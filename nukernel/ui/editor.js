@@ -18,8 +18,10 @@ const slotsEl = document.getElementById("slots");
 const edslotEl = document.getElementById("edslot");
 
 /* ---------- the step grid ---------- */
-const ROWS = ["deg", "oct", "vel", "inc", "stk", "gate", "acc", "sld"];
-const RANGE = { deg: [-7, 7], oct: [-2, 2], vel: [0, 9], inc: [-3, 3], stk: [-2, 2] };
+// exported for ui/stepnav.js — the navigator draws the same lanes in the same
+// order, and one definition of the row vocabulary is how they stay agreed
+export const ROWS = ["deg", "oct", "vel", "inc", "stk", "gate", "acc", "sld"];
+export const RANGE = { deg: [-7, 7], oct: [-2, 2], vel: [0, 9], inc: [-3, 3], stk: [-2, 2] };
 const clampTo = (v, [lo, hi]) => Math.max(lo, Math.min(hi, v));
 
 const cells = {};                          // key -> [16 buttons], alive for ever
@@ -29,24 +31,47 @@ function buildGrid() {
   // drops it from 16 columns to 8 under 560px and auto-placement wraps cells
   // 9–16 into a second rank — two banks of 8 at 44px instead of sixteen
   // 24px slivers, with no JS and no second DOM.
-  const prow = lab => {
+  // The label is TWO lines now — the name and its range ("deg −7…+7") — so
+  // the lane under the finger says what it is and how far it goes without a
+  // trip to the (?) paragraph.
+  const prow = (lab, range, parent) => {
     const r = Object.assign(document.createElement("div"), { className: "prow" });
-    r.append(Object.assign(document.createElement("div"),
-      { className: "rowlab", textContent: lab }));
+    const rl = Object.assign(document.createElement("div"), { className: "rowlab" });
+    if (lab) {
+      rl.append(Object.assign(document.createElement("span"),
+        { className: "rname", textContent: lab }));
+      rl.append(Object.assign(document.createElement("span"),
+        { className: "rrange", textContent: range }));
+    }
+    r.append(rl);
     const c = Object.assign(document.createElement("div"), { className: "prowcells" });
     r.append(c);
-    gridEl.append(r);
+    parent.append(r);
     return c;
   };
-  const nums = prow("");
+  const nums = prow("", "", gridEl);
   for (let i = 0; i < 16; i++) {
     const n = Object.assign(document.createElement("div"),
       { className: "num" + (i % 4 === 0 ? " q" : ""), textContent: String(i + 1) });
     n.dataset.q = String(1 + (i >> 2));      // the numeral wears its quarter's colour
     nums.append(n);
   }
+  // THE FOCUS VIEWPORT: the eight lanes live inside .lanesview > .lanes. On a
+  // desk both wrappers are inert (no height, no transform) and the grid reads
+  // exactly as it always has; under 560px the CSS gives .lanesview a fixed
+  // height and ui/stepnav.js pans .lanes with a translateY — ALL 128 cells
+  // stay in the DOM, alive and clickable, whichever lanes are showing. The
+  // beat-numeral ruler stays OUTSIDE the viewport so it never pans away.
+  const view = Object.assign(document.createElement("div"), { className: "lanesview" });
+  const lanes = Object.assign(document.createElement("div"), { className: "lanes" });
+  view.append(lanes);
+  gridEl.append(view);
   for (const key of ROWS) {
-    const strip = prow(key);
+    const num0 = RANGE[key];
+    const strip = prow(key,
+      num0 ? (num0[0] < 0 ? num0[0] + "…+" + num0[1] : num0[0] + "…" + num0[1])
+           : "on/off",
+      lanes);
     cells[key] = [];
     for (let i = 0; i < 16; i++) {
       const b = document.createElement("button"); b.type = "button";

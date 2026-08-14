@@ -48,6 +48,7 @@ export const curSection = () => SONG[Math.min(viewSec, SONG.length - 1)];
 //   "transport:state"    published by audio/transport — playing flipped
 //   "transport:section"  published by audio/transport — the sounding box moved
 //   "refresh"            assets finished loading mid-play; views re-render
+//   "page"               published by ui/pages — the phone deck switched pages
 //   "status"             {text} for the #readout line (readout.js listens)
 const subs = new Map();
 export function on(type, fn) {

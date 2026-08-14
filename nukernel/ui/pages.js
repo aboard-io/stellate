@@ -27,6 +27,9 @@ export function setPage(p) {
   // the arrangement measures its container; rendered while display:none it
   // measured 0 and drew at the floor width — remeasure now that it paints
   if (p === "move") emit("refresh");
+  // the typed change: the context strip re-reads its phrase suffix, the step
+  // navigator re-measures its viewport (0 while the page was display:none)
+  emit("page", { page: p });
   buzz(4);
 }
 for (const k of keys) k.addEventListener("click", () => setPage(k.dataset.page));

@@ -25,6 +25,11 @@ import "./chrome.js";
 // the chassis: page rail wiring + transport haptics (phone only in effect —
 // the rail is display:none on a desk and the buzz is coarse-pointer-gated)
 import "./pages.js";
+// the context strip (which box every edit lands on, on every page) and the
+// step navigator (the phrase minimap that pans the phone's focus view) —
+// after editor/pages: ctxstrip imports pages, stepnav imports editor's ROWS
+import "./ctxstrip.js";
+import "./stepnav.js";
 
 /* ---------- the playhead loop ---------- */
 // One rAF loop for both progress paints: the fill bar on the sounding box and

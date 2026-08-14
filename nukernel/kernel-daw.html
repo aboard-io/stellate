@@ -57,6 +57,17 @@
     </div>
   </header>
 
+  <!-- THE CONTEXT STRIP — between the transport and the deck, on EVERY page:
+       'BOX 3 · VERSE · City pop · 4 bars' (+ the phrase number on STEP). The
+       SOUND/MIX/STEP chips all write to the selected box, and on a phone that
+       box is off-screen the moment the page rail moves — this line is its name
+       tag. Tapping jumps to the SONG page, where the named box wears .sel.
+       (ui/ctxstrip.js patches it; LCD glass, one line, truncates.) -->
+  <button class="ctxstrip" id="ctxstrip" type="button">
+    <span class="ck" aria-hidden="true">edit</span>
+    <span class="ct" id="ctxtext">—</span>
+  </button>
+
   <!-- ZONE 2 · THE DECK — one page at a time on a phone, all of them on a
        desk. The palette section serves THREE pages (sound / mix / move):
        ui/pages.js flips its tab to match, and its own sub-tabs stay live. -->
@@ -86,8 +97,16 @@
         <p class="edhint" id="edhint" hidden>Tap a value cell for its fader, or
            drag up and down on it to scrub — sideways (or a second finger) for
            fine. Tap a gate/acc/sld key to flip it. <b>vel</b> is level;
-           <b>acc</b> is the 303 accent. Phrases below: tap one to edit it and
-           switch it on or off in the selected box.</p>
+           <b>acc</b> is the 303 accent. <span class="mapline">The map above
+           the grid is the whole phrase — drag it up and down to choose which
+           rows sit in the big view.</span> Phrases below: tap one to edit it
+           and switch it on or off in the selected box.</p>
+        <!-- THE NAVIGATOR (phone only): the whole 8×16 phrase as a minimap —
+             gate/acc/sld as coloured ticks, value lanes as tiny bars — with a
+             viewport outline. Dragging it pans which lanes sit in the focus
+             view below. ui/stepnav.js builds and drives it; ≥560px it is
+             display:none because the full grid is already all on screen. -->
+        <div class="stepnav" id="stepnav"></div>
         <div class="steps"><div class="stepgrid" id="stepgrid"></div></div>
         <div class="edhead phrases-head">
           <h2>Phrases</h2>
@@ -107,24 +126,32 @@
              Every box is also a mixer channel: its own effects, its own reverb and echo sends, its own way in and out.</p>
         </div>
         <div class="song" id="song"></div>
-        <!-- session operations: they act on the SONG as a file, so they live
-             with the song rather than on the transport -->
-        <!-- session operations as icon keys (the edhead pattern: an SVG-mask
-             icon beside the word, so the row reads as a bank of labelled keys
-             rather than three bare words after two pickers) -->
-        <div class="utility">
-          <label class="knob"><span>Songs</span>
-            <select id="preset"><option value="">choose…</option></select></label>
-          <label class="knob"><span>Font</span><select id="font"></select></label>
-          <span class="ukeys">
-            <button class="btn ik ik-save" id="savefile" title="save the song to a file">
-              <span class="k" aria-hidden="true"></span><span class="t">Save</span></button>
-            <button class="btn ik ik-load" id="loadfile" title="load a song file">
-              <span class="k" aria-hidden="true"></span><span class="t">Load</span></button>
-            <input type="file" id="loadinput" accept="application/json,.json" hidden>
-            <button class="btn ik ik-reset" id="reset" title="reset everything to the default song">
-              <span class="k" aria-hidden="true"></span><span class="t">Reset all</span></button>
-          </span>
+        <!-- THE GLOBAL BANK — everything that outlives a box: the soundfont,
+             the shipped songs, and the session as a file. It lives on the SONG
+             page (they are song operations, not performance controls) and on a
+             desk it is simply visible with everything else. A real silkscreened
+             bank: header, a legend over every control — the old strip was two
+             bare pickers whose labels a phone hid, which made the soundfont a
+             mystery knob. ids #font / #preset are gate-read; do not rename. -->
+        <div class="gbank" aria-label="session">
+          <div class="gbhead">Session</div>
+          <div class="gitems">
+            <label class="gctl"><span class="glab">Soundfont</span>
+              <select id="font"></select></label>
+            <label class="gctl"><span class="glab">Songs</span>
+              <select id="preset"><option value="">choose…</option></select></label>
+            <div class="gctl gkeys"><span class="glab">Song file</span>
+              <span class="ukeys">
+                <button class="btn ik ik-save" id="savefile" title="save the song to a file">
+                  <span class="k" aria-hidden="true"></span><span class="t">Save</span></button>
+                <button class="btn ik ik-load" id="loadfile" title="load a song file">
+                  <span class="k" aria-hidden="true"></span><span class="t">Load</span></button>
+                <input type="file" id="loadinput" accept="application/json,.json" hidden>
+                <button class="btn ik ik-reset" id="reset" title="reset everything to the default song">
+                  <span class="k" aria-hidden="true"></span><span class="t">Reset all</span></button>
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </section>

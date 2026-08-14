@@ -11,6 +11,15 @@
 // harmless because the carrier is already running. survival.js does the
 // swapping; this file owns the element, the offline render and the phase.
 //
+// TWO-STAGE (WAV-FIRST's firstSegSec lesson, docs/WAV-FIRST.md): the render
+// that must exist FAST is a small one. At transport start a SHORT carrier —
+// the song's first bars, bar-aligned — renders immediately, so something loops
+// within seconds of play; the full song renders behind it and swaps in at a
+// safe moment (never under a carrying element). Before this, the one render
+// waited ~3 bars plus a debounce and then took multiples of realtime on a
+// composed song — any switch-away in the first half minute found no carrier.
+// __nuBounce.stage says which is serving.
+//
 // NOT MediaStreamDestination -> <audio srcObject>. That is the route that
 // looks cheapest and the parent PROVED cannot work: the audible path still
 // mirrors a live graph, so when iOS freezes audio I/O the last quantum loops
@@ -24,9 +33,9 @@
 // mixer.buildChannel / transport.scheduleBar), so the carrier is the same
 // mix — a fork of any of those walks is how it would drift out of tune.
 import { GENRES, BASSSYNTH, DTIMES } from "../ui/deps.js";
-import { SONG, SLOTS, loopOnly, bpm, on } from "../ui/state.js";
+import { SONG, SLOTS, loopOnly, bpm, on, emit } from "../ui/state.js";
 import { stackOf, kitOf, boxBars } from "../ui/derive.js";
-import { buildMasterChain, buildEchoBus, makeVerb, masterVol, barSec } from "./graph.js";
+import { buildMasterChain, buildEchoBus, makeVerb, masterVol } from "./graph.js";
 import { FONT, isSynthFont, fontDef } from "./assets.js";
 import { makeSynthNode, driveSynth, offFallback } from "./voices.js";
 import { chanSpec, buildChannel, armAutomation } from "./mixer.js";
@@ -37,8 +46,8 @@ import { buildTimeline, scheduleBar, stepDur, playing, getPosition,
 let el = null, armed = false, carrying = false;
 let gen = 0;                                       // bumped per render request; stale renders discard
 const urls = [];                                   // blob URLs, at most 2 kept alive
-const st = { state: "idle", durSec: 0, gen: 0, sampledOnly: false,
-             lastRenderMs: 0, url: null, fallbacks: 0 };
+const st = { state: "idle", stage: null, durSec: 0, gen: 0, sampledOnly: false,
+             lastRenderMs: 0, url: null, fallbacks: 0, lastError: null };
 // the machine-readable truth for test/browser/nukernel-survival.test.js — the
 // gate reads the RENDERED BLOB through st.url, because an analyser on the
 // live graph is structurally blind to an element playing bytes
@@ -48,6 +57,10 @@ window.__nuBounce = () => ({ ...st, carrying, armed,
   // carrying/elVolume are flags this module SET, and a gate that polls only
   // what the code assigned proves the assignment, not the playback
   elPaused: el ? el.paused : null });
+// test seam: ?nobounce holds the page in the "no carrier exists" state, so the
+// survival gate can prove the no-carrier hide branches deterministically —
+// without it they race a short render that lands in a couple of seconds
+const disarmed = /[?&]nobounce\b/.test(location.search);
 
 // tiny silent-WAV data URI — the parent's unlock trick: a muted play() of this
 // inside the gesture is what permits every later programmatic play()
@@ -65,7 +78,7 @@ function silentWav(ms) {
   return "data:audio/wav;base64," + btoa(bin);
 }
 function armCarrier() {
-  if (armed) return;
+  if (armed || disarmed) return;
   armed = true;
   el = new Audio();
   el.autoplay = false; el.loop = true; el.preload = "auto";
@@ -88,43 +101,79 @@ onGesture(armCarrier);                             // rides startAt's synchronou
 // + font + loop selection. Volume is deliberately absent — the carrier renders
 // at unity and the element's own volume does the placing on handoff.
 const sig = () => JSON.stringify({ s: SONG, sl: SLOTS, bpm, f: FONT, lo: loopOnly });
-let renderedSig = null, timer = null, rendering = false, dirty = false;
+let adoptedSig = null, timer = null, rendering = false, dirty = false;
+// the short stage's duration budget, in seconds — WAV-FIRST's firstSegSec.
+// Two bars at the default tempo: big enough to loop as music, small enough
+// that a phone renders it before the user can reach the app switcher.
+const SHORT_SEC = 4;
 function schedule(delayMs) {
   clearTimeout(timer);
-  // debounced and DEFERRED: the first render waits ~3 bars past play (the
-  // precache rule — never compete with the boot or the first sound), edits
-  // wait 4 s of quiet so a scrub does not queue thirty renders
-  timer = setTimeout(maybeRender, delayMs == null ? 4000 : delayMs);
+  // debounced: edits wait 4 s of quiet so a scrub does not queue thirty
+  // renders. The timer path is always a FULL render — the short stage is
+  // kicked directly by transport:state, never queued behind a debounce.
+  timer = setTimeout(() => maybeRender("full"), delayMs == null ? 4000 : delayMs);
 }
-async function maybeRender() {
+async function maybeRender(stage) {
+  stage = stage || "full";
   if (!armed || !playing) return;
   if (rendering) { dirty = true; return; }         // one render at a time
   const want = sig();
-  if (want === renderedSig && st.state === "ready") return;
+  if (st.state === "ready" && adoptedSig === want &&
+      (stage === "short" || st.stage === "full")) {
+    // this music is already rendered — a short ask is satisfied by ANY
+    // adopted blob, a full ask only by a full one. A short blob still owes
+    // the song: keep the full render coming.
+    if (st.stage !== "full") schedule(1200);
+    return;
+  }
   rendering = true;
   st.state = "rendering";
   const myGen = ++gen;
   const t0 = performance.now();
   try {
-    const res = await renderSong();
+    const res = await renderSong(stage === "short" ? SHORT_SEC : 0);
     if (myGen !== gen) { /* stale: a newer request superseded this render */ }
-    else if (!res) st.state = "idle";              // nothing to render
+    else if (!res) st.state = st.url ? "ready" : "idle";   // nothing to render
     else {
       st.lastRenderMs = Math.round(performance.now() - t0);
-      adopt(res, want, myGen);
+      adopt(res, want, myGen, stage);
     }
   } catch (e) {
-    if (myGen === gen) { st.state = "failed"; console.warn("[nukernel] bounce render failed:", e); }
+    if (myGen === gen) {
+      // a render CAN fail outright — addModule on an OfflineAudioContext is
+      // a per-browser fact, and iOS is the browser it is a fact about. A
+      // failed FULL render must not orphan a short carrier already serving:
+      // if any blob is adopted the carrier stays 'ready' on it; 'failed' is
+      // only honest when there is nothing to play. lastError keeps
+      // __nuBounce's report honest either way.
+      st.lastError = String((e && e.message) || e).slice(0, 120);
+      st.state = st.url ? "ready" : "failed";
+      console.warn("[nukernel] bounce render failed:", e);
+    }
   }
   rendering = false;
-  if (dirty) { dirty = false; schedule(1500); }
+  if (stage === "short") schedule(1200);           // the full song, behind the carrier
+  else if (dirty) { dirty = false; schedule(1500); }
 }
 
 /* ---------- the offline render ---------- */
-async function renderSong() {
-  const TL = buildTimeline();
+async function renderSong(capSec) {
+  let TL = buildTimeline();
   if (!TL.length) return null;
   const sd = stepDur(), SR = 44100, LEAD = 0.05, TAIL = 1.5;
+  if (capSec) {
+    // the SHORT stage: the head of the song, cut on a bar line at or under
+    // the cap (at least one bar — the loop wrap must stay a downbeat for the
+    // fold). Its loop is the song's OPENING, not the user's current position:
+    // a few bars of the right music beats half a minute of silence, and the
+    // full render replaces it before most listens get around twice.
+    const cut = []; let acc = 0;
+    for (const b of TL) {
+      if (cut.length && acc + b.barSteps * sd > capSec) break;
+      cut.push(b); acc += b.barSteps * sd;
+    }
+    TL = cut;
+  }
   const durSec = TL.reduce((s, b) => s + b.barSteps, 0) * sd;
   const octx = new OfflineAudioContext(2, Math.ceil((LEAD + durSec + TAIL) * SR), SR);
   // the same room: master numbers, echo topology, cached reverb impulses —
@@ -258,20 +307,28 @@ function foldAndEncode(res) {
     }
   return new Blob([ab], { type: "audio/wav" });
 }
-function adopt(res, want, myGen) {
+function adopt(res, want, myGen, stage) {
   const url = URL.createObjectURL(foldAndEncode(res));
   urls.push(url);
   while (urls.length > 2) { try { URL.revokeObjectURL(urls.shift()); } catch (e) {} }
   st.url = url; st.durSec = res.durSec; st.gen = myGen; st.state = "ready";
-  renderedSig = want;
+  st.stage = stage;
+  adoptedSig = want;
   // the no-stall cutover: never yank the source out from under a carrying
   // element — uncarry() swaps to the newest blob when the graph takes back
-  // over. And only while the transport still RUNS: a render finishing after
-  // stop() must not restart the element the transport:state(false) handler
-  // just paused (an unmuted volume-0 loop decodes forever — worse than the
-  // muted loop that handler's own comment forbids). The render stays
-  // adopted; the next play's transport:state handler attaches it.
+  // over. (That rule is also why a full render landing while the SHORT
+  // carrier is audibly carrying does not swap mid-listen: the ear stays on
+  // the short loop until the reverse handoff.) And only while the transport
+  // still RUNS: a render finishing after stop() must not restart the element
+  // the transport:state(false) handler just paused (an unmuted volume-0 loop
+  // decodes forever — worse than the muted loop that handler's own comment
+  // forbids). The render stays adopted; the next play's transport:state
+  // handler attaches it.
   if (el && !carrying && playing) attachCurrent();
+  // announced AFTER the attach so a listener's carry() finds the new blob in
+  // the element. survival.js uses this for the lands-while-hidden pickup —
+  // impossible on iOS (the page is frozen), real on Android.
+  emit("bounce:ready", { stage });
 }
 function attachCurrent() {
   if (!el || !st.url) return;
@@ -332,10 +389,14 @@ export const isCarrying = () => carrying;
 /* ---------- subscriptions ---------- */
 on("transport:state", d => {
   if (d.playing) {
-    // keep the (possibly stale-phased) carrier rolling and re-lock it; first
-    // render waits ~3 bars so it never competes with the first sound
+    // keep the (possibly stale-phased) carrier rolling and re-lock it
     if (el && st.url) attachCurrent();
-    schedule(Math.max(2000, barSec() * 3 * 1000));
+    // TWO-STAGE, kicked from the transport itself (startAt emits this event
+    // synchronously): the short stage exists within seconds of play, the
+    // full song follows behind it. The offline render runs off the main
+    // thread, and startAt already loaded every synth this render wants, so
+    // it no longer needs the old 3-bar precache deferral.
+    maybeRender("short");
   } else {
     clearTimeout(timer);
     if (carrying) uncarry();
@@ -353,8 +414,8 @@ on("song", () => {
   // a whole new song: whatever is rendered is the WRONG music — invalidate
   // rather than carry a ghost (the "song" event also stops the transport)
   gen++;                                           // cancels any in-flight render
-  renderedSig = null;
-  st.state = "idle"; st.url = null; st.durSec = 0;
+  adoptedSig = null;
+  st.state = "idle"; st.url = null; st.durSec = 0; st.stage = null; st.lastError = null;
   while (urls.length) { try { URL.revokeObjectURL(urls.shift()); } catch (e) {} }
   if (el) { try { el.pause(); el.removeAttribute("src"); } catch (e) {} }
 });

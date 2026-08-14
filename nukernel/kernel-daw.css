@@ -199,12 +199,57 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .tgo,.tset{display:flex;align-items:center;gap:10px;min-width:0}
 .tset{margin-left:auto}
 
-/* the session keys under the song row — file operations, not performance.
-   The three keys are one .ukeys unit so a narrow screen wraps the whole bank
-   under the pickers instead of orphaning SAVE on the first row. */
-.utility{display:flex;flex-wrap:wrap;gap:10px;align-items:center;
-  border-top:1px solid var(--hair);padding-top:10px}
-.ukeys{display:flex;gap:10px;align-items:center;margin-left:auto}
+/* ---- the GLOBAL bank (SESSION) under the song row ----
+   File and fixture operations, not performance — a silkscreened bank: a
+   header with the .plabel hairline, then a legend OVER every control, so the
+   soundfont picker is never again a mystery LCD with no name (the transport's
+   phone rule hides .knob labels; these are .glab and always show). Each .gctl
+   is a column; the row aligns on the controls' baseline and wraps whole
+   columns on a narrow screen. */
+.gbank{border-top:1px solid var(--hair);padding-top:10px;
+  display:flex;flex-direction:column;gap:8px}
+.gbhead{display:flex;align-items:center;gap:8px;
+  font:600 10px/1.2 var(--f-legend);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--faint)}
+.gbhead::after{content:"";flex:1;height:1px;background:var(--hw-hair)}
+.gitems{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:flex-end}
+.gctl{display:flex;flex-direction:column;gap:5px;min-width:0}
+.glab{font:600 9px/1.2 var(--f-legend);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--dim)}
+.ukeys{display:flex;gap:10px;align-items:center}
+/* the gbank pickers wear the same recessed LCD glass as the .knob ones */
+.gctl select{
+  font:500 11.5px/1 var(--f-num);letter-spacing:.02em;cursor:pointer;
+  background:var(--lcd-bg);color:var(--lcd-ink);
+  background-image:repeating-linear-gradient(0deg,var(--lcd-grid) 0 1px,transparent 1px 3px);
+  border:1px solid rgba(0,0,0,.6);border-radius:3px;padding:7px 6px;max-width:168px;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.9),inset 0 0 0 1px rgba(255,179,71,.08),0 1px 0 var(--hw-bevel-hi);
+}
+.gctl select:hover{box-shadow:inset 0 2px 5px rgba(0,0,0,.9),inset 0 0 0 1px rgba(255,179,71,.25),0 1px 0 var(--hw-bevel-hi)}
+
+/* ---- the context strip ----
+   WHERE EDITS LAND, on every page: one LCD line between the transport and the
+   deck — 'BOX 3 · VERSE · City pop · 4 bars' (+ the phrase on STEP). It is a
+   real button (tap = jump to the SONG page) wearing the same amber glass as
+   every other readout, with one silkscreen word so it reads as a labelled
+   indicator rather than a second status line. One line; the value truncates. */
+.ctxstrip{
+  appearance:none;cursor:pointer;text-align:left;width:100%;
+  display:flex;align-items:center;gap:9px;min-width:0;
+  margin:0;padding:7px 12px;
+  font:600 12px/1.2 var(--f-num);letter-spacing:.04em;
+  background:var(--lcd-bg);color:var(--lcd-ink);
+  background-image:repeating-linear-gradient(0deg,var(--lcd-grid) 0 1px,transparent 1px 3px);
+  border:1px solid rgba(0,0,0,.6);border-radius:3px;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.9),inset 0 0 0 1px rgba(255,179,71,.08),0 1px 0 var(--hw-bevel-hi);
+}
+.ctxstrip:hover{box-shadow:inset 0 2px 5px rgba(0,0,0,.9),inset 0 0 0 1px rgba(255,179,71,.25),0 1px 0 var(--hw-bevel-hi)}
+/* the silkscreen word is ON the glass, so it speaks LCD-dim, not panel ink */
+.ctxstrip .ck{
+  flex:0 0 auto;font:600 9px/1 var(--f-legend);letter-spacing:.16em;
+  text-transform:uppercase;color:var(--lcd-dim);
+}
+.ctxstrip .ct{flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* #readout is the LCD strip: one line of machine words on amber glass */
 .readout{
@@ -332,11 +377,22 @@ h1 em{font-style:normal;color:var(--accent-txt)}
    bank A, 9–16 wrap under them as bank B, by nothing but auto-placement.
    16 pads across 390px is 24px each; folded they are 44 (see the phone block). */
 .stepgrid{display:flex;flex-direction:column;gap:2px;min-width:520px}
+/* the focus wrappers are INERT here: .lanesview has no height and no overflow
+   on a desk, .lanes is the same flex column the grid is, so the built-once DOM
+   (nums row, then .lanesview>.lanes>.prow×8) paints exactly as the flat grid
+   did. The phone block below is where they become a viewport. */
+.lanesview{min-width:0}
+.lanes{display:flex;flex-direction:column;gap:2px}
 .prow{display:grid;grid-template-columns:58px 1fr;gap:2px;align-items:stretch}
 .prowcells{display:grid;grid-template-columns:repeat(16,minmax(24px,1fr));gap:2px}
+/* two lines now: the lane's name over its range ("deg" / "−7…+7") — the lane
+   under the finger says what it is and how far it goes */
 .rowlab{font:600 10px/1.2 var(--f-legend);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);
-  display:flex;align-items:center;background:none;border:0;
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;
+  background:none;border:0;
   padding:0;cursor:default}
+.rowlab .rrange{font:500 8.5px/1 var(--f-num);letter-spacing:.02em;
+  text-transform:none;color:var(--faint)}
 .num{font:500 10px/1.4 var(--f-num);color:var(--faint);text-align:center}
 /* the beat numerals are also the ruler: each quarter's numeral wears its
    group's colour, matching the gate row below it */
@@ -376,6 +432,31 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .cell.deg.zero{color:var(--lcd-dim)}
 .cell.deg.ramp{border-bottom:1px solid var(--v3)}
 .cell.deg.ramp.zero{border-bottom-color:rgba(0,0,0,.6)}
+
+/* ---- the step navigator ----
+   The whole phrase as a minimap on LCD glass: value lanes as tiny amber bars,
+   gate ticks in the 909 quarter colours, acc amber / sld cream, a cream
+   viewport outline where the focus view sits. display:none except on the
+   narrow phone (the block at the end of this file) — on a desk the full grid
+   is already on screen, and a minimap of a fully visible grid is a second
+   source of truth with no panning job. Its hint sentence hides with it. */
+.stepnav{display:none}
+.mapline{display:none}
+.nmap{display:block;width:100%;height:76px}
+.nmap *{pointer-events:none}
+.nq{stroke:var(--lcd-dim);stroke-width:.5;opacity:.5}
+.nmap .nv{fill:var(--lcd-ink)}
+.nmap .nv.rest{opacity:.28}
+.nmap .nb{opacity:0}
+.nmap .nb.on{opacity:1}
+.nmap .nb.gate[data-q="1"]{fill:var(--step-q1)}
+.nmap .nb.gate[data-q="2"]{fill:var(--step-q2)}
+.nmap .nb.gate[data-q="3"]{fill:var(--step-q3)}
+.nmap .nb.gate[data-q="4"]{fill:var(--step-q4)}
+.nmap .nb.acc{fill:var(--a-amber)}
+.nmap .nb.sld{fill:var(--a-cream)}
+.nmap .nview{fill:none;stroke:var(--st-sel);stroke-width:1.5;
+  vector-effect:non-scaling-stroke}
 
 /* ---- the pop-up fader ----
    One dialog, built once by ui/popfader.js, hidden between uses. It is a
@@ -755,13 +836,17 @@ details .c{color:var(--faint)}
   body{padding:0}
   .chassis{
     max-width:none;height:100dvh;gap:0;
-    display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;
+    display:grid;grid-template-rows:auto auto minmax(0,1fr) auto auto;
   }
   /* the readout is a fixed one-line chyron between deck and rail; the full
      multi-line description still lives on the MOVE page (#src) */
   .readout{border-radius:0;border-left:0;border-right:0;min-height:0;
     padding:6px 10px;font-size:11px;white-space:nowrap;overflow:hidden;
     text-overflow:ellipsis}
+  /* the context strip becomes the second chassis row: edge to edge under the
+     transport, one line tall, on every page */
+  .ctxstrip{border-radius:0;border-left:0;border-right:0;
+    padding:6px 10px;font-size:11px}
   .mast{display:none}
   .bar{
     border-radius:0;border-left:0;border-right:0;border-top:0;
@@ -826,21 +911,29 @@ details .c{color:var(--faint)}
    before every box looks identical, so duration moves to the head in words
    (songrow.js prints mmss on any narrow card longer than the minimum). */
 @media (max-width:560px){
-  /* THE WHOLE STEP PAGE ON ONE SCREEN (390×844 and 360×780 both). The fold
-     stays — two banks of 8 — but the row heights now say what the row is:
-     the five value rows are slim LCD windows (a tap opens the pop-up fader,
-     so they no longer need to be finger-sized targets for precision), the
-     three binary rows keep chunky key height, and the phrase pads compress
-     to one rank of eight. Explicit heights beat the coarse-pointer 44px
-     floor above, on purpose: that floor is for controls whose ONLY gesture
-     is the tap. */
+  /* FOCUS + NAVIGATOR (390×844 and 360×780 both). The one-screen editor won
+     density at the cost of legibility — eight lanes of 20–28px slivers — so
+     the phone now shows TWO OR THREE LANES BIG and the whole pattern small:
+     .lanesview becomes a fixed-height viewport, ui/stepnav.js pans .lanes
+     under it with one translateY (all 128 cells stay in the DOM), and the
+     .stepnav minimap above is both the at-a-glance pattern display and the
+     pan control. The fold stays — two banks of 8 — so a lane is two ranks of
+     full-width pads; every cell now clears the 44px touch floor for real. */
   .stepgrid{min-width:0;gap:3px}
-  .prow{grid-template-columns:28px 1fr}
+  .lanes{gap:3px;will-change:transform}
+  .lanesview{overflow:hidden;height:min(46vh,296px)}
+  .stepnav{display:block;touch-action:none;cursor:grab;padding:4px 5px;
+    background:var(--lcd-bg);border:1px solid rgba(0,0,0,.6);border-radius:3px;
+    background-image:repeating-linear-gradient(0deg,var(--lcd-grid) 0 1px,transparent 1px 3px);
+    box-shadow:inset 0 2px 5px rgba(0,0,0,.9),inset 0 0 0 1px rgba(255,179,71,.08),0 1px 0 var(--hw-bevel-hi)}
+  .mapline{display:inline}
+  .prow{grid-template-columns:40px 1fr}
   .prowcells{grid-template-columns:repeat(8,1fr)}
-  .rowlab{font-size:8px;letter-spacing:.06em}
+  .rowlab{font-size:9px;letter-spacing:.04em}
+  .rowlab .rrange{font-size:7.5px}
   .ed{gap:6px}
-  .cell{min-height:0;height:28px}
-  .cell.deg{height:20px;font-size:10px}
+  .cell{min-height:0;height:44px}
+  .cell.deg{height:40px;font-size:12px}
   .num{font-size:9px;line-height:1.2}
   .edhint{font-size:10.5px}
   /* icon keys drop their word; the icon, the title and the id remain. The

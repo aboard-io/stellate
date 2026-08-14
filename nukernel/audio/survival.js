@@ -16,11 +16,19 @@ import { ctx, muteNow, unmuteRamp } from "./graph.js";
 import { playing, startAt, stop, getPosition, seekPhase } from "./transport.js";
 import { carry, uncarry } from "./bounce.js";
 
-// the parent's predicate: the preemptive mute is for platforms where the ctx
-// genuinely suspends on hide. A hidden DESKTOP tab keeps a running context
-// alive, and nukernel's worker clock + 2 s lookahead already carry it — muting
-// there would be a regression, not a safety.
-const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+// the parent's predicate, SPLIT (live.js onVisChange muted on isMobile; the
+// contract it protects is narrower): the preemptive mute is for platforms
+// whose ctx genuinely FREEZES on hide — iOS/iPadOS WebKit, which reports
+// "interrupted" and stops rendering until the page returns. Android Chrome
+// keeps a running, AUDIBLE context alive in the background exactly like
+// desktop (the bg-survival contract), so the old whole-of-mobile mute was
+// silencing a platform that never needed it — "stops playing when I switch
+// out of the browser", by our own hand. iPadOS 13+ masquerades as Mac in the
+// UA; maxTouchPoints is the tell. ?bgtest=ios|android forces the predicate so
+// the survival gate can walk both branches from one desktop chromium.
+const bgtest = /[?&]bgtest=(ios|android)\b/.exec(location.search);
+const isIOS = bgtest ? bgtest[1] === "ios" :
+  /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
   (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || ""));
 
 /* ---------- resume + revive ---------- */
@@ -64,10 +72,12 @@ function goHidden() {
     muteNow();
     return;
   }
-  // no carrier: mute at source only where the freeze is coming (mobile), so
-  // the suspend does not cut mid-sample and the resume does not click. A
-  // hidden desktop tab keeps playing — that is the worker clock's whole job.
-  if (isMobile && playing) { survivalMuted = true; muteNow(); }
+  // no carrier: mute at source ONLY where the freeze is real (iOS), so the
+  // suspend does not cut mid-sample and the resume does not click. Android
+  // and desktop keep playing hidden — the worker clock + the 2 s lookahead
+  // exist for exactly this, and if the ctx does get suspended anyway the
+  // onstatechange recovery below handles it.
+  if (isIOS && playing) { survivalMuted = true; muteNow(); }
 }
 function goVisible() {
   if (!ctx) return;
@@ -92,6 +102,18 @@ function goVisible() {
     }
   }, 400);
 }
+// a bounce that lands WHILE HIDDEN. Impossible on iOS — the page is frozen —
+// but Android background timers run, so it happens there. Two cases: the
+// graph is survival-muted (a forced-iOS predicate, or a suspend the
+// statechange handler muted) — that is silence, so hand off to the carrier
+// NOW; or the graph is audibly playing (the Android no-carrier path) — do
+// NOT swap mid-listen, a jump from the live graph to the blob's loose phase
+// is more jarring than letting the graph keep playing, so the carrier just
+// waits armed for the next hide.
+on("bounce:ready", () => {
+  if (document.visibilityState !== "hidden" || !playing) return;
+  if (survivalMuted && !carried && carry()) carried = true;
+});
 document.addEventListener("visibilitychange", () =>
   document.visibilityState === "hidden" ? goHidden() : goVisible());
 addEventListener("pagehide", goHidden);
