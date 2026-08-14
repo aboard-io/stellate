@@ -86,16 +86,36 @@ function setVal(v) {
 }
 
 /* ---------- placement ---------- */
-// Near the cell but never under the finger: above the cell when the cell sits
-// in the lower half of the screen (where a thumb usually is), below it
-// otherwise, clamped 8px inside the viewport either way.
+// Near the cell but never over the thing you are editing.
+//
+// BESIDE the cell, vertically centred on it, at EVERY width the side fits.
+// The tracker table runs top to bottom at every width, so the pattern you are
+// reading is always a column, and a fader dropped under the cell always covers
+// the next eight ticks of the very thing you are editing. To the right if there
+// is room, to the left otherwise.
+//
+// The side rule used to be gated at ≥900px, from the era when a phone had a
+// different editor; it does not, so the gate was measuring the screen when the
+// question is the daylight. A 150px panel fits beside a cell on most phones in
+// portrait, and where it genuinely does not, the fallback below still holds:
+// above the cell when it sits in the lower half of the screen (where a thumb
+// usually is), below it otherwise.
 function place(anchor) {
   const r = anchor.getBoundingClientRect(), w = el.offsetWidth, h = el.offsetHeight;
+  const clampY = y => Math.min(Math.max(8, y), innerHeight - h - 8);
+  {
+    const gap = 12;
+    const right = r.right + gap, left = r.left - gap - w;
+    const x = right + w <= innerWidth - 8 ? right : left >= 8 ? left : null;
+    if (x != null) {
+      el.style.left = x + "px";
+      el.style.top = clampY(r.top + r.height / 2 - h / 2) + "px";
+      return;
+    }
+  }
   const x = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8);
-  let y = r.top > innerHeight / 2 ? r.top - h - 10 : r.bottom + 10;
-  y = Math.min(Math.max(8, y), innerHeight - h - 8);
   el.style.left = x + "px";
-  el.style.top = y + "px";
+  el.style.top = clampY(r.top > innerHeight / 2 ? r.top - h - 10 : r.bottom + 10) + "px";
 }
 
 /* ---------- open / shut ---------- */

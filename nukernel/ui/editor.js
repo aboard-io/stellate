@@ -1,8 +1,18 @@
-// ui/editor.js — the phrase editor: the 8×16 step grid and the slot rail
-// beside it. Both follow the palette's law — BUILT ONCE, then patched. The
+// ui/editor.js — the phrase editor: the 16×8 TRACKER TABLE and the slot rail
+// under it. Both follow the palette's law — BUILT ONCE, then patched. The
 // old drawEditor destroyed and rebuilt 136 buttons with fresh listeners on
 // every pointermove of a scrub; the cells are now permanent, their listeners
 // bind once, and an edit patches textContent/aria-label/class in place.
+//
+// THE TABLE IS THE ONLY LAYOUT, at every width (Paul's standing law: "Don't
+// go left to right go top to bottom. Make them tables… like mod trackers.").
+// The desk's lane grid — 16 steps running left to right, one row per vector —
+// is GONE, and with it the <560px CSS transpose that used to fake the rotation
+// with display:contents and sixteen :nth-child rules. The DOM is now built in
+// tracker order to begin with: one row per 16th, one column per vector, which
+// is both the picture and the ARIA. A wider screen gets a ROOMIER table —
+// taller rows, wider columns, the ramp columns out of their latch — never a
+// different one.
 //
 // Layer graph: ui view — imports state/derive/deps and palette (for toggle:
 // clicking a slot also toggles the phrase into the focused layer).
@@ -19,70 +29,77 @@ const slotsEl = document.getElementById("slots");
 const edslotEl = document.getElementById("edslot");
 
 /* ---------- the step grid ---------- */
-// the row vocabulary, exported: the order here is the lane order on a desk
-// and the COLUMN order of the phone's tracker table — one definition
+// the vector vocabulary, exported: the order here is the COLUMN order of the
+// tracker table at every width — one definition
 export const ROWS = ["deg", "oct", "vel", "inc", "stk", "gate", "acc", "sld"];
 export const RANGE = { deg: [-7, 7], oct: [-2, 2], vel: [0, 9], inc: [-3, 3], stk: [-2, 2] };
 const clampTo = (v, [lo, hi]) => Math.max(lo, Math.min(hi, v));
 
 const cells = {};                          // key -> [16 buttons], alive for ever
 function buildGrid() {
-  // ONE .prow PER ROW: a label cell and a 16-cell strip. On a desk this is
-  // the classic lane layout — 16 columns left to right. Under 560px the CSS
-  // TRANSPOSES it into a tracker table: every wrapper here goes
-  // display:contents, #stepgrid itself becomes the grid, and each cell is
-  // placed by its data-row (column) and its :nth-child position (row) — so
-  // steps run top to bottom, 16 numbered rows, with the vectors as columns.
-  // ONE DOM, two layouts; no cell is ever rebuilt for the rotation.
-  // The label is TWO lines — the name and its range ("deg −7…+7") — so the
-  // lane under the finger says what it is and how far it goes; the tracker
-  // keeps only the name, as a column header.
+  // ONE .prow PER 16TH, plus a header row of column labels. #stepgrid is the
+  // grid; every .prow is display:contents, so its children ARE the grid items
+  // and AUTO-PLACEMENT does the rest — each row contributes exactly one cell
+  // per visible column, so the columns line up with no explicit placement at
+  // all. Hiding the two ramp columns (the RAMP latch below) simply removes a
+  // cell from every row and the table narrows by one column.
   //
-  // The ARIA reads as the DOM stands: a grid of rows, one per vector, each
-  // headed by its rowlab — a tracker's channel listing. The cells' own
-  // aria-labels ("step N deg V") carry the step identity either way.
-  const prow = (lab, range, parent) => {
-    const r = Object.assign(document.createElement("div"), { className: "prow" });
-    r.setAttribute("role", "row");
-    const rl = Object.assign(document.createElement("div"), { className: "rowlab" });
-    if (lab) {
-      rl.dataset.row = lab;                // the tracker's column placement hook
-      rl.setAttribute("role", "rowheader");
-      rl.append(Object.assign(document.createElement("span"),
-        { className: "rname", textContent: lab }));
-      rl.append(Object.assign(document.createElement("span"),
-        { className: "rrange", textContent: range }));
-    }
-    r.append(rl);
-    const c = Object.assign(document.createElement("div"), { className: "prowcells" });
-    c.setAttribute("role", "presentation"); // pass the cells up to the row
-    r.append(c);
-    parent.append(r);
-    return c;
+  // The ARIA now reads exactly as the picture does: rows are 16ths, headed by
+  // their step numeral; the vectors are columnheaders. The cells' own
+  // aria-labels ("step N deg V") are unchanged — they were always the step
+  // identity, and the audio gate reads them by name.
+  // .thd is the shared TABLE header (kernel-daw.css): every table on the
+  // machine — pattern, song, arrangement, palette bank — wears the same
+  // silkscreen, the same rule and the same sticky top. .rowlab adds only the
+  // two-line name/range stack this table's columns need.
+  const label = (key) => {
+    const rl = Object.assign(document.createElement("div"), { className: "rowlab thd" });
+    const num = RANGE[key];
+    rl.dataset.row = key;                  // the skin's column hook (ramp latch)
+    rl.setAttribute("role", "columnheader");
+    rl.append(Object.assign(document.createElement("span"),
+      { className: "rname", textContent: key }));
+    // the second line is the range ("−7…+7"): the column says what it is AND
+    // how far it goes. Narrow screens drop it; the desk has the room.
+    rl.append(Object.assign(document.createElement("span"),
+      { className: "rrange", textContent: num
+        ? (num[0] < 0 ? num[0] + "…+" + num[1] : num[0] + "…" + num[1]) : "on/off" }));
+    return rl;
   };
   gridEl.setAttribute("role", "grid");
   gridEl.setAttribute("aria-label", "step pattern");
-  const nums = prow("", "", gridEl);
+  const head = Object.assign(document.createElement("div"), { className: "prow" });
+  head.setAttribute("role", "row");
+  const corner = Object.assign(document.createElement("div"),
+    { className: "rowlab thd corner", textContent: "st" });
+  corner.setAttribute("role", "columnheader");
+  corner.setAttribute("aria-label", "step");
+  head.append(corner);
+  for (const key of ROWS) head.append(label(key));
+  gridEl.append(head);
+
+  for (const key of ROWS) cells[key] = [];
   for (let i = 0; i < 16; i++) {
+    // the beat ruling is a CLASS, not a :nth-child rule: every fourth row is
+    // the head of a quarter and the whole table rules across it
+    const r = Object.assign(document.createElement("div"),
+      { className: "prow" + (i % 4 === 0 ? " beat" : "") });
+    r.setAttribute("role", "row");
+    r.dataset.step = String(i + 1);
+    // .tnum is the shared numeral column — the step here, the tick in the
+    // arrangement, the section number in the song: one material for "which
+    // row is this"
     const n = Object.assign(document.createElement("div"),
-      { className: "num" + (i % 4 === 0 ? " q" : ""), textContent: String(i + 1) });
-    n.dataset.q = String(1 + (i >> 2));      // the numeral wears its quarter's colour
-    n.setAttribute("role", "columnheader");
-    nums.append(n);
-  }
-  for (const key of ROWS) {
-    const num0 = RANGE[key];
-    const strip = prow(key,
-      num0 ? (num0[0] < 0 ? num0[0] + "…+" + num0[1] : num0[0] + "…" + num0[1])
-           : "on/off",
-      gridEl);
-    cells[key] = [];
-    for (let i = 0; i < 16; i++) {
+      { className: "num tnum" + (i % 4 === 0 ? " q" : ""), textContent: String(i + 1) });
+    n.dataset.q = String(1 + (i >> 2));      // the row's quarter lamp (CSS reads it)
+    n.setAttribute("role", "rowheader");
+    r.append(n);
+    for (const key of ROWS) {
       const b = document.createElement("button"); b.type = "button";
-      // the skin reads these, the code never does: which row a cell sits in
+      // the skin reads these, the code never does: which COLUMN a cell sits in
       // and which quarter of the bar — the 909's q1 red / q2 orange / q3 amber
       // / q4 cream lives entirely in CSS off these two attributes. data-row is
-      // ALSO the tracker's column placement hook (kernel-daw.css <560px).
+      // also what the RAMP latch hides and shows.
       b.dataset.row = key; b.dataset.q = String(1 + (i >> 2));
       b.setAttribute("role", "gridcell");  // still a <button>: Enter/Space work
       const num = RANGE[key];
@@ -139,9 +156,10 @@ function buildGrid() {
           commit("phrase");
         });
       }
-      cells[key].push(b);
-      strip.append(b);
+      cells[key][i] = b;
+      r.append(b);
     }
+    gridEl.append(r);
   }
 }
 function patchGrid() {
@@ -317,12 +335,13 @@ export function hintKey(btnId, pId) {
 }
 hintKey("edhelp", "edhint");
 hintKey("phrhelp", "phrhint");            // the phrase rail's own paragraph
-// THE RAMP KEY (phone only — the CSS hides it ≥560px): the tracker table
+// THE RAMP KEY (narrow only — the CSS hides it ≥900px): the tracker table
 // shows deg/oct/vel plus the binary trio by default; inc and stk are the two
-// columns most phrases never touch, so they sit behind this latch rather
-// than squeezing every row nine-wide. One attribute on the grid; the CSS
-// re-places the columns. Desktop always shows all eight lanes, so the latch
-// has nothing to do there.
+// columns most phrases never touch, so under 900px they sit behind this latch
+// rather than squeezing every row nine-wide. One attribute on the grid; the
+// CSS shows the two columns and the table re-flows. A desk has the room for
+// all eight vectors, so the ramp columns are always out there and the latch
+// has nothing to do.
 {
   const b = document.getElementById("ramptog");
   b.addEventListener("click", () => {

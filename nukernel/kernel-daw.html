@@ -19,11 +19,12 @@
 
 <!-- THE CHASSIS. Three fixed zones on a phone — transport strip on top, the
      current PAGE in the middle, the page rail under the thumb — and on a
-     desk (>=900px) the zones relax back into the full workbench: every page
-     is display:contents, the rail disappears, and the machine reads top to
-     bottom exactly as it always has. Switching pages is ONE attribute write
-     (data-page below); no view is ever rebuilt for it, so every module's
-     elements stay alive and patched whichever page is showing. -->
+     desk (>=900px) the zones dissolve: every page is display:contents, the
+     rail disappears, and all four tables stack down the one column. Same
+     tables either way, with more room; there is no second layout to keep.
+     Switching pages is ONE attribute write (data-page below); no view is ever
+     rebuilt for it, so every module's elements stay alive and patched
+     whichever page is showing. -->
 <div class="chassis" id="chassis" data-page="step">
 
   <!-- ZONE 1 · TRANSPORT — always on screen. Play, the composer as a
@@ -79,8 +80,11 @@
   </button>
 
   <!-- ZONE 2 · THE DECK — one page at a time on a phone, all of them on a
-       desk. The palette section serves THREE pages (sound / mix / move):
-       ui/pages.js flips its tab to match, and its own sub-tabs stay live. -->
+       desk. Every page is a TABLE in a recessed well with a silkscreened
+       header row (kernel-daw.css, "THE TABLE"): the pattern, the song, the
+       arrangement and each palette bank are one component. The palette
+       section serves THREE pages (sound / mix / move): ui/pages.js flips its
+       tab to match, and its own sub-tabs stay live. -->
   <main class="deck">
 
     <section class="page pg-step" id="page-step" aria-label="step editor">
@@ -97,9 +101,9 @@
           <button class="btn hint" id="edhelp" aria-expanded="false"
             aria-controls="edhint" title="how to edit">?</button>
           <!-- the tracker's column latch: inc/stk are the two columns most
-               phrases never touch, so on a phone they sit behind this key
-               instead of squeezing every row nine-wide. Hidden ≥560px — the
-               desk always shows all eight lanes. ui/editor.js wires it. -->
+               phrases never touch, so under 900px they sit behind this key
+               instead of squeezing every row nine-wide. Hidden ≥900px — the
+               desk has room for all eight vectors. ui/editor.js wires it. -->
           <button class="btn ramptog" id="ramptog" aria-pressed="false"
             title="show the inc / stk ramp columns">Ramp</button>
           <span class="spacer"></span>
@@ -113,17 +117,16 @@
         <p class="edhint" id="edhint" hidden>Tap a value cell for its fader, or
            drag up and down on it to scrub — sideways (or a second finger) for
            fine. Tap a gate/acc/sld key to flip it. <b>vel</b> is level;
-           <b>acc</b> is the 303 accent. <span class="mapline">On a phone the
-           pattern reads top to bottom like a tracker — every numbered row is
-           a 16th, and RAMP shows the inc/stk columns.</span> Phrases below:
-           tap one to edit it and switch it on or off in the selected box;
-           [+] adds a phrase, [−] removes the last one.</p>
-        <!-- ONE GRID, TWO READINGS: ≥560px the classic lanes (16 steps left
-             to right, one row per vector); <560px the CSS transposes the same
-             cells into a tracker table — steps top to bottom, vectors as
-             columns. ui/editor.js builds it once; kernel-daw.css owns both
-             layouts off data-row + :nth-child, no second DOM. -->
-        <div class="steps"><div class="stepgrid" id="stepgrid"></div></div>
+           <b>acc</b> is the 303 accent. The pattern reads top to bottom like a
+           tracker — every numbered row is a 16th, the vectors are the columns,
+           and under 900px RAMP brings out the inc/stk columns. Phrases below: tap one to edit it and switch
+           it on or off in the selected box; [+] adds a phrase, [−] removes the
+           last one.</p>
+        <!-- ONE TABLE AT EVERY WIDTH: sixteen numbered rows, one per 16th,
+             with the eight vectors as columns. ui/editor.js builds it in that
+             order once; kernel-daw.css only decides how much room the columns
+             and rows get. There is no second layout and no transpose. -->
+        <div class="steps tbl"><div class="stepgrid" id="stepgrid"></div></div>
         <!-- the how-to sentence lives behind (?) now — the .btn.hint /
              .edhint pattern the editor head established, same spot (right
              after the h2), so the freed line goes to the rail itself -->
@@ -135,7 +138,7 @@
         <p class="edhint phrases-head" id="phrhint" hidden>Click one to edit it
            and switch it on or off in the selected box. [+] adds a phrase (up
            to 16); [−] removes the last one when no box plays it.</p>
-        <div class="slots" id="slots"></div>
+        <div class="slots tbl" id="slots"></div>
       </div>
     </section>
 
@@ -143,19 +146,27 @@
       <div class="ed songwrap">
         <!-- the four-line lecture moved behind (?) — the .btn.hint / .edhint
              pattern every panel head shares now, in the same spot (right
-             after the h2). The freed lines go to the rack. -->
+             after the h2). The freed lines go to the table. -->
         <div class="edhead">
           <h2>Song</h2>
           <button class="btn hint" id="songhelp" aria-expanded="false"
-            aria-controls="songhint" title="how the song row works">?</button>
+            aria-controls="songhint" title="how the song table works">?</button>
         </div>
-        <p class="edhint" id="songhint" hidden>Click to play from a box,
-           double-click to loop it, hold to read everything it has switched
-           on, drag to reorder, trim the edges. Genres stack — the first owns
-           the harmony, drums and tempo; the rest ride on top of it, each with
-           its own phrases. Every box is also a mixer channel: its own
+        <p class="edhint" id="songhint" hidden>One row per section, top to
+           bottom. Click a row for its options — sound, mix, transitions, and
+           the ▶ that plays from there; double-click to loop it, hold to read
+           everything it has switched on. Reorder with ↑ ↓ or by dragging the
+           row; ⟳ loops, ✕ removes. Length and nudge are the steppers in the
+           row's sheet. Genres stack — the first owns the harmony, drums and
+           tempo; the rest ride on top of it as indented layers, each with its
+           own phrases. Every section is also a mixer channel: its own
            effects, its own reverb and echo sends, its own way in and out.</p>
-        <div class="song" id="song"></div>
+        <!-- THE SONG TABLE: ui/songrow.js builds a header row, one row per
+             section (kept alive and patched, never rebuilt) and a footer row
+             of table keys. Rows at every width — the desk gets more columns,
+             not a different view — and the same well, ruling and row states
+             the pattern and the arrangement wear. -->
+        <div class="song tbl" id="song"></div>
         <!-- THE GLOBAL BANK — everything that outlives a box: the soundfont,
              the shipped songs, and the session as a file. It lives on the SONG
              page (they are song operations, not performance controls) and on a
@@ -163,14 +174,14 @@
              bank: header, a legend over every control — the old strip was two
              bare pickers whose labels a phone hid, which made the soundfont a
              mystery knob. ids #font / #preset are gate-read; do not rename. -->
-        <div class="gbank" aria-label="session">
-          <div class="gbhead">Session</div>
+        <div class="gbank tbl" aria-label="session">
+          <div class="thd">Session</div>
           <div class="gitems">
             <label class="gctl"><span class="glab">Soundfont</span>
               <select id="font"></select></label>
             <label class="gctl"><span class="glab">Songs</span>
               <select id="preset"><option value="">choose…</option></select></label>
-            <div class="gctl gkeys"><span class="glab">Song file</span>
+            <div class="gctl"><span class="glab">Song file</span>
               <span class="ukeys">
                 <button class="btn ik ik-save" id="savefile" title="save the song to a file">
                   <span class="k" aria-hidden="true"></span><span class="t">Save</span></button>
@@ -193,10 +204,13 @@
     </section>
 
     <section class="page pg-move" id="page-move" aria-label="arrangement">
-      <div class="daw">
-        <div class="dawscroll" id="dawscroll">
-          <div class="grid" id="grid"></div>
-        </div>
+      <!-- THE PATTERN VIEW of the selected box, as a tracker: time runs down
+           (one row per 16th, ruled every bar), the voices run across as
+           columns, and the playhead is the row that lights. ui/arrange.js
+           builds it; the fixed-height .dawscroll is what stops a changing
+           channel count from resizing the page under everything below. -->
+      <div class="dawscroll tbl glass" id="dawscroll">
+        <div class="tgrid" id="grid"></div>
       </div>
       <details>
         <summary>What the selected box asks for</summary>

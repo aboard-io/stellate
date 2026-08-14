@@ -25,11 +25,11 @@ import "./chrome.js";
 // the chassis: page rail wiring + transport haptics (phone only in effect —
 // the rail is display:none on a desk and the buzz is coarse-pointer-gated)
 import "./pages.js";
-// the context strip (which box every edit lands on, on every page) and the
-// step navigator (the phrase minimap that pans the phone's focus view) —
-// after editor/pages: ctxstrip imports pages, stepnav imports editor's ROWS
+// the context strip: which box every edit lands on, on every page. After
+// editor/pages, because it imports pages. (There is no step navigator any
+// more — the phrase minimap panned an UN-rotated lane stack, and the tracker
+// table is its own overview; ui/stepnav.js went with the layout it served.)
 import "./ctxstrip.js";
-import "./stepnav.js";
 
 /* ---------- the playhead loop ---------- */
 // One rAF loop for both progress paints: the fill bar on the sounding box and
@@ -65,9 +65,15 @@ function frame() {
     lcd((pos.si + 1) + "·" + bar + "/" + sec.len);
     songrow.paintProgress(pos.si, f);
     if (viewSec === pos.si) {                  // looking at the box that sounds
-      const cap = arrange.getViewSteps() * arrange.getStepW();
-      const x = Math.max(0, Math.min(cap, ((pos.now - pos.passStart) / pos.stepDur) * arrange.getStepW()));
-      arrange.paintPlayhead(x);
+      // the tracker's playhead is a ROW, so the position is handed over in
+      // TICKS — the units its rows are — RAW, and arrange.js does the clamping
+      // and the scroll-follow. (It used to be a pixel offset for a translateX
+      // on a horizontal ruler; the ruler runs down the side now.) Raw matters:
+      // passStart is set when a pass is SCHEDULED, up to a lookahead ahead of
+      // the sound, so this goes briefly negative at every wrap — clamping that
+      // to zero snapped the playhead to the top of a box still finishing its
+      // last bar, and only the view knows to hold instead.
+      arrange.paintPlayhead((pos.now - pos.passStart) / pos.stepDur);
     } else arrange.resetPlayhead();
   }
   requestAnimationFrame(frame);

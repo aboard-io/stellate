@@ -343,7 +343,12 @@ export function playDrum(kit, lane, when, acc, vel, chan) {
   const buf = kit && drumBufs.get(kit + "|" + lane);
   if (!buf) return !!kit && inFlight.has("kit:" + kit);
   const lvl = (vel == null ? 5 : vel) / 9;
-  if (lvl <= 0.001) return false;
+  // A HIT AT ZERO IS A HIT. Returning false here reads to the scheduler as
+  // "this kit could not play that lane", and the answer to that is the
+  // oscillator stub — so a velocity-0 event, which the kit-velocity vectors
+  // and the groove profiles both produce legitimately, came out as a BEEP.
+  // Ten of them in one 45-genre sweep. Silence is a successful hit.
+  if (lvl <= 0.001) return true;
   const c = ctxOf(chan);
   const src = c.createBufferSource(); src.buffer = buf;
   const g = c.createGain();

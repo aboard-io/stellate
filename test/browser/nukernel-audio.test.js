@@ -214,29 +214,46 @@ function taps() {
   }
 
   // (D) THE EDGES STILL TRIM. Length and nudge are the only controls with no
-  // audible signature of their own — a dead grip changes nothing you can hear,
+  // audible signature of their own — a dead trim changes nothing you can hear,
   // it just quietly stops working, and it had been dead since the stack refactor
   // because the guard still tested a field that no longer exists.
+  //
+  // REWRITTEN FOR THE SONG TABLE (Stage 2). The controls being checked are the
+  // same two, doing the same thing to the same fields; what moved is where you
+  // reach them. The song is a table of full-width rows at every width now, so
+  // a row has no width to drag and the edge grips are gone with it — length and
+  // nudge are steppers in the row's option sheet, which is also the only form
+  // of them a touch screen ever had. So: open row 1, press the bars [+], and
+  // assert the same aria-label bar count grows. Same property (the edges trim),
+  // new reading (the popover steppers, not a pointer drag on a 10px handle).
   {
-    // read the ARIA LABEL, not a head span: the head's children are built
-    // once and their order is layout, but "box 1, Simple, 4 bars" is the
-    // machine-readable truth about length and already load-bearing API
     const box = page.locator(".box").first();
+    // read the ARIA LABEL, not a cell: "box 1, Simple, 4 bars" is the
+    // machine-readable truth about length and already load-bearing API
     const before = await box.getAttribute("aria-label");
-    const g = await box.locator(".grip.r").boundingBox();
-    if (!g) fail("the length grip does not exist");
+    await box.click();                                   // the row's option sheet
+    const pop = page.locator("#rowpop");
+    if (!(await pop.isVisible())) fail("clicking a song row did not open its option sheet");
+    else ok("a row click opens the row's option sheet");
+    const plus = pop.locator('.rpstep', { hasText: /bars/ })
+                    .locator('button[aria-label="one bar more"]');
+    if (!(await plus.count())) fail("the row sheet has no bars stepper — nothing trims the length");
     else {
-      await page.mouse.move(g.x + 5, g.y + g.height / 2);
-      await page.mouse.down();
-      await page.mouse.move(g.x + 5 + 4 * 26, g.y + g.height / 2, { steps: 10 });
-      await page.mouse.up();
+      for (let i = 0; i < 4; i++) await plus.click();
       const after = await box.getAttribute("aria-label");
-      if (after === before) fail(`the length grip did not change the box (${before})`);
-      else ok(`length grip: ${before} -> ${after}`);
+      const n = s => +(String(s).match(/(\d+) bars/) || [0, 0])[1];
+      if (!(n(after) > n(before)))
+        fail(`the bars stepper did not lengthen the box (${before} -> ${after})`);
+      else ok(`bars stepper: ${before} -> ${after}`);
     }
-    const l = await box.locator(".grip.l").boundingBox();
-    if (!l) fail("the nudge grip does not exist");
-    else ok("both edge grips exist");
+    // ...and nudge, the other edge, is reachable from the same sheet
+    const nud = pop.locator('.rpstep', { hasText: /nudge/ })
+                   .locator('button[aria-label="one bar of nudge more"]');
+    if (!(await nud.count())) fail("the row sheet has no nudge stepper");
+    else ok("both edge controls (bars, nudge) are keys in the row sheet");
+    await pop.locator(".rpx").click();
+    if (await pop.isVisible()) fail("the row sheet's ✕ did not close it");
+    else ok("the row sheet closes on ✕");
   }
 
   // (E) THE MIXER IS REAL. A section carries an insert chain, two sends and a
@@ -417,9 +434,12 @@ function taps() {
   {
     const roleAt = () => page.locator(".box .role").allTextContents();
     const before = await roleAt();
-    // the tools are built once per box now (all four buttons exist; patchBox
-    // hides the moves at the ends), so take the first VISIBLE one — on box 1
-    // that is ▶, exactly the button the old conditional build put first
+    // the tools are built once per row now (all four keys exist; patchBox
+    // GHOSTS the move key with nowhere to go), so take the first VISIBLE one —
+    // on row 1 that is ↓ "move box 1 later". The glyph changed with the table
+    // (the axis is top-to-bottom at every width now, so the keys are ↑ ↓ and no
+    // longer swap to ◀ ▶ on a wide screen); the claim does not — one plain
+    // click on a key in the tools column reorders the song, no drag involved.
     const later = page.locator(".box").first().locator(".btools .t:visible").first();
     if (!(await later.count())) fail("a box has no move buttons — touch cannot reorder a song");
     else {
@@ -461,6 +481,143 @@ function taps() {
     await gcell.click();                                  // put the groove back
   }
 
+  // (G2) THE INTERFACE IS ROTATED, AND IT IS ONE IDIOM.
+  //
+  // The standing design law: don't go left to right, go top to bottom, make
+  // them tables — and NOT only on a phone. There is no desktop bench any more;
+  // a wide screen gets the same two tables with more room. This page is 1400px
+  // wide, which is exactly where the old layout put its lanes and its piano
+  // roll SIDEWAYS, so it is the right place to measure the rotation rather
+  // than admire it.
+  //
+  // Measured, not asserted by class name: in the pattern editor, step 2 sits
+  // BELOW step 1 and the gate column sits RIGHT OF the deg column; in the
+  // arrangement, tick 2 sits BELOW tick 1 and voice 2 sits RIGHT OF voice 1.
+  // Plus the table semantics both surfaces now claim (grid / row /
+  // columnheader / rowheader / gridcell), the 44px row floor, and — since the
+  // pattern is a COLUMN you read down — the pop-up fader opening BESIDE the
+  // cell instead of over the eight ticks under it.
+  {
+    const ed = await page.evaluate(() => {
+      const g = document.getElementById("stepgrid");
+      const r = (s) => g.querySelector(s).getBoundingClientRect();
+      const s1 = r('.cell[aria-label^="step 1 deg"]'), s2 = r('.cell[aria-label^="step 2 deg"]');
+      const deg = r('.rowlab[data-row="deg"]'), gate = r('.rowlab[data-row="gate"]');
+      const inc = g.querySelector('.cell[data-row="inc"]');
+      return { role: g.getAttribute("role"),
+        rows: g.querySelectorAll('.prow[role="row"]').length,
+        colh: g.querySelectorAll('[role="columnheader"]').length,
+        rowh: g.querySelectorAll('[role="rowheader"]').length,
+        cells: g.querySelectorAll('[role="gridcell"]').length,
+        down: Math.round(s2.top - s1.top), across: Math.round(gate.left - deg.left),
+        rowH: Math.round(s1.height),
+        ramp: inc.getBoundingClientRect().width > 0,
+        latch: getComputedStyle(document.getElementById("ramptog")).display };
+    });
+    if (ed.role !== "grid" || ed.rows !== 17 || ed.colh !== 9 || ed.rowh !== 16 || ed.cells !== 128)
+      fail("the pattern editor is not a 16-row × 8-column table: " + JSON.stringify(ed));
+    else ok(`the pattern editor is a table: ${ed.rows - 1} step rows × ${ed.colh - 1} vector ` +
+            `columns (${ed.cells} gridcells, ${ed.rowh} rowheaders)`);
+    if (ed.down < 40 || ed.across <= 0)
+      fail(`the editor still runs left to right at 1400px (step 2 is ${ed.down}px below ` +
+           `step 1, gate is ${ed.across}px right of deg)`);
+    else ok(`time runs DOWN and the vectors run ACROSS at 1400px ` +
+            `(+${ed.down}px per step, gate +${ed.across}px from deg)`);
+    if (ed.rowH < 44) fail(`a step row is only ${ed.rowH}px tall — 44 is the floor at every width`);
+    else ok(`the rows are ${ed.rowH}px at 1400px — roomier, not different`);
+    if (!ed.ramp || ed.latch !== "none")
+      fail(`the ramp columns are still latched on a desk (visible ${ed.ramp}, RAMP key ${ed.latch})`);
+    else ok("the ramp columns are always out at width, and the RAMP latch goes with them");
+
+    // the fader beside the cell, not over the column below it
+    await page.locator('.cell[aria-label^="step 5 deg"]').first().click();
+    const side = await page.evaluate(() => {
+      const c = document.querySelector('.cell[aria-label^="step 5 deg"]').getBoundingClientRect();
+      const f = document.getElementById("popfader").getBoundingClientRect();
+      return { beside: f.left >= c.right - 1 || f.right <= c.left + 1,
+        overlapsY: f.top < c.bottom && f.bottom > c.top,
+        gapX: Math.round(f.left - c.right) };
+    });
+    await page.locator("#popfader .pfclose").click();
+    if (!side.beside)
+      fail(`the pop-up fader still opens over the pattern column (gapX ${side.gapX})`);
+    else ok(`the fader anchors beside the cell at 1400px (${side.gapX}px clear, ` +
+            `${side.overlapsY ? "level with it" : "clamped in view"})`);
+  }
+
+  // (K) THE ARRANGEMENT IS A TRACKER PATTERN VIEW.
+  //
+  // The horizontal piano roll — lanes left to right, a pixel ruler across the
+  // top, a translateX playhead — is gone under the same law. Time runs down as
+  // rows of 16ths, the voices are columns, a note is a cell entry with its
+  // pitch in it, and the playhead is the ROW that lights. The rotation is
+  // measured in pixels; the playhead is watched actually moving down a LOOPED
+  // box, because a lamp that lights once and stops is the failure that a
+  // static read cannot tell from a working one.
+  {
+    await page.locator(".box").first().dblclick();        // loop it AND start it
+    // WAIT FOR SOUND, don't sleep at it: the first play loads a soundfont, and
+    // a fixed 1.2s here reads the loading screen on a busy machine and calls a
+    // working playhead broken
+    await page.waitForFunction(() => document.getElementById("lcdpos").textContent !== "--",
+      null, { timeout: 30000 });
+    await page.waitForTimeout(600);                       // past the start transient
+    const ar = await page.evaluate(() => {
+      const g = document.getElementById("grid");
+      const cols = [...g.querySelectorAll('.tcol[role="columnheader"]')];
+      const ticks = [...g.querySelectorAll('.ttick[role="rowheader"]')];
+      const box = (e) => e.getBoundingClientRect();
+      return { role: g.getAttribute("role"),
+        rows: g.querySelectorAll('.trow[role="row"]').length,
+        ticks: ticks.length, cols: cols.length,
+        cells: g.querySelectorAll('.tcell[role="gridcell"]').length,
+        on: g.querySelectorAll(".tcell.on").length,
+        cont: g.querySelectorAll(".tcell.cont").length,
+        // a PITCH cell, explicitly: the first filled cell in DOM order is often
+        // a drum lamp, and "◆" is not a pitch name however correct it is
+        pitch: (g.querySelector(".tcell.on:not(.drum)") || {}).textContent || "",
+        down: ticks.length > 1 ? Math.round(box(ticks[1]).top - box(ticks[0]).top) : 0,
+        across: cols.length > 1 ? Math.round(box(cols[1]).left - box(cols[0]).left) : 0,
+        names: cols.map((c) => (c.querySelector(".nm") || c).textContent.trim()).slice(0, 4) };
+    });
+    if (ar.role !== "grid" || ar.cols < 2 || ar.ticks < 16 || ar.rows !== ar.ticks + 1)
+      fail("the arrangement is not a tracker table: " + JSON.stringify(ar));
+    else ok(`the arrangement is a table: ${ar.ticks} tick rows × ${ar.cols} voice columns ` +
+            `(${ar.cells} gridcells) — ${ar.names.join(", ")}`);
+    if (ar.down <= 0 || ar.across <= 0)
+      fail(`the arrangement still runs left to right (tick 2 is ${ar.down}px below tick 1, ` +
+           `voice 2 is ${ar.across}px right of voice 1)`);
+    else ok(`time runs DOWN and the voices run ACROSS (+${ar.down}px per 16th, ` +
+            `+${ar.across}px per voice)`);
+    // a note is a CELL ENTRY now, not a positioned rectangle: it says its pitch
+    if (!ar.on || !/^[A-G]#?-?\d/.test(ar.pitch))
+      fail(`no note reads as a pitch in a cell (${ar.on} filled cells, first "${ar.pitch}")`);
+    else ok(`${ar.on} filled cells, and a note says its pitch ("${ar.pitch}"); ` +
+            `${ar.cont} sustained ticks carry the continuation glyph`);
+
+    // THE PLAYHEAD IS A ROW, AND IT SWEEPS. Sampled across ~3s of a looped box:
+    // exactly one row lit at a time, at least three different rows seen, and at
+    // least one step strictly downward (a loop wrap goes back up, legitimately).
+    const seen = [], lits = [];
+    for (let i = 0; i < 12; i++) {
+      await page.waitForTimeout(250);
+      const s = await page.evaluate(() => {
+        const l = document.querySelectorAll(".trow.play");
+        return { n: l.length, t: l[0] ? +l[0].dataset.tick : -1 };
+      });
+      seen.push(s.t); lits.push(s.n);
+    }
+    await page.click("#play");                            // stop
+    const distinct = new Set(seen.filter((t) => t >= 0)).size;
+    const advanced = seen.some((t, i) => i && t > seen[i - 1] && seen[i - 1] >= 0);
+    if (lits.some((n) => n > 1))
+      fail(`more than one row lit at once (${lits.join(",")}) — the playhead is leaking rows`);
+    else if (distinct < 3 || !advanced)
+      fail(`the playhead row does not sweep down: ticks ${seen.join(",")}`);
+    else ok(`the playhead is a row and it sweeps down: ${distinct} rows over 3s ` +
+            `(${seen.slice(0, 6).join("→")}…)`);
+  }
+
   // (H) THE COMPOSED SONG DOES NOT COST NINE TIMES WHAT IT SHOULD.
   //
   // This is the one failure in the whole page that no correctness check can see:
@@ -499,46 +656,53 @@ function taps() {
     else ok(`${m.convolvers} convolver(s) built, on demand`);
   }
 
-  // (I) THE SONG ROW SHOWS THE SONG. A horizontally scrolling arrangement means
-  // the second half of the piece does not exist until you go looking for it, and
-  // the row's whole job is the shape of the thing at a glance. It wraps instead,
-  // and a section too long to draw says its duration in words.
+  // (I) THE SONG TABLE SHOWS THE SONG. A horizontally scrolling arrangement
+  // means the second half of the piece does not exist until you go looking for
+  // it, and this view's whole job is the shape of the thing at a glance.
+  //
+  // REWRITTEN FOR THE SONG TABLE (Stage 2). The old reading was "a section
+  // capped at 240px and said its duration in words, and nothing spilled past
+  // the row's content edge" — a claim about a horizontal rack of cards whose
+  // WIDTH meant duration. There is no rack: sections are full-width rows, so
+  // the same property is read where it now lives — the BARS CELL says the
+  // length (in bars, and in mm:ss beside it), and the table never scrolls
+  // sideways at all (#song scrollWidth <= clientWidth, the strongest form of
+  // the old spill check rather than a weaker one).
   {
     const row = page.locator("#song");
-    // MEASURE THE BOXES, not scrollWidth. A padded flex container reports a
-    // scrollWidth that includes its own right padding whether or not anything
-    // overflows, so scrollWidth is off by the padding on a row that fits
-    // perfectly. The real question is whether a section sticks out past the
-    // content edge, and that is what this asks.
-    const spill = el => {
-      const r = el.getBoundingClientRect();
-      const pad = parseFloat(getComputedStyle(el).paddingRight) || 0;
-      let worst = 0;
-      for (const b of el.querySelectorAll(".box, .addbox"))
-        worst = Math.max(worst, b.getBoundingClientRect().right - (r.right - pad));
-      return Math.round(worst);
-    };
-    const over = await row.evaluate(spill);
-    if (over > 2) fail(`a section hangs ${over}px past the edge of the song row — ` +
-                       `sections are hidden`);
-    else ok("the song row wraps rather than scrolling sideways");
-    // make one section long enough to be capped, and check it says so
+    const sideways = () => row.evaluate(el =>
+      ({ scroll: el.scrollWidth, client: el.clientWidth }));
+    const s0 = await sideways();
+    if (s0.scroll > s0.client)
+      fail(`the song table scrolls sideways (${s0.scroll} > ${s0.client}) — ` +
+           `sections are hidden off the right edge`);
+    else ok(`the song table does not scroll sideways (${s0.scroll} <= ${s0.client})`);
+    // make one section long, and check the row SAYS so instead of growing
     await page.locator(".box").first().click();
-    const g = await page.locator(".box").first().locator(".grip.r").boundingBox();
-    await page.mouse.move(g.x + 5, g.y + g.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(g.x + 5 + 40 * 26, g.y + g.height / 2, { steps: 12 });
-    await page.mouse.up();
+    const pop = page.locator("#rowpop");
+    const plus = pop.locator('button[aria-label="one bar more"]');
+    const before = await page.locator(".box").first().getAttribute("aria-label");
+    for (let i = 0; i < 24; i++) await plus.click();     // ~11 s of real clicks
+    await pop.locator(".rpx").click();
     await page.waitForTimeout(200);
     const first = page.locator(".box").first();
-    const w = (await first.boundingBox()).width;
-    const head = await first.locator(".bhead span:not(.role)").first().textContent();
-    const still = await row.evaluate(spill);
-    if (w > 320) fail(`a long section is ${Math.round(w)}px wide — the cap is not holding`);
-    else if (!/\d+:\d\d/.test(head))
-      fail(`a capped section does not say how long it is: "${head}"`);
-    else if (still > 2) fail(`a long section hangs ${still}px past the edge of the row`);
-    else ok(`a long section caps at ${Math.round(w)}px and reads "${head.trim()}"`);
+    const label = await first.getAttribute("aria-label");
+    const bars = +(String(label).match(/(\d+) bars/) || [0, 0])[1];
+    const cell = (await first.locator(".bbars").textContent()).trim();
+    const s1 = await sideways();
+    if (!(bars > 20))
+      fail(`the bars stepper never lengthened the section past 20 bars ` +
+           `(${before} -> ${label})`);
+    else if (!new RegExp("(^|\\D)" + bars + " bars\\b").test(cell))
+      fail(`the bars cell does not read the section's length: "${cell}" ` +
+           `for a ${bars}-bar section`);
+    else if (!/\d+:\d\d/.test(cell))
+      fail(`the bars cell does not say how long the section runs: "${cell}"`);
+    else if (s1.scroll > s1.client)
+      fail(`a ${bars}-bar section made the table scroll sideways ` +
+           `(${s1.scroll} > ${s1.client}) — the row is encoding duration as width again`);
+    else ok(`a ${bars}-bar section reads "${cell}" in its bars cell and the table ` +
+            `still does not scroll sideways (${s1.scroll} <= ${s1.client})`);
   }
 
   // (J) AUTOMATION IS REAL — appended by the P4 depth-to-the-fingers phase;
@@ -602,7 +766,7 @@ function taps() {
     // unarmed section only varies by its fills. The unarmed floor is taken
     // the same way, so the two reads agree about what "quiet" means.
     const loopSec = await page.evaluate(() => {
-      const b = document.querySelector(".box.loop") || document.querySelector(".box.live");
+      const b = document.querySelector(".box.looped") || document.querySelector(".box.live");
       const bars = b ? parseInt((b.getAttribute("aria-label") || "").match(/(\d+) bars/)?.[1] || 8, 10) : 8;
       return bars * 4 * 60 / +document.getElementById("bpm").value;
     });

@@ -2396,6 +2396,30 @@ console.log("variable banks — round trip at any size, migrate 8->N, reference 
   }
 }
 
+/* ---------- 37. A HIT AT ZERO IS A HIT ------------------------------------
+   The kit-velocity vectors and the groove profiles both legitimately produce
+   drum events at velocity 0 — boombap and funk emit six between them on the
+   default phrase. The player must treat that as a SILENT HIT, not as "this
+   kit cannot play that lane": the second reading falls through to the
+   oscillator stub, and ten beeps came out of one 45-genre browser sweep
+   because of it. This gate is the event-side half (the browser half is the
+   fallback counter): the kernel really does emit them, so the audio tier
+   really is asked the question, and anyone who "fixes" it by clamping
+   velocities up here will see this fail. */
+{
+  let zeros = 0, from = [];
+  for (const [gk, g] of Object.entries(GENRES)) {
+    let n = 0;
+    for (const e of K.drums(DEFAULT, g, 4)) if ((e.vel == null ? 5 : e.vel) <= 0) n++;
+    if (n) { zeros += n; from.push(gk); }
+  }
+  ok(zeros > 0, "no genre emits a zero-velocity drum event any more — if that is " +
+     "deliberate, delete this check; if it is a clamp, the silent-hit path just " +
+     "went untested");
+  ok(from.length >= 1, "zero-velocity drum events come from: " + from.join(", "));
+}
+console.log("a hit at zero is a hit — the kernel emits silent drum events on purpose");
+
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }

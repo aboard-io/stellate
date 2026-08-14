@@ -4,9 +4,9 @@
    these tokens to the page's own selectors. No layout here, no ids.
 
    THE TWO FACES. Light is the silver Roland face; dark is the graphite
-   Elektron face, and graphite is the DEFAULT — kernel-daw.html ships
-   data-theme="dark" on <html>, so every visitor gets the black box unless
-   they ask for silver. The house three-state rule still holds underneath:
+   Elektron face, and SILVER is the DEFAULT — kernel-daw.html ships
+   data-theme="light" on <html>, so every visitor gets the 909 face unless
+   they ask for the black box. The house three-state rule still holds:
    bare :root is the complete silver palette, the graphite block is repeated
    once under prefers-color-scheme (guarded against data-theme="light") and
    once under [data-theme="dark"] so an explicit choice beats the OS in both
@@ -19,12 +19,17 @@
 
    THE SIX VERBS. Every control on this instrument answers to the same six
    gestures, and nothing gets a seventh:
-     TAP             toggle, commit, or select. Never destructive.
-     DRAG-VERTICAL   change a value. Up is more, everywhere.
-     DRAG-HORIZONTAL move or trim IN TIME, and nothing else, ever — the box
-                     grips own this axis, which is why pages never swipe.
+     TAP             toggle, commit, or select — or, on a table ROW, open that
+                     row's option sheet. Never destructive.
+     DRAG-VERTICAL   change a value (up is more, everywhere), or move a row up
+                     and down its table. Time runs DOWN, so this is the axis
+                     that reorders a song.
+     DRAG-HORIZONTAL nothing. RETIRED with the song box's edge grips: the song
+                     is a table of full-width rows now, so there is no width to
+                     trim (bars and nudge are steppers in the row's sheet) and
+                     nothing sideways is left to mean. Pages never swipe.
      LONG-PRESS      open the full surface of the thing under the finger.
-     DOUBLE-TAP      reset to default (a box: loop — the DAW convention).
+     DOUBLE-TAP      reset to default (a row: loop — the DAW convention).
      TWO-FINGER      fine mode on an active drag. Nothing else, until there
                      is an undo stack; do not invent one.
 
@@ -65,6 +70,11 @@
   --st-mute:#4a4f56; --st-solo:#45c8ff; --st-auto:#b06bff; --st-live:var(--a-orange);
   /* LCD — never inverts. Amber on near-black, on any desk. */
   --lcd-bg:#12100c; --lcd-ink:#ffb347; --lcd-dim:#7a5a26; --lcd-grid:rgba(255,179,71,.05);
+  /* ROW WASHES — the two tints every table row on the machine can wear (the
+     .tbl component in kernel-daw.css spends them): the pointer's row, and the
+     row that is sounding. They are washes over whatever ground the table has,
+     so they change with the face while the LAMP colours above never do. */
+  --hw-row-hi:rgba(255,255,255,.40); --hw-row-lit:rgba(255,90,31,.14);
   /* LANES (the existing names, retuned bright enough to take --on-ink) */
   --v0:#45c8ff; --v1:#2fe08a; --v2:#b06bff; --v3:#ff5fa2; --vb:#7d8792; --drum:#8b929b;
 
@@ -94,6 +104,7 @@
      (measured: 4.66 on panel-hi, 5.31 on panel, 6.05 on the recess) */
   --hw-legend:#9aa0a8; --hw-legend-dim:#8a9099; --hw-ink:#e8eaed; --hw-ink-dim:#b3b8bf;
   --a-orange-txt:#ff7a4a;
+  --hw-row-hi:rgba(255,255,255,.07); --hw-row-lit:rgba(255,90,31,.20);
   --shadow:0 1px 0 var(--hw-bevel-hi),0 3px 10px rgba(0,0,0,.6);
 }}
 :root[data-theme="dark"]{
@@ -106,46 +117,20 @@
      (measured: 4.66 on panel-hi, 5.31 on panel, 6.05 on the recess) */
   --hw-legend:#9aa0a8; --hw-legend-dim:#8a9099; --hw-ink:#e8eaed; --hw-ink-dim:#b3b8bf;
   --a-orange-txt:#ff7a4a;
+  --hw-row-hi:rgba(255,255,255,.07); --hw-row-lit:rgba(255,90,31,.20);
   --shadow:0 1px 0 var(--hw-bevel-hi),0 3px 10px rgba(0,0,0,.6);
 }
 
 /* ---- the material shop ----
-   Recipes as classes, for shells that are in the static markup or built once.
-   The crowd elements (cells, chips) never take these — kernel-daw.css gives
-   them the cheap borders-as-bevel variant instead. */
+   What is left here is what elements actually WEAR as a class. The four shell
+   recipes that used to sit here — the brushed panel, the recessed well, the
+   moulded key and the screw — were carried by nothing: kernel-daw.css spelled
+   each of them out again per surface, which is how five copies of one panel
+   drifted. They now live there ONCE, over the list of elements that wear
+   them ("THE MATERIALS, ONCE"), and the well is the .tbl table component.
+   A recipe lives where its users are named; this file owns the tokens. */
 
-/* 1 BRUSHED PANEL — static shells only (the brush grain is one of the three
-   repeating-gradients the budget allows) */
-.hw-panel{
-  background:
-    linear-gradient(180deg,var(--hw-panel-hi) 0,var(--hw-panel) 38%,var(--hw-panel-lo) 100%),
-    repeating-linear-gradient(90deg,rgba(255,255,255,.014) 0 1px,transparent 1px 3px);
-  border:1px solid var(--hw-edge);border-top-color:var(--hw-bevel-hi);border-radius:6px;
-  box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 1px 0 var(--hw-edge),0 6px 14px rgba(0,0,0,.35);
-}
-
-/* 2 RECESSED WELL — screens, trays, anything the panel was milled out for */
-.hw-well{
-  background:var(--hw-recess);border-radius:4px;
-  box-shadow:inset 0 2px 4px rgba(0,0,0,.55),inset 0 -1px 0 var(--hw-bevel-hi),0 1px 0 var(--hw-bevel-hi);
-}
-
-/* 3 INJECTION-MOULDED KEY, with real travel. The key drops onto its own 2px
-   shadow; travel is transform, never margin — no layout, ever. */
-.hw-key{
-  background:linear-gradient(180deg,var(--hw-key-hi) 0,var(--hw-key-mid) 48%,var(--hw-key-lo) 100%);
-  border:1px solid var(--hw-edge);border-radius:5px;color:var(--hw-ink);
-  box-shadow:inset 0 1px 0 var(--hw-bevel-hi),inset 0 -2px 0 var(--hw-bevel-lo),
-    0 2px 0 rgba(0,0,0,.55),0 3px 5px rgba(0,0,0,.35);
-  transition:transform 90ms cubic-bezier(.2,.9,.3,1),box-shadow 90ms linear;
-}
-.hw-key:active,.hw-key[data-pressed]{
-  transform:translateY(2px);
-  background:linear-gradient(180deg,var(--hw-key-lo),var(--hw-key-mid));
-  box-shadow:inset 0 2px 4px rgba(0,0,0,.6),inset 0 -1px 0 var(--hw-bevel-hi),0 0 0 rgba(0,0,0,.55);
-}
-
-/* 4 LED — a lit LED pays for one small glow; an unlit one pays for nothing.
+/* 1 LED — a lit LED pays for one small glow; an unlit one pays for nothing.
    State snaps: LEDs never transition. */
 .led{
   display:inline-block;width:7px;height:7px;border-radius:2px;flex:0 0 auto;
@@ -156,30 +141,7 @@
   box-shadow:0 0 6px -1px var(--led-c,var(--a-orange));
 }
 
-/* 5 SCREW — six on the whole page, corners of the shell panels, each rotated
-   a different amount where it is placed: identical screws read as a texture,
-   mismatched ones read as a machine. */
-.hw-screw{
-  width:9px;height:9px;border-radius:50%;position:absolute;
-  background:radial-gradient(circle at 35% 30%,var(--hw-screw-hi),var(--hw-key-mid) 60%,var(--hw-screw-lo));
-  box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 1px 0 var(--hw-bevel-hi);
-}
-.hw-screw::after{
-  content:"";position:absolute;left:1.5px;right:1.5px;top:50%;height:1px;
-  background:rgba(0,0,0,.8);transform:translateY(-50%) rotate(28deg);
-}
-
-/* 6 LCD GLASS — the readout strip and the recessed pickers. Amber ink on
-   near-black glass, one faint scanline grid (the second allowed gradient). */
-.lcd{
-  background:var(--lcd-bg);color:var(--lcd-ink);
-  font-family:var(--f-num);font-variant-numeric:tabular-nums;
-  background-image:repeating-linear-gradient(0deg,var(--lcd-grid) 0 1px,transparent 1px 3px);
-  border:1px solid rgba(0,0,0,.6);border-radius:3px;
-  box-shadow:inset 0 2px 5px rgba(0,0,0,.9),inset 0 0 0 1px rgba(255,179,71,.08),0 1px 0 var(--hw-bevel-hi);
-}
-
-/* SILKSCREEN — the rule: uppercase + tracking ONLY on words that NAME a
+/* 2 SILKSCREEN — the rule: uppercase + tracking ONLY on words that NAME a
    control (TEMPO, GENRE, STEP). Values and data — 'Acid house', 'dotted 1/4',
    a phrase number — keep their authored case; uppercasing them would erase
    the one typographic line between the panel and the patch. */
@@ -204,7 +166,8 @@
     --hw-legend-dim:var(--hw-legend);
     /* flatten the metal: gradients are decoration, and decoration goes first */
   }
-  .hw-panel,.hw-key{background:var(--hw-panel)}
+  .bar,.ed,details,.popfader,.rowpop,
+  .btn,.pfstep,.pfclose,.rpk,.pkey{background:var(--hw-panel)}
   :where(button,input,select,summary,[tabindex]):focus-visible{outline-width:3px}
 }
 

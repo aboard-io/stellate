@@ -226,9 +226,12 @@ export function drawPalette() {
   // rows) take the compact grid; the gates click .pchip by text and data-*,
   // and neither moved.
   const group = (title, items) => {
-    const g = document.createElement("div"); g.className = "pgroup";
+    // A BANK IS A TABLE SECTION: .tbl is the shared well and .thd the shared
+    // header row (kernel-daw.css) — the same material the pattern, the song
+    // and the arrangement are cut from.
+    const g = document.createElement("div"); g.className = "pgroup tbl";
     g.append(Object.assign(document.createElement("span"),
-      { className: "plabel", textContent: title }));
+      { className: "plabel thd", textContent: title }));
     const wrap = document.createElement("div");
     wrap.className = "pchips" +
       (items.every(i => String(i[2]).length <= 4) ? " compact" : "");
