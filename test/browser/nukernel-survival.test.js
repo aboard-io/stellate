@@ -421,6 +421,44 @@ function taps() {
     await page.click("#play");
   }
 
+  // (F) THE DROP LAW, under injected faults. A synth-identity genre whose
+  // synth AND sampled cover both fail to fetch must go SILENT on that voice —
+  // never the oscillator stub. This is the ten-beep sweep failure of
+  // 2026-08-14 made reproducible: route-abort the 303's wasm and the guitar's
+  // zones, play acid, and the beep counter must stay at zero while the drop
+  // counter proves the law (and the kit keeps the RMS floor honest).
+  {
+    const p2 = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
+    const errs2 = capturePageErrors(p2);
+    await p2.route("**/dist/tb303*-module.wasm", (r) => r.abort());
+    await p2.route("**/clean_guitar/**", (r) => r.abort());
+    await p2.addInitScript(taps);
+    await p2.goto(`http://localhost:${PORT}/nukernel/kernel-daw.html`, { waitUntil: "networkidle" });
+    const s0 = p2.locator(".slot").nth(0);
+    if ((await s0.getAttribute("aria-pressed")) !== "true") await s0.click();
+    await p2.click("#seed");
+    await p2.locator(".pchip", { hasText: /^Acid house$/ }).click();
+    await p2.click("#play");
+    await p2.waitForTimeout(12000);
+    const d = await p2.evaluate(() => ({
+      fallback: window.__nuFallback, dropped: window.__nuDropped, rms: window.__rms() }));
+    if (d.fallback > 0)
+      fail(`with both voices dead, ${d.fallback} oscillator beep(s) fired — ` +
+           `the drop law is broken`);
+    else ok("both voices dead: zero fallback beeps");
+    if (!(d.dropped > 0))
+      fail(`nothing was counted dropped (${d.dropped}) — either the injection ` +
+           `missed or the notes went somewhere unaccounted`);
+    else ok(`the dead voice's notes drop, counted: ${d.dropped}`);
+    if (d.rms > RMS_FLOOR) ok(`the rest of the band plays on (RMS ${d.rms.toFixed(3)})`);
+    else fail(`the whole mix died with one voice (RMS ${d.rms.toFixed(4)})`);
+    // the injected aborts print their own resource failures — that is the
+    // fault working, not a page error. Anything ELSE is real.
+    const real = errs2.filter(x => !/Failed to load resource|ERR_FAILED/.test(x));
+    if (real.length) fail(`drop-law page errors: ${real.slice(0, 2).join(" | ")}`);
+    await p2.close();
+  }
+
   if (errs.length) fail(`page errors: ${errs.slice(0, 3).join(" | ")}`);
   else ok("no page errors");
 

@@ -14,7 +14,7 @@ import { ctx, initAudio, rmsNow, muteNow, unmuteRamp } from "./graph.js";
 import { FONT, fontDef, isSynthFont, loadFont, specOf, zoneBufs, drumBufs,
          instrumentsInSong } from "./assets.js";
 import { synthNodes, synthKey, loadSynth, focusSynths, playSynth, playSampled,
-         playDrum, line, hit } from "./voices.js";
+         playDrum, line, hit, synthDead, countDrop } from "./voices.js";
 import { channelFor, armAutomation } from "./mixer.js";
 import { setDelayTime } from "./graph.js";
 
@@ -209,9 +209,25 @@ export function scheduleBar(bar, sec, chan, kit, when, sd, synthFn) {
       const id = instrOf(owner, e.lv == null ? e.v : e.lv);
       const useSyn = gsyn && !(gsyn.lineOnly && e.pad && !isSynthFont());
       if (useSyn && synthFn(gsyn, e.n, at, e.dur * sd, e.acc, e.sld, e.vel, e.v, chan, e.vox)) { /* signature voice */ }
+      // a DEAD signature synth drops its notes rather than beeping: a
+      // synth-identity genre has no legitimate second voice, and its sampled
+      // `instr` was never fetched (ensureAssets skips it — the genre is
+      // "never sampled"), so falling through here reached the oscillator —
+      // measured: ten fallback beeps in one sweep when two wasm fetches
+      // flaked under IO load. Silence is the design; RMS gates catch it if
+      // it ever stops being transient.
+      else if (useSyn && synthFn === playSynth && synthDead(gsyn, e.v)) countDrop();
       else if (!playSampled(id, e.n, at, e.dur * sd, e.vel, 1, chan,
-                            e.pad ? STRIPS.pad : STRIPS.lead))
-        line(at, e.n, e.dur * sd, e.acc, e.sld, e.prev, bar.g.tone, e.pad, e.vel, chan);
+                            e.pad ? STRIPS.pad : STRIPS.lead)) {
+        // BOTH voices gone. For a plain sampled genre the oscillator stub is
+        // the ancient last resort (and the gate proves it never fires); for a
+        // SYNTH-identity genre it is the wrongest sound the page can make —
+        // an oscillator standing in for a 303 — and that is exactly what
+        // beeped ten times in one sweep when a wasm fetch and the zone fetch
+        // both flaked under IO load. Identity genres drop instead.
+        if (useSyn) countDrop();
+        else line(at, e.n, e.dur * sd, e.acc, e.sld, e.prev, bar.g.tone, e.pad, e.vel, chan);
+      }
     } else if (e.kind === "hit") {
       if (!playDrum(kit, e.d, at, e.acc, e.vel, chan)) hit(at, e.d, e.acc, e.vel, chan);
     }

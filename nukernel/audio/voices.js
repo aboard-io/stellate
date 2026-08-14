@@ -151,6 +151,19 @@ export async function loadSynth(spec, v, chan) {
 // them, like the DX7, is simply left alone.)
 // Every voice takes freq/gate/level the same way; the rest is per-DSP and is
 // declared in the genre, so adding a synth is a data change rather than code.
+// a synth key whose load FINALLY failed (tri-state null, both runs spent).
+// The scheduler asks before falling anywhere else: a synth-identity genre has
+// no legitimate second voice — its identity IS the synthesis — so its notes
+// are DROPPED, not beeped. Silence over wrongness is the same law the sampled
+// path has always kept ("a note whose instrument is still in flight is
+// DROPPED"); the per-genre RMS gate is what catches sustained silence.
+export const synthDead = (spec, v) =>
+  synthNodes.has(synthKey(spec, v || 0)) && synthNodes.get(synthKey(spec, v || 0)) === null;
+// observability for the drops the law produces — NOT gated like __nuFallback
+// (a transient fetch failure on a loaded box may drop a few notes and that is
+// the design working); it exists so a real coverage hole is diagnosable.
+window.__nuDropped = 0;
+export const countDrop = () => { window.__nuDropped++; };
 export function playSynth(spec, midi, when, durSec, acc, sld, vel, v, chan, vox) {
   const key = synthKey(spec, v || 0), node = synthNodes.get(key);
   if (!node) return false;
