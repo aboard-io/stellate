@@ -142,9 +142,15 @@
                 params: { base: 380, amount: 2.4, sens: 0.7, res: 0.6, decay: 0.16, mix: 1 } },
     echo:     { label: "tape echo",  type: "delay",
                 params: { timeBars: 0.1875, feedback: 0.4, tone: 2800, mix: 0.35 } },
+    // EDGE, not a second amp. Every genre that reaches for crunch already
+    // plays a PRE-DISTORTED sample (distortion/overdrive guitar) — the fuzz
+    // is baked into the recording, and a two-stage high-gain sim on top of it
+    // re-fried the fry into mush ("WAYYYY TOO MUCH", the artist, 2026-08-14).
+    // One stage, low drive, half mix: grit that thickens what the sample
+    // already is instead of replacing it.
     crunch:   { label: "crunch",     type: "higain",
-                params: { drive: 0.6, stages: 2, gate: 0.2, low: 0.55, mid: 0.35,
-                          high: 0.6, presence: 0.5, level: 0.55, mix: 0.9 } },
+                params: { drive: 0.35, stages: 1, gate: 0.2, low: 0.55, mid: 0.4,
+                          high: 0.5, presence: 0.5, level: 0.6, mix: 0.55 } },
   };
   const FXLABEL = {};
   for (const k of Object.keys(FX)) FXLABEL[k] = FX[k].label;

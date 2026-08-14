@@ -1250,7 +1250,10 @@
       tone: { wave: "sawtooth", cut: 2000, q: 1.8, atk: .002, rel: .3, gain: .3, verb: .1 },
       words: ["every eighth, downstrokes", "the same riff, an octave under, as written"],
       word: v => (v === 0 ? [only("gate", fill(2))] : []),
-      fx: ["crunch"],
+      // NO insert. The distortion IS the instruments — distortion_guitar and
+      // crunch_guitar are recordings of amps already at the edge, and punk is
+      // downstroked eighths through them. The crunch insert on top was the
+      // one thing everyone heard first, and none of it was the song.
     },
 
     // AMBIENT [drone]. Drone is a pedal that refuses to move; ambient is the
