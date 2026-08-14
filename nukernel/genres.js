@@ -47,9 +47,19 @@
     phrygian: [0, 1, 3, 5, 7, 8, 10],
     harmonic: [0, 2, 3, 5, 7, 8, 11],
     mixo:     [0, 2, 4, 5, 7, 9, 10],
+    // THE MAJOR SIDE, which simply did not exist: mixolydian was the only
+    // bright option and three genres leaned on it as a stand-in. Ionian is
+    // major itself — motown, country, gospel, disco, ska, punk and most of the
+    // pop canon were unreachable without it. Lydian is major with the raised
+    // fourth (the film-score shimmer); melodic minor is the minor that can
+    // still make a real dominant AND a major sixth on the way up.
+    ionian:   [0, 2, 4, 5, 7, 9, 11],
+    lydian:   [0, 2, 4, 6, 7, 9, 11],
+    melodic:  [0, 2, 3, 5, 7, 9, 11],
   };
   const MODELABEL = { dorian: "dorian", phrygian: "phrygian",
-                      harmonic: "harmonic", mixo: "mixolydian" };
+                      harmonic: "harmonic", mixo: "mixolydian",
+                      ionian: "major", lydian: "lydian", melodic: "melodic minor" };
 
   // SCALES — the SUBJECT's alphabet, offered per section. Swapping it changes
   // the chromatic width of a phrase without moving a single degree: the contour
@@ -60,9 +70,46 @@
     whole:     [0, 2, 4, 6, 8, 10],                       // 2.0
     augmented: [0, 4, 8],                                 // 4.0
     quartal:   [0, 5],                                    // 6.0
+    // the two MAJOR subject alphabets, for the same reason the modes grew:
+    // a subject cannot sing a major third it does not contain. majpent is the
+    // consonant one — like the minor pentatonic it buys stretto for free.
+    major:     [0, 2, 4, 5, 7, 9, 11],                    // 1.71
+    majpent:   [0, 2, 4, 7, 9],                           // 2.4
   };
   const SCALELABEL = { chromatic: "chromatic", whole: "whole tone",
-                       augmented: "augmented", quartal: "quartal" };
+                       augmented: "augmented", quartal: "quartal",
+                       major: "major", majpent: "major pent." };
+
+  // ---- NAMED PROGRESSIONS --------------------------------------------------
+  // Chord OBJECTS per bar (kernel.js chordsOf: {d, q, inv, borrow, beats}),
+  // named so the composer can deal a DIFFERENT one per section role — the
+  // thing that makes a chorus harmonically different from a verse. THE LAW for
+  // a genre carrying both `prog` and `roots`: the prog's first-chord degrees
+  // must equal the roots bar for bar (gated). `roots` stays the skeleton the
+  // layers and the emergent machinery read; `prog` is what the pad, the bass
+  // and the ramp actually voice. A prog without a genre is inert data — that
+  // is the point, it is a vocabulary the arranger quotes by name.
+  const PROGS = {
+    // the real twelve bars: every chord a dominant seventh, which is the
+    // whole difference between a blues and a minor mode loop. Same skeleton
+    // as the old roots line, so nothing about the FORM moved.
+    blues12: [
+      { d: 0, q: "dom7" }, { d: 0, q: "dom7" }, { d: 0, q: "dom7" }, { d: 0, q: "dom7" },
+      { d: 3, q: "dom7" }, { d: 3, q: "dom7" }, { d: 0, q: "dom7" }, { d: 0, q: "dom7" },
+      { d: 4, q: "dom7" }, { d: 3, q: "dom7" }, { d: 0, q: "dom7" }, { d: 4, q: "dom7" },
+    ],
+    // soul sevenths — the diatonic "7", so dorian keeps its bright IV7
+    soul7: [
+      { d: 0, q: "7" }, { d: 0, q: "7" }, { d: 3, q: "7" }, { d: 3, q: "7" },
+      { d: 0, q: "7" }, { d: 0, q: "7" }, { d: 4, q: "7" }, { d: 4, q: "7" },
+    ],
+    // new jack: the jodeci cycle with its sevenths said out loud
+    jack7: [{ d: 0, q: "7" }, { d: 3, q: "7" }, { d: 0, q: "7" }, { d: 4, q: "7" }],
+    // the beatles verse as written, and a chorus that finally goes to V —
+    // the pair exists so a composed song can have two different harmonies
+    beatlesV: [{ d: 0 }, { d: 0 }, { d: 6 }, { d: 6 }, { d: 3 }, { d: 3 }, { d: 0 }, { d: 0 }],
+    beatlesC: [{ d: 0 }, { d: 0 }, { d: 6 }, { d: 6 }, { d: 3 }, { d: 3 }, { d: 4 }, { d: 0 }],
+  };
 
   // ---- the seed phrase (16 steps) -----------------------------------------
   const DEFAULT = {
@@ -226,6 +273,12 @@
       entry: v => v * 4, reg: v => -v, realize: () => "line",
       harmony: "cycle", bassStyle: "walk",
       roots: [0,0,0,0, 3,3,0,0, 4,3,0,4],    // twelve bars, I IV V, turnaround
+      // THE SEVENTHS. A blues where every chord is a dominant seventh is not a
+      // decoration, it is the identity — the minor-pentatonic riff over an I7
+      // with its major third is the clash the whole music is built on. The
+      // walk sounds the ♭7 on the odd bars and the ramp can land on it.
+      prog: PROGS.blues12,
+      maxHold: 4,                             // a riff answers itself; it has to stop
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },   // shuffled by swing
@@ -508,6 +561,13 @@
       realize: v => (v === 0 ? "pad" : "line"),
       harmony: "cycle", roots: [0,0, 3,3, 0,0, 4,4], mode: MODES.dorian,
       scale: [0, 2, 3, 5, 7, 9, 10], diatonic: true,        // dorian, as the subject too
+      // EXTENDED CHORDS ARE THE RHODES. A soul pad playing bare triads is a
+      // rehearsal; the i7 and the bright IV7 are the record. Voice-led, so
+      // consecutive chords move by steps the way a keyboard player's hand does
+      // — and the chords ROLL: a strummed pad is what fingers on a Rhodes do.
+      prog: PROGS.soul7,
+      pipes: [{ id: "strum", spread: 0.06 }],
+      maxHold: 4,                              // the guitar sings, and singers breathe
       artic: "legato",
       bassGrid: [1,0,0,1, 0,0,1,0, 1,0,0,0, 0,1,0,0],       // syncopated, never on 3
       kit: { k: [1,0,0,1, 0,0,1,0, 0,0,1,0, 0,0,0,0],
@@ -546,6 +606,11 @@
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              h: [1,0,1,1, 0,1,1,0, 1,1,0,1, 1,0,1,1] },   // shuffled sixteenths
       ghost: [only("acc", rotate(2))],           // the notes between the notes
+      // THE HAT HAND. The shuffle's dynamics are the drummer's own, not the
+      // tune's — beats lean hard, the between-notes sit way down, which is the
+      // other half of the Porcaro sound the ghost lane started. Only the hats:
+      // kick and snare still ride the phrase like every other genre.
+      kitVel: { h: [8,3,6,4, 3,6,5,3, 7,4,3,6, 6,3,7,4] },
       fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,0] },
       tone: { wave: "triangle", cut: 2800, q: 1.0, atk: .006, rel: .8, gain: .27, verb: .3 },
       words: ["the pad, one chord a bar", "the marimba hook",
@@ -566,6 +631,8 @@
       entry: () => 0, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
       harmony: "cycle", mode: MODES.dorian, scale: MODES.dorian, diatonic: true,
       roots: [0, 3, 0, 4],                       // i IV i v — dorian's bright IV
+      prog: PROGS.jack7,                         // the same cycle, sevenths said out loud
+      maxHold: 3,                                // melisma is phrases WITH ENDS
       artic: "legato",
       bassGrid: [1,0,0,1, 0,0,1,0, 1,0,0,0, 0,1,0,0],
       kit: { k: [1,0,0,1, 0,0,1,0, 0,0,1,0, 0,0,0,0],
@@ -592,6 +659,12 @@
       entry: () => 0, reg: v => v, realize: () => "line",
       harmony: "cycle", mode: MODES.mixo, scale: MODES.mixo, diatonic: true,
       roots: [0,0, 6,6, 3,3, 0,0],               // I ♭VII IV I
+      // THE FOUR-BAR SENTENCE — the sixth type's first customer. Three bars as
+      // written and a thinned fourth is how a sixties verse breathes: the
+      // cadence bar makes room for the harmony to land. A per-bar schedule,
+      // not a word closure, so the DAW's own palette could have said it.
+      period: [[], [], [], [drop(3)]],
+      progFamily: { verse: "beatlesV", chorus: "beatlesC" },
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
@@ -658,7 +731,8 @@
   const DRUMNAME = { k: "Kick", s: "Snare", c: "Clap", o: "Open hat",
                      h: "Hat", p: "Ghost perc" };
 
-  const api = { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL, SCALES, SCALELABEL };
+  const api = { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL, SCALES, SCALELABEL,
+                PROGS };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuGenres = api;
 })(typeof window !== "undefined" ? window : globalThis);

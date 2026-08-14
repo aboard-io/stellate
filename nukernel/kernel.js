@@ -153,7 +153,6 @@
   // a subset of MODE, so every subject note lands inside every chord.
   const PENT  = [0, 3, 5, 7, 10];                       // minor pentatonic
   const MODE  = [0, 2, 3, 5, 7, 8, 10];                 // natural minor
-  const ROMAN = ["i", "ii°", "III", "iv", "v", "VI", "VII"];
 
   // The subject's alphabet is a GENRE fact, not a constant: blues needs the
   // flat five, and the blue note is a passing tone the pentatonic cannot say.
@@ -191,6 +190,22 @@
     });
     return b;
   };
+
+  // ROMAN NUMERALS ARE DERIVED, NOT DECLARED. The old list was a hardcoded
+  // natural-minor table, which lied about every other mode — a major chord in
+  // ionian read out as "i". Case and the °/+ marks come from each degree's own
+  // third and fifth, so the readout is honest in any alphabet. ROMAN keeps its
+  // name and its exact minor values (gated) for everything already reading it.
+  const romanOf = md => {
+    const NUM = ["I", "II", "III", "IV", "V", "VI", "VII"];
+    return md.map((_, i) => {
+      const third = mp(i + 2, md) - mp(i, md), fifth = mp(i + 4, md) - mp(i, md);
+      const base = NUM[i % 7] || String(i + 1);
+      return (third === 4 ? base : base.toLowerCase()) +
+             (fifth === 6 ? "°" : fifth === 8 ? "+" : "");
+    });
+  };
+  const ROMAN = romanOf(MODE);
 
   // SWING bends the grid instead of permuting it — the first transformation
   // here that is not a rearrangement of steps. Delays every odd sixteenth by
@@ -286,6 +301,122 @@
     }).sort((a, b) => a.t - b.t);
   };
 
+  // ---- PIPES: the SEVENTH type ----------------------------------------------
+  // Timeless AND pitch-aware, and nothing else in the system is both. An
+  // operator runs before pitch exists and is alphabet-relative; an envelope is
+  // position-dependent and level-only (drop/stutter are CUTS — they duplicate
+  // or delete, never compute a new pitch); an edge is bounded to one bar;
+  // groove moves time and level per 16th; a bar schedule is pre-render. A pipe
+  // transforms the RENDERED stream knowing what is sounding — parallel harmony
+  // locked to the actual chord, imitation, humanized pads — the class of idea
+  // that is structurally unreachable anywhere earlier in the pipeline. The
+  // vocabulary is the house's own (engine/pipes.js, docs/MUSIC-MIND.md), so
+  // the design argument was settled upstream.
+  //
+  // Every pipe is TOTAL (unknown id = skipped) and SEEDED (the same mulberry32
+  // the composer uses — reproducibility, not cryptography): two renders of one
+  // state are byte-identical, which section 4 of the gate holds against.
+  const prng = s => {
+    let a = (s >>> 0) || 1;
+    return () => {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  };
+  const PIPES = {
+    // a chord-locked third/sixth above the line — chord-locked precisely
+    // because pitch only exists post-render; transpose(2) is scale-parallel
+    // and clashes, which is the whole reason this is a pipe and not an operator
+    harmonize(ev, ctx, o, rnd) {
+      const add = [];
+      for (const e of ev) {
+        if (e.part === "pad" || e.d) continue;
+        if (rnd() >= (o.p == null ? 0.6 : o.p)) continue;
+        const c = ctx.chordFor(e);
+        let n = e.n + (o.gap === "sixth" ? 8 : 3), guard = 0;
+        while (!c.pcSet.has(((n % 12) + 12) % 12) && guard++ < 12) n++;
+        add.push({ ...e, n, vel: Math.max(1, (e.vel == null ? 5 : e.vel) - 2),
+                   acc: 0, sld: 0, pipe: "harmonize" });
+      }
+      return add.length ? ev.concat(add) : ev;
+    },
+    // a delayed, quieter, register-dropped copy, clipped to its own chord bar
+    // so the imitation never smears across a harmony change
+    echoCanon(ev, ctx, o) {
+      const d = (o.delay == null ? 3 : o.delay) / ctx.rate, add = [];
+      for (const e of ev) {
+        if (e.d || e.part === "pad") continue;
+        const barEnd = (Math.floor(e.t * ctx.rate / ctx.stepsPerBar) + 1) *
+                       ctx.stepsPerBar / ctx.rate;
+        if (e.t + d >= barEnd) continue;
+        add.push({ ...e, t: e.t + d, dur: Math.min(e.dur, barEnd - (e.t + d)),
+                   n: e.n - 12, acc: 0, sld: 0, pipe: "echoCanon", echoOf: e.t,
+                   vel: Math.max(1, Math.floor((e.vel == null ? 5 : e.vel) * 0.6)) });
+      }
+      return add.length ? ev.concat(add) : ev;
+    },
+    // the event-stream twin of maxHold, for material whose notes are already
+    // fixed: the last note of each voice's bar stops short of the bar line
+    breathe(ev, ctx) {
+      const last = new Map();
+      for (const e of ev) {
+        if (e.d) continue;
+        const k = (e.v || 0) + ":" + Math.floor(e.t * ctx.rate / ctx.stepsPerBar);
+        const p = last.get(k);
+        if (!p || e.t > p.t) last.set(k, e);
+      }
+      const cut = new Set(last.values());
+      return ev.map(e => {
+        if (!cut.has(e) || e.dur == null) return e;
+        const barEnd = (Math.floor(e.t * ctx.rate / ctx.stepsPerBar) + 1) *
+                       ctx.stepsPerBar / ctx.rate;
+        const cap = Math.max(0.25 / ctx.rate, barEnd - e.t - 0.5 / ctx.rate);
+        return e.dur > cap ? { ...e, dur: cap, pipe: "breathe" } : e;
+      });
+    },
+    // pad voices leave the grid by a few hairs, direction alternating per
+    // chord — a keyboard player's hand, not a chord stamp
+    strum(ev, ctx, o) {
+      const groups = new Map();
+      ev.forEach((e, i) => {
+        if (e.part !== "pad") return;
+        const k = (e.v || 0) + "@" + e.t;
+        if (!groups.has(k)) groups.set(k, []);
+        groups.get(k).push(i);
+      });
+      if (!groups.size) return ev;
+      const out = ev.slice(); let gi = 0;
+      const sprd = (o.spread == null ? 0.06 : o.spread) / ctx.rate;
+      for (const idx of groups.values()) {
+        const order = [...idx].sort((a, b) => ev[a].n - ev[b].n);
+        if (gi % 2) order.reverse();                    // down-strum every other chord
+        order.forEach((i, k) => { out[i] = { ...ev[i], t: ev[i].t + k * sprd }; });
+        gi++;
+      }
+      return out;
+    },
+  };
+  function pipes(ev, list, ctx0) {
+    if (!list || !list.length) return ev;
+    const cache = new Map();
+    const ctx = { ...ctx0, chordFor(e) {
+      const step = e.t * ctx0.rate, bar = Math.floor(step / ctx0.stepsPerBar);
+      let cs = cache.get(bar);
+      if (!cs) { cs = ctx0.chords(bar); cache.set(bar, cs); }
+      const s = ((step % ctx0.stepsPerBar) + ctx0.stepsPerBar) % ctx0.stepsPerBar;
+      return cs.find(c => s >= c.start && s < c.start + c.len) || cs[cs.length - 1];
+    } };
+    let out = ev;
+    list.forEach((op, i) => {
+      const f = PIPES[op.id];
+      if (!f) return;                                    // total: unknown = skipped
+      out = f(out, ctx, op, prng(((op.seed || 0) + 1) * 0x9E3779B9 + i + 1));
+    });
+    return out === ev ? ev : [...out].sort((a, b) => a.t - b.t);
+  }
+
   // ---- harmony: a MODE, not a layer ---------------------------------------
   // Where the roots come from is itself a genre fact, and there are only three
   // sources: read them off the entry schedule, don't have any, or carry an
@@ -307,6 +438,136 @@
     }
     return 0;                                            // modal: no motion
   }
+
+  // ---- the CHORD LAYER: a progression is chord OBJECTS, not bar-indexed roots
+  // `g.roots` says WHERE the harmony goes and nothing about WHAT sounds there —
+  // every chord was a bare mode triad, voiced statelessly, one per bar. `g.prog`
+  // is the richer statement: an array of BARS, each bar one chord object or a
+  // list of them — { d: root degree, q: quality, inv: inversion, borrow:
+  // semitone offset on the root, beats: length in steps }. A genre without a
+  // `prog` gets the DEGENERATE progression synthesized from harm(): triads,
+  // root position, one to the bar — byte-identical to what it played before,
+  // which is the house law for every new field.
+  //
+  // WHY THIS IS NOT ONE OF THE FIVE TYPES. An operator is timeless and
+  // alphabet-relative and never sees a chord; an envelope is post-render and
+  // level-only; an edge rewrites one bar at a known end; groove is a per-16th
+  // fingerprint; a genre override substitutes an existing field wholesale. A
+  // progression is new DATA with its own internal grammar — quality, inversion,
+  // borrow, duration — read by three different renderers (pad, bass, melody),
+  // which no substitution or transform of existing fields can say.
+  //
+  // QUALITY comes in two spellings on purpose. The DIATONIC qualities walk the
+  // mode in degree steps, so "7" takes whatever seventh the mode owns — i7 in
+  // minor, Imaj7 in ionian — and the chord can never leave the key. The
+  // CHROMATIC qualities (maj7 / m7 / dom7) are absolute semitone stacks on the
+  // root, because they are requests for a specific colour the mode may not
+  // contain: dom7 is the one deliberate exit, the V7 that natural minor cannot
+  // spell and every cadence wants.
+  const QSTEPS = { triad: [0, 2, 4], "7": [0, 2, 4, 6], nine: [0, 2, 4, 6, 8],
+                   sus4: [0, 3, 4], six: [0, 2, 4, 5] };
+  const QFIX = { maj7: [0, 4, 7, 11], m7: [0, 3, 7, 10], dom7: [0, 4, 7, 10] };
+
+  // chordsOf(subj, g, bar) -> [{start, len, deg, q, inv, borrow, rootPc,
+  // bassPc, pcs[], pcSet}] — the bar's chords with their step windows. beats
+  // are steps of the pattern; unstated chords split the bar evenly and the
+  // last chord absorbs the remainder, so the bar is always exactly covered.
+  function chordsOf(subj, g, bar) {
+    const md = g.mode || MODE, N = subj.deg.length;
+    const one = c => ({ ...c, pcSet: new Set(c.pcs.map(n => ((n % 12) + 12) % 12)) });
+    if (!g.prog || g.harmony !== "cycle") {
+      const r = harm(subj, g, bar);
+      return [one({ start: 0, len: N, deg: r, q: "triad", inv: 0, borrow: 0,
+                    rootPc: mp(r, md), bassPc: mp(r, md),
+                    pcs: [r, r + 2, r + 4].map(d => mp(d, md)) })];
+    }
+    const slot = at(g.prog, bar), list = Array.isArray(slot) ? slot : [slot];
+    const out = []; let cursor = 0;
+    list.forEach((c, i) => {
+      const left = list.length - 1 - i;
+      const len = i === list.length - 1 ? N - cursor
+        : Math.max(1, Math.min(c.beats || Math.round(N / list.length), N - cursor - left));
+      const root = mp(c.d || 0, md) + (c.borrow || 0);
+      const pcs = QFIX[c.q] ? QFIX[c.q].map(x => root + x)
+        : (QSTEPS[c.q] || QSTEPS.triad).map(s => mp((c.d || 0) + s, md) + (c.borrow || 0));
+      out.push(one({ start: cursor, len, deg: c.d || 0, q: c.q || "triad",
+                     inv: c.inv || 0, borrow: c.borrow || 0, rootPc: root,
+                     bassPc: pcs[(c.inv || 0) % pcs.length], pcs }));
+      cursor += len;
+    });
+    return out;
+  }
+  const chordAt = (subj, g, bar, step) => {
+    const cs = chordsOf(subj, g, bar);
+    return cs.find(c => step >= c.start && step < c.start + c.len) || cs[cs.length - 1];
+  };
+  // materialize a cyclic prog over a section and land a CADENCE on its last
+  // bar — how the composer says "this verse ends on the chorus's door".
+  const withCadence = (prog, bars, cad) =>
+    Array.from({ length: bars }, (_, b) => (b === bars - 1 ? cad : at(prog, b)));
+
+  // VOICE LEADING, the shape of engine/theory.js moveVoices: seed the first
+  // voicing by folding into the register, then move each voice to the NEAREST
+  // realization of its next chord tone. Stateless per-note fold() destroyed
+  // exactly this — consecutive chords were voiced independently, so a
+  // progression leapt where a keyboard player's hand would barely move.
+  const voiceLead = (prev, pcs, ctr) => {
+    if (!prev) return pcs.map(n => fold(n, ctr));
+    return pcs.map((n, i) => {
+      const from = prev[i % prev.length];
+      let x = n;
+      while (x < from - 6) x += 12;
+      while (x > from + 6) x -= 12;
+      return x;
+    });
+  };
+
+  // ---- PARTS: a role is an ASSIGNMENT, not a transform ----------------------
+  // realize() was a two-value switch — pad or "a line" — so there were no
+  // parts: no riff-vs-lead, no counter-melody, no chord stab. `g.part` names
+  // what each voice IS, and the policy table says what that role may do. This
+  // is not one of the five types and not the sixth or seventh either: no
+  // operator, envelope, edge, groove profile or noun substitution can say
+  // "this voice is the riff and riffs sit low and short" — it is material and
+  // policy assigned to a performer, decided before any transform runs.
+  //
+  // `chordLock` is the genuinely new capability: a STAB fires on its own gate
+  // vector but voices the sounding chord — the offbeat skank, unreachable
+  // while a chord could only fire once a bar at the phrase's first gate.
+  // A genre without `part` gets the realize() shim and a neutral policy, so
+  // all existing genres render byte-identically.
+  const PARTS = {
+    line:    {},                                  // the shim: exactly the old behaviour
+    lead:    { ctr: 12, maxHold: 4 },             // up top, sings, breathes
+    riff:    { ctr: -12, maxHold: 2 },            // low, short, insistent
+    counter: { maxHold: 3 },                      // between them
+    pad:     {},                                  // the held-chord path below
+    stab:    { chordLock: true, maxHold: 1 },     // its own rhythm, the bar's chord
+    drone:   { ctr: -12, artic: "tie" },          // refuses to move
+  };
+  const partOf = (g, v) => (g.part
+    ? (typeof g.part === "function" ? g.part(v) : g.part[v % g.part.length])
+    : (g.realize(v) === "pad" ? "pad" : "line"));
+
+  // ---- BAR SCHEDULE: the SIXTH type -----------------------------------------
+  // `g.period` is a per-bar operator word — entry s of the cycle applies on
+  // section-bar s — so a section has a 2/4/8-bar sentence instead of one
+  // restated bar. Why it is none of the existing five: an operator is
+  // explicitly TIMELESS and cannot know which bar it is in; an envelope is
+  // position-dependent but runs POST-render and can only scale level; an edge
+  // is bounded to one bar at a known end; groove is a per-16th fingerprint;
+  // a genre override substitutes a noun. A bar schedule is position-dependent
+  // and PRE-render — it changes which notes exist in the middle of a section,
+  // the one thing none of the five can do. It is also the correct fix for
+  // phrase length: lengthening the pattern to 64 steps would slow harm() to
+  // one chord per four bars, because harmony is indexed by the same bar.
+  // Entries are operator LISTS (the same alphabet as g.word); a function form
+  // (v, s) => ops gives per-voice periods, which is call-and-response as data.
+  const periodOps = (g, v, s) => {
+    if (!g.period) return [];
+    const w = typeof g.period === "function" ? g.period(v, s) : at(g.period, s);
+    return w || [];
+  };
 
   // ---- the voice schedule --------------------------------------------------
   // A song is n copies of the subject, each with an operator word, an entry
@@ -332,12 +593,22 @@
   };
 
   function render(subj, g, bars) {
-    const N = subj.deg.length, ev = [];
+    const N = subj.deg.length, ev = [], key = g.key | 0;
     for (let v = 0; v < g.voices; v++) {
-      const ctr = 60 + 12 * g.reg(v), pad = g.realize(v) === "pad",
+      // the part's register lean sits ON TOP of g.reg, and only when the genre
+      // actually declares parts — the shim keeps every partless genre exact
+      const part = partOf(g, v), pol = g.part ? PARTS[part] || {} : {};
+      const ctr = 60 + 12 * g.reg(v) + (pol.ctr || 0), pad = part === "pad",
             sc = g.scale || PENT, md = g.mode || MODE;
+      let voicing = null;      // pad voice-leading memory: per voice, across bars
       for (let b = g.entry(v); b < bars; b++) {
-        const p = word(subj, g.word(v, b - g.entry(v))), r = harm(subj, g, b);
+        const s = b - g.entry(v);
+        // the genre's word plus the bar schedule's word for THIS bar — the
+        // sixth type joins the pipeline exactly where the timeless one runs
+        const p = word(subj, g.word(v, s).concat(periodOps(g, v, s)));
+        const chords = chordsOf(subj, g, b), c0 = chords[0], r = c0.deg;
+        const chordFor = i => (chords.length === 1 ? c0
+          : chords.find(c => i >= c.start && i < c.start + c.len) || chords[chords.length - 1]);
         const sp = spans(p.gate);
         // FOLLOW THE CHORD. A melody sitting on the same pitches while the roots
         // move under it is what makes a progression inaudible — the blues riff
@@ -374,7 +645,9 @@
         const near6 = x => ((((x + 6) % 12) + 12) % 12) - 6;
         const diat = !!g.diatonic && g.harmony === "cycle";
         const degShift = diat ? (r > sc.length / 2 ? r - sc.length : r) : 0;
-        const rootShift = (g.harmony === "cycle" && !diat) ? near6(mp(r, md)) : 0;
+        // the shift reads the CHORD's root pc, so a borrowed root (♭VI, ♭II)
+        // moves the line with it; without a prog rootPc IS mp(r, md), exactly
+        const rootShift = (g.harmony === "cycle" && !diat) ? near6(c0.rootPc) : 0;
         // A RAMP UNDER A CHORD CYCLE CLIMBS THROUGH THE CHORD, not through the
         // scale. Adding scale degrees moves the line by an amount that has
         // nothing to do with the harmony underneath it, and in a genre whose
@@ -384,14 +657,14 @@
         // consonant by construction and what an arpeggiator has always done.
         // Under `modal` there is no chord to climb, and under `emergent` the
         // chord came from the voices, so both keep the scale-degree ramp.
-        const chordPcs = g.harmony === "cycle"
-          ? new Set([r, r + 2, r + 4].map(d => (((mp(d, md) % 12) + 12) % 12))) : null;
-        const chordWalk = (base, k) => {
-          if (!chordPcs || !k) return base;
+        // ...and the rungs are the SOUNDING chord's — a seventh in the prog is
+        // a rung the ramp can land on, which is half of "sevenths are audible".
+        const chordWalk = (base, k, set) => {
+          if (!set || !k) return base;
           let n = base; const dir = k > 0 ? 1 : -1;
           for (let c = 0; c < Math.abs(k) && c < 24; c++) {
             let guard = 0;
-            do { n += dir; guard++; } while (!chordPcs.has(((n % 12) + 12) % 12) && guard < 24);
+            do { n += dir; guard++; } while (!set.has(((n % 12) + 12) % 12) && guard < 24);
           }
           return n;
         };
@@ -415,30 +688,67 @@
         // bar, so that is where the chord belongs.
         if (pad) {
           const first = p.gate.findIndex(Boolean);
-          if (first >= 0)
-            for (const n of [r, r + 2, r + 4].map(d => mp(d, md)))
-              ev.push({ t: (b * N) / g.rate, dur: N / g.rate, v,
-                        n: fold(n, ctr), acc: 0, sld: 0, vel: vel(p, first) });
+          if (first >= 0) {
+            if (!g.prog) {
+              // the degenerate progression: the mode triad, per-note fold —
+              // byte-identical to what every existing genre played
+              for (const n of c0.pcs)
+                ev.push({ t: (b * N) / g.rate, dur: N / g.rate, v, part,
+                          n: fold(n, ctr) + key, acc: 0, sld: 0, vel: vel(p, first) });
+            } else {
+              // a real progression: voice-led, and a bar may hold TWO chords —
+              // beats < N is the half-bar turnaround/ii-V that was inexpressible
+              for (const c of chords) {
+                voicing = voiceLead(voicing, c.pcs, ctr);
+                for (const n of voicing)
+                  ev.push({ t: (b * N + c.start) / g.rate, dur: c.len / g.rate, v, part,
+                            n: n + key, acc: 0, sld: 0, vel: vel(p, first) });
+              }
+            }
+          }
+          continue;
+        }
+        // A STAB fires on its OWN gate vector but voices the sounding chord —
+        // chordLock is what makes an offbeat skank sayable at all: the pad
+        // path above fires once a bar at the phrase's first gate, full stop.
+        if (pol.chordLock) {
+          for (let i = 0; i < N; i++) {
+            if (!p.gate[i]) continue;
+            const c = chordFor(i), hold = Math.min(sp[i], pol.maxHold || 1);
+            for (const n of c.pcs)
+              ev.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: hold * 0.92 / g.rate,
+                        v, part, n: fold(n, ctr) + key, acc: p.acc[i], sld: 0, vel: vel(p, i) });
+          }
           continue;
         }
         const ART = { staccato: 0.5, normal: 0.92, legato: 1, tie: 1 };
-        const artic = g.artic || "normal";
+        const artic = g.artic || pol.artic || "normal";
+        // THE REST. A gap in the gate vector used to LENGTHEN the previous note
+        // — spans() reads to the next gate, so a six-step hole was a six-step
+        // note and nothing here could stop sounding. maxHold caps the hold so
+        // the hole becomes silence. A note whose successor SLIDES is exempt:
+        // the slide is a physical connection and the cap must not cut it.
+        // Genre field first, part policy second, absent = exactly the old dur.
+        const cap = g.maxHold != null ? g.maxHold : (pol.maxHold || 0);
         const barEv = [];
         for (let i = 0; i < N; i++) {
           if (!p.gate[i]) continue;
           const steps = sp[i];
-          const legato = pad || p.sld[(i + steps) % N] ? 1 : (ART[artic] || 0.92);
+          const slid = pad || p.sld[(i + steps) % N];
+          const legato = slid ? 1 : (ART[artic] || 0.92);
+          const held = slid || !cap ? steps : Math.min(steps, cap);
           const ns = [null];                             // pitched: registered below
           for (const n of ns) {
             const dg = p.deg[i] + degShift;
+            const set = g.harmony === "cycle" ? chordFor(i).pcSet : null;
             const pitchOf = n == null
-              ? (chordPcs
+              ? (set
                   ? chordWalk(pitch(dg, sc) + shift + rootShift + 12 * p.oct[i],
-                              rampOf(p, i, b, clamp, cmode, subj))
+                              rampOf(p, i, b, clamp, cmode, subj), set)
                   : pitch(dg + rampOf(p, i, b, clamp, cmode, subj), sc) + shift + rootShift + 12 * p.oct[i])
               : fold(n, ctr);                                    // chords voice per note
-            barEv.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: steps * legato / g.rate, v,
-                         n: pitchOf, acc: p.acc[i], sld: p.sld[i], vel: vel(p, i) });
+            barEv.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: held * legato / g.rate, v, part,
+                         n: pitchOf + key, acc: p.acc[i], sld: p.sld[i], vel: vel(p, i) });
           }
         }
         // TIE. repeat(n) duplicates notes, and duplicated notes re-attack — a
@@ -459,7 +769,12 @@
         } else for (const e of barEv) ev.push(e);
       }
     }
-    return ev.sort((a, b) => a.t - b.t);
+    const out = ev.sort((a, b) => a.t - b.t);
+    // the SEVENTH type runs on the finished pitched stream — see pipes() below
+    return g.pipes && g.pipes.length
+      ? pipes(out, g.pipes, { chords: b2 => chordsOf(subj, g, b2),
+                              stepsPerBar: N, rate: g.rate })
+      : out;
   }
 
   // KIT OPERATORS. The kit is genre DATA, not a pattern, so these are kit->kit
@@ -524,12 +839,23 @@
   function drums(subj, g, bars) {
     const ev = [], N = subj.deg.length;
     for (let b = 0; b < bars; b++) {
-      const kit = (g.fill && b === bars - 1) ? { ...g.kit, ...g.fill } : (g.kit || {});
+      // KIT SCHEDULE: `g.kits` is the kit read per BAR — a two-bar groove, a
+      // hat that opens on bar 4 — where `g.kit` is one bar restated. It is not
+      // a KITOP because a KITOP is kit->kit and TIMELESS (the argument beside
+      // KITOPS); a schedule is position-dependent data. Absent = g.kit, exact.
+      const base = g.kits ? at(g.kits, b) : (g.kit || {});
+      const kit = (g.fill && b === bars - 1) ? { ...base, ...g.fill } : base;
       for (const [d, vec] of Object.entries(kit))
         for (let i = 0; i < N; i++)
-          if (at(vec, i)) ev.push({ t: (b * N + i + swing(g, i)) / g.rate, d, acc: !!subj.acc[i],
-                                    vel: vel(subj, i),
-                                    fill: b === bars - 1 && !!(g.fill && g.fill[d]) });
+          if (at(vec, i))
+            // KIT DYNAMICS: the drums used to borrow the MELODY's velocity
+            // vector — the kick's loudness was an accident of the tune at that
+            // step. `g.kitVel` gives a lane its own 16-slot velocities (ghost
+            // snares are a 2 on the off-16ths, no new machinery). Absent lane
+            // = exactly the old expression.
+            ev.push({ t: (b * N + i + swing(g, i)) / g.rate, d, acc: !!subj.acc[i],
+                      vel: g.kitVel && g.kitVel[d] ? at(g.kitVel[d], i) : vel(subj, i),
+                      fill: b === bars - 1 && !!(g.fill && g.fill[d]) });
     }
     if (g.ghost) {
       const q = word(subj, g.ghost);
@@ -552,16 +878,23 @@
     // chromatic approach a semitone under the NEXT bar's root, which is why it
     // needs to look one bar ahead: a walking line is defined by where it is
     // going, not by the chord it is sitting on.
-    const md = g.mode || MODE;
+    const md = g.mode || MODE, key = g.key | 0;
     if (g.bassStyle === "walk") {
       for (let b = 0; b < bars; b++) {
-        const r = harm(subj, g, b), nx = harm(subj, g, (b + 1) % bars);
+        const c = chordsOf(subj, g, b)[0], nc = chordsOf(subj, g, (b + 1) % bars)[0];
+        const r = c.deg, p4 = c.pcs;
         // alternate the direction of the middle two so three bars of one chord
-        // do not walk the identical line three times
-        const mid = b % 2 === 0 ? [mp(r + 2, md), mp(r + 4, md)] : [mp(r + 4, md), mp(r + 2, md)];
-        const tones = [mp(r, md), mid[0], mid[1], mp(nx, md) - 1];
+        // do not walk the identical line three times — and when the chord
+        // carries a SEVENTH, the odd bars walk up through it: a walking line
+        // that never sounds the seventh of a seventh chord does not have one
+        const mid = b % 2 === 0 ? [p4[1], p4[2]]
+          : (p4.length > 3 ? [p4[2], p4[3]] : [p4[2], p4[1]]);
+        // the walk starts from bassPc, so an inversion is audible from the
+        // first beat, and it AIMS at the next chord's bassPc — a walking line
+        // is defined by where it is going
+        const tones = [c.bassPc, mid[0], mid[1], nc.bassPc - 1];
         tones.forEach((n, q) =>
-          ev.push({ t: (b * N + q * 4) / g.rate, dur: 3.7 / g.rate, n: n + 36, r,
+          ev.push({ t: (b * N + q * 4) / g.rate, dur: 3.7 / g.rate, n: n + 36 + key, r,
                     walk: true, vel: q === 0 ? 7 : 5 }));
       }
       return ev;
@@ -593,7 +926,8 @@
       // style that is a statement about the HARMONY rather than the rhythm: the
       // chords move over a bass that refuses to, which is where every drone and
       // most of the tension in modal music comes from.
-      const r = g.bassStyle === "pedal" ? 0 : harm(subj, g, b);
+      const c = g.bassStyle === "pedal" ? null : chordsOf(subj, g, b)[0];
+      const r = c ? c.deg : 0;
       for (let i = 0; i < N; i++)
         if (at(grid, i)) {
           const k = alt++;
@@ -601,8 +935,14 @@
           // the boogie/country figure rather than a doubling
           const oct = g.bassStyle === "octaves" ? 12 * (k % 2) : 0;
           const deg = g.bassStyle === "fifths" && k % 2 ? r + 4 : r;
+          // the root note is the chord's BASS pc — an inversion puts the third
+          // under the band, folded beside the root so the register holds; with
+          // no prog, bassPc === rootPc === mp(r, md) and this is the old note
+          const n0 = !c ? mp(0, md)
+            : deg !== r ? mp(deg, md) + c.borrow
+            : fold(c.bassPc, c.rootPc);
           ev.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: sp[i] * 0.94 / g.rate,
-                    n: mp(deg, md) + 36 + oct, r, vel: vel(subj, i) });
+                    n: n0 + 36 + oct + key, r, vel: vel(subj, i) });
         }
     }
     return ev;
@@ -733,7 +1073,9 @@
 
   const api = { at, mapv, spans, vel, drop, fill, spread, split, del, rampOf, envelope, edges, intro, outro, groove, GROOVES, KITOPS, mapKit, swing, rotate, reverse, transpose, invert, complement,
                 crossmap, excerpt, only, word,
-                PENT, MODE, ROMAN, pitch, mp, fold, near,
+                PENT, MODE, ROMAN, romanOf, pitch, mp, fold, near,
+                QSTEPS, QFIX, chordsOf, chordAt, withCadence,
+                PARTS, partOf, periodOps, pipes, PIPES,
                 harm, render, drums, bass };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuKernel = api;
