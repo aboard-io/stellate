@@ -164,7 +164,17 @@ h1 em{font-style:normal;color:var(--accent)}
 
 /* ---- song boxes ---- */
 .songwrap{gap:12px}
-.song{display:flex;gap:8px;overflow-x:auto;padding:2px;align-items:stretch;min-height:126px}
+/* THE SONG WRAPS, IT DOES NOT SCROLL. A horizontally scrolling arrangement means
+   the second half of the piece does not exist until you go looking for it, and
+   the whole job of this row is to show you the shape of the thing at once. It
+   sits in its own well and grows downward; a long box is capped in width and
+   fades out at its right edge, with its duration written in the head. */
+.song{
+  display:flex;flex-wrap:wrap;gap:8px;padding:10px;align-items:stretch;
+  align-content:flex-start;
+  background:var(--sunk);border:1px solid var(--hair);border-radius:2px;
+  max-height:60vh;overflow-y:auto;overflow-x:hidden;
+}
 .addbox{
   flex:0 0 auto;width:44px;align-self:stretch;cursor:pointer;
   appearance:none;font:inherit;font-size:22px;line-height:1;
@@ -209,6 +219,17 @@ h1 em{font-style:normal;color:var(--accent)}
 .bprog{height:3px;background:var(--hair);border-radius:2px;overflow:hidden;margin-top:auto}
 .fillbar{display:block;height:100%;width:0;background:var(--accent);border-radius:2px}
 .box.queued{border-style:dashed;border-color:var(--accent2)}
+/* a box that ran out of room says so: the content fades into the right edge
+   rather than being cut off mid-word, which reads as a rendering bug */
+.box.clipped::after{
+  content:"";position:absolute;top:1px;right:1px;bottom:1px;width:34px;
+  pointer-events:none;border-radius:0 2px 2px 0;
+  background:linear-gradient(90deg,transparent,var(--sunk) 82%);
+}
+.box.clipped.sel::after,.box.clipped.live::after{
+  background:linear-gradient(90deg,transparent,var(--sunk) 88%);
+}
+.box.clipped .btags,.box.clipped .bgenre,.box.clipped .bphrase{padding-right:26px}
 /* fixed two-row well: tags wrapping to a new line grew the box and pushed the
    whole page down every time a transform was switched on */
 .btags{display:flex;flex-wrap:wrap;gap:3px;height:34px;overflow:hidden;align-content:flex-start}

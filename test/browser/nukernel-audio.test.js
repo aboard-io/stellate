@@ -233,16 +233,28 @@ function taps() {
     await tab("sound");
     await chip("Acid house").click();
     await chip("Sludge").click();                        // take the previous one off
-    await page.locator(".box").first().dblclick();
+    await page.locator(".box").first().dblclick();       // loops it AND starts it
     await tab("effects");
     for (const f of ["chorus", "tape echo"]) await chip(f).click();
     await chip("drown").click();                         // the reverb send
-    await page.click("#play");
-    await page.waitForTimeout(2500);                     // decode + a bar
 
-    // THE GRAPH. buildInsertNodes reports the stages it actually built, so a
-    // chip that lit up and passed the signal dry is visible from here.
-    const mix = await page.evaluate(() => (window.__nuMix ? window.__nuMix() : null));
+    // WAIT FOR THE BAR, not for a stopwatch. A mix change lands on the next bar
+    // line — deliberately, because rebuilding a channel under a sounding note is
+    // a click — so the channel carrying these chips does not exist until the
+    // section comes round. Polling for it is both correct and the difference
+    // between a gate and a coin toss: headless chromium's audio clock does not
+    // run at wall-clock rate, so "wait 2.5 seconds" is not a bar.
+    const waitMix = async (pred, ms) => {
+      const t0 = Date.now();
+      let m = null;
+      while (Date.now() - t0 < ms) {
+        m = await page.evaluate(() => (window.__nuMix ? window.__nuMix() : null));
+        if (m && pred(m)) return m;
+        await page.waitForTimeout(250);
+      }
+      return m;
+    };
+    const mix = await waitMix(m => m.channels.some(x => x.fx.length === 2), 20000);
     if (!mix) fail("window.__nuMix is missing — the page exposes no mixer at all");
     else {
       ok(`master bus built, reverbs: ${mix.verbs.join("/")}`);
@@ -269,7 +281,7 @@ function taps() {
     // few-percent drift between two passes.
     const clean = await hf(8);
     await chip("crunch").click();
-    await page.waitForTimeout(2500);
+    await waitMix(m => m.channels.some(x => x.fx.length === 3), 20000);
     const dirty = await hf(8);
     await page.click("#play");
     const moved = Math.abs(dirty - clean) / (clean || 1);
@@ -362,6 +374,86 @@ function taps() {
     await cell.click();
     if ((await read()) > v1) ok("the toggle flips back and a tap raises again");
     else fail("the raise/lower toggle does not flip back");
+  }
+
+  // (H) THE COMPOSED SONG DOES NOT COST NINE TIMES WHAT IT SHOULD.
+  //
+  // This is the one failure in the whole page that no correctness check can see:
+  // everything works, everything is audible, and it glitches. A Faust worklet
+  // computes every 128-sample block whether or not a note is sounding, so the
+  // size of the synth pool IS the CPU cost — and keying that pool by channel as
+  // well as by voice, which per-section effects appear to require, multiplies it
+  // by the number of distinct mixes in the song. A composed vaporwave track has
+  // nine sections and about six distinct mixes, each wanting a two-voice DX7
+  // plus whichever synth bass its drop asked for. Thirty-six always-on FM
+  // voices, and thirty-six wasm compiles to get there.
+  //
+  // So the pool is global and the ROUTE moves instead. The number below is the
+  // whole fix, and it is a number rather than a feeling.
+  {
+    await page.selectOption("#composeg", "vaporwave");
+    await page.click("#compose");
+    await page.click("#play");
+    await page.waitForTimeout(9000);            // past the intro, into the drops
+    const m = await page.evaluate(() => window.__nuMix());
+    const boxes = await page.locator(".box").count();
+    await page.click("#play");
+    console.log(`  composed vaporwave    : ${boxes} sections, ${m.channels.length} channels, ` +
+                `${m.worklets} worklets, ${m.convolvers} convolvers, ${m.routes} routes`);
+    // eight is the voice-pool ceiling; a synth bass on top of a two-voice DX7
+    // cannot need more than that however many sections ask for it
+    if (m.worklets > 12)
+      fail(`${m.worklets} Faust worklets are running for a ${boxes}-section song — ` +
+           `the synth pool is being multiplied by the mix, and every one of those ` +
+           `renders continuously`);
+    else ok(`the synth pool did not multiply by the mix: ${m.worklets} worklets ` +
+            `across ${m.channels.length} channels`);
+    if (m.convolvers > 2)
+      fail(`${m.convolvers} convolution reverbs are running — they are built on ` +
+           `first use, so a song using one space should not be paying for three`);
+    else ok(`${m.convolvers} convolver(s) built, on demand`);
+  }
+
+  // (I) THE SONG ROW SHOWS THE SONG. A horizontally scrolling arrangement means
+  // the second half of the piece does not exist until you go looking for it, and
+  // the row's whole job is the shape of the thing at a glance. It wraps instead,
+  // and a section too long to draw says its duration in words.
+  {
+    const row = page.locator("#song");
+    // MEASURE THE BOXES, not scrollWidth. A padded flex container reports a
+    // scrollWidth that includes its own right padding whether or not anything
+    // overflows, so scrollWidth is off by the padding on a row that fits
+    // perfectly. The real question is whether a section sticks out past the
+    // content edge, and that is what this asks.
+    const spill = el => {
+      const r = el.getBoundingClientRect();
+      const pad = parseFloat(getComputedStyle(el).paddingRight) || 0;
+      let worst = 0;
+      for (const b of el.querySelectorAll(".box, .addbox"))
+        worst = Math.max(worst, b.getBoundingClientRect().right - (r.right - pad));
+      return Math.round(worst);
+    };
+    const over = await row.evaluate(spill);
+    if (over > 2) fail(`a section hangs ${over}px past the edge of the song row — ` +
+                       `sections are hidden`);
+    else ok("the song row wraps rather than scrolling sideways");
+    // make one section long enough to be capped, and check it says so
+    await page.locator(".box").first().click();
+    const g = await page.locator(".box").first().locator(".grip.r").boundingBox();
+    await page.mouse.move(g.x + 5, g.y + g.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(g.x + 5 + 40 * 26, g.y + g.height / 2, { steps: 12 });
+    await page.mouse.up();
+    await page.waitForTimeout(200);
+    const first = page.locator(".box").first();
+    const w = (await first.boundingBox()).width;
+    const head = await first.locator(".bhead span:not(.role)").first().textContent();
+    const still = await row.evaluate(spill);
+    if (w > 320) fail(`a long section is ${Math.round(w)}px wide — the cap is not holding`);
+    else if (!/\d+:\d\d/.test(head))
+      fail(`a capped section does not say how long it is: "${head}"`);
+    else if (still > 2) fail(`a long section hangs ${still}px past the edge of the row`);
+    else ok(`a long section caps at ${Math.round(w)}px and reads "${head.trim()}"`);
   }
 
   // (C) no fallback fired

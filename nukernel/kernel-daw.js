@@ -12,6 +12,8 @@ const { compose, ROLES } = window.NuCompose;
 
 const DEFAULT_BPM = 126, NSLOTS = 8, NBOXES = 4;
 const PX_PER_BAR = 22, BAR_PX = 26, MAX_LEN = 64, MAX_NUDGE = 31;
+// past this a box stops growing and starts saying its length in words instead
+const MAX_BOX_PX = 240;
 
 /* ---------- persistence ---------- */
 // The song survives a reload; Reset all wipes it. Only plain data is stored —
@@ -448,6 +450,16 @@ const stackOf = sec => sec.stack || [];
 const focusOf = sec => Math.min(sec.focus || 0, stackOf(sec).length - 1);
 const focused = sec => stackOf(sec)[focusOf(sec)] || { g: null, slots: [] };
 const boxBars = b => (gid(b) ? b.len : 0);
+// HOW LONG A BOX ACTUALLY LASTS, in seconds at the current tempo: its bars, in
+// this genre's own step units, at the current step duration. A half-time genre's
+// bar is twice as long in seconds as a normal one's, which is exactly the fact
+// the bar count alone cannot tell you.
+const secsOf = b => {
+  if (!gid(b)) return 0;
+  const g = genreOf(b);
+  return boxBars(b) * (16 / g.rate) * (60 / (+document.getElementById("bpm").value) / 4);
+};
+const mmss = t => Math.floor(t / 60) + ":" + String(Math.round(t % 60)).padStart(2, "0");
 const stackLabel = sec => stackOf(sec).map(e => GENRES[e.g].label).join(" + ");
 
 /* ---------- what a box contributes ---------- */
@@ -835,16 +847,48 @@ let dx7Presets = null;
 // and the counterpoint collapsed to one line. The pool is keyed by dsp AND voice
 // index, which is how a monophonic voice becomes polyphonic: by there being
 // several of it, the way a real DX7 has sixteen.
-// ONE NODE PER VOICE PER CHANNEL. The pool was already keyed by voice, for the
-// reason below; a section's insert chain and its sends are a property of the
-// NODE'S CONNECTION, so a 303 that is dry in box 1 and drowned in box 3 has to
-// be two nodes. The key is the channel's own signature, so two boxes with the
-// same chain still share — and a song with no effects is exactly as many nodes
-// as it was before.
-const synthKey = (spec, v, chan) => spec.dsp + "#" + v + "@" + (chan ? chan.key : "-");
+// ONE NODE PER VOICE, AND THAT IS ALL. A Faust worklet is not free when it is
+// idle — it computes every 128-sample block whether or not a note is sounding —
+// so the pool size is a CPU budget, not a memory one.
+//
+// Keying it by CHANNEL as well, which is what a section's own effects seem to
+// ask for, multiplies that budget by the number of distinct mixes in the song.
+// Measured on a composed vaporwave track: nine sections, six distinct channels,
+// each wanting a two-voice DX7 plus whichever synth bass its drop asked for —
+// thirty-six always-on FM operators' worth of worklet, plus thirty-six wasm
+// compiles at load. That is the glitching, and it is not subtle.
+//
+// So the pool stays global and the ROUTE moves instead: every node fans out to
+// every channel through a gain, and exactly one of those gains is open. The
+// section still gets its own inserts and its own sends — the signal really does
+// go through them — but the expensive thing exists once.
+const synthKey = (spec, v) => spec.dsp + "#" + v;
+const synthOut = new Map();                       // nodeKey -> Map(chanKey -> gain)
+function routeSynth(key, node, chan) {
+  if (!node || !chan) return null;
+  let m = synthOut.get(key);
+  if (!m) { m = new Map(); synthOut.set(key, m); }
+  let g = m.get(chan.key);
+  if (!g) {
+    g = ctx.createGain(); g.gain.value = 0;
+    node.connect(g); g.connect(chan.input); m.set(chan.key, g);
+  }
+  return g;
+}
+// Opened on the bar a section starts, with a 4 ms ramp — long enough not to
+// click, short enough that the first note of the section is not clipped.
+function focusSynths(chan, when) {
+  if (!chan) return;
+  for (const [key, m] of synthOut) {
+    const node = synthNodes.get(key);
+    if (node && !m.has(chan.key)) routeSynth(key, node, chan);
+    for (const [k, g] of m)
+      try { g.gain.setTargetAtTime(k === chan.key ? 1 : 0, when, 0.004); } catch (e) {}
+  }
+}
 async function loadSynth(spec, v, chan) {
-  const key = synthKey(spec, v, chan);
-  if (synthNodes.has(key)) return synthNodes.get(key);
+  const key = synthKey(spec, v);
+  if (synthNodes.has(key)) { routeSynth(key, synthNodes.get(key), chan); return synthNodes.get(key); }
   try {
     const fw = await import(FAUSTDIR + "node_modules/@grame/faustwasm/dist/esm/index.js");
     const fac = await fw.FaustWasmInstantiator.loadDSPFactory(
@@ -862,8 +906,10 @@ async function loadSynth(spec, v, chan) {
         if (a) a.setValueAtTime(v, ctx.currentTime);
       }
     }
-    node.connect((chan && chan.input) || bus);
     synthNodes.set(key, node);
+    // the node never touches a channel directly — it fans out through the
+    // per-channel gates above, which is what keeps one node serving nine sections
+    if (chan) routeSynth(key, node, chan); else node.connect(bus);
     return node;
   } catch (e) { synthNodes.set(key, null); return null; }
 }
@@ -878,8 +924,9 @@ async function loadSynth(spec, v, chan) {
 // Every voice takes freq/gate/level the same way; the rest is per-DSP and is
 // declared in the genre, so adding a synth is a data change rather than code.
 function playSynth(spec, midi, when, durSec, acc, sld, vel, v, chan, vox) {
-  const node = synthNodes.get(synthKey(spec, v || 0, chan));
+  const key = synthKey(spec, v || 0), node = synthNodes.get(key);
   if (!node) return false;
+  routeSynth(key, node, chan);
   const set = (n, v, t) => {
     const a = node.parameters.get("/" + spec.root + "/" + n);
     if (a && v != null) a.setValueAtTime(v, t);
@@ -1062,18 +1109,12 @@ function initAudio() {
   outGain = ctx.createGain(); outGain.gain.value = masterVol();
   masterIn.connect(busComp); busComp.connect(makeup); makeup.connect(limiter);
   limiter.connect(topLP); topLP.connect(outGain); outGain.connect(ctx.destination);
-  // ---- three reverbs, each its own send bus ----
-  const mkVerb = (irSec, decay, damp, hp, ret) => {
-    const inp = ctx.createGain();
-    const f = ctx.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp; f.Q.value = 0.7;
-    const cv = ctx.createConvolver(); cv.buffer = impulse(irSec, decay, damp);
-    const g = ctx.createGain(); g.gain.value = ret;
-    inp.connect(f); f.connect(cv); cv.connect(g); g.connect(masterIn);
-    return inp;
-  };
-  REV = { room:  mkVerb(1.1, 3.4, 0.42, 220, 1.0),
-          hall:  mkVerb(3.2, 2.0, 0.30, 180, 0.9),
-          plate: mkVerb(1.9, 2.4, 0.85, 320, 0.85) };
+  // ---- three reverbs, BUILT ON FIRST USE ----
+  // A ConvolverNode with a 3.2-second stereo impulse is the most expensive
+  // single node on the page, and it costs that whether or not anything is being
+  // sent to it. Most songs use one of these; building all three at boot was
+  // paying for a hall and a plate to render silence.
+  REV = {};
   // ---- one PING-PONG echo bus. Cross-fed delays panned hard, so a section sent
   // to the echo throws its repeats across the stereo field instead of thickening
   // the middle — which is the whole reason to have a send rather than an insert.
@@ -1093,6 +1134,21 @@ function initAudio() {
   const nl = ctx.sampleRate * .5; noise = ctx.createBuffer(1, nl, ctx.sampleRate);
   const nd = noise.getChannelData(0);
   for (let i = 0; i < nl; i++) nd[i] = Math.random() * 2 - 1;
+}
+const VERBSPEC = { room:  [1.1, 3.4, 0.42, 220, 1.0],
+                   hall:  [3.2, 2.0, 0.30, 180, 0.9],
+                   plate: [1.9, 2.4, 0.85, 320, 0.85] };
+function verbFor(name) {
+  const n = VERBSPEC[name] ? name : "room";
+  if (REV[n]) return REV[n];
+  const [irSec, decay, damp, hp, ret] = VERBSPEC[n];
+  const inp = ctx.createGain();
+  const f = ctx.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp; f.Q.value = 0.7;
+  const cv = ctx.createConvolver(); cv.buffer = impulse(irSec, decay, damp);
+  const g = ctx.createGain(); g.gain.value = ret;
+  inp.connect(f); f.connect(cv); cv.connect(g); g.connect(masterIn);
+  REV[n] = inp;
+  return inp;
 }
 const barSec = () => 4 * 60 / (+document.getElementById("bpm").value);
 function setDelayTime(bars) {
@@ -1164,7 +1220,7 @@ function channelFor(sec) {
   const lvl = ctx.createGain(); lvl.gain.value = spec.lvl; chain(lvl);
   lvl.connect(masterIn);
   const rs = ctx.createGain(); rs.gain.value = spec.rev; lvl.connect(rs);
-  rs.connect(REV[spec.verb] || REV.room);
+  rs.connect(verbFor(spec.verb));
   const ds = ctx.createGain(); ds.gain.value = spec.del; lvl.connect(ds); ds.connect(delBus);
   nodes.push(rs, ds);
   // the drum sub-strip: transient-preserving, long-lived, one per channel
@@ -1191,7 +1247,13 @@ function channelFor(sec) {
 // passed dry is exactly the failure a screenshot cannot see.
 window.__nuMix = () => ({
   master: !!(masterIn && outGain),
-  verbs: REV ? Object.keys(REV) : [],
+  verbs: Object.keys(VERBSPEC),
+  // THE COST, in the two currencies that actually bite. A Faust worklet runs
+  // every block whether or not it is sounding, so `worklets` is a CPU budget;
+  // `convolvers` is the same story for the most expensive single node here.
+  worklets: synthNodes.size,
+  convolvers: Object.keys(REV).length,
+  routes: [...synthOut.values()].reduce((n, m) => n + m.size, 0),
   channels: [...CHAN.values()].map(c => ({
     fx: c.spec.fx, stages: c.stages, motion: c.motKind,
     rev: +c.rs.gain.value.toFixed(3), del: +c.ds.gain.value.toFixed(3),
@@ -1229,10 +1291,33 @@ function dropChannels() {
     try { c.input.disconnect(); c.drumIn.disconnect(); } catch (e) {}
   }
   CHAN.clear();
-  for (const k of [...synthNodes.keys()]) {
-    const n = synthNodes.get(k); if (n) { try { n.disconnect(); } catch (e) {} }
+  for (const m of synthOut.values()) {
+    for (const g of m.values()) { try { g.disconnect(); } catch (e) {} }
+    m.clear();
   }
-  synthNodes.clear();
+  pruneSynths();
+}
+// THE POOL IS NOT A CACHE. Nodes survive a channel — they are channel-blind and
+// expensive to build, so keeping them across an edit is right — but they must
+// not survive the SONG. Every genre you audition leaves its worklet behind, and
+// a session spent clicking through fourteen genres ends up rendering a 303, two
+// synth basses and eight DX7 operators for a piece that uses none of them. They
+// are silent and they cost exactly as much as if they were not.
+function pruneSynths() {
+  if (!ctx) return;
+  const want = new Set();
+  if (isSynthFont()) want.add(fontDef().synth.dsp);
+  for (const sec of SONG) {
+    for (const e of stackOf(sec)) if (GENRES[e.g] && GENRES[e.g].synth) want.add(GENRES[e.g].synth.dsp);
+    if (BASSSYNTH[sec.bassop]) want.add(BASSSYNTH[sec.bassop].dsp);
+  }
+  for (const [k, node] of [...synthNodes]) {
+    if (want.has(k.split("#")[0])) continue;
+    if (node) { try { node.disconnect(); } catch (e) {} }
+    const m = synthOut.get(k);
+    if (m) { for (const g of m.values()) { try { g.disconnect(); } catch (e) {} } synthOut.delete(k); }
+    synthNodes.delete(k);
+  }
 }
 const masterVol = () => (+document.getElementById("vol").value / 100) * 1.1;
 const hz = m => 440 * Math.pow(2, (m - 69) / 12);
@@ -1326,9 +1411,42 @@ function compile() {
 }
 const stepDur = () => 60 / (+document.getElementById("bpm").value) / 4;
 
+/* ---------- the heartbeat ---------- */
+// TWO CLOCKS, and the worker is the one that matters. A hidden tab clamps
+// setInterval to about 1 Hz, which starves a 150 ms lookahead seven times out of
+// eight — the music comes apart the moment you change tabs, and it looks like an
+// audio bug rather than a scheduling one. A dedicated worker is not clamped the
+// same way (nukernel/clock.js, a file rather than a blob because the production
+// CSP is worker-src 'self'). The main-thread interval stays as a fallback: a
+// worker that fails to construct must not take the transport with it, and two
+// ticks arriving for one bar is harmless — tick() fills up to a deadline rather
+// than emitting one bar per call, so it is idempotent by construction.
+let clock = null;
+function startClock() {
+  clearInterval(timer); timer = setInterval(tick, 25);
+  if (clock === false) return;                 // tried once, could not be built
+  try {
+    if (!clock) { clock = new Worker("clock.js"); clock.onmessage = () => tick(); }
+    clock.postMessage({ cmd: "start", ms: 25 });
+  } catch (e) { clock = false; }
+}
+function stopClock() {
+  clearInterval(timer); timer = null;
+  if (clock) try { clock.postMessage({ cmd: "stop" }); } catch (e) {}
+}
+// coming BACK to the tab, catch up immediately rather than on the next tick
+addEventListener("visibilitychange", () => { if (playing) tick(); });
+
+// THE LOOKAHEAD IS NOT A CONSTANT. 150 ms is right for a tab you are looking at.
+// Hidden, even with the worker clock, the whole page is running on the browser's
+// leftovers — so widen the window to two seconds and let one tick fill eight bars
+// if it has to. Nothing about the music changes; the only cost is that an edit
+// made while the tab is hidden takes up to two seconds to be heard, which is a
+// cost of exactly zero.
+const lookahead = () => (document.visibilityState === "hidden" ? 2.0 : 0.15);
 function tick() {
   if (!playing || !TL.length) return;
-  const sd = stepDur(), look = ctx.currentTime + .15;
+  const sd = stepDur(), look = ctx.currentTime + lookahead();
   while (nextBarTime < look) {
     if (pendingStart != null) {                    // a queued jump lands on the bar
       const at2 = TL.findIndex(x => x.si === pendingStart && x.first);
@@ -1345,6 +1463,7 @@ function tick() {
       // starts — a transition re-arms every pass, which is what makes it one
       setDelayTime(DTIMES[sec.dtime || "d8"]);
       armMotion(chan, nextBarTime, bar.barSteps * sd * boxBars(sec), sd * 4);
+      focusSynths(chan, nextBarTime);   // this section's mix owns the synth pool
     }
     for (const e of bar.ev) {
       const when = nextBarTime + e.off * sd;
@@ -1416,24 +1535,19 @@ async function ensureAssets(announce) {
   });
   const kits = [...new Set(SONG.filter(x => gid(x)).map(x => kitOf(x)).filter(Boolean))]
     .filter(k => !drumBufs.has(k + "|k"));
-  // PER SECTION, because a synth node has to be wired into that section's own
-  // channel. The depth is the box's OWN voice count rather than the widest box
-  // in the song — a two-voice acid box does not need six 303s to exist because a
-  // fugue elsewhere does, and now that nodes multiply by channel that stopped
-  // being a rounding error.
+  // ONE POOL, sized by the widest box in the song — a four-voice fugue over a
+  // two-voice rock riff needs six, and nothing needs more than it uses. The
+  // pool is NOT multiplied by the number of channels; see synthKey.
+  const synths = [...new Set([
+    ...(isSynthFont() ? [fontDef().synth] : []),
+    ...SONG.flatMap(x => stackOf(x).filter(e => GENRES[e.g].synth).map(e => GENRES[e.g].synth)),
+    ...SONG.filter(x => BASSSYNTH[x.bassop]).map(x => BASSSYNTH[x.bassop])])];
+  const depth = Math.min(8, Math.max(1, ...SONG.map(sec2 =>
+    stackOf(sec2).reduce((n, e) => n + (GENRES[e.g] ? GENRES[e.g].voices : 0), 0))));
   const wantSynth = [];
-  for (const sec2 of SONG) {
-    if (!gid(sec2)) continue;
-    const chan = channelFor(sec2);
-    const depth = Math.min(8, Math.max(1, stackOf(sec2)
-      .reduce((n, e) => n + (GENRES[e.g] ? GENRES[e.g].voices : 0), 0)));
-    const specs = isSynthFont() ? [fontDef().synth]
-      : stackOf(sec2).filter(e => GENRES[e.g].synth).map(e => GENRES[e.g].synth);
-    if (BASSSYNTH[sec2.bassop]) specs.push(BASSSYNTH[sec2.bassop]);
-    for (const sp of specs)
-      for (let v = 0; v < depth; v++)
-        if (!synthNodes.has(synthKey(sp, v, chan))) wantSynth.push([sp, v, chan]);
-  }
+  for (const sp of synths)
+    for (let v = 0; v < depth; v++)
+      if (!synthNodes.has(synthKey(sp, v))) wantSynth.push([sp, v, null]);
   if (!need.length && !wantSynth.length && !kits.length) return false;
   if (announce) document.getElementById("readout").textContent =
     "loading " + [...need, ...new Set(wantSynth.map(x => x[0].dsp)), ...kits].join(", ") + "\u2026";
@@ -1457,11 +1571,11 @@ async function startAt(boxIndex) {
   nextBar = at < 0 ? 0 : at;
   nextBarTime = ctx.currentTime + .08; passStart = nextBarTime;
   document.getElementById("play").textContent = "■ Stop";
-  clearInterval(timer); timer = setInterval(tick, 25); requestAnimationFrame(frame);
+  startClock(); requestAnimationFrame(frame);
   drawSong();
 }
 function stop() {
-  playing = false; clearInterval(timer); playingSec = -1; pendingStart = null;
+  playing = false; stopClock(); playingSec = -1; pendingStart = null;
   document.getElementById("play").textContent = "▶ Play";
   for (const p of phEls) p.style.transform = "translateX(-3px)";
   document.querySelectorAll(".fillbar").forEach(f => { f.style.width = "0%"; });
@@ -1569,7 +1683,7 @@ function songChanged() {
 // are enough of them to matter, so an A/B between two chains does not rebuild
 // on every click.
 function pruneChannels() {
-  if (!ctx || CHAN.size <= 12) return;
+  if (!ctx || CHAN.size <= 8) return;
   const live = new Set(SONG.filter(s => gid(s)).map(s => JSON.stringify(chanSpec(s))));
   for (const [key, c] of [...CHAN]) {
     if (live.has(key)) continue;
@@ -1577,9 +1691,9 @@ function pruneChannels() {
     for (const n of c.nodes) { try { n.disconnect(); } catch (e) {} }
     try { c.input.disconnect(); c.drumIn.disconnect(); } catch (e) {}
     CHAN.delete(key);
-    for (const k of [...synthNodes.keys()]) if (k.endsWith("@" + key)) {
-      const n = synthNodes.get(k); if (n) { try { n.disconnect(); } catch (e) {} }
-      synthNodes.delete(k);
+    for (const m of synthOut.values()) {
+      const g = m.get(key);
+      if (g) { try { g.disconnect(); } catch (e) {} m.delete(key); }
     }
   }
 }
@@ -1587,7 +1701,7 @@ function pruneChannels() {
 /* ---------- the song row ---------- */
 function drawSong() {
   const el = document.getElementById("song");
-  const keep = el.scrollLeft;
+  const keep = el.scrollTop;          // the row wraps and grows DOWN now
   el.innerHTML = "";
   SONG.forEach((sec, i) => {
     const bars = boxBars(sec);
@@ -1595,7 +1709,18 @@ function drawSong() {
     box.className = "box" + (gid(sec) ? " full" : " empty") +
       (i === viewSec ? " sel" : "") + (i === playingSec ? " live" : "") +
       (i === loopOnly ? " looped" : "") + (i === pendingStart ? " queued" : "");
-    box.style.width = (gid(sec) ? Math.max(116, bars * PX_PER_BAR) : 116) + "px";
+    // THE SONG MUST NOT SCROLL SIDEWAYS. The row is the one view of the whole
+    // piece, and a scrolling one means the second half of the song does not
+    // exist until you go looking for it — you cannot see the shape of a thing
+    // you have to scroll. So the boxes WRAP, and a box's width is capped:
+    // beyond MAX_BOX_PX it stops growing, fades out at the right edge and says
+    // how long it is instead. Width still means duration up to that point, which
+    // is where the reading is useful; past it, the number is the honest answer
+    // and a two-metre-wide rectangle was never going to be.
+    const want = gid(sec) ? Math.max(116, bars * PX_PER_BAR) : 116;
+    const clipped = want > MAX_BOX_PX;
+    box.style.width = Math.min(MAX_BOX_PX, want) + "px";
+    if (clipped) box.classList.add("clipped");
     box.draggable = true;
     box.setAttribute("aria-label", "box " + (i + 1) +
       (gid(sec) ? ", " + stackLabel(sec) + ", " + bars + " bars" : ", empty"));
@@ -1607,7 +1732,10 @@ function drawSong() {
     head.innerHTML = "<b>" + (i + 1) + "</b>" +
       (sec.role ? '<span class="role">' + ROLES[sec.role] + "</span>" : "") +
       "<span>" + bars + " bar" + (bars === 1 ? "" : "s") +
-      (sec.nudge ? " +" + sec.nudge : "") + "</span>" +
+      (sec.nudge ? " +" + sec.nudge : "") +
+      // the DURATION, on any box wide enough to have lost its width as a cue —
+      // a clipped box has to say in words what it can no longer say in pixels
+      (clipped ? " \u00b7 " + mmss(secsOf(sec)) : "") + "</span>" +
       (i === loopOnly ? '<span class="loopmark">loop</span>' : "");
     // BUTTONS, BECAUSE DRAG-AND-DROP IS A DESKTOP FICTION. HTML5 dragstart does
     // not fire on touch at all — not partially, not badly, at all — so reordering
@@ -1786,7 +1914,7 @@ function drawSong() {
     SONG.push(emptyBox()); viewSec = SONG.length - 1; songChanged();
   });
   el.append(add);
-  el.scrollLeft = keep;
+  el.scrollTop = keep;
 }
 function makeGrip(side, begin) {
   const g = document.createElement("div");
