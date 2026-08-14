@@ -10,6 +10,7 @@ import { GENRES, DEFAULT, blank } from "./deps.js";
 import { SLOTS, SUBJ, slot, setSlot, putPhrase, curSection, commit, on } from "./state.js";
 import { isBlank, focused } from "./derive.js";
 import { toggle } from "./palette.js";
+import { buzz, pointers } from "./touch.js";
 
 const gridEl = document.getElementById("stepgrid");
 const slotsEl = document.getElementById("slots");
@@ -28,16 +29,36 @@ const clampTo = (v, [lo, hi]) => Math.max(lo, Math.min(hi, v));
 
 const cells = {};                          // key -> [16 buttons], alive for ever
 function buildGrid() {
-  gridEl.append(Object.assign(document.createElement("div"), { className: "rowlab" }));
-  for (let i = 0; i < 16; i++)
-    gridEl.append(Object.assign(document.createElement("div"),
-      { className: "num" + (i % 4 === 0 ? " q" : ""), textContent: String(i + 1) }));
+  // ONE .prow PER ROW: a label cell and a 16-cell strip. The strip is its own
+  // grid, which is the whole trick behind the phone fold: kernel-daw.css
+  // drops it from 16 columns to 8 under 560px and auto-placement wraps cells
+  // 9–16 into a second rank — two banks of 8 at 44px instead of sixteen
+  // 24px slivers, with no JS and no second DOM.
+  const prow = lab => {
+    const r = Object.assign(document.createElement("div"), { className: "prow" });
+    r.append(Object.assign(document.createElement("div"),
+      { className: "rowlab", textContent: lab }));
+    const c = Object.assign(document.createElement("div"), { className: "prowcells" });
+    r.append(c);
+    gridEl.append(r);
+    return c;
+  };
+  const nums = prow("");
+  for (let i = 0; i < 16; i++) {
+    const n = Object.assign(document.createElement("div"),
+      { className: "num" + (i % 4 === 0 ? " q" : ""), textContent: String(i + 1) });
+    n.dataset.q = String(1 + (i >> 2));      // the numeral wears its quarter's colour
+    nums.append(n);
+  }
   for (const key of ROWS) {
-    gridEl.append(Object.assign(document.createElement("div"),
-      { className: "rowlab", textContent: key }));
+    const strip = prow(key);
     cells[key] = [];
     for (let i = 0; i < 16; i++) {
       const b = document.createElement("button"); b.type = "button";
+      // the skin reads these, the code never does: which row a cell sits in
+      // and which quarter of the bar — the 909's q1 red / q2 orange / q3 amber
+      // / q4 cream lives entirely in CSS off these two attributes
+      b.dataset.row = key; b.dataset.q = String(1 + (i >> 2));
       const num = RANGE[key];
       // SHIFT-CLICK IS NOT A GESTURE ON A PHONE. It was the only way to lower a
       // value, so half of the phrase editor was unreachable on touch — you could
@@ -49,18 +70,28 @@ function buildGrid() {
       // The binary rows are unaffected: a toggle has nowhere to go but the other
       // way, so a tap has always been enough.
       if (num) {
-        let from = null, base = 0, moved = false;
+        let from = null, fromX = 0, base = 0, moved = false, wasFine = false;
         b.addEventListener("pointerdown", ev => {
-          from = ev.clientY; base = SUBJ[key][i]; moved = false;
+          from = ev.clientY; fromX = ev.clientX;
+          base = SUBJ[key][i]; moved = false; wasFine = false;
           try { b.setPointerCapture(ev.pointerId); } catch (e) {}
         });
         b.addEventListener("pointermove", ev => {
           if (from == null) return;
-          const step = Math.round((from - ev.clientY) / 14);   // up is more
+          // FINE MODE (hw.css verb #6): shift, a second finger down anywhere,
+          // or walking the pointer >64px sideways — the Elektron "walk away
+          // from the knob", and the one that needs no second hand. 70px per
+          // step instead of 14. Crossing in or out REBASES the drag so the
+          // value under the finger never jumps.
+          const fine = ev.shiftKey || pointers() > 1 ||
+            Math.abs(ev.clientX - fromX) > 64;
+          if (fine !== wasFine) { wasFine = fine; from = ev.clientY; base = SUBJ[key][i]; }
+          const step = Math.round((from - ev.clientY) / (fine ? 70 : 14)); // up is more
           if (!step) return;
           const v = clampTo(base + step, num);
           if (v === SUBJ[key][i]) return;
           moved = true; SUBJ[key][i] = v;
+          buzz(4);                            // a value landed (rate-limited)
           commit("phrase");
         });
         const end = () => { from = null; };
@@ -70,58 +101,94 @@ function buildGrid() {
           if (moved) { moved = false; return; }              // that was a scrub
           SUBJ[key][i] = clampTo(SUBJ[key][i] +
             (ev.shiftKey ? -tapDirection : tapDirection), num);
+          buzz(4);
           commit("phrase");
         });
       } else {
         b.addEventListener("click", () => {
           SUBJ[key][i] = SUBJ[key][i] ? 0 : 1;
+          buzz(4);
           commit("phrase");
         });
       }
       cells[key].push(b);
-      gridEl.append(b);
+      strip.append(b);
     }
   }
 }
 function patchGrid() {
   edslotEl.textContent = "phrase " + (slot + 1);
+  // a scrub commits per pointermove and this patches all 128 cells each time;
+  // writing only what CHANGED keeps the style recalc to the one cell under
+  // the finger instead of the whole grid (an unchanged className write still
+  // invalidates the element)
+  const put = (b, cls, txt, al) => {
+    if (b.className !== cls) b.className = cls;
+    if (b.textContent !== txt) b.textContent = txt;
+    if (b.getAttribute("aria-label") !== al) b.setAttribute("aria-label", al);
+  };
   for (const key of ROWS) {
     const num = RANGE[key];
     for (let i = 0; i < 16; i++) {
       const b = cells[key][i], val = SUBJ[key][i];
       if (num) {
-        b.className = "cell deg" + (SUBJ.gate[i] ? "" : " rest") + (val === 0 ? " zero" : "") +
-          (key === "inc" || key === "stk" ? " ramp" : "");
-        b.textContent = key === "vel" ? String(val) : (val > 0 ? "+" + val : String(val));
-        b.setAttribute("aria-label", "step " + (i + 1) + " " + key + " " + val);
+        put(b,
+          "cell deg" + (SUBJ.gate[i] ? "" : " rest") + (val === 0 ? " zero" : "") +
+            (key === "inc" || key === "stk" ? " ramp" : ""),
+          key === "vel" ? String(val) : (val > 0 ? "+" + val : String(val)),
+          "step " + (i + 1) + " " + key + " " + val);
       } else {
-        b.className = "cell" + (val ? " on" : "");
-        b.textContent = val ? "●" : "";
-        b.setAttribute("aria-label", "step " + (i + 1) + " " + key + (val ? " on" : " off"));
+        put(b,
+          "cell" + (val ? " on" : ""),
+          val ? "●" : "",
+          "step " + (i + 1) + " " + key + (val ? " on" : " off"));
       }
     }
   }
 }
 
 /* ---------- phrase slots: click toggles into the box AND opens the editor --- */
-const slotEls = [];                        // { b, sn, bars: [16 <i>] }
+// the contour is ONE <svg><path> per pad, not sixteen <i> bars — 8 nodes on
+// the rail instead of 128, one attribute write per patch instead of 32 style
+// writes, and the picture survives the pad's moulded material
+const SVGNS = "http://www.w3.org/2000/svg";
+const slotEls = [];                        // { b, sn, line: <path> }
 function buildSlots() {
   SLOTS.forEach((p, i) => {
     const b = document.createElement("button");
     b.type = "button"; b.className = "slot";
     const sn = Object.assign(document.createElement("span"), { className: "sn" });
-    const mini = document.createElement("span"); mini.className = "mini";
-    const bars = [];
-    for (let k = 0; k < 16; k++) { const c = document.createElement("i"); bars.push(c); mini.append(c); }
+    const mini = document.createElementNS(SVGNS, "svg");
+    mini.setAttribute("class", "mini");
+    mini.setAttribute("viewBox", "0 0 64 26");
+    mini.setAttribute("preserveAspectRatio", "none");
+    mini.setAttribute("aria-hidden", "true");
+    const line = document.createElementNS(SVGNS, "path");
+    mini.append(line);
     b.append(sn, mini);
     b.addEventListener("click", () => {
       setSlot(i);
       toggle("phrase", i);              // toggle() commits, which saves
       commit("selection");
     });
-    slotEls.push({ b, sn, bars });
+    slotEls.push({ b, sn, line });
     slotsEl.append(b);
   });
+}
+// gated steps become line segments, rests become gaps: M starts a run, L
+// continues it. deg −7..+7 maps top-to-bottom into the 26-unit viewBox.
+function contourPath(p) {
+  const runs = [];
+  let run = null;
+  for (let k = 0; k < 16; k++) {
+    if (!p.gate[k]) { run = null; continue; }
+    const x = k * 4 + 2, y = (23 - ((p.deg[k] + 7) / 14) * 20).toFixed(1);
+    if (!run) runs.push(run = []);
+    run.push(x + " " + y);
+  }
+  // a lone gate still needs ink: a zero-length segment renders as a dot
+  // under the round linecap, but only if there IS a segment
+  return runs.map(r => "M" + r.join(" L") + (r.length === 1 ? " L" + r[0] : "")).join(" ");
 }
 function patchSlots() {
   const sec = curSection(), ent = focused(sec);
@@ -132,14 +199,8 @@ function patchSlots() {
     s.b.setAttribute("aria-label", "phrase " + (i + 1) + (isBlank(p) ? ", empty" : ", filled") +
       (inBox ? ", in " + GENRES[ent.g].label : ""));
     s.sn.textContent = (i + 1) + (isBlank(p) ? "" : " •");
-    for (let k = 0; k < 16; k++) {
-      const c = s.bars[k];
-      if (p.gate[k]) {
-        c.className = "on";
-        c.style.height = (18 + (p.deg[k] + 7) / 14 * 60) + "%";
-        c.style.opacity = String(0.35 + (p.vel[k] / 9) * 0.65);
-      } else { c.className = ""; c.style.height = ""; c.style.opacity = ""; }
-    }
+    const d = contourPath(p);
+    if (s.line.getAttribute("d") !== d) s.line.setAttribute("d", d);
   });
 }
 

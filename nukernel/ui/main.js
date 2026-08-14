@@ -22,6 +22,9 @@ import * as songrow from "./songrow.js";
 import "./palette.js";
 import "./editor.js";
 import "./chrome.js";
+// the chassis: page rail wiring + transport haptics (phone only in effect —
+// the rail is display:none on a desk and the buzz is coarse-pointer-gated)
+import "./pages.js";
 
 /* ---------- the playhead loop ---------- */
 // One rAF loop for both progress paints: the fill bar on the sounding box and
@@ -30,11 +33,18 @@ import "./chrome.js";
 // stepDur twice and ran two querySelectorAll('.box') per frame), and paints
 // through the views' own refs.
 let looping = false;
+// the position LCD on the transport: box·bar/len while running, -- parked.
+// One compare per frame, one textContent write per BAR — the LCD is glass,
+// not a spinner.
+const lcdEl = document.getElementById("lcdpos");
+let lcdTxt = "--";
+function lcd(t) { if (t !== lcdTxt) { lcdTxt = t; lcdEl.textContent = t; } }
 function frame() {
   if (!transport.playing) {
     looping = false;                           // the loop parks until restarted
     songrow.paintProgress(-1, 0);
     arrange.resetPlayhead();
+    lcd("--");
     return;
   }
   const pos = transport.getPosition();
@@ -42,6 +52,8 @@ function frame() {
     const sec = SONG[pos.si], g = GENRES[gid(sec)];
     const total = sec.len * 16 / g.rate * pos.stepDur;
     const f = Math.max(0, Math.min(1, (pos.now - pos.passStart) / total));
+    const bar = Math.min(sec.len, Math.floor(f * sec.len) + 1);
+    lcd((pos.si + 1) + "·" + bar + "/" + sec.len);
     songrow.paintProgress(pos.si, f);
     if (viewSec === pos.si) {                  // looking at the box that sounds
       const cap = arrange.getViewSteps() * arrange.getStepW();

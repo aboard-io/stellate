@@ -1,5 +1,5 @@
 // ui/arrange.js — the arrangement view of the selected box: lanes, notes,
-// ruler, playheads. The one view that genuinely has to rebuild when the music
+// ruler, playhead. The one view that genuinely has to rebuild when the music
 // changes (every note is a positioned div), so its renders are COALESCED —
 // a dirty flag flushed once per animation frame — which is what keeps an
 // editor scrub (a "phrase" event per pointermove) from rebuilding the grid at
@@ -15,7 +15,11 @@ import { update as updateReadout } from "./readout.js";
 
 const gridEl = document.getElementById("grid");
 const scrollEl = document.getElementById("dawscroll");
-let stepW = 7, phEls = [], viewSteps = 64;
+// THE SCREEN NEVER SCROLLS SIDEWAYS ON A PHONE — the same law as the song
+// row. Narrow screens shrink the head column and let stepW floor at 3px so a
+// whole section always fits the width it has.
+const NARROW = matchMedia("(max-width:560px)");
+let stepW = 7, phEl = null, viewSteps = 64;
 export const getStepW = () => stepW;
 export const getViewSteps = () => viewSteps;
 
@@ -24,7 +28,7 @@ export function render() {
   // hold the scroll across the rebuild: innerHTML = "" resets it to 0, which
   // yanked the view back to bar 1 on every single chip click
   const keepX = scrollEl.scrollLeft, keepY = scrollEl.scrollTop;
-  gridEl.innerHTML = ""; phEls = [];
+  gridEl.innerHTML = ""; phEl = null;
   requestAnimationFrame(() => { scrollEl.scrollLeft = keepX; scrollEl.scrollTop = keepY; });
   const lanes = [];
   const aSlots = stackOf(sec)[0].slots, nP = Math.max(1, aSlots.length);
@@ -55,11 +59,14 @@ export function render() {
       kind: "drum", color: "var(--drum)", ev: hits.filter(e => e.d === d) });
 
   const steps = bars * 16 / g.rate; viewSteps = steps;
+  const narrow = NARROW.matches, headW = narrow ? 64 : 118;
   // clientWidth is 0 if the stylesheet has not applied yet (module scripts can
-  // outrun a slow stylesheet) — the 560 floor keeps the first draw sane either way
-  const avail = Math.max(560, scrollEl.clientWidth - 118);
-  stepW = Math.max(4, Math.min(22, avail / steps));
-  gridEl.style.gridTemplateColumns = "118px " + steps * stepW + "px";
+  // outrun a slow stylesheet) — the 560 floor keeps the first draw sane either
+  // way. On a narrow screen the floor is the screen itself: fit, never scroll.
+  const avail = narrow ? Math.max(220, scrollEl.clientWidth - headW)
+                       : Math.max(560, scrollEl.clientWidth - headW);
+  stepW = Math.max(narrow ? 3 : 4, Math.min(22, avail / steps));
+  gridEl.style.gridTemplateColumns = headW + "px " + steps * stepW + "px";
 
   gridEl.append(Object.assign(document.createElement("div"), { className: "rulerpad" }));
   const ruler = document.createElement("div"); ruler.className = "ruler";
@@ -107,10 +114,16 @@ export function render() {
         lane.append(d);
       }
     }
-    const ph = document.createElement("div"); ph.className = "playhead";
-    ph.style.transform = "translateX(-3px)"; lane.append(ph); phEls.push(ph);
     gridEl.append(lane);
   });
+  // ONE playhead over the whole lane stack, not one per lane. Fourteen lanes
+  // meant fourteen transform writes and fourteen glow repaints per frame;
+  // this is one absolutely-positioned line over the grid (CSS pins it at the
+  // lane column's left edge) and one compositor transform per frame.
+  phEl = document.createElement("div"); phEl.className = "playhead";
+  phEl.style.left = headW + "px";                     // the CSS pin assumes 118
+  phEl.style.transform = "translateX(-9999px)";       // parked off-screen
+  gridEl.append(phEl);
   updateReadout();
 }
 
@@ -118,11 +131,10 @@ export function render() {
 // fed by main.js's rAF loop from transport.getPosition() — the view never
 // reads audio internals directly
 export function paintPlayhead(x) {
-  const tx = "translateX(" + x + "px)";
-  for (const p of phEls) p.style.transform = tx;
+  if (phEl) phEl.style.transform = "translateX(" + x + "px)";
 }
 export function resetPlayhead() {
-  for (const p of phEls) p.style.transform = "translateX(-3px)";
+  if (phEl) phEl.style.transform = "translateX(-9999px)";
 }
 export function resetScroll() { scrollEl.scrollLeft = 0; }
 

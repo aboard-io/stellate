@@ -12,15 +12,23 @@ import { GENRES, ROLES, OPLABEL, OCTAVES, SCALELABEL, VOX, KITLABEL, DRUMKITS,
          VERBS, DTLABEL, LEVELLABEL, PANLABEL, INLABEL, ENVLABEL, MOTLABEL,
          OUTLABEL, MAX_LEN, MAX_NUDGE, emptyBox } from "./deps.js";
 import { SONG, viewSec, loopOnly, pendingStart, bpm, setViewSec, setLoopOnly,
-         setPendingStart, commit, on } from "./state.js";
+         setPendingStart, commit, on, emit } from "./state.js";
 import { stackOf, stackLabel, boxBars, secsOf, focused, opsOf, optOf,
          voxAll, mmss } from "./derive.js";
 import { playing, playingSec, startAt, resetBar } from "../audio/transport.js";
+import { onLongPress } from "./touch.js";
 
 const songEl = document.getElementById("song");
 const PX_PER_BAR = 22, BAR_PX = 26;
 // past this a box stops growing and starts saying its length in words instead
 const MAX_BOX_PX = 240;
+// WIDTH STOPS MEANING DURATION on a phone. A 2-up card grid leaves ~170px per
+// card, which can encode eight bars before every box looks identical — so
+// under 560px the CSS makes the boxes fixed cards, the inline width is not
+// written at all, and duration always moves to the head in words (the same
+// mmss the .clipped machinery already prints).
+const NARROW = matchMedia("(max-width:560px)");
+NARROW.addEventListener("change", () => render());
 
 let dragFrom = null;
 const els = new Map();                     // box object -> { box, head, ... }
@@ -61,10 +69,20 @@ function buildBox(sec) {
   const prog = document.createElement("div"); prog.className = "bprog";
   const fill = Object.assign(document.createElement("i"), { className: "fillbar" });
   prog.append(fill);
-  // WHAT THIS BOX IS DOING, as chips, in the order you would read it: what the
-  // line is, what the drums are, what the mix is, how it arrives and leaves.
-  const tags = document.createElement("div"); tags.className = "btags";
-  box.append(head, gl, ph, prog, tags);
+  // WHAT THIS BOX IS DOING, as an LED strip. The old tag pile emitted ~20
+  // word-chips into a two-row well that hid the overflow; eight lamps at
+  // FIXED positions never reflow and read at rack distance: lit = that
+  // family is set, colour = which family. The words are still here — each
+  // lamp's title carries them — and the order is the reading order:
+  // line · drums · bass · time · fx · sends · place · edges.
+  const leds = document.createElement("div"); leds.className = "bleds";
+  const lamp = {};
+  for (const fam of ["line", "drum", "bass", "time", "fx", "send", "place", "edge"]) {
+    const s = document.createElement("i");
+    s.className = "led"; s.dataset.fam = fam;
+    lamp[fam] = s; leds.append(s);
+  }
+  box.append(head, gl, ph, prog, leds);
 
   // REORDER — boxes drag among themselves, and that is all dragging does now.
   box.addEventListener("dragstart", e => {
@@ -107,6 +125,21 @@ function buildBox(sec) {
     startAt(i);
   });
 
+  // HOLD TO READ (hw.css verb #4: open the full surface of the thing under
+  // the finger). The LED strip compresses ~20 words into eight lamps, and on
+  // a desk the words come back on hover — but a phone has no hover, so a
+  // long-press pours every lit family's words into the readout line instead.
+  // The grips are skipped (they own their own drag) and the helper swallows
+  // the click that follows, so a hold never also jumps the transport.
+  onLongPress(box, () => {
+    const i = idx(sec);
+    const words = Object.entries(lamp)
+      .filter(([, s]) => s.title)
+      .map(([fam, s]) => fam + ": " + s.title);
+    emit("status", { text: "box " + (i + 1) + " · " + stackLabel(sec) + "  —  " +
+      (words.length ? words.join("  ·  ") : "nothing switched on"), sticky: true });
+  }, { skip: ".grip" });
+
   // LEFT grip nudges the window into the genre's form; RIGHT grip sets its
   // length. Trimming a clip from either end, which is the DAW gesture.
   box.append(makeGrip("l", () => {
@@ -123,7 +156,7 @@ function buildBox(sec) {
       if (n !== sec.len) { sec.len = n; commit("box"); }
     };
   }));
-  return { box, head, gl, ph, tags, fill };
+  return { box, head, gl, ph, lamp, fill };
 }
 
 /* ---------- patch on every change ---------- */
@@ -181,9 +214,13 @@ function patchBox(sec, i, el) {
   // how long it is instead. Width still means duration up to that point, which
   // is where the reading is useful; past it, the number is the honest answer
   // and a two-metre-wide rectangle was never going to be.
+  // On a NARROW screen the cap is the card itself: CSS sizes the box, the
+  // inline width stays unwritten, and anything longer than the minimum says
+  // its duration in the head.
+  const narrow = NARROW.matches;
   const want = Math.max(116, bars * PX_PER_BAR);
-  const clipped = want > MAX_BOX_PX;
-  el.box.style.width = Math.min(MAX_BOX_PX, want) + "px";
+  const clipped = narrow ? want > 116 : want > MAX_BOX_PX;
+  el.box.style.width = narrow ? "" : Math.min(MAX_BOX_PX, want) + "px";
   el.box.className = "box" +
     (i === viewSec ? " sel" : "") + (i === playingSec ? " live" : "") +
     (i === loopOnly ? " looped" : "") + (i === pendingStart ? " queued" : "") +
@@ -210,38 +247,40 @@ function patchBox(sec, i, el) {
   el.ph.textContent = stackOf(sec).map(e =>
     e.slots.length ? e.slots.map(n => n + 1).join("+") : "—").join("  /  ");
 
-  el.tags.textContent = "";
+  // THE LAMPS. Each family's words are gathered exactly as the tag pile
+  // gathered them; the strip lights the lamp and the title keeps the words,
+  // so a hover (or the #src pane, always) still says everything the chips
+  // used to shout.
   const fe = i === viewSec ? focused(sec) : stackOf(sec)[0];
-  const tag = (cls, text) => el.tags.append(Object.assign(document.createElement("span"),
-    { className: "tag " + cls, textContent: text }));
-  for (const o of opsOf(sec, fe)) tag("", OPLABEL[o]);
   const fclamp = optOf(sec, fe, "clamp"), fcmode = optOf(sec, fe, "cmode"),
         fartic = optOf(sec, fe, "artic"), fscale = optOf(sec, fe, "scale"),
         foct = optOf(sec, fe, "oct"), fvox = voxAll(sec, fe);
-  if (foct) tag("rng", "oct " + OCTAVES[String(foct)]);
-  if (fclamp != null) tag("clp", "limit " + (fclamp === "0" ? "off" : fclamp));
-  if (fcmode) tag("clp", fcmode);
-  if (fartic) tag("art", fartic);
-  if (fscale) tag("rng", SCALELABEL[fscale]);
-  if (fvox) for (const [k, v] of Object.entries(fvox)) tag("vox", VOX[k].labels[v]);
-  if (sec.kit) tag("kit", KITLABEL[sec.kit]);
-  if (sec.drumkit) tag("kit", DRUMKITS[sec.drumkit]);
-  if (sec.bassop) tag("bas", BASSOPS[sec.bassop]);
-  if (sec.swing) tag("rate", SWINGLABEL[sec.swing]);
-  if (sec.groove) tag("rate", GROOVELABEL[sec.groove]);
-  if (sec.mode) tag("mode", MODELABEL[sec.mode]);
-  if (sec.rate) tag("rate", RATELABEL[sec.rate]);
-  for (const f of (sec.fx || [])) tag("fx", FX[f].label);
-  if (sec.rev) tag("env", "reverb " + SENDLABEL[sec.rev]);
-  if (sec.verb) tag("env", VERBS[sec.verb]);
-  if (sec.echo) tag("env", "echo " + SENDLABEL[sec.echo]);
-  if (sec.dtime) tag("env", DTLABEL[sec.dtime]);
-  if (sec.lvl) tag("bas", LEVELLABEL[sec.lvl]);
-  if (sec.pan) tag("bas", PANLABEL[sec.pan]);
-  if (sec.intro) tag("env", "in: " + INLABEL[sec.intro]);
-  if (sec.env) tag("env", ENVLABEL[sec.env]);
-  if (sec.mot) tag("mode", MOTLABEL[sec.mot]);
-  if (sec.outro) tag("env", "out: " + OUTLABEL[sec.outro]);
+  const fams = {
+    line: [
+      ...opsOf(sec, fe).map(o => OPLABEL[o]),
+      foct && "oct " + OCTAVES[String(foct)],
+      fclamp != null && "limit " + (fclamp === "0" ? "off" : fclamp),
+      fcmode, fartic,
+      fscale && SCALELABEL[fscale],
+      ...(fvox ? Object.entries(fvox).map(([k, v]) => VOX[k].labels[v]) : []),
+      sec.mode && MODELABEL[sec.mode],
+    ],
+    drum: [sec.kit && KITLABEL[sec.kit], sec.drumkit && DRUMKITS[sec.drumkit]],
+    bass: [sec.bassop && BASSOPS[sec.bassop]],
+    time: [sec.swing && SWINGLABEL[sec.swing], sec.groove && GROOVELABEL[sec.groove],
+           sec.rate && RATELABEL[sec.rate]],
+    fx: (sec.fx || []).map(f => FX[f].label),
+    send: [sec.rev && "reverb " + SENDLABEL[sec.rev], sec.verb && VERBS[sec.verb],
+           sec.echo && "echo " + SENDLABEL[sec.echo], sec.dtime && DTLABEL[sec.dtime]],
+    place: [sec.lvl && LEVELLABEL[sec.lvl], sec.pan && PANLABEL[sec.pan]],
+    edge: [sec.intro && "in: " + INLABEL[sec.intro], sec.env && ENVLABEL[sec.env],
+           sec.mot && MOTLABEL[sec.mot], sec.outro && "out: " + OUTLABEL[sec.outro]],
+  };
+  for (const [fam, raw] of Object.entries(fams)) {
+    const words = raw.filter(Boolean), s = el.lamp[fam];
+    if (words.length) { s.dataset.on = ""; s.title = words.join(" · "); }
+    else { delete s.dataset.on; s.removeAttribute("title"); }
+  }
 }
 function patchAll() { SONG.forEach((sec, i) => { const el = els.get(sec); if (el) patchBox(sec, i, el); }); }
 

@@ -8,7 +8,9 @@
 // user gesture, which is why initAudio rides transport.startAt.
 import { GENRES, FONTS, compose, PRESETS } from "./deps.js";
 import { bpm, vol, setBpm, setVol, setLoopOnly, adoptSong, defaultSong,
-         clearStore, loadErrorText, saveFile, loadFile, commit, on } from "./state.js";
+         clearStore, loadErrorText, saveFile, loadFile, commit, on,
+         DEFAULT_BPM } from "./state.js";
+import { buzz, pointers } from "./touch.js";
 import { playing, startAt, stop, ensureAssets } from "../audio/transport.js";
 import { initAudio } from "../audio/graph.js";
 import { setFont, fontDef, FONT } from "../audio/assets.js";
@@ -20,7 +22,13 @@ const $ = id => document.getElementById(id);
 /* ---------- transport ---------- */
 $("play").addEventListener("click",
   () => playing ? stop() : (setLoopOnly(null), startAt(0)));
-on("transport:state", d => { $("play").textContent = d.playing ? "■ Stop" : "▶ Play"; });
+on("transport:state", d => {
+  $("play").textContent = d.playing ? "■ Stop" : "▶ Play";
+  // the LED is a pseudo-element (textContent swaps would eat a child node);
+  // the class is all the CSS needs. Green while running — a state colour,
+  // the same in both faces.
+  $("play").classList.toggle("on", !!d.playing);
+});
 
 /* ---------- tempo and volume ---------- */
 // the range inputs are VIEWS: they set state and repaint their readouts; the
@@ -41,6 +49,62 @@ function syncKnobs() {
 }
 on("song", syncKnobs);
 
+// HARDWARE FEEL for the two faders — the only continuous controls on the
+// machine (everything else is a detented list, the hw.css doctrine), so they
+// carry the full verb set themselves:
+//   drag horizontal   the fader: full range across one track-width of travel
+//   drag vertical     the fine trim, ~×5 finer, up is more (verb #2)
+//   shift / a second finger anywhere: the horizontal axis goes fine too
+//   double-tap        back to the default (verb #5)
+//   wheel             ±1, shift ±5
+// The input STAYS a real <input type=range>: keyboard arrows, Home/End and
+// the accessible name are native and untouched. Only the POINTER path is
+// replaced — a native horizontal drag and a synthetic vertical scrub writing
+// the same value from two axes in the same event is a fight, not a control,
+// so pointerdown takes the whole gesture and hands back a single value.
+function fader(input, dflt) {
+  const min = +input.min, max = +input.max, span = max - min;
+  const fire = () => input.dispatchEvent(new Event("input", { bubbles: true }));
+  const set = v => {
+    v = Math.round(Math.max(min, Math.min(max, v)));
+    if (v !== +input.value) { input.value = String(v); fire(); }
+  };
+  let drag = null, lastTap = 0;
+  input.addEventListener("pointerdown", e => {
+    if (e.button) return;
+    e.preventDefault();                          // the native drag never starts
+    input.focus({ preventScroll: true });        // preventDefault ate the focus
+    try { input.setPointerCapture(e.pointerId); } catch (err) { /* fine */ }
+    drag = { x0: e.clientX, y0: e.clientY, v0: +input.value, moved: false };
+  });
+  input.addEventListener("pointermove", e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x0, dy = drag.y0 - e.clientY;   // up is more
+    if (!drag.moved && Math.hypot(dx, dy) < 4) return;          // a tap, so far
+    drag.moved = true;
+    const fine = e.shiftKey || pointers() > 1;
+    const w = Math.max(60, input.getBoundingClientRect().width - 22);
+    set(drag.v0 + (dx / w) * span * (fine ? 0.2 : 1) + (dy / (w * 5)) * span);
+  });
+  input.addEventListener("pointerup", () => {
+    if (!drag) return;
+    if (!drag.moved) {                           // taps: two inside 300ms = default
+      const now = performance.now();
+      if (now - lastTap < 300) { set(dflt); buzz(4); lastTap = 0; }
+      else lastTap = now;
+    }
+    drag = null;
+  });
+  input.addEventListener("pointercancel", () => { drag = null; });
+  input.addEventListener("dblclick", () => { set(dflt); });
+  input.addEventListener("wheel", e => {
+    e.preventDefault();
+    set(+input.value + (e.deltaY < 0 ? 1 : -1) * (e.shiftKey ? 5 : 1));
+  }, { passive: false });
+}
+fader($("bpm"), DEFAULT_BPM);
+fader($("vol"), 80);
+
 /* ---------- fonts ---------- */
 {
   const sel = $("font");
@@ -59,33 +123,48 @@ on("song", syncKnobs);
   });
 }
 
-/* ---------- the composer ---------- */
-// ONE BUTTON. It writes eight phrases and an arrangement of them — nine boxes
-// with roles, its own tempo, its own groove, its own mix — and hands the result
+/* ---------- the composer: the ✎ WRITE key ---------- */
+// ONE KEY, on the transport, because it is the fastest path to a song there
+// is. It writes eight phrases and an arrangement of them — nine boxes with
+// roles, its own tempo, its own groove, its own mix — and hands the result
 // to adoptSong, the SAME validate-and-apply path a file off the desktop takes.
 // If the composer ever emitted a song the loader would refuse, the loader
 // refuses it and says so, rather than there being a second, more trusted way in.
+//
+// THE SEED IS VISIBLE NOW. It was always real — the same number is the same
+// song, which is what makes the composer testable — and hiding it made the
+// key a slot machine. Eight hex digits on the little LCD beside the key, and
+// ⟳ rolls a fresh one IN THE SAME GENRE, which is the loop a person actually
+// plays: write, listen, reroll, reroll, keep.
 {
-  const sel = $("composeg");
+  const sel = $("composeg"), seedEl = $("seedlcd");
   sel.append(Object.assign(document.createElement("option"),
     { value: "", textContent: "surprise me" }));
   for (const k of Object.keys(GENRES))
     sel.append(Object.assign(document.createElement("option"),
       { value: k, textContent: GENRES[k].label }));
-  $("compose").addEventListener("click", () => {
-    const keys = Object.keys(GENRES);
-    const gk = sel.value || keys[Math.floor(Math.random() * keys.length)];
-    // the seed is not exposed as a control, but it IS a real seed: the same
-    // number is the same song, which is what makes the composer testable
+  let lastG = null;                    // what ⟳ rerolls: the last genre WRITTEN
+  const composeNow = gk => {
     const seed = (Math.random() * 0xffffffff) >>> 0;
     const song = compose(gk, seed);
     if (!adoptSong(song, "composer")) {
       status("the composer produced a song the loader rejected — that is a bug, not a taste", true);
       return;
     }
+    lastG = gk;
+    seedEl.textContent = seed.toString(16).padStart(8, "0");
+    seedEl.dataset.on = "";
+    seedEl.title = "seed " + seed + " — the same number is the same song";
+    buzz(4);
     status(GENRES[gk].label + " · seed " + seed + " · " +
       song.song.map(b => b.role).join(" → ") + "  —  press play", true);
-  });
+  };
+  const pick = () => {
+    const keys = Object.keys(GENRES);
+    return sel.value || keys[Math.floor(Math.random() * keys.length)];
+  };
+  $("compose").addEventListener("click", () => composeNow(pick()));
+  $("reroll").addEventListener("click", () => composeNow(lastG || pick()));
 }
 
 /* ---------- preset songs ---------- */

@@ -247,6 +247,13 @@ export function drawPalette() {
   }
   paletteBuilt = true; paletteSig = sig;
 }
+// The page rail drives the tab too: on a phone SOUND/MIX/MOVE are this
+// palette wearing a different tab (ui/pages.js), through the same rebuild a
+// .ptab click takes — one path, so the rail and the tabs can never disagree.
+export function showTab(k) {
+  if (paletteTab === k) return;
+  paletteTab = k; paletteBuilt = false; drawPalette();
+}
 
 on("song", () => { paletteBuilt = false; drawPalette(); });
 on("box", drawPalette);

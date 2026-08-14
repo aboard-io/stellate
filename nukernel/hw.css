@@ -1,0 +1,207 @@
+/* nukernel/hw.css — the hardware token layer and material shop.
+   Loaded BEFORE kernel-daw.css (the pages.css + how.css pattern): this file
+   owns every colour, face and recipe; kernel-daw.css owns layout and applies
+   these tokens to the page's own selectors. No layout here, no ids.
+
+   THE TWO FACES. Light is the silver Roland face; dark is the graphite
+   Elektron face, and graphite is the DEFAULT — kernel-daw.html ships
+   data-theme="dark" on <html>, so every visitor gets the black box unless
+   they ask for silver. The house three-state rule still holds underneath:
+   bare :root is the complete silver palette, the graphite block is repeated
+   once under prefers-color-scheme (guarded against data-theme="light") and
+   once under [data-theme="dark"] so an explicit choice beats the OS in both
+   directions.
+
+   WHAT NEVER INVERTS: the 909 accents, the LEDs, the LCD and the state
+   colours are defined once, on bare :root only. An LED is the same colour
+   when the room lights come on; an amber LCD is amber on any desk. Only the
+   metal, the ink and the shadows change with the theme.
+
+   THE SIX VERBS. Every control on this instrument answers to the same six
+   gestures, and nothing gets a seventh:
+     TAP             toggle, commit, or select. Never destructive.
+     DRAG-VERTICAL   change a value. Up is more, everywhere.
+     DRAG-HORIZONTAL move or trim IN TIME, and nothing else, ever — the box
+                     grips own this axis, which is why pages never swipe.
+     LONG-PRESS      open the full surface of the thing under the finger.
+     DOUBLE-TAP      reset to default (a box: loop — the DAW convention).
+     TWO-FINGER      fine mode on an active drag. Nothing else, until there
+                     is an undo stack; do not invent one.
+
+   THE PAINT BUDGET. Chunky is bevels and travel, and both are cheap only if
+   they are spent on elements that are built once. The hard rules:
+     - multi-layer box-shadow: panels, keys, wells — the ~24 shell elements.
+     - step cells and palette chips (the ~300-strong crowd) get flat
+       background-color + 1px borders + at most one pseudo-element LED.
+       No shadow, no transition on background.
+     - BANNED: filter:blur, backdrop-filter, animated gradients, glow on
+       legends, transitions on anything inside a patch loop.
+     - LEDs never animate. A fading LED is wrong. Blinks, where they exist,
+       are toggled on the musical clock, not on @keyframes. */
+
+:root{
+  /* STRUCTURE — the silver 909 face */
+  --hw-void:#a9a7a0; --hw-panel:#d7d5cf; --hw-panel-hi:#e8e6e0; --hw-panel-lo:#c3c1ba;
+  --hw-recess:#b6b4ac; --hw-recess-2:#c0beb6; --hw-hair:#a8a69e; --hw-rule:#8b8981;
+  --hw-edge:#6f6d66; --hw-bevel-hi:rgba(255,255,255,.75); --hw-bevel-lo:rgba(0,0,0,.22);
+  --hw-screw-hi:#f2f0ea; --hw-screw-lo:#7d7b74;
+  --hw-key-hi:#eceae4; --hw-key-mid:#dcdad4; --hw-key-lo:#c6c4bd;
+  /* INK */
+  --hw-legend:#4b4a45; --hw-legend-dim:#6e6c66; --hw-ink:#17181a; --hw-ink-dim:#3a3a38;
+  --on-ink:#0a0906;            /* the ONLY ink on a lit fill — white fails on hot */
+  --a-orange-txt:#9c2f08;      /* accent used AS TEXT on the panel, per face */
+
+  /* 909 ACCENTS — identical in both themes, never redefined below */
+  --a-red:#e8382a; --a-orange:#ff5a1f; --a-amber:#ffa717; --a-cream:#f2e6cf;
+  --step-q1:var(--a-red); --step-q2:var(--a-orange);
+  --step-q3:var(--a-amber); --step-q4:var(--a-cream);
+  /* LED — never inverts */
+  --led-off:#3a2a20; --led-off-cool:#1c2a26; --led-rim:rgba(0,0,0,.7);
+  /* STATE — never inverts */
+  --st-play:#2fe08a; --st-arm:#ffa717; --st-rec:#e8382a; --st-sel:#f2e6cf;
+  --st-mute:#4a4f56; --st-solo:#45c8ff; --st-auto:#b06bff; --st-live:var(--a-orange);
+  /* LCD — never inverts. Amber on near-black, on any desk. */
+  --lcd-bg:#12100c; --lcd-ink:#ffb347; --lcd-dim:#7a5a26; --lcd-grid:rgba(255,179,71,.05);
+  /* LANES (the existing names, retuned bright enough to take --on-ink) */
+  --v0:#45c8ff; --v1:#2fe08a; --v2:#b06bff; --v3:#ff5fa2; --vb:#7d8792; --drum:#8b929b;
+
+  /* TYPE — two stacks, no webfont. Legends are a condensed grotesque;
+     values are numbers and live in the mono stack. */
+  --f-legend:ui-sans-serif,-apple-system,"Segoe UI Variable Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --f-num:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,Consolas,monospace;
+
+  /* LEGACY ALIASES — kernel-daw.css's old names, mapped onto the machine.
+     Defined once: var() resolves at use, so the graphite blocks below reach
+     these automatically. */
+  --bg:var(--hw-void); --panel:var(--hw-panel); --sunk:var(--hw-recess);
+  --line:var(--hw-rule); --hair:var(--hw-hair); --ink:var(--hw-ink);
+  --dim:var(--hw-legend); --faint:var(--hw-legend-dim);
+  --accent:var(--a-orange); --accent2:var(--a-amber); --accent-txt:var(--a-orange-txt);
+  --shadow:0 1px 0 var(--hw-bevel-hi),0 2px 6px rgba(0,0,0,.35);
+}
+/* GRAPHITE — the Elektron face. Structure, ink and shadow only; the accents,
+   LEDs, LCD and state colours above are deliberately not here. */
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --hw-void:#08090a; --hw-panel:#1a1c1f; --hw-panel-hi:#24272b; --hw-panel-lo:#121417;
+  --hw-recess:#0c0d0f; --hw-recess-2:#101215; --hw-hair:#2c3035; --hw-rule:#3a3f46;
+  --hw-edge:#000; --hw-bevel-hi:rgba(255,255,255,.13); --hw-bevel-lo:rgba(0,0,0,.55);
+  --hw-screw-hi:#4a4f56; --hw-screw-lo:#0d0f11;
+  --hw-key-hi:#33373d; --hw-key-mid:#23262a; --hw-key-lo:#14171a;
+  --hw-legend:#9aa0a8; --hw-legend-dim:#6b7178; --hw-ink:#e8eaed; --hw-ink-dim:#b3b8bf;
+  --a-orange-txt:#ff7a4a;
+  --shadow:0 1px 0 var(--hw-bevel-hi),0 3px 10px rgba(0,0,0,.6);
+}}
+:root[data-theme="dark"]{
+  --hw-void:#08090a; --hw-panel:#1a1c1f; --hw-panel-hi:#24272b; --hw-panel-lo:#121417;
+  --hw-recess:#0c0d0f; --hw-recess-2:#101215; --hw-hair:#2c3035; --hw-rule:#3a3f46;
+  --hw-edge:#000; --hw-bevel-hi:rgba(255,255,255,.13); --hw-bevel-lo:rgba(0,0,0,.55);
+  --hw-screw-hi:#4a4f56; --hw-screw-lo:#0d0f11;
+  --hw-key-hi:#33373d; --hw-key-mid:#23262a; --hw-key-lo:#14171a;
+  --hw-legend:#9aa0a8; --hw-legend-dim:#6b7178; --hw-ink:#e8eaed; --hw-ink-dim:#b3b8bf;
+  --a-orange-txt:#ff7a4a;
+  --shadow:0 1px 0 var(--hw-bevel-hi),0 3px 10px rgba(0,0,0,.6);
+}
+
+/* ---- the material shop ----
+   Recipes as classes, for shells that are in the static markup or built once.
+   The crowd elements (cells, chips) never take these — kernel-daw.css gives
+   them the cheap borders-as-bevel variant instead. */
+
+/* 1 BRUSHED PANEL — static shells only (the brush grain is one of the three
+   repeating-gradients the budget allows) */
+.hw-panel{
+  background:
+    linear-gradient(180deg,var(--hw-panel-hi) 0,var(--hw-panel) 38%,var(--hw-panel-lo) 100%),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.014) 0 1px,transparent 1px 3px);
+  border:1px solid var(--hw-edge);border-top-color:var(--hw-bevel-hi);border-radius:6px;
+  box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 1px 0 var(--hw-edge),0 6px 14px rgba(0,0,0,.35);
+}
+
+/* 2 RECESSED WELL — screens, trays, anything the panel was milled out for */
+.hw-well{
+  background:var(--hw-recess);border-radius:4px;
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.55),inset 0 -1px 0 var(--hw-bevel-hi),0 1px 0 var(--hw-bevel-hi);
+}
+
+/* 3 INJECTION-MOULDED KEY, with real travel. The key drops onto its own 2px
+   shadow; travel is transform, never margin — no layout, ever. */
+.hw-key{
+  background:linear-gradient(180deg,var(--hw-key-hi) 0,var(--hw-key-mid) 48%,var(--hw-key-lo) 100%);
+  border:1px solid var(--hw-edge);border-radius:5px;color:var(--hw-ink);
+  box-shadow:inset 0 1px 0 var(--hw-bevel-hi),inset 0 -2px 0 var(--hw-bevel-lo),
+    0 2px 0 rgba(0,0,0,.55),0 3px 5px rgba(0,0,0,.35);
+  transition:transform 90ms cubic-bezier(.2,.9,.3,1),box-shadow 90ms linear;
+}
+.hw-key:active,.hw-key[data-pressed]{
+  transform:translateY(2px);
+  background:linear-gradient(180deg,var(--hw-key-lo),var(--hw-key-mid));
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.6),inset 0 -1px 0 var(--hw-bevel-hi),0 0 0 rgba(0,0,0,.55);
+}
+
+/* 4 LED — a lit LED pays for one small glow; an unlit one pays for nothing.
+   State snaps: LEDs never transition. */
+.led{
+  display:inline-block;width:7px;height:7px;border-radius:2px;flex:0 0 auto;
+  background:var(--led-off);box-shadow:inset 0 1px 1px var(--led-rim);
+}
+.led[data-on]{
+  background:var(--led-c,var(--a-orange));
+  box-shadow:0 0 6px -1px var(--led-c,var(--a-orange));
+}
+
+/* 5 SCREW — six on the whole page, corners of the shell panels, each rotated
+   a different amount where it is placed: identical screws read as a texture,
+   mismatched ones read as a machine. */
+.hw-screw{
+  width:9px;height:9px;border-radius:50%;position:absolute;
+  background:radial-gradient(circle at 35% 30%,var(--hw-screw-hi),var(--hw-key-mid) 60%,var(--hw-screw-lo));
+  box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 1px 0 var(--hw-bevel-hi);
+}
+.hw-screw::after{
+  content:"";position:absolute;left:1.5px;right:1.5px;top:50%;height:1px;
+  background:rgba(0,0,0,.8);transform:translateY(-50%) rotate(28deg);
+}
+
+/* 6 LCD GLASS — the readout strip and the recessed pickers. Amber ink on
+   near-black glass, one faint scanline grid (the second allowed gradient). */
+.lcd{
+  background:var(--lcd-bg);color:var(--lcd-ink);
+  font-family:var(--f-num);font-variant-numeric:tabular-nums;
+  background-image:repeating-linear-gradient(0deg,var(--lcd-grid) 0 1px,transparent 1px 3px);
+  border:1px solid rgba(0,0,0,.6);border-radius:3px;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.9),inset 0 0 0 1px rgba(255,179,71,.08),0 1px 0 var(--hw-bevel-hi);
+}
+
+/* SILKSCREEN — the rule: uppercase + tracking ONLY on words that NAME a
+   control (TEMPO, GENRE, STEP). Values and data — 'Acid house', 'dotted 1/4',
+   a phrase number — keep their authored case; uppercasing them would erase
+   the one typographic line between the panel and the patch. */
+.silk{
+  font:600 10px/1.2 var(--f-legend);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--hw-legend);font-synthesis:none;
+}
+
+/* ---- accessibility ---- */
+/* The focus ring is a panel detail: a machined cream bezel, not a browser
+   outline. :focus-visible only — a thumb never lights it up. */
+:where(button,input,select,summary,[tabindex]):focus-visible{
+  outline:2px solid var(--st-sel);outline-offset:2px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.9),0 0 0 4px rgba(242,230,207,.18);
+}
+
+@media (prefers-contrast:more){
+  :root{
+    --hw-legend:var(--hw-ink); --hw-hair:var(--hw-rule);
+    /* flatten the metal: gradients are decoration, and decoration goes first */
+  }
+  .hw-panel,.hw-key{background:var(--hw-panel)}
+  :where(button,input,select,summary,[tabindex]):focus-visible{outline-width:3px}
+}
+
+/* Motion: travel and sheets animate transform/opacity; everything else snaps.
+   Under reduced motion even the travel goes — but a moving playhead is
+   information, not decoration, and it is painted by rAF, not transition, so
+   it survives this rule untouched. */
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
