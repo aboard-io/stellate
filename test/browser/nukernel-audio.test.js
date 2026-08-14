@@ -132,8 +132,12 @@ function taps() {
   await page.goto(`http://localhost:${PORT}/nukernel/kernel-daw.html`,
     { waitUntil: "networkidle" });
 
-  // one phrase, in the one box, for every genre in turn
-  await page.locator(".slot").nth(0).click();
+  // one phrase, in the one box, for every genre in turn. The default song
+  // ships phrase 1 already switched ON in box 1 now (the fresh page must
+  // sound), and a .slot click TOGGLES — so only click it in if it is out,
+  // the same guard the survival gate's boot() carries.
+  const slot0 = page.locator(".slot").nth(0);
+  if ((await slot0.getAttribute("aria-pressed")) !== "true") await slot0.click();
   await page.click("#seed");
 
   // SWITCH WHILE IT PLAYS for all but the first: assets used to be fetched only

@@ -86,8 +86,13 @@ function taps() {
   await page.goto(`http://localhost:${PORT}/nukernel/kernel-daw.html`,
     { waitUntil: "networkidle" });
 
-  // one phrase in the one box, and play — the same entry the audio gate uses
-  await page.locator(".slot").nth(0).click();
+  // one phrase in the one box, and play — the same entry the audio gate uses.
+  // The default song ships phrase 1 already ON in box 1 (the fresh page must
+  // sound) and a .slot click TOGGLES, so guard it exactly as boot() below does.
+  {
+    const slot0 = page.locator(".slot").nth(0);
+    if ((await slot0.getAttribute("aria-pressed")) !== "true") await slot0.click();
+  }
   await page.click("#seed");
   await page.click("#play");
   await page.waitForFunction(() => window.__rms && window.__rms() > 0.01,

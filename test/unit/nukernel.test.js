@@ -630,6 +630,92 @@ console.log("intro and outro rewrite the first and last bar");
   ok(lastBar(both).some(e => e.fill), "the intro ate the outro");
 }
 
+/* --------------------------------------------------------------- 16b. THE WIDER
+   INTRO VOCABULARY — added because every composed song in every genre opened
+   with a drum hit: four of the five original kinds are drum gestures, and the
+   composer stamped count/hit on everything else. Six new kinds, each with a
+   documented signature in bar one of the RENDERED stream (test-the-artifact:
+   these checks read events, never config): padin = the pad alone, bassin = the
+   bass alone, riser = a rising hat ramp replacing the bar, cold = the identity
+   (the absence of an intro, named), stabs = the opening chord on a sparse
+   grid, fade = the one two-bar kind (a one-bar fade already exists: swell).
+   All total: an unknown name is the stream unchanged. */
+console.log("the wider intro vocabulary — six ways in that are not a drum hit");
+{
+  // vaporwave: a pad voice, a line voice, a kit and a bass — every layer the
+  // new kinds discriminate on, in one stream, tagged the way derive.js tags
+  const g = GENRES.vaporwave, bs = 16 / g.rate, span = g.bars * bs;
+  const ev = [...K.render(P, g, g.bars),
+              ...K.drums(P, g, g.bars).map(e => ({ ...e, kind: "hit" })),
+              ...K.bass(P, g, g.bars).map(e => ({ ...e, kind: "bass" }))]
+    .map(e => ({ kind: e.kind || "line", ...e })).sort((a, b) => a.t - b.t);
+  const inBar = l => l.filter(e => e.t < bs);
+  const isPad = e => e.kind === "line" && e.part === "pad";
+
+  // NEUTRALITY, the total-function half: unknown and null are the stream
+  // itself — not a copy, the same reference — so a save from before this
+  // vocabulary renders byte-identically to before it existed
+  ok(K.intro(ev, "nonsense", span, bs) === ev, "an unknown intro was not a no-op");
+  ok(K.intro(ev, null, span, bs) === ev, "a null intro was not a no-op");
+
+  // every one-bar kind leaves bars 2+ untouched (fade owns two bars by
+  // declaration and is held to its own fence below)
+  for (const k of ["padin", "bassin", "riser", "cold", "stabs"]) {
+    const out = K.intro(ev, k, span, bs);
+    ok(out.every(e => Number.isFinite(e.t) && e.t >= 0), "intro " + k + ": a bad time");
+    ok(JSON.stringify(out.filter(e => e.t >= bs)) ===
+       JSON.stringify(ev.filter(e => e.t >= bs)),
+       "intro " + k + " changed the section after its own bar");
+  }
+
+  // COLD is the identity, and the claim is not vacuous: the test stream really
+  // does have kit and line together on the downbeat for cold to preserve
+  ok(K.intro(ev, "cold", span, bs) === ev, "cold is not the identity");
+  ok(ev.some(e => e.t === 0 && e.kind === "hit") &&
+     ev.some(e => e.t === 0 && e.kind === "line"),
+     "the cold-open claim is vacuous — no band on the test stream's downbeat");
+
+  const pi = inBar(K.intro(ev, "padin", span, bs));
+  ok(pi.length > 0 && pi.every(isPad), "padin bar one is not the pad alone");
+  const bi = inBar(K.intro(ev, "bassin", span, bs));
+  ok(bi.length > 0 && bi.every(e => e.kind === "bass"),
+     "bassin bar one is not the bass alone");
+
+  // the riser: sixteen hats, velocity never falling, genuinely rising, and
+  // nothing else left in the bar — it replaces, it does not decorate
+  const ri = inBar(K.intro(ev, "riser", span, bs));
+  ok(ri.length === 16 && ri.every(e => e.d === "h"), "the riser is not sixteen hats");
+  ok(ri.every((e, i) => i === 0 || e.vel >= ri[i - 1].vel) &&
+     ri[ri.length - 1].vel > ri[0].vel, "the riser does not rise");
+
+  // stabs: the opening chord refired short at three sparse grid points, and
+  // nothing else — no drums, no line, no held pad
+  const st = inBar(K.intro(ev, "stabs", span, bs));
+  ok(st.length > 0 && st.every(e => e.kind === "line") &&
+     new Set(st.map(e => e.t)).size === 3 &&
+     st.every(e => e.dur <= bs / 16),
+     "stabs bar one is not the chord on a sparse grid");
+
+  // fade: scales and never deletes; bar one under bar two, bar two under its
+  // own untouched self, bars 3+ byte-identical
+  const fd = K.intro(ev, "fade", span, bs);
+  const mean = (l, a, b2) => { const xs = l.filter(e => e.t >= a && e.t < b2);
+    return xs.reduce((s2, e) => s2 + e.vel, 0) / Math.max(1, xs.length); };
+  ok(fd.length === ev.length, "fade deleted events — it must only scale");
+  ok(mean(fd, 0, bs) < mean(fd, bs, 2 * bs), "fade: bar one is not under bar two");
+  ok(mean(fd, bs, 2 * bs) < mean(ev, bs, 2 * bs), "fade: bar two was not pulled down");
+  ok(JSON.stringify(fd.filter(e => e.t >= 2 * bs)) ===
+     JSON.stringify(ev.filter(e => e.t >= 2 * bs)), "fade reached past its two bars");
+
+  // TOTAL MEANS A BAR OF SOMETHING: on a stream without their layer, padin
+  // and bassin degrade to the line, never to dead air
+  const lines = ev.filter(e => e.kind === "line" && !isPad(e));
+  ok(inBar(K.intro(lines, "padin", span, bs)).length > 0,
+     "padin on a padless stream is a bar of dead air");
+  ok(inBar(K.intro(lines, "bassin", span, bs)).length > 0,
+     "bassin on a bassless stream is a bar of dead air");
+}
+
 /* ---------------------------------------------------------------- 17. ENVELOPE SHAPES */
 console.log("envelope shapes and cuts");
 {
@@ -737,9 +823,11 @@ console.log("the composer writes songs that are songs");
   for (const gk of GK) {
     for (const s of seeds) {
       const song = C.compose(gk, s), G = GENRES[gk];
-      // the shape Load reads, or it cannot come back (v:2 = `echo` for `del`,
-      // padded slot banks — see nukernel/song.js migrate)
-      ok(song.v === 2 && song.slots.length === NSLOTS && song.song.length >= 6,
+      // the shape Load reads, or it cannot come back. The bank is VARIABLE
+      // (1..NSLOTS) now and the composer sizes it to what the song needs —
+      // its eight kinds of material, no blank padding.
+      ok(song.v === 2 && song.slots.length === 8 && song.slots.length <= NSLOTS &&
+         song.song.length >= 6,
          gk + "/" + s + ": not the saved shape");
       ok(song.bpm >= 70 && song.bpm <= 160, gk + "/" + s + ": bpm outside the control's range");
       ok(song.slots.every(p => ["deg", "oct", "vel", "gate", "acc", "sld", "inc", "stk"]
@@ -812,16 +900,107 @@ console.log("the composer writes songs that are songs");
   ok(!silent, silent + " composed sections are silent");
   ok(!unused, unused + " composed songs use fewer than four of their eight phrases");
   {
-    // THE DRUM INTRO IS OFFERED, NOT PROMISED — but on a genre with a kit it has
-    // to happen, and on one without a kit it must never happen, because there is
-    // nothing to bring in.
+    // THE BED INTRO SURVIVES THE WIDER VOCABULARY. It used to be near-mandatory
+    // (seven of nine shapes) — now it is one option among thirteen, weighted
+    // where the tradition really does walk in on the rhythm section: reggae
+    // (groove family — bassin/drums/drumbass on the ballot) still opens on
+    // beds routinely, and a kitless genre still never does, because there is
+    // nothing to bring in one layer at a time.
     const beds = gk => seeds.reduce((n, s) => n +
       C.compose(gk, s).song.filter(b => C.BEDS[b.role]).length, 0);
-    ok(beds("rock") > 6, "a genre with a full kit never gets a drum intro (" + beds("rock") + ")");
+    ok(beds("reggae") > 6, "the groove family never opens on a bed (" + beds("reggae") + ")");
     for (const gk of GK) {
       if (Object.keys(GENRES[gk].kit || {}).length) continue;
       ok(beds(gk) === 0, gk + " has no drums and was given a drum intro anyway");
     }
+  }
+  {
+    // HOW SONGS OPEN, measured across the table — the gate on "everything in
+    // every genre opens with a drum hit". Every composed song stamps its
+    // chosen intro kind on the head box's `cue` (the honest name; the STORED
+    // `intro` chip may be a downgraded neighbour until fields.js INLABEL
+    // learns the new words). Across 45 genres x 8 seeds the distribution must
+    // not collapse: at least eight kinds in play, no kind above 40%, no genre
+    // opening identically at all eight seeds, and the family leanings audible
+    // in the counts.
+    const kindOf = (gk, s) => {
+      const head = C.compose(gk, s).song.find(b => b.role === "intro");
+      return head && head.cue;
+    };
+    const cnt = {}, byFam = {};
+    let total = 0, mono = 0;
+    for (const gk of GK) {
+      const fam = GENRES[gk].family, ks = new Set();
+      for (let s = 1; s <= 8; s++) {
+        const k = kindOf(gk, s);
+        ok(!!k, gk + "/" + s + ": the head box carries no intro cue");
+        cnt[k] = (cnt[k] || 0) + 1; total++;
+        (byFam[fam] = byFam[fam] || {})[k] = (byFam[fam][k] || 0) + 1;
+        ks.add(k);
+      }
+      if (ks.size < 2) mono++;
+    }
+    ok(Object.keys(cnt).length >= 8, "only " + Object.keys(cnt).length +
+       " intro kinds in play across the whole table");
+    for (const [k, n] of Object.entries(cnt))
+      ok(n / total <= 0.4, "intro kind \"" + k + "\" opens " +
+         Math.round(100 * n / total) + "% of all songs — the vocabulary collapsed");
+    ok(mono === 0, mono + " genres open identically at all eight seeds");
+    // three family leanings, spot-checked as a share of the family's songs
+    const share = (fam, kinds) => {
+      const m = byFam[fam] || {}, all = Object.values(m).reduce((a, b) => a + b, 0);
+      return kinds.reduce((a, k) => a + (m[k] || 0), 0) / Math.max(1, all);
+    };
+    ok(share("club", ["riser", "kit", "cold"]) >= 0.5,
+       "club does not lean riser/kit/cold");
+    ok(share("soul", ["bassin", "stabs", "drumbass"]) >= 0.4,
+       "soul does not walk in on the bass");
+    ok(share("drift", ["padin", "fade", "solo", "swell"]) >= 0.5,
+       "drift does not lean padin/fade/solo/swell");
+    // ...and no family opens on percussion wall to wall
+    for (const [fam, m] of Object.entries(byFam))
+      ok(["padin", "bassin", "fade", "solo", "swell", "stabs", "cold"]
+           .some(k => m[k]), fam + ": every opening is a drum gesture");
+    // the ballots are covered and legal: one per family, every vote a kind the
+    // kernel edge or the bed path knows — and every anchor `intro` field too
+    const KINDS = new Set(["count", "hit", "solo", "kit", "swell", "padin",
+                           "bassin", "riser", "cold", "stabs", "fade",
+                           "drums", "drumbass"]);
+    for (const [fam] of FAMILIES) {
+      ok(Array.isArray(C.INTRO_LEAN[fam]) && C.INTRO_LEAN[fam].length,
+         fam + ": no INTRO_LEAN ballot");
+      for (const k of C.INTRO_LEAN[fam] || [])
+        ok(KINDS.has(k), fam + ": unknown intro kind \"" + k + "\" on the ballot");
+    }
+    for (const gk of GK)
+      if (GENRES[gk].intro != null)
+        ok(KINDS.has(GENRES[gk].intro), gk + ": anchor intro \"" +
+           GENRES[gk].intro + "\" is not a known kind");
+    // THE REGISTRY BRIDGE HOLDS: whatever the cue says, the stored chip is a
+    // value the loader's enum accepts (§21's round-trip proves it the long way)
+    const INLABEL2 = require("../../nukernel/fields.js").INLABEL;
+    for (const gk of ["rock", "house", "funk", "ambient", "fugue", "dub"])
+      for (let s = 1; s <= 8; s++)
+        for (const b of C.compose(gk, s).song)
+          ok(b.intro == null || INLABEL2[b.intro] != null,
+             gk + "/" + s + ": stored intro \"" + b.intro + "\" is not in the registry");
+    // THE ANCHOR'S SAY IS AUDIBLE: the genres whose identity dictates their
+    // opening lead with it — the fugue with the subject alone, dub on the bass
+    const lead = gk => { const m = {};
+      for (let s = 1; s <= 16; s++) { const k = kindOf(gk, s); m[k] = (m[k] || 0) + 1; }
+      return Object.entries(m).sort((a, b) => b[1] - a[1])[0][0]; };
+    ok(lead("fugue") === "solo", "fugue does not lead with the subject alone");
+    ok(lead("dub") === "bassin", "dub does not walk in on the bass");
+    // THE BAND ENTERS AFTER THE DOOR: whatever the intro did, the first verse
+    // carries no fade of its own — a padin or riser opening resolves into a
+    // full section, not a second arrival
+    for (const gk of ["house", "rock", "ambient"])
+      for (let s = 1; s <= 8; s++) {
+        const song = C.compose(gk, s);
+        const vi = song.song.findIndex(b => b.role === "verse");
+        ok(vi > 0 && song.song[vi].env == null,
+           gk + "/" + s + ": the verse after the intro fades instead of entering");
+      }
   }
   {
     let spent = 0;
@@ -1030,7 +1209,11 @@ console.log("the loader — round trip, typed errors, clamps, migration");
       const b = r.song.song[0];
       ok(b.stack && b.stack[0].g === "acid", "the stack climb is gone");
       ok(b.echo === "some" && !("del" in b), "del was not renamed to echo");
-      ok(r.song.slots.length === F.NSLOTS, "a short slot bank was not padded to " + F.NSLOTS);
+      // variable banks: a short bank KEEPS its length now (it used to be
+      // padded to a fixed eight) — the only growth left is reference cover,
+      // and this save's one reference (slot 0) is already covered
+      ok(r.song.slots.length === 2, "a 2-slot v:1 bank did not stay 2 slots " +
+         "(got " + r.song.slots.length + ")");
       ok(r.song.slots.every(p => Array.isArray(p.inc) && Array.isArray(p.stk)),
          "the ramp vectors were not backfilled");
       ok(r.song.v === 2, "migrate did not stamp the current version");
@@ -2128,6 +2311,88 @@ console.log("every genre carries exactly one family from the palette's set");
        " families — must be exactly one");
     ok(ALLOWED.has(GENRES[gk].family), "genre \"" + gk + "\" carries family \"" +
        GENRES[gk].family + "\" — not in the allowed set");
+  }
+}
+
+/* ---------------------------------------------------------------- 36. VARIABLE BANKS
+   The phrase bank is 1..NSLOTS now (default one, [+] grows it), and the
+   loader stopped padding to a fixed eight. What must hold: any legal size
+   round-trips at ITS OWN length, byte-identically; the fences refuse 0 and
+   NSLOTS+1; an old save whose box references past a short bank still loads
+   (grown with blanks to cover the reference — the repair that replaces the
+   old blanket pad); and the composer's output — the 8-slot case every old
+   save is — survives the loader unchanged. */
+console.log("variable banks — round trip at any size, migrate 8->N, reference cover");
+{
+  const S = require("../../nukernel/song.js");
+  const F = require("../../nukernel/fields.js");
+  const C = require("../../nukernel/compose.js");
+  const mkSong = n => ({ v: 2,
+    slots: Array.from({ length: n }, (_, i) => {
+      const p = S.blank(); p.gate[0] = 1; p.deg[0] = i % 7; return p; }),
+    song: [{ ...S.emptyBox(), stack: [{ g: "acid", slots: [Math.max(0, n - 1)] }] }],
+    bpm: 126, vol: 80 });
+  // round trip at several sizes: the bank comes back at its own length, and
+  // the phrases come back byte-identical (no pad, no trim, no re-order)
+  for (const n of [1, 2, 5, 8, F.NSLOTS]) {
+    const raw = mkSong(n), r = S.load(JSON.parse(JSON.stringify(raw)));
+    ok(r.ok, "a " + n + "-slot song does not load: " +
+       JSON.stringify(r.errors && r.errors[0]));
+    if (r.ok) {
+      ok(r.song.slots.length === n, "a " + n + "-slot bank came back as " +
+         r.song.slots.length);
+      ok(JSON.stringify(r.song.slots) === JSON.stringify(raw.slots),
+         "a " + n + "-slot bank did not round-trip byte-identically");
+      // ...and the loaded song saves and loads AGAIN at the same length
+      const r2 = S.load(JSON.parse(JSON.stringify(r.song)));
+      ok(r2.ok && r2.song.slots.length === n,
+         "a " + n + "-slot bank does not survive a second trip");
+    }
+  }
+  // the fences: an empty bank and an over-full one are refused, with the
+  // slots path named
+  {
+    const r0 = S.load({ ...mkSong(1), slots: [] });
+    ok(!r0.ok && r0.errors[0].path === "slots", "an empty bank was not refused");
+    const r17 = S.load(mkSong(F.NSLOTS + 1));
+    ok(!r17.ok && r17.errors[0].path === "slots",
+       "a " + (F.NSLOTS + 1) + "-slot bank was not refused");
+  }
+  // a phrase index past the cap is refused (the box check, not the bank one)
+  {
+    const raw = mkSong(2);
+    raw.song[0].stack[0].slots = [F.NSLOTS];
+    const r = S.load(raw);
+    ok(!r.ok, "a phrase index of " + F.NSLOTS + " (past the cap) was accepted");
+  }
+  // REFERENCE COVER: older builds padded every bank to eight, so a short-
+  // banked save could legally point at a slot the pad was about to create.
+  // The bank grows with blanks to cover the highest reference — never past
+  // it, never truncated.
+  {
+    const raw = mkSong(2);
+    raw.song[0].stack[0].slots = [0, 5];
+    const r = S.load(raw);
+    ok(r.ok && r.song.slots.length === 6,
+       "a bank of 2 referencing slot 6 did not grow to 6 (got " +
+       (r.ok ? r.song.slots.length : JSON.stringify(r.errors[0])) + ")");
+    ok(r.ok && r.song.slots.slice(2).every(p =>
+         p.gate.every(g => !g)),
+       "the reference-cover growth is not blank");
+  }
+  // MIGRATE 8->N: the 8-slot era is just one legal size now. Composer output
+  // (the shape every recent save has) loads with its bank untouched — same
+  // length, same bytes — across a spread of genres and seeds.
+  for (const gk of ["acid", "rock", "fugue"]) {
+    for (const s of [3, 11]) {
+      const song = C.compose(gk, s);
+      const r = S.load(JSON.parse(JSON.stringify(song)));
+      ok(r.ok, gk + "/" + s + ": composer output does not load: " +
+         JSON.stringify(r.errors && r.errors[0]));
+      ok(r.ok && r.song.slots.length === song.slots.length &&
+         JSON.stringify(r.song.slots) === JSON.stringify(song.slots),
+         gk + "/" + s + ": an 8-slot composed bank did not migrate unchanged");
+    }
   }
 }
 

@@ -6,8 +6,9 @@
 //
 // Layer graph: ui view — imports state/derive/deps and palette (for toggle:
 // clicking a slot also toggles the phrase into the focused layer).
-import { GENRES, DEFAULT, blank } from "./deps.js";
-import { SLOTS, SUBJ, slot, setSlot, putPhrase, curSection, commit, on } from "./state.js";
+import { GENRES, DEFAULT, blank, NSLOTS } from "./deps.js";
+import { SLOTS, SONG, SUBJ, slot, setSlot, putPhrase, curSection, commit, on,
+         emit } from "./state.js";
 import { isBlank, focused } from "./derive.js";
 import { toggle } from "./palette.js";
 import { buzz, pointers } from "./touch.js";
@@ -18,26 +19,35 @@ const slotsEl = document.getElementById("slots");
 const edslotEl = document.getElementById("edslot");
 
 /* ---------- the step grid ---------- */
-// exported for ui/stepnav.js — the navigator draws the same lanes in the same
-// order, and one definition of the row vocabulary is how they stay agreed
+// the row vocabulary, exported: the order here is the lane order on a desk
+// and the COLUMN order of the phone's tracker table — one definition
 export const ROWS = ["deg", "oct", "vel", "inc", "stk", "gate", "acc", "sld"];
 export const RANGE = { deg: [-7, 7], oct: [-2, 2], vel: [0, 9], inc: [-3, 3], stk: [-2, 2] };
 const clampTo = (v, [lo, hi]) => Math.max(lo, Math.min(hi, v));
 
 const cells = {};                          // key -> [16 buttons], alive for ever
 function buildGrid() {
-  // ONE .prow PER ROW: a label cell and a 16-cell strip. The strip is its own
-  // grid, which is the whole trick behind the phone fold: kernel-daw.css
-  // drops it from 16 columns to 8 under 560px and auto-placement wraps cells
-  // 9–16 into a second rank — two banks of 8 at 44px instead of sixteen
-  // 24px slivers, with no JS and no second DOM.
-  // The label is TWO lines now — the name and its range ("deg −7…+7") — so
-  // the lane under the finger says what it is and how far it goes without a
-  // trip to the (?) paragraph.
+  // ONE .prow PER ROW: a label cell and a 16-cell strip. On a desk this is
+  // the classic lane layout — 16 columns left to right. Under 560px the CSS
+  // TRANSPOSES it into a tracker table: every wrapper here goes
+  // display:contents, #stepgrid itself becomes the grid, and each cell is
+  // placed by its data-row (column) and its :nth-child position (row) — so
+  // steps run top to bottom, 16 numbered rows, with the vectors as columns.
+  // ONE DOM, two layouts; no cell is ever rebuilt for the rotation.
+  // The label is TWO lines — the name and its range ("deg −7…+7") — so the
+  // lane under the finger says what it is and how far it goes; the tracker
+  // keeps only the name, as a column header.
+  //
+  // The ARIA reads as the DOM stands: a grid of rows, one per vector, each
+  // headed by its rowlab — a tracker's channel listing. The cells' own
+  // aria-labels ("step N deg V") carry the step identity either way.
   const prow = (lab, range, parent) => {
     const r = Object.assign(document.createElement("div"), { className: "prow" });
+    r.setAttribute("role", "row");
     const rl = Object.assign(document.createElement("div"), { className: "rowlab" });
     if (lab) {
+      rl.dataset.row = lab;                // the tracker's column placement hook
+      rl.setAttribute("role", "rowheader");
       rl.append(Object.assign(document.createElement("span"),
         { className: "rname", textContent: lab }));
       rl.append(Object.assign(document.createElement("span"),
@@ -45,40 +55,36 @@ function buildGrid() {
     }
     r.append(rl);
     const c = Object.assign(document.createElement("div"), { className: "prowcells" });
+    c.setAttribute("role", "presentation"); // pass the cells up to the row
     r.append(c);
     parent.append(r);
     return c;
   };
+  gridEl.setAttribute("role", "grid");
+  gridEl.setAttribute("aria-label", "step pattern");
   const nums = prow("", "", gridEl);
   for (let i = 0; i < 16; i++) {
     const n = Object.assign(document.createElement("div"),
       { className: "num" + (i % 4 === 0 ? " q" : ""), textContent: String(i + 1) });
     n.dataset.q = String(1 + (i >> 2));      // the numeral wears its quarter's colour
+    n.setAttribute("role", "columnheader");
     nums.append(n);
   }
-  // THE FOCUS VIEWPORT: the eight lanes live inside .lanesview > .lanes. On a
-  // desk both wrappers are inert (no height, no transform) and the grid reads
-  // exactly as it always has; under 560px the CSS gives .lanesview a fixed
-  // height and ui/stepnav.js pans .lanes with a translateY — ALL 128 cells
-  // stay in the DOM, alive and clickable, whichever lanes are showing. The
-  // beat-numeral ruler stays OUTSIDE the viewport so it never pans away.
-  const view = Object.assign(document.createElement("div"), { className: "lanesview" });
-  const lanes = Object.assign(document.createElement("div"), { className: "lanes" });
-  view.append(lanes);
-  gridEl.append(view);
   for (const key of ROWS) {
     const num0 = RANGE[key];
     const strip = prow(key,
       num0 ? (num0[0] < 0 ? num0[0] + "…+" + num0[1] : num0[0] + "…" + num0[1])
            : "on/off",
-      lanes);
+      gridEl);
     cells[key] = [];
     for (let i = 0; i < 16; i++) {
       const b = document.createElement("button"); b.type = "button";
       // the skin reads these, the code never does: which row a cell sits in
       // and which quarter of the bar — the 909's q1 red / q2 orange / q3 amber
-      // / q4 cream lives entirely in CSS off these two attributes
+      // / q4 cream lives entirely in CSS off these two attributes. data-row is
+      // ALSO the tracker's column placement hook (kernel-daw.css <560px).
       b.dataset.row = key; b.dataset.q = String(1 + (i >> 2));
+      b.setAttribute("role", "gridcell");  // still a <button>: Enter/Space work
       const num = RANGE[key];
       // TWO WAYS INTO A VALUE, both of them one-handed on a phone:
       //   drag   up/down on the cell scrubs it (pointer events, so touch too)
@@ -170,12 +176,63 @@ function patchGrid() {
 }
 
 /* ---------- phrase slots: click toggles into the box AND opens the editor --- */
-// the contour is ONE <svg><path> per pad, not sixteen <i> bars — 8 nodes on
-// the rail instead of 128, one attribute write per patch instead of 32 style
-// writes, and the picture survives the pad's moulded material
+// the contour is ONE <svg><path> per pad, not sixteen <i> bars — one node per
+// pad on the rail instead of sixteen, one attribute write per patch instead
+// of 32 style writes, and the picture survives the pad's moulded material.
+//
+// THE BANK IS VARIABLE now (1..NSLOTS, fields.js): the rail shows the
+// phrases the SONG has, then [+] to grow it and [−] to take the last one
+// back. So the rail is rebuilt whenever the bank's SIZE moves (patch()
+// below compares lengths) — a size change is rare and structural, exactly
+// the case the built-once law carves out, and every cell listener still
+// binds once per build.
 const SVGNS = "http://www.w3.org/2000/svg";
 const slotEls = [];                        // { b, sn, line: <path> }
+// the two bank keys, built ONCE and re-appended after every rail rebuild
+const addKey = (() => {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "slotadd"; b.id = "slotadd"; b.textContent = "+";
+  b.title = "add a phrase (up to " + NSLOTS + ")";
+  b.setAttribute("aria-label", "add a phrase");
+  b.addEventListener("click", () => {
+    if (SLOTS.length >= NSLOTS) return;    // the key is hidden at the cap anyway
+    SLOTS.push(blank());
+    setSlot(SLOTS.length - 1);             // the new phrase opens in the editor
+    commit("phrase"); commit("selection");
+  });
+  return b;
+})();
+// DELETION IS LAST-SLOT-ONLY, and refused while anything plays it. Slots are
+// referenced BY INDEX from every stack entry in the song, so removing a
+// middle slot would renumber everything after it — every box quietly playing
+// a different phrase than the one it was built on. Popping the tail renumbers
+// nothing; the guard below is the readout saying WHY when the tail is in use.
+const dropKey = (() => {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "slotadd"; b.id = "slotdrop"; b.textContent = "−";
+  b.title = "remove the last phrase (only when no box plays it)";
+  b.setAttribute("aria-label", "remove the last phrase");
+  b.addEventListener("click", () => {
+    const last = SLOTS.length - 1;
+    if (last < 1) return;                  // hidden at one slot anyway
+    const holders = [];
+    SONG.forEach((sec, i) => {
+      if ((sec.stack || []).some(e => e.slots.includes(last))) holders.push(i + 1);
+    });
+    if (holders.length) {
+      emit("status", { text: "phrase " + (last + 1) + " is switched on in box " +
+        holders.join(", ") + " — take it off there first", sticky: true });
+      return;
+    }
+    SLOTS.pop();
+    if (slot > SLOTS.length - 1) setSlot(SLOTS.length - 1);
+    commit("phrase"); commit("selection");
+  });
+  return b;
+})();
 function buildSlots() {
+  slotEls.length = 0;
+  slotsEl.textContent = "";                // the keys survive: appended below
   SLOTS.forEach((p, i) => {
     const b = document.createElement("button");
     b.type = "button"; b.className = "slot";
@@ -196,6 +253,7 @@ function buildSlots() {
     slotEls.push({ b, sn, line });
     slotsEl.append(b);
   });
+  slotsEl.append(addKey, dropKey);
 }
 // gated steps become line segments, rests become gaps: M starts a run, L
 // continues it. deg −7..+7 maps top-to-bottom into the 26-unit viewBox.
@@ -214,6 +272,8 @@ function contourPath(p) {
 }
 function patchSlots() {
   const sec = curSection(), ent = focused(sec);
+  addKey.hidden = SLOTS.length >= NSLOTS;  // full bank: the key goes, not grey
+  dropKey.hidden = SLOTS.length <= 1;      // the bank keeps its last phrase
   SLOTS.forEach((p, i) => {
     const s = slotEls[i], inBox = ent.slots.includes(i);
     s.b.className = "slot" + (i === slot ? " sel" : "") + (inBox ? " inbox" : "");
@@ -244,13 +304,30 @@ const put = make => () => { putPhrase(slot, make()); commit("phrase"); };
 document.getElementById("seed").addEventListener("click", put(() => structuredClone(DEFAULT)));
 document.getElementById("rnd").addEventListener("click", put(randomPhrase));
 document.getElementById("clear").addEventListener("click", put(blank));
-// the (?) key: the how-to paragraph, off by default — the editor no longer
-// spends three lines of a phone screen teaching before it shows the grid
-{
-  const b = document.getElementById("edhelp"), p = document.getElementById("edhint");
+// the (?) keys: a how-to paragraph, off by default — a panel no longer spends
+// three lines of a phone screen teaching before it shows its controls. One
+// pattern (.btn.hint toggling an .edhint), one spot (right after the panel's
+// h2), here and on the SONG page (ui/chrome.js wires that one).
+export function hintKey(btnId, pId) {
+  const b = document.getElementById(btnId), p = document.getElementById(pId);
   b.addEventListener("click", () => {
     p.hidden = !p.hidden;
     b.setAttribute("aria-expanded", String(!p.hidden));
+  });
+}
+hintKey("edhelp", "edhint");
+hintKey("phrhelp", "phrhint");            // the phrase rail's own paragraph
+// THE RAMP KEY (phone only — the CSS hides it ≥560px): the tracker table
+// shows deg/oct/vel plus the binary trio by default; inc and stk are the two
+// columns most phrases never touch, so they sit behind this latch rather
+// than squeezing every row nine-wide. One attribute on the grid; the CSS
+// re-places the columns. Desktop always shows all eight lanes, so the latch
+// has nothing to do there.
+{
+  const b = document.getElementById("ramptog");
+  b.addEventListener("click", () => {
+    const on = gridEl.toggleAttribute("data-ramp");
+    b.setAttribute("aria-pressed", String(on));
   });
 }
 
@@ -258,6 +335,11 @@ document.getElementById("clear").addEventListener("click", put(blank));
 buildGrid();
 buildSlots();
 // refreshFader: an open fader shows a live value, and a song load or a second
-// finger scrubbing the same cell must move its LCD too
-function patch() { patchGrid(); patchSlots(); refreshFader(); }
+// finger scrubbing the same cell must move its LCD too. The slot rail is
+// REBUILT first whenever the bank's size moved (add/drop/load) — the only
+// structural change the phrase surface has.
+function patch() {
+  if (slotEls.length !== SLOTS.length) buildSlots();
+  patchGrid(); patchSlots(); refreshFader();
+}
 for (const t of ["song", "phrase", "box", "selection"]) on(t, patch);

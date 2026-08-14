@@ -267,28 +267,76 @@
     Object.assign(NS.skeleton(gk, role), { fx: G.fx ? [...G.fx] : [] });
 
   // ---- HOW A SONG STARTS ---------------------------------------------------
-  // FOUR BARS OF DRUMS, THEN THE BASS COMES IN, THEN THE TUNE. That is how a
-  // record starts, and it is not a fade — it is an ARRANGEMENT: one section per
-  // layer arriving, which is precisely why it could not be an `intro` edge on a
-  // single box. Edges rewrite one bar; this is three sections.
+  // There are more ways to open a record than a drum hit, and for a while this
+  // table did not know any of them: seven of its nine shapes were drum-led and
+  // the other two got a count-in or a downbeat stamped on anyway, so every
+  // composed song in every genre opened on percussion. The vocabulary now
+  // matches the world's: the layered BEDS (drums, then bass, then the tune —
+  // an ARRANGEMENT, one section per layer, which is why it could never be an
+  // `intro` edge on one box) sit beside the kernel's one-bar edge kinds —
+  // padin, bassin, riser, cold, stabs, fade, solo, swell, count, hit, kit.
   //
-  // It falls out of something the engine already did. A box with no phrase still
-  // renders its kit and its bass, because both are GENRE data rather than phrase
-  // data — so "drums alone" is a section with no phrase and no bass, "bass
-  // alone" is one with no phrase and no kit, and "drums and bass" is one with no
-  // phrase at all. Nothing new had to be built to say any of it.
-  const INTROS = ["soft", "soft", "hit", "count", "drums", "drums", "drumbass",
-                  "drumbass", "bassin"];
-  function introSections(G, gk, r, S) {
+  // WHO CHOOSES: the genre's FAMILY (genres.js stamps `family` on every
+  // anchor). Each family carries a weighted ballot — nine votes, repetition is
+  // the weight — leaning where the tradition leans: the choral and drift
+  // genres open on a pad or a lone line, the club genres on a riser or a cold
+  // drop-in, the bands just start playing, soul walks in on the bass, the
+  // groove genres count off or skank first. No family is a constant: two seeds
+  // of one genre should often begin differently.
+  const INTRO_LEAN = {
+    kernel: ["cold", "count", "solo", "padin", "fade", "hit", "stabs", "swell", "riser"],
+    vox:    ["solo", "solo", "padin", "padin", "fade", "fade", "swell", "stabs", "cold"],
+    drift:  ["padin", "padin", "padin", "fade", "fade", "solo", "swell", "stabs", "cold"],
+    club:   ["riser", "riser", "riser", "kit", "kit", "cold", "cold", "drums", "fade"],
+    band:   ["cold", "cold", "cold", "hit", "hit", "count", "count", "kit", "stabs"],
+    studio: ["cold", "cold", "stabs", "stabs", "padin", "fade", "hit", "kit", "count"],
+    soul:   ["bassin", "bassin", "bassin", "stabs", "stabs", "drumbass", "hit", "count", "padin"],
+    groove: ["bassin", "bassin", "stabs", "stabs", "count", "drums", "hit", "solo", "drumbass"],
+    roots:  ["count", "count", "solo", "solo", "cold", "hit", "bassin", "swell", "stabs"],
+  };
+  // A DRUM-SHAPED OPENING NEEDS DRUMS. On a kitless genre each one degrades to
+  // the nearest kind that is about the sound instead of the kit — and bassin
+  // needs a bass, which every kitless anchor in the table happens to lack.
+  const INTRO_NOKIT = { count: "solo", hit: "cold", kit: "padin", riser: "swell",
+                        drums: "padin", drumbass: "padin", bassin: "solo" };
+  // THE REGISTRY BRIDGE. The intro chip table (fields.js INLABEL) has not yet
+  // learned the new kinds, and the loader enum-rejects what the registry does
+  // not know — so a kind the table lacks is STORED as its nearest legal
+  // neighbour, while `cue` keeps the honest name (the same trick ALIAS plays
+  // with prechorus/build). When INLABEL learns the words this map goes quiet
+  // on its own: every entry is guarded by a lookup, not a build flag.
+  function introEdge(kind, kit, INLABEL) {
+    if (INLABEL[kind] != null) return kind;
+    return { padin: "solo", fade: "swell", riser: "swell",
+             stabs: kit ? "hit" : "swell", cold: null }[kind] || null;
+  }
+  // THE CHOOSER GETS ITS OWN, GENRE-SALTED STREAM. The phrase bank consumes
+  // the same number of r() draws whatever the genre, so a chooser reading the
+  // shared stream sat at the same position for every kit genre — at any fixed
+  // seed the whole family opened identically, eight seeds gave eight openings
+  // across forty-five genres, and the first measurement showed four pool
+  // entries that could never win. FNV-1a over "genre/seed" decorrelates them;
+  // still pure, still a function of (gk, seed) and nothing else.
+  const ihash = s => {
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  };
+  function introSections(G, gk, r, S, rI) {
     const kit = Object.keys(G.kit || {}).length > 0;
-    // A genre with no drums has nothing to bring in one layer at a time, so it
-    // gets the one intro that is about the sound rather than the arrangement.
-    const shape0 = kit ? pick(r, INTROS) : "soft";
+    // THE ANCHOR'S SAY comes first: a genre whose identity dictates its
+    // opening declares `intro` on the anchor (a fugue starts with the subject
+    // alone; ambient fades up; dub walks in on the bass) and wins the coin a
+    // little over half the time — often enough to read as the genre's own way
+    // in, not so often that every seed opens alike. Absent = the family lean.
+    let kind = G.intro && chance(rI, 0.55) ? G.intro
+             : pick(rI, INTRO_LEAN[G.family] || INTRO_LEAN.kernel);
+    if (!kit && INTRO_NOKIT[kind]) kind = INTRO_NOKIT[kind];
     // A KIT SCHEDULE OUTRANKS A KIT OP: drums() reads g.kits before g.kit, and
     // genreOf maps only g.kit — so "bass alone" cannot yet be said for a kits
     // genre; the bed would keep drumming under the label. Until the UI phase
     // teaches genreOf to map the schedule, a kits genre starts drums-first.
-    const shape = shape0 === "bassin" && G.kits ? "drums" : shape0;
+    if (kind === "bassin" && G.kits) kind = "drums";
     // four bars, or two in a half-time genre — four bars of vaporwave is
     // fifteen seconds of nothing but a kick, which is not an intro, it is a wait
     const n = Math.max(2, Math.min(4, G.rate < 1 ? 2 : 4));
@@ -299,20 +347,32 @@
       return Object.assign(b, extra);
     };
     const out = [];
-    if (shape === "drums" || shape === "drumbass")
+    if (kind === "drums" || kind === "drumbass")
       out.push(bed({ role: "drums", bassop: "nobass",
                      intro: chance(r, 0.4) ? "hit" : null }));
-    if (shape === "bassin") out.push(bed({ role: "bass", kit: "nodrums" }));
-    if (shape === "drumbass" || shape === "bassin")
+    if (kind === "bassin") out.push(bed({ role: "bass", kit: "nodrums" }));
+    if (kind === "drumbass" || kind === "bassin")
       out.push(bed({ role: "groove", outro: chance(r, 0.6) ? "fill" : null }));
-    // ...and then the section that actually introduces the tune
+    // ...and then the section that actually introduces the tune. `cue` carries
+    // the chosen kind whatever the stored realization looks like — the gates
+    // count openings by it, and the UX phase can label the box with it.
     const head = build("intro", G, gk, r, S);
-    if (shape === "count") head.intro = "count";
-    else if (shape === "hit") head.intro = "hit";
-    else if (out.length) {
+    head.cue = kind;
+    if (kind === "cold") {
+      // THE COLD OPEN: the whole band from beat one, playing real material —
+      // the hook itself, or the riff under the pad. Everything build() holds
+      // back for an arrival (the fade, the pulled level, the thinned kit)
+      // comes off, because the not-arriving is the gesture.
+      head.stack[0].slots = chance(r, 0.5) ? [S.hook] : [S.riff, S.pad];
+      head.env = null; head.lvl = null; head.rev = null; head.mot = null;
+      head.kit = null; head.bassop = null;
+      head.intro = introEdge("cold", kit, NF.INLABEL);
+    } else if (out.length) {
       // the bed already did the arriving, so this one just plays
       head.env = null; head.lvl = null; head.intro = null;
       if (kit) head.kit = null;
+    } else {
+      head.intro = introEdge(kind, kit, NF.INLABEL);
     }
     out.push(head);
     return out;
@@ -336,7 +396,10 @@
       b.stack[0].slots = chance(r, 0.5) ? [S.pad] : [S.pad, S.sparse];
       b.env = "in"; b.lvl = "back"; b.rev = "wet";
       b.len = Math.max(2, Math.floor(bars / 2));
-      if (kit) { b.kit = chance(r, 0.5) ? "sparse" : "nodrums"; b.intro = pick(r, ["count", "hit"]); }
+      // the intro EDGE is not decided here: introSections owns how the song
+      // opens (family-weighted, anchor-first), and stamping count/hit on top
+      // of it is exactly the every-song-opens-on-a-drum bug this replaced
+      if (kit) b.kit = chance(r, 0.5) ? "sparse" : "nodrums";
       else b.mot = "open";
       b.bassop = kit && chance(r, 0.5) ? "pedal" : null;
     } else if (role === "verse") {
@@ -460,16 +523,16 @@
     const kit = Object.keys(G.kit || {}).length > 0;
     // eight kinds of material, and every one of them is USED — a song that
     // fills three slots and leaves five blank has not composed anything, it
-    // has made a phrase. The bank is then sized to NSLOTS (the registry's
-    // number, not a literal 8): if the bank ever grows, the composer pads
-    // with blanks rather than emitting a save the loader must stretch.
+    // has made a phrase. The bank is sized to WHAT THE SONG NEEDS: exactly
+    // these eight, no blank padding. The bank is variable now (1..NSLOTS,
+    // song.js), so the old pad-to-the-registry loop would just ship inert
+    // blanks a person then has to scroll past on the rail.
     // slot 5 is the TOPLINE — the chorus's own melody, written as a hook-kind
     // phrase (motif, breath, climax) in a singable span. It replaced "busy",
     // which was the one slot that was texture rather than material.
     const slots = [phrase(r, "hook"), phrase(r, "answer"), phrase(r, "riff"),
                    phrase(r, "counter"), phrase(r, "pad"), phrase(r, "topline"),
                    phrase(r, "sparse"), phrase(r, "climb")];
-    while (slots.length < NF.NSLOTS) slots.push(blank());
     const S = { hook: 0, answer: 1, riff: 2, counter: 3, pad: 4,
                 topline: 5, sparse: 6, climb: 7,
                 groove: kit ? pick(r, [null, "backbeat", "push", "laidback", "funk", "dub"]) : null,
@@ -482,7 +545,8 @@
     const xs = arcOf(plan);
     // the plan's own "intro" is replaced by however this song decided to begin,
     // which may be one section or three
-    const song = [...introSections(G, gk, r, S),
+    const song = [...introSections(G, gk, r, S,
+                                   rng(ihash(gk + "/" + (seed == null ? 1 : seed)))),
                   ...plan.slice(1).map((role, i) =>
                     build(role, G, gk, r, S, { x: xs[i + 1], peak: xs[i + 1] === 1 }))];
     // NO SECTION RESTATES ITS NEIGHBOUR. Two drops in a row (the dance plan
@@ -500,7 +564,8 @@
              vol: 80 };
   }
 
-  const api = { compose, ROLES, BEDS, PLANS, PLAN_OF, BPM, ALIAS, arcOf, rng, phrase };
+  const api = { compose, ROLES, BEDS, PLANS, PLAN_OF, BPM, ALIAS, arcOf, rng, phrase,
+                INTRO_LEAN, INTRO_NOKIT, introEdge };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuCompose = api;
 })(typeof window !== "undefined" ? window : globalThis);

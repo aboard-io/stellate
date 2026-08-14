@@ -16,6 +16,7 @@ import { initAudio } from "../audio/graph.js";
 import { setFont, fontDef, FONT } from "../audio/assets.js";
 import { status } from "./readout.js";
 import { resetScroll } from "./arrange.js";
+import { hintKey } from "./editor.js";
 
 const $ = id => document.getElementById(id);
 
@@ -194,6 +195,10 @@ fader($("vol"), 80);
 }
 
 /* ---------- desktop + reset ---------- */
+// the SONG page's (?) — the same .btn.hint/.edhint pattern the editor head
+// established (editor.js exports the three-line wiring); the copy it toggles
+// used to be a four-line lecture printed above the rack on every visit
+hintKey("songhelp", "songhint");
 $("savefile").addEventListener("click", saveFile);
 $("loadfile").addEventListener("click", () => $("loadinput").click());
 $("loadinput").addEventListener("change", e => {

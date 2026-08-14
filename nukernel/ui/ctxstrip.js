@@ -13,6 +13,9 @@ import { ROLES } from "./deps.js";
 import { SONG, viewSec, slot, bpm, curSection, on } from "./state.js";
 import { stackLabel, boxBars, secsOf, mmss } from "./derive.js";
 import { setPage } from "./pages.js";
+// live bindings — the strip may READ the transport (a view importing audio is
+// the allowed direction); it appends the sounding box while playing
+import { playing, playingSec } from "../audio/transport.js";
 
 const strip = document.getElementById("ctxstrip");
 const text = document.getElementById("ctxtext");
@@ -30,6 +33,12 @@ function render() {
     bars + " bar" + (bars === 1 ? "" : "s"),
   ];
   if (chassis.dataset.page === "step") parts.push("phrase " + (slot + 1));
+  // WHILE PLAYING the strip also names the sounding box — the edit target and
+  // the playhead are different facts, and on a phone the song page (where the
+  // .live ring shows) is usually off screen
+  if (playing && playingSec >= 0 && SONG[playingSec])
+    parts.push("▶ " + (playingSec + 1) +
+      (SONG[playingSec].role ? " " + ROLES[SONG[playingSec].role] : ""));
   const t = parts.filter(Boolean).join(" · ");
   if (text.textContent !== t) text.textContent = t;
   strip.title = "every sound / mix / step edit lands on this box (" +
@@ -37,8 +46,10 @@ function render() {
 }
 // song = compose/load/reset/boot; box = musical edits (len moves the bar
 // count); selection = box select AND phrase-slot select; page = the deck
-// moved; transport = bpm (the duration in the title)
-for (const t of ["song", "box", "selection", "page", "transport"]) on(t, render);
+// moved; transport = bpm (the duration in the title); the two transport:*
+// events drive the ▶ suffix — playing flipped, or the sounding box moved
+for (const t of ["song", "box", "selection", "page", "transport",
+                 "transport:state", "transport:section"]) on(t, render);
 
 strip.addEventListener("click", () => {
   setPage("song");

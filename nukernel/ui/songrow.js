@@ -13,12 +13,21 @@ import { GENRES, ROLES, OPLABEL, OCTAVES, SCALELABEL, VOX, KITLABEL, DRUMKITS,
          OUTLABEL, MAX_LEN, MAX_NUDGE, emptyBox } from "./deps.js";
 import { SONG, viewSec, loopOnly, pendingStart, bpm, setViewSec, setLoopOnly,
          setPendingStart, commit, on, emit } from "./state.js";
-import { stackOf, stackLabel, boxBars, secsOf, focused, opsOf, optOf,
+import { stackOf, stackLabel, boxBars, secsOf, focused, focusOf, opsOf, optOf,
          voxAll, mmss } from "./derive.js";
 import { playing, playingSec, startAt, resetBar } from "../audio/transport.js";
-import { onLongPress } from "./touch.js";
+import { onLongPress, buzz } from "./touch.js";
+// the popover mounts the ONE palette element (built once over there); showTab
+// puts it on SOUND when a row opens — same path a .ptab click takes
+import { showTab } from "./palette.js";
 
 const songEl = document.getElementById("song");
+// TABLE SEMANTICS, honestly: the song is a list of sections with the same
+// fields on every one — a table on any width, whether the skin draws cards
+// (desk) or rows (phone). The roles are static because the DOM is; the cells
+// are marked where the boxes are built.
+songEl.setAttribute("role", "table");
+songEl.setAttribute("aria-label", "song sections");
 const PX_PER_BAR = 22, BAR_PX = 26;
 // past this a box stops growing and starts saying its length in words instead
 const MAX_BOX_PX = 240;
@@ -73,6 +82,7 @@ const keepMarks = () => {
 function buildBox(sec) {
   const box = document.createElement("div");
   box.className = "box";
+  box.setAttribute("role", "row");
   box.draggable = true;
   // THE HEAD IS BUILT ONCE TOO — dedicated children patched by textContent/
   // hidden, never innerHTML. Rebuilding it per patch destroyed the ◀ ▶ ⟳ ×
@@ -81,9 +91,13 @@ function buildBox(sec) {
   // patched, the focused button was removed and focus fell to <body> — the
   // exact mid-click destruction palette.js documents having fixed once.
   const head = document.createElement("div"); head.className = "bhead";
-  const num = document.createElement("b");
+  // the head is presentational plumbing (flex on a desk, display:contents in
+  // the phone table); its children are the row's first cells
+  head.setAttribute("role", "presentation");
+  const num = document.createElement("b"); num.setAttribute("role", "cell");
   const role = document.createElement("span"); role.className = "role";
-  const meta = document.createElement("span");
+  role.setAttribute("role", "cell");
+  const meta = document.createElement("span"); meta.setAttribute("role", "cell");
   const loopmark = document.createElement("span");
   loopmark.className = "loopmark"; loopmark.textContent = "loop";
   head.append(num, role, meta, loopmark);
@@ -118,12 +132,21 @@ function buildBox(sec) {
     if (playing) resetBar();
   });
   tools.append(moveL, moveR, loopBtn, xBtn);
+  tools.setAttribute("role", "cell");
   head.append(tools);
   const gl = document.createElement("div"); gl.className = "bgenre";
+  gl.setAttribute("role", "cell");
+  // A STACKED LAYER IS ITS OWN SUB-ROW: the genre line names the AUTHORITY,
+  // and each rider genre gets an indented line of its own beneath it — a
+  // button, because tapping a layer line focuses that layer (and on a phone
+  // opens the popover already looking at it). Rebuilt only when the stack's
+  // genres change; patched otherwise, like everything else on the card.
+  const layers = document.createElement("div"); layers.className = "blayers";
   // The box lists phrase NUMBERS. The contour picture belongs in the slot rail
   // where you are choosing a phrase; repeating it here made the row a wall of
   // little graphs you had to decode instead of a song you could read.
   const ph = document.createElement("div"); ph.className = "bphrase";
+  ph.setAttribute("role", "cell");
   const prog = document.createElement("div"); prog.className = "bprog";
   const fill = Object.assign(document.createElement("i"), { className: "fillbar" });
   prog.append(fill);
@@ -134,13 +157,14 @@ function buildBox(sec) {
   // lamp's title carries them — and the order is the reading order:
   // line · drums · bass · time · fx · sends · place · edges.
   const leds = document.createElement("div"); leds.className = "bleds";
+  leds.setAttribute("role", "cell");
   const lamp = {};
   for (const fam of ["line", "drum", "bass", "time", "fx", "send", "place", "edge"]) {
     const s = document.createElement("i");
     s.className = "led"; s.dataset.fam = fam;
     lamp[fam] = s; leds.append(s);
   }
-  box.append(head, gl, ph, prog, leds);
+  box.append(head, gl, layers, ph, prog, leds);
 
   // REORDER — boxes drag among themselves, and that is all dragging does now.
   box.addEventListener("dragstart", e => {
@@ -170,9 +194,20 @@ function buildBox(sec) {
   // CLICK plays from here and carries on; DOUBLE-CLICK loops this box alone.
   // Selecting is immediate; the JUMP waits for the bar line, so clicking
   // around while it plays never chops a bar in half.
+  // ON A PHONE a row tap OPENS THE ROW instead: the popover is the row's
+  // whole option surface, and the ▶ in its head is the play-from-here that a
+  // desk gets from the tap itself. While ANOTHER row's popover is up, a tap
+  // only dismisses it (the auto-dismiss rule) — the next tap opens this row.
   box.addEventListener("click", e => {
     if (e.target.closest(".grip")) return;
     const i = idx(sec);
+    if (NARROW.matches) {
+      if (popFor && popFor !== sec) { closePop(); setViewSec(i); commit("selection"); return; }
+      if (popFor === sec) { closePop(); return; }   // same row: a toggle
+      setViewSec(i);
+      openPop(sec, 0);
+      return;
+    }
     setViewSec(i); setLoopOnly(null);
     if (playing) { setPendingStart(i); commit("selection"); }
     else { commit("selection"); startAt(i); }
@@ -217,7 +252,7 @@ function buildBox(sec) {
     };
   }));
   return { box, head, num, role, meta, loopmark, moveL, moveR, loopBtn, xBtn,
-           gl, ph, lamp, fill };
+           gl, layers, layersSig: "", ph, lamp, fill };
 }
 
 /* ---------- patch on every change ---------- */
@@ -277,6 +312,12 @@ function patchBox(sec, i, el) {
   // spot on every card and the cluster never reshuffles between boxes
   el.moveL.classList.toggle("ghost", i === 0);
   el.moveR.classList.toggle("ghost", i === SONG.length - 1);
+  // the move keys speak the layout's axis: ◀▶ along the desk's card rack,
+  // ↑↓ down the phone's table — same buttons, same handlers, same labels
+  // ("earlier"/"later" is the truth on both axes)
+  const mvL = narrow ? "↑" : "◀", mvR = narrow ? "↓" : "▶";
+  if (el.moveL.textContent !== mvL) el.moveL.textContent = mvL;
+  if (el.moveR.textContent !== mvR) el.moveR.textContent = mvR;
   el.moveL.setAttribute("aria-label", "move box " + (i + 1) + " earlier");
   el.moveR.setAttribute("aria-label", "move box " + (i + 1) + " later");
   el.loopBtn.classList.toggle("on", i === loopOnly);
@@ -284,10 +325,42 @@ function patchBox(sec, i, el) {
     (i === loopOnly ? "stop looping box " : "loop box ") + (i + 1));
   el.xBtn.setAttribute("aria-label", "remove box " + (i + 1));
 
+  // the genre line names the AUTHORITY; the riders are sub-rows below it.
+  // (The box's aria-label above still carries the whole stack.)
+  const st = stackOf(sec);
   el.gl.className = "bgenre has";
-  el.gl.textContent = stackLabel(sec);
-  el.ph.className = "bphrase" + (stackOf(sec).some(e => e.slots.length) ? " has" : "");
-  el.ph.textContent = stackOf(sec).map(e =>
+  el.gl.textContent = GENRES[st[0].g].label;
+  // rebuild the sub-rows only when the stack's GENRES change — a structural,
+  // rare edit, the built-once law's carve-out; labels/focus patch every pass
+  const lsig = st.slice(1).map(e => e.g).join("|");
+  if (el.layersSig !== lsig) {
+    el.layersSig = lsig;
+    el.layers.textContent = "";
+    st.slice(1).forEach((ent, k) => {
+      const b2 = document.createElement("button");
+      b2.type = "button"; b2.className = "blayer";
+      b2.addEventListener("click", ev => {
+        ev.stopPropagation();               // the box click plays / opens
+        const at = idx(sec);
+        setViewSec(at); sec.focus = k + 1;  // the layer the phrase rail edits
+        if (NARROW.matches) {
+          if (popFor && popFor !== sec) { closePop(); commit("selection"); return; }
+          openPop(sec, k + 1);
+        } else commit("selection");
+      });
+      el.layers.append(b2);
+    });
+  }
+  [...el.layers.children].forEach((b2, k) => {
+    const ent = st[k + 1];
+    const t2 = GENRES[ent.g].label +
+      (ent.slots.length ? " · " + ent.slots.map(n => n + 1).join("+") : " · —");
+    if (b2.textContent !== t2) b2.textContent = t2;
+    b2.classList.toggle("foc", i === viewSec && focusOf(sec) === k + 1);
+    b2.setAttribute("aria-label", "layer: " + GENRES[ent.g].label + " — edit this layer");
+  });
+  el.ph.className = "bphrase" + (st.some(e => e.slots.length) ? " has" : "");
+  el.ph.textContent = st.map(e =>
     e.slots.length ? e.slots.map(n => n + 1).join("+") : "—").join("  /  ");
 
   // THE LAMPS. Each family's words are gathered exactly as the tag pile
@@ -355,6 +428,113 @@ const addBtn = (() => {
   });
   return add;
 })();
+
+/* ---------- the row popover (phone) ---------- */
+// Tapping a song row POPS UP that row's whole option surface — the palette,
+// wearing its own six tabs — anchored under the row, so choosing a sound for
+// box 5 never means scrolling away from box 5. The ONE palette element is
+// MOVED into the popover while it is open (it is built once by palette.js;
+// moving the node is cheap and isOn()/drawPalette keep painting it wherever
+// it stands) and moved home on close, so the SOUND/MIX rail pages still work.
+// The head carries the row's play-from-here ▶ and the bars/nudge steppers —
+// the grips' two jobs said in keys, because a grip needs a width the table
+// row no longer has (the grips themselves stay on the desk, where the gate
+// checks them).
+// Dismiss: ✕, the scrim, Esc; AUTO-dismiss on another row's tap, on a page
+// switch, on a new song, and when the deck scrolls meaningfully.
+let popFor = null;                          // the box object the popover is on
+let popScroll0 = 0;
+const paletteEl = document.getElementById("palette");
+const paletteHome = paletteEl.parentElement;
+const deckEl = document.querySelector(".deck");
+const rpScrim = Object.assign(document.createElement("div"),
+  { className: "rpscrim", hidden: true });
+const rowpop = Object.assign(document.createElement("div"),
+  { className: "rowpop", id: "rowpop", hidden: true });
+rowpop.setAttribute("role", "dialog");
+const rpTitle = Object.assign(document.createElement("span"),
+  { className: "rptitle", textContent: "box" });
+const rpPlay = btn("rpk rpplay", "▶", "play from this box", () => {
+  if (!popFor) return;
+  const i = SONG.indexOf(popFor);
+  setLoopOnly(null);
+  if (playing) { setPendingStart(i); commit("selection"); }
+  else { commit("selection"); startAt(i); }
+  buzz(4);
+});
+const rpX = btn("rpk rpx", "✕", "close the row options", () => closePop());
+const rpHead = Object.assign(document.createElement("div"), { className: "rphead" });
+rpHead.append(rpPlay, rpTitle, rpX);
+// bars/nudge as steppers: same clamps as the grips, same commit("box")
+const stepper = (lab, name, get, set) => {
+  const w = Object.assign(document.createElement("span"), { className: "rpstep" });
+  w.append(Object.assign(document.createElement("span"),
+    { className: "rlab", textContent: lab }));
+  const dn = btn("rpk", "−", "one " + name + " less", () => set(get() - 1));
+  const lcd = Object.assign(document.createElement("output"), { textContent: "0" });
+  const up = btn("rpk", "+", "one " + name + " more", () => set(get() + 1));
+  w.append(dn, lcd, up);
+  return { w, lcd };
+};
+const rpLen = stepper("bars", "bar",
+  () => popFor.len,
+  v => { const n = Math.max(1, Math.min(MAX_LEN, v));
+         if (n !== popFor.len) { popFor.len = n; commit("box"); } });
+const rpNudge = stepper("nudge", "bar of nudge",
+  () => popFor.nudge,
+  v => { const n = Math.max(0, Math.min(MAX_NUDGE, v));
+         if (n !== popFor.nudge) { popFor.nudge = n; commit("box"); } });
+const rpBars = Object.assign(document.createElement("div"), { className: "rpbars" });
+rpBars.append(rpLen.w, rpNudge.w);
+const rpMount = Object.assign(document.createElement("div"), { className: "rpmount" });
+rowpop.append(rpHead, rpBars, rpMount);
+document.body.append(rpScrim, rowpop);
+
+function openPop(sec, layer) {
+  popFor = sec;
+  sec.focus = layer;
+  showTab("sound");                        // a row opens on the sound question
+  rpMount.append(paletteEl);               // moved, not copied — one palette
+  commit("selection");                     // palette + ctx strip repaint
+  rpScrim.hidden = false; rowpop.hidden = false;
+  const el = els.get(sec);
+  const r = el ? el.box.getBoundingClientRect() : null;
+  // anchored under the row, clamped so the sheet keeps working height; it
+  // reaches the bottom edge and scrolls inside itself
+  rowpop.style.top = Math.max(8, Math.min(r ? r.bottom + 6 : 72, innerHeight - 380)) + "px";
+  popScroll0 = deckEl ? deckEl.scrollTop : 0;
+  patchPop();
+  rpX.focus({ preventScroll: true });
+  buzz(4);
+}
+function closePop() {
+  if (!popFor) return;
+  popFor = null;
+  rowpop.hidden = true; rpScrim.hidden = true;
+  paletteHome.append(paletteEl);           // home, so the rail pages find it
+}
+function patchPop() {
+  if (!popFor) return;
+  const i = SONG.indexOf(popFor);
+  if (i < 0) { closePop(); return; }       // the box was removed under it
+  const li = focusOf(popFor), st = stackOf(popFor);
+  rpTitle.textContent = "box " + (i + 1) + " · " + GENRES[st[li].g].label +
+    (li ? " (layer)" : "");
+  rpLen.lcd.textContent = String(popFor.len);
+  rpNudge.lcd.textContent = String(popFor.nudge);
+}
+rpScrim.addEventListener("click", () => closePop());
+addEventListener("keydown", ev => {
+  if (popFor && ev.key === "Escape") { closePop(); ev.preventDefault(); }
+});
+// a meaningful scroll of the deck is the finger saying "I am going somewhere"
+if (deckEl) deckEl.addEventListener("scroll", () => {
+  if (popFor && Math.abs(deckEl.scrollTop - popScroll0) > 24) closePop();
+}, { passive: true });
+on("page", () => closePop());              // the rail moved: the row is gone
+on("song", () => closePop());              // a whole new song
+on("box", patchPop);                       // bars/nudge LCDs follow the edits
+on("selection", patchPop);
 
 /* ---------- structural sync ---------- */
 // create elements for new boxes, drop the ones whose box is gone, put the rest

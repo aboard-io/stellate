@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -8,7 +8,10 @@
 <meta name="robots" content="noindex">
 <!-- hw.css first: it owns every token and face; kernel-daw.css finishes the
      declarations it leaves open (the pages.css + how.css pattern). The static
-     data-theme="dark" on <html> is why graphite is the default face. -->
+     data-theme="light" on <html> pins the SILVER 909 face as the shipped
+     default (Paul, 2026-08-14: "switch to the lighter 909 styling"); graphite
+     remains the dark palette one attribute away. LED/LCD tokens never invert
+     on either face. -->
 <link rel="stylesheet" href="hw.css">
 <link rel="stylesheet" href="kernel-daw.css">
 </head>
@@ -48,10 +51,17 @@
         <button class="btn" id="reroll" title="same genre, new seed" aria-label="recompose: same genre, new seed">⟳</button>
       </div>
     </div>
+    <!-- the fader legends are TWO spans: the full word for a desk, the
+         abbreviation for a phone (the CSS swaps them). The phone used to hide
+         the labels entirely — two bare faders whose LCDs said 126 and 80 with
+         nothing saying WHAT — and abbreviating beats hiding: a legend is the
+         silkscreen, not decoration. The accessible name is the full word both
+         ways (aria-hidden on the abbreviation, never on the label). -->
     <div class="tset">
       <div class="knob"><label for="bpm">Tempo</label>
         <input type="range" id="bpm" min="70" max="160" value="126"><b id="bpmv">126</b></div>
-      <div class="knob"><label for="vol">Volume</label>
+      <div class="knob"><label for="vol"><span class="lf">Volume</span><span
+          class="la" aria-hidden="true">Vol</span></label>
         <input type="range" id="vol" min="0" max="100" value="80"><b id="volv">80</b></div>
       <output class="poslcd" id="lcdpos" aria-label="playback position">--</output>
     </div>
@@ -86,6 +96,12 @@
           <h2>Editing <span id="edslot">phrase 1</span></h2>
           <button class="btn hint" id="edhelp" aria-expanded="false"
             aria-controls="edhint" title="how to edit">?</button>
+          <!-- the tracker's column latch: inc/stk are the two columns most
+               phrases never touch, so on a phone they sit behind this key
+               instead of squeezing every row nine-wide. Hidden ≥560px — the
+               desk always shows all eight lanes. ui/editor.js wires it. -->
+          <button class="btn ramptog" id="ramptog" aria-pressed="false"
+            title="show the inc / stk ramp columns">Ramp</button>
           <span class="spacer"></span>
           <button class="btn ik ik-seed" id="seed" title="write the starter phrase">
             <span class="k" aria-hidden="true"></span><span class="t">Seed</span></button>
@@ -97,34 +113,48 @@
         <p class="edhint" id="edhint" hidden>Tap a value cell for its fader, or
            drag up and down on it to scrub — sideways (or a second finger) for
            fine. Tap a gate/acc/sld key to flip it. <b>vel</b> is level;
-           <b>acc</b> is the 303 accent. <span class="mapline">The map above
-           the grid is the whole phrase — drag it up and down to choose which
-           rows sit in the big view.</span> Phrases below: tap one to edit it
-           and switch it on or off in the selected box.</p>
-        <!-- THE NAVIGATOR (phone only): the whole 8×16 phrase as a minimap —
-             gate/acc/sld as coloured ticks, value lanes as tiny bars — with a
-             viewport outline. Dragging it pans which lanes sit in the focus
-             view below. ui/stepnav.js builds and drives it; ≥560px it is
-             display:none because the full grid is already all on screen. -->
-        <div class="stepnav" id="stepnav"></div>
+           <b>acc</b> is the 303 accent. <span class="mapline">On a phone the
+           pattern reads top to bottom like a tracker — every numbered row is
+           a 16th, and RAMP shows the inc/stk columns.</span> Phrases below:
+           tap one to edit it and switch it on or off in the selected box;
+           [+] adds a phrase, [−] removes the last one.</p>
+        <!-- ONE GRID, TWO READINGS: ≥560px the classic lanes (16 steps left
+             to right, one row per vector); <560px the CSS transposes the same
+             cells into a tracker table — steps top to bottom, vectors as
+             columns. ui/editor.js builds it once; kernel-daw.css owns both
+             layouts off data-row + :nth-child, no second DOM. -->
         <div class="steps"><div class="stepgrid" id="stepgrid"></div></div>
+        <!-- the how-to sentence lives behind (?) now — the .btn.hint /
+             .edhint pattern the editor head established, same spot (right
+             after the h2), so the freed line goes to the rail itself -->
         <div class="edhead phrases-head">
           <h2>Phrases</h2>
-          <p>Click one to edit it and switch it on or off in the selected box.</p>
+          <button class="btn hint" id="phrhelp" aria-expanded="false"
+            aria-controls="phrhint" title="how the phrase bank works">?</button>
         </div>
+        <p class="edhint phrases-head" id="phrhint" hidden>Click one to edit it
+           and switch it on or off in the selected box. [+] adds a phrase (up
+           to 16); [−] removes the last one when no box plays it.</p>
         <div class="slots" id="slots"></div>
       </div>
     </section>
 
     <section class="page pg-song" id="page-song" aria-label="song">
       <div class="ed songwrap">
+        <!-- the four-line lecture moved behind (?) — the .btn.hint / .edhint
+             pattern every panel head shares now, in the same spot (right
+             after the h2). The freed lines go to the rack. -->
         <div class="edhead">
           <h2>Song</h2>
-          <p>Click to play from a box, double-click to loop it, hold to read
-             everything it has switched on, drag to reorder, trim the edges.
-             Genres stack — the first owns the harmony, drums and tempo; the rest ride on top of it, each with its own phrases.
-             Every box is also a mixer channel: its own effects, its own reverb and echo sends, its own way in and out.</p>
+          <button class="btn hint" id="songhelp" aria-expanded="false"
+            aria-controls="songhint" title="how the song row works">?</button>
         </div>
+        <p class="edhint" id="songhint" hidden>Click to play from a box,
+           double-click to loop it, hold to read everything it has switched
+           on, drag to reorder, trim the edges. Genres stack — the first owns
+           the harmony, drums and tempo; the rest ride on top of it, each with
+           its own phrases. Every box is also a mixer channel: its own
+           effects, its own reverb and echo sends, its own way in and out.</p>
         <div class="song" id="song"></div>
         <!-- THE GLOBAL BANK — everything that outlives a box: the soundfont,
              the shipped songs, and the session as a file. It lives on the SONG

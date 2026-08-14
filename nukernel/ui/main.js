@@ -6,9 +6,9 @@
 // which is the ONE consumer of transport.getPosition(): the UI reads the
 // audio clock through that accessor and audio never calls a draw function —
 // that one-way rule is what the whole split is for.
-import { GENRES, RATES } from "./deps.js";
-import { SONG, viewSec, readStore, adoptSong, defaultSong, on } from "./state.js";
-import { gid } from "./derive.js";
+import { GENRES, RATES, ROLES } from "./deps.js";
+import { SONG, viewSec, readStore, adoptSong, defaultSong, on, emit } from "./state.js";
+import { gid, stackLabel } from "./derive.js";
 import * as transport from "../audio/transport.js";
 // the survival tier (context recovery + MediaSession + the bounce carrier):
 // importing it IS the wiring — it registers its listeners, its gesture hook
@@ -77,6 +77,16 @@ function frame() {
 // the kind of leak the old code actually had
 on("transport:state", d => {
   if (d.playing && !looping) { looping = true; requestAnimationFrame(frame); }
+});
+// THE READOUT FOLLOWS THE PLAYING BOX (the song row's .live ring and the
+// position LCD say the number; this line says the name). Published as a
+// status EVENT, so main never draws into another view's element — readout.js
+// stays the sole owner of #readout and the layer graph stays one-way.
+on("transport:section", d => {
+  const sec = SONG[d.si];
+  if (!sec) return;                            // startAt announces si -1 once
+  emit("status", { text: "▶ box " + (d.si + 1) +
+    (sec.role ? " · " + ROLES[sec.role] : "") + " · " + stackLabel(sec) });
 });
 
 /* ---------- boot ---------- */

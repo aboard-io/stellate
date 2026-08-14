@@ -29,7 +29,9 @@
 
   // The CURRENT schema version. v:2 = v:1 with the box field `del` renamed to
   // `echo` (it collided with the kernel's delete operator) and slots allowed to
-  // arrive short (padded with blanks) instead of exactly NSLOTS long.
+  // arrive at any length 1..NSLOTS. Variable banks did not need a v:3: the
+  // SHAPE never moved — old 8-slot saves are just one legal length among
+  // sixteen, and they load byte-identically.
   const VERSION = 2;
 
   // THE FILTER RULE, written down at last: `ops` and `fx` are FILTERED on
@@ -136,17 +138,19 @@
     const s = JSON.parse(JSON.stringify(raw));
     if (s.v !== VERSION) err("v", s.v, VERSION + " (run migrate first)");
 
-    // ---- slots: 1..NSLOTS phrases, padded up with blanks. The bank used to
-    // demand exactly NSLOTS, which meant it could never change size without
-    // rejecting every existing save in both directions.
+    // ---- slots: 1..NSLOTS phrases, KEPT at their own length. The bank used
+    // to demand exactly eight (then pad short ones up to eight), which meant
+    // it could never change size without rejecting every existing save in
+    // both directions. The bank is variable now: an 8-slot save loads as 8
+    // slots, a 1-slot save as 1 — the one repair left is below, after the
+    // boxes are read: a box referencing past the end grows the bank to cover
+    // it, because a dangling index would render undefined mid-bar.
     if (!Array.isArray(s.slots) || !s.slots.length || s.slots.length > NSLOTS)
       err("slots", Array.isArray(s.slots) ? s.slots.length : typeof s.slots,
           "1.." + NSLOTS + " phrases");
-    else {
+    else
       s.slots.forEach((p, i) => { if (!okPhrase(p))
         err("slots[" + i + "]", p, "eight 16-step finite vectors"); });
-      while (s.slots.length < NSLOTS) s.slots.push(blank());
-    }
 
     // ---- one enum value against the registry. oct arrives as a number or a
     // string; the table is keyed on strings, so read it through String().
@@ -231,6 +235,22 @@
       }
       if (!okVox(b.vox)) err(at + ".vox", b.vox, "known voice knobs");
     });
+
+    // ---- the bank covers every reference. Older builds padded every bank to
+    // a fixed eight, so a short-banked save could legally point a box at a
+    // slot the pad was about to create; those saves must keep loading. Grown
+    // with blanks, never truncated — a blank phrase is silence, which is what
+    // those references always played.
+    if (Array.isArray(s.slots) && s.slots.length && Array.isArray(s.song)) {
+      let top = s.slots.length - 1;
+      for (const b of s.song)
+        if (b && Array.isArray(b.stack))
+          for (const e of b.stack)
+            if (e && Array.isArray(e.slots))
+              for (const i of e.slots)
+                if (Number.isInteger(i) && i > top && i < NSLOTS) top = i;
+      while (s.slots.length <= top) s.slots.push(blank());
+    }
 
     // tempo and volume ride along; out-of-range means "keep what you had",
     // not "refuse the song" — same policy applyState always had

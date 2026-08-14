@@ -29,7 +29,13 @@
   // rather than in the UI file because a hand-edited save has to hit the same
   // wall a drag does: a len of 1e9 used to sail through the loader and render
   // a billion bars.
-  const NSLOTS = 8, MAX_LEN = 64, MAX_NUDGE = 31, MAX_FX = 3;
+  //
+  // NSLOTS is the phrase bank's CEILING, not its size. The bank is variable
+  // now — a song carries 1..NSLOTS phrases, a fresh page carries ONE, and the
+  // [+] key on the rail grows it — so every consumer of this number is asking
+  // "how big may a bank get", never "how big is this one" (that is
+  // slots.length, on the song itself).
+  const NSLOTS = 16, MAX_LEN = 64, MAX_NUDGE = 31, MAX_FX = 3;
 
   /* ---------- pattern operators ---------- */
   // FOUR LIST FAMILIES, 1..4 each. repeat and delete change the SEQUENCE —
@@ -84,8 +90,17 @@
   // `edges`). These are the ones that actually announce a section, because they
   // are the only transforms allowed to write events that were not there: a drum
   // fill is a different bar, not a louder one.
+  // ELEVEN WAYS IN, not five — and only four of them are drum gestures. The
+  // 2026-08-14 widening ("everything opens with a drum hit… there are so many
+  // different kinds of intros in the world"): cold is the NAMED absence of an
+  // intro, fade is the two-bar exception to the one-bar law, and padin/bassin/
+  // riser/stabs are the entrances kernel.js intro() renders from the events
+  // themselves. compose.js stores whatever this table knows — its introEdge
+  // bridge stops renaming the moment a label lands here.
   const INLABEL  = { count: "count-in", hit: "downbeat", solo: "melody alone",
-                     kit: "drums alone", swell: "swell in" };
+                     kit: "drums alone", swell: "swell in", cold: "cold open",
+                     fade: "fade up", padin: "pad first", bassin: "bass first",
+                     riser: "riser", stabs: "stabs" };
   const OUTLABEL = { fill: "drum fill", roll: "snare roll", crash: "crash",
                      break: "drum break", tail: "no drums", cut: "cut short" };
 

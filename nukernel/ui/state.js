@@ -10,7 +10,7 @@
 // six functions used to re-read document.getElementById(...).value at call
 // time, two of them in the audio hot path (stepDur per tick, barSec per
 // channel build), which also made the loader untestable in node.
-import { NuSong, blank, emptyBox, NSLOTS } from "./deps.js";
+import { NuSong, blank, emptyBox, DEFAULT } from "./deps.js";
 
 export const DEFAULT_BPM = 126, NBOXES = 4;
 
@@ -18,7 +18,8 @@ export const DEFAULT_BPM = 126, NBOXES = 4;
 // Exported as live bindings: importers see every reassignment. Mutation from
 // outside goes through the setters below, because a module cannot assign to
 // another module's binding — which is exactly the discipline we want anyway.
-export let SLOTS = Array.from({ length: NSLOTS }, blank);
+// The bank is VARIABLE (1..NSLOTS) now; a fresh page carries ONE phrase.
+export let SLOTS = [blank()];
 export let slot = 0;
 export let SUBJ = SLOTS[slot];       // by reference: cell edits mutate the slot
 export let SONG = Array.from({ length: NBOXES }, emptyBox);
@@ -101,12 +102,23 @@ export function clearStore() {
   try { localStorage.removeItem(STORE); } catch (e) { /* nothing to clear */ }
 }
 
-// the fresh page: blank bank, NBOXES Simple boxes — built as a raw save so it
-// enters through the same door as everything else
-export const defaultSong = () => ({ v: NuSong.VERSION,
-  slots: Array.from({ length: NSLOTS }, blank),
-  song: Array.from({ length: NBOXES }, emptyBox),
-  bpm: DEFAULT_BPM, vol: 80 });
+// the fresh page: ONE phrase — the starter, already written and already
+// switched on in box 1 — and NBOXES Simple boxes. Built as a raw save so it
+// enters through the same door as everything else. The bank used to ship
+// eight blanks and the box referenced none of them, which meant the very
+// first thing PLAY did on a fresh page was refuse ("nothing to play"), with
+// the position LCD parked on -- and the transport key dark: the machine's
+// front door opened onto a silent room. A fresh page now SOUNDS.
+export const defaultSong = () => {
+  const song = Array.from({ length: NBOXES }, emptyBox);
+  song[0].stack[0].slots = [0];
+  return { v: NuSong.VERSION, slots: [deepDefault()], song,
+           bpm: DEFAULT_BPM, vol: 80 };
+};
+// the starter phrase is genre data (genres.js DEFAULT) and the store must
+// never hand out the literal itself — a scrub would edit the table
+const deepDefault = () => JSON.parse(JSON.stringify(
+  { ...blank(), ...DEFAULT }));
 
 /* ---------- adoptSong: the ONE entrance ---------- */
 // localStorage, a file off the desktop, a shipped preset, the composer and the

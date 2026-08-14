@@ -162,6 +162,12 @@
       instr: "rock_organ",
       entry: v => v, reg: v => 1 - v, realize: () => "line",
       kit: {}, harmony: "emergent",            // the empty kit IS the genre fact
+      // `intro` is the anchor's OPENING STATEMENT — read by the composer
+      // (compose.js introSections), where it wins the chooser's coin a little
+      // over half the time. Declared only where identity demands it: a fugue
+      // that does not begin with the subject alone is not a fugue. Absent =
+      // the family's own leaning, exactly as before the field existed.
+      intro: "solo",
       tone: { wave: "triangle", cut: 2600, q: 1.1, atk: .012, rel: .9, gain: .28, verb: .18 },
       words: ["subject", "answer @ 5th", "retrograde", "down a 5th"],
       word: (v, s) => [
@@ -338,6 +344,7 @@
       instr: "ahh_choir",
       entry: () => 0, reg: v => -v, realize: () => "line",
       kit: {}, nobass: true, harmony: "modal",
+      intro: "solo",                 // chant begins as one voice, always
       mode: MODES.dorian, scale: DIATONIC,
       artic: "legato", incClamp: 2,
       tone: { wave: "triangle", cut: 2100, q: 0.7, atk: .09, rel: 2.2, gain: .26, verb: .78 },
@@ -401,6 +408,7 @@
       instr: "harpsichord",
       entry: () => 0, reg: v => 1 - v, realize: () => "line",
       kit: {}, nobass: true, harmony: "emergent",
+      intro: "solo",                 // the cantus states itself before anything
       scale: DIATONIC, artic: "legato",
       tone: { wave: "square", cut: 2800, q: 1.0, atk: .006, rel: .6, gain: .22, verb: .3 },
       words: ["the line", "contrary motion — every rise is a fall"],
@@ -440,6 +448,7 @@
       instr: "slow_strings",
       entry: () => 0, reg: v => v - 2, realize: v => (v === 0 ? "pad" : "line"),
       kit: {}, harmony: "modal", mode: MODES.dorian, scale: DIATONIC,
+      intro: "padin",                // the drone IS the pad; it goes first
       artic: "tie", incClamp: 3, incMode: "reverse",
       bassStyle: "pedal", bassGrid: [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
       tone: { wave: "sawtooth", cut: 900, q: 1.8, atk: .35, rel: 3.2, gain: .22, verb: .9 },
@@ -1043,6 +1052,7 @@
       realize: v => (v === 0 ? "pad" : "line"),
       part: ["stab", "lead"],
       harmony: "modal",
+      intro: "bassin",               // dub walks in on the bass or not at all
       maxHold: 3,
       bassStyle: "pedal",
       kit: { k: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
@@ -1266,6 +1276,7 @@
       entry: v => v * 4, reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),
       kit: {}, nobass: true,
+      intro: "fade",                 // ambient does not arrive, it surfaces
       harmony: "cycle", roots: [0, 0, 3, 3, 5, 5, 4, 4],
       mode: MODES.lydian, scale: MODES.lydian, diatonic: true,
       prog: [{ d: 0, q: "7" }, { d: 0, q: "7" }, { d: 3, q: "7" }, { d: 3, q: "7" },

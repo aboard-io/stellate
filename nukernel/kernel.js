@@ -1035,8 +1035,70 @@
 
   function intro(ev, kind, span, bs) {
     if (!kind || !bs) return ev;
+    // COLD is the identity, and it is in the vocabulary ON PURPOSE: the whole
+    // band from beat one, no pickup, no count — the absence of an intro is
+    // itself a way to start a record, and naming it lets a composer CHOOSE it
+    // instead of falling into it whenever the dice miss everything else.
+    if (kind === "cold") return ev;
+    // FADE is the one kind that takes TWO bars, and the exception is the
+    // reason it exists: a whole-mix fade inside one bar already has a name
+    // (swell). It scales and never deletes, so the band is there from the
+    // first event — just far away, walking in.
+    if (kind === "fade") {
+      const w = Math.min(2 * bs, span || 2 * bs);
+      return ev.map(e => e.t < w
+        ? { ...e, vel: Math.max(0, Math.round((e.vel == null ? 5 : e.vel) * (e.t / w))) }
+        : e);
+    }
     const inBar = e => e.t < bs, rest = ev.filter(e => !inBar(e));
     const bar = ev.filter(inBar);
+    // a pad is a pad wherever the stream came from: the kernel's own render
+    // stamps `part`, the app's derive layer also stamps a `pad` flag
+    const isPad = e => e.kind === "line" && (e.part === "pad" || e.pad);
+    if (kind === "padin") {
+      // the pad swells alone and the band enters at bar 2. A stream with no
+      // pad in it degrades to the whole pitched layer — solo — rather than to
+      // a bar of dead air, which is what total means here.
+      const pads = bar.filter(isPad);
+      return [...(pads.length ? pads : bar.filter(e => e.kind === "line")), ...rest];
+    }
+    if (kind === "bassin") {
+      // the bass riff alone — the soul/dub opening. A bassless stream
+      // degrades to its line for the same reason padin does.
+      const bb = bar.filter(e => e.kind === "bass");
+      return [...(bb.length ? bb : bar.filter(e => e.kind === "line")), ...rest];
+    }
+    if (kind === "riser") {
+      // bar one is REPLACED by a rise: sixteen hat hits climbing from almost
+      // nothing into bar 2's downbeat, the last one accented. It is the
+      // build-up gesture as EVENTS — a velocity ramp the mixer never has to
+      // know about — and it is the one intro that throws the bar's own
+      // material away entirely, because a riser under a playing band is just
+      // a busy bar.
+      const out = rest.slice();
+      for (let s = 0; s < 16; s++)
+        out.push(D(s * bs / 16, "h", s === 15, 1 + Math.round(s * 8 / 15)));
+      return out.sort((a, b) => a.t - b.t);
+    }
+    if (kind === "stabs") {
+      // chord stabs on a sparse grid: the bar's opening chord — the pad's
+      // voicing where there is one, the line's first attack where there is
+      // not — refired short at 1, the and-of-2 and the and-of-3, everything
+      // else silent. A stream with nothing pitched in bar one has nothing to
+      // stab, and the stream comes back unchanged.
+      const pads = bar.filter(isPad);
+      const src0 = pads.length ? pads : bar.filter(e => e.kind === "line");
+      if (!src0.length) return ev;
+      const t0 = Math.min(...src0.map(e => e.t));
+      const src = src0.filter(e => e.t <= t0 + 1e-6);
+      const out = rest.slice();
+      for (const s of [0, 6, 10])
+        for (const e of src)
+          out.push({ ...e, t: s * bs / 16, dur: 0.9 * bs / 16,
+                     vel: Math.max(6, e.vel == null ? 5 : e.vel),
+                     acc: s === 0 ? 1 : 0, sld: 0 });
+      return out.sort((a, b) => a.t - b.t);
+    }
     if (kind === "count") {
       // a count-in: four rim clicks and nothing else, the fourth accented
       const out = rest.slice();

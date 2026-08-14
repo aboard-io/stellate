@@ -110,12 +110,17 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   font:600 10px/1.2 var(--f-legend);letter-spacing:.14em;text-transform:uppercase;
   color:var(--dim);
 }
+/* the volume legend's two spans: the full word on a desk, the abbreviation on
+   a phone. The swap is VISUAL only — the full word leaves the layout via the
+   clip pattern, never display:none, so the fader's accessible name stays
+   "Volume" on every width (the abbreviation is aria-hidden in the markup). */
+.knob .la{display:none}
 /* a range input restyled as a fader: recessed track with tick marks, a
    chunky moulded cap with a cream centre line. The input stays a real,
    focusable <input type=range> — arrows, Home/End and the accessible name
    come free, and the audio tier keeps reading #bpm/#vol by id. */
 .knob input{
-  appearance:none;-webkit-appearance:none;width:116px;height:26px;margin:0;
+  appearance:none;-webkit-appearance:none;width:104px;height:26px;margin:0;
   background:transparent;cursor:pointer;
   touch-action:none;  /* chrome.js owns the whole gesture: horizontal = fader,
                          vertical = fine trim — the page must not scroll out
@@ -192,12 +197,52 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   box-shadow:inset 0 2px 5px rgba(0,0,0,.9),inset 0 0 0 1px rgba(255,179,71,.08),0 1px 0 var(--hw-bevel-hi);
 }
 
-/* the transport's two clusters: GO on the left, SETTINGS pushed right as a
-   unit — margin-left:auto, so on a bench too narrow for one row the whole
-   cluster wraps and lands right-aligned, still in one piece. Baselines agree
-   because both clusters centre their mixed-height children the same way. */
+/* the transport's two clusters: GO on the left, SETTINGS on the right, ONE
+   ROW on any desk. The old wrap put TEMPO/VOLUME/position on a half-empty
+   second line at every width under ~1300px — so the row no longer wraps at
+   all above the phone breakpoint: the flexible members (the genre picker,
+   then the faders via the width media below) give ground first, and the
+   mast goes before any control does. Baselines agree because everything on
+   the row is centred and the LCD family shares one 34px control height with
+   the keys (set just below). */
+.bar{flex-wrap:nowrap}
+.mast{white-space:nowrap}
 .tgo,.tset{display:flex;align-items:center;gap:10px;min-width:0}
-.tset{margin-left:auto}
+.tset{margin-left:auto;flex:0 0 auto}
+.tgo{flex:1 1 auto}
+.write{min-width:0;flex:1 1 auto}
+/* the genre picker is the row's one elastic member: it takes the slack on a
+   wide bench and gives it back first on a narrow one, instead of truncating
+   at its minimum while daylight sits beside it */
+.write .knob{min-width:0;flex:1 1 auto;max-width:220px}
+.write .knob select{min-width:84px;width:100%;max-width:none;flex:1 1 auto}
+/* ONE CONTROL HEIGHT for the transport row: the moulded keys land at ~34px
+   (10px padding on 11px type), so the glass — value LCDs, the seed, the
+   position readout, the genre picker — meets them there instead of each
+   choosing its own padding. This is the "one baseline grid". */
+.transport .btn{height:34px}
+.transport .knob b,.transport .seedlcd,.transport .poslcd{
+  height:34px;display:inline-flex;align-items:center;justify-content:center}
+.transport .knob select{height:34px}
+/* a narrower desk: the decoration yields before the controls do — the mast
+   and the seed LCD first (the readout chyron prints the seed on every write,
+   the phone block already leans on that), then fader travel. Under 900px the
+   phone chassis takes over entirely (the block at the end of this file). */
+@media (max-width:1259px) and (min-width:900px){
+  .mast{display:none}
+  /* .transport-qualified: the control-height rule above says inline-flex at
+     higher specificity, and a bare .seedlcd{display:none} loses to it */
+  .transport .seedlcd{display:none}
+  .knob input{width:92px}
+  .tgo,.tset{gap:8px}
+}
+/* the last desk band before the phone chassis: the GENRE silkscreen and some
+   fader travel go so the picker's VALUE stays readable — the value is the
+   information, the legend is the label for it */
+@media (max-width:999px) and (min-width:900px){
+  .write .knob span{display:none}
+  .knob input{width:80px}
+}
 
 /* ---- the GLOBAL bank (SESSION) under the song row ----
    File and fixture operations, not performance — a silkscreened bank: a
@@ -371,18 +416,24 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .mini{display:block;width:100%;height:26px}
 .mini path{fill:none;stroke:var(--v0);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 .slot.sel .mini path{stroke:var(--accent)}
+/* the two BANK KEYS on the rail: [+] grows it (to NSLOTS), [−] takes the
+   last phrase back. Dashed like .addbox — the same "this makes room, it is
+   not a pad" language the song rack already speaks. editor.js hides the one
+   with nothing to do (full bank / single phrase). */
+.slotadd{
+  appearance:none;cursor:pointer;min-height:100%;
+  font:600 18px/1 var(--f-num);color:var(--faint);
+  display:flex;align-items:center;justify-content:center;
+  background:none;border:1px dashed var(--line);border-radius:6px;padding:4px;
+}
+.slotadd:hover{border-color:var(--accent);color:var(--accent-txt)}
+.slotadd[hidden]{display:none}
 .steps{overflow-x:auto}
 /* ONE ROW PER PARAM, a label column and a 16-cell strip. The strip is its own
    grid so that on a narrow screen it can FOLD to 8 columns — cells 1–8 make
    bank A, 9–16 wrap under them as bank B, by nothing but auto-placement.
    16 pads across 390px is 24px each; folded they are 44 (see the phone block). */
 .stepgrid{display:flex;flex-direction:column;gap:2px;min-width:520px}
-/* the focus wrappers are INERT here: .lanesview has no height and no overflow
-   on a desk, .lanes is the same flex column the grid is, so the built-once DOM
-   (nums row, then .lanesview>.lanes>.prow×8) paints exactly as the flat grid
-   did. The phone block below is where they become a viewport. */
-.lanesview{min-width:0}
-.lanes{display:flex;flex-direction:column;gap:2px}
 .prow{display:grid;grid-template-columns:58px 1fr;gap:2px;align-items:stretch}
 .prowcells{display:grid;grid-template-columns:repeat(16,minmax(24px,1fr));gap:2px}
 /* two lines now: the lane's name over its range ("deg" / "−7…+7") — the lane
@@ -433,30 +484,11 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .cell.deg.ramp{border-bottom:1px solid var(--v3)}
 .cell.deg.ramp.zero{border-bottom-color:rgba(0,0,0,.6)}
 
-/* ---- the step navigator ----
-   The whole phrase as a minimap on LCD glass: value lanes as tiny amber bars,
-   gate ticks in the 909 quarter colours, acc amber / sld cream, a cream
-   viewport outline where the focus view sits. display:none except on the
-   narrow phone (the block at the end of this file) — on a desk the full grid
-   is already on screen, and a minimap of a fully visible grid is a second
-   source of truth with no panning job. Its hint sentence hides with it. */
-.stepnav{display:none}
+/* the tracker's phone-only bits stay dark on a desk: the RAMP column latch
+   (all eight lanes are already on screen) and the hint sentence about the
+   top-to-bottom reading. The 560 block turns both on. */
+.ramptog{display:none}
 .mapline{display:none}
-.nmap{display:block;width:100%;height:76px}
-.nmap *{pointer-events:none}
-.nq{stroke:var(--lcd-dim);stroke-width:.5;opacity:.5}
-.nmap .nv{fill:var(--lcd-ink)}
-.nmap .nv.rest{opacity:.28}
-.nmap .nb{opacity:0}
-.nmap .nb.on{opacity:1}
-.nmap .nb.gate[data-q="1"]{fill:var(--step-q1)}
-.nmap .nb.gate[data-q="2"]{fill:var(--step-q2)}
-.nmap .nb.gate[data-q="3"]{fill:var(--step-q3)}
-.nmap .nb.gate[data-q="4"]{fill:var(--step-q4)}
-.nmap .nb.acc{fill:var(--a-amber)}
-.nmap .nb.sld{fill:var(--a-cream)}
-.nmap .nview{fill:none;stroke:var(--st-sel);stroke-width:1.5;
-  vector-effect:non-scaling-stroke}
 
 /* ---- the pop-up fader ----
    One dialog, built once by ui/popfader.js, hidden between uses. It is a
@@ -521,6 +553,58 @@ h1 em{font-style:normal;color:var(--accent-txt)}
     linear-gradient(180deg,var(--hw-key-hi) 0,var(--hw-key-mid) 48%,var(--hw-key-lo) 100%);
   box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 2px 3px rgba(0,0,0,.45);
 }
+
+/* ---- the row popover (phone) ----
+   Tapping a song-table row pops the box's whole option surface up under the
+   row: ui/songrow.js MOVES the one palette element into .rpmount while it is
+   open, so the tabs and chips in here are the same built-once nodes the
+   SOUND/MIX pages show. The head is the row's controls — ▶ play-from-here,
+   the bars/nudge steppers (the grips' jobs, said in keys), ✕. The scrim dims
+   (unlike the popfader's) because this sheet covers most of the deck and the
+   song behind it is context, not a target. Never opened ≥560px. */
+.rpscrim{position:fixed;inset:0;z-index:38;background:rgba(0,0,0,.45)}
+.rpscrim[hidden],.rowpop[hidden]{display:none}
+.rowpop{
+  position:fixed;z-index:39;left:8px;right:8px;
+  bottom:calc(8px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:8px;padding:10px;
+  background:linear-gradient(180deg,var(--hw-panel-hi) 0,var(--hw-panel) 38%,var(--hw-panel-lo) 100%);
+  border:1px solid var(--hw-edge);border-top-color:var(--hw-bevel-hi);border-radius:8px;
+  box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 1px 0 var(--hw-edge),0 14px 30px rgba(0,0,0,.55);
+}
+.rphead{display:flex;align-items:center;gap:8px;min-width:0}
+.rptitle{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font:600 10px/1.2 var(--f-legend);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+/* the popover keys are the popfader's moulded family, sized for thumbs */
+.rpk{
+  appearance:none;cursor:pointer;flex:0 0 auto;min-width:38px;min-height:38px;padding:0 8px;
+  font:600 13px/1 var(--f-num);color:var(--ink);
+  border:1px solid var(--hw-edge);border-radius:5px;
+  background:linear-gradient(180deg,var(--hw-key-hi) 0,var(--hw-key-mid) 48%,var(--hw-key-lo) 100%);
+  box-shadow:inset 0 1px 0 var(--hw-bevel-hi),inset 0 -2px 0 var(--hw-bevel-lo),0 2px 0 rgba(0,0,0,.55);
+  transition:transform 90ms cubic-bezier(.2,.9,.3,1),box-shadow 90ms linear;
+}
+.rpk:active{transform:translateY(2px);
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.6),0 0 0 rgba(0,0,0,.55)}
+.rpplay{color:var(--on-ink);
+  background:linear-gradient(180deg,
+    color-mix(in srgb,var(--a-orange) 80%,white) 0,
+    var(--a-orange) 50%,
+    color-mix(in srgb,var(--a-orange) 78%,black) 100%)}
+.rpbars{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center}
+.rpstep{display:flex;align-items:center;gap:5px}
+.rpstep .rlab{font:600 9px/1 var(--f-legend);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--dim)}
+.rpstep output{
+  color:var(--lcd-ink);background:var(--lcd-bg);font:600 12px/1 var(--f-num);
+  min-width:36px;text-align:center;padding:8px 4px;border-radius:3px;
+  border:1px solid rgba(0,0,0,.6);
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.9),0 1px 0 var(--hw-bevel-hi);
+}
+/* the mounted palette scrolls inside the sheet; its banks go one-up */
+.rpmount{overflow-y:auto;min-height:0;overscroll-behavior:contain;flex:1 1 auto}
+.rpmount .palette{gap:10px 12px}
+.rpmount .pgroup{min-width:0;flex:1 1 100%}
 
 /* ---- song boxes: the module rack ---- */
 .songwrap{gap:12px}
@@ -592,6 +676,19 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .bgenre.has{color:var(--ink);font-weight:600}
 .bphrase{font:400 11px/1.4 var(--f-num);letter-spacing:.06em;color:var(--faint)}
 .bphrase.has{color:var(--dim)}
+/* A STACKED LAYER IS ITS OWN LINE: the genre line names the authority, each
+   rider gets an indented sub-row with the ↳ as its silkscreen. It is a real
+   button — clicking focuses that layer for the phrase rail (and on the phone
+   table opens the row popover already looking at it). */
+.blayers{display:flex;flex-direction:column;gap:1px}
+.blayers:empty{display:none}
+.blayer{appearance:none;background:none;border:0;cursor:pointer;text-align:left;
+  position:relative;padding:1px 2px 1px 15px;min-width:0;
+  font:600 11px/1.5 var(--f-legend);letter-spacing:.02em;color:var(--dim);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.blayer::before{content:"↳";position:absolute;left:3px;color:var(--faint)}
+.blayer:hover{color:var(--ink)}
+.blayer.foc{color:var(--accent-txt)}
 .bprog{height:3px;background:var(--hw-recess);border-radius:2px;overflow:hidden;margin-top:auto}
 .fillbar{display:block;height:100%;width:0;background:var(--st-play);border-radius:2px}
 .box.queued{border-style:dashed;border-color:var(--st-arm)}
@@ -863,22 +960,43 @@ details .c{color:var(--faint)}
      genre picker takes the slack on row one, and .tset claims a full line of
      its own: faders left, the position LCD pinned to the right edge — the
      wrap now lands between ⟳ and tempo BY STRUCTURE, not by width luck. */
+  .bar{flex-wrap:wrap}                   /* the desk's one-row law ends here */
   .tgo,.write{display:contents}
   .write .knob{flex:1 1 90px;min-width:0}
   .write .knob select{width:100%;max-width:none}
-  .tset{flex:1 1 100%;margin-left:0;gap:8px}
+  .tset{flex:1 1 100%;margin-left:0;gap:6px}
   .tset .poslcd{margin-left:auto}
   /* the composer's seed LCD steps back on a phone: the readout chyron prints
-     "genre · seed N · sections" on every write, so the number is not lost */
-  .seedlcd{display:none}
-  .knob input{width:72px}
+     "genre · seed N · sections" on every write, so the number is not lost.
+     (.transport-qualified: the desk's control-height rule sets inline-flex at
+     two classes of specificity, and a bare .seedlcd loses to it.) */
+  .transport .seedlcd{display:none}
+  .knob input{width:64px;flex:1 1 52px;min-width:44px}
   .knob b{min-width:34px;font-size:11px;padding:5px 3px}
   .poslcd{min-width:62px;padding:7px 3px;font-size:12px}
   .knob select{max-width:104px}
-  .knob label,.knob span{display:none}   /* the value LCDs carry the number */
+  /* THE SILKSCREEN STAYS. This rule used to hide the fader legends outright,
+     which left two anonymous faders whose LCDs read 126 and 80 — a mystery
+     panel. The legends come back small (TEMPO / VOL, one row with their
+     LCDs); only VOLUME abbreviates, via the span swap — the full word keeps
+     the layout out through the clip pattern so the accessible name survives. */
+  .tset .knob label{font-size:8.5px;letter-spacing:.08em;flex:0 0 auto}
+  .knob .lf{position:absolute;width:1px;height:1px;overflow:hidden;
+    clip-path:inset(50%);white-space:nowrap}
+  .knob .la{display:inline;position:static;width:auto;height:auto}
+  .tset .knob{gap:5px}
+  /* the WRITE cluster's own labels (GENRE) still step back: the picker's
+     value is self-naming and row one has no room to spare */
+  .write .knob span{display:none}
   .deck{display:block;overflow-y:auto;min-height:0;
     padding:10px calc(10px + env(safe-area-inset-right))
             16px calc(10px + env(safe-area-inset-left))}
+  /* a row scrolled to the deck's very top sits flush under the transport's
+     shadow line, and a programmatic scroll-into-view (a tap on a half-visible
+     row, an assistive-tech focus move) can park the target exactly on the
+     seam where the tap then lands on the transport instead. Scroll margins
+     keep every interactive row clear of both edges. */
+  .box,.cell,.slot,.blayer,.prow{scroll-margin-top:14px;scroll-margin-bottom:14px}
   .page{display:none}
   .page>*+*{margin-top:12px}
   /* which page paints: one attribute, five rules. The palette section serves
@@ -903,39 +1021,93 @@ details .c{color:var(--faint)}
   .dawscroll{height:300px}
 }
 
-/* ---- the fold ----
-   Under 560px the 16-step strip folds to two banks of 8 (44px pads instead
-   of 24px slivers — the quarter-group colours now read as two bars of four),
-   the grid stops demanding a minimum width, and a song box stops encoding
-   its duration as width: on a 2-up card grid width can say at most 8 bars
-   before every box looks identical, so duration moves to the head in words
-   (songrow.js prints mmss on any narrow card longer than the minimum). */
+/* ---- the tracker rotation ----
+   Under 560px the interface stops going left to right and goes TOP TO
+   BOTTOM, like a mod tracker: the step editor transposes into a table whose
+   ROWS are the sixteen 16ths and whose COLUMNS are the vectors, and the song
+   becomes a table with one row per box. Same DOM as the desk — the rotation
+   is grid placement, not markup. */
 @media (max-width:560px){
-  /* FOCUS + NAVIGATOR (390×844 and 360×780 both). The one-screen editor won
-     density at the cost of legibility — eight lanes of 20–28px slivers — so
-     the phone now shows TWO OR THREE LANES BIG and the whole pattern small:
-     .lanesview becomes a fixed-height viewport, ui/stepnav.js pans .lanes
-     under it with one translateY (all 128 cells stay in the DOM), and the
-     .stepnav minimap above is both the at-a-glance pattern display and the
-     pan control. The fold stays — two banks of 8 — so a lane is two ranks of
-     full-width pads; every cell now clears the 44px touch floor for real. */
-  .stepgrid{min-width:0;gap:3px}
-  .lanes{gap:3px;will-change:transform}
-  .lanesview{overflow:hidden;height:min(46vh,296px)}
-  .stepnav{display:block;touch-action:none;cursor:grab;padding:4px 5px;
-    background:var(--lcd-bg);border:1px solid rgba(0,0,0,.6);border-radius:3px;
-    background-image:repeating-linear-gradient(0deg,var(--lcd-grid) 0 1px,transparent 1px 3px);
-    box-shadow:inset 0 2px 5px rgba(0,0,0,.9),inset 0 0 0 1px rgba(255,179,71,.08),0 1px 0 var(--hw-bevel-hi)}
-  .mapline{display:inline}
-  .prow{grid-template-columns:40px 1fr}
-  .prowcells{grid-template-columns:repeat(8,1fr)}
-  .rowlab{font-size:9px;letter-spacing:.04em}
-  .rowlab .rrange{font-size:7.5px}
+  /* THE PATTERN AS A TRACKER TABLE (390×844 and 360×780 both). Every wrapper
+     the desk's lane layout used goes display:contents, #stepgrid itself
+     becomes the grid, and each of the 128 cells is placed by data-row
+     (column) × :nth-child position in its strip (row). 16 numbered rows at
+     44px, beat rows ruled heavier every 4; NOTE reads as adjacent deg|oct
+     columns (each independently tappable — a merged read would need a second
+     DOM), then VEL, then the binary trio as compact keys. inc/stk sit behind
+     the RAMP latch (editor.js toggles data-ramp; the two templates below are
+     the whole difference). The table scrolls vertically in its own window so
+     the phrase rail stays in reach; it IS the overview, which is why the old
+     minimap navigator retired (ui/stepnav.js). */
+  .steps{overflow:auto;height:min(54vh,470px);overscroll-behavior:contain}
+  .stepgrid{min-width:0;display:grid;gap:2px;
+    grid-template-columns:26px minmax(48px,1.2fr) minmax(40px,1fr) minmax(40px,1fr)
+      minmax(36px,44px) minmax(36px,44px) minmax(36px,44px);
+    grid-template-rows:28px;grid-auto-rows:minmax(44px,auto)}
+  .prow,.prowcells{display:contents}
+  /* the header row: the corner over the numbers, one label per column */
+  .rowlab{grid-row:1;grid-column:1;align-items:center;justify-content:center;
+    font-size:8.5px;letter-spacing:.04em;padding:0}
+  .rowlab .rrange{display:none}
+  .rowlab[data-row="deg"]{grid-column:2}
+  .rowlab[data-row="oct"]{grid-column:3}
+  .rowlab[data-row="vel"]{grid-column:4}
+  .rowlab[data-row="gate"]{grid-column:5}
+  .rowlab[data-row="acc"]{grid-column:6}
+  .rowlab[data-row="sld"]{grid-column:7}
+  .cell[data-row="deg"]{grid-column:2}
+  .cell[data-row="oct"]{grid-column:3}
+  .cell[data-row="vel"]{grid-column:4}
+  .cell[data-row="gate"]{grid-column:5}
+  .cell[data-row="acc"]{grid-column:6}
+  .cell[data-row="sld"]{grid-column:7}
+  .rowlab[data-row="inc"],.cell[data-row="inc"],
+  .rowlab[data-row="stk"],.cell[data-row="stk"]{display:none}
+  /* RAMP on: nine columns, everything slides right of vel by two */
+  .stepgrid[data-ramp]{grid-template-columns:24px minmax(40px,1fr) minmax(34px,1fr)
+    minmax(34px,1fr) minmax(34px,1fr) minmax(34px,1fr)
+    minmax(28px,38px) minmax(28px,38px) minmax(28px,38px)}
+  .stepgrid[data-ramp] .cell[data-row="inc"]{display:flex;grid-column:5}
+  .stepgrid[data-ramp] .cell[data-row="stk"]{display:flex;grid-column:6}
+  .stepgrid[data-ramp] .rowlab[data-row="inc"]{display:flex;grid-column:5}
+  .stepgrid[data-ramp] .rowlab[data-row="stk"]{display:flex;grid-column:6}
+  .stepgrid[data-ramp] .rowlab[data-row="gate"],
+  .stepgrid[data-ramp] .cell[data-row="gate"]{grid-column:7}
+  .stepgrid[data-ramp] .rowlab[data-row="acc"],
+  .stepgrid[data-ramp] .cell[data-row="acc"]{grid-column:8}
+  .stepgrid[data-ramp] .rowlab[data-row="sld"],
+  .stepgrid[data-ramp] .cell[data-row="sld"]{grid-column:9}
+  /* the tracker's row placement: a cell's position in its strip IS its step,
+     so nth-child is the row number — one set of 16 rules covers every column
+     (the .num ruler included; its strip is the first-column track) */
+  .prowcells>:nth-child(1){grid-row:2}   .prowcells>:nth-child(2){grid-row:3}
+  .prowcells>:nth-child(3){grid-row:4}   .prowcells>:nth-child(4){grid-row:5}
+  .prowcells>:nth-child(5){grid-row:6}   .prowcells>:nth-child(6){grid-row:7}
+  .prowcells>:nth-child(7){grid-row:8}   .prowcells>:nth-child(8){grid-row:9}
+  .prowcells>:nth-child(9){grid-row:10}  .prowcells>:nth-child(10){grid-row:11}
+  .prowcells>:nth-child(11){grid-row:12} .prowcells>:nth-child(12){grid-row:13}
+  .prowcells>:nth-child(13){grid-row:14} .prowcells>:nth-child(14){grid-row:15}
+  .prowcells>:nth-child(15){grid-row:16} .prowcells>:nth-child(16){grid-row:17}
+  /* beat rows read heavier: a rule across the table every 4 rows, and the
+     beat numeral (already q-coloured) gets its weight */
+  .prowcells>:nth-child(4n+1){border-top:2px solid var(--hw-rule)}
+  .num{grid-column:1;display:flex;align-items:center;justify-content:center;
+    font-size:10px;line-height:1}
+  .num.q{font-weight:700;font-size:11px}
   .ed{gap:6px}
-  .cell{min-height:0;height:44px}
-  .cell.deg{height:40px;font-size:12px}
-  .num{font-size:9px;line-height:1.2}
+  .cell{height:auto;min-height:44px}
+  .cell.deg{height:auto;font-size:12px}
+  /* the binary keys are tap-only, so they may carry the scroll (pan-y); the
+     value cells keep touch-action:none — a vertical drag there is the scrub */
+  .cell:not(.deg){touch-action:pan-y}
   .edhint{font-size:10.5px}
+  /* the RAMP latch joins the header row, lit orange when the columns are out.
+     Compact, and the icon keys give a little more than they used to — the
+     header must still hold title + (?) + RAMP + three keys on ONE 360px row */
+  .ramptog{display:inline-block;padding:9px 7px;font-size:8.5px;min-height:38px;
+    letter-spacing:.06em}
+  .ramptog[aria-pressed="true"]{background:var(--accent);color:var(--on-ink)}
+  .edhead .btn.ik{padding:11px 8px}
   /* icon keys drop their word; the icon, the title and the id remain. The
      header must hold title + (?) + three keys on ONE 360px row — that is the
      whole point of the icons — so the gaps and the (?) give a little too. */
@@ -959,21 +1131,45 @@ details .c{color:var(--faint)}
   .slot .sn{font-size:8px;letter-spacing:.02em}
   .slot::after{top:3px;right:3px;width:5px;height:5px}
   .mini{height:15px}
-  .box{flex:1 1 42%;max-width:calc(50% - 4px);min-width:0}
-  /* EQUAL CARDS: the title area reserves two lines whether the stack label
-     needs them or not, so the progress bar and the LED strip sit on the same
-     baseline across the whole rack — cards that breathe with their titles
-     turn the grid ragged */
-  .bgenre{min-height:2.9em}
-  /* the tool cluster becomes the card's own key row: full width, four equal
-     slots (ghosts hold their seat), × pushed off ⟳ by its own gap. The coarse
-     40px min-width can't fit four across a 2-up card, so the slots split the
-     row instead — every target is ~34px wide and a full 44 tall, and it is
-     in the SAME PLACE on every card. */
-  .bhead .btools{flex:1 1 100%;justify-content:flex-end;gap:2px}
-  .bhead .t,.bhead .x{flex:1 1 0;min-width:0}
-  .bhead .x{margin-left:4px;flex-grow:0;flex-basis:34px}
-  .addbox{width:auto;flex:1 1 20%}
+  /* THE SONG AS A TABLE OF SECTIONS: one row per box — # | role | genre |
+     bars | LEDs — the 2-up card grid becomes a top-to-bottom list. The .bhead
+     dissolves (display:contents) so its children take grid cells directly;
+     a stacked layer is an indented sub-row (row 2), the LED strip and the
+     tool keys share row 3, the progress hairline closes the row. The move
+     keys read ↑↓ here (songrow.js swaps the glyphs — same buttons). The
+     GRIPS are hidden: length and nudge are steppers in the row popover,
+     because a 10px edge handle on a full-width row is a scroll trap. */
+  .song{display:flex;flex-direction:column;gap:3px;padding:6px}
+  .box{display:grid;grid-template-columns:26px auto minmax(0,1fr) auto;
+    gap:3px 8px;align-items:center;
+    min-height:44px;max-width:none;min-width:0;flex:none;
+    padding:6px 9px;cursor:pointer}
+  .bhead{display:contents}
+  .bhead b{grid-row:1;grid-column:1;text-align:center}
+  .bhead .role{grid-row:1;grid-column:2}
+  .bgenre{grid-row:1;grid-column:3;min-height:0;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bhead .role+span{grid-row:1;grid-column:4;justify-self:end;
+    white-space:nowrap;font-size:9px;letter-spacing:.04em}
+  .loopmark{display:none}   /* the looped state keeps its double border + lit ⟳ */
+  .bphrase{display:none}    /* phrase numbers live in the row popover's rail */
+  .blayers{grid-row:2;grid-column:1/-1}
+  .blayer{padding-top:8px;padding-bottom:8px}
+  .bleds{grid-row:3;grid-column:1/3;justify-self:start}
+  /* the tools live in their OWN column, spanning the row — not strewn across
+     its middle. A row is a tap target ("tap on a genre row → the options"),
+     and with the keys parked mid-row the geometric centre of every row was a
+     button: tapping "the row" hit ⟳ or ✕ as often as it opened the popover.
+     Confined right, the left three columns are all row. */
+  .bhead .btools{grid-row:1/4;grid-column:4;align-self:center;margin-left:0;
+    display:grid;grid-template-columns:44px 44px;grid-auto-rows:44px;gap:4px}
+  .bprog{grid-row:4;grid-column:1/-1;margin-top:0;width:100%}
+  .grip{display:none}
+  /* a full-width row never clips: no fade overlay, no reserved right pad —
+     the duration already sits in the bars cell in words */
+  .box.clipped::after{content:none}
+  .box.clipped .bleds,.box.clipped .bgenre,.box.clipped .bphrase{padding-right:0}
+  .addbox{width:auto;flex:0 0 auto;min-height:44px}
   /* the arrangement heads: arrange.js narrows the column to 64px */
   .head{padding:4px 5px}
   .head .nm{font-size:9px;letter-spacing:.03em}
