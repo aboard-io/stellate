@@ -494,7 +494,7 @@ function sectionEvents(sec) {
     for (let v = pi; v < g.voices; v += nP) {
       let prev = null;
       for (const e of pitched.filter(e => e.v === v)) {
-        out.push({ ...e, n: e.n + aOct, kind: "line", prev,
+        out.push({ ...e, n: e.n + aOct, kind: "line", prev, lv: v,
                    vox: aVox, pad: g.realize(v) === "pad" });
         prev = e.n + aOct;
       }
@@ -537,7 +537,7 @@ function sectionEvents(sec) {
       for (let v = pi; v < L.voices; v += lnP) {
         let prev = null;
         for (const e of lev.filter(e => e.v === v)) {
-          out.push({ ...e, n: e.n + lOct, kind: "line", prev, vox: lVox,
+          out.push({ ...e, n: e.n + lOct, kind: "line", prev, vox: lVox, lv: v,
                      pad: L.realize(v) === "pad", v: vBase + v, layer: extra });
           prev = e.n + lOct;
         }
@@ -705,6 +705,11 @@ const SAMPLERS = (REG && REG.SAMPLERS) || {};
 const MEDIA = "../found/samples/";
 
 // one instrument per genre, and one for the bass lane
+// ONE INSTRUMENT PER GENRE, OR ONE PER VOICE. A string is the whole genre; an
+// ARRAY is read per voice, with the last entry covering the rest. That second
+// form is what a band is: the Isley Brothers are a Rhodes and a fuzz guitar at
+// the same time, and until a genre could name two instruments the lead had to be
+// played on the keyboard.
 const INSTR = { simple: "yamaha_grand_piano", fugue: "rock_organ", acid: "clean_guitar",
                 vaporwave: "strings", blues: "steel_string_guitar", rock: "crunch_guitar",
                 newwave: "clean_guitar",
@@ -713,7 +718,16 @@ const INSTR = { simple: "yamaha_grand_piano", fugue: "rock_organ", acid: "clean_
                 // oohs for the closer, brighter Bulgarian sound
                 gregorian: "ahh_choir", spem: "ahh_choir", bulgarian: "ohh_voices",
                 counterpoint: "harpsichord", neoclassical: "felt_piano",
-                drone: "slow_strings", sludge: "distortion_guitar" };
+                drone: "slow_strings", sludge: "overdrive_guitar",
+                tango: ["bandoneon", "violin", "bandoneon"],
+                deathmetal: "distortion_guitar",
+                eurythmics: "synth_strings_1",
+                isley: ["electric_piano", "overdrive_guitar", "electric_piano"] };
+const instrOf = (g, v) => {
+  const e = INSTR[g];
+  if (Array.isArray(e)) return e[Math.min(v || 0, e.length - 1)] || e[0];
+  return e || "yamaha_grand_piano";
+};
 const BASS_INSTR = "acoustic_bass";
 
 // THE DRUM KIT IS SAMPLED TOO. found/samples/drums/<kit>/ is the same
@@ -826,7 +840,11 @@ async function loadInstrument(id) {
 // every instrument the song needs, decoded before the transport starts
 function instrumentsInSong() {
   const ids = new Set([BASS_INSTR]);
-  for (const sec of SONG) for (const e of stackOf(sec)) ids.add(INSTR[e.g] || "yamaha_grand_piano");
+  for (const sec of SONG)
+    for (const e of stackOf(sec)) {
+      const n = GENRES[e.g] ? GENRES[e.g].voices : 1;
+      for (let v = 0; v < n; v++) ids.add(instrOf(e.g, v));
+    }
   return [...ids];
 }
 
@@ -1473,7 +1491,7 @@ function tick() {
         // sample set, they are "play everything on this voice" — including the
         // genres that carry a signature synth of their own.
         const gsyn = isSynthFont() ? fontDef().synth : GENRES[owner].synth;
-        const id = INSTR[owner] || "yamaha_grand_piano";
+        const id = instrOf(owner, e.lv == null ? e.v : e.lv);
         const useSyn = gsyn && !(gsyn.lineOnly && e.pad && !isSynthFont());
         if (useSyn && playSynth(gsyn, e.n, when, e.dur * sd, e.acc, e.sld, e.vel, e.v, chan, e.vox)) { /* signature voice */ }
         else if (!playSampled(id, e.n, when, e.dur * sd, e.vel, 1, chan,

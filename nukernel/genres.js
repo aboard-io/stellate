@@ -168,7 +168,12 @@
     vaporwave: {
       label: "Vaporwave", rate: .5, bars: 4, voices: 2,
       drumkit: "room",              // the SAMPLED kit, not a sine and some noise
-      entry: () => 0, reg: v => (v === 0 ? -1 : 0),
+      // BOTH VOICES SIT LOW. The pad was always down here; the melody was an
+      // octave above it, up where the DX7's declared freq ceiling (1000 Hz) is
+      // close enough to matter and where a slowed-down sample stops sounding
+      // slowed down. Vaporwave is a record playing at the wrong speed, and the
+      // wrong speed is DOWN — the line belongs under the pad's top, not over it.
+      entry: () => 0, reg: () => -1,
       realize: v => (v === 0 ? "pad" : "line"),
       harmony: "cycle", roots: [3, 4, 2, 5],   // iv v III VI
       // FM, from a real cartridge. "E.PIANO 1" is the DX7 patch vaporwave is
@@ -377,6 +382,112 @@
       words: ["the riff", "the riff an octave under, thinned"],
       word: v => (v === 1 ? [drop(2)] : []),
       fx: ["crunch"],
+    },
+
+    // TANGO. Two facts and the rest follows. The first is the RHYTHM: 3-3-2,
+    // sixteen steps divided 0-3-6 / 8-11-14, which is the habanera underneath
+    // every tango ever written and is the reason it limps forward instead of
+    // marching. The second is the HARMONIC MINOR — the raised seventh, which is
+    // the only note in the scale that can produce a real dominant, and a tango
+    // is a series of dominants arriving. i · iv · V · i, and the V is a V and
+    // not a v precisely because of that one note.
+    // A bandoneón and a violin, which the per-voice INSTR table can finally say.
+    tango: {
+      label: "Tango", rate: 1, bars: 4, voices: 3,
+      entry: v => (v === 2 ? 2 : 0), reg: v => (v === 1 ? 1 : v - 1),
+      realize: v => (v === 0 ? "pad" : "line"),
+      drumkit: "acoustic",
+      harmony: "cycle", roots: [0, 3, 4, 0],
+      mode: MODES.harmonic, scale: [0, 2, 3, 5, 7, 8, 11],
+      artic: "staccato",
+      kit: { k: [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,0,1,0],       // 3-3-2, twice
+             p: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },
+      fill: { p: [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,1,0] },
+      bassGrid: [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,0,1,0],       // the bass IS the 3-3-2
+      tone: { wave: "sawtooth", cut: 2400, q: 1.6, atk: .01, rel: .5, gain: .27, verb: .3 },
+      words: ["the bandoneón chords", "the violin, singing over it",
+              "the bandoneón answering, from bar 3"],
+      word: (v, s) => (v === 2 ? [transpose(-2), drop(2)] : []),
+    },
+
+    // DEATH METAL. The genre is two techniques, and both of them are operators
+    // this kernel already had. TREMOLO PICKING is `fill(1)` — every step gated,
+    // one continuous sixteenth-note wall — and it is the whole guitar sound;
+    // nothing else in this table sets every gate on purpose. The BLAST BEAT is
+    // the same idea on the kit: kick and snare alternating at the eighth, hats
+    // through it, no space anywhere. Locrian, because the flat five is not a
+    // passing tone here, it is the tonic chord.
+    deathmetal: {
+      label: "Death metal", rate: 1, bars: 8, voices: 2,
+      drumkit: "power",
+      entry: () => 0, reg: v => v - 3, realize: () => "line",
+      harmony: "cycle", mode: MODES.phrygian, roots: [0,0,1,1, 0,0,4,4],
+      scale: [0, 1, 3, 5, 6, 8, 10],                        // locrian: the ♭5 is home
+      bassStyle: "sixteenths",
+      kit: { k: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],       // the blast
+             s: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      fill: { s: [1,0,1,0, 1,0,1,0, 1,1,1,1, 1,1,1,1] },    // bar 8: it doubles
+      tone: { wave: "sawtooth", cut: 1400, q: 2.6, atk: .002, rel: .3, gain: .3, verb: .12 },
+      words: ["the riff, tremolo-picked — every step",
+              "the same riff an octave under, as written"],
+      word: v => (v === 0 ? [only("gate", fill(1))] : []),
+      fx: ["crunch"],
+    },
+
+    // EURYTHMICS. A sequencer and a drum machine and nothing else in the room.
+    // What makes it that and not acid is where the interest lives: acid's
+    // sequence never varies and the FILTER moves, so it is one instrument
+    // breathing; this has a hook that never varies and a HARMONY that does — the
+    // two-chord vamp, i to VI, which is the entire song. The bass pulses in
+    // octaves under it. Analog, from the Model D, because a sample cannot be a
+    // monosynth any more than it can be a 303.
+    eurythmics: {
+      label: "Eurythmics", rate: 1, bars: 4, voices: 2,
+      drumkit: "electronic",
+      entry: v => v, reg: v => v - 1, realize: () => "line",
+      harmony: "cycle", roots: [0, 0, 5, 5],
+      bassStyle: "octaves",
+      synth: { dsp: "modeld", root: "modeld", level: 0.8,
+               set: { cutoff: 2600, res: 0.24, envAmount: 1.2, envAttack: 0.004,
+                      envDecay: 0.32, envSustain: 0.5, oscMix: 0.35, drive: 0.22,
+                      glide: 0, drift: 4 } },
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],       // the gated backbeat
+             h: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,1,0] },
+      tone: { wave: "sawtooth", cut: 2600, q: 2.0, atk: .004, rel: .5, gain: .28, verb: .22 },
+      words: ["the sequence, unchanged all the way through",
+              "the answer, a bar late and off the beat"],
+      word: (v, s) => (v === 0 ? [] : [only("gate", rotate(6))]),
+    },
+
+    // THE ISLEY BROTHERS. The arrangement IS the group: a Rhodes laying down
+    // extended chords, Ernie's fuzz guitar singing a whole octave above it, and
+    // a third part filling underneath — which is why this is the genre that
+    // needed a per-voice instrument table, because playing that lead on the
+    // keyboard is not a small loss, it is the entire record. Dorian, for the
+    // bright sixth that separates soul from a minor blues; a light sixteenth
+    // shuffle, because nothing here lands exactly on the grid; and a bass that
+    // syncopates rather than marches.
+    isley: {
+      label: "Isley Brothers", rate: 1, bars: 8, voices: 3, swing: 0.16,
+      drumkit: "room",
+      entry: v => (v === 1 ? 2 : 0), reg: v => (v === 1 ? 1 : v - 1),
+      realize: v => (v === 0 ? "pad" : "line"),
+      harmony: "cycle", roots: [0,0, 3,3, 0,0, 4,4], mode: MODES.dorian,
+      scale: [0, 2, 3, 5, 7, 9, 10],                        // dorian, as the subject too
+      artic: "legato",
+      bassGrid: [1,0,0,1, 0,0,1,0, 1,0,0,0, 0,1,0,0],       // syncopated, never on 3
+      kit: { k: [1,0,0,1, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,0,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2200, q: 1.2, atk: .008, rel: .9, gain: .26, verb: .34 },
+      words: ["the Rhodes, one chord a bar", "the guitar, an octave up, from bar 3",
+              "the low part, underneath"],
+      word: (v, s) => (v === 2 ? [drop(2), transpose(-2)] : []),
+      fx: ["chorus"],
     },
   };
 

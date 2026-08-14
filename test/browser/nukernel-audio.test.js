@@ -48,7 +48,8 @@ const RMS_FLOOR = 0.01;                 // silence is ~1e-4; music here runs 0.2
 // genre by construction.
 const GENRES = ["Simple", "Fugue", "Acid house", "New Wave", "Vaporwave", "Blues",
                 "Rock", "Gregorian", "Bulgarian", "Spem in alium", "Counterpoint",
-                "Neoclassical", "Drone", "Sludge"];
+                "Neoclassical", "Drone", "Sludge", "Tango", "Death metal",
+                "Eurythmics", "Isley Brothers"];
 
 const fail = (m) => { console.error("FAIL:", m); process.exitCode = 1; };
 let checks = 0; const ok = (m) => { checks++; console.log("  ok:", m); };
