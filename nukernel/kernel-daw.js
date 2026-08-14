@@ -712,7 +712,7 @@ const MEDIA = "../found/samples/";
 // played on the keyboard.
 const INSTR = { simple: "yamaha_grand_piano", fugue: "rock_organ", acid: "clean_guitar",
                 vaporwave: "strings", blues: "steel_string_guitar", rock: "crunch_guitar",
-                newwave: "clean_guitar",
+                newwave: ["clean_guitar", "synth_strings_1"],
                 // the choral four all want a real recorded voice, and the
                 // extraction has two of them — aahs for the sustained music,
                 // oohs for the closer, brighter Bulgarian sound
@@ -722,7 +722,12 @@ const INSTR = { simple: "yamaha_grand_piano", fugue: "rock_organ", acid: "clean_
                 tango: ["bandoneon", "violin", "bandoneon"],
                 deathmetal: "distortion_guitar",
                 eurythmics: "synth_strings_1",
-                isley: ["electric_piano", "overdrive_guitar", "electric_piano"] };
+                isley: ["rhodes_ep", "overdrive_guitar", "rhodes_ep"],
+                toto: ["synth_strings_1", "marimba", "clean_guitar"],
+                jodeci: ["ahh_choir", "rhodes_ep"],
+                beatles: ["steel_string_guitar", "ohh_voices"],
+                steely: ["rhodes_ep", "jazz_guitar", "rhodes_ep"],
+                postrock: ["slow_strings", "clean_guitar", "clean_guitar"] };
 const instrOf = (g, v) => {
   const e = INSTR[g];
   if (Array.isArray(e)) return e[Math.min(v || 0, e.length - 1)] || e[0];

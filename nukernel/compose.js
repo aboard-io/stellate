@@ -25,9 +25,15 @@
   // is tell the composer what to BUILD, and tell you what you are looking at
   // afterwards. It is the arrangement's vocabulary, and vocabulary is exactly
   // what a row of eleven identical grey boxes was missing.
-  const ROLES = { intro: "intro", verse: "verse", chorus: "chorus",
+  const ROLES = { drums: "drums", bass: "bass", groove: "groove",
+                  intro: "intro", verse: "verse", chorus: "chorus",
                   bridge: "bridge", breakdown: "breakdown", drop: "drop",
                   solo: "solo", outro: "outro" };
+  // The first three are the LAYERS OF AN INTRO, and they are separate names
+  // rather than three sections all called "intro" for the same reason the roles
+  // exist at all: a row of identically labelled boxes is a row of unlabelled
+  // boxes. "drums · groove · intro · verse" is the arrangement, written down.
+  const BEDS = { drums: 1, bass: 1, groove: 1 };
 
   // ---- THE PLANS -----------------------------------------------------------
   // Three shapes, because there are three kinds of thing in the genre table and
@@ -48,6 +54,9 @@
     // Eurythmics all are songs, but the last one is a DANCE record first —
     // "Sweet Dreams" has a drop where a bridge would be
     tango: "arc", deathmetal: "song", isley: "song", eurythmics: "dance",
+    // post rock is an arc by construction — it is one crescendo — and the four
+    // studio records are songs, because that is what they are
+    postrock: "arc", toto: "song", jodeci: "song", beatles: "song", steely: "song",
   };
   // Where a genre wants to sit, in bpm. The tempo control tops out at 160 and
   // bottoms at 70, and a composer that leaves everything at 126 has not arranged
@@ -56,7 +65,8 @@
                 sludge: 74, simple: 112, fugue: 108, counterpoint: 100,
                 gregorian: 76, spem: 80, bulgarian: 96, neoclassical: 86, drone: 70,
                 // 126 is not a guess: it is the tempo of "Sweet Dreams"
-                tango: 118, deathmetal: 158, eurythmics: 126, isley: 96 };
+                tango: 118, deathmetal: 158, eurythmics: 126, isley: 96,
+                toto: 92, jodeci: 74, beatles: 124, steely: 100, postrock: 72 };
 
   // ---- the random source ---------------------------------------------------
   // Seeded, so a seed is a song. mulberry32 — small, well-distributed, and the
@@ -153,16 +163,65 @@
   // One function per role, each answering the same question — what is different
   // about this section — and each allowed to say "nothing much", which is what
   // makes a verse a verse.
+  const skeleton = (role, G, gk) => ({
+    stack: [{ g: gk, slots: [] }], len: G.bars, nudge: 0, ops: [], env: null,
+    mode: null, rate: null, scale: null, kit: null, drumkit: null,
+    bassop: null, clamp: null, cmode: null, artic: null, fx: G.fx ? [...G.fx] : [],
+    rev: null, del: null, verb: null, dtime: null, lvl: null, pan: null,
+    mot: null, intro: null, outro: null, swing: null, groove: null, role,
+  });
+
+  // ---- HOW A SONG STARTS ---------------------------------------------------
+  // FOUR BARS OF DRUMS, THEN THE BASS COMES IN, THEN THE TUNE. That is how a
+  // record starts, and it is not a fade — it is an ARRANGEMENT: one section per
+  // layer arriving, which is precisely why it could not be an `intro` edge on a
+  // single box. Edges rewrite one bar; this is three sections.
+  //
+  // It falls out of something the engine already did. A box with no phrase still
+  // renders its kit and its bass, because both are GENRE data rather than phrase
+  // data — so "drums alone" is a section with no phrase and no bass, "bass
+  // alone" is one with no phrase and no kit, and "drums and bass" is one with no
+  // phrase at all. Nothing new had to be built to say any of it.
+  const INTROS = ["soft", "soft", "hit", "count", "drums", "drums", "drumbass",
+                  "drumbass", "bassin"];
+  function introSections(G, gk, r, S) {
+    const kit = Object.keys(G.kit || {}).length > 0;
+    // A genre with no drums has nothing to bring in one layer at a time, so it
+    // gets the one intro that is about the sound rather than the arrangement.
+    const shape = kit ? pick(r, INTROS) : "soft";
+    // four bars, or two in a half-time genre — four bars of vaporwave is
+    // fifteen seconds of nothing but a kick, which is not an intro, it is a wait
+    const n = Math.max(2, Math.min(4, G.rate < 1 ? 2 : 4));
+    const bed = (extra) => {
+      const b = skeleton("intro", G, gk);
+      b.len = n; b.stack[0].slots = [];            // no phrase: kit and bass only
+      b.groove = S.groove; b.swing = S.swing;
+      return Object.assign(b, extra);
+    };
+    const out = [];
+    if (shape === "drums" || shape === "drumbass")
+      out.push(bed({ role: "drums", bassop: "nobass",
+                     intro: chance(r, 0.4) ? "hit" : null }));
+    if (shape === "bassin") out.push(bed({ role: "bass", kit: "nodrums" }));
+    if (shape === "drumbass" || shape === "bassin")
+      out.push(bed({ role: "groove", outro: chance(r, 0.6) ? "fill" : null }));
+    // ...and then the section that actually introduces the tune
+    const head = build("intro", G, gk, r, S);
+    if (shape === "count") head.intro = "count";
+    else if (shape === "hit") head.intro = "hit";
+    else if (out.length) {
+      // the bed already did the arriving, so this one just plays
+      head.env = null; head.lvl = null; head.intro = null;
+      if (kit) head.kit = null;
+    }
+    out.push(head);
+    return out;
+  }
+
   function build(role, G, gk, r, S) {
     const kit = Object.keys(G.kit || {}).length > 0;   // does this genre have drums at all
     const bars = G.bars;
-    const b = { stack: [{ g: gk, slots: [] }], len: bars, nudge: 0, ops: [], env: null,
-                mode: null, rate: null, scale: null, kit: null, drumkit: null,
-                bassop: null, clamp: null, cmode: null, artic: null, fx: [],
-                rev: null, del: null, verb: null, dtime: null, lvl: null, pan: null,
-                mot: null, intro: null, outro: null, swing: null, groove: null,
-                role };
-    if (G.fx) b.fx = [...G.fx];
+    const b = skeleton(role, G, gk);
     const layer = (g2, slots) => b.stack.push({ g: g2, slots });
 
     if (role === "intro") {
@@ -250,13 +309,16 @@
                 groove: kit ? pick(r, [null, "backbeat", "push", "laidback", "funk", "dub"]) : null,
                 swing: kit && chance(r, 0.3) ? pick(r, ["light", "swing", "shuffle"]) : null };
     const plan = PLANS[PLAN_OF[gk] || "song"];
-    const song = plan.map(role => build(role, G, gk, r, S));
+    // the plan's own "intro" is replaced by however this song decided to begin,
+    // which may be one section or three
+    const song = [...introSections(G, gk, r, S),
+                  ...plan.slice(1).map(role => build(role, G, gk, r, S))];
     return { v: 1, slots, song,
              bpm: Math.max(70, Math.min(160, (BPM[gk] || 120) + Math.floor(r() * 9) - 4)),
              vol: 80 };
   }
 
-  const api = { compose, ROLES, PLANS, PLAN_OF, BPM, rng, phrase };
+  const api = { compose, ROLES, BEDS, PLANS, PLAN_OF, BPM, rng, phrase };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuCompose = api;
 })(typeof window !== "undefined" ? window : globalThis);

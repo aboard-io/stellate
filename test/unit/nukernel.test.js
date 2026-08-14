@@ -242,7 +242,13 @@ for (const gk of GK) {
   const g = GENRES[gk], sc = g.scale || K.PENT, bs = 16 / g.rate;
   const ev = K.render(P, g, g.bars).filter(e => g.realize(e.v) !== "pad");
   for (let b = 0; b < g.bars; b++) {
-    const root = g.harmony === "cycle" ? K.mp(K.harm(P, g, b), g.mode || undefined) : 0;
+    // A DIATONIC genre follows the chord by DEGREES, so its notes stay in ONE
+    // scale all the way through — a stronger claim than the transposing kind,
+    // and the check is stronger with it: root 0, no allowance for a moved
+    // alphabet. (See render's `degShift`: transposing a seven-note subject by
+    // semitones is what made tango and Eurythmics sound out of tune.)
+    const root = (g.harmony === "cycle" && !g.diatonic)
+      ? K.mp(K.harm(P, g, b), g.mode || undefined) : 0;
     const allowed = new Set(sc.map(x => (((x + root) % 12) + 12) % 12));
     // under a chord cycle a RAMPED note walks the chord's own rungs, and a
     // chord tone is not always in the pentatonic — that is the point of it
@@ -740,11 +746,38 @@ console.log("the composer writes songs that are songs");
       for (const b of song.song) {
         ok(C.ROLES[b.role], gk + "/" + s + ": a section has no role");
         ok(b.stack.length && b.stack.every(e => GENRES[e.g]), gk + "/" + s + ": bad stack");
-        ok(b.stack[0].slots.length, gk + "/" + s + "/" + b.role + ": a section with no phrase");
+        // AN INTRO BED HAS NO PHRASE BY DESIGN — four bars of drums, then the
+        // bass, then the tune, which is an arrangement rather than a fade. It
+        // still has to make a sound, and out of the right layer: a drums-only
+        // bed with a bass part in it is not a drums-only bed.
+        const bed = !!C.BEDS[b.role];
+        if (bed) {
+          ok(!b.stack[0].slots.length, gk + "/" + s + ": a " + b.role +
+             " bed has a melody in it — it is a bed, that is the whole idea");
+          const blank = K.mapv(P, v => v.map(() => 0));
+          // MIRROR genreOf EXACTLY. A kit operator replaces the kit, and the
+          // engine also drops the FILL and the ghost lane with it — without
+          // that, "no drums" still plays a fill on the last bar of the form and
+          // a ghost-perc layer underneath, which is not no drums.
+          const g3 = b.kit
+            ? { ...G, kit: K.KITOPS[b.kit](G.kit || {}), fill: null,
+                ghost: b.kit === "nodrums" ? null : G.ghost }
+            : G;
+          const dr = K.drums(blank, g3, G.bars).length;
+          const bs = K.bass(blank, { ...g3, nobass: b.bassop === "nobass" }, G.bars).length;
+          // EACH BED IS ITS OWN LAYER, and the name says which. A section called
+          // "drums" with a bass part in it is not the thing the label promises.
+          const want = { drums: [1, 0], bass: [0, 1], groove: [1, 1] }[b.role];
+          ok(!!dr === !!want[0] && !!bs === !!want[1],
+             gk + "/" + s + ": the \"" + b.role + "\" bed has " + dr + " drums and " +
+             bs + " bass");
+        } else ok(b.stack[0].slots.length,
+                  gk + "/" + s + "/" + b.role + ": a section with no phrase");
         ok(b.len >= 1 && b.nudge >= 0, gk + "/" + s + ": bad window");
         for (const e of b.stack) for (const i of e.slots) used.add(i);
         // EVERY SECTION MUST SOUND. A composed song with a silent bridge is the
         // failure nobody reports, because it reads as a deliberate pause.
+        if (bed) continue;                    // measured above, on its own terms
         const g2 = { ...G, ...(b.mode ? { mode: MODES[b.mode] } : {}) };
         let ev = 0;
         for (const e of b.stack)
@@ -772,6 +805,18 @@ console.log("the composer writes songs that are songs");
   }
   ok(!silent, silent + " composed sections are silent");
   ok(!unused, unused + " composed songs use fewer than four of their eight phrases");
+  {
+    // THE DRUM INTRO IS OFFERED, NOT PROMISED — but on a genre with a kit it has
+    // to happen, and on one without a kit it must never happen, because there is
+    // nothing to bring in.
+    const beds = gk => seeds.reduce((n, s) => n +
+      C.compose(gk, s).song.filter(b => C.BEDS[b.role]).length, 0);
+    ok(beds("rock") > 6, "a genre with a full kit never gets a drum intro (" + beds("rock") + ")");
+    for (const gk of GK) {
+      if (Object.keys(GENRES[gk].kit || {}).length) continue;
+      ok(beds(gk) === 0, gk + " has no drums and was given a drum intro anyway");
+    }
+  }
   {
     let spent = 0;
     for (const gk of GK) for (const s of seeds) {

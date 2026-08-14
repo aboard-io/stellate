@@ -353,8 +353,27 @@
         // progression audible while keeping the line in one register; unfolded,
         // rock's melody spanned 46 semitones and every note was a heavily
         // stretched sample, which is why it stopped sounding like a guitar.
+        // FOLLOW THE CHORD BY DEGREES WHEN THE ALPHABET CAN. Transposing the
+        // line by SEMITONES is right for a pentatonic subject — that is the
+        // blues riff going up to the IV, and the flat third it lands on against
+        // a major IV is the whole sound. It is wrong for a seven-note one. A
+        // harmonic-minor line moved up seven semitones is in G harmonic minor
+        // over a G major chord, which puts a B♭ against the B natural that the
+        // raised seventh existed to produce; measured, tango had a semitone
+        // clash against the chord in three bars of four and Eurythmics in two,
+        // and what that sounds like is not tension, it is out of tune.
+        //
+        // A genre whose subject alphabet IS its mode says `diatonic` and follows
+        // the chord by moving DEGREES instead. Same contour, same scale, every
+        // note in one key — which is what pop and tango actually do, and is a
+        // second correct way to follow a progression rather than a fix to the
+        // first. Folded to the nearer direction (up 3 or down 3, never up 6) so
+        // the line stays in its register the way near6 keeps the semitone one in
+        // its own.
         const near6 = x => ((((x + 6) % 12) + 12) % 12) - 6;
-        const rootShift = g.harmony === "cycle" ? near6(mp(r, md)) : 0;
+        const diat = !!g.diatonic && g.harmony === "cycle";
+        const degShift = diat ? (r > sc.length / 2 ? r - sc.length : r) : 0;
+        const rootShift = (g.harmony === "cycle" && !diat) ? near6(mp(r, md)) : 0;
         // A RAMP UNDER A CHORD CYCLE CLIMBS THROUGH THE CHORD, not through the
         // scale. Adding scale degrees moves the line by an amount that has
         // nothing to do with the harmony underneath it, and in a genre whose
@@ -410,11 +429,12 @@
           const legato = pad || p.sld[(i + steps) % N] ? 1 : (ART[artic] || 0.92);
           const ns = [null];                             // pitched: registered below
           for (const n of ns) {
+            const dg = p.deg[i] + degShift;
             const pitchOf = n == null
               ? (chordPcs
-                  ? chordWalk(pitch(p.deg[i], sc) + shift + rootShift + 12 * p.oct[i],
+                  ? chordWalk(pitch(dg, sc) + shift + rootShift + 12 * p.oct[i],
                               rampOf(p, i, b, clamp, cmode, subj))
-                  : pitch(p.deg[i] + rampOf(p, i, b, clamp, cmode, subj), sc) + shift + rootShift + 12 * p.oct[i])
+                  : pitch(dg + rampOf(p, i, b, clamp, cmode, subj), sc) + shift + rootShift + 12 * p.oct[i])
               : fold(n, ctr);                                    // chords voice per note
             barEv.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: steps * legato / g.rate, v,
                          n: pitchOf, acc: p.acc[i], sld: p.sld[i], vel: vel(p, i) });

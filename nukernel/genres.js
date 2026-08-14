@@ -136,27 +136,30 @@
       word: (v, s) => (v === 0 ? [] : [rotate(4 * s), ...(s % 2 ? [complement("acc")] : [])]),
     },
 
-    // NEW WAVE. Not a synth-pop cliche but the thing that actually separates it:
-    // an eighth-note MACHINE pulse under a melody that will not sit on the beat.
-    // The kit is a dry drum-machine four with a rim on the offbeat, the bass is
-    // octaves (the pumping eighth-note root that carries the whole genre), and
-    // the two voices answer each other a bar apart rather than stacking — the
-    // second enters late and thinned, which is the guitar-and-synth call the
-    // records are built on. Dorian by default: minor, but with the bright sixth.
+    // NEW WAVE — the Buggles and the Cars, which is a different record from the
+    // one this used to be. It was in DORIAN, i-VI-iv-v: moody, minor, closer to
+    // post-punk than to "Video Killed the Radio Star". But the thing about that
+    // music is that it is BRIGHT and it is CLIPPED — a major key, a staccato
+    // eighth-note riff with no sustain in it at all, handclaps on the backbeat,
+    // and a bass playing straight eighths underneath like a machine. Mixolydian
+    // gives it the ♭VII that both bands lean on, and `diatonic` keeps the whole
+    // thing in one key, which is what separates a pop record from a mode.
+    // I - V - vi - IV, and the second voice answers a bar late and thinned.
     newwave: {
       label: "New Wave", rate: 1, bars: 4, voices: 2,
       entry: v => v, reg: v => v - 1, realize: () => "line",
-      harmony: "cycle", roots: [0, 5, 3, 4],     // i VI iv v — the new-wave turn
-      mode: MODES.dorian,
+      harmony: "cycle", roots: [0, 4, 5, 3],     // I V vi IV
+      mode: MODES.mixo, scale: MODES.mixo, diatonic: true,
+      artic: "staccato",                         // no sustain anywhere
       drumkit: "electronic",
-      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
-             o: [0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0],   // rim on the offbeat
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],   // claps doubling the snare
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
       fill: { s: [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,1,0] },
-      bassStyle: "octaves",
-      tone: { wave: "sawtooth", cut: 2200, q: 2.4, atk: .004, rel: .55, gain: .28, verb: .16 },
-      words: ["the hook", "the answer, a bar late and thinned"],
+      bassStyle: "eighths",
+      tone: { wave: "sawtooth", cut: 2600, q: 2.4, atk: .003, rel: .35, gain: .28, verb: .14 },
+      words: ["the hook, clipped", "the answer, a bar late and thinned"],
       word: (v, s2) => (v === 0 ? [] : [only("gate", rotate(4)), drop(3)]),
     },
 
@@ -334,7 +337,7 @@
       entry: v => (v === 2 ? 4 : 0), reg: v => (v === 0 ? -1 : v - 1),
       realize: v => (v === 0 ? "pad" : "line"),
       kit: {}, harmony: "cycle", roots: [0,0, 5,5, 2,2, 6,6],
-      scale: DIATONIC, artic: "legato",
+      scale: DIATONIC, diatonic: true, artic: "legato",
       bassGrid: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
       tone: { wave: "triangle", cut: 2600, q: 0.8, atk: .02, rel: 1.4, gain: .24, verb: .52 },
       words: ["strings, one chord a bar", "the piano figure",
@@ -398,7 +401,7 @@
       realize: v => (v === 0 ? "pad" : "line"),
       drumkit: "acoustic",
       harmony: "cycle", roots: [0, 3, 4, 0],
-      mode: MODES.harmonic, scale: [0, 2, 3, 5, 7, 8, 11],
+      mode: MODES.harmonic, scale: [0, 2, 3, 5, 7, 8, 11], diatonic: true,
       artic: "staccato",
       kit: { k: [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,0,1,0],       // 3-3-2, twice
              p: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },
@@ -447,6 +450,7 @@
       drumkit: "electronic",
       entry: v => v, reg: v => v - 1, realize: () => "line",
       harmony: "cycle", roots: [0, 0, 5, 5],
+      scale: DIATONIC, diatonic: true,
       bassStyle: "octaves",
       synth: { dsp: "modeld", root: "modeld", level: 0.8,
                set: { cutoff: 2600, res: 0.24, envAmount: 1.2, envAttack: 0.004,
@@ -476,7 +480,7 @@
       entry: v => (v === 1 ? 2 : 0), reg: v => (v === 1 ? 1 : v - 1),
       realize: v => (v === 0 ? "pad" : "line"),
       harmony: "cycle", roots: [0,0, 3,3, 0,0, 4,4], mode: MODES.dorian,
-      scale: [0, 2, 3, 5, 7, 9, 10],                        // dorian, as the subject too
+      scale: [0, 2, 3, 5, 7, 9, 10], diatonic: true,        // dorian, as the subject too
       artic: "legato",
       bassGrid: [1,0,0,1, 0,0,1,0, 1,0,0,0, 0,1,0,0],       // syncopated, never on 3
       kit: { k: [1,0,0,1, 0,0,1,0, 0,0,1,0, 0,0,0,0],
@@ -488,6 +492,134 @@
               "the low part, underneath"],
       word: (v, s) => (v === 2 ? [drop(2), transpose(-2)] : []),
       fx: ["chorus"],
+    },
+
+    // ---- THE STUDIO ------------------------------------------------------
+    // Five records made by people who could play, and the interesting thing is
+    // that what separates them is almost never the notes. It is which MODE the
+    // brightness comes from, where the shuffle sits, and who is playing what.
+
+    // TOTO. The Porcaro shuffle: sixteenths, swung a full triplet third, with
+    // ghost notes between the ones you can hear — which is why `ghost` exists
+    // and why this is the second genre to use it. Over that, mixolydian: major
+    // with a ♭VII, so I-vi-IV-♭VII turns over without ever leaving the key. A
+    // marimba carries the hook, a guitar answers it from bar 5, and a synth pad
+    // holds the chords, which is three instruments and was one until INSTR
+    // learned to take a list.
+    toto: {
+      label: "Toto", rate: 1, bars: 8, voices: 3, swing: 1 / 3,
+      drumkit: "room",
+      entry: v => (v === 2 ? 4 : 0), reg: v => (v === 1 ? 1 : v - 1),
+      realize: v => (v === 0 ? "pad" : "line"),
+      harmony: "cycle", mode: MODES.mixo, scale: MODES.mixo, diatonic: true,
+      roots: [0,0, 5,5, 3,3, 6,6],               // I vi IV ♭VII
+      bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,1, 0,1,1,0, 1,1,0,1, 1,0,1,1] },   // shuffled sixteenths
+      ghost: [only("acc", rotate(2))],           // the notes between the notes
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2800, q: 1.0, atk: .006, rel: .8, gain: .27, verb: .3 },
+      words: ["the pad, one chord a bar", "the marimba hook",
+              "the guitar, answering from bar 5"],
+      word: v => (v === 2 ? [transpose(2), drop(2)] : []),
+      fx: ["chorus"],
+    },
+
+    // JODECI. New jack swing, which is one idea: play sixteenths and SWING them,
+    // hard, on a drum machine that cannot swing on its own. Under it, dorian —
+    // gospel's minor, the one with the bright sixth — and a stack of voices
+    // holding the chord while a Rhodes plays around it. Slow; the tempo is the
+    // point, and the composer knows it.
+    jodeci: {
+      label: "Jodeci", rate: 1, bars: 4, voices: 2, swing: 0.28,
+      drumkit: "electronic",
+      entry: () => 0, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
+      harmony: "cycle", mode: MODES.dorian, scale: MODES.dorian, diatonic: true,
+      roots: [0, 3, 0, 4],                       // i IV i v — dorian's bright IV
+      artic: "legato",
+      bassGrid: [1,0,0,1, 0,0,1,0, 1,0,0,0, 0,1,0,0],
+      kit: { k: [1,0,0,1, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1],
+             h: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,1,1,0] },
+      tone: { wave: "triangle", cut: 2400, q: 1.1, atk: .01, rel: 1.0, gain: .26, verb: .42 },
+      words: ["the vocal stack, one chord a bar", "the Rhodes, playing around it"],
+      word: () => [],
+      fx: ["chorus"],
+    },
+
+    // THE BEATLES. Two things, and the second is the one nobody expects a
+    // program to get: the ♭VII. I - ♭VII - IV - I is the move, it is why
+    // mixolydian and not major, and it is most of what makes a bright three-chord
+    // song sound like them rather than like everyone else. The first thing is
+    // simpler — the second voice sings a THIRD above the first, which in a
+    // seven-note alphabet is exactly transpose(2), and in parallel the whole way.
+    beatles: {
+      label: "Beatles", rate: 1, bars: 8, voices: 2,
+      drumkit: "acoustic",
+      entry: () => 0, reg: v => v, realize: () => "line",
+      harmony: "cycle", mode: MODES.mixo, scale: MODES.mixo, diatonic: true,
+      roots: [0,0, 6,6, 3,3, 0,0],               // I ♭VII IV I
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2600, q: 0.9, atk: .005, rel: .7, gain: .28, verb: .26 },
+      words: ["the tune", "the harmony, a third above, all the way"],
+      word: v => (v === 1 ? [transpose(2)] : []),
+    },
+
+    // STEELY DAN. Dorian, and specifically dorian's MAJOR fourth — the one
+    // bright chord in a minor key, which is the sound of half their catalogue
+    // and is a mode fact rather than a chord substitution. Add the relative
+    // major at the end of the form and you have i - IV - v - III, which turns
+    // over forever and never resolves anywhere emphatic, which is the point. A
+    // Rhodes, a jazz guitar over it, a walking bass, and a shuffle small enough
+    // that it reads as feel rather than as swing.
+    steely: {
+      label: "Steely Dan", rate: 1, bars: 8, voices: 3, swing: 0.2,
+      drumkit: "jazz",
+      entry: v => (v === 1 ? 2 : 0), reg: v => (v === 1 ? 1 : v - 1),
+      realize: v => (v === 0 ? "pad" : "line"),
+      harmony: "cycle", mode: MODES.dorian, scale: MODES.dorian, diatonic: true,
+      roots: [0,0, 3,3, 4,4, 2,2],               // i IV v III
+      bassStyle: "walk", artic: "legato",
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2600, q: 1.0, atk: .007, rel: .8, gain: .26, verb: .3 },
+      words: ["the Rhodes, one chord a bar", "the guitar, from bar 3",
+              "the low part underneath"],
+      word: v => (v === 2 ? [drop(2), transpose(-2)] : []),
+      fx: ["chorus"],
+    },
+
+    // POST ROCK. The genre is a SHAPE, not a harmony: one figure, arriving one
+    // voice at a time over eight bars, on a delay long enough that the
+    // arpeggio plays against itself. So the harmony is the plainest thing in
+    // the table — i VI iv v, four chords anyone would write — and everything
+    // that makes it what it is lives elsewhere: half speed, legato, staggered
+    // entries, a reverb you could lose an afternoon in, and the dotted-eighth
+    // echo that IS the guitar sound, asked for by name.
+    postrock: {
+      label: "Post rock", rate: 0.5, bars: 8, voices: 3,
+      drumkit: "room",
+      entry: v => v * 2, reg: v => v - 1,
+      realize: v => (v === 0 ? "pad" : "line"),
+      harmony: "cycle", scale: DIATONIC, diatonic: true,
+      roots: [0,0, 5,5, 3,3, 4,4],               // i VI iv v
+      artic: "legato", incClamp: 4, incMode: "reverse",
+      kit: { k: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             h: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0] },
+      fill: { s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2000, q: 1.2, atk: .03, rel: 2.0, gain: .24, verb: .72 },
+      words: ["the strings, holding", "the first guitar", "the second, from bar 5"],
+      word: v => (v === 2 ? [rotate(4), drop(2)] : []),
+      fx: ["echo"],
     },
   };
 
