@@ -131,7 +131,9 @@ function taps() {
     const h = await page.evaluate(() => ({
       rms: window.__rms(),
       b: window.__nuBounce ? window.__nuBounce() : null }));
-    const carrierUp = h.b && h.b.carrying && h.b.elVolume > 0;
+    // carrying/elVolume are flags carry() SET; el.paused is what the element
+    // is DOING — a handoff whose play() was refused must not count as audible
+    const carrierUp = h.b && h.b.carrying && h.b.elVolume > 0 && h.b.elPaused === false;
     if (h.rms > RMS_FLOOR || carrierUp)
       ok(`hidden: audible via ${carrierUp ? "the carrier element" : "the live graph"}`);
     else fail(`hidden: graph RMS ${h.rms.toFixed(4)} and no carrier — the tab went silent`);
@@ -159,8 +161,17 @@ function taps() {
       fail(`the bounce never reached 'ready' (state '${b.state}') — no background carrier exists`);
     else {
       ok(`bounce ready: ${b.durSec.toFixed(2)}s, gen ${b.gen}, rendered in ${b.lastRenderMs} ms` +
-         (b.sampledOnly ? " (SAMPLED-ONLY degrade — counted, as the contract requires)" : "") +
-         (b.fallbacks ? `, ${b.fallbacks} offline fallback voice(s)` : ""));
+         (b.sampledOnly ? " (SAMPLED-ONLY degrade — counted, as the contract requires)" : ""));
+      // the carrier must be REAL instruments. The foreground gate fails on a
+      // SINGLE live fallback as audibly wrong, and the rendered bounce is the
+      // only thing a locked phone hears — oscillator boops carry plenty of
+      // RMS, so the window checks below cannot catch this. sampledOnly stays
+      // a printed, permitted degrade; the oscillator fallback does not.
+      if (b.fallbacks)
+        fail(`${b.fallbacks} offline fallback voice(s) in the rendered bounce — the ` +
+             `background carrier is playing hand-rolled oscillator boops, the exact ` +
+             `sound the foreground gate calls audibly wrong`);
+      else ok("no offline fallback voice in the bounce");
       // decode the blob IN PAGE and measure its PCM — the artifact, not the analyser
       const probe = await page.evaluate(async () => {
         const x = window.__nuBounce();
@@ -190,6 +201,45 @@ function taps() {
         else ok("all three PCM windows of the rendered blob carry music");
       }
     }
+  }
+
+  // ── (B2) THE HANDOFF, DETERMINISTICALLY. The (A2) cycle runs before the
+  // render is ready, so the carrier branch was reachable only by race —
+  // headless keeps the graph sounding and the check short-circuited on RMS.
+  // With the bounce ready, hide again and require the ELEMENT to be the
+  // source: not paused (a play() the browser refused is a silent pocket that
+  // flags alone cannot see), volume up, currentTime advancing, and the graph
+  // really muted. This is the artifact the whole file exists for.
+  {
+    const ready = await page.evaluate(() =>
+      window.__nuBounce && window.__nuBounce().state === "ready");
+    if (ready) {
+      await page.evaluate(() => {
+        window.__vis = "hidden"; document.dispatchEvent(new Event("visibilitychange")); });
+      await page.waitForTimeout(800);
+      const c1 = await page.evaluate(() => ({ b: window.__nuBounce(), rms: window.__rms() }));
+      if (!c1.b.carrying || !(c1.b.elVolume > 0) || c1.b.elPaused !== false)
+        fail(`hidden with a ready bounce: the carrier did not take over ` +
+             `(carrying ${c1.b.carrying}, volume ${c1.b.elVolume}, paused ${c1.b.elPaused})`);
+      else ok(`hidden with a ready bounce: the element is PLAYING at volume ${c1.b.elVolume}`);
+      if (c1.rms > RMS_FLOOR)
+        fail(`the graph still sounds while the element carries (RMS ${c1.rms.toFixed(4)}) — ` +
+             `double playback in the pocket`);
+      else ok("the graph is muted while the element carries");
+      const t0 = c1.b.elTime;
+      await page.waitForTimeout(600);
+      const t1 = await page.evaluate(() => window.__nuBounce().elTime);
+      if (!(t1 > t0)) fail(`el.currentTime does not advance while carrying (${t0} -> ${t1})`);
+      else ok(`el.currentTime advances while carrying (${t0.toFixed(2)}s -> ${t1.toFixed(2)}s)`);
+      await page.evaluate(() => {
+        window.__vis = "visible"; document.dispatchEvent(new Event("visibilitychange")); });
+      await page.waitForTimeout(2000);
+      const back = await page.evaluate(() => ({ b: window.__nuBounce(), rms: window.__rms() }));
+      if (back.b.carrying || back.rms < RMS_FLOOR)
+        fail(`the reverse handoff failed (carrying ${back.b.carrying}, ` +
+             `RMS ${back.rms.toFixed(4)})`);
+      else ok("return from the carried hide: the graph is audible again");
+    } else ok("bounce never reached ready — (B) already failed this; handoff cycle skipped");
   }
 
   // ── (C) no double playback in the foreground ──

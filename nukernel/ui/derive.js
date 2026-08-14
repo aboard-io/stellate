@@ -69,6 +69,11 @@ export const genreOf = (sec, ent) => {
   if (sec.swing) out.swing = SWINGS[sec.swing];    // "straight" is 0, and means it
   if (sec.kit) {
     out.kit = KITOPS[sec.kit](g.kit || {}); out.fill = null;
+    // the operator reaches the kit SCHEDULE too — drums() prefers g.kits over
+    // kit, so mapping the kit alone made every kit chip a no-op on a kits
+    // genre (dnb's breakdown kept the full break under "no drums")
+    if (g.kits) out.kits = sec.kit === "nodrums" ? null
+      : g.kits.map(k2 => KITOPS[sec.kit](k2));
     if (sec.kit === "nodrums") out.ghost = null;   // the ghost lane is not in the kit
   }
   if (clamp != null) out.incClamp = +clamp;
@@ -88,16 +93,26 @@ export const genreOf = (sec, ent) => {
   if (pt && pt !== "auto") out.part = [pt];        // every voice of this render
   // PROG + CADENCE: a named progression overrides the genre's; "off" strips
   // it back to the degenerate triads. A cadence lands on the last bar of the
-  // FORM (withCadence over g.bars, cycled) — synthesized from the roots when
-  // the genre never declared a prog, which is how the composer's prechorus
-  // borrows the dominant's door on a triad genre. (Mirrored by the unit
-  // gate's §31 genreFor — change one, change both.)
+  // box's RENDERED WINDOW (nudge+len) — landing it on the form's last bar
+  // put it outside every half-length section (a composed prechorus renders
+  // bars [0, bars/2)) and the lift never sounded. For a default box (no len,
+  // no nudge) the window IS the form, byte for byte. The prog is synthesized
+  // from the roots when the genre never declared one, which is how the
+  // composer's prechorus borrows the dominant's door on a triad genre.
+  // (§31/§33 of the unit gate run this function for real.)
   if (sec.prog || sec.cadence) {
-    const prog = (sec.prog && sec.prog !== "off" && PROGS[sec.prog]) ||
+    const named = (sec.prog && sec.prog !== "off" && PROGS[sec.prog]) || null;
+    const prog = named ||
       (sec.prog === "off" ? null
         : out.prog || (out.harmony === "cycle" && out.roots
                        ? out.roots.map(d => ({ d })) : null));
-    out.prog = sec.cadence && prog ? withCadence(prog, out.bars, sec.cadence) : prog;
+    // a NAMED progression makes the harmony a cycle: chordsOf ignores g.prog
+    // under modal/emergent, so without this the chip validated, lit, and
+    // changed nothing on every modal genre. Safe because the prog path never
+    // reads g.roots, and harm() only runs on the no-prog branch.
+    if (named && out.harmony !== "cycle") out.harmony = "cycle";
+    const end = Math.max(0, sec.nudge | 0) + Math.max(1, sec.len || out.bars);
+    out.prog = sec.cadence && prog ? withCadence(prog, end, sec.cadence) : prog;
   }
   // PERIOD: a sentence preset resolved to the kernel's bar schedule. "1bar"
   // is the explicit flat — it STRIPS a genre's own sentence, which null must
@@ -199,14 +214,18 @@ export function sectionEvents(sec, slots) {
     // A LAYER RIDES THE BOX'S KEY the way it rides its harmony — half the
     // band modulating is not a modulation, it is a mistake (§31's law). Its
     // part/pipes/breath come through genreOf like scale does, so a per-layer
-    // `part` chip lands here; prog and period stay the authority's alone
-    // (a prog-carrying layer would play its own chords against the box's).
+    // `part` chip lands here; prog and period stay the authority's alone —
+    // said EXPLICITLY, because {...L} carries them: a prog-carrying layer
+    // (blues stacked on house) voice-led its own chords against the box's,
+    // and a layered beatles kept its own four-bar sentence. prog is the
+    // authority's (so the layer voice-leads the box's actual changes, and a
+    // prog chip on the box reaches it); period is dropped outright.
     const lg = { ...L, harmony: g.harmony, roots: g.roots, rate: g.rate,
                  swing: g.swing, mode: g.mode, scale: lo.scale, incClamp: lo.incClamp,
                  incMode: lo.incMode, artic: lo.artic, kit: {}, ghost: null,
                  nobass: true, reg: v => L.reg(v) + 1,
                  key: g.key | 0, part: lo.part, pipes: lo.pipes,
-                 maxHold: lo.maxHold };
+                 maxHold: lo.maxHold, prog: g.prog || null, period: null };
     // the layer reads ITS OWN phrases, dealt across ITS voices
     const lOct = 12 * octOf(sec, ent), lVox = voxAll(sec, ent);
     lPh.forEach((ph, pi) => {

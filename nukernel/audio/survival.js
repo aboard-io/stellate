@@ -144,8 +144,24 @@ function msUpdate(isPlaying) {
 }
 if (hasMS) {
   // the handlers ARE user gestures (media keys, lock screen), so startAt's
-  // gesture prefix — carrier arming included — rides them for free
-  try { navigator.mediaSession.setActionHandler("play", () => { if (!playing) startAt(0); }); } catch (e) {}
+  // gesture prefix — carrier arming included — rides them for free.
+  // PLAY WHILE HIDDEN REDOES THE HANDOFF: a lock-screen pause left the graph
+  // muted (ducked) and the carrier at volume 0, and neither startAt nor the
+  // transport:state subscribers raise either source — so play from the lock
+  // screen was MediaSession saying "playing" over total silence. Resetting
+  // the flags and re-running goHidden() re-carries (el volume up, graph
+  // muted coherently); with no carrier it degrades to the plain mobile
+  // mute-at-source, and goVisible restores sound on unlock either way.
+  try {
+    navigator.mediaSession.setActionHandler("play", async () => {
+      if (playing) return;
+      await startAt(0);
+      if (document.visibilityState === "hidden") {
+        carried = false; survivalMuted = false;
+        goHidden();
+      }
+    });
+  } catch (e) {}
   try { navigator.mediaSession.setActionHandler("pause", () => { if (playing) stop(); }); } catch (e) {}
   try { navigator.mediaSession.setActionHandler("stop", () => { if (playing) stop(); }); } catch (e) {}
 }

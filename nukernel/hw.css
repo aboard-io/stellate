@@ -46,8 +46,11 @@
   --hw-edge:#6f6d66; --hw-bevel-hi:rgba(255,255,255,.75); --hw-bevel-lo:rgba(0,0,0,.22);
   --hw-screw-hi:#f2f0ea; --hw-screw-lo:#7d7b74;
   --hw-key-hi:#eceae4; --hw-key-mid:#dcdad4; --hw-key-lo:#c6c4bd;
-  /* INK */
-  --hw-legend:#4b4a45; --hw-legend-dim:#6e6c66; --hw-ink:#17181a; --hw-ink-dim:#3a3a38;
+  /* INK — legend-dim is the RESTING ink of real controls (the box tools, the
+     ×, the beat numerals), so it clears 4.5:1 AA on the darkest surface this
+     face paints it on (measured: 4.70 on the recess, 5.42 on panel-lo); the
+     legend sits a step darker to keep the legend/dim hierarchy readable */
+  --hw-legend:#403f3a; --hw-legend-dim:#45443f; --hw-ink:#17181a; --hw-ink-dim:#3a3a38;
   --on-ink:#0a0906;            /* the ONLY ink on a lit fill — white fails on hot */
   --a-orange-txt:#9c2f08;      /* accent used AS TEXT on the panel, per face */
 
@@ -87,7 +90,9 @@
   --hw-edge:#000; --hw-bevel-hi:rgba(255,255,255,.13); --hw-bevel-lo:rgba(0,0,0,.55);
   --hw-screw-hi:#4a4f56; --hw-screw-lo:#0d0f11;
   --hw-key-hi:#33373d; --hw-key-mid:#23262a; --hw-key-lo:#14171a;
-  --hw-legend:#9aa0a8; --hw-legend-dim:#6b7178; --hw-ink:#e8eaed; --hw-ink-dim:#b3b8bf;
+  /* legend-dim clears 4.5:1 AA on every graphite surface it rests on
+     (measured: 4.66 on panel-hi, 5.31 on panel, 6.05 on the recess) */
+  --hw-legend:#9aa0a8; --hw-legend-dim:#8a9099; --hw-ink:#e8eaed; --hw-ink-dim:#b3b8bf;
   --a-orange-txt:#ff7a4a;
   --shadow:0 1px 0 var(--hw-bevel-hi),0 3px 10px rgba(0,0,0,.6);
 }}
@@ -97,7 +102,9 @@
   --hw-edge:#000; --hw-bevel-hi:rgba(255,255,255,.13); --hw-bevel-lo:rgba(0,0,0,.55);
   --hw-screw-hi:#4a4f56; --hw-screw-lo:#0d0f11;
   --hw-key-hi:#33373d; --hw-key-mid:#23262a; --hw-key-lo:#14171a;
-  --hw-legend:#9aa0a8; --hw-legend-dim:#6b7178; --hw-ink:#e8eaed; --hw-ink-dim:#b3b8bf;
+  /* legend-dim clears 4.5:1 AA on every graphite surface it rests on
+     (measured: 4.66 on panel-hi, 5.31 on panel, 6.05 on the recess) */
+  --hw-legend:#9aa0a8; --hw-legend-dim:#8a9099; --hw-ink:#e8eaed; --hw-ink-dim:#b3b8bf;
   --a-orange-txt:#ff7a4a;
   --shadow:0 1px 0 var(--hw-bevel-hi),0 3px 10px rgba(0,0,0,.6);
 }
@@ -192,6 +199,9 @@
 @media (prefers-contrast:more){
   :root{
     --hw-legend:var(--hw-ink); --hw-hair:var(--hw-rule);
+    /* the dim tier collapses into the full legend ink: high contrast means
+       ALL the ink, including the resting box tools */
+    --hw-legend-dim:var(--hw-legend);
     /* flatten the metal: gradients are decoration, and decoration goes first */
   }
   .hw-panel,.hw-key{background:var(--hw-panel)}

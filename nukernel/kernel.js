@@ -606,7 +606,7 @@
         // the genre's word plus the bar schedule's word for THIS bar — the
         // sixth type joins the pipeline exactly where the timeless one runs
         const p = word(subj, g.word(v, s).concat(periodOps(g, v, s)));
-        const chords = chordsOf(subj, g, b), c0 = chords[0], r = c0.deg;
+        const chords = chordsOf(subj, g, b), c0 = chords[0];
         const chordFor = i => (chords.length === 1 ? c0
           : chords.find(c => i >= c.start && i < c.start + c.len) || chords[chords.length - 1]);
         const sp = spans(p.gate);
@@ -644,10 +644,20 @@
         // its own.
         const near6 = x => ((((x + 6) % 12) + 12) % 12) - 6;
         const diat = !!g.diatonic && g.harmony === "cycle";
-        const degShift = diat ? (r > sc.length / 2 ? r - sc.length : r) : 0;
+        // PER STEP, not per bar: a beats-split bar holds TWO chords, and the
+        // stab path and the ramp's chordWalk already read chordFor(i) — the
+        // shifts must too, or the bar's second chord is pad-only and the
+        // half-bar ii–V bossa exists to prove never reaches the line. For a
+        // single-chord bar chordFor(i) IS chords[0], byte for byte.
+        const degShiftAt = i => {
+          if (!diat) return 0;
+          const d = chordFor(i).deg;
+          return d > sc.length / 2 ? d - sc.length : d;
+        };
         // the shift reads the CHORD's root pc, so a borrowed root (♭VI, ♭II)
         // moves the line with it; without a prog rootPc IS mp(r, md), exactly
-        const rootShift = (g.harmony === "cycle" && !diat) ? near6(c0.rootPc) : 0;
+        const rootShiftAt = i =>
+          (g.harmony === "cycle" && !diat) ? near6(chordFor(i).rootPc) : 0;
         // A RAMP UNDER A CHORD CYCLE CLIMBS THROUGH THE CHORD, not through the
         // scale. Adding scale degrees moves the line by an amount that has
         // nothing to do with the harmony underneath it, and in a genre whose
@@ -739,13 +749,14 @@
           const held = slid || !cap ? steps : Math.min(steps, cap);
           const ns = [null];                             // pitched: registered below
           for (const n of ns) {
-            const dg = p.deg[i] + degShift;
+            const dg = p.deg[i] + degShiftAt(i);
             const set = g.harmony === "cycle" ? chordFor(i).pcSet : null;
+            const rs = rootShiftAt(i);
             const pitchOf = n == null
               ? (set
-                  ? chordWalk(pitch(dg, sc) + shift + rootShift + 12 * p.oct[i],
+                  ? chordWalk(pitch(dg, sc) + shift + rs + 12 * p.oct[i],
                               rampOf(p, i, b, clamp, cmode, subj), set)
-                  : pitch(dg + rampOf(p, i, b, clamp, cmode, subj), sc) + shift + rootShift + 12 * p.oct[i])
+                  : pitch(dg + rampOf(p, i, b, clamp, cmode, subj), sc) + shift + rs + 12 * p.oct[i])
               : fold(n, ctr);                                    // chords voice per note
             barEv.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: held * legato / g.rate, v, part,
                          n: pitchOf + key, acc: p.acc[i], sld: p.sld[i], vel: vel(p, i) });
@@ -770,9 +781,15 @@
       }
     }
     const out = ev.sort((a, b) => a.t - b.t);
-    // the SEVENTH type runs on the finished pitched stream — see pipes() below
+    // the SEVENTH type runs on the finished pitched stream — see pipes() below.
+    // The chords handed to the pipes are KEYED: every event pitch above already
+    // carries g.key, so a pitch-aware pipe (harmonize's pcSet walk) must see
+    // the transposed chord or it snaps the keyed line to old-key chord tones.
+    const keyChords = cs => (key ? cs.map(c => ({ ...c,
+      pcs: c.pcs.map(n => n + key),
+      pcSet: new Set(c.pcs.map(n => (((n + key) % 12) + 12) % 12)) })) : cs);
     return g.pipes && g.pipes.length
-      ? pipes(out, g.pipes, { chords: b2 => chordsOf(subj, g, b2),
+      ? pipes(out, g.pipes, { chords: b2 => keyChords(chordsOf(subj, g, b2)),
                               stepsPerBar: N, rate: g.rate })
       : out;
   }
@@ -926,10 +943,16 @@
       // style that is a statement about the HARMONY rather than the rhythm: the
       // chords move over a bass that refuses to, which is where every drone and
       // most of the tension in modal music comes from.
-      const c = g.bassStyle === "pedal" ? null : chordsOf(subj, g, b)[0];
-      const r = c ? c.deg : 0;
+      // The chord is read per STEP: a beats-split bar (bossa's ii7–V7, gospel's
+      // amen) holds two, and a bass sitting on the first chord's root through
+      // the dominant half is the turnaround not happening. One chord a bar is
+      // the common case and reads chords[0] exactly as before.
+      const cs = g.bassStyle === "pedal" ? null : chordsOf(subj, g, b);
       for (let i = 0; i < N; i++)
         if (at(grid, i)) {
+          const c = !cs ? null : cs.length === 1 ? cs[0]
+            : cs.find(x => i >= x.start && i < x.start + x.len) || cs[cs.length - 1];
+          const r = c ? c.deg : 0;
           const k = alt++;
           // octaves alternates register; fifths alternates the DEGREE, which is
           // the boogie/country figure rather than a doubling

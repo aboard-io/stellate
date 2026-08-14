@@ -102,7 +102,12 @@ export function toggle(kind, value) {
     }
     sec.auto = rest;
   }
-  else if (BOXOPTS.has(kind)) sec[kind] = sec[kind] === value ? null : value;
+  // compare COERCED: compose writes numeric keys (b.key = 2) where chips carry
+  // strings, and 2 === "2" is false — the first tap on a lit key chip re-set
+  // the same value instead of clearing it. String(null) never matches a chip
+  // value and every other BOXOPTS field is already a string, so this is exact.
+  else if (BOXOPTS.has(kind))
+    sec[kind] = String(sec[kind]) === String(value) ? null : value;
   commit("box");
 }
 // the plain one-of-these box fields, all toggled the same way

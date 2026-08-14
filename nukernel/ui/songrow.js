@@ -51,6 +51,20 @@ function makeGrip(side, begin) {
   return g;
 }
 const idx = sec => SONG.indexOf(sec);
+// loopOnly/pendingStart are SONG indices, and a reorder invalidates indices —
+// the same law the box listeners follow ("close over the box object, never an
+// index"). Capture the marked BOXES before the splice, re-find them after:
+// without this, moving any box while a loop was armed retargeted the loop to
+// the moved box (move() used to setLoopOnly(j) unconditionally) and a drag
+// past the looped box silently changed which box loops.
+const keepMarks = () => {
+  const lo = loopOnly != null ? SONG[loopOnly] : null;
+  const ps = pendingStart != null ? SONG[pendingStart] : null;
+  return () => {
+    if (lo) setLoopOnly(SONG.indexOf(lo));
+    if (ps) setPendingStart(SONG.indexOf(ps));
+  };
+};
 
 /* ---------- build once per box ---------- */
 // Listeners close over the BOX OBJECT, never over an index — a box that has
@@ -60,7 +74,51 @@ function buildBox(sec) {
   const box = document.createElement("div");
   box.className = "box";
   box.draggable = true;
+  // THE HEAD IS BUILT ONCE TOO — dedicated children patched by textContent/
+  // hidden, never innerHTML. Rebuilding it per patch destroyed the ◀ ▶ ⟳ ×
+  // buttons on every "transport:section" (each box boundary while playing)
+  // and on the very activation they handle: Enter on ◀ committed, the commit
+  // patched, the focused button was removed and focus fell to <body> — the
+  // exact mid-click destruction palette.js documents having fixed once.
   const head = document.createElement("div"); head.className = "bhead";
+  const num = document.createElement("b");
+  const role = document.createElement("span"); role.className = "role";
+  const meta = document.createElement("span");
+  const loopmark = document.createElement("span");
+  loopmark.className = "loopmark"; loopmark.textContent = "loop";
+  head.append(num, role, meta, loopmark);
+  // the tools: all four buttons exist for the box's whole life (patchBox
+  // hides the moves at the ends); handlers look the index up at event time
+  const tools = document.createElement("span"); tools.className = "btools";
+  const move = d => {
+    const at = idx(sec), j = at + d;
+    if (j < 0 || j >= SONG.length) return;
+    const keep = keepMarks();
+    const [m] = SONG.splice(at, 1); SONG.splice(j, 0, m);
+    keep();
+    setViewSec(j);
+    commit("box");
+    if (playing) resetBar();
+  };
+  const moveL = btn("t", "◀", "move box earlier", () => move(-1));
+  const moveR = btn("t", "▶", "move box later", () => move(1));
+  const loopBtn = btn("t", "⟳", "loop box", () => {
+    const at = idx(sec);
+    setViewSec(at); setLoopOnly(loopOnly === at ? null : at);
+    commit("selection");
+    if (playing || loopOnly != null) startAt(at);
+  });
+  const xBtn = btn("x", "×", "remove box", () => {
+    const at = idx(sec);
+    SONG.splice(at, 1);
+    if (!SONG.length) SONG.push(emptyBox());
+    setViewSec(Math.min(viewSec, SONG.length - 1));
+    if (loopOnly != null) setLoopOnly(null);
+    commit("box");
+    if (playing) resetBar();
+  });
+  tools.append(moveL, moveR, loopBtn, xBtn);
+  head.append(tools);
   const gl = document.createElement("div"); gl.className = "bgenre";
   // The box lists phrase NUMBERS. The contour picture belongs in the slot rail
   // where you are choosing a phrase; repeating it here made the row a wall of
@@ -101,8 +159,10 @@ function buildBox(sec) {
     e.preventDefault(); box.classList.remove("over");
     const i = idx(sec);
     if (dragFrom == null || dragFrom === i) return;
+    const keep = keepMarks();
     const [moved] = SONG.splice(dragFrom, 1);
     SONG.splice(i, 0, moved);
+    keep();
     setViewSec(i); dragFrom = null; commit("box");
     if (playing) resetBar();
   });
@@ -156,7 +216,8 @@ function buildBox(sec) {
       if (n !== sec.len) { sec.len = n; commit("box"); }
     };
   }));
-  return { box, head, gl, ph, lamp, fill };
+  return { box, head, num, role, meta, loopmark, moveL, moveR, loopBtn, xBtn,
+           gl, ph, lamp, fill };
 }
 
 /* ---------- patch on every change ---------- */
@@ -173,37 +234,6 @@ const btn = (cls, glyph, label, fn) => {
   b2.addEventListener("click", ev => { ev.stopPropagation(); fn(); });
   return b2;
 };
-function buildTools(sec, i) {
-  const tools = document.createElement("span"); tools.className = "btools";
-  const move = d => {
-    const at = idx(sec), j = at + d;
-    if (j < 0 || j >= SONG.length) return;
-    const [m] = SONG.splice(at, 1); SONG.splice(j, 0, m);
-    setViewSec(j); if (loopOnly != null) setLoopOnly(j);
-    commit("box");
-    if (playing) resetBar();
-  };
-  if (i > 0) tools.append(btn("t", "◀", "move box " + (i + 1) + " earlier", () => move(-1)));
-  if (i < SONG.length - 1)
-    tools.append(btn("t", "▶", "move box " + (i + 1) + " later", () => move(1)));
-  tools.append(btn("t" + (i === loopOnly ? " on" : ""), "⟳",
-    (i === loopOnly ? "stop looping box " : "loop box ") + (i + 1), () => {
-      const at = idx(sec);
-      setViewSec(at); setLoopOnly(loopOnly === at ? null : at);
-      commit("selection");
-      if (playing || loopOnly != null) startAt(at);
-    }));
-  tools.append(btn("x", "×", "remove box " + (i + 1), () => {
-    const at = idx(sec);
-    SONG.splice(at, 1);
-    if (!SONG.length) SONG.push(emptyBox());
-    setViewSec(Math.min(viewSec, SONG.length - 1));
-    if (loopOnly != null) setLoopOnly(null);
-    commit("box");
-    if (playing) resetBar();
-  }));
-  return tools;
-}
 function patchBox(sec, i, el) {
   const bars = boxBars(sec);
   // THE SONG MUST NOT SCROLL SIDEWAYS. The row is the one view of the whole
@@ -231,15 +261,25 @@ function patchBox(sec, i, el) {
   // THE ROLE GOES IN THE HEAD, not in the tag pile. A song row is something you
   // read at a glance to find the second chorus, and "chorus" competing with
   // eleven other chips for attention is not a label, it is more noise.
-  el.head.innerHTML = "<b>" + (i + 1) + "</b>" +
-    (sec.role ? '<span class="role">' + ROLES[sec.role] + "</span>" : "") +
-    "<span>" + bars + " bar" + (bars === 1 ? "" : "s") +
+  // PATCHED IN PLACE — the head's children were built once with the box, so a
+  // focused tool button survives every patch (no node is ever removed here).
+  el.num.textContent = String(i + 1);
+  el.role.hidden = !sec.role;
+  el.role.textContent = sec.role ? ROLES[sec.role] : "";
+  el.meta.textContent = bars + " bar" + (bars === 1 ? "" : "s") +
     (sec.nudge ? " +" + sec.nudge : "") +
     // the DURATION, on any box wide enough to have lost its width as a cue —
     // a clipped box has to say in words what it can no longer say in pixels
-    (clipped ? " · " + mmss(secsOf(sec, bpm)) : "") + "</span>" +
-    (i === loopOnly ? '<span class="loopmark">loop</span>' : "");
-  el.head.append(buildTools(sec, i));
+    (clipped ? " · " + mmss(secsOf(sec, bpm)) : "");
+  el.loopmark.hidden = i !== loopOnly;
+  el.moveL.hidden = i === 0;
+  el.moveR.hidden = i === SONG.length - 1;
+  el.moveL.setAttribute("aria-label", "move box " + (i + 1) + " earlier");
+  el.moveR.setAttribute("aria-label", "move box " + (i + 1) + " later");
+  el.loopBtn.classList.toggle("on", i === loopOnly);
+  el.loopBtn.setAttribute("aria-label",
+    (i === loopOnly ? "stop looping box " : "loop box ") + (i + 1));
+  el.xBtn.setAttribute("aria-label", "remove box " + (i + 1));
 
   el.gl.className = "bgenre has";
   el.gl.textContent = stackLabel(sec);

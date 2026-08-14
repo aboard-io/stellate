@@ -42,15 +42,16 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
 let PORT = 8971;
 const RMS_FLOOR = 0.01;                 // silence is ~1e-4; music here runs 0.2..0.6
-// EVERY genre, not a sample of them. Each one is a different instrument, a
-// different kit and a different set of voices, and the failure this gate exists
-// to catch — a zone that does not decode, a freq param that clamps — is per
-// genre by construction.
-const GENRES = ["Simple", "Fugue", "Acid house", "New Wave", "Vaporwave", "Blues",
-                "Rock", "Gregorian", "Bulgarian", "Spem in alium", "Counterpoint",
-                "Neoclassical", "Drone", "Sludge", "Tango", "Death metal",
-                "Eurythmics", "Isley Brothers", "Toto", "Jodeci", "Beatles",
-                "Steely Dan", "Post rock"];
+// EVERY genre, not a sample of them — DERIVED from the data tier, so the
+// claim stays true by construction. The list was a hand-maintained literal
+// once, and the radio-dial batch left 22 of 45 genres with zero coverage for
+// exactly the failures this gate exists to catch: a zone that does not
+// decode, a freq param that clamps, a silent instrument — all per genre.
+// genres.js is UMD (the unit gate already requires it) and the labels are
+// the .pchip text the sweep clicks, exactly.
+const NG = require("../../nukernel/genres.js");
+const GENRES = Object.values(NG.GENRES).map(g => g.label);
+const RATE_OF = Object.fromEntries(Object.values(NG.GENRES).map(g => [g.label, g.rate]));
 
 const fail = (m) => { console.error("FAIL:", m); process.exitCode = 1; };
 let checks = 0; const ok = (m) => { checks++; console.log("  ok:", m); };
@@ -145,11 +146,22 @@ function taps() {
     // genres STACK, so switching means taking the previous one off first —
     // clicking six in a row would otherwise build one six-deep box
     await page.locator(".pchip", { hasText: new RegExp("^" + g + "$") }).click();
-    if (prev && prev !== g)
+    // SETTLE PAST THE PREDECESSOR, not a stopwatch. A genre switch lands on
+    // the next bar line and cancels nothing already scheduled — at the page's
+    // 126 bpm a rate-0.25 bucket is 7.6 s, plus the 150 ms lookahead and a
+    // ~3.2 s release/verb tail. A fixed 3.5 s window could be FILLED by the
+    // old genre still sounding, crediting the neighbour's audio to the genre
+    // under test — a silent genre passed on Drone's leftovers about half the
+    // time. So the wait covers the predecessor's whole bucket + tail first.
+    let settle = 3500;
+    if (prev && prev !== g) {
       await page.locator(".pchip", { hasText: new RegExp("^" + prev + "$") }).click();
+      const prevBarMs = (16 / RATE_OF[prev]) * (60 / 126 / 4) * 1000;
+      settle = Math.max(3500, prevBarMs + 150 + 3200) + 3500;
+    }
     prev = g;
     if (!started) { await page.click("#play"); started = true; }
-    await page.waitForTimeout(3500);                 // decode + a bar or two
+    await page.waitForTimeout(settle);               // predecessor gone + decode + bars
     let peak = 0;
     for (let i = 0; i < 10; i++) {
       await page.waitForTimeout(180);
@@ -191,8 +203,11 @@ function taps() {
   // it just quietly stops working, and it had been dead since the stack refactor
   // because the guard still tested a field that no longer exists.
   {
+    // read the ARIA LABEL, not a head span: the head's children are built
+    // once and their order is layout, but "box 1, Simple, 4 bars" is the
+    // machine-readable truth about length and already load-bearing API
     const box = page.locator(".box").first();
-    const before = await page.locator(".bhead span").first().textContent();
+    const before = await box.getAttribute("aria-label");
     const g = await box.locator(".grip.r").boundingBox();
     if (!g) fail("the length grip does not exist");
     else {
@@ -200,7 +215,7 @@ function taps() {
       await page.mouse.down();
       await page.mouse.move(g.x + 5 + 4 * 26, g.y + g.height / 2, { steps: 10 });
       await page.mouse.up();
-      const after = await page.locator(".bhead span").first().textContent();
+      const after = await box.getAttribute("aria-label");
       if (after === before) fail(`the length grip did not change the box (${before})`);
       else ok(`length grip: ${before} -> ${after}`);
     }
@@ -271,6 +286,20 @@ function taps() {
       if (!wet) fail(`the "drown" reverb send did not reach a send gain ` +
                      `(saw ${mix.channels.map(x => x.rev).join(", ")})`);
       else ok(`reverb send is a real gain: ${wet.rev} into the ${wet.verb}`);
+    }
+    // ...AND THE LEVEL IS A GAIN NODE, not a spec echo: __nuMix reports
+    // c.lvl.gain.value (the one place lvl reaches audio, shared by live and
+    // bounce), so a buildChannel that stopped applying it cannot hide behind
+    // a level-blind RMS floor and a level-flattening master limiter — the
+    // composed arc's "last chorus outweighs the first" rides this gain.
+    {
+      await chip("forward").click();                   // LEVELS.fwd = 1.35
+      const lm = await waitMix(m => m.channels.some(x => Math.abs(x.level - 1.35) < 1e-3), 20000);
+      if (!lm || !lm.channels.some(x => Math.abs(x.level - 1.35) < 1e-3))
+        fail(`the "forward" level chip never reached a gain node ` +
+             `(levels: ${lm && lm.channels.map(x => x.level).join(", ")})`);
+      else ok("the level chip is a real gain: a channel's lvl.gain.value reads 1.35");
+      await chip("forward").click();                   // back off for the spectrum read
     }
 
     // ...AND IT IS AUDIBLE. `crunch` is the staged amp: three waveshaper stages
@@ -353,7 +382,10 @@ function taps() {
   {
     const roleAt = () => page.locator(".box .role").allTextContents();
     const before = await roleAt();
-    const later = page.locator(".box").first().locator(".btools .t").first();
+    // the tools are built once per box now (all four buttons exist; patchBox
+    // hides the moves at the ends), so take the first VISIBLE one — on box 1
+    // that is ▶, exactly the button the old conditional build put first
+    const later = page.locator(".box").first().locator(".btools .t:visible").first();
     if (!(await later.count())) fail("a box has no move buttons — touch cannot reorder a song");
     else {
       await later.click();

@@ -102,15 +102,29 @@ export async function makeSynthNode(c, spec) {
       if (a) a.setValueAtTime(val, c.currentTime);
     }
   }
-  nodeStats.created++;
+  // the ledger counts the LIVE context only — offline bounce renders build a
+  // fresh pool through this function and drop it with the OfflineAudioContext,
+  // never passing retireSynth, so counting them reads as a permanent phantom
+  // leak in the one instrument whose whole job is seeing real ones (the
+  // countFb two-ledgers law, applied to R1 accounting)
+  if (!ctx || c === ctx) nodeStats.created++;
   return node;
 }
+// TRI-STATE, NOT POISON — the assets.js decode law, applied to the synth
+// pool: a transient wasm/meta/preset fetch drop must not downgrade the
+// signature synth to its fallback for the whole session. The first failure
+// leaves the key ABSENT (the next ensureAssets pass — every song change,
+// every transport start — re-requests it); only MAXRUNS failures write the
+// final null that loadSynth/ensureAssets short-circuit on.
+const SYNTH_MAXRUNS = 2;
+const synthFails = new Map();                     // key -> runs
 export async function loadSynth(spec, v, chan) {
   const key = synthKey(spec, v);
   if (synthNodes.has(key)) { routeSynth(key, synthNodes.get(key), chan); return synthNodes.get(key); }
   try {
     const node = await makeSynthNode(ctx, spec);
     synthNodes.set(key, node);
+    synthFails.delete(key);
     // the node never touches a channel directly — it fans out through the
     // per-channel gates above, which is what keeps one node serving nine
     // sections. A node loaded before any channel exists is PARKED, not wired
@@ -120,7 +134,12 @@ export async function loadSynth(spec, v, chan) {
     // playSynth opens the route on the first note instead.
     if (chan) routeSynth(key, node, chan);
     return node;
-  } catch (e) { synthNodes.set(key, null); return null; }
+  } catch (e) {
+    const runs = (synthFails.get(key) || 0) + 1;
+    synthFails.set(key, runs);
+    if (runs >= SYNTH_MAXRUNS) synthNodes.set(key, null);   // now, and only now, final
+    return null;
+  }
 }
 // THE VOICE KNOBS, applied generically. A chip carries a NORMALIZED position, not
 // a number in Hz, so the same "bright" means bright on a 303 (cutoff 60..6000),
@@ -233,10 +252,14 @@ function retireSynth(node, routes) {
 // the channels themselves, so no gain node outlives the channel it fed.
 // Same law as retireSynth: the map forgets immediately (fresh routes rebuild
 // on the next bar), the disconnect waits out the ramp.
-function retireGains(gains) {
-  const t = ctx ? ctx.currentTime : 0;
-  for (const g of gains) try { g.gain.cancelScheduledValues(t); g.gain.setTargetAtTime(0, t, 0.008); } catch (e) {}
-  setTimeout(() => { for (const g of gains) { try { g.disconnect(); } catch (e) {} } }, 700);
+// `at` (default now) delays the fade — a route dropped because its channel is
+// being REPLACED must let already-scheduled synth notes ring until the new
+// channel takes over at the bar line (mixer.retireChannel's law, same clock)
+function retireGains(gains, at) {
+  const t = ctx ? ctx.currentTime : 0, t0 = Math.max(t, at || t);
+  for (const g of gains) try { g.gain.cancelScheduledValues(t0); g.gain.setTargetAtTime(0, t0, 0.008); } catch (e) {}
+  setTimeout(() => { for (const g of gains) { try { g.disconnect(); } catch (e) {} } },
+             (t0 - t) * 1000 + 700);
 }
 export function clearRoutes() {
   for (const m of synthOut.values()) {
@@ -244,10 +267,10 @@ export function clearRoutes() {
     m.clear();
   }
 }
-export function dropRoute(chanKey) {
+export function dropRoute(chanKey, at) {
   for (const m of synthOut.values()) {
     const g = m.get(chanKey);
-    if (g) { retireGains([g]); m.delete(chanKey); }
+    if (g) { retireGains([g], at); m.delete(chanKey); }
   }
 }
 

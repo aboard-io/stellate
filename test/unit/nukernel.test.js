@@ -764,6 +764,8 @@ console.log("the composer writes songs that are songs");
           // a ghost-perc layer underneath, which is not no drums.
           const g3 = b.kit
             ? { ...G, kit: K.KITOPS[b.kit](G.kit || {}), fill: null,
+                kits: !G.kits ? null : b.kit === "nodrums" ? null
+                  : G.kits.map(k4 => K.KITOPS[b.kit](k4)),
                 ghost: b.kit === "nodrums" ? null : G.ghost }
             : G;
           const dr = K.drums(blank, g3, G.bars).length;
@@ -1135,6 +1137,30 @@ console.log("progression — quality, inversion, half-bar chords, cadence, voice
        "beats:8 did not split the bar into two chords (t = " + [...padT].join(",") + ")");
   }
 
+  // (c2) THE SECOND CHORD OF A SPLIT BAR IS NOT PAD-ONLY. The stab path and
+  // the ramp's chordWalk already read chordFor(i); the bass and the line's
+  // root shift must too, or the half-bar turnaround the beats field exists
+  // for never reaches the parts that carry the harmony.
+  {
+    // bossa's bar 2 packs ii7–V7 into one bar; the fifths bass must sound the
+    // V's root (pc 7) somewhere in the dominant half or the turnaround — the
+    // feature the anchor exists to prove — never happened
+    const bpc = K.bass(P, GENRES.bossa, 4)
+      .filter(e => e.t >= 24 && e.t < 32).map(e => ((e.n % 12) + 12) % 12);
+    ok(bpc.includes(7), "bossa's half-bar V7 never reaches the bass: " + bpc.join(","));
+    // ...and the LINE's root shift is per-chord: a ramp-free line over a
+    // split bar moves with the second chord where an all-I control does not
+    const b1 = { label: "t", rate: 1, bars: 1, voices: 1, entry: () => 0,
+                 reg: () => 0, realize: () => "line", kit: {}, harmony: "cycle",
+                 roots: [0], word: () => [] };
+    const flat2 = { ...clone(P), inc: new Array(N).fill(0), stk: new Array(N).fill(0) };
+    const pcsHalf = prog => [...new Set(K.render(flat2, { ...b1, prog }, 1)
+      .filter(e => e.t >= 8).map(e => ((e.n % 12) + 12) % 12))].sort((x, y) => x - y);
+    ok(JSON.stringify(pcsHalf([[{ d: 0, beats: 8 }, { d: 4, beats: 8 }]])) !==
+       JSON.stringify(pcsHalf([[{ d: 0 }]])),
+       "the line's root shift ignores the second chord of a beats-split bar");
+  }
+
   // (d) CADENCE: withCadence lands a different chord on the section's last bar
   {
     const cad = { ...base, prog: K.withCadence([{ d: 0 }], 4, { d: 4, q: "dom7" }) };
@@ -1403,6 +1429,22 @@ console.log("pipes — harmonize, echoCanon, breathe, strum: seeded, total, chor
     ok(sig(wet({ ...base, pipes: [{ id: "nonsense" }] })) === sig(dry),
        "an unknown pipe id is not a no-op — pipes are supposed to be total");
   }
+  // harmonize UNDER A KEY: render() bakes g.key into every pitch, so the chord
+  // set the pipe snaps to must be the KEYED one — at key 2 every added note
+  // sits in the +2-transposed sounding chord. Snapping to the un-keyed set is
+  // arbitrary intervals against the transposed band, which is the bug.
+  {
+    const g2 = { ...base, key: 2, pipes: [{ id: "harmonize", p: 1 }] };
+    const added = wet(g2).filter(e => e.pipe === "harmonize");
+    ok(added.length > 0, "harmonize added nothing under a key");
+    for (const e of added) {
+      const keyed = new Set([...K.chordsOf(P, base, Math.floor(e.t / 16))[0].pcSet]
+        .map(pc => (pc + 2) % 12));
+      ok(keyed.has(((e.n % 12) + 12) % 12),
+         "harmonize under key 2 added a note outside the KEYED chord in bar " +
+         Math.floor(e.t / 16) + " (pc " + (((e.n % 12) + 12) % 12) + ")");
+    }
+  }
   // echoCanon: every copy is later, quieter, and inside its source's chord bar
   {
     const ev2 = wet({ ...base, pipes: [{ id: "echoCanon", delay: 3 }] });
@@ -1485,42 +1527,35 @@ console.log("kit schedule and kit dynamics");
 /* ---------------------------------------------------------------- 31. THE ARRANGER'S ARC
    Song-level shape: a prechorus that lifts, a peak chorus that is measurably
    bigger than the first, a chorus with its OWN melody, hooks with a motif, a
-   breath and one climax — all read from RENDERED events, never from config. */
-console.log("song arc, prechorus, topline — the radio shape, measured");
+   breath and one climax — all read from RENDERED events, never from config.
+
+   §31 AND §33 RUN THE REAL ui/derive.js. They used to run hand-copied mirrors
+   of genreOf/sectionEvents, and the mirror drifted: deleting the shipped key
+   wiring left every mirror check green, and the mirror's full-form render hid
+   a cadence landing outside the box's window. The UMD data tier is published
+   onto a stub window (the exact shape ui/deps.js reads) and derive.js is
+   imported for real — so a wiring change in the shipped file fails HERE. */
+(async () => {
+const D = await (async () => {
+  globalThis.window = globalThis;
+  window.NuKernel = K;
+  window.NuGenres = require("../../nukernel/genres.js");
+  window.NuFields = require("../../nukernel/fields.js");
+  window.NuSong = require("../../nukernel/song.js");
+  window.NuInstruments = require("../../nukernel/instruments.js");
+  window.NuCompose = require("../../nukernel/compose.js");
+  window.PRESETS = require("../../nukernel/presets.js").PRESETS;
+  return import("../../nukernel/ui/derive.js");
+})();
+console.log("song arc, prechorus, topline — the radio shape, measured on ui/derive.js");
 {
   const C = require("../../nukernel/compose.js");
   const NF = require("../../nukernel/fields.js");
-  const NG = require("../../nukernel/genres.js");
   const seeds = Array.from({ length: 30 }, (_, i) => i + 1);
 
-  // the mirror of the render path for the new box fields, the same way §20
-  // mirrors genreOf — box prog names resolve through NuGenres.PROGS, the
-  // cadence through withCadence, the period through the palette's own OPS
-  const genreFor = (G, b) => {
-    const g2 = { ...G, ...(b.mode ? { mode: MODES[b.mode] } : {}) };
-    if (b.key) g2.key = b.key;
-    const prog = (b.prog && NG.PROGS[b.prog]) || G.prog ||
-                 (G.harmony === "cycle" ? G.roots.map(d => ({ d })) : null);
-    if (prog) g2.prog = b.cadence ? K.withCadence(prog, G.bars, b.cadence) : prog;
-    // the box period is a PRESET NAME since P4 (fields.js PERIODS); "1bar"
-    // strips a genre's own sentence — this mirror tracks ui/derive.js genreOf
-    if (b.period) g2.period = b.period === "1bar" ? null
-      : (NF.PERIODS[b.period] || []).map(w => w.map(k2 => NF.OPS[k2]));
-    return g2;
-  };
-  const sectionSig = (song, b, G) => {
-    const g2 = genreFor(G, b);
-    let out = [];
-    b.stack.forEach((e, ei) => {
-      // a layer rides the authority's key the way it rides its harmony —
-      // half the band modulating is not a modulation, it is a mistake
-      const gg = ei === 0 ? g2 : { ...GENRES[e.g], key: b.key || 0 };
-      for (const i of e.slots)
-        out = out.concat(K.render(K.word(song.slots[i],
-          (b.ops || []).map(k2 => NF.OPS[k2])), gg, G.bars));
-    });
-    return out;
-  };
+  // the REAL render path: everything a box plays, windowed to nudge+len,
+  // enveloped, edged and grooved — the stream the transport schedules
+  const sectionEv = (song, b) => D.sectionEvents(b, song.slots).ev;
 
   // (a) THE ARC IS AUDIBLE: mean level of the LAST chorus beats the FIRST in
   // at least 90% of songs, measured as rendered velocity × the box's level
@@ -1532,7 +1567,7 @@ console.log("song arc, prechorus, topline — the radio shape, measured");
       if (ch.length < 2) continue;
       n2++;
       const level = b => {
-        const ev2 = sectionSig(song, b, G).filter(e => e.part !== "pad");
+        const ev2 = sectionEv(song, b).filter(e => e.kind === "line" && e.part !== "pad");
         const mv = ev2.reduce((a, e) => a + (e.vel == null ? 5 : e.vel), 0) /
                    Math.max(1, ev2.length);
         return mv * NF.LEVELS[b.lvl || "norm"];
@@ -1548,14 +1583,16 @@ console.log("song arc, prechorus, topline — the radio shape, measured");
   {
     let lifted = 0;
     for (const s of seeds) {
-      const song = C.compose("rock", s), G = GENRES.rock;
+      const song = C.compose("rock", s);
       const ch = song.song.filter(b => b.role === "chorus" && !b.cue);
       const last = ch[ch.length - 1];
       ok(last.stack.length >= 2, "rock/" + s + ": the peak chorus has no extra layer");
       if (last.key) {
         lifted++;
-        const a = sectionSig(song, { ...last, key: 0 }, G);
-        const b = sectionSig(song, last, G);
+        // every PITCHED consumer — lines, layers AND the bass — moves by
+        // exactly the key; the drums (no n) are untouched by construction
+        const a = sectionEv(song, { ...last, key: 0 }).filter(e => e.n != null);
+        const b = sectionEv(song, last).filter(e => e.n != null);
         ok(a.length === b.length && a.every((e, i) => b[i].n - e.n === last.key),
            "rock/" + s + ": the truck-driver lift does not move the band by +" + last.key);
       }
@@ -1566,35 +1603,40 @@ console.log("song arc, prechorus, topline — the radio shape, measured");
 
   // (b) THE PRECHORUS EXISTS and points forward: stored under a legal role
   // (fields.js owns the vocabulary — the cue carries the honest name), riser
-  // armed, cadence stamped, and it renders a real dominant into the last bar
+  // armed, cadence stamped — and the dominant sounds INSIDE THE RENDERED
+  // WINDOW. A prechorus renders bars [0, len) with len = half the form, so a
+  // cadence landed on the form's last bar is a lift that never plays; the
+  // checks below read the same windowed stream the transport schedules.
   {
-    const song = C.compose("beatles", 5), G = GENRES.beatles;
+    const song = C.compose("beatles", 5);
     const pre = song.song.filter(b => b.cue === "prechorus");
     ok(pre.length === 2, "the song plan does not carry two prechoruses");
     for (const b of pre) {
       ok(C.ROLES[b.role], "a prechorus is stored under an illegal role: " + b.role);
       ok(b.env === "in" && b.mot === "rise" && b.cadence,
          "the prechorus does not lift (env/mot/cadence missing)");
-      // the cadence reaches the BASS: the last bar's root is the dominant's,
-      // not the prog's own final chord
-      const bpc = K.bass(song.slots[b.stack[0].slots[0]] || P, genreFor(G, b), G.bars)
-        .filter(e => e.t >= (G.bars - 1) * 16)
+      // the cadence reaches the BASS in the window's last bar: its root is
+      // the dominant's, not the prog's own final chord
+      const r = D.sectionEvents(b, song.slots), bs = 16 / r.g.rate;
+      const bpc = r.ev.filter(e => e.kind === "bass" && e.t >= (r.bars - 1) * bs)
         .map(e => ((e.n % 12) + 12) % 12);
       ok(bpc.length > 0 && bpc.every(pc => pc === 7 || pc === 6),
-         "the beatles prechorus cadence never reaches the bass: " + bpc.join(","));
+         "the beatles prechorus cadence never reaches the bass in the rendered window: " +
+         bpc.join(","));
     }
     // ...and where the genre HAS a pad, the cadence's dominant third actually
-    // SOUNDS: isley's Rhodes voices the V7 in the prechorus's last bar — pc 11,
+    // SOUNDS: isley's Rhodes voices the V7 in the window's last bar — pc 11,
     // which dorian does not contain, so only the cadence can put it there
     {
-      const song2 = C.compose("isley", 5), G2 = GENRES.isley;
+      const song2 = C.compose("isley", 5);
       const b2 = song2.song.find(b3 => b3.cue === "prechorus");
       ok(!!b2, "isley's song plan lost its prechorus");
-      const pcs2 = new Set(sectionSig(song2, b2, G2)
-        .filter(e => e.part === "pad" && e.t >= (G2.bars - 1) * 16)
+      const r2 = D.sectionEvents(b2, song2.slots), bs2 = 16 / r2.g.rate;
+      const pcs2 = new Set(r2.ev
+        .filter(e => e.kind === "line" && e.part === "pad" && e.t >= (r2.bars - 1) * bs2)
         .map(e => ((e.n % 12) + 12) % 12));
       ok(pcs2.has(11),
-         "the prechorus cadence never sounds the dominant's third in the render");
+         "the prechorus cadence never sounds the dominant's third in the rendered window");
     }
     ok(C.PLANS.song.includes("prechorus") && C.PLANS.dance.includes("build"),
        "the plans lost their lift sections");
@@ -1604,11 +1646,11 @@ console.log("song arc, prechorus, topline — the radio shape, measured");
   // render differently — the dance plan's double drop is the hard case
   for (const gk of ["acid", "eurythmics"]) {
     for (const s of seeds.slice(0, 10)) {
-      const song = C.compose(gk, s), G = GENRES[gk];
+      const song = C.compose(gk, s);
       for (let i = 1; i < song.song.length; i++) {
         const a = song.song[i - 1], b = song.song[i];
         if (a.role !== b.role || C.BEDS[b.role] || a.cue !== b.cue) continue;
-        ok(sig(sectionSig(song, a, G)) !== sig(sectionSig(song, b, G)),
+        ok(sig(sectionEv(song, a)) !== sig(sectionEv(song, b)),
            gk + "/" + s + ": two consecutive " + b.role + "s render identically");
       }
     }
@@ -1667,7 +1709,8 @@ console.log("confusion — every genre is provably not a relabelled neighbour");
   // (real only since maxHold exists), the pitch-class profile of everything
   // pitched, the harmonic rhythm read off the BASS (distinct per-bar note
   // sets — the consumer a decorative prog cannot reach), measured swing, bass
-  // density and register, and the composer's own tempo/rate/form numbers.
+  // density and register, wall-clock bar seconds (invariant under the
+  // rate×2/bpm÷2 relabel), the form length, and the RENDERED voice count.
   const featOf = (gk, g, bpm) => {
     const bars = g.bars, bs = 16 / g.rate;
     const line = K.render(P, g, bars);
@@ -1684,7 +1727,10 @@ console.log("confusion — every genre is provably not a relabelled neighbour");
     push(Math.min(1, dr.filter(e => e.d === "p").length / bars / 16), 0.5);
     const mel = line.filter(e => e.part !== "pad" && e.part !== "stab");
     push(line.length ? (line.length - mel.length) / line.length : 0, 1);
-    push(Math.min(1, mel.length / bars / 16), 1.5);
+    // LOG-SCALED, NOT CLAMPED: Math.min(1, …) saturated at one voice's worth
+    // of sixteenths, which hid a 360- vs 80-event render difference (spem vs
+    // counterpoint) and left those pairs separated only by declared scalars
+    push(Math.log2(1 + mel.length / bars) / 6, 1.5);
     const durs = mel.map(e => e.dur * g.rate);
     push(durs.length ? Math.min(1, durs.reduce((a, b) => a + b, 0) / durs.length / 8) : 0, 1);
     let covered = 0, end = 0;
@@ -1704,10 +1750,17 @@ console.log("confusion — every genre is provably not a relabelled neighbour");
     push(odd.length ? Math.min(1, (odd.reduce((a, x) => a + (x - 1), 0) / odd.length) / 0.5) : 0, 1);
     push(Math.min(1, ba.length / bars / 16), 1);
     push(ba.length ? ba.reduce((a, e) => a + e.n, 0) / ba.length / 127 : 0, 1);
-    push(((bpm == null ? C.BPM[gk] : bpm) - 70) / 90, 1.5);
-    push(g.rate / 2, 1);
+    // ONE wall-clock feature instead of raw bpm + raw rate: bar SECONDS.
+    // Every render feature above is rate-normalized (step() multiplies by
+    // g.rate, durations scale by it), so a clone with rate doubled and bpm
+    // halved renders wall-clock-identical audio — separate bpm/rate features
+    // measured that relabel 0.07 apart and the gate passed the exact
+    // duplicate it exists to forbid. Bar seconds is invariant under the
+    // relabel and still separates genuine tempo differences.
+    push(Math.log2((16 / g.rate) * (60 / (4 * (bpm == null ? C.BPM[gk] : bpm)))) / 4, 1.5);
     push(g.bars / 12, 0.75);
-    push(g.voices / 8, 1);
+    // the voice count is MEASURED from the rendered stream, not declared
+    push(new Set(line.map(e => e.v)).size / 8, 1);
     return { f, w };
   };
   const dist = (a, b) => {
@@ -1715,10 +1768,11 @@ console.log("confusion — every genre is provably not a relabelled neighbour");
     for (let i = 0; i < a.f.length; i++) { s += a.w[i] * Math.abs(a.f[i] - b.f[i]); tw += a.w[i]; }
     return s / tw;
   };
-  // THE FLOOR. Measured on the shipped table the closest true pair (gregorian
-  // vs counterpoint — genuinely siblings) sits at 0.039; a relabel that only
-  // moved the tempo ten bpm measures under 0.01. 0.03 splits those worlds
-  // with headroom, and the render is deterministic so there is no flake in it.
+  // THE FLOOR. Measured on the shipped table (post config-scalar purge) the
+  // closest true pair (gregorian vs counterpoint — genuinely siblings) sits
+  // at 0.035; a relabel that only moved the tempo ten bpm, or the compensated
+  // rate×2/bpm÷2 clone, measures under 0.003. 0.03 splits those worlds with
+  // headroom, and the render is deterministic so there is no flake in it.
   const EPS = 0.03;
   const F = {};
   for (const gk of GK) F[gk] = featOf(gk, GENRES[gk]);
@@ -1728,12 +1782,18 @@ console.log("confusion — every genre is provably not a relabelled neighbour");
       ok(d > EPS, GK[i] + " and " + GK[j] + " render " + d.toFixed(4) +
          " apart — closer than " + EPS + ", one is a relabel of the other");
     }
-  // the canaries: a relabelled clone measures zero, and a clone that only
-  // changed its tempo still fails — so the gate cannot be passed by a rename
+  // the canaries: a relabelled clone measures zero, a clone that only changed
+  // its tempo still fails, and — the compensated case — a clone with rate
+  // doubled and bpm halved plays wall-clock-identical audio and must ALSO
+  // measure as a clone, or the floor is being cleared by config relabels
   ok(dist(F.rock, featOf("rock", { ...GENRES.rock })) < EPS / 10,
      "a byte-identical clone does not measure as a clone — the metric is broken");
   ok(dist(F.rock, featOf("rock", { ...GENRES.rock }, C.BPM.rock + 10)) < EPS,
      "a tempo-only relabel clears the floor — the gate proves nothing");
+  ok(dist(F.rock, featOf("rock", { ...GENRES.rock, rate: GENRES.rock.rate * 2 },
+                         C.BPM.rock / 2)) < EPS / 10,
+     "a rate-doubled bpm-halved clone — audio-identical by construction — " +
+     "does not measure as a clone: config scalars are doing the separating");
   // every declared neighbour is a real genre, so the identity comments and the
   // matrix stay honest together
   for (const gk of GK)
@@ -1744,11 +1804,10 @@ console.log("confusion — every genre is provably not a relabelled neighbour");
 
 /* ---------------------------------------------------------------- 33. THE BOX SURFACE (P4)
    The depth fields as BOX fields — key/prog/period/breath/pipe/part — wired
-   in ui/derive.js genreOf, plus the automation vocabulary. The gate cannot
-   load the ESM ui tier, so boxGenre below is the render-path MIRROR, the same
-   law §31's genreFor states: change the wiring, change this, or the claims
-   here are about a function nobody runs. Every assertion reads RENDERED
-   events; the neutrality row proves null == absent byte for byte. */
+   in ui/derive.js genreOf, plus the automation vocabulary. boxGenre runs the
+   REAL genreOf (imported above as D — the mirror it replaced could not fail
+   when the shipped wiring changed). Every assertion reads RENDERED events;
+   the neutrality row proves null == absent byte for byte. */
 console.log("the box surface — key/prog/period/breath/pipe/part/auto reach the render");
 {
   const NF = require("../../nukernel/fields.js");
@@ -1756,26 +1815,11 @@ console.log("the box surface — key/prog/period/breath/pipe/part/auto reach the
   const S = require("../../nukernel/song.js");
   const C = require("../../nukernel/compose.js");
 
-  // MIRROR of ui/derive.js genreOf, new fields only (box level — `part` also
-  // inherits box->layer there via optOf, which is the rule §21 already gates
-  // through the registry's scope)
-  const boxGenre = (G, sec) => {
-    const out = { ...G };
-    if (sec.key != null) out.key = +sec.key;
-    if (sec.breath != null) out.maxHold = NF.BREATHS[sec.breath];
-    if (sec.pipe) out.pipes = sec.pipe === "off" ? null : NF.PIPESETS[sec.pipe];
-    if (sec.part && sec.part !== "auto") out.part = [sec.part];
-    if (sec.prog || sec.cadence) {
-      const prog = (sec.prog && sec.prog !== "off" && NG.PROGS[sec.prog]) ||
-        (sec.prog === "off" ? null
-          : out.prog || (out.harmony === "cycle" && out.roots
-                         ? out.roots.map(d => ({ d })) : null));
-      out.prog = sec.cadence && prog ? K.withCadence(prog, G.bars, sec.cadence) : prog;
-    }
-    if (sec.period) out.period = sec.period === "1bar" ? null
-      : NF.PERIODS[sec.period].map(w => w.map(k => NF.OPS[k]));
-    return out;
-  };
+  // the REAL ui/derive.js genreOf, fed a box-shaped section (a box always has
+  // an authority; layer-scope fields read through optOf's sec fallback)
+  const keyOfG = new Map(Object.keys(GENRES).map(k => [GENRES[k], k]));
+  const boxGenre = (G, sec) =>
+    D.genreOf({ stack: [{ g: keyOfG.get(G), slots: [] }], nudge: 0, ...sec }, null);
   const rsig = g2 => sig(allEvents(P, g2, g2.bars));
 
   // NEUTRALITY: a box with every depth field null renders byte-identically
@@ -1814,6 +1858,20 @@ console.log("the box surface — key/prog/period/breath/pipe/part/auto reach the
       .filter(e => e.t < 12).map(e => ((e.n % 12) + 12) % 12);
     ok(off.includes(3) && !off.includes(4),
        "prog \"off\" did not strip blues back to the minor walk: " + off.join(","));
+  }
+
+  // PROG ON A MODAL GENRE: a named progression makes the harmony a CYCLE.
+  // chordsOf ignores g.prog whenever harmony !== "cycle", so the chip used to
+  // validate, light, and change nothing on ~19 of 45 genres — the shipped
+  // depth surface silently inert. "off"/absent still leave modal modal.
+  {
+    const F2 = GENRES.funk;
+    ok(rsig(boxGenre(F2, { ...NUL, prog: "blues12" })) !== rsig(F2),
+       "prog \"blues12\" on a modal genre changes nothing — the chip is inert");
+    ok(rsig(boxGenre(F2, { ...NUL, prog: "off" })) === rsig(F2),
+       "prog \"off\" on a modal genre is not neutral");
+    ok(rsig(boxGenre(F2, { ...NUL, cadence: { d: 4, q: "dom7" } })) === rsig(F2),
+       "a bare cadence (no prog to land on) is not neutral on a modal genre");
   }
 
   // PERIOD: "4bar" lifts bar 3 (dens3 = more gates), "2bar" alternates,
@@ -1994,7 +2052,58 @@ console.log("the box surface — key/prog/period/breath/pipe/part/auto reach the
   }
 }
 
+/* ---------------------------------------------------------------- 33b. THE AUTHORITY LAW
+   A stacked layer plays through the BOX's harmony — prog and period stay the
+   authority's alone (the comment sectionEvents itself carries). A layer that
+   keeps its own prog is half the band in a different song: stacking blues on
+   house had the layer voice-leading blues12 against the box's changes, and a
+   layered beatles kept its own four-bar sentence. Both read through the REAL
+   derive path. */
+console.log("a stacked layer plays the authority's changes, not its own");
+{
+  // (a) the box's prog chip must REACH the layer: a layer following its own
+  // prog is deaf to a change in the authority's changes
+  const mk = prog => ({ stack: [{ g: "house", slots: [0] }, { g: "blues", slots: [0] }],
+                        ops: [], prog, len: 4, nudge: 0 });
+  const layerEv = sec => JSON.stringify(D.sectionEvents(sec, [P]).ev
+    .filter(e => e.layer === "blues").map(e => [e.t, e.n]));
+  ok(layerEv(mk(null)) !== layerEv(mk("jack7")),
+     "the box's prog never reaches a stacked layer — it plays its own changes");
+  // (b) a layered beatles must NOT keep its own four-bar sentence: the layer's
+  // bar 4 renders as many notes as its bar 1 once the period is stripped
+  const fb = { stack: [{ g: "funk", slots: [0] }, { g: "beatles", slots: [0] }],
+               ops: [], len: 4, nudge: 0 };
+  const lev = D.sectionEvents(fb, [P]).ev.filter(e => e.layer === "beatles");
+  const bs34 = 16 / D.sectionEvents(fb, [P]).g.rate;
+  const perBar = b => lev.filter(e => Math.floor(e.t / bs34) === b).length;
+  ok(perBar(3) === perBar(0),
+     "a stacked layer kept its own bar schedule (bar 4 " + perBar(3) +
+     " notes vs bar 1 " + perBar(0) + ")");
+}
+
+/* ---------------------------------------------------------------- 34. KIT OPS × KIT SCHEDULE
+   drums() prefers g.kits over g.kit, so a kit operator applied to the kit
+   alone is a no-op on a schedule genre — dnb's breakdown kept its full
+   two-bar break under a "no drums" chip, and only the composer's intro
+   guard ever noticed. Read through the REAL derive path. */
+console.log("kit operators reach the kit schedule (g.kits)");
+{
+  const box = kit => ({ stack: [{ g: "dnb", slots: [0] }], ops: [], kit,
+                        len: 4, nudge: 0 });
+  const hits = kit => D.sectionEvents(box(kit), [P]).ev.filter(e => e.kind === "hit");
+  ok(hits(null).length > 0, "dnb renders no drums at all — this section proves nothing");
+  ok(hits("nodrums").length === 0,
+     "kit \"nodrums\" left " + hits("nodrums").length + " hits on a kits-schedule genre");
+  ok(hits("nokick").length > 0 && hits("nokick").every(e => e.d !== "k"),
+     "kit \"nokick\" left kicks on a kits-schedule genre");
+  // `four` WRITES the lane: a kick on every quarter of every scheduled bar
+  const four = hits("four").filter(e => e.d === "k");
+  ok(four.length === 16,
+     "kit \"four\" did not straighten the kick over the schedule (" + four.length + " kicks)");
+}
+
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }
 process.exit(0);
+})().catch(e => { console.error("FAIL:", e && e.stack || e); process.exit(1); });

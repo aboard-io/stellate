@@ -163,18 +163,24 @@ export function buildChannel(c, spec, env) {
   return { key: null, input, drumIn: dHP, player, autos, autoParam,
            motKind: spec.mot, oscs, nodes, spec, stages, rs, ds, lvl };
 }
-export function channelFor(sec) {
+export function channelFor(sec, retireAt) {
   const spec = chanSpec(sec);
   let id = boxId.get(sec);
   if (id == null) boxId.set(sec, id = ++chanSeq);
   // the key is UNIQUE PER BOX (the synth route gates and the prune both hang
   // off it) and carries the spec, so a changed chip is a changed key and the
   // channel rebuilds in place — ahead of the bar, because the tick prebuilds
-  // the next section's channel outside the render window
+  // the next section's channel outside the render window.
+  // `retireAt` is WHEN the old channel may start dying: the transport passes
+  // nextBarTime, the moment the first bar scheduled into the NEW channel
+  // sounds. Fading the old one at ctx.currentTime instead cut everything
+  // already scheduled through it — the rest of the sounding bar plus the
+  // whole lookahead window died in a 30 ms fade on every live mix edit of
+  // the playing section, an audible hole of up to a bar.
   const key = "#" + id + "|" + JSON.stringify(spec);
   const got = CHAN.get(sec);
   if (got && got.key === key) return got;
-  if (got) { retireChannel(got); dropRoute(got.key); }
+  if (got) { retireChannel(got, retireAt); dropRoute(got.key, retireAt); }
   const c = buildChannel(ctx, spec, { master: masterIn, verb: verbFor, echoIn: delBus });
   c.key = key;
   CHAN.set(sec, c);
@@ -199,7 +205,10 @@ window.__nuMix = () => ({
   channels: [...CHAN.values()].map(c => ({
     fx: c.spec.fx, stages: c.stages, motion: c.motKind,
     rev: +c.rs.gain.value.toFixed(3), del: +c.ds.gain.value.toFixed(3),
-    level: c.spec.lvl, pan: c.spec.pan, verb: c.spec.verb,
+    // the BUILT value, like rev/del beside it — reporting c.spec.lvl echoed
+    // the declaration, and a buildChannel that left the gain at 1 kept every
+    // gate green while the composed arc went flat
+    level: +c.lvl.gain.value.toFixed(3), pan: c.spec.pan, verb: c.spec.verb,
     key: c.key, auto: c.autos ? c.autos.length : 0 })),
 });
 // AUTOMATION IS ARMED WHEN ITS SECTION STARTS, and re-armed on every pass —
@@ -236,17 +245,22 @@ export function armAutomation(chan, when, durSec, spb) {
 // mid-sample. ZERO-STATIC Stage 1.1 is this exact case: fade the channel out
 // (~30 ms), THEN, well clear of the ramp, stop the LFOs and disconnect. The
 // map forgets the channel immediately, so nothing new routes into a dying one.
-function retireChannel(c) {
+// `at` (audio-clock seconds, default now) is when the fade may START — a
+// channel replaced mid-bar rings out until its successor's first bar lands.
+// prune/dropChannels keep the immediate default: their channel's box is gone.
+function retireChannel(c, at) {
+  let wait = 0;
   try {
-    const t = ctx.currentTime;
-    c.lvl.gain.cancelScheduledValues(t);
-    c.lvl.gain.setTargetAtTime(0, t, 0.01);
+    const t = ctx.currentTime, t0 = Math.max(t, at || t);
+    wait = (t0 - t) * 1000;
+    c.lvl.gain.cancelScheduledValues(t0);
+    c.lvl.gain.setTargetAtTime(0, t0, 0.01);
   } catch (e) {}
   setTimeout(() => {
     for (const o of c.oscs) { try { o.stop(); } catch (e) {} }
     for (const n of c.nodes) { try { n.disconnect(); } catch (e) {} }
     try { c.input.disconnect(); c.drumIn.disconnect(); } catch (e) {}
-  }, 700);
+  }, wait + 700);
 }
 export function dropChannels() {
   for (const c of CHAN.values()) retireChannel(c);

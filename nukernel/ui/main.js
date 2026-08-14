@@ -6,7 +6,7 @@
 // which is the ONE consumer of transport.getPosition(): the UI reads the
 // audio clock through that accessor and audio never calls a draw function —
 // that one-way rule is what the whole split is for.
-import { GENRES } from "./deps.js";
+import { GENRES, RATES } from "./deps.js";
 import { SONG, viewSec, readStore, adoptSong, defaultSong, on } from "./state.js";
 import { gid } from "./derive.js";
 import * as transport from "../audio/transport.js";
@@ -50,7 +50,11 @@ function frame() {
   const pos = transport.getPosition();
   if (pos.si >= 0 && SONG[pos.si]) {
     const sec = SONG[pos.si], g = GENRES[gid(sec)];
-    const total = sec.len * 16 / g.rate * pos.stepDur;
+    // the DERIVED rate — the audio tier schedules with genreOf's g.rate ×
+    // RATES[sec.rate], so a "half time" box really lasts twice as long and
+    // the raw genre rate had the fill bar full at the halfway mark
+    const rate = g.rate * (sec.rate ? RATES[sec.rate] : 1);
+    const total = sec.len * 16 / rate * pos.stepDur;
     const f = Math.max(0, Math.min(1, (pos.now - pos.passStart) / total));
     const bar = Math.min(sec.len, Math.floor(f * sec.len) + 1);
     lcd((pos.si + 1) + "·" + bar + "/" + sec.len);

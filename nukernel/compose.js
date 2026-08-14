@@ -358,7 +358,11 @@
       b.stack[0].slots = chance(r, 0.5) ? [S.answer] : [S.answer, S.sparse];
       b.lvl = "back"; b.env = "in"; b.mot = "rise";
       if (kit) { b.kit = "busy"; b.outro = "roll"; }
-      b.cadence = { d: 4, q: "dom7" };
+      // only where there is a progression for the dominant to be a door INTO
+      // (the same guard the bridge carries) — on a modal genre the cadence
+      // has no prog to land on and the render path correctly drops it
+      if (G.progFamily || G.prog || (G.harmony === "cycle" && G.roots))
+        b.cadence = { d: 4, q: "dom7" };
       b.len = Math.max(2, Math.floor(bars / 2));
     } else if (role === "build") {
       // the dance floor's prechorus: same gesture, different clothes —

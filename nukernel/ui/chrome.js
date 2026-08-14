@@ -75,14 +75,24 @@ function fader(input, dflt) {
     e.preventDefault();                          // the native drag never starts
     input.focus({ preventScroll: true });        // preventDefault ate the focus
     try { input.setPointerCapture(e.pointerId); } catch (err) { /* fine */ }
-    drag = { x0: e.clientX, y0: e.clientY, v0: +input.value, moved: false };
+    drag = { x0: e.clientX, y0: e.clientY, v0: +input.value, moved: false,
+             fine: e.shiftKey || pointers() > 1 };
   });
   input.addEventListener("pointermove", e => {
     if (!drag) return;
-    const dx = e.clientX - drag.x0, dy = drag.y0 - e.clientY;   // up is more
+    let dx = e.clientX - drag.x0, dy = drag.y0 - e.clientY;     // up is more
     if (!drag.moved && Math.hypot(dx, dy) < 4) return;          // a tap, so far
     drag.moved = true;
+    // FINE MODE REBASES (editor.js's from/base reset, same verb): the ×0.2
+    // rescales only travel AFTER the crossing. Scaling the whole accumulated
+    // dx teleported the value the instant a second finger landed — a ~40 BPM
+    // snap on the tempo fader, the opposite of asking for fine control.
     const fine = e.shiftKey || pointers() > 1;
+    if (fine !== drag.fine) {
+      drag.fine = fine;
+      drag.x0 = e.clientX; drag.y0 = e.clientY; drag.v0 = +input.value;
+      dx = 0; dy = 0;
+    }
     const w = Math.max(60, input.getBoundingClientRect().width - 22);
     set(drag.v0 + (dx / w) * span * (fine ? 0.2 : 1) + (dy / (w * 5)) * span);
   });

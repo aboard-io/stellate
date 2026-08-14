@@ -1,0 +1,6 @@
+{
+  "//": "NOT a package — a MODULE-TYPE MARKER, the app/package.json pattern. Everything under nukernel/ui/ is a native browser ES module, but the repo root declares \"type\": \"commonjs\", and node resolves module type from the NEAREST package.json — so without this file test/unit/nukernel.test.js could not import ui/derive.js and its §31/§33 render-path checks would have to run on hand-copied mirrors (which is exactly how the mirror drifted). The browser never reads it; no build step consumes it; do not add dependencies here.",
+  "name": "nukernel-ui",
+  "private": true,
+  "type": "module"
+}

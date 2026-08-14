@@ -518,7 +518,17 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   .ptab{padding:15px 16px;min-height:44px}
   .btn{padding:13px 16px;min-height:44px}
   .slot{min-height:48px}
-  .bhead .t,.bhead .x{padding:10px 9px;font-size:14px}
+  /* the box tools hold the floor too: these are the ONLY reorder/loop/remove
+     affordances on touch (HTML5 drag never fires there), a missed tap starts
+     playback, and a 1px-adjacent mis-hit on × removes the box with no undo —
+     so 44px tall, 40px wide, and a gap that separates × from ⟳ */
+  .bhead .t,.bhead .x{padding:10px 9px;font-size:14px;min-width:40px;min-height:44px}
+  .bhead .btools{gap:6px}
+  /* the two faders own a custom pointer gesture with touch-action:none — the
+     26px strip WAS the whole grab area; the track/thumb stay centred while
+     the hit strip grows. The recessed LCD pickers get the same floor. */
+  .knob input{height:44px}
+  .knob select{min-height:44px}
   /* the grips stay narrower than 44: a 116px card cannot give 88px of its
      width to two handles. 22px on the edge of a raised card is the honest
      compromise, and the whole card is still the tap target for select/play. */

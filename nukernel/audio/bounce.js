@@ -43,7 +43,11 @@ const st = { state: "idle", durSec: 0, gen: 0, sampledOnly: false,
 // gate reads the RENDERED BLOB through st.url, because an analyser on the
 // live graph is structurally blind to an element playing bytes
 window.__nuBounce = () => ({ ...st, carrying, armed,
-  elVolume: el ? el.volume : null, elTime: el ? el.currentTime : null });
+  elVolume: el ? el.volume : null, elTime: el ? el.currentTime : null,
+  // el.paused is a RENDERED consequence (play() rejected, decode failed) —
+  // carrying/elVolume are flags this module SET, and a gate that polls only
+  // what the code assigned proves the assignment, not the playback
+  elPaused: el ? el.paused : null });
 
 // tiny silent-WAV data URI — the parent's unlock trick: a muted play() of this
 // inside the gesture is what permits every later programmatic play()
@@ -261,8 +265,13 @@ function adopt(res, want, myGen) {
   st.url = url; st.durSec = res.durSec; st.gen = myGen; st.state = "ready";
   renderedSig = want;
   // the no-stall cutover: never yank the source out from under a carrying
-  // element — uncarry() swaps to the newest blob when the graph takes back over
-  if (el && !carrying) attachCurrent();
+  // element — uncarry() swaps to the newest blob when the graph takes back
+  // over. And only while the transport still RUNS: a render finishing after
+  // stop() must not restart the element the transport:state(false) handler
+  // just paused (an unmuted volume-0 loop decodes forever — worse than the
+  // muted loop that handler's own comment forbids). The render stays
+  // adopted; the next play's transport:state handler attaches it.
+  if (el && !carrying && playing) attachCurrent();
 }
 function attachCurrent() {
   if (!el || !st.url) return;
@@ -294,6 +303,12 @@ setInterval(() => {
 /* ---------- the handoff (called by survival.js) ---------- */
 export function carry() {
   if (!el || !playing || st.state !== "ready" || !st.url) return false;
+  // IDEMPOTENT: goHidden is reachable twice while carrying (ctx statechange
+  // fires before the late visibilitychange on an iOS app switch, and
+  // pagehide doubles visibilitychange on backgrounding). A second carry()
+  // must not re-run syncEl — phase() reads the ctx clock, FROZEN since the
+  // first handoff, so the seek rewinds the audibly-playing element.
+  if (carrying) return true;
   syncEl();                                        // one last correction while the clock still runs
   el.muted = false;
   el.volume = Math.max(0, Math.min(1, masterVol()));

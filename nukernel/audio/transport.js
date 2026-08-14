@@ -10,7 +10,7 @@ import { GENRES, DTIMES, BASSSYNTH, BASS_INSTR, STRIPS, instrOf } from "../ui/de
 import { SONG, loopOnly, pendingStart, setPendingStart, bpm, on, emit,
          SLOTS } from "../ui/state.js";
 import { gid, stackOf, boxBars, kitOf, sectionRender } from "../ui/derive.js";
-import { ctx, initAudio, rmsNow } from "./graph.js";
+import { ctx, initAudio, rmsNow, muteNow, unmuteRamp } from "./graph.js";
 import { FONT, fontDef, isSynthFont, loadFont, specOf, zoneBufs, drumBufs,
          instrumentsInSong } from "./assets.js";
 import { synthNodes, synthKey, loadSynth, focusSynths, playSynth, playSampled,
@@ -151,7 +151,12 @@ function tick() {
     if (nextBar >= TL.length) nextBar = 0;
     const bar = TL[nextBar];
     const sec = SONG[bar.si];
-    if (!cur || cur.si !== bar.si || bar.first) cur = { si: bar.si, chan: channelFor(sec), kit: kitOf(sec) };
+    // channelFor gets nextBarTime as the retire clock: a spec change on the
+    // SOUNDING box rebuilds its channel here, and the old one must ring out
+    // until the bar the new one first receives — not die at ctx.currentTime
+    // under everything already scheduled through it
+    if (!cur || cur.si !== bar.si || bar.first)
+      cur = { si: bar.si, chan: channelFor(sec, nextBarTime), kit: kitOf(sec) };
     const chan = cur.chan;
     if (bar.first) {
       passStart = nextBarTime;
@@ -182,7 +187,7 @@ function tick() {
   // times the channel already exists.
   if (TL.length) {
     const nb = TL[nextBar];
-    if (nb && SONG[nb.si]) channelFor(SONG[nb.si]);
+    if (nb && SONG[nb.si]) channelFor(SONG[nb.si], nextBarTime);
   }
 }
 // ONE BAR OF EVENTS ONTO A CHANNEL, at `when`, on whatever context the channel
@@ -282,6 +287,10 @@ export async function startAt(boxIndex) {
   // resumes from it (the parent's live.js law)
   try { const p = ctx.resume(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
   for (const fn of gestureFns) { try { fn(); } catch (e) {} }
+  // undo stop()'s mute-at-source (and clear the duck flag so the volume
+  // slider works again); idempotent with the survival mute — goHidden after
+  // a hidden start simply re-mutes
+  unmuteRamp(20);
   BOOT.playPressed = Math.round(performance.now());
   compile();
   BOOT.assetsStart = Math.round(performance.now());
@@ -308,6 +317,11 @@ export async function startAt(boxIndex) {
 }
 export function stop() {
   playing = false; stopClock(); playingSec = -1; setPendingStart(null);
+  // silence the graph NOW: every voice is fire-and-forget, scheduled up to
+  // 2 s ahead when hidden, and nothing else cancels them — a media-key pause
+  // on a hidden tab otherwise reports "paused" over two more seconds of
+  // music. startAt's unmuteRamp restores the master gain on the next play.
+  muteNow();
   emit("transport:state", { playing });
 }
 // JUMP THE TRANSPORT to a phase (seconds into the song) — the return half of
