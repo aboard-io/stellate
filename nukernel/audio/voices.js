@@ -112,8 +112,13 @@ export async function loadSynth(spec, v, chan) {
     const node = await makeSynthNode(ctx, spec);
     synthNodes.set(key, node);
     // the node never touches a channel directly — it fans out through the
-    // per-channel gates above, which is what keeps one node serving nine sections
-    if (chan) routeSynth(key, node, chan); else node.connect(bus);
+    // per-channel gates above, which is what keeps one node serving nine
+    // sections. A node loaded before any channel exists is PARKED, not wired
+    // to the master bus: the old `connect(bus)` fallback left every live
+    // synth voice sounding dry at unity forever — outside the section's
+    // inserts, sends, level and pan, and DOUBLED once the channel copy opened.
+    // playSynth opens the route on the first note instead.
+    if (chan) routeSynth(key, node, chan);
     return node;
   } catch (e) { synthNodes.set(key, null); return null; }
 }
@@ -130,7 +135,14 @@ export async function loadSynth(spec, v, chan) {
 export function playSynth(spec, midi, when, durSec, acc, sld, vel, v, chan, vox) {
   const key = synthKey(spec, v || 0), node = synthNodes.get(key);
   if (!node) return false;
-  routeSynth(key, node, chan);
+  const g = routeSynth(key, node, chan);
+  // open this note's own route AT the note. focusSynths opens the section's
+  // routes on the bar it starts, but a synth that finished loading mid-section
+  // was routed with its gate still at zero and stayed silent until the next
+  // section — and with the parked pool (no bus fallback) silence would be
+  // the only sound it ever made. Idempotent: re-opening an open gate is a
+  // no-op, and a gate focusSynths closes later carries the later timestamp.
+  if (g) { try { g.gain.setTargetAtTime(1, when, 0.004); } catch (e) {} }
   driveSynth(node, spec, midi, when, durSec, acc, sld, vel, vox);
   return true;
 }

@@ -508,7 +508,33 @@ function taps() {
     else ok(`__nuMix reports automation (${m0.automation} armed before the chip)`);
     const auto0 = m0 ? (m0.automation || 0) : 0;
 
-    const open = await hf(6);
+    // PHASE-INDEPENDENT SPECTRUM READ. The close shape sweeps 16k -> 320 Hz
+    // over the WHOLE section, and the section loops — so any fixed measuring
+    // window reads a different part of the sweep depending on when the click
+    // landed against the loop (an 8-bar verse is ~15 s; a 6 s window near the
+    // top of the pass sees an almost-open filter and fails a real, audible
+    // automation). So measure in 1 s buckets across at least one full pass and
+    // compare the QUIETEST bucket to the LOUDEST: an armed close sweep must
+    // gut the floor (min << max, and min far below the unarmed floor); an
+    // unarmed section only varies by its fills. The unarmed floor is taken
+    // the same way, so the two reads agree about what "quiet" means.
+    const loopSec = await page.evaluate(() => {
+      const b = document.querySelector(".box.loop") || document.querySelector(".box.live");
+      const bars = b ? parseInt((b.getAttribute("aria-label") || "").match(/(\d+) bars/)?.[1] || 8, 10) : 8;
+      return bars * 4 * 60 / +document.getElementById("bpm").value;
+    });
+    const span = Math.min(24, Math.max(8, loopSec * 1.3));
+    const buckets = async () => {
+      const out = [];
+      for (let i = 0; i < span; i++) {
+        let s = 0;
+        for (let k = 0; k < 5; k++) { await page.waitForTimeout(200); s += await page.evaluate(() => window.__hf()); }
+        out.push(s / 5);
+      }
+      return out;
+    };
+    const pre = await buckets();
+    const floorPre = Math.min(...pre);
     await tab("effects");
     const shapeChip = page.locator('.pchip[data-kind="auto"][data-value="cutoff:close"]');
     if (!(await shapeChip.count()))
@@ -526,14 +552,16 @@ function taps() {
       else ok(`automation armed: count ${auto0} -> ${m1.automation}, ` +
               `on channel ${armed.key.split("|")[0]} (per-box identity keys)`);
 
-      const closed = await hf(6);
-      const moved = Math.abs(closed - open) / (open || 1);
-      console.log(`  spectrum above 4 kHz  : open ${open.toFixed(4)} -> ` +
-                  `auto-close ${closed.toFixed(4)} (${(moved * 100).toFixed(0)}%)`);
-      if (moved > 0.25 && closed < open)
-        ok(`the armed automation is audible: HF ${open.toFixed(4)} -> ${closed.toFixed(4)}`);
-      else fail(`a closing filter automation moved the spectrum by ` +
-                `${(moved * 100).toFixed(0)}% (${open.toFixed(4)} -> ${closed.toFixed(4)}) — ` +
+      const post = await buckets();
+      const floorPost = Math.min(...post), peakPost = Math.max(...post);
+      console.log(`  spectrum above 4 kHz  : unarmed floor ${floorPre.toFixed(4)}, ` +
+                  `armed floor ${floorPost.toFixed(4)} / peak ${peakPost.toFixed(4)} ` +
+                  `(${span.toFixed(0)}s buckets, loop ~${loopSec.toFixed(1)}s)`);
+      if (floorPost < 0.4 * (peakPost || 1e-9) && floorPost < 0.6 * (floorPre || 1e-9))
+        ok(`the armed automation is audible: the sweep guts the floor ` +
+           `(${floorPre.toFixed(4)} -> ${floorPost.toFixed(4)}, peak ${peakPost.toFixed(4)})`);
+      else fail(`a closing filter automation left the HF floor at ${floorPost.toFixed(4)} ` +
+                `(unarmed ${floorPre.toFixed(4)}, armed peak ${peakPost.toFixed(4)}) — ` +
                 `the point list is written but never armed on a node in the signal path`);
 
       // ...and "off" takes it back off, through the same chip row
