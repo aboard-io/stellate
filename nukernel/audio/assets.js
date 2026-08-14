@@ -42,6 +42,74 @@ export async function loadFont(key) {
   } catch (e) { fontData.set(key, null); }
 }
 
+/* ---------- the decode gate ---------- */
+// ONE shared throttle over EVERY decodeAudioData on the page, the parent's
+// makeDecGate shape (live.js). Before it, a six-instrument song fired 120-180
+// concurrent fetch+decodes on the first Play — the exact pattern the parent
+// measured choking iOS's decoder (a melody never becomes audible while tiny
+// drum one-shots survive) and starving the main thread with Float32 copies.
+// Cap concurrency to a few; RETRY a transient failure with linear backoff so
+// one flaky fetch on a phone never permanently strands a voice.
+function makeDecGate(limit, retries, retryMs) {
+  let inFlightN = 0, maxInFlight = 0; const waiters = [];
+  const acquire = () => new Promise(res => {
+    if (inFlightN < limit) { inFlightN++; if (inFlightN > maxInFlight) maxInFlight = inFlightN; res(); }
+    else waiters.push(res);
+  });
+  const release = () => { if (waiters.length) waiters.shift()(); else inFlightN--; };
+  const nap = ms => new Promise(r => setTimeout(r, ms));
+  async function run(fn, okp) {
+    let lastErr = null;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      await acquire();
+      let v = null;
+      try { v = await fn(); } catch (e) { v = null; lastErr = e; }
+      release();
+      if (okp(v)) return { v, err: null };
+      if (lastErr == null) lastErr = "decoded empty";
+      if (attempt >= retries) break;
+      await nap(retryMs * (attempt + 1));
+    }
+    return { v: null, err: lastErr };
+  }
+  return { run, stats: () => ({ maxInFlight, inFlight: inFlightN, limit }) };
+}
+const decGate = makeDecGate(4, 3, 500);
+// TRI-STATE, NOT POISON. A key is: absent = never requested (fetch it);
+// present-with-buffer = ok; in decFails with runs < MAXRUNS = failed but
+// RETRYABLE — zoneBufs deliberately does NOT carry it, so the next
+// ensureAssets pass re-requests it; only after MAXRUNS exhausted gate-runs is
+// the null written and the zone final. The old cache set null on the FIRST
+// throw — a transient fetch drop on a phone downgraded an instrument to the
+// oscillator fallback for the whole session, which is the failure the audio
+// gate is written to fail on.
+const MAXRUNS = 2;
+const decFails = new Map();                       // key -> { runs, err }
+function noteFail(map, key, err) {
+  const f = decFails.get(key) || { runs: 0, err: null };
+  f.runs++; f.err = String(err && err.message || err);
+  decFails.set(key, f);
+  if (f.runs >= MAXRUNS) map.set(key, null);      // now, and only now, final
+}
+const fetchable = (map, key) => {
+  if (map.get(key)) return false;                 // decoded, done
+  if (map.has(key)) return false;                 // null = final failure
+  return true;                                    // never asked, or retryable
+};
+async function decodeInto(map, key, url) {
+  if (!fetchable(map, key)) return;
+  const { v, err } = await decGate.run(async () => {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(r.status + " " + url.split("/").pop());
+    return await ctx.decodeAudioData(await r.arrayBuffer());
+  }, b => !!(b && b.length));
+  if (v) { map.set(key, v); decFails.delete(key); }
+  else noteFail(map, key, err);
+}
+// what the gate and the ?debug readout may know about decode health
+window.__nuDecode = () => ({ ...decGate.stats(),
+  failed: [...decFails].map(([k, f]) => ({ key: k, runs: f.runs, err: f.err })) });
+
 /* ---------- instrument zones ---------- */
 // Assets currently being fetched. A note whose instrument is IN FLIGHT is
 // dropped, not played on the fallback oscillator: a moment of silence while a
@@ -81,15 +149,11 @@ export async function loadInstrument(id) {
   const spec = specOf(id);
   if (!spec) return false;
   inFlight.add("ins:" + id);
-  await Promise.all(spec.zones.map(async z => {
-    const key = FONT + "|" + id + "|" + z.file;
-    if (zoneBufs.has(key)) return;
-    try {
-      const r = await fetch(MEDIA + (spec.base || "instruments") + "/" + spec.dir + "/" + z.file);
-      if (!r.ok) throw new Error(r.status + " " + z.file);
-      zoneBufs.set(key, await ctx.decodeAudioData(await r.arrayBuffer()));
-    } catch (e) { zoneBufs.set(key, null); }
-  }));
+  // Promise.all is fine now: the shared gate holds these to 4 in flight, so
+  // "every zone at once" is a queue, not a stampede
+  await Promise.all(spec.zones.map(z =>
+    decodeInto(zoneBufs, FONT + "|" + id + "|" + z.file,
+      MEDIA + (spec.base || "instruments") + "/" + spec.dir + "/" + z.file)));
   inFlight.delete("ins:" + id);
   return true;
 }
@@ -111,14 +175,7 @@ export function instrumentsInSong() {
 export const drumBufs = new Map();                // "kit|lane" -> AudioBuffer
 export async function loadKit(kit) {
   inFlight.add("kit:" + kit);
-  await Promise.all(Object.entries(DRUMFILE).map(async ([lane, file]) => {
-    const key = kit + "|" + lane;
-    if (drumBufs.has(key)) return;
-    try {
-      const r = await fetch(DRUMDIR + kit + "/" + file);
-      if (!r.ok) throw new Error(String(r.status));
-      drumBufs.set(key, await ctx.decodeAudioData(await r.arrayBuffer()));
-    } catch (e) { drumBufs.set(key, null); }
-  }));
+  await Promise.all(Object.entries(DRUMFILE).map(([lane, file]) =>
+    decodeInto(drumBufs, kit + "|" + lane, DRUMDIR + kit + "/" + file)));
   inFlight.delete("kit:" + kit);
 }

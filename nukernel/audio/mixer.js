@@ -52,11 +52,12 @@ export function chanSpec(sec) {
     mot: sec.mot || null,
   };
 }
-export function channelFor(sec) {
-  const spec = chanSpec(sec), key = JSON.stringify(spec);
-  const got = CHAN.get(key);
-  if (got) return got;
-  const input = ctx.createGain();
+// BUILD ON THE GIVEN CONTEXT. `env` names the busses the channel hangs off —
+// { master, verb(name) -> return node, echoIn } — because the offline bounce
+// builds this exact chain against its own OfflineAudioContext busses. The
+// live channelFor below is just this plus the cache and the live env.
+export function buildChannel(c, spec, env) {
+  const input = c.createGain();
   let node = input;
   const nodes = [input];
   const chain = n => { node.connect(n); node = n; nodes.push(n); };
@@ -65,11 +66,11 @@ export function channelFor(sec) {
   // down into one is a door shutting.
   let mot = null;
   if (spec.mot === "open" || spec.mot === "close") {
-    mot = ctx.createBiquadFilter(); mot.type = "lowpass"; mot.Q.value = 2.2; chain(mot);
+    mot = c.createBiquadFilter(); mot.type = "lowpass"; mot.Q.value = 2.2; chain(mot);
   } else if (spec.mot === "rise") {
-    mot = ctx.createBiquadFilter(); mot.type = "highpass"; mot.Q.value = 1.6; chain(mot);
+    mot = c.createBiquadFilter(); mot.type = "highpass"; mot.Q.value = 1.6; chain(mot);
   } else if (spec.mot === "pump") {
-    mot = ctx.createGain(); chain(mot);
+    mot = c.createGain(); chain(mot);
   }
   // BAKED AT BUILD TIME: the tempo-synced inserts (the echo's timeBars, a
   // sweep's rateBars) resolve against the bpm as it is NOW, and a later tempo
@@ -79,22 +80,22 @@ export function channelFor(sec) {
   let oscs = [], stages = [];
   if (spec.fx.length && SP && SP.buildInsertNodes) {
     try {
-      const ch = SP.buildInsertNodes(ctx, fxChain(spec.fx), barSec());
+      const ch = SP.buildInsertNodes(c, fxChain(spec.fx), barSec());
       node.connect(ch.input); node = ch.output; oscs = ch.oscs || [];
       stages = ch.stages || [];
       nodes.push(...(ch.nodes || []));
     } catch (e) { /* an insert that will not build must not take the section with it */ }
   }
-  const pan = ctx.createStereoPanner(); pan.pan.value = spec.pan; chain(pan);
-  const lvl = ctx.createGain(); lvl.gain.value = spec.lvl; chain(lvl);
-  lvl.connect(masterIn);
-  const rs = ctx.createGain(); rs.gain.value = spec.rev; lvl.connect(rs);
-  rs.connect(verbFor(spec.verb));
-  const ds = ctx.createGain(); ds.gain.value = spec.del; lvl.connect(ds); ds.connect(delBus);
+  const pan = c.createStereoPanner(); pan.pan.value = spec.pan; chain(pan);
+  const lvl = c.createGain(); lvl.gain.value = spec.lvl; chain(lvl);
+  lvl.connect(env.master);
+  const rs = c.createGain(); rs.gain.value = spec.rev; lvl.connect(rs);
+  rs.connect(env.verb(spec.verb));
+  const ds = c.createGain(); ds.gain.value = spec.del; lvl.connect(ds); ds.connect(env.echoIn);
   nodes.push(rs, ds);
   // the drum sub-strip: transient-preserving, long-lived, one per channel
-  const dHP = ctx.createBiquadFilter(); dHP.type = "highpass"; dHP.frequency.value = DRUM_HPF;
-  const dSat = ctx.createWaveShaper(); dSat.curve = satCurve(1 + 3 * DRUM_SAT, DRUM_SATMIX);
+  const dHP = c.createBiquadFilter(); dHP.type = "highpass"; dHP.frequency.value = DRUM_HPF;
+  const dSat = c.createWaveShaper(); dSat.curve = satCurve(1 + 3 * DRUM_SAT, DRUM_SATMIX);
   dSat.oversample = "2x";
   dHP.connect(dSat); dSat.connect(input);
   let player = null;
@@ -102,11 +103,18 @@ export function channelFor(sec) {
     // every send taps the CHANNEL, so a note's own dry/rev/del all arrive at the
     // same place and the section's sends decide what happens next — exactly the
     // routing live.js uses when a voice carries an insert chain
-    try { player = SP.SamplerLive(ctx, { dry: input, rev: input, del: input }); }
+    try { player = SP.SamplerLive(c, { dry: input, rev: input, del: input }); }
     catch (e) { player = null; }
   }
-  const c = { key, input, drumIn: dHP, player, mot, motKind: spec.mot, oscs, nodes,
-              spec, stages, rs, ds };
+  return { key: null, input, drumIn: dHP, player, mot, motKind: spec.mot, oscs,
+           nodes, spec, stages, rs, ds, lvl };
+}
+export function channelFor(sec) {
+  const spec = chanSpec(sec), key = JSON.stringify(spec);
+  const got = CHAN.get(key);
+  if (got) return got;
+  const c = buildChannel(ctx, spec, { master: masterIn, verb: verbFor, echoIn: delBus });
+  c.key = key;
   CHAN.set(key, c);
   return c;
 }
@@ -153,12 +161,26 @@ export function armMotion(chan, when, durSec, spb) {
     }
   } catch (e) {}
 }
-export function dropChannels() {
-  for (const c of CHAN.values()) {
+// RETIRE, DON'T CUT. pruneChannels runs while the transport runs, and a note
+// still ringing through a retired channel — up to two seconds of hidden
+// lookahead plus its own release plus the reverb send tail — used to be cut
+// mid-sample. ZERO-STATIC Stage 1.1 is this exact case: fade the channel out
+// (~30 ms), THEN, well clear of the ramp, stop the LFOs and disconnect. The
+// map forgets the channel immediately, so nothing new routes into a dying one.
+function retireChannel(c) {
+  try {
+    const t = ctx.currentTime;
+    c.lvl.gain.cancelScheduledValues(t);
+    c.lvl.gain.setTargetAtTime(0, t, 0.01);
+  } catch (e) {}
+  setTimeout(() => {
     for (const o of c.oscs) { try { o.stop(); } catch (e) {} }
     for (const n of c.nodes) { try { n.disconnect(); } catch (e) {} }
     try { c.input.disconnect(); c.drumIn.disconnect(); } catch (e) {}
-  }
+  }, 700);
+}
+export function dropChannels() {
+  for (const c of CHAN.values()) retireChannel(c);
   CHAN.clear();
   clearRoutes();
   pruneSynths();
@@ -173,9 +195,7 @@ export function pruneChannels() {
   const live = new Set(SONG.map(s => JSON.stringify(chanSpec(s))));
   for (const [key, c] of [...CHAN]) {
     if (live.has(key)) continue;
-    for (const o of c.oscs) { try { o.stop(); } catch (e) {} }
-    for (const n of c.nodes) { try { n.disconnect(); } catch (e) {} }
-    try { c.input.disconnect(); c.drumIn.disconnect(); } catch (e) {}
+    retireChannel(c);
     CHAN.delete(key);
     dropRoute(key);
   }

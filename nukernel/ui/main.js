@@ -10,6 +10,10 @@ import { GENRES } from "./deps.js";
 import { SONG, viewSec, readStore, adoptSong, defaultSong, on } from "./state.js";
 import { gid } from "./derive.js";
 import * as transport from "../audio/transport.js";
+// the survival tier (context recovery + MediaSession + the bounce carrier):
+// importing it IS the wiring — it registers its listeners, its gesture hook
+// and its subscriptions at module evaluation, exactly like the views below
+import "../audio/survival.js";
 // the views: importing them IS the wiring — each subscribes to the events it
 // cares about and binds its own DOM listeners at module evaluation
 import "./readout.js";

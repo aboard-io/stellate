@@ -1,0 +1,244 @@
+#!/usr/bin/env node
+// test/browser/nukernel-survival.test.js — THE NUKERNEL SURVIVAL GATE.
+//
+//   node test/browser/nukernel-survival.test.js
+//
+// nukernel-audio.test.js proves the page makes the right sound while you are
+// looking at it. Everything in THIS gate is about the moments you are not:
+// the context suspended by an interruption, the tab hidden, the phone locked.
+// The parent app's history says these paths ship broken while every
+// foreground check passes — and that an analyser on the live graph is
+// structurally BLIND to the one artifact that matters here, the rendered
+// bounce blob a background <audio> element plays (its output never enters the
+// AudioContext graph). So this gate reads the blob itself.
+//
+//   (A) THE CONTEXT RECOVERS. ctx.suspend() with NO visibility event — the
+//       audio-session interruption shape — must self-heal via onstatechange:
+//       state back to 'running', RMS back above the floor. Then a full
+//       hidden/visible cycle must come back audible too.
+//   (B) THE BOUNCE IS REAL MUSIC. window.__nuBounce reaches 'ready'; the blob
+//       URL it names is fetched and decoded IN PAGE, and its PCM carries
+//       energy in three windows across the file. The RENDERED artifact, not
+//       the analyser.
+//   (C) NO DOUBLE PLAYBACK. In the foreground the carrier element must sit at
+//       volume 0 while the graph runs — two sources at once is the failure
+//       class the parent had to instrument (live.js elAudible), and here the
+//       second source is a phase-shifted copy of the same song.
+//   (D) THE LOCK SCREEN TELLS THE TRUTH. MediaSession metadata + playbackState
+//       follow the real transport.
+"use strict";
+const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
+const path = require("path");
+
+const ROOT = path.join(__dirname, "..", "..");
+let PORT = 8973;                 // a PREFERENCE — the harness walks past a busy port
+const RMS_FLOOR = 0.01;          // silence is ~1e-4; music here runs 0.2..0.6
+const PCM_FLOOR = 0.003;         // post-limiter PCM windows sit well above this
+
+const fail = (m) => { console.error("FAIL:", m); process.exitCode = 1; };
+let checks = 0; const ok = (m) => { checks++; console.log("  ok:", m); };
+
+// Taps installed BEFORE any page script runs: capture the live AudioContext
+// (and its construction options — the 44100/'playback' pin is a one-line
+// regression nothing else can see) and hang an analyser off whatever connects
+// to the destination. OfflineAudioContext is deliberately NOT wrapped: the
+// bounce must run against the real thing.
+function taps() {
+  window.__acOpts = null;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  window.AudioContext = function (...a) {
+    const c = new AC(...a);
+    window.__acOpts = a[0] || null;
+    window.__ctx = c;
+    const an = c.createAnalyser(); an.fftSize = 2048;
+    const orig = AudioNode.prototype.connect;
+    AudioNode.prototype.connect = function (dest, ...rest) {
+      if (dest === c.destination) { try { orig.call(this, an); } catch (e) {} }
+      return orig.call(this, dest, ...rest);
+    };
+    window.__rms = () => {
+      const d = new Float32Array(an.fftSize); an.getFloatTimeDomainData(d);
+      let s = 0; for (const v of d) s += v * v;
+      return Math.sqrt(s / d.length);
+    };
+    return c;
+  };
+}
+
+(async () => {
+  const srv = await serve(ROOT, PORT); PORT = srv.port;
+  const browser = await launchChromium();  // the harness passes the autoplay flag
+  const page = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
+  const errs = capturePageErrors(page);
+  await page.addInitScript(taps);
+  await page.goto(`http://localhost:${PORT}/nukernel/kernel-daw.html`,
+    { waitUntil: "networkidle" });
+
+  // one phrase in the one box, and play — the same entry the audio gate uses
+  await page.locator(".slot").nth(0).click();
+  await page.click("#seed");
+  await page.click("#play");
+  await page.waitForFunction(() => window.__rms && window.__rms() > 0.01,
+    null, { timeout: 30000 });
+  ok("playing: live RMS above floor");
+
+  const rmsN = (n, gapMs) => page.evaluate(async ({ n, gapMs }) => {
+    const out = [];
+    for (let i = 0; i < n; i++) { out.push(window.__rms()); await new Promise(r => setTimeout(r, gapMs)); }
+    return out;
+  }, { n, gapMs });
+
+  // ── the pinned context: sampleRate 44100 + latencyHint 'playback' ──
+  {
+    const opts = await page.evaluate(() => window.__acOpts);
+    const sr = await page.evaluate(() => window.__ctx.sampleRate);
+    if (!opts || opts.sampleRate !== 44100 || opts.latencyHint !== "playback")
+      fail(`the AudioContext is not pinned: options ${JSON.stringify(opts)} — ` +
+           `'interactive' + device-rate is the underrun-prone default the recon retired`);
+    else ok("AudioContext requested {sampleRate:44100, latencyHint:'playback'}");
+    if (sr !== 44100) fail(`context runs at ${sr}, not 44100 — every zone decode now resamples`);
+    else ok("context runs at 44100");
+  }
+
+  // ── (A1) interruption: suspend with NO visibility event ──
+  // the onstatechange handler must mute-at-source, poke resume, and self-heal
+  await page.evaluate(() => { window.__ctx.suspend(); });
+  await page.waitForTimeout(3000);
+  {
+    const state = await page.evaluate(() => window.__ctx.state);
+    const heal = await rmsN(6, 300);
+    const alive = heal.filter(v => v > RMS_FLOOR).length;
+    console.log("  post-suspend RMS:", heal.map(v => v.toFixed(3)).join(" "), "state:", state);
+    if (state !== "running") fail(`ctx.state is '${state}' after a bare suspend() — ` +
+      `the onstatechange recovery never ran, which is permanent silence on iOS`);
+    else ok("bare ctx.suspend() self-heals: state back to 'running'");
+    if (alive < 4) fail(`RMS did not return after the interruption (${alive}/6 samples audible)`);
+    else ok(`RMS returned after the interruption (${alive}/6 samples audible)`);
+  }
+
+  // ── (A2) the hidden/visible cycle ──
+  await page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState",
+      { get: () => window.__vis || "hidden", configurable: true });
+    window.__vis = "hidden";
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await page.waitForTimeout(1500);
+  {
+    // while hidden, exactly one of two legal states: the graph still sounding
+    // (desktop, no carrier yet) or the carrier element carrying (volume up,
+    // graph muted). Silence in BOTH is the bug this file exists to catch.
+    const h = await page.evaluate(() => ({
+      rms: window.__rms(),
+      b: window.__nuBounce ? window.__nuBounce() : null }));
+    const carrierUp = h.b && h.b.carrying && h.b.elVolume > 0;
+    if (h.rms > RMS_FLOOR || carrierUp)
+      ok(`hidden: audible via ${carrierUp ? "the carrier element" : "the live graph"}`);
+    else fail(`hidden: graph RMS ${h.rms.toFixed(4)} and no carrier — the tab went silent`);
+  }
+  await page.evaluate(() => { window.__vis = "visible"; document.dispatchEvent(new Event("visibilitychange")); });
+  await page.waitForTimeout(2000);
+  {
+    const back = await rmsN(6, 300);
+    const alive = back.filter(v => v > RMS_FLOOR).length;
+    const state = await page.evaluate(() => window.__ctx.state);
+    console.log("  return RMS:", back.map(v => v.toFixed(3)).join(" "), "state:", state);
+    if (alive < 4 || state !== "running")
+      fail(`the page did not come back from hidden (${alive}/6 audible, state '${state}')`);
+    else ok(`return from hidden: audible (${alive}/6) and running`);
+  }
+
+  // ── (B) the bounce: wait for 'ready', then read the RENDERED BLOB ──
+  {
+    await page.waitForFunction(() =>
+      window.__nuBounce && window.__nuBounce().state === "ready",
+      null, { timeout: 120000 }).catch(() => {});
+    const b = await page.evaluate(() => window.__nuBounce ? window.__nuBounce() : null);
+    if (!b) fail("window.__nuBounce is missing — the page exposes no carrier state at all");
+    else if (b.state !== "ready")
+      fail(`the bounce never reached 'ready' (state '${b.state}') — no background carrier exists`);
+    else {
+      ok(`bounce ready: ${b.durSec.toFixed(2)}s, gen ${b.gen}, rendered in ${b.lastRenderMs} ms` +
+         (b.sampledOnly ? " (SAMPLED-ONLY degrade — counted, as the contract requires)" : "") +
+         (b.fallbacks ? `, ${b.fallbacks} offline fallback voice(s)` : ""));
+      // decode the blob IN PAGE and measure its PCM — the artifact, not the analyser
+      const probe = await page.evaluate(async () => {
+        const x = window.__nuBounce();
+        const ab = await (await fetch(x.url)).arrayBuffer();
+        const oc = new OfflineAudioContext(1, 44100, 44100);
+        const buf = await oc.decodeAudioData(ab);
+        const d = buf.getChannelData(0);
+        const win = Math.floor(buf.length / 3), rms = [];
+        for (let w = 0; w < 3; w++) {
+          let s = 0; const a = w * win, e = Math.min(buf.length, a + win);
+          for (let i = a; i < e; i++) s += d[i] * d[i];
+          rms.push(Math.sqrt(s / (e - a)));
+        }
+        return { durSec: buf.duration, sr: buf.sampleRate, rms };
+      }).catch(e => ({ err: String(e) }));
+      if (probe.err) fail(`the bounce blob does not decode: ${probe.err}`);
+      else {
+        console.log(`  blob: ${probe.durSec.toFixed(2)}s @ ${probe.sr}, ` +
+                    `window RMS ${probe.rms.map(v => v.toFixed(4)).join(" / ")}`);
+        if (Math.abs(probe.durSec - b.durSec) > 0.1)
+          fail(`blob duration ${probe.durSec.toFixed(2)}s != declared ${b.durSec.toFixed(2)}s`);
+        else ok("blob duration matches the declared song duration");
+        const dead = probe.rms.filter(v => v < PCM_FLOOR).length;
+        if (dead) fail(`${dead} of 3 windows of the rendered blob are silent ` +
+                       `(RMS ${probe.rms.map(v => v.toFixed(4)).join(", ")}) — ` +
+                       `the carrier would hand the background a blank tape`);
+        else ok("all three PCM windows of the rendered blob carry music");
+      }
+    }
+  }
+
+  // ── (C) no double playback in the foreground ──
+  {
+    const dp = await page.evaluate(() => ({
+      b: window.__nuBounce(), state: window.__ctx.state, rms: window.__rms() }));
+    if (dp.b.carrying) fail("the carrier claims to be carrying while the page is visible");
+    else if (dp.b.elVolume !== 0 && dp.b.elVolume != null)
+      fail(`the carrier element sits at volume ${dp.b.elVolume} in the foreground — ` +
+           `the song is playing against a phase-shifted copy of itself`);
+    else ok("foreground: element at volume 0 while the graph sounds — one source at a time");
+    if (dp.state !== "running" || dp.rms < RMS_FLOOR)
+      fail(`foreground graph not sounding (state '${dp.state}', RMS ${dp.rms.toFixed(4)})`);
+    else ok("foreground: the graph is the audible source");
+  }
+
+  // ── (D) MediaSession follows the transport ──
+  {
+    const ms = await page.evaluate(() => ({
+      state: navigator.mediaSession.playbackState,
+      title: navigator.mediaSession.metadata && navigator.mediaSession.metadata.title,
+      artist: navigator.mediaSession.metadata && navigator.mediaSession.metadata.artist }));
+    if (ms.state !== "playing") fail(`playbackState '${ms.state}' while the transport runs`);
+    else ok("playbackState 'playing' while playing");
+    if (!ms.title) fail("MediaSession has no title — the lock screen shows the page URL");
+    else ok(`MediaSession title: "${ms.title}"`);
+    if (ms.artist !== "stellate nukernel") fail(`MediaSession artist is "${ms.artist}"`);
+    else ok("MediaSession artist is 'stellate nukernel'");
+    await page.click("#play");                     // stop
+    await page.waitForTimeout(400);
+    const after = await page.evaluate(() => navigator.mediaSession.playbackState);
+    if (after !== "paused") fail(`playbackState '${after}' after stop — the lock screen still says playing`);
+    else ok("playbackState 'paused' after stop");
+  }
+
+  // the boot instrument existed and finished with a measurement, not a timer
+  {
+    const boot = await page.evaluate(() => window.__nuBoot ? window.__nuBoot() : null);
+    if (!boot || boot.firstSound == null)
+      fail("window.__nuBoot has no firstSound mark — a stalled phone boot would be invisible again");
+    else ok(`boot marks: play->assets ${boot.assetsStart - boot.playPressed} ms, ` +
+            `assets ${boot.assetsDone - boot.assetsStart} ms, ` +
+            `first sound +${boot.firstSound - boot.playPressed} ms`);
+  }
+
+  if (errs.length) fail(`page errors: ${errs.slice(0, 3).join(" | ")}`);
+  else ok("no page errors");
+
+  await browser.close(); await srv.close();
+  console.log(`\nnukernel-survival: ${checks} checks` +
+              (process.exitCode ? " — FAILURES ABOVE" : " pass"));
+})().catch((e) => { console.error("FAIL:", e && e.stack || e); process.exit(1); });

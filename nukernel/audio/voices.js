@@ -68,26 +68,48 @@ export function focusSynths(chan, when) {
       try { g.gain.setTargetAtTime(k === chan.key ? 1 : 0, when, 0.004); } catch (e) {}
   }
 }
+// the compiled DSP factory is reusable across CONTEXTS (faustwasm compiles the
+// wasm once); the node is not. Caching factories here is what lets the offline
+// bounce build its own voice pool without recompiling every module.
+const factories = new Map();                      // dsp -> factory
+let fwMod = null;
+// life accounting for the zombie-worklet law (ZERO-STATIC R1): a disconnected
+// Faust worklet computes every block forever, invisible to node counting —
+// only a created/destroyed ledger can see one leak
+export const nodeStats = { created: 0, destroyed: 0 };
+window.__nuNodes = () => ({ ...nodeStats,
+  alive: [...synthNodes.values()].filter(Boolean).length });
+// build one Faust voice ON THE GIVEN CONTEXT — the live pool and the offline
+// bounce share this, which is what makes the bounce the same instrument
+export async function makeSynthNode(c, spec) {
+  if (!fwMod) fwMod = await import(FAUSTDIR + "node_modules/@grame/faustwasm/dist/esm/index.js");
+  let fac = factories.get(spec.dsp);
+  if (!fac) {
+    fac = await fwMod.FaustWasmInstantiator.loadDSPFactory(
+      FAUSTDIR + "dist/" + spec.dsp + "-module.wasm",
+      FAUSTDIR + "dist/" + spec.dsp + "-meta.json");
+    factories.set(spec.dsp, fac);
+  }
+  const node = await new fwMod.FaustMonoDspGenerator().createNode(c, spec.dsp, fac);
+  // A CARTRIDGE PATCH is 144 params set once. data/dx7-presets.json is the
+  // real sysex decoded, so "E.PIANO 1" is the actual DX7 patch, not a
+  // sound-alike — and its `alg` picks which dx7_algN module to load.
+  if (spec.preset) {
+    if (!dx7Presets) dx7Presets = await (await fetch(FAUSTDIR + "data/dx7-presets.json")).json();
+    const pre = dx7Presets[spec.preset];
+    if (pre) for (const [path, val] of Object.entries(pre.params)) {
+      const a = node.parameters.get("/" + spec.root + path);
+      if (a) a.setValueAtTime(val, c.currentTime);
+    }
+  }
+  nodeStats.created++;
+  return node;
+}
 export async function loadSynth(spec, v, chan) {
   const key = synthKey(spec, v);
   if (synthNodes.has(key)) { routeSynth(key, synthNodes.get(key), chan); return synthNodes.get(key); }
   try {
-    const fw = await import(FAUSTDIR + "node_modules/@grame/faustwasm/dist/esm/index.js");
-    const fac = await fw.FaustWasmInstantiator.loadDSPFactory(
-      FAUSTDIR + "dist/" + spec.dsp + "-module.wasm",
-      FAUSTDIR + "dist/" + spec.dsp + "-meta.json");
-    const node = await new fw.FaustMonoDspGenerator().createNode(ctx, spec.dsp, fac);
-    // A CARTRIDGE PATCH is 144 params set once. data/dx7-presets.json is the
-    // real sysex decoded, so "E.PIANO 1" is the actual DX7 patch, not a
-    // sound-alike — and its `alg` picks which dx7_algN module to load.
-    if (spec.preset) {
-      if (!dx7Presets) dx7Presets = await (await fetch(FAUSTDIR + "data/dx7-presets.json")).json();
-      const pre = dx7Presets[spec.preset];
-      if (pre) for (const [path, val] of Object.entries(pre.params)) {
-        const a = node.parameters.get("/" + spec.root + path);
-        if (a) a.setValueAtTime(val, ctx.currentTime);
-      }
-    }
+    const node = await makeSynthNode(ctx, spec);
     synthNodes.set(key, node);
     // the node never touches a channel directly — it fans out through the
     // per-channel gates above, which is what keeps one node serving nine sections
@@ -109,6 +131,14 @@ export function playSynth(spec, midi, when, durSec, acc, sld, vel, v, chan, vox)
   const key = synthKey(spec, v || 0), node = synthNodes.get(key);
   if (!node) return false;
   routeSynth(key, node, chan);
+  driveSynth(node, spec, midi, when, durSec, acc, sld, vel, vox);
+  return true;
+}
+// the parameter walk alone, on a GIVEN node — split from the pool lookup so
+// the offline bounce can drive its own per-context pool through the exact
+// same writes (a forked copy of this walk is how the bounce would drift out
+// of tune with the live pass, one edit at a time)
+export function driveSynth(node, spec, midi, when, durSec, acc, sld, vel, vox) {
   const set = (n, val, t) => {
     const a = node.parameters.get("/" + spec.root + "/" + n);
     if (a && val != null) a.setValueAtTime(val, t);
@@ -146,7 +176,6 @@ export function playSynth(spec, midi, when, durSec, acc, sld, vel, v, chan, vox)
   set("freq", f, when);
   set("gate", 1, when);
   set("gate", 0, Math.max(when + 0.02, when + durSec * 0.92));
-  return true;
 }
 // THE POOL IS NOT A CACHE. Nodes survive a channel — they are channel-blind and
 // expensive to build, so keeping them across an edit is right — but they must
@@ -164,24 +193,49 @@ export function pruneSynths() {
   }
   for (const [k, node] of [...synthNodes]) {
     if (want.has(k.split("#")[0])) continue;
-    if (node) { try { node.disconnect(); } catch (e) {} }
     const m = synthOut.get(k);
-    if (m) { for (const g of m.values()) { try { g.disconnect(); } catch (e) {} } synthOut.delete(k); }
-    synthNodes.delete(k);
+    synthNodes.delete(k); synthOut.delete(k);   // the pool forgets it NOW…
+    retireSynth(node, m);                       // …the audio thread lets go gently
   }
 }
+// RAMP, WAIT, DISCONNECT, DESTROY — the shipped ZERO-STATIC Stage 0.A shape.
+// disconnect() alone is the zombie-worklet bug: a disconnected Faust node
+// keeps computing every 128-sample block forever, invisible to any node
+// count, so a session spent auditioning fourteen genres accumulates silent FM
+// operators that cost exactly as much as sounding ones. destroy() actually
+// frees the DSP. The 700 ms deferral (behind a ~30 ms gain ramp) is so a note
+// still ringing through the route dies as a fade rather than a mid-sample cut.
+function retireSynth(node, routes) {
+  const t = ctx.currentTime;
+  if (routes) for (const g of routes.values())
+    try { g.gain.cancelScheduledValues(t); g.gain.setTargetAtTime(0, t, 0.008); } catch (e) {}
+  setTimeout(() => {
+    if (routes) for (const g of routes.values()) { try { g.disconnect(); } catch (e) {} }
+    if (node) {
+      try { node.disconnect(); } catch (e) {}
+      try { if (node.destroy) { node.destroy(); nodeStats.destroyed++; } } catch (e) {}
+    }
+  }, 700);
+}
 // every per-channel route gate, dropped — the mixer calls this when it drops
-// the channels themselves, so no gain node outlives the channel it fed
+// the channels themselves, so no gain node outlives the channel it fed.
+// Same law as retireSynth: the map forgets immediately (fresh routes rebuild
+// on the next bar), the disconnect waits out the ramp.
+function retireGains(gains) {
+  const t = ctx ? ctx.currentTime : 0;
+  for (const g of gains) try { g.gain.cancelScheduledValues(t); g.gain.setTargetAtTime(0, t, 0.008); } catch (e) {}
+  setTimeout(() => { for (const g of gains) { try { g.disconnect(); } catch (e) {} } }, 700);
+}
 export function clearRoutes() {
   for (const m of synthOut.values()) {
-    for (const g of m.values()) { try { g.disconnect(); } catch (e) {} }
+    retireGains([...m.values()]);
     m.clear();
   }
 }
 export function dropRoute(chanKey) {
   for (const m of synthOut.values()) {
     const g = m.get(chanKey);
-    if (g) { try { g.disconnect(); } catch (e) {} m.delete(chanKey); }
+    if (g) { retireGains([g]); m.delete(chanKey); }
   }
 }
 
@@ -232,13 +286,19 @@ export function playSampled(id, midi, when, durSec, vel, gainMul, chan, strip) {
     loopEndSec: (z.loopEnd || 0) / spec.sr + leadSec });
   return true;
 }
+// EVERY NODE KNOWS ITS CONTEXT. The players below build their throwaway nodes
+// on the CHANNEL'S context rather than the module-global live one — which is
+// the whole trick that lets audio/bounce.js reuse them verbatim against an
+// OfflineAudioContext: hand them an offline channel and they render offline.
+const ctxOf = chan => (chan && chan.input ? chan.input.context : ctx);
 export function playDrum(kit, lane, when, acc, vel, chan) {
   const buf = kit && drumBufs.get(kit + "|" + lane);
   if (!buf) return !!kit && inFlight.has("kit:" + kit);
   const lvl = (vel == null ? 5 : vel) / 9;
   if (lvl <= 0.001) return false;
-  const src = ctx.createBufferSource(); src.buffer = buf;
-  const g = ctx.createGain();
+  const c = ctxOf(chan);
+  const src = c.createBufferSource(); src.buffer = buf;
+  const g = c.createGain();
   g.gain.value = (acc ? 1 : 0.72) * (0.45 + 0.55 * lvl) * (lane === "p" ? 0.5 : 1);
   src.connect(g); g.connect((chan && chan.drumIn) || bus);
   src.start(when);
@@ -251,11 +311,21 @@ export const hz = m => 440 * Math.pow(2, (m - 69) / 12);
 // silently, and test/browser/nukernel-audio.test.js fails on any of them — but
 // only if it can tell them apart from the oscillators the effect LFOs now
 // legitimately start, which is what this counter is for.
+//
+// TWO LEDGERS, one per context class. window.__nuFallback is the FROZEN gate
+// contract and counts the LIVE page only; a fallback fired inside an offline
+// bounce render is a fact about the bounce (its sampled-only degrade is
+// allowed to be imperfect) and lands in offFallback, which __nuBounce reports
+// — folding it into the live number would make the audio gate fail the live
+// path for the carrier's sins.
 window.__nuFallback = 0;
+export const offFallback = { n: 0 };
+const countFb = c => { if (!ctx || c === ctx) window.__nuFallback++; else offFallback.n++; };
 function nz(t, dur, hp, gain, chan) {
-  const s = ctx.createBufferSource(); s.buffer = noise;
-  const f = ctx.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp;
-  const g = ctx.createGain();
+  const c = ctxOf(chan);
+  const s = c.createBufferSource(); s.buffer = noise;
+  const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp;
+  const g = c.createGain();
   g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(.0008, t + dur);
   // nz is only ever a DRUM noise, so it lands on the channel's drum sub-strip
   s.connect(f); f.connect(g); g.connect((chan && chan.drumIn) || bus); s.start(t); s.stop(t + dur + .02);
@@ -263,9 +333,10 @@ function nz(t, dur, hp, gain, chan) {
 export function line(t, n, dur, acc, sld, prev, tone, padish, vel, chan) {
   const lvl = (vel == null ? 5 : vel) / 9;
   if (lvl <= 0.001) return;                       // a completed fade-out is silence
-  window.__nuFallback++;
-  const o = ctx.createOscillator(), o2 = ctx.createOscillator();
-  const f = ctx.createBiquadFilter(), g = ctx.createGain();
+  const c = ctxOf(chan);
+  countFb(c);
+  const o = c.createOscillator(), o2 = c.createOscillator();
+  const f = c.createBiquadFilter(), g = c.createGain();
   o.type = o2.type = tone.wave; o2.detune.value = padish ? 9 : 4;
   if (sld && prev != null) {
     o.frequency.setValueAtTime(hz(prev), t); o2.frequency.setValueAtTime(hz(prev), t);
@@ -290,15 +361,16 @@ export function line(t, n, dur, acc, sld, prev, tone, padish, vel, chan) {
 export function hit(t, d, acc, vel, chan) {
   const lvl = (vel == null ? 5 : vel) / 9;
   if (lvl <= 0.001) return;
-  window.__nuFallback++;
+  const c = ctxOf(chan);
+  countFb(c);
   const dest = (chan && chan.drumIn) || bus;
   const a = (acc ? 1.15 : .85) * (0.45 + 0.55 * lvl);
-  if (d === "k") { const o = ctx.createOscillator(), g = ctx.createGain();
+  if (d === "k") { const o = c.createOscillator(), g = c.createGain();
     o.frequency.setValueAtTime(126, t); o.frequency.exponentialRampToValueAtTime(43, t + .09);
     g.gain.setValueAtTime(.95 * a, t); g.gain.exponentialRampToValueAtTime(.001, t + .34);
     o.connect(g); g.connect(dest); o.start(t); o.stop(t + .36); }
   else if (d === "s") { nz(t, .19, 900, .42 * a, chan);
-    const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "triangle";
+    const o = c.createOscillator(), g = c.createGain(); o.type = "triangle";
     o.frequency.setValueAtTime(196, t);
     g.gain.setValueAtTime(.3 * a, t); g.gain.exponentialRampToValueAtTime(.001, t + .13);
     o.connect(g); g.connect(dest); o.start(t); o.stop(t + .15); }

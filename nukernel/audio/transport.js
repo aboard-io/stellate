@@ -10,7 +10,7 @@ import { GENRES, DTIMES, BASSSYNTH, BASS_INSTR, STRIPS, instrOf } from "../ui/de
 import { SONG, loopOnly, pendingStart, setPendingStart, bpm, on, emit,
          SLOTS } from "../ui/state.js";
 import { gid, stackOf, boxBars, kitOf, sectionRender } from "../ui/derive.js";
-import { ctx, initAudio } from "./graph.js";
+import { ctx, initAudio, rmsNow } from "./graph.js";
 import { FONT, fontDef, isSynthFont, loadFont, specOf, zoneBufs, drumBufs,
          instrumentsInSong } from "./assets.js";
 import { synthNodes, synthKey, loadSynth, focusSynths, playSynth, playSampled,
@@ -21,11 +21,18 @@ import { setDelayTime } from "./graph.js";
 export let playing = false;
 export let playingSec = -1;
 let timer = null, nextBarTime = 0, nextBar = 0, passStart = 0;
+// when the CURRENT pass of the whole song started, on the audio clock — the
+// carrier element and MediaSession's positionState both need "where are we in
+// the song", which passStart (per-SECTION) cannot answer
+let loopStart = 0;
 
 /* ---------- scheduler ---------- */
 let TL = [];
-export function compile() {
-  TL = [];
+// PURE over the current state: build and RETURN the bar list. The offline
+// bounce walks its own copy of exactly this — one builder, or the carrier
+// renders a different song from the one the transport plays.
+export function buildTimeline() {
+  const TL2 = [];
   const list = loopOnly == null ? SONG.map((s, i) => [s, i]) : [[SONG[loopOnly], loopOnly]];
   for (const [sec, si] of list) {
     const { g, bars, ev } = sectionRender(sec, SLOTS);
@@ -50,11 +57,47 @@ export function compile() {
       buckets[b].push({ ...e, off: e.t - b * barSteps });
     }
     for (let b = 0; b < bars; b++)
-      TL.push({ si, g, barSteps, first: b === 0, ev: buckets[b] });
+      TL2.push({ si, g, barSteps, first: b === 0, ev: buckets[b] });
   }
+  return TL2;
 }
+export function compile() { TL = buildTimeline(); }
 export const stepDur = () => 60 / bpm / 4;
+// the song's REAL duration, in seconds, at the tempo as it is now — nukernel
+// is the rare page that can tell MediaSession the truth instead of Infinity
+export const songDurSec = () => TL.reduce((s, b) => s + b.barSteps, 0) * stepDur();
 export function resetBar() { nextBar = 0; }
+
+/* ---------- gesture hooks ---------- */
+// startAt is the page's user gesture (the play button, a box click), and some
+// machinery is only ALLOWED to exist inside one — the carrier <audio> element
+// must be created and unlocked there or iOS refuses every later play(). The
+// hooks run in startAt's synchronous prefix, before the first await, which is
+// still inside the gesture's call stack. Registration instead of an import
+// keeps the layer graph one-way (bounce imports transport, never the reverse).
+const gestureFns = [];
+export const onGesture = fn => gestureFns.push(fn);
+
+/* ---------- the boot instrument ---------- */
+// marks, not guesses — the parent added bootStats() because a phone hung
+// forever at "scheduling the first bar" with zero errors and nobody could say
+// which stage was stuck. firstSound is measured from a real analyser crossing
+// (graph.rmsNow), never inferred from a timer.
+const BOOT = {};
+window.__nuBoot = () => ({ ...BOOT });
+let soundPoll = null;
+function watchFirstSound() {
+  if (BOOT.firstSound != null || soundPoll) return;
+  const t0 = performance.now();
+  soundPoll = setInterval(() => {
+    if (rmsNow() > 0.001) {
+      BOOT.firstSound = Math.round(performance.now());
+      emit("status", { text: "sounding — first sound " +
+        Math.round(performance.now() - (BOOT.playPressed || t0)) + " ms after play" });
+      clearInterval(soundPoll); soundPoll = null;
+    } else if (performance.now() - t0 > 20000) { clearInterval(soundPoll); soundPoll = null; }
+  }, 100);
+}
 
 /* ---------- the heartbeat ---------- */
 // TWO CLOCKS, and the worker is the one that matters. A hidden tab clamps
@@ -126,33 +169,54 @@ function tick() {
       armMotion(chan, nextBarTime, bar.barSteps * sd * boxBars(sec), sd * 4);
       focusSynths(chan, nextBarTime);   // this section's mix owns the synth pool
     }
-    for (const e of bar.ev) {
-      const when = nextBarTime + e.off * sd;
-      if (e.kind === "line") {
-        const owner = e.layer || gid(sec);
-        // A SYNTH FONT OVERRIDES THE GENRE. Pure FM and Pure Analog are not a
-        // sample set, they are "play everything on this voice" — including the
-        // genres that carry a signature synth of their own.
-        const gsyn = isSynthFont() ? fontDef().synth : GENRES[owner].synth;
-        const id = instrOf(owner, e.lv == null ? e.v : e.lv);
-        const useSyn = gsyn && !(gsyn.lineOnly && e.pad && !isSynthFont());
-        if (useSyn && playSynth(gsyn, e.n, when, e.dur * sd, e.acc, e.sld, e.vel, e.v, chan, e.vox)) { /* signature voice */ }
-        else if (!playSampled(id, e.n, when, e.dur * sd, e.vel, 1, chan,
-                              e.pad ? STRIPS.pad : STRIPS.lead))
-          line(when, e.n, e.dur * sd, e.acc, e.sld, e.prev, bar.g.tone, e.pad, e.vel, chan);
-      } else if (e.kind === "hit") {
-        if (!playDrum(cur.kit, e.d, when, e.acc, e.vel, chan)) hit(when, e.d, e.acc, e.vel, chan);
-      }
-      else if (e.kind === "bass") {
-        const bs = BASSSYNTH[sec.bassop];
-        if (bs && playSynth(bs, e.n, when, e.dur * sd, 0, 0, e.vel, 0, chan, e.vox)) { /* synth bass */ }
-        else if (!playSampled(BASS_INSTR, e.n, when, e.dur * sd, e.vel, 1.25, chan, STRIPS.bass))
-          line(when, e.n, e.dur * sd, 1, 0, null,
-            { wave: "square", cut: 340, q: 5, atk: .006, rel: .8, gain: .26 }, false, e.vel, chan);
-      }
-    }
+    scheduleBar(bar, sec, chan, cur.kit, nextBarTime, sd, playSynth);
     nextBarTime += bar.barSteps * sd;
     nextBar = (nextBar + 1) % TL.length;
+    if (nextBar === 0) loopStart = nextBarTime;   // the wrap will SOUND at this time
+  }
+  // PREBUILD ONE BAR AHEAD, outside the loop: the next bar to schedule may
+  // open a section whose channel does not exist yet, and building an insert
+  // chain plus a convolver return at the instant the section starts is
+  // ZERO-STATIC glitch cause R2 (measured there: a 6-modules-in-46 ms burst
+  // WAS the click). channelFor is cached by spec, so this is a no-op all the
+  // times the channel already exists.
+  if (TL.length) {
+    const nb = TL[nextBar];
+    if (nb && SONG[nb.si]) channelFor(SONG[nb.si]);
+  }
+}
+// ONE BAR OF EVENTS ONTO A CHANNEL, at `when`, on whatever context the channel
+// lives on. Extracted from tick() so the offline bounce schedules through the
+// SAME switch — a forked copy is how the carrier would drift from the live
+// sound one edit at a time. `synthFn` is the only context-bound player (the
+// Faust pool belongs to the live context), so it is the one injectable: tick
+// passes playSynth, the bounce passes its offline pool's player (or a
+// return-false, which degrades a synth voice to its sampled instrument below).
+export function scheduleBar(bar, sec, chan, kit, when, sd, synthFn) {
+  for (const e of bar.ev) {
+    const at = when + e.off * sd;
+    if (e.kind === "line") {
+      const owner = e.layer || gid(sec);
+      // A SYNTH FONT OVERRIDES THE GENRE. Pure FM and Pure Analog are not a
+      // sample set, they are "play everything on this voice" — including the
+      // genres that carry a signature synth of their own.
+      const gsyn = isSynthFont() ? fontDef().synth : GENRES[owner].synth;
+      const id = instrOf(owner, e.lv == null ? e.v : e.lv);
+      const useSyn = gsyn && !(gsyn.lineOnly && e.pad && !isSynthFont());
+      if (useSyn && synthFn(gsyn, e.n, at, e.dur * sd, e.acc, e.sld, e.vel, e.v, chan, e.vox)) { /* signature voice */ }
+      else if (!playSampled(id, e.n, at, e.dur * sd, e.vel, 1, chan,
+                            e.pad ? STRIPS.pad : STRIPS.lead))
+        line(at, e.n, e.dur * sd, e.acc, e.sld, e.prev, bar.g.tone, e.pad, e.vel, chan);
+    } else if (e.kind === "hit") {
+      if (!playDrum(kit, e.d, at, e.acc, e.vel, chan)) hit(at, e.d, e.acc, e.vel, chan);
+    }
+    else if (e.kind === "bass") {
+      const bs = BASSSYNTH[sec.bassop];
+      if (bs && synthFn(bs, e.n, at, e.dur * sd, 0, 0, e.vel, 0, chan, e.vox)) { /* synth bass */ }
+      else if (!playSampled(BASS_INSTR, e.n, at, e.dur * sd, e.vel, 1.25, chan, STRIPS.bass))
+        line(at, e.n, e.dur * sd, 1, 0, null,
+          { wave: "square", cut: 340, q: 5, atk: .006, rel: .8, gain: .26 }, false, e.vel, chan);
+    }
   }
 }
 
@@ -190,38 +254,91 @@ export async function ensureAssets(announce) {
   if (!need.length && !wantSynth.length && !kits.length) return false;
   if (announce) emit("status", { text:
     "loading " + [...need, ...new Set(wantSynth.map(x => x[0].dsp)), ...kits].join(", ") + "…" });
-  await Promise.all([...need.map(loadInstrument),
-                     ...wantSynth.map(([sp, v, c]) => loadSynth(sp, v, c)),
-                     ...kits.map(loadKit)]);
+  const t0 = performance.now();
+  // synths and kits in parallel (the decode gate caps the kit decodes anyway),
+  // but instruments one at a time with a breath between WHILE PLAYING — the
+  // precache rule from the big app: the live scheduler owns this thread, and a
+  // decode burst with no yield starves it for whole bars
+  const nap = ms => new Promise(r => setTimeout(r, ms));
+  const rest = Promise.all([...wantSynth.map(([sp, v, c]) => loadSynth(sp, v, c)),
+                            ...kits.map(loadKit)]);
+  for (const id of need) {
+    await loadInstrument(id);
+    if (playing) await nap(60);
+  }
+  await rest;
+  if (announce) emit("status", { text:
+    "loaded in " + Math.round(performance.now() - t0) + " ms" });
   return true;
 }
 
 /* ---------- transport ---------- */
 export async function startAt(boxIndex) {
-  initAudio(); if (ctx.state === "suspended") ctx.resume();
+  // everything up to the first await runs INSIDE the user's gesture — initAudio
+  // and the gesture hooks (the carrier element unlock) depend on that
+  initAudio();
+  // unconditional, never gated on ctx.state: iOS reports the non-standard
+  // "interrupted" after an app switch, and gating on "suspended" alone never
+  // resumes from it (the parent's live.js law)
+  try { const p = ctx.resume(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+  for (const fn of gestureFns) { try { fn(); } catch (e) {} }
+  BOOT.playPressed = Math.round(performance.now());
   compile();
+  BOOT.assetsStart = Math.round(performance.now());
   if (await ensureAssets(true)) emit("refresh");
+  BOOT.assetsDone = Math.round(performance.now());
   if (!TL.length) {
     emit("status", { text: "nothing to play — click a genre to fill a box first",
                      sticky: true });
     return;
   }
+  // the FIRST section's channel (and its reverb) built here, before the clock
+  // runs — never inside the render window at the first bar boundary
   const at = TL.findIndex(b => b.si === boxIndex && b.first);
+  const first = TL[at < 0 ? 0 : at];
+  if (first && SONG[first.si]) channelFor(SONG[first.si]);
   playing = true; playingSec = -1;
   nextBar = at < 0 ? 0 : at;
   nextBarTime = ctx.currentTime + .08; passStart = nextBarTime;
+  loopStart = nextBarTime;
+  BOOT.firstBar = Math.round(performance.now());
   startClock();
+  watchFirstSound();
   emit("transport:state", { playing });
 }
 export function stop() {
   playing = false; stopClock(); playingSec = -1; setPendingStart(null);
   emit("transport:state", { playing });
 }
+// JUMP THE TRANSPORT to a phase (seconds into the song) — the return half of
+// the carrier handoff: the ear followed the looping element while the graph's
+// clock was frozen, so on return the graph must pick up where the ELEMENT is,
+// not where the freeze left it. Lands on the next bar boundary at or after the
+// phase, because events are scheduled per bar.
+export function seekPhase(phaseSec) {
+  if (!playing || !TL.length || !ctx) return;
+  const sd = stepDur(), dur = songDurSec();
+  if (!(dur > 0)) return;
+  const p = ((phaseSec % dur) + dur) % dur;
+  let acc = 0, i = 0;
+  for (; i < TL.length; i++) { const d = TL[i].barSteps * sd; if (acc + d > p) break; acc += d; }
+  if (i >= TL.length) i = TL.length - 1;
+  const wait = Math.max(0.03, (acc + TL[i].barSteps * sd) - p);   // rest of the bar the ear is in
+  nextBar = (i + 1) % TL.length;
+  nextBarTime = ctx.currentTime + wait;
+  passStart = nextBarTime;
+  // where THIS pass began, back-computed so positionState stays honest
+  let upto = 0; for (let b = 0; b < nextBar; b++) upto += TL[b].barSteps * sd;
+  loopStart = nextBarTime - upto;
+}
 // what the playhead animation is allowed to know — the three UI-from-audio
-// reads (ctx.currentTime, passStart, playingSec) behind one accessor
+// reads (ctx.currentTime, passStart, playingSec) behind one accessor.
+// loopStart/durSec are the song-position half, for MediaSession and the
+// carrier's phase lock.
 export const getPosition = () => ({
   playing, si: playingSec,
   passStart, now: ctx ? ctx.currentTime : 0, stepDur: stepDur(),
+  loopStart, durSec: songDurSec(),
 });
 
 /* ---------- subscriptions ---------- */
