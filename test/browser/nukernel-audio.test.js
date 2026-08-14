@@ -458,6 +458,93 @@ function taps() {
     else ok(`a long section caps at ${Math.round(w)}px and reads "${head.trim()}"`);
   }
 
+  // (J) AUTOMATION IS REAL — appended by the P4 depth-to-the-fingers phase;
+  // everything above is untouched. The registry grew an `auto` field
+  // (fields.js AUTOPARAMS/autoShape), the mixer's channels went per-box and
+  // arm point lists on every pass (audio/mixer.js armAutomation), and the
+  // palette writes shapes. This drives the REAL palette — the auto chip rows
+  // on the effects tab — on a playing, looped section, then asserts the two
+  // artifacts: __nuMix reports the armed automation (a count, plus per-channel
+  // key info — both ADDED keys, the old shape untouched), and the spectrum
+  // moves. Same __hf discipline as (E): a lowpass that closes over the section
+  // guts the energy above 4 kHz, which no level-flattening master stage can
+  // put back — so a chip that validated, saved and armed NOTHING fails here.
+  {
+    const tab = (t) => page.locator(".ptab", { hasText: new RegExp("^" + t + "$") }).click();
+    const hf = async (secs) => {
+      let s = 0, n = 0;
+      for (let i = 0; i < secs * 5; i++) {
+        await page.waitForTimeout(200);
+        s += await page.evaluate(() => window.__hf()); n++;
+      }
+      return s / n;
+    };
+    const waitMix = async (pred, ms) => {
+      const t0 = Date.now();
+      let m = null;
+      while (Date.now() - t0 < ms) {
+        m = await page.evaluate(() => (window.__nuMix ? window.__nuMix() : null));
+        if (m && pred(m)) return m;
+        await page.waitForTimeout(250);
+      }
+      return m;
+    };
+
+    // a fresh composed song, and loop a VERSE alone: no mot, no inserts, a
+    // full kit — so the baseline spectrum has highs to lose and both reads
+    // cover the same four bars (the (E) discipline; an intro fades and an
+    // outro already carries a closing filter, either would blur the claim)
+    await page.selectOption("#composeg", "rock");
+    await page.click("#compose");
+    await page.waitForTimeout(400);
+    const roles2 = await page.locator(".box .role").allTextContents();
+    const vi = roles2.findIndex(r => /verse/.test(r));
+    if (vi < 0) fail("the composed rock song has no verse to loop");
+    await page.locator(".box").nth(vi < 0 ? 0 : vi).dblclick();   // loops AND starts it
+    await page.waitForTimeout(2500);
+    const m0 = await waitMix(m => m.channels.length > 0, 20000);
+    if (!m0 || m0.automation == null)
+      fail("__nuMix has no `automation` count — the mixer is not reporting what it arms");
+    else ok(`__nuMix reports automation (${m0.automation} armed before the chip)`);
+    const auto0 = m0 ? (m0.automation || 0) : 0;
+
+    const open = await hf(6);
+    await tab("effects");
+    const shapeChip = page.locator('.pchip[data-kind="auto"][data-value="cutoff:close"]');
+    if (!(await shapeChip.count()))
+      fail("the auto shape row is missing from the effects page — the palette never grew it");
+    else {
+      await shapeChip.click();
+      const m1 = await waitMix(m => (m.automation || 0) > auto0 &&
+        m.channels.some(c => c.auto > 0), 20000);
+      const armed = m1 && m1.channels.find(c => c.auto > 0);
+      if (!armed)
+        fail(`the cutoff:close chip armed nothing (automation ${m1 && m1.automation}, ` +
+             `channels ${m1 && JSON.stringify(m1.channels.map(c => c.auto))})`);
+      else if (typeof armed.key !== "string" || !armed.key.includes("|"))
+        fail(`a channel carries no per-box identity key: ${JSON.stringify(armed.key)}`);
+      else ok(`automation armed: count ${auto0} -> ${m1.automation}, ` +
+              `on channel ${armed.key.split("|")[0]} (per-box identity keys)`);
+
+      const closed = await hf(6);
+      const moved = Math.abs(closed - open) / (open || 1);
+      console.log(`  spectrum above 4 kHz  : open ${open.toFixed(4)} -> ` +
+                  `auto-close ${closed.toFixed(4)} (${(moved * 100).toFixed(0)}%)`);
+      if (moved > 0.25 && closed < open)
+        ok(`the armed automation is audible: HF ${open.toFixed(4)} -> ${closed.toFixed(4)}`);
+      else fail(`a closing filter automation moved the spectrum by ` +
+                `${(moved * 100).toFixed(0)}% (${open.toFixed(4)} -> ${closed.toFixed(4)}) — ` +
+                `the point list is written but never armed on a node in the signal path`);
+
+      // ...and "off" takes it back off, through the same chip row
+      await page.locator('.pchip[data-kind="auto"][data-value="cutoff:off"]').click();
+      const m2 = await waitMix(m => (m.automation || 0) <= auto0, 20000);
+      if (m2 && (m2.automation || 0) <= auto0) ok("auto off disarms the shape");
+      else fail(`auto off did not disarm (automation still ${m2 && m2.automation})`);
+    }
+    await page.click("#play");                              // stop
+  }
+
   // (C) no fallback fired
   const osc = await page.evaluate(() => window.__osc);
   const fb = await page.evaluate(() => window.__nuFallback);

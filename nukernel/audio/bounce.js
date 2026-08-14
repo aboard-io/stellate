@@ -29,7 +29,7 @@ import { stackOf, kitOf, boxBars } from "../ui/derive.js";
 import { buildMasterChain, buildEchoBus, makeVerb, masterVol, barSec } from "./graph.js";
 import { FONT, isSynthFont, fontDef } from "./assets.js";
 import { makeSynthNode, driveSynth, offFallback } from "./voices.js";
-import { chanSpec, buildChannel, armMotion } from "./mixer.js";
+import { chanSpec, buildChannel, armAutomation } from "./mixer.js";
 import { buildTimeline, scheduleBar, stepDur, playing, getPosition,
          onGesture } from "./transport.js";
 
@@ -201,7 +201,9 @@ async function renderSong() {
       cur = { si: bar.si, chan: chanOf(sec), kit: kitOf(sec) };
     if (bar.first) {
       echo.setTime(DTIMES[sec.dtime || "d8"], t);
-      armMotion(cur.chan, t, bar.barSteps * sd * boxBars(sec), sd * 4);
+      // the SAME walker the live tick arms — the carrier honors automation
+      // (mot included, since mot compiles into the same list in chanSpec)
+      armAutomation(cur.chan, t, bar.barSteps * sd * boxBars(sec), sd * 4);
       focusAt(cur.chan, t);
     }
     scheduleBar(bar, sec, cur.chan, cur.kit, t, sd, offSynth);

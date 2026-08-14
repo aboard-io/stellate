@@ -15,7 +15,7 @@ import { FONT, fontDef, isSynthFont, loadFont, specOf, zoneBufs, drumBufs,
          instrumentsInSong } from "./assets.js";
 import { synthNodes, synthKey, loadSynth, focusSynths, playSynth, playSampled,
          playDrum, line, hit } from "./voices.js";
-import { channelFor, armMotion } from "./mixer.js";
+import { channelFor, armAutomation } from "./mixer.js";
 import { setDelayTime } from "./graph.js";
 
 export let playing = false;
@@ -166,7 +166,7 @@ function tick() {
       // the section's own echo time, and its transition, both land on the bar it
       // starts — a transition re-arms every pass, which is what makes it one
       setDelayTime(DTIMES[sec.dtime || "d8"]);
-      armMotion(chan, nextBarTime, bar.barSteps * sd * boxBars(sec), sd * 4);
+      armAutomation(chan, nextBarTime, bar.barSteps * sd * boxBars(sec), sd * 4);
       focusSynths(chan, nextBarTime);   // this section's mix owns the synth pool
     }
     scheduleBar(bar, sec, chan, cur.kit, nextBarTime, sd, playSynth);

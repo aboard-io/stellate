@@ -23,7 +23,8 @@
     ? require("./fields.js") : root.NuFields;
   const NG = (typeof module !== "undefined" && module.exports)
     ? require("./genres.js") : root.NuGenres;
-  const { FIELDS, OPS, FX, MAX_FX, NSLOTS, MAX_LEN, MAX_NUDGE, VOX } = NF;
+  const { FIELDS, OPS, FX, MAX_FX, NSLOTS, MAX_LEN, MAX_NUDGE, VOX,
+          AUTOPARAMS, PERIODS } = NF;
   const { GENRES } = NG;
 
   // The CURRENT schema version. v:2 = v:1 with the box field `del` renamed to
@@ -78,6 +79,18 @@
   function migrate(raw) {
     if (!raw || typeof raw !== "object") return raw;
     const r = JSON.parse(JSON.stringify(raw));
+    // THE PERIOD INTERREGNUM. For a few hours between the P2b and P4 commits,
+    // composed saves carried the bar schedule as a raw op-list array riding
+    // an unknown key. The registry now speaks preset names, and okEnum would
+    // refuse the array — so a recognized array becomes its preset name and an
+    // unrecognized one comes off, rather than one evening's saves dying.
+    for (const b of Array.isArray(r.song) ? r.song : []) {
+      if (b && Array.isArray(b.period)) {
+        const s = JSON.stringify(b.period);
+        const hit = Object.keys(PERIODS).find(k => JSON.stringify(PERIODS[k]) === s);
+        if (hit) b.period = hit; else delete b.period;
+      }
+    }
     if (r.v !== 1) return r;             // v:2 passes through; junk fails validate
     // genre -> genres -> stack: they shared one slot list before layers
     // carried their own phrases
@@ -187,6 +200,30 @@
       if (!Array.isArray(b.ops)) err(at + ".ops", b.ops, "an array of operator keys");
       else b.ops = filterList({ table: OPS }, b.ops);
       b.fx = filterList({ table: FX, max: MAX_FX }, b.fx);
+      // AUTOMATION. Entries are {param, points, curve} objects (or a bare
+      // param string, which is legal and inert — the registry's exhaustive
+      // toggle writes those). The FILTER rule applies to the PARAM the way it
+      // does to ops/fx — an unknown param is an obsolete chip, dropped — but
+      // malformed POINTS are an error: garbage numbers mean the file is
+      // broken, not old, and arming NaN on an AudioParam throws mid-bar.
+      if (b.auto != null) {
+        if (!Array.isArray(b.auto))
+          err(at + ".auto", b.auto, "a list of {param, points, curve}");
+        else {
+          b.auto = b.auto.filter(a => {
+            const p = typeof a === "string" ? a : a && a.param;
+            return p != null && Object.prototype.hasOwnProperty.call(AUTOPARAMS, p);
+          });
+          b.auto.forEach((a, ai) => {
+            if (typeof a === "string") return;
+            if (a.points != null && !(Array.isArray(a.points) && a.points.every(pt =>
+                Array.isArray(pt) && pt.length === 2 && pt.every(Number.isFinite))))
+              err(at + ".auto[" + ai + "].points", a.points, "[[beat,value],…] finite pairs");
+            if (a.curve != null && a.curve !== "lin" && a.curve !== "exp")
+              err(at + ".auto[" + ai + "].curve", a.curve, "lin|exp");
+          });
+        }
+      }
       for (const f of FIELDS) {
         if (f.type === "list" || f.type === "int" || f.type === "vox") continue;
         if (!okEnum(f, b[f.key]))

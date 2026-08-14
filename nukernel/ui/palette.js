@@ -10,9 +10,12 @@ import { GENRES, MODELABEL, SCALELABEL, VOX, OPS, OPLABEL, MAX_FX, FX, ROLES,
          RATELABEL, ARTICS, CMODES, CLAMPLABEL, OCTAVES, KITLABEL, DRUMKITS,
          BASSOPS, SWINGLABEL, GROOVELABEL, SENDLABEL, VERBS, DTLABEL,
          LEVELLABEL, PANLABEL, INLABEL, OUTLABEL, ENVLABEL, MOTLABEL,
+         KEYLABEL, PROGLABEL, PERIODLABEL, BREATHLABEL, PIPELABEL, PARTCHOICES,
+         AUTOPARAMLABEL, AUTOSHAPELABEL, autoShape,
          MAX_NUDGE } from "./deps.js";
 import { curSection, commit, on } from "./state.js";
-import { LAYER_OPTS, stackOf, focusOf, focused, opsOf, optOf, voxOf } from "./derive.js";
+import { LAYER_OPTS, stackOf, focusOf, focused, opsOf, optOf, voxOf,
+         genreOf } from "./derive.js";
 
 const paletteEl = document.getElementById("palette");
 
@@ -83,12 +86,29 @@ export function toggle(kind, value) {
     if (i >= 0) sec.fx.splice(i, 1);
     else if (sec.fx.length < MAX_FX) sec.fx.push(value);
   }
+  else if (kind === "auto") {
+    // ONE SHAPE PER PARAM. The chips are presets that WRITE the point list —
+    // the stored truth is auto:[{param, points, curve}], which is what the
+    // mixer arms and the bounce renders, so hand-drawn breakpoints can land
+    // later without the save shape moving. Points are baked for the section's
+    // CURRENT length in beats; "off" (or re-tapping the lit shape) removes
+    // the param's entry.
+    const [param, shape] = String(value).split(":");
+    const cur = (sec.auto || []).find(a => a && a.param === param);
+    const rest = (sec.auto || []).filter(a => !a || a.param !== param);
+    if (shape !== "off" && !(cur && cur.shape === shape)) {
+      const g = genreOf(sec);
+      rest.push(autoShape(param, shape, (sec.len || g.bars) * 4 / g.rate));
+    }
+    sec.auto = rest;
+  }
   else if (BOXOPTS.has(kind)) sec[kind] = sec[kind] === value ? null : value;
   commit("box");
 }
 // the plain one-of-these box fields, all toggled the same way
 const BOXOPTS = new Set(["kit", "drumkit", "bassop", "swing", "groove", "rev", "echo",
-                         "verb", "dtime", "lvl", "pan", "mot", "intro", "outro", "role"]);
+                         "verb", "dtime", "lvl", "pan", "mot", "intro", "outro", "role",
+                         "key", "prog", "period", "breath", "pipe"]);
 
 /* ---------- the palette itself ---------- */
 // BUILT ONCE, then only its ON states change. Rebuilding it on every draw
@@ -136,6 +156,13 @@ export function drawPalette() {
     if (kind === "oct") return String(optOf(sec, ent, "oct") || "0") === v;
     if (kind === "cmode") return (optOf(sec, ent, "cmode") || "hold") === v;
     if (kind === "artic") return (optOf(sec, ent, "artic") || "normal") === v;
+    if (kind === "part") return (optOf(sec, ent, "part") || "auto") === v;
+    if (kind === "key") return String(sec.key) === v;   // compose writes numbers
+    if (kind === "auto") {
+      const [param, shape] = String(v).split(":");
+      const cur = (sec.auto || []).find(a => a && a.param === param);
+      return shape === "off" ? !cur : !!(cur && cur.shape === shape);
+    }
     return sec[kind] === v;
   };
   if (paletteBuilt) {
@@ -199,6 +226,9 @@ export function drawPalette() {
           ? " · " + e.slots.map(n => n + 1).join("+") : " · —"), "foc"]));
     rowOf("section", "role", ROLES, "role");
     rowOf("chord mode", "mode", MODELABEL, "mode");
+    rowOf("key", "key", KEYLABEL, "mode");
+    rowOf("progression", "prog", PROGLABEL, "mode");
+    rowOf("sentence", "period", PERIODLABEL, "rate");
     rowOf("tempo", "rate", RATELABEL, "rate");
     rowOf("articulation", "artic", ARTICS, "art");
   } else if (paletteTab === "line") {
@@ -212,11 +242,17 @@ export function drawPalette() {
     opRow("fill in", ["dens2", "dens3", "dens4"], "lst");
     opRow("loop a fragment", ["ex4", "ex8"], "lst");
     opRow("shift degrees", ["trm2", "trm1", "trp1", "trp2"], "lst");
+    // BOX-scope, on the line page on purpose: where a line stops (breath) and
+    // what shadows it (a pipe on the rendered stream) are facts about the
+    // lines, even though the whole box shares them
+    rowOf("breath", "breath", BREATHLABEL, "env");
+    rowOf("pipe", "pipe", PIPELABEL, "env");
   } else if (paletteTab === "voice") {
     rowOf("register", "oct", OCTAVES, "rng");
     group("width", [["op", "wide", OPLABEL.wide, "rng"],
                     ["op", "tight", OPLABEL.tight, "rng"]]);
     rowOf("alphabet", "scale", SCALELABEL, "rng");
+    rowOf("part", "part", PARTCHOICES, "rng");
     rowOf("filter", "cut", VOX.cut.labels, "vox");
     rowOf("resonance", "res", VOX.res.labels, "vox");
     rowOf("env mod", "emod", VOX.emod.labels, "vox");
@@ -239,6 +275,15 @@ export function drawPalette() {
     rowOf("echo time", "dtime", DTLABEL, "env");
     rowOf("level", "lvl", LEVELLABEL, "bas");
     rowOf("place", "pan", PANLABEL, "bas");
+    // AUTOMATION — the four public params as shape rows (send.echo stays
+    // data-only: four rows is a mixer, six is a haystack). A chip writes a
+    // point list for the section as it is now; the mixer arms it every pass
+    // and the bounce renders it, so the chip and the carrier can never
+    // disagree about what the section does.
+    for (const p of ["cutoff", "level", "pan", "send.rev"])
+      group("auto · " + AUTOPARAMLABEL[p],
+        ["off", "open", "close", "rise", "fall", "pump"].map(s =>
+          ["auto", p + ":" + s, AUTOSHAPELABEL[s], "env"]));
   } else {
     rowOf("intro", "intro", INLABEL, "env");
     rowOf("outro", "outro", OUTLABEL, "env");

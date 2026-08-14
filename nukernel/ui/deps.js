@@ -18,11 +18,11 @@
 
 // ---- the algebra (kernel.js) ----
 export const { harm, render, drums, bass, ROMAN, word, KITOPS,
-               envelope, edges, groove } = window.NuKernel;
+               envelope, edges, groove, withCadence } = window.NuKernel;
 
 // ---- the genre table (genres.js) ----
 export const { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL,
-               SCALES, SCALELABEL } = window.NuGenres;
+               SCALES, SCALELABEL, PROGS } = window.NuGenres;
 
 // ---- the control vocabulary (fields.js) — ONE definition of every control ----
 export const NuFields = window.NuFields;
@@ -33,6 +33,9 @@ export const { NSLOTS, MAX_LEN, MAX_NUDGE, MAX_FX,
                FX, fxChain, SENDS, SENDLABEL, VERBS,
                DTIMES, DTLABEL, LEVELS, LEVELLABEL, PANS, PANLABEL,
                VOX, VOXPARAM, OCTAVES, ARTICS, CMODES, CLAMPLABEL,
+               KEYS, KEYLABEL, PROGCHOICES, PROGLABEL, PERIODS, PERIODLABEL,
+               BREATHS, BREATHLABEL, PIPESETS, PIPELABEL, PARTCHOICES,
+               AUTOPARAMS, AUTOPARAMLABEL, AUTOSHAPELABEL, autoShape,
                ROLES } = window.NuFields;
 
 // ---- pure persistence (song.js) ----

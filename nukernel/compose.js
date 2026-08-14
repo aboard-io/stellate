@@ -378,8 +378,10 @@
       b.lvl = peak ? "fwd" : null; b.rev = "some";
       if (kit) { b.kit = chance(r, 0.6) ? "busy" : null; b.bassop = pick(r, ["octaves", "eighths"]); }
       b.outro = pick(r, ["fill", "roll", "crash"]);
-      // a lift on bar 3 of every four — the bar schedule as data (palette keys)
-      if (chance(r, 0.6)) b.period = [[], [], ["dens3"], []];
+      // a lift on bar 3 of every four — the bar schedule as a PRESET NAME now
+      // (fields.js PERIODS."4bar" is the same [[],[],["dens3"],[]] this used
+      // to write raw; the registry validates the name, the render resolves it)
+      if (chance(r, 0.6)) b.period = "4bar";
       // the chorus is where a second genre earns its place — one more line,
       // its own phrase, which is what the stack was built for. At the peak it
       // is not offered, it is DUE — and sometimes the whole band goes up two:
@@ -392,7 +394,7 @@
       b.stack[0].slots = chance(r, 0.5) ? [S.counter] : [S.counter, S.sparse];
       b.mode = pick(r, ["dorian", "phrygian", "harmonic", "mixo"]);
       b.ops = [pick(r, ["inv", "rev", "rot3", "gateflip"])];
-      b.period = [[], ["rot2"]];              // a two-bar period: the bridge sways
+      b.period = "2bar";                      // a two-bar period: the bridge sways
       if (G.progFamily || G.prog) b.cadence = { d: 4, q: "dom7" };
       if (kit) b.kit = pick(r, ["shift", "halftime", "swap"]);
       b.mot = chance(r, 0.4) ? "close" : null;
@@ -412,6 +414,14 @@
       b.ops = [pick(r, ["rep2", "rep4", "rot2"])];
       b.echo = chance(r, 0.4) ? "touch" : null;
       b.intro = chance(r, 0.4) ? "hit" : null;
+      // THE PEAK DROP SPENDS THE NEW SURFACE: the arc's 1.0 either opens the
+      // filter across the whole section or pumps the level on every beat —
+      // written as the real point list the mixer arms and the bounce renders,
+      // through the same validate-and-apply door as everything else
+      if (peak) {
+        const [ap, ash] = chance(r, 0.55) ? ["cutoff", "open"] : ["level", "pump"];
+        b.auto = [NF.autoShape(ap, ash, (b.len || bars) * 4 / G.rate)];
+      }
     } else if (role === "solo") {
       b.stack[0].slots = chance(r, 0.5) ? [S.climb] : [S.climb, S.riff];
       b.ops = [pick(r, ["rep3", "rep4", "wide"])];

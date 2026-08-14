@@ -7,7 +7,7 @@
 // Layer graph: deps -> state -> THIS FILE -> audio -> ui views -> main.
 import { GENRES, MODES, SCALES, RATES, SWINGS, KITOPS, OPS,
          render, drums, bass, word, envelope, edges, groove,
-         blank, VOX } from "./deps.js";
+         blank, VOX, PROGS, PERIODS, BREATHS, PIPESETS, withCadence } from "./deps.js";
 
 export const isBlank = p => p.gate.every(g => !g);
 
@@ -23,7 +23,7 @@ export const isBlank = p => p.gate.every(g => !g);
 //
 // A layer field left unset INHERITS the box's, so nothing diverges by accident
 // — which is how the fugue ended up reading pentatonic against a quartal riff.
-export const LAYER_OPTS = new Set(["op", "artic", "clamp", "cmode", "scale", "oct"]);
+export const LAYER_OPTS = new Set(["op", "artic", "clamp", "cmode", "scale", "oct", "part"]);
 export const optOf = (sec, ent, k) => (ent && ent[k] != null ? ent[k] : sec[k]);
 export const opsOf = (sec, ent) => (ent && ent.ops ? ent.ops : sec.ops);
 // the synth knobs are an OBJECT of independent settings, so they inherit
@@ -77,6 +77,33 @@ export const genreOf = (sec, ent) => {
   if (sec.bassop === "nobass") out.nobass = true;
   else if (sec.bassop === "reese" || sec.bassop === "wobble") out.nobass = false;
   else if (sec.bassop) { out.nobass = false; out.bassStyle = sec.bassop; }
+  // ---- the composition-depth surface (P4): the box speaks the same words
+  // the genre table does, into the same kernel fields. Every branch below is
+  // guarded on the field being SET, so a null field is byte-identical to an
+  // absent one (the §33 unit gate mirrors this function and holds it).
+  if (sec.key != null) out.key = +sec.key;         // semitones, post-registration
+  if (sec.breath != null) out.maxHold = BREATHS[sec.breath];  // "none" = explicit 0
+  if (sec.pipe) out.pipes = sec.pipe === "off" ? null : PIPESETS[sec.pipe];
+  const pt = optOf(sec, ent, "part");              // per-layer, like scale
+  if (pt && pt !== "auto") out.part = [pt];        // every voice of this render
+  // PROG + CADENCE: a named progression overrides the genre's; "off" strips
+  // it back to the degenerate triads. A cadence lands on the last bar of the
+  // FORM (withCadence over g.bars, cycled) — synthesized from the roots when
+  // the genre never declared a prog, which is how the composer's prechorus
+  // borrows the dominant's door on a triad genre. (Mirrored by the unit
+  // gate's §31 genreFor — change one, change both.)
+  if (sec.prog || sec.cadence) {
+    const prog = (sec.prog && sec.prog !== "off" && PROGS[sec.prog]) ||
+      (sec.prog === "off" ? null
+        : out.prog || (out.harmony === "cycle" && out.roots
+                       ? out.roots.map(d => ({ d })) : null));
+    out.prog = sec.cadence && prog ? withCadence(prog, out.bars, sec.cadence) : prog;
+  }
+  // PERIOD: a sentence preset resolved to the kernel's bar schedule. "1bar"
+  // is the explicit flat — it STRIPS a genre's own sentence, which null must
+  // never do.
+  if (sec.period) out.period = sec.period === "1bar" ? null
+    : PERIODS[sec.period].map(w => w.map(k => OPS[k]));
   return out;
 };
 
@@ -108,7 +135,14 @@ const byVoice = evs => {
   return m;
 };
 export function sectionEvents(sec, slots) {
-  const g = genreOf(sec);
+  // THE AUTHORITY READS ITS OWN LAYER'S FIELDS. Layer-scope chips (artic,
+  // scale, clamp, cmode, part…) write to the FOCUSED stack entry, and for a
+  // single-layer box that entry is stack[0] — which genreOf(sec) alone never
+  // saw, so a chip could light up and change nothing. Passing stack[0] makes
+  // the render read what the palette wrote; with no entry-level values set
+  // (every composed song, every shipped preset) it is byte-identical.
+  const a0 = stackOf(sec)[0];
+  const g = genreOf(sec, a0);
   // NUDGE is an absolute bar offset, not a phase modulo the form. Nudging a
   // fugue past bar 4 starts it AFTER the exposition, which is a different piece
   // of music from nudging within the first four bars — so it must not wrap.
@@ -118,7 +152,6 @@ export function sectionEvents(sec, slots) {
 
   const phrasesFor = e => (e.slots.length ? e.slots : [null])
     .map(i => word(i == null ? blank() : slots[i], opsOf(sec, e).map(o => OPS[o])));
-  const a0 = stackOf(sec)[0];
   const phrases = phrasesFor(a0);
   const nP = phrases.length, out = [];
   // REGISTER and the SYNTH KNOBS ride the events, not the genre. Both are
@@ -163,10 +196,17 @@ export function sectionEvents(sec, slots) {
     // and `scale` was not, which is exactly the kind of near-miss that reads as
     // a tuning problem rather than a missing line of code.
     const lo = genreOf(sec, ent);
+    // A LAYER RIDES THE BOX'S KEY the way it rides its harmony — half the
+    // band modulating is not a modulation, it is a mistake (§31's law). Its
+    // part/pipes/breath come through genreOf like scale does, so a per-layer
+    // `part` chip lands here; prog and period stay the authority's alone
+    // (a prog-carrying layer would play its own chords against the box's).
     const lg = { ...L, harmony: g.harmony, roots: g.roots, rate: g.rate,
                  swing: g.swing, mode: g.mode, scale: lo.scale, incClamp: lo.incClamp,
                  incMode: lo.incMode, artic: lo.artic, kit: {}, ghost: null,
-                 nobass: true, reg: v => L.reg(v) + 1 };
+                 nobass: true, reg: v => L.reg(v) + 1,
+                 key: g.key | 0, part: lo.part, pipes: lo.pipes,
+                 maxHold: lo.maxHold };
     // the layer reads ITS OWN phrases, dealt across ITS voices
     const lOct = 12 * octOf(sec, ent), lVox = voxAll(sec, ent);
     lPh.forEach((ph, pi) => {

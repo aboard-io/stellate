@@ -200,6 +200,125 @@
   const CLAMPS = { "0": 0, "2": 2, "4": 4, "8": 8 };
   const CLAMPLABEL = { "0": "off", "2": "2", "4": "4", "8": "8" };
 
+  /* ---------- the composition-depth surface ---------- */
+  // The P2b round put progression/period/rest/pipes/parts/key in the ALGEBRA;
+  // these tables give them to the FINGERS. Every one follows the house law:
+  // default null = "as the genre asks", and a null field must render
+  // byte-identically to an absent one (the §33 unit gate holds it).
+  //
+  // KEY — a semitone shift on the whole box, applied in the kernel AFTER
+  // registration so the fold cannot eat it. The set is deliberately small: a
+  // minor third down through a major third up covers the truck-driver +2 and
+  // the relative-major +3 without offering the tritone nobody wants as a chip.
+  const KEYS = { "-3": -3, "-2": -2, "-1": -1, "1": 1, "2": 2, "3": 3, "4": 4 };
+  const KEYLABEL = { "-3": "−3", "-2": "−2", "-1": "−1",
+                     "1": "+1", "2": "+2", "3": "+3", "4": "+4" };
+
+  // PROG — the named progressions from genres.js, by name, plus "off" (strip
+  // the genre's own prog and fall back to the degenerate triads). The names
+  // are data the composer already writes; this row is the same vocabulary
+  // under a finger.
+  const PROGCHOICES = { off: "off" };
+  const PROGLABEL = { off: "plain triads", blues12: "blues 12-bar",
+                      soul7: "soul 7ths", jack7: "new jack",
+                      beatlesV: "beatles verse", beatlesC: "beatles chorus" };
+  for (const k of Object.keys(NG.PROGS)) {
+    PROGCHOICES[k] = k;
+    if (PROGLABEL[k] == null) PROGLABEL[k] = k;
+  }
+
+  // PERIOD — sentence presets that map to the kernel's bar schedule
+  // (`g.period`, the sixth type). Entries are op-key LISTS in the palette's
+  // own alphabet, so a preset is data all the way down. "1bar" is an explicit
+  // "every bar the same": it strips a genre's own sentence, which null (the
+  // default) deliberately does not.
+  const PERIODS = {
+    "1bar": [],                                  // flat: every bar restates
+    "2bar": [[], ["rot2"]],                      // antecedent/consequent sway
+    "4bar": [[], [], ["dens3"], []],             // the lift on bar 3
+  };
+  const PERIODLABEL = { "1bar": "every bar", "2bar": "two-bar sway",
+                        "4bar": "four-bar lift" };
+
+  // BREATH — the kernel's maxHold as words. "none" is an explicit 0 (uncap:
+  // even a part policy's own hold comes off), which is different from null.
+  const BREATHS = { none: 0, "4": 4, "3": 3, "2": 2 };
+  const BREATHLABEL = { none: "unbroken", "4": "long", "3": "breathing",
+                        "2": "clipped" };
+
+  // PIPE — one chip arms one pipe set on the rendered stream (the seventh
+  // type). Single-choice on purpose: pipes compose, but a chip row that lets
+  // you stack all five is a texture, not a decision.
+  const PIPESETS = {
+    off: [],                                     // strip the genre's own pipes
+    "3rds": [{ id: "harmonize", p: 0.6 }],
+    "6ths": [{ id: "harmonize", p: 0.6, gap: "sixth" }],
+    echo: [{ id: "echoCanon", delay: 3 }],
+    strum: [{ id: "strum", spread: 0.06 }],
+    breathe: [{ id: "breathe" }],
+  };
+  const PIPELABEL = { off: "off", "3rds": "thirds", "6ths": "sixths",
+                      echo: "echo canon", strum: "strum", breathe: "breathe" };
+
+  // PART — a per-layer role assignment (kernel PARTS). "auto" means the
+  // genre's own per-voice scheme; anything else makes every voice of that
+  // layer the named part.
+  const PARTCHOICES = { auto: "auto", lead: "lead", riff: "riff",
+                        counter: "counter", pad: "pad", stab: "stab",
+                        drone: "drone" };
+
+  /* ---------- automation ---------- */
+  // A box's `auto` list is the REAL automation surface: [{param, points:
+  // [[beat, value], …], curve}], armed on the section's mixer channel every
+  // pass (audio/mixer.js armAutomation) and rendered identically by the
+  // bounce. The PALETTE writes it through shape presets — off/open/close/
+  // rise/fall/pump — which bake a point list for the section's current length
+  // in beats. Hand-drawn breakpoints can land later without the save shape
+  // moving, because points are already the stored truth.
+  //
+  // `hpf` is internal-only (the mot "rise" compile targets it) and is
+  // deliberately NOT in this table: the public params are the four+one a
+  // finger can reason about.
+  const AUTOPARAMS = {
+    cutoff:      { lo: 320,   hi: 16000, curve: "exp" },
+    level:       { lo: 0.07,  hi: 1,     curve: "exp" },
+    pan:         { lo: -0.8,  hi: 0.8,   curve: "lin" },
+    "send.rev":  { lo: 0.001, hi: 0.7,   curve: "lin" },
+    "send.echo": { lo: 0.001, hi: 0.7,   curve: "lin" },
+  };
+  const AUTOPARAMLABEL = { cutoff: "filter", level: "level", pan: "place",
+                           "send.rev": "reverb", "send.echo": "echo" };
+  // shapes in NORMALIZED position/value; pump is per-beat (the sidechain
+  // gesture, same 0.32→1 numbers the old mot pump hardcoded)
+  const AUTOSHAPES = {
+    open:  [[0, 0], [1, 1]],
+    close: [[0, 1], [1, 0]],
+    rise:  [[0, 0.3], [1, 1]],
+    fall:  [[0, 1], [1, 0.3]],
+  };
+  const AUTOSHAPELABEL = { off: "off", open: "open", close: "close",
+                           rise: "rise", fall: "fall", pump: "pump" };
+  // shape -> a concrete {param, shape, curve, points} for a section `beats`
+  // long. Returns null for "off" (the caller removes the entry instead).
+  function autoShape(param, shape, beats) {
+    const R = AUTOPARAMS[param];
+    if (!R || shape === "off") return null;
+    const B = Math.max(1, Math.round(beats));
+    const map = x => R.curve === "exp" && R.lo > 0
+      ? +(R.lo * Math.pow(R.hi / R.lo, x)).toFixed(4)
+      : +(R.lo + x * (R.hi - R.lo)).toFixed(4);
+    let points;
+    if (shape === "pump") {
+      points = [];
+      for (let b = 0; b < B; b++) points.push([b, map(0.32)], [b + 0.85, map(1)]);
+    } else {
+      const S = AUTOSHAPES[shape];
+      if (!S) return null;
+      points = S.map(([x, v]) => [x * B, map(v)]);
+    }
+    return { param, shape, curve: R.curve, points };
+  }
+
   // SECTION ROLES. A role is a NAME, not a transform: setting a box to
   // "chorus" does not reach in and change the drums. What the role does is
   // tell the composer what to BUILD, and tell you what you are looking at
@@ -295,6 +414,25 @@
       tab: "song",   group: "length",                  default: 4 },
     { key: "nudge",   scope: "box",   type: "int", min: 0, max: MAX_NUDGE,
       tab: "song",   group: "nudge",                   default: 0 },
+    // ---- the composition-depth surface (P4) — appended, never reordered ----
+    { key: "key",     scope: "box",   table: KEYS,        labels: KEYLABEL,
+      tab: "sound",  group: "key",                     default: null },
+    { key: "prog",    scope: "box",   table: PROGCHOICES, labels: PROGLABEL,
+      tab: "sound",  group: "progression",             default: null },
+    { key: "period",  scope: "box",   table: PERIODS,     labels: PERIODLABEL,
+      tab: "sound",  group: "sentence",                default: null },
+    { key: "breath",  scope: "box",   table: BREATHS,     labels: BREATHLABEL,
+      tab: "line",   group: "breath",                  default: null },
+    { key: "pipe",    scope: "box",   table: PIPESETS,    labels: PIPELABEL,
+      tab: "line",   group: "pipe",                    default: null },
+    { key: "part",    scope: "layer", table: PARTCHOICES, labels: PARTCHOICES,
+      tab: "voice",  group: "part",                    default: null },
+    // `auto` is a LIST whose real entries are {param, points, curve} objects;
+    // a bare param string is legal (and inert) so the registry's exhaustive
+    // toggle can exercise the table like any other list field. song.js owns
+    // the object-shape validation.
+    { key: "auto",    scope: "box",   type: "list", table: AUTOPARAMS,
+      labels: AUTOPARAMLABEL, tab: "fx", group: "automation", default: [] },
   ];
   const FIELD = {};
   for (const f of FIELDS) FIELD[f.key] = f;
@@ -306,6 +444,9 @@
                 FX, FXLABEL, fxChain, SENDS, SENDLABEL, VERBS,
                 DTIMES, DTLABEL, LEVELS, LEVELLABEL, PANS, PANLABEL,
                 VOX, VOXPARAM, OCTAVES, ARTICS, CMODES, CLAMPS, CLAMPLABEL,
+                KEYS, KEYLABEL, PROGCHOICES, PROGLABEL, PERIODS, PERIODLABEL,
+                BREATHS, BREATHLABEL, PIPESETS, PIPELABEL, PARTCHOICES,
+                AUTOPARAMS, AUTOPARAMLABEL, AUTOSHAPES, AUTOSHAPELABEL, autoShape,
                 ROLES, FIELDS, FIELD };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuFields = api;

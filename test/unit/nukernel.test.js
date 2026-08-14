@@ -1502,7 +1502,10 @@ console.log("song arc, prechorus, topline — the radio shape, measured");
     const prog = (b.prog && NG.PROGS[b.prog]) || G.prog ||
                  (G.harmony === "cycle" ? G.roots.map(d => ({ d })) : null);
     if (prog) g2.prog = b.cadence ? K.withCadence(prog, G.bars, b.cadence) : prog;
-    if (b.period) g2.period = b.period.map(w => w.map(k2 => NF.OPS[k2]));
+    // the box period is a PRESET NAME since P4 (fields.js PERIODS); "1bar"
+    // strips a genre's own sentence — this mirror tracks ui/derive.js genreOf
+    if (b.period) g2.period = b.period === "1bar" ? null
+      : (NF.PERIODS[b.period] || []).map(w => w.map(k2 => NF.OPS[k2]));
     return g2;
   };
   const sectionSig = (song, b, G) => {
@@ -1737,6 +1740,258 @@ console.log("confusion — every genre is provably not a relabelled neighbour");
     if (GENRES[gk].near)
       ok(!!GENRES[GENRES[gk].near],
          gk + ": declares an unknown nearest neighbour \"" + GENRES[gk].near + "\"");
+}
+
+/* ---------------------------------------------------------------- 33. THE BOX SURFACE (P4)
+   The depth fields as BOX fields — key/prog/period/breath/pipe/part — wired
+   in ui/derive.js genreOf, plus the automation vocabulary. The gate cannot
+   load the ESM ui tier, so boxGenre below is the render-path MIRROR, the same
+   law §31's genreFor states: change the wiring, change this, or the claims
+   here are about a function nobody runs. Every assertion reads RENDERED
+   events; the neutrality row proves null == absent byte for byte. */
+console.log("the box surface — key/prog/period/breath/pipe/part/auto reach the render");
+{
+  const NF = require("../../nukernel/fields.js");
+  const NG = require("../../nukernel/genres.js");
+  const S = require("../../nukernel/song.js");
+  const C = require("../../nukernel/compose.js");
+
+  // MIRROR of ui/derive.js genreOf, new fields only (box level — `part` also
+  // inherits box->layer there via optOf, which is the rule §21 already gates
+  // through the registry's scope)
+  const boxGenre = (G, sec) => {
+    const out = { ...G };
+    if (sec.key != null) out.key = +sec.key;
+    if (sec.breath != null) out.maxHold = NF.BREATHS[sec.breath];
+    if (sec.pipe) out.pipes = sec.pipe === "off" ? null : NF.PIPESETS[sec.pipe];
+    if (sec.part && sec.part !== "auto") out.part = [sec.part];
+    if (sec.prog || sec.cadence) {
+      const prog = (sec.prog && sec.prog !== "off" && NG.PROGS[sec.prog]) ||
+        (sec.prog === "off" ? null
+          : out.prog || (out.harmony === "cycle" && out.roots
+                         ? out.roots.map(d => ({ d })) : null));
+      out.prog = sec.cadence && prog ? K.withCadence(prog, G.bars, sec.cadence) : prog;
+    }
+    if (sec.period) out.period = sec.period === "1bar" ? null
+      : NF.PERIODS[sec.period].map(w => w.map(k => NF.OPS[k]));
+    return out;
+  };
+  const rsig = g2 => sig(allEvents(P, g2, g2.bars));
+
+  // NEUTRALITY: a box with every depth field null renders byte-identically
+  // to the bare genre — the extension of §22's law to the box surface
+  const NUL = { key: null, prog: null, period: null, breath: null,
+                pipe: null, part: null, cadence: null, auto: [] };
+  for (const gk of ["rock", "blues", "beatles", "isley", "vaporwave", "house", "reggae"]) {
+    const G = GENRES[gk];
+    ok(rsig(boxGenre(G, NUL)) === rsig(G),
+       gk + ": a box with every depth field null does not render identically to absent");
+  }
+
+  // KEY: "2" moves every pitched consumer by exactly +2 and the drums by 0 —
+  // the string form is what a chip writes, the number form what compose writes
+  for (const kv of ["2", 2]) {
+    const G = GENRES.rock, g2 = boxGenre(G, { ...NUL, key: kv });
+    const a = [...K.render(P, G, G.bars), ...K.bass(P, G, G.bars)];
+    const b = [...K.render(P, g2, g2.bars), ...K.bass(P, g2, g2.bars)];
+    ok(a.length === b.length && a.every((e, i) => b[i].n - e.n === 2 && b[i].t === e.t),
+       "box key " + JSON.stringify(kv) + " is not a uniform +2 on the pitched stream");
+    ok(sig(K.drums(P, g2, g2.bars)) === sig(K.drums(P, G, G.bars)),
+       "box key moved the drums");
+  }
+
+  // PROG: a named prog with sevenths widens the pad's pitch-class set; "off"
+  // strips a genre's own prog back to the triads (blues' control from §23f)
+  {
+    const G = GENRES.vaporwave;
+    const pcsPad = g2 => new Set(K.render(P, g2, g2.bars)
+      .filter(e => e.part === "pad" && e.t < 16 / g2.rate).map(e => ((e.n % 12) + 12) % 12));
+    const plain = pcsPad(G), seventh = pcsPad(boxGenre(G, { ...NUL, prog: "jack7" }));
+    ok(seventh.size > plain.size,
+       "box prog jack7 did not widen the pad's first chord (" +
+       plain.size + " -> " + seventh.size + " pcs)");
+    const off = K.bass(P, boxGenre(GENRES.blues, { ...NUL, prog: "off" }), 12)
+      .filter(e => e.t < 12).map(e => ((e.n % 12) + 12) % 12);
+    ok(off.includes(3) && !off.includes(4),
+       "prog \"off\" did not strip blues back to the minor walk: " + off.join(","));
+  }
+
+  // PERIOD: "4bar" lifts bar 3 (dens3 = more gates), "2bar" alternates,
+  // "1bar" strips a genre's own sentence (beatles carries one)
+  {
+    const G = GENRES.rock;
+    const counts = g2 => Array.from({ length: 4 }, (_, b) =>
+      K.render(P, g2, 4).filter(e => e.v === 0 && Math.floor(e.t / 16) === b).length);
+    const four = counts(boxGenre(G, { ...NUL, period: "4bar" }));
+    ok(four[2] > four[0], "period 4bar: bar 3 is not busier than bar 1 (" + four.join(",") + ")");
+    // TIMES ONLY, on the one-voice genre: P carries a ramp, so pitches climb
+    // per loop and would read as the period failing when it is the ramp working
+    const barSig = (g2, b) => JSON.stringify(K.render(P, g2, 4)
+      .filter(e => e.v === 0 && Math.floor(e.t / 16) === b)
+      .map(e => +(e.t % 16).toFixed(3)));
+    const g2b = boxGenre(GENRES.simple, { ...NUL, period: "2bar" });
+    ok(barSig(g2b, 0) !== barSig(g2b, 1) && barSig(g2b, 0) === barSig(g2b, 2) &&
+       barSig(g2b, 1) === barSig(g2b, 3),
+       "period 2bar is not an alternating two-bar sentence");
+    const B = GENRES.beatles;
+    ok(rsig(boxGenre(B, { ...NUL, period: "1bar" })) === rsig({ ...B, period: null }) &&
+       rsig(boxGenre(B, { ...NUL, period: "1bar" })) !== rsig(B),
+       "period 1bar does not strip the genre's own sentence");
+  }
+
+  // BREATH: "2" caps the hold so the gate hole is silence; "none" is the
+  // explicit uncap — it must lengthen a genre that carries its own maxHold
+  {
+    const gap = { ...clone(P), gate: [1,0,0,0, 0,0,0,1, 1,0,0,0, 0,0,1,0],
+                  sld: new Array(N).fill(0) };
+    const total = a => a.reduce((s, e) => s + e.dur, 0);
+    const G = GENRES.simple;
+    const evF = K.render(gap, G, 2);
+    const evC = K.render(gap, boxGenre(G, { ...NUL, breath: "2" }), 2);
+    ok(evC.length === evF.length && Math.max(...evC.map(e => e.dur)) <= 2 &&
+       total(evC) < total(evF),
+       "breath \"2\" does not cap the hold in the rendered durations");
+    // the GAPPED phrase again: P's own spans never exceed 2 steps, so blues'
+    // maxHold 4 never binds on it and the uncap would measure as a tie
+    const B = GENRES.blues;
+    ok(total(K.render(gap, boxGenre(B, { ...NUL, breath: "none" }), B.bars)) >
+       total(K.render(gap, B, B.bars)),
+       "breath \"none\" does not uncap a genre that carries its own maxHold");
+  }
+
+  // PIPE: "3rds" adds chord-locked events; "off" strips a genre's own pipes
+  // (isley ships a strum); "strum" spreads a pad chord's attacks
+  {
+    const G = GENRES.rock;
+    const wet = K.render(P, boxGenre(G, { ...NUL, pipe: "3rds" }), 4);
+    const added = wet.filter(e => e.pipe === "harmonize");
+    ok(wet.length > K.render(P, G, 4).length && added.length > 0,
+       "pipe 3rds added nothing to the rendered stream");
+    for (const e of added)
+      ok(K.chordsOf(P, G, Math.floor(e.t / 16))[0].pcSet.has(((e.n % 12) + 12) % 12),
+         "a box-armed harmonize added a non-chord tone");
+    const I = GENRES.isley;
+    ok(rsig(boxGenre(I, { ...NUL, pipe: "off" })) === rsig({ ...I, pipes: null }) &&
+       rsig(boxGenre(I, { ...NUL, pipe: "off" })) !== rsig(I),
+       "pipe \"off\" does not strip the genre's own pipes");
+    const V = boxGenre(GENRES.vaporwave, { ...NUL, pipe: "strum" });
+    const pad0 = K.render(P, V, 4).filter(e => e.part === "pad" && e.t < 16 / V.rate);
+    ok(new Set(pad0.map(e => e.t)).size > 1, "pipe strum left the pad as one attack");
+  }
+
+  // PART: "stab" chord-locks every line event; "auto" is the genre's own
+  {
+    const G = GENRES.rock;
+    const ev = K.render(P, boxGenre(G, { ...NUL, part: "stab" }), 4);
+    ok(ev.length > 0 && ev.every(e => e.part === "stab"),
+       "part \"stab\" did not reassign every voice of the box");
+    for (const e of ev) {
+      const c = K.chordsOf(P, G, Math.floor(e.t / 16));
+      ok(c.some(ch => ch.pcSet.has(((e.n % 12) + 12) % 12)),
+         "a box-level stab pitch left its bar's chord");
+    }
+    ok(rsig(boxGenre(G, { ...NUL, part: "auto" })) === rsig(G),
+       "part \"auto\" is not the genre's own scheme");
+  }
+
+  // TABLE INTEGRITY: every preset speaks vocabulary that exists — a period
+  // op key outside OPS or a pipe id outside PIPES would be a chip that
+  // validates and then silently does nothing
+  for (const [k, w] of Object.entries(NF.PERIODS))
+    for (const list of w) for (const opk of list)
+      ok(!!NF.OPS[opk], "PERIODS." + k + " names unknown op \"" + opk + "\"");
+  for (const [k, set] of Object.entries(NF.PIPESETS))
+    for (const p of set)
+      ok(!!K.PIPES[p.id], "PIPESETS." + k + " names unknown pipe \"" + p.id + "\"");
+  for (const k of Object.keys(NF.PROGCHOICES))
+    ok(k === "off" || !!NG.PROGS[k], "PROGCHOICES names unknown prog \"" + k + "\"");
+  for (const [k, v] of Object.entries(NF.BREATHS))
+    ok(Number.isFinite(v), "BREATHS." + k + " is not a number");
+
+  // AUTOSHAPE: the palette's point-list writer, provable in node. The ARMING
+  // (setValueAtTime/ramps on real AudioParams) has no node-side surface — it
+  // is covered by section (J) of test/browser/nukernel-audio.test.js, which
+  // sets a shape through the real palette and reads __nuMix().automation
+  // plus the spectral change.
+  {
+    const beats = 16;
+    for (const param of Object.keys(NF.AUTOPARAMS)) {
+      const R = NF.AUTOPARAMS[param];
+      ok(NF.autoShape(param, "off", beats) === null, param + ": off is not null");
+      for (const shape of ["open", "close", "rise", "fall", "pump"]) {
+        const a = NF.autoShape(param, shape, beats);
+        ok(a && a.param === param && a.shape === shape &&
+           (a.curve === "lin" || a.curve === "exp") && Array.isArray(a.points),
+           param + "/" + shape + ": malformed entry");
+        ok(a.points.every(pt => pt.length === 2 && pt.every(Number.isFinite) &&
+           pt[0] >= 0 && pt[0] <= beats + 0.9 &&
+           pt[1] >= Math.min(R.lo, R.hi) - 1e-6 && pt[1] <= Math.max(R.lo, R.hi) + 1e-6),
+           param + "/" + shape + ": a point leaves the beat span or the value range");
+      }
+      const o = NF.autoShape(param, "open", beats), c2 = NF.autoShape(param, "close", beats);
+      ok(o.points[0][1] < o.points[o.points.length - 1][1] ===
+         (c2.points[0][1] > c2.points[c2.points.length - 1][1]),
+         param + ": open and close do not run in opposite directions");
+      ok(NF.autoShape(param, "pump", beats).points.length === 2 * beats,
+         param + ": pump is not two points a beat");
+    }
+    // a written shape survives the loader — the palette's exact output
+    const b = S.emptyBox();
+    b.auto = [NF.autoShape("cutoff", "open", 16)];
+    const r = S.validateSong({ v: 2, slots: [S.blank()], song: [b], bpm: 126, vol: 80 });
+    ok(r.ok && r.song.song[0].auto.length === 1,
+       "a palette-written automation entry does not survive validation: " +
+       JSON.stringify(r.errors && r.errors[0]));
+    // ...and malformed points are refused loudly, naming their path
+    const bad = S.emptyBox();
+    bad.auto = [{ param: "cutoff", points: [[0, NaN]] }];
+    const rb = S.validateSong({ v: 2, slots: [S.blank()], song: [bad], bpm: 126, vol: 80 });
+    ok(!rb.ok && /auto\[0\]\.points$/.test(rb.errors[0].path),
+       "NaN automation points did not fail with a typed error");
+  }
+
+  // THE COMPOSER USES THE SURFACE: choruses draw the "4bar" preset, bridges
+  // the "2bar" one, and the peak drop of a dance plan carries a real point
+  // list on a public param — all through the same loader as everything else
+  {
+    const seeds = Array.from({ length: 20 }, (_, i) => i + 1);
+    let four = 0, two = 0, autos = 0;
+    for (const s of seeds) {
+      const song = C.compose("rock", s);
+      for (const b of song.song) {
+        if (b.role === "chorus" && b.period === "4bar") four++;
+        if (b.role === "bridge" && b.period === "2bar") two++;
+        if (b.period != null) ok(!!NF.PERIODS[b.period],
+          "rock/" + s + ": composed period \"" + b.period + "\" is not a preset name");
+      }
+      const dance = C.compose("house", s);
+      const drops = dance.song.filter(b => b.role === "drop");
+      const peak = drops[drops.length - 1];
+      if (peak && peak.auto && peak.auto.length) {
+        autos++;
+        ok(peak.auto.every(a => NF.AUTOPARAMS[a.param] && a.points.length),
+           "house/" + s + ": the peak drop's automation is not a real point list");
+      }
+    }
+    ok(four > 4, "composed choruses never draw the 4bar sentence (" + four + ")");
+    ok(two > 10, "composed bridges do not sway on the 2bar preset (" + two + ")");
+    ok(autos === seeds.length,
+       "the peak drop carries automation in only " + autos + "/" + seeds.length + " songs");
+  }
+
+  // THE INTERREGNUM MIGRATION: a save written between P2b and P4 carries the
+  // bar schedule as a raw array; migrate turns a recognized one into its
+  // preset name and drops an unrecognized one, so the evening's saves live
+  {
+    const mk = period => ({ v: 2, slots: [S.blank()],
+      song: [Object.assign(S.emptyBox(), { period })], bpm: 126, vol: 80 });
+    const r1 = S.load(mk([[], [], ["dens3"], []]));
+    ok(r1.ok && r1.song.song[0].period === "4bar",
+       "an array-form 4bar period did not migrate to its preset name");
+    const r2 = S.load(mk([["rev"], ["inv"], ["rot5"]]));
+    ok(r2.ok && r2.song.song[0].period == null,
+       "an unrecognized array period was not dropped on migration");
+  }
 }
 
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
