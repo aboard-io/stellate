@@ -352,7 +352,7 @@
                      intro: chance(r, 0.4) ? "hit" : null }));
     if (kind === "bassin") out.push(bed({ role: "bass", kit: "nodrums" }));
     if (kind === "drumbass" || kind === "bassin")
-      out.push(bed({ role: "groove", outro: chance(r, 0.6) ? "fill" : null }));
+      out.push(bed({ role: "groove", outro: chance(r, 0.6) ? fillOf(S, G, true) : null }));
     // ...and then the section that actually introduces the tune. `cue` carries
     // the chosen kind whatever the stored realization looks like — the gates
     // count openings by it, and the UX phase can label the box with it.
@@ -377,6 +377,57 @@
     out.push(head);
     return out;
   }
+
+  // ---- HOW A SECTION STOPS -------------------------------------------------
+  // The same argument the intros got, one round later, and the same measured
+  // symptom: the arranger knew ONE fill — an accelerating snare into a cymbal —
+  // at three densities, so every section of every song in every genre ended
+  // alike. kernel.js outro() now has ten kinds, four of them not a snare fill
+  // at all, and the choice is a FAMILY ballot drawn on its own genre-salted
+  // stream, exactly like INTRO_LEAN: nine votes, repetition is the weight,
+  // leaning where the tradition leans. A club record cuts or stutters its hats;
+  // a band plays a tom fill; the drift genres just stop.
+  const OUTRO_LEAN = {
+    kernel: ["fill", "roll", "crash", "tomfill", "hush", "cut", "break", "hatrun", "doubles"],
+    vox:    ["tail", "tail", "tail", "cut", "hush", "cut", "tail", "hush", "cut"],
+    drift:  ["tail", "tail", "hush", "hush", "cut", "crash", "tail", "hush", "tail"],
+    club:   ["hatrun", "hatrun", "cut", "cut", "hush", "doubles", "break", "roll", "crash"],
+    band:   ["fill", "fill", "tomfill", "tomfill", "crash", "roll", "doubles", "hush", "cut"],
+    studio: ["fill", "tomfill", "hatrun", "crash", "roll", "hush", "fill", "cut", "break"],
+    soul:   ["fill", "fill", "tomfill", "roll", "break", "doubles", "crash", "hush", "tomfill"],
+    groove: ["break", "break", "fill", "hush", "tomfill", "cut", "roll", "crash", "tail"],
+    roots:  ["fill", "tomfill", "roll", "crash", "break", "tail", "hush", "fill", "cut"],
+  };
+  // A DRUM-SHAPED ENDING NEEDS DRUMS — the mirror of INTRO_NOKIT. On a kitless
+  // genre every fill degrades to the two endings that are about the sound
+  // rather than the kit.
+  const OUTRO_NOKIT = { fill: "tail", roll: "tail", tomfill: "tail", hatrun: "cut",
+                        doubles: "cut", break: "tail", crash: "hush" };
+  // THE LIFT is a narrower question than the ending: a prechorus or a build is
+  // not stopping, it is handing over, so only the four kinds that accelerate
+  // into the downbeat are on this ballot.
+  const LIFT = ["roll", "hatrun", "doubles", "tomfill"];
+  const fillOf = (S, G, kit, pool) => {
+    const k = pick(S.out, pool || OUTRO_LEAN[G.family] || OUTRO_LEAN.kernel);
+    return kit ? k : (OUTRO_NOKIT[k] || k);
+  };
+  // ...and the same idea for the KIT ITSELF. There are sixty-eight kit
+  // operators now (kernel.js KITOPS) and the arranger reached for eight of
+  // them, all rearrangements of a six-lane kit: no ride, no toms, no ghosts,
+  // no hand. These ballots are per family for the same reason the fills are —
+  // a soul record's variation is a ghost snare, a band's is a crash.
+  const KIT_LEAN = {
+    kernel: ["four", "backbeat", "sparse", "busy"],
+    vox:    ["sparse", "soft", "onthree", "four"],
+    drift:  ["soft", "sparse", "tomtime", "h.half", "onthree", "ride"],
+    club:   ["four", "offbeat", "maybe", "h.dbl", "linear", "busy", "k.dens", "chaos"],
+    band:   ["crash", "ride", "kickdoubles", "flams", "loud", "tomfill", "opens"],
+    studio: ["ghosts", "ride", "opens", "humanize", "accents", "s.thin", "crashback"],
+    soul:   ["ghosts", "opens", "claps", "k.dens", "humanize", "shuffle", "tomroll"],
+    groove: ["stickside", "clave", "pedal", "ghosts", "tomtime", "maybe", "ride"],
+    roots:  ["shuffle", "stickside", "ride", "flams", "tomfill", "ghosts"],
+  };
+  const kitOf = (S, G) => pick(S.out, KIT_LEAN[G.family] || KIT_LEAN.kernel);
 
   function build(role, G, gk, r, S, a) {
     const kit = Object.keys(G.kit || {}).length > 0;   // does this genre have drums at all
@@ -411,7 +462,12 @@
                                   [S.hook, S.riff], [S.answer, S.counter]]);
       if (kit) b.bassop = pick(r, ["walk", "octaves", null, null]);
       if (chance(r, 0.35)) b.ops = [pick(r, ["rot4", "gat4", "pit4", "rev"])];
-      if (chance(r, 0.3)) b.outro = "fill";
+      // A VERSE VARIES ITS DRUMS TOO. It used to be the one role that never
+      // touched the kit — every verse in every song was the anchor's bar
+      // restated — and a ghost snare or a ride is exactly the small change
+      // that makes verse 2 not verse 1.
+      if (kit && chance(r, 0.4)) b.kit = kitOf(S, G);
+      if (chance(r, 0.3)) b.outro = fillOf(S, G, kit);
     } else if (role === "prechorus") {
       // THE LIFT. Everything here points forward: the answer phrase (not the
       // hook — the hook is being saved), the kit filling in, a riser, a fade
@@ -420,7 +476,7 @@
       // is an ARRIVAL rather than the next thing that happens.
       b.stack[0].slots = chance(r, 0.5) ? [S.answer] : [S.answer, S.sparse];
       b.lvl = "back"; b.env = "in"; b.mot = "rise";
-      if (kit) { b.kit = "busy"; b.outro = "roll"; }
+      if (kit) { b.kit = chance(r, 0.5) ? "busy" : kitOf(S, G); b.outro = fillOf(S, G, kit, LIFT); }
       // only where there is a progression for the dominant to be a door INTO
       // (the same guard the bridge carries) — on a modal genre the cadence
       // has no prog to land on and the render path correctly drops it
@@ -432,7 +488,7 @@
       // a thinned phrase under a riser, everything held back for the drop
       b.stack[0].slots = chance(r, 0.5) ? [S.sparse] : [S.climb];
       b.lvl = "back"; b.env = "in"; b.mot = "rise"; b.echo = "touch";
-      if (kit) { b.kit = chance(r, 0.5) ? "busy" : "nokick"; b.outro = "roll"; }
+      if (kit) { b.kit = chance(r, 0.5) ? "busy" : "nokick"; b.outro = fillOf(S, G, kit, LIFT); }
       b.len = Math.max(2, Math.floor(bars / 2));
     } else if (role === "chorus") {
       // THE CHORUS HAS ITS OWN MELODY — the topline, written for it, instead
@@ -443,8 +499,8 @@
       // the arc decides the size: only the PEAK chorus goes forward, so the
       // last one is bigger than the first by construction, not by accident
       b.lvl = peak ? "fwd" : null; b.rev = "some";
-      if (kit) { b.kit = chance(r, 0.6) ? "busy" : null; b.bassop = pick(r, ["octaves", "eighths"]); }
-      b.outro = pick(r, ["fill", "roll", "crash"]);
+      if (kit) { b.kit = chance(r, 0.6) ? kitOf(S, G) : null; b.bassop = pick(r, ["octaves", "eighths"]); }
+      b.outro = fillOf(S, G, kit);
       // a lift on bar 3 of every four — the bar schedule as a PRESET NAME now
       // (fields.js PERIODS."4bar" is the same [[],[],["dens3"],[]] this used
       // to write raw; the registry validates the name, the render resolves it)
@@ -463,21 +519,24 @@
       b.ops = [pick(r, ["inv", "rev", "rot3", "gateflip"])];
       b.period = "2bar";                      // a two-bar period: the bridge sways
       if (G.progFamily || G.prog) b.cadence = { d: 4, q: "dom7" };
-      if (kit) b.kit = pick(r, ["shift", "halftime", "swap"]);
+      if (kit) b.kit = pick(r, ["shift", "halftime", "swap", "onthree", "linear", "tomtime"]);
       b.mot = chance(r, 0.4) ? "close" : null;
-      b.outro = "fill";
+      b.outro = fillOf(S, G, kit);
     } else if (role === "breakdown") {
       b.stack[0].slots = [S.sparse];
       b.len = Math.max(2, Math.floor(bars / 2));
       b.lvl = "hush"; b.rev = "drown"; b.echo = "some";
-      if (kit) b.kit = pick(r, ["nokick", "nodrums", "snareonly"]);
+      if (kit) b.kit = pick(r, ["nokick", "nodrums", "snareonly", "soft", "stickside", "h.half"]);
       b.fx = [pick(r, ["sweep", "echo", "phaser"])];
       b.mot = "rise"; b.env = "in";
-      b.outro = pick(r, ["roll", "cut"]);
+      b.outro = pick(r, [fillOf(S, G, kit, LIFT), "cut"]);
     } else if (role === "drop") {
       b.stack[0].slots = [S.riff, S.climb];
       b.lvl = "fwd";
-      if (kit) { b.kit = chance(r, 0.5) ? "four" : null; b.bassop = pick(r, ["reese", "wobble", "eighths"]); }
+      // the drop is the one place a NAMED pattern earns its keep: four on the
+      // floor, or the break the whole floor knows, or the family's own move
+      if (kit) { b.kit = pick(r, ["four", "four", "amen", kitOf(S, G), null]);
+                 b.bassop = pick(r, ["reese", "wobble", "eighths"]); }
       b.ops = [pick(r, ["rep2", "rep4", "rot2"])];
       b.echo = chance(r, 0.4) ? "touch" : null;
       b.intro = chance(r, 0.4) ? "hit" : null;
@@ -494,13 +553,15 @@
       b.ops = [pick(r, ["rep3", "rep4", "wide"])];
       b.vox = { cut: "bright", res: "hot", emod: "mid", dec: "short" };
       b.lvl = "fwd"; b.echo = "touch";
-      if (kit) b.kit = chance(r, 0.5) ? "busy" : null;
-      b.outro = "fill";
+      if (kit) b.kit = chance(r, 0.5) ? "busy" : kitOf(S, G);
+      b.outro = fillOf(S, G, kit);
     } else {                                            // outro
       b.stack[0].slots = chance(r, 0.6) ? [S.pad] : [S.pad, S.riff];
       b.env = "out"; b.rev = "wet"; b.mot = "close";
       b.len = Math.max(2, Math.floor(bars / 2));
-      if (kit) { b.kit = "sparse"; b.outro = "crash"; }
+      // the last bar of the record: a crash more often than not, but a tom
+      // fill or a bar of silence with a cymbal in it is also how a song ends
+      if (kit) { b.kit = "sparse"; b.outro = pick(r, ["crash", "crash", fillOf(S, G, kit)]); }
     }
     // ONE GROOVE FOR THE WHOLE SONG, decided once by the caller and stamped on
     // every box. A groove that changed per section would not be a groove, it
@@ -535,6 +596,14 @@
                    phrase(r, "sparse"), phrase(r, "climb")];
     const S = { hook: 0, answer: 1, riff: 2, counter: 3, pad: 4,
                 topline: 5, sparse: 6, climb: 7,
+                // THE DRUM DECISIONS GET THEIR OWN, GENRE-SALTED STREAM, for
+                // the reason the intro chooser needed one: the phrase bank
+                // consumes the same number of draws whatever the genre, so a
+                // chooser reading the shared stream sits at the same position
+                // for every genre and the whole table ends its verses the same
+                // way at any fixed seed. Still pure, still a function of
+                // (gk, seed) — the same FNV-1a salt introSections uses.
+                out: rng(ihash(gk + "/drums/" + (seed == null ? 1 : seed))),
                 groove: kit ? pick(r, [null, "backbeat", "push", "laidback", "funk", "dub"]) : null,
                 swing: kit && chance(r, 0.3) ? pick(r, ["light", "swing", "shuffle"]) : null };
     // NO SILENT DEFAULTS. Every genre must carry a plan and a tempo — the old

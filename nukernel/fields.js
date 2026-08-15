@@ -21,7 +21,7 @@
   const NG = (typeof module !== "undefined" && module.exports)
     ? require("./genres.js") : root.NuGenres;
   const { reverse, invert, rotate, fill, spread, split, del, drop,
-          transpose, complement, crossmap, excerpt, only } = K;
+          transpose, complement, crossmap, excerpt, only, KITOPS, LANES } = K;
   const { MODES, MODELABEL, SCALES, SCALELABEL } = NG;
 
   // ---- limits --------------------------------------------------------------
@@ -101,8 +101,16 @@
                      kit: "drums alone", swell: "swell in", cold: "cold open",
                      fade: "fade up", padin: "pad first", bassin: "bass first",
                      riser: "riser", stabs: "stabs" };
+  // TEN WAYS OUT, and the four new ones exist for the reason the six new ways
+  // IN did: every composed song ended with the same accelerating snare into
+  // the same cymbal, because the vocabulary had one fill in it at three
+  // densities. A tom fill, a hat stutter, a bar of silence with a crash on the
+  // last sixteenth and a double-time stop are four different IDEAS about
+  // stopping — and compose.js deals them per genre and per seed (OUTRO_LEAN).
   const OUTLABEL = { fill: "drum fill", roll: "snare roll", crash: "crash",
-                     break: "drum break", tail: "no drums", cut: "cut short" };
+                     break: "drum break", tail: "no drums", cut: "cut short",
+                     tomfill: "tom fill", hatrun: "hat stutter",
+                     hush: "silence, then crash", doubles: "double-time stop" };
 
   /* ---------- grid ---------- */
   const RATES = { half: 0.5, dbl: 2 };
@@ -121,12 +129,57 @@
   // dub rip).
   const GROOVELABEL = { backbeat: "backbeat", push: "pushed", laidback: "laid back",
                         funk: "funk", dub: "dub" };
-  // EVERY KIT OPERATOR kernel.js has, which is thirteen rather than four.
-  const KITLABEL = { nodrums: "none", nokick: "no kick", nohats: "no hats",
-                     snareonly: "snare only", shift: "shift", halftime: "half time",
-                     doubletime: "double time", busy: "busy hats", sparse: "sparse",
-                     four: "four on the floor", offbeat: "offbeat hats",
-                     swap: "swap kick/snare", roll: "roll" };
+  // EVERY KIT OPERATOR kernel.js has — which is now sixty-eight rather than
+  // thirteen, because the kit grew from six lanes to twelve and a vocabulary
+  // that cannot say "ride instead of hats" or "tom fill" is not a vocabulary.
+  //
+  // THE TABLE IS DERIVED, NOT COPIED. The old literal was a second list of the
+  // kernel's own keys, and a second list is a list that goes stale — an
+  // operator with no entry here is invisible to the palette and an entry with
+  // no operator is a chip that does nothing. So KITLABEL is built from
+  // Object.keys(KITOPS): a hand-written phrase for each named idea, and for
+  // the generated per-lane family (`h.dbl`, `k.rot`, …) a label composed from
+  // the kernel's own LANES name plus the verb. Nothing falls through — the
+  // unit gate fails on any operator whose label is still its key.
+  const KITNAME = {
+    nodrums: "none", nokick: "no kick", nohats: "no hats",
+    snareonly: "snare only", shift: "shift", halftime: "half time",
+    doubletime: "double time", busy: "busy hats", sparse: "sparse",
+    four: "four on the floor", offbeat: "offbeat hats",
+    swap: "swap kick/snare", roll: "roll",
+    // the hand and the metal
+    ride: "ride, not hats", tomtime: "floor tom pulse", pedal: "pedal hat",
+    opens: "open on the and", shuffle: "shuffle hats",
+    crash: "crash on one", crashback: "crash on the backbeat",
+    // the snare hand
+    backbeat: "backbeat", onthree: "snare on 3", stickside: "cross-stick",
+    claps: "claps with the snare", ghosts: "ghost snares",
+    flams: "flams", drags: "drags",
+    // the kick foot and the toms
+    kickdoubles: "kick doubles", tomfill: "tom fill", tomrun: "tom groove",
+    tomroll: "tom roll",
+    // density, dynamics, the hand
+    linear: "linear (one limb a tick)", accents: "accents", crescendo: "crescendo",
+    soft: "soft", loud: "loud", humanize: "humanize", tight: "machine tight",
+    maybe: "sometimes", chaos: "dice",
+    // the named patterns
+    disco: "disco", stomp: "stomp", tresillo: "3-3-2", clave: "clave",
+    amen: "amen break", motorik: "motorik", blast: "blast beat",
+  };
+  const VERBLABEL = { rot: "rotate", thin: "thin", dens: "fill in",
+                      half: "half time", dbl: "double time", roll: "roll",
+                      disp: "lay back" };
+  const KITLABEL = {};
+  for (const key of Object.keys(KITOPS)) {
+    const [lane, verb] = key.split(".");
+    KITLABEL[key] = KITNAME[key]
+      || (LANES[lane] && VERBLABEL[verb] ? LANES[lane].name + " " + VERBLABEL[verb] : key);
+  }
+  // WHICH LANE IS WHICH, for anything that has to name one. The kernel owns
+  // the letters; this is the registry's copy of the NAME, so a view never has
+  // to reach above this file for a word (the layer law at the top).
+  const DRUMLANES = {};
+  for (const [d, L] of Object.entries(LANES)) DRUMLANES[d] = L.name;
   // WHICH SAMPLED KIT — found/samples/drums/<kit>/, the same extraction the big
   // engine plays. A genre names one; a box may borrow another, which is the
   // difference between playing a beat and playing it on somebody else's drums.
@@ -461,7 +514,7 @@
   const api = { NSLOTS, MAX_LEN, MAX_NUDGE, MAX_FX,
                 OPS, OPLABEL, ENVLABEL, MOTLABEL, INLABEL, OUTLABEL,
                 RATES, RATELABEL, SWINGS, SWINGLABEL, GROOVELABEL,
-                KITLABEL, DRUMKITS, BASSOPS,
+                KITLABEL, KITNAME, VERBLABEL, DRUMKITS, DRUMLANES, BASSOPS,
                 FX, FXLABEL, fxChain, SENDS, SENDLABEL, VERBS,
                 DTIMES, DTLABEL, LEVELS, LEVELLABEL, PANS, PANLABEL,
                 VOX, VOXPARAM, OCTAVES, ARTICS, CMODES, CLAMPS, CLAMPLABEL,

@@ -26,7 +26,7 @@ import { bpm, vol, on, emit } from "../ui/state.js";
 // gesture because that is the autoplay law
 export let ctx = null, masterIn = null, bus = null, outGain = null,
            topLP = null, noise = null;
-export let REV = null, delBus = null;
+export let REV = null, delBus = null, roomBus = null;
 let echo = null;                                   // the live echo bus handle
 let anl = null;                                    // the boot instrument's tap
 
@@ -129,6 +129,52 @@ export function buildEchoBus(c, dest) {
           dB.delayTime.setTargetAtTime(t, when, 0.05); } catch (e) {}
   } };
 }
+// THE DRUM ROOM — the one send that is not a reverb chip.
+//
+// "Our drums sound really dry." They were: every lane went straight into the
+// section's channel, and the only wet path on the page was the section's own
+// reverb send, which is a MUSICAL choice (a genre asks for verb 0.72 because
+// it wants to sound like that) shared by every voice in the box. A kit needs
+// something else and needs it whatever the section is doing — the room the
+// drums were recorded in. Take that away and a snare is a click; that is the
+// whole difference between a sampled kit and a kit.
+//
+// So: a SEPARATE, always-there ambience return, short and bright-ish and
+// stereo, fed by per-lane sends (instruments.js DRUMMIX.room). Early
+// reflections first — six taps under 32 ms, hard left and right, which is what
+// actually says "walls" — then a pair of damped combs for a ~0.35 s tail. A
+// 220 Hz high-pass keeps the kick's body out of it (a washed kick is mud, and
+// the kick's own room send is 0.10 for the same reason).
+//
+// NOT A CONVOLVER, deliberately: the three convolution reverbs are the most
+// expensive nodes on the page and the audio gate holds the page to two of them
+// (nukernel-audio (H)). Delays and gains cost nothing, and an early-reflection
+// network is the right shape for a small room anyway.
+export function buildRoomBus(c, dest) {
+  const input = c.createGain();
+  const hp = c.createBiquadFilter(); hp.type = "highpass";
+  hp.frequency.value = 220; hp.Q.value = 0.7;
+  const pre = c.createDelay(0.05); pre.delayTime.value = 0.008;   // distance to the first wall
+  const out = c.createGain(); out.gain.value = 0.9;
+  input.connect(hp); hp.connect(pre);
+  const side = (taps, comb, pan) => {
+    const p = c.createStereoPanner(); p.pan.value = pan;
+    for (const [t, g] of taps) {
+      const d = c.createDelay(0.1); d.delayTime.value = t;
+      const gg = c.createGain(); gg.gain.value = g;
+      pre.connect(d); d.connect(gg); gg.connect(p);
+    }
+    const d = c.createDelay(0.2); d.delayTime.value = comb[0];
+    const fb = c.createGain(); fb.gain.value = comb[1];
+    const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = comb[2];
+    pre.connect(d); d.connect(lp); lp.connect(fb); fb.connect(d); lp.connect(p);
+    p.connect(out);
+  };
+  side([[0.0113, 0.70], [0.0191, 0.50], [0.0273, 0.36]], [0.0431, 0.42, 5200], -0.8);
+  side([[0.0139, 0.66], [0.0217, 0.47], [0.0311, 0.34]], [0.0532, 0.40, 4800],  0.8);
+  out.connect(dest);
+  return input;
+}
 // one reverb return: input -> highpass -> convolver (cached IR) -> level -> dest
 export function makeVerb(c, name, dest) {
   const n = VERBSPEC[name] ? name : "room";
@@ -169,6 +215,9 @@ export function initAudio() {
   // sent to it. Most songs use one of these; building all three at boot was
   // paying for a hall and a plate to render silence.
   REV = {};
+  // the drum room is not lazy: every channel with a kit sends to it, which is
+  // nearly every channel, and it is delays rather than convolution
+  roomBus = buildRoomBus(ctx, masterIn);
   echo = buildEchoBus(ctx, masterIn);
   delBus = echo.input;
   setDelayTime(0.1875);

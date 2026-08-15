@@ -35,7 +35,8 @@
 import { GENRES, BASSSYNTH, DTIMES } from "../ui/deps.js";
 import { SONG, SLOTS, loopOnly, bpm, on, emit } from "../ui/state.js";
 import { stackOf, kitOf, boxBars } from "../ui/derive.js";
-import { buildMasterChain, buildEchoBus, makeVerb, masterVol } from "./graph.js";
+import { buildMasterChain, buildEchoBus, buildRoomBus, makeVerb,
+         masterVol } from "./graph.js";
 import { FONT, isSynthFont, fontDef } from "./assets.js";
 import { makeSynthNode, driveSynth, offFallback } from "./voices.js";
 import { chanSpec, buildChannel, armAutomation } from "./mixer.js";
@@ -185,7 +186,10 @@ async function renderSong(capSec) {
     let v = verbs.get(name); if (!v) verbs.set(name, v = makeVerb(octx, name, master.input));
     return v;
   };
-  const env = { master: master.input, verb, echoIn: echo.input };
+  // the DRUM ROOM is part of the room, so the carrier renders it: a bounce
+  // without it is a drier mix than the one the ear was just listening to
+  const env = { master: master.input, verb, echoIn: echo.input,
+                room: buildRoomBus(octx, master.input) };
   const chans = new Map();
   const chanOf = sec => {
     const spec = chanSpec(sec), k = JSON.stringify(spec);
@@ -240,6 +244,10 @@ async function renderSong(capSec) {
     const node = pool.get(sp.dsp + "#" + (v || 0));
     if (!node) return false;                       // degrades to the sampled voice
     routeTo(node, chan);
+    // a note no octave of which fits the voice's freq param is dropped here
+    // too (the live path's law) — returning TRUE keeps it dropped rather than
+    // handing it to the sampled voice, which would make the carrier a
+    // different arrangement from the one the graph plays
     driveSynth(node, sp, midi, when, durSec2, acc, sld, vel, vox);
     return true;
   };

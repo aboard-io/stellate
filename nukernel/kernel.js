@@ -680,6 +680,49 @@
         };
         const clamp = g.incClamp == null ? 7 : g.incClamp;   // 0 = let it run
         const cmode = g.incMode || "hold";
+        // THE LONG NOTE IS THE ONE THE EAR ARGUES WITH. Every follow mechanism
+        // above keeps the line in the KEY; none of them keeps it on the CHORD,
+        // and in an alphabet whose degrees are not the chord's rungs those are
+        // different things. Two ways it goes wrong, both measured:
+        //   * a second voice carrying its own `transpose(-2)` is a third below
+        //     the SCALE, not below the chord — so wherever the lead is on the
+        //     root the answer is on the ♭6. PIPES.harmonize's own comment says
+        //     this ("transpose(2) is scale-parallel and clashes"); the pipe
+        //     fixed it for a derived harmony line and nothing fixed it for a
+        //     written one.
+        //   * the dominant is the one chord in a minor key whose scale is not
+        //     the tonic's, so a degree-follow onto V sounds the ♭6 and the ♭3
+        //     against its G and D — a minor ninth against the pad, held.
+        // `anchor` is the rule the ear actually applies: a note that SOUNDS
+        // through more than `anchor` steps has to be a chord tone, and moves to
+        // the nearest one; anything shorter passes and is left exactly as the
+        // alphabet wrote it. That is where the colour lives, so this is not a
+        // flattening — the ♭9 over the dominant still sounds, it just stops
+        // being the note the bar sits on. It moves by a semitone or a whole
+        // tone or not at all: a note more than two semitones from every chord
+        // tone is a deliberate outside note, not a near miss, and lurching it
+        // into place would be the flattening. Absent = untouched, byte for byte.
+        //
+        // KEEP GOING THE WAY THE LINE WAS GOING. Both neighbours are often the
+        // same distance away, and resolving downwards by reflex turns a rising
+        // phrase into a repeated note — measured, tango's third bar came out
+        // E♭ E♭ E♭. Carrying the direction of travel makes the anchored note a
+        // continuation of the gesture instead of a stall. `prevN` lives with
+        // the rest of the per-bar state, so a bar line starts a fresh gesture
+        // rather than inheriting the last note of the one before.
+        const anchor = g.anchor || 0;
+        let prevN = null;
+        const anchored = (n, sounding, set) => {
+          if (!anchor || !set || sounding <= anchor) return n;
+          if (set.has(((n % 12) + 12) % 12)) return n;
+          const up = prevN != null && n > prevN ? 1 : -1;
+          for (let d = 1; d <= 2; d++)
+            for (const s of [up, -up]) {
+              const x = n + s * d;
+              if (set.has(((x % 12) + 12) % 12)) return x;
+            }
+          return n;
+        };
         // one octave shift for the whole line, from its degree-pitch mean
         // REGISTER THE PHRASE, NOT THE RAMP. The shift is computed from the
         // degrees AS WRITTEN, with the per-loop ramp excluded. Include the ramp
@@ -753,11 +796,13 @@
             const set = g.harmony === "cycle" ? chordFor(i).pcSet : null;
             const rs = rootShiftAt(i);
             const pitchOf = n == null
-              ? (set
+              ? anchored(set
                   ? chordWalk(pitch(dg, sc) + shift + rs + 12 * p.oct[i],
                               rampOf(p, i, b, clamp, cmode, subj), set)
-                  : pitch(dg + rampOf(p, i, b, clamp, cmode, subj), sc) + shift + rs + 12 * p.oct[i])
+                  : pitch(dg + rampOf(p, i, b, clamp, cmode, subj), sc) + shift + rs + 12 * p.oct[i],
+                  held * legato, set)
               : fold(n, ctr);                                    // chords voice per note
+            prevN = pitchOf;
             barEv.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: held * legato / g.rate, v, part,
                          n: pitchOf + key, acc: p.acc[i], sld: p.sld[i], vel: vel(p, i) });
           }
@@ -794,6 +839,88 @@
       : out;
   }
 
+  // ---- THE KIT: TWELVE LANES, FOUR VECTORS ---------------------------------
+  // WHAT WAS MISSING. found/samples/drums/<kit>/ has shipped TWELVE samples per
+  // kit since the day it was extracted — kick snare hatClosed hatOpen hatPedal
+  // clap rim ride crash tomHi tomMid tomLo — and this vocabulary knew six of
+  // them. So there were no toms, which means the oldest fill there is could not
+  // be written; no ride, so every genre kept time on the same two plates; and
+  // the crashes in intro()/outro() were spelled "o" — an OPEN HAT — because
+  // there was no cymbal lane to hit. LANES is the whole kit. The six letters
+  // that already existed keep their letters and their meaning, so every kit in
+  // genres.js renders byte for byte.
+  //
+  // `limb` is not decoration. It is what makes `linear` sayable at all — no two
+  // limbs on one tick is the DEFINITION of a linear groove — and it is why the
+  // pedal hat is a foot even though the closed hat it doubles is a hand.
+  const LANES = {
+    k: { name: "kick",      limb: "foot", kind: "drum" },
+    s: { name: "snare",     limb: "hand", kind: "drum" },
+    p: { name: "rim",       limb: "hand", kind: "drum" },
+    c: { name: "clap",      limb: "hand", kind: "drum" },
+    t: { name: "high tom",  limb: "hand", kind: "tom" },
+    m: { name: "mid tom",   limb: "hand", kind: "tom" },
+    l: { name: "low tom",   limb: "hand", kind: "tom" },
+    h: { name: "hat",       limb: "hand", kind: "hat" },
+    o: { name: "open hat",  limb: "hand", kind: "hat" },
+    f: { name: "pedal hat", limb: "foot", kind: "hat" },
+    r: { name: "ride",      limb: "hand", kind: "cymbal" },
+    x: { name: "crash",     limb: "hand", kind: "cymbal" },
+  };
+  const TOMS = ["t", "m", "l"], HATS = ["h", "o", "f"], CYMBALS = ["r", "x"];
+  // WHO WINS A TICK when only one limb may sound: the parts of the kit that
+  // carry the form beat the parts that carry the time. This is the linear
+  // drummer's own priority, written down.
+  const LIMBORDER = ["x", "k", "s", "t", "m", "l", "c", "p", "r", "o", "f", "h"];
+
+  // FOUR VECTORS PER LANE, ONE ALPHABET. A kit is key -> sixteen integers; the
+  // key says which of four things those integers are.
+  //
+  //   d    LEVEL   0 silent · 1 play (defer to kitVel, then to the phrase's own
+  //                velocity) · 2..9 play at exactly this velocity. 1 IS the old
+  //                binary "on", which is why the widening costs nothing: every
+  //                kit ever written is already in the new alphabet.
+  //   ?d   CHANCE  0..9 — the odds this step sounds at all, drawn per BAR from
+  //                a seeded hash. Absent = certain. This is the one thing in
+  //                the kit that is different on bar 2 from bar 1.
+  //   ~d   NUDGE   signed ninths of a step — the hand that is not on the grid.
+  //   !d   GRACE   how many grace hits lead this one: 1 flam, 2 drag, 3 ruff.
+  //                A flam is two hits a hair apart and there is no way to say
+  //                that on a sixteen-step grid, so it is not a step, it is a
+  //                property OF a step.
+  //
+  // All four are sixteen-slot integer vectors ON PURPOSE: every operator that
+  // rotates, shifts, thins or double-times a lane moves that lane's chance,
+  // nudge and grace with it for free, because mapKit never has to know which
+  // is which. A key that is not a lane letter is not a lane — drums() reads
+  // the sidecars WITH their lane and never as one.
+  const MARK = /^[?~!]/;
+  const bare = key => key.replace(MARK, "");
+  const laneIds = k => Object.keys(k || {}).filter(d => LANES[d]);
+
+  // THE DICE ARE A FUNCTION, NOT A STREAM. A sequential PRNG would make the
+  // chance vectors order-dependent — adding a lane, or reordering the kit's
+  // keys, would shift every later lane's draws — and two renders of one state
+  // have to be identical. So every draw is a pure hash of WHERE it was asked:
+  // seed, bar, step, lane, and a salt that keeps the chance draw, the timing
+  // draw and the velocity draw from being the same number three times.
+  const rollAt = (seed, bar, i, lane, salt) => {
+    let h = ((seed | 0) ^ 0x9E3779B9) >>> 0;
+    h = Math.imul(h ^ (bar + 0x85EBCA6B), 0xC2B2AE35);
+    h = Math.imul(h ^ (i * 2654435761 + salt), 0x165667B1);
+    h = Math.imul(h ^ lane.charCodeAt(0), 0x9E3779B1);
+    h ^= h >>> 15;
+    return (h >>> 0) / 4294967296;
+  };
+  // HUMANIZE, as genre data: `g.humanize` is either a number (how far the hand
+  // strays from the grid, in steps) or {t, v}. Unlike the baked `~` vector it
+  // is redrawn every bar, because a drummer does not make the same mistake
+  // sixteen times — and it never adds or removes a hit, which is the whole
+  // difference between humanizing and rewriting.
+  const humanOf = h => (!h ? null
+    : typeof h === "number" ? { t: h, v: 1 }
+    : { t: h.t || 0, v: h.v || 0 });
+
   // KIT OPERATORS. The kit is genre DATA, not a pattern, so these are kit->kit
   // rather than pattern->pattern — a fourth type, and they belong here beside
   // drums() rather than in the pattern group where they would silently do
@@ -807,13 +934,26 @@
   // one drum idea you reach for that no rearrangement of the existing lanes can
   // express. Both write a lane the genre may not have had.)
   const K16 = v => v.slice(0, 16).concat(new Array(Math.max(0, 16 - v.length)).fill(0));
+  // the small change of vocabulary the new operators are written in: copy a
+  // kit, drop lanes WITH their sidecars, merge one lane's hits into another,
+  // and write a sixteen-slot vector from a predicate
+  const cp = k => mapKit(k, v => v.slice());
+  const without = (k, pred) => Object.fromEntries(
+    Object.entries(cp(k)).filter(([key]) => !pred(bare(key))));
+  const mergeInto = (a, b) => K16(b).map((x, i) => Math.max(x, a ? at(a, i) : 0));
+  const vec16 = f => Array.from({ length: 16 }, (_, i) => f(i) || 0);
+  const hits = v => (v ? K16(v).some(Boolean) : false);
   const KITOPS = {
     nodrums:  () => ({}),
     // SUBTRACTIVE — take one lane away. Muting the kick is a breakdown; muting
     // the hats is the same phrase heard from further off.
-    nokick:   k => Object.fromEntries(Object.entries(k || {}).filter(([d]) => d !== "k")),
-    nohats:   k => Object.fromEntries(Object.entries(k || {}).filter(([d]) => d !== "h" && d !== "o")),
-    snareonly: k => Object.fromEntries(Object.entries(k || {}).filter(([d]) => d === "s" || d === "c")),
+    // ...and a lane goes WITH its sidecars: dropping the hats and leaving
+    // their chance vector behind would leave a `?h` in the kit describing odds
+    // for a lane that is not there. Kits in genres.js carry no sidecars, so
+    // this is byte-identical to the filter these three used to be.
+    nokick:   k => without(k, d => d === "k"),
+    nohats:   k => without(k, d => d === "h" || d === "o"),
+    snareonly: k => without(k, d => d !== "s" && d !== "c"),
     shift:    k => mapKit(k, v => v.map((_, i) => at(v, i + 2))),
     halftime: k => mapKit(k, (v, d) => v.map((x, i) => ((d === "k" || d === "s") && i % 8 !== 0 ? 0 : x))),
     // DOUBLE TIME reads the kit at twice the rate — the bar's pattern played
@@ -839,7 +979,248 @@
                     ? { ...mapKit(k, v => v.slice()),
                         s: K16(k.s).map((x, i) => (i >= 12 ? 1 : x)) }
                     : mapKit(k, v => v.slice())),
+
+    /* ---- THE REST OF THE KIT ---------------------------------------------
+       Thirteen operators was a list of tricks. What follows is meant as a
+       VOCABULARY: every entry below is a thing a drummer does, argued in its
+       own comment, and every one is still a total kit -> kit function. Three
+       standing laws, which the gate holds:
+         * a lane the kit does not have is left alone. The exceptions are
+           declared (see WRITES in test/unit/nukernel.test.js §14) and they are
+           exceptions because "put a crash on the downbeat" is a REQUEST, not a
+           rearrangement of what is there.
+         * nothing here turns an EMPTY kit into a kit except the named patterns
+           and the four-on-the-floor family — a fugue that grows a tom fill is
+           not what "vary the drums" means.
+         * an operator may write levels, chances, nudges and graces, because
+           those are the same sixteen-slot vectors the lane itself is. */
+
+    // ---- THE TIMEKEEPING HAND MOVES ----
+    // Same groove, different metal, and it is the loudest change of colour a
+    // kit has: a ride is a stick on a bell, a hat is two plates being pinched.
+    // Everything the hats were doing — closed, open and pedal — lands on the
+    // ride, because it is ONE HAND and it cannot be in two places.
+    ride:     k => moveTime(k, "r"),
+    // ...and onto a drum instead of metal: the floor-tom pulse under a chorus,
+    // which every arranger reaches for and no rearrangement of a hat can say.
+    tomtime:  k => moveTime(k, "l"),
+    // THE FOOT. A pedal hat on 2 and 4 under everything else is what a real
+    // drummer's left foot does all night and no drum machine has ever done.
+    pedal:    k => (laneIds(k).length ? { ...cp(k), f: vec16(i => (i === 4 || i === 12 ? 1 : 0)) } : cp(k)),
+    // OPEN ON THE AND. The closed hat lifts on the last eighth of each beat —
+    // the single most common thing done to a hat pattern, and it needs the
+    // open lane to be a lane rather than a lane the fill happened to carry.
+    opens:    k => (hits(k && k.h)
+                    ? { ...cp(k), h: K16(k.h).map((x, i) => (i % 4 === 2 ? 0 : x)),
+                        o: mergeInto(k.o, K16(k.h).map((x, i) => (i % 4 === 2 ? x : 0))) }
+                    : cp(k)),
+    // SHUFFLE. The hat plays the first and last third of the beat, which on a
+    // sixteen-step grid is 1 and the "a" — the triplet feel written as a kit
+    // fact rather than as swing on the whole box.
+    shuffle:  k => (hits(k && k.h)
+                    ? { ...cp(k), h: vec16(i => (i % 4 === 0 || i % 4 === 3 ? 1 : 0)) } : cp(k)),
+
+    // ---- CYMBALS ----
+    // CRASH ON ONE — the cymbal that says a new phrase starts here, which is
+    // the one drum idea that is about FORM rather than groove. A writer, like
+    // `four`, and for the same reason.
+    crash:    k => ({ ...cp(k), x: vec16(i => (i === 0 ? 9 : 0)) }),
+    // and the other placement worth having: the crash lands with the backbeat
+    // instead of the downbeat — the eighties record, the gated snare's twin.
+    crashback: k => ({ ...cp(k), x: vec16(i => (i === 4 || i === 12 ? 8 : 0)) }),
+
+    // ---- THE SNARE HAND ----
+    // The backbeat, said out loud: whatever the snare was doing, it is now on
+    // 2 and 4. The most conventional gesture in the table and the one most
+    // often wanted, because it is how you make anything sound like a record.
+    backbeat: k => (laneIds(k).length ? { ...cp(k), s: vec16(i => (i === 4 || i === 12 ? 1 : 0)) } : cp(k)),
+    // ...and the other place a snare goes: beat 3 alone. Half-time, and it is
+    // a different genre rather than a slower one — the same tempo underneath.
+    onthree:  k => (laneIds(k).length ? { ...cp(k), s: vec16(i => (i === 8 ? 1 : 0)) } : cp(k)),
+    // CROSS-STICK. The snare hand turns the stick over and plays the rim: the
+    // verse version of the same part, quiet enough to sing over.
+    stickside: k => (hits(k && k.s)
+                     ? { ...without(k, d => d === "s"), p: mergeInto(k.p, k.s) } : cp(k)),
+    // the snare answered by a clap on the same beats — the disco/gospel double
+    claps:    k => (hits(k && k.s) ? { ...cp(k), c: mergeInto(k.c, k.s) } : cp(k)),
+    // GHOSTS. The quietest thing in the bar and the reason it swings: a snare
+    // at level 2 on the "a" of every beat the snare and kick have both left
+    // alone. Level, not gate — a ghost played at full velocity is just a busy
+    // snare, which is exactly what the binary kit could say and nothing else.
+    ghosts:   k => (hits(k && k.s)
+                    ? { ...cp(k), s: K16(k.s).map((x, i) =>
+                        (x || (i % 4 === 3 && !at(k.k || [], i) ? 2 : 0))) } : cp(k)),
+    // FLAM and DRAG: one grace hit before the snare, or two. The oldest
+    // rudiments there are, and unsayable until a step could carry a property.
+    flams:    k => (hits(k && k.s) ? { ...cp(k), "!s": K16(k.s).map(x => (x ? 1 : 0)) } : cp(k)),
+    drags:    k => (hits(k && k.s) ? { ...cp(k), "!s": K16(k.s).map(x => (x ? 2 : 0)) } : cp(k)),
+
+    // ---- THE KICK FOOT ----
+    // Every kick gets a sixteenth behind it where there is room — the double
+    // that turns a straight beat into a bounce, and the reason a kick lane is
+    // worth manipulating at all rather than being the metronome.
+    kickdoubles: k => (hits(k && k.k)
+                       ? { ...cp(k), k: (v => K16(v).map((x, i) => x || (at(v, i - 1) && !at(v, i) ? 1 : 0)))(K16(k.k)) }
+                       : cp(k)),
+
+    // ---- TOMS: the oldest fill there is ----
+    // The last quarter of EVERY bar is a descending tom run, with the hand
+    // that was keeping time taken off it — a fill you cannot hear over the
+    // hats is not a fill. This is the groove-level tom fill; outro("tomfill")
+    // is the once-per-section one.
+    tomfill:  k => (laneIds(k).length
+                    ? { ...mapKit(k, (v, d) => (LANES[d] && d !== "k"
+                          ? K16(v).map((x, i) => (i >= 12 ? 0 : x)) : v.slice())),
+                        t: vec16(i => (i === 12 ? 8 : 0)),
+                        m: vec16(i => (i === 13 || i === 14 ? 7 : 0)),
+                        l: vec16(i => (i === 15 ? 9 : 0)) }
+                    : cp(k)),
+    // the whole bar as toms: the tribal/Burundi groove, where the drums stop
+    // keeping time and start being the tune
+    tomrun:   k => (laneIds(k).length
+                    ? { ...without(k, d => d !== "k"),
+                        t: vec16(i => (i % 8 === 2 ? 7 : 0)),
+                        m: vec16(i => (i % 8 === 4 ? 6 : 0)),
+                        l: vec16(i => (i % 4 === 0 ? 9 : 0)) }
+                    : cp(k)),
+    // a tom ROLL rather than a run: sixteenths down the toms into the bar line
+    tomroll:  k => (laneIds(k).length
+                    ? { ...cp(k), t: vec16(i => (i === 12 || i === 13 ? 6 : 0)),
+                        m: vec16(i => (i === 14 ? 7 : 0)),
+                        l: vec16(i => (i === 15 ? 9 : 0)) }
+                    : cp(k)),
+
+    // ---- DENSITY, DYNAMICS AND THE HAND ----
+    // LINEAR. No two limbs land on the same tick — the defining rule of linear
+    // drumming, and the one groove idea that is a CONSTRAINT rather than a
+    // pattern. Ticks are dealt in LIMBORDER, so the kick keeps its downbeat and
+    // the hat fills what is left, which is what a linear player actually plays.
+    linear:   k => {
+      const order = laneIds(k).sort((a, b) => LIMBORDER.indexOf(a) - LIMBORDER.indexOf(b));
+      const taken = new Array(16).fill(false), out = cp(k);
+      for (const d of order)
+        out[d] = K16(k[d]).map((x, i) => {
+          if (!x) return 0;
+          if (taken[i]) return 0;
+          taken[i] = true; return x;
+        });
+      return out;
+    },
+    // ACCENTS. Loud on the quarters, medium on the eighths, quiet between —
+    // one hand's worth of emphasis written onto every lane at once. This is
+    // the level alphabet doing the job velocity vectors did per genre.
+    // (the test is LANES[d], on the whole key, not on the bare lane: "?h" is
+    // the hat's odds, and a level operator that rewrote those as velocities
+    // would be silently turning a chance vector into a dynamic)
+    accents:  k => mapKit(k, (v, d) => (LANES[d]
+      ? K16(v).map((x, i) => (x ? (i % 4 === 0 ? 9 : i % 2 === 0 ? 6 : 3) : 0)) : v.slice())),
+    // and the other dynamic shape a bar can have: quiet to loud across it
+    crescendo: k => mapKit(k, (v, d) => (LANES[d]
+      ? K16(v).map((x, i) => (x ? 2 + Math.round(i * 7 / 15) : 0)) : v.slice())),
+    soft:     k => mapKit(k, (v, d) => (LANES[d] ? K16(v).map(x => (x ? 3 : 0)) : v.slice())),
+    loud:     k => mapKit(k, (v, d) => (LANES[d] ? K16(v).map(x => (x ? 9 : 0)) : v.slice())),
+    // HUMANIZE — a hand, baked. Seeded micro-timing on every lane (the `~`
+    // vector, in ninths of a step) plus a seeded weight per hit. It REPLACES a
+    // genre's written dynamics rather than perturbing them, and that is honest
+    // rather than sloppy: a level of 1 means "defer", and there is no way to
+    // jitter a value you have deferred. Deterministic, so the same box is the
+    // same performance every play; `g.humanize` is the per-BAR version.
+    humanize: k => Object.fromEntries(Object.entries(cp(k)).flatMap(([key, v]) => {
+      const d = bare(key);
+      if (!LANES[key]) return [[key, v]];               // a sidecar rides along
+      return [[key, K16(v).map((x, i) => (x ? 3 + Math.round(rollAt(7, 0, i, d, 2) * 6) : 0))],
+              ["~" + d, vec16(i => Math.round(rollAt(7, 0, i, d, 1) * 4) - 2)]];
+    })),
+    // ...and its inverse, which is also a sound: the machine. Every sidecar
+    // comes off and every hit goes back to "just play it".
+    tight:    k => Object.fromEntries(Object.entries(cp(k))
+      .filter(([key]) => LANES[key])
+      .map(([d, v]) => [d, K16(v).map(x => (x ? 1 : 0))])),
+    // PROBABILITY. `maybe` leaves the downbeats and the kick alone and makes
+    // everything else a seven-in-nine chance; `chaos` puts the whole kit on
+    // four in nine. Drawn per BAR, so this is the only operator whose output
+    // is different in bar 2 — a dropout you cannot predict and can reproduce.
+    maybe:    k => withChance(k, (d, i) => (d === "k" || i % 4 === 0 ? 9 : 7)),
+    chaos:    k => withChance(k, (d, i) => (i === 0 ? 9 : 4)),
+
+    // ---- NAMED PATTERNS ----
+    // A genre sometimes wants a SPECIFIC beat, not a transformation of the one
+    // it has, and pretending otherwise is how every "vary the drums" control
+    // ends up sounding like the same drummer. These five replace the kit
+    // outright, and they are the other family (with `four`/`offbeat`) allowed
+    // to write onto an empty one, because asking for the amen break is asking
+    // for the amen break.
+    disco:    k => ({ ...cp(k), k: vec16(i => (i % 4 === 0 ? 1 : 0)),
+                      o: vec16(i => (i % 4 === 2 ? 1 : 0)),
+                      c: vec16(i => (i === 4 || i === 12 ? 1 : 0)) }),
+    stomp:    k => ({ ...cp(k), k: vec16(i => (i === 0 || i === 4 ? 9 : 0)),
+                      c: vec16(i => (i === 8 ? 9 : 0)),
+                      h: vec16(() => 0) }),
+    // the 3-3-2, which is most of the world's dance music in one vector
+    tresillo: k => ({ ...cp(k), k: vec16(i => (i === 0 || i === 6 || i === 12 ? 1 : 0)),
+                      s: vec16(i => (i === 8 ? 1 : 0)),
+                      h: vec16(i => (i % 2 === 0 ? 1 : 0)) }),
+    // son clave, 3-2, on the rim — the pattern the bass and the horns hang off
+    clave:    k => ({ ...cp(k), p: vec16(i => ([0, 3, 6, 10, 12].includes(i) ? 8 : 0)) }),
+    // the amen bar, ghosts and all: the break that dance music was built on
+    amen:     k => ({ ...cp(k), k: vec16(i => (i === 0 || i === 10 ? 9 : 0)),
+                      s: vec16(i => (i === 4 || i === 12 ? 9 : i === 2 || i === 14 ? 2 : 0)),
+                      r: vec16(i => (i % 2 === 0 ? 5 : 0)),
+                      h: vec16(() => 0) }),
+    // the motorik: kick on 1, the "and" of 2 and 3, snare on the backbeat,
+    // sixteenths on top and nothing ever changing — a whole genre as a vector
+    motorik:  k => ({ ...cp(k), k: vec16(i => (i === 0 || i === 6 || i === 8 ? 1 : 0)),
+                      s: vec16(i => (i === 4 || i === 12 ? 1 : 0)),
+                      h: vec16(() => 1) }),
+    // and the fastest thing the kit can do: kick and snare alternating
+    // sixteenths under a ride, which is one genre's entire rhythm section
+    blast:    k => ({ ...cp(k), k: vec16(i => (i % 2 === 0 ? 1 : 0)),
+                      s: vec16(i => (i % 2 === 1 ? 1 : 0)),
+                      r: vec16(i => (i % 2 === 0 ? 1 : 0)), h: vec16(() => 0) }),
   };
+  // A KIT IS NOT ONE INSTRUMENT, and every operator above moves all of it at
+  // once — so "the hats double but nothing else does" was unsayable, which is
+  // most of what anyone actually does to a beat. Seven ideas × the three lanes
+  // every kit has, generated: `h.dbl`, `k.rot`, `s.thin`. Each is TOTAL and
+  // none of them invents: a lane the kit lacks comes back untouched.
+  const LANEVERB = {
+    // rotate the lane past itself — the same hits, landing somewhere else
+    rot:  v => v.map((_, i) => at(v, i + 2)),
+    // drop every SECOND HIT (not every second step): the lane at half density
+    thin: v => { let n = 0; return v.map(x => (x ? (++n % 2 === 0 ? 0 : x) : 0)); },
+    // fill in behind: an eighth after every hit that has room for one
+    dens: v => v.map((x, i) => x || (at(v, i - 2) ? 1 : 0)),
+    // this lane alone at half or double speed — the polyrhythm you get by
+    // leaving the rest of the kit where it is
+    half: v => v.map((_, i) => at(v, Math.floor(i / 2))),
+    dbl:  v => v.map((_, i) => at(v, i * 2)),
+    // the last quarter of this lane fills with sixteenths: a roll, per lane
+    roll: v => v.map((x, i) => (i >= 12 ? Math.max(x, 1) : x)),
+  };
+  const VERBLANES = ["k", "s", "h"];
+  for (const d of VERBLANES) {
+    for (const [verb, f] of Object.entries(LANEVERB))
+      KITOPS[d + "." + verb] = k => (hits(k && k[d])
+        ? { ...cp(k), [d]: f(K16(k[d])) } : cp(k));
+    // DISPLACE is the seventh and it is not a vector map: it moves the lane in
+    // TIME rather than on the grid, two ninths of a step late, which is the
+    // difference between a rotated part and a laid-back one.
+    KITOPS[d + ".disp"] = k => (hits(k && k[d])
+      ? { ...cp(k), ["~" + d]: vec16(() => 2) } : cp(k));
+  }
+  // the two helpers the table above is written in, kept beside it
+  function moveTime(k, dest) {
+    const src = HATS.filter(d => hits(k && k[d]));
+    if (!src.length) return cp(k);
+    let merged = new Array(16).fill(0);
+    for (const d of src) merged = mergeInto(merged, K16(k[d]));
+    return { ...without(k, d => HATS.includes(d)), [dest]: mergeInto(k[dest], merged) };
+  }
+  function withChance(k, f) {
+    const out = cp(k);
+    for (const d of laneIds(k)) out["?" + d] = vec16(i => f(d, i));
+    return out;
+  }
 
   // ---- the grid: the CATEGORICAL half --------------------------------------
   // A kit is voice -> cyclic binary vector, and it does NOT derive from the
@@ -855,6 +1236,9 @@
   // rather than a one-bar shape.
   function drums(subj, g, bars) {
     const ev = [], N = subj.deg.length;
+    // the two seeded facts, read once: a hand that is not the grid, and the
+    // salt that makes this genre's dice its own
+    const hum = humanOf(g.humanize), seed = g.kitSeed | 0;
     for (let b = 0; b < bars; b++) {
       // KIT SCHEDULE: `g.kits` is the kit read per BAR — a two-bar groove, a
       // hat that opens on bar 4 — where `g.kit` is one bar restated. It is not
@@ -862,17 +1246,60 @@
       // KITOPS); a schedule is position-dependent data. Absent = g.kit, exact.
       const base = g.kits ? at(g.kits, b) : (g.kit || {});
       const kit = (g.fill && b === bars - 1) ? { ...base, ...g.fill } : base;
-      for (const [d, vec] of Object.entries(kit))
-        for (let i = 0; i < N; i++)
-          if (at(vec, i))
-            // KIT DYNAMICS: the drums used to borrow the MELODY's velocity
-            // vector — the kick's loudness was an accident of the tune at that
-            // step. `g.kitVel` gives a lane its own 16-slot velocities (ghost
-            // snares are a 2 on the off-16ths, no new machinery). Absent lane
-            // = exactly the old expression.
-            ev.push({ t: (b * N + i + swing(g, i)) / g.rate, d, acc: !!subj.acc[i],
-                      vel: g.kitVel && g.kitVel[d] ? at(g.kitVel[d], i) : vel(subj, i),
-                      fill: b === bars - 1 && !!(g.fill && g.fill[d]) });
+      for (const [d, vec] of Object.entries(kit)) {
+        // a key that is not a lane letter is a SIDECAR (?chance ~nudge !grace)
+        // and is read here WITH its lane, never as one of its own
+        if (!LANES[d]) continue;
+        // the BOX's own chance vector (an operator wrote it into the kit)
+        // outranks the GENRE's `kitProb`, the same way a box outranks its
+        // anchor everywhere else
+        const ch = kit["?" + d] || (g.kitProb && g.kitProb[d]);
+        const nu = kit["~" + d], gr = kit["!" + d];
+        for (let i = 0; i < N; i++) {
+          const cell = at(vec, i);
+          if (!cell) continue;
+          // CHANCE. A hit that only sometimes sounds is what a hand does with
+          // a hat, and the draw is a function of WHERE it was asked (see
+          // rollAt) rather than of how many draws came before it.
+          if (ch) { const odds = at(ch, i) / 9;
+                    if (odds < 1 && rollAt(seed, b, i, d, 0) >= odds) continue; }
+          // KIT DYNAMICS, now in three layers: the LEVEL written on the step
+          // itself (2..9 — how an operator says "ghost" or "accent"), then
+          // `g.kitVel`'s per-lane hand, then the melody's own velocity, which
+          // is where the kick's loudness used to come from by accident. A
+          // level of 1 is the old binary "on" and defers, so every kit ever
+          // written renders exactly as before.
+          const v0 = cell > 1 ? cell
+            : g.kitVel && g.kitVel[d] ? at(g.kitVel[d], i) : vel(subj, i);
+          // NUDGE: the baked hand (ninths of a step) plus the per-bar drift of
+          // g.humanize. Both move the hit and neither adds or removes one.
+          const push = (nu ? at(nu, i) / 9 : 0) +
+            (hum ? (rollAt(seed, b, i, d, 1) * 2 - 1) * hum.t : 0);
+          const jit = hum && hum.v
+            ? Math.round((rollAt(seed, b, i, d, 2) * 2 - 1) * hum.v) : 0;
+          // THE HAND STRAYS INSIDE THE BAR. A hit nudged past its own bar line
+          // is a hit in the next bar — it changes which bar the fill is in, and
+          // at a section edge the window simply cuts it. So the push is
+          // clamped to the bar it was written in; only a GRACE note is allowed
+          // to sit in front of the bar, because that is what a grace note is.
+          const t0 = (b * N + i + swing(g, i)) / g.rate;
+          const e = { t: push
+                      ? Math.min(((b + 1) * N) / g.rate - 1e-9,
+                                 Math.max((b * N) / g.rate, t0 + push / g.rate))
+                      : t0, d,
+                      acc: !!subj.acc[i],
+                      vel: jit ? Math.max(0, Math.min(9, v0 + jit)) : v0,
+                      fill: b === bars - 1 && !!(g.fill && g.fill[d]) };
+          // GRACE. One quieter hit a ninth of a step in front is a flam, two
+          // is a drag, three a ruff. They are not steps — there is no room for
+          // them on a sixteen-step grid — so they hang off the step they lead.
+          const gn = gr ? Math.min(3, at(gr, i)) : 0;
+          for (let q = gn; q > 0; q--)
+            ev.push({ ...e, t: Math.max(0, e.t - q / (9 * g.rate)), acc: false,
+                      vel: Math.max(1, Math.round((e.vel || 5) * 0.45)), grace: q });
+          ev.push(e);
+        }
+      }
     }
     if (g.ghost) {
       const q = word(subj, g.ghost);
@@ -1106,8 +1533,11 @@
       return out.sort((a, b) => a.t - b.t);
     }
     if (kind === "hit") {
-      // one downbeat and then space — the oldest way to say "here we go"
-      return [D(0, "k", 1, 9), D(0, "o", 1, 8), ...rest].sort((a, b) => a.t - b.t);
+      // one downbeat and then space — the oldest way to say "here we go". The
+      // cymbal is a CRASH now: it was written as "o", an open hat, for the
+      // years there was no crash lane to write, and an open hat is not the
+      // sound of a band starting.
+      return [D(0, "k", 1, 9), D(0, "x", 1, 9), ...rest].sort((a, b) => a.t - b.t);
     }
     if (kind === "solo")  return [...bar.filter(e => e.kind === "line"), ...rest];
     if (kind === "kit")   return [...bar.filter(e => e.kind === "hit"), ...rest];
@@ -1133,7 +1563,7 @@
       const out = [...rest, ...keepLines, D(from, "k", 1, 9)];
       for (const s of [0, 2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15])
         out.push(D(from + s * bs / 16, "s", s % 4 === 0, s < 8 ? 6 : 7 + (s % 2)));
-      out.push(D(from + 15 * bs / 16, "c", 1, 9));
+      out.push(D(from + 15 * bs / 16, "x", 1, 9));
       return out.sort((a, b) => a.t - b.t);
     }
     if (kind === "roll") {
@@ -1142,12 +1572,55 @@
       const steps = [0, 4, 8, 10, 12, 13, 14, 15];
       const out = [...rest, ...keepLines];
       steps.forEach((s, i) => out.push(D(from + s * bs / 16, "s", i > 4, 4 + i)));
-      out.push(D(from + bs, "o", 1, 9));
+      out.push(D(from + bs, "x", 1, 9));
       return out.sort((a, b) => a.t - b.t);
     }
     if (kind === "crash") {
       // everything stops and one cymbal holds the door open
-      return [...rest, D(from, "o", 1, 9), D(from, "k", 1, 9)].sort((a, b) => a.t - b.t);
+      return [...rest, D(from, "x", 1, 9), D(from, "k", 1, 9)].sort((a, b) => a.t - b.t);
+    }
+    // ---- THE FILLS THAT ARE NOT A SNARE FILL --------------------------------
+    // Every outro above is the same gesture at three densities, which is why
+    // every composed song ended the same way: a snare accelerating into a
+    // cymbal. These four are different IDEAS about how a section stops, and
+    // the arranger deals them per genre and per seed (compose.js OUTRO_LEAN).
+    if (kind === "tomfill") {
+      // THE TOM FILL: the oldest fill there is, and it did not exist here
+      // because there were no toms. Down the kit — high, high, mid, mid, low —
+      // over a kick on 1, landing on a crash. Nothing else plays: a tom fill
+      // under a hat pattern is not a tom fill.
+      const out = [...rest, ...keepLines, D(from, "k", 1, 9)];
+      const run = [[0, "t", 6], [2, "t", 6], [4, "m", 7], [6, "m", 7],
+                   [8, "l", 8], [10, "l", 8], [12, "m", 8], [13, "m", 7],
+                   [14, "l", 9], [15, "l", 9]];
+      for (const [s, d, v] of run) out.push(D(from + s * bs / 16, d, s % 4 === 0, v));
+      out.push(D(from + bs, "x", 1, 9));
+      return out.sort((a, b) => a.t - b.t);
+    }
+    if (kind === "hatrun") {
+      // THE HAT STUTTER — the one fill that is not a drum at all. Sixteen
+      // closed hats getting louder and the last four opening: the electronic
+      // record's way of ending a section, where a snare roll would be a band.
+      const out = [...rest, ...keepLines, D(from, "k", 1, 8)];
+      for (let s = 0; s < 16; s++)
+        out.push(D(from + s * bs / 16, s >= 12 ? "o" : "h", s % 4 === 0,
+                   3 + Math.round(s * 6 / 15)));
+      return out.sort((a, b) => a.t - b.t);
+    }
+    if (kind === "hush") {
+      // SILENCE, THEN THE CRASH. Everything stops on the bar line and one
+      // cymbal lands on the LAST sixteenth — the hole is the gesture, and it
+      // is the only outro here whose bar is mostly empty on purpose.
+      return [...rest, D(from + 15 * bs / 16, "x", 1, 9)].sort((a, b) => a.t - b.t);
+    }
+    if (kind === "doubles") {
+      // the kick-and-snare double-time bar: no acceleration, no cymbal, just
+      // the same two drums at twice the rate — a hard stop that stays inside
+      // the groove instead of announcing itself
+      const out = [...rest, ...keepLines];
+      for (let s = 0; s < 16; s += 2)
+        out.push(D(from + s * bs / 16, s % 4 === 0 ? "k" : "s", s % 8 === 0, s % 4 === 0 ? 8 : 6));
+      return out.sort((a, b) => a.t - b.t);
     }
     if (kind === "break") return [...rest, ...bar.filter(e => e.kind === "hit")];
     if (kind === "tail")  return [...rest, ...keepLines];
@@ -1156,7 +1629,7 @@
   }
   const edges = (ev, i, o, span, bs) => outro(intro(ev, i, span, bs), o, span, bs);
 
-  const api = { at, mapv, spans, vel, drop, fill, spread, split, del, rampOf, envelope, edges, intro, outro, groove, GROOVES, KITOPS, mapKit, swing, rotate, reverse, transpose, invert, complement,
+  const api = { at, mapv, spans, vel, drop, fill, spread, split, del, rampOf, envelope, edges, intro, outro, groove, GROOVES, KITOPS, mapKit, LANES, TOMS, HATS, CYMBALS, LIMBORDER, rollAt, swing, rotate, reverse, transpose, invert, complement,
                 crossmap, excerpt, only, word,
                 PENT, MODE, ROMAN, romanOf, pitch, mp, fold, near,
                 QSTEPS, QFIX, chordsOf, chordAt, withCadence,

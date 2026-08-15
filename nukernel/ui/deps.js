@@ -44,7 +44,8 @@ export const { blank, emptyBox } = window.NuSong;
 
 // ---- the sound sources as data (instruments.js) ----
 export const { instrOf, BASS_INSTR, DRUMDIR, DRUMFILE, FONTS, BASSSYNTH,
-               STRIPS } = window.NuInstruments;
+               STRIPS, stripFor, RANGES, STRETCH_UP, STRETCH_DOWN,
+               DRUMMIX, DRUMBUS } = window.NuInstruments;
 
 // ---- arranger policy (compose.js) + the shipped songs (presets.js) ----
 export const { compose } = window.NuCompose;

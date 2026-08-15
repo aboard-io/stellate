@@ -294,10 +294,25 @@
       // walk sounds the ♭7 on the odd bars and the ramp can land on it.
       prog: PROGS.blues12,
       maxHold: 4,                             // a riff answers itself; it has to stop
+      // THE RIDE, not the hats. A shuffle on a jazz kit is a stick on a ride
+      // cymbal and a left foot closing the hat on 2 and 4 — that pairing is
+      // most of what "sounds like a blues band" means, and neither lane
+      // existed to write until the kit grew to twelve. The kick and snare are
+      // untouched: the groove did not change, the metal did.
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
-             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },   // shuffled by swing
-      fill: { s: [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,1,0] },  // bar 12: the turnaround
+             r: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],     // shuffled by swing
+             f: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },   // the left foot
+      // A HAND, NOT A GRID. Nothing else in the table moves off the grid at
+      // all; a blues band is the one place where that reads as wrong rather
+      // than as tight. Five hundredths of a step, redrawn every bar, seeded —
+      // the same take every time you press play.
+      humanize: 0.05,
+      // ...and the turnaround gets the tom the twelfth bar has always had
+      fill: { s: [0,0,0,0, 1,0,0,0, 0,0,1,0, 0,0,0,0],    // bar 12: the turnaround
+              m: [0,0,0,0, 0,0,0,0, 0,0,0,0, 1,0,0,0],
+              l: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,0],
+              x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,8] },
       tone: { wave: "sawtooth", cut: 1100, q: 3.2, atk: .006, rel: .9, gain: .27, verb: .14 },
       words: ["subject", "answer — only(gate, rotate 8)"],
       word: (v, s) => (v === 0 ? [] : [only("gate", rotate(8))]),
@@ -319,7 +334,16 @@
       kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,1, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],      // the backbeat
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
-      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,0,1,0] },   // bar 8: the turnaround
+      // BAR 8 IS A TOM FILL AND A CRASH, which is what a rock drummer plays
+      // there and what the six-lane kit could not say: the snare rolls, the
+      // hand comes off the hats and down the toms, and the cymbal lands on the
+      // last sixteenth to hand the loop back to bar 1.
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,0,0, 0,0,0,0],     // bar 8: the turnaround
+              t: [0,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
+              m: [0,0,0,0, 0,0,0,0, 0,0,0,0, 1,0,0,0],
+              l: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,0],
+              h: [1,0,1,0, 1,0,1,0, 1,0,0,0, 0,0,0,0],
+              x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,9] },
       tone: { wave: "sawtooth", cut: 1800, q: 1.6, atk: .003, rel: .8, gain: .30, verb: .10 },
       words: ["riff", "riff an octave up, thinned on odd bars"],
       word: (v, s) => (v === 1 && s % 2 ? [drop(2)] : []),
@@ -412,7 +436,24 @@
       scale: DIATONIC, artic: "legato",
       tone: { wave: "square", cut: 2800, q: 1.0, atk: .006, rel: .6, gain: .22, verb: .3 },
       words: ["the line", "contrary motion — every rise is a fall"],
-      word: (v, s) => (v === 0 ? [] : [invert(4), transpose(s % 2 ? -2 : 2)]),
+      // THE AXIS IS THE HARMONY. Both voices play the same rhythm, so every
+      // note is a simultaneity and the vertical interval is decided entirely by
+      // where the mirror is: invert(c) sends degree d to c-d, so the two voices
+      // SUM to a constant and the interval is a function of that sum alone.
+      // Measured over the composed banks, sums 2, 3 and 6 (mod 7) are the three
+      // that put a semitone or a tritone on a common degree — and the old word,
+      // invert(4) with transpose ±2, used sums 6 and 2, which is the worst axis
+      // in the scale and the second worst. Sum 6 alone contributes two tritones
+      // and a minor seventh on the tonic degree; what that sounds like is two
+      // harpsichords out of tune with each other.
+      //
+      // Mirror about the third (sum 5) and about the tonic (sum 0) instead. The
+      // alternation survives — it is what makes bar two a different bar — and
+      // the piece is now 35% thirds and sixths with no unprepared clash at all,
+      // which is what first-species contrary motion is supposed to sound like.
+      // Written as two inversions rather than an inversion plus a transpose
+      // because the sum is the only thing that was ever doing any work.
+      word: (v, s) => (v === 0 ? [] : [invert(s % 2 ? 0 : 5)]),
     },
 
     // ---- THE SLOW ONES ---------------------------------------------------
@@ -497,6 +538,18 @@
       drumkit: "acoustic",
       harmony: "cycle", roots: [0, 3, 4, 0],
       mode: MODES.harmonic, scale: [0, 2, 3, 5, 7, 8, 11], diatonic: true,
+      // THE DOMINANT IS THE ONE CHORD WHOSE SCALE IS NOT THE TONIC'S, and a
+      // tango is nothing but dominants arriving. `diatonic` keeps the line in
+      // the key, which is right, and in harmonic minor that means it keeps
+      // offering the ♭6 and the ♭3 over the V — A♭ against its G, E♭ against
+      // its D — and the answering voice's own transpose(-2) is a third below
+      // the SCALE, so wherever the lead is on the root the answer is on the ♭6.
+      // Measured: a held minor ninth against the pad in half the bars.
+      // `anchor` says the held note has to be a chord tone; everything shorter
+      // than a step and a half of actual sound is left alone, which is where
+      // the ♭9 lives. Bar two still plays G A♭ B over the dominant — it just
+      // no longer SITS on the A♭.
+      anchor: 1.5,
       artic: "staccato",
       kit: { k: [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,0,1,0],       // 3-3-2, twice
              p: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },
@@ -525,8 +578,13 @@
       bassStyle: "sixteenths",
       kit: { k: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],       // the blast
              s: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
-             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
-      fill: { s: [1,0,1,0, 1,0,1,0, 1,1,1,1, 1,1,1,1] },    // bar 8: it doubles
+             // A BLAST BEAT IS RIDDEN, NOT HATTED. The right hand is on the
+             // cymbal for the whole bar because at this speed there is nowhere
+             // else for it to be — and it is ONE hand, so the sixteenth hats
+             // it used to play at the same time were a second drummer.
+             r: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      fill: { s: [1,0,1,0, 1,0,1,0, 1,1,1,1, 1,1,1,1],      // bar 8: it doubles
+              x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,9] },
       tone: { wave: "sawtooth", cut: 1400, q: 2.6, atk: .002, rel: .3, gain: .3, verb: .12 },
       words: ["the riff, tremolo-picked — every step",
               "the same riff an octave under, as written"],
@@ -849,6 +907,11 @@
       kit: { k: [1,0,0,0, 0,0,0,0, 0,1,0,0, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,1, 0,0,0,0],
              h: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,1] },
+      // THE HAT THAT IS NOT ALWAYS THERE. Garage's shuffle is edited, not
+      // played: the hand drops sixteenths and puts them back, which a fixed
+      // vector cannot say and a per-bar CHANCE can. Seeded, so the drop-outs
+      // are the same every time you press play and different every bar.
+      kitProb: { h: [9,9,9,6, 9,9,8,5, 9,9,9,6, 9,9,7,7] },
       fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,1, 1,0,1,0] },
       tone: { wave: "triangle", cut: 2600, q: 1.4, atk: .004, rel: .4, gain: .27, verb: .24 },
       words: ["the chopped vocal", "the answer, shuffled off the beat"],
@@ -957,7 +1020,13 @@
              s: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
              p: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
-      fill: { s: [1,0,0,0, 1,0,1,0, 1,0,1,0, 1,1,1,1] },
+      // THE FUNK BROTHERS' TURNAROUND: the snare on all four, then the hand
+      // walks down the toms into the next verse. A tom fill is the oldest fill
+      // there is and this table could not write one until the kit grew.
+      fill: { s: [1,0,0,0, 1,0,1,0, 1,0,0,0, 0,0,0,0],
+              t: [0,0,0,0, 0,0,0,0, 0,0,1,0, 1,0,0,0],
+              m: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,1,0,0],
+              l: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,1] },
       tone: { wave: "triangle", cut: 2600, q: 1.0, atk: .005, rel: .6, gain: .28, verb: .26 },
       words: ["the piano, stabbing the changes", "the horn line over it"],
       word: () => [],
@@ -1107,7 +1176,14 @@
       kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
              s: [0,0,0,0, 0,1,0,0, 0,0,0,0, 0,1,0,0],
              p: [1,0,0,1, 0,0,1,0, 0,1,0,0, 1,0,1,0],
+             // TWO DRUMMERS, which is what an afrobeat band has: the tom hand
+             // plays its own three-against-four figure beside the kit hand,
+             // and it is a DRUM part rather than a percussion colour
+             m: [0,0,0,0, 1,0,0,0, 0,0,0,1, 0,0,0,0],
+             l: [0,0,1,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
              h: [1,1,1,0, 1,1,1,0, 1,1,1,0, 1,1,1,0] },
+      // and the hat hand does not hit every one of them every time round
+      kitProb: { h: [9,7,8,0, 9,6,8,0, 9,7,8,0, 9,6,7,0] },
       fill: { s: [0,0,0,0, 0,1,0,1, 0,0,1,0, 1,1,0,1] },
       tone: { wave: "triangle", cut: 2400, q: 1.4, atk: .005, rel: .5, gain: .27, verb: .2 },
       words: ["the tenor guitar, chopping", "the sax, in threes against it",
@@ -1136,7 +1212,10 @@
       bassStyle: "fifths",
       kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
              p: [1,0,0,1, 0,0,1,0, 0,0,1,0, 0,1,0,0],
-             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             // the left foot on 2 and 4 under the brushes — a bossa drummer's
+             // hat is a FOOT, and it is the quietest load-bearing thing here
+             f: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },
       fill: { p: [1,0,0,1, 0,0,1,0, 1,0,1,0, 1,1,0,1] },
       tone: { wave: "triangle", cut: 2400, q: 0.8, atk: .008, rel: .8, gain: .26, verb: .3 },
       words: ["the guitar, rolling the sevenths", "the flute, saying very little"],
@@ -1255,7 +1334,10 @@
       bassStyle: "eighths",
       kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
-             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             // punk crashes on the ONE and keeps crashing: the cymbal is the
+             // hat's louder twin here, not a punctuation mark
+             x: [9,0,0,0, 0,0,0,0, 8,0,0,0, 0,0,0,0] },
       fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,1,1,1] },
       tone: { wave: "sawtooth", cut: 2000, q: 1.8, atk: .002, rel: .3, gain: .3, verb: .1 },
       words: ["every eighth, downstrokes", "the same riff, an octave under, as written"],
@@ -1313,8 +1395,12 @@
     },
   };
 
+  // THE ARRANGEMENT'S COLUMN HEADINGS, one per lane. `p` says "Ghost perc"
+  // rather than "Rim" because the ghost layer writes to it and that is what a
+  // person sees in the column; the other eleven say what they are.
   const DRUMNAME = { k: "Kick", s: "Snare", c: "Clap", o: "Open hat",
-                     h: "Hat", p: "Ghost perc" };
+                     h: "Hat", p: "Ghost perc", f: "Pedal hat", r: "Ride",
+                     x: "Crash", t: "High tom", m: "Mid tom", l: "Low tom" };
 
   // ---- FAMILIES — the palette's bank-select clusters -----------------------
   // Forty-five chips in one heap is not a menu, it is a haystack; the palette

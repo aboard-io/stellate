@@ -6,7 +6,8 @@
 //
 // Layer graph: deps -> state -> derive -> graph -> assets -> THIS FILE ->
 // mixer -> transport. Never imports a ui view.
-import { GENRES, VOX, VOXPARAM, BASSSYNTH, SP } from "../ui/deps.js";
+import { GENRES, VOX, VOXPARAM, BASSSYNTH, SP, RANGES, STRETCH_UP,
+         STRETCH_DOWN, DRUMMIX, DRUMBUS } from "../ui/deps.js";
 import { SONG } from "../ui/state.js";
 import { stackOf } from "../ui/derive.js";
 import { ctx, bus, noise } from "./graph.js";
@@ -175,7 +176,12 @@ export function playSynth(spec, midi, when, durSec, acc, sld, vel, v, chan, vox)
   // the only sound it ever made. Idempotent: re-opening an open gate is a
   // no-op, and a gate focusSynths closes later carries the later timestamp.
   if (g) { try { g.gain.setTargetAtTime(1, when, 0.004); } catch (e) {} }
-  driveSynth(node, spec, midi, when, durSec, acc, sld, vel, vox);
+  // a note the voice cannot say in any octave is DROPPED and counted, not
+  // clamped onto the ceiling — driveSynth refuses before it writes
+  if (!driveSynth(node, spec, midi, when, durSec, acc, sld, vel, vox)) {
+    countDrop();
+    return true;                                  // handled: silence, on purpose
+  }
   return true;
 }
 // the parameter walk alone, on a GIVEN node — split from the pool lookup so
@@ -183,6 +189,21 @@ export function playSynth(spec, midi, when, durSec, acc, sld, vel, v, chan, vox)
 // same writes (a forked copy of this walk is how the bounce would drift out
 // of tune with the live pass, one edit at a time)
 export function driveSynth(node, spec, midi, when, durSec, acc, sld, vel, vox) {
+  // FOLD FIRST, AND REFUSE BEFORE WRITING ANYTHING. A Faust freq param has a
+  // declared min/max — DX7 stops at 1000 Hz, bass_reese at 500 — and setting a
+  // value past it does not error, it CLAMPS, so every note above the ceiling
+  // collapses onto the same pitch. That is not "a bit high", it is out of tune,
+  // and the audio gate fails on a write that lands ON a boundary for exactly
+  // that reason. Fold by octaves (pitch class kept, register moved); if no
+  // octave fits, follow the DROP LAW the sampled path keeps — write nothing,
+  // return false, let the caller count it — rather than write the clamp.
+  const fa = node.parameters.get("/" + spec.root + "/freq");
+  let f = hz(midi);
+  if (fa) {
+    while (f > fa.maxValue && f / 2 >= fa.minValue) f /= 2;
+    while (f < fa.minValue && f * 2 <= fa.maxValue) f *= 2;
+    if (f > fa.maxValue || f < fa.minValue) return false;
+  }
   const set = (n, val, t) => {
     const a = node.parameters.get("/" + spec.root + "/" + n);
     if (a && val != null) a.setValueAtTime(val, t);
@@ -205,21 +226,10 @@ export function driveSynth(node, spec, midi, when, durSec, acc, sld, vel, vox) {
   set("slide", sld ? 1 : 0, when);
   const lvl = spec.level * (0.25 + 0.75 * ((vel == null ? 5 : vel) / 9));
   set("level", lvl, when); set("gain", Math.min(1, lvl), when);
-  // FOLD INTO THE VOICE'S RANGE. A Faust freq param has a declared min/max —
-  // DX7 stops at 1000 Hz, bass_reese at 500 — and setting a value past it does
-  // not error, it CLAMPS, so every note above the ceiling collapses onto the
-  // same pitch. That is not "a bit high", it is out of tune. Fold by octaves,
-  // which keeps the pitch class and only moves the register.
-  const fa = node.parameters.get("/" + spec.root + "/freq");
-  let f = hz(midi);
-  if (fa) {
-    while (f > fa.maxValue && f / 2 >= fa.minValue) f /= 2;
-    while (f < fa.minValue && f * 2 <= fa.maxValue) f *= 2;
-    f = Math.max(fa.minValue, Math.min(fa.maxValue, f));
-  }
   set("freq", f, when);
   set("gate", 1, when);
   set("gate", 0, Math.max(when + 0.02, when + durSec * 0.92));
+  return true;
 }
 // THE POOL IS NOT A CACHE. Nodes survive a channel — they are channel-blind and
 // expensive to build, so keeping them across an edit is right — but they must
@@ -288,6 +298,92 @@ export function dropRoute(chanKey, at) {
 }
 
 /* ---------- the sampled players ---------- */
+
+// ==== THE INSTRUMENT-REGISTER LAW ==========================================
+// The parent states it in two tiers (state-engine.js): a MUSICAL window per
+// instrument (a flute does not play below middle C), and a TECHNICAL one from
+// the sample's own zone roots (a zone stretched more than six semitones up
+// shrieks and more than twelve down rumbles — it stops being the instrument).
+// A note outside either octave-FOLDS in: whole octaves, so the pitch class and
+// therefore the key survive, and only the register moves.
+//
+// nukernel needed both and had neither. foldToZones below folds into the zones'
+// declared lo..hi span, and the shipped registry declares those spans as 0..127
+// — every zone claims the whole keyboard — so the fold never fired and the
+// sampler played whatever it was handed at whatever rate that took. Measured on
+// the shipped table: sludge asks its overdrive guitar for MIDI 12 against a
+// bottom zone ROOT of 40 (a guitar played two and a half octaves down), ska
+// asks its trumpet for 98, trap asks a music box for 56. That is the "stretched
+// sample" this law exists to stop.
+//
+// playWindow is the two tiers intersected. Where they disagree the SAMPLE wins:
+// a window the zones cannot honestly cover is a promise the page cannot keep.
+// An instrument with no musical range AND no multisample has NO window at all
+// and passes through untouched — the parent's law for the unlisted.
+const ROOT_SPAN_MIN = 24;                         // below this, roots say nothing
+// KEYED ON THE SPEC OBJECT, not on the id: assets.js memoises one spec per
+// FONT|id, so the identity is both stable and font-correct — a soundfont swap
+// hands out different spec objects with different roots, and a cache keyed on
+// the name alone would answer the old font's window for the new font's zones.
+const winCache = new WeakMap();                   // spec -> [lo, hi] | null
+export function playWindow(spec, id) {
+  if (!spec || !spec.zones || !spec.zones.length) return null;
+  const key = spec;
+  let w = winCache.get(key);
+  if (w !== undefined) return w;
+  let bot = Infinity, top = -Infinity;
+  for (const z of spec.zones) { if (z.root < bot) bot = z.root; if (z.root > top) top = z.root; }
+  // A SAMPLER'S ROOTS ONLY BOUND IT IF IT IS MULTISAMPLED. Measured on the
+  // shipped registry the split is total: every real multisample spreads its
+  // roots over 24 semitones or more (guitars 39, choirs 42, pianos 82), and the
+  // synth patches — polysynth, halo_pad, metal_pad, the drawbar organ — are ONE
+  // zone with one root at 84 or 96, meant to be transposed anywhere. Reading
+  // those roots as a window says a pad may only play its top octave and a half,
+  // which would have shoved ambient, techno and synthpop up three octaves. A
+  // patch that is stretched by design is not stretched past honesty.
+  const w0 = (top - bot >= ROOT_SPAN_MIN) ? [bot - STRETCH_DOWN, top + STRETCH_UP] : null;
+  w = w0;
+  const R = RANGES[id];
+  if (!w0) { w = R ? [R[0], R[1]] : null; winCache.set(key, w); return w; }
+  if (R) {
+    const lo = Math.max(w[0], R[0]), hi = Math.min(w[1], R[1]);
+    // an octave is the floor: a window narrower than twelve semitones cannot
+    // hold every pitch class, so the fold would start refusing notes in key.
+    // Where the two tiers leave less than that (or nothing at all — a one-zone
+    // sampler whose single root sits outside the instrument's musical range),
+    // the ZONE window stands alone. The sample is the truth about what can
+    // actually be played.
+    if (hi - lo >= 12) w = [lo, hi];
+  }
+  winCache.set(key, w);
+  return w;
+}
+// fold by whole octaves into [lo,hi]; null when no octave lands inside (a
+// window narrower than an octave that the note keeps missing) — the caller
+// then follows the DROP LAW rather than playing it wrong.
+export function foldInto(midi, lo, hi) {
+  let m = midi;
+  while (m > hi + 0.5) m -= 12;
+  while (m < lo - 0.5) m += 12;
+  return (m > hi + 0.5 || m < lo - 0.5) ? null : m;
+}
+// THE EDGES ARE SOFT, and the per-note fold is the only thing that reads them.
+// A window's ends are a judgement ("the comfortable ceiling"), not a cliff, and
+// the transport has already moved whole lines that sit outside one (see
+// registerHome). What is left is a handful of notes spilling over an edge in a
+// line that otherwise fits — measured across the 45 genres: fifteen notes out
+// of 3,900. Folding those by the strict edge would break the contour they
+// belong to for a semitone's worth of honesty; folding only what is GROSSLY
+// out (half an octave past the edge) fixes the note that squeals and leaves
+// the phrase alone.
+const SOFT_EDGE = 6;
+// the whole law for one note, as one call — shared by the sampled player and
+// the transport's register-home pass so the two can never disagree
+export function inRange(spec, id, midi) {
+  const w = playWindow(spec, id);
+  return w ? foldInto(midi, w[0] - SOFT_EDGE, w[1] + SOFT_EDGE) : midi;
+}
+
 const zoneSpan = new Map();     // zones array (now cached, so identity hits) -> span
 export function foldToZones(zones, midi) {
   let sp = zoneSpan.get(zones);
@@ -302,19 +398,32 @@ export function foldToZones(zones, midi) {
   while (m > sp.hi && m - 12 >= sp.lo) m -= 12;
   return Math.max(sp.lo, Math.min(sp.hi, m));
 }
-export function playSampled(id, midi, when, durSec, vel, gainMul, chan, strip) {
+export function playSampled(id, midi, when, durSec, vel, gainMul, chan, strip, v) {
   const spec = specOf(id);
-  const player = chan && chan.player;
+  // THE VOICE'S OWN CHAIR, when the caller has one. Each pitched voice has its
+  // own player onto its own placed bus (mixer.buildChannel voiceBus), so two
+  // voices are two places in the room; the bass and anything without a chair
+  // still take the channel-wide player.
+  const V = v != null && chan && chan.voiceBus ? chan.voiceBus(v) : null;
+  const player = (V && V.player) || (chan && chan.player);
   if (!spec || !player) return false;
-  // FOLD INTO THE INSTRUMENT'S RANGE, the same law playSynth applies to a Faust
-  // freq param and for the same reason. A sampler's zones cover a finite span,
-  // and now that a layer can be moved two octaves either way a note can land
-  // outside it — where zoneFor returns null, playSampled returns false, and the
-  // note comes out of the oscillator fallback. Folding by octaves keeps the
-  // pitch class and only moves the register.
-  const midi2 = foldToZones(spec.zones, midi);
+  // THE INSTRUMENT-REGISTER LAW (playWindow above): fold into the window the
+  // instrument and its samples can both honestly play. This replaces the old
+  // fold into the zones' DECLARED lo..hi span — which the shipped registry
+  // declares as 0..127, so it never fired and a note two octaves under the
+  // bottom root played as a two-octave-slow sample rather than as a guitar.
+  // foldToZones still runs underneath as the last technical net (a font whose
+  // zones really are bounded).
+  let midi2 = inRange(spec, id, midi);
+  // THE DROP LAW. No octave of this note lands inside the window, so there is
+  // no honest way to play it: be silent, and COUNT it. The same law the page
+  // already keeps for a dead signature synth and an in-flight zone — silence
+  // over wrongness — and the same reason: a stretched sample is not the
+  // instrument, it is a different instrument that is out of tune with the rest.
+  if (midi2 == null) { countDrop(); return true; }
+  midi2 = foldToZones(spec.zones, midi2);
   const z = SP.zoneFor(spec.zones, midi2);
-  if (!z) return false;
+  if (!z) { countDrop(); return true; }
   const buf = zoneBufs.get(FONT + "|" + id + "|" + z.file);
   if (!buf) return inFlight.has("ins:" + id);      // loading: drop it, do not beep
   const lead = SP.zoneLeadIn ? SP.zoneLeadIn(buf, z, buf.sampleRate, spec.sr) : 0;
@@ -339,6 +448,17 @@ export function playSampled(id, midi, when, durSec, vel, gainMul, chan, strip) {
 // the whole trick that lets audio/bounce.js reuse them verbatim against an
 // OfflineAudioContext: hand them an offline channel and they render offline.
 const ctxOf = chan => (chan && chan.input ? chan.input.context : ctx);
+// WHERE A DRUM LANDS. The channel builds a strip per lane on the lane's first
+// hit — level, placement, its own share of the room — and everything drum-shaped
+// on the page goes through it, the oscillator stubs included, so a fallback
+// snare is in the same room as a sampled one. A channel that predates the lane
+// strips (or no channel at all) still has the plain drum bus.
+const drumDest = (chan, lane) => (chan && chan.laneIn ? chan.laneIn(lane)
+  : (chan && chan.drumIn) || bus);
+// the lane's trim is the STRIP's job when there is a strip; without one it has
+// to ride the hit, or a rim shot on the bare bus comes back at full level
+const laneTrim = (chan, lane) => (chan && chan.laneIn ? 1
+  : ((DRUMMIX[lane] || {}).lvl != null ? DRUMMIX[lane].lvl : 1));
 export function playDrum(kit, lane, when, acc, vel, chan) {
   const buf = kit && drumBufs.get(kit + "|" + lane);
   if (!buf) return !!kit && inFlight.has("kit:" + kit);
@@ -352,8 +472,22 @@ export function playDrum(kit, lane, when, acc, vel, chan) {
   const c = ctxOf(chan);
   const src = c.createBufferSource(); src.buffer = buf;
   const g = c.createGain();
-  g.gain.value = (acc ? 1 : 0.72) * (0.45 + 0.55 * lvl) * (lane === "p" ? 0.5 : 1);
-  src.connect(g); g.connect((chan && chan.drumIn) || bus);
+  const body = (acc ? 1 : 0.72) * (0.45 + 0.55 * lvl) * laneTrim(chan, lane);
+  // TRANSIENT SHAPING, per hit. A transient designer is two numbers — how much
+  // louder the attack is than the body, and where the body settles — and on a
+  // one-shot fired from a buffer they cost one extra ramp each rather than an
+  // envelope follower and a worklet. `punch` puts the stick back on a snare
+  // whose sample was normalised flat; `sus` under 1 shortens the tail, which is
+  // what keeps hats and toms tight in a room that is now genuinely wet.
+  const m = DRUMMIX[lane] || { punch: 1, sus: 1 };
+  const punch = m.punch != null ? m.punch : 1, sus = m.sus != null ? m.sus : 1;
+  if (punch !== 1 || sus !== 1) {
+    g.gain.setValueAtTime(body * punch, when);
+    g.gain.linearRampToValueAtTime(body, when + DRUMBUS.punchMs);
+    if (sus !== 1)
+      g.gain.linearRampToValueAtTime(body * sus, when + DRUMBUS.punchMs + DRUMBUS.susMs);
+  } else g.gain.value = body;
+  src.connect(g); g.connect(drumDest(chan, lane));
   src.start(when);
   return true;
 }
@@ -374,14 +508,15 @@ export const hz = m => 440 * Math.pow(2, (m - 69) / 12);
 window.__nuFallback = 0;
 export const offFallback = { n: 0 };
 const countFb = c => { if (!ctx || c === ctx) window.__nuFallback++; else offFallback.n++; };
-function nz(t, dur, hp, gain, chan) {
+function nz(t, dur, hp, gain, chan, lane) {
   const c = ctxOf(chan);
   const s = c.createBufferSource(); s.buffer = noise;
   const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp;
   const g = c.createGain();
   g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(.0008, t + dur);
-  // nz is only ever a DRUM noise, so it lands on the channel's drum sub-strip
-  s.connect(f); f.connect(g); g.connect((chan && chan.drumIn) || bus); s.start(t); s.stop(t + dur + .02);
+  // nz is only ever a DRUM noise, so it lands on that LANE's strip — placed and
+  // sent to the room like the sample it stands in for
+  s.connect(f); f.connect(g); g.connect(drumDest(chan, lane)); s.start(t); s.stop(t + dur + .02);
 }
 export function line(t, n, dur, acc, sld, prev, tone, padish, vel, chan) {
   const lvl = (vel == null ? 5 : vel) / 9;
@@ -416,19 +551,33 @@ export function hit(t, d, acc, vel, chan) {
   if (lvl <= 0.001) return;
   const c = ctxOf(chan);
   countFb(c);
-  const dest = (chan && chan.drumIn) || bus;
-  const a = (acc ? 1.15 : .85) * (0.45 + 0.55 * lvl);
+  const dest = drumDest(chan, d);
+  const a = (acc ? 1.15 : .85) * (0.45 + 0.55 * lvl) * laneTrim(chan, d);
   if (d === "k") { const o = c.createOscillator(), g = c.createGain();
     o.frequency.setValueAtTime(126, t); o.frequency.exponentialRampToValueAtTime(43, t + .09);
     g.gain.setValueAtTime(.95 * a, t); g.gain.exponentialRampToValueAtTime(.001, t + .34);
     o.connect(g); g.connect(dest); o.start(t); o.stop(t + .36); }
-  else if (d === "s") { nz(t, .19, 900, .42 * a, chan);
+  else if (d === "s") { nz(t, .19, 900, .42 * a, chan, d);
     const o = c.createOscillator(), g = c.createGain(); o.type = "triangle";
     o.frequency.setValueAtTime(196, t);
     g.gain.setValueAtTime(.3 * a, t); g.gain.exponentialRampToValueAtTime(.001, t + .13);
     o.connect(g); g.connect(dest); o.start(t); o.stop(t + .15); }
-  else if (d === "c") { [0, .011, .023].forEach(o2 => nz(t + o2, .1, 1400, .3 * a, chan)); }
-  else if (d === "o") { nz(t, .26, 6600, .14 * a, chan); }
-  else if (d === "h") { nz(t, .035, 7800, .13 * a, chan); }
-  else if (d === "p") { nz(t, .05, 2600, .16 * a, chan); }
+  else if (d === "c") { [0, .011, .023].forEach(o2 => nz(t + o2, .1, 1400, .3 * a, chan, d)); }
+  else if (d === "o") { nz(t, .26, 6600, .14 * a, chan, d); }
+  else if (d === "h") { nz(t, .035, 7800, .13 * a, chan, d); }
+  else if (d === "p") { nz(t, .05, 2600, .16 * a, chan, d); }
+  // THE SIX NEW LANES GET STUBS TOO. The kit grew to twelve and this stub knew
+  // six of them, so a kit that failed to decode played a fill with holes in it
+  // — silently, since a lane with no branch here simply made no sound. Still a
+  // last resort (every one of these counts as a fallback voice and the audio
+  // gate fails on any of them); still better than a fill missing its toms.
+  else if (d === "t" || d === "m" || d === "l") {
+    const o = c.createOscillator(), g = c.createGain(); o.type = "sine";
+    const f0 = d === "t" ? 260 : d === "m" ? 190 : 130;
+    o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f0 * 0.62, t + .18);
+    g.gain.setValueAtTime(.55 * a, t); g.gain.exponentialRampToValueAtTime(.001, t + .3);
+    o.connect(g); g.connect(dest); o.start(t); o.stop(t + .32); }
+  else if (d === "r") { nz(t, .5, 5200, .1 * a, chan, d); }
+  else if (d === "x") { nz(t, 1.1, 3600, .18 * a, chan, d); }
+  else if (d === "f") { nz(t, .045, 6200, .12 * a, chan, d); }
 }

@@ -6,7 +6,8 @@
 // flips, "transport:section" when the sounding box moves, "status" for the
 // readout line, "refresh" when assets land mid-play — and the views subscribe.
 // The playhead animation reads getPosition() instead of the internals.
-import { GENRES, DTIMES, BASSSYNTH, BASS_INSTR, STRIPS, instrOf } from "../ui/deps.js";
+import { GENRES, DTIMES, BASSSYNTH, BASS_INSTR, STRIPS, stripFor,
+         instrOf } from "../ui/deps.js";
 import { SONG, loopOnly, pendingStart, setPendingStart, bpm, on, emit,
          SLOTS } from "../ui/state.js";
 import { gid, stackOf, boxBars, kitOf, sectionRender } from "../ui/derive.js";
@@ -14,7 +15,7 @@ import { ctx, initAudio, rmsNow, muteNow, unmuteRamp } from "./graph.js";
 import { FONT, fontDef, isSynthFont, loadFont, specOf, zoneBufs, drumBufs,
          instrumentsInSong } from "./assets.js";
 import { synthNodes, synthKey, loadSynth, focusSynths, playSynth, playSampled,
-         playDrum, line, hit, synthDead, countDrop } from "./voices.js";
+         playDrum, line, hit, synthDead, countDrop, playWindow } from "./voices.js";
 import { channelFor, armAutomation } from "./mixer.js";
 import { setDelayTime } from "./graph.js";
 
@@ -28,6 +29,82 @@ let loopStart = 0;
 
 /* ---------- scheduler ---------- */
 let TL = [];
+// ==== REGISTER HOME ========================================================
+// A WHOLE LINE MOVES, OR THE LINE BREAKS. The per-note fold in voices.js is the
+// net under this; it cannot be the whole law here. Measured on the shipped
+// table, sixteen of the twenty-one voices that need a fold STRADDLE their
+// instrument's window — rock's rhythm guitar writes MIDI 22..41 against a
+// guitar window that starts at 40, so a per-note fold would lift sixty-two
+// notes an octave and leave two where they were. The intervals are the music;
+// what may move is the octave the whole part sits in.
+//
+// So: one octave shift per (instrument, chair) per section, chosen to put the
+// most notes inside the window and, among ties, to move the least. This is the
+// parent's REGISTER HOME (csd-engine moves the line by octaves to fit the
+// sampler's zone roots, contour intact) landing in the one place nukernel has
+// that sees a whole line — the compile from section events into bars.
+//
+// The parent rejected phrase-level folding for a reason that does not bind
+// here: live.js maps events through arbitrary beat windows, so a phrase
+// straddling a window boundary would fold differently live than pressed. There
+// are no such windows here — buildTimeline sees the section whole, and the
+// bounce walks the same builder.
+//
+// It rides the event as `home` rather than rewriting `n`, and only the SAMPLED
+// path reads it: a synth font's freq fold is its own law, and the tracker view
+// keeps showing the note that was written. That makes a home-shifted voice a
+// transposing instrument, which is what it is.
+// A line moves only when it is MOSTLY out (over 60% of its notes) and the move
+// puts nearly all of it in (90%). Both bars are there so the home never fires
+// on a line that merely leans over an edge — those notes are the per-note
+// fold's business, and only when they are grossly out (voices.js SOFT_EDGE).
+// Measured over the 45 genres: ten chairs move, all of them the mud and shriek
+// cases (sludge's guitar three octaves under its lowest sample, ska's trumpet
+// two above its highest), and 15 notes of 3,900 fold on their own afterwards.
+const HOME_MAX = 3;                                // ±3 octaves is already absurd
+const HOME_OUT = 0.6, HOME_FIT = 0.9;
+function registerHome(sec, ev) {
+  const memo = new Map();                          // "owner|lv" -> octave shift
+  // gather each chair's notes in one pass, then decide once per chair
+  const notes = new Map();
+  for (const e of ev) {
+    if (e.kind !== "line") continue;
+    const owner = e.layer || gid(sec);
+    const key = owner + "|" + (e.lv == null ? e.v : e.lv);
+    let a = notes.get(key);
+    if (!a) notes.set(key, a = { id: instrOf(owner, e.lv == null ? e.v : e.lv), n: [] });
+    a.n.push(e.n);
+  }
+  for (const [key, a] of notes) {
+    const spec = specOf(a.id), w = spec && playWindow(spec, a.id);
+    if (!w || !a.n.length) { memo.set(key, 0); continue; }
+    const inAt = k => {
+      let inside = 0;
+      for (const n of a.n) { const m = n + 12 * k; if (m >= w[0] - 0.5 && m <= w[1] + 0.5) inside++; }
+      return inside;
+    };
+    const home = inAt(0);
+    if (1 - home / a.n.length <= HOME_OUT) { memo.set(key, 0); continue; }
+    let best = 0, bestIn = home;
+    for (let k = -HOME_MAX; k <= HOME_MAX; k++) {
+      const inside = inAt(k);
+      // strictly better, or as good and a smaller move: the tie-break is what
+      // keeps an already-fitting line exactly where it was written
+      if (inside > bestIn || (inside === bestIn && Math.abs(k) < Math.abs(best))) {
+        bestIn = inside; best = k;
+      }
+    }
+    // no octave of this line is a home — leave it written where it is rather
+    // than move it somewhere that is wrong in a different way
+    memo.set(key, bestIn >= HOME_FIT * a.n.length ? best : 0);
+  }
+  return memo;
+}
+// what the register home did, for the gates and the ?debug readout — a shift
+// nobody can see is a shift nobody can check
+const homeSeen = new Map();                        // "owner|lv" -> octaves moved
+window.__nuHome = () => [...homeSeen.entries()]
+  .map(([chair, oct]) => ({ chair, oct }));
 // PURE over the current state: build and RETURN the bar list. The offline
 // bounce walks its own copy of exactly this — one builder, or the carrier
 // renders a different song from the one the transport plays.
@@ -52,9 +129,16 @@ export function buildTimeline() {
     // scheduled in sequence with lookahead that lands it at exactly the right
     // moment instead of dropping it on the floor.
     const buckets = Array.from({ length: bars }, () => []);
+    // the section's register homes, decided once over the whole event list
+    // (see registerHome) and stamped on the events that carry a chair
+    const home = registerHome(sec, ev);
     for (const e of ev) {
       const b = Math.min(bars - 1, Math.floor(e.t / barSteps));
-      buckets[b].push({ ...e, off: e.t - b * barSteps });
+      const hk = e.kind === "line"
+        ? (e.layer || gid(sec)) + "|" + (e.lv == null ? e.v : e.lv) : null;
+      const oct = hk ? (home.get(hk) || 0) : 0;
+      if (hk && oct) homeSeen.set(hk, oct); else if (hk) homeSeen.delete(hk);
+      buckets[b].push({ ...e, off: e.t - b * barSteps, home: oct * 12 });
     }
     for (let b = 0; b < bars; b++)
       TL2.push({ si, g, barSteps, first: b === 0, ev: buckets[b] });
@@ -217,8 +301,15 @@ export function scheduleBar(bar, sec, chan, kit, when, sd, synthFn) {
       // flaked under IO load. Silence is the design; RMS gates catch it if
       // it ever stops being transient.
       else if (useSyn && synthFn === playSynth && synthDead(gsyn, e.v)) countDrop();
-      else if (!playSampled(id, e.n, at, e.dur * sd, e.vel, 1, chan,
-                            e.pad ? STRIPS.pad : STRIPS.lead)) {
+      // THE STRIP FOLLOWS THE INSTRUMENT, not just the role. Every non-pad
+      // voice used to take the lead strip — 200 Hz high-pass and a 3 dB lift at
+      // 3 kHz — whatever was in the chair, so motown's upright piano lost its
+      // left hand and vaporwave's strings (mean MIDI 42, fundamental 185 Hz)
+      // lost their fundamental to the filter. instruments.js stripFor picks by
+      // family; `pad` still wins outright, because a pad is a pad whoever plays
+      // it. `home` is the register home this section decided for the chair.
+      else if (!playSampled(id, e.n + (e.home || 0), at, e.dur * sd, e.vel, 1, chan,
+                            stripFor(id, e.pad), e.v)) {
         // BOTH voices gone. For a plain sampled genre the oscillator stub is
         // the ancient last resort (and the gate proves it never fires); for a
         // SYNTH-identity genre it is the wrongest sound the page can make —

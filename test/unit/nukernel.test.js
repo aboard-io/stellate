@@ -497,30 +497,72 @@ console.log("walking bass arrives on the next root");
 
 /* ---------------------------------------------------------------- 14. KIT OPERATORS
    A kit operator is total on kits the way a pattern operator is total on
-   patterns. Two of the thirteen (`four`, `offbeat`) are deliberately allowed to
-   WRITE a lane the genre did not have, because putting a kick on every quarter
-   is an idea no rearrangement of the existing lanes can express — so they are
-   the two exceptions, and the test says which. */
-console.log("kit operators are total, and only two of them invent a lane");
+   patterns — and the kit is now TWELVE lanes carrying FOUR vectors each
+   (level · ?chance · ~nudge · !grace), so this section's alphabet widened with
+   it. Three laws, each naming its own exceptions rather than waving at them:
+
+     * ALPHABET. A lane vector is sixteen integers: 0 silent, 1 the old binary
+       "on" (defer to kitVel and then the phrase), 2..9 an explicit velocity.
+       The old check said "0 or 1", which was true only while a ghost snare was
+       unwritable. ?chance is 0..9 odds, ~nudge is signed ninths of a step,
+       !grace is 0..3 leading hits.
+     * WRITES. An operator may write only the lanes it is DECLARED to write
+       below. The list grew from two to twenty, because reaching the six lanes
+       nothing could write was the point of the round — but every entry is
+       named, so a typo that sprays toms through a house beat still fails.
+     * FROM NOTHING. Only the "give this a beat" family may turn an EMPTY kit
+       into a kit. Everything else VARIES a kit and returns {} for {} — the law
+       `roll` always had in its comment and no test could state, and the one
+       that stops a fugue growing a tom fill. */
+console.log("kit operators are total; the alphabet is levels; only the declared write");
 {
-  const WRITES = new Set(["four", "offbeat"]);
+  // WHAT EACH OPERATOR MAY WRITE. A lane the base kit already has is always
+  // allowed (that is varying, not inventing); this is the list of lanes an
+  // operator may bring into existence, one entry per operator that does.
+  const WRITES = {
+    four: ["k"], offbeat: ["h"],
+    ride: ["r"], tomtime: ["l"], pedal: ["f"], opens: ["o"],
+    crash: ["x"], crashback: ["x"],
+    backbeat: ["s"], onthree: ["s"], stickside: ["p"], claps: ["c"],
+    tomfill: ["t", "m", "l"], tomrun: ["t", "m", "l"], tomroll: ["t", "m", "l"],
+    disco: ["k", "o", "c"], stomp: ["k", "c", "h"], tresillo: ["k", "s", "h"],
+    clave: ["p"], amen: ["k", "s", "r", "h"], motorik: ["k", "s", "h"],
+    blast: ["k", "s", "r", "h"],
+  };
+  // ...and the ones that may write a kit onto NO kit at all: the named
+  // patterns and the four-on-the-floor pair. "Give this a beat" is a different
+  // request from "change this beat", and only these eleven answer the first.
+  const FROM_NOTHING = new Set(["four", "offbeat", "crash", "crashback", "disco",
+                                "stomp", "tresillo", "clave", "amen", "motorik", "blast"]);
+  const RANGE = { "": [0, 9], "?": [0, 9], "~": [-4, 4], "!": [0, 3] };
   for (const gk of GK) {
     const g = GENRES[gk], base = g.kit || {};
     for (const [name, op] of Object.entries(K.KITOPS)) {
       const out = op(base);
       ok(out && typeof out === "object", gk + "/" + name + ": did not return a kit");
-      for (const [lane, vec] of Object.entries(out)) {
+      for (const [key, vec] of Object.entries(out)) {
+        const mark = /^[?~!]/.test(key) ? key[0] : "", lane = key.slice(mark ? 1 : 0);
+        ok(!!K.LANES[lane], gk + "/" + name + ": \"" + key + "\" is not a lane or a sidecar");
         ok(Array.isArray(vec) && vec.length === 16,
-           gk + "/" + name + ": lane " + lane + " is not sixteen steps");
-        ok(vec.every(x => x === 0 || x === 1),
-           gk + "/" + name + ": lane " + lane + " left the binary alphabet");
-        ok(WRITES.has(name) || base[lane],
+           gk + "/" + name + ": " + key + " is not sixteen steps");
+        const [lo, hi] = RANGE[mark] || [0, 9];
+        ok(vec.every(x => Number.isInteger(x) && x >= lo && x <= hi),
+           gk + "/" + name + ": " + key + " left the " + lo + ".." + hi + " alphabet");
+        ok(base[lane] || (WRITES[name] || []).includes(lane),
            gk + "/" + name + ": invented lane " + lane + " out of nothing");
+        // a sidecar without its lane is odds for a drum that is not there
+        if (mark) ok(out[lane], gk + "/" + name + ": " + key + " is an orphan sidecar");
       }
       // and it must be a KIT: drums() has to accept whatever comes out
       ok(K.drums(P, { ...g, kit: out, fill: null }, g.bars).length >= 0,
          gk + "/" + name + ": drums() would not read the result");
     }
+    // THE EMPTY KIT is the law's other half, and it is checked on every genre
+    // because a kitless genre is exactly where it matters
+    for (const [name, op] of Object.entries(K.KITOPS))
+      ok((Object.keys(op({})).length > 0) === FROM_NOTHING.has(name),
+         name + ": " + (FROM_NOTHING.has(name) ? "declared a writer but left {} empty"
+                                               : "conjured a kit out of an empty one"));
     // the subtractive ones actually subtract
     ok(!("k" in K.KITOPS.nokick(base)), gk + ": nokick left a kick");
     ok(!Object.keys(K.KITOPS.nodrums(base)).length, gk + ": nodrums left a lane");
@@ -1233,7 +1275,7 @@ console.log("neutrality — absent equals neutral for every new field");
   for (const gk of ["acid", "fugue", "vaporwave", "gregorian", "rock"]) {
     const g = GENRES[gk];
     const neutral = { ...g, maxHold: 0, key: 0, period: null, kits: null,
-                      kitVel: null, prog: null, pipes: null, part: null };
+                      kitVel: null, prog: null, pipes: null, part: null, anchor: 0 };
     ok(sig2(allEvents(P, g, g.bars)) === sig2(allEvents(P, neutral, g.bars)),
        gk + ": neutral values do not render identically to absent fields");
   }
@@ -2419,6 +2461,609 @@ console.log("variable banks — round trip at any size, migrate 8->N, reference 
   ok(from.length >= 1, "zero-velocity drum events come from: " + from.join(", "));
 }
 console.log("a hit at zero is a hit — the kernel emits silent drum events on purpose");
+
+/* ---------- 37b. THE FULL KIT ---------------------------------------------
+   THE ARTIST: "There are many different drum sets. You are not using them."
+   Literally true and measurable: found/samples/drums/<kit>/ has carried twelve
+   samples per kit since extraction and instruments.js named six, so there were
+   no toms, no ride, no crash and no pedal hat anywhere in the instrument, and
+   kernel.js spelled its crashes "o" — an open hat — because there was no
+   cymbal lane to write.
+
+   Every check below reads RENDERED EVENTS, not config, because that is the
+   house law this suite exists to enforce: an operator that returns a lovely
+   kit nothing plays is the same bug as the dead ghost layer. Each operator's
+   DOCUMENTED SIGNATURE is the thing asserted — a tom fill puts toms in the
+   last quarter, linear means no two lanes on a tick, humanize moves times and
+   not counts, a chance vector is the same dice every render. */
+console.log("the full kit — twelve lanes, four vectors, and what each operator does");
+{
+  const NF = require("../../nukernel/fields.js");
+  const NC = require("../../nukernel/compose.js");
+  const drumsOf = (g, bars) => K.drums(P, g, bars == null ? g.bars : bars);
+  const lanesIn = ev => new Set(ev.map(e => e.d));
+  const at16 = (t, bs) => Math.round(((t % bs) + bs) % bs * 16 / bs);
+  // A KIT WITH SOMETHING IN EVERY HAND: a kick, a backbeat, and a hat figure
+  // that is FOUR-periodic on purpose — straight eighths are their own rotation
+  // by two and their own densification, so a degenerate hat lane would report
+  // three working operators as dead ones.
+  const BASE = { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+                 s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+                 h: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1] };
+  const G1 = { ...GENRES.simple, kit: BASE, kits: null, fill: null, ghost: null,
+               kitVel: null, bars: 2, rate: 1 };
+  const play = kit => K.drums(P, { ...G1, kit }, 2);
+  const opEv = name => play(K.KITOPS[name](BASE));
+
+  // (a) THE REGISTRY AGREES WITH THE KERNEL. A lane the kernel can write and
+  // instruments.js cannot name is a silent drum — the browser's fallback
+  // oscillator, which the audio gate fails on.
+  {
+    const NI = require("../../nukernel/instruments.js");
+    const NF2 = require("../../nukernel/fields.js");
+    const NG2 = require("../../nukernel/genres.js");
+    ok(Object.keys(K.LANES).length === 12, "the kit is not twelve lanes");
+    for (const d of Object.keys(K.LANES)) {
+      ok(NI.DRUMFILE[d], "lane " + d + " (" + K.LANES[d].name + ") has no sample file");
+      ok(NF2.DRUMLANES[d], "lane " + d + " has no name in the field registry");
+      ok(NG2.DRUMNAME[d], "lane " + d + " has no column heading in DRUMNAME");
+    }
+    for (const d of Object.keys(NI.DRUMFILE))
+      ok(K.LANES[d], "DRUMFILE names \"" + d + "\", which is not a lane");
+    // ...and the genre table cannot name one either. drums() skips a key it
+    // does not recognise, so a typo'd lane letter in genres.js is a drum part
+    // that never plays and never complains — this is the check that says so.
+    for (const gk of GK) {
+      const g = GENRES[gk];
+      for (const kit of [g.kit, g.fill, ...(g.kits || [])])
+        for (const key of Object.keys(kit || {}))
+          ok(K.LANES[key.replace(/^[?~!]/, "")],
+             gk + ": kit key \"" + key + "\" is not a lane — it will never sound");
+      for (const d of Object.keys(g.kitVel || {}))
+        ok(K.LANES[d], gk + ": kitVel names \"" + d + "\", which is not a lane");
+      for (const d of Object.keys(g.kitProb || {}))
+        ok(K.LANES[d], gk + ": kitProb names \"" + d + "\", which is not a lane");
+    }
+    // ...and the files really are on disk, in every kit, when the media layer
+    // is present. CI runs with no found/ at all, so this is skipped rather
+    // than faked — the registry checks above still hold there.
+    const fs = require("fs"), path = require("path");
+    const root = path.join(__dirname, "..", "..", "found", "samples", "drums");
+    if (fs.existsSync(root))
+      for (const kit of fs.readdirSync(root).filter(x => !x.startsWith(".")))
+        for (const [d, file] of Object.entries(NI.DRUMFILE))
+          ok(fs.existsSync(path.join(root, kit, file)),
+             kit + " has no " + file + " for lane " + d);
+  }
+
+  // (b) EVERY LANE IS REACHABLE — in a rendered stream, from the shipped
+  // vocabulary alone. Six of them had no way in at all before this round.
+  {
+    const seen = new Set();
+    for (const gk of GK) for (const e of drumsOf(GENRES[gk])) seen.add(e.d);
+    const fromGenres = new Set(seen);
+    for (const name of Object.keys(K.KITOPS)) for (const e of opEv(name)) seen.add(e.d);
+    const bs = 16, span = 2 * bs;
+    const stream = play(BASE).map(e => ({ ...e, kind: "hit" }));
+    for (const kind of Object.keys(NF.OUTLABEL))
+      for (const e of K.outro(stream, kind, span, bs)) if (e.d) seen.add(e.d);
+    for (const kind of Object.keys(NF.INLABEL))
+      for (const e of K.intro(stream, kind, span, bs)) if (e.d) seen.add(e.d);
+    for (const d of Object.keys(K.LANES))
+      ok(seen.has(d), "lane " + d + " (" + K.LANES[d].name + ") is unreachable — " +
+         "no genre, operator or edge can produce one");
+    // and the genre table itself must use more than the old six, or the kit
+    // grew only in the palette
+    for (const d of ["r", "x", "t", "m", "l", "f"])
+      ok(fromGenres.has(d), "no genre plays a " + K.LANES[d].name + " — the new lanes " +
+         "exist but the table was never wired to them");
+  }
+
+  // (c) THE OPERATORS' DOCUMENTED SIGNATURES, one assertion per claim.
+  {
+    const base = play(BASE);
+    // RIDE — the timekeeping hand moves, and it is one hand: the hats are gone
+    // and the ride has exactly the hits they had.
+    const ride = opEv("ride");
+    ok(!lanesIn(ride).has("h") && lanesIn(ride).has("r"), "ride: the hats did not move");
+    ok(ride.filter(e => e.d === "r").length === base.filter(e => e.d === "h").length,
+       "ride: the ride is not playing what the hats played");
+    ok(ride.filter(e => e.d === "k").length === base.filter(e => e.d === "k").length,
+       "ride: the kick moved too — only the timekeeping hand may");
+    // TOM FILL — toms, in the last quarter of every bar, and the hand that was
+    // keeping time is off it there
+    const tf = opEv("tomfill");
+    for (const b of [0, 1]) {
+      const q = tf.filter(e => e.t >= b * 16 + 12 && e.t < (b + 1) * 16);
+      ok(q.some(e => K.TOMS.includes(e.d)), "tomfill: bar " + b + " has no toms in the last quarter");
+      ok(!q.some(e => e.d === "h"), "tomfill: the hats are still playing over the fill");
+      ok(!tf.some(e => K.TOMS.includes(e.d) && at16(e.t, 16) < 12),
+         "tomfill: a tom landed outside the last quarter");
+    }
+    // ...and the OUTRO tom fill is the once-a-section one: the last bar only
+    {
+      const bs = 16, span = 4 * bs;
+      const ev = K.drums(P, { ...G1, bars: 4 }, 4).map(e => ({ ...e, kind: "hit" }));
+      const out = K.outro(ev, "tomfill", span, bs);
+      ok(out.some(e => K.TOMS.includes(e.d) && e.t >= span - bs),
+         "outro tomfill: no toms in the last bar");
+      ok(!out.some(e => K.TOMS.includes(e.d) && e.t < span - bs),
+         "outro tomfill: toms leaked into the section");
+      ok(out.some(e => e.d === "x"), "outro tomfill: it does not land on a crash");
+      ok(JSON.stringify(out.filter(e => e.t < span - bs)) ===
+         JSON.stringify(ev.filter(e => e.t < span - bs)),
+         "outro tomfill changed the section before its own bar");
+    }
+    // LINEAR — no two lanes on one tick, which is the whole definition
+    {
+      const lin = opEv("linear"), byT = new Map();
+      for (const e of lin) byT.set(e.t, (byT.get(e.t) || 0) + 1);
+      ok([...byT.values()].every(n => n === 1),
+         "linear: two limbs landed on the same tick");
+      ok(lin.length > 0 && lin.length < base.length,
+         "linear: nothing was taken away — it is a constraint, not a colour");
+      // it keeps the kick's downbeat: the dealing order is the drummer's
+      ok(lin.some(e => e.d === "k" && e.t === 0), "linear: the kick lost the downbeat");
+    }
+    // GHOSTS — quiet snares that were not there, and the loud ones untouched
+    {
+      const gh = opEv("ghosts"), sn = e => e.d === "s";
+      ok(gh.filter(sn).length > base.filter(sn).length, "ghosts: no snares were added");
+      ok(gh.filter(sn).some(e => e.vel === 2), "ghosts: the added snares are not ghosts");
+      ok(gh.filter(e => sn(e) && e.t % 4 === 0).length === base.filter(sn).length,
+         "ghosts: the backbeat was rewritten");
+    }
+    // FLAM and DRAG — one and two grace hits before every snare, each quieter
+    // than the hit it leads and landing in front of it
+    for (const [name, n] of [["flams", 1], ["drags", 2]]) {
+      const ev = opEv(name), sn = ev.filter(e => e.d === "s");
+      ok(sn.length === base.filter(e => e.d === "s").length * (n + 1),
+         name + ": not " + n + " grace hit(s) per snare");
+      for (const e of sn.filter(x => x.grace)) {
+        ok(e.vel < 9 && e.vel >= 1, name + ": a grace note is not quieter");
+        ok(sn.some(x => !x.grace && x.t > e.t && x.t - e.t <= 0.4),
+           name + ": a grace note does not lead a hit");
+      }
+    }
+    // KICK DOUBLES, CRASH, the snare placements — each is one claim
+    ok(opEv("kickdoubles").filter(e => e.d === "k").length >
+       base.filter(e => e.d === "k").length, "kickdoubles: no doubles");
+    ok(opEv("crash").some(e => e.d === "x" && e.t === 0 && e.vel === 9),
+       "crash: no crash on the downbeat");
+    ok(opEv("backbeat").filter(e => e.d === "s").every(e => at16(e.t, 16) % 8 === 4),
+       "backbeat: the snare is not on 2 and 4");
+    ok(opEv("onthree").filter(e => e.d === "s").every(e => at16(e.t, 16) === 8),
+       "onthree: the snare is not on 3 alone");
+    ok(!lanesIn(opEv("stickside")).has("s") && lanesIn(opEv("stickside")).has("p"),
+       "stickside: the snare hand did not turn the stick over");
+    ok(lanesIn(opEv("pedal")).has("f"), "pedal: no pedal hat");
+    ok(lanesIn(opEv("opens")).has("o"), "opens: the hat never opens");
+    // DYNAMICS — the level operators change velocity and nothing else
+    for (const name of ["accents", "crescendo", "soft", "loud"]) {
+      const ev = opEv(name);
+      ok(ev.length === base.length, name + ": changed the event COUNT — it is a level");
+      ok(ev.map(e => e.t).join() === base.map(e => e.t).join(),
+         name + ": moved a hit — it is a level");
+      ok(ev.map(e => e.vel).join() !== base.map(e => e.vel).join(),
+         name + ": did not change a single velocity");
+    }
+    ok(opEv("loud").every(e => e.vel === 9) && opEv("soft").every(e => e.vel === 3),
+       "soft/loud are not the two ends of the level alphabet");
+    // HUMANIZE — moves times, never counts; and it is the same take every time
+    {
+      const hu = opEv("humanize");
+      ok(hu.length === base.length, "humanize: added or removed a hit");
+      ok(hu.map(e => e.d).sort().join() === base.map(e => e.d).sort().join(),
+         "humanize: the lanes changed");
+      ok(hu.some((e, i) => e.t !== base[i].t), "humanize: nothing moved off the grid");
+      ok(hu.every(e => Math.abs(e.t - Math.round(e.t)) < 0.5),
+         "humanize: a hit strayed more than half a step");
+      ok(JSON.stringify(hu) === JSON.stringify(opEv("humanize")),
+         "humanize: two renders differ — the hand is not seeded");
+      // ...and the per-BAR field version moves bar 2 differently from bar 1
+      const field = K.drums(P, { ...G1, humanize: 0.08 }, 2);
+      ok(field.length === base.length, "g.humanize: added or removed a hit");
+      const shift = b => field.filter(e => Math.floor(e.t / 16) === b)
+        .map((e, i) => +(e.t - base.filter(x => Math.floor(x.t / 16) === b)[i].t).toFixed(4));
+      ok(shift(0).join() !== shift(1).join(),
+         "g.humanize: bar 2 is nudged exactly like bar 1 — that is a vector, not a hand");
+      ok(field.every(e => e.t >= 0 && e.t < 32), "g.humanize: a hit left its section");
+      // every hit stays in the bar it was written in, or the fill moves house
+      ok(field.every((e, i) => Math.floor(e.t / 16) === Math.floor(base[i].t / 16)),
+         "g.humanize: a hit crossed a bar line");
+    }
+    // TIGHT is the inverse, and it really is the machine: every hit on the
+    // grid, every level back to "just play it"
+    {
+      const ti = play(K.KITOPS.tight(K.KITOPS.humanize(BASE)));
+      ok(ti.every(e => Number.isInteger(e.t)), "tight: a hit is still off the grid");
+      ok(ti.length === base.length, "tight: the hits themselves changed");
+    }
+    // PROBABILITY — deterministic per seed, different across seeds, and it
+    // only ever removes. This is the one operator whose bar 2 differs.
+    {
+      const mk = seed => K.drums(P, { ...G1, kit: K.KITOPS.maybe(BASE), kitSeed: seed }, 8);
+      const a = mk(0), b2 = mk(0), c = mk(9);
+      ok(sig(a) === sig(b2), "maybe: two renders of one seed differ");
+      ok(sig(a) !== sig(c), "maybe: the seed does not reach the dice");
+      const full = K.drums(P, { ...G1, kit: BASE }, 8);
+      ok(a.length < full.length, "maybe: nothing was ever dropped");
+      ok(a.length > full.length * 0.5, "maybe: it dropped more than half the kit");
+      const bar = n => a.filter(e => Math.floor(e.t / 16) === n).length;
+      ok([0, 1, 2, 3, 4, 5, 6, 7].map(bar).some(n => n !== bar(0)),
+         "maybe: every bar drops the same hits — the draw is not per bar");
+      // the kick and the downbeats are exempt by declaration
+      ok(a.filter(e => e.d === "k").length === full.filter(e => e.d === "k").length,
+         "maybe: the kick was thinned, and it is declared exempt");
+      // chaos is the heavier hand
+      const ch = K.drums(P, { ...G1, kit: K.KITOPS.chaos(BASE) }, 8);
+      ok(ch.length < a.length, "chaos is not heavier than maybe");
+    }
+    // PER-LANE — the seven verbs touch one lane and leave the rest alone
+    for (const d of ["k", "s", "h"]) {
+      for (const verb of ["rot", "thin", "dens", "half", "dbl", "roll", "disp"]) {
+        const name = d + "." + verb, ev = opEv(name);
+        ok(K.KITOPS[name], name + " is not in the operator table");
+        for (const other of ["k", "s", "h"].filter(x => x !== d))
+          ok(JSON.stringify(ev.filter(e => e.d === other)) ===
+             JSON.stringify(base.filter(e => e.d === other)),
+             name + ": it moved the " + K.LANES[other].name);
+        ok(JSON.stringify(ev.filter(e => e.d === d)) !==
+           JSON.stringify(base.filter(e => e.d === d)),
+           name + ": it did nothing to its own lane");
+      }
+      // thin really thins, dens really fills, disp moves time and not the grid
+      ok(opEv(d + ".thin").filter(e => e.d === d).length <
+         base.filter(e => e.d === d).length, d + ".thin: no thinner");
+      ok(opEv(d + ".dens").filter(e => e.d === d).length >
+         base.filter(e => e.d === d).length, d + ".dens: no denser");
+      const dp = opEv(d + ".disp").filter(e => e.d === d);
+      ok(dp.length === base.filter(e => e.d === d).length, d + ".disp: added a hit");
+      ok(dp.every(e => !Number.isInteger(e.t)), d + ".disp: nothing was laid back");
+    }
+    // THE NAMED PATTERNS are five different beats, not five labels
+    {
+      const named = ["disco", "stomp", "tresillo", "clave", "amen", "motorik", "blast"];
+      const sigs = new Set(named.map(n => sig(opEv(n))));
+      ok(sigs.size === named.length, "two named patterns render identically");
+      ok(opEv("amen").some(e => e.vel === 2), "the amen break has no ghost snares");
+      ok(lanesIn(opEv("blast")).has("r"), "the blast beat is not ridden");
+    }
+  }
+
+  // (d) NEUTRALITY, the widening's half of the house law: a level of 1 is the
+  // old binary "on", an absent sidecar is no sidecar, and the three new genre
+  // fields are inert when unset. If any of this moves, every saved song moves.
+  {
+    const g0 = { ...G1 };
+    ok(sig(K.drums(P, g0, 4)) ===
+       sig(K.drums(P, { ...g0, kitProb: null, humanize: 0, kitSeed: 0 }, 4)),
+       "the new kit fields are not neutral when absent");
+    // level 1 renders exactly as the binary vector it replaced
+    const ones = K.mapKit(BASE, v => v.map(x => (x ? 1 : 0)));
+    ok(sig(K.drums(P, { ...g0, kit: ones }, 4)) === sig(K.drums(P, g0, 4)),
+       "a level-1 kit is not the old binary kit");
+    // a chance of 9 is certainty; a chance of 0 is silence
+    const all9 = { ...BASE, "?h": new Array(16).fill(9) };
+    ok(K.drums(P, { ...g0, kit: all9 }, 4).length === K.drums(P, g0, 4).length,
+       "a chance of 9 dropped a hit");
+    const none = { ...BASE, "?h": new Array(16).fill(0) };
+    ok(!K.drums(P, { ...g0, kit: none }, 4).some(e => e.d === "h"),
+       "a chance of 0 still played");
+    // the sidecars are not lanes: nothing named "?h" is ever an event
+    ok(!K.drums(P, { ...g0, kit: all9 }, 4).some(e => !K.LANES[e.d]),
+       "a sidecar was rendered as a drum");
+  }
+
+  // (e) FILL VARIETY — the artist's other complaint, one layer up. Every
+  // composed song used to end every section with the same accelerating snare;
+  // the arranger now deals outro kinds from a family ballot on its own salted
+  // stream, so a genre varies across seeds AND genres differ from each other.
+  {
+    const kindsFor = gk => {
+      const s2 = new Set();
+      for (let seed = 1; seed <= 12; seed++)
+        for (const b of NC.compose(gk, seed).song) if (b.outro) s2.add(b.outro);
+      return s2;
+    };
+    const kitted = GK.filter(gk => Object.keys(GENRES[gk].kit || {}).length);
+    for (const gk of kitted) {
+      const ks = kindsFor(gk);
+      ok(ks.size >= 4, gk + ": only " + ks.size + " kind(s) of ending across twelve " +
+         "seeds — the fills are not varying");
+      ok([...ks].some(k => ["tomfill", "hatrun", "hush", "doubles"].includes(k)),
+         gk + ": never reaches a fill that is not a snare roll");
+    }
+    // ...and two genres do not end alike: the ballots are per family
+    const rock = [...kindsFor("rock")].sort().join(), club = [...kindsFor("house")].sort().join();
+    ok(rock !== club, "rock and house end their sections with the same vocabulary");
+    // a kitless genre never gets handed a drum fill
+    for (const gk of GK.filter(g2 => !Object.keys(GENRES[g2].kit || {}).length))
+      for (const k of kindsFor(gk))
+        ok(["tail", "cut", "hush", "crash", "break"].includes(k),
+           gk + " has no drums but was given the \"" + k + "\" ending");
+    // the kit chips the arranger reaches for are real operators, and it uses
+    // more than the eight it knew before the kit grew
+    const kits = new Set();
+    for (const gk of kitted) for (let seed = 1; seed <= 8; seed++)
+      for (const b of NC.compose(gk, seed).song) if (b.kit) kits.add(b.kit);
+    for (const k of kits) ok(K.KITOPS[k], "the arranger deals \"" + k + "\", which is not an operator");
+    ok(kits.size >= 20, "the arranger reaches for only " + kits.size + " kit operators " +
+       "out of " + Object.keys(K.KITOPS).length);
+  }
+}
+
+/* ---------- 38. THE DISSONANCE CENSUS -------------------------------------
+   THE EARS SAID "TANGO IS INHARMONIC. COUNTERPOINT IS INHARMONIC." Nothing in
+   this suite could have caught that: every check above asks whether a value
+   reaches the output, and a wrong note reaches the output perfectly. So this
+   section measures the one thing none of the others do — what the notes sound
+   like AGAINST EACH OTHER — over every genre, several composed seeds, and both
+   the one-phrase box and the multi-phrase box, with the phrases DEALT ACROSS
+   VOICES exactly as ui/derive.js deals them (voice v gets phrase v % n; render
+   every voice from one phrase and the lines move in lockstep, which hides
+   every clash that only exists because two parts move independently).
+
+   Four measurements, all normalized per bar or per sounding moment:
+     (a) ic1   simultaneous SEMITONE collisions       (minor 2nd / major 7th)
+     (b) ic6   simultaneous TRITONE collisions
+     (c) nct%  non-chord AND non-scale tones landing on strong beats
+     (d) mb/mp the (a)+(b) weight that is melody-vs-BASS and melody-vs-PAD
+
+   HOW A PREPARED DISSONANCE IS TOLD FROM A WRONG NOTE, which is the whole
+   reason this is a census and not a clash counter. A fugue's suspensions and a
+   blues' passing tones are CORRECT and must not be scored. Four rules, applied
+   in order to every overlapping pair:
+
+     1. THE CHORD'S OWN COLOUR IS NOT A CLASH. If both pitch classes are in the
+        sounding chord, the dissonance is the chord — a maj7 owns an ic1, a
+        dom7 owns an ic6 — and twelve bars of blues must not read as twelve
+        bars of mistake.
+     2. THE ACCUSED IS THE NOTE OUTSIDE THE CHORD. If neither is in it, the one
+        that entered LAST is the dissonance against the standing note; and a
+        pad or stab voice is never the accused while a line is available, since
+        its notes ARE the harmony by construction.
+     3. PREPARED AND RESOLVED IS FORGIVEN. Approached by step (or tied over)
+        AND left by step is a suspension, a passing tone or a neighbour — the
+        species-counterpoint licence — and scores zero. So does an APPROACH
+        TONE with no preparation at all: a note that steps into a chord tone of
+        the chord it lands in is an appoggiatura, and it is the definition of a
+        walking bass's fourth beat. (Without that clause the walk read as the
+        worst clash in the table, which was a census bug and not a genre one.)
+     4. WHAT IS LEFT IS A WRONG NOTE: leapt into, leapt out of, and outside the
+        harmony. Weighted by how long the two actually overlap, and discounted
+        with register — a minor second inside one octave is the complaint; the
+        same interval class three octaves apart is a colour.
+
+   WHAT IT FOUND, and both were confirmed before anything was theorized:
+     * COUNTERPOINT was the worst genre in the table that is not supposed to be
+       dissonant. Both voices play the same rhythm, so invert(c) makes their
+       degrees SUM to a constant and the vertical interval is a function of the
+       sum alone; sums 2, 3 and 6 (mod 7) are the only three that put a
+       semitone or a tritone on a common degree, and the word used 6 and 2.
+     * TANGO held minor ninths against its own pad in half its bars: `diatonic`
+       keeps the line in the key, the dominant is the one chord in a minor key
+       whose scale is NOT the tonic's, and the answering voice's transpose(-2)
+       is a third below the SCALE rather than below the chord.
+   Fixes: the axis (genres.js) and `anchor` (kernel.js). Census after: 2.00 ->
+   0.00 and 1.19 -> 0.40.
+
+   THE GATE. BASELINE is the measured value of every genre, not a wish; the
+   ceiling is baseline x 1.5 + 0.20 applied identically to all 45, so a genre
+   that regresses into clashiness fails AND IS NAMED while ordinary churn does
+   not. On top of that one absolute BAR, set at the 90th percentile of the
+   measured distribution rounded up to the next 0.25 — and the only way past it
+   is the ALLOW list, one entry with one reason, never a higher bar.
+   `NUKERNEL_CENSUS=1` prints the full ranked table of all 45. */
+console.log("dissonance census — what the notes sound like against each other");
+{
+  const C = require("../../nukernel/compose.js");
+  const pcOf = n => ((n % 12) + 12) % 12;
+  const ICv = (a, b) => { const d = Math.abs(a - b) % 12; return Math.min(d, 12 - d); };
+
+  // ui/derive.js's deal, plus the bass (which follows the first phrase there too)
+  const dealt = (g, phs, bars) => {
+    const out = [];
+    phs.forEach((ph, pi) => {
+      for (const e of K.render(ph, g, bars)) if (e.v % phs.length === pi) out.push(e);
+    });
+    for (const e of K.bass(phs[0], g, bars)) out.push({ ...e, part: "bass", v: -1 });
+    return out.filter(e => e.n != null && e.dur > 0).sort((a, b) => a.t - b.t || a.n - b.n);
+  };
+
+  function measure(g, phs, bars) {
+    const ph = phs[0], NN = ph.deg.length, rate = g.rate, key = g.key | 0;
+    const ev = dealt(g, phs, bars);
+    if (!ev.length) return null;
+
+    // chords, KEYED — render adds g.key to every pitch and chordsOf does not
+    const cache = new Map();
+    const chordAt = t => {
+      const step = t * rate, bar = Math.floor(step / NN + 1e-9);
+      let cs = cache.get(bar);
+      if (!cs) {
+        cs = K.chordsOf(ph, g, bar).map(c =>
+          ({ ...c, pcSet: new Set(c.pcs.map(n => pcOf(n + key))) }));
+        cache.set(bar, cs);
+      }
+      const s = ((step % NN) + NN) % NN;
+      return cs.find(c => s >= c.start - 1e-9 && s < c.start + c.len) || cs[cs.length - 1];
+    };
+
+    const byV = new Map();
+    for (const e of ev) { if (!byV.has(e.v)) byV.set(e.v, []); byV.get(e.v).push(e); }
+    const idxOf = new Map();
+    for (const [, list] of byV) list.forEach((e, i) => idxOf.set(e, i));
+    const neighbours = e => {
+      const list = byV.get(e.v), i = idxOf.get(e);
+      let prev = null, next = null;
+      for (let j = i - 1; j >= 0; j--)
+        if (list[j].t < e.t - 1e-9) { if (!prev || list[j].t > prev.t) prev = list[j]; else break; }
+      for (let j = i + 1; j < list.length; j++) if (list[j].t > e.t + 1e-9) { next = list[j]; break; }
+      return { prev, next };
+    };
+    // RULES 3 AND 4, in order
+    const verdict = a => {
+      const { prev, next } = neighbours(a);
+      const prepared = prev && Math.abs(a.n - prev.n) <= 2;    // tied over, or stepped into
+      const stepOut = next && Math.abs(next.n - a.n) <= 2;
+      if (prepared && stepOut) return "ok";                    // suspension / passing / neighbour
+      if (stepOut && chordAt(next.t).pcSet.has(pcOf(next.n))) return "ok";   // appoggiatura
+      if (!scalePcs.has(pcOf(a.n))) return "wrong";            // out of key AND unresolved
+      if (prepared || stepOut) return "ok";                    // in key, connected one side
+      return "wrong";                                           // in key, leapt to and left
+    };
+
+    const scalePcs = new Set();
+    for (const d of (g.scale || K.PENT)) scalePcs.add(pcOf(d + key));
+    for (const d of (g.mode || K.MODE)) scalePcs.add(pcOf(d + key));
+
+    const out = { bars, ic1: 0, ic6: 0, ic1raw: 0, ic6raw: 0, nct: 0, notes: 0,
+                  mb: 0, mp: 0, all: 0, worst: [] };
+    const chordy = p => p === "pad" || p === "stab";
+    const active = [];
+    for (const e of ev) {
+      for (let i = active.length - 1; i >= 0; i--)
+        if (active[i].t + active[i].dur <= e.t + 1e-9) active.splice(i, 1);
+      for (const o of active) {
+        const ov = Math.min(o.t + o.dur, e.t + e.dur) - e.t;
+        if (ov <= 1e-9) continue;
+        const dur = Math.min(ov * rate, 4);            // steps of overlap, capped
+        out.all += dur;                                // the denominator: all sonority
+        const ic = ICv(o.n, e.n);
+        if (ic !== 1 && ic !== 6) continue;
+        const gap = Math.abs(o.n - e.n);
+        const w = dur * (gap <= 15 ? 1 : gap <= 27 ? 0.5 : 0.25);
+        if (ic === 1) out.ic1raw += w; else out.ic6raw += w;
+        const c = chordAt(e.t);
+        const inO = c.pcSet.has(pcOf(o.n)), inE = c.pcSet.has(pcOf(e.n));
+        if (inO && inE) continue;                      // rule 1
+        let acc = !inE ? e : o;                        // rule 2
+        if (!inO && !inE) acc = o.t > e.t ? o : e;
+        let other = acc === e ? o : e;
+        if (chordy(acc.part) && !chordy(other.part)) { const t = acc; acc = other; other = t; }
+        if (verdict(acc) !== "wrong") continue;
+        if (ic === 1) out.ic1 += w; else out.ic6 += w;
+        if (acc.part === "bass" || other.part === "bass") out.mb += w;
+        if (chordy(acc.part) || chordy(other.part)) out.mp += w;
+        out.worst.push({ w, ic, step: acc.t * rate, n: acc.n, on: other.n,
+                         who: (acc.part || "line") + " vs " + (other.part || "line") });
+      }
+      active.push(e);
+    }
+    // (c) a foreign tone on a strong beat: in neither the chord nor the key
+    for (const e of ev) {
+      if (chordy(e.part) || e.part === "bass") continue;
+      const step = e.t * rate;
+      if (Math.abs(step - Math.round(step)) > 1e-6 || Math.round(step) % 4 !== 0) continue;
+      out.notes++;
+      const pc = pcOf(e.n);
+      if (!chordAt(e.t).pcSet.has(pc) && !scalePcs.has(pc)) out.nct++;
+    }
+    return out;
+  }
+
+  // THE MATERIAL: the seed phrase plus the composer's own bank at four seeds,
+  // each read twice — as a one-phrase box and as a multi-phrase one
+  const SEEDS = [1, 5, 7, 11], KINDS = [0, 1, 2, 3, 5];   // hook answer riff counter topline
+  function census(gk) {
+    const g = GENRES[gk], bars = Math.max(4, g.bars), sets = [[DEFAULT]];
+    for (const s of SEEDS) {
+      const sl = C.compose(gk, s).slots;
+      sets.push(KINDS.map(i => sl[i]));
+      sets.push([sl[0]]);
+    }
+    const tot = { ic1: 0, ic6: 0, ic1raw: 0, ic6raw: 0, nct: 0, mb: 0, mp: 0,
+                  bars: 0, all: 0, notes: 0 };
+    const worst = [];
+    for (const set of sets) {
+      const m = measure(g, set.slice(0, Math.max(1, g.voices)), bars);
+      if (!m) continue;
+      for (const k of Object.keys(tot)) if (k !== "bars") tot[k] += m[k];
+      tot.bars += m.bars;
+      worst.push(...m.worst);
+    }
+    const per = k => (tot.bars ? tot[k] / tot.bars : 0);
+    return { gk, pct: tot.all ? 100 * (tot.ic1 + tot.ic6) / tot.all : 0,
+             ic1: per("ic1"), ic6: per("ic6"), ic1raw: per("ic1raw"), ic6raw: per("ic6raw"),
+             nct: tot.notes ? 100 * tot.nct / tot.notes : 0, mb: per("mb"), mp: per("mp"),
+             worst: worst.sort((a, b) => b.w - a.w).slice(0, 5) };
+  }
+
+  // THE MEASURED DISTRIBUTION — every genre's own number, re-baked with
+  // `NUKERNEL_CENSUS=1` when a deliberate change moves one. Not a wish list:
+  // blues really is at 3.95 and simple really is at 0.
+  const BASELINE = {
+    blues: 3.95, spem: 2.17, deathmetal: 1.73, shoegaze: 1.72, vaporwave: 1.64,
+    ambient: 1.46, garage: 1.43, sludge: 1.27, steely: 1.04, countrypop: 0.89,
+    eurythmics: 0.75, bulgarian: 0.74, isley: 0.72, afrobeat: 0.63, funk: 0.61,
+    punk: 0.55, ska: 0.52, rnb: 0.46, beatles: 0.43, postrock: 0.43,
+    tango: 0.40, drone: 0.35, jodeci: 0.28, disco: 0.27, bossa: 0.23,
+    neoclassical: 0.19, toto: 0.17, motown: 0.15, citypop: 0.11, house: 0.09,
+    newwave: 0.07, synthpop: 0.05, boombap: 0.04, gospel: 0.03, rock: 0.03,
+    simple: 0, fugue: 0, acid: 0, gregorian: 0, counterpoint: 0,
+    trap: 0, dnb: 0, reggae: 0, dub: 0, techno: 0,
+  };
+  const ceilOf = b => b * 1.5 + 0.20;      // one headroom rule for all 45
+
+  // THE BAR — the 90th percentile of the measured distribution above, rounded
+  // up to the next 0.25. Derived, not chosen: recompute it when the table is
+  // re-baked. Everything over it must be on ALLOW.
+  const BAR = 1.5;
+  // LEGITIMATELY DISSONANT, one reason each. This list is the ONLY way past
+  // the bar; raising the bar to admit a genre would exempt all forty-five.
+  const ALLOW = {
+    blues: "the ♭5 blue note is in the subject's scale and in none of the " +
+           "twelve dominant sevenths — the flat third against the major IV is the sound",
+    spem: "eight independent voices under `emergent` harmony: the chord the census " +
+          "measures against is a triad no voice plays, and Renaissance polyphony " +
+          "is collision by construction",
+    deathmetal: "locrian, where the tonic sonority is itself a tritone — the ♭5 is home",
+    shoegaze: "the genre IS a held second: both guitars play the same phrase one " +
+              "degree apart, which its own entry calls detune as counterpoint",
+    vaporwave: "the semitone follow lands a pentatonic minor third over a major III — " +
+               "the blues' mechanism exactly, and the haze is the point",
+  };
+
+  const rows = GK.map(census).sort((a, b) => b.pct - a.pct);
+  const f = x => x.toFixed(2).padStart(7);
+  if (process.env.NUKERNEL_CENSUS) {
+    console.log("  genre           %bad    ic1    ic6  (raw1) (raw6)   nct%     mb     mp");
+    for (const r of rows)
+      console.log("  " + r.gk.padEnd(14) + f(r.pct) + f(r.ic1) + f(r.ic6) +
+                  f(r.ic1raw) + f(r.ic6raw) + f(r.nct) + f(r.mb) + f(r.mp));
+  } else {
+    console.log("  worst six: " + rows.slice(0, 6)
+      .map(r => r.gk + " " + r.pct.toFixed(2)).join("  ") + "   (NUKERNEL_CENSUS=1 for all 45)");
+  }
+
+  for (const r of rows) {
+    const base = BASELINE[r.gk];
+    ok(base != null, r.gk + ": no census baseline — a new genre must be measured " +
+       "and baked into BASELINE, not left unmeasured");
+    if (base == null) continue;
+    const worst = r.worst[0];
+    ok(r.pct <= ceilOf(base) + 1e-9,
+       r.gk + " REGRESSED INTO CLASHINESS: " + r.pct.toFixed(2) + "% of its sonority is " +
+       "unprepared semitone/tritone, ceiling " + ceilOf(base).toFixed(2) + "% (baseline " +
+       base.toFixed(2) + "). Worst: " + (worst
+         ? "ic" + worst.ic + " at step " + worst.step.toFixed(0) + ", " + worst.who +
+           ", " + worst.n + " against " + worst.on
+         : "n/a"));
+    ok(r.pct <= BAR + 1e-9 || ALLOW[r.gk],
+       r.gk + " is over the " + BAR + "% bar at " + r.pct.toFixed(2) + "% and is not on " +
+       "the allowance list. Fix it, or add it with a REASON — do not raise the bar");
+  }
+  // the allowance list may not rot into a mute button
+  for (const gk of Object.keys(ALLOW))
+    ok(BASELINE[gk] > BAR, gk + " is on the allowance list but measures " +
+       BASELINE[gk] + "%, under the bar — a dead exemption is an exemption nobody checked");
+  // and the two the ears named stay fixed, by name
+  ok(rows.find(r => r.gk === "counterpoint").pct <= 0.35,
+     "counterpoint: the inversion axis has drifted back onto a semitone sum");
+  ok(rows.find(r => r.gk === "tango").pct <= 0.70,
+     "tango: the held note is off the chord again — check `anchor`");
+}
 
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
