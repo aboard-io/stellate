@@ -278,19 +278,149 @@
     [/halo|_pad$|glass|atmosph|sweep|warm_pad/, "pad"],
     [/piano|grand|rhodes|_ep|_ep_\d|epiano|clav|harpsi|honky|legend|felt|bandoneon|accordion/, "keys"],
   ];
-  // THE STRIP A VOICE ACTUALLY GETS. `pad` is a fact about the ROLE (the genre
-  // says which voice is a pad) and wins outright — a pad is a pad whatever is
-  // playing it, which is how postrock's slow strings get the widest air in the
-  // page. Otherwise the family decides, and an id in no family falls back to
-  // `lead`, which is what every voice used to get.
-  const stripFor = (id, pad) => {
-    if (pad) return STRIPS.pad;
-    for (const [re, fam] of FAMILY) if (re.test(id || "")) return STRIPS[fam];
-    return STRIPS.lead;
+  // WHICH FAMILY A VOICE IS IN, as one answer. `pad` is a fact about the ROLE
+  // (the genre says which voice is a pad) and wins outright — a pad is a pad
+  // whatever is playing it, which is how postrock's slow strings get the widest
+  // air in the page. Otherwise the regex table decides, and an id in no family
+  // is `lead`, which is what every voice used to get.
+  //
+  // ONE walk, two readers: the mix strip below and the dynamic response after
+  // it. Two copies of this loop is how a guitar ends up on the guitar strip and
+  // the generic response, one edit at a time.
+  const familyOf = (id, pad) => {
+    if (pad) return "pad";
+    for (const [re, fam] of FAMILY) if (re.test(id || "")) return fam;
+    return "lead";
+  };
+  // THE STRIP A VOICE ACTUALLY GETS.
+  const stripFor = (id, pad) => STRIPS[familyOf(id, pad)] || STRIPS.lead;
+
+  // ---- THE SECOND KIND OF DYNAMICS -----------------------------------------
+  // Velocity used to change one thing: LOUDNESS. The event tier now writes a
+  // real range and a real shape into it (kernel.js stress/phrase/touch), and a
+  // line whose only answer to being played harder is being played louder still
+  // reads as "extremely synthesized and robotic", because that is not what a
+  // struck or blown instrument does. A harder note is a BRIGHTER note with a
+  // faster front edge; a soft one is dull and slow. That is timbre, not level.
+  //
+  // THE PARENT SOLVES THIS AND WE CANNOT USE ITS SOLUTION.
+  // engine/faust/voices/sampler.js zoneFor(zones, midi, vel) takes a SELECTION
+  // VELOCITY and picks a velocity LAYER — a genuinely differently-recorded
+  // sample for a soft note — and its comment records the measured bug where a
+  // mix-staged gain capped that velocity at 61 over 10,109 notes so every forte
+  // layer was unreachable. audio/voices.js now passes velocity through to it
+  // (correct the day a layered font lands, see there). But the precondition
+  // fails here: measured on the shipped registry, 123 samplers / 629 zones,
+  // zone keys are file,root,lo,hi,loop,ls,le — no vlo/vhi, ONE layer per
+  // instrument. The parent gets timbre-from-velocity because its SoundFont has
+  // layers. We have to synthesize the difference instead.
+  //
+  // WHAT SHAPE THE TREATMENT TAKES, and the measurement that chose it. The
+  // first attempt was the obvious one — a lowpass per note, wide open at the
+  // default velocity and closing as the note softens. It gates, it is cheap,
+  // and it is INAUDIBLE: measured on rock's crunch guitar, offline, one note at
+  // velocity 2 against the same note at velocity 9, the spectral-shape
+  // correlation came out 0.988 against a level-only control of 0.991. The
+  // reason is arithmetic. Byte-identity at the default velocity pins the curve
+  // to "no filter" at neutral, a lowpass can only ever subtract, and a lowpass
+  // anchored at bypass has nowhere to go on the loud half — so half the range
+  // did nothing and the other half rolled off 6 kHz of a guitar that had almost
+  // no energy up there.
+  //
+  // SO IT IS A TILT, not a corner: one HIGH SHELF whose gain in dB is
+  // proportional to the distance from the default velocity. Negative below it,
+  // positive above it, exactly 0 dB — a literal bypass — at it. That keeps the
+  // skip law intact and gives the loud half somewhere to go.
+  //
+  // AND IT IS ASYMMETRIC, for the same reason the parent's velocity layer does
+  // not exist here: THE SAMPLE IS ALREADY THE FIRM NOTE. A one-layer GM font was
+  // captured at a confident level, so going DOWN from it is honest subtraction
+  // (that top end really was not there when the note was played softly) and
+  // going up is inventing high end the recording never had. So the soft side
+  // gets the full tilt and the loud side gets DYN_BRIGHT of it, plus the one
+  // thing a hard hit genuinely does add — a transient.
+  //
+  // FIVE NUMBERS PER FAMILY, and they are the five things dynamic response is:
+  //   tilt   dB the shelf moves per unit of velocity distance. The big one, and
+  //          the ordering is the physical one: brass is the extreme (a forte
+  //          trumpet and a piano one are barely the same instrument), a string
+  //          section is the mildest.
+  //   corner Hz the shelf hinges at — where "brightness" starts for THIS
+  //          instrument. A bass's is under a kilohertz; a marimba's is up where
+  //          the mallet noise lives.
+  //   bite   extra dB on the ONSET of a full-force note, decaying into the
+  //          settled tilt. This is the strike itself, and it is the half of the
+  //          treatment a static shelf cannot say.
+  //   dec    seconds that onset takes to settle. A struck string is done in
+  //          40 ms; a bowed one takes a sixth of a second.
+  //   hand   0..1, how much of this sound IS the strike — it scales BOTH the
+  //          amp-attack shortening and the sample-start offset (see
+  //          audio/voices.js). A plucked string is all hand; a string section
+  //          has none.
+  //
+  // TWO FAMILIES ARE ABSENT ON PURPOSE, and absent means the old path exactly:
+  //   organ  a drawbar organ has NO velocity response. The key is a contact,
+  //          the footages are sines, and a hard-played Hammond is the same
+  //          sound. Faking one would be the opposite of this whole round.
+  //   pad    a pad is a wash, not a stroke: a per-note transient shelf chops
+  //          the one voice whose job is not having an edge. It is also the
+  //          worst cost on the page — STRIPS.pad already builds a chorus AND a
+  //          phaser per note, on the voice that holds the longest notes.
+  const DYN = {
+    keys:    { tilt: 11, corner: 1600, bite: 4.0, dec: 0.050, hand: 1.00 },
+    guitar:  { tilt: 10, corner: 1900, bite: 4.0, dec: 0.045, hand: 1.00 },
+    // an overdriven amp COMPRESSES: less swing, and the bite is the pick rather
+    // than the tone stack (the dirty strip's own tanh already squares the top off)
+    dirty:   { tilt:  7, corner: 2200, bite: 3.0, dec: 0.040, hand: 0.80 },
+    mallet:  { tilt: 12, corner: 2600, bite: 5.0, dec: 0.030, hand: 1.00 },
+    brass:   { tilt: 13, corner: 1400, bite: 3.0, dec: 0.100, hand: 0.50 },
+    reed:    { tilt:  9, corner: 1500, bite: 2.5, dec: 0.090, hand: 0.45 },
+    bowed:   { tilt:  8, corner: 1800, bite: 2.0, dec: 0.140, hand: 0.25 },
+    strings: { tilt:  6, corner: 2000, bite: 1.5, dec: 0.160, hand: 0.15 },
+    vox:     { tilt:  6, corner: 2200, bite: 1.5, dec: 0.130, hand: 0.15 },
+    // the bass chair, reached by id rather than by family (nothing in the
+    // regex table claims acoustic_bass, and adding a rule would re-strip any
+    // future *_bass voice) — a fingered bass is most of the way to a guitar,
+    // hinged low because a bass's whole "brightness" lives under a kilohertz
+    bass:    { tilt:  9, corner:  900, bite: 3.5, dec: 0.050, hand: 0.90 },
+    // an id in no family: the same fallback stripFor makes, deliberately mild
+    lead:    { tilt:  8, corner: 1900, bite: 3.0, dec: 0.050, hand: 0.70 },
+  };
+  // the share of the tilt a note ABOVE the default velocity gets. See the
+  // asymmetry note above: the shipped one-layer font is already a firm note, so
+  // subtracting its top is honest and adding to it is invention.
+  const DYN_BRIGHT = 0.55;
+  // the amp attack at the default velocity — today's number for every sampled
+  // note — and how far a full-force note may halve it (in octaves of time).
+  // 0.006 / 2^0.9 is 3.2 ms, a hair above sampler.js's own 3 ms floor, so the
+  // hardest note this page can write still lands inside the parent's envelope.
+  const DYN_ATK = 0.006, DYN_ATK_OCT = 0.9;
+  // seconds of the sample's own head a full-force note skips. Small on purpose:
+  // this is the soft ramp before the transient, not the transient.
+  const DYN_SKIP = 0.004;
+  const dynFor = (id, pad) => (id === BASS_INSTR ? DYN.bass : DYN[familyOf(id, pad)]) || null;
+  // THE CURVE ITSELF, HERE RATHER THAN IN THE PLAYER. voices.js writes it onto
+  // AudioParams and the gates check it as arithmetic; two copies of these four
+  // lines is how the table and the sound drift apart one edit at a time. `u` is
+  // the signed distance from the default velocity (voices.js velU): -1.25 at a
+  // ghosted 0, 0 at the default 5, +1 at a hammered 9. EVERY TERM IS ZERO AT
+  // u === 0 — that is the whole byte-identity claim, and it is why the player
+  // can skip building anything at all there.
+  const dynCurve = (u, d) => {
+    const force = u > 0 ? u : 0;
+    const db = d.tilt * (u < 0 ? u : u * DYN_BRIGHT);
+    return { db, peakDb: db + d.bite * force,
+             atk: DYN_ATK / Math.pow(2, DYN_ATK_OCT * d.hand * u),
+             skip: DYN_SKIP * d.hand * force };
   };
 
   const api = { instrOf, BASS_INSTR, DRUMDIR, DRUMFILE, FONTS, BASSSYNTH, STRIPS,
-                stripFor, RANGES, STRETCH_UP, STRETCH_DOWN, DRUMMIX, DRUMBUS };
+                stripFor, familyOf, RANGES, STRETCH_UP, STRETCH_DOWN, DRUMMIX, DRUMBUS,
+                // DYN_ATK is the one raw constant the player still needs (the
+                // default attack for a note that asked for no treatment at all);
+                // DYN_ATK_OCT and DYN_SKIP stay private to dynCurve, which is
+                // the only thing that should ever be reading them
+                DYN, dynFor, dynCurve, DYN_BRIGHT, DYN_ATK };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuInstruments = api;
 })(typeof window !== "undefined" ? window : globalThis);

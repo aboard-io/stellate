@@ -20,9 +20,16 @@
     ? require("./kernel.js") : root.NuKernel;
   const NG = (typeof module !== "undefined" && module.exports)
     ? require("./genres.js") : root.NuGenres;
+  // sing.js is DATA for this registry the way genres.js is: the four chips a
+  // box may be told to sing are vocabulary, and vocabulary lives here. The
+  // dependency is one-way — sing.js imports genres.js and nothing else, so it
+  // sits below this file and cannot reach back for a label.
+  const NS = (typeof module !== "undefined" && module.exports)
+    ? require("./sing.js") : root.NuSing;
   const { reverse, invert, rotate, fill, spread, split, del, drop,
           transpose, complement, crossmap, excerpt, only, KITOPS, LANES } = K;
   const { MODES, MODELABEL, SCALES, SCALELABEL } = NG;
+  const { SINGS, SINGLABEL } = NS;
 
   // ---- limits --------------------------------------------------------------
   // The numeric fences persistence and the grips both enforce. They live here
@@ -824,6 +831,12 @@
     // the object-shape validation.
     { key: "auto",    scope: "box",   type: "list", table: AUTOPARAMS,
       labels: AUTOPARAMLABEL, tab: "fx", group: "automation", default: [] },
+    // ---- the singer (sing.js + audio/sing.js) — appended, never reordered --
+    // BOX scope, on the `voice` page: a box has one lyric and one singer, the
+    // way it has one groove and one key. Absent is the whole of the day before
+    // it existed — singPlan returns [] and no wasm is ever fetched.
+    { key: "sing",    scope: "box",   table: SINGS,       labels: SINGLABEL,
+      tab: "voice",  group: "sing",                      default: null },
   ];
   const FIELD = {};
   for (const f of FIELDS) FIELD[f.key] = f;
@@ -845,6 +858,7 @@
                 CEILINGS, CEILINGLABEL, MASTER, MASTERBY,
                 resolveMaster, masterIsDefault,
                 AUTOPARAMS, AUTOPARAMLABEL, AUTOSHAPES, AUTOSHAPELABEL, autoShape,
+                SINGS, SINGLABEL,
                 ROLES, FIELDS, FIELD };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuFields = api;

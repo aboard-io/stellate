@@ -58,6 +58,16 @@ function describe() {
       (e.slots.length ? e.slots.map(i => i + 1).join("+") : "no phrase")).join(" | ") +
     " · " + bars + " bar" + (bars === 1 ? "" : "s") +
     (sec.nudge ? " nudged " + sec.nudge : "") + " · " + roots +
+    // WHAT IT IS SINGING, in the words. A sung line is the one thing on the
+    // page whose content is not visible anywhere else in this readout, and a
+    // box that sings nothing (the chip is on but the tune has no note long
+    // enough — see sing.js MIN_STEPS) has to be able to say so.
+    (sec.sing ? "  ·  " + (() => {
+      const sung = ev.filter(e => e.kind === "sing");
+      if (!sung.length) return sec.sing + ": nothing long enough to sing";
+      const words = sung.filter(e => e.vi === 0).map(e => e.syl).join(" ");
+      return sec.sing + ' "' + words + '"';
+    })() : "") +
     (quiet.length ? "  —  " + quiet.join(", ") : "") +
     (carrierNote() ? "  —  " + carrierNote() : "");
 }

@@ -18,6 +18,7 @@ import { synthNodes, synthKey, loadSynth, focusSynths, playSynth, playSampled,
          playDrum, line, hit, synthDead, countDrop, playWindow } from "./voices.js";
 import { channelFor, armAutomation, focusKit } from "./mixer.js";
 import { setDelayTime } from "./graph.js";
+import { playSyllable, warm as warmSing, needsWarm, singOff } from "./sing.js";
 
 export let playing = false;
 export let playingSec = -1;
@@ -353,7 +354,34 @@ export function scheduleBar(bar, sec, chan, kit, when, sd, synthFn) {
           { wave: "square", cut: 340, q: 5, atk: .006, rel: .8, gain: .26 }, false, e.vel,
           chan, "bass");
     }
+    // THE SINGER. No fallback of any kind: a syllable with nothing warmed for
+    // it is SILENT, which is the same law the page already keeps for a dead
+    // signature synth and an in-flight zone — silence over wrongness. A wrong
+    // syllable is not a near miss, it is a different word.
+    else if (e.kind === "sing")
+      playSyllable(e, e.text, at, e.dur * sd, chan, e.colour, bar.barSteps * sd);
   }
+}
+
+/* ---------- what this song sings ---------- */
+// EVERY UTTERANCE THE SONG NEEDS, deduped by (line text). Exported because
+// audio/bounce.js needs the identical answer before it renders windows — the
+// carrier is the audible path on mobile, so a voice warmed only for the live
+// graph is a voice that does not exist on a phone. One walk, two callers, no
+// second opinion about what is being sung.
+export function singWork() {
+  if (singOff()) return [];
+  const byText = new Map();
+  for (const sec of SONG) {
+    if (!sec || !sec.sing) continue;
+    for (const e of sectionRender(sec, SLOTS).ev) {
+      if (e.kind !== "sing") continue;
+      let w = byText.get(e.text);
+      if (!w) byText.set(e.text, w = { text: e.text, plan: [] });
+      w.plan.push(e);
+    }
+  }
+  return [...byText.values()];
 }
 
 /* ---------- assets for the current song ---------- */
@@ -387,9 +415,18 @@ export async function ensureAssets(announce) {
   for (const sp of synths)
     for (let v = 0; v < depth; v++)
       if (!synthNodes.has(synthKey(sp, v))) wantSynth.push([sp, v, null]);
-  if (!need.length && !wantSynth.length && !kits.length) return false;
+  // THE SINGER WARMS HERE, beside the zone fetches, because it is the same
+  // kind of thing: ~2 s of wasm work that the audio clock cannot wait for.
+  // scheduleBar is a synchronous walk on the WebAudio clock and the offline
+  // render is a synchronous walk with no clock at all, so an espeak instance
+  // (~210 ms, one per voice per pitch rung) can only ever happen before the
+  // first note is due. A song with no `sing` chip anywhere returns an empty
+  // list here and nothing is fetched — the 1.7 MB artifact included.
+  const sings = singWork().filter(w => needsWarm(w.plan, w.text));
+  if (!need.length && !wantSynth.length && !kits.length && !sings.length) return false;
   if (announce) emit("status", { text:
-    "loading " + [...need, ...new Set(wantSynth.map(x => x[0].dsp)), ...kits].join(", ") + "…" });
+    "loading " + [...need, ...new Set(wantSynth.map(x => x[0].dsp)), ...kits,
+                  ...(sings.length ? ["voices"] : [])].join(", ") + "…" });
   const t0 = performance.now();
   // synths and kits in parallel (the decode gate caps the kit decodes anyway),
   // but instruments one at a time with a breath between WHILE PLAYING — the
@@ -397,7 +434,8 @@ export async function ensureAssets(announce) {
   // decode burst with no yield starves it for whole bars
   const nap = ms => new Promise(r => setTimeout(r, ms));
   const rest = Promise.all([...wantSynth.map(([sp, v, c]) => loadSynth(sp, v, c)),
-                            ...kits.map(loadKit)]);
+                            ...kits.map(loadKit),
+                            ...sings.map(w => warmSing(w.plan, w.text))]);
   for (const id of need) {
     await loadInstrument(id);
     if (playing) await nap(60);

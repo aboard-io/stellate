@@ -7,12 +7,53 @@
 // Layer graph: deps -> state -> derive -> graph -> assets -> THIS FILE ->
 // mixer -> transport. Never imports a ui view.
 import { GENRES, VOX, VOXPARAM, BASSSYNTH, SP, RANGES, STRETCH_UP,
-         STRETCH_DOWN, DRUMMIX, DRUMBUS } from "../ui/deps.js";
+         STRETCH_DOWN, DRUMMIX, DRUMBUS, STRIPS, dynFor, dynCurve,
+         DYN_ATK } from "../ui/deps.js";
 import { SONG } from "../ui/state.js";
 import { stackOf } from "../ui/derive.js";
 import { ctx, bus, noise } from "./graph.js";
 import { FAUSTDIR, FONT, fontDef, isSynthFont, specOf, zoneBufs, drumBufs,
          inFlight } from "./assets.js";
+
+/* ---------- THE SECOND KIND OF DYNAMICS ---------- */
+// The event tier writes velocity with real range and real shape now (kernel.js
+// stress/phrase/touch). Downstream of it, velocity still only moved LOUDNESS —
+// a note played harder was the same note turned up, which is not what any
+// struck, plucked or blown instrument does and is most of what "extremely
+// synthesized and robotic" was hearing.
+//
+// The parent's answer is a velocity LAYER (sampler.js zoneFor(zones, midi, vel)
+// — see instruments.js DYN for the measured reason it cannot fire here: our
+// extracted GM fonts carry one layer per instrument). So the difference is
+// synthesized: a per-note filter envelope, a velocity-dependent amp attack and
+// a few ms of sample-start offset on the sampled path (playSampled), and the
+// voice's own cutoff/env-amount params on the synth path (driveSynth).
+//
+// ONE SCALE FOR BOTH. Velocity is 0..9 and 5 is the default the whole page
+// falls back to (`vel == null ? 5` appears in every player here), so the term
+// every treatment is proportional to is the SIGNED DISTANCE from that default:
+// -1.25 at a ghosted 0, 0 at the default, +1 at a hammered 9. Everything the
+// curve computes (instruments.js dynCurve) is zero at u === 0, which is what
+// makes the default path SKIPPABLE rather than merely cheap — see the node
+// budget note on the shelf below.
+const VEL_MID = 5, VEL_TOP = 9;
+export const velU = (vel) => (vel == null ? 0 : (vel - VEL_MID) / (VEL_TOP - VEL_MID));
+// AN EAR SEAM, the ?dryroom / ?nobounce shape: ?flatvel takes the whole AUDIO
+// tier of dynamics out and leaves the event tier exactly as it is, so the A/B
+// that decides whether this helps is one reload rather than a git stash. It is
+// deliberately not a per-note switch — the point is to hear a whole song both
+// ways. `off` in the report below is how a gate knows which page it is on.
+const FLATVEL = typeof location !== "undefined" && /[?&]flatvel\b/.test(location.search);
+// WHAT ACTUALLY FIRED, for the gates and for a person with the console open:
+// `shaped` is notes that built a shelf, `flat` is notes that landed exactly on
+// the default velocity and built nothing, `synth` is the Faust path. Counters
+// only — nothing reads them back into the sound, and unlike __nuFallback beside
+// them they are NOT split per context: a background bounce's notes land in the
+// same tally as the live graph's. That is deliberate for a debug readout and
+// wrong for a gated one, which is why nukernel-drums (G) only ever asks whether
+// they are non-zero.
+export const dynStats = { shaped: 0, flat: 0, synth: 0 };
+window.__nuDyn = () => ({ ...dynStats, off: FLATVEL });
 
 /* ---------- the Faust synth voices ---------- */
 // A genre carrying `synth` is never sampled: its identity IS the synthesis. The
@@ -191,6 +232,30 @@ export function playSynth(spec, midi, when, durSec, acc, sld, vel, v, chan, vox)
   }
   return true;
 }
+// A NORMALIZED POSITION, BOTH WAYS, against a param's OWN declared range —
+// lifted out of the VOX loop below so the velocity term reads the identical
+// curve rather than a second copy of it (cutoff is heard in octaves, so `log`
+// interpolates in octaves; the value can never land on a boundary, which is
+// the clamp the audio gate exists to catch).
+const clamp01 = t => (t < 0 ? 0 : t > 1 ? 1 : t);
+const posVal = (a, t, log) => {
+  const lo = a.minValue, hi = a.maxValue;
+  const nv = log && lo > 0 ? lo * Math.pow(hi / lo, t) : lo + t * (hi - lo);
+  return Math.max(lo, Math.min(hi, nv));
+};
+const valPos = (a, v, log) => {
+  const lo = a.minValue, hi = a.maxValue;
+  if (!(hi > lo) || v == null || !isFinite(v)) return 0;
+  return clamp01(log && lo > 0 && v > 0
+    ? Math.log(v / lo) / Math.log(hi / lo) : (v - lo) / (hi - lo));
+};
+// HOW FAR VELOCITY MOVES EACH KNOB, in fractions of that knob's whole declared
+// range, per unit of velU. The two classic routings and only those: harder is
+// brighter (cut) and harder swings the envelope further (emod). `dec` is
+// deliberately not here — a note's decay is a function of how long it is held,
+// and having velocity fight the articulation would be a second dynamics
+// argument rather than a second kind of dynamics.
+const VELKNOB = { cut: 0.20, emod: 0.10 };
 // the parameter walk alone, on a GIVEN node — split from the pool lookup so
 // the offline bounce can drive its own per-context pool through the exact
 // same writes (a forked copy of this walk is how the bounce would drift out
@@ -223,10 +288,40 @@ export function driveSynth(node, spec, midi, when, durSec, acc, sld, vel, vox) {
     for (const name of (VOXPARAM[k] || [])) {
       const a = node.parameters.get("/" + spec.root + "/" + name);
       if (!a) continue;
-      const t = def.t[val], lo = a.minValue, hi = a.maxValue;
-      const nv = def.log && lo > 0 ? lo * Math.pow(hi / lo, t) : lo + t * (hi - lo);
-      set(name, Math.max(lo, Math.min(hi, nv)), when);
+      set(name, posVal(a, def.t[val], def.log), when);
       break;
+    }
+  }
+  // ---- AND THE HAND, on the same knobs ------------------------------------
+  // THE SECOND KIND OF DYNAMICS, synth side. A Faust voice already owns the
+  // two params a keyboard's velocity has been wired to since the CS-80 — the
+  // filter cutoff and the envelope's modulation amount — so the treatment is
+  // not a new mechanism, it is the VOX vocabulary read one term further along:
+  // the same VOXPARAM name search, the same normalized position against the
+  // param's OWN declared range, the same log interpolation for a cutoff heard
+  // in octaves. Nothing is hardcoded in Hz, so a 303 (cutoff 60..6000), a
+  // Model D (60..16000) and a reese all move by the same musical amount, and a
+  // DSP that owns neither param (the DX7) is left alone exactly as a chip
+  // leaves it alone.
+  //
+  // The BASE position is whatever the note would already have had — the
+  // section's chip if one is set, else the genre's own `set`, else the param's
+  // declared default — inverted back onto 0..1 so the velocity term is an
+  // offset rather than a replacement. u === 0 writes nothing at all.
+  const uv = FLATVEL ? 0 : velU(vel);
+  if (uv) {
+    dynStats.synth++;
+    for (const k of Object.keys(VELKNOB)) {
+      const def = VOX[k];
+      for (const name of (VOXPARAM[k] || [])) {
+        const a = node.parameters.get("/" + spec.root + "/" + name);
+        if (!a) continue;
+        const chip = vox && vox[k] != null ? def.t[vox[k]] : null;
+        const t0 = chip != null ? chip
+          : valPos(a, (spec.set && spec.set[name] != null) ? spec.set[name] : a.defaultValue, def.log);
+        set(name, posVal(a, clamp01(t0 + VELKNOB[k] * uv), def.log), when);
+        break;
+      }
     }
   }
   set("accent", acc ? 1 : 0, when);
@@ -414,9 +509,15 @@ export function playSampled(id, midi, when, durSec, vel, gainMul, chan, strip, v
   // Neither exists -> the channel-wide player, which is where everything went
   // before the desk did.
   const V = v != null && chan && chan.voiceBus ? chan.voiceBus(v) : null;
-  const player = (V && V.player)
-    || (part != null && chan && chan.partPlayer ? chan.partPlayer(part) : null)
-    || (chan && chan.player);
+  // …and WHERE that player taps. Every player the mixer builds is a closure
+  // over one node (dry === rev === del === the chair's, the part's or the
+  // section's input), and the per-note shelf below has to go in front of that
+  // exact node, so the two are chosen together rather than looked up twice.
+  let player = null, dest = null;
+  if (V && V.player) { player = V.player; dest = V.in; }
+  else if (part != null && chan && chan.partPlayer && chan.partPlayer(part)) {
+    player = chan.partPlayer(part); dest = chan.partIn(part);
+  } else if (chan && chan.player) { player = chan.player; dest = chan.input; }
   if (!spec || !player) return false;
   // THE INSTRUMENT-REGISTER LAW (playWindow above): fold into the window the
   // instrument and its samples can both honestly play. This replaces the old
@@ -433,13 +534,87 @@ export function playSampled(id, midi, when, durSec, vel, gainMul, chan, strip, v
   // instrument, it is a different instrument that is out of tune with the rest.
   if (midi2 == null) { countDrop(); return true; }
   midi2 = foldToZones(spec.zones, midi2);
-  const z = SP.zoneFor(spec.zones, midi2);
+  // PASS THE VELOCITY, EVEN THOUGH IT CHANGES NOTHING TODAY. sampler.js's
+  // zoneFor(zones, midi, vel) picks a velocity LAYER, and its own comment
+  // records the measured bug where a mix-staged gain capped that velocity at 61
+  // over 10,109 notes and made every forte sample unreachable. So the number
+  // handed over is the MUSICAL one and never a mix gain, and it is converted by
+  // the parent's OWN selVel rather than by a second round(127*x) here — that
+  // function is documented as "the ONE formula both engines use to pick a
+  // velocity layer", and a third copy of it is exactly the drift it was written
+  // to end. Our scale is 0..9 with the default at 5, so full scale is 9.
+  //
+  // Every zone in the shipped registry declares one layer (no vlo/vhi over 629
+  // of them), so this is byte-identical now; the audible half is the shelf
+  // below. WHEN A LAYERED FONT DOES LAND this argument is necessary and not
+  // sufficient: assets.js specOf copies file/root/lo/hi/loop/ls/le off a zone
+  // and would drop vlo/vhi on the floor before zoneFor ever saw them.
+  const z = SP.zoneFor(spec.zones, midi2,
+                       SP.selVel((vel == null ? VEL_MID : vel), VEL_TOP));
   if (!z) { countDrop(); return true; }
   const buf = zoneBufs.get(FONT + "|" + id + "|" + z.file);
   if (!buf) return inFlight.has("ins:" + id);      // loading: drop it, do not beep
   const lead = SP.zoneLeadIn ? SP.zoneLeadIn(buf, z, buf.sampleRate, spec.sr) : 0;
   const leadSec = lead ? lead / (buf.sampleRate || spec.sr) : 0;
-  player.note(buf, when, {
+  // ---- THE SECOND KIND OF DYNAMICS, sampled side --------------------------
+  // `pad` is not an argument here, but the STRIP already carries the answer:
+  // stripFor returns STRIPS.pad for a pad and only for a pad, so reading it off
+  // the strip is exact and keeps one definition of "is this a pad" instead of
+  // threading a second flag down from the scheduler.
+  const dyn = (FLATVEL || !dest) ? null : dynFor(id, strip === STRIPS.pad);
+  const u = dyn ? velU(vel) : 0;
+  let atk = DYN_ATK, offsetSec = leadSec, note = player, filt = null;
+  if (u) {
+    dynStats.shaped++;
+    const c = ctxOf(chan);
+    const cv = dynCurve(u, dyn);
+    // ONE BIQUAD, ALIVE FOR ONE NOTE, AND ONLY WHEN THE NOTE ASKED FOR IT.
+    // That is the whole per-note budget of this feature: a high shelf, hinged
+    // where this instrument's brightness starts, whose GAIN is the velocity
+    // (instruments.js dynCurve — negative below the default, positive above,
+    // exactly 0 dB at it). A shelf rather than a corner because a lowpass
+    // anchored at bypass has nowhere to go on the loud half; see the
+    // measurement recorded beside DYN.
+    const f = c.createBiquadFilter();
+    f.type = "highshelf"; f.frequency.value = dyn.corner;
+    f.gain.setValueAtTime(cv.peakDb, when);
+    // …AND THE STRIKE ON TOP OF IT. A hard note's onset is brighter than its
+    // own body and settles into it; that settling IS the transient, and it is
+    // the half a static shelf cannot say. Never longer than the note itself —
+    // a 160 ms settle on a 40 ms sixteenth is not an envelope, it is a second
+    // tone. Skipped outright when there is no bite to settle from (every note
+    // at or below the default), so a soft note is one setValueAtTime.
+    if (cv.peakDb !== cv.db)
+      f.gain.linearRampToValueAtTime(cv.db,
+        when + Math.max(0.008, Math.min(dyn.dec, durSec * 0.6)));
+    f.connect(dest);
+    filt = f;
+    // A THROWAWAY PLAYER, and why it is not a change to sampler.js: SamplerLive
+    // is a CLOSURE over three destination nodes fixed at construction (measured:
+    // an object and a Set, zero AudioNodes), and the shelf has to be per NOTE.
+    // Building one here puts the shelf in front of the real tap without forking
+    // the parent's note() — which owns the envelope, the loop points, the strip
+    // and the decoder lead-in, and is the last thing that should exist twice.
+    try { note = SP.SamplerLive(c, { dry: f, rev: f, del: f }); }
+    catch (e) { note = player; filt = null; try { f.disconnect(); } catch (e2) {} }
+    if (note !== player) {
+      // THE FRONT EDGE, which costs nothing at all: two numbers handed to the
+      // envelope note() was going to build anyway. A harder note arrives faster
+      // (the amp attack halves toward sampler.js's own 3 ms floor), and `hand`
+      // says how much of this instrument is the strike at all — a string
+      // section barely moves, a marimba is all edge.
+      atk = cv.atk;
+      // …AND THE SAMPLE'S OWN HEAD. Most of what a struck note sounds like is
+      // the first few milliseconds, and a recorded one usually opens with a
+      // soft ramp into them; skipping that ramp on a hard hit is the cheapest
+      // honest transient there is. NOT added to the loop points below — the
+      // decoder lead-in is a correction that head and loop must share
+      // (sampler.js zoneLeadIn), this is a musical start offset, and shifting
+      // the loop with it would detune the wrap.
+      offsetSec = leadSec + Math.min(cv.skip, Math.max(0, buf.duration - leadSec - 0.02));
+    }
+  } else if (dyn) dynStats.flat++;
+  note.note(buf, when, {
     rate: SP.rateFor(z, midi2), durSec,
     gain: 0.42 * (0.2 + 0.8 * ((vel == null ? 5 : vel) / 9)) * (gainMul || 1),
     // THE STRIP IS WHERE THE MIX HAPPENS. sampler.js builds it — the same node
@@ -447,11 +622,43 @@ export function playSampled(id, midi, when, durSec, vel, gainMul, chan, strip, v
     strip,
     // the sends are the SECTION's, not the note's: every tap goes to the channel
     // input and the channel decides how wet the whole box is
-    atk: 0.006, rel: 0.12, dry: 1, rsend: 0, dsend: 0,
-    offsetSec: leadSec,
+    atk, rel: 0.12, dry: 1, rsend: 0, dsend: 0,
+    offsetSec,
     loop: !!z.loop,
     loopStartSec: (z.loopStart || 0) / spec.sr + leadSec,
     loopEndSec: (z.loopEnd || 0) / spec.sr + leadSec });
+  // LET GO WHEN THE NOTE DOES. ZERO-STATIC's law is destroy, never
+  // disconnect-and-forget — but that law is about a Faust worklet, which
+  // computes every 128-sample block forever whether or not anything feeds it. A
+  // BiquadFilter has nothing to destroy and computes nothing once its input is
+  // gone, so a disconnect is the whole of it. SamplerLive registers the note's
+  // own source in `live.active` (that is what its stopAll walks) and adds it
+  // LAST, after any strip LFOs, so on a player holding exactly this one note
+  // the last member is the source.
+  //
+  // …AND NOT ONE MOMENT BEFORE. sampler.js defers its own strip teardown by
+  // stripTailN when the strip carries a delay, precisely so the echoes are not
+  // truncated at note end — and this shelf is DOWNSTREAM of that strip, so
+  // dropping it on `ended` would cut the tail the parent went to the trouble of
+  // keeping. Measured today the answer is zero (no nukernel strip declares a
+  // `delay`, so the wait is the parent's own 50 ms and nothing more), which is
+  // exactly why it is asked rather than assumed: the first delay strip anyone
+  // writes must not silently lose its echoes.
+  //
+  // ON THE LIVE CONTEXT ONLY, the countFb two-ledgers law applied to teardown:
+  // an OfflineAudioContext is thrown away whole the moment its render resolves
+  // (audio/bounce.js), so there is nothing there to release and a wall-clock
+  // timer per note of a two-minute tape is pure overhead in the one place that
+  // is racing a deadline.
+  if (filt && (!ctx || ctxOf(chan) === ctx)) {
+    const src = [...note.active].pop();
+    if (src && src.addEventListener) {
+      const sr = ctxOf(chan).sampleRate || 44100;
+      const tail = SP.stripTailN ? SP.stripTailN(strip, sr) / sr : 0;
+      src.addEventListener("ended", () =>
+        setTimeout(() => { try { filt.disconnect(); } catch (e) {} }, (tail + 0.05) * 1000));
+    }
+  }
   return true;
 }
 // EVERY NODE KNOWS ITS CONTEXT. The players below build their throwaway nodes

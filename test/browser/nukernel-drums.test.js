@@ -31,6 +31,24 @@
 //       for 98. Both played. The witness here is the artifact and nothing else:
 //       every AudioBufferSourceNode's playbackRate is captured at start(), and
 //       a rate is exactly how far from its own root a zone is being stretched.
+//   (G) VELOCITY IS A FADER. "There is no organic difference in the sound of
+//       the notes… extremely synthesized and robotic." The event tier writes
+//       real dynamics now and the audio tier threw them at a gain, so the same
+//       note hard and soft was one timbre at two levels. The claim a level
+//       meter cannot make: at velocity 2 and velocity 9 the SPECTRAL SHAPE
+//       differs, and it differs because of the treatment rather than because of
+//       the level — proved against the same instrument in the one role that
+//       deliberately has no dynamic response.
+//   (H) THE SINGER IS IN TUNE. nukernel/sing.js plans a syllable onto a note
+//       and nukernel/audio/sing.js has to actually land it there — synthesize
+//       the line, MEASURE the median F0 of the slice that came back
+//       (engine/faust/voices/found-player.js f0Profile, the deterministic
+//       clip-snap) and bend playbackRate so the heard pitch is the note. The
+//       claim a level meter cannot make, and the one an intent check cannot
+//       make either: render one sung note offline and detect the pitch of the
+//       ARTIFACT. Plus the two-voice claim (the harmony is above the tune by
+//       the interval the chart chose), the byte-determinism of one seed, and
+//       the per-note node cost, counted rather than promised.
 //
 // WHY A SECOND FILE. nukernel-audio.test.js sweeps 45 genres and takes the
 // better part of ten minutes; these three claims need three page loads of two
@@ -106,6 +124,68 @@ function taps() {
       let s = 0; for (const v of d) s += v * v; return Math.sqrt(s / d.length);
     };
     return c;
+  };
+}
+// …and the OFFLINE spectrum, installed the same way. An AnalyserNode cannot tap
+// an OfflineAudioContext — there is no "now" to read a bin at — so every offline
+// probe here bands its own rendered PCM, and there are two of them ((D) and (F)).
+// One copy, in the init script, because two twenty-line radix-2 FFTs in one file
+// is how the two probes start measuring subtly different things. Same 512-band
+// linear-magnitude shape `__spec` returns, so `corr` below applies to both.
+function offlineFft() {
+  const N = 16384;
+  function fft(re, im) {
+    const n = re.length;
+    for (let i = 1, j = 0; i < n; i++) {
+      let bit = n >> 1;
+      for (; j & bit; bit >>= 1) j ^= bit;
+      j ^= bit;
+      if (i < j) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; }
+    }
+    for (let len = 2; len <= n; len <<= 1) {
+      const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+      for (let i = 0; i < n; i += len) {
+        let cr = 1, ci = 0;
+        for (let k = 0; k < len / 2; k++) {
+          const ur = re[i + k], ui = im[i + k];
+          const vr = re[i + k + len / 2] * cr - im[i + k + len / 2] * ci;
+          const vi = re[i + k + len / 2] * ci + im[i + k + len / 2] * cr;
+          re[i + k] = ur + vr; im[i + k] = ui + vi;
+          re[i + k + len / 2] = ur - vr; im[i + k + len / 2] = ui - vi;
+          const ncr = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = ncr;
+        }
+      }
+    }
+  }
+  window.__bands = (mono, from) => {
+    const re = new Float64Array(N), im = new Float64Array(N);
+    for (let i = 0; i < N; i++)
+      re[i] = (mono[from + i] || 0) * (0.5 - 0.5 * Math.cos(2 * Math.PI * i / (N - 1)));
+    fft(re, im);
+    const out = new Array(512).fill(0), per = (N / 2) / 512;
+    for (let b = 0; b < 512; b++) {
+      let s = 0;
+      for (let i = 0; i < per; i++) s += Math.hypot(re[b * per + i], im[b * per + i]);
+      out[b] = s / per;
+    }
+    return out;
+  };
+  // EVERY AudioNode THIS CONTEXT BUILDS, COUNTED. (F) asserts a per-note node
+  // budget, and the only honest way to read one is to count the factory calls
+  // on the context the note is actually built on. Opt-in per context so nothing
+  // else on the page pays for it; the walk climbs the prototype chain because
+  // create* lives on BaseAudioContext.prototype, two links up from an
+  // OfflineAudioContext instance.
+  window.__countNodes = (c) => {
+    const seen = new Set(), n = { n: 0 };
+    for (let p = Object.getPrototypeOf(c); p; p = Object.getPrototypeOf(p))
+      for (const k of Object.getOwnPropertyNames(p))
+        if (/^create/.test(k) && !seen.has(k) && typeof c[k] === "function") {
+          seen.add(k);
+          const f = c[k].bind(c);
+          c[k] = (...a) => { n.n++; return f(...a); };
+        }
+    return n;
   };
 }
 
@@ -214,46 +294,11 @@ async function partProbe(page) {
     const roster = mx.voiceRoster(sec);
     const keys = mx.partKeysOf(sec);
     const kit = [...as.drumBufs.keys()].map(k => k.split("|")[0])[0] || null;
-    const SR = 44100, AT = 0.05, N = 16384;
-
-    // iterative radix-2, in place — twenty lines, and the alternative is
-    // shipping a megabyte of PCM back over CDP four times
-    function fft(re, im) {
-      const n = re.length;
-      for (let i = 1, j = 0; i < n; i++) {
-        let bit = n >> 1;
-        for (; j & bit; bit >>= 1) j ^= bit;
-        j ^= bit;
-        if (i < j) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; }
-      }
-      for (let len = 2; len <= n; len <<= 1) {
-        const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
-        for (let i = 0; i < n; i += len) {
-          let cr = 1, ci = 0;
-          for (let k = 0; k < len / 2; k++) {
-            const ur = re[i + k], ui = im[i + k];
-            const vr = re[i + k + len / 2] * cr - im[i + k + len / 2] * ci;
-            const vi = re[i + k + len / 2] * ci + im[i + k + len / 2] * cr;
-            re[i + k] = ur + vr; im[i + k] = ui + vi;
-            re[i + k + len / 2] = ur - vr; im[i + k + len / 2] = ui - vi;
-            const ncr = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = ncr;
-          }
-        }
-      }
-    }
-    const bands = (mono, from) => {
-      const re = new Float64Array(N), im = new Float64Array(N);
-      for (let i = 0; i < N; i++)
-        re[i] = (mono[from + i] || 0) * (0.5 - 0.5 * Math.cos(2 * Math.PI * i / (N - 1)));
-      fft(re, im);
-      const out = new Array(512).fill(0), per = (N / 2) / 512;
-      for (let b = 0; b < 512; b++) {
-        let s = 0;
-        for (let i = 0; i < per; i++) s += Math.hypot(re[b * per + i], im[b * per + i]);
-        out[b] = s / per;
-      }
-      return out;
-    };
+    const SR = 44100, AT = 0.05;
+    // the 512-band radix-2 FFT is the init script's (offlineFft) — one copy for
+    // the two offline probes in this file, and the alternative to banding here
+    // at all is shipping a megabyte of PCM back over CDP fourteen times
+    const bands = window.__bands;
     // one render of the box's chairs, with a given `parts` map on the box.
     // `aux` picks WHICH WAY the part's effect is spent: the private insert rack
     // (the offline default, and what a chain or a sweep still gets) or the
@@ -362,6 +407,248 @@ async function partsLive(page, keys) {
   await page.click("#play");                                   // stop
   return { mix, peak };
 }
+// ---- (G) THE SECOND KIND OF DYNAMICS --------------------------------------
+// "There is no organic difference in the sound of the notes… extremely
+// synthesized and robotic" (the artist, 2026-08-15). The EVENT tier answered
+// that first — kernel.js writes metrical stress, a phrase arch and a per-bar
+// touch into velocity, and the unit gate proves the range and the shape are
+// there. It did not fix the complaint, because downstream of it velocity still
+// only moved LOUDNESS: a note played harder was the same note turned up, which
+// is not what any struck, plucked or blown instrument does.
+//
+// THE PARENT'S ANSWER IS A VELOCITY LAYER and it cannot fire here.
+// engine/faust/voices/sampler.js zoneFor(zones, midi, vel) picks a
+// differently-RECORDED sample for a soft note; measured on the shipped
+// registry, 123 samplers and 629 zones carry no vlo/vhi at all — one layer per
+// instrument. So the difference is synthesized (instruments.js DYN, a per-note
+// high shelf tilted by velocity plus a faster front edge), and the thing to
+// prove is precisely the thing a level meter cannot see.
+//
+// THE CONTROL IS THE SAME INSTRUMENT WITH THE TREATMENT OFF, not a second
+// sound. `pad` is one of the two families that deliberately has NO dynamic
+// response, and `pad` is a fact about the ROLE — so the identical instrument,
+// at the identical two velocities, with the identical level difference between
+// them, can be rendered both ways. If the treated pair's shape correlation is
+// far below the pad pair's, the difference is timbre and not level, and no
+// argument about the master limiter or the compressor can be made to explain
+// it: both pairs went through the same ones.
+//
+// OFFLINE, for the reason partProbe above is offline — it is deterministic, and
+// it walks buildChannel/playSampled, the functions the live page and the
+// background bounce both use.
+async function velProbe(page) {
+  return page.evaluate(async () => {
+    const [gm, mx, vx, dp, stm] = await Promise.all([
+      import("/nukernel/audio/graph.js"), import("/nukernel/audio/mixer.js"),
+      import("/nukernel/audio/voices.js"), import("/nukernel/ui/deps.js"),
+      import("/nukernel/ui/state.js")]);
+    const sec = stm.SONG[0];
+    const roster = mx.voiceRoster(sec);
+    // a chair whose family HAS a response — a song written entirely for organs
+    // and pads would otherwise fail this gate for doing the right thing
+    const r = roster.find(x => dp.dynFor(x.id, x.pad)) || roster[0];
+    if (!r || !dp.dynFor(r.id, r.pad)) return { err: "no chair in this song has a dynamic response" };
+    const SR = 44100, AT = 0.05, bands = window.__bands;
+    // ONE note, one chair, one velocity — everything else held still.
+    // `pad` forces the role that has no response; `gainMul` is the pure LEVEL
+    // knob, which is how the second control below is taken.
+    const render = async (vel, pad, gainMul) => {
+      const octx = new OfflineAudioContext(2, SR, SR);
+      const count = window.__countNodes(octx);
+      const master = gm.buildMasterChain(octx);
+      const env = { master: master.input, verb: () => master.input,
+                    echoIn: master.input, room: null };
+      const chan = mx.buildChannel(octx, { ...mx.chanSpec(sec), auto: [], mot: null }, env);
+      const before = count.n;
+      const played = vx.playSampled(r.id, 60, AT, 0.6, vel, gainMul || 1, chan,
+                                    dp.stripFor(r.id, pad), r.v);
+      const perNote = count.n - before;
+      const out = await octx.startRendering();
+      const L = out.getChannelData(0), R = out.getChannelData(1);
+      const mono = new Float32Array(L.length);
+      let e = 0;
+      for (let i = 0; i < L.length; i++) { mono[i] = (L[i] + R[i]) / 2; e += mono[i] * mono[i]; }
+      return { spec: bands(mono, Math.floor((AT + 0.005) * SR)), perNote, played,
+               rms: Math.sqrt(e / L.length) };
+    };
+    // the family name is for the console line only, and it is read off the
+    // classic global instruments.js publishes rather than through deps — a
+    // re-export added to the app so a gate can print a word is a reshape
+    return { id: r.id, fam: window.NuInstruments.familyOf(r.id, r.pad),
+             soft: await render(2, false), hard: await render(9, false),
+             mid: await render(5, false), midAgain: await render(5, false),
+             quiet: await render(9, false, 0.3),
+             padSoft: await render(2, true), padHard: await render(9, true),
+             padMid: await render(5, true),
+             dyn: window.__nuDyn() };
+  });
+}
+// ---- (H) THE SINGER --------------------------------------------------------
+// "You did a lot of this in the upper level app, but we never really got to the
+// point where it could sing or two voices could sing" (the artist, 2026-08-15).
+//
+// THE ARTIFACT IS THE ONLY WITNESS THAT COUNTS HERE. Every step of the chain
+// has an honest-looking intermediate that can be right while the sound is
+// wrong: the plan can name the correct note, the rung can be chosen correctly,
+// the playbackRate can be computed correctly, and the syllable can still come
+// out a fourth flat because the slice boundaries were off and the detector
+// measured a consonant. So this probe renders ONE SUNG NOTE, alone, through
+// the page's own buildChannel and playSyllable, into an OfflineAudioContext —
+// and then runs the found layer's own F0 detector over the rendered PCM and
+// asks what pitch actually came out.
+//
+// WHAT IT DELIBERATELY DOES NOT ASSERT: the pitch of a slice the detector
+// could not measure in the first place. MEASURED over all 996 (bank line ×
+// rung × voice) syllables, 5.9% return no F0 — they are 40-60 ms of mostly
+// consonant — and audio/sing.js handles those by falling back to the rung's
+// own measured ladder value. Asserting a detected pitch on a clip the detector
+// has already said it cannot read would be asserting the detector's noise, so
+// the probe reports its own reliability alongside the numbers.
+async function singProbe(page) {
+  return page.evaluate(async () => {
+    const [gm, mx, sg, dp, stm, dv] = await Promise.all([
+      import("/nukernel/audio/graph.js"), import("/nukernel/audio/mixer.js"),
+      import("/nukernel/audio/sing.js"), import("/nukernel/ui/deps.js"),
+      import("/nukernel/ui/state.js"), import("/nukernel/ui/derive.js")]);
+    if (!dp.CS) return { err: "window.CsdSpeech is not on the page" };
+    if (!dp.FP) return { err: "window.FoundPlayer is not on the page" };
+    const SR = 44100, AT = 0.05;
+    const midiOf = (hz) => 69 + 12 * Math.log2(hz / 440);
+
+    // THE REAL PLAN, off the real derive path: set a box to `duet` and take
+    // what ui/derive.js emits. A hand-built plan would prove the renderer and
+    // nothing about the wiring.
+    const pick = (chip) => {
+      for (let i = 0; i < stm.SONG.length; i++) {
+        const sec = JSON.parse(JSON.stringify(stm.SONG[i]));
+        sec.sing = chip;
+        const ev = dv.sectionEvents(sec, stm.SLOTS).ev.filter(e => e.kind === "sing");
+        if (ev.length >= 4) return { sec, ev, i };
+      }
+      return null;
+    };
+    const duet = pick("duet");
+    if (!duet) return { err: "no box in this song sings — nothing to measure" };
+    const t0 = performance.now();
+    const warmed = await sg.warm(duet.ev, duet.ev[0].text);
+    const warmMs = Math.round(performance.now() - t0);
+    if (!warmed) return { err: "warm() produced no slices" };
+
+    // one syllable, alone, rendered through the page's own channel builder
+    const render = async (ev, colour, durSec) => {
+      const octx = new OfflineAudioContext(2, Math.ceil((AT + durSec + 0.6) * SR), SR);
+      const count = window.__countNodes(octx);
+      const master = gm.buildMasterChain(octx);
+      const env = { master: master.input, verb: () => master.input,
+                    echoIn: master.input, room: null };
+      // level/pan/sends neutral: a reverb tail would smear the F0 estimate
+      const chan = mx.buildChannel(octx, { ...mx.chanSpec(duet.sec), fx: [], rev: null,
+                                           echo: null, auto: [], mot: null }, env);
+      const before = count.n;
+      const played = sg.playSyllable(ev, ev.text, AT, durSec, chan, colour, 2);
+      const perNote = count.n - before;
+      const out = await octx.startRendering();
+      const L = out.getChannelData(0), R = out.getChannelData(1);
+      const mono = new Float32Array(L.length);
+      let e = 0;
+      for (let i = 0; i < L.length; i++) { mono[i] = (L[i] + R[i]) / 2; e += mono[i] * mono[i]; }
+      // measure only the sounding span; the tail is master-chain ring-out
+      const from = Math.floor(AT * SR), to = Math.min(mono.length, from + Math.ceil(durSec * SR));
+      const prof = dp.FP.f0Profile(mono.slice(from, to), SR);
+      return { played, perNote, rms: Math.sqrt(e / L.length), hz: prof.hz,
+               voiced: prof.voiced, n: prof.n,
+               midi: prof.hz > 0 ? midiOf(prof.hz) : null };
+    };
+
+    // (1) PITCH TRACKING: every planned lead syllable, sung and measured
+    const DUR = 0.5;
+    const rows = [];
+    for (const ev of duet.ev) {
+      const probe = window.__nuSingProbe(ev, ev.text);
+      if (!probe) { rows.push({ vi: ev.vi, err: "no slice" }); continue; }
+      const got = await render(ev, "natural", DUR);
+      rows.push({ vi: ev.vi, si: ev.si, syl: ev.syl, want: probe.foldedMidi,
+                  measurable: probe.measured, realBend: probe.realBend,
+                  rate: probe.rate, natSec: probe.natSec,
+                  got: got.midi, err: got.midi == null ? null : got.midi - probe.foldedMidi,
+                  played: got.played, perNote: got.perNote, rms: got.rms,
+                  voiced: got.voiced });
+      if (rows.length >= 24) break;
+    }
+
+    // (2) TWO VOICES, on the SAME syllable index: the interval the chart chose
+    const pairs = [];
+    for (const a of duet.ev.filter(e => e.vi === 0)) {
+      const b = duet.ev.find(e => e.vi === 1 && e.si === a.si);
+      if (!b) continue;
+      const ra = rows.find(r => r.vi === 0 && r.si === a.si);
+      const rb = rows.find(r => r.vi === 1 && r.si === b.si);
+      if (!ra || !rb || ra.got == null || rb.got == null) continue;
+      // A PAIR IS ONLY EVIDENCE WHEN BOTH HALVES WERE READ. `read` means the
+      // slice had a detectable F0 before the bend AND the render came back
+      // within a semitone of its own target — i.e. the detector managed this
+      // clip. It is the same rule the pitch check applies for the same reason:
+      // an autocorrelation estimate on a 60 ms resampled syllable sometimes
+      // locks an octave out, and asserting the harmony interval on top of that
+      // reading is asserting the detector's noise. Unread pairs are PRINTED,
+      // never silently dropped.
+      const read = (r) => r.measurable && r.voiced > 0.3 && Math.abs(r.err) <= 1;
+      pairs.push({ si: a.si, planned: b.n - a.n, wantHeard: rb.want - ra.want,
+                   gotHeard: rb.got - ra.got, read: read(ra) && read(rb) });
+      if (pairs.length >= 8) break;
+    }
+
+    // (3) THE VOCODER COLOUR: no bend at all, and a carrier an octave below
+    // the note (robot_choir.dsp's own intelligibility law), so the detected
+    // pitch should be the note or its octave-down and never something between.
+    const vocRows = [];
+    for (const ev of duet.ev.filter(e => e.vi === 0).slice(0, 4)) {
+      const probe = window.__nuSingProbe(ev, ev.text);
+      const got = await render(ev, "vocoder", DUR);
+      if (probe && got.midi != null)
+        vocRows.push({ want: probe.vocMidi, got: got.midi, rms: got.rms,
+                       played: got.played, perNote: got.perNote });
+    }
+
+    // (4) DETERMINISM: the same note rendered twice is the same samples. The
+    // espeak law is a fresh instance per utterance, and everything after it
+    // (the cut, the F0, the bend, the stretch) is arithmetic — so this is the
+    // end-to-end version of that claim, on the audio and not on the PCM.
+    const d1 = await render(duet.ev[0], "natural", DUR);
+    const d2 = await render(duet.ev[0], "natural", DUR);
+
+    // (5) A HELD NOTE REALLY SUSTAINS. The stretch is the difference between
+    // singing and a speech chip on a sequencer, and it is invisible to a pitch
+    // check: measure the RMS of the LAST quarter of a long note against a
+    // short one's — a blip that stopped would be silence there.
+    let hold = null;
+    {
+      const ev = duet.ev.find(e => e.vi === 0);
+      const long = await (async () => {
+        const octx = new OfflineAudioContext(2, Math.ceil((AT + 1.2 + 0.6) * SR), SR);
+        const master = gm.buildMasterChain(octx);
+        const env = { master: master.input, verb: () => master.input,
+                      echoIn: master.input, room: null };
+        const chan = mx.buildChannel(octx, { ...mx.chanSpec(duet.sec), fx: [], rev: null,
+                                             echo: null, auto: [], mot: null }, env);
+        sg.playSyllable({ ...ev, hold: true }, ev.text, AT, 1.0, chan, "natural", 2);
+        const out = await octx.startRendering();
+        const d = out.getChannelData(0);
+        const seg = (a, b) => { let e = 0, n = 0;
+          for (let i = Math.floor(a * SR); i < Math.floor(b * SR) && i < d.length; i++) { e += d[i] * d[i]; n++; }
+          return Math.sqrt(e / Math.max(1, n)); };
+        return { head: seg(AT + 0.02, AT + 0.12), tail: seg(AT + 0.75, AT + 0.95) };
+      })();
+      hold = long;
+    }
+
+    return { box: duet.i, text: duet.ev[0].text, planned: duet.ev.length,
+             warmMs, rows, pairs, vocRows, hold,
+             same: d1.rms === d2.rms && d1.hz === d2.hz,
+             stats: window.__nuSing() };
+  });
+}
+
 // ...AND THE DESK HAS A SURFACE. Everything above proves the graph carries a
 // per-part mix; this proves a PERSON can make one. It drives the mix table
 // (ui/mixtbl.js) through the DOM — click a cell, click a chip — and then asks
@@ -556,6 +843,7 @@ async function pass(page, url) {
   const page = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
   const errs = capturePageErrors(page);
   await page.addInitScript(taps);
+  await page.addInitScript(offlineFft);   // the offline probes' shared banding + node counter
   // ?nobounce ON BOTH PASSES. The background bounce renders the whole song
   // into an OfflineAudioContext while the graph plays, and an offline render
   // competing for the machine is CPU the live spectrum feels — the two passes
@@ -569,6 +857,33 @@ async function pass(page, url) {
   // the desk, also on the wet page: it needs this song's instruments decoded,
   // and it must run before the dryroom navigation throws the song away
   const desk = await partProbe(page);
+  // the dynamics, on the same decoded song and before partsLive touches
+  // `sec.parts` — it renders the chairs as the composer left them
+  const vel = await velProbe(page);
+  // …AND A PERSON CAN SWITCH IT ON. Everything in (H) below drives the store
+  // directly, which proves the engine and nothing about the surface — and the
+  // surface is where the last three chips that "shipped" turned out to be
+  // unreachable. One tab, one chip, then ask the STORE what it holds.
+  const singChip = await (async () => {
+    await page.locator(".ptab", { hasText: "voice" }).first().click();
+    await page.waitForTimeout(200);
+    const chip = page.locator('.pchip[data-kind="sing"][data-value="duet"]').first();
+    if (!(await chip.count())) return { err: "no sing chip on the voice tab" };
+    await chip.click();
+    await page.waitForTimeout(250);
+    const on = await chip.evaluate(el => el.classList.contains("on"));
+    const held = await page.evaluate(() => import("/nukernel/ui/state.js")
+      .then(s => s.curSection().sing));
+    await chip.click();                    // put it back: (H) picks its own box
+    await page.waitForTimeout(250);
+    const off = await page.evaluate(() => import("/nukernel/ui/state.js")
+      .then(s => s.curSection().sing));
+    return { on, held, off };
+  })();
+  // the singer, on the same page and the same composed song. It is the only
+  // probe here that pays for a wasm boot (~210 ms per espeak instance), so it
+  // runs once and every claim in (H) reads its result.
+  const sing = await singProbe(page);
   const live = desk.err ? null
     : await partsLive(page, { a: desk.A, b: desk.B });
   // the budget, still on the WET page — it has to count the drum room and the
@@ -1032,6 +1347,275 @@ async function pass(page, url) {
       fail(`chorusing every box cost ${grew} nodes — more than four a box means somebody ` +
            `is still building a copy of the effect per channel`);
     else ok(`chorusing every box cost ${grew} nodes: one bus plus a send and a trim each`);
+  }
+
+  // ---- (G) VELOCITY IS TIMBRE, NOT JUST LEVEL ------------------------------
+  // See velProbe above for the claim and for why the control is the SAME
+  // instrument in the one role that has no dynamic response.
+  {
+    if (vel.err) fail(`the dynamics probe could not run: ${vel.err}`);
+    else {
+      const shaped = corr(vel.soft.spec, vel.hard.spec);
+      const flat = corr(vel.padSoft.spec, vel.padHard.spec);
+      const level = corr(vel.hard.spec, vel.quiet.spec);
+      const det = corr(vel.mid.spec, vel.midAgain.spec);
+      console.log(`  ${vel.id} (${vel.fam}): v2/v9 shape ${shaped.toFixed(4)} — ` +
+        `same note as a pad (no response) ${flat.toFixed(4)}, pure level ${level.toFixed(4)}, ` +
+        `two identical renders ${det.toFixed(4)}`);
+
+      // (a) THE MEASUREMENT IS STILL DETERMINISTIC. Everything below is a
+      // difference between two renders, and it means nothing at all until the
+      // same render twice is the same number.
+      if (!(det > 0.9999)) fail(`two identical offline renders correlate ${det.toFixed(5)} — ` +
+        `the probe is not deterministic, so no difference it reports is evidence`);
+      else ok(`two identical renders of the same note correlate ${det.toFixed(5)}`);
+
+      // (b) THE CLAIM. The nukernel-audio (E) discipline: the same sound twice
+      // is ~0.995, a real treatment bends the shape to ~0.94. Measured here on
+      // rock's crunch guitar — the MILDEST family in the table, because an
+      // overdriven amp compresses — 0.952.
+      if (!(shaped < 0.98))
+        fail(`velocity 2 and velocity 9 of the same note correlate ${shaped.toFixed(4)} in ` +
+             `SHAPE — that is two renders of one timbre at two levels, which is exactly the ` +
+             `"no organic difference in the sound of the notes" this round exists to answer`);
+      else ok(`velocity bends the spectrum, not just the fader: v2 vs v9 shape ${shaped.toFixed(4)}`);
+
+      // (c) AND IT IS THE TREATMENT, NOT THE LEVEL. Two controls, both of which
+      // have to stay near 1: the same instrument as a pad (the family with no
+      // response — same velocities, same gain difference, same master limiter),
+      // and a pure 10 dB gain change on the treated note. If either of those
+      // moved as far as (b) did, (b) would be measuring the mix bus.
+      if (!(flat > 0.99))
+        fail(`the SAME note as a pad — a family with no dynamic response — still changed ` +
+             `shape between velocity 2 and 9 (${flat.toFixed(4)}). Either "absent" is not ` +
+             `absent, or (b) is measuring something downstream of the note`);
+      else ok(`the untreated control holds: the same note as a pad is ${flat.toFixed(4)}`);
+      if (!(level > 0.98))
+        fail(`a pure level change moved the shape to ${level.toFixed(4)} — the shape ` +
+             `correlation is not level-blind here, so (b) proves nothing`);
+      else ok(`a pure level change leaves the shape at ${level.toFixed(4)}`);
+      if (!(shaped < flat - 0.02))
+        fail(`the treated pair (${shaped.toFixed(4)}) is not meaningfully further from 1 than ` +
+             `the untreated pair (${flat.toFixed(4)}) — whatever moved, it was not the timbre`);
+      else ok(`the treated pair sits ${(flat - shaped).toFixed(4)} further from 1 than the ` +
+              `untreated one — the difference is timbre`);
+
+      // (d) IN THE RIGHT DIRECTION. Harder is BRIGHTER; a shelf wired backwards
+      // would bend the shape by exactly as much and sound wrong.
+      const cent = (sp) => {
+        let s = 0, t = 0;
+        for (let i = 1; i < sp.length; i++) { s += sp[i] * i * (22050 / 512); t += sp[i]; }
+        return t > 0 ? s / t : 0;
+      };
+      const cs = cent(vel.soft.spec), cm = cent(vel.mid.spec), ch = cent(vel.hard.spec);
+      if (!(cs < cm && cm < ch))
+        fail(`the spectral centroid does not rise with velocity (v2 ${cs.toFixed(0)} Hz, ` +
+             `v5 ${cm.toFixed(0)}, v9 ${ch.toFixed(0)}) — harder must be brighter`);
+      else ok(`harder is brighter, monotonically: centroid ${cs.toFixed(0)} -> ` +
+              `${cm.toFixed(0)} -> ${ch.toFixed(0)} Hz`);
+
+      // (e) WHAT IT COSTS, PER NOTE, COUNTED. One BiquadFilter on a note that
+      // asked for a treatment and NOTHING on a note that did not — which is
+      // also the byte-identity claim, as an artifact rather than as a promise:
+      // at the default velocity the player builds the graph it always built,
+      // and a family with no response builds it at every velocity.
+      const N = vel.mid.perNote;
+      console.log(`  per-note nodes: ${N} at the default velocity, ${vel.hard.perNote} shaped, ` +
+                  `${vel.padMid.perNote} on the untreated pad`);
+      if (!(vel.soft.played && vel.hard.played && vel.mid.played))
+        fail("a probe note did not play at all — the readings above are of silence");
+      else if (vel.hard.perNote !== N + 1 || vel.soft.perNote !== N + 1)
+        fail(`a shaped note costs ${vel.hard.perNote - N} extra node(s), not one ` +
+             `(default ${N}, v2 ${vel.soft.perNote}, v9 ${vel.hard.perNote}) — the whole ` +
+             `per-note budget of this feature is one shelf`);
+      else ok(`a shaped note costs exactly one extra AudioNode (${N} -> ${N + 1})`);
+      if (vel.padSoft.perNote !== vel.padMid.perNote ||
+          vel.padHard.perNote !== vel.padMid.perNote)
+        fail(`a family with NO dynamic response still built a node at velocity 2/9 ` +
+             `(${vel.padSoft.perNote}/${vel.padMid.perNote}/${vel.padHard.perNote}) — ` +
+             `absent must mean the old path exactly`);
+      else ok(`a family with no response builds nothing extra at any velocity ` +
+              `(${vel.padMid.perNote} nodes throughout)`);
+
+      // (f) …and the live page really is on the treated path. The renders above
+      // are offline; this is the counter the playing graph incremented while
+      // pass() was looping a verse, and the flag that would have turned it off.
+      if (vel.dyn.off) fail("?flatvel is on — this whole section measured the page with the " +
+        "audio tier of dynamics disabled");
+      else if (!(vel.dyn.shaped > 0))
+        fail(`__nuDyn reports ${vel.dyn.shaped} shaped notes — nothing on the LIVE path took ` +
+             `the treatment, whatever the offline renders say`);
+      else ok(`the live pass shaped ${vel.dyn.shaped} notes and left ${vel.dyn.flat} at the ` +
+              `default velocity alone`);
+    }
+  }
+
+  // ---- (H) THE SINGER IS IN TUNE ------------------------------------------
+  {
+    if (singChip.err) fail(`the palette: ${singChip.err} — the whole feature is unreachable`);
+    else if (singChip.held !== "duet")
+      fail(`clicking the sing chip left the box holding ${JSON.stringify(singChip.held)}`);
+    else if (!singChip.on) fail("the sing chip did not light when it was switched on");
+    else if (singChip.off !== null)
+      fail(`re-tapping the lit sing chip left ${JSON.stringify(singChip.off)}, not null`);
+    else ok("the sing chip is on the voice tab, lights, writes the box and clears");
+
+    if (sing.err) fail(`the sing probe could not run: ${sing.err}`);
+    else {
+      console.log(`  sings "${sing.text}" — box ${sing.box + 1}, ${sing.planned} planned ` +
+                  `syllables, ${sing.stats.utterances} espeak utterances in ${sing.warmMs} ms`);
+
+      // (a) EVERY PLANNED SYLLABLE ACTUALLY PLAYED. A warm that silently
+      // produced nothing for half the line would still pass a pitch check on
+      // the half it did produce.
+      const played = sing.rows.filter(r => r.played).length;
+      if (played !== sing.rows.length)
+        fail(`only ${played} of ${sing.rows.length} planned syllables played — ` +
+             `playSyllable found no warmed slice for the rest`);
+      else ok(`all ${played} planned syllables played`);
+      const silent = sing.rows.filter(r => r.played && r.rms < 1e-4).length;
+      if (silent) fail(`${silent} syllables played but rendered silence`);
+      else ok("every sung syllable is real audio");
+
+      // (b) THE PITCH IS THE NOTE. Measured on the RENDERED audio, on the
+      // slices whose F0 the detector could read in the first place.
+      const good = sing.rows.filter(r => r.measurable && r.got != null && r.voiced > 0.3);
+      const errs2 = good.map(r => Math.abs(r.err)).sort((a, b) => a - b);
+      const q = (f) => errs2[Math.min(errs2.length - 1, Math.floor(errs2.length * f))];
+      if (errs2.length < 4)
+        fail(`only ${errs2.length} sung syllables were measurable — the pitch claim ` +
+             `cannot be made on this song`);
+      else {
+        // THE WORST IS PRINTED AND NOT ASSERTED ON, and the reason is a
+        // measurement fact rather than a tolerance: the detector occasionally
+        // locks an octave out on a 60 ms resampled clip, which shows up as a
+        // 12-to-16 semitone reading among a run of 0.06s. The MEDIAN and the
+        // P75 are the statistics that cannot be moved by one bad estimate, so
+        // those are the bars; the count past a semitone is the evidence of how
+        // often the detector, not the singer, missed.
+        const wild = errs2.filter(e => e > 1).length;
+        console.log(`  pitch error over ${errs2.length} rendered syllables: ` +
+                    `median ${q(0.5).toFixed(3)}, p75 ${q(0.75).toFixed(3)}, ` +
+                    `worst ${errs2[errs2.length - 1].toFixed(3)} semitones` +
+                    (wild ? `  (${wild} past a semitone — detector octave slips)` : ""));
+        // THE TOLERANCE, and where it comes from: the same chain measured
+        // numerically in node over 641 (line × rung × note) combinations gave
+        // median 0.009 and p90 0.090 semitones. A quarter tone (0.5) is the
+        // ear's own "is it in tune" line, and the median has to be far inside
+        // it or the bend is not working; the p75 is what catches a systematic
+        // offset that a median could ride out.
+        if (q(0.5) > 0.5)
+          fail(`the median sung syllable is ${q(0.5).toFixed(2)} semitones off its note — ` +
+               `the clip-snap is not landing (check that cutSyllables is cutting on the ` +
+               `phoneme nuclei and that the ladder in sing.js still matches the artifact)`);
+        else ok(`the sung pitch tracks the melody: median ${q(0.5).toFixed(3)} semitones off`);
+        if (q(0.75) > 1.0)
+          fail(`a quarter of sung syllables are more than a semitone off ` +
+               `(p75 ${q(0.75).toFixed(2)}) — a systematic bias, not noise`);
+        else ok(`p75 pitch error ${q(0.75).toFixed(3)} semitones, inside a semitone`);
+      }
+      const unmeasurable = sing.rows.filter(r => !r.measurable).length;
+      console.log(`  ..: ${unmeasurable}/${sing.rows.length} slices fell back to the ` +
+                  `ladder (no detectable F0 in a 40-60 ms slice)`);
+
+      // (c) TWO VOICES, AND THEY DIFFER BY THE INTENDED INTERVAL. The plan's
+      // interval and the FOLDED interval are not the same number — each voice
+      // folds into its own range — so what is asserted is the folded one,
+      // which is what the ear hears.
+      if (!sing.pairs.length) fail("no syllable was sung by both voices — duet is not a duet");
+      else {
+        console.log(`  duet intervals (heard/intended): ` +
+                    sing.pairs.map(p => `${p.gotHeard.toFixed(1)}/${p.wantHeard.toFixed(1)}` +
+                      (p.read ? "" : "*")).join(" ") +
+                    (sing.pairs.some(p => !p.read) ? "   (* not read — see below)" : ""));
+        const usable = sing.pairs.filter(p => p.read);
+        const bad = usable.filter(p => Math.abs(p.gotHeard - p.wantHeard) > 1.0);
+        if (usable.length < 2)
+          fail(`only ${usable.length} of ${sing.pairs.length} duet pairs came back readable — ` +
+               `the harmony claim cannot be made on this song, which is itself a finding: ` +
+               `the syllables are too short for the detector`);
+        else if (bad.length)
+          fail(`${bad.length} of ${usable.length} readable duet intervals came out more than ` +
+               `a semitone from the intended one — the two voices are not singing the ` +
+               `harmony the chart chose`);
+        else ok(`all ${usable.length} readable duet intervals land within a semitone of the ` +
+                `intended one (${sing.pairs.length - usable.length} pair(s) unread)`);
+        // ...and the two voices are genuinely two: identical output would give
+        // a heard interval of exactly zero on every pair
+        if (sing.pairs.filter(p => p.read).every(p => Math.abs(p.gotHeard) < 0.1))
+          fail("both voices sang the same pitch on every note — the f3 variant is not " +
+               "applying, so engine/speech.js's lang option is not reaching set_voice");
+        else ok("the two voices are two");
+      }
+
+      // (d) THE VOCODER COLOUR: in tune by construction, and audible
+      if (!sing.vocRows.length) fail("the vocoder colour rendered nothing");
+      else {
+        // NO OCTAVE SLACK. The carrier is built at a KNOWN midi (audio/sing.js
+        // vocMidiOf, which is robot_choir's octave-down law re-floored so the
+        // carrier stays inside the detector's 65..520 Hz window and inside a
+        // phone speaker) and the probe reports it, so the comparison is exact.
+        const off = sing.vocRows.map(v => Math.abs(v.got - v.want));
+        console.log(`  vocoder: want ${sing.vocRows.map(v => v.want.toFixed(1)).join(" ")} ` +
+                    `got ${sing.vocRows.map(v => v.got.toFixed(1)).join(" ")} ` +
+                    `(octave-folded error ${off.map(o => o.toFixed(2)).join(" ")})`);
+        if (sing.vocRows.some(v => v.rms < 1e-4)) fail("a vocoded syllable is silent");
+        else ok(`the vocoder colour renders audio (${sing.vocRows.length} notes)`);
+        // the carrier is BUILT at the target, so this one has no measurement
+        // slack to spend: anything past a quarter tone means the carrier
+        // frequency is wrong, not that the detector wobbled
+        const worst = Math.max(...off);
+        if (worst > 0.5)
+          fail(`the vocoded pitch is ${worst.toFixed(2)} semitones off its note (folded to ` +
+               `the nearest octave) — the carrier is not being built at the target`);
+        else ok(`the vocoder is in tune by construction (worst ${worst.toFixed(3)} semitones)`);
+      }
+
+      // (e) A HELD NOTE SUSTAINS. The natural syllable is 0.10-0.12 s; a 1 s
+      // note has to be singing at 0.85 s or the vowel loop is dead code and
+      // the line is a stutter.
+      if (!sing.hold) fail("the hold probe did not run");
+      else {
+        const ratio = sing.hold.tail / Math.max(1e-9, sing.hold.head);
+        console.log(`  held note: head ${sing.hold.head.toFixed(4)} tail ` +
+                    `${sing.hold.tail.toFixed(4)} (${(ratio * 100).toFixed(0)}%)`);
+        if (!(sing.hold.tail > 0.02 * sing.hold.head))
+          fail(`a 1 s sung note is silent three quarters of the way through — the vowel ` +
+               `stretch is not firing and every long note is a 0.11 s blip`);
+        else ok(`a held note sustains to its end (${(ratio * 100).toFixed(0)}% of its own head)`);
+      }
+
+      // (f) DETERMINISM, end to end
+      if (!sing.same) fail("two renders of the same sung note differ — the chain is not " +
+        "deterministic, so node press and the browser would not hear the same take");
+      else ok("the same sung note renders identically twice");
+
+      // (g) WHAT IT COSTS PER NOTE, COUNTED on the context the note is built
+      // on. Two: one AudioBufferSourceNode and one GainNode. The sampled path
+      // measured on this same page costs ~7.5.
+      // THREE create* CALLS, TWO OF WHICH ARE NODES. __countNodes wraps every
+      // create* on the context, and createBuffer is one of them — it allocates
+      // Float32s and joins no graph. So the honest reading of 3 is: one buffer
+      // allocation, one AudioBufferSourceNode, one GainNode. Counting it is
+      // right (a per-note allocation is a real cost) and calling it a node
+      // would not be; the number is asserted rather than the label.
+      const pn = [...new Set(sing.rows.filter(r => r.played).map(r => r.perNote))];
+      if (pn.length !== 1 || pn[0] !== 3)
+        fail(`a sung note costs ${pn.join("/")} create* calls, not 3 — the whole per-note ` +
+             `budget of this feature is one buffer, one source and one gain`);
+      else ok("a sung note costs 1 buffer + 2 AudioNodes (source + envelope gain)");
+      const vpn = [...new Set(sing.vocRows.map(v => v.perNote))];
+      if (vpn.length && (vpn.length !== 1 || vpn[0] !== 3))
+        fail(`a VOCODED note costs ${vpn.join("/")} create* calls — the vocoder is supposed ` +
+             `to happen in the buffer domain and add no graph at all`);
+      else ok("the vocoder adds no nodes: it is buffer-domain (same 3 as natural)");
+      console.log(`  warm cost: ${sing.stats.utterances} utterances, ` +
+                  `${sing.stats.slices} slices, ${sing.stats.failed} failed lines`);
+      if (sing.stats.failed) fail(`${sing.stats.failed} utterance(s) came back with a ` +
+        `syllable count the plan did not expect — every word after the divergence would ` +
+        `land on the wrong note`);
+      else ok("every utterance cut into exactly the syllables the plan laid out");
+    }
   }
 
   // ---- (E) NOTHING ELSE MOVED ---------------------------------------------

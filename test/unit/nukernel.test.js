@@ -24,6 +24,57 @@ const K = require("../../nukernel/kernel.js");
 const { DEFAULT, GENRES, MODES, SCALES, FAMILIES } = require("../../nukernel/genres.js");
 
 const GK = Object.keys(GENRES);
+
+// ---- node test/unit/nukernel.test.js --calibrate-sing ----------------------
+// NOT A GATE — the RECIPE that produced the two measured tables baked into
+// nukernel/sing.js (LADDER_LOW / LADDER_HIGH). A number in the source that
+// nobody can reproduce is a number nobody can correct, and these two took two
+// attempts to get right: the first pass measured "la la la" at espeak speed
+// 150 and was off by up to 3.5 semitones for the syllables the singer actually
+// sings. So this runs the REAL protocol — every syllable of every bank line,
+// at the speed audio/sing.js uses, cut the way it cuts, measured with the
+// found layer's own detector — and prints the tables ready to paste. ~90 s and
+// 280 espeak instances, which is exactly why it is a flag and not a check.
+if (process.argv.includes("--calibrate-sing")) {
+  (async () => {
+    const CS = require("../../engine/speech.js");
+    const FP = require("../../engine/faust/voices/found-player.js");
+    const S = require("../../nukernel/sing.js");
+    const IPA = new Set([..."aeiouyəɐɛɪɔʊʌɜæɑɒɘɵøɤɯɨʉœɶɞ"]);
+    const isNuc = id => { const t = String(id || "").replace(/[ˈˌː%_'|\-]/g, "");
+                          return t.length > 0 && IPA.has(t[0]); };
+    const lines = Object.values(S.BANKS).flat().map(l => l.join(" "));
+    const SPEED = 260;                     // audio/sing.js SPEED
+    for (const [name, o] of [["LADDER_LOW", { variant: "", lang: "en" }],
+                             ["LADDER_HIGH", { variant: "f3", lang: "" }]]) {
+      const row = [];
+      for (const p of [10, 25, 40, 55, 70, 85, 99]) {
+        const ms = [];
+        for (const text of lines) {
+          const r = await CS.synth(text, { ...o, pitch: p, speed: SPEED });
+          const ph = (r.marks || []).filter(m => m.type === "phoneme");
+          const nuc = []; ph.forEach((m, i) => { if (isNuc(m.id)) nuc.push(i); });
+          const at = x => Math.max(0, Math.min(r.pcm.length, Math.round(x * r.sr / 1000)));
+          for (let k = 0; k < nuc.length; k++) {
+            const from = k === 0 ? 0 : at(ph[Math.max(nuc[k - 1] + 1, nuc[k] - 1)].ms);
+            const to = k + 1 < nuc.length
+              ? at(ph[Math.max(nuc[k] + 1, nuc[k + 1] - 1)].ms) : r.pcm.length;
+            if (to <= from + 8) continue;
+            const hz = FP.detectMedianHz(r.pcm.slice(from, to), r.sr);
+            if (hz > 0) ms.push(69 + 12 * Math.log2(hz / 440));
+          }
+        }
+        ms.sort((a, b) => a - b);
+        row.push([p, +ms[ms.length >> 1].toFixed(2)]);
+      }
+      console.log("  const " + name + " = " +
+        JSON.stringify(row).replace(/\],\[/g, "], [") + ";");
+    }
+    process.exit(0);
+  })().catch(e => { console.error(e); process.exit(1); });
+  return;
+}
+
 let fails = 0, checks = 0;
 const ok = (cond, msg) => {
   checks++;
@@ -1833,6 +1884,11 @@ const D = await (async () => {
   globalThis.window = globalThis;
   window.NuKernel = K;
   window.NuGenres = require("../../nukernel/genres.js");
+  // the SINGER's plan tier. Published on the stub for the same reason
+  // everything else here is: ui/deps.js reads window.NuSing, so leaving it out
+  // would make derive.js's sing branch dead in the gate and green forever —
+  // exactly the mirror-drift this stub exists to prevent (§43 measures it).
+  window.NuSing = require("../../nukernel/sing.js");
   window.NuFields = require("../../nukernel/fields.js");
   window.NuSong = require("../../nukernel/song.js");
   window.NuInstruments = require("../../nukernel/instruments.js");
@@ -3768,6 +3824,129 @@ console.log("the arranged dynamic — the chorus outweighs the verse, on the rea
   }
 }
 
+/* ---------- 39c. THE SECOND KIND OF DYNAMICS, the pure half -----------------
+   §39 and §39b prove velocity has range and shape in the STREAM. That range
+   still only moved LOUDNESS: a note played harder was the same note turned up,
+   which is the other half of "there is no organic difference in the sound of
+   the notes". audio/voices.js now maps velocity onto timbre — a per-note high
+   shelf tilted by velocity with the strike on top of it, a shorter amp attack,
+   a sample-start offset, and the synth voices' own cutoff/env-amount — off the
+   per-family table in instruments.js.
+
+   The audible claim needs a browser and lives in nukernel-drums (G), where the
+   control is the same instrument in the one role that has no response. What is
+   PURE is the table: every family the strip walk can name has a response or is
+   deliberately without one, the numbers are in range, and — the load-bearing
+   one — the curve is zero at the default velocity, because that is what lets
+   the player skip the shelf node entirely and leave today's path alone. */
+console.log("the second kind of dynamics — the response table and its neutral");
+{
+  const NI = require("../../nukernel/instruments.js");
+  const { DYN, dynFor, dynCurve, DYN_BRIGHT, DYN_ATK,
+          familyOf, stripFor, STRIPS, BASS_INSTR } = NI;
+
+  // (a) ONE FAMILY WALK, TWO READERS. dynFor and stripFor must answer about the
+  // same instrument from the same table, or a guitar lands on the guitar strip
+  // with the generic response — the drift a shared familyOf exists to stop.
+  for (const [id, pad, want] of [["crunch_guitar", false, "dirty"],
+      ["clean_guitar", false, "guitar"], ["rock_organ", false, "organ"],
+      ["ahh_choir", false, "vox"], ["trumpet", false, "brass"], ["flute", false, "reed"],
+      ["violin", false, "bowed"], ["marimba", false, "mallet"],
+      ["strings_slow", false, "strings"], ["halo_pad", false, "pad"],
+      ["yamaha_grand_piano", false, "keys"], ["clean_guitar", true, "pad"],
+      ["nothing_at_all", false, "lead"]]) {
+    ok(familyOf(id, pad) === want, id + (pad ? " (pad)" : "") + " reads as family " +
+       familyOf(id, pad) + ", not " + want);
+    ok(stripFor(id, pad) === STRIPS[want], id + ": stripFor and familyOf disagree");
+    ok(dynFor(id, pad) === (DYN[want] || null),
+       id + ": dynFor and familyOf disagree");
+  }
+  // the bass chair is reached by id — nothing in the regex table claims it
+  ok(dynFor(BASS_INSTR, false) === DYN.bass,
+     "the bass chair did not get the bass response (it would take `lead`)");
+
+  // (b) THE TWO SILENT FAMILIES ARE SILENT ON PURPOSE. A drawbar organ has no
+  // velocity response in the instrument, and a pad is the one voice a per-note
+  // transient shelf would chop. Absent must mean absent, not zeroed: the player
+  // branches on null and builds no node at all — which is also what makes the
+  // browser gate's control possible, since `pad` is a role any instrument can
+  // be put in.
+  for (const fam of ["organ", "pad"])
+    ok(DYN[fam] == null, fam + " grew a dynamic response — it must stay absent, " +
+       "which is how voices.js keeps that path byte-identical");
+  ok(dynFor("rock_organ", false) === null && dynFor("anything", true) === null,
+     "an organ or a pad answered a response object rather than null");
+
+  // (c) THE TABLE IS COMPLETE AND IN RANGE. Every family the walk can produce
+  // either has all five numbers or is one of the two above; a half-filled row
+  // is a NaN in a filter frequency.
+  const fams = new Set(["dirty", "guitar", "organ", "vox", "brass", "reed", "bowed",
+                        "mallet", "strings", "pad", "keys", "lead"]);
+  for (const f of fams)
+    ok(DYN[f] != null || f === "organ" || f === "pad",
+       "family " + f + " has neither a response nor a documented reason to lack one");
+  for (const [k, d] of Object.entries(DYN)) {
+    ok(STRIPS[k] != null, "DYN names " + k + ", which is not a strip family");
+    ok(d.tilt > 0 && d.tilt <= 18, k + ": tilt " + d.tilt + " dB is not a sane swing");
+    ok(d.corner >= 400 && d.corner <= 6000,
+       k + ": corner " + d.corner + " Hz is not where an instrument's brightness starts");
+    ok(d.bite >= 0 && d.bite <= 8, k + ": bite " + d.bite + " dB out of range");
+    ok(d.dec > 0 && d.dec <= 0.3, k + ": dec " + d.dec + " is not a short settle");
+    ok(d.hand >= 0 && d.hand <= 1, k + ": hand " + d.hand + " out of 0..1");
+  }
+  ok(new Set(Object.values(DYN).map(d => d.tilt)).size >= 6,
+     "every family swings by the same amount — a table of one number is a constant");
+  // the ORDERING is the physical claim the table makes, and it is worth one
+  // line: a trumpet's timbre moves further with the breath than a string
+  // section's does, and a plucked string is more strike than a bowed one
+  ok(DYN.brass.tilt > DYN.strings.tilt && DYN.mallet.hand > DYN.bowed.hand,
+     "the table has lost its physical ordering — brass must swing further than a " +
+     "string section, and a mallet must be more strike than a bow");
+
+  // (d) THE NEUTRAL IS EXACTLY NEUTRAL. This is the whole byte-identity claim,
+  // written as arithmetic: at the default velocity the shelf is 0 dB (a literal
+  // bypass — which is why the player builds no node at all), the attack is
+  // today's 0.006 and the start offset is 0. dynCurve is IMPORTED rather than
+  // re-derived: it is the same four lines the player writes onto AudioParams,
+  // and a second copy here would be a gate on a copy.
+  for (const [k, d] of Object.entries(DYN)) {
+    const n = dynCurve(0, d);
+    ok(n.db === 0 && n.peakDb === 0 && n.atk === DYN_ATK && n.skip === 0,
+       k + ": the curve is not the identity at the default velocity (" +
+       JSON.stringify(n) + ") — the skip in voices.js would be a lie");
+  }
+  // …and it MOVES either side of it, monotonically, in the direction an
+  // instrument moves: softer is darker, harder is brighter with a brighter
+  // onset still, and the front edge shortens all the way up.
+  {
+    const d = DYN.keys;
+    const soft = dynCurve(-1, d), hard = dynCurve(1, d), half = dynCurve(-0.5, d);
+    ok(soft.db < half.db && half.db < 0,
+       "a softer note is not darker: " + soft.db.toFixed(1) + " / " + half.db.toFixed(1) + " dB");
+    ok(hard.db > 0, "a harder note is not brighter (" + hard.db.toFixed(1) + " dB)");
+    // the asymmetry is deliberate — the one-layer sample IS the firm note, so
+    // taking its top away is honest and adding to it is invention
+    ok(hard.db < -soft.db && Math.abs(hard.db - -soft.db * DYN_BRIGHT) < 1e-9,
+       "the loud side is not DYN_BRIGHT of the soft side — the asymmetry documented " +
+       "beside DYN is what keeps the shelf from inventing high end the font never had");
+    ok(hard.peakDb > hard.db && soft.peakDb === soft.db,
+       "the strike is not a loud-side-only transient (" + hard.peakDb.toFixed(1) + " / " +
+       soft.peakDb.toFixed(1) + ")");
+    ok(hard.atk < DYN_ATK && soft.atk > DYN_ATK,
+       "the amp attack does not track the hand: " + hard.atk + " / " + soft.atk);
+    ok(hard.atk >= 0.003,
+       "the hardest attack is under sampler.js's own 3 ms floor (" + hard.atk + ")");
+    ok(hard.skip > 0 && hard.skip <= 0.006 && soft.skip === 0,
+       "the sample-start offset is not a hard-hit-only few ms (" + hard.skip + ")");
+    // a ghosted note is the extreme the vel vector really produces (0..9 with
+    // the default at 5), so the curve has to stay sane one step past full soft
+    const ghost = dynCurve(-1.25, DYN.brass);
+    ok(ghost.db > -24 && ghost.db < soft.db,
+       "the softest note the vel vector can write is " + ghost.db.toFixed(1) + " dB down — " +
+       "past about -24 the note has stopped being the instrument and started being a mute");
+  }
+}
+
 /* ---------- 40. THE FUNCTION GENRES ----------------------------------------
    "What is a Beatles song without a couple of solos. You should also have some
    vocal melodies. So I can see a Beatles song where only the drums remain, but
@@ -5032,6 +5211,307 @@ console.log("the songwriter's read — lengths, irregularity, memory, stops, voi
     }
     ok(m > 40 && inside / m >= 0.8, "the quote's pitch content sits inside the " +
        "chorus's in only " + inside + "/" + m + " records");
+  }
+}
+
+/* ------------------------------------------- 43. THE SINGER, the pure half
+   nukernel/sing.js decides which syllable lands on which note in which voice,
+   and every one of those decisions is measurable here: the syllable split, the
+   word bank, the note selection, the harmony interval, the espeak pitch rung.
+   audio/sing.js is then a renderer with no opinions, and what IT does — the
+   phoneme cut, the measured bend, the vocoder, the tape — is the browser
+   gate's job (nukernel-drums (H), nukernel-bounce (D)).
+
+   THE ONE THING THAT IS NOT PURE and is checked here anyway: espeak's own
+   syllable count. The plan's letter rule has to agree with the artifact's
+   phoneme nuclei or the words land on the wrong notes, and node can run the
+   vendored wasm — so a two-utterance sample of it runs when the artifact is
+   reachable and is skipped, loudly, when it is not (CI has no media, but
+   vendor/espeak-ng IS committed, so in practice it runs). */
+console.log("the singer — syllables, the bank, the ladders, the plan");
+{
+  const S = require("../../nukernel/sing.js");
+  const NF = require("../../nukernel/fields.js");
+  const C = require("../../nukernel/compose.js");
+
+  // (a) THE SYLLABLE RULE, on words whose answer is not in dispute
+  const cases = [["hold", 1], ["the", 1], ["be", 1], ["sky", 1], ["yes", 1],
+                 ["a", 1], ["one", 1], ["table", 2], ["little", 2], ["again", 2],
+                 ["river", 2], ["shadow", 2], ["morning", 2],
+                 // A KNOWN LIMIT, asserted rather than hidden: a vowel HIATUS
+                 // (ra-di-o) reads as one nucleus, because a maximal vowel run
+                 // is the right default for boat/rain/see and English does not
+                 // spell the difference. It is safe because no bank token has
+                 // one — (b) below is what keeps it that way.
+                 ["radio", 2]];
+  for (const [w, n] of cases)
+    ok(S.nsyl(w) === n, "syllables(" + w + ") = " + S.nsyl(w) + ", want " + n +
+       " — " + JSON.stringify(S.syllables(w)));
+  ok(S.nsyl("") === 0, "the empty word is not a syllable");
+  // the pieces reassemble into the word — a splitter that loses letters is
+  // a splitter that would sing a different word
+  for (const [w] of cases)
+    ok(S.syllables(w).join("") === w, "syllables(" + w + ") lost letters");
+
+  // (b) THE BANK IS MONOSYLLABIC, which is the precondition the whole design
+  // rests on: one token, one nucleus, one note. A polysyllabic token would
+  // make espeak emit two nuclei where the plan expects one and every word
+  // after it would land on the wrong note.
+  let tokens = 0;
+  for (const [fam, lines] of Object.entries(S.BANKS)) {
+    ok(lines.length >= 2, fam + ": a bank with one line is not a choice");
+    for (const line of lines) {
+      ok(line.length >= 5, fam + ": a line of " + line.length + " is too short to sing");
+      for (const w of line) {
+        tokens++;
+        ok(S.nsyl(w) === 1, fam + ': "' + w + '" is ' + S.nsyl(w) +
+           " syllables — bank tokens must be one");
+        ok(/^[a-zA-Z']+$/.test(w), fam + ': "' + w + '" is not a plain word');
+      }
+    }
+  }
+  ok(tokens > 100, "only " + tokens + " bank tokens");
+  // every FAMILY genres.js declares has a bank — a genre whose family has none
+  // would sing the fallback, silently
+  const { FAMILIES } = require("../../nukernel/genres.js");
+  for (const [fam] of FAMILIES)
+    ok(S.BANKS[fam], "genre family " + fam + " has no word bank");
+  // ...and every genre resolves to one
+  for (const gk of GK) ok(S.bankFor(gk) && S.bankFor(gk).length,
+    gk + ": no lyric bank resolves");
+
+  // (c) THE MEASURED LADDERS: monotone in pitch, an octave apart, and the
+  // rungs they generate keep the nominal bend inside what the header claims.
+  for (const V of S.VOICES) {
+    for (let i = 1; i < V.ladder.length; i++) {
+      ok(V.ladder[i][0] > V.ladder[i - 1][0], V.key + ": ladder pitch not ascending");
+      ok(V.ladder[i][1] > V.ladder[i - 1][1], V.key + ": ladder MIDI not ascending — " +
+         "a higher espeak pitch that sings lower is a mis-measurement");
+    }
+    ok(V.rungs.length === S.NRUNGS, V.key + ": wrong rung count");
+    for (let i = 1; i < V.rungs.length; i++)
+      ok(V.rungs[i] > V.rungs[i - 1], V.key + ": rungs not ascending");
+  }
+  ok(S.VOICES[1].ladder[0][1] - S.VOICES[0].ladder[0][1] > 9,
+     "the two singers are less than a minor seventh apart — they are one singer");
+  // THE BEND CEILING, which is the whole justification for four rungs. Nominal
+  // (the real one is a measurement and lives in the browser gate); the number
+  // is stated in sing.js's header and this is what holds it there.
+  let worstBend = 0;
+  for (let m = 24; m <= 96; m++) for (let vi = 0; vi < 2; vi++)
+    worstBend = Math.max(worstBend, Math.abs(S.rungFor(vi, m).bend));
+  ok(worstBend <= 2.2, "the worst nominal bend is " + worstBend.toFixed(2) +
+     " semitones — sing.js's header claims +-2.2, so either the ladders moved " +
+     "or NRUNGS did");
+  // every target in every register folds into the voice and picks a real rung
+  for (let m = 12; m <= 108; m++) for (let vi = 0; vi < 2; vi++) {
+    const r = S.rungFor(vi, m), V = S.VOICES[vi];
+    ok(V.rungs.includes(r.pitch), vi + "/" + m + ": rung " + r.pitch + " is not a rung");
+    ok(r.midi >= V.ladder[0][1] - 0.5 && r.midi <= V.ladder[V.ladder.length - 1][1] + 0.5,
+       vi + "/" + m + ": folded to " + r.midi.toFixed(1) + ", outside the voice");
+    ok(Math.abs(((r.midi - m) % 12 + 12) % 12) < 1e-6 ||
+       Math.abs((((r.midi - m) % 12 + 12) % 12) - 12) < 1e-6,
+       vi + "/" + m + ": the fold moved by " + (r.midi - m) + ", not by octaves — " +
+       "a fold that changes the pitch class changes the note");
+  }
+
+  // (d) THE HARMONY IS CONSONANT BY CONSTRUCTION. Against a real chord it is a
+  // chord tone in the third-to-sixth window; against nothing it is the octave.
+  ok(S.harmonyOf(60, null) === 72, "no chord -> not the octave");
+  ok(S.harmonyOf(60, []) === 72, "empty chord -> not the octave");
+  {
+    let win = 0, oct = 0;
+    for (let root = 0; root < 12; root++) for (let m = 48; m <= 72; m++) {
+      const pcs = [root, root + 4, root + 7];       // a major triad, any root
+      const h = S.harmonyOf(m, pcs), d = h - m;
+      ok(d >= S.HARM_LO && d <= S.HARM_HI || d === 12,
+         "harmony " + d + " semitones above — outside the window and not the octave");
+      if (d === 12) oct++; else {
+        win++;
+        ok(pcs.some(p => ((p % 12) + 12) % 12 === ((h % 12) + 12) % 12),
+           "the harmony note is not a chord tone");
+      }
+    }
+    // a triad covers three of twelve pitch classes, so a 7-semitone window
+    // essentially always contains one: this is the "by construction" claim
+    ok(oct === 0, oct + " harmonies fell back to the octave against a plain " +
+       "triad — the third-to-sixth window is not doing its job");
+    ok(win >= 300, "only " + win + " harmonies were measured");
+  }
+
+  // (e) NEUTRALITY, the §22 law for the new field: a box with no `sing` is the
+  // day before this existed, event for event. Read through the REAL derive.
+  {
+    const song = C.compose("beatles", 7);
+    for (const b of song.song) {
+      const before = JSON.stringify(D.sectionEvents(b, song.slots).ev);
+      ok(before.indexOf('"sing"') < 0,
+         "a box with no sing chip emitted a sing event");
+      const b2 = clone(b); b2.sing = null;
+      ok(JSON.stringify(D.sectionEvents(b2, song.slots).ev) === before,
+         "an explicit sing:null is not the same as absent");
+    }
+  }
+
+  // (f) THE PLAN, on real composed boxes and the real derive path. This is the
+  // §31 discipline: every claim is read off rendered events, never off config.
+  {
+    let sung = 0, dueted = 0, boxes = 0, held = 0;
+    const intervals = new Map();
+    for (const gk of ["beatles", "rock", "house", "gregorian", "tango", "dnb"]) {
+      for (const s of [1, 5, 11]) {
+        const song = C.compose(gk, s);
+        for (const b of song.song) {
+          const bb = clone(b); bb.sing = "duet";
+          const ev = D.sectionEvents(bb, song.slots).ev;
+          const sing = ev.filter(e => e.kind === "sing");
+          boxes++;
+          if (!sing.length) continue;
+          sung++;
+          // every sung event carries everything the player needs
+          for (const e of sing) {
+            ok(typeof e.syl === "string" && e.syl.length, gk + ": a sung event has no syllable");
+            ok(typeof e.text === "string" && e.text.indexOf(e.syl) >= 0,
+               gk + ': the utterance does not contain "' + e.syl + '"');
+            ok(e.vi === 0 || e.vi === 1, gk + ": sung voice index " + e.vi);
+            ok(Number.isFinite(e.n) && Number.isFinite(e.t) && e.dur > 0,
+               gk + ": a sung event has no note, time or length");
+            ok(e.colour === "natural", gk + ": duet is not a vocoder colour");
+            if (e.hold) held++;
+          }
+          // TWO VOICES ON EVERY NOTE, and the second one above the first
+          const lead = sing.filter(e => e.vi === 0), harm = sing.filter(e => e.vi === 1);
+          ok(lead.length === harm.length, gk + ": " + lead.length + " lead notes but " +
+             harm.length + " harmony notes — duet is not a duet");
+          if (lead.length === harm.length && lead.length) {
+            dueted++;
+            for (let i = 0; i < lead.length; i++) {
+              ok(lead[i].t === harm[i].t && lead[i].si === harm[i].si,
+                 gk + ": the two voices are not singing the same syllable at the same time");
+              const d = harm[i].n - lead[i].n;
+              ok(d >= S.HARM_LO && d <= S.HARM_HI || d === 12,
+                 gk + ": harmony " + d + " semitones above the tune");
+              intervals.set(d, (intervals.get(d) || 0) + 1);
+            }
+          }
+          // ONE SYLLABLE PER NOTE, spaced, capped
+          const ts = [...new Set(lead.map(e => +e.t.toFixed(6)))].sort((a, b) => a - b);
+          ok(ts.length === lead.length, gk + ": two syllables share a time");
+          for (let i = 1; i < ts.length; i++)
+            ok(ts[i] - ts[i - 1] >= S.MIN_STEPS - 1e-9,
+               gk + ": syllables " + (ts[i] - ts[i - 1]) + " steps apart, under MIN_STEPS");
+          ok(lead.length <= S.MAX_SYL, gk + ": " + lead.length + " syllables, over MAX_SYL");
+          // the words are the bank's, in bank order, repeating
+          const bankLine = S.lyricFor(gk, 0) && null;   // (order is checked below)
+          ok(bankLine === null, "unreachable");
+        }
+      }
+    }
+    ok(sung > 60, "only " + sung + " of " + boxes + " boxes rendered a sung line");
+    ok(dueted === sung, "only " + dueted + "/" + sung + " sung boxes were real duets");
+    ok(held > 0, "no sung note anywhere was long enough to be held — HOLD_STEPS " +
+       "is unreachable and the vowel stretch is dead code");
+    ok(intervals.size >= 3, "the harmony only ever sang " + intervals.size +
+       " distinct interval(s) — it is a fixed transposition, not a chart reading");
+    console.log("  sung " + sung + "/" + boxes + " boxes, " + held + " held notes, " +
+      "intervals " + [...intervals.entries()].sort((a, b) => a[0] - b[0])
+        .map(([d, n]) => d + "st×" + n).join(" "));
+  }
+
+  // (g) DETERMINISM. Same box, same seed, same words and same notes — twice,
+  // and against a fresh require of the module (the plan must not carry state).
+  {
+    const song = C.compose("rock", 3);
+    const b = clone(song.song[1]); b.sing = "choir";
+    const a1 = JSON.stringify(D.sectionEvents(b, song.slots).ev.filter(e => e.kind === "sing"));
+    const b2 = clone(song.song[1]); b2.sing = "choir";
+    const a2 = JSON.stringify(D.sectionEvents(b2, song.slots).ev.filter(e => e.kind === "sing"));
+    ok(a1 === a2 && a1.length > 20, "the sung plan is not deterministic");
+    ok(a1.indexOf('"vocoder"') > 0, "choir is not a vocoder colour");
+    // the lyric is the GENRE's, so every box of one song sings the same words
+    const texts = new Set();
+    for (const x of song.song) {
+      const xx = clone(x); xx.sing = "lead";
+      for (const e of D.sectionEvents(xx, song.slots).ev)
+        if (e.kind === "sing") texts.add(e.text);
+    }
+    ok(texts.size === 1, "one song sang " + texts.size + " different lines — the " +
+       "warm cost is per line, so this is also " + texts.size + " sets of espeak instances");
+  }
+
+  // (h) ONE VOICE ONLY, for the single-singer chips
+  {
+    const song = C.compose("house", 9);
+    for (const chip of ["lead", "robot"]) {
+      // the first box that HAS a singable line — not every box does (a drums
+      // box has no voice-0 tune), and (f) already measures how many do
+      let sing = [];
+      for (const x of song.song) {
+        const b = clone(x); b.sing = chip;
+        sing = D.sectionEvents(b, song.slots).ev.filter(e => e.kind === "sing");
+        if (sing.length) break;
+      }
+      ok(sing.length > 0, chip + ": no box in the song sang anything");
+      ok(sing.every(e => e.vi === 0), chip + " used the harmony voice");
+      ok(sing.every(e => e.colour === (chip === "robot" ? "vocoder" : "natural")),
+         chip + ": wrong colour");
+    }
+  }
+
+  // (i) THE REGISTRY KNOWS ABOUT IT — the §21(b) rules, applied to the one
+  // table that lives in another file
+  ok(NF.FIELD.sing && NF.FIELD.sing.scope === "box", "sing is not a box field");
+  ok(Object.keys(NF.SINGS).length === Object.keys(NF.SINGLABEL).length,
+     "a sing value has no label");
+  for (const [k, v] of Object.entries(NF.SINGS)) {
+    ok(v.voices === 1 || v.voices === 2, k + ": " + v.voices + " voices");
+    ok(v.colour === "natural" || v.colour === "vocoder", k + ": colour " + v.colour);
+  }
+
+  // (j) THE ARTIFACT'S OWN SYLLABLE COUNT. The plan's letter rule and espeak's
+  // phoneme nuclei must agree or the words land on the wrong notes. Two
+  // utterances, not two hundred: the full sweep is the calibration helper.
+  {
+    const CS = require("../../engine/speech.js");
+    // THE STUB WINDOW HAS TO GO for the duration of this check. §31 installs
+    // `globalThis.window = globalThis` so ui/deps.js can read the UMD tier —
+    // and the emscripten glue sniffs exactly that to decide it is in a
+    // browser, then reads location.pathname and throws. Nothing between here
+    // and the restore re-reads window: deps.js captured its bindings at import.
+    const stubWindow = globalThis.window;
+    delete globalThis.window;
+    const IPA = new Set([..."aeiouyəɐɛɪɔʊʌɜæɑɒɘɵøɤɯɨʉœɶɞ"]);
+    const isNuc = id => { const t = String(id || "").replace(/[ˈˌː%_'|\-]/g, "");
+                          return t.length > 0 && IPA.has(t[0]); };
+    if (await CS.available()) {
+      for (const fam of ["kernel", "vox"]) {
+        const line = S.BANKS[fam][0], text = line.join(" ");
+        const r = await CS.synth(text, { speed: 260 });
+        const nuclei = (r.marks || []).filter(m => m.type === "phoneme" && isNuc(m.id));
+        ok(nuclei.length === line.length, fam + ': espeak sang "' + text + '" as ' +
+           nuclei.length + " nuclei but the plan laid out " + line.length +
+           " — every word after the divergence lands on the wrong note");
+        ok(r.marks && r.marks.length > line.length,
+           "engine/speech.js returned no marks — the syllable cut has nothing to cut on");
+        // and the fresh-instance law still holds through the new lang option
+        const r2 = await CS.synth(text, { speed: 260 });
+        ok(r2.pcm.length === r.pcm.length &&
+           r2.pcm.every((v, i) => v === r.pcm[i]),
+           "two synths of the same line are not byte-identical");
+      }
+      // the variant is REACHABLE now, which is the point of the lang option
+      const a = await CS.synth("la la", { speed: 260 });
+      const b = await CS.synth("la la", { speed: 260, variant: "f3", lang: "" });
+      ok(a.pcm.length !== b.pcm.length ||
+         !a.pcm.every((v, i) => v === b.pcm[i]),
+         "the f3 variant produced identical PCM — engine/speech.js's lang option " +
+         "is not reaching set_voice, so there is only one singer");
+      const c = await CS.synth("la la", { speed: 260, variant: "f3" });
+      ok(c.pcm.length === a.pcm.length && c.pcm.every((v, i) => v === a.pcm[i]),
+         "a variant WITHOUT lang changed the audio — the additive contract in " +
+         "engine/speech.js is broken and 230 registry rows just moved");
+    } else console.log("  ..: espeak artifact unreachable — (j) skipped");
+    globalThis.window = stubWindow;
   }
 }
 

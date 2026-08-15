@@ -11,7 +11,7 @@ import { GENRES, FAMILIES, MODELABEL, SCALELABEL, VOX, OPS, OPLABEL, MAX_FX, FX,
          BASSOPS, SWINGLABEL, GROOVELABEL, SENDLABEL, VERBS, DTLABEL,
          LEVELLABEL, PANLABEL, INLABEL, OUTLABEL, ENVLABEL, MOTLABEL,
          KEYLABEL, PROGLABEL, PERIODLABEL, BREATHLABEL, PIPELABEL, PARTCHOICES,
-         AUTOPARAMLABEL, AUTOSHAPELABEL, autoShape,
+         SINGLABEL, AUTOPARAMLABEL, AUTOSHAPELABEL, autoShape,
          MAX_NUDGE } from "./deps.js";
 import { curSection, commit, on } from "./state.js";
 import { LAYER_OPTS, stackOf, focusOf, focused, opsOf, optOf, voxOf,
@@ -113,7 +113,7 @@ export function toggle(kind, value) {
 // the plain one-of-these box fields, all toggled the same way
 const BOXOPTS = new Set(["kit", "drumkit", "bassop", "swing", "groove", "rev", "echo",
                          "verb", "dtime", "lvl", "pan", "mot", "intro", "outro", "role",
-                         "key", "prog", "period", "breath", "pipe"]);
+                         "key", "prog", "period", "breath", "pipe", "sing"]);
 
 /* ---------- the palette itself ---------- */
 // BUILT ONCE, then only its ON states change. Rebuilding it on every draw
@@ -293,6 +293,9 @@ export function drawPalette() {
                     ["op", "tight", OPLABEL.tight, "rng"]]);
     rowOf("alphabet", "scale", SCALELABEL, "rng");
     rowOf("part", "part", PARTCHOICES, "rng");
+    // BOX-scope on a layer page, like breath and pipe on the line page: the
+    // box has one lyric and one singer, but what a voice IS belongs here
+    rowOf("sing", "sing", SINGLABEL, "vox");
     rowOf("filter", "cut", VOX.cut.labels, "vox");
     rowOf("resonance", "res", VOX.res.labels, "vox");
     rowOf("env mod", "emod", VOX.emod.labels, "vox");

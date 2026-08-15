@@ -58,12 +58,29 @@
   })();
 
   // ---- canonical options + cache key -------------------------------------
-  const DEF = { voice: "en-us", pitch: 50, speed: 175 };
+  const DEF = { voice: "en-us", pitch: 50, speed: 175, lang: "en" };
   function normOpts(o) {
     o = o || {};
     return {
       voice: o.voice || DEF.voice,
       variant: o.variant || "",   // espeak !v variant, e.g. "f3" -> "en-us+f3"
+      // THE LANG ARGUMENT, AND WHY IT IS SUDDENLY A KNOB. set_voice's signature
+      // is (name, lang, gender, age) and this organ has always passed lang
+      // "en" — which, MEASURED on the vendored artifact, WINS OUTRIGHT over the
+      // name: set_voice("en-us+f3","en",0,0) is byte-identical to
+      // set_voice("en-us","en",0,0), so `variant` has never done anything on
+      // any of the 230 registry-data.js rows that declare one. Pass lang "" and
+      // the name is honoured — f3 comes out at 200 Hz against the base voice's
+      // 96 Hz, a different singer.
+      //
+      // ADDITIVE ON PURPOSE, and this is the whole of the caution: flipping the
+      // default would re-voice 230 shipped station idents and move every hash
+      // downstream of them. So "en" stays the default, absent stays
+      // byte-identical, and a caller that WANTS the variant asks for it
+      // (nukernel/audio/sing.js is the first). The key only grows a segment
+      // when the value is non-default, so every cache key in the tree — and
+      // test/gates/speech.test.js's literals — are unchanged.
+      lang: o.lang != null ? String(o.lang) : DEF.lang,
       pitch: o.pitch != null ? Math.round(o.pitch) : DEF.pitch,
       speed: o.speed != null ? Math.round(o.speed) : DEF.speed,
     };
@@ -74,6 +91,7 @@
   function key(text, opts) {
     const n = normOpts(opts);
     return "speech:v=" + n.voice + (n.variant ? "+" + n.variant : "") +
+      (n.lang === DEF.lang ? "" : ";l=" + n.lang) +
       ";p=" + n.pitch + ";s=" + n.speed + ";" + String(text);
   }
 
@@ -125,15 +143,28 @@
     const w = new m.eSpeakNGWorker();       // FRESH worker — the determinism law
     try {
       const name = n.voice + (n.variant ? "+" + n.variant : "");
-      const rc = w.set_voice(name, "en", 0, 0);
+      const rc = w.set_voice(name, n.lang, 0, 0);
       if (rc !== 0) throw new Error("espeak set_voice(" + name + ") rc " + rc);
       w.set_pitch(n.pitch);
       w.set_rate(n.speed);
       if (w.get_samplerate() !== ESPEAK_SR)
         throw new Error("espeak samplerate " + w.get_samplerate() + " != " + ESPEAK_SR);
       const chunks = [];
-      w.synthesize(String(text), (samples) => {
+      // THE MARKS, kept rather than dropped. The synthesize callback's second
+      // argument has always carried espeak's event stream — {type:'word' |
+      // 'phoneme' | 'sentence' | 'end', text_position, word_length,
+      // audio_position (ms), id} — and this organ threw it away because a PA
+      // announcement is one opaque utterance. A SUNG line is not: it has to be
+      // cut into syllables and land each one on a note, and the phoneme marks
+      // are where the vowel nuclei actually are (nukernel/audio/sing.js).
+      // Copied out of the callback's array because it is a heap view.
+      const marks = [];
+      w.synthesize(String(text), (samples, events) => {
         if (samples && samples.length > 0) chunks.push(samples.slice());
+        if (events) for (const e of events)
+          marks.push({ type: e.type, pos: e.text_position | 0,
+                       len: e.word_length | 0, ms: e.audio_position | 0,
+                       id: e.id });
         return false;                       // falsy = continue synthesis
       });
       let total = 0; for (const c of chunks) total += c.length;
@@ -151,7 +182,7 @@
       const g = (peak > 0 ? Math.min(MAX_GAIN, TARGET_PEAK * 32768 / peak) : 1) / 32768;
       const out = new Float32Array(up.length);
       for (let i = 0; i < up.length; i++) out[i] = up[i] * g;
-      return { pcm: out, sr: SR };
+      return { pcm: out, sr: SR, marks };
     } finally {
       try { if (w.__destroy__) w.__destroy__(); } catch (e) {}
     }

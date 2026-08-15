@@ -18,7 +18,8 @@
 
 // ---- the algebra (kernel.js) ----
 export const { harm, render, drums, bass, ROMAN, word, KITOPS,
-               envelope, edges, groove, withCadence, partOf } = window.NuKernel;
+               envelope, edges, groove, withCadence, partOf,
+               chordAt } = window.NuKernel;
 
 // ---- the genre table (genres.js) ----
 export const { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL,
@@ -40,6 +41,7 @@ export const { NSLOTS, MAX_LEN, MAX_NUDGE, MAX_FX,
                okPartKey, partChairLabel, chairKeys, resolvePartMix,
                resolveMaster, masterIsDefault,
                AUTOPARAMS, AUTOPARAMLABEL, AUTOSHAPELABEL, autoShape,
+               SINGLABEL,
                ROLES } = window.NuFields;
 // THE ONE RENAME IN THIS FILE. fields.js calls the master-bus registry MASTER;
 // ui/state.js calls the song's master-bus VALUES the same thing. One says what
@@ -55,11 +57,21 @@ export const { blank, emptyBox } = window.NuSong;
 // ---- the sound sources as data (instruments.js) ----
 export const { instrOf, BASS_INSTR, DRUMDIR, DRUMFILE, FONTS, BASSSYNTH,
                STRIPS, stripFor, RANGES, STRETCH_UP, STRETCH_DOWN,
-               DRUMMIX, DRUMBUS } = window.NuInstruments;
+               DRUMMIX, DRUMBUS,
+               // the per-family DYNAMIC RESPONSE (audio/voices.js) — the same
+               // family walk stripFor uses, answering timbre instead of mix.
+               // `dynCurve` is the arithmetic; the player only writes it onto
+               // AudioParams, so the table and the sound cannot drift apart
+               dynFor, dynCurve, DYN_ATK } = window.NuInstruments;
 
 // ---- arranger policy (compose.js) + the shipped songs (presets.js) ----
 export const { compose } = window.NuCompose;
 export const PRESETS = window.PRESETS;
+
+// ---- the singer as data (sing.js) ----
+// The plan tier: syllables, the word banks, the measured espeak pitch ladders,
+// which note gets which word in which voice. audio/sing.js renders it.
+export const SING = window.NuSing || null;
 
 // ---- the big engine's sampled layer ----
 // engine/faust/voices/sampler.js is the same SamplerLive live.js drives, and
@@ -67,3 +79,18 @@ export const PRESETS = window.PRESETS;
 export const SP = window.FaustSampler;
 export const REG = window.__REGISTRY;
 export const SAMPLERS = (REG && REG.SAMPLERS) || {};
+
+// ---- the big engine's SPEECH and FOUND organs ----
+// Two more borrowings from the parent, and they are read HERE for the same
+// reason everything else is: audio/sing.js must not touch a global.
+//   CsdSpeech  engine/speech.js — deterministic espeak-ng, the fresh-instance
+//              law, the single-flight queue, the shared cache key. It lazily
+//              dynamic-imports the ~1.7 MB wasm, so referencing it costs
+//              nothing until something actually sings.
+//   FoundPlayer engine/faust/voices/found-player.js — read for f0Profile /
+//              detectMedianHz ONLY, the deterministic clip-snap's measuring
+//              half. Nothing here fetches a found source or builds a grain.
+// Both are optional: a page served without them degrades to a silent singer
+// (audio/sing.js counts it) rather than to a thrown module.
+export const CS = window.CsdSpeech || null;
+export const FP = window.FoundPlayer || null;

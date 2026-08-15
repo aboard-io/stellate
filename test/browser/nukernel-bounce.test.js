@@ -34,6 +34,17 @@
 //       a COLD render of the same edited song, window by window.
 //       (The 'test the artifact' law: three features shipped broken here while
 //       every check passed, because the checks read intent and not output.)
+//   (D) A SUNG LINE SURVIVES A WINDOW BOUNDARY. On mobile the tape IS the
+//       audible path (carrierFirst), so a voice that only exists on the live
+//       graph is silent on a phone — and the tape is cut into windows, so a
+//       held syllable that starts in one window and ends in the next is
+//       exactly the thing that vanishes silently. The pre-roll is supposed to
+//       make that impossible by construction (a window renders the bar before
+//       its own and throws that bar's output away, so a note that rings across
+//       the seam really was played) — but "by construction" is what the three
+//       broken features all claimed. So the same music is rendered with the
+//       SEAMS IN DIFFERENT PLACES and the tapes are compared: if a syllable
+//       falls down a crack, moving the cracks moves the tape.
 "use strict";
 const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
 const path = require("path");
@@ -210,6 +221,93 @@ const moved = (a, b) => a.reduce((n, v, i) =>
     // gate is about the cache, not about the edit.
     if (cold) console.log(`  ..: the edit moved ${moved(proof.rms, cold.rms)} of ` +
                           `${cold.rms.length} tape windows`);
+  }
+
+  // ── (D) the singer, in the tape and across the seams ──
+  {
+    // every box sings. Written straight onto the store rather than clicked,
+    // because the claim here is about the RENDER and not about the palette
+    // (nukernel-drums (H) drives the plan through the real derive path).
+    const planned = await page.evaluate(async () => {
+      const [stm, dv] = await Promise.all([
+        import("/nukernel/ui/state.js"), import("/nukernel/ui/derive.js")]);
+      for (const b of stm.SONG) b.sing = "duet";
+      stm.commit("song", { reason: "gate" });
+      let n = 0;
+      for (const b of stm.SONG)
+        n += dv.sectionEvents(b, stm.SLOTS).ev.filter(e => e.kind === "sing").length;
+      return n;
+    });
+    await page.waitForTimeout(400);
+    if (!planned) fail("no box in this song plans a sung syllable — (D) measures nothing");
+    else ok(`the song plans ${planned} sung syllables across ${boxes} boxes`);
+
+    // A SHORT HEAD, on purpose. The one-window control has to render the same
+    // music in a SINGLE OfflineAudioContext, and audio/bounce.js's own header
+    // measures that path as ~n^2.3 — a whole composed song in one window does
+    // not finish. Twelve seconds is many bars (so many seams at chunkSec 2)
+    // and one cheap window at chunkSec 60.
+    const HEAD = 12;
+    const many = await page.evaluate((h) =>
+      window.__nuRenderNow(h, { cold: true, chunkSec: 2 }), HEAD);
+    const one = await page.evaluate((h) =>
+      window.__nuRenderNow(h, { cold: true, chunkSec: 60 }), HEAD);
+    if (!many || !one) fail("a seam render returned nothing");
+    else {
+      console.log(`  seam A/B: ${many.chunks} windows vs ${one.chunks}, ` +
+                  `${many.durSec.toFixed(1)}s of song`);
+      // THREE, not six: a window is a whole number of BARS (planChunks walks
+      // the bar list), and a beatles bar at this tempo is ~4 s — so chunkSec 2
+      // buys one bar per window and 11.8 s of head is three of them. Two
+      // seams is what there is to test at this bar granularity, and two seams
+      // is enough: a note lost at one moves the tape.
+      if (many.chunks < 3)
+        fail(`the many-window render only made ${many.chunks} window(s) — chunkSec ` +
+             `did not take, so there are no seams to test`);
+      else if (one.chunks !== 1)
+        fail(`the control render made ${one.chunks} windows, not 1 — it is not a control`);
+      else {
+        const d = drift(many.rms, one.rms);
+        if (d > NOISE)
+          fail(`moving the window boundaries changed the tape by ${(d * 100).toFixed(1)}% — ` +
+               `something is falling down a seam. A sung note longer than one bar is the ` +
+               `likely culprit: audio/sing.js caps a syllable at the sounding bar precisely ` +
+               `because the pre-roll is one bar deep`);
+        else ok(`the tape is identical with ${many.chunks} seams and with none ` +
+                `(worst window ${(d * 100).toFixed(2)}%)`);
+      }
+      if (!(many.sing && many.sing.notes > 0))
+        fail(`the windowed render played ${many.sing && many.sing.notes} sung notes — ` +
+             `the singer is not in the tape at all, which on a phone means silent`);
+      else ok(`the windowed render sang ${many.sing.notes} notes ` +
+              `(${many.sing.utterances} espeak utterances, ${many.sing.failed} failed)`);
+    }
+
+    // …AND IT IS AUDIBLE. The strongest available read without soloing a voice
+    // out of a full mix: render the identical song with the singer off and
+    // show the tape moved. A feature that renders and cannot be heard is the
+    // failure this gate's own header is about.
+    const off = await page.evaluate(async (h) => {
+      const stm = await import("/nukernel/ui/state.js");
+      for (const b of stm.SONG) b.sing = null;
+      stm.commit("song", { reason: "gate" });
+      return window.__nuRenderNow(h, { cold: true, chunkSec: 2 });
+    }, HEAD);
+    if (!off || !many) fail("the singer-off render returned nothing");
+    else {
+      const n = moved(many.rms, off.rms);
+      console.log(`  singer on vs off: ${n}/${many.rms.length} tape windows moved by ` +
+                  `more than ${NOISE * 100}%`);
+      // THREE, and the bar is low on purpose. This is a WHOLE BAND mix through
+      // a limiter, and one voice at 0.5 against it moves the tape by a few
+      // percent in the windows it sings in — measured across runs at 5 to 36
+      // of 64. The claim being made is "it is in there", not "it dominates";
+      // (H) in nukernel-drums is where the voice is heard on its own.
+      if (n < 3)
+        fail(`switching the singer on changed only ${n} of ${many.rms.length} tape windows — ` +
+             `it rendered, it cost espeak instances, and it is inaudible`);
+      else ok(`the singer is audible in the tape: ${n}/${many.rms.length} windows moved`);
+    }
   }
 
   if (errs.length) fail(`page errors: ${errs.slice(0, 3).join(" | ")}`);

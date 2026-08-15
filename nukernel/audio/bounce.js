@@ -63,7 +63,8 @@ import { FONT, isSynthFont, fontDef } from "./assets.js";
 import { makeSynthNode, driveSynth, offFallback } from "./voices.js";
 import { chanSpec, buildChannel, armAutomation, focusKit } from "./mixer.js";
 import { buildTimeline, scheduleBar, stepDur, playing, getPosition,
-         onGesture, seekPhase, setQuietWhen } from "./transport.js";
+         onGesture, seekPhase, setQuietWhen, singWork } from "./transport.js";
+import { warm as warmSing } from "./sing.js";
 
 /* ---------- the platform predicate ---------- */
 // IT LIVES HERE NOW, not in survival.js, because the thing it decides is the
@@ -148,7 +149,8 @@ window.__nuRenderNow = async (capSec, opts) => {
   if (opts && opts.cold) dropWindowCache();
   try {
     const t0 = performance.now();
-    const res = await renderSong(capSec || 0);
+    const res = await withChunkSec((opts && opts.chunkSec) || 0,
+                                   () => renderSong(capSec || 0));
     if (!res) return null;
     const ms = Math.round(performance.now() - t0);
     // …AND A FINGERPRINT OF THE TAPE ITSELF. A render budget gate that only
@@ -169,6 +171,9 @@ window.__nuRenderNow = async (capSec, opts) => {
              phases: res.phases, chunks: st.chunks,
              hits: st.hits, misses: st.misses,
              nodes: st.nodes, pooled: st.pooled,
+             // the singer's own census of this render — an ADDED key, so every
+             // existing reader is untouched (nukernel-bounce (D) reads it)
+             sing: (typeof window.__nuSing === "function" ? window.__nuSing() : null),
              rms, peak: +peak.toFixed(5) };
   } finally { rendering = false; }
 };
@@ -382,10 +387,22 @@ const SR = 44100, LEAD = 0.05, TAIL = 1.5;
 // 4 and 6 are inside each other's noise on a loaded box; 6 is chosen because it
 // reaches the same place with a third fewer windows, and every window is a
 // master chain, a room and a kit desk built again.
-const CHUNK_SEC = (() => {
+let CHUNK_SEC = (() => {
   const q = /[?&]chunksec=(\d+(?:\.\d+)?)/.exec(typeof location !== "undefined" ? location.search : "");
   return q ? +q[1] : 6;
 })();
+// ...AND IT IS OVERRIDABLE PER RENDER, for exactly one reason: the SEAM. A
+// window boundary is invisible in a single render — the tape is a
+// concatenation and looks continuous whatever fell down the crack — so the
+// only way to prove nothing is lost at one is to render the same music with
+// the seams in different places and compare. `let` plus __nuRenderNow's
+// { chunkSec } is that A/B (test/browser/nukernel-bounce.test.js (D)); the
+// query flag above is unchanged and is still what a person reaches for.
+const withChunkSec = async (n, fn) => {
+  const was = CHUNK_SEC;
+  if (n > 0) CHUNK_SEC = n;
+  try { return await fn(); } finally { CHUNK_SEC = was; }
+};
 // how many windows render at once. Chromium gives each OfflineAudioContext its
 // own render thread; one core is left for the page, which is still running the
 // LIVE graph while this happens — a bounce that starves the audible path has
@@ -696,6 +713,18 @@ async function renderSong(capSec) {
   const plan = planChunks(TL, sd, CHUNK_SEC);
   const durSec = plan.total;
   st.wantSec = durSec; st.wantBars = TL.length; st.chunks = plan.chunks.length;
+  // THE SINGER, WARMED BEFORE ANY WINDOW OPENS — and this is not a nicety on
+  // mobile, it is the difference between a sung line existing and not. The
+  // carrier IS the audible path on a phone (the WAV-FIRST decision at the top
+  // of this file), so a voice that only ever warms on the live graph's own
+  // ensureAssets is silent on the device most likely to be listening.
+  // renderChunk's walk is synchronous by construction; every espeak instance
+  // has to be paid here, once for the whole tape, or not at all. Idempotent
+  // and cached, so the second stage and every re-render after an edit hit the
+  // same slices — which also means the two-stage render does not synthesize
+  // the same line twice.
+  ph.mark("voices");
+  for (const w of singWork()) await warmSing(w.plan, w.text);
   ph.mark("render");
   st.sampledOnly = false;
   offFallback.n = 0;

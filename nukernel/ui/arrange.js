@@ -61,8 +61,13 @@ export function render() {
   const cols = [];
   const aSlots = stackOf(sec)[0].slots, nP = Math.max(1, aSlots.length);
   // one pass into per-kind pools, then per-column picks are over the small pools
-  const lines = [], basses = [], hits = [];
-  for (const e of ev) (e.kind === "line" ? lines : e.kind === "bass" ? basses : hits).push(e);
+  // A BUCKET PER KIND, NAMED. This was a two-level ternary whose ELSE arm was
+  // `hits`, so the first event kind anyone added — `sing` — landed in the drum
+  // pool and threw on `e.d.toUpperCase()`. An unknown kind now goes nowhere
+  // rather than into the last bucket that happened to be written.
+  const lines = [], basses = [], hits = [], sings = [];
+  const POOL = { line: lines, bass: basses, hit: hits, sing: sings };
+  for (const e of ev) { const p = POOL[e.kind]; if (p) p.push(e); }
   for (let v = 0; v < g.voices; v++)
     cols.push({ name: (g.realize(v) === "pad" ? "Pad " : "Voice ") + v,
       op: (aSlots.length > 1 ? "phrase " + (aSlots[v % nP] + 1) + " · " : "") + (g.words[v] || ""),
@@ -80,6 +85,15 @@ export function render() {
   }
   cols.push({ name: "Bass", op: (g.bassStyle === "walk" ? "walking · " : "roots · ") + g.harmony,
     kind: "pitch", color: "var(--vb)", ev: basses });
+  // THE SINGER, one column per voice, and it reads as a LINE because that is
+  // what it is: a pitch per tick with a duration. The op line carries the
+  // words, which is the one thing about this column a note name cannot say.
+  for (const vi of [...new Set(sings.map(e => e.vi))].sort()) {
+    const mine = sings.filter(e => e.vi === vi);
+    cols.push({ name: vi ? "Harmony" : "Voice",
+      op: [...new Set(mine.map(e => e.syl))].join(" "),
+      kind: "pitch", color: "var(--v" + ((vi + 1) % 4) + ")", ev: mine });
+  }
   // THE KIT IS ONE COLUMN GROUP, not six unrelated channels: the drums share a
   // rule down their left edge and narrower cells, because a hit is a lamp and
   // a pitch is a word.

@@ -300,8 +300,16 @@
      script is deferred, so it always runs after every classic script here. -->
 <script src="../engine/registry-data.js"></script>
 <script src="../engine/faust/voices/sampler.js"></script>
+<!-- the parent's SPEECH and FOUND organs, borrowed whole (nukernel/audio/sing.js
+     says exactly what for). speech.js resolves the vendored espeak glue
+     relative to ITS OWN src, so loading it from ../engine/ lands on
+     /vendor/espeak-ng/ and not on /nukernel/vendor/ — and it only dynamic-
+     imports that 1.7 MB the first time something actually sings. -->
+<script src="../engine/speech.js"></script>
+<script src="../engine/faust/voices/found-player.js"></script>
 <script src="kernel.js"></script>
 <script src="genres.js"></script>
+<script src="sing.js"></script>
 <script src="fields.js"></script>
 <script src="song.js"></script>
 <script src="instruments.js"></script>

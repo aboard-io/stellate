@@ -6,8 +6,9 @@
 //
 // Layer graph: deps -> state -> THIS FILE -> audio -> ui views -> main.
 import { GENRES, MODES, SCALES, RATES, SWINGS, KITOPS, OPS,
-         render, drums, bass, word, envelope, edges, groove,
-         blank, VOX, PROGS, PERIODS, BREATHS, PIPESETS, withCadence } from "./deps.js";
+         render, drums, bass, word, envelope, edges, groove, chordAt,
+         blank, VOX, PROGS, PERIODS, BREATHS, PIPESETS, withCadence,
+         SING } from "./deps.js";
 
 export const isBlank = p => p.gate.every(g => !g);
 
@@ -294,9 +295,59 @@ export function sectionEvents(sec, slots) {
   // events in TIME rather than in pitch or level, and it has to see the final
   // stream — a fill written after the groove would be the one bar in the section
   // sitting flat on the grid, which is exactly what you notice.
-  return { g, bars: len, vBase,
-           ev: groove(edges(envelope(win, sec.env, span), sec.intro, sec.outro, span, barSteps),
-                      sec.groove, barSteps, 1) };
+  const ev = groove(edges(envelope(win, sec.env, span), sec.intro, sec.outro, span, barSteps),
+                    sec.groove, barSteps, 1);
+  // ...AND THE SINGER AFTER EVEN THAT. A sung line follows the tune, so it has
+  // to read the FINAL stream: planning it before the groove would put the
+  // words on the grid while the melody they are singing had moved off it.
+  // It is appended rather than merged into the walk because it is a different
+  // KIND of event — `sing` carries a syllable and a voice index, not a note
+  // and a chair — and because appending is what keeps every song saved before
+  // this byte-identical: `sec.sing` absent, singPlan returns [], nothing here
+  // touches `ev` at all.
+  for (const s of singEvents(sec, g, phrases[0], ev, barSteps, nudge))
+    ev.push(s);
+  return { g, bars: len, vBase, ev };
+}
+
+/* ---------- the sung line ---------- */
+// THE LYRIC IS THE GENRE'S, and the seed is the AUTHORITY GENRE KEY and
+// nothing else. Two consequences, both wanted: every box of a one-genre song
+// sings the same words (a song has one hook, not one per section), and the
+// whole song therefore warms ONE set of espeak utterances instead of one per
+// box — which is the difference between a two-second warm and a twenty-second
+// one. djb2, because it has to be stable across reloads and machines.
+const strSeed = s => {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+  return h;
+};
+// WHICH CHORD IS SOUNDING UNDER A STEP, in the coordinates chordAt wants. The
+// chord windows are indexed in PHRASE steps (kernel.js chordsOf splits the
+// subject's own 16), while an event's `t` is in output steps (16/rate to the
+// bar), so the bar fraction is the conversion — and the bar is ABSOLUTE
+// (nudge + the window's own offset), because a progression cycles by bar and
+// a nudged box starts partway through the cycle.
+function pcsAtOf(subj, g, barSteps, nudge) {
+  return (t) => {
+    const b = nudge + Math.floor(t / barSteps);
+    const step = Math.min(15, Math.max(0,
+      Math.floor(((t % barSteps) / barSteps) * 16)));
+    const c = chordAt(subj, g, b, step);
+    return c && c.pcs ? c.pcs : null;
+  };
+}
+export function singEvents(sec, g, subj, ev, barSteps, nudge) {
+  if (!sec.sing || !SING || !subj) return [];
+  const gk = gid(sec), seed = strSeed(gk);
+  const plan = SING.singPlan(ev, { sing: sec.sing, gk, seed,
+                                   pcsAt: pcsAtOf(subj, g, barSteps, nudge) });
+  if (!plan.length) return plan;
+  // the utterance and the colour are per BOX, not per note — hoisted because
+  // sectionEvents is the deep-composition cost centre and utteranceFor rebuilds
+  // a string from the bank every time it is called
+  const text = SING.utteranceFor(gk, seed), colour = SING.SINGS[sec.sing].colour;
+  return plan.map(p => ({ ...p, kind: "sing", text, colour }));
 }
 
 /* ---------- the shared render ---------- */
