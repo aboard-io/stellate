@@ -64,12 +64,57 @@
   // is. The LAST chorus (or drop) is the peak — 1.0 — and the peak is where
   // the composer spends the lift: level forward, a forced extra layer, and
   // sometimes the truck-driver key change.
-  function arcOf(words) {
+  //
+  // ...AND THE CURVE HAS A MEMORY, which is the fix for the second measured
+  // complaint of this round: "today intensity is a lookup on the role —
+  // verse=soft, chorus=big, every time". A role constant plus one peak bit is
+  // still a lookup; it gave every verse in a song the same number and every
+  // chorus but the last the same number, so a song's two verses were the same
+  // size and its first two choruses were interchangeable. Three terms now, and
+  // each is a thing a band actually does:
+  //
+  //   BASE   the role's own weight — a chorus is bigger than a verse.
+  //   RAMP   +0.10 over the length of the record: the band walks in. The
+  //          second half of a song is louder than the first in nearly every
+  //          record ever made, and nothing here knew that.
+  //   AGAIN  +0.07 each time a role comes round again (capped at two): the
+  //          second verse is bigger than the first because there is more of
+  //          the band on it, and the third chorus is the one you sing along to.
+  //
+  // The BRIDGE is the exception and takes no `again` bump: it is the place a
+  // record goes quiet, so its base sits UNDER the verses (0.36 against 0.50)
+  // and it stays there however late it falls.
+  //
+  // STEADY is the opt-out, and it is a decision rather than a shrug: two
+  // anchors in the table are one idea held for the length of a record, and an
+  // arranged crescendo over a drone is an arrangement happening to music that
+  // asked for none. Those get the bare role constants — same role, same number,
+  // deliberately flat — and the gate reads that back as a live exemption
+  // rather than an untested branch.
+  const STEADY = { drone: 1, ambient: 1 };
+  function arcOf(words, steady) {
+    const n = words.length;
     const peak = Math.max(words.lastIndexOf("chorus"), words.lastIndexOf("drop"));
     const V = { intro: 0.3, verse: 0.5, prechorus: 0.62, build: 0.58, chorus: 0.82,
-                drop: 0.85, breakdown: 0.3, bridge: 0.45, solo: 0.7, outro: 0.25 };
-    return words.map((w, i) => (i === peak ? 1 : (V[w] == null ? 0.5 : V[w])));
+                drop: 0.85, breakdown: 0.3, bridge: 0.36, solo: 0.7, outro: 0.25 };
+    const seen = {};
+    return words.map((w, i) => {
+      const k = (seen[w] = (seen[w] || 0) + 1) - 1;
+      if (i === peak) return 1;
+      const base = V[w] == null ? 0.5 : V[w];
+      if (steady) return base;
+      const ramp = 0.1 * (i / Math.max(1, n - 1));
+      const again = w === "bridge" ? 0 : 0.07 * Math.min(2, k);
+      return Math.max(0.15, Math.min(0.97, base + ramp + again));
+    });
   }
+  // HOW MANY TIMES THIS ROLE HAS ALREADY BEEN, per position — the same count
+  // the arc uses, exported to build() so a role can vary its OWN gesture on the
+  // way round (the second prechorus does not fade in again; it pushes).
+  const ordinals = words => {
+    const seen = {};
+    return words.map(w => (seen[w] = (seen[w] || 0) + 1) - 1);
+  };
   // ...and the arc is what SIZE means. The curve above already knew that a
   // bridge is smaller than a chorus, and then spent that knowledge on exactly
   // one bit — `peak` — so every other section came out at the same dynamic and
@@ -99,12 +144,70 @@
   const dynOf = a => {
     if (!a || a.x == null) return null;
     const x = a.x, nx = a.next == null ? x : a.next;
-    if (x >= 0.8) return "big";                               // the arrival sits up
-    if (nx - x >= 0.15) return x <= 0.4 ? "cresc" : "lift";   // pointed at something bigger
+    if (x >= 0.86) return "big";                              // the arrival sits up
+    if (nx - x >= 0.15) return x <= 0.45 ? "cresc" : "lift";  // pointed at something bigger
     if (x - nx >= 0.25) return "dim";                         // coming down off it
     if (x <= 0.55) return "soft";                             // and the small parts are small
     return "arch";                                            // everything else breathes
   };
+  // ---- ...AND NO TWO OF A KIND ARE THE SAME SIZE ---------------------------
+  // The arc has resolution now, but `dynOf` is a step function over six words:
+  // three choruses at 0.85 / 0.95 / 1.00 all land on "big", which is the
+  // template complaint back in a smaller box. So the last pass over a composed
+  // song walks each ROLE GROUP and forces the members apart.
+  //
+  // The ladder is ordered by the MEAN of the curve each word compiles to
+  // (kernel.js SHAPES): soft 0.68, then the three that average 0.81 — dim
+  // (coming down), cresc (arriving over) and lift (waiting, then climbing) —
+  // then arch 0.885 and big 1.14. Ordering it that way is what makes the fix
+  // musical rather than cosmetic: the group is walked from the LAST member
+  // BACKWARDS, so the latest one keeps what it was dealt and the earlier ones
+  // step DOWN to the first free rung. Three choruses come out lift → arch →
+  // big, which is monotone, and the last chorus stays the loudest thing on the
+  // record by construction rather than by luck.
+  //
+  // Values that are not on the ladder are left alone on purpose: `in` / `out`
+  // are the FADES a role owns (an intro arrives, an outro leaves) and `drop` is
+  // a STOP (a hole, not a size). Repeats of those are handled where they are
+  // written — the second prechorus is dealt "lift" instead of a second "in",
+  // and a stop kind is never placed twice in one record.
+  //
+  // (`dim` and `cresc` are the SAME size — 0.81 either way — and are adjacent
+  // rungs on purpose: they are one loudness travelled in opposite directions,
+  // which is a real distinction between two sections and no distinction at all
+  // in average level. The ladder is non-decreasing rather than strictly
+  // increasing for exactly that pair.)
+  const DYNLADDER = ["soft", "dim", "cresc", "lift", "arch", "big"];
+  // WHAT A SECTION IS CALLED, for the three passes that reason about position.
+  // Not `cue || role`, which is what everything else in this file reads: the
+  // head intro's `cue` carries its intro KIND (solo, quote, cold…) and a solo
+  // break's carries "solobreak", so a raw cue read made the opening bar of a
+  // bulgarian record look like a solo section and put a drum break on a box
+  // whose whole job is to open the song. Only two cues NAME A PLAN ROLE, and
+  // they are the two the ALIAS table stores under a different one.
+  const PLANCUE = { prechorus: 1, build: 1 };
+  const sectionWord = b => (PLANCUE[b.cue] ? b.cue : b.role);
+  function spreadDynamics(song) {
+    const by = {};
+    for (const b of song) {
+      if (BEDS[b.role]) continue;                 // a bed is a layer, not a section
+      const k = sectionWord(b);
+      (by[k] = by[k] || []).push(b);
+    }
+    for (const group of Object.values(by)) {
+      if (group.length < 2) continue;
+      const taken = new Set();
+      for (let i = group.length - 1; i >= 0; i--) {
+        const b = group[i], at = DYNLADDER.indexOf(b.env);
+        if (!taken.has(b.env) || at < 0) { taken.add(b.env); continue; }
+        let j = at - 1;
+        while (j >= 0 && taken.has(DYNLADDER[j])) j--;
+        if (j < 0) { j = at + 1; while (j < DYNLADDER.length && taken.has(DYNLADDER[j])) j++; }
+        if (j < DYNLADDER.length) b.env = DYNLADDER[j];
+        taken.add(b.env);
+      }
+    }
+  }
   const PLAN_OF = {
     acid: "dance", vaporwave: "dance", newwave: "dance",
     rock: "song", blues: "song", sludge: "song", simple: "song",
@@ -156,6 +259,71 @@
                 // behind them, a riff is a mid-tempo thing and a pad has
                 // nowhere to be
                 solo: 128, vocal: 96, backing: 84, riff: 112, pad: 74 };
+
+  // ---- HOW LONG A SECTION IS -----------------------------------------------
+  // MEASURED, and backwards: a section was `G.bars` — the genre's own FORM
+  // length, the length of the loop it repeats — so the Beatles anchor (bars 8)
+  // arranged into 8-bar sections while citypop (bars 4) got 4-bar ones and dub
+  // got 4. That is exactly the wrong way round. A form length is how long the
+  // pattern takes to come back; a SECTION length is how long you stay in it,
+  // and the two are different questions. Groove music needs the longer answer —
+  // sixteen bars is where a one-drop or a house record starts to sit in the
+  // pocket, and four bars of it is a transition — while the pop song is the one
+  // that can afford to move: eight bars of verse and on to the lift.
+  //
+  // So the target is per FAMILY, in bar-equivalents at rate 1, and it is
+  // rounded to a whole number of the genre's own form so a section never stops
+  // the pattern half way through (blues is 12 and stays 12; a fugue gets two
+  // statements of a four-bar subject, not one and a half).
+  //
+  // AND IT IS SCALED BY `rate`, which is the part a bar count alone cannot say:
+  // a half-time bar lasts twice as long in seconds, so vaporwave's four bars
+  // and rock's eight are the same amount of time. Without the scale, drone
+  // (rate 0.25) would have been handed sixteen bars — sixty-four normal bars of
+  // one chord.
+  const SECTION_BARS = { club: 16, groove: 16, soul: 8, band: 8, studio: 8,
+                         roots: 8, vox: 8, drift: 8, parts: 8, kernel: 8 };
+  const fullLen = G => {
+    const want = (SECTION_BARS[G.family] || 8) * G.rate;
+    return Math.max(G.bars, Math.round(want / G.bars) * G.bars);
+  };
+  // the roles that are HALF a section by design — an intro, a lift, a
+  // breakdown and an outro are approaches to a section rather than sections
+  const halfLen = G => Math.max(2, Math.floor(fullLen(G) / 2));
+
+  // ---- BREAKING THE CLOCK --------------------------------------------------
+  // "Every Beatles chorus is 8 bars, every prechorus 4, every verse 8 — the
+  // form reads as a template." It did, because the length was a pure function
+  // of the genre and the role, so every section of a given kind was the same
+  // size in every song at every seed. Real records break their own arithmetic,
+  // and they break it in four particular places rather than at random:
+  //
+  //   early  −1 on the lift that points at a chorus. The chorus arrives a bar
+  //          before you counted it — the seven-bar prechorus. This is the one
+  //          irregularity a listener actually notices, so it gets the highest
+  //          probability of the four.
+  //   short  −2 on a LATER verse. The band has said this part already and cuts
+  //          to the chorus; a first verse is never truncated, because there is
+  //          nothing yet to be impatient with.
+  //   turn   +2 on a chorus or solo that hands back to a verse — the
+  //          turnaround, the two bars the band vamps while the singer finds
+  //          the next line.
+  //   long   +4 on the peak. The last chorus repeats and runs out, which is
+  //          how most records in this vocabulary end.
+  //
+  // WHO MAY: the genres a BAND PLAYS A SONG on. The exclusions are not a
+  // shrug — each is a family whose arithmetic is load-bearing. A club record is
+  // mixed by somebody else and a seven-bar phrase makes it unmixable; a fugue's
+  // section length IS the subject; a groove is the thing you are supposed to
+  // stop counting, and a bar dropped out of a one-drop reads as a mistake
+  // rather than a gesture; a lone part has nothing to be irregular AGAINST.
+  // "A fugue keeps its arithmetic; a pop song does not."
+  //
+  // MEASURED at the fences the gate defends: 16% of the non-bed sections of a
+  // breakable genre come out irregular, which is one or two a record — an
+  // event, not a tic — and 0% of the square ones.
+  const SQUARE = { club: 1, groove: 1, vox: 1, drift: 1, parts: 1 };
+  const BENDS = { early: -1, short: -2, turn: 2, long: 4 };
 
   // ---- the random source ---------------------------------------------------
   // Seeded, so a seed is a song. mulberry32 — small, well-distributed, and the
@@ -226,7 +394,12 @@
   // The five kinds of material a song is made of. They are different phrases,
   // not one phrase with different operators on it — the operators are the box's
   // job, and a song whose every part is a transform of one cell is a study.
-  function phrase(r, kind) {
+  // `head` is the DEVELOPMENT hook, and it is optional: pass the first half of
+  // an already-written topline and this phrase opens with it note for note and
+  // then goes somewhere else. Absent — every existing caller — the function is
+  // byte-identical to what it was, which is why the two independent phrase
+  // gates below still measure the thing they were written for.
+  function phrase(r, kind, head) {
     const p = blank();
     const D = { hook: 0.5, answer: 0.5, riff: 0.25, counter: 0.55,
                 pad: 0.05, topline: 0.55, sparse: 0.0, climb: 0.7 }[kind];
@@ -274,6 +447,15 @@
       // a sung line stays in one octave — the leap punctuation belongs to the
       // instrumental kinds, and the climax below must be the phrase's one peak
       for (let i = 0; i < 16; i++) p.oct[i] = 0;
+      // THE DEVELOPMENT. "The same topline, developing" — so the verse's line
+      // is not a second tune and not a transform of the first, it is the
+      // chorus's own opening (its A A, eight steps of gate, degree, accent,
+      // velocity and slide) followed by a different answer: its own B, its own
+      // way home, its own climax. Written HERE, before the restatement and the
+      // breath and the peak, so every law those enforce is enforced on the
+      // developed phrase too rather than being stamped over afterwards.
+      if (head) for (const k of ["gate", "deg", "oct", "acc", "vel", "sld"])
+        for (let i = 0; i < 8; i++) p[k][i] = head[k][i];
       // the restatement restates the DYNAMICS too: same gates, same accents,
       // same velocities — that is what makes it the motif returning rather
       // than the same pitches happening again
@@ -330,16 +512,29 @@
   // drop-in, the bands just start playing, soul walks in on the bass, the
   // groove genres count off or skank first. No family is a constant: two seeds
   // of one genre should often begin differently.
+  //
+  // ...AND ONE OF THEM PLAYS THE TUNE. "The intro never quotes anything: it
+  // picks a texture and never plays the tune. The classic pop intro is the
+  // chorus hook stated instrumentally — Day Tripper, A Hard Day's Night." That
+  // is `quote`, and it is a kind of MATERIAL rather than a kind of gesture,
+  // which is why nothing in the old eleven could express it: every one of them
+  // was an answer to "how does the sound arrive", and none to "what does it
+  // play". It goes on the ballots of the families that write songs with
+  // choruses, and stays off the three that cannot mean it — a choir does not
+  // state its own chorus on an instrument first, a drift record has no hook to
+  // quote, and a lone part has no chorus to quote FROM.
   const INTRO_LEAN = {
-    kernel: ["cold", "count", "solo", "padin", "fade", "hit", "stabs", "swell", "riser"],
+    kernel: ["cold", "count", "solo", "padin", "fade", "hit", "stabs", "swell", "quote"],
     vox:    ["solo", "solo", "padin", "padin", "fade", "fade", "swell", "stabs", "cold"],
     drift:  ["padin", "padin", "padin", "fade", "fade", "solo", "swell", "stabs", "cold"],
     club:   ["riser", "riser", "riser", "kit", "kit", "cold", "cold", "drums", "fade"],
-    band:   ["cold", "cold", "cold", "hit", "hit", "count", "count", "kit", "stabs"],
-    studio: ["cold", "cold", "stabs", "stabs", "padin", "fade", "hit", "kit", "count"],
-    soul:   ["bassin", "bassin", "bassin", "stabs", "stabs", "drumbass", "hit", "count", "padin"],
-    groove: ["bassin", "bassin", "stabs", "stabs", "count", "drums", "hit", "solo", "drumbass"],
-    roots:  ["count", "count", "solo", "solo", "cold", "hit", "bassin", "swell", "stabs"],
+    band:   ["cold", "cold", "cold", "hit", "hit", "count", "count", "quote", "stabs"],
+    // the studio records are where the gesture belongs twice over: the two
+    // most-quoted intros in the vocabulary are both this family's
+    studio: ["cold", "cold", "quote", "stabs", "padin", "fade", "hit", "quote", "count"],
+    soul:   ["bassin", "bassin", "bassin", "stabs", "stabs", "drumbass", "hit", "count", "quote"],
+    groove: ["bassin", "bassin", "stabs", "stabs", "count", "drums", "hit", "quote", "drumbass"],
+    roots:  ["count", "count", "solo", "solo", "cold", "hit", "bassin", "quote", "stabs"],
     // a part has no rhythm section to walk in on: every vote here is about the
     // sound arriving, which is all a lone line can do
     parts:  ["solo", "solo", "solo", "fade", "fade", "padin", "swell", "cold", "stabs"],
@@ -358,6 +553,9 @@
   function introEdge(kind, kit, INLABEL) {
     if (INLABEL[kind] != null) return kind;
     return { padin: "solo", fade: "swell", riser: "swell",
+             // a quote IS the melody alone, which the table already has a word
+             // for — the honest name rides `cue` like every other bridged kind
+             quote: "solo",
              stabs: kit ? "hit" : "swell", cold: null }[kind] || null;
   }
   // THE CHOOSER GETS ITS OWN, GENRE-SALTED STREAM. The phrase bank consumes
@@ -408,7 +606,24 @@
     // count openings by it, and the UX phase can label the box with it.
     const head = build("intro", G, gk, r, S);
     head.cue = kind;
-    if (kind === "cold") {
+    if (kind === "quote") {
+      // THE HOOK, STATED. The chorus's own melody — slot 5, the topline the
+      // composer wrote for the chorus and nothing else — played by an
+      // instrument, on its own, before the song proper. Two things make it a
+      // QUOTE rather than an intro that happens to have notes in it, and both
+      // are checkable on the rendered stream: it is the SAME PHRASE the chorus
+      // later sings, and it is over the SAME CHANGES (a genre with a
+      // per-role progression hands the intro the chorus's, not the intro's, so
+      // the pitches the quote sounds are the pitches the chorus will sound).
+      // Everything build() holds back for an arrival comes off — a quote does
+      // not fade in, it states.
+      head.stack[0].slots = [S.topline];
+      head.env = null; head.lvl = null; head.rev = null; head.mot = null;
+      head.bassop = null;
+      if (kit) head.kit = chance(r, 0.5) ? "sparse" : "nodrums";
+      if (G.progFamily) head.prog = G.progFamily.chorus || G.progFamily.drop || head.prog;
+      head.intro = introEdge(kind, kit, NF.INLABEL);
+    } else if (kind === "cold") {
       // THE COLD OPEN: the whole band from beat one, playing real material —
       // the hook itself, or the riff under the pad. Everything build() holds
       // back for an arrival (the fade, the pulled level, the thinned kit)
@@ -534,6 +749,43 @@
   const partSlot = (who, S) => (who === "vocal" || who === "backing" ? S.topline
     : who === "riff" ? S.riff : who === "pad" ? S.pad : S.climb);
   const sings = who => who === "vocal" || who === "backing";
+
+  // ---- THE SINGER ----------------------------------------------------------
+  // "The vocal is a guest, and it should be the through-line." MEASURED on
+  // beatles/5: the `vocal` layer appeared on the BRIDGE and nowhere else, while
+  // every chorus carried a `solo`. That is backwards, and it was backwards for
+  // a structural reason rather than a tuning one — there was no such thing as
+  // the record's SINGER. A voice could only arrive the way a string quartet
+  // arrives: as one draw of one per-section coin, from a ballot that also
+  // contained the lead guitarist. A guest turns up; a singer is on the record.
+  //
+  // So the singer is cast ONCE, before a section exists, exactly like the
+  // guest — and then placed on the sections a singer sings on: the verses and
+  // the choruses first (that is what "through-line" means), the prechorus and
+  // the bridge often, the breakdown where a floor record leaves the voice
+  // alone, and the drop. Not the solo section: the whole point of a solo
+  // section is that somebody else has it.
+  //
+  // WHO SINGS, by family, and the two override tables are the interesting part:
+  //   INSTRUMENTAL  the anchors inside a singing family whose records have no
+  //                 topline — techno, dnb, acid and dub are floor music that
+  //                 uses a voice as a sample rather than a line; a fugue and a
+  //                 species-counterpoint exercise are abstractions; a tango is
+  //                 a bandoneón.
+  //   SINGER_GENRE  and the one the other way: shoegaze is filed under `drift`
+  //                 with the drones because that is what it sounds like, and it
+  //                 is a genre of SONGS with a singer buried in them.
+  const SINGS = { vox: "vocal", soul: "vocal", studio: "vocal", roots: "vocal",
+                  band: "vocal", groove: "vocal", club: "vocal", kernel: "vocal",
+                  drift: null, parts: null };
+  const INSTRUMENTAL = { techno: 1, dnb: 1, acid: 1, dub: 1,
+                         fugue: 1, counterpoint: 1, tango: 1 };
+  const SINGER_GENRE = { shoegaze: "vocal" };
+  const singerOf = (G, gk) => {
+    if (INSTRUMENTAL[gk]) return null;
+    const who = SINGER_GENRE[gk] || SINGS[G.family] || null;
+    return who && who !== gk ? who : null;      // a `vocal` record does not book a singer
+  };
   // The three kit operators that write a LEVEL onto every lane rather than
   // rearranging which lanes fire — the only ones whose dynamics survive the
   // melody being taken away. See the solo break below for why that matters.
@@ -545,7 +797,23 @@
     const peak = !!(a && a.peak);                       // the arc's 1.0 — the last chorus/drop
     const b = skeleton(ALIAS[role] || role, G, gk);
     if (ALIAS[role]) b.cue = role;                      // the honest name, kept for the UX phase
+    // THE SECTION LENGTH, from the family's own answer rather than from the
+    // genre's form length (fullLen above for why those are different questions)
+    b.len = fullLen(G);
+    const again = (a && a.again) || 0;                  // how many times this role has been
     const layer = (g2, slots) => b.stack.push({ g: g2, slots });
+    // THE SINGER, PLACED. Same shape as `guest` below and drawn the same way —
+    // unconditionally, on its own stream, so retuning where the voice sings
+    // cannot move a drum, an effect or a guest. `as: "voice"` is the one thing
+    // that distinguishes it in the saved file: the loader carries unknown keys
+    // through untouched (the trick `cue` already plays), and it is what lets a
+    // census tell the record's singer apart from a guest who dropped by. A
+    // singer counted as a guest would have put the guest rate through the roof
+    // and said nothing true about either.
+    const voice = (p, slots) => {
+      const yes = chance(S.voc, p);
+      if (S.singer && yes) b.stack.push({ g: S.singer, slots, as: "voice" });
+    };
     // THE GUEST, PLACED. The cast was drawn once for the whole song (guestCast
     // above); this is the per-section coin that decides whether they are on
     // this one. Drawn on the song's own guest stream so the placement policy
@@ -568,7 +836,7 @@
     if (role === "intro") {
       b.stack[0].slots = chance(r, 0.5) ? [S.pad] : [S.pad, S.sparse];
       b.env = "in"; b.lvl = "back"; b.rev = "wet";
-      b.len = Math.max(2, Math.floor(bars / 2));
+      b.len = halfLen(G);
       // the intro EDGE is not decided here: introSections owns how the song
       // opens (family-weighted, anchor-first), and stamping count/hit on top
       // of it is exactly the every-song-opens-on-a-drum bug this replaced
@@ -591,10 +859,17 @@
       if (kit && chance(r, 0.4)) b.kit = kitOf(S, G);
       if (chance(r, 0.3)) b.outro = fillOf(S, G, kit);
       // A PAD GENRE UNDER A VERSE, now and then — and it is the pad PHRASE
-      // whoever the guest is, because a verse's guest is a bed. The singer who
-      // guests here is holding an "ooh" behind the line, not taking the tune
-      // off it; that happens in the chorus, which is where it belongs.
+      // whoever the guest is, because a verse's guest is a bed.
       guest(0.22, [S.pad]);
+      // ...AND THE SINGER SINGS THE VERSE, which is the whole of the fourth
+      // complaint. Not the chorus topline — that is the chorus's — but its
+      // DEVELOPMENT: slot 8, which opens with the topline's own first half note
+      // for note and then answers it differently (phrase(), the `head`
+      // argument). One tune, two verses of it, and a chorus that is the same
+      // tune arriving properly. 0.85 rather than 1 because a first verse with
+      // the band alone under it and the voice entering on the second is a real
+      // arrangement and this is the only place it can happen.
+      voice(0.85, [S.verseline]);
     } else if (role === "prechorus") {
       // THE LIFT. Everything here points forward: the answer phrase (not the
       // hook — the hook is being saved), the kit filling in, a riser, a fade
@@ -602,41 +877,66 @@
       // anticipation — the last bar borrows the dominant's door so the chorus
       // is an ARRIVAL rather than the next thing that happens.
       b.stack[0].slots = chance(r, 0.5) ? [S.answer] : [S.answer, S.sparse];
-      b.lvl = "back"; b.env = "in"; b.mot = "rise";
+      // A SECOND PRECHORUS DOES NOT FADE IN AGAIN. `in` is a fade — it starts
+      // at zero — and a band that fades up twice in one record is a band with
+      // a mixing desk problem. The second time round the same gesture is `lift`
+      // (kernel.js SHAPES: held flat, then the last two fifths climb hard),
+      // which is what a lift into a bigger chorus actually is. It is also what
+      // keeps the two prechoruses of a song from carrying the identical
+      // dynamic, which the ladder pass below cannot do for a fade.
+      b.lvl = "back"; b.env = again ? "lift" : "in"; b.mot = "rise";
       if (kit) { b.kit = chance(r, 0.5) ? "busy" : kitOf(S, G); b.outro = fillOf(S, G, kit, LIFT); }
+      voice(0.6, [S.answer]);
       // only where there is a progression for the dominant to be a door INTO
       // (the same guard the bridge carries) — on a modal genre the cadence
       // has no prog to land on and the render path correctly drops it
       if (G.progFamily || G.prog || (G.harmony === "cycle" && G.roots))
         b.cadence = { d: 4, q: "dom7" };
-      b.len = Math.max(2, Math.floor(bars / 2));
+      b.len = halfLen(G);
     } else if (role === "build") {
       // the dance floor's prechorus: same gesture, different clothes —
       // a thinned phrase under a riser, everything held back for the drop
       b.stack[0].slots = chance(r, 0.5) ? [S.sparse] : [S.climb];
-      b.lvl = "back"; b.env = "in"; b.mot = "rise"; b.echo = "touch";
+      b.lvl = "back"; b.env = again ? "lift" : "in"; b.mot = "rise"; b.echo = "touch";
       if (kit) { b.kit = chance(r, 0.5) ? "busy" : "nokick"; b.outro = fillOf(S, G, kit, LIFT); }
-      b.len = Math.max(2, Math.floor(bars / 2));
+      b.len = halfLen(G);
     } else if (role === "chorus") {
       // THE CHORUS HAS ITS OWN MELODY — the topline, written for it, instead
       // of a re-deal of the verse's hook. The hook may come back as the third
       // line, which is a counter-hook, not a substitute.
       b.stack[0].slots = chance(r, 0.55) ? [S.topline, S.counter]
                                          : [S.topline, S.counter, S.hook];
-      // AND SOMEBODY SINGS IT. Where the family has a singer on its ballot, the
-      // topline moves OFF the band and onto a `vocal` layer, and the host keeps
-      // the parts — which is what a record is. The band still leads with the
-      // topline's own material where the layer is instrumental (a chorus is the
-      // hook, whoever is playing it); only a SINGER takes the tune away, because
-      // a chorus sung by the guitar player AND the singer in unison is one line
-      // twice. "The odd chorus" gets the soloist instead — the answer between
-      // the lines, which is the other thing that happens in a chorus.
-      const cast = castOf(G);
-      const who = cast.length && chance(r, 0.5) ? pick(S.out, cast) : null;
-      if (sings(who)) {
+      // AND THE SINGER SINGS IT — every time, not on a coin. The topline moves
+      // OFF the band and onto the record's `vocal` layer and the host keeps the
+      // parts, because a chorus sung by the guitar player AND the singer in
+      // unison is one line twice. This used to be a per-section draw over a
+      // ballot that also held the lead guitarist, which is how beatles/5 came
+      // out with a solo on every chorus and the voice on the bridge only.
+      //
+      // WITHOUT A SINGER (techno, a fugue, a lone part) the band leads with the
+      // topline and the odd chorus gets an instrumental part over it — and the
+      // ballot is filtered of the two names that would contradict the record:
+      // a singing part on a genre that declared it has no singer, and the
+      // soloist, who is confined below.
+      if (S.singer) {
         b.stack[0].slots = chance(r, 0.55) ? [S.counter] : [S.counter, S.hook];
-        layer(who, [S.topline]);
-      } else if (who) layer(who, [partSlot(who, S)]);
+        voice(1, [S.topline]);
+      } else {
+        const cast = castOf(G).filter(w => w !== "solo" && !sings(w));
+        const who = cast.length && chance(r, 0.5) ? pick(S.out, cast) : null;
+        if (who) layer(who, [partSlot(who, S)]);
+      }
+      // THE SOLOIST VISITS, ONCE. "The solo is what visits — one section, maybe
+      // a chorus." So it is exactly one chorus of the record, chosen before any
+      // section existed (S.visit) and never the peak, which belongs to the
+      // singer and the colour that arrives with them. Everywhere else in this
+      // file the `solo` part is unreachable by construction: it is off the
+      // guest ballots and off the chorus cast, so the only two boxes in a
+      // composed song that can carry one are the solo section and this.
+      if (a && a.i != null && a.i === S.visit) {
+        const cast = soloCast(G);
+        if (cast.length) layer(pick(S.out, cast), [S.climb]);
+      }
       // the arc decides the size: only the PEAK chorus goes forward, so the
       // last one is bigger than the first by construction, not by accident
       b.lvl = peak ? "fwd" : null; b.rev = "some";
@@ -675,9 +975,12 @@
       // master; this is what per-box fx are left holding.
       dress(b, S, G, AWAY_FX, 0.55);
       guest(0.3, [S.counter]);
+      // the bridge is a place a singer sings — it just is not the ONLY one any
+      // more, which was the measured complaint
+      voice(0.55, [S.counter]);
     } else if (role === "breakdown") {
       b.stack[0].slots = [S.sparse];
-      b.len = Math.max(2, Math.floor(bars / 2));
+      b.len = halfLen(G);
       b.lvl = "hush"; b.rev = "drown"; b.echo = "some";
       if (kit) b.kit = pick(r, ["nokick", "nodrums", "snareonly", "soft", "stickside", "h.half"]);
       addFx(b, pick(r, ["sweep", "echo", "phaser"]));
@@ -688,6 +991,8 @@
       // was the thing a breakdown is usually for — the floor drops out and one
       // foreign voice is left holding the room
       guest(0.45, [S.sparse]);
+      // ...and the other thing the floor drops out FOR: the voice on its own
+      voice(0.4, [S.sparse]);
     } else if (role === "drop") {
       b.stack[0].slots = [S.riff, S.climb];
       b.lvl = "fwd";
@@ -720,6 +1025,11 @@
         const who = peak ? (S.guest && S.guest.b) : (S.guest && S.guest.a);
         guest(peak ? 1 : 0.5, [PARTS5.includes(who) ? partSlot(who, S) : S.counter], who);
       }
+      // a dance plan has no chorus, so this IS where the record's topline
+      // lands, and at the peak it is not a coin: a floor record with a singer
+      // on it states the tune over the last drop or it never states it at all,
+      // and an intro that quotes a hook the record never plays is not a quote
+      voice(peak ? 1 : 0.45, [S.topline]);
     } else if (role === "solo") {
       b.stack[0].slots = chance(r, 0.5) ? [S.climb] : [S.climb, S.riff];
       b.ops = [pick(r, ["rep3", "rep4", "wide"])];
@@ -765,7 +1075,7 @@
     } else {                                            // outro
       b.stack[0].slots = chance(r, 0.6) ? [S.pad] : [S.pad, S.riff];
       b.env = "out"; b.rev = "wet"; b.mot = "close";
-      b.len = Math.max(2, Math.floor(bars / 2));
+      b.len = halfLen(G);
       // the last bar of the record: a crash more often than not, but a tom
       // fill or a bar of silence with a cymbal in it is also how a song ends
       if (kit) { b.kit = "sparse"; b.outro = pick(r, ["crash", "crash", fillOf(S, G, kit)]); }
@@ -811,25 +1121,33 @@
   // club genres call a topline or a pad over the floor, a soul record calls
   // backing vocals, the studio records call the string quartet, the choral
   // genres answer themselves with another choir.
+  //
+  // NO BALLOT VOTES FOR `solo` ANY MORE, and that is the other half of "the
+  // solo is what visits". A featured line that turns up under a verse is not a
+  // guest, it is a second soloist — and a record with a lead break in every
+  // section has no lead break. The name is reachable from exactly two places
+  // now (the solo section, and the one chorus it visits), which is what makes
+  // "confined" a fact about the output rather than a hope. Its votes went to
+  // the colours the same family would actually call.
   const GUEST_LEAN = {
-    kernel: ["pad", "vocal", "riff", "counterpoint", "solo", "drone"],
+    kernel: ["pad", "vocal", "riff", "counterpoint", "backing", "drone"],
     // a choir's guest is another choir — the answering voice, the organ under
     // it, the cantor over the top
     vox:    ["gregorian", "counterpoint", "fugue", "drone", "vocal", "vocal"],
     // the floor's guest is a LINE, because the floor already has everything
     // else: a topline over it, a pad under it, an acid riff across it
-    club:   ["vocal", "vocal", "pad", "pad", "riff", "solo", "drone"],
+    club:   ["vocal", "vocal", "pad", "pad", "riff", "drone", "backing"],
     // "and the horns come in" — plus the thing the census will never show you,
     // which is three people singing behind the one who is singing
-    soul:   ["backing", "backing", "vocal", "riff", "solo", "pad"],
-    groove: ["vocal", "riff", "pad", "backing", "solo", "drone"],
-    band:   ["solo", "solo", "riff", "vocal", "backing", "simple"],
+    soul:   ["backing", "backing", "vocal", "riff", "neoclassical", "pad"],
+    groove: ["vocal", "riff", "pad", "backing", "simple", "drone"],
+    band:   ["riff", "riff", "backing", "vocal", "pad", "simple"],
     // the studio records are where a genuinely foreign element belongs: the
     // string quartet on a pop single is `counterpoint`, and it is the most
     // Beatles thing in the table
-    studio: ["backing", "vocal", "counterpoint", "pad", "solo", "neoclassical"],
+    studio: ["backing", "vocal", "counterpoint", "pad", "riff", "neoclassical"],
     drift:  ["pad", "pad", "drone", "gregorian", "vocal", "neoclassical"],
-    roots:  ["vocal", "backing", "solo", "riff", "neoclassical", "pad"],
+    roots:  ["vocal", "backing", "simple", "riff", "neoclassical", "pad"],
     // a part hosting a part: the pad under the solo, the second voice against
     // the first. Not another style — two parts is an ensemble, a part plus a
     // style is a backing track, and this genre IS the part.
@@ -844,8 +1162,13 @@
   //
   // A genre may not guest on itself (a `pad` record does not book a pad), and
   // where the filter leaves one name the song has one guest, which is fine.
-  function guestCast(G, gk, rG) {
-    const pool = (GUEST_LEAN[G.family] || GUEST_LEAN.kernel).filter(w => w !== gk);
+  //
+  // ...and the SINGER is not a guest either, so the pool loses that name too.
+  // The record's own voice turning up as its own visitor would stack `vocal`
+  // twice in one chorus, which is one line played by two people.
+  function guestCast(G, gk, rG, singer) {
+    const pool = (GUEST_LEAN[G.family] || GUEST_LEAN.kernel)
+      .filter(w => w !== gk && w !== singer);
     if (!pool.length) return null;
     const a = pick(rG, pool);
     const rest = pool.filter(w => w !== a);
@@ -998,6 +1321,163 @@
     return Object.keys(out).length ? out : null;
   }
 
+  // ---- BENDING THE LENGTHS -------------------------------------------------
+  // The four gestures of BENDS, placed. It runs over the finished song rather
+  // than inside build() because every one of them is a fact about a section's
+  // NEIGHBOURS — what it points at, whether it has been round before, whether
+  // it is the peak — and build() sees one box at a time.
+  //
+  // ONE DRAW PER SECTION, always spent, whatever the branch: the same law the
+  // guest coin follows, and for the same reason. A stream whose position
+  // depends on which gesture was eligible would reshuffle every record in the
+  // table the next time one of these probabilities is edited.
+  function bendLengths(song, G, rB) {
+    const square = !!SQUARE[G.family];
+    let peak = -1;
+    song.forEach((b, i) => {
+      const w = sectionWord(b);
+      if (w === "chorus" || w === "drop") peak = i;
+    });
+    let seenVerse = false;
+    for (let i = 0; i < song.length; i++) {
+      const b = song[i], w = sectionWord(b);
+      const roll = rB();
+      const skip = BEDS[b.role] || w === "intro" || w === "outro";
+      const nx = song[i + 1] && sectionWord(song[i + 1]);
+      let bend = null, p = 0;
+      if (skip) { /* a bed and the two ends of the record keep their shape */ }
+      else if ((w === "prechorus" || w === "build") && (nx === "chorus" || nx === "drop"))
+        { bend = "early"; p = 0.4; }
+      else if (i === peak) { bend = "long"; p = 0.35; }
+      else if (w === "verse" && seenVerse) { bend = "short"; p = 0.3; }
+      else if ((w === "chorus" || w === "solo") && nx === "verse")
+        { bend = "turn"; p = 0.3; }
+      if (w === "verse") seenVerse = true;
+      if (square || !bend || roll >= p) continue;
+      const len = b.len + BENDS[bend];
+      if (len < 2 || len > NF.MAX_LEN) continue;
+      b.len = len;
+      // the honest name, carried the way `cue` is — the loader passes unknown
+      // keys through, the census counts by it, and the UX phase can label it
+      b.bend = bend;
+    }
+  }
+
+  // ---- THE STOP ------------------------------------------------------------
+  // "There are no stops. Nothing in a generated song ever stops — no 2-bar
+  // break, no full-band drop before the last chorus, no bar of silence, no
+  // stop-time. Those are the moments a listener remembers."
+  //
+  // The vocabulary is REUSED whole, not extended: `drop` is the envelope that
+  // silences the last eighth of a section (kernel.js envelope — "the oldest
+  // trick in dance music and still the loudest: what you hear is the bar that
+  // follows"), and cut / break / tail / hush are four of the ten outro edges
+  // (kernel.js outro), which between them cover the band stopping a beat
+  // early, the band dropping out under the drums, the drums dropping out under
+  // the band, and the bar of silence with one cymbal on its last sixteenth.
+  // Nothing new was added to either table, and being exact about what was
+  // missing matters: `drop` had genuinely never been written by this file, but
+  // cut / break / tail / hush were already on the OUTRO_LEAN fill ballots, so
+  // the arranger did occasionally deal a hole — at random, on whichever section
+  // the dice landed on, meaning nothing. A stop is not a vocabulary item, it is
+  // a PLACEMENT: what was missing was an arranger with an opinion about where
+  // one goes, and a guarantee that it goes there rather than somewhere else.
+  //
+  // WHERE THEY GO, in the order the policy tries them:
+  //   the hole before the peak    the section immediately before the last
+  //                               chorus or drop, at 0.7 — the loudest silence
+  //                               in pop music, and the one the brief names.
+  //   the end of the bridge       at 0.55: the bridge stops and the last
+  //                               chorus walks in over the top of the stop.
+  //   and one more, somewhere     at 0.18 on a verse, chorus or solo, so a
+  //                               record can have a hole in it that is not
+  //                               structural — stop-time in the second verse.
+  //
+  // THREE RESTRAINTS, and they are what keeps this a gesture rather than a
+  // texture: never twice in adjacent sections; never the SAME KIND twice in
+  // one record (a remembered moment that happens three times is a groove); and
+  // never on a bed, an intro or the outro, because the record's own ending is
+  // not a stop, it is the end.
+  //
+  // A KITLESS GENRE GETS THE TWO THAT ARE ABOUT THE BAND. `break` and `tail`
+  // are defined by what the DRUMS do, so on a choir they are silent no-ops —
+  // the same argument OUTRO_NOKIT already makes one table up. `drop` and `cut`
+  // delete real events whoever is playing, so those are the two on that ballot.
+  const STOPS = {
+    // AND THE FILL COMES OFF WITH IT. `env` runs before `edges` (ui/derive.js
+    // says why: the curve must see the section as written), so a section that
+    // silenced its last eighth and then played its drum fill wrote the fill
+    // straight back into the hole — measured, 17 events inside a hole that is
+    // the whole point of the gesture. The hole IS the ending; nothing else
+    // ends it.
+    drop:  b => { b.env = "drop"; b.outro = null; },
+    hush:  b => { b.outro = "hush"; },      // silence, then one cymbal on the last 16th
+    cut:   b => { b.outro = "cut"; },       // everything stops a beat before the bar
+    break: b => { b.outro = "break"; },     // the band drops out, the drums play the bar
+    tail:  b => { b.outro = "tail"; },      // the drums drop out, the band plays it
+  };
+  const STOP_KIT   = { peak: ["drop", "hush", "cut"], bridge: ["break", "tail", "cut"],
+                       loose: ["hush", "tail", "break"] };
+  const STOP_NOKIT = { peak: ["drop", "cut"], bridge: ["cut", "drop"],
+                       loose: ["cut", "drop"] };
+  // A FILL MARKS A TURN INTO SOMETHING, NOT THE END OF A BAR COUNT. Measured
+  // after the songwriter pass landed: 64% of sections ended with a gesture —
+  // tomfill, crash, roll, hatrun — because six build() sites deal one and only
+  // the stops pass ever took one away. A drummer who fills into everything is
+  // a drummer nobody notices, which is the same complaint as no fills at all.
+  //
+  // So the gesture survives on the strength of WHAT FOLLOWS IT: always into
+  // the peak (the arrival the whole record is for), usually out of a lift or a
+  // bridge or a solo (the three places a band audibly hands over), seldom
+  // between two verses, and never at the very end (the outro has its own
+  // ending). It is a THINNING pass rather than six edited call sites, because
+  // "what comes next" is exactly the fact build() cannot see — the same reason
+  // bendLengths and placeStops are passes. Stops are placed after this and are
+  // untouched by it: a hush is not a fill.
+  const TURN_INTO = { chorus: 0.62, drop: 0.62, solo: 0.5, bridge: 0.5, outro: 0.3 };
+  function thinFills(song, rF) {
+    const peak = song.reduce((best, b, i) =>
+      (b.role === "chorus" || b.role === "drop") ? i : best, -1);
+    for (let i = 0; i < song.length; i++) {
+      const b = song[i], next = song[i + 1];
+      if (!b.outro) continue;
+      if (!next) { b.outro = null; continue; }        // the outro ends itself
+      // the run-up to the biggest arrival keeps its gesture, always
+      if (i + 1 === peak) continue;
+      const lead = b.cue === "prechorus" || b.cue === "build" ||
+                   b.role === "bridge" || b.role === "solo";
+      const p = (TURN_INTO[next.role] || 0.18) * (lead ? 1.35 : 1);
+      if (!chance(rF, Math.min(0.9, p))) b.outro = null;
+    }
+  }
+  function placeStops(song, G, rS) {
+    const kit = Object.keys(G.kit || {}).length > 0;
+    const T = kit ? STOP_KIT : STOP_NOKIT;
+    let peak = -1;
+    song.forEach((b, i) => {
+      const w = sectionWord(b);
+      if (w === "chorus" || w === "drop") peak = i;
+    });
+    const used = new Set();
+    let last = -9;
+    for (let i = 0; i < song.length; i++) {
+      const b = song[i], w = sectionWord(b);
+      const roll = rS(), draw = rS();          // two numbers a section, always spent
+      if (BEDS[b.role] || w === "intro" || w === "outro" || i === peak) continue;
+      let pool = null, p = 0;
+      if (i === peak - 1) { pool = T.peak; p = 0.7; }
+      else if (w === "bridge") { pool = T.bridge; p = 0.55; }
+      else if (w === "verse" || w === "chorus" || w === "solo") { pool = T.loose; p = 0.18; }
+      if (!pool || roll >= p || i - last < 2) continue;
+      const free = pool.filter(k => !used.has(k));
+      if (!free.length) continue;
+      const k = free[Math.floor(draw * free.length) % free.length];
+      used.add(k); last = i;
+      STOPS[k](b);
+      b.stop = k;                              // the honest name, like `cue` and `bend`
+    }
+  }
+
   // ---- the whole song ------------------------------------------------------
   function compose(gk, seed) {
     if (!GENRES[gk]) gk = "simple";
@@ -1012,11 +1492,22 @@
     // slot 5 is the TOPLINE — the chorus's own melody, written as a hook-kind
     // phrase (motif, breath, climax) in a singable span. It replaced "busy",
     // which was the one slot that was texture rather than material.
+    //
+    // AND SLOT 8 IS THE SAME TUNE, DEVELOPING — the line the singer takes
+    // through the verses. It is written from the topline's own first half
+    // (phrase(), the `head` argument) and answers it differently, so a record
+    // has ONE melody with two continuations rather than a verse tune and a
+    // chorus tune that have never met. That is what makes the voice a
+    // through-line rather than a part that happens to be present twice, and it
+    // is checkable: the two phrases render the same first half bar, note for
+    // note, and diverge after it. Written LAST, so the eight that were here
+    // before still draw the numbers they always drew.
     const slots = [phrase(r, "hook"), phrase(r, "answer"), phrase(r, "riff"),
                    phrase(r, "counter"), phrase(r, "pad"), phrase(r, "topline"),
                    phrase(r, "sparse"), phrase(r, "climb")];
+    slots.push(phrase(r, "topline", slots[5]));
     const S = { hook: 0, answer: 1, riff: 2, counter: 3, pad: 4,
-                topline: 5, sparse: 6, climb: 7,
+                topline: 5, sparse: 6, climb: 7, verseline: 8,
                 // THE DRUM DECISIONS GET THEIR OWN, GENRE-SALTED STREAM, for
                 // the reason the intro chooser needed one: the phrase bank
                 // consumes the same number of draws whatever the genre, so a
@@ -1033,25 +1524,59 @@
                 // re-casting the guest must not move a single effect.
                 gst: rng(ihash(gk + "/guest/" + (seed == null ? 1 : seed))),
                 dress: rng(ihash(gk + "/dress/" + (seed == null ? 1 : seed))),
+                // ...and three more, on the same law: the voice's placement,
+                // the irregular lengths and the stops are three separate
+                // policies, so retuning where the singer sings must not move a
+                // bar line, and moving a bar line must not move a hole.
+                voc: rng(ihash(gk + "/voice/" + (seed == null ? 1 : seed))),
+                bend: rng(ihash(gk + "/bend/" + (seed == null ? 1 : seed))),
+                stop: rng(ihash(gk + "/stop/" + (seed == null ? 1 : seed))),
+                // its own stream, like every other pass: thinning the fills
+                // must not shift the dice the stops or the bends are drawing
+                fill: rng(ihash(gk + "/thin/" + (seed == null ? 1 : seed))),
                 groove: kit ? pick(r, [null, "backbeat", "push", "laidback", "funk", "dub"]) : null,
                 swing: kit && chance(r, 0.3) ? pick(r, ["light", "swing", "shuffle"]) : null };
-    // WHO IS ON THE RECORD, decided once, before a section exists — see
-    // guestCast: the musical event is the guest coming BACK, and a cast drawn
-    // per section is a shuffle rather than an arrangement.
-    S.guest = guestCast(G, gk, S.gst);
+    // WHO IS ON THE RECORD, decided once, before a section exists — the singer
+    // and the guest both, and the singer FIRST because the guest pool is
+    // filtered of whoever is already on the payroll (guestCast).
+    S.singer = singerOf(G, gk);
+    S.guest = guestCast(G, gk, S.gst, S.singer);
     // NO SILENT DEFAULTS. Every genre must carry a plan and a tempo — the old
     // `|| "song"` / `|| 120` fallbacks meant a new genre arranged like pop at
     // 120 and every gate passed. The coverage gate in test/unit/nukernel.test.js
     // fails loudly on a missing entry instead.
     const plan = PLANS[PLAN_OF[gk]];
-    const xs = arcOf(plan);
+    const xs = arcOf(plan, !!STEADY[gk]);
+    const ord = ordinals(plan);
+    // THE ONE CHORUS THE SOLOIST VISITS, or none — drawn here, before a section
+    // exists, for the reason the cast is: "one section, maybe a chorus" is a
+    // fact about the record, and a per-chorus coin would put a lead break in
+    // two of the three.
+    {
+      const peakAt = Math.max(plan.lastIndexOf("chorus"), plan.lastIndexOf("drop"));
+      const spare = plan.map((w, i) => (w === "chorus" && i !== peakAt ? i : -1))
+        .filter(i => i > 0);
+      S.visit = spare.length && chance(S.out, 0.35) ? pick(S.out, spare) : -1;
+    }
     // the plan's own "intro" is replaced by however this song decided to begin,
     // which may be one section or three
     const song = [...introSections(G, gk, r, S,
                                    rng(ihash(gk + "/" + (seed == null ? 1 : seed)))),
                   ...plan.slice(1).map((role, i) =>
                     build(role, G, gk, r, S,
-                          { x: xs[i + 1], next: xs[i + 2], peak: xs[i + 1] === 1 }))];
+                          { x: xs[i + 1], next: xs[i + 2], peak: xs[i + 1] === 1,
+                            i: i + 1, again: ord[i + 1] }))];
+    // ---- THE THREE PASSES OVER THE FINISHED RECORD --------------------------
+    // Each of them is a fact about a section's NEIGHBOURS, which is exactly
+    // what build() cannot see, and the ORDER between them is load-bearing:
+    // lengths first (a bend changes nothing else), then the stops (which write
+    // the one env value that is a hole rather than a size), then the dynamics
+    // ladder, which must see the stops already placed so it treats `drop` as a
+    // value that is taken and does not deal it to somebody else.
+    bendLengths(song, G, S.bend);
+    thinFills(song, S.fill);
+    placeStops(song, G, S.stop);
+    if (!STEADY[gk]) spreadDynamics(song);
     // NO SECTION RESTATES ITS NEIGHBOUR. Two drops in a row (the dance plan
     // has them on purpose) must be two different bars of music, not one bar
     // twice with two labels — so a repeated role is FORCED apart with an
@@ -1073,7 +1598,14 @@
 
   const api = { compose, ROLES, BEDS, PLANS, PLAN_OF, BPM, ALIAS, arcOf, dynOf, rng, phrase,
                 INTRO_LEAN, INTRO_NOKIT, introEdge, SOLO_LEAN, LAYERABLE, partSlot, PARTS5,
-                GUEST_LEAN, guestCast, AWAY_FX, SOLO_FX, MASTER_LEAN, MASTER_GENRE, masterOf };
+                GUEST_LEAN, guestCast, AWAY_FX, SOLO_FX, MASTER_LEAN, MASTER_GENRE, masterOf,
+                // the five tables and three helpers this round added, exported
+                // for the gate the same way every other ballot is: a policy the
+                // suite cannot read is a policy the suite can only measure
+                // indirectly, and then it fails for the wrong reason
+                SECTION_BARS, SQUARE, BENDS, fullLen, halfLen,
+                STOPS, STOP_KIT, STOP_NOKIT, STEADY, DYNLADDER, spreadDynamics, sectionWord,
+                SINGS, INSTRUMENTAL, SINGER_GENRE, singerOf, ordinals };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuCompose = api;
 })(typeof window !== "undefined" ? window : globalThis);
