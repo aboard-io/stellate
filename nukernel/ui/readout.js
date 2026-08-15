@@ -13,6 +13,12 @@ import { GENRES, ROMAN, harm, blank, MODES, MODELABEL, SCALELABEL,
 import { SLOTS, viewSec, curSection, on } from "./state.js";
 import { sectionRender, stackOf, stackLabel, opsOf, genreOf, kitOf, gid } from "./derive.js";
 import { chanSpec } from "../audio/mixer.js";
+// the carrier's one line. On mobile the rendered tape IS the audible path
+// (audio/bounce.js), so an edit is heard when its re-render swaps at the loop
+// — a person is owed that sentence for as long as it is true, not for the one
+// frame a transient status message survives. Null on a desk, where the
+// carrier is invisible insurance.
+import { carrierNote } from "../audio/bounce.js";
 
 const readoutEl = document.getElementById("readout");
 const srcEl = document.getElementById("src");
@@ -52,7 +58,8 @@ function describe() {
       (e.slots.length ? e.slots.map(i => i + 1).join("+") : "no phrase")).join(" | ") +
     " · " + bars + " bar" + (bars === 1 ? "" : "s") +
     (sec.nudge ? " nudged " + sec.nudge : "") + " · " + roots +
-    (quiet.length ? "  —  " + quiet.join(", ") : "");
+    (quiet.length ? "  —  " + quiet.join(", ") : "") +
+    (carrierNote() ? "  —  " + carrierNote() : "");
 }
 
 /* ---------- what the selected box asks for ---------- */

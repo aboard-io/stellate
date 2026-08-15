@@ -14,22 +14,18 @@ import { SONG, on } from "../ui/state.js";
 import { stackOf } from "../ui/derive.js";
 import { ctx, muteNow, unmuteRamp } from "./graph.js";
 import { playing, startAt, stop, getPosition, seekPhase } from "./transport.js";
-import { carry, uncarry } from "./bounce.js";
+import { carry, uncarry, isCarrying, carrierFirst, carrierPos, carrierSeek,
+         isIOS } from "./bounce.js";
 
-// the parent's predicate, SPLIT (live.js onVisChange muted on isMobile; the
-// contract it protects is narrower): the preemptive mute is for platforms
-// whose ctx genuinely FREEZES on hide — iOS/iPadOS WebKit, which reports
-// "interrupted" and stops rendering until the page returns. Android Chrome
-// keeps a running, AUDIBLE context alive in the background exactly like
-// desktop (the bg-survival contract), so the old whole-of-mobile mute was
-// silencing a platform that never needed it — "stops playing when I switch
-// out of the browser", by our own hand. iPadOS 13+ masquerades as Mac in the
-// UA; maxTouchPoints is the tell. ?bgtest=ios|android forces the predicate so
-// the survival gate can walk both branches from one desktop chromium.
-const bgtest = /[?&]bgtest=(ios|android)\b/.exec(location.search);
-const isIOS = bgtest ? bgtest[1] === "ios" :
-  /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-  (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || ""));
+// THE PREDICATE MOVED DOWN to audio/bounce.js, which is where the decision it
+// drives now lives (the carrier is the audible path on mobile, not a pocket
+// copy). It is imported rather than re-derived so the page cannot hold two
+// opinions about what device it is on. Its split still matters here: the
+// preemptive mute below is for platforms whose ctx genuinely FREEZES on hide —
+// iOS/iPadOS WebKit, which reports "interrupted" and stops rendering until the
+// page returns. Android Chrome keeps a running, AUDIBLE context alive in the
+// background exactly like desktop (the bg-survival contract), so a
+// whole-of-mobile mute would silence a platform that never needed it.
 
 /* ---------- resume + revive ---------- */
 // unconditional, NEVER gated on ctx.state: iOS reports the non-standard
@@ -62,6 +58,13 @@ let survivalMuted = false;                         // goHidden ran and goVisible
 let carried = false;                               // the bounce element took the handoff
 function goHidden() {
   if (!ctx) return;
+  // CARRIER-FIRST: NOTHING TO DO, AND THAT IS THE POINT (2026-08-15). On the
+  // mobile predicate the element has been the audible path since the first
+  // render landed, so hiding the page is not an audio event at all — no
+  // play() for iOS to refuse, no volume swap racing a frozen frame, no
+  // handoff to arrive late. This branch is the whole reason the OS grants and
+  // keeps focus: what it is being asked to background is already media.
+  if (carrierFirst() && isCarrying()) { carried = true; survivalMuted = true; return; }
   // the handoff, when the carrier is ready: element volume up + graph muted at
   // the matching loop position. Both writes are SYNCHRONOUS — background
   // timers throttle on the very frames a deferred ramp would ride, so the
@@ -82,6 +85,19 @@ function goHidden() {
 function goVisible() {
   if (!ctx) return;
   resumeCtx();
+  // CARRIER-FIRST: THE ELEMENT KEEPS THE SONG. Handing back to the graph on
+  // return would make the audible path flap between two sources at every app
+  // switch — and would drop the media session the moment the user looked at
+  // the page, which is the bug. So the only thing return owes is a RESYNC: on
+  // iOS the audio clock was frozen the whole time, so the transport (and with
+  // it the playhead, the LCD and positionState) has to be moved to where the
+  // tape actually got to, or the next tick tries to schedule the minutes it
+  // missed.
+  if (carrierFirst() && isCarrying()) {
+    const p = carrierPos();
+    if (p && playing) seekPhase(p.pos);
+    return;
+  }
   if (carried) {
     // reverse handoff: element down, graph up — and the transport RESYNCS to
     // where the element actually got to, because on iOS the graph's clock was
@@ -164,6 +180,16 @@ function msUpdate(isPlaying) {
     navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
   } catch (e) {}
 }
+// EVERY HANDLER, RECORDED. A setActionHandler is write-only — nothing can read
+// back which actions a page claims, so "the lock screen has controls" was a
+// claim no gate could check and no user could check either until they were
+// holding a locked phone. The map is the record; __nuMedia below is how the
+// gate presses the buttons the OS would press.
+const actions = new Map();
+function action(name, fn) {
+  try { navigator.mediaSession.setActionHandler(name, fn); actions.set(name, fn); }
+  catch (e) { /* a UA that does not know this action rejects it; that is fine */ }
+}
 if (hasMS) {
   // the handlers ARE user gestures (media keys, lock screen), so startAt's
   // gesture prefix — carrier arming included — rides them for free.
@@ -174,30 +200,75 @@ if (hasMS) {
   // the flags and re-running goHidden() re-carries (el volume up, graph
   // muted coherently); with no carrier it degrades to the plain mobile
   // mute-at-source, and goVisible restores sound on unlock either way.
-  try {
-    navigator.mediaSession.setActionHandler("play", async () => {
-      if (playing) return;
-      await startAt(0);
-      if (document.visibilityState === "hidden") {
-        carried = false; survivalMuted = false;
-        goHidden();
-      }
-    });
-  } catch (e) {}
-  try { navigator.mediaSession.setActionHandler("pause", () => { if (playing) stop(); }); } catch (e) {}
-  try { navigator.mediaSession.setActionHandler("stop", () => { if (playing) stop(); }); } catch (e) {}
+  // Carrier-first needs none of that: startAt's transport:state is what puts
+  // the element back up, hidden or not, so the re-handoff is skipped there.
+  action("play", async () => {
+    if (playing) return;
+    await startAt(0);
+    if (document.visibilityState === "hidden" && !(carrierFirst() && isCarrying())) {
+      carried = false; survivalMuted = false;
+      goHidden();
+    }
+  });
+  action("pause", () => { if (playing) stop(); });
+  action("stop", () => { if (playing) stop(); });
+  // SCRUBBING IS PART OF BEING MEDIA. iOS draws the position slider from
+  // setPositionState and expects seekto to answer it; without the handler the
+  // lock screen shows a scrubber that does nothing, which reads as a broken
+  // player rather than a page that declined the action. The tape is the thing
+  // that moves — carrierSeek moves the element AND the transport together —
+  // and with no carrier it is the transport alone.
+  const seekTo = t => {
+    if (!playing) return;
+    if (!carrierSeek(t)) seekPhase(t);
+    msPosition();
+  };
+  action("seekto", d => { if (d && d.seekTime != null) seekTo(d.seekTime); });
+  action("seekbackward", d => seekTo(nowPos() - ((d && d.seekOffset) || 10)));
+  action("seekforward", d => seekTo(nowPos() + ((d && d.seekOffset) || 10)));
 }
+// the gate's hand on the lock screen: what we claim, and a way to press it.
+// fire() runs the handler the OS would run — the only honest way to prove a
+// control WORKS rather than merely EXISTS.
+window.__nuMedia = () => ({
+  actions: [...actions.keys()],
+  state: hasMS ? navigator.mediaSession.playbackState : null,
+  title: hasMS && navigator.mediaSession.metadata ? navigator.mediaSession.metadata.title : null,
+  artist: hasMS && navigator.mediaSession.metadata ? navigator.mediaSession.metadata.artist : null,
+  position: nowPos(), duration: msDur(),
+  fire: (name, detail) => {
+    const fn = actions.get(name);
+    if (!fn) return false;
+    fn(detail || { action: name });
+    return true;
+  },
+});
 on("transport:state", d => msUpdate(d.playing));
 on("song", () => { msTitle = null; msUpdate(playing); });
-// positionState at 1 Hz, from the transport's own clock — the real finite
-// duration, so the lock screen counts against the truth
-setInterval(() => {
+// WHERE ARE WE — asked of whatever is AUDIBLE. While the tape carries, the
+// audio clock is not the answer (on iOS it is frozen solid, and the position
+// slider would sit still through a whole backgrounded song); the element's
+// currentTime is. nukernel is the rare page that can also declare an HONEST
+// duration — the song is a finite loop — where the parent must say Infinity.
+function msDur() {
+  const c = carrierPos();
+  if (c && c.dur > 0) return c.dur;
+  return getPosition().durSec;
+}
+function nowPos() {
+  const c = carrierPos();
+  if (c && c.dur > 0) return c.pos;
+  const p = getPosition(), dur = p.durSec;
+  if (!(dur > 0)) return 0;
+  return (((p.now - p.loopStart) % dur) + dur) % dur;
+}
+function msPosition() {
   if (!hasMS || !playing || !navigator.mediaSession.setPositionState) return;
   try {
-    const p = getPosition(), dur = p.durSec;
+    const dur = msDur();
     if (!(dur > 0)) return;
-    const pos = (((p.now - p.loopStart) % dur) + dur) % dur;
     navigator.mediaSession.setPositionState({
-      duration: dur, position: Math.max(0, Math.min(dur, pos)), playbackRate: 1 });
+      duration: dur, position: Math.max(0, Math.min(dur, nowPos())), playbackRate: 1 });
   } catch (e) {}
-}, 1000);
+}
+setInterval(msPosition, 1000);                     // 1 Hz is what a lock screen needs

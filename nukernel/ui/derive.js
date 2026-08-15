@@ -11,6 +11,31 @@ import { GENRES, MODES, SCALES, RATES, SWINGS, KITOPS, OPS,
 
 export const isBlank = p => p.gate.every(g => !g);
 
+/* ---------- the phrase contour, as one SVG path ---------- */
+// THE PICTURE OF A PHRASE, and there is exactly one of it. It was local to
+// ui/editor.js while the slot rail was its only reader; the song row draws the
+// same contour as a chip per phrase now, and two copies of a drawing routine
+// is how the pad and the chip end up disagreeing about what a phrase looks
+// like. It lives here because it is what this file is for: pure over its
+// argument, imported by views, importing nothing.
+//
+// Gated steps become line segments and rests become gaps: M starts a run, L
+// continues it. deg −7..+7 maps top-to-bottom into a 64×26 viewBox — the pad's
+// units, which the chip simply scales down.
+export function contourPath(p) {
+  const runs = [];
+  let run = null;
+  for (let k = 0; k < 16; k++) {
+    if (!p.gate[k]) { run = null; continue; }
+    const x = k * 4 + 2, y = (23 - ((p.deg[k] + 7) / 14) * 20).toFixed(1);
+    if (!run) runs.push(run = []);
+    run.push(x + " " + y);
+  }
+  // a lone gate still needs ink: a zero-length segment renders as a dot
+  // under the round linecap, but only if there IS a segment
+  return runs.map(r => "M" + r.join(" L") + (r.length === 1 ? " L" + r[0] : "")).join(" ");
+}
+
 /* ---------- box accessors ---------- */
 // WHICH OPTIONS BELONG TO A LAYER, and which to the box. The split is the same
 // rule stacking was built on: the authority owns everything that must be shared

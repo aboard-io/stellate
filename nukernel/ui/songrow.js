@@ -1,33 +1,66 @@
 // ui/songrow.js — THE SONG TABLE: one element PER BOX, kept alive and patched.
 // The song is a table of sections at every width — # | section | genre | bars |
-// phrases | switched-on | tools — with a stacked layer as an indented sub-row
+// phrases | switched-on | keys — with a stacked layer as an indented sub-row
 // beneath its authority. There is no desk card rack any more and no
 // width-as-duration: a wide screen gets the same rows with more room (wider
-// columns, the phrase list and the column header out, the option sheet
-// anchored under the row instead of over the deck). ONE DOM, one idiom; the
-// CSS decides how much room the columns get and nothing else.
+// columns, the column header out, the option sheet anchored under the row
+// instead of over the deck). ONE DOM, one idiom; the CSS decides how much room
+// the columns get and nothing else.
+//
+// ONE LINE PER SECTION (Paul, 2026-08-15: "the song sections can be much less
+// vertically tall — they sort of spread all over the place"). The phone row
+// used to be a three-line grid — head, layers, then lamps and length on a
+// third line with a 2×2 tool pad parked down the right — 109px of mostly air
+// per section, so eleven sections were a scroll rather than a song. Every
+// field is on ONE line now at every width, the sub-rows are as tight, and what
+// used to be four tool keys is a corner cluster of two:
+//
+//   ↑ ↓ RETIRED. Rows drag among themselves on a desk; the keyboard reorders
+//     with ALT+ARROW on the focused row, and touch — where HTML5 drag has
+//     never fired — reorders with the ↑ ↓ keys in the row's own sheet. Two
+//     keys off every row, and the reorder is still reachable three ways.
+//   ⟳ BECAME A PIN. Same behaviour (loop this section alone), pin
+//     iconography, pinned = lit, sitting beside the dismiss ✕ so the row's two
+//     state keys are one corner cluster instead of a pad in the middle of the
+//     row's tap target.
+//   + ADDS A SUB-GENRE. The stack has always taken riders; adding one meant
+//     opening the sheet and finding the genre bank. The key at the right of
+//     the row offers the genre choice immediately, anchored to itself, and the
+//     new layer appears as an indented sub-row.
+//   PHRASE CHIPS. The phrases the section plays, as the slot rail's own
+//     contour picture shrunk to a chip — tap one to select it AND go to STEP
+//     with the row still selected. It replaced the "1+3 / 2" numerals column,
+//     which was a desk-only cell and said less in more room.
 //
 // Rebuilding is still the sin: the old drawSong() wiped #song and rebuilt every
 // row with ~10 listeners each on every chip click and every scrub frame; here a
 // row's element is keyed by the box object's identity and only its text and
-// classes are patched. A "phrase" event does not touch this module at all —
-// that is the contract that makes an editor scrub cheap.
+// classes are patched. A "phrase" event still does not patch a ROW — it writes
+// one <path d> per chip showing the edited phrase and nothing else (see
+// patchChipPaths at the bottom) — which is the contract that makes an editor
+// scrub cheap, kept now that the row draws the phrases.
 //
 // Layer graph: ui view — imports state/derive/deps and audio/transport (the
 // one allowed direction; transport never calls back, it publishes).
 import { GENRES, ROLES, OPLABEL, OCTAVES, SCALELABEL, VOX, KITLABEL, DRUMKITS,
          BASSOPS, SWINGLABEL, GROOVELABEL, MODELABEL, RATELABEL, FX, SENDLABEL,
          VERBS, DTLABEL, LEVELLABEL, PANLABEL, INLABEL, ENVLABEL, MOTLABEL,
-         OUTLABEL, MAX_LEN, MAX_NUDGE, emptyBox } from "./deps.js";
-import { SONG, viewSec, loopOnly, pendingStart, bpm, setViewSec, setLoopOnly,
-         setPendingStart, commit, on, emit } from "./state.js";
+         OUTLABEL, MAX_LEN, MAX_NUDGE, FAMILIES, emptyBox } from "./deps.js";
+import { SONG, SLOTS, slot, viewSec, loopOnly, pendingStart, bpm, setViewSec,
+         setLoopOnly, setPendingStart, setSlot, commit, on, emit } from "./state.js";
 import { stackOf, stackLabel, boxBars, secsOf, focused, focusOf, opsOf, optOf,
-         voxAll, mmss } from "./derive.js";
+         voxAll, mmss, contourPath } from "./derive.js";
 import { playing, playingSec, startAt, resetBar } from "../audio/transport.js";
 import { onLongPress, buzz } from "./touch.js";
 // the popover mounts the ONE palette element (built once over there); showTab
-// puts it on SOUND when a row opens — same path a .ptab click takes
-import { showTab } from "./palette.js";
+// puts it on SOUND when a row opens — same path a .ptab click takes, and
+// toggle() is the ONE genre dispatcher, which is what the row's + calls rather
+// than splicing a stack entry itself
+import { showTab, toggle } from "./palette.js";
+// a phrase chip navigates — the row is where you choose WHICH phrase, the STEP
+// page is where you edit it. (pages.js imports state/palette/touch only, so
+// this direction stays acyclic.)
+import { setPage } from "./pages.js";
 
 const songEl = document.getElementById("song");
 // TABLE SEMANTICS, honestly and everywhere: the same fields on every section,
@@ -72,7 +105,7 @@ const headRow = (() => {
   for (const [cls, txt] of [["hnum", "#"], ["hrole", "section"],
                             ["hgenre", "genre"], ["hbars", "bars"],
                             ["hph", "phrases"], ["hleds", "switched on"],
-                            ["htools", "move"]]) {
+                            ["htools", "keys"]]) {
     const c = document.createElement("span");
     c.className = cls; c.textContent = txt;
     c.setAttribute("role", "columnheader");
@@ -82,12 +115,9 @@ const headRow = (() => {
 })();
 
 /* ---------- the keys ---------- */
-// BUTTONS, BECAUSE DRAG-AND-DROP IS A DESKTOP FICTION. HTML5 dragstart does
-// not fire on touch at all — not partially, not badly, at all — so reordering
-// a song on a phone was impossible and looked like a bug in the page rather
-// than a missing feature. ↑ ↓ move the row, ⟳ loops it, ✕ removes it. Row drag
-// still works where it works; these are what make the same actions reachable
-// everywhere, and they are better for the keyboard besides.
+// The row's own two state keys (pin, ✕) plus the + that grows the stack; the
+// sheet's keys are cut from the same helper. Every one stops the click, or it
+// would also open the row it sits in.
 const btn = (cls, glyph, label, fn) => {
   const b2 = document.createElement("button");
   b2.type = "button"; b2.className = cls; b2.textContent = glyph;
@@ -95,6 +125,37 @@ const btn = (cls, glyph, label, fn) => {
   b2.addEventListener("click", ev => { ev.stopPropagation(); fn(); });
   return b2;
 };
+// ...and the same key wearing a drawn icon instead of a glyph. A pushpin has
+// no dependable character in a monospace face — ⚲ and 📌 are a coverage
+// lottery and one of them is an emoji — so the pin is a path, painted with
+// currentColor like every other silkscreen icon on the machine.
+const PIN_SVG =
+  '<svg viewBox="0 0 16 16" aria-hidden="true" class="pini">' +
+  '<path d="M5.7 1.6h4.6l-.7 3.4 2.2 2.2v1.3H8.7v5.4L8 15.2l-.7-1.3V8.5H4.2V7.2l2.2-2.2z"/>' +
+  '</svg>';
+const iconBtn = (cls, svg, label, fn) => {
+  const b2 = btn(cls, "", label, fn);
+  b2.innerHTML = svg;
+  return b2;
+};
+
+/* ---------- reorder, as one function ---------- */
+// THREE CALLERS, ONE MOVE: the row sheet's ↑ ↓ (the touch path — HTML5 drag
+// does not fire on a touch screen at all, so a phone would otherwise have no
+// reorder), ALT+ARROW on the focused row (the keyboard path), and drag-and-drop
+// (the desk path, below). It closes over the BOX OBJECT and looks its index up
+// at call time, the law every listener in this file follows.
+function moveBox(sec, d) {
+  const at = idx(sec), j = at + d;
+  if (at < 0 || j < 0 || j >= SONG.length) return false;
+  const keep = keepMarks();
+  const [m] = SONG.splice(at, 1); SONG.splice(j, 0, m);
+  keep();
+  setViewSec(j);
+  commit("box");
+  if (playing) resetBar();
+  return true;
+}
 
 /* ---------- build once per box ---------- */
 // Listeners close over the BOX OBJECT, never over an index — a box that has
@@ -108,9 +169,10 @@ function buildBox(sec) {
   // EVERY CELL IS BUILT ONCE and patched by textContent/class, never by
   // innerHTML. Rebuilding the row's head per patch destroyed the tool keys on
   // every "transport:section" (each box boundary while playing) and on the very
-  // activation they handle: Enter on ↑ committed, the commit patched, the
+  // activation they handle: Enter on a key committed, the commit patched, the
   // focused button was removed and focus fell to <body> — the exact mid-click
-  // destruction palette.js documents having fixed once.
+  // destruction palette.js documents having fixed once. (The key that used to
+  // demonstrate this was ↑; the pin and ✕ are just as destroyable.)
   const cell = (tag, cls) => {
     const n = document.createElement(tag);
     n.className = cls; n.setAttribute("role", "cell");
@@ -127,10 +189,15 @@ function buildBox(sec) {
   const bn = Object.assign(document.createElement("b"), { className: "bn" });
   const bd = Object.assign(document.createElement("span"), { className: "bd" });
   bars.append(bn, bd);
-  // The row lists phrase NUMBERS. The contour picture belongs in the slot rail
-  // where you are choosing a phrase; repeating it here made the song a wall of
-  // little graphs you had to decode instead of a piece you could read.
-  const ph = cell("div", "bphrase");
+  // THE PHRASES THIS SECTION PLAYS, as chips — the slot rail's own contour
+  // picture (ui/derive.js contourPath, one drawing routine for both) shrunk to
+  // about a fingernail, one per phrase, in the layers' own order. It replaced a
+  // desk-only column of numerals ("1+3 / 2") that said which phrases without
+  // saying anything about them; the chips say both, in less room, at every
+  // width. Tapping one selects that phrase AND goes to STEP to edit it, with
+  // the row still selected — so the context strip names the right box and the
+  // right phrase when you land.
+  const ph = cell("div", "bchips");
   // WHAT THIS BOX IS DOING, as an LED strip. The old tag pile emitted ~20
   // word-chips into a two-row well that hid the overflow; eight lamps at
   // FIXED positions never reflow and read at rack distance: lit = that
@@ -144,25 +211,20 @@ function buildBox(sec) {
     s.className = "led"; s.dataset.fam = fam;
     lamp[fam] = s; leds.append(s);
   }
-  // the tools: all four keys exist for the row's whole life (patchBox ghosts
-  // the move key with nowhere to go, so the cluster never reshuffles between
-  // rows); handlers look the index up at event time
+  // THE KEYS, at the right of the row: + grows the stack, and the two state
+  // keys — pin and dismiss — are a CORNER CLUSTER, which is the whole reason
+  // they are three and not five. Four keys in a 2×2 pad put a button at the
+  // geometric centre of a 109px row, so "tap the section" hit ⟳ or ✕ as often
+  // as it opened the sheet; a one-line row with the keys in its corner has a
+  // tap target again.
   const tools = cell("span", "btools");
-  const move = d => {
-    const at = idx(sec), j = at + d;
-    if (j < 0 || j >= SONG.length) return;
-    const keep = keepMarks();
-    const [m] = SONG.splice(at, 1); SONG.splice(j, 0, m);
-    keep();
-    setViewSec(j);
-    commit("box");
-    if (playing) resetBar();
-  };
-  // ↑ and ↓ EVERYWHERE: the table runs top to bottom at every width, so the
-  // keys speak that axis and nothing swaps glyphs under the reader any more
-  const moveUp = btn("t", "↑", "move box earlier", () => move(-1));
-  const moveDn = btn("t", "↓", "move box later", () => move(1));
-  const loopBtn = btn("t", "⟳", "loop box", () => {
+  const addLayer = btn("t addl", "+", "add a sub-genre to this box",
+    () => openPicker(sec, addLayer));
+  // THE PIN IS THE OLD ⟳, exactly: it loops this section alone. A circular
+  // arrow says "again" and the thing it does is "hold here", which is what a
+  // pin says — and pinned/unpinned is a state a pin can wear (lit) where a
+  // rotation arrow can only be lit or not for no visible reason.
+  const pinBtn = iconBtn("t pin", PIN_SVG, "pin box (loop it alone)", () => {
     const at = idx(sec);
     setViewSec(at); setLoopOnly(loopOnly === at ? null : at);
     commit("selection");
@@ -177,7 +239,7 @@ function buildBox(sec) {
     commit("box");
     if (playing) resetBar();
   });
-  tools.append(moveUp, moveDn, loopBtn, xBtn);
+  tools.append(addLayer, pinBtn, xBtn);
   // A STACKED LAYER IS ITS OWN SUB-ROW: the genre cell names the AUTHORITY,
   // and each rider genre gets an indented line of its own beneath it — a
   // button, because tapping a layer line focuses that layer and opens the row
@@ -233,6 +295,22 @@ function buildBox(sec) {
   // itself was not, which made every option on it mouse-or-finger only.
   box.tabIndex = 0;
   box.addEventListener("keydown", e => {
+    // ALT+ARROW REORDERS THE FOCUSED ROW. This is what replaced the ↑ ↓ keys:
+    // they were on every row for ever so that a keyboard (and a finger) could
+    // reorder at all, which is two permanent keys of chrome to serve a rare
+    // edit. Alt is the modifier because a bare arrow must keep walking the tab
+    // ring, and the row FOLLOWS ITS BOX — the element is keyed by the box
+    // object, so re-focusing after the commit keeps the same section under the
+    // keys for a second press.
+    if (e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+      e.preventDefault();
+      if (moveBox(sec, e.key === "ArrowUp" ? -1 : 1)) {
+        const el = els.get(sec);
+        if (el) el.box.focus({ preventScroll: false });
+        buzz(4);
+      }
+      return;
+    }
     if (e.key !== "Enter" && e.key !== " ") return;
     e.preventDefault();
     const i = idx(sec);
@@ -264,8 +342,45 @@ function buildBox(sec) {
       (words.length ? words.join("  ·  ") : "nothing switched on"), sticky: true });
   });
 
-  return { box, num, role, bars, bn, bd, moveUp, moveDn, loopBtn, xBtn,
-           gl, layers, layersSig: "", ph, lamp, fill };
+  return { box, num, role, bars, bn, bd, pinBtn, xBtn, addLayer,
+           gl, layers, layersSig: "", ph, chips: [], chipsSig: "", lamp, fill };
+}
+
+/* ---------- the phrase chips ---------- */
+// One chip per (layer, phrase), rebuilt only when the SET of phrases in the
+// box changes — a structural, rare edit, the same carve-out the layer sub-rows
+// take. A scrub inside a phrase does not rebuild anything: it repaints one
+// <path d>, which is what keeps the editor's per-pointermove commit cheap
+// (patchChipPaths, at the bottom of this file).
+const SVGNS = "http://www.w3.org/2000/svg";
+function buildChip(sec, li, si) {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "bch";
+  const mini = document.createElementNS(SVGNS, "svg");
+  mini.setAttribute("class", "bcmini");
+  mini.setAttribute("viewBox", "0 0 64 26");
+  mini.setAttribute("preserveAspectRatio", "none");
+  mini.setAttribute("aria-hidden", "true");
+  const line = document.createElementNS(SVGNS, "path");
+  mini.append(line); b.append(mini);
+  b.addEventListener("click", ev => {
+    ev.stopPropagation();                 // the row click opens the sheet
+    const at = idx(sec);
+    setViewSec(at); sec.focus = li;       // the layer the phrase rail edits
+    setSlot(si);
+    commit("selection");
+    // GO AND EDIT IT. The row stays selected, so the context strip lands
+    // reading "BOX n · … · phrase si+1" — the strip's whole job. On a desk
+    // there are no pages to switch, so the same tap scrolls the tracker into
+    // view instead of doing nothing visible.
+    setPage("step");
+    if (innerWidth >= WIDE) {
+      const g = document.getElementById("stepgrid");
+      if (g) g.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+    buzz(4);
+  });
+  return { b, line, si };
 }
 
 /* ---------- patch on every change ---------- */
@@ -292,17 +407,16 @@ function patchBox(sec, i, el) {
   // "4 bars · 0:07" — in the accessibility tree as well as on the glass, and
   // it hides with the span where a phone drops it
   el.bd.textContent = "· " + mmss(secsOf(sec, bpm));
-  // a move key with nowhere to go GHOSTS (visibility, in CSS) instead of
-  // hiding: all four tool slots keep their seat, so ⟳ and ✕ are at the same
-  // spot on every row and the cluster never reshuffles between sections
-  el.moveUp.classList.toggle("ghost", i === 0);
-  el.moveDn.classList.toggle("ghost", i === SONG.length - 1);
-  el.moveUp.setAttribute("aria-label", "move box " + (i + 1) + " earlier");
-  el.moveDn.setAttribute("aria-label", "move box " + (i + 1) + " later");
-  el.loopBtn.classList.toggle("on", i === loopOnly);
-  el.loopBtn.setAttribute("aria-label",
-    (i === loopOnly ? "stop looping box " : "loop box ") + (i + 1));
+  // the corner cluster: pinned = lit, and the pin is a toggle so it says which
+  // way it is about to go. (No key ghosts any more — none of the three has a
+  // "nowhere to go" state, which is what the ghost rule was for.)
+  el.pinBtn.classList.toggle("on", i === loopOnly);
+  el.pinBtn.setAttribute("aria-pressed", String(i === loopOnly));
+  el.pinBtn.setAttribute("aria-label",
+    (i === loopOnly ? "unpin box " : "pin box ") + (i + 1) + " (loop it alone)");
   el.xBtn.setAttribute("aria-label", "remove box " + (i + 1));
+  el.addLayer.setAttribute("aria-label", (blankSimple(sec)
+    ? "choose the genre for box " : "add a sub-genre to box ") + (i + 1));
 
   // the genre cell names the AUTHORITY; the riders are sub-rows below it.
   // (The row's aria-label above still carries the whole stack.)
@@ -337,9 +451,36 @@ function patchBox(sec, i, el) {
     b2.classList.toggle("foc", i === viewSec && focusOf(sec) === k + 1);
     b2.setAttribute("aria-label", "layer: " + GENRES[ent.g].label + " — edit this layer");
   });
-  el.ph.className = "bphrase" + (st.some(e => e.slots.length) ? " has" : "");
-  el.ph.textContent = st.map(e =>
-    e.slots.length ? e.slots.map(n => n + 1).join("+") : "—").join("  /  ");
+  // THE PHRASE CHIPS — one per (layer, phrase), in the layers' own order, so
+  // the strip reads the way the stack does. Rebuilt only when the SET moves.
+  const csig = st.map(e => e.slots.join(",")).join("|");
+  if (el.chipsSig !== csig) {
+    el.chipsSig = csig;
+    el.ph.textContent = ""; el.chips.length = 0;
+    st.forEach((ent, li) => ent.slots.forEach(si => {
+      const c = buildChip(sec, li, si);
+      el.chips.push(c); el.ph.append(c.b);
+    }));
+  }
+  el.ph.className = "bchips" + (el.chips.length ? " has" : "");
+  for (const c of el.chips) {
+    // LIT = SOUNDING. Not a timer and not a guess: the transport publishes the
+    // sounding SECTION, and derive.js's own deal is that voice v plays phrase
+    // v % n — so every phrase in the sounding box is sounding at once, and the
+    // honest lamp is per section rather than per chip. (A chip that took turns
+    // lighting would be a picture of a rule the engine does not have.)
+    c.b.classList.toggle("lit", i === playingSec);
+    // ...and the ring is the EDIT target: this row selected, this layer
+    // focused, this phrase open in the tracker
+    c.b.classList.toggle("sel", i === viewSec && slot === c.si);
+    const p = SLOTS[c.si];
+    if (p) {
+      const d = contourPath(p);
+      if (c.line.getAttribute("d") !== d) c.line.setAttribute("d", d);
+    }
+    c.b.setAttribute("aria-label",
+      "phrase " + (c.si + 1) + " in box " + (i + 1) + " — edit it in the step page");
+  }
 
   // THE LAMPS. Each family's words are gathered exactly as the tag pile
   // gathered them; the strip lights the lamp and the title keeps the words,
@@ -427,17 +568,37 @@ const footRow = (() => {
 // there is room (>=900px, the chassis boundary). The ONE palette element
 // is MOVED into it while it is open (built once by palette.js; moving the node
 // is cheap and isOn()/drawPalette keep painting it wherever it stands) and
-// moved home on close, so the SOUND/MIX rail pages still work.
-// The head carries the row's play-from-here ▶ and the bars/nudge steppers —
-// what the edge grips used to do, said in keys, because a row that no longer
-// encodes its length in pixels has no edge to drag.
+// moved home on close, so the desk's own pages still work.
+//
+// AND NOW THE MIX DESK TOO. The sheet is where a box is edited, so it carries
+// BOTH per-box surfaces — the palette and ui/mixtbl.js's table of sounds —
+// behind a two-key surface switch in its head. That is what let the page rail
+// give up its SOUND and MIX keys (ui/pages.js): those were two rail
+// destinations that edited the SELECTED box from somewhere the box was not on
+// screen, which is the problem the context strip exists to paper over. The
+// mix table is moved exactly the way the palette is: one element, borrowed
+// while the sheet is open, home on close — so the desk (where every page is
+// visible at once, and where the browser gates read .mrow) is untouched
+// whenever the sheet is shut.
+//
+// The head carries the row's play-from-here ▶, the ↑ ↓ that reorder it (the
+// TOUCH reorder path, since HTML5 drag never fires there), and the bars/nudge
+// steppers — what the edge grips used to do, said in keys, because a row that
+// no longer encodes its length in pixels has no edge to drag.
 // Dismiss: ✕, the scrim, Esc; AUTO-dismiss on another row's tap, on a page
 // switch, on a new song, when the deck scrolls meaningfully, and on a resize
 // that would move the anchor.
 let popFor = null;                          // the box object the popover is on
-let popScroll0 = 0;
+let popScroll0 = 0, popSurf = "sound";      // which surface the sheet is showing
 const paletteEl = document.getElementById("palette");
 const paletteHome = paletteEl.parentElement;
+// the WHOLE mix panel, not just #mixtbl: its head carries the (?) whose
+// paragraph explains what M and S do and what the section row under the rule
+// is, and the rail key that used to paint that paragraph is gone. Borrowing
+// the table alone would have made the only explanation of the desk reachable
+// on a desk and nowhere else, which is the wrong way round.
+const mixEl = document.querySelector("#page-mix .ed");
+const mixHome = mixEl.parentElement;
 const deckEl = document.querySelector(".deck");
 const rpScrim = Object.assign(document.createElement("div"),
   { className: "rpscrim", hidden: true });
@@ -454,9 +615,16 @@ const rpPlay = btn("rpk rpplay", "▶", "play from this box", () => {
   else { commit("selection"); startAt(i); }
   buzz(4);
 });
+// THE REORDER LIVES HERE NOW. Two keys in one sheet instead of two keys on
+// every row for ever — and the row they move is the row whose sheet is open,
+// which is the only row a person is thinking about when they want it moved.
+const rpUp = btn("rpk rpmv", "↑", "move this box earlier",
+  () => { if (popFor) { moveBox(popFor, -1); buzz(4); } });
+const rpDn = btn("rpk rpmv", "↓", "move this box later",
+  () => { if (popFor) { moveBox(popFor, 1); buzz(4); } });
 const rpX = btn("rpk rpx", "✕", "close the row options", () => closePop());
 const rpHead = Object.assign(document.createElement("div"), { className: "rphead" });
-rpHead.append(rpPlay, rpTitle, rpX);
+rpHead.append(rpPlay, rpTitle, rpUp, rpDn, rpX);
 // bars/nudge as steppers: the same clamps the grips carried, the same
 // commit("box"), and reachable by thumb, key and screen reader alike
 const stepper = (lab, name, get, set) => {
@@ -479,9 +647,62 @@ const rpNudge = stepper("nudge", "bar of nudge",
          if (n !== popFor.nudge) { popFor.nudge = n; commit("box"); } });
 const rpBars = Object.assign(document.createElement("div"), { className: "rpbars" });
 rpBars.append(rpLen.w, rpNudge.w);
+// THE SURFACE SWITCH: which per-box surface the sheet is holding. Two keys,
+// because there are exactly two things a box IS — a sound and a mix — and the
+// palette's own six tabs live inside the first of them. Cut like the palette's
+// .ptab strip, because it is the same kind of control one level up.
+const surfKey = (k, lab) => {
+  const b2 = btn("rpsk" + (k === popSurf ? " on" : ""), "",
+    "show the " + lab + " surface for this box", () => setSurf(k));
+  b2.dataset.surf = k;
+  // the rail's own silkscreen, inherited: the wave and the three faders were
+  // the SOUND and MIX keys' icons and they came here with their destinations
+  // (kernel-daw.css, ".pi" keyed on data-surf now)
+  b2.append(Object.assign(document.createElement("span"),
+    { className: "pi" }), document.createTextNode(lab));
+  b2.querySelector(".pi").setAttribute("aria-hidden", "true");
+  b2.setAttribute("aria-pressed", String(k === popSurf));
+  return b2;
+};
+const rpSurf = Object.assign(document.createElement("div"), { className: "rpsurf" });
+rpSurf.setAttribute("role", "tablist");
+rpSurf.setAttribute("aria-label", "box surface");
+// THE RAIL'S OWN TWO WORDS, kept exactly. They are the names the machine has
+// used for these two surfaces everywhere else — the mix panel's own head says
+// MIX — and inventing a synonym here ("desk", which is what mixtbl.js calls
+// it in prose) would put two names for the mixer on one screen, which is the
+// drift this project spends most of its comments preventing. The palette's
+// first TAB is also called sound, and that is not a collision: it is the sound
+// surface opening on its sound bank.
+const surfKeys = [surfKey("sound", "sound"), surfKey("mix", "mix")];
+rpSurf.append(...surfKeys);
 const rpMount = Object.assign(document.createElement("div"), { className: "rpmount" });
-rowpop.append(rpHead, rpBars, rpMount);
+rowpop.append(rpHead, rpBars, rpSurf, rpMount);
 document.body.append(rpScrim, rowpop);
+
+// MOVE, NEVER COPY: one palette and one mix table exist on this page, and the
+// sheet borrows whichever it is showing. Whatever it is not showing goes home
+// first, so neither element can be left orphaned inside a hidden sheet — which
+// is what would make the desk's own MIX page (and the gates that read .mrow)
+// silently empty.
+function mountSurf() {
+  if (popSurf === "mix") { paletteHome.append(paletteEl); rpMount.append(mixEl); }
+  else { mixHome.append(mixEl); rpMount.append(paletteEl); }
+  for (const b2 of surfKeys) {
+    const on2 = b2.dataset.surf === popSurf;
+    b2.classList.toggle("on", on2);
+    b2.setAttribute("aria-pressed", String(on2));
+  }
+}
+function setSurf(k) {
+  if (popSurf === k) return;
+  popSurf = k;
+  mountSurf();
+  commit("selection");                     // the arriving surface repaints
+  if (popFor) placePop();                  // it is a different height
+  buzz(4);
+}
+function homeSurfaces() { paletteHome.append(paletteEl); mixHome.append(mixEl); }
 
 // WHERE THE SHEET GOES. Wide: under the row it belongs to, left-aligned with
 // it, flipped above when the row sits low, and never taller than the daylight
@@ -534,7 +755,8 @@ function openPop(sec, layer) {
   popFor = sec;
   sec.focus = layer || 0;
   showTab("sound");                        // a row opens on the sound question
-  rpMount.append(paletteEl);               // moved, not copied — one palette
+  popSurf = "sound";
+  mountSurf();                             // moved, not copied — one of each
   commit("selection");                     // palette + ctx strip repaint
   rpScrim.hidden = false; rowpop.hidden = false;
   popAt = -1e9; placePop();
@@ -549,7 +771,7 @@ function closePop() {
   if (!popFor) return;
   popFor = null;
   rowpop.hidden = true; rpScrim.hidden = true;
-  paletteHome.append(paletteEl);           // home, so the rail pages find it
+  homeSurfaces();                          // home, so the desk's pages find them
   patchAll();
 }
 function patchPop() {
@@ -561,6 +783,13 @@ function patchPop() {
     (li ? " (layer)" : "");
   rpLen.lcd.textContent = String(popFor.len);
   rpNudge.lcd.textContent = String(popFor.nudge);
+  // a move key with nowhere to go GHOSTS rather than vanishing (the old row
+  // cluster's rule, kept where the keys went): the head must not reshuffle
+  // between the first row and the middle of the song
+  rpUp.classList.toggle("ghost", i === 0);
+  rpDn.classList.toggle("ghost", i === SONG.length - 1);
+  rpUp.setAttribute("aria-label", "move box " + (i + 1) + " earlier");
+  rpDn.setAttribute("aria-label", "move box " + (i + 1) + " later");
 }
 rpScrim.addEventListener("click", () => closePop());
 addEventListener("keydown", ev => {
@@ -579,6 +808,132 @@ on("page", () => closePop());              // the rail moved: the row is gone
 on("song", () => closePop());              // a whole new song
 on("box", patchPop);                       // bars/nudge LCDs follow the edits
 on("selection", patchPop);
+
+/* ---------- the sub-genre picker ---------- */
+// THE + KEY'S OWN LITTLE PANEL, anchored to the key that opened it. Adding a
+// rider to the stack was already one of the machine's best moves and one of
+// its least reachable: open the row sheet, find the SOUND tab, scroll the
+// genre bank, click. This offers the choice AT the row, immediately, and the
+// answer lands as an indented sub-row a few pixels below the key.
+//
+// It calls palette.js toggle("genre", …) rather than splicing sec.stack
+// itself. That is the ONE genre dispatcher and it carries three rules this
+// panel must not re-implement: a rider inherits the authority's phrases (so it
+// sounds the moment it is added), a blank Simple box is REPLACED rather than
+// stacked on, and a whole-form box re-takes the new authority's bar count.
+// toggle() commits, so there is no commit here.
+//
+// BUILT ONCE and re-filled per open: the list is short (nine families, 45
+// genres) but what is IN it changes per box — a genre already in the stack is
+// not on offer, because tapping it in a chip bank would REMOVE it, and a key
+// captioned + must never remove anything.
+let pickFor = null;
+const gpScrim = Object.assign(document.createElement("div"),
+  { className: "gpscrim", hidden: true });
+const gpick = Object.assign(document.createElement("div"),
+  { className: "gpick", id: "gpick", hidden: true });
+gpick.setAttribute("role", "dialog");
+gpick.setAttribute("aria-label", "add a sub-genre");
+const gpHead = Object.assign(document.createElement("div"), { className: "gphead" });
+const gpTitle = Object.assign(document.createElement("span"),
+  { className: "gptitle", textContent: "add a sub-genre" });
+gpHead.append(gpTitle, btn("rpk rpx", "✕", "close the sub-genre picker", () => closePicker()));
+const gpBody = Object.assign(document.createElement("div"), { className: "gpbody" });
+gpick.append(gpHead, gpBody);
+document.body.append(gpScrim, gpick);
+
+// A BLANK BOX HAS NO SUB-GENRE TO ADD TO — toggle()'s own rule is that the
+// first real genre REPLACES the Simple kernel rather than stacking on it, so
+// the key means "choose the genre" there and the panel says so. Naming it
+// "add a sub-genre" on a blank box and then swapping the box's genre would be
+// the panel lying about which of two different edits it just made.
+const blankSimple = sec => {
+  const st = stackOf(sec);
+  return st.length === 1 && st[0].g === "simple";
+};
+function fillPicker(sec) {
+  const have = new Set(stackOf(sec).map(e => e.g));
+  const first = blankSimple(sec);
+  gpBody.textContent = "";
+  for (const [fam, keys] of FAMILIES) {
+    const offer = keys.filter(k => !have.has(k) && GENRES[k]);
+    if (!offer.length) continue;
+    const g = Object.assign(document.createElement("div"), { className: "gpfam" });
+    g.append(Object.assign(document.createElement("span"),
+      { className: "gplab thd", textContent: fam }));
+    const wrap = Object.assign(document.createElement("div"), { className: "gpkeys" });
+    for (const k of offer) {
+      const b2 = btn("gpk", GENRES[k].label,
+        (first ? "make box this genre: " : "add as a sub-genre: ") + GENRES[k].label,
+        () => {
+        const at = idx(sec);
+        if (at < 0) { closePicker(); return; }
+        setViewSec(at);
+        const was = blankSimple(sec);
+        toggle("genre", k);                // the ONE dispatcher; it commits
+        closePicker();
+        buzz(4);
+        emit("status", { text: was
+          ? "box " + (at + 1) + " is " + GENRES[k].label + " now — tap + again to stack another genre on it"
+          : GENRES[k].label + " rides on box " + (at + 1) +
+            " — tap its ↳ line to give it its own phrases" });
+      });
+      wrap.append(b2);
+    }
+    g.append(wrap);
+    gpBody.append(g);
+  }
+  if (!gpBody.children.length)
+    gpBody.append(Object.assign(document.createElement("p"),
+      { className: "gpnone", textContent: "every genre is already in this box" }));
+}
+// placed like the row sheet: beside/under the key on a desk, a bottom sheet on
+// a phone. Same 900px boundary, same clamp-into-the-viewport arithmetic — one
+// definition of "there is room beside this" on this machine.
+function placePicker(anchor) {
+  const r = anchor.getBoundingClientRect();
+  if (innerWidth >= WIDE) {
+    gpick.classList.add("beside");
+    gpick.style.maxHeight = "";
+    const w = gpick.offsetWidth;
+    const below = innerHeight - r.bottom - 12, above = r.top - 12;
+    const under = below >= 260 || below >= above;
+    const room = Math.max(180, under ? below : above);
+    const h = Math.min(gpick.offsetHeight, room);
+    gpick.style.left = Math.min(Math.max(8, r.right - w), innerWidth - w - 8) + "px";
+    gpick.style.top = (under ? r.bottom + 6 : Math.max(8, r.top - h - 6)) + "px";
+    gpick.style.maxHeight = room + "px";
+    return;
+  }
+  gpick.classList.remove("beside");
+  gpick.style.left = ""; gpick.style.maxHeight = "";
+  gpick.style.top = Math.max(8, Math.min(r.bottom + 6, innerHeight - 320)) + "px";
+}
+function openPicker(sec, anchor) {
+  pickFor = sec;
+  const i = idx(sec);
+  setViewSec(i < 0 ? viewSec : i);
+  gpTitle.textContent = "box " + (i + 1) +
+    (blankSimple(sec) ? " · choose the genre" : " · add a sub-genre");
+  fillPicker(sec);
+  gpScrim.hidden = false; gpick.hidden = false;
+  placePicker(anchor);
+  const first = gpBody.querySelector(".gpk");
+  if (first) first.focus({ preventScroll: true });
+  commit("selection");
+  buzz(4);
+}
+function closePicker() {
+  if (!pickFor) return;
+  pickFor = null;
+  gpick.hidden = true; gpScrim.hidden = true;
+}
+gpScrim.addEventListener("click", () => closePicker());
+addEventListener("keydown", ev => {
+  if (pickFor && ev.key === "Escape") { closePicker(); ev.preventDefault(); }
+});
+on("page", closePicker);
+on("song", closePicker);
 
 /* ---------- structural sync ---------- */
 // create elements for new boxes, drop the ones whose box is gone, put the rest
@@ -608,6 +963,25 @@ export function paintProgress(si, frac) {
     if (el) el.fill.style.width = i === si ? (frac * 100).toFixed(2) + "%" : "0%";
   });
 }
+
+/* ---------- the one thing a phrase edit may touch ---------- */
+// THE SCRUB CONTRACT, KEPT. This module still does not patch on "phrase" — a
+// pointermove in the tracker commits per value and patchAll() would recompute
+// eight LED families and a stack label for every section in the song. But the
+// row now DRAWS the phrases, so a contour that never followed its edits would
+// be a picture of the phrase as it was when the box was built. The middle
+// ground is exact: one contourPath for the phrase that actually changed, then
+// one <path d> write per chip that shows it — nothing else on the row is read
+// or written.
+function patchChipPaths() {
+  const p = SLOTS[slot];
+  if (!p) return;
+  const d = contourPath(p);
+  for (const el of els.values())
+    for (const c of el.chips)
+      if (c.si === slot && c.line.getAttribute("d") !== d) c.line.setAttribute("d", d);
+}
+on("phrase", patchChipPaths);
 
 on("song", () => { els.clear(); songEl.textContent = ""; render(); });
 on("box", render);

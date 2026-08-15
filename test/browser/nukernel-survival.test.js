@@ -45,6 +45,21 @@
 //       switch out of the browser". ?bgtest=ios|android forces the predicate;
 //       ?nobounce holds the no-carrier state so the branches can't be raced
 //       past by a short render landing in seconds.
+//   (G) CARRIER-FIRST ON MOBILE — the element is the audible path from the
+//       FIRST PLAY, not from the hide. A page whose foreground output is a
+//       WebAudio graph is not media, so the OS gives it no session and no
+//       audio focus; that is the phone report of 2026-08-15 and it is what
+//       docs/WAV-FIRST.md says to do ("THROUGHOUT"). Both predicates: the
+//       element is unmuted, playing and advancing with the graph silent under
+//       it BEFORE any hide; hide changes nothing; show does not flap the path
+//       back; and the lock-screen controls are pressed for real through
+//       window.__nuMedia().fire(). This REPLACES the old (E3), which asserted
+//       the opposite law (carry on hide, hand back on show) — that law was the
+//       bug, and a gate that still held it would forbid the fix.
+//   (G2) THE LESS-DYNAMIC TRADEOFF, HONEST. A phone edit is heard when its
+//       re-render lands and swaps at the loop wrap: the readout must SAY so
+//       while it is pending, the new generation must actually land, and the
+//       live graph must never come back up to cover the wait.
 "use strict";
 const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
 const path = require("path");
@@ -465,8 +480,15 @@ function taps() {
     if ((await slot0.getAttribute("aria-pressed")) !== "true") await slot0.click();
     await page.click("#seed");
     await page.click("#play");
-    await page.waitForFunction(() => window.__rms && window.__rms() > 0.01,
-      null, { timeout: 30000 });
+    // SOUNDING BY EITHER PATH. On a mobile predicate the graph is audible only
+    // until the first render lands (carrier-first, (G) below) and then goes
+    // deliberately silent — so waiting on graph RMS alone would time out on
+    // exactly the pages this file cares most about.
+    await page.waitForFunction(() =>
+      (window.__rms && window.__rms() > 0.01) ||
+      (window.__nuBounce && window.__nuBounce().carrying &&
+       window.__nuBounce().elPaused === false),
+      null, { timeout: 40000 });
   };
 
   // (E1) Android, no carrier: the ctx does NOT freeze on hide there — hiding
@@ -510,27 +532,207 @@ function taps() {
     await page.click("#play");
   }
 
-  // (E3) iOS with the bounce: after 'ready', a hide/show cycle carries
+  // ── (G) CARRIER-FIRST: ON MOBILE THE ELEMENT IS THE PATH FROM THE FIRST
+  // PLAY, and hiding changes nothing. This section replaces the old (E3),
+  // which asserted the OPPOSITE law on ios — carry on hide, hand back on show
+  // — because that law is the bug. A page whose foreground output is a
+  // WebAudio graph is not media: the OS attaches no session to it, grants it
+  // no audio focus, and backgrounds it as a page ("focus is not being applied
+  // to this app", a real phone, 2026-08-15). docs/WAV-FIRST.md reads
+  // "THROUGHOUT"; nukernel had implemented "on hide".
+  //
+  // So for each mobile predicate: the element must be genuinely audible media
+  // BEFORE any hide (unmuted, playing, volume up, currentTime advancing) with
+  // the graph silent under it; a hide must change NOTHING; a show must not
+  // flap the path back to the graph; and the lock-screen controls must exist
+  // and WORK, pressed through window.__nuMedia().fire() the way the OS would
+  // press them.
+  const carrierFirstPass = async (plat) => {
+    await boot(`?bgtest=${plat}`);
+    const took = await page.waitForFunction(() => {
+      const b = window.__nuBounce();
+      return b.carrying && b.elPaused === false;
+    }, null, { timeout: 40000 }).then(() => true).catch(() => false);
+    const b0 = await page.evaluate(() => window.__nuBounce());
+    if (!took) {
+      fail(`${plat}: the element never became the audible path in the foreground ` +
+           `(state '${b0.state}', carrying ${b0.carrying}, paused ${b0.elPaused}, ` +
+           `demoted ${b0.demoted}) — the page is still a WebAudio graph, which is ` +
+           `what the OS refuses to give a media session`);
+      await page.click("#play");
+      return;
+    }
+    if (!b0.carrierFirst) fail(`${plat}: carrierFirst is false on a mobile predicate`);
+    else ok(`${plat}: carrier-first mode is on (mode '${b0.mode}', stage '${b0.stage}')`);
+    // GENUINELY AUDIBLE MEDIA: muted media is not media, and a volume-0
+    // element is not audible. Both are how you get a session the OS drops.
+    if (b0.elMuted !== false || !(b0.elVolume > 0))
+      fail(`${plat}: the element is not audible media before any hide ` +
+           `(muted ${b0.elMuted}, volume ${b0.elVolume})`);
+    else ok(`${plat}: before any hide the element is unmuted at volume ${b0.elVolume}`);
+    // LET THE ANALYSER CATCH UP FIRST. window.__rms reads a 2048-sample window
+    // — 46 ms of HISTORY — and the handoff is detected within milliseconds of
+    // it, so the first read is still full of the graph's last quantum before
+    // the mute. That is the tap's latency, not two sources: goCarrier() mutes
+    // BEFORE it raises the element, and only then sets the flag this waited
+    // on. Settle, then require silence in every sample.
+    await page.waitForTimeout(300);
+    const g0 = await rmsN(4, 250);
+    const loud = g0.filter(v => v > RMS_FLOOR).length;
+    if (loud) fail(`${plat}: the live graph still sounds under the element ` +
+                   `(${loud}/4 samples, ${g0.map(v => v.toFixed(3)).join(" ")}) — two sources`);
+    else ok(`${plat}: the graph is muted while the element carries — one source`);
+    const t0 = await page.evaluate(() => window.__nuBounce().elTime);
+    await page.waitForTimeout(700);
+    const t1 = await page.evaluate(() => window.__nuBounce().elTime);
+    if (!(t1 > t0 || t1 < t0))   // advancing, or wrapped past the loop end
+      fail(`${plat}: el.currentTime is frozen at ${t0} — the element is not playing`);
+    else ok(`${plat}: el.currentTime advances in the foreground (${t0.toFixed(2)} -> ${t1.toFixed(2)})`);
+
+    // THE HIDE IS A NON-EVENT. That is the whole design: nothing to hand off
+    // means nothing to race, and nothing for iOS to refuse.
+    await hide();
+    await page.waitForTimeout(900);
+    const h = await page.evaluate(() => ({ b: window.__nuBounce(), rms: window.__rms() }));
+    if (!h.b.carrying || h.b.elPaused !== false || !(h.b.elVolume > 0))
+      fail(`${plat}: hiding changed the audible source ` +
+           `(carrying ${h.b.carrying}, paused ${h.b.elPaused}, volume ${h.b.elVolume})`);
+    else ok(`${plat}: hidden — the element is still the source, unchanged`);
+    if (Math.abs(h.b.elVolume - b0.elVolume) > 1e-6)
+      fail(`${plat}: the element's volume moved on hide ` +
+           `(${b0.elVolume} -> ${h.b.elVolume}) — there is still a handoff here`);
+    else ok(`${plat}: no volume handoff on hide (${h.b.elVolume} throughout)`);
+    if (h.rms > RMS_FLOOR) fail(`${plat}: the graph woke up while hidden (RMS ${h.rms.toFixed(4)})`);
+    const th0 = h.b.elTime;
+    await page.waitForTimeout(700);
+    const th1 = await page.evaluate(() => window.__nuBounce().elTime);
+    if (th1 === th0) fail(`${plat}: the element stopped while hidden (${th0})`);
+    else ok(`${plat}: the element keeps playing while hidden (${th0.toFixed(2)} -> ${th1.toFixed(2)})`);
+
+    // …AND THE SHOW IS A NON-EVENT TOO. Handing back on return would drop the
+    // media session every time the user looked at the page.
+    await show();
+    await page.waitForTimeout(1200);
+    const v = await page.evaluate(() => ({ b: window.__nuBounce(), rms: window.__rms() }));
+    if (!v.b.carrying || v.b.elPaused !== false)
+      fail(`${plat}: the path flapped back to the graph on return ` +
+           `(carrying ${v.b.carrying}, paused ${v.b.elPaused})`);
+    else ok(`${plat}: return from hidden — the element is still the path`);
+    if (v.rms > RMS_FLOOR)
+      fail(`${plat}: the graph came back up under the carrier (RMS ${v.rms.toFixed(4)}) — ` +
+           `double playback on return`);
+    else ok(`${plat}: the graph stays muted on return — still one source`);
+
+    // ── the lock screen: metadata, position, and handlers that WORK ──
+    const m = await page.evaluate(() => {
+      const x = window.__nuMedia();
+      return { actions: x.actions, state: x.state, title: x.title, artist: x.artist,
+               position: x.position, duration: x.duration };
+    });
+    for (const a of ["play", "pause", "stop", "seekto"])
+      if (!m.actions.includes(a))
+        fail(`${plat}: MediaSession has no '${a}' handler — the lock screen ` +
+             `draws a control that does nothing`);
+    ok(`${plat}: MediaSession actions [${m.actions.join(", ")}]`);
+    if (!m.title || m.artist !== "stellate nukernel")
+      fail(`${plat}: MediaSession metadata is wrong (title "${m.title}", artist "${m.artist}")`);
+    else ok(`${plat}: MediaSession metadata "${m.title}" — ${m.artist}`);
+    if (m.state !== "playing") fail(`${plat}: playbackState '${m.state}' while the tape plays`);
+    else ok(`${plat}: playbackState 'playing'`);
+    if (!(m.duration > 0)) fail(`${plat}: MediaSession duration ${m.duration} — no position slider`);
+    else ok(`${plat}: position ${m.position.toFixed(2)}s of an honest ${m.duration.toFixed(2)}s`);
+    // seekto must move THE TAPE — the audible thing — not just the transport
+    const sk = await page.evaluate(async () => {
+      const before = window.__nuBounce().elTime, dur = window.__nuMedia().duration;
+      const target = (before + dur / 2) % dur;
+      window.__nuMedia().fire("seekto", { action: "seekto", seekTime: target });
+      await new Promise(r => setTimeout(r, 300));
+      return { before, target, after: window.__nuBounce().elTime };
+    });
+    if (Math.abs(sk.after - sk.target) > 0.6)
+      fail(`${plat}: seekto asked for ${sk.target.toFixed(2)}s and the tape sits at ` +
+           `${sk.after.toFixed(2)}s — the lock-screen scrubber is decorative`);
+    else ok(`${plat}: seekto moves the tape (${sk.before.toFixed(2)} -> ${sk.after.toFixed(2)}s)`);
+    // pause/play, the two buttons a locked phone actually shows
+    await page.evaluate(() => window.__nuMedia().fire("pause"));
+    await page.waitForTimeout(600);
+    const pz = await page.evaluate(() => ({ b: window.__nuBounce(),
+      state: window.__nuMedia().state, rms: window.__rms() }));
+    if (pz.b.elPaused !== true || pz.state !== "paused" || pz.rms > RMS_FLOOR)
+      fail(`${plat}: the lock-screen pause left something running ` +
+           `(elPaused ${pz.b.elPaused}, state '${pz.state}', graph RMS ${pz.rms.toFixed(4)})`);
+    else ok(`${plat}: lock-screen pause stops the tape and the graph both`);
+    await page.evaluate(() => window.__nuMedia().fire("play"));
+    await page.waitForFunction(() => {
+      const b = window.__nuBounce(); return b.carrying && b.elPaused === false;
+    }, null, { timeout: 20000 }).catch(() => {});
+    const rp = await page.evaluate(() => ({ b: window.__nuBounce(),
+      state: window.__nuMedia().state, rms: window.__rms() }));
+    if (!rp.b.carrying || rp.b.elPaused !== false || !(rp.b.elVolume > 0))
+      fail(`${plat}: lock-screen play did not put the tape back ` +
+           `(carrying ${rp.b.carrying}, paused ${rp.b.elPaused}, volume ${rp.b.elVolume})`);
+    else ok(`${plat}: lock-screen play resumes the tape at volume ${rp.b.elVolume}`);
+    if (rp.rms > RMS_FLOOR)
+      fail(`${plat}: lock-screen play brought the graph up too (RMS ${rp.rms.toFixed(4)})`);
+    await page.click("#play");                     // park the transport for the next boot
+  };
+  await carrierFirstPass("android");
+  await carrierFirstPass("ios");
+
+  // ── (G2) A PHONE EDIT IS HEARD WHEN ITS RE-RENDER LANDS, and the page says
+  // so while it is on its way. The tradeoff is settled (Paul: "Less dynamic is
+  // fine") — what is not permitted is a silent one, an edit that never lands,
+  // or a swap that yanks the source mid-bar instead of at the loop wrap.
   {
     await boot("?bgtest=ios");
-    await page.waitForFunction(() =>
-      window.__nuBounce && window.__nuBounce().state === "ready",
-      null, { timeout: 30000 });
-    await hide();
-    await page.waitForTimeout(800);
-    const c = await page.evaluate(() => ({ b: window.__nuBounce(), rms: window.__rms() }));
-    if (!c.b.carrying || !(c.b.elVolume > 0) || c.b.elPaused !== false)
-      fail(`ios hidden with a ready bounce did not carry ` +
-           `(carrying ${c.b.carrying}, volume ${c.b.elVolume}, paused ${c.b.elPaused})`);
-    else ok(`ios hidden after ready: the carrier element plays (stage '${c.b.stage}')`);
-    if (c.rms > RMS_FLOOR) fail(`the graph sounds under the ios carrier (RMS ${c.rms.toFixed(4)})`);
-    else ok("the graph is muted under the ios carrier");
-    await show();
-    await page.waitForTimeout(1500);
-    const back = await page.evaluate(() => ({ b: window.__nuBounce(), rms: window.__rms() }));
-    if (back.b.carrying || back.rms < RMS_FLOOR)
-      fail(`ios reverse handoff failed (carrying ${back.b.carrying}, RMS ${back.rms.toFixed(4)})`);
-    else ok("ios return from the carried hide: the graph is audible again");
+    await page.waitForFunction(() => {
+      const b = window.__nuBounce(); return b.carrying && b.elPaused === false;
+    }, null, { timeout: 40000 }).catch(() => {});
+    const before = await page.evaluate(() => window.__nuBounce());
+    if (!before.carrying) ok("carrier never took over — (G) already failed this; edit pass skipped");
+    else {
+      // a real musical edit through a real control: the tempo fader. Driven
+      // as the finger drives it (value + 'input'), because .fill() on a range
+      // is a Playwright convenience and this gate is about the real path.
+      await page.evaluate(() => {
+        const el = document.getElementById("bpm");
+        el.value = "138";
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      // PENDING, VISIBLY: the readout has to carry the news, because the sound
+      // is deliberately behind the edit now
+      const said = await page.waitForFunction(() =>
+        /carrier: (re-)?rendering|swaps at the loop|new take/.test(
+          document.getElementById("readout").textContent),
+        null, { timeout: 8000 }).then(() => true).catch(() => false);
+      if (!said) fail(`the readout never mentioned the pending re-render — the phone ` +
+                      `goes quiet-ish for seconds with no explanation ` +
+                      `("${(await page.textContent("#readout")).slice(0, 90)}")`);
+      else ok("the readout announces the pending re-render");
+      // and it must actually land and swap, ON A NEW GENERATION, without the
+      // element ever stopping
+      const landed = await page.waitForFunction((g) => {
+        const b = window.__nuBounce();
+        return b.gen > g && b.state === "ready" && !b.pending && b.carrying &&
+               b.elPaused === false;
+      }, before.gen, { timeout: 90000 }).then(() => true).catch(() => false);
+      const after = await page.evaluate(() => ({ b: window.__nuBounce(), rms: window.__rms() }));
+      if (!landed)
+        fail(`the edit never reached the tape (gen ${before.gen} -> ${after.b.gen}, ` +
+             `pending ${after.b.pending}, state '${after.b.state}') — on this path that ` +
+             `is an instrument that ignores you`);
+      else ok(`the edit reached the tape and swapped at the loop (gen ${before.gen} -> ${after.b.gen})`);
+      if (after.rms > RMS_FLOOR)
+        fail(`the graph came up during the swap (RMS ${after.rms.toFixed(4)}) — two sources`);
+      else ok("the swap never brought the graph back up");
+    }
+    // leave the tempo as it was found: the store is flushed on pagehide and
+    // the sections below re-load this song
+    await page.evaluate(() => {
+      const el = document.getElementById("bpm");
+      el.value = "126";
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
     await page.click("#play");
   }
 

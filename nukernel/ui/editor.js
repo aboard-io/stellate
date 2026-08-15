@@ -19,7 +19,7 @@
 import { GENRES, DEFAULT, blank, NSLOTS } from "./deps.js";
 import { SLOTS, SONG, SUBJ, slot, setSlot, putPhrase, curSection, commit, on,
          emit } from "./state.js";
-import { isBlank, focused } from "./derive.js";
+import { isBlank, focused, contourPath } from "./derive.js";
 import { toggle } from "./palette.js";
 import { buzz, pointers } from "./touch.js";
 import { openFader, refresh as refreshFader } from "./popfader.js";
@@ -273,21 +273,9 @@ function buildSlots() {
   });
   slotsEl.append(addKey, dropKey);
 }
-// gated steps become line segments, rests become gaps: M starts a run, L
-// continues it. deg −7..+7 maps top-to-bottom into the 26-unit viewBox.
-function contourPath(p) {
-  const runs = [];
-  let run = null;
-  for (let k = 0; k < 16; k++) {
-    if (!p.gate[k]) { run = null; continue; }
-    const x = k * 4 + 2, y = (23 - ((p.deg[k] + 7) / 14) * 20).toFixed(1);
-    if (!run) runs.push(run = []);
-    run.push(x + " " + y);
-  }
-  // a lone gate still needs ink: a zero-length segment renders as a dot
-  // under the round linecap, but only if there IS a segment
-  return runs.map(r => "M" + r.join(" L") + (r.length === 1 ? " L" + r[0] : "")).join(" ");
-}
+// the contour itself is ui/derive.js's contourPath — the song row's phrase
+// chips draw the same picture, and one drawing routine is the only way the
+// pad and the chip can agree about what a phrase looks like
 function patchSlots() {
   const sec = curSection(), ent = focused(sec);
   addKey.hidden = SLOTS.length >= NSLOTS;  // full bank: the key goes, not grey

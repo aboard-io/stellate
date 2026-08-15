@@ -153,6 +153,17 @@ function taps() {
   await page.goto(`http://localhost:${PORT}/nukernel/kernel-daw.html`,
     { waitUntil: "networkidle" });
 
+  // PRESS A ROW WHERE THE ROW IS, not wherever its centre happens to be.
+  // A song section is one compact line of cells now (2026-08-15), and some of
+  // those cells are controls that stop the click: the phrase chips, and the
+  // + / pin / ✕ keys. Playwright presses an element's geometric CENTRE, so
+  // `.box` on its own can land on a chip — which selects that phrase and goes
+  // to the step page, a real feature doing exactly what it should, and not
+  // what this gate is asking for. The GENRE cell is the row's name, is never a
+  // control at any width, and the click bubbles to the row from there. Same
+  // gesture, same handler, a spot that cannot become a button.
+  const row = (n) => page.locator(".box").nth(n).locator(".bgenre");
+
   // one phrase, in the one box, for every genre in turn. The default song
   // ships phrase 1 already switched ON in box 1 now (the fresh page must
   // sound), and a .slot click TOGGLES — so only click it in if it is out,
@@ -241,7 +252,7 @@ function taps() {
     // read the ARIA LABEL, not a cell: "box 1, Simple, 4 bars" is the
     // machine-readable truth about length and already load-bearing API
     const before = await box.getAttribute("aria-label");
-    await box.click();                                   // the row's option sheet
+    await row(0).click();                                // the row's option sheet
     const pop = page.locator("#rowpop");
     if (!(await pop.isVisible())) fail("clicking a song row did not open its option sheet");
     else ok("a row click opens the row's option sheet");
@@ -292,7 +303,7 @@ function taps() {
     await tab("sound");
     await chip("Acid house").click();
     await chip("Sludge").click();                        // take the previous one off
-    await page.locator(".box").first().dblclick();       // loops it AND starts it
+    await row(0).dblclick();                             // loops it AND starts it
     await tab("effects");
     for (const f of ["chorus", "tape echo"]) await chip(f).click();
     await chip("drown").click();                         // the reverb send
@@ -534,21 +545,27 @@ function taps() {
   {
     const roleAt = () => page.locator(".box .role").allTextContents();
     const before = await roleAt();
-    // the tools are built once per row now (all four keys exist; patchBox
-    // GHOSTS the move key with nowhere to go), so take the first VISIBLE one —
-    // on row 1 that is ↓ "move box 1 later". The glyph changed with the table
-    // (the axis is top-to-bottom at every width now, so the keys are ↑ ↓ and no
-    // longer swap to ◀ ▶ on a wide screen); the claim does not — one plain
-    // click on a key in the tools column reorders the song, no drag involved.
-    const later = page.locator(".box").first().locator(".btools .t:visible").first();
-    if (!(await later.count())) fail("a box has no move buttons — touch cannot reorder a song");
+    // THE MOVE KEYS MOVED (2026-08-15, the short-row pass). They used to sit on
+    // every row for ever, two of the four keys in the tools column, which is
+    // most of what made a section 109px tall. They are in the ROW'S OWN SHEET
+    // now — open the row, press ↓ — and the same reorder is also on ALT+ARROW
+    // over a focused row. The CLAIM here is unchanged and is the one that
+    // matters: a finger with no drag and no modifier can reorder a song in two
+    // plain clicks, because HTML5 dragstart does not fire on touch at all.
+    await row(0).click();                                     // its option sheet
+    const sheet = page.locator("#rowpop");
+    const later = sheet.locator('.rpk[aria-label="move box 1 later"]');
+    if (!(await sheet.isVisible()) || !(await later.count()))
+      fail("the row sheet has no move keys — touch cannot reorder a song");
     else {
       await later.click();
       const after = await roleAt();
       if (after[0] === before[0] && after[1] === before[1])
-        fail(`the move button did not reorder the song (${before.join(",")})`);
-      else ok(`move button reorders without dragging: ${before[0]},${before[1]} -> ${after[0]},${after[1]}`);
+        fail(`the sheet's move key did not reorder the song (${before.join(",")})`);
+      else ok(`sheet move key reorders without dragging: ${before[0]},${before[1]} -> ${after[0]},${after[1]}`);
     }
+    await sheet.locator(".rpx").click();          // the palette goes home again
+    await page.waitForTimeout(150);
     // and a value can go DOWN with an ordinary tap: tapping a value cell opens
     // the pop-up fader (ui/popfader.js) — which replaced the ± "Tap raises"
     // mode toggle — and the fader's ▼ key steps the SAME phrase vector down
@@ -655,7 +672,7 @@ function taps() {
   // box, because a lamp that lights once and stops is the failure that a
   // static read cannot tell from a working one.
   {
-    await page.locator(".box").first().dblclick();        // loop it AND start it
+    await row(0).dblclick();                              // loop it AND start it
     // WAIT FOR SOUND, don't sleep at it: the first play loads a soundfont, and
     // a fixed 1.2s here reads the loading screen on a busy machine and calls a
     // working playhead broken
@@ -769,8 +786,12 @@ function taps() {
   // sideways at all (#song scrollWidth <= clientWidth, the strongest form of
   // the old spill check rather than a weaker one).
   {
-    const row = page.locator("#song");
-    const sideways = () => row.evaluate(el =>
+    // NOT `row` — that is the file-wide helper that opens section N's sheet
+    // (`row(0).click()` below depends on it). Shadowing it with the table
+    // element made every later call a TypeError, which is how this check
+    // reported "row is not a function" instead of anything about the song.
+    const tableEl = page.locator("#song");
+    const sideways = () => tableEl.evaluate(el =>
       ({ scroll: el.scrollWidth, client: el.clientWidth }));
     const s0 = await sideways();
     if (s0.scroll > s0.client)
@@ -778,7 +799,7 @@ function taps() {
            `sections are hidden off the right edge`);
     else ok(`the song table does not scroll sideways (${s0.scroll} <= ${s0.client})`);
     // make one section long, and check the row SAYS so instead of growing
-    await page.locator(".box").first().click();
+    await row(0).click();
     const pop = page.locator("#rowpop");
     const plus = pop.locator('button[aria-label="one bar more"]');
     const before = await page.locator(".box").first().getAttribute("aria-label");
@@ -847,7 +868,7 @@ function taps() {
     const roles2 = await page.locator(".box .role").allTextContents();
     const vi = roles2.findIndex(r => /verse/.test(r));
     if (vi < 0) fail("the composed rock song has no verse to loop");
-    await page.locator(".box").nth(vi < 0 ? 0 : vi).dblclick();   // loops AND starts it
+    await row(vi < 0 ? 0 : vi).dblclick();                        // loops AND starts it
     await page.waitForTimeout(2500);
     const m0 = await waitMix(m => m.channels.length > 0, 20000);
     if (!m0 || m0.automation == null)

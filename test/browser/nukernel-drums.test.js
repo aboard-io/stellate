@@ -302,6 +302,15 @@ async function partProbe(page) {
 // treatment; this proves the graph the ear is actually on carries it, because
 // the two are the same builder only as long as nothing between the box and
 // buildChannel drops the map on the floor. __nuMix reports the built nodes.
+// PRESS A ROW WHERE THE ROW IS, not wherever its centre happens to be.
+// A song section is one compact line of cells now (2026-08-15) and some of
+// them are controls that stop the click — the phrase chips, and the + / pin /
+// ✕ keys. Playwright presses an element's geometric CENTRE, so `.box` alone
+// can land on a chip and select a phrase instead of looping the section. The
+// GENRE cell is the row's name, is never a control at any width, and the
+// dblclick bubbles to the row from there.
+const rowOf = (page, n) => page.locator(".box").nth(n).locator(".bgenre");
+
 async function partsLive(page, keys) {
   await page.evaluate((ks) => {
     return import("/nukernel/ui/state.js").then((stm) => {
@@ -312,7 +321,7 @@ async function partsLive(page, keys) {
       stm.emit("box", {});
     });
   }, keys);
-  await page.locator(".box").first().dblclick();               // loops it AND starts it
+  await rowOf(page, 0).dblclick();                             // loops it AND starts it
   const t0 = Date.now();
   let m = null, peak = 0;
   while (Date.now() - t0 < 25000) {
@@ -403,7 +412,7 @@ async function homePass(page, url, genre) {
   await page.selectOption("#composeg", genre);
   await page.click("#compose");
   await page.waitForTimeout(400);
-  await page.locator(".box").first().dblclick();
+  await rowOf(page, 0).dblclick();
   await page.waitForTimeout(9000);
   const home = await page.evaluate(() => (window.__nuHome ? window.__nuHome() : null));
   const rates = await page.evaluate(() => window.__rates.slice());
@@ -426,7 +435,7 @@ async function pass(page, url) {
   // calls it the room. A verse is the plain case — full kit, no motion chip.
   const roles = await page.locator(".box .role").allTextContents();
   const vi = Math.max(0, roles.findIndex(r => /verse/.test(r)));
-  await page.locator(".box").nth(vi).dblclick();               // loops it AND starts it
+  await rowOf(page, vi).dblclick();                            // loops it AND starts it
   await page.waitForTimeout(9000);                             // past the load + first bars
   let acc = null, n = 0, peak = 0;
   for (let i = 0; i < SPEC_SEC * 5; i++) {

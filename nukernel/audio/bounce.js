@@ -11,6 +11,28 @@
 // harmless because the carrier is already running. survival.js does the
 // swapping; this file owns the element, the offline render and the phase.
 //
+// ON MOBILE THERE IS NO SWAP AT ALL: THE CARRIER IS THE PATH (2026-08-15).
+// The page had implemented half of docs/WAV-FIRST.md — element on hide, live
+// graph in the foreground — and half is the same as none. A page whose audible
+// output is a WebAudio graph holds no MEDIA: the OS has no element to attach a
+// session to, so it grants no audio focus, shows no lock-screen transport, and
+// treats the backgrounded tab as a page rather than as something playing. The
+// user's report ("focus is not being applied to this app") is that fact. So on
+// the mobile predicate the element takes over as soon as the first render
+// lands and NEVER hands back: hiding the page then requires no handoff, which
+// is precisely why the OS keeps the session alive. WAV-FIRST's decision line,
+// read the way it is written: "on mobile, the audible path is a real <audio>
+// element playing real rendered media, THROUGHOUT".
+//
+// The cost is settled, not hidden (Paul, asked directly, twice: "Less dynamic
+// is fine"). A phone edit is heard when its re-render lands and swaps at the
+// loop wrap — so the debounce shrinks to a scrub-coalescing 500 ms, the swap
+// happens on the wrap where it cannot click, and every stage of that says so
+// in the readout. What is NOT permitted is two audible sources, or a mute with
+// no carrier behind it: goCarrier() proves the element is really playing
+// before the graph goes quiet, and demotes back to the graph (recorded in
+// st.demoted) if it is not.
+//
 // TWO-STAGE (WAV-FIRST's firstSegSec lesson, docs/WAV-FIRST.md): the render
 // that must exist FAST is a small one. At transport start a SHORT carrier —
 // the song's first bars, bar-aligned — renders immediately, so something loops
@@ -36,24 +58,44 @@ import { GENRES, BASSSYNTH, DTIMES } from "../ui/deps.js";
 import { SONG, SLOTS, loopOnly, bpm, MASTER, on, emit } from "../ui/state.js";
 import { stackOf, kitOf, boxBars } from "../ui/derive.js";
 import { buildMasterChain, buildEchoBus, buildRoomBus, makeVerb,
-         masterVol } from "./graph.js";
+         masterVol, muteNow, unmuteRamp } from "./graph.js";
 import { FONT, isSynthFont, fontDef } from "./assets.js";
 import { makeSynthNode, driveSynth, offFallback } from "./voices.js";
 import { chanSpec, buildChannel, armAutomation } from "./mixer.js";
 import { buildTimeline, scheduleBar, stepDur, playing, getPosition,
-         onGesture } from "./transport.js";
+         onGesture, seekPhase, setQuietWhen } from "./transport.js";
+
+/* ---------- the platform predicate ---------- */
+// IT LIVES HERE NOW, not in survival.js, because the thing it decides is the
+// CARRIER: whether this element is the audible path or the pocket insurance.
+// survival.js imports it back (it is above this file in the layer graph), so
+// there is exactly one answer to "is this a phone" on the page.
+// iPadOS 13+ masquerades as Mac in the UA; maxTouchPoints is the tell.
+// ?bgtest=ios|android forces the predicate so one desktop chromium can walk
+// both branches.
+const bgtest = /[?&]bgtest=(ios|android)\b/.exec(location.search);
+const UA = (typeof navigator !== "undefined" && navigator.userAgent) || "";
+export const isIOS = bgtest ? bgtest[1] === "ios" :
+  /iPhone|iPad|iPod/i.test(UA) ||
+  (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || ""));
+export const isMobile = bgtest ? true : (isIOS || /Android/i.test(UA));
 
 /* ---------- the carrier element ---------- */
 let el = null, armed = false, carrying = false;
 let gen = 0;                                       // bumped per render request; stale renders discard
 const urls = [];                                   // blob URLs, at most 2 kept alive
 const st = { state: "idle", stage: null, durSec: 0, gen: 0, sampledOnly: false,
-             lastRenderMs: 0, url: null, fallbacks: 0, lastError: null };
+             lastRenderMs: 0, url: null, fallbacks: 0, lastError: null,
+             // the carrier-first half: which source the ear is on, whether a
+             // re-render is on its way, and why we fell back if we did
+             mode: "graph", pending: false, demoted: null };
 // the machine-readable truth for test/browser/nukernel-survival.test.js — the
 // gate reads the RENDERED BLOB through st.url, because an analyser on the
 // live graph is structurally blind to an element playing bytes
 window.__nuBounce = () => ({ ...st, carrying, armed,
+  mobile: isMobile, ios: isIOS, carrierFirst: carrierFirst(),
   elVolume: el ? el.volume : null, elTime: el ? el.currentTime : null,
+  elMuted: el ? el.muted : null, elLoop: el ? el.loop : null,
   // el.paused is a RENDERED consequence (play() rejected, decode failed) —
   // carrying/elVolume are flags this module SET, and a gate that polls only
   // what the code assigned proves the assignment, not the playback
@@ -93,9 +135,21 @@ function armCarrier() {
   el.muted = true; el.volume = 0;
   el.src = silentWav(150);
   const p = el.play(); if (p && p.catch) p.catch(() => {});
+  // the boundary swap: loop=true means `ended` never fires, so a pending
+  // re-render turns the loop OFF for one pass and takes the wrap as its cue.
+  // A src swap at the downbeat is the one cut in this file that cannot click.
+  el.addEventListener("ended", () => { if (el.loop) return; swapNow(); });
   document.body.appendChild(el);
 }
 onGesture(armCarrier);                             // rides startAt's synchronous prefix
+// THE CARRIER IS THE PATH: mobile, an element that exists, and no demotion on
+// record. ?nobounce (below) disarms the element entirely, which is also the
+// honest answer here — a page with no carrier must never mute its graph.
+export const carrierFirst = () => isMobile && armed && !disarmed && !st.demoted;
+// the transport asks this every tick: while the element carries, the muted
+// graph's scheduling is work nobody can hear, on the one device where it
+// competes with the render that IS the sound
+setQuietWhen(() => carrying && carrierFirst());
 
 /* ---------- render scheduling ---------- */
 // the musical identity of what a render would capture: song + phrases + tempo
@@ -111,12 +165,32 @@ let adoptedSig = null, timer = null, rendering = false, dirty = false;
 // Two bars at the default tempo: big enough to loop as music, small enough
 // that a phone renders it before the user can reach the app switcher.
 const SHORT_SEC = 4;
+// WHEN THE CARRIER IS THE PATH, THE DEBOUNCE IS THE LATENCY OF THE INSTRUMENT.
+// 4 s of quiet is right for insurance nobody is listening to; it is absurd for
+// the thing making the sound. Long enough to coalesce a scrub (a fader drag
+// emits per pointer move), and not one beat longer.
+const DEBOUNCE = () => (carrierFirst() ? 500 : 4000);
+// the readout is where "your edit is on its way" belongs — the alternative is
+// a phone that ignores you for two seconds with no explanation. Carrier-first
+// only: on a desk the carrier is invisible insurance and should stay silent.
+const say = text => { if (carrierFirst()) emit("status", { text, sticky: true }); };
+// …and the same fact DURABLY, because a status line is wiped by the next
+// render and "is my edit coming?" outlives one frame. ui/readout.js appends
+// this to the box description; null means there is nothing to say (a desk).
+export function carrierNote() {
+  if (!carrierFirst()) return st.demoted ? "carrier off (" + st.demoted + ") — live graph" : null;
+  if (!carrying) return st.state === "rendering" ? "carrier: rendering the tape…" : null;
+  if (st.pending) return st.state === "rendering"
+    ? "carrier: re-rendering — your edit lands at the loop"
+    : "carrier: new take ready — swaps at the loop";
+  return "carrier: playing the rendered tape";
+}
 function schedule(delayMs) {
   clearTimeout(timer);
-  // debounced: edits wait 4 s of quiet so a scrub does not queue thirty
-  // renders. The timer path is always a FULL render — the short stage is
-  // kicked directly by transport:state, never queued behind a debounce.
-  timer = setTimeout(() => maybeRender("full"), delayMs == null ? 4000 : delayMs);
+  // debounced: edits wait for quiet so a scrub does not queue thirty renders.
+  // The timer path is always a FULL render — the short stage is kicked
+  // directly by transport:state, never queued behind a debounce.
+  timer = setTimeout(() => maybeRender("full"), delayMs == null ? DEBOUNCE() : delayMs);
 }
 async function maybeRender(stage) {
   stage = stage || "full";
@@ -133,6 +207,10 @@ async function maybeRender(stage) {
   }
   rendering = true;
   st.state = "rendering";
+  if (carrying && carrierFirst()) {
+    st.pending = true;
+    say("carrier: re-rendering the tape — the edit lands at the loop");
+  }
   const myGen = ++gen;
   const t0 = performance.now();
   try {
@@ -339,16 +417,19 @@ function adopt(res, want, myGen, stage) {
   st.stage = stage;
   adoptedSig = want;
   // the no-stall cutover: never yank the source out from under a carrying
-  // element — uncarry() swaps to the newest blob when the graph takes back
-  // over. (That rule is also why a full render landing while the SHORT
-  // carrier is audibly carrying does not swap mid-listen: the ear stays on
-  // the short loop until the reverse handoff.) And only while the transport
-  // still RUNS: a render finishing after stop() must not restart the element
-  // the transport:state(false) handler just paused (an unmuted volume-0 loop
-  // decodes forever — worse than the muted loop that handler's own comment
-  // forbids). The render stays adopted; the next play's transport:state
-  // handler attaches it.
+  // element — the swap waits for the loop wrap (armSwap) when the element is
+  // the audible path, and for uncarry() when it is only the pocket copy. And
+  // only while the transport still RUNS: a render finishing after stop() must
+  // not restart the element the transport:state(false) handler just paused (an
+  // unmuted volume-0 loop decodes forever — worse than the muted loop that
+  // handler's own comment forbids). The render stays adopted; the next play's
+  // transport:state handler attaches it.
   if (el && !carrying && playing) attachCurrent();
+  else if (carrying) armSwap();
+  // THE FIRST TAPE TAKES OVER, on mobile, foreground, no hide involved. Until
+  // this line the page held audio focus only while backgrounded, which is to
+  // say never: the OS decides what a page is at the moment it starts playing.
+  if (carrierFirst() && !carrying && playing) goCarrier();
   // announced AFTER the attach so a listener's carry() finds the new blob in
   // the element. survival.js uses this for the lands-while-hidden pickup —
   // impossible on iOS (the page is frozen), real on Android.
@@ -357,9 +438,83 @@ function adopt(res, want, myGen, stage) {
 function attachCurrent() {
   if (!el || !st.url) return;
   el.src = st.url; el.loop = true;
-  el.muted = false; el.volume = 0;                 // audible only by volume, never by unmute
+  // audible by VOLUME, never by unmute — and while the element is the path
+  // that volume is the real one. A muted element is not media: the OS gives
+  // it no session, which is the whole bug this mode exists to fix.
+  el.muted = false; el.volume = carrying ? clampVol(masterVol()) : 0;
+  st.pending = false;
   const p = el.play(); if (p && p.catch) p.catch(() => {});
   syncEl();
+}
+const clampVol = v => Math.max(0, Math.min(1, v));
+
+/* ---------- the boundary swap (carrier-first) ---------- */
+// A new tape while the ear is on the old one. Cutting now is a click in the
+// middle of a bar; cutting at the wrap is a downbeat, which is the one seam
+// this file is allowed (the fold in foldAndEncode already made the wrap
+// continuous). loop=false hands us `ended` — which fires while the page is
+// hidden, the property that made it WAV-FIRST's background swap primitive.
+function armSwap() {
+  // CARRIER-FIRST ONLY. On a desk a carrying element means the tab is hidden
+  // and the graph is muted behind it; that path already has its swap (uncarry
+  // attaches the newest blob when the graph takes back over), and touching
+  // `loop` there would rewrite the one behaviour this change is not allowed to
+  // touch.
+  if (!el || !carrying || !st.url || !carrierFirst()) return;
+  if (el.src === st.url) { st.pending = false; return; }
+  st.pending = true;
+  el.loop = false;
+  say("carrier: new take ready — swapping at the loop");
+}
+function swapNow() {
+  if (!el || !st.url) return;
+  attachCurrent();                                 // src + loop=true + volume
+  // the TRANSPORT follows the tape, not the other way round: the element
+  // restarts the song at 0 and the muted graph (and therefore the playhead,
+  // the LCD and MediaSession's position) has to agree with what is audible.
+  if (carrying && playing) { try { seekPhase(0); } catch (e) {} }
+  say("carrier: playing your edit");
+}
+
+/* ---------- becoming the audible path ---------- */
+// MUTE FIRST, THEN RAISE, THEN VERIFY. Mute-then-raise means the two sources
+// are never both up (a phase-shifted copy of the same song is the parent's
+// elAudible failure class). Verify means the reverse is also refused: a
+// play() the browser rejected plus a muted graph is a silent phone, and
+// "a dead primary route must never mean silence" is WAV-FIRST v3.1's law.
+function goCarrier() {
+  if (!el || carrying || !playing || st.state !== "ready" || !st.url) return false;
+  if (!carrierFirst()) return false;
+  syncEl();                                        // land on the phase the graph is at
+  muteNow();
+  el.muted = false;
+  el.volume = clampVol(masterVol());
+  carrying = true; st.mode = "carrier";
+  const t0 = el.currentTime;
+  const p = el.play(); if (p && p.catch) p.catch(() => {});
+  // 400 ms is a decode plus a start; if the element is still parked after it,
+  // the element is not media and the graph gets the song back
+  setTimeout(() => {
+    if (!carrying || !playing) return;
+    // advanced, or wrapped past the loop end while we waited — both are the
+    // element playing. Only a parked one is a refusal.
+    const adv = el.currentTime > t0 + 0.02 || el.currentTime < t0;
+    if (el.paused || !adv) demote("element-refused");
+  }, 400);
+  return true;
+}
+function demote(why) {
+  st.demoted = why; st.mode = "graph";
+  carrying = false; st.pending = false;
+  // PAUSE, don't just zero the volume: iOS ignores HTMLMediaElement.volume
+  // entirely (volume is a hardware control there), so a volume-0 element on
+  // the very platform this mode is for is an element still playing at full
+  // level — the graph would come back up UNDER it. The pocket-copy path
+  // upstairs can afford volume because it only ever drops to 0 on a desk.
+  if (el) { el.volume = 0; el.loop = true; try { el.pause(); } catch (e) {} }
+  unmuteRamp(20);
+  console.warn("[nukernel] carrier demoted to the live graph:", why);
+  say("carrier unavailable (" + why + ") — playing the live graph");
 }
 
 /* ---------- phase lock ---------- */
@@ -376,9 +531,20 @@ function syncEl() {
   } catch (e) {}
 }
 // kept in phase at 1 Hz while the graph is the audible source, so the hide
-// handoff is a volume swap with NO seek in the throttled window
+// handoff is a volume swap with NO seek in the throttled window. While the
+// element IS the source it is never seeked — the ear is on it — so this
+// becomes its watchdog instead: an element that stops or freezes under a
+// muted graph is silence, and it must hand the song back rather than die
+// quietly. (The `ended` swap is a legal stop; st.pending marks it.)
+let lastElT = -1;
 setInterval(() => {
-  if (el && !carrying && playing && st.state === "ready") syncEl();
+  if (!el || !playing || st.state !== "ready") return;
+  if (!carrying) { syncEl(); lastElT = -1; return; }
+  if (!carrierFirst()) return;                     // the desk's hidden handoff: as it was
+  if (st.pending && (el.paused || el.ended)) { swapNow(); lastElT = -1; return; }
+  const t = el.currentTime || 0;
+  if (el.paused || (lastElT >= 0 && t === lastElT && !el.seeking)) demote("element-stalled");
+  lastElT = t;
 }, 1000);
 
 /* ---------- the handoff (called by survival.js) ---------- */
@@ -392,14 +558,14 @@ export function carry() {
   if (carrying) return true;
   syncEl();                                        // one last correction while the clock still runs
   el.muted = false;
-  el.volume = Math.max(0, Math.min(1, masterVol()));
+  el.volume = clampVol(masterVol());
   const p = el.play(); if (p && p.catch) p.catch(() => {});
-  carrying = true;
+  carrying = true; st.mode = "carrier";
   return true;
 }
 export function uncarry() {
   if (!carrying) return null;
-  carrying = false;
+  carrying = false; st.mode = "graph";
   const ph = el ? (el.currentTime || 0) : null;
   if (el) {
     el.volume = 0;
@@ -409,12 +575,30 @@ export function uncarry() {
   return ph;
 }
 export const isCarrying = () => carrying;
+// what the element is actually at, for the two callers that must agree with
+// the ear rather than with the (possibly frozen) audio clock: survival.js
+// resyncs the transport to this on return, and MediaSession reports it
+export const carrierPos = () =>
+  (carrying && el ? { pos: el.currentTime || 0, dur: st.durSec } : null);
+// a lock-screen scrub lands on BOTH: the tape is what is audible, the
+// transport is what the page believes. Bounded to the loop.
+export function carrierSeek(sec) {
+  if (!carrying || !el || !(st.durSec > 0)) return false;
+  const p = ((sec % st.durSec) + st.durSec) % st.durSec;
+  try { el.currentTime = p; } catch (e) { return false; }
+  try { seekPhase(p); } catch (e) {}
+  return true;
+}
 
 /* ---------- subscriptions ---------- */
 on("transport:state", d => {
   if (d.playing) {
     // keep the (possibly stale-phased) carrier rolling and re-lock it
     if (el && st.url) attachCurrent();
+    // PLAY WITH A TAPE ALREADY IN HAND (a second play, a lock-screen play):
+    // the element is the path from this instant, with no hide involved. A
+    // first play has nothing rendered yet and takes it in adopt() instead.
+    if (carrierFirst() && st.state === "ready") goCarrier();
     // TWO-STAGE, kicked from the transport itself (startAt emits this event
     // synchronously): the short stage exists within seconds of play, the
     // full song follows behind it. The offline render runs off the main
@@ -427,6 +611,11 @@ on("transport:state", d => {
     if (el) { try { el.pause(); } catch (e) {} }   // a muted loop still costs battery
   }
 });
+// THE VOLUME SLIDER MOVES THE AUDIBLE THING. While the element carries, the
+// graph's outGain is the mute and the element's volume is the fader — without
+// this the phone's slider is a control over silence. (sig() ignores volume, so
+// the schedule() below re-renders nothing for it.)
+on("transport", () => { if (carrying && el) el.volume = clampVol(masterVol()); });
 // a musical edit makes the rendered blob stale; re-render after the dust
 // settles. "transport" includes volume moves, but sig() ignores them, so
 // maybeRender no-ops those.
@@ -441,6 +630,7 @@ on("song", () => {
   gen++;                                           // cancels any in-flight render
   adoptedSig = null;
   st.state = "idle"; st.url = null; st.durSec = 0; st.stage = null; st.lastError = null;
+  st.pending = false; st.mode = "graph";
   while (urls.length) { try { URL.revokeObjectURL(urls.shift()); } catch (e) {} }
   if (el) { try { el.pause(); el.removeAttribute("src"); } catch (e) {} }
 });

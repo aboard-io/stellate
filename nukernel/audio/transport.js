@@ -162,6 +162,19 @@ export function resetBar() { nextBar = 0; }
 const gestureFns = [];
 export const onGesture = fn => gestureFns.push(fn);
 
+/* ---------- the quiet tick ---------- */
+// WHEN SOMETHING ELSE IS THE AUDIBLE PATH, SCHEDULING IS WORK NOBODY HEARS.
+// On mobile the rendered carrier plays the song and the graph sits muted
+// (audio/bounce.js) — and every bar this tick would schedule is a pile of
+// nodes built, ramped and torn down for a bus at gain 0, on the one device
+// where that CPU competes with the re-render that IS the sound. So the clock,
+// the playhead and the section announcements keep running and the note
+// scheduling stops. Registered rather than imported: transport must not know
+// what a carrier is (bounce imports transport, never the reverse).
+let quietFn = null;
+export const setQuietWhen = fn => { quietFn = fn; };
+const quiet = () => { try { return !!(quietFn && quietFn()); } catch (e) { return false; } };
+
 /* ---------- the boot instrument ---------- */
 // marks, not guesses — the parent added bootStats() because a phone hung
 // forever at "scheduling the first bar" with zero errors and nobody could say
@@ -222,6 +235,7 @@ const lookahead = () => (document.visibilityState === "hidden" ? 2.0 : 0.15);
 function tick() {
   if (!playing || !TL.length) return;
   const sd = stepDur(), look = ctx.currentTime + lookahead();
+  const mute = quiet();                            // the carrier owns the ear
   // the current section's channel, computed when the section changes rather
   // than re-derived (JSON.stringify and all) once per bar
   let cur = null;
@@ -239,9 +253,8 @@ function tick() {
     // SOUNDING box rebuilds its channel here, and the old one must ring out
     // until the bar the new one first receives — not die at ctx.currentTime
     // under everything already scheduled through it
-    if (!cur || cur.si !== bar.si || bar.first)
+    if (!mute && (!cur || cur.si !== bar.si || bar.first))
       cur = { si: bar.si, chan: channelFor(sec, nextBarTime), kit: kitOf(sec) };
-    const chan = cur.chan;
     if (bar.first) {
       passStart = nextBarTime;
       if (bar.si !== playingSec) {
@@ -254,11 +267,13 @@ function tick() {
       }
       // the section's own echo time, and its transition, both land on the bar it
       // starts — a transition re-arms every pass, which is what makes it one
-      setDelayTime(DTIMES[sec.dtime || "d8"]);
-      armAutomation(chan, nextBarTime, bar.barSteps * sd * boxBars(sec), sd * 4);
-      focusSynths(chan, nextBarTime);   // this section's mix owns the synth pool
+      if (!mute) {
+        setDelayTime(DTIMES[sec.dtime || "d8"]);
+        armAutomation(cur.chan, nextBarTime, bar.barSteps * sd * boxBars(sec), sd * 4);
+        focusSynths(cur.chan, nextBarTime);   // this section's mix owns the synth pool
+      }
     }
-    scheduleBar(bar, sec, chan, cur.kit, nextBarTime, sd, playSynth);
+    if (!mute) scheduleBar(bar, sec, cur.chan, cur.kit, nextBarTime, sd, playSynth);
     nextBarTime += bar.barSteps * sd;
     nextBar = (nextBar + 1) % TL.length;
     if (nextBar === 0) loopStart = nextBarTime;   // the wrap will SOUND at this time
@@ -269,7 +284,7 @@ function tick() {
   // ZERO-STATIC glitch cause R2 (measured there: a 6-modules-in-46 ms burst
   // WAS the click). channelFor is cached by spec, so this is a no-op all the
   // times the channel already exists.
-  if (TL.length) {
+  if (!mute && TL.length) {
     const nb = TL[nextBar];
     if (nb && SONG[nb.si]) channelFor(SONG[nb.si], nextBarTime);
   }

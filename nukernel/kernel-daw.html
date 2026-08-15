@@ -144,23 +144,12 @@
 
     <section class="page pg-song" id="page-song" aria-label="song">
       <div class="ed songwrap">
-        <!-- the four-line lecture moved behind (?) — the .btn.hint / .edhint
-             pattern every panel head shares now, in the same spot (right
-             after the h2). The freed lines go to the table. -->
-        <div class="edhead">
-          <h2>Song</h2>
-          <button class="btn hint" id="songhelp" aria-expanded="false"
-            aria-controls="songhint" title="how the song table works">?</button>
-        </div>
-        <p class="edhint" id="songhint" hidden>One row per section, top to
-           bottom. Click a row for its options — sound, mix, transitions, and
-           the ▶ that plays from there; double-click to loop it, hold to read
-           everything it has switched on. Reorder with ↑ ↓ or by dragging the
-           row; ⟳ loops, ✕ removes. Length and nudge are the steppers in the
-           row's sheet. Genres stack — the first owns the harmony, drums and
-           tempo; the rest ride on top of it as indented layers, each with its
-           own phrases. Every section is also a mixer channel: its own
-           effects, its own reverb and echo sends, its own way in and out.</p>
+        <!-- NO HEAD. The page is reached by a lit SONG tab and its first
+             element is the song table, so an h2 reading "Song" named what the
+             tab already said, and the (?) beside it explained a table you can
+             simply tap (Ford, 2026-08-15: "get rid of the song title for the
+             song area and the question ... we're just going to tap on things
+             and figure it out"). -->
         <!-- THE SONG TABLE: ui/songrow.js builds a header row, one row per
              section (kept alive and patched, never rebuilt) and a footer row
              of table keys. Rows at every width — the desk gets more columns,
@@ -286,12 +275,17 @@
        markup (values, not silkscreen); the CSS uppercases the legends. Each
        key wears a small silkscreen icon above its word (.pi, an SVG-mask
        painted with currentColor — self-contained, no glyph-coverage lottery),
-       so the rail reads at a glance the way a mode row on a groovebox does. -->
+       so the rail reads at a glance the way a mode row on a groovebox does.
+
+       THREE KEYS. SOUND and MIX are gone from the rail because they were
+       destinations for editing the SELECTED box from a page the box was not
+       on; tapping a song row opens that box's own sheet, which carries the
+       palette (its six tabs intact) and the mix table behind a two-key surface
+       switch. Nothing became unreachable — see ui/pages.js for the whole
+       argument and where each surface went. -->
   <nav class="pagerail" role="tablist" aria-label="pages">
     <button class="pkey" role="tab" data-page="song" aria-controls="page-song" aria-selected="false"><span class="pi" aria-hidden="true"></span>song</button>
     <button class="pkey" role="tab" data-page="step" aria-controls="page-step" aria-selected="true"><span class="pi" aria-hidden="true"></span>step</button>
-    <button class="pkey" role="tab" data-page="sound" aria-controls="page-palette" aria-selected="false"><span class="pi" aria-hidden="true"></span>sound</button>
-    <button class="pkey" role="tab" data-page="mix" aria-controls="page-palette" aria-selected="false"><span class="pi" aria-hidden="true"></span>mix</button>
     <button class="pkey" role="tab" data-page="move" aria-controls="page-move" aria-selected="false"><span class="pi" aria-hidden="true"></span>move</button>
   </nav>
 
