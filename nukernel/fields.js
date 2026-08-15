@@ -239,6 +239,47 @@
   const fxChain = keys => (keys || []).filter(k => FX[k])
     .map(k => ({ type: FX[k].type || k, params: { ...FX[k].params } }));
 
+  /* ---------- A CHIP IS A SEND; A CHAIN IS AN INSERT ---------- */
+  // "Maybe we need a few effects buses feeding into one master effects bus
+  // instead of everything having its own effects" — the artist, hearing the
+  // page glitch, 2026-08-15. He is describing AUX SENDS, which is what the big
+  // engine has always had: engine/faust/press/render-core.js renders every unit
+  // into FOUR shared buses (`{ dry, rev, del, pp }`, line 19) with a gain
+  // apiece, and engine/faust/live/live.js gives the whole found layer ONE
+  // submix and one reverb (`foundDests`, line 636) rather than a rack per
+  // voice. nukernel had grown the opposite way: an insert chain per box AND per
+  // part, each a private copy of the same effect.
+  //
+  // The refactor is EXACT rather than approximate, and this table is why.
+  // Read sampler.js buildInsertNodes: every effect but one is built as
+  // `parallel(mix, wet)` — a dry/wet CROSSFADE around a wet function of the
+  // same input. So
+  //     insert:  (1-m)·x + m·w(x)
+  //     send:    (1-m)·x  ->  master        [the dry trim]
+  //              m·x      ->  w() at mix 1  ->  master
+  // are the same signal, sample for sample, for ANY w. The send just spends one
+  // copy of w() for the whole page instead of one per box.
+  //
+  // TWO THINGS CANNOT BE SAID THAT WAY, and they are the private-insert budget:
+  //   `sweep` (filtersweep) has NO mix param — buildInsertNodes chains it
+  //     serially, in the signal path, because a swept resonant lowpass is a
+  //     REPLACEMENT and not a blend. A parallel copy of it is a different,
+  //     nicer, wrong sound.
+  //   A CHAIN OF TWO OR MORE CHIPS means ORDERING — chorus on a crunched guitar
+  //     is not a clean chorus beside a crunched guitar — and a parallel bank
+  //     has no ordering to offer. Measured on the shipped genre table, 12 of
+  //     the 14 fx declarations are a single chip; the two that are not
+  //     (`["crunch","chorus"]`, `["echo","sweep"]`) keep their rack.
+  const FXSEND = {};
+  for (const k of Object.keys(FX)) FXSEND[k] = (FX[k].type || k) !== "filtersweep";
+  // how much of the chip a send carries — its OWN declared mix, so a chorus is
+  // as wet on the bus as it was in the rack. An effect with no mix (only sweep,
+  // which is never sendable) reads as fully wet.
+  const fxMix = k => (FX[k] && FX[k].params && FX[k].params.mix != null)
+    ? FX[k].params.mix : 1;
+  // the one predicate the mixer asks: may this whole chain be spent as sends?
+  const fxSendable = keys => (keys || []).length === 1 && !!FXSEND[keys[0]];
+
   // SENDS ARE DISCRETE, like everything else here. A chip is a decision; a
   // slider is a fiddle, and the whole surface is chips on purpose.
   const SENDS = { none: 0, touch: 0.12, some: 0.3, wet: 0.55, drown: 0.9 };
@@ -791,7 +832,8 @@
                 OPS, OPLABEL, ENVLABEL, MOTLABEL, INLABEL, OUTLABEL,
                 RATES, RATELABEL, SWINGS, SWINGLABEL, GROOVELABEL,
                 KITLABEL, KITNAME, VERBLABEL, DRUMKITS, DRUMLANES, BASSOPS,
-                FX, FXLABEL, fxChain, SENDS, SENDLABEL, VERBS,
+                FX, FXLABEL, fxChain, FXSEND, fxMix, fxSendable,
+                SENDS, SENDLABEL, VERBS,
                 DTIMES, DTLABEL, LEVELS, LEVELLABEL, PANS, PANLABEL,
                 VOX, VOXPARAM, OCTAVES, ARTICS, CMODES, CLAMPS, CLAMPLABEL,
                 KEYS, KEYLABEL, PROGCHOICES, PROGLABEL, PERIODS, PERIODLABEL,

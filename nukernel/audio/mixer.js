@@ -1,7 +1,9 @@
-// audio/mixer.js — a section's mixer channel: the insert chain, the two sends,
-// level, pan, the motion filter, and window.__nuMix — the machine-readable
-// truth about what the mixer actually BUILT versus what the chips declared
-// (the project's "test the artifact" rule, in code; the browser gate reads it).
+// audio/mixer.js — a section's mixer channel: level, pan, the motion filter,
+// the AUX SENDS (reverb, echo, and one bus per character effect — all of them
+// shared by the whole page, see the send law below), and window.__nuMix — the
+// machine-readable truth about what the mixer actually BUILT versus what the
+// chips declared, the node budget included (the project's "test the artifact"
+// rule, in code; the browser gate reads every number in it).
 //
 // Layer graph: deps -> state -> derive -> graph -> assets -> voices ->
 // THIS FILE -> transport. Subscribes to "song" (a new song is a new mix — keep
@@ -9,7 +11,8 @@
 //
 // THE MIXING IS THE BIG ENGINE'S MIXING, and none of it is a reimplementation:
 //   channel strips  STRIP_PROFILES (instruments.js) handed to SamplerLive
-//   inserts         SP.buildInsertNodes — literally the function live.js calls
+//   the effects     SP.buildInsertNodes — literally the function live.js calls
+//                   — once per effect for the page, on a bus (see below)
 //   the master bus  audio/graph.js, live.js's numbers
 // What is NOT borrowed is the topology: the big engine mixes per VOICE because
 // a genre is one continuous thing. A song box is a SECTION, and a section is
@@ -21,43 +24,77 @@
 // the kit, and the only way to treat one thing was to give it a box of its own.
 // A box now carries `parts` — a map of PART key (lead/pad/bass/drums…, the
 // kernel's own roles, plus an ordinal where a genre has several of one) to the
-// same small strip: inserts, two sends, level, place, mute and solo. Each one
-// is a sub-bus feeding this channel's input, so the section chain is still the
+// same small strip: two sends, level, place, mute and solo. Each one is a
+// sub-bus feeding this channel's input, so the section chain is still the
 // section-wide treatment and the desk sits in front of it. See partSpecs (what
 // gets built) and buildChannel (how), and note the law both keep: a box with no
 // `parts` builds not one extra node and sounds exactly as it did before.
-import { GENRES, FX, MAX_FX, fxChain, SENDS, LEVELS, PANS, RATES,
-         SP, DRUMFILE, DRUMMIX, DRUMBUS, instrOf, BASSSYNTH,
+//
+// ================ AND THEN IT WAS ALL SENDS ================================
+// "It is glitching — maybe we need a few effects buses feeding into one master
+// effects bus instead of everything having its own effects" (the artist,
+// 2026-08-15). Measured before believing him: a composed eleven-section
+// Beatles song built 375 persistent mixer nodes, 337 of them inside the
+// channels, and the graph had inflated across four rounds each defensible on
+// its own — channels went per-box, drums grew a lane strip apiece, every part
+// gained a private rack, the master grew to forty.
+//
+// HE IS DESCRIBING WHAT THE BIG ENGINE ALREADY DOES, and this file's own
+// header has always said the mixing is the big engine's mixing. It is:
+//   engine/faust/press/render-core.js  every unit renders into FOUR shared
+//     buses — `{ dry, rev, del, pp }` (line 19) — with one gain apiece.
+//   engine/faust/live/live.js          the whole found layer gets ONE submix
+//     and one native reverb (`foundDests`, line 636), not a rack per voice.
+//   engine/faust/voices/state-engine.js  per-voice CHARACTER is STRIP_PROFILES
+//     inside the note chain, not an effects rack on the channel.
+// So the three things that used to be private are now shared and sent to:
+//   the character effects  fields.js "A CHIP IS A SEND; A CHAIN IS AN INSERT"
+//                          + graph.js buildSendBus/sendFor — one bus per
+//                          effect for the whole page, built on first use
+//   the kit's own desk     graph.js buildKitDesk/kitFor — one set of lane
+//                          strips for the page, reached through one gate per
+//                          channel, the way voices.js routes the synth pool
+//   the rooms and the echo unchanged: they were shared from the first day
+// WHAT STAYS PRIVATE PER THING is level, pan, mute/solo and the send amounts —
+// a gain and a panner, nothing else — plus the one budgeted exception below.
+import { GENRES, FX, MAX_FX, fxChain, fxMix, fxSendable, SENDS, LEVELS, PANS,
+         RATES, SP, DRUMFILE, DRUMMIX, DRUMBUS, instrOf, BASSSYNTH,
          partOf, chairKeys, resolvePartMix } from "../ui/deps.js";
 import { SONG, on } from "../ui/state.js";
 import { gid, stackOf, genreOf, kitOf } from "../ui/derive.js";
-import { ctx, masterIn, delBus, roomBus, verbFor, barSec, satCurve, REV,
-         VERBSPEC, masterReport } from "./graph.js";
+import { ctx, masterIn, delBus, roomBus, verbFor, sendFor, kitFor, buildKitDesk,
+         barSec, REV, SENDBUS, VERBSPEC, masterReport, sharedReport } from "./graph.js";
 import { synthNodes, synthOut, clearRoutes, dropRoute, pruneSynths } from "./voices.js";
 
-// DRUMS get a strip too, but a transient-preserving one — a subsonic HPF and a
-// whisper of glue saturation, NO compressor and no dulling filter (the parent's
-// STRIP_PROFILES.drum, whose whole point is that the attack IS the instrument).
-// It is one long-lived pair of nodes per channel rather than per note: the
-// drums are buffers fired straight at it, not sampler notes.
-//
-// WHAT SITS IN FRONT OF IT NOW is the part that was missing: a LANE STRIP per
-// drum lane — level, placement, and an ambience send — so the kit arrives from
-// twelve places in one room instead of from one point, dry. The numbers are
-// instruments.js DRUMMIX; the room they send to is graph.js buildRoomBus.
+// the twelve lanes, for the __nuMix vocabulary line. The strips themselves are
+// the page's now (graph.js buildKitDesk), and their numbers are still
+// instruments.js DRUMMIX — a lane's pan is the KIT's internal geometry and
+// nothing else, which is why they are small (±0.28) where the section's own
+// pan chip is not (±0.7).
 const LANEIDS = Object.keys(DRUMFILE);
-// A LANE'S PAN IS THE KIT'S INTERNAL GEOMETRY, and nothing else. The section's
-// own pan chip is a separate StereoPanner further down the channel, so a
-// hard-left box moves the whole kit and keeps its spread — which is why these
-// numbers are small (±0.28) and the chip's are not (±0.7).
-const laneMix = (lane) => DRUMMIX[lane] || { lvl: 1, pan: 0, room: 0.3, punch: 1, sus: 1 };
-// TEST SEAM, the ?nobounce shape (audio/bounce.js): ?dryroom builds every
-// channel with no drum-room send at all, which is the page as it sounded
-// before the room existed. It is here so the gate can measure the SAME music
-// wet and dry — a drum room you cannot A/B is a claim, not a treatment — and
-// nowhere else, because a mix control that turns the room off is a chip, not
-// a query string.
-const DRYROOM = typeof location !== "undefined" && /[?&]dryroom\b/.test(location.search);
+
+/* ---------- THE NODE BUDGET, and why these are the numbers ---------------- */
+// A budget nobody can check is a wish, so window.__nuMix carries the count and
+// test/browser/nukernel-drums.test.js asserts this ceiling on a composed
+// nine-plus-section song.
+//
+// PER CHANNEL, 24, and every term is a countable fact about the vocabulary. A
+// section's own strip is nine nodes — input, pan, level, dry trim, reverb send,
+// echo send, kit gate, room gate, room trim — plus at most three automation
+// nodes (cutoff/hpf/level are the only three the compiler builds), at most
+// MAX_FX=3 character sends, and one panner per pitched chair with eight the
+// deepest stack the page can deal. That is 23; the extra is the collision
+// carve. MEASURED on the composed eleven-section Beatles song: 8 to 13.
+// PER PART, 8: pan, level, mute gate, dry trim, two sends and up to three
+// character sends. Six or seven in practice, and a part only exists at all
+// once somebody has mixed it.
+// THE SHARED RACK, 220: the master chain (30 fully dressed) + three convolution
+// reverbs (4 each) + the echo (8) + the drum room (26) + the kit desk (40 with
+// all twelve lanes armed) + one bus per character effect, eleven of them at
+// 8–18 nodes apiece. NOTHING IN THE SONG CAN MAKE IT GROW — that is the claim
+// the whole round rests on, and it is why the ceiling is flat rather than
+// per-section. Measured on the same song: 95.
+export const BUDGET = { chan: 24, part: 8, shared: 220 };
 
 /* ---------- a section's mixer channel ---------- */
 // KEYED BY THE BOX'S IDENTITY, not by its spec. Channels were shared by
@@ -241,29 +278,61 @@ export function buildChannel(c, spec, env) {
   // it would have quietly orphaned every part's tremolo.
   const oscs = [];
   let stages = [];
+  // ---- HOW A CHAIN OF CHIPS IS SPENT, section and part alike ----
+  // fields.js states the law (`fxSendable`); this is the one place that acts on
+  // it, so a box and a part can never disagree about what a chip means.
+  // Returns { sends:[{key,amt,bus}], dry, rack } — `rack` non-null only when
+  // the chain could not be said in sends, and `dry` is the trim that makes the
+  // sum identical to the insert it replaces.
+  const spend = (keys) => {
+    const out = { sends: [], dry: 1, rack: null, stages: [] };
+    if (!keys || !keys.length) return out;
+    if (env.send && fxSendable(keys)) {
+      const bus = env.send(keys[0]);
+      if (bus) {
+        const m = fxMix(keys[0]);
+        out.sends.push({ key: keys[0], amt: m, bus });
+        out.dry = 1 - m;
+        out.stages = [FX[keys[0]].type || keys[0]];
+        return out;
+      }
+    }
+    // THE BUDGETED PRIVATE INSERT. A chain (ordering, which a parallel bank
+    // cannot say), a `sweep` (serial by construction — no mix param), or a bus
+    // that would not build. One rack, in the signal path, exactly as before.
+    if (SP && SP.buildInsertNodes) {
+      try {
+        const ch = SP.buildInsertNodes(c, fxChain(keys), barSec());
+        out.rack = ch; out.stages = ch.stages || [];
+        oscs.push(...(ch.oscs || []));
+      } catch (e) { /* an insert that will not build must not take the section with it */ }
+    }
+    return out;
+  };
   // ---- THE PART SUB-BUSSES, one small desk channel each ----
   // "Not every track should go through the effects." Everything below this
-  // point is the SECTION strip — one insert chain, one pan, one level, two
-  // sends — and until now every voice in the box arrived at `input` and took
-  // all of it. A part bus is the same strip, smaller, in front of that:
+  // point is the SECTION strip — pan, level, two sends — and until now every
+  // voice in the box arrived at `input` and took all of it. A part bus is the
+  // same strip, smaller, in front of that:
   //
-  //   sources of one part -> [inserts] -> pan -> level -> mute gate -> input
-  //                                                          |-> rev send -> the section's verb
-  //                                                          \-> echo send -> the echo bus
+  //   sources of one part -> pan -> level -> mute gate -> dry trim -> input
+  //                                              |-> rev send  -> the section's verb
+  //                                              |-> echo send -> the echo bus
+  //                                              \-> fx send   -> the page's chorus/crunch/…
   //
   // So the section keeps its job (the treatment on the whole box) and gains a
-  // desk under it. The sends land on the SAME two returns the section uses —
-  // a part chooses how much it goes, the section still chooses which room —
-  // and they tap POST the mute gate, because a muted part whose reverb keeps
-  // ringing is not muted.
+  // desk under it. The rev/echo sends land on the SAME two returns the section
+  // uses — a part chooses how much it goes, the section still chooses which
+  // room — and every send taps POST the mute gate, because a muted part whose
+  // reverb keeps ringing is not muted.
   //
-  // BUILT HERE, NOT LAZILY, unlike the lane strips below. A lane strip is a
-  // gain and a panner; a part bus can carry an insert chain, and instantiating
-  // an effect inside the render window is ZERO-STATIC glitch cause R2 — the
-  // one thing this file is careful about. buildChannel already runs a bar
-  // early (the tick's prebuild), and partSpecs has filtered the list down to
-  // the parts that asked for something, so this loop is empty for every box
-  // that has not been mixed.
+  // WHERE THE FX SEND IS AUDIBLY DIFFERENT, and it is the one place in this
+  // rebuild that is: a part's character send returns at the MASTER, not at this
+  // channel's input, so the section's own strip does not treat it. The part's
+  // own level and pan do (the tap is post-mute, which is post-both), but a
+  // section-wide `pump` will not duck that part's chorus and a hard-left
+  // section will not carry its wet across. That is the price of one chorus for
+  // the page instead of one per part, and it is paid where it shows least.
   //
   // AND THEY ARE CHEAP NODES, NOT VOICES. A sub-bus is gains and a panner; the
   // synth pool is still keyed (dsp, voice) and still routed through per-channel
@@ -271,32 +340,38 @@ export function buildChannel(c, spec, env) {
   // neither the worklet nor the convolver budget moves.
   const parts = new Map();                    // part key -> the strip
   for (const p of (spec.parts || [])) {
-    const pin = c.createGain();
-    let pn = pin;
-    const pnodes = [pin];
+    // THE PANNER IS THE INPUT. A strip used to open with a unity Gain purely to
+    // give the part a stable address — a node a bus, for nothing, since a
+    // StereoPanner sums its inputs perfectly well. With a private rack the
+    // rack's own input gain takes the job instead (buildInsertNodes builds one
+    // either way), so neither case pays for a second summing node.
+    const ppan = c.createStereoPanner(); ppan.pan.value = p.pan;
+    const pnodes = [ppan];
+    let pn = ppan;
     const pchain = x => { pn.connect(x); pn = x; pnodes.push(x); };
-    let pstages = [];
-    if (p.fx.length && SP && SP.buildInsertNodes) {
-      try {
-        const ch = SP.buildInsertNodes(c, fxChain(p.fx), barSec());
-        pn.connect(ch.input); pn = ch.output;
-        pstages = ch.stages || [];
-        oscs.push(...(ch.oscs || []));
-        pnodes.push(...(ch.nodes || []));
-      } catch (e) { /* one part's broken insert must not take the box with it */ }
-    }
-    const ppan = c.createStereoPanner(); ppan.pan.value = p.pan; pchain(ppan);
+    const px = spend(p.fx);
+    let pin = ppan;
+    if (px.rack) { px.rack.output.connect(ppan); pin = px.rack.input; pnodes.push(...(px.rack.nodes || [])); }
     const plvl = c.createGain(); plvl.gain.value = p.lvl; pchain(plvl);
     const pmute = c.createGain(); pmute.gain.value = p.mute ? 0 : 1; pchain(pmute);
-    pmute.connect(input);
+    if (px.dry !== 1) {
+      const pdry = c.createGain(); pdry.gain.value = px.dry;
+      pmute.connect(pdry); pdry.connect(input); pnodes.push(pdry);
+    } else pmute.connect(input);
     const prs = c.createGain(); prs.gain.value = p.rev;
     pmute.connect(prs); prs.connect(env.verb(spec.verb));
     const pds = c.createGain(); pds.gain.value = p.del;
     pmute.connect(pds); pds.connect(env.echoIn);
     pnodes.push(prs, pds);
+    const pfs = [];
+    for (const s of px.sends) {
+      const g = c.createGain(); g.gain.value = s.amt;
+      pmute.connect(g); g.connect(s.bus.input);
+      pnodes.push(g); pfs.push({ key: s.key, gain: g });
+    }
     nodes.push(...pnodes);
     parts.set(p.key, { in: pin, pan: ppan, lvl: plvl, gate: pmute, rs: prs, ds: pds,
-                       stages: pstages, spec: p });
+                       fs: pfs, rack: !!px.rack, stages: px.stages, spec: p });
   }
   // WHERE A SOURCE LANDS: its part's bus if that part has one, the section
   // input if it does not. Every player, route and fallback on the page asks
@@ -308,71 +383,83 @@ export function buildChannel(c, spec, env) {
   // drag does not re-time them until the chain rebuilds. Same contract the big
   // engine states for its own insert chains — a perceptual-twin class of
   // difference, and re-instantiating every effect on a slider drag is worse.
-  if (spec.fx.length && SP && SP.buildInsertNodes) {
-    try {
-      const ch = SP.buildInsertNodes(c, fxChain(spec.fx), barSec());
-      node.connect(ch.input); node = ch.output; oscs.push(...(ch.oscs || []));
-      stages = ch.stages || [];
-      nodes.push(...(ch.nodes || []));
-    } catch (e) { /* an insert that will not build must not take the section with it */ }
+  const sx = spend(spec.fx);
+  if (sx.rack) {
+    node.connect(sx.rack.input); node = sx.rack.output;
+    nodes.push(...(sx.rack.nodes || []));
   }
+  stages = sx.stages;
   const pan = c.createStereoPanner(); pan.pan.value = spec.pan; chain(pan);
   const lvl = c.createGain(); lvl.gain.value = spec.lvl; chain(lvl);
-  lvl.connect(env.master);
+  // THE DRY TRIM is what makes a send arithmetically identical to the insert it
+  // replaces: the bus runs at mix 1, this carries (1-mix), and the sum at the
+  // master is the crossfade buildInsertNodes used to do in the signal path.
+  // Absent when nothing is sent, so a box with no effects builds the graph it
+  // always built, node for node.
+  let dryTrim = null;
+  if (sx.dry !== 1) {
+    dryTrim = c.createGain(); dryTrim.gain.value = sx.dry;
+    lvl.connect(dryTrim); dryTrim.connect(env.master); nodes.push(dryTrim);
+  } else lvl.connect(env.master);
   const rs = c.createGain(); rs.gain.value = spec.rev; lvl.connect(rs);
   rs.connect(env.verb(spec.verb));
   const ds = c.createGain(); ds.gain.value = spec.del; lvl.connect(ds); ds.connect(env.echoIn);
   nodes.push(rs, ds);
-  // the drum sub-strip: transient-preserving, long-lived, one per channel.
-  // THE KIT IS A PART, and this is where it joins the desk — the whole lane
-  // scheme below already funnels through here, so folding the drums in is a
-  // question of where dSat lands rather than a second mechanism. `drums` with
-  // no entry lands on the section input exactly as before.
-  const dHP = c.createBiquadFilter(); dHP.type = "highpass"; dHP.frequency.value = DRUMBUS.hpf;
-  const dSat = c.createWaveShaper(); dSat.curve = satCurve(1 + 3 * DRUMBUS.sat, DRUMBUS.satMix);
-  dSat.oversample = "2x";
-  dHP.connect(dSat); dSat.connect(partIn("drums"));
-  nodes.push(dHP, dSat);
-  // ---- the drum ROOM send, per channel ----
-  // One trim for the whole kit into the shared ambience return (graph.js
-  // buildRoomBus). It hangs off the LANES, not off the drum bus output, so the
-  // ratio between a dry kick and a wet snare survives — that ratio is the room.
-  // It deliberately does NOT pass through the section's level/pan/inserts: the
+  // ...and the character sends, tapping the same place rev and echo tap: POST
+  // pan and level, so a hard-left hushed section is hard-left and hushed on the
+  // chorus bus too. What the reverb does NOT hear is the bus's wet — an insert
+  // chorus went into the reverb send, a chorus BUS returns beside it. A
+  // chorused pad's reverb is now a reverb on the pad rather than on the chorus.
+  const fs = [];
+  for (const s of sx.sends) {
+    const g = c.createGain(); g.gain.value = s.amt;
+    lvl.connect(g); g.connect(s.bus.input);
+    nodes.push(g); fs.push({ key: s.key, gain: g });
+  }
+  // ---- THE KIT: one desk for the page, one gate per section ----
+  // graph.js buildKitDesk owns the twelve lane strips, the transient-preserving
+  // drum bus (the parent's STRIP_PROFILES.drum) and the per-lane room sends,
+  // because every one of those numbers is the same in every section — there is
+  // no per-section drum-lane control in the vocabulary at all. What is left per
+  // channel is the routing: a gate onto THIS section's drums strip, and a trim
+  // on the room. `env.kit` is the page's desk; without one (an offline probe
+  // that builds a single channel and nothing else) the channel makes its own,
+  // which is exactly the graph this file built before the desk was hoisted.
+  const desk = env.kit ? env.kit() : buildKitDesk(c, env.room);
+  const ownDesk = !env.kit;
+  // OPEN WHEN THE DESK IS PRIVATE, SHUT WHEN IT IS SHARED. A private desk has
+  // exactly one channel and nothing to focus; a shared one is heard through
+  // whichever gate focusKit has opened, the same law voices.js keeps for the
+  // shared synth pool ("the pool stays global and the ROUTE moves instead").
+  const kitGate = c.createGain(); kitGate.gain.value = ownDesk ? 1 : 0;
+  desk.out.connect(kitGate); kitGate.connect(partIn("drums"));
+  nodes.push(kitGate);
+  // ---- the drum ROOM trim, per channel ----
+  // The room hangs off the LANES rather than off the kit's output, so the ratio
+  // between a dry kick and a wet snare survives — that ratio IS the room — and
+  // it deliberately does not pass through the section's level/pan/inserts: the
   // room is a property of the kit, not of the mix move being made on the box.
   //
-  // …WHICH IS ALSO WHY THE DRUMS PART'S FADER REACHES IT HERE. The room send
-  // hangs off the LANES, upstream of everything, so it does not pass through
-  // the drums sub-bus and a `drums` mute would leave the ambience ringing
-  // under a silent kit. The part's level and mute are folded into this one
-  // trim instead: pull the drums down and their room comes down with them,
-  // which is the ratio staying put — the whole point of the room.
-  let droom = null;
-  if (env.room && !DRYROOM) {
+  // …WHICH IS WHY THE DRUMS PART'S FADER REACHES IT HERE. Nothing upstream of
+  // this point knows about the box, so a `drums` mute would otherwise leave the
+  // ambience ringing under a silent kit. The part's level and mute fold into
+  // this one trim: pull the drums down and their room comes down with them.
+  let droom = null, roomGate = null;
+  if (desk.roomSum && env.room) {
     const dP = parts.get("drums");
     const dTrim = dP ? (dP.spec.mute ? 0 : dP.spec.lvl) : 1;
+    roomGate = c.createGain(); roomGate.gain.value = ownDesk ? 1 : 0;
     droom = c.createGain(); droom.gain.value = DRUMBUS.room * dTrim;
-    droom.connect(env.room); nodes.push(droom);
+    desk.roomSum.connect(roomGate); roomGate.connect(droom); droom.connect(env.room);
+    nodes.push(roomGate, droom);
   }
-  // ---- the LANE STRIPS, built on the lane's first hit ----
-  // Twelve lanes exist; a genre plays four or five of them. Building all twelve
-  // per channel would be ~36 nodes of nothing, so a lane is built when it first
-  // sounds — a gain and a panner, well outside the render window (the scheduler
-  // is 150 ms ahead of the clock, and neither node is a worklet or a convolver,
-  // which are the two things ZERO-STATIC R2 forbids building late).
-  const lanes = new Map();                    // lane letter -> { in, gain, pan, room }
-  const laneIn = (d) => {
-    let L = lanes.get(d);
-    if (L) return L.in;
-    const m = laneMix(d);
-    const g = c.createGain(); g.gain.value = m.lvl;
-    const p = c.createStereoPanner(); p.pan.value = m.pan;
-    g.connect(p); p.connect(dHP);
-    let r = null;
-    if (droom) { r = c.createGain(); r.gain.value = m.room; p.connect(r); r.connect(droom); }
-    lanes.set(d, L = { in: g, gain: g, pan: p, room: r, mix: m });
-    nodes.push(g, p); if (r) nodes.push(r);
-    return L.in;
-  };
+  // WHICH LANES THIS SECTION ACTUALLY PLAYED. The strips are the page's, so
+  // attribution is bookkeeping rather than nodes — but __nuMix still answers
+  // "which of the twelve lanes did this section play", and it still answers it
+  // off the real strip's real AudioParams.
+  const lanes = desk.lanes;
+  const played = new Set();
+  const laneIn = (d) => { played.add(d); return desk.laneIn(d); };
   // ---- the VOICE BUSES: one placement per pitched voice ----
   // The parent's mastering stage places voices at the UNIT level (MASTER_PAN:
   // lead a touch right, pad counterweighting left, solos alternating) because a
@@ -424,21 +511,24 @@ export function buildChannel(c, spec, env) {
     const dir = v % 2 ? 1 : -1;
     let pan = dir * Math.min(spread, 0.12 + 0.08 * step);
     if (v === 0) pan = r.pad ? -0.08 : 0.04;
-    let node = c.createGain();
-    const vin = node;
-    let carve = null;
+    // TWO NODES, AND ONLY WHEN THE SECOND IS EARNED. This used to open with a
+    // unity Gain purely to give the chair a stable input, with the panner
+    // behind it — a node per chair for nothing, since a StereoPanner is a
+    // perfectly good summing input. The carve, when a same-timbre collision
+    // asks for one, becomes the input instead.
+    const p = c.createStereoPanner(); p.pan.value = pan;
+    let carve = null, vin = p;
     if (carved.has(v)) {
       carve = c.createBiquadFilter(); carve.type = "peaking";
       carve.frequency.value = 450; carve.gain.value = -3.5; carve.Q.value = 0.9;
-      node.connect(carve); node = carve; nodes.push(carve);
+      carve.connect(p); vin = carve; nodes.push(carve);
     }
     // …and out onto its PART's strip. This is the pitched half of the desk:
     // the placement above is still the band's internal geometry, and the part
-    // bus (if the chair asked for one) is where the effect, the send and the
-    // fader for THAT chair live. No part, no bus, straight to `input`.
-    const p = c.createStereoPanner(); p.pan.value = pan;
-    node.connect(p); p.connect(partIn(r.key));
-    nodes.push(vin, p);
+    // bus (if the chair asked for one) is where the send and the fader for THAT
+    // chair live. No part, no bus, straight to `input`.
+    p.connect(partIn(r.key));
+    nodes.push(p);
     let pl = null;
     if (SP && SP.SamplerLive) {
       try { pl = SP.SamplerLive(c, { dry: vin, rev: vin, del: vin }); } catch (e) { pl = null; }
@@ -499,10 +589,41 @@ export function buildChannel(c, spec, env) {
     : name === "pan" ? pan.pan
     : name === "send.rev" ? rs.gain
     : name === "send.echo" ? ds.gain : null;
-  return { key: null, input, drumIn: dHP, laneIn, lanes, voiceBus, voices, droom,
-           player, autos, autoParam,
+  const self = { key: null, input, drumIn: desk.dry, laneIn, lanes, played,
+           voiceBus, voices, droom, kitGate, roomGate, desk, ownDesk,
+           player, autos, autoParam, fs, dryTrim, rack: !!sx.rack,
            parts, partIn, voiceIn, synthIn, partPlayer,
            motKind: spec.mot, oscs, nodes, spec, stages, rs, ds, lvl };
+  // the desk holds the gate ledger, so focusKit needs no second registry and a
+  // retired channel's gates stop being written to (an open gate on a dead
+  // channel is the zombie ZERO-STATIC R1 is about, one level up)
+  if (!ownDesk) desk.gates.set(self, { kit: kitGate, room: roomGate });
+  return self;
+}
+// THIS SECTION'S KIT, AND NOBODY ELSE'S — the exact shape voices.js focusSynths
+// keeps for the shared synth pool, applied to the shared kit desk. Called at
+// every section start (transport.js, and the offline walk in bounce.js), with a
+// 4 ms ramp: long enough not to click, short enough that the first hit of the
+// section is not clipped. Silent for a channel on a private desk, which has
+// nothing to focus.
+export function focusKit(chan, when) {
+  if (!chan || chan.ownDesk || !chan.desk) return;
+  // OPEN 20 ms EARLY. A setTargetAtTime ramp is still near zero AT the
+  // timestamp it is given, and unlike a synth note — whose own envelope has an
+  // attack — a kick's first sample IS the sound. Starting the ramp a hair
+  // before the downbeat costs a 20 ms crossfade between two sections that are
+  // never both being struck, and buys the transient back whole.
+  // …on the CHANNEL'S OWN CLOCK. The offline bounce walks this same function
+  // against an OfflineAudioContext whose currentTime has nothing to do with
+  // the live one's, and clamping an offline bar time to the live clock would
+  // open every gate at once, at the top of the render.
+  const now = (chan.input && chan.input.context) ? chan.input.context.currentTime : 0;
+  const t = Math.max(now, (when != null ? when : now) - 0.02);
+  for (const [ch, g] of chan.desk.gates) {
+    const open = ch === chan ? 1 : 0;
+    try { if (g.kit) g.kit.gain.setTargetAtTime(open, t, 0.004); } catch (e) {}
+    try { if (g.room) g.room.gain.setTargetAtTime(open, t, 0.004); } catch (e) {}
+  }
 }
 export function channelFor(sec, retireAt) {
   const spec = chanSpec(sec);
@@ -523,7 +644,7 @@ export function channelFor(sec, retireAt) {
   if (got && got.key === key) return got;
   if (got) { retireChannel(got, retireAt); dropRoute(got.key, retireAt); }
   const c = buildChannel(ctx, spec, { master: masterIn, verb: verbFor, echoIn: delBus,
-                                      room: roomBus });
+                                      room: roomBus, send: sendFor, kit: kitFor });
   c.key = key;
   CHAN.set(sec, c);
   return c;
@@ -554,6 +675,27 @@ window.__nuMix = () => ({
   worklets: synthNodes.size,
   convolvers: REV ? Object.keys(REV).length : 0,
   routes: [...synthOut.values()].reduce((n, m) => n + m.size, 0),
+  // THE NODE BUDGET, COUNTED — not asserted in a comment. Every number here is
+  // a length of a real array of real nodes: the shared rack counts itself as it
+  // builds (graph.js sharedReport) and each channel carries the list it will
+  // one day disconnect. `over` is the whole point: the ceiling travels with the
+  // count, so a gate — and a person reading the console — can see the mixer
+  // approaching it rather than discovering it in the ears. See BUDGET above for
+  // where the three numbers come from.
+  nodes: (() => {
+    const chans = [...CHAN.values()];
+    const shared = sharedReport();
+    const total = shared.total + chans.reduce((n, c) => n + c.nodes.length, 0);
+    const nparts = chans.reduce((n, c) => n + c.parts.size, 0);
+    const cap = BUDGET.shared + chans.length * BUDGET.chan + nparts * BUDGET.part;
+    return { total, shared: shared.total, channels: chans.length, parts: nparts,
+             per: chans.map(c => c.nodes.length), rack: shared, cap,
+             over: total > cap, budget: BUDGET };
+  })(),
+  // WHICH CHARACTER BUSES THE PAGE HAS BUILT. One per effect, ever, however
+  // many boxes and parts send to it — the claim this whole round rests on, so
+  // it is readable from outside rather than argued in a comment.
+  sends: SENDBUS ? Object.keys(SENDBUS).filter(k => SENDBUS[k]) : [],
   // total ARMED automation entries across the built channels (mot compiles
   // into the same list, so a legacy transition counts as the automation it is)
   automation: [...CHAN.values()].reduce((n, c) => n + (c.autos ? c.autos.length : 0), 0),
@@ -572,9 +714,22 @@ window.__nuMix = () => ({
     // the AudioParam's value, not the table's, because a table that never
     // reached a node is exactly the failure the mixer keeps rediscovering.
     droom: c.droom ? +c.droom.gain.value.toFixed(3) : null,
-    drums: [...c.lanes.entries()].map(([d, L]) => ({ lane: d,
+    // the strips are the PAGE's now (graph.js buildKitDesk) and only the
+    // attribution is per channel, so this walks the shared desk and keeps the
+    // lanes this section actually struck. Every number is still the shared
+    // strip's own AudioParam.
+    drums: [...c.lanes.entries()].filter(([d]) => c.played.has(d)).map(([d, L]) => ({ lane: d,
       level: +L.gain.gain.value.toFixed(3), pan: +L.pan.pan.value.toFixed(3),
       room: L.room ? +L.room.gain.value.toFixed(3) : null })),
+    // HOW THE SECTION'S EFFECTS WERE SPENT — `via: "send"` is a share of one
+    // page-wide bus, `via: "insert"` is the budgeted private rack (a chain, or
+    // a sweep). `dry` is the trim that keeps the two arithmetically the same.
+    via: c.rack ? "insert" : (c.fs.length ? "send" : null),
+    sends: c.fs.map(s => ({ key: s.key, amt: +s.gain.gain.value.toFixed(3) })),
+    dry: c.dryTrim ? +c.dryTrim.gain.value.toFixed(3) : 1,
+    // the kit gate: which section the one shared desk is currently heard
+    // through. Null on a private desk (an offline probe of a single channel).
+    kit: c.ownDesk ? null : +c.kitGate.gain.value.toFixed(3),
     voices: [...c.voices.entries()].map(([v, V]) => ({ v, id: V.id,
       pan: +V.pan.pan.value.toFixed(3), carve: V.carve, player: !!V.player,
       // which chair this voice is, so a reader can join a sounding voice to
@@ -588,6 +743,8 @@ window.__nuMix = () => ({
     // visible from outside.
     parts: [...c.parts.entries()].map(([key, P]) => ({ key,
       fx: P.spec.fx, stages: P.stages,
+      via: P.rack ? "insert" : (P.fs.length ? "send" : null),
+      sends: P.fs.map(s => ({ key: s.key, amt: +s.gain.gain.value.toFixed(3) })),
       rev: +P.rs.gain.value.toFixed(3), echo: +P.ds.gain.value.toFixed(3),
       level: +P.lvl.gain.value.toFixed(3), pan: +P.pan.pan.value.toFixed(3),
       muted: P.gate.gain.value < 0.5 })),
@@ -601,23 +758,65 @@ window.__nuMix = () => ({
 // when the channel has nothing armed, so the scheduler calls it
 // unconditionally. (The pump's re-duck is now a 0.15-beat ramp rather than
 // the old instantaneous jump — the same gesture, without the step.)
-export function armAutomation(chan, when, durSec, spb) {
+// `fromSec` — HOW FAR INTO THE BOX THIS RENDER ALREADY IS. Zero (the live
+// path, and every chunk that opens on a box) is the original behaviour to the
+// byte. It is non-zero for exactly one caller: audio/bounce.js renders the tape
+// in windows now, and a window that opens in the MIDDLE of a box still has to
+// put that box's motion where the ear expects it. Arming from the box start
+// would restart the sweep at the seam; skipping it would leave the param at its
+// built default. So the passed-over points are collapsed into ONE
+// setValueAtTime carrying the value the curve really holds at `fromSec` —
+// INTERPOLATED, not the last point's value, or a ramp that straddles the seam
+// would step. This lives here rather than in the caller because a second
+// implementation of the same walk is how the carrier drifts out of tune with
+// the graph (this file's law, and the bounce header's).
+export function armAutomation(chan, when, durSec, spb, fromSec) {
   if (!chan || !chan.autos || !chan.autos.length) return;
+  const from = fromSec > 0 ? fromSec : 0;
   for (const a of chan.autos) {
     const p = chan.autoParam && chan.autoParam(a.param);
     if (!p) continue;
     try {
       p.cancelScheduledValues(when);
       let started = false;
+      // the value the curve holds at the seam, and the last point behind it
+      let seam = null, prev = null;
       for (const [beat, val] of a.points) {
-        const t = when + Math.min(durSec, Math.max(0, beat * spb));
+        const rel = Math.min(durSec, Math.max(0, beat * spb));
         // exponential ramps refuse zero and sign changes; the floor keeps the
         // curve request honest instead of throwing mid-bar
         const v = a.curve === "exp" ? Math.max(0.0001, val) : val;
+        if (from && rel <= from) {
+          // still behind the seam: remember it and keep walking
+          if (prev && a.curve === "exp" && prev[0] < rel) seam = v; else seam = v;
+          prev = [rel, v];
+          continue;
+        }
+        if (from && !started) {
+          // the first point AHEAD of the seam. Emit the interpolated value at
+          // the seam first, so the ramp into this point starts from where the
+          // curve actually was rather than from the previous point's value.
+          if (prev) {
+            const span = rel - prev[0];
+            const frac = span > 0 ? (from - prev[0]) / span : 0;
+            const at = a.curve === "exp"
+              ? prev[1] * Math.pow(v / prev[1], frac)
+              : prev[1] + (v - prev[1]) * frac;
+            p.setValueAtTime(a.curve === "exp" ? Math.max(0.0001, at) : at, when);
+          } else if (seam != null) p.setValueAtTime(seam, when);
+          started = true;
+          // …then the point itself, as a ramp over what is LEFT of the span
+          if (a.curve === "exp") p.exponentialRampToValueAtTime(v, when + rel - from);
+          else p.linearRampToValueAtTime(v, when + rel - from);
+          continue;
+        }
+        const t = when + rel - from;
         if (!started) { p.setValueAtTime(v, t); started = true; }
         else if (a.curve === "exp") p.exponentialRampToValueAtTime(v, t);
         else p.linearRampToValueAtTime(v, t);
       }
+      // every point is behind the seam: the curve is done, hold its last value
+      if (from && !started && seam != null) p.setValueAtTime(seam, when);
     } catch (e) {}
   }
 }
@@ -638,10 +837,18 @@ function retireChannel(c, at) {
     c.lvl.gain.cancelScheduledValues(t0);
     c.lvl.gain.setTargetAtTime(0, t0, 0.01);
   } catch (e) {}
+  // OFF THE DESK'S LEDGER IMMEDIATELY, whatever the fade does: focusKit walks
+  // that map every section start, and writing a ramp onto a gate whose channel
+  // is being torn down is the zombie ZERO-STATIC R1 warns about.
+  try { if (c.desk && c.desk.gates) c.desk.gates.delete(c); } catch (e) {}
   setTimeout(() => {
     for (const o of c.oscs) { try { o.stop(); } catch (e) {} }
     for (const n of c.nodes) { try { n.disconnect(); } catch (e) {} }
-    try { c.input.disconnect(); c.drumIn.disconnect(); } catch (e) {}
+    // `drumIn` is the SHARED kit desk's summing node and is deliberately NOT
+    // disconnected here — it belongs to the page, not to this channel, and one
+    // retiring section must not take the kit away from the rest of the song.
+    // The channel's own end of that wire (kitGate) is in `nodes` above.
+    try { c.input.disconnect(); } catch (e) {}
   }, wait + 700);
 }
 export function dropChannels() {

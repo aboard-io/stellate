@@ -57,11 +57,11 @@
 import { GENRES, BASSSYNTH, DTIMES } from "../ui/deps.js";
 import { SONG, SLOTS, loopOnly, bpm, MASTER, on, emit } from "../ui/state.js";
 import { stackOf, kitOf, boxBars } from "../ui/derive.js";
-import { buildMasterChain, buildEchoBus, buildRoomBus, makeVerb,
-         masterVol, muteNow, unmuteRamp } from "./graph.js";
+import { buildMasterChain, buildEchoBus, buildRoomBus, buildKitDesk, buildSendBus, makeVerb,
+         masterVol, muteNow, unmuteRamp, DRYROOM } from "./graph.js";
 import { FONT, isSynthFont, fontDef } from "./assets.js";
 import { makeSynthNode, driveSynth, offFallback } from "./voices.js";
-import { chanSpec, buildChannel, armAutomation } from "./mixer.js";
+import { chanSpec, buildChannel, armAutomation, focusKit } from "./mixer.js";
 import { buildTimeline, scheduleBar, stepDur, playing, getPosition,
          onGesture, seekPhase, setQuietWhen } from "./transport.js";
 
@@ -88,7 +88,34 @@ const st = { state: "idle", stage: null, durSec: 0, gen: 0, sampledOnly: false,
              lastRenderMs: 0, url: null, fallbacks: 0, lastError: null,
              // the carrier-first half: which source the ear is on, whether a
              // re-render is on its way, and why we fell back if we did
-             mode: "graph", pending: false, demoted: null };
+             mode: "graph", pending: false, demoted: null,
+             // WHERE THE TIME WENT, per phase, in ms — because "the render is
+             // slow" is not a finding, it is a feeling. A composed song failed
+             // to render inside 300 s on the reference box and nobody could say
+             // which of the five phases owned the seconds. Measured here so the
+             // gate and the readout argue with numbers.
+             phases: null, phase: null, wantSec: 0, wantBars: 0, chunks: 0, chunkMs: 0, each: null, hits: 0, misses: 0,
+             ratio: 0, nodes: 0, pooled: 0 };
+// one render's stopwatch: ph.mark("pool") closes the phase that was open and
+// opens 'pool'. Cheap enough to leave armed in production (five performance.now
+// calls per render), and the alternative is instrumenting it again next time.
+// Reported LIVE (st.phase = the phase now open, st.phases = the closed ones),
+// because the first thing this instrument had to answer was "which phase is the
+// 300 s in" — and a stopwatch that only publishes when the render RETURNS
+// cannot answer that about a render that never returns.
+function stopwatch(sink) {
+  const out = {}; let t = performance.now(), name = null;
+  return {
+    mark(next) {
+      const now = performance.now();
+      if (name) out[name] = Math.round((out[name] || 0) + (now - t));
+      name = next; t = now;
+      if (sink) { sink.phases = out; sink.phase = next; }
+    },
+    done() { this.mark(null); return out; },
+    out,
+  };
+}
 // the machine-readable truth for test/browser/nukernel-survival.test.js — the
 // gate reads the RENDERED BLOB through st.url, because an analyser on the
 // live graph is structurally blind to an element playing bytes
@@ -100,6 +127,51 @@ window.__nuBounce = () => ({ ...st, carrying, armed,
   // carrying/elVolume are flags this module SET, and a gate that polls only
   // what the code assigned proves the assignment, not the playback
   elPaused: el ? el.paused : null });
+// the TARGET, stated as a number the gate can read: a song of N seconds must
+// render in well under N seconds or the carrier handoff (and with it mobile
+// background survival) waits on the tape. ratio = renderMs / (durSec*1000).
+window.__nuRender = () => ({ ms: st.lastRenderMs, durSec: st.durSec,
+  ratio: st.ratio, phases: st.phases, phase: st.phase,
+  wantSec: st.wantSec, wantBars: st.wantBars, chunks: st.chunks,
+  parallel: PARALLEL, chunkSec: CHUNK_SEC, chunkMs: st.chunkMs, each: st.each,
+  hits: st.hits, misses: st.misses,
+  nodes: st.nodes, pooled: st.pooled,
+  stage: st.stage, sampledOnly: st.sampledOnly });
+// TEST SEAM: render a known length RIGHT NOW and hand back the phase report.
+// The budget gate cannot wait on the debounce (it would be timing the timer),
+// and the growth curve — "how does cost scale with song length" — is only
+// askable if the length is an argument. Refuses while a real render is in
+// flight, because two OfflineAudioContexts competing measure neither.
+window.__nuRenderNow = async (capSec, opts) => {
+  if (rendering) return null;
+  rendering = true;
+  if (opts && opts.cold) dropWindowCache();
+  try {
+    const t0 = performance.now();
+    const res = await renderSong(capSec || 0);
+    if (!res) return null;
+    const ms = Math.round(performance.now() - t0);
+    // …AND A FINGERPRINT OF THE TAPE ITSELF. A render budget gate that only
+    // reads a clock passes just as happily on a render that got fast by going
+    // silent; this is the artifact, in 24 RMS windows and a peak.
+    // 64 windows, because the unit a caller compares is a WINDOW OF THE TAPE
+    // and a one-box edit only touches a few seconds of a long song — at 24 the
+    // buckets were wider than the edit and averaged it away.
+    const d = res.buf.getChannelData(0), W = 64, w = Math.floor(d.length / W);
+    const rms = [];
+    let peak = 0;
+    for (let k = 0; k < W; k++) {
+      let acc = 0;
+      for (let i = k * w; i < (k + 1) * w; i++) { const v = d[i]; acc += v * v; if (v > peak) peak = v; }
+      rms.push(+Math.sqrt(acc / w).toFixed(7));
+    }
+    return { ms, durSec: res.durSec, ratio: ms / (res.durSec * 1000),
+             phases: res.phases, chunks: st.chunks,
+             hits: st.hits, misses: st.misses,
+             nodes: st.nodes, pooled: st.pooled,
+             rms, peak: +peak.toFixed(5) };
+  } finally { rendering = false; }
+};
 // test seam: ?nobounce holds the page in the "no carrier exists" state, so the
 // survival gate can prove the no-carrier hide branches deterministically —
 // without it they race a short render that lands in a couple of seconds
@@ -227,8 +299,9 @@ async function maybeRender(stage) {
     if (myGen !== gen) { /* stale: a newer request superseded this render */ }
     else if (!res) st.state = st.url ? "ready" : "idle";   // nothing to render
     else {
-      st.lastRenderMs = Math.round(performance.now() - t0);
       adopt(res, want, myGen, stage);
+      st.lastRenderMs = Math.round(performance.now() - t0);
+      st.ratio = res.durSec ? st.lastRenderMs / (res.durSec * 1000) : 0;
     }
   } catch (e) {
     if (myGen === gen) {
@@ -249,25 +322,200 @@ async function maybeRender(stage) {
 }
 
 /* ---------- the offline render ---------- */
-async function renderSong(capSec) {
-  let TL = buildTimeline();
-  if (!TL.length) return null;
-  const sd = stepDur(), SR = 44100, LEAD = 0.05, TAIL = 1.5;
-  if (capSec) {
-    // the SHORT stage: the head of the song, cut on a bar line at or under
-    // the cap (at least one bar — the loop wrap must stay a downbeat for the
-    // fold). Its loop is the song's OPENING, not the user's current position:
-    // a few bars of the right music beats half a minute of silence, and the
-    // full render replaces it before most listens get around twice.
-    const cut = []; let acc = 0;
-    for (const b of TL) {
-      if (cut.length && acc + b.barSteps * sd > capSec) break;
-      cut.push(b); acc += b.barSteps * sd;
-    }
-    TL = cut;
+// THE TAPE IS RENDERED IN WINDOWS, AND THAT IS NOT AN OPTIMISATION DETAIL —
+// it is the only shape in which a whole song renders at all. MEASURED on this
+// box, one OfflineAudioContext over the whole song (a composed 141.6 s
+// beatles): 3.9 s of music cost 1.1 s, 15.5 s cost 14.1 s, 46.5 s cost 179 s.
+// That is ~n^2.3, and the extrapolation for the full song is about 25 minutes.
+// It never finished inside the 300 s anyone was willing to wait, which on
+// mobile means the audible path never arrives (bounce is the carrier).
+//
+// WHY IT IS QUADRATIC, measured rather than guessed: a 32 s render created
+// 2919 nodes — 1599 gains, 511 biquads, 386 buffer sources and, the expensive
+// ones, 195 DynamicsCompressors and 195 WaveShapers. Those are the PER-NOTE
+// channel strips (engine/faust/voices/sampler.js ~1244, buildStripNodes, the
+// profiles nukernel copies in instruments.js STRIPS, whose own comment already
+// warns "sampler.js builds the strip PER NOTE"). The live graph tears each one
+// down again — sampler.js:1255 hangs teardown on `src.onended` plus a
+// wall-clock setTimeout — and NEITHER OF THOSE FIRES DURING AN OFFLINE RENDER:
+// onended is delivered after startRendering resolves, and setTimeout measures
+// a clock the render is not on. So every note the tape has ever played is
+// still in the graph, being pulled every 128-sample quantum, for the rest of
+// the render. Node population grows linearly with song length; cost per
+// quantum grows with it; the product is the square.
+//
+// Stage 1's shared busses are NOT the term here and re-measuring says so: the
+// whole shared rack is 69 nodes and the channels 11 more (window.__nuMix), a
+// rounding error against 2919. The per-note strip is the term.
+//
+// Chunking fixes it BY CONSTRUCTION rather than by surgery. Each window is its
+// own context, so its node population is bounded by the notes in that window
+// and the cost is linear in the song. It buys a second, independent factor as
+// well: chromium renders each OfflineAudioContext on its own thread, so
+// windows rendered concurrently really do overlap — measured 2.43x for three
+// at once on this 4-core box.
+//
+// THE SEAM LAW (docs/WAV-FIRST.md v2: cut on a bar line, never into a
+// transient) is honoured the way a tape op honours it — with PRE-ROLL, not
+// with a crossfade. A window renders the bar BEFORE its own first bar and
+// throws that bar's output away. Everything that has to be true at the seam
+// then simply is: the reverb and delay buses arrive carrying the ring-out of
+// the previous bar because they really played it, and the master chain's
+// compressor and limiter arrive with real gain reduction on them rather than
+// wide open. Output is therefore a pure CONCATENATION — every sample of the
+// tape is produced by exactly one window, through one master chain — which is
+// what a crossfade of two independently-limited windows could not promise.
+// The one seam that stays additive is the LOOP WRAP, which foldAndEncode
+// already owns and which is a downbeat by construction.
+//
+// The pre-roll is one BAR rather than N seconds so the walk stays bar-indexed:
+// no fractional bar arithmetic, and a pre-roll bar that opens a box arms that
+// box exactly as the live tick does. A window that opens mid-box arms it
+// through armAutomation's `fromSec` (audio/mixer.js) — one walk, offset, never
+// a second copy of it.
+const SR = 44100, LEAD = 0.05, TAIL = 1.5;
+// Seconds of MUSIC per window, and it is a BOWL, not a slope: the cost curve
+// above is superlinear inside a window (so big windows are bad) while the
+// one-bar pre-roll is a fixed tax per window (so small ones are bad too).
+// Measured on the composed beatles song, whole-song render, same page:
+//   4 s -> 0.60x realtime    6 s -> 0.56x    10 s -> 0.71x    16 s -> 0.95x
+// 4 and 6 are inside each other's noise on a loaded box; 6 is chosen because it
+// reaches the same place with a third fewer windows, and every window is a
+// master chain, a room and a kit desk built again.
+const CHUNK_SEC = (() => {
+  const q = /[?&]chunksec=(\d+(?:\.\d+)?)/.exec(typeof location !== "undefined" ? location.search : "");
+  return q ? +q[1] : 6;
+})();
+// how many windows render at once. Chromium gives each OfflineAudioContext its
+// own render thread; one core is left for the page, which is still running the
+// LIVE graph while this happens — a bounce that starves the audible path has
+// made the wrong trade.
+const PARALLEL = (() => {
+  const q = /[?&]renderpar=(\d+)/.exec(typeof location !== "undefined" ? location.search : "");
+  if (q) return Math.max(1, +q[1]);
+  return Math.max(1, Math.min(4,
+    ((typeof navigator !== "undefined" && navigator.hardwareConcurrency) || 4) - 1));
+})();
+
+/* ---------- the window cache: an edit re-renders what it changed ---------- */
+// EVEN LINEAR IS NOT FAST ENOUGH, measured: windowing takes the composed
+// beatles song from "did not finish in 300 s" to 82-99 s over repeated runs,
+// which is 0.6-0.7x its own duration on this box. The budget is 0.25x. The gap
+// is not another constant factor hiding somewhere — it is the graph itself, at
+// ~1.2x realtime per window with the per-note strips the mix is made of, and
+// three windows at a time is already all the cores there are.
+//
+// But a re-render is not a render. An edit moves ONE box, and the tape is now
+// literally a concatenation of independently rendered windows, so the windows
+// that box does not touch are already correct on disk. Keyed on WHAT A WINDOW
+// RENDERS rather than on where it sits, so inserting a box early in the song
+// does not invalidate the ones after it: the key is the bars' own content, the
+// sections they play, the tempo, the font, the master bus and the two facts
+// about the window's geometry that change its samples (whether it carries the
+// loop tail, and how far into a box it opens).
+const winCache = new Map();                        // key -> { chs, n }
+// Bounded in SAMPLES, not entries, because a window is a few MB of Float32 and
+// what matters is total memory. The budget has to hold ONE WHOLE SONG or the
+// no-edit case starts evicting the windows it is about to be asked for again —
+// measured at half this size, a re-render with nothing changed hit only 14 of
+// 24 windows. Counted in float slots across both channels, which is the unit
+// cachePut adds, so the two agree; a phone gets a smaller ceiling because it is
+// the device that cannot spare 70 MB, and a partial cache degrades to a partial
+// speedup rather than to a fault.
+const CACHE_MAX = (isMobile ? 150 : 220) * SR * 2;
+let cacheSamples = 0;
+function dropWindowCache() { winCache.clear(); cacheSamples = 0; }
+// LRU by re-insertion: a hit moves the entry to the back of the Map, so the
+// eviction walk below takes the front, which is the least recently rendered.
+function cachePut(key, chs, n) {
+  if (n * 2 > CACHE_MAX) return;                   // one window bigger than the budget
+  winCache.set(key, { chs, n }); cacheSamples += n * 2;
+  for (const k of winCache.keys()) {
+    if (cacheSamples <= CACHE_MAX) break;
+    const e = winCache.get(k);
+    winCache.delete(k); cacheSamples -= e.n * 2;
   }
-  const durSec = TL.reduce((s, b) => s + b.barSteps, 0) * sd;
-  const octx = new OfflineAudioContext(2, Math.ceil((LEAD + durSec + TAIL) * SR), SR);
+}
+function cacheGet(key) {
+  const e = winCache.get(key);
+  if (!e) return null;
+  winCache.delete(key); winCache.set(key, e);      // freshen
+  return e;
+}
+// WHAT THIS WINDOW'S SAMPLES DEPEND ON, and nothing else. The bars carry their
+// own events (buildTimeline has already expanded the phrases), the sections
+// carry the mix — chanSpec and kitOf both read SONG[si] — and the three
+// globals are the ones the signature at the top of this file already names as
+// the musical identity of a render.
+function winKey(TL, plan, ck, sd) {
+  const sis = [];
+  for (let i = ck.pre; i < ck.b; i++) if (!sis.includes(TL[i].si)) sis.push(TL[i].si);
+  return JSON.stringify([sd, FONT, MASTER,
+                         ck.b === TL.length, +plan.from[ck.pre].toFixed(6),
+                         TL.slice(ck.pre, ck.b), sis.map(i => SONG[i])]);
+}
+
+// WHERE EVERY BAR SITS, in the two coordinates the walk needs: `t0` seconds
+// from the top of the tape (so a window knows where its output lands) and
+// `from` seconds into its own BOX (so a window opening mid-box can arm that
+// box's automation at the right point). Computed once over the whole timeline
+// because both are running sums and a window must not have to recompute the
+// song to know where it starts.
+function planChunks(TL, sd, chunkSec) {
+  const bars = TL.map(b => b.barSteps * sd);
+  // t0 carries ONE EXTRA entry, the end of the last bar, so a window's span is
+  // always t0[b] - t0[a] with no special case for the final window
+  const t0 = new Array(TL.length + 1), from = new Array(TL.length);
+  let acc = 0, since = 0;
+  for (let i = 0; i < TL.length; i++) {
+    if (TL[i].first) since = 0;
+    t0[i] = acc; from[i] = since;
+    acc += bars[i]; since += bars[i];
+  }
+  t0[TL.length] = acc;
+  const chunks = [];
+  let a = 0, len = 0;
+  for (let i = 0; i < TL.length; i++) {
+    len += bars[i];
+    if (len >= chunkSec || i === TL.length - 1) { chunks.push({ a, b: i + 1 }); a = i + 1; len = 0; }
+  }
+  // …and the pre-roll bar, which is simply the previous one (the first window
+  // has none, and needs none: nothing precedes silence)
+  for (const ck of chunks) ck.pre = Math.max(0, ck.a - 1);
+  return { chunks, t0, from, total: acc };
+}
+
+// ---- WHY THERE IS NO REAPER (a measured negative result) -------------------
+// The obvious alternative to windowing was to keep ONE context and tear the
+// dead notes out of it mid-render: an OfflineAudioContext can be suspended at a
+// given render time, which is the one place graph surgery can happen, so the
+// offline equivalent of sampler.js:1255's teardown is buildable. It WAS built,
+// and it worked exactly as designed — the per-note nodes were captured by
+// tapping the factories for the length of each synchronous SamplerLive.note()
+// call (which also, neatly, never catches the lazily-built permanent
+// structures, since mixer.js voiceBus() and the kit desk's laneIn() run before
+// the player is asked for a note rather than inside it), and each note's death
+// was computed from sampler.js's own arithmetic on the arguments.
+//
+// IT MADE THE RENDER SLOWER. Measured on one song in one page, A/B'd in the
+// same run at three sweep intervals: 0.78x at a sweep every 1 s, 0.91x every
+// 4 s, 0.92x every 8 s. The audio was bit-for-bit indifferent to it (max
+// |dRMS| 0.000000 across 24 windows, identical peak), so this is a cost result
+// and not a correctness one: disconnecting a node does not buy back its share
+// of chromium's offline render loop, and every suspend/resume is a round trip
+// to a main thread that is busy playing the live graph. Windowing gets the same
+// bound on node population for free, by never putting the nodes in one graph in
+// the first place, and it parallelises. Do not re-derive this.
+
+// ONE WINDOW. Everything the old whole-song render did, over a slice of the
+// timeline — the same builders, the same walk, the same law that the carrier is
+// the same TOPOLOGY as the live mix and not merely the same numbers.
+async function renderChunk(TL, plan, ck, sd, tally) {
+  const preSec = plan.t0[ck.a] - plan.t0[ck.pre];
+  const outSec = plan.t0[ck.b] - plan.t0[ck.a];
+  const tailSec = ck.b === TL.length ? TAIL : 0;
+  const octx = new OfflineAudioContext(2,
+    Math.ceil((LEAD + preSec + outSec + tailSec) * SR), SR);
   // the same room: master numbers, echo topology, cached reverb impulses —
   // all built by the graph's own parameterized builders
   // THE SAME MASTER, spec included. buildMasterChain resolves the song's
@@ -284,13 +532,28 @@ async function renderSong(capSec) {
   };
   // the DRUM ROOM is part of the room, so the carrier renders it: a bounce
   // without it is a drier mix than the one the ear was just listening to
-  const env = { master: master.input, verb, echoIn: echo.input,
-                room: buildRoomBus(octx, master.input) };
+  // ...AND THE SAME SHARED RACK, one of each, exactly as the live graph has it:
+  // one kit desk for the whole render and one bus per character effect. Built
+  // lazily on the same first-use law, so a carrier of a song with no chorus
+  // renders no chorus. Per WINDOW now rather than per song, which is the same
+  // sentence with the same meaning: one of each, for everything being mixed.
+  const room = DRYROOM ? null : buildRoomBus(octx, master.input);
+  let kitDesk = null;
+  const offSends = new Map();
+  const env = { master: master.input, verb, echoIn: echo.input, room,
+                kit: () => (kitDesk || (kitDesk = buildKitDesk(octx, room))),
+                send: (k) => {
+                  if (!offSends.has(k))
+                    offSends.set(k, buildSendBus(octx, k, master.input, 4 * sd));
+                  return offSends.get(k);
+                } };
   const chans = new Map();
   const chanOf = sec => {
     const spec = chanSpec(sec), k = JSON.stringify(spec);
     let c = chans.get(k);
-    if (!c) { c = buildChannel(octx, spec, env); c.key = k; chans.set(k, c); }
+    if (!c) {
+      c = buildChannel(octx, spec, env); c.key = k; chans.set(k, c);
+    }
     return c;
   };
 
@@ -299,15 +562,23 @@ async function renderSong(capSec) {
   // (addModule from a blob URL is a CSP question in production). ATTEMPT the
   // real voices; on any failure degrade to sampled-only — the synth genres
   // play their sampled instrument instead — and COUNT it. Never silently.
-  st.sampledOnly = false;
+  //
+  // PER WINDOW, and that is cheap where it counts: voices.js makeSynthNode
+  // caches the compiled DSP FACTORY in a module-level map keyed on the dsp
+  // name, so only createNode is paid again — the wasm is compiled once for the
+  // session however many windows ask for it. Only the specs this window's own
+  // bars can play are built, so a window of drums pays for no synths at all.
   const pool = new Map();                          // "dsp#v" -> node
   const routes = new Map();                        // node -> Map(chanKey -> gain)
+  const sis = new Set();
+  for (let i = ck.pre; i < ck.b; i++) sis.add(TL[i].si);
+  const mine = [...sis].map(i => SONG[i]).filter(Boolean);
   const specs = [...new Set([
     ...(isSynthFont() ? [fontDef().synth] : []),
-    ...SONG.flatMap(x => stackOf(x).filter(e => GENRES[e.g] && GENRES[e.g].synth).map(e => GENRES[e.g].synth)),
-    ...SONG.filter(x => BASSSYNTH[x.bassop]).map(x => BASSSYNTH[x.bassop])])];
+    ...mine.flatMap(x => stackOf(x).filter(e => GENRES[e.g] && GENRES[e.g].synth).map(e => GENRES[e.g].synth)),
+    ...mine.filter(x => BASSSYNTH[x.bassop]).map(x => BASSSYNTH[x.bassop])])];
   if (specs.length) {
-    const depth = Math.min(8, Math.max(1, ...SONG.map(sec =>
+    const depth = Math.min(8, Math.max(1, ...mine.map(sec =>
       stackOf(sec).reduce((n, e) => n + (GENRES[e.g] ? GENRES[e.g].voices : 0), 0))));
     try {
       for (const sp of specs)
@@ -315,7 +586,7 @@ async function renderSong(capSec) {
           pool.set(sp.dsp + "#" + v, await makeSynthNode(octx, sp));
     } catch (e) {
       pool.clear();
-      st.sampledOnly = true;
+      tally.sampledOnly = true;
     }
   }
   // KEYED, like the live routeSynth, because the key is what says which PART
@@ -356,26 +627,131 @@ async function renderSong(capSec) {
   };
 
   // ---- the walk: the live tick's bar loop against offline time ----
-  offFallback.n = 0;
   let t = LEAD, cur = null;
-  for (const bar of TL) {
-    const sec = SONG[bar.si];
+  for (let i = ck.pre; i < ck.b; i++) {
+    const bar = TL[i], sec = SONG[bar.si];
     if (!sec) continue;
+    // THE WINDOW'S FIRST BAR IS ALWAYS A SETUP BAR, whether or not it opens a
+    // box: this context has never heard of this section, so the channel, the
+    // echo time, the synth focus and the kit gates all have to be stated. When
+    // it opens a box that is exactly the live tick's `bar.first`; when it opens
+    // mid-box, `fromSec` carries the box's motion to where the ear expects it.
+    const head = i === ck.pre;
     if (!cur || cur.si !== bar.si || bar.first)
       cur = { si: bar.si, chan: chanOf(sec), kit: kitOf(sec) };
-    if (bar.first) {
+    if (bar.first || head) {
       echo.setTime(DTIMES[sec.dtime || "d8"], t);
       // the SAME walker the live tick arms — the carrier honors automation
       // (mot included, since mot compiles into the same list in chanSpec)
-      armAutomation(cur.chan, t, bar.barSteps * sd * boxBars(sec), sd * 4);
+      armAutomation(cur.chan, t, bar.barSteps * sd * boxBars(sec), sd * 4,
+                    bar.first ? 0 : plan.from[i]);
       focusAt(cur.chan, t);
+      focusKit(cur.chan, t);        // one kit desk for the render, one section at a time
     }
     scheduleBar(bar, sec, cur.chan, cur.kit, t, sd, offSynth);
-    t += bar.barSteps * sd;
+    t += TL[i].barSteps * sd;
   }
+  tally.nodes += chans.size; tally.pooled += pool.size;
+  const t0 = performance.now();
   const buf = await octx.startRendering();
+  // SUMMED, so the report can divide it by the wall clock and say what the
+  // concurrency actually bought — a number that is 1.0 is a wave that queued
+  const ms = performance.now() - t0;
+  tally.chunkMs += ms;
+  // PER WINDOW, because the sum hides the shape: a song whose choruses cost
+  // four times its verses is a density problem, and a flat profile is a fixed
+  // per-window overhead problem. They want different fixes.
+  tally.each.push([Math.round(ms), +(preSec + outSec + tailSec).toFixed(2), chans.size]);
+  // LIFTED OUT OF THE AudioBuffer HERE, not at assembly, because the cache has
+  // to hold the window's OUTPUT and not its pre-roll — and because holding an
+  // AudioBuffer holds the context that made it.
+  const skip = Math.round((LEAD + preSec) * SR);
+  const n = Math.max(0, buf.length - skip);
+  const chs = [new Float32Array(n), new Float32Array(n)];
+  for (let c = 0; c < 2; c++) {
+    const d = buf.getChannelData(Math.min(c, buf.numberOfChannels - 1));
+    for (let i = 0; i < n; i++) chs[c][i] = d[skip + i];
+  }
+  return { chs, n };
+}
+
+async function renderSong(capSec) {
+  const ph = stopwatch(st); ph.mark("timeline");
+  let TL = buildTimeline();
+  if (!TL.length) return null;
+  const sd = stepDur();
+  if (capSec) {
+    // the SHORT stage: the head of the song, cut on a bar line at or under
+    // the cap (at least one bar — the loop wrap must stay a downbeat for the
+    // fold). Its loop is the song's OPENING, not the user's current position:
+    // a few bars of the right music beats half a minute of silence, and the
+    // full render replaces it before most listens get around twice.
+    const cut = []; let acc = 0;
+    for (const b of TL) {
+      if (cut.length && acc + b.barSteps * sd > capSec) break;
+      cut.push(b); acc += b.barSteps * sd;
+    }
+    TL = cut;
+  }
+  const plan = planChunks(TL, sd, CHUNK_SEC);
+  const durSec = plan.total;
+  st.wantSec = durSec; st.wantBars = TL.length; st.chunks = plan.chunks.length;
+  ph.mark("render");
+  st.sampledOnly = false;
+  offFallback.n = 0;
+  const tally = { nodes: 0, pooled: 0, chunkMs: 0, each: [], sampledOnly: false };
+  const done = new Array(plan.chunks.length);
+  // WAVES, not a free-for-all: PARALLEL contexts at a time. Unbounded
+  // Promise.all over seventy windows would put seventy render threads and
+  // seventy graphs' worth of buffers in flight at once, which is how a phone
+  // turns a speedup into an out-of-memory reload.
+  const keys = plan.chunks.map(ck => winKey(TL, plan, ck, sd));
+  let hits = 0;
+  const todo = [];
+  for (let k = 0; k < plan.chunks.length; k++) {
+    const got = cacheGet(keys[k]);
+    if (got) { done[k] = got; hits++; } else todo.push(k);
+  }
+  for (let i = 0; i < todo.length; i += PARALLEL) {
+    const wave = todo.slice(i, i + PARALLEL);
+    const got = await Promise.all(wave.map(k => renderChunk(TL, plan, plan.chunks[k], sd, tally)));
+    for (let j = 0; j < got.length; j++) { done[wave[j]] = got[j]; cachePut(keys[wave[j]], got[j].chs, got[j].n); }
+  }
+  st.hits = hits; st.misses = todo.length;
+  st.sampledOnly = tally.sampledOnly;
   st.fallbacks = offFallback.n;
-  return { buf, durSec, lead: LEAD, sr: SR };
+  // the node census of the OFFLINE graph, the same question __nuMix answers for
+  // the live one: stage 1's shared busses are only a win if the bounce got them
+  // too, and a bounce that quietly kept a rack per section would show up here
+  // and nowhere else.
+  st.nodes = tally.nodes; st.pooled = tally.pooled;
+  st.chunkMs = Math.round(tally.chunkMs); st.each = tally.each;
+
+  // ---- assembly: a pure concatenation, plus the last window's ring-out ----
+  ph.mark("assemble");
+  const N = Math.round(durSec * SR), tailN = Math.round(TAIL * SR);
+  const chs = [new Float32Array(N + tailN), new Float32Array(N + tailN)];
+  for (let k = 0; k < plan.chunks.length; k++) {
+    const ck = plan.chunks[k], src = done[k];
+    if (!src) continue;
+    // EXACT SAMPLE BOUNDARIES, taken from the running sum rather than from each
+    // window's own length: rounding a duration per window drifts a sample at a
+    // time and a one-sample hole at a seam is a click.
+    const at = Math.round(plan.t0[ck.a] * SR);
+    const end = ck.b === TL.length ? N + tailN : Math.round(plan.t0[ck.b] * SR);
+    for (let c = 0; c < 2; c++) {
+      const d = src.chs[c], o = chs[c];
+      const n = Math.min(end - at, src.n, o.length - at);
+      for (let i = 0; i < n; i++) o[at + i] = d[i];
+    }
+  }
+  st.phases = ph.done();
+  // foldAndEncode wraps the ring-out onto the head, so it is handed a buffer
+  // that is already lead-stripped and already carries its tail past N — the
+  // duck type is the three members it reads.
+  const buf = { length: N + tailN, numberOfChannels: 2,
+                getChannelData: c => chs[c] };
+  return { buf, durSec, lead: 0, sr: SR, phases: ph.out };
 }
 
 /* ---------- fold + encode ---------- */
@@ -419,7 +795,12 @@ function foldAndEncode(res) {
   return new Blob([ab], { type: "audio/wav" });
 }
 function adopt(res, want, myGen, stage) {
+  // the fold+WAV encode is the sixth phase and it is NOT inside renderSong —
+  // it runs here, on the main thread, over every sample of the tape. Timed in
+  // the same units as the other five so the report adds up to lastRenderMs.
+  const encT = performance.now();
   const url = URL.createObjectURL(foldAndEncode(res));
+  if (res.phases) res.phases.encode = Math.round(performance.now() - encT);
   urls.push(url);
   while (urls.length > 2) { try { URL.revokeObjectURL(urls.shift()); } catch (e) {} }
   st.url = url; st.durSec = res.durSec; st.gen = myGen; st.state = "ready";

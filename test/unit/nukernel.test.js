@@ -904,8 +904,10 @@ console.log("the composer writes songs that are songs");
       const song = C.compose(gk, s), G = GENRES[gk];
       // the shape Load reads, or it cannot come back. The bank is VARIABLE
       // (1..NSLOTS) now and the composer sizes it to what the song needs —
-      // its eight kinds of material, no blank padding.
-      ok(song.v === 2 && song.slots.length === 8 && song.slots.length <= NSLOTS &&
+      // its NINE kinds of material, no blank padding. The ninth is the verse
+      // line: the chorus topline's own development, which is what makes the
+      // singer a through-line rather than a part that turns up twice.
+      ok(song.v === 2 && song.slots.length === 9 && song.slots.length <= NSLOTS &&
          song.song.length >= 6,
          gk + "/" + s + ": not the saved shape");
       ok(song.bpm >= 70 && song.bpm <= 160, gk + "/" + s + ": bpm outside the control's range");
@@ -1058,7 +1060,7 @@ console.log("the composer writes songs that are songs");
     // kernel edge or the bed path knows — and every anchor `intro` field too
     const KINDS = new Set(["count", "hit", "solo", "kit", "swell", "padin",
                            "bassin", "riser", "cold", "stabs", "fade",
-                           "drums", "drumbass"]);
+                           "drums", "drumbass", "quote"]);
     for (const [fam] of FAMILIES) {
       ok(Array.isArray(C.INTRO_LEAN[fam]) && C.INTRO_LEAN[fam].length,
          fam + ": no INTRO_LEAN ballot");
@@ -1902,10 +1904,18 @@ console.log("song arc, prechorus, topline — the radio shape, measured on ui/de
     const song = C.compose("beatles", 5);
     const pre = song.song.filter(b => b.cue === "prechorus");
     ok(pre.length === 2, "the song plan does not carry two prechoruses");
-    for (const b of pre) {
+    pre.forEach((b, i) => {
       ok(C.ROLES[b.role], "a prechorus is stored under an illegal role: " + b.role);
-      ok(b.env === "in" && b.mot === "rise" && b.cadence,
-         "the prechorus does not lift (env/mot/cadence missing)");
+      // THE SECOND ONE DOES NOT FADE IN AGAIN. Both point forward — riser
+      // armed, dominant cadence stamped — but a band that fades up twice in
+      // one record has a desk problem, so the first prechorus arrives (`in`,
+      // a fade from zero) and the second pushes (`lift`, held flat then
+      // climbing hard). It is also what keeps two same-role sections from
+      // carrying the identical dynamic where the ladder pass cannot help,
+      // because a fade is not on the ladder.
+      ok(b.env === (i ? "lift" : "in") && b.mot === "rise" && b.cadence,
+         "prechorus " + i + " does not lift (env " + b.env + " / mot " + b.mot +
+         " / cadence " + !!b.cadence + ")");
       // the cadence reaches the BASS in the window's last bar: its root is
       // the dominant's, not the prog's own final chord
       const r = D.sectionEvents(b, song.slots), bs = 16 / r.g.rate;
@@ -1914,7 +1924,7 @@ console.log("song arc, prechorus, topline — the radio shape, measured on ui/de
       ok(bpc.length > 0 && bpc.every(pc => pc === 7 || pc === 6),
          "the beatles prechorus cadence never reaches the bass in the rendered window: " +
          bpc.join(","));
-    }
+    });
     // ...and where the genre HAS a pad, the cadence's dominant third actually
     // SOUNDS: isley's Rhodes voices the V7 in the window's last bar — pc 11,
     // which dorian does not contain, so only the cadence can put it there
@@ -3712,7 +3722,19 @@ console.log("the arranged dynamic — the chorus outweighs the verse, on the rea
   }
   // (b) AND IT IS AUDIBLE IN THE EVENTS: the last chorus of a song outweighs
   // the verse before it, measured as mean rendered velocity through the real
-  // sectionEvents path (window, envelope, edges, groove — everything).
+  // sectionEvents path (window, envelope, edges, groove — everything) TIMES
+  // the box's own level, which is §31(a)'s measure and is the honest one.
+  //
+  // IT WAS NOT, until the singer landed on the verses. `lvl` was left out of
+  // this row while the verse was the band alone; put a lead vocal on it — a
+  // topline with accents and a velocity-9 climax in it — and the verse's mean
+  // velocity climbs to within a tenth of the drop's on a house record, and
+  // four of twelve seeds measured backwards. Nothing about the arrangement was
+  // wrong: the peak carries `lvl: "fwd"` (×1.35 at the desk, fields.js LEVELS)
+  // and the verse does not, and a section's size is what the mixer does with
+  // it as much as what the velocities say. Reading one and not the other was
+  // the measurement's bug rather than the composer's.
+  const LV = require("../../nukernel/fields.js").LEVELS;
   for (const gk of ["rock", "beatles", "isley", "funk", "house"]) {
     let bigger = 0, n2 = 0;
     for (const s of seeds) {
@@ -3724,8 +3746,9 @@ console.log("the arranged dynamic — the chorus outweighs the verse, on the rea
         .filter(([b]) => b.role === "verse" && !b.cue).pop();
       if (!vi) continue;
       n2++;
-      const cv = meanVel(D.sectionEvents(ci[0], song.slots).ev);
-      const vv = meanVel(D.sectionEvents(vi[0], song.slots).ev);
+      const lvl = b => LV[b.lvl || "norm"];
+      const cv = meanVel(D.sectionEvents(ci[0], song.slots).ev) * lvl(ci[0]);
+      const vv = meanVel(D.sectionEvents(vi[0], song.slots).ev) * lvl(vi[0]);
       if (cv > vv) bigger++;
     }
     ok(n2 > 0 && bigger >= n2 - 1, gk + ": the last chorus is louder than the verse " +
@@ -4261,7 +4284,14 @@ console.log("dressing the record — the master bus and the guest genre");
         const song = C.compose(gk, s), names = new Set();
         for (const b of song.song) {
           boxes++; per[gk][1]++;
-          const gs = b.stack.slice(1);
+          // THE SINGER IS NOT A GUEST, and the census has to know it or every
+          // number here stops meaning anything. A record's own voice is on the
+          // payroll — it carries the verses and the choruses now (compose.js,
+          // the through-line round) — so counting it as a visitor put the
+          // "guest rate" at 54% and reported three-guest boxes that are a
+          // band with a singer and one horn player. `as: "voice"` is how the
+          // stack entry says which it is; the loader carries the key through.
+          const gs = b.stack.slice(1).filter(e => e.as !== "voice");
           if (gs.length) { withGuest++; per[gk][0]++; }
           if (gs.length >= 2) { twoGuest++; twoRoles.add(b.role); }
           if (gs.length >= 3) threeGuest++;
@@ -4424,6 +4454,585 @@ console.log("dressing the record — the master bus and the guest genre");
     ok(proved === found, "a composed solo break did not render as one");
   }
 
+}
+
+/* ------------------------------------------- 42. THE SONGWRITER'S READ
+   Five criticisms and one correction, from reading beatles/5, postrock/2 and
+   citypop/4 as charts rather than as configuration. Every one of them is about
+   the ARRANGER — the engine could already say all of this and was never asked
+   to — and every one is measured here on the rendered stream through the real
+   ui/derive.js, because "the composer wrote a stop" and "the section has a
+   hole in it" are different claims and only the second one is music.
+
+     (a) SECTION LENGTH WAS INVERTED across the table.
+     (b) BREAK THE SYMMETRY — irregular lengths, and only where they belong.
+     (c) DYNAMICS NEED A MEMORY — position, not just role.
+     (d) THERE ARE NO STOPS.
+     (e) THE VOCAL IS A GUEST AND SHOULD BE THE THROUGH-LINE.
+     (f) THE INTRO NEVER QUOTES ANYTHING. */
+console.log("the songwriter's read — lengths, irregularity, memory, stops, voice, quote");
+{
+  const C = require("../../nukernel/compose.js");
+  const NF = require("../../nukernel/fields.js");
+  const NS = require("../../nukernel/song.js");
+  const seeds = Array.from({ length: 16 }, (_, i) => i + 1);
+  const meanVel = ev => (ev.length
+    ? ev.reduce((s, e) => s + (e.vel == null ? 5 : e.vel), 0) / ev.length : 0);
+  const lvlOf = b => NF.LEVELS[b.lvl || "norm"];
+  const median = xs => xs.slice().sort((a, b) => a - b)[xs.length >> 1];
+  // THE COMPOSER'S OWN WORD FOR A SECTION, imported rather than re-derived.
+  // `cue || role` is the wrong read for the three passes this section tests:
+  // the head intro's cue carries its intro KIND and a solo break's carries
+  // "solobreak", so the raw read made a bulgarian record's opening bar look
+  // like a solo section — and a gate that re-derives a policy is a gate that
+  // can agree with a bug.
+  const word = C.sectionWord;
+
+  // (a) HOW LONG A SECTION IS, per family — the correction that came with the
+  // five. "Beatles gets 8-bar sections while citypop gets 2- and 4-bar ones,
+  // but groove music needs LONGER to sit in the pocket and the pop song is the
+  // one that can move fast." It was inverted because the section length WAS
+  // the genre's form length (`G.bars`), which is a different question: a form
+  // length is how long the pattern takes to come back, a section length is how
+  // long you stay in it. citypop's form is 4 bars and its verse should not be.
+  //
+  // Measured in STEPS rather than bars, because a bar is not a duration: a
+  // half-time genre's bar is twice as long, and comparing 8 bars of rock with
+  // 8 bars of vaporwave compares two different amounts of time.
+  {
+    const by = {};
+    for (const gk of GK) {
+      const g = GENRES[gk], steps = C.fullLen(g) * 16 / g.rate;
+      (by[g.family] = by[g.family] || []).push(steps);
+      // and the section never stops the genre's own pattern half way through
+      ok(C.fullLen(g) % g.bars === 0, gk + ": a section of " + C.fullLen(g) +
+         " bars cuts its own " + g.bars + "-bar form off mid-phrase");
+      ok(C.fullLen(g) >= g.bars && C.fullLen(g) <= NF.MAX_LEN,
+         gk + ": section length " + C.fullLen(g) + " is not a usable window");
+      ok(C.halfLen(g) >= 2 && C.halfLen(g) < C.fullLen(g),
+         gk + ": the half-length roles are not shorter than a section");
+    }
+    // THE FENCE, and it is the correction stated as a number: the two families
+    // whose music is a groove you settle into sit at twice the duration of the
+    // families that write verses and choruses. 256 steps against 128, measured.
+    const pop = Math.max(median(by.studio), median(by.soul), median(by.roots),
+                         median(by.band));
+    for (const fam of ["club", "groove"])
+      ok(median(by[fam]) >= 2 * 128 && median(by[fam]) >= 1.5 * 128,
+         fam + ": its median section is " + median(by[fam]) + " steps — groove " +
+         "music needs longer than a pop verse to sit in the pocket");
+    ok(median(by.studio) <= 128 && median(by.soul) <= 128,
+       "the pop families are not the ones that move fast (" + median(by.studio) +
+       " / " + median(by.soul) + " steps)");
+    void pop;
+    // ...and the anchors the read actually named
+    ok(C.fullLen(GENRES.citypop) === 8 && C.fullLen(GENRES.beatles) === 8,
+       "citypop and beatles do not arrange at the same section length (" +
+       C.fullLen(GENRES.citypop) + " / " + C.fullLen(GENRES.beatles) + ")");
+    ok(C.fullLen(GENRES.dub) === 16 && C.fullLen(GENRES.house) === 16,
+       "the groove and floor anchors still arrange in four-bar sections");
+    // AND IT REACHES THE RENDER: the box's window really is that many bars
+    for (const gk of ["citypop", "house", "dub", "beatles", "blues", "vaporwave"]) {
+      const song = C.compose(gk, 3);
+      const v = song.song.find(b => b.role === "verse" && !b.cue && !b.bend);
+      ok(!!v, gk + ": no plain verse to measure");
+      if (v) {
+        const r = D.sectionEvents(v, song.slots);
+        ok(r.bars === C.fullLen(GENRES[gk]) && r.bars === v.len,
+           gk + ": the verse renders " + r.bars + " bars, not " + v.len);
+      }
+    }
+  }
+
+  // ---- ONE SWEEP, three censuses. (b), (c) and (e) are all questions about
+  // every box of every composed song, and three sweeps of that is three sweeps.
+  const CEN = { sec: 0, bent: 0, sqSec: 0, sqBent: 0, kinds: {}, stops: {},
+                stopSec: 0, dupSongs: 0, songs: 0, steadyDup: 0, steadySongs: 0,
+                chorus: 0, chorusVoice: 0, verse: 0, verseVoice: 0,
+                soloLayers: 0, soloLoose: 0, twoVisits: 0, quotes: 0 };
+  for (const gk of GK) {
+    const G = GENRES[gk], singer = C.singerOf(G, gk), steady = !!C.STEADY[gk];
+    for (const s of seeds) {
+      const song = C.compose(gk, s), by = {};
+      CEN.songs++; if (steady) CEN.steadySongs++;
+      let visits = 0, lastStop = -9;
+      song.song.forEach((b, i) => {
+        if (C.BEDS[b.role]) return;
+        const w = word(b);
+        CEN.sec++;
+        if (C.SQUARE[G.family]) { CEN.sqSec++; if (b.bend) CEN.sqBent++; }
+        if (b.bend) { CEN.bent++; CEN.kinds[b.bend] = (CEN.kinds[b.bend] || 0) + 1; }
+        if (b.stop) {
+          CEN.stopSec++; CEN.stops[b.stop] = (CEN.stops[b.stop] || 0) + 1;
+          ok(i - lastStop >= 2, gk + "/" + s + ": two stops in adjacent sections");
+          lastStop = i;
+        }
+        (by[w] = by[w] || []).push(b.env);
+        const voice = b.stack.filter(e => e.as === "voice");
+        ok(voice.length <= 1, gk + "/" + s + ": two singers on one box");
+        ok(voice.every(e => e.g === singer), gk + "/" + s + ": the voice layer is " +
+           (voice[0] && voice[0].g) + ", not the record's singer " + singer);
+        if (singer) {
+          if (w === "chorus") { CEN.chorus++; if (voice.length) CEN.chorusVoice++; }
+          if (w === "verse") { CEN.verse++; if (voice.length) CEN.verseVoice++; }
+        }
+        for (const e of b.stack.slice(1)) if (e.g === "solo") {
+          CEN.soloLayers++;
+          if (b.role === "solo") continue;
+          if (w === "chorus") visits++; else CEN.soloLoose++;
+        }
+      });
+      if (visits > 1) CEN.twoVisits++;
+      // the stop kinds are never repeated inside one record
+      const ks = song.song.filter(b => b.stop).map(b => b.stop);
+      ok(new Set(ks).size === ks.length, gk + "/" + s + ": the same stop twice");
+      // and no two sections of one role carry the same dynamic
+      let dup = false;
+      for (const v of Object.values(by)) if (new Set(v).size !== v.length) dup = true;
+      if (dup) { CEN.dupSongs++; if (steady) CEN.steadyDup++; }
+      if (!steady)
+        ok(!dup, gk + "/" + s + ": two sections of one role carry the same dynamic — " +
+           JSON.stringify(by));
+      if (song.song[0].cue === "quote") CEN.quotes++;
+    }
+  }
+
+  // (b) BREAK THE SYMMETRY. "Real pop breaks its own clock: the truncated
+  // verse, the extra 2-bar turnaround, the chorus that arrives a bar early."
+  //
+  // THE DISTRIBUTION THIS DEFENDS, and it is not a uniform dice roll on the
+  // length field — it is four named gestures at four named positions
+  // (compose.js BENDS), so an irregular section is always irregular ABOUT
+  // something: `early` takes a bar off the lift so the chorus lands before you
+  // counted it, `short` cuts two bars off a later verse, `turn` adds the
+  // two-bar turnaround into a verse, `long` runs the last chorus out. Measured
+  // at ~16% of the non-bed sections of a breakable genre, which is one or two
+  // a record — an event rather than a tic — and exactly 0% of the square ones.
+  {
+    const breakable = CEN.sec - CEN.sqSec;
+    const rate = CEN.bent / breakable;
+    console.log("  irregular lengths on " + (100 * rate).toFixed(1) + "% of breakable " +
+                "sections (" + CEN.bent + "/" + breakable + "), " + CEN.sqBent +
+                " on square ones; " + JSON.stringify(CEN.kinds));
+    ok(rate >= 0.08 && rate <= 0.25, (100 * rate).toFixed(1) + "% of breakable " +
+       "sections are irregular — outside the 8–25% band this stage defends");
+    ok(CEN.sqBent === 0, CEN.sqBent + " irregular sections in a family whose " +
+       "arithmetic is load-bearing — a fugue keeps its arithmetic");
+    for (const k of Object.keys(C.BENDS))
+      ok((CEN.kinds[k] || 0) > 20, "the \"" + k + "\" gesture fired " +
+         (CEN.kinds[k] || 0) + " times — a vocabulary entry the dice never reach");
+    // ...and every square FAMILY is really represented, so the zero above is a
+    // fact about restraint rather than about an empty set
+    ok(CEN.sqSec > 3000, "only " + CEN.sqSec + " square sections in the sweep — " +
+       "the zero proves nothing");
+    // AND IT REACHES THE RENDER. A length that does not move the window is a
+    // number in a file: the bent box must render exactly its own bars, and the
+    // same box unbent must render a different number of them.
+    let proved = 0;
+    for (const gk of GK) {
+      if (C.SQUARE[GENRES[gk].family]) continue;
+      for (const s of [3, 9]) {
+        const song = C.compose(gk, s);
+        for (const b of song.song) {
+          if (!b.bend) continue;
+          const on = D.sectionEvents(b, song.slots);
+          const off = D.sectionEvents({ ...b, len: b.len - C.BENDS[b.bend] }, song.slots);
+          ok(on.bars === b.len && on.bars !== off.bars,
+             gk + "/" + s + ": the \"" + b.bend + "\" bend does not move the window");
+          // the square length it departed from is a whole number of forms; the
+          // bent one is a bar early or two bars long, which is the point
+          ok(off.bars % GENRES[gk].bars === 0 || off.bars === C.halfLen(GENRES[gk]),
+             gk + "/" + s + ": the unbent length was not square to begin with");
+          proved++;
+          break;
+        }
+      }
+    }
+    ok(proved > 20, "only " + proved + " bent sections were rendered");
+  }
+
+  // (c) DYNAMICS NEED A MEMORY. "The second verse is bigger than the first
+  // because the band has walked in; the last chorus is the biggest thing in
+  // the record; a bridge can be the quietest. No two sections of the same role
+  // in one song should carry the same dynamic unless the song is deliberately
+  // flat." The per-song distinctness is asserted in the sweep above, box by
+  // box; what is left is the exemption and the sound.
+  {
+    console.log("  " + CEN.dupSongs + "/" + CEN.songs + " songs repeat a same-role " +
+                "dynamic, all of them deliberately flat (" + CEN.steadyDup + "/" +
+                CEN.steadySongs + " STEADY songs do)");
+    // THE EXEMPTION IS LIVE, which is the half of a carve-out that usually is
+    // not checked: `drone` and `ambient` are one idea held for a record, they
+    // are handed the bare role constants, and they really do repeat. If they
+    // stopped, the branch above would be silently covering nothing.
+    ok(CEN.dupSongs === CEN.steadyDup && CEN.steadyDup > 10,
+       "the flat-song exemption covers " + CEN.steadyDup + " songs of " +
+       CEN.dupSongs + " that repeat — it is either dead or leaking");
+    ok(Object.keys(C.STEADY).length <= 3,
+       "the deliberately-flat list has grown into an excuse: " +
+       Object.keys(C.STEADY).join(","));
+    // THE ARC IS MONOTONE WHERE IT PROMISES TO BE: the ladder walks a role
+    // group from the back, so the LAST member keeps what it was dealt and the
+    // earlier ones step down (compose.js DYNLADDER, ordered by the mean of the
+    // curve each word compiles to).
+    {
+      const meanOf = k => { let s = 0; for (let i = 0; i <= 20; i++) s += K.SHAPES[k](i / 20);
+                            return s / 21; };
+      // NON-DECREASING, not strictly increasing, and the one flat step is the
+      // interesting one: `dim` and `cresc` both average 0.810 — the same
+      // loudness travelled in opposite directions. They are two different
+      // things to hear and the same thing to measure, so they sit adjacent and
+      // the ends are what carry the strict claim.
+      for (let i = 1; i < C.DYNLADDER.length; i++)
+        ok(meanOf(C.DYNLADDER[i]) >= meanOf(C.DYNLADDER[i - 1]),
+           "DYNLADDER is not ordered by size: " + C.DYNLADDER[i - 1] + " (" +
+           meanOf(C.DYNLADDER[i - 1]).toFixed(3) + ") > " + C.DYNLADDER[i]);
+      ok(meanOf(C.DYNLADDER[C.DYNLADDER.length - 1]) > meanOf(C.DYNLADDER[0]) + 0.3,
+         "the top and bottom of the dynamics ladder are the same size");
+    }
+    // AND IT IS AUDIBLE: verse 2 outweighs verse 1 on the real render path, in
+    // the genres that have two verses and a band to walk in with. Measured at
+    // 94/96 when this landed — the two misses are seeds where the first verse
+    // drew a denser deal, which is an arrangement rather than a bug.
+    let up = 0, n2 = 0;
+    for (const gk of ["rock", "beatles", "funk", "motown", "citypop", "gospel",
+                      "countrypop", "steely"])
+      for (const s of seeds.slice(0, 12)) {
+        const song = C.compose(gk, s);
+        const vs = song.song.filter(b => b.role === "verse" && !b.cue);
+        if (vs.length < 2) continue;
+        n2++;
+        const at = b => meanVel(D.sectionEvents(b, song.slots).ev) * lvlOf(b);
+        if (at(vs[1]) > at(vs[0])) up++;
+      }
+    ok(n2 > 80 && up / n2 >= 0.9, "the second verse is bigger than the first in only " +
+       up + "/" + n2 + " songs — the arc has no memory of where it is");
+    // ...and the BRIDGE is allowed to be the quietest thing on the record,
+    // which the old table (bridge 0.45, verse 0.50, no ramp) could not express
+    {
+      let quieter = 0, n3 = 0;
+      for (const gk of ["rock", "beatles", "steely", "toto"])
+        for (const s of seeds.slice(0, 10)) {
+          const song = C.compose(gk, s);
+          const br = song.song.find(b => b.role === "bridge");
+          const vs = song.song.filter(b => b.role === "verse" && !b.cue);
+          if (!br || !vs.length) continue;
+          n3++;
+          const at = b => meanVel(D.sectionEvents(b, song.slots).ev) * lvlOf(b);
+          if (at(br) < Math.max(...vs.map(at))) quieter++;
+        }
+      ok(n3 > 30 && quieter / n3 >= 0.6, "the bridge is quieter than the loudest " +
+         "verse in only " + quieter + "/" + n3 + " songs");
+    }
+  }
+
+  // (d) THERE ARE NO STOPS. There are now, and each of the five is REUSED from
+  // a table that already had it — `drop` is the envelope that silences the last
+  // eighth of a section, cut/break/tail/hush are four of the ten outro edges.
+  // Nothing was added to the kernel; what was missing was an arranger with an
+  // opinion about where a hole goes (compose.js placeStops).
+  //
+  // EVERY CLAIM BELOW IS THE HOLE ITSELF, on the rendered stream. That matters
+  // more here than anywhere else in this file, because four of the five kinds
+  // were already reachable as ordinary end-of-section fills — the regression
+  // this guards is not "the word is missing", it is "the word is there and the
+  // bar is full".
+  {
+    console.log("  stops on " + (100 * CEN.stopSec / CEN.sec).toFixed(1) + "% of " +
+                "sections (" + CEN.stopSec + "/" + CEN.sec + "), " +
+                JSON.stringify(CEN.stops));
+    const rate = CEN.stopSec / CEN.sec;
+    ok(rate >= 0.08 && rate <= 0.22, (100 * rate).toFixed(1) + "% of sections stop — " +
+       "outside the 8–22% band: below it the record has no holes in it, above it " +
+       "a hole is the texture rather than the moment");
+    for (const k of Object.keys(C.STOPS))
+      ok((CEN.stops[k] || 0) > 40, "the \"" + k + "\" stop fired " +
+         (CEN.stops[k] || 0) + " times — the arranger never reaches it");
+    // WHERE THEY LAND. The policy says: before the peak, at the end of a
+    // bridge, or once more on a verse/chorus/solo — and never on a bed, an
+    // intro, the outro or the peak itself, because a record's own ending is
+    // not a stop, it is the end.
+    let beforePeak = 0, bridges = 0, songsWithStop = 0;
+    for (const gk of GK) for (const s of seeds) {
+      const song = C.compose(gk, s);
+      let peak = -1;
+      song.song.forEach((b, i) => { const w = word(b);
+        if (w === "chorus" || w === "drop") peak = i; });
+      let any = false;
+      song.song.forEach((b, i) => {
+        if (!b.stop) return;
+        any = true;
+        const w = word(b);
+        ok(!C.BEDS[b.role] && w !== "intro" && w !== "outro" && i !== peak,
+           gk + "/" + s + ": a stop landed on the " + w + " — the record's own " +
+           "ending is not a stop");
+        ok(i === peak - 1 || w === "bridge" || w === "verse" || w === "chorus" ||
+           w === "solo", gk + "/" + s + ": a stop landed on a " + w +
+           ", which is not a place the policy puts one");
+        if (i === peak - 1) beforePeak++;
+        else if (w === "bridge") bridges++;
+      });
+      if (any) songsWithStop++;
+    }
+    ok(beforePeak > 300, "only " + beforePeak + " records put a hole before the " +
+       "last chorus — that is the one the brief names");
+    ok(bridges > 60, "only " + bridges + " bridges stop at the end");
+    ok(songsWithStop / CEN.songs >= 0.6, "only " +
+       Math.round(100 * songsWithStop / CEN.songs) + "% of records have a stop in " +
+       "them at all");
+    // ...AND EACH KIND IS THE HOLE IT CLAIMS TO BE. One rendered assertion per
+    // kind, written as what is MISSING from the last bar (or the last eighth),
+    // plus the differential — the same box without the stop puts the events
+    // back. `cut` gets a tolerance of a sixteenth because groove() runs last
+    // and nudges the surviving events in time.
+    const proved = {};
+    for (const gk of GK) for (const s of seeds.slice(0, 10)) {
+      const song = C.compose(gk, s);
+      for (const b of song.song) {
+        if (!b.stop || proved[b.stop] > 12) continue;
+        proved[b.stop] = (proved[b.stop] || 0) + 1;
+        const r = D.sectionEvents(b, song.slots), bs = 16 / r.g.rate, span = r.bars * bs;
+        const last = r.ev.filter(e => e.t >= span - bs);
+        const at = gk + "/" + s + " (" + b.stop + " on " + word(b) + "): ";
+        if (b.stop === "drop")
+          ok(!r.ev.some(e => e.t >= span * 0.875), at + "the last eighth of the " +
+             "section is not silent — " + r.ev.filter(e => e.t >= span * 0.875).length +
+             " events in the hole");
+        else if (b.stop === "cut")
+          ok(!r.ev.some(e => e.t > span - bs / 4 + bs / 16),
+             at + "the band did not stop before the bar line");
+        else if (b.stop === "hush")
+          ok(last.length === 1 && last[0].kind === "hit" && last[0].t > span - bs / 8,
+             at + "the bar of silence has " + last.length + " events in it");
+        else if (b.stop === "tail")
+          ok(!last.some(e => e.kind === "hit"),
+             at + "the drums are still playing the last bar");
+        else if (b.stop === "break")
+          ok(last.length > 0 && !last.some(e => e.kind !== "hit"),
+             at + "the band did not drop out under the drums");
+        // the differential: without the stop there is more music in the bar
+        const off = D.sectionEvents(b.stop === "drop" ? { ...b, env: "big" }
+                                                      : { ...b, outro: null }, song.slots);
+        ok(off.ev.length >= r.ev.length, at + "removing the stop removed events");
+      }
+    }
+    for (const k of Object.keys(C.STOPS))
+      ok(proved[k] > 5, "the \"" + k + "\" stop was never rendered (" +
+         (proved[k] || 0) + ")");
+    // THE KITLESS BALLOT IS THE TWO THAT ARE ABOUT THE BAND. `break` and `tail`
+    // are defined by what the drums do, so on a choir they are silent no-ops —
+    // the same argument OUTRO_NOKIT already makes for the fills.
+    for (const k of [...C.STOP_NOKIT.peak, ...C.STOP_NOKIT.bridge,
+                     ...C.STOP_NOKIT.loose])
+      ok(k === "drop" || k === "cut", "a kitless genre may stop with \"" + k +
+         "\", which is a fact about drums it does not have");
+    for (const gk of GK) {
+      if (Object.keys(GENRES[gk].kit || {}).length) continue;
+      for (const s of seeds.slice(0, 6))
+        for (const b of C.compose(gk, s).song)
+          ok(!b.stop || b.stop === "drop" || b.stop === "cut",
+             gk + "/" + s + ": a kitless genre stopped with \"" + b.stop + "\"");
+    }
+  }
+
+  // (e) THE VOCAL IS A GUEST, AND IT SHOULD BE THE THROUGH-LINE. Measured on
+  // beatles/5 before this: the `vocal` layer appeared on the BRIDGE only while
+  // every chorus carried a `solo`. Backwards, and structurally so — there was
+  // no such thing as the record's singer, only a per-section coin over a ballot
+  // that also held the lead guitarist.
+  {
+    console.log("  the voice carries " + CEN.chorusVoice + "/" + CEN.chorus +
+                " choruses and " + CEN.verseVoice + "/" + CEN.verse + " verses; " +
+                CEN.soloLayers + " solo layers, " + CEN.soloLoose + " outside a " +
+                "solo section");
+    ok(CEN.chorus > 800 && CEN.chorusVoice === CEN.chorus,
+       "the singer misses " + (CEN.chorus - CEN.chorusVoice) + " choruses of " +
+       CEN.chorus + " — a chorus is the thing the singer is for");
+    ok(CEN.verse > 800 && CEN.verseVoice / CEN.verse >= 0.75,
+       "the singer carries only " + Math.round(100 * CEN.verseVoice / CEN.verse) +
+       "% of verses — the voice is meant to be the through-line, not a visitor");
+    // THE SOLO IS WHAT VISITS: one section, maybe one chorus, and nowhere else.
+    ok(CEN.soloLoose === 0, CEN.soloLoose + " solo layers landed outside a solo " +
+       "section and outside the one chorus the soloist visits");
+    ok(CEN.twoVisits === 0, CEN.twoVisits + " records let the soloist visit two " +
+       "choruses — \"one section, maybe a chorus\"");
+    ok(CEN.soloLayers > 200, "only " + CEN.soloLayers + " solo layers in the sweep — " +
+       "confined should not mean absent");
+    // WHO SINGS is a decision, and both override tables are live: the anchors
+    // inside a singing family that have no topline, and the one filed with the
+    // drones that is a genre of songs.
+    for (const gk of Object.keys(C.INSTRUMENTAL))
+      ok(GENRES[gk] && !C.singerOf(GENRES[gk], gk), gk + ": declared instrumental " +
+         "and given a singer anyway");
+    ok(C.singerOf(GENRES.shoegaze, "shoegaze") === "vocal",
+       "shoegaze is a genre of songs and lost its singer to its family row");
+    ok(!C.singerOf(GENRES.drone, "drone") && !C.singerOf(GENRES.vocal, "vocal"),
+       "a drone or a lone voice booked itself a singer");
+    // THE VOICE IS ON THE RECORD, in events: the layer renders, it is the
+    // topline material, and the host is still playing under it.
+    let heard = 0;
+    for (const gk of ["beatles", "rock", "motown", "citypop", "gospel", "house"])
+      for (const s of seeds.slice(0, 6)) {
+        const song = C.compose(gk, s);
+        for (const b of song.song) {
+          const v = b.stack.find(e => e.as === "voice");
+          if (!v || word(b) !== "chorus" && word(b) !== "drop") continue;
+          const ev = D.sectionEvents(b, song.slots).ev;
+          const mine = ev.filter(e => e.layer === v.g && e.kind === "line");
+          ok(mine.length > 0, gk + "/" + s + ": the singer is on the box and not " +
+             "in the render");
+          ok(ev.some(e => !e.layer && e.kind !== "hit"),
+             gk + "/" + s + ": the singer silenced the band");
+          heard++;
+          break;
+        }
+      }
+    ok(heard >= 30, "only " + heard + " sung sections were rendered");
+    // AND IT IS ONE TUNE. "The same topline, developing" — slot 8 is written
+    // from slot 5's own first half (compose.js phrase(), the `head` argument),
+    // so the verse opens with the chorus's melody note for note and then
+    // answers it differently. Read off the rendered stream with the player
+    // taken out, because this is a fact about what was WRITTEN.
+    {
+      const g = plain(GENRES.simple), bs = 16 / g.rate;
+      let same = 0, diff = 0;
+      for (const s of seeds) {
+        const song = C.compose("beatles", s);
+        const sig2 = (i, lo, hi) => JSON.stringify(
+          K.render(song.slots[i], g, 1)
+            .filter(e => e.t >= lo && e.t < hi)
+            .map(e => [+e.t.toFixed(4), e.n, e.vel]));
+        // the first half bar is the same tune
+        if (sig2(5, 0, bs / 2) === sig2(8, 0, bs / 2)) same++;
+        // ...and the second half is not, or it is not a development, it is a copy
+        if (sig2(5, bs / 2, bs) !== sig2(8, bs / 2, bs)) diff++;
+        ok(sig2(5, 0, bs / 2).length > 4,
+           "beatles/" + s + ": the topline renders nothing to develop");
+      }
+      ok(same === seeds.length, "the verse line opens with the chorus topline in " +
+         "only " + same + "/" + seeds.length + " songs — it is a second tune, not " +
+         "a development");
+      ok(diff >= seeds.length - 1, "the verse line and the chorus topline are the " +
+         "same phrase in " + (seeds.length - diff) + " songs — that is a repeat, " +
+         "not a development");
+    }
+  }
+
+  // ---- AND ALL THREE NEW KEYS SURVIVE THE ONE DOOR. `bend`, `stop` and the
+  // stack entry's `as` are CARRIED keys, not registry fields — the same trick
+  // `cue` has always played: the loader validates what the registry knows and
+  // passes the rest through untouched. That is only true as long as nobody
+  // adds a strip, and a composer whose arrangement notes are quietly eaten on
+  // save writes songs that read differently the second time they are opened.
+  {
+    let carried = 0;
+    for (const gk of GK) for (const s of seeds.slice(0, 4)) {
+      const song = C.compose(gk, s), r = NS.load(JSON.parse(JSON.stringify(song)));
+      ok(r.ok, gk + "/" + s + ": a composed song does not load: " +
+         JSON.stringify(r.errors && r.errors[0]));
+      if (!r.ok) continue;
+      ok(r.song.slots.length === song.slots.length,
+         gk + "/" + s + ": the loader resized the phrase bank");
+      song.song.forEach((b, i) => {
+        const q = r.song.song[i];
+        ok(q.len === b.len, gk + "/" + s + ": the loader clamped a bent length " +
+           b.len + " to " + q.len);
+        ok(q.bend === b.bend && q.stop === b.stop && q.cue === b.cue,
+           gk + "/" + s + ": the loader ate the arrangement notes on box " + i);
+        ok(JSON.stringify(q.stack.map(e => e.as || null)) ===
+           JSON.stringify(b.stack.map(e => e.as || null)),
+           gk + "/" + s + ": the loader ate the singer's badge on box " + i);
+        if (b.bend || b.stop) carried++;
+      });
+    }
+    ok(carried > 100, "only " + carried + " bent-or-stopped boxes went through the " +
+       "loader — the round trip proves nothing");
+  }
+
+  // (f) THE INTRO NEVER QUOTES ANYTHING. "The classic pop intro is the chorus
+  // hook stated instrumentally — Day Tripper, A Hard Day's Night. It must be
+  // the SAME material the chorus later sings, or it is not a quote."
+  {
+    ok(CEN.quotes > 40, "only " + CEN.quotes + " records open by quoting the hook");
+    // the three families that cannot mean it do not vote for it: a choir does
+    // not state its own chorus on an instrument, a drift record has no hook,
+    // and a lone part has no chorus to quote FROM
+    for (const fam of ["vox", "drift", "parts"])
+      ok(!C.INTRO_LEAN[fam].includes("quote"),
+         fam + ": votes to quote a hook it does not have");
+    ok(["band", "studio", "soul", "roots", "groove", "kernel"]
+        .every(f => C.INTRO_LEAN[f].includes("quote")),
+       "a song-writing family cannot open on its own hook");
+    let n2 = 0, shared = 0, control = 0;
+    for (const gk of GK) for (const s of seeds) {
+      const song = C.compose(gk, s), head = song.song[0];
+      if (head.cue !== "quote") continue;
+      n2++;
+      // STRUCTURAL: the intro plays slot 5 and nothing else, and slot 5 is
+      // what the record later sings — the chorus's own topline, which is the
+      // only place in this composer that slot ever goes.
+      ok(JSON.stringify(head.stack[0].slots) === "[5]" && head.stack.length === 1,
+         gk + "/" + s + ": a quote intro is not playing the topline alone");
+      const later = song.song.slice(1).find(b =>
+        b.stack.some(e => e.slots.includes(5)));
+      ok(!!later, gk + "/" + s + ": the intro quotes a hook the record never states");
+      if (!later) continue;
+      // RENDERED, and this is the assertion that makes it a quote rather than a
+      // coincidence of indices: PERTURB THE MATERIAL. Move slot 5's degrees and
+      // BOTH streams must move — the intro's and the chorus's — because they
+      // are reading the same phrase. Then the control: moving slot 0 (the hook,
+      // which the intro is NOT playing) must leave the intro alone. Two
+      // sensitivity checks in opposite directions, which is the form this suite
+      // uses everywhere a value has to be shown reaching the output.
+      const line = (b, sl) => JSON.stringify(D.sectionEvents(b, sl).ev
+        .filter(e => e.kind === "line").map(e => [+e.t.toFixed(4), e.n]));
+      const bump = i => {
+        const sl = song.slots.map(p => clone(p));
+        sl[i].deg = sl[i].deg.map(d => d + 2);
+        return sl;
+      };
+      const up5 = bump(5), up0 = bump(0);
+      const i0 = line(head, song.slots), c0 = line(later, song.slots);
+      ok(i0.length > 4, gk + "/" + s + ": the quote renders no notes");
+      ok(line(head, up5) !== i0, gk + "/" + s + ": moving the topline did not move " +
+         "the quote — the intro is not playing it");
+      if (line(later, up5) !== c0) shared++;
+      if (line(head, up0) === i0) control++;
+    }
+    ok(n2 > 40, "only " + n2 + " quote intros were rendered");
+    // THE CHORUS SIDE IS NOT 100%, and the exception is the same one §1 carries
+    // for vaporwave: a genre whose voice 0 realizes as a PAD reads chord tones
+    // and by construction cannot hear a degree vector, so a chorus that deals
+    // the topline to a wash renders a quote of it that no perturbation of the
+    // phrase can move. Measured at one record in fifty-nine; the intro side,
+    // asserted above, is exact.
+    ok(shared >= n2 - Math.ceil(n2 * 0.05),
+       "the intro and the chorus read the same phrase in only " +
+       shared + "/" + n2 + " records — one of them is quoting something else");
+    ok(control === n2, "the quote intro moved when the HOOK moved in " +
+       (n2 - control) + " records — it is not playing the topline");
+    // ...and the pitch content really does land inside the chorus's, most of
+    // the time. NOT always, and the exceptions are honest rather than
+    // tolerated: a genre whose harmony is `emergent` derives its chords from
+    // whichever phrase the section's authority leads with, so the intro's tune
+    // and the chorus's tune are voiced over two different sets of chords; and
+    // the peak chorus sometimes takes the truck-driver key. Measured at 91%.
+    let inside = 0, m = 0;
+    const pcs = ev => new Set(ev.filter(e => e.kind === "line" && e.n != null)
+      .map(e => ((e.n % 12) + 12) % 12));
+    for (const gk of GK) for (const s of seeds) {
+      const song = C.compose(gk, s), head = song.song[0];
+      if (head.cue !== "quote") continue;
+      const later = song.song.slice(1).find(b => b.stack.some(e => e.slots.includes(5)));
+      if (!later) continue;
+      m++;
+      const a = pcs(D.sectionEvents(head, song.slots).ev);
+      const b2 = pcs(D.sectionEvents(later, song.slots).ev);
+      if (a.size && [...a].every(p => b2.has(p))) inside++;
+    }
+    ok(m > 40 && inside / m >= 0.8, "the quote's pitch content sits inside the " +
+       "chorus's in only " + inside + "/" + m + " records");
+  }
 }
 
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +

@@ -254,14 +254,25 @@ async function partProbe(page) {
       }
       return out;
     };
-    // one render of the box's chairs, with a given `parts` map on the box
-    const render = async (parts) => {
+    // one render of the box's chairs, with a given `parts` map on the box.
+    // `aux` picks WHICH WAY the part's effect is spent: the private insert rack
+    // (the offline default, and what a chain or a sweep still gets) or the
+    // page's shared send bus, which is what the live page now builds for a
+    // single blend chip. Both are run, because the isolation claim has to hold
+    // for the topology that actually ships — a bus every part can reach is
+    // exactly the shape in which one part's crunch COULD leak onto another.
+    const render = async (parts, aux) => {
       sec.parts = parts;
       const spec = { ...mx.chanSpec(sec), auto: [], mot: null };
       const octx = new OfflineAudioContext(2, SR, SR);
       const master = gm.buildMasterChain(octx);
+      const buses = new Map();
       const env = { master: master.input, verb: () => master.input,
                     echoIn: master.input, room: null };
+      if (aux) env.send = (k) => {
+        if (!buses.has(k)) buses.set(k, gm.buildSendBus(octx, k, master.input, 2));
+        return buses.get(k);
+      };
       const chan = mx.buildChannel(octx, spec, env);
       let played = 0;
       // a note per chair, a fifth apart so the two spectra are distinguishable
@@ -287,15 +298,26 @@ async function partProbe(page) {
     const bWhileA = await render({ [B]: { solo: true }, [A]: { fx: ["crunch"] } });
     const allMute = await render(Object.fromEntries(keys.map(k => [k, { mute: true }])));
     const none = await render(null);
+    // ...and the same four questions again, with the effect spent as a SEND on
+    // a bus both parts can reach. This is the topology the live page builds
+    // now, and it is the one where a leak would be structural rather than a
+    // typo: if B's signal ever reached the crunch bus, sAB would move.
+    const sClean = await render({ [A]: { solo: true } }, true);
+    const sTreat = await render({ [A]: { solo: true, fx: ["crunch"] } }, true);
+    const sB = await render({ [B]: { solo: true } }, true);
+    const sAB = await render({ [B]: { solo: true }, [A]: { fx: ["crunch"] } }, true);
     // the strongest form of "untouched": not a correlation, a sample count
-    let maxd = 0;
+    let maxd = 0, smaxd = 0;
     for (let i = 0; i < bClean.mono.length; i++)
       maxd = Math.max(maxd, Math.abs(bClean.mono[i] - bWhileA.mono[i]));
+    for (let i = 0; i < sB.mono.length; i++)
+      smaxd = Math.max(smaxd, Math.abs(sB.mono[i] - sAB.mono[i]));
     sec.parts = null;                          // leave the box as it was found
     const strip = o => ({ spec: o.spec, energy: o.energy, played: o.played, built: o.built });
-    return { A, B, keys, kit, maxd, roster: roster.map(r => ({ v: r.v, part: r.part, key: r.key })),
+    return { A, B, keys, kit, maxd, smaxd, roster: roster.map(r => ({ v: r.v, part: r.part, key: r.key })),
              clean: strip(clean), treat: strip(treat), bClean: strip(bClean),
-             bWhileA: strip(bWhileA), allMute: strip(allMute), none: strip(none) };
+             bWhileA: strip(bWhileA), allMute: strip(allMute), none: strip(none),
+             sClean: strip(sClean), sTreat: strip(sTreat), sB: strip(sB), sAB: strip(sAB) };
   });
 }
 // ...AND THE LIVE CHANNEL BUILDS THE SAME DESK. The offline half proves the
@@ -401,6 +423,53 @@ async function deskUI(page) {
   return out;
 }
 
+// ---- (E) THE NODE BUDGET, on a whole composed song ------------------------
+// "It is glitching — maybe we need a few effects buses feeding into one master
+// effects bus instead of everything having its own effects" (the artist,
+// 2026-08-15). Measured before the rebuild, on a composed eleven-section
+// Beatles song: 375 persistent mixer nodes, 337 of them inside the channels,
+// eighteen of every channel's ~31 being a private copy of the SAME twelve-lane
+// drum desk. audio/mixer.js BUDGET states the ceiling that replaced it; this is
+// the thing that makes the ceiling real rather than aspirational.
+//
+// IT BUILDS THE CHANNELS RATHER THAN PLAYING THEM, deliberately. Playing an
+// eleven-section song end to end is ninety seconds of gate for a number that
+// does not move — and channelFor / laneIn / voiceBus are exactly the three
+// calls the transport makes at each section start, so this walks the shipping
+// builders (the same discipline offlineKit and partProbe keep) rather than a
+// model of them. The lanes armed are the six a kit actually plays.
+//
+// TWO PASSES: the song as composed, and the same song with a chorus chip on
+// every box. The second is the claim the whole round rests on — eleven boxes
+// asking for a chorus must build ONE chorus.
+async function budgetProbe(page, genre) {
+  await page.selectOption("#composeg", genre);
+  await page.click("#compose");
+  await page.waitForTimeout(500);
+  return page.evaluate(async () => {
+    const [mx, stm] = await Promise.all([
+      import("/nukernel/audio/mixer.js"), import("/nukernel/ui/state.js")]);
+    const build = () => {
+      for (const sec of stm.SONG) {
+        const ch = mx.channelFor(sec);
+        for (const d of ["k", "s", "h", "o", "c", "r"]) ch.laneIn(d);
+        for (const r of (ch.spec.roster || [])) ch.voiceBus(r.v);
+      }
+      return window.__nuMix();
+    };
+    const plain = build();
+    for (const sec of stm.SONG) sec.fx = ["chorus"];
+    stm.emit("box", {});
+    const chorused = build();
+    for (const sec of stm.SONG) sec.fx = [];
+    stm.emit("box", {});
+    const pick = m => ({ nodes: m.nodes, sends: m.sends,
+                         via: m.channels.map(c => c.via),
+                         kit: m.channels.map(c => c.kit),
+                         worklets: m.worklets, convolvers: m.convolvers });
+    return { sections: stm.SONG.length, plain: pick(plain), chorused: pick(chorused) };
+  });
+}
 // compose a genre, loop its verse, play briefly — enough for the transport to
 // compile a timeline and decide its register homes
 async function homePass(page, url, genre) {
@@ -502,6 +571,13 @@ async function pass(page, url) {
   const desk = await partProbe(page);
   const live = desk.err ? null
     : await partsLive(page, { a: desk.A, b: desk.B });
+  // the budget, still on the WET page — it has to count the drum room and the
+  // kit desk's room sends, and ?dryroom is precisely the page that has neither.
+  // It composes a new song over the top of the rock one, which is why it comes
+  // after every measurement that needed rock and before the navigation that
+  // throws it away. Beatles because it is the longest thing the composer writes
+  // (eleven sections) and the song the census that started this round was on.
+  const budget = await budgetProbe(page, "beatles");
   const dry = await pass(page, base + "&dryroom");
   // the surface, last and on whatever song is loaded: it needs no audio, and
   // running it here costs one page's worth of clicks rather than a third load
@@ -761,6 +837,28 @@ async function pass(page, url) {
         ok(`soloing ${desk.A} built the muting busses (${desk.clean.built.join(",")})`);
       else fail(`soloing ${desk.A} built ${desk.clean.built.join(",") || "nothing"} — ` +
                 `the parts it must silence have no gain to close`);
+
+      // (D5) THE SAME TWO CLAIMS, WITH THE EFFECT ON A SHARED BUS. This is the
+      // topology the live page builds for a single blend chip (fields.js "A
+      // CHIP IS A SEND; A CHAIN IS AN INSERT"): one crunch for the page, every
+      // part able to reach it. The insert version above proves the desk exists;
+      // this proves that sharing the effect did not un-prove it.
+      const sA = corr(desk.sClean.spec, desk.sTreat.spec);
+      const sBc = corr(desk.sB.spec, desk.sAB.spec);
+      console.log(`  per-part send         : ${desk.A} shape corr ${sA.toFixed(4)} with/without ` +
+                  `the crunch BUS, ${desk.B} ${sBc.toFixed(4)} while ${desk.A} sends ` +
+                  `(worst sample delta ${desk.smaxd.toExponential(2)})`);
+      if (sA < 0.98)
+        ok(`a send from ${desk.A} to the shared crunch bus bends ${desk.A}: ` +
+           `shape corr ${sA.toFixed(4)}`);
+      else fail(`the crunch SEND on part ${desk.A} moved nothing (shape corr ` +
+                `${sA.toFixed(4)}) — the bus was built and the signal is not reaching it`);
+      if (sBc > 0.98 && desk.smaxd < 1e-6)
+        ok(`and the shared bus does not leak onto ${desk.B}: corr ${sBc.toFixed(4)}, ` +
+           `worst sample difference ${desk.smaxd.toExponential(2)}`);
+      else fail(`part ${desk.A}'s SEND changed part ${desk.B} (corr ${sBc.toFixed(4)}, ` +
+                `worst sample delta ${desk.smaxd.toExponential(2)}) — a bus every part ` +
+                `can reach has become a bus every part goes through`);
     }
 
     // ...AND THE LIVE CHANNEL BUILDS IT TOO
@@ -850,6 +948,90 @@ async function pass(page, url) {
       fail(`clearing every chip left ${JSON.stringify(ui.emptied)} behind — absent must be ` +
            `the only spelling of a default, or an untouched box builds sub-busses`);
     else ok("clearing the chips leaves the box exactly as unmixed as it started");
+  }
+
+  // ---- (F) THE NODE BUDGET ------------------------------------------------
+  // The ceiling audio/mixer.js BUDGET declares, asserted on the longest song
+  // the composer writes. A budget nobody checks is a wish; this is the check.
+  {
+    const B = budget;
+    if (B.sections < 9)
+      fail(`the budget probe composed ${B.sections} sections — the ceiling has to be ` +
+           `measured on a NINE-plus-section song or it is not measuring an arrangement`);
+    else ok(`the budget is measured on a ${B.sections}-section composed song`);
+    for (const [name, m] of [["as composed", B.plain], ["chorus on every box", B.chorused]]) {
+      const n = m.nodes;
+      if (!n || typeof n.total !== "number") { fail("__nuMix carries no `nodes` count"); continue; }
+      console.log(`  node budget (${name.padEnd(19)}): ${n.total} total = ${n.shared} shared ` +
+                  `+ ${n.channels} channels (${n.per.join("/")}), cap ${n.cap}  ` +
+                  `[rack: master ${n.rack.master}, verbs ${n.rack.verbs}, echo ${n.rack.echo}, ` +
+                  `room ${n.rack.room}, kit ${n.rack.kit}, sends ${n.rack.sends}]`);
+      if (n.channels !== B.sections)
+        fail(`${n.channels} channels for ${B.sections} sections — the probe did not build ` +
+             `the whole song, so the number below is not the song's`);
+      if (n.over)
+        fail(`the mixer built ${n.total} persistent nodes on a ${B.sections}-section song, ` +
+             `over the ${n.cap} ceiling (${n.budget.shared} shared + ${n.budget.chan}/channel ` +
+             `+ ${n.budget.part}/part) — see audio/mixer.js BUDGET`);
+      else ok(`${name}: ${n.total} nodes against a ceiling of ${n.cap}`);
+      // and the shared rack must not grow with the SONG — that is the whole claim
+      if (n.shared > n.budget.shared)
+        fail(`the shared rack is ${n.shared} nodes, over its own ${n.budget.shared} ceiling — ` +
+             `something per-song has leaked into the page-wide bus rack`);
+    }
+    // ELEVEN BOXES ASKING FOR A CHORUS BUILD ONE CHORUS. The sentence this
+    // whole round exists to be able to say, read off the graph — as a DELTA,
+    // because the rack is page-lifetime and never shrinks: whatever earlier
+    // passes in this file built (the crunch the desk probe asked for) is still
+    // standing, which is itself the point.
+    const s0 = B.plain.sends, s = B.chorused.sends;
+    const added = s.filter(k => !s0.includes(k));
+    if (!s.includes("chorus"))
+      fail(`${B.sections} boxes carrying the chorus chip built send buses ` +
+           `${JSON.stringify(s)} — no chorus bus among them`);
+    else if (added.length > 1)
+      fail(`chorusing ${B.sections} boxes added ${added.length} buses ` +
+           `(${JSON.stringify(s0)} -> ${JSON.stringify(s)}) — a character effect is ` +
+           `supposed to exist once for the whole page`);
+    else if (B.chorused.nodes.shared - B.plain.nodes.shared > 20)
+      fail(`chorusing ${B.sections} boxes grew the shared rack by ` +
+           `${B.chorused.nodes.shared - B.plain.nodes.shared} nodes — more than one bus`);
+    else ok(`${B.sections} boxes carrying a chorus chip added at most one bus ` +
+            `(${JSON.stringify(s0)} -> ${JSON.stringify(s)}, rack ` +
+            `${B.plain.nodes.shared} -> ${B.chorused.nodes.shared})`);
+    // THE NUMBER THAT ACTUALLY MOVED. Before this round a channel on this song
+    // averaged 30.6 nodes (337 across eleven) because each carried a private
+    // twelve-lane drum desk; after, 11.3. Twenty is the bar between them: a
+    // regression that put any per-section rack back would cross it long before
+    // the structural per-channel ceiling of 24 noticed.
+    const cn = B.chorused.nodes;
+    const mean = (cn.total - cn.shared) / cn.channels;
+    if (mean > 20)
+      fail(`a channel averages ${mean.toFixed(1)} nodes on this song (was 30.6 with a ` +
+           `private drum desk per section, 11.3 after) — something per-section has ` +
+           `grown a rack again`);
+    else ok(`a channel averages ${mean.toFixed(1)} nodes (30.6 before this round)`);
+    const via = B.chorused.via;
+    if (via.some(v => v !== "send"))
+      fail(`channels spent a single blend chip as ${JSON.stringify(via)} — a lone chip is ` +
+           `a send (fields.js fxSendable); only a chain or a sweep may take a rack`);
+    else ok(`every one of the ${via.length} channels spent its chip as a send`);
+    // ...AND NOT ONE OF THEM BUILT A DRUM DESK OF ITS OWN. The regression this
+    // round exists to prevent, stated as the one thing that would undo it:
+    // `kit` is null only when a channel owns a private twelve-lane desk.
+    const own = B.plain.kit.filter(k => k === null).length;
+    if (own) fail(`${own} of ${B.sections} channels built a PRIVATE kit desk — the lane ` +
+                  `strips are the page's (graph.js buildKitDesk), and eleven copies of one ` +
+                  `constant table is the 337-node channel this round removed`);
+    else ok(`all ${B.sections} channels share the page's one kit desk`);
+    // ...and the chorus cost the page a handful of nodes, not eleven racks
+    const grew = B.chorused.nodes.total - B.plain.nodes.total;
+    console.log(`  one chorus for the page : +${grew} nodes for ${B.sections} chorused boxes ` +
+                `(${(grew / B.sections).toFixed(1)} each)`);
+    if (grew > 4 * B.sections)
+      fail(`chorusing every box cost ${grew} nodes — more than four a box means somebody ` +
+           `is still building a copy of the effect per channel`);
+    else ok(`chorusing every box cost ${grew} nodes: one bus plus a send and a trim each`);
   }
 
   // ---- (E) NOTHING ELSE MOVED ---------------------------------------------

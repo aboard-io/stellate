@@ -16,7 +16,7 @@ import { FONT, fontDef, isSynthFont, loadFont, specOf, zoneBufs, drumBufs,
          instrumentsInSong } from "./assets.js";
 import { synthNodes, synthKey, loadSynth, focusSynths, playSynth, playSampled,
          playDrum, line, hit, synthDead, countDrop, playWindow } from "./voices.js";
-import { channelFor, armAutomation } from "./mixer.js";
+import { channelFor, armAutomation, focusKit } from "./mixer.js";
 import { setDelayTime } from "./graph.js";
 
 export let playing = false;
@@ -271,6 +271,7 @@ function tick() {
         setDelayTime(DTIMES[sec.dtime || "d8"]);
         armAutomation(cur.chan, nextBarTime, bar.barSteps * sd * boxBars(sec), sd * 4);
         focusSynths(cur.chan, nextBarTime);   // this section's mix owns the synth pool
+        focusKit(cur.chan, nextBarTime);      // ...and the one kit desk, same law
       }
     }
     if (!mute) scheduleBar(bar, sec, cur.chan, cur.kit, nextBarTime, sd, playSynth);

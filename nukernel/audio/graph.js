@@ -1,6 +1,17 @@
 // audio/graph.js — the AudioContext and the shared busses: the master chain,
-// the three lazy reverbs, the ping-pong echo. Nothing musical happens here;
-// this is the ROOM the music plays in.
+// the three lazy reverbs, the ping-pong echo, the drum room, the one KIT DESK
+// and the AUX SEND RACK (one bus per character effect, for the whole page).
+// Nothing musical happens here; this is the ROOM the music plays in.
+//
+// EVERYTHING SHARED LIVES IN THIS FILE, and that is the point of the
+// 2026-08-15 round. A box or a part chooses HOW MUCH of each of these it wants
+// — a gain — and never a copy of the effect. audio/mixer.js has the law in
+// full; the short version is the big engine's own topology, which nukernel had
+// drifted away from one defensible round at a time:
+//   engine/faust/press/render-core.js  four shared buses, a gain per unit
+//   engine/faust/live/live.js          one found submix, one native reverb
+// The builders below are all context-parameterized for the same reason they
+// always were: the offline bounce renders through this exact rack.
 //
 // Layer graph: deps -> state -> derive -> THIS FILE -> assets -> voices ->
 // mixer -> transport -> ui views. Audio may import state (tempo/volume live
@@ -32,7 +43,7 @@
 // harder rather than looser: the song's globals go INTO buildMasterChain, so
 // the bounce gets them by construction and there is nowhere for a second
 // opinion about the master to live.
-import { resolveMaster } from "../ui/deps.js";
+import { resolveMaster, FX, SP, DRUMMIX, DRUMBUS } from "../ui/deps.js";
 import { bpm, vol, MASTER, on, emit } from "../ui/state.js";
 
 // exported as live bindings — null until initAudio(), which must ride a user
@@ -40,6 +51,24 @@ import { bpm, vol, MASTER, on, emit } from "../ui/state.js";
 export let ctx = null, masterIn = null, bus = null, outGain = null,
            topLP = null, noise = null;
 export let REV = null, delBus = null, roomBus = null;
+export let SENDBUS = null, KIT = null;
+
+// TEST SEAM, the ?nobounce shape (audio/bounce.js): ?dryroom builds the page
+// with no drum-room bus at all, which is how it sounded before the room
+// existed. It lives HERE, beside the room, rather than in the mixer, because
+// it is a fact about the ROOM and everything downstream — the kit desk's lane
+// sends, the channels' room trims — can then follow one null. It is here and
+// nowhere else, because a mix control that turns the room off is a chip, not a
+// query string.
+export const DRYROOM = typeof location !== "undefined" && /[?&]dryroom\b/.test(location.search);
+
+// HOW MANY NODES A SHARED BUS COST, keyed on the handle it returned. The budget
+// in window.__nuMix has to add up the whole rack, and the two oldest builders
+// (buildRoomBus, makeVerb) return a bare input node because that is what their
+// callers — the offline gates included — connect to. Rather than reshape a
+// contract two gates read, the count rides beside the handle.
+const nodeCount = new WeakMap();
+export const countOf = (h) => (h && nodeCount.get(h)) || 0;
 let echo = null;                                   // the live echo bus handle
 let anl = null;                                    // the boot instrument's tap
 
@@ -344,7 +373,8 @@ export function buildEchoBus(c, dest) {
   dB.connect(fbB); fbB.connect(dA);
   dA.connect(panL); dB.connect(panR);
   panL.connect(dest); panR.connect(dest);
-  return { input, setTime(bars, when) {
+  nodeCount.set(input, 8);
+  return { input, nodes: 8, setTime(bars, when) {
     const t = Math.min(1.9, Math.max(0.02, bars * barSec()));
     // eased, not jumped: a feedback delay whose time moves is a tape machine
     // changing speed, and that is a nicer thing to hear than a click
@@ -374,29 +404,114 @@ export function buildEchoBus(c, dest) {
 // (nukernel-audio (H)). Delays and gains cost nothing, and an early-reflection
 // network is the right shape for a small room anyway.
 export function buildRoomBus(c, dest) {
-  const input = c.createGain();
+  let n = 0;
+  const input = c.createGain(); n++;
   const hp = c.createBiquadFilter(); hp.type = "highpass";
-  hp.frequency.value = 220; hp.Q.value = 0.7;
-  const pre = c.createDelay(0.05); pre.delayTime.value = 0.008;   // distance to the first wall
-  const out = c.createGain(); out.gain.value = 0.9;
+  hp.frequency.value = 220; hp.Q.value = 0.7; n++;
+  const pre = c.createDelay(0.05); pre.delayTime.value = 0.008; n++;  // distance to the first wall
+  const out = c.createGain(); out.gain.value = 0.9; n++;
   input.connect(hp); hp.connect(pre);
   const side = (taps, comb, pan) => {
-    const p = c.createStereoPanner(); p.pan.value = pan;
+    const p = c.createStereoPanner(); p.pan.value = pan; n++;
     for (const [t, g] of taps) {
       const d = c.createDelay(0.1); d.delayTime.value = t;
-      const gg = c.createGain(); gg.gain.value = g;
+      const gg = c.createGain(); gg.gain.value = g; n += 2;
       pre.connect(d); d.connect(gg); gg.connect(p);
     }
     const d = c.createDelay(0.2); d.delayTime.value = comb[0];
     const fb = c.createGain(); fb.gain.value = comb[1];
-    const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = comb[2];
+    const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = comb[2]; n += 3;
     pre.connect(d); d.connect(lp); lp.connect(fb); fb.connect(d); lp.connect(p);
     p.connect(out);
   };
   side([[0.0113, 0.70], [0.0191, 0.50], [0.0273, 0.36]], [0.0431, 0.42, 5200], -0.8);
   side([[0.0139, 0.66], [0.0217, 0.47], [0.0311, 0.34]], [0.0532, 0.40, 4800],  0.8);
   out.connect(dest);
+  nodeCount.set(input, n);
   return input;
+}
+/* ---------- THE KIT DESK: one desk for the page, not one per section ------- */
+// TWELVE LANE STRIPS PER CHANNEL WAS THE BIGGEST SINGLE COST ON THIS PAGE.
+// Measured on a composed eleven-section Beatles song (2026-08-15): 337 of the
+// mixer's 375 persistent nodes were channel nodes, and 18 of the ~31 in each
+// channel were lane strips — the same twelve gains, panners and room sends,
+// rebuilt per section, carrying values off ONE CONSTANT TABLE (instruments.js
+// DRUMMIX). There is no per-section drum-lane control anywhere in the
+// vocabulary, so eleven copies of the desk were eleven copies of one answer.
+//
+// The parent does not do this either: engine/faust/press/render-core.js pans
+// drums by writing each event into two shared stereo buses with constant-power
+// gains (line 128), and engine/faust/live/live.js gives the whole found layer
+// ONE submix (`foundDests`, line 636). One desk, many senders.
+//
+// So the kit's internal geometry — level, placement, its share of the room —
+// is built once, and a SECTION reaches it through a single gate, exactly the
+// way voices.js routes the shared Faust synth pool ("the pool stays global and
+// the ROUTE moves instead"). The lane strips are still lazy: twelve lanes
+// exist, a genre plays four or five, and a strip is a gain and a panner well
+// outside the render window.
+export function buildKitDesk(c, room) {
+  let n = 0;
+  // the parent's transient-preserving drum strip (state-engine STRIP_PROFILES
+  // .drum: a subsonic HPF and a whisper of glue saturation, NO compressor and
+  // no dulling filter — the attack IS the instrument), now once for the page
+  const dry = c.createGain(); n++;
+  const hp = c.createBiquadFilter(); hp.type = "highpass";
+  hp.frequency.value = DRUMBUS.hpf; n++;
+  const sat = c.createWaveShaper();
+  sat.curve = satCurve(1 + 3 * DRUMBUS.sat, DRUMBUS.satMix); sat.oversample = "2x"; n++;
+  dry.connect(hp); hp.connect(sat);
+  // the room sum is fed by the LANES, not by the kit output, so the ratio
+  // between a dry kick and a wet snare survives — that ratio is the room
+  let roomSum = null;
+  if (room) { roomSum = c.createGain(); n++; }
+  const lanes = new Map();
+  const laneIn = (d) => {
+    let L = lanes.get(d);
+    if (L) return L.in;
+    const m = DRUMMIX[d] || { lvl: 1, pan: 0, room: 0.3 };
+    const g = c.createGain(); g.gain.value = m.lvl;
+    const p = c.createStereoPanner(); p.pan.value = m.pan; n += 2;
+    g.connect(p); p.connect(dry);
+    let r = null;
+    if (roomSum) { r = c.createGain(); r.gain.value = m.room; p.connect(r); r.connect(roomSum); n++; }
+    lanes.set(d, L = { in: g, gain: g, pan: p, room: r, mix: m });
+    return L.in;
+  };
+  // WHICH CHANNELS HANG OFF THIS DESK, so focusKit can walk them without the
+  // mixer having to hold a second registry (and so a retired channel's gates
+  // stop being written to — an open gate on a dead channel is the zombie
+  // ZERO-STATIC R1 is about, one level up from an oscillator).
+  const gates = new Map();                   // channel object -> { kit, room }
+  return { dry, out: sat, roomSum, laneIn, lanes, gates,
+           get nodes() { return n; } };
+}
+/* ---------- THE AUX SEND RACK: one bus per effect, for the whole page ------ */
+// See fields.js "A CHIP IS A SEND; A CHAIN IS AN INSERT" for why this is an
+// EXACT refactor rather than an approximation: every effect but `filtersweep`
+// is built by sampler.js buildInsertNodes as `parallel(mix, wet)`, a crossfade
+// around a wet function of the same input. Pin that mix to 1 and the bus is
+// pure wet; hand the chip's own mix to the send gain and trim the dry path by
+// (1-mix) and the sum is the insert's output, sample for sample.
+//
+// WHAT IS GENUINELY DIFFERENT is that the bus has ONE set of internal state
+// for the page: one chorus LFO, one flanger feedback loop, one distortion
+// stage. This instrument plays one section at a time, so in practice that
+// shows up in exactly two places, and both are improvements: the modulation
+// phase runs CONTINUOUSLY across a section change instead of restarting from
+// zero (a per-section rack re-instantiated its LFO at every boundary, which is
+// a phase jump you can hear on a pad), and during the ~30 ms channel
+// changeover two sections briefly share the effect's state.
+export function buildSendBus(c, key, dest, barsec) {
+  const def = FX[key];
+  if (!def || !SP || !SP.buildInsertNodes) return null;
+  const ch = SP.buildInsertNodes(c,
+    [{ type: def.type || key, params: { ...def.params, mix: 1 } }], barsec);
+  const input = c.createGain();
+  const ret = c.createGain();
+  input.connect(ch.input); ch.output.connect(ret); ret.connect(dest);
+  return { input, ret, oscs: ch.oscs || [], stages: ch.stages || [],
+           skipped: ch.skipped || [], nodes: (ch.nodes || []).length + 2 };
 }
 // one reverb return: input -> highpass -> convolver (cached IR) -> level -> dest
 export function makeVerb(c, name, dest) {
@@ -407,6 +522,7 @@ export function makeVerb(c, name, dest) {
   const cv = c.createConvolver(); cv.buffer = irFor(n, c.sampleRate);
   const g = c.createGain(); g.gain.value = ret;
   inp.connect(f); f.connect(cv); cv.connect(g); g.connect(dest);
+  nodeCount.set(inp, 4);
   return inp;
 }
 
@@ -447,9 +563,14 @@ export function initAudio() {
   // sent to it. Most songs use one of these; building all three at boot was
   // paying for a hall and a plate to render silence.
   REV = {};
+  // ...and the aux send rack beside them, on the same law: a chorus bus is
+  // built the first time anything asks to be chorused, and then never again
+  SENDBUS = {};
+  KIT = null;
   // the drum room is not lazy: every channel with a kit sends to it, which is
-  // nearly every channel, and it is delays rather than convolution
-  roomBus = buildRoomBus(ctx, masterIn);
+  // nearly every channel, and it is delays rather than convolution. ?dryroom
+  // is the one thing that can refuse it — see DRYROOM at the head of this file.
+  roomBus = DRYROOM ? null : buildRoomBus(ctx, masterIn);
   echo = buildEchoBus(ctx, masterIn);
   delBus = echo.input;
   setDelayTime(0.1875);
@@ -523,6 +644,45 @@ export function verbFor(name) {
   if (REV[n]) return REV[n];
   REV[n] = makeVerb(ctx, n, masterIn);
   return REV[n];
+}
+// ONE BUS PER EFFECT, BUILT ON FIRST USE — the same shape verbFor has always
+// had, applied to the character effects. A box that asks for crunch and a part
+// that asks for crunch send to the same distortion; nobody owns a copy.
+// Returns null for an effect with no native twin (or before initAudio), and
+// the caller falls back to a private insert — silence is never the answer to
+// "the bus would not build".
+export function sendFor(key) {
+  if (!ctx || !SENDBUS) return null;
+  if (Object.prototype.hasOwnProperty.call(SENDBUS, key)) return SENDBUS[key];
+  let b = null;
+  try { b = buildSendBus(ctx, key, masterIn, barSec()); } catch (e) { b = null; }
+  SENDBUS[key] = b;
+  return b;
+}
+// THE ONE KIT DESK. Lazy for the same reason the reverbs are: a song with no
+// drums anywhere should not pay for a drum strip.
+export function kitFor() {
+  if (!ctx) return null;
+  if (!KIT) KIT = buildKitDesk(ctx, roomBus);
+  return KIT;
+}
+// WHAT THE SHARED RACK COSTS, for the node budget window.__nuMix enforces.
+// Counted off the builders rather than guessed: the master chain reports its
+// own node list, the two oldest buses carry theirs beside the handle they
+// return (countOf), and the kit desk and the send buses count as they build.
+export function sharedReport() {
+  const verbs = Object.values(REV || {}).reduce((n, v) => n + countOf(v), 0);
+  const sends = Object.values(SENDBUS || {}).reduce((n, b) => n + (b ? b.nodes : 0), 0);
+  return {
+    master: chain ? chain.nodes.length : 0,
+    verbs, echo: echo ? echo.nodes : 0,
+    room: countOf(roomBus), kit: KIT ? KIT.nodes : 0, sends,
+    // the two extra anchors initAudio holds outside the swappable middle
+    anchors: masterIn ? 2 : 0,
+    sendBuses: Object.keys(SENDBUS || {}).filter(k => SENDBUS[k]),
+    get total() { return this.master + this.verbs + this.echo + this.room +
+                         this.kit + this.sends + this.anchors; },
+  };
 }
 export function setDelayTime(bars) {
   if (echo) echo.setTime(bars, ctx.currentTime);

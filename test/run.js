@@ -60,6 +60,12 @@ const listing = (dir) => {
 //   wavout-seam           render+encode 57.3% against a 33% budget   (solo: comfortable)
 //   crossfade-seam        197 and 1738 underrun quanta, budget 34    (solo: passes)
 //   live / live-resilience / sampler-inserts-live / wedge-demo       (solo: all pass)
+//   nukernel-bounce       the carrier's offline render, asserted as a fraction of
+//                         the song's own duration — three whole-song renders of a
+//                         composed beatles song, measured end to end. Two of those
+//                         renders already run three OfflineAudioContexts at once
+//                         (audio/bounce.js PARALLEL), so this gate is a full box on
+//                         its own and cannot share one.
 //
 // Every one of them passes serially and fails only for want of CPU. Letting that stand
 // would be the worst outcome available: a suite that goes red without a defect is a
@@ -72,7 +78,7 @@ const listing = (dir) => {
 // cores can shrink this list; it is a property of the hardware, not of the gates.
 // anchored on a path boundary: a bare `live` alternative also swallows
 // speech-live.test.js, which runs fine two-up and should stay in the fast lane.
-const SOLO = /(^|\/)(wavout-seam|wavout|stem-parity|crossfade-seam|live|live-resilience|sampler-inserts-live|wedge-demo)\.test\.js$/;
+const SOLO = /(^|\/)(wavout-seam|wavout|stem-parity|crossfade-seam|live|live-resilience|sampler-inserts-live|wedge-demo|nukernel-bounce)\.test\.js$/;
 
 const SETS = {
   browser: { files: [...listing("test/browser"), ...listing("test/starcruise")], jobs: HEAVY,
