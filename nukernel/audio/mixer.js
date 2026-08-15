@@ -15,12 +15,24 @@
 // a genre is one continuous thing. A song box is a SECTION, and a section is
 // the unit you want to reverb, echo, filter, place and AUTOMATE — so the
 // channel is per BOX (see CHAN below for why the spec-shared cache came off).
+//
+// AND UNDER THE SECTION, A DESK. One strip per box meant one insert chain for
+// every voice in it: crunch on the guitar was crunch on the pad, the bass and
+// the kit, and the only way to treat one thing was to give it a box of its own.
+// A box now carries `parts` — a map of PART key (lead/pad/bass/drums…, the
+// kernel's own roles, plus an ordinal where a genre has several of one) to the
+// same small strip: inserts, two sends, level, place, mute and solo. Each one
+// is a sub-bus feeding this channel's input, so the section chain is still the
+// section-wide treatment and the desk sits in front of it. See partSpecs (what
+// gets built) and buildChannel (how), and note the law both keep: a box with no
+// `parts` builds not one extra node and sounds exactly as it did before.
 import { GENRES, FX, MAX_FX, fxChain, SENDS, LEVELS, PANS, RATES,
-         SP, DRUMFILE, DRUMMIX, DRUMBUS, instrOf } from "../ui/deps.js";
+         SP, DRUMFILE, DRUMMIX, DRUMBUS, instrOf, BASSSYNTH,
+         partOf, chairKeys, resolvePartMix } from "../ui/deps.js";
 import { SONG, on } from "../ui/state.js";
-import { gid, stackOf } from "../ui/derive.js";
+import { gid, stackOf, genreOf, kitOf } from "../ui/derive.js";
 import { ctx, masterIn, delBus, roomBus, verbFor, barSec, satCurve, REV,
-         VERBSPEC } from "./graph.js";
+         VERBSPEC, masterReport } from "./graph.js";
 import { synthNodes, synthOut, clearRoutes, dropRoute, pruneSynths } from "./voices.js";
 
 // DRUMS get a strip too, but a transient-preserving one — a subsonic HPF and a
@@ -104,25 +116,78 @@ function compileAuto(sec, g) {
 // — and does not sound like soup, because its two guitars sit fourteen
 // semitones apart. Register separation is the cure; where the genre does not
 // provide it, placement and a mud dip are what the mixer can do instead.
+// It also carries the chair's ROLE and its ADDRESS, which is what makes the
+// per-part mix possible at all: `part` is the kernel's own assignment for that
+// voice (read off the DERIVED genre, so a per-layer part chip counts — the
+// same genreOf(sec, ent) derive.js renders through), and `key` is that role
+// plus an ordinal when the box has several of one (fields.js chairKeys). The
+// numbering runs across the WHOLE BOX, layers included, because the desk's
+// track list is the box's, not each genre's.
 export function voiceRoster(sec) {
   const out = [];
   let base = 0;
   for (const ent of stackOf(sec)) {
     const g = GENRES[ent.g];
     if (!g) continue;
+    const dg = genreOf(sec, ent);
     for (let v = 0; v < g.voices; v++)
-      out.push({ v: base + v, id: instrOf(ent.g, v), pad: g.realize(v) === "pad" });
+      out.push({ v: base + v, id: instrOf(ent.g, v), pad: g.realize(v) === "pad",
+                 part: partOf(dg, v) });
     base += g.voices;
+  }
+  const keys = chairKeys(out.map(r => r.part));
+  out.forEach((r, i) => { r.key = keys[i]; });
+  return out;
+}
+// EVERY ADDRESS THIS BOX HAS — the chairs plus the two parts that are not
+// voices. The bass is one line per box (not one per genre voice) and the kit
+// is one instrument, so neither has a chair in the roster; both are tracks on
+// the desk all the same, and a box with no bass or no kit must not offer an
+// address that can never sound.
+export function partKeysOf(sec, roster) {
+  const keys = (roster || voiceRoster(sec)).map(r => r.key);
+  if (!genreOf(sec).nobass) keys.push("bass");
+  if (kitOf(sec)) keys.push("drums");
+  return keys;
+}
+// THE BOX'S `parts` MAP -> THE SUB-BUSSES THAT ACTUALLY NEED BUILDING.
+//
+// The filter is the whole reason this is cheap: a part gets a bus only when it
+// asks for something. A box with no `parts` returns [], buildChannel builds
+// nothing, and every voice lands on the section input exactly as it did before
+// this existed — the absent-is-today law, in one line rather than in a flag.
+//
+// SOLO IS THE ONE CONTROL THAT REACHES OTHER PARTS, so it is resolved here,
+// where the box's whole address list is known: any solo anywhere in the box
+// mutes every part that is not soloed, and a muted part needs a bus precisely
+// so there is a gain to close.
+function partSpecs(sec, roster) {
+  const P = sec.parts;
+  if (!P || typeof P !== "object") return [];
+  const keys = partKeysOf(sec, roster);
+  const solo = keys.some(k => P[k] && P[k].solo);
+  const out = [];
+  for (const k of keys) {
+    const m = resolvePartMix(P[k]);
+    const mute = m.mute || (solo && !m.solo);
+    if (!mute && !m.fx.length && !m.rev && !m.del && m.lvl === 1 && m.pan === 0) continue;
+    out.push({ key: k, fx: m.fx, rev: m.rev, del: m.del, lvl: m.lvl, pan: m.pan, mute });
   }
   return out;
 }
+// which dsps are a BASS rather than a voice — the synth pool is keyed
+// (dsp, voice index) and a synth bass is always written at voice 0, so the
+// node key alone cannot tell a reese from a lead sitting in chair 0. The dsp
+// can (see synthIn).
+const BASSDSP = new Set(Object.values(BASSSYNTH).map(s => s.dsp));
 export function chanSpec(sec) {
   const g = GENRES[gid(sec)];    // never null: a box always has an authority
+  const roster = voiceRoster(sec);
   return {
     // the roster rides IN the spec, so a stack edit rebuilds the channel that
     // places it (the key is the stringified spec) instead of leaving yesterday's
     // placement on today's instruments
-    roster: voiceRoster(sec),
+    roster,
     fx: (sec.fx || []).filter(k => FX[k]).slice(0, MAX_FX),
     // ABSENT MEANS "AS THE GENRE ASKS". Every genre already declares how wet it
     // wants to be (tone.verb — vaporwave .55, acid .06), and that number was
@@ -136,6 +201,10 @@ export function chanSpec(sec) {
     pan: sec.pan ? PANS[sec.pan] : 0,
     mot: sec.mot || null,
     auto: compileAuto(sec, g),
+    // the desk under the section strip. It rides IN the spec like the roster
+    // does, so a mix move on one part is a changed key and the channel
+    // rebuilds — ahead of the bar, through the tick's prebuild.
+    parts: partSpecs(sec, roster),
   };
 }
 // BUILD ON THE GIVEN CONTEXT. `env` names the busses the channel hangs off —
@@ -165,16 +234,84 @@ export function buildChannel(c, spec, env) {
     A.hpf.Q.value = 1.6; chain(A.hpf);
   }
   if (needs.has("level")) { A.level = c.createGain(); chain(A.level); }
+  // ONE LEDGER OF LFOs FOR THE WHOLE CHANNEL, parts included — retireChannel
+  // stops everything in it, and an oscillator that outlives its channel is the
+  // zombie ZERO-STATIC R1 is about. It is `const` and pushed to, never
+  // reassigned: the section chain used to overwrite it, which with a desk under
+  // it would have quietly orphaned every part's tremolo.
+  const oscs = [];
+  let stages = [];
+  // ---- THE PART SUB-BUSSES, one small desk channel each ----
+  // "Not every track should go through the effects." Everything below this
+  // point is the SECTION strip — one insert chain, one pan, one level, two
+  // sends — and until now every voice in the box arrived at `input` and took
+  // all of it. A part bus is the same strip, smaller, in front of that:
+  //
+  //   sources of one part -> [inserts] -> pan -> level -> mute gate -> input
+  //                                                          |-> rev send -> the section's verb
+  //                                                          \-> echo send -> the echo bus
+  //
+  // So the section keeps its job (the treatment on the whole box) and gains a
+  // desk under it. The sends land on the SAME two returns the section uses —
+  // a part chooses how much it goes, the section still chooses which room —
+  // and they tap POST the mute gate, because a muted part whose reverb keeps
+  // ringing is not muted.
+  //
+  // BUILT HERE, NOT LAZILY, unlike the lane strips below. A lane strip is a
+  // gain and a panner; a part bus can carry an insert chain, and instantiating
+  // an effect inside the render window is ZERO-STATIC glitch cause R2 — the
+  // one thing this file is careful about. buildChannel already runs a bar
+  // early (the tick's prebuild), and partSpecs has filtered the list down to
+  // the parts that asked for something, so this loop is empty for every box
+  // that has not been mixed.
+  //
+  // AND THEY ARE CHEAP NODES, NOT VOICES. A sub-bus is gains and a panner; the
+  // synth pool is still keyed (dsp, voice) and still routed through per-channel
+  // gates, and a part send reaches verbFor with the SECTION's verb name, so
+  // neither the worklet nor the convolver budget moves.
+  const parts = new Map();                    // part key -> the strip
+  for (const p of (spec.parts || [])) {
+    const pin = c.createGain();
+    let pn = pin;
+    const pnodes = [pin];
+    const pchain = x => { pn.connect(x); pn = x; pnodes.push(x); };
+    let pstages = [];
+    if (p.fx.length && SP && SP.buildInsertNodes) {
+      try {
+        const ch = SP.buildInsertNodes(c, fxChain(p.fx), barSec());
+        pn.connect(ch.input); pn = ch.output;
+        pstages = ch.stages || [];
+        oscs.push(...(ch.oscs || []));
+        pnodes.push(...(ch.nodes || []));
+      } catch (e) { /* one part's broken insert must not take the box with it */ }
+    }
+    const ppan = c.createStereoPanner(); ppan.pan.value = p.pan; pchain(ppan);
+    const plvl = c.createGain(); plvl.gain.value = p.lvl; pchain(plvl);
+    const pmute = c.createGain(); pmute.gain.value = p.mute ? 0 : 1; pchain(pmute);
+    pmute.connect(input);
+    const prs = c.createGain(); prs.gain.value = p.rev;
+    pmute.connect(prs); prs.connect(env.verb(spec.verb));
+    const pds = c.createGain(); pds.gain.value = p.del;
+    pmute.connect(pds); pds.connect(env.echoIn);
+    pnodes.push(prs, pds);
+    nodes.push(...pnodes);
+    parts.set(p.key, { in: pin, pan: ppan, lvl: plvl, gate: pmute, rs: prs, ds: pds,
+                       stages: pstages, spec: p });
+  }
+  // WHERE A SOURCE LANDS: its part's bus if that part has one, the section
+  // input if it does not. Every player, route and fallback on the page asks
+  // through one of these three, so there is exactly one answer to "which
+  // strip is this note on" and no caller has to know whether a bus exists.
+  const partIn = k => { const P = k != null && parts.get(k); return P ? P.in : input; };
   // BAKED AT BUILD TIME: the tempo-synced inserts (the echo's timeBars, a
   // sweep's rateBars) resolve against the bpm as it is NOW, and a later tempo
   // drag does not re-time them until the chain rebuilds. Same contract the big
   // engine states for its own insert chains — a perceptual-twin class of
   // difference, and re-instantiating every effect on a slider drag is worse.
-  let oscs = [], stages = [];
   if (spec.fx.length && SP && SP.buildInsertNodes) {
     try {
       const ch = SP.buildInsertNodes(c, fxChain(spec.fx), barSec());
-      node.connect(ch.input); node = ch.output; oscs = ch.oscs || [];
+      node.connect(ch.input); node = ch.output; oscs.push(...(ch.oscs || []));
       stages = ch.stages || [];
       nodes.push(...(ch.nodes || []));
     } catch (e) { /* an insert that will not build must not take the section with it */ }
@@ -186,11 +323,15 @@ export function buildChannel(c, spec, env) {
   rs.connect(env.verb(spec.verb));
   const ds = c.createGain(); ds.gain.value = spec.del; lvl.connect(ds); ds.connect(env.echoIn);
   nodes.push(rs, ds);
-  // the drum sub-strip: transient-preserving, long-lived, one per channel
+  // the drum sub-strip: transient-preserving, long-lived, one per channel.
+  // THE KIT IS A PART, and this is where it joins the desk — the whole lane
+  // scheme below already funnels through here, so folding the drums in is a
+  // question of where dSat lands rather than a second mechanism. `drums` with
+  // no entry lands on the section input exactly as before.
   const dHP = c.createBiquadFilter(); dHP.type = "highpass"; dHP.frequency.value = DRUMBUS.hpf;
   const dSat = c.createWaveShaper(); dSat.curve = satCurve(1 + 3 * DRUMBUS.sat, DRUMBUS.satMix);
   dSat.oversample = "2x";
-  dHP.connect(dSat); dSat.connect(input);
+  dHP.connect(dSat); dSat.connect(partIn("drums"));
   nodes.push(dHP, dSat);
   // ---- the drum ROOM send, per channel ----
   // One trim for the whole kit into the shared ambience return (graph.js
@@ -198,9 +339,18 @@ export function buildChannel(c, spec, env) {
   // ratio between a dry kick and a wet snare survives — that ratio is the room.
   // It deliberately does NOT pass through the section's level/pan/inserts: the
   // room is a property of the kit, not of the mix move being made on the box.
+  //
+  // …WHICH IS ALSO WHY THE DRUMS PART'S FADER REACHES IT HERE. The room send
+  // hangs off the LANES, upstream of everything, so it does not pass through
+  // the drums sub-bus and a `drums` mute would leave the ambience ringing
+  // under a silent kit. The part's level and mute are folded into this one
+  // trim instead: pull the drums down and their room comes down with them,
+  // which is the ratio staying put — the whole point of the room.
   let droom = null;
   if (env.room && !DRYROOM) {
-    droom = c.createGain(); droom.gain.value = DRUMBUS.room;
+    const dP = parts.get("drums");
+    const dTrim = dP ? (dP.spec.mute ? 0 : dP.spec.lvl) : 1;
+    droom = c.createGain(); droom.gain.value = DRUMBUS.room * dTrim;
     droom.connect(env.room); nodes.push(droom);
   }
   // ---- the LANE STRIPS, built on the lane's first hit ----
@@ -282,14 +432,19 @@ export function buildChannel(c, spec, env) {
       carve.frequency.value = 450; carve.gain.value = -3.5; carve.Q.value = 0.9;
       node.connect(carve); node = carve; nodes.push(carve);
     }
+    // …and out onto its PART's strip. This is the pitched half of the desk:
+    // the placement above is still the band's internal geometry, and the part
+    // bus (if the chair asked for one) is where the effect, the send and the
+    // fader for THAT chair live. No part, no bus, straight to `input`.
     const p = c.createStereoPanner(); p.pan.value = pan;
-    node.connect(p); p.connect(input);
+    node.connect(p); p.connect(partIn(r.key));
     nodes.push(vin, p);
     let pl = null;
     if (SP && SP.SamplerLive) {
       try { pl = SP.SamplerLive(c, { dry: vin, rev: vin, del: vin }); } catch (e) { pl = null; }
     }
-    voices.set(v, V = { in: vin, pan: p, player: pl, carve: !!carve, id: r.id });
+    voices.set(v, V = { in: vin, pan: p, player: pl, carve: !!carve, id: r.id,
+                        part: r.part || null, key: r.key || null });
     return V;
   };
   let player = null;
@@ -300,6 +455,41 @@ export function buildChannel(c, spec, env) {
     try { player = SP.SamplerLive(c, { dry: input, rev: input, del: input }); }
     catch (e) { player = null; }
   }
+  // …and one per PART bus, for the sources that have no chair: the bass line,
+  // and anything else that reaches the mixer naming a part rather than a voice
+  // index. Lazy because a SamplerLive is a closure over three destinations,
+  // not nodes — the expensive things are still per note (see voiceBus) — so
+  // there is nothing here worth building inside the render window's budget.
+  const partPlayers = new Map();
+  const partPlayer = (k) => {
+    const P = k != null && parts.get(k);
+    if (!P) return null;
+    if (partPlayers.has(k)) return partPlayers.get(k);
+    let pl = null;
+    if (SP && SP.SamplerLive) {
+      try { pl = SP.SamplerLive(c, { dry: P.in, rev: P.in, del: P.in }); } catch (e) { pl = null; }
+    }
+    partPlayers.set(k, pl);
+    return pl;
+  };
+  // A VOICE INDEX -> ITS PART'S INPUT. The one thing outside this file that
+  // knows about voice indices is the scheduler, and it should not also have to
+  // know the roster's chair names.
+  const voiceIn = (v) => {
+    const r = roster.find(x => x.v === v);
+    return partIn(r && r.key);
+  };
+  // A SYNTH NODE KEY -> ITS PART'S INPUT. The pool is keyed "dsp#voice" and
+  // shared across every channel (voices.js: keying it per channel is what
+  // multiplied the worklet budget), so the route's destination is the only
+  // per-channel thing about it — and the dsp name is what separates a synth
+  // bass, always written at voice 0, from whatever sits in chair 0.
+  const synthIn = (nodeKey) => {
+    const i = String(nodeKey).lastIndexOf("#");
+    const dsp = i < 0 ? String(nodeKey) : String(nodeKey).slice(0, i);
+    if (BASSDSP.has(dsp)) return partIn("bass");
+    return voiceIn(i < 0 ? 0 : (+String(nodeKey).slice(i + 1) || 0));
+  };
   // where each automatable param lives on THIS channel — armAutomation asks
   // by name, so the walk never needs to know which nodes were built
   const autoParam = name =>
@@ -311,6 +501,7 @@ export function buildChannel(c, spec, env) {
     : name === "send.echo" ? ds.gain : null;
   return { key: null, input, drumIn: dHP, laneIn, lanes, voiceBus, voices, droom,
            player, autos, autoParam,
+           parts, partIn, voiceIn, synthIn, partPlayer,
            motKind: spec.mot, oscs, nodes, spec, stages, rs, ds, lvl };
 }
 export function channelFor(sec, retireAt) {
@@ -342,7 +533,15 @@ export function channelFor(sec, retireAt) {
 // reports what it could not build in `skipped`, and an effect that silently
 // passed dry is exactly the failure a screenshot cannot see.
 window.__nuMix = () => ({
-  master: !!masterIn,
+  // THE MASTER BUS. This key used to be the bare boolean `!!masterIn` — "is
+  // there a master at all" — and it still answers that question, because
+  // masterReport() is null until initAudio builds the chain and an object
+  // after. What it GAINED is content: the stages that were actually wired and
+  // the AudioParam values they landed on, read off the nodes rather than off
+  // the spec that asked for them. That is the desk's own law (see `stages` and
+  // `level` on the channels below) applied one level up: a global that lit up
+  // in the session bank and never reached a param is visible from outside.
+  master: masterReport(),
   verbs: Object.keys(VERBSPEC),
   // THE DRUM ROOM EXISTS, as a node rather than as an intention. Reported at
   // the top because it is one bus for the whole page (graph.js), and a channel
@@ -377,7 +576,21 @@ window.__nuMix = () => ({
       level: +L.gain.gain.value.toFixed(3), pan: +L.pan.pan.value.toFixed(3),
       room: L.room ? +L.room.gain.value.toFixed(3) : null })),
     voices: [...c.voices.entries()].map(([v, V]) => ({ v, id: V.id,
-      pan: +V.pan.pan.value.toFixed(3), carve: V.carve, player: !!V.player })),
+      pan: +V.pan.pan.value.toFixed(3), carve: V.carve, player: !!V.player,
+      // which chair this voice is, so a reader can join a sounding voice to
+      // the part strip it goes through
+      part: V.part, key: V.key })),
+    // THE DESK, read off the nodes. Every number is the AudioParam's value and
+    // `stages` is what buildInsertNodes actually BUILT, for the same reason the
+    // section's are: a part chip that lit up and passed the signal dry is the
+    // failure this file keeps rediscovering, one level down. Empty for every
+    // box that has not been mixed per part — which is the absent-is-today law,
+    // visible from outside.
+    parts: [...c.parts.entries()].map(([key, P]) => ({ key,
+      fx: P.spec.fx, stages: P.stages,
+      rev: +P.rs.gain.value.toFixed(3), echo: +P.ds.gain.value.toFixed(3),
+      level: +P.lvl.gain.value.toFixed(3), pan: +P.pan.pan.value.toFixed(3),
+      muted: P.gate.gain.value < 0.5 })),
   })),
 });
 // AUTOMATION IS ARMED WHEN ITS SECTION STARTS, and re-armed on every pass —

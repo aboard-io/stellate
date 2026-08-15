@@ -317,17 +317,25 @@ export function scheduleBar(bar, sec, chan, kit, when, sd, synthFn) {
         // beeped ten times in one sweep when a wasm fetch and the zone fetch
         // both flaked under IO load. Identity genres drop instead.
         if (useSyn) countDrop();
-        else line(at, e.n, e.dur * sd, e.acc, e.sld, e.prev, bar.g.tone, e.pad, e.vel, chan);
+        // the stub lands on the same chair's strip as the note it stands in
+        // for — a fallback that jumps the desk would be audible under a solo
+        else line(at, e.n, e.dur * sd, e.acc, e.sld, e.prev, bar.g.tone, e.pad, e.vel,
+                  chan, e.v);
       }
     } else if (e.kind === "hit") {
       if (!playDrum(kit, e.d, at, e.acc, e.vel, chan)) hit(at, e.d, e.acc, e.vel, chan);
     }
     else if (e.kind === "bass") {
       const bs = BASSSYNTH[sec.bassop];
+      // THE BASS IS A PART, not a chair: it is one line per box rather than one
+      // per genre voice, so it has no voice index and names its strip instead.
+      // (The synth bass finds the same strip from its dsp — mixer.synthIn.)
       if (bs && synthFn(bs, e.n, at, e.dur * sd, 0, 0, e.vel, 0, chan, e.vox)) { /* synth bass */ }
-      else if (!playSampled(BASS_INSTR, e.n, at, e.dur * sd, e.vel, 1.25, chan, STRIPS.bass))
+      else if (!playSampled(BASS_INSTR, e.n, at, e.dur * sd, e.vel, 1.25, chan,
+                            STRIPS.bass, null, "bass"))
         line(at, e.n, e.dur * sd, 1, 0, null,
-          { wave: "square", cut: 340, q: 5, atk: .006, rel: .8, gain: .26 }, false, e.vel, chan);
+          { wave: "square", cut: 340, q: 5, atk: .006, rel: .8, gain: .26 }, false, e.vel,
+          chan, "bass");
     }
   }
 }

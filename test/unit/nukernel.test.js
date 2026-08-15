@@ -1140,6 +1140,12 @@ console.log("the loader — round trip, typed errors, clamps, migration");
       const b = S.emptyBox();
       if (f.type === "list") b[f.key] = [k];
       else if (f.type === "vox") b.vox = { [f.key]: k };
+      // a "parts" table lists PART NAMES, and the value under one is a mix
+      // entry — so the exhaustive toggle exercises the real map shape (an
+      // entry per name, carrying one of every sub-field it can carry)
+      else if (f.type === "parts")
+        b[f.key] = { [k]: { fx: ["chorus"], rev: "wet", echo: "touch",
+                            lvl: "hush", pan: "l", mute: true, solo: false } };
       else b[f.key] = k;
       let r = trial(b);
       ok(r.ok, f.key + "=" + k + " on the box: loader refused — " +
@@ -2790,6 +2796,323 @@ console.log("the full kit — twelve lanes, four vectors, and what each operator
     for (const k of kits) ok(K.KITOPS[k], "the arranger deals \"" + k + "\", which is not an operator");
     ok(kits.size >= 20, "the arranger reaches for only " + kits.size + " kit operators " +
        "out of " + Object.keys(K.KITOPS).length);
+  }
+}
+
+/* ---------- 37c. THE PER-PART MIX, the half that is pure -------------------
+   "Not every track should go through the effects." The audio half of that
+   answer — a sub-bus per part under the section channel — is nodes, and it is
+   gated where nodes can be measured (test/browser/nukernel-drums.test.js §E,
+   which renders one part treated and another untouched and correlates their
+   spectra). What lives HERE is everything upstream of a node: the address
+   vocabulary, the chair numbering, the resolution to engine values, and the
+   loader's contract — because a mix you cannot save is a mix you do not have.
+
+   The law under all of it: ABSENT IS TODAY. A box with no `parts` must resolve
+   to no sub-bus at all, or every song ever saved changes sound. */
+console.log("the per-part mix — addresses, chairs, defaults, and what the loader keeps");
+{
+  const F = require("../../nukernel/fields.js");
+  const S = require("../../nukernel/song.js");
+  const NI = require("../../nukernel/instruments.js");
+
+  // (a) THE VOCABULARY COVERS THE KERNEL. A role the kernel can assign and the
+  // desk cannot name is a voice with no address — it would fall to `line` and
+  // silently share a strip with the melody. This is the join that rots first,
+  // so it is checked against kernel.js PARTS itself rather than against a copy.
+  for (const p of Object.keys(K.PARTS))
+    ok(F.PARTNAMES[p], "kernel part \"" + p + "\" has no mix address in PARTNAMES");
+  for (const p of ["bass", "drums"])
+    ok(F.PARTNAMES[p], "the desk cannot address the " + p + " — it is a track too");
+  for (const p of Object.keys(F.PARTNAMES))
+    ok(F.PARTLABEL[p], "part address \"" + p + "\" has no label");
+
+  // (b) CHAIRS. The first voice of a role keeps the bare name; the rest take an
+  // ordinal, counted across the WHOLE box. Post rock (pad + two clean guitars)
+  // and rock (two crunch guitars) are the two real shapes this exists for.
+  const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  ok(eq(F.chairKeys(["pad", "line", "line"]), ["pad", "line", "line2"]),
+     "chairKeys did not number a genre's second line");
+  ok(eq(F.chairKeys(["line", "line"]), ["line", "line2"]), "two lines did not separate");
+  ok(eq(F.chairKeys(["stab", "lead"]), ["stab", "lead"]),
+     "two different roles were given ordinals they do not need");
+  ok(eq(F.chairKeys([]), []), "chairKeys is not total over the empty stack");
+  ok(eq(F.chairKeys(["nonsense"]), ["line"]),
+     "an unknown role did not fall back to the line address");
+  // every address chairKeys can mint is one the loader accepts, at any depth
+  {
+    const deep = F.chairKeys(new Array(F.MAX_CHAIRS + 3).fill("pad"));
+    ok(deep.every(k => F.okPartKey(k)),
+       "chairKeys minted an address its own validator refuses: " + deep.join(","));
+    ok(new Set(deep.slice(0, F.MAX_CHAIRS)).size === F.MAX_CHAIRS,
+       "the first " + F.MAX_CHAIRS + " chairs are not distinct addresses");
+  }
+  ok(!F.okPartKey("line1"), "\"line1\" is a second spelling of \"line\" — it must not validate");
+  ok(!F.okPartKey("line0") && !F.okPartKey("line99") && !F.okPartKey("zzz") &&
+     !F.okPartKey("") && !F.okPartKey(null),
+     "okPartKey accepted something that is not an address");
+  ok(F.partChairLabel("line2") === "line 2" && F.partChairLabel("drums") === "drums",
+     "a chair does not read as words: " + F.partChairLabel("line2"));
+
+  // ...and the addresses a REAL genre produces are the ones the desk expects.
+  // instrOf/partOf is the same walk audio/mixer.js voiceRoster does.
+  for (const gk of GK) {
+    const g = GENRES[gk];
+    const keys = F.chairKeys(Array.from({ length: g.voices }, (_, v) => K.partOf(g, v)));
+    ok(keys.length === g.voices, gk + ": one address per voice, got " + keys.length);
+    ok(new Set(keys).size === keys.length, gk + ": two voices share an address (" +
+       keys.join(",") + ") — one strip would treat both");
+    for (const k of keys) ok(F.okPartKey(k), gk + ": minted a bad address " + k);
+  }
+
+  // (c) DEFAULTS ARE NEUTRAL, and neutral is the sound the page already makes.
+  // resolvePartMix is the one place a part entry becomes engine numbers, so
+  // "absent is today" is provable right here: nothing set, nothing changed.
+  {
+    const d = F.resolvePartMix(null);
+    ok(d.fx.length === 0 && d.rev === 0 && d.del === 0 && d.lvl === 1 && d.pan === 0 &&
+       d.mute === false && d.solo === false,
+       "an absent part entry does not resolve to neutral: " + JSON.stringify(d));
+    ok(JSON.stringify(F.resolvePartMix({})) === JSON.stringify(d),
+       "an empty entry is not the same as an absent one");
+    // ...and a SET value is the registry's own number, not a second table
+    const m = F.resolvePartMix({ rev: "wet", echo: "touch", lvl: "hush", pan: "l",
+                                 fx: ["chorus", "phaser"], mute: true });
+    ok(m.rev === F.SENDS.wet && m.del === F.SENDS.touch && m.lvl === F.LEVELS.hush &&
+       m.pan === F.PANS.l && m.mute === true,
+       "resolvePartMix does not read the shipped tables: " + JSON.stringify(m));
+    ok(m.del === F.SENDS.touch, "the `echo` field did not reach the `del` bus value");
+    // the insert budget is the box's, per part — three chips is the ceiling
+    // everywhere or a nine-part song is a wall of effects
+    const many = F.resolvePartMix({ fx: Object.keys(F.FX) });
+    ok(many.fx.length === F.MAX_FX,
+       "a part chain is not capped at MAX_FX (" + many.fx.length + ")");
+    ok(F.resolvePartMix({ fx: ["nonsense"] }).fx.length === 0, "an unknown insert survived");
+    ok(F.resolvePartMix({ rev: "soaked" }).rev === 0,
+       "an unknown send did not fall back to the neutral default");
+  }
+
+  // (d) THE REGISTRY IS COMPLETE, by the same rules FIELDS itself is held to
+  // (§21b) — an incomplete sub-field is a chip the palette cannot draw.
+  for (const f of F.PARTMIX) {
+    ok(typeof f.key === "string" && f.key, "a PARTMIX entry has no key");
+    if (f.type === "flag") { ok(f.default === false, f.key + ": a flag defaults to true"); continue; }
+    ok(f.table && Object.keys(f.table).length, f.key + ": no value table");
+    ok(f.labels && Object.keys(f.table).every(k => f.labels[k] != null),
+       f.key + ": a table value has no label");
+    if (f.type === "list") ok(Array.isArray(f.default) && f.max === F.MAX_FX,
+      f.key + ": a part list without [] and MAX_FX");
+    else ok(f.default === null, f.key + ": enum default is not null");
+  }
+  // the registry entry itself, and the constructor that seeds it
+  {
+    const fld = F.FIELD.parts;
+    ok(fld && fld.type === "parts" && fld.scope === "box" && fld.default === null,
+       "the `parts` field is not a box-scope, absent-by-default registry entry");
+    ok("parts" in S.emptyBox() && S.emptyBox().parts === null,
+       "emptyBox does not seed `parts` absent");
+  }
+
+  // (e) THE LOADER. Keys filter, values reject — the split matters, and the
+  // reason is a genre A/B: `pad2` is a legal address this box may not have a
+  // chair for right now, and losing it on save would mean clicking a genre and
+  // back silently ate the mix.
+  const trial = box => S.validateSong(
+    { v: 2, slots: [S.blank()], song: [box], bpm: 126, vol: 80 });
+  {
+    const b = S.emptyBox();
+    b.parts = { lead: { fx: ["chorus", "nonsense"], rev: "wet" },
+                pad2: { pan: "l" },                 // legal address, maybe no chair
+                nonsense: { lvl: "hush" },          // not an address at all
+                line: {} };                         // nothing set
+    const r = trial(b);
+    ok(r.ok, "the loader refused a legal per-part mix: " + JSON.stringify(r.errors[0]));
+    const p = r.ok && r.song.song[0].parts;
+    ok(p && p.lead && p.lead.fx.join(",") === "chorus",
+       "the fx filter rule does not apply inside a part");
+    ok(p && p.pad2 && p.pad2.pan === "l",
+       "an address with no chair in this box was dropped — a genre A/B would eat it");
+    ok(p && !("nonsense" in p), "a key that is not an address survived the load");
+    ok(p && !("line" in p), "an entry with nothing set was not normalized away");
+  }
+  {
+    const b = S.emptyBox(); b.parts = { lead: { lvl: "soaked" } };
+    const r = trial(b);
+    ok(!r.ok && /\.parts\.lead\.lvl$/.test(r.errors[0].path),
+       "a bad part level did not name its own field: " + JSON.stringify(r.errors[0]));
+  }
+  {
+    const b = S.emptyBox(); b.parts = { lead: { mute: "yes" } };
+    ok(!trial(b).ok, "a non-boolean mute was accepted");
+    const b2 = S.emptyBox(); b2.parts = [{ lead: {} }];
+    ok(!trial(b2).ok, "an array was accepted where the desk wants a map");
+    const b3 = S.emptyBox(); b3.parts = { lead: 3 };
+    ok(!trial(b3).ok, "a number was accepted where the desk wants a mix entry");
+  }
+  // (f) ABSENT IS TODAY, through the whole door: a song with no `parts` comes
+  // back with no `parts`, and one whose entries all normalize away does too —
+  // so there is exactly one spelling of "unmixed" for the mixer to skip on.
+  {
+    const b = S.emptyBox();
+    const r = trial(b);
+    ok(r.ok && r.song.song[0].parts === null, "an unmixed box did not come back unmixed");
+    const b2 = S.emptyBox(); b2.parts = { lead: {}, drums: {} };
+    const r2 = trial(b2);
+    ok(r2.ok && r2.song.song[0].parts === null,
+       "a map of empty entries did not normalize to absent");
+    // and it survives the round trip that every save takes
+    const b3 = S.emptyBox(); b3.parts = { drums: { pan: "l", solo: true } };
+    const once = trial(b3);
+    ok(once.ok, "a soloed kit did not validate");
+    const twice = S.load(JSON.parse(JSON.stringify(once.song)));
+    ok(twice.ok && JSON.stringify(twice.song.song[0].parts) ===
+       JSON.stringify(once.song.song[0].parts),
+       "the per-part mix is not stable across a save/load round trip");
+  }
+  // (g) A v:1 SAVE HAS NO DESK AND MUST NOT GROW ONE. `parts` is additive, so
+  // there is no migration to write — which is exactly the claim worth holding.
+  {
+    const ph = () => ({ deg: new Array(16).fill(0), oct: new Array(16).fill(0),
+                        vel: new Array(16).fill(5), gate: new Array(16).fill(1),
+                        acc: new Array(16).fill(0), sld: new Array(16).fill(0) });
+    const r = S.load({ v: 1, slots: [ph()], bpm: 126, vol: 80,
+                       song: [{ genre: "acid", slots: [0], len: 4, nudge: 0, ops: [] }] });
+    ok(r.ok && r.song.song[0].parts == null,
+       "a v:1 save came back carrying a per-part mix it never had");
+  }
+  // and the instrument table is untouched by any of this — the desk addresses
+  // chairs, it does not re-seat them
+  ok(typeof NI.stripFor("clean_guitar", false) === "object",
+     "stripFor stopped answering — the per-part desk must not touch the strips");
+}
+
+/* ---------- 37b. THE MASTER BUS -------------------------------------------
+   The other end of the desk. §37 proves a box can treat one chair; this proves
+   the song can treat everything, and — the part that actually matters — that a
+   song which asks for NOTHING resolves to exactly the chain audio/graph.js has
+   always built. The graph keys its whole absent-is-today branch on that, and
+   the offline bounce renders through the same builder, so a drift here is a
+   background carrier that does not match the foreground.
+
+   Pure node: fields.js and song.js only. The audible half (the spectrum moves,
+   the blob carries it) is the browser gates' job — nukernel-audio's shape
+   correlation and nukernel-survival's carrier read. */
+console.log("the master bus — globals, defaults, and what the loader keeps");
+{
+  const F = require("../../nukernel/fields.js");
+  const S = require("../../nukernel/song.js");
+
+  // (a) THE REGISTRY IS COMPLETE, by the rules PARTMIX and FIELDS are held to
+  for (const f of F.MASTER) {
+    ok(typeof f.key === "string" && f.key, "a MASTER entry has no key");
+    ok(typeof f.label === "string" && f.label, f.key + ": no silkscreen label");
+    ok(f.table && Object.keys(f.table).length, f.key + ": no value table");
+    ok(f.labels && Object.keys(f.table).every(k => f.labels[k] != null),
+       f.key + ": a table value has no label");
+    ok(f.default === null, f.key + ": a global defaults to something");
+    // NO "OFF" ENTRY, anywhere. A chip is a toggle and the empty option is how
+    // a global clears, so an explicit off/flat/normal would be a second
+    // spelling of absent — and two spellings of a default is what song.js and
+    // the graph both normalize away.
+    for (const k of Object.keys(f.table))
+      ok(!/^(off|none|flat|normal)$/.test(k),
+         f.key + ": '" + k + "' is a second spelling of the default");
+  }
+  ok(F.MASTER.every(f => F.MASTERBY[f.key] === f), "MASTERBY is not the same table");
+
+  // (b) ABSENT IS TODAY. These are the numbers graph.js hardcoded before the
+  // globals existed — glue at -22/2.2 into a x2.2 makeup, the brickwall at
+  // -1.5 — and resolveMaster must land on them from nothing, from {}, and from
+  // a spec full of values the build does not recognize.
+  {
+    const d = F.resolveMaster(null);
+    ok(d.glue.thr === -22 && d.glue.knee === 28 && d.glue.ratio === 2.2 &&
+       d.glue.atk === 0.015 && d.glue.rel === 0.25 && d.glue.makeup === 2.2,
+       "the resolved glue is not live.js's bus compressor: " + JSON.stringify(d.glue));
+    ok(d.ceiling.thr === -1.5 && d.ceiling.push === 1 && d.ceiling.clip === 0,
+       "the resolved ceiling is not the brickwall graph.js always built: " +
+       JSON.stringify(d.ceiling));
+    ok(d.drive === null && d.tape === null && d.space === null &&
+       d.width === null && d.tilt === null,
+       "an unset global resolved to something the graph would build a node for: " +
+       JSON.stringify(d));
+    const j = JSON.stringify(d);
+    ok(JSON.stringify(F.resolveMaster({})) === j, "{} is not the same as absent");
+    ok(JSON.stringify(F.resolveMaster({ drive: "nonsense", ceiling: "nuclear" })) === j,
+       "an unrecognized value did not fall back to today");
+    // …and the two explicit names for today's numbers really are today's
+    ok(JSON.stringify(F.resolveMaster({ glue: "glue", ceiling: "open" })) === j,
+       "choosing 'glue'/'open' by hand is not the same chain as choosing nothing");
+  }
+
+  // (c) A SET VALUE IS THE REGISTRY'S OWN NUMBER, not a second table, and the
+  // resolved objects are COPIES — the graph reads them into AudioParams and a
+  // shared literal would be one edit away from rewriting the table.
+  {
+    const m = F.resolveMaster({ drive: "crush", glue: "squash", tape: "worn",
+                                space: "hall", width: "mono", tilt: "dark",
+                                ceiling: "louder" });
+    ok(m.drive === F.DRIVES.crush, "drive did not resolve through DRIVES");
+    ok(m.glue.ratio === F.GLUES.squash.ratio, "glue did not resolve through GLUES");
+    ok(m.tape.wob === F.TAPES.worn.wob && m.tape.sat === F.TAPES.worn.sat,
+       "tape did not resolve through TAPES");
+    ok(m.space.mix === F.SPACES.hall.mix, "space did not resolve through SPACES");
+    ok(m.width === F.WIDTHS.mono, "width did not resolve through WIDTHS");
+    ok(m.tilt === F.TILTS.dark, "tilt did not resolve through TILTS");
+    ok(m.ceiling.push === F.CEILINGS.louder.push, "ceiling did not resolve through CEILINGS");
+    ok(m.glue !== F.GLUES.squash && m.tape !== F.TAPES.worn && m.space !== F.SPACES.hall,
+       "resolveMaster handed out the shipped table object itself");
+    // mono is 0, which is FALSY and the exact value a lazy `if (width)` drops
+    ok(F.resolveMaster({ width: "mono" }).width === 0,
+       "width 'mono' resolved to null — a falsy engine value was read as absent");
+  }
+
+  // (d) masterIsDefault answers the surface's question, not a shape question
+  ok(F.masterIsDefault(null) && F.masterIsDefault({}) &&
+     F.masterIsDefault({ drive: null }) && F.masterIsDefault({ drive: "nonsense" }),
+     "masterIsDefault called a no-op spec a treatment");
+  ok(!F.masterIsDefault({ drive: "hair" }) && !F.masterIsDefault({ width: "mono" }),
+     "masterIsDefault called a real treatment a default");
+
+  // (e) THE LOADER. Keys filter (the vocabulary will move), values REJECT (an
+  // unknown ceiling means the file is from a build this one cannot honestly
+  // play), and absent has one spelling on the way out.
+  const trialM = master => S.validateSong(
+    { v: 2, slots: [S.blank()], song: [S.emptyBox()], master, bpm: 126, vol: 80 });
+  {
+    const r = trialM({ drive: "dirt", tape: "worn", nonsense: "x", tilt: null });
+    ok(r.ok, "the loader refused a legal master: " + JSON.stringify(r.errors[0]));
+    ok(r.ok && JSON.stringify(r.song.master) === '{"drive":"dirt","tape":"worn"}',
+       "the master did not come back filtered and ordered: " +
+       JSON.stringify(r.ok && r.song.master));
+    const bad = trialM({ ceiling: "nuclear" });
+    ok(!bad.ok && bad.errors[0].path === "master.ceiling",
+       "a bad global did not name its own field: " + JSON.stringify(bad.errors[0]));
+    ok(!trialM([{ drive: "dirt" }]).ok, "an array was accepted where the bus wants a map");
+    ok(!trialM(7).ok, "a number was accepted where the bus wants a map");
+  }
+  // (f) ABSENT IS TODAY THROUGH THE WHOLE DOOR — including a v:1 save, which
+  // never had a master and must not grow one
+  {
+    ok(trialM(undefined).song.master === null, "a song with no master came back with one");
+    ok(trialM({}).song.master === null, "an empty master did not normalize to absent");
+    ok(trialM({ drive: null }).song.master === null,
+       "a master of nulls did not normalize to absent");
+    const ph = () => ({ deg: new Array(16).fill(0), oct: new Array(16).fill(0),
+                        vel: new Array(16).fill(5), gate: new Array(16).fill(1),
+                        acc: new Array(16).fill(0), sld: new Array(16).fill(0) });
+    const r = S.load({ v: 1, slots: [ph()], bpm: 126, vol: 80,
+                       song: [{ genre: "acid", slots: [0], len: 4, nudge: 0, ops: [] }] });
+    ok(r.ok && r.song.master === null,
+       "a v:1 save came back carrying a master bus it never had");
+  }
+  // (g) …and it survives the round trip every save takes
+  {
+    const once = trialM({ space: "cavern", width: "huge", glue: "pump" });
+    ok(once.ok, "a full master did not validate");
+    const twice = S.load(JSON.parse(JSON.stringify(once.song)));
+    ok(twice.ok && JSON.stringify(twice.song.master) === JSON.stringify(once.song.master),
+       "the master bus is not stable across a save/load round trip");
   }
 }
 

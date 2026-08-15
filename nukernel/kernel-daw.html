@@ -168,12 +168,19 @@
              the pattern and the arrangement wear. -->
         <div class="song tbl" id="song"></div>
         <!-- THE GLOBAL BANK — everything that outlives a box: the soundfont,
-             the shipped songs, and the session as a file. It lives on the SONG
-             page (they are song operations, not performance controls) and on a
-             desk it is simply visible with everything else. A real silkscreened
-             bank: header, a legend over every control — the old strip was two
-             bare pickers whose labels a phone hid, which made the soundfont a
-             mystery knob. ids #font / #preset are gate-read; do not rename. -->
+             the shipped songs, the session as a file, and the MASTER BUS. It
+             lives on the SONG page (they are song operations, not performance
+             controls) and on a desk it is simply visible with everything else.
+             A real silkscreened bank: header, a legend over every control — the
+             old strip was two bare pickers whose labels a phone hid, which made
+             the soundfont a mystery knob. ids #font / #preset / #gmaster and
+             the #m-<key> selects are gate-read; do not rename.
+
+             TWO ROW GROUPS, one bank. The first is the session itself; the
+             second is the master bus — the other end of the desk from the MIX
+             page's part strips, and a session control rather than a box control
+             because there is exactly one of it for the whole song. Same idiom,
+             same legends, one more ruled row group. -->
         <div class="gbank tbl" aria-label="session">
           <div class="thd">Session</div>
           <div class="gitems">
@@ -193,6 +200,28 @@
               </span>
             </div>
           </div>
+          <!-- the second row group. The row title is a sub-header inside the
+               same well, and ui/chrome.js fills #gmaster from the fields.js
+               MASTER registry — there is no hand-written control list here, for
+               the reason there is none anywhere else: a table of labels beside
+               a table of values is the drift fields.js exists to end. -->
+          <div class="gsub">Master bus
+            <button class="btn hint" id="mhelp" aria-expanded="false"
+              aria-controls="mhint" title="what the master bus does">?</button>
+          </div>
+          <p class="edhint ghint" id="mhint" hidden>The chain the whole song
+             lands on, after every box and every part strip. <b>Drive</b> is
+             grit on the sum; <b>glue</b> is the character of the bus compressor
+             that is always there; <b>tape</b> is a transport that drifts and a
+             head that saturates; <b>space</b> bleeds a little of the dry mix
+             into one shared room, which is what makes it different from a
+             section's reverb send; <b>width</b> trims the sides; <b>tilt</b>
+             rocks the spectrum about its middle; <b>ceiling</b> is how hard the
+             end of the chain works. Every one is off until you set it, they
+             save with the song, and the background carrier is rendered through
+             the same chain — so a song sounds the way you left it wherever it
+             is played.</p>
+          <div class="gitems gmaster" id="gmaster"></div>
         </div>
       </div>
     </section>
@@ -200,6 +229,34 @@
     <section class="page pg-palette" id="page-palette" aria-label="sound, mix and transitions">
       <div class="ed">
         <div class="palette" id="palette"></div>
+      </div>
+    </section>
+
+    <!-- THE MIX PAGE — a TABLE OF SOUNDS: one row per part the selected box
+         actually sounds (lead, riff, pad, bass, drums…), the mixer strip as
+         columns, and the SECTION row last, under a heavier rule, because
+         every part bus feeds it (audio/mixer.js buildChannel). That last row
+         is the box's own fx/rev/echo/lvl/pan — the very fields the palette's
+         EFFECTS tab writes — so the flat chips and this table are two views
+         of one mix and a saved song opens with all of it on the section row.
+         ui/mixtbl.js builds it. -->
+    <section class="page pg-mix" id="page-mix" aria-label="mix">
+      <div class="ed">
+        <div class="edhead">
+          <h2>Mix</h2>
+          <button class="btn hint" id="mixhelp" aria-expanded="false"
+            aria-controls="mixhint" title="how the mix table works">?</button>
+        </div>
+        <p class="edhint" id="mixhint" hidden>One row per sound the selected box
+           makes, read from the same track list the audio builds its channels
+           from. Tap a cell — effects, reverb, echo, level, place — for that
+           sound's chips; <b>M</b> mutes it and <b>S</b> solos it (a solo
+           anywhere in the box silences everything not soloed). A dim value is
+           the default answering; a bright one is yours. The last row, under the
+           rule, is the <b>section</b>: the treatment on the whole box, which
+           every part above it feeds into — it is the same chain the effects
+           page has always shown, so nothing you set there has moved.</p>
+        <div class="mixtbl tbl" id="mixtbl"></div>
       </div>
     </section>
 

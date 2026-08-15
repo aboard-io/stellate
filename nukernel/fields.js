@@ -341,6 +341,261 @@
                         counter: "counter", pad: "pad", stab: "stab",
                         drone: "drone" };
 
+  /* ---------- THE PER-PART MIX ---------- */
+  // "Not every track should go through the effects." Until now fx/rev/echo/
+  // lvl/pan lived on the BOX, so one insert chain treated every voice in the
+  // section at once: crunch on a box crunched the pad and the drums with the
+  // guitar, and the only way to hear an effect on one thing was to give that
+  // thing a box of its own. That is not a mixer, it is a master fader.
+  //
+  // A PART IS THE ADDRESS. The kernel already assigns every voice a role
+  // (kernel.js PARTS — lead/riff/counter/pad/stab/drone, plus `line`, the
+  // shim every genre without a `part` scheme gets), and the box already has a
+  // bass and a kit. Those nine names ARE the track list: they are what the
+  // music is made of, they are stable across a genre change, and they are
+  // already the word the palette uses for the part chip. Nothing new had to
+  // be invented — the roles were there, they just had nowhere to plug in.
+  const PARTNAMES = { line: "line", lead: "lead", riff: "riff",
+                      counter: "counter", pad: "pad", stab: "stab",
+                      drone: "drone", bass: "bass", drums: "drums" };
+  const PARTLABEL = { line: "line", lead: "lead", riff: "riff",
+                      counter: "counter", pad: "pad", stab: "stab",
+                      drone: "drone", bass: "bass", drums: "drums" };
+  // …AND A CHAIR WHEN THERE ARE SEVERAL OF ONE. Post rock is a pad and two
+  // clean guitars; rock is two crunch guitars. Both would collapse onto one
+  // address if the role were the whole key, so the second voice of a role is
+  // `line2`, the third `line3`. The FIRST keeps the bare name, which is what
+  // makes the common case (one lead, one pad) read as words rather than as
+  // indices — and what makes a one-voice genre's address survive a stack.
+  const MAX_CHAIRS = 12;                          // eight-voice pool, four of slack
+  // key -> {base, n}, or null when the string is not an address at all
+  function readPartKey(k) {
+    const m = /^([a-z]+?)(\d+)?$/.exec(String(k == null ? "" : k));
+    if (!m || !PARTNAMES[m[1]]) return null;
+    if (m[2] == null) return { base: m[1], n: 1 };
+    const n = +m[2];
+    return n >= 2 && n <= MAX_CHAIRS ? { base: m[1], n } : null;
+  }
+  const okPartKey = k => readPartKey(k) != null;
+  const partChairLabel = k => {
+    const p = readPartKey(k);
+    return p ? (p.n > 1 ? PARTLABEL[p.base] + " " + p.n : PARTLABEL[p.base]) : String(k);
+  };
+  // an ORDERED list of role names (one per voice, in voice order across the
+  // whole stack) -> the chair key each voice answers to. Beyond MAX_CHAIRS the
+  // keys clamp and two voices share an address: twelve chairs is already four
+  // more than the synth pool's depth, and a shared bus is a better failure
+  // than an unaddressable one.
+  function chairKeys(parts) {
+    const seen = Object.create(null);
+    return (parts || []).map(p => {
+      const b = PARTNAMES[p] ? p : "line";
+      const n = Math.min(MAX_CHAIRS, seen[b] = (seen[b] || 0) + 1);
+      return n > 1 ? b + n : b;
+    });
+  }
+  // WHAT ONE PART MAY BE TOLD, and it is deliberately the box's own vocabulary
+  // narrowed rather than a second one: the same FX chips under the same
+  // MAX_FX, the same discrete sends, the same four levels and five places.
+  // A mixer whose channel strip speaks a different language from the master
+  // strip is two things to learn.
+  //
+  // mute/solo are the two that are NOT enums, because they are not choices
+  // between values — they are the desk's own pair, and solo is the one control
+  // here that reaches OTHER parts (audio/mixer.js partSpecs: any solo in the
+  // box mutes every part that is not soloed).
+  const PARTMIX = [
+    { key: "fx",   type: "list", table: FX,     labels: FXLABEL,   max: MAX_FX, default: [] },
+    { key: "rev",  table: SENDS,  labels: SENDLABEL,  default: null },
+    { key: "echo", table: SENDS,  labels: SENDLABEL,  default: null },
+    { key: "lvl",  table: LEVELS, labels: LEVELLABEL, default: null },
+    { key: "pan",  table: PANS,   labels: PANLABEL,   default: null },
+    { key: "mute", type: "flag",  default: false },
+    { key: "solo", type: "flag",  default: false },
+  ];
+  const PARTMIXBY = {};
+  for (const f of PARTMIX) PARTMIXBY[f.key] = f;
+  // ONE ENTRY -> ENGINE VALUES, defaults included. It lives here and not in the
+  // mixer for the reason the rest of this file exists: the palette that writes
+  // an entry and the graph that builds it from must read the same table, or
+  // "touch" means 0.12 in one place and 0.15 in the other.
+  //
+  // NOTE THE ASYMMETRY, on purpose: the SECTION's reverb default is the genre's
+  // own tone.verb, because a genre that asks to be wet means it. A PART's
+  // default is 0 — the part send is what this chair asks for ON TOP of the
+  // section, so absent must mean "adds nothing".
+  function resolvePartMix(e) {
+    const g = e && typeof e === "object" ? e : {};
+    const pick = (tbl, v, dflt) =>
+      (v != null && Object.prototype.hasOwnProperty.call(tbl, String(v))) ? tbl[v] : dflt;
+    return {
+      fx: (g.fx || []).filter(k => Object.prototype.hasOwnProperty.call(FX, k)).slice(0, MAX_FX),
+      rev: pick(SENDS, g.rev, 0),
+      del: pick(SENDS, g.echo, 0),      // the field is `echo`, the bus is `del`
+      lvl: pick(LEVELS, g.lvl, 1),
+      pan: pick(PANS, g.pan, 0),
+      mute: !!g.mute,
+      solo: !!g.solo,
+    };
+  }
+
+  /* ---------- THE MASTER BUS: the globals ---------- */
+  // The OTHER end of the desk. A box is a channel and `parts` is the desk under
+  // it; everything below is the bus all of it lands on — one chain for the whole
+  // song, so a global is a SESSION control and lives with the soundfont and the
+  // file keys rather than on any box.
+  //
+  // NOTHING HERE IS INVENTED. Every value is the parent's own master section,
+  // engine/faust/dsp/fx_bus.dsp `master()` — "the WHOLE csd-engine.js master
+  // section in one stereo module" — read in its own order (transport wobble →
+  // grit → comp → makeup → tone tilt → tape saturation → clip), plus the two
+  // things live.js adds on top of it (the glue/makeup/brickwall bus and the
+  // MASTER TOP ceiling, both already in audio/graph.js buildMasterChain). What
+  // this file does is give those numbers NAMES a finger can choose between.
+  //
+  // ABSENT IS TODAY, the same law `parts` carries: a song with no `master`
+  // resolves to exactly the chain graph.js has always built — glue at −22/2.2,
+  // makeup ×2.2, the brickwall at −1.5, the 16 kHz ceiling — and builds not one
+  // extra node. That is why there is no "off"/"flat"/"normal" entry in any table
+  // below: every surface on this machine already has a way to say "back to the
+  // default" — a chip toggles off (ui/mixtbl.js), the session bank's pickers
+  // carry an empty "—" (ui/chrome.js) — so an explicit off/flat/normal would be
+  // a SECOND spelling of absent, and two spellings of a default is exactly what
+  // song.js and audio/graph.js both spend a branch normalizing away.
+
+  // DRIVE — fx_bus `grit`: tanh drive with a level compensation and a mix that
+  // reaches 1 by grit=0.125, so the low settings are genuinely a hair of it.
+  const DRIVES = { hair: 0.12, warm: 0.28, dirt: 0.5, crush: 0.8 };
+  const DRIVELABEL = { hair: "a hair", warm: "warm", dirt: "dirt", crush: "crush" };
+
+  // GLUE — the bus compressor that is ALREADY THERE. graph.js has run live.js's
+  // glue comp → makeup since the day the sampled voices turned out to play at
+  // −22 dBFS; what it never had was a character. `glue` is that chain's own
+  // numbers under a name, so choosing it explicitly is a no-op, and the other
+  // four walk the same two nodes from a slower, gentler ride to a pumped one.
+  // No new node is built for any of them: this is a param write.
+  const GLUES = {
+    soft:   { thr: -18, knee: 30, ratio: 1.6, atk: 0.030, rel: 0.35, makeup: 1.9 },
+    glue:   { thr: -22, knee: 28, ratio: 2.2, atk: 0.015, rel: 0.25, makeup: 2.2 },
+    tight:  { thr: -26, knee: 18, ratio: 3.2, atk: 0.006, rel: 0.18, makeup: 2.6 },
+    pump:   { thr: -30, knee: 8,  ratio: 6,   atk: 0.002, rel: 0.09, makeup: 3.0 },
+    squash: { thr: -34, knee: 4,  ratio: 12,  atk: 0.001, rel: 0.06, makeup: 3.4 },
+  };
+  const GLUEDFLT = GLUES.glue;             // == what graph.js builds with no master
+  const GLUELABEL = { soft: "soft", glue: "glue", tight: "tight",
+                      pump: "pump", squash: "squash" };
+
+  // TAPE — fx_bus's `wob` + `tsat` as ONE machine, because they are one machine:
+  // a transport that drifts and a head that saturates. wob is wow (~0.6 Hz) plus
+  // flutter (~6 Hz) modulating a 1.6 ms fractional delay per channel, at
+  // different rates L and R so the drift decorrelates into width; tsat is the
+  // level-preserving soft knee, exactly graph.js satCurve(1 + 1.8·sat, 1).
+  //
+  // fx_bus DEFAULTS wob TO 0 and says why: it is instantiated fresh at every
+  // stream open, so on a travelling path the LFO restarted at phase 0 while the
+  // outgoing stream sat elsewhere in its cycle and the master delay time jumped
+  // at every crossfade. There is no travelling path here — one chain per context,
+  // rebuilt only when a chip moves — so the wobble is offered. (The offline
+  // bounce runs its own instance at its own phase; a ±0.1% pitch drift between
+  // the carrier and the live graph is inside the perceptual-twin class the
+  // bounce already lives in, and the loop fold crosses the LFO the same way it
+  // crosses a reverb tail.)
+  const TAPES = { warm: { wob: 0,    sat: 0.18 },
+                  tape: { wob: 0.35, sat: 0.30 },
+                  worn: { wob: 0.7,  sat: 0.45 },
+                  wow:  { wob: 1,    sat: 0.60 } };
+  const TAPELABEL = { warm: "warm head", tape: "tape", worn: "worn", wow: "wow & flutter" };
+
+  // SPACE — fx_bus `mrev`, "a little of the DRY mix into the reverb so the WHOLE
+  // mix shares one room (the per-voice sends are untouched — this is the global
+  // bleed)". That is exactly what makes it different from a section's rev chip:
+  // a send is a decision about ONE section, this is the room they are all in.
+  //
+  // The room itself is live.js's vapor wash (pre-delay + three damped combs),
+  // NOT a convolver, for graph.js buildRoomBus's stated reason: the audio gate
+  // holds the page to two convolution reverbs and they are the most expensive
+  // node here. `size` scales the comb times; `mix` is the bleed off the dry sum.
+  const SPACES = { touch:  { mix: 0.07, size: 0.55 },
+                   room:   { mix: 0.13, size: 0.8 },
+                   hall:   { mix: 0.20, size: 1.2 },
+                   cavern: { mix: 0.30, size: 1.8 } };
+  const SPACELABEL = { touch: "a touch", room: "room", hall: "hall", cavern: "cavern" };
+
+  // WIDTH — the one control here with no parent to borrow from, because the
+  // parent gets its width from placement (MASTER_PAN) and from the tape's own
+  // decorrelation. A mid/side trim is the master-bus answer to the same
+  // question, and it is gains and a splitter: side ×0 is mono, ×2.2 is as wide
+  // as a two-voice box can be pushed before the centre hollows out.
+  const WIDTHS = { mono: 0, narrow: 0.5, wide: 1.5, huge: 2.2 };
+  const WIDTHLABEL = { mono: "mono", narrow: "narrow", wide: "wide", huge: "huge" };
+
+  // TILT — fx_bus's tone stage as one knob. A SHELF PAIR, not a filter pair:
+  // the parent's own note on MASTER_AIR_SHELF_DB is that a shelf "dims the air
+  // instead of stopping it", and the thing that stops it (the 16 kHz MASTER TOP
+  // lowpass) is already unconditional in graph.js. Value is the tilt in dB —
+  // the low shelf takes −t and the high shelf +t, so one number rocks the
+  // spectrum about its middle.
+  const TILTS = { dark: -4, warm: -2, clear: 2, bright: 4 };
+  const TILTLABEL = { dark: "dark", warm: "warm", clear: "clear", bright: "bright" };
+
+  // CEILING — how hard the end of the chain works. `open` is graph.js's
+  // brickwall exactly as it stands (−1.5 dB, no clip stage). The other three add
+  // fx_bus's `clip`: the Bram de Jong soft clip at 0.95 the csound renders
+  // ended on, which is a knee rather than a wall — and `push` is a gain INTO the
+  // limiter, which is the honest way to say "louder" without pretending the
+  // makeup (glue's, above) is doing it.
+  const CEILINGS = { open:   { thr: -1.5, push: 1,   clip: 0 },
+                     safe:   { thr: -2.5, push: 1,   clip: 0.95 },
+                     loud:   { thr: -3,   push: 1.7, clip: 0.95 },
+                     louder: { thr: -3,   push: 2.6, clip: 0.95 } };
+  const CEILDFLT = CEILINGS.open;          // == what graph.js builds with no master
+  const CEILINGLABEL = { open: "open", safe: "safe", loud: "loud", louder: "louder" };
+
+  // THE REGISTRY ROW, same shape as PARTMIX so one surface can draw it: `label`
+  // is the silkscreen word over the control, because unlike a mixer column
+  // ("rev", "pan") these need a noun rather than an abbreviation.
+  const MASTER = [
+    { key: "drive",   label: "drive",   table: DRIVES,   labels: DRIVELABEL,   default: null },
+    { key: "glue",    label: "glue",    table: GLUES,    labels: GLUELABEL,    default: null },
+    { key: "tape",    label: "tape",    table: TAPES,    labels: TAPELABEL,    default: null },
+    { key: "space",   label: "space",   table: SPACES,   labels: SPACELABEL,   default: null },
+    { key: "width",   label: "width",   table: WIDTHS,   labels: WIDTHLABEL,   default: null },
+    { key: "tilt",    label: "tilt",    table: TILTS,    labels: TILTLABEL,    default: null },
+    { key: "ceiling", label: "ceiling", table: CEILINGS, labels: CEILINGLABEL, default: null },
+  ];
+  const MASTERBY = {};
+  for (const f of MASTER) MASTERBY[f.key] = f;
+
+  // ONE SPEC -> ENGINE VALUES, here rather than in the graph, for the reason
+  // resolvePartMix is here: the surface that writes a chip and the builder that
+  // wires a node must read the same table.
+  //
+  // The two tables with a shipped default (glue, ceiling) resolve to THAT
+  // default when absent, so the builder gets one shape either way and never
+  // has to know which numbers are "today". The other five resolve to null,
+  // which is the builder's instruction to build nothing at all.
+  function resolveMaster(m) {
+    const g = m && typeof m === "object" ? m : {};
+    const pick = (tbl, v) =>
+      (v != null && Object.prototype.hasOwnProperty.call(tbl, String(v))) ? tbl[v] : null;
+    const t = pick(TAPES, g.tape), s = pick(SPACES, g.space);
+    return {
+      drive:   pick(DRIVES, g.drive),
+      glue:    { ...(pick(GLUES, g.glue) || GLUEDFLT) },
+      tape:    t && { ...t },
+      space:   s && { ...s },
+      width:   pick(WIDTHS, g.width),
+      tilt:    pick(TILTS, g.tilt),
+      ceiling: { ...(pick(CEILINGS, g.ceiling) || CEILDFLT) },
+    };
+  }
+  // …and the inverse question the loader and the surface both ask: is this spec
+  // the same as no spec at all? Absent must have ONE spelling (song.js
+  // normalizes an empty map away on the way in), and this is the test for it.
+  const masterIsDefault = m => !m || typeof m !== "object" ||
+    MASTER.every(f => m[f.key] == null ||
+      !Object.prototype.hasOwnProperty.call(f.table, String(m[f.key])));
+
   /* ---------- automation ---------- */
   // A box's `auto` list is the REAL automation surface: [{param, points:
   // [[beat, value], …], curve}], armed on the section's mixer channel every
@@ -501,6 +756,14 @@
       tab: "line",   group: "pipe",                    default: null },
     { key: "part",    scope: "layer", table: PARTCHOICES, labels: PARTCHOICES,
       tab: "voice",  group: "part",                    default: null },
+    // `parts` is the PER-PART MIX: a map of chair key -> {fx, rev, echo, lvl,
+    // pan, mute, solo}, each sub-field drawn from PARTMIX above. Type "parts"
+    // because it is neither an enum nor a flat list — song.js validates the
+    // map shape, exactly as it does the `vox` object and the `auto` entries.
+    // Absent (the default) is the whole of today: audio/mixer.js builds no
+    // sub-bus at all and every voice lands on the section input as before.
+    { key: "parts",   scope: "box",   type: "parts", table: PARTNAMES,
+      labels: PARTLABEL, tab: "fx", group: "per part", default: null },
     // `auto` is a LIST whose real entries are {param, points, curve} objects;
     // a bare param string is legal (and inert) so the registry's exhaustive
     // toggle can exercise the table like any other list field. song.js owns
@@ -520,6 +783,12 @@
                 VOX, VOXPARAM, OCTAVES, ARTICS, CMODES, CLAMPS, CLAMPLABEL,
                 KEYS, KEYLABEL, PROGCHOICES, PROGLABEL, PERIODS, PERIODLABEL,
                 BREATHS, BREATHLABEL, PIPESETS, PIPELABEL, PARTCHOICES,
+                PARTNAMES, PARTLABEL, PARTMIX, PARTMIXBY, MAX_CHAIRS,
+                readPartKey, okPartKey, partChairLabel, chairKeys, resolvePartMix,
+                DRIVES, DRIVELABEL, GLUES, GLUELABEL, TAPES, TAPELABEL,
+                SPACES, SPACELABEL, WIDTHS, WIDTHLABEL, TILTS, TILTLABEL,
+                CEILINGS, CEILINGLABEL, MASTER, MASTERBY,
+                resolveMaster, masterIsDefault,
                 AUTOPARAMS, AUTOPARAMLABEL, AUTOSHAPES, AUTOSHAPELABEL, autoShape,
                 ROLES, FIELDS, FIELD };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

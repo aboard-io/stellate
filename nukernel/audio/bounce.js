@@ -33,7 +33,7 @@
 // mixer.buildChannel / transport.scheduleBar), so the carrier is the same
 // mix — a fork of any of those walks is how it would drift out of tune.
 import { GENRES, BASSSYNTH, DTIMES } from "../ui/deps.js";
-import { SONG, SLOTS, loopOnly, bpm, on, emit } from "../ui/state.js";
+import { SONG, SLOTS, loopOnly, bpm, MASTER, on, emit } from "../ui/state.js";
 import { stackOf, kitOf, boxBars } from "../ui/derive.js";
 import { buildMasterChain, buildEchoBus, buildRoomBus, makeVerb,
          masterVol } from "./graph.js";
@@ -99,9 +99,13 @@ onGesture(armCarrier);                             // rides startAt's synchronou
 
 /* ---------- render scheduling ---------- */
 // the musical identity of what a render would capture: song + phrases + tempo
-// + font + loop selection. Volume is deliberately absent — the carrier renders
-// at unity and the element's own volume does the placing on handoff.
-const sig = () => JSON.stringify({ s: SONG, sl: SLOTS, bpm, f: FONT, lo: loopOnly });
+// + font + loop selection + the MASTER BUS. Volume is deliberately absent —
+// the carrier renders at unity and the element's own volume does the placing
+// on handoff — but a master global is not a volume: it is a treatment baked
+// into the bytes, so leaving it out here would leave the pocket playing an
+// untreated tape of a song the ear just heard through a tape machine.
+const sig = () => JSON.stringify({ s: SONG, sl: SLOTS, bpm, f: FONT, lo: loopOnly,
+                                   m: MASTER });
 let adoptedSig = null, timer = null, rendering = false, dirty = false;
 // the short stage's duration budget, in seconds — WAV-FIRST's firstSegSec.
 // Two bars at the default tempo: big enough to loop as music, small enough
@@ -179,7 +183,12 @@ async function renderSong(capSec) {
   const octx = new OfflineAudioContext(2, Math.ceil((LEAD + durSec + TAIL) * SR), SR);
   // the same room: master numbers, echo topology, cached reverb impulses —
   // all built by the graph's own parameterized builders
-  const master = buildMasterChain(octx);           // out stays at unity
+  // THE SAME MASTER, spec included. buildMasterChain resolves the song's
+  // globals itself, so the carrier gets the drive, the tape, the room, the
+  // width, the tilt and the ceiling the live graph is playing through — not a
+  // second opinion about them. (Its LFO phase is its own, which is the one
+  // honest difference: see the TAPES note in fields.js.)
+  const master = buildMasterChain(octx, MASTER);   // out stays at unity
   const echo = buildEchoBus(octx, master.input);
   const verbs = new Map();
   const verb = name => {
@@ -222,28 +231,35 @@ async function renderSong(capSec) {
       st.sampledOnly = true;
     }
   }
-  const routeTo = (node, chan) => {
+  // KEYED, like the live routeSynth, because the key is what says which PART
+  // strip this voice belongs on (mixer.synthIn) — a bounce that routed every
+  // synth straight at chan.input would render the per-part desk away, and the
+  // carrier would be a different mix from the one the ear just left
+  const routeTo = (key, node, chan) => {
     let m = routes.get(node);
     if (!m) routes.set(node, m = new Map());
     let g = m.get(chan.key);
     if (!g) {
       g = octx.createGain(); g.gain.setValueAtTime(0, 0);
-      node.connect(g); g.connect(chan.input); m.set(chan.key, g);
+      node.connect(g);
+      g.connect(chan.synthIn ? chan.synthIn(key) : chan.input);
+      m.set(chan.key, g);
     }
     return g;
   };
   // the offline focusSynths: at each section start, exactly one route is open
   const focusAt = (chan, when) => {
-    for (const node of pool.values()) {
-      routeTo(node, chan);
+    for (const [key, node] of pool) {
+      routeTo(key, node, chan);
       for (const [k, g] of routes.get(node))
         try { g.gain.setValueAtTime(k === chan.key ? 1 : 0, when); } catch (e) {}
     }
   };
   const offSynth = (sp, midi, when, durSec2, acc, sld, vel, v, chan, vox) => {
-    const node = pool.get(sp.dsp + "#" + (v || 0));
+    const key = sp.dsp + "#" + (v || 0);
+    const node = pool.get(key);
     if (!node) return false;                       // degrades to the sampled voice
-    routeTo(node, chan);
+    routeTo(key, node, chan);
     // a note no octave of which fits the voice's freq param is dropped here
     // too (the live path's law) — returning TRUE keeps it dropped rather than
     // handing it to the sampled voice, which would make the carrier a
@@ -418,6 +434,7 @@ const changed = () => { if (playing) schedule(); };
 on("box", changed);
 on("phrase", changed);
 on("transport", changed);
+on("master", changed);                             // baked into the bytes, so re-bake
 on("song", () => {
   // a whole new song: whatever is rendered is the WRONG music — invalidate
   // rather than carry a ghost (the "song" event also stops the transport)

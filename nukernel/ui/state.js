@@ -10,7 +10,7 @@
 // six functions used to re-read document.getElementById(...).value at call
 // time, two of them in the audio hot path (stepDur per tick, barSec per
 // channel build), which also made the loader untestable in node.
-import { NuSong, blank, emptyBox, DEFAULT } from "./deps.js";
+import { NuSong, blank, emptyBox, DEFAULT, masterIsDefault } from "./deps.js";
 
 export const DEFAULT_BPM = 126, NBOXES = 4;
 
@@ -25,6 +25,12 @@ export let SUBJ = SLOTS[slot];       // by reference: cell edits mutate the slot
 export let SONG = Array.from({ length: NBOXES }, emptyBox);
 export let viewSec = 0, loopOnly = null, pendingStart = null;
 export let bpm = DEFAULT_BPM, vol = 80;
+// THE MASTER BUS belongs to the SONG, not to the page (song.js says why), so it
+// rides here with the boxes rather than in the audio tier: audio/graph.js reads
+// it, audio/bounce.js renders through it, and neither owns it. null is the whole
+// of the old behaviour — song.js normalizes an empty spec away, so there is one
+// spelling of "no globals" for the graph's absent-is-today branch to key on.
+export let MASTER = null;
 
 export function setSlot(i) { slot = i; SUBJ = SLOTS[i]; }
 export function putPhrase(i, p) { SLOTS[i] = p; if (i === slot) SUBJ = p; }
@@ -33,6 +39,11 @@ export function setLoopOnly(v) { loopOnly = v; }
 export function setPendingStart(v) { pendingStart = v; }
 export function setBpm(v) { bpm = +v; }
 export function setVol(v) { vol = +v; }
+// one writer, and it normalizes THROUGH THE REGISTRY: a spec that asks for
+// nothing the master bus recognizes becomes null, which is the same rule
+// song.js applies on the way in — so the save shape and the graph's
+// absent-is-today branch cannot disagree about what "unmastered" is.
+export function setMaster(m) { MASTER = masterIsDefault(m) ? null : m; }
 
 export const curSection = () => SONG[Math.min(viewSec, SONG.length - 1)];
 
@@ -46,6 +57,8 @@ export const curSection = () => SONG[Math.min(viewSec, SONG.length - 1)];
 //                        arrange re-renders, transport recompiles if playing
 //   "selection"          viewSec/slot/focus moved, nothing musical changed
 //   "transport"          bpm or volume moved
+//   "master"             a master-bus global moved — the graph swaps its master
+//                        chain, the bounce re-renders, the session bank repaints
 //   "transport:state"    published by audio/transport — playing flipped
 //   "transport:section"  published by audio/transport — the sounding box moved
 //   "refresh"            assets finished loading mid-play; views re-render
@@ -65,7 +78,8 @@ export function emit(type, detail) {
 // that change what a save would contain (selection is deliberately not saved).
 export function commit(type, detail) {
   emit(type, detail);
-  if (type === "phrase" || type === "box" || type === "transport") save();
+  if (type === "phrase" || type === "box" || type === "transport" ||
+      type === "master") save();
 }
 
 /* ---------- persistence ---------- */
@@ -82,7 +96,7 @@ let saveTimer = null;
 function writeStore() {
   try {
     localStorage.setItem(STORE, JSON.stringify(
-      { v: NuSong.VERSION, slots: SLOTS, song: SONG, bpm, vol }));
+      { v: NuSong.VERSION, slots: SLOTS, song: SONG, master: MASTER, bpm, vol }));
   } catch (e) { /* private mode, or quota: not worth interrupting the music */ }
 }
 export function saveNow() { clearTimeout(saveTimer); saveTimer = null; writeStore(); }
@@ -139,6 +153,7 @@ export function adoptSong(raw, reason) {
   loadError = null;
   const s = res.song;
   SLOTS = s.slots; SONG = s.song; slot = 0; SUBJ = SLOTS[0];
+  MASTER = s.master;                   // validateSong normalizes absent to null
   viewSec = 0; loopOnly = null; pendingStart = null;
   if (s.bpm != null) bpm = s.bpm;
   if (s.vol != null) vol = s.vol;
@@ -149,7 +164,8 @@ export function adoptSong(raw, reason) {
 
 /* ---------- desktop ---------- */
 export function songJSON() {
-  return JSON.stringify({ v: NuSong.VERSION, slots: SLOTS, song: SONG, bpm, vol },
+  return JSON.stringify(
+    { v: NuSong.VERSION, slots: SLOTS, song: SONG, master: MASTER, bpm, vol },
     null, 1);
 }
 export function saveFile() {

@@ -54,7 +54,14 @@ export function routeSynth(key, node, chan) {
   let g = m.get(chan.key);
   if (!g) {
     g = ctx.createGain(); g.gain.value = 0;
-    node.connect(g); g.connect(chan.input); m.set(chan.key, g);
+    // ONTO ITS PART'S STRIP, not the section input. The route is the only
+    // per-channel thing a pooled synth has, so it is also the only place the
+    // per-part desk can reach one — and the channel answers "which strip" from
+    // the node key alone (mixer.synthIn), so the pool stays keyed (dsp, voice)
+    // and focusSynths keeps gating routes it did not create.
+    node.connect(g);
+    g.connect(chan.synthIn ? chan.synthIn(key) : chan.input);
+    m.set(chan.key, g);
   }
   return g;
 }
@@ -398,14 +405,18 @@ export function foldToZones(zones, midi) {
   while (m > sp.hi && m - 12 >= sp.lo) m -= 12;
   return Math.max(sp.lo, Math.min(sp.hi, m));
 }
-export function playSampled(id, midi, when, durSec, vel, gainMul, chan, strip, v) {
+export function playSampled(id, midi, when, durSec, vel, gainMul, chan, strip, v, part) {
   const spec = specOf(id);
   // THE VOICE'S OWN CHAIR, when the caller has one. Each pitched voice has its
   // own player onto its own placed bus (mixer.buildChannel voiceBus), so two
   // voices are two places in the room; the bass and anything without a chair
-  // still take the channel-wide player.
+  // name their PART instead (`part`, e.g. "bass") and get that strip's player.
+  // Neither exists -> the channel-wide player, which is where everything went
+  // before the desk did.
   const V = v != null && chan && chan.voiceBus ? chan.voiceBus(v) : null;
-  const player = (V && V.player) || (chan && chan.player);
+  const player = (V && V.player)
+    || (part != null && chan && chan.partPlayer ? chan.partPlayer(part) : null)
+    || (chan && chan.player);
   if (!spec || !player) return false;
   // THE INSTRUMENT-REGISTER LAW (playWindow above): fold into the window the
   // instrument and its samples can both honestly play. This replaces the old
@@ -518,7 +529,16 @@ function nz(t, dur, hp, gain, chan, lane) {
   // sent to the room like the sample it stands in for
   s.connect(f); f.connect(g); g.connect(drumDest(chan, lane)); s.start(t); s.stop(t + dur + .02);
 }
-export function line(t, n, dur, acc, sld, prev, tone, padish, vel, chan) {
+// WHERE A PITCHED SOURCE LANDS, the counterpart of drumDest above: a voice
+// index takes its chair's strip, a string names a part outright ("bass"), and
+// neither (or a channel from before the desk) is the section input.
+const pitchDest = (chan, where) => {
+  if (!chan) return bus;
+  if (typeof where === "string" && chan.partIn) return chan.partIn(where);
+  if (typeof where === "number" && chan.voiceIn) return chan.voiceIn(where);
+  return chan.input || bus;
+};
+export function line(t, n, dur, acc, sld, prev, tone, padish, vel, chan, where) {
   const lvl = (vel == null ? 5 : vel) / 9;
   if (lvl <= 0.001) return;                       // a completed fade-out is silence
   const c = ctxOf(chan);
@@ -541,7 +561,7 @@ export function line(t, n, dur, acc, sld, prev, tone, padish, vel, chan) {
   g.gain.linearRampToValueAtTime(pk, t + tone.atk);
   g.gain.setValueAtTime(pk, t + Math.max(tone.atk, dur * .7));
   g.gain.exponentialRampToValueAtTime(.0008, t + dur + tone.rel * .25);
-  const dest = (chan && chan.input) || bus;
+  const dest = pitchDest(chan, where);
   o.connect(f); o2.connect(f); f.connect(g); g.connect(dest);
   const off = t + dur + tone.rel * .25 + .05;
   o.start(t); o2.start(t); o.stop(off); o2.stop(off);

@@ -17,6 +17,13 @@
 //       whole box, not the room a kit was recorded in. audio/graph.js
 //       buildRoomBus is that room; ?dryroom builds the page without it, which
 //       is what makes this measurable instead of arguable.
+//   (D) EVERY VOICE GOES THROUGH THE SAME EFFECTS. fx/rev/echo/lvl/pan lived on
+//       the BOX, so one insert chain treated the whole section: crunch on the
+//       guitar was crunch on the pad, the bass and the kit. A box now carries
+//       `parts` — a strip per chair (audio/mixer.js partSpecs/buildChannel) —
+//       and the claim to check is precisely the one a level meter cannot make:
+//       a treatment on ONE part bends that part's spectrum and leaves another
+//       part's ALONE. Measured offline, with the parts soloed apart.
 //   (C) A NOTE OUTSIDE ITS INSTRUMENT'S RANGE PLAYS AS A STRETCHED SAMPLE.
 //       Measured on the shipped registry before the fix: sludge asked its
 //       overdrive guitar for MIDI 12 against a bottom zone root of 40 — a
@@ -170,6 +177,221 @@ async function offlineKit(page) {
     return { kitName, wetS, dryS, hat, tom };
   });
 }
+// ---- (D) THE DESK: one part treated, another untouched --------------------
+// THE HARDEST HALF OF "not every track should go through the effects" is the
+// second half. That an insert is audible somewhere is easy; that it is audible
+// on the guitar and INAUDIBLE on the pad beside it is the whole feature, and
+// nothing short of two spectra can say it.
+//
+// Four renders of the same chairs through the same buildChannel, on an offline
+// context, differing only in the box's `parts` map:
+//   1  A alone (soloed), untreated       3  B alone, untreated
+//   2  A alone, crunch on A              4  B alone, crunch on A
+// (1 vs 2) must move — that is the insert doing its job on A. (3 vs 4) must
+// NOT — that is A's insert staying off B. Solo is what isolates them, so the
+// same passes exercise the mute law rather than needing a fifth mechanism.
+//
+// OFFLINE, for the reason offlineKit above is offline: it is deterministic.
+// No loop phase, no compressor riding a different bar, no headless audio clock.
+// And it is not a shortcut around "test the artifact" — chanSpec, buildChannel,
+// playSampled and playDrum are the four functions the live page and the
+// background bounce both walk. What IS stubbed is the un-armed automation
+// (spec.auto/mot come off): armAutomation writes those AudioParams at every
+// section start on the live path, and an un-armed cutoff node would sit at the
+// BiquadFilter default of 350 Hz and lowpass all four renders equally.
+//
+// The FFT is here rather than an AnalyserNode because an analyser cannot tap
+// an OfflineAudioContext — there is no "now" to read a bin at. Same 512-band
+// linear-magnitude shape the live A/B correlates, so the same bar applies.
+async function partProbe(page) {
+  return page.evaluate(async () => {
+    const [gm, mx, vx, as, dp, stm] = await Promise.all([
+      import("/nukernel/audio/graph.js"), import("/nukernel/audio/mixer.js"),
+      import("/nukernel/audio/voices.js"), import("/nukernel/audio/assets.js"),
+      import("/nukernel/ui/deps.js"), import("/nukernel/ui/state.js")]);
+    const sec = stm.SONG.find(s => mx.voiceRoster(s).length >= 2);
+    if (!sec) return { err: "no box in the composed song carries two pitched chairs" };
+    const roster = mx.voiceRoster(sec);
+    const keys = mx.partKeysOf(sec);
+    const kit = [...as.drumBufs.keys()].map(k => k.split("|")[0])[0] || null;
+    const SR = 44100, AT = 0.05, N = 16384;
+
+    // iterative radix-2, in place — twenty lines, and the alternative is
+    // shipping a megabyte of PCM back over CDP four times
+    function fft(re, im) {
+      const n = re.length;
+      for (let i = 1, j = 0; i < n; i++) {
+        let bit = n >> 1;
+        for (; j & bit; bit >>= 1) j ^= bit;
+        j ^= bit;
+        if (i < j) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; }
+      }
+      for (let len = 2; len <= n; len <<= 1) {
+        const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+        for (let i = 0; i < n; i += len) {
+          let cr = 1, ci = 0;
+          for (let k = 0; k < len / 2; k++) {
+            const ur = re[i + k], ui = im[i + k];
+            const vr = re[i + k + len / 2] * cr - im[i + k + len / 2] * ci;
+            const vi = re[i + k + len / 2] * ci + im[i + k + len / 2] * cr;
+            re[i + k] = ur + vr; im[i + k] = ui + vi;
+            re[i + k + len / 2] = ur - vr; im[i + k + len / 2] = ui - vi;
+            const ncr = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = ncr;
+          }
+        }
+      }
+    }
+    const bands = (mono, from) => {
+      const re = new Float64Array(N), im = new Float64Array(N);
+      for (let i = 0; i < N; i++)
+        re[i] = (mono[from + i] || 0) * (0.5 - 0.5 * Math.cos(2 * Math.PI * i / (N - 1)));
+      fft(re, im);
+      const out = new Array(512).fill(0), per = (N / 2) / 512;
+      for (let b = 0; b < 512; b++) {
+        let s = 0;
+        for (let i = 0; i < per; i++) s += Math.hypot(re[b * per + i], im[b * per + i]);
+        out[b] = s / per;
+      }
+      return out;
+    };
+    // one render of the box's chairs, with a given `parts` map on the box
+    const render = async (parts) => {
+      sec.parts = parts;
+      const spec = { ...mx.chanSpec(sec), auto: [], mot: null };
+      const octx = new OfflineAudioContext(2, SR, SR);
+      const master = gm.buildMasterChain(octx);
+      const env = { master: master.input, verb: () => master.input,
+                    echoIn: master.input, room: null };
+      const chan = mx.buildChannel(octx, spec, env);
+      let played = 0;
+      // a note per chair, a fifth apart so the two spectra are distinguishable
+      for (const r of roster)
+        if (vx.playSampled(r.id, 55 + 7 * r.v, AT, 0.5, 9, 1, chan,
+                           dp.stripFor(r.id, r.pad), r.v)) played++;
+      if (vx.playSampled(dp.BASS_INSTR, 36, AT, 0.5, 9, 1.25, chan,
+                         dp.STRIPS.bass, null, "bass")) played++;
+      if (kit) vx.playDrum(kit, "s", AT, 1, 9, chan);
+      const out = await octx.startRendering();
+      const L = out.getChannelData(0), R = out.getChannelData(1);
+      const mono = new Float32Array(L.length);
+      let e = 0;
+      for (let i = 0; i < L.length; i++) { mono[i] = (L[i] + R[i]) / 2; e += mono[i] * mono[i]; }
+      return { spec: bands(mono, Math.floor((AT + 0.01) * SR)), energy: e, played,
+               built: [...chan.parts.keys()], mono };
+    };
+
+    const A = roster[0].key, B = roster[1].key;
+    const clean = await render({ [A]: { solo: true } });
+    const treat = await render({ [A]: { solo: true, fx: ["crunch"] } });
+    const bClean = await render({ [B]: { solo: true } });
+    const bWhileA = await render({ [B]: { solo: true }, [A]: { fx: ["crunch"] } });
+    const allMute = await render(Object.fromEntries(keys.map(k => [k, { mute: true }])));
+    const none = await render(null);
+    // the strongest form of "untouched": not a correlation, a sample count
+    let maxd = 0;
+    for (let i = 0; i < bClean.mono.length; i++)
+      maxd = Math.max(maxd, Math.abs(bClean.mono[i] - bWhileA.mono[i]));
+    sec.parts = null;                          // leave the box as it was found
+    const strip = o => ({ spec: o.spec, energy: o.energy, played: o.played, built: o.built });
+    return { A, B, keys, kit, maxd, roster: roster.map(r => ({ v: r.v, part: r.part, key: r.key })),
+             clean: strip(clean), treat: strip(treat), bClean: strip(bClean),
+             bWhileA: strip(bWhileA), allMute: strip(allMute), none: strip(none) };
+  });
+}
+// ...AND THE LIVE CHANNEL BUILDS THE SAME DESK. The offline half proves the
+// treatment; this proves the graph the ear is actually on carries it, because
+// the two are the same builder only as long as nothing between the box and
+// buildChannel drops the map on the floor. __nuMix reports the built nodes.
+async function partsLive(page, keys) {
+  await page.evaluate((ks) => {
+    return import("/nukernel/ui/state.js").then((stm) => {
+      const set = { mute: true };
+      for (const s of stm.SONG)
+        s.parts = { [ks.a]: { fx: ["crunch"], lvl: "hush", rev: "wet" },
+                    [ks.b]: set, drums: { pan: "l" } };
+      stm.emit("box", {});
+    });
+  }, keys);
+  await page.locator(".box").first().dblclick();               // loops it AND starts it
+  const t0 = Date.now();
+  let m = null, peak = 0;
+  while (Date.now() - t0 < 25000) {
+    await page.waitForTimeout(250);
+    m = await page.evaluate(() => (window.__nuMix ? window.__nuMix() : null));
+    peak = Math.max(peak, await page.evaluate(() => window.__rms()));
+    if (m && m.channels.some(c => c.parts && c.parts.length)) break;
+  }
+  await page.waitForTimeout(2500);
+  peak = Math.max(peak, await page.evaluate(() => window.__rms()));
+  const mix = await page.evaluate(() => window.__nuMix());
+  await page.evaluate(() => import("/nukernel/ui/state.js").then((stm) => {
+    for (const s of stm.SONG) s.parts = null;
+    stm.emit("box", {});
+  }));
+  await page.click("#play");                                   // stop
+  return { mix, peak };
+}
+// ...AND THE DESK HAS A SURFACE. Everything above proves the graph carries a
+// per-part mix; this proves a PERSON can make one. It drives the mix table
+// (ui/mixtbl.js) through the DOM — click a cell, click a chip — and then asks
+// the AUDIO tier what it resolved, because a UI gate that stops at "the button
+// changed colour" is the failure this project keeps rediscovering (the memory
+// note is "test the artifact"). Cheap on purpose: no playback, no render, one
+// already-loaded page — chanSpec() is the exact structure buildChannel builds
+// from, so resolving it is the honest end of the chain.
+async function deskUI(page) {
+  // the table draws the SELECTED box; box 0 is where the page opens
+  await page.evaluate(() => import("/nukernel/ui/state.js")
+    .then((s) => { s.setViewSec(0); s.commit("selection"); }));
+  await page.waitForTimeout(150);
+  const rows = await page.locator(".mrow").count();
+  const parts = await page.locator(".mrow:not(.msec)").count();
+  const row = page.locator(".mrow:not(.msec)").first();
+  const partKey = await row.locator(".mval").first().getAttribute("data-part");
+  // an insert on ONE part: the fx cell, then a chip. The sheet stays open on
+  // effects (a chain is several decisions), so it is dismissed by hand.
+  await row.locator('.mval[data-field="fx"]').click();
+  await page.locator(".mchip", { hasText: /^crunch$/ }).click();
+  await page.keyboard.press("Escape");
+  // ...a level on the same part: a one-of-these cell closes on the choice
+  await row.locator('.mval[data-field="lvl"]').click();
+  await page.locator(".mchip", { hasText: /^hush$/ }).click();
+  // ...and the two keys that are not cells
+  await row.locator(".mk-solo").click();
+  // the SECTION row writes the BOX's own field — the same one the palette's
+  // effects tab has always written, which is what keeps a saved song whole
+  await page.locator('.mrow.msec .mval[data-field="rev"]').click();
+  await page.locator(".mchip", { hasText: /^drown$/ }).click();
+  await page.waitForTimeout(150);
+  const out = await page.evaluate(() => Promise.all([
+    import("/nukernel/ui/state.js"), import("/nukernel/audio/mixer.js"),
+  ]).then(([s, m]) => {
+    const sec = s.SONG[0];
+    return { stored: sec.parts, rev: sec.rev, spec: m.chanSpec(sec).parts,
+             keys: m.partKeysOf(sec) };
+  }));
+  // the palette must agree: one mix, two views of it. Its banks are built one
+  // TAB at a time, so the reverb chips exist only once EFFECTS is up — and
+  // clicking the tab is the path a person takes to them anyway.
+  await page.locator(".ptab", { hasText: /^effects$/ }).click();
+  out.paletteLit = await page.locator('.pchip[data-kind="rev"][data-value="drown"]')
+    .getAttribute("aria-pressed");
+  // and clearing the part's level again must leave NO trace — absent is the
+  // only spelling of a default, which is what makes the mixer's
+  // absent-is-today law reachable from the surface
+  await row.locator('.mval[data-field="lvl"]').click();
+  await page.locator(".mchip.on", { hasText: /^hush$/ }).click();
+  await row.locator('.mval[data-field="fx"]').click();
+  await page.locator(".mchip.on", { hasText: /^crunch$/ }).click();
+  await page.keyboard.press("Escape");
+  await row.locator(".mk-solo").click();
+  await page.waitForTimeout(150);
+  out.emptied = await page.evaluate(() => import("/nukernel/ui/state.js")
+    .then((s) => s.SONG[0].parts));
+  out.rows = rows; out.parts = parts; out.partKey = partKey;
+  return out;
+}
+
 // compose a genre, loop its verse, play briefly — enough for the transport to
 // compile a timeline and decide its register homes
 async function homePass(page, url, genre) {
@@ -266,7 +488,15 @@ async function pass(page, url) {
 
   const wet = await pass(page, base);
   const kit = await offlineKit(page);       // on the WET page — see offlineKit
+  // the desk, also on the wet page: it needs this song's instruments decoded,
+  // and it must run before the dryroom navigation throws the song away
+  const desk = await partProbe(page);
+  const live = desk.err ? null
+    : await partsLive(page, { a: desk.A, b: desk.B });
   const dry = await pass(page, base + "&dryroom");
+  // the surface, last and on whatever song is loaded: it needs no audio, and
+  // running it here costs one page's worth of clicks rather than a third load
+  const ui = await deskUI(page);
 
   // ---- (A) THE LANE STRIPS ARE NODES --------------------------------------
   {
@@ -464,7 +694,156 @@ async function pass(page, url) {
     else ok(`drops stayed rare (${wet.dropped})`);
   }
 
-  // ---- (D) NOTHING ELSE MOVED ---------------------------------------------
+  // ---- (D) THE DESK: not every track goes through the effects --------------
+  {
+    if (desk.err) fail(`the per-part probe could not run: ${desk.err}`);
+    else {
+      console.log(`  desk addresses        : ${desk.keys.join(", ")}  ` +
+                  `(chairs ${desk.roster.map(r => r.v + "=" + r.key).join(" ")})`);
+      if (desk.clean.played < 2)
+        fail(`only ${desk.clean.played} source(s) played into the offline desk — ` +
+             `nothing to compare`);
+      else ok(`${desk.clean.played} sources rendered through the desk`);
+
+      // (D1) A BOX WITH NO `parts` BUILDS NO SUB-BUS. The absent-is-today law,
+      // read off the graph rather than off the code: if this ever grows a node
+      // then every song ever saved has quietly changed sound.
+      if (desk.none.built.length)
+        fail(`an unmixed box built part bus(es) ${desk.none.built.join(",")} — ` +
+             `absent is supposed to be byte-for-byte the old channel`);
+      else ok("an unmixed box builds no part bus at all");
+
+      // (D2) THE TREATED PART MOVES. Same 0.98 bar as the live A/B and the
+      // insert witness in nukernel-audio (E): two passes of one sound correlate
+      // ~0.995, a real treatment bends the shape to ~0.94.
+      const rA = corr(desk.clean.spec, desk.treat.spec);
+      const rB = corr(desk.bClean.spec, desk.bWhileA.spec);
+      console.log(`  per-part insert       : ${desk.A} shape corr ${rA.toFixed(4)} with/without ` +
+                  `crunch, ${desk.B} ${rB.toFixed(4)} while ${desk.A} is crunched ` +
+                  `(worst sample delta ${desk.maxd.toExponential(2)})`);
+      if (rA < 0.98)
+        ok(`an insert on ${desk.A} bends ${desk.A}: shape corr ${rA.toFixed(4)}`);
+      else fail(`crunch on part ${desk.A} moved its own spectrum by nothing ` +
+                `(shape corr ${rA.toFixed(4)}, needs < 0.98) — the part bus is built ` +
+                `but the signal is not going through it`);
+
+      // (D3) …AND THE OTHER PART DOES NOT. This is the whole user complaint.
+      if (rB > 0.98)
+        ok(`and it leaves ${desk.B} alone: shape corr ${rB.toFixed(4)}, worst sample ` +
+           `difference ${desk.maxd.toExponential(2)}`);
+      else fail(`crunch on part ${desk.A} also changed part ${desk.B} ` +
+                `(shape corr ${rB.toFixed(4)}) — the insert is not on a sub-bus, it is ` +
+                `still treating the whole section`);
+      // the two chairs really are two different sounds, or (D3) is measuring
+      // one part against itself and passing for free
+      const rAB = corr(desk.clean.spec, desk.bClean.spec);
+      if (rAB < 0.98) ok(`the two parts are genuinely different signals (corr ${rAB.toFixed(4)}), ` +
+                         `so the isolation above is a real comparison`);
+      else fail(`soloing ${desk.A} and soloing ${desk.B} render the same spectrum ` +
+                `(corr ${rAB.toFixed(4)}) — solo is not isolating anything`);
+
+      // (D4) MUTE IS SILENCE, and solo is mute on everyone else — one law, so
+      // muting every address must render nothing at all.
+      if (desk.allMute.energy < 1e-9)
+        ok(`muting every part renders silence (energy ${desk.allMute.energy.toExponential(2)})`);
+      else fail(`with every part muted the channel still rendered ` +
+                `${desk.allMute.energy.toExponential(2)} of energy — a mute that leaks`);
+      if (desk.clean.built.includes(desk.B))
+        ok(`soloing ${desk.A} built the muting busses (${desk.clean.built.join(",")})`);
+      else fail(`soloing ${desk.A} built ${desk.clean.built.join(",") || "nothing"} — ` +
+                `the parts it must silence have no gain to close`);
+    }
+
+    // ...AND THE LIVE CHANNEL BUILDS IT TOO
+    if (!live) { /* the offline half already failed; nothing to join to */ }
+    else {
+      const withParts = live.mix.channels.filter(c => c.parts && c.parts.length);
+      if (!withParts.length)
+        fail(`no live channel reports a part strip — __nuMix.channels[].parts is ` +
+             `${JSON.stringify(live.mix.channels.map(c => c.parts))}`);
+      else {
+        const c = withParts[0];
+        console.log(`  live desk             : ${JSON.stringify(c.parts)}`);
+        const A = c.parts.find(p => p.key === desk.A);
+        if (!A || A.stages.join(",") !== "higain")
+          fail(`the live ${desk.A} strip declared ${A ? JSON.stringify(A.fx) : "nothing"} and ` +
+               `BUILT [${A ? A.stages : ""}] — a per-part chip lit up and passed dry`);
+        else ok(`the live ${desk.A} strip built its insert chain: [${A.stages}]`);
+        if (A && Math.abs(A.level - 0.4) < 1e-3 && A.rev > 0.5)
+          ok(`its level and send are real params: level ${A.level}, reverb ${A.rev}`);
+        else fail(`the ${desk.A} strip's chips did not reach its nodes ` +
+                  `(${JSON.stringify(A)})`);
+        const B = c.parts.find(p => p.key === desk.B);
+        if (B && B.muted) ok(`the muted ${desk.B} strip reports a closed gate`);
+        else fail(`part ${desk.B} was muted and the live gate says ${JSON.stringify(B)}`);
+        const D = c.parts.find(p => p.key === "drums");
+        if (D && Math.abs(D.pan + 0.7) < 1e-3)
+          ok(`the kit takes a place of its own on the desk (pan ${D.pan}), beside its ` +
+             `own lane geometry`);
+        else fail(`the drums strip did not take the pan chip (${JSON.stringify(D)})`);
+      }
+      // and the song still plays with a desk on it
+      if (live.peak < 0.01)
+        fail(`the song went silent under a per-part mix (peak RMS ${live.peak.toFixed(4)})`);
+      else ok(`the song plays with the desk engaged: peak RMS ${live.peak.toFixed(4)}`);
+      // the budgets the audio gate holds, re-read here because sub-busses are
+      // exactly the kind of thing that quietly multiplies a pool
+      if (live.mix.worklets > 12)
+        fail(`${live.mix.worklets} Faust worklets with a per-part desk engaged — ` +
+             `a sub-bus must be cheap nodes, never another voice`);
+      else ok(`the desk cost no voices: ${live.mix.worklets} worklets, ` +
+              `${live.mix.convolvers} convolvers`);
+      if (live.mix.convolvers > 2)
+        fail(`${live.mix.convolvers} convolvers — a part send must land on the ` +
+             `section's own reverb, not build one of its own`);
+    }
+  }
+
+  // ---- (D2) THE DESK HAS A SURFACE ----------------------------------------
+  // The mix table is the only way a person reaches any of the above. Every
+  // claim here is read off the AUDIO tier after a real click, never off the
+  // button that was clicked.
+  {
+    if (!(ui.parts >= 1) || ui.rows !== ui.parts + 1)
+      fail(`the mix table drew ${ui.rows} row(s) for ${ui.parts} part(s) — it must be ` +
+           `one row per sound plus exactly one section row`);
+    else ok(`the mix table draws ${ui.parts} sounds and one section row`);
+    if (!ui.stored || !ui.stored[ui.partKey])
+      fail(`clicking the ${ui.partKey} row's chips stored ${JSON.stringify(ui.stored)}`);
+    else {
+      const e = ui.stored[ui.partKey];
+      if (e.fx && e.fx[0] === "crunch" && e.lvl === "hush" && e.solo === true)
+        ok(`the table writes song.js's own spelling: ${ui.partKey} ${JSON.stringify(e)}`);
+      else fail(`the ${ui.partKey} entry came out ${JSON.stringify(e)} — the table is writing ` +
+                `a shape the loader does not validate`);
+    }
+    const s = (ui.spec || []).find(p => p.key === ui.partKey);
+    if (!s) fail(`chanSpec built no bus for ${ui.partKey} after the table asked for one — ` +
+                 `the surface and the mixer disagree about the address`);
+    else if (s.fx[0] === "crunch" && Math.abs(s.lvl - 0.4) < 1e-3)
+      ok(`the audio tier resolves what the table wrote: ${ui.partKey} -> ` +
+         `[${s.fx}] at ${s.lvl}`);
+    else fail(`the ${ui.partKey} bus resolved to ${JSON.stringify(s)}`);
+    // a solo on one part must silence the others, resolved across the box
+    const others = (ui.spec || []).filter(p => p.key !== ui.partKey);
+    if (ui.keys.length > 1 && !others.some(p => p.mute))
+      fail(`a solo on ${ui.partKey} left ${JSON.stringify(others.map(p => p.key))} unmuted`);
+    else ok(`the solo key reaches the other ${others.length} strip(s)`);
+    // the section row is the box's own field, and the flat chips still show it
+    if (ui.rev !== "drown")
+      fail(`the section row wrote sec.rev = ${JSON.stringify(ui.rev)} — it must write the ` +
+           `same box field the palette writes, or a saved song grows a second mix`);
+    else if (ui.paletteLit !== "true")
+      fail(`the palette's own reverb chip reads aria-pressed=${ui.paletteLit} after the ` +
+           `section row set it — the two surfaces have forked`);
+    else ok("the section row IS the old flat chip: one field, both surfaces lit");
+    if (ui.emptied !== null)
+      fail(`clearing every chip left ${JSON.stringify(ui.emptied)} behind — absent must be ` +
+           `the only spelling of a default, or an untouched box builds sub-busses`);
+    else ok("clearing the chips leaves the box exactly as unmixed as it started");
+  }
+
+  // ---- (E) NOTHING ELSE MOVED ---------------------------------------------
   {
     // the shape the OTHER gate reads. Both files walk the same __nuMix; keeping
     // the old keys is a contract, and adding to them is the only allowed change.
@@ -474,6 +853,11 @@ async function pass(page, url) {
     if (gone.length) fail(`__nuMix channels lost key(s) ${gone.join(",")} — ` +
       `nukernel-audio.test.js reads every one of them`);
     else ok("__nuMix still carries the keys the audio gate reads");
+    // …and the desk is an ADDED key, always present, empty until mixed
+    if (!Array.isArray(c.parts))
+      fail(`__nuMix channels have no \`parts\` array (${JSON.stringify(c.parts)})`);
+    else ok(`__nuMix carries the desk as an added key (${c.parts.length} strips on an ` +
+            `unmixed box)`);
     if (wet.peak < 0.01) fail(`the song is silent (peak RMS ${wet.peak.toFixed(4)})`);
     else ok(`the song plays with the treatment on: peak RMS ${wet.peak.toFixed(4)}`);
     if (errs.length) fail(`page errors: ${errs.slice(0, 3).join(" | ")}`);

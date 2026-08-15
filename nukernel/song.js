@@ -24,14 +24,18 @@
   const NG = (typeof module !== "undefined" && module.exports)
     ? require("./genres.js") : root.NuGenres;
   const { FIELDS, OPS, FX, MAX_FX, NSLOTS, MAX_LEN, MAX_NUDGE, VOX,
-          AUTOPARAMS, PERIODS } = NF;
+          AUTOPARAMS, PERIODS, PARTMIX, okPartKey, MASTER } = NF;
   const { GENRES } = NG;
 
   // The CURRENT schema version. v:2 = v:1 with the box field `del` renamed to
   // `echo` (it collided with the kernel's delete operator) and slots allowed to
   // arrive at any length 1..NSLOTS. Variable banks did not need a v:3: the
   // SHAPE never moved — old 8-slot saves are just one legal length among
-  // sixteen, and they load byte-identically.
+  // sixteen, and they load byte-identically. Neither did the per-part desk
+  // (`box.parts`) nor the master bus (`song.master`): both are OPTIONAL keys
+  // whose absence is the whole of the previous behaviour, so a v:2 save from
+  // before either one loads and sounds identically and there is nothing to
+  // migrate. A version bump is for a shape that MOVED, not one that grew.
   const VERSION = 2;
 
   // THE FILTER RULE, written down at last: `ops` and `fx` are FILTERED on
@@ -51,7 +55,9 @@
   // inherits them. Each entry in the stack carries ITS OWN phrases. A BOX IS
   // ALSO A MIXER CHANNEL: `fx` is its insert chain, `rev`/`echo` its two
   // sends, `verb`/`dtime` which reverb and which echo subdivision it is sent
-  // TO, `lvl`/`pan` where it sits, `mot` its filter automation.
+  // TO, `lvl`/`pan` where it sits, `mot` its filter automation. Those are the
+  // SECTION-WIDE treatment; `parts` is the desk under it — the same controls
+  // per chair (lead/pad/bass/drums…), so an effect can land on one thing.
   //
   // Every default below comes from the registry, so emptyBox() and the
   // composer's skeleton can never disagree again — they used to be two object
@@ -228,8 +234,54 @@
           });
         }
       }
+      // THE PER-PART MIX. A map of chair key -> a small mix entry, and BOTH
+      // halves of the filter rule apply, at their own level:
+      //   the KEY is filtered. `pad2` is a perfectly legal address that this
+      //     box may simply not have a chair for — swap the genre and it is
+      //     back — so an address is dropped only when it is not an address at
+      //     all. A key naming a chair the current stack lacks is KEPT: the
+      //     mixer ignores it (audio/mixer.js partSpecs walks the box's real
+      //     chairs), and losing it here would mean a genre A/B silently ate
+      //     the mix you set on the way past.
+      //   the VALUE is rejected, exactly like the box's own send or level —
+      //     an unknown level means the file is from a build this one cannot
+      //     honestly play. `fx` is the one list, and lists filter.
+      // Normalized on the way through: an entry with nothing set, and a map
+      // with no entries, come back as absent, so "all defaults" has one
+      // spelling instead of three.
+      if (b.parts != null) {
+        if (typeof b.parts !== "object" || Array.isArray(b.parts))
+          err(at + ".parts", b.parts, "a map of part key -> mix entry");
+        else {
+          const clean = {};
+          for (const k of Object.keys(b.parts)) {
+            if (!okPartKey(k)) continue;
+            const e = b.parts[k], ep = at + ".parts." + k;
+            if (!e || typeof e !== "object" || Array.isArray(e)) {
+              err(ep, e, "a mix entry object"); continue;
+            }
+            const o = {};
+            for (const f of PARTMIX) {
+              const v = e[f.key];
+              if (v == null) continue;
+              if (f.type === "list") {
+                const l = filterList(f, v);
+                if (l.length) o[f.key] = l;
+              } else if (f.type === "flag") {
+                if (typeof v !== "boolean") err(ep + "." + f.key, v, "true|false");
+                else if (v) o[f.key] = true;
+              } else if (!okEnum(f, v)) {
+                err(ep + "." + f.key, v, "one of " + Object.keys(f.table).join("|"));
+              } else o[f.key] = v;
+            }
+            if (Object.keys(o).length) clean[k] = o;
+          }
+          b.parts = Object.keys(clean).length ? clean : null;
+        }
+      }
       for (const f of FIELDS) {
         if (f.type === "list" || f.type === "int" || f.type === "vox") continue;
+        if (f.type === "parts") continue;            // the map above, not an enum
         if (!okEnum(f, b[f.key]))
           err(at + "." + f.key, b[f.key], "one of " + Object.keys(f.table).join("|"));
       }
@@ -251,6 +303,36 @@
                 if (Number.isInteger(i) && i > top && i < NSLOTS) top = i;
       while (s.slots.length <= top) s.slots.push(blank());
     }
+
+    // ---- THE MASTER BUS. A song-level object, not a box field, because it is
+    // the one chain everything lands on — and it belongs to the SONG rather
+    // than to the page for the reason the tempo does: a song somebody shares
+    // should sound the way its author left it, and "why is this so much
+    // brighter on your machine" is exactly the failure of keeping it beside
+    // the song instead of in it.
+    //
+    // BOTH HALVES OF THE FILTER RULE, at their own level, the same split
+    // `parts` uses one line up: the KEY is filtered (the master vocabulary will
+    // grow and shrink, and a song should lose an obsolete global rather than
+    // lose itself), the VALUE is REJECTED (an unknown ceiling means the file is
+    // from a build this one cannot honestly play back). Normalized on the way
+    // through, so "no master" has exactly one spelling — which is what lets
+    // audio/graph.js key its absent-is-today branch on a null.
+    if (s.master != null) {
+      if (typeof s.master !== "object" || Array.isArray(s.master))
+        err("master", s.master, "a map of global -> value");
+      else {
+        const clean = {};
+        for (const f of MASTER) {
+          const v = s.master[f.key];
+          if (v == null) continue;
+          if (!okEnum(f, v))
+            err("master." + f.key, v, "one of " + Object.keys(f.table).join("|"));
+          else clean[f.key] = v;
+        }
+        s.master = Object.keys(clean).length ? clean : null;
+      }
+    } else s.master = null;
 
     // tempo and volume ride along; out-of-range means "keep what you had",
     // not "refuse the song" — same policy applyState always had

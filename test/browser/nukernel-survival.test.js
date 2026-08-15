@@ -25,6 +25,13 @@
 //       'full'; the blob URL it names is fetched and decoded IN PAGE, and its
 //       PCM carries energy in three windows across the file. The RENDERED
 //       artifact, not the analyser.
+//   (B3) THE CARRIER CARRIES THE MASTER. The song owns a master bus (drive,
+//       glue, tape, space, width, tilt, ceiling — fields.js MASTER). The live
+//       graph and the offline bounce must build it through the SAME
+//       graph.buildMasterChain, or the pocket gets an untreated tape of a song
+//       the ear just heard treated. Banded off the decoded blob, before and
+//       after arming every global; the shape has to move, and clearing them
+//       has to put the six-node chain back.
 //   (C) NO DOUBLE PLAYBACK. In the foreground the carrier element must sit at
 //       volume 0 while the graph runs — two sources at once is the failure
 //       class the parent had to instrument (live.js elAudible), and here the
@@ -287,6 +294,112 @@ function taps() {
              `RMS ${back.rms.toFixed(4)})`);
       else ok("return from the carried hide: the graph is audible again");
     } else ok("bounce never reached ready — (B) already failed this; handoff cycle skipped");
+  }
+
+  // ── (B3) THE CARRIER CARRIES THE MASTER TREATMENT ──
+  // The song owns a master bus now (fields.js MASTER, the session bank on the
+  // SONG page): drive, glue, tape, space, width, tilt, ceiling. The live graph
+  // plays through it and the offline bounce is supposed to render through the
+  // SAME builder — and "supposed to" is exactly the class of claim this file
+  // exists to disbelieve, because the carrier is the one signal path no
+  // analyser on the live graph can see. A bounce that forked from
+  // graph.buildMasterChain would sound right all day in the foreground and
+  // hand the pocket an untreated tape of the same song.
+  //
+  // So: band the blob, arm every global, wait for the RE-RENDER the master
+  // change must trigger (audio/bounce.js sig() carries it, or the stale blob
+  // would simply be kept), band it again, and require the shape to move. The
+  // correlation bar is nukernel-audio's — two passes of the same sound measure
+  // ~0.995 there and the bounce is more deterministic still.
+  {
+    // Goertzel over log-spaced bands, eight windows across the file. SHAPE, not
+    // level: the master ends in a brickwall whose whole job is flattening the
+    // level a treatment adds, so measuring loudness here measures the limiter.
+    const bandsOf = () => page.evaluate(async () => {
+      const x = window.__nuBounce();
+      const ab = await (await fetch(x.url)).arrayBuffer();
+      const oc = new OfflineAudioContext(1, 44100, 44100);
+      const buf = await oc.decodeAudioData(ab);
+      const d = buf.getChannelData(0), sr = buf.sampleRate, N = 4096, NB = 28;
+      const acc = new Float64Array(NB);
+      const hop = Math.max(N, Math.floor((d.length - N) / 8));
+      let w = 0;
+      for (let s = 0; s + N <= d.length && w < 8; s += hop, w++) {
+        for (let b = 0; b < NB; b++) {
+          const hz = 60 * Math.pow(200, b / (NB - 1));      // 60 Hz .. 12 kHz
+          const cw = 2 * Math.cos(2 * Math.PI * hz / sr);
+          let s0 = 0, s1 = 0, s2 = 0;
+          for (let i = 0; i < N; i++) { s0 = d[s + i] + cw * s1 - s2; s2 = s1; s1 = s0; }
+          acc[b] += Math.sqrt(Math.max(0, s1 * s1 + s2 * s2 - cw * s1 * s2)) / N;
+        }
+      }
+      return { bands: Array.from(acc, v => v / Math.max(1, w)), gen: x.gen,
+               dur: x.durSec };
+    });
+    const corr = (a, b) => {
+      const ma = a.reduce((x, y) => x + y) / a.length, mb = b.reduce((x, y) => x + y) / b.length;
+      let n = 0, da = 0, db = 0;
+      for (let i = 0; i < a.length; i++) {
+        const x = a[i] - ma, y = b[i] - mb; n += x * y; da += x * x; db += y * y;
+      }
+      return n / Math.sqrt(da * db);
+    };
+    const plain = await bandsOf().catch(e => ({ err: String(e) }));
+    if (plain.err) fail(`could not band the untreated carrier: ${plain.err}`);
+    else {
+      // every global, through the REAL session-bank controls
+      for (const [id, v] of [["m-drive", "dirt"], ["m-tape", "worn"],
+                             ["m-space", "hall"], ["m-tilt", "dark"],
+                             ["m-width", "huge"], ["m-glue", "pump"],
+                             ["m-ceiling", "loud"]])
+        await page.selectOption("#" + id, v);
+      // the LIVE graph must have swapped its chain (the same object the audio
+      // gate reads); this is the precondition for asking about the carrier
+      const live = await page.evaluate(() => window.__nuMix().master);
+      if (!live || !live.stages.length)
+        fail(`the live master chain reports no stages after every global was set ` +
+             `(${JSON.stringify(live)}) — nothing to carry`);
+      else ok(`live master armed: [${live.stages}]`);
+      // …and the bounce must notice. sig() carries the master, so the adopted
+      // blob is stale and a NEW generation has to land (4 s debounce + render).
+      const advanced = await page.waitForFunction((g) => {
+        const b = window.__nuBounce();
+        return b.state === "ready" && b.stage === "full" && b.gen > g;
+      }, plain.gen, { timeout: 180000 }).then(() => true).catch(() => false);
+      if (!advanced)
+        fail(`the carrier never re-rendered after the master changed — ` +
+             `audio/bounce.js sig() is blind to the master bus, so the pocket ` +
+             `keeps playing the untreated tape`);
+      else {
+        ok("a master change invalidates the carrier and re-renders it");
+        const treated = await bandsOf().catch(e => ({ err: String(e) }));
+        if (treated.err) fail(`the re-rendered carrier does not decode: ${treated.err}`);
+        else {
+          const r = corr(plain.bands, treated.bands);
+          console.log(`  carrier shape corr    : plain vs mastered ${r.toFixed(4)} ` +
+                      `(gen ${plain.gen} -> ${treated.gen})`);
+          if (r < 0.98)
+            ok(`the BOUNCED BLOB carries the master treatment: shape ` +
+               `correlation ${r.toFixed(4)}`);
+          else fail(`the rendered carrier's spectral shape is ${r.toFixed(4)} ` +
+                    `correlated with the untreated one — the bounce is not ` +
+                    `building through graph.buildMasterChain, so the background ` +
+                    `plays a different mix from the foreground`);
+        }
+      }
+      // leave the song as it was found: the sections below re-load it from
+      // localStorage, and a treated master would ride along into (E)
+      for (const id of ["m-drive", "m-tape", "m-space", "m-tilt", "m-width",
+                        "m-glue", "m-ceiling"])
+        await page.selectOption("#" + id, "");
+      await page.waitForTimeout(500);
+      const back = await page.evaluate(() => window.__nuMix().master);
+      if (!back || back.stages.length || back.nodes !== 6)
+        fail(`clearing the globals did not restore the chain the page always ` +
+             `built (${JSON.stringify(back && back.stages)}, ` +
+             `${back && back.nodes} nodes) — absent must be today`);
+      else ok("clearing the globals restores the six-node master chain");
+    }
   }
 
   // ── (C) no double playback in the foreground ──

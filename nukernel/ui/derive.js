@@ -42,6 +42,23 @@ export const gid = sec => sec.stack[0].g;   // a box always has an authority
 export const stackOf = sec => sec.stack || [];
 export const focusOf = sec => Math.min(sec.focus || 0, stackOf(sec).length - 1);
 export const focused = sec => stackOf(sec)[focusOf(sec)];
+// WHICH LAYER OWNS EACH VOICE, as a flat list in voice order. It is the SAME
+// walk audio/mixer.js voiceRoster makes — stackOf in order, g.voices apiece,
+// an unknown genre skipped — so the two arrays are joinable BY INDEX: entry i
+// of the roster is the chair, entry i here is the genre that put it there.
+// The mixer only needs the chair; the mix table also needs the genre, because
+// a genre carrying a signature `synth` plays that instead of its sampled
+// `instr`, and a desk that labels a 303 "clean guitar" is lying about the
+// thing you are about to fade.
+export const voiceOwners = sec => {
+  const out = [];
+  for (const ent of stackOf(sec)) {
+    const g = GENRES[ent.g];
+    if (!g) continue;
+    for (let v = 0; v < g.voices; v++) out.push(ent.g);
+  }
+  return out;
+};
 export const boxBars = b => b.len;
 // HOW LONG A BOX ACTUALLY LASTS, in seconds at the given tempo: its bars, in
 // this genre's own step units, at that step duration. A half-time genre's bar

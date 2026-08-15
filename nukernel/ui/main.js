@@ -21,6 +21,10 @@ import * as arrange from "./arrange.js";
 import * as songrow from "./songrow.js";
 import "./palette.js";
 import "./editor.js";
+// the mix table: after editor, because it borrows the panel-head (?) wiring
+// from it, and it reads the roster out of audio/mixer (a view importing audio
+// is the allowed direction; audio never imports back)
+import "./mixtbl.js";
 import "./chrome.js";
 // the chassis: page rail wiring + transport haptics (phone only in effect —
 // the rail is display:none on a desk and the buzz is coarse-pointer-gated)

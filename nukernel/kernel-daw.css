@@ -303,6 +303,25 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   font-weight:500;font-size:11.5px;line-height:1;letter-spacing:.02em;
   cursor:pointer;padding:7px 6px;max-width:168px;
 }
+/* ---- the bank's SECOND row group: the master bus ----
+   A row title INSIDE the well, ruled off the group above it the way .thd rules
+   off the top — so the bank reads as two row groups of one table rather than
+   as two banks. Quieter than .thd on purpose: .thd names the table, this names
+   a group in it. */
+.gsub{
+  display:flex;align-items:center;gap:8px;
+  padding:8px var(--tbl-gut) 0;
+  border-top:1px solid var(--tbl-rule);
+  font:600 9px/1.2 var(--f-legend);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--dim);
+}
+.gsub .btn.hint{margin-left:0}
+/* the group's own (?) copy sits in the well, not over the deck */
+.ghint{margin:0;padding:6px var(--tbl-gut) 0}
+/* SEVEN CONTROLS, and they are narrower than the session's two because their
+   values are single words. The group wraps like the one above it; nothing here
+   is a second layout. */
+.gmaster .gctl select{max-width:132px;min-width:84px}
 
 /* ---- the context strip ----
    WHERE EDITS LAND, on every page: one LCD line between the transport and the
@@ -922,6 +941,157 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .bleds .led[data-fam="edge"]{--led-c:var(--v3)}
 .pchip.role.on{background:var(--accent);border-color:var(--accent);color:var(--on-ink)}
 
+/* ---- THE MIX TABLE ----
+   The desk under the section, as the FIFTH user of .tbl (ui/mixtbl.js): one
+   row per SOUND the selected box makes, the mixer strip as columns, and the
+   section's own chain as the last row under a heavier rule — which is the
+   signal flow, since every part bus feeds it.
+
+   IT IS A TABLE BECAUSE A MIXER IS ONE. Rows are channels, columns are the
+   strip; you read DOWN a column to compare two sounds and ACROSS a row to
+   understand one. A rack of vertical faders would have been a fifth idiom on
+   the one screen that needs one least, and it does not survive 390px.
+
+   THE COLUMNS ARE FIXED (not auto) for the reason the song table's are: an
+   auto column sized to "drown" on one row and "—" on the next is a table that
+   shimmers as you mix. Same template on .mhead and .mrow, so the silkscreen
+   sits over the cells it names. Width buys room — the numeral and the SOUND
+   column arrive on a desk — never a second shape. */
+.mixtbl{display:flex;flex-direction:column;max-height:none;overflow-x:hidden}
+.mhead,.mrow{
+  display:grid;
+  grid-template-columns:minmax(58px,1.15fr) minmax(56px,1.05fr)
+    repeat(4,minmax(38px,.72fr)) 26px 26px;
+  gap:0 3px;align-items:center;flex:0 0 auto;
+}
+/* the two things a 390px table cannot afford: the channel number, and the
+   second line naming what each part is PLAYING (they come back in the two
+   width blocks at the end of this file). The ADDRESS — lead, pad, bass — is
+   the load-bearing half and it is there at every width. */
+.mnum,.mh.mhnum{display:none}
+.mhead{padding:5px var(--tbl-gut) 4px;font-size:8.5px;color:var(--tbl-faint)}
+.mh{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mh.mhkey,.mh.mhnum{text-align:center}
+.mrow{
+  position:relative;min-height:var(--tbl-rowh,44px);
+  padding:3px var(--tbl-gut);
+  border-bottom:1px solid var(--tbl-hair);
+}
+.mrow:hover{background:var(--tbl-hi)}
+/* THE MASTER STRIP. Under the heavier rule — the table's own "the music
+   divides here" cadence (.trow.bar uses the same token) — because everything
+   above it feeds into it, and its two missing keys are left as empty seats
+   rather than dead controls: at a glance, M and S are things a SOUND has and
+   a section does not. */
+.mrow.msec{border-top:2px solid var(--tbl-rule);border-bottom:0;background:var(--sunk)}
+.mrow.msec .mpn{color:var(--accent-txt);letter-spacing:.14em}
+/* a part the desk has silenced — muted, or not the one being soloed. The row
+   keeps every value legible (you are about to un-mute it) and simply steps
+   back; strike-through on a table of live controls reads as disabled. */
+.mrow.off .mpart,.mrow.off .mval{opacity:.42}
+.mpart{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:1px}
+.mpn{font:600 11.5px/1.2 var(--f-legend);letter-spacing:.06em;color:var(--tbl-ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mps{font:400 10px/1.2 var(--f-legend);letter-spacing:.01em;color:var(--tbl-faint);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mcell{min-width:0;display:flex}
+/* A VALUE CELL IS A KEY, in the crowd's cheap material (flat fill, 1px bevel,
+   no shadow — the hw.css paint budget): there are up to ten rows of five here
+   and they are patched on every commit. Tapping one opens its chip set. */
+.mval{
+  appearance:none;cursor:pointer;width:100%;min-width:0;min-height:30px;
+  display:flex;align-items:center;gap:2px;flex-wrap:wrap;
+  padding:4px 5px;border-radius:3px;
+  background:var(--tbl-key,var(--hw-key-mid));color:var(--tbl-ink);
+  border:0;border-top:1px solid rgba(255,255,255,.07);
+  border-bottom:1px solid rgba(0,0,0,.55);
+  font:500 10.5px/1.2 var(--f-legend);letter-spacing:.02em;
+  white-space:nowrap;overflow:hidden;
+}
+.mval:hover{border-top-color:rgba(255,255,255,.2)}
+/* ONE STATE LANGUAGE, the same one the palette speaks: a bright value is one
+   YOU set, a dim one is the default answering — the part's own zero, or (on
+   the section's reverb) the number the genre asks for. */
+.mval.dflt{color:var(--tbl-faint);background:transparent;
+  border-top-color:transparent;border-bottom-color:var(--tbl-hair)}
+.mval.set{color:var(--accent-txt);font-weight:600}
+.mval.open{outline:2px solid var(--accent);outline-offset:-2px}
+/* the effects cell shows the CHAIN, compactly and in order — up to three
+   little lamps, which is the whole of MAX_FX, so the cell never grows */
+.mfxc{font-style:normal;font-size:9.5px;letter-spacing:.02em;
+  padding:1px 3px;border-radius:2px;background:var(--sunk);color:var(--tbl-ink);
+  overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.mval.set .mfxc{background:var(--accent);color:var(--on-ink)}
+.mfxc.none{background:transparent;color:var(--tbl-faint);padding:0}
+/* M AND S — the desk's own pair, and the two controls here that latch rather
+   than open. They wear the state colours hw.css already defines for them
+   (--st-mute, --st-solo): a mute key that lights orange like everything else
+   is a mute key you have to read. */
+.mkey{
+  appearance:none;cursor:pointer;width:100%;min-height:30px;padding:0;
+  border-radius:3px;border:0;
+  border-top:1px solid rgba(255,255,255,.07);
+  border-bottom:1px solid rgba(0,0,0,.55);
+  background:var(--tbl-key,var(--hw-key-mid));color:var(--tbl-faint);
+  font:600 10px/1 var(--f-legend);letter-spacing:.04em;
+}
+.mkey:hover{color:var(--tbl-ink)}
+.mk-mute.on{background:var(--st-mute);color:#fff}
+.mk-solo.on{background:var(--st-solo);color:var(--on-ink)}
+
+/* ---- the cell popover ----
+   Tapping a mix cell opens ITS chip set beside it. Anchored on a desk, a
+   bottom sheet on a phone — the row sheet's two placements, for the row
+   sheet's reason, and the same brushed panel. It exists so that a row stays
+   ONE line high whatever is open: an inline chip row would make the part you
+   are editing four lines tall and push the sounds you are comparing it
+   against off the screen, which is the point of a table. */
+.mpscrim{position:fixed;inset:0;z-index:38;background:rgba(0,0,0,.45)}
+.mpscrim.beside{background:rgba(0,0,0,.18)}
+.mpscrim[hidden],.mixpop[hidden]{display:none}
+.mixpop{
+  position:fixed;z-index:39;left:8px;right:8px;
+  bottom:calc(8px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:8px;
+  background:
+    linear-gradient(180deg,var(--hw-panel-hi) 0,var(--hw-panel) 38%,var(--hw-panel-lo) 100%),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.014) 0 1px,transparent 1px 3px);
+  border:1px solid var(--hw-edge);border-top-color:var(--hw-bevel-hi);
+  box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 1px 0 var(--hw-edge),
+    0 14px 30px rgba(0,0,0,.55);
+}
+.mixpop.beside{
+  right:auto;bottom:auto;width:min(320px,calc(100vw - 16px));
+  overflow-y:auto;overscroll-behavior:contain;
+}
+.mphead{display:flex;align-items:center;gap:8px;min-width:0}
+.mptitle{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font:600 10px/1.2 var(--f-legend);letter-spacing:.12em;text-transform:uppercase;
+  color:var(--dim)}
+/* THE CHIPS ARE THE PALETTE'S CHIPS, materially — flat fill, one corner lamp,
+   the same lit/dim-lit/off language — but they are .mchip and not .pchip on
+   purpose: the browser gates click .pchip by exact text ("chorus", "drown"),
+   and a second element with the same word in it would make those locators a
+   coin toss. Same material, its own hook. */
+.mchips{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:5px}
+.mchip{
+  appearance:none;font:500 11.5px/1.2 var(--f-legend);letter-spacing:.02em;cursor:pointer;
+  position:relative;text-align:left;min-height:36px;
+  background:var(--hw-key-mid);color:var(--ink);
+  border:0;border-top:1px solid rgba(255,255,255,.07);
+  border-bottom:1px solid rgba(0,0,0,.55);
+  border-radius:3px;padding:7px 8px 7px 15px;
+}
+.mchip::after{
+  content:"";position:absolute;left:5px;top:50%;margin-top:-2px;
+  width:4px;height:4px;border-radius:1px;background:var(--led-off);
+}
+.mchip.on{background:var(--accent);color:var(--on-ink)}
+.mchip.on::after{background:var(--a-cream)}
+.mchip.on.dflt{background:color-mix(in srgb,var(--accent) 24%,var(--hw-key-mid));
+  color:var(--ink)}
+.mchip.on.dflt::after{background:color-mix(in srgb,var(--a-orange) 55%,var(--led-off))}
+
 /* ---- palette ----
    Six tabs across the top, then one row per group. The tab strip takes the whole
    width so the groups below it always start on a new line; before it existed the
@@ -1020,6 +1190,10 @@ h1 em{font-style:normal;color:var(--accent-txt)}
      ✕ from ⟳ */
   .btools .t{padding:10px 9px;font-size:14px;min-width:40px;min-height:44px}
   .btools{gap:6px}
+  /* the mix table's cells and its two latching keys: a value cell opens a
+     sheet (a miss is harmless) but M and S change what you hear, so both take
+     the row's full height rather than their text's */
+  .mval,.mkey{min-height:40px}
   /* the two faders own a custom pointer gesture with touch-action:none — the
      26px strip WAS the whole grab area; the track/thumb stay centred while
      the hit strip grows. The recessed LCD pickers get the same floor. */
@@ -1168,8 +1342,17 @@ details .c{color:var(--faint)}
   .chassis[data-page="step"]  .pg-step{display:block}
   .chassis[data-page="sound"] .pg-palette{display:block}
   .chassis[data-page="mix"]   .pg-palette{display:block}
+  .chassis[data-page="mix"]   .pg-mix{display:block}
   .chassis[data-page="move"]  .pg-palette{display:block}
   .chassis[data-page="move"]  .pg-move{display:block}
+  /* MIX is the desk's page, on the MOVE page's pattern: the table of sounds
+     comes FIRST and the palette rides below it on the RHYTHM tab — which
+     says what the kit and the bass ARE, the one question about these rows
+     the table itself cannot answer. (The effects tab is a sub-tab away, and
+     what it holds for the box is the section row up here.) */
+  .chassis[data-page="mix"] .deck{display:flex;flex-direction:column}
+  .chassis[data-page="mix"] .pg-mix{order:-1;flex:0 0 auto}
+  .chassis[data-page="mix"] .pg-palette{margin-top:12px;flex:0 0 auto}
   /* MOVE is the arrangement's page — the strip is its point, so it comes
      FIRST and gets the deck's height; the transition chips ride below it.
      (In the DOM the palette section sits above pg-move because it serves
@@ -1238,6 +1421,17 @@ details .c{color:var(--faint)}
   /* the tracker's voice columns give up their second line (the op) at this
      width; the name and its swatch are what identify a channel */
   .tcol .op{display:none}
+  /* THE MIX TABLE AT 390: the same nine columns minus the two a phone cannot
+     afford (they are already hidden), tightened. Nothing re-lays-out — the
+     values are abbreviated in the markup, not by CSS, so the cell says the
+     same word here as on a desk. */
+  .mhead,.mrow{grid-template-columns:minmax(50px,1.05fr) minmax(48px,.95fr)
+    repeat(4,minmax(32px,.66fr)) 28px 28px;gap:0 2px}
+  .mps{display:none}            /* the address stays; what plays it is what a
+                                   390px column drops, like the song row's clock */
+  .mval{font-size:10px;padding:4px 3px}
+  .mpn{font-size:10.5px;letter-spacing:.02em}
+  .mfxc{font-size:9px;padding:1px 2px}
 }
 
 /* ---- the desk: the SAME tables, with room ----
@@ -1297,4 +1491,20 @@ details .c{color:var(--faint)}
     grid-template-columns:repeat(4,auto);gap:3px}
   .btools .t{min-width:34px;padding:5px 6px}
   .blayers{grid-row:2;grid-column:3/-1}
+
+  /* THE MIX TABLE, WITH ROOM: the same rows, and the two columns a phone had
+     to drop come back — the channel number, and what each part is actually
+     PLAYING. The sound column is what makes this a table of sounds rather
+     than of abstract roles, and it is the first thing a desk should buy. */
+  .mhead,.mrow{
+    grid-template-columns:38px minmax(140px,1.5fr)
+      minmax(130px,1.3fr) repeat(4,minmax(64px,.92fr)) 44px 44px;
+    gap:0 8px}
+  /* .mnum keeps the shared numeral column's own display (a right-aligned
+     flex row, sticky to the left edge) — this only puts it back on screen */
+  .mnum{display:flex}
+  .mh.mhnum{display:block}
+  .mval{min-height:34px;font-size:11.5px;padding:5px 8px}
+  .mkey{min-height:34px;font-size:11px}
+  .mfxc{font-size:10px}
 }

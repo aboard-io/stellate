@@ -35,6 +35,16 @@
 //       asserts. window.__osc is still captured and printed, because "how many
 //       oscillators is this page running" is worth seeing, but it is no longer
 //       the pass/fail question.
+//
+//   (E/E2) THE MIXER AND THE MASTER ARE REAL. A section's insert chain, sends
+//       and level are claims about NODES, and so are the song's master-bus
+//       globals (fields.js MASTER — drive/glue/tape/space/width/tilt/ceiling).
+//       Both are read back off the built graph through window.__nuMix and both
+//       are held to the same spectral SHAPE witness, because the master ends in
+//       a brickwall whose job is flattening the level difference a treatment
+//       makes. E2 also holds the two budgets the master could quietly break:
+//       `space` must cost no third convolver, and clearing every global must
+//       restore the exact six-node chain the page built before they existed.
 "use strict";
 const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
 const path = require("path");
@@ -365,8 +375,98 @@ function taps() {
     await chip("crunch").click();
     await waitMix(m => m.channels.some(x => x.fx.length === 3), 20000);
     const dirty = await spec(8);
+
+    // (E2) THE MASTER BUS — the same witness, one level up. A global is a
+    // SESSION control (fields.js MASTER, the session bank on the SONG page):
+    // drive, glue, tape, space, width, tilt and ceiling, every one of them a
+    // stage of the parent's own fx_bus master section. The failure mode is
+    // identical to the insert chain's and so is the proof: a select that lit up
+    // and left the signal untouched is invisible to every other check here,
+    // because the master bus ends in a compressor and a brickwall whose job is
+    // to flatten exactly the level difference a treatment makes.
+    //
+    // The chain SWAPS rather than mutates (a wobble is delay nodes, a width is
+    // a splitter), so this doubles as the crossfade's only witness: the page
+    // must still be sounding on the other side of it.
+    let mfail = null, mcorr = null, mrep = null, mfull = null;
+    {
+      await chip("crunch").click();                    // back to the two-insert mix
+      await waitMix(m => m.channels.some(x => x.fx.length === 2), 20000);
+      const before = await spec(6);
+      // set every global through the REAL controls, the way a finger would
+      for (const [id, v] of [["m-drive", "dirt"], ["m-tape", "worn"],
+                             ["m-space", "hall"], ["m-tilt", "dark"],
+                             ["m-width", "huge"], ["m-glue", "pump"],
+                             ["m-ceiling", "loud"]])
+        await page.selectOption("#" + id, v);
+      await page.waitForTimeout(1200);                 // past the chain crossfade
+      mfull = await page.evaluate(() => window.__nuMix());
+      mrep = mfull.master;
+      const after = await spec(6);
+      mcorr = corr(before, after);
+      // …and turn them off again, so nothing below inherits a treated master
+      for (const id of ["m-drive", "m-tape", "m-space", "m-tilt", "m-width",
+                        "m-glue", "m-ceiling"])
+        await page.selectOption("#" + id, "");
+      await page.waitForTimeout(800);
+      mfail = await page.evaluate(() => window.__nuMix().master);
+    }
+
     await page.click("#play");
     const r = corr(clean, dirty);
+    {
+      if (!mrep) fail("__nuMix has no `master` object — the master bus reports nothing");
+      else {
+        const want = ["space", "drive", "glue", "tilt", "tape", "width", "ceiling"];
+        const missing = want.filter(s => !mrep.stages.includes(s));
+        if (missing.length)
+          fail(`the session bank set every global but the master chain BUILT ` +
+               `only [${mrep.stages}] — missing ${missing.join(",")}, i.e. a ` +
+               `select that lit up and reached no node`);
+        else ok(`the master chain built every stage asked for: [${mrep.stages}]`);
+        // the numbers are the AudioParams', not the table's
+        if (!(mrep.glue.ratio > 2.2) || !(mrep.ceiling.push > 1) ||
+            !(mrep.tape && mrep.tape.wob > 0) || !(mrep.width > 1) ||
+            !(mrep.tilt && mrep.tilt.lo > 0))
+          fail(`the master report echoes a spec rather than the nodes: ` +
+               JSON.stringify(mrep));
+        else ok(`master params read off the nodes: glue ${mrep.glue.ratio}:1, ` +
+                `push ${mrep.ceiling.push}, wob ${mrep.tape.wob}, width ${mrep.width}`);
+      }
+      // THE BUDGET SURVIVES THE MASTER. `space` is a master reverb, and the
+      // cheap way to build one is a third ConvolverNode — which is exactly the
+      // budget (H) below holds this page to. It is live.js's vapor wash
+      // (pre-delay + three damped combs) for that reason, and this is the check
+      // that keeps it that way.
+      if (mfull && mfull.convolvers > 2)
+        fail(`${mfull.convolvers} convolution reverbs with the master globals armed — ` +
+             `\`space\` built a convolver instead of the delay wash, and the ` +
+             `page's two-convolver budget is gone`);
+      else if (mfull)
+        ok(`the master room costs no convolver: ${mfull.convolvers} built, ` +
+           `${mfull.worklets} worklets`);
+      console.log(`  master shape corr     : plain vs treated ${mcorr.toFixed(4)}`);
+      if (mcorr < 0.98)
+        ok(`the master bus changes the rendered sound: shape correlation ${mcorr.toFixed(4)}`);
+      else fail(`arming every master global left the spectral shape at ` +
+                `${mcorr.toFixed(4)} correlation (>= 0.98 is indistinguishable from ` +
+                `two passes of the same sound) — the chain is built but not in ` +
+                `the signal path`);
+      // ABSENT IS TODAY, from outside: clearing every select must put the chain
+      // back to the six nodes and the exact numbers graph.js built before the
+      // globals existed. This is the check that a saved song from before the
+      // master bus still sounds like itself.
+      if (!mfail) fail("__nuMix lost its `master` object after the globals were cleared");
+      else if (mfail.stages.length || mfail.nodes !== 6 ||
+               mfail.glue.threshold !== -22 || mfail.glue.ratio !== 2.2 ||
+               mfail.glue.makeup !== 2.2 || mfail.ceiling.threshold !== -1.5 ||
+               mfail.ceiling.push !== 1 || mfail.ceiling.clip !== 0)
+        fail(`clearing every global did not restore the chain the page has always ` +
+             `built (stages [${mfail.stages}], ${mfail.nodes} nodes, ` +
+             `${JSON.stringify(mfail.glue)} / ${JSON.stringify(mfail.ceiling)}) — ` +
+             `absent must be today, or every song saved before the globals changes sound`);
+      else ok("clearing every global restores the six-node chain at live.js's numbers");
+    }
     console.log(`  spectral shape corr   : clean vs crunch ${r.toFixed(4)} ` +
                 `(same-sound drift measures ~0.995, any real treatment ~0.94)`);
     if (r < 0.98)

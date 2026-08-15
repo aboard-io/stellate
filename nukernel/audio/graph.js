@@ -13,14 +13,27 @@
 // word here: without it the sampled voices are unmastered and play at about
 // -22 dBFS, which is the "why is this so quiet and so flat" that started this.
 //
+// …AND IT IS A CHAIN YOU CAN NOW REACH. fields.js MASTER names a handful of
+// global treatments — drive, glue, tape, space, width, tilt, ceiling — and
+// every one of them is a stage of engine/faust/dsp/fx_bus.dsp `master()`, "the
+// WHOLE csd-engine.js master section in one stereo module", read in fx_bus's
+// own order. buildMasterChain takes that spec and builds ONLY the stages it
+// asks for: with no spec (a song with no `master`, which is every song saved
+// before this) it builds the six nodes it always did, with the numbers it
+// always had. Absent is today, node for node.
+//
 // EVERY BUILDER TAKES A CONTEXT. The offline bounce (audio/bounce.js) renders
 // the whole song into an OfflineAudioContext, and it must render through THIS
 // graph — the same master numbers, the same reverb impulses, the same echo
 // topology — or the carrier the phone hears in the background is a different
 // mix from the one it heard in the foreground. So the module-global `ctx` is
 // the LIVE context only; the construction functions are parameterized, and the
-// live init is just one caller of them.
-import { bpm, vol, on, emit } from "../ui/state.js";
+// live init is just one caller of them. The master bus makes that rule bite
+// harder rather than looser: the song's globals go INTO buildMasterChain, so
+// the bounce gets them by construction and there is nowhere for a second
+// opinion about the master to live.
+import { resolveMaster } from "../ui/deps.js";
+import { bpm, vol, MASTER, on, emit } from "../ui/state.js";
 
 // exported as live bindings — null until initAudio(), which must ride a user
 // gesture because that is the autoplay law
@@ -82,26 +95,236 @@ export function satCurve(G, mix) {
   for (let i = 0; i < N; i++) { const x = (i / (N - 1)) * 2 - 1, s = Math.tanh(x * G) / G; c[i] = x + mix * (s - x); }
   return c;
 }
+// fx_bus `gritmix`: tanh drive with the level compensation that keeps it from
+// simply being louder, and a mix that reaches unity by grit=0.125 — which is
+// why the DRIVES table's low settings are as low as they are.
+function gritCurve(grit) {
+  const N = 1024, c = new Float32Array(N);
+  const dr = 1 + grit * 2.6, comp = 1 / (1 + grit * 0.7), mix = Math.min(1, grit * 8);
+  for (let i = 0; i < N; i++) {
+    const x = (i / (N - 1)) * 2 - 1, g = Math.tanh(x * dr) * comp;
+    c[i] = x + (g - x) * mix;
+  }
+  return c;
+}
+// fx_bus `clip`: Bram de Jong's soft clip (method 0, iarg 0.5) — linear below
+// half the limit, then a saturating knee. This is the stage the csound renders
+// ended on, and it is a KNEE rather than a wall: the brickwall above it still
+// does the gain riding, and this only rounds what escaped.
+function clipCurve(limit) {
+  const N = 1024, c = new Float32Array(N), a = 0.5;
+  const bdj = v => (v < a ? v : a + (v - a) / (1 + Math.pow((v - a) / (1 - a), 2)));
+  for (let i = 0; i < N; i++) {
+    const x = (i / (N - 1)) * 2 - 1;
+    c[i] = Math.sign(x) * limit * bdj(Math.min(Math.abs(x) / limit, 1));
+  }
+  return c;
+}
 
 /* ---------- the context-parameterized builders ---------- */
-// the master chain, live.js's numbers; `out` is left at unity — the live init
-// sets it to the volume slider, the offline bounce renders at full scale and
-// lets the carrier element's own volume do the placing
-export function buildMasterChain(c) {
+// THE MASTER CHAIN, live.js's numbers, plus the fx_bus stages fields.js MASTER
+// names. `out` is left at unity — the live init hangs the volume gain off it,
+// the offline bounce renders at full scale and lets the carrier element's own
+// volume do the placing.
+//
+// EVERY OPTIONAL STAGE IS BUILT ONLY WHEN ASKED FOR. That is not an
+// optimization, it is the absent-is-today law made structural: with `master`
+// null the node list below is input, busComp, makeup, limiter, lp, out — the
+// six this function has always built, at the values it has always used — so
+// there is no "bypassed but present" state to drift, and a song from before
+// the globals existed renders through the identical graph.
+//
+// THE ORDER IS fx_bus's ORDER (`master()`: transport wobble, sweep, duck, grit,
+// comp, makeup, tone tilt, tape saturation, air shelf, clip), with width and
+// the loudness push inserted where a mastering chain puts them — after the
+// tone, before the brickwall. `dest` defaults to the context destination so the
+// offline probes that call buildMasterChain(octx) bare keep working.
+export function buildMasterChain(c, master, dest) {
+  const M = resolveMaster(master);
   const input = c.createGain();
+  const nodes = [input], oscs = [];
+  let node = input;
+  const chain = n => { node.connect(n); node = n; nodes.push(n); return n; };
+  const built = [];
+
+  // ---- SPACE, first, because it is a BLEED off the sum rather than a stage.
+  // fx_bus takes `mrev` off the mix into the reverb input, so the wash arrives
+  // at the TOP of the master chain and is compressed and limited with the music
+  // — which is the difference between "the mix is in a room" and "a reverb was
+  // put on the end". Here the tap is masterIn's whole sum (every channel, every
+  // section send and the drum room already land there), which is the same
+  // claim: one room under all of it, whatever a section asked for on its own.
+  //
+  // The room itself is live.js's vapor wash — pre-delay plus three damped combs
+  // — and NOT a convolver, for buildRoomBus's stated reason: the audio gate
+  // holds this page to two convolution reverbs and they are the most expensive
+  // node on it. A third one hiding in the master is exactly how that budget
+  // would go without anyone deciding to spend it.
+  let space = null;
+  if (M.space) {
+    const sum = c.createGain();
+    input.connect(sum); nodes.push(sum);
+    const bleed = c.createGain(); bleed.gain.value = M.space.mix;
+    const pre = c.createDelay(0.3); pre.delayTime.value = 0.028 * M.space.size;
+    // the wash runs hot by construction (three combs at fb ~0.7); the trim is
+    // what makes `mix` mean the bleed depth rather than the return level
+    const wet = c.createGain(); wet.gain.value = 0.7;
+    input.connect(bleed); bleed.connect(pre);
+    for (const [t, fb] of [[0.113, 0.74], [0.149, 0.71], [0.193, 0.68]]) {
+      const d = c.createDelay(0.6); d.delayTime.value = t * M.space.size;
+      const g = c.createGain(); g.gain.value = fb;
+      const lp2 = c.createBiquadFilter(); lp2.type = "lowpass"; lp2.frequency.value = 3000;
+      pre.connect(d); d.connect(lp2); lp2.connect(g); g.connect(d); d.connect(wet);
+      nodes.push(d, g, lp2);
+    }
+    wet.connect(sum); nodes.push(bleed, pre, wet);
+    node = sum;
+    space = { bleed };
+    built.push("space");
+  }
+
+  // ---- TAPE, the transport: wow + flutter modulating a short fractional delay
+  // per channel. fx_bus runs L and R at different rates on purpose, so the
+  // drift decorrelates into width instead of shifting the image. Built only
+  // when the chosen machine actually wobbles (`warm` is saturation alone).
+  let wob = null;
+  if (M.tape && M.tape.wob > 0) {
+    const base = 0.0016, dev = base * 0.9 * M.tape.wob;   // fx_bus WOB_MS, ±90%
+    const sp = c.createChannelSplitter(2), mg = c.createChannelMerger(2);
+    node.connect(sp); nodes.push(sp, mg);
+    [[0.61, 5.70], [0.53, 6.30]].forEach(([wHz, fHz], ch) => {
+      const d = c.createDelay(0.05); d.delayTime.value = base;
+      sp.connect(d, ch); d.connect(mg, 0, ch); nodes.push(d);
+      // wow is dominant, flutter a quarter-weight on top — fx_bus's own split
+      for (const [hz, w] of [[wHz, 0.75], [fHz, 0.25]]) {
+        const o = c.createOscillator(); o.frequency.value = hz;
+        const g = c.createGain(); g.gain.value = dev * w;
+        o.connect(g); g.connect(d.delayTime);
+        try { o.start(0); } catch (e) {}
+        oscs.push(o); nodes.push(g);
+      }
+    });
+    node = mg;
+    wob = M.tape.wob;
+  }
+
+  // ---- DRIVE (fx_bus grit) ----
+  let drive = null;
+  if (M.drive != null && M.drive > 0) {
+    drive = c.createWaveShaper();
+    drive.curve = gritCurve(M.drive); drive.oversample = "2x";
+    chain(drive); built.push("drive");
+  }
+
+  // ---- GLUE: the compressor that was always here, with a character ----
   const busComp = c.createDynamicsCompressor();
-  busComp.threshold.value = -22; busComp.knee.value = 28; busComp.ratio.value = 2.2;
-  busComp.attack.value = 0.015; busComp.release.value = 0.25;
-  const makeup = c.createGain(); makeup.gain.value = 2.2;
+  busComp.threshold.value = M.glue.thr; busComp.knee.value = M.glue.knee;
+  busComp.ratio.value = M.glue.ratio;
+  busComp.attack.value = M.glue.atk; busComp.release.value = M.glue.rel;
+  chain(busComp);
+  const makeup = c.createGain(); makeup.gain.value = M.glue.makeup;
+  chain(makeup);
+  // no node was added for a glue character, so "built" here means "these are
+  // not the numbers the chain runs when nothing is set"
+  const glueMoved = M.glue.thr !== -22 || M.glue.ratio !== 2.2 || M.glue.makeup !== 2.2;
+  if (glueMoved) built.push("glue");
+
+  // ---- TILT: a SHELF PAIR rocking about the middle. Not a filter pair — the
+  // thing that STOPS the top (the 16 kHz ceiling below) is unconditional, and
+  // the parent's note on its own air shelf is that a shelf dims rather than
+  // stops. One number: the low shelf takes −t, the high shelf +t.
+  let tilt = null;
+  if (M.tilt != null && M.tilt !== 0) {
+    const lo = c.createBiquadFilter(); lo.type = "lowshelf";
+    lo.frequency.value = 250; lo.gain.value = -M.tilt;
+    const hi = c.createBiquadFilter(); hi.type = "highshelf";
+    hi.frequency.value = 3000; hi.gain.value = M.tilt;
+    chain(lo); chain(hi);
+    tilt = { lo, hi };
+    built.push("tilt");
+  }
+
+  // ---- TAPE, the head: fx_bus tapesat, which IS satCurve at mix 1 ----
+  let tsat = null;
+  if (M.tape && M.tape.sat > 0) {
+    tsat = c.createWaveShaper();
+    tsat.curve = satCurve(1 + 1.8 * M.tape.sat, 1); tsat.oversample = "2x";
+    chain(tsat);
+  }
+  // reported off the two things that were actually wired, not off the chip —
+  // a machine that asked for neither a wobble nor a head would be no machine
+  if (wob != null || tsat) built.push("tape");
+
+  // ---- WIDTH: a mid/side trim. mid = (L+R)/2 goes straight through; side =
+  // (L−R)/2 is scaled and re-summed with opposite signs. Side ×0 is mono.
+  let width = null;
+  if (M.width != null && M.width !== 1) {
+    const sp = c.createChannelSplitter(2), mg = c.createChannelMerger(2);
+    const mid = c.createGain(); mid.gain.value = 0.5;
+    const side = c.createGain(); side.gain.value = 0.5;
+    const inv = c.createGain(); inv.gain.value = -1;
+    const sPos = c.createGain(); sPos.gain.value = M.width;
+    const sNeg = c.createGain(); sNeg.gain.value = -M.width;
+    node.connect(sp);
+    sp.connect(mid, 0); sp.connect(mid, 1);
+    sp.connect(side, 0); sp.connect(inv, 1); inv.connect(side);
+    side.connect(sPos); side.connect(sNeg);
+    mid.connect(mg, 0, 0); mid.connect(mg, 0, 1);
+    sPos.connect(mg, 0, 0); sNeg.connect(mg, 0, 1);
+    nodes.push(sp, mg, mid, side, inv, sPos, sNeg);
+    node = mg;
+    width = { sPos };
+    built.push("width");
+  }
+
+  // ---- CEILING: the push into the brickwall, the brickwall, the 16 kHz
+  // MASTER TOP, and (for every setting but `open`) fx_bus's soft clip.
+  let push = null;
+  if (M.ceiling.push !== 1) {
+    push = c.createGain(); push.gain.value = M.ceiling.push; chain(push);
+  }
   const limiter = c.createDynamicsCompressor();
-  limiter.threshold.value = -1.5; limiter.knee.value = 0; limiter.ratio.value = 20;
+  limiter.threshold.value = M.ceiling.thr; limiter.knee.value = 0; limiter.ratio.value = 20;
   limiter.attack.value = 0.002; limiter.release.value = 0.12;
+  chain(limiter);
   const lp = c.createBiquadFilter(); lp.type = "lowpass";
   lp.frequency.value = 16000; lp.Q.value = 0.5;
+  chain(lp);
+  let clip = null;
+  if (M.ceiling.clip > 0) {
+    clip = c.createWaveShaper();
+    clip.curve = clipCurve(M.ceiling.clip); clip.oversample = "2x";
+    chain(clip);
+  }
+  if (clip || push || M.ceiling.thr !== -1.5) built.push("ceiling");
+
   const out = c.createGain();
-  input.connect(busComp); busComp.connect(makeup); makeup.connect(limiter);
-  limiter.connect(lp); lp.connect(out); out.connect(c.destination);
-  return { input, lp, out };
+  chain(out);
+  out.connect(dest || c.destination);
+
+  // WHAT WAS BUILT, read off the nodes — not the spec that asked for it. Same
+  // law __nuMix holds the channels to: a stage that lit up in a table and never
+  // reached an AudioParam is exactly the failure this file keeps rediscovering.
+  const report = () => ({
+    stages: built.slice(),
+    nodes: nodes.length,
+    glue: { threshold: +busComp.threshold.value.toFixed(2),
+            ratio: +busComp.ratio.value.toFixed(2),
+            makeup: +makeup.gain.value.toFixed(3) },
+    drive: drive ? +M.drive.toFixed(3) : null,
+    tape: (wob != null || tsat) ? { wob: wob == null ? 0 : +wob.toFixed(3),
+                                    sat: tsat ? +M.tape.sat.toFixed(3) : 0 } : null,
+    space: space ? { mix: +space.bleed.gain.value.toFixed(3),
+                     size: +M.space.size.toFixed(3) } : null,
+    width: width ? +width.sPos.gain.value.toFixed(3) : null,
+    tilt: tilt ? { lo: +tilt.lo.gain.value.toFixed(2),
+                   hi: +tilt.hi.gain.value.toFixed(2) } : null,
+    ceiling: { threshold: +limiter.threshold.value.toFixed(2),
+               push: push ? +push.gain.value.toFixed(3) : 1,
+               clip: clip ? M.ceiling.clip : 0,
+               top: +lp.frequency.value.toFixed(0) },
+  });
+  return { input, lp, out, nodes, oscs, report };
 }
 // one PING-PONG echo bus. Cross-fed delays panned hard, so a section sent
 // to the echo throws its repeats across the stereo field instead of thickening
@@ -199,16 +422,25 @@ export function initAudio() {
   // covers a UA that rejects the options bag.
   try { ctx = new AC({ sampleRate: 44100, latencyHint: "playback" }); }
   catch (e) { ctx = new AC(); }
-  const m = buildMasterChain(ctx);
-  masterIn = m.input;                              // where anything unrouted lands
+  // THREE STABLE ANCHORS around a REBUILDABLE middle. A master global is a
+  // topology change (a wobble is delay nodes, a width is a splitter), so
+  // changing one swaps the chain — and everything that must survive that swap
+  // sits outside it:
+  //
+  //   masterIn ──> [ the master chain: swappable ] ──> outGain ──> destination
+  //                                     └──────────> anl
+  //
+  // masterIn is where every channel, reverb, echo and drum room lands, so it
+  // can never be rebuilt out from under them. outGain is the volume slider AND
+  // the survival mute, which must not so much as blink when a chip moves. anl
+  // is the boot instrument's tap, still pre-volume and pre-mute — the mute is a
+  // fact about the speaker, not about the music.
+  masterIn = ctx.createGain();                     // where anything unrouted lands
   bus = masterIn;
-  topLP = m.lp;
-  outGain = m.out; outGain.gain.value = masterVol();
-  // the boot instrument's tap sits BEFORE outGain, so "did the graph make a
-  // sound" is measured under the survival mute too — the mute is a fact about
-  // the speaker, not about the music
+  outGain = ctx.createGain(); outGain.gain.value = masterVol();
+  outGain.connect(ctx.destination);
   anl = ctx.createAnalyser(); anl.fftSize = 2048;
-  topLP.connect(anl);
+  installMaster();
   // ---- three reverbs, BUILT ON FIRST USE ----
   // A ConvolverNode with a 3.2-second stereo impulse is the most expensive
   // single node on the page, and it costs that whether or not anything is being
@@ -235,6 +467,57 @@ export function initAudio() {
   if (typeof requestIdleCallback === "function") requestIdleCallback(warm, { timeout: 4000 });
   else setTimeout(warm, 1500);
 }
+/* ---------- the master chain, installed and swapped ---------- */
+// SWAP, DON'T MUTATE. Half these globals are nodes rather than numbers, so
+// "apply the new spec" cannot be a param write — and a chain rebuilt in place
+// would have to disconnect masterIn mid-block, which is a click on every chip.
+// So: build the new chain, run BOTH into outGain for a short crossfade, and
+// retire the old one the way mixer.retireChannel retires a channel — fade,
+// then well clear of the ramp stop the LFOs and disconnect. An oscillator that
+// outlives its chain is the zombie ZERO-STATIC R1 is about, and the tape
+// transport is the first thing on this page to run oscillators at the master.
+const XFADE = 0.05;                                // seconds, both directions
+let chain = null;
+// module-local on purpose: the only ways in are initAudio's first build and the
+// two subscriptions at the foot of this file, and a second caller would be a
+// second opinion about when the master is allowed to change under a playing bar
+function installMaster() {
+  if (!ctx) return;
+  const next = buildMasterChain(ctx, MASTER, outGain);
+  const t = ctx.currentTime;
+  next.out.connect(anl);
+  if (chain) {
+    // both chains carry the signal through the fade — masterIn stays connected
+    // to the outgoing one until after it, so nothing is cut mid-block
+    next.out.gain.setValueAtTime(0, t);
+    next.out.gain.linearRampToValueAtTime(1, t + XFADE);
+    retireMaster(chain, t);
+  }
+  masterIn.connect(next.input);
+  chain = next;
+  topLP = next.lp;
+}
+function retireMaster(old, at) {
+  try {
+    old.out.gain.cancelScheduledValues(at);
+    old.out.gain.setValueAtTime(old.out.gain.value, at);
+    old.out.gain.linearRampToValueAtTime(0, at + XFADE);
+  } catch (e) {}
+  // masterIn STAYS CONNECTED to the outgoing chain through the fade. Cutting
+  // its feed here instead would leave the old side with nothing but its own
+  // tails while the new side ramps up from zero — a 50 ms hole in the middle of
+  // a crossfade, which is the click this whole dance exists to avoid.
+  setTimeout(() => {
+    try { masterIn.disconnect(old.input); } catch (e) {}
+    for (const o of old.oscs) { try { o.stop(); } catch (e) {} }
+    for (const n of old.nodes) { try { n.disconnect(); } catch (e) {} }
+  }, 2500);
+}
+// WHAT THE MASTER ACTUALLY BUILT, for window.__nuMix (audio/mixer.js reads it).
+// Reported off the nodes, never off the spec — the same law the channel rows
+// are held to. Null before initAudio, which is honest: there is no master yet.
+export const masterReport = () => (chain ? { ...chain.report(), set: MASTER || null } : null);
+
 export function verbFor(name) {
   const n = VERBSPEC[name] ? name : "room";
   if (REV[n]) return REV[n];
@@ -282,3 +565,8 @@ export function rmsNow() {
 on("transport", () => {
   if (outGain && !ducked) outGain.gain.setTargetAtTime(masterVol(), ctx.currentTime, 0.02);
 });
+// a global moved, or a whole new song brought its own master with it. Both
+// swap the chain; before initAudio both are no-ops, and the first build picks
+// up whatever MASTER holds by then.
+on("master", () => installMaster());
+on("song", () => installMaster());

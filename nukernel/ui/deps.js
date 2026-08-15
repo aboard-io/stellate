@@ -12,13 +12,13 @@
 // LAYER GRAPH (one-way, stated once here and enforced by import direction):
 //   deps -> state -> derive -> audio/graph -> audio/assets -> audio/voices
 //        -> audio/mixer -> audio/transport -> ui views (readout, arrange,
-//        songrow, palette, editor, chrome) -> main
+//        songrow, palette, editor, mixtbl, chrome) -> main
 // audio never imports a ui VIEW module; ui views may import audio; state
 // publishes events, it does not draw; derive is pure over its arguments.
 
 // ---- the algebra (kernel.js) ----
 export const { harm, render, drums, bass, ROMAN, word, KITOPS,
-               envelope, edges, groove, withCadence } = window.NuKernel;
+               envelope, edges, groove, withCadence, partOf } = window.NuKernel;
 
 // ---- the genre table (genres.js) ----
 export const { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL,
@@ -35,8 +35,17 @@ export const { NSLOTS, MAX_LEN, MAX_NUDGE, MAX_FX,
                VOX, VOXPARAM, OCTAVES, ARTICS, CMODES, CLAMPLABEL,
                KEYS, KEYLABEL, PROGCHOICES, PROGLABEL, PERIODS, PERIODLABEL,
                BREATHS, BREATHLABEL, PIPESETS, PIPELABEL, PARTCHOICES,
+               PARTNAMES, PARTLABEL, PARTMIX, PARTMIXBY, MAX_CHAIRS,
+               okPartKey, partChairLabel, chairKeys, resolvePartMix,
+               resolveMaster, masterIsDefault,
                AUTOPARAMS, AUTOPARAMLABEL, AUTOSHAPELABEL, autoShape,
                ROLES } = window.NuFields;
+// THE ONE RENAME IN THIS FILE. fields.js calls the master-bus registry MASTER;
+// ui/state.js calls the song's master-bus VALUES the same thing. One says what
+// a global may be, the other says what it is, and importing both under one
+// name is how a view ends up drawing chips from the store. The registry takes
+// the longer name because it is the one with fewer readers.
+export const MASTER_FIELDS = window.NuFields.MASTER;
 
 // ---- pure persistence (song.js) ----
 export const NuSong = window.NuSong;
