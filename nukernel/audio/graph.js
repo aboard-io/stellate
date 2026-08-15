@@ -150,6 +150,24 @@ function clipCurve(limit) {
   return c;
 }
 
+// THE SAFETY NET, which is not a colour. Identity below `knee`, then a
+// tanh knee that asymptotes to 1.0 — so nothing can leave this graph above
+// full scale, and nothing below the knee is touched at all. It exists because
+// a DynamicsCompressor at ratio 20 is not a brickwall (it has an attack and it
+// overshoots): with the velocity response on, a composed bar measured a peak
+// of 1.032, which is the distortion a listener reports as "everything is
+// distorted". Keeping the dynamics and stopping the overshoot is the whole
+// job — flattening the music back down is what the old chain did.
+function safetyCurve(knee) {
+  const N = 2048, c = new Float32Array(N), span = 1 - knee;
+  for (let i = 0; i < N; i++) {
+    const x = (i / (N - 1)) * 2 - 1, a = Math.abs(x);
+    const y = a <= knee ? a : knee + span * Math.tanh((a - knee) / span);
+    c[i] = Math.sign(x) * y;
+  }
+  return c;
+}
+
 /* ---------- the context-parameterized builders ---------- */
 // THE MASTER CHAIN, live.js's numbers, plus the fx_bus stages fields.js MASTER
 // names. `out` is left at unity — the live init hangs the volume gain off it,
@@ -319,13 +337,39 @@ export function buildMasterChain(c, master, dest) {
   const lp = c.createBiquadFilter(); lp.type = "lowpass";
   lp.frequency.value = 16000; lp.Q.value = 0.5;
   chain(lp);
+  // THE SAFETY CLIP IS NOT A TASTE SETTING. A DynamicsCompressor at ratio 20
+  // is not a brickwall — it has an attack and it overshoots — so with the
+  // ceiling left alone there was nothing at the end of the chain that could
+  // not be exceeded. Measured the day the velocity response landed: the same
+  // composed bar peaked at 1.032 with the response on and 0.734 with
+  // ?flatvel, because a per-note high shelf legitimately adds level and
+  // nothing downstream was obliged to catch it. Peaks over 1.0 are the
+  // distortion Paul reported; the crest they buy (5.8 dB -> 10.3) is the
+  // dynamics he asked for, so the answer is to keep the dynamics and stop the
+  // overshoot, not to flatten the music back down.
+  //
+  // So: always end in a SAFETY curve — but not clipCurve, which is a colour.
+  // Bram de Jong's soft clip is linear only below HALF its limit and saturates
+  // the whole upper half; used as a safety net it took the crest from 10.3 dB
+  // down to 4.8, which is the crush wearing a different hat (measured, this
+  // file's own experiment). The safety curve below is IDENTITY up to `knee`
+  // and only bends in the last sliver, so a mix that never approaches full
+  // scale is bit-transparent through it, and one that does is stopped rather
+  // than squashed. `ceiling.clip`, when the user asks for it, still gets the
+  // fx_bus colour — that is a taste, and it goes BEFORE the safety net.
   let clip = null;
   if (M.ceiling.clip > 0) {
     clip = c.createWaveShaper();
     clip.curve = clipCurve(M.ceiling.clip); clip.oversample = "2x";
     chain(clip);
   }
-  if (clip || push || M.ceiling.thr !== -1.5) built.push("ceiling");
+  const safety = c.createWaveShaper();
+  safety.curve = safetyCurve(0.96); safety.oversample = "2x";
+  chain(safety);
+  // the safety clip is always there, so it is no longer evidence that the
+  // user asked for a ceiling — only a chosen limit, a push or a moved
+  // threshold is
+  if (M.ceiling.clip > 0 || push || M.ceiling.thr !== -1.5) built.push("ceiling");
 
   const out = c.createGain();
   chain(out);
@@ -350,7 +394,7 @@ export function buildMasterChain(c, master, dest) {
                    hi: +tilt.hi.gain.value.toFixed(2) } : null,
     ceiling: { threshold: +limiter.threshold.value.toFixed(2),
                push: push ? +push.gain.value.toFixed(3) : 1,
-               clip: clip ? M.ceiling.clip : 0,
+               clip: M.ceiling.clip,
                top: +lp.frequency.value.toFixed(0) },
   });
   return { input, lp, out, nodes, oscs, report };
