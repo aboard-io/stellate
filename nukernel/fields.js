@@ -82,8 +82,21 @@
   // and there is no event to hang it on. Offering both under one heading is the
   // point — from the outside they answer the same question, "how does this
   // section arrive".
+  // TWO FAMILIES INSIDE ONE FIELD, and the field is right to hold both: they
+  // are the same question ("level over the section") with two kinds of answer.
+  // The first four are FADES — they touch zero, they are how a section arrives
+  // or leaves. The six after are DYNAMICS — they never touch zero, they say how
+  // big this section is against the one before it, and until they existed a
+  // composed song was a fade in, eight flat sections and a fade out. `soft` and
+  // `big` are constants on purpose: how loud a section is has a flat answer more
+  // often than it has a curve, and a constant is a curve. (kernel.js SHAPES
+  // carries the numbers and the argument for keeping them in `env` rather than
+  // in a second box field.) Appended, never reordered — a saved song names
+  // these by key.
   const ENVLABEL = { in: "fade in", out: "fade out", swell: "swell",
-                     duck: "duck", drop: "drop", stutter: "stutter" };
+                     duck: "duck", drop: "drop", stutter: "stutter",
+                     cresc: "crescendo", dim: "diminuendo", arch: "arch",
+                     lift: "build", soft: "quieter", big: "bigger" };
   const MOTLABEL = { open: "filter open", close: "filter close",
                      rise: "riser", pump: "pump" };
   // INTRO / OUTRO — the two bars that are not like the others (kernel.js

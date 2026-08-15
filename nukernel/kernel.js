@@ -592,6 +592,151 @@
     return out;
   };
 
+  // ---- THE PERFORMANCE: stress, phrase, touch -------------------------------
+  // AN EIGHTH TYPE, and the argument is the same shape as every other one here:
+  // nothing already in the pipeline can say this. An operator is timeless and
+  // runs before pitch exists; an envelope is one curve over the whole SECTION
+  // and level-only; an edge rewrites one bar at a known end; a bar schedule
+  // changes which notes exist; a pipe adds derived notes; and GROOVE — the
+  // closest relative — is a fixed sixteen-slot fingerprint that lands on every
+  // bar of every loop with the identical numbers. What was missing is the part
+  // a PLAYER adds to a bar they have already played once.
+  //
+  // MEASURED, before this existed: all 45 genres rendered a mean velocity of
+  // 6.90, a standard deviation of 1.45 and a range of 4..9 — the SAME three
+  // numbers for every genre, because all 45 read the same eight values off the
+  // phrase's `vel` vector and nothing downstream was a function of where the
+  // note sat in the bar or of which pass this was. That is exactly the
+  // "everything plays around the same, extremely synthesized and robotic" the
+  // ears reported, written as statistics.
+  //
+  // Three terms, all genre-scoped, all opt-in, all absent = byte-identical:
+  //   g.stress  0..1     METRICAL accent — 1 is heavier than 3, 3 than 2 and 4,
+  //                      the beat than the "and", the "and" than the sixteenth
+  //                      between them. Scaled per genre because a machine has
+  //                      no metre in its hands and a soul band is mostly metre.
+  //   g.phrase  0..1     the line's own ARCH, read off the LINE and not from a
+  //                      stored curve: the tent peaks on the bar's highest note
+  //                      and tapers to both ends, and the peak is held a hair
+  //                      longer — the agogic half of an accent, which is how a
+  //                      player leans on a note without simply hitting it.
+  //   g.touch   n|{t,v}  the HAND: seeded micro-timing (steps) and micro-level
+  //                      (velocity units), drawn as a function of the BAR, so
+  //                      bar 3 is not bar 1 with the same numbers. Same field
+  //                      shape and same dice as the kit's `g.humanize`, because
+  //                      it is the same idea one voice family over.
+  //
+  // What none of the three does is add, remove or re-pitch a note: they move
+  // level, they move duration by a hair, and they move time by less than a
+  // step. A performance is not a rewrite.
+  //
+  // The metrical hierarchy, in weights. `q` is the quarter in THIS pattern's
+  // own step units, so a twelve-step bar stresses its three beats rather than
+  // an imaginary four.
+  const stressAt = (i, N) => {
+    const q = N / 4, j = ((i % N) + N) % N;
+    if (j === 0) return 1;                                        // the downbeat
+    if (q >= 1 && j % q === 0) return j === 2 * q ? 0.55 : 0.3;   // 3, then 2 and 4
+    if (q >= 2 && j % (q / 2) === 0) return -0.15;                // the eighths
+    return -0.6;                                                  // and between them
+  };
+  // The genre's own dice salt, off its LABEL rather than a new stored field:
+  // two genres must not make the same mistake in the same bar, every genre
+  // already has a label, and a field nobody would ever set by hand is a field
+  // that rots. FNV-1a, the same hash compose.js salts its streams with.
+  // (named for what it hashes, not for what it is: `salt` is already rollAt's
+  // own parameter name one screen down, and two salts in one file is one too
+  // many)
+  const labelHash = s => {
+    let h = 0x811C9DC5;
+    for (let k = 0; k < s.length; k++) { h ^= s.charCodeAt(k); h = Math.imul(h, 0x01000193); }
+    return h >>> 0;
+  };
+  // one die, thrown at a named place: the genre's kit salt (so a genre that
+  // already rolls dice keeps ONE set of them) crossed with its label, then the
+  // kit's own positional hash. Shared by the line, the bass and the pad's
+  // per-bar breath so all three read the same book.
+  const perfDice = (g, b, i, lane, s) =>
+    rollAt((g.kitSeed | 0) ^ labelHash(g.label || ""), b, i, lane, s);
+  // A CHORD MOVES AS ONE. The pad and the stab are the two places where a
+  // single event in the score is several events in the stream, and the terms
+  // that apply to them are the ones a CHORD can carry together: the metre it
+  // lands on, and one level draw for the whole voicing. The other two terms are
+  // meaningless here and would be actively wrong — a phrase tent across a
+  // voicing would peak on whichever note the voice-leading happened to put on
+  // top, and a per-note timing draw would spread a chord into an accident.
+  // Without this a pad and a skank play the identical velocity in every bar of
+  // every loop, which on a pad-led or stab-led genre is most of what you hear.
+  const chordFeel = (g, b, i, lane, N) => {
+    const st = +g.stress || 0, feel = humanOf(g.touch);
+    if (!st && !feel) return null;
+    let dv = st ? 2.4 * st * stressAt(i, N) : 0;
+    if (feel && feel.v) dv += (perfDice(g, b, i, lane, 6) * 2 - 1) * feel.v;
+    return { dv, push: feel && feel.t ? (perfDice(g, b, i, lane, 4) * 2 - 1) * feel.t / g.rate : 0 };
+  };
+  const leaned = (v, dv) => Math.max(0, Math.min(9, Math.round((v == null ? 5 : v) + dv)));
+  // `bar` is ONE voice's ONE bar, in step order, freshly built and safe to
+  // mutate; `steps` is the parallel step index, which the events themselves no
+  // longer carry once swing and the bar offset are baked into `t`. Level and
+  // duration first, time second — the agogic cap reads the NEXT onset, and
+  // reading one that has already been nudged would make the cap a function of
+  // the dice rather than of the grid.
+  //
+  // `o` carries the three facts perform cannot see from the events alone:
+  //   lane    which voice's dice to throw (see rollAt: a pure hash of WHERE)
+  //   ontime  this material is tied and its clock must not be touched
+  //   hold    per-note, the LONGEST this note may legally sound — the span the
+  //           articulation shortened, after maxHold had its say. The agogic
+  //           peak borrows from the articulation's gap and from nothing else:
+  //           a note lengthened past its own span is a note played over the one
+  //           after it, and a note lengthened past `maxHold` is the rest that
+  //           `breath` exists to create, quietly filled back in.
+  const perform = (bar, steps, g, b, N, o) => {
+    const lane = o.lane, ontime = o.ontime, hold = o.hold;
+    const st = +g.stress || 0, ph = +g.phrase || 0, feel = humanOf(g.touch);
+    const m = bar.length;
+    if ((!st && !ph && !feel) || !m) return false;
+    // THE PEAK IS THE LINE'S OWN. Ties go to the first: the first time a phrase
+    // reaches the top is the arrival, the second is a repeat of it.
+    let pk = 0;
+    for (let k = 1; k < m; k++) if (bar[k].n > bar[pk].n) pk = k;
+    for (let k = 0; k < m; k++) {
+      const e = bar[k];
+      let d = st ? 2.4 * st * stressAt(steps[k], N) : 0;
+      // two notes have no arch to hear, so the tent starts at three
+      if (ph && m >= 3) {
+        const tent = k <= pk ? (pk ? k / pk : 1) : (m - 1 - k) / (m - 1 - pk);
+        d += 2 * ph * (tent - 0.5);
+        if (k === pk) {
+          let grow = e.dur * (1 + 0.35 * ph);
+          if (hold) grow = Math.min(grow, hold[k]);
+          // never long enough to run into the note after it — that would be a
+          // tie, not an accent
+          e.dur = k + 1 < m ? Math.min(grow, Math.max(e.dur, bar[k + 1].t - e.t)) : grow;
+        }
+      }
+      if (feel && feel.v) d += (perfDice(g, b, steps[k], lane, 5) * 2 - 1) * feel.v;
+      if (d) e.vel = leaned(e.vel, d);
+    }
+    // ONTIME material keeps its grid. Under `tie` the render folds consecutive
+    // same-pitch events that meet END TO END into one held note, and it decides
+    // that on a 1e-6 comparison — so a hand that moves an onset by a hair is a
+    // hand that un-ties every tie and turns a held drone back into the
+    // machine-gun the tie exists to prevent. Level and the agogic peak still
+    // apply; only the clock is left alone.
+    if (feel && feel.t && !ontime) {
+      // THE HAND STRAYS INSIDE THE BAR, exactly as it does on the kit: a note
+      // nudged past its own bar line is a note in the NEXT bar, and at a
+      // section edge the window simply cuts it.
+      const t0 = (b * N) / g.rate, t1 = ((b + 1) * N) / g.rate;
+      for (let k = 0; k < m; k++) {
+        const push = (perfDice(g, b, steps[k], lane, 4) * 2 - 1) * feel.t / g.rate;
+        bar[k].t = Math.min(t1 - 1e-9, Math.max(t0, bar[k].t + push));
+      }
+    }
+    return true;
+  };
+
   function render(subj, g, bars) {
     const N = subj.deg.length, ev = [], key = g.key | 0;
     for (let v = 0; v < g.voices; v++) {
@@ -742,6 +887,11 @@
         if (pad) {
           const first = p.gate.findIndex(Boolean);
           if (first >= 0) {
+            // A PAD BREATHES BAR TO BAR (chordFeel, above) — but it never
+            // MOVES: it holds to the next chord, so a pushed pad is a hole in
+            // the harmony rather than a lean.
+            const cf = chordFeel(g, b, first, String.fromCharCode(97 + (v % 26)), N);
+            const from = ev.length;
             if (!g.prog) {
               // the degenerate progression: the mode triad, per-note fold —
               // byte-identical to what every existing genre played
@@ -758,6 +908,8 @@
                             n: n + key, acc: 0, sld: 0, vel: vel(p, first) });
               }
             }
+            if (cf && cf.dv)
+              for (let k = from; k < ev.length; k++) ev[k].vel = leaned(ev[k].vel, cf.dv);
           }
           continue;
         }
@@ -765,12 +917,21 @@
         // chordLock is what makes an offbeat skank sayable at all: the pad
         // path above fires once a bar at the phrase's first gate, full stop.
         if (pol.chordLock) {
+          const lane = String.fromCharCode(97 + (v % 26));
+          const t0 = (b * N) / g.rate, t1 = ((b + 1) * N) / g.rate;
           for (let i = 0; i < N; i++) {
             if (!p.gate[i]) continue;
             const c = chordFor(i), hold = Math.min(sp[i], pol.maxHold || 1);
+            // the stab is the one chord that DOES move: a skank that lands
+            // dead on the grid every time is the drum machine playing a
+            // guitar. It moves as one, though — see chordFeel.
+            const cf = chordFeel(g, b, i, lane, N);
+            const t = Math.min(t1 - 1e-9, Math.max(t0,
+              (b * N + i + swing(g, i)) / g.rate + (cf ? cf.push : 0)));
             for (const n of c.pcs)
-              ev.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: hold * 0.92 / g.rate,
-                        v, part, n: fold(n, ctr) + key, acc: p.acc[i], sld: 0, vel: vel(p, i) });
+              ev.push({ t, dur: hold * 0.92 / g.rate,
+                        v, part, n: fold(n, ctr) + key, acc: p.acc[i], sld: 0,
+                        vel: cf ? leaned(vel(p, i), cf.dv) : vel(p, i) });
           }
           continue;
         }
@@ -783,7 +944,7 @@
         // the slide is a physical connection and the cap must not cut it.
         // Genre field first, part policy second, absent = exactly the old dur.
         const cap = g.maxHold != null ? g.maxHold : (pol.maxHold || 0);
-        const barEv = [];
+        const barEv = [], barAt = [], barHold = [];
         for (let i = 0; i < N; i++) {
           if (!p.gate[i]) continue;
           const steps = sp[i];
@@ -805,8 +966,18 @@
             prevN = pitchOf;
             barEv.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: held * legato / g.rate, v, part,
                          n: pitchOf + key, acc: p.acc[i], sld: p.sld[i], vel: vel(p, i) });
+            barAt.push(i); barHold.push(held / g.rate);
           }
         }
+        // THE PERFORMANCE (the eighth type, above) runs on the bar the voice
+        // just played, before the tie pass folds any of it together — it has to
+        // see the notes as separate events to find the phrase's peak, and a
+        // tied pair is ONE note by the time the fold is done. Pads and stabs
+        // never reach here (both `continue` above), which is right: a held
+        // chord has no contour and a chord-locked stab's peak would be
+        // whichever voicing note happened to land on top.
+        perform(barEv, barAt, g, b, N, { lane: String.fromCharCode(97 + (v % 26)),
+                                         ontime: artic === "tie", hold: barHold });
         // TIE. repeat(n) duplicates notes, and duplicated notes re-attack — a
         // machine-gun rather than a longer note. Under `tie`, consecutive events
         // at the same pitch that meet end-to-end become ONE held note, which is
@@ -1323,6 +1494,14 @@
     // needs to look one bar ahead: a walking line is defined by where it is
     // going, not by the chord it is sitting on.
     const md = g.mode || MODE, key = g.key | 0;
+    // THE BASS IS A PLAYER TOO. Same performance layer as the line (the eighth
+    // type), minus the phrase arch: a bass part's shape is the harmony's, not
+    // its own contour, and tenting a walking line onto its highest note would
+    // put the accent on a passing tone. Absent fields = the old stream, and
+    // the sort only runs when the hand actually moved something, so a genre
+    // without `touch` cannot even be reordered by accident.
+    const bg = (g.stress || g.touch || g.phrase) ? { ...g, phrase: 0 } : g;
+    let played = false;
     if (g.bassStyle === "walk") {
       for (let b = 0; b < bars; b++) {
         const c = chordsOf(subj, g, b)[0], nc = chordsOf(subj, g, (b + 1) % bars)[0];
@@ -1337,11 +1516,13 @@
         // first beat, and it AIMS at the next chord's bassPc — a walking line
         // is defined by where it is going
         const tones = [c.bassPc, mid[0], mid[1], nc.bassPc - 1];
-        tones.forEach((n, q) =>
-          ev.push({ t: (b * N + q * 4) / g.rate, dur: 3.7 / g.rate, n: n + 36 + key, r,
-                    walk: true, vel: q === 0 ? 7 : 5 }));
+        const bar = tones.map((n, q) =>
+          ({ t: (b * N + q * 4) / g.rate, dur: 3.7 / g.rate, n: n + 36 + key, r,
+             walk: true, vel: q === 0 ? 7 : 5 }));
+        played = perform(bar, tones.map((_, q) => q * 4), bg, b, N, { lane: "B" }) || played;
+        for (const e of bar) ev.push(e);
       }
-      return ev;
+      return played ? ev.sort((a, b) => a.t - b.t) : ev;
     }
 
     // The root bass borrows its rhythm from the melody's ACCENTS, which reads
@@ -1375,6 +1556,7 @@
       // the dominant half is the turnaround not happening. One chord a bar is
       // the common case and reads chords[0] exactly as before.
       const cs = g.bassStyle === "pedal" ? null : chordsOf(subj, g, b);
+      const bar = [], barAt = [];
       for (let i = 0; i < N; i++)
         if (at(grid, i)) {
           const c = !cs ? null : cs.length === 1 ? cs[0]
@@ -1391,11 +1573,14 @@
           const n0 = !c ? mp(0, md)
             : deg !== r ? mp(deg, md) + c.borrow
             : fold(c.bassPc, c.rootPc);
-          ev.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: sp[i] * 0.94 / g.rate,
-                    n: n0 + 36 + oct + key, r, vel: vel(subj, i) });
+          bar.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: sp[i] * 0.94 / g.rate,
+                     n: n0 + 36 + oct + key, r, vel: vel(subj, i) });
+          barAt.push(i);
         }
+      played = perform(bar, barAt, bg, b, N, { lane: "B" }) || played;
+      for (const e of bar) ev.push(e);
     }
-    return ev;
+    return played ? ev.sort((a, b) => a.t - b.t) : ev;
   }
 
   // ---- ENVELOPES — a different type from operators --------------------------
@@ -1412,11 +1597,52 @@
   // rather than smoothing one. (The third family, the filter sweeps, cannot live
   // here at all: they are a property of the SOUND, not of the event stream, so
   // they are automation on the section's mixer channel — see audio/mixer.js.)
+  // THE DYNAMIC ARC IS `env`, STRENGTHENED — not a second box field, and the
+  // argument is not economy, it is that there is only one question here. `env`
+  // already is "level over the section": one curve, multiplied onto the
+  // rendered velocities, evaluated at the note's position in the section. A
+  // crescendo is that, with different numbers. Two fields would mean two curves
+  // with no defined interaction, two chips that can contradict each other
+  // (fade in AND diminuendo), and a UI that has to explain which wins — for a
+  // gesture the existing field already expresses. It is also the only reachable
+  // seam: ui/derive.js calls envelope(win, sec.env, span) once, and a new field
+  // would need a new call site in a file this tier does not own.
+  //
+  // The four originals are FADES: they start or end at zero, they are how a
+  // section arrives or leaves. The six below are DYNAMICS: they never reach
+  // zero, and they say how big this section is against its neighbours. That is
+  // the distinction the vocabulary was missing — every composed song had a
+  // fade-in on the intro, a fade-out on the outro, and eight flat sections in
+  // between, which is a record with no shape at all.
+  //
+  // `soft` and `big` are CONSTANTS, and a constant is a legitimate curve: the
+  // question "how loud is this section" has a flat answer more often than not.
+  // They are what makes a chorus genuinely bigger than the verse before it —
+  // and note WHICH WAY that works. Rendered velocity already runs 4..9 against
+  // a ceiling of 9, so there is very little room above and a great deal below:
+  // the chorus is big mostly because the verse got out of its way. A multiplier
+  // over 1 is worth having anyway (it lifts the quiet notes and closes the gap
+  // to the loud ones, which is what a section played harder actually sounds
+  // like), but the arrangement's dynamic range is bought at the bottom.
   const SHAPES = {
     in:    x => x,
     out:   x => 1 - x,
     swell: x => 1 - Math.abs(2 * x - 1),          // up and back down
     duck:  x => Math.abs(2 * x - 1),              // out of the middle, into the edges
+    // a real crescendo: it starts well under the written level and arrives over
+    // it, so the last bar of the section is the loudest bar in it
+    cresc: x => 0.5 + 0.62 * x,
+    dim:   x => 1.12 - 0.62 * x,
+    // the ARCH is not `swell`: swell fades from and to silence (it is a fade in
+    // and a fade out end to end), this rises to a peak two thirds through and
+    // settles back to a level you can still hear — the shape a section of music
+    // has when nobody is fading anything
+    arch:  x => 0.65 + 0.47 * (x < 2 / 3 ? x * 1.5 : (1 - x) * 3),
+    // THE BUILD: held flat, then the last two fifths climb hard. A build that
+    // ramps from bar one is a long fade; what a build does is wait.
+    lift:  x => (x < 0.6 ? 0.72 : 0.72 + (x - 0.6) * 1.125),
+    soft:  () => 0.68,
+    big:   () => 1.14,
   };
   const envelope = (ev, kind, span) => {
     if (!kind || !span) return ev;
@@ -1440,7 +1666,9 @@
     return ev.map(e => {
       const x = Math.min(1, Math.max(0, e.t / span));
       const f = shape(x);
-      return { ...e, vel: Math.max(0, Math.round((e.vel == null ? 5 : e.vel) * f)) };
+      // the ceiling was never needed while every shape was a fade — no fade can
+      // push a velocity past what it already was. A dynamic can.
+      return { ...e, vel: Math.max(0, Math.min(9, Math.round((e.vel == null ? 5 : e.vel) * f))) };
     });
   };
 
@@ -1629,7 +1857,7 @@
   }
   const edges = (ev, i, o, span, bs) => outro(intro(ev, i, span, bs), o, span, bs);
 
-  const api = { at, mapv, spans, vel, drop, fill, spread, split, del, rampOf, envelope, edges, intro, outro, groove, GROOVES, KITOPS, mapKit, LANES, TOMS, HATS, CYMBALS, LIMBORDER, rollAt, swing, rotate, reverse, transpose, invert, complement,
+  const api = { at, mapv, spans, vel, drop, fill, spread, split, del, rampOf, envelope, SHAPES, edges, intro, outro, groove, GROOVES, stressAt, perform, KITOPS, mapKit, LANES, TOMS, HATS, CYMBALS, LIMBORDER, rollAt, swing, rotate, reverse, transpose, invert, complement,
                 crossmap, excerpt, only, word,
                 PENT, MODE, ROMAN, romanOf, pitch, mp, fold, near,
                 QSTEPS, QFIX, chordsOf, chordAt, withCadence,

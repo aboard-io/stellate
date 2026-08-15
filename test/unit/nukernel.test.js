@@ -48,6 +48,29 @@ const allEvents = (p, g, bars) =>
   [...K.render(p, g, bars), ...K.drums(p, g, bars), ...K.bass(p, g, bars)]
     .sort((a, b) => a.t - b.t || (a.n || 0) - (b.n || 0));
 
+// THE GENRE WITH THE PLAYER TAKEN OUT — the documented neutral of the
+// performance layer (kernel.js: stress/phrase/touch, §39 below). A gate that
+// measures WHAT WAS WRITTEN — a root shift, a bar schedule, the composer's
+// topline — must read it through this, because the performance layer's whole
+// job is to make bar 3 not bar 1 and no two notes equal, and a gate that reads
+// "the first event in the bar" or "bar 0 == bar 2" is asking a question that
+// only had one answer while nothing ever moved. Where a gate measures the
+// PLAYING, it uses the shipped anchor and says so.
+const plain = g => ({ ...g, stress: 0, phrase: 0, touch: null });
+
+// A GENRE THAT IS NOTHING BUT THE WASH. The pad path (kernel.js render) fires
+// one voicing at the phrase's first gate and holds it to the next chord: it
+// reads the GATE vector to know when and the VEL vector to know how hard, and
+// by construction nothing else in a phrase can reach it — a held chord has no
+// contour, no octave displacement, no slide, no accent and no ramp, and its
+// duration is the chord's, not the gate's. Every anchor in the table used to
+// have a line voice somewhere, so §1 and §10 could ask every one of them the same
+// question; the FUNCTION genres brought the first anchor that is only a pad.
+// The two gates say what a wash CAN be sensitive to rather than exempting a
+// genre by name, and each of them then proves the exemption is not dead.
+const allPad = g => Array.from({ length: g.voices }, (_, v) => K.partOf(g, v))
+  .every(p => p === "pad");
+
 /* ---------------------------------------------------------------- 1. SENSITIVITY
    Every vector must reach the output. This is the check the octave bug and the
    dead ghost layer both needed and neither had. */
@@ -57,7 +80,10 @@ for (const gk of GK) {
   // index, so in a one-bar form (Simple) it multiplies by zero and is correctly
   // inert. Render four bars so inc/stk have somewhere to go.
   const g = GENRES[gk], bars = Math.max(4, g.bars), base = sig(allEvents(P, g, bars));
-  for (const key of ["deg", "oct", "vel", "inc", "stk", "gate", "acc", "sld"]) {
+  // ...every vector, unless the genre is only a wash, in which case there are
+  // exactly two (allPad, above) and they are still required to reach
+  for (const key of (allPad(g) ? ["gate", "vel"]
+    : ["deg", "oct", "vel", "inc", "stk", "gate", "acc", "sld"])) {
     const q = clone(P);
     if (key === "deg") q.deg = q.deg.map(d => d + 2);
     else if (key === "oct") q.oct = q.oct.map(() => 1);
@@ -73,6 +99,10 @@ for (const gk of GK) {
        gk + ": changing " + key + " did not change the rendered events" + (pad ? " (pad genre)" : ""));
   }
 }
+// ...and the exemption is not a dead branch: something in the table really is
+// only a wash, or the two-key list above is silently covering nothing
+ok(GK.some(gk => allPad(GENRES[gk])),
+   "no genre in the table is all pad — the sensitivity exemption checks nothing");
 
 /* ---------------------------------------------------------------- 2. GROUP LAWS
    The operator set is only searchable if it is closed and its elements have
@@ -382,7 +412,11 @@ console.log("tie merges repeats; the root shift takes the nearest octave");
                   stk: new Array(N).fill(0), gate: new Array(N).fill(1),
                   acc: new Array(N).fill(0), sld: new Array(N).fill(0) };
   for (const gk of GK) {
-    const g = GENRES[gk];
+    // the root shift is a fact about the HARMONY, so read it with the player
+    // taken out: "the first event in the bar" is only a well-defined note while
+    // no hand is moving onsets, and two voices whose registers differ by an
+    // octave both start on the downbeat
+    const g = plain(GENRES[gk]);
     if (g.harmony !== "cycle") continue;
     const bs = 16 / g.rate;
     const perBar = Array.from({ length: g.bars }, (_, b) =>
@@ -431,7 +465,10 @@ console.log("durations read the gate vector");
 for (const gk of GK) {
   const g = GENRES[gk];
   const durs = new Set(K.render(P, g, g.bars).map(e => +e.dur.toFixed(3)));
-  ok(durs.size > 1, gk + ": every note has the same duration");
+  // a wash holds one chord to the next chord, so its durations are the
+  // HARMONY's and are correctly all alike — the claim being made here is about
+  // lines reading the gate vector (allPad, top of file)
+  ok(durs.size > 1 || allPad(g), gk + ": every note has the same duration");
   ok([...durs].every(d => d > 0), gk + ": a note has non-positive duration");
 }
 
@@ -884,28 +921,42 @@ console.log("the composer writes songs that are songs");
         // still has to make a sound, and out of the right layer: a drums-only
         // bed with a bass part in it is not a drums-only bed.
         const bed = !!C.BEDS[b.role];
+        const blank = K.mapv(P, v => v.map(() => 0));
+        // MIRROR genreOf EXACTLY. A kit operator replaces the kit, and the
+        // engine also drops the FILL and the ghost lane with it — without
+        // that, "no drums" still plays a fill on the last bar of the form and
+        // a ghost-perc layer underneath, which is not no drums.
+        const g3 = b.kit
+          ? { ...G, kit: K.KITOPS[b.kit](G.kit || {}), fill: null,
+              kits: !G.kits ? null : b.kit === "nodrums" ? null
+                : G.kits.map(k4 => K.KITOPS[b.kit](k4)),
+              ghost: b.kit === "nodrums" ? null : G.ghost }
+          : G;
+        const dr = K.drums(blank, g3, G.bars).length;
+        const bs = K.bass(blank, { ...g3, nobass: b.bassop === "nobass" }, G.bars).length;
         if (bed) {
           ok(!b.stack[0].slots.length, gk + "/" + s + ": a " + b.role +
              " bed has a melody in it — it is a bed, that is the whole idea");
-          const blank = K.mapv(P, v => v.map(() => 0));
-          // MIRROR genreOf EXACTLY. A kit operator replaces the kit, and the
-          // engine also drops the FILL and the ghost lane with it — without
-          // that, "no drums" still plays a fill on the last bar of the form and
-          // a ghost-perc layer underneath, which is not no drums.
-          const g3 = b.kit
-            ? { ...G, kit: K.KITOPS[b.kit](G.kit || {}), fill: null,
-                kits: !G.kits ? null : b.kit === "nodrums" ? null
-                  : G.kits.map(k4 => K.KITOPS[b.kit](k4)),
-                ghost: b.kit === "nodrums" ? null : G.ghost }
-            : G;
-          const dr = K.drums(blank, g3, G.bars).length;
-          const bs = K.bass(blank, { ...g3, nobass: b.bassop === "nobass" }, G.bars).length;
           // EACH BED IS ITS OWN LAYER, and the name says which. A section called
           // "drums" with a bass part in it is not the thing the label promises.
           const want = { drums: [1, 0], bass: [0, 1], groove: [1, 1] }[b.role];
           ok(!!dr === !!want[0] && !!bs === !!want[1],
              gk + "/" + s + ": the \"" + b.role + "\" bed has " + dr + " drums and " +
              bs + " bass");
+        } else if (!b.stack[0].slots.length) {
+          // THE SOLO BREAK — the second place an authority legally has no
+          // phrase, and the whole point of the function genres: the host is
+          // reduced to its own drums and a stacked part plays over it. It is
+          // held to the three facts that make it that rather than a hole: the
+          // box says so in `cue`, a layer is actually playing, and the host's
+          // drums are still going. (Drums come from genre data, which is why
+          // an empty slot list can silence the band without silencing the kit.)
+          ok(b.cue === "solobreak", gk + "/" + s + "/" + b.role +
+             ": the authority has no phrase and the box does not say why");
+          ok(b.stack.slice(1).some(e => e.slots.length), gk + "/" + s + "/" + b.role +
+             ": the authority stopped playing and nothing took over");
+          ok(dr > 0, gk + "/" + s + "/" + b.role +
+             ": a solo break with the drums switched off is four bars of one guitar");
         } else ok(b.stack[0].slots.length,
                   gk + "/" + s + "/" + b.role + ": a section with no phrase");
         ok(b.len >= 1 && b.nudge >= 0, gk + "/" + s + ": bad window");
@@ -961,7 +1012,7 @@ console.log("the composer writes songs that are songs");
     // every genre opens with a drum hit". Every composed song stamps its
     // chosen intro kind on the head box's `cue` (the honest name; the STORED
     // `intro` chip may be a downgraded neighbour until fields.js INLABEL
-    // learns the new words). Across 45 genres x 8 seeds the distribution must
+    // learns the new words). Across the whole table x 8 seeds the distribution must
     // not collapse: at least eight kinds in play, no kind above 40%, no genre
     // opening identically at all eight seeds, and the family leanings audible
     // in the counts.
@@ -1034,13 +1085,18 @@ console.log("the composer writes songs that are songs");
     ok(lead("fugue") === "solo", "fugue does not lead with the subject alone");
     ok(lead("dub") === "bassin", "dub does not walk in on the bass");
     // THE BAND ENTERS AFTER THE DOOR: whatever the intro did, the first verse
-    // carries no fade of its own — a padin or riser opening resolves into a
-    // full section, not a second arrival
+    // carries no FADE of its own — a padin or riser opening resolves into a
+    // full section, not a second arrival. It does carry a DYNAMIC (the arc
+    // decides how big a verse is against the chorus it points at), and the two
+    // are different fields of the same enum: a fade touches zero and is an
+    // entrance, a dynamic never does and is a size. Written as the fade list
+    // rather than as `== null` so it stays a check about arriving twice.
+    const FADES = new Set(["in", "swell", "duck", "drop", "stutter"]);
     for (const gk of ["house", "rock", "ambient"])
       for (let s = 1; s <= 8; s++) {
         const song = C.compose(gk, s);
         const vi = song.song.findIndex(b => b.role === "verse");
-        ok(vi > 0 && song.song[vi].env == null,
+        ok(vi > 0 && !FADES.has(song.song[vi].env),
            gk + "/" + s + ": the verse after the intro fades instead of entering");
       }
   }
@@ -1277,7 +1333,11 @@ console.log("the loader — round trip, typed errors, clamps, migration");
 console.log("neutrality — absent equals neutral for every new field");
 {
   const sig2 = ev => JSON.stringify(ev.map(e => [e.t, e.n, e.d, e.dur, e.vel, e.acc, e.sld]));
-  // reference genres left UNWIRED on purpose — they are the control group
+  // reference genres left unwired FOR THESE FIELDS on purpose — they are the
+  // control group for the composition-depth surface. (They are not a control
+  // group for everything: the performance layer wires four of the five, and
+  // its own absent-equals-neutral law is §39(b), which strips the three fields
+  // it added rather than pretending nobody set them.)
   for (const gk of ["acid", "fugue", "vaporwave", "gregorian", "rock"]) {
     const g = GENRES[gk];
     const neutral = { ...g, maxHold: 0, key: 0, period: null, kits: null,
@@ -1892,8 +1952,17 @@ console.log("song arc, prechorus, topline — the radio shape, measured on ui/de
   for (const s of seeds.slice(0, 10)) {
     const song = C.compose("rock", s);
     for (const b of song.song) {
-      if (b.role === "chorus" && !b.cue)
-        ok(b.stack[0].slots[0] === 5, "a chorus does not lead with the topline");
+      // ...and where a SINGER took the chorus (compose.js: the topline moves off
+      // the band and onto a `vocal` layer, because a chorus sung in unison by
+      // the guitar player and the singer is one line twice) the topline leads
+      // THAT layer. Either way it is what the chorus opens with.
+      if (b.role === "chorus" && !b.cue) {
+        const tune = b.stack.find(e => e.slots[0] === 5);
+        ok(!!tune, "a chorus does not lead with the topline");
+        ok(!tune || tune === b.stack[0] || tune.g === "vocal" || tune.g === "backing",
+           "the chorus's topline is on a layer that is not the band and not the singer: " +
+           (tune && tune.g));
+      }
       if (b.role === "verse" && !b.cue)
         ok(!b.stack[0].slots.includes(5), "a verse borrowed the chorus's topline");
     }
@@ -1904,7 +1973,11 @@ console.log("song arc, prechorus, topline — the radio shape, measured on ui/de
   // is real silence at the bar's end under a singer's maxHold, and exactly one
   // note is both the highest and the loudest
   {
-    const g = GENRES.simple, gSing = { ...g, maxHold: 2 };
+    // the TOPLINE WRITER is compose.js's, so it is measured with the player
+    // taken out — a phrase whose climax is the one loudest note is a fact about
+    // what was written, and the performance layer exists precisely to stop the
+    // rendered velocities being the written ones
+    const g = plain(GENRES.simple), gSing = { ...g, maxHold: 2 };
     for (let s = 1; s <= 60; s++) {
       const p = C.phrase(C.rng(s * 17), s % 2 ? "hook" : "topline");
       const q = clone(p); q.sld = q.sld.map(() => 0);      // slides are exempt from the cap
@@ -2118,7 +2191,9 @@ console.log("the box surface — key/prog/period/breath/pipe/part/auto reach the
     const barSig = (g2, b) => JSON.stringify(K.render(P, g2, 4)
       .filter(e => e.v === 0 && Math.floor(e.t / 16) === b)
       .map(e => +(e.t % 16).toFixed(3)));
-    const g2b = boxGenre(GENRES.simple, { ...NUL, period: "2bar" });
+    // plain() AFTER genreOf, never before: boxGenre finds the section's genre
+    // key by identity, and a copy is not the anchor
+    const g2b = plain(boxGenre(GENRES.simple, { ...NUL, period: "2bar" }));
     ok(barSig(g2b, 0) !== barSig(g2b, 1) && barSig(g2b, 0) === barSig(g2b, 2) &&
        barSig(g2b, 1) === barSig(g2b, 3),
        "period 2bar is not an alternating two-bar sentence");
@@ -2341,8 +2416,10 @@ console.log("kit operators reach the kit schedule (g.kits)");
    from the sound page — the palette draws the clusters, not GENRES. */
 console.log("every genre carries exactly one family from the palette's set");
 {
+  // `parts` is the one cluster that is not a tradition: the FUNCTION genres,
+  // whose identity is a role rather than a style (genres.js)
   const ALLOWED = new Set(["kernel", "vox", "club", "soul", "groove",
-                           "band", "studio", "drift", "roots"]);
+                           "band", "studio", "drift", "roots", "parts"]);
   ok(Array.isArray(FAMILIES) && FAMILIES.length === ALLOWED.size,
      "FAMILIES is not the allowed set (" + (FAMILIES || []).length + " families)");
   const seen = new Map();                       // genre key -> how many families
@@ -3172,12 +3249,12 @@ console.log("the master bus — globals, defaults, and what the loader keeps");
    0.00 and 1.19 -> 0.40.
 
    THE GATE. BASELINE is the measured value of every genre, not a wish; the
-   ceiling is baseline x 1.5 + 0.20 applied identically to all 45, so a genre
+   ceiling is baseline x 1.5 + 0.20 applied identically to every genre, so one
    that regresses into clashiness fails AND IS NAMED while ordinary churn does
    not. On top of that one absolute BAR, set at the 90th percentile of the
    measured distribution rounded up to the next 0.25 — and the only way past it
    is the ALLOW list, one entry with one reason, never a higher bar.
-   `NUKERNEL_CENSUS=1` prints the full ranked table of all 45. */
+   `NUKERNEL_CENSUS=1` prints the full ranked table. */
 console.log("dissonance census — what the notes sound like against each other");
 {
   const C = require("../../nukernel/compose.js");
@@ -3326,15 +3403,22 @@ console.log("dissonance census — what the notes sound like against each other"
     newwave: 0.07, synthpop: 0.05, boombap: 0.04, gospel: 0.03, rock: 0.03,
     simple: 0, fugue: 0, acid: 0, gregorian: 0, counterpoint: 0,
     trap: 0, dnb: 0, reggae: 0, dub: 0, techno: 0,
+    // THE FUNCTION GENRES all measure zero, and the reason is the same one for
+    // all five: a part carries no progression of its own and reads the same
+    // pentatonic the rest of the table does, so standalone there is nothing for
+    // it to be out of tune WITH. The number that matters for these is the one
+    // the census cannot see — a part STACKED on a host — which is what §40's
+    // Beatles test measures instead.
+    solo: 0, vocal: 0, backing: 0, riff: 0, pad: 0,
   };
-  const ceilOf = b => b * 1.5 + 0.20;      // one headroom rule for all 45
+  const ceilOf = b => b * 1.5 + 0.20;      // one headroom rule for every genre
 
   // THE BAR — the 90th percentile of the measured distribution above, rounded
   // up to the next 0.25. Derived, not chosen: recompute it when the table is
   // re-baked. Everything over it must be on ALLOW.
   const BAR = 1.5;
   // LEGITIMATELY DISSONANT, one reason each. This list is the ONLY way past
-  // the bar; raising the bar to admit a genre would exempt all forty-five.
+  // the bar; raising the bar to admit a genre would exempt the whole table.
   const ALLOW = {
     blues: "the ♭5 blue note is in the subject's scale and in none of the " +
            "twelve dominant sevenths — the flat third against the major IV is the sound",
@@ -3357,7 +3441,8 @@ console.log("dissonance census — what the notes sound like against each other"
                   f(r.ic1raw) + f(r.ic6raw) + f(r.nct) + f(r.mb) + f(r.mp));
   } else {
     console.log("  worst six: " + rows.slice(0, 6)
-      .map(r => r.gk + " " + r.pct.toFixed(2)).join("  ") + "   (NUKERNEL_CENSUS=1 for all 45)");
+      .map(r => r.gk + " " + r.pct.toFixed(2)).join("  ") +
+      "   (NUKERNEL_CENSUS=1 for all " + GK.length + ")");
   }
 
   for (const r of rows) {
@@ -3386,6 +3471,959 @@ console.log("dissonance census — what the notes sound like against each other"
      "counterpoint: the inversion axis has drifted back onto a semitone sum");
   ok(rows.find(r => r.gk === "tango").pct <= 0.70,
      "tango: the held note is off the chord again — check `anchor`");
+}
+
+/* ---------- 39. DYNAMICS ----------------------------------------------------
+   THE EARS SAID "everything plays around the same. There are no crescendos or
+   decrescendos inside of the music. There is no organic difference in the sound
+   of the notes." Measured, they were exactly right and the number was damning:
+   every one of the 45 genres rendered a mean velocity of 6.90, a standard
+   deviation of 1.45 and a range of 4..9 — the SAME three numbers for all of
+   them — because all 45 read the same eight values off the phrase's vel vector
+   and nothing downstream was a function of where a note sat or which pass this
+   was. Three flat sources, repeating identically every loop.
+
+   Everything here reads the RENDERED STREAM, and the two halves are measured
+   separately: the PERFORMANCE (kernel.js stress/phrase/touch — per note, per
+   bar) and the ARC (the `env` dynamics — per section, dealt by the composer
+   across the song). The last check is the one that keeps the whole layer
+   honest: the machines are frozen by fingerprint, so "opt-in" is a fact rather
+   than a claim. */
+console.log("dynamics — metrical stress, phrase arch, the hand, and the section arc");
+{
+  const crypto = require("crypto");
+  const fp = ev => crypto.createHash("sha1").update(JSON.stringify(ev.map(e =>
+    [+e.t.toFixed(6), e.n, e.d, +(e.dur || 0).toFixed(6), e.vel, e.acc, e.sld]))).digest("hex").slice(0, 16);
+  const sd = xs => {
+    const m = xs.reduce((a, b) => a + b, 0) / xs.length;
+    return Math.sqrt(xs.reduce((a, b) => a + (b - m) * (b - m), 0) / xs.length);
+  };
+  const barsOf = (ev, bs, n) => Array.from({ length: n }, (_, b) =>
+    ev.filter(e => e.t >= b * bs && e.t < (b + 1) * bs));
+
+  // (a) THE MACHINES ARE FROZEN. techno/acid/house/trap declare no dynamics, and
+  // these are the sha1s of their full streams taken the commit BEFORE the
+  // performance layer existed. A machine genre that starts breathing fails here
+  // by name, which is the only way "absent is byte-identical" stays true rather
+  // than remaining true by luck.
+  const MACHINE = { techno: "036036ec46edb986", acid: "c047f764a47233de",
+                    house: "2f1c41112ac01206", trap: "addcf7d93d0fdcfa" };
+  for (const gk of Object.keys(MACHINE)) {
+    const g = GENRES[gk], bars = Math.max(4, g.bars);
+    ok(fp(allEvents(P, g, bars)) === MACHINE[gk],
+       gk + ": a machine genre no longer renders what it rendered before the " +
+       "performance layer existed — dynamics must stay opt-in");
+    ok(!g.stress && !g.phrase && !g.touch,
+       gk + ": a machine genre declares dynamics — the fingerprint above is the " +
+       "contract, this is the reason it holds");
+  }
+
+  // (b) NEUTRALITY, the §22 law for the three new fields: the documented
+  // neutral value renders byte-identically to the field being absent.
+  for (const gk of ["funk", "blues", "gregorian", "vaporwave"]) {
+    const g = GENRES[gk], bare = { ...g }, zeroed = { ...g, stress: 0, phrase: 0, touch: null };
+    delete bare.stress; delete bare.phrase; delete bare.touch;
+    ok(fp(allEvents(P, bare, g.bars)) === fp(allEvents(P, zeroed, g.bars)),
+       gk + ": stress/phrase/touch neutral values are not the same as absent");
+    // ...and each one on its own must MOVE the stream, or it is a dead field
+    for (const f of [{ stress: 0.6 }, { phrase: 0.6 }, { touch: { t: 0.06, v: 1 } }])
+      ok(fp(allEvents(P, { ...zeroed, ...f }, g.bars)) !== fp(allEvents(P, zeroed, g.bars)),
+         gk + ": " + Object.keys(f)[0] + " does not reach the rendered stream");
+  }
+
+  // (c) VARIANCE ROSE, and it rose per genre rather than on average: the flat
+  // 1.45 was the whole complaint. Every genre that declares a hand must spread
+  // its velocities wider than the phrase vector alone does, and the range must
+  // open DOWNWARD — the old stream never went under 4, so the bottom half of
+  // the scale did not exist.
+  {
+    let wired = 0, wider = 0, lower = 0;
+    for (const gk of GK) {
+      const g = GENRES[gk];
+      if (!g.stress && !g.phrase && !g.touch) continue;
+      wired++;
+      const vs = K.render(DEFAULT, g, g.bars).map(e => e.vel);
+      const flat = K.render(DEFAULT, plain(g), g.bars).map(e => e.vel);
+      if (sd(vs) > sd(flat) + 1e-9) wider++;
+      if (Math.min(...vs) < Math.min(...flat)) lower++;
+      ok(Math.max(...vs) <= 9 && Math.min(...vs) >= 0,
+         gk + ": the performance layer put a velocity outside 0..9");
+    }
+    // EXHAUSTIVE, not mostly: every genre either declares all three fields or is
+    // one of the four machines that declare none on purpose. A genre that
+    // resolves to neither renders flat forever and nothing else would say so.
+    for (const gk of GK) {
+      const g = GENRES[gk];
+      ok(MACHINE[gk] != null || (g.stress != null && g.phrase != null && g.touch != null),
+         gk + ": no dynamics row — it is neither a declared machine nor a genre " +
+         "with stress/phrase/touch, so it will render flat forever");
+    }
+    ok(wired === GK.length - Object.keys(MACHINE).length,
+       wired + " genres declare dynamics; expected " +
+       (GK.length - Object.keys(MACHINE).length) + " (everything but the machines)");
+    ok(wider >= wired - 2, "only " + wider + "/" + wired + " wired genres widened " +
+       "their velocity spread; the flat 1.45 is what this layer exists to break");
+    ok(lower >= wired * 0.6, "only " + lower + "/" + wired + " genres reached below " +
+       "their written floor — the dynamic room is at the bottom of the scale");
+  }
+
+  // (d) NO TWO PASSES ARE THE SAME BAR. The hand is redrawn per bar, so a
+  // genre that declares `touch` must render bar 3 differently from bar 1 — in
+  // velocity, in onset, or both. This is the "every rendition of a bar is
+  // numerically the same bar" complaint, as an assertion.
+  for (const gk of ["funk", "blues", "boombap", "rock", "gregorian"]) {
+    const g = GENRES[gk], bs = 16 / g.rate, n = Math.max(4, g.bars);
+    const ev = K.render(DEFAULT, g, n).filter(e => e.v === 0);
+    const cells = barsOf(ev, bs, n).map(bar =>
+      JSON.stringify(bar.map(e => [+((e.t % bs) * g.rate).toFixed(3), e.vel])));
+    ok(new Set(cells).size >= Math.min(3, n),
+       gk + ": " + new Set(cells).size + " distinct bars in " + n + " — the loop is " +
+       "playing the identical numbers every pass");
+    // ...and it is the HAND doing it, not the notes: with the player taken out
+    // the same bars are identical again
+    const flatCells = barsOf(K.render(DEFAULT, plain(g), n).filter(e => e.v === 0), bs, n)
+      .map(bar => JSON.stringify(bar.map(e => [+((e.t % bs) * g.rate).toFixed(3), e.vel])));
+    ok(new Set(flatCells).size < new Set(cells).size,
+       gk + ": the bars differ with the player taken out too — this is the phrase, " +
+       "not the performance");
+  }
+
+  // (e) DETERMINISM. Seeded, not random: two renders of one state are the same
+  // stream, or the whole artifact stops being reproducible.
+  for (const gk of ["funk", "tango", "neoclassical"])
+    ok(fp(allEvents(P, GENRES[gk], GENRES[gk].bars)) ===
+       fp(allEvents(P, GENRES[gk], GENRES[gk].bars)),
+       gk + ": two renders of one state differ — the hand is not seeded");
+
+  // (f) THE PHRASE PEAK LANDS ON THE CONTOUR PEAK. Built by hand: a bar with an
+  // unambiguous high note in the middle, read through a genre that is all
+  // phrase and nothing else, so the tent is the only term moving.
+  {
+    const arch = { deg:  [0, 1, 2, 3, 5, 3, 2, 1, 0, 1, 2, 1, 0, 1, 0, 1],
+                   oct:  new Array(16).fill(0), vel: new Array(16).fill(5),
+                   inc:  new Array(16).fill(0), stk: new Array(16).fill(0),
+                   gate: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                   acc:  new Array(16).fill(0), sld: new Array(16).fill(0) };
+    const g = { ...plain(GENRES.simple), phrase: 0.9 };
+    const ev = K.render(arch, g, 1);
+    const flat = K.render(arch, plain(GENRES.simple), 1);
+    const top = Math.max(...ev.map(e => e.n));
+    const pk = ev.findIndex(e => e.n === top);
+    ok(pk > 0, "the test phrase has no interior peak — the fixture is wrong");
+    ok(ev[pk].vel === Math.max(...ev.map(e => e.vel)),
+       "the phrase's highest note is not its loudest — the tent does not peak on " +
+       "the contour");
+    ok(ev[0].vel < ev[pk].vel && ev[ev.length - 1].vel < ev[pk].vel,
+       "the phrase does not taper to both ends (" + ev.map(e => e.vel).join(",") + ")");
+    // the AGOGIC half: the peak is held longer than it was written, and no
+    // other note is
+    ok(ev[pk].dur > flat[pk].dur + 1e-9,
+       "the peak note is not held any longer — the agogic half of the accent is missing");
+    ok(ev.every((e, i) => i === pk || Math.abs(e.dur - flat[i].dur) < 1e-9),
+       "a note that is not the peak changed length — the agogic is not agogic");
+    // and it never runs into the note after it, nor past its own cap
+    ok(ev.every((e, i) => i + 1 >= ev.length || e.t + e.dur <= ev[i + 1].t + 1e-9),
+       "the lengthened peak overlaps the note after it — that is a tie, not an accent");
+    const capped = K.render(arch, { ...g, maxHold: 1 }, 1);
+    ok(capped.every(e => e.dur <= 1 / GENRES.simple.rate + 1e-9),
+       "the agogic peak grew past maxHold — breath is not optional");
+  }
+
+  // (g) METRICAL ACCENT IS A HIERARCHY, and it is one in the OUTPUT: on a
+  // phrase whose written velocities are all equal, the downbeat outweighs the
+  // beat, the beat outweighs the "and", and the "and" outweighs the sixteenth
+  // between them. Scaled per genre, so a genre with a bigger `stress` separates
+  // them further.
+  {
+    const even = { deg: new Array(16).fill(0), oct: new Array(16).fill(0),
+                   vel: new Array(16).fill(5), inc: new Array(16).fill(0),
+                   stk: new Array(16).fill(0), gate: new Array(16).fill(1),
+                   acc: new Array(16).fill(0), sld: new Array(16).fill(0) };
+    const at2 = (g, i) => K.render(even, g, 1).filter(e => e.v === 0)[i].vel;
+    const g = { ...plain(GENRES.simple), stress: 0.8 };
+    ok(at2(g, 0) > at2(g, 4) && at2(g, 4) > at2(g, 2) && at2(g, 2) >= at2(g, 1),
+       "the metrical hierarchy is not in the rendered velocities (" +
+       [0, 4, 2, 1].map(i => at2(g, i)).join(">") + ")");
+    const soft2 = { ...plain(GENRES.simple), stress: 0.25 };
+    ok(at2(g, 0) - at2(g, 1) > at2(soft2, 0) - at2(soft2, 1),
+       "stress does not scale — a heavier genre must separate the beats further");
+    ok(K.stressAt(0, 12) === 1 && K.stressAt(3, 12) === 0.3 && K.stressAt(6, 12) === 0.55,
+       "a twelve-step bar does not stress its three beats");
+  }
+
+  // (h) THE SECTION ARC. Six new `env` shapes, and the property that separates
+  // them from the four fades is that they never reach zero — a dynamic is a
+  // size, not an entrance.
+  {
+    const g = GENRES.rock, span = g.bars * 16 / g.rate;
+    const ev = K.render(P, g, g.bars);
+    const lvl = out => {
+      const a = [...out].sort((x, y) => x.t - y.t);
+      const half = Math.floor(a.length / 2);
+      const mean = xs => xs.reduce((s, e) => s + e.vel, 0) / xs.length;
+      return [mean(a.slice(0, half)), mean(a.slice(half))];
+    };
+    for (const kind of ["cresc", "dim", "arch", "lift", "soft", "big"]) {
+      const out = K.envelope(ev, kind, span);
+      ok(out.length === ev.length, kind + " changed the event count — it is a curve, not a cut");
+      ok(out.every(e => e.vel >= 0 && e.vel <= 9), kind + " left a velocity out of 0..9");
+      ok(out.every(e => e.vel > 0), kind + " silenced a note — a dynamic is not a fade");
+    }
+    const cr = lvl(K.envelope(ev, "cresc", span));
+    ok(cr[1] > cr[0] * 1.3, "a crescendo section does not climb (" +
+       cr.map(x => x.toFixed(2)).join(" -> ") + ")");
+    const dm = lvl(K.envelope(ev, "dim", span));
+    ok(dm[1] < dm[0] * 0.8, "a diminuendo does not fall away");
+    const lf = lvl(K.envelope(ev, "lift", span));
+    ok(lf[1] > lf[0] * 1.15, "a build does not build");
+    // the arch peaks in the MIDDLE and comes back — which `swell` does too, and
+    // the difference is that the arch is still audible at both ends
+    const ar = K.envelope(ev, "arch", span).sort((a, b) => a.t - b.t);
+    ok(ar[0].vel > 0.5 * ev.sort((a, b) => a.t - b.t)[0].vel,
+       "the arch starts as quietly as a fade — it is supposed to be a shape, not an entrance");
+    // soft vs big is the whole point: the same bar, two sizes
+    const sm = lvl(K.envelope(ev, "soft", span))[0], bg = lvl(K.envelope(ev, "big", span))[0];
+    ok(bg > sm * 1.4, "big is not measurably bigger than soft (" + sm.toFixed(2) +
+       " vs " + bg.toFixed(2) + ") — the chorus cannot outweigh the verse");
+    ok(K.envelope(ev, "big", span).every(e => e.vel <= 9),
+       "big pushed a velocity past the ceiling");
+  }
+}
+
+/* ---------- 39b. THE ARRANGED DYNAMIC, measured on ui/derive.js ------------
+   §39 proves the shapes work; this proves the COMPOSER spends them, on the
+   real render path, over the whole table. The complaint was about listening to
+   a composed song, so the check has to be about one. */
+console.log("the arranged dynamic — the chorus outweighs the verse, on the real render path");
+{
+  const C = require("../../nukernel/compose.js");
+  const seeds = Array.from({ length: 12 }, (_, i) => i + 1);
+  const meanVel = ev => (ev.length
+    ? ev.reduce((s, e) => s + (e.vel == null ? 5 : e.vel), 0) / ev.length : 0);
+  // (a) EVERY SECTION IS DEALT A DYNAMIC. A composed song with eight flat
+  // boxes in the middle of it is the record the ears were complaining about.
+  {
+    let flat = 0, total2 = 0;
+    for (const gk of GK) for (const s of seeds.slice(0, 4)) {
+      for (const b of C.compose(gk, s).song) { total2++; if (!b.env) flat++; }
+    }
+    ok(flat / total2 <= 0.2, flat + "/" + total2 + " composed sections carry no " +
+       "level shape at all — the arc is not being spent");
+  }
+  // (b) AND IT IS AUDIBLE IN THE EVENTS: the last chorus of a song outweighs
+  // the verse before it, measured as mean rendered velocity through the real
+  // sectionEvents path (window, envelope, edges, groove — everything).
+  for (const gk of ["rock", "beatles", "isley", "funk", "house"]) {
+    let bigger = 0, n2 = 0;
+    for (const s of seeds) {
+      const song = C.compose(gk, s);
+      const ci = song.song.map((b, i) => [b, i]).filter(([b]) =>
+        (b.cue || b.role) === "chorus" || (b.cue || b.role) === "drop").pop();
+      if (!ci) continue;
+      const vi = song.song.slice(0, ci[1]).map((b, i) => [b, i])
+        .filter(([b]) => b.role === "verse" && !b.cue).pop();
+      if (!vi) continue;
+      n2++;
+      const cv = meanVel(D.sectionEvents(ci[0], song.slots).ev);
+      const vv = meanVel(D.sectionEvents(vi[0], song.slots).ev);
+      if (cv > vv) bigger++;
+    }
+    ok(n2 > 0 && bigger >= n2 - 1, gk + ": the last chorus is louder than the verse " +
+       "before it in only " + bigger + "/" + n2 + " songs — the arc is not reaching " +
+       "the notes");
+  }
+  // (c) THE WHOLE SONG HAS A SHAPE: across a composed record the per-section
+  // mean velocity must actually vary — one number for every section is the
+  // "everything plays around the same" complaint at song scale.
+  for (const gk of ["rock", "funk", "house", "gregorian"]) {
+    const song = C.compose(gk, 5);
+    const means = song.song.map(b => meanVel(D.sectionEvents(b, song.slots).ev))
+      .filter(x => x > 0);
+    const lo = Math.min(...means), hi = Math.max(...means);
+    ok(hi - lo >= 1.2, gk + ": the loudest section of a composed song is only " +
+       (hi - lo).toFixed(2) + " velocity above the quietest — the record is flat");
+  }
+}
+
+/* ---------- 40. THE FUNCTION GENRES ----------------------------------------
+   "What is a Beatles song without a couple of solos. You should also have some
+   vocal melodies. So I can see a Beatles song where only the drums remain, but
+   the solo plays."
+
+   A FUNCTION GENRE is one whose identity is a ROLE and not a style — solo,
+   vocal, backing, riff, pad (genres.js, the `parts` family). Everything below
+   is measured on the RENDERED EVENT STREAM through the real ui/derive.js,
+   because every claim here is exactly the kind that config can satisfy and
+   audio cannot: a genre can declare `nobass` and still emit a bass, a layer can
+   declare that it inherits the host's changes and still play its own, and a
+   "solo section" can be a box with a solo LAYER on it that nobody can hear.
+
+   Four things:
+     (a) THE CONTRACT — a part carries nothing that would fight its host, and
+         answers the PARTS chair its name promises, so the per-part mixer can
+         address it.
+     (b) THE BEATLES TEST, literally: a box whose authority is reduced to drums
+         with a solo stacked over it. Drums from the HOST, notes from the LAYER,
+         no bass, and both in every bar — plus the two controls that make it a
+         proof rather than a description: stripping the authority must leave the
+         drum stream byte-identical, and swapping the host must move the solo.
+     (c) THE COMPOSER really places them, across the table and across seeds.
+     (d) THE SINGER BREATHES — rest ratio and leap distribution, vocal against
+         the instrumental leads, on the same phrases. */
+console.log("function genres — the part, the Beatles test, and what a singer does");
+{
+  const C = require("../../nukernel/compose.js");
+  const NS = require("../../nukernel/song.js");
+  const PARTS5 = ["solo", "vocal", "backing", "riff", "pad"];
+
+  // (a) THE CONTRACT. The layer law (ui/derive.js) hands a stacked genre the
+  // authority's harmony, roots, prog, key, mode, rate and swing and drops its
+  // kit and bass — so a part that declares any of those is declaring something
+  // that will be silently thrown away in the only place it is meant to be used,
+  // which is worse than declaring nothing.
+  const CHAIR = { solo: "lead", vocal: "lead", backing: "counter",
+                  riff: "riff", pad: "pad" };
+  for (const gk of PARTS5) {
+    const g = GENRES[gk];
+    ok(g.family === "parts", gk + ": a function genre outside the `parts` family");
+    ok(!Object.keys(g.kit || {}).length && !g.kits,
+       gk + ": a part brought its own drums — the host owns the kit");
+    ok(g.nobass === true, gk + ": a part brought its own bass — the host owns the bass");
+    ok(!g.prog && !g.roots && g.harmony === "modal",
+       gk + ": a part carries harmony of its own; stacked, it would follow its " +
+       "chords against the box's — half the band in a different song");
+    ok(g.voices === 1, gk + ": a part is one part (" + g.voices + " voices)");
+    ok(K.partOf(g, 0) === CHAIR[gk], gk + ": answers the \"" + K.partOf(g, 0) +
+       "\" chair, not \"" + CHAIR[gk] + "\" — the mixer would address it as " +
+       "something it is not");
+    ok(C.LAYERABLE.includes(gk), gk + ": a part that the arranger may not stack");
+    // and it must SOUND on its own, because it is a genre in the palette and
+    // somebody will click it first
+    ok(K.render(P, g, g.bars).length > 0, gk + ": renders nothing on its own");
+  }
+  // the ballots are covered and legal: every family votes, every vote names a
+  // real function genre, and the one empty ballot is the deliberate one
+  for (const [fam] of FAMILIES) {
+    const b = C.SOLO_LEAN[fam];
+    ok(Array.isArray(b), fam + ": no SOLO_LEAN ballot — its solos would fall back");
+    for (const w of b || []) ok(PARTS5.includes(w),
+      fam + ": votes for \"" + w + "\", which is not a function genre");
+  }
+  ok(C.SOLO_LEAN.parts.length === 0, "a function genre calls a soloist of its own");
+
+  // (b) THE BEATLES TEST. Built by hand and pushed through the LOADER, because
+  // a hand-built box the loader would reject is not a thing a person can make.
+  const beatlesTest = (host, layerG, hostSlots) => {
+    const box = NS.skeleton(host, "solo");
+    box.stack = [{ g: host, slots: hostSlots || [] }, { g: layerG, slots: [0] }];
+    box.bassop = "nobass";
+    // the kit operator the composer writes on a break, and for the reason it
+    // writes it: `accents` puts a real level on every lane, so the drums stop
+    // borrowing their dynamics from the melody that just stopped playing
+    box.kit = "accents";
+    box.len = 4;
+    const r = NS.load({ v: NS.VERSION, slots: [clone(P)], song: [box], bpm: 120, vol: 80 });
+    ok(r.ok, "the Beatles test box does not load: " +
+       JSON.stringify(r.errors && r.errors[0]));
+    return r.ok ? { box: r.song.song[0], out: D.sectionEvents(r.song.song[0], r.song.slots) }
+                : null;
+  };
+  {
+    const t = beatlesTest("beatles", "solo");
+    ok(!!t, "the Beatles test never rendered");
+    if (t) {
+      const ev = t.out.ev;
+      const hits = ev.filter(e => e.kind === "hit");
+      const line = ev.filter(e => e.kind === "line");
+      const bass = ev.filter(e => e.kind === "bass");
+      ok(hits.length > 0, "only the drums remain — and they do not: no drum events");
+      ok(bass.length === 0, "the bass is still playing under the solo break");
+      ok(line.length > 0, "the solo does not play");
+      // EVERY note is the layer's: the authority contributed none, which is
+      // what "reduced to drums" means as a fact about the stream
+      ok(line.every(e => e.layer === "solo"),
+         line.filter(e => e.layer !== "solo").length +
+         " of the notes came from the host — it was supposed to have stopped");
+      // ...and the drums really are the HOST's: beatles' own kit lanes
+      const lanes = new Set(hits.map(e => e.d));
+      const own = new Set(Object.keys(GENRES.beatles.kit));
+      ok([...lanes].every(l => own.has(l)) && lanes.size > 1,
+         "the drums under the solo are not the host's kit: " + [...lanes].join(","));
+      // ONE BAR APART, not just in total: an aggregate check passes a section
+      // where the drums play the first bar and the solo plays the last
+      const bs = 16 / t.out.g.rate;
+      for (let b = 0; b < t.out.bars; b++) {
+        const inBar = xs => xs.some(e => e.t >= b * bs && e.t < (b + 1) * bs);
+        ok(inBar(hits), "bar " + b + " of the solo break has no drums");
+        ok(inBar(line), "bar " + b + " of the solo break has no solo");
+      }
+    }
+  }
+  // THE TWO CONTROLS. Without these the test above is a description of what
+  // the composer happened to write rather than a proof of the mechanism.
+  {
+    // 1. STRIPPING THE AUTHORITY LEAVES THE KIT ALONE, note for note. The
+    // drums are GENRE data and the phrase is not, which is the whole reason
+    // the strip is expressible at all — the same box with and without the
+    // host's melody must render the identical drum stream, and lose exactly
+    // the host's half of the notes.
+    //
+    // WHY BOTH BOXES CARRY `accents`, and it is the finding rather than a
+    // convenience: the kit's velocity chain (kernel.js drums) falls through to
+    // the MELODY's velocity wherever a lane's cell is the bare 1, so on an
+    // unoperated kit this comparison FAILS — the grid is identical and every
+    // velocity drops to a flat 5, because the line whose dynamics the kick was
+    // borrowing has stopped. That is why the composer writes a level-writing
+    // kit op on every break (compose.js BREAK_KIT), and it is the one thing
+    // about the strip that is a workaround rather than a mechanism.
+    const t = beatlesTest("beatles", "solo");
+    const f = beatlesTest("beatles", "solo", [0]);
+    ok(f && t, "the control box does not load");
+    if (f && t) {
+      const drum = xs => JSON.stringify(xs.filter(e => e.kind === "hit")
+        .map(e => [+e.t.toFixed(6), e.d, e.vel]));
+      ok(drum(f.out.ev) === drum(t.out.ev),
+         "taking the host's phrase away changed its drums — the strip is not a strip");
+      ok(f.out.ev.filter(e => e.kind === "line").length >
+         t.out.ev.filter(e => e.kind === "line").length,
+         "the stripped box plays as many notes as the full band");
+      // ...and the drums under the break are AUDIBLE, which the grid check
+      // cannot see: a kit playing velocity 0 is a kit that renders and does
+      // not sound
+      const dv = t.out.ev.filter(e => e.kind === "hit").map(e => e.vel);
+      ok(Math.max(...dv) >= 6 && dv.filter(v => v > 0).length / dv.length > 0.9,
+         "the drums under the solo break render but barely sound (max vel " +
+         Math.max(...dv) + ")");
+    }
+    // 2. THE SOLO READS THE HOST. Same layer, same phrase, two different
+    // authorities: if the rendered notes are the same stream, the layer is
+    // playing its own harmony and the inheritance is decorative.
+    const a = beatlesTest("beatles", "solo"), b = beatlesTest("sludge", "solo");
+    ok(a && b && JSON.stringify(a.out.ev.filter(e => e.kind === "line").map(e => e.n)) !==
+       JSON.stringify(b.out.ev.filter(e => e.kind === "line").map(e => e.n)),
+       "the same solo over two different hosts renders the same notes — it is " +
+       "not inheriting the authority's changes");
+    // ...and a KEY on the box moves the part with the band, every note of it
+    const k = beatlesTest("beatles", "vocal");
+    if (k) {
+      const lifted = D.sectionEvents({ ...k.box, key: 3 }, [clone(P)]);
+      const x = k.out.ev.filter(e => e.n != null), y = lifted.ev.filter(e => e.n != null);
+      ok(x.length === y.length && x.every((e, i) => y[i].n - e.n === 3),
+         "the singer does not modulate with the band");
+    }
+  }
+
+  // (c) THE COMPOSER PLACES THEM. Not "can" — does, across the table.
+  {
+    const seeds = Array.from({ length: 40 }, (_, i) => i + 1);
+    let soloSecs = 0, withPart = 0, strips = 0, chorusParts = 0;
+    const used = new Set();
+    for (const gk of GK) {
+      const kit = Object.keys(GENRES[gk].kit || {}).length > 0;
+      for (const s of seeds) {
+        for (const b of C.compose(gk, s).song) {
+          const parts = b.stack.slice(1).filter(e => PARTS5.includes(e.g));
+          for (const e of parts) used.add(e.g);
+          if (b.role === "solo") {
+            soloSecs++;
+            if (parts.length) withPart++;
+            if (b.cue === "solobreak") {
+              strips++;
+              ok(kit, gk + "/" + s + ": a kitless genre was given a solo BREAK — " +
+                 "there are no drums for the band to be reduced to");
+              ok(b.bassop === "nobass" && !b.stack[0].slots.length,
+                 gk + "/" + s + ": a solobreak that did not strip the host");
+            }
+          } else if (b.role === "chorus" && parts.length) chorusParts++;
+        }
+      }
+    }
+    // every family but `parts` has a soloist, so all but five genres * their
+    // seeds must carry one — written as a share so a table edit does not
+    // require re-counting by hand
+    ok(soloSecs > 400, "only " + soloSecs + " solo sections in the whole sweep");
+    ok(withPart / soloSecs >= 0.85, "only " + Math.round(100 * withPart / soloSecs) +
+       "% of solo sections have anybody playing the solo");
+    // the strip is a COIN, not a constant: always would make every solo section
+    // a drum break, never would mean the Beatles test is unreachable in practice
+    ok(strips > 60 && strips < soloSecs * 0.6,
+       strips + " solo breaks out of " + soloSecs + " solo sections — the strip " +
+       "should be a coin on a genre with a kit, not a constant");
+    ok(chorusParts > 200, "only " + chorusParts + " choruses carry a part layer — " +
+       "the odd chorus was supposed to get one too");
+    for (const gk of PARTS5)
+      ok(used.has(gk), gk + ": the arranger never once calls for it");
+  }
+
+  // (d) WHAT A SINGER DOES, measured against what a lead player does, on the
+  // SAME phrases — the composer's own toplines, so the only difference is the
+  // genre. Two numbers, both read off the rendered stream, and both defined
+  // carefully enough to mean what they say:
+  //
+  //   BREATH SHARE  the share of the section taken by silences of at least a
+  //                 BEAT. Not "rest ratio": a staccato lead is silent for half
+  //                 of every note and breathes not at all, so total silence
+  //                 measures articulation and calls it phrasing. A breath is a
+  //                 STRUCTURAL hole — three steps or more — and on that
+  //                 definition the instrumental leads score exactly zero.
+  //   LEAP SHARE    the share of intervals wider than a major third, counted
+  //                 over MOVES only. A repeated note is not a small interval,
+  //                 it is not an interval; counting unisons let `split` — which
+  //                 emits its subdivisions on one degree — flatter any genre
+  //                 that subdivides into looking like a smooth singer.
+  const feel = gk => {
+    const g = GENRES[gk], bars = 8, bs = 16 / g.rate;
+    let breath = 0, n = 0, ivals = 0, big = 0, span = 0;
+    for (let s = 1; s <= 12; s++) {
+      const ev = K.render(C.compose("beatles", s).slots[5], g, bars)
+        .filter(e => e.part !== "pad").sort((a, b) => a.t - b.t);
+      if (!ev.length) continue;
+      n++;
+      let end = 0, sil = 0;
+      for (const e of ev) {
+        const gap = (e.t - end) * g.rate;
+        if (gap >= 3) sil += gap;
+        end = Math.max(end, e.t + e.dur);
+      }
+      const tail = (bars * bs - end) * g.rate;
+      if (tail >= 3) sil += tail;
+      breath += sil / (bars * 16);
+      for (let i = 1; i < ev.length; i++) {
+        const d = Math.abs(ev[i].n - ev[i - 1].n);
+        if (!d) continue;
+        ivals++; span += d; if (d > 4) big++;
+      }
+    }
+    return { breath: breath / n, leap: big / ivals, mean: span / ivals };
+  };
+  {
+    const v = feel("vocal"), s = feel("solo"), b = feel("simple");
+    // MEASURED at the commit that added these, on twelve of the composer's own
+    // toplines: vocal breath 0.149 / leap 0.287 / mean 3.81 semitones; solo
+    // 0.000 / 0.449 / 5.09; the same phrase through `simple` 0.000 / 0.498 /
+    // 5.48; through `beatles` 0.000 / 0.726 / 11.26. The fences sit between
+    // those, not on them.
+    ok(v.breath > 0.10, "the vocal spends " + (100 * v.breath).toFixed(0) +
+       "% of the section in a real rest — it is not breathing");
+    ok(s.breath < 0.02 && b.breath < 0.02, "an instrumental lead breathes too (" +
+       s.breath.toFixed(3) + " / " + b.breath.toFixed(3) + ") — the measurement is " +
+       "counting articulation as phrasing, so it proves nothing about the singer");
+    ok(v.leap < 0.35, (100 * v.leap).toFixed(0) + "% of the vocal's moves are " +
+       "leaps wider than a third — that is an instrument, not a voice");
+    ok(v.leap < s.leap * 0.75, "the vocal (" + v.leap.toFixed(3) + ") does not leap " +
+       "measurably less than the solo (" + s.leap.toFixed(3) + ")");
+    ok(v.mean < s.mean - 0.8, "the vocal's mean interval (" + v.mean.toFixed(2) +
+       " semitones) is not narrower than the solo's (" + s.mean.toFixed(2) + ")");
+    // ...and the breath is REAL SILENCE at the end of the bar, which is the one
+    // thing maxHold and the `breathe` pipe exist to produce
+    const g = GENRES.vocal, bs = 16 / g.rate;
+    for (let s2 = 1; s2 <= 12; s2++) {
+      const ev = K.render(C.compose("beatles", s2).slots[5], g, 4);
+      for (let bar = 0; bar < 4; bar++) {
+        const end = (bar + 1) * bs;
+        ok(!ev.some(e => e.t < end && e.t + e.dur > end - 0.6 / g.rate),
+           "vocal/" + s2 + ": bar " + bar + " sings straight through the bar line");
+      }
+    }
+    // the singer's instrument is a VOICE and it sits where a voice sits: the
+    // registry's own window for solo_vox is [50, 84] (instruments.js RANGES)
+    const NI = require("../../nukernel/instruments.js");
+    for (const gk of ["vocal", "backing"]) {
+      const id = NI.instrOf(gk, 0), win = NI.RANGES[id];
+      ok(!!win, gk + ": " + id + " has no declared range — it may not be a voice");
+      const ns = K.render(C.compose("beatles", 3).slots[5], GENRES[gk], 4).map(e => e.n);
+      const mean = ns.reduce((a, x) => a + x, 0) / ns.length;
+      ok(mean >= win[0] && mean <= win[1], gk + ": sings at a mean of " +
+         mean.toFixed(0) + ", outside " + id + "'s own window " + win.join(".."));
+    }
+  }
+}
+
+/* ------------------------------------------- 41. DRESSING THE RECORD
+   Two measured complaints, both about the composer rather than the engine.
+
+     "When you generate a song and there are global effects apply them globally
+      not per module."  MEASURED: a composed song set NO master at all —
+      `compose("beatles", 3)` handed back eleven boxes, zero effects on any of
+      them and `master` unset, which the loader normalizes to null, which the
+      graph reads as the stock chain. Every composed record in every genre
+      landed on one mastering.
+
+     "You have stopped adding elements from other genres into the randomly
+      generated songs."  MEASURED: 10.7% of boxes carried a second genre, and
+      ELEVEN genres never stacked at all — acid, newwave, vaporwave,
+      eurythmics, trap, house, garage, dnb, disco, dub, techno. All eleven
+      arrange on the DANCE plan, and the only two roles that could call for a
+      layer were `chorus` and `solo`, which a dance plan does not have.
+
+   The fences below are the numbers this stage defends, not aspirations: a
+   third of boxes carry a guest, sectional effects are confined to the three
+   roles that genuinely depart, and every song is mastered its family's way.
+
+   THE HOUSE LAW APPLIES UNEVENLY HERE and it is worth being honest about
+   where. The guest and the solo break are read off the RENDERED EVENT STREAM
+   through the real ui/derive.js — a layer that renders nothing is exactly the
+   failure this suite exists for. The master cannot be: it is a bus, and
+   nothing at this tier makes a sample. So it is proved as far as it can be —
+   through the real loader, and through fields.js's own resolveMaster into the
+   engine numbers audio/graph.js builds from — and the audio-tier gate that
+   hears it is a browser gate, named in the report. */
+console.log("dressing the record — the master bus and the guest genre");
+{
+  const C = require("../../nukernel/compose.js");
+  const NF = require("../../nukernel/fields.js");
+  const NS = require("../../nukernel/song.js");
+  const seeds = Array.from({ length: 40 }, (_, i) => i + 1);
+  const FAM = Object.fromEntries(FAMILIES.map(([f, ks]) => [f, ks]));
+
+  // (a) EVERY COMPOSED SONG IS MASTERED — and it survives the loader, which is
+  // the only door the composer gets. An unloadable master is a song the
+  // composer can write and a person cannot open.
+  {
+    let keys = 0, songs = 0, seven = [];
+    for (const gk of GK) for (const s of seeds) {
+      const song = C.compose(gk, s), m = song.master;
+      songs++;
+      ok(m && typeof m === "object", gk + "/" + s + ": composed a song with no master");
+      if (!m) continue;
+      ok(!NF.masterIsDefault(m), gk + "/" + s + ": the master is a second spelling " +
+         "of absent — " + JSON.stringify(m));
+      // in the registry's own order, so the saved file reads the way the desk
+      // is laid out — and an unknown key could not survive this either
+      ok(JSON.stringify(Object.keys(m)) ===
+         JSON.stringify(NF.MASTER.map(f => f.key).filter(k => m[k] != null)),
+         gk + "/" + s + ": master keys are not in MASTER's order");
+      // THROUGH THE LOADER, UNCHANGED — which is the check that the VALUES are
+      // legal too, and a stronger one than reading the tables here: the loader
+      // filters unknown keys and rejects unknown values, so anything the
+      // composer spelled wrong comes back quietly smaller (or not at all) and
+      // this equality is what notices.
+      //
+      // A QUARTER OF THE SWEEP, and the reason is cost rather than confidence:
+      // load() deep-validates every step of every slot and every field of
+      // every box, which is a millisecond a song and two full seconds of this
+      // suite. The ballots are small — ten seeds of fifty genres draws every
+      // value in every table many times over — and every OTHER claim here runs
+      // the full forty.
+      if (s <= 10) {
+        const r = NS.load(song);
+        ok(r.ok, gk + "/" + s + ": the composed song does not load: " +
+           JSON.stringify(r.errors && r.errors[0]));
+        ok(r.ok && JSON.stringify(r.song.master) === JSON.stringify(m),
+           gk + "/" + s + ": the loader changed the master to " +
+           JSON.stringify(r.ok && r.song.master));
+      }
+      // ...and it is a DIFFERENT CHAIN, in engine numbers, not just a
+      // different word: resolveMaster is what audio/graph.js builds from.
+      const A = NF.resolveMaster(m), B = NF.resolveMaster(null);
+      ok(JSON.stringify(A) !== JSON.stringify(B),
+         gk + "/" + s + ": the master resolves to exactly the stock chain");
+      const n = Object.keys(m).length;
+      keys += n;
+      if (n === NF.MASTER.length) seven.push(gk);
+    }
+    // RESTRAINT, as a distribution. Every knob turned on every record is not a
+    // master, it is a preset demo — measured at 4.53 globals of seven when this
+    // landed, and exactly one anchor asks for the whole desk.
+    const mean = keys / songs;
+    ok(mean > 3 && mean < 5.5, "the average composed master moves " + mean.toFixed(2) +
+       " of " + NF.MASTER.length + " globals — a master is a few decisions, not a sweep");
+    ok(new Set(seven).size <= 1 && (!seven.length || seven[0] === "shoegaze"),
+       "more than one genre turns every knob on the desk: " +
+       [...new Set(seven)].join(","));
+  }
+
+  // (b) FAMILY-APPROPRIATE, and each of these is a BALLOT WITH NO NULL IN IT
+  // one tier down (compose.js MASTER_LEAN) — a promise the table makes and this
+  // reads back off the composed songs. Tape and glue on a soul record, a room
+  // on a choir, a ceiling on a club track: the producer's defaults, by tradition.
+  {
+    const must = {
+      soul:   m => m.tape != null,
+      roots:  m => m.tape != null,
+      club:   m => m.ceiling != null && m.ceiling !== "open",
+      drift:  m => m.space != null,
+      vox:    m => m.space != null,
+      groove: m => m.space != null,
+      band:   m => m.drive != null,
+      // a studio record is EDITED, not squashed
+      studio: m => m.glue != null && m.glue !== "pump" && m.glue !== "squash",
+      // and a lone part is not a record: nothing is being fought on the bus
+      parts:  m => m.drive == null && m.ceiling !== "loud" && m.ceiling !== "louder",
+    };
+    const WHY = {
+      soul: "tape", roots: "tape", club: "a ceiling that is not open",
+      drift: "a room", vox: "a room", groove: "a room", band: "drive on the bus",
+      studio: "glue that is not pumped", parts: "no bus fight at all",
+    };
+    for (const [fam, ks] of FAMILIES) {
+      if (!must[fam]) continue;
+      for (const gk of ks) for (const s of seeds.slice(0, 12)) {
+        const m = C.compose(gk, s).master || {};
+        ok(must[fam](m), gk + "/" + s + " (" + fam + "): a " + fam + " record wants " +
+           WHY[fam] + " — got " + JSON.stringify(m));
+      }
+    }
+    // THE HANDFUL WHOSE MASTER IS THE SOUND (compose.js MASTER_GENRE). Not a
+    // lean: the anchor's own row, and if it stops winning the genre stops
+    // sounding like itself.
+    const OWN = {
+      vaporwave: m => m.tape === "wow" || m.tape === "worn",
+      dub:       m => m.space === "cavern" || m.space === "hall",
+      sludge:    m => m.drive === "crush" || m.drive === "dirt",
+      techno:    m => m.ceiling === "loud" || m.ceiling === "louder",
+      shoegaze:  m => m.width === "huge" || m.width === "wide",
+      gregorian: m => m.space === "cavern" || m.space === "hall",
+    };
+    for (const gk of Object.keys(OWN))
+      for (const s of seeds.slice(0, 12))
+        ok(OWN[gk](C.compose(gk, s).master || {}),
+           gk + "/" + s + ": its own master row did not win — " +
+           JSON.stringify(C.compose(gk, s).master));
+    // ...AND STRUCTURALLY, not on the dice. `glue: "glue"` and `ceiling:
+    // "open"` are the stock chain under their own names (fields.js
+    // GLUEDFLT/CEILDFLT), so a row whose every ballot can draw a null or a
+    // stock word has a draw that resolves to exactly no master at all — which
+    // is the whole complaint, recurring at one in three thousand seeds where
+    // no sweep would find it. Every row must carry one ballot that ALWAYS
+    // moves something.
+    {
+      const STOCK = { glue: "glue", ceiling: "open" };
+      const moves = row => Object.keys(row).some(k =>
+        row[k].every(v => v != null && v !== STOCK[k]));
+      for (const [fam, row] of Object.entries(C.MASTER_LEAN))
+        ok(moves(row), fam + ": every one of its master ballots can draw a null or " +
+           "the desk's own default — some seed of it resolves to no master at all");
+      // the anchor rows are read ON TOP of a family row, so they may be as
+      // partial as they like; what they may not be is misspelled
+      for (const [gk, row] of Object.entries(C.MASTER_GENRE)) {
+        ok(GENRES[gk], "MASTER_GENRE names " + gk + ", which is not a genre");
+        for (const [k, ballot] of Object.entries(row)) {
+          ok(NF.MASTERBY[k], gk + ": masters a global the registry lacks (" + k + ")");
+          for (const v of ballot)
+            ok(v == null || (NF.MASTERBY[k] &&
+               Object.prototype.hasOwnProperty.call(NF.MASTERBY[k].table, v)),
+               gk + "." + k + ": votes for " + v + ", which is not in the table");
+        }
+      }
+    }
+    // THE SHIPPED PRESETS ARE MASTERED TOO. Six hand-authored songs are the
+    // first sound anybody hears, and a fix that dressed the generated records
+    // and left the demos on the stock chain would have fixed the measurement
+    // rather than the complaint.
+    for (const p of require("../../nukernel/presets.js").PRESETS) {
+      const m = p.data.master;
+      ok(m && !NF.masterIsDefault(m), p.name + ": a shipped preset with no master");
+      const r = NS.load(p.data);
+      ok(r.ok && JSON.stringify(r.song.master) === JSON.stringify(m),
+         p.name + ": the loader does not keep its master (" +
+         JSON.stringify(r.ok ? r.song.master : r.errors[0]) + ")");
+      ok(m && JSON.stringify(NF.resolveMaster(m)) !==
+              JSON.stringify(NF.resolveMaster(null)),
+         p.name + ": its master resolves to exactly the stock chain");
+    }
+    // SALTED, like every other ballot: one seed across the table must not
+    // master fifty records the same way
+    const at1 = new Set(GK.map(gk => JSON.stringify(C.compose(gk, 1).master)));
+    ok(at1.size > 20, "only " + at1.size + " distinct masters across " + GK.length +
+       " genres at one seed — the stream is not genre-salted");
+    // and deterministic: a seed is a record, master included
+    for (const gk of ["beatles", "techno", "dub"])
+      ok(JSON.stringify(C.compose(gk, 9).master) === JSON.stringify(C.compose(gk, 9).master),
+         gk + ": the master is not a function of (genre, seed)");
+  }
+
+  // (c) THE GUEST — the rate, the floor, the affinity and the restraint — and
+  // (f) in the same pass, because both are census questions over every box of
+  // every composed song and two sweeps of that is two sweeps.
+  //
+  // (f) SECTIONAL EFFECTS ARE SECTIONAL: the other half of "apply them
+  // globally". Now that the bus is dressed, a per-box chain is reserved for the
+  // section that genuinely departs — the bridge underwater, the breakdown, the
+  // pedal under a solo — and nothing else in the plan gets one. Only the
+  // DRESSED boxes are checked in detail; the legality of every chip on every
+  // other box is what the loader in (a) already proved, twice per song.
+  {
+    const ZEROED = ["acid", "newwave", "vaporwave", "eurythmics", "trap", "house",
+                    "garage", "dnb", "disco", "dub", "techno"];
+    const SECTIONAL = new Set(["bridge", "breakdown", "solo"]);
+    let boxes = 0, withGuest = 0, twoGuest = 0, threeGuest = 0, dressed = 0;
+    const per = {}, distinct = [], twoRoles = new Set();
+    for (const gk of GK) {
+      const G = GENRES[gk], fam = G.family, ownFx = (G.fx || []).length;
+      // WHO THIS HOST MAY CALL: the family's guest ballot plus its solo cast.
+      // Anything else in a composed stack means a uniform draw crept back in,
+      // which is how a techno track ended up with plainchant over it.
+      const allowed = new Set([...(C.GUEST_LEAN[fam] || C.GUEST_LEAN.kernel),
+                               ...(C.SOLO_LEAN[fam] || C.SOLO_LEAN.kernel)]);
+      per[gk] = [0, 0];
+      for (const s of seeds) {
+        const song = C.compose(gk, s), names = new Set();
+        for (const b of song.song) {
+          boxes++; per[gk][1]++;
+          const gs = b.stack.slice(1);
+          if (gs.length) { withGuest++; per[gk][0]++; }
+          if (gs.length >= 2) { twoGuest++; twoRoles.add(b.role); }
+          if (gs.length >= 3) threeGuest++;
+          for (const e of gs) {
+            names.add(e.g);
+            // ON THE BALLOT and not the host itself. `allowed` is the family's
+            // guest ballot plus its solo cast, and the ballots are held to
+            // LAYERABLE structurally below — so this one check covers the
+            // affinity law and the stackability law at once. Anything else in
+            // a composed stack means a uniform draw crept back in, which is
+            // how a techno track ended up with plainchant over it.
+            ok(e.g !== gk && allowed.has(e.g), gk + "/" + s + ": stacked " + e.g +
+               ", which is not on the " + fam + " ballot — the guest is being " +
+               "drawn at random again");
+            // and it must have something to play: an empty slot list on a
+            // layer is a guest who was booked and never turned up
+            ok(Array.isArray(e.slots) && e.slots.length,
+               gk + "/" + s + ": " + e.g + " is stacked with nothing to play");
+          }
+          // ...and the box's own effects chain, where the section added to it
+          if (b.fx.length > ownFx) {
+            dressed++;
+            ok(SECTIONAL.has(b.role), gk + "/" + s + ": a sectional effect landed " +
+               "on a " + b.role + " — per-box fx are for the section that departs, " +
+               "and everything global belongs on the master now");
+            ok(b.fx.length <= NF.MAX_FX && new Set(b.fx).size === b.fx.length &&
+               b.fx.every(k => NF.FX[k]),
+               gk + "/" + s + ": a bad effects chain — " + JSON.stringify(b.fx));
+          }
+        }
+        distinct.push(names.size);
+      }
+    }
+    const fxShare = dressed / boxes;
+    console.log("  sectional fx on " + (100 * fxShare).toFixed(1) + "% of boxes (" +
+                dressed + "/" + boxes + "), three roles only");
+    ok(fxShare > 0.04 && fxShare < 0.15, (100 * fxShare).toFixed(1) + "% of boxes carry " +
+       "a sectional effect — reserved means a handful, and a handful means it happens");
+    const rate = withGuest / boxes;
+    console.log("  guest rate " + (100 * rate).toFixed(1) + "% of boxes (" +
+                withGuest + "/" + boxes + "), " + twoGuest + " boxes with two");
+    // THE BAND THIS STAGE DEFENDS: a third. Below a quarter and the complaint
+    // is unfixed; above 40% and every other section has a stranger on it,
+    // which is the mush the restraint rules exist to prevent.
+    ok(rate >= 0.25 && rate <= 0.40, "the guest rate is " + (100 * rate).toFixed(1) +
+       "% — outside the 25–40% band this stage defends");
+    // NO GENRE AT ZERO, and the eleven that used to be are named so the
+    // regression cannot come back quietly as "the average is fine"
+    for (const gk of GK) {
+      const [g, b] = per[gk];
+      ok(g > 0, gk + ": never once hosts a guest");
+      ok(g / b >= 0.15, gk + ": only " + (100 * g / b).toFixed(0) + "% of its boxes " +
+         "carry a guest — every genre must be able to host one");
+    }
+    for (const gk of ZEROED)
+      ok(per[gk][0] > 0, gk + ": still at zero — it was one of the eleven");
+    // RESTRAINT. Never three, and two only where a chorus can carry it: the
+    // singer plus the colour that arrives for the last one.
+    ok(threeGuest === 0, threeGuest + " boxes stack three guests — that is mush");
+    ok([...twoRoles].every(r2 => r2 === "chorus"),
+       "two guests landed outside a chorus: " + [...twoRoles].join(","));
+    // ...and a song has a CAST, not a shuffle: the guest comes back, which is
+    // the whole musical point of drawing them once
+    const mean = distinct.reduce((a, b) => a + b, 0) / distinct.length;
+    ok(mean < 3.2, "a composed song calls on " + mean.toFixed(2) + " different " +
+       "guest genres on average — that is a shuffle, not an arrangement");
+    ok(Math.max(...distinct) <= 5, "one song called " + Math.max(...distinct) +
+       " different guests");
+    // THE BALLOTS THEMSELVES: every family votes, every vote is stackable, and
+    // no vote carries a prog (§23h proves the same law on the composed output;
+    // this catches a bad ballot entry that the dice have not reached yet)
+    for (const [fam] of FAMILIES) {
+      const b = C.GUEST_LEAN[fam];
+      ok(Array.isArray(b) && b.length >= 2, fam + ": no usable GUEST_LEAN ballot");
+      for (const w of b || []) {
+        ok(C.LAYERABLE.includes(w), fam + ": votes for " + w + ", which is not stackable");
+        ok(!GENRES[w].prog, fam + ": votes for " + w + ", which carries a prog");
+      }
+    }
+  }
+
+  // (d) THE GUEST IS AUDIBLE, on the real render path. A stacked genre that
+  // contributes no events is a config change, and this suite exists because
+  // three of those shipped green.
+  {
+    let checked = 0;
+    for (const gk of GK) {
+      for (const s of seeds.slice(0, 4)) {
+        const song = C.compose(gk, s);
+        for (const b of song.song) {
+          if (b.stack.length < 2) continue;
+          const ev = D.sectionEvents(b, song.slots).ev;
+          const mine = ev.filter(e => e.layer);
+          ok(mine.length > 0, gk + "/" + s + " (" + b.role + "): " +
+             b.stack.slice(1).map(e => e.g).join("+") + " is stacked and plays nothing");
+          // ...and it is a SECOND voice, not a replacement: the host is still
+          // playing under it wherever the section did not deliberately strip
+          // the authority (the solo break, which is the one place it does)
+          if (b.stack[0].slots.length)
+            ok(ev.some(e => !e.layer && e.kind === "line"),
+               gk + "/" + s + " (" + b.role + "): the guest silenced the host");
+          checked++;
+          break;                                    // one box per song is enough
+        }
+      }
+    }
+    ok(checked >= 150, "only " + checked + " guested sections were rendered");
+    // THE CAST IS TWO NAMES, and they are two: the peak's arrival is only an
+    // arrival if it has not already been on the record.
+    for (const gk of GK) for (const s of seeds.slice(0, 10)) {
+      const c = C.guestCast(GENRES[gk], gk, C.rng(s * 7919 + 13));
+      ok(c && c.a !== gk && c.b !== gk, gk + ": cast itself as its own guest");
+      ok(c && c.a !== c.b, gk + ": drew the same guest twice — the peak brings " +
+         "nobody new");
+    }
+  }
+
+  // (e) THE BEATLES TEST IN A REAL COMPOSED SONG. §40 proves the mechanism on a
+  // hand-built box; the ask was that the arranger actually writes one — "a
+  // Beatles song where only the drums remain, but the solo plays" — so this
+  // goes looking for it in compose("beatles", …) and renders what it finds.
+  {
+    let found = 0, proved = 0;
+    for (const s of seeds) {
+      const song = C.compose("beatles", s);
+      for (const b of song.song) {
+        if (b.cue !== "solobreak") continue;
+        found++;
+        const out = D.sectionEvents(b, song.slots), ev = out.ev;
+        const hits = ev.filter(e => e.kind === "hit");
+        const line = ev.filter(e => e.kind === "line");
+        const bass = ev.filter(e => e.kind === "bass");
+        ok(hits.length > 0, "beatles/" + s + ": the solo break has no drums");
+        ok(bass.length === 0, "beatles/" + s + ": the bass plays under the break");
+        ok(line.length > 0, "beatles/" + s + ": nobody takes the solo");
+        ok(line.every(e => e.layer), "beatles/" + s + ": " +
+           line.filter(e => !e.layer).length + " notes came from the host — it was " +
+           "supposed to have stopped");
+        // the drums are the HOST's kit, which is what makes it a Beatles song
+        // with somebody else's solo over it rather than two records at once.
+        // MEASURED EXCEPT THE LAST BAR, and that is a finding rather than a
+        // convenience: a composed solo section carries an `outro` fill, and a
+        // fill speaks a wider vocabulary than the genre's bar — beatles/1 ends
+        // on a crash, which is a lane its kit does not otherwise own. §40's
+        // hand-built box has no ending, which is why it can ask for all of them.
+        const own = new Set(Object.keys(GENRES.beatles.kit));
+        const bs = 16 / out.g.rate, body = (out.bars - 1) * bs;
+        const inBody = hits.filter(e => e.t < body);
+        ok(inBody.length > 0 && inBody.every(e => own.has(e.d)),
+           "beatles/" + s + ": the drums under the break are not the host's kit (" +
+           [...new Set(inBody.filter(e => !own.has(e.d)).map(e => e.d))].join(",") + ")");
+        ok(new Set(inBody.map(e => e.d)).size > 1,
+           "beatles/" + s + ": the break is one drum lane, not a kit");
+        proved++;
+        break;
+      }
+    }
+    ok(found >= 8, "only " + found + " of " + seeds.length + " Beatles songs contain " +
+       "a solo break — the arranger has stopped writing them");
+    ok(proved === found, "a composed solo break did not render as one");
+  }
+
 }
 
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +

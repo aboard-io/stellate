@@ -70,6 +70,41 @@
                 drop: 0.85, breakdown: 0.3, bridge: 0.45, solo: 0.7, outro: 0.25 };
     return words.map((w, i) => (i === peak ? 1 : (V[w] == null ? 0.5 : V[w])));
   }
+  // ...and the arc is what SIZE means. The curve above already knew that a
+  // bridge is smaller than a chorus, and then spent that knowledge on exactly
+  // one bit — `peak` — so every other section came out at the same dynamic and
+  // the record had no shape between its fade-in and its fade-out. This turns
+  // the whole curve into the box's `env`, which is the field that already means
+  // "level over the section" (kernel.js SHAPES for why it is that field and not
+  // a new one).
+  //
+  // It reads the NEXT section as well as this one, because a dynamic is
+  // relative: a section pointed at something bigger crescendos into it, and one
+  // coming down off the peak diminuendos away. That is the difference between a
+  // song with an arrangement and a playlist of loops at the same level.
+  //
+  // Only where build() left `env` alone: the intro's fade up, the prechorus's
+  // fade in and the outro's fade out are GESTURES the roles own, and a cold
+  // open's flatness is the point of a cold open.
+  // ORDER MATTERS, and the first line is why: a chorus is big because it is a
+  // chorus, not because of what follows it. Testing "am I coming down?" first
+  // put a diminuendo on every chorus in the table — the arrival fading away
+  // from itself — because a verse does follow it.
+  //
+  // A section that is merely smaller gets `soft` and not a curve, on purpose:
+  // the breathing INSIDE a quiet verse is the performance layer's job (the
+  // genre's stress/phrase/touch), and the section's job is to be smaller than
+  // the chorus. Two curves fighting over the same notes is how you get a mix
+  // where nothing is anywhere.
+  const dynOf = a => {
+    if (!a || a.x == null) return null;
+    const x = a.x, nx = a.next == null ? x : a.next;
+    if (x >= 0.8) return "big";                               // the arrival sits up
+    if (nx - x >= 0.15) return x <= 0.4 ? "cresc" : "lift";   // pointed at something bigger
+    if (x - nx >= 0.25) return "dim";                         // coming down off it
+    if (x <= 0.55) return "soft";                             // and the small parts are small
+    return "arch";                                            // everything else breathes
+  };
   const PLAN_OF = {
     acid: "dance", vaporwave: "dance", newwave: "dance",
     rock: "song", blues: "song", sludge: "song", simple: "song",
@@ -92,6 +127,13 @@
     reggae: "song", ska: "song", bossa: "song", countrypop: "song",
     synthpop: "song", shoegaze: "song", citypop: "song", punk: "song",
     afrobeat: "arc", ambient: "arc",
+    // THE FUNCTION GENRES arrange as ARCS, every one of them, and it is not a
+    // shrug. A part on its own has no verse and no chorus — there is nothing
+    // for it to be the chorus OF — so what is left is one shape with a peak,
+    // which is what an unaccompanied line is. (They are written to be STACKED;
+    // a solo composing its own record is the degenerate case, and the plan
+    // should say so rather than pretend it is a pop song.)
+    solo: "arc", vocal: "arc", backing: "arc", riff: "arc", pad: "arc",
   };
   // Where a genre wants to sit, in bpm. The tempo control tops out at 160 and
   // bottoms at 70, and a composer that leaves everything at 126 has not arranged
@@ -108,7 +150,12 @@
                 disco: 118, funk: 100, motown: 122, rnb: 72, gospel: 76,
                 reggae: 76, dub: 74, ska: 156, afrobeat: 108, bossa: 132,
                 countrypop: 120, synthpop: 118, shoegaze: 104, citypop: 108,
-                punk: 160, ambient: 70, techno: 132 };
+                punk: 160, ambient: 70, techno: 132,
+                // the parts, at the tempo the part itself implies: a solo is
+                // played over an up record, a singer is slower than the band
+                // behind them, a riff is a mid-tempo thing and a pad has
+                // nowhere to be
+                solo: 128, vocal: 96, backing: 84, riff: 112, pad: 74 };
 
   // ---- the random source ---------------------------------------------------
   // Seeded, so a seed is a song. mulberry32 — small, well-distributed, and the
@@ -293,6 +340,9 @@
     soul:   ["bassin", "bassin", "bassin", "stabs", "stabs", "drumbass", "hit", "count", "padin"],
     groove: ["bassin", "bassin", "stabs", "stabs", "count", "drums", "hit", "solo", "drumbass"],
     roots:  ["count", "count", "solo", "solo", "cold", "hit", "bassin", "swell", "stabs"],
+    // a part has no rhythm section to walk in on: every vote here is about the
+    // sound arriving, which is all a lone line can do
+    parts:  ["solo", "solo", "solo", "fade", "fade", "padin", "swell", "cold", "stabs"],
   };
   // A DRUM-SHAPED OPENING NEEDS DRUMS. On a kitless genre each one degrades to
   // the nearest kind that is about the sound instead of the kit — and bassin
@@ -397,6 +447,8 @@
     soul:   ["fill", "fill", "tomfill", "roll", "break", "doubles", "crash", "hush", "tomfill"],
     groove: ["break", "break", "fill", "hush", "tomfill", "cut", "roll", "crash", "tail"],
     roots:  ["fill", "tomfill", "roll", "crash", "break", "tail", "hush", "fill", "cut"],
+    // and it has no kit to end on either — a part stops, or it rings out
+    parts:  ["tail", "tail", "tail", "hush", "hush", "cut", "cut", "tail", "hush"],
   };
   // A DRUM-SHAPED ENDING NEEDS DRUMS — the mirror of INTRO_NOKIT. On a kitless
   // genre every fill degrades to the two endings that are about the sound
@@ -429,6 +481,64 @@
   };
   const kitOf = (S, G) => pick(S.out, KIT_LEAN[G.family] || KIT_LEAN.kernel);
 
+  // ---- WHO PLAYS THE SOLO --------------------------------------------------
+  // "What is a Beatles song without a couple of solos." Until the FUNCTION
+  // genres existed (genres.js, the `parts` family) the arranger could not
+  // answer that, because a solo section was the host genre playing its own
+  // line a bit louder — the same instruments, the same parts, a level chip.
+  // A solo is a PART somebody else is playing, and now it is one: the section
+  // stacks a `solo`/`vocal`/`riff`/`pad`/`backing` layer, which inherits the
+  // host's key, harmony, tempo and groove (the layer law) and contributes
+  // nothing but its own line.
+  //
+  // WHO, per family, and it is the producer's question rather than a random
+  // draw: a band's solo is a guitar, a soul record's is the singer, the club
+  // genres put a topline over the floor, the drift genres do not really solo
+  // at all — a wash surfaces. Weighted like every other ballot in this file,
+  // and drawn on the genre-salted drum stream so two genres at one seed do not
+  // both call the same part.
+  const SOLO_LEAN = {
+    kernel: ["solo", "solo", "vocal", "riff"],
+    // the choral genres have a CANTOR, not a soloist, and their answer to it
+    // is another voice
+    vox:    ["vocal", "vocal", "vocal", "backing"],
+    club:   ["vocal", "vocal", "solo", "riff", "pad"],
+    soul:   ["vocal", "vocal", "vocal", "solo", "backing"],
+    groove: ["solo", "solo", "vocal", "riff"],
+    band:   ["solo", "solo", "solo", "solo", "vocal"],
+    studio: ["solo", "solo", "solo", "vocal", "backing"],
+    drift:  ["pad", "pad", "vocal", "solo"],
+    roots:  ["solo", "solo", "solo", "vocal", "riff"],
+    // A FUNCTION GENRE HAS NOBODY TO CALL. It already IS the part, and a solo
+    // over a solo is two soloists — so the ballot is deliberately empty and
+    // every caller below is guarded on `length`. Empty is a DECISION here, the
+    // same way `null` is one in the dynamics table.
+    parts:  [],
+  };
+  const castOf = G => SOLO_LEAN[G.family] || SOLO_LEAN.kernel;
+  // ...MINUS THE ONE PART A SOLO SECTION CANNOT BE. Backing vocals BACK
+  // something, and a solo section is precisely the place where the thing they
+  // would be backing has stopped playing. It is filtered at this call site
+  // rather than kept off the ballot, because the chorus — which is where a
+  // backing part belongs — wants it.
+  const soloCast = G => castOf(G).filter(w => w !== "backing");
+  // WHICH PHRASE the part is handed. A singer gets the topline — the melody the
+  // composer wrote to be sung, with its motif, its breath and its one climax
+  // (phrase("topline") below) — and the instrumental parts get the material
+  // their own name describes. Nothing else in the file knows this mapping, so
+  // it lives beside the ballot rather than at each call site.
+  // the five FUNCTION genres by name, because two questions below need to know
+  // whether a stacked genre is a PART (it plays its own material) or a style
+  // stacked as colour (it accompanies)
+  const PARTS5 = ["solo", "vocal", "backing", "riff", "pad"];
+  const partSlot = (who, S) => (who === "vocal" || who === "backing" ? S.topline
+    : who === "riff" ? S.riff : who === "pad" ? S.pad : S.climb);
+  const sings = who => who === "vocal" || who === "backing";
+  // The three kit operators that write a LEVEL onto every lane rather than
+  // rearranging which lanes fire — the only ones whose dynamics survive the
+  // melody being taken away. See the solo break below for why that matters.
+  const BREAK_KIT = ["accents", "accents", "crescendo", "loud"];
+
   function build(role, G, gk, r, S, a) {
     const kit = Object.keys(G.kit || {}).length > 0;   // does this genre have drums at all
     const bars = G.bars;
@@ -436,6 +546,18 @@
     const b = skeleton(ALIAS[role] || role, G, gk);
     if (ALIAS[role]) b.cue = role;                      // the honest name, kept for the UX phase
     const layer = (g2, slots) => b.stack.push({ g: g2, slots });
+    // THE GUEST, PLACED. The cast was drawn once for the whole song (guestCast
+    // above); this is the per-section coin that decides whether they are on
+    // this one. Drawn on the song's own guest stream so the placement policy
+    // can change without moving a single drum or phrase decision, and drawn
+    // UNCONDITIONALLY — a p of 1 still spends its number, because a stream
+    // whose position depends on which branch was taken is a stream that
+    // reshuffles the whole record every time a probability is edited.
+    const guest = (p, slots, who) => {
+      const g2 = who || (S.guest && S.guest.a);
+      const yes = chance(S.gst, p);
+      if (g2 && yes) layer(g2, slots);
+    };
     // A genre with named progressions deals a DIFFERENT one per role — the
     // verse and the chorus finally disagree about harmony. The key is a name
     // into NuGenres.PROGS; it rides the save as data (the loader carries
@@ -468,6 +590,11 @@
       // that makes verse 2 not verse 1.
       if (kit && chance(r, 0.4)) b.kit = kitOf(S, G);
       if (chance(r, 0.3)) b.outro = fillOf(S, G, kit);
+      // A PAD GENRE UNDER A VERSE, now and then — and it is the pad PHRASE
+      // whoever the guest is, because a verse's guest is a bed. The singer who
+      // guests here is holding an "ooh" behind the line, not taking the tune
+      // off it; that happens in the chorus, which is where it belongs.
+      guest(0.22, [S.pad]);
     } else if (role === "prechorus") {
       // THE LIFT. Everything here points forward: the answer phrase (not the
       // hook — the hook is being saved), the kit filling in, a riser, a fade
@@ -496,6 +623,20 @@
       // line, which is a counter-hook, not a substitute.
       b.stack[0].slots = chance(r, 0.55) ? [S.topline, S.counter]
                                          : [S.topline, S.counter, S.hook];
+      // AND SOMEBODY SINGS IT. Where the family has a singer on its ballot, the
+      // topline moves OFF the band and onto a `vocal` layer, and the host keeps
+      // the parts — which is what a record is. The band still leads with the
+      // topline's own material where the layer is instrumental (a chorus is the
+      // hook, whoever is playing it); only a SINGER takes the tune away, because
+      // a chorus sung by the guitar player AND the singer in unison is one line
+      // twice. "The odd chorus" gets the soloist instead — the answer between
+      // the lines, which is the other thing that happens in a chorus.
+      const cast = castOf(G);
+      const who = cast.length && chance(r, 0.5) ? pick(S.out, cast) : null;
+      if (sings(who)) {
+        b.stack[0].slots = chance(r, 0.55) ? [S.counter] : [S.counter, S.hook];
+        layer(who, [S.topline]);
+      } else if (who) layer(who, [partSlot(who, S)]);
       // the arc decides the size: only the PEAK chorus goes forward, so the
       // last one is bigger than the first by construction, not by accident
       b.lvl = peak ? "fwd" : null; b.rev = "some";
@@ -509,10 +650,16 @@
       // its own phrase, which is what the stack was built for. At the peak it
       // is not offered, it is DUE — and sometimes the whole band goes up two:
       // the truck-driver modulation, the most recognizable radio gesture there is.
+      //
+      // WHO the guest is stopped being a uniform draw over LAYERABLE here: the
+      // pool is the family's own ballot and the name was chosen once for the
+      // record (guestCast). The peak gets the SECOND name — a colour that has
+      // not been heard yet, arriving in the last chorus, which is the oldest
+      // gesture in pop and the one place this file allows two guests in a box.
       if (peak) {
-        layer(pick(r, LAYERABLE), [S.counter]);
+        guest(1, [S.counter], S.guest && S.guest.b);
         if (chance(r, 0.4)) b.key = 2;
-      } else if (chance(r, 0.45)) layer(pick(r, LAYERABLE), [S.counter]);
+      } else guest(0.45, [S.counter]);
     } else if (role === "bridge") {
       b.stack[0].slots = chance(r, 0.5) ? [S.counter] : [S.counter, S.sparse];
       b.mode = pick(r, ["dorian", "phrygian", "harmonic", "mixo"]);
@@ -522,14 +669,25 @@
       if (kit) b.kit = pick(r, ["shift", "halftime", "swap", "onthree", "linear", "tomtime"]);
       b.mot = chance(r, 0.4) ? "close" : null;
       b.outro = fillOf(S, G, kit);
+      // THE BRIDGE THAT GOES UNDERWATER — the section that is genuinely
+      // somewhere else, which is the one place a per-box effect is a
+      // production decision rather than a wash. Everything global went to the
+      // master; this is what per-box fx are left holding.
+      dress(b, S, G, AWAY_FX, 0.55);
+      guest(0.3, [S.counter]);
     } else if (role === "breakdown") {
       b.stack[0].slots = [S.sparse];
       b.len = Math.max(2, Math.floor(bars / 2));
       b.lvl = "hush"; b.rev = "drown"; b.echo = "some";
       if (kit) b.kit = pick(r, ["nokick", "nodrums", "snareonly", "soft", "stickside", "h.half"]);
-      b.fx = [pick(r, ["sweep", "echo", "phaser"])];
+      addFx(b, pick(r, ["sweep", "echo", "phaser"]));
       b.mot = "rise"; b.env = "in";
       b.outro = pick(r, [fillOf(S, G, kit, LIFT), "cut"]);
+      // the breakdown is the OTHER genuinely sectional place, and it already
+      // had its one effect (the line above this block); what it did not have
+      // was the thing a breakdown is usually for — the floor drops out and one
+      // foreign voice is left holding the room
+      guest(0.45, [S.sparse]);
     } else if (role === "drop") {
       b.stack[0].slots = [S.riff, S.climb];
       b.lvl = "fwd";
@@ -548,13 +706,62 @@
         const [ap, ash] = chance(r, 0.55) ? ["cutoff", "open"] : ["level", "pump"];
         b.auto = [NF.autoShape(ap, ash, (b.len || bars) * 4 / G.rate)];
       }
+      // THE DROP IS WHERE A DANCE RECORD'S GUEST LIVES, and its absence here is
+      // the whole reason eleven genres never stacked: the dance plan has no
+      // chorus and no solo, so until this line acid, techno, house, garage,
+      // dnb, trap, disco, dub, vaporwave, newwave and eurythmics had no role
+      // that could call anybody. The peak drop is not a coin — a floor record's
+      // last drop is exactly where the topline arrives.
+      //
+      // A function genre plays its OWN material over the floor (a singer sings
+      // the topline, a pad pads); a style genre stacked as colour takes the
+      // counter-line, because it is accompanying rather than fronting.
+      {
+        const who = peak ? (S.guest && S.guest.b) : (S.guest && S.guest.a);
+        guest(peak ? 1 : 0.5, [PARTS5.includes(who) ? partSlot(who, S) : S.counter], who);
+      }
     } else if (role === "solo") {
       b.stack[0].slots = chance(r, 0.5) ? [S.climb] : [S.climb, S.riff];
       b.ops = [pick(r, ["rep3", "rep4", "wide"])];
       b.vox = { cut: "bright", res: "hot", emod: "mid", dec: "short" };
       b.lvl = "fwd"; b.echo = "touch";
+      // THE PEDAL THE SOLOIST STEPS ON — the third and last sectional effect.
+      // A solo is a different player with a different signal path, which is
+      // exactly the departure a per-box chain is for.
+      dress(b, S, G, SOLO_FX, 0.4);
       if (kit) b.kit = chance(r, 0.5) ? "busy" : kitOf(S, G);
       b.outro = fillOf(S, G, kit);
+      // SOMEBODY TAKES IT. The section's whole job is that a part arrives which
+      // was not there before, so the layer is not a coin — it is what the role
+      // means. (Only the function genres themselves have nobody to call.)
+      const cast = soloCast(G);
+      if (cast.length) {
+        const who = pick(S.out, cast);
+        layer(who, [partSlot(who, S)]);
+        // ...AND THE BAND GETS OUT OF THE WAY. "A Beatles song where only the
+        // drums remain, but the solo plays." Half the time, on a genre that
+        // has a kit: the authority's phrase comes off entirely, the bass stops,
+        // and what is left is the host's own drums under somebody else's line.
+        // It is expressible because a box with an empty authority slot list is
+        // already how the intro BEDS work — the kit and the bass are genre
+        // data, not phrase data — and the layer is already independent of it.
+        // `cue` carries the honest name the way it does for a prechorus.
+        if (kit && chance(r, 0.5)) {
+          b.stack[0].slots = [];
+          b.bassop = "nobass";
+          b.cue = "solobreak";
+          b.ops = [];                       // there is no host phrase left to operate on
+          // THE DRUMMER PLAYS UNDER IT, and the kit operator here is not
+          // decoration — it is load-bearing. The kit's velocity chain
+          // (kernel.js drums) falls through to the MELODY's velocity wherever a
+          // lane's cell is the bare 1, and the melody is precisely what this
+          // section just took away: measured, an unoperated kit plays a flat,
+          // accent-less 5 for the whole break. Every op on this ballot writes
+          // real levels onto every lane, so the break's drums carry their own
+          // dynamics instead of borrowing a line that is not playing.
+          b.kit = pick(S.out, BREAK_KIT);
+        }
+      }
     } else {                                            // outro
       b.stack[0].slots = chance(r, 0.6) ? [S.pad] : [S.pad, S.riff];
       b.env = "out"; b.rev = "wet"; b.mot = "close";
@@ -567,6 +774,11 @@
     // every box. A groove that changed per section would not be a groove, it
     // would be several drummers.
     b.groove = S.groove; b.swing = S.swing;
+    // THE ARC, SPENT. Where the role has not already claimed the field with a
+    // fade of its own, the section gets the dynamic its place in the song asks
+    // for — which is what makes the last chorus bigger than the first verse
+    // without either of them being told what a chorus or a verse is.
+    if (!b.env) b.env = dynOf(a);
     b.fx = b.fx.filter(Boolean);
     return b;
   }
@@ -575,7 +787,216 @@
   // but not its progression, so a prog-carrying layer would follow its own
   // chords against the box's — half the band in a different song. The gate
   // holds this list prog-free until the layer path learns to inherit prog.
-  const LAYERABLE = ["fugue", "counterpoint", "gregorian", "simple", "drone", "neoclassical"];
+  // ...and the FUNCTION genres belong here by construction: no kit, no bass, no
+  // prog, one part, written to be stacked. They are the reason the list stopped
+  // being "the six genres that happen to be safe" and became a category.
+  const LAYERABLE = ["fugue", "counterpoint", "gregorian", "simple", "drone", "neoclassical",
+                     "solo", "vocal", "backing", "riff", "pad"];
+
+  // ---- THE GUEST -----------------------------------------------------------
+  // "You have stopped adding elements from other genres into the randomly
+  // generated songs." Measured before this: 10.7% of boxes carried a second
+  // genre and ELEVEN genres never stacked at all — acid, newwave, vaporwave,
+  // eurythmics, trap, house, garage, dnb, disco, dub, techno. That list is not
+  // a coincidence and it is not eleven separate bugs: every one of them
+  // arranges on the DANCE plan, and the only two roles that ever called for a
+  // layer were `chorus` and `solo`, neither of which a dance plan has. A
+  // record with no chorus could not have a guest on it.
+  //
+  // Two things were wrong, and the second is the interesting one. Layering was
+  // reachable from too few roles, AND where it was reachable the guest was
+  // drawn UNIFORMLY from LAYERABLE — which is how a techno track ends up with
+  // plainchant over it. A guest is a producer's decision, so it is a ballot
+  // like every other decision in this file, and it leans on the FAMILY: the
+  // club genres call a topline or a pad over the floor, a soul record calls
+  // backing vocals, the studio records call the string quartet, the choral
+  // genres answer themselves with another choir.
+  const GUEST_LEAN = {
+    kernel: ["pad", "vocal", "riff", "counterpoint", "solo", "drone"],
+    // a choir's guest is another choir — the answering voice, the organ under
+    // it, the cantor over the top
+    vox:    ["gregorian", "counterpoint", "fugue", "drone", "vocal", "vocal"],
+    // the floor's guest is a LINE, because the floor already has everything
+    // else: a topline over it, a pad under it, an acid riff across it
+    club:   ["vocal", "vocal", "pad", "pad", "riff", "solo", "drone"],
+    // "and the horns come in" — plus the thing the census will never show you,
+    // which is three people singing behind the one who is singing
+    soul:   ["backing", "backing", "vocal", "riff", "solo", "pad"],
+    groove: ["vocal", "riff", "pad", "backing", "solo", "drone"],
+    band:   ["solo", "solo", "riff", "vocal", "backing", "simple"],
+    // the studio records are where a genuinely foreign element belongs: the
+    // string quartet on a pop single is `counterpoint`, and it is the most
+    // Beatles thing in the table
+    studio: ["backing", "vocal", "counterpoint", "pad", "solo", "neoclassical"],
+    drift:  ["pad", "pad", "drone", "gregorian", "vocal", "neoclassical"],
+    roots:  ["vocal", "backing", "solo", "riff", "neoclassical", "pad"],
+    // a part hosting a part: the pad under the solo, the second voice against
+    // the first. Not another style — two parts is an ensemble, a part plus a
+    // style is a backing track, and this genre IS the part.
+    parts:  ["pad", "drone", "backing", "counterpoint", "vocal", "simple"],
+  };
+  // A SONG HAS A GUEST, NOT A ROTATING CAST. Drawn ONCE, at the top, and used
+  // all record long — because the musical event is the string quartet COMING
+  // BACK, and a different foreign genre in every section is not an arrangement,
+  // it is a shuffle. Two names, not one: the primary is who is on the record,
+  // and the secondary is saved for the peak, where a colour arriving for the
+  // first time in the last chorus is the oldest trick in pop.
+  //
+  // A genre may not guest on itself (a `pad` record does not book a pad), and
+  // where the filter leaves one name the song has one guest, which is fine.
+  function guestCast(G, gk, rG) {
+    const pool = (GUEST_LEAN[G.family] || GUEST_LEAN.kernel).filter(w => w !== gk);
+    if (!pool.length) return null;
+    const a = pick(rG, pool);
+    const rest = pool.filter(w => w !== a);
+    return { a, b: rest.length ? pick(rG, rest) : a };
+  }
+
+  // ---- SECTIONAL FX --------------------------------------------------------
+  // "When you generate a song and there are global effects apply them globally
+  // not per module." The other half of that sentence is what per-box fx are
+  // FOR once the master exists: the section that genuinely departs. Three roles
+  // qualify and the other eight get nothing — the bridge that goes underwater,
+  // the breakdown (which already had one), and the pedal the soloist steps on.
+  // A phaser on every box is not a production decision, it is a wash.
+  const AWAY_FX = {                                  // the bridge leaves the room
+    kernel: ["phaser", "chorus", "sweep"],
+    vox:    ["chorus", "phaser", "sweep"],
+    club:   ["sweep", "phaser", "ringmod", "flanger"],
+    soul:   ["leslie", "phaser", "tremolo", "chorus"],
+    groove: ["echo", "phaser", "sweep", "flanger"],
+    band:   ["flanger", "phaser", "tremolo", "leslie"],
+    studio: ["leslie", "chorus", "phaser", "flanger"],
+    drift:  ["chorus", "sweep", "flanger", "echo"],
+    roots:  ["tremolo", "chorus", "leslie", "phaser"],
+    parts:  ["chorus", "echo", "phaser", "tremolo"],
+  };
+  const SOLO_FX = {                                  // and what the soloist steps on
+    kernel: ["echo", "wah"], vox: ["chorus", "echo"], club: ["fenv", "wah", "echo"],
+    soul:   ["wah", "leslie", "echo"], groove: ["echo", "wah", "phaser"],
+    band:   ["crunch", "wah", "echo"], studio: ["leslie", "echo", "chorus"],
+    drift:  ["echo", "chorus"], roots: ["tremolo", "echo"], parts: ["echo", "chorus"],
+  };
+  // ...and it is APPENDED, never assigned: a genre that carries `fx` on the
+  // anchor is carrying its own sound (sludge played clean is not sludge), so
+  // the section's departure joins that chain rather than deleting it — and
+  // stops at the registry's own MAX_FX rather than being sliced by the loader.
+  //
+  // WHICH THE BREAKDOWN WAS NOT DOING. It is the one section that already had
+  // an effect, and it wrote `b.fx = [one]` — deleting the anchor's chain, so a
+  // dub or techno breakdown was the only bar of the record where the genre's
+  // own sound came off. It goes through addFx now like everything else.
+  const addFx = (b, k) => {
+    if (b.fx.length < NF.MAX_FX && !b.fx.includes(k)) b.fx.push(k);
+  };
+  const dress = (b, S, G, table, p) => {
+    if (chance(S.dress, p)) addFx(b, pick(S.dress, table[G.family] || table.kernel));
+  };
+
+  // ---- THE MASTER BUS: dressing the whole record ---------------------------
+  // The composer used to hand back a song with `master` UNSET — every composed
+  // record in every genre landed on the same default chain (glue at −22/2.2,
+  // the brickwall at −1.5) because that is what absent means, and absent was
+  // all it ever said. A record is MASTERED, and which way is a fact about the
+  // genre: tape and glue on a soul record, a room on a choir, a ceiling on a
+  // club track, wow and flutter on vaporwave.
+  //
+  // BALLOTS, per family, exactly like the intro and fill leans, and read in
+  // fields.js MASTER's own order so the saved key order is the registry's. A
+  // `null` vote is the knob LEFT ALONE — which is how restraint is written
+  // here. Measured across the table at forty seeds: a mean of 4.5 globals move
+  // and the rest stay at the desk's defaults, because a master with every knob
+  // turned is not a master, it is a preset demo. Exactly one anchor asks for
+  // the whole desk (shoegaze, whose row below adds drive to a family that
+  // already spends space, width, tape, tilt, glue and ceiling) and that is the
+  // genre it should be.
+  //
+  // A BALLOT WITH NO NULL IN IT IS A PROMISE, and the gate reads it as one:
+  // soul always tapes, club always ceilings, drift and vox always carry a room,
+  // a band always drives the bus. Those are the four "family-appropriate"
+  // claims worth being held to; the rest is weather.
+  const MASTER_LEAN = {
+    // the zero of the table gets the desk it already had, said out loud
+    // the zero of the table gets the desk it already had, said out loud — plus
+    // a room, which is NOT decoration: `glue`/`open` ARE the stock chain under
+    // their own names (fields.js GLUEDFLT/CEILDFLT), so a row that could draw
+    // only those would resolve to exactly what absent resolves to, and the
+    // composer would be right back to shipping an unmastered record with a
+    // master key on it. Every row below therefore carries at least one ballot
+    // that always moves something; the gate checks that structurally.
+    kernel: { glue: ["glue", "glue", "soft"], space: ["touch", "touch", "room"],
+              ceiling: ["open", "open", "safe"] },
+    // voices in a building: the room IS the record, and nothing else is being
+    // done to them
+    vox:    { space: ["hall", "hall", "cavern", "room"], glue: ["soft", "soft", "glue"],
+              width: ["wide", "wide", "huge", null], tilt: [null, "clear", "warm", null],
+              ceiling: ["open", "open", "safe"] },
+    // the floor is LOUD, and loud is a ceiling rather than a fader. Almost no
+    // room — a club record's space is the club.
+    club:   { ceiling: ["loud", "loud", "louder", "safe"],
+              glue: ["pump", "pump", "tight", "squash"],
+              drive: ["hair", "warm", null, null], tilt: ["bright", "clear", null, "clear"],
+              width: ["wide", "wide", "huge", null], space: [null, null, "touch", null] },
+    soul:   { tape: ["tape", "tape", "warm", "worn"], glue: ["glue", "glue", "tight", "soft"],
+              tilt: ["warm", "warm", null, "clear"], space: ["room", "touch", null, "room"],
+              ceiling: ["safe", "safe", "open", "loud"] },
+    // a groove record is a SPACE record — the echo chamber is an instrument in
+    // every one of these traditions, and in dub it is the lead
+    groove: { space: ["room", "hall", "hall", "cavern"], glue: ["glue", "glue", "soft"],
+              tape: ["tape", "warm", null, "worn"], tilt: ["warm", "dark", null, "clear"],
+              ceiling: ["open", "safe", "safe"] },
+    band:   { drive: ["warm", "dirt", "warm", "hair"], glue: ["tight", "glue", "tight", "pump"],
+              ceiling: ["loud", "safe", "loud", "open"], tilt: ["clear", null, "bright", "warm"],
+              space: ["room", "room", "touch", null] },
+    // the clean end: a studio record is EDITED, not squashed, so the glue
+    // ballot deliberately excludes the two settings that pump
+    studio: { glue: ["soft", "glue", "soft", "tight"], tape: ["warm", "tape", null, "warm"],
+              tilt: ["clear", "bright", "clear", "warm"], width: ["wide", null, "wide", "huge"],
+              space: ["touch", "room", "room", null], ceiling: ["safe", "open", "safe"] },
+    drift:  { space: ["hall", "cavern", "hall", "cavern"], width: ["wide", "huge", "huge", "wide"],
+              tape: ["warm", "worn", null, "tape"], tilt: ["dark", "warm", "dark", null],
+              glue: ["soft", "soft", "glue"], ceiling: ["open", "open", "safe"] },
+    roots:  { tape: ["warm", "tape", "warm", "worn"], space: ["room", "room", "hall", "touch"],
+              glue: ["soft", "glue", "glue"], tilt: ["warm", null, "clear", "warm"],
+              ceiling: ["open", "safe", "safe"] },
+    // A LONE PART IS NOT A RECORD and must not be mastered like one: a room to
+    // stand in, the gentlest glue, and no ceiling work at all — there is one
+    // line here and nothing for a limiter to be fighting.
+    parts:  { space: ["room", "touch", "hall", "room"], glue: ["soft", "soft", "glue"],
+              tilt: [null, "clear", null, "warm"], ceiling: ["open", "open", "safe"] },
+  };
+  // THE HANDFUL WHOSE MASTER IS THE SOUND. Same shape as the family rows and
+  // read on top of them, key by key — the genres.js DYNAMICS/DYN_FAMILY split
+  // one tier down, for its reason: temperament is a fact about a cluster first
+  // and about the anchor second, and the exceptions are the ones that matter.
+  // Vaporwave is a tape being played back; dub is an echo chamber; sludge and
+  // death metal are the two ends of what a distorted bus sounds like.
+  const MASTER_GENRE = {
+    vaporwave: { tape: ["wow", "wow", "worn"], space: ["hall", "cavern"],
+                 tilt: ["dark", "dark", "warm"], ceiling: ["open"] },
+    dub:       { space: ["cavern", "cavern", "hall"], tape: ["worn", "tape"],
+                 tilt: ["dark", "warm"] },
+    shoegaze:  { width: ["huge", "huge", "wide"], space: ["cavern", "hall"],
+                 drive: ["warm", "dirt", "hair"] },
+    postrock:  { space: ["hall", "cavern", "hall"], ceiling: ["loud", "safe", "loud"] },
+    sludge:    { drive: ["crush", "dirt", "crush"], tilt: ["dark", "dark", "warm"],
+                 glue: ["squash", "pump", "tight"] },
+    deathmetal:{ drive: ["dirt", "crush"], ceiling: ["louder", "loud"],
+                 tilt: ["bright", "clear"] },
+    techno:    { ceiling: ["louder", "loud", "louder"], glue: ["pump", "squash", "pump"] },
+    gregorian: { space: ["cavern", "cavern", "hall"], width: ["huge", "wide"] },
+  };
+  function masterOf(G, gk, rM) {
+    const fam = MASTER_LEAN[G.family] || MASTER_LEAN.kernel, own = MASTER_GENRE[gk];
+    const out = {};
+    for (const f of NF.MASTER) {
+      const ballot = (own && own[f.key]) || fam[f.key];
+      if (!ballot) continue;
+      const v = pick(rM, ballot);
+      if (v != null) out[f.key] = v;
+    }
+    return Object.keys(out).length ? out : null;
+  }
 
   // ---- the whole song ------------------------------------------------------
   function compose(gk, seed) {
@@ -604,8 +1025,20 @@
                 // way at any fixed seed. Still pure, still a function of
                 // (gk, seed) — the same FNV-1a salt introSections uses.
                 out: rng(ihash(gk + "/drums/" + (seed == null ? 1 : seed))),
+                // ...and one each for the two decisions this stage added, on
+                // the same law and for the same reason. They are SEPARATE
+                // streams rather than one "arranging" stream because they are
+                // separate policies: retuning how often a bridge goes
+                // underwater must not re-cast the record's guest, and
+                // re-casting the guest must not move a single effect.
+                gst: rng(ihash(gk + "/guest/" + (seed == null ? 1 : seed))),
+                dress: rng(ihash(gk + "/dress/" + (seed == null ? 1 : seed))),
                 groove: kit ? pick(r, [null, "backbeat", "push", "laidback", "funk", "dub"]) : null,
                 swing: kit && chance(r, 0.3) ? pick(r, ["light", "swing", "shuffle"]) : null };
+    // WHO IS ON THE RECORD, decided once, before a section exists — see
+    // guestCast: the musical event is the guest coming BACK, and a cast drawn
+    // per section is a shuffle rather than an arrangement.
+    S.guest = guestCast(G, gk, S.gst);
     // NO SILENT DEFAULTS. Every genre must carry a plan and a tempo — the old
     // `|| "song"` / `|| 120` fallbacks meant a new genre arranged like pop at
     // 120 and every gate passed. The coverage gate in test/unit/nukernel.test.js
@@ -617,7 +1050,8 @@
     const song = [...introSections(G, gk, r, S,
                                    rng(ihash(gk + "/" + (seed == null ? 1 : seed)))),
                   ...plan.slice(1).map((role, i) =>
-                    build(role, G, gk, r, S, { x: xs[i + 1], peak: xs[i + 1] === 1 }))];
+                    build(role, G, gk, r, S,
+                          { x: xs[i + 1], next: xs[i + 2], peak: xs[i + 1] === 1 }))];
     // NO SECTION RESTATES ITS NEIGHBOUR. Two drops in a row (the dance plan
     // has them on purpose) must be two different bars of music, not one bar
     // twice with two labels — so a repeated role is FORCED apart with an
@@ -629,12 +1063,17 @@
       b2.ops = [...(b2.ops || []), add];
     }
     return { v: NS.VERSION, slots, song,
+             // AND THE RECORD IS MASTERED. Its own genre-salted stream, like
+             // every other ballot here — a song-level decision drawn before any
+             // section could have moved the position.
+             master: masterOf(G, gk, rng(ihash(gk + "/master/" + (seed == null ? 1 : seed)))),
              bpm: Math.max(70, Math.min(160, BPM[gk] + Math.floor(r() * 9) - 4)),
              vol: 80 };
   }
 
-  const api = { compose, ROLES, BEDS, PLANS, PLAN_OF, BPM, ALIAS, arcOf, rng, phrase,
-                INTRO_LEAN, INTRO_NOKIT, introEdge };
+  const api = { compose, ROLES, BEDS, PLANS, PLAN_OF, BPM, ALIAS, arcOf, dynOf, rng, phrase,
+                INTRO_LEAN, INTRO_NOKIT, introEdge, SOLO_LEAN, LAYERABLE, partSlot, PARTS5,
+                GUEST_LEAN, guestCast, AWAY_FX, SOLO_FX, MASTER_LEAN, MASTER_GENRE, masterOf };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuCompose = api;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -255,10 +255,6 @@ fader($("vol"), 80);
 }
 
 /* ---------- desktop + reset ---------- */
-// the SONG page's (?) — the same .btn.hint/.edhint pattern the editor head
-// established (editor.js exports the three-line wiring); the copy it toggles
-// used to be a four-line lecture printed above the rack on every visit
-hintKey("songhelp", "songhint");
 $("savefile").addEventListener("click", saveFile);
 $("loadfile").addEventListener("click", () => $("loadinput").click());
 $("loadinput").addEventListener("change", e => {

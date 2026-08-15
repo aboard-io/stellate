@@ -24,7 +24,8 @@
   "use strict";
   const K = (typeof module !== "undefined" && module.exports)
     ? require("./kernel.js") : root.NuKernel;
-  const { rotate, reverse, transpose, invert, complement, excerpt, only, drop, fill, del } = K;
+  const { rotate, reverse, transpose, invert, complement, excerpt, only, drop, fill, del,
+          split, spread } = K;
 
   // The blues scale — minor pentatonic plus the flat five. The ♭5 is a passing
   // tone, not a chord tone, and it is the whole reason `scale` had to become a
@@ -119,6 +120,29 @@
   // every operator: pattern in, pattern out, nothing mutated.
   const offbeats = every => p =>
     ({ ...p, gate: p.gate.map((_, i) => (i % every === every / 2 ? 1 : 0)) });
+
+  // THE BREATH — a gate MASK, and it is its own total operator for exactly the
+  // reason the skank is: no operator in the palette can SAY "the singer stops
+  // here". drop and del are periodic, rotate and reverse permute, and every one
+  // of them is a function of the gates the phrase happens to carry. A breath is
+  // an ABSOLUTE window in the bar, it is in the same place every bar, and it
+  // must survive being handed a phrase that gated straight through it — so it
+  // is an AND with the phrase's own rhythm rather than a rewrite of it. The
+  // singer keeps their tune and loses only the air they need.
+  //
+  // Total, like every operator here: if the mask would silence the bar outright
+  // the downbeat comes back, because "pattern in, valid pattern out" has no
+  // exception for a phrase that happens to live in the gaps.
+  const breath = mask => p => {
+    const gate = p.gate.map((g, i) => (mask[i % mask.length] ? g : 0));
+    if (!gate.some(Boolean)) gate[0] = 1;
+    return { ...p, gate };
+  };
+  // Two four-beat phrases with air after each: the shape of a sung line, and
+  // the same shape compose.js `rhythm` forces onto a topline. Here it is a
+  // GENRE fact rather than a composed one, so the vocal breathes whatever
+  // phrase it is handed — including a hand-drawn one.
+  const SUNG = [1,1,1,1, 1,1,0,0, 1,1,1,1, 0,0,0,0];
 
   // ---- the seed phrase (16 steps) -----------------------------------------
   const DEFAULT = {
@@ -1393,6 +1417,216 @@
       word: (v, s) => (v === 0 && s % 2 ? [del(2)] : []),
       fx: ["sweep"],
     },
+
+    // ---- THE FUNCTION GENRES ---------------------------------------------
+    // A genre whose identity is a ROLE and not a style. "What is a Beatles song
+    // without a couple of solos" — and until now there was no way to say it: a
+    // solo was a section where the host genre played its own line louder. Every
+    // other entry in this table answers "what music is this"; these five answer
+    // "what is this part DOING", and the answer is the same whatever it is
+    // stacked on.
+    //
+    // WHY THEY ARE GENRES AND NOT A SIXTH FIELD, which is the same argument
+    // every other type here had to make. A part is already a genre-shaped
+    // thing: it has an instrument, a register, an articulation, a phrase-length
+    // cap, a hand, an alphabet and an operator word — that is the whole of what
+    // a genre is minus the kit and the bass, and both of those are exactly what
+    // the stack already drops from a layer (ui/derive.js). A `solo:true` flag
+    // on a box would have to re-invent all nine. Being genres also means they
+    // stack, mix, save and appear in the palette with no new machinery
+    // anywhere: a person can drag a vocal onto a techno box because the box
+    // already knows how to hold a second genre.
+    //
+    // THE LAW THEY LIVE UNDER is the layer law, which was already written: a
+    // stacked genre inherits the authority's harmony, roots, prog, key, mode,
+    // rate and swing, and contributes only its pitched voices. So a function
+    // genre carries NO prog, NO roots, NO kit and NO bass — nothing that would
+    // fight the host — and declares `harmony: "modal"` for the one case where
+    // it is the authority itself (a solo on its own is a line over a drone of
+    // one chord, which is what an unaccompanied solo is).
+    //
+    // TWO REGISTER FACTS, both consequences of the layer path rather than
+    // choices: a layer renders at `L.reg(v) + 1`, an octave above its standalone
+    // self, so `reg` is written for the LAYER case (where these live) and the
+    // standalone octave is the one that gives; and PARTS adds its own lean on
+    // top (lead +12, riff −12), so the numbers below look one octave low.
+
+    // SOLO. A lead line that rides whatever it is stacked on. Four bars that
+    // GO SOMEWHERE — subdivide, fill in, subdivide again, take it up — because
+    // a solo that plays the same bar four times is a riff. `anchor` is the
+    // phrasing rule that makes it fit over a host it has never met: a note the
+    // player SITS on has to be a chord tone, and everything shorter passes
+    // exactly as written, which is what a lead player does over changes.
+    //
+    // THE ALPHABET IS THE HOUSE PENTATONIC and not the blues scale, which was
+    // tried first and measured badly for a reason worth writing down: a lead
+    // line is MONOPHONIC, so the only simultaneity it has is the hair of
+    // overlap the hand's micro-timing leaves between consecutive notes, and
+    // over that vanishing denominator the ♭5 landing against the 4 read as the
+    // second-clashiest genre in the table (1.78% against a 1.5% bar). The
+    // dissonance census is measuring a legato join as a sonority there — see
+    // the report — but the pentatonic is the honest default regardless: it is
+    // what the rest of the table reads, so a solo and its host share one
+    // alphabet by construction, which is the §9e law.
+    solo: {
+      label: "Solo", rate: 1, bars: 8, voices: 1,
+      instr: "overdrive_guitar",
+      entry: () => 0, reg: () => -1, realize: () => "line",
+      part: ["lead"],
+      kit: {}, nobass: true, harmony: "modal",
+      swing: 0.16,       // the sixteenths push; nobody solos straight
+      // PICKED, NOT SUNG, and it is the axis that separates a solo from the
+      // singer standing next to it: staccato and dense against legato and
+      // breathing. It is also what makes the two measurably different music
+      // rather than two labels on one line — a lead break is individual
+      // articulated notes at speed, which is a fact about the stream and not
+      // about the sample it is played on.
+      artic: "staccato", anchor: 3, maxHold: 4,
+      // A RAMP THAT NEVER TURNS AROUND LEAVES THE INSTRUMENT, and a solo is
+      // the one part built to be handed the `climb` phrase — measured, the
+      // default clamp of seven let a rock solo top out at MIDI 108, two
+      // octaves over an overdrive guitar's own ceiling. Three rungs and back
+      // down is a lick; seven and up is a siren.
+      incClamp: 3, incMode: "reverse",
+      intro: "solo",                   // the one genre for which this is a tautology
+      tone: { wave: "sawtooth", cut: 3000, q: 1.6, atk: .004, rel: .8, gain: .30, verb: .34 },
+      words: ["the break: subdivide, fill in, subdivide again, take it up"],
+      // FOUR BARS THAT GO SOMEWHERE. The whole word is about DENSITY climbing:
+      // a solo that plays the phrase as written for a bar is not soloing, it is
+      // doubling whoever wrote it. Measured against `simple` — the other lone
+      // pentatonic line in the table — the two sat 0.030 apart on the confusion
+      // metric with the floor at 0.030; the density arc and the articulation
+      // put them at 0.057, and both of those are the difference a listener
+      // would name first.
+      word: (v, s) => [[split(2)], [only("gate", fill(2))], [split(3)],
+                       [split(4), transpose(2)]][s % 4],
+    },
+
+    // VOCAL. A sung topline, and the whole of what makes it one is WHERE IT
+    // STOPS. Three things no instrumental line does, and all three are measured
+    // on the rendered stream in §40 rather than asserted here:
+    //   it BREATHES  — an absolute window in the bar, twice, whatever rhythm it
+    //                  was handed (`breath`). Measured over the composer's own
+    //                  toplines as the share of the section spent in a silence
+    //                  of at least a beat: 15%, against ZERO for the solo, zero
+    //                  for `simple` and zero for a band playing the same phrase.
+    //                  Nothing else in the table stops.
+    //   it does not LEAP — spread(0.5) halves every degree's distance from the
+    //                  centre without moving a note off the alphabet, so the
+    //                  contour it was handed survives and the reach does not.
+    //                  Mean interval 3.8 semitones against the solo's 5.1 and
+    //                  the Beatles' 11.3; 29% of its moves are leaps wider than
+    //                  a third, against the solo's 45% and the band's 73%.
+    //   it HOLDS     — legato, capped at three steps, so the cap makes a REST
+    //                  rather than a longer note. The `breathe` pipe is the belt
+    //                  to that brace: the last note of every bar stops short of
+    //                  the bar line even where the phrase gated straight through.
+    //
+    // HOW CONVINCING THIS IS: it is a melody with a voice on it and the
+    // phrasing of a singer, which is a real thing. It is not a SUNG melody —
+    // there are no words, no consonants and no vibrato, and the sampled choir
+    // does not slur between pitches the way a voice does. Read the report.
+    vocal: {
+      // RATE 0.5 — a sung phrase is TWO BARS of the band's time, not one. It is
+      // the plainest difference between a topline and an instrumental line and
+      // it costs nothing where the genre actually lives, because a layer takes
+      // the authority's rate (the layer law): this is the tempo of a vocal
+      // standing on its own. Measured, it is also most of what separates the
+      // singer from `simple` on the confusion metric — 0.032 to 0.051.
+      label: "Vocal", rate: 0.5, bars: 8, voices: 1,
+      instr: "solo_vox",
+      entry: () => 0, reg: () => -1, realize: () => "line",
+      part: ["lead"],
+      kit: {}, nobass: true, harmony: "modal",
+      artic: "legato", maxHold: 3, anchor: 2,
+      incClamp: 2, incMode: "reverse",   // a singer's range is two rungs, not seven
+      intro: "solo",
+      pipes: [{ id: "breathe" }],
+      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .03, rel: 1.1, gain: .28, verb: .40 },
+      words: ["the topline: two phrases and two breaths"],
+      word: () => [spread(0.5), breath(SUNG)],
+    },
+
+    // BACKING VOCALS. The other half of a vocal arrangement, and it is not a
+    // second melody — it is the SAME line in harmony. Written as the harmonize
+    // pipe at probability 1 rather than as a second voice carrying transpose,
+    // for the reason PIPES.harmonize exists at all: transpose(2) is parallel in
+    // the ALPHABET and clashes with the chord, while the pipe locks its
+    // interval to whatever is actually sounding. Slow (rate 0.5), because a
+    // backing part holds while the lead moves.
+    //
+    // THIRDS, NOT SIXTHS, and the census is why. The mode this genre reads
+    // contains a ♭6, the sixth-walk snaps it up to the fifth eleven semitones
+    // away, and eleven semitones IS a major seventh — measured, backing in
+    // sixths was the clashiest genre in the whole table at 7.91%, nearly double
+    // blues. In thirds every degree of the mode resolves to a third, a fourth
+    // or a fifth and the number is zero. Two singers in thirds is also just
+    // what a backing part is.
+    backing: {
+      label: "Backing vocals", rate: 0.5, bars: 4, voices: 1,
+      instr: "ahh_choir",
+      entry: () => 0, reg: () => -1, realize: () => "line",
+      part: ["counter"],
+      kit: {}, nobass: true, harmony: "modal",
+      scale: DIATONIC,                 // a choir sings the mode, not the pentatonic
+      artic: "legato", maxHold: 4, anchor: 2,
+      incClamp: 2, incMode: "reverse",
+      intro: "swell",
+      pipes: [{ id: "harmonize", p: 1 }],
+      tone: { wave: "triangle", cut: 2000, q: 0.8, atk: .06, rel: 1.6, gain: .24, verb: .55 },
+      words: ["the stack: the line, and a third over it"],
+      word: () => [breath(SUNG), drop(3)],
+    },
+
+    // RIFF. The part that ANSWERS, and answering is a TWO-BAR shape: the figure
+    // on the offbeats, then the phrase's own rhythm coming back at it a step
+    // under. `only("gate", offbeats(4))` is the figure — an absolute grid rather
+    // than the phrase's own, so it lands between the downbeats instead of
+    // doubling them — and the bar after it is deliberately NOT that, because a
+    // riff whose every bar is the same absolute grid has stopped reading the
+    // phrase at all: hand it any tune and it plays the identical four notes.
+    // Low, short (the two-step hold is what makes it a stab rather than a pad),
+    // and it does not develop — a riff that develops is a solo.
+    riff: {
+      label: "Riff", rate: 1, bars: 2, voices: 1,
+      instr: "palm_muted_guitar",
+      entry: () => 0, reg: () => 0, realize: () => "line",
+      part: ["riff"],
+      kit: {}, nobass: true, harmony: "modal",
+      artic: "staccato", maxHold: 2, anchor: 2,
+      incClamp: 2, incMode: "reverse",   // a riff that walks away is not a riff
+      intro: "cold",                   // a riff does not fade in
+      tone: { wave: "sawtooth", cut: 1600, q: 1.8, atk: .003, rel: .35, gain: .30, verb: .12 },
+      words: ["the figure on the offbeats, then the answer a step under"],
+      word: (v, s) => (s % 2 ? [drop(3), transpose(-1)]
+                             : [only("gate", offbeats(4))]),
+    },
+
+    // PAD. A wash, and the reason it is worth a genre of its own is the one
+    // thing the pad path already does for free: it voices THE SOUNDING CHORD,
+    // whatever the host's progression is, one voicing a bar, voice-led. Stacked
+    // under anything with a prog it is a string section reading the chart. On
+    // its own it is eight bars of one chord, which is honest — a pad alone is
+    // not a piece of music, it is a pad.
+    pad: {
+      label: "Pad", rate: 0.5, bars: 8, voices: 1,
+      instr: "warm_pad",
+      entry: () => 0, reg: () => -1, realize: () => "pad",
+      part: ["pad"],
+      kit: {}, nobass: true, harmony: "modal",
+      artic: "tie",
+      // NO `intro` ANCHOR, deliberately, and it is the one place in the table
+      // where leaving the field off is the decision rather than the default.
+      // "The pad fades up" is the `parts` family's own lean and every other
+      // family that owns a wash says it too — declaring it here as well means
+      // the anchor coin (compose.js introSections, 0.55) is being asked to
+      // choose between padin and padin. Measured: `pad` opened identically at
+      // all eight seeds, which is precisely the failure the intro vocabulary
+      // was rewritten to end.
+      tone: { wave: "triangle", cut: 1600, q: 0.7, atk: .4, rel: 2.6, gain: .22, verb: .78 },
+      words: ["the chord, held, one voicing a bar"],
+      word: () => [],
+    },
   };
 
   // THE ARRANGEMENT'S COLUMN HEADINGS, one per lane. `p` says "Ghost perc"
@@ -1423,12 +1657,119 @@
     ["studio", ["beatles", "steely", "toto", "eurythmics", "synthpop", "citypop"]],
     ["drift",  ["ambient", "drone", "vaporwave", "shoegaze", "postrock", "neoclassical"]],
     ["roots",  ["countrypop", "tango"]],
+    // ...and the one cluster that is not a tradition at all: the FUNCTION
+    // genres, which are parts rather than styles. They sit last because that
+    // is how they are used — you pick the music first and the part second.
+    ["parts",  ["solo", "vocal", "backing", "riff", "pad"]],
   ];
   for (const [fam, keys] of FAMILIES)
     for (const k of keys) GENRES[k].family = fam;
 
+  // ---- DYNAMICS — how much PLAYER each genre has in it ---------------------
+  // The three fields kernel.js's performance layer reads: `stress` (how hard
+  // the metre is felt), `phrase` (how much arch the line gets, agogic peak
+  // included) and `touch` (the hand — seeded micro-timing in steps and
+  // micro-level in velocity units, redrawn every bar). Absent is byte-identical
+  // to the day before they existed, which is why the machines can simply say
+  // nothing and stay exactly as they were.
+  //
+  // WRITTEN AS A TABLE AND STAMPED, exactly like `family` two lines above, and
+  // for the same reason: family membership and dynamic temperament are both
+  // facts about a whole CLUSTER first and about the individual anchor second.
+  // A default per family plus the handful of anchors that genuinely disagree is
+  // the honest shape; one hand-written triple per anchor would be one place per
+  // anchor for it to rot, and the ones that matter are the exceptions.
+  const DYN_FAMILY = {
+    kernel: { stress: 0.35, phrase: 0.55, touch: { t: 0.05,  v: 0.7 } },
+    // choral music is nearly all phrase and hardly any metre — the barline is a
+    // scribe's convenience, the shape of the line is the music
+    vox:    { stress: 0.22, phrase: 0.8,  touch: { t: 0.045, v: 0.55 } },
+    // there is deliberately NO `club` row: the floor is a machine by
+    // construction and its seven members disagree about it individually — four
+    // are machines outright and three are the sampled corners where a hand is
+    // in the loop — so every one of them is named below. A club genre added
+    // without an entry resolves to nothing and renders flat forever, which is
+    // the failure this table exists to prevent; §39 fails on it by name rather
+    // than letting a default paper over it.
+    soul:   { stress: 0.5,  phrase: 0.45, touch: { t: 0.07,  v: 1 } },
+    groove: { stress: 0.42, phrase: 0.4,  touch: { t: 0.06,  v: 0.85 } },
+    band:   { stress: 0.5,  phrase: 0.35, touch: { t: 0.05,  v: 0.95 } },
+    // a studio record is played by people and then edited by people
+    studio: { stress: 0.35, phrase: 0.4,  touch: { t: 0.035, v: 0.6 } },
+    drift:  { stress: 0.12, phrase: 0.6,  touch: { t: 0.05,  v: 0.6 } },
+    roots:  { stress: 0.45, phrase: 0.5,  touch: { t: 0.06,  v: 0.8 } },
+    // A FUNCTION GENRE IS THE PLAYER, and that is nearly a definition: the part
+    // that is stacked ON something is the one somebody is playing by hand over
+    // a track. High phrase, real touch, and only as much metre as a soloist
+    // leans on — the host is keeping time, that is what the host is for.
+    parts:  { stress: 0.3,  phrase: 0.75, touch: { t: 0.06,  v: 1 } },
+  };
+  const DYNAMICS = {
+    // THE MACHINES, and null means it: a 303 sequence and a four-on-the-floor
+    // kick do not breathe, and making them breathe would be a costume. These
+    // four render byte-for-byte what they rendered before the layer existed,
+    // and the unit gate holds them to it by fingerprint.
+    techno: null, acid: null, house: null, trap: null,
+    // ...and the sampled corners of the same floor, which are hands: an MPC
+    // with the quantize off, a garage shuffle, breaks cut by an editor rather
+    // than played (tight time, real level moves).
+    boombap: { stress: 0.35, phrase: 0.25, touch: { t: 0.06,  v: 0.9 } },
+    garage:  { stress: 0.3,  phrase: 0.2,  touch: { t: 0.04,  v: 0.7 } },
+    dnb:     { stress: 0.2,  phrase: 0.15, touch: { t: 0.015, v: 0.5 } },
+    // plainchant has no metre AT ALL — the whole point — so the stress term is
+    // nearly off and every drop of shape comes from the line
+    gregorian: { stress: 0.06, phrase: 0.9, touch: { t: 0.06, v: 0.5 } },
+    // a fugue is the tight end of the human range: four voices only stay
+    // legible if they agree about where the beat is
+    fugue:     { stress: 0.3,  phrase: 0.7,  touch: { t: 0.025, v: 0.4 } },
+    // the drone refuses to move, and its `tie` is exactly the material the
+    // timing hand must not touch (kernel.js perform, `ontime`) — level and the
+    // long peak are the only dynamics a held note has
+    drone:     { stress: 0.05, phrase: 0.35, touch: { t: 0,    v: 0.5 } },
+    ambient:   { stress: 0.06, phrase: 0.65, touch: { t: 0.05, v: 0.5 } },
+    // vaporwave is a RECORD being played back, not a band being recorded: a
+    // little wow on the tape, almost no metre of its own
+    vaporwave: { stress: 0.1,  phrase: 0.4,  touch: { t: 0.045, v: 0.4 } },
+    // funk is the loosest thing in the table and it is loose ON PURPOSE — the
+    // sixteenths are where the groove lives and no two of them are equal
+    funk:      { stress: 0.6,  phrase: 0.4,  touch: { t: 0.085, v: 1.2 } },
+    // punk plays tight and hits everything: the time barely moves, the level
+    // moves a lot. Death metal is the same trade taken further.
+    punk:      { stress: 0.55, phrase: 0.25, touch: { t: 0.03,  v: 1.1 } },
+    deathmetal:{ stress: 0.6,  phrase: 0.2,  touch: { t: 0.02,  v: 1 } },
+    blues:     { stress: 0.5,  phrase: 0.5,  touch: { t: 0.08,  v: 1.1 } },
+    // rubato is the tango's signature — the line stretches and the band waits
+    tango:     { stress: 0.4,  phrase: 0.75, touch: { t: 0.075, v: 0.9 } },
+    // a piano played by a person is the case the whole layer was written for
+    neoclassical: { stress: 0.3, phrase: 0.8, touch: { t: 0.06, v: 0.8 } },
+    // drum machines with singers over them: the machine is the floor, the
+    // performance is on top, so metre stays modest and the level moves
+    jodeci:    { stress: 0.3,  phrase: 0.5,  touch: { t: 0.04,  v: 0.8 } },
+    rnb:       { stress: 0.35, phrase: 0.55, touch: { t: 0.05,  v: 0.85 } },
+    eurythmics:{ stress: 0.25, phrase: 0.35, touch: { t: 0.02,  v: 0.55 } },
+    synthpop:  { stress: 0.25, phrase: 0.35, touch: { t: 0.02,  v: 0.5 } },
+    // THE THREE FUNCTION GENRES THAT DISAGREE WITH THEIR FAMILY. A riff is
+    // metre — it is the part that is NOT expressive, that is its job. A pad has
+    // no metre and barely a hand (the chord path reads stress and touch and
+    // nothing else, kernel.js chordFeel), so what is left is level. And a
+    // singer is the most phrase and the least metre of anything in the table.
+    riff:      { stress: 0.6,  phrase: 0.15, touch: { t: 0.03,  v: 0.9 } },
+    pad:       { stress: 0.08, phrase: 0.4,  touch: { t: 0.02,  v: 0.6 } },
+    vocal:     { stress: 0.18, phrase: 0.9,  touch: { t: 0.07,  v: 0.9 } },
+  };
+  // NO SILENT DEFAULT (the compose.js law, one tier down): a genre resolves to
+  // its own row or to its family's, and `null` is a DECISION rather than an
+  // omission. Nothing here invents a fallback for a genre that resolves to
+  // neither — the gate names it instead.
+  for (const k of Object.keys(GENRES)) {
+    const d = Object.prototype.hasOwnProperty.call(DYNAMICS, k)
+      ? DYNAMICS[k] : DYN_FAMILY[GENRES[k].family];
+    if (!d) continue;
+    GENRES[k].stress = d.stress; GENRES[k].phrase = d.phrase; GENRES[k].touch = d.touch;
+  }
+
   const api = { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL, SCALES, SCALELABEL,
-                PROGS, FAMILIES };
+                PROGS, FAMILIES, DYNAMICS, DYN_FAMILY };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuGenres = api;
 })(typeof window !== "undefined" ? window : globalThis);
