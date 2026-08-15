@@ -162,8 +162,17 @@ const sig = () => JSON.stringify({ s: SONG, sl: SLOTS, bpm, f: FONT, lo: loopOnl
                                    m: MASTER });
 let adoptedSig = null, timer = null, rendering = false, dirty = false;
 // the short stage's duration budget, in seconds — WAV-FIRST's firstSegSec.
-// Two bars at the default tempo: big enough to loop as music, small enough
-// that a phone renders it before the user can reach the app switcher.
+// Two bars at the default tempo, which is NOT "big enough to loop as music"
+// however the first draft of this comment wished it were: Paul heard it
+// immediately — "every two Beatles measures has a complete and sudden pause at
+// the end" — because a 4 s tape of the song's HEAD, looping, is exactly that.
+// The short stage was designed when the carrier only played while hidden, and
+// a fragment beats silence in a pocket. Once the carrier became the audible
+// path (carrierFirst), a fragment became the music, and it is not the music.
+//
+// So the short tape survives ONLY as the hidden-state insurance it always was:
+// goCarrier refuses it, and the graph keeps the ear until the FULL song is
+// rendered. See shortIsInsurance below.
 const SHORT_SEC = 4;
 // WHEN THE CARRIER IS THE PATH, THE DEBOUNCE IS THE LATENCY OF THE INSTRUMENT.
 // 4 s of quiet is right for insurance nobody is listening to; it is absurd for
@@ -482,9 +491,16 @@ function swapNow() {
 // elAudible failure class). Verify means the reverse is also refused: a
 // play() the browser rejected plus a muted graph is a silent phone, and
 // "a dead primary route must never mean silence" is WAV-FIRST v3.1's law.
+// THE FRAGMENT NEVER TAKES THE EAR. A short tape is the song's first few bars
+// on loop; handing it the foreground turns a two-bar head into the whole
+// performance. It stays what it was built to be — the thing that is already in
+// hand if the page is hidden in the first seconds — and the live graph plays
+// until the full render lands, at which point the handoff is to the real song.
+const shortIsInsurance = () => st.stage !== "full";
 function goCarrier() {
   if (!el || carrying || !playing || st.state !== "ready" || !st.url) return false;
   if (!carrierFirst()) return false;
+  if (shortIsInsurance()) return false;
   syncEl();                                        // land on the phase the graph is at
   muteNow();
   el.muted = false;
