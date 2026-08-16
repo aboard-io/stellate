@@ -8033,6 +8033,278 @@ console.log("the Chess band plays again, and a voice announces itself only once"
   }
 }
 
+/* ------------------------------- 52. A GENRE YOU INVENTED IS A GENRE THE SONG
+                                       CAN PLAY
+   The LAB's kept candidates, all the way through: the RECIPE they are stored
+   as, the song that carries them, the schedule they render, the chronology they
+   sort into, and the CLI that writes one into the catalog by hand.
+
+   WHY A RECIPE AND NOT AN ANCHOR, restated here because it is what every check
+   below is really testing: half a genre is closures and JSON drops a function
+   without a word, so a saved candidate would come back as a genre with no
+   behaviour at all. What travels is the four facts it takes to MAKE it —
+   parents and weights, the bench seed, the presses per material field, and
+   whatever a person wrote instead — and nukernel/lab.js `rebuild` walks them
+   back. That is only true if the walk is deterministic and if the stride lives
+   in exactly one place, which is §52a.
+------------------------------------------------------------------------- */
+console.log("a genre you invented — the recipe, the song, the schedule, the atlas, the promotion");
+{
+  const LAB52 = require("../../nukernel/lab.js");
+  const NS52 = require("../../nukernel/song.js");
+  const P52 = require("../../nukernel/promote-genre.js");
+  const fs52 = require("fs");
+  const path52 = require("path");
+  const j52 = x => JSON.stringify(x);
+  // two parents from different families, so the cross is a real cross and the
+  // material rollers have something to disagree about
+  const REC = { label: "Sheffield 2031", parents: { house: 0.55, jazz: 0.45 }, seed: 7 };
+
+  /* --- 52a. the recipe rebuilds to the same genre, twice, and the stride is
+     one number. A kept genre that came back DIFFERENT on the next reload would
+     be the worst failure this feature can have: silent, and only in the fields
+     somebody had rolled. */
+  {
+    const a = LAB52.rebuild(REC), b = LAB52.rebuild(clone(REC));
+    ok(j52(a.candidate.kit) === j52(b.candidate.kit) &&
+       j52(a.candidate.roots) === j52(b.candidate.roots) &&
+       String(a.candidate.word) === String(b.candidate.word),
+       "the same recipe rebuilds to a different genre — a kept genre would not " +
+       "survive a reload");
+    ok(a.candidate.label === "Sheffield 2031",
+       "rebuild does not carry the coined label onto the candidate");
+    // the presses move the draft, and move it REPEATABLY
+    const p1 = LAB52.rebuild({ ...REC, rolls: { roots: 3 } });
+    const p2 = LAB52.rebuild({ ...REC, rolls: { roots: 3 } });
+    ok(j52(p1.candidate.roots) === j52(p2.candidate.roots),
+       "a pressed roll is not repeatable — (parents, seed, presses) is supposed " +
+       "to name a draft");
+    ok(LAB52.seedAt(7, 3) === 7 + 3 * LAB52.SEED_STRIDE,
+       "seedAt does not walk by SEED_STRIDE — the page and the loader would " +
+       "disagree about which draft a press names");
+    // a hand edit is never re-rolled, whatever the presses say
+    const mineKit = { k: [9,0,0,0, 0,0,0,0, 9,0,0,0, 0,0,0,0] };
+    const hand = LAB52.rebuild({ ...REC, rolls: { kit: 5 }, mine: { kit: mineKit } });
+    ok(j52(hand.candidate.kit) === j52(mineKit),
+       "the dice took back a field a person wrote — the roll key's whole " +
+       "contract is that they do not");
+  }
+
+  /* --- 52b. the song carries it: save -> load -> the same recipe, and the
+     box that names it is still naming it. */
+  const key52 = NS52.sessionKey(REC.label);
+  {
+    ok(NS52.isSessionKey(key52) && !GENRES[key52],
+       "the session key " + key52 + " collides with the catalog — the namespace " +
+       "is supposed to make that impossible");
+    ok(NS52.sessionKey(REC.label, { [key52]: 1 }) !== key52,
+       "two genres coined with the same name take the same key");
+    const box = Object.assign(NS52.emptyBox(), { stack: [{ g: key52, slots: [0] }] });
+    const raw = { v: NS52.VERSION, slots: [NS52.blank()], song: [box],
+                  genres: { [key52]: REC }, bpm: 126 };
+    const r = NS52.load(clone(raw));
+    ok(r.ok, "a song carrying an invented genre does not load: " + j52(r.errors[0]));
+    ok(r.ok && j52(r.song.genres[key52]) === j52(REC),
+       "the recipe did not survive the loader unchanged");
+    ok(r.ok && r.song.song[0].stack[0].g === key52,
+       "the box stopped naming its own genre on the way through");
+    // ...and the round trip: what the loader hands back is what it takes back
+    const again = NS52.load(clone(r.song));
+    ok(again.ok && j52(again.song.genres) === j52(r.song.genres),
+       "load(load(x)) is not load(x) — the save shape is not stable");
+
+    // THE REFUSALS. Each one is a law with a reason, so each one is checked.
+    const bad = (mut, why) => {
+      const x = clone(raw); mut(x);
+      const res = NS52.load(x);
+      ok(!res.ok, "the loader accepted " + why);
+    };
+    bad(x => { x.genres[key52].label = "Sheffield"; }, "a genre with no coined year");
+    bad(x => { x.genres[key52].parents = {}; }, "a genre with no parents");
+    bad(x => { x.genres[key52].parents = { house: 0 }; }, "a parent with no weight");
+    bad(x => { x.genres.house = REC; }, "a session entry keyed on a catalog anchor");
+    bad(x => { x.genres.sheffield2031 = REC; }, "a session entry outside the namespace");
+
+    // ...and the DEGRADE, which is the opposite policy on purpose: a box naming
+    // a genre the song does not carry plays as `simple` and SAYS SO, because
+    // refusing would lose the record to save the genre.
+    const orphan = clone(raw); delete orphan.genres;
+    const od = NS52.load(orphan);
+    ok(od.ok, "a song whose invented genre is missing refuses to load at all");
+    ok(od.ok && od.song.song[0].stack[0].g === NS52.FALLBACK_GENRE,
+       "the orphaned box did not fall back to " + NS52.FALLBACK_GENRE);
+    ok(od.notes.length === 1 && od.notes[0].got === key52 &&
+       od.notes[0].chose === NS52.FALLBACK_GENRE,
+       "the loader degraded quietly — 'report what you chose' is the whole rule");
+    // and a recipe whose PARENT left the catalog is dropped with a note rather
+    // than refused: a lineage is a claim about a table that grows and renames
+    const gone = clone(raw); gone.genres[key52].parents = { nosuchgenre: 1 };
+    const gd = NS52.load(gone);
+    ok(gd.ok && !gd.song.genres[key52] && gd.notes.length >= 1,
+       "a recipe with a vanished parent is not dropped with a note");
+    // the OLD law is untouched: an unknown CATALOG key still refuses
+    const unknown = clone(raw);
+    unknown.song[0].stack[0].g = "nosuchgenre"; delete unknown.genres;
+    ok(!NS52.load(unknown).ok,
+       "an unknown catalog genre stopped being an error — the degrade is only " +
+       "for the namespace");
+  }
+
+  /* --- 52c. it plays like any other genre. Not "it renders" — it renders the
+     SAME SCHEDULE the identical anchor renders under a catalog key, which is
+     the only way to say that nothing downstream treats it as a special case. */
+  {
+    const built = LAB52.rebuild(REC);
+    const cand = built.candidate;
+    ok(LAB52.ok(built.problems),
+       "the bench refuses its own rebuild: " +
+       built.problems.filter(p => p.level === "error").map(p => p.msg).join("; "));
+    // seat the same object twice — once under a session key, once under a
+    // catalog-shaped one — and render both through the kernel the scheduler
+    // calls. ui/derive.js genreOf is a single `GENRES[key]` index, so this is
+    // that lookup with the namespace on one side of it.
+    GENRES[key52] = cand;
+    GENRES.__catalog_twin__ = cand;
+    try {
+      for (const fn of ["render", "drums", "bass"]) {
+        const a = K[fn](DEFAULT, GENRES[key52], cand.bars);
+        const b = K[fn](DEFAULT, GENRES.__catalog_twin__, cand.bars);
+        ok(j52(a) === j52(b) && a.length,
+           "a session genre's " + fn + "() is not the catalog's — the one " +
+           "lookup path has grown a second branch");
+      }
+      // and it is a real genre, not a silent one
+      ok(K.render(DEFAULT, GENRES[key52], cand.bars).length > 0 &&
+         K.drums(DEFAULT, GENRES[key52], cand.bars).length > 0,
+         "the invented genre renders nothing — it would be a silent section");
+    } finally { delete GENRES[key52]; delete GENRES.__catalog_twin__; }
+  }
+
+  /* --- 52d. THE ATLAS. The genre menu is one chronological list and an
+     invented genre sorts into it by the year it coined. The sort itself is
+     ui/palette.js chronoGenres (a browser module); its LAW is a trailing year
+     on the label, which is what song.js gates and what is checked here. */
+  {
+    const year = s => { const m = /(\d{3,4})\s*$/.exec(s); return m ? +m[1] : null; };
+    ok(year(REC.label) === 2031,
+       "the coined label does not end in a year — it would fall into the " +
+       "yearless FUNCTION-genre bucket at the bottom of the menu");
+    const dated = Object.keys(GENRES).filter(k => year(GENRES[k].label) != null);
+    const merged = dated.concat([key52])
+      .sort((a, b) => (a === key52 ? 2031 : year(GENRES[a].label)) -
+                      (b === key52 ? 2031 : year(GENRES[b].label)) ||
+                      (a < b ? -1 : a > b ? 1 : 0));
+    const at = merged.indexOf(key52);
+    ok(at === merged.length - 1,
+       "a 2031 genre does not sort past every anchor in the table");
+    const before = year(GENRES[merged[at - 1]].label);
+    ok(before != null && before <= 2031,
+       "the merged chronology is not ordered around the invented genre");
+    // ...and one dated BEFORE the newest anchor lands inside the list, not at
+    // an end — a chronology that only ever appends is not a chronology
+    const mid = dated.concat(["__mid__"])
+      .sort((a, b) => (a === "__mid__" ? 1975 : year(GENRES[a].label)) -
+                      (b === "__mid__" ? 1975 : year(GENRES[b].label)));
+    const mi = mid.indexOf("__mid__");
+    ok(mi > 0 && mi < mid.length - 1,
+       "a genre coined at 1975 does not land between the anchors it belongs " +
+       "between");
+  }
+
+  /* --- 52e. PROMOTE, exercised against a COPY of the catalog and never the
+     catalog itself. The tool's own verify requires the spliced file and
+     compares the anchor that comes back out of it to the genre that went in;
+     this checks that the copy is byte-untouched except where it should be, and
+     that the refusals refuse. */
+  {
+    const dir = path52.join(__dirname, "..", "..", "nukernel");
+    const gsrc = path52.join(dir, "genres.js"), csrc = path52.join(dir, "compose.js");
+    // the copies live BESIDE the originals on purpose: genres.js and compose.js
+    // require their neighbours by relative path, so a copy in a temp directory
+    // resolves nothing and the splice could never be loaded back
+    const gcopy = path52.join(dir, "__promote_gate_genres.js");
+    const ccopy = path52.join(dir, "__promote_gate_compose.js");
+    const rfile = path52.join(dir, "__promote_gate_recipe.json");
+    const before = { g: fs52.readFileSync(gsrc, "utf8"), c: fs52.readFileSync(csrc, "utf8") };
+    fs52.writeFileSync(gcopy, before.g);
+    fs52.writeFileSync(ccopy, before.c);
+    fs52.writeFileSync(rfile, j52(REC));
+    const args = extra => ["--recipe", rfile, "--genres", gcopy, "--compose", ccopy]
+      .concat(extra);
+    try {
+      // the dry run: both spliced files are REQUIRED and their anchors compared
+      // to the bench's, so reaching here at all is the serialization proof
+      const dry = P52.run(args(["--key", "__gate_genre__"]));
+      ok(fs52.readFileSync(gcopy, "utf8") === before.g &&
+         fs52.readFileSync(ccopy, "utf8") === before.c,
+         "a dry run wrote to the file — --write is supposed to be the only writer");
+      ok(/__gate_genre__: \{/.test(dry.genres) && dry.compose.includes("__gate_genre__: "),
+         "the splice did not put the genre in both files");
+      ok(dry.fam === GENRES.house.family,
+         "the promoted anchor did not join its dominant parent's family");
+      ok(!/\n\s*family:/.test(dry.anchor) && !/\n\s*stress:/.test(dry.anchor),
+         "the anchor writes its own family/dynamics — both are STAMPED at load, " +
+         "and a second losing copy in the literal is exactly the rot the stamp " +
+         "exists to prevent");
+      ok(/parents: \{ house: 0.55, jazz: 0.45 \}/.test(dry.anchor),
+         "the lineage annotation is not written as the anchors write it");
+      ok(/\n\s*wants: \[\],/.test(dry.anchor), "the anchor carries no `wants` line");
+      ok(dry.anchor.split("\n").every(l => l.length <= 95),
+         "the promoted anchor runs past the widest line in genres.js");
+
+      // now WRITE it, and prove the copy still loads and still holds the genre
+      P52.run(args(["--key", "__gate_genre__", "--write"]));
+      const after = { g: fs52.readFileSync(gcopy, "utf8"), c: fs52.readFileSync(ccopy, "utf8") };
+      ok(after.g !== before.g && after.c !== before.c, "--write wrote nothing");
+      ok(before.g === fs52.readFileSync(gsrc, "utf8") &&
+         before.c === fs52.readFileSync(csrc, "utf8"),
+         "the real catalog was touched — the gate must only ever splice a copy");
+      delete require.cache[require.resolve(gcopy)];
+      delete require.cache[require.resolve(ccopy)];
+      const G2 = require(gcopy), C2 = require(ccopy);
+      const anchor = G2.GENRES.__gate_genre__;
+      ok(!!anchor, "the written copy does not hold the promoted genre");
+      ok(anchor && anchor.label === REC.label && anchor.family === dry.fam,
+         "the promoted anchor came back with the wrong name or family");
+      ok(anchor && typeof anchor.word === "function" &&
+         Array.isArray(anchor.word(0, 0)),
+         "the promoted `word` is not a closure the kernel can call — a rolled " +
+         "word is serialized from its TABLE, never from its toString");
+      ok(C2.BPM.__gate_genre__ === dry.bpm,
+         "the tempo row did not land — the composer would write a NaN tempo");
+      // THE ARTIFACT, not the literal: the anchor read back out of the file
+      // must play what the bench played
+      const cand = LAB52.rebuild(REC).candidate;
+      for (const fn of ["render", "drums", "bass"])
+        ok(j52(K[fn](DEFAULT, anchor, anchor.bars)) ===
+           j52(K[fn](DEFAULT, cand, cand.bars)),
+           "the promoted anchor's " + fn + "() is not the genre that was kept");
+      // every other anchor is untouched: a splice that reformatted its
+      // neighbours would be a splice nobody could review
+      ok(Object.keys(G2.GENRES).length === GK.length + 1,
+         "the splice changed the size of the table by something other than one");
+      for (const k of ["house", "jazz", "simple", "pad"])
+        ok(j52(K.render(DEFAULT, G2.GENRES[k], G2.GENRES[k].bars)) ===
+           j52(K.render(DEFAULT, GENRES[k], GENRES[k].bars)),
+           "promoting a genre changed what " + k + " plays");
+
+      // THE REFUSALS
+      const refuses = (extra, why) => {
+        let threw = false;
+        try { P52.run(args(extra)); } catch (e) { threw = true; }
+        ok(threw, "promote did not refuse " + why);
+      };
+      refuses(["--key", "house"], "a key the catalog already holds");
+      refuses(["--key", "not a key"], "a key that is not an identifier");
+      fs52.writeFileSync(rfile, j52({ ...REC, parents: { solo: 1 } }));
+      refuses(["--key", "__gate_two__"], "a FUNCTION genre as a parent");
+      fs52.writeFileSync(rfile, j52({ ...REC, label: "Chicago 1986" }));
+      refuses(["--key", "__gate_two__"], "a label the table already carries");
+    } finally {
+      for (const f of [gcopy, ccopy, rfile]) { try { fs52.unlinkSync(f); } catch (e) { /* never made */ } }
+    }
+  }
+}
 
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");

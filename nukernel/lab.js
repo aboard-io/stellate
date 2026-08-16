@@ -875,6 +875,15 @@ function roll(cand, field, seed, parents) {
 // without losing what a person has already written.
 const ROLL_ORDER = ["kit", "kitVel", "fill", "roots", "prog", "instr",
                     "bassGrid", "word", "words"];
+// …AND IT MUST NAME EVERY ROLLER. Both walks over the material — `rollAll` and
+// `rebuild` — iterate this list, so a roller nobody orders is a roller that
+// never runs: the field would come out of the bench empty and `validate` would
+// blame the person at the keyboard for not inventing it. This used to be
+// checked in ui/lab.js, which kept a copy of the order; the copy is gone and
+// the guard belongs beside the list it guards.
+for (const f of Object.keys(ROLLERS))
+  if (!ROLL_ORDER.includes(f))
+    throw new Error("lab: ROLL_ORDER does not name the roller \"" + f + "\"");
 function rollAll(syn, seed, opts) {
   opts = opts || {};
   const keep = new Set(opts.keep || []);       // fields a person has taken over
@@ -1268,6 +1277,51 @@ function bench(parentSpec, opts) {
            problems: validate(candidate), rolled: !opts.raw };
 }
 
+// ---------------------------------------------------------------------------
+// §6b. REBUILD — a genre from its RECIPE, which is the only form a kept genre
+// is ever stored in
+// ---------------------------------------------------------------------------
+// A candidate is half closures, so a kept genre CANNOT be saved as itself: the
+// thing a song carries is the four facts it takes to make it again — parents +
+// weights, the bench seed, how many times each material field was rolled, and
+// whatever a person wrote instead. This walks those back to the same anchor.
+//
+// THE STRIDE LIVES HERE, and that is the whole reason this function is in the
+// bench rather than in the page that presses the keys. A roll key walks its
+// field's seed one stride at a time; if the page held the stride and the loader
+// held another, a kept genre would come back as a DIFFERENT genre on the next
+// reload — silently, and only in the fields somebody had rolled. One number,
+// one place, three callers (the lab page's build, the song loader, promote).
+//
+// It is `bench()`'s walk with a seed per field instead of one for all, and the
+// per-field seed is exactly what the roll key means: a draft is named by
+// (parents, seed, presses) and stays reachable.
+const SEED_STRIDE = 1009;
+const seedAt = (seed, n) => (seed | 0) + (n | 0) * SEED_STRIDE;
+function rebuild(recipe, opts) {
+  opts = opts || {};
+  const seed = (recipe && recipe.seed) | 0;
+  const syn = synthesize(recipe.parents, { ...opts, seed });
+  const want = new Set(syn.invention.map(i => i.field));
+  const rolls = recipe.rolls || {}, mine = recipe.mine || {};
+  const cand = { ...syn.candidate };
+  for (const f of ROLL_ORDER) {
+    if (!want.has(f)) continue;
+    // a field a person took over is never re-rolled — the roll key's own
+    // contract, and the reason `mine` rides in the recipe beside the presses
+    if (Object.prototype.hasOwnProperty.call(mine, f)) { cand[f] = mine[f]; continue; }
+    const v = roll(cand, f, seedAt(seed, rolls[f]), syn.parents);
+    if (v == null) delete cand[f]; else cand[f] = v;
+  }
+  if (recipe.label) cand.label = recipe.label;
+  const ordered = {};
+  for (const f of ORDER) if (Object.prototype.hasOwnProperty.call(cand, f)) ordered[f] = cand[f];
+  for (const f of Object.keys(cand)) if (!(f in ordered)) ordered[f] = cand[f];
+  return { ...syn, seed, candidate: ordered, want,
+           novelty: novelty(ordered), names: names(syn, seed),
+           problems: validate(ordered), rolled: true };
+}
+
 // ---- reports ---------------------------------------------------------------
 const trunc = (s, n) => {
   s = String(s).replace(/\s+/g, " ");
@@ -1427,7 +1481,8 @@ function selfTest() {
 const api = { MATERIAL, CORE_MATERIAL, ORDER, ELSEWHERE, PALETTE,
               synthesize, inventionList, roll, rollAll, ROLLERS, targets,
               novelty, space, featuresOfCandidate, names, placeYear,
-              validate, ok, bench, printBench, printManifest, selfTest };
+              validate, ok, bench, rebuild, seedAt, SEED_STRIDE,
+              printBench, printManifest, selfTest };
 
 if (NODE && require.main === module) {
   const argv = process.argv.slice(2);

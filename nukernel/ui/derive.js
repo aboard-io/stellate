@@ -133,11 +133,28 @@ export const secsOf = (b, bpm) => {
   return boxBars(b) * (16 / g.rate) * (60 / bpm / 4);
 };
 export const mmss = t => Math.floor(t / 60) + ":" + String(Math.round(t % 60)).padStart(2, "0");
-export const stackLabel = sec => stackOf(sec).map(e => GENRES[e.g].label).join(" + ");
+// NAMES THE KEY IT CANNOT FIND rather than throwing on it. Every other reader
+// here indexes a genre it has already established is there; this one is called
+// from labels and chyrons that repaint on their own clock, and there is exactly
+// one window in which the table can be missing a key a box still names — the
+// LAB's audition genre, which is installed for as long as the candidate sounds
+// and deleted the instant it stops (ui/lab.js §5). A repaint landing inside
+// that window should print the key, not take the page down.
+export const stackLabel = sec =>
+  stackOf(sec).map(e => (GENRES[e.g] || { label: e.g }).label).join(" + ");
 
 // The genre a box actually renders with: its own definition, plus whatever the
 // box overrides. Mode and tempo are not pattern operators and not envelopes —
 // they are the third kind, a change to the GENRE the phrase is read through.
+//
+// ONE LOOKUP PATH, AND IT IS THIS ONE. A genre invented in the LAB and kept
+// into the song is INSTALLED IN `GENRES` under its own namespaced key
+// (`lab.<slug>` — song.js SESSION_NS, ui/state.js installs them before the song
+// publishes), so it is resolved right here, by the same index, on the same
+// line, as a genre that has been in the catalog for two years. That is
+// deliberate and it is the whole design: a session genre is not a special case
+// carried through the scheduler, the mixer, the pool and the bounce — it is a
+// genre. Nothing below this line knows the difference, and nothing should.
 export const genreOf = (sec, ent) => {
   const key = (ent && ent.g) || gid(sec);
   const g = GENRES[key];

@@ -60,6 +60,43 @@
   // the file is from somewhere this build cannot honestly play, so it errors.
   const FILTERED = { ops: true, fx: true };
 
+  // ---- THE SESSION NAMESPACE ------------------------------------------------
+  // A genre invented in the LAB gets a key of its own that the catalog can
+  // never hold: the prefix is the collision law, and it is a construction
+  // rather than a check — `sessionKey` still walks a suffix if two coined names
+  // reduce to the same slug, because two "Sheffield 1989"s in one song are a
+  // person's business, not a crash.
+  //
+  // A DOT, because it cannot occur in a catalog key (they are bare
+  // identifiers) and because it reads as an address rather than as decoration:
+  // `lab.sheffield1989` says where the genre came from every time it is
+  // printed in a save, a share URL or an error path.
+  const SESSION_NS = "lab.";
+  const isSessionKey = k => typeof k === "string" && k.indexOf(SESSION_NS) === 0;
+  // the slug: a coined name down to the letters and digits that survive being
+  // typed anywhere. `taken` is anything already spoken for — the catalog is
+  // checked here too even though the prefix makes it impossible, because the
+  // day someone adds a `lab.` anchor by hand is the day this is the only thing
+  // standing between them and a silently shadowed genre.
+  function sessionKey(label, taken) {
+    const has = k => Object.prototype.hasOwnProperty.call(GENRES, k) ||
+      (taken && (Array.isArray(taken) ? taken.indexOf(k) >= 0
+                                      : Object.prototype.hasOwnProperty.call(taken, k)));
+    const base = SESSION_NS +
+      (String(label || "").toLowerCase().replace(/[^a-z0-9]+/g, "") || "genre");
+    let k = base, n = 2;
+    while (has(k)) k = base + "_" + n++;
+    return k;
+  }
+  // the bench holds three parents at most (nukernel/ui/lab.js MAX_PARENTS) and
+  // a roll key is pressed by a finger, not a loop: both caps are here so a
+  // hand-written file cannot ask the loader to rebuild a genre from a thousand
+  // parents or walk a seed a billion strides on load.
+  const MAX_PARENTS = 3, MAX_ROLLS = 9999;
+  // what a box plays when the genre it names is gone — the same genre a new box
+  // is born with, so the degrade lands on the one anchor that is always there
+  const FALLBACK_GENRE = "simple";
+
   /* ---------- constructors ---------- */
   const z = () => new Array(16).fill(0);
   const blank = () => ({ deg: z(), oct: z(), vel: new Array(16).fill(5),
@@ -233,9 +270,16 @@
   function validateSong(raw) {
     const errors = [];
     const err = (path, got, want) => errors.push({ path, got, want });
+    // NOTES ARE NOT ERRORS. A note is something the loader CHOSE rather than
+    // refused — a session genre whose recipe is gone, played as `simple` — and
+    // it exists because "degrade honestly" means saying what you did, out loud,
+    // where the UI can print it. errors[0] still names the first refusal; a
+    // song with notes and no errors loaded, and is not what it was.
+    const notes = [];
+    const note = (path, got, chose, why) => notes.push({ path, got, chose, why });
     if (!raw || typeof raw !== "object") {
       err("", typeof raw, "a song object");
-      return { ok: false, song: null, errors };
+      return { ok: false, song: null, errors, notes };
     }
     const s = JSON.parse(JSON.stringify(raw));
     if (s.v !== VERSION) err("v", s.v, VERSION + " (run migrate first)");
@@ -282,6 +326,87 @@
       return Object.keys(o).length ? o : null;
     };
 
+    // ---- THE SONG'S OWN GENRES, read BEFORE the boxes because the boxes are
+    // allowed to point at them. A genre invented in the LAB lives in the SONG:
+    // it has to travel with the file or the song that uses it cannot be
+    // reopened, which is the one failure that would lose somebody's record.
+    //
+    // WHAT IS STORED IS THE RECIPE, NOT THE GENRE. An anchor is half closures
+    // (`entry`, `reg`, `realize`, `word`) and JSON drops a function silently, so
+    // a saved candidate would come back as a genre with no behaviour at all.
+    // The recipe is the four facts it takes to make it again — the parents and
+    // their weights, the bench seed, how many times each material field was
+    // rolled, and whatever a person wrote instead — and nukernel/lab.js
+    // `rebuild` walks them back to the same anchor, deterministically, on any
+    // machine. That is also what makes a shared song play the same genre: the
+    // DNA is literally the parents, which are in this table already.
+    //
+    // THE FILTER RULE, at the level it belongs: an entry whose PARENTS this
+    // build no longer holds is dropped with a note (a lineage is a claim about
+    // the catalog, and the catalog grows and renames), while an entry that is
+    // MALFORMED errors — a broken recipe means the file is from somewhere this
+    // build cannot honestly play. Absent (`null`) is not the same as `{}`:
+    // ui/state.js reads absent as "this producer knows nothing about session
+    // genres, keep the ones already installed" and an empty map as "this
+    // document states its set, and it is empty".
+    const okWeights = p => p && typeof p === "object" && !Array.isArray(p) &&
+      Object.keys(p).length >= 1 && Object.keys(p).length <= MAX_PARENTS &&
+      Object.values(p).every(w => Number.isFinite(w) && w > 0);
+    if (s.genres != null) {
+      if (typeof s.genres !== "object" || Array.isArray(s.genres)) {
+        err("genres", s.genres, "a map of session key -> recipe");
+        s.genres = null;
+      } else {
+        const clean = {};
+        for (const [k, r] of Object.entries(s.genres)) {
+          const gp = "genres." + k;
+          // THE NAMESPACE IS THE COLLISION LAW. A session key is prefixed, so
+          // it cannot shadow a catalog anchor by construction rather than by a
+          // check that has to be remembered — and the check is here anyway,
+          // because a hand-edited file is a file.
+          if (!isSessionKey(k)) { err(gp, k, "a key beginning \"" + SESSION_NS + "\""); continue; }
+          if (Object.prototype.hasOwnProperty.call(GENRES, k))
+            { err(gp, k, "a key the catalog does not already hold"); continue; }
+          if (!r || typeof r !== "object" || Array.isArray(r))
+            { err(gp, r, "a recipe object"); continue; }
+          // the label must END IN A YEAR: an invented genre coins a speculative
+          // place-year ("Lagos 2031"), and the year is what sorts it into the
+          // genre menu's one chronological list beside the catalog. A yearless
+          // label would drop it into the FUNCTION-genre bucket at the bottom,
+          // which is a lie about what it is.
+          if (typeof r.label !== "string" || !/\S/.test(r.label) || !/\d{3,4}\s*$/.test(r.label))
+            { err(gp + ".label", r.label, "a place-year label ending in a year"); continue; }
+          if (!okWeights(r.parents))
+            { err(gp + ".parents", r.parents, "1.." + MAX_PARENTS + " parents with positive weights"); continue; }
+          if (r.seed != null && !Number.isInteger(r.seed))
+            { err(gp + ".seed", r.seed, "an integer seed"); continue; }
+          const gone = Object.keys(r.parents).filter(p =>
+            !Object.prototype.hasOwnProperty.call(GENRES, p));
+          if (gone.length) {
+            note(gp, k, null, "its parent" + (gone.length > 1 ? "s " : " ") +
+                 gone.join(", ") + " left the catalog, so the bench cannot make it again");
+            continue;
+          }
+          const e = { label: r.label, parents: { ...r.parents }, seed: r.seed | 0 };
+          // the presses and the hand edits: both optional, both plain data.
+          // A press count that is not a count is dropped rather than refused —
+          // it moves a draft, it does not define the genre.
+          if (r.rolls && typeof r.rolls === "object" && !Array.isArray(r.rolls)) {
+            const n = {};
+            for (const [f, c] of Object.entries(r.rolls))
+              if (Number.isInteger(c) && c >= 0 && c <= MAX_ROLLS) n[f] = c;
+            if (Object.keys(n).length) e.rolls = n;
+          }
+          if (r.mine && typeof r.mine === "object" && !Array.isArray(r.mine) &&
+              Object.keys(r.mine).length) e.mine = r.mine;
+          clean[k] = e;
+        }
+        s.genres = clean;
+      }
+    } else s.genres = null;
+    const known = g => Object.prototype.hasOwnProperty.call(GENRES, g) ||
+      (s.genres && Object.prototype.hasOwnProperty.call(s.genres, g));
+
     if (!Array.isArray(s.song) || !s.song.length)
       err("song", typeof s.song, "at least one box");
     else s.song.forEach((b, bi) => {
@@ -292,7 +417,20 @@
         err(at + ".stack", b.stack, "a non-empty genre stack");
       } else b.stack.forEach((e, ei) => {
         const ep = at + ".stack[" + ei + "]";
-        if (!e || !Object.prototype.hasOwnProperty.call(GENRES, e.g))
+        // A SESSION KEY WITH NO RECIPE DEGRADES, IT DOES NOT REFUSE — and it
+        // says what it chose. A song can arrive here having lost its own genre
+        // set (a box pasted out of another file, a hand edit, a recipe whose
+        // parents left the catalog above), and refusing the whole song over one
+        // layer would lose the record to save the genre. Everything else keeps
+        // the old law: an unknown CATALOG key means the file is from a build
+        // this one cannot honestly play, and that still errors.
+        if (e && typeof e === "object" && isSessionKey(e.g) && !known(e.g)) {
+          note(ep + ".g", e.g, FALLBACK_GENRE,
+               "this song does not carry the recipe for it, so it plays as " +
+               GENRES[FALLBACK_GENRE].label);
+          e.g = FALLBACK_GENRE;
+        }
+        if (!e || !known(e.g))
           { err(ep + ".g", e && e.g, "a known genre"); return; }
         if (!Array.isArray(e.slots) ||
             !e.slots.every(i => Number.isInteger(i) && i >= 0 && i < NSLOTS))
@@ -550,13 +688,16 @@
     s.bpm = Number.isFinite(s.bpm) && s.bpm >= 70 && s.bpm <= 160 ? s.bpm : null;
     s.vol = Number.isFinite(s.vol) && s.vol >= 0 && s.vol <= 100 ? s.vol : null;
 
-    return { ok: !errors.length, song: errors.length ? null : s, errors };
+    return { ok: !errors.length, song: errors.length ? null : s, errors, notes };
   }
 
-  // the whole path in one call: any version in, {ok, song, errors} out
+  // the whole path in one call: any version in, {ok, song, errors, notes} out —
+  // errors are refusals, notes are what it CHOSE (a session genre it could not
+  // rebuild, played as `simple`), and a song can load with notes on it
   const load = raw => validateSong(migrate(raw));
 
   const api = { VERSION, FILTERED, blank, skeleton, emptyBox,
+                SESSION_NS, isSessionKey, sessionKey, MAX_PARENTS, FALLBACK_GENRE,
                 migrate, validateSong, load };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuSong = api;

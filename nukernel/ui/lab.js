@@ -32,8 +32,8 @@
 // its own: an audition is a scratch box in the ordinary SONG played by the
 // ordinary transport (see §5), because a second play path is a second sound.
 import { GENRES, loadLab, emptyBox } from "./deps.js";
-import { SONG, SLOTS, loopOnly, setLoopOnly, saveNow,
-         emit, on } from "./state.js";
+import { SONG, SLOTS, loopOnly, setLoopOnly, saveNow, GENRESET,
+         keepGenre, useBench, emit, on } from "./state.js";
 import { chronoGenres, eraOf } from "./palette.js";
 import { isBlank } from "./derive.js";
 import { buzz } from "./touch.js";
@@ -56,15 +56,13 @@ const MINE = new Map();          // material field -> what a person wrote instea
 let label = "";                  // the coined name, "" until one is picked
 let B = null;                    // the last build: { syn, cand, novelty, … }
 
-// THE ROLL ORDER IS A DEPENDENCY ORDER, and it is lab.js's own (`ROLL_ORDER`):
-// the fill reads the kit, kitVel reads the kit, the prog reads the roots, the
-// words read the word. It is copied rather than imported because rollAll() takes
-// ONE seed for every field and this page gives every field a seed of its own —
-// so the walk happens here. GUARDED below: a material field the bench learns to
-// roll that this list does not name throws at build time rather than silently
-// going unrolled.
-const ROLL_ORDER = ["kit", "kitVel", "fill", "roots", "prog", "instr",
-                    "bassGrid", "word", "words"];
+// (THE ROLL ORDER AND THE SEED STRIDE ARE THE BENCH'S, not this page's. They
+// were copied here while the per-field walk lived on the page; the walk is
+// `LAB.rebuild` now — §3 — because a kept genre is stored as its recipe and
+// REBUILT on load, and if the page held the stride and the loader held another,
+// a genre somebody kept would come back as a different genre on the next
+// reload. One number, one place, three callers: this page, the song loader and
+// nukernel/promote-genre.js.)
 // which material fields get a direct control rather than only a roll. The rule
 // is the brief's: the phrase editor already exists and is not rebuilt here, so
 // a control earns its place only where ONE tap is a real musical edit — a step
@@ -73,8 +71,24 @@ const LANEFIELDS = new Set(["kit", "fill"]);
 
 // a field's seed is the bench's, walked one stride per press of its roll key —
 // so a draft is named by (parents, seed, presses) and is reachable again
-const seedAt = n => seed + n * 1009;
+const seedAt = n => LAB.seedAt(seed, n);
 const fieldSeed = f => seedAt(NONCE.get(f) || 0);
+// THE RECIPE — the four facts a kept genre is stored as, and the same four this
+// page is holding at any moment: parents + weights, the bench seed, the presses
+// and the hand edits. Assembling it here rather than only at the keep is what
+// makes the page and the save the same object: what you are looking at IS what
+// would be written, and `LAB.rebuild` reads it either way.
+function recipeNow() {
+  const parents = {};
+  for (const k of PICK) parents[k] = W.get(k);
+  const rolls = {}, mine = {};
+  for (const [f, n] of NONCE) if (n) rolls[f] = n;
+  for (const [f, v] of MINE) mine[f] = v;
+  const r = { label, parents, seed };
+  if (Object.keys(rolls).length) r.rolls = rolls;
+  if (Object.keys(mine).length) r.mine = mine;
+  return r;
+}
 
 /* ------------------------------------------------------------- §2 the load */
 // The bench is ~123 KB of analysis tier (lab.js + its two oracles) and most
@@ -82,13 +96,17 @@ const fieldSeed = f => seedAt(NONCE.get(f) || 0);
 // on a phone, by the section scrolling into view on a desk, or by the first
 // pick. ui/deps.js loadLab() owns the actual import (it is the only module
 // allowed to read a global); this is just the one-shot.
-let loading = false;
-async function ensure() {
-  if (LAB || loading) return LAB;
-  loading = true;
-  try { LAB = await loadLab(); } finally { loading = false; }
-  build(); paint();
-  return LAB;
+// THE IN-FLIGHT LOAD IS AWAITED, not skipped. Three things arm this — the rail,
+// the observer, and the song loader's rebuilder — and a second caller that
+// returned `null` because the first was still fetching would leave a kept genre
+// standing in for itself forever. One promise, every caller on it.
+let loadingP = null;
+function ensure() {
+  if (LAB) return Promise.resolve(LAB);
+  if (!loadingP) loadingP = loadLab().then(l => {
+    LAB = l; build(); paint(); return l;
+  });
+  return loadingP;
 }
 on("page", d => { if (d.page === "lab") ensure(); });
 if (wrap && typeof IntersectionObserver === "function") {
@@ -109,31 +127,16 @@ if (wrap && typeof IntersectionObserver === "function") {
 function build() {
   B = null;
   if (!LAB || !PICK.length) return;
-  const missing = Object.keys(LAB.ROLLERS).filter(f => !ROLL_ORDER.includes(f));
-  if (missing.length)
-    throw new Error("ui/lab.js: the bench rolls " + missing.join(", ") +
-                    " and this page has no order for it");
-  const spec = {};
-  for (const k of PICK) spec[k] = W.get(k);
   // the bench refuses some parents by name (a FUNCTION genre is a part, not a
   // style, and has no history to inherit). The chip bank cannot offer one —
   // it deals the DATED anchors and a function genre carries no year — but the
   // refusal is the engine's to make, so it is reported rather than pre-empted.
-  let syn;
-  try { syn = LAB.synthesize(spec, { seed }); }
+  const recipe = recipeNow();
+  let r;
+  try { r = LAB.rebuild(recipe); }
   catch (e) { emit("status", { text: String(e.message || e), sticky: true }); return; }
-  const want = new Set(syn.invention.map(i => i.field));
-  const cand = { ...syn.candidate };
-  for (const f of ROLL_ORDER) {
-    if (!want.has(f)) continue;
-    if (MINE.has(f)) { cand[f] = MINE.get(f); continue; }
-    const v = LAB.roll(cand, f, fieldSeed(f), syn.parents);
-    if (v == null) delete cand[f]; else cand[f] = v;
-  }
-  if (label) cand.label = label;
-  B = { syn, cand, want,
-        novelty: LAB.novelty(cand), names: LAB.names(syn, seed),
-        problems: LAB.validate(cand) };
+  B = { syn: r, cand: r.candidate, want: r.want, recipe,
+        novelty: r.novelty, names: r.names, problems: r.problems };
 }
 
 /* ------------------------------------------------------------ §4 the picks */
@@ -292,28 +295,48 @@ addEventListener("beforeunload", endAudition);
 addEventListener("visibilitychange", endAudition, true);
 
 /* -------------------------------------------------------------- §6 keeping */
-// THE SEAM THE NEXT PHASE WIDENS. Keeping a genre means adding it to the SONG's
-// own set — which is a persistence question (song.js validates every box's genre
-// key against the table on load, so a kept genre has to travel WITH the save or
-// the song it is used in cannot be reopened). That save format is the next
-// phase's; what is settled here is the gate in front of it: a candidate is held
-// to the same laws a hand-written anchor is, and a KEEP that would put a broken
-// genre in a song is refused by name.
+// A KEPT GENRE LIVES IN THE SONG. Not in this module, not in a session cache —
+// in the record, as a recipe, beside the boxes (song.js `genres`), because
+// song.js validates every box's genre key on load and a genre that does not
+// travel with the save is a song that cannot be reopened. The store owns the
+// installing and the persisting (ui/state.js keepGenre); what is settled HERE
+// is the gate in front of it: a candidate is held to the same laws a
+// hand-written anchor is, and a keep that would put a broken genre in a song is
+// refused by name, before the song has heard of it.
 //
-// So this keeps them IN MEMORY and says so. It deliberately does NOT write the
-// genre table: a box pointing at a genre the save cannot carry is exactly the
-// failure that would lose somebody's song.
+// WHAT IS STORED IS THE RECIPE, NEVER THE ANCHOR. Half of a genre is closures
+// and JSON drops a function without saying so; the recipe is the parents, the
+// seed, the presses and the hand edits, and `LAB.rebuild` walks those back to
+// the same anchor on any machine (§3). So the DNA of a shared genre is true by
+// construction — its parents are catalog anchors the recipient already has.
 export const KEPT = [];
 const keptHooks = [];
-export const onKept = fn => keptHooks.push(fn);       // the next phase's hook
-// a key for the table, from the name a person coined: "Sheffield 1989" ->
-// "sheffield1989", never colliding with an anchor or with an earlier keep
-function keyFor(name) {
-  const base = String(name).toLowerCase().replace(/[^a-z0-9]+/g, "") || "genre";
-  let k = base, n = 2;
-  while (GENRES[k] || KEPT.some(e => e.key === k)) k = base + "_" + n++;
-  return k;
-}
+export const onKept = fn => keptHooks.push(fn);
+// THE LOADER'S REBUILDER, handed to the store as this module evaluates — which
+// is before boot adopts the saved song, and is why a song with an invented
+// genre in it comes back playing that genre rather than a stand-in. The bench
+// is fetched on demand here exactly as the tab fetches it; a page that never
+// opens the LAB and never loads a lab song never pays for it.
+useBench(async recipe => {
+  const L = await ensure();
+  if (!L) return null;
+  const r = L.rebuild(recipe);
+  // the same gate the keep passed, asked again on the way back in: a catalog
+  // that moved under a saved recipe can make a genre that no longer holds, and
+  // the stand-in is a better answer than an anchor that throws mid-bar
+  return L.ok(r.problems) ? r.candidate : null;
+});
+// THE BENCH'S OWN SHELF IS THE SONG'S SET, not a list this module accumulates.
+// A song opened off the desktop brings its invented genres with it and they
+// have to appear here — reopenable, arguable, re-rollable — or the record would
+// carry a genre its own bench had never heard of.
+on("song", () => {
+  KEPT.length = 0;
+  for (const [key, r] of Object.entries(GENRESET))
+    KEPT.push({ key, genre: GENRES[key], recipe: r, problems: [],
+                parents: { ...r.parents }, seed: r.seed | 0 });
+  paint();
+});
 export function keepCandidate(cand, ctx) {
   // the laws live in the bench, so there is no keeping anything before it has
   // loaded — and a keep that "succeeded" unvalidated is the one outcome this
@@ -327,12 +350,14 @@ export function keepCandidate(cand, ctx) {
       (first.field ? first.field + ": " : "") + first.msg, sticky: true });
     return { ok: false, problems };
   }
-  const entry = { key: keyFor(cand.label), genre: cand, problems,
-                  parents: { ...(ctx && ctx.parents) }, seed: (ctx && ctx.seed) | 0 };
+  const recipe = (ctx && ctx.recipe) || recipeNow();
+  const key = keepGenre(recipe, cand);
+  const entry = { key, genre: cand, problems, recipe,
+                  parents: { ...recipe.parents }, seed: recipe.seed | 0 };
   KEPT.push(entry);
   for (const fn of keptHooks) { try { fn(entry); } catch (e) { /* a listener is not the keep */ } }
-  emit("status", { text: "kept " + cand.label + " — " + entry.key +
-    " is in this session's genre set" });
+  emit("status", { text: "kept " + cand.label + " — " + key +
+    " is this song's own, and plays anywhere a genre plays" });
   return { ok: true, entry, problems };
 }
 
@@ -724,7 +749,7 @@ function paintKeep() {
   const errs = B.problems.filter(p => p.level === "error");
   const warns = B.problems.filter(p => p.level === "warn");
   const k = key("+ Keep this genre", "go labkeep", () => {
-    const r = keepCandidate(B.cand, { parents: B.syn.parents, seed });
+    const r = keepCandidate(B.cand, { recipe: B.recipe });
     if (r.ok) paint();
   });
   k.disabled = !!errs.length || !label;
@@ -740,18 +765,26 @@ function paintKeep() {
   if (KEPT.length) {
     const kept = el("div", "pchips labkept");
     for (const e of KEPT) {
-      const b = el("button", "pchip gen on", e.genre.label);
+      // the RECIPE's name, not the table's: the installed anchor wears the
+      // session mark (ui/state.js) and this shelf is already, entirely, the
+      // song's own genres — marking them here would mark every chip on it
+      const b = el("button", "pchip gen on", e.recipe.label);
       b.type = "button";
       b.dataset.kept = e.key;
       b.append(el("span", "labwhy", Object.keys(e.parents).join(" + ")));
       b.addEventListener("click", () => {
-        // reopen a kept genre on the bench: its parents and seed are all it
-        // was, which is what makes a kept genre a thing you can argue with
-        PICK = Object.keys(e.parents);
+        // reopen a kept genre on the bench: the RECIPE is all it ever was —
+        // parents, seed, presses, hand edits — so it comes back on the bench
+        // exactly as it went into the song, which is what makes a kept genre a
+        // thing you can argue with rather than a thing you can only admire
+        const r = e.recipe;
+        PICK = Object.keys(r.parents);
         W.clear();
-        for (const p of PICK) W.set(p, e.parents[p]);
-        seed = e.seed; label = e.genre.label;
+        for (const p of PICK) W.set(p, r.parents[p]);
+        seed = r.seed | 0; label = r.label;
         MINE.clear(); NONCE.clear();
+        for (const [f, n] of Object.entries(r.rolls || {})) NONCE.set(f, n);
+        for (const [f, v] of Object.entries(r.mine || {})) MINE.set(f, v);
         normalize(); build(); paint(); reaudition();
       });
       kept.append(b);

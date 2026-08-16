@@ -10,7 +10,7 @@
 // six functions used to re-read document.getElementById(...).value at call
 // time, two of them in the audio hot path (stepDur per tick, barSec per
 // channel build), which also made the loader untestable in node.
-import { NuSong, blank, emptyBox, DEFAULT, masterIsDefault,
+import { NuSong, GENRES, blank, emptyBox, DEFAULT, masterIsDefault,
          busesIsDefault, GROOVELABEL, SWINGLABEL, INSTRCHOICES,
          POOLCHAIRS } from "./deps.js";
 
@@ -97,6 +97,32 @@ export let SWING = null;
 // bounce re-cuts the carrier, and song.js migrates the retired per-layer
 // `instr` overrides up to it.
 export let POOL = null;
+
+// …AND THE SONG'S OWN GENRES (2026-08-16, "a genre you invented is a genre the
+// song can play"): the LAB's kept candidates, as RECIPES (song.js says why a
+// recipe and not an anchor), keyed `lab.<slug>`. A song fact like the master
+// bus and for the same reason — a genre invented for a record belongs to the
+// record, and a shared song that plays a genre the recipient does not have is
+// not a shared song.
+//
+// ONE LOOKUP PATH: the rebuilt anchors are INSTALLED IN THE LIVE GENRE TABLE
+// under their session keys. Not a second table consulted first — the same
+// object every module already reads, so a session genre is resolved by
+// ui/derive.js `genreOf`, layered by the stack, seated by the mixer, cast by
+// the pool, sorted into the genre menu at its coined year and bounced, with no
+// module in the graph knowing there was ever a difference. The namespace is
+// what makes that safe (song.js SESSION_NS): a `lab.` key cannot shadow an
+// anchor, so "session first" and "catalog first" are the same order.
+export let GENRESET = {};                 // session key -> recipe
+// what the invented ones are MARKED WITH, everywhere at once. It goes on the
+// LABEL rather than on a chip class because a genre is named in eight places —
+// the menu, the stack line, the mixer's roster, the chyron, the file name — and
+// a mark that lives in one bank's class table marks it in one of them. ✎ is
+// the WRITE key's own glyph (ui/chrome.js): made here, not found.
+// (the PREDICATE is song.js's — `NuSong.isSessionKey` — and stays there rather
+// than being re-exported from here: the namespace is a fact about the save
+// format, and the save format is that file's.)
+const MARK = "✎ ";
 
 export function setSlot(i) { slot = i; SUBJ = SLOTS[i]; }
 export function putPhrase(i, p) { SLOTS[i] = p; if (i === slot) SUBJ = p; }
@@ -195,6 +221,77 @@ export function commit(type, detail) {
       type === "swing" || type === "pool") save();
 }
 
+/* ---------- the session genres: install, rebuild, keep ---------- */
+// THE BENCH IS NOT ON THE BOOT PATH and must not be dragged onto it — it is
+// ~123 KB of analysis tier behind ui/deps.js loadLab(), and most songs carry no
+// invented genre at all. So this file never imports it: ui/lab.js hands the
+// rebuilder in as it evaluates (a view registering a capability with the store,
+// the same direction every subscription already runs), and a page served
+// without the lab simply keeps the stand-ins.
+let rebuilder = null;
+export const useBench = fn => { rebuilder = fn; };
+
+// THE STAND-IN, and it is the honest answer to a genuinely asynchronous fact.
+// A song is adopted synchronously — derive.js indexes the genre table on the
+// very next line, and a missing key throws — while rebuilding an invented
+// genre needs a module that has not been fetched yet. So the dominant parent
+// takes the part, wearing the coined name: a complete, playable, correctly-
+// labelled anchor that sorts to the right year, is replaced in place the moment
+// the bench arrives, and is what the genre STAYS if the bench refuses it. It is
+// an understudy, not a placeholder — nothing downstream can tell, and nothing
+// downstream has to wait.
+const dominantOf = r => Object.keys(r.parents)
+  .sort((a, b) => r.parents[b] - r.parents[a])[0];
+function standIn(r) {
+  const d = dominantOf(r);
+  return { ...GENRES[d], label: MARK + r.label, parents: { ...r.parents } };
+}
+// the mark rides on the label of whatever the bench hands back, so the two
+// paths cannot disagree about how an invented genre is named
+const marked = (g, r) => ({ ...g, label: MARK + r.label });
+
+function install(key, r) {
+  GENRES[key] = standIn(r);
+  if (!rebuilder) return;
+  Promise.resolve()
+    .then(() => rebuilder(r))
+    .then(g => {
+      if (GENRESET[key] !== r) return;      // the song moved on under us
+      if (!g) throw new Error("the bench refused it");
+      GENRES[key] = marked(g, r);
+      // the definition just changed under a song that may be sounding: "box" is
+      // the event for that — songrow patches, arrange re-renders, and the
+      // transport recompiles if it is playing
+      emit("box", { reason: "genre" });
+    })
+    .catch(() => {
+      emit("status", { text: r.label + " could not be rebuilt — it plays as " +
+        (GENRES[dominantOf(r)] || {}).label + ", its strongest parent", sticky: true });
+    });
+}
+// adopt the song's genre set. ABSENT IS NOT EMPTY: a producer that omits the
+// key (the composer, a preset, a save from before the lab existed) is saying
+// "I know nothing about these", and the session's genres stay installed —
+// otherwise pressing ✎ WRITE would silently strip the genre you just invented
+// out of the table it was about to be composed with. An explicit map, `{}`
+// included, is a document stating its own set, and replaces it.
+function adoptSession(map) {
+  if (!map) return;
+  for (const k of Object.keys(GENRESET)) if (!map[k]) delete GENRES[k];
+  GENRESET = { ...map };
+  for (const [k, r] of Object.entries(GENRESET)) install(k, r);
+}
+// THE KEEP, from ui/lab.js: the candidate is already built and already
+// validated there, so it goes straight into the table and the recipe goes into
+// the song. Returns the key it took, which is the name the box will carry.
+export function keepGenre(recipe, genre) {
+  const key = NuSong.sessionKey(recipe.label, GENRESET);
+  GENRESET[key] = recipe;
+  GENRES[key] = marked(genre, recipe);
+  saveNow();
+  return key;
+}
+
 /* ---------- persistence ---------- */
 // The song survives a reload; Reset all wipes it. Only plain data is stored —
 // genre and transform names are STRING KEYS, never the operator functions — so
@@ -210,7 +307,8 @@ function writeStore() {
   try {
     localStorage.setItem(STORE, JSON.stringify(
       { v: NuSong.VERSION, slots: SLOTS, song: SONG, master: MASTER,
-        buses: BUSES, groove: GROOVE, swing: SWING, pool: POOL, bpm }));
+        buses: BUSES, groove: GROOVE, swing: SWING, pool: POOL,
+        genres: GENRESET, bpm }));
   } catch (e) { /* private mode, or quota: not worth interrupting the music */ }
 }
 export function saveNow() { clearTimeout(saveTimer); saveTimer = null; writeStore(); }
@@ -266,6 +364,11 @@ export function adoptSong(raw, reason) {
   if (!res.ok) { loadError = res.errors[0]; return false; }
   loadError = null;
   const s = res.song;
+  // FIRST, BEFORE ANYTHING PUBLISHES: the genre table has to hold every key
+  // this song's boxes name before a single view indexes it (derive.js genreOf
+  // throws on a miss), so the session set is installed ahead of the assignment
+  // that makes those boxes current.
+  adoptSession(s.genres);
   SLOTS = s.slots; SONG = s.song; slot = 0; SUBJ = SLOTS[0];
   MASTER = s.master;                   // validateSong normalizes absent to null
   BUSES = s.buses;                     // same normalizer, same law
@@ -275,6 +378,15 @@ export function adoptSong(raw, reason) {
   viewSec = 0; loopOnly = null; pendingStart = null;
   if (s.bpm != null) bpm = s.bpm;
   // s.vol is deliberately NOT adopted — volume is the device's (VOLSTORE above)
+  // WHAT THE LOADER CHOSE, said out loud. A note is not a refusal (song.js): a
+  // box naming an invented genre this file no longer carries plays as `simple`
+  // rather than taking the whole song down, and the one thing that must not
+  // happen is that it does so quietly.
+  if (res.notes && res.notes.length)
+    emit("status", { text: res.notes.length + " layer" +
+      (res.notes.length > 1 ? "s" : "") + " named a genre this song does not " +
+      "carry — " + res.notes.map(n => n.got + " → " + n.chose).join(", "),
+      sticky: true });
   emit("song", { reason: reason || "load" });
   save();
   return true;
@@ -282,9 +394,13 @@ export function adoptSong(raw, reason) {
 
 /* ---------- desktop ---------- */
 export function songJSON() {
+  // `genres` is written ALWAYS, empty map included — a file states its own
+  // genre set, and the absent-is-"I don't know" reading adoptSession applies is
+  // for producers inside this session, never for a document leaving it
   return JSON.stringify(
     { v: NuSong.VERSION, slots: SLOTS, song: SONG, master: MASTER,
-      buses: BUSES, groove: GROOVE, swing: SWING, pool: POOL, bpm },
+      buses: BUSES, groove: GROOVE, swing: SWING, pool: POOL,
+      genres: GENRESET, bpm },
     null, 1);
 }
 export function saveFile() {
