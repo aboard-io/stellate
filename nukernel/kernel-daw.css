@@ -1,180 +1,171 @@
-/* nukernel/kernel-daw.css — the page: layout and the hardware skin applied to
-   the page's own selectors. Every colour and face comes from hw.css (loaded
-   first); this file holds no palette of its own. The gate-read classes
-   (.cell .slot .box .bcell .bgenre .pchip #play #readout …) are load-bearing.
-   Since "the row and the board" (2026-08-15) the song row is a rank of NAMED
-   CELLS, each opening its own focused popup; the tracker pages, the palette
-   page, the LED strip and the context strip are gone, and their questions are
-   answered by the cells and the popups.
+/* nukernel/kernel-daw.css — the page: layout and the flat skin applied to
+   the page's own selectors. Every colour, size and space comes from hw.css
+   (loaded first); this file holds no palette of its own. The gate-read
+   classes (.cell .slot .box .bcell .bgenre .pchip #play #readout …) are
+   load-bearing. Since "the row and the board" (2026-08-15) the song row is a
+   rank of NAMED CELLS, each opening its own focused popup.
 
-   THE TABLE IS ONE COMPONENT (the .tbl block below). The pattern editor, the
-   song, the mix and every chip bank share one well, one header
-   row, one numeral column, one ruling cadence and one set of row states; the
-   per-surface sections that follow add only their own columns and cells. When
-   two of them stop looking like the same instrument, the fix belongs in .tbl,
-   not in a fifth copy of a recessed well.
+   THE COSTUME CAME OFF (2026-08-16). Three things went with it, and they are
+   the reason this file is shorter than it was:
+     1 NO MATERIALS. There is no brushed panel, no moulded key with travel,
+       no amber glass, no screw. A surface is one flat colour; a key is one
+       flat colour that changes when you touch it; a readout is type.
+     2 NO HEADERS, NO HELP, NO TABLE HEADS. The (?) keys and their
+       paragraphs, the section <h2>s and every silkscreened column-label row
+       are gone ("get rid of headers and help buttons and table headers").
+       The UI names itself in its own values: a length cell says "4 bars",
+       a genre cell says where and when the genre is from.
+     3 NO DECORATIVE FRAME. The song table runs to the edge of the view —
+       no gutter, no well, no rounded card ("make the song arrangement go to
+       the edge of the view, no strange borders"). A rule appears only where
+       one row genuinely ends and the next begins.
 
-   The paint budget (hw.css header) is enforced here by CLASS: panels, keys
-   and pads carry the moulded recipes; the crowd — 128 step cells, ~140
-   palette chips — gets flat background-color, 1px borders as bevel, and at
-   most one pseudo-element LED. Nothing in a patch loop transitions. */
+   THE TABLE IS STILL ONE COMPONENT (the .tbl block below): the pattern
+   editor, the song, the mix and every chip bank share one ground, one
+   numeral column, one ruling cadence and one set of row states. When two of
+   them stop looking like the same instrument, the fix belongs in .tbl.
+
+   The paint budget (hw.css header) is enforced here by CLASS: the crowd —
+   128 step cells, ~140 chips — gets background-color and nothing else.
+   Nothing in a patch loop transitions. */
 
 *{box-sizing:border-box}
 body{
-  background:var(--bg); color:var(--ink);
-  font:400 13px/1.5 var(--f-legend);
+  background:var(--bg-app); color:var(--ink);
+  font:400 var(--t-md)/1.55 var(--f-ui);
   font-variant-numeric:tabular-nums; font-synthesis:none;
-  margin:0; padding:22px 18px 60px;
+  margin:0; padding:0 0 var(--sp-5);
   -webkit-font-smoothing:antialiased;
 }
 /* ---- the chassis ----
-   ON A DESK the three zones dissolve: .deck and every .page are
-   display:contents, so the panels flow down the chassis column and the page
-   rail does not exist — a 1180px screen has room for every page at once, and
-   paging what already fits is just hiding things. The phone block at the end
-   of this file is where the zones become real. Either way it is the SAME
-   tables: width buys room, never a second layout. */
-.chassis{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+   FULL BLEED, at every width ("make the song arrangement go to the edge of
+   the view — no strange borders"). There is no max-width and no centring
+   gutter: the app IS the window. On a desk the three zones dissolve — .deck
+   and every .page are display:contents, so the sections flow down the one
+   column and the page rail does not exist, because paging what already fits
+   is just hiding things. The phone block at the end of this file is where the
+   zones become real. Either way it is the SAME tables: width buys room,
+   never a second layout. */
+/* THE GUTTER LIVES HERE, not on .tbl. It is the one number that says how far
+   every row, caption and key row on the machine stands off the window edge,
+   so a table and the key row above it line up — they used to disagree,
+   because only .tbl carried it and everything else fell back to a guess. */
+.chassis{max-width:none;margin:0;display:flex;flex-direction:column;gap:0;
+  --tbl-gut:var(--sp-4)}
 .deck,.page{display:contents}
 .pagerail{display:none}
 
 /* ================================================================
-   ---- THE MATERIALS, ONCE ----
-   Four recipes dress every shell on this page, and each one is written here
-   exactly once, over the list of elements that wear it. They used to be
-   copied per surface — the brushed panel five times, the moulded key five,
-   the amber glass NINE — which is how three of the glass readouts quietly
-   drifted apart (two had the scanline grid, two had a shallower socket).
-   A recipe lives where its users are named; hw.css owns the tokens.
+   ---- THE SURFACES, ONCE ----
+   What used to be four material recipes — brushed panel, moulded key, amber
+   glass, screw — is now two flat ones, and they are flat all the way down.
+   Nothing here is lit from the top left, nothing travels on press, and a
+   readout is type on a ground rather than an object with a bezel.
 
-   The CROWD is deliberately not in these lists. Step cells and palette chips
-   are ~300 elements patched inside a scrub, so they get the cheap variant —
-   flat fill, 1px borders as bevel, no shadow (the hw.css paint budget). */
+   The CROWD is deliberately not in these lists. Step cells and chips are
+   ~300 elements patched inside a scrub: background-color, nothing else. */
 
-/* 1 BRUSHED PANEL — the transport, the deck panels (the Compose page's
-   #composewrap is a .ed like the others — the phrase editor stopped being a
-   modal and became a page) and the source drawer. (The cell menu #rowpop left
-   this list when it stopped floating: it is a recessed drawer of the song
-   table now, styled there.) */
+/* 1 A SECTION — the transport, each page's body, the source drawer. It is a
+   band of surface across the whole window, divided from its neighbour by one
+   real rule. No border box, no radius, no shadow: the rule IS the edge. */
 .bar,.ed,details,.popfader{
-  background:
-    linear-gradient(180deg,var(--hw-panel-hi) 0,var(--hw-panel) 38%,var(--hw-panel-lo) 100%),
-    repeating-linear-gradient(90deg,rgba(255,255,255,.014) 0 1px,transparent 1px 3px);
-  border:1px solid var(--hw-edge);border-top-color:var(--hw-bevel-hi);border-radius:6px;
-  box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 1px 0 var(--hw-edge),0 6px 14px rgba(0,0,0,.35);
+  background:var(--bg-surface);
 }
-/* 2 INJECTION-MOULDED KEY, with real travel: it drops 2px onto its own shadow
-   on press. Travel is transform, never padding — no layout shift, ever. */
+.ed,details{border-top:1px solid var(--rule)}
+/* 2 A KEY — one flat fill, a hairline, and a fill change on touch. The state
+   is the colour, not the geometry: nothing moves, so nothing shifts layout
+   and a mis-hit never lands on a moving target. */
 .btn,.pfstep,.pfclose,.rpk,.pkey{
   appearance:none;cursor:pointer;color:var(--ink);
-  border:1px solid var(--hw-edge);border-radius:5px;
-  background:linear-gradient(180deg,var(--hw-key-hi) 0,var(--hw-key-mid) 48%,var(--hw-key-lo) 100%);
-  box-shadow:inset 0 1px 0 var(--hw-bevel-hi),inset 0 -2px 0 var(--hw-bevel-lo),
-    0 2px 0 rgba(0,0,0,.55),0 3px 5px rgba(0,0,0,.35);
-  transition:transform 90ms cubic-bezier(.2,.9,.3,1),box-shadow 90ms linear;
+  border:1px solid var(--rule);border-radius:var(--r);
+  background:var(--bg-key);
+  transition:background-color 90ms linear,color 90ms linear;
 }
-.btn:active,.pfstep:active,.pfclose:active,.rpk:active,.pkey:active{
-  transform:translateY(2px);
-  background:linear-gradient(180deg,var(--hw-key-lo),var(--hw-key-mid));
-  box-shadow:inset 0 2px 4px rgba(0,0,0,.6),inset 0 -1px 0 var(--hw-bevel-hi),0 0 0 rgba(0,0,0,.55);
-}
-/* 3 LCD GLASS — every readout on the machine: the two fader values, the seed,
-   the position, the status line, the recessed pickers, the pop-up fader's
-   big number and the cell popup's steppers. Amber ink on near-black, one
-   faint scanline grid, one socket. */
+.btn:hover,.pfstep:hover,.pfclose:hover,.rpk:hover,.pkey:hover{background:var(--bg-key-hi)}
+.btn:active,.pfstep:active,.pfclose:active,.rpk:active,.pkey:active{background:var(--bg-key-lo)}
+/* 3 A READOUT — the two fader values, the seed, the position, the status
+   line, the pickers, the pop-up fader's number, the cell steppers. There is
+   no glass: a number is monospace ink on the quiet ground, sized by how far
+   away you read it from. */
 .knob b,.knob select,.gctl select,.seedlcd,.poslcd,.readout,
 .pflcd,.rpstep output{
-  background:var(--lcd-bg);color:var(--lcd-ink);
-  background-image:repeating-linear-gradient(0deg,var(--lcd-grid) 0 1px,transparent 1px 3px);
+  background:var(--bg-sunk);color:var(--ink);
   font-family:var(--f-num);font-variant-numeric:tabular-nums;
-  border:1px solid rgba(0,0,0,.6);border-radius:3px;
-  box-shadow:inset 0 2px 5px rgba(0,0,0,.9),inset 0 0 0 1px rgba(255,179,71,.08),
-    0 1px 0 var(--hw-bevel-hi);
+  border:1px solid transparent;border-radius:var(--r);
 }
-/* the glass you can touch lights its inner rim under the pointer */
-.knob select:hover,.gctl select:hover{
-  box-shadow:inset 0 2px 5px rgba(0,0,0,.9),inset 0 0 0 1px rgba(255,179,71,.25),
-    0 1px 0 var(--hw-bevel-hi);
-}
-/* 4 SCREW — four on the page, two holding the transport down and two the
-   source drawer. Each sits at its own angle where it is placed: matched
-   screws read as wallpaper, mismatched ones read as assembly. */
-.bar::before,.bar::after,details::before,details::after{
-  content:"";position:absolute;width:9px;height:9px;border-radius:50%;
-  background:
-    linear-gradient(0deg,transparent 44%,rgba(0,0,0,.8) 44% 56%,transparent 56%),
-    radial-gradient(circle at 35% 30%,var(--hw-screw-hi),var(--hw-key-mid) 60%,var(--hw-screw-lo));
-  box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 1px 0 var(--hw-bevel-hi);
-}
-.bar::before{top:6px;left:6px;transform:rotate(12deg)}
-.bar::after{top:6px;right:6px;transform:rotate(64deg)}
-details::before{top:8px;left:6px;transform:rotate(40deg)}
-details::after{top:8px;right:6px;transform:rotate(-15deg)}
+.knob select:hover,.gctl select:hover{background:var(--bg-key-hi)}
 /* ================================================================ */
 
-/* ---- masthead ---- */
+/* ---- masthead — the app's own name, the one word above the controls. Not
+   a section header: the <h2>s are gone from every page. ---- */
 h1{
-  font-size:13px; line-height:1; margin:0 4px 0 0; font-weight:600;
-  letter-spacing:.16em; text-transform:uppercase; color:var(--dim);
+  font:600 var(--t-sm)/1 var(--f-ui); margin:0 var(--sp-2) 0 0;
+  letter-spacing:.01em; color:var(--ink-3);
 }
-h1 em{font-style:normal;color:var(--accent-txt)}
+h1 em{font-style:normal;color:var(--ink)}
 
-/* ---- the transport panel ----
-   The top bar is a brushed panel with two screws; the buttons on it are
-   moulded keys with real travel; tempo and volume are hardware faders over
-   the same #bpm/#vol range inputs the audio tier has always read. */
+/* ---- the transport ----
+   A band of surface across the top of the window, ending in one rule. The
+   keys on it are flat; tempo and volume are the same #bpm/#vol range inputs
+   the audio tier has always read, drawn as flat tracks. */
 .bar{
   position:relative;
-  display:flex;flex-wrap:wrap;gap:10px;align-items:center;
-  padding:12px 30px 12px 12px;
+  display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-3);align-items:center;
+  padding:var(--sp-3) var(--sp-4);
+  border-bottom:1px solid var(--rule);
 }
 
 /* ---- keys ----
-   The moulding is the shared recipe above; this is the silkscreen on it. */
+   The fill is the shared recipe above; this is the word on it — sentence
+   case at reading size, because a control that has to shout in caps is
+   admitting its shape does not say what it does. */
 .btn{
-  font:600 11px/1 var(--f-legend);letter-spacing:.1em;text-transform:uppercase;
-  padding:10px 15px;
+  font:600 var(--t-sm)/1 var(--f-ui);letter-spacing:.005em;
+  padding:var(--sp-3) var(--sp-3);
 }
-/* the GO keys: the orange lens family. Dark legend on a lit fill — white on
-   this orange measures 3.1:1 and fails; near-black measures 6.7:1. */
+/* the GO keys: the accent fill. Dark ink on it — white on this orange
+   measures 3.1:1 and fails; near-black measures 6.0:1. */
 .btn.go{
-  min-width:104px;color:var(--on-ink);border-color:var(--hw-edge);
-  background:linear-gradient(180deg,
-    color-mix(in srgb,var(--a-orange) 80%,white) 0,
-    var(--a-orange) 50%,
-    color-mix(in srgb,var(--a-orange) 78%,black) 100%);
+  min-width:104px;color:var(--on-accent);
+  background:var(--accent);border-color:var(--accent);
 }
-.btn.go:active{
-  background:linear-gradient(180deg,
-    color-mix(in srgb,var(--a-orange) 72%,black),
-    var(--a-orange));
-}
-/* PLAY carries its LED as a pseudo-element (chrome.js swaps the button's
-   textContent, which would eat a child node). Lit green while running —
-   state colours never invert. LEDs snap; no transition. */
-#play{padding-left:24px;position:relative}
+.btn.go:hover{background:color-mix(in srgb,var(--accent) 88%,black)}
+.btn.go:active{background:color-mix(in srgb,var(--accent) 76%,black)}
+/* ONE FILLED KEY PER REGION. PLAY and WRITE were both solid accent blocks
+   side by side, which says they are the same rank and they are not: Play is
+   the transport, Write makes a new song. Write keeps the accent as its OUTLINE
+   and its word — secondary, unmistakably related, and it stops the top of
+   the phone being two orange slabs. */
+#compose{background:none;color:var(--accent-txt);border-color:var(--accent)}
+#compose:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+#compose:active{background:color-mix(in srgb,var(--accent) 20%,transparent)}
+/* PLAY carries its state dot as a pseudo-element (chrome.js swaps the
+   button's textContent, which would eat a child node). Green while running:
+   a state colour, the same in both faces, and it snaps — a fading state
+   light is a lie about when the sound started. */
+#play{padding-left:26px;position:relative}
 #play::before{
-  content:"";position:absolute;left:9px;top:50%;margin-top:-3.5px;
-  width:7px;height:7px;border-radius:2px;
-  background:var(--led-off);box-shadow:inset 0 1px 1px var(--led-rim);
+  content:"";position:absolute;left:11px;top:50%;margin-top:-4px;
+  width:8px;height:8px;border-radius:50%;
+  background:color-mix(in srgb,var(--on-accent) 28%,transparent);
 }
-#play.on::before{background:var(--st-play);box-shadow:0 0 6px -1px var(--st-play)}
+#play.on::before{background:var(--st-play)}
 
 /* ---- faders and pickers ---- */
-.knob{display:flex;align-items:center;gap:8px}
+.knob{display:flex;align-items:center;gap:var(--sp-2)}
 .knob label,.knob span{
-  font:600 10px/1.2 var(--f-legend);letter-spacing:.14em;text-transform:uppercase;
-  color:var(--dim);
+  font:500 var(--t-xs)/1.3 var(--f-ui);color:var(--ink-3);
 }
 /* the volume legend's two spans: the full word on a desk, the abbreviation on
    a phone. The swap is VISUAL only — the full word leaves the layout via the
    clip pattern, never display:none, so the fader's accessible name stays
    "Volume" on every width (the abbreviation is aria-hidden in the markup). */
 .knob .la{display:none}
-/* a range input restyled as a fader: recessed track with tick marks, a
-   chunky moulded cap with a cream centre line. The input stays a real,
-   focusable <input type=range> — arrows, Home/End and the accessible name
-   come free, and the audio tier keeps reading #bpm/#vol by id. */
+/* a range input as a flat fader: a 4px track and a plain accent cap. No
+   ticks, no milling, no cream index line — the VALUE is printed beside it,
+   which is the honest readout a tick strip was only approximating. The input
+   stays a real, focusable <input type=range> — arrows, Home/End and the
+   accessible name come free, and the audio tier keeps reading #bpm/#vol. */
 .knob input{
   appearance:none;-webkit-appearance:none;width:104px;height:26px;margin:0;
   background:transparent;cursor:pointer;
@@ -183,70 +174,46 @@ h1 em{font-style:normal;color:var(--accent-txt)}
                          from under either axis */
 }
 .knob input::-webkit-slider-runnable-track{
-  height:8px;border-radius:4px;
-  background:
-    repeating-linear-gradient(90deg,var(--hw-hair) 0 1px,transparent 1px 13px),
-    var(--hw-recess);
-  box-shadow:inset 0 2px 4px rgba(0,0,0,.55),inset 0 -1px 0 var(--hw-bevel-hi);
+  height:4px;border-radius:2px;background:var(--rule-strong);
 }
 .knob input::-webkit-slider-thumb{
-  -webkit-appearance:none;appearance:none;width:22px;height:20px;margin-top:-6px;
-  border:1px solid var(--hw-edge);border-radius:4px;
-  background:
-    /* the cream index line, CENTRED. It was drawn as a band from 9px to 12px
-       of a 22px cap, whose middle is 11 — half a pixel left, which at 3x is a
-       visibly off-centre line on a crisp moulded cap. Positioned rather than
-       measured, it stays centred whatever the cap's width becomes. */
-    linear-gradient(var(--a-cream),var(--a-cream)) center/3px 100% no-repeat,
-    linear-gradient(180deg,var(--hw-key-hi) 0,var(--hw-key-mid) 48%,var(--hw-key-lo) 100%);
-  box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 2px 3px rgba(0,0,0,.45);
+  -webkit-appearance:none;appearance:none;width:16px;height:16px;margin-top:-6px;
+  border:0;border-radius:50%;background:var(--accent);
 }
 .knob input::-moz-range-track{
-  height:8px;border-radius:4px;
-  background:
-    repeating-linear-gradient(90deg,var(--hw-hair) 0 1px,transparent 1px 13px),
-    var(--hw-recess);
-  box-shadow:inset 0 2px 4px rgba(0,0,0,.55),inset 0 -1px 0 var(--hw-bevel-hi);
+  height:4px;border-radius:2px;background:var(--rule-strong);
 }
 .knob input::-moz-range-thumb{
-  width:22px;height:20px;border:1px solid var(--hw-edge);border-radius:4px;
-  background:
-    /* the cream index line, CENTRED. It was drawn as a band from 9px to 12px
-       of a 22px cap, whose middle is 11 — half a pixel left, which at 3x is a
-       visibly off-centre line on a crisp moulded cap. Positioned rather than
-       measured, it stays centred whatever the cap's width becomes. */
-    linear-gradient(var(--a-cream),var(--a-cream)) center/3px 100% no-repeat,
-    linear-gradient(180deg,var(--hw-key-hi) 0,var(--hw-key-mid) 48%,var(--hw-key-lo) 100%);
-  box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 2px 3px rgba(0,0,0,.45);
+  width:16px;height:16px;border:0;border-radius:50%;background:var(--accent);
 }
-/* the value beside a fader is a number, so it speaks LCD (the glass recipe
-   above; these are its dimensions) */
-.knob b{font-weight:600;font-size:12px;line-height:1;
-  min-width:44px;text-align:center;padding:5px 4px}
-/* selects are recessed LCD pickers — their options are DATA (genre names,
-   song names) and keep their case */
+/* the value beside a fader: mono, at reading size — the number IS the
+   readout now that the track carries no scale */
+.knob b{font-weight:600;font-size:var(--t-md);line-height:1;
+  min-width:46px;text-align:center;padding:var(--sp-2) var(--sp-1)}
+/* the pickers: their options are DATA (genre names, song names) and keep the
+   case they were authored in */
 .knob select{
-  font-weight:500;font-size:11.5px;line-height:1;letter-spacing:.02em;
-  cursor:pointer;padding:7px 6px;max-width:138px;
+  font-weight:500;font-size:var(--t-sm);line-height:1;letter-spacing:.01em;
+  cursor:pointer;padding:var(--sp-2);max-width:180px;
 }
 .spacer{flex:1 1 auto}
 
 /* the WRITE cluster: the composer promoted to the transport. One key writes
    a whole song; the seed it used sits on its own little LCD (the same number
    is the same song), and ⟳ rolls a fresh one in the same genre. */
-.write{display:flex;align-items:center;gap:6px}
-/* the reroll glyph is the key's whole legend, so it gets glyph size, not
-   silkscreen size — an 11px ⟳ read as lint */
-#reroll{font-size:16px;line-height:.8;padding:7px 12px}
+.write{display:flex;align-items:center;gap:var(--sp-2)}
+/* the reroll glyph is the key's whole label, so it gets glyph size */
+#reroll{font-size:18px;line-height:.8;padding:var(--sp-2) var(--sp-3)}
+/* the seed: eight hex digits, quiet until a write has actually set them */
 .seedlcd{
-  color:var(--lcd-dim);font-weight:600;font-size:12px;line-height:1;
-  letter-spacing:.08em;min-width:78px;text-align:center;padding:6px 5px;
+  color:var(--ink-3);font-weight:600;font-size:var(--t-sm);line-height:1;
+  letter-spacing:.06em;min-width:82px;text-align:center;padding:var(--sp-2);
 }
-.seedlcd[data-on]{color:var(--lcd-ink)}
-/* the position LCD: box·bar/len while running, -- while parked */
+.seedlcd[data-on]{color:var(--ink)}
+/* the position: box·bar/len while running, -- while parked */
 .poslcd{
-  font-weight:600;font-size:13px;line-height:1;
-  letter-spacing:.06em;min-width:84px;text-align:center;padding:7px 6px;
+  font-weight:600;font-size:var(--t-md);line-height:1;
+  letter-spacing:.04em;min-width:88px;text-align:center;padding:var(--sp-2);
 }
 
 /* the transport's two clusters: GO on the left, SETTINGS on the right, ONE
@@ -268,14 +235,14 @@ h1 em{font-style:normal;color:var(--accent-txt)}
    at its minimum while daylight sits beside it */
 .write .knob{min-width:0;flex:1 1 auto;max-width:220px}
 .write .knob select{min-width:84px;width:100%;max-width:none;flex:1 1 auto}
-/* ONE CONTROL HEIGHT for the transport row: the moulded keys land at ~34px
-   (10px padding on 11px type), so the glass — value LCDs, the seed, the
-   position readout, the genre picker — meets them there instead of each
-   choosing its own padding. This is the "one baseline grid". */
-.transport .btn{height:34px}
+/* ONE CONTROL HEIGHT for the transport row — 40px, one number, so every key,
+   readout and picker sits on the same baseline instead of each choosing its
+   own padding. It went up from 34 with the flat pass: without a bevel to
+   read an edge from, a control needs its height to say it is a control. */
+.transport .btn{height:40px}
 .transport .knob b,.transport .seedlcd,.transport .poslcd{
-  height:34px;display:inline-flex;align-items:center;justify-content:center}
-.transport .knob select{height:34px}
+  height:40px;display:inline-flex;align-items:center;justify-content:center}
+.transport .knob select{height:40px}
 /* a narrower desk: the decoration yields before the controls do — the mast
    and the seed LCD first (the readout chyron prints the seed on every write,
    the phone block already leans on that), then fader travel. Under 900px the
@@ -296,57 +263,57 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   .knob input{width:80px}
 }
 
-/* ---- the GLOBAL bank (SESSION) under the song table ----
-   File and fixture operations, not performance. It is a BANK, which on this
-   machine means a table section: the .tbl well, the .thd header row, then one
-   row of controls with a legend over each — so the soundfont picker is never
-   again a mystery LCD with no name (the transport's phone rule hides .knob
-   labels; these are .glab and always show). */
-.gbank{display:flex;flex-direction:column}
-.gitems{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:flex-end;
-  padding:10px var(--tbl-gut)}
-.gctl{display:flex;flex-direction:column;gap:5px;min-width:0}
-.glab{font:600 10.5px/1.2 var(--f-legend);letter-spacing:.14em;text-transform:uppercase;
-  color:var(--dim)}
-.ukeys{display:flex;gap:10px;align-items:center}
-/* the gbank pickers are the same glass as the .knob ones, a little wider */
+/* ---- the SESSION bank under the song table ----
+   File and fixture operations, not performance. It has NO HEADER ROW any
+   more — the word "Session" over five controls named Groove, Swing,
+   Soundfont, Songs and Song file was a caption for a list that already says
+   what it is. What is left is the controls, each under its own quiet label,
+   with room between them. */
+/* each bank opens with a rule, the same way the song table does — three
+   stacked tables on the Arrange page, each saying where it begins with one
+   hairline instead of with a card */
+.gbank{display:flex;flex-direction:column;border-top:1px solid var(--rule)}
+.gitems{display:flex;flex-wrap:wrap;gap:var(--sp-3) var(--sp-5);align-items:flex-end;
+  padding:var(--sp-4) var(--tbl-gut)}
+.gctl{display:flex;flex-direction:column;gap:var(--sp-1);min-width:0}
+.glab{font:500 var(--t-xs)/1.3 var(--f-ui);color:var(--ink-3)}
+.ukeys{display:flex;gap:var(--sp-2);align-items:center}
+/* the session pickers are the transport's pickers with a little more width */
 .gctl select{
-  font-weight:500;font-size:13px;line-height:1;letter-spacing:.02em;
-  cursor:pointer;padding:7px 6px;max-width:168px;
+  font-weight:500;font-size:var(--t-md);line-height:1;letter-spacing:.01em;
+  cursor:pointer;padding:var(--sp-2) var(--sp-2);max-width:200px;min-height:40px;
 }
-/* (The bank's master-bus row group moved to the MIX page's rack — "the SSL
-   board". .ghint survives: the rack's own (?) copy wears it there.) */
-.ghint{margin:0;padding:6px var(--tbl-gut) 8px}
 
-/* ---- the INSTRUMENT POOL bank ("the band is hired for the record") ----
-   One row per chair, the session bank's own material: the chair name is a
-   .glab silkscreen, the current pick the value beside it — dim while the
-   chair is uncast (the genre's own answering, the machine's one state
-   language), lit when you cast it. Tapping unfolds the same .pgroup/.pchip
-   family picker every other bank is cut from, full width, in place. */
-.poolrows{display:flex;flex-direction:column;padding:4px 0 8px}
+/* ---- the INSTRUMENT POOL ("the band is hired for the record") ----
+   One row per chair: the chair's name quiet on the left, the instrument
+   playing it as the row's value — dim while the chair is uncast (the genre's
+   own answering, the machine's one state language), accent when you cast it.
+   No header row: the rows say "drums · 909 kit", which names the column
+   better than the word INSTRUMENTS over the top of it ever did. Tapping
+   unfolds the same .pgroup/.pchip family picker every bank is cut from. */
+.poolrows{display:flex;flex-direction:column}
 .poolrow{display:flex;flex-direction:column}
 .poolpick{
-  display:flex;align-items:baseline;gap:12px;width:100%;text-align:left;
+  display:flex;align-items:baseline;gap:var(--sp-3);width:100%;text-align:left;
   background:none;border:0;cursor:pointer;color:inherit;
-  padding:7px var(--tbl-gut);
-  border-top:1px solid var(--tbl-rule,rgba(0,0,0,.08));
+  padding:var(--sp-3) var(--tbl-gut);
+  border-top:1px solid var(--rule);
 }
 .poolrow:first-child .poolpick{border-top:0}
-.poolpick .glab{flex:0 0 72px}
+.poolpick .glab{flex:0 0 84px}
 .poolpick .pv{
-  font-weight:600;font-size:13.5px;letter-spacing:.03em;line-height:1.3;
+  font-weight:600;font-size:var(--t-md);letter-spacing:.01em;line-height:1.35;
   min-width:0;overflow-wrap:anywhere;
 }
-.poolpick .pv.dflt{color:var(--dim);font-weight:500}
-.poolpick.unseated .pv{color:var(--tbl-faint,var(--dim))}
+.poolpick .pv.dflt{color:var(--ink-2);font-weight:500}
+.poolpick.unseated .pv{color:var(--ink-3)}
 .poolpick:hover .pv,.poolrow.open .poolpick .pv{color:var(--ink)}
-.poolpick.on .pv{color:var(--accent)}
-.poolrow.open .poolpick{background:var(--tbl-well,rgba(0,0,0,.04))}
+.poolpick.on .pv{color:var(--accent-txt)}
+.poolrow.open .poolpick{background:var(--bg-sunk)}
 .poolmount{
-  display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-start;
-  padding:8px var(--tbl-gut) 12px;
-  border-top:1px solid var(--tbl-rule,rgba(0,0,0,.08));
+  display:flex;flex-wrap:wrap;gap:var(--sp-3);align-items:flex-start;
+  padding:var(--sp-3) var(--tbl-gut) var(--sp-4);
+  border-top:1px solid var(--rule);
 }
 .poolmount .pgroup{flex:1 1 300px}
 @media (max-width:640px){.poolmount .pgroup{flex:1 1 100%}}
@@ -354,10 +321,14 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 /* (There is no context strip: popups open ON the row they edit — "the row
    and the board" — so no page edits a box it cannot see.) */
 
-/* #readout is the LCD strip: one line of machine words on amber glass */
+/* #readout is the one status line: what the selected box is, or the last
+   thing that happened. A quiet band with a rule above it — no glass, no
+   scanlines; it is a sentence, and it is set as one. */
 .readout{
-  margin:0;padding:9px 12px;min-height:34px;
-  font-weight:500;font-size:13.5px;line-height:1.4;letter-spacing:.03em;
+  margin:0;padding:var(--sp-3) var(--sp-4);min-height:40px;
+  border-radius:0;border:0;border-top:1px solid var(--rule);
+  color:var(--ink-2);
+  font-weight:500;font-size:var(--t-sm);line-height:1.5;letter-spacing:.01em;
 }
 
 /* ================================================================
@@ -373,76 +344,60 @@ h1 em{font-style:normal;color:var(--accent-txt)}
    layer: not four surfaces that happen to be laid out top to bottom, but one
    instrument whose four screens are cut from the same material.
 
-   TWO GROUNDS, ONE COMPONENT. A table sits either on the PANEL (milled into
-   the silver: the pattern, the song, the banks) or on GLASS (.glass — where
-   saturated colours have to read at once and
-   only near-black lets them). The ground is a set of tokens, so every rule
-   below is written once and both grounds answer it. --tbl-key is the
-   crowd's unlit fill: an unlit pad in the pattern and an unlit chip in a bank
-   are the same key, because they are.
+   ONE GROUND, NOT TWO. There used to be a second, near-black "glass" ground
+   for the tracker, because saturated 909 colours needed near-black to read
+   against. The flat palette's colours read on both faces by construction, so
+   .glass is now the same surface as everything else — the token block
+   survives only so a stray `.tbl.glass` in the markup cannot go dark.
 
-   HEIGHTS AND GUTTERS come from --tbl-rowh / --tbl-gut, so the desk block at
-   the end of this file makes every table roomier by moving two numbers. */
+   NO WELL, NO FRAME. A table is not a recessed box any more: it is the
+   surface, with rules where rows genuinely divide. That is what lets the
+   song table run to the edge of the window.
+
+   HEIGHTS come from --tbl-rowh here; the GUTTER comes from --tbl-gut on the
+   chassis, so the tables and the key rows beside them stand off the window
+   edge by the same number. The desk block at the end of this file makes
+   everything roomier by moving those two. */
 .tbl{
-  --tbl-rowh:44px;                      /* the row-height floor, every table */
-  --tbl-gut:8px;                        /* the column gutter */
-  --tbl-ground:var(--hw-recess);
-  --tbl-ink:var(--ink); --tbl-dim:var(--dim); --tbl-faint:var(--faint);
-  --tbl-key:var(--hw-key-mid);
-  --tbl-rule:var(--hw-rule);            /* the header rule and the bar line */
-  --tbl-hair:var(--hw-hair);            /* between rows */
-  --tbl-hi:var(--hw-row-hi);            /* the row under the pointer */
-  --tbl-lit:var(--hw-row-lit);          /* the row that is sounding */
+  --tbl-rowh:48px;                      /* the row-height floor, every table */
+  --tbl-ground:var(--bg-surface);
+  --tbl-ink:var(--ink); --tbl-dim:var(--ink-2); --tbl-faint:var(--ink-3);
+  --tbl-key:var(--bg-key);
+  --tbl-rule:var(--rule-strong);        /* where the material divides */
+  --tbl-hair:var(--rule);               /* between rows */
+  --tbl-hi:var(--row-hi);               /* the row under the pointer */
+  --tbl-lit:var(--row-lit);             /* the row that is sounding */
   background:var(--tbl-ground);
-  border:1px solid var(--hw-edge);border-radius:4px;
-  box-shadow:inset 0 2px 4px rgba(0,0,0,.45),inset 0 -1px 0 var(--hw-bevel-hi);
   overflow:auto;overscroll-behavior:contain;
 }
-.tbl.glass{
-  --tbl-ground:var(--lcd-bg);
-  --tbl-ink:var(--lcd-ink); --tbl-dim:var(--lcd-dim); --tbl-faint:var(--lcd-dim);
-  --tbl-rule:var(--lcd-dim); --tbl-hair:rgba(255,179,71,.07);
-  /* the washes are amber on glass: the panel's white hover would flare a 40%
-     white band across a near-black tracker on the silver face */
-  --tbl-hi:rgba(255,179,71,.08); --tbl-lit:rgba(255,179,71,.16);
-  background-image:repeating-linear-gradient(0deg,var(--lcd-grid) 0 1px,transparent 1px 3px);
-  box-shadow:inset 0 2px 5px rgba(0,0,0,.9),inset 0 0 0 1px rgba(255,179,71,.08);
-}
-/* THE HEADER ROW — the columns named once, in silkscreen, stuck to the top of
-   the well. A table you have scrolled into is unreadable without it, so it
-   sticks in all four; it is opaque on the table's own ground, because rows
-   sliding under a translucent header is the one thing a frozen header must
-   never do. */
-.thd{
-  position:sticky;top:0;z-index:3;
-  background:var(--tbl-ground);border-bottom:1px solid var(--tbl-rule);
-  font:600 10px/1.2 var(--f-legend);letter-spacing:.14em;text-transform:uppercase;
-  color:var(--tbl-dim);padding:5px var(--tbl-gut);
-}
-/* THE NUMERAL COLUMN — the step, the tick, the section number. Mono, dim,
-   right-aligned against the first data column, frozen to the left edge. It is
-   TRANSPARENT by default so the row washes run under it; only the table that
-   actually scrolls sideways (the glass one) pays for an opaque ground, which
-   is the one case where cells sliding under a frozen column would show. */
+.tbl.glass{--tbl-ground:var(--bg-surface)}
+/* (THERE IS NO .thd. Every table on this machine lost its column-label row
+   — "get rid of table headers" — and the columns name themselves in their
+   own cells instead: "4 bars", "Chicago 1987", "909 kit". The one caption
+   left anywhere is the tracker's column line, and it is written as ordinary
+   quiet text down at .rowlab, not as a sticky silkscreen band.) */
+/* THE NUMERAL COLUMN — the step, the tick, the section number. Mono, quiet,
+   right-aligned against the first data column, frozen to the left edge and
+   transparent, so the row washes run under it. */
 .tnum{
   position:sticky;left:0;z-index:2;
   display:flex;align-items:center;justify-content:flex-end;
-  padding:0 5px;font:500 10px/1 var(--f-num);color:var(--tbl-faint);
+  padding:0 var(--sp-1);font:500 var(--t-xs)/1 var(--f-num);color:var(--tbl-faint);
 }
-.tbl.glass .tnum{background:var(--tbl-ground)}
 /* THE RULING — one cadence, two strengths: a hairline between rows, a heavier
    rule where the music divides (a beat in the pattern). The class is on the
    ROW, so nothing needs :nth-child arithmetic. */
 .prow.beat>*{border-top:2px solid var(--tbl-rule)}
-.prow.beat>.thd{border-top:0}
-/* THE STATES, one language for every table on the machine:
+/* THE STATES, one language for every table on the machine, and every one of
+   them is now COLOUR rather than relief:
      hover     the row under the pointer washes (fine pointers only — a
                fingertip has no hover and a stuck highlight is a lie)
-     selected  a cream ring: this is the row your edits land on
-     sounding  a wash plus a 3px lamp on the leading edge — the same bar of
-               paint the pattern's quarter numerals wear
-     open      the accent ring: this row's cell popup is up
-   Where a surface has no such state it simply does not use the class. */
+     selected  an accent ring: this is the row your edits land on
+     sounding  a wash plus a 3px accent bar on the leading edge
+     open      the accent ring: this row's cell menu is unfolded
+   Where a surface has no such state it simply does not use the class.
+   The rings are inset box-shadows on purpose: a ring that does not move
+   layout, which is the one job box-shadow keeps in a flat design. */
 @media (hover:hover){
   .box:hover{background:var(--tbl-hi)}
   .prow:hover>.tnum{color:var(--tbl-ink)}
@@ -458,15 +413,22 @@ h1 em{font-style:normal;color:var(--accent-txt)}
    playhead question is answered by the song row's fill bar and the position
    LCD, and its pattern facts are the cell values and popup states.) */
 
-/* ---- the deck panels (the brushed panel recipe above) ---- */
-.ed{padding:12px;display:flex;flex-direction:column;gap:10px}
-/* centre-aligned, ONE row: baseline alignment against mixed key heights was
-   the hanging-buttons bug — the keys rode their text baseline and CLEAR
-   wrapped onto a line of its own on a phone */
-.edhead{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.edhead h2 span{color:var(--accent-txt);text-transform:none;letter-spacing:.06em;font-family:var(--f-num)}
-.edhead h2{margin:0;font:600 13px/1.4 var(--f-legend);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);white-space:nowrap}
-.edhead p{margin:0;font-size:11px;color:var(--dim)}
+/* ---- the deck sections ----
+   A page's body: full-bleed surface, vertical room, no frame. The gutter is
+   VERTICAL only (--sp-4 top and bottom); horizontally the content runs to
+   the window and its own rows carry the padding, so a table's rules reach
+   both edges instead of stopping at a card. */
+.ed{padding:var(--sp-4) 0;display:flex;flex-direction:column;gap:var(--sp-4)}
+/* the key row that used to be a header ("Compose · phrase 1" + (?) + three
+   keys). The title and the (?) are gone; what is left is the keys, so the
+   row simply pushes them to the right of the section. */
+.edhead{display:flex;flex-wrap:wrap;gap:var(--sp-2);align-items:center;
+  padding:0 var(--tbl-gut)}
+.edhead p{margin:0;font-size:var(--t-xs);color:var(--ink-3)}
+/* WHICH PHRASE these sixteen rows are — the one fact the deleted h2 carried
+   that nothing else on the page says, so it stays, as a value rather than a
+   heading */
+.edslot{font:600 var(--t-lg)/1.2 var(--f-ui);color:var(--ink)}
 /* an icon key: icon + word on a desk, icon alone under 560px (the title
    attribute and the id keep the name). The icons are inline-SVG data-URI
    masks painted with currentColor — self-contained silkscreen, no glyph
@@ -488,42 +450,38 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .ik-save{--ikm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M1.8 9v2.4a1 1 0 0 0 1 1h8.4a1 1 0 0 0 1-1V9' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='M7 1.6v6.2M4.3 5.5L7 8.2l2.7-2.7' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
 .ik-load{--ikm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M1.8 9v2.4a1 1 0 0 0 1 1h8.4a1 1 0 0 0 1-1V9' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='M7 8.2V2M4.3 4.7L7 2l2.7 2.7' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
 .ik-reset{--ikm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M11.6 7A4.6 4.6 0 1 1 7 2.4h1.6' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='M6.9 0L10.4 2.4 6.9 4.8z'/%3E%3C/svg%3E")}
-/* the (?) key is a round instrument-panel detail, not a full mode key */
-.btn.hint{border-radius:50%;width:30px;min-width:30px;height:30px;padding:0;
-  font:600 12px/1 var(--f-num);letter-spacing:0;color:var(--dim)}
-.btn.hint[aria-expanded="true"]{color:var(--accent-txt)}
-.edhint{margin:0;font-size:12.5px;line-height:1.7;color:var(--dim);max-width:82ch}
-/* THE PHRASE RAIL IS A TRAY — the .tbl well again, holding pads instead of
-   rows. It was the one surface left standing bare on the panel while every
-   other bank on the machine sat in a recess, which is exactly the kind of
-   odd-one-out this stage is for.
+/* (THERE IS NO (?) KEY and no help paragraph, anywhere — "get rid of headers
+   and help buttons". Four of them shipped: the editor's, the phrase rail's,
+   the mix board's and the master bus's, each a round key over a paragraph
+   explaining a surface you can simply tap. The explanations are deleted, not
+   hidden: a control that needs a paragraph is a control that is wrong.) */
+/* THE PHRASE RAIL — a grid of phrase pads on the page's own surface.
    auto-fill, not repeat(8,...): the bank's size is NSLOTS (fields.js), and the
    grid must not need editing when that number moves. */
-.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));
-  gap:8px;padding:8px}
-/* a phrase slot is a rubber pad: moulded, with an activity LED in the corner
-   (lit = the phrase is in the focused layer of the selected box) */
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));
+  gap:var(--sp-2);padding:0 var(--tbl-gut)}
+/* a phrase pad: a flat key carrying its number and its picture. Its one
+   state — "this phrase is in the focused layer of the selected box" — is a
+   dot in the corner, and the dot is the accent, not a lamp with a glow. */
 .slot{
-  appearance:none;font:inherit;cursor:pointer;padding:6px 7px 7px;
+  appearance:none;font:inherit;cursor:pointer;padding:var(--sp-2);
   position:relative;
-  background:
-    radial-gradient(120% 100% at 50% 0,rgba(255,255,255,.07),transparent 60%),
-    linear-gradient(180deg,var(--hw-key-hi),var(--hw-key-mid) 60%,var(--hw-key-lo));
-  border:1px solid var(--hw-edge);border-radius:6px;
-  box-shadow:inset 0 1px 0 var(--hw-bevel-hi),inset 0 -3px 6px rgba(0,0,0,.28),0 2px 0 rgba(0,0,0,.5);
-  display:flex;flex-direction:column;gap:4px;align-items:stretch;
+  background:var(--bg-key);color:var(--ink);
+  border:1px solid var(--rule);border-radius:var(--r);
+  display:flex;flex-direction:column;gap:var(--sp-1);align-items:stretch;
 }
+.slot:hover{background:var(--bg-key-hi)}
 .slot::after{
-  content:"";position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:2px;
-  background:var(--led-off);box-shadow:inset 0 1px 1px var(--led-rim);
+  content:"";position:absolute;top:var(--sp-2);right:var(--sp-2);
+  width:7px;height:7px;border-radius:50%;background:var(--rule-strong);
 }
-.slot.inbox::after{background:var(--a-orange);box-shadow:0 0 6px -1px var(--a-orange)}
-.slot.sel{box-shadow:inset 0 0 0 2px var(--st-sel),inset 0 -3px 6px rgba(0,0,0,.28),0 2px 0 rgba(0,0,0,.5)}
-.slot .sn{font:600 13px/1 var(--f-num);letter-spacing:.1em;color:var(--dim);text-align:left}
+.slot.inbox::after{background:var(--accent)}
+.slot.sel{box-shadow:inset 0 0 0 2px var(--st-sel)}
+.slot .sn{font:600 var(--t-md)/1 var(--f-num);color:var(--ink-3);text-align:left}
 .slot.sel .sn,.slot.inbox .sn{color:var(--accent-txt)}
 /* the picture is ONE svg path per pad — thumbPath's FILLED gate/velocity
    bars now (the Arrange thumbnails' own drawing), not the old pitch line */
-.mini{display:block;width:100%;height:34px}
+.mini{display:block;width:100%;height:38px}
 .mini path{fill:var(--v0)}
 .slot.sel .mini path{fill:var(--accent)}
 /* the two BANK KEYS on the rail: [+] grows it (to NSLOTS), [−] takes the
@@ -532,9 +490,10 @@ h1 em{font-style:normal;color:var(--accent-txt)}
    with nothing to do (full bank / single phrase). */
 .slotadd{
   appearance:none;cursor:pointer;min-height:100%;
-  font:600 18px/1 var(--f-num);color:var(--faint);
+  font:600 20px/1 var(--f-num);color:var(--ink-3);
   display:flex;align-items:center;justify-content:center;
-  background:none;border:1px dashed var(--line);border-radius:6px;padding:4px;
+  background:none;border:1px dashed var(--rule-strong);border-radius:var(--r);
+  padding:var(--sp-1);
 }
 .slotadd:hover{border-color:var(--accent);color:var(--accent-txt)}
 .slotadd[hidden]{display:none}
@@ -548,34 +507,35 @@ h1 em{font-style:normal;color:var(--accent-txt)}
    The well, the sticky header, the numeral column, the beat ruling and the
    row hover are the .tbl component (top of this file); what is here is the
    column template and the 909 pad. */
-.steps{flex:1 1 auto;min-height:160px}
+.steps{flex:1 1 auto;min-height:160px;padding:0 var(--tbl-gut)}
 /* A PAGE'S ROWS, not a popup's: the modal's 26px crouch is gone with the
    modal. 34px keeps sixteen rows on one phone screen-and-a-bit while every
    bar and numeral reads at arm's length; the desk block widens the columns
    and goes to 38px (still under the audio gate's 40px ceiling — the tracker
    stays a tracker, not a spreadsheet). */
-.stepgrid{display:grid;gap:1px;padding:3px;--tbl-rowh:34px;
-  grid-template-columns:24px repeat(3,minmax(30px,52px)) repeat(5,minmax(34px,1fr));
-  grid-template-rows:auto;grid-auto-rows:minmax(34px,auto)}
+.stepgrid{display:grid;gap:2px;padding:0;--tbl-rowh:36px;
+  grid-template-columns:26px repeat(3,minmax(30px,52px)) repeat(5,minmax(34px,1fr));
+  grid-template-rows:auto;grid-auto-rows:minmax(36px,auto)}
 .prow{display:contents}
-/* the column header: the vector's name over its range ("deg" / "−7…+7") — the
-   column says what it is and how far it goes. The silkscreen, the sticky and
-   the rule are .thd; this is the two-line stack inside it. */
+/* THE ONE CAPTION LEFT ON THE MACHINE, and it is not a header row.
+   Every other column-label row is deleted, because every other column names
+   itself in its cells. Eight columns of bare numerals cannot: "deg" and
+   "oct" and "vel" are not recoverable from a value, and a tracker you have
+   to guess at is not self-evident, it is just unlabelled. So the names stay
+   — as ordinary quiet text in the ink hierarchy, in the case they were
+   written in, with no sticky band, no rule under them and no silkscreen. */
 .rowlab{display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:2px;letter-spacing:.1em;border-left:0;padding:6px 2px;cursor:default;
-  font-size:12px}
-.rowlab.corner{color:var(--tbl-faint);letter-spacing:.04em}
-.rowlab .rrange{font:500 10px/1 var(--f-num);letter-spacing:.02em;
-  text-transform:none;color:var(--tbl-faint)}
-/* the step numeral is the row header — the .tnum column, quarter-lamped on
-   every beat */
-.stepgrid .tnum{font-size:12px}
-.num.q{font-weight:700;font-size:14px}
-/* THE QUARTER COLOUR IS A LAMP, NOT INK. Each quarter's beat row wears its
-   909 colour — q1 red, q2 orange, q3 amber, q4 cream — but as a bar of paint
-   beside the numeral rather than as the numeral itself: cream on a silver face
-   is invisible, and steps 13–16 were unreadable the whole time the numerals
-   carried the colour. The lamp reads on both faces; the numeral stays ink. */
+  gap:1px;padding:0 2px var(--sp-2);cursor:default;
+  font:500 var(--t-xs)/1.2 var(--f-ui);color:var(--ink-3)}
+.rowlab.corner{color:var(--ink-3)}
+.rowlab .rrange{font:400 11px/1 var(--f-num);color:var(--ink-3);opacity:.75}
+/* the step numeral is the row's own address — the .tnum column, colour-coded
+   on every beat */
+.stepgrid .tnum{font-size:var(--t-xs)}
+.num.q{font-weight:700;font-size:var(--t-sm)}
+/* THE QUARTER COLOUR IS A BAR, NOT INK — a short stroke of the level ramp
+   beside the numeral rather than the numeral itself, because a pale step of
+   the ramp as text is unreadable and the numeral has to stay ink. */
 .num[data-q="1"]{--q:var(--step-q1)}
 .num[data-q="2"]{--q:var(--step-q2)}
 .num[data-q="3"]{--q:var(--step-q3)}
@@ -584,106 +544,89 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .num.q::before{content:"";position:absolute;left:1px;top:20%;bottom:20%;width:3px;
   background:var(--q);border-radius:1px}
 
-/* ---- the 909 step cell ----
-   The cells are the crowd: 128 of them, patched during a scrub, so the
-   material is the CHEAP bevel — flat background, a light top edge and a dark
-   bottom edge, no shadows, no transitions. Quarter-group colour is the 909
-   lineage: q1 red, q2 orange, q3 amber, q4 cream — in the GATE column, where
-   the groove lives. Accent and slide keep their own lamps (amber, cream); the
-   value columns stay monochrome so the values read as values.
-   The rows are TIGHT on purpose (26px, the popup's budget) — a bar cell is a
-   read-and-scrub target, and the pop-up fader is the precision path. */
+/* ---- the step cell ----
+   The cells are the crowd: 128 of them, patched during a scrub, so they get
+   background-color and nothing else — no border stack, no shadow, no
+   transition. Quarter-group colour is the LEVEL ramp, in the GATE column
+   where the groove lives; accent and slide take state colours of their own;
+   the value columns stay monochrome so the values read as values. */
 .cell{touch-action:none;position:relative;overflow:hidden;
-  appearance:none;font:600 13px/1 var(--f-num);height:auto;cursor:pointer;
-  min-height:var(--tbl-rowh,34px);
-  background:var(--tbl-key,var(--hw-key-mid));color:var(--dim);
-  border:0;border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(0,0,0,.55);
-  border-radius:3px;
+  appearance:none;font:600 var(--t-sm)/1 var(--f-num);height:auto;cursor:pointer;
+  min-height:var(--tbl-rowh,36px);
+  background:var(--bg-key);color:var(--ink-3);
+  border:0;border-radius:var(--r);
   display:flex;align-items:center;justify-content:center;padding:0;
 }
 .cell[data-q="1"]{--q:var(--step-q1)}
 .cell[data-q="2"]{--q:var(--step-q2)}
 .cell[data-q="3"]{--q:var(--step-q3)}
 .cell[data-q="4"]{--q:var(--step-q4)}
-/* A LIT PAD IS SEATED IN ITS SOCKET — a 1px near-black edge all round. Without
-   it the cream slide lamp (#f2e6cf) sat on an unlit silver key (#dcdad4) and
-   the two were the same colour: the whole SLD column read as lit at a glance.
-   Still crowd-cheap — a border, not a shadow. */
-.cell.on{background:var(--a-orange);color:var(--on-ink);
-  border:1px solid rgba(0,0,0,.55)}
+/* A LIT CELL IS A COLOUR, full stop — the fill changes and the ink flips to
+   the on-accent near-black, which clears AA on all four ramp steps and on
+   both state colours below. */
+.cell.on{background:var(--accent);color:var(--on-accent)}
 .cell[data-row="gate"].on{background:var(--q)}
-.cell[data-row="acc"].on{background:var(--a-amber)}
-.cell[data-row="sld"].on{background:var(--a-cream)}
-/* the VALUE rows are slim LCD windows drawing the value AS A BAR — .cbar is
-   an amber strip positioned by the two custom properties ui/editor.js
+.cell[data-row="acc"].on{background:var(--st-arm)}
+.cell[data-row="sld"].on{background:var(--st-solo);color:#fff}
+/* the VALUE columns draw the value AS A BAR on the quiet ground — .cbar is
+   an accent strip positioned by the two custom properties ui/editor.js
    patches (--b bottom, --h height): vel fills from the floor, the bipolar
    four (.bip) fill from the midline, up for + and down for −. The bar is the
-   primary read; .cv is the numeral riding it, dropped where the cell cannot
-   afford it, never the other way round. Still crowd-cheap: flat fills, 1px
-   borders, no shadow, and a patch writes two properties, not a style sheet. */
-.cell.deg{background:var(--lcd-bg);color:var(--lcd-ink);
-  border:1px solid rgba(0,0,0,.6);border-top-color:rgba(0,0,0,.8);border-radius:2px}
+   primary read; .cv is the numeral riding it. Crowd-cheap: a patch writes
+   two custom properties, not a style sheet. */
+.cell.deg{background:var(--bg-sunk);color:var(--ink)}
 .cell .cbar{position:absolute;left:3px;right:3px;
   bottom:var(--b,0%);height:var(--h,0%);
-  background:var(--lcd-ink);opacity:.55;border-radius:1px;pointer-events:none}
+  background:var(--accent);opacity:.34;border-radius:1px;pointer-events:none}
 /* the zero line: a hairline across the middle of every bipolar column — it is
    what says "zero" when the bar has no height */
 .cell.bip::before{content:"";position:absolute;left:2px;right:2px;top:50%;
-  height:1px;background:var(--lcd-dim);opacity:.6;pointer-events:none}
-.cell .cv{position:relative;z-index:1;font:600 12px/1 var(--f-num);
-  font-weight:600;pointer-events:none}
+  height:1px;background:var(--rule-strong);pointer-events:none}
+.cell .cv{position:relative;z-index:1;font:600 var(--t-sm)/1 var(--f-num);
+  pointer-events:none}
 .cell.deg.rest{opacity:.45}
-.cell.deg.zero .cv{color:var(--lcd-dim)}
+.cell.deg.zero .cv{color:var(--ink-3)}
 /* the binary keys are tap-only, so they may carry the scroll (pan-y); the
    value cells keep touch-action:none — a vertical drag there is the scrub */
 .cell:not(.deg){touch-action:pan-y}
 
 /* ---- the pop-up fader ----
-   One dialog, built once by ui/popfader.js, hidden between uses. It is a
-   little hardware panel — moulded keys, LCD readout, a recessed fader track
-   with silkscreen ticks — anchored beside the tapped cell. The scrim under it
-   is transparent: it exists to catch the tap-away, not to dim the machine. */
+   One dialog, built once by ui/popfader.js, hidden between uses. A small flat
+   sheet — the one place a drop shadow survives, because a sheet genuinely
+   floats above the page and needs to say so. The scrim under it is
+   transparent: it exists to catch the tap-away, not to dim anything. */
 .pfscrim{position:fixed;inset:0;z-index:46;background:transparent}
 /* author display beats the UA [hidden] rule, so shut must say so explicitly */
 .popfader[hidden],.pfscrim[hidden]{display:none}
 .popfader{
-  position:fixed;z-index:47;width:150px;
-  /* a floating sheet throws a deeper shadow than a bolted-down panel */
-  box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 1px 0 var(--hw-edge),0 10px 24px rgba(0,0,0,.5);
-  padding:8px;display:grid;grid-template-columns:52px 1fr;gap:8px;
+  position:fixed;z-index:47;width:164px;
+  border:1px solid var(--rule);border-radius:var(--r-lg);
+  box-shadow:var(--sheet-shadow);
+  padding:var(--sp-3);display:grid;grid-template-columns:56px 1fr;gap:var(--sp-2);
   touch-action:none;
 }
-.pfhead{grid-column:1/-1;display:flex;align-items:center;gap:6px}
-.pftitle{flex:1 1 auto;font-size:9.5px;letter-spacing:.08em;
+.pfhead{grid-column:1/-1;display:flex;align-items:center;gap:var(--sp-2)}
+.pftitle{flex:1 1 auto;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pfclose{
-  flex:0 0 auto;width:26px;height:26px;padding:0;
-  font:600 12px/1 var(--f-num);color:var(--dim);border-radius:4px;
+  flex:0 0 auto;width:30px;height:30px;padding:0;
+  font:600 var(--t-sm)/1 var(--f-num);color:var(--ink-2);
 }
-.pfside{display:flex;flex-direction:column;gap:6px;align-items:stretch}
-.pfstep{min-height:38px;padding:0;font:600 12px/1 var(--f-num)}
+.pfside{display:flex;flex-direction:column;gap:var(--sp-2);align-items:stretch}
+.pfstep{min-height:40px;padding:0;font:600 var(--t-md)/1 var(--f-num)}
 .pflcd{
   flex:1 1 auto;display:flex;align-items:center;justify-content:center;
-  font-weight:600;font-size:20px;line-height:1;min-height:44px;
+  font-weight:600;font-size:var(--t-xl);line-height:1;min-height:48px;
 }
-/* the track: a recessed channel with tick marks every ~13px, a moulded cap
-   with the cream centre line — the transport faders' material, stood upright */
+/* the track: a plain channel, the cap a plain accent block — the number
+   above it is the readout, so the track carries no scale of its own */
 .pftrack{
-  position:relative;height:172px;border-radius:4px;cursor:pointer;
-  background:
-    repeating-linear-gradient(0deg,var(--hw-hair) 0 1px,transparent 1px 13px),
-    linear-gradient(90deg,transparent 0 calc(50% - 4px),var(--hw-recess) calc(50% - 4px) calc(50% + 4px),transparent calc(50% + 4px)),
-    var(--hw-recess-2);
-  border:1px solid var(--hw-edge);
-  box-shadow:inset 0 2px 4px rgba(0,0,0,.55),inset 0 -1px 0 var(--hw-bevel-hi);
+  position:relative;height:172px;border-radius:var(--r);cursor:pointer;
+  background:var(--bg-sunk);
 }
 .pfthumb{
-  position:absolute;left:4px;right:4px;height:20px;pointer-events:none;
-  border:1px solid var(--hw-edge);border-radius:4px;
-  background:
-    linear-gradient(180deg,transparent 0 8px,var(--a-cream) 8px 11px,transparent 11px),
-    linear-gradient(180deg,var(--hw-key-hi) 0,var(--hw-key-mid) 48%,var(--hw-key-lo) 100%);
-  box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 2px 3px rgba(0,0,0,.45);
+  position:absolute;left:3px;right:3px;height:20px;pointer-events:none;
+  border-radius:3px;background:var(--accent);
 }
 
 /* ---- the CELL MENU, unfolding IN PLACE ----
@@ -696,34 +639,31 @@ h1 em{font-style:normal;color:var(--accent-txt)}
    mountBanks). The head is the title and ✕. */
 .rowpop[hidden]{display:none}
 .rowpop{
-  display:block;padding:0 var(--tbl-gut) 10px;
+  display:block;padding:0 var(--tbl-gut) var(--sp-4);
   border-bottom:1px solid var(--tbl-hair);
-  /* NOT the brushed-panel recipe here: the menu is a recessed drawer of the
-     same table, so it sits in a darker well with the accent naming the fold */
-  background:var(--tbl-ground);
+  /* the fold is a quieter band of the same table, named by one accent bar on
+     its leading edge — the same 3px the sounding row wears, so "this is the
+     row you are inside" reads as the table's own language */
+  background:var(--bg-sunk);
   border-left:3px solid var(--accent);
   border-radius:0;border-top:0;border-right:0;
-  box-shadow:inset 0 6px 8px -6px rgba(0,0,0,.6),inset 0 -4px 6px -5px rgba(0,0,0,.5);
 }
-.rpcell{display:flex;flex-direction:column;gap:8px;min-width:0}
-.rphead{display:flex;align-items:center;gap:8px;min-width:0;padding-top:8px}
+.rpcell{display:flex;flex-direction:column;gap:var(--sp-3);min-width:0}
+.rphead{display:flex;align-items:center;gap:var(--sp-2);min-width:0;
+  padding-top:var(--sp-3)}
 .rptitle{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  font:600 13.5px/1.2 var(--f-legend);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
-/* the menu keys are the same moulded family, sized for thumbs */
-.rpk{flex:0 0 auto;min-width:44px;min-height:44px;padding:0 10px;
-  font:600 15px/1 var(--f-num)}
-.rpplay{color:var(--on-ink);
-  background:linear-gradient(180deg,
-    color-mix(in srgb,var(--a-orange) 80%,white) 0,
-    var(--a-orange) 50%,
-    color-mix(in srgb,var(--a-orange) 78%,black) 100%)}
-.rpbars{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center}
-.rpstep{display:flex;align-items:center;gap:6px}
-.rpstep .rlab{font:600 12.5px/1 var(--f-legend);letter-spacing:.14em;text-transform:uppercase;
-  color:var(--dim)}
+  font:600 var(--t-md)/1.3 var(--f-ui);letter-spacing:.01em;color:var(--ink-2)}
+/* the menu keys are the shared flat key, sized for thumbs */
+.rpk{flex:0 0 auto;min-width:44px;min-height:44px;padding:0 var(--sp-3);
+  font:600 var(--t-lg)/1 var(--f-num)}
+.rpplay{color:var(--on-accent);background:var(--accent);border-color:var(--accent)}
+.rpplay:hover{background:color-mix(in srgb,var(--accent) 88%,black)}
+.rpbars{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-4);align-items:center}
+.rpstep{display:flex;align-items:center;gap:var(--sp-2)}
+.rpstep .rlab{font:500 var(--t-xs)/1 var(--f-ui);color:var(--ink-3)}
 .rpstep output{
-  font-weight:600;font-size:16px;line-height:1;
-  min-width:46px;text-align:center;padding:10px 6px;
+  font-weight:600;font-size:var(--t-lg);line-height:1;
+  min-width:52px;text-align:center;padding:var(--sp-3) var(--sp-2);
 }
 /* a move key with nowhere to go ghosts rather than vanishing — the keys must
    not reshuffle between the first row's menu and the middle of the song */
@@ -790,50 +730,57 @@ h1 em{font-style:normal;color:var(--accent-txt)}
    line 2 (mods · voice · rhythm · trans) — with the header row
    still present, its words abbreviated by the span swap (.hf/.ha). No
    flex-wrap anywhere: a busy section never re-flows into prose. */
-.songwrap{gap:12px}
+.songwrap{gap:var(--sp-5)}
+/* EDGE TO EDGE, and no cap. The 60vh well is gone with the frame: a song
+   scrolling inside its own box, inside a page that also scrolls, was two
+   scrollbars for one list. The table is as tall as the song and the PAGE
+   carries it. */
 .song{
   display:flex;flex-direction:column;
-  max-height:60vh;overflow-x:hidden;
+  max-height:none;overflow:visible;
+  border-top:1px solid var(--rule);
 }
 /* flex:none, or the well's max-height SQUASHES the rows: #song is a column
    flex container with a height cap, so a song longer than the cap made every
    row shrink to its min-height. The cap belongs to the SCROLLBAR. */
-.box,.shead,.sfoot{flex:0 0 auto}
+.box,.sfoot{flex:0 0 auto}
 /* a SECTION IS A ROWGROUP now: its row, its layer sub-rows, and — while a
    cell menu is open — the menu row, moving together through every reorder */
 .bgrp{flex:0 0 auto;display:flex;flex-direction:column}
 .bgrp>*{flex:0 0 auto}
 .box{
-  position:relative;min-height:0;padding:6px var(--tbl-gut) 8px;
+  position:relative;min-height:0;padding:var(--sp-3) var(--tbl-gut);
   cursor:pointer;background:transparent;
   border:0;border-bottom:1px solid var(--tbl-hair);
   align-items:center;
 }
-/* A CELL IS A KEY, not a caption: the crowd-cheap moulded material (.mval's
-   recipe — flat key fill on the recessed well, 1px bevel borders, no shadow),
-   with real press feedback. `.unset` dims the "—" cells so the set facts read
-   first, but the KEY stays — an unset cell is still a place you tap.
-   Every cell is a real button — its own tab stop, its own popup. */
+/* A CELL IS A KEY, not a caption — one flat fill, no border stack, no
+   travel. `.unset` quiets the "—" cells so the set facts read first, but the
+   KEY stays: an unset cell is still a place you tap.
+   Every cell is a real button — its own tab stop, its own menu. */
 .bcell{
   appearance:none;cursor:pointer;
-  display:inline-flex;align-items:center;gap:6px;min-width:0;
-  padding:8px 8px;border-radius:3px;
-  background:var(--tbl-key,var(--hw-key-mid));color:var(--ink);
-  border:0;border-top:1px solid rgba(255,255,255,.09);
-  border-bottom:1px solid rgba(0,0,0,.55);
-  font:600 15px/1.35 var(--f-legend);letter-spacing:.02em;
+  display:inline-flex;align-items:center;gap:var(--sp-2);min-width:0;
+  padding:var(--sp-2) var(--sp-3);border-radius:var(--r);
+  background:var(--tbl-key,var(--bg-key));color:var(--ink);
+  border:0;
+  font:600 var(--t-md)/1.35 var(--f-ui);letter-spacing:.01em;
 }
-.bcell:hover{background:var(--hw-key-hi);border-top-color:rgba(255,255,255,.25)}
-.bcell:active{transform:translateY(1px);background:var(--hw-key-lo);
-  border-top-color:rgba(0,0,0,.3);border-bottom-color:rgba(0,0,0,.2)}
-/* the OPEN cell reads pressed while its menu is unfolded below the row —
-   held down, the way a latched hardware key sits low until released */
-.bcell.openc{background:var(--hw-key-lo);color:var(--accent-txt);
-  transform:translateY(1px);
-  border-top-color:rgba(0,0,0,.3);border-bottom-color:rgba(0,0,0,.2);
-  box-shadow:inset 0 2px 4px rgba(0,0,0,.5)}
+.bcell:hover{background:var(--bg-key-hi)}
+.bcell:active{background:var(--bg-key-lo)}
+/* the OPEN cell is the accent while its menu is unfolded below the row — a
+   latched control says so in colour now, not by sitting lower */
+.bcell.openc{background:var(--bg-key-lo);color:var(--accent-txt);
+  box-shadow:inset 0 0 0 1px var(--accent)}
 .bcell .cvx{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bcell.unset .cvx{color:var(--faint);font-weight:400}
+/* AN UNSET CELL HAS NO FILL. A row of eight identical grey keys, five of
+   them saying "—", is a wall the eye has to read through to find the two
+   facts that are actually set. Losing the fill (the icon and the dash stay,
+   and hover gives the key back) leaves the SET values standing on the row
+   with white around them, which is what the whitespace is for. */
+.bcell.unset{background:none}
+.bcell.unset:hover{background:var(--bg-key-hi)}
+.bcell.unset .cvx{color:var(--ink-3);font-weight:400}
 /* the cell icons: silkscreen SVG masks painted with currentColor (the
    .pi/.ik recipe) — self-contained, no glyph-coverage lottery */
 .bcell .ci{width:14px;height:14px;flex:0 0 auto;background:currentColor;opacity:.6;
@@ -858,25 +805,29 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .bcell.c-trans .ci{--cim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M1.2 12.8C6 12.8 8.6 3.6 12.6 3.4' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='M10.6 1.4l3.6 2-3.6 2z'/%3E%3C/svg%3E")}
 /* the PART cell: the shared numeral column, plus the pin lamp when the box
    loops alone (the pin key itself lives in the PART popup) */
-.bnum{color:var(--tbl-ink);font:600 14px/1 var(--f-num)}
+.bnum{color:var(--tbl-faint);font:600 var(--t-md)/1 var(--f-num)}
 .box.live .bnum{color:var(--accent-txt)}
 .bpin{display:inline-flex;align-items:center}
 .bpin[hidden]{display:none}
-.bpin .pini{display:block;width:10px;height:10px;fill:var(--accent-txt)}
-/* the GENRE cell is the row's name */
-.bcell.bgenre{font-weight:600;font-size:16.5px}
-/* the FUNCTION word keeps its lens outline when set — it NAMES the section */
+.bpin .pini{display:block;width:11px;height:11px;fill:var(--accent-txt)}
+/* the GENRE cell is the row's name, and with the column heads gone it is the
+   biggest type in the table — that is what says which column this is */
+.bcell.bgenre{font-weight:600;font-size:var(--t-lg)}
+/* the FUNCTION word is the section's role in the form: a quiet accent chip,
+   no outline — the colour is the whole signal that it is set */
 .bcell.c-role:not(.unset) .role{
-  font:600 12px/1.5 var(--f-legend);letter-spacing:.08em;text-transform:uppercase;
-  color:var(--accent-txt);border:1px solid var(--accent);border-radius:2px;
-  padding:0 5px}
-/* the LENGTH cell: bars always, the clock beside it where there is room */
-.bcell.bbars .cvx{display:flex;align-items:baseline;gap:6px;
-  font:600 13px/1.4 var(--f-legend);letter-spacing:.04em;text-transform:uppercase;
-  color:var(--dim)}
-.bbars .bn{color:var(--ink);font-weight:600;font-size:15px;white-space:nowrap}
+  font:600 var(--t-sm)/1.5 var(--f-ui);letter-spacing:.01em;
+  color:var(--accent-txt)}
+/* the LENGTH cell CARRIES ITS OWN COLUMN NAME: it reads "4 bars", never a
+   bare 4 under a BARS silkscreen, because the silkscreen is gone. The unit
+   word is therefore load-bearing and never hides — only the mm:ss clock
+   beside it is optional (the narrow block drops that). */
+.bcell.bbars .cvx{display:flex;align-items:baseline;gap:var(--sp-1);
+  font:500 var(--t-sm)/1.4 var(--f-ui);letter-spacing:.01em;
+  color:var(--ink-2)}
+.bbars .bn{color:var(--ink);font-weight:600;font-size:var(--t-md);white-space:nowrap}
 .bbars .bu{white-space:pre}
-.bbars .bd{font-family:var(--f-num);letter-spacing:.02em;color:var(--faint);white-space:nowrap}
+.bbars .bd{font-family:var(--f-num);letter-spacing:.01em;color:var(--ink-3);white-space:nowrap}
 /* THE PATTERN ROW — the phrases on their OWN full-width strip beneath the
    cells ("make the little patterns visualization big and chunky"): one
    chunky thumbnail per phrase THIS LAYER PLAYS, in play order — thumbPath's
@@ -886,22 +837,21 @@ h1 em{font-style:normal;color:var(--accent-txt)}
    .bchips.bank below is that bank). The thumbnails wear the SAME key
    material as the cells — a thumbnail is a key you press, not a decal — with
    the state ring drawn over it. Tap = go to Compose on that phrase. */
-.bchips{grid-column:1/-1;display:flex;gap:6px;align-items:stretch;min-width:0;
-  flex-wrap:wrap;padding:6px 0 2px}
+.bchips{grid-column:1/-1;display:flex;gap:var(--sp-2);align-items:stretch;min-width:0;
+  flex-wrap:wrap;padding:var(--sp-2) 0 var(--sp-1)}
 .bplab{align-self:center;flex:0 0 auto;
-  font:600 10px/1 var(--f-legend);letter-spacing:.14em;text-transform:uppercase;
-  color:var(--tbl-faint)}
+  font:500 var(--t-xs)/1 var(--f-ui);color:var(--ink-3)}
 /* a layer that plays no pattern shows only its [+] — the silkscreen recedes
    rather than labelling an empty strip */
 .bchips.none .bplab{opacity:.55}
 .bch{
   appearance:none;cursor:pointer;padding:3px 4px;flex:0 1 auto;
-  width:104px;height:46px;border-radius:4px;position:relative;
-  background:var(--tbl-key,var(--hw-key-mid));color:var(--tbl-ink);
-  border:1px solid rgba(0,0,0,.4);border-top-color:rgba(255,255,255,.2);
+  width:104px;height:46px;border-radius:var(--r);position:relative;
+  background:var(--tbl-key,var(--bg-key));color:var(--tbl-ink);
+  border:1px solid transparent;
   display:flex;align-items:stretch;gap:0;overflow:hidden;
 }
-.bch:active{transform:translateY(1px);background:var(--hw-key-lo)}
+.bch:active{background:var(--bg-key-lo)}
 /* THE PHRASE NUMBER, SUPERIMPOSED ON THE PICTURE ("and superimpose their
    number on them"): a big numeral laid over the whole face rather than
    beside it, because a thumbnail that has to give up width for a numeral
@@ -910,18 +860,19 @@ h1 em{font-style:normal;color:var(--accent-txt)}
    reads a centred watermark against ANY of them. Translucent so the bars
    read straight through it, with a key-coloured halo so it stays legible
    over the accent fill, and non-interactive so it never eats the tap. */
+/* the halo is a text STROKE in the key's own colour, not a glow: it knocks
+   the bars back out from under the numeral by exactly the stroke width and
+   stops there. Without it the numeral disappeared into a dense phrase. */
 .bch .bcn{position:absolute;inset:0;pointer-events:none;
   display:flex;align-items:center;justify-content:center;
-  font:700 26px/1 var(--f-num);letter-spacing:.02em;
-  color:var(--tbl-ink);opacity:.44;
-  text-shadow:0 0 4px var(--tbl-key,var(--hw-key-mid)),
-              0 0 2px var(--tbl-key,var(--hw-key-mid))}
+  font:700 var(--t-xl)/1 var(--f-num);letter-spacing:.01em;
+  color:var(--tbl-ink);opacity:.7;
+  -webkit-text-stroke:3px var(--tbl-key,var(--bg-key));paint-order:stroke fill}
 /* OFF = in the bank, not in this layer: the key recedes and its bars go
    faint — visible, recognizable, clearly not playing. Only the BANK behind
    [+] has off keys now; every thumbnail on a row is one the section plays. */
 .bch:not(.on){opacity:.5}
 .bch:not(.on) .bcmini{opacity:.55}
-.bch.on{border-color:rgba(0,0,0,.55)}
 .bch.on .bcn{color:var(--accent-txt);opacity:.5}
 .bch.on .bcmini{fill:var(--accent)}
 /* THE SOUNDING ROW'S KEYS TAKE THE WASH: the .tbl row states paint the row's
@@ -943,9 +894,9 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .bch.lit{color:var(--st-play);border-color:var(--st-play)}
 .bch.lit .bcmini{fill:var(--st-play)}
 .bch.bplus{
-  width:auto;min-width:46px;padding:0 10px;height:46px;
-  font:600 20px/1 var(--f-num);color:var(--faint);
-  border-style:dashed;border-color:var(--hw-edge);
+  width:auto;min-width:48px;padding:0 var(--sp-3);height:46px;
+  font:600 20px/1 var(--f-num);color:var(--ink-3);background:none;
+  border-style:dashed;border-color:var(--rule-strong);
   display:inline-flex;align-items:center;justify-content:center}
 .bch.bplus:hover{color:var(--accent-txt)}
 .bch.bplus[hidden]{display:none}
@@ -980,11 +931,11 @@ h1 em{font-style:normal;color:var(--accent-txt)}
    this layer. .foc marks the layer the menus edit; .live takes the sounding
    wash with the parent, because the layers sound together. */
 .lrow{
-  position:relative;display:grid;gap:3px 4px;align-items:center;
-  padding:4px var(--tbl-gut) 6px;
+  position:relative;display:grid;gap:var(--sp-1);align-items:center;
+  padding:var(--sp-2) var(--tbl-gut);
   border-bottom:1px solid var(--tbl-hair);
 }
-.lmark{color:var(--faint);font:600 14px/1 var(--f-num);text-align:center;
+.lmark{color:var(--ink-3);font:600 var(--t-md)/1 var(--f-num);text-align:center;
   justify-self:center}
 .lrow.foc{background:var(--tbl-hi)}
 .lrow.foc .lmark{color:var(--accent-txt)}
@@ -992,50 +943,50 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .lrow.live .bcell,.lrow.live .bch{
   background:color-mix(in srgb,var(--st-live) 13%,var(--tbl-key,var(--hw-key-mid)))}
 .ldel{display:flex;justify-content:flex-end}
-.lrx{appearance:none;cursor:pointer;min-width:32px;min-height:32px;border-radius:3px;
-  background:none;color:var(--faint);border:1px dashed var(--line);
-  font:600 13px/1 var(--f-num)}
+.lrx{appearance:none;cursor:pointer;min-width:36px;min-height:36px;border-radius:var(--r);
+  background:none;color:var(--ink-3);border:1px dashed var(--rule-strong);
+  font:600 var(--t-sm)/1 var(--f-num)}
 .lrx:hover{color:var(--accent-txt);border-color:var(--accent)}
-/* THE HEADER ROW: the columns named once, in silkscreen (.thd), instead of
-   every row re-explaining itself. Same grid as .box AT EVERY WIDTH — on the
-   phone it splits into the same two decks the rows do, and each cell swaps to
-   its abbreviation (.ha) while the full word stays in the accessibility tree
-   via the clip pattern (.hf) — the transport legends' own swap. */
-.shead{padding:6px var(--tbl-gut) 5px;font-size:11.5px;color:var(--tbl-faint)}
-.shead .ha{display:none}
+/* (THERE IS NO HEADER ROW. The song table's column-label row — # · GENRE ·
+   FUNCTION · BARS · MODS · VOICE · RHYTHM · TRANSITIONS in silkscreen — is
+   deleted, DOM and all (ui/songrow.js). Every one of those columns already
+   printed a self-naming value in its own cells: the genre cell says the
+   genre and where it is from, the length cell says "4 bars", the function
+   cell says VERSE. The header was the table repeating itself in caps.
+   The .shead grid placements below are gone with it; only .box is placed.) */
 /* THE PHONE SONG GRID — the two-deck row. Identity cells on line 1 (the
    numeral, the genre across two tracks, the function, the bars, the pattern
    chips trailing), treatment cells on line 2, indented past the numeral
-   column. Six shared tracks, so every key lines up vertically with the header
-   and with every other row — the grid is real, not a wrap. Scoped to <900px:
-   these placements must never leak into the desk's ten-track template. */
+   column. Six shared tracks, so every key lines up vertically with every
+   other row — the grid is real, not a wrap. (It used to line up with the
+   header row too; the header is gone, so the grid answers only to itself.)
+   Scoped to <900px: these placements must never leak into the desk's
+   eight-track template. */
 @media (max-width:899px){
-  .box,.shead{
+  .box{
     display:grid;
-    grid-template-columns:24px repeat(5,minmax(0,1fr));
-    gap:3px 4px;align-items:stretch;
+    grid-template-columns:26px repeat(5,minmax(0,1fr));
+    gap:var(--sp-1);align-items:stretch;
   }
-  .shead{gap:1px 4px;padding:4px var(--tbl-gut) 3px}
-  .shead .hf{position:absolute;width:1px;height:1px;overflow:hidden;
-    clip-path:inset(50%);white-space:nowrap}
-  .shead .ha{display:inline}
-  /* line 1 is the IDENTITY line, and the pattern row freed its sixth track:
-     genre and function get the width their words actually need */
-  .c-part,.h-part{grid-row:1;grid-column:1}
-  .c-genre,.h-genre{grid-row:1;grid-column:2/span 2}
-  .c-role,.h-role{grid-row:1;grid-column:4/span 2}
-  .c-bars,.h-bars{grid-row:1;grid-column:6}
+  /* line 1 is the IDENTITY line. BARS TOOK A SECOND TRACK from FUNCTION when
+     the header row died: the cell has to print its own column name now, and
+     "4 bars" was arriving as "4 ba…" in one track. The function word is the
+     shorter of the two (VERSE, DROP, CHORUS) and gives the width up. */
+  .c-part{grid-row:1;grid-column:1}
+  .c-genre{grid-row:1;grid-column:2/span 2}
+  .c-role{grid-row:1;grid-column:4}
+  .c-bars{grid-row:1;grid-column:5/span 2}
   /* line 2 lost the TIMING cell (nothing in a section tells time): four
      treatment cells over five tracks, and the freed room goes to VOICE —
      the one cell carrying a real instrument name rather than a count */
-  .c-mods,.h-mods{grid-row:2;grid-column:2}
-  .c-voice,.h-voice{grid-row:2;grid-column:3/span 2}
-  .c-rhythm,.h-rhythm{grid-row:2;grid-column:5}
-  .c-trans,.h-trans{grid-row:2;grid-column:6}
+  .c-mods{grid-row:2;grid-column:2}
+  .c-voice{grid-row:2;grid-column:3/span 2}
+  .c-rhythm{grid-row:2;grid-column:5}
+  .c-trans{grid-row:2;grid-column:6}
   /* line 3 is the PATTERN ROW, full width past the numeral column */
   .bchips{grid-row:3;grid-column:1/-1}
   /* the part key holds the numeral centred */
-  .bcell.c-part{justify-content:center;padding:4px 2px}
+  .bcell.c-part{justify-content:center;padding:var(--sp-1) 2px}
   /* the layer sub-row: ↳ · genre · voice · mods · ✕ on line 1, its own
      pattern row beneath */
   .lrow{grid-template-columns:24px minmax(0,1.15fr) minmax(0,1fr) minmax(0,.85fr) 36px}
@@ -1043,19 +994,19 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 }
 /* THE FOOTER ROW: duplicate and add. They are table keys, not sections, so
    they get their own row under the last one. */
-.sfoot{display:flex;padding:6px var(--tbl-gut)}
-.sfootcell{display:flex;gap:6px;flex-wrap:wrap}
+.sfoot{display:flex;padding:var(--sp-3) var(--tbl-gut)}
+.sfootcell{display:flex;gap:var(--sp-2);flex-wrap:wrap}
 .addbox{
-  cursor:pointer;appearance:none;font:inherit;min-height:40px;padding:0 12px;
-  display:inline-flex;align-items:center;justify-content:center;gap:7px;
-  background:none;color:var(--faint);
-  border:1px dashed var(--line);border-radius:4px;
+  cursor:pointer;appearance:none;font:inherit;min-height:44px;padding:0 var(--sp-4);
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);
+  background:none;color:var(--ink-3);
+  border:1px dashed var(--rule-strong);border-radius:var(--r);
 }
 .addbox:hover{border-color:var(--accent);color:var(--accent-txt)}
-.addbox.copy{border-style:solid}
+.addbox.copy{border-style:solid;border-color:var(--rule)}
 .addbox.copy svg{width:17px;height:17px;fill:none;stroke:currentColor;
   stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
-.addbox .ab{font:600 9px/1 var(--f-legend);letter-spacing:.14em;text-transform:uppercase}
+.addbox .ab{font:500 var(--t-sm)/1 var(--f-ui);letter-spacing:.01em}
 .pchip.role.on{background:var(--accent);border-color:var(--accent);color:var(--on-ink)}
 
 /* ---- THE BOARD ----
@@ -1348,30 +1299,32 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
    chip is a latching key with an LED in its corner — chips are the crowd, so
    the material is the cheap bevel: flat fill, edge borders, one
    pseudo-element lamp. No shadows, no transitions. */
-.pnote{flex:1 0 100%;margin:0;font-size:13.5px;color:var(--dim);line-height:1.6}
-/* A GROUP IS A BANK, AND A BANK IS A TABLE SECTION: the same .tbl well and
-   the same .thd header row the pattern editor and the song table wear,
-   holding a UNIFORM grid of keys — equal widths, aligned columns, 2-3 across
-   on a phone, more as the bank gets room. */
+.pnote{flex:1 0 100%;margin:0;font-size:var(--t-sm);color:var(--ink-2);line-height:1.6}
+/* A GROUP IS A BANK: a NAME over a uniform grid of keys — equal widths,
+   aligned columns, 2-3 across on a phone, more as the bank gets room.
+   .plabel survives the header cull on purpose and is not a table head: it
+   names WHICH BANK this is ("instrument · strings", "phrase bank"), one of
+   twelve stacked in the same fold, and no chip inside it can say that for
+   itself. It is set as ordinary quiet text, not silkscreen. */
 .pgroup{flex:1 1 300px;min-width:240px}
-.plabel{display:block;font-size:11.5px;letter-spacing:.16em;color:var(--tbl-faint)}
-.pchips{display:grid;grid-template-columns:repeat(auto-fill,minmax(126px,1fr));
-  gap:6px;padding:6px var(--tbl-gut) 8px}
-.pchips.compact{grid-template-columns:repeat(auto-fill,minmax(62px,1fr))}
+.plabel{display:block;padding:var(--sp-2) var(--tbl-gut) var(--sp-1);
+  font:500 var(--t-xs)/1.3 var(--f-ui);letter-spacing:.01em;color:var(--ink-3)}
+.pchips{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));
+  gap:var(--sp-2);padding:var(--sp-1) var(--tbl-gut) var(--sp-3)}
+.pchips.compact{grid-template-columns:repeat(auto-fill,minmax(66px,1fr))}
 .pchip{
-  appearance:none;font:500 14.5px/1.25 var(--f-legend);letter-spacing:.02em;cursor:pointer;
-  position:relative;text-align:left;min-height:46px;
-  background:var(--tbl-key,var(--hw-key-mid));color:var(--ink);
-  border:0;border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(0,0,0,.55);
-  border-radius:3px;padding:9px 9px 9px 17px;
+  appearance:none;font:500 var(--t-md)/1.25 var(--f-ui);letter-spacing:.01em;cursor:pointer;
+  position:relative;text-align:left;min-height:48px;
+  background:var(--tbl-key,var(--bg-key));color:var(--ink);
+  border:0;border-radius:var(--r);padding:var(--sp-3) var(--sp-3) var(--sp-3) 20px;
 }
 .pchip::after{
-  content:"";position:absolute;left:5px;top:50%;margin-top:-2px;
-  width:4px;height:4px;border-radius:1px;
-  background:var(--led-off);
+  content:"";position:absolute;left:var(--sp-2);top:50%;margin-top:-3px;
+  width:6px;height:6px;border-radius:50%;
+  background:var(--rule-strong);
 }
-.pchip.on::after{background:var(--a-cream)}
-.pchip:hover{color:var(--ink);border-top-color:rgba(255,255,255,.2)}
+.pchip.on::after{background:var(--on-accent)}
+.pchip:hover{color:var(--ink);background:var(--bg-key-hi)}
 .pchip.gen{font-weight:600}
 /* ONE STATE LANGUAGE, everywhere on the machine: lit orange = you set it,
    dim-lit = the default is doing it (palette.js marks those .dflt), off = a
@@ -1385,11 +1338,11 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
   background:color-mix(in srgb,var(--accent) 24%,var(--tbl-key));
   color:var(--ink);
 }
-.pchip.on.dflt::after{background:color-mix(in srgb,var(--a-orange) 55%,var(--led-off))}
-.pchip.lst{min-width:30px;padding:9px 9px 9px 15px}
-.pchip.foc{border:1px dashed var(--line)}
-.pchip.foc.on{border-style:solid;border-color:var(--accent)}
-.slot.inbox{box-shadow:inset 0 0 0 1px var(--accent),inset 0 -3px 6px rgba(0,0,0,.28),0 2px 0 rgba(0,0,0,.5)}
+.pchip.on.dflt::after{background:var(--accent)}
+.pchip.lst{min-width:34px;padding:var(--sp-3) var(--sp-2) var(--sp-3) 18px}
+.pchip.foc{box-shadow:inset 0 0 0 1px var(--rule-strong)}
+.pchip.foc.on{box-shadow:inset 0 0 0 2px var(--accent-txt)}
+.slot.inbox{box-shadow:inset 0 0 0 1px var(--accent)}
 
 /* ---- touch ----
    A coarse pointer has no hover, no shift key and a fingertip about nine
@@ -1400,9 +1353,9 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
 @media (pointer:coarse){
   /* the step cells already hold 44px at every width — the table is the same
      table on a tablet, only roomier, so there is nothing here to re-lay-out */
-  .pchip{padding:13px 12px 13px 17px;min-height:46px}
-  .btn{padding:13px 16px;min-height:44px}
-  .slot{min-height:52px}
+  .pchip{padding:var(--sp-3) var(--sp-3) var(--sp-3) 20px;min-height:48px}
+  .btn{padding:var(--sp-3) var(--sp-4);min-height:44px}
+  .slot{min-height:56px}
   /* THE ROW CELLS ARE THE ONE PLACE THE 44px FLOOR LOSES, deliberately and
      by a stated amount: ten cells at 44px tall is a 100px section, which is
      the exact height the cell row exists to end. The mitigations are real:
@@ -1411,7 +1364,7 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
        · nothing on the row is destructive — delete lives in the PART popup
          behind a deliberate tap.
      The cells get a taller pad than a desk's, short of the floor. */
-  .bcell{padding:8px 6px;min-height:36px}
+  .bcell{padding:var(--sp-2) var(--sp-2);min-height:40px}
   /* the pattern thumbnails are chunky keys on their own row now — they hold
      the full 44px floor with room to spare (46px base) */
   .bch{min-height:46px}
@@ -1425,8 +1378,7 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
      the hit strip grows. The recessed LCD pickers get the same floor. */
   .knob input{height:44px}
   .knob select{min-height:44px}
-  /* the round (?) key and the fader's own keys hold the floor as squares */
-  .btn.hint{width:44px;height:44px;min-width:44px}
+  /* the fader's own keys hold the floor as squares */
   .pfstep{min-height:44px}
   .pfclose{width:36px;height:36px}
   /* the row popover's keys are the trim controls now — the edge grips they
@@ -1435,37 +1387,37 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
   .pkey{min-height:48px}
 }
 
-/* ---- the source drawer (the brushed panel, with the other two screws) ---- */
-details{position:relative;padding:10px 12px}
-summary{cursor:pointer;font:600 11px/1.4 var(--f-legend);letter-spacing:.12em;text-transform:uppercase;
-  color:var(--dim)}
+/* ---- the source drawer ---- */
+details{position:relative;padding:var(--sp-3) var(--sp-4)}
+summary{cursor:pointer;font:600 var(--t-sm)/1.4 var(--f-ui);letter-spacing:.01em;
+  color:var(--ink-2)}
 summary:hover{color:var(--ink)}
-details pre{margin:10px 0 0;overflow-x:auto;font:400 11.5px/1.65 var(--f-num);
+details pre{margin:var(--sp-3) 0 0;overflow-x:auto;font:400 var(--t-sm)/1.65 var(--f-num);
   color:var(--ink)}
-details .c{color:var(--faint)}
+details .c{color:var(--ink-3)}
 
 /* ---- the page rail ----
-   Hardware mode keys. display:none on a desk (set at the top of this file);
-   the phone block below turns them on. Selected = the orange lens with a
-   dark legend, same as every other lit key on the machine. */
+   Three mode keys. display:none on a desk (set at the top of this file); the
+   phone block below turns them on. Flat: the selected page is the accent
+   fill, the other two are the surface with quiet ink — no lens, no bevel, no
+   moulding, and no borders between them (the rail's own rule is enough). */
 .pagerail{
-  grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;
-  padding:8px calc(8px + env(safe-area-inset-right))
-          calc(8px + env(safe-area-inset-bottom))
-          calc(8px + env(safe-area-inset-left));
-  background:
-    linear-gradient(180deg,var(--hw-panel-hi) 0,var(--hw-panel) 38%,var(--hw-panel-lo) 100%);
-  border-top:1px solid var(--hw-edge);
-  box-shadow:inset 0 1px 0 var(--hw-bevel-hi);
+  grid-auto-flow:column;grid-auto-columns:1fr;gap:0;
+  padding:0 env(safe-area-inset-right)
+          env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background:var(--bg-surface);
+  border-top:1px solid var(--rule);
 }
 .pkey{
-  font:600 10px/1 var(--f-legend);letter-spacing:.12em;
-  text-transform:uppercase;color:var(--dim);min-height:48px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  font:600 var(--t-sm)/1 var(--f-ui);letter-spacing:.01em;
+  color:var(--ink-3);min-height:56px;border:0;border-radius:0;
+  background:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:var(--sp-1);
 }
-/* the rail's silkscreen: a small icon over each word, currentColor through an
-   SVG mask (the .ik recipe), so the lit key's dark ink carries into its icon. */
-.pkey .pi{width:15px;height:15px;flex:0 0 auto;background:currentColor;
+/* a small icon over each word, currentColor through an SVG mask, so the
+   selected key's dark ink carries into its icon */
+.pkey .pi{width:17px;height:17px;flex:0 0 auto;background:currentColor;
   -webkit-mask:var(--pim) center/contain no-repeat;mask:var(--pim) center/contain no-repeat}
 /* the song's own picture: a table of rows (it was three upright cartridges in
    a rack, which is the layout the song table replaced) */
@@ -1477,13 +1429,7 @@ details .c{color:var(--faint)}
 /* the mix desk: three faders, caps at different throws (the icon the MIX
    destination has always worn, wherever it lived) */
 .pkey[data-page="mix"] .pi{--pim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M2.6 1.4v12.2M7.5 1.4v12.2M12.4 1.4v12.2' stroke='%23000' stroke-width='1.3'/%3E%3Crect x='1' y='3.4' width='3.2' height='3' rx='.8'/%3E%3Crect x='5.9' y='8.2' width='3.2' height='3' rx='.8'/%3E%3Crect x='10.8' y='5.2' width='3.2' height='3' rx='.8'/%3E%3C/svg%3E")}
-.pkey[aria-selected="true"]{
-  color:var(--on-ink);
-  background:linear-gradient(180deg,
-    color-mix(in srgb,var(--a-orange) 80%,white) 0,
-    var(--a-orange) 50%,
-    color-mix(in srgb,var(--a-orange) 78%,black) 100%);
-}
+.pkey[aria-selected="true"]{color:var(--on-accent);background:var(--accent)}
 
 /* ---- the phone chassis ----
    Below 900px the three zones become REAL: transport pinned on top, the deck
@@ -1498,19 +1444,17 @@ details .c{color:var(--faint)}
     display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;
   }
   /* the readout is a fixed one-line chyron between deck and rail */
-  .readout{border-radius:0;border-left:0;border-right:0;min-height:0;
-    padding:7px 10px;font-size:12.5px;white-space:nowrap;overflow:hidden;
-    text-overflow:ellipsis}
+  .readout{min-height:0;
+    padding:var(--sp-2) var(--sp-3);font-size:var(--t-sm);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .mast{display:none}
   .bar{
-    border-radius:0;border-left:0;border-right:0;border-top:0;
-    padding:calc(8px + env(safe-area-inset-top))
-            calc(10px + env(safe-area-inset-right))
-            8px calc(10px + env(safe-area-inset-left));
-    gap:6px 8px;
+    padding:calc(var(--sp-2) + env(safe-area-inset-top))
+            calc(var(--sp-3) + env(safe-area-inset-right))
+            var(--sp-2) calc(var(--sp-3) + env(safe-area-inset-left));
+    gap:var(--sp-2);
   }
-  .bar::before,.bar::after{display:none}
-  .btn{padding:11px 12px}
+  .btn{padding:var(--sp-3)}
   .btn.go{min-width:0}
   /* TWO ALIGNED ROWS, not a ragged wrap. The go cluster dissolves into the
      bar's own flex line (display:contents twice — .tgo, then .write), the
@@ -1529,15 +1473,15 @@ details .c{color:var(--faint)}
      two classes of specificity, and a bare .seedlcd loses to it.) */
   .transport .seedlcd{display:none}
   .knob input{width:64px;flex:1 1 52px;min-width:44px}
-  .knob b{min-width:34px;font-size:11px;padding:5px 3px}
-  .poslcd{min-width:62px;padding:7px 3px;font-size:12px}
-  .knob select{max-width:104px}
+  .knob b{min-width:38px;font-size:var(--t-sm);padding:var(--sp-1) 3px}
+  .poslcd{min-width:66px;padding:var(--sp-2) var(--sp-1);font-size:var(--t-sm)}
+  .knob select{max-width:120px}
   /* THE SILKSCREEN STAYS. This rule used to hide the fader legends outright,
      which left two anonymous faders whose LCDs read 126 and 80 — a mystery
      panel. The legends come back small (TEMPO / VOL, one row with their
      LCDs); only VOLUME abbreviates, via the span swap — the full word keeps
      the layout out through the clip pattern so the accessible name survives. */
-  .tset .knob label{font-size:8.5px;letter-spacing:.08em;flex:0 0 auto}
+  .tset .knob label{font-size:11px;letter-spacing:.01em;flex:0 0 auto}
   .knob .lf{position:absolute;width:1px;height:1px;overflow:hidden;
     clip-path:inset(50%);white-space:nowrap}
   .knob .la{display:inline;position:static;width:auto;height:auto}
@@ -1545,9 +1489,13 @@ details .c{color:var(--faint)}
   /* the WRITE cluster's own labels (GENRE) still step back: the picker's
      value is self-naming and row one has no room to spare */
   .write .knob span{display:none}
-  .deck{display:block;overflow-y:auto;min-height:0;
-    padding:10px calc(10px + env(safe-area-inset-right))
-            16px calc(10px + env(safe-area-inset-left))}
+  /* NO SIDE PADDING on the phone deck either: the arrangement runs to both
+     edges of the phone exactly as it does on a desk, and the safe-area
+     insets ride on the ROWS (--tbl-gut below) rather than on a gutter that
+     would stop every rule short of the glass. */
+  .deck{display:block;overflow-y:auto;min-height:0;padding:0 0 var(--sp-4)}
+  .chassis{--tbl-gut:calc(var(--sp-3) + env(safe-area-inset-left))}
+  .ed{padding:var(--sp-3) 0}
   /* a row scrolled to the deck's very top sits flush under the transport's
      shadow line, and a programmatic scroll-into-view (a tap on a half-visible
      row, an assistive-tech focus move) can park the target exactly on the
@@ -1563,8 +1511,6 @@ details .c{color:var(--faint)}
   .chassis[data-page="song"] .pg-song{display:block}
   .chassis[data-page="mix"]  .pg-mix{display:block}
   .pagerail{display:grid}
-  .ed{padding:10px}
-  .song{max-height:none}
 }
 
 /* ---- the narrow band ----
@@ -1576,48 +1522,38 @@ details .c{color:var(--faint)}
    be another one; if something has to SHRINK rather than wrap to fit a
    phone, it is the wrong thing to have on the phone. */
 @media (max-width:560px){
-  .tbl{--tbl-gut:6px}
+  .chassis{--tbl-gut:calc(var(--sp-2) + env(safe-area-inset-left))}
   /* all eight columns, tighter tracks — no latch, no hidden column: a bar
      cell narrows where a numeral cell could not. The type does NOT follow
      the tracks down. */
   .stepgrid{grid-template-columns:26px repeat(3,minmax(26px,40px))
     repeat(5,minmax(28px,1fr))}
-  /* the column header keeps only its name at this width — the range line is
-     the one thing a 390px column cannot afford */
-  .rowlab{font-size:10.5px;letter-spacing:.04em;padding:5px 1px}
+  /* the tracker's caption keeps only the column name at this width — the
+     range line is the one thing a 390px column cannot afford */
+  .rowlab{font-size:11px;padding:0 1px var(--sp-1)}
   .rowlab .rrange{display:none}
-  .ed{gap:8px}
-  .edhint{font-size:12.5px}
-  .edhead .btn.ik{padding:11px 8px}
-  /* icon keys drop their word; the icon, the title and the id remain. The
-     header must hold title + (?) + three keys on ONE 360px row — that is the
-     whole point of the icons — so the gaps and the (?) give a little too. */
-  .edhead{gap:6px}
-  .edhead h2{font-size:12px;letter-spacing:.08em}
-  .btn.hint{width:38px;height:38px;min-width:38px}
-  .btn.ik{padding:11px 11px}
-  /* the EDITOR's keys go icon-only — that is what buys the one-row header.
+  .ed{gap:var(--sp-3)}
+  .edhead{gap:var(--sp-2)}
+  .btn.ik{padding:var(--sp-3)}
+  /* the EDITOR's keys go icon-only; the icon, the title and the id remain.
      The utility keys keep their words: Save/Load/Reset live on the roomy
      Arrange page, and a word next to a destructive key is cheap insurance. */
   .edhead .btn.ik .t{display:none}
-  .btn.ik .k{width:15px;height:15px}
+  .btn.ik .k{width:16px;height:16px}
   /* the phrase bank keeps CHUNKY pads — two or three to a row, wrapping down
-     the page, never a rank of fingernails (the old 8-across strip put a 15px
-     picture on a 34px pad, which is squinting distance) */
-  .slots{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));
-    gap:6px;padding:6px}
-  .slot{min-height:52px}
-  .mini{height:28px}
-  /* THE SONG TABLE AT 390: the clock drops from the length cell and the
-     gutters tighten — the TYPE HOLDS. The cells were 9.5px here once; a
-     section row's words now stay at the desk's own sizes and the row simply
-     takes three lines, which is what infinite vertical room is FOR. */
-  .bbars .bd,.bbars .bu{display:none} /* the number stays; the unit word and
-                                         the mm:ss are what a phone drops */
-  .bcell{padding:7px 5px;gap:4px}
-  .bcell.c-role:not(.unset) .role{font-size:10px;letter-spacing:.04em;padding:0 3px}
-  .bch{width:88px}
-  .bch.bbk{width:96px}
+     the page, never a rank of fingernails */
+  .slots{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));
+    gap:var(--sp-2)}
+  .slot{min-height:56px}
+  .mini{height:30px}
+  /* THE SONG TABLE AT 390: the mm:ss clock drops from the length cell and the
+     gutters tighten — the TYPE HOLDS, and so does the UNIT WORD. "4" under a
+     BARS silkscreen was fine; with the header gone the cell has to say "4
+     bars" itself, so .bu is no longer droppable and only .bd is. */
+  .bbars .bd{display:none}
+  .bcell{padding:var(--sp-2) var(--sp-2);gap:var(--sp-1)}
+  .bch{width:92px}
+  .bch.bbk{width:100px}
   /* the superimposed numeral scales with the face it rides */
   .bch .bcn{font-size:22px}
   .addbox{flex:1 1 auto}
@@ -1640,13 +1576,14 @@ details .c{color:var(--faint)}
   /* the two numbers every table is measured in: taller rows and a wider
      column gutter. This is the whole of "a desk gets more room" — the
      surfaces move together because they are one component. */
-  .tbl{--tbl-rowh:48px;--tbl-gut:12px}
-  .stepgrid .rowlab{font-size:12px;padding:6px 3px}
+  .chassis{--tbl-gut:var(--sp-5)}
+  .tbl{--tbl-rowh:52px}
+  .stepgrid .rowlab{font-size:var(--t-sm);padding:0 3px var(--sp-2)}
   /* the tracker with a desk's room: 38px rows (under the audio gate's 40px
      ceiling — a tracker, not a spreadsheet) and wider value columns */
   .stepgrid{--tbl-rowh:38px;grid-auto-rows:minmax(38px,auto);
     grid-template-columns:30px repeat(3,minmax(38px,60px)) repeat(5,minmax(48px,1fr))}
-  .cell .cv{font-size:13px}
+  .cell .cv{font-size:var(--t-md)}
 
   /* THE SONG TABLE, WITH ROOM — the cells stop wrapping and become FIXED
      grid tracks, so every row's columns line up with the header and with
@@ -1655,16 +1592,15 @@ details .c{color:var(--faint)}
      (the pattern thumbnails moved to their own full-width row beneath), the
      freed width dealt to the cells that carry words:
      part · genre · function · bars · mods · voice · rhythm · transitions. */
-  .box,.shead{
+  .box{
     display:grid;
-    grid-template-columns:40px minmax(150px,1.4fr) 110px 150px 96px
-      minmax(120px,1.2fr) 110px minmax(110px,1fr);
-    gap:0 6px;align-items:center}
-  .shead{display:grid}
-  .box{padding:5px var(--tbl-gut) 6px}
-  .bnum{font-size:17px}
-  .bcell{padding:9px 8px}
-  .bcell.bgenre{font-size:17px}
+    grid-template-columns:40px minmax(160px,1.4fr) 120px 150px 100px
+      minmax(130px,1.2fr) 116px minmax(116px,1fr);
+    gap:0 var(--sp-2);align-items:center;
+    padding:var(--sp-3) var(--tbl-gut)}
+  .bnum{font-size:var(--t-lg)}
+  .bcell{padding:var(--sp-2) var(--sp-3)}
+  .bcell.bgenre{font-size:21px}
   /* the pattern row gets the desk's chunkier thumbnails */
   .bchips{gap:8px;padding:8px 0 4px}
   .bch{width:128px;height:52px}

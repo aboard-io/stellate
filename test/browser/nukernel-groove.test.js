@@ -121,19 +121,23 @@ const liftedSw = loaded.find(x => x.r.ok && x.r.song.swing != null);
     else ok("no box in the save carries a groove or a swing");
   }
 
-  // (D) NOTHING IN A SECTION TELLS TIME. No TIMING cell on any row or in the
-  // header; and no cell menu the section surface can open offers a swing or
+  // (D) NOTHING IN A SECTION TELLS TIME. No TIMING cell anywhere in the song
+  // table; and no cell menu the section surface can open offers a swing or
   // groove bank. The two survivors work from PATTERN MODS into state.
+  // (The second half of this used to count `.shead .h-timing` — a TIMING
+  // header cell. The header row is gone from the whole app, so that locator
+  // became vacuously zero; the count it is replaced with is STRICTLY wider
+  // than the .bcell one it joins, because it sweeps the layer sub-rows too.)
   // A fresh page first: the preset loaded above carries its own nudges, and
   // the stepper claim below is exact (0 -> 1).
   await page.evaluate(() => localStorage.removeItem("nukernel.song.v1"));
   await page.reload({ waitUntil: "networkidle" });
   {
     const tCells = await page.locator('.bcell[data-cell="timing"]').count();
-    const tHead = await page.locator(".shead .h-timing").count();
-    if (tCells || tHead)
-      fail(`a TIMING surface survives (${tCells} cells, ${tHead} header cells)`);
-    else ok("no TIMING cell exists — not on a row, not in the header");
+    const tAny = await page.locator('#song [data-cell="timing"]').count();
+    if (tCells || tAny)
+      fail(`a TIMING surface survives (${tCells} row cells, ${tAny} in the table)`);
+    else ok("no TIMING cell exists — not on a row, not on a layer sub-row");
 
     // walk EVERY distinct cell menu a section row offers
     const kinds = await page.locator(".box").first()

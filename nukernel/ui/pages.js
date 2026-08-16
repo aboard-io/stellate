@@ -1,4 +1,4 @@
-// ui/pages.js — the page rail: THREE hardware mode keys switching what the
+// ui/pages.js — the page rail: THREE mode keys switching what the
 // phone deck paints. A page switch is ONE attribute write on the chassis
 // (CSS does the rest) — never a rebuild, so every module's elements stay
 // alive and the gates' selectors stay in the DOM whichever page is up. On a
@@ -16,7 +16,7 @@
 //   ARRANGE  home. The table of sections plus the song-level banks
 //            (instruments, session). Internal key "song" — the key is a DOM
 //            value the CSS and gates hook ([data-page="song"], .pg-song),
-//            and only the silkscreen ever said the word, so the label
+//            and only the rail key ever said the word, so the label
 //            renamed and the key did not: fewer broken selectors, zero
 //            behavior risk.
 //   MIX      the board and the rack.

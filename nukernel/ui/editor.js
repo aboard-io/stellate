@@ -37,9 +37,11 @@ import { openFader, refresh as refreshFader } from "./popfader.js";
 
 /* ---------- the page's insides ---------- */
 // Built HERE, into kernel-daw.html's #composewrap (the page section owns only
-// the shell). The ids the modal carried (#stepgrid #slots #seed #rnd #clear
-// #edslot #edhelp/#edhint #phrhelp/#phrhint) are kept on the page's own
-// elements — they are gate-read and the (?) wiring below reads them by id.
+// the shell). The ids the modal carried — #stepgrid #slots #seed #rnd #clear
+// #edslot — are kept on the page's own elements, because they are gate-read.
+// The two (?) pairs that used to be in that list (#edhelp/#edhint,
+// #phrhelp/#phrhint) are not "hidden by CSS": the elements are deleted, so
+// there is no dead id left behind.
 const mk = (tag, cls, txt) => {
   const n = document.createElement(tag);
   n.className = cls;
@@ -57,48 +59,31 @@ const key = (id, cls, label, title) => {
 };
 const wrap = document.getElementById("composewrap");
 
+// NO HEADER, NO (?) — "get rid of headers and help buttons and table
+// headers" (Paul, 2026-08-16). What stood here was an h2 reading
+// "Compose · phrase 1" (the rail key already says COMPOSE, and the open
+// phrase is lit in the bank below), a round (?) over a paragraph explaining
+// a tracker you can simply drag on, and a second h2 + (?) pair over the
+// phrase bank. All four are DELETED, not hidden — the paragraphs went with
+// them, because a surface that needs a paragraph is a surface that is wrong.
+//
+// #edslot survives the cull: it is the one thing the head said that the page
+// cannot say twice — WHICH phrase these sixteen rows are — so it rides the
+// key row as a plain value instead of inside a heading.
 const head = mk("div", "edhead");
-const h2 = mk("h2", "", "Compose · ");
-const edslotEl = Object.assign(mk("span", "", "phrase 1"), { id: "edslot" });
-h2.append(edslotEl);
-const helpBtn = mk("button", "btn hint", "?");
-helpBtn.type = "button"; helpBtn.id = "edhelp"; helpBtn.title = "how to edit";
-helpBtn.setAttribute("aria-expanded", "false");
-helpBtn.setAttribute("aria-controls", "edhint");
+const edslotEl = Object.assign(mk("span", "edslot", "phrase 1"), { id: "edslot" });
 const seedBtn = key("seed", "btn ik ik-seed", "Seed", "write the starter phrase");
 const rndBtn = key("rnd", "btn ik ik-rnd", "Random", "roll a random phrase");
 const clearBtn = key("clear", "btn ik ik-clear", "Clear", "empty this phrase");
-head.append(h2, helpBtn, mk("span", "spacer"), seedBtn, rndBtn, clearBtn);
-
-const hint = Object.assign(mk("p", "edhint"), { id: "edhint", hidden: true });
-hint.innerHTML = "Tap a value cell for its fader, or drag up and down on it " +
-  "to scrub — sideways (or a second finger) for fine. Tap a gate/acc/sld key " +
-  "to flip it. The pattern reads top to bottom like a tracker: every numbered " +
-  "row is a 16th, the switches come first — <b>gate</b>, the 303 <b>acc</b>ent, " +
-  "<b>sld</b> — then the value columns, each drawn as a bar (the middle line " +
-  "is zero; <b>vel</b> fills from the floor). Phrases below: tap one to edit " +
-  "it and switch it on or off in the selected box; [+] adds a phrase, [−] " +
-  "removes the last one.";
+head.append(edslotEl, mk("span", "spacer"), seedBtn, rndBtn, clearBtn);
 
 const stepsWell = mk("div", "steps tbl");
 const gridEl = Object.assign(mk("div", "stepgrid"), { id: "stepgrid" });
 stepsWell.append(gridEl);
 
-const phHead = mk("div", "edhead phrases-head");
-phHead.append(mk("h2", "", "Phrases"));
-const phHelp = mk("button", "btn hint", "?");
-phHelp.type = "button"; phHelp.id = "phrhelp";
-phHelp.title = "how the phrase bank works";
-phHelp.setAttribute("aria-expanded", "false");
-phHelp.setAttribute("aria-controls", "phrhint");
-phHead.append(phHelp);
-const phHint = Object.assign(mk("p", "edhint phrases-head", "Click one to " +
-  "edit it and switch it on or off in the selected box. [+] adds a phrase " +
-  "(up to 16); [−] removes the last one when no box plays it."),
-  { id: "phrhint", hidden: true });
 const slotsEl = Object.assign(mk("div", "slots tbl"), { id: "slots" });
 
-wrap.append(head, hint, stepsWell, phHead, phHint, slotsEl);
+wrap.append(head, stepsWell, slotsEl);
 
 /* ---------- the step grid ---------- */
 // the vector vocabulary, exported: the order here is the COLUMN order of the
@@ -118,10 +103,14 @@ function buildGrid() {
   // their step numeral; the vectors are columnheaders. The cells' own
   // aria-labels ("step N deg V") are unchanged — they were always the step
   // identity, and the audio gate reads them by name.
-  // .thd is the shared TABLE header (kernel-daw.css): every table on the
-  // machine wears the same silkscreen, the same rule and the same sticky top.
+  // NOT A HEADER ROW. Every silkscreened column-label row on the machine is
+  // deleted; this is the one caption that survives, and it survives because
+  // eight columns of bare numerals genuinely cannot name themselves — "deg"
+  // and "oct" and "vel" are not recoverable from a value the way "4 bars" or
+  // "Chicago 1987" are. It is plain quiet text now: no .thd, no sticky band,
+  // no rule beneath it, no uppercase.
   const label = (key2) => {
-    const rl = Object.assign(document.createElement("div"), { className: "rowlab thd" });
+    const rl = Object.assign(document.createElement("div"), { className: "rowlab" });
     const num = RANGE[key2];
     rl.dataset.row = key2;                 // the skin's column hook
     rl.setAttribute("role", "columnheader");
@@ -139,7 +128,7 @@ function buildGrid() {
   const headRow = Object.assign(document.createElement("div"), { className: "prow" });
   headRow.setAttribute("role", "row");
   const corner = Object.assign(document.createElement("div"),
-    { className: "rowlab thd corner", textContent: "st" });
+    { className: "rowlab corner", textContent: "st" });
   corner.setAttribute("role", "columnheader");
   corner.setAttribute("aria-label", "step");
   headRow.append(corner);
@@ -416,18 +405,10 @@ const put = make => () => { putPhrase(slot, make()); commit("phrase"); };
 seedBtn.addEventListener("click", put(() => structuredClone(DEFAULT)));
 rndBtn.addEventListener("click", put(randomPhrase));
 clearBtn.addEventListener("click", put(blank));
-// the (?) keys: a how-to paragraph, off by default. One pattern (.btn.hint
-// toggling an .edhint), one spot (right after the panel's h2), here and on
-// the SONG page (ui/chrome.js wires that one).
-export function hintKey(btnId, pId) {
-  const b = document.getElementById(btnId), p = document.getElementById(pId);
-  b.addEventListener("click", () => {
-    p.hidden = !p.hidden;
-    b.setAttribute("aria-expanded", String(!p.hidden));
-  });
-}
-hintKey("edhelp", "edhint");
-hintKey("phrhelp", "phrhint");            // the phrase rail's own paragraph
+// (hintKey — the exported (?) wiring, one round key toggling one paragraph,
+// used four times across the app — is GONE with the paragraphs it opened
+// ("get rid of ... help buttons", 2026-08-16). Nothing imports it any more;
+// if a surface needs explaining, that is a note about the surface.)
 
 /* ---------- navigation ---------- */
 // ONE way in: openPhraseEditor — from a song row's PATTERN thumbnails, and

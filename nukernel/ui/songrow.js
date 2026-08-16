@@ -85,9 +85,12 @@ const keepMarks = () => {
 };
 
 /* ---------- the cell vocabulary ---------- */
-// the column order IS the interface order — one definition, the header row
-// and every box row walk it. FUNCTION is the section-role cell (the word
-// "function" is the brief's; "role" is the field's).
+// the column order IS the interface order — one definition, and every box
+// row walks it. (It used to be walked twice: the header row read the same
+// list to print its labels. The header is gone; CELLNAME below survives it,
+// because the per-cell aria-labels are where those words do real work.)
+// FUNCTION is the section-role cell (the word "function" is the brief's;
+// "role" is the field's).
 const CELLS = ["part", "genre", "role", "bars", "mods",
                "voice", "rhythm", "trans"];
 const CELLNAME = { part: "part", genre: "genre", role: "function", bars: "bars",
@@ -97,39 +100,19 @@ const CELLNAME = { part: "part", genre: "genre", role: "function", bars: "bars",
                    // unfolds the phrase bank through the same menu machinery
                    ptn: "patterns" };
 
-/* ---------- the column header ---------- */
-// A real header row AT EVERY WIDTH: the columns are named once, at the top.
-// Each header cell carries the full word plus a phone abbreviation — the
-// transport legend's span swap: the full word leaves the layout via the clip
-// pattern, never display:none, so the columnheader's accessible name stays
-// the full word on every width.
-const headRow = (() => {
-  const r = document.createElement("div");
-  r.className = "shead thd"; r.setAttribute("role", "row");
-  const names = { part: "#", genre: "genre", role: "function", bars: "bars",
-                  mods: "mods", voice: "voice",
-                  rhythm: "rhythm", trans: "transitions" };
-  const abbr = { part: "#", genre: "genre", role: "func", bars: "bars",
-                 mods: "mods", voice: "voice",
-                 rhythm: "rhy", trans: "trans" };
-  const mk = (cls, full, ab) => {
-    const c = document.createElement("span");
-    c.className = cls;
-    c.setAttribute("role", "columnheader");
-    const f = document.createElement("span");
-    f.className = "hf"; f.textContent = full;
-    const a = document.createElement("span");
-    a.className = "ha"; a.textContent = ab;
-    a.setAttribute("aria-hidden", "true");
-    c.append(f, a);
-    return c;
-  };
-  for (const k of CELLS) r.append(mk("h-" + k, names[k], abbr[k]));
-  // (no "patterns" column any more: the thumbnails are a full-width PATTERN
-  // ROW beneath each row's cells — "make the little patterns visualization
-  // big and chunky, on their own row" — and that row wears its own label)
-  return r;
-})();
+/* ---------- (there is no column header) ----------
+   The silkscreened row that named # · GENRE · FUNCTION · BARS · MODS · VOICE
+   · RHYTHM · TRANSITIONS across the top of the table is DELETED — DOM, CSS
+   and the .hf/.ha phone abbreviation swap with it ("get rid of headers and
+   help buttons and table headers", Paul, 2026-08-16).
+
+   It goes because every one of those columns already prints a self-naming
+   value in its own cells: the genre cell says the genre and the city and
+   year it comes from, the length cell says "4 bars", the function cell says
+   VERSE, and an unset cell says "—" beside its own icon. The header was the
+   table repeating itself in capitals above itself. The cells' aria-labels
+   (set in cell(), unchanged) carry the column name for anyone who cannot
+   see the row, which is the only place the words were doing real work. */
 
 /* ---------- keys and icons ---------- */
 const btn = (cls, glyph, label, fn) => {
@@ -869,7 +852,7 @@ function buildPtnBank(sec, ent) {
   const g = document.createElement("div");
   g.className = "pgroup tbl rpptn";
   g.append(Object.assign(document.createElement("span"),
-    { className: "plabel thd",
+    { className: "plabel",
       textContent: "phrase bank · tap to switch in or out" }));
   const wrap = document.createElement("div");
   wrap.className = "bchips bank";
@@ -1025,17 +1008,17 @@ on("selection", patchPop);
 // in SONG order (append moves an existing rowgroup), then patch everything
 export function render() {
   const keep = songEl.scrollTop;           // the table grows DOWN and scrolls
-  if (songEl.firstElementChild !== headRow) songEl.prepend(headRow);
   for (const [sec, el] of [...els]) if (!SONG.includes(sec)) {
     if (popFor === sec) closePop();
     el.grp.remove(); els.delete(sec);
   }
   for (const sec of SONG) if (!els.has(sec)) els.set(sec, buildBox(sec));
-  // put the rowgroups in SONG order, MOVING ONLY THE MISPLACED ONES — the
-  // header holds slot 0, so a section's slot is its index plus one
+  // put the rowgroups in SONG order, MOVING ONLY THE MISPLACED ONES. A
+  // section's slot IS its index now that the header row is gone — it used to
+  // be index+1, because the header held slot 0.
   SONG.forEach((sec, i) => {
     const el = els.get(sec).grp;
-    if (songEl.children[i + 1] !== el) songEl.insertBefore(el, songEl.children[i + 1] || null);
+    if (songEl.children[i] !== el) songEl.insertBefore(el, songEl.children[i] || null);
   });
   if (songEl.lastElementChild !== footRow) songEl.append(footRow);
   patchAll();

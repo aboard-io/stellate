@@ -6,12 +6,13 @@
 <title>Song Boxes — nukernel</title>
 <meta name="description" content="Build a song from boxes. One 16-step phrase reads as a fugue, acid house, vaporwave, twelve-bar blues or rock.">
 <meta name="robots" content="noindex">
-<!-- hw.css first: it owns every token and face; kernel-daw.css finishes the
-     declarations it leaves open (the pages.css + how.css pattern). The static
-     data-theme="light" on <html> pins the SILVER 909 face as the shipped
-     default (Paul, 2026-08-14: "switch to the lighter 909 styling"); graphite
-     remains the dark palette one attribute away. LED/LCD tokens never invert
-     on either face. -->
+<!-- hw.css first: it owns every token, size and face; kernel-daw.css finishes
+     the declarations it leaves open (the pages.css + how.css pattern). The
+     static data-theme="light" on <html> pins the LIGHT face as the shipped
+     default; the dark face is one attribute away. Since the flat pass
+     (2026-08-16) hw.css carries no material recipes at all — surfaces, rules,
+     ink, one accent, the state/category/level colours, a type scale and a
+     space scale. The meaning colours never invert. -->
 <link rel="stylesheet" href="hw.css">
 <link rel="stylesheet" href="kernel-daw.css">
 </head>
@@ -104,7 +105,11 @@
              you choose what plays: a song fact like the groove, not a box
              field. ui/poolbank.js builds and wires it. -->
         <div class="gbank tbl poolbank" id="poolbank" aria-label="instruments">
-          <div class="thd">Instruments</div>
+          <!-- NO HEADER ROW. "Instruments" over a list of rows that each read
+               "drums · 909 kit" was the surface saying out loud what its own
+               values already say ("get rid of ... table headers",
+               2026-08-16). The aria-label keeps the name for anyone who
+               cannot see the rows. -->
           <div class="poolrows"></div>
         </div>
         <!-- THE GLOBAL BANK — everything that outlives a box: the soundfont,
@@ -120,7 +125,9 @@
              the MIX page now — one desk, every bus on it — with the #m-<key>
              ids kept alive on the knobs (ui/mixtbl.js builds them). -->
         <div class="gbank tbl" aria-label="session">
-          <div class="thd">Session</div>
+          <!-- NO HEADER ROW here either: five controls that name themselves
+               Groove, Swing, Soundfont, Songs and Song file do not need the
+               word SESSION silkscreened above them. -->
           <div class="gitems">
             <!-- THE SONG'S GROOVE — a song fact like the tempo (one drummer
                  for the record, not one per section), so its one control
@@ -183,26 +190,13 @@
          kept). ui/mixtbl.js builds both wells. -->
     <section class="page pg-mix" id="page-mix" aria-label="mix">
       <div class="ed">
-        <div class="edhead">
-          <h2>Mix</h2>
-          <button class="btn hint" id="mixhelp" aria-expanded="false"
-            aria-controls="mixhint" title="how the board works">?</button>
-        </div>
-        <p class="edhint" id="mixhint" hidden>A mixing board: one strip per
-           sound the selected box makes, read from the same track list the
-           audio builds its channels from. Tap a strip's value keys — effects,
-           reverb, echo, level, place — for that sound's chips; <b>M</b> mutes
-           it and <b>S</b> solos it (a solo anywhere in the box silences
-           everything not soloed). The <b>fader is automated</b>: while the box
-           plays, the cap shows the level actually driving that channel, and
-           dragging it stores an offset that rides on top — the automation
-           keeps moving under your trim, shown in dB under the slot. The
-           <b>section</b> strip, under the rule, is the whole box, which every
-           part feeds — it also chooses which room the reverb is and the
-           echo's subdivision; the bus strips after it are the page's shared reverb,
-           echo and drum room, and the <b>master</b> strip meters the sum. The
-           rack below is one knob row per bus plus the master-bus row — every
-           knob detented, absent meaning the graph exactly as built.</p>
+        <!-- NO HEAD, NO (?). The page is reached by a lit MIX key and its
+             first element is the board, so an h2 reading "Mix" named what the
+             key already said; the (?) beside it carried a paragraph
+             explaining strips you can simply tap ("get rid of headers and
+             help buttons", 2026-08-16). The explanation is deleted rather
+             than hidden — a control that needs a paragraph is a control that
+             is wrong. -->
         <div class="mixtbl board tbl" id="mixtbl"></div>
         <div class="rack tbl" id="rack"></div>
       </div>

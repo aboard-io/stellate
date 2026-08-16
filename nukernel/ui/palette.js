@@ -174,12 +174,15 @@ const isDflt = kind => {
 // neither moved when the banks moved into the cell popups.
 function makeBuilders(host) {
   const group = (title, items) => {
-    // A BANK IS A TABLE SECTION: .tbl is the shared well and .thd the shared
-    // header row (kernel-daw.css) — the same material the pattern editor and
-    // the song table are cut from.
+    // A BANK IS NAMED, and .plabel is not a table header: it says WHICH of a
+    // dozen banks stacked in the same fold this one is ("instrument ·
+    // strings"), which no chip inside it can say for itself. That is the
+    // whole test the header cull applies ("get rid of ... table headers",
+    // 2026-08-16) — a column label goes, a thing's own name stays — and the
+    // .thd class goes with the rest.
     const g = document.createElement("div"); g.className = "pgroup tbl";
     g.append(Object.assign(document.createElement("span"),
-      { className: "plabel thd", textContent: title }));
+      { className: "plabel", textContent: title }));
     const wrap = document.createElement("div");
     wrap.className = "pchips" +
       (items.every(i => String(i[2]).length <= 4) ? " compact" : "");

@@ -45,7 +45,7 @@ $("vol").addEventListener("input", e => {
 });
 // "song" re-syncs the TEMPO only: a song owns its bpm, but volume is the
 // device's (state.js VOLSTORE) and no incoming song may move the fader. The
-// vol glass is set once here from the restored store value — the HTML's
+// vol readout is set once here from the restored store value — the HTML's
 // value="80" is only the pre-boot placeholder.
 function syncKnobs() {
   $("bpm").value = bpm; $("bpmv").textContent = String(bpm);
@@ -53,7 +53,7 @@ function syncKnobs() {
 on("song", syncKnobs);
 $("vol").value = vol; $("volv").textContent = String(vol);
 // TWO VIEWS, ONE VALUE: the board's MASTER strip drives the same sticky vol
-// store this fader does, so the glass follows every "transport" commit. No
+// store this fader does, so the readout follows every "transport" commit. No
 // loop — assigning .value fires no input event, and an in-place assignment of
 // the value the input already holds is a no-op paint.
 on("transport", () => {
@@ -62,8 +62,8 @@ on("transport", () => {
   }
 });
 
-// HARDWARE FEEL for the two faders — the only continuous controls on the
-// machine (everything else is a detented list, the hw.css doctrine), so they
+// THE FULL GESTURE SET for the two faders — the only continuous controls on
+// the machine (everything else is a list of named steps), so they
 // carry the full verb set themselves:
 //   drag horizontal   the fader: full range across one track-width of travel
 //   drag vertical     the fine trim, ~×5 finer, up is more (verb #2)
@@ -147,7 +147,7 @@ fader($("vol"), 80);
   const syncGroove = () => { sel.value = GROOVE || ""; };
   syncGroove();
   on("song", syncGroove);
-  on("groove", syncGroove);          // any other writer keeps this glass honest
+  on("groove", syncGroove);          // any other writer keeps this picker honest
   sel.addEventListener("change", e => {
     setGroove(e.target.value || null);
     syncGroove();                    // the normalizer may have said null
@@ -173,7 +173,7 @@ fader($("vol"), 80);
   const syncSwing = () => { sel.value = SWING || ""; };
   syncSwing();
   on("song", syncSwing);
-  on("swing", syncSwing);            // any other writer keeps this glass honest
+  on("swing", syncSwing);            // any other writer keeps this picker honest
   sel.addEventListener("change", e => {
     setSwing(e.target.value || null);
     syncSwing();                     // the normalizer may have said null
@@ -209,7 +209,7 @@ fader($("vol"), 80);
 //
 // THE SEED IS VISIBLE NOW. It was always real — the same number is the same
 // song, which is what makes the composer testable — and hiding it made the
-// key a slot machine. Eight hex digits on the little LCD beside the key, and
+// key a slot machine. Eight hex digits printed beside the key, and
 // ⟳ rolls a fresh one IN THE SAME GENRE, which is the loop a person actually
 // plays: write, listen, reroll, reroll, keep.
 {

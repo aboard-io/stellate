@@ -113,7 +113,7 @@ function buildPicker(chair) {
   const own = document.createElement("div");
   own.className = "pgroup tbl";
   own.append(Object.assign(document.createElement("span"),
-    { className: "plabel thd", textContent: "the genre's own" }));
+    { className: "plabel", textContent: "the genre's own" }));
   const ownWrap = document.createElement("div");
   ownWrap.className = "pchips";
   ownWrap.append(chip("", "genre default", "gen"));
@@ -123,7 +123,7 @@ function buildPicker(chair) {
     const g = document.createElement("div");
     g.className = "pgroup tbl";
     g.append(Object.assign(document.createElement("span"),
-      { className: "plabel thd", textContent: "instrument · " + fam }));
+      { className: "plabel", textContent: "instrument · " + fam }));
     const wrap = document.createElement("div");
     wrap.className = "pchips";
     for (const id of ids) wrap.append(chip(id, INSTRCHOICES[id], "gen"));
