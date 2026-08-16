@@ -447,10 +447,13 @@ docs in `docs/`.
       at every loop wrap on the 552 of 614 zones that loop. Both halves of the fix
       are WRITTEN — `tools/build/transcode-samples.js` bakes `len`, and
       `sampler.js zoneLeadIn()` detects the pad by comparing decoded length to
-      `len × (ctxRate / sr)` rather than sniffing the UA — and **neither has ever
-      run against a real mp3 zone**, because none exist. Treat the zone diet as an
-      untested path, not a shipped one: prove the loop-wrap alignment on a handful
-      of zones across all three decoders before converting 1372 files.
+      `len × (ctxRate / sr)` rather than sniffing the UA — and the mechanism is now
+      PROVEN on 8 real zones across ffmpeg/chromium/firefox/webkit (docs/TODO.md
+      "The zone diet — proven on 8 zones, 2026-08-15"): `zoneLeadIn()` correct as
+      written, webkit's 1105-sample pad reproduced and removed exactly, corrected
+      mp3 loop seams as smooth as wav. The FLEET CONVERSION still has not run —
+      before converting 1372 files, give the short-loop zones an ear pass (a
+      60-sample loop at 22.05k becomes 30 samples).
       `zones.json` is extractor output only; the browser reads `K.SAMPLERS`
     - `live/live.js` — `FaustLive.exploreLive`: chord-bar JIT scheduler on the WebAudio
       clock, voice pools, eco-mode load shedding. Desktop rides a SharedArrayBuffer
@@ -525,14 +528,14 @@ docs in `docs/`.
     `genre-specs` `pos-coverage` `coords-coverage` `live-walk-parity`
     `boot-smoke` `doc-counts`) plus the MUSIC-MIND/speech organ gates
     `theory`/`pipes`/`speech`. Pure node, CI-safe.
-  - `test/unit/` (46) — pure-node gates outside the release suite
+  - `test/unit/` (49) — pure-node gates outside the release suite
     (`meter` `invariants` `musicality` `melody-cells` `melody-weave`
     `theory-tables` `midi-mine` `corpus-db` `snare-law` `strip-fuzz`
     `nukernel` …).
     `npm run test:unit` runs them (concurrently, via `test/run.js`); before that
     runner existed nothing globbed them at all and 33 gates only ever ran if
     somebody named the file.
-  - `test/browser/` (26) + `test/starcruise/` (8) — the gates that launch real
+  - `test/browser/` (41) + `test/starcruise/` (8) — the gates that launch real
     chromium via `test/lib/probe-harness.js`. `npm run test:browser` globs
     exactly these two folders and nothing else. They `goto /index.html` (or
     `test/browser/live-test.html`, the FaustLive harness page) and read the

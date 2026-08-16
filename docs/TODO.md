@@ -81,16 +81,62 @@ diffs — plus the dominant genre. Sequinfreight's longest run went 17 → 1.
 
 What remains is the anti-flicker hold doing its job, and the gate now says so:
 `HOLD_BARS` 4 locks a timbre that just walked on stage, flips apply every other
-bar, and up to three identity dims (form / drum kit / lead voice) queue to walk on
-one at a time — so a run of a few bars is correct. The allowance is the ARRIVAL
-contract itself (8), on the principle that a revision should land in the same
-window an arrival must; measured worst is 7.
+bar mid-transit, and up to three identity dims (form / drum kit / lead voice)
+queue to walk on one at a time — so a run of a few bars is correct. The
+allowance is the ARRIVAL contract itself (8), on the principle that a revision
+should land in the same window an arrival must.
 
-`simulate-path` has been narrowed since: everything it gates passes except check
-5a, post-arrival identity churn. On the old centre-anchored loop the worst
-segment churned 57 bars against an allowance of 6; the citypop loop's worst is
-21. Same failure, less of it — the re-tier in `targeting.js rebuildQueue` still
-does not converge for some arrivals, and that is the thing to diagnose.
+**Round two of check 5a was three different non-convergences wearing one
+number**, found by riding the citypop loop across ten seeds (worst runs 9–12
+against the 8-bar allowance) and tracing `--rows` on each offender:
+
+- **the FLAP** (seed 17, shibuyakei): with w0 sitting flat at ~0.685, `K.mix`
+  straddles a pick boundary and the target's form oscillated A↔B every 2–3
+  bars — every half-cycle re-queued a "revision" that burned an apply slot and
+  (form bundles `genreMeta.kit`) clobbered the kit each time. 9-bar run.
+- **the WANDER** (seed 196, punk): through a 20-bar low-dominance creep the
+  target's lead walked bell → glockenspiel → vibraphone → crunch, a fresh pick
+  every 4–8 bars; playing trailed the walk by the debounce + the half-rate
+  cadence. 11-bar run. Flap and wander want OPPOSITE chase speeds, which is
+  why any single debounce constant fails one of them.
+- **the DEMOTION** (seed 99, velourregatta): "form" applied after "drum kit"
+  overwrote the playing kit with its own bundled pick; when the target settled
+  back, the kit dim read applied-and-current (tier 4, re-apply LAST) and an
+  audible identity mismatch queued behind six cosmetic flips for 11 bars.
+
+The fix, all in `targeting.js`: a revision debounce that ages DISAGREEMENT with
+the applied value (`REV_STABLE` 2 bars — not raw-signature constancy, which the
+drum-kit sig's flapping sampler ids never satisfy), a longer window
+(`REV_FLAP` 4) only when the re-pick points BACK at the previously-applied
+value (an oscillation is chased at most once, a wander is chased fast); an
+identity dim in the diffs never ranks tier 4 (wrong out loud is wrong, whoever
+clobbered it); and identity REVISIONS apply every bar instead of every other
+(first-arrival pacing untouched — the half-rate cadence is for being heard,
+not for repairs). Measured across the ten-seed sweep: worst run 9–12 → 6
+(seed 7, punk), seed 43's gate run worst 5, flips landed 214 → 186 (the
+abandoned chases), arrivals unharmed (sim worst lag +4, blend-arrival gate
+drums 2 / kit-lead 7). One honest wart the auditor still reports: a segment's
+DEPARTURE edge (seed 99, citypop — the target courting the next star while
+dominance decays 0.75→0.5) counts as churn it never re-converges from; it is
+outbound blend tracking, 4 bars, not a re-tier failure.
+
+**The debounce bought convergence at the price of one new failure**, caught by
+re-riding the sweep before commit: at seed 91 the loop that passes clean on the
+pre-debounce tree came back `musicality FAIL: toastercore` — "found is declared
+in the resolved state but NEVER sounds." That is the transit chimera the
+simulator's header had documented and deferred (form adopts sections that
+declare found sourceIds; the crate rides the separate "sample" flip), made
+WORSE by the fix above: the flap-hold can park the sample dim at an older
+crate while form chases, so the skew is no longer a blink between two queued
+flips — it SETTLES, queue empty, with a declared bed the crate lacks. The
+flip-dependency fix the header asked for is now in: the "form" flip carries
+the found sources its sections reference (found/hits/vox/vocal), the way
+"drum kit" carries its zone wavs. Re-measured: seed 91 PASS, the ten-seed
+sweep unchanged (worst run still 6, seed 7 punk), and the header's own stress
+path (`blues,dnb,industrial --pace 48`) no longer blooms a silent found layer —
+its remaining FAIL (chalkvespers keeping the transit's drums against a
+drumless promise, twice) reproduces identically at the pre-debounce HEAD and
+is a different, older class.
 
 ---
 
@@ -131,8 +177,21 @@ of them not the reported one:
 
 Neither could be caught by the release suite, which does not ride the live path
 under a slow link. The audit summary (`handle.auditSummary()`) is the instrument
-that found both; it deserves a gate that rides a throttled session and asserts an
-anomaly ceiling.
+that found both; it now has the gate it deserved —
+`test/browser/live-audit-throttled.test.js` rides the ring route CDP-throttled to
+250 KB/s (~2 Mbps, the link the warm-ahead was calibrated against) through the
+transit form's bar-29 metal solo (transitwave seed 3 — the 4-chord synthwave
+draw; the field URL's seed 91681 parks on deep_two, solo at bar 14, a runway no
+fix can make) and waits for BARS, not seconds: the ride ends when the audit ring
+holds bars past the solo, at whatever pace the engine manages. Calibration
+(2026-08-15, 4 rides + 1 under four CPU hogs): 40/40/40/40/39 anomalies over
+28/34 audited bars — byte-stable, because the ride is link-bound — all of them
+per-bar station-voice fetches and boot races, none crunch. Ceiling 60 (observed
+40 + 50% slack); the two field defects each get a sharp assertion the noise
+floor cannot mask: zero `ins_crunch_guitar` missing-anomalies (was 1-2 bars
+pre-fix), and 8 crunch requests for 8 zones (the double-fetch measured 16). It
+runs alone in `test/run.js`'s held-back cohort, like the other timing-sensitive
+gates.
 
 ---
 
@@ -234,6 +293,56 @@ rides came out 0.0025, 0.1617, 0.0264 and 0.1047 — no threshold over it is any
 but a coin flip. It asserts on `handle.auditSummary()` instead, which measures
 voices that were expected to sound and did not. Worth recording: with the rotation
 gone that ride reports **0 anomalous bars over 48**, where the rotating one left 2.
+
+### The zone diet — proven on 8 zones, 2026-08-15
+
+The two halves of the mp3-zone fix (`transcode-samples.js` baking `len`,
+`sampler.js zoneLeadIn()` detecting the decoder pad by length) had never met a
+real mp3 zone. They have now: 8 looped zones chosen to span the geometry —
+loop lengths 60 → 151,957 samples, roots 28 → 88, one loop starting 192,810
+samples into its file (clarinet z04/z00, acoustic_bass z00, nylon z00, strings
+z00/z05, tenor_sax z07, flute z04) — copied aside, transcoded with the tool's
+exact ffmpeg invocation (mono/22.05k/48k, `-write_xing 1`, ~14× smaller), and
+decoded in headless **chromium, firefox AND webkit** (playwright ships all
+three) plus **ffmpeg** (press's node decoder; the repo has no wasm mp3
+*de*coder — `codec/` is lamejs *encode* + fmp4 mux, so these four are every
+decoder the project runs).
+
+**The pad, measured per decoder.** ffmpeg: sample-exact at 22.05k and 44.1k on
+all 8 (slack 0), ≤ +0.9 samples resampling to 48k. Chromium and firefox:
+sample-exact at a 44.1k context on all 8, |Δ| ≤ 0.9 at 48k — `zoneLeadIn`
+returns 0 everywhere, and the false-positive margin against its `len·scale + 8`
+threshold is ~9×. WebKit: head pad **2210 samples at 44.1k = exactly
+1105 × scale** on all 8 zones (cross-correlation against the wav decode,
+r ≥ 0.993), 2406 at 48k where `zoneLeadIn` computes 2405 — the true pad is
+fractional (1105 × 48000/22050 = 2405.44), so the disagreement is sub-sample.
+Total decoded excess ran 2335–3355 samples (constant head + a *variable* tail
+pad), which confirms the design: the tail makes raw length-difference unusable
+as an offset, so detect-by-threshold-then-correct-by-`round(1105·scale)` is the
+right shape, not a shortcut. One xcorr outlier (tenor_sax @48k read 2442, +37 ≈
+one period of the 1244 Hz tone) is the correlator locking a cycle off on a
+quasi-periodic sustain, not a decoder difference.
+
+**Loop-wrap continuity**, rendered with the sampler's exact read arithmetic
+(pos = lead + i·rate, modulo wrap, linear interp; rate one semitone up so the
+read is fractional; 2–6197 wraps per 8 s render). Metric: max sample-to-sample
+jump at a wrap ÷ the sustain's median first-difference. Wav baseline: 0.8–4.1.
+Offset-corrected mp3: **0.0–3.8 in all three engines** — indistinguishable from
+wav (the mp3 lowpass *smooths* several seams: bass 4.1 → 0.1). Uncorrected mp3
+in webkit: **5.1–19.8 on 5 of 8 zones**, absolute jumps to 0.86 full-scale —
+the click the diet spec predicted, reproduced and then removed by the exact
+`zoneLeadIn` offset. (The two clarinets and the nylon land benign uncorrected
+by luck of their periodicity; luck is not a policy.)
+
+**Verdict: `zoneLeadIn` is correct as written — no code change** — and the
+fleet conversion of the 1372 zone files (and with it the soundfont rotation's
+return, above) is **unblocked on correctness**. What this did NOT measure:
+48 kbps × 22.05k *timbre* on 614 instruments (the 60-sample clarinet loop is
+now a 30-sample loop; short-loop zones deserve an ear pass), and real-device
+Safari vs playwright's webkit build. Harness + per-zone numbers:
+scratchpad `zonediet/` (`transcode-copies.js`, `probe.js`, `run-probe.js`,
+`results.{chromium,firefox,webkit}.json`); originals verified byte-identical
+after (sha256), registry untouched.
 
 ---
 

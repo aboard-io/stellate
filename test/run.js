@@ -78,7 +78,9 @@ const listing = (dir) => {
 // cores can shrink this list; it is a property of the hardware, not of the gates.
 // anchored on a path boundary: a bare `live` alternative also swallows
 // speech-live.test.js, which runs fine two-up and should stay in the fast lane.
-const SOLO = /(^|\/)(wavout-seam|wavout|stem-parity|crossfade-seam|live|live-resilience|sampler-inserts-live|wedge-demo|nukernel-bounce)\.test\.js$/;
+// live-audit-throttled rides a CDP-throttled link and asserts an anomaly ceiling —
+// the decode-vs-bar-clock races it measures are exactly what a busy box distorts.
+const SOLO = /(^|\/)(wavout-seam|wavout|stem-parity|crossfade-seam|live|live-resilience|live-audit-throttled|sampler-inserts-live|wedge-demo|nukernel-bounce)\.test\.js$/;
 
 const SETS = {
   browser: { files: [...listing("test/browser"), ...listing("test/starcruise")], jobs: HEAVY,

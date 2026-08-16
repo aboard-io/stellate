@@ -96,11 +96,15 @@ export function retargetWeights(weights, pt, snap){
   // lead stayed brass_section for the next 17 bars until the blend finally moved
   // 5% — the whole of that segment's identity churn, and the reason
   // test/unit/simulate-path.test.js check 5a never converged.
-  // The signature is now the target's OWN discrete dims (exactly what rebuildQueue
+  // The signature is the target's OWN discrete dims (exactly what rebuildQueue
   // diffs) plus the dominant genre, whose change resets appliedFlips. Same
   // coalescing intent, no blind spot: a target that re-picks anything the queue
-  // can act on always enqueues it.
-  const sig=DISCRETE.map(([n,get])=>flipSig(get,target)).join("|")+"|"+
+  // can act on always enqueues it. Per-dim it is wantSig — DEBOUNCED for
+  // applied dims (see REVISION DEBOUNCE at rebuildQueue) — so a 1-bar flap
+  // never triggers a rebuild, and a re-pick that MATURES (kept disagreeing
+  // with the applied value through its debounce window) still does.
+  ageDimSigs(target);
+  const sig=DISCRETE.map(([n,get])=>wantSig(n,get)).join("|")+"|"+
     ((weights[0]&&weights[0].g)||"")+"|"+S.modeLock;
   if(sig!==lastSig){ lastSig=sig; rebuildQueue(); }
   // 1.6: pre-voice the TARGET while the glide is still in flight — the engine
@@ -226,7 +230,20 @@ const DISCRETE=[
       c.sections.forEach((s,i)=>{const ts=t.sections[i%t.sections.length];
         if(s.found&&ts&&ts.found)s.found=deep(ts.found);
         if(ts&&ts.hits)s.hits=deep(ts.hits); else delete s.hits;});}],
-  ["form",c=>c.genreMeta.form,(c,t)=>{c.sections=deep(t.sections);Object.assign(c.genreMeta,{form:t.genreMeta.form,kit:t.genreMeta.kit});}],
+  ["form",c=>c.genreMeta.form,(c,t)=>{c.sections=deep(t.sections);Object.assign(c.genreMeta,{form:t.genreMeta.form,kit:t.genreMeta.kit});
+    // the new shape DECLARES found parts (sections' found/hits/vox/vocal
+    // sourceIds) but the crate rides the separate "sample" flip — and the
+    // revision debounce can hold that flip at an older crate while form
+    // chases, so the skew is a SETTLEABLE state now, not a transit blink
+    // (seed 91, toastercore: queue empty with a declared bed the crate
+    // lacked — buildEvents' srcById misses, zero found events, a musicality
+    // hard fail the committed tree didn't have). Carry the sources this
+    // form's sections reference, the way "drum kit" carries its zone wavs.
+    const have=new Set((c.foundSources||[]).map(s=>s.id));
+    for(const s of c.sections)
+      for(const id of [s.found&&s.found.sourceId,s.hits&&s.hits.sourceId,s.vox&&s.vox.sourceId,s.vocal])
+        if(id&&!have.has(id)){ const src=(t.foundSources||[]).find(x=>x.id===id);
+          if(src){ c.foundSources.push(deep(src)); have.add(id); } }}],
 ];
 // INSTRUMENT-INTRODUCTION HOLD: an instrument that gets introduced lasts for at
 // least a few measures. A discrete flip that swaps a VOICE'S TIMBRE
@@ -306,23 +323,95 @@ const LEAD_FLIPS=new Set(["form","drum kit","lead voice"]);
 // during which the queue's non-held dims keep flowing.
 let lastDominant="";
 const flipSig=(get,st)=>{try{return JSON.stringify(get(st));}catch(e){return "?";}};
+// REVISION DEBOUNCE (simulate-path check 5a, round two — the revision re-tier
+// alone did not converge). In a LOW-DOMINANCE neighborhood (w0 creeping through
+// 0.5–0.7, never the 0.85 arrival override) K.mix sits on a pick boundary and
+// the target's discrete dims FLAP bar to bar — traced at seed 17 entering
+// shibuyakei, the target's lead went distortion_guitar → glockenspiel →
+// bell → … → glockenspiel → crunch_guitar while w0 slid 0.52→0.50, and the kit
+// boombap → full → breaks. Every 1-bar flap became a tier-1 revision competing
+// for the one-flip-per-2-bars slot ("form" flapped in and out of the diff and
+// stole two apply slots), so playing trailed the flapping target 9 consecutive
+// bars against the 8-bar allowance. The queue was CHASING noise: a re-pick the
+// target abandons a bar later should never cost a flip slot.
+// So a REVISION only becomes actionable once the target has DISAGREED with the
+// applied value for REV_STABLE consecutive bars. The aging is on the
+// DISAGREEMENT, not on the raw signature holding one value: a first cut that
+// waited for the raw sig to sit still failed the other way (seed 99,
+// velourregatta) — the drum-kit signature bundles the kit name with its
+// sampler zone ids, and the ids kept moving while the kit name sat on a real
+// re-pick, so "stable" never matured and a genuine kit revision waited 12 bars
+// at the bottom tier. A target that flaps AWAY-and-back inside the window is
+// never chased (playing holds the applied identity); a target that stays away
+// — even flapping among alternatives — is chased at its instantaneous value
+// after REV_STABLE bars. Never-applied dims read the raw signature with no
+// delay — a genre ARRIVAL (dominant change clears appliedFlips) is
+// debounce-free, so the arrival contract is untouched.
+// Two debounce speeds, split by what the re-pick IS (measured, both directions
+// wrong with one speed): a WANDER (seed 196, punk — the target's lead walked
+// bell → glockenspiel → vibraphone → crunch through a 20-bar low-dominance
+// creep) must be chased fast or playing trails the walk 11 bars; a FLAP
+// (seed 17, shibuyakei — form oscillating A↔B every 2-3 bars while w0 sat
+// flat at 0.685) must NOT be chased or every half-cycle burns an apply slot.
+// The discriminator is where the re-pick points: BACK to the value applied
+// immediately before the current one is a flap (REV_FLAP bars to act — longer
+// than the observed 2-3-bar half-cycles, so an oscillation is chased at most
+// once and then held); anywhere new is a wander (REV_STABLE bars).
+const REV_STABLE=2, REV_FLAP=4;
+let dimDiv=new Map();    // flip name -> consecutive bars the target has differed from the applied value
+let prevApplied=new Map();   // flip name -> the applied value BEFORE the current one (flap-back detection)
+let lastAgeBar=-1;
+function ageDimSigs(target){
+  const bar=S.barCount|0, bump=bar!==lastAgeBar; lastAgeBar=bar;
+  for(const [n,get] of DISCRETE){
+    const applied=appliedFlips.get(n);
+    if(applied===undefined||flipSig(get,target)===applied) dimDiv.set(n,0);
+    else if(bump||!dimDiv.get(n)) dimDiv.set(n,(dimDiv.get(n)||0)+1);
+  }
+}
+// what the queue should aim a dim at: never-applied dims (arrival) take the
+// target as it stands; applied dims chase a re-pick only once it has persisted
+// its debounce window — until then the applied value stands and the dim reads
+// as current
+const wantSig=(n,get)=>{
+  const applied=appliedFlips.get(n);
+  if(applied===undefined) return flipSig(get,S.target);
+  const raw=flipSig(get,S.target);
+  const need=raw===prevApplied.get(n)?REV_FLAP:REV_STABLE;
+  return (dimDiv.get(n)||0)>=need?raw:applied;
+};
 export function rebuildQueue(){
   if(!S.playing||!S.target)return;
   const dom=(S.weights&&S.weights[0]&&S.weights[0].g)||"";
-  if(dom!==lastDominant){ lastDominant=dom; appliedFlips.clear(); }
-  const diffs=DISCRETE.filter(([n,get])=>flipSig(get,S.playing)!==flipSig(get,S.target));
-  if(!diffs.length) appliedFlips.clear();   // converged: the next journey starts fresh
+  if(dom!==lastDominant){ lastDominant=dom; appliedFlips.clear(); prevApplied.clear(); }
+  const diffs=DISCRETE.filter(([n,get])=>flipSig(get,S.playing)!==wantSig(n,get));
+  // converged (against the RAW target, so a mid-flap moment can't fake it):
+  // the next journey starts fresh
+  if(!DISCRETE.some(([n,get])=>flipSig(get,S.playing)!==flipSig(get,S.target))){
+    appliedFlips.clear(); prevApplied.clear();
+  }
   const rank=n=>{let h=(S.seed>>>0)||1; for(const ch of n) h=(h*31+ch.charCodeAt(0))>>>0; return h;};
-  // tiers: 0 never-applied identity dims, 1 REVISED identity dims (the target
-  // re-picked what it already delivered), 2 never-applied rest, 3 revised
-  // rest, 4 applied-and-current (the target still wants what we applied;
-  // playing drifted via another flip's overlap — re-apply last).
+  // tiers: 0 never-applied identity dims, 1 identity dims that MISMATCH after
+  // application — revised by the target OR clobbered by another flip's overlap
+  // (seed 99, velourregatta: "form" bundles genreMeta.kit, so applying it
+  // erased the drum-kit flip's work; the old applied-and-current tier 4 then
+  // parked an audible kit mismatch behind six cosmetic flips for 11 bars — an
+  // identity dim in the diffs is wrong OUT LOUD no matter whose fault the
+  // drift is), 2 never-applied rest, 3 revised rest, 4 applied-and-current
+  // rest (the target still wants what we applied; playing drifted via
+  // overlap — re-apply last).
   const tier=([n,get])=>{
-    const revised=appliedFlips.has(n)&&appliedFlips.get(n)!==flipSig(get,S.target);
-    if(LEAD_FLIPS.has(n)) return appliedFlips.has(n)?(revised?1:4):0;
+    if(LEAD_FLIPS.has(n)) return appliedFlips.has(n)?1:0;
+    const revised=appliedFlips.has(n)&&appliedFlips.get(n)!==wantSig(n,get);
     return appliedFlips.has(n)?(revised?3:4):2;
   };
   set({queue:diffs.slice().sort((a,b)=>(tier(a)-tier(b))||(rank(a[0])-rank(b[0])))});
+  // diagnosis tap, off unless a rider defines the array: the queue's tiers /
+  // applied set / divergence ages are module-private, and both churn hunts
+  // needed them per bar (tools/audit/simulate-path.js --rows sees only S.queue)
+  if(typeof window!=="undefined"&&window.__GLIDE_TRACE)
+    window.__GLIDE_TRACE.push({bar:S.barCount,dom,applied:[...appliedFlips.keys()],
+      div:Object.fromEntries(dimDiv),queue:S.queue.map(f=>f[0]+":"+tier(f))});
 }
 export function glideStep(){
   const c=S.playing, t=S.target; if(!c||!t)return;
@@ -353,16 +442,30 @@ export function glideStep(){
   }
   c.foundSources.forEach((s,i)=>{const ts=t.foundSources[i]||t.foundSources[0];
     if(ts&&typeof ts.vol==="number") s.vol+=(ts.vol-s.vol)*0.13;});
-  if(S.barCount%2===0&&S.queue.length){
+  // CADENCE: mid-transit a flip lands every OTHER bar (the listener hears a
+  // band changing over, not a hard cut) — first-arrival pacing is untouched.
+  // Two cases land EVERY bar instead: at a star (w0>=0.85, the same arrival
+  // override that bypasses the timbre holds — the destination must sound
+  // right, and during the sharpening approach the target legitimately
+  // re-picks all three identity dims as w0 climbs 0.5→1.0: seed 99, punk,
+  // form/kit/lead each re-picked twice, so the half-rate cadence alone was an
+  // 11-bar convergence floor), and an identity REVISION at the queue's head
+  // (the neighborhood already introduced itself and now plays the WRONG
+  // identity — repair must not queue behind the half-rate pace it was
+  // designed to be heard through).
+  if(S.queue.length){
     // apply the FIRST flip we're allowed to run now: a timbre flip whose voice
     // is still inside its hold window is skipped (left queued for later) UNLESS
     // we've arrived at a star, when destinations must sound right. Structural
     // flips (harmony/form/sample/…) are never held, so they always flow.
     const arrived=arrivedNow();
     const idx=S.queue.findIndex(([name])=>!HELD_FLIPS.has(name)||arrived||(S.holdUntil[name]||0)<=S.barCount);
-    if(idx>=0){
+    const fast=arrived||(idx>=0&&LEAD_FLIPS.has(S.queue[idx][0])&&appliedFlips.has(S.queue[idx][0]));
+    if(idx>=0&&(S.barCount%2===0||fast)){
       const [name,get,apply]=S.queue[idx];
       try{ apply(c,t);
+        const before=appliedFlips.get(name);
+        if(before!==undefined) prevApplied.set(name,before);   // flap-back memory (wantSig)
         appliedFlips.set(name,flipSig(get,t));   // had its turn — remember WHAT the target wanted, so a later re-pick reads as a revision
         // a timbre just walked on stage — lock this slot for a few measures
         const hold=HELD_FLIPS.has(name)?{...S.holdUntil,[name]:S.barCount+HOLD_BARS}:S.holdUntil;

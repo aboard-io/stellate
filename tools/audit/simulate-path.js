@@ -60,19 +60,22 @@
 // reported, NOT judged — neither arrival nor musicality gates them. Any
 // VISITED segment (dwell > CONTRACT_BARS) that never arrives still FAILS.
 //
-// KNOWN REAL DEFECT CLASS (transit chimera, found by this tool and KEPT
-// failing — press evidence from the queue-work round): the "form"
-// flip adopts the target's sections wholesale, including their found
-// sourceIds, but the CRATE arrives only with the separate "sample" flip
-// (hash-ranked later). Between the two, the settled state declares a found
-// layer whose sourceId its foundSources don't carry — buildEvents emits ZERO
-// found events (csd-engine srcById lookup misses), so a listener in that
-// segment genuinely never hears the declared part. Stress path
-// blues,dnb,industrial --pace 48: duststrut dwell 13, form landed, "sample"
-// still queued at the most-settled bar, ev.found=0 -> bloom hard-fail is
-// REAL, not an audit artifact. The fix is a flip-dependency question (form
-// carrying the found sources it declares, the way "drum kit" carries its
-// zone wavs), owned by the queue work, not by this auditor.
+// DEFECT CLASS CLOSED (transit chimera, found by this tool): the "form"
+// flip adopted the target's sections wholesale, including their found
+// sourceIds, but the CRATE arrived only with the separate "sample" flip
+// (hash-ranked later). Between the two, the settled state declared a found
+// layer whose sourceId its foundSources didn't carry — buildEvents emitted
+// ZERO found events (csd-engine srcById lookup misses), so a listener in
+// that segment genuinely never heard the declared part. The revision
+// debounce promoted it from a transit blink to a SETTLEABLE state (default
+// loop seed 91, toastercore: queue empty, declared bed missing, bloom hard
+// fail), which forced the flip-dependency fix this header used to defer:
+// targeting.js's "form" flip now carries the found sources its sections
+// declare, the way "drum kit" carries its zone wavs. The stress path
+// (blues,dnb,industrial --pace 48) still FAILS, on a DIFFERENT and older
+// class: chalkvespers' settled state keeps the transit's drums against its
+// drumless promise (identical at the pre-debounce HEAD) — a claims/flip
+// question this auditor reports but does not own.
 //
 // WHAT A VIRTUAL RIDE CANNOT PROVE (documented honestly):
 //   - nothing about SOUND: a flip "lands" when the STATE carries it; whether
