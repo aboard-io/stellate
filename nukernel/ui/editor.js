@@ -1,17 +1,18 @@
-// ui/editor.js — the phrase editor as a MODAL POPUP: a bottom sheet under
-// 900px, a centred dialog over it, opened by openPhraseEditor() and never a
-// page. The STEP page is gone (2026-08-15, "the row and the board"): the
-// editor is reached from the thing being edited — a phrase chip on a song
-// row, the row sheet's phrases key — instead of being a rail destination
-// that edited a phrase the selected box was not on screen for. The popup
-// carries everything the page carried: the 16-row tracker, Seed/Random/
-// Clear, the (?) paragraph, and the phrase bank rail with [+]/[−].
+// ui/editor.js — the phrase editor as THE COMPOSE PAGE ("compose, arrange,
+// mix", 2026-08-16). The modal died: the editor is a full page again, one of
+// the rail's three verbs, and openPhraseEditor() is now a NAVIGATION — it
+// loads the phrase and switches the deck to Compose (on a desk, where every
+// page is visible, it just scrolls the panel into view). Reached from the
+// rail, from a PATTERN thumbnail on an Arrange row, or from a row's [+].
+// The page carries everything the modal carried: the 16-row tracker, Seed/
+// Random/Clear, the (?) paragraphs, and the phrase bank with [+]/[−] — laid
+// out with a page's room instead of a dialog's crouch.
 //
 // The table itself follows the palette's law — BUILT ONCE, then patched.
 // The cells are permanent, their listeners bind once, and an edit patches
-// class/label/bar in place; the popup opening is hidden=false, never a build.
+// class/label/bar in place; "opening" is one data-page attribute write.
 //
-// MUCH TIGHTER THAN THE PAGE WAS. Two moves paid for it:
+// The modal-era column moves survive, because they were right anyway:
 //   COLUMN ORDER  gate acc sld FIRST, then deg oct vel inc stk — the groove
 //     keys under the step numeral where a 303's row starts, the values after.
 //   BARS, NOT NUMERALS. A value cell draws its value as a bar — zero-centred
@@ -22,22 +23,23 @@
 //     latch (which existed to hide inc/stk under 900px) has nothing left to
 //     hide and is gone.
 //
-// Layer graph: ui view — imports state/derive/deps and palette (for toggle:
-// clicking a slot also toggles the phrase into the focused layer).
+// Layer graph: ui view — imports state/derive/deps, palette (for toggle:
+// clicking a slot also toggles the phrase into the focused layer) and pages
+// (setPage IS the open verb now).
 import { GENRES, DEFAULT, blank, NSLOTS } from "./deps.js";
 import { SLOTS, SONG, SUBJ, slot, setSlot, putPhrase, curSection, commit, on,
          emit } from "./state.js";
-import { isBlank, focused, contourPath } from "./derive.js";
+import { isBlank, focused } from "./derive.js";
 import { toggle } from "./palette.js";
 import { buzz, pointers } from "./touch.js";
-import { openFader, refresh as refreshFader, shut as shutFader,
-         isOpen as faderOpen } from "./popfader.js";
+import { setPage } from "./pages.js";
+import { openFader, refresh as refreshFader } from "./popfader.js";
 
-/* ---------- the popup shell ---------- */
-// Built HERE, not in kernel-daw.html: the page section went with the page.
-// The ids the page carried (#stepgrid #slots #seed #rnd #clear #edslot
-// #edhelp/#edhint #phrhelp/#phrhint) are kept on the popup's own elements —
-// they are gate-read and the (?) wiring below reads them by id.
+/* ---------- the page's insides ---------- */
+// Built HERE, into kernel-daw.html's #composewrap (the page section owns only
+// the shell). The ids the modal carried (#stepgrid #slots #seed #rnd #clear
+// #edslot #edhelp/#edhint #phrhelp/#phrhint) are kept on the page's own
+// elements — they are gate-read and the (?) wiring below reads them by id.
 const mk = (tag, cls, txt) => {
   const n = document.createElement(tag);
   n.className = cls;
@@ -53,14 +55,10 @@ const key = (id, cls, label, title) => {
   b.querySelector(".k").setAttribute("aria-hidden", "true");
   return b;
 };
-const scrim = Object.assign(mk("div", "edscrim"), { hidden: true });
-const pop = Object.assign(mk("div", "edpop"), { hidden: true, id: "edpop" });
-pop.setAttribute("role", "dialog");
-pop.setAttribute("aria-modal", "true");
-pop.setAttribute("aria-label", "phrase editor");
+const wrap = document.getElementById("composewrap");
 
 const head = mk("div", "edhead");
-const h2 = mk("h2", "", "Editing ");
+const h2 = mk("h2", "", "Compose · ");
 const edslotEl = Object.assign(mk("span", "", "phrase 1"), { id: "edslot" });
 h2.append(edslotEl);
 const helpBtn = mk("button", "btn hint", "?");
@@ -70,10 +68,7 @@ helpBtn.setAttribute("aria-controls", "edhint");
 const seedBtn = key("seed", "btn ik ik-seed", "Seed", "write the starter phrase");
 const rndBtn = key("rnd", "btn ik ik-rnd", "Random", "roll a random phrase");
 const clearBtn = key("clear", "btn ik ik-clear", "Clear", "empty this phrase");
-const closeBtn = mk("button", "rpk edx", "✕");
-closeBtn.type = "button";
-closeBtn.setAttribute("aria-label", "close the phrase editor");
-head.append(h2, helpBtn, mk("span", "spacer"), seedBtn, rndBtn, clearBtn, closeBtn);
+head.append(h2, helpBtn, mk("span", "spacer"), seedBtn, rndBtn, clearBtn);
 
 const hint = Object.assign(mk("p", "edhint"), { id: "edhint", hidden: true });
 hint.innerHTML = "Tap a value cell for its fader, or drag up and down on it " +
@@ -103,8 +98,7 @@ const phHint = Object.assign(mk("p", "edhint phrases-head", "Click one to " +
   { id: "phrhint", hidden: true });
 const slotsEl = Object.assign(mk("div", "slots tbl"), { id: "slots" });
 
-pop.append(head, hint, stepsWell, phHead, phHint, slotsEl);
-document.body.append(scrim, pop);
+wrap.append(head, hint, stepsWell, phHead, phHint, slotsEl);
 
 /* ---------- the step grid ---------- */
 // the vector vocabulary, exported: the order here is the COLUMN order of the
@@ -285,8 +279,28 @@ function patchGrid() {
   }
 }
 
+/* ---------- the phrase THUMBNAIL ---------- */
+// THE ONE DRAWING OF A PHRASE, exported: a filled bar chart — one block per
+// gated step across all 16, block height = velocity — as a single <path d>
+// string for a 64×24 viewBox. Big enough to recognize a phrase by SHAPE,
+// which the old single-line contour (pitch only) never was: rhythm and
+// dynamics are what the eye tells phrases apart by. One path element per
+// thumbnail, one attribute write per patch — the contourPath idiom, kept.
+// Drawn by the Compose bank pads here AND the Arrange rows' pattern
+// thumbnails (ui/songrow.js imports it): one routine is the only way the pad
+// and the thumbnail can agree about what a phrase looks like.
+export function thumbPath(p) {
+  let d = "";
+  for (let i = 0; i < 16; i++) {
+    if (!p.gate[i]) continue;
+    const x = i * 4, h = (3 + (p.vel[i] / 9) * 20).toFixed(1);
+    d += "M" + (x + 0.4) + " 24V" + (24 - h).toFixed(1) + "H" + (x + 3.6) + "V24Z";
+  }
+  return d;
+}
+
 /* ---------- phrase slots: click toggles into the box AND selects it ------- */
-// the contour is ONE <svg><path> per pad, not sixteen <i> bars — one node per
+// the picture is ONE <svg><path> per pad, not sixteen <i> bars — one node per
 // pad on the rail instead of sixteen, one attribute write per patch instead
 // of 32 style writes, and the picture survives the pad's moulded material.
 //
@@ -349,7 +363,7 @@ function buildSlots() {
     const sn = Object.assign(document.createElement("span"), { className: "sn" });
     const mini = document.createElementNS(SVGNS, "svg");
     mini.setAttribute("class", "mini");
-    mini.setAttribute("viewBox", "0 0 64 26");
+    mini.setAttribute("viewBox", "0 0 64 24");
     mini.setAttribute("preserveAspectRatio", "none");
     mini.setAttribute("aria-hidden", "true");
     const line = document.createElementNS(SVGNS, "path");
@@ -365,9 +379,9 @@ function buildSlots() {
   });
   slotsEl.append(addKey, dropKey);
 }
-// the contour itself is ui/derive.js's contourPath — the song row's phrase
-// chips draw the same picture, and one drawing routine is the only way the
-// pad and the chip can agree about what a phrase looks like
+// the picture is thumbPath above — the Arrange rows' pattern thumbnails draw
+// the same one, and one drawing routine is the only way the pad and the
+// thumbnail can agree about what a phrase looks like
 function patchSlots() {
   const sec = curSection(), ent = focused(sec);
   addKey.hidden = SLOTS.length >= NSLOTS;  // full bank: the key goes, not grey
@@ -379,7 +393,7 @@ function patchSlots() {
     s.b.setAttribute("aria-label", "phrase " + (i + 1) + (isBlank(p) ? ", empty" : ", filled") +
       (inBox ? ", in " + GENRES[ent.g].label : ""));
     s.sn.textContent = (i + 1) + (isBlank(p) ? "" : " •");
-    const d = contourPath(p);
+    const d = thumbPath(p);
     if (s.line.getAttribute("d") !== d) s.line.setAttribute("d", d);
   });
 }
@@ -415,41 +429,27 @@ export function hintKey(btnId, pId) {
 hintKey("edhelp", "edhint");
 hintKey("phrhelp", "phrhint");            // the phrase rail's own paragraph
 
-/* ---------- open / shut ---------- */
-// ONE way in: openPhraseEditor — from a song row's PATTERN chips, and from
-// the trailing [+] cell that grows the bank into the box (ui/songrow.js).
+/* ---------- navigation ---------- */
+// ONE way in: openPhraseEditor — from a song row's PATTERN thumbnails, and
+// from the trailing [+] that grows the bank into the box (ui/songrow.js).
 // Takes a slot index or { slot }; with neither it opens on the current slot.
-// Dismiss: ✕ / scrim / Esc; auto-close on a page switch and on a whole new
-// song — the same rules the cell popup follows, because it is the same kind
-// of thing one level down.
-let isOpen = false;
+// It is a NAVIGATION now, not an open: load the phrase, switch the deck to
+// the Compose page (one attribute — on a desk the rail is invisible and the
+// attribute paints nothing), and scroll the panel into view so the tracker
+// starts where the eye lands. There is nothing to close: Compose is a place,
+// and the rail (or a tap back on Arrange's stacked panel) is the way out.
 export function openPhraseEditor(opts) {
   const si = typeof opts === "number" ? opts
     : opts && opts.slot != null ? opts.slot : null;
   if (si != null && SLOTS[si]) setSlot(si);
-  isOpen = true;
-  scrim.hidden = false; pop.hidden = false;
+  setPage("compose");
   commit("selection");                     // the slot may have moved; every rail
                                            // (this one included) repaints off it
-  closeBtn.focus({ preventScroll: true });
+  // #composewrap, not the section: the .page is display:contents on a desk
+  // and a contents box has no rect to scroll to
+  try { wrap.scrollIntoView({ block: "start" }); } catch (e) {}
   buzz(4);
 }
-export function closePhraseEditor() {
-  if (!isOpen) return;
-  isOpen = false;
-  if (faderOpen()) shutFader();            // no fader floating over a shut sheet
-  pop.hidden = true; scrim.hidden = true;
-}
-export const phraseEditorOpen = () => isOpen;
-closeBtn.addEventListener("click", closePhraseEditor);
-scrim.addEventListener("click", closePhraseEditor);
-addEventListener("keydown", ev => {
-  if (!isOpen || ev.key !== "Escape") return;
-  if (faderOpen()) return;                 // the fader's own Esc goes first
-  closePhraseEditor(); ev.preventDefault();
-});
-on("page", closePhraseEditor);             // the rail moved: new subject
-on("song", closePhraseEditor);             // a whole new song
 
 /* ---------- wiring ---------- */
 buildGrid();

@@ -68,17 +68,19 @@
     </div>
   </header>
 
-  <!-- ZONE 2 · THE DECK — one page at a time on a phone, both on a desk.
-       TWO pages ("the row and the board", 2026-08-15): SONG and MIX. Every
-       per-box control is a POPUP off the song row's cells (ui/songrow.js +
-       ui/palette.js mountBanks), the phrase editor is a POPUP (ui/editor.js
-       builds its whole dialog, ids intact) opened from a row's PATTERN
-       chips, and the tracker pages (STEP's table, MOVE's pattern view) are
-       gone entirely. There is no context strip either: a popup opens ON the
-       row it edits, so nothing edits a box from a page the box is not on. -->
+  <!-- ZONE 2 · THE DECK — one page at a time on a phone, all three on a desk.
+       THREE pages ("compose, arrange, mix", 2026-08-16): ARRANGE (the song
+       table — internal key "song", the section rows and the song-level banks),
+       COMPOSE (the phrase editor as a FULL PAGE again — the modal died; a
+       PATTERN thumbnail on Arrange navigates here with that phrase loaded,
+       ui/editor.js builds the page's insides into #composewrap, ids intact)
+       and MIX (the board). Every per-box control is still a menu off the song
+       row's cells (ui/songrow.js + ui/palette.js mountBanks). There is no
+       context strip: a menu opens ON the row it edits, so nothing edits a box
+       from a page the box is not on. -->
   <main class="deck">
 
-    <section class="page pg-song" id="page-song" aria-label="song">
+    <section class="page pg-song" id="page-song" aria-label="arrange">
       <div class="ed songwrap">
         <!-- NO HEAD. The page is reached by a lit SONG tab and its first
              element is the song table, so an h2 reading "Song" named what the
@@ -154,6 +156,18 @@
       </div>
     </section>
 
+    <!-- THE COMPOSE PAGE — the phrase editor as a place you GO ("compose,
+         arrange, mix", 2026-08-16). ui/editor.js builds everything inside
+         #composewrap — the tracker (#stepgrid), Seed/Random/Clear, the (?)
+         paragraphs and the phrase bank (#slots) — with the ids the modal
+         carried, because the gates and the (?) wiring read them. A PATTERN
+         thumbnail or [+] on an Arrange row NAVIGATES here with that phrase
+         loaded; the phrase bank at the bottom is where a phrase toggles into
+         the selected box's focused layer. -->
+    <section class="page pg-compose" id="page-compose" aria-label="compose">
+      <div class="ed composewrap" id="composewrap"></div>
+    </section>
+
     <!-- THE MIX PAGE — the BOARD over the RACK ("the SSL board", 2026-08-16).
          The board is vertical channel strips, one per part the selected box
          sounds (the same roster audio/mixer.js builds channels from), then the
@@ -206,13 +220,16 @@
        key wears a small silkscreen icon above its word (.pi, an SVG-mask
        painted with currentColor — self-contained, no glyph-coverage lottery).
 
-       TWO KEYS: SONG and MIX. STEP and MOVE went with the tracker ("the row
-       and the board") — the phrase editor is a popup off a row's PATTERN
-       cells, and the arrangement's playhead question is answered by the song
-       row's own fill bar and the position LCD. Nothing became unreachable —
-       ui/pages.js carries the argument, ui/palette.js the bank inventory. -->
+       THREE KEYS ("compose, arrange, mix", 2026-08-16): COMPOSE (the phrase
+       editor page), ARRANGE (the song table — its internal key stays "song":
+       nothing but the silkscreen ever said the word, and the CSS/gate hooks
+       .pg-song/[data-page="song"] stay true), MIX (the board). The rail
+       order is the verbs' order — what you do to a phrase, a song, a sum —
+       and the deck's DOM order (arrange · compose · mix) is the desk's
+       stacking order, where the rail does not exist. -->
   <nav class="pagerail" role="tablist" aria-label="pages">
-    <button class="pkey" role="tab" data-page="song" aria-controls="page-song" aria-selected="true"><span class="pi" aria-hidden="true"></span>song</button>
+    <button class="pkey" role="tab" data-page="compose" aria-controls="page-compose" aria-selected="false"><span class="pi" aria-hidden="true"></span>compose</button>
+    <button class="pkey" role="tab" data-page="song" aria-controls="page-song" aria-selected="true"><span class="pi" aria-hidden="true"></span>arrange</button>
     <button class="pkey" role="tab" data-page="mix" aria-controls="page-mix" aria-selected="false"><span class="pi" aria-hidden="true"></span>mix</button>
   </nav>
 

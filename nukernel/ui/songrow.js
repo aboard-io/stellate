@@ -1,7 +1,9 @@
-// ui/songrow.js — THE SONG TABLE, and since "the section speaks up"
-// (2026-08-16) THE WHOLE PER-BOX INTERFACE: one row per section, built from
-// NAMED CELLS — | PART | GENRE | FUNCTION | BARS# | PATTERN MODS | VOICE |
-// RHYTHM | TRANSITIONS | PATTERN 1..n | — and every cell is a tap
+// ui/songrow.js — THE SONG TABLE (the ARRANGE page since "compose, arrange,
+// mix", 2026-08-16), and since "the section speaks up" (2026-08-16) THE WHOLE
+// PER-BOX INTERFACE: one row per section, built from NAMED CELLS —
+// | PART | GENRE | FUNCTION | BARS# | PATTERN MODS | VOICE | RHYTHM |
+// TRANSITIONS | — with a full-width PATTERN ROW of chunky phrase thumbnails
+// beneath them (see "the phrase thumbnails" below) — and every cell is a tap
 // target that UNFOLDS A MENU IN PLACE, an accordion panel inserted directly
 // below the row that owns it (the floating cell popup is gone: the menu is a
 // row of the table now, #rowpop wearing role="row", and the table simply gets
@@ -44,16 +46,18 @@ import { SONG, SLOTS, slot, viewSec, loopOnly, pendingStart, bpm, setViewSec,
          setLoopOnly, setPendingStart, setSlot, commit, on,
          POOL } from "./state.js";
 import { stackOf, stackLabel, boxBars, secsOf, focusOf, opsOf, optOf,
-         voxAll, kitOf, mmss, contourPath, poolInstrOf } from "./derive.js";
+         voxAll, kitOf, mmss, poolInstrOf } from "./derive.js";
 import { playing, playingSec, startAt, resetBar } from "../audio/transport.js";
 import { buzz } from "./touch.js";
 // toggle() is the ONE dispatcher every chip goes through; mountBanks builds a
 // cell's banks into the menu mount and refreshChips re-lights them per commit
 import { toggle, mountBanks, refreshChips } from "./palette.js";
-// a PATTERN cell opens the PHRASE EDITOR POPUP on that phrase — the row is
-// where you choose WHICH phrase, the popup is where you edit it. (The editor
-// stays a modal: it is an editor with a tracker inside it, not a menu.)
-import { openPhraseEditor } from "./editor.js";
+// a PATTERN thumbnail NAVIGATES to the COMPOSE PAGE on that phrase — the row
+// is where you see the phrases, Compose is where you edit them ("compose,
+// arrange, mix": one thing, one place — the modal died). thumbPath is the ONE
+// drawing of a phrase (gate blocks × velocity height), shared with the
+// Compose bank's pads so both surfaces agree what a phrase looks like.
+import { openPhraseEditor, thumbPath } from "./editor.js";
 
 const songEl = document.getElementById("song");
 // TABLE SEMANTICS, honestly and everywhere: each section is a ROWGROUP now
@@ -116,7 +120,9 @@ const headRow = (() => {
     return c;
   };
   for (const k of CELLS) r.append(mk("h-" + k, names[k], abbr[k]));
-  r.append(mk("h-ph", "patterns", "ptns"));
+  // (no "patterns" column any more: the thumbnails are a full-width PATTERN
+  // ROW beneath each row's cells — "make the little patterns visualization
+  // big and chunky, on their own row" — and that row wears its own label)
   return r;
 })();
 
@@ -158,22 +164,31 @@ function moveBox(sec, d) {
   return true;
 }
 
-/* ---------- the phrase chips ---------- */
-// One chip per phrase ON ITS OWN ROW now — the parent carries the authority's
-// phrases, each sub-row its layer's. `ent` is the stack entry the chip edits
-// (null = the authority); the layer index is looked up at CLICK time, because
-// removing a middle layer renumbers the ones after it.
+/* ---------- the phrase thumbnails ---------- */
+// THE PATTERN ROW ("make the little patterns visualization big and chunky —
+// on their own row"): one chunky THUMBNAIL PER BANK PHRASE on a full-width
+// strip beneath the row's cells — a real drawing of the phrase (thumbPath:
+// gate blocks across the 16 steps, velocity as bar height, big enough to
+// recognize by shape), lit when the phrase is switched ON in this layer and
+// dim when it is not, plus the [+]. The parent's strip speaks for the
+// authority, each sub-row's for its layer. Tapping one NAVIGATES to Compose
+// with that phrase loaded; toggling on/off lives on Compose's phrase bank.
+// `ent` is the stack entry the strip belongs to (null = the authority); the
+// layer index is looked up at CLICK time, because removing a middle layer
+// renumbers the ones after it.
 const SVGNS = "http://www.w3.org/2000/svg";
 function buildChip(sec, ent, si) {
   const b = document.createElement("button");
   b.type = "button"; b.className = "bch";
+  const bcn = Object.assign(document.createElement("b"),
+    { className: "bcn", textContent: String(si + 1) });
   const mini = document.createElementNS(SVGNS, "svg");
   mini.setAttribute("class", "bcmini");
-  mini.setAttribute("viewBox", "0 0 64 26");
+  mini.setAttribute("viewBox", "0 0 64 24");
   mini.setAttribute("preserveAspectRatio", "none");
   mini.setAttribute("aria-hidden", "true");
   const line = document.createElementNS(SVGNS, "path");
-  mini.append(line); b.append(mini);
+  mini.append(line); b.append(bcn, mini);
   b.addEventListener("click", ev => {
     ev.stopPropagation();                 // the row click opens the PART menu
     const at = idx(sec);
@@ -273,12 +288,17 @@ function buildBox(sec) {
   const bu = Object.assign(document.createElement("span"), { className: "bu" });
   const bd = Object.assign(document.createElement("span"), { className: "bd" });
   vals.bars.append(bn, bu, bd);
-  // THE PATTERN CELLS — the AUTHORITY's phrases (each sub-row carries its
-  // own), the phrase's contour as the icon, plus the trailing [+].
+  // THE PATTERN ROW — a full-width strip beneath the cells carrying the
+  // AUTHORITY's thumbnails (each sub-row carries its own), one per bank
+  // phrase, lit/dim by in-this-layer, plus the trailing [+]. It spans the
+  // row's grid (CSS: grid-column 1/-1) and wears its own silkscreen.
   const ph = document.createElement("div");
   ph.className = "bchips"; ph.setAttribute("role", "cell");
+  const plab = Object.assign(document.createElement("span"),
+    { className: "bplab", textContent: "ptn" });
+  plab.setAttribute("aria-hidden", "true");
   const plus = buildPlus(sec, null);
-  ph.append(plus);
+  ph.append(plab, plus);
   const prog = document.createElement("div"); prog.className = "bprog";
   const fill = Object.assign(document.createElement("i"), { className: "fillbar" });
   prog.append(fill);
@@ -478,38 +498,44 @@ function transFact(sec) {
   return t || "—";
 }
 
-/* ---------- chip reconciliation, shared by row and sub-row ---------- */
-// one chip per phrase of ONE layer, rebuilt only when that layer's slot SET
-// moves — a structural, rare edit. `holder` is the row/sub record carrying
+/* ---------- thumbnail reconciliation, shared by row and sub-row ---------- */
+// ONE THUMBNAIL PER BANK PHRASE now — the strip shows the whole bank, lit
+// where the layer plays a phrase and dim where it does not ("on/off state
+// stays visible"), so rebuild only when the BANK's size moves — a
+// structural, rare edit. `holder` is the row/sub record carrying
 // {ph, plus, chips, chipsSig}.
-function syncChips(sec, ent, slots, holder) {
-  const csig = slots.join(",");
-  if (holder.chipsSig !== csig) {
-    holder.chipsSig = csig;
+function syncChips(sec, ent, holder) {
+  if (holder.chipsSig !== SLOTS.length) {
+    holder.chipsSig = SLOTS.length;
     for (const c of holder.chips) c.b.remove();
     holder.chips.length = 0;
-    for (const si of slots) {
+    for (let si = 0; si < SLOTS.length; si++) {
       const c = buildChip(sec, ent, si);
       holder.chips.push(c); holder.ph.insertBefore(c.b, holder.plus);
     }
   }
-  holder.ph.className = "bchips" + (holder.chips.length ? " has" : "");
+  holder.ph.className = "bchips has";
   holder.plus.hidden = SLOTS.length >= NSLOTS;
 }
-function patchChips(sec, i, holder, layerWord) {
+function patchChips(sec, i, slots, holder, layerWord) {
   for (const c of holder.chips) {
+    const inLayer = slots.includes(c.si);
+    // ON = this layer PLAYS the phrase; a dim thumbnail is in the bank but
+    // not in this box — the state a numbered key could never show at a glance
+    c.b.classList.toggle("on", inLayer);
     // LIT = SOUNDING: the transport publishes the sounding SECTION, and every
     // phrase in the sounding box sounds at once, so the lamp is per section.
-    c.b.classList.toggle("lit", i === playingSec);
+    c.b.classList.toggle("lit", inLayer && i === playingSec);
     // ...and the ring is the EDIT target: this row selected, this phrase open
     c.b.classList.toggle("sel", i === viewSec && slot === c.si);
     const p = SLOTS[c.si];
     if (p) {
-      const d = contourPath(p);
+      const d = thumbPath(p);
       if (c.line.getAttribute("d") !== d) c.line.setAttribute("d", d);
     }
-    c.b.setAttribute("aria-label", "phrase " + (c.si + 1) + " in box " +
-      (i + 1) + layerWord + " — opens the phrase editor");
+    c.b.setAttribute("aria-label", "phrase " + (c.si + 1) +
+      (inLayer ? " on" : " off") + " in box " + (i + 1) + layerWord +
+      " — opens it on the compose page");
   }
 }
 
@@ -568,10 +594,10 @@ function patchBox(sec, i, el) {
     el.cells[k].classList.toggle("openc", open);
   }
 
-  // the authority's own phrase chips
-  syncChips(sec, null, st[0].slots, el);
+  // the authority's own pattern row
+  syncChips(sec, null, el);
   el.plus.setAttribute("aria-label", "add a phrase to box " + (i + 1));
-  patchChips(sec, i, el, "");
+  patchChips(sec, i, st[0].slots, el, "");
 
   // THE SUB-ROWS: one per extra layer, keyed by the entry object — build the
   // new, drop the gone, order the rest; then patch text and state in place.
@@ -608,10 +634,10 @@ function patchBox(sec, i, el) {
     }
     sub.del.setAttribute("aria-label",
       "remove layer " + GENRES[ent.g].label + " from box " + (i + 1));
-    syncChips(sec, ent, ent.slots, sub);
+    syncChips(sec, ent, sub);
     sub.plus.setAttribute("aria-label",
       "add a phrase to the " + GENRES[ent.g].label + " layer of box " + (i + 1));
-    patchChips(sec, i, sub, ", " + GENRES[ent.g].label + " layer");
+    patchChips(sec, i, ent.slots, sub, ", " + GENRES[ent.g].label + " layer");
   });
 
   // ROW ORDER INSIDE THE GROUP: parent, then each sub-row in stack order,
@@ -911,7 +937,7 @@ export function paintProgress(si, frac) {
 function patchChipPaths() {
   const p = SLOTS[slot];
   if (!p) return;
-  const d = contourPath(p);
+  const d = thumbPath(p);
   const paint = holder => {
     for (const c of holder.chips)
       if (c.si === slot && c.line.getAttribute("d") !== d) c.line.setAttribute("d", d);

@@ -170,18 +170,19 @@ function taps() {
     await page.waitForSelector("#rowpop", { state: "hidden" });
   };
 
-  // THE PHRASE EDITOR IS A POPUP: #stepgrid / .slot / #seed live inside
-  // #edpop, reached the way a finger reaches them — a PATTERN chip on the
-  // row (the default song ships box 1 with phrase 1 on, so the chip exists).
-  // Esc closes it; the deck behind is untouched.
+  // THE PHRASE EDITOR IS THE COMPOSE PAGE ("compose, arrange, mix",
+  // 2026-08-16): #stepgrid / .slot / #seed live on it, reached the way a
+  // finger reaches them — a PATTERN thumbnail on the row NAVIGATES there
+  // (data-page flips to "compose"; at this desk viewport every page is
+  // visible anyway, so the deck is never covered and closeEditor has
+  // nothing left to close).
   const openEditor = async () => {
     await page.locator(".box").first().locator(".bch").first().click();
-    await page.waitForSelector("#edpop:not([hidden])", { timeout: 10000 });
+    await page.waitForFunction(() =>
+      document.getElementById("chassis").dataset.page === "compose",
+      null, { timeout: 10000 });
   };
-  const closeEditor = async () => {
-    await page.keyboard.press("Escape");
-    await page.waitForSelector("#edpop", { state: "hidden" });
-  };
+  const closeEditor = async () => {};
 
   // one phrase, in the one box, for every genre in turn. The default song
   // ships phrase 1 already switched ON in box 1 now (the fresh page must
@@ -340,8 +341,10 @@ function taps() {
     // four bars at rate 1, and a double-click loops that box alone, so both
     // measurements below cover the same music.
     await openCell(0, "genre");
-    await chip("Acid house").click();
-    await chip("Sludge").click();                        // take the previous one off
+    // the city-and-year labels (102bb37): acid = "Chicago 1987", sludge =
+    // "New Orleans 1991" — the ids under them are unchanged
+    await chip("Chicago 1987").click();
+    await chip("New Orleans 1991").click();              // take the previous one off
     await closeCell();
     await row(0).dblclick();                             // loops it AND starts it
     await secCell("fx");                                 // the chain stays open
@@ -708,11 +711,11 @@ function taps() {
   // pattern is a COLUMN you read down — the pop-up fader opening BESIDE the
   // cell instead of over the eight ticks under it.
   {
-    // the editor is a POPUP: the table shape, the rotation and the fader
-    // placement are the same questions, asked inside #edpop. Two things
-    // CHANGED with the popup and are asserted the new way round: gate/acc/sld
-    // lead the columns (deg sits RIGHT of gate now), and the rows are TIGHT —
-    // markedly under the old 44px slabs, but still a finger target.
+    // the editor is the COMPOSE PAGE now: the table shape, the rotation and
+    // the fader placement are the same questions, asked at #stepgrid on the
+    // page. The column order survives from the modal era (gate/acc/sld lead,
+    // deg sits RIGHT of gate) and the rows sit between the modal's 26px
+    // crouch and the old 44px slabs — a page's room, still a tracker.
     await openEditor();
     await page.click("#rnd");            // varied values, so the bars can be read
     const ed = await page.evaluate(() => {
@@ -760,9 +763,9 @@ function taps() {
     else ok(`time runs DOWN and gate/acc/sld LEAD the columns ` +
             `(+${ed.down}px per step, deg +${ed.across}px right of gate)`);
     if (ed.rowH < 20 || ed.rowH > 40)
-      fail(`a step row is ${ed.rowH}px tall — the popup's cells must be tight ` +
-           `(under the old 44px slabs) and still hittable (20px floor)`);
-    else ok(`the rows are ${ed.rowH}px — markedly tighter than the 44px page was`);
+      fail(`a step row is ${ed.rowH}px tall — the tracker's cells must stay a ` +
+           `tracker's (under 44px slabs) and still hittable (20px floor)`);
+    else ok(`the rows are ${ed.rowH}px — a page's room, still a tracker`);
     // the bar visualization, against the values the labels declare
     const velErr = Math.max(...ed.vel.map(c => Math.abs(c.frac - c.v / 9)));
     if (velErr > 0.15)

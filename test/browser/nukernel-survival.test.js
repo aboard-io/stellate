@@ -108,18 +108,18 @@ function taps() {
   await page.goto(`http://localhost:${PORT}/nukernel/kernel-daw.html`,
     { waitUntil: "networkidle" });
 
-  // THE PHRASE EDITOR IS A POPUP: .slot and #seed live inside #edpop, reached
-  // through a PATTERN chip on the row ("the row and the board" — the default
-  // and restored songs ship box 1 with a phrase on, so the chip exists).
-  // Esc closes it.
+  // THE PHRASE EDITOR IS THE COMPOSE PAGE ("compose, arrange, mix",
+  // 2026-08-16): .slot and #seed live on it, reached through a PATTERN
+  // thumbnail on the row — the tap NAVIGATES (data-page flips to "compose";
+  // at this desk viewport every page is visible anyway, so nothing covers
+  // the deck and closeEditor has nothing left to close).
   const openEditor = async (p) => {
     await p.locator(".box").first().locator(".bch").first().click();
-    await p.waitForSelector("#edpop:not([hidden])", { timeout: 10000 });
+    await p.waitForFunction(() =>
+      document.getElementById("chassis").dataset.page === "compose",
+      null, { timeout: 10000 });
   };
-  const closeEditor = async (p) => {
-    await p.keyboard.press("Escape");
-    await p.waitForSelector("#edpop", { state: "hidden" });
-  };
+  const closeEditor = async (p) => {};
 
   // one phrase in the one box, and play — the same entry the audio gate uses.
   // The default song ships phrase 1 already ON in box 1 (the fresh page must
@@ -791,7 +791,9 @@ function taps() {
     // sits over #play
     await p2.locator(".box").first().locator(".bgenre").click();
     await p2.waitForSelector("#rowpop:not([hidden])", { timeout: 10000 });
-    await p2.locator(".pchip", { hasText: /^Acid house$/ }).click();
+    // acid house wears its city-and-year label now ("every genre is a city
+    // and a year", 102bb37) — the id is still `acid`, the chip says this
+    await p2.locator(".pchip", { hasText: /^Chicago 1987$/ }).click();
     await p2.keyboard.press("Escape");
     await p2.waitForSelector("#rowpop", { state: "hidden" });
     await p2.click("#play");

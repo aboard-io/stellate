@@ -1,23 +1,30 @@
-// ui/pages.js — the page rail: TWO hardware mode keys switching what the
+// ui/pages.js — the page rail: THREE hardware mode keys switching what the
 // phone deck paints. A page switch is ONE attribute write on the chassis
 // (CSS does the rest) — never a rebuild, so every module's elements stay
 // alive and the gates' selectors stay in the DOM whichever page is up. On a
-// desk the rail is display:none and this module goes quiet: every page is
-// visible at once and nothing here ever runs.
+// desk the rail is display:none and every page is visible at once —
+// setPage() still runs there (openPhraseEditor calls it as the one
+// navigation verb), it just paints nothing.
 //
-// TWO KEYS ("the row and the board", 2026-08-15). The tracker pages went
-// entirely — STEP is the phrase editor POPUP (opened from a row's PATTERN
-// cells), MOVE's pattern view is gone, and SOUND's palette lives in the
-// per-cell popups — so the rail is down to the two places a person GOES:
+// THREE KEYS ("compose, arrange, mix", 2026-08-16) — the app finally says
+// what you DO, and each verb has exactly one place:
 //
-//   SONG   home. The table of sections; every box's editing surface is one
-//          tap into a cell of the row it belongs to.
-//   MIX    the desk: the mix of the selected box, and the master rack.
+//   COMPOSE  the phrase editor, a full page again — the modal died. Reached
+//            by the rail, or by tapping a PATTERN thumbnail on an Arrange
+//            row (ui/editor.js openPhraseEditor navigates here).
+//            Internal key "compose".
+//   ARRANGE  home. The table of sections plus the song-level banks
+//            (instruments, session). Internal key "song" — the key is a DOM
+//            value the CSS and gates hook ([data-page="song"], .pg-song),
+//            and only the silkscreen ever said the word, so the label
+//            renamed and the key did not: fewer broken selectors, zero
+//            behavior risk.
+//   MIX      the board and the rack.
 //
-// NOTHING BECAME UNREACHABLE. The palette's banks are in the cell popups
-// (ui/palette.js mountBanks maps them); the phrase editor opens from any
-// PATTERN chip; the session bank stays on SONG. What went is pages that
-// edited the selected box from somewhere the box was not on screen.
+// NOTHING BECAME UNREACHABLE. The palette's banks are in the cell menus
+// (ui/palette.js mountBanks maps them); the phrase editor is the Compose
+// page; the session and instrument-pool banks stay on Arrange (they are
+// song-level, and Arrange is the song's home).
 //
 // Layer graph: ui view — imports state (events) and touch; audio never knows
 // pages exist.

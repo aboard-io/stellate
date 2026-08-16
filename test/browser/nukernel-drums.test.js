@@ -982,18 +982,19 @@ async function budgetProbe(page, genre) {
     return { sections: stm.SONG.length, plain: pick(plain), chorused: pick(chorused) };
   });
 }
-// phrase 1 into box 1 when it is out. The .slot rail lives in the phrase
-// editor POPUP — reached through a PATTERN chip on the row ("the row and the
-// board") — and only when the toggle is actually needed (a fresh default
-// song ships it ON, so the popup usually never opens here).
+// phrase 1 into box 1 when it is out. The .slot bank lives on the COMPOSE
+// PAGE now ("compose, arrange, mix") — reached through a PATTERN thumbnail
+// on the row, which NAVIGATES there — and only when the toggle is actually
+// needed (a fresh default song ships it ON, so this usually never fires;
+// at this desk viewport every page is visible, so there is nothing to close).
 async function slotOn(page) {
   const slot0 = page.locator(".slot").nth(0);
   if ((await slot0.getAttribute("aria-pressed")) === "true") return;
   await page.locator(".box").first().locator(".bch").first().click();
-  await page.waitForSelector("#edpop:not([hidden])", { timeout: 10000 });
+  await page.waitForFunction(() =>
+    document.getElementById("chassis").dataset.page === "compose",
+    null, { timeout: 10000 });
   await slot0.click();
-  await page.keyboard.press("Escape");
-  await page.waitForSelector("#edpop", { state: "hidden" });
 }
 // compose a genre, loop its verse, play briefly — enough for the transport to
 // compile a timeline and decide its register homes
