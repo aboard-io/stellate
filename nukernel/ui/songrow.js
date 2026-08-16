@@ -616,7 +616,8 @@ function patchBox(sec, i, el) {
   // ROW ORDER INSIDE THE GROUP: parent, then each sub-row in stack order,
   // with the OPEN MENU inserted directly after the row whose cell opened it.
   // insertBefore only where the order is wrong — re-inserting an unmoved node
-  // would reset the menu's own scroll position under the finger.
+  // would drop the key under the finger mid-tap (the menu itself never
+  // scrolls; it opens at full height and the page scrolls instead).
   const want = [el.box];
   if (popFor === sec && !popEnt) want.push(rowpop);
   for (const ent of st.slice(1)) {
@@ -784,12 +785,15 @@ function openPop(sec, kind, ent) {
   commit("selection");                     // the ring moves; every view repaints
   patchPop();
   patchAll();                              // places the menu row + .open states
-  // the menu unfolded below the row — keep the ROW on screen (it is the
-  // menu's title bar; the fold below it scrolls on its own)
+  // the menu unfolds to its FULL height below the row — the page makes room,
+  // the menu never scrolls — so pin the OWNING ROW near the top of the view
+  // (it is the menu's title bar) and the whole fold stands below it, visible
+  // even when the tap landed at the bottom of the glass. ONE smooth nudge on
+  // open; .box scroll-margin keeps the row clear of the sticky chrome.
   requestAnimationFrame(() => {
     try {
       const anchor = rowpop.previousElementSibling || rowpop;
-      anchor.scrollIntoView({ block: "nearest" });
+      anchor.scrollIntoView({ block: "start", behavior: "smooth" });
     } catch (e) {}
   });
   rpX.focus({ preventScroll: true });
