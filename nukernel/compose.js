@@ -230,6 +230,17 @@
     reggae: "song", ska: "song", bossa: "song", countrypop: "song",
     synthpop: "song", shoegaze: "song", citypop: "song", punk: "song",
     afrobeat: "arc", ambient: "arc",
+    // THE ANCESTORS. Seven of the eight are songs, which is most of what an
+    // ancestor turns out to be: jazz is a head, solos and the head again — a
+    // song whose middle is the blowing — and doo-wop, skiffle, Bo Diddley,
+    // Chuck Berry and Kraftwerk all wrote singles, whatever their children did
+    // with them (Düsseldorf's half that is the Beatles is the half that decided
+    // on verses and three minutes). Electro is the one that is a floor record,
+    // and minimalism is the one that is neither: one process, one shape, which
+    // is an arc — it is NOT on the steady list, because the process goes
+    // somewhere, and that is the whole difference from drone and ambient.
+    jazz: "song", doowop: "song", skiffle: "song", bodiddley: "song",
+    chuckberry: "song", kraftwerk: "song", electro: "dance", minimalism: "arc",
     // THE FUNCTION GENRES arrange as ARCS, every one of them, and it is not a
     // shrug. A part on its own has no verse and no chorus — there is nothing
     // for it to be the chorus OF — so what is left is one shape with a peak,
@@ -254,6 +265,19 @@
                 reggae: 76, dub: 74, ska: 156, afrobeat: 108, bossa: 132,
                 countrypop: 120, synthpop: 118, shoegaze: 104, citypop: 108,
                 punk: 160, ambient: 70, techno: 132,
+                // THE ANCESTORS. 144 is medium-up bebop, the tempo the jazz
+                // ride's 1.6:1 lean is measured for; 84 is the 12/8 side of
+                // doo-wop; 148 makes skiffle the fastest thing in the roots
+                // family, because these records rush and nobody stops them;
+                // 128 is the one-bar reading of the Bo Diddley clave AND
+                // Planet Rock; 150 is the honest mid between Roll Over
+                // Beethoven and a Johnny B. Goode past the dial's ceiling;
+                // 120 is Trans-Europe Express and the number a metronome
+                // picks, and it is also where minimalism's sixteenths run at
+                // eight a second — under about 100 the phase stops shimmering
+                // and just sounds late
+                jazz: 144, doowop: 84, skiffle: 148, bodiddley: 128,
+                chuckberry: 150, kraftwerk: 120, electro: 128, minimalism: 120,
                 // the parts, at the tempo the part itself implies: a solo is
                 // played over an up record, a singer is slower than the band
                 // behind them, a riff is a mid-tempo thing and a pad has

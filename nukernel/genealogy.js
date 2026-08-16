@@ -220,6 +220,54 @@ function report() {
         f.residRms.toFixed(3) + " | " + w + " |");
   }
   say("");
+
+  // ---- WHAT PHASE 2 MOVED --------------------------------------------------
+  // The fit before the eight ancestors landed, committed as data rather than
+  // as prose, so this section is a MEASUREMENT and not a memory: PHASE1 is the
+  // R²/residue of every child in the 44-anchor table (the run this file held
+  // on 2026-08-16, before jazz/bodiddley/chuckberry/doowop/skiffle/minimalism/
+  // kraftwerk/electro), and bossa is in it as a root, which is why it carries
+  // a null R² and only its residue. A child not in the table below is one of
+  // the eight themselves, or a child that has not moved because it never
+  // wanted anything.
+  const PHASE1 = {
+    rock: [0.938, 0.082], newwave: [0.876, 0.127], neoclassical: [0.849, 0.135],
+    beatles: [0.835, 0.131], rnb: [0.830, 0.143], citypop: [0.808, 0.150],
+    eurythmics: [0.803, 0.142], jodeci: [0.792, 0.163], disco: [0.786, 0.160],
+    synthpop: [0.779, 0.168], boombap: [0.763, 0.143], deathmetal: [0.762, 0.191],
+    toto: [0.711, 0.166], gospel: [0.710, 0.175], steely: [0.679, 0.177],
+    postrock: [0.673, 0.175], isley: [0.649, 0.176], shoegaze: [0.644, 0.216],
+    counterpoint: [0.636, 0.184], reggae: [0.631, 0.194], house: [0.615, 0.233],
+    punk: [0.610, 0.221], garage: [0.596, 0.218], motown: [0.595, 0.209],
+    techno: [0.570, 0.223], afrobeat: [0.561, 0.205], vaporwave: [0.510, 0.214],
+    sludge: [0.462, 0.231], fugue: [0.404, 0.238], spem: [0.401, 0.269],
+    dnb: [0.393, 0.258], acid: [0.385, 0.234], dub: [0.339, 0.243],
+    countrypop: [0.337, 0.272], trap: [0.232, 0.329], ska: [0.142, 0.323],
+    funk: [0.096, 0.323], ambient: [0.000, 0.394], bossa: [null, 0.343],
+  };
+  const moved = fits
+    .filter(f => PHASE1[f.key] && Math.abs(PHASE1[f.key][1] - f.residRms) > 0.0005)
+    .sort((a, b) => (PHASE1[b.key][1] - b.residRms) - (PHASE1[a.key][1] - a.residRms));
+  if (moved.length) {
+    say("## What phase 2 moved — the residues, before and after");
+    say("");
+    say("| child | R² before | R² after | residue before | after | fell by |");
+    say("|---|---|---|---|---|---|");
+    let fell = 0;
+    for (const f of moved) {
+      const [r0, d0] = PHASE1[f.key];
+      fell += d0 - f.residRms;
+      say("| " + f.key + " | " + (r0 == null ? "(root)" : pct(r0)) + " | " +
+          pct(f.r2) + " | " + d0.toFixed(3) + " | " + f.residRms.toFixed(3) +
+          " | " + (d0 - f.residRms).toFixed(3) + " |");
+    }
+    say("");
+    say("**" + moved.length + " children moved; " + fell.toFixed(3) +
+        " of residue (rms, summed) came off the table** — the ancestors the " +
+        "declarations were reaching for through proxies, built and wired in.");
+    say("");
+  }
+
   say("## The roots (parents: {})");
   say("");
   for (const f of roots)
@@ -258,11 +306,18 @@ function report() {
   say("- Biggest residue: **" + bigResid.key + "** (rms " +
       bigResid.residRms.toFixed(3) + ").");
   const b = fits.find(f => f.key === "beatles");
+  // ...and the founding example's own sentence has to survive its shopping
+  // list emptying, which is what happened the day the four ancestors it named
+  // were built. An empty `wants` is a RESULT, not a missing value, so it gets
+  // said rather than printed as an empty pair of brackets.
   say("- The founding example: **Liverpool 1962 is " + pct(b.r2).trim() +
       " its parents** (" + b.parents.join(" + ") + "); " +
       ((1 - b.r2) * 100).toFixed(1) + "% is what the Beatles invented — " +
-      "and the declared wants (" + b.wants.join(", ") + ") say where to " +
-      "look for the rest.");
+      (b.wants.length
+        ? "and the declared wants (" + b.wants.join(", ") + ") say where to " +
+          "look for the rest."
+        : "and it owes nothing further: every ancestor it once named is an " +
+          "anchor in the table, so what is left is the invention."));
   say("");
   return lines.join("\n");
 }

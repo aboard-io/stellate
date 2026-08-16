@@ -162,9 +162,12 @@
   // real (place-year) anchor below declares `parents`: weighted references to
   // OTHER anchors in this table, the weights a claim about SHARE (they sum to
   // 1) and the comment beside them the historical argument. Where a true
-  // parent is not in the catalog yet — skiffle, Kraftwerk, delta blues,
-  // doo-wop — `wants` names it as a plain lowercase string: that list is
-  // phase 2's shopping order, ancestors in their own names. A genuine root
+  // parent is not in the catalog yet — delta blues, mento, Moroder — `wants`
+  // names it as a plain lowercase string: that list is the shopping order,
+  // ancestors in their own names. It is a working list and not a monument:
+  // phase 2 built the eight it demanded loudest (see THE ANCESTORS below),
+  // and every anchor that had asked for one moved a name off `wants` and
+  // into `parents` on the same day. A genuine root
   // (or an anchor whose every parent is missing) declares parents: {}
   // honestly and its comment says which of the two it is. The six FUNCTION
   // genres (simple/solo/vocal/backing/riff/pad) declare nothing: a role has
@@ -237,9 +240,12 @@
       label: "Chicago 1987", rate: 1, bars: 4, voices: 2,
       // LINEAGE: Phuture were house DJs — acid is house with the bassline
       // machine abused until the filter became the melody; the machine-funk
-      // lean underneath is P-funk, which reached Chicago through electro.
-      parents: { house: 0.8, funk: 0.2 },
-      wants: ["electro"],
+      // lean underneath is P-funk, and it reached Chicago through ELECTRO,
+      // which is now in the table and takes its own share — a debt paid, not
+      // an ancestor nobody thought about, so `wants` empties rather than
+      // keeping a name it no longer needs.
+      parents: { house: 0.7, electro: 0.15, funk: 0.15 },
+      wants: [],
       instr: "clean_guitar",
       // the kit vector below has always said "909, four on the floor" — now
       // the SOUND is the machine it names (synthesized, audio/machines.js)
@@ -284,9 +290,11 @@
       // LINEAGE: punk's clipped economy played by people who secretly loved
       // pop hooks (the Cars are beatlesque to the bone) over a straight
       // dance-floor eighth pulse disco normalized; the synth sheen on top is
-      // Kraftwerk's, not yet in the catalog.
-      parents: { punk: 0.4, beatles: 0.35, disco: 0.25 },
-      wants: ["kraftwerk", "glam rock"],
+      // Kraftwerk's, one row up — the smallest of that anchor's four edges,
+      // taken off beatles and disco alike, because what disco gave new wave
+      // is the four on the floor and not the timbre.
+      parents: { punk: 0.4, beatles: 0.3, disco: 0.2, kraftwerk: 0.1 },
+      wants: ["glam rock"],
       instr: ["clean_guitar", "synth_strings_1"],
       entry: v => v, reg: v => v - 1, realize: () => "line",
       harmony: "cycle", roots: [0, 4, 5, 3],     // I V vi IV
@@ -412,10 +420,14 @@
       label: "London 1969", rate: 1, bars: 8, voices: 2,
       // LINEAGE: Zeppelin is Chess blues played louder by a British beat
       // band — the riff-over-backbeat is electric blues, the band format and
-      // the songs are the Beatles' invasion; the missing ancestors are the
-      // Chuck Berry guitar language and the skiffle that armed the boom.
-      parents: { blues: 0.65, beatles: 0.35 },
-      wants: ["chuck berry", "skiffle"],
+      // the songs are the Beatles' invasion. Both of the ancestors this
+      // entry used to name are anchors now: the guitar LANGUAGE every British
+      // riff band learned first is Chuck Berry's off 45s rather than Muddy's
+      // off Chess LPs, and skiffle is why Page and Jones owned a guitar at
+      // all — upstream of the music, which is why it takes a tenth and no
+      // more.
+      parents: { blues: 0.45, chuckberry: 0.2, beatles: 0.25, skiffle: 0.1 },
+      wants: [],
       instr: "crunch_guitar",
       drumkit: "power",              // the SAMPLED kit, not a sine and some noise
       entry: () => 0, reg: v => v - 2, realize: () => "line",
@@ -588,10 +600,14 @@
       label: "Berlin 2011", rate: 1, bars: 8, voices: 3,
       // LINEAGE: Frahm is ambient's production values and drone's patience
       // applied to a piano figure, with post-rock's slow-arrival arc; the
-      // parent it most needs is the one that owns the figure itself — the
-      // romantic miniature (Satie, Chopin's nocturnes) and minimalism's cells.
-      parents: { ambient: 0.45, drone: 0.3, postrock: 0.25 },
-      wants: ["romantic piano miniature", "minimalism"],
+      // parent that owns the FIGURE is minimalism, now anchored: Frahm's and
+      // Richter's left hand is a repeating cell turning over under a chord
+      // that moves slower than it does, and its 0.2 comes almost entirely out
+      // of drone — declared at 0.3 and fitted at 0.00, the largest
+      // declared/fitted gap the table had. The romantic miniature (Satie,
+      // Chopin's nocturnes) is still owed.
+      parents: { ambient: 0.4, postrock: 0.25, minimalism: 0.2, drone: 0.15 },
+      wants: ["romantic piano miniature"],
       instr: "felt_piano",
       entry: v => (v === 2 ? 4 : 0), reg: v => (v === 0 ? -1 : v - 1),
       realize: v => (v === 0 ? "pad" : "line"),
@@ -765,9 +781,13 @@
       // LINEAGE: Basildon's machines with a soul singer over them — Lennox
       // is Motown phrasing on a synthpop chassis, and the bass pulse is
       // funk's octave engine sequenced; the machine aesthetic itself is
-      // Kraftwerk's, still missing.
-      parents: { synthpop: 0.55, motown: 0.3, funk: 0.15 },
-      wants: ["kraftwerk"],
+      // Kraftwerk's, and synthpop was carrying it as a proxy — so synthpop
+      // gives the most back. Motown gives a nudge too: Lennox's phrasing is
+      // Hitsville, but "a sequencer and a drum machine and nothing else in
+      // the room" is a description of Kling Klang's floor plan. `wants` empties
+      // — Düsseldorf was the whole of this anchor's shopping list.
+      parents: { synthpop: 0.4, motown: 0.25, kraftwerk: 0.2, funk: 0.15 },
+      wants: [],
       instr: "synth_strings_1",
       // "a drum machine and nothing else in the room" — the CR-era box, not a
       // sampled kit pretending to be one
@@ -805,9 +825,12 @@
       // LINEAGE: church-trained voices (the brothers began in gospel), funk's
       // groove under the Rhodes, and the fuzz lead is rock's gift returned —
       // Hendrix was literally their sideman in 1964. The doo-wop they
-      // actually started as is not in the catalog.
-      parents: { gospel: 0.35, funk: 0.35, rock: 0.3 },
-      wants: ["doo-wop", "hendrix"],
+      // actually started as is an anchor now and takes a tenth and a half,
+      // mostly out of funk — the 3+3 groove was carrying both the pocket and
+      // the vocal-group blend. (The fit asks for nearly twice that; 0.15 is
+      // what the history claims, and the gap is the finding.)
+      parents: { gospel: 0.3, funk: 0.3, rock: 0.25, doowop: 0.15 },
+      wants: ["hendrix"],
       instr: ["rhodes_ep", "overdrive_guitar", "rhodes_ep"],
       drumkit: "room",
       entry: v => (v === 1 ? 2 : 0), reg: v => (v === 1 ? 1 : v - 1),
@@ -949,12 +972,20 @@
       // plus Bo Diddley plus skiffle"): rhythm & blues learned off Chess
       // imports, Motown covers all over the early setlists, Nashville
       // fingerpicking in the guitars, and part-writing craft — the thirds,
-      // the voice-leading — that is counterpoint by ear. The skiffle that
-      // put guitars in their hands, the Bo Diddley beat, Chuck Berry's
-      // language and the doo-wop harmony stack are all still missing, which
-      // is most of phase 2's shopping list in one anchor.
-      parents: { blues: 0.3, motown: 0.25, countrypop: 0.25, counterpoint: 0.2 },
-      wants: ["skiffle", "bo diddley", "chuck berry", "doo-wop"],
+      // the voice-leading — that is counterpoint by ear. ALL FOUR OF THE
+      // ANCESTORS THIS ENTRY USED TO NAME ARE ANCHORS NOW, and between them
+      // they take 55% — not because they are new ingredients but because they
+      // are the DOORS the old four came through: the Quarrymen were a skiffle
+      // group (that is the band's own first form, so it goes first), what
+      // Liverpool heard of "the blues" was largely Chuck Berry 45s, the beat
+      // under the early setlists is Bo Diddley's, and the stacked thirds
+      // behind Lennon are the corner rather than counterpoint. So blues,
+      // motown and countrypop each step back and counterpoint — the one claim
+      // a rhythm figure and a harmony stack cannot explain, and the one the
+      // fit keeps using — barely moves. Nothing is left on the list.
+      parents: { skiffle: 0.18, chuckberry: 0.15, doowop: 0.12, bodiddley: 0.1,
+                 blues: 0.12, motown: 0.1, countrypop: 0.08, counterpoint: 0.15 },
+      wants: [],
       instr: ["steel_string_guitar", "ohh_voices"],
       drumkit: "acoustic",
       entry: () => 0, reg: v => v, realize: () => "line",
@@ -988,10 +1019,13 @@
       label: "Los Angeles 1977", rate: 1, bars: 8, voices: 3, swing: 0.2,
       // LINEAGE: a rock band's format carrying blues changes dressed in
       // Motown's session polish — but the dorian IV7, the walking bass and
-      // the shuffle all point at the catalog's one great hole: jazz. Steely
-      // Dan without jazz is the biggest residue in the table, on purpose.
-      parents: { rock: 0.35, blues: 0.35, motown: 0.3 },
-      wants: ["jazz", "bacharach"],
+      // the shuffle all pointed at the catalog's one great hole: jazz. It is
+      // filled, and jazz takes the largest single share almost entirely out of
+      // BLUES (0.35 -> 0.10) — that is the honest bookkeeping, since all three
+      // of those things arrive here through 52nd Street rather than through
+      // Chess. The band format and the session polish barely move.
+      parents: { jazz: 0.35, rock: 0.3, motown: 0.25, blues: 0.1 },
+      wants: ["bacharach"],
       instr: ["rhodes_ep", "jazz_guitar", "rhodes_ep"],
       drumkit: "jazz",
       entry: v => (v === 1 ? 2 : 0), reg: v => (v === 1 ? 1 : v - 1),
@@ -1023,10 +1057,13 @@
       label: "Austin 2003", rate: 0.5, bars: 8, voices: 3,
       // LINEAGE: a rock band playing ambient's material — guitars, bass and
       // drums refusing the song in favour of the arc — through shoegaze's
-      // wall of reverb; the motorik patience underneath is krautrock's and
-      // the additive build is minimalism's, neither anchored yet.
-      parents: { ambient: 0.4, rock: 0.3, shoegaze: 0.3 },
-      wants: ["krautrock", "minimalism"],
+      // wall of reverb; the motorik patience underneath is krautrock's, still
+      // owed, and the additive build is minimalism's, which is anchored now.
+      // Its 0.15 comes off shoegaze (which was standing in for an
+      // arrival-shape it does not own — its claim is the wall) and off
+      // ambient, itself downstream of the same source; rock is untouched.
+      parents: { ambient: 0.35, rock: 0.3, shoegaze: 0.2, minimalism: 0.15 },
+      wants: ["krautrock"],
       instr: ["slow_strings", "clean_guitar", "clean_guitar"],
       drumkit: "room",
       entry: v => v * 2, reg: v => v - 1,
@@ -1066,10 +1103,14 @@
       label: "New York 1994", rate: 1, bars: 4, voices: 2, swing: 0.2, near: "isley",
       // LINEAGE: the `near` field already told the truth — boom bap's chops
       // ARE the Isley-shaped soul records it samples, its breaks are funk
-      // and disco 45s; the sound-system culture and electro that taught New
-      // York to loop them are the missing half.
-      parents: { isley: 0.4, funk: 0.35, disco: 0.25 },
-      wants: ["jamaican sound system", "electro"],
+      // and disco 45s. Boom bap does not sample electro, but electro is the
+      // record that taught New York a track could be BUILT rather than
+      // played, and the machine under the chopped loop is a direct
+      // inheritance from the borough next door ten years earlier — a nickel
+      // off each declared parent, no more. The sound-system culture that
+      // taught them to loop is still owed.
+      parents: { isley: 0.35, funk: 0.3, disco: 0.2, electro: 0.15 },
+      wants: ["jamaican sound system"],
       instr: ["electric_piano", "muted_trumpet"],
       drumkit: "room",
       entry: v => v * 2, reg: v => v - 1,
@@ -1306,10 +1347,14 @@
       label: "Detroit 1965", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "beatles",
       // LINEAGE: gospel moved to the assembly line — the Funk Brothers were
       // church and jazz players, the writers blues-schooled — under pop
-      // discipline whose actual teachers (doo-wop's harmony stack, Tin Pan
-      // Alley's song forms) are not anchors yet.
-      parents: { gospel: 0.6, blues: 0.4 },
-      wants: ["doo-wop", "tin pan alley"],
+      // discipline whose actual teacher — doo-wop's harmony stack — is an
+      // anchor now and takes the biggest single share any of these edits
+      // moved: the Miracles, the Marvelettes and the Temptations were vocal
+      // groups before Gordy signed them, so gospel and blues each step back.
+      // (Fitted 0.39 against a declared 0.35: the data wants almost exactly
+      // what the history claims.) Tin Pan Alley's song forms are still owed.
+      parents: { gospel: 0.4, blues: 0.25, doowop: 0.35 },
+      wants: ["tin pan alley"],
       instr: ["upright_piano", "trumpet"],
       drumkit: "acoustic",
       entry: v => v, reg: v => v - 1,
@@ -1346,10 +1391,14 @@
       label: "Philadelphia 1994", rate: 1, bars: 4, voices: 2, near: "jodeci",
       // LINEAGE: Boyz II Men is the doo-wop revival sung with gospel
       // technique over Motown songcraft, arriving through new jack's door
-      // (the jodeci share); doo-wop itself and quiet storm's late-night
-      // radio format are the missing parents.
-      parents: { gospel: 0.35, motown: 0.35, jodeci: 0.3 },
-      wants: ["doo-wop", "quiet storm"],
+      // (the jodeci share); doo-wop itself is an anchor now and the parent
+      // this comment already named is real. What the revival kept is the FORM
+      // — four voices and the a-cappella tag — and none of the measurable
+      // surface (straight time, electronic kit, maj7s), which is why the
+      // declared 0.2 fits at zero and is worth saying out loud. Quiet storm's
+      // late-night radio format is still owed.
+      parents: { gospel: 0.3, motown: 0.25, jodeci: 0.25, doowop: 0.2 },
+      wants: ["quiet storm"],
       instr: ["legend_ep_2", "synth_voice"],
       drumkit: "electronic",
       entry: v => v, reg: v => v - 1,
@@ -1481,10 +1530,14 @@
       label: "Kingston 1962", rate: 1, bars: 4, voices: 2, near: "reggae",
       // LINEAGE: the shuffle came off American R&B radio picked up from New
       // Orleans — the catalog's blues anchor carries that shuffle — but
-      // everything CARIBBEAN about ska (mento, calypso) and the jazz horn
-      // section are missing, which is most of the record.
-      parents: { blues: 1 },
-      wants: ["mento", "calypso", "jazz"],
+      // everything CARIBBEAN about ska (mento, calypso) is still missing. The
+      // other half is no longer: the Skatalites WERE a jazz band — Drummond,
+      // McCook and Alphonso came off Alpha's and Kingston's jazz scene — and
+      // everything ska plays that is not the shuffle is theirs, the unison
+      // horn front line, the walking bass, the major turnaround. Fifty-fifty
+      // is the historical claim; the fit puts all of it on jazz.
+      parents: { jazz: 0.5, blues: 0.5 },
+      wants: ["mento", "calypso"],
       instr: ["palm_muted_guitar", "trumpet"],
       drumkit: "acoustic",
       entry: v => v, reg: v => v,
@@ -1513,11 +1566,14 @@
       // threes against the four, a groove you stay in.
       label: "Lagos 1971", rate: 1, bars: 8, voices: 3, near: "funk",
       // LINEAGE: Fela heard James Brown and built a bigger machine — the
-      // one-chord modal groove is funk's own move — but highlife (the band
-      // he came FROM), jazz (his horn writing) and the Yoruba drumming the
-      // cross-rhythms quote are all missing anchors.
-      parents: { funk: 1 },
-      wants: ["highlife", "jazz", "yoruba drumming"],
+      // one-chord modal groove is funk's own move, and it stays the plurality
+      // — but the HORNS are not funk's horns: Fela wrote unison heads and blew
+      // over changes, which is bebop's writing done twice over, so jazz takes
+      // 0.3, the size of the horn section in the arrangement. Highlife (the
+      // band he came FROM) and the Yoruba drumming the cross-rhythms quote
+      // are still missing anchors.
+      parents: { funk: 0.7, jazz: 0.3 },
+      wants: ["highlife", "yoruba drumming"],
       instr: ["clean_guitar", "tenor_sax", "brass_section"],
       drumkit: "jazz",
       entry: v => v * 2, reg: v => v - 1, realize: () => "line",
@@ -1551,12 +1607,15 @@
       // named "Rio de Janeiro 1958" — Chega de Saudade, cut in Rio that July:
       // the clave, the brushes, the ii7-V7 in half a bar.
       label: "Rio de Janeiro 1958", rate: 1, bars: 4, voices: 2, near: "steely",
-      // LINEAGE: a root under protest — Jobim and Gilberto folded samba's
-      // rhythm and cool jazz's harmony into the apartment voice, and
-      // neither parent (nor choro, the older Rio string tradition) is in
-      // the catalog; steely is the NEIGHBOUR, twenty years downstream.
-      parents: {},
-      wants: ["samba", "jazz", "choro"],
+      // LINEAGE: it stops being a root under protest. Jobim and Gilberto
+      // folded samba's rhythm and cool jazz's harmony into the apartment
+      // voice; cool jazz is bebop's chamber wing and IS in the catalog now —
+      // the ii7-V7 in half a bar, the sevenths everywhere, the understatement
+      // — so the weight normalizes to 1 over what exists. Samba and choro,
+      // the older Rio string tradition, are still owed. `near: steely` now
+      // reads better: the neighbour is a SIBLING, both children of 1945.
+      parents: { jazz: 1 },
+      wants: ["samba", "choro"],
       instr: ["nylon_string_guitar", "flute"],
       drumkit: "brush",
       entry: v => v, reg: v => v - 1,
@@ -1622,9 +1681,14 @@
       label: "Basildon 1981", rate: 1, bars: 4, voices: 2, near: "eurythmics",
       // LINEAGE: new wave with the guitars traded for sequencers and
       // disco's four still on the floor; the whole all-synth AESTHETIC is
-      // Kraftwerk via Moroder, the two most-wanted ghosts in the catalog.
-      parents: { newwave: 0.55, disco: 0.45 },
-      wants: ["kraftwerk", "moroder"],
+      // Kraftwerk via Moroder, and one of those two ghosts is now an anchor.
+      // Disco loses the larger share because half of what it was priced for
+      // was the all-synth chassis, which was never disco's — what stays
+      // disco's is the kick on every quarter, which Düsseldorf never played.
+      // Note Kraftwerk reaches Basildon twice: 0.25 direct, plus 0.45 x 0.1
+      // through new wave.
+      parents: { newwave: 0.45, disco: 0.3, kraftwerk: 0.25 },
+      wants: ["moroder"],
       instr: ["polysynth", "saw_wave"],
       drumkit: "cr78",             // the CR-era anthem box, like its neighbour
       entry: v => v, reg: v => v - 1,
@@ -1720,10 +1784,12 @@
       label: "New York 1976", rate: 1, bars: 4, voices: 2, near: "rock",
       // LINEAGE: the Ramones are sixties pop played as fast and plainly as
       // possible — rock's power stripped of its solos, bubblegum hooks kept
-      // whole; the garage-rock middle step and Chuck Berry's downstroke
-      // (via the girl groups they adored) are missing.
-      parents: { rock: 0.55, beatles: 0.45 },
-      wants: ["chuck berry", "garage rock", "girl groups"],
+      // whole. Chuck Berry's downstroke is an anchor now, but it arrives here
+      // SECONDHAND — via the girl groups they adored — so it takes the
+      // smallest share of that ancestor's three edges; the garage-rock middle
+      // step and the girl groups themselves are still missing.
+      parents: { rock: 0.45, beatles: 0.4, chuckberry: 0.15 },
+      wants: ["garage rock", "girl groups"],
       instr: ["distortion_guitar", "crunch_guitar"],
       drumkit: "power",
       entry: () => 0, reg: v => -1 - v, realize: () => "line",
@@ -1756,11 +1822,14 @@
       // the stillness, which this comment calls the entire difference.
       label: "London 1978", rate: 0.5, bars: 8, voices: 2, near: "drone",
       // LINEAGE: Eno put a moving harmony inside drone's stillness — the
-      // catalog's one parent — and everything else he cites (Satie's
-      // furniture music, minimalism's processes, the tape loops) is
-      // missing on purpose: ambient names its sources in liner notes.
-      parents: { drone: 1 },
-      wants: ["satie", "minimalism", "tape music"],
+      // catalog's one parent — and minimalism's PROCESS, which is the other
+      // thing he added: Music for Airports is loops of unequal length going
+      // out of phase, which is Reich's phasing done with tape machines. Drone
+      // keeps the larger share because the SOUND, held and slow and pulseless,
+      // is Young's: ambient took the method and threw the pulse away. Satie's
+      // furniture music and the tape loops are still named in liner notes.
+      parents: { drone: 0.65, minimalism: 0.35 },
+      wants: ["satie", "tape music"],
       instr: ["halo_pad", "bowed_glass"],
       entry: v => v * 4, reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),
@@ -1788,11 +1857,17 @@
       // sound: the 909 kick and open hat, everything else stripped.
       label: "Detroit 1988", rate: 1, bars: 8, voices: 2, near: "acid",
       // LINEAGE: Derrick May's own formula — "Kraftwerk and George Clinton
-      // stuck in an elevator" — half of which the catalog holds: Chicago's
-      // house floor, funk's machine pulse, and Kraftwerk arriving through
-      // synthpop's British translation until the real thing is anchored.
-      parents: { house: 0.4, funk: 0.3, synthpop: 0.3 },
-      wants: ["kraftwerk", "electro"],
+      // stuck in an elevator" — and BOTH halves of it are now in the table,
+      // plus the road between them: Juan Atkins made Cybotron before he made
+      // Model 500, so Detroit reached Düsseldorf through ELECTRO rather than
+      // around it. Synthpop takes the big cut because it was the stand-in and
+      // keeps a real sliver, since the Belleville Three genuinely did play the
+      // British records; house keeps the floor but stops being the plurality.
+      // (The fit corroborates kraftwerk at 0.27 against the declared 0.25 and
+      // reads electro as already spanned by funk + synthpop + disco — which is
+      // what electro IS, so the weight is the historical claim.)
+      parents: { house: 0.3, kraftwerk: 0.25, electro: 0.2, funk: 0.2, synthpop: 0.05 },
+      wants: [],
       instr: ["charang", "metal_pad"],
       drumkit: "tr909",            // Detroit's kick-and-open-hat is the 909's
       entry: v => v * 2, reg: v => v - 2,
@@ -1807,6 +1882,896 @@
       words: ["the stab, thinned every other bar", "the pad underneath"],
       word: (v, s) => (v === 0 && s % 2 ? [del(2)] : []),
       fx: ["sweep"],
+    },
+
+    // ---- THE ANCESTORS (phase 2) -----------------------------------------
+    // GENEALOGY.md ended in a shopping order: the ancestors the declared
+    // lineages ask for BY NAME and the catalog did not hold. These eight are
+    // that order, filled. They sit here in one block rather than beside their
+    // children, and they sit in CHRONOLOGICAL order by the year their label
+    // names — 1945, three from 1955 (March, May, September), 1956, 1967, 1977,
+    // 1982 — because an ancestor's whole claim is that it came first, and a
+    // reader walking this section is walking the century. Everything above is
+    // in the order it was written; this section is in the order it happened.
+    //
+    // Every one of them was demanded: each arrived on `wants` lists that are
+    // now shorter, and the children's weights moved on the same day (see each
+    // child's LINEAGE comment for where the share came from).
+
+    // JAZZ. The catalog's largest hole: four anchors — steely, ska, afrobeat,
+    // bossa — named it in `wants`, and it was the biggest residue in the fit
+    // (1.048, half again the next one). What the four are asking for turns out
+    // to be the SAME THREE THINGS, which is why one anchor pays all four:
+    // extended chords (an m7/dom7/maj7 alphabet, not triads), a walking bass,
+    // and the time carried on the RIDE. That triple names an era all by
+    // itself. It is not Storyville — New Orleans has no walking four — and it
+    // is not Kansas City, where the time was still in the hi-hat and the
+    // chords were still triads with a sixth on top. It is BEBOP: the small
+    // group that moved the pulse onto the cymbal, fed the bass drum in quietly
+    // underneath it, and stacked the sevenths up into ninths.
+    //
+    // The band is a rhythm section and a front line, and both are arguments.
+    // The piano is a STAB, not a pad: comping is punctuation, not a wash — it
+    // plays the tune's own rhythm displaced and thinned, in the gaps the horns
+    // leave, and it is the first anchor to use the stab for a KEYBOARD rather
+    // than for a skank. The horns play the head IN UNISON — one line, two
+    // instruments, which is the texture bebop actually is (Parker and Gillespie
+    // on the same notes, no harmony anywhere until the solos). Both children
+    // that asked for horns inherit exactly this: the Skatalites' front line and
+    // Fela's are unison head-writing, done twice over.
+    jazz: {
+      // named "New York 1945" — 52nd Street and the Savoy/Guild sessions of
+      // that November: Ko-Ko, Billie's Bounce, Now's the Time. The label years
+      // invert against `blues` below, the way Tallis's do against Fux's.
+      //
+      // ...and the swing scalar is SMALL, because the RIDE carries the feel
+      // instead (see the kit). At sixteen steps to the bar a step is a
+      // sixteenth, and the eighth-note swing this music is actually made of
+      // lands on even steps, where the scalar cannot reach it; 0.2 is the lean
+      // it CAN say — the same lean its own descendant steely reads as feel
+      // rather than as shuffle.
+      label: "New York 1945", rate: 1, bars: 8, voices: 3, swing: 0.2,
+      // LINEAGE: a parent under protest. Bebop's real ancestors are all
+      // missing — the swing band's four-to-the-bar, ragtime's left hand, the
+      // Tin Pan Alley song whose changes it plays over, and the New Orleans
+      // polyphony under everything — and the catalog's `blues` is a Chess date
+      // seven years LATER. But strip that anchor to what it holds and it is a
+      // twelve-bar form played by a band with a jazz kit, a ride shuffle, a
+      // walking bass and a dominant seventh on every chord: the right claim
+      // wearing the wrong year. A third of the 1945 sessions is twelve-bar
+      // blues, so it is also the honest one.
+      parents: { blues: 1 },
+      wants: ["swing", "ragtime", "tin pan alley", "new orleans jazz"],
+      // MEASURED, and it is the declared parent — which is what a well-behaved
+      // lineage looks like. Of the anchors the confusion metric compares, the
+      // closest to this one is `blues`, against a 0.03 floor. Same band, same
+      // kit, same walk. Two fields separate them and both are in this entry —
+      // the ALPHABET (twelve bars of one dominant seventh against an eight-bar
+      // turnaround of maj7/m7/dom7 that leaves the key on the VI7) and the
+      // RIDE (a shuffle read off the swing dial against a "da" placed by hand
+      // in the nudge lane).
+      near: "blues",
+      instr: ["bright_yamaha_grand", "tenor_sax", "trumpet"],
+      drumkit: "jazz",
+      entry: () => 0,
+      // THE REGISTER COMES FROM THE ROLE, not from the voice index: the part
+      // policy already lifts a lead an octave (PARTS.lead ctr +12), so one
+      // number puts the comping hand at C3 where a pianist's voicings live and
+      // both horns at C4, which is the middle of a tenor and the fat part of a
+      // trumpet at the same time.
+      reg: () => -1,
+      part: ["stab", "lead", "lead"],
+      realize: v => (v === 0 ? "pad" : "line"),
+      harmony: "cycle", mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      // THE TURNAROUND THAT NEVER LANDS — I vi ii V, twice, with the second vi
+      // turned into a VI7. Eight bars of the cycle every standard is made of,
+      // and the whole point is that it comes back round rather than resolving:
+      // bar 8 is a dominant pointing at bar 1.
+      roots: [0, 5, 1, 4, 2, 5, 1, 4],
+      // ...and the CHORDS are the reason this anchor exists. Every one of them
+      // is a chromatic quality — an absolute stack on the root, not a walk
+      // through the mode — because that is what "extended chords" means and
+      // what a diatonic "7" cannot say: the ii is a MINOR seventh where the
+      // mode would hand back a minor triad plus its own sixth, the I is a
+      // MAJOR seventh, and the VI7 in bar 6 is the one deliberate exit from
+      // the key (a secondary dominant, the bebop move, an A7 in C where the
+      // key only owns Am). The line stays diatonic and lets the piano and the
+      // bass be the ones who say the raised third.
+      prog: [{ d: 0, q: "maj7" }, { d: 5, q: "m7" }, { d: 1, q: "m7" }, { d: 4, q: "dom7" },
+             { d: 2, q: "m7" }, { d: 5, q: "dom7" }, { d: 1, q: "m7" }, { d: 4, q: "dom7" }],
+      bassStyle: "walk", artic: "legato",
+      // a bebop phrase is a stream of eighths with air at the END of it, not a
+      // held note; the cap is what puts the air there. (The stab is untouched —
+      // a chord-locked voice reads its part policy, PARTS.stab maxHold 1.)
+      maxHold: 3,
+      // THE AVOID NOTE, which is the one thing a major key genuinely gets
+      // wrong: the fourth degree held over a major seventh is a minor ninth
+      // against the third, and it is the note every jazz teacher tells you not
+      // to sit on. `anchor` is tango's own field doing tango's own job — a note
+      // that SOUNDS through more than a step and a half has to be a chord tone.
+      // Anything shorter is a passing tone and is left alone, which is where
+      // bebop's chromaticism lives anyway.
+      anchor: 1.5,
+      kit: {
+        // THE KICK IS FEATHERED. Four to the bar at level 2 — barely audible,
+        // felt rather than heard, which is what a bebop drummer's right foot
+        // does and what the level alphabet exists to say — plus a BOMB: one
+        // loud accent off the beat that lands five bars in nine, because a
+        // dropped bomb you can predict is not a bomb.
+        k: [2,0,0,0, 2,0,0,0, 2,0,0,7, 2,0,0,0],
+        "?k": [9,0,0,0, 9,0,0,0, 9,0,0,5, 9,0,0,0],
+        // the left hand comps rather than backbeats — one answer, late in the
+        // bar, two bars in three
+        s: [0,0,0,0, 0,0,0,0, 0,0,4,0, 0,0,0,0],
+        "?s": [0,0,0,0, 0,0,0,0, 0,0,6,0, 0,0,0,0],
+        // SPANG-A-LANG, and where its "da" sits IS the genre. `swing` bends
+        // odd sixteenths, so a note written on the eighth-offbeat — step 6,
+        // even — cannot be swung by the scalar at all; a jazz ride's second
+        // note has to be placed by hand, and the nudge lane is the hand. Four
+        // ninths of a step (the alphabet's ceiling) puts it at 0.61 of the
+        // beat: a 1.6-to-1 swing ratio, which is not a compromise but the
+        // right number — the notional 2:1 triplet is a ballad ratio, and a
+        // rhythm section measured at this tempo always comes back nearer 1.5.
+        r: [1,0,0,0, 1,0,1,0, 1,0,0,0, 1,0,1,0],
+        "~r": [0,0,0,0, 0,0,4,0, 0,0,0,0, 0,0,4,0],
+        // and the left foot closes the hat on 2 and 4 — the quietest
+        // load-bearing thing on the kit, same as the blues band's
+        f: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+      },
+      // BAR 8 SETS UP THE NEXT CHORUS. The comping hand turns into a figure
+      // that accelerates across the bar and hands off to the toms and a crash
+      // on the last sixteenth — and the ride never stops, because in this music
+      // the time is not allowed to.
+      fill: { s: [0,0,0,0, 0,0,4,0, 0,0,5,0, 6,0,7,0],
+              m: [0,0,0,0, 0,0,0,0, 0,0,0,5, 0,0,0,0],
+              l: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,6,0],
+              x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,8] },
+      // a hand, not a grid — the blues band's own number, one notch tighter,
+      // because bebop time is faster and closer than a shuffle
+      humanize: 0.04,
+      tone: { wave: "sawtooth", cut: 2400, q: 1.2, atk: .01, rel: .6, gain: .26, verb: .32 },
+      words: ["the piano, comping in the gaps", "the head, on the tenor",
+              "the trumpet, in unison — off for half of every other bar"],
+      // THE COMP IS THE TUNE'S OWN RHYTHM, DISPLACED AND THINNED TWICE. What
+      // falls out of it is 1, the and of 2, the and of 3, and 4 — the
+      // charleston cell with an answer, which is what a comping hand plays and
+      // is nothing anyone had to hand-draw. The trumpet takes the odd bars
+      // half off: two horns on one line is a texture, not a doubling machine.
+      word: (v, s) => (v === 0 ? [only("gate", rotate(6)), drop(2), drop(3)]
+                     : v === 2 && s % 2 ? [drop(2)] : []),
+    },
+
+    // BO DIDDLEY. The genre is a RHYTHM, and that is the reason it earns a row
+    // in a table which otherwise insists a genre is four numbers and some
+    // nouns: there is no progression here AT ALL. One chord, held for the
+    // length of the record, and everything that would have been harmonic
+    // motion has moved into the drums — the 3-2 clave, played on the floor tom,
+    // doubled by the guitar, shaken over the top by a pair of maracas. It is
+    // the one anchor in the band family with no backbeat: the snare answers the
+    // clave's TWO-side and says nothing on beat 2, which is most of what a
+    // listener means by "that beat".
+    //
+    // THE FIGURE, WRITTEN ONCE. On the record the clave is spread over two bars
+    // at doubled tempo; this is the one-bar compression at 128, the reading
+    // every cover of it uses (Not Fade Away, Magic Bus, Faith, Desire) and the
+    // only one where a sixteen-step kit, a bass grid and a velocity hand can
+    // all land on the same five hits: 1, the a of 1, the and of 2, the a of 3,
+    // and 4.
+    bodiddley: {
+      // named "Chicago 1955" — Ellas McDaniel's first Chess single, cut in the
+      // same room and for the same label as the electric-blues anchor three
+      // years earlier, playing a rhythm nobody in that room had recorded.
+      label: "Chicago 1955", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "blues",
+      // LINEAGE: Chess blues is the MATERIAL — the guitar language, the band,
+      // the room, the amp — and the sanctified church is where the shouted
+      // call-and-response and the body-percussion pulse come from. The beat
+      // itself is hambone, the juba pattin' rhythm played on the thighs, whose
+      // shape is the same clave the Afro-Cuban records of those years carried;
+      // neither is an anchor, and between them they are what this genre adds.
+      parents: { blues: 0.7, gospel: 0.3 },
+      wants: ["hambone", "latin percussion", "jump blues"],
+      instr: ["clean_guitar", "harmonica"],
+      drumkit: "acoustic",
+      entry: v => v * 2, reg: v => v, realize: () => "line",
+      // ONE CHORD, FOREVER — `modal`, and not the drone's kind of modal: there
+      // the stillness IS the piece, here the harmony simply is not the subject.
+      // Mixolydian for the chord (a major third over a ♭7 — the E7 the guitar
+      // bangs) and the blues scale for the tune, which stacks a minor third and
+      // a ♭5 on top of that major third and never resolves either.
+      harmony: "modal", mode: MODES.mixo, scale: BLUES,
+      maxHold: 2,                 // a figure, not a melody: it stops to be answered
+      // the low end states the THREE-side and leaves the two to the drums (and,
+      // as everywhere, a phrase with accents of its own outranks this grid)
+      bassGrid: [1,0,0,1, 0,0,1,0, 0,0,0,0, 0,0,0,0],
+      kit: { k: [1,0,0,1, 0,0,1,0, 0,0,0,0, 0,0,0,0],    // the three
+             s: [0,0,0,0, 0,0,0,0, 0,0,1,0, 1,0,0,0],    // the two — NO backbeat
+             l: [1,0,0,1, 0,0,1,0, 0,0,1,0, 1,0,0,0],    // floor tom: all five
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },  // maracas, unbroken
+      // THE MARACAS ARE THE HAT LANE, and that is a compromise said out loud:
+      // there is no shaker among the twelve extracted samples, so the nearest
+      // thing is a closed hat at sixteenths with the clave leaned on. The
+      // ACCENTS are the part that matters — a flat sixteenth hat is a disco
+      // record, and Jerome Green's hand is the second instrument on the single.
+      kitVel: { h: [9,3,4,8, 3,4,8,3, 4,3,7,4, 8,3,4,4] },
+      // a room in 1955, not a grid: four hundredths of a step, redrawn every
+      // bar, seeded — the same take every time you press play
+      humanize: 0.04,
+      // BAR 4: the toms take the figure over and the crash hands it back. The
+      // maracas do not stop, because on these records nothing stops them.
+      fill: { s: [0,0,0,0, 0,0,0,0, 0,0,1,0, 1,0,1,0],
+              t: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,1,0,1],
+              m: [0,0,0,0, 0,0,0,1, 0,0,0,1, 0,0,0,0],
+              l: [1,0,0,1, 0,0,1,0, 0,0,1,1, 1,0,0,0],
+              x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,8] },
+      tone: { wave: "square", cut: 2000, q: 1.8, atk: .003, rel: .4, gain: .29, verb: .22 },
+      words: ["the guitar, masked to the clave",
+              "the harp, answering in the holes from bar 3"],
+      // THE MASK IS THE GENRE. `breath` already says the exact thing a clave
+      // is — an ABSOLUTE window in the bar, in the same place every bar, ANDed
+      // with whatever rhythm the phrase brought — it was just written for a
+      // singer's air instead of a rhythm figure. So the guitar keeps its own
+      // tune and sounds it only where the figure lets it, the harp is masked to
+      // the complement, and the two parts interlock by construction instead of
+      // by luck.
+      word: v => (v === 0
+        ? [breath([1,0,0,1, 0,0,1,0, 0,0,1,0, 1,0,0,0])]
+        : [breath([0,0,0,0, 1,1,0,0, 0,1,0,0, 0,0,1,1]), transpose(2)]),
+      fx: ["tremolo"],            // the DeArmond Trem-Trol — Mona's amp, and the table's first
+    },
+
+    // CHUCK BERRY [rock]. The double stop is the whole idea, and it costs two
+    // voices: one line played twice a FOURTH apart, one rhythm, one register —
+    // two strings under one finger, not a lead and a harmony part. (The
+    // Beatles' thirds are the other shape, a third up and an octave clear;
+    // this one never leaves the guitarist's hand, which is why it is the only
+    // place in the table where two voices share a register on purpose.) Under
+    // it the boogie — root and fifth, alternating — a piano chording the tune's
+    // own eighths, and over twelve bars with the quick change a backbeat that
+    // is barely shuffled at all: the guitar plays straight, the piano plays
+    // triplets, and the record splits the difference at swing 0.15. That split
+    // is the genre — the one anchor here whose identity is a compromise about
+    // TIME rather than a mode, a kit or a chord.
+    chuckberry: {
+      // named "St. Louis 1955" — the Sir John's Trio at the Cosmopolitan Club
+      // in East St. Louis: guitar, piano, drums, no horns, which is the band
+      // this anchor models. Maybellene was cut in Chicago that May; the group
+      // that walked into Chess was St. Louis's, and Johnnie Johnson's piano is
+      // the half of it everybody forgets.
+      label: "St. Louis 1955", rate: 1, bars: 12, voices: 3, swing: 0.15, near: "rock",
+      // LINEAGE: Chess blues played out of a hillbilly's songbook. Maybellene
+      // is Ida Red, and the country side is not a costume — it is the straight
+      // eighths, the major third and the diction that got him billed as a
+      // hillbilly singer sight unseen. The three ancestors still owed: T-Bone
+      // Walker, whose double stops these literally are; Louis Jordan's jump
+      // shuffle, which is the tempo and the small band; and the boogie-woogie
+      // left hand Johnnie Johnson brought to the piano stool.
+      parents: { blues: 0.6, countrypop: 0.4 },
+      wants: ["t-bone walker", "jump blues", "boogie-woogie"],
+      instr: ["clean_guitar", "clean_guitar", "upright_piano"],
+      drumkit: "room",
+      // NO reg() TERM AT ALL, which is the point: voices 0 and 1 are `lead`
+      // and take the part's own +12, the piano is a `stab` and takes none, so
+      // it sits an octave under the guitars without this genre naming a
+      // single number. The parts do the register work; the anchor only says
+      // who is who.
+      entry: () => 0, reg: () => 0, realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "lead", "stab"],
+      // MIXOLYDIAN, AND NO `diatonic`. The line follows the root by SEMITONES
+      // — Berry slides the grip up to the IV rather than rethinking it — and
+      // mixolydian is closed under exactly that move: C mixo up a fourth is F
+      // mixo, up a fifth is G mixo, so one shape lands in tune on all three
+      // chords. The ♭7 in the subject is the same ♭7 as in the chords, which
+      // is why this alphabet can take the semitone follow the seven-note
+      // genres had to give up.
+      harmony: "cycle", mode: MODES.mixo, scale: MODES.mixo,
+      roots: [0,3,0,0, 3,3,0,0, 4,3,0,4],
+      // THE QUICK CHANGE — bar 2 goes to the IV and comes straight back — is
+      // most of what separates a rock'n'roll twelve from the Chess twelve that
+      // PROGS.blues12 writes. Every chord is still a dominant seventh: the
+      // major third of the double stop against the ♭7 under it is the same
+      // clash the blues is built on, taken at twice the speed.
+      prog: [
+        { d: 0, q: "dom7" }, { d: 3, q: "dom7" }, { d: 0, q: "dom7" }, { d: 0, q: "dom7" },
+        { d: 3, q: "dom7" }, { d: 3, q: "dom7" }, { d: 0, q: "dom7" }, { d: 0, q: "dom7" },
+        { d: 4, q: "dom7" }, { d: 3, q: "dom7" }, { d: 0, q: "dom7" }, { d: 4, q: "dom7" },
+      ],
+      // THE BOOGIE IS A DEGREE ALTERNATION, not a doubling: root, fifth, root,
+      // fifth — Willie Dixon's slap upright and Johnnie Johnson's left hand
+      // playing the same figure. The drive belongs to the piano and the hat;
+      // the bass's job here is the shape.
+      bassStyle: "fifths",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0],   // one, three, and the push back to one
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],   // the backbeat
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      // THE HAND. The backbeat cracks at 9 — on these records it is the
+      // loudest thing in the room — while the hat rides light and uneven, the
+      // down-eighths at 7 and the swung up-eighths at 3. Velocity rather than
+      // a second lane, because it is one drummer.
+      kitVel: { s: [0,0,0,0, 9,0,0,0, 0,0,0,0, 9,0,0,0],
+                h: [7,3,5,3, 6,3,5,3, 7,3,5,3, 6,3,5,4] },
+      // BAR 12 IS THE TURNAROUND: the snare rolls into the crash on the last
+      // sixteenth and the hand comes off the hats halfway through to play it.
+      fill: { s: [0,0,0,0, 1,0,1,0, 1,0,1,0, 1,1,1,1],
+              h: [1,0,1,0, 1,0,1,0, 1,0,0,0, 0,0,0,0],
+              x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,9] },
+      tone: { wave: "sawtooth", cut: 2400, q: 1.5, atk: .003, rel: .5, gain: .29, verb: .14 },
+      // THE GRIP, AND WHERE THE REGISTER LAW PUTS IT. Voice 1 is voice 0 three
+      // DEGREES up, which in mixolydian is a perfect fourth from every degree
+      // but the ♭7 — and the ♭7 gives a tritone, the blue note that is in the
+      // grip on purpose. Then `fold` registers each line by its own mean, so
+      // the pair renders a fourth ABOVE or a fifth BELOW depending on where
+      // the phrase sits: the same two strings, the other position. It cannot
+      // do anything else — both lines fold around the SAME centre, so the
+      // interval is 5 or −7 and never an octave.
+      words: ["the double stops", "the same grip, a fourth off, all the way",
+              "the piano, on the tune's own eighths"],
+      word: v => (v === 1 ? [transpose(3)]
+                : v === 2 ? [only("gate", drop(2))] : []),
+      // THE CHESS SLAPBACK: one short tape repeat over the band, which is not
+      // reverb and not a decoration — 2120 Michigan Avenue is a dry room and
+      // an echo chamber down the hall, and that pair IS the 1955 record.
+      fx: ["echo"],
+    },
+
+    // DOO-WOP [motown]. The table's first vocal-group anchor, and the one with
+    // no instrument in it at all: three singers, an upright and a drummer,
+    // which is what a street corner has. It and Motown are both ionian
+    // I-vi-IV-V machines — the ice-cream changes — so the fields that separate
+    // them are the SHUFFLE and who is playing. Motown is a band with a snare on
+    // all four; this is three voices over a shuffle in which the harmony
+    // instrument IS the group.
+    //
+    // THREE PARTS, AND EACH IS A ROLE THE TABLE ALREADY HAD — which is the
+    // whole argument for parts being an assignment rather than a transform:
+    //   stab   the GROUP, and it is voice 0 because the record starts with
+    //          them. This is the reggae skank's machine saying the other thing
+    //          it could always say — chord-locked (they sing the chord, all of
+    //          it), their own absolute rhythm, one syllable long. "Doo-wop,
+    //          doo-wop" is a stab, and it is the only place the harmony sounds.
+    //   riff   the BASS SINGER: low (the role's own −12 puts him at C3 with
+    //          `reg` left flat), short, insistent, and he does not develop —
+    //          "bom, ba-ba-bom" is a riff by the table's own definition.
+    //   lead   the tenor, up top, entering at bar 3 over a group that has
+    //          already been singing, which is why `entry` runs the other way
+    //          round from every other genre here.
+    // ...and NO `pipes`. The harmony in this music is SUNG by a part, not added
+    // to a line by one: the group voice is the harmonizer, chord-locked, which
+    // is exactly what harmonize would have had to become anyway.
+    //
+    // THE SHUFFLE IS WHERE THE GRID CAN SAY IT. A sixteen-step bar cannot hold
+    // three-per-beat, so there is no exact 12/8 here and writing one would be a
+    // lie in the data. What swing 1/3 does hold, exactly, is a 2:1 pair at the
+    // SIXTEENTH — the triplet subdivision one level down — so the hat rides all
+    // sixteen and every pair of them leans, which is the rolling 12/8 ride at
+    // the resolution this kernel owns. `kitVel` puts the weight back on the
+    // beat and the half-beat so the pulse stays legible underneath. Blues and
+    // gospel already swing 1/3 and leave their kits straight; this is the same
+    // knob answering the same problem from the other side.
+    //
+    // THE HARMONY IS THE OTHER HALF. Eight bars, and the second four swap the
+    // ii in for the IV (I-vi-IV-V | I-vi-ii-V) — both halves of the cycle these
+    // records turn over, rather than one of them twice. Every tonic and
+    // subdominant is a SIXTH chord, which is the close-harmony sound itself:
+    // four voices on a triad have a spare throat and it takes the sixth. The V
+    // is the only chromatic thing in the genre, a real dom7, and the last bar
+    // gives its final quarter back to the tonic — the "shoo-bop" tag that flips
+    // the strain to the top, and the one bar of the form holding two chords.
+    doowop: {
+      // named "Harlem 1955" — the Cadillacs cutting "Speedoo" for Josie and the
+      // Harptones working the Apollo, the year the corner went on record;
+      // uptown New York, not the Penguins' LA or the Moonglows' Chicago.
+      label: "Harlem 1955", rate: 1, bars: 8, voices: 3, swing: 1 / 3, near: "motown",
+      // LINEAGE: the jubilee/gospel quartet is where the parts, the blend and
+      // the bass singer come from — every one of these groups had been singing
+      // in church first — and the band behind them is the blues, playing the
+      // shuffle it had been playing since jump. The songs came from Tin Pan
+      // Alley by way of the pop vocal groups, and barbershop is where the added
+      // sixth was already sitting; neither of those is an anchor yet.
+      parents: { gospel: 0.6, blues: 0.4 },
+      wants: ["jubilee quartets", "barbershop", "tin pan alley", "jump blues"],
+      // ONE GROUP IS ONE SOUND: the lead is a solo voice and the other two are
+      // the recorded choir, closed vowel on top for the syllables and the
+      // rounder one underneath for the bass, because that is literally what is
+      // standing there. No piano, no sax — this is the corner, not the date.
+      instr: ["ohh_voices", "ahh_choir", "solo_vox"],
+      drumkit: "acoustic",
+      // `reg` is flat and the PARTS do the registering: stab at 60, riff at 48,
+      // lead at 72, which is a vocal group's spacing written once.
+      entry: v => (v === 2 ? 2 : 0), reg: () => 0,
+      part: ["stab", "riff", "lead"],
+      // the stab declares itself "pad" to the realize() shim exactly as
+      // motown's does — it is a chord, not a line, and the octave law reads it
+      // that way
+      realize: v => (v === 0 ? "pad" : "line"),
+      harmony: "cycle", mode: MODES.ionian, scale: MODES.ionian, diatonic: true,
+      roots: [0,5, 3,4, 0,5, 1,4],               // I vi IV V | I vi ii V
+      prog: [{ d: 0, q: "six" }, { d: 5, q: "7" }, { d: 3, q: "six" }, { d: 4, q: "dom7" },
+             { d: 0, q: "six" }, { d: 5, q: "7" }, { d: 1, q: "7" },
+             [{ d: 4, q: "dom7", beats: 12 }, { d: 0, q: "six", beats: 4 }]],
+      // CALL AND RESPONSE AS DATA — the per-voice `period`, which is what that
+      // form of the field was for. Every second bar the tenor thins out and the
+      // bass singer answers into the hole he left: the two-bar shape the whole
+      // idiom is built out of. It also fires twice, alone, before the lead has
+      // opened his mouth, and that is the intro.
+      period: (v, s) => (s % 2 ? (v === 2 ? [drop(2)] : v === 1 ? [fill(3)] : []) : []),
+      maxHold: 4, artic: "legato",
+      // THE BASS SINGER IS NOT A PASSING TONE. The riff follows the changes by
+      // DEGREE, which keeps him in the key and not necessarily on the chord, and
+      // a bass voice holding the seventh under the upright's root is the one
+      // clash three singers and a bass can actually make: measured, it was most
+      // of the genre's dissonance census. `anchor: 2` is the ear's own rule —
+      // sound through more than two steps and you have to be a chord tone.
+      anchor: 2,
+      // THE TWO-FEEL. An upright alternating root and fifth under the shuffle —
+      // not a walk, which is the jump-blues band and Motown's Funk Brothers.
+      // The doo-wop bass player holds the bottom still so the voices can move,
+      // and where the phrase brings no accents of its own the grid is 1, 3 and
+      // the push into the next bar.
+      bassStyle: "fifths",
+      bassGrid: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0],
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitVel: { h: [6,3,4,3, 7,3,4,3, 6,3,4,3, 7,3,4,4] },
+      // the eighth bar: the snare picks the shuffle up off the hat and runs the
+      // group back to the top — a roll into the turnaround is the one fill this
+      // music has, and the only bar the drummer is not just keeping time in
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,1,0,1, 1,1,0,1] },
+      // no `fx` either: a 1955 vocal record's only effect is the room it was
+      // cut in, and the room is `verb`
+      tone: { wave: "triangle", cut: 2400, q: 0.8, atk: .014, rel: 1.1, gain: .26, verb: .5 },
+      words: ["the group — \"doo-wop\", the bar's chord, on their own grid",
+              "the bass singer, under everything", "the lead tenor, from bar 3"],
+      word: (v, s) => (v === 0 ? [breath([1,0,0,1, 0,0,0,0, 1,0,0,1, 0,0,0,0])]
+        : v === 1 ? [breath([1,0,0,1, 0,0,1,0, 1,0,0,0, 0,0,1,0])]
+        : [breath(SUNG)]),
+    },
+
+    // SKIFFLE [countrypop] — the genre with NO INSTRUMENTS, and every field
+    // below is that one fact worked out. A washboard is a laundry board played
+    // with sewing thimbles; a tea-chest bass is a packing crate, a broom handle
+    // and one length of string; the guitar is the only object in the room
+    // anybody paid money for. So there is no kick in this kit and no snare
+    // either — the beat is a SCRUB, sixteenths across the ribs with the hand's
+    // own down-and-return in `kitVel`, and two thimble clicks on the backbeat
+    // that arrive twice because a thimble crossing a rib always does (`!p`, the
+    // flam and the drag). Over it three major chords with no seventh anywhere:
+    // the entire proposition of the music is that a boy with a fortnight of
+    // practice can play it, and a seventh is a fortnight he does not have. The
+    // guitar strums an eighth-note downstroke grid — fill(1) then drop(2), every
+    // step and then every other one taken away, which is the one shape a right
+    // hand that only goes DOWN can make — twenty years before punk claimed the
+    // gesture and out of the same impulse.
+    skiffle: {
+      // named "London 1956" — Rock Island Line in the charts and the coffee
+      // bars full of teenagers with tea chests; Liverpool 1957 (the Quarrymen,
+      // and Lennon meeting McCartney at the Woolton fête) is the other
+      // claimant, and it is the one the beatles anchor downstream is made of.
+      label: "London 1956", rate: 1, bars: 8, voices: 3, swing: 0.15,
+      near: "countrypop",
+      // LINEAGE: skiffle is a STRING BAND playing American blues off imported
+      // 78s — Nashville's banjo-and-two-beat machinery arriving at the same
+      // music from the other side of the ocean (countrypop), Lead Belly's and
+      // Broonzy's songs as the actual repertoire (blues), and the work-song
+      // and spiritual half of that songbook, "Midnight Special" through "Rock
+      // Island Line", which is church music with the church taken off it
+      // (gospel). The missing parent is the one it was literally born inside:
+      // the British trad-jazz revival, where a skiffle break was the interval
+      // number Ken Colyer's and Chris Barber's bands played while the horns
+      // put their instruments down.
+      // ...and the want is named PRECISELY, because the `jazz` anchor two
+      // rows up is the wrong jazz: 52nd Street in 1945 is bebop, and the
+      // rooms these kids were standing in were playing New Orleans revival.
+      parents: { countrypop: 0.4, blues: 0.4, gospel: 0.2 },
+      wants: ["trad jazz revival", "delta blues", "work song"],
+      instr: ["steel_string_guitar", "solo_vox", "banjo"],
+      // BRUSHES, because a washboard is SCRAPED and every other sampled kit
+      // here is struck: the brush kit is the only one whose snare is a sound
+      // made by dragging something across a surface, which is the whole
+      // instrument. The lanes it is asked for are a hat and a rim; the kick,
+      // the snare and both cymbals are silent for the whole genre.
+      drumkit: "brush",
+      // REGISTER: the guitar chunks in the middle, the singer sits ON it, and
+      // the banjo rolls UNDER the voice rather than over it — which is where a
+      // banjo actually is on these records, a middle-register rhythm engine and
+      // not a lead. The pentatonic alphabet is 2.4 semitones a degree, so every
+      // voice here reads an octave wider than a seven-note one: this is written
+      // two rungs lower than a diatonic genre would be for the same result.
+      entry: v => (v === 2 ? 2 : 0), reg: v => (v === 0 ? -1 : v - 2),
+      realize: v => (v === 0 ? "pad" : "line"),
+      part: ["stab", "lead", "counter"],
+      // MAJOR TRIADS UNDER A MAJOR PENTATONIC SUBJECT — and it is the first
+      // anchor in the table to read the SCALES row `majpent` at all, which has
+      // sat there unused since the major side was added. It is the alphabet of
+      // the songs: an Anglo-Celtic ballad and a Lead Belly holler are both
+      // five notes, and the friction the blues anchor gets from a flat third is
+      // not available here because nobody in the band could find one.
+      harmony: "cycle", mode: MODES.ionian, scale: SCALES.majpent,
+      // THE EIGHT-BAR FOLK BLUES — I I IV I V IV I I, the shape of "Key to the
+      // Highway" and of half the songbook. Not the twelve: skiffle got its
+      // repertoire off records but its FORM off the page and the campfire, and
+      // eight bars is the length of a verse somebody can remember.
+      roots: [0,0, 3,0, 4,3, 0,0],
+      // ...AND NO `prog`. Every other cycle in this half of the table says its
+      // sevenths out loud; this one refuses on principle. Three major triads is
+      // not a simplification of the harmony, it IS the harmony — the whole
+      // point of the boom was that the chords were reachable.
+      maxHold: 3,
+      // the strummed chord is a RAKE, not a block: six strings under one
+      // downstroke are a few milliseconds apart and that is what makes it a
+      // guitar rather than an organ
+      pipes: [{ id: "strum", spread: 0.05 }],
+      // ROOT AND FIFTH, TWO TO THE BAR — the same figure whether the band has
+      // a tea chest (one string, tuned by pulling the broom handle, so a fifth
+      // is a lean of the wrist) or a borrowed double bass with Chris Barber
+      // behind it. `bassGrid` is the floor under a phrase with no accents:
+      // this part never stops being two in a bar.
+      bassStyle: "fifths",
+      bassGrid: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+      kit: { h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],     // the scrub, unbroken
+             p: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],     // thimbles, 2 and 4
+             "!p": [0,0,0,0, 1,0,0,0, 0,0,0,0, 2,0,0,0] },// a flam, then a drag
+      // THE HAND ON THE BOARD. Down-stroke on the beat, the return stroke
+      // gathering into the next one — a scrub is a crescendo repeated four
+      // times a bar, not a hat playing sixteenths at one level.
+      kitVel: { h: [8,3,4,6, 7,3,4,6, 8,3,4,6, 7,3,5,7] },
+      // and nothing in this band is on the grid: no metal, no machine, no
+      // drummer — a hand on a laundry board is the loosest timekeeper the
+      // table has, looser than the blues band it learned from
+      humanize: 0.06,
+      // BAR 8: the washboard breaks out of the backbeat and runs the thimbles
+      // into the bar line. There are no toms to fall down and no crash to land
+      // on; the only thing that can get louder is the board.
+      fill: { p: [0,0,0,0, 1,0,1,0, 1,0,1,0, 1,1,1,0],
+              "!p": [0,0,0,0, 1,0,0,0, 0,0,0,0, 0,0,0,0] },
+      tone: { wave: "triangle", cut: 3000, q: 1.0, atk: .004, rel: .45, gain: .28, verb: .16 },
+      intro: "cold",                 // one voice counts it off and the band is in
+      words: ["the strum — an eighth-note grid, all downstrokes",
+              "the tune, hollered, as written",
+              "the banjo roll, from bar 3 — a three grinding against the two"],
+      word: v => [[fill(1), drop(2)], [], [fill(3), transpose(2)]][v],
+    },
+
+    // MINIMALISM. Two mechanisms, and both of them are `period` — the bar
+    // schedule is the only type that can say "this bar is one step further
+    // along than the last", which is what a PROCESS is.
+    //   PHASE (Reich): voices 0 and 1 are the same figure, the same
+    // instrument, the same octave, and voice 1 moves one sixteenth further
+    // ahead every bar — 0, 1, 2 … 7 and home. A canon whose interval of
+    // imitation is not a musical distance but a mechanical one, and the
+    // harmony is whatever the figure makes against itself.
+    //   ADDITIVE PROCESS (Glass): voice 2 plays a four-step cell for two bars,
+    // an eight-step cell for two, twelve for two, then the whole sixteen. What
+    // grows is the CELL, not the density — the tune is not stated and then
+    // developed, it is built in front of you.
+    // Under both, a pulse that never stops and never accents anything.
+    minimalism: {
+      // named "New York 1967" — Piano Phase at the Park Place Gallery: two
+      // pianos, one figure, one player walking a sixteenth ahead. Glass's
+      // additive cells (Two Pages, 1969) are the same downtown loft scene two
+      // years on, which is why one anchor can honestly hold both.
+      label: "New York 1967", rate: 1, bars: 8, voices: 3,
+      // LINEAGE: Young's Theatre of Eternal Music is the room Riley and Reich
+      // came out of, so drone is the catalog's one true ancestor here — and a
+      // phase piece is also, exactly, a CANON, which is counterpoint's half:
+      // the species machinery with the interval of imitation taken off the
+      // grid. Declared near even because those are two halves, not a trunk and
+      // a branch. It then fits worse than anything else in the table, and that
+      // is the honest reading rather than a bug: what neither parent can
+      // explain is the PULSE, and the two ancestors that would — Coltrane's
+      // one-chord modal playing, which Reich credits by name, and the Ewe bell
+      // patterns he went to Legon in 1970 to learn — are exactly the two the
+      // catalog does not hold. The tape pieces where phase was found by
+      // accident are the third.
+      // and the first want is named PRECISELY for the same reason skiffle's
+      // is: the `jazz` anchor in this section is bebop, and what Reich took
+      // was the one-chord MODAL playing that came fourteen years after it.
+      parents: { drone: 0.55, counterpoint: 0.45 },
+      wants: ["modal jazz", "west african drumming", "tape music"],
+      // Two marimbas and a piano. The phase pair must be the SAME instrument
+      // in the SAME octave or the ear files them as two parts instead of one
+      // figure coming apart, which is why `reg` is flat across 0 and 1 and
+      // only the additive voice sits up an octave.
+      instr: ["marimba", "marimba", "bright_yamaha_grand"],
+      drumkit: "acoustic",
+      // NOTHING ARRIVES. Every other genre in the drift family is built on
+      // staggered entry — ambient surfaces at bar 5, post rock arrives one
+      // guitar at a time, neoclassical's second piano waits four bars. Here
+      // all three play from bar 1 and only the PROCESS changes: the piece does
+      // not begin, it is already running when you get there.
+      entry: () => 0, reg: v => (v === 2 ? 1 : 0),
+      // AND NO PAD, which is the same family's other shared habit thrown out.
+      // Everything is attack; the sustain is an illusion made of repetitions,
+      // which is what a marimba ensemble is.
+      realize: () => "line",
+      harmony: "cycle", mode: MODES.dorian, scale: MODES.dorian, diatonic: true,
+      // i · ♭VII four times, then IV · ♭VII: not a progression, a ROCKING. And
+      // dorian because it has no leading tone — nothing here ever cadences,
+      // the top of the loop is the only resolution the music offers.
+      roots: [0, 6, 0, 6, 3, 6, 3, 6],
+      // NO `prog`, and the absence is a decision rather than an omission: with
+      // no pad and no stab nothing would voice a quality, so a chord table
+      // here would be inert data — and minimalism's harmony genuinely is bare
+      // roots under a figure. The chord you hear is the one the figure makes.
+      // Short and capped, because a mallet is short: nothing is held over
+      // anything, so every simultaneity in the piece is two attacks meeting.
+      artic: "staccato", maxHold: 2,
+      // The bass is not UNDER the pulse, it IS the pulse an octave down —
+      // Glass's left hand doubles the figure's rhythm, it does not walk.
+      bassStyle: "eighths",
+      kit: { // maracas: sixteenths that never stop
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],
+             // claves, five strokes across the sixteen (3+3+3+3+4) — the
+             // cross-rhythm the pulse gets measured against
+             p: [1,0,0,1, 0,0,1,0, 0,1,0,0, 1,0,0,0],
+             // and Clapping Music's second player: the identical cell, one
+             // step over. The interference is the part.
+             c: [0,1,0,0, 1,0,0,1, 0,0,1,0, 0,1,0,0] },
+      // A PULSE WITH NO ACCENT IN IT — flat velocity vectors, on purpose, and
+      // the only kit in the table written that way. Every other one leans on 1
+      // and 3 to tell the ear where the beat is; this music's whole gift is
+      // refusing to, so the ear does the grouping and hears a different metre
+      // every minute. There is no kick and no snare either: a backbeat would
+      // answer the question the piece exists to leave open.
+      kitVel: { h: [4,4,4,4, 4,4,4,4, 4,4,4,4, 4,4,4,4],
+                p: [6,6,6,6, 6,6,6,6, 6,6,6,6, 6,6,6,6],
+                c: [5,5,5,5, 5,5,5,5, 5,5,5,5, 5,5,5,5] },
+      // THE FILL IS A CUE, not a drum break: in Music for 18 Musicians the
+      // vibraphone plays a figure that means "everybody move on now". Here the
+      // claves and the claps double into the last bar and the ensemble is told
+      // the process is over.
+      fill: { p: [1,0,1,1, 0,1,1,0, 1,1,0,1, 1,0,1,0],
+              c: [1,1,0,1, 1,0,1,1, 0,1,1,0, 1,1,0,1] },
+      tone: { wave: "triangle", cut: 3400, q: 0.9, atk: .002, rel: .28, gain: .26, verb: .3 },
+      words: ["the figure, steady, all the way through",
+              "the same figure, a sixteenth further ahead every bar",
+              "the additive voice: a four-step cell growing to sixteen"],
+      // The word is EMPTY and the period carries all of it, which is the
+      // argument for the sixth type written out in one anchor: an operator is
+      // timeless and cannot know it is in bar 3, and a process that cannot
+      // count bars is not a process.
+      word: () => [],
+      period: (v, s) => (v === 1 ? [rotate(s)]
+        : v === 2 ? (s < 2 ? [excerpt(0, 4)] : s < 4 ? [excerpt(0, 8)]
+                     : s < 6 ? [excerpt(0, 12)] : [])
+        : []),
+      // No `fx`, deliberately: the phase voice IS the delay, played rather
+      // than patched, and a genre that hands its signature to an insert does
+      // not own it.
+    },
+
+    // KRAFTWERK [synthpop]. The catalog's most-wanted ancestor — four children
+    // named it at once (new wave, synth pop, Eurythmics, techno) and all four
+    // had to route it through somebody else. What no proxy could carry: this
+    // is a POP RECORD MADE BY A MACHINE, and both halves are load-bearing.
+    // Against synth pop, the nearest neighbour and the child that inherited
+    // most, the field that separates them is THE KICK. Basildon puts one on
+    // every quarter — that is disco's gift and the reason it is dance music.
+    // Düsseldorf puts one on 1 and 3 and pushes off the & of 3, which is a
+    // train, and it is why nobody dances to this and everybody has heard it.
+    //
+    // Three machines switched on one at a time (entry 0, 2, 4 — a Kraftwerk
+    // record is an accretion, not an arrangement): the SEQUENCE low and short,
+    // the TUNE an octave over it, the VOCODER CHORALE underneath them both.
+    // The band's own words for it were Roboterpop and Industrielle Volksmusik
+    // — industrial folk music, which describes this anchor better than this
+    // comment does.
+    kraftwerk: {
+      // named "Düsseldorf 1977" — Trans-Europe Express, the record every one
+      // of the four children actually heard: Bowie carried it to Berlin,
+      // Bambaataa cut it up in the Bronx, Detroit built a genre on it.
+      // Autobahn 1974 is where the machine arrives; 1977 is what was
+      // inherited, and a label on an ancestor should name the inheritance.
+      label: "Düsseldorf 1977", rate: 1, bars: 8, voices: 3, near: "synthpop",
+      // LINEAGE: three parents, and two of them were meant to be the whole
+      // list — most of Kraftwerk's ancestry is ghosts here: Stockhausen's
+      // studio an hour down the Rhine, the krautrock the band's own first
+      // three albums are, and the European light music they always said they
+      // were continuing. The third is the American minimalists' repeating
+      // cell, which was on that ghost list until New York 1967 landed in this
+      // same section ten rows up; an ancestor the table holds is a parent, so
+      // it takes a quarter and drone gives most of it (they are the two
+      // halves of the same claim, and the cell that MOVES is Reich's rather
+      // than Young's). What the catalog holds beyond that is the two
+      // decisions that made them Kraftwerk rather than one more tape project:
+      // they wrote SONGS — verse, chorus, three minutes, a self-contained
+      // four-piece with its own studio, which is the Beatles' template — and
+      // they let the cell repeat past the point where anything happens, which
+      // is the drone's. The pop half is the larger share because it is the
+      // decision; the drone half is why the decision sounds like this. (With
+      // only those two declared the fit read 58.1% and put ALL of it on
+      // beatles, because none of the 27 features measures "a cell held past
+      // event" and the drone half is carried by the word table the fit cannot
+      // read. Naming the third parent is what fixed that rather than a bigger
+      // weight: 76.0%, with minimalism fitted at 0.60 — the pulse and the
+      // repeating cell were the missing measurable, and the declared 0.25 is
+      // the conservative read of a fit that wants more.)
+      parents: { beatles: 0.45, drone: 0.3, minimalism: 0.25 },
+      wants: ["stockhausen", "krautrock", "schlager"],
+      instr: ["square_lead", "saw_wave", "synth_voice"],
+      // NOT the CR-78, and that is the point: all three synth children reach
+      // for the preset box, which arrives in 1978, a year after this record.
+      // Düsseldorf's percussion was hand-built — metal struck with sticks —
+      // so it takes the sampled electronic kit, and the difference between a
+      // machine somebody built and a machine somebody bought is audible in
+      // one bar.
+      drumkit: "electronic",
+      // ONE MACHINE AT A TIME: the sequence alone, the tune from bar 3, the
+      // chorale from bar 5, and four bars of the whole thing. reg is flat
+      // because the PARTS do the register — riff sits an octave down, lead an
+      // octave up (PARTS ctr), so the three voices stack 48 / 72 / 60 without
+      // a single hand-written offset.
+      entry: v => v * 2, reg: () => 0,
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["riff", "lead", "pad"],
+      // i - ♭VII - ♭VI - i, two bars each: the descending aeolian tetrachord
+      // "Das Model" walks down, and the seed of both synth children's loops —
+      // Eurythmics' i-VI vamp is one move out of it, synth pop's i-VI-III-VII
+      // anthem its four corners. EIGHT bars because harmony is the slow layer
+      // here: the sequence turns over every bar and the chord waits two.
+      harmony: "cycle", roots: [0,0, 6,6, 5,5, 0,0],
+      // stepwise and in one key. A Kraftwerk tune is a nursery melody played
+      // by a machine — it steps, it does not leap — so the subject reads
+      // through the full seven, and `diatonic` follows the chord by DEGREES
+      // so nothing ever leaves the key. The robots do not modulate.
+      scale: DIATONIC, diatonic: true,
+      // NO `artic`, and it is the one field this anchor withholds on purpose:
+      // new wave, synth pop and techno all say `staccato`, so the clip is
+      // THEIRS, not inherited. Here only the riff is short, and the part
+      // policy already caps it (maxHold 2) — the chorale has to hold.
+      //
+      // THE SEQUENCER DOES NOT KNOW THERE IS A SINGER: straight eighths on
+      // the root, every one the same length and the same weight, for the
+      // whole record. `eighths` is the one bass style that overrides the
+      // melody's accents instead of reading them, and that override IS this
+      // music.
+      bassStyle: "eighths",
+      // THE SIGNATURE-SYNTH LAW (see acid): a Model D, because these lead
+      // lines are a Minimoog and a sample cannot slide from one note to the
+      // next. Every number is set AGAINST drama — resonance 0.18 where acid
+      // sits at 11 and the filter envelope barely a step, because the interest
+      // here is the notes and their repetition, never the filter. `glide: 18`
+      // is the sequencer's own slide and not a singer's swoop; `drift: 3` is a
+      // fraction of what a real Model D wanders, because these machines were
+      // tuned before every take. lineOnly, like vaporwave's DX7: the chorale
+      // must be polyphonic and a Model D node is one voice.
+      synth: { dsp: "modeld", root: "modeld", level: 0.8, lineOnly: true,
+               set: { cutoff: 2100, res: 0.18, envAmount: 1.0, envAttack: 0.004,
+                      envDecay: 0.28, envSustain: 0.6, oscMix: 0.7, drive: 0.15,
+                      glide: 18, drift: 3 } },
+      // THE TRAIN. Kick on 1 and 3 with a push off the & of 3 — the motorik
+      // lean, a bar that is always arriving at the next one — the backbeat
+      // exactly on 2 and 4, sixteenth hats that never stop, and a metal ping
+      // on the & of 2 and the & of 4: the rim lane, because Flür's kit was
+      // sheet metal on stands and this is the clack, not a hat.
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      // THE FLATTEST TABLE IN THE FILE, and it is the whole aesthetic. Every
+      // other genre's kitVel is a HAND — disco and Toto lean on the pulse and
+      // tuck the between-notes under, funk writes its ghosts as 2s between
+      // 9s. Sixteen identical numbers per lane is the opposite claim, and it
+      // has to be said out loud rather than left absent, because absent means
+      // "take the tune's velocity" and the tune breathes.
+      kitVel: { k: [9,9,9,9, 9,9,9,9, 9,9,9,9, 9,9,9,9],
+                s: [8,8,8,8, 8,8,8,8, 8,8,8,8, 8,8,8,8],
+                p: [7,7,7,7, 7,7,7,7, 7,7,7,7, 7,7,7,7],
+                h: [5,5,5,5, 5,5,5,5, 5,5,5,5, 5,5,5,5] },
+      // BAR 8: A MACHINE DOES NOT ROLL, IT SUBDIVIDES. No tom run, no snare
+      // accelerando — the kick simply starts landing on every other sixteenth
+      // and the metal goes to straight sixteenths for the last beat. Same
+      // hits, finer grid, and it hands the form back on the bar line.
+      fill: { k: [1,0,0,0, 0,0,0,0, 1,0,1,0, 1,0,1,0],
+              p: [0,0,0,0, 0,0,1,0, 0,0,0,0, 1,1,1,1] },
+      intro: "bassin",               // the pulse starts, then the machines join
+      tone: { wave: "sawtooth", cut: 2400, q: 1.2, atk: .004, rel: .45, gain: .28, verb: .18 },
+      words: ["the sequence, never once varied",
+              "the tune, answered a third up every other bar",
+              "the vocoder chorale"],
+      // The least-transformed word in the table, and that is the design: what
+      // you draw is what you hear, sixteen steps at a time, and the only move
+      // is the one Kraftwerk actually make — the same figure restated a third
+      // higher. The sequence and the chorale never take an operator at all.
+      word: (v, s) => (v === 1 && s % 2 ? [transpose(2)] : []),
+      fx: ["echo"],                  // the Kling Klang tape loop, and nothing else
+    },
+
+    // ELECTRO [trap] — and the neighbour is measured, not a joke: it is the
+    // same machine. Electro is the missing middle of the club family, the
+    // record where a Bronx funk DJ stopped playing breaks off other people's
+    // 45s and PROGRAMMED one — Kraftwerk's melody, the 808's own kick, clap,
+    // cowbell and congas, and nothing on the tape that a person played. What
+    // it invents and hands on: the SYNCOPATED machine kick (1, the & of 2, 3,
+    // the & of 4 — the body-pop, and the thing four-on-the-floor throws away),
+    // the octave-jumping sequenced bass, and the sixteenth hats accented UP on
+    // the offbeat. House and techno take the kick and straighten it; boom bap
+    // takes the loop discipline; trap takes the 808 itself, twenty-one years
+    // later, which is why the census puts them next to each other.
+    //
+    // THE FIRST CLUB GENRE THAT READS ALL SEVEN NOTES. Acid, house and techno
+    // are pentatonic machines — a riff, not a tune. The whole point of "Planet
+    // Rock" is that the tune on top is a EUROPEAN one, stepwise and diatonic
+    // (it is Trans-Europe Express, note for note — two rows up), so the subject
+    // reads through the full natural minor and `diatonic` moves the sequence by
+    // DEGREES when the root moves, which is what a keyboard player transposing
+    // a pattern does and what keeps a seven-note line in one key.
+    electro: {
+      // named "New York 1982" — Planet Rock's city and year. Detroit's own
+      // half of it (Cybotron's "Clear") is the same year and the same machine;
+      // the twelve-inch went out of New York, so the label follows it.
+      label: "New York 1982", rate: 1, bars: 4, voices: 2, near: "trap",
+      // LINEAGE: Bambaataa was a FUNK DJ first — the syncopation, the body and
+      // the break are James Brown's and P-funk's — playing to a floor disco
+      // built and to a twelve-inch disco invented. The fourth is the one this
+      // record does not merely resemble but QUOTES: Planet Rock is Trans-
+      // Europe Express with an 808 under it, so Düsseldorf is a declared
+      // parent and not a want. Synthpop keeps a fifth beside it because the
+      // all-synth chassis reached the Bronx as British pop records too, and
+      // those were on the radio where the German twelve-inch was not.
+      parents: { funk: 0.35, kraftwerk: 0.25, synthpop: 0.2, disco: 0.2 },
+      wants: ["moroder", "yellow magic orchestra", "hip-hop dj culture"],
+      // the square-wave sequencer and the vocoder: the two voices on every
+      // electro record, and the second one is a MACHINE SINGING
+      instr: ["square_lead", "synth_voice"],
+      drumkit: "tr808",            // not a stand-in — the 808 IS the genre
+      entry: v => v, reg: v => 1 - v, realize: () => "line",
+      // TWO LINES, NO PAD. A pad is a held chord and electro does not have one
+      // — the harmony is the bass and the sequence, which is why the parts are
+      // a low insistent riff and a hook on top of it rather than line + wash.
+      part: ["riff", "lead"],
+      artic: "staccato",                       // gated, clipped, machine-short
+      // i - i - ♭VI - ♭VII, and BARE TRIADS: no `prog`, because a seventh is a
+      // soul chord and there is not one on a Cybotron record. Two bars of
+      // tonic to lock the sequence in, then the two-chord lift that every
+      // minor-key machine record uses to get back to the top.
+      harmony: "cycle", roots: [0, 0, 5, 6],
+      scale: DIATONIC, diatonic: true,
+      // THE OCTAVE JUMP IS THE BASSLINE — Numbers, Al-Naafiysh, Nunk, all of
+      // it: one note, alternating registers, on the phrase's own accents, so
+      // the bass and the sequence are the same idea at two densities.
+      bassStyle: "octaves",
+      // THE 808 BAR. Kick on 1 and 3 with a push in front of each backbeat;
+      // handclap on 2 and 4 (the 808 clap, never a snare); the cowbell
+      // interlocking on the & of 1 and 3 and picking up the bar line;
+      // sixteenth hats with the open hat sizzling into the next bar, and the
+      // closed hat stepping out of its way.
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [0,0,1,0, 0,0,0,0, 0,0,1,0, 0,0,0,1],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,0,1],
+             o: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,0] },
+      // THE ACCENT SWITCH, which is what an 808 has instead of a hand: the
+      // hats lean on the OFFBEAT (steps 2/6/10/14 — that upward lean is the
+      // body-pop), the claps hit at 9, and the two kick pushes sit under the
+      // two downbeat kicks. Written as level, not as timing, because a machine
+      // is exactly on the grid — see DYNAMICS, where electro is `null`.
+      kitVel: { k: [9,0,0,0, 0,0,7,0, 8,0,0,0, 0,0,7,0],
+                c: [0,0,0,0, 9,0,0,0, 0,0,0,0, 9,0,0,0],
+                p: [0,0,6,0, 0,0,0,0, 0,0,6,0, 0,0,0,6],
+                h: [6,3,8,3, 6,3,8,3, 6,3,8,3, 6,3,8,4] },
+      // ...and bar 4 is the 808 CONGA RUN, high-high-mid-low across the kit,
+      // with the clap answering itself into the bar line. Every electro record
+      // has this fill and it is the one moment the machine sounds like a drummer.
+      fill: { t: [0,0,0,0, 0,0,0,0, 1,0,1,0, 0,0,0,0],
+              m: [0,0,0,0, 0,0,0,0, 0,0,0,0, 1,0,0,0],
+              l: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,0],
+              c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,1,0] },
+      tone: { wave: "square", cut: 2200, q: 3.2, atk: .002, rel: .28, gain: .28, verb: .08 },
+      // DRY WITH A SLAP, not a room: the space on an electro record is a tape
+      // delay on the hook, which is why `verb` is nearly off and the echo is
+      // the genre's one effect.
+      fx: ["echo"],
+      words: ["the sequence, filled to eighths — a step higher every other section",
+              "the vocoder hook: eight steps of the phrase, every other note gone"],
+      // A SEQUENCER DOES NOT DEVELOP, it TRANSPOSES: voice 0 is the pattern
+      // filled in to a running eighth and lifted one degree on the odd
+      // sections (the pattern-transpose button, and the one move acid's rotate
+      // has no equivalent for). Voice 1 is the vocoder — a fixed eight-step
+      // cell, halved, that moves to the phrase's second half when the sequence
+      // lifts, so the two of them change places rather than both restating.
+      word: (v, s) => (v === 0 ? (s % 2 ? [fill(2), transpose(1)] : [fill(2)])
+                               : [excerpt(s % 2 ? 8 : 0, 8), drop(2)]),
     },
 
     // ---- THE FUNCTION GENRES ---------------------------------------------
@@ -2041,13 +3006,23 @@
   const FAMILIES = [
     ["kernel", ["simple"]],
     ["vox",    ["gregorian", "bulgarian", "spem", "counterpoint", "fugue"]],
-    ["club",   ["acid", "house", "techno", "garage", "dnb", "trap", "boombap"]],
-    ["soul",   ["motown", "isley", "funk", "disco", "gospel", "rnb", "jodeci"]],
+    ["club",   ["acid", "house", "techno", "garage", "dnb", "trap", "boombap",
+                "electro"]],
+    ["soul",   ["doowop", "motown", "isley", "funk", "disco", "gospel", "rnb",
+                "jodeci"]],
     ["groove", ["reggae", "dub", "ska", "afrobeat", "bossa"]],
-    ["band",   ["rock", "punk", "blues", "newwave", "sludge", "deathmetal"]],
-    ["studio", ["beatles", "steely", "toto", "eurythmics", "synthpop", "citypop"]],
-    ["drift",  ["ambient", "drone", "vaporwave", "shoegaze", "postrock", "neoclassical"]],
-    ["roots",  ["countrypop", "tango"]],
+    ["band",   ["rock", "punk", "blues", "bodiddley", "chuckberry", "newwave",
+                "sludge", "deathmetal"]],
+    ["studio", ["beatles", "steely", "toto", "kraftwerk", "eurythmics",
+                "synthpop", "citypop"]],
+    ["drift",  ["ambient", "drone", "vaporwave", "shoegaze", "postrock",
+                "neoclassical", "minimalism"]],
+    // the pre-rock traditions, and the two ancestors that joined them are
+    // exactly that: Buenos Aires 1935, Nashville 1945, New York 1945,
+    // London 1956. Kling Klang is `studio` and not `club` for the same kind of
+    // reason — Kraftwerk made a record, and the floor is what the children
+    // built out of it.
+    ["roots",  ["countrypop", "skiffle", "tango", "jazz"]],
     // ...and the one cluster that is not a tradition at all: the FUNCTION
     // genres, which are parts rather than styles. They sit last because that
     // is how they are used — you pick the music first and the part second.
@@ -2100,7 +3075,11 @@
     // kick do not breathe, and making them breathe would be a costume. These
     // four render byte-for-byte what they rendered before the layer existed,
     // and the unit gate holds them to it by fingerprint.
-    techno: null, acid: null, house: null, trap: null,
+    // ...and ELECTRO is the fifth, which is the whole argument of that anchor
+    // written as a null: an 808 has an ACCENT SWITCH where a drummer has a
+    // hand, so everything it wants to say about weight is already in `kitVel`
+    // and nothing is left for a performance layer to add.
+    techno: null, acid: null, house: null, trap: null, electro: null,
     // ...and the sampled corners of the same floor, which are hands: an MPC
     // with the quantize off, a garage shuffle, breaks cut by an editor rather
     // than played (tight time, real level moves).
@@ -2131,12 +3110,33 @@
     blues:     { stress: 0.5,  phrase: 0.5,  touch: { t: 0.08,  v: 1.1 } },
     // rubato is the tango's signature — the line stretches and the band waits
     tango:     { stress: 0.4,  phrase: 0.75, touch: { t: 0.075, v: 0.9 } },
+    // the most PHRASE of anything in the table that has drums, and the loosest
+    // hand after funk: a bebop line is all shape, and keeping the metre is
+    // somebody else's job — that is what the rhythm section is for
+    jazz:      { stress: 0.3,  phrase: 0.7,  touch: { t: 0.07,  v: 1 } },
+    // skiffle is the amateur end of the table on purpose: teenagers playing as
+    // hard as they can on objects, so the metre is felt hard, the line has
+    // little arch, and both the time and the level move more than anywhere else
+    skiffle:   { stress: 0.55, phrase: 0.4,  touch: { t: 0.075, v: 1.1 } },
     // a piano played by a person is the case the whole layer was written for
     neoclassical: { stress: 0.3, phrase: 0.8, touch: { t: 0.06, v: 0.8 } },
+    // minimalism is players, not a machine, but it is the tightest players in
+    // the table: the metre is deliberately not felt (that IS the piece), the
+    // line has a process rather than an arch, and a phase that wanders is just
+    // two people out of time
+    minimalism: { stress: 0.12, phrase: 0.15, touch: { t: 0.012, v: 0.4 } },
     // drum machines with singers over them: the machine is the floor, the
     // performance is on top, so metre stays modest and the level moves
     jodeci:    { stress: 0.3,  phrase: 0.5,  touch: { t: 0.04,  v: 0.8 } },
     rnb:       { stress: 0.35, phrase: 0.55, touch: { t: 0.05,  v: 0.85 } },
+    // KRAFTWERK is not `null` like the five club machines, and the difference
+    // matters: this music was PLAYED — Flür hit metal with sticks, the tunes
+    // were fingered on keyboards — it just refuses to lean. So it gets the
+    // smallest hand in the table rather than no hand: four thousandths of a
+    // step and a quarter of a velocity unit. The metre is genuinely felt (the
+    // count is the point) and the phrase is nearly flat, because a Kraftwerk
+    // line does not arch, it recurs.
+    kraftwerk: { stress: 0.3,  phrase: 0.15, touch: { t: 0.004, v: 0.25 } },
     eurythmics:{ stress: 0.25, phrase: 0.35, touch: { t: 0.02,  v: 0.55 } },
     synthpop:  { stress: 0.25, phrase: 0.35, touch: { t: 0.02,  v: 0.5 } },
     // THE THREE FUNCTION GENRES THAT DISAGREE WITH THEIR FAMILY. A riff is

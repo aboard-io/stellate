@@ -136,7 +136,13 @@ console.log("roster — every shipped genre key still exists; labels are unique"
     "garage", "dnb", "disco", "funk", "motown", "rnb", "gospel", "reggae",
     "dub", "ska", "afrobeat", "bossa", "countrypop", "synthpop", "shoegaze",
     "citypop", "punk", "ambient", "techno", "solo", "vocal", "backing",
-    "riff", "pad"];
+    "riff", "pad",
+    // THE ANCESTORS (phase 2, 2026-08-16) — the eight the shopping order in
+    // GENEALOGY.md demanded by name. Listed here the day they landed, which is
+    // the point of this roster: a key becomes load-bearing the moment it can
+    // appear in a saved song, not once somebody remembers to write it down.
+    "jazz", "bodiddley", "chuckberry", "doowop", "skiffle", "minimalism",
+    "kraftwerk", "electro"];
   for (const k of SHIPPED) ok(GENRES[k], "shipped genre key vanished: " + k);
   const labels = GK.map(k => GENRES[k].label);
   ok(new Set(labels).size === labels.length,
@@ -3063,11 +3069,23 @@ console.log("the full kit — twelve lanes, four vectors, and what each operator
   {
     const base = play(BASE);
     // RIDE — the timekeeping hand moves, and it is one hand: the hats are gone
-    // and the ride has exactly the hits they had.
+    // and the ride carries their part. It carries the PHRASING, not every
+    // stroke. This used to assert stroke-for-stroke equality, and that is the
+    // law that made afrobeat's twelve-step hat into sixteen bars of solid
+    // cymbal: a ride is ONE plate that rings for seconds, and twelve strokes a
+    // bar into it is not time, it is fifteen overlapping copies of a wash the
+    // ear names "crash". So the two claims are now what a hand on metal can
+    // actually do (kernel.js moveTime) — it plays nowhere the hat did not, and
+    // it plays no faster than an eighth, because the plate has to speak.
     const ride = opEv("ride");
     ok(!lanesIn(ride).has("h") && lanesIn(ride).has("r"), "ride: the hats did not move");
-    ok(ride.filter(e => e.d === "r").length === base.filter(e => e.d === "h").length,
-       "ride: the ride is not playing what the hats played");
+    const rideAt = [...new Set(ride.filter(e => e.d === "r").map(e => at16(e.t, 16)))]
+      .sort((a, b) => a - b);
+    const hatAt = new Set(base.filter(e => e.d === "h").map(e => at16(e.t, 16)));
+    ok(rideAt.length && rideAt.every(i => hatAt.has(i)),
+       "ride: the ride is playing a stroke the hats never played");
+    ok(rideAt.every((i, q) => q === 0 || i - rideAt[q - 1] >= 2),
+       "ride: two ride strokes land closer than an eighth — the plate is still ringing");
     ok(ride.filter(e => e.d === "k").length === base.filter(e => e.d === "k").length,
        "ride: the kick moved too — only the timekeeping hand may");
     // TOM FILL — toms, in the last quarter of every bar, and the hand that was
@@ -4103,6 +4121,15 @@ console.log("dissonance census — what the notes sound like against each other"
     newwave: 0.07, synthpop: 0.05, boombap: 0.04, gospel: 0.03, rock: 0.03,
     simple: 0, fugue: 0, acid: 0, gregorian: 0, counterpoint: 0,
     trap: 0, dnb: 0, reggae: 0, dub: 0, techno: 0,
+    // THE ANCESTORS, measured the day they landed (NUKERNEL_CENSUS=1). Every
+    // one is under the 1.5 bar, so none of them needs an ALLOW entry — which
+    // is worth saying for the two that could have gone either way: chuck berry
+    // sounds a major third against a ♭7 twelve bars out of twelve and still
+    // reads 0.95 (a third of blues's 3.95) because the double stop is a fourth
+    // and fourths are not in the census's alphabet, and doo-wop's 0.85 is
+    // almost entirely bass-vs-riff, which is what `anchor: 2` already halved.
+    chuckberry: 0.95, doowop: 0.85, electro: 0.77, kraftwerk: 0.43,
+    minimalism: 0.29, jazz: 0.14, bodiddley: 0, skiffle: 0,
     // THE FUNCTION GENRES all measure zero, and the reason is the same one for
     // all five: a part carries no progression of its own and reads the same
     // pentatonic the rest of the table does, so standalone there is nothing for
@@ -4206,8 +4233,14 @@ console.log("dynamics — metrical stress, phrase arch, the hand, and the sectio
   // performance layer existed. A machine genre that starts breathing fails here
   // by name, which is the only way "absent is byte-identical" stays true rather
   // than remaining true by luck.
+  // ...and ELECTRO, the fifth machine, whose fingerprint was taken the day it
+  // landed rather than before the layer existed — there is no "before" for an
+  // anchor that arrived after it. The contract is the same one: an 808 says
+  // its weight with an accent switch (`kitVel`), so if this genre ever starts
+  // breathing it fails here by name.
   const MACHINE = { techno: "036036ec46edb986", acid: "c047f764a47233de",
-                    house: "2f1c41112ac01206", trap: "addcf7d93d0fdcfa" };
+                    house: "2f1c41112ac01206", trap: "addcf7d93d0fdcfa",
+                    electro: "1b4dccccfb127a5e" };
   for (const gk of Object.keys(MACHINE)) {
     const g = GENRES[gk], bars = Math.max(4, g.bars);
     ok(fp(allEvents(P, g, bars)) === MACHINE[gk],
@@ -6775,7 +6808,12 @@ console.log("the master harmonization engine — one tonality, every added voice
   const evsig = ev => JSON.stringify(ev.map(e =>
     [e.t, e.n, e.d, e.v, e.vel, e.acc, e.sld, e.dur, e.kind, e.layer || ""]));
 
-  // (a) byte-identity — REF measured pre-change at HEAD b1adc27, 2026-08-16
+  // (a) byte-identity — REF measured pre-change at HEAD b1adc27, 2026-08-16.
+  // Two rows have moved SINCE, and deliberately: steely and afrobeat are the
+  // only genres whose seeds 1-3 draw the `ride` operator, and the ride stopped
+  // carrying a sixteenth-note hat stroke for stroke (kernel.js moveTime — the
+  // crash-wash fix). A hash here is a tripwire on accidental drift, so an
+  // argued change to the drums re-measures it; it does not get weakened.
   const REF = { simple: "59e6bbccf152", fugue: "28bd4816aea5", acid: "0611a30234fe",
     newwave: "d479d03fc358", vaporwave: "6038a5ad3c29", blues: "b4d746d40cde",
     rock: "5b0638589dd6", gregorian: "e9e5506ebc03", bulgarian: "1c6e24bc4e58",
@@ -6783,16 +6821,24 @@ console.log("the master harmonization engine — one tonality, every added voice
     drone: "55b6a223f5c5", sludge: "5745aec1ef02", tango: "31ccb349fe82",
     deathmetal: "8e37cc6c23e7", eurythmics: "659d98a1aac1", isley: "5dda0c12a84c",
     toto: "858359aa7ab5", jodeci: "8075db9e55ed", beatles: "364e1f38e57c",
-    steely: "9e49dbb4933f", postrock: "89753782089f", boombap: "6f720e4e55c7",
+    steely: "e253dcb6e03c", postrock: "89753782089f", boombap: "6f720e4e55c7",
     trap: "71f4effe33d2", house: "01351b861ddc", garage: "08246e315cbc",
     dnb: "8ff495da1ee9", disco: "f8355f5e40ca", funk: "0fcf09bd9114",
     motown: "9b5e3f90e3c4", rnb: "46cf80b96895", gospel: "8acbcf41ec97",
     reggae: "30f63535c3b7", dub: "9488d28b22b6", ska: "2a968bb0154f",
-    afrobeat: "cce2c8f159ad", bossa: "a80142d750bc", countrypop: "900656abd54f",
+    afrobeat: "ee953899945c", bossa: "a80142d750bc", countrypop: "900656abd54f",
     synthpop: "2c1f8f3b879b", shoegaze: "229fa1b09670", citypop: "317fd2caf3c4",
     punk: "0be5aaaa6134", ambient: "066d2634daf1", techno: "c76899eec976",
     solo: "bd4d51b66ed6", vocal: "ea099fbc12d1", backing: "dc681b7608c8",
-    riff: "e5974f77ea07", pad: "284988fc92d1" };
+    riff: "e5974f77ea07", pad: "284988fc92d1",
+    // THE ANCESTORS — measured the day they landed, on this tree, with the
+    // ride fix above already in. Same contract as every row here: a hash is a
+    // tripwire, and the fifty rows above it did NOT move when these eight were
+    // spliced in, which is the proof that a new anchor is an addition and not
+    // an edit to the table's existing sound.
+    jazz: "60353ff94432", bodiddley: "6d65deba5f42", chuckberry: "69a8e26199e8",
+    doowop: "00dc69e9c6a8", skiffle: "672f68713330", minimalism: "9f06ff4c0613",
+    kraftwerk: "d67bd8e0ecb5", electro: "c9d21f5f0711" };
   for (const gk of GK) {
     if (!REF[gk]) { ok(false, gk + ": no pre-change reference hash — a new " +
       "genre needs its single-layer baseline measured and added to REF"); continue; }
