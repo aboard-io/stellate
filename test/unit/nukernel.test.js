@@ -1758,9 +1758,16 @@ console.log("progression — quality, inversion, half-bar chords, cadence, voice
   // for never reaches the parts that carry the harmony.
   {
     // bossa's bar 2 packs ii7–V7 into one bar; the fifths bass must sound the
-    // V's root (pc 7) somewhere in the dominant half or the turnaround — the
-    // feature the anchor exists to prove — never happened
-    const bpc = K.bass(P, GENRES.bossa, 4)
+    // V's root (pc 7) somewhere in the dominant half — the feature the anchor
+    // exists to prove. Read through plain(): this measures WHAT WAS WRITTEN,
+    // and bossa is a PLAYED anchor (stress .42, phrase .4, touch t=.06). The
+    // shipped anchor does voice the V root, dead on the dominant half's
+    // downbeat — and the hand pushes it 8 ms EARLY, to t=23.9918, so a window
+    // cut at the raw step boundary threw the very note it was looking for one
+    // hundredth of a beat over the edge. The bug was never in the bass walk
+    // (chordsOf is already read per step here) nor in the anchor's beats
+    // split; it was a gate asking a written question of a performed stream.
+    const bpc = K.bass(P, plain(GENRES.bossa), 4)
       .filter(e => e.t >= 24 && e.t < 32).map(e => ((e.n % 12) + 12) % 12);
     ok(bpc.includes(7), "bossa's half-bar V7 never reaches the bass: " + bpc.join(","));
     // ...and the LINE's root shift is per-chord: a ramp-free line over a
