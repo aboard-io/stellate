@@ -55,7 +55,7 @@
 // mixer.buildChannel / transport.scheduleBar), so the carrier is the same
 // mix — a fork of any of those walks is how it would drift out of tune.
 import { GENRES, BASSSYNTH, DTIMES } from "../ui/deps.js";
-import { SONG, SLOTS, loopOnly, bpm, MASTER, on, emit } from "../ui/state.js";
+import { SONG, SLOTS, loopOnly, bpm, MASTER, BUSES, on, emit } from "../ui/state.js";
 import { stackOf, kitOf, boxBars } from "../ui/derive.js";
 import { buildMasterChain, buildEchoBus, buildRoomBus, buildKitDesk, buildSendBus, makeVerb,
          masterVol, muteNow, unmuteRamp, DRYROOM } from "./graph.js";
@@ -150,7 +150,8 @@ window.__nuRenderNow = async (capSec, opts) => {
   try {
     const t0 = performance.now();
     const res = await withChunkSec((opts && opts.chunkSec) || 0,
-                                   () => renderSong(capSec || 0));
+                                   () => renderSong(capSec || 0),
+                                   (opts && opts.preBars) || 0);
     if (!res) return null;
     const ms = Math.round(performance.now() - t0);
     // …AND A FINGERPRINT OF THE TAPE ITSELF. A render budget gate that only
@@ -174,6 +175,13 @@ window.__nuRenderNow = async (capSec, opts) => {
              // the singer's own census of this render — an ADDED key, so every
              // existing reader is untouched (nukernel-bounce (D) reads it)
              sing: (typeof window.__nuSing === "function" ? window.__nuSing() : null),
+             // { tap: [t0, t1] } returns the raw samples of that span, both
+             // channels — the seam probes read the artifact, not a summary
+             tap: (opts && opts.tap)
+               ? [0, 1].map(ch => Array.from(res.buf.getChannelData(
+                     Math.min(ch, res.buf.numberOfChannels - 1))
+                   .slice(Math.floor(opts.tap[0] * SR), Math.floor(opts.tap[1] * SR))))
+               : null,
              rms, peak: +peak.toFixed(5) };
   } finally { rendering = false; }
 };
@@ -236,7 +244,7 @@ setQuietWhen(() => carrying && carrierFirst());
 // into the bytes, so leaving it out here would leave the pocket playing an
 // untreated tape of a song the ear just heard through a tape machine.
 const sig = () => JSON.stringify({ s: SONG, sl: SLOTS, bpm, f: FONT, lo: loopOnly,
-                                   m: MASTER });
+                                   m: MASTER, bu: BUSES });
 let adoptedSig = null, timer = null, rendering = false, dirty = false;
 // the short stage's duration budget, in seconds — WAV-FIRST's firstSegSec.
 // Two bars at the default tempo, which is NOT "big enough to loop as music"
@@ -391,6 +399,14 @@ let CHUNK_SEC = (() => {
   const q = /[?&]chunksec=(\d+(?:\.\d+)?)/.exec(typeof location !== "undefined" ? location.search : "");
   return q ? +q[1] : 6;
 })();
+// how many bars each window replays before its own first bar. One is the
+// design; overridable per render (opts.preBars) because the seam A/B needed
+// the depth as an instrument: measured on seed-7/1234 beatles heads, drift
+// vs the one-window control is NOT monotonic in depth (even depths landed the
+// walk on the 4-bar box grid and measured 0.0%, odd depths 16–20% at the
+// box-boundary bucket) — so the seam leak is walk-alignment state, not a
+// truncated tail, and a deeper default would buy cost without correctness.
+let PRE_BARS = 1;
 // ...AND IT IS OVERRIDABLE PER RENDER, for exactly one reason: the SEAM. A
 // window boundary is invisible in a single render — the tape is a
 // concatenation and looks continuous whatever fell down the crack — so the
@@ -398,10 +414,11 @@ let CHUNK_SEC = (() => {
 // the seams in different places and compare. `let` plus __nuRenderNow's
 // { chunkSec } is that A/B (test/browser/nukernel-bounce.test.js (D)); the
 // query flag above is unchanged and is still what a person reaches for.
-const withChunkSec = async (n, fn) => {
-  const was = CHUNK_SEC;
+const withChunkSec = async (n, fn, preBars) => {
+  const was = CHUNK_SEC, wasPre = PRE_BARS;
   if (n > 0) CHUNK_SEC = n;
-  try { return await fn(); } finally { CHUNK_SEC = was; }
+  if (preBars > 0) PRE_BARS = preBars;
+  try { return await fn(); } finally { CHUNK_SEC = was; PRE_BARS = wasPre; }
 };
 // how many windows render at once. Chromium gives each OfflineAudioContext its
 // own render thread; one core is left for the page, which is still running the
@@ -467,7 +484,9 @@ function cacheGet(key) {
 function winKey(TL, plan, ck, sd) {
   const sis = [];
   for (let i = ck.pre; i < ck.b; i++) if (!sis.includes(TL[i].si)) sis.push(TL[i].si);
-  return JSON.stringify([sd, FONT, MASTER,
+  // BUSES rides in the key beside MASTER for the same reason: the builders bake
+  // the rack trims into every window, so a knob move must miss the cache
+  return JSON.stringify([sd, FONT, MASTER, BUSES,
                          ck.b === TL.length, +plan.from[ck.pre].toFixed(6),
                          TL.slice(ck.pre, ck.b), sis.map(i => SONG[i])]);
 }
@@ -496,9 +515,9 @@ function planChunks(TL, sd, chunkSec) {
     len += bars[i];
     if (len >= chunkSec || i === TL.length - 1) { chunks.push({ a, b: i + 1 }); a = i + 1; len = 0; }
   }
-  // …and the pre-roll bar, which is simply the previous one (the first window
-  // has none, and needs none: nothing precedes silence)
-  for (const ck of chunks) ck.pre = Math.max(0, ck.a - 1);
+  // …and the pre-roll bars, which are simply the previous PRE_BARS (the first
+  // window has none, and needs none: nothing precedes silence)
+  for (const ck of chunks) ck.pre = Math.max(0, ck.a - PRE_BARS);
   return { chunks, t0, from, total: acc };
 }
 
@@ -1050,6 +1069,7 @@ on("box", changed);
 on("phrase", changed);
 on("transport", changed);
 on("master", changed);                             // baked into the bytes, so re-bake
+on("buses", changed);                              // the rack trims are too
 on("song", () => {
   // a whole new song: whatever is rendered is the WRONG music — invalidate
   // rather than carry a ghost (the "song" event also stops the transport)

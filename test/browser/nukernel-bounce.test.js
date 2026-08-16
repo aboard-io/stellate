@@ -175,11 +175,17 @@ const moved = (a, b) => a.reduce((n, v, i) =>
   else if (cold && warm) ok("the cached tape matches the fresh one");
 
   // ── (B) one box edited: the number a phone lives with ──
+  // A REAL edit through the real surface: open box `mid`'s RHYTHM cell popup
+  // and click a drumkit chip ("the row and the board" — the LED strip this
+  // used to click only mutated sec.focus, which was an accidental edit). The
+  // chip toggles sec.drumkit either way, which must invalidate exactly that
+  // box's windows.
   const mid = Math.max(0, Math.floor(boxes / 2));
-  await page.evaluate((m) => {
-    const b = document.querySelectorAll("#song .box")[m];
-    b.querySelector('.led[data-fam="drum"]').click();
-  }, mid);
+  await page.locator("#song .box").nth(mid).locator('.bcell[data-cell="rhythm"]').click();
+  await page.waitForSelector("#rowpop:not([hidden])", { timeout: 10000 });
+  await page.locator('.pchip[data-kind="drumkit"]').first().click();
+  await page.keyboard.press("Escape");
+  await page.waitForSelector("#rowpop", { state: "hidden" });
   await page.waitForTimeout(600);
   const inc = await page.evaluate(() => window.__nuRenderNow(0));
   if (!inc) { fail("the incremental render returned nothing"); }

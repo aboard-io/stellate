@@ -6,17 +6,15 @@
 //
 // Layer graph: ui view — imports state/audio; the play button is the page's
 // user gesture, which is why initAudio rides transport.startAt.
-import { GENRES, FONTS, compose, PRESETS, MASTER_FIELDS } from "./deps.js";
+import { GENRES, FONTS, compose, PRESETS } from "./deps.js";
 import { bpm, vol, setBpm, setVol, setLoopOnly, adoptSong, defaultSong,
          clearStore, loadErrorText, saveFile, loadFile, commit, on,
-         MASTER, setMaster, DEFAULT_BPM } from "./state.js";
+         DEFAULT_BPM } from "./state.js";
 import { buzz, pointers } from "./touch.js";
 import { playing, startAt, stop, ensureAssets } from "../audio/transport.js";
 import { initAudio } from "../audio/graph.js";
 import { setFont, fontDef, FONT } from "../audio/assets.js";
 import { status } from "./readout.js";
-import { resetScroll } from "./arrange.js";
-import { hintKey } from "./editor.js";
 
 const $ = id => document.getElementById(id);
 
@@ -44,11 +42,24 @@ $("vol").addEventListener("input", e => {
   $("volv").textContent = e.target.value;
   commit("transport");
 });
+// "song" re-syncs the TEMPO only: a song owns its bpm, but volume is the
+// device's (state.js VOLSTORE) and no incoming song may move the fader. The
+// vol glass is set once here from the restored store value — the HTML's
+// value="80" is only the pre-boot placeholder.
 function syncKnobs() {
   $("bpm").value = bpm; $("bpmv").textContent = String(bpm);
-  $("vol").value = vol; $("volv").textContent = String(vol);
 }
 on("song", syncKnobs);
+$("vol").value = vol; $("volv").textContent = String(vol);
+// TWO VIEWS, ONE VALUE: the board's MASTER strip drives the same sticky vol
+// store this fader does, so the glass follows every "transport" commit. No
+// loop — assigning .value fires no input event, and an in-place assignment of
+// the value the input already holds is a no-op paint.
+on("transport", () => {
+  if (+$("vol").value !== vol) {
+    $("vol").value = vol; $("volv").textContent = String(vol);
+  }
+});
 
 // HARDWARE FEEL for the two faders — the only continuous controls on the
 // machine (everything else is a detented list, the hw.css doctrine), so they
@@ -194,65 +205,10 @@ fader($("vol"), 80);
   });
 }
 
-/* ---------- the master bus ---------- */
-// THE OTHER END OF THE DESK. The MIX page is one row per sound in the selected
-// box; this is the one row everything lands on, and it is here rather than
-// there because it belongs to the SONG and not to any box — the same reason
-// the soundfont and the file keys are here.
-//
-// DERIVED FROM THE REGISTRY, entirely: one control per fields.js MASTER entry,
-// its options from that entry's own table and labels. There is no list of
-// globals in this file, so adding one is an entry in fields.js and an apply
-// site in audio/graph.js buildMasterChain — the FIELDS law, extended to the bus.
-//
-// A SELECT RATHER THAN A CHIP ROW, and that is the bank's idiom and not a
-// retreat from it: the two controls already in this bank (Soundfont, Songs) are
-// selects with a .glab legend over them, seven chip rows would be a wall in the
-// one place on the machine that is a list of settings rather than a performance
-// surface, and a select IS a detented list — the hw.css doctrine's own words.
-// The empty option is how a global goes back to absent, which is the only
-// spelling of "off" the loader and the graph recognize.
-{
-  const host = $("gmaster");
-  const sels = [];
-  for (const f of MASTER_FIELDS) {
-    const lab = document.createElement("label");
-    lab.className = "gctl";
-    const legend = document.createElement("span");
-    legend.className = "glab";
-    legend.textContent = f.label;
-    const sel = document.createElement("select");
-    sel.id = "m-" + f.key;
-    sel.append(Object.assign(document.createElement("option"),
-      { value: "", textContent: "—" }));
-    for (const k of Object.keys(f.table))
-      sel.append(Object.assign(document.createElement("option"),
-        { value: k, textContent: f.labels[k] }));
-    sel.addEventListener("change", e => {
-      // read-modify-WRITE through the store's own setter, which normalizes an
-      // all-empty spec back to null — so "everything off" and "never touched"
-      // are one state in the save, in the graph and on the glass
-      const next = { ...(MASTER || {}) };
-      if (e.target.value) next[f.key] = e.target.value; else delete next[f.key];
-      setMaster(next);
-      initAudio();                     // a select change is a user gesture
-      commit("master");
-      status(f.label + ": " + (e.target.value ? f.labels[e.target.value] : "off"));
-    });
-    lab.append(legend, sel);
-    host.append(lab);
-    sels.push([f, sel]);
-  }
-  // the glass follows the store, never the other way round: a loaded file, a
-  // preset, the composer and Reset all land here through the "song" event
-  const syncMaster = () => {
-    for (const [f, sel] of sels) sel.value = (MASTER && MASTER[f.key]) || "";
-  };
-  on("song", syncMaster);
-  on("master", syncMaster);
-  syncMaster();
-  hintKey("mhelp", "mhint");
-}
+/* (There is no master-bus row group here any more: the master controls are the
+   MIX page's rack MASTER row — ui/mixtbl.js builds them from the same fields.js
+   MASTER registry, ids #m-<key> kept — because the master is the last strip of
+   the one desk, and the desk lives on the board.) */
 
 /* ---------- desktop + reset ---------- */
 $("savefile").addEventListener("click", saveFile);
@@ -262,8 +218,7 @@ $("loadinput").addEventListener("change", e => {
   e.target.value = "";                       // so the same file can be picked twice
 });
 $("reset").addEventListener("click", () => {
-  clearStore();
+  clearStore();                        // the SONG key only — the device volume survives a reset
   adoptSong(defaultSong(), "reset");   // stop + dropChannels ride the "song" event
-  commit("transport");                 // the knobs went back to their defaults
-  resetScroll();
+  commit("transport");                 // tempo went back to its default; vol stays put
 });

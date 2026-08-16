@@ -688,12 +688,12 @@ async function deskUI(page) {
     return { stored: sec.parts, rev: sec.rev, spec: m.chanSpec(sec).parts,
              keys: m.partKeysOf(sec) };
   }));
-  // the palette must agree: one mix, two views of it. Its banks are built one
-  // TAB at a time, so the reverb chips exist only once EFFECTS is up — and
-  // clicking the tab is the path a person takes to them anyway.
-  await page.locator(".ptab", { hasText: /^effects$/ }).click();
-  out.paletteLit = await page.locator('.pchip[data-kind="rev"][data-value="drown"]')
-    .getAttribute("aria-pressed");
+  // the surface must agree with the store: one mix, two views of it. The
+  // palette's fx tab is gone ("the row and the board"), so the second view is
+  // the SECTION row's own rev cell — bright (.set) and reading "drown".
+  const revCell = page.locator('.mrow.msec .mval[data-field="rev"]');
+  out.paletteLit = String(/drown/.test((await revCell.textContent()) || "") &&
+                          (await revCell.getAttribute("class")).includes("set"));
   // and clearing the part's level again must leave NO trace — absent is the
   // only spelling of a default, which is what makes the mixer's
   // absent-is-today law reachable from the surface
@@ -757,14 +757,26 @@ async function budgetProbe(page, genre) {
     return { sections: stm.SONG.length, plain: pick(plain), chorused: pick(chorused) };
   });
 }
+// phrase 1 into box 1 when it is out. The .slot rail lives in the phrase
+// editor POPUP — reached through a PATTERN chip on the row ("the row and the
+// board") — and only when the toggle is actually needed (a fresh default
+// song ships it ON, so the popup usually never opens here).
+async function slotOn(page) {
+  const slot0 = page.locator(".slot").nth(0);
+  if ((await slot0.getAttribute("aria-pressed")) === "true") return;
+  await page.locator(".box").first().locator(".bch").first().click();
+  await page.waitForSelector("#edpop:not([hidden])", { timeout: 10000 });
+  await slot0.click();
+  await page.keyboard.press("Escape");
+  await page.waitForSelector("#edpop", { state: "hidden" });
+}
 // compose a genre, loop its verse, play briefly — enough for the transport to
 // compile a timeline and decide its register homes
 async function homePass(page, url, genre) {
   await page.goto(url, { waitUntil: "domcontentloaded" });
   await page.waitForSelector("#play", { timeout: 30000 });
   await page.waitForTimeout(1200);
-  const slot0 = page.locator(".slot").nth(0);
-  if ((await slot0.getAttribute("aria-pressed")) !== "true") await slot0.click();
+  await slotOn(page);
   await page.selectOption("#composeg", genre);
   await page.click("#compose");
   await page.waitForTimeout(400);
@@ -780,8 +792,7 @@ async function pass(page, url) {
   await page.goto(url, { waitUntil: "domcontentloaded" });
   await page.waitForSelector("#play", { timeout: 30000 });
   await page.waitForTimeout(1200);
-  const slot0 = page.locator(".slot").nth(0);
-  if ((await slot0.getAttribute("aria-pressed")) !== "true") await slot0.click();
+  await slotOn(page);
   await page.selectOption("#composeg", GENRE);
   await page.click("#compose");
   await page.waitForTimeout(400);
@@ -865,10 +876,11 @@ async function pass(page, url) {
   // surface is where the last three chips that "shipped" turned out to be
   // unreachable. One tab, one chip, then ask the STORE what it holds.
   const singChip = await (async () => {
-    await page.locator(".ptab", { hasText: "voice" }).first().click();
-    await page.waitForTimeout(200);
+    // the sing chips live in a row's VOICE cell popup ("the row and the board")
+    await page.locator(".box").first().locator('.bcell[data-cell="voice"]').click();
+    await page.waitForSelector("#rowpop:not([hidden])", { timeout: 10000 });
     const chip = page.locator('.pchip[data-kind="sing"][data-value="duet"]').first();
-    if (!(await chip.count())) return { err: "no sing chip on the voice tab" };
+    if (!(await chip.count())) return { err: "no sing chip in the VOICE popup" };
     await chip.click();
     await page.waitForTimeout(250);
     const on = await chip.evaluate(el => el.classList.contains("on"));
@@ -878,6 +890,8 @@ async function pass(page, url) {
     await page.waitForTimeout(250);
     const off = await page.evaluate(() => import("/nukernel/ui/state.js")
       .then(s => s.curSection().sing));
+    await page.keyboard.press("Escape");   // the popup's scrim would cover the page
+    await page.waitForSelector("#rowpop", { state: "hidden" });
     return { on, held, off };
   })();
   // the singer, on the same page and the same composed song. It is the only
@@ -1251,14 +1265,15 @@ async function pass(page, url) {
     if (ui.keys.length > 1 && !others.some(p => p.mute))
       fail(`a solo on ${ui.partKey} left ${JSON.stringify(others.map(p => p.key))} unmuted`);
     else ok(`the solo key reaches the other ${others.length} strip(s)`);
-    // the section row is the box's own field, and the flat chips still show it
+    // the section row is the box's own field, and the CELL shows what the
+    // store holds — the two-views claim, both views on the mix table now
     if (ui.rev !== "drown")
       fail(`the section row wrote sec.rev = ${JSON.stringify(ui.rev)} — it must write the ` +
-           `same box field the palette writes, or a saved song grows a second mix`);
+           `same box field every surface writes, or a saved song grows a second mix`);
     else if (ui.paletteLit !== "true")
-      fail(`the palette's own reverb chip reads aria-pressed=${ui.paletteLit} after the ` +
-           `section row set it — the two surfaces have forked`);
-    else ok("the section row IS the old flat chip: one field, both surfaces lit");
+      fail(`the section row's rev cell does not show the drown it wrote ` +
+           `(lit+labelled = ${ui.paletteLit}) — the surface and the store have forked`);
+    else ok("the section row IS the box field: the store holds drown and the cell says so");
     if (ui.emptied !== null)
       fail(`clearing every chip left ${JSON.stringify(ui.emptied)} behind — absent must be ` +
            `the only spelling of a default, or an untouched box builds sub-busses`);

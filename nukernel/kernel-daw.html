@@ -25,7 +25,7 @@
      Switching pages is ONE attribute write (data-page below); no view is ever
      rebuilt for it, so every module's elements stay alive and patched
      whichever page is showing. -->
-<div class="chassis" id="chassis" data-page="step">
+<div class="chassis" id="chassis" data-page="song">
 
   <!-- ZONE 1 · TRANSPORT — always on screen. Play, the composer as a
        hardware WRITE key (genre picker, the seed on its own little LCD, and
@@ -68,79 +68,15 @@
     </div>
   </header>
 
-  <!-- THE CONTEXT STRIP — between the transport and the deck, on EVERY page:
-       'BOX 3 · VERSE · City pop · 4 bars' (+ the phrase number on STEP). The
-       SOUND/MIX/STEP chips all write to the selected box, and on a phone that
-       box is off-screen the moment the page rail moves — this line is its name
-       tag. Tapping jumps to the SONG page, where the named box wears .sel.
-       (ui/ctxstrip.js patches it; LCD glass, one line, truncates.) -->
-  <button class="ctxstrip" id="ctxstrip" type="button">
-    <span class="ck" aria-hidden="true">edit</span>
-    <span class="ct" id="ctxtext">—</span>
-  </button>
-
-  <!-- ZONE 2 · THE DECK — one page at a time on a phone, all of them on a
-       desk. Every page is a TABLE in a recessed well with a silkscreened
-       header row (kernel-daw.css, "THE TABLE"): the pattern, the song, the
-       arrangement and each palette bank are one component. The palette
-       section serves THREE pages (sound / mix / move): ui/pages.js flips its
-       tab to match, and its own sub-tabs stay live. -->
+  <!-- ZONE 2 · THE DECK — one page at a time on a phone, both on a desk.
+       TWO pages ("the row and the board", 2026-08-15): SONG and MIX. Every
+       per-box control is a POPUP off the song row's cells (ui/songrow.js +
+       ui/palette.js mountBanks), the phrase editor is a POPUP (ui/editor.js
+       builds its whole dialog, ids intact) opened from a row's PATTERN
+       chips, and the tracker pages (STEP's table, MOVE's pattern view) are
+       gone entirely. There is no context strip either: a popup opens ON the
+       row it edits, so nothing edits a box from a page the box is not on. -->
   <main class="deck">
-
-    <section class="page pg-step" id="page-step" aria-label="step editor">
-      <div class="ed">
-        <!-- ONE ALIGNED ROW of keys. The old header set four keys on
-             align-items:baseline next to a three-line paragraph, which is the
-             "hanging buttons" a phone showed: CLEAR wrapped onto its own line.
-             The paragraph now lives behind the (?) key, the keys are
-             icon+word (icon-only under 560px), and there is no ± toggle —
-             tapping a value cell opens its fader (ui/popfader.js), so a tap
-             has nothing left to decide. -->
-        <div class="edhead">
-          <h2>Editing <span id="edslot">phrase 1</span></h2>
-          <button class="btn hint" id="edhelp" aria-expanded="false"
-            aria-controls="edhint" title="how to edit">?</button>
-          <!-- the tracker's column latch: inc/stk are the two columns most
-               phrases never touch, so under 900px they sit behind this key
-               instead of squeezing every row nine-wide. Hidden ≥900px — the
-               desk has room for all eight vectors. ui/editor.js wires it. -->
-          <button class="btn ramptog" id="ramptog" aria-pressed="false"
-            title="show the inc / stk ramp columns">Ramp</button>
-          <span class="spacer"></span>
-          <button class="btn ik ik-seed" id="seed" title="write the starter phrase">
-            <span class="k" aria-hidden="true"></span><span class="t">Seed</span></button>
-          <button class="btn ik ik-rnd" id="rnd" title="roll a random phrase">
-            <span class="k" aria-hidden="true"></span><span class="t">Random</span></button>
-          <button class="btn ik ik-clear" id="clear" title="empty this phrase">
-            <span class="k" aria-hidden="true"></span><span class="t">Clear</span></button>
-        </div>
-        <p class="edhint" id="edhint" hidden>Tap a value cell for its fader, or
-           drag up and down on it to scrub — sideways (or a second finger) for
-           fine. Tap a gate/acc/sld key to flip it. <b>vel</b> is level;
-           <b>acc</b> is the 303 accent. The pattern reads top to bottom like a
-           tracker — every numbered row is a 16th, the vectors are the columns,
-           and under 900px RAMP brings out the inc/stk columns. Phrases below: tap one to edit it and switch
-           it on or off in the selected box; [+] adds a phrase, [−] removes the
-           last one.</p>
-        <!-- ONE TABLE AT EVERY WIDTH: sixteen numbered rows, one per 16th,
-             with the eight vectors as columns. ui/editor.js builds it in that
-             order once; kernel-daw.css only decides how much room the columns
-             and rows get. There is no second layout and no transpose. -->
-        <div class="steps tbl"><div class="stepgrid" id="stepgrid"></div></div>
-        <!-- the how-to sentence lives behind (?) now — the .btn.hint /
-             .edhint pattern the editor head established, same spot (right
-             after the h2), so the freed line goes to the rail itself -->
-        <div class="edhead phrases-head">
-          <h2>Phrases</h2>
-          <button class="btn hint" id="phrhelp" aria-expanded="false"
-            aria-controls="phrhint" title="how the phrase bank works">?</button>
-        </div>
-        <p class="edhint phrases-head" id="phrhint" hidden>Click one to edit it
-           and switch it on or off in the selected box. [+] adds a phrase (up
-           to 16); [−] removes the last one when no box plays it.</p>
-        <div class="slots tbl" id="slots"></div>
-      </div>
-    </section>
 
     <section class="page pg-song" id="page-song" aria-label="song">
       <div class="ed songwrap">
@@ -157,19 +93,17 @@
              the pattern and the arrangement wear. -->
         <div class="song tbl" id="song"></div>
         <!-- THE GLOBAL BANK — everything that outlives a box: the soundfont,
-             the shipped songs, the session as a file, and the MASTER BUS. It
-             lives on the SONG page (they are song operations, not performance
-             controls) and on a desk it is simply visible with everything else.
-             A real silkscreened bank: header, a legend over every control — the
-             old strip was two bare pickers whose labels a phone hid, which made
-             the soundfont a mystery knob. ids #font / #preset / #gmaster and
-             the #m-<key> selects are gate-read; do not rename.
+             the shipped songs, the session as a file. It lives on the SONG
+             page (they are song operations, not performance controls) and on a
+             desk it is simply visible with everything else. A real
+             silkscreened bank: header, a legend over every control — the old
+             strip was two bare pickers whose labels a phone hid, which made
+             the soundfont a mystery knob. ids #font / #preset are gate-read.
 
-             TWO ROW GROUPS, one bank. The first is the session itself; the
-             second is the master bus — the other end of the desk from the MIX
-             page's part strips, and a session control rather than a box control
-             because there is exactly one of it for the whole song. Same idiom,
-             same legends, one more ruled row group. -->
+             The MASTER BUS row group is gone from here ("the SSL board",
+             2026-08-16): the master controls are the rack's MASTER knob row on
+             the MIX page now — one desk, every bus on it — with the #m-<key>
+             ids kept alive on the knobs (ui/mixtbl.js builds them). -->
         <div class="gbank tbl" aria-label="session">
           <div class="thd">Session</div>
           <div class="gitems">
@@ -189,79 +123,48 @@
               </span>
             </div>
           </div>
-          <!-- the second row group. The row title is a sub-header inside the
-               same well, and ui/chrome.js fills #gmaster from the fields.js
-               MASTER registry — there is no hand-written control list here, for
-               the reason there is none anywhere else: a table of labels beside
-               a table of values is the drift fields.js exists to end. -->
-          <div class="gsub">Master bus
-            <button class="btn hint" id="mhelp" aria-expanded="false"
-              aria-controls="mhint" title="what the master bus does">?</button>
-          </div>
-          <p class="edhint ghint" id="mhint" hidden>The chain the whole song
-             lands on, after every box and every part strip. <b>Drive</b> is
-             grit on the sum; <b>glue</b> is the character of the bus compressor
-             that is always there; <b>tape</b> is a transport that drifts and a
-             head that saturates; <b>space</b> bleeds a little of the dry mix
-             into one shared room, which is what makes it different from a
-             section's reverb send; <b>width</b> trims the sides; <b>tilt</b>
-             rocks the spectrum about its middle; <b>ceiling</b> is how hard the
-             end of the chain works. Every one is off until you set it, they
-             save with the song, and the background carrier is rendered through
-             the same chain — so a song sounds the way you left it wherever it
-             is played.</p>
-          <div class="gitems gmaster" id="gmaster"></div>
         </div>
       </div>
     </section>
 
-    <section class="page pg-palette" id="page-palette" aria-label="sound, mix and transitions">
-      <div class="ed">
-        <div class="palette" id="palette"></div>
-      </div>
-    </section>
-
-    <!-- THE MIX PAGE — a TABLE OF SOUNDS: one row per part the selected box
-         actually sounds (lead, riff, pad, bass, drums…), the mixer strip as
-         columns, and the SECTION row last, under a heavier rule, because
-         every part bus feeds it (audio/mixer.js buildChannel). That last row
-         is the box's own fx/rev/echo/lvl/pan — the very fields the palette's
-         EFFECTS tab writes — so the flat chips and this table are two views
-         of one mix and a saved song opens with all of it on the section row.
-         ui/mixtbl.js builds it. -->
+    <!-- THE MIX PAGE — the BOARD over the RACK ("the SSL board", 2026-08-16).
+         The board is vertical channel strips, one per part the selected box
+         sounds (the same roster audio/mixer.js builds channels from), then the
+         SECTION strip under a heavier rule (every part bus feeds it), then the
+         shared-bus strips (reverb, echo, drum room — graph.js's own roster)
+         and the MASTER strip with its meter. Each channel strip carries its
+         label block, its value keys (fx/rev/echo/lvl/pan — the same chips,
+         the same saved fields the old table wrote), M/S, and a long-throw
+         AUTOMATED fader: the cap follows the level actually driving the
+         channel and a drag stores a dB OFFSET on top of it (fields.js
+         `fader`). Below the board, the EFFECTS RACK: one knob row per shared
+         bus plus the MASTER row, moved here off the SONG page (ids #m-<key>
+         kept). ui/mixtbl.js builds both wells. -->
     <section class="page pg-mix" id="page-mix" aria-label="mix">
       <div class="ed">
         <div class="edhead">
           <h2>Mix</h2>
           <button class="btn hint" id="mixhelp" aria-expanded="false"
-            aria-controls="mixhint" title="how the mix table works">?</button>
+            aria-controls="mixhint" title="how the board works">?</button>
         </div>
-        <p class="edhint" id="mixhint" hidden>One row per sound the selected box
-           makes, read from the same track list the audio builds its channels
-           from. Tap a cell — effects, reverb, echo, level, place — for that
-           sound's chips; <b>M</b> mutes it and <b>S</b> solos it (a solo
-           anywhere in the box silences everything not soloed). A dim value is
-           the default answering; a bright one is yours. The last row, under the
-           rule, is the <b>section</b>: the treatment on the whole box, which
-           every part above it feeds into — it is the same chain the effects
-           page has always shown, so nothing you set there has moved.</p>
-        <div class="mixtbl tbl" id="mixtbl"></div>
+        <p class="edhint" id="mixhint" hidden>A mixing board: one strip per
+           sound the selected box makes, read from the same track list the
+           audio builds its channels from. Tap a strip's value keys — effects,
+           reverb, echo, level, place — for that sound's chips; <b>M</b> mutes
+           it and <b>S</b> solos it (a solo anywhere in the box silences
+           everything not soloed). The <b>fader is automated</b>: while the box
+           plays, the cap shows the level actually driving that channel, and
+           dragging it stores an offset that rides on top — the automation
+           keeps moving under your trim, shown in dB under the slot. The
+           <b>section</b> strip, under the rule, is the whole box, which every
+           part feeds — it also chooses which room the reverb is and the
+           echo's subdivision; the bus strips after it are the page's shared reverb,
+           echo and drum room, and the <b>master</b> strip meters the sum. The
+           rack below is one knob row per bus plus the master-bus row — every
+           knob detented, absent meaning the graph exactly as built.</p>
+        <div class="mixtbl board tbl" id="mixtbl"></div>
+        <div class="rack tbl" id="rack"></div>
       </div>
-    </section>
-
-    <section class="page pg-move" id="page-move" aria-label="arrangement">
-      <!-- THE PATTERN VIEW of the selected box, as a tracker: time runs down
-           (one row per 16th, ruled every bar), the voices run across as
-           columns, and the playhead is the row that lights. ui/arrange.js
-           builds it; the fixed-height .dawscroll is what stops a changing
-           channel count from resizing the page under everything below. -->
-      <div class="dawscroll tbl glass" id="dawscroll">
-        <div class="tgrid" id="grid"></div>
-      </div>
-      <details>
-        <summary>What the selected box asks for</summary>
-        <pre id="src"></pre>
-      </details>
     </section>
 
   </main>
@@ -274,19 +177,16 @@
   <!-- ZONE 3 · PAGE RAIL — hardware mode keys, phone only. Lowercase in the
        markup (values, not silkscreen); the CSS uppercases the legends. Each
        key wears a small silkscreen icon above its word (.pi, an SVG-mask
-       painted with currentColor — self-contained, no glyph-coverage lottery),
-       so the rail reads at a glance the way a mode row on a groovebox does.
+       painted with currentColor — self-contained, no glyph-coverage lottery).
 
-       THREE KEYS. SOUND and MIX are gone from the rail because they were
-       destinations for editing the SELECTED box from a page the box was not
-       on; tapping a song row opens that box's own sheet, which carries the
-       palette (its six tabs intact) and the mix table behind a two-key surface
-       switch. Nothing became unreachable — see ui/pages.js for the whole
-       argument and where each surface went. -->
+       TWO KEYS: SONG and MIX. STEP and MOVE went with the tracker ("the row
+       and the board") — the phrase editor is a popup off a row's PATTERN
+       cells, and the arrangement's playhead question is answered by the song
+       row's own fill bar and the position LCD. Nothing became unreachable —
+       ui/pages.js carries the argument, ui/palette.js the bank inventory. -->
   <nav class="pagerail" role="tablist" aria-label="pages">
-    <button class="pkey" role="tab" data-page="song" aria-controls="page-song" aria-selected="false"><span class="pi" aria-hidden="true"></span>song</button>
-    <button class="pkey" role="tab" data-page="step" aria-controls="page-step" aria-selected="true"><span class="pi" aria-hidden="true"></span>step</button>
-    <button class="pkey" role="tab" data-page="move" aria-controls="page-move" aria-selected="false"><span class="pi" aria-hidden="true"></span>move</button>
+    <button class="pkey" role="tab" data-page="song" aria-controls="page-song" aria-selected="true"><span class="pi" aria-hidden="true"></span>song</button>
+    <button class="pkey" role="tab" data-page="mix" aria-controls="page-mix" aria-selected="false"><span class="pi" aria-hidden="true"></span>mix</button>
   </nav>
 
 </div>

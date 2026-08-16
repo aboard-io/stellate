@@ -44,7 +44,7 @@
 //       a brickwall whose job is flattening the level difference a treatment
 //       makes. E2 also holds the two budgets the master could quietly break:
 //       `space` must cost no third convolver, and clearing every global must
-//       restore the exact six-node chain the page built before they existed.
+//       restore the exact seven-node default chain (safety net included).
 "use strict";
 const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
 const path = require("path");
@@ -153,24 +153,45 @@ function taps() {
   await page.goto(`http://localhost:${PORT}/nukernel/kernel-daw.html`,
     { waitUntil: "networkidle" });
 
-  // PRESS A ROW WHERE THE ROW IS, not wherever its centre happens to be.
-  // A song section is one compact line of cells now (2026-08-15), and some of
-  // those cells are controls that stop the click: the phrase chips, and the
-  // + / pin / ✕ keys. Playwright presses an element's geometric CENTRE, so
-  // `.box` on its own can land on a chip — which selects that phrase and goes
-  // to the step page, a real feature doing exactly what it should, and not
-  // what this gate is asking for. The GENRE cell is the row's name, is never a
-  // control at any width, and the click bubbles to the row from there. Same
-  // gesture, same handler, a spot that cannot become a button.
+  // THE CELL IS THE DOOR ("the row and the board", 2026-08-15): a song row is
+  // a rank of named cells and each cell opens ITS OWN popup in #rowpop. The
+  // helpers below take the path a finger takes — tap the cell, work in the
+  // popup, Esc out. `row(n)` stays the GENRE cell: clicking it opens the
+  // GENRE popup (the genre banks live there now) and dblclicking it still
+  // loops the row, so every old `row(n)` gesture keeps its meaning.
   const row = (n) => page.locator(".box").nth(n).locator(".bgenre");
+  const cellOf = (n, k) => page.locator(".box").nth(n).locator(`.bcell[data-cell="${k}"]`);
+  const openCell = async (n, k) => {
+    await cellOf(n, k).click();
+    await page.waitForSelector("#rowpop:not([hidden])", { timeout: 10000 });
+  };
+  const closeCell = async () => {
+    await page.keyboard.press("Escape");
+    await page.waitForSelector("#rowpop", { state: "hidden" });
+  };
+
+  // THE PHRASE EDITOR IS A POPUP: #stepgrid / .slot / #seed live inside
+  // #edpop, reached the way a finger reaches them — a PATTERN chip on the
+  // row (the default song ships box 1 with phrase 1 on, so the chip exists).
+  // Esc closes it; the deck behind is untouched.
+  const openEditor = async () => {
+    await page.locator(".box").first().locator(".bch").first().click();
+    await page.waitForSelector("#edpop:not([hidden])", { timeout: 10000 });
+  };
+  const closeEditor = async () => {
+    await page.keyboard.press("Escape");
+    await page.waitForSelector("#edpop", { state: "hidden" });
+  };
 
   // one phrase, in the one box, for every genre in turn. The default song
   // ships phrase 1 already switched ON in box 1 now (the fresh page must
   // sound), and a .slot click TOGGLES — so only click it in if it is out,
   // the same guard the survival gate's boot() carries.
+  await openEditor();
   const slot0 = page.locator(".slot").nth(0);
   if ((await slot0.getAttribute("aria-pressed")) !== "true") await slot0.click();
   await page.click("#seed");
+  await closeEditor();
 
   // SWITCH WHILE IT PLAYS for all but the first: assets used to be fetched only
   // by the transport start, so a genre chosen mid-play had no instrument and no
@@ -179,8 +200,11 @@ function taps() {
   const seen = { rms: {}, worst: null };
   let started = false, prev = null;
   for (const g of GENRES) {
-    // genres STACK, so switching means taking the previous one off first —
-    // clicking six in a row would otherwise build one six-deep box
+    // the genre chips live in box 1's GENRE popup now — open it, click, Esc
+    // (the popup's scrim would otherwise sit over #play). Genres STACK, so
+    // switching means taking the previous one off after the new one lands —
+    // clicking six in a row would otherwise build one six-deep box.
+    await openCell(0, "genre");
     await page.locator(".pchip", { hasText: new RegExp("^" + g + "$") }).click();
     // SETTLE PAST THE PREDECESSOR, not a stopwatch. A genre switch lands on
     // the next bar line and cancels nothing already scheduled — at the page's
@@ -195,6 +219,7 @@ function taps() {
       const prevBarMs = (16 / RATE_OF[prev]) * (60 / 126 / 4) * 1000;
       settle = Math.max(3500, prevBarMs + 150 + 3200) + 3500;
     }
+    await closeCell();
     prev = g;
     if (!started) { await page.click("#play"); started = true; }
     await page.waitForTimeout(settle);               // predecessor gone + decode + bars
@@ -251,14 +276,16 @@ function taps() {
     const box = page.locator(".box").first();
     // read the ARIA LABEL, not a cell: "box 1, Simple, 4 bars" is the
     // machine-readable truth about length and already load-bearing API
+    // The steppers live in their own cells' popups now: bars in BARS#, nudge
+    // in TIMING (a nudge is a when, not a how-long).
     const before = await box.getAttribute("aria-label");
-    await row(0).click();                                // the row's option sheet
+    await openCell(0, "bars");
     const pop = page.locator("#rowpop");
-    if (!(await pop.isVisible())) fail("clicking a song row did not open its option sheet");
-    else ok("a row click opens the row's option sheet");
+    if (!(await pop.isVisible())) fail("clicking the bars cell did not open its popup");
+    else ok("the BARS cell opens its popup");
     const plus = pop.locator('.rpstep', { hasText: /bars/ })
                     .locator('button[aria-label="one bar more"]');
-    if (!(await plus.count())) fail("the row sheet has no bars stepper — nothing trims the length");
+    if (!(await plus.count())) fail("the bars popup has no stepper — nothing trims the length");
     else {
       for (let i = 0; i < 4; i++) await plus.click();
       const after = await box.getAttribute("aria-label");
@@ -267,14 +294,16 @@ function taps() {
         fail(`the bars stepper did not lengthen the box (${before} -> ${after})`);
       else ok(`bars stepper: ${before} -> ${after}`);
     }
-    // ...and nudge, the other edge, is reachable from the same sheet
+    await closeCell();
+    // ...and nudge, the other edge, in the TIMING cell's popup
+    await openCell(0, "timing");
     const nud = pop.locator('.rpstep', { hasText: /nudge/ })
                    .locator('button[aria-label="one bar of nudge more"]');
-    if (!(await nud.count())) fail("the row sheet has no nudge stepper");
-    else ok("both edge controls (bars, nudge) are keys in the row sheet");
+    if (!(await nud.count())) fail("the timing popup has no nudge stepper");
+    else ok("both edge controls (bars, nudge) are steppers in their cells' popups");
     await pop.locator(".rpx").click();
-    if (await pop.isVisible()) fail("the row sheet's ✕ did not close it");
-    else ok("the row sheet closes on ✕");
+    if (await pop.isVisible()) fail("the popup's ✕ did not close it");
+    else ok("the popup closes on ✕");
   }
 
   // (E) THE MIXER IS REAL. A section carries an insert chain, two sends and a
@@ -284,7 +313,16 @@ function taps() {
   // the whole failure mode this project keeps rediscovering.
   {
     const chip = (t) => page.locator(".pchip", { hasText: new RegExp("^" + t + "$") }).first();
-    const tab = (t) => page.locator(".ptab", { hasText: new RegExp("^" + t + "$") }).click();
+    // THE BOX'S OWN MIX FIELDS live on the MIX page's SECTION row now (the
+    // palette's fx tab went with pg-palette): tap the section row's cell,
+    // click the chip in its popover. A one-of cell closes on the choice; the
+    // effects cell stays open and Esc dismisses it.
+    const secRow = page.locator(".mrow.msec");
+    const mchip = (t) => page.locator(".mchip", { hasText: new RegExp("^" + t + "$") }).first();
+    const secCell = async (f) => {
+      await secRow.locator(`.mval[data-field="${f}"]`).click();
+      await page.waitForSelector("#mixpop:not([hidden])", { timeout: 10000 });
+    };
     // average the spectrum over a few seconds of real playback
     const hf = async (secs) => {
       let s = 0, n = 0;
@@ -300,13 +338,16 @@ function taps() {
     // different parts of the song and calls the difference an effect. Acid is
     // four bars at rate 1, and a double-click loops that box alone, so both
     // measurements below cover the same music.
-    await tab("sound");
+    await openCell(0, "genre");
     await chip("Acid house").click();
     await chip("Sludge").click();                        // take the previous one off
+    await closeCell();
     await row(0).dblclick();                             // loops it AND starts it
-    await tab("effects");
-    for (const f of ["chorus", "tape echo"]) await chip(f).click();
-    await chip("drown").click();                         // the reverb send
+    await secCell("fx");                                 // the chain stays open
+    for (const f of ["chorus", "tape echo"]) await mchip(f).click();
+    await page.keyboard.press("Escape");
+    await secCell("rev");
+    await mchip("drown").click();                        // the reverb send; one-of closes
 
     // WAIT FOR THE BAR, not for a stopwatch. A mix change lands on the next bar
     // line — deliberately, because rebuilding a channel under a sounding note is
@@ -346,13 +387,15 @@ function taps() {
     // a level-blind RMS floor and a level-flattening master limiter — the
     // composed arc's "last chorus outweighs the first" rides this gain.
     {
-      await chip("forward").click();                   // LEVELS.fwd = 1.35
+      await secCell("lvl");
+      await mchip("forward").click();                  // LEVELS.fwd = 1.35; one-of closes
       const lm = await waitMix(m => m.channels.some(x => Math.abs(x.level - 1.35) < 1e-3), 20000);
       if (!lm || !lm.channels.some(x => Math.abs(x.level - 1.35) < 1e-3))
         fail(`the "forward" level chip never reached a gain node ` +
              `(levels: ${lm && lm.channels.map(x => x.level).join(", ")})`);
       else ok("the level chip is a real gain: a channel's lvl.gain.value reads 1.35");
-      await chip("forward").click();                   // back off for the spectrum read
+      await secCell("lvl");
+      await mchip("forward").click();                  // back off for the spectrum read
     }
 
     // ...AND IT IS AUDIBLE — measured as spectral SHAPE, not the above-4kHz
@@ -383,7 +426,9 @@ function taps() {
       return num / Math.sqrt(da * db);
     };
     const clean = await spec(8);
-    await chip("crunch").click();
+    await secCell("fx");
+    await mchip("crunch").click();
+    await page.keyboard.press("Escape");
     await waitMix(m => m.channels.some(x => x.fx.length === 3), 20000);
     const dirty = await spec(8);
 
@@ -401,24 +446,41 @@ function taps() {
     // must still be sounding on the other side of it.
     let mfail = null, mcorr = null, mrep = null, mfull = null;
     {
-      await chip("crunch").click();                    // back to the two-insert mix
+      await secCell("fx");
+      await mchip("crunch").click();                   // back to the two-insert mix
+      await page.keyboard.press("Escape");
       await waitMix(m => m.channels.some(x => x.fx.length === 2), 20000);
       const before = await spec(6);
-      // set every global through the REAL controls, the way a finger would
+      // set every global through the REAL controls, the way a finger would.
+      // The masters are the MIX page's rack KNOBS now (ui/mixtbl.js buildKnob,
+      // ids #m-<key> kept): role=slider, Home is the empty detent, ArrowRight
+      // steps, data-value mirrors the detent — so a gate drives them blind.
+      const setKnob = async (id, want) => {
+        const k = page.locator("#" + id);
+        await k.focus();
+        await page.keyboard.press("Home");
+        for (let i = 0; i < 12; i++) {
+          if ((await k.getAttribute("data-value")) === (want || "")) return;
+          await page.keyboard.press("ArrowRight");
+        }
+        if ((await k.getAttribute("data-value")) !== (want || ""))
+          fail(`the rack knob #${id} never reached "${want}" by keyboard`);
+      };
       for (const [id, v] of [["m-drive", "dirt"], ["m-tape", "worn"],
                              ["m-space", "hall"], ["m-tilt", "dark"],
                              ["m-width", "huge"], ["m-glue", "pump"],
                              ["m-ceiling", "loud"]])
-        await page.selectOption("#" + id, v);
+        await setKnob(id, v);
       await page.waitForTimeout(1200);                 // past the chain crossfade
       mfull = await page.evaluate(() => window.__nuMix());
       mrep = mfull.master;
       const after = await spec(6);
       mcorr = corr(before, after);
-      // …and turn them off again, so nothing below inherits a treated master
+      // …and turn them off again (Home = the empty detent, the one spelling of
+      // absent), so nothing below inherits a treated master
       for (const id of ["m-drive", "m-tape", "m-space", "m-tilt", "m-width",
                         "m-glue", "m-ceiling"])
-        await page.selectOption("#" + id, "");
+        await setKnob(id, "");
       await page.waitForTimeout(800);
       mfail = await page.evaluate(() => window.__nuMix().master);
     }
@@ -464,19 +526,21 @@ function taps() {
                 `two passes of the same sound) — the chain is built but not in ` +
                 `the signal path`);
       // ABSENT IS TODAY, from outside: clearing every select must put the chain
-      // back to the six nodes and the exact numbers graph.js built before the
-      // globals existed. This is the check that a saved song from before the
-      // master bus still sounds like itself.
+      // back to the SEVEN default nodes (input, busComp, makeup, limiter, lp,
+      // safety, out — the safety net is unconditional since b1adc27; this line
+      // said 6 for one commit and failed on the truth) and the shipped default
+      // numbers — glue -22/2.2 into the RESTAGED x1.4 makeup (2026-08-16 gain
+      // staging; fields.js GLUES carries the measurement), the brickwall at -1.5.
       if (!mfail) fail("__nuMix lost its `master` object after the globals were cleared");
-      else if (mfail.stages.length || mfail.nodes !== 6 ||
+      else if (mfail.stages.length || mfail.nodes !== 7 ||
                mfail.glue.threshold !== -22 || mfail.glue.ratio !== 2.2 ||
-               mfail.glue.makeup !== 2.2 || mfail.ceiling.threshold !== -1.5 ||
+               mfail.glue.makeup !== 1.4 || mfail.ceiling.threshold !== -1.5 ||
                mfail.ceiling.push !== 1 || mfail.ceiling.clip !== 0)
         fail(`clearing every global did not restore the chain the page has always ` +
              `built (stages [${mfail.stages}], ${mfail.nodes} nodes, ` +
              `${JSON.stringify(mfail.glue)} / ${JSON.stringify(mfail.ceiling)}) — ` +
              `absent must be today, or every song saved before the globals changes sound`);
-      else ok("clearing every global restores the six-node chain at live.js's numbers");
+      else ok("clearing every global restores the seven-node chain at the shipped default numbers");
     }
     console.log(`  spectral shape corr   : clean vs crunch ${r.toFixed(4)} ` +
                 `(same-sound drift measures ~0.995, any real treatment ~0.94)`);
@@ -498,6 +562,13 @@ function taps() {
     // okBox, and a preset written before any of them exists is the exact input
     // that a too-strict validator drops on the floor — silently, since the whole
     // point of that path is that it refuses rather than half-loads.
+    // VOLUME IS A DEVICE SETTING (2026-08-16): set the fader, then walk BOTH
+    // adopt doors below (a shipped preset, then the composer) — the fader must
+    // not move, because adoptSong no longer reads `vol` off an incoming song.
+    await page.evaluate(() => {
+      const v = document.getElementById("vol");
+      v.value = "37"; v.dispatchEvent(new Event("input", { bubbles: true }));
+    });
     const first = await page.locator("#preset option").nth(1).getAttribute("value");
     await page.selectOption("#preset", first);
     await page.waitForTimeout(300);
@@ -518,6 +589,25 @@ function taps() {
     else if (!/verse/.test(roles.join(" ")) || !/chorus/.test(roles.join(" ")))
       fail(`the composed arrangement has no verse or chorus: ${roles.join(" ")}`);
     else ok(`composed ${roles.length} labelled sections: ${roles.join(" → ")}`);
+
+    // …and the fader stayed where the finger left it, on the glass AND in the
+    // store the graph reads — through a preset load and a composed song
+    const stick = await page.evaluate(async () => {
+      const stm = await import("/nukernel/ui/state.js");
+      return { glass: document.getElementById("vol").value, store: stm.vol,
+               saved: localStorage.getItem("nukernel.vol.v1") };
+    });
+    if (stick.glass !== "37" || stick.store !== 37 || stick.saved !== "37")
+      fail(`volume is not a device setting: after a preset and a composed song ` +
+           `the fader reads ${stick.glass}, state ${stick.store}, ` +
+           `localStorage ${stick.saved} (all should be 37)`);
+    else ok("volume is sticky: preset + composer left the fader at 37 (glass, state, store)");
+    // back to the default through the fader (its one writer), so the RMS
+    // reads below measure the staging and not this check's quiet setting
+    await page.evaluate(() => {
+      const v = document.getElementById("vol");
+      v.value = "80"; v.dispatchEvent(new Event("input", { bubbles: true }));
+    });
 
     // PAST THE INTRO. A composed song opens on a half-length intro that fades in
     // at a reduced level — which is the arrangement working — so a short sample
@@ -545,31 +635,32 @@ function taps() {
   {
     const roleAt = () => page.locator(".box .role").allTextContents();
     const before = await roleAt();
-    // THE MOVE KEYS MOVED (2026-08-15, the short-row pass). They used to sit on
-    // every row for ever, two of the four keys in the tools column, which is
-    // most of what made a section 109px tall. They are in the ROW'S OWN SHEET
-    // now — open the row, press ↓ — and the same reorder is also on ALT+ARROW
-    // over a focused row. The CLAIM here is unchanged and is the one that
-    // matters: a finger with no drag and no modifier can reorder a song in two
-    // plain clicks, because HTML5 dragstart does not fire on touch at all.
-    await row(0).click();                                     // its option sheet
+    // THE MOVE KEYS LIVE IN THE PART POPUP now ("the row and the board"):
+    // open the PART cell, press ↓ — and the same reorder is also on
+    // ALT+ARROW over a focused row. The CLAIM here is unchanged and is the
+    // one that matters: a finger with no drag and no modifier can reorder a
+    // song in two plain clicks, because HTML5 dragstart does not fire on
+    // touch at all.
+    await openCell(0, "part");
     const sheet = page.locator("#rowpop");
     const later = sheet.locator('.rpk[aria-label="move box 1 later"]');
     if (!(await sheet.isVisible()) || !(await later.count()))
-      fail("the row sheet has no move keys — touch cannot reorder a song");
+      fail("the PART popup has no move keys — touch cannot reorder a song");
     else {
       await later.click();
       const after = await roleAt();
       if (after[0] === before[0] && after[1] === before[1])
-        fail(`the sheet's move key did not reorder the song (${before.join(",")})`);
-      else ok(`sheet move key reorders without dragging: ${before[0]},${before[1]} -> ${after[0]},${after[1]}`);
+        fail(`the PART popup's move key did not reorder the song (${before.join(",")})`);
+      else ok(`PART-popup move key reorders without dragging: ${before[0]},${before[1]} -> ${after[0]},${after[1]}`);
     }
-    await sheet.locator(".rpx").click();          // the palette goes home again
+    await sheet.locator(".rpx").click();
     await page.waitForTimeout(150);
     // and a value can go DOWN with an ordinary tap: tapping a value cell opens
     // the pop-up fader (ui/popfader.js) — which replaced the ± "Tap raises"
     // mode toggle — and the fader's ▼ key steps the SAME phrase vector down
-    // through the same commit("phrase") path a scrub takes
+    // through the same commit("phrase") path a scrub takes. The cells are in
+    // the editor popup now, so open it first — the checks are unchanged.
+    await openEditor();
     const cell = page.locator('.cell[aria-label^="step 3 deg"]').first();
     const read = async () => +(await cell.getAttribute("aria-label")).split(" ").pop();
     const v0 = await read();
@@ -596,6 +687,7 @@ function taps() {
     else fail(`tapping a gate cell went ${g0} -> ${g1}` +
               ((await pop.isVisible()) ? " and opened a fader" : ""));
     await gcell.click();                                  // put the groove back
+    await closeEditor();
   }
 
   // (G2) THE INTERFACE IS ROTATED, AND IT IS ONE IDIOM.
@@ -615,36 +707,75 @@ function taps() {
   // pattern is a COLUMN you read down — the pop-up fader opening BESIDE the
   // cell instead of over the eight ticks under it.
   {
+    // the editor is a POPUP: the table shape, the rotation and the fader
+    // placement are the same questions, asked inside #edpop. Two things
+    // CHANGED with the popup and are asserted the new way round: gate/acc/sld
+    // lead the columns (deg sits RIGHT of gate now), and the rows are TIGHT —
+    // markedly under the old 44px slabs, but still a finger target.
+    await openEditor();
+    await page.click("#rnd");            // varied values, so the bars can be read
     const ed = await page.evaluate(() => {
       const g = document.getElementById("stepgrid");
       const r = (s) => g.querySelector(s).getBoundingClientRect();
       const s1 = r('.cell[aria-label^="step 1 deg"]'), s2 = r('.cell[aria-label^="step 2 deg"]');
       const deg = r('.rowlab[data-row="deg"]'), gate = r('.rowlab[data-row="gate"]');
-      const inc = g.querySelector('.cell[data-row="inc"]');
+      // THE BAR IS THE VALUE — read the ARTIFACT: each vel cell's .cbar must
+      // stand v/9 of the cell, and a bipolar cell's bar must sit on the right
+      // side of the midline for its sign. Random values, exact law.
+      const vel = [...g.querySelectorAll('.cell[data-row="vel"]')].map(c => {
+        const v = +c.getAttribute("aria-label").split(" ").pop();
+        const cr = c.getBoundingClientRect(), br = c.querySelector(".cbar").getBoundingClientRect();
+        return { v, frac: br.height / cr.height };
+      });
+      const bip = [...g.querySelectorAll('.cell[data-row="deg"]')].map(c => {
+        const v = +c.getAttribute("aria-label").split(" ").pop();
+        const cr = c.getBoundingClientRect(), br = c.querySelector(".cbar").getBoundingClientRect();
+        const mid = cr.top + cr.height / 2;
+        // side by the ANCHORED edge, not a ±2px band: the bar grows FROM the
+        // midline, so a + bar's bottom and a − bar's top both sit ON it, and
+        // the other edge says the sign. A band test read a |v|=1 bar (~2px,
+        // both edges inside the band) as "above" whichever side it hung.
+        return { v, h: br.height,
+          side: br.height < 1 ? 0
+              : (Math.abs(br.bottom - mid) <= 1 && br.top < mid - 1) ? 1
+              : (Math.abs(br.top - mid) <= 1 && br.bottom > mid + 1) ? -1 : 9 };
+      });
       return { role: g.getAttribute("role"),
         rows: g.querySelectorAll('.prow[role="row"]').length,
         colh: g.querySelectorAll('[role="columnheader"]').length,
         rowh: g.querySelectorAll('[role="rowheader"]').length,
         cells: g.querySelectorAll('[role="gridcell"]').length,
-        down: Math.round(s2.top - s1.top), across: Math.round(gate.left - deg.left),
-        rowH: Math.round(s1.height),
-        ramp: inc.getBoundingClientRect().width > 0,
-        latch: getComputedStyle(document.getElementById("ramptog")).display };
+        down: Math.round(s2.top - s1.top), across: Math.round(deg.left - gate.left),
+        rowH: Math.round(s1.height), vel, bip };
     });
     if (ed.role !== "grid" || ed.rows !== 17 || ed.colh !== 9 || ed.rowh !== 16 || ed.cells !== 128)
-      fail("the pattern editor is not a 16-row × 8-column table: " + JSON.stringify(ed));
-    else ok(`the pattern editor is a table: ${ed.rows - 1} step rows × ${ed.colh - 1} vector ` +
+      fail("the pattern editor is not a 16-row × 8-column table: " + JSON.stringify(
+        { role: ed.role, rows: ed.rows, colh: ed.colh, rowh: ed.rowh, cells: ed.cells }));
+    else ok(`the editor popup is a table: ${ed.rows - 1} step rows × ${ed.colh - 1} vector ` +
             `columns (${ed.cells} gridcells, ${ed.rowh} rowheaders)`);
-    if (ed.down < 40 || ed.across <= 0)
-      fail(`the editor still runs left to right at 1400px (step 2 is ${ed.down}px below ` +
-           `step 1, gate is ${ed.across}px right of deg)`);
-    else ok(`time runs DOWN and the vectors run ACROSS at 1400px ` +
-            `(+${ed.down}px per step, gate +${ed.across}px from deg)`);
-    if (ed.rowH < 44) fail(`a step row is only ${ed.rowH}px tall — 44 is the floor at every width`);
-    else ok(`the rows are ${ed.rowH}px at 1400px — roomier, not different`);
-    if (!ed.ramp || ed.latch !== "none")
-      fail(`the ramp columns are still latched on a desk (visible ${ed.ramp}, RAMP key ${ed.latch})`);
-    else ok("the ramp columns are always out at width, and the RAMP latch goes with them");
+    if (ed.down < 20 || ed.across <= 0)
+      fail(`the editor's columns are wrong (step 2 is ${ed.down}px below step 1, ` +
+           `deg is ${ed.across}px right of gate — the switches must lead)`);
+    else ok(`time runs DOWN and gate/acc/sld LEAD the columns ` +
+            `(+${ed.down}px per step, deg +${ed.across}px right of gate)`);
+    if (ed.rowH < 20 || ed.rowH > 40)
+      fail(`a step row is ${ed.rowH}px tall — the popup's cells must be tight ` +
+           `(under the old 44px slabs) and still hittable (20px floor)`);
+    else ok(`the rows are ${ed.rowH}px — markedly tighter than the 44px page was`);
+    // the bar visualization, against the values the labels declare
+    const velErr = Math.max(...ed.vel.map(c => Math.abs(c.frac - c.v / 9)));
+    if (velErr > 0.15)
+      fail(`a vel bar does not stand v/9 of its cell (worst error ${velErr.toFixed(2)})`);
+    else ok(`vel bars are unipolar and proportional (worst error ${velErr.toFixed(2)})`);
+    const bipBad = ed.bip.filter(c => (c.v > 0 && c.side !== 1) || (c.v < 0 && c.side !== -1) ||
+                                      (c.v === 0 && c.h > 1));
+    const signs = new Set(ed.bip.map(c => Math.sign(c.v)));
+    if (bipBad.length || !ed.bip.some(c => c.v !== 0))
+      fail(`${bipBad.length} deg bar(s) sit on the wrong side of the midline ` +
+           `(e.g. ${JSON.stringify(bipBad[0] || null)})`);
+    else ok(`deg bars are zero-centred: ${ed.bip.length} cells, ` +
+            `signs seen ${[...signs].join("/")}, every bar on its value's side`);
+    await page.click("#seed");           // the starter phrase back, for (K)
 
     // the fader beside the cell, not over the column below it
     await page.locator('.cell[aria-label^="step 5 deg"]').first().click();
@@ -658,19 +789,18 @@ function taps() {
     await page.locator("#popfader .pfclose").click();
     if (!side.beside)
       fail(`the pop-up fader still opens over the pattern column (gapX ${side.gapX})`);
-    else ok(`the fader anchors beside the cell at 1400px (${side.gapX}px clear, ` +
+    else ok(`the fader anchors beside the cell (${side.gapX}px clear, ` +
             `${side.overlapsY ? "level with it" : "clamped in view"})`);
+    await closeEditor();
   }
 
-  // (K) THE ARRANGEMENT IS A TRACKER PATTERN VIEW.
-  //
-  // The horizontal piano roll — lanes left to right, a pixel ruler across the
-  // top, a translateX playhead — is gone under the same law. Time runs down as
-  // rows of 16ths, the voices are columns, a note is a cell entry with its
-  // pitch in it, and the playhead is the ROW that lights. The rotation is
-  // measured in pixels; the playhead is watched actually moving down a LOOPED
-  // box, because a lamp that lights once and stops is the failure that a
-  // static read cannot tell from a working one.
+  // (K) THE PLAYHEAD IS HONEST. The tracker pattern view is gone ("the row
+  // and the board"), but its QUESTION survives, repointed at the surfaces
+  // that now carry the position: the sounding row's fill bar sweeps (strictly
+  // forward, with at most loop-wrap resets), exactly ONE row wears .live at a
+  // time, and the position LCD's bar counter advances. Watched on a LOOPED
+  // box across ~3s of real playback, because a lamp that lights once and
+  // stops is the failure a static read cannot tell from a working one.
   {
     await row(0).dblclick();                              // loop it AND start it
     // WAIT FOR SOUND, don't sleep at it: the first play loads a soundfont, and
@@ -679,60 +809,43 @@ function taps() {
     await page.waitForFunction(() => document.getElementById("lcdpos").textContent !== "--",
       null, { timeout: 30000 });
     await page.waitForTimeout(600);                       // past the start transient
-    const ar = await page.evaluate(() => {
-      const g = document.getElementById("grid");
-      const cols = [...g.querySelectorAll('.tcol[role="columnheader"]')];
-      const ticks = [...g.querySelectorAll('.ttick[role="rowheader"]')];
-      const box = (e) => e.getBoundingClientRect();
-      return { role: g.getAttribute("role"),
-        rows: g.querySelectorAll('.trow[role="row"]').length,
-        ticks: ticks.length, cols: cols.length,
-        cells: g.querySelectorAll('.tcell[role="gridcell"]').length,
-        on: g.querySelectorAll(".tcell.on").length,
-        cont: g.querySelectorAll(".tcell.cont").length,
-        // a PITCH cell, explicitly: the first filled cell in DOM order is often
-        // a drum lamp, and "◆" is not a pitch name however correct it is
-        pitch: (g.querySelector(".tcell.on:not(.drum)") || {}).textContent || "",
-        down: ticks.length > 1 ? Math.round(box(ticks[1]).top - box(ticks[0]).top) : 0,
-        across: cols.length > 1 ? Math.round(box(cols[1]).left - box(cols[0]).left) : 0,
-        names: cols.map((c) => (c.querySelector(".nm") || c).textContent.trim()).slice(0, 4) };
-    });
-    if (ar.role !== "grid" || ar.cols < 2 || ar.ticks < 16 || ar.rows !== ar.ticks + 1)
-      fail("the arrangement is not a tracker table: " + JSON.stringify(ar));
-    else ok(`the arrangement is a table: ${ar.ticks} tick rows × ${ar.cols} voice columns ` +
-            `(${ar.cells} gridcells) — ${ar.names.join(", ")}`);
-    if (ar.down <= 0 || ar.across <= 0)
-      fail(`the arrangement still runs left to right (tick 2 is ${ar.down}px below tick 1, ` +
-           `voice 2 is ${ar.across}px right of voice 1)`);
-    else ok(`time runs DOWN and the voices run ACROSS (+${ar.down}px per 16th, ` +
-            `+${ar.across}px per voice)`);
-    // a note is a CELL ENTRY now, not a positioned rectangle: it says its pitch
-    if (!ar.on || !/^[A-G]#?-?\d/.test(ar.pitch))
-      fail(`no note reads as a pitch in a cell (${ar.on} filled cells, first "${ar.pitch}")`);
-    else ok(`${ar.on} filled cells, and a note says its pitch ("${ar.pitch}"); ` +
-            `${ar.cont} sustained ticks carry the continuation glyph`);
-
-    // THE PLAYHEAD IS A ROW, AND IT SWEEPS. Sampled across ~3s of a looped box:
-    // exactly one row lit at a time, at least three different rows seen, and at
-    // least one step strictly downward (a loop wrap goes back up, legitimately).
-    const seen = [], lits = [];
+    const seen = [], lives = [], lcds = [];
     for (let i = 0; i < 12; i++) {
       await page.waitForTimeout(250);
       const s = await page.evaluate(() => {
-        const l = document.querySelectorAll(".trow.play");
-        return { n: l.length, t: l[0] ? +l[0].dataset.tick : -1 };
+        const live = document.querySelectorAll(".box.live");
+        const f = live[0] && live[0].querySelector(".fillbar");
+        return { n: live.length,
+                 w: f ? f.getBoundingClientRect().width : -1,
+                 lcd: document.getElementById("lcdpos").textContent };
       });
-      seen.push(s.t); lits.push(s.n);
+      seen.push(s.w); lives.push(s.n); lcds.push(s.lcd);
     }
     await page.click("#play");                            // stop
-    const distinct = new Set(seen.filter((t) => t >= 0)).size;
-    const advanced = seen.some((t, i) => i && t > seen[i - 1] && seen[i - 1] >= 0);
-    if (lits.some((n) => n > 1))
-      fail(`more than one row lit at once (${lits.join(",")}) — the playhead is leaking rows`);
-    else if (distinct < 3 || !advanced)
-      fail(`the playhead row does not sweep down: ticks ${seen.join(",")}`);
-    else ok(`the playhead is a row and it sweeps down: ${distinct} rows over 3s ` +
-            `(${seen.slice(0, 6).join("→")}…)`);
+    if (lives.some((n) => n !== 1))
+      fail(`not exactly one .box.live while playing (${lives.join(",")}) — ` +
+           `the sounding lamp is leaking rows or dark`);
+    else ok("exactly one row wears .live at every sample");
+    const distinct = new Set(seen.map((w) => Math.round(w))).size;
+    // strictly forward with at most wrap resets: every step either grows the
+    // fill or wraps it back toward zero — a stuck bar fails on distinct
+    let wraps = 0, backwards = 0;
+    for (let i = 1; i < seen.length; i++) {
+      if (seen[i] >= seen[i - 1]) continue;
+      if (seen[i] < seen[i - 1] * 0.5) wraps++; else backwards++;
+    }
+    if (distinct < 3 || backwards > 0)
+      fail(`the fill bar does not sweep (${seen.map((w) => Math.round(w)).join(",")}` +
+           ` — ${distinct} distinct widths, ${backwards} backwards steps)`);
+    else ok(`the fill bar sweeps the sounding row: ${distinct} widths over 3s` +
+            (wraps ? `, ${wraps} loop wrap(s)` : ""));
+    // the LCD is the other reading of the same clock: box·bar/len, moving
+    const lcdset = new Set(lcds);
+    if (!lcds.every((t) => /^\d+·\d+\/\d+$/.test(t)))
+      fail(`the position LCD is not reading box·bar/len while playing: ${lcds.join(" ")}`);
+    else if (lcdset.size < 2 && distinct < 6)
+      fail(`the position LCD never advanced (${lcds[0]}) and the fill barely moved`);
+    else ok(`the position LCD reads the clock: ${[...lcdset].slice(0, 4).join(" → ")}`);
   }
 
   // (H) THE COMPOSED SONG DOES NOT COST NINE TIMES WHAT IT SHOULD.
@@ -786,8 +899,8 @@ function taps() {
   // sideways at all (#song scrollWidth <= clientWidth, the strongest form of
   // the old spill check rather than a weaker one).
   {
-    // NOT `row` — that is the file-wide helper that opens section N's sheet
-    // (`row(0).click()` below depends on it). Shadowing it with the table
+    // NOT `row` — that is the file-wide helper for section N's GENRE cell.
+    // Shadowing it with the table
     // element made every later call a TypeError, which is how this check
     // reported "row is not a function" instead of anything about the song.
     const tableEl = page.locator("#song");
@@ -799,7 +912,7 @@ function taps() {
            `sections are hidden off the right edge`);
     else ok(`the song table does not scroll sideways (${s0.scroll} <= ${s0.client})`);
     // make one section long, and check the row SAYS so instead of growing
-    await row(0).click();
+    await openCell(0, "bars");
     const pop = page.locator("#rowpop");
     const plus = pop.locator('button[aria-label="one bar more"]');
     const before = await page.locator(".box").first().getAttribute("aria-label");
@@ -830,15 +943,15 @@ function taps() {
   // everything above is untouched. The registry grew an `auto` field
   // (fields.js AUTOPARAMS/autoShape), the mixer's channels went per-box and
   // arm point lists on every pass (audio/mixer.js armAutomation), and the
-  // palette writes shapes. This drives the REAL palette — the auto chip rows
-  // on the effects tab — on a playing, looped section, then asserts the two
+  // palette writes shapes. This drives the REAL surface — the auto chip rows
+  // in the TRANSITIONS cell's popup — on a playing, looped section, then
+  // asserts the two
   // artifacts: __nuMix reports the armed automation (a count, plus per-channel
   // key info — both ADDED keys, the old shape untouched), and the spectrum
   // moves. Same __hf discipline as (E): a lowpass that closes over the section
   // guts the energy above 4 kHz, which no level-flattening master stage can
   // put back — so a chip that validated, saved and armed NOTHING fails here.
   {
-    const tab = (t) => page.locator(".ptab", { hasText: new RegExp("^" + t + "$") }).click();
     const hf = async (secs) => {
       let s = 0, n = 0;
       for (let i = 0; i < secs * 5; i++) {
@@ -868,7 +981,8 @@ function taps() {
     const roles2 = await page.locator(".box .role").allTextContents();
     const vi = roles2.findIndex(r => /verse/.test(r));
     if (vi < 0) fail("the composed rock song has no verse to loop");
-    await row(vi < 0 ? 0 : vi).dblclick();                        // loops AND starts it
+    const ti = vi < 0 ? 0 : vi;
+    await row(ti).dblclick();                                     // loops AND starts it
     await page.waitForTimeout(2500);
     const m0 = await waitMix(m => m.channels.length > 0, 20000);
     if (!m0 || m0.automation == null)
@@ -903,10 +1017,10 @@ function taps() {
     };
     const pre = await buckets();
     const floorPre = Math.min(...pre);
-    await tab("effects");
+    await openCell(ti, "trans");           // the auto rows live in TRANSITIONS
     const shapeChip = page.locator('.pchip[data-kind="auto"][data-value="cutoff:close"]');
     if (!(await shapeChip.count()))
-      fail("the auto shape row is missing from the effects page — the palette never grew it");
+      fail("the auto shape row is missing from the TRANSITIONS popup — the banks never grew it");
     else {
       await shapeChip.click();
       const m1 = await waitMix(m => (m.automation || 0) > auto0 &&
@@ -938,6 +1052,7 @@ function taps() {
       if (m2 && (m2.automation || 0) <= auto0) ok("auto off disarms the shape");
       else fail(`auto off did not disarm (automation still ${m2 && m2.automation})`);
     }
+    await closeCell();                     // the scrim would sit over #play
     await page.click("#play");                              // stop
   }
 

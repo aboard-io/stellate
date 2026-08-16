@@ -1,18 +1,13 @@
-// ui/readout.js — the words under the arrangement: the one-line #readout
-// (what the selected box is, or a transient status like "loading…") and the
-// #src pane ("what the selected box asks for"). Split from the old draw() so
-// that text updates never require rebuilding the grid, and so status messages
-// from the audio tier arrive as EVENTS rather than as a function call from
-// transport into the UI.
+// ui/readout.js — the one-line #readout: what the selected box is, or a
+// transient status like "loading…". (The #src "what the selected box asks
+// for" pane went with the MOVE page — "the row and the board": its facts are
+// the cell values and popup states now.) Status messages from the audio tier
+// arrive as EVENTS rather than as a function call from transport into the UI.
 //
-// Layer graph: ui view — imports state/derive/deps and audio/mixer (for the
-// pure chanSpec), publishes nothing.
-import { GENRES, ROMAN, harm, blank, MODES, MODELABEL, SCALELABEL,
-         OPLABEL, ENVLABEL, MOTLABEL, INLABEL, OUTLABEL, DTLABEL, RATELABEL,
-         FX } from "./deps.js";
+// Layer graph: ui view — imports state/derive/deps, publishes nothing.
+import { GENRES, ROMAN, harm, blank } from "./deps.js";
 import { SLOTS, viewSec, curSection, on } from "./state.js";
-import { sectionRender, stackOf, stackLabel, opsOf, genreOf, kitOf, gid } from "./derive.js";
-import { chanSpec } from "../audio/mixer.js";
+import { sectionRender, stackOf, stackLabel, opsOf } from "./derive.js";
 // the carrier's one line. On mobile the rendered tape IS the audible path
 // (audio/bounce.js), so an edit is heard when its re-render swaps at the loop
 // — a person is owed that sentence for as long as it is true, not for the one
@@ -21,7 +16,6 @@ import { chanSpec } from "../audio/mixer.js";
 import { carrierNote } from "../audio/bounce.js";
 
 const readoutEl = document.getElementById("readout");
-const srcEl = document.getElementById("src");
 
 // A STICKY status survives exactly one render. Renders are coalesced onto the
 // next animation frame now, so a message written right after a change (the
@@ -72,52 +66,20 @@ function describe() {
     (carrierNote() ? "  —  " + carrierNote() : "");
 }
 
-/* ---------- what the selected box asks for ---------- */
-function writeSrc() {
-  const sec = curSection();
-  const g = genreOf(sec), cs = chanSpec(sec);
-  const kit = Object.keys(g.kit || {}).length
-    ? Object.entries(g.kit).map(([d, v]) => "  " + d + ": [" + v.join(",") + "]").join("\n")
-    : '  {}   <span class="c">// a fugue has no drums. The empty kit is the fact.</span>';
-  srcEl.innerHTML =
-    g.label.toUpperCase() + "\n\n" +
-    "form       " + g.bars + " bars\n" +
-    "window     " + sec.len + " bars from bar " + (sec.nudge + 1) + "\n" +
-    "phrases    " + stackOf(sec).map(e => GENRES[e.g].label + ": " +
-      (e.slots.length ? e.slots.map(i => i + 1).join(", ") : "none")).join("\n           ") + "\n" +
-    "rate       " + g.rate + (sec.rate ? "  (" + RATELABEL[sec.rate] + ")" : "") +
-      (g.swing ? "   swing " + g.swing.toFixed(2) : "") + "\n" +
-    "scale      [" + (g.scale || [0, 3, 5, 7, 10]).join(" ") + "]  " +
-      (sec.scale ? SCALELABEL[sec.scale] : GENRES[gid(sec)].scale ? "genre's own" : "minor pentatonic") +
-      "  — " + (12 / (g.scale || [0, 3, 5, 7, 10]).length).toFixed(1) +
-      " semitones per degree-step\n" +
-    "harmony    " + g.harmony + (g.roots ? "  [" + g.roots.map(r => ROMAN[r]).join(" ") + "]" : "") + "\n" +
-    "mode       " + (sec.mode ? MODELABEL[sec.mode] + "  [" + MODES[sec.mode].join(" ") + "]"
-                              : "natural minor  [0 2 3 5 7 8 10]") + "\n" +
-    "transforms " + (sec.ops.length || sec.env
-      ? [...sec.ops.map(o => OPLABEL[o]), ...(sec.env ? [ENVLABEL[sec.env]] : [])].join(" + ")
-      : "none") + "\n" +
-    // THE CHANNEL, in the same terms the palette used to ask for it. A box that
-    // sounds wrong is usually a mix question, and until this line existed the
-    // panel could tell you everything about the notes and nothing about the mix.
-    "channel    " + (sec.fx && sec.fx.length ? sec.fx.map(k => FX[k].label).join(" -> ")
-                                             : "no inserts") + "\n" +
-    "sends      reverb " + Math.round(cs.rev * 100) + "% -> " + cs.verb +
-      " · echo " + Math.round(cs.del * 100) + "%" +
-      (sec.dtime ? " at " + DTLABEL[sec.dtime] : "") + "\n" +
-    "place      level " + cs.lvl.toFixed(2) + " · pan " + cs.pan.toFixed(2) +
-      (cs.mot ? " · " + MOTLABEL[cs.mot] : "") + "\n" +
-    "edges      " + (sec.intro ? INLABEL[sec.intro] : "straight in") + " / " +
-      (sec.outro ? OUTLABEL[sec.outro] : "straight out") + "\n\n" +
-    "kit        " + (kitOf(sec) || "none") + "\n" + kit;
-}
-
 export function update() {
-  if (hold) { hold = false; writeSrc(); return; }
-  describe(); writeSrc();
+  if (hold) { hold = false; return; }
+  describe();
 }
 
-// no self-subscription to the change events: arrange.js calls update() at the
-// end of its (coalesced) render, exactly as the old draw() called writeSrc —
-// one text rewrite per real grid rebuild, never one per pointer event
+// SELF-SUBSCRIBED, COALESCED. The arrangement view used to call update() at
+// the end of its own coalesced render; the arrangement is gone, so the line
+// owns its schedule — one rAF per burst of change events, never one rewrite
+// per pointer event (a scrub commits "phrase" per pointermove).
+let queued = false;
+const queue = () => {
+  if (queued) return;
+  queued = true;
+  requestAnimationFrame(() => { queued = false; update(); });
+};
+for (const t of ["song", "box", "selection", "phrase", "refresh"]) on(t, queue);
 on("status", d => status(d.text, d.sticky));

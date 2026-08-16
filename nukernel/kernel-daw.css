@@ -1,14 +1,14 @@
 /* nukernel/kernel-daw.css — the page: layout and the hardware skin applied to
    the page's own selectors. Every colour and face comes from hw.css (loaded
-   first); this file holds no palette of its own. The DOM is unchanged from the
-   paper era — same sections, same ids, same gate-read classes (.cell .slot
-   .box .btools .pchip .ptab #play #readout …) — only the material changed.
-   The one retired affordance is the song box's edge GRIPS: the song is a table
-   of full-width rows at every width now, so a row has no width to trim and the
-   bars/nudge steppers in its option sheet do that job instead.
+   first); this file holds no palette of its own. The gate-read classes
+   (.cell .slot .box .bcell .bgenre .pchip #play #readout …) are load-bearing.
+   Since "the row and the board" (2026-08-15) the song row is a rank of NAMED
+   CELLS, each opening its own focused popup; the tracker pages, the palette
+   page, the LED strip and the context strip are gone, and their questions are
+   answered by the cells and the popups.
 
    THE TABLE IS ONE COMPONENT (the .tbl block below). The pattern editor, the
-   song, the arrangement and every palette bank share one well, one header
+   song, the mix and every chip bank share one well, one header
    row, one numeral column, one ruling cadence and one set of row states; the
    per-surface sections that follow add only their own columns and cells. When
    two of them stop looking like the same instrument, the fix belongs in .tbl,
@@ -51,9 +51,9 @@ body{
    are ~300 elements patched inside a scrub, so they get the cheap variant —
    flat fill, 1px borders as bevel, no shadow (the hw.css paint budget). */
 
-/* 1 BRUSHED PANEL — the transport, the three deck panels, the two floating
-   sheets and the source drawer. */
-.bar,.ed,details,.popfader,.rowpop{
+/* 1 BRUSHED PANEL — the transport, the deck panels, the floating
+   sheets (row sheet, phrase editor) and the source drawer. */
+.bar,.ed,details,.popfader,.rowpop,.edpop{
   background:
     linear-gradient(180deg,var(--hw-panel-hi) 0,var(--hw-panel) 38%,var(--hw-panel-lo) 100%),
     repeating-linear-gradient(90deg,rgba(255,255,255,.014) 0 1px,transparent 1px 3px);
@@ -76,10 +76,10 @@ body{
   box-shadow:inset 0 2px 4px rgba(0,0,0,.6),inset 0 -1px 0 var(--hw-bevel-hi),0 0 0 rgba(0,0,0,.55);
 }
 /* 3 LCD GLASS — every readout on the machine: the two fader values, the seed,
-   the position, the context strip, the status line, the recessed pickers, the
-   pop-up fader's big number and the row sheet's steppers. Amber ink on
-   near-black, one faint scanline grid, one socket. */
-.knob b,.knob select,.gctl select,.seedlcd,.poslcd,.ctxstrip,.readout,
+   the position, the status line, the recessed pickers, the pop-up fader's
+   big number and the cell popup's steppers. Amber ink on near-black, one
+   faint scanline grid, one socket. */
+.knob b,.knob select,.gctl select,.seedlcd,.poslcd,.readout,
 .pflcd,.rpstep output{
   background:var(--lcd-bg);color:var(--lcd-ink);
   background-image:repeating-linear-gradient(0deg,var(--lcd-grid) 0 1px,transparent 1px 3px);
@@ -89,7 +89,7 @@ body{
     0 1px 0 var(--hw-bevel-hi);
 }
 /* the glass you can touch lights its inner rim under the pointer */
-.knob select:hover,.gctl select:hover,.ctxstrip:hover{
+.knob select:hover,.gctl select:hover{
   box-shadow:inset 0 2px 5px rgba(0,0,0,.9),inset 0 0 0 1px rgba(255,179,71,.25),
     0 1px 0 var(--hw-bevel-hi);
 }
@@ -311,44 +311,12 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   font-weight:500;font-size:11.5px;line-height:1;letter-spacing:.02em;
   cursor:pointer;padding:7px 6px;max-width:168px;
 }
-/* ---- the bank's SECOND row group: the master bus ----
-   A row title INSIDE the well, ruled off the group above it the way .thd rules
-   off the top — so the bank reads as two row groups of one table rather than
-   as two banks. Quieter than .thd on purpose: .thd names the table, this names
-   a group in it. */
-.gsub{
-  display:flex;align-items:center;gap:8px;
-  padding:8px var(--tbl-gut) 0;
-  border-top:1px solid var(--tbl-rule);
-  font:600 9px/1.2 var(--f-legend);letter-spacing:.16em;text-transform:uppercase;
-  color:var(--dim);
-}
-.gsub .btn.hint{margin-left:0}
-/* the group's own (?) copy sits in the well, not over the deck */
-.ghint{margin:0;padding:6px var(--tbl-gut) 0}
-/* SEVEN CONTROLS, and they are narrower than the session's two because their
-   values are single words. The group wraps like the one above it; nothing here
-   is a second layout. */
-.gmaster .gctl select{max-width:132px;min-width:84px}
+/* (The bank's master-bus row group moved to the MIX page's rack — "the SSL
+   board". .ghint survives: the rack's own (?) copy wears it there.) */
+.ghint{margin:0;padding:6px var(--tbl-gut) 8px}
 
-/* ---- the context strip ----
-   WHERE EDITS LAND, on every page: one LCD line between the transport and the
-   deck — 'BOX 3 · VERSE · City pop · 4 bars' (+ the phrase on STEP). It is a
-   real button (tap = jump to the SONG page) wearing the same amber glass as
-   every other readout, with one silkscreen word so it reads as a labelled
-   indicator rather than a second status line. One line; the value truncates. */
-.ctxstrip{
-  appearance:none;cursor:pointer;text-align:left;width:100%;
-  display:flex;align-items:center;gap:9px;min-width:0;
-  margin:0;padding:7px 12px;
-  font-weight:600;font-size:12px;line-height:1.2;letter-spacing:.04em;
-}
-/* the silkscreen word is ON the glass, so it speaks LCD-dim, not panel ink */
-.ctxstrip .ck{
-  flex:0 0 auto;font:600 9px/1 var(--f-legend);letter-spacing:.16em;
-  text-transform:uppercase;color:var(--lcd-dim);
-}
-.ctxstrip .ct{flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* (There is no context strip: popups open ON the row they edit — "the row
+   and the board" — so no page edits a box it cannot see.) */
 
 /* #readout is the LCD strip: one line of machine words on amber glass */
 .readout{
@@ -358,8 +326,8 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 
 /* ================================================================
    ---- THE TABLE ----
-   ONE COMPONENT, FOUR USERS. The pattern editor, the song, the arrangement
-   and every palette bank are the same object: a recessed well containing a
+   ONE COMPONENT, FOUR USERS. The pattern editor, the song, the mix
+   and every chip bank are the same object: a recessed well containing a
    silkscreened header row, a numeral column down the left, and ruled rows
    that answer to one state language. Everything they share is declared HERE,
    once — the well, the header, the numerals, the ruling, hover / selected /
@@ -370,8 +338,8 @@ h1 em{font-style:normal;color:var(--accent-txt)}
    instrument whose four screens are cut from the same material.
 
    TWO GROUNDS, ONE COMPONENT. A table sits either on the PANEL (milled into
-   the silver: the pattern, the song, the banks) or on GLASS (.glass — the
-   arrangement, where six saturated channel colours have to read at once and
+   the silver: the pattern, the song, the banks) or on GLASS (.glass — where
+   saturated colours have to read at once and
    only near-black lets them). The ground is a set of tokens, so every rule
    below is written once and both grounds answer it. --tbl-key is the
    crowd's unlit fill: an unlit pad in the pattern and an unlit chip in a bank
@@ -427,97 +395,32 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 }
 .tbl.glass .tnum{background:var(--tbl-ground)}
 /* THE RULING — one cadence, two strengths: a hairline between rows, a heavier
-   rule where the music divides (a beat in the pattern, a bar in the
-   arrangement). The class is on the ROW, so nothing needs :nth-child
-   arithmetic and the playhead is one class write. */
+   rule where the music divides (a beat in the pattern). The class is on the
+   ROW, so nothing needs :nth-child arithmetic. */
 .prow.beat>*{border-top:2px solid var(--tbl-rule)}
 .prow.beat>.thd{border-top:0}
-.trow.beat .trule{box-shadow:inset 0 1px 0 var(--tbl-hair)}
-.trow.bar .trule{box-shadow:inset 0 1px 0 var(--tbl-rule)}
 /* THE STATES, one language for every table on the machine:
      hover     the row under the pointer washes (fine pointers only — a
                fingertip has no hover and a stuck highlight is a lie)
      selected  a cream ring: this is the row your edits land on
      sounding  a wash plus a 3px lamp on the leading edge — the same bar of
                paint the pattern's quarter numerals wear
-     open      the accent ring: this row's option sheet is up
+     open      the accent ring: this row's cell popup is up
    Where a surface has no such state it simply does not use the class. */
 @media (hover:hover){
   .box:hover{background:var(--tbl-hi)}
-  .trow:hover .trule{background:var(--tbl-hi)}
-  .prow:hover>.tnum,.trow:hover .tnum{color:var(--tbl-ink)}
+  .prow:hover>.tnum{color:var(--tbl-ink)}
 }
 .box.sel{background:var(--tbl-hi);box-shadow:inset 0 0 0 2px var(--st-sel)}
 .box.looped{background:var(--tbl-hi);box-shadow:inset 3px 0 0 var(--st-arm)}
 .box.queued{outline:1px dashed var(--st-arm);outline-offset:-3px}
 .box.live{background:var(--tbl-lit);box-shadow:inset 3px 0 0 var(--st-live)}
-.trow.play .trule{background:var(--tbl-lit);
-  box-shadow:inset 0 1px 0 var(--a-amber),inset 0 -1px 0 rgba(255,179,71,.35)}
 .box.open{background:var(--tbl-hi);box-shadow:inset 0 0 0 2px var(--accent);z-index:40}
 /* ================================================================ */
 
-/* ---- arrangement: the tracker screen ----
-   The one table on GLASS. FIXED HEIGHT, not content height: the column count
-   transform is switched on — no drums removes four channels, a fugue has four
-   voices where Simple has one — and letting the panel resize moved everything
-   below it on the page. It scrolls internally instead: DOWN through the ticks,
-   and sideways only when a stacked box has more channels than the screen.
-   THE SCREEN IS LCD GLASS in both faces. Six saturated channel colours cannot
-   all read as ink on a silver panel; on near-black they read at a glance, and
-   the LCD tokens are the one palette this machine never inverts. */
-.dawscroll{height:330px}
-/* THE TRACKER TABLE. Rows are 16ths, columns are voices, every .trow is
-   display:contents so its children are the grid items. --rowh is the one
-   number that sets the tick height; the desk block raises it. */
-.tgrid{
-  --rowh:20px; --tickw:44px; --voicew:minmax(62px,1fr); --drumw:38px;
-  display:grid;position:relative;min-width:min-content;
-  /* the header row takes what its two lines need; every tick row is --rowh */
-  grid-template-rows:auto;grid-auto-rows:var(--rowh);
-  font:500 11px/1 var(--f-num);
-}
-/* the header cells are .thd (the shared header row) plus the two lines a voice
-   column needs: its name with a colour swatch, and what it is playing */
-.tcorner,.tcol{z-index:4;padding:4px 5px;overflow:hidden}
-.tcorner{left:0;z-index:6;border-right:1px solid var(--tbl-rule);
-  letter-spacing:.1em;display:flex;align-items:flex-end}
-.tcol{display:flex;flex-direction:column;justify-content:flex-end;gap:2px;
-  font-size:9px;letter-spacing:normal;text-transform:none}
-.tcol .nm{letter-spacing:.06em;text-transform:uppercase;color:var(--tbl-ink);
-  display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis}
-.tcol .op{font:400 9px/1.2 var(--f-num);color:var(--tbl-dim);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.swatch{width:8px;height:8px;border-radius:1px;flex:0 0 auto}
-.trow{display:contents}
-/* the ruling and the playhead lamp are ONE element per row, spanning every
-   column, painted under the cells (it comes first in the row). Both are the
-   shared .tbl ruling and the shared LIVE state; nothing here restates them. */
-.trule{grid-column:1/-1;pointer-events:none}
-.ttick{border-right:1px solid var(--tbl-rule);font-size:10px}
-.trow.bar .ttick{color:var(--tbl-ink);font-weight:700}
-/* the lit row's tick stays OPAQUE — it is sticky, and cells scrolling
-   sideways under a translucent header is the one thing a frozen column
-   must never do (the amber rides over the LCD ground, layered, not instead) */
-.trow.play .ttick{color:var(--a-cream);
-  background:linear-gradient(var(--tbl-lit),var(--tbl-lit)),var(--tbl-ground)}
-/* a hairline between columns: at width the channels are wide, and without a
-   rule down each one the table stops reading as a table */
-.tcell,.tcol{border-left:1px solid var(--tbl-hair)}
-/* pitch cells align LEFT, like every tracker's note column: a chord voicing is
-   wider than its cell, and centring clips it at BOTH ends — the low note, the
-   one you read first, disappearing off the left. Drum lamps centre. */
-.tcell{display:flex;align-items:center;justify-content:flex-start;
-  padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:clip;
-  color:var(--tbl-dim)}
-.tcell.drum{font-size:10px;justify-content:center;padding:0 2px}
-/* a held note's remaining ticks: the tracker's way of drawing duration */
-.tcell.cont{color:var(--tbl-dim);opacity:.5}
-.tcell.acc{font-weight:700;text-shadow:0 0 1px currentColor}
-.tcell.fill{box-shadow:inset 0 0 0 1px var(--accent)}
-.tcell.sld{text-decoration:underline;text-underline-offset:2px}
-/* the kit reads as one group: a rule down the left edge of its first channel */
-.tcol.gstart,.tcell.gstart{border-left:1px solid var(--tbl-rule)}
+/* (The arrangement tracker screen is gone — "the row and the board": its
+   playhead question is answered by the song row's fill bar and the position
+   LCD, and its pattern facts are the cell values and popup states.) */
 
 /* ---- the deck panels (the brushed panel recipe above) ---- */
 .ed{padding:12px;display:flex;flex-direction:column;gap:10px}
@@ -599,34 +502,24 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 }
 .slotadd:hover{border-color:var(--accent);color:var(--accent-txt)}
 .slotadd[hidden]{display:none}
-/* ---- THE PATTERN AS A TRACKER TABLE, at every width ----
+/* ---- THE PATTERN AS A TRACKER TABLE, inside the editor popup ----
    Time runs DOWN: sixteen numbered rows, one per 16th, and the eight vectors
-   are the columns. This is the ONLY layout the editor has — the desk's old
-   lane grid (16 steps left to right) and the <560px CSS transpose that faked
-   the rotation both went, because ui/editor.js now BUILDS the table in this
-   order. Every .prow is display:contents, so its children are the grid items
-   and auto-placement lines the columns up; a wider screen gets taller rows,
-   wider columns and the two ramp columns out of their latch, never a
-   different table.
+   are the columns — switches first (gate acc sld), then the five value
+   columns as BARS (below). Every .prow is display:contents, so its children
+   are the grid items and auto-placement lines the columns up. All eight
+   columns fit a 360px phone because a bar cell needs no three-digit width —
+   which is why there is no RAMP latch and no hidden column anywhere.
    The well, the sticky header, the numeral column, the beat ruling and the
    row hover are the .tbl component (top of this file); what is here is the
    column template and the 909 pad. */
-.steps{height:clamp(300px,58vh,620px)}
-.stepgrid{display:grid;gap:2px;padding:2px;
-  grid-template-columns:30px minmax(46px,1fr) minmax(46px,1fr) minmax(46px,1fr)
-    minmax(38px,52px) minmax(38px,52px) minmax(38px,52px);
-  grid-template-rows:auto;grid-auto-rows:minmax(44px,auto)}
-/* RAMP out: nine columns — inc and stk land between vel and the binary trio,
-   exactly where they sit in ui/editor.js's ROWS order, so auto-placement needs
-   no help */
-.stepgrid[data-ramp]{grid-template-columns:26px repeat(5,minmax(38px,1fr))
-  minmax(32px,44px) minmax(32px,44px) minmax(32px,44px)}
+.steps{flex:1 1 auto;min-height:160px}
+/* tight rows are the popup's whole budget: --tbl-rowh here beats .tbl's 44px
+   floor AND the desk block's 48px — the popup is the one surface whose cells
+   got smaller on purpose (2026-08-15, "much tighter") */
+.stepgrid{display:grid;gap:1px;padding:2px;--tbl-rowh:26px;
+  grid-template-columns:20px repeat(3,minmax(26px,44px)) repeat(5,minmax(30px,1fr));
+  grid-template-rows:auto;grid-auto-rows:minmax(26px,auto)}
 .prow{display:contents}
-.cell[data-row="inc"],.cell[data-row="stk"],
-.rowlab[data-row="inc"],.rowlab[data-row="stk"]{display:none}
-.stepgrid[data-ramp] .cell[data-row="inc"],.stepgrid[data-ramp] .cell[data-row="stk"],
-.stepgrid[data-ramp] .rowlab[data-row="inc"],.stepgrid[data-ramp] .rowlab[data-row="stk"]{
-  display:flex}
 /* the column header: the vector's name over its range ("deg" / "−7…+7") — the
    column says what it is and how far it goes. The silkscreen, the sticky and
    the rule are .thd; this is the two-line stack inside it. */
@@ -658,11 +551,11 @@ h1 em{font-style:normal;color:var(--accent-txt)}
    lineage: q1 red, q2 orange, q3 amber, q4 cream — in the GATE column, where
    the groove lives. Accent and slide keep their own lamps (amber, cream); the
    value columns stay monochrome so the values read as values.
-   44px is the floor at every width, coarse pointer or not: a tracker row you
-   cannot hit is a picture of a tracker. */
-.cell{touch-action:none;
-  appearance:none;font:600 12px/1 var(--f-num);height:auto;cursor:pointer;
-  min-height:var(--tbl-rowh,44px);
+   The rows are TIGHT on purpose (26px, the popup's budget) — a bar cell is a
+   read-and-scrub target, and the pop-up fader is the precision path. */
+.cell{touch-action:none;position:relative;overflow:hidden;
+  appearance:none;font:600 10px/1 var(--f-num);height:auto;cursor:pointer;
+  min-height:var(--tbl-rowh,26px);
   background:var(--tbl-key,var(--hw-key-mid));color:var(--dim);
   border:0;border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(0,0,0,.55);
   border-radius:3px;
@@ -681,36 +574,40 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .cell[data-row="gate"].on{background:var(--q)}
 .cell[data-row="acc"].on{background:var(--a-amber)}
 .cell[data-row="sld"].on{background:var(--a-cream)}
-/* the VALUE rows read as slim LCD windows — amber digits on glass, the same
-   material as every other number on the machine — while the binary rows stay
-   moulded keys. Still crowd-cheap: flat fill, 1px borders, no shadow. */
+/* the VALUE rows are slim LCD windows drawing the value AS A BAR — .cbar is
+   an amber strip positioned by the two custom properties ui/editor.js
+   patches (--b bottom, --h height): vel fills from the floor, the bipolar
+   four (.bip) fill from the midline, up for + and down for −. The bar is the
+   primary read; .cv is the numeral riding it, dropped where the cell cannot
+   afford it, never the other way round. Still crowd-cheap: flat fills, 1px
+   borders, no shadow, and a patch writes two properties, not a style sheet. */
 .cell.deg{background:var(--lcd-bg);color:var(--lcd-ink);
   border:1px solid rgba(0,0,0,.6);border-top-color:rgba(0,0,0,.8);border-radius:2px}
+.cell .cbar{position:absolute;left:3px;right:3px;
+  bottom:var(--b,0%);height:var(--h,0%);
+  background:var(--lcd-ink);opacity:.55;border-radius:1px;pointer-events:none}
+/* the zero line: a hairline across the middle of every bipolar column — it is
+   what says "zero" when the bar has no height */
+.cell.bip::before{content:"";position:absolute;left:2px;right:2px;top:50%;
+  height:1px;background:var(--lcd-dim);opacity:.6;pointer-events:none}
+.cell .cv{position:relative;z-index:1;font:600 9px/1 var(--f-num);
+  font-weight:600;pointer-events:none}
 .cell.deg.rest{opacity:.45}
-.cell.deg.zero{color:var(--lcd-dim)}
-.cell.deg.ramp{border-bottom:1px solid var(--v3)}
-.cell.deg.ramp.zero{border-bottom-color:rgba(0,0,0,.6)}
+.cell.deg.zero .cv{color:var(--lcd-dim)}
 /* the binary keys are tap-only, so they may carry the scroll (pan-y); the
    value cells keep touch-action:none — a vertical drag there is the scrub */
 .cell:not(.deg){touch-action:pan-y}
-
-/* the RAMP column latch, lit orange when the two columns are out. It is a
-   NARROW affordance only: the ≥900px block hides it, because the desk always
-   shows all eight vectors. */
-.ramptog{display:inline-block;padding:9px 7px;font-size:8.5px;min-height:38px;
-  letter-spacing:.06em}
-.ramptog[aria-pressed="true"]{background:var(--accent);color:var(--on-ink)}
 
 /* ---- the pop-up fader ----
    One dialog, built once by ui/popfader.js, hidden between uses. It is a
    little hardware panel — moulded keys, LCD readout, a recessed fader track
    with silkscreen ticks — anchored beside the tapped cell. The scrim under it
    is transparent: it exists to catch the tap-away, not to dim the machine. */
-.pfscrim{position:fixed;inset:0;z-index:40;background:transparent}
+.pfscrim{position:fixed;inset:0;z-index:46;background:transparent}
 /* author display beats the UA [hidden] rule, so shut must say so explicitly */
 .popfader[hidden],.pfscrim[hidden]{display:none}
 .popfader{
-  position:fixed;z-index:41;width:150px;
+  position:fixed;z-index:47;width:150px;
   /* a floating sheet throws a deeper shadow than a bolted-down panel */
   box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 1px 0 var(--hw-edge),0 10px 24px rgba(0,0,0,.5);
   padding:8px;display:grid;grid-template-columns:52px 1fr;gap:8px;
@@ -749,12 +646,10 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 2px 3px rgba(0,0,0,.45);
 }
 
-/* ---- the row popover ----
-   Tapping a song-table row pops that section's whole option surface: ui/
-   songrow.js MOVES the one palette element into .rpmount while it is open, so
-   the tabs and chips in here are the same built-once nodes the SOUND/MIX pages
-   show. The head is the row's controls — ▶ play-from-here, the bars/nudge
-   steppers (what the edge grips used to do, said in keys), ✕.
+/* ---- the CELL popup ----
+   Tapping a cell on a song row pops THAT CELL'S controls and nothing else:
+   ui/songrow.js empties .rpmount and mounts the cell's own keys plus its
+   banks (ui/palette.js mountBanks). The head is the title and ✕.
    ONE NODE, TWO PLACEMENTS. Narrow: a bottom sheet, because a phone deck has
    no daylight anywhere else. Wide (≥900px, the chassis boundary): .beside,
    an anchored panel dropped under the row itself, left-aligned with it and
@@ -799,151 +694,162 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   font-weight:600;font-size:12px;line-height:1;
   min-width:36px;text-align:center;padding:8px 4px;
 }
-/* a move key with nowhere to go ghosts rather than vanishing — the head must
-   not reshuffle between the first row's sheet and the middle of the song */
+/* a move key with nowhere to go ghosts rather than vanishing — the keys must
+   not reshuffle between the first row's popup and the middle of the song */
 .rpk.ghost{visibility:hidden;pointer-events:none}
-/* THE SURFACE SWITCH: which per-box surface the sheet is holding — the palette
-   or the mix desk. It is cut like the palette's own .ptab strip because it is
-   the same kind of control one level up, and it wears the two icons the page
-   rail's SOUND and MIX keys used to (they came here with their destinations). */
-.rpsurf{display:flex;gap:4px}
-.rpsk{
-  appearance:none;cursor:pointer;flex:0 0 auto;min-height:34px;padding:0 12px;
-  display:inline-flex;align-items:center;gap:6px;
-  font:600 10px/1 var(--f-legend);letter-spacing:.12em;text-transform:uppercase;
-  color:var(--dim);background:none;border:1px solid var(--line);border-radius:3px;
-}
-.rpsk:hover{color:var(--ink);border-color:var(--accent)}
-.rpsk.on{color:var(--on-ink);border-color:var(--accent);
-  background:linear-gradient(180deg,
-    color-mix(in srgb,var(--a-orange) 80%,white) 0,
-    var(--a-orange) 50%,
-    color-mix(in srgb,var(--a-orange) 78%,black) 100%)}
-/* the mounted surface scrolls inside the sheet; the palette's banks go one-up */
-.rpmount{overflow-y:auto;min-height:0;overscroll-behavior:contain;flex:1 1 auto}
-.rpmount .palette{gap:10px 12px}
+/* the mounted cell scrolls inside the popup; the banks flow as a column in
+   the sheet and tile two-up in the anchored panel */
+.rpmount{overflow-y:auto;min-height:0;overscroll-behavior:contain;flex:1 1 auto;
+  display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-start;
+  align-content:flex-start}
 .rpmount .pgroup{min-width:0;flex:1 1 100%}
-/* the anchored panel is wide enough for the banks to tile two-up */
 .rowpop.beside .rpmount .pgroup{flex:1 1 260px}
-/* the MIX panel borrowed into the sheet (its head, its (?) and its table)
-   gives up the page padding it wears as a page — the sheet already has some */
-.rpmount .ed{padding:0;gap:6px}
-.rpmount .mixtbl{width:100%}
+.rpmount .pnote{flex:1 0 100%}
+/* THE PART POPUP'S KEY ROW: the row-level operations in one rank — ▶, the
+   two movers, duplicate, pin, remove — every one at the popup's 44px floor */
+.rpkeys{flex:1 0 100%;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.rpkeys .pini{display:block;width:13px;height:13px;fill:currentColor}
+.rpk.rppin.on{color:var(--accent-txt)}
+.rpk.rpdel{margin-left:auto}
+/* THE GENRE POPUP'S LAYER LIST: the stack as focus rows — authority first,
+   each rider indented under it with the ↳ as its silkscreen, the focused one
+   lit. Tap = which layer the PATTERN cells, the mods and the voice popup edit. */
+.rpfoc{flex:1 0 100%;display:flex;flex-direction:column;gap:2px}
+.rpfoc .blayer{
+  appearance:none;background:none;border:0;cursor:pointer;text-align:left;
+  position:relative;padding:0 4px 0 16px;min-width:0;min-height:30px;
+  display:flex;align-items:center;
+  font:600 10.5px/1.5 var(--f-legend);letter-spacing:.02em;color:var(--dim);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rpfoc .blayer::before{content:"↳";position:absolute;left:3px;color:var(--faint)}
+.rpfoc .blayer:first-child::before{content:""}
+.rpfoc .blayer:hover{color:var(--ink)}
+.rpfoc .blayer.foc{color:var(--accent-txt)}
 
-/* ---- THE SUB-GENRE PICKER ----
-   The + key's own panel: the genre choice, offered AT the row, anchored to the
-   key that asked. Same materials and same placement law as the row sheet (a
-   bottom sheet under 900px, beside the key over it) because it is the same
-   kind of thing one size down — and a higher z-index than the sheet, since it
-   can be opened from a row whose sheet is already up. */
-.gpscrim{position:fixed;inset:0;z-index:44;background:rgba(0,0,0,.32)}
-.gpscrim[hidden],.gpick[hidden]{display:none}
-.gpick{
-  position:fixed;z-index:45;left:8px;right:8px;
+/* ---- the phrase editor popup ----
+   ui/editor.js builds the whole dialog (the old STEP page's ids intact) and
+   opens it over whatever page is up. ONE NODE, TWO PLACEMENTS, the row
+   sheet's own law: a bottom sheet where the deck is narrow, a centred dialog
+   ≥900px — centred rather than row-anchored because a phrase belongs to the
+   BANK, not to one row, and the popup is tall enough that anchoring would
+   always have flipped anyway. The tracker well flexes and scrolls inside;
+   the head, the (?) and the slot rail stay put. Z: above the row sheet (a
+   phrases key opens this from there), below the pop-up fader (which opens
+   from a cell in here). */
+.edscrim{position:fixed;inset:0;z-index:42;background:rgba(0,0,0,.45)}
+.edscrim[hidden],.edpop[hidden]{display:none}
+.edpop{
+  position:fixed;z-index:43;left:8px;right:8px;
+  bottom:calc(8px + env(safe-area-inset-bottom));
+  max-height:min(88vh,720px);
   display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:8px;
-  max-height:min(52vh,360px);
-  background:linear-gradient(180deg,var(--hw-panel-hi) 0,var(--hw-panel) 40%,var(--hw-panel-lo) 100%);
   box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 1px 0 var(--hw-edge),0 14px 30px rgba(0,0,0,.55);
 }
-.gpick.beside{right:auto;width:min(420px,calc(100vw - 16px))}
-.gphead{display:flex;align-items:center;gap:8px;min-width:0}
-.gptitle{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  font:600 10px/1.2 var(--f-legend);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
-.gpbody{overflow-y:auto;min-height:0;overscroll-behavior:contain;flex:1 1 auto;
-  display:flex;flex-direction:column;gap:7px}
-.gpfam{display:flex;flex-direction:column;gap:3px}
-.gplab{font-size:8.5px;color:var(--tbl-faint);padding:0}
-.gpkeys{display:flex;flex-wrap:wrap;gap:4px}
-/* the keys are the palette's own chip material minus the lamp — a genre on
-   offer has no on/off state to show, it is a thing you press once */
-.gpk{
-  appearance:none;cursor:pointer;min-height:34px;padding:0 10px;
-  font:500 11.5px/1.2 var(--f-legend);letter-spacing:.02em;color:var(--ink);
-  background:var(--tbl-key,var(--hw-key-mid));
-  border:0;border-top:1px solid rgba(255,255,255,.07);
-  border-bottom:1px solid rgba(0,0,0,.55);border-radius:3px;
+.edpop .edx{margin-left:2px}
+/* the popup's slot rail is a strip, not a page section: slimmer pads so the
+   bank reads as a footer under the tracker rather than a second table */
+.edpop .slots{flex:0 0 auto;
+  grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:4px;padding:4px}
+.edpop .slot{min-height:36px}
+@media (min-width:900px){
+  .edpop{
+    left:50%;right:auto;bottom:auto;top:50%;transform:translate(-50%,-50%);
+    width:min(600px,calc(100vw - 32px));max-height:min(90vh,860px);
+    box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 1px 0 var(--hw-edge),0 18px 40px rgba(0,0,0,.5);
+  }
+  /* the desk dialog gets slightly roomier rows and columns — more room,
+     never a different table (and still well under the old 44px slabs) */
+  .edpop .stepgrid{--tbl-rowh:30px;grid-auto-rows:minmax(30px,auto);
+    grid-template-columns:26px repeat(3,minmax(34px,52px)) repeat(5,minmax(40px,1fr))}
+  .edpop .cell .cv{font-size:10px}
 }
-.gpk:hover{color:var(--accent-txt);border-top-color:rgba(255,255,255,.2)}
-.gpnone{font:400 11px/1.5 var(--f-legend);color:var(--faint)}
+
+/* (The #gpick sub-genre picker is gone: the GENRE cell's popup carries the
+   family banks, where a dark chip adds a layer and a lit one removes it.) */
 
 /* ---- THE SONG TABLE ----
-   Sections are ROWS at every width: # | section | genre | bars | phrases |
-   switched on | tools, with a stacked layer as an indented sub-row under its
-   authority and the play-through as a hairline along the row's bottom edge.
-   There is no card rack and no width-as-duration any more — a row cannot say
-   its length in pixels, so it says it in the BARS cell, and the desk spends
-   its extra room on wider columns, the phrase list and a header row naming
-   the columns rather than on a second layout to maintain.
-   The grid is declared once for .box and .shead together: same template, so
-   the header sits over the cells it names. That alignment is the whole reason
-   a table beats a pile of cards. */
+   One row per section, and THE ROW IS THE INTERFACE ("the row and the
+   board"): named cells — PART · GENRE · FUNCTION · BARS · TIMING · MODS ·
+   VOICE · RHYTHM · TRANSITIONS · the PATTERN chips — each showing its
+   compact current value, each opening its own focused popup. The row reads
+   as a summary line of the whole section; the popups carry the controls, so
+   nothing here needs a second line, a lamp strip or a tool pad.
+   Below the desk boundary the cells WRAP inside their row (a busy section
+   may take two short lines); at >=900px they are FIXED grid tracks under a
+   silkscreen header row, which is what makes it a table you read down. */
 .songwrap{gap:12px}
 .song{
   display:flex;flex-direction:column;
   max-height:60vh;overflow-x:hidden;
 }
-/* PHONE SHAPE: SEVEN COLUMNS ON ONE LINE. It was four columns over THREE
-   lines — head, layers, then lamps and length under a 2×2 tool pad — 109px of
-   mostly air per section, so eleven sections were a scroll rather than a song
-   ("they sort of spread all over the place"). Every field sits on one line
-   now, at every width; a stacked layer's sub-row is the only second line a
-   section can have, and only when it has one.
-   What made the line possible was taking two keys OFF it: ↑ ↓ went to the row
-   sheet and to ALT+ARROW (ui/songrow.js), leaving + and the pin/✕ corner
-   cluster — three keys where there were four, in a strip instead of a pad.
-
-   WHAT YIELDS WHEN THE LINE IS TOO NARROW, said in the track list rather than
-   left to chance: the GENRE keeps a 56px floor (it is the row's name and an
-   ellipsis is still a name), and the CHIP strip is the one track allowed to
-   shrink to nothing — minmax(0,auto) with its own overflow:hidden — because a
-   fourth phrase clipped off the end costs a picture you can get back by
-   tapping the row, where a genre squeezed to "P" costs the row's identity. */
-.box,.shead{
-  display:grid;
-  grid-template-columns:16px auto minmax(56px,1fr) auto minmax(0,auto) auto auto;
-  gap:0 5px;align-items:center;
-}
 .shead{display:none}          /* the desk turns it on; a phone has no room */
 /* flex:none, or the well's max-height SQUASHES the rows: #song is a column
    flex container with a height cap, so a song longer than the cap made every
-   row shrink to its min-height and a layer sub-row spilled out of the bottom
-   of its own row. The cap belongs to the SCROLLBAR, not to the rows. */
+   row shrink to its min-height. The cap belongs to the SCROLLBAR. */
 .box,.shead,.sfoot{flex:0 0 auto}
-/* A SECTION IS A LINE IN THE TABLE, not a card in a rack. It used to be a
-   raised moulded panel with its own border and shadow, floating on the well —
-   which is what a horizontal rack of cards looks like after you stack it
-   vertically, and it read as a different instrument from the pattern and the
-   arrangement three panels away. It is a ruled row now: the table's ground,
-   a hairline under it, and the .tbl state language on top (hover, cream ring
-   for selected, a wash and a leading lamp for sounding). */
 .box{
-  position:relative;min-height:0;padding:2px var(--tbl-gut) 3px;
+  position:relative;min-height:0;padding:3px var(--tbl-gut) 4px;
   cursor:pointer;background:transparent;
   border:0;border-bottom:1px solid var(--tbl-hair);
+  display:flex;flex-wrap:wrap;gap:1px 2px;align-items:center;
 }
-.bnum{grid-row:1;grid-column:1;justify-self:end;
-  color:var(--tbl-ink);font:600 11px/1 var(--f-num)}
-/* the role tag keeps its lens outline (it is the one word that NAMES the
-   section) but gives up the room the outline used to sit in */
-.box .role{grid-row:1;grid-column:2;
+/* A CELL IS A FLAT KEY: icon silkscreen + the current value, washing under
+   the pointer. `.unset` dims the "—" cells so the set facts read first.
+   Every cell is a real button — its own tab stop, its own popup. */
+.bcell{
+  appearance:none;background:none;border:0;cursor:pointer;
+  display:inline-flex;align-items:center;gap:4px;min-width:0;
+  padding:3px 5px;border-radius:2px;
+  font:600 10.5px/1.4 var(--f-legend);letter-spacing:.02em;color:var(--ink);
+}
+.bcell:hover{background:var(--sunk)}
+.bcell .cvx{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bcell.unset .cvx{color:var(--faint);font-weight:400}
+/* the cell icons: silkscreen SVG masks painted with currentColor (the
+   .pi/.ik recipe) — self-contained, no glyph-coverage lottery */
+.bcell .ci{width:11px;height:11px;flex:0 0 auto;background:currentColor;opacity:.6;
+  -webkit-mask:var(--cim) center/contain no-repeat;mask:var(--cim) center/contain no-repeat}
+.bcell.unset .ci{opacity:.35}
+.bcell.c-part .ci{display:none}   /* the row number IS the part cell's mark */
+/* a star: the genre stack */
+.bcell.c-genre .ci{--cim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M7.5.8l1.8 4.6 4.9.3-3.8 3 1.3 4.7-4.2-2.7-4.2 2.7 1.3-4.7-3.8-3 4.9-.3z'/%3E%3C/svg%3E")}
+/* a flag: the section's function in the form */
+.bcell.c-role .ci{--cim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M3 1v13' stroke='%23000' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='M3.9 2.2h8.3l-2.2 2.9 2.2 2.9H3.9z'/%3E%3C/svg%3E")}
+/* a ruler: bars */
+.bcell.c-bars .ci{--cim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Crect x='.8' y='4.6' width='13.4' height='5.8' rx='1' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3Cpath d='M4 4.6v3M7.5 4.6v2.2M11 4.6v3' stroke='%23000' stroke-width='1.2'/%3E%3C/svg%3E")}
+/* a metronome: everything about when */
+.bcell.c-timing .ci{--cim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M5.4 1.6h4.2l2.4 11.8H3z' fill='none' stroke='%23000' stroke-width='1.4' stroke-linejoin='round'/%3E%3Cpath d='M7.5 10.6l3.3-7.2' stroke='%23000' stroke-width='1.4' stroke-linecap='round'/%3E%3Ccircle cx='10.8' cy='3.4' r='1.4'/%3E%3C/svg%3E")}
+/* crossed arrows: the pattern transforms */
+.bcell.c-mods .ci{--cim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M1.2 4.4h5l4.6 6.2h2M1.2 10.6h5l4.6-6.2h2' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3Cpath d='M11.6 2.4l3 2-3 2zM11.6 8.6l3 2-3 2z'/%3E%3C/svg%3E")}
+/* one cycle of wave: what plays the notes (the old SOUND key's silkscreen) */
+.bcell.c-voice .ci{--cim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M1 7.5C2.6 3 4.2 3 5.8 7.5S9 12 10.6 7.5 13.4 3 14 4.8' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E")}
+/* a kick drum: circle in a ring */
+.bcell.c-rhythm .ci{--cim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Ccircle cx='7.5' cy='7.5' r='5.8' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3Ccircle cx='7.5' cy='7.5' r='2.1'/%3E%3C/svg%3E")}
+/* a rising ramp with an arrowhead: how the section enters and leaves */
+.bcell.c-trans .ci{--cim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M1.2 12.8C6 12.8 8.6 3.6 12.6 3.4' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='M10.6 1.4l3.6 2-3.6 2z'/%3E%3C/svg%3E")}
+/* the PART cell: the shared numeral column, plus the pin lamp when the box
+   loops alone (the pin key itself lives in the PART popup) */
+.bnum{color:var(--tbl-ink);font:600 11px/1 var(--f-num)}
+.box.live .bnum{color:var(--accent-txt)}
+.bpin{display:inline-flex;align-items:center}
+.bpin[hidden]{display:none}
+.bpin .pini{display:block;width:10px;height:10px;fill:var(--accent-txt)}
+/* the GENRE cell is the row's name */
+.bcell.bgenre{font-weight:600;font-size:11.5px}
+/* the FUNCTION word keeps its lens outline when set — it NAMES the section */
+.bcell.c-role:not(.unset) .role{
   font:600 8.5px/1.5 var(--f-legend);letter-spacing:.08em;text-transform:uppercase;
   color:var(--accent-txt);border:1px solid var(--accent);border-radius:2px;
-  padding:0 3px;white-space:nowrap}
-.bgenre{grid-row:1;grid-column:3;min-width:0;
-  font:400 11.5px/1.5 var(--f-legend);letter-spacing:.02em;color:var(--faint);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bgenre.has{color:var(--ink);font-weight:600}
+  padding:0 3px}
 /* the LENGTH cell: bars always, the clock beside it where there is room */
-.bbars{grid-row:1;grid-column:4;justify-self:end;display:flex;align-items:baseline;gap:5px;
+.bcell.bbars .cvx{display:flex;align-items:baseline;gap:5px;
   font:600 8.5px/1.5 var(--f-legend);letter-spacing:.04em;text-transform:uppercase;
-  color:var(--dim);white-space:nowrap}
-.bbars .bn{color:var(--ink);font-weight:600}
-.bbars .bd{font-family:var(--f-num);letter-spacing:.02em;color:var(--faint)}
-/* THE PHRASE CHIPS — the slot pad's contour, at a sixth of the pad's area.
-   They are the row's own column at every width now; the desk-only numerals
-   ("1+3 / 2") they replaced said WHICH phrase and nothing about it. */
-.bchips{grid-row:1;grid-column:5;display:flex;gap:2px;align-items:center;
-  min-width:0;overflow:hidden}
+  color:var(--dim)}
+.bbars .bn{color:var(--ink);font-weight:600;white-space:nowrap}
+.bbars .bd{font-family:var(--f-num);letter-spacing:.02em;color:var(--faint);white-space:nowrap}
+/* THE PATTERN CELLS — the phrase's own contour at fingernail size, one chip
+   per (layer, phrase), plus the [+] that grows the bank into this box. */
+.bchips{display:flex;gap:2px;align-items:center;min-width:0;overflow:hidden}
 .bch{
   appearance:none;cursor:pointer;padding:0;flex:0 0 auto;
   width:19px;height:13px;border-radius:2px;
@@ -954,74 +860,32 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   fill:none;stroke:currentColor;stroke-width:3.4;
   stroke-linecap:round;stroke-linejoin:round}
 .bch:hover{border-color:var(--accent);color:var(--accent-txt)}
-/* SEL is the edit target (this phrase is open in the tracker); LIT is the
-   sounding section — ui/songrow.js says why the lamp is per section */
+/* SEL is the edit target (this phrase is open in the editor popup); LIT is
+   the sounding section — ui/songrow.js says why the lamp is per section */
 .bch.sel{border-color:var(--accent);color:var(--accent-txt);background:var(--tbl-hi)}
 .bch.lit{color:var(--st-play);border-color:var(--st-play)}
-.blayers{grid-row:2;grid-column:2/-1;display:flex;flex-direction:column;gap:0}
-.blayers:empty{display:none}
-/* the strip is SLIM now — eight 5px lamps instead of eight 7px ones with 5px
-   between them, which was 70px of the row's width for eight bits of state.
-   The colour coding and the title words are untouched; only the pitch is. */
-.bleds{grid-row:1;grid-column:6;justify-self:start;
-  display:flex;gap:3px;height:10px;align-items:center}
-.bleds .led{width:5px;height:5px;border-radius:1px}
-.btools{grid-row:1;grid-column:7;justify-self:end;align-self:center;
-  display:flex;gap:1px;position:relative;z-index:1}
-/* A STACKED LAYER IS ITS OWN LINE: the genre cell names the authority, each
-   rider gets an indented sub-row with the ↳ as its silkscreen. It is a real
-   button — clicking focuses that layer for the phrase rail and opens the row's
-   option sheet already looking at it. AS TIGHT AS THE LINE ABOVE IT: a rider
-   used to cost 32px on a phone, which is most of a whole row for one word. */
-.blayer{appearance:none;background:none;border:0;cursor:pointer;text-align:left;
-  position:relative;padding:0 2px 0 13px;min-width:0;
-  font:600 9.5px/1.5 var(--f-legend);letter-spacing:.02em;color:var(--dim);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.blayer::before{content:"↳";position:absolute;left:2px;color:var(--faint)}
-.blayer:hover{color:var(--ink)}
-.blayer.foc{color:var(--accent-txt)}
+.bch.bplus{
+  width:auto;min-width:19px;padding:0 4px;height:13px;
+  font:600 10px/1 var(--f-num);color:var(--faint);
+  border-style:dashed;display:inline-flex;align-items:center;justify-content:center}
+.bch.bplus:hover{color:var(--accent-txt)}
+.bch.bplus[hidden]{display:none}
 /* the play-through rides the row's own bottom edge — a hairline, not a grid
    row: it is the row filling up, not another field of the table */
 .bprog{position:absolute;left:0;right:0;bottom:0;height:2px;
   background:var(--tbl-ground);overflow:hidden}
 .fillbar{display:block;height:100%;width:0;background:var(--st-play)}
-/* THREE KEYS, SAME SEATS ON EVERY ROW: + grows the stack, then the CORNER
-   CLUSTER — pin and dismiss. None of the three has a "nowhere to go" state any
-   more (that was the ↑ ↓ pair, and the .ghost rule went with them to the row
-   sheet's head), so nothing here reshuffles between the first section and the
-   last: the ✕ is at the same x on row 1 as on row 11. */
-.btools .t{
-  appearance:none;background:none;border:0;cursor:pointer;color:var(--faint);
-  font:600 12px/1 var(--f-num);padding:3px 4px;border-radius:2px;min-width:22px;
-  display:inline-flex;align-items:center;justify-content:center;
-}
-.btools .t:hover{color:var(--accent-txt);background:var(--sunk)}
-.btools .t.on{color:var(--accent-txt)}
-.btools .x{font-size:13px}
-/* the pin is a drawn path (no dependable pushpin character exists) painted in
-   currentColor, so it lights with the key exactly as a glyph would */
-.pini{display:block;width:12px;height:12px;fill:currentColor}
-.btools .pin.on .pini{fill:var(--accent-txt)}
-.btools .addl{font-size:15px}
-/* THE ROW STATES ARE THE TABLE'S (top of this file): the ring, the wash and
-   the leading lamp are declared once for every table on the machine. What is
-   left here is what only a SONG row can be — the drop target of a reorder, the
-   row being dragged, and the sounding row's numeral going hot. THE OPEN ROW
-   STAYS ABOVE THE SCRIM (.box.open carries the z-index): the sheet is not a
-   modal over the song, it belongs to this row, and the row is its title bar —
-   tapping it again closes it, double-tapping it loops the section. */
+/* THE ROW STATES ARE THE TABLE'S (top of this file). What is left here is
+   what only a SONG row can be — the drop target of a reorder, the row being
+   dragged. THE OPEN ROW STAYS ABOVE THE SCRIM (.box.open carries the
+   z-index): the popup belongs to this row, and the row is its title bar. */
 .box.over{box-shadow:inset 0 3px 0 var(--accent)}
 .box.dragging{opacity:.4}
-.box.live .bnum{color:var(--accent-txt)}
 /* THE HEADER ROW: the columns named once, in silkscreen (.thd), instead of
-   every row re-explaining itself. Same grid as .box, so it lines up. */
+   every row re-explaining itself. Same grid as .box on a desk. */
 .shead{padding:5px var(--tbl-gut) 4px;font-size:8.5px;color:var(--tbl-faint)}
-/* the header cells sit over the cells they name, which means they align the
-   same way: the numeral column right, the tools column right */
-.shead .hnum,.shead .htools{text-align:right}
 /* THE FOOTER ROW: duplicate and add. They are table keys, not sections, so
-   they get their own row under the last one rather than a floating slot in the
-   rack where they read as an empty section. */
+   they get their own row under the last one. */
 .sfoot{display:flex;padding:6px var(--tbl-gut)}
 .sfootcell{display:flex;gap:6px;flex-wrap:wrap}
 .addbox{
@@ -1035,110 +899,81 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .addbox.copy svg{width:17px;height:17px;fill:none;stroke:currentColor;
   stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
 .addbox .ab{font:600 9px/1 var(--f-legend);letter-spacing:.14em;text-transform:uppercase}
-/* THE LED STRIP replaced the tag pile. A fully configured section used to emit
-   ~20 word-chips into a 34px well that hid the overflow — noise with no
-   information gradient, and a re-layout on every option toggle. Eight LEDs at
-   fixed positions never reflow: lit = that family is set, colour = which
-   family, and the words moved to the LED's title. One lamp per family:
-   line · drums · bass · time · fx · sends · place · edges. */
-.bleds .led[data-fam="line"]{--led-c:var(--v0)}
-.bleds .led[data-fam="drum"]{--led-c:var(--drum)}
-.bleds .led[data-fam="bass"]{--led-c:var(--vb)}
-.bleds .led[data-fam="time"]{--led-c:var(--v1)}
-.bleds .led[data-fam="fx"]{--led-c:var(--v2)}
-.bleds .led[data-fam="send"]{--led-c:var(--a-amber)}
-.bleds .led[data-fam="place"]{--led-c:var(--a-cream)}
-.bleds .led[data-fam="edge"]{--led-c:var(--v3)}
 .pchip.role.on{background:var(--accent);border-color:var(--accent);color:var(--on-ink)}
 
-/* ---- THE MIX TABLE ----
-   The desk under the section, as the FIFTH user of .tbl (ui/mixtbl.js): one
-   row per SOUND the selected box makes, the mixer strip as columns, and the
-   section's own chain as the last row under a heavier rule — which is the
-   signal flow, since every part bus feeds it.
+/* ---- THE BOARD ----
+   The MIX page as a desk (ui/mixtbl.js, "the SSL board"): VERTICAL CHANNEL
+   STRIPS in the .tbl well — label block, value keys, M/S, a long-throw
+   automated fader — then the SECTION strip past a heavier rule, then the
+   shared-bus strips and the MASTER strip with its meter. The board scrolls
+   sideways inside its own well when the strips outgrow the glass; the page
+   body never does.
 
-   IT IS A TABLE BECAUSE A MIXER IS ONE. Rows are channels, columns are the
-   strip; you read DOWN a column to compare two sounds and ACROSS a row to
-   understand one. A rack of vertical faders would have been a fifth idiom on
-   the one screen that needs one least, and it does not survive 390px.
-
-   THE COLUMNS ARE FIXED (not auto) for the reason the song table's are: an
-   auto column sized to "drown" on one row and "—" on the next is a table that
-   shimmers as you mix. Same template on .mhead and .mrow, so the silkscreen
-   sits over the cells it names. Width buys room — the numeral and the SOUND
-   column arrive on a desk — never a second shape. */
-.mixtbl{display:flex;flex-direction:column;max-height:none;overflow-x:hidden}
-.mhead,.mrow{
-  display:grid;
-  grid-template-columns:minmax(58px,1.15fr) minmax(56px,1.05fr)
-    repeat(4,minmax(38px,.72fr)) 26px 26px;
-  gap:0 3px;align-items:center;flex:0 0 auto;
+   .mrow / .msec / .mval / .mk-* / .mchip keep their names ACROSS the redesign
+   on purpose: two browser gates (nukernel-drums deskUI, nukernel-audio (E))
+   drive this surface through exactly those hooks, and only CHANNEL strips
+   carry .mrow — the drums gate counts them against the part roster. */
+.mixtbl.board{display:flex;flex-direction:row;align-items:stretch;max-height:none;
+  overflow-x:auto;overscroll-behavior-x:contain;padding:0 0 4px}
+.strips{display:flex;align-items:stretch;min-width:max-content}
+.strips.chans{padding-left:var(--tbl-gut)}
+/* the bus block reads as a second bay of the same desk: heavier rule at its
+   left edge, sunk ground — the "music divides here" cadence, rotated */
+.strips.buses{border-left:2px solid var(--tbl-rule);background:var(--sunk);
+  padding-right:var(--tbl-gut)}
+.strip{
+  display:flex;flex-direction:column;gap:6px;flex:0 0 auto;
+  width:88px;min-width:0;padding:8px 6px 6px;
+  border-right:1px solid var(--tbl-hair);
 }
-/* the two things a 390px table cannot afford: the channel number, and the
-   second line naming what each part is PLAYING (they come back in the two
-   width blocks at the end of this file). The ADDRESS — lead, pad, bass — is
-   the load-bearing half and it is there at every width. */
-.mnum,.mh.mhnum{display:none}
-.mhead{padding:5px var(--tbl-gut) 4px;font-size:8.5px;color:var(--tbl-faint)}
-.mh{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mh.mhkey,.mh.mhnum{text-align:center}
-.mrow{
-  position:relative;min-height:var(--tbl-rowh,44px);
-  padding:3px var(--tbl-gut);
-  border-bottom:1px solid var(--tbl-hair);
-}
-.mrow:hover{background:var(--tbl-hi)}
-/* THE MASTER STRIP. Under the heavier rule — the table's own "the music
-   divides here" cadence (.trow.bar uses the same token) — because everything
-   above it feeds into it, and its two missing keys are left as empty seats
-   rather than dead controls: at a glance, M and S are things a SOUND has and
-   a section does not. */
-.mrow.msec{border-top:2px solid var(--tbl-rule);border-bottom:0;background:var(--sunk)}
-.mrow.msec .mpn{color:var(--accent-txt);letter-spacing:.14em}
-/* a part the desk has silenced — muted, or not the one being soloed. The row
-   keeps every value legible (you are about to un-mute it) and simply steps
-   back; strike-through on a table of live controls reads as disabled. */
-.mrow.off .mpart,.mrow.off .mval{opacity:.42}
-.mpart{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:1px}
-.mpn{font:600 11.5px/1.2 var(--f-legend);letter-spacing:.06em;color:var(--tbl-ink);
+.strip:hover{background:var(--tbl-hi)}
+/* THE SECTION STRIP: everything left of it feeds it, so it closes the
+   channel bay against the heavier rule the bus bay opens with */
+.strip.msec{background:var(--sunk)}
+.strip.msec .mpn{color:var(--accent-txt);letter-spacing:.12em}
+/* a part the desk has silenced — muted, or not the one being soloed — steps
+   back whole; every value stays legible (you are about to un-mute it) */
+.strip.off .mlabel,.strip.off .mval,.strip.off .fwell{opacity:.42}
+/* ---- the label block: number, address, what plays it, where it goes ---- */
+.mlabel{display:flex;flex-direction:column;gap:1px;min-height:52px}
+.mnum{font:600 9px/1 var(--f-num);color:var(--tbl-faint)}
+.mpn{font:600 11px/1.2 var(--f-legend);letter-spacing:.06em;color:var(--tbl-ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
+.mps{font:400 9.5px/1.2 var(--f-legend);letter-spacing:.01em;color:var(--tbl-faint);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mps{font:400 10px/1.2 var(--f-legend);letter-spacing:.01em;color:var(--tbl-faint);
+.mfeed{font:400 8.5px/1.2 var(--f-legend);letter-spacing:.03em;color:var(--tbl-faint);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mcell{min-width:0;display:flex}
-/* A VALUE CELL IS A KEY, in the crowd's cheap material (flat fill, 1px bevel,
-   no shadow — the hw.css paint budget): there are up to ten rows of five here
-   and they are patched on every commit. Tapping one opens its chip set. */
+/* ---- the value keys, stacked, each under its own silkscreen ---- */
+.mvals{display:flex;flex-direction:column;gap:3px}
+.mcell{min-width:0;display:flex;align-items:center;gap:4px}
+.mvlab{flex:0 0 24px;font:600 8px/1 var(--f-legend);letter-spacing:.1em;
+  text-transform:uppercase;color:var(--tbl-faint);font-style:normal}
 .mval{
-  appearance:none;cursor:pointer;width:100%;min-width:0;min-height:30px;
+  appearance:none;cursor:pointer;flex:1 1 auto;min-width:0;min-height:24px;
   display:flex;align-items:center;gap:2px;flex-wrap:wrap;
-  padding:4px 5px;border-radius:3px;
+  padding:3px 4px;border-radius:3px;
   background:var(--tbl-key,var(--hw-key-mid));color:var(--tbl-ink);
   border:0;border-top:1px solid rgba(255,255,255,.07);
   border-bottom:1px solid rgba(0,0,0,.55);
-  font:500 10.5px/1.2 var(--f-legend);letter-spacing:.02em;
+  font:500 10px/1.2 var(--f-legend);letter-spacing:.02em;
   white-space:nowrap;overflow:hidden;
 }
 .mval:hover{border-top-color:rgba(255,255,255,.2)}
-/* ONE STATE LANGUAGE, the same one the palette speaks: a bright value is one
-   YOU set, a dim one is the default answering — the part's own zero, or (on
-   the section's reverb) the number the genre asks for. */
+/* ONE STATE LANGUAGE, the palette's: a bright value is one YOU set, a dim one
+   is the default answering — the part's own zero, or the genre's own wetness */
 .mval.dflt{color:var(--tbl-faint);background:transparent;
   border-top-color:transparent;border-bottom-color:var(--tbl-hair)}
 .mval.set{color:var(--accent-txt);font-weight:600}
 .mval.open{outline:2px solid var(--accent);outline-offset:-2px}
-/* the effects cell shows the CHAIN, compactly and in order — up to three
-   little lamps, which is the whole of MAX_FX, so the cell never grows */
-.mfxc{font-style:normal;font-size:9.5px;letter-spacing:.02em;
+.mfxc{font-style:normal;font-size:8.5px;letter-spacing:.02em;
   padding:1px 3px;border-radius:2px;background:var(--sunk);color:var(--tbl-ink);
   overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .mval.set .mfxc{background:var(--accent);color:var(--on-ink)}
 .mfxc.none{background:transparent;color:var(--tbl-faint);padding:0}
-/* M AND S — the desk's own pair, and the two controls here that latch rather
-   than open. They wear the state colours hw.css already defines for them
-   (--st-mute, --st-solo): a mute key that lights orange like everything else
-   is a mute key you have to read. */
+/* ---- M and S, side by side over the fader ---- */
+.mms{display:flex;gap:3px;min-height:0}
 .mkey{
-  appearance:none;cursor:pointer;width:100%;min-height:30px;padding:0;
+  appearance:none;cursor:pointer;flex:1 1 0;min-height:24px;padding:0;
   border-radius:3px;border:0;
   border-top:1px solid rgba(255,255,255,.07);
   border-bottom:1px solid rgba(0,0,0,.55);
@@ -1148,6 +983,94 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .mkey:hover{color:var(--tbl-ink)}
 .mk-mute.on{background:var(--st-mute);color:#fff}
 .mk-solo.on{background:var(--st-solo);color:var(--on-ink)}
+/* ---- THE FADER: a milled slot, a silkscreened zero line, a cap that MOVES.
+   The cap rides --f (0 at the slot's foot), written per frame off the built
+   gain nodes — the automation is what you are looking at, and the dB readout
+   under the slot is YOUR offset over it. touch-action none: the drag is the
+   control's own gesture, not a scroll. ---- */
+.fwell{display:flex;flex-direction:column;align-items:center;gap:4px;
+  flex:1 1 auto;min-height:150px}
+.fslot{
+  position:relative;flex:1 1 auto;width:34px;min-height:120px;
+  border-radius:4px;cursor:ns-resize;touch-action:none;
+  background:linear-gradient(180deg,var(--hw-recess) 0,var(--hw-recess-2) 100%);
+  border:1px solid var(--hw-edge);border-bottom-color:var(--hw-bevel-hi);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.45);
+}
+.fslot:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.fgroove{position:absolute;left:50%;top:6px;bottom:6px;width:2px;margin-left:-1px;
+  background:rgba(0,0,0,.6);border-radius:1px}
+.fzero{position:absolute;left:3px;right:3px;height:1px;background:var(--tbl-faint);
+  bottom:calc(6px + var(--f,0)*(100% - 12px));opacity:.6}
+.fcap{
+  position:absolute;left:2px;right:2px;height:16px;
+  bottom:calc(4px + var(--f,0)*(100% - 24px));
+  border-radius:3px;
+  background:linear-gradient(180deg,var(--hw-key-hi) 0,var(--hw-key-mid) 45%,
+    var(--hw-key-lo) 100%);
+  border:1px solid var(--hw-edge);border-top-color:var(--hw-bevel-hi);
+  box-shadow:0 2px 4px rgba(0,0,0,.4);
+}
+.fcap::after{content:"";position:absolute;left:3px;right:3px;top:50%;height:2px;
+  margin-top:-1px;background:var(--accent);border-radius:1px}
+/* the offset readout: the strip's own little LCD digit */
+.foff{font:600 10px/1 var(--f-num);letter-spacing:.04em;color:var(--accent-txt);
+  min-height:12px}
+.foff.dflt{color:var(--tbl-faint)}
+/* bus-strip faders are DETENTED (they step the rack's own table) and slimmer */
+.fslot.bslot,.fslot.vslot{width:26px}
+/* ---- the MASTER strip: the meter beside the volume fader ---- */
+.strip.mstr{width:104px;border-right:0}
+.mbody{display:flex;gap:6px;flex:1 1 auto;min-height:150px}
+.meter{
+  position:relative;flex:0 0 14px;border-radius:3px;overflow:hidden;
+  background:var(--lcd-bg);border:1px solid var(--hw-edge);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.5);
+}
+.mfill{position:absolute;left:2px;right:2px;bottom:2px;
+  height:calc(var(--f,0)*(100% - 4px));border-radius:1px;
+  background:linear-gradient(180deg,var(--a-red) 0,var(--a-amber) 12%,
+    var(--st-play) 40%,var(--st-play) 100%)}
+.mstages{color:var(--accent-txt)}
+
+/* ---- THE EFFECTS RACK ----
+   One knob row per shared bus, then the MASTER row (fields.js registries; the
+   masters moved here off the SONG page). A knob is the machine's one rotary:
+   a milled face, a pointer line rotated by --ka across the detents, the value
+   word under it — set bright, default dim, exactly the chips' language. */
+.rack{display:flex;flex-direction:column}
+.rrow{display:flex;align-items:flex-start;gap:10px;
+  padding:8px var(--tbl-gut);border-bottom:1px solid var(--tbl-hair)}
+.rrow:last-of-type{border-bottom:0}
+.rrow.rmaster{border-top:2px solid var(--tbl-rule);background:var(--sunk)}
+.rname{flex:0 0 76px;display:flex;align-items:center;gap:6px;padding-top:10px;
+  font:600 9px/1.2 var(--f-legend);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--dim)}
+.rknobs{display:flex;flex-wrap:wrap;gap:6px 10px}
+.kwrap{display:flex;flex-direction:column;align-items:center;gap:2px;width:56px}
+.klab{font:600 8px/1.2 var(--f-legend);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--dim)}
+.knobk{
+  appearance:none;cursor:pointer;padding:0;border:0;background:none;
+  width:40px;height:40px;touch-action:none;border-radius:50%;
+}
+.knobk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.kface{
+  display:block;width:40px;height:40px;border-radius:50%;position:relative;
+  background:
+    radial-gradient(circle at 34% 30%,var(--hw-key-hi) 0,var(--hw-key-mid) 55%,
+      var(--hw-key-lo) 100%);
+  border:1px solid var(--hw-edge);border-top-color:var(--hw-bevel-hi);
+  box-shadow:0 2px 4px rgba(0,0,0,.4),inset 0 1px 0 var(--hw-bevel-hi);
+  transform:rotate(var(--ka,-135deg));
+}
+.kmark{position:absolute;left:50%;top:3px;width:2px;height:12px;margin-left:-1px;
+  border-radius:1px;background:var(--tbl-faint)}
+.knobk.set .kmark{background:var(--accent)}
+.kval{font:500 9px/1.2 var(--f-legend);letter-spacing:.02em;color:var(--tbl-faint);
+  max-width:56px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  text-align:center}
+.knobk.set + .kval{color:var(--accent-txt);font-weight:600}
 
 /* ---- the cell popover ----
    Tapping a mix cell opens ITS chip set beside it. Anchored on a desk, a
@@ -1202,46 +1125,17 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   color:var(--ink)}
 .mchip.on.dflt::after{background:color-mix(in srgb,var(--a-orange) 55%,var(--led-off))}
 
-/* ---- palette ----
-   Six tabs across the top, then one row per group. The tab strip takes the whole
-   width so the groups below it always start on a new line; before it existed the
-   palette was one flat run of a hundred and forty chips.
-   A chip is a latching key with an LED in its corner — but chips are the other
-   crowd (~140 on the line tab), so the material is the cheap bevel: flat fill,
-   edge borders, one pseudo-element lamp. No shadows, no transitions. */
-/* its own panel now (it used to share the song panel, hence the old rule
-   line; the panel edge does that job) */
-/* the banks are trays now, so a line of them aligns at the TOP — centring
-   floated a short bank halfway down beside a tall one and the header rows
-   stopped lining up, which is the one thing a page of tables must not do */
-.palette{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:flex-start}
-/* the strip SCROLLS rather than clips — with overflow:hidden the active tab
-   could sit out of view on a phone (MOVE's own tab was invisible on the MOVE
-   page); palette.js scrolls the lit tab into view on every activation */
-.ptabs{flex:1 0 100%;display:flex;gap:0;border:1px solid var(--hw-edge);border-radius:4px;
-  overflow-x:auto;overflow-y:hidden;width:fit-content;max-width:100%;
-  scrollbar-width:none;
-  background:var(--hw-recess);
-  box-shadow:inset 0 2px 4px rgba(0,0,0,.45)}
-.ptabs::-webkit-scrollbar{display:none}
-.ptab{
-  appearance:none;border:0;border-right:1px solid var(--hw-edge);background:transparent;
-  color:var(--dim);font:600 11px/1 var(--f-legend);letter-spacing:.12em;text-transform:uppercase;
-  padding:9px 15px;cursor:pointer;flex:0 0 auto;white-space:nowrap;
-}
-.ptab:last-child{border-right:0}
-.ptab:hover{color:var(--ink)}
-.ptab.on{background:var(--accent);color:var(--on-ink)}
-/* no max-width:82ch here — a clamped flex-basis lets the first bank share the
-   note's row, which un-aligns the whole page; the note is one sentence and
-   wraps at the container instead */
+/* ---- the chip banks ----
+   The palette is a LIBRARY now (ui/palette.js mountBanks) — there is no tab
+   strip and no palette page; the banks are built into the cell popups. A
+   chip is a latching key with an LED in its corner — chips are the crowd, so
+   the material is the cheap bevel: flat fill, edge borders, one
+   pseudo-element lamp. No shadows, no transitions. */
 .pnote{flex:1 0 100%;margin:0;font-size:11px;color:var(--dim);line-height:1.6}
 /* A GROUP IS A BANK, AND A BANK IS A TABLE SECTION: the same .tbl well and
-   the same .thd header row the pattern, the song and the arrangement wear,
+   the same .thd header row the pattern editor and the song table wear,
    holding a UNIFORM grid of keys — equal widths, aligned columns, 2-3 across
-   on a phone, more as the bank gets room. The banks tile at width: each takes
-   a ~300px tile of the palette, so a tab reads as a page of labelled trays
-   instead of one long list, and a tray reads like every other table here. */
+   on a phone, more as the bank gets room. */
 .pgroup{flex:1 1 300px;min-width:240px}
 .plabel{display:block;letter-spacing:.16em;color:var(--tbl-faint)}
 .pchips{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));
@@ -1290,32 +1184,26 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   /* the step cells already hold 44px at every width — the table is the same
      table on a tablet, only roomier, so there is nothing here to re-lay-out */
   .pchip{padding:13px 12px 13px 17px;font-size:12px;min-height:44px}
-  .ptab{padding:15px 16px;min-height:44px}
   .btn{padding:13px 16px;min-height:44px}
   .slot{min-height:48px}
-  /* THE ROW KEYS ARE THE ONE PLACE THE 44px FLOOR LOSES, deliberately and by
-     a stated amount. They used to be 44×40 apiece — four of them, which is
-     176px of key on a 390px row and the reason a section was 109px tall. The
-     brief is a short row; three keys at 34px tall inside a 38px row is what
-     that costs. The mitigations are real and not hand-waving:
-       · a MISS is harmless — every miss lands on the row, which opens the
-         sheet, and the sheet's own keys are at the full 44px floor;
-       · the ✕ (the one destructive key) is at the row's outer edge with the
-         pin between it and +, so the two adjacent targets to a mis-hit are
-         "pin" and "the row";
-       · the same three actions are ALL reachable from the sheet at 44px
-         (dismiss, the pin's dblclick-to-loop, and + via the genre bank).
-     The row's own hit area is the rest of the line, which is 300+px wide. */
-  .btools .t{padding:8px 5px;font-size:13px;min-width:30px;min-height:34px}
-  .btools{gap:2px}
+  /* THE ROW CELLS ARE THE ONE PLACE THE 44px FLOOR LOSES, deliberately and
+     by a stated amount: ten cells at 44px tall is a 100px section, which is
+     the exact height the cell row exists to end. The mitigations are real:
+       · every miss between cells lands on the row, which opens the PART
+         popup, and every popup's own keys hold the full 44px floor;
+       · nothing on the row is destructive — delete lives in the PART popup
+         behind a deliberate tap.
+     The cells get a taller pad than a desk's, short of the floor. */
+  .bcell{padding:7px 6px;min-height:32px}
   /* the phrase chips are a nudge under the floor for the same reason and with
-     the same mitigation — a miss opens the row. They stay UNDER the key
-     height, or the chips (not the keys) would be what sets the row's height */
+     the same mitigation — a miss opens the row. They stay UNDER the cell
+     height, or the chips would be what sets the row's height */
   .bch{min-height:20px}
-  /* the mix table's cells and its two latching keys: a value cell opens a
-     sheet (a miss is harmless) but M and S change what you hear, so both take
-     the row's full height rather than their text's */
-  .mval,.mkey{min-height:40px}
+  /* the board's value keys and its two latching keys: a value key opens a
+     sheet (a miss is harmless) but M and S change what you hear, so both get
+     a taller face on coarse pointers; the fader slot is already a slab */
+  .mval,.mkey{min-height:34px}
+  .knobk,.kface{width:44px;height:44px}
   /* the two faders own a custom pointer gesture with touch-action:none — the
      26px strip WAS the whole grab area; the track/thumb stay centred while
      the hit strip grows. The recessed LCD pickers get the same floor. */
@@ -1360,26 +1248,15 @@ details .c{color:var(--faint)}
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
 }
 /* the rail's silkscreen: a small icon over each word, currentColor through an
-   SVG mask (the .ik recipe), so the lit key's dark ink carries into its icon.
-   The row sheet's surface keys wear the same recipe — one icon material. */
-.pkey .pi,.rpsk .pi{width:15px;height:15px;flex:0 0 auto;background:currentColor;
+   SVG mask (the .ik recipe), so the lit key's dark ink carries into its icon. */
+.pkey .pi{width:15px;height:15px;flex:0 0 auto;background:currentColor;
   -webkit-mask:var(--pim) center/contain no-repeat;mask:var(--pim) center/contain no-repeat}
 /* the song's own picture: a table of rows (it was three upright cartridges in
    a rack, which is the layout the song table replaced) */
 .pkey[data-page="song"] .pi{--pim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Crect x='1.2' y='2.6' width='12.6' height='9.8' rx='1.4' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3Cpath d='M1.2 5.7h12.6M1.2 8.6h12.6M1.2 11.5h12.6' stroke='%23000' stroke-width='1.3'/%3E%3C/svg%3E")}
-/* the step grid, nine pads */
-.pkey[data-page="step"] .pi{--pim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Crect x='.6' y='.6' width='3.6' height='3.6' rx='.9'/%3E%3Crect x='5.7' y='.6' width='3.6' height='3.6' rx='.9'/%3E%3Crect x='10.8' y='.6' width='3.6' height='3.6' rx='.9'/%3E%3Crect x='.6' y='5.7' width='3.6' height='3.6' rx='.9'/%3E%3Crect x='5.7' y='5.7' width='3.6' height='3.6' rx='.9'/%3E%3Crect x='10.8' y='5.7' width='3.6' height='3.6' rx='.9'/%3E%3Crect x='.6' y='10.8' width='3.6' height='3.6' rx='.9'/%3E%3Crect x='5.7' y='10.8' width='3.6' height='3.6' rx='.9'/%3E%3Crect x='10.8' y='10.8' width='3.6' height='3.6' rx='.9'/%3E%3C/svg%3E")}
-/* THE OTHER TWO ICONS MOVED WITH THEIR DESTINATIONS. SOUND and MIX left the
-   rail for the row sheet's surface switch (ui/pages.js says why), and the
-   silkscreen went with them rather than being deleted and re-drawn: the same
-   .pi mask recipe, keyed on data-surf instead of data-page, so the two
-   surfaces read as the same two things they always were. */
-/* one cycle of wave */
-.rpsk[data-surf="sound"] .pi{--pim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M1 7.5C2.6 3 4.2 3 5.8 7.5S9 12 10.6 7.5 13.4 3 14 4.8' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E")}
-/* three faders, caps at different throws */
-.rpsk[data-surf="mix"] .pi{--pim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M2.6 1.4v12.2M7.5 1.4v12.2M12.4 1.4v12.2' stroke='%23000' stroke-width='1.3'/%3E%3Crect x='1' y='3.4' width='3.2' height='3' rx='.8'/%3E%3Crect x='5.9' y='8.2' width='3.2' height='3' rx='.8'/%3E%3Crect x='10.8' y='5.2' width='3.2' height='3' rx='.8'/%3E%3C/svg%3E")}
-/* move in time: the two-way arrow */
-.pkey[data-page="move"] .pi{--pim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M13.6 4.6H3M5.8 1.8L3 4.6l2.8 2.8' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M1.4 10.4H12M9.2 7.6l2.8 2.8-2.8 2.8' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+/* the mix desk: three faders, caps at different throws (the icon the MIX
+   destination has always worn, wherever it lived) */
+.pkey[data-page="mix"] .pi{--pim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M2.6 1.4v12.2M7.5 1.4v12.2M12.4 1.4v12.2' stroke='%23000' stroke-width='1.3'/%3E%3Crect x='1' y='3.4' width='3.2' height='3' rx='.8'/%3E%3Crect x='5.9' y='8.2' width='3.2' height='3' rx='.8'/%3E%3Crect x='10.8' y='5.2' width='3.2' height='3' rx='.8'/%3E%3C/svg%3E")}
 .pkey[aria-selected="true"]{
   color:var(--on-ink);
   background:linear-gradient(180deg,
@@ -1398,17 +1275,12 @@ details .c{color:var(--faint)}
   body{padding:0}
   .chassis{
     max-width:none;height:100dvh;gap:0;
-    display:grid;grid-template-rows:auto auto minmax(0,1fr) auto auto;
+    display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;
   }
-  /* the readout is a fixed one-line chyron between deck and rail; the full
-     multi-line description still lives on the MOVE page (#src) */
+  /* the readout is a fixed one-line chyron between deck and rail */
   .readout{border-radius:0;border-left:0;border-right:0;min-height:0;
     padding:6px 10px;font-size:11px;white-space:nowrap;overflow:hidden;
     text-overflow:ellipsis}
-  /* the context strip becomes the second chassis row: edge to edge under the
-     transport, one line tall, on every page */
-  .ctxstrip{border-radius:0;border-left:0;border-right:0;
-    padding:6px 10px;font-size:11px}
   .mast{display:none}
   .bar{
     border-radius:0;border-left:0;border-right:0;border-top:0;
@@ -1464,27 +1336,13 @@ details .c{color:var(--faint)}
   .box,.cell,.slot,.blayer,.prow{scroll-margin-top:14px;scroll-margin-bottom:14px}
   .page{display:none}
   .page>*+*{margin-top:12px}
-  /* which page paints: one attribute, four rules. THREE pages now — the SOUND
-     and MIX destinations went into the row's own sheet (ui/pages.js says why),
-     so pg-palette and pg-mix are only ever painted here as MOVE's transition
-     chips; the sheet borrows both elements out of their hidden pages when it
-     opens, which is how they show on a phone at all. */
-  .chassis[data-page="song"]  .pg-song{display:block}
-  .chassis[data-page="step"]  .pg-step{display:block}
-  .chassis[data-page="move"]  .pg-palette{display:block}
-  .chassis[data-page="move"]  .pg-move{display:block}
-  /* MOVE is the arrangement's page — the strip is its point, so it comes
-     FIRST and gets the deck's height; the transition chips ride below it.
-     (In the DOM the palette section sits above pg-move because it serves
-     three pages; flex order restates whose page this is.) */
-  .chassis[data-page="move"] .deck{display:flex;flex-direction:column}
-  .chassis[data-page="move"] .pg-move{order:-1}
-  .chassis[data-page="move"] .pg-palette{display:block;margin-top:12px;flex:0 0 auto}
-  .chassis[data-page="move"] .dawscroll{height:clamp(260px,44vh,420px)}
+  /* which page paints: one attribute, TWO pages — SONG and MIX ("the row and
+     the board"). Everything else is a popup over whichever page is up. */
+  .chassis[data-page="song"] .pg-song{display:block}
+  .chassis[data-page="mix"]  .pg-mix{display:block}
   .pagerail{display:grid}
   .ed{padding:10px}
   .song{max-height:none}
-  .dawscroll{height:300px}
 }
 
 /* ---- the narrow band ----
@@ -1495,16 +1353,15 @@ details .c{color:var(--faint)}
    tighten to fit a phone, it is the wrong thing to have on the phone. */
 @media (max-width:560px){
   .tbl{--tbl-gut:6px}
-  .stepgrid{grid-template-columns:26px repeat(3,minmax(40px,1fr))
-    minmax(36px,44px) minmax(36px,44px) minmax(36px,44px)}
-  .stepgrid[data-ramp]{grid-template-columns:24px repeat(5,minmax(34px,1fr))
-    minmax(28px,38px) minmax(28px,38px) minmax(28px,38px)}
+  /* all eight columns, tighter — no latch, no hidden column: a bar cell
+     narrows where a numeral cell could not */
+  .stepgrid{grid-template-columns:18px repeat(3,minmax(24px,38px))
+    repeat(5,minmax(26px,1fr))}
   /* the column header keeps only its name at this width — the range line is
      the first thing a 390px column cannot afford */
   .rowlab{font-size:8.5px;letter-spacing:.04em;padding:4px 1px}
   .rowlab .rrange{display:none}
   .ed{gap:6px}
-  .cell.deg{font-size:12px}
   .edhint{font-size:10.5px}
   .edhead .btn.ik{padding:11px 8px}
   /* icon keys drop their word; the icon, the title and the id remain. The
@@ -1512,14 +1369,7 @@ details .c{color:var(--faint)}
      whole point of the icons — so the gaps and the (?) give a little too. */
   .edhead{gap:6px}
   .edhead h2{font-size:10px;letter-spacing:.1em}
-  /* six tabs at 390px: tighter silkscreen so the whole strip usually fits;
-     when it still doesn't, it scrolls and palette.js chases the lit tab */
-  .ptab{padding:13px 10px;letter-spacing:.08em;font-size:10px}
   .btn.hint{width:38px;height:38px;min-width:38px}
-  /* (The three-line phone shape this block used to re-place — .btools spanning
-     all three grid rows as a 2×2 pad, .bbars and .blayers stretched across
-     it — is gone: the base .box grid is ONE line at every width now, so there
-     is nothing left here to re-place. See THE SONG TABLE.) */
   .btn.ik{padding:11px 11px}
   /* the EDITOR's keys go icon-only — that is what buys the one-row header.
      The utility keys keep their words: Save/Load/Reset live on the roomy SONG
@@ -1534,107 +1384,75 @@ details .c{color:var(--faint)}
   .slot .sn{font-size:8px;letter-spacing:.02em}
   .slot::after{top:3px;right:3px;width:5px;height:5px}
   .mini{height:15px}
-  /* THE SONG TABLE AT 390: the base shape (see THE SONG TABLE above) with
-     the clock dropped from the length cell and the columns at their tightest.
-     Nothing re-lays-out here — the columns just get less room, which is the
-     whole point of one table at every width. */
-  .box,.shead{gap:0 4px}
+  /* THE SONG TABLE AT 390: the cell row at its tightest — the clock drops
+     from the length cell, the silkscreen shrinks, the cells wrap where they
+     must. Nothing re-lays-out: the cells just get less room, which is the
+     whole point of one row of cells at every width. */
   .bbars .bd{display:none}      /* bars stay; the mm:ss is what a phone drops */
-  .bbars{font-size:8px;letter-spacing:.02em}
-  .bgenre{font-size:11px}
-  .box .role{font-size:8px;letter-spacing:.04em;padding:0 2px}
-  /* every fixed track gives back a few pixels at this width, and all of them
-     go to the CHIP strip: it is the only track that shrinks (see the base
-     rule), so anything the keys and the lamps do not spend is one more phrase
-     you can see and tap */
-  .bleds{gap:2px}
-  .btools .t{min-width:24px;padding:8px 3px}
+  .bcell{padding:5px 4px;gap:3px;font-size:9.5px}
+  .bcell.bgenre{font-size:11px}
+  .bcell.c-role:not(.unset) .role{font-size:8px;letter-spacing:.04em;padding:0 2px}
   .bch{width:15px;height:12px}
   .addbox{flex:1 1 auto}
-  /* the tracker's voice columns give up their second line (the op) at this
-     width; the name and its swatch are what identify a channel */
-  .tcol .op{display:none}
-  /* THE MIX TABLE AT 390: the same nine columns minus the two a phone cannot
-     afford (they are already hidden), tightened. Nothing re-lays-out — the
-     values are abbreviated in the markup, not by CSS, so the cell says the
-     same word here as on a desk. */
-  .mhead,.mrow{grid-template-columns:minmax(50px,1.05fr) minmax(48px,.95fr)
-    repeat(4,minmax(32px,.66fr)) 28px 28px;gap:0 2px}
-  .mps{display:none}            /* the address stays; what plays it is what a
-                                   390px column drops, like the song row's clock */
-  .mval{font-size:10px;padding:4px 3px}
-  .mpn{font-size:10.5px;letter-spacing:.02em}
-  .mfxc{font-size:9px;padding:1px 2px}
+  /* THE BOARD AT 390: the same strips, narrower, scrolling in their own well
+     — a board is the one surface that EARNS a sideways scroll, because that
+     is what a desk wider than the room does. The address stays; what plays
+     it is what a 390px strip drops, like the song row's clock. */
+  .strip{width:76px;padding:6px 4px 5px}
+  .strip.mstr{width:92px}
+  .mps{display:none}
+  .mval{font-size:9.5px;padding:3px 3px}
+  .mvlab{flex-basis:20px}
+  .mpn{font-size:10px;letter-spacing:.02em}
+  .mfxc{font-size:8px;padding:1px 2px}
+  .fwell{min-height:128px}
+  .fslot{min-height:100px}
 }
 
 /* ---- the desk: the SAME tables, with room ----
-   A wide screen does not get a different editor, a different song or a
-   different arrangement — it gets the same four tables with taller rows, a
-   wider gutter, both ramp columns permanently out (so the RAMP latch has
-   nothing to latch and goes), every song field on its own column, and enough
-   height to read a page of pattern without scrolling. */
+   A wide screen does not get a different song — it gets the same tables with
+   taller rows, a wider gutter, every cell on its own column. (The phrase
+   editor is a popup at every width; its own desk sizing lives with its rules
+   above — the dialog centres and its rows go from 26 to 30px, deliberately
+   staying tight.) */
 @media (min-width:900px){
   /* the two numbers every table is measured in: taller rows and a wider
-     column gutter. This is the whole of "a desk gets more room" — four
+     column gutter. This is the whole of "a desk gets more room" — the
      surfaces move together because they are one component. */
   .tbl{--tbl-rowh:48px;--tbl-gut:12px}
-  /* ALL SIXTEEN ROWS AT ONCE. The room a desk has is spent on the pattern
-     ceasing to be a scroll at all — no window, no nested scrollbar; the page
-     carries the scroll and the column headers stick as it goes. */
-  .steps{height:auto;overflow:visible}
-  .stepgrid,.stepgrid[data-ramp]{
-    grid-template-columns:44px repeat(5,minmax(64px,1fr))
-      minmax(58px,76px) minmax(58px,76px) minmax(58px,76px);
-    grid-auto-rows:minmax(48px,auto)}
-  /* the ramp columns are always out here — 0,2,1 beats the base rule's 0,1,1,
-     and the data-ramp form is the same value, so the latch state is moot */
-  .stepgrid .cell[data-row="inc"],.stepgrid .cell[data-row="stk"],
-  .stepgrid .rowlab[data-row="inc"],.stepgrid .rowlab[data-row="stk"]{display:flex}
-  .stepgrid .cell{font-size:13px}
-  .stepgrid .rowlab{font-size:11px;padding:7px 4px}
-  .ramptog{display:none}
-  /* the arrangement gets the same treatment: taller ticks, wider channels */
-  .dawscroll{height:clamp(420px,62vh,760px)}
-  .tgrid{--rowh:24px}
-  .tcell{font-size:12px}
-  .tcol{font-size:10px}
+  .stepgrid .rowlab{font-size:10px;padding:6px 3px}
 
-  /* THE SONG TABLE, WITH ROOM — and the desk's extra room goes to the COLUMNS,
-     never back into row height. The tracks are FIXED (not auto) so every row's
-     columns line up with the header and with each other: an auto column sized
-     to "BREAKDOWN" on one row and "VERSE" on the next is a table that shimmers
-     as the song changes. A desk row is ~30px, and it holds every field the
-     phone row holds, in the same order. */
+  /* THE SONG TABLE, WITH ROOM — the cells stop wrapping and become FIXED
+     grid tracks, so every row's columns line up with the header and with
+     each other: an auto column sized to "BREAKDOWN" on one row and "VERSE"
+     on the next is a table that shimmers as the song changes. Ten tracks:
+     part · genre · function · bars · timing · mods · voice · rhythm ·
+     transitions · the pattern chips. */
   .box,.shead{
-    grid-template-columns:30px 92px minmax(130px,1.6fr) 106px minmax(110px,1fr) 84px 106px;
-    gap:0 10px;align-items:center}
+    display:grid;
+    grid-template-columns:34px minmax(112px,1.35fr) 74px 96px 82px 68px
+      minmax(78px,1fr) 82px 88px minmax(92px,1.15fr);
+    gap:0 6px;align-items:center}
   .shead{display:grid}
   .box{padding:3px var(--tbl-gut) 4px}
   .bnum{font-size:12px}
-  .box .role{grid-row:1;grid-column:2;justify-self:start;font-size:9px}
-  .bgenre{grid-row:1;grid-column:3;font-size:12.5px}
-  .bbars{grid-row:1;grid-column:4;justify-self:start;font-size:9px}
+  .bcell{padding:4px 4px}
+  .bcell.bgenre{font-size:12px}
   /* the chips get a roomier fingernail here, not a second line */
   .bchips{gap:3px}
   .bch{width:24px;height:15px}
-  .bleds{grid-row:1;grid-column:6;justify-self:start;gap:4px}
-  .btools{grid-row:1;grid-column:7;justify-self:end;gap:2px}
-  .btools .t{min-width:28px;padding:4px 5px}
-  .blayers{grid-row:2;grid-column:3/-1}
+  .bch.bplus{height:15px}
 
-  /* THE MIX TABLE, WITH ROOM: the same rows, and the two columns a phone had
-     to drop come back — the channel number, and what each part is actually
-     PLAYING. The sound column is what makes this a table of sounds rather
-     than of abstract roles, and it is the first thing a desk should buy. */
-  .mhead,.mrow{
-    grid-template-columns:38px minmax(140px,1.5fr)
-      minmax(130px,1.3fr) repeat(4,minmax(64px,.92fr)) 44px 44px;
-    gap:0 8px}
-  /* .mnum keeps the shared numeral column's own display (a right-aligned
-     flex row, sticky to the left edge) — this only puts it back on screen */
-  .mnum{display:flex}
-  .mh.mhnum{display:block}
-  .mval{min-height:34px;font-size:11.5px;padding:5px 8px}
-  .mkey{min-height:34px;font-size:11px}
-  .mfxc{font-size:10px}
+  /* THE BOARD, WITH ROOM: the same strips, wider, with taller fader travel —
+     what a desk buys a board is THROW, and the second label line (what each
+     part is actually PLAYING) has the width to breathe. */
+  .strip{width:112px;padding:10px 8px 8px}
+  .strip.mstr{width:128px}
+  .mval{min-height:26px;font-size:10.5px;padding:4px 6px}
+  .mkey{min-height:26px;font-size:11px}
+  .mfxc{font-size:9.5px}
+  .fwell{min-height:210px}
+  .fslot{min-height:170px}
+  .mbody{min-height:210px}
+  .rname{flex-basis:96px}
 }

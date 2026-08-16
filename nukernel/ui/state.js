@@ -10,7 +10,8 @@
 // six functions used to re-read document.getElementById(...).value at call
 // time, two of them in the audio hot path (stepDur per tick, barSec per
 // channel build), which also made the loader untestable in node.
-import { NuSong, blank, emptyBox, DEFAULT, masterIsDefault } from "./deps.js";
+import { NuSong, blank, emptyBox, DEFAULT, masterIsDefault,
+         busesIsDefault } from "./deps.js";
 
 export const DEFAULT_BPM = 126, NBOXES = 4;
 
@@ -24,13 +25,35 @@ export let slot = 0;
 export let SUBJ = SLOTS[slot];       // by reference: cell edits mutate the slot
 export let SONG = Array.from({ length: NBOXES }, emptyBox);
 export let viewSec = 0, loopOnly = null, pendingStart = null;
-export let bpm = DEFAULT_BPM, vol = 80;
+// VOLUME IS A DEVICE SETTING, NOT A SONG FIELD (2026-08-16). It lives in its
+// own key, restored at boot, written only by the volume fader — adoptSong
+// never touches it, so Write/preset/reset stop yanking the room's level
+// around. bpm stays a song fact on purpose: a song owns its tempo, nobody's
+// song owns your speaker. Old saves still carry `vol`; the loader keeps
+// accepting it (song.js) and this file ignores it on adopt.
+const VOLSTORE = "nukernel.vol.v1";
+const readVol = () => {
+  try {
+    // getItem is null on a fresh device and +null is 0, not NaN — read the
+    // string first or every new browser boots MUTED (found the hard way: the
+    // audio gate's whole genre sweep read 0.0000 RMS)
+    const s = localStorage.getItem(VOLSTORE);
+    if (s == null || s === "") return 80;
+    const v = +s;
+    return Number.isFinite(v) && v >= 0 && v <= 100 ? v : 80;
+  } catch (e) { return 80; }
+};
+export let bpm = DEFAULT_BPM, vol = readVol();
 // THE MASTER BUS belongs to the SONG, not to the page (song.js says why), so it
 // rides here with the boxes rather than in the audio tier: audio/graph.js reads
 // it, audio/bounce.js renders through it, and neither owns it. null is the whole
 // of the old behaviour — song.js normalizes an empty spec away, so there is one
 // spelling of "no globals" for the graph's absent-is-today branch to key on.
 export let MASTER = null;
+// …AND THE SHARED-BUS TRIMS beside it, on the same terms: the song's, not the
+// page's, null = the graph exactly as built (song.js validates; audio/graph.js
+// applies; audio/bounce.js bakes them into the carrier).
+export let BUSES = null;
 
 export function setSlot(i) { slot = i; SUBJ = SLOTS[i]; }
 export function putPhrase(i, p) { SLOTS[i] = p; if (i === slot) SUBJ = p; }
@@ -38,12 +61,19 @@ export function setViewSec(i) { viewSec = i; }
 export function setLoopOnly(v) { loopOnly = v; }
 export function setPendingStart(v) { pendingStart = v; }
 export function setBpm(v) { bpm = +v; }
-export function setVol(v) { vol = +v; }
+export function setVol(v) {
+  vol = +v;
+  try { localStorage.setItem(VOLSTORE, String(vol)); } catch (e) { /* private mode */ }
+}
 // one writer, and it normalizes THROUGH THE REGISTRY: a spec that asks for
 // nothing the master bus recognizes becomes null, which is the same rule
 // song.js applies on the way in — so the save shape and the graph's
 // absent-is-today branch cannot disagree about what "unmastered" is.
 export function setMaster(m) { MASTER = masterIsDefault(m) ? null : m; }
+// same writer, same normalizer, for the rack: a spec that asks for nothing the
+// rack recognizes becomes null, so "every knob cleared" and "never touched"
+// are one state in the save and in the graph's as-built branch
+export function setBuses(b) { BUSES = busesIsDefault(b) ? null : b; }
 
 export const curSection = () => SONG[Math.min(viewSec, SONG.length - 1)];
 
@@ -58,7 +88,9 @@ export const curSection = () => SONG[Math.min(viewSec, SONG.length - 1)];
 //   "selection"          viewSec/slot/focus moved, nothing musical changed
 //   "transport"          bpm or volume moved
 //   "master"             a master-bus global moved — the graph swaps its master
-//                        chain, the bounce re-renders, the session bank repaints
+//                        chain, the bounce re-renders, the rack repaints
+//   "buses"              a rack knob moved — the graph re-trims the shared
+//                        returns (a param write, no swap), the bounce re-renders
 //   "transport:state"    published by audio/transport — playing flipped
 //   "transport:section"  published by audio/transport — the sounding box moved
 //   "refresh"            assets finished loading mid-play; views re-render
@@ -79,7 +111,7 @@ export function emit(type, detail) {
 export function commit(type, detail) {
   emit(type, detail);
   if (type === "phrase" || type === "box" || type === "transport" ||
-      type === "master") save();
+      type === "master" || type === "buses") save();
 }
 
 /* ---------- persistence ---------- */
@@ -96,7 +128,8 @@ let saveTimer = null;
 function writeStore() {
   try {
     localStorage.setItem(STORE, JSON.stringify(
-      { v: NuSong.VERSION, slots: SLOTS, song: SONG, master: MASTER, bpm, vol }));
+      { v: NuSong.VERSION, slots: SLOTS, song: SONG, master: MASTER,
+        buses: BUSES, bpm }));
   } catch (e) { /* private mode, or quota: not worth interrupting the music */ }
 }
 export function saveNow() { clearTimeout(saveTimer); saveTimer = null; writeStore(); }
@@ -127,7 +160,7 @@ export const defaultSong = () => {
   const song = Array.from({ length: NBOXES }, emptyBox);
   song[0].stack[0].slots = [0];
   return { v: NuSong.VERSION, slots: [deepDefault()], song,
-           bpm: DEFAULT_BPM, vol: 80 };
+           bpm: DEFAULT_BPM };
 };
 // the starter phrase is genre data (genres.js DEFAULT) and the store must
 // never hand out the literal itself — a scrub would edit the table
@@ -154,9 +187,10 @@ export function adoptSong(raw, reason) {
   const s = res.song;
   SLOTS = s.slots; SONG = s.song; slot = 0; SUBJ = SLOTS[0];
   MASTER = s.master;                   // validateSong normalizes absent to null
+  BUSES = s.buses;                     // same normalizer, same law
   viewSec = 0; loopOnly = null; pendingStart = null;
   if (s.bpm != null) bpm = s.bpm;
-  if (s.vol != null) vol = s.vol;
+  // s.vol is deliberately NOT adopted — volume is the device's (VOLSTORE above)
   emit("song", { reason: reason || "load" });
   save();
   return true;
@@ -165,7 +199,8 @@ export function adoptSong(raw, reason) {
 /* ---------- desktop ---------- */
 export function songJSON() {
   return JSON.stringify(
-    { v: NuSong.VERSION, slots: SLOTS, song: SONG, master: MASTER, bpm, vol },
+    { v: NuSong.VERSION, slots: SLOTS, song: SONG, master: MASTER,
+      buses: BUSES, bpm },
     null, 1);
 }
 export function saveFile() {

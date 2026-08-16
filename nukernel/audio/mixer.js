@@ -59,11 +59,12 @@
 // a gain and a panner, nothing else — plus the one budgeted exception below.
 import { GENRES, FX, MAX_FX, fxChain, fxMix, fxSendable, SENDS, LEVELS, PANS,
          RATES, SP, DRUMFILE, DRUMMIX, DRUMBUS, instrOf, BASSSYNTH,
-         partOf, chairKeys, resolvePartMix } from "../ui/deps.js";
+         partOf, chairKeys, resolvePartMix, faderDb } from "../ui/deps.js";
 import { SONG, on } from "../ui/state.js";
 import { gid, stackOf, genreOf, kitOf } from "../ui/derive.js";
 import { ctx, masterIn, delBus, roomBus, verbFor, sendFor, kitFor, buildKitDesk,
-         barSec, REV, SENDBUS, VERBSPEC, masterReport, sharedReport } from "./graph.js";
+         barSec, REV, SENDBUS, VERBSPEC, masterReport, sharedReport,
+         busReport } from "./graph.js";
 import { synthNodes, synthOut, clearRoutes, dropRoute, pruneSynths } from "./voices.js";
 
 // the twelve lanes, for the __nuMix vocabulary line. The strips themselves are
@@ -89,7 +90,8 @@ const LANEIDS = Object.keys(DRUMFILE);
 // character sends. Six or seven in practice, and a part only exists at all
 // once somebody has mixed it.
 // THE SHARED RACK, 220: the master chain (30 fully dressed) + three convolution
-// reverbs (4 each) + the echo (8) + the drum room (26) + the kit desk (40 with
+// reverbs (4 each) + the echo (9 — the rack's return gain is the ninth, the
+// one shared node the board round added) + the drum room (26) + the kit desk (40 with
 // all twelve lanes armed) + one bus per character effect, eleven of them at
 // 8–18 nodes apiece. NOTHING IN THE SONG CAN MAKE IT GROW — that is the claim
 // the whole round rests on, and it is why the ceiling is flat rather than
@@ -207,8 +209,10 @@ function partSpecs(sec, roster) {
   for (const k of keys) {
     const m = resolvePartMix(P[k]);
     const mute = m.mute || (solo && !m.solo);
-    if (!mute && !m.fx.length && !m.rev && !m.del && m.lvl === 1 && m.pan === 0) continue;
-    out.push({ key: k, fx: m.fx, rev: m.rev, del: m.del, lvl: m.lvl, pan: m.pan, mute });
+    if (!mute && !m.fx.length && !m.rev && !m.del && m.lvl === 1 && m.pan === 0 &&
+        m.fader === 0) continue;
+    out.push({ key: k, fx: m.fx, rev: m.rev, del: m.del, lvl: m.lvl, pan: m.pan,
+               fader: m.fader, mute });
   }
   return out;
 }
@@ -234,7 +238,11 @@ export function chanSpec(sec) {
     del: sendOf(sec, "echo", 0),   // the box field is `echo` since v:2; the
                                    // channel key stays `del` — it names the bus
     verb: sec.verb || (g.tone && g.tone.verb > 0.4 ? "hall" : "room"),
-    lvl: sec.lvl ? LEVELS[sec.lvl] : 1,
+    // the fader OFFSET multiplies the resolved level — the enum, the
+    // composer's arc and any level automation keep meaning what they meant,
+    // and the board's touch rides on top (fields.js `fader`, the board law)
+    lvl: +((sec.lvl ? LEVELS[sec.lvl] : 1) *
+           Math.pow(10, faderDb(sec.fader) / 20)).toFixed(4),
     pan: sec.pan ? PANS[sec.pan] : 0,
     mot: sec.mot || null,
     auto: compileAuto(sec, g),
@@ -352,7 +360,9 @@ export function buildChannel(c, spec, env) {
     const px = spend(p.fx);
     let pin = ppan;
     if (px.rack) { px.rack.output.connect(ppan); pin = px.rack.input; pnodes.push(...(px.rack.nodes || [])); }
-    const plvl = c.createGain(); plvl.gain.value = p.lvl; pchain(plvl);
+    const plvl = c.createGain();
+    plvl.gain.value = +(p.lvl * Math.pow(10, (p.fader || 0) / 20)).toFixed(4);
+    pchain(plvl);
     const pmute = c.createGain(); pmute.gain.value = p.mute ? 0 : 1; pchain(pmute);
     if (px.dry !== 1) {
       const pdry = c.createGain(); pdry.gain.value = px.dry;
@@ -663,6 +673,10 @@ window.__nuMix = () => ({
   // `level` on the channels below) applied one level up: a global that lit up
   // in the session bank and never reached a param is visible from outside.
   master: masterReport(),
+  // THE RACK'S RETURNS, the same law one shelf down: what the reverb/echo/room
+  // return gains actually sit at (graph.js busReport, read off the nodes) and
+  // what the song asked for — an ADDED key, so every existing reader holds.
+  buses: busReport(),
   verbs: Object.keys(VERBSPEC),
   // THE DRUM ROOM EXISTS, as a node rather than as an intention. Reported at
   // the top because it is one bus for the whole page (graph.js), and a channel

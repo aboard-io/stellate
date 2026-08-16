@@ -31,7 +31,7 @@
 //       graph.buildMasterChain, or the pocket gets an untreated tape of a song
 //       the ear just heard treated. Banded off the decoded blob, before and
 //       after arming every global; the shape has to move, and clearing them
-//       has to put the six-node chain back.
+//       has to put the seven-node default chain back.
 //   (C) NO DOUBLE PLAYBACK. In the foreground the carrier element must sit at
 //       volume 0 while the graph runs — two sources at once is the failure
 //       class the parent had to instrument (live.js elAudible), and here the
@@ -108,14 +108,29 @@ function taps() {
   await page.goto(`http://localhost:${PORT}/nukernel/kernel-daw.html`,
     { waitUntil: "networkidle" });
 
+  // THE PHRASE EDITOR IS A POPUP: .slot and #seed live inside #edpop, reached
+  // through a PATTERN chip on the row ("the row and the board" — the default
+  // and restored songs ship box 1 with a phrase on, so the chip exists).
+  // Esc closes it.
+  const openEditor = async (p) => {
+    await p.locator(".box").first().locator(".bch").first().click();
+    await p.waitForSelector("#edpop:not([hidden])", { timeout: 10000 });
+  };
+  const closeEditor = async (p) => {
+    await p.keyboard.press("Escape");
+    await p.waitForSelector("#edpop", { state: "hidden" });
+  };
+
   // one phrase in the one box, and play — the same entry the audio gate uses.
   // The default song ships phrase 1 already ON in box 1 (the fresh page must
   // sound) and a .slot click TOGGLES, so guard it exactly as boot() below does.
+  await openEditor(page);
   {
     const slot0 = page.locator(".slot").nth(0);
     if ((await slot0.getAttribute("aria-pressed")) !== "true") await slot0.click();
   }
   await page.click("#seed");
+  await closeEditor(page);
   await page.click("#play");
   await page.waitForFunction(() => window.__rms && window.__rms() > 0.01,
     null, { timeout: 30000 });
@@ -362,12 +377,25 @@ function taps() {
     const plain = await bandsOf().catch(e => ({ err: String(e) }));
     if (plain.err) fail(`could not band the untreated carrier: ${plain.err}`);
     else {
-      // every global, through the REAL session-bank controls
+      // every global, through the REAL controls — the rack KNOBS on the MIX
+      // page now (ui/mixtbl.js buildKnob, ids #m-<key> kept): role=slider,
+      // Home is the empty detent, ArrowRight steps, data-value mirrors it
+      const setKnob = async (id, want) => {
+        const k = page.locator("#" + id);
+        await k.focus();
+        await page.keyboard.press("Home");
+        for (let i = 0; i < 12; i++) {
+          if ((await k.getAttribute("data-value")) === (want || "")) return;
+          await page.keyboard.press("ArrowRight");
+        }
+        if ((await k.getAttribute("data-value")) !== (want || ""))
+          fail(`the rack knob #${id} never reached "${want}" by keyboard`);
+      };
       for (const [id, v] of [["m-drive", "dirt"], ["m-tape", "worn"],
                              ["m-space", "hall"], ["m-tilt", "dark"],
                              ["m-width", "huge"], ["m-glue", "pump"],
                              ["m-ceiling", "loud"]])
-        await page.selectOption("#" + id, v);
+        await setKnob(id, v);
       // the LIVE graph must have swapped its chain (the same object the audio
       // gate reads); this is the precondition for asking about the carrier
       const live = await page.evaluate(() => window.__nuMix().master);
@@ -406,14 +434,17 @@ function taps() {
       // localStorage, and a treated master would ride along into (E)
       for (const id of ["m-drive", "m-tape", "m-space", "m-tilt", "m-width",
                         "m-glue", "m-ceiling"])
-        await page.selectOption("#" + id, "");
+        await setKnob(id, "");
       await page.waitForTimeout(500);
       const back = await page.evaluate(() => window.__nuMix().master);
-      if (!back || back.stages.length || back.nodes !== 6)
+      // seven nodes: input, busComp, makeup, limiter, lp, SAFETY, out — the
+      // safety net is unconditional since b1adc27 (this line said 6 for one
+      // commit and failed on the truth)
+      if (!back || back.stages.length || back.nodes !== 7)
         fail(`clearing the globals did not restore the chain the page always ` +
              `built (${JSON.stringify(back && back.stages)}, ` +
              `${back && back.nodes} nodes) — absent must be today`);
-      else ok("clearing the globals restores the six-node master chain");
+      else ok("clearing the globals restores the seven-node master chain");
     }
   }
 
@@ -475,10 +506,12 @@ function taps() {
     // RESTORE the earlier section's song from localStorage (pagehide flushes
     // the store, so clearing it pre-goto loses the race) — on a restored
     // song the slot is already in the box and a blind click would empty it,
-    // leaving "nothing to play"
+    // leaving "nothing to play". Both live in the editor popup now.
+    await openEditor(page);
     const slot0 = page.locator(".slot").nth(0);
     if ((await slot0.getAttribute("aria-pressed")) !== "true") await slot0.click();
     await page.click("#seed");
+    await closeEditor(page);
     await page.click("#play");
     // SOUNDING BY EITHER PATH. On a mobile predicate the graph is audible only
     // until the first render lands (carrier-first, (G) below) and then goes
@@ -749,10 +782,18 @@ function taps() {
     await p2.route("**/clean_guitar/**", (r) => r.abort());
     await p2.addInitScript(taps);
     await p2.goto(`http://localhost:${PORT}/nukernel/kernel-daw.html`, { waitUntil: "networkidle" });
+    await openEditor(p2);
     const s0 = p2.locator(".slot").nth(0);
     if ((await s0.getAttribute("aria-pressed")) !== "true") await s0.click();
     await p2.click("#seed");
+    await closeEditor(p2);
+    // the genre chips live in the GENRE cell's popup; Esc first, or its scrim
+    // sits over #play
+    await p2.locator(".box").first().locator(".bgenre").click();
+    await p2.waitForSelector("#rowpop:not([hidden])", { timeout: 10000 });
     await p2.locator(".pchip", { hasText: /^Acid house$/ }).click();
+    await p2.keyboard.press("Escape");
+    await p2.waitForSelector("#rowpop", { state: "hidden" });
     await p2.click("#play");
     await p2.waitForTimeout(12000);
     const d = await p2.evaluate(() => ({

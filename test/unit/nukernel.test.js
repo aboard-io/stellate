@@ -1222,6 +1222,14 @@ console.log("the loader — round trip, typed errors, clamps, migration");
          f.key + ": default outside its own range");
       continue;
     }
+    // "num" is the fader-offset family: a range, no table, absent-by-default
+    // (null, not 0 — absent must stay the one spelling of "no offset")
+    if (f.type === "num") {
+      ok(Number.isFinite(f.min) && Number.isFinite(f.max) && f.min <= f.max,
+         f.key + ": num field without a [min,max]");
+      ok(f.default === null, f.key + ": num default is not null (absent = no offset)");
+      continue;
+    }
     ok(f.table && typeof f.table === "object" && Object.keys(f.table).length,
        f.key + ": no value table");
     ok(f.labels && Object.keys(f.table).every(k => f.labels[k] != null),
@@ -1244,7 +1252,7 @@ console.log("the loader — round trip, typed errors, clamps, migration");
   const trial = box => S.validateSong(
     { v: 2, slots: [S.blank()], song: [box], bpm: 126, vol: 80 });
   for (const f of F.FIELDS) {
-    if (f.type === "int") continue;                  // clamped, checked below
+    if (f.type === "int" || f.type === "num") continue;  // clamped, checked below
     for (const k of Object.keys(f.table)) {
       const b = S.emptyBox();
       if (f.type === "list") b[f.key] = [k];
@@ -3014,7 +3022,7 @@ console.log("the per-part mix — addresses, chairs, defaults, and what the load
   {
     const d = F.resolvePartMix(null);
     ok(d.fx.length === 0 && d.rev === 0 && d.del === 0 && d.lvl === 1 && d.pan === 0 &&
-       d.mute === false && d.solo === false,
+       d.mute === false && d.solo === false && d.fader === 0,
        "an absent part entry does not resolve to neutral: " + JSON.stringify(d));
     ok(JSON.stringify(F.resolvePartMix({})) === JSON.stringify(d),
        "an empty entry is not the same as an absent one");
@@ -3033,6 +3041,18 @@ console.log("the per-part mix — addresses, chairs, defaults, and what the load
     ok(F.resolvePartMix({ fx: ["nonsense"] }).fx.length === 0, "an unknown insert survived");
     ok(F.resolvePartMix({ rev: "soaked" }).rev === 0,
        "an unknown send did not fall back to the neutral default");
+    // THE FADER OFFSET: a dB number over the automated value — clamped to the
+    // registry row's range, held to 0.1 dB, and garbage resolves to 0 (no
+    // offset), never to silence
+    ok(F.resolvePartMix({ fader: -6 }).fader === -6, "a set fader did not resolve");
+    ok(F.resolvePartMix({ fader: -99 }).fader === -24 &&
+       F.resolvePartMix({ fader: 99 }).fader === 12,
+       "the fader offset is not clamped to the registry's own range");
+    ok(F.resolvePartMix({ fader: -3.14159 }).fader === -3.1,
+       "the fader offset is not held to 0.1 dB");
+    ok(F.resolvePartMix({ fader: "loud" }).fader === 0 &&
+       F.resolvePartMix({ fader: NaN }).fader === 0,
+       "a garbage fader did not resolve to no-offset");
   }
 
   // (d) THE REGISTRY IS COMPLETE, by the same rules FIELDS itself is held to
@@ -3040,6 +3060,12 @@ console.log("the per-part mix — addresses, chairs, defaults, and what the load
   for (const f of F.PARTMIX) {
     ok(typeof f.key === "string" && f.key, "a PARTMIX entry has no key");
     if (f.type === "flag") { ok(f.default === false, f.key + ": a flag defaults to true"); continue; }
+    if (f.type === "num") {
+      ok(Number.isFinite(f.min) && Number.isFinite(f.max) && f.min <= f.max,
+         f.key + ": num field without a [min,max]");
+      ok(f.default === null, f.key + ": num default is not null");
+      continue;
+    }
     ok(f.table && Object.keys(f.table).length, f.key + ": no value table");
     ok(f.labels && Object.keys(f.table).every(k => f.labels[k] != null),
        f.key + ": a table value has no label");
@@ -3112,6 +3138,35 @@ console.log("the per-part mix — addresses, chairs, defaults, and what the load
        JSON.stringify(once.song.song[0].parts),
        "the per-part mix is not stable across a save/load round trip");
   }
+  // (f2) THE FADER OFFSETS through the loader — the len/nudge policy at both
+  // scopes: garbage rejects and names its field, a wild number clamps, and 0
+  // normalizes away so "no offset" keeps one spelling (absent).
+  {
+    const b = S.emptyBox(); b.parts = { lead: { fader: -6.16 } };
+    const r = trial(b);
+    ok(r.ok && r.song.song[0].parts.lead.fader === -6.2,
+       "a part fader did not load at 0.1 dB: " +
+       JSON.stringify(r.ok && r.song.song[0].parts));
+    const bz = S.emptyBox(); bz.parts = { lead: { fader: 0 } };
+    const rz = trial(bz);
+    ok(rz.ok && rz.song.song[0].parts === null,
+       "a zero part fader did not normalize to absent");
+    const bj = S.emptyBox(); bj.parts = { lead: { fader: "loud" } };
+    const rj = trial(bj);
+    ok(!rj.ok && /\.parts\.lead\.fader$/.test(rj.errors[0].path),
+       "a garbage part fader did not name its own field");
+    const bb = S.emptyBox(); bb.fader = -99;
+    const rb = trial(bb);
+    ok(rb.ok && rb.song.song[0].fader === -24,
+       "a wild box fader did not clamp to the registry range");
+    const b0 = S.emptyBox(); b0.fader = 0;
+    ok(trial(b0).ok && trial(b0).song.song[0].fader === null,
+       "a zero box fader did not normalize to absent");
+    const bx = S.emptyBox(); bx.fader = "hot";
+    const rx = trial(bx);
+    ok(!rx.ok && /\.fader$/.test(rx.errors[0].path),
+       "a garbage box fader did not name its own field");
+  }
   // (g) A v:1 SAVE HAS NO DESK AND MUST NOT GROW ONE. `parts` is additive, so
   // there is no migration to write — which is exactly the claim worth holding.
   {
@@ -3163,15 +3218,17 @@ console.log("the master bus — globals, defaults, and what the loader keeps");
   }
   ok(F.MASTER.every(f => F.MASTERBY[f.key] === f), "MASTERBY is not the same table");
 
-  // (b) ABSENT IS TODAY. These are the numbers graph.js hardcoded before the
-  // globals existed — glue at -22/2.2 into a x2.2 makeup, the brickwall at
-  // -1.5 — and resolveMaster must land on them from nothing, from {}, and from
-  // a spec full of values the build does not recognize.
+  // (b) ABSENT IS TODAY. The default glue is live.js's bus compressor at
+  // -22/2.2 into the RESTAGED x1.4 makeup (2026-08-16: at x2.2 a composed
+  // song's peaks sat pinned on the brickwall — fields.js GLUES has the
+  // measured numbers), the brickwall at -1.5 — and resolveMaster must land on
+  // them from nothing, from {}, and from a spec full of values the build does
+  // not recognize.
   {
     const d = F.resolveMaster(null);
     ok(d.glue.thr === -22 && d.glue.knee === 28 && d.glue.ratio === 2.2 &&
-       d.glue.atk === 0.015 && d.glue.rel === 0.25 && d.glue.makeup === 2.2,
-       "the resolved glue is not live.js's bus compressor: " + JSON.stringify(d.glue));
+       d.glue.atk === 0.015 && d.glue.rel === 0.25 && d.glue.makeup === 1.4,
+       "the resolved glue is not the shipped default bus compressor: " + JSON.stringify(d.glue));
     ok(d.ceiling.thr === -1.5 && d.ceiling.push === 1 && d.ceiling.clip === 0,
        "the resolved ceiling is not the brickwall graph.js always built: " +
        JSON.stringify(d.ceiling));
@@ -3256,6 +3313,93 @@ console.log("the master bus — globals, defaults, and what the loader keeps");
     const twice = S.load(JSON.parse(JSON.stringify(once.song)));
     ok(twice.ok && JSON.stringify(twice.song.master) === JSON.stringify(once.song.master),
        "the master bus is not stable across a save/load round trip");
+  }
+}
+
+/* ---------- 37c. THE SHARED-BUS TRIMS -------------------------------------
+   The rack's knobs (fields.js BUSES): reverb/echo/room return trims plus the
+   echo's two internals, the master-bus law one shelf down. The claim that
+   matters is the same one: a song that asks for NOTHING resolves to the graph
+   exactly as built — ret ×1, fb/tone null — because audio/graph.js keys its
+   as-built branch on that, and the offline bounce bakes the same resolution
+   into every window. Pure node; the audible half is the browser gates'. */
+console.log("the shared buses — the rack registry, defaults, and the loader");
+{
+  const F = require("../../nukernel/fields.js");
+  const S = require("../../nukernel/song.js");
+
+  // (a) the registry is complete and self-describing — a knob with no table
+  // or label is a control a surface cannot draw
+  ok(Array.isArray(F.BUSES) && F.BUSES.length === 3 &&
+     F.BUSES.map(b => b.bus).join(",") === "rev,echo,room",
+     "the bus registry does not name the graph's own shared roster");
+  for (const b of F.BUSES) {
+    ok(typeof b.label === "string" && b.label, b.bus + " has no label");
+    ok(b.knobs.some(k => k.key === "ret"), b.bus + " has no return knob");
+    for (const k of b.knobs) {
+      ok(k.table && k.labels && Object.keys(k.table).length >= 2,
+         b.bus + "." + k.key + " has no table/labels");
+      ok(Object.keys(k.table).every(x => k.labels[x]),
+         b.bus + "." + k.key + " has a value with no label");
+      ok(k.default === null, b.bus + "." + k.key + " defaults to something — " +
+         "absent must be the graph as built");
+    }
+  }
+  ok(F.BUSES.every(b => F.BUSBY[b.bus] === b), "BUSBY is not the same table");
+
+  // (b) ABSENT IS THE GRAPH AS BUILT: every ret ×1, echo internals untouched
+  {
+    const d = F.resolveBuses(null);
+    ok(d.rev.ret === 1 && d.echo.ret === 1 && d.room.ret === 1,
+       "an absent spec did not resolve every return to unity");
+    ok(d.echo.fb === null && d.echo.tone === null,
+       "an absent spec touched the echo's own constants");
+    const j = JSON.stringify(d);
+    ok(JSON.stringify(F.resolveBuses({})) === j, "{} is not the same as absent");
+    ok(JSON.stringify(F.resolveBuses({ rev: { ret: "soaked" } })) === j,
+       "junk values did not resolve as absent");
+  }
+  // (c) a set spec resolves through its own tables
+  {
+    const m = F.resolveBuses({ rev: { ret: "hot" }, echo: { fb: "less", tone: "dark" },
+                               room: { ret: "down" } });
+    ok(m.rev.ret === 1.6 && m.room.ret === 0.5,
+       "return trims did not resolve through the table");
+    ok(m.echo.fb === 0.22 && m.echo.tone === 1400 && m.echo.ret === 1,
+       "the echo knobs did not resolve independently");
+  }
+  // (d) busesIsDefault answers the normalizer's question
+  ok(F.busesIsDefault(null) && F.busesIsDefault({}) &&
+     F.busesIsDefault({ rev: { ret: "nonsense" } }),
+     "busesIsDefault called a no-op spec a treatment");
+  ok(!F.busesIsDefault({ room: { ret: "down" } }),
+     "busesIsDefault called a real trim a default");
+
+  // (e) THE LOADER — the master's split at both levels: bus and knob KEYS
+  // filter, knob VALUES reject, absent keeps one spelling
+  const trialB = buses => S.validateSong(
+    { v: 2, slots: [S.blank()], song: [S.emptyBox()], buses, bpm: 126, vol: 80 });
+  {
+    const r = trialB({ rev: { ret: "up" }, junkbus: { x: 1 }, echo: { junkknob: "x" } });
+    ok(r.ok, "the loader refused a legal buses spec: " + JSON.stringify(r.errors && r.errors[0]));
+    ok(r.ok && JSON.stringify(r.song.buses) === '{"rev":{"ret":"up"}}',
+       "buses did not come back filtered: " + JSON.stringify(r.ok && r.song.buses));
+    const bad = trialB({ rev: { ret: "soaked" } });
+    ok(!bad.ok && bad.errors[0].path === "buses.rev.ret",
+       "a bad trim did not name its own field: " + JSON.stringify(bad.errors[0]));
+    ok(!trialB([{ rev: 1 }]).ok, "an array was accepted where the rack wants a map");
+    ok(trialB(undefined).song.buses === null, "a song with no buses came back with some");
+    ok(trialB({}).song.buses === null, "an empty buses spec did not normalize to absent");
+    ok(trialB({ rev: {} }).song.buses === null,
+       "a map of empty entries did not normalize to absent");
+  }
+  // (f) …and the round trip every save takes
+  {
+    const once = trialB({ echo: { ret: "dim", fb: "more" }, room: { ret: "hot" } });
+    ok(once.ok, "a full buses spec did not validate");
+    const twice = S.load(JSON.parse(JSON.stringify(once.song)));
+    ok(twice.ok && JSON.stringify(twice.song.buses) === JSON.stringify(once.song.buses),
+       "the bus trims are not stable across a save/load round trip");
   }
 }
 

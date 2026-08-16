@@ -1,23 +1,25 @@
-// ui/palette.js — the chips: click things on and off in the selected box, and
-// toggle(), the ONE dispatcher every chip goes through. The palette was
-// already the file's one incremental view — BUILT ONCE, then only its ON
-// states change, with a stack signature forcing a rebuild — and that pattern
-// is the one the editor and the song row now copy.
+// ui/palette.js — the chip LIBRARY: toggle(), the ONE dispatcher every chip
+// goes through, and mountBanks(), which builds a named CELL's bank list into
+// whatever host asks for it. There is no palette PAGE any more (2026-08-15,
+// "the row and the board"): the six tabs went with pg-palette, and every bank
+// now lives in the popup of the song-row cell that owns its question —
+// ui/songrow.js says which cell owns which bank. What this file keeps is the
+// material: .pchip with data-kind/data-value, .on/.dflt/aria-pressed, the
+// bank-as-table idiom — byte-compatible with the page it replaced, because
+// the gates click chips by exactly those hooks.
 //
 // Layer graph: ui view — imports state/derive/deps only; every change leaves
 // through commit(), never through a direct call into audio.
-import { GENRES, FAMILIES, MODELABEL, SCALELABEL, VOX, OPS, OPLABEL, MAX_FX, FX, ROLES,
+import { GENRES, FAMILIES, MODELABEL, SCALELABEL, VOX, OPLABEL, MAX_FX, ROLES,
          RATELABEL, ARTICS, CMODES, CLAMPLABEL, OCTAVES, KITLABEL, DRUMKITS,
-         BASSOPS, SWINGLABEL, GROOVELABEL, SENDLABEL, VERBS, DTLABEL,
-         LEVELLABEL, PANLABEL, INLABEL, OUTLABEL, ENVLABEL, MOTLABEL,
+         BASSOPS, SWINGLABEL, GROOVELABEL,
+         INLABEL, OUTLABEL, ENVLABEL, MOTLABEL,
          KEYLABEL, PROGLABEL, PERIODLABEL, BREATHLABEL, PIPELABEL, PARTCHOICES,
          SINGLABEL, AUTOPARAMLABEL, AUTOSHAPELABEL, autoShape,
          MAX_NUDGE } from "./deps.js";
-import { curSection, commit, on } from "./state.js";
+import { curSection, commit } from "./state.js";
 import { LAYER_OPTS, stackOf, focusOf, focused, opsOf, optOf, voxOf,
          genreOf } from "./derive.js";
-
-const paletteEl = document.getElementById("palette");
 
 /* ---------- clicking things on and off in the selected box ---------- */
 export function toggle(kind, value) {
@@ -115,120 +117,62 @@ const BOXOPTS = new Set(["kit", "drumkit", "bassop", "swing", "groove", "rev", "
                          "verb", "dtime", "lvl", "pan", "mot", "intro", "outro", "role",
                          "key", "prog", "period", "breath", "pipe", "sing"]);
 
-/* ---------- the palette itself ---------- */
-// BUILT ONCE, then only its ON states change. Rebuilding it on every draw
-// destroyed the button under the pointer mid-click, which lost focus and made
-// the page jump — and it took the keyboard focus ring with it.
-let paletteBuilt = false, paletteSig = "", paletteTab = "sound";
-const PTABS = [["sound", "sound"], ["line", "line"], ["voice", "voice"],
-               ["rhythm", "rhythm"], ["fx", "effects"], ["move", "transitions"]];
-// One sentence per tab, and only where the answer is not obvious from the chips.
-// The two that need it are the two that are per LAYER — which is a real fact
-// about how a stacked box works and used to be repeated, uselessly, on twelve
-// separate group labels.
-const PNOTE = {
-  line: "These apply to the layer you are editing, not to the whole box. " +
-        "They compose in the order you switch them on.",
-  voice: "Also per layer. The five synth knobs reach any voice that has them — " +
-         "the 303, the Model D, the reese and wobble basses.",
-  fx: "The whole section goes through this chain, and out to the two sends.",
-  move: "Intro and outro replace the first and last bar; the other two shape " +
-        "the whole section.",
-};
-export function drawPalette() {
-  const el = paletteEl;
+/* ---------- is this chip on? ---------- */
+// ONE function for the build path and the refresh path, so they can never
+// disagree — a chip that lights up only after a rebuild is indistinguishable
+// from a chip that does not work. Pure over the current selection.
+const isOn = (kind, v) => {
   const sec = curSection();
-  // The layer picker only EXISTS when there is more than one layer, and its
-  // chips are LABELLED with each layer's phrases — neither of which a
-  // build-once palette can update. Rebuild on a signature of the stack, so it
-  // still does not rebuild on an ordinary chip click, which is what kept the
-  // button from vanishing under the pointer.
-  const sig = stackOf(sec).map(e => e.g + ":" + e.slots.join(",")).join("|");
-  if (paletteBuilt && sig !== paletteSig) paletteBuilt = false;
-  // IS THIS CHIP ON? One function, so the build path and the cheap refresh path
-  // can never disagree — which they had already started to, and a chip that
-  // lights up only after a rebuild is indistinguishable from a chip that does
-  // not work.
-  const isOn = (kind, v) => {
-    const ent = LAYER_OPTS.has(kind) || VOX[kind] ? focused(sec) : null;
-    if (kind === "genre") return stackOf(sec).some(e => e.g === v);
-    if (kind === "op") return opsOf(sec, ent).includes(v);
-    if (kind === "focus") return String(focusOf(sec)) === v;
-    if (kind === "fx") return sec.fx.includes(v);
-    if (VOX[kind]) return voxOf(sec, ent, kind) === v;
-    if (kind === "scale") return optOf(sec, ent, "scale") === v;
-    if (kind === "clamp") return optOf(sec, ent, "clamp") === v;
-    if (kind === "oct") return String(optOf(sec, ent, "oct") || "0") === v;
-    if (kind === "cmode") return (optOf(sec, ent, "cmode") || "hold") === v;
-    if (kind === "artic") return (optOf(sec, ent, "artic") || "normal") === v;
-    if (kind === "part") return (optOf(sec, ent, "part") || "auto") === v;
-    if (kind === "key") return String(sec.key) === v;   // compose writes numbers
-    if (kind === "auto") {
-      const [param, shape] = String(v).split(":");
-      const cur = (sec.auto || []).find(a => a && a.param === param);
-      return shape === "off" ? !cur : !!(cur && cur.shape === shape);
-    }
-    return sec[kind] === v;
-  };
-  // DEFAULT-LIT vs USER-SET — the machine's one state language: a lit chip is
-  // bright orange when YOU set it, dim (.dflt) when it is only the fallback
-  // answering — hold, normal, auto, oct 0, and the blank Simple kernel. Same
-  // aria-pressed either way: to the accessibility tree "on" is on; the dimming
-  // is the panel telling you which lights you own.
-  const isDflt = kind => {
-    const ent = LAYER_OPTS.has(kind) || VOX[kind] ? focused(sec) : null;
-    if (kind === "cmode") return optOf(sec, ent, "cmode") == null;
-    if (kind === "artic") return optOf(sec, ent, "artic") == null;
-    if (kind === "part") return optOf(sec, ent, "part") == null;
-    if (kind === "oct") return optOf(sec, ent, "oct") == null;
-    if (kind === "genre") {
-      const st = stackOf(sec);
-      return st.length === 1 && st[0].g === "simple";
-    }
-    return false;
-  };
-  if (paletteBuilt) {
-    el.querySelectorAll(".pchip").forEach(b => {
-      const on2 = isOn(b.dataset.kind, b.dataset.value);
-      b.classList.toggle("on", !!on2);
-      b.classList.toggle("dflt", !!on2 && isDflt(b.dataset.kind));
-      b.setAttribute("aria-pressed", String(!!on2));
-    });
-    return;
+  const ent = LAYER_OPTS.has(kind) || VOX[kind] ? focused(sec) : null;
+  if (kind === "genre") return stackOf(sec).some(e => e.g === v);
+  if (kind === "op") return opsOf(sec, ent).includes(v);
+  if (kind === "focus") return String(focusOf(sec)) === v;
+  if (kind === "fx") return sec.fx.includes(v);
+  if (VOX[kind]) return voxOf(sec, ent, kind) === v;
+  if (kind === "scale") return optOf(sec, ent, "scale") === v;
+  if (kind === "clamp") return optOf(sec, ent, "clamp") === v;
+  if (kind === "oct") return String(optOf(sec, ent, "oct") || "0") === v;
+  if (kind === "cmode") return (optOf(sec, ent, "cmode") || "hold") === v;
+  if (kind === "artic") return (optOf(sec, ent, "artic") || "normal") === v;
+  if (kind === "part") return (optOf(sec, ent, "part") || "auto") === v;
+  if (kind === "key") return String(sec.key) === v;   // compose writes numbers
+  if (kind === "auto") {
+    const [param, shape] = String(v).split(":");
+    const cur = (sec.auto || []).find(a => a && a.param === param);
+    return shape === "off" ? !cur : !!(cur && cur.shape === shape);
   }
-  el.innerHTML = "";
-  // TABS, because there are now a hundred and forty of these and a hundred and
-  // forty chips in one heap is not a palette, it is a haystack. Six headings,
-  // each answering one question about the section, and the question is the
-  // heading. (This is also what replaced the "· layer" / "· box" suffix on every
-  // group label: the suffix was on twelve labels and told you the same two
-  // things over and over. What is per layer is now said once, at the top of the
-  // LINE and VOICE tabs, where it is actually a fact you need.)
-  const tabs = document.createElement("div"); tabs.className = "ptabs";
-  for (const [k, lab] of PTABS) {
-    const b = document.createElement("button");
-    b.type = "button"; b.className = "ptab" + (k === paletteTab ? " on" : "");
-    b.textContent = lab; b.setAttribute("aria-pressed", String(k === paletteTab));
-    b.addEventListener("click", () => {
-      paletteTab = k; paletteBuilt = false; drawPalette();
-    });
-    tabs.append(b);
+  return sec[kind] === v;
+};
+// DEFAULT-LIT vs USER-SET — the machine's one state language: a lit chip is
+// bright orange when YOU set it, dim (.dflt) when it is only the fallback
+// answering — hold, normal, auto, oct 0, and the blank Simple kernel. Same
+// aria-pressed either way: to the accessibility tree "on" is on; the dimming
+// is the panel telling you which lights you own.
+const isDflt = kind => {
+  const sec = curSection();
+  const ent = LAYER_OPTS.has(kind) || VOX[kind] ? focused(sec) : null;
+  if (kind === "cmode") return optOf(sec, ent, "cmode") == null;
+  if (kind === "artic") return optOf(sec, ent, "artic") == null;
+  if (kind === "part") return optOf(sec, ent, "part") == null;
+  if (kind === "oct") return optOf(sec, ent, "oct") == null;
+  if (kind === "genre") {
+    const st = stackOf(sec);
+    return st.length === 1 && st[0].g === "simple";
   }
-  el.append(tabs);
-  const note = document.createElement("p"); note.className = "pnote";
-  note.textContent = PNOTE[paletteTab] || "";
-  if (note.textContent) el.append(note);
+  return false;
+};
 
-  // A GROUP IS A BANK: silkscreen header over a uniform grid of keys, never a
-  // label beside a ragged run of chips. The header is a real <span> and the
-  // chips live in their own grid wrapper so the columns align — Elektron bank
-  // select, not a tag cloud. Rows whose labels are all short (the numbered op
-  // rows) take the compact grid; the gates click .pchip by text and data-*,
-  // and neither moved.
+/* ---------- the banks, built into a host ---------- */
+// A GROUP IS A BANK: silkscreen header over a uniform grid of keys, never a
+// label beside a ragged run of chips. The header is a real <span> and the
+// chips live in their own grid wrapper so the columns align — Elektron bank
+// select, not a tag cloud. The gates click .pchip by text and data-*, and
+// neither moved when the banks moved into the cell popups.
+function makeBuilders(host) {
   const group = (title, items) => {
     // A BANK IS A TABLE SECTION: .tbl is the shared well and .thd the shared
-    // header row (kernel-daw.css) — the same material the pattern, the song
-    // and the arrangement are cut from.
+    // header row (kernel-daw.css) — the same material the pattern editor and
+    // the song table are cut from.
     const g = document.createElement("div"); g.className = "pgroup tbl";
     g.append(Object.assign(document.createElement("span"),
       { className: "plabel thd", textContent: title }));
@@ -242,11 +186,11 @@ export function drawPalette() {
         (on2 && isDflt(kind) ? " dflt" : "");
       b.textContent = label; b.setAttribute("aria-pressed", String(!!on2));
       b.dataset.kind = kind; b.dataset.value = String(value);
-      b.addEventListener("click", () => toggle(kind, value));
+      b.addEventListener("click", ev => { ev.stopPropagation(); toggle(kind, value); });
       wrap.append(b);
     }
     g.append(wrap);
-    el.append(g);
+    host.append(g);
   };
   // one row per table, from the table — a new option is a new entry, never a
   // new line of UI code
@@ -254,108 +198,121 @@ export function drawPalette() {
     group(title, Object.keys(table).map(k => [kind, k, table[k], cls]));
   const opRow = (title, keys, cls) =>
     group(title, keys.map(k => ["op", k, OPLABEL[k], cls]));
+  const note = txt => {
+    const p = document.createElement("p");
+    p.className = "pnote"; p.textContent = txt;
+    host.append(p);
+  };
+  return { group, rowOf, opRow, note };
+}
 
-  if (paletteTab === "sound") {
-    // the genre haystack, clustered: one bank per family, in FAMILIES order —
-    // the header names the tradition, the chips are its members
+// WHICH BANKS A CELL OWNS — the inventory made code (nukernel-plan.md §1e is
+// the law; ui/songrow.js names the cells). What is NOT here is deliberate:
+// fx / rev / verb / echo / dtime / lvl / pan are the MIX page's section row
+// (ui/mixtbl.js writes the same box fields), and the genre FOCUS list is the
+// GENRE popup's own layer rows, built by songrow because it is rows, not chips.
+const CELLBANKS = {
+  genre: b => {
+    // the genre haystack, clustered: one bank per family, in FAMILIES order.
+    // One bank serves BOTH halves of the stack edit — a dark chip ADDS the
+    // genre (as the authority on a blank box, as a rider otherwise: toggle()'s
+    // own rules), a lit chip TAKES IT OFF — which is what retired the
+    // standalone #gpick picker panel.
     for (const [fam, keys] of FAMILIES)
-      group(fam, keys.map(k => ["genre", k, GENRES[k].label, "gen"]));
-    if (stackOf(sec).length > 1)
-      group("editing", stackOf(sec).map((e, i) =>
-        ["focus", String(i), GENRES[e.g].label + (e.slots.length
-          ? " · " + e.slots.map(n => n + 1).join("+") : " · —"), "foc"]));
-    rowOf("section", "role", ROLES, "role");
-    rowOf("chord mode", "mode", MODELABEL, "mode");
-    rowOf("key", "key", KEYLABEL, "mode");
-    rowOf("progression", "prog", PROGLABEL, "mode");
-    rowOf("sentence", "period", PERIODLABEL, "rate");
-    rowOf("tempo", "rate", RATELABEL, "rate");
-    rowOf("articulation", "artic", ARTICS, "art");
-  } else if (paletteTab === "line") {
-    opRow("pattern", ["rev", "inv", "gateflip", "accflip", "slides", "stick"], "");
-    opRow("rotate", ["rot1", "rot2", "rot3", "rot4", "rot5", "rot6", "rot7"], "lst");
-    opRow("rotate rhythm only", ["gat2", "gat4", "gat8"], "lst");
-    opRow("rotate pitch only", ["pit2", "pit4", "pit8"], "lst");
-    opRow("split", ["rep2", "rep3", "rep4", "rep5", "rep6", "rep7", "rep8"], "lst");
-    opRow("delete", ["del2", "del3", "del4", "del5", "del6", "del7", "del8"], "lst");
-    opRow("thin", ["thin2", "thin3", "thin4"], "lst");
-    opRow("fill in", ["dens2", "dens3", "dens4"], "lst");
-    opRow("loop a fragment", ["ex4", "ex8"], "lst");
-    opRow("shift degrees", ["trm2", "trm1", "trp1", "trp2"], "lst");
-    // BOX-scope, on the line page on purpose: where a line stops (breath) and
-    // what shadows it (a pipe on the rendered stream) are facts about the
-    // lines, even though the whole box shares them
-    rowOf("breath", "breath", BREATHLABEL, "env");
-    rowOf("pipe", "pipe", PIPELABEL, "env");
-  } else if (paletteTab === "voice") {
-    rowOf("register", "oct", OCTAVES, "rng");
-    group("width", [["op", "wide", OPLABEL.wide, "rng"],
-                    ["op", "tight", OPLABEL.tight, "rng"]]);
-    rowOf("alphabet", "scale", SCALELABEL, "rng");
-    rowOf("part", "part", PARTCHOICES, "rng");
-    // BOX-scope on a layer page, like breath and pipe on the line page: the
-    // box has one lyric and one singer, but what a voice IS belongs here
-    rowOf("sing", "sing", SINGLABEL, "vox");
-    rowOf("filter", "cut", VOX.cut.labels, "vox");
-    rowOf("resonance", "res", VOX.res.labels, "vox");
-    rowOf("env mod", "emod", VOX.emod.labels, "vox");
-    rowOf("decay", "dec", VOX.dec.labels, "vox");
-    rowOf("waveform", "wave", VOX.wave.labels, "vox");
-    rowOf("ramp limit", "clamp", CLAMPLABEL, "clp");
-    rowOf("at the limit", "cmode", CMODES, "clp");
-  } else if (paletteTab === "rhythm") {
-    rowOf("drum pattern", "kit", KITLABEL, "kit");
-    rowOf("drum sound", "drumkit", DRUMKITS, "kit");
-    rowOf("bass", "bassop", BASSOPS, "bas");
-    rowOf("swing", "swing", SWINGLABEL, "rate");
-    rowOf("groove", "groove", GROOVELABEL, "rate");
-  } else if (paletteTab === "fx") {
-    group("effects · up to " + MAX_FX + ", in order",
-      Object.keys(FX).map(k => ["fx", k, FX[k].label, "fx"]));
-    rowOf("reverb", "rev", SENDLABEL, "env");
-    rowOf("space", "verb", VERBS, "env");
-    rowOf("echo", "echo", SENDLABEL, "env");
-    rowOf("echo time", "dtime", DTLABEL, "env");
-    rowOf("level", "lvl", LEVELLABEL, "bas");
-    rowOf("place", "pan", PANLABEL, "bas");
+      b.group(fam, keys.map(k => ["genre", k, GENRES[k].label, "gen"]));
+    b.rowOf("chord mode", "mode", MODELABEL, "mode");
+    b.rowOf("key", "key", KEYLABEL, "mode");
+    b.rowOf("progression", "prog", PROGLABEL, "mode");
+  },
+  role: b => b.rowOf("section", "role", ROLES, "role"),
+  timing: b => {
+    b.rowOf("tempo", "rate", RATELABEL, "rate");
+    b.rowOf("swing", "swing", SWINGLABEL, "rate");
+    b.rowOf("groove", "groove", GROOVELABEL, "rate");
+    b.rowOf("articulation", "artic", ARTICS, "art");
+  },
+  mods: b => {
+    b.note("These apply to the layer you are editing, not to the whole box. " +
+           "They compose in the order you switch them on.");
+    b.opRow("pattern", ["rev", "inv", "gateflip", "accflip", "slides", "stick"], "");
+    b.opRow("rotate", ["rot1", "rot2", "rot3", "rot4", "rot5", "rot6", "rot7"], "lst");
+    b.opRow("rotate rhythm only", ["gat2", "gat4", "gat8"], "lst");
+    b.opRow("rotate pitch only", ["pit2", "pit4", "pit8"], "lst");
+    b.opRow("split", ["rep2", "rep3", "rep4", "rep5", "rep6", "rep7", "rep8"], "lst");
+    b.opRow("delete", ["del2", "del3", "del4", "del5", "del6", "del7", "del8"], "lst");
+    b.opRow("thin", ["thin2", "thin3", "thin4"], "lst");
+    b.opRow("fill in", ["dens2", "dens3", "dens4"], "lst");
+    b.opRow("loop a fragment", ["ex4", "ex8"], "lst");
+    b.opRow("shift degrees", ["trm2", "trm1", "trp1", "trp2"], "lst");
+    // BOX-scope, in the mods popup on purpose: how the bar schedule phrases
+    // (sentence), where a line stops (breath) and what shadows it (a pipe on
+    // the rendered stream) are facts about the pattern's unfolding, even
+    // though the whole box shares them
+    b.rowOf("sentence", "period", PERIODLABEL, "rate");
+    b.rowOf("breath", "breath", BREATHLABEL, "env");
+    b.rowOf("pipe", "pipe", PIPELABEL, "env");
+  },
+  voice: b => {
+    b.note("Also per layer. The five synth knobs reach any voice that has " +
+           "them — the 303, the Model D, the reese and wobble basses.");
+    b.rowOf("register", "oct", OCTAVES, "rng");
+    b.group("width", [["op", "wide", OPLABEL.wide, "rng"],
+                      ["op", "tight", OPLABEL.tight, "rng"]]);
+    b.rowOf("alphabet", "scale", SCALELABEL, "rng");
+    b.rowOf("part", "part", PARTCHOICES, "rng");
+    // BOX-scope on a layer popup, like breath in mods: the box has one lyric
+    // and one singer, but what a voice IS belongs here
+    b.rowOf("sing", "sing", SINGLABEL, "vox");
+    b.rowOf("filter", "cut", VOX.cut.labels, "vox");
+    b.rowOf("resonance", "res", VOX.res.labels, "vox");
+    b.rowOf("env mod", "emod", VOX.emod.labels, "vox");
+    b.rowOf("decay", "dec", VOX.dec.labels, "vox");
+    b.rowOf("waveform", "wave", VOX.wave.labels, "vox");
+    b.rowOf("ramp limit", "clamp", CLAMPLABEL, "clp");
+    b.rowOf("at the limit", "cmode", CMODES, "clp");
+  },
+  rhythm: b => {
+    b.rowOf("drum pattern", "kit", KITLABEL, "kit");
+    b.rowOf("drum sound", "drumkit", DRUMKITS, "kit");
+    b.rowOf("bass", "bassop", BASSOPS, "bas");
+  },
+  trans: b => {
+    b.note("Intro and outro replace the first and last bar; level and filter " +
+           "shape the whole section; the auto rows write a moving shape over it.");
+    b.rowOf("intro", "intro", INLABEL, "env");
+    b.rowOf("outro", "outro", OUTLABEL, "env");
+    b.rowOf("level over the section", "env", ENVLABEL, "env");
+    b.rowOf("filter over the section", "mot", MOTLABEL, "mode");
     // AUTOMATION — the four public params as shape rows (send.echo stays
     // data-only: four rows is a mixer, six is a haystack). A chip writes a
     // point list for the section as it is now; the mixer arms it every pass
     // and the bounce renders it, so the chip and the carrier can never
     // disagree about what the section does.
     for (const p of ["cutoff", "level", "pan", "send.rev"])
-      group("auto · " + AUTOPARAMLABEL[p],
+      b.group("auto · " + AUTOPARAMLABEL[p],
         ["off", "open", "close", "rise", "fall", "pump"].map(s =>
           ["auto", p + ":" + s, AUTOSHAPELABEL[s], "env"]));
-  } else {
-    rowOf("intro", "intro", INLABEL, "env");
-    rowOf("outro", "outro", OUTLABEL, "env");
-    rowOf("level over the section", "env", ENVLABEL, "env");
-    rowOf("filter over the section", "mot", MOTLABEL, "mode");
-  }
-  // the lit tab must be IN VIEW — the strip scrolls instead of clipping now,
-  // and a page switch can land on a tab past the fold (MOVE's own tab sat
-  // invisible on the MOVE page at 390px). Scrolled by hand, horizontally,
-  // never scrollIntoView: that would also scroll the DECK vertically to the
-  // strip, yanking the arrangement off screen on the very page it owns.
-  {
-    const lit = el.querySelector(".ptab.on"), strip = lit && lit.parentElement;
-    if (strip && strip.scrollWidth > strip.clientWidth) {
-      const s = strip.getBoundingClientRect(), t = lit.getBoundingClientRect();
-      if (t.right > s.right) strip.scrollLeft += t.right - s.right + 8;
-      else if (t.left < s.left) strip.scrollLeft -= s.left - t.left + 8;
-    }
-  }
-  paletteBuilt = true; paletteSig = sig;
-}
-// The page rail drives the tab too: on a phone SOUND/MIX/MOVE are this
-// palette wearing a different tab (ui/pages.js), through the same rebuild a
-// .ptab click takes — one path, so the rail and the tabs can never disagree.
-export function showTab(k) {
-  if (paletteTab === k) return;
-  paletteTab = k; paletteBuilt = false; drawPalette();
-}
+  },
+};
 
-on("song", () => { paletteBuilt = false; drawPalette(); });
-on("box", drawPalette);
-on("selection", drawPalette);
+// BUILD a cell's banks into a host (the popup mount). The host owns the
+// lifecycle: it empties itself, calls this on open, and calls refreshChips()
+// on every commit while it is up — this module keeps no subscription and no
+// singleton element, which is what made it a library instead of a page.
+export function mountBanks(cellKey, host) {
+  const def = CELLBANKS[cellKey];
+  if (!def) return false;
+  def(makeBuilders(host));
+  return true;
+}
+// the cheap pass: only the ON states move (a chip click, a focus change, an
+// arriving song). Structure never changes under a mounted bank — the one
+// structural dependency the old page had (the focus bank) lives in songrow.
+export function refreshChips(root) {
+  root.querySelectorAll(".pchip").forEach(b => {
+    const on2 = isOn(b.dataset.kind, b.dataset.value);
+    b.classList.toggle("on", !!on2);
+    b.classList.toggle("dflt", !!on2 && isDflt(b.dataset.kind));
+    b.setAttribute("aria-pressed", String(!!on2));
+  });
+}

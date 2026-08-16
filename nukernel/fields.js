@@ -473,6 +473,13 @@
     { key: "pan",  table: PANS,   labels: PANLABEL,   default: null },
     { key: "mute", type: "flag",  default: false },
     { key: "solo", type: "flag",  default: false },
+    // THE FADER OFFSET, in dB, and it is an OFFSET rather than a level: the
+    // board's fader rides ON TOP of the automated/derived value (`lvl` above,
+    // the composer's arc, a level automation), multiplying it, never replacing
+    // it — a user touch must not fight the automation. Numeric because a
+    // long-throw fader is not a detented list; clamped ±24/12 and kept at
+    // 0.1 dB so the save never carries float noise. Absent = 0 dB = today.
+    { key: "fader", type: "num", min: -24, max: 12, default: null },
   ];
   const PARTMIXBY = {};
   for (const f of PARTMIX) PARTMIXBY[f.key] = f;
@@ -485,6 +492,11 @@
   // own tone.verb, because a genre that asks to be wet means it. A PART's
   // default is 0 — the part send is what this chair asks for ON TOP of the
   // section, so absent must mean "adds nothing".
+  // a stored dB offset -> the number a builder may trust: finite, clamped to
+  // the registry row's own range, 0.1 dB. One function because the loader that
+  // accepts a fader and the mixer that applies one must agree on the clamp.
+  const faderDb = v => Number.isFinite(v)
+    ? Math.max(-24, Math.min(12, Math.round(v * 10) / 10)) : 0;
   function resolvePartMix(e) {
     const g = e && typeof e === "object" ? e : {};
     const pick = (tbl, v, dflt) =>
@@ -497,6 +509,7 @@
       pan: pick(PANS, g.pan, 0),
       mute: !!g.mute,
       solo: !!g.solo,
+      fader: faderDb(g.fader),          // dB offset OVER lvl; 0 when unset
     };
   }
 
@@ -516,7 +529,7 @@
   //
   // ABSENT IS TODAY, the same law `parts` carries: a song with no `master`
   // resolves to exactly the chain graph.js has always built — glue at −22/2.2,
-  // makeup ×2.2, the brickwall at −1.5, the 16 kHz ceiling — and builds not one
+  // makeup ×1.4, the brickwall at −1.5, the 16 kHz ceiling — and builds not one
   // extra node. That is why there is no "off"/"flat"/"normal" entry in any table
   // below: every surface on this machine already has a way to say "back to the
   // default" — a chip toggles off (ui/mixtbl.js), the session bank's pickers
@@ -535,12 +548,21 @@
   // numbers under a name, so choosing it explicitly is a no-op, and the other
   // four walk the same two nodes from a slower, gentler ride to a pumped one.
   // No new node is built for any of them: this is a param write.
+  // MAKEUPS RESTAGED 2026-08-16, measured rather than felt. At makeup 2.2 a
+  // composed song rendered at −6 to −7 dBFS RMS with its peaks PINNED on the
+  // brickwall (beatles peak −1.53 dBFS == the limiter threshold; rock 1.10,
+  // OVER full scale through the safety shaper's oversampling overshoot, which
+  // the 16-bit encode then hard-clips — the "hot and distorted" report, as
+  // numbers). The whole table is scaled by one factor so the characters keep
+  // their relative loudness; the default now leaves the limiter with ~0
+  // reduction at default settings (beatles peak −3.5 dBFS after), so the
+  // brickwall is a net again instead of the sound.
   const GLUES = {
-    soft:   { thr: -18, knee: 30, ratio: 1.6, atk: 0.030, rel: 0.35, makeup: 1.9 },
-    glue:   { thr: -22, knee: 28, ratio: 2.2, atk: 0.015, rel: 0.25, makeup: 2.2 },
-    tight:  { thr: -26, knee: 18, ratio: 3.2, atk: 0.006, rel: 0.18, makeup: 2.6 },
-    pump:   { thr: -30, knee: 8,  ratio: 6,   atk: 0.002, rel: 0.09, makeup: 3.0 },
-    squash: { thr: -34, knee: 4,  ratio: 12,  atk: 0.001, rel: 0.06, makeup: 3.4 },
+    soft:   { thr: -18, knee: 30, ratio: 1.6, atk: 0.030, rel: 0.35, makeup: 1.2 },
+    glue:   { thr: -22, knee: 28, ratio: 2.2, atk: 0.015, rel: 0.25, makeup: 1.4 },
+    tight:  { thr: -26, knee: 18, ratio: 3.2, atk: 0.006, rel: 0.18, makeup: 1.7 },
+    pump:   { thr: -30, knee: 8,  ratio: 6,   atk: 0.002, rel: 0.09, makeup: 1.9 },
+    squash: { thr: -34, knee: 4,  ratio: 12,  atk: 0.001, rel: 0.06, makeup: 2.2 },
   };
   const GLUEDFLT = GLUES.glue;             // == what graph.js builds with no master
   const GLUELABEL = { soft: "soft", glue: "glue", tight: "tight",
@@ -611,6 +633,74 @@
                      louder: { thr: -3,   push: 2.6, clip: 0.95 } };
   const CEILDFLT = CEILINGS.open;          // == what graph.js builds with no master
   const CEILINGLABEL = { open: "open", safe: "safe", loud: "loud", louder: "louder" };
+
+  /* ---------- THE SHARED BUSES: the rack's own knobs ---------- */
+  // The three send returns graph.js builds for every song — reverb, echo, drum
+  // room — plus the echo's two internal numbers, as detented knobs on the MIX
+  // page's effects rack. Same law as MASTER below: ABSENT IS TODAY. A song with
+  // no `buses` gets the graph exactly as built — the reverb returns at
+  // VERBSPEC's own levels, the room at its 0.9, the echo at fb 0.42 into a
+  // 2800 Hz tone — so there is no "normal" entry in any table here; the empty
+  // detent is the only spelling of the default, and clearing every knob must
+  // restore the shipped graph node for node (the master-bus law, one bus down).
+  //
+  // `ret` is a MULTIPLIER on the return the graph already builds, not a level
+  // of its own: each bus's base return is a tuned number (VERBSPEC per verb,
+  // the room's 0.9) and a knob that replaced it would need one table per verb.
+  const BUSRETS = { down: 0.5, dim: 0.75, up: 1.3, hot: 1.6 };
+  const BUSRETLABEL = { down: "down", dim: "dim", up: "up", hot: "hot" };
+  // the echo's feedback (base 0.42) and tone lowpass (base 2800 Hz) —
+  // buildEchoBus's own constants, offered a step either side of themselves
+  const EFBS = { less: 0.22, more: 0.62 };
+  const EFBLABEL = { less: "fewer", more: "more" };
+  const ETONES = { dark: 1400, bright: 5600 };
+  const ETONELABEL = { dark: "dark", bright: "bright" };
+  // one row per shared bus, each row listing its rack knobs — the registry the
+  // board and the rack draw from, so no surface carries a hand-written label
+  // table (the FIELDS law, extended to the rack)
+  const BUSES = [
+    { bus: "rev",  label: "reverb", feed: "fed by the reverb sends",
+      knobs: [
+        { key: "ret",  label: "return", table: BUSRETS, labels: BUSRETLABEL, default: null } ] },
+    { bus: "echo", label: "echo",   feed: "ping-pong · fed by the echo sends",
+      knobs: [
+        { key: "ret",  label: "return", table: BUSRETS, labels: BUSRETLABEL, default: null },
+        { key: "fb",   label: "repeats", table: EFBS,   labels: EFBLABEL,    default: null },
+        { key: "tone", label: "tone",   table: ETONES,  labels: ETONELABEL,  default: null } ] },
+    { bus: "room", label: "drum room", feed: "fed by the kit's lane sends",
+      knobs: [
+        { key: "ret",  label: "return", table: BUSRETS, labels: BUSRETLABEL, default: null } ] },
+  ];
+  const BUSBY = {};
+  for (const b of BUSES) BUSBY[b.bus] = b;
+  // ONE SPEC -> ENGINE VALUES, resolveMaster's shape: `ret` resolves to its
+  // multiplier (1 when unset — the graph as built), fb/tone to their number or
+  // null (null = the builder's own constant, untouched).
+  function resolveBuses(v) {
+    const g = v && typeof v === "object" ? v : {};
+    const pick = (tbl, x) =>
+      (x != null && Object.prototype.hasOwnProperty.call(tbl, String(x))) ? tbl[x] : null;
+    const out = {};
+    for (const b of BUSES) {
+      const e = g[b.bus] && typeof g[b.bus] === "object" ? g[b.bus] : {};
+      const r = {};
+      for (const k of b.knobs) {
+        const val = pick(k.table, e[k.key]);
+        r[k.key] = k.key === "ret" ? (val == null ? 1 : val) : val;
+      }
+      out[b.bus] = r;
+    }
+    return out;
+  }
+  // is this spec the same as no spec at all? — masterIsDefault's question, for
+  // the same normalizer in song.js and ui/state.js setBuses
+  const busesIsDefault = v => !v || typeof v !== "object" ||
+    BUSES.every(b => {
+      const e = v[b.bus];
+      return e == null || typeof e !== "object" ||
+        b.knobs.every(k => e[k.key] == null ||
+          !Object.prototype.hasOwnProperty.call(k.table, String(e[k.key])));
+    });
 
   // THE REGISTRY ROW, same shape as PARTMIX so one surface can draw it: `label`
   // is the silkscreen word over the control, because unlike a mixer column
@@ -837,6 +927,13 @@
     // it existed — singPlan returns [] and no wasm is ever fetched.
     { key: "sing",    scope: "box",   table: SINGS,       labels: SINGLABEL,
       tab: "voice",  group: "sing",                      default: null },
+    // ---- the board (2026-08-16) — appended, never reordered ----------------
+    // the SECTION strip's fader offset, the same dB-over-the-automated-value
+    // law as PARTMIX `fader` (see the note there): it multiplies the channel's
+    // resolved `lvl` in audio/mixer.js chanSpec, so the enum level, the
+    // composer's arc and a level automation all keep meaning what they meant.
+    { key: "fader",   scope: "box",   type: "num", min: -24, max: 12,
+      tab: "fx",     group: "fader",                     default: null },
   ];
   const FIELD = {};
   for (const f of FIELDS) FIELD[f.key] = f;
@@ -853,10 +950,12 @@
                 BREATHS, BREATHLABEL, PIPESETS, PIPELABEL, PARTCHOICES,
                 PARTNAMES, PARTLABEL, PARTMIX, PARTMIXBY, MAX_CHAIRS,
                 readPartKey, okPartKey, partChairLabel, chairKeys, resolvePartMix,
+                faderDb,
                 DRIVES, DRIVELABEL, GLUES, GLUELABEL, TAPES, TAPELABEL,
                 SPACES, SPACELABEL, WIDTHS, WIDTHLABEL, TILTS, TILTLABEL,
                 CEILINGS, CEILINGLABEL, MASTER, MASTERBY,
                 resolveMaster, masterIsDefault,
+                BUSES, BUSBY, resolveBuses, busesIsDefault,
                 AUTOPARAMS, AUTOPARAMLABEL, AUTOSHAPES, AUTOSHAPELABEL, autoShape,
                 SINGS, SINGLABEL,
                 ROLES, FIELDS, FIELD };

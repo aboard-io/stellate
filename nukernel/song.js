@@ -24,7 +24,7 @@
   const NG = (typeof module !== "undefined" && module.exports)
     ? require("./genres.js") : root.NuGenres;
   const { FIELDS, OPS, FX, MAX_FX, NSLOTS, MAX_LEN, MAX_NUDGE, VOX,
-          AUTOPARAMS, PERIODS, PARTMIX, okPartKey, MASTER } = NF;
+          AUTOPARAMS, PERIODS, PARTMIX, okPartKey, MASTER, BUSES, faderDb } = NF;
   const { GENRES } = NG;
 
   // The CURRENT schema version. v:2 = v:1 with the box field `del` renamed to
@@ -36,6 +36,7 @@
   // whose absence is the whole of the previous behaviour, so a v:2 save from
   // before either one loads and sounds identically and there is nothing to
   // migrate. A version bump is for a shape that MOVED, not one that grew.
+  // (`song.buses` — the rack's return trims — is optional on the same terms.)
   const VERSION = 2;
 
   // THE FILTER RULE, written down at last: `ops` and `fx` are FILTERED on
@@ -270,6 +271,12 @@
               } else if (f.type === "flag") {
                 if (typeof v !== "boolean") err(ep + "." + f.key, v, "true|false");
                 else if (v) o[f.key] = true;
+              } else if (f.type === "num") {
+                // the len/nudge policy: garbage rejects, a wild number clamps
+                // (fields.js faderDb, the one clamp the mixer also applies) —
+                // and 0 normalizes away, so "no offset" keeps one spelling
+                if (!Number.isFinite(v)) err(ep + "." + f.key, v, f.min + ".." + f.max);
+                else { const n = faderDb(v); if (n) o[f.key] = n; }
               } else if (!okEnum(f, v)) {
                 err(ep + "." + f.key, v, "one of " + Object.keys(f.table).join("|"));
               } else o[f.key] = v;
@@ -282,6 +289,13 @@
       for (const f of FIELDS) {
         if (f.type === "list" || f.type === "int" || f.type === "vox") continue;
         if (f.type === "parts") continue;            // the map above, not an enum
+        if (f.type === "num") {                      // the box fader: same policy
+          const v = b[f.key];                        // as the part one above
+          if (v == null) { b[f.key] = null; continue; }
+          if (!Number.isFinite(v)) err(at + "." + f.key, v, f.min + ".." + f.max);
+          else b[f.key] = faderDb(v) || null;
+          continue;
+        }
         if (!okEnum(f, b[f.key]))
           err(at + "." + f.key, b[f.key], "one of " + Object.keys(f.table).join("|"));
       }
@@ -333,6 +347,39 @@
         s.master = Object.keys(clean).length ? clean : null;
       }
     } else s.master = null;
+
+    // ---- THE SHARED-BUS TRIMS: the master's law, one level down. A song-level
+    // map of bus -> { knob: value } (fields.js BUSES), because the rack's
+    // returns are part of how a song sounds and a shared song must sound the
+    // way its author left it. Same filter split as master: an unknown BUS or
+    // KNOB is dropped (that vocabulary will grow and shrink), an unknown VALUE
+    // rejects. Normalized to null when nothing survives — absent keeps one
+    // spelling, and audio/graph.js keys its as-built branch on it.
+    if (s.buses != null) {
+      if (typeof s.buses !== "object" || Array.isArray(s.buses))
+        err("buses", s.buses, "a map of bus -> knob values");
+      else {
+        const clean = {};
+        for (const b of BUSES) {
+          const e = s.buses[b.bus];
+          if (e == null) continue;
+          if (typeof e !== "object" || Array.isArray(e)) {
+            err("buses." + b.bus, e, "a knob-value object"); continue;
+          }
+          const o = {};
+          for (const k of b.knobs) {
+            const v = e[k.key];
+            if (v == null) continue;
+            if (!Object.prototype.hasOwnProperty.call(k.table, String(v)))
+              err("buses." + b.bus + "." + k.key, v,
+                  "one of " + Object.keys(k.table).join("|"));
+            else o[k.key] = v;
+          }
+          if (Object.keys(o).length) clean[b.bus] = o;
+        }
+        s.buses = Object.keys(clean).length ? clean : null;
+      }
+    } else s.buses = null;
 
     // tempo and volume ride along; out-of-range means "keep what you had",
     // not "refuse the song" — same policy applyState always had

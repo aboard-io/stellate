@@ -1,80 +1,67 @@
-// ui/songrow.js — THE SONG TABLE: one element PER BOX, kept alive and patched.
-// The song is a table of sections at every width — # | section | genre | bars |
-// phrases | switched-on | keys — with a stacked layer as an indented sub-row
-// beneath its authority. There is no desk card rack any more and no
-// width-as-duration: a wide screen gets the same rows with more room (wider
-// columns, the column header out, the option sheet anchored under the row
-// instead of over the deck). ONE DOM, one idiom; the CSS decides how much room
-// the columns get and nothing else.
+// ui/songrow.js — THE SONG TABLE, and since "the row and the board"
+// (2026-08-15) THE WHOLE PER-BOX INTERFACE: one row per section, built from
+// NAMED CELLS — | PART | GENRE | FUNCTION | BARS# | TIMING | PATTERN MODS |
+// VOICE | RHYTHM | TRANSITIONS | PATTERN 1..n | — and every cell is a tap
+// target that opens a FOCUSED POPUP carrying only that cell's controls. You
+// don't pop up everything at once; you manipulate the section by tapping
+// different parts of its row. The popups are built from the palette's bank
+// library (ui/palette.js mountBanks — the page it used to be is gone), plus
+// the row-level keys this file owns: play-from-here, reorder, duplicate,
+// delete and pin in the PART popup, the bars stepper in BARS#, the nudge
+// stepper in TIMING, the layer/focus list in GENRE.
 //
-// ONE LINE PER SECTION (Paul, 2026-08-15: "the song sections can be much less
-// vertically tall — they sort of spread all over the place"). The phone row
-// used to be a three-line grid — head, layers, then lamps and length on a
-// third line with a 2×2 tool pad parked down the right — 109px of mostly air
-// per section, so eleven sections were a scroll rather than a song. Every
-// field is on ONE line now at every width, the sub-rows are as tight, and what
-// used to be four tool keys is a corner cluster of two:
+// WHAT THE CELLS REPLACED, and why nothing is lost:
+//   THE LED STRIP — eight lamps compressing ~20 words because the row had no
+//     room for them. The cell row IS the words: every cell shows its current
+//     value compactly (genre name, bar count, role word, a kit word, an op
+//     count), and each family's full detail is one tap away in its popup.
+//     The long-press that poured the lamp words into the readout went with
+//     the lamps — the cells say their values in place.
+//   THE ROW SHEET'S SURFACE SWITCH (sound/mix) — the two surfaces it switched
+//     no longer share a sheet: sound is the cell popups, mix is the MIX page.
+//   THE + / PIN / ✕ CORNER CLUSTER and the #gpick picker — the PART popup
+//     carries pin/delete (and dblclick still loops); the GENRE popup carries
+//     the family banks, where a dark chip adds a layer and a lit one removes.
 //
-//   ↑ ↓ RETIRED. Rows drag among themselves on a desk; the keyboard reorders
-//     with ALT+ARROW on the focused row, and touch — where HTML5 drag has
-//     never fired — reorders with the ↑ ↓ keys in the row's own sheet. Two
-//     keys off every row, and the reorder is still reachable three ways.
-//   ⟳ BECAME A PIN. Same behaviour (loop this section alone), pin
-//     iconography, pinned = lit, sitting beside the dismiss ✕ so the row's two
-//     state keys are one corner cluster instead of a pad in the middle of the
-//     row's tap target.
-//   + ADDS A SUB-GENRE. The stack has always taken riders; adding one meant
-//     opening the sheet and finding the genre bank. The key at the right of
-//     the row offers the genre choice immediately, anchored to itself, and the
-//     new layer appears as an indented sub-row.
-//   PHRASE CHIPS. The phrases the section plays, as the slot rail's own
-//     contour picture shrunk to a chip — tap one to select it AND go to STEP
-//     with the row still selected. It replaced the "1+3 / 2" numerals column,
-//     which was a desk-only cell and said less in more room.
-//
-// Rebuilding is still the sin: the old drawSong() wiped #song and rebuilt every
-// row with ~10 listeners each on every chip click and every scrub frame; here a
-// row's element is keyed by the box object's identity and only its text and
-// classes are patched. A "phrase" event still does not patch a ROW — it writes
-// one <path d> per chip showing the edited phrase and nothing else (see
-// patchChipPaths at the bottom) — which is the contract that makes an editor
-// scrub cheap, kept now that the row draws the phrases.
+// Rebuilding is still the sin: a row's element is keyed by the box object's
+// identity and only its text and classes are patched. A "phrase" event still
+// does not patch a ROW — it writes one <path d> per chip showing the edited
+// phrase and nothing else (patchChipPaths, at the bottom), the contract that
+// makes an editor scrub cheap.
 //
 // Layer graph: ui view — imports state/derive/deps and audio/transport (the
 // one allowed direction; transport never calls back, it publishes).
-import { GENRES, ROLES, OPLABEL, OCTAVES, SCALELABEL, VOX, KITLABEL, DRUMKITS,
-         BASSOPS, SWINGLABEL, GROOVELABEL, MODELABEL, RATELABEL, FX, SENDLABEL,
-         VERBS, DTLABEL, LEVELLABEL, PANLABEL, INLABEL, ENVLABEL, MOTLABEL,
-         OUTLABEL, MAX_LEN, MAX_NUDGE, FAMILIES, emptyBox } from "./deps.js";
+import { GENRES, ROLES, KITLABEL, DRUMKITS,
+         SWINGLABEL, GROOVELABEL, RATELABEL, ARTICS, INLABEL, OUTLABEL,
+         SINGLABEL, MAX_LEN, MAX_NUDGE, NSLOTS, blank, instrOf,
+         emptyBox } from "./deps.js";
 import { SONG, SLOTS, slot, viewSec, loopOnly, pendingStart, bpm, setViewSec,
-         setLoopOnly, setPendingStart, setSlot, commit, on, emit } from "./state.js";
+         setLoopOnly, setPendingStart, setSlot, commit, on } from "./state.js";
 import { stackOf, stackLabel, boxBars, secsOf, focused, focusOf, opsOf, optOf,
-         voxAll, mmss, contourPath } from "./derive.js";
+         voxAll, kitOf, mmss, contourPath } from "./derive.js";
 import { playing, playingSec, startAt, resetBar } from "../audio/transport.js";
-import { onLongPress, buzz } from "./touch.js";
-// the popover mounts the ONE palette element (built once over there); showTab
-// puts it on SOUND when a row opens — same path a .ptab click takes, and
-// toggle() is the ONE genre dispatcher, which is what the row's + calls rather
-// than splicing a stack entry itself
-import { showTab, toggle } from "./palette.js";
-// a phrase chip navigates — the row is where you choose WHICH phrase, the STEP
-// page is where you edit it. (pages.js imports state/palette/touch only, so
-// this direction stays acyclic.)
-import { setPage } from "./pages.js";
+import { buzz } from "./touch.js";
+// toggle() is the ONE dispatcher every chip goes through; mountBanks builds a
+// cell's banks into the popup mount and refreshChips re-lights them per commit
+import { toggle, mountBanks, refreshChips } from "./palette.js";
+// a PATTERN cell opens the PHRASE EDITOR POPUP on that phrase — the row is
+// where you choose WHICH phrase, the popup is where you edit it. (editor.js
+// imports state/palette/popfader/touch only, so this direction stays acyclic.)
+import { openPhraseEditor } from "./editor.js";
 
 const songEl = document.getElementById("song");
-// TABLE SEMANTICS, honestly and everywhere: the same fields on every section,
+// TABLE SEMANTICS, honestly and everywhere: the same cells on every section,
 // one row each, a header row naming the columns (CSS hides that header where
 // there is no room for it). The roles are static because the DOM is.
 songEl.setAttribute("role", "table");
 songEl.setAttribute("aria-label", "song sections");
-// the anchored option sheet needs daylight under the row; below this width it
-// is a bottom sheet instead. The same number the pop-up fader uses — one
+// the anchored popup needs daylight under the row; below this width it is a
+// bottom sheet instead. The same number the pop-up fader uses — one
 // definition of "there is room beside/below this".
 const WIDE = 900;
 
 let dragFrom = null;
-const els = new Map();                     // box object -> { box, num, role, ... }
+const els = new Map();                     // box object -> { box, cells, ... }
 
 const idx = sec => SONG.indexOf(sec);
 // loopOnly/pendingStart are SONG indices, and a reorder invalidates indices —
@@ -92,32 +79,39 @@ const keepMarks = () => {
   };
 };
 
+/* ---------- the cell vocabulary ---------- */
+// the column order IS the interface order — one definition, the header row
+// and every box row walk it. FUNCTION is the section-role cell (the word
+// "function" is the brief's; "role" is the field's).
+const CELLS = ["part", "genre", "role", "bars", "timing", "mods",
+               "voice", "rhythm", "trans"];
+const CELLNAME = { part: "part", genre: "genre", role: "function", bars: "bars",
+                   timing: "timing", mods: "pattern mods", voice: "voice",
+                   rhythm: "rhythm", trans: "transitions" };
+
 /* ---------- the column header ---------- */
 // A real header row: the columns are named once, at the top, instead of every
-// row re-explaining itself. It is a row of columnheaders in the same grid, so
-// the names sit over the cells they name — that alignment is the whole reason
-// a table beats a card. Hidden by CSS where the columns are stacked.
+// row re-explaining itself. Hidden by CSS where the columns wrap instead.
 const headRow = (() => {
   const r = document.createElement("div");
-  // .thd: the shared TABLE header row — same silkscreen, same rule, same
-  // sticky top as the pattern editor's column labels and the arrangement's
   r.className = "shead thd"; r.setAttribute("role", "row");
-  for (const [cls, txt] of [["hnum", "#"], ["hrole", "section"],
-                            ["hgenre", "genre"], ["hbars", "bars"],
-                            ["hph", "phrases"], ["hleds", "switched on"],
-                            ["htools", "keys"]]) {
+  const names = { part: "#", genre: "genre", role: "function", bars: "bars",
+                  timing: "timing", mods: "mods", voice: "voice",
+                  rhythm: "rhythm", trans: "transitions" };
+  for (const k of CELLS) {
     const c = document.createElement("span");
-    c.className = cls; c.textContent = txt;
+    c.className = "h-" + k; c.textContent = names[k];
     c.setAttribute("role", "columnheader");
     r.append(c);
   }
+  const c = document.createElement("span");
+  c.className = "h-ph"; c.textContent = "patterns";
+  c.setAttribute("role", "columnheader");
+  r.append(c);
   return r;
 })();
 
-/* ---------- the keys ---------- */
-// The row's own two state keys (pin, ✕) plus the + that grows the stack; the
-// sheet's keys are cut from the same helper. Every one stops the click, or it
-// would also open the row it sits in.
+/* ---------- keys and icons ---------- */
 const btn = (cls, glyph, label, fn) => {
   const b2 = document.createElement("button");
   b2.type = "button"; b2.className = cls; b2.textContent = glyph;
@@ -125,10 +119,9 @@ const btn = (cls, glyph, label, fn) => {
   b2.addEventListener("click", ev => { ev.stopPropagation(); fn(); });
   return b2;
 };
-// ...and the same key wearing a drawn icon instead of a glyph. A pushpin has
-// no dependable character in a monospace face — ⚲ and 📌 are a coverage
-// lottery and one of them is an emoji — so the pin is a path, painted with
-// currentColor like every other silkscreen icon on the machine.
+// a drawn icon instead of a glyph: no dependable pushpin character exists in
+// a monospace face, so the pin is a path painted with currentColor — the
+// silkscreen recipe every icon on the machine uses.
 const PIN_SVG =
   '<svg viewBox="0 0 16 16" aria-hidden="true" class="pini">' +
   '<path d="M5.7 1.6h4.6l-.7 3.4 2.2 2.2v1.3H8.7v5.4L8 15.2l-.7-1.3V8.5H4.2V7.2l2.2-2.2z"/>' +
@@ -140,7 +133,7 @@ const iconBtn = (cls, svg, label, fn) => {
 };
 
 /* ---------- reorder, as one function ---------- */
-// THREE CALLERS, ONE MOVE: the row sheet's ↑ ↓ (the touch path — HTML5 drag
+// THREE CALLERS, ONE MOVE: the PART popup's ↑ ↓ (the touch path — HTML5 drag
 // does not fire on a touch screen at all, so a phone would otherwise have no
 // reorder), ALT+ARROW on the focused row (the keyboard path), and drag-and-drop
 // (the desk path, below). It closes over the BOX OBJECT and looks its index up
@@ -167,89 +160,80 @@ function buildBox(sec) {
   box.setAttribute("role", "row");
   box.draggable = true;
   // EVERY CELL IS BUILT ONCE and patched by textContent/class, never by
-  // innerHTML. Rebuilding the row's head per patch destroyed the tool keys on
-  // every "transport:section" (each box boundary while playing) and on the very
-  // activation they handle: Enter on a key committed, the commit patched, the
-  // focused button was removed and focus fell to <body> — the exact mid-click
-  // destruction palette.js documents having fixed once. (The key that used to
-  // demonstrate this was ↑; the pin and ✕ are just as destroyable.)
-  const cell = (tag, cls) => {
-    const n = document.createElement(tag);
-    n.className = cls; n.setAttribute("role", "cell");
-    return n;
+  // innerHTML — rebuilding destroys the button under the pointer mid-click
+  // (the exact failure palette.js documents having fixed once).
+  // A cell is a real <button role="cell">: icon silkscreen + the compact
+  // current value, and tapping it opens ITS popup. The click stops there —
+  // the row's own click (the gap between cells) opens the PART popup.
+  const cells = {};
+  const cell = k => {
+    const b2 = document.createElement("button");
+    b2.type = "button";
+    b2.className = "bcell c-" + k + (k === "genre" ? " bgenre" : "") +
+                   (k === "bars" ? " bbars" : "");
+    b2.dataset.cell = k;
+    b2.setAttribute("role", "cell");
+    const ci = document.createElement("span");
+    ci.className = "ci"; ci.setAttribute("aria-hidden", "true");
+    b2.append(ci);
+    b2.addEventListener("click", ev => {
+      ev.stopPropagation();
+      const i = idx(sec);
+      if (popFor === sec && popCell === k) { closePop(); return; }  // a toggle
+      setViewSec(i);
+      openPop(sec, k);
+    });
+    cells[k] = b2;
+    return b2;
   };
-  const num = cell("b", "bnum tnum");   // the shared numeral column
-  const role = cell("span", "role");
-  const gl = cell("div", "bgenre");
-  // the BARS cell says the length in the units the song is written in, and the
-  // duration in the units a listener hears. Two spans, because the phone drops
-  // the clock and keeps the bars (the fader-legend pattern: abbreviate, never
-  // hide the thing itself).
-  const bars = cell("span", "bbars");
+  for (const k of CELLS) cell(k);
+  // the PART cell carries the row number (the shared numeral column) and the
+  // pin lamp; the others carry a value span the patch writes
+  const num = Object.assign(document.createElement("b"),
+    { className: "bnum tnum", textContent: "" });
+  const pinLamp = document.createElement("span");
+  pinLamp.className = "bpin"; pinLamp.innerHTML = PIN_SVG;
+  pinLamp.setAttribute("aria-hidden", "true");
+  cells.part.append(num, pinLamp);
+  const vals = {};
+  for (const k of CELLS.slice(1)) {
+    const v = document.createElement("span");
+    // the FUNCTION cell's value keeps the .role class — it is the one word
+    // that NAMES the section, and gates read `.box .role` for it
+    v.className = k === "role" ? "cvx role" : "cvx";
+    cells[k].append(v);
+    vals[k] = v;
+  }
+  // the BARS cell says the length in the units the song is written in, and
+  // the duration in the units a listener hears. Two spans, because the phone
+  // drops the clock and keeps the bars.
   const bn = Object.assign(document.createElement("b"), { className: "bn" });
   const bd = Object.assign(document.createElement("span"), { className: "bd" });
-  bars.append(bn, bd);
-  // THE PHRASES THIS SECTION PLAYS, as chips — the slot rail's own contour
-  // picture (ui/derive.js contourPath, one drawing routine for both) shrunk to
-  // about a fingernail, one per phrase, in the layers' own order. It replaced a
-  // desk-only column of numerals ("1+3 / 2") that said which phrases without
-  // saying anything about them; the chips say both, in less room, at every
-  // width. Tapping one selects that phrase AND goes to STEP to edit it, with
-  // the row still selected — so the context strip names the right box and the
-  // right phrase when you land.
-  const ph = cell("div", "bchips");
-  // WHAT THIS BOX IS DOING, as an LED strip. The old tag pile emitted ~20
-  // word-chips into a two-row well that hid the overflow; eight lamps at
-  // FIXED positions never reflow and read at rack distance: lit = that
-  // family is set, colour = which family. The words are still here — each
-  // lamp's title carries them — and the order is the reading order:
-  // line · drums · bass · time · fx · sends · place · edges.
-  const leds = cell("div", "bleds");
-  const lamp = {};
-  for (const fam of ["line", "drum", "bass", "time", "fx", "send", "place", "edge"]) {
-    const s = document.createElement("i");
-    s.className = "led"; s.dataset.fam = fam;
-    lamp[fam] = s; leds.append(s);
-  }
-  // THE KEYS, at the right of the row: + grows the stack, and the two state
-  // keys — pin and dismiss — are a CORNER CLUSTER, which is the whole reason
-  // they are three and not five. Four keys in a 2×2 pad put a button at the
-  // geometric centre of a 109px row, so "tap the section" hit ⟳ or ✕ as often
-  // as it opened the sheet; a one-line row with the keys in its corner has a
-  // tap target again.
-  const tools = cell("span", "btools");
-  const addLayer = btn("t addl", "+", "add a sub-genre to this box",
-    () => openPicker(sec, addLayer));
-  // THE PIN IS THE OLD ⟳, exactly: it loops this section alone. A circular
-  // arrow says "again" and the thing it does is "hold here", which is what a
-  // pin says — and pinned/unpinned is a state a pin can wear (lit) where a
-  // rotation arrow can only be lit or not for no visible reason.
-  const pinBtn = iconBtn("t pin", PIN_SVG, "pin box (loop it alone)", () => {
+  vals.bars.append(bn, bd);
+  // THE PATTERN CELLS — one chip per (layer, phrase), the phrase's own
+  // contour as the icon (contourPath, one drawing routine with the editor's
+  // rail), plus the trailing [+] that grows the bank into this box and opens
+  // the editor on the new phrase.
+  const ph = document.createElement("div");
+  ph.className = "bchips"; ph.setAttribute("role", "cell");
+  const plus = btn("bch bplus", "+", "add a phrase to this box", () => {
     const at = idx(sec);
-    setViewSec(at); setLoopOnly(loopOnly === at ? null : at);
-    commit("selection");
-    if (playing || loopOnly != null) startAt(at);
+    if (at < 0 || SLOTS.length >= NSLOTS) return;
+    setViewSec(at);
+    SLOTS.push(blank());
+    const si = SLOTS.length - 1;
+    setSlot(si);
+    commit("phrase");
+    toggle("phrase", si);                 // into the FOCUSED layer; it commits
+    closePop();
+    openPhraseEditor({ slot: si });
+    buzz(4);
   });
-  const xBtn = btn("t x", "✕", "remove box", () => {
-    const at = idx(sec);
-    SONG.splice(at, 1);
-    if (!SONG.length) SONG.push(emptyBox());
-    setViewSec(Math.min(viewSec, SONG.length - 1));
-    if (loopOnly != null) setLoopOnly(null);
-    commit("box");
-    if (playing) resetBar();
-  });
-  tools.append(addLayer, pinBtn, xBtn);
-  // A STACKED LAYER IS ITS OWN SUB-ROW: the genre cell names the AUTHORITY,
-  // and each rider genre gets an indented line of its own beneath it — a
-  // button, because tapping a layer line focuses that layer and opens the row
-  // popover already looking at it. Rebuilt only when the stack's genres
-  // change; patched otherwise, like everything else on the row.
-  const layers = document.createElement("div"); layers.className = "blayers";
+  ph.append(plus);
   const prog = document.createElement("div"); prog.className = "bprog";
   const fill = Object.assign(document.createElement("i"), { className: "fillbar" });
   prog.append(fill);
-  box.append(num, role, gl, bars, ph, leds, tools, layers, prog);
+  box.append(...CELLS.map(k => cells[k]), ph, prog);
 
   // REORDER — rows drag among themselves, and that is all dragging does now.
   box.addEventListener("dragstart", e => {
@@ -276,32 +260,26 @@ function buildBox(sec) {
     if (playing) resetBar();
   });
 
-  // A ROW TAP OPENS THE ROW, at every width. The popover is the section's whole
-  // option surface, and the ▶ in its head is the play-from-here a desk used to
-  // get from the tap itself — which was a hidden mode by width: the same click
-  // on the same table meant "play" on one screen and "open" on another. While
-  // ANOTHER row's popover is up, a tap only dismisses it (the auto-dismiss
-  // rule); the next tap opens this row. DOUBLE-CLICK still loops this row
-  // alone, and closes whatever the first click opened.
+  // the ROW itself (the gaps between cells) opens the PART popup — the row's
+  // "default" cell, so a miss on a cell still lands on the box's own options.
+  // While ANOTHER row's popup is up, a tap only dismisses it (the auto-dismiss
+  // rule). DOUBLE-CLICK still loops this row alone, and closes whatever the
+  // first click opened.
   box.addEventListener("click", () => {
     const i = idx(sec);
     if (popFor && popFor !== sec) { closePop(); setViewSec(i); commit("selection"); return; }
     if (popFor === sec) { closePop(); return; }   // same row: a toggle
     setViewSec(i);
-    openPop(sec, focusOf(sec));
+    openPop(sec, "part");
   });
   // ...and the same door from the keyboard: the row is a tab stop, Enter or
-  // Space opens its sheet. The tool keys were already reachable; the row
-  // itself was not, which made every option on it mouse-or-finger only.
+  // Space opens its PART popup (each cell is a real button and its own stop).
   box.tabIndex = 0;
   box.addEventListener("keydown", e => {
-    // ALT+ARROW REORDERS THE FOCUSED ROW. This is what replaced the ↑ ↓ keys:
-    // they were on every row for ever so that a keyboard (and a finger) could
-    // reorder at all, which is two permanent keys of chrome to serve a rare
-    // edit. Alt is the modifier because a bare arrow must keep walking the tab
-    // ring, and the row FOLLOWS ITS BOX — the element is keyed by the box
-    // object, so re-focusing after the commit keeps the same section under the
-    // keys for a second press.
+    // ALT+ARROW REORDERS THE FOCUSED ROW. Alt is the modifier because a bare
+    // arrow must keep walking the tab ring, and the row FOLLOWS ITS BOX — the
+    // element is keyed by the box object, so re-focusing after the commit
+    // keeps the same section under the keys for a second press.
     if (e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
       e.preventDefault();
       if (moveBox(sec, e.key === "ArrowUp" ? -1 : 1)) {
@@ -312,12 +290,13 @@ function buildBox(sec) {
       return;
     }
     if (e.key !== "Enter" && e.key !== " ") return;
+    if (e.target !== box) return;              // a cell button handles its own
     e.preventDefault();
     const i = idx(sec);
     if (popFor === sec) { closePop(); return; }
     if (popFor) closePop();
     setViewSec(i);
-    openPop(sec, focusOf(sec));
+    openPop(sec, "part");
   });
   box.addEventListener("dblclick", () => {
     const i = idx(sec);
@@ -327,31 +306,14 @@ function buildBox(sec) {
     startAt(i);
   });
 
-  // HOLD TO READ (hw.css verb #4: open the full surface of the thing under
-  // the finger). The LED strip compresses ~20 words into eight lamps, and on
-  // a desk the words come back on hover — but a phone has no hover, so a
-  // long-press pours every lit family's words into the readout line instead.
-  // The helper swallows the click that follows, so a hold never also opens the
-  // option sheet on top of what it just said.
-  onLongPress(box, () => {
-    const i = idx(sec);
-    const words = Object.entries(lamp)
-      .filter(([, s]) => s.title)
-      .map(([fam, s]) => fam + ": " + s.title);
-    emit("status", { text: "box " + (i + 1) + " · " + stackLabel(sec) + "  —  " +
-      (words.length ? words.join("  ·  ") : "nothing switched on"), sticky: true });
-  });
-
-  return { box, num, role, bars, bn, bd, pinBtn, xBtn, addLayer,
-           gl, layers, layersSig: "", ph, chips: [], chipsSig: "", lamp, fill };
+  return { box, cells, vals, num, pinLamp, bn, bd, plus,
+           ph, chips: [], chipsSig: "", fill };
 }
 
 /* ---------- the phrase chips ---------- */
 // One chip per (layer, phrase), rebuilt only when the SET of phrases in the
-// box changes — a structural, rare edit, the same carve-out the layer sub-rows
-// take. A scrub inside a phrase does not rebuild anything: it repaints one
-// <path d>, which is what keeps the editor's per-pointermove commit cheap
-// (patchChipPaths, at the bottom of this file).
+// box changes — a structural, rare edit. A scrub inside a phrase does not
+// rebuild anything: it repaints one <path d> (patchChipPaths, at the bottom).
 const SVGNS = "http://www.w3.org/2000/svg";
 function buildChip(sec, li, si) {
   const b = document.createElement("button");
@@ -364,23 +326,64 @@ function buildChip(sec, li, si) {
   const line = document.createElementNS(SVGNS, "path");
   mini.append(line); b.append(mini);
   b.addEventListener("click", ev => {
-    ev.stopPropagation();                 // the row click opens the sheet
+    ev.stopPropagation();                 // the row click opens the PART popup
     const at = idx(sec);
+    closePop();                           // one popup at a time
     setViewSec(at); sec.focus = li;       // the layer the phrase rail edits
     setSlot(si);
     commit("selection");
-    // GO AND EDIT IT. The row stays selected, so the context strip lands
-    // reading "BOX n · … · phrase si+1" — the strip's whole job. On a desk
-    // there are no pages to switch, so the same tap scrolls the tracker into
-    // view instead of doing nothing visible.
-    setPage("step");
-    if (innerWidth >= WIDE) {
-      const g = document.getElementById("stepgrid");
-      if (g) g.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    }
+    // GO AND EDIT IT. The editor is a popup — it opens ON the phrase the chip
+    // shows, with the row still selected, at every width.
+    openPhraseEditor({ slot: si });
     buzz(4);
   });
   return { b, line, si };
+}
+
+/* ---------- the compact cell values ---------- */
+// the row reads as a summary line of the whole section: every cell shows its
+// current value in a word or two, and "—" is the honest spelling of unset.
+// These derivations are the old LED-strip families, said in place.
+function timingFact(sec, fe) {
+  const artic = optOf(sec, fe, "artic");
+  const facts = [sec.rate && RATELABEL[sec.rate],
+                 sec.swing && SWINGLABEL[sec.swing],
+                 sec.groove && GROOVELABEL[sec.groove],
+                 sec.nudge ? "+" + sec.nudge : null,
+                 artic && ARTICS[artic]].filter(Boolean);
+  return facts.length ? facts[0] + (facts.length > 1 ? " +" + (facts.length - 1) : "") : "—";
+}
+function modsFact(sec, fe) {
+  const n = opsOf(sec, fe).length +
+    (sec.period ? 1 : 0) + (sec.breath ? 1 : 0) + (sec.pipe ? 1 : 0);
+  return n ? n + (n === 1 ? " op" : " ops") : "—";
+}
+function voiceFact(sec, fe) {
+  const g = GENRES[fe.g];
+  // the RESOLVED voice word, the mix table's own switch: a signature synth
+  // beats the sampled instrument, and a singing box says its singer
+  const base = sec.sing ? SINGLABEL[sec.sing]
+    : g.synth ? (g.synth.root || g.synth.dsp)
+    : g.instr ? String(instrOf(fe.g, 0)).replace(/_/g, " ") : "—";
+  const vox = voxAll(sec, fe);
+  const n = (optOf(sec, fe, "oct") ? 1 : 0) + (optOf(sec, fe, "scale") ? 1 : 0) +
+    (optOf(sec, fe, "part") ? 1 : 0) + (optOf(sec, fe, "clamp") != null ? 1 : 0) +
+    (optOf(sec, fe, "cmode") ? 1 : 0) + (vox ? Object.keys(vox).length : 0);
+  return base + (n ? " +" + n : "");
+}
+function rhythmFact(sec) {
+  if (sec.kit) return KITLABEL[sec.kit];
+  const k = kitOf(sec);
+  return k ? (DRUMKITS[k] || k) : "—";
+}
+function transFact(sec) {
+  const marks = [sec.intro && INLABEL[sec.intro],
+                 sec.outro && OUTLABEL[sec.outro]].filter(Boolean);
+  let t = marks.join("→");
+  const extra = (sec.env ? 1 : 0) + (sec.mot ? 1 : 0) +
+    (sec.auto || []).filter(Boolean).length;
+  if (extra) t = t ? t + " +" + extra : extra + " set";
+  return t || "—";
 }
 
 /* ---------- patch on every change ---------- */
@@ -394,84 +397,67 @@ function patchBox(sec, i, el) {
     "box " + (i + 1) + ", " + stackLabel(sec) + ", " + bars + " bars");
 
   el.num.textContent = String(i + 1);
-  el.role.hidden = !sec.role;
-  el.role.textContent = sec.role ? ROLES[sec.role] : "";
-  // THE BARS CELL IS WHERE LENGTH LIVES NOW. It used to be pixels — a row was
-  // as wide as it was long — which stopped being readable past a few bars and
-  // stopped being possible at all once the song became a table of full-width
-  // rows. The number is the honest answer, and a two-metre-wide rectangle was
-  // never going to be one.
+  el.pinLamp.hidden = i !== loopOnly;
+  el.cells.part.setAttribute("aria-label", "box " + (i + 1) + " options" +
+    (i === loopOnly ? " (pinned: loops alone)" : ""));
+
+  const st = stackOf(sec);
+  const put = (k, txt) => {
+    if (el.vals[k].textContent !== txt) el.vals[k].textContent = txt;
+    el.cells[k].classList.toggle("unset", txt === "—");
+  };
+  // the GENRE cell names the AUTHORITY with a rider count; the layers list
+  // and the family banks are its popup
+  el.cells.genre.classList.add("has");
+  put("genre", GENRES[st[0].g].label + (st.length > 1 ? " +" + (st.length - 1) : ""));
+  el.cells.genre.setAttribute("aria-label",
+    "box " + (i + 1) + " genre: " + stackLabel(sec));
+  put("role", sec.role ? ROLES[sec.role] : "—");
+  el.cells.role.setAttribute("aria-label", "box " + (i + 1) + " function: " +
+    (sec.role ? ROLES[sec.role] : "not set"));
+  // THE BARS CELL IS WHERE LENGTH LIVES. The number is the honest answer —
+  // a row cannot say its length in pixels any more.
   el.bn.textContent = bars + " bar" + (bars === 1 ? "" : "s") +
     (sec.nudge ? " +" + sec.nudge : "");
   // the clock carries its own separator so the cell reads as one phrase —
-  // "4 bars · 0:07" — in the accessibility tree as well as on the glass, and
-  // it hides with the span where a phone drops it
+  // "4 bars · 0:07" — in the accessibility tree as well as on the glass
   el.bd.textContent = "· " + mmss(secsOf(sec, bpm));
-  // the corner cluster: pinned = lit, and the pin is a toggle so it says which
-  // way it is about to go. (No key ghosts any more — none of the three has a
-  // "nowhere to go" state, which is what the ghost rule was for.)
-  el.pinBtn.classList.toggle("on", i === loopOnly);
-  el.pinBtn.setAttribute("aria-pressed", String(i === loopOnly));
-  el.pinBtn.setAttribute("aria-label",
-    (i === loopOnly ? "unpin box " : "pin box ") + (i + 1) + " (loop it alone)");
-  el.xBtn.setAttribute("aria-label", "remove box " + (i + 1));
-  el.addLayer.setAttribute("aria-label", (blankSimple(sec)
-    ? "choose the genre for box " : "add a sub-genre to box ") + (i + 1));
+  el.cells.bars.setAttribute("aria-label",
+    "box " + (i + 1) + " length: " + bars + " bars");
 
-  // the genre cell names the AUTHORITY; the riders are sub-rows below it.
-  // (The row's aria-label above still carries the whole stack.)
-  const st = stackOf(sec);
-  el.gl.className = "bgenre has";
-  el.gl.textContent = GENRES[st[0].g].label;
-  // rebuild the sub-rows only when the stack's GENRES change — a structural,
-  // rare edit, the built-once law's carve-out; labels/focus patch every pass
-  const lsig = st.slice(1).map(e => e.g).join("|");
-  if (el.layersSig !== lsig) {
-    el.layersSig = lsig;
-    el.layers.textContent = "";
-    st.slice(1).forEach((ent, k) => {
-      const b2 = document.createElement("button");
-      b2.type = "button"; b2.className = "blayer";
-      b2.addEventListener("click", ev => {
-        ev.stopPropagation();               // the row click opens the sheet
-        const at = idx(sec);
-        setViewSec(at); sec.focus = k + 1;  // the layer the phrase rail edits
-        if (popFor && popFor !== sec) { closePop(); commit("selection"); return; }
-        if (popFor === sec) { patchPop(); commit("selection"); return; }
-        openPop(sec, k + 1);
-      });
-      el.layers.append(b2);
-    });
-  }
-  [...el.layers.children].forEach((b2, k) => {
-    const ent = st[k + 1];
-    const t2 = GENRES[ent.g].label +
-      (ent.slots.length ? " · " + ent.slots.map(n => n + 1).join("+") : " · —");
-    if (b2.textContent !== t2) b2.textContent = t2;
-    b2.classList.toggle("foc", i === viewSec && focusOf(sec) === k + 1);
-    b2.setAttribute("aria-label", "layer: " + GENRES[ent.g].label + " — edit this layer");
-  });
-  // THE PHRASE CHIPS — one per (layer, phrase), in the layers' own order, so
+  const fe = i === viewSec ? focused(sec) : st[0];
+  put("timing", timingFact(sec, fe));
+  put("mods", modsFact(sec, fe));
+  put("voice", voiceFact(sec, fe));
+  put("rhythm", rhythmFact(sec));
+  put("trans", transFact(sec));
+  for (const k of ["timing", "mods", "voice", "rhythm", "trans"])
+    el.cells[k].setAttribute("aria-label",
+      "box " + (i + 1) + " " + CELLNAME[k] + ": " + el.vals[k].textContent);
+
+  // THE PATTERN CELLS — one per (layer, phrase), in the layers' own order, so
   // the strip reads the way the stack does. Rebuilt only when the SET moves.
   const csig = st.map(e => e.slots.join(",")).join("|");
   if (el.chipsSig !== csig) {
     el.chipsSig = csig;
-    el.ph.textContent = ""; el.chips.length = 0;
+    for (const c of el.chips) c.b.remove();
+    el.chips.length = 0;
     st.forEach((ent, li) => ent.slots.forEach(si => {
       const c = buildChip(sec, li, si);
-      el.chips.push(c); el.ph.append(c.b);
+      el.chips.push(c); el.ph.insertBefore(c.b, el.plus);
     }));
   }
   el.ph.className = "bchips" + (el.chips.length ? " has" : "");
+  el.plus.hidden = SLOTS.length >= NSLOTS;
+  el.plus.setAttribute("aria-label", "add a phrase to box " + (i + 1));
   for (const c of el.chips) {
     // LIT = SOUNDING. Not a timer and not a guess: the transport publishes the
     // sounding SECTION, and derive.js's own deal is that voice v plays phrase
     // v % n — so every phrase in the sounding box is sounding at once, and the
-    // honest lamp is per section rather than per chip. (A chip that took turns
-    // lighting would be a picture of a rule the engine does not have.)
+    // honest lamp is per section rather than per chip.
     c.b.classList.toggle("lit", i === playingSec);
-    // ...and the ring is the EDIT target: this row selected, this layer
-    // focused, this phrase open in the tracker
+    // ...and the ring is the EDIT target: this row selected, this phrase open
+    // in the editor popup
     c.b.classList.toggle("sel", i === viewSec && slot === c.si);
     const p = SLOTS[c.si];
     if (p) {
@@ -479,51 +465,22 @@ function patchBox(sec, i, el) {
       if (c.line.getAttribute("d") !== d) c.line.setAttribute("d", d);
     }
     c.b.setAttribute("aria-label",
-      "phrase " + (c.si + 1) + " in box " + (i + 1) + " — edit it in the step page");
-  }
-
-  // THE LAMPS. Each family's words are gathered exactly as the tag pile
-  // gathered them; the strip lights the lamp and the title keeps the words,
-  // so a hover (or the #src pane, always) still says everything the chips
-  // used to shout.
-  const fe = i === viewSec ? focused(sec) : stackOf(sec)[0];
-  const fclamp = optOf(sec, fe, "clamp"), fcmode = optOf(sec, fe, "cmode"),
-        fartic = optOf(sec, fe, "artic"), fscale = optOf(sec, fe, "scale"),
-        foct = optOf(sec, fe, "oct"), fvox = voxAll(sec, fe);
-  const fams = {
-    line: [
-      ...opsOf(sec, fe).map(o => OPLABEL[o]),
-      foct && "oct " + OCTAVES[String(foct)],
-      fclamp != null && "limit " + (fclamp === "0" ? "off" : fclamp),
-      fcmode, fartic,
-      fscale && SCALELABEL[fscale],
-      ...(fvox ? Object.entries(fvox).map(([k, v]) => VOX[k].labels[v]) : []),
-      sec.mode && MODELABEL[sec.mode],
-    ],
-    drum: [sec.kit && KITLABEL[sec.kit], sec.drumkit && DRUMKITS[sec.drumkit]],
-    bass: [sec.bassop && BASSOPS[sec.bassop]],
-    time: [sec.swing && SWINGLABEL[sec.swing], sec.groove && GROOVELABEL[sec.groove],
-           sec.rate && RATELABEL[sec.rate]],
-    fx: (sec.fx || []).map(f => FX[f].label),
-    send: [sec.rev && "reverb " + SENDLABEL[sec.rev], sec.verb && VERBS[sec.verb],
-           sec.echo && "echo " + SENDLABEL[sec.echo], sec.dtime && DTLABEL[sec.dtime]],
-    place: [sec.lvl && LEVELLABEL[sec.lvl], sec.pan && PANLABEL[sec.pan]],
-    edge: [sec.intro && "in: " + INLABEL[sec.intro], sec.env && ENVLABEL[sec.env],
-           sec.mot && MOTLABEL[sec.mot], sec.outro && "out: " + OUTLABEL[sec.outro]],
-  };
-  for (const [fam, raw] of Object.entries(fams)) {
-    const words = raw.filter(Boolean), s = el.lamp[fam];
-    if (words.length) { s.dataset.on = ""; s.title = words.join(" · "); }
-    else { delete s.dataset.on; s.removeAttribute("title"); }
+      "phrase " + (c.si + 1) + " in box " + (i + 1) + " — opens the phrase editor");
   }
 }
 function patchAll() { SONG.forEach((sec, i) => { const el = els.get(sec); if (el) patchBox(sec, i, el); }); }
 
 /* ---------- the two table keys, built once ---------- */
 // COPY duplicates the selected box — everything, including its transforms and
-// its trim — which is how a song gets a repeated section without rebuilding it.
-// They sit in a footer ROW of the table, not floating beside the last section:
-// the table has one column layout and these are not a section.
+// its trim. They sit in a footer ROW of the table, not floating beside the
+// last section: the table has one column layout and these are not a section.
+// (The PART popup carries a per-row duplicate too — same splice, that row.)
+const dupBox = sec => {
+  const at = Math.max(0, idx(sec));
+  const src = JSON.parse(JSON.stringify(SONG[at]));
+  SONG.splice(at + 1, 0, src);
+  setViewSec(at + 1); commit("box");
+};
 const copyBtn = (() => {
   const copy = document.createElement("button");
   copy.type = "button"; copy.className = "addbox copy";
@@ -532,11 +489,7 @@ const copyBtn = (() => {
     '<path d="M13.5 17.5h-11v-13"></path></svg><span class="ab">duplicate</span>';
   copy.title = "duplicate the selected box";
   copy.setAttribute("aria-label", "duplicate the selected box");
-  copy.addEventListener("click", () => {
-    const src = JSON.parse(JSON.stringify(SONG[Math.min(viewSec, SONG.length - 1)]));
-    SONG.splice(viewSec + 1, 0, src);
-    setViewSec(viewSec + 1); commit("box");
-  });
+  copy.addEventListener("click", () => dupBox(SONG[Math.min(viewSec, SONG.length - 1)]));
   return copy;
 })();
 const addBtn = (() => {
@@ -560,45 +513,17 @@ const footRow = (() => {
   return f;
 })();
 
-/* ---------- the row popover ---------- */
-// Tapping a song row POPS UP that row's whole option surface — the palette,
-// wearing its own six tabs — so choosing a sound for box 5 never means
-// scrolling away from box 5. ONE node at every width: a bottom sheet where the
-// deck is narrow, and an ANCHORED panel dropped under the row itself where
-// there is room (>=900px, the chassis boundary). The ONE palette element
-// is MOVED into it while it is open (built once by palette.js; moving the node
-// is cheap and isOn()/drawPalette keep painting it wherever it stands) and
-// moved home on close, so the desk's own pages still work.
-//
-// AND NOW THE MIX DESK TOO. The sheet is where a box is edited, so it carries
-// BOTH per-box surfaces — the palette and ui/mixtbl.js's table of sounds —
-// behind a two-key surface switch in its head. That is what let the page rail
-// give up its SOUND and MIX keys (ui/pages.js): those were two rail
-// destinations that edited the SELECTED box from somewhere the box was not on
-// screen, which is the problem the context strip exists to paper over. The
-// mix table is moved exactly the way the palette is: one element, borrowed
-// while the sheet is open, home on close — so the desk (where every page is
-// visible at once, and where the browser gates read .mrow) is untouched
-// whenever the sheet is shut.
-//
-// The head carries the row's play-from-here ▶, the ↑ ↓ that reorder it (the
-// TOUCH reorder path, since HTML5 drag never fires there), and the bars/nudge
-// steppers — what the edge grips used to do, said in keys, because a row that
-// no longer encodes its length in pixels has no edge to drag.
-// Dismiss: ✕, the scrim, Esc; AUTO-dismiss on another row's tap, on a page
-// switch, on a new song, when the deck scrolls meaningfully, and on a resize
-// that would move the anchor.
-let popFor = null;                          // the box object the popover is on
-let popScroll0 = 0, popSurf = "sound";      // which surface the sheet is showing
-const paletteEl = document.getElementById("palette");
-const paletteHome = paletteEl.parentElement;
-// the WHOLE mix panel, not just #mixtbl: its head carries the (?) whose
-// paragraph explains what M and S do and what the section row under the rule
-// is, and the rail key that used to paint that paragraph is gone. Borrowing
-// the table alone would have made the only explanation of the desk reachable
-// on a desk and nowhere else, which is the wrong way round.
-const mixEl = document.querySelector("#page-mix .ed");
-const mixHome = mixEl.parentElement;
+/* ---------- the cell popup ---------- */
+// ONE popup element for every cell: the #rowpop shell — anchored under the
+// row on a desk, a bottom sheet on a phone — whose mount holds only the OPEN
+// cell's controls. The banks come from palette.mountBanks; the keys and
+// steppers below are the row-level controls this file owns. Chip clicks
+// commit and the popup PATCHES, never closes — a chain of edits is one visit.
+// Dismiss: ✕, the scrim, Esc; AUTO-dismiss on another row's tap, a page
+// switch, a new song, a meaningful deck scroll, and re-anchor on resize/scroll.
+let popFor = null;                          // the box object the popup is on
+let popCell = null;                         // which cell opened it
+let popScroll0 = 0;
 const deckEl = document.querySelector(".deck");
 const rpScrim = Object.assign(document.createElement("div"),
   { className: "rpscrim", hidden: true });
@@ -607,6 +532,16 @@ const rowpop = Object.assign(document.createElement("div"),
 rowpop.setAttribute("role", "dialog");
 const rpTitle = Object.assign(document.createElement("span"),
   { className: "rptitle", textContent: "box" });
+const rpX = btn("rpk rpx", "✕", "close the cell options", () => closePop());
+const rpHead = Object.assign(document.createElement("div"), { className: "rphead" });
+rpHead.append(rpTitle, rpX);
+const rpMount = Object.assign(document.createElement("div"), { className: "rpmount" });
+rowpop.append(rpHead, rpMount);
+document.body.append(rpScrim, rowpop);
+
+// THE PART POPUP'S KEYS — the row-level operations: play from here, the
+// touch-path reorder, duplicate, delete, pin. Built once, moved into the
+// mount when the PART cell opens.
 const rpPlay = btn("rpk rpplay", "▶", "play from this box", () => {
   if (!popFor) return;
   const i = SONG.indexOf(popFor);
@@ -615,18 +550,36 @@ const rpPlay = btn("rpk rpplay", "▶", "play from this box", () => {
   else { commit("selection"); startAt(i); }
   buzz(4);
 });
-// THE REORDER LIVES HERE NOW. Two keys in one sheet instead of two keys on
-// every row for ever — and the row they move is the row whose sheet is open,
-// which is the only row a person is thinking about when they want it moved.
 const rpUp = btn("rpk rpmv", "↑", "move this box earlier",
   () => { if (popFor) { moveBox(popFor, -1); buzz(4); } });
 const rpDn = btn("rpk rpmv", "↓", "move this box later",
   () => { if (popFor) { moveBox(popFor, 1); buzz(4); } });
-const rpX = btn("rpk rpx", "✕", "close the row options", () => closePop());
-const rpHead = Object.assign(document.createElement("div"), { className: "rphead" });
-rpHead.append(rpPlay, rpTitle, rpUp, rpDn, rpX);
-// bars/nudge as steppers: the same clamps the grips carried, the same
-// commit("box"), and reachable by thumb, key and screen reader alike
+const rpDup = btn("rpk rpdup", "⧉", "duplicate this box",
+  () => { if (popFor) { dupBox(popFor); buzz(4); } });
+const rpPin = iconBtn("rpk rppin", PIN_SVG, "pin box (loop it alone)", () => {
+  if (!popFor) return;
+  const at = idx(popFor);
+  setViewSec(at); setLoopOnly(loopOnly === at ? null : at);
+  commit("selection");
+  if (playing || loopOnly != null) startAt(at);
+});
+const rpDel = btn("rpk rpdel", "✕", "remove this box", () => {
+  if (!popFor) return;
+  const at = idx(popFor);
+  closePop();
+  SONG.splice(at, 1);
+  if (!SONG.length) SONG.push(emptyBox());
+  setViewSec(Math.min(viewSec, SONG.length - 1));
+  if (loopOnly != null) setLoopOnly(null);
+  commit("box");
+  if (playing) resetBar();
+});
+const rpKeys = Object.assign(document.createElement("div"), { className: "rpkeys" });
+rpKeys.append(rpPlay, rpUp, rpDn, rpDup, rpPin, rpDel);
+
+// bars/nudge as steppers: the same clamps the edge grips carried, the same
+// commit("box"), and reachable by thumb, key and screen reader alike. BARS
+// lives in the BARS# popup, NUDGE in TIMING (it is a when, not a how-long).
 const stepper = (lab, name, get, set) => {
   const w = Object.assign(document.createElement("span"), { className: "rpstep" });
   w.append(Object.assign(document.createElement("span"),
@@ -646,77 +599,51 @@ const rpNudge = stepper("nudge", "bar of nudge",
   v => { const n = Math.max(0, Math.min(MAX_NUDGE, v));
          if (n !== popFor.nudge) { popFor.nudge = n; commit("box"); } });
 const rpBars = Object.assign(document.createElement("div"), { className: "rpbars" });
-rpBars.append(rpLen.w, rpNudge.w);
-// THE SURFACE SWITCH: which per-box surface the sheet is holding. Two keys,
-// because there are exactly two things a box IS — a sound and a mix — and the
-// palette's own six tabs live inside the first of them. Cut like the palette's
-// .ptab strip, because it is the same kind of control one level up.
-const surfKey = (k, lab) => {
-  const b2 = btn("rpsk" + (k === popSurf ? " on" : ""), "",
-    "show the " + lab + " surface for this box", () => setSurf(k));
-  b2.dataset.surf = k;
-  // the rail's own silkscreen, inherited: the wave and the three faders were
-  // the SOUND and MIX keys' icons and they came here with their destinations
-  // (kernel-daw.css, ".pi" keyed on data-surf now)
-  b2.append(Object.assign(document.createElement("span"),
-    { className: "pi" }), document.createTextNode(lab));
-  b2.querySelector(".pi").setAttribute("aria-hidden", "true");
-  b2.setAttribute("aria-pressed", String(k === popSurf));
-  return b2;
-};
-const rpSurf = Object.assign(document.createElement("div"), { className: "rpsurf" });
-rpSurf.setAttribute("role", "tablist");
-rpSurf.setAttribute("aria-label", "box surface");
-// THE RAIL'S OWN TWO WORDS, kept exactly. They are the names the machine has
-// used for these two surfaces everywhere else — the mix panel's own head says
-// MIX — and inventing a synonym here ("desk", which is what mixtbl.js calls
-// it in prose) would put two names for the mixer on one screen, which is the
-// drift this project spends most of its comments preventing. The palette's
-// first TAB is also called sound, and that is not a collision: it is the sound
-// surface opening on its sound bank.
-const surfKeys = [surfKey("sound", "sound"), surfKey("mix", "mix")];
-rpSurf.append(...surfKeys);
-const rpMount = Object.assign(document.createElement("div"), { className: "rpmount" });
-rowpop.append(rpHead, rpBars, rpSurf, rpMount);
-document.body.append(rpScrim, rowpop);
+rpBars.append(rpLen.w);
+const rpNud = Object.assign(document.createElement("div"), { className: "rpbars" });
+rpNud.append(rpNudge.w);
 
-// MOVE, NEVER COPY: one palette and one mix table exist on this page, and the
-// sheet borrows whichever it is showing. Whatever it is not showing goes home
-// first, so neither element can be left orphaned inside a hidden sheet — which
-// is what would make the desk's own MIX page (and the gates that read .mrow)
-// silently empty.
-function mountSurf() {
-  if (popSurf === "mix") { paletteHome.append(paletteEl); rpMount.append(mixEl); }
-  else { mixHome.append(mixEl); rpMount.append(paletteEl); }
-  for (const b2 of surfKeys) {
-    const on2 = b2.dataset.surf === popSurf;
-    b2.classList.toggle("on", on2);
-    b2.setAttribute("aria-pressed", String(on2));
-  }
+// THE GENRE POPUP'S LAYER LIST — the stack as rows, tap to focus: which layer
+// the phrase rail, the mods and the voice popup edit. Rebuilt only when the
+// stack's GENRES change; labels and the focus ring patch every pass.
+const rpFoc = Object.assign(document.createElement("div"), { className: "rpfoc" });
+let focSig = "";
+function buildFoc(sec) {
+  focSig = stackOf(sec).map(e => e.g).join("|");
+  rpFoc.textContent = "";
+  stackOf(sec).forEach((ent, k) => {
+    const b2 = document.createElement("button");
+    b2.type = "button"; b2.className = "blayer";
+    b2.addEventListener("click", ev => {
+      ev.stopPropagation();
+      sec.focus = k;
+      commit("selection");
+      buzz(4);
+    });
+    rpFoc.append(b2);
+  });
 }
-function setSurf(k) {
-  if (popSurf === k) return;
-  popSurf = k;
-  mountSurf();
-  commit("selection");                     // the arriving surface repaints
-  if (popFor) placePop();                  // it is a different height
-  buzz(4);
+function patchFoc(sec) {
+  const st = stackOf(sec);
+  if (focSig !== st.map(e => e.g).join("|")) { buildFoc(sec); }
+  [...rpFoc.children].forEach((b2, k) => {
+    const ent = st[k];
+    const t2 = (k ? "" : "authority · ") + GENRES[ent.g].label +
+      (ent.slots.length ? " · " + ent.slots.map(n => n + 1).join("+") : " · —");
+    if (b2.textContent !== t2) b2.textContent = t2;
+    b2.classList.toggle("foc", focusOf(sec) === k);
+    b2.setAttribute("aria-pressed", String(focusOf(sec) === k));
+    b2.setAttribute("aria-label", (k ? "layer: " : "authority: ") +
+      GENRES[ent.g].label + " — edit this layer");
+  });
 }
-function homeSurfaces() { paletteHome.append(paletteEl); mixHome.append(mixEl); }
 
-// WHERE THE SHEET GOES. Wide: under the row it belongs to, left-aligned with
+// WHERE THE POPUP GOES. Wide: under the row it belongs to, left-aligned with
 // it, flipped above when the row sits low, and never taller than the daylight
-// it found — and NEVER over the row itself, which is the whole point of
-// anchoring rather than covering. Narrow: the bottom sheet, anchored no
-// further up than the row.
-//
-// MEASURED LATE, AND RE-ANCHORED ON A MOVE. Opening the sheet moves the
-// palette out of its page, the document gets ~700px shorter, and the browser
-// re-clamps the scroll position for it — asynchronously. Placing once,
-// synchronously, can write coordinates for where the row used to be. So the
-// sheet is placed again on the next frame, and again whenever a scroll has
-// actually moved its row: never per-frame, because a panel that re-lays itself
-// out under the pointer every frame is a panel you cannot click.
+// it found — and NEVER over the row itself. Narrow: the bottom sheet.
+// MEASURED LATE, AND RE-ANCHORED ON A MOVE — placing once, synchronously, can
+// write coordinates for where the row used to be, so the popup is placed
+// again on the next frame and whenever a scroll has actually moved its row.
 let popAt = 0;
 function reanchor() {
   const el = popFor && els.get(popFor);
@@ -735,7 +662,7 @@ function placePop() {
     const w = rowpop.offsetWidth;
     const below = innerHeight - r.bottom - 14, above = r.top - 14;
     const under = below >= 320 || below >= above;
-    // the daylight on the chosen side is a hard ceiling: the sheet scrolls
+    // the daylight on the chosen side is a hard ceiling: the popup scrolls
     // inside itself rather than growing over the row or off the screen
     const room = Math.max(180, under ? below : above);
     const h = Math.min(rowpop.offsetHeight, room);
@@ -746,18 +673,25 @@ function placePop() {
   }
   rowpop.classList.remove("beside"); rpScrim.classList.remove("beside");
   rowpop.style.left = ""; rowpop.style.maxHeight = "";
-  // anchored under the row, clamped so the sheet keeps working height; it
-  // reaches the bottom edge and scrolls inside itself
   rowpop.style.top = Math.max(8, Math.min(r ? r.bottom + 6 : 72, innerHeight - 380)) + "px";
 }
 
-function openPop(sec, layer) {
-  popFor = sec;
-  sec.focus = layer || 0;
-  showTab("sound");                        // a row opens on the sound question
-  popSurf = "sound";
-  mountSurf();                             // moved, not copied — one of each
-  commit("selection");                     // palette + ctx strip repaint
+// WHAT EACH CELL MOUNTS: its own keys first, then its banks. The keys are
+// built once above and MOVED in (one of each exists); the banks are rebuilt
+// per open — they are cheap, and the mount is emptied anyway.
+function mountCell(sec, kind) {
+  rpMount.textContent = "";
+  if (kind === "part") rpMount.append(rpKeys);
+  else if (kind === "bars") rpMount.append(rpBars);
+  else if (kind === "timing") { rpMount.append(rpNud); mountBanks("timing", rpMount); }
+  else if (kind === "genre") { buildFoc(sec); rpMount.append(rpFoc); mountBanks("genre", rpMount); }
+  else mountBanks(kind, rpMount);
+}
+
+function openPop(sec, kind) {
+  popFor = sec; popCell = kind;
+  mountCell(sec, kind);
+  commit("selection");                     // the ring moves; every view repaints
   rpScrim.hidden = false; rowpop.hidden = false;
   popAt = -1e9; placePop();
   requestAnimationFrame(reanchor);         // after the scroll anchor settles
@@ -769,27 +703,33 @@ function openPop(sec, layer) {
 }
 function closePop() {
   if (!popFor) return;
-  popFor = null;
+  popFor = null; popCell = null;
   rowpop.hidden = true; rpScrim.hidden = true;
-  homeSurfaces();                          // home, so the desk's pages find them
   patchAll();
 }
 function patchPop() {
   if (!popFor) return;
   const i = SONG.indexOf(popFor);
   if (i < 0) { closePop(); return; }       // the box was removed under it
-  const li = focusOf(popFor), st = stackOf(popFor);
-  rpTitle.textContent = "box " + (i + 1) + " · " + GENRES[st[li].g].label +
-    (li ? " (layer)" : "");
-  rpLen.lcd.textContent = String(popFor.len);
-  rpNudge.lcd.textContent = String(popFor.nudge);
-  // a move key with nowhere to go GHOSTS rather than vanishing (the old row
-  // cluster's rule, kept where the keys went): the head must not reshuffle
-  // between the first row and the middle of the song
-  rpUp.classList.toggle("ghost", i === 0);
-  rpDn.classList.toggle("ghost", i === SONG.length - 1);
-  rpUp.setAttribute("aria-label", "move box " + (i + 1) + " earlier");
-  rpDn.setAttribute("aria-label", "move box " + (i + 1) + " later");
+  rpTitle.textContent = "box " + (i + 1) + " · " + CELLNAME[popCell];
+  if (popCell === "part") {
+    // a move key with nowhere to go GHOSTS rather than vanishing: the keys
+    // must not reshuffle between the first row and the middle of the song
+    rpUp.classList.toggle("ghost", i === 0);
+    rpDn.classList.toggle("ghost", i === SONG.length - 1);
+    rpUp.setAttribute("aria-label", "move box " + (i + 1) + " earlier");
+    rpDn.setAttribute("aria-label", "move box " + (i + 1) + " later");
+    rpDup.setAttribute("aria-label", "duplicate box " + (i + 1));
+    rpDel.setAttribute("aria-label", "remove box " + (i + 1));
+    rpPin.classList.toggle("on", i === loopOnly);
+    rpPin.setAttribute("aria-pressed", String(i === loopOnly));
+    rpPin.setAttribute("aria-label",
+      (i === loopOnly ? "unpin box " : "pin box ") + (i + 1) + " (loop it alone)");
+  }
+  if (popCell === "bars") rpLen.lcd.textContent = String(popFor.len);
+  if (popCell === "timing") rpNudge.lcd.textContent = String(popFor.nudge);
+  if (popCell === "genre") patchFoc(popFor);
+  refreshChips(rpMount);                   // the banks follow every commit
 }
 rpScrim.addEventListener("click", () => closePop());
 addEventListener("keydown", ev => {
@@ -799,141 +739,15 @@ addEventListener("keydown", ev => {
 if (deckEl) deckEl.addEventListener("scroll", () => {
   if (popFor && Math.abs(deckEl.scrollTop - popScroll0) > 24) closePop();
 }, { passive: true });
-// a resize can change which side the sheet goes on; a page scroll moves the
+// a resize can change which side the popup goes on; a page scroll moves the
 // row out from under it. Both re-anchor rather than leave it pointing at
 // nothing. (The DECK's own scroll is a different gesture — it closes, above.)
 addEventListener("resize", () => { if (popFor) placePop(); });
 addEventListener("scroll", reanchor, { passive: true });
 on("page", () => closePop());              // the rail moved: the row is gone
 on("song", () => closePop());              // a whole new song
-on("box", patchPop);                       // bars/nudge LCDs follow the edits
+on("box", patchPop);                       // LCDs and chip lights follow edits
 on("selection", patchPop);
-
-/* ---------- the sub-genre picker ---------- */
-// THE + KEY'S OWN LITTLE PANEL, anchored to the key that opened it. Adding a
-// rider to the stack was already one of the machine's best moves and one of
-// its least reachable: open the row sheet, find the SOUND tab, scroll the
-// genre bank, click. This offers the choice AT the row, immediately, and the
-// answer lands as an indented sub-row a few pixels below the key.
-//
-// It calls palette.js toggle("genre", …) rather than splicing sec.stack
-// itself. That is the ONE genre dispatcher and it carries three rules this
-// panel must not re-implement: a rider inherits the authority's phrases (so it
-// sounds the moment it is added), a blank Simple box is REPLACED rather than
-// stacked on, and a whole-form box re-takes the new authority's bar count.
-// toggle() commits, so there is no commit here.
-//
-// BUILT ONCE and re-filled per open: the list is short (nine families, 45
-// genres) but what is IN it changes per box — a genre already in the stack is
-// not on offer, because tapping it in a chip bank would REMOVE it, and a key
-// captioned + must never remove anything.
-let pickFor = null;
-const gpScrim = Object.assign(document.createElement("div"),
-  { className: "gpscrim", hidden: true });
-const gpick = Object.assign(document.createElement("div"),
-  { className: "gpick", id: "gpick", hidden: true });
-gpick.setAttribute("role", "dialog");
-gpick.setAttribute("aria-label", "add a sub-genre");
-const gpHead = Object.assign(document.createElement("div"), { className: "gphead" });
-const gpTitle = Object.assign(document.createElement("span"),
-  { className: "gptitle", textContent: "add a sub-genre" });
-gpHead.append(gpTitle, btn("rpk rpx", "✕", "close the sub-genre picker", () => closePicker()));
-const gpBody = Object.assign(document.createElement("div"), { className: "gpbody" });
-gpick.append(gpHead, gpBody);
-document.body.append(gpScrim, gpick);
-
-// A BLANK BOX HAS NO SUB-GENRE TO ADD TO — toggle()'s own rule is that the
-// first real genre REPLACES the Simple kernel rather than stacking on it, so
-// the key means "choose the genre" there and the panel says so. Naming it
-// "add a sub-genre" on a blank box and then swapping the box's genre would be
-// the panel lying about which of two different edits it just made.
-const blankSimple = sec => {
-  const st = stackOf(sec);
-  return st.length === 1 && st[0].g === "simple";
-};
-function fillPicker(sec) {
-  const have = new Set(stackOf(sec).map(e => e.g));
-  const first = blankSimple(sec);
-  gpBody.textContent = "";
-  for (const [fam, keys] of FAMILIES) {
-    const offer = keys.filter(k => !have.has(k) && GENRES[k]);
-    if (!offer.length) continue;
-    const g = Object.assign(document.createElement("div"), { className: "gpfam" });
-    g.append(Object.assign(document.createElement("span"),
-      { className: "gplab thd", textContent: fam }));
-    const wrap = Object.assign(document.createElement("div"), { className: "gpkeys" });
-    for (const k of offer) {
-      const b2 = btn("gpk", GENRES[k].label,
-        (first ? "make box this genre: " : "add as a sub-genre: ") + GENRES[k].label,
-        () => {
-        const at = idx(sec);
-        if (at < 0) { closePicker(); return; }
-        setViewSec(at);
-        const was = blankSimple(sec);
-        toggle("genre", k);                // the ONE dispatcher; it commits
-        closePicker();
-        buzz(4);
-        emit("status", { text: was
-          ? "box " + (at + 1) + " is " + GENRES[k].label + " now — tap + again to stack another genre on it"
-          : GENRES[k].label + " rides on box " + (at + 1) +
-            " — tap its ↳ line to give it its own phrases" });
-      });
-      wrap.append(b2);
-    }
-    g.append(wrap);
-    gpBody.append(g);
-  }
-  if (!gpBody.children.length)
-    gpBody.append(Object.assign(document.createElement("p"),
-      { className: "gpnone", textContent: "every genre is already in this box" }));
-}
-// placed like the row sheet: beside/under the key on a desk, a bottom sheet on
-// a phone. Same 900px boundary, same clamp-into-the-viewport arithmetic — one
-// definition of "there is room beside this" on this machine.
-function placePicker(anchor) {
-  const r = anchor.getBoundingClientRect();
-  if (innerWidth >= WIDE) {
-    gpick.classList.add("beside");
-    gpick.style.maxHeight = "";
-    const w = gpick.offsetWidth;
-    const below = innerHeight - r.bottom - 12, above = r.top - 12;
-    const under = below >= 260 || below >= above;
-    const room = Math.max(180, under ? below : above);
-    const h = Math.min(gpick.offsetHeight, room);
-    gpick.style.left = Math.min(Math.max(8, r.right - w), innerWidth - w - 8) + "px";
-    gpick.style.top = (under ? r.bottom + 6 : Math.max(8, r.top - h - 6)) + "px";
-    gpick.style.maxHeight = room + "px";
-    return;
-  }
-  gpick.classList.remove("beside");
-  gpick.style.left = ""; gpick.style.maxHeight = "";
-  gpick.style.top = Math.max(8, Math.min(r.bottom + 6, innerHeight - 320)) + "px";
-}
-function openPicker(sec, anchor) {
-  pickFor = sec;
-  const i = idx(sec);
-  setViewSec(i < 0 ? viewSec : i);
-  gpTitle.textContent = "box " + (i + 1) +
-    (blankSimple(sec) ? " · choose the genre" : " · add a sub-genre");
-  fillPicker(sec);
-  gpScrim.hidden = false; gpick.hidden = false;
-  placePicker(anchor);
-  const first = gpBody.querySelector(".gpk");
-  if (first) first.focus({ preventScroll: true });
-  commit("selection");
-  buzz(4);
-}
-function closePicker() {
-  if (!pickFor) return;
-  pickFor = null;
-  gpick.hidden = true; gpScrim.hidden = true;
-}
-gpScrim.addEventListener("click", () => closePicker());
-addEventListener("keydown", ev => {
-  if (pickFor && ev.key === "Escape") { closePicker(); ev.preventDefault(); }
-});
-on("page", closePicker);
-on("song", closePicker);
 
 /* ---------- structural sync ---------- */
 // create elements for new boxes, drop the ones whose box is gone, put the rest
@@ -955,8 +769,8 @@ export function render() {
 }
 
 /* ---------- the fill bars ---------- */
-// painted from main.js's rAF loop off transport.getPosition() — the frame loop
-// used to querySelectorAll('.box') twice per frame; now it is a walk over refs
+// painted from main.js's rAF loop off transport.getPosition() — a walk over
+// refs, never a querySelectorAll per frame
 export function paintProgress(si, frac) {
   SONG.forEach((sec, i) => {
     const el = els.get(sec);
@@ -967,12 +781,10 @@ export function paintProgress(si, frac) {
 /* ---------- the one thing a phrase edit may touch ---------- */
 // THE SCRUB CONTRACT, KEPT. This module still does not patch on "phrase" — a
 // pointermove in the tracker commits per value and patchAll() would recompute
-// eight LED families and a stack label for every section in the song. But the
-// row now DRAWS the phrases, so a contour that never followed its edits would
-// be a picture of the phrase as it was when the box was built. The middle
-// ground is exact: one contourPath for the phrase that actually changed, then
-// one <path d> write per chip that shows it — nothing else on the row is read
-// or written.
+// every cell value for every section in the song. But the row DRAWS the
+// phrases, so the middle ground is exact: one contourPath for the phrase that
+// actually changed, then one <path d> write per chip that shows it — nothing
+// else on the row is read or written.
 function patchChipPaths() {
   const p = SLOTS[slot];
   if (!p) return;

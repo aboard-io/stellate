@@ -1,53 +1,38 @@
-// ui/pages.js — the page rail: THREE hardware mode keys switching what the
+// ui/pages.js — the page rail: TWO hardware mode keys switching what the
 // phone deck paints. A page switch is ONE attribute write on the chassis
 // (CSS does the rest) — never a rebuild, so every module's elements stay
 // alive and the gates' selectors stay in the DOM whichever page is up. On a
 // desk the rail is display:none and this module goes quiet: every page is
 // visible at once and nothing here ever runs.
 //
-// THREE KEYS, NOT FIVE (Paul, 2026-08-15: "many of the elements on the bottom
-// and views are now less necessary because when I tap on a song section, it
-// brings up a rich modal with tons of interaction"). SOUND and MIX were rail
-// DESTINATIONS that edited the SELECTED box — you left the song to change a
-// box, and the context strip existed to tell you which box you had left. The
-// row sheet (ui/songrow.js) now carries both surfaces for the row you tapped,
-// so the rail is down to the three places a person actually GOES:
+// TWO KEYS ("the row and the board", 2026-08-15). The tracker pages went
+// entirely — STEP is the phrase editor POPUP (opened from a row's PATTERN
+// cells), MOVE's pattern view is gone, and SOUND's palette lives in the
+// per-cell popups — so the rail is down to the two places a person GOES:
 //
-//   SONG   home. The table of sections, and every box's editing surface is one
-//          tap into the row it belongs to.
-//   STEP   the phrase. One tracker table, sixteen 16ths, the bank under it —
-//          not per box, which is why it is not in the row sheet.
-//   MOVE   the arrangement: the pattern of the selected box running down the
-//          screen, with the transition chips under it.
+//   SONG   home. The table of sections; every box's editing surface is one
+//          tap into a cell of the row it belongs to.
+//   MIX    the desk: the mix of the selected box, and the master rack.
 //
-// NOTHING BECAME UNREACHABLE. The palette's six tabs and the mix table are in
-// the sheet; MOVE still shows the palette on its transitions tab; the session
-// bank and the master bus are on SONG where they always were. What went is two
-// ways of arriving at a surface from the wrong place.
+// NOTHING BECAME UNREACHABLE. The palette's banks are in the cell popups
+// (ui/palette.js mountBanks maps them); the phrase editor opens from any
+// PATTERN chip; the session bank stays on SONG. What went is pages that
+// edited the selected box from somewhere the box was not on screen.
 //
-// Layer graph: ui view — imports state (events), palette (its tab follows
-// the page) and touch; audio never knows pages exist.
+// Layer graph: ui view — imports state (events) and touch; audio never knows
+// pages exist.
 import { on, emit } from "./state.js";
-import { showTab } from "./palette.js";
 import { buzz } from "./touch.js";
 
 const chassis = document.getElementById("chassis");
 const keys = [...document.querySelectorAll(".pkey")];
 
-// MOVE is the one page that is still partly the palette: the arrangement
-// screen with the transitions tab under it.
-const PAGETAB = { move: "move" };
-
 export function setPage(p) {
   if (chassis.dataset.page === p) return;
   chassis.dataset.page = p;
   for (const k of keys) k.setAttribute("aria-selected", String(k.dataset.page === p));
-  if (PAGETAB[p]) showTab(PAGETAB[p]);
-  // the arrangement measures its container; rendered while display:none it
-  // measured 0 and drew at the floor width — remeasure now that it paints
-  if (p === "move") emit("refresh");
-  // the typed change: the context strip re-reads its phrase suffix, the step
-  // navigator re-measures its viewport (0 while the page was display:none)
+  // the typed change: open popups dismiss (their row left the screen), and
+  // any view that measured itself while display:none re-measures
   emit("page", { page: p });
   buzz(4);
 }

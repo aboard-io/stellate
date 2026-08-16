@@ -30,8 +30,8 @@
 // WHOLE csd-engine.js master section in one stereo module", read in fx_bus's
 // own order. buildMasterChain takes that spec and builds ONLY the stages it
 // asks for: with no spec (a song with no `master`, which is every song saved
-// before this) it builds the six nodes it always did, with the numbers it
-// always had. Absent is today, node for node.
+// before this) it builds only the default chain — the seven nodes named at
+// buildMasterChain, safety net included. Absent is today, node for node.
 //
 // EVERY BUILDER TAKES A CONTEXT. The offline bounce (audio/bounce.js) renders
 // the whole song into an OfflineAudioContext, and it must render through THIS
@@ -43,8 +43,8 @@
 // harder rather than looser: the song's globals go INTO buildMasterChain, so
 // the bounce gets them by construction and there is nowhere for a second
 // opinion about the master to live.
-import { resolveMaster, FX, SP, DRUMMIX, DRUMBUS } from "../ui/deps.js";
-import { bpm, vol, MASTER, on, emit } from "../ui/state.js";
+import { resolveMaster, resolveBuses, FX, SP, DRUMMIX, DRUMBUS } from "../ui/deps.js";
+import { bpm, vol, MASTER, BUSES, on, emit } from "../ui/state.js";
 
 // exported as live bindings — null until initAudio(), which must ride a user
 // gesture because that is the autoplay law
@@ -69,10 +69,20 @@ export const DRYROOM = typeof location !== "undefined" && /[?&]dryroom\b/.test(l
 // contract two gates read, the count rides beside the handle.
 const nodeCount = new WeakMap();
 export const countOf = (h) => (h && nodeCount.get(h)) || 0;
+// THE RETURN GAIN BEHIND A BARE-NODE HANDLE, same trick for the same two
+// builders: makeVerb and buildRoomBus return their input node (a contract two
+// offline gates connect to), but the RACK trims their RETURN — so the return
+// gain and its base value ride beside the handle, where applyBuses and
+// busReport can reach them without reshaping what the callers hold.
+const busRet = new WeakMap();                       // input node -> { g, base }
 let echo = null;                                   // the live echo bus handle
 let anl = null;                                    // the boot instrument's tap
 
-export const masterVol = () => (vol / 100) * 1.1;
+// unity at full — the old ×1.1 sat AFTER the safety shaper, so any vol past 91
+// pushed an already-limited signal over full scale at the destination: clipping
+// the fader could dial in and nothing downstream could catch (the carrier
+// clamped it; the live graph did not)
+export const masterVol = () => vol / 100;
 export const barSec = () => 4 * 60 / bpm;
 
 // a decaying-noise impulse response — three of them, because "which reverb" is
@@ -176,8 +186,8 @@ function safetyCurve(knee) {
 //
 // EVERY OPTIONAL STAGE IS BUILT ONLY WHEN ASKED FOR. That is not an
 // optimization, it is the absent-is-today law made structural: with `master`
-// null the node list below is input, busComp, makeup, limiter, lp, out — the
-// six this function has always built, at the values it has always used — so
+// null the node list below is input, busComp, makeup, limiter, lp, safety,
+// out — seven since the safety net landed — at the shipped default values, so
 // there is no "bypassed but present" state to drift, and a song from before
 // the globals existed renders through the identical graph.
 //
@@ -186,9 +196,19 @@ function safetyCurve(knee) {
 // the loudness push inserted where a mastering chain puts them — after the
 // tone, before the brickwall. `dest` defaults to the context destination so the
 // offline probes that call buildMasterChain(octx) bare keep working.
+// HEADROOM INTO THE CHAIN, on the input node the chain already owns (node
+// count must not move — the gates hold the default chain to its seven).
+// live.js staged the glue for sampled voices arriving around −22 dBFS; this
+// page's summed channels arrive ~20 dB hotter, so the same numbers ran the
+// compressor and the brickwall flat-out at DEFAULTS (measured 2026-08-16:
+// composed beatles pinned at the limiter threshold, rock peaking OVER full
+// scale, crest 4.8 dB). The trim puts the sum back where the chain was
+// designed to receive it; the glue then glues and the limiter is a net.
+const MASTER_HEADROOM = 0.2;
 export function buildMasterChain(c, master, dest) {
   const M = resolveMaster(master);
   const input = c.createGain();
+  input.gain.value = MASTER_HEADROOM;
   const nodes = [input], oscs = [];
   let node = input;
   const chain = n => { node.connect(n); node = n; nodes.push(n); return n; };
@@ -273,7 +293,7 @@ export function buildMasterChain(c, master, dest) {
   chain(makeup);
   // no node was added for a glue character, so "built" here means "these are
   // not the numbers the chain runs when nothing is set"
-  const glueMoved = M.glue.thr !== -22 || M.glue.ratio !== 2.2 || M.glue.makeup !== 2.2;
+  const glueMoved = M.glue.thr !== -22 || M.glue.ratio !== 2.2 || M.glue.makeup !== 1.4;
   if (glueMoved) built.push("glue");
 
   // ---- TILT: a SHELF PAIR rocking about the middle. Not a filter pair — the
@@ -363,8 +383,14 @@ export function buildMasterChain(c, master, dest) {
     clip.curve = clipCurve(M.ceiling.clip); clip.oversample = "2x";
     chain(clip);
   }
+  // NO OVERSAMPLING ON THE SAFETY, deliberately: "2x" reshapes at double rate
+  // and the downsampling filter rings PAST the ceiling — measured 1.10 on a
+  // composed rock song, which the 16-bit encode then hard-clips on every loud
+  // drum hit. Per-sample shaping is strictly bounded by the curve (< 1.0), so
+  // the stated law — nothing leaves this graph above full scale — is actually
+  // true; the aliasing cost exists only in the rare transient the net catches.
   const safety = c.createWaveShaper();
-  safety.curve = safetyCurve(0.96); safety.oversample = "2x";
+  safety.curve = safetyCurve(0.96); safety.oversample = "none";
   chain(safety);
   // the safety clip is always there, so it is no longer evidence that the
   // user asked for a ceiling — only a chosen limit, a push or a moved
@@ -381,6 +407,7 @@ export function buildMasterChain(c, master, dest) {
   const report = () => ({
     stages: built.slice(),
     nodes: nodes.length,
+    headroom: +input.gain.value.toFixed(3),
     glue: { threshold: +busComp.threshold.value.toFixed(2),
             ratio: +busComp.ratio.value.toFixed(2),
             makeup: +makeup.gain.value.toFixed(3) },
@@ -405,20 +432,27 @@ export function buildMasterChain(c, master, dest) {
 // setTime takes (bars, when) so the offline walk can schedule each section's
 // echo time at the bar it starts, exactly as the live tick does at "now".
 export function buildEchoBus(c, dest) {
+  const B = resolveBuses(BUSES).echo;
   const input = c.createGain();
   const dA = c.createDelay(2.0), dB = c.createDelay(2.0);
-  const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 2800;
+  const lp = c.createBiquadFilter(); lp.type = "lowpass";
+  lp.frequency.value = B.tone != null ? B.tone : 2800;
   const fbA = c.createGain(), fbB = c.createGain();
-  fbA.gain.value = fbB.gain.value = 0.42;
+  fbA.gain.value = fbB.gain.value = B.fb != null ? B.fb : 0.42;
   const panL = c.createStereoPanner(), panR = c.createStereoPanner();
   panL.pan.value = -0.75; panR.pan.value = 0.75;
+  // THE RETURN, which this bus never had: panL/panR used to land on the dest
+  // directly, so the rack's echo trim had no gain to move. One shared node
+  // (the budget note in mixer.js BUDGET covers it) at unity by default, so a
+  // song with no `buses` sums identically to the eight-node bus it replaces.
+  const ret = c.createGain(); ret.gain.value = B.ret;
   input.connect(dA);
   dA.connect(lp); lp.connect(fbA); fbA.connect(dB);
   dB.connect(fbB); fbB.connect(dA);
   dA.connect(panL); dB.connect(panR);
-  panL.connect(dest); panR.connect(dest);
-  nodeCount.set(input, 8);
-  return { input, nodes: 8, setTime(bars, when) {
+  panL.connect(ret); panR.connect(ret); ret.connect(dest);
+  nodeCount.set(input, 9);
+  return { input, nodes: 9, ret, fbA, fbB, lp, setTime(bars, when) {
     const t = Math.min(1.9, Math.max(0.02, bars * barSec()));
     // eased, not jumped: a feedback delay whose time moves is a tape machine
     // changing speed, and that is a nicer thing to hear than a click
@@ -453,7 +487,9 @@ export function buildRoomBus(c, dest) {
   const hp = c.createBiquadFilter(); hp.type = "highpass";
   hp.frequency.value = 220; hp.Q.value = 0.7; n++;
   const pre = c.createDelay(0.05); pre.delayTime.value = 0.008; n++;  // distance to the first wall
-  const out = c.createGain(); out.gain.value = 0.9; n++;
+  const out = c.createGain();
+  out.gain.value = 0.9 * resolveBuses(BUSES).room.ret; n++;
+  busRet.set(input, { g: out, base: 0.9 });
   input.connect(hp); hp.connect(pre);
   const side = (taps, comb, pan) => {
     const p = c.createStereoPanner(); p.pan.value = pan; n++;
@@ -564,9 +600,13 @@ export function makeVerb(c, name, dest) {
   const inp = c.createGain();
   const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp; f.Q.value = 0.7;
   const cv = c.createConvolver(); cv.buffer = irFor(n, c.sampleRate);
-  const g = c.createGain(); g.gain.value = ret;
+  const g = c.createGain();
+  // ONE rack trim across the three verbs (the REV strip is one strip), riding
+  // ON each verb's own tuned return rather than replacing it
+  g.gain.value = ret * resolveBuses(BUSES).rev.ret;
   inp.connect(f); f.connect(cv); cv.connect(g); g.connect(dest);
   nodeCount.set(inp, 4);
+  busRet.set(inp, { g, base: ret });
   return inp;
 }
 
@@ -731,6 +771,51 @@ export function sharedReport() {
 export function setDelayTime(bars) {
   if (echo) echo.setTime(bars, ctx.currentTime);
 }
+/* ---------- the rack's trims, applied to the LIVE graph ---------- */
+// Unlike a master global, every rack knob is a PARAM — no topology moves — so
+// a knob change is param writes on the nodes already built, eased 20 ms so the
+// return does not step under a tail. The builders above read the same resolved
+// spec at construction, which is how the offline bounce (its own contexts, the
+// same builders) bakes the trims without ever calling this.
+function applyBuses() {
+  if (!ctx) return;
+  const B = resolveBuses(BUSES);
+  const t = ctx.currentTime;
+  const ease = (p, v) => { try {
+    p.cancelScheduledValues(t); p.setTargetAtTime(v, t, 0.02); } catch (e) {} };
+  for (const n of Object.keys(REV || {})) {
+    const r = busRet.get(REV[n]);
+    if (r) ease(r.g.gain, r.base * B.rev.ret);
+  }
+  if (echo) {
+    ease(echo.ret.gain, B.echo.ret);
+    ease(echo.fbA.gain, B.echo.fb != null ? B.echo.fb : 0.42);
+    ease(echo.fbB.gain, B.echo.fb != null ? B.echo.fb : 0.42);
+    ease(echo.lp.frequency, B.echo.tone != null ? B.echo.tone : 2800);
+  }
+  if (roomBus) {
+    const r = busRet.get(roomBus);
+    if (r) ease(r.g.gain, r.base * B.room.ret);
+  }
+}
+// WHAT THE RETURNS ACTUALLY SIT AT, read off the nodes (the __nuMix law): the
+// board dims a default and brightens a set value against THESE numbers, and a
+// knob that lit up without reaching a gain is the failure this page keeps
+// rediscovering. Null before initAudio — there is no rack yet.
+export const busReport = () => (!ctx ? null : {
+  rev: Object.fromEntries(Object.keys(REV || {}).map(n => {
+    const r = busRet.get(REV[n]);
+    return [n, r ? +r.g.gain.value.toFixed(3) : null];
+  })),
+  echo: echo ? { ret: +echo.ret.gain.value.toFixed(3),
+                 fb: +echo.fbA.gain.value.toFixed(3),
+                 tone: +echo.lp.frequency.value.toFixed(0) } : null,
+  room: (() => {
+    const r = roomBus && busRet.get(roomBus);
+    return r ? +r.g.gain.value.toFixed(3) : null;
+  })(),
+  set: BUSES || null,
+});
 
 /* ---------- the survival mute ---------- */
 // Mute AT THE SOURCE, SYNCHRONOUSLY — the hide path cannot ramp, because
@@ -773,4 +858,6 @@ on("transport", () => {
 // swap the chain; before initAudio both are no-ops, and the first build picks
 // up whatever MASTER holds by then.
 on("master", () => installMaster());
-on("song", () => installMaster());
+on("song", () => { installMaster(); applyBuses(); });
+// a rack knob moved: params only, no swap
+on("buses", () => applyBuses());

@@ -7,7 +7,7 @@
 // audio clock through that accessor and audio never calls a draw function —
 // that one-way rule is what the whole split is for.
 import { GENRES, RATES, ROLES } from "./deps.js";
-import { SONG, viewSec, readStore, adoptSong, defaultSong, on, emit } from "./state.js";
+import { SONG, readStore, adoptSong, defaultSong, on, emit } from "./state.js";
 import { gid, stackLabel } from "./derive.js";
 import * as transport from "../audio/transport.js";
 // the survival tier (context recovery + MediaSession + the bounce carrier):
@@ -15,25 +15,24 @@ import * as transport from "../audio/transport.js";
 // and its subscriptions at module evaluation, exactly like the views below
 import "../audio/survival.js";
 // the views: importing them IS the wiring — each subscribes to the events it
-// cares about and binds its own DOM listeners at module evaluation
+// cares about and binds its own DOM listeners at module evaluation.
+// (There is no ui/arrange.js — the MOVE tracker went with "the row and the
+// board", its playhead question answered by the song row's fill bar and the
+// position LCD — and no ui/ctxstrip.js: popups open ON the row they edit, so
+// nothing edits a box from a page the box is not on.)
 import "./readout.js";
-import * as arrange from "./arrange.js";
 import * as songrow from "./songrow.js";
 import "./palette.js";
 import "./editor.js";
-// the mix table: after editor, because it borrows the panel-head (?) wiring
+// the board: after editor, because it borrows the panel-head (?) wiring
 // from it, and it reads the roster out of audio/mixer (a view importing audio
-// is the allowed direction; audio never imports back)
-import "./mixtbl.js";
+// is the allowed direction; audio never imports back). paintBoard rides the
+// one rAF loop below — the board's fader caps follow the built gains live.
+import * as board from "./mixtbl.js";
 import "./chrome.js";
 // the chassis: page rail wiring + transport haptics (phone only in effect —
 // the rail is display:none on a desk and the buzz is coarse-pointer-gated)
 import "./pages.js";
-// the context strip: which box every edit lands on, on every page. After
-// editor/pages, because it imports pages. (There is no step navigator any
-// more — the phrase minimap panned an UN-rotated lane stack, and the tracker
-// table is its own overview; ui/stepnav.js went with the layout it served.)
-import "./ctxstrip.js";
 
 /* ---------- the playhead loop ---------- */
 // One rAF loop for both progress paints: the fill bar on the sounding box and
@@ -52,7 +51,6 @@ function frame() {
   if (!transport.playing) {
     looping = false;                           // the loop parks until restarted
     songrow.paintProgress(-1, 0);
-    arrange.resetPlayhead();
     lcd("--");
     return;
   }
@@ -68,18 +66,10 @@ function frame() {
     const bar = Math.min(sec.len, Math.floor(f * sec.len) + 1);
     lcd((pos.si + 1) + "·" + bar + "/" + sec.len);
     songrow.paintProgress(pos.si, f);
-    if (viewSec === pos.si) {                  // looking at the box that sounds
-      // the tracker's playhead is a ROW, so the position is handed over in
-      // TICKS — the units its rows are — RAW, and arrange.js does the clamping
-      // and the scroll-follow. (It used to be a pixel offset for a translateX
-      // on a horizontal ruler; the ruler runs down the side now.) Raw matters:
-      // passStart is set when a pass is SCHEDULED, up to a lookahead ahead of
-      // the sound, so this goes briefly negative at every wrap — clamping that
-      // to zero snapped the playhead to the top of a box still finishing its
-      // last bar, and only the view knows to hold instead.
-      arrange.paintPlayhead((pos.now - pos.passStart) / pos.stepDur);
-    } else arrange.resetPlayhead();
   }
+  // the board's automated fader caps + master meter, on the same frame — the
+  // one-loop rule (two loops painting one page is the leak the loop replaced)
+  board.paintBoard();
   requestAnimationFrame(frame);
 }
 // guarded: startAt() fires transport:state on every call (the loop button
@@ -101,15 +91,9 @@ on("transport:section", d => {
 
 /* ---------- boot ---------- */
 // One path: the saved song, or the default, both through adoptSong — the boot
-// draw is just the "song" event doing what it always does. Guarded against the
-// stylesheet race: a module entry can outrun a slow stylesheet, and the first
-// arrange render measures #dawscroll (it floors at 560px regardless, so the
-// guard is belt and the floor is braces).
-function boot() {
-  const raw = readStore();
-  if (!raw || !adoptSong(raw, "boot")) adoptSong(defaultSong(), "boot");
-}
-const sc = document.getElementById("dawscroll");
-if (!sc.clientWidth && document.readyState !== "complete")
-  addEventListener("load", boot, { once: true });
-else boot();
+// draw is just the "song" event doing what it always does. No stylesheet-race
+// guard any more: the view that measured itself at boot (the MOVE tracker)
+// is gone, and every surface that measures now does it inside a popup, on a
+// user gesture, long after load.
+const raw = readStore();
+if (!raw || !adoptSong(raw, "boot")) adoptSong(defaultSong(), "boot");

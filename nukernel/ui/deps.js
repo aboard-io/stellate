@@ -11,7 +11,7 @@
 //
 // LAYER GRAPH (one-way, stated once here and enforced by import direction):
 //   deps -> state -> derive -> audio/graph -> audio/assets -> audio/voices
-//        -> audio/mixer -> audio/transport -> ui views (readout, arrange,
+//        -> audio/mixer -> audio/transport -> ui views (readout,
 //        songrow, palette, editor, mixtbl, chrome) -> main
 // audio never imports a ui VIEW module; ui views may import audio; state
 // publishes events, it does not draw; derive is pure over its arguments.
@@ -38,8 +38,8 @@ export const { NSLOTS, MAX_LEN, MAX_NUDGE, MAX_FX,
                KEYS, KEYLABEL, PROGCHOICES, PROGLABEL, PERIODS, PERIODLABEL,
                BREATHS, BREATHLABEL, PIPESETS, PIPELABEL, PARTCHOICES,
                PARTNAMES, PARTLABEL, PARTMIX, PARTMIXBY, MAX_CHAIRS,
-               okPartKey, partChairLabel, chairKeys, resolvePartMix,
-               resolveMaster, masterIsDefault,
+               okPartKey, partChairLabel, chairKeys, resolvePartMix, faderDb,
+               resolveMaster, masterIsDefault, resolveBuses, busesIsDefault,
                AUTOPARAMS, AUTOPARAMLABEL, AUTOSHAPELABEL, autoShape,
                SINGLABEL,
                ROLES } = window.NuFields;
@@ -49,6 +49,9 @@ export const { NSLOTS, MAX_LEN, MAX_NUDGE, MAX_FX,
 // name is how a view ends up drawing chips from the store. The registry takes
 // the longer name because it is the one with fewer readers.
 export const MASTER_FIELDS = window.NuFields.MASTER;
+// same rename, same reason: fields.js's BUSES is the rack REGISTRY; ui/state.js
+// BUSES is the song's VALUES for it.
+export const BUS_FIELDS = window.NuFields.BUSES;
 
 // ---- pure persistence (song.js) ----
 export const NuSong = window.NuSong;
