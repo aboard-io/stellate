@@ -61,8 +61,8 @@ import { GENRES, FX, MAX_FX, fxChain, fxMix, fxSendable, SENDS, LEVELS, PANS,
          RATES, SP, DRUMFILE, DRUMMIX, DRUMBUS, instrOf, BASSSYNTH,
          partOf, chairKeys, resolvePartMix, faderDb, EQ_BANDS,
          resolveEq } from "../ui/deps.js";
-import { SONG, on } from "../ui/state.js";
-import { gid, stackOf, genreOf, kitOf } from "../ui/derive.js";
+import { SONG, POOL, on } from "../ui/state.js";
+import { gid, stackOf, genreOf, kitOf, poolInstrOf } from "../ui/derive.js";
 import { ctx, masterIn, delBus, roomBus, verbFor, sendFor, kitFor, buildKitDesk,
          barSec, REV, SENDBUS, VERBSPEC, masterReport, sharedReport,
          busReport, buildEq } from "./graph.js";
@@ -174,13 +174,16 @@ export function voiceRoster(sec) {
     const g = GENRES[ent.g];
     if (!g) continue;
     const dg = genreOf(sec, ent);
-    for (let v = 0; v < g.voices; v++)
-      // the layer's `instr` override is the chair's honest name — the same
-      // resolution the scheduler makes (derive.js instrIdOf), inlined because
-      // the entry is already in hand
-      out.push({ v: base + v, id: ent.instr || instrOf(ent.g, v),
+    for (let v = 0; v < g.voices; v++) {
+      // the SONG POOL's pick is the chair's honest name — the same resolution
+      // the scheduler makes (derive.js instrIdOf: pool first, genre second).
+      // `over` rides along so the board can mirror the synth-mute law without
+      // a second resolver.
+      const over = poolInstrOf(sec, ent.g, v, POOL);
+      out.push({ v: base + v, id: over || instrOf(ent.g, v), over,
                  pad: g.realize(v) === "pad",
                  part: partOf(dg, v) });
+    }
     base += g.voices;
   }
   const keys = chairKeys(out.map(r => r.part));

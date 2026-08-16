@@ -9,9 +9,9 @@
 import { GENRES, DTIMES, BASSSYNTH, BASS_INSTR, STRIPS, stripFor,
          instrOf } from "../ui/deps.js";
 import { SONG, loopOnly, pendingStart, setPendingStart, bpm, on, emit,
-         SLOTS, GROOVE, SWING } from "../ui/state.js";
+         SLOTS, GROOVE, SWING, POOL } from "../ui/state.js";
 import { gid, stackOf, boxBars, kitOf, sectionRender,
-         instrIdOf, instrOverrideOf } from "../ui/derive.js";
+         instrIdOf, poolInstrOf } from "../ui/derive.js";
 import { ctx, initAudio, rmsNow, muteNow, unmuteRamp } from "./graph.js";
 import { FONT, fontDef, isSynthFont, loadFont, specOf, zoneBufs, drumBufs,
          instrumentsInSong } from "./assets.js";
@@ -79,7 +79,7 @@ function registerHome(sec, ev) {
     const owner = e.layer || gid(sec);
     const key = owner + "|" + (e.lv == null ? e.v : e.lv);
     let a = notes.get(key);
-    if (!a) notes.set(key, a = { id: instrIdOf(sec, owner, e.lv == null ? e.v : e.lv), n: [] });
+    if (!a) notes.set(key, a = { id: instrIdOf(sec, owner, e.lv == null ? e.v : e.lv, POOL), n: [] });
     a.n.push(e.n);
   }
   for (const [key, a] of notes) {
@@ -311,11 +311,13 @@ export function scheduleBar(bar, sec, chan, kit, when, sd, synthFn) {
       // A SYNTH FONT OVERRIDES THE GENRE. Pure FM and Pure Analog are not a
       // sample set, they are "play everything on this voice" — including the
       // genres that carry a signature synth of their own.
-      // ...AND A LAYER'S OWN INSTRUMENT OVERRIDES THE SYNTH (but never the
-      // synth font — that is a session law). An `instr` chip on acid means
-      // "play this on a rhodes", and a 303 wearing a rhodes label would be
-      // the desk lying about the thing you just chose.
-      const over = instrOverrideOf(sec, owner);
+      // ...AND THE SONG'S POOL PICK OVERRIDES THE SYNTH (but never the synth
+      // font — that is a session law). Casting a rhodes in the chair acid's
+      // line sits in means "play this on a rhodes", and a 303 wearing a
+      // rhodes label would be the desk lying about the thing you just chose.
+      // (The per-layer `instr` override this law was written for is gone —
+      // the band is hired for the RECORD, one pool per song.)
+      const over = poolInstrOf(sec, owner, e.lv == null ? e.v : e.lv, POOL);
       const gsyn = isSynthFont() ? fontDef().synth
         : (over ? null : GENRES[owner].synth);
       const id = over || instrOf(owner, e.lv == null ? e.v : e.lv);
@@ -357,12 +359,21 @@ export function scheduleBar(bar, sec, chan, kit, when, sd, synthFn) {
     }
     else if (e.kind === "bass") {
       const bs = BASSSYNTH[sec.bassop];
-      // THE BASS IS A PART, not a chair: it is one line per box rather than one
-      // per genre voice, so it has no voice index and names its strip instead.
-      // (The synth bass finds the same strip from its dsp — mixer.synthIn.)
+      // THE BASS IS A PART, not a chair on the roster: it is one line per box
+      // rather than one per genre voice, so it has no voice index and names
+      // its strip instead. (The synth bass finds the same strip from its dsp
+      // — mixer.synthIn.) It IS a pool seat, though: `pool.bass` recasts the
+      // sampled bass song-wide. A set bassop synth still wins — a reese IS
+      // its LFO (instruments.js's own law), and silently unplugging a lit
+      // bassop chip would make it the one control on the page that lies.
+      // THE STRIP FOLLOWS THE INSTRUMENT here too: the bass strip is written
+      // for the acoustic bass, and a rhodes cast into the bass chair takes
+      // its family strip, exactly as it would in any other chair.
+      const bid = (POOL && POOL.bass) || BASS_INSTR;
       if (bs && synthFn(bs, e.n, at, e.dur * sd, 0, 0, e.vel, 0, chan, e.vox)) { /* synth bass */ }
-      else if (!playSampled(BASS_INSTR, e.n, at, e.dur * sd, e.vel, 1.25, chan,
-                            STRIPS.bass, null, "bass"))
+      else if (!playSampled(bid, e.n, at, e.dur * sd, e.vel, 1.25, chan,
+                            bid === BASS_INSTR ? STRIPS.bass : stripFor(bid, false),
+                            null, "bass"))
         line(at, e.n, e.dur * sd, 1, 0, null,
           { wave: "square", cut: 340, q: 5, atk: .006, rel: .8, gain: .26 }, false, e.vel,
           chan, "bass");
@@ -552,4 +563,7 @@ on("box", changed);
 // because stepDur is read per tick, but the groove is baked into the events
 on("groove", changed);
 on("swing", changed);                      // ...and the swing is baked the same way
+// the band changed: the register homes are decided per instrument, so the bar
+// list carries the pool's consequences — and the recast chair's zones fetch
+on("pool", changed);
 on("song", () => { if (playing) stop(); });

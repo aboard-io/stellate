@@ -55,7 +55,7 @@
 // mixer.buildChannel / transport.scheduleBar), so the carrier is the same
 // mix — a fork of any of those walks is how it would drift out of tune.
 import { GENRES, BASSSYNTH, DTIMES } from "../ui/deps.js";
-import { SONG, SLOTS, loopOnly, bpm, MASTER, BUSES, GROOVE, SWING,
+import { SONG, SLOTS, loopOnly, bpm, MASTER, BUSES, GROOVE, SWING, POOL,
          on, emit } from "../ui/state.js";
 import { stackOf, kitOf, boxBars } from "../ui/derive.js";
 import { buildMasterChain, buildEchoBus, buildRoomBus, buildKitDesk, buildSendBus, makeVerb,
@@ -239,16 +239,17 @@ setQuietWhen(() => carrying && carrierFirst());
 
 /* ---------- render scheduling ---------- */
 // the musical identity of what a render would capture: song + phrases + tempo
-// + font + loop selection + the MASTER BUS + the song's GROOVE and SWING
-// (song facts like the tempo, and no longer inside the boxes — so they must
-// be named here or a groove or swing change would never re-render the
-// carrier). Volume is deliberately absent —
+// + font + loop selection + the MASTER BUS + the song's GROOVE, SWING and
+// INSTRUMENT POOL (song facts like the tempo, and no longer inside the boxes
+// — so they must be named here or a groove, swing or recast-chair change
+// would never re-render the carrier). Volume is deliberately absent —
 // the carrier renders at unity and the element's own volume does the placing
 // on handoff — but a master global is not a volume: it is a treatment baked
 // into the bytes, so leaving it out here would leave the pocket playing an
 // untreated tape of a song the ear just heard through a tape machine.
 const sig = () => JSON.stringify({ s: SONG, sl: SLOTS, bpm, f: FONT, lo: loopOnly,
-                                   m: MASTER, bu: BUSES, g: GROOVE, sw: SWING });
+                                   m: MASTER, bu: BUSES, g: GROOVE, sw: SWING,
+                                   p: POOL });
 let adoptedSig = null, timer = null, rendering = false, dirty = false;
 // the short stage's duration budget, in seconds — WAV-FIRST's firstSegSec.
 // Two bars at the default tempo, which is NOT "big enough to loop as music"
@@ -1076,6 +1077,7 @@ on("master", changed);                             // baked into the bytes, so r
 on("buses", changed);                              // the rack trims are too
 on("groove", changed);                             // ...and the song's groove
 on("swing", changed);                              // ...and its swing, same law
+on("pool", changed);                               // ...and the band it hired
 on("song", () => {
   // a whole new song: whatever is rendered is the WRONG music — invalidate
   // rather than carry a ghost (the "song" event also stops the transport)

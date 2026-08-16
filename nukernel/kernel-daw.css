@@ -316,6 +316,39 @@ h1 em{font-style:normal;color:var(--accent-txt)}
    board". .ghint survives: the rack's own (?) copy wears it there.) */
 .ghint{margin:0;padding:6px var(--tbl-gut) 8px}
 
+/* ---- the INSTRUMENT POOL bank ("the band is hired for the record") ----
+   One row per chair, the session bank's own material: the chair name is a
+   .glab silkscreen, the current pick the value beside it — dim while the
+   chair is uncast (the genre's own answering, the machine's one state
+   language), lit when you cast it. Tapping unfolds the same .pgroup/.pchip
+   family picker every other bank is cut from, full width, in place. */
+.poolrows{display:flex;flex-direction:column;padding:4px 0 8px}
+.poolrow{display:flex;flex-direction:column}
+.poolpick{
+  display:flex;align-items:baseline;gap:12px;width:100%;text-align:left;
+  background:none;border:0;cursor:pointer;color:inherit;
+  padding:7px var(--tbl-gut);
+  border-top:1px solid var(--tbl-rule,rgba(0,0,0,.08));
+}
+.poolrow:first-child .poolpick{border-top:0}
+.poolpick .glab{flex:0 0 72px}
+.poolpick .pv{
+  font-weight:600;font-size:12px;letter-spacing:.03em;line-height:1.3;
+  min-width:0;overflow-wrap:anywhere;
+}
+.poolpick .pv.dflt{color:var(--dim);font-weight:500}
+.poolpick.unseated .pv{color:var(--tbl-faint,var(--dim))}
+.poolpick:hover .pv,.poolrow.open .poolpick .pv{color:var(--ink)}
+.poolpick.on .pv{color:var(--accent)}
+.poolrow.open .poolpick{background:var(--tbl-well,rgba(0,0,0,.04))}
+.poolmount{
+  display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-start;
+  padding:8px var(--tbl-gut) 12px;
+  border-top:1px solid var(--tbl-rule,rgba(0,0,0,.08));
+}
+.poolmount .pgroup{flex:1 1 300px}
+@media (max-width:640px){.poolmount .pgroup{flex:1 1 100%}}
+
 /* (There is no context strip: popups open ON the row they edit — "the row
    and the board" — so no page edits a box it cannot see.) */
 

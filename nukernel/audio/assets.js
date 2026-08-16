@@ -8,8 +8,8 @@
 // without one) and state for the song (what does THIS song need).
 import { SAMPLERS, GENRES, instrOf, BASS_INSTR, DRUMDIR, DRUMFILE,
          FONTS } from "../ui/deps.js";
-import { SONG } from "../ui/state.js";
-import { stackOf } from "../ui/derive.js";
+import { SONG, POOL } from "../ui/state.js";
+import { stackOf, instrIdOf } from "../ui/derive.js";
 import { ctx } from "./graph.js";
 import { isMachine, machineBuffer } from "./machines.js";
 
@@ -161,14 +161,21 @@ export async function loadInstrument(id) {
 // every instrument the song needs, decoded before the transport starts
 export function instrumentsInSong() {
   const ids = new Set([BASS_INSTR]);
+  // the pool's bass chair is what the bass line actually plays, so it must
+  // decode; BASS_INSTR stays in the set too — clearing the chair mid-play
+  // must not find an unfetched bass
+  if (POOL && POOL.bass) ids.add(POOL.bass);
   for (const sec of SONG)
     for (const e of stackOf(sec)) {
-      // a layer's `instr` override is what its chairs actually play, so it is
-      // what must decode; the genre's own list stays in the set too, because
-      // clearing the override mid-play must not find an unfetched guitar
-      if (e.instr) ids.add(e.instr);
       const n = GENRES[e.g] ? GENRES[e.g].voices : 1;
-      for (let v = 0; v < n; v++) ids.add(instrOf(e.g, v));
+      for (let v = 0; v < n; v++) {
+        // the POOLED instrument is what this chair actually plays (the one
+        // resolver, derive.js instrIdOf); the genre's own pick stays in the
+        // set too, because clearing a chair mid-play must not find an
+        // unfetched guitar
+        ids.add(instrOf(e.g, v));
+        ids.add(instrIdOf(sec, e.g, v, POOL));
+      }
     }
   return [...ids];
 }

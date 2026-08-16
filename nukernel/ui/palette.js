@@ -127,14 +127,8 @@ const isOn = (kind, v) => {
   const sec = curSection();
   const ent = LAYER_OPTS.has(kind) || VOX[kind] ? focused(sec) : null;
   if (kind === "genre") return stackOf(sec).some(e => e.g === v);
-  if (kind === "instr") {
-    // set: the override alone is lit. Unset: the genre's OWN instruments light
-    // as .dflt — the fallback answering, the machine's one state language.
-    const set = optOf(sec, ent, "instr");
-    if (set) return set === v;
-    const e = GENRES[ent.g] && GENRES[ent.g].instr;
-    return Array.isArray(e) ? e.includes(v) : e === v;
-  }
+  // (no "instr" branch: the instrument is the SONG's pool now — ui/poolbank.js
+  // owns those chips, and no section surface offers an instrument at all)
   if (kind === "op") return opsOf(sec, ent).includes(v);
   if (kind === "focus") return String(focusOf(sec)) === v;
   if (kind === "fx") return sec.fx.includes(v);
@@ -165,7 +159,6 @@ const isDflt = kind => {
   if (kind === "artic") return optOf(sec, ent, "artic") == null;
   if (kind === "part") return optOf(sec, ent, "part") == null;
   if (kind === "oct") return optOf(sec, ent, "oct") == null;
-  if (kind === "instr") return optOf(sec, ent, "instr") == null;
   if (kind === "genre") {
     const st = stackOf(sec);
     return st.length === 1 && st[0].g === "simple";
@@ -219,7 +212,11 @@ function makeBuilders(host) {
 
 // THE INSTRUMENT BANK'S SHAPE, built once: family -> ids, in a musical order
 // (keyboards first, synth colours last), each family named the way a crate is.
-const INSTRFAMS = (() => {
+// EXPORTED for the one surface that still offers instruments — the SONG
+// page's INSTRUMENT POOL bank (ui/poolbank.js): the band is hired for the
+// record, so the VOICE cells below carry no instrument banks any more, but
+// the picker they open is the same twelve families, unchanged.
+export const INSTRFAMS = (() => {
   const order = ["keys", "organ", "guitar", "dirty", "strings", "bowed",
                  "brass", "reed", "mallet", "vox", "pad", "lead"];
   const label = { keys: "keys", organ: "organs", guitar: "guitars",
@@ -289,16 +286,14 @@ const CELLBANKS = {
     b.rowOf("pipe", "pipe", PIPELABEL, "env");
   },
   voice: b => {
-    b.note("Per layer: the instrument banks swap what PLAYS this layer's " +
-           "lines (the genre's own choice glows dim until you override it); " +
-           "the five synth knobs reach any voice that has them — the 303, " +
-           "the Model D, the reese and wobble basses.");
-    // THE INSTRUMENT, FRONT AND CENTER — the union of every sampled sound the
-    // genre table plays (fields.js INSTRCHOICES), clustered by the same family
-    // walk the mix strips use, so "driven guitar" here IS the dirty strip there
-    for (const [fam, ids] of INSTRFAMS)
-      b.group("instrument · " + fam,
-              ids.map(id => ["instr", id, INSTRCHOICES[id], "gen"]));
+    b.note("Per layer: how this layer's lines SPEAK — register, width, " +
+           "alphabet, part, and the five synth knobs any voice that has them " +
+           "answers to (the 303, the Model D, the reese and wobble basses). " +
+           "WHICH instrument plays is the song's: cast the band once, in the " +
+           "INSTRUMENTS bank on the song page.");
+    // (no instrument banks here: the band is hired for the RECORD, not the
+    // scene — the same twelve-family picker lives in the SONG page's
+    // INSTRUMENT POOL bank, ui/poolbank.js, one pick per chair.)
     b.rowOf("register", "oct", OCTAVES, "rng");
     b.group("width", [["op", "wide", OPLABEL.wide, "rng"],
                       ["op", "tight", OPLABEL.tight, "rng"]]);

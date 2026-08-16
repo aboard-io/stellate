@@ -23,9 +23,15 @@
     ? require("./fields.js") : root.NuFields;
   const NG = (typeof module !== "undefined" && module.exports)
     ? require("./genres.js") : root.NuGenres;
+  // the kernel is below this file in the layer graph (kernel -> genres ->
+  // fields -> THIS FILE); partOf is the one algebra call the INSTR LIFT needs
+  // — which chair a genre voice sits in is the kernel's own assignment
+  const K = (typeof module !== "undefined" && module.exports)
+    ? require("./kernel.js") : root.NuKernel;
   const { FIELDS, OPS, FX, MAX_FX, NSLOTS, MAX_LEN, MAX_NUDGE, VOX,
           AUTOPARAMS, PERIODS, PARTMIX, okPartKey, MASTER, BUSES, faderDb,
-          eqDb, GROOVELABEL, SWINGLABEL } = NF;
+          eqDb, GROOVELABEL, SWINGLABEL, INSTRCHOICES, POOLCHAIRS,
+          PARTNAMES } = NF;
   const { GENRES } = NG;
 
   // The CURRENT schema version. v:2 = v:1 with the box field `del` renamed to
@@ -42,7 +48,9 @@
   // retired box field is unmistakable — no new writer emits it — so migrate()
   // lifts on its presence, exactly the period-interregnum idiom below. The
   // SWING MOVE (2026-08-16, "nothing in a section tells time") is the same
-  // move made twice, and takes the same presence-keyed lift.
+  // move made twice, and takes the same presence-keyed lift — as does the
+  // INSTR MOVE ("the band is hired for the record"): the per-layer `instr`
+  // override lifts, per chair, into the song's one INSTRUMENT POOL.
   const VERSION = 2;
 
   // THE FILTER RULE, written down at last: `ops` and `fx` are FILTERED on
@@ -134,6 +142,58 @@
         r[key] = best;
       }
       for (const b of r.song) if (b) delete b[key];
+    }
+    // THE INSTR LIFT (2026-08-16, "the band is hired for the record"). For one
+    // release a stack entry could carry `instr` — a per-layer override of what
+    // that layer's voices play. The band is the SONG's now: one INSTRUMENT
+    // POOL, one pick per CHAIR (fields.js POOLCHAIRS), so the same lift the
+    // groove and the swing took runs here, per chair. Presence-keyed like both
+    // of them — no new writer emits the entry field, so the lift is exact and
+    // idempotent. Each section casts ONE vote per chair (its first entry to
+    // seat the chair — the authority first, the stack's own order); the
+    // majority per chair wins, and ties go to the section nearest the top,
+    // which is the authority the groove lift already named. The chair a voice
+    // sits in is the kernel's own assignment (partOf), read exactly the way
+    // the scheduler reads it: the layer's `part` chip first, else the box's,
+    // else the genre's scheme, anything unnamed answering to `line`.
+    if (Array.isArray(r.song) && r.song.some(b => b && Array.isArray(b.stack) &&
+        b.stack.some(e => e && e.instr !== undefined))) {
+      if (r.pool === undefined) {
+        const chairAt = (b, e, g, v) => {
+          const pt = e.part != null ? e.part : b.part;
+          const p = pt && pt !== "auto" ? pt : K.partOf(g, v);
+          return PARTNAMES[p] ? p : "line";
+        };
+        const votes = new Map();                  // chair -> Map(id -> n)
+        for (const b of r.song) {
+          if (!b || !Array.isArray(b.stack)) continue;
+          const per = new Map();                  // this section's one vote per chair
+          for (const e of b.stack) {
+            if (!e || e.instr == null || !GENRES[e.g]) continue;
+            const g = GENRES[e.g];
+            for (let v = 0; v < g.voices; v++) {
+              const c = chairAt(b, e, g, v);
+              if (!per.has(c)) per.set(c, e.instr);
+            }
+          }
+          for (const [c, id] of per) {
+            let m = votes.get(c);
+            if (!m) votes.set(c, m = new Map());
+            m.set(id, (m.get(id) || 0) + 1);
+          }
+        }
+        const pool = {};
+        for (const [c, m] of votes) {
+          let best = null, bestN = 0;             // insertion order again: a tie
+          for (const [id, n] of m)                // keeps the FIRST section's pick
+            if (n > bestN) { best = id; bestN = n; }
+          if (best != null) pool[c] = best;
+        }
+        if (Object.keys(pool).length) r.pool = pool;
+      }
+      for (const b of r.song)
+        if (b && Array.isArray(b.stack))
+          for (const e of b.stack) if (e) delete e.instr;
     }
     if (r.v !== 1) return r;             // v:2 passes through; junk fails validate
     // genre -> genres -> stack: they shared one slot list before layers
@@ -459,6 +519,31 @@
     s.swing = s.swing != null &&
       Object.prototype.hasOwnProperty.call(SWINGLABEL, String(s.swing))
       ? s.swing : null;
+
+    // ---- THE INSTRUMENT POOL, the third song fact in this family ("the band
+    // is hired for the record"): a map of chair -> instrument id, one pick per
+    // POOLCHAIRS seat, null (or an empty map) meaning every chair plays the
+    // genre's own `instr`. The ops/fx FILTER rule at both levels: a key that
+    // is not a chair is dropped (only the eight seats are read at all), and an
+    // id INSTRCHOICES no longer names is dropped too — the instrument
+    // vocabulary moves with the genre table, and a song should lose an
+    // obsolete pick rather than lose itself. Normalized to null when nothing
+    // survives, so "no pool" keeps one spelling.
+    if (s.pool != null) {
+      if (typeof s.pool !== "object" || Array.isArray(s.pool)) {
+        err("pool", s.pool, "a map of chair -> instrument id");
+        s.pool = null;
+      } else {
+        const clean = {};
+        for (const c of POOLCHAIRS) {
+          const v = s.pool[c];
+          if (v == null) continue;
+          if (Object.prototype.hasOwnProperty.call(INSTRCHOICES, String(v)))
+            clean[c] = v;
+        }
+        s.pool = Object.keys(clean).length ? clean : null;
+      }
+    } else s.pool = null;
 
     // tempo and volume ride along; out-of-range means "keep what you had",
     // not "refuse the song" — same policy applyState always had

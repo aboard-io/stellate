@@ -8,7 +8,7 @@
 import { GENRES, MODES, SCALES, RATES, SWINGS, KITOPS, OPS,
          render, drums, bass, word, envelope, edges, groove, chordAt,
          blank, VOX, PROGS, PERIODS, BREATHS, PIPESETS, withCadence,
-         SING, instrOf } from "./deps.js";
+         SING, instrOf, partOf, PARTNAMES } from "./deps.js";
 
 export const isBlank = p => p.gate.every(g => !g);
 
@@ -50,8 +50,8 @@ export function contourPath(p) {
 //
 // A layer field left unset INHERITS the box's, so nothing diverges by accident
 // — which is how the fugue ended up reading pentatonic against a quartal riff.
-export const LAYER_OPTS = new Set(["op", "artic", "clamp", "cmode", "scale", "oct", "part",
-                                   "instr"]);
+export const LAYER_OPTS = new Set(["op", "artic", "clamp", "cmode", "scale", "oct",
+                                   "part"]);
 export const optOf = (sec, ent, k) => (ent && ent[k] != null ? ent[k] : sec[k]);
 export const opsOf = (sec, ent) => (ent && ent.ops ? ent.ops : sec.ops);
 // the synth knobs are an OBJECT of independent settings, so they inherit
@@ -68,20 +68,39 @@ export const octOf = (sec, ent) => +(optOf(sec, ent, "oct") || 0);
 
 export const gid = sec => sec.stack[0].g;   // a box always has an authority
 
-// THE INSTRUMENT A CHAIR ACTUALLY PLAYS, as one answer with one fallback:
-// the layer's own `instr` override (every voice of that layer), else the
-// genre's `instr` per voice (instruments.js instrOf). By the time the
-// scheduler sees an event the only thing that says which layer it came from
-// is the event's `layer` tag (absent = the authority), so the lookup is by
-// genre key — safe because toggle() never lets one genre appear twice in a
-// stack. Read by the live scheduler, the register home, the asset list and
-// the mix desk, so a swapped chair is one fact everywhere at once.
-export const instrOverrideOf = (sec, owner) => {
-  const e = stackOf(sec).find(x => x.g === owner);
-  return (e && e.instr) || null;
+// WHICH CHAIR A VOICE SITS IN, as the base role name the song's INSTRUMENT
+// POOL is keyed on. It is the scheduler/mixer's own assignment, read the same
+// three-step way the mixer's roster reads it: the layer's `part` chip first
+// (genreOf puts it on every voice of that render), else the box's, else the
+// genre's own scheme (kernel partOf — the realize() shim answering `line` or
+// `pad` for the genres without one); anything the role table does not name
+// answers to `line`, chairKeys' law. NOTE this is the BASE chair — the desk's
+// addresses add an ordinal (`line2`), the pool deliberately does not: the
+// band has one lead player however many lead chairs a section seats.
+export const chairOf = (sec, ent, v) => {
+  const pt = optOf(sec, ent, "part");
+  const g = GENRES[(ent && ent.g) || gid(sec)];
+  const p = pt && pt !== "auto" ? pt : partOf(g, v);
+  return PARTNAMES[p] ? p : "line";
 };
-export const instrIdOf = (sec, owner, v) =>
-  instrOverrideOf(sec, owner) || instrOf(owner, v);
+// THE INSTRUMENT A CHAIR ACTUALLY PLAYS, as one answer with one fallback:
+// the SONG's pool pick for the voice's chair ("the band is hired for the
+// record" — one instrument per chair, for every section at once), else the
+// genre's `instr` per voice (instruments.js instrOf). The pool arrives as an
+// argument (ui/state.js POOL) because this file is pure over what it is given
+// — it is a song fact the way the groove is, and the groove arrives the same
+// way. By the time the scheduler sees an event the only thing that says which
+// layer it came from is the event's `layer` tag (absent = the authority), so
+// the lookup is by genre key — safe because toggle() never lets one genre
+// appear twice in a stack. Read by the live scheduler, the register home, the
+// asset list and the mix desk, so a cast chair is one fact everywhere at once.
+export const poolInstrOf = (sec, owner, v, pool) => {
+  if (!pool) return null;
+  const ent = stackOf(sec).find(x => x.g === owner) || null;
+  return pool[chairOf(sec, ent, v)] || null;
+};
+export const instrIdOf = (sec, owner, v, pool) =>
+  poolInstrOf(sec, owner, v, pool) || instrOf(owner, v);
 export const stackOf = sec => sec.stack || [];
 export const focusOf = sec => Math.min(sec.focus || 0, stackOf(sec).length - 1);
 export const focused = sec => stackOf(sec)[focusOf(sec)];

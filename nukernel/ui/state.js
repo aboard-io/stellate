@@ -11,7 +11,8 @@
 // time, two of them in the audio hot path (stepDur per tick, barSec per
 // channel build), which also made the loader untestable in node.
 import { NuSong, blank, emptyBox, DEFAULT, masterIsDefault,
-         busesIsDefault, GROOVELABEL, SWINGLABEL } from "./deps.js";
+         busesIsDefault, GROOVELABEL, SWINGLABEL, INSTRCHOICES,
+         POOLCHAIRS } from "./deps.js";
 
 export const DEFAULT_BPM = 126, NBOXES = 4;
 
@@ -70,6 +71,17 @@ export let GROOVE = null;
 // recompiles on "swing", the bounce re-renders, song.js migrates old per-box
 // saves up to it.
 export let SWING = null;
+// …AND THE INSTRUMENT POOL (2026-08-16, "the band is hired for the record"):
+// a song fact like all three above — the band is cast once, for the record,
+// not re-auditioned per section. A map of CHAIR (fields.js POOLCHAIRS: the
+// kernel's own roles plus the bass) -> instrument id (INSTRCHOICES), null
+// meaning every chair plays the genre's own `instr` — absent is today, the
+// same spelling law as MASTER/BUSES. ui/derive.js resolves it as an argument
+// (instrIdOf: pool first, genre second — it stays pure), the transport
+// recompiles on "pool" (the register home is decided per instrument), the
+// bounce re-cuts the carrier, and song.js migrates the retired per-layer
+// `instr` overrides up to it.
+export let POOL = null;
 
 export function setSlot(i) { slot = i; SUBJ = SLOTS[i]; }
 export function putPhrase(i, p) { SLOTS[i] = p; if (i === slot) SUBJ = p; }
@@ -103,6 +115,19 @@ export function setSwing(v) {
   SWING = v != null &&
     Object.prototype.hasOwnProperty.call(SWINGLABEL, String(v)) ? v : null;
 }
+// ...and one writer per CHAIR for the song's instrument pool, the same
+// normalizer against its own two tables: a seat POOLCHAIRS does not name is
+// ignored, an id INSTRCHOICES does not name (null included) clears the chair
+// back to "the genre's own", and a pool with every chair cleared is null —
+// one spelling of "no pool", the MASTER/BUSES law.
+export function setPoolChair(chair, id) {
+  if (!POOLCHAIRS.includes(chair)) return;
+  const p = { ...(POOL || {}) };
+  if (id != null && Object.prototype.hasOwnProperty.call(INSTRCHOICES, String(id)))
+    p[chair] = id;
+  else delete p[chair];
+  POOL = Object.keys(p).length ? p : null;
+}
 
 export const curSection = () => SONG[Math.min(viewSec, SONG.length - 1)];
 
@@ -123,6 +148,10 @@ export const curSection = () => SONG[Math.min(viewSec, SONG.length - 1)];
 //   "groove"             the song's groove moved — the transport recompiles
 //                        (event times shift), the bounce re-renders the carrier
 //   "swing"              the song's swing moved — same consumers, same reason
+//   "pool"               a chair of the song's instrument pool moved — the
+//                        transport recompiles (register homes are per
+//                        instrument) and fetches what the new chair needs,
+//                        the bounce re-cuts the carrier, the board relabels
 //   "transport:state"    published by audio/transport — playing flipped
 //   "transport:section"  published by audio/transport — the sounding box moved
 //   "refresh"            assets finished loading mid-play; views re-render
@@ -144,7 +173,7 @@ export function commit(type, detail) {
   emit(type, detail);
   if (type === "phrase" || type === "box" || type === "transport" ||
       type === "master" || type === "buses" || type === "groove" ||
-      type === "swing") save();
+      type === "swing" || type === "pool") save();
 }
 
 /* ---------- persistence ---------- */
@@ -162,7 +191,7 @@ function writeStore() {
   try {
     localStorage.setItem(STORE, JSON.stringify(
       { v: NuSong.VERSION, slots: SLOTS, song: SONG, master: MASTER,
-        buses: BUSES, groove: GROOVE, swing: SWING, bpm }));
+        buses: BUSES, groove: GROOVE, swing: SWING, pool: POOL, bpm }));
   } catch (e) { /* private mode, or quota: not worth interrupting the music */ }
 }
 export function saveNow() { clearTimeout(saveTimer); saveTimer = null; writeStore(); }
@@ -223,6 +252,7 @@ export function adoptSong(raw, reason) {
   BUSES = s.buses;                     // same normalizer, same law
   GROOVE = s.groove;                   // ...and the song's groove, same law
   SWING = s.swing;                     // ...and its swing, the same move made twice
+  POOL = s.pool;                       // ...and the band, hired for the record
   viewSec = 0; loopOnly = null; pendingStart = null;
   if (s.bpm != null) bpm = s.bpm;
   // s.vol is deliberately NOT adopted — volume is the device's (VOLSTORE above)
@@ -235,7 +265,7 @@ export function adoptSong(raw, reason) {
 export function songJSON() {
   return JSON.stringify(
     { v: NuSong.VERSION, slots: SLOTS, song: SONG, master: MASTER,
-      buses: BUSES, groove: GROOVE, swing: SWING, bpm },
+      buses: BUSES, groove: GROOVE, swing: SWING, pool: POOL, bpm },
     null, 1);
 }
 export function saveFile() {

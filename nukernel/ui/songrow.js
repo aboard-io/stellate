@@ -41,9 +41,10 @@ import { GENRES, ROLES, KITLABEL, DRUMKITS,
          SINGLABEL, MAX_LEN, MAX_NUDGE, NSLOTS, blank, instrOf,
          emptyBox } from "./deps.js";
 import { SONG, SLOTS, slot, viewSec, loopOnly, pendingStart, bpm, setViewSec,
-         setLoopOnly, setPendingStart, setSlot, commit, on } from "./state.js";
+         setLoopOnly, setPendingStart, setSlot, commit, on,
+         POOL } from "./state.js";
 import { stackOf, stackLabel, boxBars, secsOf, focusOf, opsOf, optOf,
-         voxAll, kitOf, mmss, contourPath } from "./derive.js";
+         voxAll, kitOf, mmss, contourPath, poolInstrOf } from "./derive.js";
 import { playing, playingSec, startAt, resetBar } from "../audio/transport.js";
 import { buzz } from "./touch.js";
 // toggle() is the ONE dispatcher every chip goes through; mountBanks builds a
@@ -447,11 +448,11 @@ function modsFact(sec, fe) {
 }
 function voiceFact(sec, fe) {
   const g = GENRES[fe.g];
-  // the RESOLVED voice word, the scheduler's own switch: the layer's `instr`
-  // override beats the signature synth (you asked for a rhodes, not a 303
-  // wearing one), the synth beats the genre's sampled instrument, and a
-  // singing box says its singer
-  const over = optOf(sec, fe, "instr");
+  // the RESOLVED voice word, the scheduler's own switch: the SONG POOL's pick
+  // for this chair beats the signature synth (you asked for a rhodes, not a
+  // 303 wearing one — the band is hired for the record), the synth beats the
+  // genre's sampled instrument, and a singing box says its singer
+  const over = poolInstrOf(sec, fe.g, 0, POOL);
   const base = sec.sing ? SINGLABEL[sec.sing]
     : over ? String(over).replace(/_/g, " ")
     : g.synth ? (g.synth.root || g.synth.dsp)
@@ -896,6 +897,7 @@ on("phrase", patchChipPaths);
 
 on("song", () => { els.clear(); songEl.textContent = ""; render(); });
 on("box", render);
+on("pool", patchAll);      // a recast chair renames every VOICE cell it seats
 on("selection", patchAll);
 on("transport:section", patchAll);
 on("transport:state", d => { patchAll(); if (!d.playing) paintProgress(-1, 0); });

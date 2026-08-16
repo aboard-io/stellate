@@ -30,6 +30,10 @@ import "./editor.js";
 // one rAF loop below — the board's fader caps follow the built gains live.
 import * as board from "./mixtbl.js";
 import "./chrome.js";
+// the INSTRUMENT POOL bank on the SONG page — the band, hired for the record
+// (one instrument per chair, per song; ui/poolbank.js owns the rows and the
+// twelve-family picker they unfold)
+import "./poolbank.js";
 // the chassis: page rail wiring + transport haptics (phone only in effect —
 // the rail is display:none on a desk and the buzz is coarse-pointer-gated)
 import "./pages.js";
