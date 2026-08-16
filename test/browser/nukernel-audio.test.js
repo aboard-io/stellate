@@ -220,6 +220,9 @@ function taps() {
   // kit and fell straight through to the oscillator. That is the exact path a
   // person takes, and it was the only one not covered.
   const seen = { rms: {}, worst: null };
+  // the two page-lifetime ledgers, saved across (H)'s reload so check (C) at the
+  // foot of the file still speaks for the whole run
+  const carried = { osc: 0, fb: 0 };
   let started = false, prev = null;
   for (const g of GENRES) {
     // the genre chips live in box 1's GENRE popup now — open it, click, Esc
@@ -258,8 +261,31 @@ function taps() {
     prev = g;
     if (!started) { await page.click("#play"); started = true; }
     await page.waitForTimeout(settle);               // predecessor gone + decode + bars
+    // ...AND THEN WAIT FOR THE LOADER TO BE EMPTY. A note whose instrument is
+    // still on its way is DROPPED, never beeped — that is the drop law this
+    // gate's own check (C) enforces from the other side — so a genre measured
+    // while its chairs are still arriving reads near-zero, and the gate blames
+    // the genre for the loader. Measured: New Orleans 1991, fourth in the
+    // sweep, read 0.0027 on one run and 0.1291 on another with nothing between
+    // them but decode timing. `inflight` is the loader's own answer to "is
+    // anything still coming" (assets.js), so the sweep asks it instead of
+    // guessing with a longer sleep.
+    await page.waitForFunction(() =>
+      !window.__nuDecode || window.__nuDecode().inflight.length === 0,
+      null, { timeout: 30000 }).catch(() => {});
+    // LISTEN FOR ONE OF THE GENRE'S OWN BARS, not for a fixed 1.8 s. The sparse
+    // genres are the ones this matters for: Pad puts twelve notes in a box and
+    // Backing vocals thirty-two (measured on sectionEvents), and at rate 0.25
+    // one bucket is 7.6 s — so ten 180 ms samples can land wholly in a gap
+    // between two of them and report a clean 0.0000 for a genre that is
+    // playing. Both did, on the same run where Solo, Vocal and Riff beside
+    // them read 0.06–0.09. The window is the genre's own bar (capped, so a slow
+    // genre cannot run the gate away), which is the shortest span in which a
+    // genre is obliged to make a sound at all.
+    const gBarMs = (16 / RATE_OF[g]) * (60 / 126 / 4) * 1000;
+    const nSamp = Math.min(50, Math.max(10, Math.ceil(gBarMs / 180)));
     let peak = 0;
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < nSamp; i++) {
       await page.waitForTimeout(180);
       const r = await page.evaluate(() => (window.__rms ? window.__rms() : 0));
       if (r > peak) peak = r;
@@ -901,6 +927,24 @@ function taps() {
   // So the pool is global and the ROUTE moves instead. The number below is the
   // whole fix, and it is a number rather than a feeling.
   {
+    // ON A FRESH PAGE, because the claim is "for a 10-section song" and the
+    // worklet pool is a SESSION-LIFETIME thing: nothing tears a synth down, so
+    // whatever the 58-genre sweep above instantiated is still resident and gets
+    // counted here. That was invisible while the sweep was quietly failing to
+    // apply its synth genres; the moment it started applying all of them the
+    // reading went 8 -> 15 with `channels: 1` and `routes: 0` — i.e. the pool
+    // had not been multiplied by anything, the page had simply been played for
+    // ten minutes first. A reload measures the pool THIS song builds, which is
+    // the only reading the sentence above was ever making.
+    //
+    // THE LEDGERS ARE CARRIED ACROSS IT BY HAND. __osc and __nuFallback are
+    // page globals, so a reload zeroes them — and check (C) at the foot of this
+    // file is the sweep's verdict on all 58 genres, not on the two minutes
+    // after this line. Read them out first and add them back there.
+    carried.osc = await page.evaluate(() => window.__osc);
+    carried.fb = await page.evaluate(() => window.__nuFallback);
+    await page.reload({ waitUntil: "networkidle" });
+    await page.waitForSelector(".box", { timeout: 15000 });
     await page.selectOption("#composeg", "vaporwave");
     await page.click("#compose");
     await page.click("#play");
@@ -1119,9 +1163,11 @@ function taps() {
     await page.click("#play");                              // stop
   }
 
-  // (C) no fallback fired
-  const osc = await page.evaluate(() => window.__osc);
-  const fb = await page.evaluate(() => window.__nuFallback);
+  // (C) no fallback fired — over the WHOLE run, both sides of (H)'s reload
+  const oscNow = await page.evaluate(() => window.__osc);
+  const fbNow = await page.evaluate(() => window.__nuFallback);
+  const osc = carried.osc + (oscNow || 0);
+  const fb = fbNow == null || carried.fb == null ? null : carried.fb + fbNow;
   console.log(`  oscillators started   : ${osc} (effect LFOs + any fallback)`);
   if (fb == null) fail("window.__nuFallback is missing — the page is not counting its fallback voices");
   else if (fb) fail(`${fb} hand-rolled fallback voice(s) started — a sampled or synth ` +
