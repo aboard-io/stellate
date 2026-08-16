@@ -24,6 +24,23 @@
 // the sub-rows are just sec.stack drawn honestly. The GENRE menu still adds
 // and removes layers — a dark chip grows a sub-row, a lit one removes it.
 //
+// AND A SECTION GROWS A LAYER BY HAND ("there's no way to add a subsection",
+// Paul, 2026-08-16). Stacking a second genre was reachable only by finding
+// the GENRE cell's menu and knowing that a dark chip there means "another
+// line", which is a rule you have to be told — so the block ends in a
+// [↳ + layer] KEY of its own (buildAdd/addLayer below), present at rest at
+// every width, on every section, layered or not. It is the matched partner of
+// each sub-row's ✕: the two verbs a layer has, in the row grammar itself,
+// wearing the layer's own colour — the key wears the hue the NEXT layer will
+// take. It cannot be read as the pattern strip's [+]: different words (the
+// [+] is a bare glyph), different place (its own row at the foot of the
+// block, never inside a "ptn" strip) and a different colour family (a layer
+// hue against the strip's neutral dashed keys). Tapping it grows the layer
+// AND opens that layer's own GENRE menu on it, so the new line means
+// something before your finger leaves the glass — and in that scoped menu a
+// chip BECOMES this layer's genre rather than stacking another (the scope
+// note on ui/palette.js toggle()).
+//
 // (NOTHING IN A SECTION TELLS TIME: tempo, groove and swing are all the
 // SONG's — the transport fader and the session bank's pickers — so there is
 // no TIMING cell any more. Its two genuinely-per-pattern survivors moved
@@ -276,6 +293,54 @@ function growPhrase(sec, ent) {
   buzz(4);
 }
 
+/* ---------- + LAYER: the key that grows a sub-row ---------- */
+// THE SEED GENRE. A layer has to be some genre the moment it exists, and the
+// stack keeps its genre keys UNIQUE (ui/derive.js poolInstrOf looks a layer up
+// by key), so the seed is "simple" — the blank kernel, which is what a
+// not-yet-decided line honestly is — unless the box already plays it, in which
+// case the first free key stands in. Either way the GENRE menu opens on the
+// new line in the same gesture, so the seed is what you see for one tap.
+function seedGenre(sec) {
+  const has = k => stackOf(sec).some(e => e.g === k);
+  return has("simple") ? (Object.keys(GENRES).find(k => !has(k)) || "simple")
+                       : "simple";
+}
+// GROW A LAYER. It writes the same shape the GENRE menu's chip writes —
+// palette.js's law, kept: a new layer INHERITS THE AUTHORITY'S PHRASES so it
+// sounds the moment it appears — then lands you in that layer's own genre
+// menu. commit("box") builds the sub-row (render → patchBox) BEFORE openPop
+// asks for it, which is why the order here is push, commit, open.
+function addLayer(sec) {
+  const at = idx(sec);
+  if (at < 0 || !sec.stack || !sec.stack.length) return;
+  const ent = { g: seedGenre(sec), slots: [...sec.stack[0].slots] };
+  sec.stack.push(ent);
+  sec.focus = sec.stack.length - 1;
+  setViewSec(at);
+  commit("box");
+  openPop(sec, "genre", ent);
+  buzz(4);
+}
+// the key itself: WORDS, not a glyph — "+ layer" is the whole point of the
+// affordance, and the ↳ mark is the same one the sub-rows wear, so the eye
+// reads the key as the empty next line of the family.
+function buildAdd(sec) {
+  const row = document.createElement("div");
+  row.className = "laddrow";
+  row.setAttribute("role", "row");
+  const cellEl = document.createElement("span");
+  cellEl.className = "laddcell"; cellEl.setAttribute("role", "cell");
+  const key = btn("laddk", "", "add a layer", () => addLayer(sec));
+  const mark = Object.assign(document.createElement("span"),
+    { className: "lam", textContent: "↳" });
+  mark.setAttribute("aria-hidden", "true");
+  key.append(mark, Object.assign(document.createElement("span"),
+    { className: "lat", textContent: "+ layer" }));
+  cellEl.append(key);
+  row.append(cellEl);
+  return { row, key };
+}
+
 /* ---------- build once per box ---------- */
 // Listeners close over the BOX OBJECT, never over an index — a box that has
 // been dragged three places up is still the same object, so its element and
@@ -431,8 +496,14 @@ function buildBox(sec) {
     startAt(i);
   });
 
+  // ...and the block's last row is the key that grows the next layer, built
+  // once with the box and never conditional: a section with no layers yet is
+  // exactly the one that needs to be told it can have them.
+  const add = buildAdd(sec);
+
   return { grp, box, cells, vals, num, pinLamp, bn, bu, bd, plus,
-           ph, chips: [], chipsSig: "", fill, subs: new Map() };
+           ph, chips: [], chipsSig: "", fill, subs: new Map(),
+           addRow: add.row, addKey: add.key };
 }
 
 /* ---------- the layer sub-rows ---------- */
@@ -490,15 +561,17 @@ function buildSub(sec, ent) {
   plab.setAttribute("aria-hidden", "true");
   const plus = buildPlus(sec, ent);
   ph.append(plab, plus);
-  // THE ONE DELETE A LAYER HAS. The parent's ✕ (PART menu) takes the whole
-  // family; this key takes only this layer — toggle("genre") on a lit genre,
-  // the same splice the GENRE menu's chip makes.
+  // THE ONE DELETE A LAYER HAS, and the MATCHED PARTNER of the block's
+  // [+ layer] key — same family, opposite verb, both in the row grammar and
+  // both visible at rest. The parent's ✕ (PART menu) takes the whole family;
+  // this key takes only this layer. It passes the ENTRY as the scope, so the
+  // splice is by identity rather than by genre key.
   const del = btn("lrx", "✕", "remove this layer", () => {
     const at = idx(sec);
     if (at < 0) return;
     if (popFor === sec && popEnt === ent) closePop();
     setViewSec(at);
-    toggle("genre", ent.g);               // lit -> removes; it commits
+    toggle("genre", ent.g, ent);          // this entry, exactly; it commits
     buzz(4);
   });
   const dcell = document.createElement("span");
@@ -724,8 +797,15 @@ function patchBox(sec, i, el) {
     patchChips(sec, i, ent.slots, sub, ", " + GENRES[ent.g].label + " layer");
   });
 
+  // THE + LAYER KEY wears the hue the NEXT layer will take (the sub-rows deal
+  // --lhue by position and the CSS holds four, cycling), so the empty line at
+  // the foot of the block is already the colour of the line it makes.
+  el.addRow.dataset.li = String(((st.length - 1) % 4) + 1);
+  el.addKey.setAttribute("aria-label", "add a layer to box " + (i + 1));
+
   // ROW ORDER INSIDE THE GROUP: parent, then each sub-row in stack order,
-  // with the OPEN MENU inserted directly after the row whose cell opened it.
+  // with the OPEN MENU inserted directly after the row whose cell opened it,
+  // and the [+ layer] key LAST — the block always ends in the way to grow it.
   // insertBefore only where the order is wrong — re-inserting an unmoved node
   // would drop the key under the finger mid-tap (the menu itself never
   // scrolls; it opens at full height and the page scrolls instead).
@@ -735,6 +815,7 @@ function patchBox(sec, i, el) {
     want.push(el.subs.get(ent).row);
     if (popFor === sec && popEnt === ent) want.push(rowpop);
   }
+  want.push(el.addRow);
   want.forEach((node, k) => {
     if (el.grp.children[k] !== node)
       el.grp.insertBefore(node, el.grp.children[k] || null);
@@ -952,8 +1033,11 @@ function mountCell(sec, kind) {
   if (kind === "part") rpMount.append(rpKeys);
   else if (kind === "bars") rpMount.append(rpBars);
   else if (kind === "ptn") buildPtnBank(sec, popEnt);
-  else if (kind === "mods") { rpMount.append(rpNud); mountBanks("mods", rpMount); }
-  else mountBanks(kind, rpMount);
+  // popEnt rides along as the LAYER SCOPE: a menu a sub-row opened edits that
+  // layer, which for GENRE is the difference between "become this" and
+  // "stack another" (ui/palette.js toggle()).
+  else if (kind === "mods") { rpMount.append(rpNud); mountBanks("mods", rpMount, popEnt); }
+  else mountBanks(kind, rpMount, popEnt);
 }
 
 function openPop(sec, kind, ent) {

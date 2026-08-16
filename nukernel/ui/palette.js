@@ -73,8 +73,31 @@ export const eraOf = k => {
 };
 
 /* ---------- clicking things on and off in the selected box ---------- */
-export function toggle(kind, value) {
+// `ent` is the LAYER SCOPE, and only the GENRE branch reads it: a menu opened
+// from a layer's own sub-row (ui/songrow.js popEnt) hands its stack entry
+// down, and then a genre chip means "make THIS LAYER that genre" rather than
+// "stack another layer on the box". Without it the [+ layer] key was a trap —
+// you grew a blank sub-row, its genre menu opened on it, and the first chip
+// you tapped grew a SECOND sub-row and left the blank one sitting there. The
+// parent row still passes nothing, so its GENRE menu keeps the old law: a
+// dark chip adds a layer, a lit one takes it off.
+export function toggle(kind, value, ent) {
   const sec = curSection();
+  if (kind === "genre" && ent) {
+    // SCOPED: one entry, never the authority (index 0 IS the box's genre, and
+    // its cell is the parent row's, which passes no scope). Genre keys stay
+    // UNIQUE inside a stack — ui/derive.js poolInstrOf looks a layer up by its
+    // key — so becoming a genre another layer already plays is a no-op.
+    const st = sec.stack, i = st.indexOf(ent);
+    if (i > 0) {
+      if (ent.g === value) {                   // its own genre: take the layer off
+        st.splice(i, 1);
+        sec.focus = Math.min(sec.focus || 0, st.length - 1);
+      } else if (!st.some(e => e.g === value)) ent.g = value;
+      commit("box");
+      return;
+    }
+  }
   if (kind === "genre") {
     const st = sec.stack, i = st.findIndex(e => e.g === value);
     const wasWholeForm = !sec.len || sec.len === GENRES[st[0].g].bars;
@@ -380,7 +403,7 @@ function repaintDna() { if (dnaEl && dnaEl.isConnected) paintDna(dnaEl); else dn
 // chips live in their own grid wrapper so the columns align — Elektron bank
 // select, not a tag cloud. The gates click .pchip by text and data-*, and
 // neither moved when the banks moved into the cell popups.
-function makeBuilders(host) {
+function makeBuilders(host, ent) {
   // `gcls` is an optional class on the BANK (not on its chips) — one user so
   // far, the chronological genre bank, which is one long list where every
   // other bank is a short one and so wants the whole fold rather than a
@@ -406,7 +429,9 @@ function makeBuilders(host) {
         (on2 && isDflt(kind) ? " dflt" : "");
       b.textContent = label; b.setAttribute("aria-pressed", String(!!on2));
       b.dataset.kind = kind; b.dataset.value = String(value);
-      b.addEventListener("click", ev => { ev.stopPropagation(); toggle(kind, value); });
+      // the LAYER SCOPE rides along (null from a parent row's cell): toggle()
+      // reads it in the genre branch and nowhere else
+      b.addEventListener("click", ev => { ev.stopPropagation(); toggle(kind, value, ent); });
       wrap.append(b);
     }
     g.append(wrap);
@@ -473,7 +498,10 @@ const CELLBANKS = {
     // One bank serves BOTH halves of the stack edit — a dark chip ADDS the
     // genre (as the authority on a blank box, as a rider otherwise: toggle()'s
     // own rules), a lit chip TAKES IT OFF — which is what retired the
-    // standalone #gpick picker panel.
+    // standalone #gpick picker panel. Opened from a LAYER's sub-row (the
+    // scoped case) the same bank means one layer instead of the stack: a dark
+    // chip makes THIS layer that genre, its own lit chip takes the layer off,
+    // and another layer's lit chip stands for that layer and does nothing.
     const { dated, undated } = chronoGenres();
     b.group("genre · oldest first",
       dated.map(k => ["genre", k, GENRES[k].label, "gen" + eraOf(k)]), "chrono");
@@ -571,10 +599,12 @@ const CELLBANKS = {
 // lifecycle: it empties itself, calls this on open, and calls refreshChips()
 // on every commit while it is up — this module keeps no subscription and no
 // singleton element, which is what made it a library instead of a page.
-export function mountBanks(cellKey, host) {
+// `ent` is the sub-row's stack entry when a LAYER opened the menu, threaded
+// straight through to every chip's toggle() — see the scope note on toggle().
+export function mountBanks(cellKey, host, ent) {
   const def = CELLBANKS[cellKey];
   if (!def) return false;
-  def(makeBuilders(host));
+  def(makeBuilders(host, ent || null));
   return true;
 }
 // the cheap pass: only the ON states move (a chip click, a focus change, an

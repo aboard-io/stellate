@@ -1027,10 +1027,46 @@ h1 em{font-style:normal;color:var(--ink)}
 .lrow.live .bcell,.lrow.live .bch{
   background:color-mix(in srgb,var(--st-live) 13%,var(--tbl-key,var(--hw-key-mid)))}
 .ldel{display:flex;justify-content:flex-end}
-.lrx{appearance:none;cursor:pointer;min-width:36px;min-height:36px;border-radius:var(--r);
-  background:none;color:var(--ink-3);border:1px dashed var(--rule-strong);
-  font:600 var(--t-sm)/1 var(--f-num)}
+/* THE LAYER'S ✕ AND THE BLOCK'S [+ layer] ARE ONE SET: the two verbs a layer
+   has, the same 44px key height, both wearing a LAYER HUE rather than the
+   table's neutral ink — the ✕ takes the hue of the layer it ends, the add key
+   the hue of the layer it starts. 44 rather than the old 36 because it is a
+   delete under a thumb and the AA floor is the floor. */
+.lrx{appearance:none;cursor:pointer;min-width:44px;min-height:44px;border-radius:var(--r);
+  background:none;color:var(--lhue);
+  border:1px solid color-mix(in srgb,var(--lhue) 55%,transparent);
+  font:600 var(--t-md)/1 var(--f-num)}
 .lrx:hover{color:var(--accent-txt);border-color:var(--accent)}
+.lrx:active{background:color-mix(in srgb,var(--lhue) 18%,transparent)}
+.lrx:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+/* ---- [+ LAYER]: THE KEY THAT GROWS A SUB-ROW ----
+   "There's no way to add a subsection" (Paul, 2026-08-16). There was one —
+   a second genre picked inside the GENRE cell's menu — and it may as well not
+   have existed, the same failure the pattern ✕ above just answered. So the
+   block ENDS in the way to grow it: a key on its own row at the foot of the
+   section, at the sub-rows' own indent, continuing their spine as a DASHED
+   one (the line that is not there yet), present at rest at every width.
+   It cannot be mistaken for the pattern strip's [+]: that one is a bare glyph
+   in neutral grey INSIDE a "ptn" strip, this one says the word LAYER in the
+   hue the new line will wear, on a line of its own that no strip occupies. */
+.laddrow{display:flex;align-items:center;--lhue:var(--vb);
+  margin:var(--sp-2) var(--tbl-gut) 0 calc(var(--tbl-gut) + var(--sp-4));
+  padding:0 0 0 var(--sp-3);
+  border-left:2px dashed color-mix(in srgb,var(--lhue) 60%,transparent)}
+.laddrow[data-li="1"]{--lhue:var(--v0)}
+.laddrow[data-li="2"]{--lhue:var(--v1)}
+.laddrow[data-li="3"]{--lhue:var(--v2)}
+.laddrow[data-li="4"]{--lhue:var(--v3)}
+.laddcell{display:flex}
+.laddk{appearance:none;cursor:pointer;min-height:44px;padding:0 var(--sp-4) 0 var(--sp-3);
+  display:inline-flex;align-items:center;gap:var(--sp-2);border-radius:var(--r);
+  border:1px solid var(--lhue);color:var(--lhue);
+  background:color-mix(in srgb,var(--lhue) 12%,transparent)}
+.laddk .lam{font:600 var(--t-lg)/1 var(--f-num)}
+.laddk .lat{font:700 var(--t-md)/1 var(--f-ui);letter-spacing:.02em}
+.laddk:hover{background:color-mix(in srgb,var(--lhue) 22%,transparent)}
+.laddk:active{background:color-mix(in srgb,var(--lhue) 32%,transparent)}
+.laddk:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 /* (THERE IS NO HEADER ROW. The song table's column-label row — # · GENRE ·
    FUNCTION · BARS · MODS · VOICE · RHYTHM · TRANSITIONS in silkscreen — is
    deleted, DOM and all (ui/songrow.js). Every one of those columns already
@@ -1084,7 +1120,9 @@ h1 em{font-style:normal;color:var(--ink)}
      line 1 names the layer (↳ · genre · ✕), line 2 is its treatment (voice ·
      mods), line 3 is ITS patterns — indented past the ↳ so the strip starts
      under the genre that plays it rather than under the mark. */
-  .lrow{grid-template-columns:20px minmax(0,2fr) minmax(0,1fr) 36px}
+  /* the last track is the layer's ✕, and it is 44 now, not 36: a delete gets
+     the AA target on a phone (its partner, the [+ layer] key, is 44 too) */
+  .lrow{grid-template-columns:20px minmax(0,2fr) minmax(0,1fr) 44px}
   .lrow>.lmark{grid-row:1;grid-column:1}
   .lrow>.c-genre{grid-row:1;grid-column:2/span 2}
   .lrow>.ldel{grid-row:1;grid-column:4}
