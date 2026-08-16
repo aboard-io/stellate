@@ -756,7 +756,21 @@ function drumLeadIn(bar, tBase, inBar, kit, siB, rnd) {
     return { kind: "hit", t: tBase + t, off: t, d, acc: i === pos.length - 1,
              vel: Math.min(9, 3 + Math.round(5 * p)), pu: 1, puSi: siB, kit };
   });
-  if (lanes.has("k") && rnd() < 0.7)                    // the pickup kick into the line
+  // THE KICK LOOKS DOWN BEFORE IT LANDS. "Nothing to collide with" up there is
+  // a claim about the BAR, and it says nothing about this function's own two
+  // strokes. The accelerating build halves its gap as it runs, so over a whole
+  // bar it walks 0 · 4 · 8 · 12 · 14 · 15 — and step 15 is exactly where the
+  // kick goes. Usually they are different lanes and it reads as a kick under a
+  // roll, which is the point; but `voice` falls through to the kick itself
+  // when the entering kit is bare enough to have nothing else in it (a box of
+  // k and h and no snare), and then the lead-in flams its own last note. Same
+  // rule quoteFill states one function down, for the same reason — a fill may
+  // never flam a hit that is already there. `rnd()` is still drawn whenever
+  // the kit has a kick, so the seeded walk is unchanged and every other song
+  // compiles the bar it compiled before.
+  const busy = (d, t) => bar.ev.concat(add).some(e =>
+    e.kind === "hit" && e.d === d && Math.abs(e.off - t) < 0.5 * u);
+  if (lanes.has("k") && rnd() < 0.7 && !busy("k", bs - u))
     add.push({ kind: "hit", t: tBase + bs - u, off: bs - u, d: "k", acc: false,
                vel: 7, pu: 1, puSi: siB, kit });
   bar.ev = bar.ev.concat(add);

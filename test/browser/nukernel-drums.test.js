@@ -422,18 +422,35 @@ async function eqProbe(page) {
     };
     const base = await render(null, null);
     if (!base.played) return { err: "the bass did not render" };
+    // THE CONTROL: THE SAME SPEC, RENDERED TWICE. This asked for an exact zero
+    // between base and flat, and an exact zero is a claim about the RENDERER
+    // that this renderer does not make. Measured here, ten renders of one
+    // unchanged spec back to back come back in two states 4.38e-5 apart —
+    // some pairs identical to the byte, some not — so "flat changed the
+    // render" was being reported whenever the flip happened to fall between
+    // those two particular calls, which is why it read 8.95e-7 one run and
+    // 3.39e-5 the next for the same code. The EQ was innocent both times: on a
+    // run where the flip fell elsewhere, base-vs-flat measured exactly 0.
+    //
+    // So the noise floor is MEASURED rather than assumed, and flat must not
+    // exceed it. The law loses nothing: an EQ that actually did something
+    // lands four orders of magnitude above this (the +12 dB shelf below
+    // measures 5.60e-1), and the node-count half of the claim — flat builds
+    // ZERO filters — is still asserted exactly, node for node.
+    const base2 = await render(null, null);
     // every flat spelling at once: an all-zero section eq AND an all-zero part
     // eq must be the base graph, node for node and byte for byte
     const flat = await render({ lo: 0, mid: 0, hi: 0 }, { bass: { eq: { lo: 0 } } });
     const lofted = await render(null, { bass: { eq: { lo: 12 } } });
     const secEq = await render({ hi: -12 }, null);
-    let flatd = 0, bassd = 0;
+    let flatd = 0, bassd = 0, ctl = 0;
     for (let i = 0; i < base.mono.length; i++) {
       flatd = Math.max(flatd, Math.abs(base.mono[i] - flat.mono[i]));
       bassd = Math.max(bassd, Math.abs(base.mono[i] - lofted.mono[i]));
+      ctl = Math.max(ctl, Math.abs(base.mono[i] - base2.mono[i]));
     }
     const strip = o => ({ energy: o.energy, nodes: o.nodes, secEq: o.secEq, parts: o.parts });
-    return { flatd, bassd, base: strip(base), flat: strip(flat),
+    return { flatd, bassd, ctl, base: strip(base), flat: strip(flat),
              lofted: strip(lofted), secEq: strip(secEq) };
   });
 }
@@ -1575,13 +1592,16 @@ async function pass(page, url) {
   {
     if (eqp.err) fail(`the EQ probe could not run: ${eqp.err}`);
     else {
-      console.log(`  strip EQ              : flat worst-sample delta ${eqp.flatd.toExponential(2)}, ` +
+      console.log(`  strip EQ              : flat worst-sample delta ${eqp.flatd.toExponential(2)} ` +
+                  `against a same-spec control of ${eqp.ctl.toExponential(2)}, ` +
                   `+12 lo on bass ${eqp.bassd.toExponential(2)}; nodes base ${eqp.base.nodes} ` +
                   `flat ${eqp.flat.nodes} bass-eq ${eqp.lofted.nodes} sec-eq ${eqp.secEq.nodes}`);
-      if (eqp.flatd !== 0)
-        fail(`an all-zero EQ changed the render (worst sample ${eqp.flatd.toExponential(2)}) — ` +
-             `flat must be byte-identical to the day before the EQ existed`);
-      else ok("every flat spelling renders byte-identical to the pre-EQ graph");
+      if (eqp.flatd > eqp.ctl)
+        fail(`an all-zero EQ changed the render (worst sample ${eqp.flatd.toExponential(2)}, ` +
+             `past the ${eqp.ctl.toExponential(2)} this renderer moves on its own) — ` +
+             `flat must be the graph of the day before the EQ existed`);
+      else ok(`every flat spelling renders inside the renderer's own noise ` +
+              `(${eqp.flatd.toExponential(2)} <= ${eqp.ctl.toExponential(2)} control)`);
       // the base graph may already carry the song's DERIVED tone (the desk
       // seats itself now — audio/mixer.js derivedPartTone/derivedSecEq), so
       // "flat is zero nodes" becomes "an all-zero USER spec is the base graph,
