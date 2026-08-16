@@ -8,8 +8,12 @@
 // STRIPS, one per chair the SONG uses ("One channel per voice!!", 2026-08-16 —
 // the union of every section's parts, fixed for the whole song; a chair the
 // current section does not sound sits dimmed and wakes when its section
-// arrives), each with its label block,
-// its value keys, M/S and a long-throw AUTOMATED fader; then the SHARED-BUS
+// arrives), each a true SSL 4000 read, top to bottom ("lay out the mix
+// channels like SSL — stack it", 2026-08-16): the label block (chair +
+// instrument — on a pool chair the instrument line is the POOL's own control,
+// opening the twelve-family picker), the EQ stacked HI over MID over LO in
+// the 4000-series colorways (red/green/brown caps), the sends then pan keys,
+// the CUT/SOLO pair, and a long-throw AUTOMATED fader; then the SHARED-BUS
 // strips (reverb, echo, drum room — audio/graph.js's own roster, plus a slim
 // strip per character send bus as it builds); then the MASTER strip with a
 // meter. Below the board, the EFFECTS RACK: one row of detented knobs per
@@ -42,10 +46,13 @@
 import { GENRES, FX, MAX_FX, SENDS, SENDLABEL, DRUMKITS, PARTMIX,
          partChairLabel, BASS_INSTR, BASSSYNTH, LEVELS, faderDb,
          resolvePartMix, MASTER_FIELDS, BUS_FIELDS,
-         EQ_BANDS, EQ_RANGE, eqDb,
+         EQ_BANDS, EQ_RANGE, eqDb, INSTRCHOICES, POOLCHAIRS,
          VERBS, DTIMES, DTLABEL } from "./deps.js";
 import { curSection, commit, on, emit, MASTER, setMaster, BUSES, setBuses,
-         vol, setVol, SONG, POOL } from "./state.js";
+         vol, setVol, SONG, POOL, setPoolChair } from "./state.js";
+// the same twelve families the SONG page's pool bank offers — two views, one
+// store (ui/state.js POOL): a strip's instrument label opens THIS picker
+import { INSTRFAMS } from "./palette.js";
 // READ-ONLY, and the allowed direction (a view importing audio — main.js does
 // the same): the two live bindings that say which box is SOUNDING, so the desk
 // can play along instead of staring at the selection while the song moves on.
@@ -119,7 +126,17 @@ const SECCOLS = [
   { key: "verb",  table: VERBS,  labels: VERBS },
   { key: "dtime", table: DTIMES, labels: DTLABEL },
 ];
-const colsOf = row => (row.sect ? [...COLS, ...SECCOLS] : COLS);
+// THE SSL STACK ("lay out the mix channels like SSL", 2026-08-16) fixes the
+// within-strip reading order: after the EQ come the SENDS (rev/echo, plus the
+// section strip's room/time), then the insert chain, then level, PAN last
+// before the M/S pair and the fader — the 4000-series' own top-to-bottom.
+const KEYORD = ["rev", "echo", "verb", "dtime", "fx", "lvl", "pan"];
+const colsOf = row => [...(row.sect ? [...COLS, ...SECCOLS] : COLS)]
+  .sort((a, b) => KEYORD.indexOf(a.key) - KEYORD.indexOf(b.key));
+// the SSL small-knob colorways for the key groups: blue for the sends, gray
+// for level/pan — painted by kernel-daw.css as a cap band on the key
+const KEYCW = { rev: "cw-send", echo: "cw-send", verb: "cw-send",
+                dtime: "cw-send", lvl: "cw-pan", pan: "cw-pan" };
 const SHORT = {
   rev: SENDLABEL, echo: SENDLABEL, dtime: DTLABEL,
   lvl: { hush: "hush", back: "back", norm: "norm", fwd: "fwd" },
@@ -367,7 +384,9 @@ const fmtEq = v => (v > 0 ? "+" : "") +
 function buildEqKnob({ band, legend, label, part, bus, get, drag, write, derived }) {
   const cell = mk("span", "eqcell");
   const leg = mk("i", "eqlab", legend);
-  const b = mk("button", "eqk");
+  // the SSL 4000 colorway is the wayfinding: red cap HF, green MID, brown LF
+  // (blue stays reserved for a fourth band) — kernel-daw.css paints the faces
+  const b = mk("button", "eqk cw-" + band);
   b.type = "button";
   b.dataset.band = band;
   if (part != null) b.dataset.part = part;
@@ -554,36 +573,38 @@ function build() {
   refs = rows.map((row, i) => {
     const tr = mk("div", "strip mrow" + (row.sect ? " msec" : ""));
     tr.setAttribute("role", "row");
-    // ---- the label block: who this is, what plays it, where it goes ----
+    // ---- the label block: who this is, what plays it, where it goes.
+    // On a pool chair the instrument line is a CONTROL ("make the instrument
+    // pool show up in the mixer", 2026-08-16): tapping it unfolds the same
+    // twelve-family picker the SONG page's pool bank carries, for THIS chair
+    // — same chips, same commit("pool") path, two views over one store. The
+    // drums chair stays passive on purpose: the kit is a kit, chosen by the
+    // RHYTHM cell, not an instrument id (fields.js POOLCHAIRS' law).
     const head = mk("div", "mlabel");
     head.setAttribute("role", "cell");
     const num = mk("b", "mnum tnum", row.sect ? "" : String(i + 1));
-    const pn = mk("b", "mpn", row.label), ps = mk("i", "mps", row.sound);
+    const pn = mk("b", "mpn", row.label);
+    const pool = !row.sect && POOLCHAIRS.includes(row.key);
+    const ps = mk(pool ? "button" : "i", "mps" + (pool ? " minstr" : ""), row.sound);
+    if (pool) {
+      ps.type = "button";
+      ps.dataset.chair = row.key;
+      ps.addEventListener("click", ev => {
+        ev.stopPropagation(); openPop(ps, row, POOLFIELD);
+      });
+    } else if (row.key === "drums") {
+      ps.title = "the kit — chosen by the RHYTHM cell, not the instrument pool";
+    }
     const feed = mk("i", "mfeed", row.sect ? "→ master bus" : "→ section");
     head.append(num, pn, ps, feed);
     tr.append(head);
-    // ---- the value keys: the same chips, one tap away ----
-    const vals = mk("div", "mvals");
-    vals.setAttribute("role", "cell");
-    const cells = {};
-    for (const f of colsOf(row)) {
-      const kwrap = mk("span", "mcell mc-" + f.key);
-      const leg = mk("i", "mvlab", KEYLEG[f.key] || f.key);
-      const b = mk("button", "mval");
-      b.type = "button";
-      b.dataset.part = row.key == null ? "" : row.key;
-      b.dataset.field = f.key;
-      b.addEventListener("click", ev => { ev.stopPropagation(); openPop(b, row, f); });
-      kwrap.append(leg, b); vals.append(kwrap);
-      cells[f.key] = b;
-    }
-    tr.append(vals);
-    // ---- the tone block: LO / MID / HI over the M/S keys, the desk's order.
+    // ---- the tone block, SSL-stacked: HI over MID over LO, one knob per row
+    // with its legend, straight under the label — the desk's own order.
     // Always present, flat (dim) by default — a strip that could hide its EQ
     // would be a strip you have to open to trust.
     const eqrow = mk("div", "eqrow");
     eqrow.setAttribute("role", "cell");
-    const eqs = EQ_BANDS.map(bd => buildEqKnob({
+    const eqs = [...EQ_BANDS].reverse().map(bd => buildEqKnob({
       band: bd.key, legend: bd.label, part: row.key == null ? "" : row.key,
       label: row.label + " " + bd.label + " EQ",
       get: () => eqBand(boardSec(), row.key, bd.key),
@@ -600,13 +621,31 @@ function build() {
     }));
     for (const e of eqs) eqrow.append(e.cell);
     tr.append(eqrow);
-    // ---- M and S: the two that latch rather than open ----
+    // ---- the value keys, in the SSL stack's order (KEYORD): sends first,
+    // pan last — the same chips, one tap away ----
+    const vals = mk("div", "mvals");
+    vals.setAttribute("role", "cell");
+    const cells = {};
+    for (const f of colsOf(row)) {
+      const kwrap = mk("span", "mcell mc-" + f.key +
+                       (KEYCW[f.key] ? " " + KEYCW[f.key] : ""));
+      const leg = mk("i", "mvlab", KEYLEG[f.key] || f.key);
+      const b = mk("button", "mval");
+      b.type = "button";
+      b.dataset.part = row.key == null ? "" : row.key;
+      b.dataset.field = f.key;
+      b.addEventListener("click", ev => { ev.stopPropagation(); openPop(b, row, f); });
+      kwrap.append(leg, b); vals.append(kwrap);
+      cells[f.key] = b;
+    }
+    tr.append(vals);
+    // ---- CUT and SOLO: the desk's button pair, the two that latch ----
     const ms = mk("div", "mms");
     ms.setAttribute("role", "cell");
     const keys = {};
     for (const k of ["mute", "solo"]) {
       if (row.sect) { keys[k] = null; continue; }
-      const b = mk("button", "mkey mk-" + k, k === "mute" ? "M" : "S");
+      const b = mk("button", "mkey mk-" + k, k === "mute" ? "cut" : "solo");
       b.type = "button";
       b.addEventListener("click", ev => {
         ev.stopPropagation();
@@ -645,6 +684,15 @@ function patch() {
     const idle = !row.sect && !cur;
     const sound = row.sect ? row.sound : (cur ? cur.sound : row.sound);
     if (R.ps.textContent !== sound) R.ps.textContent = sound;
+    // a CAST chair lights its label (the pool's pick), a genre default reads
+    // dim — the one state language, on the strip's own nameplate
+    if (!row.sect && POOLCHAIRS.includes(row.key)) {
+      const cast = !!(POOL && POOL[row.key]);
+      R.ps.classList.toggle("set", cast);
+      R.ps.setAttribute("aria-label", row.label + " instrument: " + sound +
+        (cast ? " — cast from the pool" : " — the genre's own") +
+        " — opens the instrument picker");
+    }
     const muted = !row.sect && !!ent && !!ent.mute;
     const off = !row.sect && (muted || (solo && !(ent && ent.solo)));
     R.tr.className = "strip mrow" + (row.sect ? " msec" : "") + (off ? " off" : "") +
@@ -722,11 +770,33 @@ const popChips = mk("div", "mchips");
 pop.append(popHead, popChips);
 document.body.append(scrim, pop);
 
+// THE POOL PSEUDO-FIELD: the strip's instrument label opens the picker
+// through the same one popover — the pool bank's chips and commit("pool")
+// path, the mixer's .mchip material (never .pchip: the gates click .pchip by
+// exact text, and a twin would make those locators a coin toss).
+const POOLFIELD = { key: "pool" };
 const chipList = f => (f.key === "fx"
   ? Object.keys(FX).map(k => [k, FX[k].label])
   : Object.keys(f.table).map(k => [k, f.labels[k]]));
 function buildPop() {
   popChips.textContent = "";
+  if (popField.key === "pool") {
+    // the pool bank's shape: the un-cast chip first, then the twelve families
+    const chip = (v, label) => {
+      const b = mk("button", "mchip", label);
+      b.type = "button";
+      b.dataset.value = v;
+      b.addEventListener("click", () => hit(v));
+      popChips.append(b);
+    };
+    popChips.append(mk("span", "mgrp", "the genre's own"));
+    chip("", "genre default");
+    for (const [fam, ids] of INSTRFAMS) {
+      popChips.append(mk("span", "mgrp", "instrument · " + fam));
+      for (const id of ids) chip(id, INSTRCHOICES[id]);
+    }
+    return;
+  }
   for (const [v, label] of chipList(popField)) {
     const b = mk("button", "mchip", label);
     b.type = "button";
@@ -737,6 +807,15 @@ function buildPop() {
 }
 function hit(v) {
   const sec = boardSec();
+  if (popField.key === "pool") {
+    // ONE song fact, the pool bank's exact path — the roster re-resolves, the
+    // strip relabels, every VOICE cell renames. Patch, never close (the pool
+    // bank's one-visit law): casting a band is several decisions.
+    setPoolChair(popRow.key, v || null);
+    commit("pool");
+    buzz(4);
+    return;
+  }
   if (popField.key === "fx") {
     const cur = readField(sec, popRow.key, "fx").slice();
     const i = cur.indexOf(v);
@@ -755,6 +834,18 @@ function hit(v) {
 function patchPop() {
   if (!popRow) return;
   const sec = boardSec();
+  if (popField.key === "pool") {
+    // the pick lit bright; uncast, the "genre default" chip answers dim
+    const pick = POOL && POOL[popRow.key];
+    for (const b of popChips.children) {
+      if (!b.classList.contains("mchip")) continue;
+      const on2 = pick ? b.dataset.value === pick : b.dataset.value === "";
+      b.classList.toggle("on", on2);
+      b.classList.toggle("dflt", on2 && !pick);
+      b.setAttribute("aria-pressed", String(on2));
+    }
+    return;
+  }
   const v = readField(sec, popRow.key, popField.key);
   const d = defaultOf(sec, popRow.key, popField.key);
   for (const b of popChips.children) {
@@ -791,7 +882,8 @@ function openPop(cell, row, f) {
   popRow = row; popField = f; popCell = cell;
   const s = row.key + "|" + f.key;
   if (s !== popSig) { popSig = s; buildPop(); }
-  popTitle.textContent = row.label + " · " + (f.key === "fx" ? "effects" : f.key) +
+  popTitle.textContent = row.label + " · " +
+    (f.key === "fx" ? "effects" : f.key === "pool" ? "instrument" : f.key) +
     (f.key === "fx" ? "  (up to " + MAX_FX + ", in order)" : "");
   pop.setAttribute("aria-label", popTitle.textContent);
   scrim.hidden = false; pop.hidden = false;
@@ -917,10 +1009,11 @@ function buildBusStrip(row) {
   const state = mk("i", "mfeed", "");
   head.append(pn, ps, state);
   tr.append(head);
-  // the return's tone pair — LO / HI, the simpler strip a bus earns
+  // the return's tone pair — HI over LO, the simpler strip a bus earns,
+  // stacked in the same SSL order as the channels
   const eqrow = mk("div", "eqrow");
   eqrow.setAttribute("role", "cell");
-  const eqs = (row.eq || []).map(bd => buildEqKnob({
+  const eqs = [...(row.eq || [])].reverse().map(bd => buildEqKnob({
     band: bd.key, legend: bd.label, bus: row.bus,
     label: row.label + " return " + bd.label + " EQ",
     get: () => busEqBand(row.bus, bd.key),

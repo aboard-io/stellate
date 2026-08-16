@@ -1027,19 +1027,31 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .pchip.role.on{background:var(--accent);border-color:var(--accent);color:var(--on-ink)}
 
 /* ---- THE BOARD ----
-   The MIX page as a desk (ui/mixtbl.js, "the SSL board"): VERTICAL CHANNEL
-   STRIPS in the .tbl well — label block, value keys, M/S, a long-throw
-   automated fader — then the SECTION strip past a heavier rule, then the
-   shared-bus strips and the MASTER strip with its meter. The board scrolls
-   sideways inside its own well when the strips outgrow the glass; the page
-   body never does.
+   The MIX page as a desk (ui/mixtbl.js, "the SSL board" + "lay out the mix
+   channels like SSL — stack it", 2026-08-16): VERTICAL CHANNEL STRIPS in the
+   .tbl well, each a 4000-series read top to bottom — label block (chair,
+   instrument: the pool's own control on a pool chair), the EQ STACKED
+   HI over MID over LO in the classic colorways (red HF / green MID / brown LF
+   caps, blue reserved for a fourth band), the sends-then-pan keys wearing the
+   small-knob blue/gray bands, the CUT/SOLO pair (red-ish/yellow-ish), and the
+   long-throw automated fader with its silkscreened dB scale at the bottom —
+   then the SECTION strip past a heavier rule, then the shared-bus strips and
+   the MASTER strip with its meter. The strip face is the brushed gray of the
+   desk, cut by thin channel separators; SSL homage in the silver-909 token
+   world, never a photo skin. The board scrolls sideways inside its own well
+   when the strips outgrow the glass; the page body never does.
 
    .mrow / .msec / .mval / .mk-* / .mchip keep their names ACROSS the redesign
    on purpose: two browser gates (nukernel-drums deskUI, nukernel-audio (E))
    drive this surface through exactly those hooks, and only CHANNEL strips
    carry .mrow — the drums gate counts them against the part roster. */
 .mixtbl.board{display:flex;flex-direction:row;align-items:stretch;max-height:none;
-  overflow-x:auto;overscroll-behavior-x:contain;padding:0 0 4px}
+  overflow-x:auto;overscroll-behavior-x:contain;padding:0 0 4px;
+  /* the SSL colorways as tokens: fixed plastic-cap hues (a knob cap is the
+     same plastic on the light desk and in the dark room), leaning on the hw
+     faces only for bevels and grounds */
+  --ssl-hf:#c0392e; --ssl-mf:#3f8a52; --ssl-lf:#6d4a33;
+  --ssl-blue:#3e6fa5; --ssl-gray:#8a8d92}
 .strips{display:flex;align-items:stretch;min-width:max-content}
 .strips.chans{padding-left:var(--tbl-gut)}
 /* the bus block reads as a second bay of the same desk: heavier rule at its
@@ -1050,6 +1062,10 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   display:flex;flex-direction:column;gap:6px;flex:0 0 auto;
   width:88px;min-width:0;padding:8px 6px 6px;
   border-right:1px solid var(--tbl-hair);
+  /* the brushed-gray strip face — the popover panel's grain, laid vertical,
+     between the thin channel separators the border-right already cuts */
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.016) 0 1px,
+    transparent 1px 3px);
 }
 .strip:hover{background:var(--tbl-hi)}
 /* THE SECTION STRIP: everything left of it feeds it, so it closes the
@@ -1074,6 +1090,15 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
 .mps{font:400 9.5px/1.2 var(--f-legend);letter-spacing:.01em;color:var(--tbl-faint);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* THE INSTRUMENT LABEL AS A CONTROL (pool chairs only, ui/mixtbl.js): the
+   same nameplate line, now a button that unfolds the pool picker — cast
+   bright (.set), the genre's own answer dim, the one state language */
+button.mps.minstr{appearance:none;border:0;background:none;margin:0;padding:0;
+  width:100%;text-align:left;cursor:pointer;border-radius:2px}
+button.mps.minstr:hover{color:var(--tbl-ink)}
+button.mps.minstr:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button.mps.minstr.set{color:var(--accent-txt);font-weight:600}
+button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
 .mfeed{font:400 8.5px/1.2 var(--f-legend);letter-spacing:.03em;color:var(--tbl-faint);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* ---- the value keys, stacked, each under its own silkscreen ---- */
@@ -1081,6 +1106,10 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .mcell{min-width:0;display:flex;align-items:center;gap:4px}
 .mvlab{flex:0 0 24px;font:600 8px/1 var(--f-legend);letter-spacing:.1em;
   text-transform:uppercase;color:var(--tbl-faint);font-style:normal}
+/* the SSL small-knob colorways on the key groups (ui/mixtbl.js KEYCW): a cap
+   band on the key's left edge — blue for the sends, gray for level/pan */
+.mcell.cw-send .mval{box-shadow:inset 3px 0 0 var(--ssl-blue)}
+.mcell.cw-pan .mval{box-shadow:inset 3px 0 0 var(--ssl-gray)}
 .mval{
   appearance:none;cursor:pointer;flex:1 1 auto;min-width:0;min-height:24px;
   display:flex;align-items:center;gap:2px;flex-wrap:wrap;
@@ -1103,13 +1132,15 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .mval.set .mfxc{background:var(--accent);color:var(--on-ink)}
 .mfxc.none{background:transparent;color:var(--tbl-faint);padding:0}
-/* ---- THE TONE BLOCK: LO / MID / HI, the strip's own small rotaries (bus
-   strips carry the LO / HI pair). The rack knob's face at strip size, the
-   pointer straight up at flat and rotated ±135° across ±12 dB; flat reads dim
-   (the default-answering language), a set band brights its mark and its dB. */
-.eqrow{display:flex;gap:4px;justify-content:center}
-.eqcell{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0}
-.eqlab{font:600 7.5px/1.2 var(--f-legend);letter-spacing:.08em;
+/* ---- THE TONE BLOCK, SSL-STACKED: HI over MID over LO, one knob per row
+   with its legend at the left and its dB at the right (bus strips carry the
+   HI/LO pair). The rack knob's face at strip size in the 4000-series cap
+   colors — red HF, green MID, brown LF, blue reserved for a fourth band —
+   the pointer straight up at flat and rotated ±135° across ±12 dB; flat
+   reads dim (the default-answering language), a set band brights its dB. */
+.eqrow{display:flex;flex-direction:column;gap:3px}
+.eqcell{display:flex;flex-direction:row;align-items:center;gap:5px;min-width:0}
+.eqlab{flex:0 0 20px;font:600 7.5px/1.2 var(--f-legend);letter-spacing:.08em;
   text-transform:uppercase;color:var(--tbl-faint);font-style:normal}
 .eqk{appearance:none;cursor:ns-resize;padding:0;border:0;background:none;
   width:22px;height:22px;touch-action:none;border-radius:50%}
@@ -1127,10 +1158,25 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .eqk.drag .eqface{transition:none}
 .eqface .kmark{top:2px;height:7px}
 .eqk.set .kmark{background:var(--accent)}
+/* THE COLORED CAPS (ui/mixtbl.js cw-<band>): the fixed plastic hue molded
+   with the same highlight/shade the gray faces wear, the pointer line cream
+   for contrast — a set band keeps its color and rings the cap instead */
+.eqk.cw-hi .eqface{background:radial-gradient(circle at 34% 30%,
+  color-mix(in srgb,var(--ssl-hf) 58%,#fff) 0,var(--ssl-hf) 55%,
+  color-mix(in srgb,var(--ssl-hf) 58%,#000) 100%)}
+.eqk.cw-mid .eqface{background:radial-gradient(circle at 34% 30%,
+  color-mix(in srgb,var(--ssl-mf) 58%,#fff) 0,var(--ssl-mf) 55%,
+  color-mix(in srgb,var(--ssl-mf) 58%,#000) 100%)}
+.eqk.cw-lo .eqface{background:radial-gradient(circle at 34% 30%,
+  color-mix(in srgb,var(--ssl-lf) 58%,#fff) 0,var(--ssl-lf) 55%,
+  color-mix(in srgb,var(--ssl-lf) 58%,#000) 100%)}
+.eqk.cw-hi .kmark,.eqk.cw-mid .kmark,.eqk.cw-lo .kmark{background:var(--a-cream)}
+.eqk.set .eqface{box-shadow:0 1px 3px rgba(0,0,0,.4),0 0 0 1.5px var(--accent)}
 .eqv{font:600 8px/1.2 var(--f-num);color:var(--tbl-faint);font-style:normal;
-  min-height:10px}
+  min-height:10px;margin-left:auto}
 .eqv.set{color:var(--accent-txt)}
-/* ---- M and S, side by side over the fader ---- */
+/* ---- CUT and SOLO, the desk's button pair over the fader: cut red-ish,
+   solo yellow-ish — tinted at rest, full color latched ---- */
 .mms{display:flex;gap:3px;min-height:0}
 .mkey{
   appearance:none;cursor:pointer;flex:1 1 0;min-height:24px;padding:0;
@@ -1138,11 +1184,14 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   border-top:1px solid rgba(255,255,255,.07);
   border-bottom:1px solid rgba(0,0,0,.55);
   background:var(--tbl-key,var(--hw-key-mid));color:var(--tbl-faint);
-  font:600 10px/1 var(--f-legend);letter-spacing:.04em;
+  font:600 8.5px/1 var(--f-legend);letter-spacing:.08em;text-transform:uppercase;
 }
 .mkey:hover{color:var(--tbl-ink)}
-.mk-mute.on{background:var(--st-mute);color:#fff}
-.mk-solo.on{background:var(--st-solo);color:var(--on-ink)}
+.mk-mute{color:color-mix(in srgb,var(--a-red) 45%,var(--tbl-faint))}
+.mk-solo{color:color-mix(in srgb,var(--a-amber) 55%,var(--tbl-faint))}
+.mk-mute.on{background:color-mix(in srgb,var(--a-red) 78%,var(--hw-key-lo));color:#fff}
+.mk-solo.on{background:color-mix(in srgb,var(--a-amber) 82%,var(--hw-key-mid));
+  color:var(--on-ink)}
 /* ---- THE FADER: a milled slot, a silkscreened zero line, a cap that MOVES.
    The cap rides --f (0 at the slot's foot), written per frame off the built
    gain nodes — the automation is what you are looking at, and the dB readout
@@ -1158,6 +1207,12 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   box-shadow:inset 0 2px 5px rgba(0,0,0,.45);
 }
 .fslot:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* the silkscreened dB scale beside the groove: tick marks down the slot's
+   right edge (every eighth of the −36..+12 throw), the zero line brighter */
+.fslot::after{content:"";position:absolute;top:6px;bottom:6px;right:3px;width:5px;
+  background:repeating-linear-gradient(180deg,var(--tbl-faint) 0 1px,
+    transparent 1px 12.5%);
+  opacity:.45;pointer-events:none}
 .fgroove{position:absolute;left:50%;top:6px;bottom:6px;width:2px;margin-left:-1px;
   background:rgba(0,0,0,.6);border-radius:1px}
 .fzero{position:absolute;left:3px;right:3px;height:1px;background:var(--tbl-faint);
@@ -1171,8 +1226,11 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   border:1px solid var(--hw-edge);border-top-color:var(--hw-bevel-hi);
   box-shadow:0 2px 4px rgba(0,0,0,.4);
 }
+/* the long GRAY cap, SSL's: the center line is the cream silkscreen stripe,
+   not an accent lamp — the cap's position is the desk's, not a highlight */
 .fcap::after{content:"";position:absolute;left:3px;right:3px;top:50%;height:2px;
-  margin-top:-1px;background:var(--accent);border-radius:1px}
+  margin-top:-1px;background:var(--a-cream);border-radius:1px;
+  box-shadow:0 0 0 .5px rgba(0,0,0,.35)}
 /* the offset readout: the strip's own little LCD digit */
 .foff{font:600 10px/1 var(--f-num);letter-spacing:.04em;color:var(--accent-txt);
   min-height:12px}
@@ -1248,6 +1306,9 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .mixpop{
   position:fixed;z-index:39;left:8px;right:8px;
   bottom:calc(8px + env(safe-area-inset-bottom));
+  /* the pool picker is twelve families deep: the sheet scrolls inside its
+     own glass rather than growing past the viewport */
+  max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain;
   display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:8px;
   background:
     linear-gradient(180deg,var(--hw-panel-hi) 0,var(--hw-panel) 38%,var(--hw-panel-lo) 100%),
@@ -1270,6 +1331,11 @@ h1 em{font-style:normal;color:var(--accent-txt)}
    and a second element with the same word in it would make those locators a
    coin toss. Same material, its own hook. */
 .mchips{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:5px}
+/* the pool picker's family headers inside the same grid (ui/mixtbl.js
+   buildPop pool branch): a silkscreen line spanning the row */
+.mgrp{grid-column:1/-1;margin-top:4px;font:600 8.5px/1.2 var(--f-legend);
+  letter-spacing:.12em;text-transform:uppercase;color:var(--tbl-faint)}
+.mgrp:first-child{margin-top:0}
 .mchip{
   appearance:none;font:500 11.5px/1.2 var(--f-legend);letter-spacing:.02em;cursor:pointer;
   position:relative;text-align:left;min-height:36px;
