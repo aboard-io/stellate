@@ -690,15 +690,23 @@
     // that what separates them is almost never the notes. It is which MODE the
     // brightness comes from, where the shuffle sits, and who is playing what.
 
-    // TOTO. The Porcaro shuffle: sixteenths, swung a full triplet third, with
-    // ghost notes between the ones you can hear — which is why `ghost` exists
-    // and why this is the second genre to use it. Over that, mixolydian: major
-    // with a ♭VII, so I-vi-IV-♭VII turns over without ever leaving the key. A
-    // marimba carries the hook, a guitar answers it from bar 5, and a synth pad
-    // holds the chords, which is three instruments and was one until INSTR
-    // learned to take a list.
+    // TOTO. The reference is "Africa" — the lope, not the shuffle. Toto has
+    // two famous feels, and the OTHER one, the Rosanna half-time shuffle, is
+    // deliberately not this anchor: it wore that groove for a while (swing a
+    // full triplet third, shuffled hats) and read as the wrong song. Africa
+    // sits nearly straight — a hair of swing at most — with the time in
+    // steady sixteenth hats and the PULSE carried by a rolling tom figure, a
+    // dotted cross-rhythm percolating under everything the way the record's
+    // percussion loop does; the backbeat lands a ninth of a step behind the
+    // grid, laid back but never swung. The rim taps `ghost` scatters between
+    // the melody's accents stay — built for the shuffle era's notes-between-
+    // the-notes, the lope hears them as more percussion. Over that,
+    // unchanged: mixolydian, major with a ♭VII, so I-vi-IV-♭VII turns over
+    // without ever leaving the key. A marimba carries the kalimba-ish hook, a
+    // guitar answers it from bar 5, and a synth pad holds the chords, which
+    // is three instruments and was one until INSTR learned to take a list.
     toto: {
-      label: "Toto", rate: 1, bars: 8, voices: 3, swing: 1 / 3,
+      label: "Toto", rate: 1, bars: 8, voices: 3, swing: 0.08,
       instr: ["synth_strings_1", "marimba", "clean_guitar"],
       drumkit: "room",
       entry: v => (v === 2 ? 4 : 0), reg: v => (v === 1 ? 1 : v - 1),
@@ -708,14 +716,24 @@
       bassStyle: "eighths",
       kit: { k: [1,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
-             h: [1,0,1,1, 0,1,1,0, 1,1,0,1, 1,0,1,1] },   // shuffled sixteenths
-      ghost: [only("acc", rotate(2))],           // the notes between the notes
-      // THE HAT HAND. The shuffle's dynamics are the drummer's own, not the
-      // tune's — beats lean hard, the between-notes sit way down, which is the
-      // other half of the Porcaro sound the ghost lane started. Only the hats:
-      // kick and snare still ride the phrase like every other genre.
-      kitVel: { h: [8,3,6,4, 3,6,5,3, 7,4,3,6, 6,3,7,4] },
-      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,0] },
+             "~s": [0,0,0,0, 2,0,0,0, 0,0,0,0, 2,0,0,0],  // the relaxed backbeat
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],     // steady sixteenths
+             t: [0,0,0,1, 0,0,1,0, 0,0,0,1, 0,0,1,0],     // the rolling figure:
+             l: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0] },   // dotted cross-rhythm
+      ghost: [only("acc", rotate(2))],           // rim taps: more percussion
+      // THE HAT HAND. Even now the dynamics are the drummer's own, not the
+      // tune's — a gentle lean on the eighth pulse, the between-notes tucked
+      // under, a lope rather than the old shuffle's hard beats. Only the hats:
+      // kick, snare and toms still ride the phrase like every other genre.
+      kitVel: { h: [7,4,5,4, 6,4,5,4, 7,4,5,4, 6,4,5,4] },
+      // BAR 8: the backbeat lands once, then the hand rolls down the toms —
+      // t, m, l, gathering speed as it falls — while the sixteenth hats keep
+      // going underneath, because on this record the time never stops for
+      // the fill.
+      fill: { s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 0,0,0,0],
+              t: [0,0,0,0, 1,0,1,0, 0,0,0,0, 0,0,0,0],
+              m: [0,0,0,0, 0,0,0,0, 1,0,1,1, 0,0,0,0],
+              l: [0,0,0,0, 0,0,0,0, 0,0,0,0, 1,1,1,1] },
       tone: { wave: "triangle", cut: 2800, q: 1.0, atk: .006, rel: .8, gain: .27, verb: .3 },
       words: ["the pad, one chord a bar", "the marimba hook",
               "the guitar, answering from bar 5"],
