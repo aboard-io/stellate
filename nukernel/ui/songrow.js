@@ -168,13 +168,22 @@ function moveBox(sec, d) {
 // the patterns in the song section — just the active ones", 2026-08-16). The
 // strip is the layer's `slots` list in PLAY ORDER, one thumbnail each, plus
 // the [+]. The whole bank — every phrase the song has, lit where this layer
-// plays it and dim where it does not — moved BEHIND that [+], into the same
-// inline menu row every cell unfolds (popCell "ptn", buildPtnBank below).
-// That is where a phrase is switched in and switched OUT: a tap on a
-// thumbnail ON THE ROW always means "open this phrase on Compose" and never
-// silently drops it from the section, the one-thing-one-place law — and it
-// keeps the row's keys single-purpose instead of hanging a second, smaller
-// tap target (a ✕) inside a 46px key that a thumb cannot separate from it.
+// plays it and dim where it does not — lives BEHIND that [+], in the same
+// inline menu row every cell unfolds (popCell "ptn", buildPtnBank below):
+// that is where a phrase is switched IN, and it is still one of the two ways
+// it comes out.
+//
+// AND EVERY THUMBNAIL ON THE ROW WEARS ITS OWN ✕ ("there's no way to remove a
+// pattern", Paul, 2026-08-16). The bank's toggle-off worked, and nobody could
+// find it: an affordance you have to be told about has failed, whatever the
+// reasoning. So removal is now ON THE STRIP, visible at rest, at every width.
+// It is NOT a ✕ floated inside the 46px face — that is the mis-tap the last
+// pass rightly refused. It is an ATTACHED LANE: the thumbnail keeps its whole
+// drawing as the tap-to-Compose target, and a 32px-wide key stands full-height
+// beside it behind a dashed seam, two zones that never overlap. 32 × 46 clears
+// the AA floor on the axis that matters and gives the thumb the full height of
+// the key as slop. The verb is the same toggle("phrase") the bank chip makes,
+// so it is exactly as reversible: tap [+], tap the dim thumbnail, it is back.
 //
 // The parent's strip speaks for the authority, each sub-row's for its layer.
 // `ent` is the stack entry the strip belongs to (null = the authority); the
@@ -215,6 +224,23 @@ function buildChip(sec, ent, si) {
     openPhraseEditor({ slot: si });
     buzz(4);
   });
+  // THE REMOVE KEY, ATTACHED. A sibling of the face, not a child — a button
+  // inside a button is not a document — so the pair rides a .bchw wrapper and
+  // the strip inserts THAT. It takes this phrase off THIS layer through the
+  // one dispatcher (toggle "phrase" on a slot the layer holds = splice), which
+  // commits, which repaints the strip and the open bank together.
+  const rx = btn("bcx", "✕", "remove phrase " + (si + 1), () => {
+    const at = idx(sec);
+    if (at < 0) return;
+    setViewSec(at);
+    sec.focus = ent ? Math.max(0, stackOf(sec).indexOf(ent)) : 0;
+    toggle("phrase", si);                 // in the layer -> takes it out; commits
+    buzz(4);
+  });
+  const w = document.createElement("span");
+  w.className = "bchw";
+  w.append(c.b, rx);
+  c.w = w; c.rx = rx;
   return c;
 }
 // the trailing [+]: the door to the BANK. It unfolds the phrase bank as a
@@ -547,11 +573,12 @@ function syncChips(sec, ent, slots, holder) {
   const sig = slots.join(",");
   if (holder.chipsSig !== sig) {
     holder.chipsSig = sig;
-    for (const c of holder.chips) c.b.remove();
+    // the strip's flex children are the WRAPPERS (face + its ✕), not the faces
+    for (const c of holder.chips) (c.w || c.b).remove();
     holder.chips.length = 0;
     for (const si of slots) {
       const c = buildChip(sec, ent, si);
-      holder.chips.push(c); holder.ph.insertBefore(c.b, holder.plus);
+      holder.chips.push(c); holder.ph.insertBefore(c.w, holder.plus);
     }
   }
   // A LAYER THAT PLAYS NOTHING SAYS SO by showing only its [+]: an empty
@@ -576,6 +603,8 @@ function patchChips(sec, i, slots, holder, layerWord) {
     }
     c.b.setAttribute("aria-label", "phrase " + (c.si + 1) +
       " in box " + (i + 1) + layerWord + " — opens it on the compose page");
+    if (c.rx) c.rx.setAttribute("aria-label", "remove phrase " + (c.si + 1) +
+      " from box " + (i + 1) + layerWord);
   }
 }
 

@@ -943,6 +943,36 @@ h1 em{font-style:normal;color:var(--ink)}
 .bch.bplus.openc{border-style:solid;border-color:var(--accent);
   color:var(--accent-txt);background:var(--tbl-hi)}
 
+/* ---- TAKING A PATTERN OFF, ON THE ROW, VISIBLE AT REST ----
+   "There's no way to remove a pattern" (Paul, 2026-08-16). There was one — a
+   second tap on the lit thumbnail inside the bank behind [+] — and it might as
+   well not have existed, because nothing on screen said so. So every thumbnail
+   the section plays now carries its own ✕.
+   NOT floated in the corner of the 46px face: a small target laid over a big
+   one is the mis-tap the previous pass refused, and it was right to. This is an
+   ATTACHED LANE — the pair rides a .bchw wrapper, the drawing keeps its whole
+   face for the tap that opens Compose, and the ✕ stands beside it full-height
+   behind a dashed seam. Two zones, no overlap, 32 × 46 (× 52 on a desk), so
+   the thumb gets the entire height of the key as slop on the axis it misses on.
+   It is TRANSLUCENT rather than keyed, which is how it takes the sounding and
+   looped washes for free instead of needing a rule per row state. */
+.bchw{position:relative;display:inline-flex;align-items:stretch;
+  flex:0 1 auto;min-width:0}
+.bchw .bch{border-top-right-radius:0;border-bottom-right-radius:0}
+.bcx{
+  appearance:none;cursor:pointer;flex:0 0 auto;
+  width:32px;min-height:46px;padding:0;margin-left:-1px;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--rule-strong);border-left:1px dashed var(--rule-strong);
+  border-radius:0 var(--r) var(--r) 0;
+  background:color-mix(in srgb,var(--ink) 6%,transparent);
+  color:var(--ink-3);font:600 var(--t-sm)/1 var(--f-num);
+}
+.bcx:hover{color:var(--accent-txt);border-color:var(--accent)}
+.bcx:active{background:color-mix(in srgb,var(--ink) 15%,transparent);
+  color:var(--accent-txt)}
+.bcx:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
 /* THE PHRASE BANK BEHIND [+] — the same thumbnails, in the menu row, where
    on/off is the verb: lit = this layer plays it, dim = it is in the song but
    not here, and a tap is the switch BOTH WAYS (this is also how a phrase
@@ -1907,6 +1937,8 @@ details .c{color:var(--ink-3)}
   .bch.bbk{width:128px;height:56px}
   .bch .bcn{font-size:30px}
   .bch.bplus{height:52px}
+  /* the remove lane grows with the key it is attached to */
+  .bcx{width:36px}
   /* the layer sub-row, with the desk's room: ↳ · genre · voice · mods · ✕ on
      one line, its pattern strip on the next — placed explicitly, and scoped
      to `.lrow>` for the same reason the phone block is (a bare `.c-voice`
