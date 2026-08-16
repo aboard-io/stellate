@@ -202,27 +202,69 @@ const moved = (a, b) => a.reduce((n, v, i) =>
            `wrap is not where the music ends`);
     else ok(`the tape is exactly the song: ${cold.durSec.toFixed(3)} s over ` +
             `${score.bars} bars, to the millisecond`);
-    // THE FRAGMENT, measured beside it. The short insurance stage renders the
-    // song's head at or under its cap; audio/bounce.js carry() refuses to hand
-    // it to the ear anywhere the live graph survives hiding, and this is the
-    // number behind that refusal.
+    // THE INSURANCE TAPE, MEASURED BESIDE IT — and it is a WHOLE BOX now.
+    // It used to be a 4 s bar-aligned cut of the head, which on this corpus was
+    // one or two bars and routinely had no drums in it; looping that is Paul's
+    // "one phrase over and over, no drums" and his "the crash loops and loops
+    // on a different tempo". The cut moved to a section boundary, and the three
+    // claims that has to mean are only answerable on a real render:
+    //
+    //   * IT ENDS WHERE A BOX ENDS, so the loop wrap is a downbeat the music
+    //     has. Checked against the box boundary times the live walk itself
+    //     produces, to the millisecond — not against a bar count.
+    //   * IT IS STILL SHORT. One box, not the record.
+    //   * ITS DRUM LANES ARE THE BOX'S DRUM LANES. bounce.js now publishes the
+    //     score's own ask (lanesWant) beside what the channels really routed
+    //     (lanes), so the subtraction it already does (lanesMissing) is the
+    //     assertion: a tape that dropped a drummer between the score and the
+    //     bytes says so in a field rather than in a listener's report.
+    //
+    // The cap comes from the shipped module, not from a literal here — the
+    // number lived in two places once and that is how the old 4 s went stale.
     // NOT { cold: true } — dropping the window cache here would make the warm
-    // re-render below miss every window and fail for the gate's own reasons
-    const frag = await page.evaluate(() => window.__nuRenderNow(4));
+    // re-render below miss every window and fail for the gate's own reasons.
+    const boxes = await page.evaluate(async () => {
+      const t = await import("/nukernel/audio/transport.js");
+      const TL = t.buildTimeline(), sd = t.stepDur();
+      const ends = [];                        // seconds at which each box ends
+      let acc = 0;
+      for (let i = 0; i < TL.length; i++) {
+        acc += TL[i].barSteps * sd;
+        if (i + 1 === TL.length || TL[i + 1].first) ends.push(acc);
+      }
+      return { ends, cap: window.__nuBounce().shortCap };
+    });
+    const frag = await page.evaluate(cap => window.__nuRenderNow(cap), boxes.cap);
     if (!frag) fail("the short-stage render returned nothing");
     else {
       const fl = new Set((frag.lanes || []).map(k => k.split("|").pop()));
-      console.log(`  the 4 s insurance tape: ${frag.durSec.toFixed(2)}s, drum lanes ` +
-                  `{${[...fl].join("")}} against the song's {${score.lanes.join("")}}`);
+      const want = new Set((frag.lanesWant || []).map(k => k.split("|").pop()));
+      const onBox = boxes.ends.find(e => Math.abs(e - frag.durSec) < 0.001);
+      const nBox = onBox == null ? 0 : boxes.ends.indexOf(onBox) + 1;
+      console.log(`  the insurance tape: ${frag.durSec.toFixed(2)}s = ${nBox} whole ` +
+                  `box(es) of ${boxes.ends.length}, drum lanes {${[...fl].join("")}} ` +
+                  `against the song's {${score.lanes.join("")}} (cap ${boxes.cap}s)`);
       if (frag.durSec >= score.sec)
         fail(`the short stage rendered the whole song (${frag.durSec.toFixed(1)}s) — ` +
              `it is not a short stage`);
-      else if (fl.size >= letters.size)
-        fail(`the 4 s head carries as many drum lanes as the whole song — the ` +
-             `measurement behind carry()'s refusal has gone stale, so re-derive ` +
-             `whether the fragment may take the ear`);
-      else ok(`the insurance tape really is a fragment: ${frag.durSec.toFixed(2)}s ` +
-              `and ${fl.size} of ${letters.size} drum lanes`);
+      else if (onBox == null)
+        fail(`the insurance tape is ${frag.durSec.toFixed(3)}s, which is not where ` +
+             `any box ends (${boxes.ends.slice(0, 4).map(e => e.toFixed(2)).join(", ")}` +
+             `…) — it wraps mid-phrase, which is the fragment this stage stopped ` +
+             `being`);
+      else if (frag.durSec <= 4.001)
+        fail(`the insurance tape is still ${frag.durSec.toFixed(2)}s — at or under ` +
+             `the old 4 s cap, so the box law is not reaching the render`);
+      else if ((frag.lanesMissing || []).length)
+        fail(`the insurance tape is missing drum lane(s) ` +
+             `${frag.lanesMissing.join(",")} that its own box plays — the census ` +
+             `and the bytes disagree, which is "no drums" measured on the render`);
+      else if (want.size && !fl.size)
+        fail(`the insurance tape carries no drum lane at all against a box whose ` +
+             `score asks for {${[...want].join("")}}`);
+      else ok(`the insurance tape is a whole phrase: ${frag.durSec.toFixed(2)}s, ` +
+              `${nBox} box(es), carrying every drum lane its box plays ` +
+              `({${[...fl].join("")}} of the song's ${letters.size})`);
     }
   }
 
@@ -315,22 +357,32 @@ const moved = (a, b) => a.reduce((n, v, i) =>
     // A SHORT HEAD, on purpose. The one-window control has to render the same
     // music in a SINGLE OfflineAudioContext, and audio/bounce.js's own header
     // measures that path as ~n^2.3 — a whole composed song in one window does
-    // not finish. Twelve seconds is many bars (so many seams at chunkSec 2)
-    // and one cheap window at chunkSec 60.
-    const HEAD = 12;
-    const many = await page.evaluate((h) =>
-      window.__nuRenderNow(h, { cold: true, chunkSec: 2 }), HEAD);
+    // not finish. HEAD is the short stage's cap, so what comes back is the
+    // song's first BOX, whole: ~7.8 s of beatles, four bars.
+    //
+    // SEAMS PER BAR, which is why SEAM_SEC is 1 and not 2. A window is a whole
+    // number of BARS (planChunks walks the bar list), so the smallest useful
+    // window is one bar — and one bar per window is the densest seam grid this
+    // music admits, which is what a seam test wants. It used to be 2, which
+    // bought two bars per window; when the head became a box rather than an
+    // arbitrary 12 s that left only two windows and nothing to compare. One
+    // gives four windows over the same music, so the A/B got stronger and the
+    // one-window control got cheaper at the same time.
+    const HEAD = 12, SEAM_SEC = 1;
+    const many = await page.evaluate((a) =>
+      window.__nuRenderNow(a[0], { cold: true, chunkSec: a[1] }), [HEAD, SEAM_SEC]);
     const one = await page.evaluate((h) =>
       window.__nuRenderNow(h, { cold: true, chunkSec: 60 }), HEAD);
     if (!many || !one) fail("a seam render returned nothing");
     else {
       console.log(`  seam A/B: ${many.chunks} windows vs ${one.chunks}, ` +
                   `${many.durSec.toFixed(1)}s of song`);
-      // THREE, not six: a window is a whole number of BARS (planChunks walks
-      // the bar list), and a beatles bar at this tempo is ~4 s — so chunkSec 2
-      // buys one bar per window and 11.8 s of head is three of them. Two
-      // seams is what there is to test at this bar granularity, and two seams
-      // is enough: a note lost at one moves the tape.
+      // THREE, and there are four: a window is a whole number of BARS
+      // (planChunks walks the bar list), so at SEAM_SEC 1 the head's four bars
+      // are four windows and three seams. Three seams is plenty — a note lost
+      // at one moves the tape — and the floor stays at three so a change that
+      // collapses the grid (a longer bar, a coarser SEAM_SEC) says so here
+      // rather than passing on a comparison of one window with one window.
       if (many.chunks < 3)
         fail(`the many-window render only made ${many.chunks} window(s) — chunkSec ` +
              `did not take, so there are no seams to test`);
@@ -357,12 +409,15 @@ const moved = (a, b) => a.reduce((n, v, i) =>
     // out of a full mix: render the identical song with the singer off and
     // show the tape moved. A feature that renders and cannot be heard is the
     // failure this gate's own header is about.
-    const off = await page.evaluate(async (h) => {
+    // the SAME chunkSec as `many`, or the RMS windows being subtracted are two
+    // different renders of two different geometries and the difference is the
+    // seam rather than the singer
+    const off = await page.evaluate(async (a) => {
       const stm = await import("/nukernel/ui/state.js");
       for (const b of stm.SONG) b.sing = null;
       stm.commit("song", { reason: "gate" });
-      return window.__nuRenderNow(h, { cold: true, chunkSec: 2 });
-    }, HEAD);
+      return window.__nuRenderNow(a[0], { cold: true, chunkSec: a[1] });
+    }, [HEAD, SEAM_SEC]);
     if (!off || !many) fail("the singer-off render returned nothing");
     else {
       const n = moved(many.rms, off.rms);

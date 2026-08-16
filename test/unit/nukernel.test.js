@@ -7431,10 +7431,22 @@ console.log("music breathes — the tempo map and the lead-ins");
          exactly once, in order, at the time the live walk puts it. This is the
          assertion that would have caught "no drums": a tape that is not the
          whole bar list is not the song.
-     (e) A FRAGMENT IS NOT THE BAND — measured on the shipped short-stage
-         arithmetic, the 4-second head of a composed song is one or two bars
-         and routinely has no drums in it at all. So the carrier may only hand
-         it to the ear where the alternative is silence.
+     (e) THE INSURANCE TAPE IS A WHOLE PHRASE. It did not used to be. Measured
+         on the shipped arithmetic as it stood, the 4-second bar-aligned head of
+         a composed song was one or two bars — ONE bar of Lagos 1971, 2.17 s,
+         with the bass alone in it — and 5 of these 8 songs had no drums in the
+         fragment at all. Looping that is the report Paul made twice: "one
+         phrase over and over, no drums" and "the crash loops and loops on a
+         different tempo". Desktop stopped handing it to the ear; iOS in the
+         first stretch could not, because there the alternative is silence.
+         So the CUT MOVED to a box boundary — the composer's own section, whole
+         — and this section holds the four things that has to mean: it is at
+         least one COMPLETE box and never a truncated one, the cap refuses a
+         second box rather than knifing the first, it wraps on a bar the
+         composer stamped as a box opening (so the loop is a downbeat the music
+         has, under the full tape's own timing law), and its drum-lane census is
+         exactly the census of the boxes in it. The carrier still only hands it
+         to the ear where the alternative is silence.
 
    WHAT IS DELIBERATELY NOT ON THE TEMPO MAP, so nobody reads its absence as an
    oversight: the ECHO and the tempo-synced sends (audio/graph.js barSec, set
@@ -7615,42 +7627,148 @@ console.log("the loop ends where the music does, and the tape carries the whole 
     }
   }
 
-  /* (e) A FRAGMENT IS NOT THE BAND */
+  /* (e) THE INSURANCE TAPE IS A WHOLE PHRASE */
   {
-    let noDrums = 0, maxBars = 0;
+    // the boxes a bar list opens, as [start, end) spans. `first` is the
+    // timeline's own box stamp, which is the boundary shortCut is required to
+    // cut on and the one the live tick arms automation against — so this gate
+    // and the shipped arithmetic are reading the same line, not two opinions
+    // about where a section begins.
+    const boxes50 = TL => {
+      const out = []; let a = 0;
+      for (let i = 1; i <= TL.length; i++)
+        if (i === TL.length || TL[i].first) { out.push([a, i]); a = i; }
+      return out;
+    };
+    // the drum lanes a span really plays, from the events themselves — the
+    // score half of the census the render reports as st.lanes
+    const lanes50 = list => new Set(list.flatMap(b =>
+      (b.ev || []).filter(e => e.kind === "hit").map(e => e.d)));
+    let minSec = Infinity, maxSec = 0, drumless = 0, twoBox = 0, sum = 0;
+    const named = {};
     for (const [gk, seed] of CORPUS50) {
       ST50.adoptSong(C50.compose(gk, seed), "gate");
       const TL = T50.buildTimeline(), sd = T50.stepDur();
       const cut = B50.shortCut(TL, sd, B50.SHORT_CAP);
+      const at = gk + "/" + seed + ": ";
+      const secs = cut.reduce((a, b) => a + b.barSteps * sd, 0);
       ok(cut.length >= 1 && cut.length < TL.length,
-         gk + "/" + seed + ": the short stage is not a short cut of the song (" +
+         at + "the short stage is not a short cut of the song (" +
          cut.length + " of " + TL.length + " bars)");
-      maxBars = Math.max(maxBars, cut.length);
-      if (!cut.some(b => b.ev.some(e => e.kind === "hit"))) noDrums++;
+
+      // (1) IT IS A WHOLE BOX, AND WHOLE BOXES ONLY. The cut is the head of
+      // the bar list, so "whole boxes" is two facts: it starts where box 0
+      // starts, and it ENDS where a box ends — the bar after it opens the next
+      // one. A cut that stops in the middle of a section is the two-bar
+      // fragment this section is named after, wearing a longer coat.
+      const B = boxes50(TL);
+      ok(B.length > 1, at + "the song is one box — §50(e) proves nothing here");
+      const whole = B.filter(([a, b]) => b <= cut.length);
+      ok(whole.length >= 1, at + "the short tape is not even one complete box (" +
+         cut.length + " bars, first box is " + B[0][1] + ")");
+      ok(whole[whole.length - 1][1] === cut.length,
+         at + "the short tape ends " + cut.length + " bars in, inside the box that " +
+         "runs bars " + B[whole.length].join("-") +
+         " — a truncated phrase is the defect, not the fix");
+      // ...stated the other way round, which is the LOOP law: the wrap lands on
+      // a bar the composer stamped as a box opening, so the tape comes round on
+      // a downbeat the music itself has. (foldAndEncode folds the ring-out onto
+      // that downbeat; a wrap anywhere else is the seam law's forbidden cut.)
+      ok(TL[cut.length].first === true,
+         at + "the short tape wraps onto a bar that does not open a box — the " +
+         "insurance loops against the music instead of with it");
+      // and the timing law is the FULL tape's, unchanged: the plan the bounce
+      // makes over the cut is exactly as long as the bars in it, so the loop
+      // point is the music's own end and not a rounded one
+      const plan = B50.planFor(cut, sd);
+      ok(Math.abs(plan.total - secs) < 1e-9,
+         at + "the short tape's plan is " + (plan.total - secs).toFixed(6) +
+         " s off its own bar list — it would loop early or late");
+
+      // (2) AT LEAST ONE COMPLETE BOX EVEN WHEN THE BOX IS LONGER THAN THE CAP.
+      // The cap refuses a SECOND box; it never truncates the first.
+      ok(cut.length >= B[0][1],
+         at + "the cap cut the first box short at " + cut.length + " of " +
+         B[0][1] + " bars — SHORT_CAP is a ceiling on extra boxes, not a knife");
+      ok(whole.length === 1 || secs <= B50.SHORT_CAP,
+         at + "the short tape took " + whole.length + " boxes and " +
+         secs.toFixed(2) + " s, past the " + B50.SHORT_CAP + " s cap");
+      if (whole.length > 1) twoBox++;
+
+      // (3) THE DRUM-LANE CENSUS MATCHES THE BOX. Not "the tape has drums" —
+      // a drift record's opening section genuinely has none, and demanding
+      // otherwise would be demanding a different song. The law is that the
+      // tape's lanes are EXACTLY the lanes the boxes it contains play: nothing
+      // lost between the box and the cut, and nothing borrowed from a box the
+      // cut does not reach. bounce.js publishes the same arithmetic as
+      // scoreLanes and hands it to the render as st.lanesWant, so the browser
+      // gate can subtract it from what the channels really routed.
+      const want = lanes50(TL.slice(0, cut.length));
+      const got = new Set(B50.scoreLanes(cut));
+      ok(want.size === got.size && [...want].every(d => got.has(d)),
+         at + "the shipped lane census disagrees with the score (" +
+         [...got].sort().join(",") + " vs " + [...want].sort().join(",") + ")");
+      const boxLanes = new Set(whole.flatMap(([a, b]) => [...lanes50(TL.slice(a, b))]));
+      ok(boxLanes.size === want.size && [...boxLanes].every(d => want.has(d)),
+         at + "the short tape does not carry the lanes its own boxes play — " +
+         "missing " + [...boxLanes].filter(d => !want.has(d)).join(","));
+      // the FRAGMENT's own failure, held as a regression: the 4 s bar-aligned
+      // cut this replaced took one bar of Lagos 1971 and got the bass alone.
+      // A whole box cannot do that unless the box is genuinely drumless.
+      const headHasDrums = lanes50(TL.slice(B[0][0], B[0][1])).size > 0;
+      ok(!headHasDrums || want.size > 0,
+         at + "the opening box plays drums and the insurance tape has none — " +
+         "this is the Lagos report exactly");
+      if (!want.size) drumless++;
+
+      minSec = Math.min(minSec, secs); maxSec = Math.max(maxSec, secs); sum += secs;
+      named[gk + "/" + seed] = secs.toFixed(2) + "s/" + cut.length + "b/[" +
+                               [...want].sort().join("") + "]";
     }
-    ok(maxBars <= 3, "the short insurance tape has grown to " + maxBars + " bars — " +
-       "if it is now long enough to be music, say so and let it take the ear");
-    ok(noDrums >= 2, "every short tape in the corpus has drums in it (" + noDrums +
-       " of " + CORPUS50.length + " do not) — the measurement behind carry()'s " +
-       "refusal has gone stale");
-    console.log("  the 4 s head of a composed song: at most " + maxBars +
-                " bar(s), and " + noDrums + " of " + CORPUS50.length +
-                " have no drums in them at all");
-    // THE LAW: the fragment may only take the ear where the alternative is
+    // THE COST, SAID OUT LOUD. The tape is now several times the old fragment,
+    // and the render is roughly linear in the music it renders, so the first
+    // tape arrives correspondingly later. That is the trade — a phrase that is
+    // worth hearing, later — and it belongs in the log where the next person
+    // measuring the first-tape latency will find it rather than rediscover it.
+    ok(minSec > 4, "the shortest insurance tape in the corpus is " +
+       minSec.toFixed(2) + " s — at or under the old 4 s cap, which means the " +
+       "box law is not reaching the cut");
+    ok(maxSec <= 32, "an insurance tape has reached " + maxSec.toFixed(2) +
+       " s — one box was supposed to be a phrase, not a side");
+    ok(drumless === 0, drumless + " of " + CORPUS50.length + " insurance tapes in " +
+       "this corpus have no drums, and every one of these songs opens with a kit — " +
+       "the box cut is not carrying the band");
+    console.log("  the insurance tape is a whole box: " +
+                minSec.toFixed(2) + "-" + maxSec.toFixed(2) + " s (mean " +
+                (sum / CORPUS50.length).toFixed(2) + "), " + twoBox + " of " +
+                CORPUS50.length + " take two boxes, " + drumless +
+                " have no drums — " + Object.entries(named)
+                  .map(([k, v]) => k + " " + v).join(", "));
+    // THE LAW: the insurance may only take the ear where the alternative is
     // silence. Both doors — the carrier-first takeover and the hide handoff —
     // refuse it, and the hide handoff makes the one exception iOS, whose
-    // context genuinely freezes.
+    // context genuinely freezes. A whole phrase is a better thing to hand that
+    // listener than two bars; it is still not the record, so the refusals stand.
     const b50 = src50("audio/bounce.js");
     ok(/shortIsInsurance\(\)\) return false;/.test(b50),
-       "audio/bounce.js goCarrier no longer refuses the short tape — a two-bar " +
-       "head would become the whole performance");
+       "audio/bounce.js goCarrier no longer refuses the short tape — one section " +
+       "on loop would become the whole performance");
     ok(/if \(shortIsInsurance\(\) && !isIOS && ctx && ctx\.state === "running"\) return false;/
          .test(b50),
        "audio/bounce.js carry() hands the ear whatever blob exists on hide — for " +
-       "the first minute of any song that is one or two bars of its head, on loop. " +
+       "the first stretch of any song that is one box of its head, on loop. " +
        "The refusal is conditional on there being something to replace: a frozen " +
-       "or suspended context still takes the fragment, because the alternative " +
+       "or suspended context still takes the insurance, because the alternative " +
        "there really is silence");
+    // ...and the cut is cut on the STAMP, in the shipped text. A bar-count or a
+    // seconds-only walk here is the regression, and it is invisible in the
+    // numbers above on any song whose boxes happen to divide the cap.
+    ok(/for \(; j < TL\.length && !TL\[j\]\.first; j\+\+\)/.test(b50),
+       "audio/bounce.js shortCut no longer scans to the next box stamp — the " +
+       "insurance tape is being cut on something other than a section boundary");
+    ok(/if \(cut\.length && acc \+ box > capSec\) break;/.test(b50),
+       "audio/bounce.js shortCut's cap can now refuse the FIRST box — that is a " +
+       "truncated phrase, which is the thing this stage stopped doing");
     // ...and NOTHING ELSE ON THE PAGE LOOPS. The carrier element is the only
     // thing entitled to `loop = true`; a drum or a note that looped natively
     // would keep ringing through a handoff the master gain cannot reach.

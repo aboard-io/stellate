@@ -35,12 +35,12 @@
 //
 // TWO-STAGE (WAV-FIRST's firstSegSec lesson, docs/WAV-FIRST.md): the render
 // that must exist FAST is a small one. At transport start a SHORT carrier —
-// the song's first bars, bar-aligned — renders immediately, so something loops
-// within seconds of play; the full song renders behind it and swaps in at a
-// safe moment (never under a carrying element). Before this, the one render
-// waited ~3 bars plus a debounce and then took multiples of realtime on a
-// composed song — any switch-away in the first half minute found no carrier.
-// __nuBounce.stage says which is serving.
+// the song's first BOX, whole, cut where the music has a boundary — renders
+// immediately, so a whole phrase loops within seconds of play; the full song
+// renders behind it and swaps in at a safe moment (never under a carrying
+// element). Before this, the one render waited ~3 bars plus a debounce and then
+// took multiples of realtime on a composed song — any switch-away in the first
+// half minute found no carrier. __nuBounce.stage says which is serving.
 //
 // NOT MediaStreamDestination -> <audio srcObject>. That is the route that
 // looks cheapest and the parent PROVED cannot work: the audible path still
@@ -100,8 +100,10 @@ const st = { state: "idle", stage: null, durSec: 0, gen: 0, sampledOnly: false,
              ratio: 0, nodes: 0, pooled: 0,
              // which drum lanes the last tape really carried (the channels'
              // laneIn ledger, not the score's opinion) — "no drums" was a
-             // report this file had no number for
-             lanes: [] };
+             // report this file had no number for — beside what the SCORE for
+             // that same tape asked for, and the difference. lanesMissing is
+             // the bug; the other two are the working.
+             lanes: [], lanesWant: [], lanesMissing: [] };
 // one render's stopwatch: ph.mark("pool") closes the phase that was open and
 // opens 'pool'. Cheap enough to leave armed in production (five performance.now
 // calls per render), and the alternative is instrumenting it again next time.
@@ -127,6 +129,9 @@ function stopwatch(sink) {
 // live graph is structurally blind to an element playing bytes
 window.__nuBounce = () => ({ ...st, carrying, armed,
   mobile: isMobile, ios: isIOS, carrierFirst: carrierFirst(),
+  // the SHIPPED short-stage cap, so a gate asks this module what the insurance
+  // tape is instead of hardcoding a number that then goes stale in two places
+  shortCap: SHORT_CAP,
   elVolume: el ? el.volume : null, elTime: el ? el.currentTime : null,
   elMuted: el ? el.muted : null, elLoop: el ? el.loop : null,
   // el.paused is a RENDERED consequence (play() rejected, decode failed) —
@@ -142,6 +147,7 @@ window.__nuRender = () => ({ ms: st.lastRenderMs, durSec: st.durSec,
   parallel: PARALLEL, chunkSec: CHUNK_SEC, chunkMs: st.chunkMs, each: st.each,
   hits: st.hits, misses: st.misses,
   nodes: st.nodes, pooled: st.pooled, lanes: st.lanes,
+  lanesWant: st.lanesWant, lanesMissing: st.lanesMissing,
   stage: st.stage, sampledOnly: st.sampledOnly });
 // TEST SEAM: render a known length RIGHT NOW and hand back the phase report.
 // The budget gate cannot wait on the debounce (it would be timing the timer),
@@ -178,8 +184,11 @@ window.__nuRenderNow = async (capSec, opts) => {
              hits: st.hits, misses: st.misses,
              nodes: st.nodes, pooled: st.pooled,
              // the DRUM LANES the tape really carries, from the channels'
-             // own laneIn ledger — the answer to 'no drums' (E)
-             lanes: st.lanes,
+             // own laneIn ledger — the answer to 'no drums' (E) — with the
+             // score's own ask beside it, so the gate can subtract rather
+             // than eyeball
+             lanes: st.lanes, lanesWant: st.lanesWant,
+             lanesMissing: st.lanesMissing,
              // the singer's own census of this render — an ADDED key, so every
              // existing reader is untouched (nukernel-bounce (D) reads it)
              sing: (typeof window.__nuSing === "function" ? window.__nuSing() : null),
@@ -259,18 +268,46 @@ const sig = () => JSON.stringify({ s: SONG, sl: SLOTS, bpm, f: FONT, lo: loopOnl
                                    p: POOL });
 let adoptedSig = null, timer = null, rendering = false, dirty = false;
 // the short stage's duration budget, in seconds — WAV-FIRST's firstSegSec.
-// Two bars at the default tempo, which is NOT "big enough to loop as music"
-// however the first draft of this comment wished it were: Paul heard it
-// immediately — "every two Beatles measures has a complete and sudden pause at
-// the end" — because a 4 s tape of the song's HEAD, looping, is exactly that.
-// The short stage was designed when the carrier only played while hidden, and
-// a fragment beats silence in a pocket. Once the carrier became the audible
-// path (carrierFirst), a fragment became the music, and it is not the music.
 //
-// So the short tape survives ONLY as the hidden-state insurance it always was:
-// goCarrier refuses it, and the graph keeps the ear until the FULL song is
-// rendered. See shortIsInsurance below.
-const SHORT_SEC = 4;
+// IT USED TO BE 4, AND 4 SECONDS IS NOT A PHRASE. A bar-aligned cut of the
+// song's head at that cap comes out at one or two bars, and Paul heard exactly
+// what that is: "every two Beatles measures has a complete and sudden pause at
+// the end", and on Lagos 1971 a kick-and-crash pair wrapping every 3.93 s —
+// "the crash loops and loops on a different tempo" — because a 2.17 s tape of
+// the first bar, looping, is a metre of its own laid over nothing. Measured on
+// the shipped composer, that cut was ONE bar on Lagos with only the bass in it,
+// and 5 of 8 corpus songs had no drums in the fragment at all.
+//
+// So the cut moves to a BOX BOUNDARY. A box is the composer's own unit — a
+// section, a whole musical phrase, with its own kit, its own automation sweep
+// and its own end — and a tape that is one whole box loops the way the song
+// loops: the wrap is the downbeat the next section would have started on. That
+// is the same timing law the full tape already obeys (foldAndEncode's wrap is a
+// downbeat by construction); the short tape simply stops borrowing a boundary
+// the music does not have.
+//
+// The cap is a CEILING ON EXTRA BOXES, not a truncation: shortCut always takes
+// the first box WHOLE, however long it is, because half a phrase is the defect
+// this change exists to remove. Measured over 290 composed songs (58 genres ×
+// 5 seeds) the first box runs 5.99 s (median 10.11) to 27.97 s — the long tail
+// is ambient/drone/pad, whose sections really are half a minute. At 16 s, 47 of
+// 290 first boxes exceed the cap and are taken whole anyway, and 6 songs whose
+// opening box is a short count-in get a second box under it. Sixteen because
+// two short boxes are still inside a mobile listener's patience, and a third
+// would be the song rather than the insurance.
+//
+// THE PRICE IS PAID KNOWINGLY: the first tape is a few seconds later than it
+// was (the render is roughly linear in the music, so 2-4x the old 4 s stage).
+// That is the trade the fragment was not worth. The full song still replaces it
+// the moment it exists — maybeRender("short") schedules the full render behind
+// itself, and adopt() swaps at the loop wrap.
+//
+// The short tape is still INSURANCE and not the performance: goCarrier refuses
+// it, and the graph keeps the ear until the full render lands. The one door it
+// still walks through is a frozen context (iOS, hidden), where the alternative
+// is silence — and it is that listener this change is for. See
+// shortIsInsurance below.
+const SHORT_SEC = 16;
 // WHEN THE CARRIER IS THE PATH, THE DEBOUNCE IS THE LATENCY OF THE INSTRUMENT.
 // 4 s of quiet is right for insurance nobody is listening to; it is absurd for
 // the thing making the sound. Long enough to coalesce a scrub (a fader drag
@@ -540,19 +577,47 @@ function planChunks(TL, sd, chunkSec) {
 // arguments and allocating nothing the render needs, so a gate calling it costs
 // a plan and no contexts. test/unit/nukernel.test.js §50.
 export const planFor = (TL, sd) => planChunks(TL, sd, CHUNK_SEC);
-// THE SHORT STAGE'S CUT — the head of the song, on a bar line, at or under the
-// cap (at least one bar, so the wrap stays a downbeat). Exported because what
-// this returns is the whole argument for carry()'s refusal above: the gate
-// measures how little band is left in it rather than taking the claim on
-// trust, and one arithmetic serves the render and the measurement both.
+// THE SHORT STAGE'S CUT — the head of the song, on a BOX LINE. Whole boxes
+// only: the first one always, however long it is, and each following one only
+// if the whole of it still fits under the cap. Never a partial box, which is
+// the entire point (see SHORT_SEC) — a phrase cut off at an arbitrary bar is
+// the thing that looped as a fragment.
+//
+// `first` is the timeline's own box-start stamp (buildTimeline writes it on the
+// bar that opens a section), so this walks the same boundaries the live tick
+// arms automation on. Ending the cut where a box ends means the loop wrap is
+// the downbeat the next section would have begun on, which is the same law
+// foldAndEncode already relies on for the full tape.
+//
+// Exported because what this returns is the whole argument for carry()'s
+// refusal above AND for this change: the gate measures the phrase that is left
+// in it — its length, its boundary and the drum lanes it plays — rather than
+// taking the claim on trust, and one arithmetic serves the render and the
+// measurement both.
 export function shortCut(TL, sd, capSec) {
-  const cut = []; let acc = 0;
-  for (const b of TL) {
-    if (cut.length && acc + b.barSteps * sd > capSec) break;
-    cut.push(b); acc += b.barSteps * sd;
+  const cut = []; let acc = 0, i = 0;
+  while (i < TL.length) {
+    // the next WHOLE box: this bar, plus every bar after it that does not open
+    // one. (TL[0] opens box 0 whether or not it is stamped, so the scan starts
+    // from i unconditionally rather than testing TL[i].first.)
+    let j = i + 1, box = TL[i].barSteps * sd;
+    for (; j < TL.length && !TL[j].first; j++) box += TL[j].barSteps * sd;
+    // AT LEAST ONE BOX, ALWAYS — the cap only ever refuses a SECOND one
+    if (cut.length && acc + box > capSec) break;
+    for (let k = i; k < j; k++) cut.push(TL[k]);
+    acc += box; i = j;
+    if (acc >= capSec) break;
   }
   return cut;
 }
+// the drum lanes a bar list PLAYS, from the score — the other half of the lane
+// census. st.lanes is what the render's channels really routed (mixer.js
+// laneIn); this is what the music asked for. A tape whose census is missing a
+// lane this names has lost a drummer between the score and the bytes, which is
+// precisely the class of defect "no drums on the tape" was, and it is now a
+// number both the readout and the gate can subtract.
+export const scoreLanes = TL => [...new Set(TL.flatMap(b =>
+  (b.ev || []).filter(e => e.kind === "hit").map(e => e.d)))].sort();
 export const SHORT_CAP = SHORT_SEC;
 
 // ---- WHY THERE IS NO REAPER (a measured negative result) -------------------
@@ -765,11 +830,11 @@ async function renderSong(capSec) {
   if (!TL.length) return null;
   const sd = stepDur();
   if (capSec) {
-    // the SHORT stage: the head of the song, cut on a bar line at or under
-    // the cap (at least one bar — the loop wrap must stay a downbeat for the
-    // fold). Its loop is the song's OPENING, not the user's current position:
-    // a few bars of the right music beats half a minute of silence, and the
-    // full render replaces it before most listens get around twice.
+    // the SHORT stage: the head of the song, cut on a BOX line — whole
+    // sections, never a truncated one, so the loop wrap is a downbeat the
+    // music itself has. Its loop is the song's OPENING, not the user's current
+    // position: a whole phrase of the right music beats half a minute of
+    // silence, and the full render replaces it as soon as it exists.
     TL = shortCut(TL, sd, capSec);
   }
   const plan = planChunks(TL, sd, CHUNK_SEC);
@@ -818,6 +883,24 @@ async function renderSong(capSec) {
   // and nowhere else.
   st.nodes = tally.nodes; st.pooled = tally.pooled;
   st.lanes = [...tally.lanes].sort();
+  // THE CENSUS, SUBTRACTED. st.lanes is what the channels really routed; the
+  // score says what the bars asked for. A short tape is now a WHOLE BOX, so
+  // "the box plays a snare and the tape has none" is a checkable sentence
+  // rather than a feeling — and it is checkable on the full tape by the same
+  // arithmetic. Recorded rather than thrown: a carrier that lost a lane is
+  // still better than no carrier, and the gate is where this becomes a
+  // failure. (It is empty on every tape that is honest.)
+  // COMPARED ON THE LETTER. A machine lane earns its own strip key ("tr808|k")
+  // in the channels' ledger while a sampled one is the bare letter, and the
+  // claim here is about LANES — subtracting the two spellings unchanged would
+  // report every drum missing on every machine-kit genre, which is a false
+  // alarm that would train the next reader to ignore the field.
+  st.lanesWant = scoreLanes(TL);
+  const carried = new Set([...tally.lanes].map(k => String(k).split("|").pop()));
+  st.lanesMissing = st.lanesWant.filter(d => !carried.has(d));
+  if (st.lanesMissing.length)
+    console.warn("[nukernel] the tape is missing drum lane(s) the score plays:",
+                 st.lanesMissing.join(","));
   st.chunkMs = Math.round(tally.chunkMs); st.each = tally.each;
 
   // ---- assembly: a pure concatenation, plus the last window's ring-out ----
@@ -965,8 +1048,9 @@ function swapNow() {
 // elAudible failure class). Verify means the reverse is also refused: a
 // play() the browser rejected plus a muted graph is a silent phone, and
 // "a dead primary route must never mean silence" is WAV-FIRST v3.1's law.
-// THE FRAGMENT NEVER TAKES THE EAR. A short tape is the song's first few bars
-// on loop; handing it the foreground turns a two-bar head into the whole
+// THE INSURANCE NEVER TAKES THE EAR. A short tape is the song's first box on
+// loop; it is a whole phrase now rather than two bars, but one section repeated
+// is still not the record, and handing it the foreground would make it the
 // performance. It stays what it was built to be — the thing that is already in
 // hand if the page is hidden in the first seconds — and the live graph plays
 // until the full render lands, at which point the handoff is to the real song.
@@ -1040,16 +1124,26 @@ setInterval(() => {
 /* ---------- the handoff (called by survival.js) ---------- */
 export function carry() {
   if (!el || !playing || st.state !== "ready" || !st.url) return false;
-  // THE FRAGMENT ONLY PLAYS WHERE THE ALTERNATIVE IS SILENCE. goCarrier already
-  // refuses a short tape (shortIsInsurance, above) and this is the same law on
+  // THE SHORT TAPE ONLY PLAYS WHERE THE ALTERNATIVE IS SILENCE. goCarrier
+  // already refuses it (shortIsInsurance, above) and this is the same law on
   // the other door: hiding the tab used to hand the ear whatever blob existed,
-  // and for the first minute of any song that blob is the SHORT stage — one or
-  // two bars of the song's head, on loop. Measured on the shipped composer: a
-  // Lagos 1971 short tape is ONE bar, 2.17 s, box 0, and the only voice in it
-  // is the bass; a Liverpool 1962 one is two bars of the intro. That is Paul's
-  // report exactly — "one phrase repeats over and over, no drums" — and the
-  // crash it loops under is the same fragment wrapping every two seconds, which
-  // is why it sounded like a different tempo from the band.
+  // and for the first stretch of any song that blob is the SHORT stage.
+  //
+  // WHAT THAT STAGE IS HAS CHANGED, and it changed because this door is the one
+  // that stayed open. It used to be a 4 s bar-aligned cut — measured on the
+  // shipped composer, ONE bar of Lagos 1971, 2.17 s, with only the bass in it,
+  // and two bars of the Liverpool 1962 intro. That is Paul's report exactly
+  // ("one phrase repeats over and over, no drums"), and the crash looping under
+  // it was the same fragment wrapping every 3.93 s, which is why it sounded
+  // like a different tempo from the band. It is now a WHOLE BOX (SHORT_SEC,
+  // shortCut): Liverpool 1962 seed 7 is 7.75 s of the four-bar opening with
+  // kick, snare and hat in it; Lagos 1971 seed 7 is 8.69 s with kick and two
+  // toms; New York 1945 seed 5 is 6.82 s; Chicago 1952 seed 7 is 13.90 s of the
+  // twelve-bar form with the whole Chess kit. A phrase, in other words, which
+  // is what the ear behind a frozen context was owed.
+  //
+  // It is STILL not the song, so the refusal below stands unchanged: only a
+  // context that has genuinely stopped gets it.
   //
   // THE TEST IS WHETHER THERE IS ANYTHING TO REPLACE. On iOS the ctx really
   // does freeze on hide, and a suspended context anywhere is the same fact — a
