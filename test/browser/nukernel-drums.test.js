@@ -366,8 +366,15 @@ async function partProbe(page) {
     for (let i = 0; i < sB.mono.length; i++)
       smaxd = Math.max(smaxd, Math.abs(sB.mono[i] - sAB.mono[i]));
     sec.parts = null;                          // leave the box as it was found
+    // what the MODEL derives for each address on this (unmixed) box — the
+    // reference the (D1) assertion holds the built strips against
+    const derived = Object.fromEntries(keys.map(k => {
+      const t = mx.derivedPartTone(sec, k, roster);
+      return [k, { tdb: t.db, eq: !!t.eq }];
+    }));
     const strip = o => ({ spec: o.spec, energy: o.energy, played: o.played, built: o.built });
-    return { A, B, keys, kit, maxd, smaxd, roster: roster.map(r => ({ v: r.v, part: r.part, key: r.key })),
+    return { A, B, keys, kit, maxd, smaxd, derived,
+             roster: roster.map(r => ({ v: r.v, part: r.part, key: r.key })),
              clean: strip(clean), treat: strip(treat), bClean: strip(bClean),
              bWhileA: strip(bWhileA), allMute: strip(allMute), none: strip(none),
              sClean: strip(sClean), sTreat: strip(sTreat), sB: strip(sB), sAB: strip(sAB) };
@@ -1344,13 +1351,25 @@ async function pass(page, url) {
              `nothing to compare`);
       else ok(`${desk.clean.played} sources rendered through the desk`);
 
-      // (D1) A BOX WITH NO `parts` BUILDS NO SUB-BUS. The absent-is-today law,
-      // read off the graph rather than off the code: if this ever grows a node
-      // then every song ever saved has quietly changed sound.
-      if (desk.none.built.length)
-        fail(`an unmixed box built part bus(es) ${desk.none.built.join(",")} — ` +
-             `absent is supposed to be byte-for-byte the old channel`);
-      else ok("an unmixed box builds no part bus at all");
+      // (D1) AN UNMIXED BOX BUILDS EXACTLY THE STRIPS THE SONG DERIVES — no
+      // more, no fewer. The old law here ("no `parts` = no sub-bus at all")
+      // was the flattering desk Paul reported 2026-08-16: every cap at one
+      // height, every knob at noon. derivedPartTone now seats the desk from
+      // the model, so the honest claim is that the built strips are the
+      // derivation's own answer, address for address — a strip the model did
+      // not ask for is still a bug, and one it asked for that is missing is
+      // the old flatness back.
+      {
+        const want = desk.keys.filter(k => {
+          const r = desk.derived && desk.derived[k];
+          return r && (r.tdb || r.eq);
+        }).sort().join(",");
+        const got = desk.none.built.slice().sort().join(",");
+        if (got !== want)
+          fail(`an unmixed box built part bus(es) [${got}] but the model derives ` +
+               `[${want}] — the graph and derivedPartTone disagree`);
+        else ok(`an unmixed box builds exactly the derived strips [${got || "none"}]`);
+      }
 
       // (D2) THE TREATED PART MOVES. Same 0.98 bar as the live A/B and the
       // insert witness in nukernel-audio (E): two passes of one sound correlate
@@ -1430,10 +1449,15 @@ async function pass(page, url) {
           fail(`the live ${desk.A} strip declared ${A ? JSON.stringify(A.fx) : "nothing"} and ` +
                `BUILT [${A ? A.stages : ""}] — a per-part chip lit up and passed dry`);
         else ok(`the live ${desk.A} strip built its insert chain: [${A.stages}]`);
-        if (A && Math.abs(A.level - 0.4) < 1e-3 && A.rev > 0.5)
-          ok(`its level and send are real params: level ${A.level}, reverb ${A.rev}`);
+        // the built level is hush (0.4) × the song's own derived seating
+        // (tdb, reported beside it) — the user's chip rides ON the derivation,
+        // which is the board law for the fader applied to the enum too
+        const wantA = A ? 0.4 * Math.pow(10, (A.tdb || 0) / 20) : 0;
+        if (A && Math.abs(A.level - wantA) < 2e-3 && A.rev > 0.5)
+          ok(`its level and send are real params: level ${A.level} ` +
+             `(hush × derived ${A.tdb} dB), reverb ${A.rev}`);
         else fail(`the ${desk.A} strip's chips did not reach its nodes ` +
-                  `(${JSON.stringify(A)})`);
+                  `(${JSON.stringify(A)}, want level ${wantA.toFixed(4)})`);
         const B = c.parts.find(p => p.key === desk.B);
         if (B && B.muted) ok(`the muted ${desk.B} strip reports a closed gate`);
         else fail(`part ${desk.B} was muted and the live gate says ${JSON.stringify(B)}`);
@@ -1544,11 +1568,17 @@ async function pass(page, url) {
         fail(`an all-zero EQ changed the render (worst sample ${eqp.flatd.toExponential(2)}) — ` +
              `flat must be byte-identical to the day before the EQ existed`);
       else ok("every flat spelling renders byte-identical to the pre-EQ graph");
-      if (eqp.flat.nodes !== eqp.base.nodes || eqp.flat.secEq !== 0 || eqp.flat.parts.length)
-        fail(`a flat spec built nodes: ${eqp.flat.nodes} vs ${eqp.base.nodes} base, ` +
-             `secEq ${eqp.flat.secEq}, parts [${eqp.flat.parts}] — zero BiquadFilters ` +
-             `when flat is the law`);
-      else ok(`a flat spec builds zero extra nodes (${eqp.base.nodes} = ${eqp.flat.nodes})`);
+      // the base graph may already carry the song's DERIVED tone (the desk
+      // seats itself now — audio/mixer.js derivedPartTone/derivedSecEq), so
+      // "flat is zero nodes" becomes "an all-zero USER spec is the base graph,
+      // node for node" — a stored zero must never add or remove a biquad
+      if (eqp.flat.nodes !== eqp.base.nodes || eqp.flat.secEq !== eqp.base.secEq ||
+          eqp.flat.parts.length !== eqp.base.parts.length)
+        fail(`an all-zero user spec changed the graph: ${eqp.flat.nodes} vs ` +
+             `${eqp.base.nodes} base nodes, secEq ${eqp.flat.secEq} vs ${eqp.base.secEq}, ` +
+             `parts [${eqp.flat.parts}] vs [${eqp.base.parts}]`);
+      else ok(`an all-zero user spec is the base graph, node for node ` +
+              `(${eqp.base.nodes} = ${eqp.flat.nodes})`);
       if (!(eqp.bassd > 1e-3))
         fail(`+12 dB of low shelf on the bass moved the bytes by ` +
              `${eqp.bassd.toExponential(2)} — the filter is built but the bass is ` +
@@ -1559,10 +1589,15 @@ async function pass(page, url) {
       else ok(`+12 dB lo on the bass is audible in the bytes (worst sample ` +
               `${eqp.bassd.toExponential(2)}, energy ×` +
               `${(eqp.lofted.energy / eqp.base.energy).toFixed(2)})`);
-      if (eqp.secEq.nodes !== eqp.base.nodes + 3)
-        fail(`a section-strip EQ built ${eqp.secEq.nodes - eqp.base.nodes} nodes — ` +
-             `the three registry bands must build exactly three biquads`);
-      else ok("a non-flat section strip builds exactly its three biquads");
+      // three biquads for a section tone — unless the song already DERIVED a
+      // section tone (base.secEq is 3), in which case the user band merges
+      // onto the biquads that exist and the node count must not move
+      if (eqp.base.secEq ? eqp.secEq.nodes !== eqp.base.nodes
+                         : eqp.secEq.nodes !== eqp.base.nodes + 3)
+        fail(`a section-strip EQ built ${eqp.secEq.nodes - eqp.base.nodes} node(s) ` +
+             `over base (base secEq ${eqp.base.secEq}) — the tone stage must exist ` +
+             `exactly once, three biquads, derived and user merged onto them`);
+      else ok("a non-flat section strip carries exactly one three-biquad tone stage");
     }
   }
 
@@ -1622,11 +1657,19 @@ async function pass(page, url) {
     // the structural per-channel ceiling of 24 noticed.
     const cn = B.chorused.nodes;
     const mean = (cn.total - cn.shared) / cn.channels;
-    if (mean > 20)
-      fail(`a channel averages ${mean.toFixed(1)} nodes on this song (was 30.6 with a ` +
-           `private drum desk per section, 11.3 after) — something per-section has ` +
-           `grown a rack again`);
-    else ok(`a channel averages ${mean.toFixed(1)} nodes (30.6 before this round)`);
+    // the twenty-node bar, with the DERIVED DESK accounted: the song now seats
+    // a strip per part (audio/mixer.js derivedPartTone), and those nodes ride
+    // inside the channel count — so the allowance is 20 for the section chain
+    // plus the part budget for the strips the model actually built. A private
+    // drum desk (18 nodes over budget) still crosses it.
+    const allow = 20 + (cn.parts * cn.budget.part) / cn.channels;
+    if (mean > allow)
+      fail(`a channel averages ${mean.toFixed(1)} nodes on this song against an ` +
+           `allowance of ${allow.toFixed(1)} (20 + ${cn.parts} derived/mixed part ` +
+           `strips × ${cn.budget.part}) — something per-section has grown a rack again`);
+    else ok(`a channel averages ${mean.toFixed(1)} nodes ` +
+            `(allowance ${allow.toFixed(1)} with ${cn.parts} part strips; ` +
+            `30.6 before the shared-rack round)`);
     const via = B.chorused.via;
     if (via.some(v => v !== "send"))
       fail(`channels spent a single blend chip as ${JSON.stringify(via)} — a lone chip is ` +

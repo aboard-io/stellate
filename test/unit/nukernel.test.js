@@ -6501,6 +6501,129 @@ console.log("the register law — the table, the home, and the per-note fold");
   }
 }
 
+/* ------------------------------- 47. THE DESK STOPS FLATTERING
+   THE DERIVED PER-PART TONE, gated at the model (audio/mixer.js
+   derivedPartTone / derivedSecEq / mergeEq / resolvedPart — no DOM, no
+   render). Paul, on the shipped board, 2026-08-16: "All the EQ settings and
+   all the faders are always the same and never move… but never inside a
+   song." Both halves were structural: resolvePartMix answered (1, flat) for
+   every unmixed chair, and nothing seeded an EQ, so the desk showed a row of
+   identical units however different the music was. The claims:
+     (a) ANTI-FLATTEN, within a section: on composed songs the per-part
+         resolved (gain, eq) tuples are NOT all identical;
+     (b) ANTI-FLATTEN, across sections: within one composed song, some part's
+         tuple DIFFERS between sections — a song that evolves shows a desk
+         that evolves (the shading reads the composed arc's own sec.lvl/env);
+     (c) a USER value is an absolute override over the derived, never a sum,
+         and unset bands keep answering with the derived value;
+     (d) FLAT-WHEN-NO-SOURCE: a chair with no tonal character (family in no
+         FAM_EQ row, role seat 0, no section words) resolves to the exact
+         identity and builds NO part spec — absent-is-today survives where
+         nothing derives;
+     (e) SINGLE APPLICATION: each part appears in chanSpec exactly once, its
+         spec eq IS resolvedPart's eq (one tone stage, the displayed one), and
+         the genre's character seeds the SECTION strip only;
+     (f) the whole spec is deterministic — the offline bounce builds from the
+         same chanSpec, so the carrier carries the derivation by construction. */
+console.log("the desk stops flattering — derived per-part (gain, eq)");
+{
+  const MX = await import("../../nukernel/audio/mixer.js");
+  const ST = await import("../../nukernel/ui/state.js");
+  const C = require("../../nukernel/compose.js");
+  const S = require("../../nukernel/song.js");
+  const tup = (sec, k) => {
+    const r = MX.resolvedPart(sec, k);
+    return JSON.stringify([r.gain, r.eq]);
+  };
+  // (a) + (b) across five composed songs — measured before being asserted:
+  // beatles' `line` chair takes 7 distinct tuples over 11 sections
+  for (const gk of ["beatles", "rock", "vaporwave", "postrock", "motown"]) {
+    ST.adoptSong(C.compose(gk, 3), "gate");
+    let within = false;
+    for (const sec of ST.SONG) {
+      const keys = MX.partKeysOf(sec);
+      if (keys.length >= 2 && new Set(keys.map(k => tup(sec, k))).size > 1) {
+        within = true; break;
+      }
+    }
+    ok(within, gk + ": every part resolves the identical (gain, eq) tuple — " +
+       "the desk is flattering again");
+    const byKey = new Map();
+    for (const sec of ST.SONG) for (const k of MX.partKeysOf(sec)) {
+      if (!byKey.has(k)) byKey.set(k, new Set());
+      byKey.get(k).add(tup(sec, k));
+    }
+    ok([...byKey.values()].some(s => s.size > 1),
+       gk + ": no part's resolved tuple moves across sections — the song " +
+       "evolves and the desk does not");
+  }
+  // (c) override beats derived — absolute per band, multiplied on gain
+  {
+    ST.adoptSong(C.compose("rock", 3), "gate");
+    const sec = ST.SONG.find(s => MX.partKeysOf(s).length >= 2);
+    const k = MX.partKeysOf(sec).find(x => x !== "drums");
+    sec.parts = { [k]: { eq: { mid: 5 }, fader: -6, lvl: "hush" } };
+    const r = MX.resolvedPart(sec, k);
+    const t = MX.derivedPartTone(sec, k);
+    ok(r.eq && r.eq.mid === 5,
+       "a set band is not absolute over the derived (got " +
+       JSON.stringify(r.eq) + " over derived " + JSON.stringify(t.eq) + ")");
+    for (const b of ["lo", "hi"]) if (t.eq && t.eq[b])
+      ok(r.eq[b] === t.eq[b], "an unset " + b + " band stopped answering with " +
+         "the derived value under a neighbouring override");
+    ok(Math.abs(r.gain - 0.4 * Math.pow(10, (t.db - 6) / 20)) < 1e-3,
+       "hush × fader −6 does not ride the derived seating (gain " + r.gain +
+       ", derived " + t.db + " dB)");
+    sec.parts = null;
+  }
+  // (d) flat-when-no-source: dnb's first chair is family `lead` (no FAM_EQ
+  // row), role seat 0, and a bare skeleton box has no section words — the
+  // identity, and the identity builds nothing
+  {
+    const sec = S.skeleton("dnb", null);
+    const keys = MX.partKeysOf(sec);
+    const t = MX.derivedPartTone(sec, keys[0]);
+    ok(t.db === 0 && t.eq === null,
+       "a chair with no tonal source derived " + JSON.stringify(t) +
+       " — flat-when-no-source is broken");
+    const built = MX.chanSpec(sec).parts.map(p => p.key);
+    ok(!built.includes(keys[0]),
+       "the identity chair " + keys[0] + " still built a part spec [" + built +
+       "] — absent-is-today no longer survives where nothing derives");
+    ok(MX.derivedSecEq(sec) === null,
+       "dnb's mid-range tone derived a section EQ — the character thresholds " +
+       "have widened past neutral");
+  }
+  // (e) single application + (f) determinism, on one composed box
+  {
+    ST.adoptSong(C.compose("beatles", 3), "gate");
+    const sec = ST.SONG.find(s => MX.partKeysOf(s).length >= 2);
+    ok(JSON.stringify(MX.chanSpec(sec)) === JSON.stringify(MX.chanSpec(sec)),
+       "chanSpec is not deterministic — live and bounce would disagree about " +
+       "the derived desk");
+    const parts = MX.chanSpec(sec).parts;
+    const seen = new Set();
+    for (const p of parts) {
+      ok(!seen.has(p.key), "part " + p.key + " appears twice in one spec — " +
+         "the tone stage would build twice");
+      seen.add(p.key);
+      ok(JSON.stringify(p.eq) === JSON.stringify(MX.resolvedPart(sec, p.key).eq),
+         p.key + ": the built eq is not the displayed eq — the board is lying " +
+         "about the graph");
+    }
+    // the genre's character is the section strip's and only the section
+    // strip's: chairs on two genres with different tone but the same family
+    // derive the same part eq, so the character cannot be applied twice
+    const g = ST.SONG && MX.derivedSecEq(sec);
+    if (g) {
+      const merged = MX.chanSpec(sec).eq;
+      ok(merged && ["lo", "mid", "hi"].every(b => merged[b] === (g[b] || 0)),
+         "the untouched section strip does not carry the genre's derived " +
+         "character (" + JSON.stringify(merged) + " vs " + JSON.stringify(g) + ")");
+    }
+  }
+}
+
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }

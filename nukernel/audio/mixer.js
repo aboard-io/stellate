@@ -27,8 +27,11 @@
 // same small strip: two sends, level, place, mute and solo. Each one is a
 // sub-bus feeding this channel's input, so the section chain is still the
 // section-wide treatment and the desk sits in front of it. See partSpecs (what
-// gets built) and buildChannel (how), and note the law both keep: a box with no
-// `parts` builds not one extra node and sounds exactly as it did before.
+// gets built) and buildChannel (how). The law both keep is now the DERIVED
+// form of absent-is-today: a part whose resolved (gain, tone) is the identity
+// builds not one extra node — but the song itself seats the desk
+// (derivedPartTone), so most chairs carry a derived strip even before a
+// finger touches them. The desk shows the song's truth, not a row of units.
 //
 // ================ AND THEN IT WAS ALL SENDS ================================
 // "It is glitching — maybe we need a few effects buses feeding into one master
@@ -60,7 +63,7 @@
 import { GENRES, FX, MAX_FX, fxChain, fxMix, fxSendable, SENDS, LEVELS, PANS,
          RATES, SP, DRUMFILE, DRUMMIX, DRUMBUS, instrOf, BASSSYNTH,
          partOf, chairKeys, resolvePartMix, faderDb, EQ_BANDS,
-         resolveEq } from "../ui/deps.js";
+         eqDb, familyOf } from "../ui/deps.js";
 import { SONG, POOL, on } from "../ui/state.js";
 import { gid, stackOf, genreOf, kitOf, poolInstrOf } from "../ui/derive.js";
 import { ctx, masterIn, delBus, roomBus, verbFor, sendFor, kitFor, buildKitDesk,
@@ -201,30 +204,182 @@ export function partKeysOf(sec, roster) {
   if (kitOf(sec)) keys.push("drums");
   return keys;
 }
-// THE BOX'S `parts` MAP -> THE SUB-BUSSES THAT ACTUALLY NEED BUILDING.
+/* ---------- THE DERIVED TONE: the song seats its own desk ------------------ */
+// "All the EQ settings and all the faders are always the same and never move…
+// but never inside a song" (Paul, on the shipped board, 2026-08-16). He was
+// right, and the reason was structural: nothing in the model ever SAID a
+// per-part level or a per-part tone — resolvePartMix answered (1, flat) for
+// every unmixed chair, so every cap sat at the same height and every knob at
+// noon, forever, while only the effects chips differed. The board was not
+// lying; the model was silent. This block is the model speaking.
 //
-// The filter is the whole reason this is cheap: a part gets a bus only when it
-// asks for something. A box with no `parts` returns [], buildChannel builds
-// nothing, and every voice lands on the section input exactly as it did before
-// this existed — the absent-is-today law, in one line rather than in a flag.
+// WHERE THE DERIVED VALUES COME FROM, and why each source is applied HERE and
+// nowhere else (the double-application audit, in writing):
+//   * ROLE SEATING (SEAT_DB + the chair ordinal): a pad sits behind a lead,
+//     the second guitar under the first. Nothing downstream applies this —
+//     the per-note strip trims (STRIPS[fam].trim) are timbre make-up gains
+//     inside sampler.js's note chain and are deliberately NOT re-read here.
+//   * SECTION WORDS (shade): sec.lvl / sec.env are the composed arc's own
+//     vocabulary, and the shading is DIFFERENTIAL — lead up means pad down —
+//     because the WHOLE-section level is already the section chain's job
+//     (chanSpec lvl) and the whole-section velocity curve is already the
+//     kernel envelope's. The desk adds the one thing neither can say: the
+//     BALANCE between parts changing as the song moves. This is what makes a
+//     hush section's strips sit differently from a chorus's.
+//   * FAMILY TONE (FAM_EQ): the direction of the instrument strip's carve
+//     (instruments.js STRIPS — the dirty scoop, the vox mud dip, the bass
+//     warmth), said at the DESK's three fixed frequencies (120/1000/7200)
+//     at ≤2 dB. The per-note strip keeps its own stage at its own
+//     frequencies; this is the board-level seating tone, built ONCE on the
+//     part bus — the resolved chain contains each tone stage exactly once.
+//   * GENRE CHARACTER (derivedSecEq): tone.cut / tone.verb, where they are
+//     EQ-shaped, seed the SECTION strip only — disjoint from the part strips
+//     by construction, so the genre's darkness is never said twice.
+// A USER VALUE IS AN ABSOLUTE OVERRIDE, never a sum: a set band replaces the
+// derived band (mergeEq), lvl/fader multiply exactly as they always did, and
+// clearing back to absent returns the derived answer — the dim-vs-lit law.
+const SEAT_DB = { lead: 0, line: 0, riff: -0.5, counter: -1, stab: -0.5,
+                  pad: -1.5, drone: -2, bass: 0, drums: 0 };
+const FAM_EQ = {
+  bass:    { lo: 1.5, hi: -1.5 },
+  pad:     { mid: -1.5, hi: 1 },
+  dirty:   { mid: -2, hi: 1 },
+  vox:     { mid: -1.5, hi: 1 },
+  brass:   { mid: 1.5 },
+  reed:    { mid: 1 },
+  guitar:  { mid: 1 },
+  keys:    { mid: 0.5 },
+  mallet:  { hi: 1 },
+  bowed:   { hi: 0.5 },
+  strings: { hi: 0.5 },
+  organ:   { mid: 0.5 },
+  // `lead` (the no-family fallback) and `drums` are deliberately absent: an
+  // id in no family has no tonal character to derive (the flat-when-no-source
+  // law, visible), and the kit's truth already lives on the lane strips
+  // (DRUMMIX) — repeating it here would be the double the audit forbids.
+};
+// the composed arc, as per-part DIFFERENTIAL shading. Sums ≈ 0 across a
+// typical roster on purpose: the section's overall level belongs to the
+// section chain; the desk only redistributes it.
+function shade(sec, base) {
+  let db = 0; const eq = {};
+  const melodic = base === "lead" || base === "line" || base === "riff";
+  const w = sec.lvl;
+  if (w === "hush") {
+    if (base === "drums") { db -= 2; eq.hi = -1; }
+    else if (melodic) db -= 1;
+    else if (base === "pad") db += 0.5;
+  } else if (w === "fwd") {
+    if (melodic) { db += 1; eq.mid = 0.8; }
+    else if (base === "pad") db -= 1;
+  } else if (w === "back") { if (melodic) db -= 0.5; }
+  const e = sec.env;
+  if (e === "in") { if (melodic) db -= 1.5; else if (base === "pad") db += 0.5; }
+  else if (e === "out" || e === "dim") {
+    db -= 0.5; if (base !== "drums") eq.hi = (eq.hi || 0) - 1.5;
+  } else if (e === "soft") {
+    if (base === "drums") { db -= 1.5; eq.hi = (eq.hi || 0) - 0.5; }
+    else if (base === "bass") db += 0.5;
+  } else if (e === "big") {
+    if (melodic) { db += 1; eq.mid = (eq.mid || 0) + 0.5; }
+    else if (base === "pad") db -= 1;
+    else if (base === "drums") db += 0.5;
+  } else if (e === "lift" || e === "cresc") {
+    if (base === "drums") db += 0.5; else if (base === "pad") db -= 0.5;
+  } else if (e === "arch") { if (melodic) db += 0.5; }
+  return { db, eq };
+}
+// ONE PART'S DERIVED (gain, tone), the model-level truth the board parks on
+// and buildChannel bakes. Deterministic over (sec, key) — same walk, same
+// numbers — which is what lets the offline bounce carry it by construction.
+export function derivedPartTone(sec, key, roster) {
+  const m = /^([a-z]+?)(\d+)?$/.exec(String(key || "")) || [];
+  const base = m[1] || "line", ord = m[2] ? +m[2] : 1;
+  let db = (SEAT_DB[base] != null ? SEAT_DB[base] : 0) - Math.min(2, ord - 1);
+  const eq = { lo: 0, mid: 0, hi: 0 };
+  let fam = null;
+  if (key === "bass") fam = "bass";
+  else if (key !== "drums") {
+    const r = (roster || voiceRoster(sec)).find(x => x.key === key);
+    if (r) fam = familyOf(r.id, r.pad);
+  }
+  const add = src => { if (src) for (const b of ["lo", "mid", "hi"])
+    if (src[b]) eq[b] += src[b]; };
+  add(FAM_EQ[fam]);
+  const sh = shade(sec, base);
+  db += sh.db; add(sh.eq);
+  for (const b of ["lo", "mid", "hi"]) eq[b] = eqDb(eq[b]);
+  const flat = !eq.lo && !eq.mid && !eq.hi;
+  return { db: Math.round(db * 10) / 10, eq: flat ? null : eq };
+}
+// THE SECTION STRIP'S DERIVED TONE — the genre's character where it is
+// EQ-shaped, and only here (see the audit above): a dark genre (tone.cut low)
+// keeps its top rolled and its low warm, a bright one lifts air, a washy one
+// (tone.verb high) carves the mud its own reverb makes.
+export function derivedSecEq(sec) {
+  const g = GENRES[gid(sec)], t = g && g.tone;
+  if (!t) return null;
+  const eq = { lo: 0, mid: 0, hi: 0 };
+  if (t.cut != null && t.cut <= 1100) { eq.hi = -2; eq.lo = 1; }
+  else if (t.cut != null && t.cut >= 2700) eq.hi = 1.5;
+  if (t.verb != null && t.verb >= 0.6) eq.mid -= 1.5;
+  for (const b of ["lo", "mid", "hi"]) eq[b] = eqDb(eq[b]);
+  return (eq.lo || eq.mid || eq.hi) ? eq : null;
+}
+// DERIVED UNDER, USER OVER — per band, absolute, never a sum. A user band
+// that is stored (non-zero — writeEqBand deletes zeros) replaces the derived
+// band outright; an absent band keeps the derived answer. Returns the same
+// full-band shape resolveEq returns, or null when everything is flat.
+export function mergeEq(drv, user) {
+  const u = user && typeof user === "object" ? user : null;
+  const out = {};
+  let any = false;
+  for (const b of EQ_BANDS) {
+    const uv = u ? eqDb(u[b.key]) : 0;
+    const v = uv !== 0 ? uv : eqDb(drv ? drv[b.key] : 0);
+    out[b.key] = v; if (v) any = true;
+  }
+  return any ? out : null;
+}
+// THE RESOLVED STATIC TRUTH for one part — derived × user, the exact numbers
+// partSpecs bakes into the built nodes. One function, three readers (the
+// board's cap rest position, the node gate, partSpecs below), so the display,
+// the test and the graph cannot drift apart.
+export function resolvedPart(sec, key, roster) {
+  const m = resolvePartMix(sec.parts && sec.parts[key]);
+  const t = derivedPartTone(sec, key, roster);
+  return { gain: +(m.lvl * Math.pow(10, (m.fader + t.db) / 20)).toFixed(4),
+           eq: mergeEq(t.eq, sec.parts && sec.parts[key] && sec.parts[key].eq),
+           tdb: t.db };
+}
+// THE BOX'S ADDRESSES -> THE SUB-BUSSES THAT NEED BUILDING.
+//
+// A part gets a bus when it asks for something OR when the song derives
+// something for it (derivedPartTone above). The old law — "a box with no
+// `parts` builds not one extra node" — was the flattering desk: it also meant
+// a box with no `parts` had no per-part truth at all. What survives of it is
+// the honest core: a part whose resolved (gain, tone) is the identity still
+// builds nothing, so a genre with no tonal character keeps its old graph.
 //
 // SOLO IS THE ONE CONTROL THAT REACHES OTHER PARTS, so it is resolved here,
 // where the box's whole address list is known: any solo anywhere in the box
 // mutes every part that is not soloed, and a muted part needs a bus precisely
 // so there is a gain to close.
 function partSpecs(sec, roster) {
-  const P = sec.parts;
-  if (!P || typeof P !== "object") return [];
+  const P = sec.parts && typeof sec.parts === "object" ? sec.parts : null;
   const keys = partKeysOf(sec, roster);
-  const solo = keys.some(k => P[k] && P[k].solo);
+  const solo = !!P && keys.some(k => P[k] && P[k].solo);
   const out = [];
   for (const k of keys) {
-    const m = resolvePartMix(P[k]);
+    const ent = P ? P[k] : null;
+    const m = resolvePartMix(ent);
+    const t = derivedPartTone(sec, k, roster);
+    const eq = mergeEq(t.eq, ent && ent.eq);
     const mute = m.mute || (solo && !m.solo);
     if (!mute && !m.fx.length && !m.rev && !m.del && m.lvl === 1 && m.pan === 0 &&
-        m.fader === 0 && !m.eq) continue;
+        m.fader === 0 && !eq && !t.db) continue;
     out.push({ key: k, fx: m.fx, rev: m.rev, del: m.del, lvl: m.lvl, pan: m.pan,
-               fader: m.fader, eq: m.eq, mute });
+               fader: m.fader, tdb: t.db, eq, mute });
   }
   return out;
 }
@@ -256,9 +411,11 @@ export function chanSpec(sec) {
     lvl: +((sec.lvl ? LEVELS[sec.lvl] : 1) *
            Math.pow(10, faderDb(sec.fader) / 20)).toFixed(4),
     pan: sec.pan ? PANS[sec.pan] : 0,
-    // the section strip's EQ, resolved here for the reason lvl is: null (flat)
-    // is buildChannel's instruction to build zero filter nodes
-    eq: resolveEq(sec.eq),
+    // the section strip's EQ: the genre's derived character under the box's
+    // own bands (mergeEq — a set band overrides, a cleared one returns to the
+    // derived answer). null (flat) is still buildChannel's instruction to
+    // build zero filter nodes, which a characterless genre still earns.
+    eq: mergeEq(derivedSecEq(sec), sec.eq),
     mot: sec.mot || null,
     auto: compileAuto(sec, g),
     // the desk under the section strip. It rides IN the spec like the roster
@@ -396,7 +553,11 @@ export function buildChannel(c, spec, env) {
       peq.output.connect(pin); pin = peq.input; pnodes.push(...peq.nodes);
     }
     const plvl = c.createGain();
-    plvl.gain.value = +(p.lvl * Math.pow(10, (p.fader || 0) / 20)).toFixed(4);
+    // the part's level is three multiplicands, each meaning what it always
+    // meant: the enum (lvl), the user's dB trim (fader), and the song's own
+    // derived seating (tdb — derivedPartTone, the composed arc's balance)
+    plvl.gain.value = +(p.lvl * Math.pow(10, ((p.fader || 0) + (p.tdb || 0)) / 20))
+      .toFixed(4);
     pchain(plvl);
     const pmute = c.createGain(); pmute.gain.value = p.mute ? 0 : 1; pchain(pmute);
     if (px.dry !== 1) {
@@ -493,7 +654,8 @@ export function buildChannel(c, spec, env) {
   let droom = null, roomGate = null;
   if (desk.roomSum && env.room) {
     const dP = parts.get("drums");
-    const dTrim = dP ? (dP.spec.mute ? 0 : dP.spec.lvl) : 1;
+    const dTrim = dP ? (dP.spec.mute ? 0
+      : dP.spec.lvl * Math.pow(10, ((dP.spec.fader || 0) + (dP.spec.tdb || 0)) / 20)) : 1;
     roomGate = c.createGain(); roomGate.gain.value = ownDesk ? 1 : 0;
     droom = c.createGain(); droom.gain.value = DRUMBUS.room * dTrim;
     desk.roomSum.connect(roomGate); roomGate.connect(droom); droom.connect(env.room);
@@ -800,16 +962,17 @@ window.__nuMix = () => ({
     // THE DESK, read off the nodes. Every number is the AudioParam's value and
     // `stages` is what buildInsertNodes actually BUILT, for the same reason the
     // section's are: a part chip that lit up and passed the signal dry is the
-    // failure this file keeps rediscovering, one level down. Empty for every
-    // box that has not been mixed per part — which is the absent-is-today law,
-    // visible from outside.
+    // failure this file keeps rediscovering, one level down. A strip appears
+    // when the user mixed it OR when the song derived a seat for it
+    // (derivedPartTone — `tdb` is the derived dB, an ADDED key, so a reader
+    // can separate the song's seating from the user's trim in `level`).
     parts: [...c.parts.entries()].map(([key, P]) => ({ key,
       fx: P.spec.fx, stages: P.stages,
       via: P.rack ? "insert" : (P.fs.length ? "send" : null),
       sends: P.fs.map(s => ({ key: s.key, amt: +s.gain.gain.value.toFixed(3) })),
       rev: +P.rs.gain.value.toFixed(3), echo: +P.ds.gain.value.toFixed(3),
       level: +P.lvl.gain.value.toFixed(3), pan: +P.pan.pan.value.toFixed(3),
-      eq: eqRead(P.eq),
+      eq: eqRead(P.eq), tdb: P.spec.tdb || 0,
       muted: P.gate.gain.value < 0.5 })),
   })),
 });

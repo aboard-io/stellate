@@ -5,7 +5,10 @@
 // a row of abbreviations can say what a channel is set to, but it cannot show
 // the level MOVING — and the composer's arc, the pump, the level automation
 // all move. "The SSL board" (2026-08-15) is the redesign: vertical CHANNEL
-// STRIPS, one per part the selected box sounds, each with its label block,
+// STRIPS, one per chair the SONG uses ("One channel per voice!!", 2026-08-16 —
+// the union of every section's parts, fixed for the whole song; a chair the
+// current section does not sound sits dimmed and wakes when its section
+// arrives), each with its label block,
 // its value keys, M/S and a long-throw AUTOMATED fader; then the SHARED-BUS
 // strips (reverb, echo, drum room — audio/graph.js's own roster, plus a slim
 // strip per character send bus as it builds); then the MASTER strip with a
@@ -48,7 +51,8 @@ import { curSection, commit, on, emit, MASTER, setMaster, BUSES, setBuses,
 // can play along instead of staring at the selection while the song moves on.
 import { playing as transportOn, playingSec } from "../audio/transport.js";
 import { stackOf, kitOf, voiceOwners } from "./derive.js";
-import { voiceRoster, partKeysOf, CHAN } from "../audio/mixer.js";
+import { voiceRoster, partKeysOf, CHAN, resolvedPart, derivedPartTone,
+         derivedSecEq } from "../audio/mixer.js";
 import { initAudio, rmsNow, masterReport, busReport,
          SENDBUS } from "../audio/graph.js";
 import { isSynthFont, fontDef } from "../audio/assets.js";
@@ -171,6 +175,32 @@ function rowsOf(sec) {
   out.push({ key: null, label: "section", sound: "whole box", sect: true });
   return out;
 }
+// ONE CHANNEL PER VOICE — the board's roster is the SONG's, not the section's
+// ("One channel per voice!!", 2026-08-16). The strip set is the union of every
+// section's chairs, in first-appearance order (so the opening box's chairs
+// lead), bass and drums held to the tail, the section strip last — and it is
+// FIXED for the whole song: a boundary changes VALUES on stable strips, never
+// the strip set. A chair the current section does not sound stays on the desk,
+// dimmed (patch marks it .idle), parked on its resolved static, and wakes when
+// its section arrives. Identity is the chair KEY — the same vocabulary
+// derive.js and the mixer address — which is what lets a label or a stored mix
+// follow the chair across sections (and, next, lets the strips BE the
+// instrument pool's chairs).
+function songRows() {
+  const idx = new Map();
+  for (const sec of SONG) {
+    if (!sec) continue;
+    for (const r of rowsOf(sec)) {
+      if (r.sect) continue;
+      if (!idx.has(r.key)) idx.set(r.key, r);
+    }
+  }
+  const tail = ["bass", "drums"];
+  const out = [...idx.values()].filter(r => !tail.includes(r.key));
+  for (const k of tail) if (idx.has(k)) out.push(idx.get(k));
+  out.push({ key: null, label: "section", sound: "whole box", sect: true });
+  return out;
+}
 
 /* ---------- reading and writing one field ---------- */
 // THE SECTION STRIP IS THE BOX'S OWN FIELDS — no new storage, the palette's
@@ -238,12 +268,12 @@ const gainToF = g => {
 };
 const fmtDb = v => (v > 0 ? "+" : "") + v.toFixed(1);
 // the resolved STATIC level a strip rests at when its channel is not built —
-// the same tables chanSpec/resolvePartMix read, cited not re-invented
+// the mixer's own resolver (resolvedPart: derived seating × user trim), cited
+// not re-invented, so the cap's rest position IS the part's built gain
 const secBase = sec => (sec.lvl ? LEVELS[sec.lvl] : 1);
 function staticGain(sec, key) {
   if (key == null) return secBase(sec) * Math.pow(10, faderDb(sec.fader) / 20);
-  const m = resolvePartMix(sec.parts && sec.parts[key]);
-  return m.lvl * Math.pow(10, m.fader / 20);
+  return resolvedPart(sec, key).gain;
 }
 // the LIVE gain: the built nodes when the channel exists (automation included
 // — AudioParam.value reads the timeline), the resolved static value when not.
@@ -274,8 +304,12 @@ const offsetOf = (sec, key) => {
 function easeLive(sec, key, off) {
   const c = CHAN.get(sec);
   if (!c) return;
+  // the drag's target rides ON the derived seating (derivedPartTone.db), the
+  // same composition buildChannel bakes — or the first frame after pointerup
+  // would snap to a different gain than the hand just heard
   const base = key == null ? secBase(sec)
-    : resolvePartMix(sec.parts && sec.parts[key]).lvl;
+    : resolvePartMix(sec.parts && sec.parts[key]).lvl *
+      Math.pow(10, derivedPartTone(sec, key).db / 20);
   const target = base * Math.pow(10, off / 20);
   const P = key == null ? null : c.parts.get(key);
   const p = key == null ? c.lvl.gain : (P ? P.lvl.gain : null);
@@ -322,11 +356,15 @@ const fmtEq = v => (v > 0 ? "+" : "") +
 
 // ---- the tone knob: one band, ±12 dB, flat = absent ----
 // The rack knob's idiom at strip size, over dB rather than detents:
-// role=slider, arrows step 1 dB (PageUp/Down 3), Home is FLAT (absent, the
-// one spelling), drag rotates at 0.15 dB/px with the live param eased under
-// the hand, a tap opens the pop-up fader on whole dB, dblclick clears.
-// data-part/data-bus/data-band/data-value are the gate's hooks.
-function buildEqKnob({ band, legend, label, part, bus, get, drag, write }) {
+// role=slider, arrows step 1 dB (PageUp/Down 3), Home clears to the DERIVED
+// answer (absent, the one spelling — the song's own tone shows again), drag
+// rotates at 0.15 dB/px with the live param eased under the hand, a tap opens
+// the pop-up fader on whole dB, dblclick clears.
+// data-part/data-bus/data-band/data-value are the gate's hooks; data-derived
+// (ADDED, never reshaped) carries the song's derived dB when no user value
+// overrides it. `derived()` is the dim half of the dim-vs-lit law: the knob
+// face turns to the derived angle unlit, and only a user value lights it.
+function buildEqKnob({ band, legend, label, part, bus, get, drag, write, derived }) {
   const cell = mk("span", "eqcell");
   const leg = mk("i", "eqlab", legend);
   const b = mk("button", "eqk");
@@ -349,19 +387,29 @@ function buildEqKnob({ band, legend, label, part, bus, get, drag, write }) {
     b.classList.toggle("set", set);
     val.classList.toggle("set", set);
   };
+  // the value the face SHOWS: the user's (lit) or the song's derived (dim)
+  const shown = () => {
+    const v = get();
+    if (v != null) return v;
+    const dv = derived ? derived() : null;
+    return dv == null ? 0 : dv;
+  };
   const paint = () => {
     if (d) return;                         // the finger owns the face mid-drag
     const v = get();
-    show(v == null ? 0 : v, v != null);
+    const dv = v == null && derived ? derived() : null;
+    show(v != null ? v : (dv || 0), v != null);
     b.dataset.value = v == null ? "" : String(v);
-    b.setAttribute("aria-valuenow", String(v == null ? 0 : v));
-    b.setAttribute("aria-valuetext", v == null ? "flat" : fmtEq(v) + " dB");
+    b.dataset.derived = dv == null ? "" : String(dv);
+    b.setAttribute("aria-valuenow", String(v != null ? v : (dv || 0)));
+    b.setAttribute("aria-valuetext", v != null ? fmtEq(v) + " dB"
+      : (dv ? "derived " + fmtEq(dv) + " dB" : "flat"));
   };
   // zero IS flat, so a write that lands on 0 stores absent — the knob has no
   // second spelling of the default to offer
   const commitDb = x => { write(x != null && eqDb(x) ? eqDb(x) : null); buzz(4); };
   b.addEventListener("keydown", ev => {
-    const v = get() == null ? 0 : get();
+    const v = shown();                     // a step rides off the derived value
     if (ev.key === "ArrowUp" || ev.key === "ArrowRight") commitDb(v + 1);
     else if (ev.key === "ArrowDown" || ev.key === "ArrowLeft") commitDb(v - 1);
     else if (ev.key === "PageUp") commitDb(v + 3);
@@ -378,8 +426,8 @@ function buildEqKnob({ band, legend, label, part, bus, get, drag, write }) {
     try { b.setPointerCapture(ev.pointerId); } catch (e) {}
     touchOn();                             // pin the section under the finger
     b.classList.add("drag");               // the ease is for the song's moves
-    const v = get();
-    d = { y0: ev.clientY, v0: v == null ? 0 : v, cur: v == null ? 0 : v, moved: false };
+    const v = shown();                     // a drag departs the derived angle
+    d = { y0: ev.clientY, v0: v, cur: v, moved: false };
   });
   b.addEventListener("pointermove", ev => {
     if (!d) return;
@@ -395,7 +443,7 @@ function buildEqKnob({ band, legend, label, part, bus, get, drag, write }) {
     const moved = d.moved, cur = d.cur;
     if (moved) commitDb(cur);
     else openFader({ anchor: b, label, min: -EQ_RANGE, max: EQ_RANGE,
-                     get: () => Math.round(get() || 0),
+                     get: () => Math.round(shown() || 0),
                      set: x => commitDb(x),
                      fmt: x => (x ? fmtEq(x) + " dB" : "flat") });
     d = null;                              // …then release the pin (write first)
@@ -539,6 +587,14 @@ function build() {
       band: bd.key, legend: bd.label, part: row.key == null ? "" : row.key,
       label: row.label + " " + bd.label + " EQ",
       get: () => eqBand(boardSec(), row.key, bd.key),
+      // the song's own tone, dim under the finger's: genre character on the
+      // section strip, family/arc seating on the parts (audio/mixer.js — the
+      // same derivation the built biquads bake, so the knob face IS the graph)
+      derived: () => {
+        const e = row.sect ? derivedSecEq(boardSec())
+                           : derivedPartTone(boardSec(), row.key).eq;
+        return e && e[bd.key] ? e[bd.key] : null;
+      },
       drag: db => easeEqLive(boardSec(), row.key, bd.key, db),
       write: db => writeEqBand(boardSec(), row.key, bd.key, db),
     }));
@@ -579,14 +635,22 @@ function patch() {
   const sec = boardSec();
   const P = sec.parts || null;
   const solo = !!P && rows.some(r => r.key && P[r.key] && P[r.key].solo);
+  // which of the song's chairs THIS section sounds, and what plays them here:
+  // the strip set never changes at a boundary (songRows), only these values do
+  const here = new Map(rowsOf(sec).filter(r => !r.sect).map(r => [r.key, r]));
   rows.forEach((row, i) => {
     const R = refs[i];
     const ent = entryOf(sec, row.key);
+    const cur = row.sect ? null : here.get(row.key);
+    const idle = !row.sect && !cur;
+    const sound = row.sect ? row.sound : (cur ? cur.sound : row.sound);
+    if (R.ps.textContent !== sound) R.ps.textContent = sound;
     const muted = !row.sect && !!ent && !!ent.mute;
     const off = !row.sect && (muted || (solo && !(ent && ent.solo)));
-    R.tr.className = "strip mrow" + (row.sect ? " msec" : "") + (off ? " off" : "");
-    R.tr.setAttribute("aria-label", row.label + " · " + row.sound +
-      (off ? " · silent" : ""));
+    R.tr.className = "strip mrow" + (row.sect ? " msec" : "") + (off ? " off" : "") +
+      (idle ? " idle" : "");
+    R.tr.setAttribute("aria-label", row.label + " · " + sound +
+      (off ? " · silent" : "") + (idle ? " · idle this section" : ""));
     for (const f of colsOf(row)) {
       const b = R.cells[f.key], v = readField(sec, row.key, f.key);
       const d = defaultOf(sec, row.key, f.key);
@@ -624,9 +688,13 @@ function patch() {
 }
 
 export function drawMix() {
-  const sec = boardSec();
-  const next = rowsOf(sec);
-  const s = next.map(r => r.key + ":" + r.label + ":" + r.sound).join("|");
+  const next = songRows();
+  // the signature is the CHAIR LIST — not the sounds, which change per section
+  // and are patched onto the stable strips. A boundary crossing therefore
+  // never rebuilds the board; only a song/stack edit that changes the union
+  // does. That is the fixed-desk law: strips never appear or disappear while
+  // the song plays.
+  const s = next.map(r => r.key + ":" + r.label).join("|");
   rows = next;
   if (s !== sig) { sig = s; build(); }
   patch();
