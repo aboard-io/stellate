@@ -1230,6 +1230,13 @@ console.log("the loader — round trip, typed errors, clamps, migration");
       ok(f.default === null, f.key + ": num default is not null (absent = no offset)");
       continue;
     }
+    // "eq" is the strip-EQ family: a band list instead of a table, absent
+    // (flat) by default — the bands themselves are checked in §37d
+    if (f.type === "eq") {
+      ok(Array.isArray(f.bands) && f.bands.length, f.key + ": eq field without a band list");
+      ok(f.default === null, f.key + ": eq default is not null (absent = flat)");
+      continue;
+    }
     ok(f.table && typeof f.table === "object" && Object.keys(f.table).length,
        f.key + ": no value table");
     ok(f.labels && Object.keys(f.table).every(k => f.labels[k] != null),
@@ -1253,6 +1260,15 @@ console.log("the loader — round trip, typed errors, clamps, migration");
     { v: 2, slots: [S.blank()], song: [box], bpm: 126, vol: 80 });
   for (const f of F.FIELDS) {
     if (f.type === "int" || f.type === "num") continue;  // clamped, checked below
+    if (f.type === "eq") {                               // every band, one at a time
+      for (const bd of f.bands) {
+        const b = S.emptyBox(); b[f.key] = { [bd.key]: 6 };
+        const r = trial(b);
+        ok(r.ok, f.key + "." + bd.key + " on the box: loader refused — " +
+           (r.errors[0] && r.errors[0].path));
+      }
+      continue;
+    }
     for (const k of Object.keys(f.table)) {
       const b = S.emptyBox();
       if (f.type === "list") b[f.key] = [k];
@@ -3066,6 +3082,11 @@ console.log("the per-part mix — addresses, chairs, defaults, and what the load
       ok(f.default === null, f.key + ": num default is not null");
       continue;
     }
+    if (f.type === "eq") {
+      ok(f.bands === F.EQ_BANDS, f.key + ": a part's EQ does not ride the one band list");
+      ok(f.default === null, f.key + ": eq default is not null (absent = flat)");
+      continue;
+    }
     ok(f.table && Object.keys(f.table).length, f.key + ": no value table");
     ok(f.labels && Object.keys(f.table).every(k => f.labels[k] != null),
        f.key + ": a table value has no label");
@@ -3400,6 +3421,148 @@ console.log("the shared buses — the rack registry, defaults, and the loader");
     const twice = S.load(JSON.parse(JSON.stringify(once.song)));
     ok(twice.ok && JSON.stringify(twice.song.buses) === JSON.stringify(once.song.buses),
        "the bus trims are not stable across a save/load round trip");
+  }
+}
+
+/* ---------- 37d. THE STRIP EQ ---------------------------------------------
+   "Every strip earns its tone": LO/MID/HI on every channel strip, LO/HI on
+   the bus returns (fields.js EQ_BANDS / BUS_EQ_BANDS). The audible half —
+   biquads in the built chain, bytes moving under a +12 dB shelf — is the
+   browser gate's (nukernel-drums eqProbe, which also holds the zero-nodes
+   claim at graph level). What lives here is everything upstream of a node:
+   the band registry, the dB policy, the resolvers, and the loader — under the
+   one law that matters most: FLAT IS ABSENT, with exactly one spelling, or
+   every song ever saved changes graph. */
+console.log("the strip EQ — bands, the dB policy, the resolvers, and the loader");
+{
+  const F = require("../../nukernel/fields.js");
+  const S = require("../../nukernel/song.js");
+
+  // (a) THE BAND LIST IS BUILDABLE: key/label for the surface, type/freq (and
+  // the bell's q) for the node — graph.buildEq reads exactly these.
+  ok(Array.isArray(F.EQ_BANDS) && F.EQ_BANDS.map(b => b.key).join(",") === "lo,mid,hi",
+     "the strip EQ is not the three bands lo,mid,hi");
+  for (const b of F.EQ_BANDS) {
+    ok(typeof b.label === "string" && b.label, b.key + " has no silkscreen label");
+    ok(["lowshelf", "peaking", "highshelf"].includes(b.type),
+       b.key + ": type " + b.type + " is not a biquad the builder can make");
+    ok(Number.isFinite(b.freq) && b.freq > 20 && b.freq < 16000,
+       b.key + ": frequency " + b.freq + " is not on the audible desk");
+  }
+  ok(F.EQ_BANDS[1].type === "peaking" && Number.isFinite(F.EQ_BANDS[1].q),
+     "the mid bell has no Q — a peaking biquad at default Q is a different EQ");
+  // the bus pair IS the strip's own shelves — same objects, one frequency per
+  // word, and the registry rows all point at the one list
+  ok(F.BUS_EQ_BANDS.length === 2 && F.BUS_EQ_BANDS[0] === F.EQ_BANDS[0] &&
+     F.BUS_EQ_BANDS[1] === F.EQ_BANDS[2],
+     "the bus pair is not the strip's own lo/hi shelves");
+  ok(F.BUSES.every(b => b.eq === F.BUS_EQ_BANDS),
+     "a bus registry row does not carry the shared band pair");
+  ok(F.FIELD.eq && F.FIELD.eq.type === "eq" && F.FIELD.eq.scope === "box" &&
+     F.FIELD.eq.bands === F.EQ_BANDS && F.FIELD.eq.default === null,
+     "the section strip's eq is not a box-scope, absent-by-default registry entry");
+  ok("eq" in S.emptyBox() && S.emptyBox().eq === null,
+     "emptyBox does not seed `eq` absent");
+
+  // (b) THE dB POLICY — the fader's, at the EQ's own range: clamp ±12, hold
+  // to 0.1 dB, garbage resolves to 0 (flat), never to anything audible
+  ok(F.eqDb(6) === 6 && F.eqDb(-6) === -6, "a set band did not survive eqDb");
+  ok(F.eqDb(99) === 12 && F.eqDb(-99) === -12, "eqDb is not clamped to ±12");
+  ok(F.eqDb(3.14159) === 3.1, "eqDb is not held to 0.1 dB");
+  ok(F.eqDb(NaN) === 0 && F.eqDb("loud") === 0 && F.eqDb(null) === 0,
+     "garbage did not resolve to flat");
+
+  // (c) RESOLUTION: null is FLAT is "build zero filter nodes", with every
+  // no-op spelling collapsing onto it; a non-flat spec resolves EVERY band
+  ok(F.resolveEq(null) === null && F.resolveEq({}) === null,
+     "an absent spec did not resolve to null");
+  ok(F.resolveEq({ lo: 0, mid: 0, hi: 0 }) === null,
+     "an all-zero spec is a second spelling of flat");
+  ok(F.resolveEq({ lo: "loud", mid: NaN }) === null,
+     "junk bands did not resolve as flat");
+  {
+    const r = F.resolveEq({ lo: 12, hi: -3.14 });
+    ok(r.lo === 12 && r.mid === 0 && r.hi === -3.1,
+       "a set spec did not resolve totally: " + JSON.stringify(r));
+  }
+  // a band the strip lacks is not a treatment: `mid` on a bus pair is flat
+  ok(F.resolveEq({ mid: 6 }, F.BUS_EQ_BANDS) === null,
+     "a band the bus pair lacks resolved to a treatment");
+  ok(F.eqIsFlat(null) && F.eqIsFlat({ lo: 0 }) && !F.eqIsFlat({ lo: 3 }),
+     "eqIsFlat does not answer the normalizer's question");
+
+  // (d) THE RESOLVERS CARRY IT — part, and bus
+  ok(F.resolvePartMix(null).eq === null && F.resolvePartMix({ eq: { lo: 0 } }).eq === null,
+     "an untouched part strip did not resolve flat");
+  ok(F.resolvePartMix({ eq: { lo: 4 } }).eq.lo === 4,
+     "a part's set band did not resolve through eqDb");
+  ok(F.resolveBuses(null).rev.eq === null,
+     "an absent buses spec grew a return EQ");
+  ok(F.resolveBuses({ rev: { eq: { hi: 6 } } }).rev.eq.hi === 6,
+     "a return's set band did not resolve");
+  ok(F.busesIsDefault({ rev: { eq: { lo: 0 } } }),
+     "a flat return EQ counted as a treatment — setBuses would keep it");
+  ok(!F.busesIsDefault({ rev: { eq: { lo: 3 } } }),
+     "a real return EQ counted as the default — setBuses would drop it");
+
+  // (e) THE LOADER, at all three doors. Band KEYS filter, VALUES take the
+  // fader's policy (garbage rejects, wild clamps, zero normalizes away).
+  const trial = mut => {
+    const b = S.emptyBox(); const s = { v: 2, slots: [S.blank()], song: [b], bpm: 126, vol: 80 };
+    mut(b, s); return S.validateSong(s);
+  };
+  {
+    const r = trial(b => { b.eq = { lo: 3.14159, mid: 0, junk: 5 }; });
+    ok(r.ok && JSON.stringify(r.song.song[0].eq) === '{"lo":3.1}',
+       "the box eq did not come back filtered+clamped: " +
+       JSON.stringify(r.ok && r.song.song[0].eq));
+    const bad = trial(b => { b.eq = { mid: "loud" }; });
+    ok(!bad.ok && bad.errors[0].path === "song[0].eq.mid",
+       "a garbage band did not name its own field: " + JSON.stringify(bad.errors[0]));
+    ok(!trial(b => { b.eq = [3]; }).ok, "an array was accepted where the strip wants a map");
+    ok(trial(b => { b.eq = { lo: 0, hi: 0 }; }).song.song[0].eq === null,
+       "an all-zero box eq did not normalize to absent");
+    ok(trial(b => { b.eq = { lo: 99 }; }).song.song[0].eq.lo === 12,
+       "a wild band did not clamp to the registry's own range");
+  }
+  {
+    const r = trial(b => { b.parts = { lead: { eq: { hi: -6 } } }; });
+    ok(r.ok && r.song.song[0].parts.lead.eq.hi === -6,
+       "a part's eq did not survive the loader");
+    ok(trial(b => { b.parts = { lead: { eq: { hi: 0 } } }; }).song.song[0].parts === null,
+       "a flat part eq did not normalize the whole entry away");
+    // string garbage, deliberately: a NaN cannot survive the JSON round trip
+    // every save takes (it lands as null, which is a legal empty band)
+    const bad = trial(b => { b.parts = { lead: { eq: { lo: "loud" } } }; });
+    ok(!bad.ok && bad.errors[0].path === "song[0].parts.lead.eq.lo",
+       "a part's garbage band did not name its field: " + JSON.stringify(bad.errors[0]));
+  }
+  {
+    const r = trial((b, s) => { s.buses = { rev: { eq: { lo: 3, mid: 6 } } }; });
+    ok(r.ok && JSON.stringify(r.song.buses) === '{"rev":{"eq":{"lo":3}}}',
+       "the bus pair did not filter the band it lacks: " +
+       JSON.stringify(r.ok && r.song.buses));
+    const bad = trial((b, s) => { s.buses = { echo: { eq: { hi: "x" } } }; });
+    ok(!bad.ok && bad.errors[0].path === "buses.echo.eq.hi",
+       "a return's garbage band did not name its field: " + JSON.stringify(bad.errors[0]));
+    ok(trial((b, s) => { s.buses = { room: { eq: { lo: 0 } } }; }).song.buses === null,
+       "a flat return eq did not normalize the buses map to absent");
+  }
+  // (f) …and the round trip every save takes, at all three homes at once
+  {
+    const once = trial((b, s) => {
+      b.eq = { mid: -2.5 };
+      b.parts = { drums: { eq: { lo: 6 } } };
+      s.buses = { rev: { ret: "up", eq: { hi: -4 } } };
+    });
+    ok(once.ok, "a full eq spec did not validate: " +
+       JSON.stringify(once.errors && once.errors[0]));
+    const twice = S.load(JSON.parse(JSON.stringify(once.song)));
+    ok(twice.ok &&
+       JSON.stringify(twice.song.song[0].eq) === JSON.stringify(once.song.song[0].eq) &&
+       JSON.stringify(twice.song.song[0].parts) === JSON.stringify(once.song.song[0].parts) &&
+       JSON.stringify(twice.song.buses) === JSON.stringify(once.song.buses),
+       "the strip EQ is not stable across a save/load round trip");
   }
 }
 

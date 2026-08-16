@@ -59,12 +59,13 @@
 // a gain and a panner, nothing else — plus the one budgeted exception below.
 import { GENRES, FX, MAX_FX, fxChain, fxMix, fxSendable, SENDS, LEVELS, PANS,
          RATES, SP, DRUMFILE, DRUMMIX, DRUMBUS, instrOf, BASSSYNTH,
-         partOf, chairKeys, resolvePartMix, faderDb } from "../ui/deps.js";
+         partOf, chairKeys, resolvePartMix, faderDb, EQ_BANDS,
+         resolveEq } from "../ui/deps.js";
 import { SONG, on } from "../ui/state.js";
 import { gid, stackOf, genreOf, kitOf } from "../ui/derive.js";
 import { ctx, masterIn, delBus, roomBus, verbFor, sendFor, kitFor, buildKitDesk,
          barSec, REV, SENDBUS, VERBSPEC, masterReport, sharedReport,
-         busReport } from "./graph.js";
+         busReport, buildEq } from "./graph.js";
 import { synthNodes, synthOut, clearRoutes, dropRoute, pruneSynths } from "./voices.js";
 
 // the twelve lanes, for the __nuMix vocabulary line. The strips themselves are
@@ -79,24 +80,28 @@ const LANEIDS = Object.keys(DRUMFILE);
 // test/browser/nukernel-drums.test.js asserts this ceiling on a composed
 // nine-plus-section song.
 //
-// PER CHANNEL, 24, and every term is a countable fact about the vocabulary. A
+// PER CHANNEL, 27, and every term is a countable fact about the vocabulary. A
 // section's own strip is nine nodes — input, pan, level, dry trim, reverb send,
-// echo send, kit gate, room gate, room trim — plus at most three automation
-// nodes (cutoff/hpf/level are the only three the compiler builds), at most
-// MAX_FX=3 character sends, and one panner per pitched chair with eight the
-// deepest stack the page can deal. That is 23; the extra is the collision
-// carve. MEASURED on the composed eleven-section Beatles song: 8 to 13.
-// PER PART, 8: pan, level, mute gate, dry trim, two sends and up to three
-// character sends. Six or seven in practice, and a part only exists at all
-// once somebody has mixed it.
-// THE SHARED RACK, 220: the master chain (30 fully dressed) + three convolution
+// echo send, kit gate, room gate, room trim — plus at most three strip-EQ
+// biquads (fields.js EQ_BANDS, built only when the box's `eq` is non-flat),
+// at most three automation nodes (cutoff/hpf/level are the only three the
+// compiler builds), at most MAX_FX=3 character sends, and one panner per
+// pitched chair with eight the deepest stack the page can deal. That is 26;
+// the extra is the collision carve. MEASURED on the composed eleven-section
+// Beatles song: 8 to 13.
+// PER PART, 11: pan, level, mute gate, dry trim, two sends, up to three
+// character sends and up to three EQ biquads. Six or seven in practice, and a
+// part only exists at all once somebody has mixed it.
+// THE SHARED RACK, 230: the master chain (30 fully dressed) + three convolution
 // reverbs (4 each) + the echo (9 — the rack's return gain is the ninth, the
 // one shared node the board round added) + the drum room (26) + the kit desk (40 with
 // all twelve lanes armed) + one bus per character effect, eleven of them at
-// 8–18 nodes apiece. NOTHING IN THE SONG CAN MAKE IT GROW — that is the claim
-// the whole round rests on, and it is why the ceiling is flat rather than
-// per-section. Measured on the same song: 95.
-export const BUDGET = { chan: 24, part: 8, shared: 220 };
+// 8–18 nodes apiece — plus at most TEN return-EQ biquads (a lo/hi pair per
+// verb, echo and room, built only when the song's `buses` asks). Nothing else
+// in the song can make it grow — that is the claim the whole round rests on,
+// and it is why the ceiling is flat rather than per-section. Measured on the
+// same song: 95.
+export const BUDGET = { chan: 27, part: 11, shared: 230 };
 
 /* ---------- a section's mixer channel ---------- */
 // KEYED BY THE BOX'S IDENTITY, not by its spec. Channels were shared by
@@ -210,9 +215,9 @@ function partSpecs(sec, roster) {
     const m = resolvePartMix(P[k]);
     const mute = m.mute || (solo && !m.solo);
     if (!mute && !m.fx.length && !m.rev && !m.del && m.lvl === 1 && m.pan === 0 &&
-        m.fader === 0) continue;
+        m.fader === 0 && !m.eq) continue;
     out.push({ key: k, fx: m.fx, rev: m.rev, del: m.del, lvl: m.lvl, pan: m.pan,
-               fader: m.fader, mute });
+               fader: m.fader, eq: m.eq, mute });
   }
   return out;
 }
@@ -244,6 +249,9 @@ export function chanSpec(sec) {
     lvl: +((sec.lvl ? LEVELS[sec.lvl] : 1) *
            Math.pow(10, faderDb(sec.fader) / 20)).toFixed(4),
     pan: sec.pan ? PANS[sec.pan] : 0,
+    // the section strip's EQ, resolved here for the reason lvl is: null (flat)
+    // is buildChannel's instruction to build zero filter nodes
+    eq: resolveEq(sec.eq),
     mot: sec.mot || null,
     auto: compileAuto(sec, g),
     // the desk under the section strip. It rides IN the spec like the roster
@@ -261,6 +269,18 @@ export function buildChannel(c, spec, env) {
   let node = input;
   const nodes = [input];
   const chain = n => { node.connect(n); node = n; nodes.push(n); };
+  // THE STRIP EQ FIRST — the desk's own order: the tone block sits at the top
+  // of an SSL strip, so the inserts, the sends and the automation all hear the
+  // corrected signal. Built ONLY when the spec is non-flat (graph.buildEq, the
+  // registry's own bands): a box that never touched an EQ knob builds these
+  // zero nodes and the chain below is byte-identical to the day before the EQ
+  // existed. Absolute, not automated — a knob move is a spec change and the
+  // channel rebuilds; the board's drag eases the live gain params directly.
+  let secEq = null;
+  if (spec.eq) {
+    secEq = buildEq(c, EQ_BANDS, spec.eq);
+    node.connect(secEq.input); node = secEq.output; nodes.push(...secEq.nodes);
+  }
   // AUTOMATION NODES first, so a filter sweep works the section BEFORE its
   // effects rather than after them — closing down onto a reverb tail is a
   // fade, closing down into one is a door shutting. Only the nodes the
@@ -360,6 +380,14 @@ export function buildChannel(c, spec, env) {
     const px = spend(p.fx);
     let pin = ppan;
     if (px.rack) { px.rack.output.connect(ppan); pin = px.rack.input; pnodes.push(...(px.rack.nodes || [])); }
+    // the part's STRIP EQ, at the very front for the section strip's reason:
+    // everything on the strip — rack, pan, level, every send — hears the tone
+    // block. Zero nodes when flat, the same law.
+    let peq = null;
+    if (p.eq) {
+      peq = buildEq(c, EQ_BANDS, p.eq);
+      peq.output.connect(pin); pin = peq.input; pnodes.push(...peq.nodes);
+    }
     const plvl = c.createGain();
     plvl.gain.value = +(p.lvl * Math.pow(10, (p.fader || 0) / 20)).toFixed(4);
     pchain(plvl);
@@ -381,7 +409,8 @@ export function buildChannel(c, spec, env) {
     }
     nodes.push(...pnodes);
     parts.set(p.key, { in: pin, pan: ppan, lvl: plvl, gate: pmute, rs: prs, ds: pds,
-                       fs: pfs, rack: !!px.rack, stages: px.stages, spec: p });
+                       fs: pfs, rack: !!px.rack, stages: px.stages, spec: p,
+                       eq: peq ? peq.by : null });
   }
   // WHERE A SOURCE LANDS: its part's bus if that part has one, the section
   // input if it does not. Every player, route and fallback on the page asks
@@ -609,6 +638,7 @@ export function buildChannel(c, spec, env) {
            voiceBus, voices, droom, kitGate, roomGate, desk, ownDesk,
            player, autos, autoParam, fs, dryTrim, rack: !!sx.rack,
            parts, partIn, voiceIn, synthIn, partPlayer,
+           eq: secEq ? secEq.by : null,
            motKind: spec.mot, oscs, nodes, spec, stages, rs, ds, lvl };
   // the desk holds the gate ledger, so focusKit needs no second registry and a
   // retired channel's gates stop being written to (an open gate on a dead
@@ -669,6 +699,10 @@ export function channelFor(sec, retireAt) {
 // declared chain and the built chain are two different things — buildInsertNodes
 // reports what it could not build in `skipped`, and an effect that silently
 // passed dry is exactly the failure a screenshot cannot see.
+// a strip's built EQ, read off the biquads themselves — null is FLAT, which is
+// also the claim that no filter node exists at all (the zero-nodes law, visible)
+const eqRead = by => (by ? Object.fromEntries(Object.entries(by)
+  .map(([k, f]) => [k, +f.gain.value.toFixed(1)])) : null);
 window.__nuMix = () => ({
   // THE MASTER BUS. This key used to be the bare boolean `!!masterIn` — "is
   // there a master at all" — and it still answers that question, because
@@ -726,6 +760,7 @@ window.__nuMix = () => ({
     // the declaration, and a buildChannel that left the gain at 1 kept every
     // gate green while the composed arc went flat
     level: +c.lvl.gain.value.toFixed(3), pan: c.spec.pan, verb: c.spec.verb,
+    eq: eqRead(c.eq),                  // ADDED key: the section strip's tone
     key: c.key, auto: c.autos ? c.autos.length : 0,
     // ADDED KEYS, never a reshape: the drum lanes and the pitched chairs that
     // have actually SOUNDED on this channel, read off the nodes themselves.
@@ -767,6 +802,7 @@ window.__nuMix = () => ({
       sends: P.fs.map(s => ({ key: s.key, amt: +s.gain.gain.value.toFixed(3) })),
       rev: +P.rs.gain.value.toFixed(3), echo: +P.ds.gain.value.toFixed(3),
       level: +P.lvl.gain.value.toFixed(3), pan: +P.pan.pan.value.toFixed(3),
+      eq: eqRead(P.eq),
       muted: P.gate.gain.value < 0.5 })),
   })),
 });

@@ -410,6 +410,49 @@
                         counter: "counter", pad: "pad", stab: "stab",
                         drone: "drone" };
 
+  /* ---------- THE STRIP EQ ---------- */
+  // "Every strip earns its tone." Three fixed bands on every channel strip —
+  // an SSL-style corrective EQ, not a parametric: the FREQUENCIES are the
+  // desk's, silkscreened once here, and the knob only turns GAIN. Fixed points
+  // chosen around this page's own spectrum: the low shelf under the bass's
+  // fundamental register, the bell at the 1 kHz presence band (well clear of
+  // the mixer's 450 Hz mud carve), the high shelf below the master's
+  // unconditional 16 kHz ceiling so it dims air the ceiling still passes.
+  //
+  // ONE BAND LIST, three readers: the board draws a knob per entry, song.js
+  // validates a save's band keys against it, and audio builds one biquad per
+  // entry (graph.js buildEq) — `type`/`freq`/`q` go straight onto the node, so
+  // a band added here is a knob, a field and a filter with no second table.
+  const EQ_BANDS = [
+    { key: "lo",  label: "lo",  type: "lowshelf",  freq: 120 },
+    { key: "mid", label: "mid", type: "peaking",   freq: 1000, q: 0.9 },
+    { key: "hi",  label: "hi",  type: "highshelf", freq: 7200 },
+  ];
+  // the RETURNS get the simpler pair: a bus is a treatment already, and what a
+  // return needs is "darker / brighter", never a presence bell. Same objects,
+  // deliberately — a bus's `lo` is the strip's `lo`, one frequency per word.
+  const BUS_EQ_BANDS = [EQ_BANDS[0], EQ_BANDS[2]];
+  // the fader's own numeric policy at the EQ's own range: finite clamps to
+  // ±12 dB at 0.1 dB (no float noise in a save), garbage resolves to 0 — and
+  // 0 is FLAT, which normalizes away, so absent stays the one spelling of it
+  const EQ_RANGE = 12;
+  const eqDb = v => Number.isFinite(v)
+    ? Math.max(-EQ_RANGE, Math.min(EQ_RANGE, Math.round(v * 10) / 10)) : 0;
+  // ONE SPEC -> BUILDER VALUES, resolvePartMix's law: null when the strip is
+  // FLAT — every band 0, unknown, or absent — which is the builder's
+  // instruction to build ZERO BiquadFilter nodes (a song that never touched
+  // the EQ produces a byte-identical graph). Non-flat resolves EVERY band of
+  // the list (0 for the untouched ones), so the built chain's params are total.
+  function resolveEq(e, bands) {
+    const B = bands || EQ_BANDS;
+    const g = e && typeof e === "object" ? e : {};
+    const out = {};
+    let any = false;
+    for (const b of B) { const v = eqDb(g[b.key]); out[b.key] = v; if (v) any = true; }
+    return any ? out : null;
+  }
+  const eqIsFlat = (e, bands) => resolveEq(e, bands) == null;
+
   /* ---------- THE PER-PART MIX ---------- */
   // "Not every track should go through the effects." Until now fx/rev/echo/
   // lvl/pan lived on the BOX, so one insert chain treated every voice in the
@@ -488,6 +531,11 @@
     // long-throw fader is not a detented list; clamped ±24/12 and kept at
     // 0.1 dB so the save never carries float noise. Absent = 0 dB = today.
     { key: "fader", type: "num", min: -24, max: 12, default: null },
+    // THE STRIP EQ (EQ_BANDS above): a band -> dB map, absolute rather than
+    // automated — tone is set and left, so there is no offset dance and no
+    // per-frame follower. Flat (every band 0) normalizes to absent, and absent
+    // builds zero filter nodes (resolveEq's law).
+    { key: "eq", type: "eq", bands: EQ_BANDS, default: null },
   ];
   const PARTMIXBY = {};
   for (const f of PARTMIX) PARTMIXBY[f.key] = f;
@@ -518,6 +566,7 @@
       mute: !!g.mute,
       solo: !!g.solo,
       fader: faderDb(g.fader),          // dB offset OVER lvl; 0 when unset
+      eq: resolveEq(g.eq),              // null = flat = build no filter at all
     };
   }
 
@@ -666,16 +715,20 @@
   // one row per shared bus, each row listing its rack knobs — the registry the
   // board and the rack draw from, so no surface carries a hand-written label
   // table (the FIELDS law, extended to the rack)
+  // …and each return carries the SIMPLER EQ PAIR (`eq`, BUS_EQ_BANDS above):
+  // stored as `buses.<bus>.eq = { lo, hi }` in dB beside the knobs, drawn on
+  // the bus STRIP rather than in the rack row, and — the same law as a part's
+  // — flat builds not one filter node on the return.
   const BUSES = [
-    { bus: "rev",  label: "reverb", feed: "fed by the reverb sends",
+    { bus: "rev",  label: "reverb", feed: "fed by the reverb sends", eq: BUS_EQ_BANDS,
       knobs: [
         { key: "ret",  label: "return", table: BUSRETS, labels: BUSRETLABEL, default: null } ] },
-    { bus: "echo", label: "echo",   feed: "ping-pong · fed by the echo sends",
+    { bus: "echo", label: "echo",   feed: "ping-pong · fed by the echo sends", eq: BUS_EQ_BANDS,
       knobs: [
         { key: "ret",  label: "return", table: BUSRETS, labels: BUSRETLABEL, default: null },
         { key: "fb",   label: "repeats", table: EFBS,   labels: EFBLABEL,    default: null },
         { key: "tone", label: "tone",   table: ETONES,  labels: ETONELABEL,  default: null } ] },
-    { bus: "room", label: "drum room", feed: "fed by the kit's lane sends",
+    { bus: "room", label: "drum room", feed: "fed by the kit's lane sends", eq: BUS_EQ_BANDS,
       knobs: [
         { key: "ret",  label: "return", table: BUSRETS, labels: BUSRETLABEL, default: null } ] },
   ];
@@ -696,6 +749,7 @@
         const val = pick(k.table, e[k.key]);
         r[k.key] = k.key === "ret" ? (val == null ? 1 : val) : val;
       }
+      r.eq = resolveEq(e.eq, b.eq);      // null = the return as built, no nodes
       out[b.bus] = r;
     }
     return out;
@@ -706,8 +760,9 @@
     BUSES.every(b => {
       const e = v[b.bus];
       return e == null || typeof e !== "object" ||
-        b.knobs.every(k => e[k.key] == null ||
-          !Object.prototype.hasOwnProperty.call(k.table, String(e[k.key])));
+        (b.knobs.every(k => e[k.key] == null ||
+           !Object.prototype.hasOwnProperty.call(k.table, String(e[k.key]))) &&
+         eqIsFlat(e.eq, b.eq));
     });
 
   // THE REGISTRY ROW, same shape as PARTMIX so one surface can draw it: `label`
@@ -942,6 +997,10 @@
     // composer's arc and a level automation all keep meaning what they meant.
     { key: "fader",   scope: "box",   type: "num", min: -24, max: 12,
       tab: "fx",     group: "fader",                     default: null },
+    // the SECTION strip's EQ (EQ_BANDS): the same three knobs the part strips
+    // carry, on the box's own field — the PARTMIX `eq` note has the law
+    { key: "eq",      scope: "box",   type: "eq", bands: EQ_BANDS,
+      tab: "fx",     group: "strip eq",                  default: null },
   ];
   const FIELD = {};
   for (const f of FIELDS) FIELD[f.key] = f;
@@ -959,6 +1018,7 @@
                 PARTNAMES, PARTLABEL, PARTMIX, PARTMIXBY, MAX_CHAIRS,
                 readPartKey, okPartKey, partChairLabel, chairKeys, resolvePartMix,
                 faderDb,
+                EQ_BANDS, BUS_EQ_BANDS, EQ_RANGE, eqDb, resolveEq, eqIsFlat,
                 DRIVES, DRIVELABEL, GLUES, GLUELABEL, TAPES, TAPELABEL,
                 SPACES, SPACELABEL, WIDTHS, WIDTHLABEL, TILTS, TILTLABEL,
                 CEILINGS, CEILINGLABEL, MASTER, MASTERBY,

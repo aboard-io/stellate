@@ -39,6 +39,7 @@
 import { GENRES, FX, MAX_FX, SENDS, SENDLABEL, DRUMKITS, PARTMIX,
          partChairLabel, BASS_INSTR, BASSSYNTH, LEVELS, faderDb,
          resolvePartMix, MASTER_FIELDS, BUS_FIELDS,
+         EQ_BANDS, EQ_RANGE, eqDb,
          VERBS, DTIMES, DTLABEL } from "./deps.js";
 import { curSection, commit, on, emit, MASTER, setMaster, BUSES, setBuses,
          vol, setVol } from "./state.js";
@@ -67,7 +68,8 @@ const WIDE = 900;
 // The five PARTMIX enum fields, in registry order — same contract as the old
 // table's columns: adding a control to the desk registry adds a key to every
 // strip and nothing else.
-const COLS = PARTMIX.filter(f => f.type !== "flag" && f.type !== "num");
+const COLS = PARTMIX.filter(f => f.type !== "flag" && f.type !== "num" &&
+                                 f.type !== "eq");
 // …PLUS THE TWO SECTION-ONLY FIELDS the palette's fx tab used to carry: which
 // ROOM the reverb send lands in (sec.verb) and the echo's subdivision
 // (sec.dtime). They are box fields with no part twin, so only the SECTION
@@ -241,6 +243,122 @@ function easeLive(sec, key, off) {
   } catch (e) {}
 }
 
+/* ---------- the strip EQ ---------- */
+// ONE READER, ONE WRITER, the field law: a band is read off the entry's `eq`
+// map and written back through writeField, with zero (flat) deleted so absent
+// stays the one spelling — song.js normalizes a save identically.
+const eqBand = (sec, key, band) => {
+  const e = entryOf(sec, key);
+  return e && e.eq && e.eq[band] != null ? e.eq[band] : null;
+};
+function writeEqBand(sec, key, band, db) {
+  const e = entryOf(sec, key);
+  const cur = { ...((e && e.eq) || {}) };
+  const v = db == null ? 0 : eqDb(db);
+  if (v) cur[band] = v; else delete cur[band];
+  writeField(sec, key, "eq", Object.keys(cur).length ? cur : null);
+}
+// ease the drag onto the LIVE biquad so the hand hears the tone move before
+// the commit rebuilds the channel — easeLive's law for the fader, per band.
+// A flat strip has no node to ease (zero-nodes law); the commit builds one.
+function easeEqLive(sec, key, band, db) {
+  const c = CHAN.get(sec);
+  if (!c) return;
+  const by = key == null ? c.eq
+    : (() => { const P = c.parts.get(key); return P && P.eq; })();
+  const f = by && by[band];
+  if (!f) return;
+  try {
+    const t = c.input.context.currentTime;
+    f.gain.cancelScheduledValues(t); f.gain.setTargetAtTime(db || 0, t, 0.02);
+  } catch (e) {}
+}
+// short dB for a strip-sized readout: "+4", "-2.5", "0" dim when flat
+const fmtEq = v => (v > 0 ? "+" : "") +
+  (Math.round(v * 10) % 10 ? v.toFixed(1) : String(Math.round(v)));
+
+// ---- the tone knob: one band, ±12 dB, flat = absent ----
+// The rack knob's idiom at strip size, over dB rather than detents:
+// role=slider, arrows step 1 dB (PageUp/Down 3), Home is FLAT (absent, the
+// one spelling), drag rotates at 0.15 dB/px with the live param eased under
+// the hand, a tap opens the pop-up fader on whole dB, dblclick clears.
+// data-part/data-bus/data-band/data-value are the gate's hooks.
+function buildEqKnob({ band, legend, label, part, bus, get, drag, write }) {
+  const cell = mk("span", "eqcell");
+  const leg = mk("i", "eqlab", legend);
+  const b = mk("button", "eqk");
+  b.type = "button";
+  b.dataset.band = band;
+  if (part != null) b.dataset.part = part;
+  if (bus != null) b.dataset.bus = bus;
+  b.setAttribute("role", "slider");
+  b.setAttribute("aria-label", label);
+  b.setAttribute("aria-valuemin", String(-EQ_RANGE));
+  b.setAttribute("aria-valuemax", String(EQ_RANGE));
+  const face = mk("span", "eqface");
+  face.append(mk("i", "kmark"));
+  b.append(face);
+  const val = mk("i", "eqv", "0");
+  cell.append(leg, b, val);
+  const show = (db, set) => {
+    face.style.setProperty("--ka", (db / EQ_RANGE) * 135 + "deg");
+    val.textContent = fmtEq(db);
+    b.classList.toggle("set", set);
+    val.classList.toggle("set", set);
+  };
+  const paint = () => {
+    const v = get();
+    show(v == null ? 0 : v, v != null);
+    b.dataset.value = v == null ? "" : String(v);
+    b.setAttribute("aria-valuenow", String(v == null ? 0 : v));
+    b.setAttribute("aria-valuetext", v == null ? "flat" : fmtEq(v) + " dB");
+  };
+  // zero IS flat, so a write that lands on 0 stores absent — the knob has no
+  // second spelling of the default to offer
+  const commitDb = x => { write(x != null && eqDb(x) ? eqDb(x) : null); buzz(4); };
+  b.addEventListener("keydown", ev => {
+    const v = get() == null ? 0 : get();
+    if (ev.key === "ArrowUp" || ev.key === "ArrowRight") commitDb(v + 1);
+    else if (ev.key === "ArrowDown" || ev.key === "ArrowLeft") commitDb(v - 1);
+    else if (ev.key === "PageUp") commitDb(v + 3);
+    else if (ev.key === "PageDown") commitDb(v - 3);
+    else if (ev.key === "Home") commitDb(null);
+    else return;
+    ev.preventDefault();
+  });
+  let d = null;
+  b.addEventListener("pointerdown", ev => {
+    if (ev.button) return;
+    ev.preventDefault();
+    b.focus({ preventScroll: true });
+    try { b.setPointerCapture(ev.pointerId); } catch (e) {}
+    const v = get();
+    d = { y0: ev.clientY, v0: v == null ? 0 : v, cur: v == null ? 0 : v, moved: false };
+  });
+  b.addEventListener("pointermove", ev => {
+    if (!d) return;
+    const dy = d.y0 - ev.clientY;
+    if (!d.moved && Math.abs(dy) < 3) return;
+    d.moved = true;
+    d.cur = eqDb(d.v0 + dy * 0.15);
+    drag(d.cur);
+    show(d.cur, true);
+  });
+  b.addEventListener("pointerup", () => {
+    if (!d) return;
+    if (d.moved) commitDb(d.cur);
+    else openFader({ anchor: b, label, min: -EQ_RANGE, max: EQ_RANGE,
+                     get: () => Math.round(get() || 0),
+                     set: x => commitDb(x),
+                     fmt: x => (x ? fmtEq(x) + " dB" : "flat") });
+    d = null;
+  });
+  b.addEventListener("pointercancel", () => { d = null; paint(); });
+  b.addEventListener("dblclick", () => commitDb(null));
+  paint();
+  return { cell, paint };
+}
+
 /* ---------- the board ---------- */
 // BUILT ONCE PER TRACK LIST, then only its values change — the palette's law.
 // Two wells inside #mixtbl: the channel strips (rebuilt when the roster
@@ -354,6 +472,20 @@ function build() {
       cells[f.key] = b;
     }
     tr.append(vals);
+    // ---- the tone block: LO / MID / HI over the M/S keys, the desk's order.
+    // Always present, flat (dim) by default — a strip that could hide its EQ
+    // would be a strip you have to open to trust.
+    const eqrow = mk("div", "eqrow");
+    eqrow.setAttribute("role", "cell");
+    const eqs = EQ_BANDS.map(bd => buildEqKnob({
+      band: bd.key, legend: bd.label, part: row.key == null ? "" : row.key,
+      label: row.label + " " + bd.label + " EQ",
+      get: () => eqBand(curSection(), row.key, bd.key),
+      drag: db => easeEqLive(curSection(), row.key, bd.key, db),
+      write: db => writeEqBand(curSection(), row.key, bd.key, db),
+    }));
+    for (const e of eqs) eqrow.append(e.cell);
+    tr.append(eqrow);
     // ---- M and S: the two that latch rather than open ----
     const ms = mk("div", "mms");
     ms.setAttribute("role", "cell");
@@ -381,7 +513,7 @@ function build() {
     });
     tr.append(fader.wrap);
     chanWell.append(tr);
-    return { tr, num, pn, ps, cells, keys, fader };
+    return { tr, num, pn, ps, cells, keys, fader, eqs };
   });
 }
 
@@ -428,6 +560,7 @@ function patch() {
       b.setAttribute("aria-label", (on2 ? "un-" : "") + k + " " + row.label);
     }
     R.fader.paint(sec);
+    for (const e of R.eqs) e.paint();
   });
   patchPop();
 }
@@ -570,6 +703,27 @@ const busWrite = (bus, key, val) => {
   commit("buses");
 };
 const busVal = (bus, key) => (BUSES && BUSES[bus] && BUSES[bus][key]) || "";
+// the return's EQ pair rides the same song map (`buses.<bus>.eq`, fields.js
+// BUS_EQ_BANDS). Unlike a channel band this needs no separate ease path: a
+// bus EQ change is param writes on the shared rack (graph.applyBuses), so the
+// drag writes straight through — the dedup below keeps the move-storm quiet.
+const busEqBand = (bus, band) => {
+  const e = BUSES && BUSES[bus] && BUSES[bus].eq;
+  return e && e[band] != null ? e[band] : null;
+};
+const busEqWrite = (bus, band, db) => {
+  const v = db == null ? 0 : eqDb(db);
+  if ((busEqBand(bus, band) || 0) === v) return;
+  const next = JSON.parse(JSON.stringify(BUSES || {}));
+  const e = next[bus] || (next[bus] = {});
+  const eq = { ...(e.eq || {}) };
+  if (v) eq[band] = v; else delete eq[band];
+  if (Object.keys(eq).length) e.eq = eq; else delete e.eq;
+  if (!Object.keys(e).length) delete next[bus];
+  setBuses(next);
+  initAudio();                             // a knob move is a user gesture
+  commit("buses");
+};
 
 // a detented vertical fader over one knob row's table: positions ordered by
 // value with the empty detent ("as built") sitting at its own value slot
@@ -637,12 +791,25 @@ function buildBusStrip(row) {
   const state = mk("i", "mfeed", "");
   head.append(pn, ps, state);
   tr.append(head);
+  // the return's tone pair — LO / HI, the simpler strip a bus earns
+  const eqrow = mk("div", "eqrow");
+  eqrow.setAttribute("role", "cell");
+  const eqs = (row.eq || []).map(bd => buildEqKnob({
+    band: bd.key, legend: bd.label, bus: row.bus,
+    label: row.label + " return " + bd.label + " EQ",
+    get: () => busEqBand(row.bus, bd.key),
+    drag: db => busEqWrite(row.bus, bd.key, db),
+    write: db => busEqWrite(row.bus, bd.key, db),
+  }));
+  for (const e of eqs) eqrow.append(e.cell);
+  tr.append(eqrow);
   const ret = row.knobs.find(k => k.key === "ret");
   const fader = buildBusFader(row.bus, ret);
   tr.append(fader.wrap);
   busWell.append(tr);
   busRefs.push({ paint() {
     fader.paint();
+    for (const e of eqs) e.paint();
     // the built state, read off the nodes (graph.busReport): which returns
     // exist and where they actually sit — dim silence before initAudio
     const rep = busReport();

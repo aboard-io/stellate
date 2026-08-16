@@ -24,7 +24,8 @@
   const NG = (typeof module !== "undefined" && module.exports)
     ? require("./genres.js") : root.NuGenres;
   const { FIELDS, OPS, FX, MAX_FX, NSLOTS, MAX_LEN, MAX_NUDGE, VOX,
-          AUTOPARAMS, PERIODS, PARTMIX, okPartKey, MASTER, BUSES, faderDb } = NF;
+          AUTOPARAMS, PERIODS, PARTMIX, okPartKey, MASTER, BUSES, faderDb,
+          eqDb } = NF;
   const { GENRES } = NG;
 
   // The CURRENT schema version. v:2 = v:1 with the box field `del` renamed to
@@ -168,6 +169,24 @@
     const filterList = (f, v) => (v || []).filter(k =>
       Object.prototype.hasOwnProperty.call(f.table, k))
       .slice(0, f.max || Infinity);
+    // THE STRIP EQ, one door for its three homes (box, part entry, bus entry):
+    // band KEYS filter against the given list (a band the strip lacks is an
+    // obsolete chip, dropped), band VALUES take the fader's own policy —
+    // garbage rejects, a wild number clamps (fields.js eqDb), and zero
+    // normalizes away — so FLAT keeps exactly one spelling: absent.
+    const cleanEq = (v, bands, path) => {
+      if (typeof v !== "object" || Array.isArray(v)) {
+        err(path, v, "a band -> dB map"); return null;
+      }
+      const o = {};
+      for (const b of bands) {
+        const x = v[b.key];
+        if (x == null) continue;
+        if (!Number.isFinite(x)) err(path + "." + b.key, x, "-12..12 dB");
+        else { const n = eqDb(x); if (n) o[b.key] = n; }
+      }
+      return Object.keys(o).length ? o : null;
+    };
 
     if (!Array.isArray(s.song) || !s.song.length)
       err("song", typeof s.song, "at least one box");
@@ -277,6 +296,9 @@
                 // and 0 normalizes away, so "no offset" keeps one spelling
                 if (!Number.isFinite(v)) err(ep + "." + f.key, v, f.min + ".." + f.max);
                 else { const n = faderDb(v); if (n) o[f.key] = n; }
+              } else if (f.type === "eq") {
+                const n = cleanEq(v, f.bands, ep + "." + f.key);
+                if (n) o[f.key] = n;
               } else if (!okEnum(f, v)) {
                 err(ep + "." + f.key, v, "one of " + Object.keys(f.table).join("|"));
               } else o[f.key] = v;
@@ -289,6 +311,11 @@
       for (const f of FIELDS) {
         if (f.type === "list" || f.type === "int" || f.type === "vox") continue;
         if (f.type === "parts") continue;            // the map above, not an enum
+        if (f.type === "eq") {                       // the section strip's EQ
+          if (b[f.key] == null) { b[f.key] = null; continue; }
+          b[f.key] = cleanEq(b[f.key], f.bands, at + "." + f.key);
+          continue;
+        }
         if (f.type === "num") {                      // the box fader: same policy
           const v = b[f.key];                        // as the part one above
           if (v == null) { b[f.key] = null; continue; }
@@ -374,6 +401,11 @@
               err("buses." + b.bus + "." + k.key, v,
                   "one of " + Object.keys(k.table).join("|"));
             else o[k.key] = v;
+          }
+          // the return's EQ pair, the strip law at the bus's own band list
+          if (e.eq != null) {
+            const n = cleanEq(e.eq, b.eq, "buses." + b.bus + ".eq");
+            if (n) o.eq = n;
           }
           if (Object.keys(o).length) clean[b.bus] = o;
         }

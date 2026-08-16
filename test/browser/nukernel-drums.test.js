@@ -373,6 +373,63 @@ async function partProbe(page) {
              sClean: strip(sClean), sTreat: strip(sTreat), sB: strip(sB), sAB: strip(sAB) };
   });
 }
+// ---- (D6) THE STRIP EQ, AS SOUND AND AS NODES -----------------------------
+// The unit gate (§37d) proves the registry, the resolvers and the loader; what
+// only a render can prove is the two ends of the audio claim: a +12 dB low
+// shelf on the BASS part actually changes the rendered bytes, and a flat spec
+// — null, all-zero, either home — builds ZERO extra nodes and renders
+// byte-identical to the pre-change graph. Same offline discipline as
+// partProbe: the shipping chanSpec/buildChannel, one bass note (MIDI 36, whose
+// fundamental sits square under the 120 Hz shelf), deterministic, and the node
+// count is the channel's own ledger (chan.nodes — the list retireChannel will
+// one day disconnect), not a model of it.
+async function eqProbe(page) {
+  return page.evaluate(async () => {
+    const [gm, mx, vx, dp, stm] = await Promise.all([
+      import("/nukernel/audio/graph.js"), import("/nukernel/audio/mixer.js"),
+      import("/nukernel/audio/voices.js"), import("/nukernel/ui/deps.js"),
+      import("/nukernel/ui/state.js")]);
+    const sec = stm.SONG.find(s => mx.partKeysOf(s).includes("bass"));
+    if (!sec) return { err: "no box in the composed song carries a bass address" };
+    const SR = 44100, AT = 0.05;
+    const render = async (eq, parts) => {
+      const keep = { eq: sec.eq, parts: sec.parts };
+      sec.eq = eq; sec.parts = parts;
+      const spec = { ...mx.chanSpec(sec), auto: [], mot: null };
+      sec.eq = keep.eq; sec.parts = keep.parts;     // leave the box as found
+      const octx = new OfflineAudioContext(2, SR, SR);
+      const master = gm.buildMasterChain(octx);
+      const env = { master: master.input, verb: () => master.input,
+                    echoIn: master.input, room: null };
+      const chan = mx.buildChannel(octx, spec, env);
+      const played = vx.playSampled(dp.BASS_INSTR, 36, AT, 0.6, 9, 1.25, chan,
+                                    dp.STRIPS.bass, null, "bass") ? 1 : 0;
+      const out = await octx.startRendering();
+      const L = out.getChannelData(0), R = out.getChannelData(1);
+      const mono = new Float32Array(L.length);
+      let e = 0;
+      for (let i = 0; i < L.length; i++) { mono[i] = (L[i] + R[i]) / 2; e += mono[i] * mono[i]; }
+      return { mono, energy: e, played, nodes: chan.nodes.length,
+               secEq: chan.eq ? Object.keys(chan.eq).length : 0,
+               parts: [...chan.parts.keys()] };
+    };
+    const base = await render(null, null);
+    if (!base.played) return { err: "the bass did not render" };
+    // every flat spelling at once: an all-zero section eq AND an all-zero part
+    // eq must be the base graph, node for node and byte for byte
+    const flat = await render({ lo: 0, mid: 0, hi: 0 }, { bass: { eq: { lo: 0 } } });
+    const lofted = await render(null, { bass: { eq: { lo: 12 } } });
+    const secEq = await render({ hi: -12 }, null);
+    let flatd = 0, bassd = 0;
+    for (let i = 0; i < base.mono.length; i++) {
+      flatd = Math.max(flatd, Math.abs(base.mono[i] - flat.mono[i]));
+      bassd = Math.max(bassd, Math.abs(base.mono[i] - lofted.mono[i]));
+    }
+    const strip = o => ({ energy: o.energy, nodes: o.nodes, secEq: o.secEq, parts: o.parts });
+    return { flatd, bassd, base: strip(base), flat: strip(flat),
+             lofted: strip(lofted), secEq: strip(secEq) };
+  });
+}
 // ...AND THE LIVE CHANNEL BUILDS THE SAME DESK. The offline half proves the
 // treatment; this proves the graph the ear is actually on carries it, because
 // the two are the same builder only as long as nothing between the box and
@@ -819,6 +876,55 @@ async function deskUI(page) {
   out.emptied = await page.evaluate(() => import("/nukernel/ui/state.js")
     .then((s) => s.SONG[0].parts));
   out.rows = rows; out.parts = parts; out.partKey = partKey;
+  // ---- THE TONE KNOBS (the strip-EQ round). Same discipline as everything
+  // above: every claim is read off the STORE after a real gesture, and the
+  // knob count is read against the registry's own arithmetic — three bands
+  // per channel strip, the lo/hi pair per fixed bus strip.
+  out.eqCounts = {
+    strip: await row.locator(".eqk").count(),
+    sec: await page.locator(".mrow.msec .eqk").count(),
+    bus: await page.locator(".bstrip:not(.mstr):not(.send) .eqk").count(),
+  };
+  // a DRAG writes the field: 40px up at 0.15 dB/px is exactly +6 dB
+  const lo = row.locator('.eqk[data-band="lo"]');
+  {
+    const bb = await lo.boundingBox();
+    const cx = bb.x + bb.width / 2, cy = bb.y + bb.height / 2;
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    await page.mouse.move(cx, cy - 40, { steps: 8 });
+    await page.mouse.up();
+  }
+  await page.waitForTimeout(150);
+  out.eqStored = await page.evaluate((k) => import("/nukernel/ui/state.js")
+    .then((s) => { const p = s.SONG[0].parts;
+                   return p && p[k] && p[k].eq ? p[k].eq.lo : null; }), partKey);
+  // a TAP opens the pop-up fader on the same band
+  await lo.click();
+  out.eqPop = await page.locator("#popfader:not([hidden])").count() === 1;
+  await page.keyboard.press("Escape");
+  // HOME is flat, and flat is ABSENT — the whole entry normalizes away
+  await lo.press("Home");
+  await page.waitForTimeout(150);
+  out.eqCleared = await page.evaluate(() => import("/nukernel/ui/state.js")
+    .then((s) => s.SONG[0].parts));
+  // …and a BUS knob writes the song's `buses` map the same way
+  const busLo = page.locator('.eqk[data-bus="rev"][data-band="lo"]');
+  {
+    const bb = await busLo.boundingBox();
+    const cx = bb.x + bb.width / 2, cy = bb.y + bb.height / 2;
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    await page.mouse.move(cx, cy - 40, { steps: 8 });
+    await page.mouse.up();
+  }
+  await page.waitForTimeout(150);
+  out.busEq = await page.evaluate(() => import("/nukernel/ui/state.js")
+    .then((s) => s.BUSES && s.BUSES.rev && s.BUSES.rev.eq ? s.BUSES.rev.eq.lo : null));
+  await busLo.press("Home");
+  await page.waitForTimeout(150);
+  out.busCleared = await page.evaluate(() => import("/nukernel/ui/state.js")
+    .then((s) => s.BUSES));
   return out;
 }
 
@@ -980,6 +1086,8 @@ async function pass(page, url) {
   // the desk, also on the wet page: it needs this song's instruments decoded,
   // and it must run before the dryroom navigation throws the song away
   const desk = await partProbe(page);
+  // the strip EQ, on the same decoded song, before anything renavigates
+  const eqp = await eqProbe(page);
   // the dynamics, on the same decoded song and before partsLive touches
   // `sec.parts` — it renders the chairs as the composer left them
   const vel = await velProbe(page);
@@ -1395,6 +1503,67 @@ async function pass(page, url) {
       fail(`clearing every chip left ${JSON.stringify(ui.emptied)} behind — absent must be ` +
            `the only spelling of a default, or an untouched box builds sub-busses`);
     else ok("clearing the chips leaves the box exactly as unmixed as it started");
+    // ---- the tone knobs (the strip-EQ round): present, writable, clearable
+    const eqc = ui.eqCounts || {};
+    if (eqc.strip !== 3 || eqc.sec !== 3 || eqc.bus !== 6)
+      fail(`the tone knobs are not on the board: ${eqc.strip} on a channel strip ` +
+           `(want 3), ${eqc.sec} on the section strip (want 3), ${eqc.bus} on the ` +
+           `bus strips (want 6 — the lo/hi pair on each of the three returns)`);
+    else ok("LO/MID/HI on every channel strip, LO/HI on the three returns");
+    if (ui.eqStored !== 6)
+      fail(`a 40px drag on the ${ui.partKey} LO knob stored ` +
+           `${JSON.stringify(ui.eqStored)} — the gesture is not reaching the field ` +
+           `(0.15 dB/px must land exactly +6)`);
+    else ok(`a drag writes the field: ${ui.partKey} eq.lo = +6 dB`);
+    if (!ui.eqPop) fail("a tap on a tone knob did not open the pop-up fader");
+    else ok("a tap on a tone knob opens the pop-up fader");
+    if (ui.eqCleared !== null)
+      fail(`Home on the knob left ${JSON.stringify(ui.eqCleared)} behind — flat must ` +
+           `normalize the entry away, or an untouched strip builds filters`);
+    else ok("Home is flat, and flat is absent — the entry normalizes away");
+    if (ui.busEq !== 6)
+      fail(`the reverb return's LO knob stored ${JSON.stringify(ui.busEq)} — the bus ` +
+           `pair is not reaching the song's buses map`);
+    else if (ui.busCleared !== null)
+      fail(`clearing the bus knob left ${JSON.stringify(ui.busCleared)} — busesIsDefault ` +
+           `is not treating a flat return EQ as the default`);
+    else ok("the bus pair writes buses.rev.eq and clears back to absent");
+  }
+
+  // ---- (D6) THE STRIP EQ, RENDERED -----------------------------------------
+  // The one render comparison the round budgets for: +12 dB of low shelf on
+  // the bass part moves the bytes, every flat spelling moves nothing — and the
+  // node ledger says the flat graph IS the pre-change graph.
+  {
+    if (eqp.err) fail(`the EQ probe could not run: ${eqp.err}`);
+    else {
+      console.log(`  strip EQ              : flat worst-sample delta ${eqp.flatd.toExponential(2)}, ` +
+                  `+12 lo on bass ${eqp.bassd.toExponential(2)}; nodes base ${eqp.base.nodes} ` +
+                  `flat ${eqp.flat.nodes} bass-eq ${eqp.lofted.nodes} sec-eq ${eqp.secEq.nodes}`);
+      if (eqp.flatd !== 0)
+        fail(`an all-zero EQ changed the render (worst sample ${eqp.flatd.toExponential(2)}) — ` +
+             `flat must be byte-identical to the day before the EQ existed`);
+      else ok("every flat spelling renders byte-identical to the pre-EQ graph");
+      if (eqp.flat.nodes !== eqp.base.nodes || eqp.flat.secEq !== 0 || eqp.flat.parts.length)
+        fail(`a flat spec built nodes: ${eqp.flat.nodes} vs ${eqp.base.nodes} base, ` +
+             `secEq ${eqp.flat.secEq}, parts [${eqp.flat.parts}] — zero BiquadFilters ` +
+             `when flat is the law`);
+      else ok(`a flat spec builds zero extra nodes (${eqp.base.nodes} = ${eqp.flat.nodes})`);
+      if (!(eqp.bassd > 1e-3))
+        fail(`+12 dB of low shelf on the bass moved the bytes by ` +
+             `${eqp.bassd.toExponential(2)} — the filter is built but the bass is ` +
+             `not going through it`);
+      else if (!(eqp.lofted.energy > eqp.base.energy))
+        fail(`+12 dB of low shelf LOWERED the energy (${eqp.lofted.energy.toFixed(4)} vs ` +
+             `${eqp.base.energy.toFixed(4)}) — the gain is on the wrong band`);
+      else ok(`+12 dB lo on the bass is audible in the bytes (worst sample ` +
+              `${eqp.bassd.toExponential(2)}, energy ×` +
+              `${(eqp.lofted.energy / eqp.base.energy).toFixed(2)})`);
+      if (eqp.secEq.nodes !== eqp.base.nodes + 3)
+        fail(`a section-strip EQ built ${eqp.secEq.nodes - eqp.base.nodes} nodes — ` +
+             `the three registry bands must build exactly three biquads`);
+      else ok("a non-flat section strip builds exactly its three biquads");
+    }
   }
 
   // ---- (F) THE NODE BUDGET ------------------------------------------------

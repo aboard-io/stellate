@@ -43,7 +43,8 @@
 // harder rather than looser: the song's globals go INTO buildMasterChain, so
 // the bounce gets them by construction and there is nowhere for a second
 // opinion about the master to live.
-import { resolveMaster, resolveBuses, FX, SP, DRUMBUS } from "../ui/deps.js";
+import { resolveMaster, resolveBuses, BUS_EQ_BANDS, FX, SP,
+         DRUMBUS } from "../ui/deps.js";
 import { bpm, vol, MASTER, BUSES, on, emit } from "../ui/state.js";
 // the per-lane mix rows, MERGED: instruments.js DRUMMIX for the sampled kits,
 // audio/machines.js MACHINEMIX riding it for the synthesized machines — one
@@ -183,6 +184,27 @@ function safetyCurve(knee) {
 }
 
 /* ---------- the context-parameterized builders ---------- */
+// THE STRIP EQ, one biquad per band off the registry's own list (fields.js
+// EQ_BANDS / BUS_EQ_BANDS — type/freq/q go straight onto the node, gain is the
+// resolved dB). Called ONLY with a non-flat spec: a flat strip builds ZERO
+// BiquadFilter nodes (resolveEq keys that on null), which is the
+// absent-is-today law at node level — a song that never touched an EQ knob
+// produces a byte-identical graph. Non-flat builds the WHOLE band list, the
+// untouched bands at 0 dB (a biquad at gain 0 is identity), so a live ease
+// always finds a param to move without a rebuild.
+export function buildEq(c, bands, spec) {
+  const by = {}, nodes = [];
+  let input = null, output = null;
+  for (const b of bands) {
+    const f = c.createBiquadFilter();
+    f.type = b.type; f.frequency.value = b.freq;
+    if (b.q) f.Q.value = b.q;
+    f.gain.value = (spec && spec[b.key]) || 0;
+    if (output) output.connect(f); else input = f;
+    output = f; nodes.push(f); by[b.key] = f;
+  }
+  return { input, output, nodes, by };
+}
 // THE MASTER CHAIN, live.js's numbers, plus the fx_bus stages fields.js MASTER
 // names. `out` is left at unity — the live init hangs the volume gain off it,
 // the offline bounce renders at full scale and lets the carrier element's own
@@ -454,9 +476,15 @@ export function buildEchoBus(c, dest) {
   dA.connect(lp); lp.connect(fbA); fbA.connect(dB);
   dB.connect(fbB); fbB.connect(dA);
   dA.connect(panL); dB.connect(panR);
-  panL.connect(ret); panR.connect(ret); ret.connect(dest);
-  nodeCount.set(input, 9);
-  return { input, nodes: 9, ret, fbA, fbB, lp, setTime(bars, when) {
+  panL.connect(ret); panR.connect(ret);
+  // the return's EQ pair (fields.js BUS_EQ_BANDS), between the return gain and
+  // the dest — built only when the song's spec is non-flat, like every strip
+  let eq = null, n = 9;
+  if (B.eq) { eq = buildEq(c, BUS_EQ_BANDS, B.eq);
+              ret.connect(eq.input); eq.output.connect(dest); n += eq.nodes.length; }
+  else ret.connect(dest);
+  nodeCount.set(input, n);
+  return { input, nodes: n, ret, fbA, fbB, lp, eq, dest, setTime(bars, when) {
     const t = Math.min(1.9, Math.max(0.02, bars * barSec()));
     // eased, not jumped: a feedback delay whose time moves is a tape machine
     // changing speed, and that is a nicer thing to hear than a click
@@ -486,14 +514,14 @@ export function buildEchoBus(c, dest) {
 // (nukernel-audio (H)). Delays and gains cost nothing, and an early-reflection
 // network is the right shape for a small room anyway.
 export function buildRoomBus(c, dest) {
+  const B = resolveBuses(BUSES).room;
   let n = 0;
   const input = c.createGain(); n++;
   const hp = c.createBiquadFilter(); hp.type = "highpass";
   hp.frequency.value = 220; hp.Q.value = 0.7; n++;
   const pre = c.createDelay(0.05); pre.delayTime.value = 0.008; n++;  // distance to the first wall
   const out = c.createGain();
-  out.gain.value = 0.9 * resolveBuses(BUSES).room.ret; n++;
-  busRet.set(input, { g: out, base: 0.9 });
+  out.gain.value = 0.9 * B.ret; n++;
   input.connect(hp); hp.connect(pre);
   const side = (taps, comb, pan) => {
     const p = c.createStereoPanner(); p.pan.value = pan; n++;
@@ -510,7 +538,12 @@ export function buildRoomBus(c, dest) {
   };
   side([[0.0113, 0.70], [0.0191, 0.50], [0.0273, 0.36]], [0.0431, 0.42, 5200], -0.8);
   side([[0.0139, 0.66], [0.0217, 0.47], [0.0311, 0.34]], [0.0532, 0.40, 4800],  0.8);
-  out.connect(dest);
+  // the return's EQ pair, the echo bus's own construction: non-flat or nothing
+  let eq = null;
+  if (B.eq) { eq = buildEq(c, BUS_EQ_BANDS, B.eq);
+              out.connect(eq.input); eq.output.connect(dest); n += eq.nodes.length; }
+  else out.connect(dest);
+  busRet.set(input, { g: out, base: 0.9, dest, eq });
   nodeCount.set(input, n);
   return input;
 }
@@ -607,16 +640,23 @@ export function buildSendBus(c, key, dest, barsec) {
 export function makeVerb(c, name, dest) {
   const n = VERBSPEC[name] ? name : "room";
   const [, , , hp, ret] = VERBSPEC[n];
+  const B = resolveBuses(BUSES).rev;
   const inp = c.createGain();
   const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp; f.Q.value = 0.7;
   const cv = c.createConvolver(); cv.buffer = irFor(n, c.sampleRate);
   const g = c.createGain();
   // ONE rack trim across the three verbs (the REV strip is one strip), riding
-  // ON each verb's own tuned return rather than replacing it
-  g.gain.value = ret * resolveBuses(BUSES).rev.ret;
-  inp.connect(f); f.connect(cv); cv.connect(g); g.connect(dest);
-  nodeCount.set(inp, 4);
-  busRet.set(inp, { g, base: ret });
+  // ON each verb's own tuned return rather than replacing it — and ONE EQ pair
+  // the same way: each built verb carries its own two biquads off the shared
+  // `rev` spec, because the strip's lo/hi must reach whichever hall is up
+  inp.connect(f); f.connect(cv); cv.connect(g);
+  g.gain.value = ret * B.ret;
+  let eq = null, count = 4;
+  if (B.eq) { eq = buildEq(c, BUS_EQ_BANDS, B.eq);
+              g.connect(eq.input); eq.output.connect(dest); count += eq.nodes.length; }
+  else g.connect(dest);
+  nodeCount.set(inp, count);
+  busRet.set(inp, { g, base: ret, dest, eq });
   return inp;
 }
 
@@ -793,19 +833,51 @@ function applyBuses() {
   const t = ctx.currentTime;
   const ease = (p, v) => { try {
     p.cancelScheduledValues(t); p.setTargetAtTime(v, t, 0.02); } catch (e) {} };
+  // THE ONE TOPOLOGY MOVE ON THIS PATH, and it happens at most once per bus
+  // per page: the EQ pair is built the first time a return's spec turns
+  // non-flat, spliced between the return gain and its dest in one JS turn (one
+  // render quantum — no gap), FLAT, and then eased like any param below. It
+  // stays once built — a biquad at 0 dB is identity — so turning the knob back
+  // to flat is an ease, not a tear-down; the offline bounce never comes here
+  // (its builders bake the resolved spec at construction, zero nodes when flat).
+  // holder = anything carrying { eq, dest } plus the node feeding the dest
+  // (`from`). Returns how many nodes the splice added, so each caller can keep
+  // its own count honest (nodeCount for the bare-handle buses, echo.nodes).
+  const easeEq = (holder, from, spec) => {
+    if (!holder) return 0;
+    let added = 0;
+    if (spec && !holder.eq && holder.dest) {
+      const eq = buildEq(ctx, BUS_EQ_BANDS, null);
+      try { from.disconnect(holder.dest); } catch (e) {}
+      from.connect(eq.input); eq.output.connect(holder.dest);
+      holder.eq = eq;
+      added = eq.nodes.length;
+    }
+    if (holder.eq) for (const b of BUS_EQ_BANDS)
+      ease(holder.eq.by[b.key].gain, (spec && spec[b.key]) || 0);
+    return added;
+  };
   for (const n of Object.keys(REV || {})) {
     const r = busRet.get(REV[n]);
-    if (r) ease(r.g.gain, r.base * B.rev.ret);
+    if (!r) continue;
+    ease(r.g.gain, r.base * B.rev.ret);
+    const added = easeEq(r, r.g, B.rev.eq);
+    if (added) nodeCount.set(REV[n], countOf(REV[n]) + added);
   }
   if (echo) {
     ease(echo.ret.gain, B.echo.ret);
     ease(echo.fbA.gain, B.echo.fb != null ? B.echo.fb : 0.42);
     ease(echo.fbB.gain, B.echo.fb != null ? B.echo.fb : 0.42);
     ease(echo.lp.frequency, B.echo.tone != null ? B.echo.tone : 2800);
+    echo.nodes += easeEq(echo, echo.ret, B.echo.eq);
   }
   if (roomBus) {
     const r = busRet.get(roomBus);
-    if (r) ease(r.g.gain, r.base * B.room.ret);
+    if (r) {
+      ease(r.g.gain, r.base * B.room.ret);
+      const added = easeEq(r, r.g, B.room.eq);
+      if (added) nodeCount.set(roomBus, countOf(roomBus) + added);
+    }
   }
 }
 // WHAT THE RETURNS ACTUALLY SIT AT, read off the nodes (the __nuMix law): the
@@ -823,6 +895,18 @@ export const busReport = () => (!ctx ? null : {
   room: (() => {
     const r = roomBus && busRet.get(roomBus);
     return r ? +r.g.gain.value.toFixed(3) : null;
+  })(),
+  // the return EQs, read off the built biquads — null where a return has no
+  // EQ nodes at all, which is itself the zero-nodes-when-flat claim, visible.
+  // ADDED key, so every existing reader of this report holds.
+  eq: (() => {
+    const read = eq => (eq ? Object.fromEntries(Object.entries(eq.by)
+      .map(([k, f]) => [k, +f.gain.value.toFixed(1)])) : null);
+    const rv = Object.keys(REV || {}).map(n => busRet.get(REV[n]))
+      .find(r => r && r.eq);
+    const rm = roomBus && busRet.get(roomBus);
+    return { rev: read(rv && rv.eq), echo: read(echo && echo.eq),
+             room: read(rm && rm.eq) };
   })(),
   set: BUSES || null,
 });
