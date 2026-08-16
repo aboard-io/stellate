@@ -1579,11 +1579,39 @@
       ? { ...cp(k), ["~" + d]: vec16(() => 2) } : cp(k));
   }
   // the two helpers the table above is written in, kept beside it
+  //
+  // THE HAND MOVES; THE PLATE DOES NOT KEEP UP. This carried the time part
+  // across stroke for stroke, which is right for a hat — two plates pinched
+  // shut speak at once and can say sixteenths — and wrong for a cymbal, which
+  // is ONE plate that rings for seconds. A sixteenth-note hat moved onto the
+  // ride is twelve strokes a bar into a two-and-a-half-second sample: not a
+  // groove, fifteen overlapping copies of the same wash, and the ear does not
+  // hear time in that, it hears a crash. (Measured: afrobeat's verse, the
+  // densest hat in the table at twelve steps, became sixteen bars of solid
+  // cymbal — "Lagos 1971 is dominated by crash cymbal". A crash marks an
+  // arrival; nothing on this kit keeps time by ringing.)
+  //
+  // So a hand arriving on metal plays the EIGHTHS it was implying: a stroke
+  // closer than an eighth behind the last one is dropped, because the stick
+  // has not come back and the plate has not finished speaking. What survives
+  // is the hat's own phrasing — which strokes land, where the part leaves a
+  // hole, and every level the operator wrote — and what does not is only the
+  // subdivision the plate cannot articulate. A part already at eighths or
+  // slower passes through untouched, which is every straight-eighth genre in
+  // the table, so `ride` still means exactly what it meant there.
+  const MINGAP = 2;                       // an eighth, on the sixteen-step grid
   function moveTime(k, dest) {
     const src = HATS.filter(d => hits(k && k[d]));
     if (!src.length) return cp(k);
     let merged = new Array(16).fill(0);
     for (const d of src) merged = mergeInto(merged, K16(k[d]));
+    if (CYMBALS.includes(dest)) {
+      let last = -MINGAP;
+      merged = merged.map((v, i) => {
+        if (!v || i - last < MINGAP) return 0;
+        last = i; return v;
+      });
+    }
     return { ...without(k, d => HATS.includes(d)), [dest]: mergeInto(k[dest], merged) };
   }
   function withChance(k, f) {
