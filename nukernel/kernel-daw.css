@@ -386,8 +386,14 @@ h1 em{font-style:normal;color:var(--ink)}
 }
 /* THE RULING — one cadence, two strengths: a hairline between rows, a heavier
    rule where the music divides (a beat in the pattern). The class is on the
-   ROW, so nothing needs :nth-child arithmetic. */
-.prow.beat>*{border-top:2px solid var(--tbl-rule)}
+   ROW, so nothing needs :nth-child arithmetic. AN INSET SHADOW, NOT A BORDER:
+   a real border-top is drawn INSIDE the cell, so its padding box loses 2px
+   and shifts down 2px — and that box is what every percentage below resolves
+   against, both the .cbar's --b/--h and the .bip zero hairline's top:50%. A
+   border therefore put the beat rows' zero line a pixel below the other
+   twelve, and the grid's midline staircased once a beat. The shadow draws the
+   same 2px rule and moves no layout. */
+.prow.beat>*{box-shadow:inset 0 2px 0 var(--tbl-rule)}
 /* THE STATES, one language for every table on the machine, and every one of
    them is now COLOUR rather than relief:
      hover     the row under the pointer washes (fine pointers only — a

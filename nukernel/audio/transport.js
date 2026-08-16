@@ -14,7 +14,7 @@ import { gid, stackOf, kitOf, sectionRender, songBars,
          instrIdOf, poolInstrOf } from "../ui/derive.js";
 import { ctx, initAudio, rmsNow, muteNow, unmuteRamp } from "./graph.js";
 import { FONT, fontDef, isSynthFont, loadFont, specOf, zoneBufs, drumBufs,
-         instrumentsInSong } from "./assets.js";
+         instrumentsInSong, reserveInstruments } from "./assets.js";
 import { synthNodes, synthKey, loadSynth, focusSynths, playSynth, playSampled,
          playDrum, line, hit, synthDead, countDrop, playWindow } from "./voices.js";
 import { channelFor, armAutomation, focusKit, refreshChannels } from "./mixer.js";
@@ -490,6 +490,13 @@ export async function ensureAssets(announce) {
   const rest = Promise.all([...wantSynth.map(([sp, v, c]) => loadSynth(sp, v, c)),
                             ...kits.map(loadKit),
                             ...sings.map(w => warmSing(w.plan, w.text))]);
+  // EVERY QUEUED INSTRUMENT COUNTS AS IN FLIGHT FROM HERE, not from the moment
+  // its own fetch starts. The loop below is deliberately serial with a breath
+  // between decodes, so a genre's second chair waits behind its first — and a
+  // note due in that gap read "no buffer, not loading" and took the oscillator
+  // stub. Silence over wrongness is the law for a loading instrument; this is
+  // what makes the law cover the whole queue (assets.js reserveInstruments).
+  reserveInstruments(need);
   for (const id of need) {
     await loadInstrument(id);
     if (playing) await nap(60);

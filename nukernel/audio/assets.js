@@ -146,9 +146,22 @@ export const specOf = id => {
   specCache.set(ck, spec);
   return spec;
 };
+// RESERVE THE WHOLE QUEUE, not just the instrument being fetched right now.
+// ensureAssets loads instruments ONE AT A TIME with a breath between them (the
+// live scheduler owns that thread), so everything after the first sat in a gap
+// where it was neither decoded nor "in flight" — and playSampled reads exactly
+// that pair to decide between silence and the oscillator stub. Measured over a
+// 58-genre live sweep: ONE genre beeped, house, whose second chair is a
+// polysynth queued behind a six-zone grand piano — 10 fallback voices, five
+// notes, all of them in the bar between the switch and the piano finishing.
+// Reserving up front makes the drop law true for the queue and not just for
+// its head; loadInstrument's own delete below clears each key as it lands.
+export const reserveInstruments = ids => {
+  for (const id of ids) inFlight.add("ins:" + id);
+};
 export async function loadInstrument(id) {
   const spec = specOf(id);
-  if (!spec) return false;
+  if (!spec) { inFlight.delete("ins:" + id); return false; }
   inFlight.add("ins:" + id);
   // Promise.all is fine now: the shared gate holds these to 4 in flight, so
   // "every zone at once" is a queue, not a stampede
