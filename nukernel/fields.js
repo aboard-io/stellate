@@ -200,11 +200,19 @@
   // to reach above this file for a word (the layer law at the top).
   const DRUMLANES = {};
   for (const [d, L] of Object.entries(LANES)) DRUMLANES[d] = L.name;
-  // WHICH SAMPLED KIT — found/samples/drums/<kit>/, the same extraction the big
-  // engine plays. A genre names one; a box may borrow another, which is the
-  // difference between playing a beat and playing it on somebody else's drums.
+  // WHICH KIT — the first six are SAMPLED (found/samples/drums/<kit>/, the same
+  // extraction the big engine plays); the four after are the CLASSIC MACHINES,
+  // synthesized deterministically into the same buffers by audio/machines.js —
+  // downstream of loadKit the two kinds are indistinguishable. A genre names
+  // one; a box may borrow another, which is the difference between playing a
+  // beat and playing it on somebody else's drums. An id added here must have a
+  // recipe in audio/machines.js or a directory on disk — the browser gate
+  // (nukernel-drums (M)) renders every machine lane and holds the two lists
+  // together.
   const DRUMKITS = { acoustic: "acoustic", brush: "brushes", electronic: "electronic",
-                     jazz: "jazz", power: "power", room: "room" };
+                     jazz: "jazz", power: "power", room: "room",
+                     tr808: "TR-808", tr909: "TR-909", tr606: "TR-606",
+                     cr78: "CR-78" };
   const BASSOPS = { nobass: "none", walk: "walking", octaves: "octaves",
                     fifths: "fifths", pedal: "pedal", eighths: "eighths",
                     sixteenths: "sixteenths", reese: "reese", wobble: "wobble" };

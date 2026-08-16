@@ -415,6 +415,18 @@ export function vocMidiOf(midi) {
   return c;
 }
 
+// THE LINE CYCLES, AND THE CACHE MUST FOLD WITH IT. singPlan hands syllable i
+// of the section the word words[i % words.length] (sing.js singPlan) — `si` is
+// the NOTE's index and grows past the line — while warm() slices ONE utterance
+// of the line, exactly one entry per word. Reading the raw si here left every
+// syllable past the first cycle of the lyric silent: measured on a composed
+// verse, a sixteen-note line over a six-word lyric sang six notes and dropped
+// ten (nukernel-drums (H) caught it on a random compose seed). One fold, the
+// plan's own modulus, shared by the player and the probe below.
+const sylIx = (ev, text) => {
+  const n = text.split(" ").filter(Boolean).length;
+  return n > 0 ? ev.si % n : ev.si;
+};
 // PLAY ONE SYLLABLE. Returns false when there is nothing warmed for it, which
 // the caller treats exactly as it treats an undecoded zone: be silent, never
 // substitute something else. `ev` is a singPlan entry; `text` is the utterance
@@ -424,7 +436,8 @@ export function playSyllable(ev, text, when, durSec, chan, colour, barSec) {
   const c = chan.input ? chan.input.context : ctx;
   if (!c) return false;
   const r = SING.rungFor(ev.vi, ev.n);
-  const s = SLICES.get(ev.vi + ":" + r.pitch + ":" + text + ":" + ev.si);
+  const si = sylIx(ev, text);
+  const s = SLICES.get(ev.vi + ":" + r.pitch + ":" + text + ":" + si);
   if (!s || !s.data.length) return false;
   const sr = s.sr;
   // ONE BAR IS THE CEILING, and it is a BOUNCE law rather than a musical one.
@@ -448,7 +461,7 @@ export function playSyllable(ev, text, when, durSec, chan, colour, barSec) {
     rate = 1;
     const vm = vocMidiOf(ev.n);
     const want = fitFrames(s, ev, dur, 1);
-    const key = "v:" + ev.vi + ":" + r.pitch + ":" + text + ":" + ev.si + ":" +
+    const key = "v:" + ev.vi + ":" + r.pitch + ":" + text + ":" + si + ":" +
                 want + ":" + vm.toFixed(2);
     data = FITS.get(key);
     // vocode() builds the carrier at freq*0.5 (robot_choir's own line), so it
@@ -462,7 +475,7 @@ export function playSyllable(ev, text, when, durSec, chan, colour, barSec) {
     if (!(rate > 0.25 && rate < 4)) rate = 1;
     const want = fitFrames(s, ev, dur, rate);
     if (want > s.data.length) {
-      const key = "n:" + ev.vi + ":" + r.pitch + ":" + text + ":" + ev.si + ":" + want;
+      const key = "n:" + ev.vi + ":" + r.pitch + ":" + text + ":" + si + ":" + want;
       data = FITS.get(key);
       if (!data) { data = stretchVowel(s, want); fitPut(key, data); }
     } else data = s.data;
@@ -507,7 +520,7 @@ const LEVEL = 0.5;
 window.__nuSingProbe = (ev, text) => {
   if (!SING) return null;
   const r = SING.rungFor(ev.vi, ev.n);
-  const s = SLICES.get(ev.vi + ":" + r.pitch + ":" + text + ":" + ev.si);
+  const s = SLICES.get(ev.vi + ":" + r.pitch + ":" + text + ":" + sylIx(ev, text));
   if (!s) return null;
   const rate = hzOf(r.midi) / hzOf(s.srcMidi);
   return { rung: r.pitch, foldedMidi: r.midi, vocMidi: vocMidiOf(ev.n),

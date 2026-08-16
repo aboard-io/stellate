@@ -1,0 +1,6 @@
+{
+  "//": "NOT a package — a MODULE-TYPE MARKER, the app/package.json pattern (nukernel/ui/ carries the same one). Everything under nukernel/audio/ is a native browser ES module, but the repo root declares \"type\": \"commonjs\", and node resolves module type from the NEAREST package.json — so without this file test/unit/nukernel.test.js could not import audio/machines.js and the pure-node machine checks (every lane a voice on every machine, byte-deterministic synthesis) would have to run in a browser, which is exactly the iteration cost they exist to end. The browser never reads it; no build step consumes it; do not add dependencies here.",
+  "name": "nukernel-audio",
+  "private": true,
+  "type": "module"
+}

@@ -7,11 +7,12 @@
 // Layer graph: deps -> state -> derive -> graph -> assets -> THIS FILE ->
 // mixer -> transport. Never imports a ui view.
 import { GENRES, VOX, VOXPARAM, BASSSYNTH, SP, RANGES, STRETCH_UP,
-         STRETCH_DOWN, DRUMMIX, DRUMBUS, STRIPS, dynFor, dynCurve,
+         STRETCH_DOWN, DRUMBUS, STRIPS, dynFor, dynCurve,
          DYN_ATK } from "../ui/deps.js";
 import { SONG } from "../ui/state.js";
 import { stackOf } from "../ui/derive.js";
 import { ctx, bus, noise } from "./graph.js";
+import { mixFor, isMachine } from "./machines.js";
 import { FAUSTDIR, FONT, fontDef, isSynthFont, specOf, zoneBufs, drumBufs,
          inFlight } from "./assets.js";
 
@@ -671,15 +672,24 @@ const ctxOf = chan => (chan && chan.input ? chan.input.context : ctx);
 // on the page goes through it, the oscillator stubs included, so a fallback
 // snare is in the same room as a sampled one. A channel that predates the lane
 // strips (or no channel at all) still has the plain drum bus.
-const drumDest = (chan, lane) => (chan && chan.laneIn ? chan.laneIn(lane)
+// `kit` reaches the strip because the strip is per MIX ROW now: a machine
+// lane with its own MACHINEMIX row lands on its own strip, a sampled lane on
+// the shared one — audio/machines.js laneKey decides, inside the desk
+const drumDest = (chan, lane, kit) => (chan && chan.laneIn ? chan.laneIn(lane, kit)
   : (chan && chan.drumIn) || bus);
 // the lane's trim is the STRIP's job when there is a strip; without one it has
 // to ride the hit, or a rim shot on the bare bus comes back at full level
-const laneTrim = (chan, lane) => (chan && chan.laneIn ? 1
-  : ((DRUMMIX[lane] || {}).lvl != null ? DRUMMIX[lane].lvl : 1));
+const laneTrim = (chan, lane, kit) => {
+  if (chan && chan.laneIn) return 1;
+  const m = mixFor(kit, lane);
+  return m && m.lvl != null ? m.lvl : 1;
+};
 export function playDrum(kit, lane, when, acc, vel, chan) {
   const buf = kit && drumBufs.get(kit + "|" + lane);
-  if (!buf) return !!kit && inFlight.has("kit:" + kit);
+  // a machine kit is never "in flight" (it synthesizes, no fetch), but a
+  // mid-play kit change can reach here a tick before ensureAssets has run
+  // loadKit — same law as a decoding kit: silence, never the oscillator stub
+  if (!buf) return !!kit && (inFlight.has("kit:" + kit) || isMachine(kit));
   const lvl = (vel == null ? 5 : vel) / 9;
   // A HIT AT ZERO IS A HIT. Returning false here reads to the scheduler as
   // "this kit could not play that lane", and the answer to that is the
@@ -690,14 +700,17 @@ export function playDrum(kit, lane, when, acc, vel, chan) {
   const c = ctxOf(chan);
   const src = c.createBufferSource(); src.buffer = buf;
   const g = c.createGain();
-  const body = (acc ? 1 : 0.72) * (0.45 + 0.55 * lvl) * laneTrim(chan, lane);
+  const body = (acc ? 1 : 0.72) * (0.45 + 0.55 * lvl) * laneTrim(chan, lane, kit);
   // TRANSIENT SHAPING, per hit. A transient designer is two numbers — how much
   // louder the attack is than the body, and where the body settles — and on a
   // one-shot fired from a buffer they cost one extra ramp each rather than an
   // envelope follower and a worklet. `punch` puts the stick back on a snare
   // whose sample was normalised flat; `sus` under 1 shortens the tail, which is
   // what keeps hats and toms tight in a room that is now genuinely wet.
-  const m = DRUMMIX[lane] || { punch: 1, sus: 1 };
+  // (mixFor: a machine kit's own row rides DRUMMIX here — a synthesized 808
+  // kick was BUILT with its transient, and punching it manufactures a click
+  // the machine is famous for not having.)
+  const m = mixFor(kit, lane) || { punch: 1, sus: 1 };
   const punch = m.punch != null ? m.punch : 1, sus = m.sus != null ? m.sus : 1;
   if (punch !== 1 || sus !== 1) {
     g.gain.setValueAtTime(body * punch, when);
@@ -705,7 +718,7 @@ export function playDrum(kit, lane, when, acc, vel, chan) {
     if (sus !== 1)
       g.gain.linearRampToValueAtTime(body * sus, when + DRUMBUS.punchMs + DRUMBUS.susMs);
   } else g.gain.value = body;
-  src.connect(g); g.connect(drumDest(chan, lane));
+  src.connect(g); g.connect(drumDest(chan, lane, kit));
   src.start(when);
   return true;
 }

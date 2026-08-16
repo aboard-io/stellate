@@ -5659,6 +5659,114 @@ console.log("the singer — syllables, the bank, the ladders, the plan");
   }
 }
 
+/* ---------------------------------------------------------------- 44. THE MACHINES
+   The classic drum machines (fields.js DRUMKITS tr808/tr909/tr606/cr78,
+   synthesized by audio/machines.js) — every claim a SCORE can answer, answered
+   here rather than in a browser:
+     (a) the digital genres resolve to the machine their comments name, and
+         every drumkit any genre names is vocabulary;
+     (b) the silent-drum law: every lane the kernel can write voices on every
+         machine, non-silently, unclipped at source, and BYTE-DETERMINISTICALLY
+         (seeded noise — two fresh syntheses are identical), and every
+         MACHINEMIX row names real lanes with sane numbers;
+     (c) the machines do not move a single scheduled event: drumkit is a SOUND
+         choice, and swapping it must leave the rendered stream identical to
+         the millisecond — measured on ui/derive.js's own sectionEvents, the
+         stream the transport schedules.
+   machines.js is a browser ES module; audio/package.json is the module-type
+   marker (the ui/ pattern) that lets this gate import it, and ui/deps.js
+   resolves against the same stub window §31 built. */
+console.log("the machines — genre→kit, every lane a voice, and the schedule does not move");
+{
+  const NF = require("../../nukernel/fields.js");
+  const M = await import("../../nukernel/audio/machines.js");
+  const MACHINES = ["tr808", "tr909", "tr606", "cr78"];
+
+  // (a) the genre→kit table, and the vocabulary behind it
+  const WANT = { acid: "tr909", house: "tr909", techno: "tr909",
+                 trap: "tr808", jodeci: "tr808",
+                 newwave: "cr78", eurythmics: "cr78", synthpop: "cr78" };
+  for (const [g, want] of Object.entries(WANT))
+    ok(GENRES[g].drumkit === want,
+       g + " plays \"" + GENRES[g].drumkit + "\", not the " + want + " its own comments name");
+  for (const gk of GK)
+    if (GENRES[gk].drumkit)
+      ok(NF.DRUMKITS[GENRES[gk].drumkit],
+         gk + ": drumkit \"" + GENRES[gk].drumkit + "\" is not in DRUMKITS — an unloadable kit");
+  for (const k of MACHINES) {
+    ok(NF.DRUMKITS[k], k + " is missing from DRUMKITS — the palette cannot offer it");
+    ok(M.isMachine(k), k + " is in DRUMKITS but audio/machines.js has no recipes for it");
+  }
+  // ...and the sampled six stayed sampled: isMachine must not claim them, or
+  // loadKit stops fetching their files
+  for (const k of ["acoustic", "brush", "electronic", "jazz", "power", "room"])
+    ok(!M.isMachine(k), k + " is a sampled directory and a machine at once");
+
+  // (b) every lane, every machine: a voice, honest levels, seeded bytes
+  for (const kit of MACHINES) {
+    let minRms = Infinity, maxPeak = 0;
+    for (const d of Object.keys(K.LANES)) {
+      const s = M.laneSamples(kit, d);
+      ok(s && s.length > 0, kit + "/" + d + " (" + K.LANES[d].name + "): no recipe — " +
+         "a lane a genre can write and this machine cannot voice is a silent drum");
+      if (!s) continue;
+      let e = 0, peak = 0;
+      for (let i = 0; i < s.length; i++) { e += s[i] * s[i]; const a = Math.abs(s[i]); if (a > peak) peak = a; }
+      const rms = Math.sqrt(e / s.length);
+      if (rms < minRms) minRms = rms;
+      if (peak > maxPeak) maxPeak = peak;
+      ok(rms > 0.005, kit + "/" + d + ": renders near-silent (rms " + rms.toFixed(4) + ")");
+      ok(peak <= 0.95, kit + "/" + d + ": clipped at source (peak " + peak.toFixed(3) + ")");
+      const s2 = M.laneSamples(kit, d);
+      ok(s2.length === s.length && s2.every((v, i) => v === s[i]),
+         kit + "/" + d + ": two fresh syntheses differ — Math.random is in a recipe " +
+         "and the offline bounce would drift from the live graph");
+    }
+    console.log("  " + kit + ": 12 lanes, min rms " + minRms.toFixed(3) +
+                ", max peak " + maxPeak.toFixed(3));
+    const rows = M.MACHINEMIX[kit] || {};
+    for (const [d, row] of Object.entries(rows)) {
+      ok(K.LANES[d], kit + ": MACHINEMIX names \"" + d + "\", which is not a lane");
+      ok(row.room >= 0 && row.room <= 1 && (row.lvl == null || row.lvl > 0) &&
+         row.punch > 0 && row.sus > 0,
+         kit + "/" + d + ": MACHINEMIX row is not sane (" + JSON.stringify(row) + ")");
+      // the one merge really rides DRUMMIX: pan comes through from the base row
+      const m = M.mixFor(kit, d);
+      ok(m.pan === (row.pan != null ? row.pan : window.NuInstruments.DRUMMIX[d].pan),
+         kit + "/" + d + ": mixFor does not ride the DRUMMIX base row");
+    }
+  }
+
+  // (c) THE SCHEDULE DOES NOT MOVE. Event offsets are in steps and a step is
+  // 60/bpm/4 seconds, so identical steps are identical milliseconds at every
+  // tempo — asserted anyway in ms at the default 120, so the claim is stated
+  // in the unit it is heard in. The whole stream must be byte-identical:
+  // kind, lane, pitch, velocity, accent, and time.
+  {
+    const C = require("../../nukernel/compose.js");
+    const stepMs = 60 / 120 / 4 * 1000;
+    for (const gk of Object.keys(WANT)) {
+      const song = C.compose(gk, 7);
+      const b = song.song.find(x => x.stack && x.stack.some(en => en.g === gk)) || song.song[0];
+      const evOf = dk => D.sectionEvents({ ...JSON.parse(JSON.stringify(b)), drumkit: dk },
+                                         song.slots).ev;
+      const a = evOf("electronic"), z = evOf(GENRES[gk].drumkit);
+      ok(a.length === z.length, gk + ": swapping the kit sound changed the EVENT COUNT (" +
+         a.length + " vs " + z.length + ") — a drum machine rewrote the score");
+      let maxDms = 0, moved = 0;
+      for (let i = 0; i < Math.min(a.length, z.length); i++) {
+        const d1 = Math.abs((a[i].off || 0) - (z[i].off || 0)) * stepMs;
+        if (d1 > maxDms) maxDms = d1;
+        if (JSON.stringify(a[i]) !== JSON.stringify(z[i])) moved++;
+      }
+      ok(maxDms === 0, gk + ": a scheduled event moved " + maxDms.toFixed(3) + " ms " +
+         "under a kit-sound swap — drumkit is leaking into the scheduler");
+      ok(moved === 0, gk + ": " + moved + " event(s) differ under a kit-sound swap — " +
+         "the machines must not move a single scheduled event");
+    }
+  }
+}
+
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }

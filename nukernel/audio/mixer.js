@@ -469,7 +469,13 @@ export function buildChannel(c, spec, env) {
   // off the real strip's real AudioParams.
   const lanes = desk.lanes;
   const played = new Set();
-  const laneIn = (d) => { played.add(d); return desk.laneIn(d); };
+  // `kit` rides through to the desk (machine lanes have strips of their own —
+  // graph.js laneIn); `played` records the RESOLVED strip key, so the __nuMix
+  // drums report walks sampled and machine strips with one filter
+  const laneIn = (d, kit) => {
+    played.add(desk.laneKey ? desk.laneKey(kit, d) : d);
+    return desk.laneIn(d, kit);
+  };
   // ---- the VOICE BUSES: one placement per pitched voice ----
   // The parent's mastering stage places voices at the UNIT level (MASTER_PAN:
   // lead a touch right, pad counterweighting left, solos alternating) because a

@@ -39,6 +39,14 @@
 //       differs, and it differs because of the treatment rather than because of
 //       the level — proved against the same instrument in the one role that
 //       deliberately has no dynamic response.
+//   (M) THE MACHINES ARE KITS. tr808/tr909/tr606/cr78 are DRUMKITS entries
+//       synthesized by audio/machines.js. The score-level claims (genre→kit,
+//       lane coverage, byte-deterministic synthesis, the schedule not moving
+//       a millisecond under a kit swap) live in test/unit/nukernel.test.js
+//       §44 — pure node. Here, only what WebAudio can witness: every machine
+//       voice renders non-silent and unclipped through the real chain, on its
+//       own MACHINEMIX strip row, and two cold bounce renders of a machine
+//       song are the identical take.
 //   (H) THE SINGER IS IN TUNE. nukernel/sing.js plans a syllable onto a note
 //       and nukernel/audio/sing.js has to actually land it there — synthesize
 //       the line, MEASURE the median F0 of the slice that came back
@@ -483,6 +491,96 @@ async function velProbe(page) {
              dyn: window.__nuDyn() };
   });
 }
+// ---- (M) THE MACHINES ------------------------------------------------------
+// The classic drum machines are DRUMKITS entries synthesized by
+// audio/machines.js rather than directories under found/samples/drums/.
+// EVERYTHING A SCORE CAN ANSWER LIVES IN THE UNIT GATE (§44: the genre→kit
+// table, every lane voicing on every machine, byte-deterministic synthesis,
+// the schedule not moving one millisecond under a kit swap). What is left for
+// a browser is exactly what only WebAudio can witness:
+//   - each machine voice RENDERS through the real chain (playDrum → the kit
+//     desk → the master), non-silent and unclipped, riding its own MACHINEMIX
+//     strip row on the shared desk;
+//   - two BOUNCE renders of the same machine song are identical — the carrier
+//     a phone hears must be the take the desk heard, byte for byte.
+//
+// OFFLINE, the offlineKit discipline: buildMasterChain, buildChannel and
+// playDrum are the three functions the live page and the background bounce
+// walk, and an offline render is the only reading that does not move.
+async function machinesProbe(page) {
+  return page.evaluate(async () => {
+    const [gm, mx, vx, as, mc, dp] = await Promise.all([
+      import("/nukernel/audio/graph.js"), import("/nukernel/audio/mixer.js"),
+      import("/nukernel/audio/voices.js"), import("/nukernel/audio/assets.js"),
+      import("/nukernel/audio/machines.js"), import("/nukernel/ui/deps.js")]);
+    const SR = 44100, AT = 0.02;
+    const lanes = Object.keys(dp.DRUMFILE);
+    // the vocabulary and the recipes, held together: every DRUMKITS id that is
+    // not a sampled directory must be a machine the module knows
+    const machines = Object.keys(dp.DRUMKITS).filter(k => mc.isMachine(k));
+    const out = { machines, lanes, kits: {}, strip: null };
+    for (const kit of machines) await as.loadKit(kit);          // synthesizes, no fetch
+    const render = async (kit, lane, withRoom) => {
+      const octx = new OfflineAudioContext(2, Math.ceil(2.3 * SR), SR);
+      const master = gm.buildMasterChain(octx);
+      const env = { master: master.input, verb: () => master.input, echoIn: master.input,
+                    room: withRoom ? gm.buildRoomBus(octx, master.input) : null };
+      const chan = mx.buildChannel(octx, { roster: [], fx: [], rev: 0, del: 0,
+        verb: "room", lvl: 1, pan: 0, mot: null, auto: [] }, env);
+      const played = vx.playDrum(kit, lane, AT, 1, 9, chan);
+      const buf = await octx.startRendering();
+      const L = buf.getChannelData(0), R = buf.getChannelData(1);
+      let e = 0, peak = 0;
+      for (let i = 0; i < L.length; i++) {
+        e += L[i] * L[i] + R[i] * R[i];
+        const a = Math.max(Math.abs(L[i]), Math.abs(R[i]));
+        if (a > peak) peak = a;
+      }
+      return { played, e, peak, chan };
+    };
+    for (const kit of machines) {
+      const row = {};
+      for (const lane of lanes) {
+        const r = await render(kit, lane, false);
+        row[lane] = { played: r.played, e: r.e, peak: +r.peak.toFixed(4) };
+      }
+      out.kits[kit] = row;
+    }
+    // a machine lane earns its own strip carrying its own row — read off the
+    // node, never the table (the (A) discipline)
+    {
+      const r = await render("tr808", "h", true);
+      const Lm = r.chan.lanes.get("tr808|h");
+      out.strip = { built: !!Lm, room: Lm && Lm.room ? +Lm.room.gain.value.toFixed(3) : null,
+                    want: mc.mixFor("tr808", "h").room, base: dp.DRUMMIX.h.room };
+    }
+    return out;
+  });
+}
+// ...and the BOUNCE, twice. The tape is the audible path on a phone, so a
+// machine kick that renders differently per take is a different song per
+// pocket. Two COLD renders (the window cache dropped, so the second really
+// re-renders) of the page's own song with box 0 borrowing the 909 — compared
+// on __nuRenderNow's own fingerprint: 64 RMS windows at 7 decimals plus the
+// peak, the same artifact the bounce gate trusts.
+async function bounceTwice(page) {
+  return page.evaluate(async () => {
+    const [as, stm] = await Promise.all([
+      import("/nukernel/audio/assets.js"), import("/nukernel/ui/state.js")]);
+    await as.loadKit("tr909");
+    const sec = stm.SONG[0];
+    if (!sec) return { err: "no song on the page" };
+    const was = Object.prototype.hasOwnProperty.call(sec, "drumkit") ? sec.drumkit : null;
+    sec.drumkit = "tr909";
+    try {
+      const a = await window.__nuRenderNow(4, { cold: true });
+      const b = await window.__nuRenderNow(4, { cold: true });
+      if (!a || !b) return { err: "__nuRenderNow refused (a render already in flight?)" };
+      return { durSec: a.durSec, rmsA: a.rms, rmsB: b.rms, peakA: a.peak, peakB: b.peak };
+    } finally { sec.drumkit = was; }
+  });
+}
+
 // ---- (H) THE SINGER --------------------------------------------------------
 // "You did a lot of this in the upper level app, but we never really got to the
 // point where it could sing or two voices could sing" (the artist, 2026-08-15).
@@ -530,7 +628,21 @@ async function singProbe(page) {
     const duet = pick("duet");
     if (!duet) return { err: "no box in this song sings — nothing to measure" };
     const t0 = performance.now();
-    const warmed = await sg.warm(duet.ev, duet.ev[0].text);
+    // EVERY DISTINCT LINE, not just the first — the page's own warm path
+    // (transport.js singWork -> sing.warm) groups the plan by text and warms
+    // each. A multi-line box warmed for line one alone leaves every later
+    // syllable sliceless, which reads as "half the plan never played" and is a
+    // fact about the PROBE, not the page — and #compose rolls a random seed
+    // per click, so whether this gate draws a one-line or a three-line box is
+    // a coin toss per run.
+    const byText = new Map();
+    for (const e of duet.ev) {
+      let w = byText.get(e.text);
+      if (!w) byText.set(e.text, w = []);
+      w.push(e);
+    }
+    let warmed = false;
+    for (const [text, plan] of byText) warmed = (await sg.warm(plan, text)) || warmed;
     const warmMs = Math.round(performance.now() - t0);
     if (!warmed) return { err: "warm() produced no slices" };
 
@@ -871,6 +983,11 @@ async function pass(page, url) {
   // the dynamics, on the same decoded song and before partsLive touches
   // `sec.parts` — it renders the chairs as the composer left them
   const vel = await velProbe(page);
+  // the machines, offline on the same page — needs nothing this song decoded
+  // (a machine kit synthesizes its own buffers), touches nothing it leaves
+  const mach = await machinesProbe(page);
+  // ...and the bounce, twice, on the same composed song with the 909 borrowed
+  const btw = await bounceTwice(page);
   // …AND A PERSON CAN SWITCH IT ON. Everything in (H) below drives the store
   // directly, which proves the engine and nothing about the surface — and the
   // surface is where the last three chips that "shipped" turned out to be
@@ -1630,6 +1747,73 @@ async function pass(page, url) {
         `syllable count the plan did not expect — every word after the divergence would ` +
         `land on the wrong note`);
       else ok("every utterance cut into exactly the syllables the plan laid out");
+    }
+  }
+
+  // ---- (M) THE MACHINES ---------------------------------------------------
+  // The score-level half (genre→kit, lane coverage, byte-determinism of the
+  // synthesis, the schedule not moving) is test/unit/nukernel.test.js §44.
+  // Here: only what WebAudio can witness.
+  {
+    if (mach.err) fail(`machines probe: ${mach.err}`);
+    else {
+      if (mach.machines.length < 4)
+        fail(`DRUMKITS carries only ${mach.machines.length} machine kit(s) ` +
+             `(${mach.machines.join(",")}) — tr808/tr909/tr606/cr78 expected`);
+      else ok(`DRUMKITS carries the machines: ${mach.machines.join(", ")}`);
+      // (a) EVERY MACHINE VOICE RENDERS through the real chain: non-silent,
+      // and unclipped (the safety net asymptotes at 1.0; the small allowance
+      // is the 2x-oversampled shaper's own resampling ripple, which the
+      // sampled path carries identically)
+      for (const kit of mach.machines) {
+        const row = mach.kits[kit];
+        const silent = mach.lanes.filter(d => !row[d].played || !(row[d].e > 1e-4));
+        const clipped = mach.lanes.filter(d => row[d].peak > 1.02);
+        if (silent.length)
+          fail(`${kit}: lane(s) ${silent.join(",")} rendered silent — a lane a genre ` +
+               `can write and this machine cannot voice is a silent drum`);
+        else if (clipped.length)
+          fail(`${kit}: lane(s) ${clipped.join(",")} rendered over full scale ` +
+               `(worst ${Math.max(...clipped.map(d => row[d].peak))}) — clipping`);
+        else {
+          const min = Math.min(...mach.lanes.map(d => row[d].e));
+          const pk = Math.max(...mach.lanes.map(d => row[d].peak));
+          ok(`${kit}: all ${mach.lanes.length} lanes voice, unclipped ` +
+             `(min energy ${min.toExponential(1)}, max peak ${pk.toFixed(3)})`);
+        }
+      }
+      // (b) THE MACHINE'S OWN MIX ROW, read off the node
+      if (!mach.strip.built || mach.strip.room == null ||
+          Math.abs(mach.strip.room - mach.strip.want) > 1e-3)
+        fail(`the 808 hat has no strip of its own (${JSON.stringify(mach.strip)}) — ` +
+             `MACHINEMIX never reached the desk`);
+      else ok(`a machine lane rides its own row: 808 hat room ${mach.strip.room} ` +
+              `against the sampled kit's ${mach.strip.base}`);
+    }
+    // (c) TWO BOUNCE RENDERS OF THE SAME MACHINE SONG ARE THE SAME TAKE.
+    // "Same" is held to a FLOAT-NOISE fence, not the last bit, and the fence
+    // is measured rather than wished: the machine SOURCES are byte-stable
+    // (unit §44 compares two syntheses sample for sample) and one hit through
+    // the full chain rendered sample-identically — but a whole windowed tape
+    // through chromium's offline pipeline measured a worst window ΔRMS of
+    // 3.8e-6 (one window of 64, peaks byte-identical) across two cold
+    // renders, which is −108 dB of arithmetic and not a take. A REAL
+    // difference — one moved hit, one late note — moves a 4 s window's RMS at
+    // the 1e-2 scale, three orders past the fence.
+    if (btw.err) fail(`bounce determinism: ${btw.err}`);
+    else {
+      let worst = 0;
+      for (let i = 0; i < Math.min(btw.rmsA.length, btw.rmsB.length); i++)
+        worst = Math.max(worst, Math.abs(btw.rmsA[i] - btw.rmsB[i]));
+      const same = btw.rmsA.length === btw.rmsB.length &&
+        worst <= 1e-5 && btw.peakA === btw.peakB;
+      if (!same)
+        fail(`two cold bounce renders of the 909 song differ (worst window ` +
+             `ΔRMS ${worst.toExponential(2)}, peaks ${btw.peakA}/${btw.peakB}) — ` +
+             `the carrier is not the take the desk heard`);
+      else ok(`two cold bounce renders are the same take: ${btw.rmsA.length} RMS ` +
+              `windows within ${worst.toExponential(1)} and one peak (${btw.peakA}) ` +
+              `over ${btw.durSec.toFixed(1)} s`);
     }
   }
 

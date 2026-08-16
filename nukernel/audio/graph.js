@@ -43,8 +43,12 @@
 // harder rather than looser: the song's globals go INTO buildMasterChain, so
 // the bounce gets them by construction and there is nowhere for a second
 // opinion about the master to live.
-import { resolveMaster, resolveBuses, FX, SP, DRUMMIX, DRUMBUS } from "../ui/deps.js";
+import { resolveMaster, resolveBuses, FX, SP, DRUMBUS } from "../ui/deps.js";
 import { bpm, vol, MASTER, BUSES, on, emit } from "../ui/state.js";
+// the per-lane mix rows, MERGED: instruments.js DRUMMIX for the sampled kits,
+// audio/machines.js MACHINEMIX riding it for the synthesized machines — one
+// merge (mixFor), so the desk and playDrum can never disagree about a row
+import { mixFor, laneKey } from "./machines.js";
 
 // exported as live bindings — null until initAudio(), which must ride a user
 // gesture because that is the autoplay law
@@ -545,17 +549,23 @@ export function buildKitDesk(c, room) {
   // between a dry kick and a wet snare survives — that ratio is the room
   let roomSum = null;
   if (room) { roomSum = c.createGain(); n++; }
+  // STRIPS ARE KEYED BY MIX ROW, not by lane alone: a sampled kit's lanes
+  // share one strip apiece exactly as before (key = the letter), and a machine
+  // lane whose MACHINEMIX row differs earns its own (key = "kit|letter") —
+  // lazily, so a song with no machine pays not one node for them
   const lanes = new Map();
-  const laneIn = (d) => {
-    let L = lanes.get(d);
+  const laneIn = (d, kit) => {
+    const key = laneKey(kit, d);
+    let L = lanes.get(key);
     if (L) return L.in;
-    const m = DRUMMIX[d] || { lvl: 1, pan: 0, room: 0.3 };
-    const g = c.createGain(); g.gain.value = m.lvl;
-    const p = c.createStereoPanner(); p.pan.value = m.pan; n += 2;
+    const m = mixFor(kit, d) || { lvl: 1, pan: 0, room: 0.3 };
+    const g = c.createGain(); g.gain.value = m.lvl != null ? m.lvl : 1;
+    const p = c.createStereoPanner(); p.pan.value = m.pan || 0; n += 2;
     g.connect(p); p.connect(dry);
     let r = null;
-    if (roomSum) { r = c.createGain(); r.gain.value = m.room; p.connect(r); r.connect(roomSum); n++; }
-    lanes.set(d, L = { in: g, gain: g, pan: p, room: r, mix: m });
+    if (roomSum) { r = c.createGain(); r.gain.value = m.room != null ? m.room : 0.3;
+                   p.connect(r); r.connect(roomSum); n++; }
+    lanes.set(key, L = { in: g, gain: g, pan: p, room: r, mix: m });
     return L.in;
   };
   // WHICH CHANNELS HANG OFF THIS DESK, so focusKit can walk them without the
@@ -563,7 +573,7 @@ export function buildKitDesk(c, room) {
   // stop being written to — an open gate on a dead channel is the zombie
   // ZERO-STATIC R1 is about, one level up from an oscillator).
   const gates = new Map();                   // channel object -> { kit, room }
-  return { dry, out: sat, roomSum, laneIn, lanes, gates,
+  return { dry, out: sat, roomSum, laneIn, laneKey, lanes, gates,
            get nodes() { return n; } };
 }
 /* ---------- THE AUX SEND RACK: one bus per effect, for the whole page ------ */

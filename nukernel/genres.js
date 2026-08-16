@@ -209,7 +209,9 @@
     acid: {
       label: "Acid house", rate: 1, bars: 4, voices: 2,
       instr: "clean_guitar",
-      drumkit: "electronic",              // the SAMPLED kit, not a sine and some noise
+      // the kit vector below has always said "909, four on the floor" — now
+      // the SOUND is the machine it names (synthesized, audio/machines.js)
+      drumkit: "tr909",
       entry: v => v, reg: v => -2 + v, realize: () => "line",
       harmony: "modal",
       // THE SIGNATURE-SYNTH LAW, from state-engine.js SIGNATURE_MODELS: a genre
@@ -250,7 +252,7 @@
       harmony: "cycle", roots: [0, 4, 5, 3],     // I V vi IV
       mode: MODES.mixo, scale: MODES.mixo, diatonic: true,
       artic: "staccato",                         // no sustain anywhere
-      drumkit: "electronic",
+      drumkit: "cr78",             // 1979's preset box — the machine of the era
       kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],   // claps doubling the snare
@@ -626,7 +628,9 @@
     eurythmics: {
       label: "Eurythmics", rate: 1, bars: 4, voices: 2,
       instr: "synth_strings_1",
-      drumkit: "electronic",
+      // "a drum machine and nothing else in the room" — the CR-era box, not a
+      // sampled kit pretending to be one
+      drumkit: "cr78",
       entry: v => v, reg: v => v - 1, realize: () => "line",
       harmony: "cycle", roots: [0, 0, 5, 5],
       scale: DIATONIC, diatonic: true,
@@ -727,7 +731,9 @@
     jodeci: {
       label: "Jodeci", rate: 1, bars: 4, voices: 2, swing: 0.28,
       instr: ["ahh_choir", "rhodes_ep"],
-      drumkit: "electronic",
+      // "a drum machine that cannot swing on its own" — the 808; the swing is
+      // ours, exactly as new jack applied it
+      drumkit: "tr808",
       entry: () => 0, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
       harmony: "cycle", mode: MODES.dorian, scale: MODES.dorian, diatonic: true,
       roots: [0, 3, 0, 4],                       // i IV i v — dorian's bright IV
@@ -874,7 +880,7 @@
     trap: {
       label: "Trap", rate: 1, bars: 4, voices: 2, near: "deathmetal",
       instr: ["music_box", "square_lead"],
-      drumkit: "electronic",
+      drumkit: "tr808",            // "the 808 ties" — it does, and now it is one
       entry: v => v * 2, reg: v => 1 - 2 * v, realize: () => "line",
       harmony: "cycle", roots: [0, 0, 5, 5],
       artic: "tie",
@@ -896,7 +902,7 @@
     house: {
       label: "House", rate: 1, bars: 4, voices: 2, near: "acid",
       instr: ["bright_yamaha_grand", "polysynth"],
-      drumkit: "electronic",
+      drumkit: "tr909",            // Chicago's four on the floor is a 909's
       entry: v => v, reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),
       part: ["stab", "lead"],
@@ -1276,7 +1282,7 @@
     synthpop: {
       label: "Synth pop", rate: 1, bars: 4, voices: 2, near: "eurythmics",
       instr: ["polysynth", "saw_wave"],
-      drumkit: "electronic",
+      drumkit: "cr78",             // the CR-era anthem box, like its neighbour
       entry: v => v, reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),
       part: ["stab", "lead"],
@@ -1403,7 +1409,7 @@
     techno: {
       label: "Techno", rate: 1, bars: 8, voices: 2, near: "acid",
       instr: ["charang", "metal_pad"],
-      drumkit: "electronic",
+      drumkit: "tr909",            // Detroit's kick-and-open-hat is the 909's
       entry: v => v * 2, reg: v => v - 2,
       realize: v => (v === 1 ? "pad" : "line"),
       harmony: "modal",

@@ -74,6 +74,14 @@
   //          numbers; doing it per note costs nothing and needs no worklet.
   // The parent's drum strip (subsonic HPF + a whisper of glue saturation, NO
   // compressor) still sits under all of this on the drum bus — see DRUMBUS.
+  //
+  // THESE ROWS ARE THE SAMPLED KITS' TRUTH, and the synthesized machine kits
+  // ride them through per-machine overrides (audio/machines.js MACHINEMIX,
+  // merged by its mixFor — one merge, read by the desk and the player both).
+  // The overrides exist because two of these numbers are compensations for
+  // flat-normalised RECORDINGS: `punch` re-manufactures a transient a
+  // synthesized hit already owns, and `room` puts a kit in a room a drum
+  // machine was never in.
   const DRUMMIX = {
     k: { lvl: 1.00, pan:  0.00, room: 0.10, punch: 1.45, sus: 1.00 },
     s: { lvl: 1.00, pan: -0.02, room: 0.55, punch: 1.35, sus: 0.94 },
