@@ -2,8 +2,10 @@
 // mix", 2026-08-16), and since "the section speaks up" (2026-08-16) THE WHOLE
 // PER-BOX INTERFACE: one row per section, built from NAMED CELLS —
 // | PART | GENRE | FUNCTION | BARS# | PATTERN MODS | VOICE | RHYTHM |
-// TRANSITIONS | — with a full-width PATTERN ROW of chunky phrase thumbnails
-// beneath them (see "the phrase thumbnails" below) — and every cell is a tap
+// TRANSITIONS | — with a full-width PATTERN ROW beneath them carrying chunky
+// thumbnails of THE PHRASES THAT LAYER PLAYS and no others, the whole bank
+// folded away behind its [+] (see "the phrase thumbnails" below, and the
+// phrase bank down beside mountCell) — and every cell is a tap
 // target that UNFOLDS A MENU IN PLACE, an accordion panel inserted directly
 // below the row that owns it (the floating cell popup is gone: the menu is a
 // row of the table now, #rowpop wearing role="row", and the table simply gets
@@ -90,7 +92,10 @@ const CELLS = ["part", "genre", "role", "bars", "mods",
                "voice", "rhythm", "trans"];
 const CELLNAME = { part: "part", genre: "genre", role: "function", bars: "bars",
                    mods: "pattern mods", voice: "voice",
-                   rhythm: "rhythm", trans: "transitions" };
+                   rhythm: "rhythm", trans: "transitions",
+                   // "ptn" is not a COLUMN — it is the pattern row's [+], which
+                   // unfolds the phrase bank through the same menu machinery
+                   ptn: "patterns" };
 
 /* ---------- the column header ---------- */
 // A real header row AT EVERY WIDTH: the columns are named once, at the top.
@@ -166,30 +171,57 @@ function moveBox(sec, d) {
 
 /* ---------- the phrase thumbnails ---------- */
 // THE PATTERN ROW ("make the little patterns visualization big and chunky —
-// on their own row"): one chunky THUMBNAIL PER BANK PHRASE on a full-width
-// strip beneath the row's cells — a real drawing of the phrase (thumbPath:
-// gate blocks across the 16 steps, velocity as bar height, big enough to
-// recognize by shape), lit when the phrase is switched ON in this layer and
-// dim when it is not, plus the [+]. The parent's strip speaks for the
-// authority, each sub-row's for its layer. Tapping one NAVIGATES to Compose
-// with that phrase loaded; toggling on/off lives on Compose's phrase bank.
+// on their own row"): chunky THUMBNAILS on a full-width strip beneath the
+// row's cells — a real drawing of each phrase (thumbPath: gate blocks across
+// the 16 steps, velocity as bar height, big enough to recognize by shape),
+// with the PHRASE NUMBER SUPERIMPOSED on the drawing (see .bcn in
+// kernel-daw.css: a big translucent numeral centred over the bars with a
+// key-coloured halo — centred because thumbPath grows its bars from the
+// bottom edge at every step, so no corner is reliably empty, and translucent
+// so a dense phrase still reads through it while an empty one is not just a
+// blank key).
+//
+// A SECTION SHOWS THE PATTERNS IT PLAYS, AND ONLY THOSE ("don't include all
+// the patterns in the song section — just the active ones", 2026-08-16). The
+// strip is the layer's `slots` list in PLAY ORDER, one thumbnail each, plus
+// the [+]. The whole bank — every phrase the song has, lit where this layer
+// plays it and dim where it does not — moved BEHIND that [+], into the same
+// inline menu row every cell unfolds (popCell "ptn", buildPtnBank below).
+// That is where a phrase is switched in and switched OUT: a tap on a
+// thumbnail ON THE ROW always means "open this phrase on Compose" and never
+// silently drops it from the section, the one-thing-one-place law — and it
+// keeps the row's keys single-purpose instead of hanging a second, smaller
+// tap target (a ✕) inside a 46px key that a thumb cannot separate from it.
+//
+// The parent's strip speaks for the authority, each sub-row's for its layer.
 // `ent` is the stack entry the strip belongs to (null = the authority); the
 // layer index is looked up at CLICK time, because removing a middle layer
 // renumbers the ones after it.
 const SVGNS = "http://www.w3.org/2000/svg";
-function buildChip(sec, ent, si) {
+// the thumbnail FACE, shared by the row strips and the bank behind [+]: the
+// number over the drawing, one <path> to patch. Callers add the behaviour.
+function thumbFace(si, cls) {
   const b = document.createElement("button");
-  b.type = "button"; b.className = "bch";
-  const bcn = Object.assign(document.createElement("b"),
-    { className: "bcn", textContent: String(si + 1) });
+  b.type = "button"; b.className = cls;
   const mini = document.createElementNS(SVGNS, "svg");
   mini.setAttribute("class", "bcmini");
   mini.setAttribute("viewBox", "0 0 64 24");
   mini.setAttribute("preserveAspectRatio", "none");
   mini.setAttribute("aria-hidden", "true");
   const line = document.createElementNS(SVGNS, "path");
-  mini.append(line); b.append(bcn, mini);
-  b.addEventListener("click", ev => {
+  mini.append(line);
+  // the numeral rides OVER the drawing (absolutely placed in CSS), so it is
+  // painted after it and marked decorative — the accessible name says the
+  // phrase number in words
+  const bcn = Object.assign(document.createElement("b"),
+    { className: "bcn", textContent: String(si + 1) });
+  bcn.setAttribute("aria-hidden", "true");
+  b.append(mini, bcn);
+  return { b, line, si };
+}
+function buildChip(sec, ent, si) {
+  const c = thumbFace(si, "bch");
+  c.b.addEventListener("click", ev => {
     ev.stopPropagation();                 // the row click opens the PART menu
     const at = idx(sec);
     closePop();                           // one open surface at a time
@@ -200,25 +232,39 @@ function buildChip(sec, ent, si) {
     openPhraseEditor({ slot: si });
     buzz(4);
   });
-  return { b, line, si };
+  return c;
 }
-// the trailing [+] that grows the bank into this box's given layer and opens
-// the editor on the new phrase
+// the trailing [+]: the door to the BANK. It unfolds the phrase bank as a
+// menu row under this row (the same accordion every cell uses) — where
+// phrases are switched into and out of this layer, and where a new one is
+// grown. It is never hidden: at a full bank there is still a bank to edit.
 function buildPlus(sec, ent) {
-  return btn("bch bplus", "+", "add a phrase", () => {
+  return btn("bch bplus", "+", "phrases", () => {
     const at = idx(sec);
-    if (at < 0 || SLOTS.length >= NSLOTS) return;
+    if (at < 0) return;
+    if (popFor === sec && popCell === "ptn" && popEnt === (ent || null)) {
+      closePop(); return;                 // the same key again: a toggle
+    }
     setViewSec(at);
     sec.focus = ent ? Math.max(0, stackOf(sec).indexOf(ent)) : 0;
-    SLOTS.push(blank());
-    const si = SLOTS.length - 1;
-    setSlot(si);
-    commit("phrase");
-    toggle("phrase", si);                 // onto the FOCUSED layer; it commits
-    closePop();
-    openPhraseEditor({ slot: si });
-    buzz(4);
+    openPop(sec, "ptn", ent);
   });
+}
+// GROW A NEW PHRASE — the action that used to be the [+] itself: it makes a
+// phrase, switches it into this layer, and lands on Compose editing it.
+function growPhrase(sec, ent) {
+  const at = idx(sec);
+  if (at < 0 || SLOTS.length >= NSLOTS) return;
+  setViewSec(at);
+  sec.focus = ent ? Math.max(0, stackOf(sec).indexOf(ent)) : 0;
+  SLOTS.push(blank());
+  const si = SLOTS.length - 1;
+  setSlot(si);
+  commit("phrase");
+  toggle("phrase", si);                   // onto the FOCUSED layer; it commits
+  closePop();
+  openPhraseEditor({ slot: si });
+  buzz(4);
 }
 
 /* ---------- build once per box ---------- */
@@ -499,33 +545,36 @@ function transFact(sec) {
 }
 
 /* ---------- thumbnail reconciliation, shared by row and sub-row ---------- */
-// ONE THUMBNAIL PER BANK PHRASE now — the strip shows the whole bank, lit
-// where the layer plays a phrase and dim where it does not ("on/off state
-// stays visible"), so rebuild only when the BANK's size moves — a
-// structural, rare edit. `holder` is the row/sub record carrying
-// {ph, plus, chips, chipsSig}.
-function syncChips(sec, ent, holder) {
-  if (holder.chipsSig !== SLOTS.length) {
-    holder.chipsSig = SLOTS.length;
+// ONE THUMBNAIL PER PHRASE THIS LAYER PLAYS, in the order the slots list
+// carries them, and nothing else — the bank lives behind [+]. So the strip is
+// rebuilt when THAT LIST changes (its signature is the list itself, not the
+// bank's size): switching a phrase in or out is exactly the structural edit
+// the built-once law carves out, and it is a menu tap, not a scrub.
+// `holder` is the row/sub record carrying {ph, plus, chips, chipsSig}.
+function syncChips(sec, ent, slots, holder) {
+  const sig = slots.join(",");
+  if (holder.chipsSig !== sig) {
+    holder.chipsSig = sig;
     for (const c of holder.chips) c.b.remove();
     holder.chips.length = 0;
-    for (let si = 0; si < SLOTS.length; si++) {
+    for (const si of slots) {
       const c = buildChip(sec, ent, si);
       holder.chips.push(c); holder.ph.insertBefore(c.b, holder.plus);
     }
   }
-  holder.ph.className = "bchips has";
-  holder.plus.hidden = SLOTS.length >= NSLOTS;
+  // A LAYER THAT PLAYS NOTHING SAYS SO by showing only its [+]: an empty
+  // strip is the honest picture of a section with no pattern switched in,
+  // where five dim thumbnails used to imply five it might be playing.
+  holder.ph.className = "bchips has" + (slots.length ? "" : " none");
 }
 function patchChips(sec, i, slots, holder, layerWord) {
   for (const c of holder.chips) {
-    const inLayer = slots.includes(c.si);
-    // ON = this layer PLAYS the phrase; a dim thumbnail is in the bank but
-    // not in this box — the state a numbered key could never show at a glance
-    c.b.classList.toggle("on", inLayer);
+    // every thumbnail on the strip is one this layer PLAYS — .on is what the
+    // key material reads as "in the section"; dim/lit lives in the bank now
+    c.b.classList.add("on");
     // LIT = SOUNDING: the transport publishes the sounding SECTION, and every
     // phrase in the sounding box sounds at once, so the lamp is per section.
-    c.b.classList.toggle("lit", inLayer && i === playingSec);
+    c.b.classList.toggle("lit", i === playingSec);
     // ...and the ring is the EDIT target: this row selected, this phrase open
     c.b.classList.toggle("sel", i === viewSec && slot === c.si);
     const p = SLOTS[c.si];
@@ -534,8 +583,7 @@ function patchChips(sec, i, slots, holder, layerWord) {
       if (c.line.getAttribute("d") !== d) c.line.setAttribute("d", d);
     }
     c.b.setAttribute("aria-label", "phrase " + (c.si + 1) +
-      (inLayer ? " on" : " off") + " in box " + (i + 1) + layerWord +
-      " — opens it on the compose page");
+      " in box " + (i + 1) + layerWord + " — opens it on the compose page");
   }
 }
 
@@ -595,8 +643,13 @@ function patchBox(sec, i, el) {
   }
 
   // the authority's own pattern row
-  syncChips(sec, null, el);
-  el.plus.setAttribute("aria-label", "add a phrase to box " + (i + 1));
+  syncChips(sec, null, st[0].slots, el);
+  el.plus.setAttribute("aria-label",
+    "phrases in box " + (i + 1) + " — open the phrase bank");
+  el.plus.setAttribute("aria-expanded",
+    String(popFor === sec && !popEnt && popCell === "ptn"));
+  el.plus.classList.toggle("openc",
+    popFor === sec && !popEnt && popCell === "ptn");
   patchChips(sec, i, st[0].slots, el, "");
 
   // THE SUB-ROWS: one per extra layer, keyed by the entry object — build the
@@ -634,9 +687,13 @@ function patchBox(sec, i, el) {
     }
     sub.del.setAttribute("aria-label",
       "remove layer " + GENRES[ent.g].label + " from box " + (i + 1));
-    syncChips(sec, ent, sub);
+    syncChips(sec, ent, ent.slots, sub);
     sub.plus.setAttribute("aria-label",
-      "add a phrase to the " + GENRES[ent.g].label + " layer of box " + (i + 1));
+      "phrases in the " + GENRES[ent.g].label + " layer of box " + (i + 1) +
+      " — open the phrase bank");
+    const pop = popFor === sec && popEnt === ent && popCell === "ptn";
+    sub.plus.setAttribute("aria-expanded", String(pop));
+    sub.plus.classList.toggle("openc", pop);
     patchChips(sec, i, ent.slots, sub, ", " + GENRES[ent.g].label + " layer");
   });
 
@@ -793,6 +850,72 @@ rpBars.append(rpLen.w);
 const rpNud = Object.assign(document.createElement("div"), { className: "rpbars" });
 rpNud.append(rpNudge.w);
 
+/* ---------- the PHRASE BANK, behind the pattern row's [+] ---------- */
+// THE WHOLE BANK LIVES HERE now, not on the row: every phrase the song has,
+// as the same chunky numbered thumbnail, LIT where this layer plays it and
+// DIM where it does not — the on/off state the row used to carry, moved to
+// the one surface whose verb is on/off. A tap toggles the phrase into or out
+// of the layer the menu was opened from (that is also THE REMOVE: taking a
+// phrase off a section is a tap on its lit thumbnail HERE, so a tap on the
+// row's thumbnail can keep meaning "open it on Compose"). The trailing key
+// grows a new phrase and lands on Compose editing it, which is what the row's
+// [+] used to do directly.
+//
+// Built fresh per open (the mount is emptied anyway, and a bank is a dozen
+// nodes); patched by patchBank on every commit while it is up.
+let bankChips = [];
+function buildPtnBank(sec, ent) {
+  bankChips = [];
+  const g = document.createElement("div");
+  g.className = "pgroup tbl rpptn";
+  g.append(Object.assign(document.createElement("span"),
+    { className: "plabel thd",
+      textContent: "phrase bank · tap to switch in or out" }));
+  const wrap = document.createElement("div");
+  wrap.className = "bchips bank";
+  for (let si = 0; si < SLOTS.length; si++) {
+    const c = thumbFace(si, "bch bbk");
+    c.b.dataset.kind = "phrase"; c.b.dataset.value = String(si);
+    c.b.addEventListener("click", ev => {
+      ev.stopPropagation();
+      const at = idx(sec);
+      if (at < 0) return;
+      setViewSec(at);
+      sec.focus = ent ? Math.max(0, stackOf(sec).indexOf(ent)) : 0;
+      toggle("phrase", si);              // in or OUT of this layer; it commits
+      buzz(4);
+    });
+    bankChips.push(c); wrap.append(c.b);
+  }
+  const grow = btn("bch bplus bbknew", "+", "grow a new phrase",
+    () => growPhrase(sec, ent));
+  grow.hidden = SLOTS.length >= NSLOTS;
+  wrap.append(grow);
+  g.append(wrap);
+  rpMount.append(g);
+}
+// the bank's lights follow every commit, the same contract refreshChips has
+function patchBank() {
+  if (popCell !== "ptn" || !popFor) return;
+  const ent = popEnt || stackOf(popFor)[0];
+  const slots = ent ? ent.slots : [];
+  const i = SONG.indexOf(popFor);
+  for (const c of bankChips) {
+    const inLayer = slots.includes(c.si);
+    c.b.classList.toggle("on", inLayer);
+    c.b.classList.toggle("lit", inLayer && i === playingSec);
+    c.b.setAttribute("aria-pressed", String(inLayer));
+    const p = SLOTS[c.si];
+    if (p) {
+      const d = thumbPath(p);
+      if (c.line.getAttribute("d") !== d) c.line.setAttribute("d", d);
+    }
+    c.b.setAttribute("aria-label", "phrase " + (c.si + 1) +
+      (inLayer ? " — playing here, tap to take it out"
+               : " — not here, tap to switch it in"));
+  }
+}
+
 // WHAT EACH CELL MOUNTS: its own keys first, then its banks. The keys are
 // built once above and MOVED in (one of each exists); the banks are rebuilt
 // per open — they are cheap, and the mount is emptied anyway. (The GENRE
@@ -801,6 +924,7 @@ function mountCell(sec, kind) {
   rpMount.textContent = "";
   if (kind === "part") rpMount.append(rpKeys);
   else if (kind === "bars") rpMount.append(rpBars);
+  else if (kind === "ptn") buildPtnBank(sec, popEnt);
   else if (kind === "mods") { rpMount.append(rpNud); mountBanks("mods", rpMount); }
   else mountBanks(kind, rpMount);
 }
@@ -885,6 +1009,7 @@ function patchPop() {
   }
   if (popCell === "bars") rpLen.lcd.textContent = String(popFor.len);
   if (popCell === "mods") rpNudge.lcd.textContent = String(popFor.nudge);
+  patchBank();                             // ...and so do the phrase thumbnails
   refreshChips(rpMount);                   // the banks follow every commit
 }
 addEventListener("keydown", ev => {
@@ -946,6 +1071,7 @@ function patchChipPaths() {
     paint(el);
     for (const sub of el.subs.values()) paint(sub);
   }
+  if (popCell === "ptn") paint({ chips: bankChips });   // ...and the open bank
 }
 on("phrase", patchChipPaths);
 

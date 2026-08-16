@@ -879,33 +879,50 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .bbars .bd{font-family:var(--f-num);letter-spacing:.02em;color:var(--faint);white-space:nowrap}
 /* THE PATTERN ROW — the phrases on their OWN full-width strip beneath the
    cells ("make the little patterns visualization big and chunky"): one
-   chunky thumbnail per BANK phrase — thumbPath's gate blocks × velocity
-   height, big enough to recognize a phrase by shape — lit when this layer
-   plays it, dim when it does not, plus the [+]. The thumbnails wear the SAME
-   key material as the cells — a thumbnail is a key you press, not a decal —
-   with the state ring drawn over it. Tap = go to Compose on that phrase. */
+   chunky thumbnail per phrase THIS LAYER PLAYS, in play order — thumbPath's
+   gate blocks × velocity height, big enough to recognize a phrase by shape —
+   plus the [+], which unfolds the whole bank as a menu row ("don't include
+   all the patterns in the song section — just the active ones", 2026-08-16;
+   .bchips.bank below is that bank). The thumbnails wear the SAME key
+   material as the cells — a thumbnail is a key you press, not a decal — with
+   the state ring drawn over it. Tap = go to Compose on that phrase. */
 .bchips{grid-column:1/-1;display:flex;gap:6px;align-items:stretch;min-width:0;
   flex-wrap:wrap;padding:6px 0 2px}
 .bplab{align-self:center;flex:0 0 auto;
   font:600 10px/1 var(--f-legend);letter-spacing:.14em;text-transform:uppercase;
   color:var(--tbl-faint)}
+/* a layer that plays no pattern shows only its [+] — the silkscreen recedes
+   rather than labelling an empty strip */
+.bchips.none .bplab{opacity:.55}
 .bch{
-  appearance:none;cursor:pointer;padding:4px 6px 3px;flex:0 1 auto;
+  appearance:none;cursor:pointer;padding:3px 4px;flex:0 1 auto;
   width:104px;height:46px;border-radius:4px;position:relative;
   background:var(--tbl-key,var(--hw-key-mid));color:var(--tbl-ink);
   border:1px solid rgba(0,0,0,.4);border-top-color:rgba(255,255,255,.2);
-  display:flex;align-items:stretch;gap:5px;
+  display:flex;align-items:stretch;gap:0;overflow:hidden;
 }
 .bch:active{transform:translateY(1px);background:var(--hw-key-lo)}
-/* the phrase number rides the thumbnail's top-left in silkscreen */
-.bch .bcn{flex:0 0 auto;align-self:flex-start;
-  font:600 12px/1 var(--f-num);color:var(--tbl-faint)}
+/* THE PHRASE NUMBER, SUPERIMPOSED ON THE PICTURE ("and superimpose their
+   number on them"): a big numeral laid over the whole face rather than
+   beside it, because a thumbnail that has to give up width for a numeral
+   stops being a picture. CENTRED, because thumbPath grows every bar from the
+   bottom edge — no corner of a dense phrase is reliably empty, but the eye
+   reads a centred watermark against ANY of them. Translucent so the bars
+   read straight through it, with a key-coloured halo so it stays legible
+   over the accent fill, and non-interactive so it never eats the tap. */
+.bch .bcn{position:absolute;inset:0;pointer-events:none;
+  display:flex;align-items:center;justify-content:center;
+  font:700 26px/1 var(--f-num);letter-spacing:.02em;
+  color:var(--tbl-ink);opacity:.44;
+  text-shadow:0 0 4px var(--tbl-key,var(--hw-key-mid)),
+              0 0 2px var(--tbl-key,var(--hw-key-mid))}
 /* OFF = in the bank, not in this layer: the key recedes and its bars go
-   faint — visible, recognizable, clearly not playing */
+   faint — visible, recognizable, clearly not playing. Only the BANK behind
+   [+] has off keys now; every thumbnail on a row is one the section plays. */
 .bch:not(.on){opacity:.5}
 .bch:not(.on) .bcmini{opacity:.55}
 .bch.on{border-color:rgba(0,0,0,.55)}
-.bch.on .bcn{color:var(--accent-txt)}
+.bch.on .bcn{color:var(--accent-txt);opacity:.5}
 .bch.on .bcmini{fill:var(--accent)}
 /* THE SOUNDING ROW'S KEYS TAKE THE WASH: the .tbl row states paint the row's
    ground, but the keys are opaque now — without this the live tint only shows
@@ -932,6 +949,19 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   display:inline-flex;align-items:center;justify-content:center}
 .bch.bplus:hover{color:var(--accent-txt)}
 .bch.bplus[hidden]{display:none}
+/* the [+] wears the accent while ITS bank is unfolded below the row — the
+   same .openc language every cell speaks when its menu is open */
+.bch.bplus.openc{border-style:solid;border-color:var(--accent);
+  color:var(--accent-txt);background:var(--tbl-hi)}
+
+/* THE PHRASE BANK BEHIND [+] — the same thumbnails, in the menu row, where
+   on/off is the verb: lit = this layer plays it, dim = it is in the song but
+   not here, and a tap is the switch BOTH WAYS (this is also how a phrase
+   comes off a section, so a tap on a row thumbnail can keep its one meaning,
+   "open it on Compose"). The trailing dashed key grows a new phrase. */
+.rpptn{flex:1 1 100%}
+.bchips.bank{padding:8px 0 4px;gap:8px}
+.bch.bbk{width:112px;height:52px}
 /* the play-through rides the row's own bottom edge — a hairline, not a grid
    row: it is the row filling up, not another field of the table */
 .bprog{position:absolute;left:0;right:0;bottom:0;height:2px;
@@ -1631,6 +1661,9 @@ details .c{color:var(--faint)}
   .bcell{padding:7px 5px;gap:4px}
   .bcell.c-role:not(.unset) .role{font-size:10px;letter-spacing:.04em;padding:0 3px}
   .bch{width:88px}
+  .bch.bbk{width:96px}
+  /* the superimposed numeral scales with the face it rides */
+  .bch .bcn{font-size:22px}
   .addbox{flex:1 1 auto}
   /* THE BOARD AT 390: the same strips, narrower, scrolling in their own well
      — a board is the one surface that EARNS a sideways scroll, because that
@@ -1687,6 +1720,8 @@ details .c{color:var(--faint)}
   /* the pattern row gets the desk's chunkier thumbnails */
   .bchips{gap:8px;padding:8px 0 4px}
   .bch{width:128px;height:52px}
+  .bch.bbk{width:128px;height:56px}
+  .bch .bcn{font-size:30px}
   .bch.bplus{height:52px}
   /* the layer sub-row, with the desk's room (its pattern row spans below,
      placed by the base .bchips rule) */
