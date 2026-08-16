@@ -8490,6 +8490,366 @@ console.log("the tape wraps where the bar does");
   }
 }
 
+/* ── §54 THE SONG PLAYS LIKE A RADIO ─────────────────────────────────────────
+   "When the browser sleeps the song turns off. It's very vexing especially
+   since we solved it." We had solved it — for phones. A desk kept the live
+   WebAudio graph as its audible path, and a hidden tab is not a page a browser
+   feels much duty toward: it throttles the timers, deprioritises the audio
+   thread and suspends the context on a sleeping display, every one of which is
+   fatal to something that must schedule a bar every 1.9 seconds forever. A
+   playing <audio> element is MEDIA, and media is the one thing an OS keeps
+   alive. So audio/bounce.js makes the rendered tape the playback path
+   EVERYWHERE and leaves the live graph exactly one job: being audible while
+   somebody is touching the machine, because no tape can make an edit audible
+   in the bar it was made.
+
+   The whole thing is one decision — carrierWant() — and it is a pure function
+   of its arguments precisely so it can be walked here rather than only in a
+   browser, where a handoff is a race against a render that takes a minute.
+   Three things are held:
+
+   (a) THE TRUTH TABLE, over every world the machine can be in. Two laws have
+       to survive it: nothing carries a FRAGMENT (a desk waits for the full
+       tape — the short cut is one box on loop, which is worse than the live
+       graph the listener already has), and nothing carries at all without an
+       armed, undemoted element, because a mute with no carrier behind it is
+       silence.
+   (b) THE SEQUENCE PAUL ASKED FOR, walked in order: touching -> live, quiet
+       -> tape, hidden -> tape, touching -> live. At no point are two sources
+       audible, which here means: the decision is TOTAL and single-valued, so
+       there is no world in which the machine believes both.
+   (c) THE WIRING, on the real module rather than on a copy of its reasoning.
+       bounce.js is imported with a document that records its listeners, and
+       then the events the browser would send are sent: a hide sets `away`, a
+       pointerdown clears it and restarts the idle clock, becoming visible
+       counts as a touch. This is the half a truth table cannot prove — that
+       the function is connected to anything. */
+console.log("the song plays like a radio");
+{
+  // the same browser stubs §53 installs, plus a DOCUMENT — which §53
+  // deliberately does not have, so bounce.js's first instance registered no
+  // listeners at all. This one records them and then fires them.
+  const H54 = new Map();
+  const winH54 = new Map();
+  globalThis.location = globalThis.location || { search: "" };
+  globalThis.navigator = globalThis.navigator ||
+    { userAgent: "node", platform: "", maxTouchPoints: 0, hardwareConcurrency: 4 };
+  globalThis.Audio = globalThis.Audio || function () {};
+  globalThis.document = {
+    visibilityState: "visible",
+    addEventListener: (t, f) => H54.set(t, f),
+    removeEventListener: () => {},
+    body: { appendChild: () => {} },
+  };
+  globalThis.addEventListener = (t, f) => winH54.set(t, f);
+  // a FRESH evaluation of the module (the query string busts the ES module
+  // cache; its own imports resolve to the instances §53 already loaded), so
+  // the listeners are registered against the document above
+  const B54 = await import("../../nukernel/audio/bounce.js?radio=1");
+  const want = B54.carrierWant;
+
+  /* (a) THE TRUTH TABLE */
+  {
+    const base = { armed: true, disarmed: false, demoted: null, playing: true,
+                   mobile: false, hidden: false, away: false, idleMs: 0,
+                   ready: true, full: true, after: 30000 };
+    const w = (o) => want({ ...base, ...o });
+    const cases = [
+      // [world, expected, why]
+      [{}, "graph", "someone is touching the machine, so the live graph is audible"],
+      [{ idleMs: 29999 }, "graph", "one millisecond short of the idle threshold"],
+      [{ idleMs: 30000 }, "carrier", "the idle threshold, reached"],
+      [{ hidden: true, idleMs: 0 }, "carrier", "hidden hands over with no wait at all"],
+      [{ away: true, idleMs: 0 }, "carrier", "another window on top is the same fact"],
+      [{ idleMs: 1e6, full: false }, "graph",
+       "a SHORT tape is insurance, never the performance — the desk waits"],
+      [{ idleMs: 1e6, ready: false }, "graph", "nothing rendered, nothing to hand over"],
+      [{ idleMs: 1e6, armed: false }, "graph", "no element: a mute with no carrier is silence"],
+      [{ idleMs: 1e6, disarmed: true }, "graph", "?nobounce disarms the whole tier"],
+      [{ idleMs: 1e6, demoted: "element-refused" }, "graph",
+       "a demoted carrier never gets a second chance by idling"],
+      [{ playing: false, hidden: true }, "graph", "stopped is not carried"],
+      [{ mobile: true, idleMs: 0 }, "carrier", "the phone's answer, unchanged by any of this"],
+      [{ mobile: true, playing: false }, "graph", "…except that it too must be playing"],
+      [{ mobile: true, demoted: "x" }, "graph", "…and must not be demoted"],
+    ];
+    for (const [o, exp, why] of cases) {
+      const got = w(o);
+      ok(got === exp, `§54(a) ${why}: carrierWant said "${got}", not "${exp}" ` +
+                      `(${JSON.stringify(o)})`);
+    }
+    // TOTAL AND SINGLE-VALUED, over the whole cross product — this is the
+    // "never two audible sources" claim in the only form a pure function can
+    // carry it: there is no third answer and no world without one.
+    let worlds = 0, carried = 0;
+    for (const armed of [0, 1]) for (const playing of [0, 1])
+      for (const mobile of [0, 1]) for (const hidden of [0, 1])
+        for (const away of [0, 1]) for (const ready of [0, 1])
+          for (const full of [0, 1]) for (const idleMs of [0, 30000])
+            for (const demoted of [null, "why"]) {
+              const r = want({ armed: !!armed, disarmed: false, demoted,
+                               playing: !!playing, mobile: !!mobile,
+                               hidden: !!hidden, away: !!away, ready: !!ready,
+                               full: !!full, idleMs, after: 30000 });
+              worlds++;
+              if (r === "carrier") carried++;
+              else if (r !== "graph") ok(false, `§54(a) a third state: "${r}"`);
+              // the law, restated at every point: a carrier that is not armed,
+              // not playing or demoted is a silent page
+              if (r === "carrier" && (!armed || !playing || demoted))
+                ok(false, `§54(a) carrying with armed=${armed} playing=${playing} ` +
+                          `demoted=${demoted} — that is a mute with nothing behind it`);
+              // …and on a desk, never a fragment
+              if (r === "carrier" && !mobile && !(ready && full))
+                ok(false, `§54(a) a desk carried a tape that is ready=${ready} full=${full}`);
+            }
+    ok(worlds === 512 && carried > 0 && carried < worlds,
+       `§54(a) the walk is degenerate: ${carried}/${worlds} worlds carry`);
+    console.log(`  the decision is total over ${worlds} worlds; ${carried} of them carry`);
+  }
+
+  /* (b) THE SEQUENCE, IN ORDER */
+  {
+    // one world, mutated by the events a listener would deliver, asserted at
+    // every step — interact -> live, idle -> tape, hide -> tape, interact ->
+    // live. The tape is READY and FULL throughout, so every transition below
+    // is the machine's decision and never a missing render.
+    const W = { armed: true, disarmed: false, demoted: null, playing: true,
+                mobile: false, hidden: false, away: false, idleMs: 0,
+                ready: true, full: true, after: 30000 };
+    const step = (label, mutate, exp) => {
+      mutate();
+      const got = want(W);
+      ok(got === exp, `§54(b) ${label}: "${got}", not "${exp}"`);
+      return got;
+    };
+    const seen = [];
+    seen.push(step("play, hand on the desk", () => {}, "graph"));
+    seen.push(step("ten seconds of quiet", () => { W.idleMs = 10000; }, "graph"));
+    seen.push(step("thirty seconds of quiet", () => { W.idleMs = 30000; }, "carrier"));
+    seen.push(step("a touch", () => { W.idleMs = 0; W.away = false; }, "graph"));
+    seen.push(step("the tab is hidden", () => { W.hidden = true; }, "carrier"));
+    seen.push(step("back, and touched", () => { W.hidden = false; W.idleMs = 0; }, "graph"));
+    seen.push(step("another app on top", () => { W.away = true; }, "carrier"));
+    seen.push(step("clicked back into", () => { W.away = false; W.idleMs = 0; }, "graph"));
+    seen.push(step("stop", () => { W.playing = false; W.idleMs = 1e6; }, "graph"));
+    const sig54 = seen.join(">");
+    ok(sig54 === "graph>graph>carrier>graph>carrier>graph>carrier>graph>graph",
+       `§54(b) the walk came out ${sig54}`);
+    console.log("  interact -> live, idle -> tape, hide -> tape, interact -> live");
+  }
+
+  /* (c) THE WIRING, ON THE REAL MODULE */
+  {
+    // the constant is NAMED and it is the one Paul asked for
+    ok(B54.IDLE_MS === 30000,
+       `§54(c) the idle threshold is ${B54.IDLE_MS} ms, not the 30 s it is documented as`);
+    // every signal the machine listens for is really listened for. touchstart
+    // and wheel are there so a finger on a phone-sized desk and a scroll both
+    // count as touching; blur is there because ANOTHER APP ON TOP is not a
+    // visibilitychange and is exactly the tab-away being fixed.
+    for (const ev of ["pointerdown", "keydown", "wheel", "touchstart", "visibilitychange"])
+      ok(H54.has(ev), `§54(c) nothing listens for "${ev}" — the idle clock cannot be reset`);
+    for (const ev of ["focus", "blur"])
+      ok(winH54.has(ev), `§54(c) the window does not listen for "${ev}"`);
+    const read = () => globalThis.window.__nuBounce();
+    // a hide sets `away` and the machine says so
+    globalThis.document.visibilityState = "hidden";
+    H54.get("visibilitychange")();
+    ok(read().away === true, "§54(c) a hide did not put the page away");
+    // …and coming back counts as touching: `away` clears and the idle clock
+    // restarts, which is why a person who tabs back gets the live graph
+    globalThis.document.visibilityState = "visible";
+    H54.get("visibilitychange")();
+    const back = read();
+    ok(back.away === false, "§54(c) becoming visible did not clear `away`");
+    ok(back.idleMs < 50, `§54(c) becoming visible left the idle clock at ${back.idleMs} ms`);
+    // the window losing focus is the same fact by another door
+    winH54.get("blur")();
+    ok(read().away === true, "§54(c) a window blur did not put the page away");
+    // and a pointer on the machine takes it all back
+    H54.get("pointerdown")();
+    const touched54 = read();
+    ok(touched54.away === false, "§54(c) a pointerdown did not clear `away`");
+    ok(touched54.idleMs < 50, `§54(c) a pointerdown left the idle clock at ${touched54.idleMs} ms`);
+    // nothing carries in a page that never pressed play, whatever it is told
+    ok(touched54.want === "graph" && touched54.carrying === false &&
+       touched54.desk === false && touched54.parked === false,
+       `§54(c) a page with no transport claims ${JSON.stringify(
+         { want: touched54.want, carrying: touched54.carrying,
+           desk: touched54.desk, parked: touched54.parked })}`);
+    console.log("  the listeners are real: hide/blur -> away, touch/visible -> the clock restarts");
+  }
+}
+
+/* ------------------------------- 55. A URL FOR EVERY ROOM IN THE HOUSE
+   ui/pages.js's router, run FOR REAL — imported as the module it is (the §31
+   window-stub trick, extended with just enough of document/location/history/
+   EventTarget for the router's own code to execute) rather than a hand
+   rewrite of its logic that could drift from the shipped file and still
+   pass. Reads the RENDERED result: chassis.dataset.page, location.hash and
+   the history stack a click, a URL load, or a back/forward actually leaves
+   behind — never the source. */
+console.log("§55 — a url for every room in the house");
+{
+  globalThis.window = globalThis;
+  window.NuKernel = K;
+  window.NuGenres = require("../../nukernel/genres.js");
+  window.NuSing = require("../../nukernel/sing.js");
+  window.NuFields = require("../../nukernel/fields.js");
+  window.NuSong = require("../../nukernel/song.js");
+  window.NuInstruments = require("../../nukernel/instruments.js");
+  window.NuCompose = require("../../nukernel/compose.js");
+  window.PRESETS = require("../../nukernel/presets.js").PRESETS;
+  window.__REGISTRY = require("../../engine/registry-data.js");
+
+  // ui/touch.js reads matchMedia/navigator/performance at import time;
+  // ui/pages.js reads document/location/history/addEventListener. None of it
+  // needs to be a browser, only real enough that the router's own code runs
+  // rather than a stub standing in for it.
+  globalThis.matchMedia = () => ({ matches: false });
+  globalThis.navigator = { vibrate: null };
+  globalThis.performance = globalThis.performance || { now: () => Date.now() };
+  const bus = new EventTarget();
+  globalThis.addEventListener = bus.addEventListener.bind(bus);
+  globalThis.removeEventListener = bus.removeEventListener.bind(bus);
+  globalThis.dispatchEvent = bus.dispatchEvent.bind(bus);
+
+  class Elem {
+    constructor(page) { this.dataset = { page }; this._attrs = {}; this._on = {}; }
+    setAttribute(k, v) { this._attrs[k] = String(v); }
+    getAttribute(k) { return this._attrs[k]; }
+    addEventListener(t, fn) { (this._on[t] = this._on[t] || []).push(fn); }
+    click(mods) {
+      const ev = Object.assign({ defaultPrevented: false, button: 0 }, mods,
+        { preventDefault() { ev.defaultPrevented = true; } });
+      for (const fn of (this._on.click || [])) fn(ev);
+      return ev;
+    }
+  }
+  const chassis55 = new Elem(); chassis55.dataset = { page: "song" };
+  const pkeys55 = ["compose", "song", "mix", "lab"].map(p => new Elem(p));
+  globalThis.document = {
+    getElementById: id => (id === "chassis" ? chassis55 : null),
+    querySelectorAll: sel => (sel === ".pkey" ? pkeys55 : []),
+  };
+
+  let hist55 = [""], hi55 = 0;
+  const hashOf55 = u => { const s = String(u), i = s.indexOf("#");
+                           return i < 0 ? "" : s.slice(i); };
+  globalThis.location = { hash: "" };
+  globalThis.history = {
+    pushState(_s, _t, u) {
+      hist55 = hist55.slice(0, hi55 + 1); hist55.push(hashOf55(u));
+      hi55 = hist55.length - 1; globalThis.location.hash = hist55[hi55];
+    },
+    replaceState(_s, _t, u) { hist55[hi55] = hashOf55(u); globalThis.location.hash = hist55[hi55]; },
+    back() { if (hi55 > 0) { hi55--; globalThis.location.hash = hist55[hi55];
+                              globalThis.dispatchEvent(new Event("popstate")); } },
+    forward() { if (hi55 < hist55.length - 1) { hi55++; globalThis.location.hash = hist55[hi55];
+                              globalThis.dispatchEvent(new Event("popstate")); } },
+  };
+
+  const PG = await import("../../nukernel/ui/pages.js");
+  const ST = await import("../../nukernel/ui/state.js");
+
+  // (a) EVERY PAGE REACHABLE BY URL: the rail carries a real href (a
+  // right-click has something to copy), and a plain click lands the chassis
+  // on that page carrying the CURRENT index, not a bare page name a listener
+  // has to correct after the fact.
+  for (const p of ["compose", "song", "mix", "lab"]) {
+    const k = pkeys55.find(e => e.dataset.page === p);
+    const ev = k.click();
+    ok(ev.defaultPrevented, "§55(a) clicking the " + p + " rail key did not take the click");
+    ok(chassis55.dataset.page === p,
+       "§55(a) the " + p + " rail key did not land on its page (got " + chassis55.dataset.page + ")");
+    const want = "#/" + p + (p === "compose" ? "/" + ST.slot
+      : (p === "song" || p === "mix") ? "/" + ST.viewSec : "");
+    ok(location.hash === want,
+       "§55(a) " + p + " landed on " + location.hash + ", not " + want);
+  }
+  // a modified click (new tab) is left to the real href — the router must
+  // not swallow it or navigate in-page underneath it
+  {
+    const before = chassis55.dataset.page;
+    const ev = pkeys55.find(e => e.dataset.page === "compose").click({ metaKey: true });
+    ok(!ev.defaultPrevented, "§55(a) a cmd-click on a rail key was swallowed");
+    ok(chassis55.dataset.page === before, "§55(a) a cmd-click navigated in-page too");
+  }
+
+  // (b) LOAD-FROM-URL RESTORES THE PAGE: a shared link lands on what the
+  // sender was looking at — the phrase on Compose, the section on Arrange —
+  // not on whichever page the markup happens to open on.
+  ST.putPhrase(1, ST.SLOTS[0]);          // a real slot 1 to restore into
+  {
+    location.hash = "#/compose/1";
+    PG.initRoute();
+    ok(chassis55.dataset.page === "compose",
+       "§55(b) #/compose/1 did not land on Compose");
+    ok(ST.slot === 1, "§55(b) #/compose/1 did not restore slot 1 (got " + ST.slot + ")");
+  }
+  {
+    location.hash = "#/song/2";
+    PG.initRoute();
+    ok(chassis55.dataset.page === "song", "§55(b) #/song/2 did not land on Arrange");
+    ok(ST.viewSec === 2, "§55(b) #/song/2 did not restore section 2 (got " + ST.viewSec + ")");
+  }
+  // an unrecognised fragment writes the CURRENT state back rather than
+  // leaving a lie in the address bar, and does it as a REPLACE (no new entry)
+  {
+    const lenBefore = hist55.length;
+    location.hash = "#/nonsense";
+    PG.initRoute();
+    ok(chassis55.dataset.page === "song", "§55(b) a bad fragment changed the page");
+    ok(location.hash === "#/song/2", "§55(b) a bad fragment was not corrected (got " + location.hash + ")");
+    ok(hist55.length === lenBefore, "§55(b) correcting a bad fragment pushed a history entry");
+  }
+
+  // (c) BACK/FORWARD WALKS THE HISTORY the way a person expects: three real
+  // navigations push three entries, and the browser's own back/forward key
+  // (simulated as a popstate, since that's what a real back button fires)
+  // steps the chassis back through them without this file touching setPage.
+  {
+    PG.setPage("song"); PG.setPage("mix"); PG.setPage("lab");
+    ok(chassis55.dataset.page === "lab", "§55(c) three setPage calls did not land on lab");
+    history.back();
+    ok(chassis55.dataset.page === "mix",
+       "§55(c) back() did not return to mix (got " + chassis55.dataset.page + ")");
+    history.back();
+    ok(chassis55.dataset.page === "song",
+       "§55(c) a second back() did not return to song (got " + chassis55.dataset.page + ")");
+    history.forward();
+    ok(chassis55.dataset.page === "mix",
+       "§55(c) forward() did not return to mix (got " + chassis55.dataset.page + ")");
+  }
+  console.log("  every rail key has an href, a load restores page+index, back/forward walk the stack");
+
+  // (d) NO LAYOUT BRANCH ABOVE THE PHONE BREAKPOINT, in the CHASSIS/RAIL
+  // region this lane owns (kernel-daw.css carries other, unrelated
+  // @media (max-width:899px) blocks — the song table's own phone grid among
+  // them — that belong to other lanes and are not this claim). The chassis's
+  // three zones and the rail used to live entirely behind that breakpoint,
+  // with a separate >=900px rule undoing them for a desk; both gates are
+  // gone from the source text itself, which is the one claim only the
+  // source can prove, so it is read here rather than re-derived from
+  // computed style.
+  {
+    const css = require("fs").readFileSync(
+      require("path").join(__dirname, "../../nukernel/kernel-daw.css"), "utf8");
+    ok(css.includes("body{padding:0}"),
+       "§55(d) the chassis's body{padding:0} left the file entirely");
+    ok(!css.includes("@media (max-width:899px){\n  body{padding:0}"),
+       "§55(d) the chassis block is still gated behind the 899px breakpoint");
+    ok(!/\.deck,\.page\{display:contents\}/.test(css),
+       "§55(d) the desk's chassis dissolve (.deck,.page{display:contents}) is still in the file");
+    ok(!/\.pagerail\{display:none\}/.test(css),
+       "§55(d) .pagerail{display:none} — the desk-hides-the-rail rule — is still in the file");
+    ok(/\.pagerail\{[^}]*display:grid/.test(css),
+       "§55(d) .pagerail no longer paints unconditionally");
+    console.log("  kernel-daw.css: the chassis/rail block is ungated, no desk dissolve remains");
+  }
+}
+
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }

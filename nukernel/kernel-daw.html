@@ -18,14 +18,16 @@
 </head>
 <body>
 
-<!-- THE CHASSIS. Three fixed zones on a phone — transport strip on top, the
-     current PAGE in the middle, the page rail under the thumb — and on a
-     desk (>=900px) the zones dissolve: every page is display:contents, the
-     rail disappears, and all four tables stack down the one column. Same
-     tables either way, with more room; there is no second layout to keep.
+<!-- THE CHASSIS. Three fixed zones AT EVERY WIDTH now (2026-08-16, "get rid
+     of the non-mobile vertical UX") — transport strip on top, the current
+     PAGE in the middle, the page rail under the thumb. A wide window does
+     not dissolve the zones into a stacked column; it gives the same tables
+     more room (wider columns, taller rows — kernel-daw.css's own media step).
+     One mental model, never a second layout to keep in sync with this one.
      Switching pages is ONE attribute write (data-page below); no view is ever
      rebuilt for it, so every module's elements stay alive and patched
-     whichever page is showing. -->
+     whichever page is showing — and the page, plus whichever phrase or
+     section it is showing, round-trips through the URL (ui/pages.js). -->
 <div class="chassis" id="chassis" data-page="song">
 
   <!-- ZONE 1 · TRANSPORT — always on screen. Play, the composer as a
@@ -231,25 +233,32 @@
        up — hold a box and the words land HERE, visibly. -->
   <p class="readout" id="readout"></p>
 
-  <!-- ZONE 3 · PAGE RAIL — hardware mode keys, phone only. Lowercase in the
-       markup (values, not silkscreen); the CSS uppercases the legends. Each
-       key wears a small silkscreen icon above its word (.pi, an SVG-mask
-       painted with currentColor — self-contained, no glyph-coverage lottery).
+  <!-- ZONE 3 · PAGE RAIL — hardware mode keys, on screen at every width now.
+       Lowercase in the markup (values, not silkscreen); the CSS uppercases
+       the legends. Each key wears a small silkscreen icon above its word
+       (.pi, an SVG-mask painted with currentColor — self-contained, no
+       glyph-coverage lottery).
+
+       REAL LINKS NOW (Paul: "every nav element should have a URL") — a real
+       href beside the tab semantics, so a right-click copies a real address
+       and a modified click opens a real tab, while a plain tap still runs
+       through ui/pages.js setPage() so the address it lands on carries the
+       phrase or section that page is showing, not a bare page name
+       (ui/pages.js's own router comment says the scheme).
 
        FOUR KEYS: COMPOSE (the phrase editor page), ARRANGE (the song table —
        its internal key stays "song": nothing but the silkscreen ever said the
        word, and the CSS/gate hooks .pg-song/[data-page="song"] stay true), MIX
        (the board) and LAB (the genre bench). The rail order is the verbs'
        order — what you do to a phrase, a song, a sum, and then the thing you
-       make the parts out of — and the deck's DOM order (arrange · compose ·
-       mix · lab) is the desk's stacking order, where the rail does not exist.
-       LAB is LAST in both: it is where a new genre comes from, not where a
-       song is made, and it must never sit between a person and their song. -->
+       make the parts out of. LAB is LAST: it is where a new genre comes from,
+       not where a song is made, and it must never sit between a person and
+       their song. -->
   <nav class="pagerail" role="tablist" aria-label="pages">
-    <button class="pkey" role="tab" data-page="compose" aria-controls="page-compose" aria-selected="false"><span class="pi" aria-hidden="true"></span>compose</button>
-    <button class="pkey" role="tab" data-page="song" aria-controls="page-song" aria-selected="true"><span class="pi" aria-hidden="true"></span>arrange</button>
-    <button class="pkey" role="tab" data-page="mix" aria-controls="page-mix" aria-selected="false"><span class="pi" aria-hidden="true"></span>mix</button>
-    <button class="pkey" role="tab" data-page="lab" aria-controls="page-lab" aria-selected="false"><span class="pi" aria-hidden="true"></span>lab</button>
+    <a class="pkey" role="tab" href="#/compose" data-page="compose" aria-controls="page-compose" aria-selected="false"><span class="pi" aria-hidden="true"></span>compose</a>
+    <a class="pkey" role="tab" href="#/song" data-page="song" aria-controls="page-song" aria-selected="true"><span class="pi" aria-hidden="true"></span>arrange</a>
+    <a class="pkey" role="tab" href="#/mix" data-page="mix" aria-controls="page-mix" aria-selected="false"><span class="pi" aria-hidden="true"></span>mix</a>
+    <a class="pkey" role="tab" href="#/lab" data-page="lab" aria-controls="page-lab" aria-selected="false"><span class="pi" aria-hidden="true"></span>lab</a>
   </nav>
 
 </div>

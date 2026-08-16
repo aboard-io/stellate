@@ -39,9 +39,9 @@ import "./poolbank.js";
 // bench, which is ~123 KB of analysis tier behind ui/deps.js loadLab() and
 // arrives on the first visit to the tab, not at boot.
 import "./lab.js";
-// the chassis: page rail wiring + transport haptics (phone only in effect —
-// the rail is display:none on a desk and the buzz is coarse-pointer-gated)
-import "./pages.js";
+// the chassis: page rail wiring, the URL router, and transport haptics (the
+// buzz is coarse-pointer-gated)
+import { initRoute } from "./pages.js";
 
 /* ---------- the playhead loop ---------- */
 // One rAF loop for both progress paints: the fill bar on the sounding box and
@@ -105,3 +105,7 @@ on("transport:section", d => {
 // user gesture, long after load.
 const raw = readStore();
 if (!raw || !adoptSong(raw, "boot")) adoptSong(defaultSong(), "boot");
+// the URL, read AFTER the song is real — restores a shared link's page and
+// index, or else writes the boot page back as the canonical address
+// (ui/pages.js says why it has to run this late).
+initRoute();

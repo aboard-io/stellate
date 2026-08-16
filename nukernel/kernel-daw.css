@@ -40,20 +40,18 @@ body{
 /* ---- the chassis ----
    FULL BLEED, at every width ("make the song arrangement go to the edge of
    the view — no strange borders"). There is no max-width and no centring
-   gutter: the app IS the window. On a desk the three zones dissolve — .deck
-   and every .page are display:contents, so the sections flow down the one
-   column and the page rail does not exist, because paging what already fits
-   is just hiding things. The phone block at the end of this file is where the
-   zones become real. Either way it is the SAME tables: width buys room,
-   never a second layout. */
+   gutter: the app IS the window. THREE ZONES, ALWAYS REAL (2026-08-16, "get
+   rid of the non-mobile vertical UX" — the desk stopped dissolving .deck and
+   every .page into one stacked column) — transport strip, one page at a
+   time, the thumb rail, defined once below rather than gated behind a
+   min-width. A wide window is the SAME tables with more room (kernel-daw.css's
+   own media step widens rows and columns as the window grows), never a
+   second layout. */
 /* THE GUTTER LIVES HERE, not on .tbl. It is the one number that says how far
    every row, caption and key row on the machine stands off the window edge,
    so a table and the key row above it line up — they used to disagree,
    because only .tbl carried it and everything else fell back to a guess. */
-.chassis{max-width:none;margin:0;display:flex;flex-direction:column;gap:0;
-  --tbl-gut:var(--sp-4)}
-.deck,.page{display:contents}
-.pagerail{display:none}
+.chassis{max-width:none;margin:0;gap:0;--tbl-gut:var(--sp-4)}
 
 /* ================================================================
    ---- THE SURFACES, ONCE ----
@@ -1769,12 +1767,14 @@ details pre{margin:var(--sp-3) 0 0;overflow-x:auto;font:400 var(--t-sm)/1.65 var
 details .c{color:var(--ink-3)}
 
 /* ---- the page rail ----
-   Three mode keys. display:none on a desk (set at the top of this file); the
-   phone block below turns them on. Flat: the selected page is the accent
+   Four mode keys, on screen at every width now (2026-08-16) — real <a href>
+   links wearing role=tab (Paul: "every nav element should have a URL" — the
+   rail keeps its tab semantics AND becomes a link a finger, a right-click or
+   a screen reader can all follow). Flat: the selected page is the accent
    fill, the other two are the surface with quiet ink — no lens, no bevel, no
    moulding, and no borders between them (the rail's own rule is enough). */
 .pagerail{
-  grid-auto-flow:column;grid-auto-columns:1fr;gap:0;
+  display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:0;
   padding:0 env(safe-area-inset-right)
           env(safe-area-inset-bottom) env(safe-area-inset-left);
   background:var(--bg-surface);
@@ -1783,7 +1783,7 @@ details .c{color:var(--ink-3)}
 .pkey{
   font:600 var(--t-sm)/1 var(--f-ui);letter-spacing:.01em;
   color:var(--ink-3);min-height:56px;border:0;border-radius:0;
-  background:none;
+  background:none;text-decoration:none;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:var(--sp-1);
 }
@@ -1806,88 +1806,85 @@ details .c{color:var(--ink-3)}
 .pkey[data-page="lab"] .pi{--pim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M6 1.6v4.3L2.3 12.1a1 1 0 0 0 .9 1.5h8.6a1 1 0 0 0 .9-1.5L9 5.9V1.6' fill='none' stroke='%23000' stroke-width='1.5' stroke-linejoin='round'/%3E%3Cpath d='M4.9 1.6h5.2' stroke='%23000' stroke-width='1.5' stroke-linecap='round'/%3E%3Ccircle cx='7.5' cy='10.6' r='1.15'/%3E%3C/svg%3E")}
 .pkey[aria-selected="true"]{color:var(--on-accent);background:var(--accent)}
 
-/* ---- the phone chassis ----
-   Below 900px the three zones become REAL: transport pinned on top, the deck
-   scrolling in the middle, the page rail under the thumb. Page switching is
-   the data-page attribute on .chassis and nothing else — the sections all
+/* ---- the chassis's three zones, real at every width ----
+   Transport pinned on top, the deck in the middle, the page rail under the
+   thumb (2026-08-16, "get rid of the non-mobile vertical UX" — this used to
+   be gated behind a narrow-width breakpoint, with a desk given a different,
+   stacked layout past it; the gate is gone, this IS the layout now). Page switching
+   is the data-page attribute on .chassis and nothing else — the sections all
    stay in the DOM, alive and patched, they just stop being painted.
-   100dvh, not 100vh: the phone's collapsing URL bar must not hide the rail. */
-@media (max-width:899px){
-  body{padding:0}
-  .chassis{
-    max-width:none;height:100dvh;gap:0;
-    display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;
-  }
-  /* the readout is a fixed one-line chyron between deck and rail */
-  .readout{min-height:0;
-    padding:var(--sp-2) var(--sp-3);font-size:var(--t-sm);
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .mast{display:none}
-  .bar{
-    padding:calc(var(--sp-2) + env(safe-area-inset-top))
-            calc(var(--sp-3) + env(safe-area-inset-right))
-            var(--sp-2) calc(var(--sp-3) + env(safe-area-inset-left));
-    gap:var(--sp-2);
-  }
-  .btn{padding:var(--sp-3)}
-  .btn.go{min-width:0}
-  /* TWO ALIGNED ROWS, not a ragged wrap. The go cluster dissolves into the
-     bar's own flex line (display:contents twice — .tgo, then .write), the
-     genre picker takes the slack on row one, and .tset claims a full line of
-     its own: faders left, the position LCD pinned to the right edge — the
-     wrap now lands between ⟳ and tempo BY STRUCTURE, not by width luck. */
-  .bar{flex-wrap:wrap}                   /* the desk's one-row law ends here */
-  .tgo,.write{display:contents}
-  .write .knob{flex:1 1 90px;min-width:0}
-  .write .knob select{width:100%;max-width:none}
-  .tset{flex:1 1 100%;margin-left:0;gap:6px}
-  .tset .poslcd{margin-left:auto}
-  /* the composer's seed LCD steps back on a phone: the readout chyron prints
-     "genre · seed N · sections" on every write, so the number is not lost.
-     (.transport-qualified: the desk's control-height rule sets inline-flex at
-     two classes of specificity, and a bare .seedlcd loses to it.) */
-  .transport .seedlcd{display:none}
-  .knob input{width:64px;flex:1 1 52px;min-width:44px}
-  .knob b{min-width:38px;font-size:var(--t-sm);padding:var(--sp-1) 3px}
-  .poslcd{min-width:66px;padding:var(--sp-2) var(--sp-1);font-size:var(--t-sm)}
-  .knob select{max-width:120px}
-  /* THE SILKSCREEN STAYS. This rule used to hide the fader legends outright,
-     which left two anonymous faders whose LCDs read 126 and 80 — a mystery
-     panel. The legends come back small (TEMPO / VOL, one row with their
-     LCDs); only VOLUME abbreviates, via the span swap — the full word keeps
-     the layout out through the clip pattern so the accessible name survives. */
-  .tset .knob label{font-size:11px;letter-spacing:.01em;flex:0 0 auto}
-  .knob .lf{position:absolute;width:1px;height:1px;overflow:hidden;
-    clip-path:inset(50%);white-space:nowrap}
-  .knob .la{display:inline;position:static;width:auto;height:auto}
-  .tset .knob{gap:5px}
-  /* the WRITE cluster's own labels (GENRE) still step back: the picker's
-     value is self-naming and row one has no room to spare */
-  .write .knob span{display:none}
-  /* NO SIDE PADDING on the phone deck either: the arrangement runs to both
-     edges of the phone exactly as it does on a desk, and the safe-area
-     insets ride on the ROWS (--tbl-gut below) rather than on a gutter that
-     would stop every rule short of the glass. */
-  .deck{display:block;overflow-y:auto;min-height:0;padding:0 0 var(--sp-4)}
-  .chassis{--tbl-gut:calc(var(--sp-3) + env(safe-area-inset-left))}
-  .ed{padding:var(--sp-3) 0}
-  /* a row scrolled to the deck's very top sits flush under the transport's
-     shadow line, and a programmatic scroll-into-view (a tap on a half-visible
-     row, an assistive-tech focus move) can park the target exactly on the
-     seam where the tap then lands on the transport instead. Scroll margins
-     keep every interactive row clear of both edges. */
-  .box,.lrow,.cell,.slot,.blayer,.prow{scroll-margin-top:14px;scroll-margin-bottom:14px}
-  .page{display:none}
-  .page>*+*{margin-top:12px}
-  /* which page paints: one attribute, FOUR pages — COMPOSE, ARRANGE
-     (internal key "song"), MIX and LAB. The cell menus and the pop-up fader
-     are the only surfaces left that float. */
-  .chassis[data-page="compose"] .pg-compose{display:block}
-  .chassis[data-page="song"] .pg-song{display:block}
-  .chassis[data-page="mix"]  .pg-mix{display:block}
-  .chassis[data-page="lab"]  .pg-lab{display:block}
-  .pagerail{display:grid}
+   100dvh, not 100vh: a phone's collapsing URL bar must not hide the rail. */
+body{padding:0}
+.chassis{
+  max-width:none;height:100dvh;gap:0;
+  display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;
 }
+/* the readout is a fixed one-line chyron between deck and rail */
+.readout{min-height:0;
+  padding:var(--sp-2) var(--sp-3);font-size:var(--t-sm);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mast{display:none}
+.bar{
+  padding:calc(var(--sp-2) + env(safe-area-inset-top))
+          calc(var(--sp-3) + env(safe-area-inset-right))
+          var(--sp-2) calc(var(--sp-3) + env(safe-area-inset-left));
+  gap:var(--sp-2);
+}
+.btn{padding:var(--sp-3)}
+.btn.go{min-width:0}
+/* TWO ALIGNED ROWS, not a ragged wrap. The go cluster dissolves into the
+   bar's own flex line (display:contents twice — .tgo, then .write), the
+   genre picker takes the slack on row one, and .tset claims a full line of
+   its own: faders left, the position LCD pinned to the right edge. */
+.bar{flex-wrap:wrap}
+.tgo,.write{display:contents}
+.write .knob{flex:1 1 90px;min-width:0}
+.write .knob select{width:100%;max-width:none}
+.tset{flex:1 1 100%;margin-left:0;gap:6px}
+.tset .poslcd{margin-left:auto}
+/* the composer's seed LCD steps back: the readout chyron prints "genre ·
+   seed N · sections" on every write, so the number is not lost.
+   (.transport-qualified: the control-height rule sets inline-flex at two
+   classes of specificity, and a bare .seedlcd loses to it.) */
+.transport .seedlcd{display:none}
+.knob input{width:64px;flex:1 1 52px;min-width:44px}
+.knob b{min-width:38px;font-size:var(--t-sm);padding:var(--sp-1) 3px}
+.poslcd{min-width:66px;padding:var(--sp-2) var(--sp-1);font-size:var(--t-sm)}
+.knob select{max-width:120px}
+/* THE SILKSCREEN STAYS. This rule used to hide the fader legends outright,
+   which left two anonymous faders whose LCDs read 126 and 80 — a mystery
+   panel. The legends come back small (TEMPO / VOL, one row with their
+   LCDs); only VOLUME abbreviates, via the span swap — the full word keeps
+   the layout out through the clip pattern so the accessible name survives. */
+.tset .knob label{font-size:11px;letter-spacing:.01em;flex:0 0 auto}
+.knob .lf{position:absolute;width:1px;height:1px;overflow:hidden;
+  clip-path:inset(50%);white-space:nowrap}
+.knob .la{display:inline;position:static;width:auto;height:auto}
+.tset .knob{gap:5px}
+/* the WRITE cluster's own labels (GENRE) still step back: the picker's
+   value is self-naming and row one has no room to spare */
+.write .knob span{display:none}
+/* NO SIDE PADDING on the deck either: the arrangement runs to both edges at
+   every width, and the safe-area insets ride on the ROWS (--tbl-gut below)
+   rather than on a gutter that would stop every rule short of the glass. */
+.deck{display:block;overflow-y:auto;min-height:0;padding:0 0 var(--sp-4)}
+.chassis{--tbl-gut:calc(var(--sp-3) + env(safe-area-inset-left))}
+.ed{padding:var(--sp-3) 0}
+/* a row scrolled to the deck's very top sits flush under the transport's
+   shadow line, and a programmatic scroll-into-view (a tap on a half-visible
+   row, an assistive-tech focus move) can park the target exactly on the
+   seam where the tap then lands on the transport instead. Scroll margins
+   keep every interactive row clear of both edges. */
+.box,.lrow,.cell,.slot,.blayer,.prow{scroll-margin-top:14px;scroll-margin-bottom:14px}
+.page{display:none}
+.page>*+*{margin-top:12px}
+/* which page paints: one attribute, FOUR pages — COMPOSE, ARRANGE
+   (internal key "song"), MIX and LAB. The cell menus and the pop-up fader
+   are the only surfaces left that float. */
+.chassis[data-page="compose"] .pg-compose{display:block}
+.chassis[data-page="song"] .pg-song{display:block}
+.chassis[data-page="mix"]  .pg-mix{display:block}
+.chassis[data-page="lab"]  .pg-lab{display:block}
 
 /* ---- the narrow band ----
    Under 560px the tables give up GUTTER, never TYPE ("make the text big and
