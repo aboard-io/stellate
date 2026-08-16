@@ -70,7 +70,7 @@ const I = require(path.join(__dirname, "inherit.js"));
 const GEN = require(path.join(__dirname, "genealogy.js"));
 const INSTR = require(path.join(__dirname, "instruments.js"));
 const { BPM } = require(path.join(__dirname, "compose.js"));
-const { GENRES, MODES, DEFAULT, FAMILIES } = NG;
+const { GENRES, DEFAULT } = NG;
 
 const REAL = I.REAL;                       // the place-year anchors; no count is stored
 const canon = I.canon;
@@ -1118,6 +1118,14 @@ function validate(cand, opts) {
       if (!known.has(id))
         err("instr", "instr", "\"" + id + "\" is not a SAMPLERS id any anchor voices " +
             "(instruments.js instrOf throws rather than falling back to a piano)");
+    // …and asked of the real resolver, not of a copy of its rules: instrOf is
+    // what the player calls, and a candidate whose per-voice reading throws
+    // there is a genre that cannot be seated however good its id list looks
+    try {
+      withStub(cand, key => {
+        for (let v = 0; v < (cand.voices || 1); v++) INSTR.instrOf(key, v);
+      });
+    } catch (e) { err("instr", "instr", "instruments.instrOf refuses it: " + e.message); }
     if (Array.isArray(cand.instr) && cand.instr.length > (cand.voices || 1))
       warn("instr", "instr", "more instruments than voices — the tail is never heard");
   }
