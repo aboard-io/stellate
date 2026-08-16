@@ -42,6 +42,19 @@
 // took multiples of realtime on a composed song — any switch-away in the first
 // half minute found no carrier. __nuBounce.stage says which is serving.
 //
+// THE WRAP COSTS NOTHING (2026-08-16). "The song is a finite loop, so play it
+// in a loop=true element" was true about the MUSIC and false about the MEDIA:
+// measured in headless chromium, a `loop=true` <audio> drops 266 samples —
+// 6.03 ms — of SILENCE at every wrap, because the wrap is a seek and the seek
+// flushes the decoder. Paul heard it as "a phrase loops with an audible gap."
+// The fix is the parent's, borrowed rather than reinvented (docs/WAV-FIRST.md
+// v4 + engine/faust/codec/fmp4.js): the element stops looping and becomes a
+// stream — the folded loop encoded ONCE and the same fMP4 fragment appended
+// again and again with an explicit tfdt a whole loop later each time. Measured
+// the same way afterwards: zero. The whole tier degrades to the loop=true blob
+// wherever the codec is missing, so nothing about this paragraph is required
+// for the page to make a sound. See "the seamless tape" below.
+//
 // NOT MediaStreamDestination -> <audio srcObject>. That is the route that
 // looks cheapest and the parent PROVED cannot work: the audible path still
 // mirrors a live graph, so when iOS freezes audio I/O the last quantum loops
@@ -91,6 +104,11 @@ const st = { state: "idle", stage: null, durSec: 0, gen: 0, sampledOnly: false,
              // the carrier-first half: which source the ear is on, whether a
              // re-render is on its way, and why we fell back if we did
              mode: "graph", pending: false, demoted: null,
+             // WHICH CARRIER the element is running: the seamless append route
+             // ("mms-aac"/"mse-opus"/…) or "loop-wav", the shipped blob-on-loop
+             // that costs ~6 ms of silence at every wrap. seamWhy names the
+             // reason whenever it is the second one.
+             seam: "loop-wav", seamWhy: null,
              // WHERE THE TIME WENT, per phase, in ms — because "the render is
              // slow" is not a finding, it is a feeling. A composed song failed
              // to render inside 300 s on the reference box and nobody could say
@@ -132,7 +150,14 @@ window.__nuBounce = () => ({ ...st, carrying, armed,
   // the SHIPPED short-stage cap, so a gate asks this module what the insurance
   // tape is instead of hardcoding a number that then goes stale in two places
   shortCap: SHORT_CAP,
-  elVolume: el ? el.volume : null, elTime: el ? el.currentTime : null,
+  // elTime is the PHASE — where in the song the tape is. It used to be
+  // el.currentTime because the two were the same number; in seam mode the
+  // element's clock is stream time and only grows, so the reading every caller
+  // wanted all along is named explicitly here.
+  elVolume: el ? el.volume : null, elTime: elPhase(),
+  elStreamTime: el ? el.currentTime : null,
+  seamAhead: seam.on && el ? +(seam.appendedSec - (el.currentTime || 0)).toFixed(3) : null,
+  seamPushes: seam.pushes, seamLoopN: seam.loopN,
   elMuted: el ? el.muted : null, elLoop: el ? el.loop : null,
   // el.paused is a RENDERED consequence (play() rejected, decode failed) —
   // carrying/elVolume are flags this module SET, and a gate that polls only
@@ -206,6 +231,11 @@ window.__nuRenderNow = async (capSec, opts) => {
 // survival gate can prove the no-carrier hide branches deterministically —
 // without it they race a short render that lands in a couple of seconds
 const disarmed = /[?&]nobounce\b/.test(location.search);
+// …and its sibling: ?noseam holds the carrier on the SHIPPED loop=true blob, so
+// the before/after of the gapless change is measurable on the same tape by the
+// same probe — and so the fallback tier is a path a gate can actually walk
+// rather than a branch nobody ever takes.
+const noSeam = /[?&]noseam\b/.test(location.search);
 
 // tiny silent-WAV data URI — the parent's unlock trick: a muted play() of this
 // inside the gesture is what permits every later programmatic play()
@@ -282,7 +312,7 @@ let adoptedSig = null, timer = null, rendering = false, dirty = false;
 // section, a whole musical phrase, with its own kit, its own automation sweep
 // and its own end — and a tape that is one whole box loops the way the song
 // loops: the wrap is the downbeat the next section would have started on. That
-// is the same timing law the full tape already obeys (foldAndEncode's wrap is a
+// is the same timing law the full tape already obeys (foldLoop's wrap is a
 // downbeat by construction); the short tape simply stops borrowing a boundary
 // the music does not have.
 //
@@ -427,7 +457,7 @@ async function maybeRender(stage) {
 // wide open. Output is therefore a pure CONCATENATION — every sample of the
 // tape is produced by exactly one window, through one master chain — which is
 // what a crossfade of two independently-limited windows could not promise.
-// The one seam that stays additive is the LOOP WRAP, which foldAndEncode
+// The one seam that stays additive is the LOOP WRAP, which foldLoop
 // already owns and which is a downbeat by construction.
 //
 // The pre-roll is one BAR rather than N seconds so the walk stays bar-indexed:
@@ -587,7 +617,7 @@ export const planFor = (TL, sd) => planChunks(TL, sd, CHUNK_SEC);
 // bar that opens a section), so this walks the same boundaries the live tick
 // arms automation on. Ending the cut where a box ends means the loop wrap is
 // the downbeat the next section would have begun on, which is the same law
-// foldAndEncode already relies on for the full tape.
+// foldLoop already relies on for the full tape.
 //
 // Exported because what this returns is the whole argument for carry()'s
 // refusal above AND for this change: the gate measures the phrase that is left
@@ -922,7 +952,7 @@ async function renderSong(capSec) {
     }
   }
   st.phases = ph.done();
-  // foldAndEncode wraps the ring-out onto the head, so it is handed a buffer
+  // foldLoop wraps the ring-out onto the head, so it is handed a buffer
   // that is already lead-stripped and already carries its tail past N — the
   // duck type is the three members it reads.
   const buf = { length: N + tailN, numberOfChannels: 2,
@@ -938,7 +968,7 @@ async function renderSong(capSec) {
 // bar arrive under the first bar of the next pass, exactly as they do live.
 // The last ~10 ms of the folded tail is eased to zero so the fold itself
 // cannot step.
-function foldAndEncode(res) {
+function foldLoop(res) {
   const { buf, durSec, lead, sr } = res;
   const N = Math.round(durSec * sr), lead0 = Math.round(lead * sr);
   const tailN = Math.max(0, Math.min(buf.length - lead0 - N, N));
@@ -954,7 +984,13 @@ function foldAndEncode(res) {
       o[i] += v;
     }
   }
-  // 16-bit stereo WAV — the blob is same-origin bytes, decodable by the gate
+  return { chs, N, sr };
+}
+// 16-bit stereo WAV, EXACTLY N frames — the blob is same-origin bytes, decodable
+// by the gate, and its declared data length is the score's own sample count with
+// nothing added. Exported because that is the law test/unit/nukernel.test.js §53
+// holds: a container that pads is a container that gaps at the wrap.
+export function wavBytes(chs, N, sr) {
   const dataLen = N * 4;
   const ab = new ArrayBuffer(44 + dataLen), dv = new DataView(ab);
   let p = 0;
@@ -968,14 +1004,16 @@ function foldAndEncode(res) {
       const v = Math.max(-1, Math.min(1, chs[c][i]));
       dv.setInt16(p, v < 0 ? v * 0x8000 : v * 0x7fff, true); p += 2;
     }
-  return new Blob([ab], { type: "audio/wav" });
+  return ab;
 }
 function adopt(res, want, myGen, stage) {
   // the fold+WAV encode is the sixth phase and it is NOT inside renderSong —
   // it runs here, on the main thread, over every sample of the tape. Timed in
   // the same units as the other five so the report adds up to lastRenderMs.
   const encT = performance.now();
-  const url = URL.createObjectURL(foldAndEncode(res));
+  const fold = foldLoop(res);
+  const url = URL.createObjectURL(new Blob([wavBytes(fold.chs, fold.N, fold.sr)],
+                                           { type: "audio/wav" }));
   if (res.phases) res.phases.encode = Math.round(performance.now() - encT);
   urls.push(url);
   while (urls.length > 2) { try { URL.revokeObjectURL(urls.shift()); } catch (e) {} }
@@ -1000,9 +1038,17 @@ function adopt(res, want, myGen, stage) {
   // the element. survival.js uses this for the lands-while-hidden pickup —
   // impossible on iOS (the page is frozen), real on Android.
   emit("bounce:ready", { stage });
+  // …and behind all of it, the SEAMLESS tape: the same folded loop, encoded
+  // once and appended forever, so the wrap costs no samples at all. It lands
+  // when it lands; until then the WAV above is already playing (with the
+  // element's own ~6 ms hole at each wrap), which is what shipped before.
+  seamBuild(fold, res.durSec, myGen);
 }
 function attachCurrent() {
   if (!el || !st.url) return;
+  // in seam mode the element's source is the MediaSource, not a blob URL, and
+  // the new tape arrives through the append pump rather than through src
+  if (seam.on) { st.pending = false; seamPlay(); return; }
   el.src = st.url; el.loop = true;
   // audible by VOLUME, never by unmute — and while the element is the path
   // that volume is the real one. A muted element is not media: the OS gives
@@ -1014,10 +1060,348 @@ function attachCurrent() {
 }
 const clampVol = v => Math.max(0, Math.min(1, v));
 
+/* ---------- the seamless tape (the parent's fMP4 append, come home) ---------- */
+// MEASURED FIRST, then fixed (2026-08-16). A `loop=true` <audio> element is NOT
+// gapless in any shipping browser: the wrap is a seek, and the seek flushes the
+// decode pipeline. Headless chromium, a 47863-sample sine tape whose content is
+// exactly periodic, captured off the element through a ScriptProcessor:
+//
+//     wav + loop=true       266 samples of SILENCE at every wrap (6.03 ms)
+//     the same wav, not looped   0        (the floor of the measurement)
+//
+// So the phrase Paul heard looping "with an audible gap" was gapping in the
+// container, not in the music — the fold in foldLoop() had already made the
+// wrap sample-continuous, and the element threw the join away. MP3 is worse and
+// for the reason this project proved on the zone diet the same morning: encoder
+// delay + padding, measured here at 1981 samples (44.9 ms) per wrap through MSE.
+//
+// The cure is the parent's, verbatim (docs/WAV-FIRST.md v4, engine/faust/codec/
+// fmp4.js): the element stops looping and becomes a STREAM. The folded loop is
+// encoded ONCE, muxed into one fragmented-MP4 fragment, and that same fragment
+// is appended again and again — each push carrying an EXPLICIT tfdt exactly
+// loopSamples later than the last, so the tape's second pass begins on the
+// sample after its first pass ends. Nothing is inferred, so nothing can drift
+// and nothing can pad. Measured the same way, same tape: 0 silence samples at
+// every wrap, and buffered length 5.982874 s against an arithmetic 5.982875 s
+// — sample-exact across six passes.
+//
+// TWO THINGS ARE LOAD-BEARING and both were measured, not assumed:
+//
+//   1. THE WARM TAIL. A codec frame is not independent: its decode depends on
+//      the frame before it. Encoding the loop from a COLD encoder and then
+//      repeating those frames leaves the decoder crossing the wrap with state
+//      the encoder never saw — measured as a single 19x sample step, which is
+//      a CLICK where the gap used to be. So the encoder is warmed with the
+//      loop's OWN LAST FRAME before the loop is fed: the frames we keep are
+//      then the steady state of a tape that has already been round once.
+//      Measured: max sample step 1.1x the signal's own maximum — the floor.
+//   2. THE TRIMMED LAST FRAME. The loop is not a whole number of codec frames.
+//      The last frame's DECLARED duration is cut to the remainder, so the
+//      fragment's declared sample sum is the score's own sample count and not
+//      one sample more. That is the law test/unit/nukernel.test.js §53 holds.
+//
+// Everything below degrades to the shipped WAV loop the moment anything is
+// missing or refuses — a phone without WebCodecs hears exactly what it heard
+// yesterday, which is the only safe shape for a change to the audible path.
+const T_AAC = 'audio/mp4; codecs="mp4a.40.2"', T_OPUS = 'audio/mp4; codecs="opus"';
+const MMS = typeof window !== "undefined" ? window.ManagedMediaSource : null;
+const MSctor = MMS || (typeof window !== "undefined" ? window.MediaSource : null);
+const mseTypeOk = t => {
+  try { if (MMS && MMS.isTypeSupported) return MMS.isTypeSupported(t);
+        if (MSctor && MSctor.isTypeSupported) return MSctor.isTypeSupported(t); } catch (e) {}
+  return false;
+};
+// KEEP AHEAD / KEEP BEHIND, in seconds. One whole pass ahead is the floor (a
+// wrap must never be the thing we are waiting to append), and the ceiling on
+// how long a re-render waits to be heard is this same number — so it is kept
+// tight rather than generous. Background timers throttle but do not stop while
+// a media element plays, which is the whole reason the parent could do this.
+const SEAM_AHEAD = () => Math.max(4, seam.loopSec || 0);
+const SEAM_BEHIND = 20;
+const seam = { on: false, why: null, tier: null, ms: null, sb: null, mux: null,
+               mime: null, codec: null, frames: null, loopN: 0, loopSec: 0, sr: SR,
+               ledger: [], appendedSec: 0, wants: true, building: false, pushes: 0, msUrl: null,
+               // bumped by every teardown, so an encode that was in flight when
+               // the song changed cannot attach its stream to the new one
+               epoch: 0 };
+// THE LENGTH THE LOOP HAS TO BE, and the measurement that forced it. A codec
+// frame is atomic: opus is 20 ms, aac is 1024 samples, and a loop is not a whole
+// number of either. The obvious answer — declare the last frame SHORT in the
+// trun so the fragment's timeline sums to the loop exactly — is what this file
+// tried first, and it is wrong in the one way that matters: chromium honours the
+// declared duration for the buffered RANGE (buffered came back exact to a
+// microsecond) and then plays the frame's full decoded output anyway. Measured
+// on the real tape: 514 samples of encoder padding audible at every single wrap,
+// the same 514 five times running — a hole where the downbeat goes, which is the
+// bug we came to fix wearing a different hat.
+//
+// So the loop is RESAMPLED to a whole number of frames instead. The cost is a
+// tempo/pitch scale of at most half a frame over the whole loop — 0.13% on a
+// 7.6 s tape, 0.33% on a short insurance one, two to six cents, uniform across
+// the pass rather than a hiccup at the seam — and the gain is that there is no
+// partial frame to trim, no padding to play, and nothing left for a decoder to
+// interpret. (Shortening the loop to floor(N/F) frames instead would put a real
+// cut where foldLoop's continuous wrap is, which is a click, not a fix.)
+export const loopSamplesFor = (n, frame) => Math.max(frame, Math.round(n / frame) * frame);
+// the PURE half, exported for the node gate: the frames the fragment carries.
+// With a frame-multiple loop this takes whole frames and nothing else, and the
+// sum it returns MUST equal the loop exactly — §53 is that law.
+export function loopFrames(chunks, loopSamples) {
+  const frames = []; let sum = 0;
+  for (const c of chunks || []) {
+    if (sum >= loopSamples) break;
+    const d = Math.min(c.duration | 0, loopSamples - sum);
+    if (d <= 0) break;
+    frames.push({ data: c.data, duration: d });
+    sum += d;
+  }
+  return { frames, sum };
+}
+// the loop, at the encoder's rate and at a whole number of frames. ONE offline
+// pass: the browser's own resampler, uniform across the whole tape, so the wrap
+// foldLoop made continuous stays continuous.
+async function seamResample(fold, rate, frame) {
+  const M = loopSamplesFor(fold.N * rate / fold.sr, frame);
+  if (rate === fold.sr && M === fold.N) return { chs: fold.chs, N: M, sr: rate };
+  const oc = new OfflineAudioContext(2, M, rate);
+  const b = oc.createBuffer(2, fold.N, fold.sr);
+  b.copyToChannel(fold.chs[0], 0); b.copyToChannel(fold.chs[1], 1);
+  const s = oc.createBufferSource(); s.buffer = b;
+  s.playbackRate.value = (fold.N / fold.sr) / (M / rate);
+  s.connect(oc.destination); s.start(0);
+  const out = await oc.startRendering();
+  return { chs: [out.getChannelData(0), out.getChannelData(1)], N: M, sr: rate };
+}
+// which codec this browser can both ENCODE and DEMUX. AAC first (it is what
+// iOS has), opus second (it is what chromium has, and the headless gate's
+// route). No mp3 tier: mp3 is exactly the padding this file is removing.
+let codecPick = null;
+async function seamPickCodec() {
+  if (codecPick !== null) return codecPick;
+  codecPick = false;
+  if (!MSctor || typeof AudioEncoder === "undefined") return codecPick;
+  // OPUS IS ALWAYS 48 kHz. Its frames are 20 ms of 48000, and Opus-in-ISOBMFF
+  // wants the track timescale to say so — a 44100 timescale over 882-sample
+  // frames is a stream the demuxer has to reconcile, and reconciling is exactly
+  // where the samples went. AAC at 44100 is native and stays there.
+  for (const [name, codec, mime, rate] of [["aac", "mp4a.40.2", T_AAC, SR],
+                                           ["opus", "opus", T_OPUS, 48000]]) {
+    if (!mseTypeOk(mime)) continue;
+    try {
+      const r = await AudioEncoder.isConfigSupported(
+        { codec, sampleRate: rate, numberOfChannels: 2, bitrate: 192000 });
+      if (r && r.supported) { codecPick = { name, codec, mime, rate }; break; }
+    } catch (e) { /* an encoder that will not answer is an encoder we do not use */ }
+  }
+  return codecPick;
+}
+// HOW BIG IS A FRAME — asked of the encoder rather than assumed, because BOTH
+// the warm tail and the loop length are measured in frames (aac is 1024 samples,
+// opus is 20 ms = 960 at its own 48 kHz), and a ladder that hardcodes either is
+// a ladder that silently mis-aligns on the other.
+const frameN = {};
+async function seamFrameN(pick) {
+  if (frameN[pick.name]) return frameN[pick.name];
+  let d = 0;
+  const enc = new AudioEncoder({
+    output: c => { if (!d) d = Math.round(c.duration * pick.rate / 1e6); }, error: () => {} });
+  enc.configure({ codec: pick.codec, sampleRate: pick.rate, numberOfChannels: 2, bitrate: 192000 });
+  const n = Math.round(pick.rate / 4);
+  enc.encode(new AudioData({ format: "f32-planar", sampleRate: pick.rate, numberOfFrames: n,
+    numberOfChannels: 2, timestamp: 0, data: new Float32Array(n * 2) }));
+  await enc.flush();
+  try { enc.close(); } catch (e) {}
+  frameN[pick.name] = d > 0 ? d : 1024;
+  return frameN[pick.name];
+}
+// encode the folded loop ONCE, at the codec's own rate and at a whole number of
+// frames: one frame of its own tail to warm the encoder (discarded), then the
+// loop itself, in ONE encoder pass — flush() is called once, at the end, because
+// a flush between the two is a state reset and the warm tail is only worth
+// anything if the state survives it.
+async function seamEncode(fold0, pick) {
+  const F = await seamFrameN(pick);
+  const fold = await seamResample(fold0, pick.rate, F);
+  const { chs, N } = fold;
+  const SR2 = fold.sr, WARM = Math.min(F, N);
+  const out = []; let desc = null, failed = null;
+  const enc = new AudioEncoder({
+    output: (c, meta) => {
+      if (meta && meta.decoderConfig && meta.decoderConfig.description && !desc)
+        desc = meta.decoderConfig.description;
+      const d = new Uint8Array(c.byteLength); c.copyTo(d);
+      out.push({ data: d, duration: Math.max(1, Math.round(c.duration * SR2 / 1e6)) });
+    },
+    error: e => { failed = (e && e.message) || String(e); } });
+  enc.configure({ codec: pick.codec, sampleRate: SR2, numberOfChannels: 2, bitrate: 192000 });
+  // the interleave WebCodecs wants is planar-by-channel in one buffer
+  const planar = (from, n) => {
+    const o = new Float32Array(n * 2);
+    for (let i = 0; i < n; i++) {
+      const k = ((from + i) % N + N) % N;
+      o[i] = chs[0][k]; o[n + i] = chs[1][k];
+    }
+    return o;
+  };
+  enc.encode(new AudioData({ format: "f32-planar", sampleRate: SR2, numberOfFrames: WARM,
+    numberOfChannels: 2, timestamp: 0, data: planar(N - WARM, WARM) }));
+  enc.encode(new AudioData({ format: "f32-planar", sampleRate: SR2, numberOfFrames: N,
+    numberOfChannels: 2, timestamp: Math.round(WARM / SR2 * 1e6), data: planar(0, N) }));
+  await enc.flush();
+  try { enc.close(); } catch (e) {}
+  if (failed) throw new Error("encoder: " + failed);
+  // frame 0 is the warm tail; every frame after it starts at loop sample 0
+  const { frames, sum } = loopFrames(out.slice(1), N);
+  // WHOLE FRAMES OR NOTHING. seamResample sized the loop to a frame multiple
+  // precisely so this never has to shorten one — if it did, we would be back to
+  // the padding chromium plays instead of trimming, so refuse the tier instead.
+  if (sum !== N || frames.length !== Math.round(N / F))
+    throw new Error("frames " + frames.length + "x sum " + sum + " != loop " + N);
+  return { frames, loopN: N, rate: SR2, desc };
+}
+function seamOff(why) {
+  seam.epoch++;
+  if (!seam.on && !seam.building) { seam.why = why; return; }
+  seam.on = false; seam.building = false; seam.frames = null;
+  seam.ledger = []; seam.appendedSec = 0; seam.sb = null; seam.mux = null;
+  try { if (seam.ms && seam.ms.readyState === "open") seam.ms.endOfStream(); } catch (e) {}
+  seam.ms = null;
+  if (seam.msUrl) { try { URL.revokeObjectURL(seam.msUrl); } catch (e) {} seam.msUrl = null; }
+  seam.why = why; st.seam = "loop-wav"; st.seamWhy = why;
+  if (why) console.warn("[nukernel] seamless tape unavailable:", why);
+  // back to what shipped: the blob, on loop, with the element's own wrap hole.
+  // Only while the transport RUNS — a failure after stop() must not restart the
+  // element the transport:state(false) handler just paused (adopt's own law).
+  if (el && st.url && playing) { try { el.srcObject = null; } catch (e) {} attachCurrent(); }
+}
+// BUILD: called from adopt() for every tape, short stage and full alike. The
+// first one attaches the MediaSource; later ones just replace the frames the
+// pump appends, so a re-render reaches the ear at the next wrap — and reaches
+// it sample-continuously, which the src swap never could.
+async function seamBuild(fold, durSec, myGen) {
+  if (!el || disarmed || noSeam || seam.building) return;
+  if (seam.why && !seam.on) return;                // a tier we already gave up on
+  if (!(fold && fold.N > 0)) return;
+  seam.building = true;
+  const epoch = seam.epoch;
+  try {
+    const pick = await seamPickCodec();
+    if (!pick) { seam.building = false; seamOff("no aac/opus encoder"); return; }
+    const { frames, loopN, rate, desc } = await seamEncode(fold, pick);
+    // a newer tape, or a new song, won the race while we encoded
+    if (myGen !== gen || epoch !== seam.epoch) { seam.building = false; return; }
+    seam.frames = frames; seam.loopN = loopN; seam.loopSec = loopN / rate;
+    seam.sr = rate; seam.codec = pick.name; seam.mime = pick.mime;
+    if (!seam.on) await seamAttach(pick, desc, epoch);
+    else { st.seam = seam.tier; say("carrier: new take ready — it joins at the loop"); }
+    seamPump();
+  } catch (e) {
+    seamOff((e && e.message) || String(e));
+  } finally { seam.building = false; }
+}
+async function seamAttach(pick, desc, epoch) {
+  const Fmp4 = await import("../../engine/faust/codec/fmp4.js")
+    .then(() => window.FaustFmp4).catch(() => null);
+  if (!Fmp4 || !Fmp4.makeFmp4Mux) throw new Error("fmp4 muxer did not load");
+  seam.mux = Fmp4.makeFmp4Mux({ codec: pick.name === "aac" ? "aac" : "opus",
+                                sampleRate: pick.rate, channels: 2, codecConfig: desc });
+  const ms = new MSctor();
+  seam.ms = ms;
+  const isMMS = !!(MMS && ms instanceof MMS);
+  seam.tier = (isMMS ? "mms-" : "mse-") + pick.name;
+  // the parent's hard-won order (WAV-FIRST v3.1): remote playback is already
+  // disabled on this element from armCarrier, and MMS wants srcObject — the
+  // object URL works, but only srcObject drives start/endstreaming.
+  let attached = false;
+  if (isMMS) { try { el.srcObject = ms; attached = true; } catch (e) {} }
+  if (!attached) { seam.msUrl = URL.createObjectURL(ms); el.src = seam.msUrl; }
+  el.loop = false;                                 // a stream does not loop; it continues
+  await new Promise((res, rej) => {
+    const t = setTimeout(() => rej(new Error("sourceopen never fired")), 4000);
+    ms.addEventListener("sourceopen", () => { clearTimeout(t); res(); }, { once: true });
+  });
+  const sb = ms.addSourceBuffer(pick.mime);
+  sb.mode = "segments";                            // tfdt is explicit; nothing is inferred
+  seam.sb = sb;
+  sb.addEventListener("updateend", seamPump);
+  sb.addEventListener("error", () => seamOff("sourcebuffer error"));
+  if (isMMS) {
+    try { ms.addEventListener("startstreaming", () => { seam.wants = true; seamPump(); }); } catch (e) {}
+    try { ms.addEventListener("endstreaming", () => { seam.wants = false; }); } catch (e) {}
+    try { seam.wants = ms.streaming !== false; } catch (e) {}
+  }
+  await new Promise((res, rej) => {
+    sb.addEventListener("updateend", res, { once: true });
+    sb.addEventListener("error", () => rej(new Error("init segment rejected")), { once: true });
+    sb.appendBuffer(seam.mux.initSegment());
+  });
+  if (epoch !== seam.epoch) throw new Error("torn down mid-attach");
+  seam.on = true; st.seam = seam.tier; st.seamWhy = null;
+  seamPlay();
+}
+function seamPlay() {
+  if (!el) return;
+  el.muted = false; el.volume = carrying ? clampVol(masterVol()) : 0;
+  const p = el.play(); if (p && p.catch) p.catch(() => {});
+}
+// ONE COPY PER CALL — a SourceBuffer takes one operation at a time, and
+// updateend calls us back. Evict behind first (memory), then top up ahead.
+function seamPump() {
+  if (!seam.on || !seam.sb || !seam.frames || !el) return;
+  if (seam.sb.updating || !seam.ms || seam.ms.readyState !== "open") return;
+  if (!seam.wants) return;                         // MMS said stop
+  const t = el.currentTime || 0;
+  try {
+    const b = seam.sb.buffered;
+    if (b.length && t - b.start(0) > SEAM_BEHIND + 10) {
+      seam.sb.remove(b.start(0), t - SEAM_BEHIND);
+      // the ledger follows the buffer: a copy nobody can seek into is not a copy
+      while (seam.ledger.length > 1 && seam.ledger[0].t0 + seam.ledger[0].dur < t - SEAM_BEHIND)
+        seam.ledger.shift();
+      return;
+    }
+    if (seam.appendedSec - t >= SEAM_AHEAD()) return;
+    const frag = seam.mux.pushChunks(seam.frames);
+    seam.ledger.push({ t0: seam.appendedSec, dur: seam.loopSec });
+    seam.appendedSec += seam.loopSec;
+    seam.pushes++;
+    seam.sb.appendBuffer(frag);
+  } catch (e) {
+    seamOff("append: " + ((e && e.message) || e));
+  }
+}
+// WHERE IN THE SONG the stream is. The element's currentTime only grows — it is
+// stream time, not a phase — so every reader that used to mean "how far into the
+// loop" goes through here, and reads the same number it always did.
+function seamPhase() {
+  if (!seam.on || !el) return el ? (el.currentTime || 0) : 0;
+  const t = el.currentTime || 0;
+  for (let i = seam.ledger.length - 1; i >= 0; i--) {
+    const c = seam.ledger[i];
+    if (t >= c.t0) return Math.max(0, Math.min(c.dur, t - c.t0));
+  }
+  return 0;
+}
+// …and the inverse, for the two seeks this file makes: the phase-lock while the
+// graph is audible, and the lock-screen scrub. Land inside the copy that is
+// playing; if that point is already behind us, take the next copy's.
+function seamSeekPhase(ph) {
+  if (!seam.on || !el) return false;
+  const t = el.currentTime || 0;
+  let cur = null;
+  for (let i = seam.ledger.length - 1; i >= 0; i--) if (t >= seam.ledger[i].t0) { cur = seam.ledger[i]; break; }
+  if (!cur) return false;
+  let target = cur.t0 + Math.max(0, Math.min(cur.dur, ph));
+  if (target < t - 0.05 && cur.t0 + cur.dur + ph < seam.appendedSec) target += cur.dur;
+  try { el.currentTime = target; } catch (e) { return false; }
+  return true;
+}
+const elPhase = () => (el ? (seam.on ? seamPhase() : (el.currentTime || 0)) : null);
+
 /* ---------- the boundary swap (carrier-first) ---------- */
 // A new tape while the ear is on the old one. Cutting now is a click in the
 // middle of a bar; cutting at the wrap is a downbeat, which is the one seam
-// this file is allowed (the fold in foldAndEncode already made the wrap
+// this file is allowed (the fold in foldLoop already made the wrap
 // continuous). loop=false hands us `ended` — which fires while the page is
 // hidden, the property that made it WAV-FIRST's background swap primitive.
 function armSwap() {
@@ -1027,6 +1411,10 @@ function armSwap() {
   // `loop` there would rewrite the one behaviour this change is not allowed to
   // touch.
   if (!el || !carrying || !st.url || !carrierFirst()) return;
+  // SEAM MODE HAS NO SWAP. The new take is already the frame list the pump
+  // appends, so it joins the stream at the wrap sample-continuously — turning
+  // `loop` off here would end a stream that is not supposed to end.
+  if (seam.on) { st.pending = false; return; }
   if (el.src === st.url) { st.pending = false; return; }
   st.pending = true;
   el.loop = false;
@@ -1085,7 +1473,9 @@ function demote(why) {
   // the very platform this mode is for is an element still playing at full
   // level — the graph would come back up UNDER it. The pocket-copy path
   // upstairs can afford volume because it only ever drops to 0 on a desk.
-  if (el) { el.volume = 0; el.loop = true; try { el.pause(); } catch (e) {} }
+  // (a MediaSource-backed element is a stream, not a loop; `loop` there would
+  // replay the buffered range rather than the song, so it stays off)
+  if (el) { el.volume = 0; if (!seam.on) el.loop = true; try { el.pause(); } catch (e) {} }
   unmuteRamp(20);
   console.warn("[nukernel] carrier demoted to the live graph:", why);
   say("carrier unavailable (" + why + ") — playing the live graph");
@@ -1101,6 +1491,10 @@ function syncEl() {
   if (!el || !st.url) return;
   try {
     const ph = phase();
+    // in seam mode currentTime is stream time, so the phase has to be mapped
+    // onto the copy that is playing — and the comparison is against the PHASE,
+    // not the clock, or the lock re-seeks on every pass
+    if (seam.on) { if (Math.abs(seamPhase() - ph) > 0.03) seamSeekPhase(ph); return; }
     if (Math.abs((el.currentTime || 0) - ph) > 0.03) el.currentTime = ph;
   } catch (e) {}
 }
@@ -1113,11 +1507,22 @@ function syncEl() {
 let lastElT = -1;
 setInterval(() => {
   if (!el || !playing || st.state !== "ready") return;
+  // THE PUMP'S HEARTBEAT. updateend re-enters seamPump while there is work; once
+  // the stream is far enough ahead nothing calls back, so the tick is what keeps
+  // it topped up. Background timers throttle but do not stop while a media
+  // element plays — which is the whole reason the parent could stream at all.
+  seamPump();
   if (!carrying) { syncEl(); lastElT = -1; return; }
   if (!carrierFirst()) return;                     // the desk's hidden handoff: as it was
   if (st.pending && (el.paused || el.ended)) { swapNow(); lastElT = -1; return; }
   const t = el.currentTime || 0;
-  if (el.paused || (lastElT >= 0 && t === lastElT && !el.seeking)) demote("element-stalled");
+  if (el.paused || (lastElT >= 0 && t === lastElT && !el.seeking)) {
+    // A FROZEN STREAM IS THE STREAM'S FAULT BEFORE IT IS THE ELEMENT'S. Fall
+    // back to the shipped WAV loop first — it costs a wrap hole, not the song —
+    // and only hand the ear back to the live graph if that stalls too.
+    if (seam.on) { seamOff("stream stalled"); lastElT = -1; return; }
+    demote("element-stalled");
+  }
   lastElT = t;
 }, 1000);
 
@@ -1182,13 +1587,14 @@ export const isCarrying = () => carrying;
 // the ear rather than with the (possibly frozen) audio clock: survival.js
 // resyncs the transport to this on return, and MediaSession reports it
 export const carrierPos = () =>
-  (carrying && el ? { pos: el.currentTime || 0, dur: st.durSec } : null);
+  (carrying && el ? { pos: elPhase(), dur: st.durSec } : null);
 // a lock-screen scrub lands on BOTH: the tape is what is audible, the
 // transport is what the page believes. Bounded to the loop.
 export function carrierSeek(sec) {
   if (!carrying || !el || !(st.durSec > 0)) return false;
   const p = ((sec % st.durSec) + st.durSec) % st.durSec;
-  try { el.currentTime = p; } catch (e) { return false; }
+  if (seam.on) { if (!seamSeekPhase(p)) return false; }
+  else { try { el.currentTime = p; } catch (e) { return false; } }
   try { seekPhase(p); } catch (e) {}
   return true;
 }
@@ -1239,5 +1645,8 @@ on("song", () => {
   st.state = "idle"; st.url = null; st.durSec = 0; st.stage = null; st.lastError = null;
   st.pending = false; st.mode = "graph";
   while (urls.length) { try { URL.revokeObjectURL(urls.shift()); } catch (e) {} }
-  if (el) { try { el.pause(); el.removeAttribute("src"); } catch (e) {} }
+  // the stream carried the OLD song; drop it whole rather than let the pump
+  // keep appending it, and let seamOff's re-attach find no url and do nothing
+  seamOff(null);
+  if (el) { try { el.pause(); el.srcObject = null; el.removeAttribute("src"); } catch (e) {} }
 });

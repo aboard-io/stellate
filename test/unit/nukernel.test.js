@@ -8306,6 +8306,190 @@ console.log("a genre you invented — the recipe, the song, the schedule, the at
   }
 }
 
+/* ── §53 THE TAPE WRAPS WHERE THE BAR DOES ───────────────────────────────────
+   The carrier is a loop, and a loop is only a loop if the wrap costs nothing.
+   It cost 812 samples — 18.4 ms of silence, measured on the real tape in
+   headless chromium at every single pass — because a `loop=true` <audio>
+   element wraps by SEEKING and a seek flushes the decode pipeline. The music
+   was never the problem: foldLoop() had already made sample N-1 -> 0
+   continuous, and the container threw the join away.
+
+   audio/bounce.js now streams instead of looping: the folded loop is encoded
+   ONCE and the same fMP4 fragment is appended again and again, each push
+   carrying an explicit baseMediaDecodeTime exactly one loop later. Two facts
+   have to hold for that to be gapless, and BOTH are things a pure-node gate
+   can hold, which is why they are here rather than only in a browser:
+
+   (a) THE LOOP IS A WHOLE NUMBER OF CODEC FRAMES. The first attempt declared a
+       SHORT final frame in the trun so the fragment's timeline summed to the
+       loop exactly — and chromium honoured that for the buffered range (exact
+       to a microsecond) while playing the frame's full decoded output anyway.
+       Measured: 514 samples of encoder padding at every wrap, the same 514
+       five times running. loopSamplesFor() is the answer to that.
+   (b) NOTHING IS PADDED AND NOTHING IS DROPPED. The frame list's declared
+       sample sum must equal the loop, and pushing the same list again must
+       advance the fragment's tfdt by exactly that — a container that pads by
+       one sample per pass is a container that drifts, which is the parent's
+       own diagnosis of the mp3 route (docs/WAV-FIRST.md v4).
+
+   The same law over the FALLBACK tape, which is still what a browser without
+   WebCodecs plays: the WAV the carrier falls back to declares exactly the
+   score's sample count and not one byte more. */
+console.log("the tape wraps where the bar does");
+{
+  globalThis.location = globalThis.location || { search: "" };
+  globalThis.navigator = globalThis.navigator ||
+    { userAgent: "node", platform: "", maxTouchPoints: 0, hardwareConcurrency: 4 };
+  globalThis.Audio = globalThis.Audio || function () {};
+  const B53 = await import("../../nukernel/audio/bounce.js");
+  const FM53 = require("../../engine/faust/codec/fmp4.js");
+  const SR53 = 44100;
+  // the two frame sizes the shipping ladder can pick: aac is 1024 samples at
+  // the tape's own rate, opus is 20 ms of its own 48 kHz
+  const FRAMES53 = [["aac", 1024, 44100], ["opus", 960, 48000]];
+
+  /* (a) THE LENGTH IS A WHOLE NUMBER OF FRAMES, and it is the RIGHT length */
+  {
+    // REAL tape lengths first — the short insurance cut and the full song, as
+    // this composer actually renders them (the ones quoted in bounce.js's own
+    // carry() note: Liverpool 1962 7.75 s, Lagos 1971 8.69 s, New York 1945
+    // 6.82 s, Chicago 1952 13.90 s), plus the 2.17 s one-bar fragment the short
+    // stage used to be and the 141.6 s composed beatles song the budget gate
+    // renders. The SHORTEST is the hard case: the rounding error is half a
+    // frame however long the tape is, so a short tape wears the most of it.
+    const ns = [2.171, 6.82, 7.608456979328381, 7.75, 8.69, 13.9, 141.6]
+      .map(d => Math.round(d * SR53));
+    // …plus the pathological neighbours of a frame boundary (one sample over,
+    // one under, exactly on), where a rounding rule goes wrong if it is going to
+    const edge53 = [];
+    for (const f of [960, 1024]) for (const k of [1, 2, 380]) for (const off of [-1, 0, 1])
+      edge53.push(k * f + off);
+    for (const [name, F, rate] of FRAMES53) {
+      let worst = 0, worstAt = "", bad = 0;
+      for (const n of ns.concat(edge53)) {
+        const want = n * rate / SR53;
+        const M = B53.loopSamplesFor(want, F);
+        if (M % F !== 0 || M < F) {
+          bad++;
+          ok(false, `§53(a) ${name}: ${n} samples -> ${M}, which is not a whole ${F}-sample frame`);
+        }
+      }
+      // the ERROR is only meaningful over lengths that are songs. The edge
+      // cases above are one and two frames long — a millisecond of tape — and
+      // rounding half a frame there is 100%, which says nothing about music.
+      for (const n of ns) {
+        const want = n * rate / SR53;
+        const err = Math.abs(B53.loopSamplesFor(want, F) - want) / want;
+        if (err > worst) { worst = err; worstAt = (n / SR53).toFixed(2) + "s"; }
+      }
+      // half a frame over the whole loop is the arithmetic ceiling; the number
+      // that matters is that the SHORTEST real tape is still inside a cent or
+      // three of its own tempo, which is what makes this trade payable
+      // half a frame over the shortest tape this composer cuts (2.17 s) is
+      // ~0.5%, nine cents; over a real song it is a hundredth of that. Anything
+      // above 1% would be a tempo the ear can name, and this trade is only
+      // payable while it cannot.
+      ok(worst <= 0.01, `§53(a) ${name}: worst length error ${(worst * 100).toFixed(3)}% ` +
+                        `at ${worstAt} — that is audible as a tempo change, not a rounding`);
+      console.log(`  ${name}: every length rounds to whole ${F}-sample frames ` +
+                  `(${ns.length + edge53.length} of them, ${bad} wrong); worst tempo cost ` +
+                  `${(worst * 100).toFixed(3)}% at ${worstAt}`);
+    }
+  }
+
+  /* (b) THE FRAME LIST IS THE LOOP, EXACTLY — no short frame, no spare frame */
+  {
+    for (const [name, F] of FRAMES53) {
+      const M = B53.loopSamplesFor(365205, F);
+      const K = M / F;
+      // what the encoder hands back: whole frames, and MORE of them than the
+      // loop needs (the encoder pads its last input frame), which is the case
+      // loopFrames has to cut — by dropping frames, never by shortening one
+      const chunks = [];
+      for (let i = 0; i < K + 3; i++) chunks.push({ data: new Uint8Array(64), duration: F });
+      const r = B53.loopFrames(chunks, M);
+      ok(r.sum === M, `§53(b) ${name}: frame list sums to ${r.sum}, loop is ${M} — ` +
+                      `the fragment's timeline is not the song's length`);
+      ok(r.frames.length === K, `§53(b) ${name}: ${r.frames.length} frames for a ${K}-frame loop`);
+      ok(r.frames.every(f => f.duration === F),
+         `§53(b) ${name}: a frame came back SHORTENED — that is the trim chromium ` +
+         `ignores, and 514 samples of padding play at every wrap when it does`);
+    }
+  }
+
+  /* (c) THE WRAP IS SAMPLE-EXACT IN THE CONTAINER — box-walked, four passes */
+  {
+    // a minimal ISO-BMFF walker: enough to find tfdt + trun and read them back
+    const boxes = (u8, from, to, want, out) => {
+      let o = from;
+      while (o + 8 <= to) {
+        const size = (u8[o] << 24 | u8[o + 1] << 16 | u8[o + 2] << 8 | u8[o + 3]) >>> 0;
+        const type = String.fromCharCode(u8[o + 4], u8[o + 5], u8[o + 6], u8[o + 7]);
+        if (size < 8 || o + size > to) break;
+        if (type === want) out.push({ o, size });
+        if (["moof", "traf"].includes(type)) boxes(u8, o + 8, o + size, want, out);
+        o += size;
+      }
+      return out;
+    };
+    const u32at = (u8, o) => (u8[o] << 24 | u8[o + 1] << 16 | u8[o + 2] << 8 | u8[o + 3]) >>> 0;
+    const u64at = (u8, o) => u32at(u8, o) * 0x100000000 + u32at(u8, o + 4);
+
+    for (const [name, F, rate] of FRAMES53) {
+      const M = B53.loopSamplesFor(365205 * rate / SR53, F), K = M / F;
+      const frames = [];
+      for (let i = 0; i < K; i++) frames.push({ data: new Uint8Array(48), duration: F });
+      const mux = FM53.makeFmp4Mux({ codec: name === "aac" ? "aac" : "opus",
+                                     sampleRate: rate, channels: 2,
+                                     codecConfig: name === "opus"
+                                       ? new Uint8Array([79, 112, 117, 115, 72, 101, 97, 100, 1, 2,
+                                                         0x38, 0x01, 0x80, 0xbb, 0, 0, 0, 0, 0])
+                                       : null });
+      mux.initSegment();
+      let bad = "";
+      for (let pass = 0; pass < 4; pass++) {
+        const frag = mux.pushChunks(frames.map(f => ({ data: f.data, duration: f.duration })));
+        const tf = boxes(frag, 0, frag.length, "tfdt", [])[0];
+        const tr = boxes(frag, 0, frag.length, "trun", [])[0];
+        if (!tf || !tr) { bad = "pass " + pass + " carries no tfdt/trun"; break; }
+        // tfdt: 4-byte size + 4-byte type + 4-byte version/flags, then a 64-bit time
+        const t = u64at(frag, tf.o + 12);
+        if (t !== pass * M) { bad = `pass ${pass} starts at ${t}, not ${pass * M}`; break; }
+        // trun: version/flags, sample_count, data_offset, then (duration,size) pairs
+        const cnt = u32at(frag, tr.o + 12);
+        let sum = 0;
+        for (let i = 0; i < cnt; i++) sum += u32at(frag, tr.o + 20 + i * 8);
+        if (sum !== M) { bad = `pass ${pass} declares ${sum} samples, loop is ${M}`; break; }
+      }
+      ok(!bad, `§53(c) ${name}: ${bad} — the tape does not wrap where the bar does`);
+      if (!bad) console.log(`  ${name}: four passes of ${K} frames, tfdt ` +
+                            `0/${M}/${2 * M}/${3 * M} — sample-exact, no padding`);
+    }
+  }
+
+  /* (d) THE FALLBACK TAPE DECLARES THE SCORE'S LENGTH AND NOTHING MORE */
+  {
+    // the WAV the carrier still plays wherever WebCodecs is missing. It is not
+    // gapless (that is the element's own wrap seek), but it must not ALSO pad:
+    // a container that declares more samples than the score has is a hole this
+    // gate would have to find twice.
+    for (const durSec of [2.171, 7.608456979328381, 141.6]) {
+      const N = Math.round(durSec * SR53);
+      const ab = B53.wavBytes([new Float32Array(N), new Float32Array(N)], N, SR53);
+      const dv = new DataView(ab);
+      const riff = dv.getUint32(4, true), fmtRate = dv.getUint32(24, true);
+      const dataLen = dv.getUint32(40, true);
+      ok(ab.byteLength === 44 + N * 4,
+         `§53(d) a ${durSec}s tape encodes ${ab.byteLength} bytes, not ${44 + N * 4}`);
+      ok(dataLen === N * 4,
+         `§53(d) a ${durSec}s tape DECLARES ${dataLen / 4} frames, the score has ${N}`);
+      ok(riff === 36 + N * 4, `§53(d) the RIFF length disagrees with the data chunk`);
+      ok(fmtRate === SR53, `§53(d) the tape claims ${fmtRate} Hz`);
+    }
+    console.log("  fallback wav: declared frames == round(durSec x 44100), exactly, at three lengths");
+  }
+}
+
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }
