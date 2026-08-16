@@ -1059,271 +1059,227 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .pchip.role.on{background:var(--accent);border-color:var(--accent);color:var(--on-ink)}
 
 /* ---- THE BOARD ----
-   The MIX page as a desk (ui/mixtbl.js, "the SSL board" + "lay out the mix
-   channels like SSL — stack it", 2026-08-16): VERTICAL CHANNEL STRIPS in the
-   .tbl well, each a 4000-series read top to bottom — label block (chair,
-   instrument: the pool's own control on a pool chair), the EQ STACKED
-   HI over MID over LO in the classic colorways (red HF / green MID / brown LF
-   caps, blue reserved for a fourth band), the sends-then-pan keys wearing the
-   small-knob blue/gray bands, the CUT/SOLO pair (red-ish/yellow-ish), and the
-   long-throw automated fader with its silkscreened dB scale at the bottom —
-   then the SECTION strip past a heavier rule, then the shared-bus strips and
-   the MASTER strip with its meter. The strip face is the brushed gray of the
-   desk, cut by thin channel separators; SSL homage in the silver-909 token
-   world, never a photo skin. The board scrolls sideways inside its own well
-   when the strips outgrow the glass; the page body never does.
+   The MIX page, flat (ui/mixtbl.js; Paul, 2026-08-16: "Mix is too
+   skeuomorphic. Just give everything except master level sliders a horizontal
+   slider type with inner labeled indicators… Use color. Make the effects
+   busses into special channel strips. Label the channels at the top"). This
+   is the deliberate reversal of the SSL 4000 dress: the moulded caps, the
+   colorway plastic, the milled slots and the rotary rack are all gone.
 
-   .mrow / .msec / .mval / .mk-* / .mchip keep their names ACROSS the redesign
-   on purpose: two browser gates (nukernel-drums deskUI, nukernel-audio (E))
-   drive this surface through exactly those hooks, and only CHANNEL strips
-   carry .mrow — the drums gate counts them against the part roster. */
-.mixtbl.board{display:flex;flex-direction:row;align-items:stretch;max-height:none;
-  overflow-x:auto;overscroll-behavior-x:contain;padding:0 0 4px;
-  /* the SSL colorways as tokens: fixed plastic-cap hues (a knob cap is the
-     same plastic on the light desk and in the dark room), leaning on the hw
-     faces only for bevels and grounds */
-  --ssl-hf:#c0392e; --ssl-mf:#3f8a52; --ssl-lf:#6d4a33;
-  --ssl-blue:#3e6fa5; --ssl-gray:#8a8d92}
-.strips{display:flex;align-items:stretch;min-width:max-content}
-.strips.chans{padding-left:var(--tbl-gut)}
-/* the bus block reads as a second bay of the same desk: heavier rule at its
-   left edge, sunk ground — the "music divides here" cadence, rotated */
-.strips.buses{border-left:2px solid var(--tbl-rule);background:var(--sunk);
-  padding-right:var(--tbl-gut)}
-.strip{
-  display:flex;flex-direction:column;gap:6px;flex:0 0 auto;
-  width:88px;min-width:0;padding:8px 6px 6px;
-  border-right:1px solid var(--tbl-hair);
-  /* the brushed-gray strip face — the popover panel's grain, laid vertical,
-     between the thin channel separators the border-right already cuts */
-  background:repeating-linear-gradient(90deg,rgba(255,255,255,.016) 0 1px,
-    transparent 1px 3px);
+   ONE CONTROL, .mbar: a flat track, a FILL that is the value, and the two
+   words printed INSIDE it — name at the left, number at the right. There is
+   no legend row anywhere on this page because every bar says its own name.
+   Level, sends, pan, the EQ bands, the returns' trims and the master's seven
+   stages are that one object at different scales. The one exception Paul
+   named is the master LEVEL, which stays vertical beside its meter.
+
+   COLOR IS THE WAYFINDING. One hue per control FAMILY, declared once on the
+   board and spent through data-fam, so a strip reads as bands of colour and
+   you find the send you want before you have read a word. A hue never means
+   two things here.
+
+   FILL IS STATE. A dim fill is the song's own answer (the composer's seating,
+   the genre's wetness, the enum default); a bright one is a value YOU set.
+   That is the same dim-vs-lit law the chips have always spoken.
+
+   STRIPS ARE CARDS IN A GRID, not columns in a sideways scroller: one column
+   on a phone (full-width bars, nothing shrinks), as many as fit on a desk.
+   The board therefore never scrolls sideways and the page never forks.
+
+   .mrow / .msec / .mval / .mk-* / .mchip / .eqk / .fcap keep their names and
+   the #m-* / #b-* ids survive the rack's absorption, because four browser
+   gates drive this surface through exactly those hooks — and only CHANNEL
+   strips carry .mrow, since the drums gate counts them against the roster. */
+.mixtbl.board{
+  display:flex;flex-direction:column;gap:var(--sp-3);
+  max-height:none;overflow:visible;padding:var(--sp-2) 0 var(--sp-3);
+  /* THE FAMILY HUES. Mid-tones from the meaning palette, so they read on both
+     faces; re-point them here and the whole board changes key at once. */
+  --mx-level:var(--accent);            /* how loud */
+  --mx-pan:var(--st-auto);             /* where */
+  --mx-send:var(--st-solo);            /* how much goes to a shared room */
+  --mx-fx:var(--ink-2);                /* what is inserted (no hue: it is a list) */
+  --mx-eq:var(--st-play);              /* tone */
+  --mx-bus:var(--v3);                  /* a return, not a voice */
+  --mx-master:var(--st-arm);           /* the sum */
 }
-.strip:hover{background:var(--tbl-hi)}
-/* THE SECTION STRIP: everything left of it feeds it, so it closes the
-   channel bay against the heavier rule the bus bay opens with */
-.strip.msec{background:var(--sunk)}
-.strip.msec .mpn{color:var(--accent-txt);letter-spacing:.12em}
+.strips{display:grid;gap:var(--sp-3) var(--sp-4);align-items:stretch;
+  grid-template-columns:repeat(auto-fill,minmax(232px,1fr));
+  padding:0 var(--tbl-gut)}
+/* THE RETURN BAY: the buses are strips in the same grammar, past the one rule
+   on this page that marks a real division — everything above feeds everything
+   below it */
+.strips.buses{padding-top:var(--sp-3);border-top:2px solid var(--tbl-rule)}
+.strip{display:flex;flex-direction:column;gap:var(--sp-2);min-width:0;
+  --hue-strip:var(--accent)}
+/* THE SECTION STRIP: every part bus feeds it, so it wears the accent at its
+   head rather than a heavier frame */
+.strip.msec{--hue-strip:var(--accent)}
+.strip.msec .mpn{color:var(--accent-txt)}
+.strip.bstrip{--hue-strip:var(--mx-bus)}
+.strip.bstrip.send{--hue-strip:var(--mx-fx)}
+.strip.mstr{--hue-strip:var(--mx-master);grid-column:1/-1}
 /* a part the desk has silenced — muted, or not the one being soloed — steps
    back whole; every value stays legible (you are about to un-mute it) */
-.strip.off .mlabel,.strip.off .mval,.strip.off .fwell,.strip.off .eqrow{opacity:.42}
+.strip.off .mlabel,.strip.off .mvals,.strip.off .fwell,.strip.off .eqrow{opacity:.45}
 /* AN IDLE CHAIR — on the song's desk but not in the sounding section (the
    fixed-roster law, ui/mixtbl.js songRows): the strip stays where it is,
    parked on its resolved statics, and dims a shade lighter than .off — idle
    is "waiting", not "silenced", and the two must read differently */
-.strip.idle .mlabel,.strip.idle .mval,.strip.idle .eqrow,.strip.idle .mms{opacity:.34}
-.strip.idle .fwell{opacity:.5}
-.strip.idle:hover .mlabel,.strip.idle:hover .mval,.strip.idle:hover .eqrow,
-.strip.idle:hover .mms,.strip.idle:hover .fwell{opacity:.85}
-/* ---- the label block: number, address, what plays it, where it goes ---- */
-.mlabel{display:flex;flex-direction:column;gap:1px;min-height:52px}
-.mnum{font:600 9px/1 var(--f-num);color:var(--tbl-faint)}
-.mpn{font:600 11px/1.2 var(--f-legend);letter-spacing:.06em;color:var(--tbl-ink);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
-.mps{font:400 9.5px/1.2 var(--f-legend);letter-spacing:.01em;color:var(--tbl-faint);
+.strip.idle .mlabel,.strip.idle .mvals,.strip.idle .eqrow,.strip.idle .mms{opacity:.36}
+.strip.idle .fwell{opacity:.52}
+.strip.idle:hover .mlabel,.strip.idle:hover .mvals,.strip.idle:hover .eqrow,
+.strip.idle:hover .mms,.strip.idle:hover .fwell{opacity:.9}
+
+/* ---- THE HEAD: the channel says who it is, at the top, in the largest type
+   on the strip ("Label the channels at the top"). The hairline under it is a
+   real boundary — name above, controls below — and on a bus or the master it
+   takes that strip's hue, which is the whole of "visually distinguished". */
+.mlabel{display:flex;flex-direction:column;gap:2px;min-width:0;
+  padding-bottom:var(--sp-2);border-bottom:1px solid var(--rule)}
+.bstrip .mlabel,.strip.msec .mlabel{
+  border-bottom:2px solid color-mix(in srgb,var(--hue-strip) 60%,transparent)}
+.mtop{display:flex;align-items:baseline;gap:var(--sp-2);min-width:0}
+.mpn{flex:1 1 auto;min-width:0;font:600 var(--t-lg)/1.15 var(--f-ui);
+  color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mnum{flex:0 0 auto;font:500 var(--t-xs)/1 var(--f-num);color:var(--ink-3)}
+/* the marker a return wears instead of a voice's number */
+.btag{flex:0 0 auto;font:500 var(--t-xs)/1.4 var(--f-ui);font-style:normal;
+  color:var(--ink);padding:2px 8px;border-radius:999px;
+  background:color-mix(in srgb,var(--hue-strip) 32%,transparent)}
+.mps{font:500 var(--t-sm)/1.3 var(--f-ui);color:var(--ink-2);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* THE INSTRUMENT LABEL AS A CONTROL (pool chairs only, ui/mixtbl.js): the
-   same nameplate line, now a button that unfolds the pool picker — cast
+   same nameplate line, still a button that unfolds the pool picker — cast
    bright (.set), the genre's own answer dim, the one state language */
-button.mps.minstr{appearance:none;border:0;background:none;margin:0;padding:0;
-  width:100%;text-align:left;cursor:pointer;border-radius:2px}
-button.mps.minstr:hover{color:var(--tbl-ink)}
-button.mps.minstr:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button.mps.minstr{appearance:none;border:0;background:none;margin:0;
+  padding:2px 0;width:100%;text-align:left;cursor:pointer;border-radius:var(--r)}
+button.mps.minstr:hover{color:var(--ink)}
 button.mps.minstr.set{color:var(--accent-txt);font-weight:600}
 button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
-.mfeed{font:400 8.5px/1.2 var(--f-legend);letter-spacing:.03em;color:var(--tbl-faint);
+.mfeed{font:400 var(--t-xs)/1.35 var(--f-ui);color:var(--ink-3);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* ---- the value keys, stacked, each under its own silkscreen ---- */
-.mvals{display:flex;flex-direction:column;gap:3px}
-.mcell{min-width:0;display:flex;align-items:center;gap:4px}
-.mvlab{flex:0 0 24px;font:600 8px/1 var(--f-legend);letter-spacing:.1em;
-  text-transform:uppercase;color:var(--tbl-faint);font-style:normal}
-/* the SSL small-knob colorways on the key groups (ui/mixtbl.js KEYCW): a cap
-   band on the key's left edge — blue for the sends, gray for level/pan */
-.mcell.cw-send .mval{box-shadow:inset 3px 0 0 var(--ssl-blue)}
-.mcell.cw-pan .mval{box-shadow:inset 3px 0 0 var(--ssl-gray)}
-.mval{
-  appearance:none;cursor:pointer;flex:1 1 auto;min-width:0;min-height:24px;
-  display:flex;align-items:center;gap:2px;flex-wrap:wrap;
-  padding:3px 4px;border-radius:3px;
-  background:var(--tbl-key,var(--hw-key-mid));color:var(--tbl-ink);
-  border:0;border-top:1px solid rgba(255,255,255,.07);
-  border-bottom:1px solid rgba(0,0,0,.55);
-  font:500 10px/1.2 var(--f-legend);letter-spacing:.02em;
-  white-space:nowrap;overflow:hidden;
-}
-.mval:hover{border-top-color:rgba(255,255,255,.2)}
-/* ONE STATE LANGUAGE, the palette's: a bright value is one YOU set, a dim one
-   is the default answering — the part's own zero, or the genre's own wetness */
-.mval.dflt{color:var(--tbl-faint);background:transparent;
-  border-top-color:transparent;border-bottom-color:var(--tbl-hair)}
-.mval.set{color:var(--accent-txt);font-weight:600}
-.mval.open{outline:2px solid var(--accent);outline-offset:-2px}
-.mfxc{font-style:normal;font-size:8.5px;letter-spacing:.02em;
-  padding:1px 3px;border-radius:2px;background:var(--sunk);color:var(--tbl-ink);
-  overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.mval.set .mfxc{background:var(--accent);color:var(--on-ink)}
-.mfxc.none{background:transparent;color:var(--tbl-faint);padding:0}
-/* ---- THE TONE BLOCK, SSL-STACKED: HI over MID over LO, one knob per row
-   with its legend at the left and its dB at the right (bus strips carry the
-   HI/LO pair). The rack knob's face at strip size in the 4000-series cap
-   colors — red HF, green MID, brown LF, blue reserved for a fourth band —
-   the pointer straight up at flat and rotated ±135° across ±12 dB; flat
-   reads dim (the default-answering language), a set band brights its dB. */
-.eqrow{display:flex;flex-direction:column;gap:3px}
-.eqcell{display:flex;flex-direction:row;align-items:center;gap:5px;min-width:0}
-.eqlab{flex:0 0 20px;font:600 7.5px/1.2 var(--f-legend);letter-spacing:.08em;
-  text-transform:uppercase;color:var(--tbl-faint);font-style:normal}
-.eqk{appearance:none;cursor:ns-resize;padding:0;border:0;background:none;
-  width:22px;height:22px;touch-action:none;border-radius:50%}
-.eqk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.eqface{display:block;width:22px;height:22px;border-radius:50%;position:relative;
-  background:radial-gradient(circle at 34% 30%,var(--hw-key-hi) 0,var(--hw-key-mid) 55%,
-    var(--hw-key-lo) 100%);
-  border:1px solid var(--hw-edge);border-top-color:var(--hw-bevel-hi);
-  box-shadow:0 1px 3px rgba(0,0,0,.4);
-  transform:rotate(var(--ka,0deg));
-  /* the desk plays along: when the sounding section changes, the knob EASES
-     to the new section's value — the UI mirror of the audio's setTargetAtTime */
-  transition:transform .3s ease}
-/* …but never under a finger: the drag is its own feedback, lag-free */
-.eqk.drag .eqface{transition:none}
-.eqface .kmark{top:2px;height:7px}
-.eqk.set .kmark{background:var(--accent)}
-/* THE COLORED CAPS (ui/mixtbl.js cw-<band>): the fixed plastic hue molded
-   with the same highlight/shade the gray faces wear, the pointer line cream
-   for contrast — a set band keeps its color and rings the cap instead */
-.eqk.cw-hi .eqface{background:radial-gradient(circle at 34% 30%,
-  color-mix(in srgb,var(--ssl-hf) 58%,#fff) 0,var(--ssl-hf) 55%,
-  color-mix(in srgb,var(--ssl-hf) 58%,#000) 100%)}
-.eqk.cw-mid .eqface{background:radial-gradient(circle at 34% 30%,
-  color-mix(in srgb,var(--ssl-mf) 58%,#fff) 0,var(--ssl-mf) 55%,
-  color-mix(in srgb,var(--ssl-mf) 58%,#000) 100%)}
-.eqk.cw-lo .eqface{background:radial-gradient(circle at 34% 30%,
-  color-mix(in srgb,var(--ssl-lf) 58%,#fff) 0,var(--ssl-lf) 55%,
-  color-mix(in srgb,var(--ssl-lf) 58%,#000) 100%)}
-.eqk.cw-hi .kmark,.eqk.cw-mid .kmark,.eqk.cw-lo .kmark{background:var(--a-cream)}
-.eqk.set .eqface{box-shadow:0 1px 3px rgba(0,0,0,.4),0 0 0 1.5px var(--accent)}
-.eqv{font:600 8px/1.2 var(--f-num);color:var(--tbl-faint);font-style:normal;
-  min-height:10px;margin-left:auto}
-.eqv.set{color:var(--accent-txt)}
-/* ---- CUT and SOLO, the desk's button pair over the fader: cut red-ish,
-   solo yellow-ish — tinted at rest, full color latched ---- */
-.mms{display:flex;gap:3px;min-height:0}
-.mkey{
-  appearance:none;cursor:pointer;flex:1 1 0;min-height:24px;padding:0;
-  border-radius:3px;border:0;
-  border-top:1px solid rgba(255,255,255,.07);
-  border-bottom:1px solid rgba(0,0,0,.55);
-  background:var(--tbl-key,var(--hw-key-mid));color:var(--tbl-faint);
-  font:600 8.5px/1 var(--f-legend);letter-spacing:.08em;text-transform:uppercase;
-}
-.mkey:hover{color:var(--tbl-ink)}
-.mk-mute{color:color-mix(in srgb,var(--a-red) 45%,var(--tbl-faint))}
-.mk-solo{color:color-mix(in srgb,var(--a-amber) 55%,var(--tbl-faint))}
-.mk-mute.on{background:color-mix(in srgb,var(--a-red) 78%,var(--hw-key-lo));color:#fff}
-.mk-solo.on{background:color-mix(in srgb,var(--a-amber) 82%,var(--hw-key-mid));
-  color:var(--on-ink)}
-/* ---- THE FADER: a milled slot, a silkscreened zero line, a cap that MOVES.
-   The cap rides --f (0 at the slot's foot), written per frame off the built
-   gain nodes — the automation is what you are looking at, and the dB readout
-   under the slot is YOUR offset over it. touch-action none: the drag is the
-   control's own gesture, not a scroll. ---- */
-.fwell{display:flex;flex-direction:column;align-items:center;gap:4px;
-  flex:1 1 auto;min-height:150px}
-.fslot{
-  position:relative;flex:1 1 auto;width:34px;min-height:120px;
-  border-radius:4px;cursor:ns-resize;touch-action:none;
-  background:linear-gradient(180deg,var(--hw-recess) 0,var(--hw-recess-2) 100%);
-  border:1px solid var(--hw-edge);border-bottom-color:var(--hw-bevel-hi);
-  box-shadow:inset 0 2px 5px rgba(0,0,0,.45);
-}
-.fslot:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-/* the silkscreened dB scale beside the groove: tick marks down the slot's
-   right edge (every eighth of the −36..+12 throw), the zero line brighter */
-.fslot::after{content:"";position:absolute;top:6px;bottom:6px;right:3px;width:5px;
-  background:repeating-linear-gradient(180deg,var(--tbl-faint) 0 1px,
-    transparent 1px 12.5%);
-  opacity:.45;pointer-events:none}
-.fgroove{position:absolute;left:50%;top:6px;bottom:6px;width:2px;margin-left:-1px;
-  background:rgba(0,0,0,.6);border-radius:1px}
-.fzero{position:absolute;left:3px;right:3px;height:1px;background:var(--tbl-faint);
-  bottom:calc(6px + var(--f,0)*(100% - 12px));opacity:.6}
-.fcap{
-  position:absolute;left:2px;right:2px;height:16px;
-  bottom:calc(4px + var(--f,0)*(100% - 24px));
-  border-radius:3px;
-  background:linear-gradient(180deg,var(--hw-key-hi) 0,var(--hw-key-mid) 45%,
-    var(--hw-key-lo) 100%);
-  border:1px solid var(--hw-edge);border-top-color:var(--hw-bevel-hi);
-  box-shadow:0 2px 4px rgba(0,0,0,.4);
-}
-/* the long GRAY cap, SSL's: the center line is the cream silkscreen stripe,
-   not an accent lamp — the cap's position is the desk's, not a highlight */
-.fcap::after{content:"";position:absolute;left:3px;right:3px;top:50%;height:2px;
-  margin-top:-1px;background:var(--a-cream);border-radius:1px;
-  box-shadow:0 0 0 .5px rgba(0,0,0,.35)}
-/* the offset readout: the strip's own little LCD digit */
-.foff{font:600 10px/1 var(--f-num);letter-spacing:.04em;color:var(--accent-txt);
-  min-height:12px}
-.foff.dflt{color:var(--tbl-faint)}
-/* bus-strip faders are DETENTED (they step the rack's own table) and slimmer */
-.fslot.bslot,.fslot.vslot{width:26px}
-/* ---- the MASTER strip: the meter beside the volume fader ---- */
-.strip.mstr{width:104px;border-right:0}
-.mbody{display:flex;gap:6px;flex:1 1 auto;min-height:150px}
-.meter{
-  position:relative;flex:0 0 14px;border-radius:3px;overflow:hidden;
-  background:var(--lcd-bg);border:1px solid var(--hw-edge);
-  box-shadow:inset 0 2px 5px rgba(0,0,0,.5);
-}
-.mfill{position:absolute;left:2px;right:2px;bottom:2px;
-  height:calc(var(--f,0)*(100% - 4px));border-radius:1px;
-  background:linear-gradient(180deg,var(--a-red) 0,var(--a-amber) 12%,
-    var(--st-play) 40%,var(--st-play) 100%)}
 .mstages{color:var(--accent-txt)}
 
-/* ---- THE EFFECTS RACK ----
-   One knob row per shared bus, then the MASTER row (fields.js registries; the
-   masters moved here off the SONG page). A knob is the machine's one rotary:
-   a milled face, a pointer line rotated by --ka across the detents, the value
-   word under it — set bright, default dim, exactly the chips' language. */
-.rack{display:flex;flex-direction:column}
-.rrow{display:flex;align-items:flex-start;gap:10px;
-  padding:8px var(--tbl-gut);border-bottom:1px solid var(--tbl-hair)}
-.rrow:last-of-type{border-bottom:0}
-.rrow.rmaster{border-top:2px solid var(--tbl-rule);background:var(--sunk)}
-.rname{flex:0 0 76px;display:flex;align-items:center;gap:6px;padding-top:10px;
-  font:600 9px/1.2 var(--f-legend);letter-spacing:.14em;text-transform:uppercase;
-  color:var(--dim)}
-.rknobs{display:flex;flex-wrap:wrap;gap:6px 10px}
-.kwrap{display:flex;flex-direction:column;align-items:center;gap:2px;width:56px}
-.klab{font:600 8px/1.2 var(--f-legend);letter-spacing:.1em;text-transform:uppercase;
-  color:var(--dim)}
-.knobk{
-  appearance:none;cursor:pointer;padding:0;border:0;background:none;
-  width:40px;height:40px;touch-action:none;border-radius:50%;
+/* ---- THE BAR ----
+   The fill is spelled as two edges, --a and --b, in fractions of the track:
+   unipolar controls run 0 → f, BIPOLAR ones (pan, the EQ bands) run out of
+   the .5 centre, so "flat" is a hairline in the middle and the direction of a
+   cut is visible without reading the number. --f carries the raw fraction
+   beside them (it is what the board gate reads off .fcap).
+   NO transition: these are repainted per frame off live AudioParams. */
+.mbar{
+  position:relative;display:flex;align-items:center;gap:var(--sp-2);
+  width:100%;min-height:36px;padding:0 var(--sp-2);overflow:hidden;
+  appearance:none;border:0;border-radius:var(--r);cursor:pointer;
+  touch-action:none;text-align:left;
+  background:var(--tbl-key);color:var(--ink);
+  font:500 var(--t-sm)/1.2 var(--f-ui);
+  --hue:var(--mx-level);
 }
-.knobk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.kface{
-  display:block;width:40px;height:40px;border-radius:50%;position:relative;
-  background:
-    radial-gradient(circle at 34% 30%,var(--hw-key-hi) 0,var(--hw-key-mid) 55%,
-      var(--hw-key-lo) 100%);
-  border:1px solid var(--hw-edge);border-top-color:var(--hw-bevel-hi);
-  box-shadow:0 2px 4px rgba(0,0,0,.4),inset 0 1px 0 var(--hw-bevel-hi);
-  transform:rotate(var(--ka,-135deg));
-  /* detent-to-detent moves settle rather than snap — the board knobs' ease,
-     kept on under the finger too because a rack move is discrete anyway */
-  transition:transform .25s ease;
+.mbar[data-fam="level"]{--hue:var(--mx-level)}
+.mbar[data-fam="pan"]{--hue:var(--mx-pan)}
+.mbar[data-fam="send"]{--hue:var(--mx-send)}
+.mbar[data-fam="fx"]{--hue:var(--mx-fx)}
+.mbar[data-fam="eq"]{--hue:var(--mx-eq)}
+.mbar[data-fam="bus"]{--hue:var(--mx-bus)}
+.mbar[data-fam="master"]{--hue:var(--mx-master)}
+.mbar:hover{background:var(--bg-key-hi)}
+.bfill{position:absolute;top:0;bottom:0;pointer-events:none;
+  left:calc(var(--a,0)*100%);right:calc(100% - var(--b,0)*100%);
+  background:color-mix(in srgb,var(--hue) 18%,transparent)}
+/* the dim-vs-lit law, said in saturation: the song's answer is a wash, your
+   own value is the colour at strength */
+.mbar.set .bfill{background:color-mix(in srgb,var(--hue) 45%,transparent)}
+/* the centre of a bipolar bar is a real boundary, so it gets one hairline */
+.mbar[data-bipolar]::before{content:"";position:absolute;left:50%;top:5px;
+  bottom:5px;width:1px;background:var(--rule-strong);pointer-events:none}
+.blab{position:relative;flex:0 1 auto;min-width:0;font-style:normal;
+  color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bval{position:relative;flex:0 0 auto;margin-left:auto;display:flex;
+  align-items:center;gap:var(--sp-1);white-space:nowrap;
+  font:600 var(--t-sm)/1.2 var(--f-num);color:var(--ink-3)}
+.mbar.set .blab{color:var(--ink)}
+.mbar.set .bval{color:var(--ink)}
+.mbar.open{outline:2px solid var(--accent);outline-offset:-2px}
+
+/* ---- the value keys: one bar each, tap opens that key's chip set ---- */
+.mvals{display:flex;flex-direction:column;gap:var(--sp-1)}
+.mfxc{font-style:normal;font:500 var(--t-xs)/1.4 var(--f-ui);padding:2px 6px;
+  border-radius:var(--r);color:var(--ink);max-width:96px;overflow:hidden;
+  text-overflow:ellipsis;background:color-mix(in srgb,var(--mx-fx) 30%,transparent)}
+.mfxc.none{background:transparent;color:var(--ink-3);padding:0}
+
+/* ---- the tone bars: three per channel strip, the lo/hi pair per return ---- */
+.eqrow{display:flex;flex-direction:column;gap:var(--sp-1)}
+
+/* ---- CUT and SOLO: the two controls that LATCH rather than take a value,
+   so they are the one pair on the page that is not a bar ---- */
+.mms{display:flex;gap:var(--sp-2);margin-top:auto;padding-top:var(--sp-1)}
+.mkey{
+  appearance:none;cursor:pointer;flex:1 1 0;min-height:32px;padding:0;
+  border:1px solid var(--rule);border-radius:var(--r);background:transparent;
+  color:var(--ink-2);font:500 var(--t-sm)/1 var(--f-ui);
 }
-.kmark{position:absolute;left:50%;top:3px;width:2px;height:12px;margin-left:-1px;
-  border-radius:1px;background:var(--tbl-faint)}
-.knobk.set .kmark{background:var(--accent)}
-.kval{font:500 9px/1.2 var(--f-legend);letter-spacing:.02em;color:var(--tbl-faint);
-  max-width:56px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  text-align:center}
-.knobk.set + .kval{color:var(--accent-txt);font-weight:600}
+.mkey:hover{color:var(--ink);border-color:var(--rule-strong)}
+.mk-mute.on{background:var(--st-rec);border-color:var(--st-rec);color:var(--on-accent)}
+.mk-solo.on{background:var(--st-solo);border-color:var(--st-solo);color:var(--on-accent)}
+
+/* ---- THE LEVEL BAR: the one control on a channel strip that moves by
+   itself. The fill is the gain ACTUALLY driving the channel (automation
+   included, read per frame off the built nodes); the number is YOUR offset
+   over it, and the hairline is unity — a real boundary, so it is a rule. */
+.fwell{display:block}
+.mbar.fslot{min-height:44px;font-weight:600}
+.fzero{position:absolute;top:3px;bottom:3px;width:1px;pointer-events:none;
+  left:calc(var(--f,0)*100%);background:var(--rule-strong)}
+.foff{color:var(--accent-txt)}
+.mbar.fslot .foff.dflt{color:var(--ink-3)}
+
+/* ---- THE MASTER STRIP: full width, because seven stages want the room and
+   because the sum is not one voice among the others. The vertical slider is
+   the exception Paul kept — flat: a track, a fill, a 2px cap. ---- */
+.mbody{display:flex;gap:var(--sp-4);align-items:flex-start}
+/* the meter and the one vertical slider left on the page, under one word:
+   a caption, because this is the single control too narrow to print its own
+   name inside itself */
+.mlevel{flex:0 0 auto;display:grid;gap:var(--sp-1) var(--sp-2);
+  grid-template-columns:14px 48px;grid-template-rows:auto 1fr auto;
+  height:180px}
+.vlab{grid-column:1/-1;font-style:normal;color:var(--ink-2);
+  font:500 var(--t-xs)/1.2 var(--f-ui)}
+.fslot.vslot{position:relative;display:block;padding:0;border:0;
+  background:var(--tbl-key);border-radius:var(--r);
+  cursor:ns-resize;touch-action:none}
+.vslot .fcap{position:absolute;left:0;right:0;bottom:0;border-radius:var(--r);
+  height:calc(var(--f,0)*100%);
+  background:color-mix(in srgb,var(--mx-master) 45%,transparent)}
+.vslot .fcap::after{content:"";position:absolute;left:0;right:0;top:0;height:2px;
+  background:var(--mx-master)}
+.mlevel .foff{grid-column:1/-1;text-align:center;
+  font:600 var(--t-md)/1.2 var(--f-num)}
+/* the meter: length is the reading, and the colour says which third of the
+   headroom that length is in. The gradient is sized to the FULL track and
+   anchored at the foot, so the same dBFS always paints the same colour. */
+.meter{position:relative;border-radius:var(--r);background:var(--bg-sunk);
+  overflow:hidden}
+.mfill{position:absolute;left:0;right:0;bottom:0;height:calc(var(--f,0)*100%);
+  background-color:var(--st-play);
+  background-image:linear-gradient(0deg,var(--st-play) 0 62%,
+    var(--st-arm) 62% 84%,var(--st-rec) 84% 100%);
+  background-repeat:no-repeat;background-position:bottom;
+  background-size:100% calc(100% / max(var(--f,1),.02))}
+.mgrid{flex:1 1 auto;display:grid;gap:var(--sp-2);
+  grid-template-columns:repeat(auto-fit,minmax(212px,1fr));align-content:start}
+
+/* ---- WHAT IS LEFT BELOW THE BOARD ----
+   Nothing at all. The EFFECTS RACK is gone: its per-bus knob rows are the
+   bus strips' own bars and its MASTER row is the master strip's, ids intact
+   (ui/mixtbl.js). The master's hint paragraph went with the other three
+   ("get rid of ... help buttons", 2026-08-16), so #rack now keeps only its
+   id and its place in the page — permanently empty, so no gate or stylesheet
+   has to learn a new address. */
+.rack{background:none;overflow:visible;padding:0}
 
 /* ---- the cell popover ----
    Tapping a mix cell opens ITS chip set beside it. Anchored on a desk, a
@@ -1459,11 +1415,11 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
   /* the pattern thumbnails are chunky keys on their own row now — they hold
      the full 44px floor with room to spare (46px base) */
   .bch{min-height:46px}
-  /* the board's value keys and its two latching keys: a value key opens a
-     sheet (a miss is harmless) but M and S change what you hear, so both get
-     a taller face on coarse pointers; the fader slot is already a slab */
-  .mval,.mkey{min-height:34px}
-  .knobk,.kface{width:44px;height:44px}
+  /* the board is one control repeated, so it holds the 44px floor whole: a
+     bar is a slab already and the two latching keys change what you hear.
+     (The rack knobs that used to be listed here no longer exist — every one
+     of them is a bar on a bus or the master strip.) */
+  .mbar,.mkey{min-height:44px}
   /* the two faders own a custom pointer gesture with touch-action:none — the
      26px strip WAS the whole grab area; the track/thumb stay centred while
      the hit strip grows. The recessed LCD pickers get the same floor. */
@@ -1665,22 +1621,14 @@ details .c{color:var(--faint)}
   /* the superimposed numeral scales with the face it rides */
   .bch .bcn{font-size:22px}
   .addbox{flex:1 1 auto}
-  /* THE BOARD AT 390: the same strips, narrower, scrolling in their own well
-     — a board is the one surface that EARNS a sideways scroll, because that
-     is what a desk wider than the room does. The address stays; what plays
-     it is what a 390px strip drops, like the song row's clock. */
-  .strip{width:76px;padding:6px 4px 5px}
-  .strip.mstr{width:92px}
-  .mps{display:none}
-  .mval{font-size:9.5px;padding:3px 3px}
-  .mvlab{flex-basis:20px}
-  .mpn{font-size:10px;letter-spacing:.02em}
-  .mfxc{font-size:8px;padding:1px 2px}
-  /* three tone knobs inside a 68px strip interior: smaller faces, tighter gap */
-  .eqrow{gap:2px}
-  .eqk,.eqface{width:20px;height:20px}
-  .fwell{min-height:128px}
-  .fslot{min-height:100px}
+  /* THE BOARD AT 390: ONE STRIP PER ROW, full width, and NOTHING SHRINKS.
+     The old board bought its narrow fit by cutting the strips to 76px and
+     hiding what each chair was playing; a bar that prints its own name is
+     exactly the control that does not need that, so the phone gets the whole
+     sentence — the name, the number, the fill — and simply scrolls down. */
+  .strips{grid-template-columns:1fr;gap:var(--sp-4);padding:0 var(--sp-3)}
+  .mbody{flex-direction:column;gap:var(--sp-3)}
+  .mlevel{height:168px}
 }
 
 /* ---- the desk: the SAME tables, with room ----
@@ -1729,16 +1677,12 @@ details .c{color:var(--faint)}
       minmax(130px,1fr) 48px;
     gap:0 6px;padding:4px var(--tbl-gut) 6px}
 
-  /* THE BOARD, WITH ROOM: the same strips, wider, with taller fader travel —
-     what a desk buys a board is THROW, and the second label line (what each
-     part is actually PLAYING) has the width to breathe. */
-  .strip{width:112px;padding:10px 8px 8px}
-  .strip.mstr{width:128px}
-  .mval{min-height:26px;font-size:10.5px;padding:4px 6px}
-  .mkey{min-height:26px;font-size:11px}
-  .mfxc{font-size:9.5px}
-  .fwell{min-height:210px}
-  .fslot{min-height:170px}
-  .mbody{min-height:210px}
-  .rname{flex-basis:96px}
+  /* THE BOARD, WITH ROOM: the same strips and the same bars, dealt into as
+     many columns as fit and given a taller bar to read — what a desk buys
+     this board is COMPARISON (eight chairs side by side), not a longer throw. */
+  .strips{grid-template-columns:repeat(auto-fill,minmax(268px,1fr))}
+  .mbar{min-height:40px;font-size:var(--t-md)}
+  .mbar.fslot{min-height:48px}
+  .mkey{min-height:36px;font-size:var(--t-md)}
+  .mlevel{height:216px}
 }

@@ -1,43 +1,62 @@
-// ui/mixtbl.js — THE BOARD AND THE RACK: the MIX page as a mixing desk.
+// ui/mixtbl.js — THE BOARD: the MIX page as a stack of labelled bars.
 //
-// The mix table this file used to draw ("a mixer is the most table-shaped
-// object in music") was right about the DATA and wrong about the instrument:
-// a row of abbreviations can say what a channel is set to, but it cannot show
-// the level MOVING — and the composer's arc, the pump, the level automation
-// all move. "The SSL board" (2026-08-15) is the redesign: vertical CHANNEL
-// STRIPS, one per chair the SONG uses ("One channel per voice!!", 2026-08-16 —
-// the union of every section's parts, fixed for the whole song; a chair the
-// current section does not sound sits dimmed and wakes when its section
-// arrives), each a true SSL 4000 read, top to bottom ("lay out the mix
-// channels like SSL — stack it", 2026-08-16): the label block (chair +
-// instrument — on a pool chair the instrument line is the POOL's own control,
-// opening the twelve-family picker), the EQ stacked HI over MID over LO in
-// the 4000-series colorways (red/green/brown caps), the sends then pan keys,
-// the CUT/SOLO pair, and a long-throw AUTOMATED fader; then the SHARED-BUS
-// strips (reverb, echo, drum room — audio/graph.js's own roster, plus a slim
-// strip per character send bus as it builds); then the MASTER strip with a
-// meter. Below the board, the EFFECTS RACK: one row of detented knobs per
-// bus, and the MASTER row — the fields.js MASTER registry, moved here off the
-// SONG page's session bank with its #m-<key> ids intact.
+// THE COSTUME CAME OFF (Paul, 2026-08-16: "Mix is too skeuomorphic. Just give
+// everything except master level sliders a horizontal slider type with inner
+// labeled indicators — here a bar graph simple thing is okay. Use color. Make
+// the effects busses into special channel strips. Label the channels at the
+// top."). This reverses the SSL 4000 dress of 38a509c deliberately: the
+// molded caps, the colorway plastic, the milled slots and the rotary rack are
+// gone, and every one of them is replaced by ONE control.
 //
-// THE AUTOMATED FADER'S LAW (the round's one new idea): the cap follows the
-// level actually driving the channel — the enum level, the composer's arc, a
-// `pump` — read per frame off the built gain nodes (CHAN, audio/mixer.js).
-// A drag does NOT fight that: it writes a persistent dB OFFSET (fields.js
-// `fader`, PARTMIX `fader`) that multiplies the automated value, shown as its
-// own small readout under the slot. Automation keeps moving under your trim.
-// During the drag the target gain is eased onto the live AudioParam for
-// immediacy; the value commits on pointerup — one writer, no fight.
+// THE BAR is that control, and there is nothing else on this page that takes
+// a value: a flat track, a FILL that is the value, and the two words printed
+// INSIDE it — the control's name left-anchored, its number right-anchored.
+// You read a strip the way you read a sentence, without a legend, because
+// every bar says its own name. It drags across its width (and up its height:
+// the house's DRAG-VERTICAL verb still means "more", so the dominant axis
+// wins and neither gesture is dead), it is a role=slider with arrow keys, and
+// a tap opens the surface behind it — the pop-up fader on a continuous bar,
+// the chip set on a value key. Level, sends, pan, the EQ bands, the returns'
+// trims and the master's seven stages are all the same object at different
+// scales. The ONE exception Paul named is the MASTER LEVEL, which stays a
+// vertical slider beside its meter, because that is the one control on the
+// page you reach for while listening rather than while reading.
 //
-// WHAT SURVIVES THE TABLE, deliberately: rowsOf (the track list is still the
-// mixer's own roster), readField/writeField (one writer, absent the only
-// spelling of a default), the cell POPOVER with its chips (a strip's fx/rev/
-// echo/lvl/pan keys open the same chip sets — the discrete vocabulary stays
-// reachable, so old songs' values stay legible beside the fader), and the
-// .mrow/.msec/.mval/.mk-*/.mchip class names, which are LOAD-BEARING: two
-// browser gates (nukernel-drums deskUI, nukernel-audio (E)) drive this
-// surface through exactly those hooks. Only CHANNEL strips carry .mrow — the
-// drums gate counts them against the part roster.
+// COLOR IS THE WAYFINDING, not decoration. One hue per control FAMILY —
+// level / pan / sends / inserts / EQ / bus returns / master — declared as
+// tokens on the board in kernel-daw.css and spent by `data-fam`. Nothing on
+// this page is coloured for looks, and a hue never means two things.
+//
+// STATE IS FILL, and the derived-vs-user law survives the redesign intact: a
+// DIM fill is the song's own answer (the composer's seating, the genre's
+// wetness, the enum default) and a BRIGHT one is a value YOU set. The
+// automated level keeps moving inside its bar while the transport runs.
+//
+// THE AUTOMATED LEVEL BAR'S LAW (unchanged from the fader it replaces): the
+// FILL follows the level actually driving the channel — the enum level, the
+// composer's arc, a `pump` — read per frame off the built gain nodes (CHAN,
+// audio/mixer.js). A drag does NOT fight that: it writes a persistent dB
+// OFFSET (fields.js `fader`, PARTMIX `fader`) that multiplies the automated
+// value, and that offset is the NUMBER printed in the bar. Automation keeps
+// moving under your trim. During the drag the target gain is eased onto the
+// live AudioParam for immediacy; the value commits on pointerup — one writer,
+// no fight.
+//
+// THE BUSES TAKE SEATS. reverb / echo / drum room are CHANNEL STRIPS now, in
+// the same grammar as a voice's, marked by their own hue and a "return" tag —
+// and the separate knob RACK that used to sit under the board is ABSORBED
+// into them: each bus's rack row (return, repeats, tone) is now that strip's
+// own bars, ids `#b-<bus>-<key>` intact. The MASTER registry's seven stages
+// (`#m-<key>`) moved the same way, onto the master strip. Nothing at all is
+// left below the board: #rack keeps its id and stays permanently empty.
+//
+// WHAT SURVIVES, deliberately: rowsOf (the track list is still the mixer's
+// own roster), readField/writeField (one writer, absent the only spelling of
+// a default), the cell POPOVER with its chips, and the .mrow/.msec/.mval/
+// .mk-*/.mchip/.eqk/.fcap class names and the #m-*/#b-* ids, which are
+// LOAD-BEARING: four browser gates drive this surface through exactly those
+// hooks. Only CHANNEL strips carry .mrow — the drums gate counts them against
+// the part roster.
 //
 // Layer graph: ui view — imports state/derive/deps, audio/graph, audio/mixer
 // and audio/assets for READS ONLY, and leaves every change through commit().
@@ -63,18 +82,16 @@ import { voiceRoster, partKeysOf, CHAN, resolvedPart, derivedPartTone,
 import { initAudio, rmsNow, masterReport, busReport,
          SENDBUS } from "../audio/graph.js";
 import { isSynthFont, fontDef } from "../audio/assets.js";
-import { hintKey } from "./editor.js";
 import { openFader } from "./popfader.js";
 import { buzz } from "./touch.js";
 
 const el = document.getElementById("mixtbl");
-// TABLE SEMANTICS still — a board is a table rotated: a strip is a row you
-// read DOWN, and you compare across the board the way you compared down a
-// column. The roles are static because the DOM is.
+// TABLE SEMANTICS still — a strip is a row you read DOWN, and you compare
+// across the board the way you compared down a column. The roles are static
+// because the DOM is.
 el.setAttribute("role", "table");
 el.setAttribute("aria-label",
   "the mixing board — the sounding box while playing, the selected box at rest");
-hintKey("mixhelp", "mixhint");
 
 // the width at which there is daylight beside a cell rather than only under
 // the deck — the same 900px boundary the row sheet and the pop-up fader use.
@@ -83,14 +100,11 @@ const WIDE = 900;
 /* ---------- which box the desk is aimed at ---------- */
 // THE BOARD FOLLOWS THE SOUNDING BOX. While the transport runs, the strips
 // re-target to the section the ear is in — the roster, the value keys, the
-// faders and the EQ all read (and write) THAT box. The SELECTED box wins only
-// while the transport is stopped, or while the user is mid-edit: a finger down
-// on a board control, an open value-key popover, or an open pop-up fader PINS
-// the section, so the desk cannot swap out from under an edit and a commit
-// cannot land on a box the user never touched. This was the static-board bug:
-// paintBoard ran every frame, but it read the selection — whose channel params
-// are constants once built — while the moving params (the automation, the
-// composed arc) belonged to the sounding section it never looked at.
+// bars all read (and write) THAT box. The SELECTED box wins only while the
+// transport is stopped, or while the user is mid-edit: a finger down on a
+// board control, an open value-key popover, or an open pop-up fader PINS the
+// section, so the desk cannot swap out from under an edit and a commit cannot
+// land on a box the user never touched.
 let touching = 0;                          // fingers currently down on the board
 let heldSec = null;                        // the section pinned under an edit
 let pfEl = null;                           // ui/popfader.js's one element, lazily
@@ -112,9 +126,9 @@ const touchOn = () => { boardSec(); touching++; };
 const touchOff = () => { touching = Math.max(0, touching - 1); };
 
 /* ---------- what the value keys are ---------- */
-// The five PARTMIX enum fields, in registry order — same contract as the old
-// table's columns: adding a control to the desk registry adds a key to every
-// strip and nothing else.
+// The five PARTMIX enum fields, in registry order — same contract as ever:
+// adding a control to the desk registry adds a bar to every strip and nothing
+// else.
 const COLS = PARTMIX.filter(f => f.type !== "flag" && f.type !== "num" &&
                                  f.type !== "eq");
 // …PLUS THE TWO SECTION-ONLY FIELDS the palette's fx tab used to carry: which
@@ -126,30 +140,33 @@ const SECCOLS = [
   { key: "verb",  table: VERBS,  labels: VERBS },
   { key: "dtime", table: DTIMES, labels: DTLABEL },
 ];
-// THE SSL STACK ("lay out the mix channels like SSL", 2026-08-16) fixes the
-// within-strip reading order: after the EQ come the SENDS (rev/echo, plus the
-// section strip's room/time), then the insert chain, then level, PAN last
-// before the M/S pair and the fader — the 4000-series' own top-to-bottom.
-const KEYORD = ["rev", "echo", "verb", "dtime", "fx", "lvl", "pan"];
+// THE READING ORDER IS THE COLOUR ORDER, which is what the redesign buys: a
+// strip descends level → place → sends → inserts → tone, so the hues run in
+// bands down the strip and you find the send you want by colour before you
+// have read a word.
+const KEYORD = ["lvl", "pan", "rev", "echo", "verb", "dtime", "fx"];
 const colsOf = row => [...(row.sect ? [...COLS, ...SECCOLS] : COLS)]
   .sort((a, b) => KEYORD.indexOf(a.key) - KEYORD.indexOf(b.key));
-// the SSL small-knob colorways for the key groups: blue for the sends, gray
-// for level/pan — painted by kernel-daw.css as a cap band on the key
-const KEYCW = { rev: "cw-send", echo: "cw-send", verb: "cw-send",
-                dtime: "cw-send", lvl: "cw-pan", pan: "cw-pan" };
+// THE FAMILY of each value key — the hue token kernel-daw.css spends. One hue
+// per family, and a hue never means two things.
+const FAM = { lvl: "level", pan: "pan", rev: "send", echo: "send",
+              verb: "send", dtime: "send", fx: "fx" };
+// which keys read BIPOLAR (a fill out of the centre rather than up from the
+// left): pan is the only value key that has a middle
+const BIPOLAR = { pan: true };
 const SHORT = {
   rev: SENDLABEL, echo: SENDLABEL, dtime: DTLABEL,
   lvl: { hush: "hush", back: "back", norm: "norm", fwd: "fwd" },
-  pan: { l: "L", hl: "L·", c: "C", hr: "·R", r: "R" },
+  pan: { l: "left", hl: "left-ish", c: "centre", hr: "right-ish", r: "right" },
 };
 const LONG = {};
 for (const f of [...COLS, ...SECCOLS]) LONG[f.key] = f.labels;
 const shortOf = (f, v) => (SHORT[f] && SHORT[f][v]) || v;
 const longOf = (f, v) => (LONG[f] && LONG[f][v]) || v;
-// the silkscreen word over each value key — a strip has no header row to
-// borrow a column name from, so every key carries its own legend
-const KEYLEG = { fx: "fx", rev: "rev", echo: "echo", lvl: "lvl", pan: "pan",
-                 verb: "room", dtime: "time" };
+// the word printed at the LEFT of each bar — a strip has no header row to
+// borrow a column name from, so every bar carries its own name
+const KEYLEG = { fx: "inserts", rev: "reverb", echo: "echo", lvl: "level",
+                 pan: "pan", verb: "room", dtime: "time" };
 
 /* ---------- what the strips are ---------- */
 const humanize = id => String(id || "").replace(/_/g, " ");
@@ -201,8 +218,7 @@ function rowsOf(sec) {
 // dimmed (patch marks it .idle), parked on its resolved static, and wakes when
 // its section arrives. Identity is the chair KEY — the same vocabulary
 // derive.js and the mixer address — which is what lets a label or a stored mix
-// follow the chair across sections (and, next, lets the strips BE the
-// instrument pool's chairs).
+// follow the chair across sections.
 function songRows() {
   const idx = new Map();
   for (const sec of SONG) {
@@ -230,7 +246,7 @@ function readField(sec, key, f) {
   const v = e[f];
   return f === "fx" ? (v || []) : (v == null ? null : v);
 }
-// ONE WRITER, so a chip, a key and a fader cannot disagree about what "off"
+// ONE WRITER, so a chip, a bar and a drag cannot disagree about what "off"
 // spells. Absent is the ONLY spelling of a default (song.js normalizes a save
 // the same way): an entry with nothing set is deleted, and a map with no
 // entries becomes null — the mixer's absent-is-today law.
@@ -250,7 +266,7 @@ function writeField(sec, key, f, v) {
   commit("box");
 }
 // WHAT THE DEFAULT RESOLVES TO, said in the key's own vocabulary and dimmed —
-// a bright value is one you set, a dim one is the fallback answering.
+// a bright fill is one you set, a dim one is the fallback answering.
 const nearest = (tbl, x) => Object.keys(tbl)
   .reduce((a, b) => (Math.abs(tbl[b] - x) < Math.abs(tbl[a] - x) ? b : a));
 function defaultOf(sec, key, f) {
@@ -274,10 +290,10 @@ function defaultOf(sec, key, f) {
   return null;
 }
 
-/* ---------- the fader arithmetic ---------- */
-// The slot maps −36..+12 dB of GAIN to 0..1 of travel: LEVELS spans −8..+2.6
-// dB, the offset ±24/12, the pump's duck −10 — all inside the throw with the
-// nulls readable. gainToF is the ONE place gain becomes travel.
+/* ---------- the level arithmetic ---------- */
+// The bar maps −36..+12 dB of GAIN to 0..1 of fill: LEVELS spans −8..+2.6 dB,
+// the offset ±24/12, the pump's duck −10 — all inside the track with the
+// nulls readable. gainToF is the ONE place gain becomes fill.
 const F_LO = -36, F_HI = 12;
 const gainToF = g => {
   const db = 20 * Math.log10(Math.max(1e-4, g));
@@ -286,7 +302,7 @@ const gainToF = g => {
 const fmtDb = v => (v > 0 ? "+" : "") + v.toFixed(1);
 // the resolved STATIC level a strip rests at when its channel is not built —
 // the mixer's own resolver (resolvedPart: derived seating × user trim), cited
-// not re-invented, so the cap's rest position IS the part's built gain
+// not re-invented, so the fill's rest length IS the part's built gain
 const secBase = sec => (sec.lvl ? LEVELS[sec.lvl] : 1);
 function staticGain(sec, key) {
   if (key == null) return secBase(sec) * Math.pow(10, faderDb(sec.fader) / 20);
@@ -295,7 +311,7 @@ function staticGain(sec, key) {
 // the LIVE gain: the built nodes when the channel exists (automation included
 // — AudioParam.value reads the timeline), the resolved static value when not.
 // Node reads only while the transport runs or a finger is down (the drag's
-// eased param is its own feedback) — at rest the caps PARK on the resolved
+// eased param is its own feedback) — at rest the fills PARK on the resolved
 // statics rather than on wherever a pump's duck happened to freeze.
 function liveGain(sec, key) {
   const c = (transportOn || touching) && CHAN.get(sec);
@@ -353,7 +369,7 @@ function writeEqBand(sec, key, band, db) {
   writeField(sec, key, "eq", Object.keys(cur).length ? cur : null);
 }
 // ease the drag onto the LIVE biquad so the hand hears the tone move before
-// the commit rebuilds the channel — easeLive's law for the fader, per band.
+// the commit rebuilds the channel — easeLive's law for the level, per band.
 // A flat strip has no node to ease (zero-nodes law); the commit builds one.
 function easeEqLive(sec, key, band, db) {
   const c = CHAN.get(sec);
@@ -367,46 +383,88 @@ function easeEqLive(sec, key, band, db) {
     f.gain.cancelScheduledValues(t); f.gain.setTargetAtTime(db || 0, t, 0.02);
   } catch (e) {}
 }
-// short dB for a strip-sized readout: "+4", "-2.5", "0" dim when flat
+// short dB for a bar-sized readout: "+4", "-2.5", "0" dim when flat
 const fmtEq = v => (v > 0 ? "+" : "") +
   (Math.round(v * 10) % 10 ? v.toFixed(1) : String(Math.round(v)));
 
-// ---- the tone knob: one band, ±12 dB, flat = absent ----
-// The rack knob's idiom at strip size, over dB rather than detents:
-// role=slider, arrows step 1 dB (PageUp/Down 3), Home clears to the DERIVED
-// answer (absent, the one spelling — the song's own tone shows again), drag
-// rotates at 0.15 dB/px with the live param eased under the hand, a tap opens
-// the pop-up fader on whole dB, dblclick clears.
-// data-part/data-bus/data-band/data-value are the gate's hooks; data-derived
-// (ADDED, never reshaped) carries the song's derived dB when no user value
-// overrides it. `derived()` is the dim half of the dim-vs-lit law: the knob
-// face turns to the derived angle unlit, and only a user value lights it.
-function buildEqKnob({ band, legend, label, part, bus, get, drag, write, derived }) {
-  const cell = mk("span", "eqcell");
-  const leg = mk("i", "eqlab", legend);
-  // the SSL 4000 colorway is the wayfinding: red cap HF, green MID, brown LF
-  // (blue stays reserved for a fourth band) — kernel-daw.css paints the faces
-  const b = mk("button", "eqk cw-" + band);
+/* ==================== THE BAR ==================== */
+// The page's ONE control. Everything below builds one of these and hands it a
+// getter, a writer and a name; nothing on this board draws a second widget.
+//
+// GEOMETRY: the fill is spelled as two edges, --a and --b, in fractions of
+// the track. Unipolar controls run 0 → f; BIPOLAR ones (pan, the EQ bands)
+// run from the .5 centre out to .5 ± f/2, so "flat" is a hairline at the
+// middle and the direction of a cut is visible without reading the number.
+// --f carries the raw fraction beside them: it is what the board gates read
+// off .fcap, and it is the honest name for how far along the throw a value
+// sits.
+//
+// GESTURE: pointer drag on the DOMINANT AXIS (across is the natural reading
+// of a horizontal bar; up is the house's DRAG-VERTICAL verb and every browser
+// gate's habit — supporting both costs one Math.abs and kills no gesture),
+// arrow keys, and a tap that opens whatever surface the caller passes as
+// `tap`. touch-action none: the drag is the control's own gesture, not a
+// scroll.
+const mk = (tag, cls, txt) => {
+  const n = document.createElement(tag);
+  n.className = cls;
+  if (txt != null) n.textContent = txt;
+  return n;
+};
+// the dominant axis of a drag, in "more" units: right is more, up is more
+const axis = (ev, d) => {
+  const dx = ev.clientX - d.x0, dy = d.y0 - ev.clientY;
+  return Math.abs(dx) >= Math.abs(dy) ? dx : dy;
+};
+function makeBar({ cls, fillCls, fam, legend, label, bipolar, aria }) {
+  const b = mk("button", "mbar " + (cls || ""));
   b.type = "button";
+  b.dataset.fam = fam;
+  if (bipolar) b.dataset.bipolar = "1";
+  b.setAttribute("role", "slider");
+  b.setAttribute("aria-label", label);
+  if (aria) for (const [k, v] of Object.entries(aria)) b.setAttribute(k, v);
+  const fill = mk("i", "bfill " + (fillCls || ""));
+  const lab = mk("i", "blab", legend);
+  const val = mk("b", "bval", "");
+  b.append(fill, lab, val);
+  // f is a FRACTION: 0..1 unipolar, −1..1 bipolar
+  const setF = f => {
+    const x = Math.max(bipolar ? -1 : 0, Math.min(1, f || 0));
+    fill.style.setProperty("--a", String(bipolar ? Math.min(0.5, 0.5 + x / 2) : 0));
+    fill.style.setProperty("--b", String(bipolar ? Math.max(0.5, 0.5 + x / 2) : x));
+    fill.style.setProperty("--f", String(x));
+  };
+  // a bright fill is a value you set; a dim one is the song answering
+  const setLit = on2 => { b.classList.toggle("set", !!on2); };
+  return { b, fill, lab, val, setF, setLit };
+}
+
+/* ---------- a CONTINUOUS bar: dB, over a range ---------- */
+// The EQ bands and (through buildLevelBar) the channel level. Arrows step 1
+// unit, PageUp/Down 3, Home clears to the DERIVED answer (absent, the one
+// spelling — the song's own tone shows again), drag moves at 0.15 units/px
+// with the live param eased under the hand, a tap opens the pop-up fader,
+// dblclick clears.
+//
+// data-part/data-bus/data-band/data-value are the gates' hooks; data-derived
+// carries the song's derived dB when no user value overrides it. `derived()`
+// is the dim half of the dim-vs-lit law: the bar fills to the derived value
+// unlit, and only a user value brightens it.
+function buildEqBar({ band, legend, label, part, bus, get, drag, write, derived }) {
+  const { b, val, setF, setLit } = makeBar({
+    cls: "eqk", fillCls: "eqface", fam: "eq", legend, label, bipolar: true,
+    aria: { "aria-valuemin": String(-EQ_RANGE), "aria-valuemax": String(EQ_RANGE) },
+  });
   b.dataset.band = band;
   if (part != null) b.dataset.part = part;
   if (bus != null) b.dataset.bus = bus;
-  b.setAttribute("role", "slider");
-  b.setAttribute("aria-label", label);
-  b.setAttribute("aria-valuemin", String(-EQ_RANGE));
-  b.setAttribute("aria-valuemax", String(EQ_RANGE));
-  const face = mk("span", "eqface");
-  face.append(mk("i", "kmark"));
-  b.append(face);
-  const val = mk("i", "eqv", "0");
-  cell.append(leg, b, val);
   const show = (db, set) => {
-    face.style.setProperty("--ka", (db / EQ_RANGE) * 135 + "deg");
+    setF(db / EQ_RANGE);
     val.textContent = fmtEq(db);
-    b.classList.toggle("set", set);
-    val.classList.toggle("set", set);
+    setLit(set);
   };
-  // the value the face SHOWS: the user's (lit) or the song's derived (dim)
+  // the value the bar SHOWS: the user's (lit) or the song's derived (dim)
   const shown = () => {
     const v = get();
     if (v != null) return v;
@@ -414,7 +472,7 @@ function buildEqKnob({ band, legend, label, part, bus, get, drag, write, derived
     return dv == null ? 0 : dv;
   };
   const paint = () => {
-    if (d) return;                         // the finger owns the face mid-drag
+    if (d) return;                         // the finger owns the fill mid-drag
     const v = get();
     const dv = v == null && derived ? derived() : null;
     show(v != null ? v : (dv || 0), v != null);
@@ -424,7 +482,7 @@ function buildEqKnob({ band, legend, label, part, bus, get, drag, write, derived
     b.setAttribute("aria-valuetext", v != null ? fmtEq(v) + " dB"
       : (dv ? "derived " + fmtEq(dv) + " dB" : "flat"));
   };
-  // zero IS flat, so a write that lands on 0 stores absent — the knob has no
+  // zero IS flat, so a write that lands on 0 stores absent — the bar has no
   // second spelling of the default to offer
   const commitDb = x => { write(x != null && eqDb(x) ? eqDb(x) : null); buzz(4); };
   b.addEventListener("keydown", ev => {
@@ -445,15 +503,15 @@ function buildEqKnob({ band, legend, label, part, bus, get, drag, write, derived
     try { b.setPointerCapture(ev.pointerId); } catch (e) {}
     touchOn();                             // pin the section under the finger
     b.classList.add("drag");               // the ease is for the song's moves
-    const v = shown();                     // a drag departs the derived angle
-    d = { y0: ev.clientY, v0: v, cur: v, moved: false };
+    const v = shown();                     // a drag departs the derived value
+    d = { x0: ev.clientX, y0: ev.clientY, v0: v, cur: v, moved: false };
   });
   b.addEventListener("pointermove", ev => {
     if (!d) return;
-    const dy = d.y0 - ev.clientY;
-    if (!d.moved && Math.abs(dy) < 3) return;
+    const n = axis(ev, d);
+    if (!d.moved && Math.abs(n) < 3) return;
     d.moved = true;
-    d.cur = eqDb(d.v0 + dy * 0.15);
+    d.cur = eqDb(d.v0 + n * 0.15);
     drag(d.cur);
     show(d.cur, true);
   });
@@ -475,92 +533,151 @@ function buildEqKnob({ band, legend, label, part, bus, get, drag, write, derived
   });
   b.addEventListener("dblclick", () => commitDb(null));
   paint();
-  return { cell, paint };
+  return { el: b, paint };
 }
 
-/* ---------- the board ---------- */
-// BUILT ONCE PER TRACK LIST, then only its values change — the palette's law.
-// Two wells inside #mixtbl: the channel strips (rebuilt when the roster
-// changes) and the bus strips (built once — the shared rack is the page's).
-let sig = "", rows = [], refs = [];
-
-const mk = (tag, cls, txt) => {
-  const n = document.createElement(tag);
-  n.className = cls;
-  if (txt != null) n.textContent = txt;
-  return n;
-};
-const chanWell = mk("div", "strips chans");
-const busWell = mk("div", "strips buses");
-el.append(chanWell, busWell);
-
-// one long-throw fader: the slot, the groove, the automated cap, the dB
-// readout. `write(off|null)` commits; `drag(off)` is the live-ease path.
-function buildFader({ label, getOffset, getGain, write, drag }) {
-  const wrap = mk("div", "fwell");
-  wrap.setAttribute("role", "cell");
-  const slot = mk("div", "fslot");
-  slot.tabIndex = 0;
-  slot.setAttribute("role", "slider");
-  slot.setAttribute("aria-label", label + " fader offset (dB over the automation)");
-  slot.setAttribute("aria-valuemin", "-24");
-  slot.setAttribute("aria-valuemax", "12");
-  const groove = mk("i", "fgroove");
-  const zero = mk("i", "fzero");                 // the 0 dB silkscreen line
-  zero.style.setProperty("--f", String(gainToF(1)));
-  const cap = mk("i", "fcap");
-  slot.append(groove, zero, cap);
-  const off = mk("output", "foff", "0.0");
-  wrap.append(slot, off);
-  const R = { wrap, slot, cap, off,
-    paint(sec) {
-      // the cap follows the live gain even under a finger (easeLive is moving
-      // the real param — the cap IS the feedback); the offset readout is the
-      // drag's own while one is down, or the two writers fight per frame
-      cap.style.setProperty("--f", String(gainToF(getGain())));
-      if (d) return;
-      const o = getOffset();
-      off.textContent = fmtDb(o == null ? 0 : o);
-      off.classList.toggle("dflt", o == null);
-      slot.setAttribute("aria-valuenow", String(o == null ? 0 : o));
-      slot.setAttribute("aria-valuetext", fmtDb(o == null ? 0 : o) + " dB");
-    } };
+/* ---------- a DETENTED bar: one of a registry's words ---------- */
+// The absorbed rack: the bus returns (#b-<bus>-<key>) and the master's seven
+// stages (#m-<key>). The empty detent sits at the left end and IS the default
+// ("as built", absent — the one spelling of off), so an untouched bus reads as
+// an empty track and a set one fills. Home is that empty detent, arrows step,
+// data-value mirrors the current key so a gate can drive it blind — the knob's
+// whole keyboard contract, kept across the shape change.
+function buildDetentBar({ id, fam, label, keys, labels, get, set, status }) {
+  const det = ["", ...keys];
+  const { b, val, setF, setLit } = makeBar({
+    cls: "detbar", fam, legend: label, label,
+    aria: { "aria-valuemin": "0", "aria-valuemax": String(det.length - 1) },
+  });
+  if (id) b.id = id;
+  b.dataset.detents = JSON.stringify(det);
+  const idx = () => Math.max(0, det.indexOf(get() || ""));
+  const paint = () => {
+    const i = idx(), n = det.length - 1, k = det[i];
+    setF(n ? i / n : 0);
+    val.textContent = k ? labels[k] : "—";
+    b.dataset.value = k;
+    setLit(!!k);
+    b.setAttribute("aria-valuenow", String(i));
+    b.setAttribute("aria-valuetext", k ? labels[k] : "as built");
+  };
+  const setIdx = i => {
+    const c = Math.max(0, Math.min(det.length - 1, i));
+    if (c === idx()) return;
+    set(det[c] || null);
+    buzz(4);
+    paint();
+    // the chyron says what landed, the way the old session-bank selects did
+    if (status) emit("status", { text: label + ": " + (det[c] ? labels[det[c]] : "off") });
+  };
+  b.addEventListener("keydown", ev => {
+    if (ev.key === "ArrowRight" || ev.key === "ArrowUp") { setIdx(idx() + 1); ev.preventDefault(); }
+    else if (ev.key === "ArrowLeft" || ev.key === "ArrowDown") { setIdx(idx() - 1); ev.preventDefault(); }
+    else if (ev.key === "Home") { setIdx(0); ev.preventDefault(); }
+    else if (ev.key === "End") { setIdx(det.length - 1); ev.preventDefault(); }
+  });
   let d = null;
-  slot.addEventListener("pointerdown", ev => {
+  b.addEventListener("pointerdown", ev => {
     if (ev.button) return;
     ev.preventDefault();
-    slot.focus({ preventScroll: true });
-    try { slot.setPointerCapture(ev.pointerId); } catch (e) {}
+    b.focus({ preventScroll: true });
+    try { b.setPointerCapture(ev.pointerId); } catch (e) {}
+    d = { x0: ev.clientX, y0: ev.clientY, i0: idx(), moved: false };
+  });
+  b.addEventListener("pointermove", ev => {
+    if (!d) return;
+    const di = Math.round(axis(ev, d) / 26);   // one detent per 26px of travel
+    if (di) d.moved = true;
+    setIdx(d.i0 + di);
+  });
+  b.addEventListener("pointerup", () => {
+    if (d && !d.moved)
+      openFader({ anchor: b, label, min: 0, max: det.length - 1,
+                  get: idx, set: setIdx,
+                  fmt: i => (det[i] ? labels[det[i]] : "—") });
+    d = null;
+  });
+  b.addEventListener("pointercancel", () => { d = null; });
+  b.addEventListener("dblclick", () => setIdx(0));
+  paint();
+  return { el: b, paint };
+}
+
+/* ---------- the LEVEL bar: the automated one ---------- */
+// The fill is the gain ACTUALLY driving the channel and keeps moving while the
+// transport runs; the number is YOUR offset over it. `write(off|null)`
+// commits; `drag(off)` is the live-ease path. The unity tick is a real
+// boundary — 0 dB — so it is a hairline and nothing else.
+function buildLevelBar({ label, getOffset, getGain, write, drag }) {
+  const wrap = mk("div", "fwell");
+  wrap.setAttribute("role", "cell");
+  const { b, val, setF } = makeBar({
+    cls: "fslot", fillCls: "fcap", fam: "level", legend: "fader",
+    label: label + " level (your offset over the automation)",
+    aria: { "aria-valuemin": "-24", "aria-valuemax": "12" },
+  });
+  b.tabIndex = 0;
+  const zero = mk("i", "fzero");                 // the 0 dB boundary, a hairline
+  zero.style.setProperty("--f", String(gainToF(1)));
+  b.insertBefore(zero, b.querySelector(".blab"));
+  val.classList.add("foff");
+  wrap.append(b);
+  const R = { wrap, slot: b, off: val,
+    paint() {
+      // the fill follows the live gain even under a finger (easeLive is moving
+      // the real param — the fill IS the feedback); the offset readout is the
+      // drag's own while one is down, or the two writers fight per frame
+      setF(gainToF(getGain()));
+      if (d) return;
+      const o = getOffset();
+      val.textContent = fmtDb(o == null ? 0 : o);
+      val.classList.toggle("dflt", o == null);
+      b.classList.toggle("set", o != null);
+      b.setAttribute("aria-valuenow", String(o == null ? 0 : o));
+      b.setAttribute("aria-valuetext", fmtDb(o == null ? 0 : o) + " dB");
+    } };
+  let d = null;
+  b.addEventListener("pointerdown", ev => {
+    if (ev.button) return;
+    ev.preventDefault();
+    b.focus({ preventScroll: true });
+    try { b.setPointerCapture(ev.pointerId); } catch (e) {}
     touchOn();                             // pin the section under the finger
     const o = getOffset();
-    d = { y0: ev.clientY, o0: o == null ? 0 : o, cur: o == null ? 0 : o, moved: false };
+    d = { x0: ev.clientX, y0: ev.clientY, o0: o == null ? 0 : o,
+          cur: o == null ? 0 : o, moved: false };
   });
-  slot.addEventListener("pointermove", ev => {
+  b.addEventListener("pointermove", ev => {
     if (!d) return;
-    const dy = d.y0 - ev.clientY;                // up is more, everywhere
-    if (!d.moved && Math.abs(dy) < 3) return;
+    const n = axis(ev, d);
+    if (!d.moved && Math.abs(n) < 3) return;
     d.moved = true;
-    // 0.15 dB per px: the ±24/12 range inside ~one slot of travel, fine
+    // 0.15 dB per px: the ±24/12 range inside ~one track of travel, fine
     // enough that a flick is a trim and a sweep is a move
-    d.cur = faderDb(d.o0 + dy * 0.15);
+    d.cur = faderDb(d.o0 + n * 0.15);
     drag(d.cur);
-    off.textContent = fmtDb(d.cur);
-    off.classList.remove("dflt");
+    val.textContent = fmtDb(d.cur);
+    val.classList.remove("dflt");
   });
   const finish = () => {
     if (!d) return;
-    if (d.moved) write(d.cur === 0 ? null : d.cur);   // write lands on the pin
+    const moved = d.moved, cur = d.cur;
+    if (moved) write(cur === 0 ? null : cur);      // write lands on the pin
+    else openFader({ anchor: b, label: label + " level", min: -24, max: 12,
+                     get: () => Math.round(getOffset() || 0),
+                     set: x => write(x === 0 ? null : faderDb(x)),
+                     fmt: x => fmtDb(x) + " dB" });
     d = null;
     touchOff();
   };
-  slot.addEventListener("pointerup", finish);
-  slot.addEventListener("pointercancel", () => { if (d) { d = null; touchOff(); } });
-  slot.addEventListener("dblclick", () => { write(null); buzz(4); });
-  slot.addEventListener("keydown", ev => {
+  b.addEventListener("pointerup", finish);
+  b.addEventListener("pointercancel", () => { if (d) { d = null; touchOff(); } });
+  b.addEventListener("dblclick", () => { write(null); buzz(4); });
+  b.addEventListener("keydown", ev => {
     const o = getOffset() == null ? 0 : getOffset();
     const step = (n) => { write(faderDb(o + n) || null); ev.preventDefault(); };
-    if (ev.key === "ArrowUp") step(0.5);
-    else if (ev.key === "ArrowDown") step(-0.5);
+    if (ev.key === "ArrowUp" || ev.key === "ArrowRight") step(0.5);
+    else if (ev.key === "ArrowDown" || ev.key === "ArrowLeft") step(-0.5);
     else if (ev.key === "PageUp") step(3);
     else if (ev.key === "PageDown") step(-3);
     else if (ev.key === "Home") { write(null); ev.preventDefault(); }
@@ -568,49 +685,148 @@ function buildFader({ label, getOffset, getGain, write, drag }) {
   return R;
 }
 
+/* ==================== THE BOARD ==================== */
+// BUILT ONCE PER TRACK LIST, then only its values change — the palette's law.
+// Two wells inside #mixtbl: the channel strips (rebuilt when the roster
+// changes) and the bus strips (built once — the shared returns are the
+// page's).
+let sig = "", rows = [], refs = [];
+const chanWell = mk("div", "strips chans");
+const busWell = mk("div", "strips buses");
+el.append(chanWell, busWell);
+
+// THE HEAD: a strip says who it is at the TOP, in the page's largest strip
+// type ("Label the channels at the top", 2026-08-16). On a pool chair the
+// instrument line is a CONTROL: tapping it unfolds the same twelve-family
+// picker the SONG page's pool bank carries, for THIS chair — same chips, same
+// commit("pool") path, two views over one store. The drums chair stays passive
+// on purpose: the kit is a kit, chosen by the RHYTHM cell, not an instrument
+// id (fields.js POOLCHAIRS' law).
+function buildHead(row, i) {
+  const head = mk("div", "mlabel");
+  head.setAttribute("role", "cell");
+  const top = mk("div", "mtop");
+  const num = mk("b", "mnum", row.sect ? "" : String(i + 1));
+  const pn = mk("b", "mpn", row.label);
+  top.append(pn, num);
+  const pool = !row.sect && POOLCHAIRS.includes(row.key);
+  const ps = mk(pool ? "button" : "i", "mps" + (pool ? " minstr" : ""), row.sound);
+  if (pool) {
+    ps.type = "button";
+    ps.dataset.chair = row.key;
+    ps.addEventListener("click", ev => {
+      ev.stopPropagation(); openPop(ps, row, POOLFIELD);
+    });
+  } else if (row.key === "drums") {
+    ps.title = "the kit — chosen by the RHYTHM cell, not the instrument pool";
+  }
+  const feed = mk("i", "mfeed", row.sect ? "→ master bus" : "→ section");
+  head.append(top, ps, feed);
+  return { head, num, pn, ps };
+}
+
 function build() {
   chanWell.textContent = "";
   refs = rows.map((row, i) => {
     const tr = mk("div", "strip mrow" + (row.sect ? " msec" : ""));
     tr.setAttribute("role", "row");
-    // ---- the label block: who this is, what plays it, where it goes.
-    // On a pool chair the instrument line is a CONTROL ("make the instrument
-    // pool show up in the mixer", 2026-08-16): tapping it unfolds the same
-    // twelve-family picker the SONG page's pool bank carries, for THIS chair
-    // — same chips, same commit("pool") path, two views over one store. The
-    // drums chair stays passive on purpose: the kit is a kit, chosen by the
-    // RHYTHM cell, not an instrument id (fields.js POOLCHAIRS' law).
-    const head = mk("div", "mlabel");
-    head.setAttribute("role", "cell");
-    const num = mk("b", "mnum tnum", row.sect ? "" : String(i + 1));
-    const pn = mk("b", "mpn", row.label);
-    const pool = !row.sect && POOLCHAIRS.includes(row.key);
-    const ps = mk(pool ? "button" : "i", "mps" + (pool ? " minstr" : ""), row.sound);
-    if (pool) {
-      ps.type = "button";
-      ps.dataset.chair = row.key;
-      ps.addEventListener("click", ev => {
-        ev.stopPropagation(); openPop(ps, row, POOLFIELD);
+    const H = buildHead(row, i);
+    tr.append(H.head);
+    // ---- the LEVEL bar, straight under the name: the one control you reach
+    // for first, and the only one on a channel strip that MOVES by itself ----
+    const level = buildLevelBar({
+      label: row.label,
+      getOffset: () => offsetOf(boardSec(), row.key),
+      getGain: () => liveGain(boardSec(), row.key),
+      write: off => writeField(boardSec(), row.key, "fader", off),
+      drag: off => easeLive(boardSec(), row.key, off),
+    });
+    tr.append(level.wrap);
+    // ---- the value keys, in the colour order (KEYORD): level word, place,
+    // sends, inserts. Each is a detented bar over its registry's table whose
+    // TAP still opens that key's chip set — the discrete vocabulary stays one
+    // tap away, and the gates click .mval[data-field] exactly as before ----
+    const vals = mk("div", "mvals");
+    vals.setAttribute("role", "cell");
+    const cells = {};
+    for (const f of colsOf(row)) {
+      const { b, val, setF, setLit } = makeBar({
+        cls: "mval", fam: FAM[f.key] || "level", legend: KEYLEG[f.key] || f.key,
+        label: row.label + " " + f.key, bipolar: !!BIPOLAR[f.key],
       });
-    } else if (row.key === "drums") {
-      ps.title = "the kit — chosen by the RHYTHM cell, not the instrument pool";
+      b.dataset.part = row.key == null ? "" : row.key;
+      b.dataset.field = f.key;
+      // a click opens the chips; a drag steps the table under the finger and
+      // swallows the click that follows it (one gesture, one outcome)
+      let d = null, ate = false;
+      // where a word sits in its registry's own order — the fill's length.
+      // An unknown word (or the fx chain, which has no scalar) reads as the
+      // first detent rather than as −1: a bar never fills backwards.
+      const rank = v => {
+        const ks = Object.keys(f.table);
+        return { i: Math.max(0, ks.indexOf(v)), n: ks.length - 1, ks };
+      };
+      b.addEventListener("click", ev => {
+        ev.stopPropagation();
+        if (ate) { ate = false; return; }
+        openPop(b, row, f);
+      });
+      if (f.key !== "fx") {                // a chain has no scalar to drag
+        b.addEventListener("pointerdown", ev => {
+          if (ev.button) return;
+          try { b.setPointerCapture(ev.pointerId); } catch (e) {}
+          touchOn();
+          const shown = readField(boardSec(), row.key, f.key) ||
+            (defaultOf(boardSec(), row.key, f.key) || {}).v;
+          d = { x0: ev.clientX, y0: ev.clientY, i0: rank(shown).i, moved: false };
+        });
+        b.addEventListener("pointermove", ev => {
+          if (!d) return;
+          const n = axis(ev, d);
+          if (!d.moved && Math.abs(n) < 6) return;
+          d.moved = true; ate = true;
+          const { ks } = rank("");
+          const want = ks[Math.max(0, Math.min(ks.length - 1,
+            d.i0 + Math.round(n / 26)))];
+          if (want && want !== readField(boardSec(), row.key, f.key))
+            writeField(boardSec(), row.key, f.key, want);
+        });
+        const done = () => { if (d) { d = null; touchOff(); } };
+        b.addEventListener("pointerup", done);
+        b.addEventListener("pointercancel", done);
+        b.addEventListener("keydown", ev => {
+          const ks = Object.keys(f.table);
+          const cur = readField(boardSec(), row.key, f.key) ||
+            (defaultOf(boardSec(), row.key, f.key) || {}).v;
+          const at = ks.indexOf(cur);
+          const go = n => {
+            const j = Math.max(0, Math.min(ks.length - 1, at + n));
+            writeField(boardSec(), row.key, f.key, ks[j]);
+            buzz(4); ev.preventDefault();
+          };
+          if (ev.key === "ArrowRight" || ev.key === "ArrowUp") go(1);
+          else if (ev.key === "ArrowLeft" || ev.key === "ArrowDown") go(-1);
+          else if (ev.key === "Home") {
+            writeField(boardSec(), row.key, f.key, null); ev.preventDefault();
+          }
+        });
+      }
+      vals.append(b);
+      cells[f.key] = { b, val, setF, setLit, rank };
     }
-    const feed = mk("i", "mfeed", row.sect ? "→ master bus" : "→ section");
-    head.append(num, pn, ps, feed);
-    tr.append(head);
-    // ---- the tone block, SSL-stacked: HI over MID over LO, one knob per row
-    // with its legend, straight under the label — the desk's own order.
-    // Always present, flat (dim) by default — a strip that could hide its EQ
-    // would be a strip you have to open to trust.
+    tr.append(vals);
+    // ---- the TONE block: three bipolar bars, always present and flat (dim)
+    // by default — a strip that could hide its EQ would be a strip you have
+    // to open to trust ----
     const eqrow = mk("div", "eqrow");
     eqrow.setAttribute("role", "cell");
-    const eqs = [...EQ_BANDS].reverse().map(bd => buildEqKnob({
+    const eqs = [...EQ_BANDS].reverse().map(bd => buildEqBar({
       band: bd.key, legend: bd.label, part: row.key == null ? "" : row.key,
       label: row.label + " " + bd.label + " EQ",
       get: () => eqBand(boardSec(), row.key, bd.key),
       // the song's own tone, dim under the finger's: genre character on the
       // section strip, family/arc seating on the parts (audio/mixer.js — the
-      // same derivation the built biquads bake, so the knob face IS the graph)
+      // same derivation the built biquads bake, so the fill IS the graph)
       derived: () => {
         const e = row.sect ? derivedSecEq(boardSec())
                            : derivedPartTone(boardSec(), row.key).eq;
@@ -619,27 +835,10 @@ function build() {
       drag: db => easeEqLive(boardSec(), row.key, bd.key, db),
       write: db => writeEqBand(boardSec(), row.key, bd.key, db),
     }));
-    for (const e of eqs) eqrow.append(e.cell);
+    for (const e of eqs) eqrow.append(e.el);
     tr.append(eqrow);
-    // ---- the value keys, in the SSL stack's order (KEYORD): sends first,
-    // pan last — the same chips, one tap away ----
-    const vals = mk("div", "mvals");
-    vals.setAttribute("role", "cell");
-    const cells = {};
-    for (const f of colsOf(row)) {
-      const kwrap = mk("span", "mcell mc-" + f.key +
-                       (KEYCW[f.key] ? " " + KEYCW[f.key] : ""));
-      const leg = mk("i", "mvlab", KEYLEG[f.key] || f.key);
-      const b = mk("button", "mval");
-      b.type = "button";
-      b.dataset.part = row.key == null ? "" : row.key;
-      b.dataset.field = f.key;
-      b.addEventListener("click", ev => { ev.stopPropagation(); openPop(b, row, f); });
-      kwrap.append(leg, b); vals.append(kwrap);
-      cells[f.key] = b;
-    }
-    tr.append(vals);
-    // ---- CUT and SOLO: the desk's button pair, the two that latch ----
+    // ---- CUT and SOLO: the two that LATCH rather than take a value, so they
+    // are the one pair on the page that is not a bar ----
     const ms = mk("div", "mms");
     ms.setAttribute("role", "cell");
     const keys = {};
@@ -656,17 +855,8 @@ function build() {
       keys[k] = b;
     }
     tr.append(ms);
-    // ---- the automated fader ----
-    const fader = buildFader({
-      label: row.label,
-      getOffset: () => offsetOf(boardSec(), row.key),
-      getGain: () => liveGain(boardSec(), row.key),
-      write: off => writeField(boardSec(), row.key, "fader", off),
-      drag: off => easeLive(boardSec(), row.key, off),
-    });
-    tr.append(fader.wrap);
     chanWell.append(tr);
-    return { tr, num, pn, ps, cells, keys, fader, eqs };
+    return { tr, num: H.num, pn: H.pn, ps: H.ps, cells, keys, fader: level, eqs };
   });
 }
 
@@ -700,26 +890,34 @@ function patch() {
     R.tr.setAttribute("aria-label", row.label + " · " + sound +
       (off ? " · silent" : "") + (idle ? " · idle this section" : ""));
     for (const f of colsOf(row)) {
-      const b = R.cells[f.key], v = readField(sec, row.key, f.key);
+      const C = R.cells[f.key], v = readField(sec, row.key, f.key);
       const d = defaultOf(sec, row.key, f.key);
       if (f.key === "fx") {
-        b.textContent = "";
-        if (v.length) for (const k of v) b.append(mk("i", "mfxc", FX[k].label));
-        else b.append(mk("i", "mfxc none", "—"));
-        b.classList.toggle("set", !!v.length);
-        b.classList.toggle("dflt", !v.length);
-        b.title = v.length ? v.map(k => FX[k].label).join(" → ")
-                           : "no effects on this " + (row.sect ? "section" : "part");
+        C.val.textContent = "";
+        if (v.length) for (const k of v) C.val.append(mk("i", "mfxc", FX[k].label));
+        else C.val.append(mk("i", "mfxc none", "—"));
+        C.setF(v.length / MAX_FX);
+        C.setLit(!!v.length);
+        C.b.classList.toggle("dflt", !v.length);
+        C.b.title = v.length ? v.map(k => FX[k].label).join(" → ")
+                             : "no effects on this " + (row.sect ? "section" : "part");
       } else {
         const shown = v != null ? v : (d && d.v);
-        b.textContent = shown ? shortOf(f.key, shown) : "—";
-        b.classList.toggle("set", v != null);
-        b.classList.toggle("dflt", v == null);
-        b.title = (v != null ? longOf(f.key, v)
-                             : (shown ? longOf(f.key, shown) : "—") +
-                               (d && d.note ? " · " + d.note : " · default")) + "";
+        C.val.textContent = shown ? shortOf(f.key, shown) : "—";
+        const { i: at, n } = C.rank(shown);
+        C.b.setAttribute("aria-valuenow", String(at));
+        C.b.setAttribute("aria-valuemin", "0");
+        C.b.setAttribute("aria-valuemax", String(n));
+        // pan runs out of the centre; everything else fills from the left
+        C.setF(BIPOLAR[f.key] ? (n ? (at / n) * 2 - 1 : 0) : (n ? at / n : 0));
+        C.setLit(v != null);
+        C.b.classList.toggle("dflt", v == null);
+        C.b.title = (v != null ? longOf(f.key, v)
+                               : (shown ? longOf(f.key, shown) : "—") +
+                                 (d && d.note ? " · " + d.note : " · default")) + "";
       }
-      b.setAttribute("aria-label", row.label + " " + f.key + ": " + b.title);
+      C.b.setAttribute("aria-label", row.label + " " + f.key + ": " + C.b.title);
+      C.b.setAttribute("aria-valuetext", C.b.title);
     }
     for (const k of ["mute", "solo"]) {
       const b = R.keys[k];
@@ -906,18 +1104,21 @@ addEventListener("keydown", ev => {
 addEventListener("resize", () => { if (popRow) place(); });
 
 /* ==================== THE BUS STRIPS ==================== */
-// One strip per SHARED bus (graph.js's roster: reverb, echo, drum room), a
-// slim strip per character send bus as it builds, and the MASTER strip. The
-// three fixed buses' faders are DETENTED — they drive the song's `buses`
-// trims (fields.js BUS_FIELDS `ret`), the same value the rack's return knob
-// turns: two views, one state, the transport-fader/master-strip pattern.
+// "Make the effects busses into special channel strips" (2026-08-16): reverb,
+// echo and drum room are strips in the SAME grammar as a voice's — a head
+// with the name at the top, then bars — distinguished by their own hue and a
+// `return` tag rather than by a different widget. The rack row each bus used
+// to own below the board is now those bars: `ret` (and echo's `fb`/`tone`)
+// with their #b-<bus>-<key> ids intact, driving the song's `buses` trims
+// (fields.js BUS_FIELDS). One control per fact; the duplicate detented fader
+// that used to sit beside the rack knob is gone.
 const busWrite = (bus, key, val) => {
   const next = JSON.parse(JSON.stringify(BUSES || {}));
   const e = next[bus] || (next[bus] = {});
   if (val) e[key] = val; else delete e[key];
   if (!Object.keys(e).length) delete next[bus];
   setBuses(next);
-  initAudio();                             // a knob move is a user gesture
+  initAudio();                             // a bar move is a user gesture
   commit("buses");
 };
 const busVal = (bus, key) => (BUSES && BUSES[bus] && BUSES[bus][key]) || "";
@@ -939,95 +1140,55 @@ const busEqWrite = (bus, band, db) => {
   if (Object.keys(eq).length) e.eq = eq; else delete e.eq;
   if (!Object.keys(e).length) delete next[bus];
   setBuses(next);
-  initAudio();                             // a knob move is a user gesture
+  initAudio();                             // a bar move is a user gesture
   commit("buses");
 };
 
-// a detented vertical fader over one knob row's table: positions ordered by
-// value with the empty detent ("as built") sitting at its own value slot
-function buildBusFader(busKey, kn) {
-  const det = ["", ...Object.keys(kn.table)]
-    .sort((a, b) => (a ? kn.table[a] : 1) - (b ? kn.table[b] : 1));
-  const wrap = mk("div", "fwell");
-  const slot = mk("div", "fslot bslot");
-  slot.tabIndex = 0;
-  slot.setAttribute("role", "slider");
-  slot.setAttribute("aria-label", busKey + " bus " + kn.label);
-  slot.setAttribute("aria-valuemin", "0");
-  slot.setAttribute("aria-valuemax", String(det.length - 1));
-  const groove = mk("i", "fgroove");
-  const cap = mk("i", "fcap");
-  slot.append(groove, cap);
-  const off = mk("output", "foff", "—");
-  wrap.append(slot, off);
-  const idx = () => Math.max(0, det.indexOf(busVal(busKey, kn.key)));
-  const paint = () => {
-    const i = idx(), k = det[i];
-    cap.style.setProperty("--f", String(det.length > 1 ? i / (det.length - 1) : 0));
-    off.textContent = k ? kn.labels[k] : "—";
-    off.classList.toggle("dflt", !k);
-    slot.setAttribute("aria-valuenow", String(i));
-    slot.setAttribute("aria-valuetext", k ? kn.labels[k] : "as built");
-  };
-  const setIdx = i => {
-    const c = Math.max(0, Math.min(det.length - 1, i));
-    if (c === idx()) return;
-    busWrite(busKey, kn.key, det[c] || null);
-    buzz(4);
-  };
-  let d = null;
-  slot.addEventListener("pointerdown", ev => {
-    if (ev.button) return;
-    ev.preventDefault();
-    slot.focus({ preventScroll: true });
-    try { slot.setPointerCapture(ev.pointerId); } catch (e) {}
-    d = { y0: ev.clientY, i0: idx() };
-  });
-  slot.addEventListener("pointermove", ev => {
-    if (!d) return;
-    setIdx(d.i0 + Math.round((d.y0 - ev.clientY) / 22));
-  });
-  slot.addEventListener("pointerup", () => { d = null; });
-  slot.addEventListener("pointercancel", () => { d = null; });
-  slot.addEventListener("dblclick", () => setIdx(det.indexOf("")));
-  slot.addEventListener("keydown", ev => {
-    if (ev.key === "ArrowUp") { setIdx(idx() + 1); ev.preventDefault(); }
-    else if (ev.key === "ArrowDown") { setIdx(idx() - 1); ev.preventDefault(); }
-    else if (ev.key === "Home") { setIdx(det.indexOf("")); ev.preventDefault(); }
-  });
-  return { wrap, paint };
-}
-
 const busRefs = [];                        // { paint() } for everything below
+const detBars = [];                        // the absorbed rack: bus + master bars
 function buildBusStrip(row) {
   const tr = mk("div", "strip bstrip");
   tr.setAttribute("role", "row");
   const head = mk("div", "mlabel");
   head.setAttribute("role", "cell");
-  const pn = mk("b", "mpn", row.label);
+  const top = mk("div", "mtop");
+  top.append(mk("b", "mpn", row.label), mk("i", "btag", "return"));
   const ps = mk("i", "mps", row.feed);
   const state = mk("i", "mfeed", "");
-  head.append(pn, ps, state);
+  head.append(top, ps, state);
   tr.append(head);
-  // the return's tone pair — HI over LO, the simpler strip a bus earns,
-  // stacked in the same SSL order as the channels
+  // the bus's own rack row, absorbed: return level first, then whatever else
+  // this return has to say about itself (echo's repeats and tone)
+  const vals = mk("div", "mvals");
+  vals.setAttribute("role", "cell");
+  const knobs = row.knobs.map(kn => {
+    const B = buildDetentBar({
+      id: "b-" + row.bus + "-" + kn.key, fam: "bus", label: kn.label,
+      keys: Object.keys(kn.table), labels: kn.labels,
+      get: () => busVal(row.bus, kn.key),
+      set: v => busWrite(row.bus, kn.key, v),
+      status: true,
+    });
+    vals.append(B.el);
+    return B;
+  });
+  tr.append(vals);
+  // the return's tone pair — HI over LO, the simpler strip a bus earns
   const eqrow = mk("div", "eqrow");
   eqrow.setAttribute("role", "cell");
-  const eqs = [...(row.eq || [])].reverse().map(bd => buildEqKnob({
+  const eqs = [...(row.eq || [])].reverse().map(bd => buildEqBar({
     band: bd.key, legend: bd.label, bus: row.bus,
     label: row.label + " return " + bd.label + " EQ",
     get: () => busEqBand(row.bus, bd.key),
     drag: db => busEqWrite(row.bus, bd.key, db),
     write: db => busEqWrite(row.bus, bd.key, db),
   }));
-  for (const e of eqs) eqrow.append(e.cell);
+  for (const e of eqs) eqrow.append(e.el);
   tr.append(eqrow);
-  const ret = row.knobs.find(k => k.key === "ret");
-  const fader = buildBusFader(row.bus, ret);
-  tr.append(fader.wrap);
   busWell.append(tr);
+  for (const k of knobs) detBars.push(k.paint);
   busRefs.push({ paint() {
-    fader.paint();
+    for (const k of knobs) k.paint();
     for (const e of eqs) e.paint();
     // the built state, read off the nodes (graph.busReport): which returns
     // exist and where they actually sit — dim silence before initAudio
@@ -1048,7 +1209,7 @@ function buildBusStrip(row) {
   } });
 }
 
-// a slim page-lifetime strip per BUILT character send bus: its fader is the
+// a slim page-lifetime strip per BUILT character send bus: its bar is the
 // bus's own `ret` gain, a trim on the page rather than on the song (which is
 // why it commits nothing and appears only once the bus exists)
 const sendStrips = new Map();              // fx key -> strip element
@@ -1057,86 +1218,117 @@ function ensureSendStrips() {
   for (const k of list) {
     if (sendStrips.has(k)) continue;
     const bus = SENDBUS[k];
+    const name = (FX[k] && FX[k].label) || k;
     const tr = mk("div", "strip bstrip send");
     tr.setAttribute("role", "row");
     const head = mk("div", "mlabel");
     head.setAttribute("role", "cell");
-    head.append(mk("b", "mpn", (FX[k] && FX[k].label) || k),
-                mk("i", "mps", "send bus · this session"));
+    const top = mk("div", "mtop");
+    top.append(mk("b", "mpn", name), mk("i", "btag", "send"));
+    head.append(top, mk("i", "mps", "this session only"));
     tr.append(head);
-    const wrap = mk("div", "fwell");
-    const slot = mk("div", "fslot bslot");
-    slot.tabIndex = 0;
-    slot.setAttribute("role", "slider");
-    slot.setAttribute("aria-label", ((FX[k] && FX[k].label) || k) + " bus return");
-    const groove = mk("i", "fgroove"), cap = mk("i", "fcap");
-    slot.append(groove, cap);
-    const off = mk("output", "foff", "1.00");
-    wrap.append(slot, off);
-    tr.append(wrap);
+    const vals = mk("div", "mvals");
+    const { b, val, setF, setLit } = makeBar({
+      cls: "mval", fam: "bus", legend: "return", label: name + " bus return",
+      aria: { "aria-valuemin": "0", "aria-valuemax": "1.6" },
+    });
+      vals.append(b);
+    tr.append(vals);
     const paint = () => {
       const v = bus.ret.gain.value;
-      cap.style.setProperty("--f", String(Math.max(0, Math.min(1, v / 1.6))));
-      off.textContent = v.toFixed(2);
+      setF(Math.max(0, Math.min(1, v / 1.6)));
+      setLit(Math.abs(v - 1) > 0.001);
+      val.textContent = v.toFixed(2);
+      b.setAttribute("aria-valuenow", v.toFixed(2));
     };
     let d = null;
-    slot.addEventListener("pointerdown", ev => {
+    b.addEventListener("pointerdown", ev => {
       if (ev.button) return;
       ev.preventDefault();
-      try { slot.setPointerCapture(ev.pointerId); } catch (e) {}
-      d = { y0: ev.clientY, v0: bus.ret.gain.value };
+      try { b.setPointerCapture(ev.pointerId); } catch (e) {}
+      d = { x0: ev.clientX, y0: ev.clientY, v0: bus.ret.gain.value };
     });
-    slot.addEventListener("pointermove", ev => {
+    b.addEventListener("pointermove", ev => {
       if (!d) return;
-      const v = Math.max(0, Math.min(1.6, d.v0 + (d.y0 - ev.clientY) * 0.01));
+      const v = Math.max(0, Math.min(1.6, d.v0 + axis(ev, d) * 0.01));
       try { bus.ret.gain.value = v; } catch (e) {}
       paint();
     });
-    slot.addEventListener("pointerup", () => { d = null; });
-    slot.addEventListener("pointercancel", () => { d = null; });
+    b.addEventListener("pointerup", () => { d = null; });
+    b.addEventListener("pointercancel", () => { d = null; });
     busWell.insertBefore(tr, masterStrip);
     sendStrips.set(k, tr);
     busRefs.push({ paint });
   }
 }
 
-// ---- the MASTER strip: the meter, the device volume, the active stages ----
-// The fader here IS the transport's volume fader — the sticky device vol
-// (ui/state.js VOLSTORE), two views over one store, deliberately NOT in the
-// song. The meter reads graph.rmsNow() per frame: the sum, pre-volume.
+/* ---------- the MASTER strip ---------- */
+// THE ONE EXCEPTION Paul named: the master LEVEL keeps its vertical slider,
+// flat — a track, a fill, a 2px cap — beside the meter, because it is the
+// control you reach for while listening rather than while reading. The fader
+// here IS the transport's volume fader (ui/state.js VOLSTORE), two views over
+// one store, deliberately NOT in the song; the meter reads graph.rmsNow() per
+// frame (the sum, pre-volume).
+//
+// Everything ELSE the master owns is bars: the seven MASTER_FIELDS stages,
+// absorbed off the old rack with their #m-<key> ids and their whole keyboard
+// contract intact. The strip runs full width because seven bars want the room
+// and because the sum is not one voice among the others.
 let masterStrip = null;
 {
   const tr = mk("div", "strip bstrip mstr");
   tr.setAttribute("role", "row");
   const head = mk("div", "mlabel");
   head.setAttribute("role", "cell");
-  const pn = mk("b", "mpn", "master");
-  const ps = mk("i", "mps", "the sum · device volume");
+  const top = mk("div", "mtop");
+  // (no (?) key here: the four help buttons on the app are gone with their
+  // paragraphs — "get rid of headers and help buttons", 2026-08-16)
+  top.append(mk("b", "mpn", "master"), mk("i", "btag", "the sum"));
   const stages = mk("i", "mfeed mstages", "");
-  head.append(pn, ps, stages);
+  head.append(top, mk("i", "mps", "device volume · every strip lands here"), stages);
   tr.append(head);
   const body = mk("div", "mbody");
+  // the meter and the one vertical slider left on the page
+  const lvlwrap = mk("div", "mlevel");
+  // the one control on the page with no room to print its own name inside
+  // itself, so it says it above — the bars' contract, kept honest
+  const vlab = mk("i", "vlab", "volume");
   const meter = mk("div", "meter");
   const mfill = mk("i", "mfill");
   meter.append(mfill);
-  const wrap = mk("div", "fwell");
   const slot = mk("div", "fslot vslot");
   slot.tabIndex = 0;
   slot.setAttribute("role", "slider");
   slot.setAttribute("aria-label", "master volume");
   slot.setAttribute("aria-valuemin", "0");
   slot.setAttribute("aria-valuemax", "100");
-  const groove = mk("i", "fgroove"), cap = mk("i", "fcap");
-  slot.append(groove, cap);
-  const off = mk("output", "foff", String(vol));
-  wrap.append(slot, off);
-  body.append(meter, wrap);
+  const cap = mk("i", "fcap");
+  const vout = mk("output", "foff", String(vol));
+  slot.append(cap);
+  lvlwrap.append(vlab, meter, slot, vout);
+  // the seven stages, as bars
+  const grid = mk("div", "mgrid");
+  const stageBars = MASTER_FIELDS.map(f => buildDetentBar({
+    id: "m-" + f.key, fam: "master", label: f.label,
+    keys: Object.keys(f.table), labels: f.labels,
+    get: () => (MASTER && MASTER[f.key]) || "",
+    set: v => {
+      const next = { ...(MASTER || {}) };
+      if (v) next[f.key] = v; else delete next[f.key];
+      setMaster(next);
+      initAudio();                         // a bar move is a user gesture
+      commit("master");
+    },
+    status: true,
+  }));
+  for (const s of stageBars) { grid.append(s.el); detBars.push(s.paint); }
+  body.append(lvlwrap, grid);
   tr.append(body);
   busWell.append(tr);
   masterStrip = tr;
   const paint = () => {
     cap.style.setProperty("--f", String(vol / 100));
-    off.textContent = String(vol);
+    vout.textContent = String(vol);
     slot.setAttribute("aria-valuenow", String(vol));
     const rep = masterReport();
     const t = rep && rep.stages.length ? rep.stages.join(" · ") : "default chain";
@@ -1178,155 +1370,22 @@ let masterStrip = null;
 }
 for (const row of BUS_FIELDS) buildBusStrip(row);
 // the fixed strips were appended after the master (it was built first so the
-// send strips could insert before it); put the master back at the right edge
+// send strips could insert before it); put the master back at the end
 busWell.append(masterStrip);
 
-/* ==================== THE EFFECTS RACK ==================== */
-// One knob row per shared bus (fields.js BUS_FIELDS), then the MASTER row —
-// the fields.js MASTER registry, moved here off the SONG page's session bank.
-// No hand-written label table anywhere: every word is the registry's.
-//
-// THE KNOB is this page's one rotary: role="slider", ArrowLeft/Right steps
-// the detents, Home is the empty detent (absent, the only spelling of off),
-// pointer drag rotates, a tap opens the pop-up fader on the same detents.
-// `data-value` mirrors the current key so a gate can drive it blind.
-const rack = document.getElementById("rack");
-const rackKnobs = [];
-function buildKnob({ id, label, keys, labels, get, set }) {
-  const det = ["", ...keys];
-  const wrap = mk("div", "kwrap");
-  const leg = mk("span", "klab", label);
-  const b = mk("button", "knobk");
-  b.type = "button";
-  if (id) b.id = id;
-  b.setAttribute("role", "slider");
-  b.setAttribute("aria-label", label);
-  b.setAttribute("aria-valuemin", "0");
-  b.setAttribute("aria-valuemax", String(det.length - 1));
-  b.dataset.detents = JSON.stringify(det);
-  const face = mk("span", "kface");
-  const markEl = mk("i", "kmark");
-  face.append(markEl);
-  const val = mk("span", "kval", "—");
-  b.append(face);
-  wrap.append(leg, b, val);
-  const idx = () => Math.max(0, det.indexOf(get() || ""));
-  const paint = () => {
-    const i = idx(), n = det.length - 1, k = det[i];
-    face.style.setProperty("--ka", (-135 + (n ? (i / n) * 270 : 0)) + "deg");
-    val.textContent = k ? labels[k] : "—";
-    b.dataset.value = k;
-    b.classList.toggle("set", !!k);
-    b.setAttribute("aria-valuenow", String(i));
-    b.setAttribute("aria-valuetext", k ? labels[k] : "off");
-  };
-  const setIdx = i => {
-    const c = Math.max(0, Math.min(det.length - 1, i));
-    if (c === idx()) return;
-    set(det[c] || null);
-    buzz(4);
-    paint();
-    // the chyron says what landed, the way the old session-bank selects did
-    emit("status", { text: label + ": " + (det[c] ? labels[det[c]] : "off") });
-  };
-  b.addEventListener("keydown", ev => {
-    if (ev.key === "ArrowRight" || ev.key === "ArrowUp") { setIdx(idx() + 1); ev.preventDefault(); }
-    else if (ev.key === "ArrowLeft" || ev.key === "ArrowDown") { setIdx(idx() - 1); ev.preventDefault(); }
-    else if (ev.key === "Home") { setIdx(0); ev.preventDefault(); }
-    else if (ev.key === "End") { setIdx(det.length - 1); ev.preventDefault(); }
-  });
-  let d = null;
-  b.addEventListener("pointerdown", ev => {
-    if (ev.button) return;
-    ev.preventDefault();
-    b.focus({ preventScroll: true });
-    try { b.setPointerCapture(ev.pointerId); } catch (e) {}
-    d = { y0: ev.clientY, i0: idx(), moved: false };
-  });
-  b.addEventListener("pointermove", ev => {
-    if (!d) return;
-    const di = Math.round((d.y0 - ev.clientY) / 24);
-    if (di) d.moved = true;
-    setIdx(d.i0 + di);
-  });
-  b.addEventListener("pointerup", () => {
-    if (d && !d.moved)
-      openFader({ anchor: b, label, min: 0, max: det.length - 1,
-                  get: idx, set: setIdx,
-                  fmt: i => (det[i] ? labels[det[i]] : "—") });
-    d = null;
-  });
-  b.addEventListener("pointercancel", () => { d = null; });
-  paint();
-  rackKnobs.push(paint);
-  return wrap;
-}
-{
-  rack.append(mk("div", "thd", "Effects rack"));
-  // one row per shared bus
-  for (const row of BUS_FIELDS) {
-    const rr = mk("div", "rrow");
-    rr.append(mk("b", "rname", row.label));
-    const ks = mk("div", "rknobs");
-    for (const kn of row.knobs)
-      ks.append(buildKnob({
-        id: "b-" + row.bus + "-" + kn.key,
-        label: kn.label, keys: Object.keys(kn.table), labels: kn.labels,
-        get: () => busVal(row.bus, kn.key),
-        set: v => busWrite(row.bus, kn.key, v),
-      }));
-    rr.append(ks);
-    rack.append(rr);
-  }
-  // the MASTER row: chrome.js's registry loop, re-homed — same read-modify-
-  // write through the store's own setter, same ids, the widget now a knob
-  const rr = mk("div", "rrow rmaster");
-  const name = mk("b", "rname", "master");
-  const help = mk("button", "btn hint", "?");
-  help.type = "button"; help.id = "mhelp";
-  help.setAttribute("aria-expanded", "false");
-  help.setAttribute("aria-controls", "mhint");
-  help.title = "what the master bus does";
-  name.append(help);
-  rr.append(name);
-  const ks = mk("div", "rknobs");
-  for (const f of MASTER_FIELDS)
-    ks.append(buildKnob({
-      id: "m-" + f.key,
-      label: f.label, keys: Object.keys(f.table), labels: f.labels,
-      get: () => (MASTER && MASTER[f.key]) || "",
-      set: v => {
-        const next = { ...(MASTER || {}) };
-        if (v) next[f.key] = v; else delete next[f.key];
-        setMaster(next);
-        initAudio();                       // a knob move is a user gesture
-        commit("master");
-      },
-    }));
-  rr.append(ks);
-  rack.append(rr);
-  const hint = mk("p", "edhint ghint");
-  hint.id = "mhint"; hint.hidden = true;
-  hint.innerHTML = "The chain the whole song lands on, after every strip on " +
-    "the board. <b>Drive</b> is grit on the sum; <b>glue</b> is the character " +
-    "of the bus compressor that is always there; <b>tape</b> is a transport " +
-    "that drifts and a head that saturates; <b>space</b> bleeds a little of " +
-    "the dry mix into one shared room, which is what makes it different from " +
-    "a strip's reverb send; <b>width</b> trims the sides; <b>tilt</b> rocks " +
-    "the spectrum about its middle; <b>ceiling</b> is how hard the end of the " +
-    "chain works. The bus rows above trim the shared returns the same way. " +
-    "Every knob is off until you set it, they save with the song, and the " +
-    "background carrier renders through the same chain — a song sounds the " +
-    "way you left it wherever it is played.";
-  rack.append(hint);
-  hintKey("mhelp", "mhint");
-}
-const paintKnobs = () => { for (const p of rackKnobs) p(); };
+/* ---------- what is left below the board ---------- */
+// NOTHING. The RACK's rows became the bus and master strips above, and the
+// master's hint paragraph — the last (?) on the machine — is deleted with
+// the other three ("get rid of headers and help buttons", 2026-08-16): every
+// stage it described is a labelled bar on the master strip, reading its own
+// value. #rack keeps its id and stays empty, so no page, gate or stylesheet
+// has to learn a new address.
+const paintKnobs = () => { for (const p of detBars) p(); };
 
 /* ---------- the frame paint ---------- */
 // Called from main.js's one rAF loop while the transport runs (the one-loop
 // rule), and from the event subscriptions below when it does not — so the
-// caps follow the automation live and settle to the resolved statics at rest.
+// fills follow the automation live and settle to the resolved statics at rest.
 export function paintBoard() {
   const sec = boardSec();
   for (let i = 0; i < rows.length; i++) refs[i] && refs[i].fader.paint(sec);
@@ -1345,11 +1404,11 @@ on("master", () => { paintKnobs(); paintBoard(); });
 on("buses", () => { paintKnobs(); paintBoard(); });
 on("transport", () => paintBoard());       // the master strip mirrors the vol fader
 // THE DESK PLAYS ALONG: the sounding box moved, so the strips re-target — the
-// roster rebuilds if the parts changed, the value keys / EQ knobs re-read the
-// new section (the CSS eases the knob faces there), and the caps land on the
-// new channel's gains. Deliberately NOT closePop(): an open popover pins the
-// section (boardSec), because the user mid-edit wins over the transport.
+// roster rebuilds if the parts changed, the value keys / EQ bars re-read the
+// new section, and the fills land on the new channel's gains. Deliberately
+// NOT closePop(): an open popover pins the section (boardSec), because the
+// user mid-edit wins over the transport.
 on("transport:section", () => { drawMix(); paintBoard(); });
 // play/stop flipped: back to the selected box at rest, and one last paint so
-// the meter parks at zero and the caps settle on the resolved statics
+// the meter parks at zero and the fills settle on the resolved statics
 on("transport:state", () => { drawMix(); paintBoard(); });
