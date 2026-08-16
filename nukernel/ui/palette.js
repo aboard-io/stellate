@@ -59,8 +59,12 @@ export function chronoGenres() {
 // LABELLED "baroque" or "the eighties" — the chronology does its own work,
 // the labels say the years, and the colour just gives the eye somewhere to
 // rest as it scrolls a list that only grows.
+//
+// EXPORTED because the LAB's parent bank (ui/lab.js) deals the same
+// chronological list and must wear the same tint — a second copy of the cut
+// years is a second chronology, free to disagree about when the eighties start.
 const ERAS = [1600, 1900, 1960, 1980, 2000];
-const eraOf = k => {
+export const eraOf = k => {
   const y = genreYear(k);
   if (y == null) return "";
   let e = 1;

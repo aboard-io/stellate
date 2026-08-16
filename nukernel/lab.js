@@ -57,19 +57,37 @@
 //     cannot promise a move the `word` closure does not make. Same dice build
 //     both.
 //
-// TIER. This is an ANALYSIS-tier file, CommonJS like its two neighbours
-// inherit.js and genealogy.js, and NOT the UMD the app tier uses — it requires
-// both of them and neither publishes itself on `window`. Zero dependencies,
-// pure node, require-able. Nothing in the app, the kernel or the gates reads
-// it; it writes no file and mutates no anchor.
+// TIER. Analysis-tier CommonJS in node — `node nukernel/lab.js house techno`,
+// `require`-able, zero dependencies — and, since the LAB tab (ui/lab.js), THE
+// SAME BYTES also load in the browser as a <script type="module">. That is not
+// the UMD wrapper the app tier wears, and the difference is deliberate: this
+// file and its two neighbours declare ~40 top-level names between them (`path`,
+// `pick`, `clamp`, `space`, `hash`…), and three classic scripts share ONE
+// global lexical scope, so the first collision would be a SyntaxError at load.
+// A module script gives each file its own scope for free, and the file needs no
+// import/export statement to get it — which is what keeps node's `require`
+// working on the very same text. Nothing else changes: no fetch, no build step,
+// no second copy of the bench. It still writes no file and mutates no anchor.
+//
+// So the dependency prologue asks node for a require and the browser for the
+// globals the classic tier published before any module ran (kernel-daw.html
+// loads kernel/genres/instruments/compose as classic scripts; ui/deps.js
+// `loadLab()` imports inherit → genealogy → this one, in that order, the first
+// time the tab is opened).
 "use strict";
-const path = require("path");
-const K = require(path.join(__dirname, "kernel.js"));
-const NG = require(path.join(__dirname, "genres.js"));
-const I = require(path.join(__dirname, "inherit.js"));
-const GEN = require(path.join(__dirname, "genealogy.js"));
-const INSTR = require(path.join(__dirname, "instruments.js"));
-const { BPM } = require(path.join(__dirname, "compose.js"));
+const NODE = typeof require === "function" && typeof module !== "undefined";
+const DEP = NODE
+  ? n => require(require("path").join(__dirname, n))
+  : n => ({ "kernel.js": window.NuKernel, "genres.js": window.NuGenres,
+            "inherit.js": window.NuInherit, "genealogy.js": window.NuGenealogy,
+            "instruments.js": window.NuInstruments,
+            "compose.js": window.NuCompose })[n];
+const K = DEP("kernel.js");
+const NG = DEP("genres.js");
+const I = DEP("inherit.js");
+const GEN = DEP("genealogy.js");
+const INSTR = DEP("instruments.js");
+const { BPM } = DEP("compose.js");
 const { GENRES, DEFAULT } = NG;
 
 const REAL = I.REAL;                       // the place-year anchors; no count is stored
@@ -1411,7 +1429,7 @@ const api = { MATERIAL, CORE_MATERIAL, ORDER, ELSEWHERE, PALETTE,
               novelty, space, featuresOfCandidate, names, placeYear,
               validate, ok, bench, printBench, printManifest, selfTest };
 
-if (require.main === module) {
+if (NODE && require.main === module) {
   const argv = process.argv.slice(2);
   const flag = n => argv.find(a => a.startsWith("--" + n + "="));
   const num = (n, d) => (flag(n) ? Number(flag(n).split("=")[1]) : d);
@@ -1447,4 +1465,5 @@ if (require.main === module) {
   } else {
     console.log(printBench(b));
   }
-} else module.exports = api;
+} else if (NODE) module.exports = api;
+else window.NuLab = api;                   // the browser tier: ui/deps.js loadLab()

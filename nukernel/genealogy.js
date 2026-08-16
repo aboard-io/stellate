@@ -50,10 +50,19 @@
 //   stress     g.stress||0 — the stamped dynamics (machines are 0)
 //   phrase     g.phrase||0
 //   touch      (g.touch ? g.touch.t : 0)*10, clamped — the hand's timing
+// TIER. node (CommonJS) and, since the LAB tab, the browser too: lab.js reads
+// `featuresOf` for its roll targets and its novelty space, and it loads the same
+// bytes as a <script type="module">, which is where the per-file scope comes
+// from (lab.js's TIER note has the argument). The prologue is the only thing
+// that knows which side it is on; `report()`'s file write stays in the CLI
+// block, where there is a filesystem.
 "use strict";
-const path = require("path");
-const { GENRES } = require(path.join(__dirname, "genres.js"));
-const { BPM } = require(path.join(__dirname, "compose.js"));
+const NODE = typeof require === "function" && typeof module !== "undefined";
+const DEP = NODE
+  ? n => require(require("path").join(__dirname, n))
+  : n => ({ "genres.js": window.NuGenres, "compose.js": window.NuCompose })[n];
+const { GENRES } = DEP("genres.js");
+const { BPM } = DEP("compose.js");
 
 const FUNCTION_ANCHORS = new Set(["simple", "solo", "vocal", "backing", "riff", "pad"]);
 const REAL = Object.keys(GENRES).filter(k => !FUNCTION_ANCHORS.has(k));
@@ -323,9 +332,11 @@ function report() {
 }
 
 const api = { FEATURES, REAL, featuresOf, nnls, fitChild, fitAll, report };
-if (require.main === module) {
+if (NODE && require.main === module) {
   const md = report();
   console.log(md);
-  require("fs").writeFileSync(path.join(__dirname, "GENEALOGY.md"), md + "\n");
+  require("fs").writeFileSync(
+    require("path").join(__dirname, "GENEALOGY.md"), md + "\n");
   console.log("wrote nukernel/GENEALOGY.md");
-} else module.exports = api;
+} else if (NODE) module.exports = api;
+else window.NuGenealogy = api;             // the browser tier: ui/deps.js loadLab()

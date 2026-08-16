@@ -102,3 +102,30 @@ export const SAMPLERS = (REG && REG.SAMPLERS) || {};
 // (audio/sing.js counts it) rather than to a thrown module.
 export const CS = window.CsdSpeech || null;
 export const FP = window.FoundPlayer || null;
+
+// ---- the bench (nukernel/lab.js), LOADED ON DEMAND ----
+// The LAB tab's engine and its two oracles are ~123 KB of analysis tier that
+// most sessions never open, so they are not in kernel-daw.html's classic list:
+// ui/lab.js awaits this the first time the tab is shown, and the page boots
+// without paying for a bench nobody asked for. (The parent app does the same
+// thing with the star-cruise controller — dynamic-imported on the first ✦, not
+// on the boot path.)
+//
+// THE ORDER IS THE DEPENDENCY GRAPH and it is not optional: lab.js reads
+// window.NuInherit and window.NuGenealogy in its own prologue, synchronously,
+// as it evaluates. Each import is a <script type="module"> in all but name —
+// the three files are CommonJS in node and module-scoped in the browser (see
+// lab.js's TIER note), which is why they are imported for their SIDE EFFECT and
+// destructured off window here rather than through named exports: adding
+// `export` to those files would break `require` in node, where they are CLIs.
+// This function is the only place in ui/ that may await them, for the same
+// reason this file is the only place that may read a global.
+let labP = null;
+export const loadLab = () => (labP || (labP = (async () => {
+  if (!window.NuLab) {
+    await import("../inherit.js");
+    await import("../genealogy.js");
+    await import("../lab.js");
+  }
+  return window.NuLab;
+})()));

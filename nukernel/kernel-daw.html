@@ -69,13 +69,16 @@
     </div>
   </header>
 
-  <!-- ZONE 2 · THE DECK — one page at a time on a phone, all three on a desk.
-       THREE pages ("compose, arrange, mix", 2026-08-16): ARRANGE (the song
-       table — internal key "song", the section rows and the song-level banks),
-       COMPOSE (the phrase editor as a FULL PAGE again — the modal died; a
-       PATTERN thumbnail on Arrange navigates here with that phrase loaded,
-       ui/editor.js builds the page's insides into #composewrap, ids intact)
-       and MIX (the board). Every per-box control is still a menu off the song
+  <!-- ZONE 2 · THE DECK — one page at a time on a phone, all four on a desk.
+       FOUR pages ("compose, arrange, mix" + the LAB, 2026-08-16): ARRANGE (the
+       song table — internal key "song", the section rows and the song-level
+       banks), COMPOSE (the phrase editor as a FULL PAGE again — the modal died;
+       a PATTERN thumbnail on Arrange navigates here with that phrase loaded,
+       ui/editor.js builds the page's insides into #composewrap, ids intact),
+       MIX (the board) and LAB (the bench where genres are crossed — pick two or
+       three parents and the machine fills the ARCHITECTURE it can actually
+       predict, leaving the MATERIAL to a person; ui/lab.js builds it into
+       #labwrap). Every per-box control is still a menu off the song
        row's cells (ui/songrow.js + ui/palette.js mountBanks). There is no
        context strip: a menu opens ON the row it edits, so nothing edits a box
        from a page the box is not on. -->
@@ -202,6 +205,25 @@
       </div>
     </section>
 
+    <!-- THE LAB PAGE — the bench where genres are crossed (nukernel/lab.js is
+         the engine, ui/lab.js the view). Empty in the markup on purpose, like
+         #composewrap: the whole surface is built by its module, and the module
+         is not even fetched until the tab is first opened (ui/deps.js
+         loadLab()), because the bench and its two oracles are ~123 KB of
+         analysis tier that most sessions never ask for.
+
+         WHAT IT IS FOR, in one line, because it decides the layout: measured
+         over the catalog (nukernel/INHERITANCE.md), crossing parents predicts a
+         genre's ARCHITECTURE (harmony 87%, realize 84%, rate 76%, drumkit 61%)
+         and essentially NONE of its MATERIAL (kit 16%, roots 7%, fill/instr 3%,
+         prog/words 0%). So the page reads as that division of labour: the
+         architecture arrives as read-only FACTS with their provenance printed,
+         and the material arrives as an INVENTION LIST with a roll key on every
+         row. -->
+    <section class="page pg-lab" id="page-lab" aria-label="lab">
+      <div class="ed labwrap" id="labwrap"></div>
+    </section>
+
   </main>
 
   <!-- the LCD line: what the selected box is, or the last status. Chassis
@@ -214,17 +236,20 @@
        key wears a small silkscreen icon above its word (.pi, an SVG-mask
        painted with currentColor — self-contained, no glyph-coverage lottery).
 
-       THREE KEYS ("compose, arrange, mix", 2026-08-16): COMPOSE (the phrase
-       editor page), ARRANGE (the song table — its internal key stays "song":
-       nothing but the silkscreen ever said the word, and the CSS/gate hooks
-       .pg-song/[data-page="song"] stay true), MIX (the board). The rail
-       order is the verbs' order — what you do to a phrase, a song, a sum —
-       and the deck's DOM order (arrange · compose · mix) is the desk's
-       stacking order, where the rail does not exist. -->
+       FOUR KEYS: COMPOSE (the phrase editor page), ARRANGE (the song table —
+       its internal key stays "song": nothing but the silkscreen ever said the
+       word, and the CSS/gate hooks .pg-song/[data-page="song"] stay true), MIX
+       (the board) and LAB (the genre bench). The rail order is the verbs'
+       order — what you do to a phrase, a song, a sum, and then the thing you
+       make the parts out of — and the deck's DOM order (arrange · compose ·
+       mix · lab) is the desk's stacking order, where the rail does not exist.
+       LAB is LAST in both: it is where a new genre comes from, not where a
+       song is made, and it must never sit between a person and their song. -->
   <nav class="pagerail" role="tablist" aria-label="pages">
     <button class="pkey" role="tab" data-page="compose" aria-controls="page-compose" aria-selected="false"><span class="pi" aria-hidden="true"></span>compose</button>
     <button class="pkey" role="tab" data-page="song" aria-controls="page-song" aria-selected="true"><span class="pi" aria-hidden="true"></span>arrange</button>
     <button class="pkey" role="tab" data-page="mix" aria-controls="page-mix" aria-selected="false"><span class="pi" aria-hidden="true"></span>mix</button>
+    <button class="pkey" role="tab" data-page="lab" aria-controls="page-lab" aria-selected="false"><span class="pi" aria-hidden="true"></span>lab</button>
   </nav>
 
 </div>

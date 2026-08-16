@@ -34,6 +34,11 @@ import "./chrome.js";
 // (one instrument per chair, per song; ui/poolbank.js owns the rows and the
 // twelve-family picker they unfold)
 import "./poolbank.js";
+// THE LAB PAGE — the bench where genres are crossed. Importing it wires the
+// tab the same way every view above is wired; what it does NOT do is load the
+// bench, which is ~123 KB of analysis tier behind ui/deps.js loadLab() and
+// arrives on the first visit to the tab, not at boot.
+import "./lab.js";
 // the chassis: page rail wiring + transport haptics (phone only in effect —
 // the rail is display:none on a desk and the buzz is coarse-pointer-gated)
 import "./pages.js";

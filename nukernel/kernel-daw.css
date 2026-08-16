@@ -1464,6 +1464,167 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
 .pchip.foc.on{box-shadow:inset 0 0 0 2px var(--accent-txt)}
 .slot.inbox{box-shadow:inset 0 0 0 1px var(--accent)}
 
+/* ================================================================
+   THE LAB — the bench where genres are crossed (ui/lab.js).
+   ================================================================
+   The page has one job and the type does most of it. Measured over the
+   catalog (nukernel/INHERITANCE.md), crossing parents predicts a genre's
+   ARCHITECTURE and none of its MATERIAL, so the surface is built as that
+   division of labour and nothing else:
+
+     THE FACTS ARE QUIET   the architecture rows are read-only, one hairline
+                           apart, the value at reading size and its provenance
+                           a rank below it in --ink-3. No keys, no chips, no
+                           colour — a fact you cannot change should not look
+                           like a control that is switched off.
+     THE KEYS ARE ON THE   every material row opens with its name and a ROLL
+     MATERIAL              key, and the two surfaces you can actually edit
+                           (the kit lanes, the band) are the only lit things
+                           in the middle of the page.
+     ONE THING IS HUGE     the candidate's name, at --t-xl, because it is the
+                           only thing on the page that is not yet true.
+
+   No frames, no cards, no header rows: sections are separated by the same
+   hairline every table on this machine uses, and each carries the .glab
+   legend the session bank already speaks. Edge to edge at every width — the
+   rows run to the glass and the gutter rides on them (--tbl-gut), exactly as
+   the song table does. */
+.labwrap{gap:0}
+.labsec{display:flex;flex-direction:column;gap:var(--sp-2);
+  padding:var(--sp-4) 0 var(--sp-5);border-top:1px solid var(--rule)}
+.labsec>.glab{padding:0 var(--tbl-gut)}
+
+/* the head: the name, what it is made of, and the seed it was drafted at */
+.labtop{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--sp-2) var(--sp-4);
+  padding:var(--sp-3) var(--tbl-gut) var(--sp-4)}
+.labtitle{flex:1 1 100%;font:600 var(--t-xl)/1.15 var(--f-ui);color:var(--ink)}
+.labtitle.un{color:var(--ink-3);font-weight:500}
+.labsub{flex:1 1 300px;font:400 var(--t-md)/1.5 var(--f-ui);color:var(--ink-2)}
+.labdice{display:flex;align-items:center;gap:var(--sp-2);margin-left:auto}
+.labseed{font:600 var(--t-sm)/1 var(--f-num);color:var(--ink-2);
+  background:var(--bg-sunk);border-radius:var(--r);padding:var(--sp-2) var(--sp-3)}
+.labre{font-size:19px;line-height:1;min-width:48px}
+
+/* the parents: the DNA bar (the genre menu's own picture, made of the weights
+   you are setting), one fader per parent, then the chronological bank */
+.labw{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-2);
+  padding:var(--sp-1) var(--tbl-gut)}
+.labw .labwn i{width:10px;height:10px;border-radius:2px;background:var(--c);
+  flex:0 0 auto}
+/* the parent's NAME is the row's value, not its legend, so it takes reading
+   size back off .knob span (which is silkscreen-small by default) */
+.labw .labwn{display:flex;align-items:center;gap:var(--sp-2);flex:0 1 auto;
+  font:500 var(--t-md)/1.3 var(--f-ui);color:var(--ink);
+  min-width:140px;letter-spacing:0;text-transform:none}
+/* one weight row is ONE object: the fader gives up width before the row wraps,
+   because a percentage on a line of its own reads as a different control */
+.labw{flex:1 1 320px;max-width:560px}
+.labw .labwr{flex:1 1 90px;min-width:80px;max-width:none}
+.labw .labwv{font-size:var(--t-md);min-width:52px;text-align:right}
+.labsec .dnabar{margin:0 var(--tbl-gut) var(--sp-2)}
+.labchips{max-height:none}
+
+/* HEAR IT: one accent key and one honest line about what it is doing */
+.labhear{flex-direction:row;flex-wrap:wrap;align-items:center;
+  gap:var(--sp-3);padding:var(--sp-4) var(--tbl-gut)}
+.labplay{min-height:52px;font-size:var(--t-lg);padding:var(--sp-3) var(--sp-5)}
+/* the status line is typography only — the flex basis belongs to the HEAR row
+   and nowhere else. Set on the class itself it also applied inside the KEEP
+   section, whose .labsec is a COLUMN, where a 220px basis is 220px of HEIGHT:
+   a fifth of a phone screen of nothing between the key and what it kept. */
+.labstatus{font:400 var(--t-sm)/1.5 var(--f-ui);color:var(--ink-3)}
+.labhear .labstatus{flex:1 1 220px}
+
+/* the two ledgers. A row is a row is a row: the same hairline cadence as the
+   song table, no zebra, no box. */
+.labtbl{display:flex;flex-direction:column}
+.labarow{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px var(--sp-3);
+  padding:var(--sp-2) var(--tbl-gut);border-top:1px solid var(--rule)}
+.labf{font:600 var(--t-md)/1.4 var(--f-ui);color:var(--ink);
+  flex:0 0 auto;min-width:104px}
+.labv{font:400 var(--t-lg)/1.35 var(--f-num);color:var(--ink);flex:1 1 260px;
+  overflow-wrap:anywhere}
+/* prose gets a MEASURE. A desk is 1280px wide and a provenance note set across
+   all of it is a line the eye loses its place in; every other reading surface
+   on this machine is a table cell and never had the problem. */
+.labp{flex:1 1 100%;margin:0;max-width:82ch;
+  font:400 var(--t-sm)/1.55 var(--f-ui);color:var(--ink-3)}
+/* PROVENANCE IS THE POINT, so the one word that says where a value came from
+   carries the only colour in the ledger — plucked from ONE parent is a
+   different claim from combined across all of them, and the page must not
+   blur them into "generated". */
+.labp.plucked{color:var(--accent-txt)}
+.labp.combined,.labp.snapped{color:var(--st-solo)}
+
+.labmrow{display:flex;flex-direction:column;gap:var(--sp-2);
+  padding:var(--sp-3) var(--tbl-gut) var(--sp-4);border-top:1px solid var(--rule)}
+.labmhead{display:flex;align-items:center;flex-wrap:wrap;gap:var(--sp-2)}
+.labmhead .labf{font-size:var(--t-lg)}
+.labroll{font:600 var(--t-sm)/1 var(--f-ui);min-height:40px;padding:0 var(--sp-3)}
+.labmine{font:600 var(--t-xs)/1 var(--f-ui);color:var(--on-accent);
+  background:var(--accent);border-radius:var(--r);padding:5px var(--sp-2)}
+.labfseed{font:400 var(--t-xs)/1 var(--f-num);color:var(--ink-3);margin-left:auto}
+.labmval{font:400 var(--t-md)/1.5 var(--f-ui);color:var(--ink)}
+.labmval.mono{font-family:var(--f-num);font-size:var(--t-sm);color:var(--ink-2);
+  overflow-wrap:anywhere}
+.labmval.big{font:600 var(--t-xl)/1.2 var(--f-num);color:var(--ink);
+  letter-spacing:.02em}
+.labline{margin:0;font:400 var(--t-md)/1.6 var(--f-ui);color:var(--ink-2)}
+.labinstr{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:var(--sp-2)}
+
+/* THE KIT, as sixteen steps a lane. Not the phrase editor: no pitch, no
+   velocity, no pages — a drum hits on that sixteenth or it does not, and one
+   tap is the whole edit. The quarter ramp is the machine's own, so a step in
+   the fourth quarter of a lab kit is the colour it is everywhere else. */
+.labkit{display:flex;flex-direction:column;gap:var(--sp-1)}
+.labkrow{display:flex;align-items:center;gap:var(--sp-2)}
+.labklab{font:600 var(--t-sm)/1 var(--f-num);color:var(--ink-2);
+  flex:0 0 22px;text-transform:uppercase}
+.labksteps{display:grid;grid-template-columns:repeat(16,1fr);gap:3px;flex:1 1 auto}
+.labstep{appearance:none;border:0;border-radius:2px;cursor:pointer;
+  min-height:34px;background:var(--bg-sunk);
+  box-shadow:inset 0 0 0 1px var(--rule)}
+.labstep:hover{background:var(--bg-key-hi)}
+.labstep.on{box-shadow:none}
+.labstep.on.q1{background:var(--step-q1)}
+.labstep.on.q2{background:var(--step-q2)}
+.labstep.on.q3{background:var(--step-q3)}
+.labstep.on.q4{background:var(--step-q4)}
+
+/* the verdict is a sentence, set as one, and the band is the colour */
+.labverdict{font:500 var(--t-lg)/1.4 var(--f-ui);color:var(--ink);max-width:64ch;
+  padding:0 var(--tbl-gut);border-left:4px solid var(--rule-strong);
+  margin-left:calc(var(--tbl-gut) - 4px)}
+.labverdict.derivative{border-left-color:var(--st-rec)}
+.labverdict.cousin{border-left-color:var(--st-arm)}
+.labverdict.new{border-left-color:var(--st-play)}
+.labverdict.outlier{border-left-color:var(--st-solo)}
+.labnovelty .labp,.labsec>.labp{padding:0 var(--tbl-gut)}
+
+/* the names: chips that carry their own reason, and a field to coin one */
+.labnames .pchip,.labkept .pchip{padding-top:var(--sp-2);padding-bottom:var(--sp-2)}
+.labwhy{display:block;font:400 var(--t-xs)/1.35 var(--f-ui);color:var(--ink-3);
+  margin-top:3px}
+.pchip.on .labwhy{color:var(--on-accent);opacity:.8}
+.labcoin{margin:var(--sp-1) var(--tbl-gut) 0;max-width:420px;min-height:48px;
+  font:500 var(--t-md)/1.3 var(--f-ui);color:var(--ink);
+  background:var(--bg-key);border:0;border-radius:var(--r);
+  padding:var(--sp-2) var(--sp-3)}
+
+/* keep: the key, then every law the candidate broke, in the law's own words */
+.btn.labkeep{align-self:flex-start;margin:0 var(--tbl-gut);
+  min-height:52px;font-size:var(--t-lg);padding:var(--sp-3) var(--sp-5)}
+/* a KEEP that cannot fire stops looking like the lit key it is not — the fill,
+   the ink and the edge all step back together, because a bright orange border
+   round a dead key is the one thing worse than no state at all */
+.btn.labkeep:disabled{background:var(--bg-key);color:var(--ink-3);
+  border-color:var(--rule);cursor:default}
+.labsec>.labstatus{padding:0 var(--tbl-gut)}
+.labprob{margin:0;padding:0 var(--tbl-gut);
+  font:400 var(--t-sm)/1.6 var(--f-ui);color:var(--ink-3)}
+.labprob.error{color:var(--st-rec);font-weight:600}
+
 /* ---- touch ----
    A coarse pointer has no hover, no shift key and a fingertip about nine
    millimetres across. 44px is the floor, not the aspiration — the old 34px
@@ -1549,6 +1710,9 @@ details .c{color:var(--ink-3)}
 /* the mix desk: three faders, caps at different throws (the icon the MIX
    destination has always worn, wherever it lived) */
 .pkey[data-page="mix"] .pi{--pim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M2.6 1.4v12.2M7.5 1.4v12.2M12.4 1.4v12.2' stroke='%23000' stroke-width='1.3'/%3E%3Crect x='1' y='3.4' width='3.2' height='3' rx='.8'/%3E%3Crect x='5.9' y='8.2' width='3.2' height='3' rx='.8'/%3E%3Crect x='10.8' y='5.2' width='3.2' height='3' rx='.8'/%3E%3C/svg%3E")}
+/* the lab: a flask, because the tab is a bench and the thing on it is not a
+   song yet */
+.pkey[data-page="lab"] .pi{--pim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M6 1.6v4.3L2.3 12.1a1 1 0 0 0 .9 1.5h8.6a1 1 0 0 0 .9-1.5L9 5.9V1.6' fill='none' stroke='%23000' stroke-width='1.5' stroke-linejoin='round'/%3E%3Cpath d='M4.9 1.6h5.2' stroke='%23000' stroke-width='1.5' stroke-linecap='round'/%3E%3Ccircle cx='7.5' cy='10.6' r='1.15'/%3E%3C/svg%3E")}
 .pkey[aria-selected="true"]{color:var(--on-accent);background:var(--accent)}
 
 /* ---- the phone chassis ----
@@ -1624,12 +1788,13 @@ details .c{color:var(--ink-3)}
   .box,.lrow,.cell,.slot,.blayer,.prow{scroll-margin-top:14px;scroll-margin-bottom:14px}
   .page{display:none}
   .page>*+*{margin-top:12px}
-  /* which page paints: one attribute, THREE pages — COMPOSE, ARRANGE
-     (internal key "song") and MIX ("compose, arrange, mix"). The cell menus
-     and the pop-up fader are the only surfaces left that float. */
+  /* which page paints: one attribute, FOUR pages — COMPOSE, ARRANGE
+     (internal key "song"), MIX and LAB. The cell menus and the pop-up fader
+     are the only surfaces left that float. */
   .chassis[data-page="compose"] .pg-compose{display:block}
   .chassis[data-page="song"] .pg-song{display:block}
   .chassis[data-page="mix"]  .pg-mix{display:block}
+  .chassis[data-page="lab"]  .pg-lab{display:block}
   .pagerail{display:grid}
 }
 
@@ -1685,6 +1850,21 @@ details .c{color:var(--ink-3)}
   .strips{grid-template-columns:1fr;gap:var(--sp-4);padding:0 var(--sp-3)}
   .mbody{flex-direction:column;gap:var(--sp-3)}
   .mlevel{height:168px}
+  /* THE LAB AT 390. Sixteen steps stay sixteen steps: a bar is not eight
+     cells wide, and folding it in half would lie about the grid the pattern
+     is written on. The gap tightens and the cells grow TALLER instead — the
+     same trade every table on this machine makes (give up gutter, never
+     type), which lands each step at ~20 × 38, a drum-machine cell. */
+  .labksteps{gap:2px}
+  .labstep{min-height:38px}
+  /* the head stacks: the name owns its line, the parents-and-tempo line the
+     next, and the seed rides under them rather than squeezing the title */
+  .labdice{margin-left:0}
+  /* a weight row becomes two lines — the parent's name, then its fader and
+     its number together. The number under the fader on a line of its own was
+     the wrap this rule prevents. */
+  .labw .labwn{flex:1 1 100%;min-width:0}
+  .labw .labwr{flex:1 1 auto;max-width:none}
 }
 
 /* ---- the desk: the SAME tables, with room ----

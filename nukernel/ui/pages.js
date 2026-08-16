@@ -1,4 +1,4 @@
-// ui/pages.js — the page rail: THREE mode keys switching what the
+// ui/pages.js — the page rail: FOUR mode keys switching what the
 // phone deck paints. A page switch is ONE attribute write on the chassis
 // (CSS does the rest) — never a rebuild, so every module's elements stay
 // alive and the gates' selectors stay in the DOM whichever page is up. On a
@@ -6,8 +6,11 @@
 // setPage() still runs there (openPhraseEditor calls it as the one
 // navigation verb), it just paints nothing.
 //
-// THREE KEYS ("compose, arrange, mix", 2026-08-16) — the app finally says
-// what you DO, and each verb has exactly one place:
+// FOUR KEYS — the app says what you DO, and each verb has exactly one place.
+// NOTHING BELOW COUNTS THEM: the rail is read out of the DOM
+// (querySelectorAll(".pkey")) and a page switch is one attribute write, so the
+// LAB key was markup and CSS only — this file did not change to gain a fourth
+// page and will not change to gain a fifth.
 //
 //   COMPOSE  the phrase editor, a full page again — the modal died. Reached
 //            by the rail, or by tapping a PATTERN thumbnail on an Arrange
@@ -20,6 +23,10 @@
 //            renamed and the key did not: fewer broken selectors, zero
 //            behavior risk.
 //   MIX      the board and the rack.
+//   LAB      the bench where genres are crossed — parents in, architecture
+//            out, the material left for a person (ui/lab.js). Last on the
+//            rail: it makes the parts a song is made of, and it must never
+//            stand between a person and their song.
 //
 // NOTHING BECAME UNREACHABLE. The palette's banks are in the cell menus
 // (ui/palette.js mountBanks maps them); the phrase editor is the Compose

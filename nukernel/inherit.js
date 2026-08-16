@@ -54,10 +54,16 @@
 // the comment "WRITTEN AS A TABLE AND STAMPED". This is that idea with a
 // weighted-parent table instead of a flat one.
 //
-// HAND-RUN. Nothing in the app, the kernel or the gates depends on this file.
+// HAND-RUN, and now also READ BY THE APP: lab.js is the LAB tab's bench and
+// this file is its oracle, so the same bytes load in node (CommonJS) and in the
+// browser (a <script type="module">, for the per-file scope a classic script
+// would not give three analysis files at once — lab.js's own TIER note has the
+// whole argument). The prologue is the only thing that knows which: node gets a
+// require, the browser gets the globals genres.js already published.
 "use strict";
-const path = require("path");
-const G = require(path.join(__dirname, "genres.js"));
+const NODE = typeof require === "function" && typeof module !== "undefined";
+const G = NODE ? require(require("path").join(__dirname, "genres.js"))
+               : window.NuGenres;
 const { GENRES, MODES, SCALES, PROGS } = G;
 
 const FUNCTION_ANCHORS = new Set(["simple", "solo", "vocal", "backing", "riff", "pad"]);
@@ -572,7 +578,7 @@ const api = { GROUPS, DISPOSITION, IDENTITY, DERIVED, COMBINE, COMBINE_Q,
               pluckSource, ledger, deltaOf, expand, roundTrip, sourceForm, emit,
               printLedger, summary, unknownFields, nearMiss };
 
-if (require.main === module) {
+if (NODE && require.main === module) {
   const argv = process.argv.slice(2);
   const ruleArg = argv.find(a => a.startsWith("--rule="));
   const opts = { rule: ruleArg ? ruleArg.split("=")[1] : "attributed" };
@@ -630,4 +636,5 @@ if (require.main === module) {
   } else {
     for (const k of (keys.length ? keys : ["beatles"])) console.log(printLedger(k, opts) + "\n");
   }
-} else module.exports = api;
+} else if (NODE) module.exports = api;
+else window.NuInherit = api;               // the browser tier: ui/deps.js loadLab()
