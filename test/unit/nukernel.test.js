@@ -2069,6 +2069,11 @@ const D = await (async () => {
   window.NuInstruments = require("../../nukernel/instruments.js");
   window.NuCompose = require("../../nukernel/compose.js");
   window.PRESETS = require("../../nukernel/presets.js").PRESETS;
+  // the big engine's sampler registry: ui/deps.js snapshots window.__REGISTRY
+  // the moment it first evaluates (which is THIS import), so it must be on the
+  // stub now or §45's playWindow would see zero zones and prove nothing about
+  // the real extents
+  window.__REGISTRY = require("../../engine/registry-data.js");
   return import("../../nukernel/ui/derive.js");
 })();
 console.log("the song groove — one drummer for the record, and it reaches the schedule");
@@ -6147,6 +6152,184 @@ console.log("the machines — genre→kit, every lane a voice, and the schedule 
          "the machines must not move a single scheduled event");
     }
   }
+}
+
+/* ------------------------------- 45. A TRUMPET KNOWS WHERE IT LIVES
+   The INSTRUMENT-REGISTER LAW, gated at the score. The parent states it in
+   two tiers (engine/faust/voices/state-engine.js INSTRUMENT_RANGE + the
+   mapEvents per-note fold; engine/csd-engine.js SAMPLER REGISTER HOME), and
+   this round gave nukernel the same two layers after Paul heard the gap:
+   "the ska trumpet is squeaky" (2026-08-16) — ska's composed trumpet line
+   reaches MIDI 100 against a table ceiling of 84, the old register home was
+   too shy to fire on a straddling line, and the per-note fold's six-semitone
+   soft edge let the spill sustain at 89.
+
+   Four claims, all score-level (the schedule IS the artifact at this layer —
+   no renders, no browser):
+     (a) the TABLE covers everything choosable — every id a genre can voice
+         (fields.js INSTRCHOICES is the union of every genre's `instr`) plus
+         the bass chair has a RANGES row, and every value shared with the
+         parent's table is BORROWED, not reinvented;
+     (b) the SWEEP — every scheduled pitched note, all genres × seeds ×
+         (default + adversarial overrides), lands inside its instrument's
+         window after home + fold, and the DROP LAW never fires on shipped
+         content;
+     (c) CONTOUR — the register home moves whole octaves, one constant per
+         (section, chair), so interval signs are untouched;
+     (d) ONE RESOLVER — the offline bounce walks the same buildTimeline +
+         scheduleBar the live tick schedules, the schedule is deterministic,
+         and scheduleBar hands the homed note to both the sampler and the
+         oscillator fallback. */
+console.log("the register law — the table, the home, and the per-note fold");
+{
+  // the audio tier's browser surface, stubbed only as far as import needs:
+  // state.js listens for storage events, transport.js registers a visibility
+  // catch-up and reads localStorage for the volume — none of it schedules
+  globalThis.addEventListener = globalThis.addEventListener || (() => {});
+  globalThis.document = globalThis.document ||
+    { visibilityState: "visible", addEventListener: () => {} };
+  globalThis.localStorage = globalThis.localStorage ||
+    { getItem: () => null, setItem: () => {}, removeItem: () => {} };
+  const ST = await import("../../nukernel/ui/state.js");
+  const A = await import("../../nukernel/audio/assets.js");
+  const V = await import("../../nukernel/audio/voices.js");
+  const T = await import("../../nukernel/audio/transport.js");
+  const NI = require("../../nukernel/instruments.js");
+  const C = require("../../nukernel/compose.js");
+  const fs = require("fs"), path = require("path");
+
+  // (a) COVERAGE + BORROWING. Every choosable id and the bass chair is in the
+  // table; unlisted stays legal only for ids nothing can currently voice.
+  const choosable = new Set([NI.BASS_INSTR]);
+  for (const g of Object.values(GENRES)) {
+    const e = g.instr;
+    if (Array.isArray(e)) e.forEach(x => choosable.add(x));
+    else if (e) choosable.add(e);
+  }
+  for (const id of choosable)
+    ok(Array.isArray(NI.RANGES[id]) && NI.RANGES[id][0] < NI.RANGES[id][1],
+       id + " is choosable but has no RANGES row — a squeak nothing can stop");
+  // ...and where the parent's INSTRUMENT_RANGE names the same id, the values
+  // match: the directive was borrow, never invent
+  const seSrc = fs.readFileSync(
+    path.join(__dirname, "../../engine/faust/voices/state-engine.js"), "utf8");
+  const m = seSrc.match(/const INSTRUMENT_RANGE = \{([\s\S]*?)\n  \};/);
+  ok(!!m, "cannot find the parent's INSTRUMENT_RANGE table to borrow from");
+  const PARENT = m ? new Function("return {" + m[1] + "};")() : {};
+  for (const id of Object.keys(NI.RANGES))
+    if (PARENT[id])
+      ok(PARENT[id][0] === NI.RANGES[id][0] && PARENT[id][1] === NI.RANGES[id][1],
+         id + ": nukernel says [" + NI.RANGES[id] + "] but the parent says [" +
+         PARENT[id] + "] — borrowed values must not drift");
+
+  // (d-source) ONE RESOLVER, anchored in the shipped text so the sweep below
+  // cannot mirror-drift from what actually schedules: the bounce imports the
+  // transport's own builder and bar-scheduler, and scheduleBar hands the HOMED
+  // note (e.n + e.home) to the sampled player and the oscillator fallback both.
+  const bSrc = fs.readFileSync(path.join(__dirname, "../../nukernel/audio/bounce.js"), "utf8");
+  ok(/import \{[^}]*buildTimeline[^}]*\} from "\.\/transport\.js"/.test(bSrc) &&
+     /scheduleBar/.test(bSrc.match(/import \{[^}]*\} from "\.\/transport\.js"/)[0]),
+     "bounce.js does not import buildTimeline + scheduleBar from transport.js — " +
+     "the carrier would resolve registers with a different law than the live tick");
+  const tSrc = fs.readFileSync(path.join(__dirname, "../../nukernel/audio/transport.js"), "utf8");
+  ok((tSrc.match(/e\.n \+ \(e\.home \|\| 0\)/g) || []).length >= 2,
+     "scheduleBar does not hand the homed note to both the sampler and the fallback");
+
+  // (b) THE SWEEP. Every genre × three seeds as composed, plus the adversarial
+  // chairs: a piccolo-ish music box ([72,100]) on sludge's floor-scraping
+  // guitar line (raw MIDI down to 19), a guitar whose ceiling is ~76 on ska's
+  // trumpet line (raw up to 100), and a trumpet on sludge. The resolution here
+  // is playSampled's own, via the same exports it calls: home rides the event
+  // (buildTimeline), then inRange folds — one law, asserted in aggregate so a
+  // quarter-million notes stay one gate.
+  const synthBound = (sec, owner, e) => {
+    // mirror of scheduleBar's branch, anchored by the source check above: a
+    // signature-synth line (no override) never reaches the sampled fold
+    const over = D.instrOverrideOf(sec, owner);
+    const gsyn = over ? null : GENRES[owner].synth;
+    return gsyn && !(gsyn.lineOnly && e.pad);
+  };
+  const seeds = [1, 3, 7];
+  const cases = [];
+  for (const gk of GK) for (const s of seeds) cases.push([gk, s, null]);
+  cases.push(["sludge", 3, "music_box"], ["ska", 3, "palm_muted_guitar"],
+             ["sludge", 7, "trumpet"]);
+  let total = 0, out = 0, drops = 0, badHome = 0, badSign = 0, bassOut = 0;
+  const skaFinal = [], skaRaw = [];
+  for (const [gk, seed, over] of cases) {
+    ST.adoptSong(C.compose(gk, seed), "gate");
+    if (over) for (const sec of ST.SONG) for (const en of sec.stack) en.instr = over;
+    const TL = T.buildTimeline();
+    const chairs = new Map();                    // si|owner|lv -> [raw..], home
+    for (const bar of TL) for (const e of bar.ev) {
+      const sec = ST.SONG[bar.si];
+      if (e.kind === "bass") {
+        // the bass chair rides the same law with no home (registerHome is a
+        // line pass); synth basses are their own instrument
+        if (NI.BASSSYNTH[sec.bassop]) continue;
+        const bs = A.specOf(NI.BASS_INSTR);
+        const fin = V.inRange(bs, NI.BASS_INSTR, e.n);
+        total++;
+        if (fin == null) drops++;
+        else if (fin < NI.RANGES[NI.BASS_INSTR][0] - 0.5 ||
+                 fin > NI.RANGES[NI.BASS_INSTR][1] + 0.5) bassOut++;
+        continue;
+      }
+      if (e.kind !== "line") continue;
+      const owner = e.layer || D.gid(sec);
+      if (synthBound(sec, owner, e)) continue;
+      const lv = e.lv == null ? e.v : e.lv;
+      const id = D.instrIdOf(sec, owner, lv);
+      const spec = A.specOf(id), w = V.playWindow(spec, id);
+      const home = e.home || 0;
+      if (home % 12 !== 0) badHome++;
+      const ck = bar.si + "|" + owner + "|" + lv;
+      let ch = chairs.get(ck);
+      if (!ch) chairs.set(ck, ch = { raw: [], home });
+      if (ch.home !== home) badHome++;           // one constant per (section, chair)
+      ch.raw.push(e.n);
+      total++;
+      if (!w) continue;                          // an id outside the tables: untouched
+      const fin = V.inRange(spec, id, e.n + home);
+      if (fin == null) { drops++; continue; }
+      if (fin < w[0] - 0.5 || fin > w[1] + 0.5) out++;
+      if (!over && gk === "ska" && id === "trumpet") { skaFinal.push(fin); skaRaw.push(e.n); }
+    }
+    // (c) CONTOUR: the home is a transposition, so every interval keeps its
+    // sign — stated as the directive asks, per chair, raw vs homed
+    for (const ch of chairs.values())
+      for (let i = 1; i < ch.raw.length; i++)
+        if (Math.sign(ch.raw[i] - ch.raw[i - 1]) !==
+            Math.sign((ch.raw[i] + ch.home) - (ch.raw[i - 1] + ch.home))) badSign++;
+  }
+  ok(total > 100000, "the sweep saw only " + total + " notes — it is not sweeping");
+  ok(out === 0, out + " scheduled note(s) land outside their instrument's window");
+  ok(bassOut === 0, bassOut + " bass note(s) escape the acoustic bass's [28,60]");
+  ok(drops === 0, drops + " note(s) hit the DROP LAW — shipped content must " +
+     "always have an in-window octave");
+  ok(badHome === 0, badHome + " register-home violation(s): a home that is not " +
+     "a whole octave, or not one constant per (section, chair)");
+  ok(badSign === 0, badSign + " interval(s) changed sign under the home — the " +
+     "home broke a contour it exists to preserve");
+
+  // (b-reported) THE SKA TRUMPET ITSELF. The complaint must be real in the raw
+  // line and gone in the resolved one: composed ska writes trumpet above the
+  // table ceiling (measured: up to MIDI 100), and every scheduled trumpet note
+  // now lands inside the parent's own [54, 84].
+  const TR = NI.RANGES.trumpet;
+  ok(skaRaw.length > 0 && Math.max(...skaRaw) > TR[1],
+     "ska's raw trumpet line no longer exceeds " + TR[1] + " — the reported " +
+     "case has vanished from the composer and this gate is proving nothing");
+  ok(skaFinal.every(n => n >= TR[0] - 0.5 && n <= TR[1] + 0.5),
+     "ska schedules a trumpet note outside [" + TR + "] — still squeaky " +
+     "(max " + Math.max(...skaFinal).toFixed(1) + ")");
+
+  // (d) ...and the builder is deterministic over the same state, which is what
+  // makes the bounce's walk the live walk: same song, same bars, same homes.
+  ST.adoptSong(C.compose("ska", 3), "gate");
+  const j = TL2 => JSON.stringify(TL2.map(b => [b.si, b.barSteps, b.ev]));
+  ok(j(T.buildTimeline()) === j(T.buildTimeline()),
+     "buildTimeline is not deterministic — live and bounce would disagree");
 }
 
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +

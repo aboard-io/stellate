@@ -56,15 +56,20 @@ let TL = [];
 // path reads it: a synth font's freq fold is its own law, and the tracker view
 // keeps showing the note that was written. That makes a home-shifted voice a
 // transposing instrument, which is what it is.
-// A line moves only when it is MOSTLY out (over 60% of its notes) and the move
-// puts nearly all of it in (90%). Both bars are there so the home never fires
-// on a line that merely leans over an edge — those notes are the per-note
-// fold's business, and only when they are grossly out (voices.js SOFT_EDGE).
-// Measured over the 45 genres: ten chairs move, all of them the mud and shriek
-// cases (sludge's guitar three octaves under its lowest sample, ska's trumpet
-// two above its highest), and 15 notes of 3,900 fold on their own afterwards.
+// WHEN IT FIRES: the parent's own threshold (csd-engine.js SAMPLER REGISTER
+// HOME, REGISTER_FIT = 0.95) — a line homes whenever less than 95% of its
+// notes sit inside the window and some whole-octave shift STRICTLY improves
+// the fit; ties prefer the smaller move, so an already-fitting line never
+// budges. This used to be far shyer (fire only when 60% out, land only when
+// 90% in), which left the squeak Paul heard: ska's trumpet line straddled its
+// ceiling — under half its notes above C6 — so the home never fired and the
+// spill either played as squeak (inside the old soft edge) or per-note folded
+// against the phrase's contour. The parent chose eager homing for exactly this
+// case: "the mapping layer's per-note render fold saved the ear but bent
+// phrase contours." Moving the whole line is the contour-preserving fix; the
+// per-note fold (voices.js inRange) stays underneath as the net.
 const HOME_MAX = 3;                                // ±3 octaves is already absurd
-const HOME_OUT = 0.6, HOME_FIT = 0.9;
+const REGISTER_FIT = 0.95;                         // the parent's threshold, verbatim
 function registerHome(sec, ev) {
   const memo = new Map();                          // "owner|lv" -> octave shift
   // gather each chair's notes in one pass, then decide once per chair
@@ -86,19 +91,18 @@ function registerHome(sec, ev) {
       return inside;
     };
     const home = inAt(0);
-    if (1 - home / a.n.length <= HOME_OUT) { memo.set(key, 0); continue; }
+    if (home >= REGISTER_FIT * a.n.length) { memo.set(key, 0); continue; }
     let best = 0, bestIn = home;
     for (let k = -HOME_MAX; k <= HOME_MAX; k++) {
       const inside = inAt(k);
       // strictly better, or as good and a smaller move: the tie-break is what
-      // keeps an already-fitting line exactly where it was written
+      // keeps an already-fitting line exactly where it was written (best
+      // starts at 0, so a shift must beat the written octave outright)
       if (inside > bestIn || (inside === bestIn && Math.abs(k) < Math.abs(best))) {
         bestIn = inside; best = k;
       }
     }
-    // no octave of this line is a home — leave it written where it is rather
-    // than move it somewhere that is wrong in a different way
-    memo.set(key, bestIn >= HOME_FIT * a.n.length ? best : 0);
+    memo.set(key, best);
   }
   return memo;
 }
@@ -342,9 +346,11 @@ export function scheduleBar(bar, sec, chan, kit, when, sd, synthFn) {
         // both flaked under IO load. Identity genres drop instead.
         if (useSyn) countDrop();
         // the stub lands on the same chair's strip as the note it stands in
-        // for — a fallback that jumps the desk would be audible under a solo
-        else line(at, e.n, e.dur * sd, e.acc, e.sld, e.prev, bar.g.tone, e.pad, e.vel,
-                  chan, e.v);
+        // for — a fallback that jumps the desk would be audible under a solo —
+        // and it plays the HOMED note: a register-shifted voice that fell back
+        // must not jump an octave from the line it stands in for
+        else line(at, e.n + (e.home || 0), e.dur * sd, e.acc, e.sld, e.prev,
+                  bar.g.tone, e.pad, e.vel, chan, e.v);
       }
     } else if (e.kind === "hit") {
       if (!playDrum(kit, e.d, at, e.acc, e.vel, chan)) hit(at, e.d, e.acc, e.vel, chan);

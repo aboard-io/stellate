@@ -470,21 +470,24 @@ export function foldInto(midi, lo, hi) {
   while (m < lo - 0.5) m += 12;
   return (m > hi + 0.5 || m < lo - 0.5) ? null : m;
 }
-// THE EDGES ARE SOFT, and the per-note fold is the only thing that reads them.
-// A window's ends are a judgement ("the comfortable ceiling"), not a cliff, and
-// the transport has already moved whole lines that sit outside one (see
-// registerHome). What is left is a handful of notes spilling over an edge in a
-// line that otherwise fits — measured across the 45 genres: fifteen notes out
-// of 3,900. Folding those by the strict edge would break the contour they
-// belong to for a semitone's worth of honesty; folding only what is GROSSLY
-// out (half an octave past the edge) fixes the note that squeals and leaves
-// the phrase alone.
-const SOFT_EDGE = 6;
+// THE EDGES ARE HARD, the parent's own law (state-engine.js foldToRange folds
+// at the bound plus half a semitone of float tolerance, nothing more). This
+// tier shipped one release with a six-semitone "soft edge" — the theory being
+// that a note spilling just over the ceiling belongs to its phrase's contour —
+// and the soft edge turned out to be exactly where the squeak lives: ska's
+// trumpet line straddles its window, the register home of that era never
+// fired, and the spill sustained up to MIDI 90 against a table ceiling of 84
+// ("the ska trumpet is squeaky", 2026-08-16). The ceiling is set a little
+// under the physical extreme BECAUSE that is where the shriek starts; a grace
+// zone above it un-sets it. Contour is the register home's job (transport.js,
+// now at the parent's eager REGISTER_FIT); what still lands here folds, and a
+// folded ornament is voicing idiom, not a contour break (csd-engine.js
+// REGISTER HOME pass 2).
 // the whole law for one note, as one call — shared by the sampled player and
 // the transport's register-home pass so the two can never disagree
 export function inRange(spec, id, midi) {
   const w = playWindow(spec, id);
-  return w ? foldInto(midi, w[0] - SOFT_EDGE, w[1] + SOFT_EDGE) : midi;
+  return w ? foldInto(midi, w[0], w[1]) : midi;
 }
 
 const zoneSpan = new Map();     // zones array (now cached, so identity hits) -> span

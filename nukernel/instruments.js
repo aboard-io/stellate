@@ -113,9 +113,16 @@
   // overdrive guitar asks for MIDI 12 against a bottom zone root of 40, which
   // is a guitar sample played two and a half octaves down — mud, not a guitar.
   //
-  // Only instruments with an HONEST window are listed. Pianos, Rhodes, pads and
-  // the synth patches are genuinely full-range and are deliberately absent: an
-  // unlisted instrument passes through untouched, exactly as the parent does it.
+  // EVERY id a genre can voice is listed — the 48 choosable ids (fields.js
+  // INSTRCHOICES is the union of every genre's `instr`) plus the bass chair —
+  // because the squeaky-ska-trumpet round (2026-08-16) showed what an absent
+  // row costs: an unlisted instrument still passes through untouched (future
+  // ids degrade to the zone window, the parent's law for the unlisted), but the
+  // gate in test/unit/nukernel.test.js now proves nothing choosable is
+  // unlisted. Where the parent's table carries the id, its values are borrowed
+  // verbatim; where it does not (pianos, EPs, sections, the GM synth patches),
+  // the bounds come from the instrument's real compass intersected with the
+  // registry's zone extents (playWindow does the intersection).
   const RANGES = {
     // winds + reeds
     flute: [60, 96], harmonica: [60, 96], tenor_sax: [44, 77],
@@ -132,12 +139,34 @@
     bandoneon: [41, 86], drawbarorgan: [36, 96], rock_organ: [36, 96],
     // struck + tuned percussion
     marimba: [45, 91], harpsichord: [29, 89], clavinet: [36, 84],
-    // MUSIC BOX IS DELIBERATELY ABSENT, against the parent's own [72,100]. The
-    // musical tier exists to stop shrieks and mud, and a music box an octave
-    // low is neither — but the window would have moved trap's whole melody
-    // (MIDI 56..72) up two octaves, which is a different genre, not a fixed one.
+    // music box: the parent's own window, RESTORED. It was deliberately absent
+    // for one release because a bare per-note fold would have mangled trap's
+    // melody — but the register home (audio/transport.js) now moves the WHOLE
+    // line by octaves first, contour intact, so trap's plinks land in the
+    // register a music box actually has tines for.
+    music_box: [72, 100],
     // voices
     ahh_choir: [48, 84], ohh_voices: [48, 84], solo_vox: [50, 84],
+    synth_voice: [48, 88],
+    // pianos + EPs — genuinely wide, so the entry is the real compass (a
+    // grand's 88 keys; a Rhodes 73's E1..E7 held to the zones' top root) and
+    // the row exists so the table covers everything choosable rather than to
+    // clamp: nothing the composer writes leaves these bounds today
+    yamaha_grand_piano: [21, 108], bright_yamaha_grand: [21, 108],
+    upright_piano: [21, 108], felt_piano: [21, 108],
+    rhodes_ep: [28, 96], electric_piano: [28, 96], legend_ep_2: [28, 96],
+    // string sections — contrabass bottom to violin-section top
+    strings: [28, 96], slow_strings: [28, 96], synth_strings_1: [28, 96],
+    // THE GM SYNTH PATCHES. The parent leaves real synths unclamped, but these
+    // are one-zone SAMPLES of synths (warm_pad: a single zone rooted at 84),
+    // exempt from the zone window by design (ROOT_SPAN_MIN in voices.js) — so
+    // without a row here they had NO bounds at all, and boombap's warm pad was
+    // being asked for MIDI 21: rate 0.026, a rumble where a pad should be.
+    // Keyboard-honest windows; the pads reach a fourth lower than the leads.
+    saw_wave: [36, 96], square_lead: [36, 96], charang: [36, 96],
+    fifth_sawtooth_wave: [36, 96], echo_drops: [36, 96],
+    polysynth: [36, 96], warm_pad: [33, 96], halo_pad: [36, 96],
+    metal_pad: [36, 96], bowed_glass: [48, 96],
     // the bass chair
     acoustic_bass: [28, 60],
   };
