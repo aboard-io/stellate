@@ -641,7 +641,30 @@
       // the pitches the quote sounds are the pitches the chorus will sound).
       // Everything build() holds back for an arrival comes off — a quote does
       // not fade in, it states.
-      head.stack[0].slots = [S.topline];
+      // ONE PHRASE IS NOT ONE VOICE. A box deals its slots ACROSS the genre's
+      // voices (derive.js: voice v reads phrase v % nP), so a single slot is
+      // handed to EVERY voice — and with the band stripped off around it, "the
+      // hook on its own" came out as the hook and its own octave, or two horns
+      // on the same pitches a few milliseconds apart. That is a flanger, not a
+      // statement. The second slot is `sparse` — two notes a bar, its own walk
+      // — so the voice that is not stating the tune punctuates it instead of
+      // copying it, while voice 0 still carries the quote (pi = 0).
+      //
+      // ...BUT ONLY WHERE THERE IS A VOICE TO SPARE, and the measurement that
+      // forced the condition is worth keeping: a PAD voice takes its pitches
+      // from the chord and only its rhythm from the phrase, so on a genre that
+      // comps (toto, citypop, jodeci — `realize(0) === "pad"`, with one line
+      // voice playing from bar 1) handing the second voice a companion left
+      // the quoted MELODY nowhere at all. Twenty-five genre/seed pairs stopped
+      // quoting. The doubling was never those genres' problem anyway: it comes
+      // from two LINE voices reading the same phrase, so that is the test —
+      // count the line voices that are actually in the box from the top, and
+      // if only one of them can state the tune, let it have the whole deal.
+      const spare = [];
+      for (let v = 0; v < (G.voices || 1); v++)
+        if ((G.realize ? G.realize(v) : "line") !== "pad" &&
+            (G.entry ? G.entry(v) : 0) === 0) spare.push(v);
+      head.stack[0].slots = spare.length > 1 ? [S.topline, S.sparse] : [S.topline];
       head.env = null; head.lvl = null; head.rev = null; head.mot = null;
       head.bassop = null;
       if (kit) head.kit = chance(r, 0.5) ? "sparse" : "nodrums";
@@ -652,6 +675,16 @@
       // the hook itself, or the riff under the pad. Everything build() holds
       // back for an arrival (the fade, the pulled level, the thinned kit)
       // comes off, because the not-arriving is the gesture.
+      // A COLD OPEN IS LEFT ALONE, and it is worth writing down why, because
+      // the obvious repair is to give the one-slot branch the pad its sibling
+      // has. MEASURED over 348 composed songs, that makes it WORSE — cold
+      // doubling 11 boxes → 13. Adding a slot does not remove the deal, it
+      // re-partitions it: two phrases across four voices is two doubled pairs
+      // where one phrase across four was one. What actually exposes a double is
+      // having nothing else in the bar, and cold is the one opening that keeps
+      // the whole kit and the bass (`head.kit = null` below is the FULL kit,
+      // not none), so the band covers it. The naked opening is `quote`, and
+      // that is the one that changed.
       head.stack[0].slots = chance(r, 0.5) ? [S.hook] : [S.riff, S.pad];
       head.env = null; head.lvl = null; head.rev = null; head.mot = null;
       head.kit = null; head.bassop = null;

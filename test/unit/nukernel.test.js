@@ -5814,11 +5814,23 @@ console.log("the songwriter's read — lengths, irregularity, memory, stops, voi
       const song = C.compose(gk, s), head = song.song[0];
       if (head.cue !== "quote") continue;
       n2++;
-      // STRUCTURAL: the intro plays slot 5 and nothing else, and slot 5 is
-      // what the record later sings — the chorus's own topline, which is the
-      // only place in this composer that slot ever goes.
-      ok(JSON.stringify(head.stack[0].slots) === "[5]" && head.stack.length === 1,
-         gk + "/" + s + ": a quote intro is not playing the topline alone");
+      // STRUCTURAL: the intro STATES slot 5 — it is dealt first, so it is the
+      // material voice 0 plays — and slot 5 is what the record later sings, the
+      // chorus's own topline, which is the only place in this composer that
+      // slot ever goes.
+      //
+      // This used to read `slots === "[5]"`, and pinning the ONE-slot deal is
+      // what let the defect in §51(b) live here: a box hands each phrase to
+      // every voice v ≡ pi (mod nP), so one slot is not one voice, it is the
+      // same rendered phrase on all of them — the hook and its own octave, with
+      // the composer having already taken the drums and the bass off. "Alone"
+      // has to be a statement about the MATERIAL, so it is written that way:
+      // the topline leads the deal, and what is beside it may only be `sparse`
+      // (two notes a bar, its own walk) — never a second real part.
+      ok(head.stack.length === 1 && head.stack[0].slots[0] === 5 &&
+         head.stack[0].slots.slice(1).every(i => i === 6),
+         gk + "/" + s + ": a quote intro is not stating the topline alone " +
+         "(slots " + JSON.stringify(head.stack[0].slots) + ")");
       const later = song.song.slice(1).find(b =>
         b.stack.some(e => e.slots.includes(5)));
       ok(!!later, gk + "/" + s + ": the intro quotes a hook the record never states");
@@ -6814,20 +6826,32 @@ console.log("the master harmonization engine — one tonality, every added voice
   // carrying a sixteenth-note hat stroke for stroke (kernel.js moveTime — the
   // crash-wash fix). A hash here is a tripwire on accidental drift, so an
   // argued change to the drums re-measures it; it does not get weakened.
+  // ...and TWELVE more moved on 2026-08-16, for the two repairs in §51, with an
+  // argued reason each. blues and jazz are the anchors themselves: the blues
+  // kit's off-beat eighths are now placed by hand in the nudge lane, and the
+  // jazz comment beside them stopped claiming a shuffle can be read off the
+  // swing dial — it bends odd sixteenths, and both kits are written on even
+  // ones. bossa draws `ride`/`tomtime`, which no longer sweep the LEFT FOOT
+  // onto the plate it was already playing under. The other nine never touched
+  // their anchors at all: they draw a solo-edged opening, whose first bar now
+  // sounds ONE lane instead of the whole pitched layer ("a quote IS the melody
+  // alone", compose.js), or a quote whose deal changed. The forty-six rows
+  // that draw none of the three did NOT move, which is what says these are
+  // those three changes and not a fourth.
   const REF = { simple: "59e6bbccf152", fugue: "28bd4816aea5", acid: "0611a30234fe",
-    newwave: "d479d03fc358", vaporwave: "6038a5ad3c29", blues: "b4d746d40cde",
-    rock: "5b0638589dd6", gregorian: "e9e5506ebc03", bulgarian: "1c6e24bc4e58",
-    spem: "fe970b7b00f7", counterpoint: "25818b5f4144", neoclassical: "84a10e704550",
-    drone: "55b6a223f5c5", sludge: "5745aec1ef02", tango: "31ccb349fe82",
-    deathmetal: "8e37cc6c23e7", eurythmics: "659d98a1aac1", isley: "5dda0c12a84c",
-    toto: "858359aa7ab5", jodeci: "8075db9e55ed", beatles: "364e1f38e57c",
+    newwave: "d479d03fc358", vaporwave: "6038a5ad3c29", blues: "7ab1afc4b18e",
+    rock: "5b0638589dd6", gregorian: "4de589451798", bulgarian: "b1567d4849e7",
+    spem: "fe970b7b00f7", counterpoint: "def5746d9dab", neoclassical: "84a10e704550",
+    drone: "55b6a223f5c5", sludge: "5745aec1ef02", tango: "451fb8967612",
+    deathmetal: "1bd247981e0f", eurythmics: "659d98a1aac1", isley: "5dda0c12a84c",
+    toto: "858359aa7ab5", jodeci: "d8e045832fed", beatles: "8690d077ccbb",
     steely: "e253dcb6e03c", postrock: "89753782089f", boombap: "6f720e4e55c7",
     trap: "71f4effe33d2", house: "01351b861ddc", garage: "08246e315cbc",
     dnb: "8ff495da1ee9", disco: "f8355f5e40ca", funk: "0fcf09bd9114",
     motown: "9b5e3f90e3c4", rnb: "46cf80b96895", gospel: "8acbcf41ec97",
     reggae: "30f63535c3b7", dub: "9488d28b22b6", ska: "2a968bb0154f",
-    afrobeat: "ee953899945c", bossa: "a80142d750bc", countrypop: "900656abd54f",
-    synthpop: "2c1f8f3b879b", shoegaze: "229fa1b09670", citypop: "317fd2caf3c4",
+    afrobeat: "ee953899945c", bossa: "64c65c2b95b1", countrypop: "457ae63a4a73",
+    synthpop: "2c1f8f3b879b", shoegaze: "a14544749e08", citypop: "317fd2caf3c4",
     punk: "0be5aaaa6134", ambient: "066d2634daf1", techno: "c76899eec976",
     solo: "bd4d51b66ed6", vocal: "ea099fbc12d1", backing: "dc681b7608c8",
     riff: "e5974f77ea07", pad: "284988fc92d1",
@@ -6836,7 +6860,7 @@ console.log("the master harmonization engine — one tonality, every added voice
     // tripwire, and the fifty rows above it did NOT move when these eight were
     // spliced in, which is the proof that a new anchor is an addition and not
     // an edit to the table's existing sound.
-    jazz: "60353ff94432", bodiddley: "6d65deba5f42", chuckberry: "69a8e26199e8",
+    jazz: "18f55c904384", bodiddley: "6d65deba5f42", chuckberry: "69a8e26199e8",
     doowop: "00dc69e9c6a8", skiffle: "672f68713330", minimalism: "9f06ff4c0613",
     kraftwerk: "d67bd8e0ecb5", electro: "c9d21f5f0711" };
   for (const gk of GK) {
@@ -7639,6 +7663,258 @@ console.log("the loop ends where the music does, and the tape carries the whole 
        "instrument's loop is a fact about the sample, not a default");
   }
 }
+
+
+/* ------------------------------- 51. THE CHESS BAND PLAYS AGAIN, AND A VOICE
+   ANNOUNCES ITSELF ONLY ONCE
+   Two reports from Paul on one afternoon, and both turned out to be the same
+   shape of mistake — a comment describing music the code was not making:
+
+     "The drums in Chicago 1952 are completely off."
+     "Intros seem weirdly doubled."
+
+   (a) THE SHUFFLE IS IN THE HAND, NOT ON THE DIAL. `swing` bends ODD
+       sixteenths. Every hit on the blues kit — kick 0/6/8, snare 4/12, ride on
+       all eight eighths, pedal hat 4/12 — is written on an EVEN one, so the
+       anchor's declared `swing: 1/3` reached exactly ONE hit in a twelve-bar
+       form out of 183 (the turnaround crash, on step 15), and the lane's own
+       comment said "shuffled by swing" about a lane that had never shuffled.
+       The GUITAR meanwhile swung, because a line's odd sixteenths are odd:
+       measured at ~107 bpm the two players were up to 47 ms apart, which is
+       not stiffness, it is two people in different time. The repair is the one
+       the `jazz` anchor already documents — the off-beat eighths placed by
+       hand in the nudge lane — and the laws here say what "placed by hand" has
+       to MEAN, so the next hand that edits the array has to keep the shuffle
+       rather than keep the numbers.
+
+   (b) A NAKED OPENING STATES ITS MATERIAL ONCE. A box deals its slots ACROSS
+       the genre's voices (derive.js: voice v reads phrase v % nP), so a
+       ONE-slot box hands the same rendered phrase to every voice, separated
+       only by `reg`. Everywhere else in a record that is a colour inside a
+       band; in an intro the composer has already taken the drums and the bass
+       off, so it is the whole texture — punk's quote came out as one riff and
+       its own octave, jazz's as two horns on the same pitches six milliseconds
+       apart, which is a flanger and not two players. Measured over 348
+       composed songs (every genre × seeds 1,2,3,5,7,11): the naked `quote`
+       opening had two PLAYING lanes in constant-interval parallel in 4 of 30
+       boxes — one of them, jazz/7, at interval ZERO — and a solo-edged first
+       bar carried more than one lane in 31 of 67. After the repair: 0 and 0.
+
+       Two things the repair had to learn the hard way, both kept as
+       conditions in compose.js and kernel.js rather than as prose:
+       a PAD takes its pitches from the CHORD and only its rhythm from the
+       phrase, so on a genre that comps (toto, citypop, jodeci) giving the
+       second voice a companion left the quoted MELODY nowhere at all — 25
+       genre/seed pairs stopped quoting — and the same fact is why the law
+       here counts non-pad lanes only: two pads in parallel is voicing.
+       And `cold` was deliberately left alone: it keeps the whole kit and the
+       bass, and giving it a second slot measured WORSE (11 doubled boxes →
+       13), because two phrases across four voices is two doubled pairs where
+       one phrase across four was one. */
+console.log("the Chess band plays again, and a voice announces itself only once");
+{
+  // ---- (a) the shuffle ----
+  // THE ROOT CAUSE, stated algebraically, because it is the fact that makes
+  // every nudge sidecar in the table necessary rather than decorative.
+  for (let i = 0; i < 16; i += 2)
+    ok(K.swing({ swing: 1 / 3 }, i) === 0,
+       "the swing dial reached step " + i + ", an EVEN sixteenth — if it can bend " +
+       "these, the hand-placed shuffles in blues and jazz are the wrong repair");
+  ok(K.swing({ swing: 1 / 3 }, 1) > 0,
+       "the swing dial no longer bends odd sixteenths at all");
+
+  const B51 = GENRES.blues, N51 = 16;
+  const dr51 = K.drums(P, { ...B51, humanize: 0 }, B51.bars);
+  const stepOf = e => Math.round(e.t) % N51;
+  const lateOf = e => e.t - Math.floor(e.t + 1e-9);
+  const off8 = dr51.filter(e => stepOf(e) % 4 === 2);      // the ands of every beat
+  const onBeat = dr51.filter(e => stepOf(e) % 4 === 0);    // 1, 2, 3, 4
+
+  ok(off8.length > 0, "Chicago 1952 sounds nothing on an off-beat eighth — the " +
+     "shuffle has nowhere to live");
+  // THE SHUFFLE EXISTS. Every off-beat eighth arrives late, all by the same
+  // amount: a shuffle is one ratio, not a scatter.
+  const lates = new Set(off8.map(e => +lateOf(e).toFixed(6)));
+  ok(lates.size === 1,
+     "Chicago 1952's off-beat eighths arrive at " + lates.size + " different " +
+     "places (" + [...lates].join(", ") + ") — a shuffle is one ratio for the " +
+     "whole kit, not a lane-by-lane opinion");
+  const swung = [...lates][0];
+  // ...and it is AUDIBLY a shuffle and still ITS OWN step: a third of a step is
+  // ~62 ms at this tempo, and half a step is the ceiling because a hit pushed
+  // further is nearer the next step than the one it was written on — which is
+  // why a literal 2:1 triplet (6/9) is not sayable in the nudge alphabet and
+  // 1.6:1 (4/9) is the shuffle a rhythm section actually plays.
+  ok(swung >= 1 / 3 && swung < 0.5,
+     "Chicago 1952's off-beat eighths sit " + swung.toFixed(3) + " of a step late — " +
+     "a shuffle has to be past a third of a step to be heard as one and inside " +
+     "half a step to still belong to its own beat");
+  // THE BEAT ITSELF DID NOT MOVE. A shuffle bends the ands; it does not drag.
+  ok(onBeat.every(e => lateOf(e) < 1e-9),
+     onBeat.filter(e => lateOf(e) >= 1e-9).length + " on-beat hit(s) in Chicago " +
+     "1952 arrive late — the shuffle leaked onto the beat and became a drag");
+  // THE BACKBEAT SURVIVES: 2 and 4, dead on, which is the other half of what a
+  // blues band sounds like and the thing a global nudge would have eaten.
+  const snare = dr51.filter(e => e.d === "s" && !e.fill);
+  ok(snare.length > 0 && snare.every(e => [4, 12].includes(stepOf(e)) && lateOf(e) < 1e-9),
+     "Chicago 1952's backbeat is no longer 2 and 4 on the grid");
+  // NO LIMB FLAMS AGAINST ANOTHER. Two lanes written on the SAME step have to
+  // land at the same time — blues's kick plays the and-of-2 with the ride, and
+  // leaving it on the grid while the ride shuffled would have flammed them 62 ms
+  // apart at the busiest point in the bar, which is worse than not shuffling.
+  // (Deliberately a law about THIS anchor and not the table: toto's `s.disp`
+  // lays the snare back against a kick on the beat on purpose, and that is what
+  // a laid-back backbeat IS.)
+  const atStep = new Map();
+  for (const e of dr51) {
+    if (e.grace) continue;
+    const key = Math.floor(e.t / N51) + ":" + stepOf(e);
+    let g51 = atStep.get(key); if (!g51) atStep.set(key, g51 = []);
+    g51.push(e);
+  }
+  const flams = [...atStep.values()]
+    .filter(g => new Set(g.map(e => +e.t.toFixed(6))).size > 1);
+  ok(flams.length === 0,
+     flams.length + " step(s) in Chicago 1952 have two limbs written together and " +
+     "landing apart — " + (flams[0] || []).map(e => e.d + "@" + e.t.toFixed(3)).join("/"));
+  // A NUDGE MOVES A HIT; IT NEVER ADDS OR REMOVES ONE. Stripping the sidecars
+  // has to give back the same number of hits in the same bars.
+  const strip = k => Object.fromEntries(Object.entries(k).filter(([d]) => d[0] !== "~"));
+  const flat51 = K.drums(P, { ...B51, humanize: 0, kit: strip(B51.kit),
+                              fill: strip(B51.fill) }, B51.bars);
+  const perBar = ev => ev.reduce((a, e) => {
+    const b = Math.floor(e.t / N51); a[b] = (a[b] || 0) + 1; return a;
+  }, []);
+  ok(JSON.stringify(perBar(flat51)) === JSON.stringify(perBar(dr51)),
+     "the nudge lanes changed WHICH BAR the hits are in (" +
+     perBar(flat51).join(",") + " → " + perBar(dr51).join(",") + ") — a hand moves " +
+     "a stroke inside its own bar, it does not add one and it does not push one " +
+     "over the bar line");
+
+  // THE HAND MOVES, THE FOOT STAYS. `ride` and `tomtime` sweep the hats onto
+  // another surface, and `f` is a hat by taxonomy but a FOOT by limb: sweeping
+  // it in deleted the left foot outright on the two anchors whose ride already
+  // covers 2 and 4, which is pure subtraction dressed as an arrangement.
+  for (const gk of GK) {
+    const k = GENRES[gk].kit;
+    if (!k || !(Array.isArray(k.f) && k.f.some(x => x))) continue;
+    for (const op of ["ride", "tomtime"]) {
+      const out = K.KITOPS[op](k);
+      ok(Array.isArray(out.f) && out.f.some(x => x),
+         gk + "/" + op + " deleted the pedal hat — a kit op that moves the HAND " +
+         "to another surface may not take the left foot with it");
+    }
+  }
+
+  // ---- (b) the doubling ----
+  const NS51 = require("../../nukernel/song.js");
+  const C51 = require("../../nukernel/compose.js");
+  const SEEDS51 = [1, 2, 3, 5, 7, 11];
+  const barsOf51 = (s, si) => D.songBars(s.song, s.slots, s.groove, s.swing, si, {});
+  // two lanes DOUBLE each other when most of the shorter one's onsets have a
+  // partner within a 64th (humanize drift, not a rhythm) and every partnered
+  // interval is the same number of semitones — an octave copy and a unison
+  // flange are the same defect at two intervals
+  const doubles51 = (A, B2) => {
+    const oa = [...new Map(A.map(e => [e.t.toFixed(3), e])).values()];
+    const ob = [...new Map(B2.map(e => [e.t.toFixed(3), e])).values()];
+    if (oa.length < 2 || ob.length < 2) return false;
+    let nn = 0, iv = null;
+    for (const a of oa) {
+      const b = ob.find(x => Math.abs(x.t - a.t) <= 0.25);
+      if (!b) continue;
+      if (iv === null) iv = b.n - a.n; else if (b.n - a.n !== iv) return false;
+      nn++;
+    }
+    return nn > 1 && nn / Math.min(oa.length, ob.length) >= 0.75;
+  };
+  // PLAYERS ONLY. A pad takes its pitches from the chord and only its rhythm
+  // from the phrase, so two pads — or a pad and the line it comps under — moving
+  // in parallel is voicing, which is what comping IS. The defect is two PLAYERS
+  // handed the same part, so the lanes that count are the non-pad ones.
+  const lanesOf51 = (evs, playersOnly) => {
+    const m = new Map();
+    for (const e of evs) if (e.kind === "line" && !(playersOnly && e.pad)) {
+      let a = m.get(e.lv); if (!a) m.set(e.lv, a = []); a.push(e);
+    }
+    return m;
+  };
+  const anyDouble51 = lanes => {
+    const vs = [...lanes.keys()];
+    for (let i = 0; i < vs.length; i++)
+      for (let j = i + 1; j < vs.length; j++)
+        if (doubles51(lanes.get(vs[i]), lanes.get(vs[j]))) return vs[i] + "+" + vs[j];
+    return null;
+  };
+  let soloBoxes = 0, soloBad = [], quoteBoxes = 0, quoteBad = [], silent = 0;
+  for (const gk of GK) for (const seed of SEEDS51) {
+    let r51; try { r51 = NS51.load(C51.compose(gk, seed)); } catch (e) { continue; }
+    if (!r51 || !r51.ok) continue;
+    const s51 = r51.song;
+    s51.song.forEach((sec, si) => {
+      if (sec.role !== "intro") return;
+      const bars51 = barsOf51(s51, si);
+      if (!bars51.length) { silent++; return; }
+      // THE DEAL, measured on the RENDERED box rather than on the slot array,
+      // because "two slots" is the mechanism and "two players are not one
+      // player twice" is the law. A quote is the opening the composer strips to
+      // no drums and no bass, so it is the one where a doubled part is the
+      // whole texture: no two PLAYING lanes in it may be constant-interval
+      // copies of one another. (Measured pre-repair: 4 of 30 boxes, one of them
+      // — jazz/7 — at interval ZERO, two horns on the same pitches.)
+      if (sec.cue === "quote") {
+        quoteBoxes++;
+        const all = [];
+        for (const b of bars51) for (const e of (b.ev || [])) all.push(e);
+        const hit = anyDouble51(lanesOf51(all, true));
+        if (hit) quoteBad.push(gk + "/" + seed + " lanes " + hit);
+      }
+      // THE EDGE. compose.js bridges `quote` and `padin` onto the `solo` intro
+      // kind with the words "a quote IS the melody alone"; solo has to mean one
+      // lane, or the announcement is the flange the report described.
+      if (sec.intro === "solo") {
+        soloBoxes++;
+        const lanes = lanesOf51(bars51[0].ev || []);
+        if (lanes.size > 1)
+          soloBad.push(gk + "/" + seed + " lanes " + [...lanes.keys()].join(","));
+      }
+    });
+  }
+  ok(quoteBoxes > 20 && soloBoxes > 40,
+     "the corpus produced only " + quoteBoxes + " quote box(es) and " + soloBoxes +
+     " solo-edged opening(s) — this section is measuring nothing");
+  ok(silent === 0, silent + " intro box(es) render no events at all — songBars " +
+     "drops an empty box, so a thinned opening would vanish from the record");
+  ok(quoteBad.length === 0,
+     quoteBad.length + " quote box(es) state their hook twice — one phrase dealt " +
+     "to two playing lanes, which with the band stripped off is the whole sound: " +
+     quoteBad.slice(0, 4).join(" | "));
+  ok(soloBad.length === 0,
+     soloBad.length + " solo-edged opening(s) sound more than one lane in their " +
+     "first bar: " + soloBad.slice(0, 4).join(" | "));
+
+  // ...AND IT HAS TEETH. Put a quote box back to one slot and the doubling
+  // comes back, on the anchor Paul would have been listening to — so the two
+  // laws above are load-bearing and not a description of an accident.
+  {
+    const r51 = NS51.load(C51.compose("punk", 5));
+    ok(r51.ok, "punk/5 no longer composes — the teeth below measure nothing");
+    const s51 = r51.song, si = s51.song.findIndex(x => x.cue === "quote");
+    ok(si >= 0, "punk/5 no longer opens with a quote — pick another witness");
+    if (si >= 0) {
+      const one = clone(s51);
+      one.song[si].stack[0].slots = [one.song[si].stack[0].slots[0]];
+      one.song[si].intro = null;
+      const all = [];
+      for (const b of barsOf51(one, si)) for (const e of (b.ev || [])) all.push(e);
+      ok(!!anyDouble51(lanesOf51(all, true)),
+         "a one-slot quote box on punk/5 no longer doubles — either the " +
+         "deal changed in derive.js (and the compose-side repair is now dead " +
+         "weight) or this detector stopped detecting");
+    }
+  }
+}
+
 
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");

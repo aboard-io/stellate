@@ -388,19 +388,40 @@
       // most of what "sounds like a blues band" means, and neither lane
       // existed to write until the kit grew to twelve. The kick and snare are
       // untouched: the groove did not change, the metal did.
+      //
+      // AND THE SHUFFLE IS IN THE NUDGE LANE, NOT ON THE SWING DIAL. `swing`
+      // bends ODD sixteenths; every hit on this kit is written on an EVEN one,
+      // so for as long as the ride said "shuffled by swing" it was not shuffled
+      // at all — the guitar swung its sixteenths and the drummer played
+      // straight eighths underneath, two players 47 ms apart at this tempo,
+      // which is what "the drums are completely off" sounds like. The off-beat
+      // eighths (steps 2/6/10/14) are placed BY HAND, four ninths of a step
+      // late, exactly as the `jazz` anchor places its "da" — the alphabet stops
+      // at four because a hit nudged further is nearer the next step than its
+      // own, so a literal 2:1 triplet is not sayable here and 1.6:1 is the
+      // shuffle a rhythm section actually plays. The KICK'S and-of-2 is on that
+      // same off-eighth and moves WITH the ride; leaving it on the grid would
+      // flam it against the cymbal at the busiest point in the bar.
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             "~k":[0,0,0,0, 0,0,4,0, 0,0,0,0, 0,0,0,0],  // the and-of-2 rides along
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
-             r: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],     // shuffled by swing
-             f: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },   // the left foot
+             r: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             "~r":[0,0,4,0, 0,0,4,0, 0,0,4,0, 0,0,4,0],  // the "da", placed by hand
+             f: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },  // the left foot
       // A HAND, NOT A GRID. Nothing else in the table moves off the grid at
       // all; a blues band is the one place where that reads as wrong rather
       // than as tight. Five hundredths of a step, redrawn every bar, seeded —
       // the same take every time you press play.
       humanize: 0.05,
-      // ...and the turnaround gets the tom the twelfth bar has always had
+      // ...and the turnaround gets the tom the twelfth bar has always had. Its
+      // two off-eighth strokes (the snare's and-of-3, the low tom's and-of-4)
+      // carry the same hand as the ride above; the beat-4 tom does not, because
+      // it is on the beat.
       fill: { s: [0,0,0,0, 1,0,0,0, 0,0,1,0, 0,0,0,0],    // bar 12: the turnaround
+              "~s":[0,0,0,0, 0,0,0,0, 0,0,4,0, 0,0,0,0],
               m: [0,0,0,0, 0,0,0,0, 0,0,0,0, 1,0,0,0],
               l: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,0],
+              "~l":[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,4,0],
               x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,8] },
       tone: { wave: "sawtooth", cut: 1100, q: 3.2, atk: .006, rel: .9, gain: .27, verb: .14 },
       words: ["subject", "answer — only(gate, rotate 8)"],
@@ -1948,8 +1969,10 @@
       // kit, same walk. Two fields separate them and both are in this entry —
       // the ALPHABET (twelve bars of one dominant seventh against an eight-bar
       // turnaround of maj7/m7/dom7 that leaves the key on the VI7) and the
-      // RIDE (a shuffle read off the swing dial against a "da" placed by hand
-      // in the nudge lane).
+      // RIDE — both anchors place their "da" by hand in the nudge lane (there
+      // is no shuffle to be had off the swing dial: it bends odd sixteenths and
+      // both kits are written on even ones), but the blues rides straight
+      // eighths and this one plays spang-a-lang, quarter then two.
       near: "blues",
       instr: ["bright_yamaha_grand", "tenor_sax", "trumpet"],
       drumkit: "jazz",

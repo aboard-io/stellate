@@ -1600,8 +1600,19 @@
   // slower passes through untouched, which is every straight-eighth genre in
   // the table, so `ride` still means exactly what it meant there.
   const MINGAP = 2;                       // an eighth, on the sixteen-step grid
+  // ...and THE HAND IS NOT THE FOOT. `f` is a hat by taxonomy — it is the hat,
+  // closed by the pedal — but it is played by the left foot, and "the hand moves
+  // to the ride" is a statement about the right hand only. Sweeping the pedal in
+  // deleted a lane no operator asked about: on blues and jazz, whose left foot
+  // marks 2 and 4 under a ride that already plays them, `ride` was PURE
+  // DELETION — it took away the quietest load-bearing thing on a jazz kit and
+  // put nothing back — and `tomtime` turned that foot into a floor tom. With the
+  // foot left alone, `ride` on a kit that is already on the ride is the identity
+  // (there is no hand to move), and on bossa the hand goes to the plate while
+  // the foot keeps its own time, which is what those two limbs actually do.
+  const HANDHATS = HATS.filter(d => d !== "f");
   function moveTime(k, dest) {
-    const src = HATS.filter(d => hits(k && k[d]));
+    const src = HANDHATS.filter(d => hits(k && k[d]));
     if (!src.length) return cp(k);
     let merged = new Array(16).fill(0);
     for (const d of src) merged = mergeInto(merged, K16(k[d]));
@@ -1612,7 +1623,7 @@
         last = i; return v;
       });
     }
-    return { ...without(k, d => HATS.includes(d)), [dest]: mergeInto(k[dest], merged) };
+    return { ...without(k, d => HANDHATS.includes(d)), [dest]: mergeInto(k[dest], merged) };
   }
   function withChance(k, f) {
     const out = cp(k);
@@ -1937,9 +1948,13 @@
     // a pad is a pad wherever the stream came from: the kernel's own render
     // stamps `part`, the app's derive layer also stamps a `pad` flag
     const isPad = e => e.kind === "line" && (e.part === "pad" || e.pad);
+    // WHICH LANE AN EVENT IS IN, whichever stream it came from: the kernel's
+    // own render numbers its voices `v`, the app's derive layer restamps them
+    // `lv` so a stacked layer's voices keep going past the authority's.
+    const laneOf = e => (e.lv == null ? e.v : e.lv);
     if (kind === "padin") {
       // the pad swells alone and the band enters at bar 2. A stream with no
-      // pad in it degrades to the whole pitched layer — solo — rather than to
+      // pad in it degrades to the whole pitched layer rather than to
       // a bar of dead air, which is what total means here.
       const pads = bar.filter(isPad);
       return [...(pads.length ? pads : bar.filter(e => e.kind === "line")), ...rest];
@@ -1994,7 +2009,32 @@
       // sound of a band starting.
       return [D(0, "k", 1, 9), D(0, "x", 1, 9), ...rest].sort((a, b) => a.t - b.t);
     }
-    if (kind === "solo")  return [...bar.filter(e => e.kind === "line"), ...rest];
+    // SOLO MEANS ONE VOICE. It used to keep the whole pitched layer, which on
+    // any genre whose voices are one phrase dealt twice — the octave-doubled
+    // riff, the two horns in unison — announced the tune as a flange rather
+    // than as a player: the same notes twice, a fixed interval or a few
+    // milliseconds apart. compose.js bridges `quote` onto this kind with the
+    // words "a quote IS the melody alone"; this is that sentence in code.
+    //
+    // THE LOWEST LANE STATES IT, and the rule is that blunt on purpose: a box
+    // deals its FIRST slot to voice 0 (derive.js: voice v reads phrase v % nP),
+    // so the lowest lane is by construction the one holding the material the
+    // section is ABOUT. The obvious alternative — keep whichever lane is
+    // busiest in the bar — was written first and measured wrong: on a genre
+    // whose voice 0 comps (toto, citypop, jodeci — `realize(0) === "pad"`) a
+    // two-note companion out-counts a held chord, and the opening states the
+    // companion while the quoted hook never sounds. Thirty genre/seed pairs
+    // failed the quote gate that way. Choosing by lane index cannot do that.
+    // The cost is that on a comping genre the head is announced in chords
+    // before the horns come in, which is a piano trio, not a mistake. A stream
+    // carrying no lane numbers at all keeps what it had.
+    if (kind === "solo") {
+      const lines = bar.filter(e => e.kind === "line");
+      const named = lines.filter(e => laneOf(e) != null);
+      if (!named.length) return [...lines, ...rest];
+      const one = Math.min(...named.map(laneOf));
+      return [...named.filter(e => laneOf(e) === one), ...rest];
+    }
     if (kind === "kit")   return [...bar.filter(e => e.kind === "hit"), ...rest];
     if (kind === "swell") {
       // the first bar alone fades up — a fade-in that does not eat the section
