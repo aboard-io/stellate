@@ -1596,12 +1596,28 @@ async function pass(page, url) {
                   `against a same-spec control of ${eqp.ctl.toExponential(2)}, ` +
                   `+12 lo on bass ${eqp.bassd.toExponential(2)}; nodes base ${eqp.base.nodes} ` +
                   `flat ${eqp.flat.nodes} bass-eq ${eqp.lofted.nodes} sec-eq ${eqp.secEq.nodes}`);
-      if (eqp.flatd > eqp.ctl)
+      // THE FLOOR IS STATED, NOT SAMPLED. The control above is printed because
+      // it is the evidence, but it cannot BE the threshold: the renderer's
+      // wobble is intermittent — ten same-spec renders come back in two states
+      // about 4.4e-5 apart, and any given pair may be one of the matching ones
+      // (measured: a control of 7.33e-6 on the same run that read 4.44e-5
+      // between base and flat, both of them the same spec-identical graph).
+      // Gating on one sampled pair just moves the coin flip.
+      //
+      // So: 1e-3, which is twenty times the wobble and five hundred times
+      // below what an EQ that did anything looks like (the +12 dB shelf
+      // beside it measures 5.60e-1). Nothing a filter can do to this signal
+      // fits under that. The EXACT half of the claim is the node ledger below
+      // — flat adds no biquad, node for node — and that is where "flat is the
+      // pre-EQ graph" is actually decided; this is the corroborating listen.
+      const FLOOR = 1e-3;
+      if (eqp.flatd > FLOOR)
         fail(`an all-zero EQ changed the render (worst sample ${eqp.flatd.toExponential(2)}, ` +
-             `past the ${eqp.ctl.toExponential(2)} this renderer moves on its own) — ` +
-             `flat must be the graph of the day before the EQ existed`);
-      else ok(`every flat spelling renders inside the renderer's own noise ` +
-              `(${eqp.flatd.toExponential(2)} <= ${eqp.ctl.toExponential(2)} control)`);
+             `past the ${FLOOR.toExponential(0)} floor) — flat must be the graph of the ` +
+             `day before the EQ existed`);
+      else ok(`every flat spelling renders the pre-EQ graph ` +
+              `(${eqp.flatd.toExponential(2)} under a ${FLOOR.toExponential(0)} floor, ` +
+              `same-spec control ${eqp.ctl.toExponential(2)})`);
       // the base graph may already carry the song's DERIVED tone (the desk
       // seats itself now — audio/mixer.js derivedPartTone/derivedSecEq), so
       // "flat is zero nodes" becomes "an all-zero USER spec is the base graph,
