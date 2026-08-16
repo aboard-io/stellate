@@ -1099,6 +1099,35 @@ export function pruneChannels() {
     dropRoute(c.key);
   }
 }
+// WHAT THE DESK SAYS, THE BAND DOES — the join, re-made on an edit.
+//
+// channelFor is lazy on purpose: a box's channel is re-derived when the
+// transport next REACHES that box, and until then the map keeps the channel
+// that box had on an earlier pass, holding the params it had THEN. The
+// sounding box is fine — the tick re-derives it under the playhead — and
+// every other cached channel is a ghost: a per-part mix that resolves
+// perfectly in chanSpec, and nodes that never heard about it. That is
+// invisible from the ear (a ghost is scheduled nothing) and plainly visible
+// to anything that READS the graph, __nuMix and the desk surface included,
+// which is exactly how a mix can be right in the model and wrong on the desk.
+//
+// So re-derive every cached channel whose box still exists. channelFor
+// no-ops on the ones whose spec did not move, so an edit costs precisely the
+// channels it changed; `at` is the ease law's clock passed straight through
+// (the transport's next bar time), so a replaced channel still rings out
+// until its successor's first bar sounds. Returns how many actually rebuilt,
+// so the caller can skip the follow-up an unchanged graph does not need.
+export function refreshChannels(at) {
+  if (!ctx) return 0;
+  const live = new Set(SONG);
+  let n = 0;
+  for (const box of [...CHAN.keys()]) {
+    const c = CHAN.get(box);
+    if (!c || !live.has(box)) continue;          // pruneChannels owns those
+    if (channelFor(box, at).key !== c.key) n++;
+  }
+  return n;
+}
 
 // a new song is a new mix; a changed box may strand a chain
 on("song", () => { if (ctx) dropChannels(); });

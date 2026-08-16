@@ -17,7 +17,7 @@ import { FONT, fontDef, isSynthFont, loadFont, specOf, zoneBufs, drumBufs,
          instrumentsInSong } from "./assets.js";
 import { synthNodes, synthKey, loadSynth, focusSynths, playSynth, playSampled,
          playDrum, line, hit, synthDead, countDrop, playWindow } from "./voices.js";
-import { channelFor, armAutomation, focusKit } from "./mixer.js";
+import { channelFor, armAutomation, focusKit, refreshChannels } from "./mixer.js";
 import { setDelayTime } from "./graph.js";
 import { playSyllable, warm as warmSing, needsWarm, singOff } from "./sing.js";
 
@@ -566,4 +566,34 @@ on("swing", changed);                      // ...and the swing is baked the same
 // the band changed: the register homes are decided per instrument, so the bar
 // list carries the pool's consequences — and the recast chair's zones fetch
 on("pool", changed);
+// ...AND THE SAME LAW ONE TIER DOWN, for the MIX. `changed` rebuilds the bar
+// list — the notes. The desk lives in the channels, and mixer.refreshChannels
+// is where a stale one is re-derived; this is the call that says WHEN, and on
+// which clock. `nextBarTime` while playing is the ease law, unchanged: the
+// moment the first bar scheduled into the new channel sounds, so nothing
+// already in the lookahead is cut. Stopped, there is nothing to ring out and
+// the default (now) is right.
+//
+// A REBUILT CHANNEL COMES UP THE WAY A FRESH ONE DOES — kit gate shut, synth
+// routes unfocused, automation un-armed — because those are the section
+// START's job, and an edit is not a section start. Without the three calls
+// below a mix move mid-box takes the kit away and parks the sweep filter at
+// the BiquadFilter default until the box comes round again, which is up to a
+// whole box of wrong sound bought with a right one. `armAutomation`'s last
+// argument is how far into the box we already are, so the motion is put back
+// where the ear expects it rather than restarted at the top — the same seam
+// the offline bounce's windows use.
+const remix = () => {
+  if (!ctx || !refreshChannels(playing ? nextBarTime : undefined)) return;
+  const sec = playing ? SONG[playingSec] : null;
+  if (!sec) return;
+  const chan = channelFor(sec, nextBarTime), now = ctx.currentTime, sd = stepDur();
+  focusSynths(chan, now);
+  focusKit(chan, now);
+  const first = TL.find(b => b.si === playingSec && b.first);
+  if (first) armAutomation(chan, now, first.barSteps * sd * boxBars(sec), sd * 4,
+                           Math.max(0, now - passStart));
+};
+on("box", remix);
+on("pool", remix);
 on("song", () => { if (playing) stop(); });
