@@ -108,7 +108,10 @@ async function decodeInto(map, key, url) {
   else noteFail(map, key, err);
 }
 // what the gate and the ?debug readout may know about decode health
-window.__nuDecode = () => ({ ...decGate.stats(),
+// `inflight` is the SET ITSELF, named: the drop law reads it to choose silence
+// over a beep, so "which asset is holding this note back, right now" is the
+// only way to tell an honest wait from a reservation that was never released.
+window.__nuDecode = () => ({ ...decGate.stats(), inflight: [...inFlight],
   failed: [...decFails].map(([k, f]) => ({ key: k, runs: f.runs, err: f.err })) });
 
 /* ---------- instrument zones ---------- */
