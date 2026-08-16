@@ -6624,6 +6624,345 @@ console.log("the desk stops flattering — derived per-part (gain, eq)");
   }
 }
 
+/* ------------------------------- 48. GENEALOGY — genre as mixture
+   Every real (place-year) anchor declares `parents` (weighted references to
+   other anchors — the historical claim) and `wants` (the ancestors phase 2
+   still owes the catalog); the fit that measures the claims is
+   nukernel/genealogy.js. The whole layer is ANNOTATION: the one hard law here
+   is (d), that stripping it changes zero rendered bytes — the same
+   absent-equals-neutral discipline as §22, proved by deletion rather than
+   trusted by review. */
+console.log("genealogy — parents reference real anchors, and annotation is inert");
+{
+  const FN = new Set(["simple", "solo", "vocal", "backing", "riff", "pad"]);
+  const real = GK.filter(k => !FN.has(k));
+  // (a) COVERAGE + SHAPE: every real anchor declares both fields; parents
+  // reference existing non-function anchors, never themselves; weights are
+  // positive and sum to ~1 where any are declared at all
+  for (const gk of real) {
+    const g = GENRES[gk];
+    ok(g.parents && typeof g.parents === "object" && !Array.isArray(g.parents),
+       gk + ": no parents annotation");
+    ok(Array.isArray(g.wants) && g.wants.every(w => typeof w === "string" && w),
+       gk + ": wants is not a list of ancestor names");
+    for (const [p, w] of Object.entries(g.parents || {})) {
+      ok(!!GENRES[p], gk + ": parent " + p + " is not an anchor in the table");
+      ok(p !== gk, gk + " is its own parent");
+      ok(!FN.has(p), gk + ": parent " + p + " is a function genre — a role " +
+         "has a job, not children");
+      ok(typeof w === "number" && Number.isFinite(w) && w > 0,
+         gk + ": parent weight for " + p + " is not a positive number");
+    }
+    const ws = Object.values(g.parents || {});
+    if (ws.length) {
+      const s = ws.reduce((a, b) => a + b, 0);
+      ok(Math.abs(s - 1) < 0.05,
+         gk + ": parent weights sum to " + s.toFixed(3) + ", not ~1");
+    }
+  }
+  // ...and the function genres declare nothing: a role is not a tradition
+  for (const gk of GK) if (FN.has(gk))
+    ok(!("parents" in GENRES[gk]) && !("wants" in GENRES[gk]),
+       gk + ": a function genre grew a lineage");
+  // (b) ROOTS ARE ARGUED, NOT ACCIDENTAL: an empty parents object is a claim,
+  // and every root except gregorian (the one true root) must at least name
+  // what it is missing — {} beside an empty wants is an anchor nobody thought
+  // about, and only chant has earned that silence
+  const roots = real.filter(k => !Object.keys(GENRES[k].parents).length);
+  ok(roots.includes("gregorian"),
+     "gregorian is no longer a root — something claims to predate chant");
+  ok(roots.length <= 8, roots.length + " roots — the lineage layer is " +
+     "under-declared, half the table has gone orphan");
+  for (const r of roots) if (r !== "gregorian")
+    ok(GENRES[r].wants.length > 0,
+       r + ": empty parents AND empty wants — an unargued root");
+  // (c) THE PARENT GRAPH IS A DAG: nobody is their own ancestor
+  {
+    const state = new Map();
+    const cyc = k => {
+      if (state.get(k) === 1) return true;
+      if (state.get(k) === 2) return false;
+      state.set(k, 1);
+      for (const p of Object.keys(GENRES[k].parents || {})) if (cyc(p)) return true;
+      state.set(k, 2);
+      return false;
+    };
+    ok(!real.some(cyc), "the parent graph has a cycle");
+  }
+  // (d) BYTE IDENTITY: the annotation reaches NOTHING. Render every genre
+  // with and without parents/wants — identical events, or the fields have
+  // silently become behavior
+  for (const gk of GK) {
+    const g = GENRES[gk], bars = Math.max(4, g.bars);
+    const stripped = { ...g };
+    delete stripped.parents; delete stripped.wants;
+    ok(sig(allEvents(P, g, bars)) === sig(allEvents(P, stripped, bars)),
+       gk + ": stripping the lineage annotation changed the rendered events");
+  }
+  // (e) THE FIT RUNS and produces finite numbers: features, weights, R2 and
+  // residue are all real, so GENEALOGY.md can never be regenerated from NaNs
+  const GY = require("../../nukernel/genealogy.js");
+  for (const gk of real)
+    ok(GY.featuresOf(gk).every(Number.isFinite),
+       gk + ": a genealogy feature is not finite");
+  const fits = GY.fitAll();
+  ok(fits.length === real.length, "the fit does not cover every real anchor");
+  for (const f of fits) {
+    ok(Number.isFinite(f.r2) && f.r2 >= 0 && f.r2 <= 1,
+       f.key + ": fit R2 is not a finite number in [0,1]");
+    ok(Number.isFinite(f.residRms) && f.residRms >= 0,
+       f.key + ": fit residue is not finite");
+    ok(f.fitted.every(w => Number.isFinite(w) && w >= 0),
+       f.key + ": a fitted parent weight is negative or NaN");
+    if (!f.root)
+      ok(Math.abs(f.fitted.reduce((a, b) => a + b, 0) - 1) < 1e-6,
+         f.key + ": normalized fitted weights do not sum to 1");
+  }
+}
+
+/* ------------------------------- 48. ONE TONALITY, EVERY ADDED VOICE SPEAKS IT
+   THE MASTER HARMONIZATION ENGINE (kernel.js harmonizeStage, wired at
+   ui/derive.js sectionEvents through masterCtx). Paul: "when we add patterns
+   and sub voices to sections, that is when a tonality happens — there should
+   be a master harmonization engine." The claims, all score-level:
+
+     (a) THE DON'T-LOSE-WHAT-WE-HAVE LAW: a single-layer song renders
+         BYTE-IDENTICAL to the pre-change engine. REF below was measured at
+         HEAD b1adc27 (2026-08-16, before harmonizeStage existed): sha1 of
+         every section of compose(gk, seed) for seeds 1..3, each section's
+         stack truncated to its authority. Recomputed here and held equal,
+         genre by genre. Plus the structural half: harmonizeStage on a stream
+         with nothing to conform returns the SAME ARRAY.
+     (b) MULTI-LAYER CONFORMANCE, measured against baked PRE-change numbers
+         (same corpus, same metric code, measured at the same HEAD):
+         strong-beat chord-tone coverage strictly up, sustained cross-layer
+         minor-second grinds down to ~0, every conformable note inside the
+         governing scale or the sounding chord, stacked cross-layer unisons
+         down, and the whole render deterministic twice.
+     (c) THE AUTHORITY IS UNTOUCHED: strip the layer's events from a stacked
+         render and what remains is the single-layer render, byte for byte.
+     (d) THE EMERGENT RULING: fugue/spem/counterpoint (the whole
+         `harmony:"emergent"` roster — the counterpoint family) do NOT opt
+         out. Their harm() walk IS a per-bar timeline, and a layer agreeing
+         with it is the continuo's job; their own voices are authority voices
+         and never move (that is (c)). The drones the question worried about
+         — drone, sludge, ambient — are `modal`, not emergent, so a drone is
+         always an authority voice and cannot be made to stop droning.
+
+   The metric reads the FINAL stream sectionEvents ships (windowed, edged,
+   grooved) through D.masterCtx — the same context the engine corrects by, so
+   the measurement and the engine cannot drift apart. Grinds obey the census's
+   rule 1 (§38): a chord-tone-vs-chord-tone second is the chord's own colour
+   and never counts. */
+console.log("the master harmonization engine — one tonality, every added voice speaks it");
+{
+  const crypto = require("crypto");
+  const C = require("../../nukernel/compose.js");
+  const S = require("../../nukernel/song.js");
+  const sha = s => crypto.createHash("sha1").update(s).digest("hex").slice(0, 12);
+  const evsig = ev => JSON.stringify(ev.map(e =>
+    [e.t, e.n, e.d, e.v, e.vel, e.acc, e.sld, e.dur, e.kind, e.layer || ""]));
+
+  // (a) byte-identity — REF measured pre-change at HEAD b1adc27, 2026-08-16
+  const REF = { simple: "59e6bbccf152", fugue: "28bd4816aea5", acid: "0611a30234fe",
+    newwave: "d479d03fc358", vaporwave: "6038a5ad3c29", blues: "b4d746d40cde",
+    rock: "5b0638589dd6", gregorian: "e9e5506ebc03", bulgarian: "1c6e24bc4e58",
+    spem: "fe970b7b00f7", counterpoint: "25818b5f4144", neoclassical: "84a10e704550",
+    drone: "55b6a223f5c5", sludge: "5745aec1ef02", tango: "31ccb349fe82",
+    deathmetal: "8e37cc6c23e7", eurythmics: "659d98a1aac1", isley: "5dda0c12a84c",
+    toto: "858359aa7ab5", jodeci: "8075db9e55ed", beatles: "364e1f38e57c",
+    steely: "9e49dbb4933f", postrock: "89753782089f", boombap: "6f720e4e55c7",
+    trap: "71f4effe33d2", house: "01351b861ddc", garage: "08246e315cbc",
+    dnb: "8ff495da1ee9", disco: "f8355f5e40ca", funk: "0fcf09bd9114",
+    motown: "9b5e3f90e3c4", rnb: "46cf80b96895", gospel: "8acbcf41ec97",
+    reggae: "30f63535c3b7", dub: "9488d28b22b6", ska: "2a968bb0154f",
+    afrobeat: "cce2c8f159ad", bossa: "a80142d750bc", countrypop: "900656abd54f",
+    synthpop: "2c1f8f3b879b", shoegaze: "229fa1b09670", citypop: "317fd2caf3c4",
+    punk: "0be5aaaa6134", ambient: "066d2634daf1", techno: "c76899eec976",
+    solo: "bd4d51b66ed6", vocal: "ea099fbc12d1", backing: "dc681b7608c8",
+    riff: "e5974f77ea07", pad: "284988fc92d1" };
+  for (const gk of GK) {
+    if (!REF[gk]) { ok(false, gk + ": no pre-change reference hash — a new " +
+      "genre needs its single-layer baseline measured and added to REF"); continue; }
+    let acc = "";
+    for (const seed of [1, 2, 3]) {
+      const song = C.compose(gk, seed);
+      for (const sec of song.song) {
+        const one = clone(sec);
+        one.stack = [one.stack[0]];
+        acc += evsig(D.sectionEvents(one, song.slots, song.groove, song.swing).ev);
+      }
+    }
+    ok(sha(acc) === REF[gk],
+       gk + ": a single-layer song no longer renders byte-identical to the " +
+       "pre-harmonization engine (the authority moved)");
+  }
+  {
+    const arr = [{ t: 0, n: 60, dur: 1, kind: "line", v: 0 }];
+    ok(K.harmonizeStage(arr, { conform: () => false, chords: () => [],
+       scalePcs: new Set(), stepsPerBar: 16, rate: 1 }) === arr,
+       "harmonizeStage with nothing to conform did not return the same array");
+  }
+
+  // ---- the measurement kit (identical to the pre-change recipe) ------------
+  const pcOf = n => ((n % 12) + 12) % 12;
+  const chordAtT = (ctx, cache, t) => {
+    const step = t * ctx.rate, bar = Math.floor(step / ctx.stepsPerBar + 1e-9);
+    let cs = cache.get(bar);
+    if (!cs) { cs = ctx.chords(bar); cache.set(bar, cs); }
+    const s = ((step % ctx.stepsPerBar) + ctx.stepsPerBar) % ctx.stepsPerBar;
+    return cs.find(c => s >= c.start - 1e-9 && s < c.start + c.len) || cs[cs.length - 1];
+  };
+  function hMetrics(ev, ctx) {
+    const cache = new Map();
+    const isL = e => ctx.conform(e) && e.dur > 0;
+    const L = ev.filter(isL);
+    const beat = ctx.stepsPerBar / 4;
+    let strongOn = 0, strongTot = 0, viol = 0;
+    for (const e of L) {
+      const c = chordAtT(ctx, cache, e.t), pc = pcOf(e.n);
+      const inC = c.pcSet.has(pc);
+      const s = e.t * ctx.rate;
+      const sb = ((s % ctx.stepsPerBar) + ctx.stepsPerBar) % ctx.stepsPerBar;
+      const r = Math.round(sb);
+      if (Math.abs(sb - r) < 0.45 && r % beat === 0) { strongTot++; if (inC) strongOn++; }
+      if (!inC && !ctx.scalePcs.has(pc)) viol++;
+    }
+    const pitched = ev.filter(e => e.n != null && e.dur > 0 && !e.d &&
+      e.kind !== "sing" && (e.kind === "line" || e.kind === "bass"));
+    let grinds = 0, unis = 0;
+    const minOv = 0.9 / ctx.rate;
+    for (let i = 0; i < pitched.length; i++)
+      for (let j = i + 1; j < pitched.length; j++) {
+        const a = pitched[i], b = pitched[j];
+        if (!isL(a) && !isL(b)) continue;
+        if (a.v === b.v) continue;
+        const ov = Math.min(a.t + a.dur, b.t + b.dur) - Math.max(a.t, b.t);
+        if (ov < minOv) continue;
+        const ic = Math.abs(a.n - b.n) % 12;
+        if (ic === 1 || ic === 11) {
+          const c = chordAtT(ctx, cache, Math.max(a.t, b.t));
+          if (!(c.pcSet.has(pcOf(a.n)) && c.pcSet.has(pcOf(b.n)))) grinds++;
+        }
+        if (a.n === b.n && (a.layer || null) !== (b.layer || null)) unis++;
+      }
+    return { strongOn, strongTot, viol, grinds, unis, layerNotes: L.length };
+  }
+
+  // (b) + (c) + (d) on constructed stacks — the layer phrase leans wide and
+  // offbeat so it genuinely has non-chord material to conform
+  const P2 = {
+    deg:  [1, 4, 2, 6, -3, 1, 5, 3, 0, 2, 4, 1, -2, 5, 2, 0],
+    oct:  [0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0],
+    vel:  [7, 5, 6, 8, 5, 6, 7, 5, 8, 6, 5, 7, 6, 5, 7, 6],
+    inc:  new Array(16).fill(0), stk: new Array(16).fill(0),
+    gate: [1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0],
+    acc:  [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+    sld:  new Array(16).fill(0),
+  };
+  const slots2 = [P, P2];
+  // PRE measured at HEAD b1adc27 (pre-change), same corpus, same metric code:
+  //   pair                      cover      viol grinds unis
+  //   house+blues                6/12       14    7     0
+  //   vaporwave+acid            10/21       24   20    29
+  //   rock+bulgarian            10/24       16   32     1
+  //   tango+gregorian           16/24       16   39     8
+  //   funk+citypop               6/9         6   23     0
+  //   fugue+acid                 8/21        0    0     5
+  //   spem+simple                3/12        0    4     5
+  //   counterpoint+vaporwave     8/12        0    5     1
+  const PREPAIR = {
+    "house+blues": { on: 6, tot: 12, unis: 0 },
+    "vaporwave+acid": { on: 10, tot: 21, unis: 29 },
+    "rock+bulgarian": { on: 10, tot: 24, unis: 1 },
+    "tango+gregorian": { on: 16, tot: 24, unis: 8 },
+    "funk+citypop": { on: 6, tot: 9, unis: 0 },
+    "fugue+acid": { on: 8, tot: 21, unis: 5 },
+    "spem+simple": { on: 3, tot: 12, unis: 5 },
+    "counterpoint+vaporwave": { on: 8, tot: 12, unis: 1 },
+  };
+  const EMERGENT = new Set(["fugue", "spem", "counterpoint"]);
+  for (const [a, l] of [["house", "blues"], ["vaporwave", "acid"],
+                        ["rock", "bulgarian"], ["tango", "gregorian"],
+                        ["funk", "citypop"], ["fugue", "acid"],
+                        ["spem", "simple"], ["counterpoint", "vaporwave"]]) {
+    const b = S.emptyBox();
+    b.stack[0] = { g: a, slots: [0] };
+    b.stack.push({ g: l, slots: [1] });
+    const ctx = D.masterCtx(b, slots2);
+    const ev = D.sectionEvents(b, slots2, null, null).ev;
+    const m = hMetrics(ev, ctx), pre = PREPAIR[a + "+" + l], id = a + "+" + l;
+    ok(m.layerNotes > 0, id + ": the layer contributed no conformable notes");
+    ok(m.strongTot === pre.tot && m.strongOn === m.strongTot && m.strongOn > pre.on,
+       id + ": strong-beat chord-tone coverage is not strictly up (" +
+       m.strongOn + "/" + m.strongTot + " vs pre " + pre.on + "/" + pre.tot + ")");
+    ok(m.grinds === 0, id + ": " + m.grinds + " sustained cross-layer minor " +
+       "seconds survive the harmonize stage");
+    ok(m.viol === 0, id + ": " + m.viol + " layer notes outside the governing " +
+       "scale and the sounding chord");
+    ok(pre.unis === 0 ? m.unis === 0 : m.unis < pre.unis,
+       id + ": stacked cross-layer unisons not spread (" + m.unis +
+       " vs pre " + pre.unis + ")");
+    // (c) the authority is untouched: strip the layer and the singer, and the
+    // stacked render IS the single-layer render
+    const solo = clone(b); solo.stack = [solo.stack[0]];
+    ok(evsig(ev.filter(e => !e.layer && e.kind !== "sing")) ===
+       evsig(D.sectionEvents(solo, slots2, null, null).ev.filter(e => e.kind !== "sing")),
+       id + ": the harmonize stage moved an authority event");
+    // determinism, twice
+    ok(evsig(D.sectionEvents(b, slots2, null, null).ev) === evsig(ev),
+       id + ": two renders of one stacked box differ");
+    // (d) the emergent ruling holds where the authority IS emergent
+    if (EMERGENT.has(a))
+      ok(GENRES[a].harmony === "emergent" && m.viol === 0 && m.strongOn === m.strongTot,
+         id + ": an emergent authority's layer does not conform — the ruling " +
+         "(participate, timeline read off the voices) broke");
+  }
+  // the ruling's roster and its boundary: emergent is exactly the counterpoint
+  // family, and the drones are modal (so a drone is never conformable)
+  ok(GK.filter(k => GENRES[k].harmony === "emergent").sort().join(",") ===
+     "counterpoint,fugue,spem",
+     "the emergent roster changed — re-argue the §48 ruling genre by genre");
+  for (const k of ["drone", "sludge", "ambient"])
+    ok(GENRES[k].harmony === "modal",
+       k + " is no longer modal — the drone half of the §48 ruling needs re-reading");
+
+  // (b) on COMPOSED stacked sections — the corpus the arranger actually ships.
+  // PRE measured at HEAD b1adc27: cover 1966/2477, viol 1105, grinds 1773,
+  // unis 820 over 93 stacked sections (beatles/rock/house/vaporwave/motown ×
+  // seeds 1..3). "Down to ~0" is asserted as ≤ 12 grinds (0.7% of pre) and
+  // ≤ 60 unisons (7% of pre) so ordinary churn breathes; coverage and the
+  // scale law are exact.
+  {
+    const tot = { strongOn: 0, strongTot: 0, viol: 0, grinds: 0, unis: 0, layerNotes: 0 };
+    let stacked = 0;
+    for (const gk of ["beatles", "rock", "house", "vaporwave", "motown"]) {
+      for (const seed of [1, 2, 3]) {
+        const song = C.compose(gk, seed);
+        for (const sec of song.song) {
+          if ((sec.stack || []).length < 2) continue;
+          stacked++;
+          const m = hMetrics(
+            D.sectionEvents(sec, song.slots, song.groove, song.swing).ev,
+            D.masterCtx(sec, song.slots));
+          for (const k of Object.keys(tot)) tot[k] += m[k];
+        }
+      }
+    }
+    ok(stacked >= 80, "the composed corpus lost its stacked sections (" +
+       stacked + ") — the multi-layer claims are measuring nothing");
+    ok(tot.strongOn === tot.strongTot && tot.strongOn > 1966,
+       "composed corpus: strong-beat chord-tone coverage not strictly up (" +
+       tot.strongOn + "/" + tot.strongTot + " vs pre 1966/2477)");
+    ok(tot.viol === 0, "composed corpus: " + tot.viol +
+       " layer notes outside the governing scale and the sounding chord");
+    ok(tot.grinds <= 12, "composed corpus: " + tot.grinds +
+       " sustained cross-layer minor seconds (pre 1773, shipped at 6)");
+    ok(tot.unis <= 60, "composed corpus: " + tot.unis +
+       " stacked cross-layer unisons (pre 820, shipped at 39)");
+  }
+}
+
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }
