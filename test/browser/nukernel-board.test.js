@@ -12,14 +12,14 @@
 // is that the BOARD renders that truth:
 //
 //   (A) two strips in one section show DIFFERENT cap heights and DIFFERENT
-//       knob angles — the board no longer flattens;
+//       tone-bar fills — the board no longer flattens;
 //   (B) the roster is the SONG's, fixed: crossing a section boundary changes
 //       VALUES on stable strips (count and chair list identical, the moving
 //       chair's cap/knobs move), and a chair the section does not sound is
 //       dimmed .idle rather than removed;
 //   (C) a user turn BRIGHTENS (.set, data-value) and STICKS across a
-//       boundary round-trip, while unturned knobs keep their dim derived
-//       angle (data-derived).
+//       boundary round-trip, while unturned bands keep their dim derived
+//       fill (data-derived).
 //
 // DOM + model reads only — no play button, no analyser: the values the board
 // paints are the same resolvedPart numbers buildChannel bakes (the unit gate
@@ -52,14 +52,21 @@ let checks = 0; const ok = (m) => { checks++; console.log("  ok:", m); };
   await page.waitForTimeout(600);
 
   // one board snapshot: every channel strip's chair, idle state, cap height
-  // and knob faces — read off the painted styles, not off any model call
+  // and tone faces — read off the painted styles, not off any model call
   const snap = () => page.evaluate(() => {
     return [...document.querySelectorAll(".mrow:not(.msec)")].map(r => ({
       part: r.querySelector(".mval") ? r.querySelector(".mval").dataset.part : null,
       idle: r.classList.contains("idle"),
       cap: r.querySelector(".fcap").style.getPropertyValue("--f"),
+      // THE TONE FACE, ON THE FLAT DESK. This read `--ka` — a rotary knob's
+      // ANGLE — and the hardware costume came off: an EQ band is a bipolar bar
+      // now (ui/mixtbl.js buildEqBar) and the value it shows is the fill
+      // fraction `--f`. Reading a custom property nothing writes handed back ""
+      // for every strip, so the seeding check below could only ever report the
+      // desk as identical — a gate that fails on its own dead selector rather
+      // than on the product. Same claim, the surface that exists.
       kas: [...r.querySelectorAll(".eqface")]
-        .map(f => f.style.getPropertyValue("--ka")).join("|"),
+        .map(f => f.style.getPropertyValue("--f")).join("|"),
       derived: [...r.querySelectorAll(".eqk")].map(b => b.dataset.derived).join("|"),
       set: [...r.querySelectorAll(".eqk")].map(b => b.classList.contains("set")),
       values: [...r.querySelectorAll(".eqk")].map(b => b.dataset.value).join("|"),
@@ -84,9 +91,9 @@ let checks = 0; const ok = (m) => { checks++; console.log("  ok:", m); };
       r.part + "@" + (+r.cap).toFixed(3)).join(", ")}`);
     const faces = new Set(live.map(r => r.kas));
     if (faces.size < 2)
-      fail(`every strip's knob angles are identical — the EQs are not seeded ` +
+      fail(`every strip's tone bars sit at the same fill — the EQs are not seeded ` +
            `by the song`);
-    else ok(`knob angles differ per strip (${faces.size} distinct tone faces)`);
+    else ok(`tone bars differ per strip (${faces.size} distinct tone faces)`);
     const dim = live.filter(r => r.derived.replace(/\|/g, "") !== "");
     if (!dim.length)
       fail("no strip carries a derived (dim) EQ value — data-derived is empty " +
