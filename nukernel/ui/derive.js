@@ -889,5 +889,33 @@ export function songBars(song, slots, songGroove, songSwing, loopOnly, opts) {
   }
   if (o.pickups !== false) leadIns(out, song, slots);
   if (o.rubato !== false) warpBars(out, song);
+  stampBoxSpan(out);
   return out;
+}
+// HOW LONG THE BOX REALLY IS, written on every bar of it. Before the tempo map
+// a box lasted `bars × barSteps` and any reader could do that multiplication;
+// now every bar of a box is a different length and the multiplication is a lie.
+// Measured on a composed Liverpool song it is worth up to 0.73 of a beat by the
+// outro (0.94 on Lagos, 1.39 across a whole song) — which is a fill bar and a
+// position LCD that wrap before or after the music does, and a mix automation
+// lane that ends somewhere other than the box it belongs to. So the ONE walk
+// that knows the durations writes the sum down and the readers read it:
+//   boxSteps  the box in TIME steps — what a scheduler multiplies by stepDur
+//   boxNom    the same box on the GRID, so a reader can stretch a per-beat
+//             lane onto the warped box with one ratio
+//   barIn/boxBars  which bar of the box this is, and how many there are
+// With rubato off boxSteps === boxNom and this is exactly the multiplication it
+// replaces, to the byte.
+function stampBoxSpan(bars) {
+  for (let i = 0; i < bars.length;) {
+    let j = i, sum = 0, nom = 0;
+    while (j < bars.length && bars[j].si === bars[i].si && (j === i || !bars[j].first)) {
+      sum += bars[j].barSteps; nom += bars[j].steps; j++;
+    }
+    for (let k = i; k < j; k++) {
+      bars[k].boxSteps = sum; bars[k].boxNom = nom;
+      bars[k].barIn = k - i; bars[k].boxBars = j - i;
+    }
+    i = j;
+  }
 }

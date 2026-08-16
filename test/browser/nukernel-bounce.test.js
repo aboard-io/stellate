@@ -162,6 +162,70 @@ const moved = (a, b) => a.reduce((n, v, i) =>
     else ok(`the cold tape is real audio (peak ${cold.peak})`);
   }
 
+  // ── (E) THE TAPE CARRIES THE WHOLE BAND, AND WRAPS WHERE THE MUSIC DOES ──
+  // Paul, on a phone: "I switch out of the browser. One phrase repeats over and
+  // over — no drums — but there's no doubling." Nothing above could confirm or
+  // deny that: the phases say how long the render took, the RMS windows say it
+  // was not silent, and neither can tell a band from a bass line. So the render
+  // now reports the channels' own laneIn ledger — which drum lanes really had a
+  // hit routed to a strip — and this reads it against the live walk's score.
+  // The score half is §50 in test/unit/nukernel.test.js; this is the half that
+  // can only be asked of a real OfflineAudioContext.
+  {
+    const score = await page.evaluate(async () => {
+      const t = await import("/nukernel/audio/transport.js");
+      const TL = t.buildTimeline(), sd = t.stepDur();
+      const lanes = new Set();
+      for (const b of TL) for (const e of b.ev) if (e.kind === "hit") lanes.add(e.d);
+      return { lanes: [...lanes].sort(),
+               sec: TL.reduce((a, b) => a + b.barSteps, 0) * sd, bars: TL.length };
+    });
+    const got = (cold && cold.lanes) || [];
+    // a machine lane earns its own strip key ("tr808|k"); a sampled one is the
+    // bare letter. The claim is about LANES, so compare on the letter.
+    const letters = new Set(got.map(k => k.split("|").pop()));
+    const missing = score.lanes.filter(d => !letters.has(d));
+    if (!got.length)
+      fail(`the tape carries NO drum lane at all for a ${GENRE} song whose score ` +
+           `plays ${score.lanes.length} of them (${score.lanes.join("")}) — this is ` +
+           `"one phrase repeats over and over, no drums", measured on the render`);
+    else if (missing.length)
+      fail(`the tape is missing drum lane(s) ${missing.join(",")} that the live walk ` +
+           `plays — the carrier is a different arrangement from the graph`);
+    else ok(`the tape carries every drum lane the band plays (${score.lanes.join("")})`);
+    // …AND IT IS THE WHOLE SONG. A tape shorter or longer than the bar list
+    // loops early or late, which is the other half of the same report.
+    if (!cold) fail("no cold tape to measure the loop point on");
+    else if (Math.abs(cold.durSec - score.sec) > 0.001)
+      fail(`the tape is ${(cold.durSec - score.sec).toFixed(3)} s off the live walk's ` +
+           `${score.sec.toFixed(3)} s over ${score.bars} bars — the carrier's loop ` +
+           `wrap is not where the music ends`);
+    else ok(`the tape is exactly the song: ${cold.durSec.toFixed(3)} s over ` +
+            `${score.bars} bars, to the millisecond`);
+    // THE FRAGMENT, measured beside it. The short insurance stage renders the
+    // song's head at or under its cap; audio/bounce.js carry() refuses to hand
+    // it to the ear anywhere the live graph survives hiding, and this is the
+    // number behind that refusal.
+    // NOT { cold: true } — dropping the window cache here would make the warm
+    // re-render below miss every window and fail for the gate's own reasons
+    const frag = await page.evaluate(() => window.__nuRenderNow(4));
+    if (!frag) fail("the short-stage render returned nothing");
+    else {
+      const fl = new Set((frag.lanes || []).map(k => k.split("|").pop()));
+      console.log(`  the 4 s insurance tape: ${frag.durSec.toFixed(2)}s, drum lanes ` +
+                  `{${[...fl].join("")}} against the song's {${score.lanes.join("")}}`);
+      if (frag.durSec >= score.sec)
+        fail(`the short stage rendered the whole song (${frag.durSec.toFixed(1)}s) — ` +
+             `it is not a short stage`);
+      else if (fl.size >= letters.size)
+        fail(`the 4 s head carries as many drum lanes as the whole song — the ` +
+             `measurement behind carry()'s refusal has gone stale, so re-derive ` +
+             `whether the fragment may take the ear`);
+      else ok(`the insurance tape really is a fragment: ${frag.durSec.toFixed(2)}s ` +
+              `and ${fl.size} of ${letters.size} drum lanes`);
+    }
+  }
+
   // ── the warm no-edit render: every window already on disk ──
   const warm = await page.evaluate(() => window.__nuRenderNow(0));
   if (!warm) fail("the warm render returned nothing");

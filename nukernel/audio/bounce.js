@@ -57,9 +57,9 @@
 import { GENRES, BASSSYNTH, DTIMES } from "../ui/deps.js";
 import { SONG, SLOTS, loopOnly, bpm, MASTER, BUSES, GROOVE, SWING, POOL,
          on, emit } from "../ui/state.js";
-import { stackOf, kitOf, boxBars } from "../ui/derive.js";
+import { stackOf, kitOf } from "../ui/derive.js";
 import { buildMasterChain, buildEchoBus, buildRoomBus, buildKitDesk, buildSendBus, makeVerb,
-         masterVol, muteNow, unmuteRamp, DRYROOM } from "./graph.js";
+         masterVol, muteNow, unmuteRamp, DRYROOM, ctx } from "./graph.js";
 import { FONT, isSynthFont, fontDef } from "./assets.js";
 import { makeSynthNode, driveSynth, offFallback } from "./voices.js";
 import { chanSpec, buildChannel, armAutomation, focusKit } from "./mixer.js";
@@ -97,7 +97,11 @@ const st = { state: "idle", stage: null, durSec: 0, gen: 0, sampledOnly: false,
              // which of the five phases owned the seconds. Measured here so the
              // gate and the readout argue with numbers.
              phases: null, phase: null, wantSec: 0, wantBars: 0, chunks: 0, chunkMs: 0, each: null, hits: 0, misses: 0,
-             ratio: 0, nodes: 0, pooled: 0 };
+             ratio: 0, nodes: 0, pooled: 0,
+             // which drum lanes the last tape really carried (the channels'
+             // laneIn ledger, not the score's opinion) — "no drums" was a
+             // report this file had no number for
+             lanes: [] };
 // one render's stopwatch: ph.mark("pool") closes the phase that was open and
 // opens 'pool'. Cheap enough to leave armed in production (five performance.now
 // calls per render), and the alternative is instrumenting it again next time.
@@ -137,7 +141,7 @@ window.__nuRender = () => ({ ms: st.lastRenderMs, durSec: st.durSec,
   wantSec: st.wantSec, wantBars: st.wantBars, chunks: st.chunks,
   parallel: PARALLEL, chunkSec: CHUNK_SEC, chunkMs: st.chunkMs, each: st.each,
   hits: st.hits, misses: st.misses,
-  nodes: st.nodes, pooled: st.pooled,
+  nodes: st.nodes, pooled: st.pooled, lanes: st.lanes,
   stage: st.stage, sampledOnly: st.sampledOnly });
 // TEST SEAM: render a known length RIGHT NOW and hand back the phase report.
 // The budget gate cannot wait on the debounce (it would be timing the timer),
@@ -173,6 +177,9 @@ window.__nuRenderNow = async (capSec, opts) => {
              phases: res.phases, chunks: st.chunks,
              hits: st.hits, misses: st.misses,
              nodes: st.nodes, pooled: st.pooled,
+             // the DRUM LANES the tape really carries, from the channels'
+             // own laneIn ledger — the answer to 'no drums' (E)
+             lanes: st.lanes,
              // the singer's own census of this render — an ADDED key, so every
              // existing reader is untouched (nukernel-bounce (D) reads it)
              sing: (typeof window.__nuSing === "function" ? window.__nuSing() : null),
@@ -525,6 +532,28 @@ function planChunks(TL, sd, chunkSec) {
   for (const ck of chunks) ck.pre = Math.max(0, ck.a - PRE_BARS);
   return { chunks, t0, from, total: acc };
 }
+// TEST SEAM: the plan, over a bar list the caller supplies. "Does the tape
+// carry the whole band" is a question about THIS — which bars each window
+// renders, which of them it keeps, and how long the whole thing is — and it is
+// answerable without a browser, which is where the answer belongs (a carrier
+// that lost the drums is a score fact before it is an audio one). Pure over its
+// arguments and allocating nothing the render needs, so a gate calling it costs
+// a plan and no contexts. test/unit/nukernel.test.js §50.
+export const planFor = (TL, sd) => planChunks(TL, sd, CHUNK_SEC);
+// THE SHORT STAGE'S CUT — the head of the song, on a bar line, at or under the
+// cap (at least one bar, so the wrap stays a downbeat). Exported because what
+// this returns is the whole argument for carry()'s refusal above: the gate
+// measures how little band is left in it rather than taking the claim on
+// trust, and one arithmetic serves the render and the measurement both.
+export function shortCut(TL, sd, capSec) {
+  const cut = []; let acc = 0;
+  for (const b of TL) {
+    if (cut.length && acc + b.barSteps * sd > capSec) break;
+    cut.push(b); acc += b.barSteps * sd;
+  }
+  return cut;
+}
+export const SHORT_CAP = SHORT_SEC;
 
 // ---- WHY THERE IS NO REAPER (a measured negative result) -------------------
 // The obvious alternative to windowing was to keep ONE context and tear the
@@ -684,7 +713,12 @@ async function renderChunk(TL, plan, ck, sd, tally) {
       echo.setTime(DTIMES[sec.dtime || "d8"], t);
       // the SAME walker the live tick arms — the carrier honors automation
       // (mot included, since mot compiles into the same list in chanSpec)
-      armAutomation(cur.chan, t, bar.barSteps * sd * boxBars(sec), sd * 4,
+      // the box's REAL length and the box's own beat, exactly as the live tick
+      // arms it — a nominal `bar × boxBars` here would put the carrier's
+      // automation somewhere the graph's is not, which is the one thing this
+      // walk exists to prevent
+      armAutomation(cur.chan, t, bar.boxSteps * sd,
+                    sd * 4 * (bar.boxSteps / bar.boxNom),
                     bar.first ? 0 : plan.from[i]);
       focusAt(cur.chan, t);
       focusKit(cur.chan, t);        // one kit desk for the render, one section at a time
@@ -692,6 +726,15 @@ async function renderChunk(TL, plan, ck, sd, tally) {
     scheduleBar(bar, sec, cur.chan, cur.kit, t, sd, offSynth);
     t += TL[i].barSteps * sd;
   }
+  // WHICH DRUM LANES REALLY REACHED THIS TAPE. The channel's `played` ledger is
+  // written by mixer.js laneIn — a lane appears there when a hit was actually
+  // routed to its strip, which is a fact about the RENDER and not about the
+  // score. It is here because "one phrase repeats over and over — no drums" was
+  // a report nothing in this file could confirm or deny: the phases said how
+  // long the render took, the RMS windows said it was not silent, and neither
+  // of them can tell a band from a bass line. (test/browser/nukernel-bounce (E))
+  for (const c of chans.values())
+    if (c.played) for (const d of c.played) tally.lanes.add(d);
   tally.nodes += chans.size; tally.pooled += pool.size;
   const t0 = performance.now();
   const buf = await octx.startRendering();
@@ -727,12 +770,7 @@ async function renderSong(capSec) {
     // fold). Its loop is the song's OPENING, not the user's current position:
     // a few bars of the right music beats half a minute of silence, and the
     // full render replaces it before most listens get around twice.
-    const cut = []; let acc = 0;
-    for (const b of TL) {
-      if (cut.length && acc + b.barSteps * sd > capSec) break;
-      cut.push(b); acc += b.barSteps * sd;
-    }
-    TL = cut;
+    TL = shortCut(TL, sd, capSec);
   }
   const plan = planChunks(TL, sd, CHUNK_SEC);
   const durSec = plan.total;
@@ -752,7 +790,8 @@ async function renderSong(capSec) {
   ph.mark("render");
   st.sampledOnly = false;
   offFallback.n = 0;
-  const tally = { nodes: 0, pooled: 0, chunkMs: 0, each: [], sampledOnly: false };
+  const tally = { nodes: 0, pooled: 0, chunkMs: 0, each: [], sampledOnly: false,
+                  lanes: new Set() };
   const done = new Array(plan.chunks.length);
   // WAVES, not a free-for-all: PARALLEL contexts at a time. Unbounded
   // Promise.all over seventy windows would put seventy render threads and
@@ -778,6 +817,7 @@ async function renderSong(capSec) {
   // too, and a bounce that quietly kept a rack per section would show up here
   // and nowhere else.
   st.nodes = tally.nodes; st.pooled = tally.pooled;
+  st.lanes = [...tally.lanes].sort();
   st.chunkMs = Math.round(tally.chunkMs); st.each = tally.each;
 
   // ---- assembly: a pure concatenation, plus the last window's ring-out ----
@@ -1000,6 +1040,25 @@ setInterval(() => {
 /* ---------- the handoff (called by survival.js) ---------- */
 export function carry() {
   if (!el || !playing || st.state !== "ready" || !st.url) return false;
+  // THE FRAGMENT ONLY PLAYS WHERE THE ALTERNATIVE IS SILENCE. goCarrier already
+  // refuses a short tape (shortIsInsurance, above) and this is the same law on
+  // the other door: hiding the tab used to hand the ear whatever blob existed,
+  // and for the first minute of any song that blob is the SHORT stage — one or
+  // two bars of the song's head, on loop. Measured on the shipped composer: a
+  // Lagos 1971 short tape is ONE bar, 2.17 s, box 0, and the only voice in it
+  // is the bass; a Liverpool 1962 one is two bars of the intro. That is Paul's
+  // report exactly — "one phrase repeats over and over, no drums" — and the
+  // crash it loops under is the same fragment wrapping every two seconds, which
+  // is why it sounded like a different tempo from the band.
+  //
+  // THE TEST IS WHETHER THERE IS ANYTHING TO REPLACE. On iOS the ctx really
+  // does freeze on hide, and a suspended context anywhere is the same fact — a
+  // fragment beats silence, and that is what the short stage was built for.
+  // But a RUNNING graph on a platform that keeps running hidden (desktop and
+  // Android, by design: the worker clock and the 2 s lookahead exist for
+  // exactly this) is the whole song already playing, and swapping two bars of
+  // its head over the top of it is a strictly worse pocket.
+  if (shortIsInsurance() && !isIOS && ctx && ctx.state === "running") return false;
   // IDEMPOTENT: goHidden is reachable twice while carrying (ctx statechange
   // fires before the late visibilitychange on an iOS app switch, and
   // pagehide doubles visibilitychange on backgrounding). A second carry()

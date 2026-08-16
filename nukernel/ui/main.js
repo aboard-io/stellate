@@ -6,9 +6,9 @@
 // which is the ONE consumer of transport.getPosition(): the UI reads the
 // audio clock through that accessor and audio never calls a draw function —
 // that one-way rule is what the whole split is for.
-import { GENRES, RATES, ROLES } from "./deps.js";
+import { ROLES } from "./deps.js";
 import { SONG, readStore, adoptSong, defaultSong, on, emit } from "./state.js";
-import { gid, stackLabel } from "./derive.js";
+import { stackLabel } from "./derive.js";
 import * as transport from "../audio/transport.js";
 // the survival tier (context recovery + MediaSession + the bounce carrier):
 // importing it IS the wiring — it registers its listeners, its gesture hook
@@ -60,16 +60,15 @@ function frame() {
   }
   const pos = transport.getPosition();
   if (pos.si >= 0 && SONG[pos.si]) {
-    const sec = SONG[pos.si], g = GENRES[gid(sec)];
-    // the DERIVED rate — the audio tier schedules with genreOf's g.rate ×
-    // RATES[sec.rate], so a "half time" box really lasts twice as long and
-    // the raw genre rate had the fill bar full at the halfway mark
-    const rate = g.rate * (sec.rate ? RATES[sec.rate] : 1);
-    const total = sec.len * 16 / rate * pos.stepDur;
-    const f = Math.max(0, Math.min(1, (pos.now - pos.passStart) / total));
-    const bar = Math.min(sec.len, Math.floor(f * sec.len) + 1);
-    lcd((pos.si + 1) + "·" + bar + "/" + sec.len);
-    songrow.paintProgress(pos.si, f);
+    // THE BOX THAT IS PLAYING, not the box the grid describes. This used to be
+    // `sec.len × 16 / rate × stepDur` — the nominal box — and since the tempo
+    // map every bar of a box is a different length, so the fill bar and the LCD
+    // wrapped up to a beat before or after the music did ("it's repeating
+    // itself off by a beat or two"). transport.passAt sums the bar list's own
+    // durations, which is the only place the answer exists.
+    const p = transport.passAt(pos.now);
+    lcd((pos.si + 1) + "·" + p.bar + "/" + p.bars);
+    songrow.paintProgress(pos.si, p.f);
   }
   // the board's automated fader caps + master meter, on the same frame — the
   // one-loop rule (two loops painting one page is the leak the loop replaced)

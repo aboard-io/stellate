@@ -10,7 +10,7 @@ import { GENRES, DTIMES, BASSSYNTH, BASS_INSTR, STRIPS, stripFor,
          instrOf } from "../ui/deps.js";
 import { SONG, loopOnly, pendingStart, setPendingStart, bpm, on, emit,
          SLOTS, GROOVE, SWING, POOL, RUBATO, setRubato } from "../ui/state.js";
-import { gid, stackOf, boxBars, kitOf, sectionRender, songBars,
+import { gid, stackOf, kitOf, sectionRender, songBars,
          instrIdOf, poolInstrOf } from "../ui/derive.js";
 import { ctx, initAudio, rmsNow, muteNow, unmuteRamp } from "./graph.js";
 import { FONT, fontDef, isSynthFont, loadFont, specOf, zoneBufs, drumBufs,
@@ -24,6 +24,11 @@ import { playSyllable, warm as warmSing, needsWarm, singOff } from "./sing.js";
 export let playing = false;
 export let playingSec = -1;
 let timer = null, nextBarTime = 0, nextBar = 0, passStart = 0;
+// which bar of the bar list the current pass opened on. passStart says WHEN;
+// this says WHERE, and under the tempo map that is the only way to ask how long
+// the pass is — every bar of a box is a different length now, so the playhead
+// can no longer multiply a nominal bar by a bar count (see passAt).
+let passBar = 0;
 // when the CURRENT pass of the whole song started, on the audio clock — the
 // carrier element and MediaSession's positionState both need "where are we in
 // the song", which passStart (per-SECTION) cannot answer
@@ -274,7 +279,7 @@ function tick() {
     if (!mute && (!cur || cur.si !== bar.si || bar.first))
       cur = { si: bar.si, chan: channelFor(sec, nextBarTime), kit: kitOf(sec) };
     if (bar.first) {
-      passStart = nextBarTime;
+      passStart = nextBarTime; passBar = nextBar;
       if (bar.si !== playingSec) {
         // The playhead marks which box is SOUNDING. It must not move the
         // SELECTION — the selected box is what every palette click acts on, and
@@ -287,7 +292,14 @@ function tick() {
       // starts — a transition re-arms every pass, which is what makes it one
       if (!mute) {
         setDelayTime(DTIMES[sec.dtime || "d8"]);
-        armAutomation(cur.chan, nextBarTime, bar.barSteps * sd * boxBars(sec), sd * 4);
+        // THE BOX'S OWN LENGTH, not one of its bars times how many there are.
+        // Under the tempo map every bar of a box is a different length, so that
+        // multiplication ran a sweep short (or long) by up to a beat by the end
+        // of an outro. `boxSteps` is the sum the bar list already computed;
+        // the beat handed to the walker is stretched by the same ratio, so an
+        // automation lane written in beats spans the box the ear is hearing.
+        armAutomation(cur.chan, nextBarTime, bar.boxSteps * sd,
+                      sd * 4 * (bar.boxSteps / bar.boxNom));
         focusSynths(cur.chan, nextBarTime);   // this section's mix owns the synth pool
         focusKit(cur.chan, nextBarTime);      // ...and the one kit desk, same law
       }
@@ -519,7 +531,7 @@ export async function startAt(boxIndex) {
   if (first && SONG[first.si]) channelFor(SONG[first.si]);
   playing = true; playingSec = -1;
   nextBar = at < 0 ? 0 : at;
-  nextBarTime = ctx.currentTime + .08; passStart = nextBarTime;
+  nextBarTime = ctx.currentTime + .08; passStart = nextBarTime; passBar = nextBar;
   loopStart = nextBarTime;
   BOOT.firstBar = Math.round(performance.now());
   startClock();
@@ -551,7 +563,7 @@ export function seekPhase(phaseSec) {
   const wait = Math.max(0.03, (acc + TL[i].barSteps * sd) - p);   // rest of the bar the ear is in
   nextBar = (i + 1) % TL.length;
   nextBarTime = ctx.currentTime + wait;
-  passStart = nextBarTime;
+  passStart = nextBarTime; passBar = nextBar;
   // where THIS pass began, back-computed so positionState stays honest
   let upto = 0; for (let b = 0; b < nextBar; b++) upto += TL[b].barSteps * sd;
   loopStart = nextBarTime - upto;
@@ -565,6 +577,27 @@ export const getPosition = () => ({
   passStart, now: ctx ? ctx.currentTime : 0, stepDur: stepDur(),
   loopStart, durSec: songDurSec(),
 });
+// WHERE THE EAR IS IN THE SOUNDING BOX — the fraction through it and the bar it
+// is in, both measured off the bar list's OWN durations. ui/main.js computed
+// this as `sec.len × 16 / rate × stepDur`, which is the box the grid says and
+// not the box being played: since the tempo map that is out by up to 0.73 of a
+// beat on a Liverpool outro and 0.94 on a Lagos one, so the fill bar filled and
+// the LCD turned over before (or after) the phrase actually came round. The
+// arithmetic lives here because this tier owns the clock AND the bar list; the
+// view paints what it is told.
+export function passAt(now) {
+  if (!TL.length) return { f: 0, bar: 1, bars: 1 };
+  const sd = stepDur(), b0 = TL[passBar] || TL[0];
+  const bars = b0.boxBars || 1, tot = (b0.boxSteps || b0.barSteps) * sd;
+  const e = Math.max(0, now - passStart);
+  let acc = 0, i = 0;
+  for (; i < bars - 1; i++) {
+    const d = (TL[(passBar + i) % TL.length] || b0).barSteps * sd;
+    if (acc + d > e) break;
+    acc += d;
+  }
+  return { f: tot > 0 ? Math.max(0, Math.min(1, e / tot)) : 0, bar: i + 1, bars };
+}
 
 /* ---------- subscriptions ---------- */
 // the "something changed" law, in one place: a musical change while playing
@@ -609,7 +642,8 @@ const remix = () => {
   focusSynths(chan, now);
   focusKit(chan, now);
   const first = TL.find(b => b.si === playingSec && b.first);
-  if (first) armAutomation(chan, now, first.barSteps * sd * boxBars(sec), sd * 4,
+  if (first) armAutomation(chan, now, first.boxSteps * sd,
+                           sd * 4 * (first.boxSteps / first.boxNom),
                            Math.max(0, now - passStart));
 };
 on("box", remix);

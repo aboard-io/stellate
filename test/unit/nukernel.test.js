@@ -7379,6 +7379,267 @@ console.log("music breathes — the tempo map and the lead-ins");
   }
 }
 
+/* ------------------------------- 50. THE LOOP ENDS WHERE THE MUSIC DOES,
+   AND THE TAPE CARRIES THE WHOLE BAND
+   Two reports from Paul, one week after the tempo map landed, and they turned
+   out to be two halves of one mistake — code that still measured MUSIC WITH A
+   RULER after the music started breathing:
+
+     "I play Liverpool. It's repeating itself off by a beat or two."
+     "I switch out of the browser. One phrase repeats over and over — no
+      drums — but there's no doubling."
+
+   §49 proved the bar list breathes. This section proves that everything which
+   asks the bar list HOW LONG SOMETHING IS gets the breathed answer:
+
+     (a) THE PASS-LENGTH LAW — a box's stamped span is exactly the sum of its
+         own bars, on the clock and on the grid, for every genre and seed and
+         with rubato both ways. And it has TEETH: the nominal multiplication
+         everything used to do (one bar × the bar count) is measurably wrong,
+         which is the beat Paul heard.
+     (b) NO RULER LEFT — the three readers that used to multiply (the live
+         tick's automation arm, the bounce's, the playhead) read the stamp,
+         anchored in the shipped text.
+     (c) THE WRAP IS THE MUSIC'S OWN END — the song duration the transport
+         reports, the tape length the bounce plans, and the sum of the bar
+         list are one number.
+     (d) CARRIER PARITY — the bounce's plan renders every bar of the live walk
+         exactly once, in order, at the time the live walk puts it. This is the
+         assertion that would have caught "no drums": a tape that is not the
+         whole bar list is not the song.
+     (e) A FRAGMENT IS NOT THE BAND — measured on the shipped short-stage
+         arithmetic, the 4-second head of a composed song is one or two bars
+         and routinely has no drums in it at all. So the carrier may only hand
+         it to the ear where the alternative is silence.
+
+   WHAT IS DELIBERATELY NOT ON THE TEMPO MAP, so nobody reads its absence as an
+   oversight: the ECHO and the tempo-synced sends (audio/graph.js barSec, set
+   once per box from that box's dtime chip). A tape echo is a machine with a
+   time on it; a band that breathes does not reach over and re-tune the delay
+   bar by bar, and the drift a rubato bar puts on a dotted eighth is single-
+   digit milliseconds. Every SCHEDULED EVENT, and every span a box is said to
+   have, does ride the map — that is what (a)-(d) hold. */
+console.log("the loop ends where the music does, and the tape carries the whole band");
+{
+  // audio/bounce.js reads the platform off the page at module evaluation (the
+  // ?bgtest predicate and the render knobs), so the stub window needs the two
+  // globals a browser would have. Nothing here plays; the plan is pure.
+  globalThis.location = globalThis.location || { search: "" };
+  globalThis.navigator = globalThis.navigator ||
+    { userAgent: "node", platform: "", maxTouchPoints: 0, hardwareConcurrency: 4 };
+  globalThis.Audio = globalThis.Audio || function () {};
+  const ST50 = await import("../../nukernel/ui/state.js");
+  const T50 = await import("../../nukernel/audio/transport.js");
+  const B50 = await import("../../nukernel/audio/bounce.js");
+  const NS50 = require("../../nukernel/song.js");
+  const C50 = require("../../nukernel/compose.js");
+  const fs50 = require("fs"), path50 = require("path");
+  const src50 = f => fs50.readFileSync(path50.join(__dirname, "../../nukernel/", f), "utf8");
+  const load50 = (gk, seed) => {
+    const r = NS50.load(C50.compose(gk, seed));
+    ok(r.ok, "compose(" + gk + "," + seed + ") no longer loads — §50 measures nothing");
+    return r.song;
+  };
+  const bars50 = (s, o) => D.songBars(s.song, s.slots, s.groove, s.swing, null, o || {});
+  // a spread of the corpus rather than one song: the tempo map's gestures are
+  // chosen by ROLE, so a genre whose composer writes no breakdown never sees
+  // the biggest ritard and would prove the law only where it is easy
+  const CORPUS50 = [["beatles", 7], ["beatles", 1234], ["afrobeat", 7], ["jazz", 5],
+                    ["house", 7], ["rock", 3], ["dnb", 5], ["punk", 3]];
+
+  /* (a) THE PASS-LENGTH LAW, and the beat it is worth */
+  {
+    let worstBeats = 0, worstAt = "";
+    for (const [gk, seed] of CORPUS50) {
+      const s = load50(gk, seed);
+      for (const rub of [true, false]) {
+        const tl = bars50(s, { rubato: rub });
+        // the stamp is on EVERY bar, and it is the sum of the run it belongs to
+        const runs = [];
+        for (let i = 0; i < tl.length;) {
+          let j = i;
+          while (j < tl.length && tl[j].si === tl[i].si && (j === i || !tl[j].first)) j++;
+          runs.push([i, j]); i = j;
+        }
+        let bad = 0;
+        for (const [a, b] of runs) {
+          let sum = 0, nom = 0;
+          for (let i = a; i < b; i++) { sum += tl[i].barSteps; nom += tl[i].steps; }
+          for (let i = a; i < b; i++) {
+            const x = tl[i];
+            if (Math.abs(x.boxSteps - sum) > 1e-9 || Math.abs(x.boxNom - nom) > 1e-9) bad++;
+            if (x.boxBars !== b - a || x.barIn !== i - a) bad++;
+          }
+        }
+        ok(bad === 0, gk + "/" + seed + (rub ? "" : " (rubato off)") + ": " + bad +
+           " bar(s) carry a box span that is not the sum of the box's own bars — " +
+           "the pass length and the music have come apart again");
+        // OFF IS TODAY: with the tempo map off the stamp IS the old multiplication
+        if (!rub) {
+          let off = 0;
+          for (const b of tl) if (Math.abs(b.boxSteps - b.boxBars * b.barSteps) > 1e-9) off++;
+          ok(off === 0, gk + "/" + seed + ": the box span is not bars × barSteps with " +
+             "the tempo map off — the escape hatch no longer returns the old timeline");
+        } else {
+          // ...and ON, the old multiplication is WRONG. This is the teeth: if
+          // this ever stops failing, §50 is measuring a grid again.
+          for (const b of tl) {
+            const beats = Math.abs(b.boxSteps - b.boxBars * b.barSteps) / 4;
+            if (beats > worstBeats) { worstBeats = beats; worstAt = gk + "/" + seed; }
+          }
+        }
+      }
+    }
+    ok(worstBeats > 0.4, "the nominal box length (one bar × the bar count) is never " +
+       "more than " + worstBeats.toFixed(3) + " of a beat out across the corpus — " +
+       "either the tempo stopped moving or this section is measuring the grid");
+    console.log("  worst nominal-vs-real box length: " + worstBeats.toFixed(3) +
+                " beats (" + worstAt + ")");
+  }
+
+  /* (b) NO RULER LEFT — the three readers, in the shipped text */
+  {
+    const t50 = src50("audio/transport.js"), b50 = src50("audio/bounce.js"),
+          m50 = src50("ui/main.js");
+    ok(/armAutomation\(cur\.chan, nextBarTime, bar\.boxSteps \* sd/.test(t50) &&
+       /armAutomation\(chan, now, first\.boxSteps \* sd/.test(t50),
+       "audio/transport.js arms a box's automation off something other than " +
+       "boxSteps — a sweep that ends where the box does not");
+    ok(/armAutomation\(cur\.chan, t, bar\.boxSteps \* sd/.test(b50),
+       "audio/bounce.js arms the carrier's automation off something other than " +
+       "boxSteps — the tape's mix would drift from the graph's");
+    ok(!/barSteps \* sd \* boxBars/.test(t50) && !/barSteps \* sd \* boxBars/.test(b50),
+       "a `barSteps × boxBars` box length is back in the audio tier — that is the " +
+       "ruler the tempo map made a lie");
+    ok(/transport\.passAt\(/.test(m50) && !/sec\.len \* 16 \/ rate/.test(m50),
+       "ui/main.js computes the playhead from the nominal box again — the fill bar " +
+       "and the LCD would wrap a beat before or after the music does");
+    ok(/export function passAt/.test(t50),
+       "audio/transport.js no longer exports passAt — the playhead has nowhere " +
+       "honest to ask how far through the box it is");
+  }
+
+  /* (c) ONE NUMBER FOR THE END OF THE SONG */
+  {
+    for (const [gk, seed] of CORPUS50.slice(0, 4)) {
+      ST50.adoptSong(C50.compose(gk, seed), "gate");
+      T50.compile();                     // songDurSec reads the COMPILED list
+      const TL = T50.buildTimeline(), sd = T50.stepDur();
+      const sum = TL.reduce((a, b) => a + b.barSteps, 0) * sd;
+      ok(Math.abs(T50.songDurSec() - sum) < 1e-9,
+         gk + "/" + seed + ": the transport's song duration is not the sum of its " +
+         "bars — the live loop wraps somewhere other than the end of the music");
+      const plan = B50.planFor(TL, sd);
+      ok(Math.abs(plan.total - sum) < 1e-9,
+         gk + "/" + seed + ": the tape the bounce plans is " +
+         (plan.total - sum).toFixed(4) + " s longer than the music — the carrier " +
+         "would loop early or late");
+    }
+  }
+
+  /* (d) CARRIER PARITY — every bar of the live walk, once, where it belongs */
+  {
+    for (const [gk, seed] of CORPUS50) {
+      ST50.adoptSong(C50.compose(gk, seed), "gate");
+      const TL = T50.buildTimeline(), sd = T50.stepDur();
+      const plan = B50.planFor(TL, sd);
+      // the windows PARTITION the bar list: contiguous, in order, no gap, no
+      // overlap. A window also replays its pre-roll bars, but it throws that
+      // output away, so every bar's samples come from exactly one window.
+      let next = 0, bad = 0;
+      for (const ck of plan.chunks) {
+        if (ck.a !== next || ck.b <= ck.a || ck.pre > ck.a) bad++;
+        next = ck.b;
+      }
+      ok(bad === 0 && next === TL.length,
+         gk + "/" + seed + ": the bounce's windows do not cover the bar list exactly " +
+         "once (" + next + " of " + TL.length + " bars, " + bad + " broken window(s)) " +
+         "— the tape is not the song");
+      // ...and each bar lands at the time the live walk puts it
+      let acc = 0, drift = 0;
+      for (let i = 0; i < TL.length; i++) {
+        drift = Math.max(drift, Math.abs(plan.t0[i] - acc));
+        acc += TL[i].barSteps * sd;
+      }
+      ok(drift < 1e-9 && Math.abs(plan.t0[TL.length] - acc) < 1e-9,
+         gk + "/" + seed + ": a bar sits " + drift.toFixed(6) + " s from where the " +
+         "live walk puts it — the carrier is a different performance");
+      // THE EVENT SET IS THE SAME EVENT SET — same voices, same count, same
+      // order. The bounce walks TL[pre..b) and keeps [a,b), so the union of the
+      // kept spans is the whole walk; anything else is a lost voice.
+      const ident = list => list.flatMap((b, i) => b.ev.map(e =>
+        [i, e.kind, e.d || "", e.n == null ? "" : e.n, e.v == null ? "" : e.v,
+         e.vel == null ? "" : e.vel, +e.off.toFixed(6)].join("|")));
+      const live = ident(TL);
+      const tape = plan.chunks.flatMap(ck =>
+        ident(TL.slice(ck.a, ck.b)).map(k => {           // re-index onto the song
+          const p = k.indexOf("|");
+          return (ck.a + +k.slice(0, p)) + k.slice(p);
+        }));
+      ok(live.length === tape.length && live.every((k, i) => k === tape[i]),
+         gk + "/" + seed + ": the carrier's event set is not the live walk's (" +
+         tape.length + " vs " + live.length + " events) — this is what 'no drums " +
+         "on the tape' looks like from the score");
+      // and the lanes, said out loud, because a count can match while a lane
+      // vanishes: every drum lane the band plays is on the tape
+      const lanes = l => new Set(l.filter(k => k.split("|")[1] === "hit")
+                                  .map(k => k.split("|")[2]));
+      const L = lanes(live), Tp = lanes(tape);
+      ok(L.size === Tp.size && [...L].every(d => Tp.has(d)),
+         gk + "/" + seed + ": the tape is missing drum lane(s) " +
+         [...L].filter(d => !Tp.has(d)).join(",") + " that the live walk plays");
+    }
+  }
+
+  /* (e) A FRAGMENT IS NOT THE BAND */
+  {
+    let noDrums = 0, maxBars = 0;
+    for (const [gk, seed] of CORPUS50) {
+      ST50.adoptSong(C50.compose(gk, seed), "gate");
+      const TL = T50.buildTimeline(), sd = T50.stepDur();
+      const cut = B50.shortCut(TL, sd, B50.SHORT_CAP);
+      ok(cut.length >= 1 && cut.length < TL.length,
+         gk + "/" + seed + ": the short stage is not a short cut of the song (" +
+         cut.length + " of " + TL.length + " bars)");
+      maxBars = Math.max(maxBars, cut.length);
+      if (!cut.some(b => b.ev.some(e => e.kind === "hit"))) noDrums++;
+    }
+    ok(maxBars <= 3, "the short insurance tape has grown to " + maxBars + " bars — " +
+       "if it is now long enough to be music, say so and let it take the ear");
+    ok(noDrums >= 2, "every short tape in the corpus has drums in it (" + noDrums +
+       " of " + CORPUS50.length + " do not) — the measurement behind carry()'s " +
+       "refusal has gone stale");
+    console.log("  the 4 s head of a composed song: at most " + maxBars +
+                " bar(s), and " + noDrums + " of " + CORPUS50.length +
+                " have no drums in them at all");
+    // THE LAW: the fragment may only take the ear where the alternative is
+    // silence. Both doors — the carrier-first takeover and the hide handoff —
+    // refuse it, and the hide handoff makes the one exception iOS, whose
+    // context genuinely freezes.
+    const b50 = src50("audio/bounce.js");
+    ok(/shortIsInsurance\(\)\) return false;/.test(b50),
+       "audio/bounce.js goCarrier no longer refuses the short tape — a two-bar " +
+       "head would become the whole performance");
+    ok(/if \(shortIsInsurance\(\) && !isIOS && ctx && ctx\.state === "running"\) return false;/
+         .test(b50),
+       "audio/bounce.js carry() hands the ear whatever blob exists on hide — for " +
+       "the first minute of any song that is one or two bars of its head, on loop. " +
+       "The refusal is conditional on there being something to replace: a frozen " +
+       "or suspended context still takes the fragment, because the alternative " +
+       "there really is silence");
+    // ...and NOTHING ELSE ON THE PAGE LOOPS. The carrier element is the only
+    // thing entitled to `loop = true`; a drum or a note that looped natively
+    // would keep ringing through a handoff the master gain cannot reach.
+    const v50 = src50("audio/voices.js");
+    ok(!/\.loop\s*=\s*true/.test(v50),
+       "audio/voices.js sets loop = true on a source — nothing in the band loops " +
+       "itself; the score says when a sound comes round again");
+    ok(/loop: !!z\.loop/.test(v50),
+       "the sampler no longer takes its zone loop from the zone spec — a sustaining " +
+       "instrument's loop is a fact about the sample, not a default");
+  }
+}
+
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }
