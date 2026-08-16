@@ -122,6 +122,29 @@ const plain = g => ({ ...g, stress: 0, phrase: 0, touch: null });
 const allPad = g => Array.from({ length: g.voices }, (_, v) => K.partOf(g, v))
   .every(p => p === "pad");
 
+/* ---------------------------------------------------------------- 0. THE ROSTER
+   Genre KEYS are load-bearing — saves, presets, gates and compose all address
+   genres by key — so display names may change freely (they became place-year
+   names in 2026-08) but every key that has ever shipped must still exist.
+   A rename that touched a key would silently orphan every saved song. */
+console.log("roster — every shipped genre key still exists; labels are unique");
+{
+  const SHIPPED = ["simple", "fugue", "acid", "newwave", "vaporwave", "blues",
+    "rock", "gregorian", "bulgarian", "spem", "counterpoint", "neoclassical",
+    "drone", "sludge", "tango", "deathmetal", "eurythmics", "isley", "toto",
+    "jodeci", "beatles", "steely", "postrock", "boombap", "trap", "house",
+    "garage", "dnb", "disco", "funk", "motown", "rnb", "gospel", "reggae",
+    "dub", "ska", "afrobeat", "bossa", "countrypop", "synthpop", "shoegaze",
+    "citypop", "punk", "ambient", "techno", "solo", "vocal", "backing",
+    "riff", "pad"];
+  for (const k of SHIPPED) ok(GENRES[k], "shipped genre key vanished: " + k);
+  const labels = GK.map(k => GENRES[k].label);
+  ok(new Set(labels).size === labels.length,
+     "two genres display the same name");
+  ok(GK.every(k => typeof GENRES[k].label === "string" && GENRES[k].label),
+     "a genre has no display name");
+}
+
 /* ---------------------------------------------------------------- 1. SENSITIVITY
    Every vector must reach the output. This is the check the octave bug and the
    dead ghost layer both needed and neither had. */
@@ -1550,6 +1573,79 @@ console.log("the loader — round trip, typed errors, clamps, migration");
     }
     ok(liftedPresets > 0,
        "no shipped preset lifted a swing — the lift is dead on real data");
+  }
+
+  // (h) THE INSTR LIFT — the third move in the family ("the band is hired for
+  // the record, not the scene", 2026-08-16): the per-layer `instr` override
+  // left the stack entries for ONE song-level INSTRUMENT POOL, keyed by CHAIR
+  // (the kernel's own roles plus the bass). Claims: the registry no longer
+  // says `instr` (registry death), the chair vocabulary exists, an old save's
+  // overrides lift per chair — majority wins, ties to the authority section,
+  // the entry field dies — an explicit pool beats stragglers, junk filters to
+  // null, and the pool round-trips.
+  {
+    ok(!F.FIELDS.some(f => f.key === "instr"),
+       "fields.js still carries a per-layer instr entry");
+    ok(Array.isArray(F.POOLCHAIRS) && F.POOLCHAIRS.length === 8 &&
+       F.POOLCHAIRS.includes("bass") && F.POOLCHAIRS.includes("line") &&
+       !F.POOLCHAIRS.includes("drums"),
+       "POOLCHAIRS is not the seven roles plus the bass (drums excluded)");
+    ok(Object.keys(F.INSTRCHOICES).length >= 40,
+       "INSTRCHOICES left the registry — the pool has no vocabulary");
+    // one override on a ska box casts BOTH its chairs (stab voice 0, lead
+    // voice 1 — the kernel's own scheme), because the old field spoke for
+    // every voice of its layer
+    const box = (gk, instr) => {
+      const b = S.emptyBox(); b.stack[0].g = gk;
+      if (instr !== undefined) b.stack[0].instr = instr;
+      return b;
+    };
+    const lift = boxes => S.load(
+      { v: 2, slots: [S.blank()], song: boxes, bpm: 126, vol: 80 });
+    let r = lift([box("ska", "flute"), box("ska", "trumpet"), box("ska", "trumpet")]);
+    ok(r.ok && r.song.pool && r.song.pool.lead === "trumpet" &&
+       r.song.pool.stab === "trumpet",
+       "the majority instrument did not win the lift per chair: " +
+       JSON.stringify(r.ok && r.song.pool));
+    ok(r.ok && r.song.song.every(b => b.stack.every(e => !("instr" in e))),
+       "the lift left per-layer instr overrides behind");
+    // ...ties go to the FIRST section carrying one — the authority
+    r = lift([box("ska", "flute"), box("ska", "trumpet")]);
+    ok(r.ok && r.song.pool && r.song.pool.lead === "flute",
+       "a tie did not go to the authority section: " +
+       JSON.stringify(r.ok && r.song.pool));
+    // the chair follows the kernel's assignment INCLUDING the part chip — the
+    // same three-step read the scheduler makes
+    const pb = box("ska", "marimba"); pb.stack[0].part = "riff";
+    r = lift([pb]);
+    ok(r.ok && r.song.pool && r.song.pool.riff === "marimba" && !r.song.pool.lead,
+       "the lift ignores the part chip the scheduler honours: " +
+       JSON.stringify(r.ok && r.song.pool));
+    // a save already carrying a pool wins over straggler overrides — the
+    // groove's own both-present rule — and the entry field still dies
+    r = S.load({ v: 2, slots: [S.blank()], song: [box("ska", "flute")],
+                 pool: { lead: "violin" }, bpm: 126, vol: 80 });
+    ok(r.ok && r.song.pool.lead === "violin" && !r.song.pool.stab &&
+       r.song.song.every(b => b.stack.every(e => !("instr" in e))),
+       "an explicit pool did not beat the lift, or the field survived");
+    // FILTER at both levels (an unknown chair or id is dropped, never fatal —
+    // the ops/fx rule), and an emptied pool normalizes to null
+    r = S.load({ v: 2, slots: [S.blank()], song: [S.emptyBox()],
+                 pool: { lead: "kazoo9000", drums: "trumpet", zzz: "trumpet" },
+                 bpm: 126, vol: 80 });
+    ok(r.ok && r.song.pool === null,
+       "junk chairs and ids did not filter away to a null pool");
+    // the pool round-trips byte-for-byte through the loader
+    r = lift([box("ska", "trumpet")]);
+    const rt = S.load(JSON.parse(JSON.stringify(r.song)));
+    ok(rt.ok && JSON.stringify(rt.song.pool) === JSON.stringify(r.song.pool),
+       "the pool does not round-trip through the loader");
+    // no shipped writer emits the retired field
+    for (const p of PRESETS) {
+      const rp = S.load(p.data);
+      ok(rp.ok && rp.song.song.every(b => b.stack.every(e => !("instr" in e))),
+         "preset \"" + p.name + "\" kept a per-layer instr");
+    }
   }
 }
 
@@ -6244,11 +6340,13 @@ console.log("the register law — the table, the home, and the per-note fold");
   // quarter-million notes stay one gate.
   const synthBound = (sec, owner, e) => {
     // mirror of scheduleBar's branch, anchored by the source check above: a
-    // signature-synth line (no override) never reaches the sampled fold
-    const over = D.instrOverrideOf(sec, owner);
+    // signature-synth line (no pool pick on its chair) never reaches the
+    // sampled fold
+    const over = D.poolInstrOf(sec, owner, e.lv == null ? e.v : e.lv, ST.POOL);
     const gsyn = over ? null : GENRES[owner].synth;
     return gsyn && !(gsyn.lineOnly && e.pad);
   };
+  const NF45 = require("../../nukernel/fields.js");
   const seeds = [1, 3, 7];
   const cases = [];
   for (const gk of GK) for (const s of seeds) cases.push([gk, s, null]);
@@ -6257,8 +6355,16 @@ console.log("the register law — the table, the home, and the per-note fold");
   let total = 0, out = 0, drops = 0, badHome = 0, badSign = 0, bassOut = 0;
   const skaFinal = [], skaRaw = [];
   for (const [gk, seed, over] of cases) {
-    ST.adoptSong(C.compose(gk, seed), "gate");
-    if (over) for (const sec of ST.SONG) for (const en of sec.stack) en.instr = over;
+    // the adversarial chair is cast through the SONG POOL now — the per-layer
+    // `instr` override died at the registry ("the band is hired for the
+    // record") — every pitched seat at once, the bass left to its own so the
+    // bass half of the sweep keeps measuring the acoustic bass
+    const raw = C.compose(gk, seed);
+    if (over) {
+      raw.pool = {};
+      for (const c of NF45.POOLCHAIRS) if (c !== "bass") raw.pool[c] = over;
+    }
+    ST.adoptSong(raw, "gate");
     const TL = T.buildTimeline();
     const chairs = new Map();                    // si|owner|lv -> [raw..], home
     for (const bar of TL) for (const e of bar.ev) {
@@ -6279,7 +6385,7 @@ console.log("the register law — the table, the home, and the per-note fold");
       const owner = e.layer || D.gid(sec);
       if (synthBound(sec, owner, e)) continue;
       const lv = e.lv == null ? e.v : e.lv;
-      const id = D.instrIdOf(sec, owner, lv);
+      const id = D.instrIdOf(sec, owner, lv, ST.POOL);
       const spec = A.specOf(id), w = V.playWindow(spec, id);
       const home = e.home || 0;
       if (home % 12 !== 0) badHome++;
@@ -6330,6 +6436,69 @@ console.log("the register law — the table, the home, and the per-note fold");
   const j = TL2 => JSON.stringify(TL2.map(b => [b.si, b.barSteps, b.ev]));
   ok(j(T.buildTimeline()) === j(T.buildTimeline()),
      "buildTimeline is not deterministic — live and bounce would disagree");
+
+  /* ------------------------------- 46. THE BAND IS HIRED FOR THE RECORD
+     The INSTRUMENT POOL, gated at the score (the schedule IS the artifact at
+     this layer): one pool per song, one pick per chair, resolved by the same
+     instrIdOf walk scheduleBar and the register home make. Four claims:
+       (a) a pooled trumpet reaches EVERY section's scheduled lead — every
+           lead-chair note in the whole timeline resolves to the pool's pick;
+       (b) the register fold from "a trumpet knows where it lives" applies to
+           the pooled chair unchanged — home + per-note fold land every one
+           of those notes inside the trumpet's own window, no drops;
+       (c) a NULL pool is the genre's own band, byte-identical: cast a chair,
+           clear it, and the timeline is the very bytes it was before;
+       (d) the bass seat reaches the bass line — anchored in the shipped
+           scheduleBar text, since the bass is scheduled per bar, not baked
+           into the timeline. */
+  console.log("the instrument pool — one band for the record, and it reaches the schedule");
+  {
+    // house seats stab+lead (kernel scheme) and its lead is a polysynth, so a
+    // pooled trumpet is a real recast, not the default answering
+    const raw = C.compose("house", 3);
+    ST.adoptSong(raw, "gate");
+    const before = j(T.buildTimeline());
+    const raw2 = C.compose("house", 3); raw2.pool = { lead: "trumpet" };
+    ST.adoptSong(raw2, "gate");
+    ok(JSON.stringify(ST.POOL) === JSON.stringify({ lead: "trumpet" }),
+       "adoptSong did not land the pool in state");
+    const TLp = T.buildTimeline();
+    const w = V.playWindow(A.specOf("trumpet"), "trumpet");
+    const leadSecs = new Set(); let leadN = 0, misres = 0, pOut = 0, pDrops = 0;
+    for (const bar of TLp) for (const e of bar.ev) {
+      if (e.kind !== "line") continue;
+      const sec = ST.SONG[bar.si];
+      const owner = e.layer || D.gid(sec);
+      const lv = e.lv == null ? e.v : e.lv;
+      const ent = D.stackOf(sec).find(x => x.g === owner);
+      if (D.chairOf(sec, ent, lv) !== "lead") continue;
+      leadSecs.add(bar.si); leadN++;
+      if (D.instrIdOf(sec, owner, lv, ST.POOL) !== "trumpet") misres++;
+      const fin = V.inRange(A.specOf("trumpet"), "trumpet", e.n + (e.home || 0));
+      if (fin == null) pDrops++;
+      else if (fin < w[0] - 0.5 || fin > w[1] + 0.5) pOut++;
+    }
+    ok(leadN > 50 && leadSecs.size >= 2, "the pooled song schedules only " +
+       leadN + " lead notes across " + leadSecs.size + " sections — nothing to prove");
+    ok(misres === 0, misres + " lead note(s) resolve past the pool — " +
+       "the trumpet does not reach every section's lead");
+    ok(pDrops === 0 && pOut === 0, "the pooled trumpet escapes its register " +
+       "(" + pOut + " out, " + pDrops + " dropped) — the fold does not follow the pool");
+    // (c) cast, then clear: the timeline returns to the exact bytes of the
+    // never-pooled song — null pool IS the genre's own band
+    ok(j(TLp) !== before,
+       "casting the lead changed nothing in the schedule — the pool is dead");
+    ST.setPoolChair("lead", null);
+    ok(ST.POOL === null, "clearing the one cast chair did not normalize to null");
+    ok(j(T.buildTimeline()) === before,
+       "a cleared pool is not byte-identical to the genre's own band");
+    // (d) the bass seat, anchored in the shipped text the way §45 anchors the
+    // homed note: scheduleBar plays the POOLED bass, bassop synths still win
+    const tSrc2 = fs.readFileSync(
+      path.join(__dirname, "../../nukernel/audio/transport.js"), "utf8");
+    ok(/\(POOL && POOL\.bass\) \|\| BASS_INSTR/.test(tSrc2),
+       "scheduleBar does not seat the pool's bass chair");
+  }
 }
 
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +

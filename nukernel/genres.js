@@ -182,7 +182,9 @@
     // lookup. (Known limit: it reads the ENTRY word, so the roots freeze once
     // all voices are in. Expositions genuinely work that way; episodes don't.)
     fugue: {
-      label: "Fugue", rate: 1, bars: 4, voices: 4,
+      // named "Leipzig 1725" — the subject/answer-at-the-fifth machinery is
+      // Bach's, Thomaskantor at Leipzig by then.
+      label: "Leipzig 1725", rate: 1, bars: 4, voices: 4,
       instr: "rock_organ",
       entry: v => v, reg: v => 1 - v, realize: () => "line",
       kit: {}, harmony: "emergent",            // the empty kit IS the genre fact
@@ -207,7 +209,9 @@
     // the one with no fugal equivalent (cyclic, not reflective). Modal: the 303
     // line is simultaneously melody, bass and the entire harmony.
     acid: {
-      label: "Acid house", rate: 1, bars: 4, voices: 2,
+      // named "Chicago 1987" — Phuture's Acid Tracks: the 303 squelch this
+      // anchor's signature-synth law exists for.
+      label: "Chicago 1987", rate: 1, bars: 4, voices: 2,
       instr: "clean_guitar",
       // the kit vector below has always said "909, four on the floor" — now
       // the SOUND is the machine it names (synthesized, audio/machines.js)
@@ -246,7 +250,9 @@
     // thing in one key, which is what separates a pop record from a mode.
     // I - V - vi - IV, and the second voice answers a bar late and thinned.
     newwave: {
-      label: "New Wave", rate: 1, bars: 4, voices: 2,
+      // named "London 1979" for the Buggles (the comment's first reference and
+      // the CR-78 preset-box year); Boston 1978 would have honoured the Cars.
+      label: "London 1979", rate: 1, bars: 4, voices: 2,
       instr: ["clean_guitar", "synth_strings_1"],
       entry: v => v, reg: v => v - 1, realize: () => "line",
       harmony: "cycle", roots: [0, 4, 5, 3],     // I V vi IV
@@ -270,7 +276,9 @@
     // move. Restatement rate is ~1 like acid; what separates them is rate,
     // realization and lossiness, which is why the dial is four numbers not one.
     vaporwave: {
-      label: "Vaporwave", rate: .5, bars: 4, voices: 2,
+      // named "Portland 2011" — Vektroid's Floral Shoppe: the slowed record
+      // with the DX7 E.PIANO 1 this anchor literally loads.
+      label: "Portland 2011", rate: .5, bars: 4, voices: 2,
       instr: "strings",
       drumkit: "room",              // the SAMPLED kit, not a sine and some noise
       // BOTH VOICES SIT LOW. The pad was always down here; the melody was an
@@ -307,7 +315,9 @@
     // `swing` is the genuinely new thing: every other operator permutes the
     // grid, swing bends it.
     blues: {
-      label: "Blues", rate: 1, bars: 12, voices: 2, swing: 1 / 3,
+      // named "Chicago 1952" not the Delta — the anchor is a BAND: jazz kit,
+      // ride shuffle, walking bass. That is Chess-era electric blues.
+      label: "Chicago 1952", rate: 1, bars: 12, voices: 2, swing: 1 / 3,
       instr: "steel_string_guitar",
       drumkit: "jazz",              // the SAMPLED kit, not a sine and some noise
       scale: BLUES,
@@ -352,7 +362,9 @@
     // rock needs no scale and no mode override at all — the first genre added
     // that changes nothing about the alphabets.
     rock: {
-      label: "Rock", rate: 1, bars: 8, voices: 2,
+      // named "London 1969" — a riff doubled at the octave (guitar+bass as one
+      // line) over a backbeat and a tom-fill turnaround is Led Zeppelin's move.
+      label: "London 1969", rate: 1, bars: 8, voices: 2,
       instr: "crunch_guitar",
       drumkit: "power",              // the SAMPLED kit, not a sine and some noise
       entry: () => 0, reg: v => v - 2, realize: () => "line",
@@ -390,7 +402,9 @@
     // table and it is not the same emptiness as Simple: Simple has nothing
     // because it is a zero, this has nothing because everything was taken away.
     gregorian: {
-      label: "Gregorian", rate: 0.5, bars: 4, voices: 2,
+      // named "Rome 600" for the name's own claim — Gregory's Rome and its
+      // schola cantorum; the Frankish codification (~800, Metz) came later.
+      label: "Rome 600", rate: 0.5, bars: 4, voices: 2,
       instr: "ahh_choir",
       entry: () => 0, reg: v => -v, realize: () => "line",
       kit: {}, nobass: true, harmony: "modal",
@@ -410,7 +424,9 @@
     // never sits down where you expect. Underneath both, a pedal — the ison,
     // the drone the whole tradition is built over.
     bulgarian: {
-      label: "Bulgarian", rate: 1, bars: 4, voices: 2,
+      // named "Sofia 1975" — Le Mystère des Voix Bulgares (the comment's own
+      // reference) is the Sofia state radio choir, first issued 1975.
+      label: "Sofia 1975", rate: 1, bars: 4, voices: 2,
       instr: "ohh_voices",
       drumkit: "acoustic",
       entry: () => 0, reg: v => v, realize: () => "line",
@@ -435,7 +451,9 @@
     // anyway. Harmony is emergent — nobody wrote the chords down, they are what
     // happens when eight transpositions of one line arrive on top of each other.
     spem: {
-      label: "Spem in alium", rate: 0.5, bars: 8, voices: 8,
+      // named "London 1570" — Tallis at the Chapel Royal; the forty-part motet
+      // premiered in the Arundel/Nonsuch orbit around 1570.
+      label: "London 1570", rate: 0.5, bars: 8, voices: 8,
       instr: "ahh_choir",
       entry: v => v, reg: v => (v % 4) - 1, realize: () => "line",
       kit: {}, nobass: true, harmony: "emergent",
@@ -454,7 +472,9 @@
     // means. It is the smallest complete statement of the idea the fugue then
     // elaborates, and having both makes the difference legible.
     counterpoint: {
-      label: "Counterpoint", rate: 1, bars: 4, voices: 2,
+      // named "Vienna 1725" — Fux's Gradus ad Parnassum, the species exercise
+      // this anchor implements, published in Vienna that year.
+      label: "Vienna 1725", rate: 1, bars: 4, voices: 2,
       instr: "harpsichord",
       entry: () => 0, reg: v => 1 - v, realize: () => "line",
       kit: {}, nobass: true, harmony: "emergent",
@@ -490,7 +510,9 @@
     // gesture the style really has. Eight bars of i-VI-III-VII, two bars each,
     // because the whole point is that the progression is slower than the figure.
     neoclassical: {
-      label: "Neoclassical", rate: 1, bars: 8, voices: 3,
+      // named "Berlin 2011" — Nils Frahm's Felt: the anchor's instrument IS
+      // felt_piano, and that record is Berlin, 2011.
+      label: "Berlin 2011", rate: 1, bars: 8, voices: 3,
       instr: "felt_piano",
       entry: v => (v === 2 ? 4 : 0), reg: v => (v === 0 ? -1 : v - 1),
       realize: v => (v === 0 ? "pad" : "line"),
@@ -511,7 +533,9 @@
     // that it is not a pad-only genre: something has to move or there is nothing
     // to listen TO, and the ramp (clamped, reversing) is what moves it.
     drone: {
-      label: "Drone", rate: 0.25, bars: 4, voices: 2,
+      // named "New York 1964" — La Monte Young's Theatre of Eternal Music:
+      // strings holding tones over a pedal that never moves.
+      label: "New York 1964", rate: 0.25, bars: 4, voices: 2,
       instr: "slow_strings",
       entry: () => 0, reg: v => v - 2, realize: v => (v === 0 ? "pad" : "line"),
       kit: {}, harmony: "modal", mode: MODES.dorian, scale: DIATONIC,
@@ -532,7 +556,9 @@
     // with `crunch` already on: a sampled guitar played clean is not sludge, and
     // the insert chain exists now, so the genre may as well ask for it.
     sludge: {
-      label: "Sludge", rate: 0.5, bars: 8, voices: 2,
+      // named "New Orleans 1991" — the half-speed phrygian ♭II riff under
+      // crunch is NOLA sludge (Eyehategod/Crowbar), not Birmingham doom.
+      label: "New Orleans 1991", rate: 0.5, bars: 8, voices: 2,
       instr: "overdrive_guitar",
       drumkit: "power",
       entry: () => 0, reg: v => v - 3, realize: () => "line",
@@ -557,7 +583,9 @@
     // not a v precisely because of that one note.
     // A bandoneón and a violin, which the per-voice INSTR table can finally say.
     tango: {
-      label: "Tango", rate: 1, bars: 4, voices: 3,
+      // named "Buenos Aires 1935" — the golden age's dance-hall orquestas
+      // (D'Arienzo's rise): bandoneón, violin, the habanera driving.
+      label: "Buenos Aires 1935", rate: 1, bars: 4, voices: 3,
       instr: ["bandoneon", "violin", "bandoneon"],
       entry: v => (v === 2 ? 2 : 0), reg: v => (v === 1 ? 1 : v - 1),
       realize: v => (v === 0 ? "pad" : "line"),
@@ -595,7 +623,9 @@
     // through it, no space anywhere. Locrian, because the flat five is not a
     // passing tone here, it is the tonic chord.
     deathmetal: {
-      label: "Death metal", rate: 1, bars: 8, voices: 2,
+      // named "Tampa 1990" — the Morrisound era: blast beats ridden on the
+      // cymbal and tremolo-picked walls are the Florida school's two techniques.
+      label: "Tampa 1990", rate: 1, bars: 8, voices: 2,
       instr: "distortion_guitar",
       drumkit: "power",
       entry: () => 0, reg: v => v - 3, realize: () => "line",
@@ -626,7 +656,9 @@
     // octaves under it. Analog, from the Model D, because a sample cannot be a
     // monosynth any more than it can be a 303.
     eurythmics: {
-      label: "Eurythmics", rate: 1, bars: 4, voices: 2,
+      // named "London 1983" — Sweet Dreams: the two-chord i-VI vamp, the
+      // sequencer that never varies, the drum machine and nothing else.
+      label: "London 1983", rate: 1, bars: 4, voices: 2,
       instr: "synth_strings_1",
       // "a drum machine and nothing else in the room" — the CR-era box, not a
       // sampled kit pretending to be one
@@ -658,7 +690,9 @@
     // shuffle, because nothing here lands exactly on the grid; and a bass that
     // syncopates rather than marches.
     isley: {
-      label: "Isley Brothers", rate: 1, bars: 8, voices: 3, swing: 0.16,
+      // named "Teaneck 1973" — T-Neck Records IS Teaneck NJ, the Isleys' label
+      // and home; the Rhodes-plus-fuzz-lead anchor is 3+3.
+      label: "Teaneck 1973", rate: 1, bars: 8, voices: 3, swing: 0.16,
       instr: ["rhodes_ep", "overdrive_guitar", "rhodes_ep"],
       drumkit: "room",
       entry: v => (v === 1 ? 2 : 0), reg: v => (v === 1 ? 1 : v - 1),
@@ -706,7 +740,9 @@
     // guitar answers it from bar 5, and a synth pad holds the chords, which
     // is three instruments and was one until INSTR learned to take a list.
     toto: {
-      label: "Toto", rate: 1, bars: 8, voices: 3, swing: 0.08,
+      // named "Los Angeles 1982" — Toto IV: the Africa lope this comment
+      // describes, cut by LA session players.
+      label: "Los Angeles 1982", rate: 1, bars: 8, voices: 3, swing: 0.08,
       instr: ["synth_strings_1", "marimba", "clean_guitar"],
       drumkit: "room",
       entry: v => (v === 2 ? 4 : 0), reg: v => (v === 1 ? 1 : v - 1),
@@ -747,7 +783,10 @@
     // holding the chord while a Rhodes plays around it. Slow; the tempo is the
     // point, and the composer knows it.
     jodeci: {
-      label: "Jodeci", rate: 1, bars: 4, voices: 2, swing: 0.28,
+      // named "Charlotte 1991" — Forever My Lady's year, and the choir-over-808
+      // anchor is the Hailey brothers' Charlotte church sound; the new jack
+      // swing TECHNIQUE itself would be Harlem 1987 (Teddy Riley).
+      label: "Charlotte 1991", rate: 1, bars: 4, voices: 2, swing: 0.28,
       instr: ["ahh_choir", "rhodes_ep"],
       // "a drum machine that cannot swing on its own" — the 808; the swing is
       // ours, exactly as new jack applied it
@@ -777,7 +816,9 @@
     // simpler — the second voice sings a THIRD above the first, which in a
     // seven-note alphabet is exactly transpose(2), and in parallel the whole way.
     beatles: {
-      label: "Beatles", rate: 1, bars: 8, voices: 2,
+      // named "Liverpool 1962" — Love Me Do: the ♭VII already in the tune and
+      // two voices in thirds, before the studio years moved them to London.
+      label: "Liverpool 1962", rate: 1, bars: 8, voices: 2,
       instr: ["steel_string_guitar", "ohh_voices"],
       drumkit: "acoustic",
       entry: () => 0, reg: v => v, realize: () => "line",
@@ -806,7 +847,9 @@
     // Rhodes, a jazz guitar over it, a walking bass, and a shuffle small enough
     // that it reads as feel rather than as swing.
     steely: {
-      label: "Steely Dan", rate: 1, bars: 8, voices: 3, swing: 0.2,
+      // named "Los Angeles 1977" — Aja: the Rhodes/jazz-guitar/walking-bass
+      // session polish is the LA years, not the NY bar band of 1972.
+      label: "Los Angeles 1977", rate: 1, bars: 8, voices: 3, swing: 0.2,
       instr: ["rhodes_ep", "jazz_guitar", "rhodes_ep"],
       drumkit: "jazz",
       entry: v => (v === 1 ? 2 : 0), reg: v => (v === 1 ? 1 : v - 1),
@@ -833,7 +876,9 @@
     // entries, a reverb you could lose an afternoon in, and the dotted-eighth
     // echo that IS the guitar sound, asked for by name.
     postrock: {
-      label: "Post rock", rate: 0.5, bars: 8, voices: 3,
+      // named "Austin 2003" — dotted-eighth echo on clean guitars arriving one
+      // at a time is Explosions in the Sky; Glasgow 1997 was the other claimant.
+      label: "Austin 2003", rate: 0.5, bars: 8, voices: 3,
       instr: ["slow_strings", "clean_guitar", "clean_guitar"],
       drumkit: "room",
       entry: v => v * 2, reg: v => v - 1,
@@ -868,7 +913,9 @@
     // the whole tune live. The snare hand (kitVel) does the rest — every
     // backbeat at 9.
     boombap: {
-      label: "Boom bap", rate: 1, bars: 4, voices: 2, swing: 0.2, near: "isley",
+      // named "New York 1994" — Illmatic-era: the chopped soul loop with the
+      // snare hand at 9 on every backbeat.
+      label: "New York 1994", rate: 1, bars: 4, voices: 2, swing: 0.2, near: "isley",
       instr: ["electric_piano", "muted_trumpet"],
       drumkit: "room",
       entry: v => v * 2, reg: v => v - 1,
@@ -896,7 +943,9 @@
     // bell up top where the tremolo guitar was. The hats carry the hand
     // (kitVel) and the 808 ties.
     trap: {
-      label: "Trap", rate: 1, bars: 4, voices: 2, near: "deathmetal",
+      // named "Atlanta 2003" — T.I.'s Trap Muzik named the thing: 808 ties,
+      // half-time snare, the bell up top.
+      label: "Atlanta 2003", rate: 1, bars: 4, voices: 2, near: "deathmetal",
       instr: ["music_box", "square_lead"],
       drumkit: "tr808",            // "the 808 ties" — it does, and now it is one
       entry: v => v * 2, reg: v => 1 - 2 * v, realize: () => "line",
@@ -918,7 +967,9 @@
     // major key, a stab part on the phrase's own rhythm, and the open hat on
     // the offbeat doing the work acid's sixteenth hats did.
     house: {
-      label: "House", rate: 1, bars: 4, voices: 2, near: "acid",
+      // named "Chicago 1986" not 1985 — the anchor's identity is the PIANO
+      // STAB over the four, and that is Move Your Body's year.
+      label: "Chicago 1986", rate: 1, bars: 4, voices: 2, near: "acid",
       instr: ["bright_yamaha_grand", "polysynth"],
       drumkit: "tr909",            // Chicago's four on the floor is a 909's
       entry: v => v, reg: v => v - 1,
@@ -942,7 +993,9 @@
     // the swing is huge, and the two-bar shuffle is a PERIOD — the sixth type
     // saying what house's straight grid cannot.
     garage: {
-      label: "UK garage", rate: 1, bars: 4, voices: 2, swing: 0.28, near: "house",
+      // named "London 1999" — the 2-step year (Re-Rewind): displaced second
+      // snare, chopped vocal, the shuffle edited rather than played.
+      label: "London 1999", rate: 1, bars: 4, voices: 2, swing: 0.28, near: "house",
       instr: ["electric_piano", "solo_vox"],
       drumkit: "electronic",
       entry: v => v, reg: v => v - 1, realize: () => "line",
@@ -971,7 +1024,9 @@
     // a different bar of drums on the even and odd bars, ghost layer armed,
     // over a tied reese-register line and a pedal sub that refuses to move.
     dnb: {
-      label: "Drum & bass", rate: 1, bars: 4, voices: 2, near: "house",
+      // named "London 1994" — the year jungle became drum & bass: the two-bar
+      // break schedule over a reese and a pedal sub.
+      label: "London 1994", rate: 1, bars: 4, voices: 2, near: "house",
       instr: ["fifth_sawtooth_wave", "echo_drops"],
       drumkit: "electronic",
       entry: v => v, reg: v => v - 2, realize: () => "line",
@@ -1003,7 +1058,9 @@
     // on EVERY offbeat, sixteenth hats under it, strings stabbing the chords
     // and an octave bass — the whole record leans forward.
     disco: {
-      label: "Disco", rate: 1, bars: 4, voices: 2, near: "newwave",
+      // named "New York 1977" — the peak-of-the-floor year; Philadelphia 1974
+      // owns the proto-disco strings, but this anchor is the full club machine.
+      label: "New York 1977", rate: 1, bars: 4, voices: 2, near: "newwave",
       instr: ["strings", "clean_guitar"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1,
@@ -1030,7 +1087,9 @@
     // the Rhodes was, a sixteenth bass with a hard rest cap, ghost snares as
     // a velocity fact (kitVel 2s between the 9s), and the ghost lane armed.
     funk: {
-      label: "Funk", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "isley",
+      // named "Cincinnati 1967" — Cold Sweat at King Records: the first
+      // one-chord modal groove, which is exactly what this anchor is.
+      label: "Cincinnati 1967", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "isley",
       instr: ["clavinet", "brass_section"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1, realize: () => "line",
@@ -1053,7 +1112,9 @@
     // stamp, with the tambourine offbeats beside it — over a walking bass and
     // an ionian I-vi-IV-V said with its sevenths out loud.
     motown: {
-      label: "Motown", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "beatles",
+      // named "Detroit 1965" — the Funk Brothers' snare-on-all-four at
+      // Hitsville's peak.
+      label: "Detroit 1965", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "beatles",
       instr: ["upright_piano", "trumpet"],
       drumkit: "acoustic",
       entry: v => v, reg: v => v - 1,
@@ -1085,7 +1146,9 @@
     // EXTENDED chords, Imaj7–iii7–vi7–IVmaj7, a rim on 3, an EP that holds,
     // and backing vocals that are a harmonize PIPE, chord-locked sixths.
     rnb: {
-      label: "R&B", rate: 1, bars: 4, voices: 2, near: "jodeci",
+      // named "Philadelphia 1994" — the straight-time maj7 ballad with a rim
+      // on 3 and stacked thirds is Boyz II Men's Philadelphia.
+      label: "Philadelphia 1994", rate: 1, bars: 4, voices: 2, near: "jodeci",
       instr: ["legend_ep_2", "synth_voice"],
       drumkit: "electronic",
       entry: v => v, reg: v => v - 1,
@@ -1112,7 +1175,9 @@
     // plagal amen, IV–I inside the last bar. Shuffled hard, organ under
     // everything, the answering choir arriving late a third up.
     gospel: {
-      label: "Gospel", rate: 1, bars: 4, voices: 3, swing: 1 / 3, near: "motown",
+      // named "Chicago 1932" — Thomas A. Dorsey at Pilgrim Baptist: the organ,
+      // the shuffle, the secondary dominant and the plagal amen.
+      label: "Chicago 1932", rate: 1, bars: 4, voices: 3, swing: 1 / 3, near: "motown",
       instr: ["drawbarorgan", "ahh_choir", "ohh_voices"],
       drumkit: "acoustic",
       entry: v => v * 2, reg: v => (v === 0 ? -1 : v - 1),
@@ -1139,7 +1204,9 @@
     // PARTS proof: a stab on an absolute offbeat gate, which was unsayable
     // while a chord could only fire once a bar.
     reggae: {
-      label: "Reggae", rate: 1, bars: 4, voices: 2, near: "dub",
+      // named "Kingston 1969" — the one-drop settling out of rocksteady the
+      // year after Do the Reggay named it.
+      label: "Kingston 1969", rate: 1, bars: 4, voices: 2, near: "dub",
       instr: ["clean_guitar", "harmonica"],
       drumkit: "room",
       entry: v => v, reg: v => v,
@@ -1162,7 +1229,9 @@
     // at once, the bass sits on the pedal, and the tape echo is on the genre
     // (the sends are the instrument here, not the notes).
     dub: {
-      label: "Dub", rate: 1, bars: 4, voices: 2, near: "reggae",
+      // named "Kingston 1973" — King Tubby's mixing desk: the sends as the
+      // instrument, the song taken away.
+      label: "Kingston 1973", rate: 1, bars: 4, voices: 2, near: "reggae",
       instr: ["clean_guitar", "echo_drops"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1,
@@ -1189,7 +1258,9 @@
     // and a major I-IV-V — reggae's rhythm cell in a completely different key
     // of feeling.
     ska: {
-      label: "Ska", rate: 1, bars: 4, voices: 2, near: "reggae",
+      // named "Kingston 1962" — independence year, the first-wave double skank
+      // with horns (Skatalites forming out of Studio One's session floor).
+      label: "Kingston 1962", rate: 1, bars: 4, voices: 2, near: "reggae",
       instr: ["palm_muted_guitar", "trumpet"],
       drumkit: "acoustic",
       entry: v => v, reg: v => v,
@@ -1214,7 +1285,9 @@
     // of two locked ones, and an eight-bar form because the groove is a place
     // you stay, not a bar you loop.
     afrobeat: {
-      label: "Afrobeat", rate: 1, bars: 8, voices: 3, near: "funk",
+      // named "Lagos 1971" — Fela's Africa '70 at the Shrine: two drummers,
+      // threes against the four, a groove you stay in.
+      label: "Lagos 1971", rate: 1, bars: 8, voices: 3, near: "funk",
       instr: ["clean_guitar", "tenor_sax", "brass_section"],
       drumkit: "jazz",
       entry: v => v * 2, reg: v => v - 1, realize: () => "line",
@@ -1245,7 +1318,9 @@
     // HALF a bar (`beats: 8`), which is the turnaround steely spreads over
     // two whole bars.
     bossa: {
-      label: "Bossa nova", rate: 1, bars: 4, voices: 2, near: "steely",
+      // named "Rio de Janeiro 1958" — Chega de Saudade, cut in Rio that July:
+      // the clave, the brushes, the ii7-V7 in half a bar.
+      label: "Rio de Janeiro 1958", rate: 1, bars: 4, voices: 2, near: "steely",
       instr: ["nylon_string_guitar", "flute"],
       drumkit: "brush",
       entry: v => v, reg: v => v - 1,
@@ -1276,7 +1351,9 @@
     // figure. The fiddle answers late instead of doubling in thirds all the
     // way, which is the difference between Nashville and Liverpool.
     countrypop: {
-      label: "Country", rate: 1, bars: 4, voices: 2, swing: 0.1, near: "beatles",
+      // named "Nashville 1945" — voice 0's word is literally "the banjo roll",
+      // and the roll is Earl Scruggs', debuted with Monroe at the Ryman in 1945.
+      label: "Nashville 1945", rate: 1, bars: 4, voices: 2, swing: 0.1, near: "beatles",
       instr: ["banjo", "fiddle"],
       drumkit: "acoustic",
       entry: () => 0, reg: v => v, realize: () => "line",
@@ -1298,7 +1375,9 @@
     // half the eighties) with a STAB where the second sequence was, a huge
     // gated snare and — the tell — no hats at all.
     synthpop: {
-      label: "Synth pop", rate: 1, bars: 4, voices: 2, near: "eurythmics",
+      // named "Basildon 1981" — early Depeche Mode: all-synth staccato stabs
+      // on the CR-era box, the aeolian anthem loop.
+      label: "Basildon 1981", rate: 1, bars: 4, voices: 2, near: "eurythmics",
       instr: ["polysynth", "saw_wave"],
       drumkit: "cr78",             // the CR-era anthem box, like its neighbour
       entry: v => v, reg: v => v - 1,
@@ -1323,7 +1402,10 @@
     // phrase ONE DEGREE APART (bulgarian's held second, under fuzz), which is
     // where the blur comes from — it is detune as counterpoint.
     shoegaze: {
-      label: "Shoegaze", rate: 1, bars: 8, voices: 2, near: "postrock",
+      // named "London 1991" — Loveless: the held-second blur under fuzz, made
+      // across a year of London studios (MBV formed in Dublin; the record is
+      // London's).
+      label: "London 1991", rate: 1, bars: 8, voices: 2, near: "postrock",
       instr: ["overdrive_guitar", "overdrive_guitar"],
       drumkit: "room",
       entry: () => 0, reg: v => v - 1, realize: () => "line",
@@ -1346,7 +1428,9 @@
     // project was once named after, finally in the table under its own flag.
     // Slap-tight sixteenth bass, an EP stab, no ghost lane.
     citypop: {
-      label: "City pop", rate: 1, bars: 4, voices: 2, swing: 0.1, near: "toto",
+      // named "Tokyo 1984" — Plastic Love's year: the royal road with slap
+      // sixteenths under it.
+      label: "Tokyo 1984", rate: 1, bars: 4, voices: 2, swing: 0.1, near: "toto",
       instr: ["electric_piano", "clean_guitar"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1,
@@ -1372,7 +1456,9 @@
     // dynamics, over a kick on every quarter and a major I-IV-V because
     // subtlety is for prog. Three chords and the truth at 160.
     punk: {
-      label: "Punk", rate: 1, bars: 4, voices: 2, near: "rock",
+      // named "New York 1976" — the Ramones' debut: every-eighth downstrokes
+      // at 160 is Johnny's right hand, a year before London took it up.
+      label: "New York 1976", rate: 1, bars: 4, voices: 2, near: "rock",
       instr: ["distortion_guitar", "crunch_guitar"],
       drumkit: "power",
       entry: () => 0, reg: v => -1 - v, realize: () => "line",
@@ -1401,7 +1487,9 @@
     // to the chord, no drums, no bass at all, a line that surfaces four bars
     // in and barely moves. The moving chord is the entire difference.
     ambient: {
-      label: "Ambient", rate: 0.5, bars: 8, voices: 2, near: "drone",
+      // named "London 1978" — Music for Airports: the moving maj7 chord inside
+      // the stillness, which this comment calls the entire difference.
+      label: "London 1978", rate: 0.5, bars: 8, voices: 2, near: "drone",
       instr: ["halo_pad", "bowed_glass"],
       entry: v => v * 4, reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),
@@ -1425,7 +1513,9 @@
     // open hat, a staccato stab over a metal pad, and the section's own
     // filter sweep doing what the 303's envelope did.
     techno: {
-      label: "Techno", rate: 1, bars: 8, voices: 2, near: "acid",
+      // named "Detroit 1988" — the Belleville Three's comp that named the
+      // sound: the 909 kick and open hat, everything else stripped.
+      label: "Detroit 1988", rate: 1, bars: 8, voices: 2, near: "acid",
       instr: ["charang", "metal_pad"],
       drumkit: "tr909",            // Detroit's kick-and-open-hat is the 909's
       entry: v => v * 2, reg: v => v - 2,
