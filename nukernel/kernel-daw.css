@@ -735,8 +735,11 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .song:has(.rowpop:not([hidden])){max-height:none}
 /* the open row is pinned to the top of the view when its menu unfolds (the
    openPop nudge); scroll margin keeps it off the very edge at desk widths
-   too, not just under the phone's transport (the phone block sets its own) */
-.box{scroll-margin-top:14px}
+   too, not just under the phone's transport (the phone block sets its own).
+   .lrow IS IN THE LIST: a layer sub-row anchors its own menu, and a sub-row
+   pinned with no margin parked its remove-layer ✕ flush on the chrome seam
+   where the tap fell dead ("I can't remove subsections", 2026-08-16) */
+.box,.lrow{scroll-margin-top:14px}
 .rpmount .pgroup{min-width:0;flex:1 1 100%}
 .rpmount .pnote{flex:1 0 100%}
 @media (min-width:900px){
@@ -1056,6 +1059,14 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 /* a part the desk has silenced — muted, or not the one being soloed — steps
    back whole; every value stays legible (you are about to un-mute it) */
 .strip.off .mlabel,.strip.off .mval,.strip.off .fwell,.strip.off .eqrow{opacity:.42}
+/* AN IDLE CHAIR — on the song's desk but not in the sounding section (the
+   fixed-roster law, ui/mixtbl.js songRows): the strip stays where it is,
+   parked on its resolved statics, and dims a shade lighter than .off — idle
+   is "waiting", not "silenced", and the two must read differently */
+.strip.idle .mlabel,.strip.idle .mval,.strip.idle .eqrow,.strip.idle .mms{opacity:.34}
+.strip.idle .fwell{opacity:.5}
+.strip.idle:hover .mlabel,.strip.idle:hover .mval,.strip.idle:hover .eqrow,
+.strip.idle:hover .mms,.strip.idle:hover .fwell{opacity:.85}
 /* ---- the label block: number, address, what plays it, where it goes ---- */
 .mlabel{display:flex;flex-direction:column;gap:1px;min-height:52px}
 .mnum{font:600 9px/1 var(--f-num);color:var(--tbl-faint)}
@@ -1485,7 +1496,7 @@ details .c{color:var(--faint)}
      row, an assistive-tech focus move) can park the target exactly on the
      seam where the tap then lands on the transport instead. Scroll margins
      keep every interactive row clear of both edges. */
-  .box,.cell,.slot,.blayer,.prow{scroll-margin-top:14px;scroll-margin-bottom:14px}
+  .box,.lrow,.cell,.slot,.blayer,.prow{scroll-margin-top:14px;scroll-margin-bottom:14px}
   .page{display:none}
   .page>*+*{margin-top:12px}
   /* which page paints: one attribute, TWO pages — SONG and MIX ("the row and

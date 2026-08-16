@@ -789,12 +789,40 @@ function openPop(sec, kind, ent) {
   // the menu unfolds to its FULL height below the row — the page makes room,
   // the menu never scrolls — so pin the OWNING ROW near the top of the view
   // (it is the menu's title bar) and the whole fold stands below it, visible
-  // even when the tap landed at the bottom of the glass. ONE smooth nudge on
-  // open; .box scroll-margin keeps the row clear of the sticky chrome.
+  // even when the tap landed at the bottom of the glass.
+  //
+  // TWO HARD-WON RULES ABOUT THAT NUDGE (2026-08-16, "I can't remove sections
+  // any more"). The pin used to be an unconditional SMOOTH scroll, and a
+  // smooth scroll is three hundred milliseconds of every key on the page
+  // being a moving target: a thumb that opened the PART menu and went for its
+  // ✕ tapped a key that was mid-flight — touchstart on the key, touchend on
+  // whatever slid under it, NO click — and the miss landed on a neighbouring
+  // cell, which opened ITS menu, which scrolled again. Every delete sat
+  // behind exactly that animation, so "remove" was the verb that died first.
+  //   1. NEVER SCROLL WHEN NOTHING NEEDS IT: if the owning row and the whole
+  //      fold are already inside the glass (clear of the sticky chrome), the
+  //      menu opens with ZERO displacement and the keys are exactly where the
+  //      eye already is. The PART menu — the short one, the one with the
+  //      delete — almost always takes this path.
+  //   2. WHEN A SCROLL IS EARNED, IT IS INSTANT: block:"start" with the
+  //      default behavior lands settled inside the same frame, so by the time
+  //      the finger comes back for its second tap nothing is in motion.
+  // (Every gate clicked through the old animation happily — a driver re-aims
+  // after scrolling, a thumb does not, which is why this shipped green.)
   requestAnimationFrame(() => {
     try {
       const anchor = rowpop.previousElementSibling || rowpop;
-      anchor.scrollIntoView({ block: "start", behavior: "smooth" });
+      const a = anchor.getBoundingClientRect();
+      const m = rowpop.getBoundingClientRect();
+      // the glass between the sticky chrome: below the transport bar, above
+      // the page rail (which only exists to measure on a phone)
+      const bar = document.querySelector(".transport");
+      const rail = document.querySelector(".pagerail");
+      const top = bar ? bar.getBoundingClientRect().bottom : 0;
+      const bot = rail && rail.getBoundingClientRect().height && rail.getBoundingClientRect().top < innerHeight
+        ? rail.getBoundingClientRect().top : innerHeight;
+      const fits = a.top >= top && m.bottom <= bot;
+      if (!fits) anchor.scrollIntoView({ block: "start" });
     } catch (e) {}
   });
   rpX.focus({ preventScroll: true });

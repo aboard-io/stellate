@@ -22,7 +22,16 @@
 //       no `instr` on any stack entry;
 //   (C) NO SECTION SURFACE OFFERS AN INSTRUMENT: neither the parent row's
 //       VOICE menu nor a layer sub-row's carries an instrument bank or a
-//       single instr chip.
+//       single instr chip;
+//   (D) THE DELETES WORK LIKE A FINGER WORKS ("I can't remove sections any
+//       more", 2026-08-16): the PART menu's ✕ removes the section — row and
+//       sub-rows leaving both SONG and the DOM — and the sub-row's own ✕
+//       removes the layer; the last section cannot be deleted (it is replaced
+//       by a fresh empty box, the model's law). Every tap here is HONEST — a
+//       raw click at the key's current on-screen position, no helper scroll —
+//       because that is exactly what broke: the menu's unconditional smooth
+//       pin-scroll kept every key in motion under the finger, and gates that
+//       re-aim after scrolling stayed green while thumbs missed.
 "use strict";
 const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
 const path = require("path");
@@ -147,6 +156,102 @@ const { POOLCHAIRS } = require("../../nukernel/fields.js");
       await page.waitForSelector("#rowpop:not([hidden])", { timeout: 10000 });
       await noInstr("layer sub-row");
       await page.keyboard.press("Escape");
+    }
+  }
+
+  // (D) the deletes, tapped the way a finger taps
+  {
+    const st = () => page.evaluate(async () => {
+      const stm = await import("/nukernel/ui/state.js");
+      return { songs: stm.SONG.length,
+               rows: document.querySelectorAll(".box").length,
+               lrows: document.querySelectorAll(".lrow").length,
+               stack0: stm.SONG[0].stack.map(e => e.g) };
+    });
+    // an HONEST tap: a raw click at the key's current centre, only if the
+    // point really belongs to the key — a covered or off-glass key is the
+    // regression this section exists to catch, reported by name
+    const honestTap = async (sel, what) => {
+      const info = await page.evaluate(s => {
+        const el = document.querySelector(s);
+        if (!el) return { missing: true };
+        const r = el.getBoundingClientRect();
+        const cx = r.x + r.width / 2, cy = r.y + r.height / 2;
+        const at = document.elementFromPoint(cx, cy);
+        return { cx, cy,
+                 inView: cy >= 0 && cy <= innerHeight && cx >= 0 && cx <= innerWidth,
+                 onTarget: !!(at && (at === el || el.contains(at))),
+                 at: at ? (at.className || at.tagName) : "nothing" };
+      }, sel);
+      if (info.missing) { fail(`${what}: no ${sel} in the DOM`); return false; }
+      if (!info.inView) { fail(`${what}: the key sits off the glass`); return false; }
+      if (!info.onTarget) {
+        fail(`${what}: the key is covered by "${info.at}" — a tap lands there instead`);
+        return false;
+      }
+      await page.mouse.click(info.cx, info.cy);
+      return true;
+    };
+    // box 1 still wears the ska+fugue stack from (C): deleting the parent
+    // must take the whole family — the sub-row leaves with the row
+    const before = await st();
+    if (before.lrows < 1) fail("(C) left no layer sub-row for (D) to inherit");
+    await page.locator(".box").first().locator('.bcell[data-cell="part"]').click();
+    await page.waitForSelector("#rowpop:not([hidden])", { timeout: 10000 });
+    await page.waitForTimeout(120);            // the pin is INSTANT now; settle a frame
+    if (await honestTap("#rowpop .rpdel", "section delete")) {
+      await page.waitForTimeout(200);
+      const after = await st();
+      if (after.songs !== before.songs - 1 || after.rows !== after.songs)
+        fail(`the section delete left SONG at ${after.songs} with ${after.rows} rows ` +
+             `(was ${before.songs})`);
+      else ok("the PART menu's ✕ removes the section — model and DOM together");
+      if (after.lrows !== 0)
+        fail(`${after.lrows} layer sub-row(s) survived their parent's delete`);
+      else ok("the deleted section's sub-rows left with it");
+    }
+    // a fresh layer on the new first box, then the sub-row's own ✕
+    await page.locator(".box").first().locator('.bcell[data-cell="genre"]').click();
+    await page.waitForSelector("#rowpop:not([hidden])", { timeout: 10000 });
+    await page.locator('#rowpop .pchip[data-kind="genre"][data-value="ska"]').click();
+    await page.locator('#rowpop .pchip[data-kind="genre"][data-value="fugue"]').click();
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(120);
+    const layered = await st();
+    if (layered.lrows !== 1 || layered.stack0.length !== 2)
+      fail(`could not stage a layer to remove (lrows ${layered.lrows}, ` +
+           `stack ${layered.stack0.join("+")})`);
+    else if (await honestTap(".lrow .lrx", "layer remove")) {
+      await page.waitForTimeout(200);
+      const after = await st();
+      if (after.lrows !== 0 || after.stack0.length !== 1)
+        fail(`the layer ✕ left lrows ${after.lrows}, stack ${after.stack0.join("+")}`);
+      else ok("the sub-row's ✕ removes the layer — stack shrinks, sub-row gone");
+    }
+    // the last-section law: delete down to one, then once more — the song
+    // never empties, the final delete hands back a fresh empty box
+    let guard = 12;
+    while ((await st()).songs > 1 && guard--) {
+      await page.locator(".box").first().locator('.bcell[data-cell="part"]').click();
+      await page.waitForSelector("#rowpop:not([hidden])", { timeout: 10000 });
+      await page.waitForTimeout(120);
+      if (!(await honestTap("#rowpop .rpdel", "section delete (drain)"))) break;
+      await page.waitForTimeout(150);
+    }
+    const one = await st();
+    if (one.songs !== 1) fail(`could not drain the song to one box (${one.songs})`);
+    else {
+      await page.locator(".box").first().locator('.bcell[data-cell="part"]').click();
+      await page.waitForSelector("#rowpop:not([hidden])", { timeout: 10000 });
+      await page.waitForTimeout(120);
+      if (await honestTap("#rowpop .rpdel", "last-section delete")) {
+        await page.waitForTimeout(200);
+        const last = await st();
+        if (last.songs !== 1 || last.stack0.join() !== "simple")
+          fail(`deleting the last box left ${last.songs} box(es), ` +
+               `stack ${last.stack0.join("+")} — the fresh-box law broke`);
+        else ok("the last section cannot be deleted — a fresh empty box takes its place");
+      }
     }
   }
 
