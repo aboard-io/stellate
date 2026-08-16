@@ -169,6 +169,12 @@ function taps() {
     await page.keyboard.press("Escape");
     await page.waitForSelector("#rowpop", { state: "hidden" });
   };
+  // A GENRE LABEL IS NO LONGER UNIQUE ON THE PAGE. The lab bench lists the same
+  // dated anchors as its parent chips, so every city-and-year string exists
+  // twice: once in the box's genre popover, once on the bench. Both are real
+  // surfaces; this sweep drives the popover, so it names the popover.
+  const genreChip = (t) =>
+    page.locator("#rowpop .pchip", { hasText: new RegExp("^" + t + "$") });
 
   // THE PHRASE EDITOR IS THE COMPOSE PAGE ("compose, arrange, mix",
   // 2026-08-16): #stepgrid / .slot / #seed live on it, reached the way a
@@ -206,7 +212,11 @@ function taps() {
     // switching means taking the previous one off after the new one lands —
     // clicking six in a row would otherwise build one six-deep box.
     await openCell(0, "genre");
-    await page.locator(".pchip", { hasText: new RegExp("^" + g + "$") }).click();
+    // SCOPED TO THE POPOVER. The lab bench deals the same dated anchors as its
+    // parent chips, with the same city-and-year labels, so a bare `.pchip` text
+    // match now resolves to two buttons and strict mode refuses to guess. The
+    // popover is the surface this sweep means: the box's own genre stack.
+    await genreChip(g).click();
     // SETTLE PAST THE PREDECESSOR, not a stopwatch. A genre switch lands on
     // the next bar line and cancels nothing already scheduled — at the page's
     // 126 bpm a rate-0.25 bucket is 7.6 s, plus the 150 ms lookahead and a
@@ -216,7 +226,7 @@ function taps() {
     // time. So the wait covers the predecessor's whole bucket + tail first.
     let settle = 3500;
     if (prev && prev !== g) {
-      await page.locator(".pchip", { hasText: new RegExp("^" + prev + "$") }).click();
+      await genreChip(prev).click();
       const prevBarMs = (16 / RATE_OF[prev]) * (60 / 126 / 4) * 1000;
       settle = Math.max(3500, prevBarMs + 150 + 3200) + 3500;
     }
@@ -314,7 +324,7 @@ function taps() {
   // built, so a chip that lit up and did nothing is visible from here — which is
   // the whole failure mode this project keeps rediscovering.
   {
-    const chip = (t) => page.locator(".pchip", { hasText: new RegExp("^" + t + "$") }).first();
+    const chip = genreChip;      // the popover's chips — see genreChip above
     // THE BOX'S OWN MIX FIELDS live on the MIX page's SECTION row now (the
     // palette's fx tab went with pg-palette): tap the section row's cell,
     // click the chip in its popover. A one-of cell closes on the choice; the
@@ -1037,18 +1047,43 @@ function taps() {
         fail(`a channel carries no per-box identity key: ${JSON.stringify(armed.key)}`);
       else ok(`automation armed: count ${auto0} -> ${m1.automation}, ` +
               `on channel ${armed.key.split("|")[0]} (per-box identity keys)`);
+      // …AND IT LANDED ON A NODE. `auto` counts DECLARATIONS; `autop` is the
+      // AudioParam the entry names, read off the graph (mixer.js), so "the
+      // point list is written but never armed" — the sentence the spectrum
+      // failure below can only guess at — is now a fact this can state.
+      const ap = (armed.autop || []).find(x => x.param === "cutoff");
+      if (!ap || !ap.on)
+        fail(`the cutoff entry reached no AudioParam (autop ` +
+             `${JSON.stringify(armed.autop)}) — the node was never built`);
+      else ok(`the cutoff entry is on a real node (its frequency reads ` +
+              `${ap.at.toFixed(0)} Hz)`);
 
       const post = await buckets();
       const floorPost = Math.min(...post), peakPost = Math.max(...post);
-      console.log(`  spectrum above 4 kHz  : unarmed floor ${floorPre.toFixed(4)}, ` +
-                  `armed floor ${floorPost.toFixed(4)} / peak ${peakPost.toFixed(4)} ` +
+      // THE UNARMED MEDIAN, NOT THE UNARMED FLOOR. Both reads are minima over
+      // a full pass, and the unarmed minimum is a MUSICAL fact — the quietest
+      // instant of the loop, a gap between fills, the section's own fade-in —
+      // not a filter state. Measured at the node (autop above): the sweep runs
+      // 9864 -> 338 Hz and takes HF from 0.045 to 0.011, a clean 4x fall, while
+      // the unarmed pass dips to 0.0115 in its first bucket all by itself. So
+      // `floorPost < 0.6 * floorPre` was asking a closing filter to beat the
+      // song's own quietest instant, which no filter can promise. What it can
+      // promise, and what a listener actually hears, is both of these: the
+      // armed pass guts its OWN range, and its floor lands far under the level
+      // the same music sits at unarmed.
+      const med = a => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)];
+      const medPre = med(pre);
+      console.log(`  spectrum above 4 kHz  : unarmed floor ${floorPre.toFixed(4)} / ` +
+                  `median ${medPre.toFixed(4)}, armed floor ${floorPost.toFixed(4)} / ` +
+                  `peak ${peakPost.toFixed(4)} ` +
                   `(${span.toFixed(0)}s buckets, loop ~${loopSec.toFixed(1)}s)`);
-      if (floorPost < 0.4 * (peakPost || 1e-9) && floorPost < 0.6 * (floorPre || 1e-9))
+      if (floorPost < 0.4 * (peakPost || 1e-9) && floorPost < 0.6 * (medPre || 1e-9))
         ok(`the armed automation is audible: the sweep guts the floor ` +
-           `(${floorPre.toFixed(4)} -> ${floorPost.toFixed(4)}, peak ${peakPost.toFixed(4)})`);
+           `(unarmed median ${medPre.toFixed(4)} -> ${floorPost.toFixed(4)}, ` +
+           `peak ${peakPost.toFixed(4)})`);
       else fail(`a closing filter automation left the HF floor at ${floorPost.toFixed(4)} ` +
-                `(unarmed ${floorPre.toFixed(4)}, armed peak ${peakPost.toFixed(4)}) — ` +
-                `the point list is written but never armed on a node in the signal path`);
+                `(unarmed median ${medPre.toFixed(4)}, armed peak ${peakPost.toFixed(4)}) — ` +
+                `the sweep is on a node but the signal path does not hear it`);
 
       // ...and "off" takes it back off, through the same chip row
       await page.locator('.pchip[data-kind="auto"][data-value="cutoff:off"]').click();

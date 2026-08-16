@@ -931,6 +931,18 @@ window.__nuMix = () => ({
     level: +c.lvl.gain.value.toFixed(3), pan: c.spec.pan, verb: c.spec.verb,
     eq: eqRead(c.eq),                  // ADDED key: the section strip's tone
     key: c.key, auto: c.autos ? c.autos.length : 0,
+    // …AND WHERE EACH OF THOSE ENTRIES LANDED, read off the AudioParam it
+    // names. `auto` above counts DECLARATIONS, which is the exact shape of
+    // failure this file keeps rediscovering one level down: a compiled point
+    // list can be green in the count while autoParam returned null and the
+    // walk skipped it, so nothing in the signal path ever moved. `at` is the
+    // param's value NOW — sample it twice across a bar and a live sweep is
+    // visible from outside; `on` is false when the node was never built.
+    autop: (c.autos || []).map(a => {
+      const p = c.autoParam && c.autoParam(a.param);
+      return { param: a.param, shape: a.shape, on: !!p,
+               at: p ? +p.value.toFixed(4) : null };
+    }),
     // ADDED KEYS, never a reshape: the drum lanes and the pitched chairs that
     // have actually SOUNDED on this channel, read off the nodes themselves.
     // A lane strip is built on its first hit, so this doubles as "which of the

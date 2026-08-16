@@ -241,11 +241,25 @@ function taps() {
     else {
       ok(`bounce ready: ${b.durSec.toFixed(2)}s, gen ${b.gen}, rendered in ${b.lastRenderMs} ms` +
          (b.sampledOnly ? " (SAMPLED-ONLY degrade — counted, as the contract requires)" : ""));
-      if (shortDur && !(b.durSec > shortDur))
-        fail(`the full carrier (${b.durSec.toFixed(2)}s) did not grow past the ` +
+      // THE FULL TAPE IS THE WHOLE SONG, which is not the same claim as "it is
+      // longer than the short one". The short stage cuts on a BOX LINE now
+      // ("the insurance tape is a whole phrase, because two bars is not a
+      // song") and takes the first box WHOLE however long it is — so on this
+      // gate's ONE-BOX song the two stages are legitimately the same tape, and
+      // a strict `>` was asserting the old two-bar fragment. The claim that
+      // survives: the full tape never SHRINKS below the insurance one, and it
+      // grows whenever there is more song than the first box.
+      const boxes = await page.locator(".box").count();
+      if (shortDur && b.durSec < shortDur - 0.01)
+        fail(`the full carrier (${b.durSec.toFixed(2)}s) is SHORTER than the ` +
              `short stage (${shortDur.toFixed(2)}s) — the whole song never bounced`);
+      else if (shortDur && boxes > 1 && !(b.durSec > shortDur))
+        fail(`the full carrier (${b.durSec.toFixed(2)}s) did not grow past the ` +
+             `short stage (${shortDur.toFixed(2)}s) across ${boxes} boxes — the ` +
+             `render stopped at the insurance cut`);
       else if (shortDur)
-        ok(`the blob grew to the song: ${shortDur.toFixed(2)}s -> ${b.durSec.toFixed(2)}s`);
+        ok(`the blob is the whole song: ${shortDur.toFixed(2)}s -> ` +
+           `${b.durSec.toFixed(2)}s over ${boxes} box(es)`);
       // the carrier must be REAL instruments. The foreground gate fails on a
       // SINGLE live fallback as audibly wrong, and the rendered bounce is the
       // only thing a locked phone hears — oscillator boops carry plenty of
@@ -793,7 +807,9 @@ function taps() {
     await p2.waitForSelector("#rowpop:not([hidden])", { timeout: 10000 });
     // acid house wears its city-and-year label now ("every genre is a city
     // and a year", 102bb37) — the id is still `acid`, the chip says this
-    await p2.locator(".pchip", { hasText: /^Chicago 1987$/ }).click();
+    // SCOPED TO THE POPOVER: the lab bench deals the same dated anchors as its
+    // parent chips, so the label alone matches two buttons on the page now.
+    await p2.locator("#rowpop .pchip", { hasText: /^Chicago 1987$/ }).click();
     await p2.keyboard.press("Escape");
     await p2.waitForSelector("#rowpop", { state: "hidden" });
     await p2.click("#play");
