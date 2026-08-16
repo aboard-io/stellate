@@ -90,24 +90,34 @@ const CELLNAME = { part: "part", genre: "genre", role: "function", bars: "bars",
                    rhythm: "rhythm", trans: "transitions" };
 
 /* ---------- the column header ---------- */
-// A real header row: the columns are named once, at the top, instead of every
-// row re-explaining itself. Hidden by CSS where the columns wrap instead.
+// A real header row AT EVERY WIDTH: the columns are named once, at the top,
+// instead of every row re-explaining itself. Each header cell carries the full
+// word plus a phone abbreviation — the transport legend's span swap: the full
+// word leaves the layout via the clip pattern, never display:none, so the
+// columnheader's accessible name stays the full word on every width.
 const headRow = (() => {
   const r = document.createElement("div");
   r.className = "shead thd"; r.setAttribute("role", "row");
   const names = { part: "#", genre: "genre", role: "function", bars: "bars",
                   timing: "timing", mods: "mods", voice: "voice",
                   rhythm: "rhythm", trans: "transitions" };
-  for (const k of CELLS) {
+  const abbr = { part: "#", genre: "genre", role: "func", bars: "bars",
+                 timing: "time", mods: "mods", voice: "voice",
+                 rhythm: "rhy", trans: "trans" };
+  const mk = (cls, full, ab) => {
     const c = document.createElement("span");
-    c.className = "h-" + k; c.textContent = names[k];
+    c.className = cls;
     c.setAttribute("role", "columnheader");
-    r.append(c);
-  }
-  const c = document.createElement("span");
-  c.className = "h-ph"; c.textContent = "patterns";
-  c.setAttribute("role", "columnheader");
-  r.append(c);
+    const f = document.createElement("span");
+    f.className = "hf"; f.textContent = full;
+    const a = document.createElement("span");
+    a.className = "ha"; a.textContent = ab;
+    a.setAttribute("aria-hidden", "true");
+    c.append(f, a);
+    return c;
+  };
+  for (const k of CELLS) r.append(mk("h-" + k, names[k], abbr[k]));
+  r.append(mk("h-ph", "patterns", "ptns"));
   return r;
 })();
 

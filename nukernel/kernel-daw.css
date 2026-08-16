@@ -774,35 +774,46 @@ h1 em{font-style:normal;color:var(--accent-txt)}
    compact current value, each opening its own focused popup. The row reads
    as a summary line of the whole section; the popups carry the controls, so
    nothing here needs a second line, a lamp strip or a tool pad.
-   Below the desk boundary the cells WRAP inside their row (a busy section
-   may take two short lines); at >=900px they are FIXED grid tracks under a
-   silkscreen header row, which is what makes it a table you read down. */
+   THE GRID IS REAL AT EVERY WIDTH ("a section is a row of keys"): shared
+   column tracks under a silkscreen header row, so the same cell lines up
+   vertically across section rows. >=900px: ten fixed tracks, one line per
+   section (the desk block at the end). <900px: a TWO-DECK grid per row —
+   identity on line 1 (# · genre · function · bars · patterns), treatment on
+   line 2 (timing · mods · voice · rhythm · trans) — with the header row
+   still present, its words abbreviated by the span swap (.hf/.ha). No
+   flex-wrap anywhere: a busy section never re-flows into prose. */
 .songwrap{gap:12px}
 .song{
   display:flex;flex-direction:column;
   max-height:60vh;overflow-x:hidden;
 }
-.shead{display:none}          /* the desk turns it on; a phone has no room */
 /* flex:none, or the well's max-height SQUASHES the rows: #song is a column
    flex container with a height cap, so a song longer than the cap made every
    row shrink to its min-height. The cap belongs to the SCROLLBAR. */
 .box,.shead,.sfoot{flex:0 0 auto}
 .box{
-  position:relative;min-height:0;padding:3px var(--tbl-gut) 4px;
+  position:relative;min-height:0;padding:4px var(--tbl-gut) 6px;
   cursor:pointer;background:transparent;
   border:0;border-bottom:1px solid var(--tbl-hair);
-  display:flex;flex-wrap:wrap;gap:1px 2px;align-items:center;
+  align-items:center;
 }
-/* A CELL IS A FLAT KEY: icon silkscreen + the current value, washing under
-   the pointer. `.unset` dims the "—" cells so the set facts read first.
+/* A CELL IS A KEY, not a caption: the crowd-cheap moulded material (.mval's
+   recipe — flat key fill on the recessed well, 1px bevel borders, no shadow),
+   with real press feedback. `.unset` dims the "—" cells so the set facts read
+   first, but the KEY stays — an unset cell is still a place you tap.
    Every cell is a real button — its own tab stop, its own popup. */
 .bcell{
-  appearance:none;background:none;border:0;cursor:pointer;
+  appearance:none;cursor:pointer;
   display:inline-flex;align-items:center;gap:4px;min-width:0;
-  padding:3px 5px;border-radius:2px;
-  font:600 10.5px/1.4 var(--f-legend);letter-spacing:.02em;color:var(--ink);
+  padding:4px 6px;border-radius:3px;
+  background:var(--tbl-key,var(--hw-key-mid));color:var(--ink);
+  border:0;border-top:1px solid rgba(255,255,255,.09);
+  border-bottom:1px solid rgba(0,0,0,.55);
+  font:600 10.5px/1.4 var(--f-legend);letter-spacing:.02em;
 }
-.bcell:hover{background:var(--sunk)}
+.bcell:hover{background:var(--hw-key-hi);border-top-color:rgba(255,255,255,.25)}
+.bcell:active{transform:translateY(1px);background:var(--hw-key-lo);
+  border-top-color:rgba(0,0,0,.3);border-bottom-color:rgba(0,0,0,.2)}
 .bcell .cvx{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bcell.unset .cvx{color:var(--faint);font-weight:400}
 /* the cell icons: silkscreen SVG masks painted with currentColor (the
@@ -848,14 +859,25 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .bbars .bn{color:var(--ink);font-weight:600;white-space:nowrap}
 .bbars .bd{font-family:var(--f-num);letter-spacing:.02em;color:var(--faint);white-space:nowrap}
 /* THE PATTERN CELLS — the phrase's own contour at fingernail size, one chip
-   per (layer, phrase), plus the [+] that grows the bank into this box. */
-.bchips{display:flex;gap:2px;align-items:center;min-width:0;overflow:hidden}
+   per (layer, phrase), plus the [+] that grows the bank into this box. The
+   chips wear the SAME key material as the cells — a chip is a key you press,
+   not a decal — with the state ring drawn over it. */
+.bchips{display:flex;gap:3px;align-items:center;min-width:0;overflow:hidden}
 .bch{
   appearance:none;cursor:pointer;padding:0;flex:0 0 auto;
-  width:19px;height:13px;border-radius:2px;
-  background:var(--tbl-ground);border:1px solid var(--tbl-hair);
-  display:block;color:var(--tbl-ink);
+  width:20px;height:14px;border-radius:2px;
+  background:var(--tbl-key,var(--hw-key-mid));color:var(--tbl-ink);
+  border:1px solid rgba(0,0,0,.4);border-top-color:rgba(255,255,255,.2);
+  display:block;
 }
+.bch:active{transform:translateY(1px);background:var(--hw-key-lo)}
+/* THE SOUNDING ROW'S KEYS TAKE THE WASH: the .tbl row states paint the row's
+   ground, but the keys are opaque now — without this the live tint only shows
+   in the gutters and the playing row stops announcing itself. */
+.box.live .bcell,.box.live .bch{
+  background:color-mix(in srgb,var(--st-live) 13%,var(--tbl-key,var(--hw-key-mid)))}
+.box.looped .bcell,.box.looped .bch{
+  background:color-mix(in srgb,var(--st-arm) 9%,var(--tbl-key,var(--hw-key-mid)))}
 .bcmini{display:block;width:100%;height:100%;
   fill:none;stroke:currentColor;stroke-width:3.4;
   stroke-linecap:round;stroke-linejoin:round}
@@ -865,9 +887,10 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .bch.sel{border-color:var(--accent);color:var(--accent-txt);background:var(--tbl-hi)}
 .bch.lit{color:var(--st-play);border-color:var(--st-play)}
 .bch.bplus{
-  width:auto;min-width:19px;padding:0 4px;height:13px;
+  width:auto;min-width:20px;padding:0 4px;height:14px;
   font:600 10px/1 var(--f-num);color:var(--faint);
-  border-style:dashed;display:inline-flex;align-items:center;justify-content:center}
+  border-style:dashed;border-color:var(--hw-edge);
+  display:inline-flex;align-items:center;justify-content:center}
 .bch.bplus:hover{color:var(--accent-txt)}
 .bch.bplus[hidden]{display:none}
 /* the play-through rides the row's own bottom edge — a hairline, not a grid
@@ -882,8 +905,42 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .box.over{box-shadow:inset 0 3px 0 var(--accent)}
 .box.dragging{opacity:.4}
 /* THE HEADER ROW: the columns named once, in silkscreen (.thd), instead of
-   every row re-explaining itself. Same grid as .box on a desk. */
+   every row re-explaining itself. Same grid as .box AT EVERY WIDTH — on the
+   phone it splits into the same two decks the rows do, and each cell swaps to
+   its abbreviation (.ha) while the full word stays in the accessibility tree
+   via the clip pattern (.hf) — the transport legends' own swap. */
 .shead{padding:5px var(--tbl-gut) 4px;font-size:8.5px;color:var(--tbl-faint)}
+.shead .ha{display:none}
+/* THE PHONE SONG GRID — the two-deck row. Identity cells on line 1 (the
+   numeral, the genre across two tracks, the function, the bars, the pattern
+   chips trailing), treatment cells on line 2, indented past the numeral
+   column. Six shared tracks, so every key lines up vertically with the header
+   and with every other row — the grid is real, not a wrap. Scoped to <900px:
+   these placements must never leak into the desk's ten-track template. */
+@media (max-width:899px){
+  .box,.shead{
+    display:grid;
+    grid-template-columns:24px repeat(5,minmax(0,1fr));
+    gap:3px 4px;align-items:stretch;
+  }
+  .shead{gap:1px 4px;padding:4px var(--tbl-gut) 3px}
+  .shead .hf{position:absolute;width:1px;height:1px;overflow:hidden;
+    clip-path:inset(50%);white-space:nowrap}
+  .shead .ha{display:inline}
+  .c-part,.h-part{grid-row:1;grid-column:1}
+  .c-genre,.h-genre{grid-row:1;grid-column:2/span 2}
+  .c-role,.h-role{grid-row:1;grid-column:4}
+  .c-bars,.h-bars{grid-row:1;grid-column:5}
+  .bchips,.h-ph{grid-row:1;grid-column:6}
+  .c-timing,.h-timing{grid-row:2;grid-column:2}
+  .c-mods,.h-mods{grid-row:2;grid-column:3}
+  .c-voice,.h-voice{grid-row:2;grid-column:4}
+  .c-rhythm,.h-rhythm{grid-row:2;grid-column:5}
+  .c-trans,.h-trans{grid-row:2;grid-column:6}
+  /* the part key holds the numeral centred; the chips sit on the key line */
+  .bcell.c-part{justify-content:center;padding:4px 2px}
+  .bchips{align-self:center}
+}
 /* THE FOOTER ROW: duplicate and add. They are table keys, not sections, so
    they get their own row under the last one. */
 .sfoot{display:flex;padding:6px var(--tbl-gut)}
