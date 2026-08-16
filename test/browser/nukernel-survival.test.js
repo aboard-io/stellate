@@ -155,12 +155,20 @@ function taps() {
   }
 
   // ── (A0) two-stage bounce: a short carrier exists within seconds of play ──
-  let shortDur = 0;
+  // `shortBars` is the SHORT cut's own bar count, kept so (B) can ask the only
+  // question that survives a whole-box insurance tape: did the full render
+  // cover MORE BARS than the cut did. Seconds cannot answer it — a song whose
+  // timeline is one box has two stages of identical length, legitimately —
+  // and DOM `.box` rows cannot either: a fresh page ships four of them and
+  // buildTimeline only walks the ones carrying a phrase.
+  let shortDur = 0, shortBars = 0;
   {
     await page.waitForFunction(() =>
       window.__nuBounce && window.__nuBounce().state === "ready",
       null, { timeout: 15000 }).catch(() => {});
     const b = await page.evaluate(() => window.__nuBounce());
+    const r0 = await page.evaluate(() => window.__nuRender && window.__nuRender());
+    if (r0 && r0.stage === "short") shortBars = r0.wantBars || 0;
     if (b.state !== "ready")
       fail(`no carrier within 15 s of play (state '${b.state}'` +
            (b.lastError ? `, lastError '${b.lastError}'` : "") +
@@ -248,18 +256,24 @@ function taps() {
       // gate's ONE-BOX song the two stages are legitimately the same tape, and
       // a strict `>` was asserting the old two-bar fragment. The claim that
       // survives: the full tape never SHRINKS below the insurance one, and it
-      // grows whenever there is more song than the first box.
-      const boxes = await page.locator(".box").count();
+      // covers every bar the TIMELINE has. Bars, not seconds and not DOM rows
+      // — measured on this gate's own song, a fresh page shows four `.box`
+      // rows but only the first carries a phrase, so buildTimeline walks 4
+      // bars and the full render honestly wants all 4 of them. Asking `.box`
+      // reported "4 boxes, the render stopped at the insurance cut" about a
+      // tape that was already the whole song.
+      const fullBars = await page.evaluate(() =>
+        (window.__nuRender && window.__nuRender().wantBars) || 0);
       if (shortDur && b.durSec < shortDur - 0.01)
         fail(`the full carrier (${b.durSec.toFixed(2)}s) is SHORTER than the ` +
              `short stage (${shortDur.toFixed(2)}s) — the whole song never bounced`);
-      else if (shortDur && boxes > 1 && !(b.durSec > shortDur))
-        fail(`the full carrier (${b.durSec.toFixed(2)}s) did not grow past the ` +
-             `short stage (${shortDur.toFixed(2)}s) across ${boxes} boxes — the ` +
+      else if (shortBars && fullBars > shortBars && !(b.durSec > shortDur))
+        fail(`the full render covers ${fullBars} bars against the cut's ` +
+             `${shortBars}, but the tape is still ${b.durSec.toFixed(2)}s — the ` +
              `render stopped at the insurance cut`);
       else if (shortDur)
-        ok(`the blob is the whole song: ${shortDur.toFixed(2)}s -> ` +
-           `${b.durSec.toFixed(2)}s over ${boxes} box(es)`);
+        ok(`the blob is every bar the timeline has: ${shortBars} -> ${fullBars} ` +
+           `bars, ${shortDur.toFixed(2)}s -> ${b.durSec.toFixed(2)}s`);
       // the carrier must be REAL instruments. The foreground gate fails on a
       // SINGLE live fallback as audibly wrong, and the rendered bounce is the
       // only thing a locked phone hears — oscillator boops carry plenty of
@@ -694,12 +708,24 @@ function taps() {
       const target = (before + dur / 2) % dur;
       window.__nuMedia().fire("seekto", { action: "seekto", seekTime: target });
       await new Promise(r => setTimeout(r, 300));
-      return { before, target, after: window.__nuBounce().elTime };
+      return { before, target, after: window.__nuBounce().elTime, dur };
     });
-    if (Math.abs(sk.after - sk.target) > 0.6)
+    // MEASURED ROUND THE WRAP. elTime is a PHASE — it is the position in the
+    // loop, and the loop is now a whole box rather than the whole song, which
+    // on this gate's song is 7.6 s. Seeking to the far side of a 7.6 s tape
+    // lands near its end, and the 300 ms of playback this waits out carries
+    // the phase past the wrap to ~0.0: a straight subtraction read that as
+    // "the scrubber is decorative" about a scrubber that had just worked. So
+    // the difference is taken modulo the loop, and the window is opened by the
+    // 300 ms the tape was allowed to advance.
+    const dt = ((sk.after - sk.target) % sk.dur + sk.dur) % sk.dur;
+    const off = Math.min(dt, sk.dur - dt);
+    if (off > 0.95)
       fail(`${plat}: seekto asked for ${sk.target.toFixed(2)}s and the tape sits at ` +
-           `${sk.after.toFixed(2)}s — the lock-screen scrubber is decorative`);
-    else ok(`${plat}: seekto moves the tape (${sk.before.toFixed(2)} -> ${sk.after.toFixed(2)}s)`);
+           `${sk.after.toFixed(2)}s of ${sk.dur.toFixed(2)}s (${off.toFixed(2)}s off, ` +
+           `round the wrap) — the lock-screen scrubber is decorative`);
+    else ok(`${plat}: seekto moves the tape (${sk.before.toFixed(2)} -> ` +
+            `${sk.after.toFixed(2)}s, ${off.toFixed(2)}s off target)`);
     // pause/play, the two buttons a locked phone actually shows
     await page.evaluate(() => window.__nuMedia().fire("pause"));
     await page.waitForTimeout(600);
