@@ -338,11 +338,24 @@ function taps() {
         fail(`the graph still sounds while the element carries (RMS ${c1.rms.toFixed(4)}) — ` +
              `double playback in the pocket`);
       else ok("the graph is muted while the element carries");
-      const t0 = c1.b.elTime;
+      // ADVANCE IS MEASURED ON THE LOOP, NOT ON THE NUMBER. The carrier is a
+      // LOOPING element — that is the whole point of the insurance tape — so
+      // `t1 > t0` is only true when the 600 ms window happens to miss the wrap.
+      // Measured: a tape 7.61 s long sampled at 7.55 s came back at 0.56 s and
+      // failed a playing element for playing. Modulo the tape's own length the
+      // reading is exact (7.55 -> 0.56 is +0.62 s of a 7.61 s loop), and it
+      // says MORE than the old one did: the tape must advance by roughly the
+      // wall time that passed, so a stuck element and a 2x element both fail.
+      const t0 = c1.b.elTime, dur = c1.b.durSec || 0;
       await page.waitForTimeout(600);
       const t1 = await page.evaluate(() => window.__nuBounce().elTime);
-      if (!(t1 > t0)) fail(`el.currentTime does not advance while carrying (${t0} -> ${t1})`);
-      else ok(`el.currentTime advances while carrying (${t0.toFixed(2)}s -> ${t1.toFixed(2)}s)`);
+      const moved = dur > 0 ? ((t1 - t0) % dur + dur) % dur : t1 - t0;
+      if (!(moved > 0.2 && moved < 1.6))
+        fail(`el.currentTime does not advance while carrying (${t0.toFixed(2)} -> ` +
+             `${t1.toFixed(2)}s, ${moved.toFixed(2)}s of a ${dur.toFixed(2)}s loop, ` +
+             `against 0.6s of wall clock)`);
+      else ok(`el.currentTime advances while carrying (${t0.toFixed(2)}s -> ` +
+              `${t1.toFixed(2)}s, +${moved.toFixed(2)}s on a ${dur.toFixed(2)}s loop)`);
       await page.evaluate(() => {
         window.__vis = "visible"; document.dispatchEvent(new Event("visibilitychange")); });
       await page.waitForTimeout(2000);

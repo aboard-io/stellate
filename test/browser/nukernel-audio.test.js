@@ -175,6 +175,21 @@ function taps() {
   // surfaces; this sweep drives the popover, so it names the popover.
   const genreChip = (t) =>
     page.locator("#rowpop .pchip", { hasText: new RegExp("^" + t + "$") });
+  // A GENRE CHIP IS A TOGGLE, SO A SWALLOWED CLICK IS NOT A NO-OP — it inverts
+  // every later switch in the sweep. The chips are repatched on every commit
+  // (palette.js `isOn`: a genre chip is pressed iff it is in THIS box's stack),
+  // and the click that lands during that repatch hits a button the DOM is in
+  // the middle of replacing. Measured: a sweep run alone still lost two or
+  // three genres to it, and never the same ones twice — the box came out with
+  // an EMPTY stack, which is not a quiet genre, it is no genre, and reads as a
+  // clean 0.0000. So every toggle now waits for the surface to AGREE it
+  // happened before the next one is sent. This is the sweep's own assumption,
+  // finally asserted rather than assumed.
+  const setGenre = async (t, want) => {
+    await genreChip(t).click();
+    await page.locator(`#rowpop .pchip[aria-pressed="${want}"]`,
+      { hasText: new RegExp("^" + t + "$") }).waitFor({ timeout: 8000 });
+  };
 
   // THE PHRASE EDITOR IS THE COMPOSE PAGE ("compose, arrange, mix",
   // 2026-08-16): #stepgrid / .slot / #seed live on it, reached the way a
@@ -216,7 +231,7 @@ function taps() {
     // parent chips, with the same city-and-year labels, so a bare `.pchip` text
     // match now resolves to two buttons and strict mode refuses to guess. The
     // popover is the surface this sweep means: the box's own genre stack.
-    await genreChip(g).click();
+    await setGenre(g, "true");
     // SETTLE PAST THE PREDECESSOR, not a stopwatch. A genre switch lands on
     // the next bar line and cancels nothing already scheduled — at the page's
     // 126 bpm a rate-0.25 bucket is 7.6 s, plus the 150 ms lookahead and a
@@ -226,7 +241,16 @@ function taps() {
     // time. So the wait covers the predecessor's whole bucket + tail first.
     let settle = 3500;
     if (prev && prev !== g) {
-      await genreChip(prev).click();
+      // ASK WHETHER THE PREDECESSOR IS STILL THERE before taking it off. Simple
+      // is the blank default and the first real genre REPLACES it rather than
+      // stacking on it (palette.js `toggle`), so after the very first switch the
+      // predecessor is already gone — and clicking its chip then does the
+      // opposite of what this line means: it ADDS Simple back, and the box
+      // spends the rest of the sweep two genres deep with every reading
+      // crediting one genre's audio to another. A chip's aria-pressed IS the
+      // stack membership (palette.js `isOn`), so the sweep reads it.
+      if ((await genreChip(prev).getAttribute("aria-pressed")) === "true")
+        await setGenre(prev, "false");
       const prevBarMs = (16 / RATE_OF[prev]) * (60 / 126 / 4) * 1000;
       settle = Math.max(3500, prevBarMs + 150 + 3200) + 3500;
     }
