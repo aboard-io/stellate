@@ -42,7 +42,7 @@ export const { NSLOTS, MAX_LEN, MAX_NUDGE, MAX_FX,
                EQ_BANDS, BUS_EQ_BANDS, EQ_RANGE, eqDb, resolveEq, eqIsFlat,
                resolveMaster, masterIsDefault, resolveBuses, busesIsDefault,
                AUTOPARAMS, AUTOPARAMLABEL, AUTOSHAPELABEL, autoShape,
-               SINGLABEL,
+               SINGLABEL, INSTRCHOICES,
                ROLES } = window.NuFields;
 // THE ONE RENAME IN THIS FILE. fields.js calls the master-bus registry MASTER;
 // ui/state.js calls the song's master-bus VALUES the same thing. One says what
@@ -59,7 +59,7 @@ export const NuSong = window.NuSong;
 export const { blank, emptyBox } = window.NuSong;
 
 // ---- the sound sources as data (instruments.js) ----
-export const { instrOf, BASS_INSTR, DRUMDIR, DRUMFILE, FONTS, BASSSYNTH,
+export const { instrOf, familyOf, BASS_INSTR, DRUMDIR, DRUMFILE, FONTS, BASSSYNTH,
                STRIPS, stripFor, RANGES, STRETCH_UP, STRETCH_DOWN,
                DRUMMIX, DRUMBUS,
                // the per-family DYNAMIC RESPONSE (audio/voices.js) — the same

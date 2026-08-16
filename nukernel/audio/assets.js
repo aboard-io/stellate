@@ -163,6 +163,10 @@ export function instrumentsInSong() {
   const ids = new Set([BASS_INSTR]);
   for (const sec of SONG)
     for (const e of stackOf(sec)) {
+      // a layer's `instr` override is what its chairs actually play, so it is
+      // what must decode; the genre's own list stays in the set too, because
+      // clearing the override mid-play must not find an unfetched guitar
+      if (e.instr) ids.add(e.instr);
       const n = GENRES[e.g] ? GENRES[e.g].voices : 1;
       for (let v = 0; v < n; v++) ids.add(instrOf(e.g, v));
     }

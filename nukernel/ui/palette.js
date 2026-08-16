@@ -11,8 +11,8 @@
 // Layer graph: ui view — imports state/derive/deps only; every change leaves
 // through commit(), never through a direct call into audio.
 import { GENRES, FAMILIES, MODELABEL, SCALELABEL, VOX, OPLABEL, MAX_FX, ROLES,
-         RATELABEL, ARTICS, CMODES, CLAMPLABEL, OCTAVES, KITLABEL, DRUMKITS,
-         BASSOPS, SWINGLABEL,
+         ARTICS, CMODES, CLAMPLABEL, OCTAVES, KITLABEL, DRUMKITS,
+         BASSOPS, SWINGLABEL, INSTRCHOICES, familyOf,
          INLABEL, OUTLABEL, ENVLABEL, MOTLABEL,
          KEYLABEL, PROGLABEL, PERIODLABEL, BREATHLABEL, PIPELABEL, PARTCHOICES,
          SINGLABEL, AUTOPARAMLABEL, AUTOSHAPELABEL, autoShape,
@@ -126,6 +126,14 @@ const isOn = (kind, v) => {
   const sec = curSection();
   const ent = LAYER_OPTS.has(kind) || VOX[kind] ? focused(sec) : null;
   if (kind === "genre") return stackOf(sec).some(e => e.g === v);
+  if (kind === "instr") {
+    // set: the override alone is lit. Unset: the genre's OWN instruments light
+    // as .dflt — the fallback answering, the machine's one state language.
+    const set = optOf(sec, ent, "instr");
+    if (set) return set === v;
+    const e = GENRES[ent.g] && GENRES[ent.g].instr;
+    return Array.isArray(e) ? e.includes(v) : e === v;
+  }
   if (kind === "op") return opsOf(sec, ent).includes(v);
   if (kind === "focus") return String(focusOf(sec)) === v;
   if (kind === "fx") return sec.fx.includes(v);
@@ -156,6 +164,7 @@ const isDflt = kind => {
   if (kind === "artic") return optOf(sec, ent, "artic") == null;
   if (kind === "part") return optOf(sec, ent, "part") == null;
   if (kind === "oct") return optOf(sec, ent, "oct") == null;
+  if (kind === "instr") return optOf(sec, ent, "instr") == null;
   if (kind === "genre") {
     const st = stackOf(sec);
     return st.length === 1 && st[0].g === "simple";
@@ -207,6 +216,28 @@ function makeBuilders(host) {
   return { group, rowOf, opRow, note };
 }
 
+// THE INSTRUMENT BANK'S SHAPE, built once: family -> ids, in a musical order
+// (keyboards first, synth colours last), each family named the way a crate is.
+const INSTRFAMS = (() => {
+  const order = ["keys", "organ", "guitar", "dirty", "strings", "bowed",
+                 "brass", "reed", "mallet", "vox", "pad", "lead"];
+  const label = { keys: "keys", organ: "organs", guitar: "guitars",
+                  dirty: "driven guitars", strings: "string sections",
+                  bowed: "bowed", brass: "brass", reed: "winds + reeds",
+                  mallet: "struck + tuned", vox: "voices", pad: "pads",
+                  lead: "synths" };
+  const by = new Map();
+  for (const id of Object.keys(INSTRCHOICES)) {
+    const f = familyOf(id, false);
+    if (!by.has(f)) by.set(f, []);
+    by.get(f).push(id);
+  }
+  const fams = [...by.keys()].sort((a, b2) =>
+    (order.indexOf(a) + 99 * (order.indexOf(a) < 0)) -
+    (order.indexOf(b2) + 99 * (order.indexOf(b2) < 0)));
+  return fams.map(f => [label[f] || f, by.get(f)]);
+})();
+
 // WHICH BANKS A CELL OWNS — the inventory made code (nukernel-plan.md §1e is
 // the law; ui/songrow.js names the cells). What is NOT here is deliberate:
 // fx / rev / verb / echo / dtime / lvl / pan are the MIX page's section row
@@ -227,10 +258,11 @@ const CELLBANKS = {
   },
   role: b => b.rowOf("section", "role", ROLES, "role"),
   timing: b => {
-    b.rowOf("tempo", "rate", RATELABEL, "rate");
+    // (no tempo row and no groove row: BOTH belong to the SONG now — the
+    // transport fader and the session bank's GROOVE picker, ui/chrome.js. A
+    // genre still keeps its own derived rate — a lazy genre renders half-time
+    // — but that is identity, not a per-section control.)
     b.rowOf("swing", "swing", SWINGLABEL, "rate");
-    // (no groove row: the groove belongs to the SONG, like the tempo — its
-    // one control is the session bank's GROOVE picker, ui/chrome.js)
     b.rowOf("articulation", "artic", ARTICS, "art");
   },
   mods: b => {
@@ -255,8 +287,16 @@ const CELLBANKS = {
     b.rowOf("pipe", "pipe", PIPELABEL, "env");
   },
   voice: b => {
-    b.note("Also per layer. The five synth knobs reach any voice that has " +
-           "them — the 303, the Model D, the reese and wobble basses.");
+    b.note("Per layer: the instrument banks swap what PLAYS this layer's " +
+           "lines (the genre's own choice glows dim until you override it); " +
+           "the five synth knobs reach any voice that has them — the 303, " +
+           "the Model D, the reese and wobble basses.");
+    // THE INSTRUMENT, FRONT AND CENTER — the union of every sampled sound the
+    // genre table plays (fields.js INSTRCHOICES), clustered by the same family
+    // walk the mix strips use, so "driven guitar" here IS the dirty strip there
+    for (const [fam, ids] of INSTRFAMS)
+      b.group("instrument · " + fam,
+              ids.map(id => ["instr", id, INSTRCHOICES[id], "gen"]));
     b.rowOf("register", "oct", OCTAVES, "rng");
     b.group("width", [["op", "wide", OPLABEL.wide, "rng"],
                       ["op", "tight", OPLABEL.tight, "rng"]]);

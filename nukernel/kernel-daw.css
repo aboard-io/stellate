@@ -51,9 +51,10 @@ body{
    are ~300 elements patched inside a scrub, so they get the cheap variant —
    flat fill, 1px borders as bevel, no shadow (the hw.css paint budget). */
 
-/* 1 BRUSHED PANEL — the transport, the deck panels, the floating
-   sheets (row sheet, phrase editor) and the source drawer. */
-.bar,.ed,details,.popfader,.rowpop,.edpop{
+/* 1 BRUSHED PANEL — the transport, the deck panels, the phrase editor and
+   the source drawer. (The cell menu #rowpop left this list when it stopped
+   floating: it is a recessed drawer of the song table now, styled there.) */
+.bar,.ed,details,.popfader,.edpop{
   background:
     linear-gradient(180deg,var(--hw-panel-hi) 0,var(--hw-panel) 38%,var(--hw-panel-lo) 100%),
     repeating-linear-gradient(90deg,rgba(255,255,255,.014) 0 1px,transparent 1px 3px);
@@ -415,7 +416,7 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .box.looped{background:var(--tbl-hi);box-shadow:inset 3px 0 0 var(--st-arm)}
 .box.queued{outline:1px dashed var(--st-arm);outline-offset:-3px}
 .box.live{background:var(--tbl-lit);box-shadow:inset 3px 0 0 var(--st-live)}
-.box.open{background:var(--tbl-hi);box-shadow:inset 0 0 0 2px var(--accent);z-index:40}
+.box.open{background:var(--tbl-hi);box-shadow:inset 0 0 0 2px var(--accent)}
 /* ================================================================ */
 
 /* (The arrangement tracker screen is gone — "the row and the board": its
@@ -646,85 +647,67 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 2px 3px rgba(0,0,0,.45);
 }
 
-/* ---- the CELL popup ----
-   Tapping a cell on a song row pops THAT CELL'S controls and nothing else:
-   ui/songrow.js empties .rpmount and mounts the cell's own keys plus its
-   banks (ui/palette.js mountBanks). The head is the title and ✕.
-   ONE NODE, TWO PLACEMENTS. Narrow: a bottom sheet, because a phone deck has
-   no daylight anywhere else. Wide (≥900px, the chassis boundary): .beside,
-   an anchored panel dropped under the row itself, left-aligned with it and
-   sized to the daylight it found — the row stays visible and in place while
-   you work on it, which is the thing a modal sheet cannot do.
-   The scrim dims either way: the sheet covers most of the deck, and the
-   anchored panel still means "this row is the subject". */
-.rpscrim{position:fixed;inset:0;z-index:38;background:rgba(0,0,0,.45)}
-/* beside the row, the dim is lighter: the sheet is not covering the table, so
-   the song stays readable behind it — dimming it to a silhouette would throw
-   away the one thing the anchored placement buys */
-.rpscrim.beside{background:rgba(0,0,0,.22)}
-.rpscrim[hidden],.rowpop[hidden]{display:none}
+/* ---- the CELL MENU, unfolding IN PLACE ----
+   Tapping a cell on a song row UNFOLDS that cell's controls directly below
+   the row — #rowpop is a ROW OF THE TABLE now (ui/songrow.js inserts it into
+   the rowgroup after the row that owns it), not a floating popup, not a
+   bottom sheet, at every width. No scrim: the table is not covered, it is
+   unfolded, and the open cell reads pressed (.openc). ui/songrow.js empties
+   .rpmount and mounts the cell's own keys plus its banks (ui/palette.js
+   mountBanks). The head is the title and ✕. */
+.rowpop[hidden]{display:none}
 .rowpop{
-  position:fixed;z-index:39;left:8px;right:8px;
-  bottom:calc(8px + env(safe-area-inset-bottom));
-  display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:8px;
-  box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 1px 0 var(--hw-edge),0 14px 30px rgba(0,0,0,.55);
+  display:block;padding:0 var(--tbl-gut) 10px;
+  border-bottom:1px solid var(--tbl-hair);
+  /* NOT the brushed-panel recipe here: the menu is a recessed drawer of the
+     same table, so it sits in a darker well with the accent naming the fold */
+  background:var(--tbl-ground);
+  border-left:3px solid var(--accent);
+  border-radius:0;border-top:0;border-right:0;
+  box-shadow:inset 0 6px 8px -6px rgba(0,0,0,.6),inset 0 -4px 6px -5px rgba(0,0,0,.5);
 }
-/* anchored under its row: left/top/max-height are written by placePop(), so
-   the only job here is to stop being a full-width bottom sheet */
-.rowpop.beside{
-  right:auto;bottom:auto;width:min(620px,calc(100vw - 16px));
-  box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 1px 0 var(--hw-edge),0 18px 40px rgba(0,0,0,.5);
-}
-.rphead{display:flex;align-items:center;gap:8px;min-width:0}
+.rpcell{display:flex;flex-direction:column;gap:8px;min-width:0}
+.rphead{display:flex;align-items:center;gap:8px;min-width:0;padding-top:8px}
 .rptitle{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  font:600 10px/1.2 var(--f-legend);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
-/* the popover keys are the same moulded family, sized for thumbs */
-.rpk{flex:0 0 auto;min-width:38px;min-height:38px;padding:0 8px;
-  font:600 13px/1 var(--f-num)}
+  font:600 12px/1.2 var(--f-legend);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+/* the menu keys are the same moulded family, sized for thumbs */
+.rpk{flex:0 0 auto;min-width:44px;min-height:44px;padding:0 10px;
+  font:600 15px/1 var(--f-num)}
 .rpplay{color:var(--on-ink);
   background:linear-gradient(180deg,
     color-mix(in srgb,var(--a-orange) 80%,white) 0,
     var(--a-orange) 50%,
     color-mix(in srgb,var(--a-orange) 78%,black) 100%)}
 .rpbars{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center}
-.rpstep{display:flex;align-items:center;gap:5px}
-.rpstep .rlab{font:600 9px/1 var(--f-legend);letter-spacing:.14em;text-transform:uppercase;
+.rpstep{display:flex;align-items:center;gap:6px}
+.rpstep .rlab{font:600 11px/1 var(--f-legend);letter-spacing:.14em;text-transform:uppercase;
   color:var(--dim)}
 .rpstep output{
-  font-weight:600;font-size:12px;line-height:1;
-  min-width:36px;text-align:center;padding:8px 4px;
+  font-weight:600;font-size:16px;line-height:1;
+  min-width:46px;text-align:center;padding:10px 6px;
 }
 /* a move key with nowhere to go ghosts rather than vanishing — the keys must
-   not reshuffle between the first row's popup and the middle of the song */
+   not reshuffle between the first row's menu and the middle of the song */
 .rpk.ghost{visibility:hidden;pointer-events:none}
-/* the mounted cell scrolls inside the popup; the banks flow as a column in
-   the sheet and tile two-up in the anchored panel */
-.rpmount{overflow-y:auto;min-height:0;overscroll-behavior:contain;flex:1 1 auto;
+/* the mounted banks scroll inside the fold — the menu never grows taller
+   than about half the glass, so the row it belongs to stays in reach — and
+   tile side by side where the fold is wide */
+.rpmount{overflow-y:auto;min-height:0;max-height:52vh;overscroll-behavior:contain;
   display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-start;
   align-content:flex-start}
 .rpmount .pgroup{min-width:0;flex:1 1 100%}
-.rowpop.beside .rpmount .pgroup{flex:1 1 260px}
 .rpmount .pnote{flex:1 0 100%}
-/* THE PART POPUP'S KEY ROW: the row-level operations in one rank — ▶, the
-   two movers, duplicate, pin, remove — every one at the popup's 44px floor */
+@media (min-width:900px){
+  .rpmount .pgroup{flex:1 1 300px}
+}
+/* THE PART MENU'S KEY ROW: the row-level operations in one rank — ▶, the
+   two movers, duplicate, pin, remove — every one at the 44px floor. The ✕
+   here is the only parent-level delete, and it takes the layer sub-rows with
+   the row. */
 .rpkeys{flex:1 0 100%;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.rpkeys .pini{display:block;width:13px;height:13px;fill:currentColor}
+.rpkeys .pini{display:block;width:15px;height:15px;fill:currentColor}
 .rpk.rppin.on{color:var(--accent-txt)}
 .rpk.rpdel{margin-left:auto}
-/* THE GENRE POPUP'S LAYER LIST: the stack as focus rows — authority first,
-   each rider indented under it with the ↳ as its silkscreen, the focused one
-   lit. Tap = which layer the PATTERN cells, the mods and the voice popup edit. */
-.rpfoc{flex:1 0 100%;display:flex;flex-direction:column;gap:2px}
-.rpfoc .blayer{
-  appearance:none;background:none;border:0;cursor:pointer;text-align:left;
-  position:relative;padding:0 4px 0 16px;min-width:0;min-height:30px;
-  display:flex;align-items:center;
-  font:600 10.5px/1.5 var(--f-legend);letter-spacing:.02em;color:var(--dim);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rpfoc .blayer::before{content:"↳";position:absolute;left:3px;color:var(--faint)}
-.rpfoc .blayer:first-child::before{content:""}
-.rpfoc .blayer:hover{color:var(--ink)}
-.rpfoc .blayer.foc{color:var(--accent-txt)}
 
 /* ---- the phrase editor popup ----
    ui/editor.js builds the whole dialog (the old STEP page's ids intact) and
@@ -791,8 +774,12 @@ h1 em{font-style:normal;color:var(--accent-txt)}
    flex container with a height cap, so a song longer than the cap made every
    row shrink to its min-height. The cap belongs to the SCROLLBAR. */
 .box,.shead,.sfoot{flex:0 0 auto}
+/* a SECTION IS A ROWGROUP now: its row, its layer sub-rows, and — while a
+   cell menu is open — the menu row, moving together through every reorder */
+.bgrp{flex:0 0 auto;display:flex;flex-direction:column}
+.bgrp>*{flex:0 0 auto}
 .box{
-  position:relative;min-height:0;padding:4px var(--tbl-gut) 6px;
+  position:relative;min-height:0;padding:6px var(--tbl-gut) 8px;
   cursor:pointer;background:transparent;
   border:0;border-bottom:1px solid var(--tbl-hair);
   align-items:center;
@@ -804,21 +791,27 @@ h1 em{font-style:normal;color:var(--accent-txt)}
    Every cell is a real button — its own tab stop, its own popup. */
 .bcell{
   appearance:none;cursor:pointer;
-  display:inline-flex;align-items:center;gap:4px;min-width:0;
-  padding:4px 6px;border-radius:3px;
+  display:inline-flex;align-items:center;gap:6px;min-width:0;
+  padding:8px 8px;border-radius:3px;
   background:var(--tbl-key,var(--hw-key-mid));color:var(--ink);
   border:0;border-top:1px solid rgba(255,255,255,.09);
   border-bottom:1px solid rgba(0,0,0,.55);
-  font:600 10.5px/1.4 var(--f-legend);letter-spacing:.02em;
+  font:600 13px/1.35 var(--f-legend);letter-spacing:.02em;
 }
 .bcell:hover{background:var(--hw-key-hi);border-top-color:rgba(255,255,255,.25)}
 .bcell:active{transform:translateY(1px);background:var(--hw-key-lo);
   border-top-color:rgba(0,0,0,.3);border-bottom-color:rgba(0,0,0,.2)}
+/* the OPEN cell reads pressed while its menu is unfolded below the row —
+   held down, the way a latched hardware key sits low until released */
+.bcell.openc{background:var(--hw-key-lo);color:var(--accent-txt);
+  transform:translateY(1px);
+  border-top-color:rgba(0,0,0,.3);border-bottom-color:rgba(0,0,0,.2);
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.5)}
 .bcell .cvx{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bcell.unset .cvx{color:var(--faint);font-weight:400}
 /* the cell icons: silkscreen SVG masks painted with currentColor (the
    .pi/.ik recipe) — self-contained, no glyph-coverage lottery */
-.bcell .ci{width:11px;height:11px;flex:0 0 auto;background:currentColor;opacity:.6;
+.bcell .ci{width:14px;height:14px;flex:0 0 auto;background:currentColor;opacity:.6;
   -webkit-mask:var(--cim) center/contain no-repeat;mask:var(--cim) center/contain no-repeat}
 .bcell.unset .ci{opacity:.35}
 .bcell.c-part .ci{display:none}   /* the row number IS the part cell's mark */
@@ -840,23 +833,24 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .bcell.c-trans .ci{--cim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M1.2 12.8C6 12.8 8.6 3.6 12.6 3.4' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='M10.6 1.4l3.6 2-3.6 2z'/%3E%3C/svg%3E")}
 /* the PART cell: the shared numeral column, plus the pin lamp when the box
    loops alone (the pin key itself lives in the PART popup) */
-.bnum{color:var(--tbl-ink);font:600 11px/1 var(--f-num)}
+.bnum{color:var(--tbl-ink);font:600 14px/1 var(--f-num)}
 .box.live .bnum{color:var(--accent-txt)}
 .bpin{display:inline-flex;align-items:center}
 .bpin[hidden]{display:none}
 .bpin .pini{display:block;width:10px;height:10px;fill:var(--accent-txt)}
 /* the GENRE cell is the row's name */
-.bcell.bgenre{font-weight:600;font-size:11.5px}
+.bcell.bgenre{font-weight:600;font-size:14.5px}
 /* the FUNCTION word keeps its lens outline when set — it NAMES the section */
 .bcell.c-role:not(.unset) .role{
-  font:600 8.5px/1.5 var(--f-legend);letter-spacing:.08em;text-transform:uppercase;
+  font:600 10.5px/1.5 var(--f-legend);letter-spacing:.08em;text-transform:uppercase;
   color:var(--accent-txt);border:1px solid var(--accent);border-radius:2px;
-  padding:0 3px}
+  padding:0 4px}
 /* the LENGTH cell: bars always, the clock beside it where there is room */
-.bcell.bbars .cvx{display:flex;align-items:baseline;gap:5px;
-  font:600 8.5px/1.5 var(--f-legend);letter-spacing:.04em;text-transform:uppercase;
+.bcell.bbars .cvx{display:flex;align-items:baseline;gap:6px;
+  font:600 11.5px/1.4 var(--f-legend);letter-spacing:.04em;text-transform:uppercase;
   color:var(--dim)}
-.bbars .bn{color:var(--ink);font-weight:600;white-space:nowrap}
+.bbars .bn{color:var(--ink);font-weight:600;font-size:13px;white-space:nowrap}
+.bbars .bu{white-space:pre}
 .bbars .bd{font-family:var(--f-num);letter-spacing:.02em;color:var(--faint);white-space:nowrap}
 /* THE PATTERN CELLS — the phrase's own contour at fingernail size, one chip
    per (layer, phrase), plus the [+] that grows the bank into this box. The
@@ -865,7 +859,7 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .bchips{display:flex;gap:3px;align-items:center;min-width:0;overflow:hidden}
 .bch{
   appearance:none;cursor:pointer;padding:0;flex:0 0 auto;
-  width:20px;height:14px;border-radius:2px;
+  width:28px;height:19px;border-radius:2px;
   background:var(--tbl-key,var(--hw-key-mid));color:var(--tbl-ink);
   border:1px solid rgba(0,0,0,.4);border-top-color:rgba(255,255,255,.2);
   display:block;
@@ -887,8 +881,8 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .bch.sel{border-color:var(--accent);color:var(--accent-txt);background:var(--tbl-hi)}
 .bch.lit{color:var(--st-play);border-color:var(--st-play)}
 .bch.bplus{
-  width:auto;min-width:20px;padding:0 4px;height:14px;
-  font:600 10px/1 var(--f-num);color:var(--faint);
+  width:auto;min-width:26px;padding:0 6px;height:19px;
+  font:600 13px/1 var(--f-num);color:var(--faint);
   border-style:dashed;border-color:var(--hw-edge);
   display:inline-flex;align-items:center;justify-content:center}
 .bch.bplus:hover{color:var(--accent-txt)}
@@ -900,16 +894,39 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .fillbar{display:block;height:100%;width:0;background:var(--st-play)}
 /* THE ROW STATES ARE THE TABLE'S (top of this file). What is left here is
    what only a SONG row can be — the drop target of a reorder, the row being
-   dragged. THE OPEN ROW STAYS ABOVE THE SCRIM (.box.open carries the
-   z-index): the popup belongs to this row, and the row is its title bar. */
+   dragged. */
 .box.over{box-shadow:inset 0 3px 0 var(--accent)}
 .box.dragging{opacity:.4}
+/* ---- THE LAYER SUB-ROWS ----
+   One per genre stacked on the authority ("every layer gets its own line"):
+   indented under the parent in the same key material, carrying what a layer
+   owns — its genre, its voice, its mods, its phrase chips — and its own
+   remove-layer key. Killing the parent kills these; the ✕ here takes only
+   this layer. .foc marks the layer the menus edit; .live takes the sounding
+   wash with the parent, because the layers sound together. */
+.lrow{
+  position:relative;display:grid;gap:3px 4px;align-items:center;
+  padding:4px var(--tbl-gut) 6px;
+  border-bottom:1px solid var(--tbl-hair);
+}
+.lmark{color:var(--faint);font:600 14px/1 var(--f-num);text-align:center;
+  justify-self:center}
+.lrow.foc{background:var(--tbl-hi)}
+.lrow.foc .lmark{color:var(--accent-txt)}
+.lrow.live{background:var(--tbl-lit)}
+.lrow.live .bcell,.lrow.live .bch{
+  background:color-mix(in srgb,var(--st-live) 13%,var(--tbl-key,var(--hw-key-mid)))}
+.ldel{display:flex;justify-content:flex-end}
+.lrx{appearance:none;cursor:pointer;min-width:32px;min-height:32px;border-radius:3px;
+  background:none;color:var(--faint);border:1px dashed var(--line);
+  font:600 13px/1 var(--f-num)}
+.lrx:hover{color:var(--accent-txt);border-color:var(--accent)}
 /* THE HEADER ROW: the columns named once, in silkscreen (.thd), instead of
    every row re-explaining itself. Same grid as .box AT EVERY WIDTH — on the
    phone it splits into the same two decks the rows do, and each cell swaps to
    its abbreviation (.ha) while the full word stays in the accessibility tree
    via the clip pattern (.hf) — the transport legends' own swap. */
-.shead{padding:5px var(--tbl-gut) 4px;font-size:8.5px;color:var(--tbl-faint)}
+.shead{padding:5px var(--tbl-gut) 4px;font-size:9.5px;color:var(--tbl-faint)}
 .shead .ha{display:none}
 /* THE PHONE SONG GRID — the two-deck row. Identity cells on line 1 (the
    numeral, the genre across two tracks, the function, the bars, the pattern
@@ -940,6 +957,8 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   /* the part key holds the numeral centred; the chips sit on the key line */
   .bcell.c-part{justify-content:center;padding:4px 2px}
   .bchips{align-self:center}
+  /* the layer sub-row: one line — ↳ · genre · voice · mods · chips · ✕ */
+  .lrow{grid-template-columns:24px minmax(0,1.15fr) minmax(0,1fr) minmax(0,.85fr) auto 36px}
 }
 /* THE FOOTER ROW: duplicate and add. They are table keys, not sections, so
    they get their own row under the last one. */
@@ -1210,22 +1229,22 @@ h1 em{font-style:normal;color:var(--accent-txt)}
    chip is a latching key with an LED in its corner — chips are the crowd, so
    the material is the cheap bevel: flat fill, edge borders, one
    pseudo-element lamp. No shadows, no transitions. */
-.pnote{flex:1 0 100%;margin:0;font-size:11px;color:var(--dim);line-height:1.6}
+.pnote{flex:1 0 100%;margin:0;font-size:12.5px;color:var(--dim);line-height:1.6}
 /* A GROUP IS A BANK, AND A BANK IS A TABLE SECTION: the same .tbl well and
    the same .thd header row the pattern editor and the song table wear,
    holding a UNIFORM grid of keys — equal widths, aligned columns, 2-3 across
    on a phone, more as the bank gets room. */
 .pgroup{flex:1 1 300px;min-width:240px}
-.plabel{display:block;letter-spacing:.16em;color:var(--tbl-faint)}
-.pchips{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));
-  gap:5px;padding:6px var(--tbl-gut) 8px}
-.pchips.compact{grid-template-columns:repeat(auto-fill,minmax(52px,1fr))}
+.plabel{display:block;font-size:10px;letter-spacing:.16em;color:var(--tbl-faint)}
+.pchips{display:grid;grid-template-columns:repeat(auto-fill,minmax(126px,1fr));
+  gap:6px;padding:6px var(--tbl-gut) 8px}
+.pchips.compact{grid-template-columns:repeat(auto-fill,minmax(62px,1fr))}
 .pchip{
-  appearance:none;font:500 11.5px/1.2 var(--f-legend);letter-spacing:.02em;cursor:pointer;
-  position:relative;text-align:left;
+  appearance:none;font:500 13px/1.25 var(--f-legend);letter-spacing:.02em;cursor:pointer;
+  position:relative;text-align:left;min-height:40px;
   background:var(--tbl-key,var(--hw-key-mid));color:var(--ink);
   border:0;border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(0,0,0,.55);
-  border-radius:3px;padding:7px 8px 7px 15px;
+  border-radius:3px;padding:9px 9px 9px 17px;
 }
 .pchip::after{
   content:"";position:absolute;left:5px;top:50%;margin-top:-2px;
@@ -1248,7 +1267,7 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   color:var(--ink);
 }
 .pchip.on.dflt::after{background:color-mix(in srgb,var(--a-orange) 55%,var(--led-off))}
-.pchip.lst{min-width:26px;padding:7px 8px 7px 13px}
+.pchip.lst{min-width:30px;padding:9px 9px 9px 15px}
 .pchip.foc{border:1px dashed var(--line)}
 .pchip.foc.on{border-style:solid;border-color:var(--accent)}
 .slot.inbox{box-shadow:inset 0 0 0 1px var(--accent),inset 0 -3px 6px rgba(0,0,0,.28),0 2px 0 rgba(0,0,0,.5)}
@@ -1467,7 +1486,8 @@ details .c{color:var(--faint)}
      from the length cell, the silkscreen shrinks, the cells wrap where they
      must. Nothing re-lays-out: the cells just get less room, which is the
      whole point of one row of cells at every width. */
-  .bbars .bd{display:none}      /* bars stay; the mm:ss is what a phone drops */
+  .bbars .bd,.bbars .bu{display:none} /* the number stays; the unit word and
+                                         the mm:ss are what a phone drops */
   .bcell{padding:5px 4px;gap:3px;font-size:9.5px}
   .bcell.bgenre{font-size:11px}
   .bcell.c-role:not(.unset) .role{font-size:8px;letter-spacing:.04em;padding:0 2px}
@@ -1512,18 +1532,22 @@ details .c{color:var(--faint)}
      transitions · the pattern chips. */
   .box,.shead{
     display:grid;
-    grid-template-columns:34px minmax(112px,1.35fr) 74px 96px 82px 68px
-      minmax(78px,1fr) 82px 88px minmax(92px,1.15fr);
+    grid-template-columns:40px minmax(110px,1.3fr) 74px 136px 76px 62px
+      minmax(70px,1fr) 84px 88px minmax(80px,1.1fr);
     gap:0 6px;align-items:center}
   .shead{display:grid}
-  .box{padding:3px var(--tbl-gut) 4px}
-  .bnum{font-size:12px}
-  .bcell{padding:4px 4px}
-  .bcell.bgenre{font-size:12px}
+  .box{padding:5px var(--tbl-gut) 6px}
+  .bnum{font-size:15px}
+  .bcell{padding:8px 6px}
+  .bcell.bgenre{font-size:15px}
   /* the chips get a roomier fingernail here, not a second line */
   .bchips{gap:3px}
-  .bch{width:24px;height:15px}
-  .bch.bplus{height:15px}
+  .bch{width:30px;height:20px}
+  .bch.bplus{height:20px}
+  /* the layer sub-row, with the desk's room */
+  .lrow{grid-template-columns:40px minmax(150px,1.35fr) minmax(150px,1.2fr) 122px
+      minmax(110px,1fr) 48px;
+    gap:0 6px;padding:4px var(--tbl-gut) 6px}
 
   /* THE BOARD, WITH ROOM: the same strips, wider, with taller fader travel —
      what a desk buys a board is THROW, and the second label line (what each

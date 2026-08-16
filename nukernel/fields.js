@@ -881,6 +881,25 @@
                   bridge: "bridge", breakdown: "breakdown", drop: "drop",
                   solo: "solo", outro: "outro" };
 
+  // THE INSTRUMENT CHOICES (2026-08-16, "the section speaks up"): the union of
+  // every sampled instrument the genre table itself plays — 48 ids, every one
+  // a SAMPLERS id the coverage gate already proves real, so a chip here can
+  // never name a sound the page cannot fetch. Per LAYER, like `oct` and
+  // `scale`: set, it replaces what that layer's voices play (and mutes a
+  // signature synth — you asked for a rhodes, not a 303 wearing one); unset,
+  // the genre's own `instr` answers, which is why the default is null like
+  // every other enum. The label is the id said as words — the same honest
+  // naming the mix desk's second line uses.
+  const INSTRCHOICES = {};
+  {
+    const ids = new Set();
+    for (const g of Object.values(NG.GENRES)) {
+      const e = g && g.instr;
+      if (e) for (const id of (Array.isArray(e) ? e : [e])) ids.add(id);
+    }
+    for (const id of [...ids].sort()) INSTRCHOICES[id] = id.replace(/_/g, " ");
+  }
+
   /* ---------- THE REGISTRY ---------- */
   // One entry per control. Shape:
   //   key     the field name on the box (and, for scope "layer", on a stack
@@ -1011,6 +1030,10 @@
     // carry, on the box's own field — the PARTMIX `eq` note has the law
     { key: "eq",      scope: "box",   type: "eq", bands: EQ_BANDS,
       tab: "fx",     group: "strip eq",                  default: null },
+    // ---- the layer's own instrument (2026-08-16, "the section speaks up") --
+    // See INSTRCHOICES above: per layer, null = the genre's own `instr`.
+    { key: "instr",   scope: "layer", table: INSTRCHOICES, labels: INSTRCHOICES,
+      tab: "voice",  group: "instrument",                default: null },
   ];
   const FIELD = {};
   for (const f of FIELDS) FIELD[f.key] = f;
@@ -1035,7 +1058,7 @@
                 resolveMaster, masterIsDefault,
                 BUSES, BUSBY, resolveBuses, busesIsDefault,
                 AUTOPARAMS, AUTOPARAMLABEL, AUTOSHAPES, AUTOSHAPELABEL, autoShape,
-                SINGS, SINGLABEL,
+                SINGS, SINGLABEL, INSTRCHOICES,
                 ROLES, FIELDS, FIELD };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuFields = api;

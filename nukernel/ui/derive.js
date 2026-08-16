@@ -8,7 +8,7 @@
 import { GENRES, MODES, SCALES, RATES, SWINGS, KITOPS, OPS,
          render, drums, bass, word, envelope, edges, groove, chordAt,
          blank, VOX, PROGS, PERIODS, BREATHS, PIPESETS, withCadence,
-         SING } from "./deps.js";
+         SING, instrOf } from "./deps.js";
 
 export const isBlank = p => p.gate.every(g => !g);
 
@@ -50,7 +50,8 @@ export function contourPath(p) {
 //
 // A layer field left unset INHERITS the box's, so nothing diverges by accident
 // — which is how the fugue ended up reading pentatonic against a quartal riff.
-export const LAYER_OPTS = new Set(["op", "artic", "clamp", "cmode", "scale", "oct", "part"]);
+export const LAYER_OPTS = new Set(["op", "artic", "clamp", "cmode", "scale", "oct", "part",
+                                   "instr"]);
 export const optOf = (sec, ent, k) => (ent && ent[k] != null ? ent[k] : sec[k]);
 export const opsOf = (sec, ent) => (ent && ent.ops ? ent.ops : sec.ops);
 // the synth knobs are an OBJECT of independent settings, so they inherit
@@ -66,6 +67,21 @@ export const voxAll = (sec, ent) => {
 export const octOf = (sec, ent) => +(optOf(sec, ent, "oct") || 0);
 
 export const gid = sec => sec.stack[0].g;   // a box always has an authority
+
+// THE INSTRUMENT A CHAIR ACTUALLY PLAYS, as one answer with one fallback:
+// the layer's own `instr` override (every voice of that layer), else the
+// genre's `instr` per voice (instruments.js instrOf). By the time the
+// scheduler sees an event the only thing that says which layer it came from
+// is the event's `layer` tag (absent = the authority), so the lookup is by
+// genre key — safe because toggle() never lets one genre appear twice in a
+// stack. Read by the live scheduler, the register home, the asset list and
+// the mix desk, so a swapped chair is one fact everywhere at once.
+export const instrOverrideOf = (sec, owner) => {
+  const e = stackOf(sec).find(x => x.g === owner);
+  return (e && e.instr) || null;
+};
+export const instrIdOf = (sec, owner, v) =>
+  instrOverrideOf(sec, owner) || instrOf(owner, v);
 export const stackOf = sec => sec.stack || [];
 export const focusOf = sec => Math.min(sec.focus || 0, stackOf(sec).length - 1);
 export const focused = sec => stackOf(sec)[focusOf(sec)];

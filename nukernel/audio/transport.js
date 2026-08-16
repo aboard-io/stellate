@@ -10,7 +10,8 @@ import { GENRES, DTIMES, BASSSYNTH, BASS_INSTR, STRIPS, stripFor,
          instrOf } from "../ui/deps.js";
 import { SONG, loopOnly, pendingStart, setPendingStart, bpm, on, emit,
          SLOTS, GROOVE } from "../ui/state.js";
-import { gid, stackOf, boxBars, kitOf, sectionRender } from "../ui/derive.js";
+import { gid, stackOf, boxBars, kitOf, sectionRender,
+         instrIdOf, instrOverrideOf } from "../ui/derive.js";
 import { ctx, initAudio, rmsNow, muteNow, unmuteRamp } from "./graph.js";
 import { FONT, fontDef, isSynthFont, loadFont, specOf, zoneBufs, drumBufs,
          instrumentsInSong } from "./assets.js";
@@ -73,7 +74,7 @@ function registerHome(sec, ev) {
     const owner = e.layer || gid(sec);
     const key = owner + "|" + (e.lv == null ? e.v : e.lv);
     let a = notes.get(key);
-    if (!a) notes.set(key, a = { id: instrOf(owner, e.lv == null ? e.v : e.lv), n: [] });
+    if (!a) notes.set(key, a = { id: instrIdOf(sec, owner, e.lv == null ? e.v : e.lv), n: [] });
     a.n.push(e.n);
   }
   for (const [key, a] of notes) {
@@ -306,8 +307,14 @@ export function scheduleBar(bar, sec, chan, kit, when, sd, synthFn) {
       // A SYNTH FONT OVERRIDES THE GENRE. Pure FM and Pure Analog are not a
       // sample set, they are "play everything on this voice" — including the
       // genres that carry a signature synth of their own.
-      const gsyn = isSynthFont() ? fontDef().synth : GENRES[owner].synth;
-      const id = instrOf(owner, e.lv == null ? e.v : e.lv);
+      // ...AND A LAYER'S OWN INSTRUMENT OVERRIDES THE SYNTH (but never the
+      // synth font — that is a session law). An `instr` chip on acid means
+      // "play this on a rhodes", and a 303 wearing a rhodes label would be
+      // the desk lying about the thing you just chose.
+      const over = instrOverrideOf(sec, owner);
+      const gsyn = isSynthFont() ? fontDef().synth
+        : (over ? null : GENRES[owner].synth);
+      const id = over || instrOf(owner, e.lv == null ? e.v : e.lv);
       const useSyn = gsyn && !(gsyn.lineOnly && e.pad && !isSynthFont());
       if (useSyn && synthFn(gsyn, e.n, at, e.dur * sd, e.acc, e.sld, e.vel, e.v, chan, e.vox)) { /* signature voice */ }
       // a DEAD signature synth drops its notes rather than beeping: a

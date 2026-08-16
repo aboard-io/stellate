@@ -175,7 +175,11 @@ export function voiceRoster(sec) {
     if (!g) continue;
     const dg = genreOf(sec, ent);
     for (let v = 0; v < g.voices; v++)
-      out.push({ v: base + v, id: instrOf(ent.g, v), pad: g.realize(v) === "pad",
+      // the layer's `instr` override is the chair's honest name — the same
+      // resolution the scheduler makes (derive.js instrIdOf), inlined because
+      // the entry is already in hand
+      out.push({ v: base + v, id: ent.instr || instrOf(ent.g, v),
+                 pad: g.realize(v) === "pad",
                  part: partOf(dg, v) });
     base += g.voices;
   }

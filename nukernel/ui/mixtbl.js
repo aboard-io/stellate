@@ -43,7 +43,7 @@ import { GENRES, FX, MAX_FX, SENDS, SENDLABEL, DRUMKITS, PARTMIX,
          VERBS, DTIMES, DTLABEL } from "./deps.js";
 import { curSection, commit, on, emit, MASTER, setMaster, BUSES, setBuses,
          vol, setVol } from "./state.js";
-import { stackOf, kitOf, voiceOwners } from "./derive.js";
+import { stackOf, kitOf, voiceOwners, instrOverrideOf } from "./derive.js";
 import { voiceRoster, partKeysOf, CHAN } from "../audio/mixer.js";
 import { initAudio, rmsNow, masterReport, busReport,
          SENDBUS } from "../audio/graph.js";
@@ -100,8 +100,10 @@ const humanize = id => String(id || "").replace(/_/g, " ");
 // a genre with a signature `synth` never plays it, and a synth FONT overrides
 // even that. A board that labels a 303 "clean guitar" is lying about the
 // thing you are about to fade, so this mirrors that same switch.
-function soundOf(g, r) {
-  const syn = isSynthFont() ? fontDef().synth : (g && g.synth);
+function soundOf(g, r, over) {
+  // a layer `instr` override mutes the signature synth (transport's law), and
+  // the roster's r.id already carries the override — so the label follows
+  const syn = isSynthFont() ? fontDef().synth : (over ? null : (g && g.synth));
   const useSyn = syn && !(syn.lineOnly && r.pad && !isSynthFont());
   return useSyn ? (syn.root || syn.dsp) : humanize(r.id);
 }
@@ -114,7 +116,7 @@ function rowsOf(sec) {
   const out = roster.map((r, i) => ({
     key: r.key,
     label: partChairLabel(r.key),
-    sound: soundOf(GENRES[owners[i]], r),
+    sound: soundOf(GENRES[owners[i]], r, instrOverrideOf(sec, owners[i])),
   }));
   const keys = partKeysOf(sec, roster);
   if (keys.includes("bass")) {
