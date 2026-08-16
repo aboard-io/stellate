@@ -12,7 +12,7 @@
 // through commit(), never through a direct call into audio.
 import { GENRES, FAMILIES, MODELABEL, SCALELABEL, VOX, OPLABEL, MAX_FX, ROLES,
          ARTICS, CMODES, CLAMPLABEL, OCTAVES, KITLABEL, DRUMKITS,
-         BASSOPS, SWINGLABEL, INSTRCHOICES, familyOf,
+         BASSOPS, INSTRCHOICES, familyOf,
          INLABEL, OUTLABEL, ENVLABEL, MOTLABEL,
          KEYLABEL, PROGLABEL, PERIODLABEL, BREATHLABEL, PIPELABEL, PARTCHOICES,
          SINGLABEL, AUTOPARAMLABEL, AUTOSHAPELABEL, autoShape,
@@ -112,9 +112,10 @@ export function toggle(kind, value) {
     sec[kind] = String(sec[kind]) === String(value) ? null : value;
   commit("box");
 }
-// the plain one-of-these box fields, all toggled the same way. (`groove` is
-// not here: it is the SONG's now — ui/chrome.js owns its control.)
-const BOXOPTS = new Set(["kit", "drumkit", "bassop", "swing", "rev", "echo",
+// the plain one-of-these box fields, all toggled the same way. (`groove` and
+// `swing` are not here: they are the SONG's now — ui/chrome.js owns their
+// controls, and no section surface may tell time.)
+const BOXOPTS = new Set(["kit", "drumkit", "bassop", "rev", "echo",
                          "verb", "dtime", "lvl", "pan", "mot", "intro", "outro", "role",
                          "key", "prog", "period", "breath", "pipe", "sing"]);
 
@@ -257,17 +258,18 @@ const CELLBANKS = {
     b.rowOf("progression", "prog", PROGLABEL, "mode");
   },
   role: b => b.rowOf("section", "role", ROLES, "role"),
-  timing: b => {
-    // (no tempo row and no groove row: BOTH belong to the SONG now — the
-    // transport fader and the session bank's GROOVE picker, ui/chrome.js. A
-    // genre still keeps its own derived rate — a lazy genre renders half-time
-    // — but that is identity, not a per-section control.)
-    b.rowOf("swing", "swing", SWINGLABEL, "rate");
-    b.rowOf("articulation", "artic", ARTICS, "art");
-  },
+  // (no `timing` bank any more: NOTHING IN A SECTION TELLS TIME. Tempo,
+  // groove and swing all belong to the SONG — the transport fader and the
+  // session bank's pickers, ui/chrome.js. A genre still keeps its own derived
+  // rate and its own lean, but that is identity, not a per-section control.
+  // The cell's two genuinely-per-pattern survivors moved into MODS: the nudge
+  // stepper — ui/songrow.js mounts it — and the articulation row below.)
   mods: b => {
     b.note("These apply to the layer you are editing, not to the whole box. " +
            "They compose in the order you switch them on.");
+    // HOW THE PATTERN SPEAKS is a mod of the pattern — articulation rode the
+    // retired timing cell only because it changes note LENGTHS
+    b.rowOf("articulation", "artic", ARTICS, "art");
     b.opRow("pattern", ["rev", "inv", "gateflip", "accflip", "slides", "stick"], "");
     b.opRow("rotate", ["rot1", "rot2", "rot3", "rot4", "rot5", "rot6", "rot7"], "lst");
     b.opRow("rotate rhythm only", ["gat2", "gat4", "gat8"], "lst");

@@ -277,7 +277,8 @@ function taps() {
     // read the ARIA LABEL, not a cell: "box 1, Simple, 4 bars" is the
     // machine-readable truth about length and already load-bearing API
     // The steppers live in their own cells' popups now: bars in BARS#, nudge
-    // in TIMING (a nudge is a when, not a how-long).
+    // in PATTERN MODS (the TIMING cell retired with the swing move — nothing
+    // in a section tells time; a nudge modifies where the pattern sits).
     const before = await box.getAttribute("aria-label");
     await openCell(0, "bars");
     const pop = page.locator("#rowpop");
@@ -295,11 +296,11 @@ function taps() {
       else ok(`bars stepper: ${before} -> ${after}`);
     }
     await closeCell();
-    // ...and nudge, the other edge, in the TIMING cell's popup
-    await openCell(0, "timing");
+    // ...and nudge, the other edge, in the PATTERN MODS cell's popup
+    await openCell(0, "mods");
     const nud = pop.locator('.rpstep', { hasText: /nudge/ })
                    .locator('button[aria-label="one bar of nudge more"]');
-    if (!(await nud.count())) fail("the timing popup has no nudge stepper");
+    if (!(await nud.count())) fail("the mods popup has no nudge stepper");
     else ok("both edge controls (bars, nudge) are steppers in their cells' popups");
     await pop.locator(".rpx").click();
     if (await pop.isVisible()) fail("the popup's ✕ did not close it");

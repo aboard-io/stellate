@@ -752,17 +752,19 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 
 /* ---- THE SONG TABLE ----
    One row per section, and THE ROW IS THE INTERFACE ("the row and the
-   board"): named cells — PART · GENRE · FUNCTION · BARS · TIMING · MODS ·
+   board"): named cells — PART · GENRE · FUNCTION · BARS · MODS ·
    VOICE · RHYTHM · TRANSITIONS · the PATTERN chips — each showing its
-   compact current value, each opening its own focused popup. The row reads
+   compact current value, each opening its own focused popup (no TIMING
+   cell: nothing in a section tells time — nudge and articulation live in
+   MODS). The row reads
    as a summary line of the whole section; the popups carry the controls, so
    nothing here needs a second line, a lamp strip or a tool pad.
    THE GRID IS REAL AT EVERY WIDTH ("a section is a row of keys"): shared
    column tracks under a silkscreen header row, so the same cell lines up
-   vertically across section rows. >=900px: ten fixed tracks, one line per
+   vertically across section rows. >=900px: nine fixed tracks, one line per
    section (the desk block at the end). <900px: a TWO-DECK grid per row —
    identity on line 1 (# · genre · function · bars · patterns), treatment on
-   line 2 (timing · mods · voice · rhythm · trans) — with the header row
+   line 2 (mods · voice · rhythm · trans) — with the header row
    still present, its words abbreviated by the span swap (.hf/.ha). No
    flex-wrap anywhere: a busy section never re-flows into prose. */
 .songwrap{gap:12px}
@@ -821,8 +823,8 @@ h1 em{font-style:normal;color:var(--accent-txt)}
 .bcell.c-role .ci{--cim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M3 1v13' stroke='%23000' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='M3.9 2.2h8.3l-2.2 2.9 2.2 2.9H3.9z'/%3E%3C/svg%3E")}
 /* a ruler: bars */
 .bcell.c-bars .ci{--cim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Crect x='.8' y='4.6' width='13.4' height='5.8' rx='1' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3Cpath d='M4 4.6v3M7.5 4.6v2.2M11 4.6v3' stroke='%23000' stroke-width='1.2'/%3E%3C/svg%3E")}
-/* a metronome: everything about when */
-.bcell.c-timing .ci{--cim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M5.4 1.6h4.2l2.4 11.8H3z' fill='none' stroke='%23000' stroke-width='1.4' stroke-linejoin='round'/%3E%3Cpath d='M7.5 10.6l3.3-7.2' stroke='%23000' stroke-width='1.4' stroke-linecap='round'/%3E%3Ccircle cx='10.8' cy='3.4' r='1.4'/%3E%3C/svg%3E")}
+/* (no c-timing icon: the TIMING cell retired with the swing move — nothing
+   in a section tells time. Nudge and articulation live in PATTERN MODS.) */
 /* crossed arrows: the pattern transforms */
 .bcell.c-mods .ci{--cim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M1.2 4.4h5l4.6 6.2h2M1.2 10.6h5l4.6-6.2h2' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3Cpath d='M11.6 2.4l3 2-3 2zM11.6 8.6l3 2-3 2z'/%3E%3C/svg%3E")}
 /* one cycle of wave: what plays the notes (the old SOUND key's silkscreen) */
@@ -949,9 +951,11 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   .c-role,.h-role{grid-row:1;grid-column:4}
   .c-bars,.h-bars{grid-row:1;grid-column:5}
   .bchips,.h-ph{grid-row:1;grid-column:6}
-  .c-timing,.h-timing{grid-row:2;grid-column:2}
-  .c-mods,.h-mods{grid-row:2;grid-column:3}
-  .c-voice,.h-voice{grid-row:2;grid-column:4}
+  /* line 2 lost the TIMING cell (nothing in a section tells time): four
+     treatment cells over five tracks, and the freed room goes to VOICE —
+     the one cell carrying a real instrument name rather than a count */
+  .c-mods,.h-mods{grid-row:2;grid-column:2}
+  .c-voice,.h-voice{grid-row:2;grid-column:3/span 2}
   .c-rhythm,.h-rhythm{grid-row:2;grid-column:5}
   .c-trans,.h-trans{grid-row:2;grid-column:6}
   /* the part key holds the numeral centred; the chips sit on the key line */
@@ -1535,13 +1539,15 @@ details .c{color:var(--faint)}
   /* THE SONG TABLE, WITH ROOM — the cells stop wrapping and become FIXED
      grid tracks, so every row's columns line up with the header and with
      each other: an auto column sized to "BREAKDOWN" on one row and "VERSE"
-     on the next is a table that shimmers as the song changes. Ten tracks:
-     part · genre · function · bars · timing · mods · voice · rhythm ·
+     on the next is a table that shimmers as the song changes. Nine tracks
+     (TIMING retired — nothing in a section tells time), the freed 76px
+     dealt to the cells that carry words:
+     part · genre · function · bars · mods · voice · rhythm ·
      transitions · the pattern chips. */
   .box,.shead{
     display:grid;
-    grid-template-columns:40px minmax(110px,1.3fr) 74px 136px 76px 62px
-      minmax(70px,1fr) 84px 88px minmax(80px,1.1fr);
+    grid-template-columns:40px minmax(120px,1.35fr) 76px 140px 78px
+      minmax(90px,1.15fr) 90px 94px minmax(90px,1.2fr);
     gap:0 6px;align-items:center}
   .shead{display:grid}
   .box{padding:5px var(--tbl-gut) 6px}

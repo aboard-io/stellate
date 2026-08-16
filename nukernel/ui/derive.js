@@ -126,7 +126,8 @@ export const genreOf = (sec, ent) => {
                 ...(scale ? { scale: SCALES[scale] } : {}),
                 ...(sec.rate ? { rate: g.rate * RATES[sec.rate] } : {}) };
   if (sec.drumkit) out.drumkit = sec.drumkit;      // borrow another kit's SOUND
-  if (sec.swing) out.swing = SWINGS[sec.swing];    // "straight" is 0, and means it
+  // (no sec.swing branch: the swing is the SONG's now, like the groove — it
+  // arrives as sectionEvents' own argument and lands on the genre there)
   if (sec.kit) {
     out.kit = KITOPS[sec.kit](g.kit || {}); out.fill = null;
     // the operator reaches the kit SCHEDULE too — drums() prefers g.kits over
@@ -209,10 +210,11 @@ const byVoice = evs => {
   for (const e of evs) { let a = m.get(e.v); if (!a) m.set(e.v, a = []); a.push(e); }
   return m;
 };
-// `songGroove` is the SONG's groove (ui/state.js GROOVE), handed in as an
-// argument because this file is pure over what it is given — it is a song
-// fact the way the tempo is, and the tempo arrives the same way (secsOf).
-export function sectionEvents(sec, slots, songGroove) {
+// `songGroove` / `songSwing` are the SONG's (ui/state.js GROOVE / SWING),
+// handed in as arguments because this file is pure over what it is given —
+// they are song facts the way the tempo is, and the tempo arrives the same
+// way (secsOf).
+export function sectionEvents(sec, slots, songGroove, songSwing) {
   // THE AUTHORITY READS ITS OWN LAYER'S FIELDS. Layer-scope chips (artic,
   // scale, clamp, cmode, part…) write to the FOCUSED stack entry, and for a
   // single-layer box that entry is stack[0] — which genreOf(sec) alone never
@@ -221,6 +223,12 @@ export function sectionEvents(sec, slots, songGroove) {
   // (every composed song, every shipped preset) it is byte-identical.
   const a0 = stackOf(sec)[0];
   const g = genreOf(sec, a0);
+  // THE SONG'S SWING lands on the authority's genre, first thing: the kernel
+  // reads g.swing per note, the layers copy it (lg below), and the drums and
+  // bass render through this same g — one assignment, everything leans
+  // together. "straight" is 0, and means it — the override a null never is;
+  // null leaves the genre's own lean standing, because swing is identity there.
+  if (songSwing) g.swing = SWINGS[songSwing];
   // NUDGE is an absolute bar offset, not a phase modulo the form. Nudging a
   // fugue past bar 4 starts it AFTER the exposition, which is a different piece
   // of music from nudging within the first four bars — so it must not wrap.
@@ -379,16 +387,18 @@ export function singEvents(sec, g, subj, ev, barSteps, nudge) {
 // the box AND the phrases it references — a scrub mutates a phrase in place,
 // so slot IDS alone would never invalidate.
 const rcache = new WeakMap();               // box -> { sig, out }
-export function sectionRender(sec, slots, songGroove) {
+export function sectionRender(sec, slots, songGroove, songSwing) {
   const ids = new Set();
   for (const e of stackOf(sec)) for (const i of e.slots) ids.add(i);
-  // the song groove is IN the signature: it is no longer a key of `sec`, and a
-  // cache that ignored it would keep serving the old feel after a change
-  const sig = JSON.stringify(sec) + "§g:" + (songGroove || "") + "§" +
+  // the song groove AND swing are IN the signature: neither is a key of `sec`
+  // any more, and a cache that ignored them would keep serving the old feel
+  // after a change
+  const sig = JSON.stringify(sec) + "§g:" + (songGroove || "") +
+    "§s:" + (songSwing || "") + "§" +
     [...ids].map(i => i + ":" + JSON.stringify(slots[i])).join("");
   const c = rcache.get(sec);
   if (c && c.sig === sig) return c.out;
-  const out = sectionEvents(sec, slots, songGroove);
+  const out = sectionEvents(sec, slots, songGroove, songSwing);
   rcache.set(sec, { sig, out });
   return out;
 }

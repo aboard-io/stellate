@@ -591,7 +591,7 @@
     const bed = (extra) => {
       const b = skeleton("intro", G, gk);
       b.len = n; b.stack[0].slots = [];            // no phrase: kit and bass only
-      b.swing = S.swing;                 // the groove is the SONG's (see compose)
+      // (no groove and no swing here: BOTH are the SONG's — compose's return)
       return Object.assign(b, extra);
     };
     const out = [];
@@ -1080,12 +1080,11 @@
       // fill or a bar of silence with a cymbal in it is also how a song ends
       if (kit) { b.kit = "sparse"; b.outro = pick(r, ["crash", "crash", fillOf(S, G, kit)]); }
     }
-    // ONE GROOVE FOR THE WHOLE SONG — it used to be decided once and STAMPED
-    // on every box, which was the tell that it was never a box fact at all.
-    // It rides the song object now (compose's return), the way the tempo does;
-    // swing stays per section, the difference between a pattern and a
-    // performance.
-    b.swing = S.swing;
+    // (No groove and no swing stamped here: BOTH ride the song object now —
+    // compose's return — the way the tempo does. Each was decided once and
+    // STAMPED on every box, which was the tell that neither was ever a box
+    // fact at all; the swing followed the groove up on 2026-08-16, "nothing
+    // in a section tells time".)
     // THE ARC, SPENT. Where the role has not already claimed the field with a
     // fade of its own, the section gets the dynamic its place in the song asks
     // for — which is what makes the last chorus bigger than the first verse
@@ -1598,6 +1597,10 @@
              // drummer for the record, drawn once (S.groove, up with the cast)
              // and written HERE rather than stamped on every box.
              groove: S.groove,
+             // ...AND SO IS THE SWING (the same move made twice): one feel for
+             // the record, drawn once up with the cast, written HERE rather
+             // than stamped on every box.
+             swing: S.swing,
              bpm: Math.max(70, Math.min(160, BPM[gk] + Math.floor(r() * 9) - 4)),
              vol: 80 };
   }

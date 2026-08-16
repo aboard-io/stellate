@@ -1472,6 +1472,85 @@ console.log("the loader — round trip, typed errors, clamps, migration");
     ok(liftedPresets > 0,
        "no shipped preset lifted a groove — the lift is dead on real data");
   }
+
+  // (g) THE SWING LIFT — the same move made twice ("nothing in a section
+  // tells time", 2026-08-16): swing left the boxes for the song exactly the
+  // way the groove did, so it takes exactly the groove's claims — the
+  // registry no longer says `swing`, the composer emits it at song level and
+  // it round-trips, an old per-box save adopts the majority (ties to the
+  // authority), and the shipped presets come through lifted.
+  {
+    ok(!F.FIELDS.some(f => f.key === "swing"),
+       "fields.js still carries a per-section swing entry");
+    ok(F.SWINGLABEL && Object.keys(F.SWINGLABEL).length >= 5,
+       "SWINGLABEL left the registry — the song control has no vocabulary");
+    // the composer: song-level, boxes clean, and the value survives the loader
+    let swung = 0;
+    for (const s of seeds.slice(0, 12)) {
+      const c = C.compose("isley", s);
+      ok(c.song.every(b => b.swing === undefined),
+         "isley/" + s + ": the composer still stamps a swing on boxes");
+      const r = S.load(c);
+      ok(r.ok && (r.song.swing || null) === (c.swing || null),
+         "isley/" + s + ": the song-level swing did not round-trip");
+      if (c.swing != null) swung++;
+    }
+    ok(swung > 0, "the composer never draws a swing for isley — the ballot is dead");
+    // the lift itself: majority wins, the box field dies on the way through
+    const mkB = v => { const b = S.emptyBox();
+                       if (v !== undefined) b.swing = v; return b; };
+    const lift = boxes => S.load(
+      { v: 2, slots: [S.blank()], song: boxes, bpm: 126, vol: 80 });
+    let r = lift([mkB("light"), mkB("shuffle"), mkB("shuffle")]);
+    ok(r.ok && r.song.swing === "shuffle",
+       "the majority swing did not win the lift: " + (r.ok && r.song.swing));
+    ok(r.ok && r.song.song.every(b => !("swing" in b)),
+       "the lift left per-box swings behind");
+    // ...ties go to the FIRST section carrying one — the authority
+    r = lift([mkB("light"), mkB("shuffle")]);
+    ok(r.ok && r.song.swing === "light",
+       "a tie did not go to the authority section: " + (r.ok && r.song.swing));
+    r = lift([mkB(null), mkB("hard"), mkB("swing")]);
+    ok(r.ok && r.song.swing === "hard",
+       "a leading null outvoted the first real swing: " + (r.ok && r.song.swing));
+    // ...an all-null save stays default, a swing-free save normalizes to null
+    r = lift([mkB(null), mkB(null)]);
+    ok(r.ok && r.song.swing === null, "an all-null lift invented a swing");
+    r = lift([mkB(), mkB()]);
+    ok(r.ok && r.song.swing === null,
+       "a swing-free save did not normalize to song swing null");
+    // ...a v:1 save takes the same lift on its way up the versions
+    const rv1 = S.load({ v: 1, slots: [S.blank()],
+                         song: [{ genre: "acid", slots: [0], len: 4, nudge: 0,
+                                  ops: [], swing: "shuffle" }],
+                         bpm: 126, vol: 80 });
+    ok(rv1.ok && rv1.song.swing === "shuffle" && !("swing" in rv1.song.song[0]),
+       "a v:1 save did not lift its swing");
+    // ...an unknown SONG swing drops to null, never fatal — the tempo's policy
+    r = S.load({ v: 2, slots: [S.blank()], song: [S.emptyBox()],
+                 swing: "wonky", bpm: 126, vol: 80 });
+    ok(r.ok && r.song.swing === null,
+       "an unknown song swing was not dropped to null");
+    // ...and BOTH lifts ride one save together without crosstalk
+    const both = S.load({ v: 2, slots: [S.blank()],
+                          song: [Object.assign(S.emptyBox(),
+                                               { groove: "dub", swing: "shuffle" })],
+                          bpm: 126, vol: 80 });
+    ok(both.ok && both.song.groove === "dub" && both.song.swing === "shuffle" &&
+       !("groove" in both.song.song[0]) && !("swing" in both.song.song[0]),
+       "the groove and swing lifts interfere on one save");
+    // the shipped presets: every box comes through clean, and at least one
+    // record lifts a real swing (they are composer output, per-box vintage)
+    let liftedPresets = 0;
+    for (const p of PRESETS) {
+      const rp = S.load(p.data);
+      ok(rp.ok && rp.song.song.every(b => !("swing" in b)),
+         "preset \"" + p.name + "\" kept a per-box swing");
+      if (rp.ok && rp.song.swing != null) liftedPresets++;
+    }
+    ok(liftedPresets > 0,
+       "no shipped preset lifted a swing — the lift is dead on real data");
+  }
 }
 
 /* ---------------------------------------------------------------- 22. NEUTRALITY
@@ -2023,6 +2102,42 @@ console.log("the song groove — one drummer for the record, and it reaches the 
   const ra = D.sectionRender(b, slots, null), rb = D.sectionRender(b, slots, "funk");
   ok(ra !== rb && times(ra.ev) !== times(rb.ev),
      "sectionRender's cache serves the old groove after a song-groove change");
+
+  // ...AND THE SONG SWING, the same claim one argument over ("nothing in a
+  // section tells time"): sectionEvents' fourth argument moves the SCHEDULED
+  // TIMES while the note content is identical — one feel for the record, not
+  // a different band.
+  const straight = D.sectionEvents(b, slots, null, null).ev;
+  const shuffled = D.sectionEvents(b, slots, null, "shuffle").ev;
+  ok(straight.length > 0 && straight.length === shuffled.length,
+     "the song swing added or dropped events (" +
+     straight.length + " vs " + shuffled.length + ")");
+  ok(ident(straight) === ident(shuffled),
+     "changing the song swing moved pitches or lanes, not just time");
+  ok(times(straight) !== times(shuffled),
+     "changing the song swing moved no scheduled event in time");
+  // late, never early: swing only delays the odd sixteenths
+  {
+    const a = straight.map(e => e.t).sort((x, y) => x - y);
+    const c = shuffled.map(e => e.t).sort((x, y) => x - y);
+    ok(c.every((t, i) => t >= a[i] - 1e-9),
+       "the song swing moved a note EARLIER");
+  }
+  // "straight" is the explicit zero: it OVERRIDES a swinging genre's own
+  // lean, which null (the default) must LEAVE STANDING — swing is identity at
+  // the genre, and the two spellings being different is the whole distinction
+  {
+    const sw = JSON.parse(JSON.stringify(b)); sw.stack[0].g = "isley";
+    const own = D.sectionEvents(sw, slots, null, null).ev;      // the lean stands
+    const zeroed = D.sectionEvents(sw, slots, null, "straight").ev;
+    ok(times(own) !== times(zeroed),
+       "song swing 'straight' does not override the genre's own lean " +
+       "(or null stripped it — either way the two spellings collapsed)");
+  }
+  // the cache tells swings apart too
+  const rc = D.sectionRender(b, slots, null, "shuffle");
+  ok(rc !== ra && times(rc.ev) !== times(ra.ev),
+     "sectionRender's cache serves the old swing after a song-swing change");
 }
 console.log("song arc, prechorus, topline — the radio shape, measured on ui/derive.js");
 {

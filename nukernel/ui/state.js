@@ -11,7 +11,7 @@
 // time, two of them in the audio hot path (stepDur per tick, barSec per
 // channel build), which also made the loader untestable in node.
 import { NuSong, blank, emptyBox, DEFAULT, masterIsDefault,
-         busesIsDefault, GROOVELABEL } from "./deps.js";
+         busesIsDefault, GROOVELABEL, SWINGLABEL } from "./deps.js";
 
 export const DEFAULT_BPM = 126, NBOXES = 4;
 
@@ -61,6 +61,15 @@ export let BUSES = null;
 // transport recompiles on "groove", the bounce re-renders, song.js migrates
 // old per-box saves up to it.
 export let GROOVE = null;
+// …AND THE SWING, on the same terms (2026-08-16, "nothing in a section tells
+// time"): a record swings or it does not — a per-section swing would be the
+// drummer changing hands mid-song, and compose.js stamped one value on every
+// box, the same tell the groove gave. null means the GENRE's own lean stands
+// (swing is identity there — kernel.js g.swing); "straight" is the explicit 0
+// that overrides it. ui/derive.js reads it as an argument, the transport
+// recompiles on "swing", the bounce re-renders, song.js migrates old per-box
+// saves up to it.
+export let SWING = null;
 
 export function setSlot(i) { slot = i; SUBJ = SLOTS[i]; }
 export function putPhrase(i, p) { SLOTS[i] = p; if (i === slot) SUBJ = p; }
@@ -88,6 +97,12 @@ export function setGroove(g) {
   GROOVE = g != null &&
     Object.prototype.hasOwnProperty.call(GROOVELABEL, String(g)) ? g : null;
 }
+// ...and one for the song's swing, the same normalizer against its own table:
+// anything SWINGLABEL does not name is "the genre's own lean", spelled null
+export function setSwing(v) {
+  SWING = v != null &&
+    Object.prototype.hasOwnProperty.call(SWINGLABEL, String(v)) ? v : null;
+}
 
 export const curSection = () => SONG[Math.min(viewSec, SONG.length - 1)];
 
@@ -107,6 +122,7 @@ export const curSection = () => SONG[Math.min(viewSec, SONG.length - 1)];
 //                        returns (a param write, no swap), the bounce re-renders
 //   "groove"             the song's groove moved — the transport recompiles
 //                        (event times shift), the bounce re-renders the carrier
+//   "swing"              the song's swing moved — same consumers, same reason
 //   "transport:state"    published by audio/transport — playing flipped
 //   "transport:section"  published by audio/transport — the sounding box moved
 //   "refresh"            assets finished loading mid-play; views re-render
@@ -127,7 +143,8 @@ export function emit(type, detail) {
 export function commit(type, detail) {
   emit(type, detail);
   if (type === "phrase" || type === "box" || type === "transport" ||
-      type === "master" || type === "buses" || type === "groove") save();
+      type === "master" || type === "buses" || type === "groove" ||
+      type === "swing") save();
 }
 
 /* ---------- persistence ---------- */
@@ -145,7 +162,7 @@ function writeStore() {
   try {
     localStorage.setItem(STORE, JSON.stringify(
       { v: NuSong.VERSION, slots: SLOTS, song: SONG, master: MASTER,
-        buses: BUSES, groove: GROOVE, bpm }));
+        buses: BUSES, groove: GROOVE, swing: SWING, bpm }));
   } catch (e) { /* private mode, or quota: not worth interrupting the music */ }
 }
 export function saveNow() { clearTimeout(saveTimer); saveTimer = null; writeStore(); }
@@ -205,6 +222,7 @@ export function adoptSong(raw, reason) {
   MASTER = s.master;                   // validateSong normalizes absent to null
   BUSES = s.buses;                     // same normalizer, same law
   GROOVE = s.groove;                   // ...and the song's groove, same law
+  SWING = s.swing;                     // ...and its swing, the same move made twice
   viewSec = 0; loopOnly = null; pendingStart = null;
   if (s.bpm != null) bpm = s.bpm;
   // s.vol is deliberately NOT adopted — volume is the device's (VOLSTORE above)
@@ -217,7 +235,7 @@ export function adoptSong(raw, reason) {
 export function songJSON() {
   return JSON.stringify(
     { v: NuSong.VERSION, slots: SLOTS, song: SONG, master: MASTER,
-      buses: BUSES, groove: GROOVE, bpm },
+      buses: BUSES, groove: GROOVE, swing: SWING, bpm },
     null, 1);
 }
 export function saveFile() {

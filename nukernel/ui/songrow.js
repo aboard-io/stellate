@@ -1,7 +1,7 @@
 // ui/songrow.js — THE SONG TABLE, and since "the section speaks up"
 // (2026-08-16) THE WHOLE PER-BOX INTERFACE: one row per section, built from
-// NAMED CELLS — | PART | GENRE | FUNCTION | BARS# | TIMING | PATTERN MODS |
-// VOICE | RHYTHM | TRANSITIONS | PATTERN 1..n | — and every cell is a tap
+// NAMED CELLS — | PART | GENRE | FUNCTION | BARS# | PATTERN MODS | VOICE |
+// RHYTHM | TRANSITIONS | PATTERN 1..n | — and every cell is a tap
 // target that UNFOLDS A MENU IN PLACE, an accordion panel inserted directly
 // below the row that owns it (the floating cell popup is gone: the menu is a
 // row of the table now, #rowpop wearing role="row", and the table simply gets
@@ -9,7 +9,7 @@
 // it, tapping any other cell swaps it. The menus are built from the palette's
 // bank library (ui/palette.js mountBanks), plus the row-level keys this file
 // owns: play-from-here, reorder, duplicate, delete and pin in the PART menu,
-// the bars stepper in BARS#, the nudge stepper in TIMING.
+// the bars stepper in BARS#, the nudge stepper in PATTERN MODS.
 //
 // EVERY LAYER GETS ITS OWN LINE: a stacked box no longer compresses to
 // "City pop +1" — each genre layered on the authority renders as an indented
@@ -20,9 +20,12 @@
 // the sub-rows are just sec.stack drawn honestly. The GENRE menu still adds
 // and removes layers — a dark chip grows a sub-row, a lit one removes it.
 //
-// (No tempo anywhere on the section surface: the tempo is the SONG's — the
-// transport fader — and the groove went the same way before it. A genre's own
-// derived rate is identity, not a control.)
+// (NOTHING IN A SECTION TELLS TIME: tempo, groove and swing are all the
+// SONG's — the transport fader and the session bank's pickers — so there is
+// no TIMING cell any more. Its two genuinely-per-pattern survivors moved
+// into PATTERN MODS: the nudge stepper and the articulation bank — they
+// modify how the pattern sits and speaks, which is what a mod is. A genre's
+// own derived rate and lean are identity, not controls.)
 //
 // Rebuilding is still the sin: a row's element is keyed by the box object's
 // identity (a sub-row by its stack entry's) and only its text and classes are
@@ -34,7 +37,7 @@
 // Layer graph: ui view — imports state/derive/deps and audio/transport (the
 // one allowed direction; transport never calls back, it publishes).
 import { GENRES, ROLES, KITLABEL, DRUMKITS,
-         SWINGLABEL, ARTICS, INLABEL, OUTLABEL,
+         INLABEL, OUTLABEL,
          SINGLABEL, MAX_LEN, MAX_NUDGE, NSLOTS, blank, instrOf,
          emptyBox } from "./deps.js";
 import { SONG, SLOTS, slot, viewSec, loopOnly, pendingStart, bpm, setViewSec,
@@ -78,10 +81,10 @@ const keepMarks = () => {
 // the column order IS the interface order — one definition, the header row
 // and every box row walk it. FUNCTION is the section-role cell (the word
 // "function" is the brief's; "role" is the field's).
-const CELLS = ["part", "genre", "role", "bars", "timing", "mods",
+const CELLS = ["part", "genre", "role", "bars", "mods",
                "voice", "rhythm", "trans"];
 const CELLNAME = { part: "part", genre: "genre", role: "function", bars: "bars",
-                   timing: "timing", mods: "pattern mods", voice: "voice",
+                   mods: "pattern mods", voice: "voice",
                    rhythm: "rhythm", trans: "transitions" };
 
 /* ---------- the column header ---------- */
@@ -94,10 +97,10 @@ const headRow = (() => {
   const r = document.createElement("div");
   r.className = "shead thd"; r.setAttribute("role", "row");
   const names = { part: "#", genre: "genre", role: "function", bars: "bars",
-                  timing: "timing", mods: "mods", voice: "voice",
+                  mods: "mods", voice: "voice",
                   rhythm: "rhythm", trans: "transitions" };
   const abbr = { part: "#", genre: "genre", role: "func", bars: "bars",
-                 timing: "time", mods: "mods", voice: "voice",
+                 mods: "mods", voice: "voice",
                  rhythm: "rhy", trans: "trans" };
   const mk = (cls, full, ab) => {
     const c = document.createElement("span");
@@ -361,7 +364,7 @@ function buildBox(sec) {
 // is keyed by the box: the element and its handlers survive reorders and
 // other layers' removal. A sub-row carries what a layer owns — its genre,
 // its voice, its mods, its phrase chips — and its own remove-layer key; the
-// box-level cells (bars, timing, rhythm, transitions, function) stay on the
+// box-level cells (bars, rhythm, transitions, function) stay on the
 // parent, because the authority owns them for the whole family.
 function buildSub(sec, ent) {
   const row = document.createElement("div");
@@ -432,18 +435,14 @@ function buildSub(sec, ent) {
 /* ---------- the compact cell values ---------- */
 // the row reads as a summary line of the whole section: every cell shows its
 // current value in a word or two, and "—" is the honest spelling of unset.
-function timingFact(sec, fe) {
-  const artic = optOf(sec, fe, "artic");
-  // (no rate fact and no groove fact: tempo and groove are the SONG's — the
-  // transport fader and the session bank's GROOVE picker say them once)
-  const facts = [sec.swing && SWINGLABEL[sec.swing],
-                 sec.nudge ? "+" + sec.nudge : null,
-                 artic && ARTICS[artic]].filter(Boolean);
-  return facts.length ? facts[0] + (facts.length > 1 ? " +" + (facts.length - 1) : "") : "—";
-}
+// (no timingFact any more: the TIMING cell is gone — nothing in a section
+// tells time. Its per-pattern survivors count into the MODS fact below.)
 function modsFact(sec, fe) {
   const n = opsOf(sec, fe).length +
-    (sec.period ? 1 : 0) + (sec.breath ? 1 : 0) + (sec.pipe ? 1 : 0);
+    (sec.period ? 1 : 0) + (sec.breath ? 1 : 0) + (sec.pipe ? 1 : 0) +
+    // the two that moved in from the retired timing cell: a set nudge and a
+    // set articulation are mods of how the pattern sits and speaks
+    (sec.nudge ? 1 : 0) + (optOf(sec, fe, "artic") ? 1 : 0);
   return n ? n + (n === 1 ? " op" : " ops") : "—";
 }
 function voiceFact(sec, fe) {
@@ -554,12 +553,11 @@ function patchBox(sec, i, el) {
   // the parent row's layer-scope cells SPEAK FOR THE AUTHORITY — each other
   // layer's voice and mods live on its own sub-row
   const fe = st[0];
-  put("timing", timingFact(sec, fe));
   put("mods", modsFact(sec, fe));
   put("voice", voiceFact(sec, fe));
   put("rhythm", rhythmFact(sec));
   put("trans", transFact(sec));
-  for (const k of ["timing", "mods", "voice", "rhythm", "trans"])
+  for (const k of ["mods", "voice", "rhythm", "trans"])
     el.cells[k].setAttribute("aria-label",
       "box " + (i + 1) + " " + CELLNAME[k] + ": " + el.vals[k].textContent);
   // the open cell reads pressed/expanded; every other cell reads closed
@@ -741,7 +739,9 @@ rpKeys.append(rpPlay, rpUp, rpDn, rpDup, rpPin, rpDel);
 
 // bars/nudge as steppers: the same clamps the edge grips carried, the same
 // commit("box"), and reachable by thumb, key and screen reader alike. BARS
-// lives in the BARS# menu, NUDGE in TIMING (it is a when, not a how-long).
+// lives in the BARS# menu, NUDGE in PATTERN MODS — it moved there when the
+// TIMING cell retired: a nudge modifies where the pattern SITS in the form,
+// which is a mod of the pattern, not the song's clock.
 const stepper = (lab, name, get, set) => {
   const w = Object.assign(document.createElement("span"), { className: "rpstep" });
   w.append(Object.assign(document.createElement("span"),
@@ -773,7 +773,7 @@ function mountCell(sec, kind) {
   rpMount.textContent = "";
   if (kind === "part") rpMount.append(rpKeys);
   else if (kind === "bars") rpMount.append(rpBars);
-  else if (kind === "timing") { rpMount.append(rpNud); mountBanks("timing", rpMount); }
+  else if (kind === "mods") { rpMount.append(rpNud); mountBanks("mods", rpMount); }
   else mountBanks(kind, rpMount);
 }
 
@@ -825,7 +825,7 @@ function patchPop() {
       (i === loopOnly ? "unpin box " : "pin box ") + (i + 1) + " (loop it alone)");
   }
   if (popCell === "bars") rpLen.lcd.textContent = String(popFor.len);
-  if (popCell === "timing") rpNudge.lcd.textContent = String(popFor.nudge);
+  if (popCell === "mods") rpNudge.lcd.textContent = String(popFor.nudge);
   refreshChips(rpMount);                   // the banks follow every commit
 }
 addEventListener("keydown", ev => {

@@ -6,10 +6,11 @@
 //
 // Layer graph: ui view — imports state/audio; the play button is the page's
 // user gesture, which is why initAudio rides transport.startAt.
-import { GENRES, FONTS, compose, PRESETS, GROOVELABEL } from "./deps.js";
+import { GENRES, FONTS, compose, PRESETS, GROOVELABEL,
+         SWINGLABEL } from "./deps.js";
 import { bpm, vol, setBpm, setVol, setLoopOnly, adoptSong, defaultSong,
          clearStore, loadErrorText, saveFile, loadFile, commit, on,
-         GROOVE, setGroove, DEFAULT_BPM } from "./state.js";
+         GROOVE, setGroove, SWING, setSwing, DEFAULT_BPM } from "./state.js";
 import { buzz, pointers } from "./touch.js";
 import { playing, startAt, stop, ensureAssets } from "../audio/transport.js";
 import { initAudio } from "../audio/graph.js";
@@ -151,6 +152,32 @@ fader($("vol"), 80);
     setGroove(e.target.value || null);
     syncGroove();                    // the normalizer may have said null
     commit("groove");
+  });
+}
+
+/* ---------- ...and its swing ---------- */
+// THE SAME MOVE MADE TWICE ("nothing in a section tells time"): the swing sits
+// beside the groove in the session bank, one control for the record, wired the
+// same way — filled from the registry table, read from state on every "song",
+// written through the one setter, leaving through commit("swing"). The empty
+// option is "default", not "flat": null means the GENRE's own lean stands
+// (swing is identity there), and the explicit zero already has a name in the
+// vocabulary — "straight".
+{
+  const sel = $("swing");
+  sel.append(Object.assign(document.createElement("option"),
+    { value: "", textContent: "default" }));       // the genre's own lean
+  for (const k of Object.keys(SWINGLABEL))
+    sel.append(Object.assign(document.createElement("option"),
+      { value: k, textContent: SWINGLABEL[k] }));
+  const syncSwing = () => { sel.value = SWING || ""; };
+  syncSwing();
+  on("song", syncSwing);
+  on("swing", syncSwing);            // any other writer keeps this glass honest
+  sel.addEventListener("change", e => {
+    setSwing(e.target.value || null);
+    syncSwing();                     // the normalizer may have said null
+    commit("swing");
   });
 }
 

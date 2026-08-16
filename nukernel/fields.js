@@ -136,9 +136,18 @@
   const RATES = { half: 0.5, dbl: 2 };
   const RATELABEL = { half: "half time", dbl: "double time" };
   // SWING bends the grid — every odd sixteenth arrives late by this fraction of
-  // a step. As a box control it is the difference between a pattern and a
-  // performance, and it belongs to the section rather than to the genre for the
-  // same reason tempo does.
+  // a step. "straight" is an explicit 0: it OVERRIDES a genre's own lean, which
+  // null never does (a genre's swing is identity, kernel.js reads g.swing).
+  //
+  // AND IT IS A SONG FACT NOW, NOT A BOX FIELD (2026-08-16, "nothing in a
+  // section tells time" — the groove's move, finished). A record swings or it
+  // does not; a swing that changed per section would be the drummer changing
+  // hands mid-song. compose.js stamped ONE swing on every box, the same tell
+  // the groove gave. So there is no `swing` entry in FIELDS below: the song
+  // carries it beside bpm/groove/master/buses (ui/state.js SWING, song.js
+  // validates, migrate lifts old per-box saves), and ui/derive.js reads it as
+  // an argument. The tables stay HERE because they are vocabulary, and one
+  // registry file owns every word.
   const SWINGS = { straight: 0, light: 0.12, swing: 0.22, shuffle: 1 / 3, hard: 0.42 };
   const SWINGLABEL = { straight: "straight", light: "light", swing: "swing",
                        shuffle: "shuffle", hard: "hard shuffle" };
@@ -952,10 +961,8 @@
       tab: "rhythm", group: "drum sound",              default: null },
     { key: "bassop",  scope: "box",   table: BASSOPS,  labels: BASSOPS,
       tab: "rhythm", group: "bass",                    default: null },
-    { key: "swing",   scope: "box",   table: SWINGS,   labels: SWINGLABEL,
-      tab: "rhythm", group: "swing",                   default: null },
-    // (no `groove` entry: the groove is the SONG's, like the tempo — see the
-    // GROOVELABEL note above)
+    // (no `swing` and no `groove` entry: BOTH are the SONG's, like the tempo
+    // — see the SWINGS and GROOVELABEL notes above)
     { key: "fx",      scope: "box",   type: "list", table: FX, labels: FXLABEL,
       tab: "fx",     group: "effects", max: MAX_FX,    default: [] },
     { key: "rev",     scope: "box",   table: SENDS,    labels: SENDLABEL,

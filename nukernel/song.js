@@ -25,7 +25,7 @@
     ? require("./genres.js") : root.NuGenres;
   const { FIELDS, OPS, FX, MAX_FX, NSLOTS, MAX_LEN, MAX_NUDGE, VOX,
           AUTOPARAMS, PERIODS, PARTMIX, okPartKey, MASTER, BUSES, faderDb,
-          eqDb, GROOVELABEL } = NF;
+          eqDb, GROOVELABEL, SWINGLABEL } = NF;
   const { GENRES } = NG;
 
   // The CURRENT schema version. v:2 = v:1 with the box field `del` renamed to
@@ -40,7 +40,9 @@
   // (`song.buses` — the rack's return trims — is optional on the same terms.)
   // The GROOVE MOVE (box field -> song fact) did not need a v:3 either: the
   // retired box field is unmistakable — no new writer emits it — so migrate()
-  // lifts on its presence, exactly the period-interregnum idiom below.
+  // lifts on its presence, exactly the period-interregnum idiom below. The
+  // SWING MOVE (2026-08-16, "nothing in a section tells time") is the same
+  // move made twice, and takes the same presence-keyed lift.
   const VERSION = 2;
 
   // THE FILTER RULE, written down at last: `ops` and `fx` are FILTERED on
@@ -112,20 +114,26 @@
     // A song whose sections disagreed (only a hand-edit could) adopts the
     // groove most sections agree on; ties go to the section nearest the top,
     // which is the authority the box's own stack rule already names.
-    if (Array.isArray(r.song) && r.song.some(b => b && b.groove !== undefined)) {
-      if (r.groove === undefined) {
+    // ...AND THE SWING LIFT beside it (2026-08-16, "nothing in a section tells
+    // time"): the same move made twice, so it is the same code run twice —
+    // presence-keyed, majority wins, ties to the section nearest the top (the
+    // authority), the box field dies on the way through.
+    for (const key of ["groove", "swing"]) {
+      if (!Array.isArray(r.song) || !r.song.some(b => b && b[key] !== undefined))
+        continue;
+      if (r[key] === undefined) {
         const count = new Map();
         for (const b of r.song) {
-          if (!b || b.groove == null) continue;
-          if (!count.has(b.groove)) count.set(b.groove, 0);
-          count.set(b.groove, count.get(b.groove) + 1);
+          if (!b || b[key] == null) continue;
+          if (!count.has(b[key])) count.set(b[key], 0);
+          count.set(b[key], count.get(b[key]) + 1);
         }
         let best = null, bestN = 0;               // Map iterates in insertion
         for (const [g2, n] of count)              // order, so a tie keeps the
-          if (n > bestN) { best = g2; bestN = n; } // FIRST section's groove
-        r.groove = best;
+          if (n > bestN) { best = g2; bestN = n; } // FIRST section's value
+        r[key] = best;
       }
-      for (const b of r.song) if (b) delete b.groove;
+      for (const b of r.song) if (b) delete b[key];
     }
     if (r.v !== 1) return r;             // v:2 passes through; junk fails validate
     // genre -> genres -> stack: they shared one slot list before layers
@@ -446,6 +454,11 @@
     s.groove = s.groove != null &&
       Object.prototype.hasOwnProperty.call(GROOVELABEL, String(s.groove))
       ? s.groove : null;
+    // ...and THE SWING, the same policy against its own table: null means the
+    // genre's own lean stands, "straight" is the explicit 0 that overrides it
+    s.swing = s.swing != null &&
+      Object.prototype.hasOwnProperty.call(SWINGLABEL, String(s.swing))
+      ? s.swing : null;
 
     // tempo and volume ride along; out-of-range means "keep what you had",
     // not "refuse the song" — same policy applyState always had
