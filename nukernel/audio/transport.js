@@ -9,8 +9,8 @@
 import { GENRES, DTIMES, BASSSYNTH, BASS_INSTR, STRIPS, stripFor,
          instrOf } from "../ui/deps.js";
 import { SONG, loopOnly, pendingStart, setPendingStart, bpm, on, emit,
-         SLOTS, GROOVE, SWING, POOL } from "../ui/state.js";
-import { gid, stackOf, boxBars, kitOf, sectionRender,
+         SLOTS, GROOVE, SWING, POOL, RUBATO, setRubato } from "../ui/state.js";
+import { gid, stackOf, boxBars, kitOf, sectionRender, songBars,
          instrIdOf, poolInstrOf } from "../ui/derive.js";
 import { ctx, initAudio, rmsNow, muteNow, unmuteRamp } from "./graph.js";
 import { FONT, fontDef, isSynthFont, loadFont, specOf, zoneBufs, drumBufs,
@@ -114,44 +114,56 @@ window.__nuHome = () => [...homeSeen.entries()]
 // PURE over the current state: build and RETURN the bar list. The offline
 // bounce walks its own copy of exactly this — one builder, or the carrier
 // renders a different song from the one the transport plays.
+//
+// THE WALK ITSELF IS ui/derive.js songBars: the bucketing, the tempo map (bar
+// durations and event offsets come back already warped, so the live tick and
+// the offline chunk plan cannot integrate one clock two ways) and the lead-in
+// pickups are SCORE facts and are derived where the score is. What stays here
+// is the one thing that needs the audio tier: the register home, which has to
+// ask the sampler how wide an instrument's window is.
 export function buildTimeline() {
-  const TL2 = [];
-  const list = loopOnly == null ? SONG.map((s, i) => [s, i]) : [[SONG[loopOnly], loopOnly]];
-  for (const [sec, si] of list) {
-    const { g, bars, ev } = sectionRender(sec, SLOTS, GROOVE, SWING);
-    // A BOX THAT PRODUCES NOTHING TAKES NO TIME. Since Simple became the default
-    // there is no "empty" box any more, so a fresh page was four boxes of which
-    // three had no phrase — one bar of music followed by three bars of silence,
-    // for ever. A box with no events is skipped the way an empty one used to be.
-    if (!ev.length) continue;
-    const barSteps = 16 / g.rate;
-    // ONE PASS into per-bar buckets. The old per-bar filter over the whole
-    // event list was O(bars × events) per box — ~6M comparisons per compile on
-    // a twenty-box song, and compile runs on every editor scrub while playing.
-    //
-    // GROOVE CAN PUSH THE LAST SIXTEENTH PAST THE BAR LINE, by design — that is
-    // what a late note IS. Clamping the BUCKET rather than the time keeps the
-    // event in the last bar with an offset a hair over a bar, and since bars are
-    // scheduled in sequence with lookahead that lands it at exactly the right
-    // moment instead of dropping it on the floor.
-    const buckets = Array.from({ length: bars }, () => []);
-    // the section's register homes, decided once over the whole event list
-    // (see registerHome) and stamped on the events that carry a chair
-    const home = registerHome(sec, ev);
-    for (const e of ev) {
-      const b = Math.min(bars - 1, Math.floor(e.t / barSteps));
-      const hk = e.kind === "line"
-        ? (e.layer || gid(sec)) + "|" + (e.lv == null ? e.v : e.lv) : null;
-      const oct = hk ? (home.get(hk) || 0) : 0;
-      if (hk && oct) homeSeen.set(hk, oct); else if (hk) homeSeen.delete(hk);
-      buckets[b].push({ ...e, off: e.t - b * barSteps, home: oct * 12 });
+  const TL2 = songBars(SONG, SLOTS, GROOVE, SWING, loopOnly, { rubato: RUBATO });
+  // one home decision per BOX, over its whole event list (see registerHome),
+  // memoized because a box's bars all read the same answer
+  const homes = new Map();
+  const homeOf = si => {
+    let h = homes.get(si);
+    if (!h) homes.set(si, h = registerHome(SONG[si],
+      sectionRender(SONG[si], SLOTS, GROOVE, SWING).ev));
+    return h;
+  };
+  for (const bar of TL2) {
+    for (const e of bar.ev) {
+      if (e.kind !== "line") continue;
+      // A PICKUP IS THE NEXT BOX'S VOICE SOUNDING IN THIS BAR, so it rides the
+      // NEXT box's register decision: `puSi` names the box it belongs to. Read
+      // the sounding box's map instead and a lead-in could arrive an octave
+      // from the note it is leading to, which is the one thing a pickup may
+      // never do.
+      const si = e.puSi == null ? bar.si : e.puSi;
+      const hk = (e.layer || gid(SONG[si])) + "|" + (e.lv == null ? e.v : e.lv);
+      const oct = homeOf(si).get(hk) || 0;
+      if (oct) homeSeen.set(hk, oct); else homeSeen.delete(hk);
+      e.home = oct * 12;                 // songBars' events are ours to stamp
     }
-    for (let b = 0; b < bars; b++)
-      TL2.push({ si, g, barSteps, first: b === 0, ev: buckets[b] });
   }
   return TL2;
 }
 export function compile() { TL = buildTimeline(); }
+// WHAT THE TEMPO MAP AND THE LEAD-INS ACTUALLY DID, for the gates and ?debug —
+// the register home's own argument (a shift nobody can see is a shift nobody
+// can check), applied to the two things that now move under the music. The
+// third hook is the escape hatch: `__nuRubato(false)` pins the grid for anyone
+// who needs one, and recompiles on the spot rather than at the next edit.
+window.__nuTempo = () => TL.map(b =>
+  ({ si: b.si, steps: b.steps, dur: b.barSteps, r: b.tempo }));
+window.__nuPickups = () => TL.flatMap((b, i) => b.ev.filter(e => e.pu)
+  .map(e => ({ bar: i, si: b.si, into: e.puSi, kind: e.kind,
+               d: e.d, n: e.n, off: e.off })));
+window.__nuRubato = v => {
+  if (v !== undefined) { setRubato(v); if (playing) compile(); }
+  return RUBATO;
+};
 export const stepDur = () => 60 / bpm / 4;
 // the song's REAL duration, in seconds, at the tempo as it is now — nukernel
 // is the rare page that can tell MediaSession the truth instead of Infinity
@@ -355,7 +367,13 @@ export function scheduleBar(bar, sec, chan, kit, when, sd, synthFn) {
                   bar.g.tone, e.pad, e.vel, chan, e.v);
       }
     } else if (e.kind === "hit") {
-      if (!playDrum(kit, e.d, at, e.acc, e.vel, chan)) hit(at, e.d, e.acc, e.vel, chan);
+      // A DRUM LEAD-IN PLAYS THE KIT IT IS ANNOUNCING, not the one whose bar it
+      // borrows: the fill under the last two beats before the drums arrive IS
+      // the arriving kit, and this bar's box may have no kit at all (that is
+      // exactly when a drum pickup fires). `e.kit` is set only by that pickup —
+      // absent, this is the bar's own kit, byte for byte.
+      const k2 = e.kit || kit;
+      if (!playDrum(k2, e.d, at, e.acc, e.vel, chan)) hit(at, e.d, e.acc, e.vel, chan);
     }
     else if (e.kind === "bass") {
       const bs = BASSSYNTH[sec.bassop];

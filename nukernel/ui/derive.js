@@ -9,7 +9,8 @@ import { GENRES, MODES, SCALES, RATES, SWINGS, KITOPS, OPS,
          render, drums, bass, word, envelope, edges, groove, chordAt,
          blank, VOX, PROGS, PERIODS, BREATHS, PIPESETS, withCadence,
          SING, instrOf, partOf, PARTNAMES,
-         chordsOf, MODE, harmonizeStage } from "./deps.js";
+         chordsOf, MODE, harmonizeStage,
+         tempoWarp, seatNote, prng, TOMS } from "./deps.js";
 
 export const isBlank = p => p.gate.every(g => !g);
 
@@ -478,5 +479,401 @@ export function sectionRender(sec, slots, songGroove, songSwing) {
   if (c && c.sig === sig) return c.out;
   const out = sectionEvents(sec, slots, songGroove, songSwing);
   rcache.set(sec, { sig, out });
+  return out;
+}
+
+/* ---------- the song as a bar list ---------- */
+// THE ONE WALK from boxes to bars, and the two facts a bar list knows that no
+// single section can: what happens at a SEAM (the voice about to enter may
+// start before the bar line) and how long a bar actually LASTS (the tempo
+// moves). It lived inside audio/transport.js buildTimeline, so both of those
+// could only ever be proved in a browser. They are SCORE facts and they are
+// derived here with everything else; the transport keeps exactly the half that
+// needs the audio tier — the register home, which has to ask the sampler how
+// wide an instrument's window is — and the offline bounce walks the transport's
+// result, so there is still ONE bar list and one clock under both.
+
+/* ---------- 1. the tempo map ---------- */
+// "Tempo changes never happen. But music slows down and speeds up." So nothing
+// here is a tempo EVENT and no section carries a metronome mark: there is one
+// continuous rate curve over the whole song, and kernel.js tempoWarp integrates
+// it into bar durations. The curve is derived from the ARRANGEMENT by default,
+// because a listener should hear the music breathe without setting anything.
+//
+// Three things shape it, in this order:
+//   BASE   a section SITS at a tempo — a breakdown a little under it, a drop a
+//          little over. Never as a step: the node AT a seam is the average of
+//          the two sections' rates, so the band arrives at the new feel instead
+//          of being told about it.
+//   SEAM   one gesture per section end, chosen by what the music is doing: a
+//          ritard into a breakdown or an outro, a small lean into a chorus, an
+//          accelerando where a build runs at its drop, and the big final ritard
+//          at the end of the song. The gesture lands on the closing bar's
+//          second half and the next bar recovers over its first — which is a
+//          musician, not an automation lane.
+//   DRIFT  the whole thing breathes underneath: the parent's own rubato law
+//          (engine/csd-engine.js — tempo(b)/tempo0 = 1 + depth·cos(2πb/P + φ)),
+//          read at every node, at well under a percent.
+//
+// Every input is the song's own content — roles, box order, genre keys, bar
+// counts — so two compiles of one song give one clock, and an edit that changes
+// the arrangement changes the breathing with it. There is no per-section tempo
+// control and there will not be one: the tempo is a fact about the SONG.
+const TEMPOROLE = {
+  intro: 0.988, verse: 1, prechorus: 1.004, build: 1.006, chorus: 1.008,
+  drop: 1.012, breakdown: 0.976, bridge: 0.994, solo: 1.004, outro: 0.978,
+  drums: 1, bass: 1, groove: 1,          // the beds keep the song's own tempo
+};
+// compose.js's own rule (its PLANCUE table): only two cues name a plan role,
+// because the loader stores a prechorus as a verse and a build as a breakdown
+// and keeps the honest name in `cue`. Reading `role` alone would put a build's
+// accelerando under a breakdown's ritard.
+const PLANCUE = { prechorus: 1, build: 1 };
+const roleOf = s => (s && (PLANCUE[s.cue] ? s.cue : s.role)) || null;
+const LIFT = { chorus: 1, drop: 1, solo: 1 };            // a section arrived AT
+const PUSH = { build: 1, prechorus: 1, breakdown: 1 };   // ...and one that runs at it
+const DRIFT = 0.006;                                     // the human wobble, ±0.6%
+
+// TWO NODES PER BAR PLUS ONE, and every bar SHARES its ends with its
+// neighbours. That shared array IS the continuity law: no gesture below can put
+// a step into the tempo even by accident, because there is only one number at
+// each seam and both bars read it.
+function tempoNodes(bars, song, seed) {
+  const n = bars.length, rnd = prng(seed);
+  const base = bars.map(b => TEMPOROLE[roleOf(song[b.si])] || 1);
+  const N = new Array(2 * n + 1);
+  for (let k = 0; k <= 2 * n; k++)
+    N[k] = k % 2 ? base[k >> 1]
+      : (k === 0 ? base[0] : k === 2 * n ? base[n - 1]
+         : (base[k / 2 - 1] + base[k / 2]) / 2);
+  const many = new Set(bars.map(b => b.si)).size > 1;
+  for (let i = 0; i < n; i++) {
+    const nxt = i === n - 1 ? null : bars[i + 1];
+    if (nxt && nxt.si === bars[i].si) continue;          // mid-section: no gesture
+    const ra = roleOf(song[bars[i].si]), rb = nxt ? roleOf(song[nxt.si]) : null;
+    const r = rnd();
+    let g;
+    if (!nxt) {
+      // THE FINAL RITARD, and only when there is a song to end. One box on
+      // loop that slowed down every pass would be a hiccup, not an ending.
+      if (!many) continue;
+      g = -(0.09 + 0.05 * r);
+    } else if (PUSH[ra] && LIFT[rb]) g = 0.020 + 0.020 * r;   // the build runs at it
+    else if (rb === "breakdown" || rb === "outro") g = -(0.035 + 0.025 * r);
+    else if (LIFT[rb]) g = -(0.012 + 0.012 * r);              // the chorus is leaned into
+    else g = -(0.008 + 0.014 * r);                            // every seam breathes a little
+    N[2 * i + 2] *= 1 + g;
+    N[2 * i + 1] *= 1 + g * 0.35;
+  }
+  const P = 5 + (seed % 5), ph = ((seed >>> 5) % 1000) / 1000 * 2 * Math.PI;
+  for (let k = 0; k <= 2 * n; k++)
+    N[k] *= 1 + DRIFT * Math.cos(2 * Math.PI * (k / 2) / P + ph);
+  return N;
+}
+function warpBars(bars, song) {
+  if (!bars.length) return;
+  const seed = strSeed(bars.map(b => b.si + ":" + roleOf(song[b.si]) + ":" +
+                                     gid(song[b.si]) + ":" + b.barSteps).join("|"));
+  const N = tempoNodes(bars, song, seed);
+  const W = tempoWarp(bars.map((b, i) =>
+    ({ steps: b.barSteps, rs: [N[2 * i], N[2 * i + 1], N[2 * i + 2]] })));
+  bars.forEach((b, i) => {
+    const w = W[i];
+    // barSteps STOPS BEING THE GRID AND BECOMES THE CLOCK. It is what every
+    // reader multiplies by the step duration — the transport's tick, the
+    // bounce's chunk plan, the singer's bar length — so warping it here is what
+    // makes the live graph and the rendered carrier honour one tempo map
+    // without either of them knowing there is one. `steps` keeps the musical
+    // grid for anyone who needs to ask what a bar is made of.
+    b.steps = w.steps; b.barSteps = w.dur; b.tempo = [w.r0, w.r1];
+    // WRITTEN IN PLACE, on purpose. Every event in a bar is already a fresh
+    // copy this walk made (the bucketing above, and the pickups' own objects) —
+    // nothing outside the bar list holds one, and the section cache holds the
+    // originals — so a second full copy here would only be a copy. compile()
+    // runs on every editor scrub while playing, and this pass touches every
+    // event in the song.
+    for (const e of b.ev) {
+      const off = w.at(e.off);
+      if (e.dur > 0) e.dur = Math.max(1e-4, w.at(e.off + e.dur) - off);
+      e.off = off;
+    }
+  });
+}
+
+/* ---------- 2. the lead-ins ---------- */
+// "Solos have a bar or a few notes of lead-in, as do drum phrases and so
+// forth." A voice about to ENTER may start before the bar line it enters on: a
+// horn pickup before the solo, a bass run into the change, a fill under the
+// last two beats before the drums arrive. What makes this derivable rather than
+// another chip is that the arrangement already says who enters when — a lane
+// that plays in the next box's first bar and NOWHERE in this box is an
+// entrance, and nothing else is.
+//
+// THE LAWS, in the order they matter:
+//   LANDS   the pickup's last note ends ON the bar line it leads to, exactly.
+//           It never plays the arrival; the entering voice does that.
+//   BORROWS it takes the closing bar's last beat — or half bar, or a whole bar
+//           when the lane it announces was silent for the entire box — and
+//           THINS what was there: the outgoing box's own lines of that kind
+//           stop at the borrow, sustains are trimmed to it, and a drum quote
+//           adds no hit where the kit already has one. (engine/csd-engine.js's
+//           kit fill is the same idea: QUOTE the section's own pattern and
+//           crescendo it, with one pickup hit into the downbeat, rather than
+//           pasting generic toms over what is playing.)
+//   SPEAKS  every pitch is seated on the chord it is arriving INTO — through
+//           kernel.seatNote, the same law the harmonize stage seats layers with
+//           — and folded to within an octave of the note it leads to, so the
+//           register home the transport decides for that chair carries the
+//           pickup with it and a pickup can never be an octave from its own
+//           arrival.
+// A pickup is tagged `pu` and carries `puSi`, the box it belongs to, because it
+// SOUNDS in the outgoing box's bar but BELONGS to the incoming box's voice —
+// the transport reads puSi for the register home, and a drum pickup carries its
+// own `kit` for the same reason: the drums entering next box must arrive on
+// next box's kit even though the bar is this box's.
+const laneKey = e => e.kind === "hit" ? "drums" : e.kind === "bass" ? "bass"
+  : (e.kind === "line" && !e.pad
+     ? "line:" + (e.layer || "") + ":" + (e.lv == null ? e.v : e.lv) : null);
+// SEMITONES RELATIVE TO THE NOTE BEING LED TO — the parent's lick vocabulary
+// (engine/csd-engine.js lickEvents RUNS: pentatonic climb, chromatic approach,
+// enclosure turn, fall from the fifth) at nukernel's scale. They are written
+// chromatically and seated afterwards, which is exactly how the parent gets a
+// blues approach out of a diatonic table.
+const PICKUPS = {
+  approach: [-2, -1],                    // two notes, in from below
+  scoop:    [-5, -3, -1],
+  climb:    [-12, -7, -5, -3, -1],
+  turn:     [-3, 2, 1],                  // the enclosure: under, over, in
+  fall:     [7, 4, 2],                   // down from the fifth
+};
+const PICKKEYS = Object.keys(PICKUPS);
+
+// the chord the pickup is arriving INTO: the incoming box's own harmony at the
+// first bar it renders (masterCtx keys the timeline in the box's key, and a
+// nudged box starts partway through its progression — so the bar is absolute)
+// what the seating law counts as legal at that arrival: the chord's own colour
+// plus the governing scale — kernel.js seatNote's `legalWith` set, read from
+// outside so the pickup's own tie-breaks cannot smuggle a note past it
+const legalPc = (n, arr) => {
+  const pc = ((n % 12) + 12) % 12;
+  return arr.c.pcSet.has(pc) || arr.scalePcs.has(pc);
+};
+function arrivalChord(sec, slots) {
+  const ctx = masterCtx(sec, slots);
+  const cs = ctx.chords(Math.max(0, sec.nudge | 0));
+  const c = cs.find(x => x.start === 0) || cs[0];
+  return c ? { c, scalePcs: ctx.scalePcs } : null;
+}
+// the pitched pickup — one line, or the bass, announced by a run that lands on
+// the bar line. Everything of the same KIND inside the borrowed window makes
+// room for it (that is the thinning law); pads and drums play on underneath,
+// because the harmony the pickup is leaning against has to stay audible.
+function pitchedLeadIn(bar, tBase, secB, slots, e0, siB, rnd) {
+  const arr = arrivalChord(secB, slots);
+  if (!arr || e0.n == null) return;
+  const bs = bar.barSteps, u = bs / 16, beat = bs / 4;
+  const run = PICKUPS[PICKKEYS[Math.floor(rnd() * PICKKEYS.length)]];
+  const gap = [2, 3, 4][Math.floor(rnd() * 3)] * u;     // 8th, dotted 8th, quarter
+  // HALF A BAR IS THE CEILING for a pitched pickup: past that it stops being a
+  // lead-in and starts being a part the outgoing box did not write. Trim from
+  // the FRONT — it is the end of the figure that does the leading.
+  const k = Math.max(2, Math.min(run.length, Math.floor((bs / 2) / gap)));
+  if (k * gap > bs / 2 + 1e-9 || k < 2) return;
+  const notes = run.slice(run.length - k), L = k * gap, w0 = bs - L;
+  const tgt = e0.n, add = [];
+  let prev = null;
+  notes.forEach((semi, i) => {
+    const off = bs - (k - i) * gap, r = Math.round(off);
+    const onBeat = Math.abs(off - r) < 0.45 && r % beat === 0;
+    // which way this rung of the figure is travelling — the enclosure turns
+    // around in the middle, so it is the FIGURE's own step, not the run's
+    const step = i === 0 ? (semi < 0 ? 1 : -1)
+      : (semi > notes[i - 1] ? 1 : semi < notes[i - 1] ? -1 : (semi < 0 ? 1 : -1));
+    let n = seatNote(tgt + semi, arr.c, arr.scalePcs, onBeat, semi < 0 ? 1 : -1);
+    while (n > tgt + 12) n -= 12;                       // the range fold, per note:
+    while (n < tgt - 12) n += 12;                       // a pickup stays in its own octave
+    // A RUN THAT REPEATS A NOTE IS NOT A RUN, and a pickup NEVER PLAYS ITS OWN
+    // ARRIVAL. Seating can pull two rungs of a chromatic figure onto one chord
+    // tone (a bare root-and-fifth does it every time) and it can pull the last
+    // rung onto the very note the entering voice is about to play — a monotone
+    // and a stutter, both out of the same cause. So the rung moves on: the next
+    // LEGAL pitch (the seating law's own legal set — this may not smuggle in a
+    // note the harmonize stage would have folded) in the direction the figure
+    // was travelling, inside the octave the fold just put it in, and the other
+    // way if that direction runs out of room.
+    const bad = m => m === prev || (i === k - 1 && m === tgt);
+    if (bad(n)) {
+      let alt = null;
+      for (const dirn of [step, -step]) {
+        for (let d = 1; d <= 12 && alt == null; d++) {
+          const c = n + dirn * d;
+          if (c >= tgt - 12 && c <= tgt + 12 && !bad(c) && legalPc(c, arr)) alt = c;
+        }
+        if (alt != null) break;
+      }
+      if (alt != null) n = alt;
+    }
+    // THE PICKUP IS PLAYED BY THE VOICE IT ANNOUNCES, so it names that voice's
+    // GENRE even when the entering line is its own box's authority (which
+    // carries no layer tag at all). The scheduler reads `e.layer || gid(the
+    // sounding box)`, and the sounding box is the outgoing one — so an
+    // unstamped pickup would arrive on the OLD band's instrument, which is the
+    // one instrument it must not be.
+    add.push({ ...e0, ...(e0.kind === "line" ? { layer: e0.layer || gid(secB) } : {}),
+               t: tBase + off, off, n, prev, acc: 0, sld: 0,
+               dur: gap * (i === k - 1 ? 1 : 0.94),     // the last one ends ON the line
+               vel: 4 + Math.round(3 * i / Math.max(1, k - 1)), pu: 1, puSi: siB });
+    prev = n;
+  });
+  const mine = e => e.kind === e0.kind && !e.pad;
+  bar.ev = bar.ev
+    .filter(e => !(mine(e) && e.off >= w0 - 1e-9))      // the borrow
+    .map(e => (mine(e) && e.dur > 0 && e.off < w0 && e.off + e.dur > w0
+      ? { ...e, dur: Math.max(1e-4, w0 - e.off) } : e)) // ...and the trim
+    .concat(add);
+}
+// the drum lead-in, case one: the kit was SILENT all box and arrives next box.
+// Nothing to collide with, so this writes real material — and it is the one
+// pickup allowed a whole bar, which is the "a bar early" case.
+function drumLeadIn(bar, tBase, inBar, kit, siB, rnd) {
+  const bs = bar.barSteps, u = bs / 16;
+  const lanes = new Set(inBar.ev.filter(e => e.kind === "hit").map(e => e.d));
+  if (!lanes.size) return;
+  const voice = ["s", "p", "c", "t", "m", "l"].find(d => lanes.has(d)) || [...lanes][0];
+  const toms = TOMS.filter(t => lanes.has(t));
+  const L = rnd() < 0.35 ? bs : bs / 2, w0 = bs - L;
+  const shapes = toms.length ? ["roll", "toms", "build"] : ["roll", "build"];
+  const shape = shapes[Math.floor(rnd() * shapes.length)];
+  const pos = [];
+  if (shape === "build") {                              // the accelerating build
+    let g = 4 * u, t = w0;
+    while (t < bs - 1e-9) { pos.push(t); t += g; if (t > bs - L * 0.4) g = Math.max(u, g / 2); }
+  } else for (let t = w0; t < bs - 1e-9; t += 2 * u) pos.push(t);
+  const add = pos.map((t, i) => {
+    const p = L > 0 ? (t - w0) / L : 0;
+    const d = shape === "toms"
+      ? toms[Math.min(toms.length - 1, Math.floor(p * toms.length))] : voice;
+    return { kind: "hit", t: tBase + t, off: t, d, acc: i === pos.length - 1,
+             vel: Math.min(9, 3 + Math.round(5 * p)), pu: 1, puSi: siB, kit };
+  });
+  if (lanes.has("k") && rnd() < 0.7)                    // the pickup kick into the line
+    add.push({ kind: "hit", t: tBase + bs - u, off: bs - u, d: "k", acc: false,
+               vel: 7, pu: 1, puSi: siB, kit });
+  bar.ev = bar.ev.concat(add);
+}
+// the drum lead-in, case two: the kit plays through and the next box is a lift.
+// The parent's kit fill exactly — QUOTE what is already playing, crescendo it,
+// double some of its hits — with the collision check the parent left implicit
+// made explicit: a double that lands where the kit already hits is dropped, so
+// a fill can never flam its own pattern.
+function quoteFill(bar, rnd) {
+  const bs = bar.barSteps, u = bs / 16, w0 = bs / 2;
+  const win = bar.ev.filter(e => e.kind === "hit" && e.off >= w0 - 1e-9);
+  if (!win.length) return;
+  const add = [];
+  const busy = (d, t) =>
+    bar.ev.some(e => e.kind === "hit" && e.d === d && Math.abs(e.off - t) < 0.5 * u) ||
+    add.some(e => e.d === d && Math.abs(e.off - t) < 0.5 * u);
+  for (const h of win) {
+    if (rnd() >= 0.55) continue;
+    const t = h.off + u;
+    if (t >= bs - 1e-9 || busy(h.d, t)) continue;
+    add.push({ ...h, t: h.t + u, off: t, acc: false, pu: 1, quote: 1,
+               vel: Math.max(1, Math.round((h.vel == null ? 5 : h.vel) * 0.6)) });
+  }
+  bar.ev = bar.ev.map(e => {                            // the crescendo, on the quote
+    if (e.kind !== "hit" || e.off < w0 - 1e-9) return e;
+    const p = (e.off - w0) / (bs - w0);
+    return { ...e, vel: Math.min(9, Math.round((e.vel == null ? 5 : e.vel) * (1 + 0.30 * p))) };
+  }).concat(add);
+}
+function leadIns(bars, song, slots) {
+  // the contiguous run of bars each box owns. A box is one run by construction
+  // (songBars walks the boxes in order), and the seam walk only asks about
+  // neighbours — which is the whole reason this pass lives at bar level.
+  const runs = [];
+  for (let i = 0; i < bars.length; i++) {
+    const cur = runs[runs.length - 1];
+    if (cur && cur.si === bars[i].si) cur.to = i;
+    else runs.push({ si: bars[i].si, from: i, to: i });
+  }
+  for (let r = 0; r + 1 < runs.length; r++) {
+    const A = runs[r], B = runs[r + 1];
+    const bar = bars[A.to], inBar = bars[B.from];
+    const secA = song[A.si], secB = song[B.si];
+    const had = new Set();
+    for (let i = A.from; i <= A.to; i++)
+      for (const e of bars[i].ev) { const k = laneKey(e); if (k) had.add(k); }
+    const enters = new Map();
+    for (const e of [...inBar.ev].sort((x, y) => x.off - y.off)) {
+      const k = laneKey(e);
+      if (k && !had.has(k) && !enters.has(k)) enters.set(k, e);
+    }
+    // ONE SEED PER SEAM, from the two boxes it joins: the same song makes the
+    // same pickups on every compile, and moving a box changes only the seams it
+    // touches rather than re-rolling the whole record.
+    const rnd = prng(strSeed("leadin|" + A.si + "|" + B.si + "|" +
+                             gid(secA) + "|" + gid(secB) + "|" + roleOf(secB)));
+    const tBase = (A.to - A.from) * bar.barSteps;
+    // AT MOST ONE PERCUSSIVE AND ONE PITCHED PICKUP PER SEAM. Two horns and a
+    // bass all announcing the same downbeat is not an arrangement, it is a
+    // pile-up — and the ear only hears the one that lands anyway.
+    if (enters.has("drums")) drumLeadIn(bar, tBase, inBar, kitOf(secB), B.si, rnd);
+    else if (had.has("drums") && LIFT[roleOf(secB)] &&
+             roleOf(secA) !== roleOf(secB) && rnd() < 0.7) quoteFill(bar, rnd);
+    const lines = [...enters.keys()].filter(k => k.startsWith("line:")).sort();
+    if (lines.length) {
+      // the voice that sings the pickup is the one entering on top — a lead
+      // announces itself, a pad underneath it does not (laneKey already
+      // excluded pads, so this is choosing between real lines)
+      let best = lines[0];
+      for (const k of lines) if (enters.get(k).n > enters.get(best).n) best = k;
+      pitchedLeadIn(bar, tBase, secB, slots, enters.get(best), B.si, rnd);
+    } else if (enters.has("bass"))
+      pitchedLeadIn(bar, tBase, secB, slots, enters.get("bass"), B.si, rnd);
+    bar.ev.sort((x, y) => x.off - y.off);
+  }
+}
+
+// THE BAR LIST — pure over its arguments, like everything else in this file.
+// `opts.pickups` and `opts.rubato` default ON: both are derived from the
+// arrangement and both are meant to be heard without anyone asking for them.
+// Turning them off is not a musical setting, it is the way the gate reads the
+// unbreathed timeline (and ui/state.js RUBATO, the device escape hatch for
+// somebody who needs a grid) — with both off this returns exactly the bar list
+// the transport built before either existed.
+export function songBars(song, slots, songGroove, songSwing, loopOnly, opts) {
+  const o = opts || {};
+  const out = [];
+  const list = loopOnly == null
+    ? song.map((s, i) => [s, i]) : [[song[loopOnly], loopOnly]];
+  for (const [sec, si] of list) {
+    const { g, bars, ev } = sectionRender(sec, slots, songGroove, songSwing);
+    // A BOX THAT PRODUCES NOTHING TAKES NO TIME. Since Simple became the
+    // default there is no "empty" box any more, so a fresh page was four boxes
+    // of which three had no phrase — one bar of music followed by three bars of
+    // silence, for ever. A box with no events is skipped the way an empty one
+    // used to be.
+    if (!ev.length) continue;
+    const barSteps = 16 / g.rate;
+    // ONE PASS into per-bar buckets. The old per-bar filter over the whole event
+    // list was O(bars × events) per box — ~6M comparisons per compile on a
+    // twenty-box song, and compile runs on every editor scrub while playing.
+    //
+    // GROOVE CAN PUSH THE LAST SIXTEENTH PAST THE BAR LINE, by design — that is
+    // what a late note IS. Clamping the BUCKET rather than the time keeps the
+    // event in the last bar with an offset a hair over a bar, and since bars are
+    // scheduled in sequence with lookahead that lands it at exactly the right
+    // moment instead of dropping it on the floor.
+    const buckets = Array.from({ length: bars }, () => []);
+    for (const e of ev) {
+      const b = Math.min(bars - 1, Math.floor(e.t / barSteps));
+      buckets[b].push({ ...e, off: e.t - b * barSteps });
+    }
+    for (let b = 0; b < bars; b++)
+      out.push({ si, g, barSteps, steps: barSteps, first: b === 0, ev: buckets[b] });
+  }
+  if (o.pickups !== false) leadIns(out, song, slots);
+  if (o.rubato !== false) warpBars(out, song);
   return out;
 }

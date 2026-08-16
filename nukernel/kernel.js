@@ -301,6 +301,62 @@
     }).sort((a, b) => a.t - b.t);
   };
 
+  // ---- THE TEMPO MAP: the one stage that moves the CLOCK --------------------
+  // Everything above moves a note against a grid that never moves — groove
+  // pushes a sixteenth, swing leans a pair, an envelope changes a level. This
+  // moves the grid. Paul's sentence is the whole specification: "tempo changes
+  // never happen, but music slows down and speeds up". So there is no tempo
+  // EVENT here and no per-section metronome mark — there is a rate CURVE,
+  // continuous by construction, and time is its integral.
+  //
+  // A plan is one entry per bar: `steps`, the bar in this genre's own step
+  // units, and `rs`, the rate at equally spaced nodes ACROSS the bar (1 is the
+  // song's tempo; 0.94 is six percent slower than it). Two laws make this music
+  // rather than automation:
+  //   * CONTINUITY — rs[last] of a bar IS rs[0] of the next, because the caller
+  //     builds ONE node array and slices it. A jump in rate is a tempo change;
+  //     a ramp is a musician.
+  //   * TIME IS THE INTEGRAL, in closed form. Over a segment where the rate runs
+  //     linearly a->b across L steps, r(x) = a + kx with k = (b-a)/L, so
+  //     t(x) = ln(r(x)/a)/k — exact, strictly monotonic while a,b > 0. Nothing
+  //     samples the curve, so no two consumers can integrate it differently.
+  //
+  // The answer per bar is `dur` (the bar's length in TIME steps, what a
+  // scheduler multiplies by the step duration) and `at(x)` (the time offset of
+  // musical offset x). Both readers of the bar list — the live transport and
+  // the offline bounce — get those two numbers already baked in, which is why
+  // the warp lives in the timeline rather than in whoever is playing it.
+  //
+  // Prior art: engine/csd-engine.js's rubato stage — "implemented ONCE here as
+  // a smooth monotonic BEAT-WARP so every consumer inherits the exact same
+  // musical clock and all layers stay sample-locked BY CONSTRUCTION". The
+  // parent warps beats with a sine because its consumers map beat -> time
+  // linearly; this warps steps with a piecewise-linear rate because a nukernel
+  // bar is asked, out loud, how long it is.
+  const RATE_MIN = 0.6, RATE_MAX = 1.6;
+  function tempoWarp(plan) {
+    return plan.map(p => {
+      const steps = p.steps;
+      const rs = p.rs.map(r => Math.min(RATE_MAX, Math.max(RATE_MIN, +r || 1)));
+      const n = rs.length - 1, L = steps / n, t = [0];
+      for (let i = 0; i < n; i++) {
+        const a = rs[i], b = rs[i + 1];
+        t.push(t[i] + (Math.abs(b - a) < 1e-9 ? L / a : L * Math.log(b / a) / (b - a)));
+      }
+      // PAST THE BAR LINE THE LAST SEGMENT CARRIES ON. Groove pushes the final
+      // sixteenth over the line by design (ui/derive.js says so), and the bar
+      // has ended but the tempo has not — extrapolating the segment is the only
+      // reading that keeps a pushed note where the ear expects it.
+      const at = x => {
+        const i = Math.min(n - 1, Math.max(0, Math.floor(x / L)));
+        const a = rs[i], x0 = i * L, k = (rs[i + 1] - a) / L;
+        return Math.abs(k) < 1e-12 ? t[i] + (x - x0) / a
+                                   : t[i] + Math.log((a + k * (x - x0)) / a) / k;
+      };
+      return { steps, dur: t[n], at, r0: rs[0], r1: rs[n] };
+    });
+  }
+
   // ---- PIPES: the SEVENTH type ----------------------------------------------
   // Timeless AND pitch-aware, and nothing else in the system is both. An
   // operator runs before pitch exists and is alphabet-relative; an envelope is
@@ -572,12 +628,33 @@
   // runs BEFORE the window/envelope/edges/groove (pitch before time) and
   // upstream of the transport's register fold, which moves whole octaves and
   // so changes no pitch class decided here.
+  // ONE NOTE, SEATED — rules 1 and 2 of the stage below for a single pitch
+  // against a single chord. It is hoisted out of harmonizeStage because a note
+  // written OUTSIDE a section's stream has to obey the same law: ui/derive.js
+  // builds lead-in pickups after the stage has run and seats every one of them
+  // through this, so a pickup into a chorus speaks the chorus's chord by the
+  // same rule its own voices did. `c` is a chord from ui/derive.js masterCtx
+  // (pcs + pcSet); `_legal` caches the chord's union with the scale on the
+  // chord object, which is why the walk below keeps calling legalOf.
+  const pcw = n => ((n % 12) + 12) % 12;
+  const nearestIn = (n, set, dir) => {
+    for (let d = 1; d <= 6; d++)
+      for (const s of [dir, -dir]) if (set.has(pcw(n + s * d))) return n + s * d;
+    return n;
+  };
+  const legalWith = (c, scalePcs) =>
+    c._legal || (c._legal = new Set([...c.pcSet, ...scalePcs]));
+  function seatNote(n, c, scalePcs, onBeat, dir) {
+    if (c.pcSet.has(pcw(n))) return n;
+    if (onBeat) return nearestIn(n, c.pcSet, dir);                    // rule 2
+    if (scalePcs.has(pcw(n))) return n;
+    return nearestIn(n, legalWith(c, scalePcs), dir);                 // rule 1
+  }
   function harmonizeStage(ev, ctx) {
     const idx = [];
     for (let i = 0; i < ev.length; i++) if (ctx.conform(ev[i])) idx.push(i);
     if (!idx.length) return ev;                  // single-layer: the same array
     const N = ctx.stepsPerBar, rate = ctx.rate;
-    const pcw = n => ((n % 12) + 12) % 12;
     const cache = new Map();
     const chordAtT = t => {
       const step = t * rate, bar = Math.floor(step / N + 1e-9);
@@ -585,12 +662,6 @@
       if (!cs) { cs = ctx.chords(bar); cache.set(bar, cs); }
       const s = ((step % N) + N) % N;
       return cs.find(c => s >= c.start - 1e-9 && s < c.start + c.len) || cs[cs.length - 1];
-    };
-    const legalOf = c => c._legal || (c._legal = new Set([...c.pcSet, ...ctx.scalePcs]));
-    const nearestIn = (n, set, dir) => {
-      for (let d = 1; d <= 6; d++)
-        for (const s of [dir, -dir]) if (set.has(pcw(n + s * d))) return n + s * d;
-      return n;
     };
     const out = ev.slice();
     // one order for everything: voice, then time — the direction of travel
@@ -601,13 +672,9 @@
       const e = out[i], c = chordAtT(e.t);
       const prev = prevOf.get(e.v);
       const dir = prev != null && e.n > prev ? 1 : -1;
-      let n = e.n;
       const sb = (((e.t * rate) % N) + N) % N, r = Math.round(sb);
       const onBeat = Math.abs(sb - r) < 0.45 && r % beat === 0;
-      if (!c.pcSet.has(pcw(n))) {
-        if (onBeat) n = nearestIn(n, c.pcSet, dir);                 // rule 2
-        else if (!ctx.scalePcs.has(pcw(n))) n = nearestIn(n, legalOf(c), dir); // rule 1
-      }
+      const n = seatNote(e.n, c, ctx.scalePcs, onBeat, dir);        // rules 1 and 2
       prevOf.set(e.v, n);
       if (n !== e.n) out[i] = { ...e, n, hz: 1 };
     }
@@ -1993,6 +2060,7 @@
                 crossmap, excerpt, only, word,
                 PENT, MODE, ROMAN, romanOf, pitch, mp, fold, near,
                 QSTEPS, QFIX, chordsOf, chordAt, withCadence, harmonizeStage,
+                seatNote, tempoWarp, prng,
                 PARTS, partOf, periodOps, pipes, PIPES,
                 harm, render, drums, bass };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

@@ -6396,7 +6396,11 @@ console.log("the register law — the table, the home, and the per-note fold");
       const spec = A.specOf(id), w = V.playWindow(spec, id);
       const home = e.home || 0;
       if (home % 12 !== 0) badHome++;
-      const ck = bar.si + "|" + owner + "|" + lv;
+      // the chair is keyed by the box the note BELONGS to, not the box whose
+      // bar it sounds in: a lead-in pickup (§49) plays in the closing bar of
+      // the previous box and rides the entering box's home, which is the only
+      // way it can arrive in tune with the note it leads to
+      const ck = (e.puSi == null ? bar.si : e.puSi) + "|" + owner + "|" + lv;
       let ch = chairs.get(ck);
       if (!ch) chairs.set(ck, ch = { raw: [], home });
       if (ch.home !== home) badHome++;           // one constant per (section, chair)
@@ -6970,6 +6974,362 @@ console.log("the master harmonization engine — one tonality, every added voice
        " sustained cross-layer minor seconds (pre 1773, shipped at 6)");
     ok(tot.unis <= 60, "composed corpus: " + tot.unis +
        " stacked cross-layer unisons (pre 820, shipped at 39)");
+  }
+}
+
+/* ------------------------------- 49. MUSIC BREATHES
+   Two claims Paul made in two sentences — "tempo changes never happen, but
+   music slows down and speeds up" and "solos have a bar or a few notes of
+   lead-in, as do drum phrases and so forth" — measured where they are made:
+   ui/derive.js songBars, the one walk from boxes to bars that both the live
+   transport and the offline bounce read. Score level, no renders: the bar list
+   IS the artifact at this layer, and both features are facts about it.
+
+     (a) THE TEMPO MOVES — bar durations really vary across a composed song,
+         the curve is CONTINUOUS at every bar line (a jump would be a tempo
+         change, which is the one thing forbidden), the gestures land at
+         section ends rather than inside sections, and the last bar of the song
+         is the slowest thing in it.
+     (b) IT IS THE SAME CLOCK EVERYWHERE — the transport's bar list carries the
+         warped durations, and the bounce measures its bars off `barSteps * sd`
+         (anchored in the shipped text), so the carrier cannot drift from the
+         live graph.
+     (c) OFF IS TODAY — with rubato off every bar is exactly 16/rate steps and
+         every offset is exactly its event's own time, so the device escape
+         hatch (ui/state.js RUBATO) returns the timeline that existed before
+         any of this.
+     (d) A VOICE ANNOUNCES ITSELF — a lane that enters gets a pickup, the
+         pickup LANDS on the bar line it leads to, it speaks the chord it is
+         arriving into, it stays within an octave of the note it leads to and
+         rides that note's register home, it never plays the arrival itself,
+         and it never double-hits or plays over what it borrowed.
+     (e) BOTH ARE SEEDED — compiled twice, byte for byte the same. */
+console.log("music breathes — the tempo map and the lead-ins");
+{
+  // the same browser stubs §45 installs, stated again because a section must
+  // not depend on another section having run first
+  globalThis.addEventListener = globalThis.addEventListener || (() => {});
+  globalThis.document = globalThis.document ||
+    { visibilityState: "visible", addEventListener: () => {} };
+  globalThis.localStorage = globalThis.localStorage ||
+    { getItem: () => null, setItem: () => {}, removeItem: () => {} };
+  const ST49 = await import("../../nukernel/ui/state.js");
+  const T49 = await import("../../nukernel/audio/transport.js");
+  const NS49 = require("../../nukernel/song.js");
+  const C49 = require("../../nukernel/compose.js");
+  const fs49 = require("fs"), path49 = require("path");
+  const load = (gk, seed) => {
+    const r = NS49.load(C49.compose(gk, seed));
+    ok(r.ok, "compose(" + gk + "," + seed + ") no longer loads — §49 is measuring nothing");
+    return r.song;
+  };
+  const bars = (s, o) => D.songBars(s.song, s.slots, s.groove, s.swing, null, o || {});
+  const plainOf = s => bars(s, { rubato: false, pickups: false });
+
+  /* (a) THE TEMPO MOVES, and moves like a musician */
+  {
+    const s = load("house", 7), tl = bars(s), flat = plainOf(s);
+    const durs = tl.map(b => b.barSteps), nom = flat.map(b => b.barSteps);
+    ok(tl.length === flat.length && tl.length > 20,
+       "the tempo map changed how many bars there are (" + tl.length + " vs " +
+       flat.length + ") — it may only change how long they last");
+    ok(new Set(durs.map(d => d.toFixed(6))).size > 5,
+       "every bar of a composed song lasts the same time — the tempo does not move");
+    // the whole point: a bar is not its nominal length, and no bar is silly
+    const ratio = durs.map((d, i) => d / nom[i]);
+    ok(Math.max(...ratio) / Math.min(...ratio) > 1.02,
+       "the tempo moves by less than two percent across a whole song (" +
+       ((Math.max(...ratio) / Math.min(...ratio) - 1) * 100).toFixed(2) +
+       "%) — that is a grid with a rounding error, not a band");
+    ok(ratio.every(r => r > 0.6 && r < 1.7),
+       "a bar left the tempo map's own rate clamp — the clock is no longer musical");
+    // CONTINUITY, the law that makes this breathing rather than automation:
+    // the rate at the end of a bar IS the rate at the start of the next
+    let jumps = 0;
+    for (let i = 1; i < tl.length; i++)
+      if (tl[i - 1].tempo[1] !== tl[i].tempo[0]) jumps++;
+    ok(jumps === 0, jumps + " tempo JUMP(S) at a bar line — a jump is a tempo " +
+       "change, which is the one thing this may never be");
+    // the gestures live at section ENDS. Inside a section only the drift moves,
+    // and it moves slowly; a closing bar moves several times as far.
+    // (a bar that OPENS a section is a seam bar too: it is the one recovering
+    // from the gesture the closing bar made, which is where "a tempo" happens)
+    let insideMax = 0, closingMax = 0, closings = 0;
+    for (let i = 0; i < tl.length; i++) {
+      const closing = i === tl.length - 1 || tl[i + 1].si !== tl[i].si;
+      const move = Math.abs(tl[i].tempo[1] / tl[i].tempo[0] - 1);
+      if (closing) { closings++; closingMax = Math.max(closingMax, move); }
+      else if (!tl[i].first) insideMax = Math.max(insideMax, move);
+    }
+    ok(closings >= 5 && closingMax > 4 * insideMax && closingMax > 0.02,
+       "the ritards do not land at section ends (closing move " +
+       (closingMax * 100).toFixed(2) + "%, inside-section move " +
+       (insideMax * 100).toFixed(2) + "%)");
+    ok(insideMax > 0, "nothing moves inside a section at all — the human drift " +
+       "underneath the arrangement has gone flat");
+    // THE FINAL RITARD: the last bar of the song is the slowest bar in it
+    const last = ratio[ratio.length - 1];
+    ok(last === Math.max(...ratio) && last > 1.03,
+       "the song does not end with a ritard (last bar " + last.toFixed(3) +
+       "× nominal, slowest " + Math.max(...ratio).toFixed(3) + "×)");
+    // ...and a single box on loop is NOT a song ending every four bars
+    const one = { song: [s.song[1]], slots: s.slots, groove: s.groove, swing: s.swing };
+    const loop = bars(one);
+    const lr = loop.map((b, i) => b.barSteps / plainOf(one)[i].barSteps);
+    ok(Math.max(...lr) / Math.min(...lr) < 1.02,
+       "a single box slows down at the end of every pass — a loop is not an ending");
+    // ONE SEAM THAT SLOWS AND ONE THAT PUSHES: a build running at its drop
+    // accelerates, everything else leans back
+    const dance = load("dnb", 5), dtl = bars(dance);
+    let slower = 0, faster = 0;
+    for (let i = 0; i < dtl.length; i++)
+      if (i === dtl.length - 1 || dtl[i + 1].si !== dtl[i].si) {
+        const m = dtl[i].tempo[1] / dtl[i].tempo[0];
+        if (m < 0.995) slower++; else if (m > 1.005) faster++;
+      }
+    ok(slower >= 2, "no seam in a composed song slows into the next section");
+    ok(faster >= 1, "no seam in a composed dance song pushes into its drop — " +
+       "the accelerando out of a build never fires");
+  }
+
+  /* (b) ONE CLOCK for the live tick and the rendered carrier */
+  {
+    ST49.adoptSong(C49.compose("house", 7), "gate");
+    const TL = T49.buildTimeline();
+    const durs = TL.map(b => b.barSteps);
+    ok(new Set(durs.map(d => d.toFixed(6))).size > 5,
+       "the transport's bar list carries no tempo map — the live tick plays a grid");
+    ok(TL.every(b => b.steps > 0 && Math.abs(b.barSteps - b.steps) < b.steps * 0.6),
+       "a transport bar lost its musical grid (`steps`) or its clock ran away from it");
+    // the BOUNCE reads the same number: its bar durations are barSteps × the
+    // step duration, so warping barSteps is what makes the carrier honour the
+    // map without knowing there is one. Anchored in the shipped text — a
+    // rewrite that computed bar times from bpm × bars would silently drift.
+    const bSrc49 = fs49.readFileSync(
+      path49.join(__dirname, "../../nukernel/audio/bounce.js"), "utf8");
+    ok(/b\.barSteps \* sd/.test(bSrc49) && /TL\[i\]\.barSteps \* sd/.test(bSrc49),
+       "audio/bounce.js no longer measures its bars off barSteps × stepDur — " +
+       "the carrier would render a different tempo map from the one you hear");
+    const dSrc49 = fs49.readFileSync(
+      path49.join(__dirname, "../../nukernel/ui/derive.js"), "utf8");
+    ok(/export function songBars/.test(dSrc49) &&
+       /songBars/.test(fs49.readFileSync(
+         path49.join(__dirname, "../../nukernel/audio/transport.js"), "utf8")),
+       "audio/transport.js does not build its timeline with ui/derive.js songBars — " +
+       "there are two walks again");
+  }
+
+  /* (c) OFF IS TODAY */
+  {
+    const s = load("rock", 3);
+    const flat = plainOf(s);
+    let bad = 0, evs = 0;
+    for (const b of flat) {
+      if (Math.abs(b.barSteps - 16 / b.g.rate) > 1e-12) bad++;
+      if (b.tempo) bad++;
+    }
+    // every offset is exactly the event's own time minus the bars before it,
+    // which is the arithmetic the timeline did before there was a tempo map
+    const byBox = new Map();
+    for (const b of flat) {
+      const n = byBox.get(b.si) || 0;
+      for (const e of b.ev) {
+        evs++;
+        if (Math.abs(e.off - (e.t - n * b.barSteps)) > 1e-9 &&
+            !(e.t / b.barSteps >= flat.filter(x => x.si === b.si).length)) bad++;
+      }
+      byBox.set(b.si, n + 1);
+    }
+    ok(evs > 200 && bad === 0, bad + " bar(s)/event(s) moved with the tempo map " +
+       "OFF — the escape hatch does not return the timeline that was there before");
+    // ...and turning it ON moves TIME and nothing else: same notes, same lanes
+    const on = bars(s, { pickups: false });
+    const ident = tl => tl.flatMap(b => b.ev.map(e =>
+      [e.kind, e.n != null ? e.n : e.d, e.v == null ? "" : e.v, e.vel].join("|")))
+      .sort().join(";");
+    const flat2 = bars(s, { rubato: false, pickups: false });
+    ok(ident(on) === ident(flat2),
+       "the tempo map moved a pitch, a lane or a level — it may only move time");
+    ok(JSON.stringify(on.map(b => +b.barSteps.toFixed(6))) !==
+       JSON.stringify(flat2.map(b => +b.barSteps.toFixed(6))),
+       "the tempo map moved no bar at all");
+    // the escape hatch is a DEVICE setting, not a song field: it never rides a save
+    ok(typeof ST49.setRubato === "function" && !/rubato/.test(ST49.songJSON()),
+       "the rubato escape hatch is missing, or it has leaked into the saved song " +
+       "— the tempo is derived from the arrangement, not stored beside it");
+  }
+
+  /* (d) THE LEAD-INS */
+  {
+    // three arrangements that make an entrance happen on purpose, beside the
+    // composed corpus: the drums arrive, a stacked solo voice arrives, the
+    // bass arrives
+    const mk = (g, over) =>
+      Object.assign(NS49.skeleton(g, null), { stack: [{ g, slots: [0] }] }, over);
+    const build = song => {
+      const r = NS49.load({ v: NS49.VERSION, slots: [P], song, bpm: 120 });
+      ok(r.ok, "§49's hand-built song no longer loads: " +
+         JSON.stringify(r.errors && r.errors[0]));
+      return r.song;
+    };
+    const drumsIn = build([mk("rock", { kit: "nodrums", role: "breakdown" }),
+                           mk("rock", { role: "chorus" })]);
+    const soloIn = build([mk("rock", { role: "verse" }),
+                          Object.assign(mk("rock", { role: "solo" }),
+                            { stack: [{ g: "rock", slots: [0] }, { g: "acid", slots: [0] }] })]);
+    const bassIn = build([mk("rock", { bassop: "nobass", role: "breakdown" }),
+                          mk("rock", { role: "chorus" })]);
+    const seamOf = tl => tl.findIndex((b, i) => tl[i + 1] && tl[i + 1].si !== b.si);
+    for (const [name, s, kind] of [["the drums", drumsIn, "hit"],
+                                   ["a solo voice", soloIn, "line"],
+                                   ["the bass", bassIn, "bass"]]) {
+      const tl = bars(s), i = seamOf(tl);
+      const pu = tl[i].ev.filter(e => e.pu && e.kind === kind);
+      ok(pu.length >= 2, name + " enters with no lead-in (" + pu.length +
+         " pickup events in the closing bar)");
+      // it LANDS: the last pickup event ends exactly on the bar line it leads to
+      const lastEnd = Math.max(...pu.map(e => e.off + (e.dur || 0)));
+      // a pitched pickup ENDS on the line (its last note abuts the arrival); a
+      // drum fill is struck rather than held, so its last hit must land inside
+      // the final beat before the line and never past it
+      ok(kind === "hit"
+         ? (lastEnd < tl[i].barSteps && lastEnd > tl[i].barSteps - tl[i].barSteps / 4)
+         : Math.abs(lastEnd - tl[i].barSteps) < 1e-6,
+         name + "'s lead-in does not land on the bar line (ends " +
+         lastEnd.toFixed(4) + " of " + tl[i].barSteps.toFixed(4) + ")");
+      // it belongs to the box it announces, and only to a seam bar
+      ok(pu.every(e => e.puSi === tl[i + 1].si),
+         name + "'s pickup is not tagged with the box it announces");
+      ok(tl.every((b, j) => j === i || !b.ev.some(e => e.pu && e.puSi != null)),
+         name + ": a pickup appeared in a bar that is not a seam");
+    }
+    // A DRUM LEAD-IN ARRIVES ON THE ARRIVING KIT, and only there
+    {
+      const tl = bars(drumsIn), i = seamOf(tl);
+      const pu = tl[i].ev.filter(e => e.pu && e.kind === "hit");
+      ok(pu.length > 0 && pu.every(e => e.kit === D.kitOf(drumsIn.song[1])),
+         "the drum lead-in plays the kit of the box whose bar it borrows — the " +
+         "box that (by construction) has no kit at all");
+      const lanes = new Set(tl[i + 1].ev.filter(e => e.kind === "hit").map(e => e.d));
+      ok(pu.every(e => lanes.has(e.d)),
+         "the drum lead-in plays a lane the arriving kit does not have");
+    }
+    // THE THINNING LAW: nothing of the pickup's own kind survives in the
+    // window it borrowed, and no drum pickup lands on top of an existing hit
+    {
+      const tl = bars(soloIn), flat = plainOf(soloIn), i = seamOf(tl);
+      const pu = tl[i].ev.filter(e => e.pu && e.kind === "line");
+      const w0 = Math.min(...pu.map(e => e.off));
+      const left = tl[i].ev.filter(e => !e.pu && e.kind === "line" && !e.pad &&
+                                        e.off >= w0 - 1e-9);
+      ok(pu.length > 0 && left.length === 0,
+         left.length + " outgoing line event(s) still play under the pickup that " +
+         "borrowed their beat");
+      ok(flat[i].ev.filter(e => e.kind === "line" && !e.pad && e.off >= w0).length > 0,
+         "the outgoing box had nothing in the borrowed window — the thinning " +
+         "law is being proved against silence");
+      // sustains are TRIMMED to the borrow, not left ringing through it
+      ok(tl[i].ev.every(e => e.pu || e.kind !== "line" || e.pad ||
+                             !(e.dur > 0) || e.off + e.dur <= w0 + 1e-6),
+         "an outgoing line sustains through the borrowed window");
+    }
+    /* the composed corpus: every law at once, over real songs */
+    const seen = { pu: 0, songs: 0, seams: 0 };
+    let offChord = 0, offRange = 0, onArrival = 0, repeat = 0, doubles = 0,
+        badHome = 0, strayBar = 0;
+    for (const gk of ["house", "rock", "dnb", "jazz", "acid", "vaporwave", "blues"]) {
+      if (!GENRES[gk]) continue;
+      for (const seed of [1, 5, 9]) {
+        // through the SHIPPED path, not a private call: adoptSong + the
+        // transport's own builder, so the register home is really stamped and
+        // the home law below is measuring something
+        const s = load(gk, seed);
+        ST49.adoptSong(C49.compose(gk, seed), "gate");
+        const tl = T49.buildTimeline();
+        seen.songs++;
+        // the arrival chord of each box, read through the SAME masterCtx the
+        // engine corrects by (§48's discipline: one reading, not two)
+        const arrivalOf = si => {
+          const ctx = D.masterCtx(s.song[si], s.slots);
+          const cs = ctx.chords(Math.max(0, s.song[si].nudge | 0));
+          const c = cs.find(x => x.start === 0) || cs[0];
+          return { pcs: new Set([...c.pcSet, ...ctx.scalePcs]) };
+        };
+        for (let i = 0; i < tl.length; i++) {
+          const pu = tl[i].ev.filter(e => e.pu);
+          if (!pu.length) continue;
+          const seam = i === tl.length - 1 || tl[i + 1].si !== tl[i].si;
+          if (!seam) strayBar++;
+          seen.seams++;
+          seen.pu += pu.length;
+          const pitched = pu.filter(e => e.kind !== "hit").sort((a, b) => a.off - b.off);
+          if (pitched.length) {
+            const into = pitched[0].puSi, legal = arrivalOf(into).pcs;
+            // the entering voice's own first note in the box it announces
+            const first = tl.find(b => b.si === into).ev
+              .filter(e => !e.pu && e.kind === pitched[0].kind &&
+                           (e.kind !== "line" || (e.v === pitched[0].v && !e.pad)))
+              .sort((a, b) => a.off - b.off)[0];
+            for (const e of pitched) {
+              if (!legal.has(((e.n % 12) + 12) % 12)) offChord++;
+              if (first && Math.abs(e.n - first.n) > 12) offRange++;
+              if (first && e.kind === "line" && (e.home || 0) !== (first.home || 0)) badHome++;
+            }
+            if (first && pitched[pitched.length - 1].n === first.n) onArrival++;
+            for (let k = 1; k < pitched.length; k++)
+              if (pitched[k].n === pitched[k - 1].n) repeat++;
+          }
+          const u = tl[i].barSteps / 16;
+          for (const e of pu.filter(x => x.kind === "hit"))
+            for (const o of tl[i].ev)
+              if (o !== e && o.kind === "hit" && o.d === e.d &&
+                  Math.abs(o.off - e.off) < 0.5 * u) doubles++;
+        }
+      }
+    }
+    ok(seen.pu > 40 && seen.seams > 12,
+       "the composed corpus produced only " + seen.pu + " pickup event(s) across " +
+       seen.seams + " seam(s) — the lead-ins are not reaching real songs");
+    ok(strayBar === 0, strayBar + " pickup(s) landed in a bar that is not a seam");
+    ok(offChord === 0, offChord + " pickup note(s) speak neither the chord they " +
+       "arrive into nor the governing scale — the harmonize law does not reach them");
+    ok(offRange === 0, offRange + " pickup note(s) sit more than an octave from " +
+       "the note they lead to");
+    ok(badHome === 0, badHome + " pickup note(s) ride a different register home " +
+       "from their own arrival — the lead-in would enter an octave out");
+    ok(onArrival === 0, onArrival + " pickup(s) end ON the note the entering " +
+       "voice is about to play — a lead-in leads to the arrival, it does not play it");
+    ok(repeat === 0, repeat + " repeated note(s) inside a pickup — a run that " +
+       "repeats a note is not a run");
+    ok(doubles === 0, doubles + " pickup hit(s) land on top of an existing hit " +
+       "in the same lane");
+    // pickups OFF is the timeline without them, and nothing else
+    {
+      const s = load("house", 7);
+      const off = bars(s, { rubato: false, pickups: false });
+      const on = bars(s, { rubato: false });
+      ok(off.every(b => b.ev.every(e => !e.pu)) &&
+         on.some(b => b.ev.some(e => e.pu)),
+         "the pickups switch does not switch the pickups");
+      ok(off.length === on.length &&
+         off.every((b, i) => Math.abs(b.barSteps - on[i].barSteps) < 1e-12),
+         "the lead-ins changed how long a bar is — they may only change what is in one");
+    }
+  }
+
+  /* (e) SEEDED, both of them */
+  {
+    const s = load("dnb", 5);
+    const j = tl => JSON.stringify(tl.map(b =>
+      [b.si, b.barSteps, b.tempo, b.ev.map(e =>
+        [e.kind, e.off, e.dur, e.n, e.d, e.vel, e.pu || 0, e.puSi == null ? -1 : e.puSi])]));
+    ok(j(bars(s)) === j(bars(s)),
+       "songBars is not deterministic — the tempo map or the pickups roll fresh " +
+       "dice per compile, and the bounce would render a different record");
+    ST49.adoptSong(C49.compose("dnb", 5), "gate");
+    const k = TL2 => JSON.stringify(TL2.map(b => [b.si, b.barSteps, b.ev]));
+    ok(k(T49.buildTimeline()) === k(T49.buildTimeline()),
+       "buildTimeline is not deterministic with the tempo map and the lead-ins in it");
   }
 }
 

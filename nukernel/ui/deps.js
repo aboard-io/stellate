@@ -19,7 +19,11 @@
 // ---- the algebra (kernel.js) ----
 export const { harm, render, drums, bass, ROMAN, word, KITOPS,
                envelope, edges, groove, withCadence, partOf,
-               chordAt, chordsOf, MODE, harmonizeStage } = window.NuKernel;
+               chordAt, chordsOf, MODE, harmonizeStage,
+               // the time layer's own three: the tempo map's closed-form warp,
+               // the one-note seating law the lead-in pickups share with the
+               // harmonize stage, and the seeded dice both of them roll
+               tempoWarp, seatNote, prng, TOMS } = window.NuKernel;
 
 // ---- the genre table (genres.js) ----
 export const { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL,

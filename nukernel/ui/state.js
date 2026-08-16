@@ -45,6 +45,21 @@ const readVol = () => {
   } catch (e) { return 80; }
 };
 export let bpm = DEFAULT_BPM, vol = readVol();
+// THE TEMPO MOVES, AND THAT IS NOT A SETTING (2026-08-16, "music breathes").
+// A song's tempo map — a breakdown sitting under the tempo, a ritard into the
+// outro, the drift underneath all of it — is DERIVED from the arrangement in
+// ui/derive.js songBars, so it is a fact about the song and there is no chip
+// for it: a per-section tempo control would be a metronome mark, which is the
+// one thing Paul's law forbids. What lives here is the escape hatch, and it is
+// a DEVICE setting like the volume, in its own key, never adopted from a song:
+// somebody working against a grid (or a gate reading the unbreathed timeline)
+// turns the breathing off for their machine, not for the record. Default on —
+// the music breathes without anyone asking it to.
+const RUBSTORE = "nukernel.rubato.v1";
+const readRubato = () => {
+  try { return localStorage.getItem(RUBSTORE) !== "0"; } catch (e) { return true; }
+};
+export let RUBATO = readRubato();
 // THE MASTER BUS belongs to the SONG, not to the page (song.js says why), so it
 // rides here with the boxes rather than in the audio tier: audio/graph.js reads
 // it, audio/bounce.js renders through it, and neither owns it. null is the whole
@@ -89,6 +104,10 @@ export function setViewSec(i) { viewSec = i; }
 export function setLoopOnly(v) { loopOnly = v; }
 export function setPendingStart(v) { pendingStart = v; }
 export function setBpm(v) { bpm = +v; }
+export function setRubato(v) {
+  RUBATO = !!v;
+  try { localStorage.setItem(RUBSTORE, RUBATO ? "1" : "0"); } catch (e) { /* private mode */ }
+}
 export function setVol(v) {
   vol = +v;
   try { localStorage.setItem(VOLSTORE, String(vol)); } catch (e) { /* private mode */ }
