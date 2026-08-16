@@ -10,7 +10,11 @@
 //
 // Layer graph: ui view — imports state/derive/deps only; every change leaves
 // through commit(), never through a direct call into audio.
-import { GENRES, FAMILIES, MODELABEL, SCALELABEL, VOX, OPLABEL, MAX_FX, ROLES,
+// (FAMILIES is no longer imported: the genre bank is chronological now, and
+// nothing else in this file asked the table which cluster a genre belongs to.
+// The field itself is untouched — genres.js still stamps `family` and the
+// unit gate still holds every anchor to exactly one.)
+import { GENRES, MODELABEL, SCALELABEL, VOX, OPLABEL, MAX_FX, ROLES,
          ARTICS, CMODES, CLAMPLABEL, OCTAVES, KITLABEL, DRUMKITS,
          BASSOPS, INSTRCHOICES, familyOf,
          INLABEL, OUTLABEL, ENVLABEL, MOTLABEL,
@@ -20,6 +24,49 @@ import { GENRES, FAMILIES, MODELABEL, SCALELABEL, VOX, OPLABEL, MAX_FX, ROLES,
 import { curSection, commit } from "./state.js";
 import { LAYER_OPTS, stackOf, focusOf, focused, opsOf, optOf, voxOf,
          genreOf } from "./derive.js";
+
+/* ---------- THE CHRONOLOGY ---------- */
+// "Organize the genres chronologically in the menu" (Paul, 2026-08-16). Every
+// real anchor is named PLACE YEAR — "Rome 600", "Leipzig 1725", "Portland
+// 2011" ("every genre is a city and a year", 102bb37) — so the ordering key
+// is already printed on the chip, and the year is READ OFF THE LABEL rather
+// than stored a second time as a field. That is deliberate: a `year:` on the
+// anchor would be a second copy of a fact the label must carry anyway, free
+// to drift, and genres.js is written by other hands than this file's. The
+// parse is a trailing 3-or-4 digit run, which every place-year label ends in
+// and no function genre ("Simple", "Backing vocals") contains at all.
+//
+// NOTHING COUNTS THE ROSTER. Both lists below are computed from
+// Object.keys(GENRES) at call time, so a genre added to the table appears in
+// the menu at its own year with no edit here.
+export const genreYear = k => {
+  const g = GENRES[k];
+  const m = g && /(\d{3,4})\s*$/.exec(g.label);
+  return m ? +m[1] : null;
+};
+// oldest first, then the yearless ones (the FUNCTION genres — a part has a
+// job, not a history) in table order behind them. Ties break on the key so
+// two anchors from the same year never swap places between repaints.
+export function chronoGenres() {
+  const keys = Object.keys(GENRES);
+  const dated = keys.filter(k => genreYear(k) != null)
+    .sort((a, b) => genreYear(a) - genreYear(b) || (a < b ? -1 : a > b ? 1 : 0));
+  return { dated, undated: keys.filter(k => genreYear(k) == null) };
+}
+// THE ERA TINT, and it is the only thing standing in for the group headers
+// the house forbids: six bands of years, each lighting the chip's existing
+// LED dot a different colour (kernel-daw.css .pchip.e1…e6). Nothing is
+// LABELLED "baroque" or "the eighties" — the chronology does its own work,
+// the labels say the years, and the colour just gives the eye somewhere to
+// rest as it scrolls a list that only grows.
+const ERAS = [1600, 1900, 1960, 1980, 2000];
+const eraOf = k => {
+  const y = genreYear(k);
+  if (y == null) return "";
+  let e = 1;
+  for (const cut of ERAS) if (y >= cut) e++;
+  return " e" + e;
+};
 
 /* ---------- clicking things on and off in the selected box ---------- */
 export function toggle(kind, value) {
@@ -166,6 +213,163 @@ const isDflt = kind => {
   return false;
 };
 
+/* ---------- THE DNA OF A GENRE ---------- */
+// "Show the DNA of a genre somewhere" (Paul, 2026-08-16). Somewhere is the
+// GENRE menu, over the chronological bank, reading the genre the menu is
+// currently pointed at: a flat bar of its weighted parents, one colour each,
+// ending in THE INVENTION — the share of this music that its parents do not
+// explain. Under the bar, the parents in words, then the children it went on
+// to have and the ancestors it is still missing.
+//
+// TWO SOURCES, AND BOTH ARE READ LIVE — nothing here is a copied number:
+//   THE CLAIM     GENRES[k].parents / .wants, the annotation each anchor
+//                 declares (001766e). Always present, and it grows: another
+//                 hand is seating new ancestors in genres.js right now, so
+//                 the parents map is walked at paint time, never cached.
+//   THE FIT       nukernel/GENEALOGY.md, the committed finding that
+//                 genealogy.js writes — how much of the child its declared
+//                 parents ACTUALLY explain (R²) and at what weights. Fetched
+//                 once, lazily, on the first genre menu; parsed out of the
+//                 report's own table. When a genre is missing from it (a new
+//                 anchor whose fit has not been re-run) or the file is not
+//                 served at all, the panel falls back to the DECLARED weights
+//                 and says so, rather than inventing a residue.
+// The bar is the honest arithmetic either way: with a fit, each parent takes
+// fitted-weight × R² and the invention takes 1 − R², so the segments sum to
+// one; without one, the declared weights sum to one and there is no invention
+// segment to draw, because nothing measured it.
+const FIT = new Map();                       // key -> { r2, w: {parent: share} }
+let fitAsked = false;
+function loadFit() {
+  if (fitAsked) return;
+  fitAsked = true;
+  // relative to THIS module, not to the page: the same URL works from
+  // nukernel/kernel-daw.html and from any probe that serves the tree
+  fetch(new URL("../GENEALOGY.md", import.meta.url))
+    .then(r => (r.ok ? r.text() : ""))
+    .then(md => {
+      // the report's row shape: | key — Label | 93.8% | 0.082 | a 0.08 (0.65), … |
+      for (const line of md.split("\n")) {
+        const m = /^\|\s*([a-z0-9]+)\s+—[^|]*\|\s*([\d.]+)%\s*\|[^|]*\|([^|]*)\|/.exec(line);
+        if (!m) continue;
+        const w = {};
+        for (const part of m[3].split(",")) {
+          const p = /\s*([a-z0-9]+)\s+([\d.]+)\s*\(/.exec(part);
+          if (p) w[p[1]] = +p[2];
+        }
+        FIT.set(m[1], { r2: +m[2] / 100, w });
+      }
+      if (FIT.size) repaintDna();
+    })
+    .catch(() => {});
+}
+// the six colours a parent can wear, cycled by position — category colour in
+// its plainest use: which strand of the braid is this one
+const STRAND = ["--v0", "--v1", "--v2", "--v3", "--vb", "--drum"];
+const childrenOf = k => Object.keys(GENRES)
+  .filter(c => GENRES[c].parents && GENRES[c].parents[k] != null);
+
+// THE SHARES, as one function so the bar, the legend and any probe reading
+// the DOM can never disagree: [{ key, label, share, colour }], plus the
+// invention when a fit is what produced them.
+function dnaShares(k) {
+  const declared = GENRES[k].parents || {};
+  const names = Object.keys(declared);
+  const fit = FIT.get(k);
+  const out = names.map((p, i) => ({
+    key: p, label: (GENRES[p] && GENRES[p].label) || p,
+    share: fit && fit.w[p] != null ? fit.w[p] * fit.r2 : declared[p],
+    colour: "var(" + STRAND[i % STRAND.length] + ")",
+  }));
+  if (fit) out.push({ key: "", label: "the invention", invention: true,
+                      share: Math.max(0, 1 - fit.r2), colour: "var(--accent)" });
+  return { rows: out, fitted: !!fit, r2: fit ? fit.r2 : null };
+}
+
+// THE PRINTED PERCENTAGES MUST ADD UP. Rounding each share on its own gave
+// "39% inherited, 62% invented" over a bar of 12 + 27 + 62 — three true
+// numbers that read as a mistake. The LAST row (the invention, wherever a fit
+// produced one) takes the remainder, so the words on screen sum to 100 while
+// the exact shares stay on the segments as data.
+function pcts(rows) {
+  const out = rows.map(r => Math.round(r.share * 100));
+  if (out.length) out[out.length - 1] =
+    Math.max(0, 100 - out.slice(0, -1).reduce((a, b) => a + b, 0));
+  return out;
+}
+let dnaEl = null;                            // the mounted panel, if any
+function buildDna(host) {
+  loadFit();
+  const d = document.createElement("div");
+  d.className = "dna";
+  d.append(Object.assign(document.createElement("span"), { className: "dnahead" }),
+           Object.assign(document.createElement("div"), { className: "dnabar" }),
+           Object.assign(document.createElement("div"), { className: "dnakeys" }),
+           Object.assign(document.createElement("p"), { className: "dnaline dnakids" }),
+           Object.assign(document.createElement("p"), { className: "dnaline dnawant" }));
+  host.append(d);
+  dnaEl = d;
+  paintDna(d);
+}
+// REBUILT ON EVERY PAINT, and that is fine here where it is a sin on a row:
+// this is a dozen nodes behind no pointer — no key of it is tappable, so
+// nothing can be destroyed under a finger mid-click — and the shares change
+// shape (a different genre has a different number of parents) rather than
+// changing value.
+function paintDna(d) {
+  const k = focused(curSection()).g;
+  const g = GENRES[k];
+  const { rows, fitted } = dnaShares(k);
+  const shown = pcts(rows);
+  const inherited = rows.reduce((a, r, i) => a + (r.invention ? 0 : shown[i]), 0);
+  const head = d.querySelector(".dnahead");
+  head.textContent = "";
+  head.append(Object.assign(document.createElement("b"), { textContent: g.label }));
+  head.append(document.createTextNode(
+    !rows.length ? " · a root: it has no parents in this catalog"
+    : fitted ? " · " + inherited + "% inherited, " + (100 - inherited) + "% invented"
+    : " · as declared (the fit has not measured this one yet)"));
+  const bar = d.querySelector(".dnabar");
+  const keys = d.querySelector(".dnakeys");
+  bar.textContent = ""; keys.textContent = "";
+  bar.hidden = keys.hidden = !rows.length;
+  rows.forEach((r, i) => {
+    const seg = document.createElement("i");
+    seg.className = "dnaseg" + (r.invention ? " inv" : "");
+    seg.style.setProperty("--w", (r.share * 100).toFixed(2) + "%");
+    seg.style.setProperty("--c", r.colour);
+    // the numbers live in the DOM as data, so the picture and any reader of
+    // it are the same fact
+    seg.dataset.share = r.share.toFixed(4);
+    if (r.key) seg.dataset.parent = r.key;
+    bar.append(seg);
+    const kk = document.createElement("span");
+    kk.className = "dnak" + (r.invention ? " inv" : "");
+    const dot = document.createElement("i");
+    dot.style.setProperty("--c", r.colour);
+    kk.append(dot, document.createTextNode(r.label + " "));
+    kk.append(Object.assign(document.createElement("b"),
+      { textContent: shown[i] + "%" }));
+    keys.append(kk);
+  });
+  bar.setAttribute("role", "img");
+  bar.setAttribute("aria-label", rows.length
+    ? g.label + " is " + rows.map((r, i) => r.label + " " + shown[i] + "%").join(", ")
+    : g.label + " has no declared parents");
+  const kids = childrenOf(k);
+  const kidLine = d.querySelector(".dnakids");
+  kidLine.textContent = kids.length
+    ? "went on to father " + kids.map(c => GENRES[c].label).join(", ")
+    : "";
+  kidLine.hidden = !kids.length;
+  const want = (g.wants || []);
+  const wantLine = d.querySelector(".dnawant");
+  wantLine.textContent = want.length
+    ? "still missing its " + want.join(", ") : "";
+  wantLine.hidden = !want.length;
+}
+function repaintDna() { if (dnaEl && dnaEl.isConnected) paintDna(dnaEl); else dnaEl = null; }
+
 /* ---------- the banks, built into a host ---------- */
 // A GROUP IS A BANK: silkscreen header over a uniform grid of keys, never a
 // label beside a ragged run of chips. The header is a real <span> and the
@@ -173,14 +377,19 @@ const isDflt = kind => {
 // select, not a tag cloud. The gates click .pchip by text and data-*, and
 // neither moved when the banks moved into the cell popups.
 function makeBuilders(host) {
-  const group = (title, items) => {
+  // `gcls` is an optional class on the BANK (not on its chips) — one user so
+  // far, the chronological genre bank, which is one long list where every
+  // other bank is a short one and so wants the whole fold rather than a
+  // 300px column of it
+  const group = (title, items, gcls) => {
     // A BANK IS NAMED, and .plabel is not a table header: it says WHICH of a
     // dozen banks stacked in the same fold this one is ("instrument ·
     // strings"), which no chip inside it can say for itself. That is the
     // whole test the header cull applies ("get rid of ... table headers",
     // 2026-08-16) — a column label goes, a thing's own name stays — and the
     // .thd class goes with the rest.
-    const g = document.createElement("div"); g.className = "pgroup tbl";
+    const g = document.createElement("div");
+    g.className = "pgroup tbl" + (gcls ? " " + gcls : "");
     g.append(Object.assign(document.createElement("span"),
       { className: "plabel", textContent: title }));
     const wrap = document.createElement("div");
@@ -210,7 +419,7 @@ function makeBuilders(host) {
     p.className = "pnote"; p.textContent = txt;
     host.append(p);
   };
-  return { group, rowOf, opRow, note };
+  return { group, rowOf, opRow, note, dna: () => buildDna(host) };
 }
 
 // THE INSTRUMENT BANK'S SHAPE, built once: family -> ids, in a musical order
@@ -246,13 +455,30 @@ export const INSTRFAMS = (() => {
 // GENRE popup's own layer rows, built by songrow because it is rows, not chips.
 const CELLBANKS = {
   genre: b => {
-    // the genre haystack, clustered: one bank per family, in FAMILIES order.
+    // THE DNA FIRST: what this genre IS, before the list of what it could be.
+    b.dna();
+    // THE HAYSTACK IN TIME ORDER, oldest first — Rome 600 down to whatever was
+    // named last. The eleven FAMILIES banks it replaces (vox · club · soul ·
+    // groove · band · studio · drift · roots) sorted by TRADITION, which is a
+    // taxonomy the reader has to learn before the menu is usable; a year is a
+    // fact everyone already has, and the chip prints it. One bank, no era
+    // headers (the house forbids them and they would only repeat the labels) —
+    // the chronology is the organisation, and the era tint on each chip's dot
+    // is all the banding it gets.
+    //
     // One bank serves BOTH halves of the stack edit — a dark chip ADDS the
     // genre (as the authority on a blank box, as a rider otherwise: toggle()'s
     // own rules), a lit chip TAKES IT OFF — which is what retired the
     // standalone #gpick picker panel.
-    for (const [fam, keys] of FAMILIES)
-      b.group(fam, keys.map(k => ["genre", k, GENRES[k].label, "gen"]));
+    const { dated, undated } = chronoGenres();
+    b.group("genre · oldest first",
+      dated.map(k => ["genre", k, GENRES[k].label, "gen" + eraOf(k)]), "chrono");
+    // ...and the yearless ones behind them, in table order: the FUNCTION
+    // genres are parts, not styles, and chronology has nothing to say about a
+    // part. They sit last for the reason FAMILIES always put them last — you
+    // pick the music first and the part second.
+    if (undated.length)
+      b.group("parts", undated.map(k => ["genre", k, GENRES[k].label, "gen"]));
     b.rowOf("chord mode", "mode", MODELABEL, "mode");
     b.rowOf("key", "key", KEYLABEL, "mode");
     b.rowOf("progression", "prog", PROGLABEL, "mode");
@@ -350,7 +576,11 @@ export function mountBanks(cellKey, host) {
 // the cheap pass: only the ON states move (a chip click, a focus change, an
 // arriving song). Structure never changes under a mounted bank — the one
 // structural dependency the old page had (the focus bank) lives in songrow.
+// The DNA panel rides the same pass, because it reads the FOCUSED genre and
+// that is exactly what a chip click moves: adding a layer makes the new genre
+// the focused one, so its blood is on screen the moment it joins the stack.
 export function refreshChips(root) {
+  if (dnaEl && root.contains(dnaEl)) paintDna(dnaEl);
   root.querySelectorAll(".pchip").forEach(b => {
     const on2 = isOn(b.dataset.kind, b.dataset.value);
     b.classList.toggle("on", !!on2);

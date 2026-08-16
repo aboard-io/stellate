@@ -12,6 +12,12 @@ import { bpm, vol, setBpm, setVol, setLoopOnly, adoptSong, defaultSong,
          clearStore, loadErrorText, saveFile, loadFile, commit, on,
          GROOVE, setGroove, SWING, setSwing, DEFAULT_BPM } from "./state.js";
 import { buzz, pointers } from "./touch.js";
+// the WRITE picker lists genres in the same order the GENRE menu does — by
+// YEAR, oldest first ("organize the genres chronologically in the menu",
+// Paul, 2026-08-16). One ordering, defined once, in the module that owns the
+// menu banks; two surfaces sorting the same list two different ways is how a
+// person learns a place in a list that is not there on the other screen.
+import { chronoGenres } from "./palette.js";
 import { playing, startAt, stop, ensureAssets } from "../audio/transport.js";
 import { initAudio } from "../audio/graph.js";
 import { setFont, fontDef, FONT } from "../audio/assets.js";
@@ -216,7 +222,11 @@ fader($("vol"), 80);
   const sel = $("composeg"), seedEl = $("seedlcd");
   sel.append(Object.assign(document.createElement("option"),
     { value: "", textContent: "surprise me" }));
-  for (const k of Object.keys(GENRES))
+  // oldest first, the yearless FUNCTION genres behind them — the GENRE menu's
+  // own order. A <select> may not be grouped by era either: the labels print
+  // the years, which is the whole organisation.
+  const chrono = chronoGenres();
+  for (const k of [...chrono.dated, ...chrono.undated])
     sel.append(Object.assign(document.createElement("option"),
       { value: k, textContent: GENRES[k].label }));
   let lastG = null;                    // what ⟳ rerolls: the last genre WRITTEN

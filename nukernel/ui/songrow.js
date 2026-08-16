@@ -57,8 +57,9 @@ import { toggle, mountBanks, refreshChips } from "./palette.js";
 // a PATTERN thumbnail NAVIGATES to the COMPOSE PAGE on that phrase — the row
 // is where you see the phrases, Compose is where you edit them ("compose,
 // arrange, mix": one thing, one place — the modal died). thumbPath is the ONE
-// drawing of a phrase (gate blocks × velocity height), shared with the
-// Compose bank's pads so both surfaces agree what a phrase looks like.
+// drawing of a phrase — a MINIATURE OF THE COMPOSE GRID, so a preview looks
+// like the thing you tap it to edit — shared with the Compose bank's pads so
+// both surfaces agree what a phrase looks like.
 import { openPhraseEditor, thumbPath } from "./editor.js";
 
 const songEl = document.getElementById("song");
@@ -155,14 +156,13 @@ function moveBox(sec, d) {
 /* ---------- the phrase thumbnails ---------- */
 // THE PATTERN ROW ("make the little patterns visualization big and chunky —
 // on their own row"): chunky THUMBNAILS on a full-width strip beneath the
-// row's cells — a real drawing of each phrase (thumbPath: gate blocks across
-// the 16 steps, velocity as bar height, big enough to recognize by shape),
-// with the PHRASE NUMBER SUPERIMPOSED on the drawing (see .bcn in
-// kernel-daw.css: a big translucent numeral centred over the bars with a
-// key-coloured halo — centred because thumbPath grows its bars from the
-// bottom edge at every step, so no corner is reliably empty, and translucent
-// so a dense phrase still reads through it while an empty one is not just a
-// blank key).
+// row's cells — a real drawing of each phrase (thumbPath: the Compose grid at
+// 1:8, sixteen steps across, gate/acc/sld lanes over a mini piano roll), with
+// the PHRASE NUMBER SUPERIMPOSED on the drawing (see .bcn in kernel-daw.css:
+// a big translucent numeral centred over the grid with a key-coloured halo —
+// centred because the drawing fills its whole face, so no corner is reliably
+// empty, and translucent so a dense phrase still reads through it while an
+// empty one is not just a blank key).
 //
 // A SECTION SHOWS THE PATTERNS IT PLAYS, AND ONLY THOSE ("don't include all
 // the patterns in the song section — just the active ones", 2026-08-16). The
@@ -453,8 +453,17 @@ function buildSub(sec, ent) {
   const mo = mkCell("mods", "lsub");
   const ph = document.createElement("div");
   ph.className = "bchips"; ph.setAttribute("role", "cell");
+  // A LAYER'S STRIP SAYS IT IS A STRIP, exactly like the parent's. It used to
+  // be the one pattern row on the page with no tag, which left a bare run of
+  // thumbnails floating under a row of cells — the reader had to infer the
+  // ownership from an alignment that (see the phone grid in kernel-daw.css)
+  // was not even true. The tag wears the layer's hue; the spine down the
+  // sub-row's left edge wears the same one.
+  const plab = Object.assign(document.createElement("span"),
+    { className: "bplab", textContent: "ptn" });
+  plab.setAttribute("aria-hidden", "true");
   const plus = buildPlus(sec, ent);
-  ph.append(plus);
+  ph.append(plab, plus);
   // THE ONE DELETE A LAYER HAS. The parent's ✕ (PART menu) takes the whole
   // family; this key takes only this layer — toggle("genre") on a lit genre,
   // the same splice the GENRE menu's chip makes.
@@ -647,6 +656,12 @@ function patchBox(sec, i, el) {
     sub.row.className = "lrow" +
       (focusedHere ? " foc" : "") + (i === playingSec ? " live" : "") +
       (popFor === sec && popEnt === ent ? " open" : "");
+    // THE LAYER'S HUE, dealt by POSITION IN THE STACK and written every patch
+    // because removing a middle layer renumbers the ones after it. The CSS
+    // holds four (--v0..--v3) and cycles; colour is the category carrier
+    // here, saying WHICH LAYER — the spine down the sub-row, the ↳, and the
+    // "ptn" tag over its own pattern strip all read this one variable.
+    sub.row.dataset.li = String(((li - 1) % 4) + 1);
     sub.row.setAttribute("aria-label", "box " + (i + 1) + " layer: " +
       GENRES[ent.g].label);
     if (sub.gval.textContent !== GENRES[ent.g].label)

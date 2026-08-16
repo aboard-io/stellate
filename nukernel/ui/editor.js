@@ -269,21 +269,65 @@ function patchGrid() {
 }
 
 /* ---------- the phrase THUMBNAIL ---------- */
-// THE ONE DRAWING OF A PHRASE, exported: a filled bar chart — one block per
-// gated step across all 16, block height = velocity — as a single <path d>
-// string for a 64×24 viewBox. Big enough to recognize a phrase by SHAPE,
-// which the old single-line contour (pitch only) never was: rhythm and
-// dynamics are what the eye tells phrases apart by. One path element per
-// thumbnail, one attribute write per patch — the contourPath idiom, kept.
-// Drawn by the Compose bank pads here AND the Arrange rows' pattern
-// thumbnails (ui/songrow.js imports it): one routine is the only way the pad
-// and the thumbnail can agree about what a phrase looks like.
+// THE ONE DRAWING OF A PHRASE, exported: A MINIATURE OF THE GRID ABOVE — not
+// a bar chart ("make the pattern previews tiny versions of the pattern grid,
+// not bar charts", Paul, 2026-08-16). The velocity bar chart it replaces was
+// a summary of the phrase; this is the phrase, at 1:8. A preview now looks
+// like the thing you tap it to edit, which is the whole point of a preview.
+//
+// THE REDUCTION, and it is a reduction on purpose — eight vectors in 24 user
+// units would be three-pixel lanes. The tracker's own column order runs down
+// the miniature (gate, acc, sld, then pitch), and the sixteen steps run
+// ACROSS, because a thumbnail is twice as wide as it is tall and the step
+// axis is the long one:
+//   GATE   a full-width block in its lane: the rhythm, read as a row of teeth
+//   ACC    a narrower block, centred in the step: an accent is a gate with
+//          emphasis, so it is the same mark, smaller
+//   SLD    a TIE running from this step into the next, which is what a slide
+//          IS — and it wraps at step 16 because the phrase loops
+//   PITCH  a mini piano roll over deg + 7·oct, clamped to ±10 (deg alone is
+//          ±7, so the clamp only bites on a phrase that octave-jumps), one
+//          block per gated step at the height its note sits
+// deg/vel/inc/stk are not drawn: velocity was the OLD picture and it told
+// phrases apart worst of all — two phrases with the same rhythm and different
+// tunes drew identically.
+//
+// THE GRID ITSELF IS CSS, not path data (.bcmini/.mini in kernel-daw.css): a
+// 16-column ruling with the beat lines stronger and one rule under the switch
+// lanes, painted as a static background-image. So an EMPTY phrase still draws
+// as an empty grid rather than as a blank key, and the repaint contract is
+// untouched — ONE <path d> string per thumbnail, one attribute write per
+// patch, which is what makes an editor scrub cheap (ui/songrow.js
+// patchChipPaths). Drawn by the Compose bank pads here AND the Arrange rows'
+// pattern thumbnails: one routine is the only way the pad and the thumbnail
+// can agree about what a phrase looks like.
+const STEP_W = 4;                          // 64 user units / 16 steps
+const CELL_W = 3.2;                        // the mark, with .8 of air after it
+// lane tops and heights, in the 64×24 viewBox — the CSS grid's horizontal
+// rule sits at 43%, i.e. between the sld lane and the pitch band
+const L_GATE = [0.5, 3.2], L_ACC = [4.5, 2.4], L_SLD = [7.7, 2.0];
+const BAND_TOP = 11, BAND_H = 12.4, NOTE_H = 2, PITCH_SPAN = 10;
+const box = (x, y, w, h) =>
+  "M" + x.toFixed(1) + " " + y.toFixed(1) + "h" + w.toFixed(1) +
+  "v" + h.toFixed(1) + "h" + (-w).toFixed(1) + "Z";
 export function thumbPath(p) {
   let d = "";
   for (let i = 0; i < 16; i++) {
-    if (!p.gate[i]) continue;
-    const x = i * 4, h = (3 + (p.vel[i] / 9) * 20).toFixed(1);
-    d += "M" + (x + 0.4) + " 24V" + (24 - h).toFixed(1) + "H" + (x + 3.6) + "V24Z";
+    const x = i * STEP_W + 0.4;
+    if (p.gate[i]) {
+      d += box(x, L_GATE[0], CELL_W, L_GATE[1]);
+      // the note, where it sits: up is higher, the way the deg column's bar is
+      const v = Math.max(-PITCH_SPAN, Math.min(PITCH_SPAN,
+        p.deg[i] + 7 * p.oct[i]));
+      const t = (v + PITCH_SPAN) / (2 * PITCH_SPAN);
+      d += box(x, BAND_TOP + (1 - t) * (BAND_H - NOTE_H), CELL_W, NOTE_H);
+    }
+    if (p.acc[i]) d += box(x + CELL_W / 4, L_ACC[0], CELL_W / 2, L_ACC[1]);
+    // a slide REACHES: it is drawn as the tie it is, clipped at the right edge
+    if (p.sld[i]) {
+      const sx = x + CELL_W / 2;
+      d += box(sx, L_SLD[0], Math.min(STEP_W, 64 - sx), L_SLD[1]);
+    }
   }
   return d;
 }

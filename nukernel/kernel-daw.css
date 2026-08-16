@@ -745,13 +745,23 @@ h1 em{font-style:normal;color:var(--ink)}
    row shrink to its min-height. The cap belongs to the SCROLLBAR. */
 .box,.sfoot{flex:0 0 auto}
 /* a SECTION IS A ROWGROUP now: its row, its layer sub-rows, and — while a
-   cell menu is open — the menu row, moving together through every reorder */
-.bgrp{flex:0 0 auto;display:flex;flex-direction:column}
+   cell menu is open — the menu row, moving together through every reorder.
+   THE BLOCK IS THE UNIT OF DIVISION ("subsections are all piled up with
+   patterns on top", Paul, 2026-08-16). Every one of a section's parts used to
+   wear the same hairline underneath — parent row, each layer row — so five
+   rules in twelve vertical millimetres said "five equal things" when the
+   truth is one section containing two layers. The ONLY rule that survives is
+   the one between SECTIONS, and it is the heavy one, because that is the
+   boundary that is real. Inside the block nothing is ruled at all: the
+   reading order is carried by indentation and by air, and vertical space is
+   free. */
+.bgrp{flex:0 0 auto;display:flex;flex-direction:column;
+  padding-bottom:var(--sp-4);border-bottom:2px solid var(--tbl-rule)}
 .bgrp>*{flex:0 0 auto}
 .box{
-  position:relative;min-height:0;padding:var(--sp-3) var(--tbl-gut);
+  position:relative;min-height:0;padding:var(--sp-4) var(--tbl-gut) 0;
   cursor:pointer;background:transparent;
-  border:0;border-bottom:1px solid var(--tbl-hair);
+  border:0;
   align-items:center;
 }
 /* A CELL IS A KEY, not a caption — one flat fill, no border stack, no
@@ -830,15 +840,21 @@ h1 em{font-style:normal;color:var(--ink)}
 .bbars .bd{font-family:var(--f-num);letter-spacing:.01em;color:var(--ink-3);white-space:nowrap}
 /* THE PATTERN ROW — the phrases on their OWN full-width strip beneath the
    cells ("make the little patterns visualization big and chunky"): one
-   chunky thumbnail per phrase THIS LAYER PLAYS, in play order — thumbPath's
-   gate blocks × velocity height, big enough to recognize a phrase by shape —
-   plus the [+], which unfolds the whole bank as a menu row ("don't include
-   all the patterns in the song section — just the active ones", 2026-08-16;
-   .bchips.bank below is that bank). The thumbnails wear the SAME key
-   material as the cells — a thumbnail is a key you press, not a decal — with
-   the state ring drawn over it. Tap = go to Compose on that phrase. */
+   chunky thumbnail per phrase THIS LAYER PLAYS, in play order — a MINIATURE
+   OF THE COMPOSE GRID (editor.js thumbPath: gate/acc/sld lanes over a mini
+   piano roll, sixteen steps across), big enough to recognize a phrase by
+   shape — plus the [+], which unfolds the whole bank as a menu row ("don't
+   include all the patterns in the song section — just the active ones",
+   2026-08-16; .bchips.bank below is that bank). The thumbnails wear the SAME
+   key material as the cells — a thumbnail is a key you press, not a decal —
+   with the state ring drawn over it. Tap = go to Compose on that phrase.
+   EVERY STRIP SAYS WHOSE IT IS: the strip belongs to the row directly above
+   it, and it opens with that row's own "ptn" tag (the layer strips wear the
+   layer's hue on theirs). A strip is never ruled off from its owner and never
+   shares a line with a cell — the sequence down a block is always
+   cells → their patterns, cells → their patterns. */
 .bchips{grid-column:1/-1;display:flex;gap:var(--sp-2);align-items:stretch;min-width:0;
-  flex-wrap:wrap;padding:var(--sp-2) 0 var(--sp-1)}
+  flex-wrap:wrap;padding:var(--sp-2) 0 0}
 .bplab{align-self:center;flex:0 0 auto;
   font:500 var(--t-xs)/1 var(--f-ui);color:var(--ink-3)}
 /* a layer that plays no pattern shows only its [+] — the silkscreen recedes
@@ -882,9 +898,31 @@ h1 em{font-style:normal;color:var(--ink)}
   background:color-mix(in srgb,var(--st-live) 13%,var(--tbl-key,var(--hw-key-mid)))}
 .box.looped .bcell,.box.looped .bch{
   background:color-mix(in srgb,var(--st-arm) 9%,var(--tbl-key,var(--hw-key-mid)))}
-/* the drawing: thumbPath's filled bars, stretched to the key's face */
+/* the drawing: thumbPath's mini grid, stretched to the key's face */
 .bcmini{display:block;flex:1 1 auto;min-width:0;height:100%;
   fill:currentColor}
+/* ---- THE GRID UNDER THE PREVIEW, and it is CSS rather than path data ----
+   A preview is "a tiny version of the pattern grid" (Paul, 2026-08-16), and
+   half of what makes a grid legible as a grid is the RULING, which never
+   changes: sixteen step columns with the four beat lines stronger, and one
+   rule between the switch lanes (gate/acc/sld) and the pitch band beneath
+   them. Painted as a static background-image so it costs nothing per repaint
+   — the scrub contract writes ONE <path d> and this never moves — and so an
+   EMPTY phrase reads as an empty grid instead of as a blank key.
+   The two faces of the same drawing share it: .bcmini is the Arrange row's
+   thumbnail, .mini the Compose bank's pad. They must agree, so the recipe is
+   written once, here, beside the one that is styled most.
+   The 43% split matches editor.js's lane geometry (the sld lane ends at 9.7
+   of 24 user units, the pitch band starts at 11) — move one, move the other. */
+.bcmini,.mini{
+  --pg-line:color-mix(in srgb,var(--ink) 7%,transparent);
+  --pg-beat:color-mix(in srgb,var(--ink) 17%,transparent);
+  background-image:
+    linear-gradient(to bottom,transparent 0 43%,var(--pg-beat) 43% calc(43% + 1px),
+      transparent calc(43% + 1px) 100%),
+    repeating-linear-gradient(to right,var(--pg-beat) 0 1px,transparent 1px 25%),
+    repeating-linear-gradient(to right,var(--pg-line) 0 1px,transparent 1px 6.25%);
+}
 .bch:hover{border-color:var(--accent);color:var(--accent-txt)}
 /* SEL is the edit target (this phrase is open on the Compose page for the
    selected row); LIT is the sounding section — ui/songrow.js says why the
@@ -925,18 +963,34 @@ h1 em{font-style:normal;color:var(--ink)}
 .box.dragging{opacity:.4}
 /* ---- THE LAYER SUB-ROWS ----
    One per genre stacked on the authority ("every layer gets its own line"):
-   indented under the parent in the same key material, carrying what a layer
-   owns — its genre, its voice, its mods, its phrase chips — and its own
-   remove-layer key. Killing the parent kills these; the ✕ here takes only
-   this layer. .foc marks the layer the menus edit; .live takes the sounding
-   wash with the parent, because the layers sound together. */
+   carrying what a layer owns — its genre, its voice, its mods, its phrase
+   chips — and its own remove-layer key. Killing the parent kills these; the ✕
+   here takes only this layer. .foc marks the layer the menus edit; .live
+   takes the sounding wash with the parent, because the layers sound together.
+
+   INDENTED AND SPINED, which is the whole answer to the pile. A layer is
+   subordinate to the section above it, so it starts further in, and a thin
+   vertical rule runs down its left edge for its full height — cells AND
+   pattern strip — which is the one boundary in the block that is genuinely
+   real: everything to the right of that spine belongs to this layer and to
+   nothing else. The spine carries the layer's HUE (--lhue, dealt by
+   data-li in ui/songrow.js), and the layer's "ptn" tag wears the same
+   colour, so the question "which patterns belong to which layer" is answered
+   twice — by position and by colour — without a word of UI text. */
 .lrow{
   position:relative;display:grid;gap:var(--sp-1);align-items:center;
-  padding:var(--sp-2) var(--tbl-gut);
-  border-bottom:1px solid var(--tbl-hair);
+  --lhue:var(--vb);
+  margin:var(--sp-3) var(--tbl-gut) 0 calc(var(--tbl-gut) + var(--sp-4));
+  padding:var(--sp-1) 0 var(--sp-1) var(--sp-3);
+  border-left:2px solid var(--lhue);
 }
-.lmark{color:var(--ink-3);font:600 var(--t-md)/1 var(--f-num);text-align:center;
+.lrow[data-li="1"]{--lhue:var(--v0)}
+.lrow[data-li="2"]{--lhue:var(--v1)}
+.lrow[data-li="3"]{--lhue:var(--v2)}
+.lrow[data-li="4"]{--lhue:var(--v3)}
+.lmark{color:var(--lhue);font:600 var(--t-md)/1 var(--f-num);text-align:center;
   justify-self:center}
+.lrow .bplab{color:var(--lhue)}
 .lrow.foc{background:var(--tbl-hi)}
 .lrow.foc .lmark{color:var(--accent-txt)}
 .lrow.live{background:var(--tbl-lit)}
@@ -968,29 +1022,45 @@ h1 em{font-style:normal;color:var(--ink)}
     grid-template-columns:26px repeat(5,minmax(0,1fr));
     gap:var(--sp-1);align-items:stretch;
   }
+  /* EVERY PLACEMENT BELOW IS SCOPED TO ITS OWN GRID (`.box>` / `.lrow>`), and
+     that scoping is the bug fix ("subsections are all piled up with patterns
+     on top"). The cell classes are shared by the parent row and the layer
+     sub-rows, so the unscoped `.c-voice{grid-row:2;grid-column:3/span 2}`
+     written for the parent ALSO placed the sub-row's voice cell at row 2 —
+     where the sub-row's own pattern strip is placed, full width. Two things
+     in one grid area do not wrap or push: they OVERLAP. The strip was drawn
+     straight over the layer's voice and mods cells at every width under
+     900px, which is exactly what the pile looked like. */
   /* line 1 is the IDENTITY line. BARS TOOK A SECOND TRACK from FUNCTION when
      the header row died: the cell has to print its own column name now, and
      "4 bars" was arriving as "4 ba…" in one track. The function word is the
      shorter of the two (VERSE, DROP, CHORUS) and gives the width up. */
-  .c-part{grid-row:1;grid-column:1}
-  .c-genre{grid-row:1;grid-column:2/span 2}
-  .c-role{grid-row:1;grid-column:4}
-  .c-bars{grid-row:1;grid-column:5/span 2}
+  .box>.c-part{grid-row:1;grid-column:1}
+  .box>.c-genre{grid-row:1;grid-column:2/span 2}
+  .box>.c-role{grid-row:1;grid-column:4}
+  .box>.c-bars{grid-row:1;grid-column:5/span 2}
   /* line 2 lost the TIMING cell (nothing in a section tells time): four
      treatment cells over five tracks, and the freed room goes to VOICE —
      the one cell carrying a real instrument name rather than a count */
-  .c-mods{grid-row:2;grid-column:2}
-  .c-voice{grid-row:2;grid-column:3/span 2}
-  .c-rhythm{grid-row:2;grid-column:5}
-  .c-trans{grid-row:2;grid-column:6}
+  .box>.c-mods{grid-row:2;grid-column:2}
+  .box>.c-voice{grid-row:2;grid-column:3/span 2}
+  .box>.c-rhythm{grid-row:2;grid-column:5}
+  .box>.c-trans{grid-row:2;grid-column:6}
   /* line 3 is the PATTERN ROW, full width past the numeral column */
-  .bchips{grid-row:3;grid-column:1/-1}
+  .box>.bchips{grid-row:3;grid-column:1/-1}
   /* the part key holds the numeral centred */
   .bcell.c-part{justify-content:center;padding:var(--sp-1) 2px}
-  /* the layer sub-row: ↳ · genre · voice · mods · ✕ on line 1, its own
-     pattern row beneath */
-  .lrow{grid-template-columns:24px minmax(0,1.15fr) minmax(0,1fr) minmax(0,.85fr) 36px}
-  .lrow .bchips{grid-row:2;grid-column:1/-1}
+  /* THE LAYER SUB-ROW READS DOWN, exactly like the section it sits inside:
+     line 1 names the layer (↳ · genre · ✕), line 2 is its treatment (voice ·
+     mods), line 3 is ITS patterns — indented past the ↳ so the strip starts
+     under the genre that plays it rather than under the mark. */
+  .lrow{grid-template-columns:20px minmax(0,2fr) minmax(0,1fr) 36px}
+  .lrow>.lmark{grid-row:1;grid-column:1}
+  .lrow>.c-genre{grid-row:1;grid-column:2/span 2}
+  .lrow>.ldel{grid-row:1;grid-column:4}
+  .lrow>.c-voice{grid-row:2;grid-column:2}
+  .lrow>.c-mods{grid-row:2;grid-column:3/span 2}
+  .lrow>.bchips{grid-row:3;grid-column:2/-1}
 }
 /* THE FOOTER ROW: duplicate and add. They are table keys, not sections, so
    they get their own row under the last one. */
@@ -1307,6 +1377,11 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
    twelve stacked in the same fold, and no chip inside it can say that for
    itself. It is set as ordinary quiet text, not silkscreen. */
 .pgroup{flex:1 1 300px;min-width:240px}
+/* the chronological genre bank is the one LONG bank on the machine — every
+   anchor the catalog holds, in one list that only grows — so it takes the
+   whole fold and deals itself into as many columns as the glass allows,
+   instead of scrolling a 300px column past forty years at a time */
+.pgroup.chrono{flex:1 1 100%}
 .plabel{display:block;padding:var(--sp-2) var(--tbl-gut) var(--sp-1);
   font:500 var(--t-xs)/1.3 var(--f-ui);letter-spacing:.01em;color:var(--ink-3)}
 .pchips{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));
@@ -1321,11 +1396,56 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
 .pchip::after{
   content:"";position:absolute;left:var(--sp-2);top:50%;margin-top:-3px;
   width:6px;height:6px;border-radius:50%;
-  background:var(--rule-strong);
+  background:var(--dot,var(--rule-strong));
 }
 .pchip.on::after{background:var(--on-accent)}
 .pchip:hover{color:var(--ink);background:var(--bg-key-hi)}
 .pchip.gen{font-weight:600}
+/* THE ERA TINT — the genre bank runs oldest first ("organize the genres
+   chronologically in the menu"), and group headers are forbidden, so the only
+   banding the list gets is the colour of the LED dot each chip already had.
+   Six bands, cool to warm, walking forward in time: chant and polyphony, then
+   the written centuries, the first half of the recorded one, the sixties and
+   seventies, the eighties and nineties, and the present. It is an ORDERING
+   AID and it is deliberately quiet — the label prints the year, which is the
+   fact; this only gives the eye somewhere to rest while it scrolls. A lit
+   chip's dot still goes to the on-ink, because SET beats WHEN. */
+.pchip.e1{--dot:var(--v2)}
+.pchip.e2{--dot:var(--v0)}
+.pchip.e3{--dot:var(--v1)}
+.pchip.e4{--dot:var(--st-arm)}
+.pchip.e5{--dot:var(--step-q2)}
+.pchip.e6{--dot:var(--step-q1)}
+
+/* ---- THE DNA OF A GENRE ("show the DNA of a genre somewhere") ----
+   Over the chronological bank in the GENRE menu: one flat bar of the genre's
+   weighted parents, ending in THE INVENTION — the share its parents do not
+   explain (ui/palette.js reads the declared parentage off the anchors and the
+   measured fit out of GENEALOGY.md). It is a FACT ABOUT THE MUSIC, so it is
+   set as one: a sentence, a bar, the parents named in words. No table, no
+   monospace dump, no percentages to three places. */
+.dna{flex:1 0 100%;min-height:118px;max-width:820px;
+  display:flex;flex-direction:column;gap:var(--sp-2);
+  padding:var(--sp-3) var(--tbl-gut) var(--sp-4)}
+.dnahead{font:400 var(--t-md)/1.4 var(--f-ui);color:var(--ink-2)}
+.dnahead b{font-weight:600;color:var(--ink);font-size:var(--t-lg)}
+/* the bar: segments in a row, no gaps, no rounding — a genome is contiguous */
+.dnabar{display:flex;height:12px;border-radius:2px;overflow:hidden;
+  background:var(--bg-sunk)}
+.dnabar[hidden]{display:none}
+.dnaseg{display:block;width:var(--w);background:var(--c);min-width:1px}
+/* the invention is the accent, and it is the only segment that is not a
+   borrowing — the point of the picture is how much of it there is */
+.dnaseg.inv{background:var(--accent)}
+.dnakeys{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-4)}
+.dnakeys[hidden]{display:none}
+.dnak{display:inline-flex;align-items:center;gap:6px;
+  font:400 var(--t-sm)/1.4 var(--f-ui);color:var(--ink-2);white-space:nowrap}
+.dnak i{width:9px;height:9px;border-radius:2px;background:var(--c);flex:0 0 auto}
+.dnak b{font-weight:600;color:var(--ink)}
+.dnak.inv b{color:var(--accent-txt)}
+.dnaline{margin:0;font:400 var(--t-sm)/1.5 var(--f-ui);color:var(--ink-3)}
+.dnaline[hidden]{display:none}
 /* ONE STATE LANGUAGE, everywhere on the machine: lit orange = you set it,
    dim-lit = the default is doing it (palette.js marks those .dflt), off = a
    recessed key with a dark LED dot. The old skin gave every chip family its
@@ -1607,11 +1727,24 @@ details .c{color:var(--ink-3)}
   .bch.bbk{width:128px;height:56px}
   .bch .bcn{font-size:30px}
   .bch.bplus{height:52px}
-  /* the layer sub-row, with the desk's room (its pattern row spans below,
-     placed by the base .bchips rule) */
-  .lrow{grid-template-columns:40px minmax(170px,1.35fr) minmax(170px,1.2fr)
-      minmax(130px,1fr) 48px;
-    gap:0 6px;padding:4px var(--tbl-gut) 6px}
+  /* the layer sub-row, with the desk's room: ↳ · genre · voice · mods · ✕ on
+     one line, its pattern strip on the next — placed explicitly, and scoped
+     to `.lrow>` for the same reason the phone block is (a bare `.c-voice`
+     rule reaches into both grids and the strip lands on top of a cell). */
+  /* A LAYER DOES NOT SPAN THE DESK. Its tracks are CAPPED and a spacer takes
+     the slack, so the ✕ sits beside the layer it removes instead of a metre
+     away at the window edge — and the narrower block is itself the signal
+     that this line is subordinate to the section row above it, which runs
+     the full width. */
+  .lrow{grid-template-columns:24px minmax(170px,360px) minmax(170px,330px)
+      minmax(130px,220px) 48px minmax(0,1fr);
+    gap:0 6px;padding:var(--sp-1) 0 var(--sp-2) var(--sp-3)}
+  .lrow>.lmark{grid-row:1;grid-column:1}
+  .lrow>.c-genre{grid-row:1;grid-column:2}
+  .lrow>.c-voice{grid-row:1;grid-column:3}
+  .lrow>.c-mods{grid-row:1;grid-column:4}
+  .lrow>.ldel{grid-row:1;grid-column:5}
+  .lrow>.bchips{grid-row:2;grid-column:2/6}
 
   /* THE BOARD, WITH ROOM: the same strips and the same bars, dealt into as
      many columns as fit and given a taller bar to read — what a desk buys
