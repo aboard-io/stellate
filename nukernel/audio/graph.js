@@ -33,6 +33,30 @@
 // before this) it builds only the default chain — the seven nodes named at
 // buildMasterChain, safety net included. Absent is today, node for node.
 //
+// WHICH TOPOLOGY IS CHEAPEST, MEASURED, FOR THE LANE THAT REBUILDS THE DESK.
+// The shared rack below is not a tidiness preference, it is the whole CPU
+// story, and the numbers are already in this repo rather than in anyone's
+// intuition. Counted on a real render (audio/bounce.js's node census, the
+// paragraph beginning "WHY IT IS QUADRATIC"): 32 seconds of one composed song
+// built 2919 nodes, of which 195 were DynamicsCompressors and 195 WaveShapers —
+// the PER-NOTE channel strips. The entire shared rack, by contrast — three
+// reverbs, the echo, the drum room, the send rack, the master chain — is 69
+// nodes, and a channel adds 11 (window.__nuMix reports both). So:
+//
+//   shared bus, one gain per sender   69 + 11/channel   flat in the music
+//   per-voice insert of the same fx   ~2 nodes/NOTE     grows with the notes
+//
+// A compressor or a convolver computes the same arithmetic whether one voice
+// or twenty is feeding it, so putting it on a bus makes its cost a CONSTANT;
+// putting it on a voice multiplies that constant by the note count, and the
+// note count is the one number a song is free to grow. The rule for a desk
+// rebuild, therefore: anything with STATE OVER TIME (compression, reverb,
+// delay, tape) belongs on a shared bus with a send gain per voice; only
+// per-voice CHARACTER that must differ note by note (a filter cutoff, a pan, a
+// level) belongs in the strip, and it should be the cheapest node that will do
+// it. Per-voice inserts are also what made the offline render quadratic, which
+// is a second, independent reason to keep them off the voices.
+//
 // EVERY BUILDER TAKES A CONTEXT. The offline bounce (audio/bounce.js) renders
 // the whole song into an OfflineAudioContext, and it must render through THIS
 // graph — the same master numbers, the same reverb impulses, the same echo
@@ -740,7 +764,11 @@ function installMaster() {
   if (!ctx) return;
   const next = buildMasterChain(ctx, MASTER, outGain);
   const t = ctx.currentTime;
-  next.out.connect(anl);
+  // …unless the room is parked, in which case the tap is exactly what must not
+  // be connected: an analyser with no output pulls the chain behind it, and a
+  // master swapped while the tape carries would quietly un-park the graph.
+  // unparkGraph reconnects it, so the tap comes back with the sound.
+  if (!parked) next.out.connect(anl);
   if (chain) {
     // both chains carry the signal through the fade — masterIn stays connected
     // to the outgoing one until after it, so nothing is cut mid-block
@@ -934,8 +962,71 @@ export function unmuteRamp(ms) {
     outGain.gain.linearRampToValueAtTime(masterVol(), t + (ms || 20) / 1000);
   } catch (e) {}
 }
+/* ---------- parking the room ---------- */
+// A MUTED GRAPH IS NOT A FREE GRAPH. outGain at zero silences the speaker and
+// changes nothing about the work: every scheduled voice is still summed, every
+// biquad still filters, and the convolver still runs its FFT — a ConvolverNode
+// with a 3.2 s impulse costs the same rendering silence as it does rendering a
+// band (the comment at initAudio already says so about BUILDING one). So when
+// audio/bounce.js hands the ear to the rendered tape, muting is only half of
+// getting out of the way.
+//
+// PARKING IS THE OTHER HALF, and it is one edge: outGain is disconnected from
+// ctx.destination and the master chain's tap into the analyser goes with it.
+// Web Audio renders by PULLING from the destination, so a subgraph nothing
+// pulls is a subgraph nothing computes — the whole room, every channel and
+// every voice above it, drops to zero CPU without a single node being torn
+// down and therefore without a single node having to be rebuilt on the way
+// back. The analyser has to go too and that is not tidiness: an AnalyserNode
+// with no output is on the context's AUTOMATIC PULL list, so leaving it
+// connected would keep pulling the entire chain through it and park nothing.
+//
+// THE CLOCK KEEPS RUNNING, deliberately. ctx.suspend() would save the last
+// sliver — the destination callback itself — and cost the thing the page is
+// built on: ctx.currentTime is the transport's clock, so suspending freezes
+// the playhead, the LCD and the position the tape is phase-locked against, and
+// buys a resume() that some platforms refuse. iOS freezes the context for us
+// when it wants to (audio/survival.js) and the page already survives that;
+// there is no reason to do it to ourselves on a desk.
+//
+// MEASURED, on this box, one composed song at 126 bpm, headless chromium,
+// summing utime+stime across every browser process (the audio thread lives in
+// a different one from the page, and this chromium has no renderCapacity
+// meter to ask directly):
+//
+//   live graph audible, somebody touching   57.7% of one core   main thread 11.9%
+//   the tape carrying, the room parked      29.2%               main thread  6.7%
+//   touched again, live graph back          56.4%               main thread  8.5%
+//
+// Half the machine, for a page that is playing the same song either way. The
+// node population does not move (70 in both states, window.__nuMix) and that
+// is the point: nothing was torn down, it simply stopped being pulled.
+//
+// It is IDEMPOTENT in both directions and the flag is the only truth — a
+// second unpark must never connect outGain to the destination twice, which
+// would be the same music at double gain.
+let parked = false;
+export const isParked = () => parked;
+export function parkGraph() {
+  if (!ctx || parked || !outGain) return false;
+  parked = true;
+  try { outGain.disconnect(ctx.destination); } catch (e) {}
+  if (chain) { try { chain.out.disconnect(anl); } catch (e) {} }
+  return true;
+}
+export function unparkGraph() {
+  if (!ctx || !parked || !outGain) return false;
+  parked = false;
+  try { outGain.connect(ctx.destination); } catch (e) {}
+  if (chain) { try { chain.out.connect(anl); } catch (e) {} }
+  return true;
+}
 // the honest first-sound reading: RMS at the master tap, pre-mute
 export function rmsNow() {
+  // …and honest about a parked room too: the analyser's buffer holds whatever
+  // was passing through it at the instant the tap was cut, and a meter that
+  // reads a stale peak forever is worse than one that reads zero.
+  if (parked) return 0;
   if (!anl) return 0;
   const d = new Float32Array(anl.fftSize);
   anl.getFloatTimeDomainData(d);

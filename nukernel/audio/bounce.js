@@ -72,11 +72,12 @@ import { SONG, SLOTS, loopOnly, bpm, MASTER, BUSES, GROOVE, SWING, POOL,
          on, emit } from "../ui/state.js";
 import { stackOf, kitOf } from "../ui/derive.js";
 import { buildMasterChain, buildEchoBus, buildRoomBus, buildKitDesk, buildSendBus, makeVerb,
-         masterVol, muteNow, unmuteRamp, DRYROOM, ctx } from "./graph.js";
+         masterVol, muteNow, unmuteRamp, parkGraph, unparkGraph, isParked,
+         DRYROOM, ctx } from "./graph.js";
 import { FONT, isSynthFont, fontDef } from "./assets.js";
 import { makeSynthNode, driveSynth, offFallback } from "./voices.js";
 import { chanSpec, buildChannel, armAutomation, focusKit } from "./mixer.js";
-import { buildTimeline, scheduleBar, stepDur, playing, getPosition,
+import { buildTimeline, scheduleBar, stepDur, playing, getPosition, nextBarAt,
          onGesture, seekPhase, setQuietWhen, singWork } from "./transport.js";
 import { warm as warmSing } from "./sing.js";
 
@@ -147,6 +148,13 @@ function stopwatch(sink) {
 // live graph is structurally blind to an element playing bytes
 window.__nuBounce = () => ({ ...st, carrying, armed,
   mobile: isMobile, ios: isIOS, carrierFirst: carrierFirst(),
+  // THE RADIO STATE MACHINE, read from the outside: which source has the ear,
+  // whether the room behind it is parked (the CPU claim, as a fact rather than
+  // as an intention), how long since anybody touched anything, and what the
+  // machine WOULD do with that. want != mode for at most one second.
+  desk: deskCarrier, parked: isParked(), handingBack: !!handing,
+  idleMs: Math.round(nowMs() - lastTouch), idleAfter: IDLE_MS,
+  away, want: wantNow(),
   // the SHIPPED short-stage cap, so a gate asks this module what the insurance
   // tape is instead of hardcoding a number that then goes stale in two places
   shortCap: SHORT_CAP,
@@ -274,14 +282,166 @@ function armCarrier() {
   document.body.appendChild(el);
 }
 onGesture(armCarrier);                             // rides startAt's synchronous prefix
-// THE CARRIER IS THE PATH: mobile, an element that exists, and no demotion on
-// record. ?nobounce (below) disarms the element entirely, which is also the
-// honest answer here — a page with no carrier must never mute its graph.
-export const carrierFirst = () => isMobile && armed && !disarmed && !st.demoted;
+// THE PHONE'S ANSWER, which never changes: mobile, an element that exists, and
+// no demotion on record. ?nobounce (below) disarms the element entirely, which
+// is also the honest answer here — a page with no carrier must never mute its
+// graph. Everything that is a fact about PHONES rather than about carrying —
+// the 500 ms debounce, the readout's running commentary — still asks this one.
+const phoneFirst = () => isMobile && armed && !disarmed && !st.demoted;
+
+/* ---------- THE TAPE IS THE PATH WHENEVER NOBODY IS TOUCHING ---------- */
+// A DESK IS NOT A DIFFERENT MACHINE (2026-08-16). Everything above this line
+// was written as though the carrier were a mobile accommodation and a desktop
+// tab were a safe place to run a live synthesiser. It is not: Paul, tabbed
+// away, listening — "when the browser sleeps the song turns off. It's very
+// vexing especially since we solved it." We had solved it, for phones, and
+// left the desk on the path we already knew fails, because a hidden tab is not
+// a page a browser feels much duty toward. It throttles its timers, it
+// deprioritises its audio thread, it suspends its context on a sleeping
+// display, and every one of those is fatal to a graph that must schedule a bar
+// every 1.9 seconds forever. The tape is fatal to none of them: a playing
+// <audio> element is MEDIA, and media is the one thing an OS keeps alive.
+//
+// So the carrier stops being the mobile branch and becomes the PLAYBACK PATH,
+// and the only question left is when the live graph gets the ear instead. The
+// answer is the honest one: WHEN SOMEONE IS TOUCHING THE MACHINE. An edit must
+// be audible in the bar it is made, and no rendered tape can promise that. So:
+//
+//   touching  ->  the live graph, everything immediate, everything expensive
+//   quiet     ->  the tape, and the whole room parked (audio/graph.js park)
+//
+// where "quiet" is IDLE_MS of nobody touching anything, or — with no wait at
+// all — the page being hidden or the window losing focus, because those are
+// the two moments where a live graph is about to be starved.
+//
+// THIRTY SECONDS, and it is a musical number rather than a round one: long
+// enough that a listener who is scrubbing a fader, opening a menu, thinking
+// with their hand still on the desk is never interrupted by a handoff, short
+// enough that "I put this on and went to read something" reaches the tape
+// before the reading does. ?idle= moves it, which is how the probe measures
+// both states in one page rather than waiting half a minute per reading.
+export const IDLE_MS = (() => {
+  const m = /[?&]idle=(\d+)/.exec(location.search);
+  return m ? Math.max(0, +m[1]) : 30000;
+})();
+const nowMs = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+let lastTouch = nowMs();                           // when a human last did anything
+let away = false;                                  // hidden, or the window lost focus
+let deskCarrier = false;                           // the desk has handed the ear over
+let handing = null;                                // the bar-aligned handback, pending
+
+// THE DECISION, AS A FUNCTION OF NOTHING BUT ITS ARGUMENTS. Every fact this
+// machine turns on — playing, phone, hidden, away, how long since a touch,
+// whether a full tape exists — arrives as a value, so the state machine can be
+// walked in pure node (test/unit/nukernel.test.js §54) instead of only in a
+// browser where a handoff is a race against a render. The live path calls it
+// with the live values and no second copy of the reasoning exists.
+//
+// The two refusals are the ones this file has always had: nothing carries
+// without an armed, undemoted element, and NOTHING CARRIES A FRAGMENT — a desk
+// handoff waits for the full tape, because handing a listener the first box on
+// loop is worse than the live graph they already have (shortIsInsurance).
+export function carrierWant(w) {
+  if (!w.armed || w.disarmed || w.demoted || !w.playing) return "graph";
+  if (w.mobile) return "carrier";                  // the phone's answer, unchanged
+  const after = w.after != null ? w.after : IDLE_MS;
+  const quiet = w.hidden || w.away || (w.idleMs != null && w.idleMs >= after);
+  if (!quiet) return "graph";
+  return w.ready && w.full ? "carrier" : "graph";
+}
+function wantNow() {
+  return carrierWant({
+    armed, disarmed, demoted: !!st.demoted, playing, mobile: isMobile,
+    hidden: typeof document !== "undefined" && document.visibilityState === "hidden",
+    away, idleMs: nowMs() - lastTouch,
+    ready: st.state === "ready", full: st.stage === "full" });
+}
+// ...and the one place that acts on it. Called on every hide, every blur and
+// once a second; the phone is exempt because its answer is a constant.
+function settle() {
+  if (isMobile || disarmed) return;
+  const want = wantNow();
+  if (want === "carrier" && !deskCarrier) {
+    deskCarrier = true;
+    if (!goCarrier()) deskCarrier = false;         // nothing to hand off to yet
+  } else if (want === "graph" && deskCarrier) handBack();
+}
+// SOMEONE IS TOUCHING THE MACHINE. Both halves matter: the clock restarts, and
+// if the tape had the ear it gives it back. Wired to the raw input events
+// rather than to the app's own edit events because the intent shows up in the
+// pointer before it shows up in the store — a person who has just put a finger
+// on a fader is about to want the live graph.
+export function touched() {
+  lastTouch = nowMs();
+  away = false;
+  if (deskCarrier) handBack();
+}
+// THE HANDBACK LANDS ON A BAR LINE, and that is the whole of why it cannot be
+// heard. The two sources are the same song at the same phase, so the only
+// audible thing about a swap is where in the phrase it happens: mid-bar it is
+// a splice, on the downbeat it is a downbeat. So the quiet flag is dropped
+// IMMEDIATELY (the transport starts filling bars again this tick, into a muted
+// master) and the actual crossing is scheduled for the next bar the graph will
+// play — measured from the transport, not guessed from a timer.
+//
+// Not seekPhase(): the desk's context never froze, so the graph's clock has
+// been running in step with the tape the whole time it was parked, and a seek
+// would land the transport on the NEXT bar boundary — up to a whole bar of
+// silence in exchange for correcting a drift of a few milliseconds. The 1 Hz
+// syncEl below keeps the two within 30 ms; the bar line closes the rest.
+function handBack() {
+  if (isMobile || !deskCarrier) return;
+  deskCarrier = false;                             // tick() schedules again NOW
+  unparkGraph();                                   // ...and the room can hear it
+  if (!carrying) return;
+  if (handing) return;                             // already crossing
+  const at = playing ? nextBarAt() : 0;
+  const wait = playing && ctx ? Math.max(0, (at - ctx.currentTime) * 1000) : 0;
+  const cross = () => {
+    handing = null;
+    if (deskCarrier) return;                       // the page went quiet again mid-cross
+    carrying = false; st.mode = "graph"; st.pending = false;
+    if (el) {
+      el.volume = 0;                               // element down, graph up, one instant
+      // a tape that landed while we were carrying has been waiting for exactly
+      // this moment (armSwap only swaps at the loop wrap while it is audible)
+      if (st.url && el.src !== st.url && !seam.on) attachCurrent();
+    }
+    if (playing) unmuteRamp(12);
+  };
+  if (wait < 8) cross();
+  else handing = setTimeout(cross, Math.min(4000, wait));
+}
+// survival.js asks this before it does its own reverse handoff: while a bar
+// cross is pending the element is still the audible source, and an un-mute
+// from anywhere else is two copies of the song at once.
+export const handingBack = () => !!handing;
+// THE CARRIER IS THE PATH: the phone always, the desk whenever it has gone
+// quiet. Everything downstream of "is the tape the audible source" — the quiet
+// tick, the swap at the wrap, the survival handoff — reads this one answer.
+export const carrierFirst = () => phoneFirst() || (deskCarrier && armed && !disarmed && !st.demoted);
 // the transport asks this every tick: while the element carries, the muted
-// graph's scheduling is work nobody can hear, on the one device where it
-// competes with the render that IS the sound
+// graph's scheduling is work nobody can hear — and now that the desk carries
+// too, it is the desk's fans this saves as much as the phone's battery
 setQuietWhen(() => carrying && carrierFirst());
+
+// the raw signals. `capture` so a handler that stops propagation cannot make
+// the machine think the room is empty; `passive` so listening costs nothing on
+// a scroll. Becoming visible or focused IS an interaction — a person who has
+// just come back to look at the machine gets the live one.
+if (typeof document !== "undefined" && document.addEventListener) {
+  for (const ev of ["pointerdown", "keydown", "wheel", "touchstart"])
+    document.addEventListener(ev, touched, { capture: true, passive: true });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") { away = true; settle(); }
+    else touched();
+  });
+  addEventListener("focus", touched);
+  addEventListener("blur", () => { away = true; settle(); });
+  // ANOTHER APP ON TOP IS NOT A visibilitychange. A window that loses focus to
+  // a different application stays "visible" by the spec and stops being looked
+  // at by any other measure, which is precisely the tab-away Paul reports.
+}
 
 /* ---------- render scheduling ---------- */
 // the musical identity of what a render would capture: song + phrases + tempo
@@ -342,16 +502,20 @@ const SHORT_SEC = 16;
 // 4 s of quiet is right for insurance nobody is listening to; it is absurd for
 // the thing making the sound. Long enough to coalesce a scrub (a fader drag
 // emits per pointer move), and not one beat longer.
-const DEBOUNCE = () => (carrierFirst() ? 500 : 4000);
+// PHONE, not carrying: on a desk an edit is heard on the live graph in the bar
+// it is made, so the tape is never what anyone is waiting for and 4 s of quiet
+// before re-rendering it is exactly right.
+const DEBOUNCE = () => (phoneFirst() ? 500 : 4000);
 // the readout is where "your edit is on its way" belongs — the alternative is
-// a phone that ignores you for two seconds with no explanation. Carrier-first
-// only: on a desk the carrier is invisible insurance and should stay silent.
-const say = text => { if (carrierFirst()) emit("status", { text, sticky: true }); };
+// a phone that ignores you for two seconds with no explanation. PHONE ONLY: on
+// a desk the tape takes over only once nobody is touching the machine, and a
+// machine nobody is touching has nobody to tell.
+const say = text => { if (phoneFirst()) emit("status", { text, sticky: true }); };
 // …and the same fact DURABLY, because a status line is wiped by the next
 // render and "is my edit coming?" outlives one frame. ui/readout.js appends
 // this to the box description; null means there is nothing to say (a desk).
 export function carrierNote() {
-  if (!carrierFirst()) return st.demoted ? "carrier off (" + st.demoted + ") — live graph" : null;
+  if (!phoneFirst()) return st.demoted ? "carrier off (" + st.demoted + ") — live graph" : null;
   if (!carrying) return st.state === "rendering" ? "carrier: rendering the tape…" : null;
   if (st.pending) return st.state === "rendering"
     ? "carrier: re-rendering — your edit lands at the loop"
@@ -1038,6 +1202,11 @@ function adopt(res, want, myGen, stage) {
   // the element. survival.js uses this for the lands-while-hidden pickup —
   // impossible on iOS (the page is frozen), real on Android.
   emit("bounce:ready", { stage });
+  // A TAPE THAT ARRIVES INTO AN EMPTY ROOM TAKES THE EAR. The desk goes quiet
+  // (or hidden) long before the full render lands on any composed song, and
+  // settle() refused it then for the honest reason that there was nothing to
+  // hand over. This is that refusal being answered.
+  settle();
   // …and behind all of it, the SEAMLESS tape: the same folded loop, encoded
   // once and appended forever, so the wrap costs no samples at all. It lands
   // when it lands; until then the WAV above is already playing (with the
@@ -1405,11 +1574,12 @@ const elPhase = () => (el ? (seam.on ? seamPhase() : (el.currentTime || 0)) : nu
 // continuous). loop=false hands us `ended` — which fires while the page is
 // hidden, the property that made it WAV-FIRST's background swap primitive.
 function armSwap() {
-  // CARRIER-FIRST ONLY. On a desk a carrying element means the tab is hidden
-  // and the graph is muted behind it; that path already has its swap (uncarry
-  // attaches the newest blob when the graph takes back over), and touching
-  // `loop` there would rewrite the one behaviour this change is not allowed to
-  // touch.
+  // WHEREVER THE TAPE IS THE PATH, which is now the desk as well: a new take
+  // that lands while the element is audible waits for the wrap. The old
+  // wording said "carrier-first only, and on a desk a carrying element means
+  // the tab is hidden" — a desk that has simply gone quiet is carrying too, and
+  // a tape it never swapped is a tape one edit out of date until someone
+  // touches the machine again.
   if (!el || !carrying || !st.url || !carrierFirst()) return;
   // SEAM MODE HAS NO SWAP. The new take is already the frame list the pump
   // appends, so it joins the stream at the wrap sample-continuously — turning
@@ -1462,12 +1632,21 @@ function goCarrier() {
     // element playing. Only a parked one is a refusal.
     const adv = el.currentTime > t0 + 0.02 || el.currentTime < t0;
     if (el.paused || !adv) demote("element-refused");
+    // PROVEN PLAYING, AND ONLY THEN, the room goes dark. Parking behind an
+    // element that turned out not to be media would be silence with the lights
+    // off, which is the one failure this file refuses everywhere else; so the
+    // park hangs off the same verification the demote does. Nothing is torn
+    // down — a parked graph is simply not pulled — so the way back is a
+    // reconnect rather than a rebuild (audio/graph.js parkGraph).
+    else parkGraph();
   }, 400);
   return true;
 }
 function demote(why) {
   st.demoted = why; st.mode = "graph";
   carrying = false; st.pending = false;
+  deskCarrier = false;
+  unparkGraph();                                   // the graph is the sound again
   // PAUSE, don't just zero the volume: iOS ignores HTMLMediaElement.volume
   // entirely (volume is a hardware control there), so a volume-0 element on
   // the very platform this mode is for is an element still playing at full
@@ -1506,14 +1685,26 @@ function syncEl() {
 // quietly. (The `ended` swap is a legal stop; st.pending marks it.)
 let lastElT = -1;
 setInterval(() => {
+  // …and the idle clock is read on the same beat. It is the ONLY thing that has
+  // to run while the tape carries and the room is parked, which is the point:
+  // one 1 Hz timer is what a radio costs.
+  settle();
   if (!el || !playing || st.state !== "ready") return;
   // THE PUMP'S HEARTBEAT. updateend re-enters seamPump while there is work; once
   // the stream is far enough ahead nothing calls back, so the tick is what keeps
   // it topped up. Background timers throttle but do not stop while a media
   // element plays — which is the whole reason the parent could stream at all.
   seamPump();
-  if (!carrying) { syncEl(); lastElT = -1; return; }
+  // NOT CARRYING MEANS NOT PARKED, held as an invariant rather than as a
+  // sequence of correct calls: every route out of carrying (a demote, a stop, a
+  // handback, a song swap) would otherwise have to remember, and the one that
+  // forgot would be a page with no sound and no error.
+  if (!carrying) { unparkGraph(); syncEl(); lastElT = -1; return; }
   if (!carrierFirst()) return;                     // the desk's hidden handoff: as it was
+  // the belt to goCarrier's braces: a carrier that took over by some other door
+  // (survival's carry() on a hide that beat the idle clock) parks here instead,
+  // once the element has been seen to advance under it.
+  if (lastElT >= 0 && (el.currentTime || 0) !== lastElT && !el.paused) parkGraph();
   if (st.pending && (el.paused || el.ended)) { swapNow(); lastElT = -1; return; }
   const t = el.currentTime || 0;
   if (el.paused || (lastElT >= 0 && t === lastElT && !el.seeking)) {
@@ -1574,6 +1765,9 @@ export function carry() {
 export function uncarry() {
   if (!carrying) return null;
   carrying = false; st.mode = "graph";
+  deskCarrier = false;
+  if (handing) { clearTimeout(handing); handing = null; }   // this IS the handback
+  unparkGraph();                                   // whatever is about to be unmuted must exist
   const ph = el ? (el.currentTime || 0) : null;
   if (el) {
     el.volume = 0;
@@ -1617,6 +1811,8 @@ on("transport:state", d => {
   } else {
     clearTimeout(timer);
     if (carrying) uncarry();
+    deskCarrier = false;
+    unparkGraph();                                 // stopped is not parked
     if (el) { try { el.pause(); } catch (e) {} }   // a muted loop still costs battery
   }
 });
@@ -1644,6 +1840,10 @@ on("song", () => {
   adoptedSig = null;
   st.state = "idle"; st.url = null; st.durSec = 0; st.stage = null; st.lastError = null;
   st.pending = false; st.mode = "graph";
+  // …and with the tape gone the room has to come back, whatever it was doing
+  carrying = false; deskCarrier = false;
+  if (handing) { clearTimeout(handing); handing = null; }
+  unparkGraph();
   while (urls.length) { try { URL.revokeObjectURL(urls.shift()); } catch (e) {} }
   // the stream carried the OLD song; drop it whole rather than let the pump
   // keep appending it, and let seamOff's re-attach find no url and do nothing

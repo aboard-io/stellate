@@ -15,7 +15,7 @@ import { stackOf } from "../ui/derive.js";
 import { ctx, muteNow, unmuteRamp } from "./graph.js";
 import { playing, startAt, stop, getPosition, seekPhase } from "./transport.js";
 import { carry, uncarry, isCarrying, carrierFirst, carrierPos, carrierSeek,
-         isIOS } from "./bounce.js";
+         handingBack, isIOS } from "./bounce.js";
 
 // THE PREDICATE MOVED DOWN to audio/bounce.js, which is where the decision it
 // drives now lives (the carrier is the audible path on mobile, not a pocket
@@ -58,12 +58,15 @@ let survivalMuted = false;                         // goHidden ran and goVisible
 let carried = false;                               // the bounce element took the handoff
 function goHidden() {
   if (!ctx) return;
-  // CARRIER-FIRST: NOTHING TO DO, AND THAT IS THE POINT (2026-08-15). On the
-  // mobile predicate the element has been the audible path since the first
-  // render landed, so hiding the page is not an audio event at all — no
-  // play() for iOS to refuse, no volume swap racing a frozen frame, no
-  // handoff to arrive late. This branch is the whole reason the OS grants and
-  // keeps focus: what it is being asked to background is already media.
+  // CARRIER-FIRST: NOTHING TO DO, AND THAT IS THE POINT (2026-08-15). The
+  // element has been the audible path since the first render landed — on a
+  // phone always, and on a desk since the machine went quiet or this very
+  // hide told bounce's own listener to hand over (it runs first; bounce is
+  // below this file in the layer graph). So hiding the page is not an audio
+  // event at all — no play() for iOS to refuse, no volume swap racing a
+  // frozen frame, no handoff to arrive late. This branch is the whole reason
+  // the OS grants and keeps focus: what it is being asked to background is
+  // already media.
   if (carrierFirst() && isCarrying()) { carried = true; survivalMuted = true; return; }
   // the handoff, when the carrier is ready: element volume up + graph muted at
   // the matching loop position. Both writes are SYNCHRONOUS — background
@@ -88,27 +91,42 @@ function goVisible() {
   // CARRIER-FIRST: THE ELEMENT KEEPS THE SONG. Handing back to the graph on
   // return would make the audible path flap between two sources at every app
   // switch — and would drop the media session the moment the user looked at
-  // the page, which is the bug. So the only thing return owes is a RESYNC: on
-  // iOS the audio clock was frozen the whole time, so the transport (and with
-  // it the playhead, the LCD and positionState) has to be moved to where the
-  // tape actually got to, or the next tick tries to schedule the minutes it
-  // missed.
+  // the page, which is the bug. (On a desk, LOOKING is exactly what hands it
+  // back — bounce.js counts becoming visible as a touch and crosses at the
+  // next bar — so this branch is the phone's, and a desk arrives here only
+  // while that cross is still pending.) So the only thing return owes is a
+  // RESYNC: on iOS the audio clock was frozen the whole time, so the transport
+  // (and with it the playhead, the LCD and positionState) has to be moved to
+  // where the tape actually got to, or the next tick tries to schedule the
+  // minutes it missed.
   if (carrierFirst() && isCarrying()) {
     const p = carrierPos();
     if (p && playing) seekPhase(p.pos);
     return;
   }
   if (carried) {
-    // reverse handoff: element down, graph up — and the transport RESYNCS to
-    // where the element actually got to, because on iOS the graph's clock was
-    // frozen the whole time and would otherwise resume in the musical past
-    const ph = uncarry();
     carried = false;
-    if (ph != null && playing) seekPhase(ph);
+    // THE TAPE MAY BE GIVING ITSELF BACK, and if it is, this must keep its
+    // hands off. audio/bounce.js hands the desk back ON A BAR LINE (touched ->
+    // handBack): for that second the element is still the audible source, so
+    // an uncarry() here would cut it mid-phrase and a seekPhase would cost a
+    // bar of silence to correct a clock that never drifted. Only the route
+    // bounce is NOT handling — a hide that carried without the desk state, and
+    // every mobile path — gets the reverse handoff below.
+    if (isCarrying() && !handingBack()) {
+      // reverse handoff: element down, graph up — and the transport RESYNCS to
+      // where the element actually got to, because on iOS the graph's clock was
+      // frozen the whole time and would otherwise resume in the musical past
+      const ph = uncarry();
+      if (ph != null && playing) seekPhase(ph);
+    }
   }
   if (survivalMuted) {
     survivalMuted = false;
-    unmuteRamp(20);                                // no click on return
+    // …and for the same reason the un-mute waits: raising the graph while the
+    // element still has the ear is the two-audible-sources failure this whole
+    // file is written against. bounce's own cross does it at the bar.
+    if (!isCarrying()) unmuteRamp(20);              // no click on return
   }
   // if iOS refused the non-gesture resume, the next touch revives the session
   setTimeout(() => {

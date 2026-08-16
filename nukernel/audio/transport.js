@@ -174,6 +174,16 @@ export const stepDur = () => 60 / bpm / 4;
 // is the rare page that can tell MediaSession the truth instead of Infinity
 export const songDurSec = () => TL.reduce((s, b) => s + b.barSteps, 0) * stepDur();
 export function resetBar() { nextBar = 0; }
+// WHEN THE NEXT BAR STARTS, in context time. The one instant at which two
+// copies of the same music — the live graph and the rendered tape — can be
+// swapped without anybody hearing the join, because a downbeat is where the
+// ear expects a new thing to begin. audio/bounce.js reads it to give the tape
+// back at the bar rather than in the middle of a phrase. It is the next bar
+// NOT YET SCHEDULED, so it is always in the future; read it before you clear
+// the quiet flag, because the tick that follows will schedule that bar and
+// move this number on by one.
+export const nextBarAt = () =>
+  (playing && nextBarTime ? nextBarTime : (ctx ? ctx.currentTime : 0));
 
 /* ---------- gesture hooks ---------- */
 // startAt is the page's user gesture (the play button, a box click), and some
