@@ -42,7 +42,11 @@ import { GENRES, FX, MAX_FX, SENDS, SENDLABEL, DRUMKITS, PARTMIX,
          EQ_BANDS, EQ_RANGE, eqDb,
          VERBS, DTIMES, DTLABEL } from "./deps.js";
 import { curSection, commit, on, emit, MASTER, setMaster, BUSES, setBuses,
-         vol, setVol } from "./state.js";
+         vol, setVol, SONG } from "./state.js";
+// READ-ONLY, and the allowed direction (a view importing audio — main.js does
+// the same): the two live bindings that say which box is SOUNDING, so the desk
+// can play along instead of staring at the selection while the song moves on.
+import { playing as transportOn, playingSec } from "../audio/transport.js";
 import { stackOf, kitOf, voiceOwners, instrOverrideOf } from "./derive.js";
 import { voiceRoster, partKeysOf, CHAN } from "../audio/mixer.js";
 import { initAudio, rmsNow, masterReport, busReport,
@@ -57,12 +61,44 @@ const el = document.getElementById("mixtbl");
 // read DOWN, and you compare across the board the way you compared down a
 // column. The roles are static because the DOM is.
 el.setAttribute("role", "table");
-el.setAttribute("aria-label", "the mixing board for the selected box");
+el.setAttribute("aria-label",
+  "the mixing board — the sounding box while playing, the selected box at rest");
 hintKey("mixhelp", "mixhint");
 
 // the width at which there is daylight beside a cell rather than only under
 // the deck — the same 900px boundary the row sheet and the pop-up fader use.
 const WIDE = 900;
+
+/* ---------- which box the desk is aimed at ---------- */
+// THE BOARD FOLLOWS THE SOUNDING BOX. While the transport runs, the strips
+// re-target to the section the ear is in — the roster, the value keys, the
+// faders and the EQ all read (and write) THAT box. The SELECTED box wins only
+// while the transport is stopped, or while the user is mid-edit: a finger down
+// on a board control, an open value-key popover, or an open pop-up fader PINS
+// the section, so the desk cannot swap out from under an edit and a commit
+// cannot land on a box the user never touched. This was the static-board bug:
+// paintBoard ran every frame, but it read the selection — whose channel params
+// are constants once built — while the moving params (the automation, the
+// composed arc) belonged to the sounding section it never looked at.
+let touching = 0;                          // fingers currently down on the board
+let heldSec = null;                        // the section pinned under an edit
+let pfEl = null;                           // ui/popfader.js's one element, lazily
+function editing() {
+  if (touching > 0 || popRow) return true;
+  if (!pfEl) pfEl = document.getElementById("popfader");
+  return !!(pfEl && !pfEl.hidden);
+}
+function boardSec() {
+  if (editing() && heldSec) return heldSec;
+  const s = (transportOn && playingSec >= 0 && SONG[playingSec])
+    ? SONG[playingSec] : curSection();
+  heldSec = s;
+  return s;
+}
+// every drag opens with touchOn (which pins first) and must close with
+// touchOff AFTER its commit, so the write lands on the box the drag edited
+const touchOn = () => { boardSec(); touching++; };
+const touchOff = () => { touching = Math.max(0, touching - 1); };
 
 /* ---------- what the value keys are ---------- */
 // The five PARTMIX enum fields, in registry order — same contract as the old
@@ -208,9 +244,12 @@ function staticGain(sec, key) {
   return m.lvl * Math.pow(10, m.fader / 20);
 }
 // the LIVE gain: the built nodes when the channel exists (automation included
-// — AudioParam.value reads the timeline), the resolved static value when not
+// — AudioParam.value reads the timeline), the resolved static value when not.
+// Node reads only while the transport runs or a finger is down (the drag's
+// eased param is its own feedback) — at rest the caps PARK on the resolved
+// statics rather than on wherever a pump's duck happened to freeze.
 function liveGain(sec, key) {
-  const c = CHAN.get(sec);
+  const c = (transportOn || touching) && CHAN.get(sec);
   if (c) {
     if (key == null) {
       let g = c.lvl.gain.value;
@@ -309,6 +348,7 @@ function buildEqKnob({ band, legend, label, part, bus, get, drag, write }) {
     val.classList.toggle("set", set);
   };
   const paint = () => {
+    if (d) return;                         // the finger owns the face mid-drag
     const v = get();
     show(v == null ? 0 : v, v != null);
     b.dataset.value = v == null ? "" : String(v);
@@ -334,6 +374,8 @@ function buildEqKnob({ band, legend, label, part, bus, get, drag, write }) {
     ev.preventDefault();
     b.focus({ preventScroll: true });
     try { b.setPointerCapture(ev.pointerId); } catch (e) {}
+    touchOn();                             // pin the section under the finger
+    b.classList.add("drag");               // the ease is for the song's moves
     const v = get();
     d = { y0: ev.clientY, v0: v == null ? 0 : v, cur: v == null ? 0 : v, moved: false };
   });
@@ -348,14 +390,20 @@ function buildEqKnob({ band, legend, label, part, bus, get, drag, write }) {
   });
   b.addEventListener("pointerup", () => {
     if (!d) return;
-    if (d.moved) commitDb(d.cur);
+    const moved = d.moved, cur = d.cur;
+    if (moved) commitDb(cur);
     else openFader({ anchor: b, label, min: -EQ_RANGE, max: EQ_RANGE,
                      get: () => Math.round(get() || 0),
                      set: x => commitDb(x),
                      fmt: x => (x ? fmtEq(x) + " dB" : "flat") });
-    d = null;
+    d = null;                              // …then release the pin (write first)
+    b.classList.remove("drag");
+    touchOff();
+    paint();
   });
-  b.addEventListener("pointercancel", () => { d = null; paint(); });
+  b.addEventListener("pointercancel", () => {
+    d = null; b.classList.remove("drag"); touchOff(); paint();
+  });
   b.addEventListener("dblclick", () => commitDb(null));
   paint();
   return { cell, paint };
@@ -397,7 +445,11 @@ function buildFader({ label, getOffset, getGain, write, drag }) {
   wrap.append(slot, off);
   const R = { wrap, slot, cap, off,
     paint(sec) {
+      // the cap follows the live gain even under a finger (easeLive is moving
+      // the real param — the cap IS the feedback); the offset readout is the
+      // drag's own while one is down, or the two writers fight per frame
       cap.style.setProperty("--f", String(gainToF(getGain())));
+      if (d) return;
       const o = getOffset();
       off.textContent = fmtDb(o == null ? 0 : o);
       off.classList.toggle("dflt", o == null);
@@ -410,6 +462,7 @@ function buildFader({ label, getOffset, getGain, write, drag }) {
     ev.preventDefault();
     slot.focus({ preventScroll: true });
     try { slot.setPointerCapture(ev.pointerId); } catch (e) {}
+    touchOn();                             // pin the section under the finger
     const o = getOffset();
     d = { y0: ev.clientY, o0: o == null ? 0 : o, cur: o == null ? 0 : o, moved: false };
   });
@@ -427,11 +480,12 @@ function buildFader({ label, getOffset, getGain, write, drag }) {
   });
   const finish = () => {
     if (!d) return;
-    if (d.moved) write(d.cur === 0 ? null : d.cur);
+    if (d.moved) write(d.cur === 0 ? null : d.cur);   // write lands on the pin
     d = null;
+    touchOff();
   };
   slot.addEventListener("pointerup", finish);
-  slot.addEventListener("pointercancel", () => { d = null; });
+  slot.addEventListener("pointercancel", () => { if (d) { d = null; touchOff(); } });
   slot.addEventListener("dblclick", () => { write(null); buzz(4); });
   slot.addEventListener("keydown", ev => {
     const o = getOffset() == null ? 0 : getOffset();
@@ -482,9 +536,9 @@ function build() {
     const eqs = EQ_BANDS.map(bd => buildEqKnob({
       band: bd.key, legend: bd.label, part: row.key == null ? "" : row.key,
       label: row.label + " " + bd.label + " EQ",
-      get: () => eqBand(curSection(), row.key, bd.key),
-      drag: db => easeEqLive(curSection(), row.key, bd.key, db),
-      write: db => writeEqBand(curSection(), row.key, bd.key, db),
+      get: () => eqBand(boardSec(), row.key, bd.key),
+      drag: db => easeEqLive(boardSec(), row.key, bd.key, db),
+      write: db => writeEqBand(boardSec(), row.key, bd.key, db),
     }));
     for (const e of eqs) eqrow.append(e.cell);
     tr.append(eqrow);
@@ -498,7 +552,7 @@ function build() {
       b.type = "button";
       b.addEventListener("click", ev => {
         ev.stopPropagation();
-        writeField(curSection(), row.key, k, !readField(curSection(), row.key, k));
+        writeField(boardSec(), row.key, k, !readField(boardSec(), row.key, k));
         buzz(4);
       });
       ms.append(b);
@@ -508,10 +562,10 @@ function build() {
     // ---- the automated fader ----
     const fader = buildFader({
       label: row.label,
-      getOffset: () => offsetOf(curSection(), row.key),
-      getGain: () => liveGain(curSection(), row.key),
-      write: off => writeField(curSection(), row.key, "fader", off),
-      drag: off => easeLive(curSection(), row.key, off),
+      getOffset: () => offsetOf(boardSec(), row.key),
+      getGain: () => liveGain(boardSec(), row.key),
+      write: off => writeField(boardSec(), row.key, "fader", off),
+      drag: off => easeLive(boardSec(), row.key, off),
     });
     tr.append(fader.wrap);
     chanWell.append(tr);
@@ -520,7 +574,7 @@ function build() {
 }
 
 function patch() {
-  const sec = curSection();
+  const sec = boardSec();
   const P = sec.parts || null;
   const solo = !!P && rows.some(r => r.key && P[r.key] && P[r.key].solo);
   rows.forEach((row, i) => {
@@ -568,7 +622,7 @@ function patch() {
 }
 
 export function drawMix() {
-  const sec = curSection();
+  const sec = boardSec();
   const next = rowsOf(sec);
   const s = next.map(r => r.key + ":" + r.label + ":" + r.sound).join("|");
   rows = next;
@@ -612,7 +666,7 @@ function buildPop() {
   }
 }
 function hit(v) {
-  const sec = curSection();
+  const sec = boardSec();
   if (popField.key === "fx") {
     const cur = readField(sec, popRow.key, "fx").slice();
     const i = cur.indexOf(v);
@@ -630,7 +684,7 @@ function hit(v) {
 }
 function patchPop() {
   if (!popRow) return;
-  const sec = curSection();
+  const sec = boardSec();
   const v = readField(sec, popRow.key, popField.key);
   const d = defaultOf(sec, popRow.key, popField.key);
   for (const b of popChips.children) {
@@ -924,8 +978,11 @@ let masterStrip = null;
     const rep = masterReport();
     const t = rep && rep.stages.length ? rep.stages.join(" · ") : "default chain";
     if (stages.textContent !== t) stages.textContent = t;
-    // −60..0 dBFS onto the meter — the same log window every meter uses
-    const r = rmsNow();
+    // −60..0 dBFS onto the meter — the same log window every meter uses.
+    // Parked at zero when the transport is stopped: notes scheduled ahead of a
+    // stop keep ringing into the (pre-mute) analyser tap, and a meter that
+    // twitches on a stopped desk reads as broken.
+    const r = transportOn ? rmsNow() : 0;
     const db = 20 * Math.log10(Math.max(1e-4, r));
     mfill.style.setProperty("--f", String(Math.max(0, Math.min(1, (db + 60) / 60))));
   };
@@ -1108,7 +1165,7 @@ const paintKnobs = () => { for (const p of rackKnobs) p(); };
 // rule), and from the event subscriptions below when it does not — so the
 // caps follow the automation live and settle to the resolved statics at rest.
 export function paintBoard() {
-  const sec = curSection();
+  const sec = boardSec();
   for (let i = 0; i < rows.length; i++) refs[i] && refs[i].fader.paint(sec);
   ensureSendStrips();
   for (const r of busRefs) r.paint();
@@ -1123,3 +1180,12 @@ on("refresh", () => { drawMix(); paintBoard(); });
 on("master", () => { paintKnobs(); paintBoard(); });
 on("buses", () => { paintKnobs(); paintBoard(); });
 on("transport", () => paintBoard());       // the master strip mirrors the vol fader
+// THE DESK PLAYS ALONG: the sounding box moved, so the strips re-target — the
+// roster rebuilds if the parts changed, the value keys / EQ knobs re-read the
+// new section (the CSS eases the knob faces there), and the caps land on the
+// new channel's gains. Deliberately NOT closePop(): an open popover pins the
+// section (boardSec), because the user mid-edit wins over the transport.
+on("transport:section", () => { drawMix(); paintBoard(); });
+// play/stop flipped: back to the selected box at rest, and one last paint so
+// the meter parks at zero and the caps settle on the resolved statics
+on("transport:state", () => { drawMix(); paintBoard(); });

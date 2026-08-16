@@ -1062,7 +1062,12 @@ h1 em{font-style:normal;color:var(--accent-txt)}
     var(--hw-key-lo) 100%);
   border:1px solid var(--hw-edge);border-top-color:var(--hw-bevel-hi);
   box-shadow:0 1px 3px rgba(0,0,0,.4);
-  transform:rotate(var(--ka,0deg))}
+  transform:rotate(var(--ka,0deg));
+  /* the desk plays along: when the sounding section changes, the knob EASES
+     to the new section's value — the UI mirror of the audio's setTargetAtTime */
+  transition:transform .3s ease}
+/* …but never under a finger: the drag is its own feedback, lag-free */
+.eqk.drag .eqface{transition:none}
 .eqface .kmark{top:2px;height:7px}
 .eqk.set .kmark{background:var(--accent)}
 .eqv{font:600 8px/1.2 var(--f-num);color:var(--tbl-faint);font-style:normal;
@@ -1161,6 +1166,9 @@ h1 em{font-style:normal;color:var(--accent-txt)}
   border:1px solid var(--hw-edge);border-top-color:var(--hw-bevel-hi);
   box-shadow:0 2px 4px rgba(0,0,0,.4),inset 0 1px 0 var(--hw-bevel-hi);
   transform:rotate(var(--ka,-135deg));
+  /* detent-to-detent moves settle rather than snap — the board knobs' ease,
+     kept on under the finger too because a rack move is discrete anyway */
+  transition:transform .25s ease;
 }
 .kmark{position:absolute;left:50%;top:3px;width:2px;height:12px;margin-left:-1px;
   border-radius:1px;background:var(--tbl-faint)}
