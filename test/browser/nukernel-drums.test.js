@@ -916,8 +916,21 @@ async function deskUI(page) {
   out.eqCleared = await page.evaluate(() => import("/nukernel/ui/state.js")
     .then((s) => s.SONG[0].parts));
   // …and a BUS knob writes the song's `buses` map the same way
+  //
+  // SCROLL IT UNDER THE MOUSE FIRST. `page.mouse` moves to VIEWPORT
+  // coordinates and clicks whatever is painted there; it does no scrolling of
+  // its own. The part knob above escapes that because its own row has been
+  // clicked half a dozen times by the time we reach it, and every one of those
+  // clicks auto-scrolled it into view. The bus strips sit at the FOOT of the
+  // board — measured, the reverb return's LO bar rests at y≈3003 in a
+  // 1000px-tall page — so the same drag was landing on empty space a full two
+  // screens below the fold, and the store said `null` because nothing had been
+  // touched. Scrolled in, the identical gesture stores +6 dB. A gate that
+  // misses its own target is not a product failure.
   const busLo = page.locator('.eqk[data-bus="rev"][data-band="lo"]');
   {
+    await busLo.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(150);
     const bb = await busLo.boundingBox();
     const cx = bb.x + bb.width / 2, cy = bb.y + bb.height / 2;
     await page.mouse.move(cx, cy);
