@@ -859,8 +859,22 @@ h1 em{font-style:normal;color:var(--ink)}
    layer's hue on theirs). A strip is never ruled off from its owner and never
    shares a line with a cell — the sequence down a block is always
    cells → their patterns, cells → their patterns. */
+/* THE STRIP KEEPS A FLOOR UNDER ITS LAST LINE ("the little patterns often cut
+   off on the bottom", Paul, 2026-08-16), and it is a floor rather than a
+   nicety. The strip is the LAST thing in a .box, and .box below the desk
+   breakpoint has NO bottom padding, so with `padding:… 0` here the bottom edge
+   of the bottom line of thumbnails WAS the row's own bottom edge — the exact
+   line where .bprog (the 2px play-through hairline, a later sibling, painted
+   in the table ground) and the .box.sel / .live / .looped inset rings are
+   drawn. They landed ON the thumbnails: bottom border gone, rounded corners
+   squared off, the ✕ lane's bottom rule and the [+]'s bottom dash erased, and
+   the bottom two pixels of every drawing shaved. It read exactly like a
+   picture cut off, and it happened on every strip narrower than the desk —
+   which is why a desk never showed it (there .box pads 12px and this padded 4)
+   and a phone always did. The floor is sp-3 at EVERY width: more than the
+   thickest thing the row paints on that edge, and vertical space is free. */
 .bchips{grid-column:1/-1;display:flex;gap:var(--sp-2);align-items:stretch;min-width:0;
-  flex-wrap:wrap;padding:var(--sp-2) 0 0}
+  flex-wrap:wrap;padding:var(--sp-2) 0 var(--sp-3)}
 .bplab{align-self:center;flex:0 0 auto;
   font:500 var(--t-xs)/1 var(--f-ui);color:var(--ink-3)}
 /* a layer that plays no pattern shows only its [+] — the silkscreen recedes
@@ -985,10 +999,13 @@ h1 em{font-style:normal;color:var(--ink)}
    comes off a section, so a tap on a row thumbnail can keep its one meaning,
    "open it on Compose"). The trailing dashed key grows a new phrase. */
 .rpptn{flex:1 1 100%}
-.bchips.bank{padding:8px 0 4px;gap:8px}
+.bchips.bank{padding:8px 0 var(--sp-3);gap:8px}
 .bch.bbk{width:112px;height:52px}
 /* the play-through rides the row's own bottom edge — a hairline, not a grid
-   row: it is the row filling up, not another field of the table */
+   row: it is the row filling up, not another field of the table. It is
+   ABSOLUTE and it is painted LAST, so it lands on whatever the row's own
+   bottom edge happens to be: the strip above owes it a floor (see .bchips), or
+   the hairline eats the bottom of the thumbnails instead of the row's edge. */
 .bprog{position:absolute;left:0;right:0;bottom:0;height:2px;
   background:var(--tbl-ground);overflow:hidden}
 .fillbar{display:block;height:100%;width:0;background:var(--st-play)}
@@ -1976,7 +1993,7 @@ details .c{color:var(--ink-3)}
   .bcell{padding:var(--sp-2) var(--sp-3)}
   .bcell.bgenre{font-size:21px}
   /* the pattern row gets the desk's chunkier thumbnails */
-  .bchips{gap:8px;padding:8px 0 4px}
+  .bchips{gap:8px;padding:8px 0 var(--sp-3)}
   .bch{width:128px;height:52px}
   .bch.bbk{width:128px;height:56px}
   .bch .bcn{font-size:30px}

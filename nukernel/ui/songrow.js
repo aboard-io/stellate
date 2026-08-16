@@ -422,6 +422,10 @@ function buildBox(sec) {
   const prog = document.createElement("div"); prog.className = "bprog";
   const fill = Object.assign(document.createElement("i"), { className: "fillbar" });
   prog.append(fill);
+  // the play-through hairline goes in LAST and is absolute at the row's bottom
+  // edge, so it paints over whatever ends there. The strip above it keeps a
+  // floor (.bchips padding-bottom) precisely so that "whatever" is the row's
+  // own edge and not the bottom of the thumbnails — see kernel-daw.css .bchips.
   box.append(...CELLS.map(k => cells[k]), ph, prog);
 
   // REORDER — rows drag among themselves, and that is all dragging does now.
