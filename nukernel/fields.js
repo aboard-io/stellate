@@ -147,6 +147,15 @@
   // timing and loudness — which steps lean late, which land hard. `dub` is
   // mined rather than written (engine/pipes.js ACCENT_PROFILES, off the MIDIMAN
   // dub rip).
+  //
+  // AND IT IS A SONG FACT, NOT A BOX FIELD (2026-08-16, "the groove belongs to
+  // the song"). A groove that changed per section would not be a groove, it
+  // would be several drummers — compose.js already stamped ONE groove on every
+  // box for exactly that reason, which was the tell. So there is no `groove`
+  // entry in FIELDS below: the song carries it beside bpm/master/buses
+  // (ui/state.js GROOVE, song.js validates, migrate lifts old per-box saves),
+  // and ui/derive.js reads it as an argument. The label table stays HERE
+  // because it is vocabulary, and one registry file owns every word.
   const GROOVELABEL = { backbeat: "backbeat", push: "pushed", laidback: "laid back",
                         funk: "funk", dub: "dub" };
   // EVERY KIT OPERATOR kernel.js has — which is now sixty-eight rather than
@@ -878,8 +887,9 @@
   //           entry — a layer field left unset INHERITS the box's)
   //   scope   "box" | "layer". The split is the rule stacking was built on: the
   //           authority owns everything that must be shared for the box to be
-  //           one piece of music — the grid, the groove, the key centre, the
-  //           section envelope — and everything else is per layer.
+  //           one piece of music — the grid, the key centre, the section
+  //           envelope — and everything else is per layer. (The groove sits a
+  //           level higher still: it is the SONG's, and not in this registry.)
   //   type    "enum" (default) — one key of `table` or null
   //           "list"           — an ordered array of `table` keys, FILTERED on
   //                              load rather than rejected (see song.js)
@@ -925,8 +935,8 @@
       tab: "rhythm", group: "bass",                    default: null },
     { key: "swing",   scope: "box",   table: SWINGS,   labels: SWINGLABEL,
       tab: "rhythm", group: "swing",                   default: null },
-    { key: "groove",  scope: "box",   table: GROOVELABEL, labels: GROOVELABEL,
-      tab: "rhythm", group: "groove",                  default: null },
+    // (no `groove` entry: the groove is the SONG's, like the tempo — see the
+    // GROOVELABEL note above)
     { key: "fx",      scope: "box",   type: "list", table: FX, labels: FXLABEL,
       tab: "fx",     group: "effects", max: MAX_FX,    default: [] },
     { key: "rev",     scope: "box",   table: SENDS,    labels: SENDLABEL,

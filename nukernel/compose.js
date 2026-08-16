@@ -591,7 +591,7 @@
     const bed = (extra) => {
       const b = skeleton("intro", G, gk);
       b.len = n; b.stack[0].slots = [];            // no phrase: kit and bass only
-      b.groove = S.groove; b.swing = S.swing;
+      b.swing = S.swing;                 // the groove is the SONG's (see compose)
       return Object.assign(b, extra);
     };
     const out = [];
@@ -1080,10 +1080,12 @@
       // fill or a bar of silence with a cymbal in it is also how a song ends
       if (kit) { b.kit = "sparse"; b.outro = pick(r, ["crash", "crash", fillOf(S, G, kit)]); }
     }
-    // ONE GROOVE FOR THE WHOLE SONG, decided once by the caller and stamped on
-    // every box. A groove that changed per section would not be a groove, it
-    // would be several drummers.
-    b.groove = S.groove; b.swing = S.swing;
+    // ONE GROOVE FOR THE WHOLE SONG — it used to be decided once and STAMPED
+    // on every box, which was the tell that it was never a box fact at all.
+    // It rides the song object now (compose's return), the way the tempo does;
+    // swing stays per section, the difference between a pattern and a
+    // performance.
+    b.swing = S.swing;
     // THE ARC, SPENT. Where the role has not already claimed the field with a
     // fade of its own, the section gets the dynamic its place in the song asks
     // for — which is what makes the last chorus bigger than the first verse
@@ -1592,6 +1594,10 @@
              // every other ballot here — a song-level decision drawn before any
              // section could have moved the position.
              master: masterOf(G, gk, rng(ihash(gk + "/master/" + (seed == null ? 1 : seed)))),
+             // THE GROOVE IS A SONG FACT, like the tempo two lines down: one
+             // drummer for the record, drawn once (S.groove, up with the cast)
+             // and written HERE rather than stamped on every box.
+             groove: S.groove,
              bpm: Math.max(70, Math.min(160, BPM[gk] + Math.floor(r() * 9) - 4)),
              vol: 80 };
   }

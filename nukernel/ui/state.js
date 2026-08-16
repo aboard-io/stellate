@@ -11,7 +11,7 @@
 // time, two of them in the audio hot path (stepDur per tick, barSec per
 // channel build), which also made the loader untestable in node.
 import { NuSong, blank, emptyBox, DEFAULT, masterIsDefault,
-         busesIsDefault } from "./deps.js";
+         busesIsDefault, GROOVELABEL } from "./deps.js";
 
 export const DEFAULT_BPM = 126, NBOXES = 4;
 
@@ -54,6 +54,13 @@ export let MASTER = null;
 // page's, null = the graph exactly as built (song.js validates; audio/graph.js
 // applies; audio/bounce.js bakes them into the carrier).
 export let BUSES = null;
+// …AND THE GROOVE (2026-08-16): a song fact, the way the tempo is — one
+// drummer for the record, not one per section. It was a box field once, and
+// compose.js stamped the same value on every box, which was the tell. null is
+// the grid. ui/derive.js reads it as an argument (it stays pure), the
+// transport recompiles on "groove", the bounce re-renders, song.js migrates
+// old per-box saves up to it.
+export let GROOVE = null;
 
 export function setSlot(i) { slot = i; SUBJ = SLOTS[i]; }
 export function putPhrase(i, p) { SLOTS[i] = p; if (i === slot) SUBJ = p; }
@@ -74,6 +81,13 @@ export function setMaster(m) { MASTER = masterIsDefault(m) ? null : m; }
 // rack recognizes becomes null, so "every knob cleared" and "never touched"
 // are one state in the save and in the graph's as-built branch
 export function setBuses(b) { BUSES = busesIsDefault(b) ? null : b; }
+// one writer for the song's groove, normalizing through the registry table the
+// way setMaster does: anything GROOVELABEL does not name is the grid, spelled
+// null — the same rule song.js applies on the way in
+export function setGroove(g) {
+  GROOVE = g != null &&
+    Object.prototype.hasOwnProperty.call(GROOVELABEL, String(g)) ? g : null;
+}
 
 export const curSection = () => SONG[Math.min(viewSec, SONG.length - 1)];
 
@@ -91,6 +105,8 @@ export const curSection = () => SONG[Math.min(viewSec, SONG.length - 1)];
 //                        chain, the bounce re-renders, the rack repaints
 //   "buses"              a rack knob moved — the graph re-trims the shared
 //                        returns (a param write, no swap), the bounce re-renders
+//   "groove"             the song's groove moved — the transport recompiles
+//                        (event times shift), the bounce re-renders the carrier
 //   "transport:state"    published by audio/transport — playing flipped
 //   "transport:section"  published by audio/transport — the sounding box moved
 //   "refresh"            assets finished loading mid-play; views re-render
@@ -111,7 +127,7 @@ export function emit(type, detail) {
 export function commit(type, detail) {
   emit(type, detail);
   if (type === "phrase" || type === "box" || type === "transport" ||
-      type === "master" || type === "buses") save();
+      type === "master" || type === "buses" || type === "groove") save();
 }
 
 /* ---------- persistence ---------- */
@@ -129,7 +145,7 @@ function writeStore() {
   try {
     localStorage.setItem(STORE, JSON.stringify(
       { v: NuSong.VERSION, slots: SLOTS, song: SONG, master: MASTER,
-        buses: BUSES, bpm }));
+        buses: BUSES, groove: GROOVE, bpm }));
   } catch (e) { /* private mode, or quota: not worth interrupting the music */ }
 }
 export function saveNow() { clearTimeout(saveTimer); saveTimer = null; writeStore(); }
@@ -188,6 +204,7 @@ export function adoptSong(raw, reason) {
   SLOTS = s.slots; SONG = s.song; slot = 0; SUBJ = SLOTS[0];
   MASTER = s.master;                   // validateSong normalizes absent to null
   BUSES = s.buses;                     // same normalizer, same law
+  GROOVE = s.groove;                   // ...and the song's groove, same law
   viewSec = 0; loopOnly = null; pendingStart = null;
   if (s.bpm != null) bpm = s.bpm;
   // s.vol is deliberately NOT adopted — volume is the device's (VOLSTORE above)
@@ -200,7 +217,7 @@ export function adoptSong(raw, reason) {
 export function songJSON() {
   return JSON.stringify(
     { v: NuSong.VERSION, slots: SLOTS, song: SONG, master: MASTER,
-      buses: BUSES, bpm },
+      buses: BUSES, groove: GROOVE, bpm },
     null, 1);
 }
 export function saveFile() {

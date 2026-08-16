@@ -1400,6 +1400,78 @@ console.log("the loader — round trip, typed errors, clamps, migration");
       ok(r.song.v === 2, "migrate did not stamp the current version");
     }
   }
+
+  // (f) THE GROOVE LIFT — the groove belongs to the SONG now, the way the
+  // tempo does ("one drummer for the record", 2026-08-16). Four claims: the
+  // registry no longer says `groove` (the ONE place validation, the palette
+  // and the audio walk all lost the box field), the composer emits it at song
+  // level and it round-trips, an old per-box save adopts the groove most
+  // sections agree on (ties to the first — the authority), and the shipped
+  // presets — every one of them per-box vintage — come through lifted.
+  {
+    ok(!F.FIELDS.some(f => f.key === "groove"),
+       "fields.js still carries a per-section groove entry");
+    ok(F.GROOVELABEL && Object.keys(F.GROOVELABEL).length >= 5,
+       "GROOVELABEL left the registry — the song control has no vocabulary");
+    // the composer: song-level, boxes clean, and the value survives the loader
+    let grooved = 0;
+    for (const s of seeds.slice(0, 12)) {
+      const c = C.compose("isley", s);
+      ok(c.song.every(b => b.groove === undefined),
+         "isley/" + s + ": the composer still stamps a groove on boxes");
+      const r = S.load(c);
+      ok(r.ok && (r.song.groove || null) === (c.groove || null),
+         "isley/" + s + ": the song-level groove did not round-trip");
+      if (c.groove != null) grooved++;
+    }
+    ok(grooved > 0, "the composer never draws a groove for isley — the ballot is dead");
+    // the lift itself: majority wins, the box field dies on the way through
+    const mkB = g2 => { const b = S.emptyBox();
+                       if (g2 !== undefined) b.groove = g2; return b; };
+    const lift = boxes => S.load(
+      { v: 2, slots: [S.blank()], song: boxes, bpm: 126, vol: 80 });
+    let r = lift([mkB("funk"), mkB("dub"), mkB("dub")]);
+    ok(r.ok && r.song.groove === "dub",
+       "the majority groove did not win the lift: " + (r.ok && r.song.groove));
+    ok(r.ok && r.song.song.every(b => !("groove" in b)),
+       "the lift left per-box grooves behind");
+    // ...ties go to the FIRST section carrying one — the authority
+    r = lift([mkB("funk"), mkB("dub")]);
+    ok(r.ok && r.song.groove === "funk",
+       "a tie did not go to the authority section: " + (r.ok && r.song.groove));
+    r = lift([mkB(null), mkB("push"), mkB("laidback")]);
+    ok(r.ok && r.song.groove === "push",
+       "a leading null outvoted the first real groove: " + (r.ok && r.song.groove));
+    // ...an all-null save stays flat, a groove-free save normalizes to null
+    r = lift([mkB(null), mkB(null)]);
+    ok(r.ok && r.song.groove === null, "an all-null lift invented a groove");
+    r = lift([mkB(), mkB()]);
+    ok(r.ok && r.song.groove === null,
+       "a groove-free save did not normalize to song groove null");
+    // ...a v:1 save takes the same lift on its way up the versions
+    const rv1 = S.load({ v: 1, slots: [S.blank()],
+                         song: [{ genre: "acid", slots: [0], len: 4, nudge: 0,
+                                  ops: [], groove: "push" }],
+                         bpm: 126, vol: 80 });
+    ok(rv1.ok && rv1.song.groove === "push" && !("groove" in rv1.song.song[0]),
+       "a v:1 save did not lift its groove");
+    // ...an unknown SONG groove drops to null, never fatal — the tempo's policy
+    r = S.load({ v: 2, slots: [S.blank()], song: [S.emptyBox()],
+                 groove: "sludgy", bpm: 126, vol: 80 });
+    ok(r.ok && r.song.groove === null,
+       "an unknown song groove was not dropped to null");
+    // the shipped presets: every box comes through clean, and at least one
+    // record lifts a real groove (they are composer output, per-box vintage)
+    let liftedPresets = 0;
+    for (const p of PRESETS) {
+      const rp = S.load(p.data);
+      ok(rp.ok && rp.song.song.every(b => !("groove" in b)),
+         "preset \"" + p.name + "\" kept a per-box groove");
+      if (rp.ok && rp.song.groove != null) liftedPresets++;
+    }
+    ok(liftedPresets > 0,
+       "no shipped preset lifted a groove — the lift is dead on real data");
+  }
 }
 
 /* ---------------------------------------------------------------- 22. NEUTRALITY
@@ -1920,6 +1992,38 @@ const D = await (async () => {
   window.PRESETS = require("../../nukernel/presets.js").PRESETS;
   return import("../../nukernel/ui/derive.js");
 })();
+console.log("the song groove — one drummer for the record, and it reaches the schedule");
+{
+  // THE SCORE-LEVEL CLAIM behind the move: the groove is sectionEvents' own
+  // argument now (the box no longer spells it), and changing it moves the
+  // SCHEDULED TIMES while leaving pitches and lanes untouched — which is what
+  // "a groove, not a different drummer" means, measured on the same stream the
+  // transport buckets into bars. No audio render needed: the schedule IS the
+  // artifact at this layer.
+  const S = require("../../nukernel/song.js");
+  const b = S.emptyBox(); b.stack[0].slots = [0];
+  const slots = [P];
+  const flat = D.sectionEvents(b, slots, null).ev;
+  const funk = D.sectionEvents(b, slots, "funk").ev;
+  ok(flat.length > 0 && flat.length === funk.length,
+     "the song groove added or dropped events (" + flat.length + " vs " + funk.length + ")");
+  // pitches and lanes untouched: the same multiset of (kind, pitch-or-drum,
+  // voice). Velocity is deliberately absent — a groove leans on levels too.
+  const ident = ev => ev.map(e =>
+    [e.kind, e.n != null ? e.n : e.d, e.v == null ? "" : e.v].join("|")).sort().join(";");
+  ok(ident(flat) === ident(funk),
+     "changing the song groove moved pitches or lanes, not just time");
+  // ...but the TIMING moved: the scheduled times are a different multiset
+  const times = ev => JSON.stringify(
+    ev.map(e => +e.t.toFixed(4)).sort((x, y) => x - y));
+  ok(times(flat) !== times(funk),
+     "changing the song groove moved no scheduled event in time");
+  // and sectionRender's cache tells grooves apart — the groove left the box's
+  // JSON, so the signature must carry it or an edit keeps the old feel
+  const ra = D.sectionRender(b, slots, null), rb = D.sectionRender(b, slots, "funk");
+  ok(ra !== rb && times(ra.ev) !== times(rb.ev),
+     "sectionRender's cache serves the old groove after a song-groove change");
+}
 console.log("song arc, prechorus, topline — the radio shape, measured on ui/derive.js");
 {
   const C = require("../../nukernel/compose.js");

@@ -12,7 +12,7 @@
 // through commit(), never through a direct call into audio.
 import { GENRES, FAMILIES, MODELABEL, SCALELABEL, VOX, OPLABEL, MAX_FX, ROLES,
          RATELABEL, ARTICS, CMODES, CLAMPLABEL, OCTAVES, KITLABEL, DRUMKITS,
-         BASSOPS, SWINGLABEL, GROOVELABEL,
+         BASSOPS, SWINGLABEL,
          INLABEL, OUTLABEL, ENVLABEL, MOTLABEL,
          KEYLABEL, PROGLABEL, PERIODLABEL, BREATHLABEL, PIPELABEL, PARTCHOICES,
          SINGLABEL, AUTOPARAMLABEL, AUTOSHAPELABEL, autoShape,
@@ -112,8 +112,9 @@ export function toggle(kind, value) {
     sec[kind] = String(sec[kind]) === String(value) ? null : value;
   commit("box");
 }
-// the plain one-of-these box fields, all toggled the same way
-const BOXOPTS = new Set(["kit", "drumkit", "bassop", "swing", "groove", "rev", "echo",
+// the plain one-of-these box fields, all toggled the same way. (`groove` is
+// not here: it is the SONG's now — ui/chrome.js owns its control.)
+const BOXOPTS = new Set(["kit", "drumkit", "bassop", "swing", "rev", "echo",
                          "verb", "dtime", "lvl", "pan", "mot", "intro", "outro", "role",
                          "key", "prog", "period", "breath", "pipe", "sing"]);
 
@@ -228,7 +229,8 @@ const CELLBANKS = {
   timing: b => {
     b.rowOf("tempo", "rate", RATELABEL, "rate");
     b.rowOf("swing", "swing", SWINGLABEL, "rate");
-    b.rowOf("groove", "groove", GROOVELABEL, "rate");
+    // (no groove row: the groove belongs to the SONG, like the tempo — its
+    // one control is the session bank's GROOVE picker, ui/chrome.js)
     b.rowOf("articulation", "artic", ARTICS, "art");
   },
   mods: b => {

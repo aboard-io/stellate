@@ -40,8 +40,9 @@ export function contourPath(p) {
 /* ---------- box accessors ---------- */
 // WHICH OPTIONS BELONG TO A LAYER, and which to the box. The split is the same
 // rule stacking was built on: the authority owns everything that must be shared
-// for the box to be one piece of music — the grid, the groove, the key centre,
-// the section envelope — and everything else is per layer.
+// for the box to be one piece of music — the grid, the key centre, the section
+// envelope — and everything else is per layer. (The groove sits a level higher
+// still: it is the SONG's, and arrives as sectionEvents' own argument.)
 //
 //   per layer   pattern ops, split/delete, spread, articulation, ramp limit
 //               and mode, subject scale
@@ -192,7 +193,10 @@ const byVoice = evs => {
   for (const e of evs) { let a = m.get(e.v); if (!a) m.set(e.v, a = []); a.push(e); }
   return m;
 };
-export function sectionEvents(sec, slots) {
+// `songGroove` is the SONG's groove (ui/state.js GROOVE), handed in as an
+// argument because this file is pure over what it is given — it is a song
+// fact the way the tempo is, and the tempo arrives the same way (secsOf).
+export function sectionEvents(sec, slots, songGroove) {
   // THE AUTHORITY READS ITS OWN LAYER'S FIELDS. Layer-scope chips (artic,
   // scale, clamp, cmode, part…) write to the FOCUSED stack entry, and for a
   // single-layer box that entry is stack[0] — which genreOf(sec) alone never
@@ -294,9 +298,11 @@ export function sectionEvents(sec, slots) {
   // GROOVE LAST, so the drum fill grooves too. It is the only stage that moves
   // events in TIME rather than in pitch or level, and it has to see the final
   // stream — a fill written after the groove would be the one bar in the section
-  // sitting flat on the grid, which is exactly what you notice.
+  // sitting flat on the grid, which is exactly what you notice. The groove is
+  // the SONG's (one drummer for the record), applied here because this is
+  // where the section's final stream exists.
   const ev = groove(edges(envelope(win, sec.env, span), sec.intro, sec.outro, span, barSteps),
-                    sec.groove, barSteps, 1);
+                    songGroove, barSteps, 1);
   // ...AND THE SINGER AFTER EVEN THAT. A sung line follows the tune, so it has
   // to read the FINAL stream: planning it before the groove would put the
   // words on the grid while the melody they are singing had moved off it.
@@ -357,14 +363,16 @@ export function singEvents(sec, g, subj, ev, barSteps, nudge) {
 // the box AND the phrases it references — a scrub mutates a phrase in place,
 // so slot IDS alone would never invalidate.
 const rcache = new WeakMap();               // box -> { sig, out }
-export function sectionRender(sec, slots) {
+export function sectionRender(sec, slots, songGroove) {
   const ids = new Set();
   for (const e of stackOf(sec)) for (const i of e.slots) ids.add(i);
-  const sig = JSON.stringify(sec) + "§" +
+  // the song groove is IN the signature: it is no longer a key of `sec`, and a
+  // cache that ignored it would keep serving the old feel after a change
+  const sig = JSON.stringify(sec) + "§g:" + (songGroove || "") + "§" +
     [...ids].map(i => i + ":" + JSON.stringify(slots[i])).join("");
   const c = rcache.get(sec);
   if (c && c.sig === sig) return c.out;
-  const out = sectionEvents(sec, slots);
+  const out = sectionEvents(sec, slots, songGroove);
   rcache.set(sec, { sig, out });
   return out;
 }

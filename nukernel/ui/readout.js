@@ -6,7 +6,7 @@
 //
 // Layer graph: ui view — imports state/derive/deps, publishes nothing.
 import { GENRES, ROMAN, harm, blank } from "./deps.js";
-import { SLOTS, viewSec, curSection, on } from "./state.js";
+import { SLOTS, GROOVE, viewSec, curSection, on } from "./state.js";
 import { sectionRender, stackOf, stackLabel, opsOf } from "./derive.js";
 // the carrier's one line. On mobile the rendered tape IS the audible path
 // (audio/bounce.js), so an edit is heard when its re-render swaps at the loop
@@ -32,7 +32,7 @@ export function status(text, sticky) {
 /* ---------- the box readout ---------- */
 function describe() {
   const sec = curSection();
-  const { g, bars, ev } = sectionRender(sec, SLOTS);
+  const { g, bars, ev } = sectionRender(sec, SLOTS, GROOVE);
   const roots = g.harmony === "modal" ? "one mode, no motion"
     : "roots " + Array.from({ length: bars }, (_, b) =>
         ROMAN[harm(SLOTS[stackOf(sec)[0].slots[0]] || blank(), g, sec.nudge + b)]).join(" ") +

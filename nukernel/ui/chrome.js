@@ -6,10 +6,10 @@
 //
 // Layer graph: ui view — imports state/audio; the play button is the page's
 // user gesture, which is why initAudio rides transport.startAt.
-import { GENRES, FONTS, compose, PRESETS } from "./deps.js";
+import { GENRES, FONTS, compose, PRESETS, GROOVELABEL } from "./deps.js";
 import { bpm, vol, setBpm, setVol, setLoopOnly, adoptSong, defaultSong,
          clearStore, loadErrorText, saveFile, loadFile, commit, on,
-         DEFAULT_BPM } from "./state.js";
+         GROOVE, setGroove, DEFAULT_BPM } from "./state.js";
 import { buzz, pointers } from "./touch.js";
 import { playing, startAt, stop, ensureAssets } from "../audio/transport.js";
 import { initAudio } from "../audio/graph.js";
@@ -126,6 +126,33 @@ function fader(input, dflt) {
 }
 fader($("bpm"), DEFAULT_BPM);
 fader($("vol"), 80);
+
+/* ---------- the song's groove ---------- */
+// A SONG FACT, LIKE THE TEMPO — one drummer for the record, not one per
+// section — so its one control sits in the session bank with the other things
+// that outlive a box (the transport bar has no room for a fourth control at
+// phone width). A select rather than chips because it is the bank's idiom
+// (soundfont, songs), reading its current value the way the tempo fader does:
+// set from state on every "song", written back through the one setter, and the
+// change leaves through commit("groove") — the transport recompiles and the
+// carrier re-renders on that event, never on a direct call from here.
+{
+  const sel = $("groove");
+  sel.append(Object.assign(document.createElement("option"),
+    { value: "", textContent: "flat" }));          // the grid, the null spelling
+  for (const k of Object.keys(GROOVELABEL))
+    sel.append(Object.assign(document.createElement("option"),
+      { value: k, textContent: GROOVELABEL[k] }));
+  const syncGroove = () => { sel.value = GROOVE || ""; };
+  syncGroove();
+  on("song", syncGroove);
+  on("groove", syncGroove);          // any other writer keeps this glass honest
+  sel.addEventListener("change", e => {
+    setGroove(e.target.value || null);
+    syncGroove();                    // the normalizer may have said null
+    commit("groove");
+  });
+}
 
 /* ---------- fonts ---------- */
 {

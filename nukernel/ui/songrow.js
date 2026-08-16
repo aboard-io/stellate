@@ -32,7 +32,7 @@
 // Layer graph: ui view — imports state/derive/deps and audio/transport (the
 // one allowed direction; transport never calls back, it publishes).
 import { GENRES, ROLES, KITLABEL, DRUMKITS,
-         SWINGLABEL, GROOVELABEL, RATELABEL, ARTICS, INLABEL, OUTLABEL,
+         SWINGLABEL, RATELABEL, ARTICS, INLABEL, OUTLABEL,
          SINGLABEL, MAX_LEN, MAX_NUDGE, NSLOTS, blank, instrOf,
          emptyBox } from "./deps.js";
 import { SONG, SLOTS, slot, viewSec, loopOnly, pendingStart, bpm, setViewSec,
@@ -356,9 +356,10 @@ function buildChip(sec, li, si) {
 // These derivations are the old LED-strip families, said in place.
 function timingFact(sec, fe) {
   const artic = optOf(sec, fe, "artic");
+  // (no groove fact: the groove is the SONG's — the session bank's GROOVE
+  // picker says it once, instead of every row repeating it)
   const facts = [sec.rate && RATELABEL[sec.rate],
                  sec.swing && SWINGLABEL[sec.swing],
-                 sec.groove && GROOVELABEL[sec.groove],
                  sec.nudge ? "+" + sec.nudge : null,
                  artic && ARTICS[artic]].filter(Boolean);
   return facts.length ? facts[0] + (facts.length > 1 ? " +" + (facts.length - 1) : "") : "—";

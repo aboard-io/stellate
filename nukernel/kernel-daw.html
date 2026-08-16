@@ -107,6 +107,14 @@
         <div class="gbank tbl" aria-label="session">
           <div class="thd">Session</div>
           <div class="gitems">
+            <!-- THE SONG'S GROOVE — a song fact like the tempo (one drummer
+                 for the record, not one per section), so its one control
+                 lives with the other things that outlive a box. The transport
+                 bar could not take a fourth control at phone width, and the
+                 bank's legend idiom is exactly what an enum this rare needs.
+                 ui/chrome.js fills and wires it; "flat" is the grid. -->
+            <label class="gctl"><span class="glab">Groove</span>
+              <select id="groove"></select></label>
             <label class="gctl"><span class="glab">Soundfont</span>
               <select id="font"></select></label>
             <label class="gctl"><span class="glab">Songs</span>

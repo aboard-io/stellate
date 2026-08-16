@@ -25,7 +25,7 @@
     ? require("./genres.js") : root.NuGenres;
   const { FIELDS, OPS, FX, MAX_FX, NSLOTS, MAX_LEN, MAX_NUDGE, VOX,
           AUTOPARAMS, PERIODS, PARTMIX, okPartKey, MASTER, BUSES, faderDb,
-          eqDb } = NF;
+          eqDb, GROOVELABEL } = NF;
   const { GENRES } = NG;
 
   // The CURRENT schema version. v:2 = v:1 with the box field `del` renamed to
@@ -38,6 +38,9 @@
   // before either one loads and sounds identically and there is nothing to
   // migrate. A version bump is for a shape that MOVED, not one that grew.
   // (`song.buses` — the rack's return trims — is optional on the same terms.)
+  // The GROOVE MOVE (box field -> song fact) did not need a v:3 either: the
+  // retired box field is unmistakable — no new writer emits it — so migrate()
+  // lifts on its presence, exactly the period-interregnum idiom below.
   const VERSION = 2;
 
   // THE FILTER RULE, written down at last: `ops` and `fx` are FILTERED on
@@ -100,6 +103,29 @@
         const hit = Object.keys(PERIODS).find(k => JSON.stringify(PERIODS[k]) === s);
         if (hit) b.period = hit; else delete b.period;
       }
+    }
+    // THE GROOVE LIFT (2026-08-16, "the groove belongs to the song"). `groove`
+    // was a box field through every earlier save; it is a song fact now, like
+    // the tempo. Keyed on the PRESENCE of the retired field rather than on v —
+    // the period-interregnum precedent above — because both v:1 and v:2 saves
+    // carry it and a new save never does, so the lift is exact and idempotent.
+    // A song whose sections disagreed (only a hand-edit could) adopts the
+    // groove most sections agree on; ties go to the section nearest the top,
+    // which is the authority the box's own stack rule already names.
+    if (Array.isArray(r.song) && r.song.some(b => b && b.groove !== undefined)) {
+      if (r.groove === undefined) {
+        const count = new Map();
+        for (const b of r.song) {
+          if (!b || b.groove == null) continue;
+          if (!count.has(b.groove)) count.set(b.groove, 0);
+          count.set(b.groove, count.get(b.groove) + 1);
+        }
+        let best = null, bestN = 0;               // Map iterates in insertion
+        for (const [g2, n] of count)              // order, so a tie keeps the
+          if (n > bestN) { best = g2; bestN = n; } // FIRST section's groove
+        r.groove = best;
+      }
+      for (const b of r.song) if (b) delete b.groove;
     }
     if (r.v !== 1) return r;             // v:2 passes through; junk fails validate
     // genre -> genres -> stack: they shared one slot list before layers
@@ -412,6 +438,14 @@
         s.buses = Object.keys(clean).length ? clean : null;
       }
     } else s.buses = null;
+
+    // ---- THE GROOVE, a song fact like the tempo (the box field it replaced
+    // died at the registry; migrate() lifts old per-box saves). The tempo's own
+    // policy: an unknown groove means "no groove", never "refuse the song" —
+    // the vocabulary is small and stable, and null is the whole of the grid.
+    s.groove = s.groove != null &&
+      Object.prototype.hasOwnProperty.call(GROOVELABEL, String(s.groove))
+      ? s.groove : null;
 
     // tempo and volume ride along; out-of-range means "keep what you had",
     // not "refuse the song" — same policy applyState always had

@@ -9,7 +9,7 @@
 import { GENRES, DTIMES, BASSSYNTH, BASS_INSTR, STRIPS, stripFor,
          instrOf } from "../ui/deps.js";
 import { SONG, loopOnly, pendingStart, setPendingStart, bpm, on, emit,
-         SLOTS } from "../ui/state.js";
+         SLOTS, GROOVE } from "../ui/state.js";
 import { gid, stackOf, boxBars, kitOf, sectionRender } from "../ui/derive.js";
 import { ctx, initAudio, rmsNow, muteNow, unmuteRamp } from "./graph.js";
 import { FONT, fontDef, isSynthFont, loadFont, specOf, zoneBufs, drumBufs,
@@ -113,7 +113,7 @@ export function buildTimeline() {
   const TL2 = [];
   const list = loopOnly == null ? SONG.map((s, i) => [s, i]) : [[SONG[loopOnly], loopOnly]];
   for (const [sec, si] of list) {
-    const { g, bars, ev } = sectionRender(sec, SLOTS);
+    const { g, bars, ev } = sectionRender(sec, SLOTS, GROOVE);
     // A BOX THAT PRODUCES NOTHING TAKES NO TIME. Since Simple became the default
     // there is no "empty" box any more, so a fresh page was four boxes of which
     // three had no phrase — one bar of music followed by three bars of silence,
@@ -374,7 +374,7 @@ export function singWork() {
   const byText = new Map();
   for (const sec of SONG) {
     if (!sec || !sec.sing) continue;
-    for (const e of sectionRender(sec, SLOTS).ev) {
+    for (const e of sectionRender(sec, SLOTS, GROOVE).ev) {
       if (e.kind !== "sing") continue;
       let w = byText.get(e.text);
       if (!w) byText.set(e.text, w = { text: e.text, plan: [] });
@@ -534,4 +534,8 @@ const changed = () => {
 };
 on("phrase", changed);
 on("box", changed);
+// the song's groove moved: every event time downstream of it moved, so the
+// bar list must be rebuilt — a "transport" (bpm) change never needs this,
+// because stepDur is read per tick, but the groove is baked into the events
+on("groove", changed);
 on("song", () => { if (playing) stop(); });
