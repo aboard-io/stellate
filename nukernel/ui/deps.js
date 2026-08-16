@@ -19,7 +19,7 @@
 // ---- the algebra (kernel.js) ----
 export const { harm, render, drums, bass, ROMAN, word, KITOPS,
                envelope, edges, groove, withCadence, partOf,
-               chordAt } = window.NuKernel;
+               chordAt, chordsOf, MODE, harmonizeStage } = window.NuKernel;
 
 // ---- the genre table (genres.js) ----
 export const { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL,

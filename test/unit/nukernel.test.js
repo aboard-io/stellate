@@ -6746,8 +6746,9 @@ console.log("genealogy — parents reference real anchors, and annotation is ine
          out. Their harm() walk IS a per-bar timeline, and a layer agreeing
          with it is the continuo's job; their own voices are authority voices
          and never move (that is (c)). The drones the question worried about
-         — drone, sludge, ambient — are `modal`, not emergent, so a drone is
-         always an authority voice and cannot be made to stop droning.
+         are not emergent at all — drone is `modal`, sludge and ambient are
+         `cycle`, having WRITTEN their timelines down — so a drone is always
+         an authority voice and cannot be made to stop droning.
 
    The metric reads the FINAL stream sectionEvents ships (windowed, edged,
    grooved) through D.masterCtx — the same context the engine corrects by, so
@@ -6919,13 +6920,15 @@ console.log("the master harmonization engine — one tonality, every added voice
          "(participate, timeline read off the voices) broke");
   }
   // the ruling's roster and its boundary: emergent is exactly the counterpoint
-  // family, and the drones are modal (so a drone is never conformable)
+  // family, and the drones are NOT emergent — drone vamps one modal chord,
+  // sludge/ambient wrote their cycles down — so a drone is never conformable
   ok(GK.filter(k => GENRES[k].harmony === "emergent").sort().join(",") ===
      "counterpoint,fugue,spem",
      "the emergent roster changed — re-argue the §48 ruling genre by genre");
-  for (const k of ["drone", "sludge", "ambient"])
-    ok(GENRES[k].harmony === "modal",
-       k + " is no longer modal — the drone half of the §48 ruling needs re-reading");
+  ok(GENRES.drone.harmony === "modal" && GENRES.sludge.harmony === "cycle" &&
+     GENRES.ambient.harmony === "cycle",
+     "a drone-family genre changed harmony mode — the §48 ruling's boundary " +
+     "needs re-reading");
 
   // (b) on COMPOSED stacked sections — the corpus the arranger actually ships.
   // PRE measured at HEAD b1adc27: cover 1966/2477, viol 1105, grinds 1773,

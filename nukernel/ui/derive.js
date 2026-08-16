@@ -8,7 +8,8 @@
 import { GENRES, MODES, SCALES, RATES, SWINGS, KITOPS, OPS,
          render, drums, bass, word, envelope, edges, groove, chordAt,
          blank, VOX, PROGS, PERIODS, BREATHS, PIPESETS, withCadence,
-         SING, instrOf, partOf, PARTNAMES } from "./deps.js";
+         SING, instrOf, partOf, PARTNAMES,
+         chordsOf, MODE, harmonizeStage } from "./deps.js";
 
 export const isBlank = p => p.gate.every(g => !g);
 
@@ -229,6 +230,42 @@ const byVoice = evs => {
   for (const e of evs) { let a = m.get(e.v); if (!a) m.set(e.v, a = []); a.push(e); }
   return m;
 };
+// THE MASTER CONTEXT — the box's ONE harmonic authority, as data: the
+// authority genre's chord timeline expressed in the box's key, plus the
+// governing scale, plus the law of who answers to it. This is the design
+// Paul approved in one sentence ("when we add patterns and sub voices to
+// sections, that is when a tonality happens — there should be a master
+// harmonization engine"), and the SONG half of it is already structural:
+// compose.js writes one genre's sections, the layer law hands every stacked
+// genre the authority's harmony/prog/mode/key, and a modulation is a section
+// `key` the authority itself carries — so expressing the timeline in the
+// authority's key IS expressing it in the song's. Exported on its own so the
+// unit gate (§48) measures through the SAME reading the engine corrects by —
+// a measurement and an engine that compute the context separately is how
+// they drift apart.
+//
+// `conform` is the whole don't-lose-what-we-have law in one predicate: only
+// layer-tagged line events answer. The authority (every phrase of it, plus
+// drums and bass) IS the tonality and never moves; a layer PAD voices the
+// authority's own chords by construction (lg.prog is g.prog below) so it is
+// the harmony already, not a voice speaking over it.
+export function masterCtx(sec, slots) {
+  const a0 = stackOf(sec)[0];
+  const g = genreOf(sec, a0);
+  const slot = a0.slots.length ? slots[a0.slots[0]] : blank();
+  const subj = word(slot, opsOf(sec, a0).map(o => OPS[o]));
+  const key = g.key | 0, md = g.mode || MODE;
+  const pcK = n => (((n + key) % 12) + 12) % 12;
+  const scalePcs = new Set(md.map(pcK));
+  // chords come back KEYED, exactly as kernel render keys them for its pipes:
+  // every event pitch already carries g.key, so the timeline must too
+  const chords = bar => chordsOf(subj, g, bar).map(c => ({ ...c,
+    pcs: c.pcs.map(n => n + key), pcSet: new Set(c.pcs.map(pcK)) }));
+  return { chords, scalePcs, stepsPerBar: subj.deg.length, rate: g.rate,
+           conform: e => !!e.layer && e.kind === "line" && e.n != null &&
+                         !e.pad && e.part !== "pad" };
+}
+
 // `songGroove` / `songSwing` are the SONG's (ui/state.js GROOVE / SWING),
 // handed in as arguments because this file is pure over what it is given —
 // they are song facts the way the tempo is, and the tempo arrives the same
@@ -332,7 +369,29 @@ export function sectionEvents(sec, slots, songGroove, songSwing) {
     vBase += L.voices;
   }
 
-  const win = out.filter(e => e.t >= from && e.t < to).map(e => ({ ...e, t: e.t - from }));
+  // THE HARMONIZE STAGE (kernel.js harmonizeStage): the box has one tonality
+  // — the authority's — and every added voice speaks it. Chord tones seat the
+  // beats, out-of-key notes fold into the governing scale, and no layer holds
+  // a minor second or a stacked unison against another voice. Runs on the
+  // whole stream BEFORE the window/envelope/edges/groove (pitch before time)
+  // and upstream of the transport's register fold; a single-layer box takes
+  // the else-branch and renders byte-identical, which §48 of the unit gate
+  // holds across all genres × 3 seeds against pre-change hashes.
+  //
+  // THE EMERGENT RULING, genre by genre (the "does a drone opt out" question):
+  // the three `harmony: "emergent"` anchors — fugue, spem, counterpoint — are
+  // all the COUNTERPOINT family, and none opts out. Their identity lives in
+  // the authority voices, which this stage never touches; their harm() walk
+  // IS a per-bar timeline (nobody wrote the chords down, but the voices did),
+  // and a layer agreeing with what the counterpoint sounds at that bar is the
+  // continuo's job description. The drones the question worried about are not
+  // emergent at all: drone is `modal` (a one-chord timeline is exactly the
+  // vamp a layer should sit inside) and sludge/ambient are `cycle` (they
+  // WROTE their timelines down) — and in every case the drone itself is an
+  // authority voice, so nothing here can stop it droning.
+  const evAll = vBase > g.voices ? harmonizeStage(out, masterCtx(sec, slots)) : out;
+
+  const win = evAll.filter(e => e.t >= from && e.t < to).map(e => ({ ...e, t: e.t - from }));
   // ORDER MATTERS, and this is the only order that makes sense. The envelope is
   // a curve over the whole section, so it must see the section as written; the
   // intro and outro REPLACE bars, so they must go last or the curve would fade

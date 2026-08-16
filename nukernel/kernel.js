@@ -522,6 +522,138 @@
     });
   };
 
+  // ---- THE MASTER HARMONIZATION ENGINE: one tonality per box ----------------
+  // Paul: "when we add patterns and sub voices to sections, that is when a
+  // tonality happens. There should be a master harmonization engine." The box
+  // already HAS one harmonic authority — stack[0]'s genre owns the key, the
+  // mode and the chord timeline, and the layer law (ui/derive.js) makes every
+  // stacked genre render THROUGH that harmony. What the law could not do is
+  // make a layer's NOTES agree with it: a layer walks its own phrase through
+  // its own alphabet, so its pitches land wherever the alphabet put them —
+  // non-chord tones held on downbeats, sustained minor seconds against the
+  // authority's line, unisons stacked dead on the host's own notes. Nothing at
+  // any tier was ALLOWED to fix that: operators are timeless and pre-pitch,
+  // envelopes are level-only, PIPES.harmonize ADDS a derived voice and never
+  // corrects a written one, groove moves time. This stage is the parent's two
+  // harmony organs met in the middle, cited:
+  //   * engine/theory.js moveVoices — "each voice takes its nearest chord
+  //     tone"; the nearest-realization walk below is that idea per note, and
+  //     its coverage repair ("only doubled voices may leave") is the doubling
+  //     spread here.
+  //   * engine/pipes.js harmonize — "snapped to the pad/bass pitch-class set
+  //     sounding at that beat … instant polyphony that can't clash"; the same
+  //     pcSet walk, pointed at correction instead of addition.
+  //   * kernel `anchored`, one screen down — "a note that SOUNDS through more
+  //     than `anchor` steps has to be a chord tone"; the strong-beat rule is
+  //     the metrical twin of that duration rule, and the direction-of-travel
+  //     tie-break is anchored's own, for anchored's own reason (a rising
+  //     phrase resolved downward by reflex becomes a repeated note).
+  //
+  // THE AUTHORITY IS UNTOUCHED — the don't-lose-what-we-have law. Only events
+  // ctx.conform admits (ui/derive.js masterCtx: layer-tagged line events, pads
+  // excluded — a layer pad voices the authority's own chords by construction)
+  // may move; a stream with none comes back the SAME ARRAY, which is what
+  // holds §48's byte-identity across every genre. Three rules, in order, all
+  // pitch-only — a correction never adds, removes or re-times a note:
+  //   1. FOLD INTO THE KEY: a note outside both the governing scale and the
+  //      sounding chord moves to the nearest legal pitch class. The chord's
+  //      own colour is legal — a borrowed bVI's notes are not wrong notes.
+  //   2. STRONG BEATS SIT ON THE CHORD: a note landing on a beat moves to the
+  //      nearest chord tone. Offbeats keep their colour — that is where the
+  //      passing tones live, so this is a seating plan, not a flattening.
+  //   3. THE VOICES AGREE: a note sustained a minor second (interval class 1)
+  //      against a simultaneous note from another voice — or stacked in exact
+  //      unison on another LAYER's note — re-seats on the chord tone that
+  //      clashes with nothing: nearest first, least-clashing when every rung
+  //      clashes. A chord-tone-vs-chord-tone second is the chord's OWN colour
+  //      (a maj7 owns its ic1 — the census's rule 1) and never counts.
+  // Deterministic by construction: no dice, one processing order (voice, then
+  // time), every decision a pure function of the stream and the timeline. It
+  // runs BEFORE the window/envelope/edges/groove (pitch before time) and
+  // upstream of the transport's register fold, which moves whole octaves and
+  // so changes no pitch class decided here.
+  function harmonizeStage(ev, ctx) {
+    const idx = [];
+    for (let i = 0; i < ev.length; i++) if (ctx.conform(ev[i])) idx.push(i);
+    if (!idx.length) return ev;                  // single-layer: the same array
+    const N = ctx.stepsPerBar, rate = ctx.rate;
+    const pcw = n => ((n % 12) + 12) % 12;
+    const cache = new Map();
+    const chordAtT = t => {
+      const step = t * rate, bar = Math.floor(step / N + 1e-9);
+      let cs = cache.get(bar);
+      if (!cs) { cs = ctx.chords(bar); cache.set(bar, cs); }
+      const s = ((step % N) + N) % N;
+      return cs.find(c => s >= c.start - 1e-9 && s < c.start + c.len) || cs[cs.length - 1];
+    };
+    const legalOf = c => c._legal || (c._legal = new Set([...c.pcSet, ...ctx.scalePcs]));
+    const nearestIn = (n, set, dir) => {
+      for (let d = 1; d <= 6; d++)
+        for (const s of [dir, -dir]) if (set.has(pcw(n + s * d))) return n + s * d;
+      return n;
+    };
+    const out = ev.slice();
+    // one order for everything: voice, then time — the direction of travel
+    // wants each voice's line in sequence, and determinism wants ONE order
+    idx.sort((a, b) => (ev[a].v - ev[b].v) || (ev[a].t - ev[b].t) || (ev[a].n - ev[b].n));
+    const beat = N / 4, prevOf = new Map();
+    for (const i of idx) {                       // rules 1 and 2
+      const e = out[i], c = chordAtT(e.t);
+      const prev = prevOf.get(e.v);
+      const dir = prev != null && e.n > prev ? 1 : -1;
+      let n = e.n;
+      const sb = (((e.t * rate) % N) + N) % N, r = Math.round(sb);
+      const onBeat = Math.abs(sb - r) < 0.45 && r % beat === 0;
+      if (!c.pcSet.has(pcw(n))) {
+        if (onBeat) n = nearestIn(n, c.pcSet, dir);                 // rule 2
+        else if (!ctx.scalePcs.has(pcw(n))) n = nearestIn(n, legalOf(c), dir); // rule 1
+      }
+      prevOf.set(e.v, n);
+      if (n !== e.n) out[i] = { ...e, n, hz: 1 };
+    }
+    // rule 3 — reconciliation against the WHOLE pitched stream, authority
+    // included: the authority never moves, so the layer is always the one
+    // that yields (the census's rule 2: the accused is the added voice)
+    const OV = 0.9 / rate;               // "sustained": most of a step together
+    const pitched = [];
+    for (let j = 0; j < out.length; j++) {
+      const x = out[j];
+      if (x.n == null || !(x.dur > 0) || x.d || x.kind === "sing") continue;
+      pitched.push(j);
+    }
+    const icOne = (a, b) => { const ic = Math.abs(a - b) % 12; return ic === 1 || ic === 11; };
+    for (const i of idx) {
+      const e = out[i], c = chordAtT(e.t);
+      const near = [];
+      for (const j of pitched) {
+        if (j === i) continue;
+        const x = out[j];
+        if (x.v === e.v) continue;
+        if (Math.min(e.t + e.dur, x.t + x.dur) - Math.max(e.t, x.t) >= OV) near.push(x);
+      }
+      if (!near.length) continue;
+      const cost = cand => {                     // clashes first, distance last
+        const candIn = c.pcSet.has(pcw(cand));
+        let w = 0;
+        for (const x of near) {
+          if (icOne(cand, x.n) && !(candIn && c.pcSet.has(pcw(x.n)))) w += 100;
+          if (x.n === cand && (x.layer || null) !== (e.layer || null)) w += 40;
+        }
+        return w;
+      };
+      if (!cost(e.n)) continue;                  // no grind, no stacked unison
+      let best = e.n, bc = cost(e.n) + 0;        // moving must beat staying
+      for (const p of c.pcs) {
+        const d0 = pcw(p - e.n);
+        const cand = e.n + (d0 <= 6 ? d0 : d0 - 12);
+        const cc = cost(cand) + Math.abs(cand - e.n) * 0.01;
+        if (cc < bc - 1e-9 || (Math.abs(cc - bc) < 1e-9 && cand < best)) { best = cand; bc = cc; }
+      }
+      if (best !== e.n) out[i] = { ...e, n: best, hz: 1 };
+    }
+    return out;
+  }
+
   // ---- PARTS: a role is an ASSIGNMENT, not a transform ----------------------
   // realize() was a two-value switch — pad or "a line" — so there were no
   // parts: no riff-vs-lead, no counter-melody, no chord stab. `g.part` names
@@ -1860,7 +1992,7 @@
   const api = { at, mapv, spans, vel, drop, fill, spread, split, del, rampOf, envelope, SHAPES, edges, intro, outro, groove, GROOVES, stressAt, perform, KITOPS, mapKit, LANES, TOMS, HATS, CYMBALS, LIMBORDER, rollAt, swing, rotate, reverse, transpose, invert, complement,
                 crossmap, excerpt, only, word,
                 PENT, MODE, ROMAN, romanOf, pitch, mp, fold, near,
-                QSTEPS, QFIX, chordsOf, chordAt, withCadence,
+                QSTEPS, QFIX, chordsOf, chordAt, withCadence, harmonizeStage,
                 PARTS, partOf, periodOps, pipes, PIPES,
                 harm, render, drums, bass };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
