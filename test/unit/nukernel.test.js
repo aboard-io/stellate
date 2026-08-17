@@ -10047,6 +10047,202 @@ console.log("a drum phrase is a phrase you can hear the machine in, and it takes
               "and it saves and loads whole");
 }
 
+/* ── §65 COMING BACK IS A FADE AND A LOADING LINE ────────────────────────────
+   Paul, on the build that shipped the night before: "There are definitely
+   glitches when I come back in to the browser. Why don't you fade out radio and
+   come back to live with a loading graphic on page?"
+
+   §54 made the rendered tape the playback path whenever nobody is touching the
+   machine, and going OUT to it is easy — the render already exists. Coming BACK
+   is the hard direction and it is where the glitch lives: the live graph has
+   been PARKED (disconnected from the destination, therefore not computed at
+   all) while the transport counted bars without scheduling a note into any of
+   them, so at the instant of a handback there is nothing in it. The shipped
+   code dropped the quiet flag, took the very next bar line and hoped. Measured
+   across a hide/return cycle in a real browser (test/probes/nukernel-return.probe.js,
+   the ?jumpcut seam is that old path kept walkable):
+
+     BEFORE  tape cut at 3370 ms, the graph's first sound at 3406 ms
+             -> a 30 ms HOLE, 1323 samples at 44.1 kHz, hard-cut at both ends
+     AFTER   0 ms, 0 samples: the tape keeps the song until the graph has
+             proved it can render a bar, then they cross equal-power on a
+             downbeat; ready at 1125 ms, crossed at 3047 ms
+
+   Two things are held here, in node, where a handback is a truth table instead
+   of a race:
+
+   (a) THE DECISION — returnStep(), the same shape §54's carrierWant() is
+       written in and for the same reason. Never a cross without a bar the graph
+       has actually been given; never a cross anywhere but a bar line; and no
+       world in which the machine believes both sources or neither.
+   (b) THE CROSSFADE ITSELF, as the envelope it really is: the 65-point equal-
+       power curve graph.js hands setValueCurveAtTime against the cosine
+       audio/bounce.js steps the element down with. A click IS a step
+       discontinuity, so the measurement is the largest one-sample step in the
+       summed envelope — which is the difference between a jump cut and a
+       fade, in a number. */
+console.log("coming back is a fade and a loading line");
+{
+  const B65 = await import("../../nukernel/audio/bounce.js?ret=1");
+  const G65 = await import("../../nukernel/audio/graph.js?ret=1");
+  const step = B65.returnStep;
+
+  /* (a) THE DECISION */
+  {
+    const base = { carrying: true, playing: true, primed: false, sounding: false,
+                   waited: 0, ceiling: 6000, atBar: true };
+    const w = o => step({ ...base, ...o });
+    const cases = [
+      [{}, "warm", "the tape keeps the song while the graph is still cold"],
+      [{ primed: true }, "warm", "a bar scheduled is not yet a bar sounding"],
+      [{ primed: true, sounding: true }, "cross",
+       "scheduled AND sounding, on a bar line: cross"],
+      [{ primed: true, sounding: true, atBar: false }, "wait",
+       "ready, but the downbeat is too close to ramp into — take the next one"],
+      [{ sounding: true }, "warm",
+       "an analyser reading the tail of the last bar is not a primed graph"],
+      [{ waited: 6000 }, "stay",
+       "the ceiling with nothing scheduled: the tape keeps the song"],
+      [{ waited: 6000, primed: true }, "cross",
+       "the ceiling with bars scheduled: the structural proof stands alone"],
+      [{ waited: 6000, primed: true, atBar: false }, "wait",
+       "...but still only ever on a bar line"],
+      [{ carrying: false }, "graph", "nothing is carrying: there is nothing to cross from"],
+      [{ playing: false }, "stop", "the transport went away under the return"],
+    ];
+    for (const [o, exp, why] of cases) {
+      const got = w(o);
+      ok(got === exp, `§65(a) ${why}: returnStep said "${got}", not "${exp}" ` +
+                      `(${JSON.stringify(o)})`);
+    }
+    // TOTAL AND SINGLE-VALUED over the whole cross product — the only form in
+    // which "never two audible sources and never none" can be carried by a pure
+    // function: one answer, always, and only ONE of the five moves the ear.
+    const ANS = new Set(["warm", "wait", "cross", "stay", "graph", "stop"]);
+    let worlds = 0, crosses = 0;
+    for (const carrying of [0, 1]) for (const playing of [0, 1])
+      for (const primed of [0, 1]) for (const sounding of [0, 1])
+        for (const atBar of [0, 1]) for (const waited of [0, 6000, 60000]) {
+          const r = step({ carrying: !!carrying, playing: !!playing,
+                           primed: !!primed, sounding: !!sounding,
+                           atBar: !!atBar, waited, ceiling: 6000 });
+          worlds++;
+          ok(ANS.has(r), `§65(a) a sixth answer: "${r}"`);
+          if (r === "cross") {
+            crosses++;
+            // the two laws, restated at every point in the space
+            ok(carrying && playing, `§65(a) a cross with carrying=${carrying} ` +
+               `playing=${playing} — that is a fade from nothing`);
+            ok(primed, "§65(a) a cross to a graph that has been given no bar");
+            ok(atBar, "§65(a) a cross somewhere other than a bar line");
+          }
+        }
+    ok(worlds === 96 && crosses > 0 && crosses < worlds,
+       `§65(a) the walk is degenerate: ${crosses}/${worlds} worlds cross`);
+    console.log(`  the return is total over ${worlds} worlds; ${crosses} of them cross`);
+  }
+
+  /* (b) THE SEQUENCE, AS THE WARM-UP RUNS IT */
+  {
+    const W = { carrying: true, playing: true, primed: false, sounding: false,
+                waited: 0, ceiling: 6000, atBar: false };
+    const seen = [];
+    const go = (label, mutate, exp) => {
+      mutate();
+      const got = step(W);
+      ok(got === exp, `§65(b) ${label}: "${got}", not "${exp}"`);
+      seen.push(got);
+    };
+    go("the touch lands, the room is only just reconnected", () => {}, "warm");
+    go("the transport hands the graph a bar", () => { W.primed = true; W.waited = 200; }, "warm");
+    go("the analyser hears it, mid-bar", () => { W.sounding = true; W.waited = 1300; }, "wait");
+    go("the downbeat", () => { W.atBar = true; }, "cross");
+    ok(seen.join(">") === "warm>warm>wait>cross", `§65(b) the walk came out ${seen.join(">")}`);
+    console.log("  cold -> a bar scheduled -> a bar sounding -> the downbeat");
+  }
+
+  /* (c) THE CROSSFADE, MEASURED */
+  {
+    // the artifact, not the intention: the 65-point equal-power curve graph.js
+    // hands to setValueCurveAtTime (which interpolates it LINEARLY between the
+    // points, so that is how it is reconstructed here) against the cosine
+    // bounce.js steps the element down with, at 44.1 kHz.
+    const SR = 44100, XF = 0.08, N = Math.round(SR * XF);
+    const up = new Float32Array(65);
+    for (let i = 0; i < 65; i++) up[i] = Math.sin((i / 64) * Math.PI / 2);
+    const curveAt = x => {                          // the UA's own reconstruction
+      const p = Math.max(0, Math.min(1, x)) * 64, i = Math.min(63, Math.floor(p));
+      return up[i] + (up[i + 1] - up[i]) * (p - i);
+    };
+    const down = G65.epDown;                        // the shipped element half
+    ok(Math.abs(down(0) - 1) < 1e-9 && Math.abs(down(1)) < 1e-9,
+       "§65(c) the element's curve does not run from 1 to 0");
+    // EQUAL POWER: sin²+cos² is 1 everywhere, which is the whole reason for the
+    // shape — two takes of the same bar at the same phase, correlated at the
+    // bottom of the spectrum and not at the top, must not dip in the middle.
+    let worstPow = 0;
+    for (let i = 0; i <= N; i++) {
+      const x = i / N, p = curveAt(x) ** 2 + down(x) ** 2;
+      worstPow = Math.max(worstPow, Math.abs(p - 1));
+    }
+    ok(worstPow < 0.002, `§65(c) the crossfade is not equal power: the summed ` +
+       `power wanders ${worstPow.toFixed(5)} from unity`);
+    // NEVER TWO SOURCES AT FULL, and never a hole: at the midpoint both sit at
+    // .707, which is the definition of the fade rather than double playback.
+    let bothFull = 0, sumMin = 9;
+    for (let i = 0; i <= N; i++) {
+      const x = i / N, a = curveAt(x), b = down(x);
+      if (a > 0.95 && b > 0.95) bothFull++;
+      sumMin = Math.min(sumMin, a + b);
+    }
+    ok(!bothFull, `§65(c) ${bothFull} samples with both sources at full level`);
+    ok(sumMin > 0.99, `§65(c) the summed amplitude falls to ${sumMin.toFixed(3)} ` +
+       `mid-fade — that is an audible dip`);
+    // THE CLICK, AS A NUMBER. A click is a step discontinuity, so measure the
+    // largest one-sample step in each envelope. BEFORE is the shipped handback:
+    // the element's volume written to 0 in one instant while the graph ramps up
+    // from nothing over unmuteRamp(12)'s twelve milliseconds — a full-scale step
+    // in a single sample. AFTER is the curve pair above.
+    const worstStep = f => {
+      let worst = 0;
+      for (let i = 0; i <= N; i++) worst = Math.max(worst, Math.abs(f(i) - f(i - 1)));
+      return worst;
+    };
+    // the shipped handback, as one envelope through the seam: the element's
+    // volume is written to 0 at sample 0 and the graph ramps linearly from
+    // nothing over unmuteRamp(12) — so the sum drops the height of the whole
+    // signal between two adjacent samples
+    const before = i => (i <= 0 ? 1 : Math.min(1, (i / SR) / 0.012));
+    const after = i => curveAt(i / N) + down(i / N);
+    const sBefore = worstStep(before), sAfter = worstStep(after);
+    ok(sBefore > 0.9, `§65(c) the before-envelope does not reproduce the jump cut ` +
+       `(largest step ${sBefore.toFixed(4)})`);
+    ok(sAfter < 0.001, `§65(c) the crossfade steps ${sAfter.toFixed(6)} per sample ` +
+       `— at ${SR} Hz that is a corner the ear hears`);
+    console.log(`  the seam, largest one-sample step at 44.1k: jump cut ` +
+                `${sBefore.toFixed(4)}, equal-power fade ${sAfter.toFixed(6)} ` +
+                `(${Math.round(sBefore / sAfter)}x smaller), summed power flat to ` +
+                `${worstPow.toFixed(6)}`);
+  }
+
+  /* (d) THE CEILING IS A NUMBER, AND IT IS THE MEASURED ONE */
+  {
+    // the probe says a cold return reaches "the graph is making the sound"
+    // in 1.1–1.4 s (one bar of counter plus the bar it must play), so a ceiling
+    // under a second would be a promise the machine cannot keep and one over
+    // ten would be a loading line nobody waits through. Held as a range, not a
+    // constant, so a tempo change is not a test failure.
+    const b = globalThis.window.__nuBounce();
+    ok(b.returnCeil >= 3000 && b.returnCeil <= 10000,
+       `§65(d) the return ceiling is ${b.returnCeil} ms, outside the measured range`);
+    ok(b.returning === false && b.returnFrac === 0,
+       "§65(d) a page that never played claims a return in flight");
+    ok(typeof b.graphRms === "number",
+       "§65(d) the pre-mute master reading is not published — the readiness " +
+       "proof cannot be read from outside");
+  }
+}
+
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }

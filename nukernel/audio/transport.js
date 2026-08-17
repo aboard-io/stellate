@@ -264,11 +264,27 @@ addEventListener("visibilitychange", () => { if (playing) tick(); });
 // if it has to. Nothing about the music changes; the only cost is that an edit
 // made while the tab is hidden takes up to two seconds to be heard, which is a
 // cost of exactly zero.
-const lookahead = () => (document.visibilityState === "hidden" ? 2.0 : 0.15);
+// ...AND IT IS NARROW WHILE THE TAPE HAS THE EAR (2026-08-17). Quiet, this loop
+// schedules nothing at all — it only COUNTS bars — and every bar it counts ahead
+// is a bar the live graph can never sound in when the ear comes back, because
+// the counter is already past it. Measured on the shipped build: a hidden,
+// carried desk kept nextBarTime 2.0–3.9 s in front of the clock, and the whole
+// of that was dead time in front of the handback (audio/bounce.js warmReturn) —
+// the first half of the glitch Paul hears coming back to the browser. A quarter
+// second is everything the counter needs, and the loop's own condition still
+// guarantees it exits with nextBarTime in the FUTURE however long a throttled
+// tab took to get here, so a bar can never be scheduled into the past.
+// ?jumpcut reverts BOTH halves of the return fix — this and audio/bounce.js's
+// warm-up — so that test/probes/nukernel-return.probe.js measures the shipped
+// build and the new one on the same page, with the same tape, by the same
+// sampler. One flag, because half a revert measures neither.
+const JUMPCUT = typeof location !== "undefined" && /[?&]jumpcut\b/.test(location.search);
+const lookahead = (mute) =>
+  mute && !JUMPCUT ? 0.25 : (document.visibilityState === "hidden" ? 2.0 : 0.15);
 function tick() {
   if (!playing || !TL.length) return;
-  const sd = stepDur(), look = ctx.currentTime + lookahead();
   const mute = quiet();                            // the carrier owns the ear
+  const sd = stepDur(), look = ctx.currentTime + lookahead(mute);
   // the current section's channel, computed when the section changes rather
   // than re-derived (JSON.stringify and all) once per bar
   let cur = null;

@@ -1058,6 +1058,54 @@ export function unmuteRamp(ms) {
     outGain.gain.linearRampToValueAtTime(masterVol(), t + (ms || 20) / 1000);
   } catch (e) {}
 }
+// COMING BACK FROM THE TAPE IS A FADE, NOT A JUMP CUT (2026-08-17, Paul:
+// "there are definitely glitches when I come back in to the browser... why
+// don't you fade out radio and come back to live"). unmuteRamp above is the
+// return from a hide: one source, nothing to cross with, so 20 ms of straight
+// line is all it owes. This is the other return — the rendered tape is still
+// audible and coming down while the graph comes up underneath it — and there
+// the SHAPE is the whole thing:
+//
+//   * EQUAL POWER, sin over the quarter turn against the element's cos, so
+//     that sin²+cos²=1 holds the SUM OF POWERS flat across the join. The two
+//     sources are the same bar of the same song at the same phase to within
+//     the 30 ms the 1 Hz lock keeps — correlated at the bottom of the
+//     spectrum, decorrelated at the top — so neither a linear fade (which
+//     dips 3 dB in the middle for the decorrelated part) nor a hard swap
+//     (which is a step, which is a click) is the right law. Equal power is.
+//   * AT AN ABSOLUTE TIME on the AUDIO clock. The whole point of the return is
+//     landing on a downbeat the transport named; a setTimeout lands on
+//     whenever the main thread got round to it, which on a page that has just
+//     been given back the focus is exactly the wrong moment.
+//   * FROM ZERO, unconditionally: the caller has been muted the entire time
+//     the tape carried, and starting the curve from `.value` would inherit
+//     whatever a slider write left behind.
+//
+// `ducked` stays TRUE until the curve has finished — the volume slider's own
+// subscription must not setTargetAtTime over a running crossfade.
+const EPUP = (() => {
+  const a = new Float32Array(65);
+  for (let i = 0; i < a.length; i++) a[i] = Math.sin((i / (a.length - 1)) * Math.PI / 2);
+  return a;
+})();
+export function fadeUpAt(at, sec) {
+  if (!outGain || !ctx) return 0;
+  const t = Math.max(ctx.currentTime, at || 0), d = Math.max(0.005, sec || 0.08);
+  const v = masterVol();
+  try {
+    outGain.gain.cancelScheduledValues(ctx.currentTime);
+    outGain.gain.setValueAtTime(0, ctx.currentTime);
+    const curve = new Float32Array(EPUP.length);
+    for (let i = 0; i < EPUP.length; i++) curve[i] = EPUP[i] * v;
+    outGain.gain.setValueCurveAtTime(curve, t, d);
+  } catch (e) { unmuteRamp(d * 1000); return t; }
+  setTimeout(() => { ducked = false; }, Math.max(0, (t - ctx.currentTime + d) * 1000) + 20);
+  return t;
+}
+// the other half of the same curve, for whatever is fading DOWN against it —
+// audio/bounce.js steps the <audio> element's volume with it, because an
+// element's volume is not an AudioParam and has no clock but this one
+export const epDown = x => Math.cos(Math.max(0, Math.min(1, x)) * Math.PI / 2);
 /* ---------- parking the room ---------- */
 // A MUTED GRAPH IS NOT A FREE GRAPH. outGain at zero silences the speaker and
 // changes nothing about the work: every scheduled voice is still summed, every

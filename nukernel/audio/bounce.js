@@ -73,7 +73,7 @@ import { SONG, SLOTS, loopOnly, bpm, MASTER, BUSES, GROOVE, SWING, POOL,
 import { stackOf, kitOf } from "../ui/derive.js";
 import { buildMasterChain, buildEchoBus, buildRoomBus, buildKitDesk, buildSendBus, makeVerb,
          masterVol, muteNow, unmuteRamp, parkGraph, unparkGraph, isParked,
-         DRYROOM, ctx } from "./graph.js";
+         fadeUpAt, epDown, rmsNow, DRYROOM, ctx } from "./graph.js";
 import { FONT, isSynthFont, fontDef } from "./assets.js";
 import { makeSynthNode, driveSynth, offFallback } from "./voices.js";
 import { chanSpec, buildChannel, armAutomation, focusKit } from "./mixer.js";
@@ -152,7 +152,19 @@ window.__nuBounce = () => ({ ...st, carrying, armed,
   // whether the room behind it is parked (the CPU claim, as a fact rather than
   // as an intention), how long since anybody touched anything, and what the
   // machine WOULD do with that. want != mode for at most one second.
-  desk: deskCarrier, parked: isParked(), handingBack: !!handing,
+  desk: deskCarrier, parked: isParked(), handingBack: handingBack(),
+  // COMING BACK, as a state anything outside can read: whether a warm-up is in
+  // flight, how far its honest milestones have got, which of the two proofs
+  // have landed, and — once it has crossed — how long the live graph actually
+  // took to become ready. That last number is the one the ceiling is set from,
+  // and it is measured on the machine rather than guessed at the desk.
+  returning: !!ret, returnFrac: ret ? ret.frac : 0,
+  returnPrimed: ret ? ret.primed : null, returnSounding: ret ? ret.sounding : null,
+  returnStalled: ret ? ret.stalled : false, returnCrossed: ret ? !!ret.crossed : false,
+  returnMs: st.returnMs != null ? st.returnMs : null, returnCeil: RETURN_CEIL,
+  // the master tap PRE-mute: what the live graph is making, whether or not the
+  // room can hear it. It is the readiness proof, so it is readable from outside
+  graphRms: +rmsNow().toFixed(5),
   idleMs: Math.round(nowMs() - lastTouch), idleAfter: IDLE_MS,
   away, want: wantNow(),
   // the SHIPPED short-stage cap, so a gate asks this module what the insurance
@@ -363,6 +375,12 @@ function settle() {
   const want = wantNow();
   if (want === "carrier" && !deskCarrier) {
     deskCarrier = true;
+    // ALREADY CARRYING IS ALREADY DONE. A return still warming up — the graph
+    // rebuilding behind a tape that never stopped — is exactly this case, and
+    // goCarrier refuses it (it refuses anything already carrying), so without
+    // this line the flag just set would be taken straight back off and the
+    // warm-up would cross to a graph in a room nobody is in.
+    if (cancelReturn() || carrying) return;
     if (!goCarrier()) deskCarrier = false;         // nothing to hand off to yet
   } else if (want === "graph" && deskCarrier) handBack();
 }
@@ -379,10 +397,39 @@ export function touched() {
 // THE HANDBACK LANDS ON A BAR LINE, and that is the whole of why it cannot be
 // heard. The two sources are the same song at the same phase, so the only
 // audible thing about a swap is where in the phrase it happens: mid-bar it is
-// a splice, on the downbeat it is a downbeat. So the quiet flag is dropped
-// IMMEDIATELY (the transport starts filling bars again this tick, into a muted
-// master) and the actual crossing is scheduled for the next bar the graph will
-// play — measured from the transport, not guessed from a timer.
+// a splice, on the downbeat it is a downbeat.
+//
+// GOING OUT IS EASY AND COMING BACK IS NOT (2026-08-17, Paul, on the build
+// that shipped the night before: "there are definitely glitches when I come
+// back in to the browser. Why don't you fade out radio and come back to live
+// with a loading graphic on page?"). Handing OUT to the tape hands over to
+// something that ALREADY EXISTS — the render is finished, the element is
+// playing it. Handing BACK hands over to a graph that has been parked: not
+// pulled, therefore not computing, with a transport that has been advancing
+// its bar counter without scheduling a note into it (setQuietWhen, above).
+// That graph has to fill a bar, build any channel the next section needs, and
+// have the voices actually SOUNDING by the instant it takes the ear — and the
+// code here used to drop the quiet flag, take the very next bar line and hope.
+// The gap between "the flag dropped" and "the graph is making the sound" is
+// the glitch, and it is a whole bar wide.
+//
+// So the return is a WARM-UP, and it is Paul's design in four rules:
+//
+//   1. DO NOT SWITCH IMMEDIATELY. The tape keeps playing. It is the same song
+//      and it is already correct; silence and stutter are both worse than
+//      staying on tape a moment longer.
+//   2. REBUILD BEHIND IT. The room is unparked and the quiet flag dropped in
+//      the same tick, so the transport fills bars into a muted master while
+//      the tape is still the audible thing.
+//   3. PROVE IT, then cross. Two milestones, both MEASURED and neither a
+//      timer: the transport has handed a bar to the live graph (nextBarAt has
+//      moved past the bar we were at when the touch came in), and the master
+//      analyser — which taps PRE-mute, so it hears a graph nobody can — reads
+//      real signal. A graph that is scheduling and sounding into silence is a
+//      graph that can be unmuted on the beat.
+//   4. IF IT IS NOT READY, STAY ON THE TAPE and ask again at the next bar.
+//      Never silence, never a stutter — bounce.js's own demote rule, in the
+//      other direction.
 //
 // Not seekPhase(): the desk's context never froze, so the graph's clock has
 // been running in step with the tape the whole time it was parked, and a seek
@@ -392,9 +439,18 @@ export function touched() {
 function handBack() {
   if (isMobile || !deskCarrier) return;
   deskCarrier = false;                             // tick() schedules again NOW
-  unparkGraph();                                   // ...and the room can hear it
+  unparkGraph();                                   // ...and the room is computed again
   if (!carrying) return;
-  if (handing) return;                             // already crossing
+  if (ret || handing) return;                      // a return is already in flight
+  if (JUMPCUT) { jumpCut(); return; }              // ?jumpcut: the old hope, for the probe
+  warmReturn();
+}
+// ?jumpcut — THE BEFORE, kept as a walkable path (the ?noseam precedent). The
+// return gap is a number, and a number needs the two readings taken on the
+// same page by the same probe: this is the shipped-last-night handback, the
+// one that drops the flag, takes the next bar line and hopes.
+const JUMPCUT = /[?&]jumpcut\b/.test(location.search);
+function jumpCut() {
   const at = playing ? nextBarAt() : 0;
   const wait = playing && ctx ? Math.max(0, (at - ctx.currentTime) * 1000) : 0;
   const cross = () => {
@@ -403,8 +459,6 @@ function handBack() {
     carrying = false; st.mode = "graph"; st.pending = false;
     if (el) {
       el.volume = 0;                               // element down, graph up, one instant
-      // a tape that landed while we were carrying has been waiting for exactly
-      // this moment (armSwap only swaps at the loop wrap while it is audible)
       if (st.url && el.src !== st.url && !seam.on) attachCurrent();
     }
     if (playing) unmuteRamp(12);
@@ -412,10 +466,185 @@ function handBack() {
   if (wait < 8) cross();
   else handing = setTimeout(cross, Math.min(4000, wait));
 }
-// survival.js asks this before it does its own reverse handoff: while a bar
-// cross is pending the element is still the audible source, and an un-mute
-// from anywhere else is two copies of the song at once.
-export const handingBack = () => !!handing;
+
+/* ---------- the warm-up, and the loading line over it ---------- */
+// THE CEILING IS MEASURED, NOT GUESSED. The warm-up cannot finish before the
+// graph has played a bar into the mute, so its floor is one bar — 1.9 s at 126
+// bpm — and measured on the reference box a cold return reaches "sounding" in
+// 1.4–2.2 s (test/probes/nukernel-return.probe.js). Six seconds is three bars
+// of headroom over that: long enough that a slow section change or a channel
+// that has to be built is waited out, short enough that a graph which is never
+// going to sound stops promising it will. Past it the tape simply keeps the
+// song — that is the whole penalty — and the next touch tries again.
+const RETURN_CEIL = (() => {
+  const m = /[?&]ready=(\d+)/.exec(location.search);
+  return m ? Math.max(200, +m[1]) : 6000;
+})();
+const XF_SEC = 0.08;                               // the crossfade, both sides
+const READY_RMS = 0.004;                           // silence is ~1e-4; music 0.2..0.6
+let ret = null;                                    // the warm-up in flight
+// THE DECISION, AS A FUNCTION OF NOTHING BUT ITS ARGUMENTS — the same law
+// carrierWant() is written under, and for the same reason: a handback is a
+// race against a render in a browser and a truth table in node. Four answers
+// and no fifth, and the only one that moves the ear is "cross".
+export function returnStep(w) {
+  if (!w.carrying) return "graph";                 // nothing is carrying: nothing to cross
+  if (!w.playing) return "stop";                   // the transport went away under us
+  if (w.primed && w.sounding) return w.atBar ? "cross" : "wait";
+  // THE CEILING, AND WHY IT IS NOT SIMPLY A REFUSAL. Past it, a graph that has
+  // been given bars and is not making a sound is either broken or playing a
+  // genuinely quiet passage — and refusing forever would lock a listener out of
+  // the live machine for the crime of returning during an intro. So the
+  // STRUCTURAL proof alone is enough once we have waited long enough for the
+  // other one: bars are being scheduled, so a bar line is a legal place to
+  // stand. With no bars at all there is nothing to cross to, and the tape
+  // keeps the song — never silence, never a stutter.
+  if (w.waited >= w.ceiling) return w.primed ? (w.atBar ? "cross" : "wait") : "stay";
+  return "warm";
+}
+function warmReturn() {
+  // the bar the transport will fill FIRST. Everything before it was counted
+  // off while the room was quiet and never became sound, so it is the earliest
+  // instant at which "the graph has scheduled something" can be true.
+  const first = playing && ctx ? nextBarAt() : 0;
+  ret = { t0: nowMs(), first, primed: false, sounding: false, readyMs: null,
+          frac: 0, stalled: false, bars: 0, poll: null };
+  progress(0.12);                                  // the room is connected again
+  ret.poll = setInterval(warmStep, 25);
+  warmStep();
+}
+function warmStep() {
+  if (!ret) return;
+  const waited = nowMs() - ret.t0;
+  // MILESTONE 1 — the transport has handed a bar to the live graph. nextBarAt
+  // is the next bar NOT YET SCHEDULED, so its having moved past the bar we
+  // were sitting on is exactly "one bar of this song is now in the graph".
+  if (!ret.primed && playing && nextBarAt() > ret.first + 1e-4) {
+    ret.primed = true; ret.bars = 1; progress(0.45);
+  }
+  // MILESTONE 2 — ...and the graph is really MAKING that bar. rmsNow taps the
+  // master chain before outGain, so it hears a graph the room cannot: this is
+  // the parent's own boot rule (app/audio/live.js bootBar: "wait for REAL
+  // sound, not a guess"), which is the only honest way to know a voice pool
+  // warmed, a sampler decoded and a channel got built.
+  if (ret.primed && !ret.sounding && rmsNow() > READY_RMS) {
+    ret.sounding = true; ret.readyMs = Math.round(waited); progress(0.82);
+  }
+  const at = playing && ctx ? nextBarAt() : 0;
+  const now = ctx ? ctx.currentTime : 0;
+  // a downbeat we can still ramp INTO. Closer than the fade itself and the
+  // curve would start in the past, which is a cut wearing a fade's name — so
+  // that bar is skipped and the next one asked for, 4 rule.
+  const atBar = at >= now + XF_SEC + 0.02;
+  const step = returnStep({ carrying, playing, primed: ret.primed,
+                            sounding: ret.sounding, waited,
+                            ceiling: RETURN_CEIL, atBar });
+  if (step === "cross") { commitCross(at); return; }
+  if (step === "wait") return;                     // ready, waiting for a bar line
+  if (step === "warm") {
+    // HONEST, INCLUDING ABOUT BEING STUCK: past a second and a half with no
+    // milestone the line stops pretending to move and shimmers instead (the
+    // parent's `ind` class, same 1400 ms). It never creeps to 99%.
+    if (waited > 1400 && !ret.stalled) { ret.stalled = true; progress(ret.frac); }
+    return;
+  }
+  // "graph" / "stop" / "stay": the ear stays exactly where it is. On "stay"
+  // that means the tape keeps the song — never silence, never a stutter — and
+  // the next touch starts a fresh warm-up.
+  if (step === "stay") {
+    st.returnStalled = (st.returnStalled || 0) + 1;
+    console.warn("[nukernel] the live graph did not become ready in " +
+                 RETURN_CEIL + " ms — staying on the tape");
+    deskCarrier = true;                            // it is the audible path again, honestly
+  }
+  endReturn();
+}
+function commitCross(at) {
+  if (!ret) return;
+  ret.crossed = true;
+  clearInterval(ret.poll); ret.poll = null;
+  progress(0.95);
+  // THE GRAPH RISES ON THE AUDIO CLOCK, sample-accurately, from the downbeat
+  // the transport named — equal power, so the join holds level against the
+  // element's cosine coming down through the same window.
+  fadeUpAt(at, XF_SEC);
+  const lead = Math.max(0, (at - (ctx ? ctx.currentTime : 0)) * 1000);
+  // ...and the tape comes down on the only clock an <audio> element has. It is
+  // started 6 ms EARLY on purpose: a setTimeout can be late and never early,
+  // and being a few milliseconds ahead of the audio clock costs a sliver of
+  // two sources at PARTIAL gain, where being late costs both at FULL.
+  handing = setTimeout(() => {
+    handing = null;
+    if (deskCarrier || !ret) { endReturn(); return; }  // it went quiet again mid-cross
+    elFade(XF_SEC * 1000);
+  }, Math.max(0, lead - 6));
+}
+// the element's side of the curve, stepped. 4 ms is finer than any UA's own
+// volume smoothing and cheap for the 80 ms it runs.
+function elFade(ms) {
+  const t0 = nowMs(), v0 = el ? el.volume : 0;
+  // the flags flip HERE, at the top of the fade, so nothing downstream (the
+  // 1 Hz watchdog, armSwap, a render landing mid-cross) can treat the element
+  // as the audible path while it is on its way down
+  carrying = false; st.mode = "graph"; st.pending = false;
+  const tick2 = () => {
+    const x = Math.min(1, (nowMs() - t0) / ms);
+    if (el) { try { el.volume = clampVol(v0 * epDown(x)); } catch (e) {} }
+    if (x >= 1) {
+      clearInterval(iv);
+      // a tape that landed while we were carrying has been waiting for exactly
+      // this moment (armSwap only swaps at the loop wrap while it is audible),
+      // and it waits until the fade is OVER so the swap is not inside it
+      if (el && st.url && el.src !== st.url && !seam.on) attachCurrent();
+      progress(1);
+      endReturn();
+    }
+  };
+  const iv = setInterval(tick2, 4);
+  tick2();
+}
+function endReturn() {
+  if (ret && ret.poll) clearInterval(ret.poll);
+  const r = ret; ret = null;
+  if (r) { st.returnMs = r.readyMs; st.returnBars = r.bars; }
+  // NEVER SILENCE, held as an invariant rather than as a sequence of correct
+  // calls (the 1 Hz tick's own law, in the other direction): every way out of
+  // a return that did NOT cross — the transport stopped, the tape was taken
+  // away under us, the ceiling with nothing scheduled — leaves the graph muted
+  // behind an element that may already be down. If nothing is carrying, the
+  // room is the sound and it says so.
+  if (r && !r.crossed && !carrying && playing && !isParked()) unmuteRamp(20);
+  emit("return", { on: false, frac: 1, stalled: false });
+}
+// THE PAGE WENT QUIET AGAIN MID-WARM-UP — hidden, blurred, or thirty seconds of
+// nobody. The tape is still the audible path and stays it: the warm-up is
+// abandoned, the graph goes back to silent, and the room re-parks on the next
+// 1 Hz tick. A cross already committed is past the point of stopping, and does
+// not need stopping — it ends with the graph audible, and settle() hands the
+// tape the ear again a second later through the front door.
+function cancelReturn() {
+  if (!ret) return false;
+  if (ret.crossed) return false;
+  if (handing) { clearTimeout(handing); handing = null; }
+  clearInterval(ret.poll); ret = null;
+  if (carrying) muteNow();
+  emit("return", { on: false, frac: 1, stalled: false });
+  return true;
+}
+// THE LOADING LINE IS THE WARM-UP'S OWN PROGRESS, never a timer's. It moves
+// because a milestone closed, it shimmers when nothing has closed for a second
+// and a half, and it is WORDLESS — a hairline under the transport, no text and
+// no percentage ("success is almost no words"). ui/readout.js draws it.
+function progress(frac) {
+  if (!ret) return;
+  ret.frac = Math.max(ret.frac, frac);             // monotonic: never walks backward
+  st.returnFrac = ret.frac;
+  emit("return", { on: true, frac: ret.frac, stalled: ret.stalled });
+}
+// survival.js asks this before it does its own reverse handoff: while a return
+// is warming or crossing the element is still the audible source, and an
+// un-mute from anywhere else is two copies of the song at once.
+export const handingBack = () => !!handing || !!ret;
 // THE CARRIER IS THE PATH: the phone always, the desk whenever it has gone
 // quiet. Everything downstream of "is the tape the audible source" — the quiet
 // tick, the swap at the wrap, the survival handoff — reads this one answer.

@@ -59,6 +59,33 @@ export function update() {
   describe();
 }
 
+/* ---------- the loading line ---------- */
+// COMING BACK IS NOT INSTANT, AND THE PAGE SAYS SO (2026-08-17, Paul: "why
+// don't you fade out radio and come back to live with a loading graphic on
+// page"). While the rendered tape keeps the song, the live graph is rebuilding
+// behind it — filling a bar, warming voices, proving it can sound — and that
+// takes a bar or two. A page that showed nothing would look frozen; a page that
+// showed a sentence would be back to explaining itself.
+//
+// So it is a HAIRLINE on the rule this row already draws, and it is the
+// parent's honest boot-progress meter (app/audio/live.js bootTo/bootStart, "we
+// drive the bar off THOSE events only — never a timer faking progress"): it
+// moves when a MILESTONE closes, it is monotonic, and when nothing has closed
+// for a second and a half it stops pretending and shimmers instead of creeping
+// to 99%. No text, no percentage — the only wordless thing this row has ever
+// had to say is "wait".
+const loadEl = document.createElement("span");
+loadEl.className = "posload";
+loadEl.setAttribute("aria-hidden", "true");       // it is not a field; it is the rule moving
+readoutEl.appendChild(loadEl);
+on("return", d => {
+  // scaleX rather than width: the line rides the compositor, so it never
+  // competes with the bar the graph is trying to schedule beneath it
+  loadEl.style.transform = "scaleX(" + Math.max(0, Math.min(1, d.frac || 0)) + ")";
+  loadEl.classList.toggle("stall", !!d.stalled);
+  readoutEl.classList.toggle("loading", !!d.on);
+});
+
 // SELF-SUBSCRIBED, COALESCED — one rAF per burst of change events, never one
 // rewrite per pointer event (a scrub commits "phrase" per pointermove).
 // "transport:section" joins the list here (it used to only drive main.js's

@@ -107,12 +107,16 @@ function goVisible() {
   if (carried) {
     carried = false;
     // THE TAPE MAY BE GIVING ITSELF BACK, and if it is, this must keep its
-    // hands off. audio/bounce.js hands the desk back ON A BAR LINE (touched ->
-    // handBack): for that second the element is still the audible source, so
-    // an uncarry() here would cut it mid-phrase and a seekPhase would cost a
-    // bar of silence to correct a clock that never drifted. Only the route
-    // bounce is NOT handling — a hide that carried without the desk state, and
-    // every mobile path — gets the reverse handoff below.
+    // hands off. audio/bounce.js hands the desk back through a WARM-UP that can
+    // run for a bar or two (touched -> handBack -> warmReturn): the live graph
+    // rebuilds behind a tape that never stops, and the two cross equal-power on
+    // a downbeat only once the graph has proved it can render a bar. For all of
+    // that time the element is still the audible source, so an uncarry() here
+    // would cut it mid-phrase and a seekPhase would cost a bar of silence to
+    // correct a clock that never drifted. handingBack() covers the whole
+    // window, warm-up and crossfade both. Only the route bounce is NOT handling
+    // — a hide that carried without the desk state, and every mobile path —
+    // gets the reverse handoff below.
     if (isCarrying() && !handingBack()) {
       // reverse handoff: element down, graph up — and the transport RESYNCS to
       // where the element actually got to, because on iOS the graph's clock was

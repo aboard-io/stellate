@@ -224,10 +224,28 @@ function taps() {
   await page.evaluate(() => { window.__vis = "visible"; document.dispatchEvent(new Event("visibilitychange")); });
   await page.waitForTimeout(2000);
   {
-    const back = await rmsN(6, 300);
-    const alive = back.filter(v => v > RMS_FLOOR).length;
+    // AUDIBLE BY EITHER SOURCE, on the way back exactly as on the way out. The
+    // hidden half above has always counted the carrier; this half used to
+    // demand the live GRAPH within two seconds, which since 2026-08-17 is a law
+    // the page deliberately does not keep: coming back, the tape holds the song
+    // until the graph has proved it can render a bar, and only then do they
+    // cross (audio/bounce.js warmReturn — measured at 1.5 s to ready, 3.4 s to
+    // the downbeat). Silence is still the failure, and (B2)/(R) below is what
+    // holds the graph to actually arriving.
+    const back = await page.evaluate(async () => {
+      const out = [];
+      for (let i = 0; i < 6; i++) {
+        const b = window.__nuBounce ? window.__nuBounce() : null;
+        out.push({ rms: window.__rms(),
+                   tape: !!(b && b.carrying && b.elVolume > 0 && b.elPaused === false) });
+        await new Promise(r => setTimeout(r, 300));
+      }
+      return out;
+    });
+    const alive = back.filter(v => v.rms > RMS_FLOOR || v.tape).length;
     const state = await page.evaluate(() => window.__ctx.state);
-    console.log("  return RMS:", back.map(v => v.toFixed(3)).join(" "), "state:", state);
+    console.log("  return RMS:", back.map(v => v.rms.toFixed(3)).join(" "),
+                "tape:", back.map(v => (v.tape ? "t" : "·")).join(""), "state:", state);
     if (alive < 4 || state !== "running")
       fail(`the page did not come back from hidden (${alive}/6 audible, state '${state}')`);
     else ok(`return from hidden: audible (${alive}/6) and running`);
@@ -356,14 +374,80 @@ function taps() {
              `against 0.6s of wall clock)`);
       else ok(`el.currentTime advances while carrying (${t0.toFixed(2)}s -> ` +
               `${t1.toFixed(2)}s, +${moved.toFixed(2)}s on a ${dur.toFixed(2)}s loop)`);
-      await page.evaluate(() => {
-        window.__vis = "visible"; document.dispatchEvent(new Event("visibilitychange")); });
-      await page.waitForTimeout(2000);
-      const back = await page.evaluate(() => ({ b: window.__nuBounce(), rms: window.__rms() }));
+      // ── (R) COMING BACK IS A FADE AND A LOADING LINE, NOT A JUMP CUT ──
+      // 2026-08-17, Paul, on the build that shipped the night before: "there
+      // are definitely glitches when I come back in to the browser." Going OUT
+      // hands the ear to a render that already exists; coming BACK hands it to
+      // a graph that was parked — not pulled, therefore not computing — with a
+      // transport that has been counting bars without scheduling a note into
+      // any of them. The old law here was a fixed two-second wait, which is the
+      // same hope the code had: it asserted that the graph was audible 2 s after
+      // the show, whatever the graph was actually doing.
+      //
+      // The law now is that the TAPE KEEPS THE SONG until the live graph has
+      // PROVEN it can render a bar — the transport has handed it one and the
+      // pre-mute analyser hears it — and only then do the two cross, equal
+      // power, on a bar line. So this samples the whole return at 10 ms and
+      // holds three things the old check could not: never a moment with no
+      // audible source, never a moment with two at full, and a loading line
+      // that is on exactly while the warm-up is.
+      const cycle = await page.evaluate(async () => {
+        const rows = [];
+        const t0 = performance.now();
+        window.__vis = "visible";
+        document.dispatchEvent(new Event("visibilitychange"));
+        const readout = document.getElementById("readout");
+        const line = document.querySelector(".posload");
+        for (let i = 0; i < 900; i++) {
+          const b = window.__nuBounce();
+          rows.push({ t: +(performance.now() - t0).toFixed(1), rms: window.__rms(),
+                      v: b.elVolume, p: !!b.elPaused, c: !!b.carrying,
+                      ret: !!b.returning, frac: b.returnFrac,
+                      load: !!(readout && readout.classList.contains("loading")),
+                      sx: line ? line.style.transform : null });
+          if (!b.carrying && !b.returning && performance.now() - t0 > 500) break;
+          await new Promise(r => setTimeout(r, 10));
+        }
+        const b = window.__nuBounce();
+        return { rows, b, ms: Math.round(performance.now() - t0) };
+      });
+      const back = { b: cycle.b, rms: await page.evaluate(() => window.__rms()) };
       if (back.b.carrying || back.rms < RMS_FLOOR)
         fail(`the reverse handoff failed (carrying ${back.b.carrying}, ` +
-             `RMS ${back.rms.toFixed(4)})`);
-      else ok("return from the carried hide: the graph is audible again");
+             `RMS ${back.rms.toFixed(4)}, returning ${back.b.returning}, ` +
+             `frac ${back.b.returnFrac}) after ${cycle.ms} ms`);
+      else ok(`return from the carried hide: the graph is audible again ` +
+              `(ready in ${back.b.returnMs} ms, crossed at ${cycle.ms} ms)`);
+      {
+        // ONE SOURCE, ALWAYS. "audible" is the live graph over the analyser
+        // floor or the element unpaused with its volume up; the crossfade is
+        // the one legal overlap and it is bounded — never both at FULL.
+        const R = cycle.rows;
+        const none = R.filter(r => r.rms <= RMS_FLOOR && !(r.v > 0.02 && !r.p));
+        const full = R.filter(r => r.rms > RMS_FLOOR * 4 && r.v > 0.9 && !r.p);
+        if (none.length)
+          fail(`${none.length * 10} ms of the return had NO audible source ` +
+               `(first at ${none[0].t} ms) — that is the glitch, in samples: ` +
+               `${Math.round(none.length * 10 * 44.1)} at 44.1k`);
+        else ok(`the return never went silent (${R.length} samples at 10 ms)`);
+        if (full.length > 2)
+          fail(`${full.length * 10} ms with BOTH sources at full level — ` +
+               `the song against a phase-shifted copy of itself`);
+        else ok("never two sources at full level across the cross");
+        // THE LOADING LINE IS ON EXACTLY WHILE THE WARM-UP IS, and it moves
+        // because milestones closed — monotonic, and never a timer's creep.
+        const lied = R.filter(r => r.load && !r.ret && !r.c);
+        const mute = R.filter(r => !r.load && r.ret);
+        if (lied.length) fail(`the loading line stayed up ${lied.length * 10} ms ` +
+                              `after the graph was ready — a loader that lies`);
+        else ok("the loading line is up only while the graph is genuinely not ready");
+        if (mute.length > 2) fail(`${mute.length * 10} ms of warm-up with no loading line`);
+        else ok("the warm-up is never silent about itself");
+        const fr = R.filter(r => r.ret).map(r => r.frac);
+        const backward = fr.filter((v, i) => i && v < fr[i - 1]);
+        if (backward.length) fail("the loading line walked backward");
+        else if (fr.length) ok(`the line filled ${fr[0]} -> ${fr[fr.length - 1]}, monotonic`);
+      }
     } else ok("bounce never reached ready — (B) already failed this; handoff cycle skipped");
   }
 
