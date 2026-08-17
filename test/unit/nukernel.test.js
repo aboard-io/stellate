@@ -26,27 +26,32 @@ const { DEFAULT, GENRES, MODES, SCALES, FAMILIES } = require("../../nukernel/gen
 const GK = Object.keys(GENRES);
 
 // ---- node test/unit/nukernel.test.js --calibrate-sing ----------------------
-// NOT A GATE — the RECIPE that produced the two measured tables baked into
-// nukernel/sing.js (LADDER_LOW / LADDER_HIGH). A number in the source that
-// nobody can reproduce is a number nobody can correct, and these two took two
-// attempts to get right: the first pass measured "la la la" at espeak speed
-// 150 and was off by up to 3.5 semitones for the syllables the singer actually
-// sings. So this runs the REAL protocol — every syllable of every bank line,
-// at the speed audio/sing.js uses, cut the way it cuts, measured with the
-// found layer's own detector — and prints the tables ready to paste. ~90 s and
-// 280 espeak instances, which is exactly why it is a flag and not a check.
+// NOT A GATE — the RECIPE that produced the measured ladders baked into
+// nukernel/sing.js (LADDERS, one row per singer). A number in the source that
+// nobody can reproduce is a number nobody can correct, and the first two took
+// two attempts to get right: the first pass measured "la la la" at espeak
+// speed 150 and was off by up to 3.5 semitones for the syllables the singer
+// actually sings. So this runs the REAL protocol — every syllable of every
+// bank line, at the speed audio/sing.js uses, cut the way it cuts, measured
+// with the found layer's own detector — and prints the table ready to paste.
+// It walks whatever SINGERS names, so adding a voice to the cast is a row
+// there and a re-run here. ~9 min and 1260 espeak instances for nine singers,
+// which is exactly why it is a flag and not a check.
 if (process.argv.includes("--calibrate-sing")) {
   (async () => {
     const CS = require("../../engine/speech.js");
     const FP = require("../../engine/faust/voices/found-player.js");
     const S = require("../../nukernel/sing.js");
-    const IPA = new Set([..."aeiouyəɐɛɪɔʊʌɜæɑɒɘɵøɤɯɨʉœɶɞ"]);
+    // the rhotic pair is in the set for audio/sing.js's own reason: every
+    // variant resolves through lang "" to the AMERICAN side, where "for" is
+    // "f ɚ", and a missed nucleus here is a syllable missing from the median
+    const IPA = new Set([..."aeiouyəɐɛɪɔʊʌɜæɑɒɘɵøɤɯɨʉœɶɞɚɝ"]);
     const isNuc = id => { const t = String(id || "").replace(/[ˈˌː%_'|\-]/g, "");
                           return t.length > 0 && IPA.has(t[0]); };
     const lines = Object.values(S.BANKS).flat().map(l => l.join(" "));
-    const SPEED = 260;                     // audio/sing.js SPEED
-    for (const [name, o] of [["LADDER_LOW", { variant: "", lang: "en" }],
-                             ["LADDER_HIGH", { variant: "f3", lang: "" }]]) {
+    const SPEED = 175;                     // audio/sing.js SPEED
+    for (const [name, o] of Object.entries(S.SINGERS)
+                                  .map(([k, v]) => [k, { variant: v.variant, lang: v.lang }])) {
       const row = [];
       for (const p of [10, 25, 40, 55, 70, 85, 99]) {
         const ms = [];
@@ -67,8 +72,8 @@ if (process.argv.includes("--calibrate-sing")) {
         ms.sort((a, b) => a - b);
         row.push([p, +ms[ms.length >> 1].toFixed(2)]);
       }
-      console.log("  const " + name + " = " +
-        JSON.stringify(row).replace(/\],\[/g, "], [") + ";");
+      console.log("    " + (name + ":").padEnd(7) + " " +
+        JSON.stringify(row).replace(/\],\[/g, "], [") + ",");
     }
     process.exit(0);
   })().catch(e => { console.error(e); process.exit(1); });
@@ -7401,55 +7406,68 @@ console.log("the master harmonization engine — one tonality, every added voice
   // ROW THAT DID NOT MOVE is a genre that declares no singer — postrock,
   // house, dub, techno, ambient, jazz, drone, tango, the three function
   // genres — which is what says this is that one change and not a second.
+  // ...AND ONCE MORE, for ONE change again: THE SINGER LEARNED TO PHRASE.
+  // Three things moved inside sing.js singPlan, all of them about WHICH note
+  // gets a word, and nothing else in the stream: the lyric is dealt in order
+  // and waits for a downbeat (or a bar's silence) before starting again
+  // instead of wrapping at words[i % n] wherever that fell; the gap floor
+  // between syllables went from 2 steps to 3, because a step is 0.09-0.13 s
+  // and the syllable it has to hold is 0.11-0.34 s; and the floor on the
+  // NOTE's own length came off (MIN_NOTE 1), because a filter on note length
+  // is a filter on articulation — it silenced every staccato genre, and
+  // gothsynth sang three syllables in a whole song. THE ROWS THAT DID NOT
+  // MOVE ARE THE TWENTY-SIX THAT DECLARE NO SINGER (postrock, house, dub,
+  // techno, ambient, jazz, drone, tango, the function genres), exactly as
+  // they did not move last time, which is what says this is that one change.
   // (`NUKERNEL_REF=1` prints this block, below.)
   const REF = { simple: "4b9740e29df3", fugue: "fb66b85894fe",
-    acid: "6e5ab21af5a4", newwave: "5717cb778837",
-    vaporwave: "149d5015f704", blues: "e992816fe37e", rock: "7da5273b42eb",
-    gregorian: "878e3db9b604", bulgarian: "a9febf4f8da0",
-    spem: "68d79fe43d42", counterpoint: "05be67334465",
+    acid: "6e5ab21af5a4", newwave: "fc397d82d6a6",
+    vaporwave: "149d5015f704", blues: "e1d84fc92275", rock: "bc65d1cce68b",
+    gregorian: "33ae1961f915", bulgarian: "fb4380b09a9f",
+    spem: "4110871cc1b5", counterpoint: "05be67334465",
     neoclassical: "182f2de5a1d1", drone: "c44769f4ff21",
-    sludge: "cc012c09833a", tango: "ee09103e8ed3",
-    deathmetal: "dfb27fd453a3", eurythmics: "18609e9690eb",
-    isley: "bc15362e0163", toto: "0e38f9a06f7c", jodeci: "4e15a51dbd81",
-    beatles: "cfcb9a476370", steely: "6cbe0f6192d0",
+    sludge: "300413ae8751", tango: "ee09103e8ed3",
+    deathmetal: "e6a62fa22604", eurythmics: "4d8d27640d24",
+    isley: "cf18257fe7e5", toto: "91784f823241", jodeci: "c9accfbd59a1",
+    beatles: "034abe921678", steely: "21b785908651",
     postrock: "27b4a3b46e43", boombap: "b01f5cdbae1b", trap: "897203c2b00b",
-    house: "817eac80ba2a", garage: "f1cac91c36d5", dnb: "3999fdcb3980",
-    disco: "13ecc4e5cece", funk: "63dbf9e5f228", motown: "1cfc02d9f83d",
-    rnb: "1237ca043286", gospel: "011369d4a62f", reggae: "00decaf27935",
-    dub: "54c3fb491042", ska: "50422c601d13", afrobeat: "354f7ab0e380",
-    bossa: "d6c65027d041", countrypop: "60a5db06cfac",
-    synthpop: "4073379ba16a", shoegaze: "b27b6d368bc2",
-    citypop: "ad41f31ba215", punk: "ccb6fd54686f", ambient: "e5269e817b91",
-    techno: "c76899eec976", jazz: "8f2957718601", bodiddley: "96c2fe73deda",
-    chuckberry: "ce67f7e73a9c", doowop: "47cf5f4adcfd",
-    skiffle: "024eb7dbb2ca", minimalism: "cd067bced87e",
-    kraftwerk: "593e5cafcdd3", electro: "f61b83b8be03",
-    hymn: "42c362d76583", crooner: "bcce779eaa4c", yuletide: "d39158037cc8",
-    merseybeat: "ccf6ed4dc4a7", psychpop: "611140b0494e",
-    bigbeat: "5f57407002f7", drill: "e7a238609e57", clubpop: "9ef1751a2ba5",
-    powerballad: "779d94a84869", retrofunkpop: "335b4039ae44",
-    reggaeton: "cc2eee583635", latinpop: "513e350a2ee4",
-    kpop: "4fa1cc80588f", boyband: "491e5849b584", emo: "29c32da28ea9",
-    screamo: "098322f177b0", confessionalpop: "6e5d3c8c0168",
-    darkrnb: "113536484ec8", bigroom: "15833d9eadf3",
-    blueeyedsoul: "398778bb04a6", folkduo: "110c9173814b",
-    worldfolk: "6ad91dd72f71", jamband: "6d77799cf70f",
-    sophistirock: "9e06be895ac4", motorik: "4277a78e2735",
-    roboticpop: "acc9aa6c2a89", industrialmetal: "669cf728afcd",
-    ebm: "eead7a465859", synthduo: "e5b1c59de4df",
-    musichallrock: "173395a3e3dd", orchpsych: "e89a8c8588dd",
-    altcountry: "254d44ce9cf7", yachtsoul: "21f127a9215c",
-    yachtrock: "f63d0f41c9e1", songwriterpiano: "ed1a283201fd",
-    softfolk: "76758a37d604", singersongwriter: "bf3c8a71be98",
-    coastrock: "d1c26b288b19", spacerock: "bf510e0f500a",
-    grebo: "3860e0568cef", melodictechno: "b790604dd18f",
-    bleeptechno: "facb92b5ae8c", industrialbreaks: "8fd9b42455d7",
-    industrialrock: "ca2204fe4330", analogsynthpop: "ada1c6c03ec7",
-    gothsynth: "b80df7e239aa", gothicpop: "ee0b718ed928",
-    postpunk: "6b27594474e8", dancepostpunk: "622df48b27c4",
-    madchester: "5d719ae2eaf4", janglepop: "36c94ebc8d82",
-    indiedance: "c33e61453c40", solo: "219f51866bce", vocal: "0aae245803eb",
-    backing: "18c7c4cd850b", riff: "3c531d83afd9", pad: "ce08c515e400" };
+    house: "817eac80ba2a", garage: "c85f64143bc8", dnb: "3999fdcb3980",
+    disco: "fe0d735bab38", funk: "de449a3510fa", motown: "830ae85c2dff",
+    rnb: "faa57db340d3", gospel: "d4794f5d4efd", reggae: "9a13237198d9",
+    dub: "54c3fb491042", ska: "5af11924b3ca", afrobeat: "1cb38386cf98",
+    bossa: "ca69ccf9457e", countrypop: "354ed2ad2b95",
+    synthpop: "b203e269f229", shoegaze: "aece6c7e5153",
+    citypop: "ba49e05af4a8", punk: "d886a3f859ef", ambient: "e5269e817b91",
+    techno: "c76899eec976", jazz: "8f2957718601", bodiddley: "34d2e6f7648d",
+    chuckberry: "d5e5922b0753", doowop: "b16f4034d45c",
+    skiffle: "bc07ca0adcd9", minimalism: "cd067bced87e",
+    kraftwerk: "3b21c1c849a4", electro: "2b77e521634d",
+    hymn: "6f601bb1ee4c", crooner: "6e1496b5e115", yuletide: "001acf60b37a",
+    merseybeat: "2fa691f2b214", psychpop: "4f073ae5d4e6",
+    bigbeat: "cb13a450d5b9", drill: "e7a238609e57", clubpop: "73e8dc84d174",
+    powerballad: "7c740f32f578", retrofunkpop: "3bd04265cca5",
+    reggaeton: "6036a96ffa7c", latinpop: "cc300a8f6190",
+    kpop: "e3d3aa7557a2", boyband: "44a2ea8dd3df", emo: "07056b9c7c09",
+    screamo: "0716e3417dae", confessionalpop: "dd22d62d8c00",
+    darkrnb: "df020165263d", bigroom: "15833d9eadf3",
+    blueeyedsoul: "6f8762f87a3b", folkduo: "0bd204cde20a",
+    worldfolk: "7b1f4b40e7ca", jamband: "f8db97b39da0",
+    sophistirock: "3d857cca7063", motorik: "663fb8118bcc",
+    roboticpop: "8bf1dd6900a9", industrialmetal: "b1e44cba2f8b",
+    ebm: "272d75871834", synthduo: "b3c6068cb21b",
+    musichallrock: "3cf53ef1f3d9", orchpsych: "64bec638495b",
+    altcountry: "b410e4c541f6", yachtsoul: "eb9f4517c10d",
+    yachtrock: "564afc36207b", songwriterpiano: "ab87aba5be76",
+    softfolk: "bad64c2f20ad", singersongwriter: "f0f4dc547b85",
+    coastrock: "f4b8fe40c33b", spacerock: "bf510e0f500a",
+    grebo: "910b0540079e", melodictechno: "b790604dd18f",
+    bleeptechno: "497804dfac9d", industrialbreaks: "8fd9b42455d7",
+    industrialrock: "6cb01e1c9d52", analogsynthpop: "58e25563e5f4",
+    gothsynth: "ac969d926d6d", gothicpop: "41cd5f52ac9e",
+    postpunk: "4f7ec5c9774c", dancepostpunk: "973106c1c3c2",
+    madchester: "6251dd1ccc0d", janglepop: "b3629d416bc7",
+    indiedance: "d14e87c7d07e", solo: "219f51866bce", vocal: "14938c9543f9",
+    backing: "2f77c6eb6605", riff: "3c531d83afd9", pad: "ce08c515e400" };
   // RE-MEASURING IS A COMMAND, not a hand copy off a failure log: the table
   // above is 110 rows and a deliberate change moves most of them at once, so
   // `NUKERNEL_REF=1` prints the whole block ready to paste, the way the
@@ -11479,8 +11497,13 @@ console.log("one singer is a demo; a record is the same voice four times, slight
     path70.join(__dirname, "../../nukernel/audio/sing.js"), "utf8");
   // (the predicate was named `stacked` on 2026-08-17 so the level makeup and
   // the route could not disagree about which parts are stacked — §72(b))
+  // (the chair's destination became the SINGER'S OWN STRIP on 2026-08-17 —
+  // `sing` is a part address now and partIn answers with the section input
+  // where the box has no strip, so this reads the variable rather than the
+  // literal it used to be)
   ok(/const stacked = !!\(ev\.role && ev\.role !== "tune"\)/.test(aSrc70) &&
-     /const dest = stacked[\s\S]{0,80}voiceChairFor\(chan, "sing", "vox", chan\.input\)/.test(aSrc70),
+     /const strip = chan\.partIn \? chan\.partIn\("sing"\) : chan\.input/.test(aSrc70) &&
+     /const dest = stacked[\s\S]{0,80}voiceChairFor\(chan, "sing", "vox", strip\)/.test(aSrc70),
      "§70(g) playSyllable no longer routes a stacked part through the vox chair");
   ok(/const ratio = drift \? Math\.pow\(2, drift\.cents \/ 1200\)/.test(aSrc70),
      "§70(g) playSyllable no longer bends a drifted part's pitch");

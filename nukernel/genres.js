@@ -519,8 +519,11 @@
     bulgarian: {
       // named "Sofia 1975" — Le Mystère des Voix Bulgares (the comment's own
       // reference) is the Sofia state radio choir, first issued 1975.
-      // SING: the open, held second above the tune — the choir's own dissonance.
-      label: "Sofia 1975", sing: "duet", rate: 1, bars: 4, voices: 2,
+      // SING: the open, held second above the tune — the choir's own
+      // dissonance, sung by WOMEN: Le Mystère des Voix Bulgares is a female
+      // choir, so this is the one chant anchor that takes `torch` (a woman on
+      // the tune) rather than the family's mixed `chapel`.
+      label: "Sofia 1975", sing: "duet", singer: "torch", rate: 1, bars: 4, voices: 2,
       // LINEAGE: a root under protest — the radio choir ARRANGED a village
       // diaphony older than notation; the ison under it is Orthodox chant's,
       // and neither parent is in the catalog. Gregorian is chant, but the
@@ -686,8 +689,10 @@
     sludge: {
       // named "New Orleans 1991" — the half-speed phrygian ♭II riff under
       // crunch is NOLA sludge (Eyehategod/Crowbar), not Birmingham doom.
-      // SING: a punk throat dragged to doom tempo, roared rather than sung.
-      label: "New Orleans 1991", sing: "holler", rate: 0.5, bars: 8, voices: 2,
+      // SING: a punk throat dragged to doom tempo, roared rather than sung —
+      // the `shout` cast, whose two voices are the only ones in the room with
+      // grain in them (sing.js SINGERS: roughness on both halves of the stack).
+      label: "New Orleans 1991", sing: "holler", singer: "shout", rate: 0.5, bars: 8, voices: 2,
       // LINEAGE: NOLA sludge is hardcore punk slowed into blues feel —
       // Eyehategod is a punk band playing at doom tempo with a blues hand;
       // the missing link between them is Sabbath, the doom that showed rock
@@ -766,8 +771,8 @@
     deathmetal: {
       // named "Tampa 1990" — the Morrisound era: blast beats ridden on the
       // cymbal and tremolo-picked walls are the Florida school's two techniques.
-      // SING: the death growl, unison and rough, over the blast.
-      label: "Tampa 1990", sing: "holler", rate: 1, bars: 8, voices: 2,
+      // SING: the death growl, unison and rough, over the blast — `shout`.
+      label: "Tampa 1990", sing: "holler", singer: "shout", rate: 1, bars: 8, voices: 2,
       // LINEAGE: the blast beat is hardcore's D-beat run past its limit and
       // the riff wall is rock's language forced chromatic — but the actual
       // parents, thrash and the NWOBHM it fed on, are the missing rungs of
@@ -961,8 +966,10 @@
       // named "Charlotte 1991" — Forever My Lady's year, and the choir-over-808
       // anchor is the Hailey brothers' Charlotte church sound; the new jack
       // swing TECHNIQUE itself would be Harlem 1987 (Teddy Riley).
-      // SING: the new jack quartet, church voices over the 808.
-      label: "Charlotte 1991", sing: "chorale", rate: 1, bars: 4, voices: 2, swing: 0.28,
+      // SING: the new jack quartet, church voices over the 808 — four brothers,
+      // so `teen` rather than the soul family's woman-out-front `torch`.
+      label: "Charlotte 1991", sing: "chorale", singer: "teen",
+      rate: 1, bars: 4, voices: 2, swing: 0.28,
       // LINEAGE: gospel melisma from the Haileys' church over funk's pocket
       // quantized into a drum machine, with Motown's songcraft underneath;
       // the swung-sixteenth TECHNIQUE is Teddy Riley's new jack swing, and
@@ -1830,8 +1837,9 @@
     punk: {
       // named "New York 1976" — the Ramones' debut: every-eighth downstrokes
       // at 160 is Johnny's right hand, a year before London took it up.
-      // SING: the shouted unison, rough on purpose — no harmony to soften it.
-      label: "New York 1976", sing: "holler", rate: 1, bars: 4, voices: 2, near: "rock",
+      // SING: the shouted unison, rough on purpose — no harmony to soften it,
+      // and the `shout` cast so the voice itself is not a polite one.
+      label: "New York 1976", sing: "holler", singer: "shout", rate: 1, bars: 4, voices: 2, near: "rock",
       // LINEAGE: the Ramones are sixties pop played as fast and plainly as
       // possible — rock's power stripped of its solos, bubblegum hooks kept
       // whole. Chuck Berry's downstroke is an anchor now, but it arrives here
@@ -2314,8 +2322,9 @@
       // named "Harlem 1955" — the Cadillacs cutting "Speedoo" for Josie and the
       // Harptones working the Apollo, the year the corner went on record;
       // uptown New York, not the Penguins' LA or the Moonglows' Chicago.
-      // SING: the corner quartet's four-part ooh/ahh.
-      label: "Harlem 1955", sing: "chorale", rate: 1, bars: 8, voices: 3, swing: 1 / 3, near: "motown",
+      // SING: the corner quartet's four-part ooh/ahh — four MEN on the corner,
+      // so `teen` (a bright tenor lead) rather than soul's own `torch`.
+      label: "Harlem 1955", sing: "chorale", singer: "teen", rate: 1, bars: 8, voices: 3, swing: 1 / 3, near: "motown",
       // LINEAGE: the jubilee/gospel quartet is where the parts, the blend and
       // the bass singer come from — every one of these groups had been singing
       // in church first — and the band behind them is the blues, playing the
@@ -3284,8 +3293,9 @@
     // declares (stacked sixths, chord-locked) does the backing-vocal work
     // here exactly as it does there, cited rather than reinvented.
     boyband: {
-      // SING: a boyband is stacked, full stop.
-      label: "Orlando 1997", sing: "thirds", rate: 1, bars: 4, voices: 3, near: "doowop",
+      // SING: a boyband is stacked, full stop — and the stack is `teen`, the
+      // bright tenor with air over it, which is the whole sound of the record.
+      label: "Orlando 1997", sing: "thirds", singer: "teen", rate: 1, bars: 4, voices: 3, near: "doowop",
       // LINEAGE: the group-of-voices arithmetic (lead out front, a harmony
       // stack, a keyboard holding the changes) is doo-wop's own scheme,
       // inherited whole down to the `part` register spacing; the sixths-
@@ -3363,8 +3373,8 @@
     // fills every step, is one riff stated twice; the second half of the
     // subject is a different riff), at hardcore tempo instead of a drone's.
     screamo: {
-      // SING: the screamed unison, torn on purpose.
-      label: "San Diego 1994", sing: "holler", rate: 1, bars: 4, voices: 2, near: "deathmetal",
+      // SING: the screamed unison, torn on purpose — `shout`.
+      label: "San Diego 1994", sing: "holler", singer: "shout", rate: 1, bars: 4, voices: 2, near: "deathmetal",
       // LINEAGE: emo's confessional dynamics are the base, pushed to the
       // edge by punk's raw directness and death metal's chromatic dissonance
       // and ridden cymbal. Hardcore, the actual scene emo and screamo both
@@ -3744,8 +3754,8 @@
     // playing to a sequencer from a band playing itself, which is exactly
     // what Kraftwerk's own inheritance argues.
     industrialmetal: {
-      // SING: the quantized scream riding the sequenced kick.
-      label: "Chicago 1988", sing: "holler", rate: 1, bars: 8, voices: 2, near: "deathmetal",
+      // SING: the quantized scream riding the sequenced kick — `shout`.
+      label: "Chicago 1988", sing: "holler", singer: "shout", rate: 1, bars: 8, voices: 2, near: "deathmetal",
       // LINEAGE: the chromatic riff wall and the ♭5-is-home locrian colour
       // are death metal's own, cited whole; kraftwerk supplies the machine-
       // sequenced, unwavering kick underneath in place of a drummer; punk
@@ -4143,8 +4153,9 @@
     // caption. Punk's directness and rock's band format argue the rest;
     // funk supplies the syncopated pocket two basses need to not collide.
     grebo: {
-      // SING: the scrappy shouted indie vocal — two basses and one ragged voice.
-      label: "Stourbridge 1990", sing: "holler", rate: 1, bars: 4, voices: 3, near: "punk",
+      // SING: the scrappy shouted indie vocal — two basses and one ragged
+      // voice, and `shout` is the ragged one.
+      label: "Stourbridge 1990", sing: "holler", singer: "shout", rate: 1, bars: 4, voices: 3, near: "punk",
       parents: { punk: 0.4, rock: 0.35, funk: 0.25 },
       wants: ["stourbridge scene"],
       instr: ["distortion_guitar", "acoustic_bass", "acoustic_bass"],
@@ -4266,8 +4277,8 @@
     // Wax Trax! industrial-rock scene, the actual missing rung, is not yet
     // an anchor.
     industrialrock: {
-      // SING: the aggressive processed scream over the fuzz.
-      label: "Cleveland 1989", sing: "holler", rate: 1, bars: 4, voices: 2, near: "industrialmetal",
+      // SING: the aggressive processed scream over the fuzz — `shout`.
+      label: "Cleveland 1989", sing: "holler", singer: "shout", rate: 1, bars: 4, voices: 2, near: "industrialmetal",
       parents: { deathmetal: 0.4, kraftwerk: 0.3, punk: 0.3 },
       wants: ["wax trax industrial"],
       instr: ["distortion_guitar", "metal_pad"],
@@ -4329,8 +4340,12 @@
     // huge plate is the tone.verb number, not an effect list. Gothic rock's
     // guitar-forward gloom is the missing rung this record actually leans on.
     gothsynth: {
-      // SING: the deep gothic baritone, doubled and reverbed.
-      label: "Basildon 1990", sing: "double", rate: 1, bars: 4, voices: 2, near: "analogsynthpop",
+      // SING: the deep gothic baritone, doubled and reverbed — `band` by name,
+      // because this anchor sits in the STUDIO family, whose default cast is
+      // the bright `teen` beat-group pair, and a bright tenor is the one voice
+      // this record cannot have (sing.js CASTS).
+      label: "Basildon 1990", sing: "double", singer: "band",
+      rate: 1, bars: 4, voices: 2, near: "analogsynthpop",
       parents: { analogsynthpop: 0.45, rock: 0.3, kraftwerk: 0.25 },
       wants: ["gothic rock"],
       instr: ["crunch_guitar", "metal_pad"],
@@ -4338,9 +4353,26 @@
       entry: v => v, reg: v => (v === 0 ? 1 : -2), realize: v => (v === 0 ? "pad" : "line"),
       harmony: "cycle", roots: [0, 5, 3, 4],
       artic: "staccato", maxHold: 2,
-      synth: { dsp: "modeld", root: "modeld", level: 0.85, lineOnly: true,
+      // THE LADDER IS THE IDENTITY; THE DRIVE WAS NOT. "The organs have gain
+      // applied in Basildon 1990 and are very loud" (Paul, 2026-08-17) — and
+      // he is describing this line, the held resonant modeld chord that reads
+      // as a synth organ. Measured against the shipped table this was the
+      // loudest and the most driven modeld in the catalogue at once: level
+      // 0.85 where kraftwerk/motorik/roboticpop sit at 0.78-0.80, and drive
+      // 0.4 where they sit at 0.15-0.25. And drive is not a colour knob —
+      // modeld.dsp is `stack * (1 + drive*5) : tanh : *(1/(1 + drive*1.2))`,
+      // so 0.4 pushed 3x into the saturator and came back a SQUARED-OFF wave,
+      // which is both louder and harsher than the oscillators that went in;
+      // and this voice plays two octaves down (reg -2) under a resonant corner
+      // at 380 Hz, so all of that lands exactly where the bass and the kick
+      // live. Level 0.62 with drive 0.2 is 2.6 dB down on the same line by
+      // arithmetic and rather more by ear, because half the drive is also half
+      // the squaring. What makes this genre ITSELF is the filter — cutoff 380
+      // with res 0.55, "dark and resonant", the head comment's own words — and
+      // every one of those numbers is untouched. Only the gain came down.
+      synth: { dsp: "modeld", root: "modeld", level: 0.62, lineOnly: true,
                set: { cutoff: 380, res: 0.55, envAmount: 1.4, envAttack: 0.004,
-                      envDecay: 0.4, envSustain: 0.35, oscMix: 0.3, drive: 0.4,
+                      envDecay: 0.4, envSustain: 0.35, oscMix: 0.3, drive: 0.2,
                       glide: 0.02, drift: 5 } },
       kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],

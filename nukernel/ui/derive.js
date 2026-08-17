@@ -477,7 +477,10 @@ export function singEvents(sec, g, subj, ev, barSteps, nudge) {
   const gk = gid(sec), seed = strSeed(gk);
   const key = SING.singFor(gk, sec.sing);
   if (!key) return [];
-  const plan = SING.singPlan(ev, { sing: key, gk, seed,
+  // `barSteps` is the box's real bar (the rate chip moves it), and the singer
+  // needs it for one thing only: a line that has run out waits for the top of
+  // a bar before starting again (sing.js THE LINE BREATHES).
+  const plan = SING.singPlan(ev, { sing: key, gk, seed, barSteps,
                                    pcsAt: pcsAtOf(subj, g, barSteps, nudge) });
   if (!plan.length) return plan;
   // the utterance and the colour are per BOX, not per note — hoisted because

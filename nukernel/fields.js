@@ -526,12 +526,25 @@
   // music is made of, they are stable across a genre change, and they are
   // already the word the palette uses for the part chip. Nothing new had to
   // be invented — the roles were there, they just had nowhere to plug in.
+  //
+  // ...AND THE TENTH IS THE SINGER, added 2026-08-17. "not as a track" (Paul,
+  // on hearing the speech organ arrive): every other part of a box had a chair
+  // — a fader, a cut, three sends — and the voice landed straight on the
+  // section input behind all of them, so the one thing on the record you
+  // cannot mix was the singer. `sing` is an address like the other nine; it
+  // is not a kernel role (no voice is ever assigned it — audio/mixer.js
+  // partKeysOf adds it the way it adds `bass` and `drums`, when the box
+  // actually sings), and it takes no ordinal, because a box has one lyric.
   const PARTNAMES = { line: "line", lead: "lead", riff: "riff",
                       counter: "counter", pad: "pad", stab: "stab",
-                      drone: "drone", bass: "bass", drums: "drums" };
+                      drone: "drone", bass: "bass", drums: "drums",
+                      sing: "sing" };
   const PARTLABEL = { line: "line", lead: "lead", riff: "riff",
                       counter: "counter", pad: "pad", stab: "stab",
-                      drone: "drone", bass: "bass", drums: "drums" };
+                      drone: "drone", bass: "bass", drums: "drums",
+                      // the label is what the DESK says, and a desk says
+                      // "voice" for the thing with a person in front of it
+                      sing: "voice" };
   // …AND A CHAIR WHEN THERE ARE SEVERAL OF ONE. Post rock is a pad and two
   // clean guitars; rock is two crunch guitars. Both would collapse onto one
   // address if the role were the whole key, so the second voice of a role is

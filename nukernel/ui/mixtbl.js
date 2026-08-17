@@ -136,7 +136,7 @@ import { GENRES, FX, MAX_FX, SENDS, SENDLABEL, DRUMKITS, PARTMIX,
          partChairLabel, BASS_INSTR, BASSSYNTH, LEVELS, faderDb,
          resolvePartMix, MASTER_FIELDS, BUS_FIELDS, NuFields,
          EQ_BANDS, EQ_RANGE, eqDb, INSTRCHOICES, POOLCHAIRS,
-         VERBS, DTIMES, DTLABEL } from "./deps.js";
+         VERBS, DTIMES, DTLABEL, SING, SINGLABEL } from "./deps.js";
 import { curSection, commit, on, emit, MASTER, setMaster, BUSES, setBuses,
          vol, setVol, SONG, POOL, setPoolChair } from "./state.js";
 // the same twelve families the SONG page's pool bank offers — two views, one
@@ -146,7 +146,7 @@ import { INSTRFAMS } from "./palette.js";
 // the same): the two live bindings that say which box is SOUNDING, so the desk
 // can play along instead of staring at the selection while the song moves on.
 import { playing as transportOn, playingSec } from "../audio/transport.js";
-import { stackOf, kitOf, voiceOwners } from "./derive.js";
+import { gid, stackOf, kitOf, voiceOwners } from "./derive.js";
 import { voiceRoster, partKeysOf, CHAN, resolvedPart, derivedPartTone,
          derivedSecEq } from "../audio/mixer.js";
 import { initAudio, rmsNow, masterReport, busReport,
@@ -299,6 +299,17 @@ function rowsOf(sec) {
     out.push({ key: "drums", label: partChairLabel("drums"),
                sound: DRUMKITS[k] || k || "" });
   }
+  // THE SINGER IS A TRACK. Its `sound` is the two facts a desk wants about a
+  // vocal and cannot get from an instrument id: WHAT they are singing (the
+  // chip — one voice, a duet, a stack of thirds) and WHO is singing it (the
+  // cast the record hired, sing.js castFor). A board that said "voice" and
+  // nothing else would be the only strip on the page that names no sound.
+  if (keys.includes("sing")) {
+    const chip = SING && SING.singFor(gid(sec), sec.sing);
+    out.push({ key: "sing", label: partChairLabel("sing"),
+               sound: [(SINGLABEL && SINGLABEL[chip]) || chip,
+                       SING && SING.castFor(gid(sec))].filter(Boolean).join(" · ") });
+  }
   // the section strip, last before the buses: downstream of every part
   out.push({ key: null, label: "section", sound: "whole box", sect: true });
   return out;
@@ -322,7 +333,10 @@ function songRows() {
       if (!idx.has(r.key)) idx.set(r.key, r);
     }
   }
-  const tail = ["bass", "drums"];
+  // the three that are not chairs, in the order a desk is laid out: the band's
+  // own strips, then the bottom end, then the kit, then the voice on top of
+  // the lot of it
+  const tail = ["bass", "drums", "sing"];
   const out = [...idx.values()].filter(r => !tail.includes(r.key));
   for (const k of tail) if (idx.has(k)) out.push(idx.get(k));
   out.push({ key: null, label: "section", sound: "whole box", sect: true });
@@ -977,6 +991,9 @@ function buildHead(row, i) {
     });
   } else if (row.key === "drums") {
     ps.title = "the kit — chosen by the RHYTHM cell, not the instrument pool";
+  } else if (row.key === "sing") {
+    ps.title = "the singer — the stack is the SING chip, the voices are the " +
+               "genre's own cast";
   }
   head.append(top, ps);
   return { head, num, pn, ps };

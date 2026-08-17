@@ -54,7 +54,7 @@
 //   filters below are plain RBJ two-pole bandpasses of my own rather than
 //   fi.filterbank's — same topology, not the same phase response. (2) The
 //   octave-down is RE-FLOORED (vocMidiOf): robot_choir is driven by a lead line
-//   and our lead singer is a bass-baritone, so an octave under its fold is
+//   and our lead singers are low voices, so an octave under their fold is
 //   27-46 Hz — inaudible on a phone and, measured, below the found layer's own
 //   65 Hz detection floor. The carrier is synthetic and owes the singer's
 //   ladder nothing, so it takes the note's own octave in a real singing
@@ -68,9 +68,11 @@
 // and not one more. That is CHEAPER than a played note — audio/bounce.js
 // measured the sampled path at ~7.5 nodes per note (2919 nodes for 386 buffer
 // sources, the per-note channel strips) and the same probe reads 14 for a
-// sampled note on this page. There is no per-note filter, no strip and no send
-// gain: the voice lands on the section channel input, so the box's own fx,
-// sends, level and place treat it like everything else.
+// sampled note on this page. There is no per-note filter and no per-note send
+// gain: the voice lands on its own PART STRIP — the `sing` chair on the box's
+// desk (audio/mixer.js partKeysOf), one sub-bus for the whole song, shared by
+// every syllable — and that strip lands on the section input, so the box's own
+// fx, sends, level and place still treat it like everything else.
 // THE VOCODER ADDS NOTHING AT ALL, which is why it is done in the buffer
 // domain at warm time rather than as a graph: a 32-band channel vocoder as
 // live nodes would be 64 biquads PER NOTE, and the whole point of the
@@ -155,7 +157,14 @@ export const singStats = { utterances: 0, slices: 0, notes: 0, vocoded: 0,
                            stretched: 0, failed: 0, unavailable: 0 };
 window.__nuSing = () => ({ ...singStats, off: NOSING,
                            lines: LINES.size, sliceCache: SLICES.size,
-                           fitCache: FITS.size });
+                           fitCache: FITS.size,
+                           // WHO WAS ACTUALLY WARMED, not how many: the key is
+                           // "cast:voice:rung:line", so this is the one place
+                           // outside the plan that can answer "is this record
+                           // being sung by the singers it hired" — which is
+                           // exactly the question that went unasked while the
+                           // page had one man in it.
+                           warmed: [...LINES.keys()] });
 
 /* ---------- the vowel test, on espeak's own phoneme ids ------------------- */
 // espeak's phoneme marks carry IPA (see the sample in engine/speech.js's marks
@@ -164,7 +173,17 @@ window.__nuSing = () => ({ ...singStats, off: NOSING,
 // covers the diphthongs too, because they are written vowel-first. This is the
 // only place the syllable boundaries come from; nukernel/sing.js's letter rule
 // is the PLAN's estimate and the gate holds the two against each other.
-const IPA_VOWELS = new Set([..."aeiouyəɐɛɪɔʊʌɜæɑɒɘɵøɤɯɨʉœɶɞ"]);
+// ...AND THE TWO THAT WERE MISSING COST THE WHOLE LINE, not one syllable.
+// ɚ / ɝ are the R-COLOURED vowels ("for" -> "f ɚ"), and they are only reachable
+// on the AMERICAN side of the fork: the shipped default (lang "en") is
+// non-rhotic and says "f ɔː", so the set below was complete for exactly one
+// singer and short by two for every variant, which all resolve through lang ""
+// to en-US. What that cost is not subtle. cutSyllables REFUSES a line whose
+// nucleus count misses the plan's (rightly — the words would land on the wrong
+// notes), so ONE unrecognised ɚ threw away the entire utterance: measured, the
+// f3 harmony was silent on every bank line containing "for", which is why the
+// page has only ever sung in a man's voice at odd, missing moments.
+const IPA_VOWELS = new Set([..."aeiouyəɐɛɪɔʊʌɜæɑɒɘɵøɤɯɨʉœɶɞɚɝ"]);
 const isNucleus = (id) => {
   const s = String(id == null ? "" : id).replace(/[ˈˌː%_'|\-]/g, "");
   return s.length > 0 && IPA_VOWELS.has(s[0]);
@@ -269,31 +288,44 @@ function cutSyllables(pcm, sr, marks, want, base) {
 // returns from cache in microseconds, but ensureAssets announces "loading…" and
 // reports a load whenever it has anything at all — so without this a song that
 // sings would announce a load on every single start.
+//
+// THE CAST IS PART OF EVERY CACHE COORDINATE, because it is part of the sound:
+// two songs singing the same words at the same rung through different singers
+// are two different takes, and a key that could not tell them apart would serve
+// the screamo shout to the hymn. sing.js warmSpecs hands the singer's whole
+// identity down (variant, lang, and the rung's own ladder MIDI) so nothing here
+// has to know the cast table exists.
+const lineKey = (sp, text) => sp.cast + ":" + sp.vi + ":" + sp.pitch + ":" + text;
 export function needsWarm(plan, text) {
   if (NOSING || !plan || !plan.length || !text || !CS || !SING) return false;
-  return SING.warmSpecs(plan).some(sp => !LINES.has(sp.vi + ":" + sp.pitch + ":" + text));
+  return SING.warmSpecs(plan).some(sp => !LINES.has(lineKey(sp, text)));
 }
 export async function warm(plan, text) {
   if (NOSING || !plan || !plan.length || !text || !CS || !SING) return false;
   let ok = false;
   const want = text.split(" ").filter(Boolean).length;
   for (const spec of SING.warmSpecs(plan)) {
-    const V = SING.VOICES[spec.vi];
-    const key = spec.vi + ":" + spec.pitch + ":" + text;
+    const key = lineKey(spec, text);
     if (LINES.has(key)) { ok = true; continue; }
     const job = (async () => {
-      // SPEED IS FIXED AND FAST. Measured on the vendored artifact over 276
-      // real bank syllables: 0.224 s each at espeak speed 150, and 0.049 to
-      // 0.331 s (median 0.143) at 260. A note at 126 bpm runs 0.119 s (a
-      // sixteenth) to 0.476 s (a half), so 260 is the setting that puts the
-      // natural syllable at the SHORT end of the note range — which is the
-      // right side to be on, because lengthening a vowel is a loop and
-      // shortening one throws the vowel away.
-      const r = await CS.synth(text, { variant: V.variant, lang: V.lang,
+      // SPEED IS FIXED, AND IT USED TO BE TOO FAST. The old setting (260) put
+      // the natural syllable at the SHORT end of the note range on purpose —
+      // "lengthening a vowel is a loop and shortening one throws the vowel
+      // away". True, and it left the wrong side of the trade: measured over
+      // every syllable of every bank line, at 260 the VOWEL is 24-124 ms
+      // (median 58), while the notes the plan picks have a median of 0.24 s
+      // and a p90 of 0.59. So the common case was a 58 ms vowel looped four or
+      // five times to fill a quarter note, and a 58 ms loop is not a held
+      // vowel, it is a 17 Hz buzz — which is what "clipped syllables" sounds
+      // like from the other side. At 175 the syllable is 0.109-0.335 s (median
+      // 0.204) and the vowel 53-207 ms (median 103): one or two loops for the
+      // median note, none at all for a half. The rung ladders are unmoved by
+      // this — remeasured at 175 they land within 0.35 semitones of the 260
+      // tables, because espeak's pitch knob and its rate are separate.
+      const r = await CS.synth(text, { variant: spec.variant, lang: spec.lang,
                                        pitch: spec.pitch, speed: SPEED });
       singStats.utterances++;
-      const cut = cutSyllables(r.pcm, r.sr, r.marks, want,
-                               SING.ladderMidi(V.ladder, spec.pitch));
+      const cut = cutSyllables(r.pcm, r.sr, r.marks, want, spec.base);
       if (!cut) { singStats.failed++; return null; }
       cut.forEach((s, i) => SLICES.set(key + ":" + i, s));
       singStats.slices += cut.length;
@@ -305,7 +337,7 @@ export async function warm(plan, text) {
   if (!ok && !CS) singStats.unavailable++;
   return ok;
 }
-const SPEED = 260;
+const SPEED = 175;
 
 /* ---------- fitting a slice to a note ------------------------------------- */
 // THE THREE THINGS THAT HAPPEN BETWEEN A SLICE AND A NOTE, in this order:
@@ -635,8 +667,8 @@ export const hzOf = m => 440 * Math.pow(2, (m - 69) / 12);
 // WHERE THE VOCODER'S CARRIER SITS, and it is NOT the singer's ladder fold.
 // robot_choir.dsp puts the carrier an octave below the note "because a lower
 // carrier packs more harmonics into the 200 Hz-3 kHz formant band and the
-// words actually read" — written for a LEAD line. Our lead singer is a
-// bass-baritone whose ladder folds every target into MIDI 39.6..52.8, and an
+// words actually read" — written for a LEAD line. Our lead singers are low
+// voices whose ladders fold every target into MIDI 39..53, and an
 // octave below THAT is 27-46 Hz: sub-bass, under the low corner of any phone
 // speaker and, MEASURED, under the found layer's own F0 detector (f0Profile
 // searches 65..520 Hz, so it reported a note-46 carrier as 65 Hz flat, which
@@ -677,9 +709,10 @@ export function playSyllable(ev, text, when, durSec, chan, colour, barSec) {
   if (NOSING || !SING || !chan) return false;
   const c = chan.input ? chan.input.context : ctx;
   if (!c) return false;
-  const r = SING.rungFor(ev.vi, ev.n);
+  const r = SING.rungFor(ev.vi, ev.n, ev.cast);
   const si = sylIx(ev, text);
-  const s = SLICES.get(ev.vi + ":" + r.pitch + ":" + text + ":" + si);
+  const key0 = (ev.cast || SING.DEFAULT_CAST) + ":" + ev.vi + ":" + r.pitch + ":" + text;
+  const s = SLICES.get(key0 + ":" + si);
   if (!s || !s.data.length) return false;
   const sr = s.sr;
   // ONE BAR IS THE CEILING, and it is a BOUNCE law rather than a musical one.
@@ -734,7 +767,7 @@ export function playSyllable(ev, text, when, durSec, chan, colour, barSec) {
     // its neighbour's un-leaned take.
     const sp = vocSpec(ev.voc);
     const cch = sp.car + ":" + sp.bands + ":" + (sp.grip || "firm");
-    const key = "v:" + ev.vi + ":" + r.pitch + ":" + text + ":" + si + ":" +
+    const key = "v:" + key0 + ":" + si + ":" +
                 want + ":" + vm.toFixed(2) + ":" + cch +
                 (drift ? ":d" + drift.cents.toFixed(1) : "");
     data = FITS.get(key);
@@ -756,7 +789,7 @@ export function playSyllable(ev, text, when, durSec, chan, colour, barSec) {
     if (!(rate > 0.25 && rate < 4)) rate = 1;
     const want = fitFrames(s, ev, dur, rate);
     if (want > s.data.length) {
-      const key = "n:" + ev.vi + ":" + r.pitch + ":" + text + ":" + si + ":" + want;
+      const key = "n:" + key0 + ":" + si + ":" + want;
       data = FITS.get(key);
       if (!data) { data = stretchVowel(s, want); fitPut(key, data); }
     } else data = s.data;
@@ -769,7 +802,20 @@ export function playSyllable(ev, text, when, durSec, chan, colour, barSec) {
   // vowel clicks) and a ramp out at the note's end, which is what makes a
   // truncated syllable read as a clipped word instead of as a cut tape.
   const g = c.createGain();
-  const heard = Math.min(dur, data.length / rate / sr);
+  // A CLIPPED SYLLABLE IS WORSE THAN A SLOW ONE, so the word finishes. `dur` is
+  // the NOTE, and where the note is shorter than the syllable it took the
+  // syllable's head and threw the rest away — a sixteenth under a slow voice
+  // came out as "lie" for "light", which reads as a machine stuttering rather
+  // than as a singer running on. Measured over every note the plan picks, HALF
+  // of them are under 0.25 s while the syllable is 0.11-0.34 s — a singer
+  // sings legato over a staccato line, which is exactly why sing.js stopped
+  // filtering notes by length: the note now GIVES WAY to the word (the gap
+  // floor between syllables is what keeps them from piling up, measured at
+  // 0.28 s minimum), and the ceiling stays the sounding bar (the bounce's
+  // one-bar pre-roll law above, which is a fact about the tape and cannot
+  // give way to anything).
+  const nat = data.length / rate / sr;
+  const heard = Math.min(Math.max(dur, nat), barSec || 4);
   const atk = Math.min(0.012, heard * 0.25), rel = Math.min(0.05, heard * 0.4);
   // the stacked parts pay the chair's own gain back here, at the one place a
   // sung note's level is set (see chairMakeup at the top of this file)
@@ -796,11 +842,20 @@ export function playSyllable(ev, text, when, durSec, chan, colour, barSec) {
   // singer off the level the vocoder's own RMS-match targets
   // (test/browser/nukernel-sing.test.js (C), which reads dry-vs-vocoded level
   // as its own claim) — a real cost this round does not get to spend on a
-  // chip it did not touch. THEN the section channel either way, exactly as
-  // before — the box's fx, sends, level and place still treat the singer
-  // like everything else.
+  // chip it did not touch.
+  //
+  // THEN THE VOICE'S OWN STRIP, which is what changed today. "not as a track"
+  // (Paul, 2026-08-17): every part of this box has a chair on the desk — a
+  // fader, a cut, three sends — and the singer landed on the section input
+  // BEHIND all of them, so it was the one thing on the record you could not
+  // mix. `sing` is a part address now (fields.js PARTNAMES, audio/mixer.js
+  // partKeysOf), and partIn answers with that strip when the box has one and
+  // with the section input when it does not — the same one-answer rule every
+  // player, route and fallback on this page already asks through, so nothing
+  // here has to know whether a bus exists.
+  const strip = chan.partIn ? chan.partIn("sing") : chan.input;
   const dest = stacked
-    ? voiceChairFor(chan, "sing", "vox", chan.input).in : chan.input;
+    ? voiceChairFor(chan, "sing", "vox", strip).in : strip;
   g.connect(dest);
   src.start(when0);
   src.stop(when0 + heard + 0.02);
@@ -821,11 +876,14 @@ const LEVEL = 0.5;
 // are readable: what espeak produced, what we measured, what we will bend to.
 window.__nuSingProbe = (ev, text) => {
   if (!SING) return null;
-  const r = SING.rungFor(ev.vi, ev.n);
-  const s = SLICES.get(ev.vi + ":" + r.pitch + ":" + text + ":" + sylIx(ev, text));
+  const cast = ev.cast || SING.DEFAULT_CAST;
+  const r = SING.rungFor(ev.vi, ev.n, cast);
+  const s = SLICES.get(cast + ":" + ev.vi + ":" + r.pitch + ":" + text + ":" +
+                       sylIx(ev, text));
   if (!s) return null;
   const rate = hzOf(r.midi) / hzOf(s.srcMidi);
   return { rung: r.pitch, foldedMidi: r.midi, vocMidi: vocMidiOf(ev.n),
+           cast, singer: SING.voiceOf(ev.vi, cast).key,
            voc: ev.voc || null, carrier: vocSpec(ev.voc).car,
            nominalBend: r.bend,
            rungBase: r.base, measuredHz: s.hz, measured: s.measured,

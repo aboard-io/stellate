@@ -155,15 +155,22 @@
   }
 
   /* ================================================================= VOICES
-     TWO SINGERS, AND THE MEASURED LADDER EACH ONE HAS.
+     NINE SINGERS, AND THE MEASURED LADDER EACH ONE HAS.
 
      The vendored espeak build (vendor/espeak-ng/) turns out to carry the !v
-     variants after all — the trim kept `voices/!v/*` — but engine/speech.js
-     passed lang "en" to set_voice, which MEASURABLY wins over the voice name,
-     so `variant` was a dead field on all 230 registry-data.js rows that
-     declare one. This round taught the organ an additive `lang` option; pass
-     lang "" and the variant applies. That is the entire reason two voices are
-     possible at all, and it is why VOICES below names a lang.
+     variants after all — the trim kept `voices/!v/*`, all 104 of them — but
+     engine/speech.js passed lang "en" to set_voice, which MEASURABLY wins over
+     the voice name, so `variant` was a dead field on all 230 registry-data.js
+     rows that declare one. The organ takes an additive `lang` option; pass
+     lang "" and the variant applies. That is the entire reason more than one
+     voice is possible at all, and it is why every row below names a lang.
+
+     AND THEN THE CATALOGUE SANG IN ONE MAN'S VOICE ANYWAY. "always a masculine
+     voice" (Paul, 2026-08-17) — because this table had exactly two rows, the
+     base voice for every lead and f3 for every harmony, so a crooner, a boy
+     band, a screamo vocal and a hymn were one bass-baritone with a woman
+     doubling him. Nine singers now, paired into CASTS below, and which cast a
+     record hires is the genre's own declaration.
 
      THE LADDERS ARE MEASURED, NOT DERIVED, AND MEASURED ON THE REAL PROTOCOL.
      espeak's `pitch` is 0..99 with no documented Hz mapping, so the tables
@@ -173,33 +180,56 @@
      calibrated on one syllable mis-centred every rung and the residual bends
      came out at 1.7-4.0 semitones instead of the +-2.2 the rungs promise.
      What is baked below is the median MIDI of EVERY SYLLABLE OF EVERY BANK
-     LINE, synthesized at the speed this file actually uses (260) and cut the
-     way audio/sing.js actually cuts it, measured with the found layer's own
-     detector (engine/faust/voices/found-player.js f0Profile) — 112 syllables
-     per rung for the low voice, 118 for the high. `node
-     test/unit/nukernel.test.js --calibrate-sing` reprints it.
+     LINE (875 syllables a rung), synthesized at the speed audio/sing.js
+     actually uses and cut the way it actually cuts, measured with the found
+     layer's own detector (engine/faust/voices/found-player.js f0Profile).
+     `node test/unit/nukernel.test.js --calibrate-sing` reprints the table.
 
-       base voice (no variant)  pitch 10..99  ->  MIDI 39.6 .. 52.8   (E♭2..E3)
-       f3 variant (lang "")     pitch 10..99  ->  MIDI 51.6 .. 64.7   (E♭3..E4)
-
-     So the two singers are a bass-baritone and a mezzo, an octave apart and
-     overlapping a fourth in the middle. The harmony line is the HIGH one
-     because harmony sits above the tune; that keeps both bends small instead
-     of asking one voice to cover two octaves. */
-  const LADDER_LOW = [[10, 39.63], [25, 41.03], [40, 42.97], [55, 45.32],
-                      [70, 47.83], [85, 50.52], [99, 52.78]];
-  const LADDER_HIGH = [[10, 51.58], [25, 53.33], [40, 55.28], [55, 57.36],
-                       [70, 59.69], [85, 62.23], [99, 64.66]];
+     WHY THESE NINE AND NOT ANY OTHER NINE. Each row is a different THROAT —
+     the variant files set formants, breath, roughness and flutter, not just a
+     pitch range — and the four low rows sit inside a tone of each other at the
+     bottom rung, which is the point: they are the same register sung by
+     different people, not one person transposed. Two candidates were measured
+     and REFUSED: `grandpa` (flutter 20) came back non-monotone in pitch — 44.1
+     at rung 10 against 43.7 at rung 25, which is a detector reading a wobble
+     rather than a voice — and `croak` fell nearly ten semitones across the
+     ladder in the wrong direction. A ladder that does not ascend cannot be
+     inverted, so those two are not singers here whatever they sound like. */
+  const LADDERS = {
+    // the LOWS — the leads. bari is the shipped voice, unchanged in character
+    // and re-measured with the rest so one protocol covers the cast.
+    bari:  [[10, 39.62], [25, 41.13], [40, 42.98], [55, 45.15],
+            [70, 47.48], [85, 50.12], [99, 52.82]],
+    tenor: [[10, 40.51], [25, 42.13], [40, 43.51], [55, 45.56],
+            [70, 47.82], [85, 50.37], [99, 52.91]],
+    croon: [[10, 42.96], [25, 43.23], [40, 44.47], [55, 46.50],
+            [70, 48.82], [85, 50.90], [99, 53.27]],
+    rough: [[10, 39.03], [25, 40.06], [40, 41.57], [55, 43.69],
+            [70, 46.16], [85, 48.77], [99, 51.43]],
+    // the HIGHS — the harmonies, and torch's lead
+    mezzo: [[10, 51.54], [25, 53.32], [40, 55.27], [55, 57.42],
+            [70, 59.76], [85, 62.27], [99, 64.69]],
+    alto:  [[10, 49.54], [25, 51.58], [40, 53.65], [55, 56.04],
+            [70, 58.60], [85, 61.36], [99, 63.88]],
+    sopr:  [[10, 49.77], [25, 52.01], [40, 54.31], [55, 56.93],
+            [70, 59.68], [85, 62.59], [99, 65.29]],
+    belt:  [[10, 47.60], [25, 49.82], [40, 52.07], [55, 54.57],
+            [70, 57.35], [85, 60.15], [99, 62.85]],
+    kid:   [[10, 54.89], [25, 57.00], [40, 59.22], [55, 61.72],
+            [70, 64.34], [85, 67.10], [99, 69.77]],
+  };
   // FOUR RUNGS PER VOICE, and the number is a measured trade rather than a
   // taste. An utterance is one espeak instance (~234 ms in node, ~210 ms in
   // chromium per vendor/espeak-ng/README.md) and the instance is per PITCH, so
   // rungs cost warm-up time linearly: 4 rungs x 2 voices = 8 utterances ~= 2 s
   // for a whole song's worth of singing, paid once beside the zone fetches.
-  // What they buy is a SMALL BEND: the ladder spans ~13.1 semitones, so four
-  // evenly spaced rungs put every target within +-2.2 semitones of a rung, and
-  // the residual is the only thing that shifts formants (espeak's own pitch
-  // knob is source-side and leaves the filter alone). Three rungs would be
-  // +-3.3, which starts to sound like a different person per note.
+  // What they buy is a SMALL BEND: a ladder spans 10.3 (croon) to 14.9 (kid)
+  // semitones, so four evenly spaced rungs put every target within 2.0
+  // semitones of a rung for the default pair and 2.4 for the widest cast
+  // (shout), and the residual is the only thing that shifts formants (espeak's
+  // own pitch knob is source-side and leaves the filter alone). Three rungs
+  // would be half again that, which starts to sound like a different person
+  // per note.
   const NRUNGS = 4;
   // MIDI at an espeak pitch param, by linear interpolation ON THE MEASUREMENT.
   // A straight-line fit was off by 0.8 semitones in the middle of the base
@@ -234,24 +264,87 @@
       out.push(ladderPitch(L, lo + (hi - lo) * (i / (NRUNGS - 1))));
     return out;
   };
-  const VOICES = [
-    // the LEAD: the base voice, no variant, so it needs no lang override and
-    // stays on the exact call sequence every other consumer of the organ uses
-    { key: "lead", variant: "", lang: "en", ladder: LADDER_LOW,
-      rungs: rungsOf(LADDER_LOW) },
-    // the HARMONY: f3, which only exists because of the lang knob above
-    { key: "harm", variant: "f3", lang: "", ladder: LADDER_HIGH,
-      rungs: rungsOf(LADDER_HIGH) },
-  ];
-  const voiceMidi = (vi, pitch) => ladderMidi(VOICES[vi].ladder, pitch);
+  /* --------------------------------------------------------- THE CAST
+     WHO THE NINE ARE. `variant` is the espeak !v file, `lang` is the knob that
+     makes it reachable at all — "" for every variant (see the note above),
+     "en" for the base voice, which has no variant to protect and so stays on
+     the exact call sequence every other consumer of the organ uses.
+
+       bari   the base voice: the bass-baritone this page has always sung in,
+              non-rhotic, plain. Still the default, still the rock lead.
+       tenor  m7 — voicing 155, a brighter and more forward throat at the same
+              pitch: the beat-group lead, the one that carries a hook
+       croon  Michael — narrow pitch band, heavy voicing, soft consonants: the
+              close-mic'd microphone singer
+       rough  m1 — roughness 4 and flutter 5, the only low voice with grain in
+              it: a shout, and the one that does not sound hurt by a holler
+       mezzo  f3 — the shipped harmony voice, breath and echo in the file
+       alto   f2 — lower and rounder than mezzo, with its own echo: a woman who
+              can take the tune rather than only the line above it
+       sopr   f5 — breath 6 and consonants 150: air, and consonants that cut
+       belt   f1 — roughness 4, flutter 8: the female voice with grain, so a
+              shouted stack is two rough voices rather than one rough and one
+              polite
+       kid    anika — pitch 200-300, intonation 10: the top of a group vocal */
+  const SINGERS = {
+    bari:  { variant: "",        lang: "en" },
+    tenor: { variant: "m7",      lang: ""   },
+    croon: { variant: "Michael", lang: ""   },
+    rough: { variant: "m1",      lang: ""   },
+    mezzo: { variant: "f3",      lang: ""   },
+    alto:  { variant: "f2",      lang: ""   },
+    sopr:  { variant: "f5",      lang: ""   },
+    belt:  { variant: "f1",      lang: ""   },
+    kid:   { variant: "anika",   lang: ""   },
+  };
+  for (const key of Object.keys(SINGERS)) {
+    const V = SINGERS[key], L = LADDERS[key];
+    if (!L) throw new Error("sing.js: singer " + key + " has no measured ladder");
+    // A LADDER THAT DOES NOT ASCEND CANNOT BE INVERTED, and ladderPitch is the
+    // whole rung mechanism. Held here rather than in the gate because a bad
+    // paste would otherwise sing every note at the bottom rung and sound
+    // merely dull, which is the failure nobody reports.
+    for (let i = 1; i < L.length; i++)
+      if (L[i][1] <= L[i - 1][1])
+        throw new Error("sing.js: " + key + "'s ladder falls at rung " + L[i][0]);
+    V.key = key; V.ladder = L; V.rungs = rungsOf(L);
+  }
+  /* A CAST IS A LOW SINGER AND A HIGH ONE, in that order, because that is what
+     the two voice indices ARE: vi 0 takes the tune, vi 1 takes whatever sits
+     above it (sing.js THE STACK). Six of them, and the pairing is the whole
+     design — a record does not hire a lead and a harmony from different
+     rooms. Every cast is checked below to make sure its high voice really is
+     above its low one, or `harmony` would compute a note above the tune and
+     the fold would sing it underneath. */
+  const CASTS = {
+    band:    ["bari",  "mezzo"],   // the shipped pair: rock, blues, the goths
+    crooner: ["croon", "alto"],    // the microphone singer and a low woman
+    shout:   ["rough", "belt"],    // both voices with grain in them
+    teen:    ["tenor", "sopr"],    // the beat group: bright lead, air on top
+    torch:   ["alto",  "kid"],     // a WOMAN LEADS — soul, disco, the club
+    chapel:  ["bari",  "sopr"],    // plainchant's own spread, an octave and more
+  };
+  const DEFAULT_CAST = "band";
+  for (const [k, [lo, hi]] of Object.entries(CASTS)) {
+    if (!SINGERS[lo] || !SINGERS[hi]) throw new Error("sing.js: cast " + k + " names nobody");
+    if (SINGERS[hi].ladder[0][1] <= SINGERS[lo].ladder[0][1])
+      throw new Error("sing.js: cast " + k + "'s harmony sits under its tune");
+  }
+  // THE TWO ROLES, as the default cast plays them — `VOICES[vi]` is still "the
+  // singer at voice index vi" for every reader that does not know about casts
+  // (the gate, the probe, and any call that omits one).
+  const castOf = c => CASTS[c] || CASTS[DEFAULT_CAST];
+  const voiceOf = (vi, cast) => SINGERS[castOf(cast)[vi ? 1 : 0]];
+  const VOICES = [voiceOf(0), voiceOf(1)];
+  const voiceMidi = (vi, pitch, cast) => ladderMidi(voiceOf(vi, cast).ladder, pitch);
   // FOLD A TARGET INTO A SINGER. A melody is written wherever the genre writes
   // it and a throat is a fourth-and-a-bit wide, so the note a voice actually
   // sings is the target's nearest OCTAVE inside the ladder. This is the same
   // move audio/voices.js foldInto makes for a sampled instrument and for the
   // same reason: an instrument played outside its range is a different
   // instrument. The ladder spans more than an octave, so the loop terminates.
-  function foldToVoice(vi, midi) {
-    const L = VOICES[vi].ladder, lo = L[0][1], hi = L[L.length - 1][1];
+  function foldToVoice(vi, midi, cast) {
+    const L = voiceOf(vi, cast).ladder, lo = L[0][1], hi = L[L.length - 1][1];
     let m = midi;
     while (m < lo - 0.5) m += 12;
     while (m > hi + 0.5) m -= 12;
@@ -262,8 +355,8 @@
   // rendered syllable and bends from THAT (found-player's autoTuneRate law:
   // the clip's own median, never the number we hoped for) — but it is what the
   // gate reads to prove the rungs are doing their job.
-  function rungFor(vi, midi) {
-    const V = VOICES[vi], want = foldToVoice(vi, midi);
+  function rungFor(vi, midi, cast) {
+    const V = voiceOf(vi, cast), want = foldToVoice(vi, midi, cast);
     let best = V.rungs[0], bestD = Infinity;
     for (const p of V.rungs) {
       const d = Math.abs(ladderMidi(V.ladder, p) - want);
@@ -481,6 +574,37 @@
     const d = g && g.sing;
     return (d && SINGS[d]) ? d : null;
   }
+  /* ...AND WHO IS IN THE ROOM. `sing` says what the singers DO (one voice, a
+     duet, a stack of thirds); `singer` says WHO THEY ARE, and it is the same
+     declaration continued rather than a second system: one key beside the
+     other on the genre, resolved by the same law one line up.
+
+         GENRES.boyband = { …, sing: "thirds", singer: "teen" }
+
+     A genre that names nobody gets its FAMILY's cast, which is why 84 singing
+     anchors did not need 84 edits: the family is already how the lyric bank is
+     chosen (BANKS above), and a family is a room full of records that sound
+     alike. A family with no row falls to `band`, which is the pair the page
+     sang in before any of this — so an anchor that says nothing sounds exactly
+     as it did, and every anchor that says something is somebody else. */
+  const FAMILY_CAST = {
+    kernel: "band",      // the fallback: the voice this page has always had
+    band:   "band",      // rock, blues, the guitar records
+    studio: "teen",      // the beat groups and the pop craftsmen
+    soul:   "torch",     // a woman out front, which is what these records are
+    club:   "torch",     // the diva over the machine
+    groove: "teen",      // reggae, ska, afrobeat: bright and up
+    roots:  "crooner",   // folk, country, the songwriter at the piano
+    drift:  "chapel",    // ambient and shoegaze: air, and a long way off
+    vox:    "chapel",    // plainchant, and the four-part hymn
+    parts:  "band",      // the naked vocal/backing utility genres
+  };
+  function castFor(gk) {
+    const g = GENRES[gk];
+    if (g && CASTS[g.singer]) return g.singer;
+    const f = g && FAMILY_CAST[g.family];
+    return CASTS[f] ? f : DEFAULT_CAST;
+  }
   // the resolved character, for the renderer and the gate: which carrier, how
   // many bands, how hard. Null for a natural singer, which is what says "no
   // vocoder" all the way down.
@@ -495,14 +619,34 @@
   /* ============================================================ THE PLAN
      WHICH NOTES GET SUNG.
 
-     A SUNG NOTE IS AT LEAST AN EIGHTH. The melody vector is 16 steps to the
-     bar and genres run it at rate 1..4, so "every gated step" would be sixteen
-     syllables a bar — nobody sings that, and at two voices it is 128 transient
-     nodes a section for something that reads as a stutter. So the selection is
-     a floor on DURATION plus a floor on the GAP to the previous pick, both in
-     steps, both = MIN_STEPS. At the common rate 4 that is an eighth note and
-     at most eight syllables a bar; a slow genre gets fewer, which is also what
-     a singer would do.
+     WHAT LIMITS A SINGER IS THE GAP, NOT THE NOTE. The melody vector is 16
+     steps to the bar and genres run it at rate 1..4, so "every gated step"
+     would be sixteen syllables a bar — nobody sings that, and at two voices it
+     is 128 transient nodes a section for something that reads as a stutter. So
+     there are two floors, and until 2026-08-17 they were the same number and
+     that was a real mistake:
+
+       MIN_STEPS  the GAP to the previous syllable. THIS is the one that
+                  matters, because it is the room a word has to be said in.
+                  Three steps: measured, an espeak syllable at the shipped
+                  speed runs 0.11-0.34 s while a step is 0.09-0.13 s at the
+                  tempos the catalogue actually uses, so three steps clears the
+                  longest word at the fastest tempo. At 2 the gaps ran down to
+                  0.19 s and a tenth of them were shorter than the word that
+                  had to fit in them.
+       MIN_NOTE   the note's own LENGTH, and it is 1 — any real note at all.
+                  It used to be MIN_STEPS too, which sounds prudent and is not:
+                  it silenced every STACCATO genre outright, because a filter
+                  on note length is a filter on ARTICULATION, not on singing.
+                  Measured on composed songs, gothsynth ("Basildon 1990",
+                  artic staccato, maxHold 2) offered candidates in ONE box out
+                  of eleven and sang three syllables in a whole song, and disco
+                  twelve — which is precisely "the speech synthesis is showing
+                  up at odd times". A singer over a staccato synth line sings
+                  legato; the note gives way to the word (audio/sing.js), so a
+                  short note is a place to start a syllable, not a reason to
+                  drop one. With the floor at 1 the same two songs sing 127 and
+                  130 syllables, about 1.7 a bar, which is a lyric.
 
      THE LINE FOLLOWS ONE VOICE OF THE AUTHORITY, and picking it is not as
      obvious as it looks. A layered box has several lines and a stack can be
@@ -513,14 +657,15 @@
      realize voice 0 as a PAD (house renders 448 pad events on voice 0 and 105
      line events on voice 1), so the rule sang nothing at all for them.
      So the tune is the authority voice with the MOST singable notes — non-pad,
-     gated, at least MIN_STEPS long — with ties going to the lowest index. A
-     genre with none (techno: every voice-0 note is a sub-eighth stab) sings
-     nothing, and that is the right answer rather than a gap: there is no tune
-     in a stab pattern to put words on. */
-  const MIN_STEPS = 2;
+     gated, at least MIN_NOTE long — with ties going to the lowest index. A
+     genre with none sings nothing, and that is the right answer rather than a
+     gap: there is no tune in an empty voice to put words on. */
+  const MIN_STEPS = 3;
+  const MIN_NOTE = 1;
   // ...and a ceiling, so a pathological box cannot mint an unbounded number of
-  // transient voices. 4 bars x 8 = 32 is the honest maximum of the rule above
-  // at rate 4; a longer box repeats the line rather than growing the graph.
+  // transient voices. 32 is a six-bar box sung at the gap floor; a longer one
+  // stops rather than growing the graph, and the measured catalogue does not
+  // reach it (the fullest box in six composed songs picks 28).
   const MAX_SYL = 32;
   // A HELD NOTE STRETCHES THE VOWEL rather than repeating the syllable — that
   // is the difference between singing and a sequencer with a speech chip on
@@ -568,9 +713,9 @@
                 realism is entirely in a few ms of timing lean and a few cents
                 of pitch lean, because an identical copy summed with itself is
                 not a double, it is 6 dB
-       octave   the same words, same pitch class, sung by the OTHER voice's
-                ladder (VOICES[1] sits roughly an octave over VOICES[0] by
-                measurement — the ladder note at the top of this file) — the
+       octave   the same words, same pitch class, sung by the OTHER SINGER of
+                the cast (whose ladder sits a fifth to an octave and a half
+                over the first's, by measurement — the ladder table above) — the
                 same move gregorian's sampled `ahh_choir` line already makes
                 with a register fold, done here with the second singer instead
                 of a second sample
@@ -587,9 +732,10 @@
      duet — SINGS.choir and SINGS.chorale below are exactly that, one vocoded
      and one not.
 
-     THE COST IS BOUNDED BY THE TWO LADDERS, NOT BY THE STACK. Every part above
-     names vi 0 or vi 1 — there is no third voice — so warmSpecs (which dedupes
-     by (voice, rung)) can never ask for more than NRUNGS x 2 = 8 utterances no
+     THE COST IS BOUNDED BY THE CAST, NOT BY THE STACK. Every part above names
+     vi 0 or vi 1 — a cast is two singers, there is no third — so warmSpecs
+     (which dedupes by (cast, voice, rung)) can never ask for more than
+     NRUNGS x 2 = 8 utterances for a box no
      matter how many parts a chip stacks: `double` reuses its source part's own
      rung exactly (same vi, same target pitch, so rungFor picks the identical
      rung and the SLICES cache serves the same clip), and `octave`/`harmony`
@@ -631,8 +777,9 @@
 
   // singPlan(evs, opts) -> [{ t, dur, n, vi, syl, hold }]
   //   evs   the section's rendered event stream (ui/derive.js sectionEvents)
-  //   opts  { sing, gk, seed, pcsAt } — the chip, the authority's genre key
-  //         (for the bank), the box's seed, and step -> chord pitch classes
+  //   opts  { sing, gk, seed, pcsAt, barSteps } — the chip, the authority's
+  //         genre key (for the bank AND the cast), the box's seed, step ->
+  //         chord pitch classes, and how long a bar of this box is in steps
   // Pure, total, and EMPTY when the box is not singing — which is what makes
   // the whole feature cost exactly nothing on every song saved before it.
   function singPlan(evs, opts) {
@@ -651,7 +798,7 @@
     const pcsAt = (opts && opts.pcsAt) || (() => null);
     // the authority's singable notes, by voice; then the fullest voice wins
     const cand = evs.filter(e => e.kind === "line" && !e.pad && !e.layer &&
-                                 e.n != null && e.dur >= MIN_STEPS);
+                                 e.n != null && e.dur >= MIN_NOTE);
     if (!cand.length) return [];
     const per = new Map();
     for (const e of cand) per.set(e.v, (per.get(e.v) || 0) + 1);
@@ -666,6 +813,36 @@
       picked.push(e); lastT = e.t;
       if (picked.length >= MAX_SYL) break;
     }
+    /* THE LINE BREATHES, AND COMES BACK TO THE TOP. Until now the words were
+       dealt words[i % words.length] over every pick in the section, which is a
+       lyric with no beginning and no end: a six-word hook over sixteen notes
+       wrapped at note six wherever that fell, so the second time round began
+       on the "and" of two and the phrase never came back to the top. "at odd
+       times" (Paul, 2026-08-17), and this is the half of it that is a score
+       fact rather than a synthesis one.
+       So the line is dealt IN ORDER, and when it runs out the singer waits —
+       for the top of a bar, which is where a line starts, OR for a bar's worth
+       of silence, whichever comes first. Both halves are load-bearing and the
+       second one is the one I got wrong first: MEASURED on the composed
+       catalogue, a great many genres pick exactly ONE note a bar and always at
+       the same place in it (gothsynth's tune sits on beat 2 of every bar,
+       disco's a sixteenth after beat 2), so "wait for a downbeat" alone is a
+       line that never starts at all — it silenced two of the six genres I
+       measured outright. A pick a whole bar after the last sung syllable IS
+       the top of a phrase whatever the grid says, and the first pick of a
+       section takes that door (no previous syllable, so the gap is infinite).
+       `barSteps` is the caller's (ui/derive.js knows the box's real rate);
+       absent, it is the authority genre's own 16/rate, which is the same
+       number for every caller that is not overriding the rate. TOL is a
+       sixteenth of a bar: the groove moves a downbeat by real fractions of a
+       step, and a note the ear hears AS the downbeat must count as one. */
+    const barSteps = (opts && opts.barSteps) ||
+      (16 / (((GENRES[(opts && opts.gk)] || {}).rate) || 1));
+    const TOL = barSteps / 16;
+    const onBar = t => {
+      const d = ((t % barSteps) + barSteps) % barSteps;
+      return d <= TOL || d >= barSteps - TOL;
+    };
     // THE STACK, walked once per picked note. `slot` is the part's own index
     // in spec.stack — fixed for the whole song, which is what makes driftFor
     // deterministic per PART and not just per note (two different doubles in
@@ -673,17 +850,26 @@
     // vi 0, no drift, no `of`) reduces to exactly the single push this loop
     // used to make, so `lead`/`robot`/etc. plan byte-identically to before
     // this round.
+    const cast = castFor((opts && opts.gk) || "");
     const out = [];
-    picked.forEach((e, i) => {
-      const syl = words[i % words.length];
+    let w = words.length;                    // "no line is running" — see above
+    let sungT = null;                        // when the last syllable was sung
+    for (const e of picked) {
+      if (w >= words.length) {
+        // the rest between two lines: a downbeat, or a bar of silence
+        if (!(onBar(e.t) || sungT == null || e.t - sungT >= barSteps)) continue;
+        w = 0;
+      }
+      const syl = words[w], si = w;
       const hold = e.dur >= HOLD_STEPS;
       spec.stack.forEach((p, slot) => {
         const base = partPitch(p, e.n, pcsAt, e.t);
-        const drift = p.drift ? driftFor((opts && opts.seed) | 0, slot, i, p.drift) : null;
-        out.push({ t: e.t, dur: e.dur, n: base, vi: p.vi, syl, hold, si: i,
-                   colour: spec.colour, voc, role: p.role, drift });
+        const drift = p.drift ? driftFor((opts && opts.seed) | 0, slot, si, p.drift) : null;
+        out.push({ t: e.t, dur: e.dur, n: base, vi: p.vi, syl, hold, si,
+                   colour: spec.colour, voc, cast, role: p.role, drift });
       });
-    });
+      w++; sungT = e.t;
+    }
     return out;
   }
   // the utterance a voice must synthesize for a plan: the whole line, as
@@ -691,19 +877,28 @@
   // instead of one per note, and the space is what makes espeak emit a word
   // mark at every syllable boundary rather than cliticizing "the" onto "on".
   const utteranceFor = (gk, seed) => lyricFor(gk, seed).join(" ");
-  // every (voice, rung) an audio tier has to warm for a plan — deduped, so a
-  // line whose notes all fold to one rung costs one utterance and not thirty.
+  // every (cast, voice, rung) an audio tier has to warm for a plan — deduped,
+  // so a line whose notes all fold to one rung costs one utterance and not
+  // thirty. The SINGER'S WHOLE IDENTITY rides along (variant, lang, and the
+  // rung's own ladder MIDI, which is the model the cut falls back to when the
+  // detector finds no F0) so audio/sing.js never has to know this table exists.
   function warmSpecs(plan) {
     const seen = new Map();
     for (const p of plan || []) {
-      const r = rungFor(p.vi, p.n), k = p.vi + ":" + r.pitch;
-      if (!seen.has(k)) seen.set(k, { vi: p.vi, pitch: r.pitch });
+      const cast = p.cast || DEFAULT_CAST;
+      const r = rungFor(p.vi, p.n, cast), k = cast + ":" + p.vi + ":" + r.pitch;
+      if (seen.has(k)) continue;
+      const V = voiceOf(p.vi, cast);
+      seen.set(k, { vi: p.vi, cast, pitch: r.pitch, variant: V.variant,
+                    lang: V.lang, singer: V.key, base: r.base });
     }
     return [...seen.values()];
   }
 
   const api = { SINGS, SINGLABEL, CARRIERS, GRIPS, singFor, vocFor,
-                VOICES, NRUNGS, MIN_STEPS, MAX_SYL, HOLD_STEPS, MAX_STACK,
+                VOICES, SINGERS, LADDERS, CASTS, DEFAULT_CAST, FAMILY_CAST,
+                castFor, voiceOf,
+                NRUNGS, MIN_STEPS, MAX_SYL, HOLD_STEPS, MAX_STACK,
                 HARM_LO, HARM_HI, BANKS, syllables, nsyl, bankFor, lyricFor,
                 ladderMidi, ladderPitch, rungsOf, voiceMidi, foldToVoice,
                 rungFor, harmonyOf, DRIFT, driftFor, partPitch,
