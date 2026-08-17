@@ -1481,9 +1481,13 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
 .foff{color:var(--accent-txt)}
 .mbar.fslot .foff.dflt{color:var(--ink-3)}
 
-/* ---- THE MASTER STRIP: everything at 100% width, horizontal. The volume is
-   a bar like every other bar; the meter lies under it at the same width so
-   the two read as one instrument. ---- */
+/* ---- THE MASTER STRIP: "master EQ, master fader, the meter, the blend, and
+   nothing else" (Paul, 2026-08-17 — the seven mastering stages that used to
+   sit here moved to the processing bstrip below, in BUSES). The volume is a
+   bar like every other bar; the meter lies under it at the same width so the
+   two read as one instrument; the EQ curve and the blend bar under THAT are
+   .eqrow.eqplot and .mval, the same recipes every other strip already
+   wears — no new geometry for either. ---- */
 .mlevel{display:flex;flex-direction:column;gap:var(--sp-1);width:100%}
 .fslot.hslot{position:relative;display:flex;align-items:center;gap:var(--sp-2);
   width:100%;min-height:48px;padding:0 var(--sp-3);overflow:hidden;
@@ -1510,12 +1514,40 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
 
 /* ---- WHAT IS LEFT BELOW THE BOARD ----
    Nothing at all. The EFFECTS RACK is gone: its per-bus knob rows are the
-   bus strips' own bars and its MASTER row is the master strip's, ids intact
-   (ui/mixtbl.js). The master's hint paragraph went with the other three
-   ("get rid of ... help buttons", 2026-08-16), so #rack now keeps only its
-   id and its place in the page — permanently empty, so no gate or stylesheet
-   has to learn a new address. */
+   bus strips' own bars and its MASTER row is the processing strip's, ids
+   intact (ui/mixtbl.js buildProcessingStrip, a fourth .bstrip in BUSES). The
+   master's hint paragraph went with the other three ("get rid of ... help
+   buttons", 2026-08-16), so #rack now keeps only its id and its place in the
+   page — permanently empty, so no gate or stylesheet has to learn a new
+   address. */
 .rack{background:none;overflow:visible;padding:0}
+
+/* ---- THE MIX PAGE'S TWO DRAWERS: casting the band, and the file keys ----
+   "Move all the sound definition and saving functionality into mix… you'll
+   need to redesign it to fit" (Paul, 2026-08-16). Both are session facts,
+   not mix facts, so neither is a strip: each is a plain <details>, the same
+   closed-by-default drawer this machine already wears on the compose page's
+   source view — not a new idiom, and no JS toggle to write. One icon and a
+   title on the summary, nothing printed; the marker is the browser's own
+   triangle, quarter-turned open rather than replaced with a caption. */
+.mixplug{border-top:1px solid var(--rule)}
+.mixplug>summary{
+  display:flex;align-items:center;gap:var(--sp-3);cursor:pointer;
+  list-style:none;min-height:44px;padding:0 var(--tbl-gut);color:var(--ink-2);
+}
+.mixplug>summary::-webkit-details-marker{display:none}
+.mixplug>summary::before{
+  content:"";flex:0 0 auto;width:0;height:0;
+  border:5px solid transparent;border-left-color:var(--ink-3);
+  transition:transform .15s;
+}
+.mixplug[open]>summary::before{transform:rotate(90deg)}
+.mixplug>summary .k{width:15px;height:15px;flex:0 0 auto;background:currentColor;
+  -webkit-mask:var(--ikm) center/contain no-repeat;mask:var(--ikm) center/contain no-repeat}
+/* a small mixer-fader glyph — the instrument drawer's own icon, distinct
+   from ik-genre (which already means the genre chip elsewhere on the deck) */
+.ik-cast{--ikm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Crect x='1' y='5' width='2.4' height='8' rx='1'/%3E%3Crect x='5.8' y='1' width='2.4' height='12' rx='1'/%3E%3Crect x='10.6' y='4' width='2.4' height='9' rx='1'/%3E%3C/svg%3E")}
+.mixplug .poolbank,.mixplug .gbank{border-top:0}
 
 /* ---- the cell popover ----
    Tapping a mix cell opens ITS chip set beside it. Anchored on a desk, a

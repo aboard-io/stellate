@@ -306,10 +306,19 @@ fader($("vol"), 80);
   });
 }
 
-/* (There is no master-bus row group here any more: the master controls are the
-   MIX page's rack MASTER row — ui/mixtbl.js builds them from the same fields.js
-   MASTER registry, ids #m-<key> kept — because the master is the last strip of
-   the one desk, and the desk lives on the board.) */
+/* (There is no master-bus row group here any more: the master's mastering
+   stages are the MIX page's processing strip — ui/mixtbl.js buildProcessingStrip,
+   a fourth bstrip in BUSES, from the same fields.js MASTER registry, ids
+   #m-<key> kept — because "those feel like a bus" (Paul, 2026-08-17), and the
+   desk lives on the board.) */
+
+/* THE GROOVE/SWING/FONT/SONGS/SAVE ROW LIVES ON THE MIX PAGE NOW ("move all
+   the sound definition and saving functionality into mix", Paul, 2026-08-16)
+   — two <details> beside the desk (kernel-daw.html's MIX PAGE markup), not
+   the Arrange page. This file's wiring below did not move with it: every
+   selector here is a plain getElementById, so it binds to whichever page's
+   DOM carries the id, and pages.js never rebuilds a view on a page switch —
+   the session bank is simply mounted somewhere else now. */
 
 /* ---------- desktop + reset ---------- */
 $("savefile").addEventListener("click", saveFile);

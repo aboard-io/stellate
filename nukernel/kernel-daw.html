@@ -124,45 +124,16 @@
              not a different view — and the same well, ruling and row states
              the pattern and the arrangement wear. -->
         <div class="song tbl" id="song"></div>
-        <!-- THE INSTRUMENT POOL AND THE SESSION BANK ARE OFF THIS PAGE NOW
+        <!-- THE INSTRUMENT POOL AND THE SESSION BANK MOVED TO THE MIX PAGE
              ("move all the sound definition and saving functionality into
-             mix", Paul, 2026-08-16) — lane A3 is building their real home on
-             the MIX page. HIDDEN here rather than deleted: ui/poolbank.js and
-             ui/chrome.js both bind these ids unconditionally at module load
-             (querySelector/getElementById().addEventListener with no null
-             guard on #savefile etc.), so removing the markup before the Mix
-             page grows the same ids would crash the whole app's boot for
-             every lane, not just this one's surface. `hidden` takes them out
-             of layout, the tab order and the accessibility tree — gone for
-             every purpose Paul asked for — while the ids stay live for the
-             modules that still reach for them. Delete this block outright
-             once the Mix-page versions exist. -->
-        <div class="gbank tbl poolbank" id="poolbank" aria-label="instruments" hidden>
-          <div class="poolrows"></div>
-        </div>
-        <div class="gbank tbl" aria-label="session" hidden>
-          <div class="gitems">
-            <label class="gctl"><span class="glab">Groove</span>
-              <select id="groove"></select></label>
-            <label class="gctl"><span class="glab">Swing</span>
-              <select id="swing"></select></label>
-            <label class="gctl"><span class="glab">Soundfont</span>
-              <select id="font"></select></label>
-            <label class="gctl"><span class="glab">Songs</span>
-              <select id="preset"><option value="">choose…</option></select></label>
-            <div class="gctl"><span class="glab">Song file</span>
-              <span class="ukeys">
-                <button class="btn ik ik-save" id="savefile" title="save the song to a file">
-                  <span class="k" aria-hidden="true"></span><span class="t">Save</span></button>
-                <button class="btn ik ik-load" id="loadfile" title="load a song file">
-                  <span class="k" aria-hidden="true"></span><span class="t">Load</span></button>
-                <input type="file" id="loadinput" accept="application/json,.json" hidden>
-                <button class="btn ik ik-reset" id="reset" title="reset everything to the default song">
-                  <span class="k" aria-hidden="true"></span><span class="t">Reset all</span></button>
-              </span>
-            </div>
-          </div>
-        </div>
+             mix", Paul, 2026-08-16) — lane A3's #poolbank / #groove / #swing /
+             #font / #preset / #savefile / #loadfile / #loadinput / #reset now
+             live there, inside two <details> beside the desk. This is the
+             block that used to sit here `hidden` as a placeholder for exactly
+             that move; deleted rather than left behind, because a second copy
+             of these ids would have shadowed the Mix page's live ones
+             (getElementById answers the first match in the document, and the
+             song page comes before the mix page in it). -->
       </div>
     </section>
 
@@ -185,10 +156,13 @@
          the fill its level, the word its instrument name, cut/solo beside
          it, and a tap unfolds that channel's pan, its three BUS SENDS and its
          EQ curve. BUSES: three named, renameable returns with the effects
-         inside them and a send from each to the others (a cycle is refused —
-         fields.js busSendPlan). MAIN: the section's own group strip and the
-         master, whose volume is a full-width bar over a full-width meter.
-         ui/mixtbl.js builds all three wells; #rack stays empty. -->
+         inside them, a send from each to the others (a cycle is refused —
+         fields.js busSendPlan), and a fourth always-open strip carrying the
+         mastering chain's own character (drive/tape/space/width/tilt/glue/
+         ceiling — "those feel like a bus," Paul, 2026-08-17). MAIN: the
+         section's own group strip and the master — volume, meter, a real EQ
+         curve and a blend over the buses' own returns, and nothing else.
+         ui/mixtbl.js builds all four wells; #rack stays empty. -->
     <section class="page pg-mix" id="page-mix" aria-label="mix">
       <div class="ed">
         <!-- NO HEAD, NO (?). The page is reached by a lit MIX key and its
@@ -200,6 +174,45 @@
              is wrong. -->
         <div class="mixtbl board tbl" id="mixtbl"></div>
         <div class="rack tbl" id="rack"></div>
+        <!-- SOUND DEFINITION AND SAVING, moved here whole ("move all the
+             sound definition and saving functionality into mix… redesign it
+             to fit", Paul, 2026-08-16). ui/poolbank.js and ui/chrome.js bind
+             these ids exactly as they did on the Arrange page — same ids,
+             same modules, a new home — so casting the band and the file keys
+             are two tappable drawers beside the desk rather than a page of
+             their own. Closed by default: a quiet section at the bottom. -->
+        <details class="mixplug">
+          <summary title="cast the band"><i class="k ik-cast" aria-hidden="true"></i></summary>
+          <div class="gbank tbl poolbank" id="poolbank" aria-label="instruments">
+            <div class="poolrows"></div>
+          </div>
+        </details>
+        <details class="mixplug">
+          <summary title="groove, swing, soundfont, songs, save and load"><i class="k ik-save" aria-hidden="true"></i></summary>
+          <div class="gbank tbl" aria-label="session">
+            <div class="gitems">
+              <label class="gctl"><span class="glab">Groove</span>
+                <select id="groove"></select></label>
+              <label class="gctl"><span class="glab">Swing</span>
+                <select id="swing"></select></label>
+              <label class="gctl"><span class="glab">Soundfont</span>
+                <select id="font"></select></label>
+              <label class="gctl"><span class="glab">Songs</span>
+                <select id="preset"><option value="">choose…</option></select></label>
+              <div class="gctl"><span class="glab">Song file</span>
+                <span class="ukeys">
+                  <button class="btn ik ik-save" id="savefile" title="save the song to a file">
+                    <span class="k" aria-hidden="true"></span><span class="t">Save</span></button>
+                  <button class="btn ik ik-load" id="loadfile" title="load a song file">
+                    <span class="k" aria-hidden="true"></span><span class="t">Load</span></button>
+                  <input type="file" id="loadinput" accept="application/json,.json" hidden>
+                  <button class="btn ik ik-reset" id="reset" title="reset everything to the default song">
+                    <span class="k" aria-hidden="true"></span><span class="t">Reset all</span></button>
+                </span>
+              </div>
+            </div>
+          </div>
+        </details>
       </div>
     </section>
 

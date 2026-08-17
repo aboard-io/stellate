@@ -9,9 +9,13 @@
 // the carrier, the board relabels, every VOICE cell renames — one resolver,
 // derive.js instrIdOf, everywhere at once.
 //
-// It lives on the SONG page beside the session bank because it is a SONG
-// operation: like the groove and the swing it outlives every box, and a
-// per-section instrument was several bands pretending to be one.
+// It lives on the MIX page now, beside the desk it casts ("move all the
+// sound definition and saving functionality into mix", Paul, 2026-08-16) —
+// #poolbank is a tappable <details> there, closed by default. It is still a
+// SONG operation, not a box one: like the groove and the swing it outlives
+// every section, and a per-section instrument was several bands pretending
+// to be one. This module never queried its own page, so the move cost it
+// nothing — #poolbank/.poolrows are read wherever they sit in the DOM.
 //
 // Layer graph: ui view — imports state/derive/deps and palette's bank shape;
 // every change leaves through commit(), never through a direct call into

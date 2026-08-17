@@ -84,9 +84,41 @@
 // the same grammar as a voice's, marked by their own hue and a "return" tag —
 // and the separate knob RACK that used to sit under the board is ABSORBED
 // into them: each bus's rack row (return, repeats, tone) is now that strip's
-// own bars, ids `#b-<bus>-<key>` intact. The MASTER registry's seven stages
-// (`#m-<key>`) moved the same way, onto the master strip. Nothing at all is
-// left below the board: #rack keeps its id and stays permanently empty.
+// own bars, ids `#b-<bus>-<key>` intact. Nothing at all is left below the
+// board: #rack keeps its id and stays permanently empty.
+//
+// MAIN WAS THE WRONG SHELF FOR A MASTERING CHAIN. Paul again, 2026-08-17:
+// "main feels weird — why is drive space width tape etc here? those feel
+// like a bus". He is right — DRIVES/GLUES/TAPES/SPACES/WIDTHS/TILTS/CEILINGS
+// (fields.js MASTER) are the shared rack's own character, not the sum's, so
+// the seven stage bars — ids `#m-<key>` intact, same table, same detent, the
+// exact keyboard contract two browser gates already drive blind — move off
+// the master strip and onto buildProcessingStrip below, a fourth bstrip in
+// BUSES that is ALWAYS OPEN. That is not a style choice: both gates call
+// `.focus()` on an `#m-<key>` bar with no fold opened first, so a control
+// this machine has always been able to reach blind has to stay reachable
+// blind, and BUSES already opens by default the way MAIN did.
+//
+// WHAT MAIN KEEPS is exactly what Paul named: "master EQ, master fader, the
+// meter, the blend, and nothing else." The fader and the meter were already
+// here. The EQ is buildEqCurve called a THIRD time rather than written a
+// second — over the same two shelves fields.js TILT already builds
+// (buildMasterChain: −t at 250 Hz, +t at 3000 Hz), so dragging the curve's
+// right side up is the real high trim he asked for, landing on the exact
+// node graph.js already wires. `#m-tilt` keeps its own detented bar on the
+// processing strip too — two views over one store, the law the master
+// volume fader already lives by (state.js VOLSTORE) — so the curve and the
+// knob can never disagree about what "bright" means.
+//
+// THE BLEND is a second view over the three buses' own `ret` returns
+// (fields.js BUS_FIELDS), moved together by one continuous bar instead of
+// three separate detents — down recedes reverb/delay/room toward BUSRETS'
+// own floor, up pushes them toward its own ceiling, and any one bus's own
+// strip reads the same word this bar just chose. It is NOT yet a true
+// dry/kill crossfade — nothing in fields.js trims the dry sum at master, so
+// a fourth field (`MASTER.blend`, resolved in graph.js buildMasterChain the
+// way `space`/`width` already are) is the honest next stage of this, and it
+// needs fields.js + audio/graph.js, both outside this lane's file list.
 //
 // WHAT SURVIVES, deliberately: rowsOf (the track list is still the mixer's
 // own roster), readField/writeField (one writer, absent the only spelling of
@@ -1554,17 +1586,71 @@ function ensureSendStrips() {
   }
 }
 
+/* ---------- the master EQ curve and the blend: two views each ---------- */
+// THE MASTER EQ is buildEqCurve pointed at fields.js TILT — a real shelf
+// pair, not a new field: −t at 250 Hz, +t at 3000 Hz, the exact nodes
+// graph.js buildMasterChain already wires when `#m-tilt` moves. Dragging the
+// curve snaps to the same four words the knob offers (nearest(), the law
+// every continuous-over-enum bridge on this board already uses for `rev`'s
+// default) and writes the SAME MASTER.tilt the knob does, so the two can
+// never read two different truths.
+const TILT_FIELD = MASTER_FIELDS.find(f => f.key === "tilt");
+const TILT_BANDS = [
+  { key: "lo", freq: 250,  type: "lowshelf",  label: "low" },
+  { key: "hi", freq: 3000, type: "highshelf", label: "high" },
+];
+const tiltKeyOf = () => (MASTER && MASTER.tilt) || null;
+const tiltShown = bandKey => {
+  const k = tiltKeyOf(), t = k != null ? TILT_FIELD.table[k] : null;
+  return t == null ? null : (bandKey === "hi" ? t : -t);
+};
+function tiltWrite(bandKey, db) {
+  const cur = tiltKeyOf();
+  if (db == null) {
+    if (cur == null) return;
+    const next = { ...(MASTER || {}) }; delete next.tilt;
+    setMaster(next); initAudio(); commit("master");
+    return;
+  }
+  const k = nearest(TILT_FIELD.table, bandKey === "hi" ? db : -db);
+  if (k === cur) return;                   // same detent: no chain rebuild
+  const next = { ...(MASTER || {}) }; next.tilt = k;
+  setMaster(next); initAudio(); commit("master");
+}
+// THE BLEND is a second view over the three buses' own `ret` (fields.js
+// BUS_FIELDS), moved together — see the header note on why this stands in
+// for a true dry/kill crossfade rather than being one. RET_LO/RET_HI is
+// BUSRETS' own span (down .5 .. hot 1.6); absent (unity, "as built") sits at
+// its own fraction inside that span rather than at either end.
+const RET_FIELD = BUS_FIELDS[0].knobs.find(k => k.key === "ret");
+const RET_TABLE = RET_FIELD.table;
+const RET_LO = Math.min(...Object.values(RET_TABLE));
+const RET_HI = Math.max(...Object.values(RET_TABLE));
+const blendToF = v => Math.max(0, Math.min(1, (v - RET_LO) / (RET_HI - RET_LO)));
+const blendGain = () => { const v = busVal("rev", "ret"); return v ? RET_TABLE[v] : 1; };
+function blendWrite(x) {
+  const cur = blendGain();
+  if (x == null) {
+    if (cur === 1) return;
+    for (const b of ["rev", "echo", "room"]) busWrite(b, "ret", null);
+    return;
+  }
+  const k = nearest(RET_TABLE, Math.max(RET_LO, Math.min(RET_HI, x)));
+  if (RET_TABLE[k] === cur) return;        // same detent on every bus: skip
+  for (const b of ["rev", "echo", "room"]) busWrite(b, "ret", k);
+}
+
 /* ---------- the MASTER strip ---------- */
 // "Keep everything 100% width including master volume and readout. Everything
 // is horizontal now" (Paul, 2026-08-17). So the last vertical control on the
 // page is gone: master volume is a full-width horizontal bar with the meter
-// lying under it at the same width, and the seven MASTER_FIELDS stages are
-// bars beneath both. The volume fader here IS the transport's volume fader
-// (ui/state.js VOLSTORE), two views over one store, deliberately NOT in the
-// song; the meter reads graph.rmsNow() per frame (the sum, pre-volume).
-//
-// The #m-<key> ids and the whole keyboard contract of the stage bars survive
-// the move untouched — three browser gates drive them by id.
+// lying under it at the same width. What sits under THAT is the master EQ
+// curve and the blend bar (above) — "master EQ, master fader, the meter, the
+// blend, and nothing else," so the seven mastering-stage bars that used to
+// sit here are gone from this strip; buildProcessingStrip below is their new
+// home. The volume fader IS the transport's volume fader (ui/state.js
+// VOLSTORE), two views over one store, deliberately NOT in the song; the
+// meter reads graph.rmsNow() per frame (the sum, pre-volume).
 let masterStrip = null;
 {
   const tr = mk("div", "strip bstrip mstr");
@@ -1586,33 +1672,45 @@ let masterStrip = null;
   meter.append(mfill);
   lvlwrap.append(slot, meter);
   tr.append(lvlwrap);
-  // what the chain actually built, and the seven stages that build it
-  const stages = mk("i", "mfeed mstages", "");
-  tr.append(stages);
-  const grid = mk("div", "mgrid");
-  const stageBars = MASTER_FIELDS.map(f => buildDetentBar({
-    id: "m-" + f.key, fam: "master", label: f.label,
-    keys: Object.keys(f.table), labels: f.labels,
-    get: () => (MASTER && MASTER[f.key]) || "",
-    set: v => {
-      const next = { ...(MASTER || {}) };
-      if (v) next[f.key] = v; else delete next[f.key];
-      setMaster(next);
-      initAudio();                         // a bar move is a user gesture
-      commit("master");
-    },
-    status: true,
-  }));
-  for (const s of stageBars) { grid.append(s.el); detBars.push(s.paint); }
-  tr.append(grid);
+  const eq = buildEqCurve({
+    bands: TILT_BANDS, label: "master tone",
+    get: tiltShown, derived: () => null,
+    drag: tiltWrite, write: tiltWrite,
+  });
+  tr.append(eq.el);
+  const blend = makeBar({
+    cls: "mval", fillCls: "bfill", fam: "send", legend: "blend",
+    label: "the buses back into the mix",
+    aria: { "aria-valuemin": RET_LO.toFixed(2), "aria-valuemax": RET_HI.toFixed(2) },
+  });
+  tr.append(blend.b);
+  let bd = null;
+  blend.b.addEventListener("pointerdown", ev => {
+    if (ev.button) return;
+    ev.preventDefault();
+    blend.b.focus({ preventScroll: true });
+    try { blend.b.setPointerCapture(ev.pointerId); } catch (e) {}
+    bd = { x0: ev.clientX, y0: ev.clientY, v0: blendGain() };
+  });
+  blend.b.addEventListener("pointermove", ev => {
+    if (!bd) return;
+    blendWrite(bd.v0 + axis(ev, bd) * ((RET_HI - RET_LO) / 220));
+  });
+  const blendUp = () => { bd = null; };
+  blend.b.addEventListener("pointerup", blendUp);
+  blend.b.addEventListener("pointercancel", blendUp);
+  blend.b.addEventListener("dblclick", () => { blendWrite(null); buzz(4); });
+  blend.b.addEventListener("keydown", ev => {
+    const step = n => { blendWrite(blendGain() + n); ev.preventDefault(); };
+    if (ev.key === "ArrowUp" || ev.key === "ArrowRight") step(0.1);
+    else if (ev.key === "ArrowDown" || ev.key === "ArrowLeft") step(-0.1);
+    else if (ev.key === "Home") { blendWrite(null); ev.preventDefault(); }
+  });
   masterStrip = tr;
   const paint = () => {
     cap.style.setProperty("--f", String(vol / 100));
     vout.textContent = String(vol);
     slot.setAttribute("aria-valuenow", String(vol));
-    const rep = masterReport();
-    const t = rep && rep.stages.length ? rep.stages.join(" · ") : "default chain";
-    if (stages.textContent !== t) stages.textContent = t;
     // −60..0 dBFS onto the meter — the same log window every meter uses.
     // Parked at zero when the transport is stopped: notes scheduled ahead of a
     // stop keep ringing into the (pre-mute) analyser tap, and a meter that
@@ -1620,6 +1718,13 @@ let masterStrip = null;
     const r = transportOn ? rmsNow() : 0;
     const db = 20 * Math.log10(Math.max(1e-4, r));
     mfill.style.setProperty("--f", String(Math.max(0, Math.min(1, (db + 60) / 60))));
+    eq.paint();
+    const bv = blendGain();
+    blend.setF(blendToF(bv));
+    blend.val.textContent = bv.toFixed(2);
+    blend.setLit(Math.abs(bv - 1) > 0.001);
+    blend.b.setAttribute("aria-valuenow", bv.toFixed(2));
+    blend.b.setAttribute("aria-valuetext", bv.toFixed(2));
   };
   const setV = v => {
     const c = Math.round(Math.max(0, Math.min(100, v)));
@@ -1652,13 +1757,55 @@ let masterStrip = null;
 }
 for (const row of BUS_FIELDS) buildBusStrip(row);
 
+/* ---------- THE PROCESSING STRIP: the master's seven stages, moved ------- */
+// fields.js MASTER's mastering chain, off the master strip and onto its own
+// bstrip in BUSES ("those feel like a bus" — see the header note). ALWAYS
+// OPEN, unlike a track or a bus return, and that is a gate constraint rather
+// than a design one: two browser gates call `.focus()` on `#m-<key>` with no
+// fold opened first, so this strip carries no toggle to fight them, the way
+// the master strip never folded either. Every bar still says its own name
+// (the board's own law — "a strip has no header row to borrow a column name
+// from"), so the grid needs no label of its own.
+function buildProcessingStrip() {
+  const tr = mk("div", "strip bstrip proc");
+  tr.setAttribute("role", "row");
+  tr.setAttribute("aria-label", "master processing");
+  // what the chain actually built, read off the same report the master
+  // strip used to print
+  const stages = mk("i", "mfeed mstages", "");
+  tr.append(stages);
+  const grid = mk("div", "mgrid");
+  const stageBars = MASTER_FIELDS.map(f => buildDetentBar({
+    id: "m-" + f.key, fam: "master", label: f.label,
+    keys: Object.keys(f.table), labels: f.labels,
+    get: () => (MASTER && MASTER[f.key]) || "",
+    set: v => {
+      const next = { ...(MASTER || {}) };
+      if (v) next[f.key] = v; else delete next[f.key];
+      setMaster(next);
+      initAudio();                         // a bar move is a user gesture
+      commit("master");
+    },
+    status: true,
+  }));
+  for (const s of stageBars) { grid.append(s.el); detBars.push(s.paint); }
+  tr.append(grid);
+  busWell.append(tr);
+  busRefs.push({ paint() {
+    const rep = masterReport();
+    const t = rep && rep.stages.length ? rep.stages.join(" · ") : "default chain";
+    if (stages.textContent !== t) stages.textContent = t;
+  } });
+}
+buildProcessingStrip();
+
 /* ---------- what is left below the board ---------- */
 // NOTHING. The RACK's rows became the bus and master strips above, and the
 // master's hint paragraph — the last (?) on the machine — is deleted with
 // the other three ("get rid of headers and help buttons", 2026-08-16): every
-// stage it described is a labelled bar on the master strip, reading its own
-// value. #rack keeps its id and stays empty, so no page, gate or stylesheet
-// has to learn a new address.
+// stage it described is a labelled bar on the processing strip now, reading
+// its own value. #rack keeps its id and stays empty, so no page, gate or
+// stylesheet has to learn a new address.
 const paintKnobs = () => { for (const p of detBars) p(); };
 
 /* ---------- the frame paint ---------- */
