@@ -27,7 +27,7 @@
   const NS = (typeof module !== "undefined" && module.exports)
     ? require("./sing.js") : root.NuSing;
   const { reverse, invert, rotate, fill, spread, split, del, drop,
-          transpose, complement, crossmap, excerpt, only, KITOPS, LANES } = K;
+          transpose, complement, crossmap, excerpt, only, KITOPS, LANES, MODE } = K;
   const { MODES, MODELABEL, SCALES, SCALELABEL } = NG;
   const { SINGS, SINGLABEL } = NS;
 
@@ -367,13 +367,54 @@
   // default null = "as the genre asks", and a null field must render
   // byte-identically to an absent one (the §33 unit gate holds it).
   //
-  // KEY — a semitone shift on the whole box, applied in the kernel AFTER
-  // registration so the fold cannot eat it. The set is deliberately small: a
-  // minor third down through a major third up covers the truck-driver +2 and
-  // the relative-major +3 without offering the tritone nobody wants as a chip.
-  const KEYS = { "-3": -3, "-2": -2, "-1": -1, "1": 1, "2": 2, "3": 3, "4": 4 };
-  const KEYLABEL = { "-3": "−3", "-2": "−2", "-1": "−1",
-                     "1": "+1", "2": "+2", "3": "+3", "4": "+4" };
+  // KEY — the SONG'S TONIC, a semitone shift on the whole box, applied in the
+  // kernel AFTER registration so the fold cannot eat it (already true, and
+  // read off the rendered score rather than assumed — see the nukernel gate's
+  // "a song knows what key it is in" section): every pitch kernel.js builds
+  // adds `key` as its very last step, so a phrase is transposed whole, never
+  // broken. Widened from the truck-driver's own small range (2026-08-16) to
+  // the full twelve: "there should be a variety of keys… I should be able to
+  // change keys" (Paul, 2026-08-17). Nothing in this engine carries an
+  // inherent pitch class — every phrase is scale DEGREES, and a genre's own
+  // harmony is written the same relative way — so "0" is a naming convention
+  // and not a measurement: call the phrase as written "C", the way any
+  // tracker names its open string that, and every other tonic is spoken
+  // relative to it. Old saves (which only ever wrote −3..4) still validate
+  // and still SOUND exactly as they did — those seven values did not move,
+  // only their label did, from a bare number to the note it actually names.
+  const KEYNAMES = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
+  const KEYS = {}, KEYLABEL = {};
+  for (let i = -6; i <= 5; i++) {
+    KEYS[String(i)] = i;
+    KEYLABEL[String(i)] = KEYNAMES[((i % 12) + 12) % 12];
+  }
+  // a modulation's own arithmetic: any semitone count, folded back onto the
+  // twelve keys this table actually offers (−6..5) so a composed "+2" (the
+  // truck driver) or a "relative minor, −3" (the bridge) never hands song.js
+  // a value its own registry would refuse. compose.js is the only caller.
+  const wrapKey = n => (((n + 6) % 12) + 12) % 12 - 6;
+  // A KEY THIS WIDE CAN PUSH A FIXED-REGISTER VOICE OFF ITS ANCHOR — the same
+  // caveat the narrower range already carried (kernel.js `anchored()` decides
+  // a note's register BEFORE `key` is added), now with a half-octave either
+  // side rather than a third. Not a new problem and not fixed here: it is the
+  // instrument's own ceiling (vaporwave's DX7 comment is the documented case),
+  // and the composer never reaches for the extremes of this table on its own.
+
+  // MODE, reread as the other half of "the key" now that the tonic is a real
+  // picker: "a major/minor (or modal) toggle" (Paul). The seven-way modal
+  // chip already existed below; the one thing it could never say was "minor"
+  // itself, because minor is what an UNSET chip already plays (kernel.js:
+  // `g.mode || MODE`, and MODE there is natural minor). `minor` joins the
+  // table as a real, choosable chip rather than a blank space, and it is safe
+  // to add without a matching entry in genres.js: ui/derive.js resolves a
+  // box's chip through NuGenres.MODES, which has no "minor" key either, so
+  // the lookup returns undefined and the render falls through to
+  // `g.mode || MODE` exactly as leaving the chip alone would. The visible
+  // difference is real, though — choosing "minor" OVERRIDES a genre's own
+  // colour (newwave's mixolydian, say) the way every other explicit chip
+  // overrides the genre's own default, which null never does.
+  const KEYMODES = { ...MODES, minor: MODE };
+  const KEYMODELABEL = { ...MODELABEL, minor: "minor" };
 
   // PROG — the named progressions from genres.js, by name, plus "off" (strip
   // the genre's own prog and fall back to the degenerate triads). The names
@@ -1046,8 +1087,8 @@
       tab: "line",   group: "pattern",                 default: [] },
     { key: "role",    scope: "box",   table: ROLES,    labels: ROLES,
       tab: "sound",  group: "section",                 default: null },
-    { key: "mode",    scope: "box",   table: MODES,    labels: MODELABEL,
-      tab: "sound",  group: "chord mode",              default: null },
+    { key: "mode",    scope: "box",   table: KEYMODES, labels: KEYMODELABEL,
+      tab: "sound",  group: "key",                     default: null },
     { key: "rate",    scope: "box",   table: RATES,    labels: RATELABEL,
       tab: "sound",  group: "tempo",                   default: null },
     { key: "artic",   scope: "layer", table: ARTICS,   labels: ARTICS,
@@ -1172,7 +1213,8 @@
                 SENDS, SENDLABEL, VERBS,
                 DTIMES, DTLABEL, LEVELS, LEVELLABEL, PANS, PANLABEL,
                 VOX, VOXPARAM, OCTAVES, ARTICS, CMODES, CLAMPS, CLAMPLABEL,
-                KEYS, KEYLABEL, PROGCHOICES, PROGLABEL, PERIODS, PERIODLABEL,
+                KEYS, KEYLABEL, KEYNAMES, wrapKey, KEYMODES, KEYMODELABEL,
+                PROGCHOICES, PROGLABEL, PERIODS, PERIODLABEL,
                 BREATHS, BREATHLABEL, PIPESETS, PIPELABEL, PARTCHOICES,
                 PARTNAMES, PARTLABEL, PARTMIX, PARTMIXBY, MAX_CHAIRS,
                 readPartKey, okPartKey, partChairLabel, chairKeys, resolvePartMix,

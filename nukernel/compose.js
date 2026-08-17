@@ -515,9 +515,11 @@
   //
   // The box literal itself comes from song.js — one skeleton, not two copies —
   // and only the composer's own opinion is added on top: a genre carrying `fx`
-  // seeds the chain (sludge played clean is not sludge).
-  const skeleton = (role, G, gk) =>
-    Object.assign(NS.skeleton(gk, role), { fx: G.fx ? [...G.fx] : [] });
+  // seeds the chain (sludge played clean is not sludge), and every box opens
+  // in the SONG'S KEY (S.tonic, set once in compose() below) — a section only
+  // departs from it where build() below decides that IS the gesture.
+  const skeleton = (role, G, gk, S) =>
+    Object.assign(NS.skeleton(gk, role), { fx: G.fx ? [...G.fx] : [], key: S.tonic });
 
   // ---- HOW A SONG STARTS ---------------------------------------------------
   // There are more ways to open a record than a drum hit, and for a while this
@@ -613,7 +615,7 @@
     // fifteen seconds of nothing but a kick, which is not an intro, it is a wait
     const n = Math.max(2, Math.min(4, G.rate < 1 ? 2 : 4));
     const bed = (extra) => {
-      const b = skeleton("intro", G, gk);
+      const b = skeleton("intro", G, gk, S);
       b.len = n; b.stack[0].slots = [];            // no phrase: kit and bass only
       // (no groove and no swing here: BOTH are the SONG's — compose's return)
       return Object.assign(b, extra);
@@ -852,7 +854,7 @@
     const kit = Object.keys(G.kit || {}).length > 0;   // does this genre have drums at all
     const bars = G.bars;
     const peak = !!(a && a.peak);                       // the arc's 1.0 — the last chorus/drop
-    const b = skeleton(ALIAS[role] || role, G, gk);
+    const b = skeleton(ALIAS[role] || role, G, gk, S);
     if (ALIAS[role]) b.cue = role;                      // the honest name, kept for the UX phase
     // THE SECTION LENGTH, from the family's own answer rather than from the
     // genre's form length (fullLen above for why those are different questions)
@@ -1006,7 +1008,13 @@
       // the chorus is where a second genre earns its place — one more line,
       // its own phrase, which is what the stack was built for. At the peak it
       // is not offered, it is DUE — and sometimes the whole band goes up two:
-      // the truck-driver modulation, the most recognizable radio gesture there is.
+      // the truck-driver modulation, the most recognizable radio gesture there
+      // is, up a whole step off the SONG'S OWN key (S.tonic, wrapped back onto
+      // the twelve fields.js actually offers rather than sailing past +5).
+      // ONLY A "song"-PLAN GENRE EVER REACHES HERE — `chorus` is not a role the
+      // dance or arc plans build (PLAN_OF above) — so the gesture is already
+      // confined to the radio-song idiom that owns it, with no further filter
+      // needed: a fugue or a drone never rolls this dice because it never asks.
       //
       // WHO the guest is stopped being a uniform draw over LAYERABLE here: the
       // pool is the family's own ballot and the name was chosen once for the
@@ -1015,11 +1023,22 @@
       // gesture in pop and the one place this file allows two guests in a box.
       if (peak) {
         guest(1, [S.counter], S.guest && S.guest.b);
-        if (chance(r, 0.4)) b.key = 2;
+        if (chance(r, 0.4)) b.key = NF.wrapKey(S.tonic + 2);
       } else guest(0.45, [S.counter]);
     } else if (role === "bridge") {
       b.stack[0].slots = chance(r, 0.5) ? [S.counter] : [S.counter, S.sparse];
       b.mode = pick(r, ["dorian", "phrygian", "harmonic", "mixo"]);
+      // THE RELATIVE-MINOR BRIDGE. A bridge already changes colour (b.mode,
+      // just above); on a genre with real harmonic function it sometimes
+      // changes CENTRE too — up or down a minor third off the song's own key,
+      // the classic relative major/minor pair and the oldest way a middle
+      // eight reads as "somewhere else". GATED ON FUNCTION: a genre that never
+      // names a prog or a chord cycle (acid, simple, anything modal) has no
+      // dominant to leave home from and nothing for a relative key to mean, so
+      // it sits this one out — the same guard the cadence three lines down
+      // already uses for the identical reason.
+      if ((G.progFamily || G.prog || (G.harmony === "cycle" && G.roots)) && chance(r, 0.3))
+        b.key = NF.wrapKey(S.tonic + (chance(r, 0.5) ? -3 : 3));
       b.ops = [pick(r, ["inv", "rev", "rot3", "gateflip"])];
       b.period = "2bar";                      // a two-bar period: the bridge sways
       if (G.progFamily || G.prog) b.cadence = { d: 4, q: "dom7" };
@@ -1599,6 +1618,20 @@
     // filtered of whoever is already on the payroll (guestCast).
     S.singer = singerOf(G, gk);
     S.guest = guestCast(G, gk, S.gst, S.singer);
+    // THE SONG'S KEY (fields.js KEYS carries the law). genres.js declares no
+    // tonic — every anchor is written in scale DEGREES, so there is nothing to
+    // read off it — and until now that meant every composed record landed on
+    // the same unlabelled pitch class, "why is everything A minor". `S.tonic`
+    // is DERIVED instead: deterministic off the genre's own name, the same
+    // FNV-1a salt every other genre-scoped stream in this file already keys
+    // on, so two different genres reliably land on two different keys and one
+    // genre always opens in the same one — a fact about the record, not a
+    // coin toss, and stable across seeds the way BPM and PLAN_OF are. Not
+    // salted by seed: skeleton() (below, per box) stamps it on every section
+    // by default, and build()'s bridge/peak-chorus branches are the only
+    // places that move off it — that IS the modulation, drawn on the seeded
+    // stream like everything else a section decides.
+    S.tonic = (ihash(gk + "/key") % 12) - 6;
     // NO SILENT DEFAULTS. Every genre must carry a plan and a tempo — the old
     // `|| "song"` / `|| 120` fallbacks meant a new genre arranged like pop at
     // 120 and every gate passed. The coverage gate in test/unit/nukernel.test.js

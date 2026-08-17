@@ -9750,6 +9750,161 @@ console.log("the desk is three buses and a fader — bus routing, the cut, the c
               "a refused cycle");
 }
 
+/* ---------------------------------------------------------------- 63. THE KEY
+   "How do I change key? … There should be a variety of keys … defaulting per
+   genre … I should be able to change keys … occasionally … songs should
+   change keys" (Paul). fields.js widened `key` from a truck-driver's ±few to
+   the full twelve tonics (plus a real "minor" chip beside the modal ones);
+   compose.js derives a genre's own tonic and occasionally moves off it. Every
+   claim below is read off the RENDERED score, through the REAL ui/derive.js
+   (§31's own law) — never off the saved box. */
+console.log("a song knows what key it is in, and sometimes it decides to move");
+{
+  const NF = require("../../nukernel/fields.js");
+  const NS2 = require("../../nukernel/song.js");
+  const C = require("../../nukernel/compose.js");
+
+  // (a) TRANSPOSITION IS EXACT. fields.js's own claim is that `key` is added
+  // in the kernel AFTER registration, so a phrase (degrees, never absolute
+  // pitches) cannot be broken by it — that was already true before this
+  // round; this reads it off K.render rather than assuming it, the way every
+  // other claim in this gate does.
+  {
+    const G = GENRES.beatles;
+    const at0 = K.render(P, { ...G, key: 0 }, 4);
+    const at5 = K.render(P, { ...G, key: 5 }, 4);
+    ok(at0.length > 0 && at0.length === at5.length,
+       "changing the key changed which notes played, not just their pitch");
+    ok(at0.every((e, i) => {
+      const f = at5[i];
+      return f && Math.abs(f.t - e.t) < 1e-9 && f.dur === e.dur && f.v === e.v &&
+             f.vel === e.vel && f.acc === e.acc && f.sld === e.sld && f.n === e.n + 5;
+    }), "key +5 did not transpose every note by exactly 5 semitones and nothing else");
+  }
+
+  // (b) fields.js's own widened table: the old seven values kept their exact
+  // meaning (a save from before this round still plays the note it always
+  // played), and it now spans a real octave with a name on every one of them.
+  {
+    const old = { "-3": -3, "-2": -2, "-1": -1, "1": 1, "2": 2, "3": 3, "4": 4 };
+    ok(Object.keys(old).every(k => NF.KEYS[k] === old[k]),
+       "a pre-existing saved key value changed meaning");
+    ok(Object.keys(NF.KEYS).length === 12 &&
+       new Set(Object.values(NF.KEYS).map(v => ((v % 12) + 12) % 12)).size === 12,
+       "the tonic picker is not the full twelve");
+    ok(NF.KEYLABEL["0"] === "C" && /^[A-G]/.test(NF.KEYLABEL["-6"]),
+       "a tonic chip carries jargon instead of a note name");
+  }
+
+  // (c) A SONG WITH NO KEY SET IS BYTE-IDENTICAL TO BEFORE. skeleton()'s own
+  // default is unchanged (null, "as the genre asks"), and an absent key still
+  // renders exactly as an explicit 0 does — the house law §33 already holds
+  // for every other field, read here for this one.
+  {
+    const gk = "isley";
+    const b = NS2.skeleton(gk, "verse"); b.stack[0].slots = [0];
+    ok(b.key === null, "skeleton()'s own default for key moved off null");
+    const evNull = D.sectionEvents(b, [P]).ev;
+    const ev0 = D.sectionEvents({ ...b, key: 0 }, [P]).ev;
+    ok(evNull.length > 0 && JSON.stringify(evNull) === JSON.stringify(ev0),
+       "an absent key no longer renders identically to an explicit 0");
+  }
+
+  // (d) A SECTION KEY CHANGE LANDS ON THE SECTION BOUNDARY, NOT A BAR EARLY.
+  // Two independent sections — a plain verse and a bridge modulated a minor
+  // third up — each rendered whole. If the modulation leaked a bar early it
+  // would show up as a mismatch inside the verse's OWN last bar; if it landed
+  // late it would show up in the bridge's first. Neither happens: every note
+  // of the bridge, including its very first, sits exactly a minor third above
+  // the same step of the (unmodulated) verse — the whole box moves together,
+  // by construction, because `key` is one value for the section's whole
+  // window and not a per-bar fact.
+  {
+    const gk = "isley";
+    const secA = NS2.skeleton(gk, "verse"); secA.stack[0].slots = [0]; secA.len = 4;
+    const secB = NS2.skeleton(gk, "bridge"); secB.stack[0].slots = [0];
+    secB.len = 4; secB.key = 3;
+    const line = b => D.sectionEvents(b, [P]).ev
+      .filter(e => e.kind === "line" && e.n != null)
+      .sort((x, y) => x.t - y.t || x.v - y.v);
+    const evA = line(secA), evB = line(secB);
+    ok(evA.length > 0 && evA.length === evB.length,
+       "the two sections did not render the same shape of events");
+    ok(evA.every((e, i) => Math.abs(evB[i].t - e.t) < 1e-9 && evB[i].n === e.n + 3),
+       "the bridge's key did not land uniformly across its whole length " +
+       "(a bar early or a bar late from the boundary)");
+  }
+
+  // (e) A MODULATING GENRE MODULATES DETERMINISTICALLY. "beatles" is a
+  // song-plan genre with both a peak chorus (the truck-driver +2) and a
+  // harmonically functional bridge (the relative-minor gesture) — the two
+  // places compose.js ever moves a box off the song's own key. Composing the
+  // same (genre, seed) twice must choose the same keys both times.
+  {
+    const gk = "beatles";
+    for (const seed of [3, 11, 42]) {
+      const keysOf = () => C.compose(gk, seed).song.map(b => (b.key == null ? null : b.key));
+      const k1 = keysOf(), k2 = keysOf();
+      ok(JSON.stringify(k1) === JSON.stringify(k2),
+         gk + "/" + seed + ": composing twice at one seed picked different keys");
+    }
+  }
+
+  // (f) …AND IT IS NEVER GRATUITOUS AND NEVER ABSENT. Across forty seeds of a
+  // song-plan genre, some records modulate and some do not — the "occasional"
+  // Paul asked for, measured rather than assumed.
+  {
+    const gk = "beatles";
+    let moved = 0;
+    for (let seed = 1; seed <= 40; seed++) {
+      const song = C.compose(gk, seed);
+      const base = song.song[0].key;
+      if (song.song.some(b => b.key !== base)) moved++;
+    }
+    ok(moved > 0 && moved < 40,
+       gk + ": key changes are either never gratuitous nor never happen (" +
+       moved + "/40)");
+  }
+
+  // (g) A GENRE DECLARES THE KEY IT LIVES IN — not the same one every time.
+  // Two different genres get two different tonics far more often than one in
+  // twelve genres would collide by chance, and one genre's tonic is stable
+  // across every seed (a record does not re-key itself between takes).
+  {
+    const sample = ["beatles", "isley", "rock", "simple", "jazz", "dub", "punk"]
+      .filter(gk => GENRES[gk]);
+    const tonics = sample.map(gk => C.compose(gk, 1).song[0].key);
+    ok(new Set(tonics).size > 1,
+       "every sampled genre defaulted to the same tonic (" + tonics.join(",") + ")");
+    for (const gk of sample) {
+      const t1 = C.compose(gk, 1).song[0].key, t2 = C.compose(gk, 9).song[0].key;
+      ok(t1 === t2, gk + ": the genre's own default key moved between seeds");
+    }
+  }
+
+  // (h) THE MAJOR/MINOR CHIP. "minor" is a real, choosable value now (not
+  // just an absent field reading as one) and it OVERRIDES a genre's own
+  // colour, the way every other explicit chip does — read on newwave, the one
+  // shipped anchor whose own mode is not natural minor (mixolydian).
+  {
+    // its VALUE is unused by design (fields.js's own note) — what the picker
+    // and song.js's okEnum both need is the KEY, and that is what this checks
+    ok(Object.prototype.hasOwnProperty.call(NF.KEYMODES, "minor"),
+       "'minor' is not a legal value of the key-mode field");
+    const gk = "newwave", secOwn = NS2.skeleton(gk, "verse");
+    secOwn.stack[0].slots = [0]; secOwn.len = 4;
+    const secMinor = { ...secOwn, mode: "minor" };
+    const own = D.sectionEvents(secOwn, [P]).ev.filter(e => e.kind === "line" && e.n != null);
+    const min = D.sectionEvents(secMinor, [P]).ev.filter(e => e.kind === "line" && e.n != null);
+    ok(own.length && min.length &&
+       JSON.stringify(own.map(e => e.n)) !== JSON.stringify(min.map(e => e.n)),
+       "choosing 'minor' on a genre with its own mode changed nothing");
+  }
+
+  console.log("  63: a variety of keys, a genre's own default, a modulation " +
+              "that lands on the boundary and never happens twice by accident");
+}
+
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }
