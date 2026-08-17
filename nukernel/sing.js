@@ -273,21 +273,171 @@
     return { pitch: best, midi: want, base, bend: want - base };
   }
 
+  /* ============================================================== THE CARRIER
+     WHAT THE VOCODER SINGS THROUGH, and this is the half that was missing.
+
+     A channel vocoder is two signals: the VOICE is the modulator (espeak, cut
+     into syllables above) and a SYNTH TONE is the carrier. The voice supplies
+     only a moving spectral envelope; every sample you actually hear comes out
+     of the carrier. So the carrier IS the sound, and offering exactly one of
+     them — robot_choir.dsp's three detuned saws — was offering one robot.
+
+     "Don't forget you have a real analog synth, real filters and a DX7 as
+     needed along with samples" (Paul, 2026-08-17). The engine next door has
+     the real models (engine/faust/dsp: modeld, tb303, dx7_alg*, robot_choir),
+     and each row below is drawn from ONE of them, `from` naming which. What is
+     borrowed is the OSCILLATOR SECTION and the filter, not the wasm: the
+     vocoder runs in the buffer domain at fit time (see the cost note in
+     audio/sing.js — a 32-band bank as live nodes would be 64 biquads per
+     note), so a Faust worklet cannot stand in the middle of it. The numbers
+     are the shipped models' own wherever the model has them: `moog` carries
+     instruments.js FONTS.analog's cutoff/res/oscMix/drift verbatim, `303`
+     carries tb303's single saw into a screaming ladder.
+
+     ONE RULE DECIDES WHETHER A CARRIER WORKS AT ALL: it must be
+     HARMONICALLY DENSE across 200 Hz–3 kHz, because a band with no carrier
+     energy in it cannot be modulated and simply goes silent — vocode a sine
+     and you get a sine. That is why every row is saws, pulses or a
+     high-index FM pair, and why the FM row's index has a FLOOR rather than
+     decaying to a bell.
+
+       osc     [ratio, wave, amp, (pulse width)] partials, summed
+       fm      one 2-op pair: sin(2pi(p + idx*sin(2pi*ratio*p))), idx decaying
+               from `index` to `floor` over `decay` seconds
+       drift   slow detune, in cents (the analog wobble)
+       ladder  the carrier's OWN filter, 4-pole with real resonance, with an
+               optional envelope in octaves — the acid squelch is this line */
+  const CARRIERS = {
+    // robot_choir.dsp's own carrier, literally: three saws detuned +-0.4% and
+    // a quiet octave double. The default, so `robot` and `choir` sound today
+    // exactly as they were written to.
+    saw:  { from: "robot_choir",
+            osc: [[0.996, "saw", 0.3], [1, "saw", 0.3], [1.004, "saw", 0.3],
+                  [2, "saw", 0.18]] },
+    // MODEL D — modeld.dsp / instruments.js FONTS.analog: two saws a hair
+    // apart, oscillator 3 an octave down as a pulse (oscMix 0.4), 6 cents of
+    // drift, into the ladder at 2400/0.28. Warm and wide; the vowels sit in
+    // the ladder's shoulder rather than on top of it.
+    moog: { from: "modeld",
+            osc: [[1, "saw", 0.34], [1.007, "saw", 0.3], [0.5, "pulse", 0.26, 0.5]],
+            drift: 6, ladder: { cutoff: 2400, res: 0.28 } },
+    // THE DX7 — dx7_alg5's stacked 2-op pair. Ratio 2 with the index held at
+    // 1.6 after its attack keeps the sidebands up where the formants are; the
+    // quiet octave sine is E.PIANO 1's tine, and it is the only thing here
+    // that reads as glass rather than as a saw.
+    dx7:  { from: "dx7_alg5", osc: [[2, "sine", 0.12]],
+            fm: { ratio: 2, index: 4.2, floor: 1.6, decay: 0.25, amp: 0.75 } },
+    // THE 303 — tb303.dsp: ONE saw, and everything else is the ladder. res
+    // 0.82 with a 2.2-octave envelope over 220 ms is the squelch, and under a
+    // vocoder it reads as a voice with a mouth that opens on every syllable.
+    "303": { from: "tb303", osc: [[1, "saw", 0.9]],
+             ladder: { cutoff: 700, res: 0.82, env: 2.2, decay: 0.22 } },
+  };
+
+  /* ------------------------------------------------------------- THE GRIP
+     HOW HARD THE VOICE IS IMPOSED ON THE TONE, which is the one vocoder knob
+     that is not a filter. Three numbers, and they are three different answers
+     to "how much of this is a machine":
+       imp  vocoded vs RAW CARRIER. At 1 the tone is entirely shaped by the
+            voice (a vocoder). Below it the synth line survives underneath and
+            the words ride on top — which is what most of the records this is
+            for actually do, and which is why it is a control and not a law.
+            (The leak is the carrier, never the dry espeak: the espeak clip
+            sings at its own rung, so mixing it in would be a second singer a
+            few semitones out. The carrier is in tune by construction.)
+       exp  the band envelope's exponent. Above 1 the quiet bands go quieter
+            and the loud ones stay — consonants snap, the gaps between
+            syllables open, and it reads as gated and robotic. Below 1 it
+            smears toward a held chord.
+       sib  the unvoiced path (see audio/sing.js): how loud the "s" is. */
+  const GRIPS = {
+    soft: { imp: 0.55, exp: 0.8, sib: 0.9, mk: 5 },
+    half: { imp: 0.78, exp: 0.9, sib: 1.0, mk: 5 },
+    firm: { imp: 1,    exp: 1,   sib: 1.0, mk: 5 },   // robot_choir's own
+    full: { imp: 1,    exp: 1.6, sib: 1.3, mk: 7 },
+  };
+
   /* ================================================================== CHIPS
-     WHAT A BOX MAY BE TOLD TO SING. Four values, which is voices x colour and
-     not a knob per axis: the two questions are not independent in any way a
-     finger cares about, and the whole surface is chips on purpose (fields.js).
+     WHAT A BOX MAY BE TOLD TO SING. One field, chips only (fields.js), and it
+     answers voices x colour x carrier at once — which is not three questions
+     to a finger. It is "who sings this", and the answer is a person or a
+     machine, named.
        lead    one singer on the tune, as synthesized
        duet    two singers, the second on a chord tone above (see harmonyOf)
        robot   one singer, through the channel vocoder (audio/sing.js)
-       choir   two singers, both vocoded — always in tune by construction */
+       choir   two singers, both vocoded — always in tune by construction
+
+     ...AND THEN THE MACHINES, appended 2026-08-17, because the vocoder had
+     exactly one voice and a vocoder is its carrier. Each of these is `robot`
+     with a different synth behind it, so the row reads as a cast rather than
+     as a knob per axis, and the three things that actually change a vocoder —
+     WHICH SYNTH, HOW MANY BANDS, HOW HARD — are chosen together the way they
+     are on a real one, where the band count is soldered in.
+       moog    a Model D behind the voice, 32 bands
+       dx7     the FM pair, 40 bands — glassy, and the most intelligible
+       303     one saw and a screaming ladder, 24 bands
+       fat     the saw, EIGHT bands, imposed to the limit: a 1978 brick, no
+               words survive, which is the point of it
+       clear   the saw, 48 bands, half grip: the synth line stays audible and
+               the words sit on it
+     BANDS ARE THE WHOLE CHARACTER of a vocoder and the trade is one-sided in
+     the middle: 8 bands cannot resolve two formants so every vowel collapses
+     to one honk, 16 gets you vowels, 32 (robot_choir's own) gets you
+     consonants, and past ~40 you are mostly paying for filters — the bank is
+     log-spaced 110..7500 Hz (audio/sing.js VB_LO/VB_HI), so 48 bands are
+     roughly a quarter-tone apart down at the bottom where speech has nothing
+     to say anyway. Spacing stays logarithmic at every count because formants
+     move in ratios, not in hertz. */
   const SINGS = {
     lead:  { voices: 1, colour: "natural" },
     duet:  { voices: 2, colour: "natural" },
-    robot: { voices: 1, colour: "vocoder" },
-    choir: { voices: 2, colour: "vocoder" },
+    robot: { voices: 1, colour: "vocoder", voc: { car: "saw", bands: 32, grip: "firm" } },
+    choir: { voices: 2, colour: "vocoder", voc: { car: "saw", bands: 32, grip: "firm" } },
+    moog:  { voices: 1, colour: "vocoder", voc: { car: "moog", bands: 32, grip: "firm" } },
+    dx7:   { voices: 1, colour: "vocoder", voc: { car: "dx7", bands: 40, grip: "firm" } },
+    "303": { voices: 1, colour: "vocoder", voc: { car: "303", bands: 24, grip: "full" } },
+    fat:   { voices: 1, colour: "vocoder", voc: { car: "saw", bands: 8, grip: "full" } },
+    clear: { voices: 2, colour: "vocoder", voc: { car: "saw", bands: 48, grip: "half" } },
   };
-  const SINGLABEL = { lead: "lead", duet: "duet", robot: "robot", choir: "choir" };
+  const SINGLABEL = { lead: "lead", duet: "duet", robot: "robot", choir: "choir",
+                      moog: "moog", dx7: "dx7", "303": "303", fat: "fat",
+                      clear: "clear" };
+
+  /* --------------------------------------------------------- WHO ASKS FIRST
+     THE GENRE MAY DECLARE ITS OWN SINGER, and until 2026-08-17 nothing could:
+     `sing` was a box field defaulting to null, no genre set it, and so the
+     whole organ — the ladders, the syllable cutter, the vocoder — had never
+     once been asked to run. Paul: "The espeak/vocoder singing never showed up".
+
+     The shape is one string on the genre, a key of SINGS:
+
+         GENRES.motorik = { …, sing: "moog" }
+
+     and the resolution is the house law every other field already obeys
+     (fields.js: "default null = as the genre asks"): an explicit chip on the
+     box wins, absent falls through to the genre, and a genre that declares
+     nothing sings nothing — singPlan returns [], warm() is never called, no
+     wasm is fetched, and the emitted score is byte-identical to the day
+     before this existed. There is deliberately no "off" chip: absent is
+     already the one spelling of absent, and a box that must be silent under a
+     singing genre is the one thing this cannot say yet — it wants a real
+     "silent" chip rather than a second spelling of the default. */
+  function singFor(gk, boxValue) {
+    if (boxValue && SINGS[boxValue]) return boxValue;
+    const g = GENRES[gk];
+    const d = g && g.sing;
+    return (d && SINGS[d]) ? d : null;
+  }
+  // the resolved character, for the renderer and the gate: which carrier, how
+  // many bands, how hard. Null for a natural singer, which is what says "no
+  // vocoder" all the way down.
+  function vocFor(key) {
+    const s = SINGS[key];
+    if (!s || !s.voc) return null;
+    const g = GRIPS[s.voc.grip] || GRIPS.firm;
+    return { car: s.voc.car, bands: s.voc.bands, grip: s.voc.grip,
+             imp: g.imp, exp: g.exp, sib: g.sib, mk: g.mk };
+  }
 
   /* ============================================================ THE PLAN
      WHICH NOTES GET SUNG.
@@ -350,8 +500,17 @@
   // Pure, total, and EMPTY when the box is not singing — which is what makes
   // the whole feature cost exactly nothing on every song saved before it.
   function singPlan(evs, opts) {
-    const spec = SINGS[(opts && opts.sing) || ""];
+    // the box's own chip first, then the genre's (singFor) — so a genre that
+    // sings arms itself and a box that names a singer still wins
+    const key = singFor((opts && opts.gk) || "", opts && opts.sing);
+    const spec = SINGS[key];
     if (!spec || !evs || !evs.length) return [];
+    // the COLOUR AND THE CHARACTER TRAVEL WITH THE PLAN, not with the chip.
+    // ui/derive.js reads SINGS[sec.sing].colour off the box, which cannot see
+    // a genre's default and knows nothing about carriers; stamping both on
+    // every entry means audio/sing.js reads what was actually resolved, and
+    // the derive line becomes a formality it can drop when it likes.
+    const voc = vocFor(key);
     const words = lyricFor((opts && opts.gk) || "simple", (opts && opts.seed) | 0);
     const pcsAt = (opts && opts.pcsAt) || (() => null);
     // the authority's singable notes, by voice; then the fullest voice wins
@@ -375,10 +534,11 @@
     picked.forEach((e, i) => {
       const syl = words[i % words.length];
       const hold = e.dur >= HOLD_STEPS;
-      out.push({ t: e.t, dur: e.dur, n: e.n, vi: 0, syl, hold, si: i });
+      out.push({ t: e.t, dur: e.dur, n: e.n, vi: 0, syl, hold, si: i,
+                 colour: spec.colour, voc });
       if (spec.voices > 1)
         out.push({ t: e.t, dur: e.dur, n: harmonyOf(e.n, pcsAt(e.t)), vi: 1,
-                   syl, hold, si: i });
+                   syl, hold, si: i, colour: spec.colour, voc });
     });
     return out;
   }
@@ -398,7 +558,8 @@
     return [...seen.values()];
   }
 
-  const api = { SINGS, SINGLABEL, VOICES, NRUNGS, MIN_STEPS, MAX_SYL, HOLD_STEPS,
+  const api = { SINGS, SINGLABEL, CARRIERS, GRIPS, singFor, vocFor,
+                VOICES, NRUNGS, MIN_STEPS, MAX_SYL, HOLD_STEPS,
                 HARM_LO, HARM_HI, BANKS, syllables, nsyl, bankFor, lyricFor,
                 ladderMidi, ladderPitch, rungsOf, voiceMidi, foldToVoice,
                 rungFor, harmonyOf, singPlan, utteranceFor, warmSpecs };

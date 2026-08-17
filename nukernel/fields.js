@@ -1065,6 +1065,28 @@
   const POOLCHAIRS = ["lead", "line", "riff", "counter", "pad", "stab",
                      "drone", "bass"];
 
+  // WHAT THIS BOX SINGS, resolved — the registry's own answer, so no surface
+  // has to know that the fallback exists. The same two-line shape as
+  // resolvePartMix / resolveMaster above: an explicit chip wins, absent means
+  // "as the genre asks", and the arithmetic itself lives one file up in
+  // sing.js beside the table it validates against (this file reaches UP to
+  // sing.js for the vocabulary already, and must not be reached back into).
+  //
+  //   ui/derive.js singEvents is the ONE caller that matters and it still
+  //   gates on `sec.sing` being truthy, which no genre default can satisfy.
+  //   The four lines that finish the wiring, for whoever owns that file:
+  //       if (!SING || !subj) return [];                       // was !sec.sing ||
+  //       const gk = gid(sec), seed = strSeed(gk);
+  //       const plan = SING.singPlan(ev, { sing: sec.sing, gk, seed, pcsAt: … });
+  //       if (!plan.length) return plan;
+  //       const text = SING.utteranceFor(gk, seed);
+  //       return plan.map(p => ({ ...p, kind: "sing", text }));  // colour rides on p
+  //   singPlan already resolves the default itself and stamps `colour` and
+  //   `voc` on every entry, so that edit only DELETES the two lines that read
+  //   the chip directly. Until it lands, a genre's own singer is reachable by
+  //   tapping the chip and nothing arms itself.
+  const resolveSing = (box, gk) => NS.singFor(gk, box && box.sing);
+
   /* ---------- THE REGISTRY ---------- */
   // One entry per control. Shape:
   //   key     the field name on the box (and, for scope "layer", on a stack
@@ -1182,8 +1204,14 @@
       labels: AUTOPARAMLABEL, tab: "fx", group: "automation", default: [] },
     // ---- the singer (sing.js + audio/sing.js) — appended, never reordered --
     // BOX scope, on the `voice` page: a box has one lyric and one singer, the
-    // way it has one groove and one key. Absent is the whole of the day before
-    // it existed — singPlan returns [] and no wasm is ever fetched.
+    // way it has one groove and one key. Absent is NOT silence any more — it
+    // is the house law this registry states everywhere else, "as the genre
+    // asks" (sing.js singFor: the box's chip wins, absent falls through to
+    // GENRES[gk].sing, and a genre that declares nothing still sings nothing,
+    // singPlan returns [], no wasm is fetched, the score is byte-identical).
+    // The table grew nine chips wide with the carriers (sing.js SINGS): the
+    // row is drawn from this table by ui/palette.js, so a new machine is one
+    // entry there and no line of UI at all.
     { key: "sing",    scope: "box",   table: SINGS,       labels: SINGLABEL,
       tab: "voice",  group: "sing",                      default: null },
     // ---- the board (2026-08-16) — appended, never reordered ----------------
@@ -1227,7 +1255,7 @@
                 BUSES, BUSBY, resolveBuses, busesIsDefault,
                 BUSNAMES, busNameOf, busSendPlan,
                 AUTOPARAMS, AUTOPARAMLABEL, AUTOSHAPES, AUTOSHAPELABEL, autoShape,
-                SINGS, SINGLABEL, INSTRCHOICES, POOLCHAIRS,
+                SINGS, SINGLABEL, resolveSing, INSTRCHOICES, POOLCHAIRS,
                 ROLES, FIELDS, FIELD };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuFields = api;

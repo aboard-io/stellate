@@ -10530,6 +10530,145 @@ console.log("the desk says what it is costing, quietly, in the corner");
   }
 }
 
+/* §67 THE SINGER IS ASKED — the genre-level default, and the carriers.
+
+   Paul: "The espeak/vocoder singing never showed up — seems right for
+   Kraftwerk." It never showed up because nothing ever asked: `sing` was a box
+   field defaulting to null, singPlan returned [] when it was unset, and not
+   one of the shipped genres set it — so the ladders, the syllable cutter and
+   the vocoder had run exactly zero times outside their own gate.
+
+   Two claims here, both at the SCORE level (the audio half is
+   test/browser/nukernel-sing.test.js, which renders the thing and measures
+   the spectrum):
+     (a) A GENRE MAY DECLARE ITS SINGER, and the resolution is the house law —
+         the box's chip wins, absent falls through to the genre, and a genre
+         that declares nothing is byte-identical to the day before this
+         existed: no plan, no utterance, no wasm.
+     (b) THE VOCODER HAS A CARRIER, and it travels with the plan rather than
+         with the chip, because a genre default cannot be spelled in the
+         `colour` string ui/derive.js reads off the box. */
+console.log("the singer is asked, and it answers with a carrier");
+{
+  const NS67 = require("../../nukernel/sing.js");
+  const F67 = require("../../nukernel/fields.js");
+  const S67 = require("../../nukernel/song.js");
+
+  // ---- (a) NOTHING SINGS TODAY. Every shipped genre, on its OWN rendered
+  // section: the plan is empty, which is what "byte-identical" means at this
+  // layer — sectionEvents appends singPlan's output and nothing else.
+  // The events have to be a real box's or the claim is vacuous: an empty
+  // stack renders no line, and "no line" would pass this check while proving
+  // nothing at all.
+  const evOf67 = (gk) => {
+    const b = S67.emptyBox(gk); b.stack[0].slots = [0];
+    return D.sectionEvents(b, [P], null).ev;
+  };
+  let quiet = 0, singable = null;
+  for (const gk of GK) {
+    const ev = evOf67(gk);
+    if (!NS67.singPlan(ev, { gk, seed: 1 }).length) quiet++;
+    if (!singable && NS67.singPlan(ev, { gk, seed: 1, sing: "lead" }).length)
+      singable = gk;
+  }
+  ok(quiet === GK.length,
+     "§67(a) " + (GK.length - quiet) + " genres sing without being asked — the score moved");
+  ok(singable, "§67(a) not one shipped genre has a tune a singer could take");
+  ok(NS67.singFor(singable, null) === null && NS67.singFor("nosuchgenre", null) === null,
+     "§67(a) a genre that declares nothing resolved to a singer anyway");
+
+  // ...AND THE MOMENT ONE ASKS, IT SINGS. The declaration is one string on the
+  // genre (the shape lane G2 fills in): GENRES.<key>.sing = "moog".
+  const evs67 = evOf67(singable);
+  {
+    const gk = singable, g = GENRES[gk], had = g.sing;
+    g.sing = "moog";
+    const armed = NS67.singPlan(evs67, { gk, seed: 1 });
+    ok(armed.length > 0, "§67(a) a genre declaring `sing` still planned nothing");
+    ok(NS67.singFor(gk, null) === "moog", "§67(a) the genre's own singer did not resolve");
+    // THE BOX STILL WINS — an explicit chip overrides the genre exactly the
+    // way `mode` or `kit` does
+    ok(NS67.singFor(gk, "lead") === "lead", "§67(a) the box's chip lost to the genre's default");
+    ok(NS67.singPlan(evs67, { gk, seed: 1, sing: "lead" })[0].colour === "natural",
+       "§67(a) the box asked for a natural singer and got the genre's machine");
+    // the registry's resolver and the singer's own agree, or a surface that
+    // asks fields.js gets a different answer than the plan does
+    ok(F67.resolveSing({ sing: null }, gk) === "moog" &&
+       F67.resolveSing({ sing: "duet" }, gk) === "duet" &&
+       F67.resolveSing({}, "rock") === null,
+       "§67(a) fields.resolveSing disagrees with sing.singFor");
+    // A GENRE THAT NAMES A CHIP THAT IS NOT THERE IS NOT A CRASH, it is a
+    // genre that does not sing — the same filter rule the ops/fx lists have
+    g.sing = "kraftwerk";
+    ok(NS67.singFor(gk, null) === null, "§67(a) an unknown genre singer was not refused");
+    // ...and the ONLY thing arming a genre adds to the stream is sing events
+    g.sing = "moog";
+    const withSing = NS67.singPlan(evs67, { gk, seed: 1 });
+    ok(withSing.every(e => e.syl && e.colour && e.n != null),
+       "§67(a) a planned syllable is missing its word, its colour or its note");
+    if (had == null) delete g.sing; else g.sing = had;
+    ok(NS67.singPlan(evs67, { gk, seed: 1 }).length === 0,
+       "§67(a) the genre kept singing after its declaration was removed");
+  }
+
+  // ---- (b) THE CARRIERS. Every vocoded chip names a real carrier and a real
+  // grip, and the resolved character rides on the plan.
+  for (const k of Object.keys(NS67.SINGS)) {
+    const s = NS67.SINGS[k];
+    ok(s.colour === "natural" || s.colour === "vocoder", "§67(b) " + k + ": unknown colour");
+    ok(NS67.SINGLABEL[k] != null, "§67(b) " + k + " has no label — the palette draws this row from the table");
+    if (s.colour !== "vocoder") { ok(!s.voc, "§67(b) " + k + ": a natural singer carries a carrier"); continue; }
+    ok(s.voc && NS67.CARRIERS[s.voc.car], "§67(b) " + k + " names a carrier that does not exist");
+    ok(s.voc && NS67.GRIPS[s.voc.grip], "§67(b) " + k + " names a grip that does not exist");
+    ok(s.voc.bands >= 4 && s.voc.bands <= 64, "§67(b) " + k + ": " + s.voc.bands + " bands");
+    const v = NS67.vocFor(k);
+    ok(v && v.car === s.voc.car && v.imp > 0 && v.exp > 0 && v.mk > 0,
+       "§67(b) " + k + ": vocFor did not resolve the grip's numbers");
+  }
+  // the carriers themselves: each one names the engine model it is drawn from
+  // and can actually make a sound (an oscillator bank or an FM pair — a row
+  // with neither would vocode to silence, which is the failure this catches)
+  for (const c of Object.keys(NS67.CARRIERS)) {
+    const r = NS67.CARRIERS[c];
+    ok(typeof r.from === "string" && r.from,
+       "§67(b) carrier " + c + " does not say which engine model it is drawn from");
+    ok((r.osc && r.osc.length) || r.fm, "§67(b) carrier " + c + " has no oscillator at all");
+    for (const [ratio, wave, amp] of (r.osc || [])) {
+      ok(ratio > 0 && amp > 0, "§67(b) carrier " + c + ": a partial with no pitch or no level");
+      ok(wave === "saw" || wave === "pulse" || wave === "sine",
+         "§67(b) carrier " + c + ": unknown waveform " + wave);
+    }
+    if (r.ladder) ok(r.ladder.cutoff > 20 && r.ladder.res >= 0 && r.ladder.res < 1,
+                     "§67(b) carrier " + c + ": the ladder is out of range");
+  }
+  // AT LEAST ONE OF EACH: the point of the round is that a vocoder IS its
+  // carrier, so an analog ladder and an FM pair both have to be reachable
+  // ("you have a real analog synth, real filters and a DX7", Paul 2026-08-17)
+  ok(Object.values(NS67.CARRIERS).some(r => r.ladder && r.ladder.res > 0.5),
+     "§67(b) nothing in the carrier table has a resonant filter on it");
+  ok(Object.values(NS67.CARRIERS).some(r => r.fm),
+     "§67(b) no FM carrier — the DX7 is not reachable from the vocoder");
+  // ...and the character reaches the plan, which is the whole wiring claim:
+  // audio/sing.js reads ev.voc, so a carrier that stopped at the table would
+  // be a chip that changed nothing
+  {
+    const plan = NS67.singPlan(evs67, { gk: singable, seed: 1, sing: "303" });
+    ok(plan.length && plan[0].voc && plan[0].voc.car === "303" &&
+       plan[0].voc.bands === NS67.SINGS["303"].voc.bands,
+       "§67(b) the resolved carrier never reached the plan");
+    const nat = NS67.singPlan(evs67, { gk: singable, seed: 1, sing: "lead" });
+    ok(nat.length && nat[0].voc === null,
+       "§67(b) a natural singer was handed a vocoder spec");
+  }
+  // and a box may still be saved with any of them — the loader is registry
+  // driven, so a new chip that does not persist is a chip that vanishes
+  for (const k of Object.keys(NS67.SINGS)) {
+    const b = S67.emptyBox(); b.sing = k;
+    const r = S67.validateSong({ v: 2, slots: [S67.blank()], song: [b], bpm: 126, vol: 80 });
+    ok(r.ok && r.song.song[0].sing === k, "§67(b) the loader refused sing=" + k);
+  }
+}
+
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }

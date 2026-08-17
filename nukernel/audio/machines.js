@@ -35,12 +35,18 @@ const SR = 44100;
 // FNV-1a over "kit|lane" -> mulberry32. Each lane's noise differs (a clap and
 // a snare must not share a take) and every load is the same take — the espeak
 // fresh-instance law, applied to a noise generator.
-function hash(s) {
+//
+// EXPORTED for the vocoder's unvoiced path (audio/sing.js): an "s" is noise,
+// and a whispered consonant that came out of Math.random would be a different
+// syllable on every load and a different bounce every time — which is the one
+// thing neither the espeak law nor the offline render tolerates. Same
+// generator, same law, one seed per (voice, syllable).
+export function hash(s) {
   let h = 2166136261 >>> 0;
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
   return h >>> 0;
 }
-function prng(seed) {
+export function prng(seed) {
   let a = seed >>> 0;
   return () => {
     a = (a + 0x6D2B79F5) | 0;
