@@ -72,26 +72,92 @@ body{
 .ed,details{border-top:1px solid var(--rule)}
 /* 2 A KEY — one flat fill, a hairline, and a fill change on touch. The state
    is the colour, not the geometry: nothing moves, so nothing shifts layout
-   and a mis-hit never lands on a moving target. */
-.btn,.pfstep,.pfclose,.rpk,.pkey{
+   and a mis-hit never lands on a moving target.
+
+   IF YOU CAN PRESS IT, IT LOOKS LIKE YOU CAN PRESS IT (Paul, 2026-08-17:
+   "everything that's clickable should be a button, lots of stuff has no
+   border but it's clickable"). Every element in this list has a click
+   handler, and the list was audited by READING THE HANDLERS, not by eye —
+   ui/songrow.js's cells, its four header keys and its phrase thumbnails,
+   ui/palette.js's chips, ui/readout.js's load chip and the genre lozenge all
+   answered a tap while wearing no border at all, or (worse) a
+   `border:1px solid transparent` that reserved the space and then painted
+   nothing. A hairline is not decoration on a touch surface: hover does not
+   exist there, so at rest is the ONLY state a thumb ever sees. */
+.btn,.pfstep,.pfclose,.rpk,.pkey,
+.bcell,.bicon,.bch,.pchip,.posk,.loadchip,.genrelz{
   appearance:none;cursor:pointer;color:var(--ink);
   border:1px solid var(--rule);border-radius:var(--r);
   background:var(--bg-key);
   transition:background-color 90ms linear,color 90ms linear;
 }
-.btn:hover,.pfstep:hover,.pfclose:hover,.rpk:hover,.pkey:hover{background:var(--bg-key-hi)}
-.btn:active,.pfstep:active,.pfclose:active,.rpk:active,.pkey:active{background:var(--bg-key-lo)}
-/* 3 A READOUT — the two fader values, the seed, the position, the status
-   line, the pickers, the pop-up fader's number, the cell steppers. There is
-   no glass: a number is monospace ink on the quiet ground, sized by how far
-   away you read it from. */
-.knob b,.knob select,.gctl select,.seedlcd,.poslcd,.readout,
-.pflcd,.rpstep output{
+.btn:hover,.pfstep:hover,.pfclose:hover,.rpk:hover,.pkey:hover,
+.posk:hover,.loadchip:hover,.genrelz:hover{background:var(--bg-key-hi)}
+.btn:active,.pfstep:active,.pfclose:active,.rpk:active,.pkey:active,
+.posk:active,.loadchip:active,.genrelz:active{background:var(--bg-key-lo)}
+/* ...AND THE CROWD DOES NOT TRANSITION. .bcell/.bch/.pchip are repainted
+   inside a scrub (the paint budget, hw.css header) — they take the border and
+   the fill above and give the transition straight back. */
+.bcell,.bch,.pchip{transition:none}
+
+/* ONE HEIGHT, FOR EVERY KIND OF CONTROL. --ctl-h is declared once (hw.css)
+   and read here once; no rule below this line may write a height of its own,
+   which is the only way "all the buttons and text areas are the same height"
+   stays true through the next edit. The two deliberate exceptions are
+   written down rather than left to be discovered: .bcx (a 22px dismiss badge
+   riding ON a thumbnail, not sitting in a row) and .pchip (a bank key whose
+   long labels wrap, so the height is a FLOOR — same number, `min-height`).
+   The pop-up fader's own keys are not in the list either: that sheet is a
+   fixed geometry of its own (a 172px track between two steps), not a rank of
+   controls in a row, and it is another lane's surface. */
+.btn,.rpk,.pkey,.bcell,.bicon,.bch,.posk,.loadchip,
+.genrelz,.lrx,.laddk,.knob,.knob b,.knob input,.rpstep output,.gctl select{
+  height:var(--ctl-h);
+}
+.pchip{min-height:var(--ctl-h)}
+
+/* 3 A MENU — a control whose FACE IS ITS VALUE and whose tap opens the
+   chooser for that value: every song-row cell (the value is the genre, the
+   function, the count) and the genre lozenge. It is a key, plus the caret —
+   the one mark on this machine that means "there is a list behind this".
+   A key with no value on it (a glyph verb: ▶, ✕, +) never wears the caret,
+   which is what keeps the mark meaning something. */
+/* the mark is a mask painted with currentColor, like every other silkscreen
+   on the machine (.ik/.pi/.ci) — declared on the elements that wear it rather
+   than on :root, because hw.css owns the tokens and an icon is not one */
+.bcell,.genrelz{
+  --caret:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 3.6L5 7.1l3.5-3.5' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.bcell::after,.genrelz::after{
+  content:"";flex:0 0 auto;width:9px;height:9px;margin-left:auto;
+  background:currentColor;opacity:.5;
+  -webkit-mask:var(--caret) center/contain no-repeat;
+  mask:var(--caret) center/contain no-repeat;
+}
+/* 4 A FIELD — a number that belongs to a control: the two fader values, the
+   seed, the pop-up fader's number, the cell steppers, the session pickers.
+   SUNK, not raised (--bg-sunk under a hairline), because a recess reads as a
+   place a value LIVES where a raised key reads as a place you push. */
+.knob b,.seedlcd,.pflcd,.rpstep output{
   background:var(--bg-sunk);color:var(--ink);
   font-family:var(--f-num);font-variant-numeric:tabular-nums;
-  border:1px solid transparent;border-radius:var(--r);
+  border:1px solid var(--rule);border-radius:var(--r);
+}
+/* a <select> is a menu that came with its own caret, so it takes the key
+   material and nothing else — the native arrow is the mark */
+.knob select,.gctl select{
+  background:var(--bg-key);color:var(--ink);
+  border:1px solid var(--rule);border-radius:var(--r);
 }
 .knob select:hover,.gctl select:hover{background:var(--bg-key-hi)}
+/* 5 AND THE THING THAT IS NOT A CONTROL wears none of it. The readout row's
+   own fields (#lcdpos, #possection), every silkscreen label, the row
+   numerals: no fill, no border, no caret. That is the whole point of the
+   four kinds — a border on a readout is a lie, and it costs the other four
+   their meaning. */
+.readout,.posf,.plabel,.glab,.rlab,.bnum,.lmark{
+  background:none;border:0;
+}
 /* ================================================================ */
 
 /* ---- masthead — the app's own name, the one word above the controls. Not
@@ -111,7 +177,7 @@ h1 em{font-style:normal;color:var(--ink)}
    a wide window just gives the faders room to grow (flex, below) rather than
    switching to a different arrangement. */
 .bar.transport{
-  display:flex;flex-direction:column;gap:var(--sp-1);
+  display:flex;flex-direction:column;gap:var(--row-gap);
   padding:calc(var(--sp-2) + env(safe-area-inset-top))
           calc(var(--sp-3) + env(safe-area-inset-right))
           var(--sp-2) calc(var(--sp-3) + env(safe-area-inset-left));
@@ -125,7 +191,7 @@ h1 em{font-style:normal;color:var(--ink)}
 .mast{display:none}
 
 /* ---- ROW 1: the keys ---- */
-.trow{display:flex;flex-wrap:nowrap;align-items:center;gap:var(--sp-1);min-width:0}
+.trow{display:flex;flex-wrap:nowrap;align-items:center;gap:var(--ctl-gap);min-width:0}
 /* the fill is the shared SURFACE/KEY recipe (top of file); this is the size
    on it. Every key on this row is icon-only — a title= tooltip and an
    aria-label are its only words, so sentence-case type never shows here at
@@ -147,13 +213,17 @@ h1 em{font-style:normal;color:var(--ink)}
 #compose{background:none;color:var(--accent-txt);border-color:var(--accent)}
 #compose:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
 #compose:active{background:color-mix(in srgb,var(--accent) 20%,transparent)}
-/* every icon key on the row shares one small square, so five keys and two
-   faders still fit a 390px window without wrapping */
+/* every icon key on the row shares one square — the house control height
+   (hw.css --ctl-h) on both axes, so FOUR keys and two faders still fit a
+   390px window without wrapping. It was five keys at 32px; the genre picker
+   moved down to row 2 as a lozenge (2026-08-17, "move the genre selector
+   into the little bar below"), and the width that freed is what paid for the
+   keys reaching the 44px touch floor the rest of the machine sits at. */
 .trow .btn.ik{
   display:inline-flex;align-items:center;justify-content:center;
-  flex:0 0 auto;width:32px;height:32px;padding:0;
+  flex:0 0 auto;width:var(--ctl-h);padding:0;
 }
-.trow .btn.ik .k{width:15px;height:15px}
+.trow .btn.ik .k{width:16px;height:16px}
 /* PLAY: the icon itself swaps (chrome.js toggles .on) rather than the old
    text-swap-plus-dot — a fading state light was a lie about when the sound
    started, so this snaps between the two shapes with no transition. */
@@ -174,18 +244,12 @@ h1 em{font-style:normal;color:var(--ink)}
 .ik-reroll{--ikm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M12 7A5 5 0 1 1 9.6 2.7' fill='none' stroke='%23000' stroke-width='2.3' stroke-linecap='round'/%3E%3Cpath d='M9 .8l1.6 2.4-2.7.6z'/%3E%3C/svg%3E")}
 #reroll .k{width:18px;height:18px}
 
-/* ---- the genre picker: an icon that opens the real picker ----
-   The <select> IS the control — real, focusable, keyboard-operable, its
-   option list built by chrome.js exactly as before — stretched over the
-   icon and painted invisible, so what a person SEES is the record and what
-   any input (tap, click, Enter) opens is the native genre list. No custom
-   popup to keep in sync with a second source of truth. */
-.genrepick{position:relative;flex:0 0 auto;width:32px;height:32px}
-.genrepick .btn.ik{position:absolute;inset:0;pointer-events:none}
-.genrepick select{
-  position:absolute;inset:0;width:100%;height:100%;
-  opacity:0;border:0;padding:0;margin:0;cursor:pointer;
-}
+/* (THE GENRE PICKER IS NOT ON THIS ROW ANY MORE. It was a record icon here
+   with the <select> stretched invisibly over it — an icon that opened a list
+   of genres, sitting beside the keys that WRITE with that genre, while the
+   genre actually on the platter was printed as a separate readout on the row
+   below. Two places for one fact. It is one control in row 2 now: the
+   lozenge, .genrelz below, which both SAYS the genre and OPENS the picker.) */
 
 /* ---- faders: tempo and volume, inline in the same row ----
    A 4px track and a plain accent cap, the value on the cap rather than a
@@ -204,7 +268,7 @@ h1 em{font-style:normal;color:var(--ink)}
    the page must not scroll out from under either axis. */
 .knob input{
   appearance:none;-webkit-appearance:none;width:36px;flex:1 1 36px;min-width:32px;
-  height:26px;margin:0;background:transparent;cursor:pointer;touch-action:none;
+  margin:0;background:transparent;cursor:pointer;touch-action:none;
   /* the explicit width, not flex-basis alone: a bare <input type=range> has a
      ~170px UA-default intrinsic size, and that is the number a grid ancestor's
      auto column track (.chassis has one) reaches for when it measures this
@@ -226,40 +290,103 @@ h1 em{font-style:normal;color:var(--ink)}
   width:16px;height:16px;border:0;border-radius:50%;background:var(--accent);
 }
 /* the value on the cap: mono, small — the number IS the readout, there is no
-   separate LCD any more */
+   separate LCD any more. It is a FIELD (the sunk recipe at the top of this
+   file), which is what says it belongs to the fader beside it and is not
+   another key to press. */
 .knob b{font-weight:600;font-size:var(--t-sm);line-height:1;
-  min-width:24px;text-align:center;flex:0 0 auto}
+  min-width:26px;text-align:center;flex:0 0 auto;
+  display:inline-flex;align-items:center;justify-content:center}
 .spacer{flex:1 1 auto}
 
-/* ONE CONTROL HEIGHT for the row — 32px, one number, so every key and fader
-   sits on the same baseline. */
-.transport .btn{height:32px}
-.transport .knob,.transport .knob b{height:32px}
-.transport .knob b{display:inline-flex;align-items:center;justify-content:center}
+/* (THE ROW'S HEIGHTS ARE NOT WRITTEN HERE. Every key, fader and field on it
+   reads --ctl-h from the one-height rule at the top of this file — the whole
+   point of the token is that this region no longer carries a number of its
+   own to drift from the song table's.) */
 
-/* ---- ROW 2: where the song is ----
-   Root genre · song position · section name — three quiet fields with no
-   label and no punctuation of their own; a rule between them does the work a
-   character used to. ui/readout.js writes #posgenre/#possection; main.js's
-   playhead loop writes #lcdpos every bar, unchanged, just living here now. A
-   transient status (loading, a rejected song, the mobile carrier's own
-   honesty about a pending re-render) takes the row over whole through
-   #posmsg, then gives it back on the next repaint. */
+/* ---- ROW 2: WHERE GENRE IS PICKED, and where the song is ----
+   The genre lozenge · surprise · song position · section name. This row used
+   to be three readouts (root genre · position · section) with the genre
+   picker living upstairs beside the write keys; Paul, 2026-08-17: "move the
+   genre selector into the little bar below and make the genre a clickable
+   lozenge. That'll be where we pick genre. Maybe 'Surprise me' becomes a
+   button there too." So the first field and the picker are now ONE control —
+   the pill says the genre and the pill opens the list — and the two controls
+   stand out from the two remaining readouts beside them because they are the
+   only things on the row wearing a border (the four kinds, top of file).
+   ui/readout.js writes #posgenre/#possection; main.js's playhead loop writes
+   #lcdpos every bar. A transient status (loading, a rejected song, the mobile
+   carrier's own honesty about a pending re-render) takes the READOUTS over
+   through #posmsg — never the two controls; a message must not eat the way
+   to pick a genre — and gives them back on the next repaint. */
 .posrow{
-  display:flex;align-items:center;gap:0;min-height:20px;
+  display:flex;align-items:center;gap:var(--ctl-gap);min-height:var(--ctl-h);
   overflow:hidden;
 }
 .posf{
   min-width:0;padding:0 var(--sp-2);white-space:nowrap;overflow:hidden;
   text-overflow:ellipsis;border-left:1px solid var(--rule);
 }
-.posf:first-child{padding-left:0;border-left:0}
-#posgenre{color:var(--ink);font-weight:600;flex:0 1 auto}
 #lcdpos.posf{flex:0 0 auto}
 #possection{flex:1 1 auto}
-.posmsg{padding:0;border:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* it takes the room the two hidden fields left, and ellipsizes into it. A
+   status sentence is ~750px of nowrap text and it must never widen the row —
+   the chassis's own single column is what holds that line (see the
+   `grid-template-columns:minmax(0,1fr)` note at the end of this file, and the
+   measurement that earned it). */
+.posmsg{padding:0 var(--sp-2);border:0;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;flex:1 1 auto;min-width:0}
 .posrow:not(.msg) .posmsg{display:none}
 .posrow.msg .posf{display:none}
+
+/* THE GENRE LOZENGE — a pill that is both the readout and the picker. The
+   <select id="composeg"> IS the control, exactly as it was upstairs: real,
+   focusable, keyboard-operable, its option list built by ui/chrome.js, its id
+   unchanged because eight gates drive this page with selectOption("#composeg").
+   It is stretched over the pill and painted invisible, so what a person SEES
+   is the record mark and the genre's own name and what any input (tap, click,
+   Enter) opens is the native list. No custom popup to keep in sync with a
+   second source of truth — the thing on screen and the thing that opens are
+   one element deep. */
+.genrelz{
+  /* IT DOES NOT SHRINK. A status sentence arriving in the row is a passing
+     fact; the pill is the control, and a control that collapses to an icon
+     and a caret whenever the machine has something to say is a control you
+     cannot aim at. The message is the flexible one — it takes what is left
+     and ellipsizes — and the 60% cap keeps a long genre name from taking the
+     row all the same. */
+  position:relative;flex:0 0 auto;min-width:0;max-width:60%;
+  display:inline-flex;align-items:center;gap:var(--sp-2);
+  padding:0 var(--sp-2) 0 var(--sp-3);
+}
+.genrelz .k{
+  flex:0 0 auto;width:14px;height:14px;background:currentColor;opacity:.6;
+  -webkit-mask:var(--ikm) center/contain no-repeat;mask:var(--ikm) center/contain no-repeat;
+}
+/* a record: genre is what is on the platter (the mark the retired row-1 key
+   wore, kept, because it is the same idea in its new place) */
+.genrelz{--ikm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Ccircle cx='7' cy='7' r='6' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3Ccircle cx='7' cy='7' r='1.6'/%3E%3C/svg%3E")}
+.posgen{
+  min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font:600 var(--t-md)/1 var(--f-ui);letter-spacing:.01em;color:var(--ink);
+}
+/* -1px, not 0: `inset:0` lands on the pill's PADDING box, so the invisible
+   select stopped a hairline short of the border on every side and the pill's
+   own edge was the one part of it a tap missed. The select is the control;
+   it gets the whole face, border included. */
+.genrelz select{
+  position:absolute;inset:-1px;width:auto;
+  opacity:0;border:0;padding:0;margin:0;cursor:pointer;
+}
+/* SURPRISE — its own key, not an option inside the list ("maybe 'surprise
+   me' becomes a button there too"): a random genre is one tap now, where it
+   used to be open the menu, scroll to the top, choose the one entry that is
+   not a genre, then press write. Same dice the phrase editor's Random key
+   wears — one mark for one idea, all over the machine. */
+.posk{
+  flex:0 0 auto;width:var(--ctl-h);padding:0;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.btn.ik.posk .k{width:16px;height:16px}
 
 /* ---- the SESSION bank under the song table ----
    File and fixture operations, not performance. It has NO HEADER ROW any
@@ -369,10 +496,16 @@ h1 em{font-style:normal;color:var(--ink)}
    one glance. A tap prints one line after it (.loaddetail, the numeral
    column's own type) and folds it away again — the chip itself never
    leaves, only the sentence behind it does. */
+/* IT IS A BUTTON, SO IT IS A KEY (2026-08-17): the chip has always answered a
+   tap and always looked like three bars of paint — the exact "no border but
+   it's clickable" Paul named. It takes the key material and the one control
+   height like everything else on the row; the bars inside it stay the meter. */
 .loadchip{
-  flex:0 0 auto;display:flex;align-items:flex-end;gap:2px;
-  height:14px;padding:0 var(--sp-2);margin-left:auto;min-width:0;
-  background:none;border:0;border-left:1px solid var(--rule);cursor:pointer;
+  flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;gap:2px;
+  /* the block padding centres the 14px meter inside the 44px key: 14 + 2×14
+     + the two hairlines is the height, so the bars stand in the middle of the
+     face rather than on its floor */
+  padding:14px var(--sp-2);margin-left:auto;min-width:0;
 }
 .loadchip .lb{display:block;width:3px;border-radius:1px;background:var(--rule-strong)}
 .loadchip .lb:nth-child(1){height:5px}
@@ -873,17 +1006,21 @@ h1 em{font-style:normal;color:var(--ink)}
 }
 .rptitle{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   font:600 var(--t-md)/1.3 var(--f-ui);letter-spacing:.01em;color:var(--ink-2)}
-/* the menu keys are the shared flat key, sized for thumbs */
-.rpk{flex:0 0 auto;min-width:44px;min-height:44px;padding:0 var(--sp-3);
+/* the menu keys are the shared flat key, sized for thumbs — the width floor
+   is written here, the height comes from --ctl-h with everything else */
+.rpk{flex:0 0 auto;min-width:var(--ctl-h);padding:0 var(--sp-3);
   font:600 var(--t-lg)/1 var(--f-num)}
 .rpx{padding:0}
 .rpx svg{display:block;width:16px;height:16px}
 .rpbars{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-4);align-items:center}
 .rpstep{display:flex;align-items:center;gap:var(--sp-2)}
 .rpstep .rlab{font:500 var(--t-xs)/1 var(--f-ui);color:var(--ink-3)}
+/* the stepper's number is a FIELD, between its two keys: sunk, mono, bordered
+   — the one kind on this row you do not press */
 .rpstep output{
+  display:inline-flex;align-items:center;justify-content:center;
   font-weight:600;font-size:var(--t-lg);line-height:1;
-  min-width:52px;text-align:center;padding:var(--sp-3) var(--sp-2);
+  min-width:52px;text-align:center;padding:0 var(--sp-2);
 }
 /* a move key with nowhere to go ghosts rather than vanishing — the keys must
    not reshuffle between the first row's menu and the middle of the song */
@@ -990,35 +1127,50 @@ h1 em{font-style:normal;color:var(--ink)}
 .bgrp:has(>.box.sel)>.box.sel,.bgrp:has(>.box.open)>.box.open{
   background:none;box-shadow:none;
 }
+/* THE ROW ITSELF IS A ROW, NOT A CONTROL. It answers a tap (the PART menu is
+   the row's fallback, so a miss between two cells still lands somewhere
+   useful) but it wears no key material and never will: it is role="row", it
+   contains fourteen real controls, and a border around it would say "press
+   this" about the container of everything you might actually press. Its own
+   states — selected, sounding, pinned, open — are the table's four washes and
+   rings, and they are enough. */
 .box{
   position:relative;min-height:0;padding:var(--sp-4) var(--tbl-gut) 0;
   cursor:pointer;background:transparent;
   border:0;
-  display:flex;flex-direction:column;gap:var(--sp-2);
+  display:flex;flex-direction:column;gap:var(--row-gap);
 }
 /* THE HEADER LINE: # · genre · section type · duplicate · add-empty-below ·
    play · pin. The three data cells carry Paul's own rough weights (10/50/30);
    the four action keys are fixed icon buttons, never flexed, so they hold
    their AA-floor size at any width while genre/section type give up room. */
-.bhead{display:flex;align-items:center;gap:var(--sp-1);min-width:0}
-.bhead>.c-part{flex:1 1 20px;justify-content:center;min-width:22px;
-  padding:var(--sp-1) 2px}
+.bhead{display:flex;align-items:center;gap:var(--ctl-gap);min-width:0}
+.bhead>.c-part{flex:0 0 auto;justify-content:center;min-width:34px;
+  padding:0 var(--sp-1)}
 .bhead>.c-genre{flex:5 1 60px;min-width:0}
 .bhead>.c-role{flex:3 1 40px;min-width:0}
 /* THE ICON LINE: bars · mods · voice · rhythm · transitions, five equal
    tracks at every width — an icon and a bare count, never a word. */
 .bicons{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
-  gap:var(--sp-1)}
-.bicons>.bcell{justify-content:center;padding:var(--sp-2) var(--sp-1)}
-.bicons>.bcell .cvx{font:700 var(--t-md)/1 var(--f-num)}
-/* THE FOUR ACTION KEYS — always their own icon size, light material (not the
-   filled .bcell key) so the header reads as one row of TEXT with four small
-   controls riding along it, not five equal keys. */
+  gap:var(--ctl-gap)}
+.bicons>.bcell{justify-content:center;padding:0 var(--sp-1);gap:var(--sp-1)}
+.bicons>.bcell .cvx{font:700 var(--t-md)/1 var(--f-num);flex:0 0 auto}
+/* the caret rides WITH the icon and the count on these five rather than being
+   pushed to the far edge: the cell is centred, so an auto margin would shove
+   the whole group left and undo it */
+.bicons>.bcell::after{margin-left:0}
+/* THE FOUR ACTION KEYS — a real key now, at the one control height. They were
+   `background:none` over `border:1px solid transparent`: a 40px hole in the
+   header that duplicated, inserted, played and pinned when you hit it, and
+   said none of that at rest. They are NARROWER than they are tall — 38 here,
+   32 at phone width, the full square on a desk — because the header line has
+   to hold the genre and the function beside them, and a 32 × 44 target still
+   clears the floor on the axis a thumb misses on. The HEIGHT never moves;
+   that is the whole of the one-height law. */
 .bicon{
-  appearance:none;cursor:pointer;flex:0 0 auto;
-  min-width:40px;min-height:40px;padding:0;border-radius:var(--r);
+  flex:0 0 auto;width:38px;padding:0;
   display:flex;align-items:center;justify-content:center;
-  background:none;color:var(--ink-3);border:1px solid transparent;
+  color:var(--ink-2);
 }
 .bicon svg{width:16px;height:16px}
 .bicon .pini{fill:currentColor}     /* PIN_SVG is a filled path, not a stroke */
@@ -1029,30 +1181,38 @@ h1 em{font-style:normal;color:var(--ink)}
 /* PIN LIT = this box loops alone — the same accent-fill law every latched
    key on the machine wears, now that the lamp beside the numeral is gone. */
 .bicon.bipin.on{background:var(--accent);color:var(--on-ink);border-color:var(--accent)}
-/* A CELL IS A KEY, not a caption — one flat fill, no border stack, no
-   travel. `.unset` quiets the "—" cells so the set facts read first, but the
-   KEY stays: an unset cell is still a place you tap.
-   Every cell is a real button — its own tab stop, its own menu. */
+/* A CELL IS A MENU — the third of the four kinds (top of this file): its face
+   is its value and its tap opens the chooser for that value, so it wears the
+   key material, the one control height, and the caret. Every cell is a real
+   button: its own tab stop, its own menu, its own border.
+   THE CARET IS WHY THE ROW READS NOW. Eight filled rectangles in two lines
+   told you nothing about whether tapping one did something or merely selected
+   the row; the mark says "there is a list behind this", and it appears on
+   nothing else in the table. */
 .bcell{
-  appearance:none;cursor:pointer;
   display:inline-flex;align-items:center;gap:var(--sp-2);min-width:0;
-  padding:var(--sp-2) var(--sp-3);border-radius:var(--r);
+  padding:0 var(--sp-2) 0 var(--sp-3);
   background:var(--tbl-key,var(--bg-key));color:var(--ink);
-  border:0;
   font:600 var(--t-md)/1.35 var(--f-ui);letter-spacing:.01em;
 }
 .bcell:hover{background:var(--bg-key-hi)}
 .bcell:active{background:var(--bg-key-lo)}
+/* THE # CELL IS THE ONE CELL WITH NO VALUE — the numeral on it is the row's
+   own name, not a setting with alternatives — so it takes no caret, and the
+   38px it saves goes to the genre beside it. */
+.bcell.c-part::after{display:none}
 /* the OPEN cell is the accent while its menu is unfolded below the row — a
    latched control says so in colour now, not by sitting lower */
 .bcell.openc{background:var(--bg-key-lo);color:var(--accent-txt);
-  box-shadow:inset 0 0 0 1px var(--accent)}
+  border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .bcell .cvx{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* AN UNSET CELL HAS NO FILL. A row of eight identical grey keys, five of
-   them saying "—", is a wall the eye has to read through to find the two
-   facts that are actually set. Losing the fill (the icon and the dash stay,
-   and hover gives the key back) leaves the SET values standing on the row
-   with white around them, which is what the whitespace is for. */
+/* AN UNSET CELL HAS NO FILL — but it keeps its border, which is the whole
+   difference between quiet and gone. A row of eight identical grey keys, five
+   of them saying "—", is a wall the eye reads through to find the two facts
+   that are set; losing the FILL leaves the set values standing out with white
+   around them, while the hairline and the caret still say the empty ones are
+   places you tap. (Dropping the border with the fill is exactly the "no
+   border but it's clickable" this pass exists to end.) */
 .bcell.unset{background:none}
 .bcell.unset:hover{background:var(--bg-key-hi)}
 .bcell.unset .cvx{color:var(--ink-3);font-weight:400}
@@ -1132,16 +1292,19 @@ h1 em{font-style:normal;color:var(--ink)}
    which is why a desk never showed it (there .box pads 12px and this padded 4)
    and a phone always did. The floor is sp-3 at EVERY width: more than the
    thickest thing the row paints on that edge, and vertical space is free. */
-.bchips{grid-column:1/-1;display:flex;gap:var(--sp-2);align-items:stretch;min-width:0;
-  flex-wrap:wrap;padding:var(--sp-2) 0 var(--sp-3)}
+.bchips{grid-column:1/-1;display:flex;gap:var(--ctl-gap);align-items:stretch;min-width:0;
+  flex-wrap:wrap;padding:var(--row-gap) 0 var(--sp-3)}
 /* (no "ptn" tag here any more — "get rid of 'ptn'", 2026-08-16 — the strip
    sits directly under its own row/sub-row and needs no word to say whose it
    is; a layer that plays no pattern simply shows only its [+].) */
+/* the thumbnail is a KEY (a verb: go edit this phrase), so it takes the key
+   material and the one control height like everything else — its border was
+   `transparent` until now, which reserved the pixel and painted nothing, and
+   a picture with no edge on a white ground is not obviously a thing you press */
 .bch{
-  appearance:none;cursor:pointer;padding:3px 4px;flex:0 1 auto;
-  width:104px;height:46px;border-radius:var(--r);position:relative;
+  padding:3px 4px;flex:0 1 auto;
+  width:104px;position:relative;
   background:var(--tbl-key,var(--bg-key));color:var(--tbl-ink);
-  border:1px solid transparent;
   display:flex;align-items:stretch;gap:0;overflow:hidden;
 }
 .bch:active{background:var(--bg-key-lo)}
@@ -1209,7 +1372,7 @@ h1 em{font-style:normal;color:var(--ink)}
 .bch.lit{color:var(--st-play);border-color:var(--st-play)}
 .bch.lit .bcmini{fill:var(--st-play)}
 .bch.bplus{
-  width:auto;min-width:48px;padding:0 var(--sp-3);height:46px;
+  width:auto;min-width:48px;padding:0 var(--sp-3);
   font:600 20px/1 var(--f-num);color:var(--ink-3);background:none;
   border-style:dashed;border-color:var(--rule-strong);
   display:inline-flex;align-items:center;justify-content:center}
@@ -1254,8 +1417,8 @@ h1 em{font-style:normal;color:var(--ink)}
    comes off a section, so a tap on a row thumbnail can keep its one meaning,
    "open it on Compose"). The trailing dashed key grows a new phrase. */
 .rpptn{flex:1 1 100%}
-.bchips.bank{padding:8px 0 var(--sp-3);gap:8px}
-.bch.bbk{width:112px;height:52px}
+.bchips.bank{padding:var(--row-gap) 0 var(--sp-3);gap:var(--ctl-gap)}
+.bch.bbk{width:112px}
 /* the play-through rides the row's own bottom edge — a hairline, not a grid
    row: it is the row filling up, not another field of the table. It is
    ABSOLUTE and it is painted LAST, so it lands on whatever the row's own
@@ -1314,7 +1477,7 @@ h1 em{font-style:normal;color:var(--ink)}
    table's neutral ink — the ✕ takes the hue of the layer it ends, the add key
    the hue of the layer it starts. 44 rather than the old 36 because it is a
    delete under a thumb and the AA floor is the floor. */
-.lrx{appearance:none;cursor:pointer;min-width:44px;min-height:44px;border-radius:var(--r);
+.lrx{appearance:none;cursor:pointer;min-width:var(--ctl-h);border-radius:var(--r);
   background:none;color:var(--lhue);
   border:1px solid color-mix(in srgb,var(--lhue) 55%,transparent);
   font:600 var(--t-md)/1 var(--f-num)}
@@ -1340,7 +1503,7 @@ h1 em{font-style:normal;color:var(--ink)}
 .laddrow[data-li="3"]{--lhue:var(--v2)}
 .laddrow[data-li="4"]{--lhue:var(--v3)}
 .laddcell{display:flex}
-.laddk{appearance:none;cursor:pointer;min-height:44px;padding:0 var(--sp-4) 0 var(--sp-3);
+.laddk{appearance:none;cursor:pointer;padding:0 var(--sp-4) 0 var(--sp-3);
   display:inline-flex;align-items:center;gap:var(--sp-2);border-radius:var(--r);
   border:1px solid var(--lhue);color:var(--lhue);
   background:color-mix(in srgb,var(--lhue) 12%,transparent)}
@@ -1750,11 +1913,18 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
 .pchips{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));
   gap:var(--sp-2);padding:var(--sp-1) var(--tbl-gut) var(--sp-3)}
 .pchips.compact{grid-template-columns:repeat(auto-fill,minmax(66px,1fr))}
+/* A CHIP IS A TOGGLE — the fourth kind: it latches on and off and says so
+   with aria-pressed, so it wears the key material at rest and the accent fill
+   when it is on (the one state language, at the foot of this block). The
+   border is not decoration on a bank of forty: without it a dim chip on the
+   fold's own ground was a word floating in a grid. Height is a FLOOR here,
+   not a fixed measure — "Rio de Janeiro 1958" wraps to two lines in a 132px
+   column, and clipping a genre's name to keep a rank tidy is the wrong trade. */
 .pchip{
-  appearance:none;font:500 var(--t-md)/1.25 var(--f-ui);letter-spacing:.01em;cursor:pointer;
-  position:relative;text-align:left;min-height:48px;
+  font:500 var(--t-md)/1.25 var(--f-ui);letter-spacing:.01em;
+  position:relative;text-align:left;
   background:var(--tbl-key,var(--bg-key));color:var(--ink);
-  border:0;border-radius:var(--r);padding:var(--sp-3) var(--sp-3) var(--sp-3) 20px;
+  padding:var(--sp-2) var(--sp-3) var(--sp-2) 20px;
 }
 .pchip::after{
   content:"";position:absolute;left:var(--sp-2);top:50%;margin-top:-3px;
@@ -1816,13 +1986,14 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
    pad — which made eleven selected-states where an instrument has one. The
    family colours still exist where they mean signal (voice lanes, box LEDs);
    a SELECTED chip is just selected. */
-.pchip.on{background:var(--accent);color:var(--on-ink)}
+.pchip.on{background:var(--accent);color:var(--on-ink);border-color:var(--accent)}
 .pchip.on.dflt{
   background:color-mix(in srgb,var(--accent) 24%,var(--tbl-key));
+  border-color:color-mix(in srgb,var(--accent) 45%,var(--rule));
   color:var(--ink);
 }
 .pchip.on.dflt::after{background:var(--accent)}
-.pchip.lst{min-width:34px;padding:var(--sp-3) var(--sp-2) var(--sp-3) 18px}
+.pchip.lst{min-width:34px;padding:var(--sp-2) var(--sp-2) var(--sp-2) 18px}
 .pchip.foc{box-shadow:inset 0 0 0 1px var(--rule-strong)}
 .pchip.foc.on{box-shadow:inset 0 0 0 2px var(--accent-txt)}
 .slot.inbox{box-shadow:inset 0 0 0 1px var(--accent)}
@@ -2044,9 +2215,22 @@ details .c{color:var(--ink-3)}
    stay in the DOM, alive and patched, they just stop being painted.
    100dvh, not 100vh: a phone's collapsing URL bar must not hide the rail. */
 body{padding:0}
+/* ONE COLUMN, AND IT IS THE WINDOW. `grid-template-columns` is stated even
+   though there is only ever one column, because the IMPLICIT column it
+   replaces is an `auto` track — and an auto track never sizes below the
+   min-content of the widest thing in it. One long nowrap sentence in the
+   transport's status field (a composed song's "genre · seed · intro → verse →
+   …") was therefore enough to size the whole machine at ~1000px: the
+   transport, the page rail and every page rendered a screen and a half across
+   with the right-hand half off the glass of a 390px phone, and no amount of
+   flex-shrink on the sentence could undo it, because the track had already
+   been sized. minmax(0,1fr) says the column is the viewport and anything
+   wider than that scrolls inside its own container — which is what every
+   table on this machine (.tbl overflow:auto) is already built to do. */
 .chassis{
   max-width:none;height:100dvh;gap:0;
-  display:grid;grid-template-rows:auto minmax(0,1fr) auto;
+  display:grid;grid-template-columns:minmax(0,1fr);
+  grid-template-rows:auto minmax(0,1fr) auto;
 }
 /* (THERE IS NO PHONE-SPECIFIC TRANSPORT FORK HERE ANY MORE, 2026-08-17: row 1
    never wraps and row 2 is the readout at every width — see the transport
@@ -2113,8 +2297,23 @@ body{padding:0}
   .slot{min-height:56px}
   .mini{height:30px}
   /* THE SONG TABLE AT 390: gutters tighten, the row keeps its icon+count
-     cells (BARS is a bare number now — nothing left to drop at this width). */
-  .bcell{padding:var(--sp-2) var(--sp-2);gap:var(--sp-1)}
+     cells (BARS is a bare number now — nothing left to drop at this width).
+     THE HEIGHTS DO NOT MOVE — they are --ctl-h at every width, which is what
+     "the same height" means; only the horizontal room is negotiable. */
+  .bcell{padding:0 var(--sp-2);gap:var(--sp-1)}
+  /* the header line's two WORD cells give up their leading mark to pay for
+     the caret: a star and a flag are decoration beside the genre's own name,
+     the caret is the thing that says the cell opens a list, and at 390px the
+     row can afford exactly one of the two. The count cells keep theirs — an
+     icon is the only thing naming those five. */
+  .bhead .bcell .ci{display:none}
+  /* ...and the same trade in the other direction: the four action keys give
+     up WIDTH and never height (32 × 44 still clears the floor on the axis a
+     thumb misses on), so the two word cells beside them keep enough room to
+     say "verse" whole and to print as much of a city and its year as 390px
+     can hold. Measured: 32 rather than 40 is what got the function cell from
+     "ve…" back to "verse". */
+  .bicon{width:32px}
   .bch{width:92px}
   .bch.bbk{width:100px}
   /* the superimposed numeral scales with the face it rides */
@@ -2165,16 +2364,17 @@ body{padding:0}
   .box{padding:var(--sp-3) var(--tbl-gut)}
   .bhead{gap:var(--sp-2)}
   .bnum{font-size:var(--t-lg)}
-  .bcell{padding:var(--sp-2) var(--sp-3)}
+  .bcell{padding:0 var(--sp-3)}
   .bcell.bgenre{font-size:21px}
-  .bicon{min-width:44px;min-height:44px}
+  /* WIDER, NEVER TALLER: a desk buys a control room to be hit, not a second
+     height for the same key (--ctl-h holds at every width) */
+  .bicon{width:var(--ctl-h)}
   .bicon svg{width:18px;height:18px}
-  /* the pattern row gets the desk's chunkier thumbnails */
-  .bchips{gap:8px;padding:8px 0 var(--sp-3)}
-  .bch{width:128px;height:52px}
-  .bch.bbk{width:128px;height:56px}
-  .bch .bcn{font-size:30px}
-  .bch.bplus{height:52px}
+  /* the pattern row gets the desk's WIDER thumbnails */
+  .bchips{gap:var(--sp-2);padding:var(--sp-2) 0 var(--sp-3)}
+  .bch{width:128px}
+  .bch.bbk{width:128px}
+  .bch .bcn{font-size:26px}
   /* the layer sub-row, with the desk's room: ↳ · genre · voice · mods · ✕ on
      one line, its pattern strip on the next — placed explicitly, and scoped
      to `.lrow>` for the same reason the phone block is (a bare `.c-voice`

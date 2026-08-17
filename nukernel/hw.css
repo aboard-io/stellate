@@ -113,6 +113,24 @@
   /* ---- SPACE and RADIUS — one scale, one corner ---- */
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:20px; --sp-5:32px;
   --r:4px; --r-lg:10px;
+
+  /* ---- CONTROL — ONE HEIGHT, and one rhythm between the rows of them.
+     "All the buttons and text areas should be the same height" (Paul,
+     2026-08-17), and they were not: 32 in the transport, 36 on a chip, 40 on
+     a header key, 44 on a delete, 46 on a thumbnail, 48 on a bank chip. Not
+     one of those numbers was a decision — each rule simply carried its own,
+     and a number written six times drifts six ways. There is ONE number now
+     and every rule reads it, which is the only arrangement in which "the same
+     height" survives the next edit.
+
+     44 because the accessibility floor for a touch target is 44, so the
+     house measure and the floor are one fact rather than two to keep in
+     sync. A control that is genuinely not in a row of controls — a badge
+     riding on a picture, a 3px hairline — is not a control and does not read
+     this; everything a finger presses in a row does. ---- */
+  --ctl-h:44px;                 /* every button, menu, field and key */
+  --ctl-gap:var(--sp-1);        /* between controls sitting in one row */
+  --row-gap:var(--sp-2);        /* between the rows they sit in */
   /* the only shadow left on the machine: a sheet floating over the page */
   --sheet-shadow:0 12px 32px rgba(0,0,0,.18);
 

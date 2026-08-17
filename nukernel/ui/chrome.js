@@ -258,10 +258,21 @@ fader($("vol"), 80);
 // which is what keeps the composer testable; ⟳ still rolls a fresh one IN
 // THE SAME GENRE, the loop a person actually plays — write, listen, reroll,
 // reroll, keep.
+//
+// THE PICKER IS THE LOZENGE IN ROW 2 NOW (2026-08-17, "move the genre
+// selector into the little bar below and make the genre a clickable lozenge.
+// That'll be where we pick genre"). The element is unchanged — the same real
+// <select id="composeg">, the same option list, built here — it just lives
+// inside the pill that also PRINTS the genre, one row down. Nothing in this
+// file knows where the pill sits; it binds by id, exactly as it always did,
+// which is why the move cost the wiring nothing.
+//
+// AND THE LIST HOLDS ONLY GENRES. "Surprise me" was its first option — the
+// one entry that was not a genre, sitting above four decades of them — and
+// picking a random genre therefore cost three gestures. It is #surprise now,
+// its own key beside the lozenge, and this list is what its name says.
 {
   const sel = $("composeg");
-  sel.append(Object.assign(document.createElement("option"),
-    { value: "", textContent: "surprise me" }));
   // oldest first, the yearless FUNCTION genres behind them — the GENRE menu's
   // own order. A <select> may not be grouped by era either: the labels print
   // the years, which is the whole organisation.
@@ -269,8 +280,18 @@ fader($("vol"), 80);
   for (const k of [...chrono.dated, ...chrono.undated])
     sel.append(Object.assign(document.createElement("option"),
       { value: k, textContent: GENRES[k].label }));
+  const anyGenre = () => {
+    const keys = Object.keys(GENRES);
+    return keys[Math.floor(Math.random() * keys.length)];
+  };
   let lastG = null;                    // what ⟳ rerolls: the last genre WRITTEN
-  const composeNow = gk => {
+  // `play` is what a caller means by "and then?": the three KEYS (write,
+  // reroll, surprise) are deliberate acts and start the record from the top;
+  // a pick off the lozenge only RESUMES — if the song was playing it keeps
+  // playing, and if it was stopped it stays stopped. A menu selection must
+  // never seize the transport, which is also what keeps the gates honest:
+  // every one of them selects a genre and then presses ▶ itself.
+  const composeNow = (gk, play) => {
     const seed = (Math.random() * 0xffffffff) >>> 0;
     const song = compose(gk, seed);
     if (!adoptSong(song, "composer")) {
@@ -278,6 +299,10 @@ fader($("vol"), 80);
       return;
     }
     lastG = gk;
+    // the picker's own selected option IS the genre now on the platter, from
+    // the instant it lands — the lozenge prints the same fact from the song
+    // (ui/readout.js), and the two must never be able to disagree
+    if (sel.value !== gk) sel.value = gk;
     buzz(4);
     // ...AND IT PLAYS, FROM THE TOP (Paul, 2026-08-17: "When I click 'reload'
     // or 'write' just start playing from the beginning of the song"). Writing a
@@ -289,17 +314,30 @@ fader($("vol"), 80);
     // rides (see the play handler at the top of this file); startAt(0) restarts
     // from bar 0 whether or not it was already playing, and clearing loopOnly
     // means you hear the ARRANGEMENT and not whichever box was soloed before.
-    setLoopOnly(null);
-    startAt(0);
+    // The guard is the lozenge's doing — see `play` above — and a pick that
+    // arrives mid-song passes true, so the record never stops under a person
+    // who was listening to it.
+    if (play) { setLoopOnly(null); startAt(0); }
     status(GENRES[gk].label + " · seed " + seed + " · " +
       song.song.map(b => b.role).join(" → "), true);
   };
-  const pick = () => {
-    const keys = Object.keys(GENRES);
-    return sel.value || keys[Math.floor(Math.random() * keys.length)];
-  };
-  $("compose").addEventListener("click", () => composeNow(pick()));
-  $("reroll").addEventListener("click", () => composeNow(lastG || pick()));
+  $("compose").addEventListener("click", () => composeNow(sel.value || anyGenre(), true));
+  $("reroll").addEventListener("click", () => composeNow(lastG || sel.value || anyGenre(), true));
+  // SURPRISE — the option that became a key. One tap: a genre off the whole
+  // catalog, a fresh seed, and the record from the top, which is the same
+  // deal ✎ offers minus having to decide what to write.
+  $("surprise").addEventListener("click", () => composeNow(anyGenre(), true));
+  // PICKING A GENRE WRITES ONE. The lozenge is where genre is chosen now, so
+  // choosing has to be the act itself — a pick that only armed a key you then
+  // had to find and press is the "two places for one fact" the move was
+  // undoing. It resumes rather than restarts (see composeNow), so a pick made
+  // mid-song hands the new song straight to the transport that was already
+  // running, and a pick made at rest leaves the room quiet.
+  sel.addEventListener("change", () => {
+    if (!sel.value) return;
+    const wasPlaying = playing;        // adoptSong stops: read it BEFORE
+    composeNow(sel.value, wasPlaying);
+  });
 }
 
 /* ---------- preset songs ---------- */

@@ -1,8 +1,18 @@
-// ui/readout.js — ROW 2 of the transport: root genre, song position, section
-// name (2026-08-17, Paul: "success is almost no words" — the old line read
-// out roots, silence reasons and sung lyrics in full sentences; three quiet
-// fields replace it, no label and no punctuation of their own — a CSS rule
-// divides them, not a character). #lcdpos is main.js's own element, written
+// ui/readout.js — ROW 2 of the transport: the GENRE LOZENGE, then song
+// position and section name (2026-08-17, Paul: "success is almost no words" —
+// the old line read out roots, silence reasons and sung lyrics in full
+// sentences; quiet fields replace it, no label and no punctuation of their
+// own — a CSS rule divides them, not a character).
+//
+// THE FIRST FIELD BECAME A CONTROL in the same pass ("move the genre selector
+// into the little bar below and make the genre a clickable lozenge. That'll
+// be where we pick genre"): #posgenre is the FACE of a pill that ui/chrome.js's
+// <select id="composeg"> is stretched invisibly over, so the thing that says
+// which genre this is and the thing that changes it are one object. This file
+// still only ever WRITES the word — the picking, and what picking does, stays
+// chrome.js's — plus the one line that points the select at the same genre the
+// pill is printing, because a control that opens onto a different answer than
+// the one on its own face is two controls. #lcdpos is main.js's own element, written
 // every bar by its playhead rAF loop; this file only ever READS its id off
 // the DOM to know where it sits, never rebuilds it, because a fresh node
 // would orphan main.js's cached reference to it. Status messages from the
@@ -25,6 +35,15 @@ const readoutEl = document.getElementById("readout");
 const genreEl = document.getElementById("posgenre");
 const secEl = document.getElementById("possection");
 const msgEl = document.getElementById("posmsg");
+// THE LOZENGE'S OTHER HALF. #posgenre is the face of the genre pill now, and
+// #composeg — the real <select> ui/chrome.js fills — is stretched invisibly
+// over that same pill (2026-08-17: "make the genre a clickable lozenge...
+// that'll be where we pick genre"). One control, so one fact: this file
+// writes the WORD from the song and points the select's own selected option
+// at the same genre, so opening the list lands on what the pill just said.
+// chrome.js writes the value the other way after a compose; both writes are
+// idempotent and neither fires a change event, so there is no loop.
+const pickEl = document.getElementById("composeg");
 
 // A STICKY status survives exactly one render — unchanged from before. What
 // changed is the SOURCE of one recurring message: main.js used to announce
@@ -41,21 +60,40 @@ export function status(text, sticky) {
   if (sticky) hold = true;
 }
 
-/* ---------- the three fields ---------- */
+/* ---------- the lozenge, and the two fields ---------- */
 // WHICH SECTION: the box actually SOUNDING while the transport runs, else
 // the box a person is LOOKING at (state.js curSection/viewSec) — the same
 // section the position field (main.js's #lcdpos) is already describing,
 // which is the whole point of putting them on one row.
+const here = () => (playing && playingSec >= 0 && SONG[playingSec]) || curSection();
+
+// THE LOZENGE IS A CONTROL, AND A CONTROL IS NEVER STALE. It is painted on
+// every update, INCLUDING the ones a sticky status message holds the rest of
+// the row back for — which is not a nicety: composing a song ends in exactly
+// such a message, so the one repaint that follows the genre changing was the
+// one repaint the pill used to be skipped by, and the pill sat there naming
+// the genre before last while the song played the new one.
+function paintGenre() {
+  const sec = here();
+  if (!sec) return;
+  const g = gid(sec);
+  const label = (GENRES[g] || { label: g }).label;
+  if (genreEl.textContent !== label) genreEl.textContent = label;
+  // the picker follows the pill it is stretched over. `!== g` first, because
+  // assigning a <select>'s value while its list is open on a phone closes it.
+  if (pickEl && pickEl.value !== g && GENRES[g]) pickEl.value = g;
+}
+
 function describe() {
   readoutEl.classList.remove("msg");
-  const sec = (playing && playingSec >= 0 && SONG[playingSec]) || curSection();
+  const sec = here();
   if (!sec) return;
-  genreEl.textContent = (GENRES[gid(sec)] || { label: gid(sec) }).label;
   const note = carrierNote();
   secEl.textContent = (sec.role ? ROLES[sec.role] : "—") + (note ? "  " + note : "");
 }
 
 export function update() {
+  paintGenre();
   if (hold) { hold = false; return; }
   describe();
 }

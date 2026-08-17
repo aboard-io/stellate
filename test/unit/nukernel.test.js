@@ -404,6 +404,157 @@ if (process.argv.includes("--transport-dom")) {
   return;
 }
 
+// ---- node test/unit/nukernel.test.js --controls-dom -------------------------
+// NOT PART OF THE PURE-NODE GATE — §59, lane C's own check, and it exists
+// because Paul's three complaints about the song surface are all things only a
+// real browser can answer ("everything that's clickable should be a button,
+// lots of stuff has no border but it's clickable. All the buttons and text
+// areas should be the same height. It's hard to see what different things
+// are", 2026-08-17). Every one of these is a COMPUTED-STYLE question — a
+// border that is `1px solid transparent` reads as a border in the source and
+// as nothing on the glass; a height written six times in six rules looks
+// deliberate in each of them. So the gate measures the rendered page:
+//   (a) every button and select on the transport and the arrange surface
+//       paints a border or a fill AT REST (no hover, the only state a thumb
+//       ever sees),
+//   (b) every one of them measures --ctl-h, at 390 and at 1400,
+//   (c) the things that are NOT controls wear neither — which is the half
+//       that gives the other half its meaning,
+//   (d) the genre lozenge picks, and (e) the surprise key writes.
+if (process.argv.includes("--controls-dom")) {
+  (async () => {
+    const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
+    const path = require("path");
+    const ROOT = path.join(__dirname, "..", "..");
+    let fails59 = 0, checks59 = 0;
+    const ok59 = (cond, msg) => {
+      checks59++;
+      if (cond) console.log("  ok: " + msg);
+      else { fails59++; console.error("  FAIL: " + msg); }
+    };
+
+    const srv = await serve(ROOT, 8977);
+    const browser = await launchChromium();
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const errs = capturePageErrors(page);
+    await page.goto(`http://localhost:${srv.port}/nukernel/kernel-daw.html?nobounce`,
+      { waitUntil: "networkidle" });
+    await page.evaluate(() => localStorage.removeItem("nukernel.song.v1"));
+    await page.reload({ waitUntil: "networkidle" });
+
+    // ---- (d) THE LOZENGE IS THE PICKER ----
+    // choosing a genre on the pill writes a song in it, and the pill then
+    // SAYS that genre: one control, so one fact.
+    await page.selectOption("#composeg", "acid");
+    await page.waitForTimeout(900);
+    const picked = await page.evaluate(() => ({
+      loz: document.getElementById("posgenre").textContent.trim(),
+      pick: document.getElementById("composeg").value,
+      boxes: document.querySelectorAll("#song .box").length,
+      // the pill must survive a status message taking the row: a sentence may
+      // eat the readouts, never the way to pick a genre
+      lozWide: document.querySelector(".genrelz").getBoundingClientRect().width,
+    }));
+    ok59(picked.pick === "acid" && picked.boxes > 4,
+      "§59(d) picking a genre on the lozenge wrote a song: " + JSON.stringify(picked));
+    ok59(picked.loz === "Chicago 1987",
+      '§59(d) the lozenge names the genre it wrote: "' + picked.loz + '"');
+    ok59(picked.lozWide > 40, "§59(d) the lozenge is on screen while a status message shows");
+
+    // ---- (e) SURPRISE IS A KEY, not a menu item ----
+    const before = await page.evaluate(() =>
+      document.querySelectorAll("#song .box").length + ":" +
+      [...document.getElementById("composeg").options].some(o => o.value === ""));
+    await page.click("#surprise");
+    // the play lamp is the transport ANSWERING, not the click landing — the
+    // graph has to warm before the first sound, so this waits for the state
+    // event rather than for a stopwatch
+    const played = await page.waitForFunction(
+      () => document.getElementById("play").classList.contains("on"), null, { timeout: 10000 })
+      .then(() => true).catch(() => false);
+    const after = await page.evaluate(() => ({
+      pick: document.getElementById("composeg").value,
+      loz: document.getElementById("posgenre").textContent.trim(),
+      boxes: document.querySelectorAll("#song .box").length,
+    }));
+    ok59(after.boxes > 4 && !!after.pick && !!after.loz,
+      "§59(e) the surprise key composed: " + JSON.stringify(after) + " (before " + before + ")");
+    ok59(played, "§59(e) the surprise key started the record from the top");
+    ok59(before.endsWith(":false"),
+      '§59(e) the genre list holds genres and nothing else — "surprise me" left it for a key');
+
+    // ---- (a)(b)(c) THE THREE LAWS, at both widths ----
+    const audit = () => page.evaluate(() => {
+      const vis = el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+      const dressed = el => {
+        const cs = getComputedStyle(el);
+        const bordered = ["Top", "Right", "Bottom", "Left"].some(s =>
+          parseFloat(cs["border" + s + "Width"]) > 0 &&
+          cs["border" + s + "Style"] !== "none" &&
+          !/rgba\(0, 0, 0, 0\)|transparent/.test(cs["border" + s + "Color"]));
+        const filled = !/rgba\(0, 0, 0, 0\)|transparent/.test(cs.backgroundColor);
+        return { bordered, filled };
+      };
+      const name = el => (el.id || el.className.toString().split(" ").slice(0, 2).join(".") ||
+                          el.tagName.toLowerCase());
+      const ctl = parseFloat(getComputedStyle(document.documentElement)
+        .getPropertyValue("--ctl-h"));
+      const out = { ctl, naked: [], wrongH: [], dressedText: [] };
+      // the two faders are the documented exception: an <input type=range> is
+      // its own affordance (a track and a cap), and painting a box round it
+      // would make it read as a key rather than as something that slides.
+      const EXCEPT = new Set(["bpm", "vol"]);
+      for (const root of [document.querySelector(".transport"),
+                          document.getElementById("song")]) {
+        for (const el of root.querySelectorAll("button,select,input")) {
+          if (!vis(el)) continue;
+          const d = dressed(el), h = el.getBoundingClientRect().height;
+          if (!d.bordered && !d.filled && !EXCEPT.has(el.id)) out.naked.push(name(el));
+          // .bcx is the dismiss BADGE riding on a thumbnail, not a control in
+          // a row — the one height this law carves out, and it says so here
+          if (Math.abs(h - ctl) > 1 && !el.classList.contains("bcx"))
+            out.wrongH.push(name(el) + "=" + Math.round(h));
+        }
+      }
+      // ...and the other half: a readout is not a control and must not look
+      // like one. #lcdpos and #possection are the two fields on the transport
+      // row that a person may NOT press.
+      for (const id of ["lcdpos", "possection"]) {
+        const el = document.getElementById(id);
+        const d = dressed(el);
+        if (d.bordered && d.filled) out.dressedText.push(id);
+      }
+      return out;
+    });
+
+    for (const [w, h] of [[390, 844], [1400, 1000]]) {
+      await page.setViewportSize({ width: w, height: h });
+      await page.waitForTimeout(200);
+      const a = await audit();
+      ok59(a.naked.length === 0,
+        "§59(a) at " + w + "px, clickable with no border and no fill: " + JSON.stringify(a.naked));
+      ok59(a.wrongH.length === 0,
+        "§59(b) at " + w + "px, controls off the --ctl-h " + a.ctl + "px baseline: " +
+        JSON.stringify(a.wrongH));
+      ok59(a.dressedText.length === 0,
+        "§59(c) at " + w + "px, readouts wearing the key skin: " + JSON.stringify(a.dressedText));
+      // and the page itself never grows past the glass: a long status sentence
+      // in the transport once sized the whole chassis at ~1000px
+      const doc = await page.evaluate(() => document.documentElement.scrollWidth);
+      ok59(doc <= w, "§59(b) the document is " + doc + "px wide in a " + w + "px window");
+      await page.screenshot({
+        path: "/home/ford/.claude/jobs/c1b341cb/tmp/controls-" + w + ".png" });
+    }
+
+    ok59(errs.length === 0, "§59 page errors: " + JSON.stringify(errs));
+    await browser.close();
+    srv.close();
+    console.log("\n§59 controls-dom: " + (checks59 - fails59) + "/" + checks59 + " checks pass");
+    process.exit(fails59 ? 1 : 0);
+  })().catch(e => { console.error("FAIL:", e && e.stack || e); process.exit(1); });
+  return;
+}
+
 let fails = 0, checks = 0;
 const ok = (cond, msg) => {
   checks++;

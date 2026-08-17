@@ -57,16 +57,14 @@
       <button class="btn ik ik-loop" id="loop" type="button" aria-pressed="true"
         title="song loops — tap to play once and stop"
         aria-label="song loops — tap to play once and stop"><span class="k" aria-hidden="true"></span></button>
-      <!-- the genre picker: a record icon that OPENS the real picker. The
-           <select> beneath it is the whole control — real, focusable, its
-           option list built by chrome.js exactly as before — sized to the
-           icon and painted transparent, so what shows is the icon and what a
-           tap or a keyboard Enter opens is the native genre list. No custom
-           popup to keep in sync with it. -->
-      <span class="genrepick">
-        <span class="btn ik ik-genre" aria-hidden="true"><span class="k" aria-hidden="true"></span></span>
-        <select id="composeg" title="genre to write" aria-label="genre to write"></select>
-      </span>
+      <!-- (THE GENRE PICKER MOVED DOWN A ROW, 2026-08-17: "move the genre
+           selector into the little bar below and make the genre a clickable
+           lozenge. That'll be where we pick genre." It was a record icon here
+           with the <select> stretched invisibly over it, sitting one row above
+           a readout that printed the genre actually on the platter — the same
+           fact in two places, and the picker in the place where you press
+           things rather than the place where you read them. It is one control
+           in row 2 now.) -->
       <button class="btn ik ik-reroll" id="reroll" type="button"
         title="same genre, new seed" aria-label="recompose: same genre, new seed"><span class="k" aria-hidden="true"></span></button>
       <!-- the fader legends are TWO spans, always: a single-letter silkscreen
@@ -80,15 +78,39 @@
           class="la" aria-hidden="true">V</span></label>
         <input type="range" id="vol" min="0" max="100" value="80"><b id="volv">80</b></div>
     </div>
-    <!-- ZONE 1, ROW 2: where the song is. Root genre · song position ·
-         section name — three fields, no label, no punctuation of their own
-         (a CSS rule divides them, not a character). This is the readout line
-         moved up from the bottom of the chassis, with the little play
-         symbol gone (ui/readout.js/ui/main.js). #lcdpos is main.js's own
-         element — written every bar by its playhead loop — living here now
-         instead of beside the faders. -->
+    <!-- ZONE 1, ROW 2: WHERE GENRE IS PICKED, and where the song is. The
+         genre lozenge · surprise · song position · section name — no label,
+         no punctuation of their own (a CSS rule divides the readouts, not a
+         character).
+
+         THE LOZENGE IS ONE CONTROL, not a readout beside a menu (2026-08-17,
+         Paul). The pill both SAYS the genre — ui/readout.js writes #posgenre,
+         the root genre of the box that is sounding or being looked at — and
+         OPENS the picker: #composeg is the same real <select> that lived
+         upstairs, same id (eight gates drive this page through it), stretched
+         invisibly over the pill. Choosing from it writes a song in that
+         genre; the machine has no pending state you have to press a second
+         key to cash in.
+
+         SURPRISE IS ITS OWN KEY. It used to be the first OPTION inside that
+         list — open the menu, scroll to the top, pick the one entry that is
+         not a genre — which is three gestures for the least deliberate act on
+         the machine. One tap now, and the list holds only genres.
+
+         #lcdpos is main.js's own element, written every bar by its playhead
+         loop; #possection is readout.js's. Neither is a control and neither
+         wears a border — that is the whole vocabulary this row demonstrates. -->
     <p class="readout posrow" id="readout">
-      <output class="posf" id="posgenre"></output>
+      <span class="genrelz">
+        <span class="k" aria-hidden="true"></span>
+        <output class="posgen" id="posgenre"></output>
+        <select id="composeg" title="genre — pick one and it writes a song in it"
+          aria-label="genre — pick one and it writes a song in it"></select>
+      </span>
+      <button class="btn ik ik-rnd posk" id="surprise" type="button"
+        title="surprise me: write a song in a genre picked at random"
+        aria-label="surprise me: write a song in a genre picked at random"><span
+        class="k" aria-hidden="true"></span></button>
       <output class="posf poslcd" id="lcdpos" aria-label="playback position">--</output>
       <output class="posf" id="possection"></output>
       <output class="posmsg" id="posmsg"></output>
