@@ -67,13 +67,12 @@
 // harder rather than looser: the song's globals go INTO buildMasterChain, so
 // the bounce gets them by construction and there is nowhere for a second
 // opinion about the master to live.
-import { resolveMaster, resolveBuses, BUS_EQ_BANDS, FX, SP,
-         DRUMBUS, BUS_FIELDS, NuFields } from "../ui/deps.js";
-import { bpm, vol, MASTER, BUSES, on, emit } from "../ui/state.js";
 // the per-lane mix rows, MERGED: instruments.js DRUMMIX for the sampled kits,
-// audio/machines.js MACHINEMIX riding it for the synthesized machines — one
-// merge (mixFor), so the desk and playDrum can never disagree about a row
-import { mixFor, laneKey } from "./machines.js";
+// its MACHINEMIX riding it for the machine kits — one merge (mixFor), so the
+// desk and the drum player can never disagree about a row
+import { resolveMaster, resolveBuses, BUS_EQ_BANDS, FX, SP,
+         DRUMBUS, BUS_FIELDS, NuFields, mixFor, laneKey } from "../ui/deps.js";
+import { bpm, vol, MASTER, BUSES, on, emit } from "../ui/state.js";
 
 // exported as live bindings — null until initAudio(), which must ride a user
 // gesture because that is the autoplay law

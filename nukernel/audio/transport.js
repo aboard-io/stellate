@@ -13,10 +13,12 @@ import { SONG, loopOnly, pendingStart, setPendingStart, bpm, on, emit,
 import { gid, stackOf, kitOf, sectionRender, songBars,
          instrIdOf, poolInstrOf } from "../ui/derive.js";
 import { ctx, initAudio, rmsNow, muteNow, unmuteRamp } from "./graph.js";
-import { FONT, fontDef, isSynthFont, loadFont, specOf, zoneBufs, drumBufs,
+import { FONT, fontDef, isSynthFont, loadFont, specOf, zoneBufs,
          instrumentsInSong, reserveInstruments } from "./assets.js";
 import { synthNodes, synthKey, loadSynth, focusSynths, playSynth, playSampled,
-         playDrum, line, hit, synthDead, countDrop, playWindow } from "./voices.js";
+         playDrum, line, hit, synthDead, countDrop, playWindow,
+         warmKit, kitReady } from "./voices.js";
+import { isMachine } from "./to-engine.js";
 import { channelFor, armAutomation, focusKit, refreshChannels } from "./mixer.js";
 import { setDelayTime } from "./graph.js";
 import { playSyllable, warm as warmSing, needsWarm, singOff } from "./sing.js";
@@ -486,8 +488,12 @@ export async function ensureAssets(announce) {
   const need = instrumentsInSong().filter(id => {
     const sp = specOf(id); return sp && sp.zones.some(z => !zoneBufs.has(FONT + "|" + id + "|" + z.file));
   });
+  // A KIT IS READY IN ONE OF TWO WAYS and neither is the other's business: a
+  // recorded kit has decoded its wavs, a machine has built the parent's
+  // worklets. voices.kitReady answers both, so a song that plays a 606 warms
+  // it here rather than dropping the first hits while the worklet arrives.
   const kits = [...new Set(SONG.map(x => kitOf(x)).filter(Boolean))]
-    .filter(k => !drumBufs.has(k + "|k"));
+    .filter(k => !kitReady(k));
   // ONE POOL, sized by the widest box in the song — a four-voice fugue over a
   // two-voice rock riff needs six, and nothing needs more than it uses. The
   // pool is NOT multiplied by the number of channels; see synthKey.
@@ -520,7 +526,7 @@ export async function ensureAssets(announce) {
   // decode burst with no yield starves it for whole bars
   const nap = ms => new Promise(r => setTimeout(r, ms));
   const rest = Promise.all([...wantSynth.map(([sp, v, c]) => loadSynth(sp, v, c)),
-                            ...kits.map(loadKit),
+                            ...kits.map(k => isMachine(k) ? warmKit(k) : loadKit(k)),
                             ...sings.map(w => warmSing(w.plan, w.text))]);
   // EVERY QUEUED INSTRUMENT COUNTS AS IN FLIGHT FROM HERE, not from the moment
   // its own fetch starts. The loop below is deliberately serial with a breath

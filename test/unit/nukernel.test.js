@@ -6647,26 +6647,41 @@ console.log("the singer — syllables, the bank, the ladders, the plan");
 }
 
 /* ---------------------------------------------------------------- 44. THE MACHINES
-   The classic drum machines (fields.js DRUMKITS tr808/tr909/tr606/cr78,
-   synthesized by audio/machines.js) — every claim a SCORE can answer, answered
-   here rather than in a browser:
-     (a) the digital genres resolve to the machine their comments name, and
-         every drumkit any genre names is vocabulary;
-     (b) the silent-drum law: every lane the kernel can write voices on every
-         machine, non-silently, unclipped at source, and BYTE-DETERMINISTICALLY
-         (seeded noise — two fresh syntheses are identical), and every
-         MACHINEMIX row names real lanes with sane numbers;
-     (c) the machines do not move a single scheduled event: drumkit is a SOUND
+   The classic drum machines (fields.js DRUMKITS tr808/tr909/tr606/cr78) — every
+   claim a SCORE can answer, answered here rather than in a browser.
+
+   ONE DRUM SYSTEM, as of this round. There used to be two: audio/machines.js
+   synthesized four boxes out of oscillator banks for the live page, while
+   audio/to-engine.js named the parent's kick_808/kick909 for the tape and had
+   no row at all for the 606 — so the same song played a different drum machine
+   depending on which path you were listening to. machines.js is gone; the
+   MACHINE_KIT + drumVoice table in to-engine.js is the whole routing layer, and
+   audio/voices.js reads it for the page exactly as toEngine reads it for the
+   record. What this section gates is that ONE-NESS:
+     (a) the digital genres resolve to the machine their comments name, every
+         drumkit any genre names is vocabulary, and the machine/sampled split
+         is agreed by DRUMKITS and isMachine both;
+     (b) the silent-drum law, restated for a routing table: every lane the
+         kernel can write resolves to a REAL parent module on every kit — the
+         four machines, a sampled kit, and no kit at all — and the model names
+         the table uses are the parent's own, held against the maps in
+         state-engine.js voiceUnits so a borrowed value cannot drift;
+     (c) ONE TABLE, TWO READERS: the live player imports it rather than keeping
+         a second opinion, and the retired synthesis stays retired;
+     (d) the machine kits' DESK rows (instruments.js MACHINEMIX, which is what
+         survives of machines.js — a mix, not a sound) name real lanes and ride
+         DRUMMIX through the one merge;
+     (e) the machines do not move a single scheduled event: drumkit is a SOUND
          choice, and swapping it must leave the rendered stream identical to
          the millisecond — measured on ui/derive.js's own sectionEvents, the
          stream the transport schedules.
-   machines.js is a browser ES module; audio/package.json is the module-type
+   to-engine.js is a browser ES module; audio/package.json is the module-type
    marker (the ui/ pattern) that lets this gate import it, and ui/deps.js
    resolves against the same stub window §31 built. */
-console.log("the machines — genre→kit, every lane a voice, and the schedule does not move");
+console.log("the machines — genre→kit, one drum table, and the schedule does not move");
 {
   const NF = require("../../nukernel/fields.js");
-  const M = await import("../../nukernel/audio/machines.js");
+  const M = await import("../../nukernel/audio/to-engine.js");
   const MACHINES = ["tr808", "tr909", "tr606", "cr78"];
 
   // (a) the genre→kit table, and the vocabulary behind it
@@ -6682,45 +6697,96 @@ console.log("the machines — genre→kit, every lane a voice, and the schedule 
          gk + ": drumkit \"" + GENRES[gk].drumkit + "\" is not in DRUMKITS — an unloadable kit");
   for (const k of MACHINES) {
     ok(NF.DRUMKITS[k], k + " is missing from DRUMKITS — the palette cannot offer it");
-    ok(M.isMachine(k), k + " is in DRUMKITS but audio/machines.js has no recipes for it");
+    ok(M.isMachine(k), k + " is in DRUMKITS but to-engine.js MACHINE_KIT has no row " +
+       "for it — the tape would play the default kit while the page played a machine");
   }
   // ...and the sampled six stayed sampled: isMachine must not claim them, or
   // loadKit stops fetching their files
   for (const k of ["acoustic", "brush", "electronic", "jazz", "power", "room"])
     ok(!M.isMachine(k), k + " is a sampled directory and a machine at once");
 
-  // (b) every lane, every machine: a voice, honest levels, seeded bytes
-  for (const kit of MACHINES) {
-    let minRms = Infinity, maxPeak = 0;
+  // (b) EVERY LANE, EVERY KIT, A REAL MODULE. The kits that route through the
+  // machine rows, one that routes through a sampled kit, and the no-kit case
+  // the fallback plays — a lane a genre can write and this table cannot name is
+  // a silent drum whichever path is listening.
+  const fs44 = require("fs"), path44 = require("path");
+  const DSPDIR = path44.join(__dirname, "../../engine/faust/dsp");
+  const seen = new Set();
+  for (const kit of [...MACHINES, "acoustic", null]) {
+    const mods = [];
     for (const d of Object.keys(K.LANES)) {
-      const s = M.laneSamples(kit, d);
-      ok(s && s.length > 0, kit + "/" + d + " (" + K.LANES[d].name + "): no recipe — " +
-         "a lane a genre can write and this machine cannot voice is a silent drum");
-      if (!s) continue;
-      let e = 0, peak = 0;
-      for (let i = 0; i < s.length; i++) { e += s[i] * s[i]; const a = Math.abs(s[i]); if (a > peak) peak = a; }
-      const rms = Math.sqrt(e / s.length);
-      if (rms < minRms) minRms = rms;
-      if (peak > maxPeak) maxPeak = peak;
-      ok(rms > 0.005, kit + "/" + d + ": renders near-silent (rms " + rms.toFixed(4) + ")");
-      ok(peak <= 0.95, kit + "/" + d + ": clipped at source (peak " + peak.toFixed(3) + ")");
-      const s2 = M.laneSamples(kit, d);
-      ok(s2.length === s.length && s2.every((v, i) => v === s[i]),
-         kit + "/" + d + ": two fresh syntheses differ — Math.random is in a recipe " +
-         "and the offline bounce would drift from the live graph");
+      const V = M.drumVoice(kit, d);
+      ok(V && V.module, (kit || "no kit") + "/" + d + " (" + K.LANES[d].name +
+         "): the drum table names no parent voice — a silent drum");
+      if (!V) continue;
+      seen.add(V.module);
+      mods.push(V.module);
+      ok(V.durB > 0 && V.lvl > 0 && V.gain > 0,
+         (kit || "no kit") + "/" + d + ": nonsense row " + JSON.stringify(V));
     }
-    console.log("  " + kit + ": 12 lanes, min rms " + minRms.toFixed(3) +
-                ", max peak " + maxPeak.toFixed(3));
-    const rows = M.MACHINEMIX[kit] || {};
+    console.log("  " + (kit || "no kit") + ": " + mods.length + " lanes -> " +
+                [...new Set(mods)].join(" "));
+  }
+  for (const mod of seen)
+    ok(fs44.existsSync(path44.join(DSPDIR, mod + ".dsp")),
+       "the drum table names \"" + mod + "\", which is not a module in engine/faust/dsp");
+  // ...and the MODEL NAMES are the parent's own, held against voiceUnits itself
+  // so a borrowed spelling cannot drift into a lane that resolves to nothing
+  const seSrc44 = fs44.readFileSync(
+    path44.join(__dirname, "../../engine/faust/voices/state-engine.js"), "utf8");
+  const mapOf = (re) => { const mm = seSrc44.match(re); return mm ? new Function("return {" + mm[1] + "}")() : null; };
+  const PK = mapOf(/units\.kick = \{ module: \{([^}]*)\}/);
+  const PS = mapOf(/units\.snare = \{ module: \{([^}]*)\}/);
+  const PH = mapOf(/units\.hat = \{ module: \{([^}]*)\}/);
+  ok(PK && PS && PH, "cannot find the parent's drum model maps in state-engine voiceUnits");
+  ok(Object.keys(M.MACHINE_KIT).length === MACHINES.length,
+     "MACHINE_KIT covers " + Object.keys(M.MACHINE_KIT).length + " of " + MACHINES.length +
+     " machines — an uncovered box plays the default kit on the tape");
+  for (const [kit, row] of Object.entries(M.MACHINE_KIT)) {
+    ok(!PK || PK[row.kickModel], kit + ": kickModel \"" + row.kickModel + "\" is not one the parent knows");
+    ok(!PS || PS[row.snareModel], kit + ": snareModel \"" + row.snareModel + "\" is not one the parent knows");
+    ok(!PH || PH[row.hatModel], kit + ": hatModel \"" + row.hatModel + "\" is not one the parent knows");
+    ok(!PK || M.drumVoice(kit, "k").module === PK[row.kickModel],
+       kit + ": the page's kick module is not the one the parent resolves for \"" + row.kickModel + "\"");
+    ok(!PS || M.drumVoice(kit, "s").module === PS[row.snareModel],
+       kit + ": the page's snare module is not the one the parent resolves for \"" + row.snareModel + "\"");
+    ok(!PH || M.drumVoice(kit, "h").module === PH[row.hatModel],
+       kit + ": the page's hat module is not the one the parent resolves for \"" + row.hatModel + "\"");
+    ok(row.tune > 0.5 && row.tune < 2, kit + ": tune " + row.tune + " is outside the parent's own knob range");
+  }
+
+  // (c) ONE TABLE, TWO READERS — anchored in the shipped text, because a second
+  // drum table is exactly the thing that is invisible until somebody presses a
+  // record and hears a different box than the one they were dancing to
+  const vSrc44 = fs44.readFileSync(path44.join(__dirname, "../../nukernel/audio/voices.js"), "utf8");
+  ok(/import \{[^}]*drumVoice[^}]*\} from "\.\/to-engine\.js"/.test(vSrc44),
+     "audio/voices.js no longer reads the drum table from to-engine.js — the page " +
+     "and the tape are free to disagree about which drum machine is playing");
+  ok(!/"(kick_boom|kick_808|kick909|snare_noise|snare_crack|snare_clap|hat_noise|hat_metal)"/
+       .test(vSrc44),
+     "audio/voices.js names a drum module directly — that is a second drum table");
+  ok(!fs44.existsSync(path44.join(__dirname, "../../nukernel/audio/machines.js")),
+     "audio/machines.js is back — a dormant second drum engine beside the real one");
+
+  // (d) the DESK rows, which is all that survives of the machines here: a mix,
+  // not a sound. No punch/sus (there is no sample to shape), and the one merge
+  // still rides DRUMMIX — pan comes through from the base row.
+  const NI44 = window.NuInstruments;
+  for (const kit of MACHINES) {
+    const rows = NI44.MACHINEMIX[kit] || {};
+    ok(Object.keys(rows).length === Object.keys(K.LANES).length,
+       kit + ": MACHINEMIX covers " + Object.keys(rows).length + " of " +
+       Object.keys(K.LANES).length + " lanes");
     for (const [d, row] of Object.entries(rows)) {
       ok(K.LANES[d], kit + ": MACHINEMIX names \"" + d + "\", which is not a lane");
       ok(row.room >= 0 && row.room <= 1 && (row.lvl == null || row.lvl > 0) &&
-         row.punch > 0 && row.sus > 0,
+         row.punch == null && row.sus == null,
          kit + "/" + d + ": MACHINEMIX row is not sane (" + JSON.stringify(row) + ")");
-      // the one merge really rides DRUMMIX: pan comes through from the base row
-      const m = M.mixFor(kit, d);
-      ok(m.pan === (row.pan != null ? row.pan : window.NuInstruments.DRUMMIX[d].pan),
+      const m = NI44.mixFor(kit, d);
+      ok(m.pan === (row.pan != null ? row.pan : NI44.DRUMMIX[d].pan),
          kit + "/" + d + ": mixFor does not ride the DRUMMIX base row");
+      ok(NI44.laneKey(kit, d) === kit + "|" + d,
+         kit + "/" + d + ": a lane with its own row must earn its own strip");
     }
   }
 

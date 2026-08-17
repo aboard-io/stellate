@@ -573,68 +573,62 @@ async function velProbe(page) {
   });
 }
 // ---- (M) THE MACHINES ------------------------------------------------------
-// The classic drum machines are DRUMKITS entries synthesized by
-// audio/machines.js rather than directories under found/samples/drums/.
-// EVERYTHING A SCORE CAN ANSWER LIVES IN THE UNIT GATE (§44: the genre→kit
-// table, every lane voicing on every machine, byte-deterministic synthesis,
-// the schedule not moving one millisecond under a kit swap). What is left for
-// a browser is exactly what only WebAudio can witness:
-//   - each machine voice RENDERS through the real chain (playDrum → the kit
-//     desk → the master), non-silent and unclipped, riding its own MACHINEMIX
-//     strip row on the shared desk;
+// The classic drum machines are DRUMKITS entries with no directory under
+// found/samples/drums/ — and as of the one-drum-system round they are not this
+// page's own synthesis either. tr808/tr909/tr606/cr78 are voiced by the PARENT
+// ENGINE's drum modules (audio/to-engine.js MACHINE_KIT names the models,
+// drumVoice resolves the lane), which is the same table the pressed tape is cut
+// from. EVERYTHING A SCORE CAN ANSWER LIVES IN THE UNIT GATE (§44: the genre→kit
+// table, every lane resolving to a real module, the model names held against
+// state-engine's own maps, the schedule not moving under a kit swap). What is
+// left for a browser is what only WebAudio can witness:
+//   - each machine lane SOUNDS through the real chain (playDrum → the kit desk
+//     → the master), non-silent and unclipped, riding its own MACHINEMIX strip;
 //   - two BOUNCE renders of the same machine song are identical — the carrier
 //     a phone hears must be the take the desk heard, byte for byte.
 //
-// OFFLINE, the offlineKit discipline: buildMasterChain, buildChannel and
-// playDrum are the three functions the live page and the background bounce
-// walk, and an offline render is the only reading that does not move.
+// LIVE, not offline, and that is a change this round forced rather than chose:
+// a Faust worklet cannot be built inside an OfflineAudioContext (it is
+// scheduled and rendered in one synchronous pass — audio/voices.js says so at
+// the stand-in pool), so the machines are heard on the live context through the
+// analyser tap, one lane at a time, and the pressed tape is measured where it
+// is actually made (the bounce, below).
 async function machinesProbe(page) {
   return page.evaluate(async () => {
-    const [gm, mx, vx, as, mc, dp] = await Promise.all([
+    const [gm, mx, vx, dp, te] = await Promise.all([
       import("/nukernel/audio/graph.js"), import("/nukernel/audio/mixer.js"),
-      import("/nukernel/audio/voices.js"), import("/nukernel/audio/assets.js"),
-      import("/nukernel/audio/machines.js"), import("/nukernel/ui/deps.js")]);
-    const SR = 44100, AT = 0.02;
+      import("/nukernel/audio/voices.js"), import("/nukernel/ui/deps.js"),
+      import("/nukernel/audio/to-engine.js")]);
+    if (!gm.ctx) return { err: "no live AudioContext — a machine can only be heard on one" };
+    const nap = (ms) => new Promise(r => setTimeout(r, ms));
     const lanes = Object.keys(dp.DRUMFILE);
-    // the vocabulary and the recipes, held together: every DRUMKITS id that is
-    // not a sampled directory must be a machine the module knows
-    const machines = Object.keys(dp.DRUMKITS).filter(k => mc.isMachine(k));
-    const out = { machines, lanes, kits: {}, strip: null };
-    for (const kit of machines) await as.loadKit(kit);          // synthesizes, no fetch
-    const render = async (kit, lane, withRoom) => {
-      const octx = new OfflineAudioContext(2, Math.ceil(2.3 * SR), SR);
-      const master = gm.buildMasterChain(octx);
-      const env = { master: master.input, verb: () => master.input, echoIn: master.input,
-                    room: withRoom ? gm.buildRoomBus(octx, master.input) : null };
-      const chan = mx.buildChannel(octx, { roster: [], fx: [], rev: 0, del: 0,
-        verb: "room", lvl: 1, pan: 0, mot: null, auto: [] }, env);
-      const played = vx.playDrum(kit, lane, AT, 1, 9, chan);
-      const buf = await octx.startRendering();
-      const L = buf.getChannelData(0), R = buf.getChannelData(1);
-      let e = 0, peak = 0;
-      for (let i = 0; i < L.length; i++) {
-        e += L[i] * L[i] + R[i] * R[i];
-        const a = Math.max(Math.abs(L[i]), Math.abs(R[i]));
-        if (a > peak) peak = a;
-      }
-      return { played, e, peak, chan };
-    };
+    // the vocabulary and the routing table, held together: every DRUMKITS id
+    // that is not a sampled directory must be a machine the table knows
+    const machines = Object.keys(dp.DRUMKITS).filter(k => te.isMachine(k));
+    const out = { machines, lanes, kits: {}, strip: null, modules: {}, ready: {} };
+    const env = { master: gm.masterIn, verb: () => gm.masterIn, echoIn: gm.masterIn,
+                  room: gm.buildRoomBus(gm.ctx, gm.masterIn) };
+    const chan = mx.buildChannel(gm.ctx, { roster: [], fx: [], rev: 0, del: 0,
+      verb: "room", lvl: 1, pan: 0, mot: null, auto: [] }, env);
     for (const kit of machines) {
+      await vx.warmKit(kit);                       // build the worklets, not decode wavs
+      out.ready[kit] = vx.kitReady(kit);
+      out.modules[kit] = lanes.map(d => (te.drumVoice(kit, d) || {}).module || null);
       const row = {};
       for (const lane of lanes) {
-        const r = await render(kit, lane, false);
-        row[lane] = { played: r.played, e: r.e, peak: +r.peak.toFixed(4) };
+        const played = vx.playDrum(kit, lane, gm.ctx.currentTime + 0.04, 1, 9, chan);
+        let peak = 0;
+        for (let i = 0; i < 7; i++) { await nap(30); peak = Math.max(peak, window.__rms()); }
+        row[lane] = { played, peak: +peak.toFixed(5) };
+        await nap(60);
       }
       out.kits[kit] = row;
     }
     // a machine lane earns its own strip carrying its own row — read off the
     // node, never the table (the (A) discipline)
-    {
-      const r = await render("tr808", "h", true);
-      const Lm = r.chan.lanes.get("tr808|h");
-      out.strip = { built: !!Lm, room: Lm && Lm.room ? +Lm.room.gain.value.toFixed(3) : null,
-                    want: mc.mixFor("tr808", "h").room, base: dp.DRUMMIX.h.room };
-    }
+    const Lm = chan.lanes.get("tr808|h");
+    out.strip = { built: !!Lm, room: Lm && Lm.room ? +Lm.room.gain.value.toFixed(3) : null,
+                  want: dp.mixFor("tr808", "h").room, base: dp.DRUMMIX.h.room };
     return out;
   });
 }
@@ -2067,9 +2061,10 @@ async function pass(page, url) {
   }
 
   // ---- (M) THE MACHINES ---------------------------------------------------
-  // The score-level half (genre→kit, lane coverage, byte-determinism of the
-  // synthesis, the schedule not moving) is test/unit/nukernel.test.js §44.
-  // Here: only what WebAudio can witness.
+  // The score-level half (genre→kit, every lane resolving to a real parent
+  // module, the model names held against state-engine's own maps, the schedule
+  // not moving) is test/unit/nukernel.test.js §44. Here: only what WebAudio
+  // can witness — that the module the table names actually SOUNDS, live.
   {
     if (mach.err) fail(`machines probe: ${mach.err}`);
     else {
@@ -2077,25 +2072,29 @@ async function pass(page, url) {
         fail(`DRUMKITS carries only ${mach.machines.length} machine kit(s) ` +
              `(${mach.machines.join(",")}) — tr808/tr909/tr606/cr78 expected`);
       else ok(`DRUMKITS carries the machines: ${mach.machines.join(", ")}`);
-      // (a) EVERY MACHINE VOICE RENDERS through the real chain: non-silent,
-      // and unclipped (the safety net asymptotes at 1.0; the small allowance
-      // is the 2x-oversampled shaper's own resampling ripple, which the
-      // sampled path carries identically)
+      // (a) EVERY MACHINE LANE SOUNDS through the real chain: the worklet
+      // built, the hit accepted, and the analyser hearing it. Silence here is
+      // the one failure this round exists to make impossible — a lane routed
+      // to nothing used to fall back on a second drum engine.
       for (const kit of mach.machines) {
         const row = mach.kits[kit];
-        const silent = mach.lanes.filter(d => !row[d].played || !(row[d].e > 1e-4));
+        if (!mach.ready[kit])
+          fail(`${kit}: warmKit left a lane without its parent module — ` +
+               `the first hits of the song would drop`);
+        const silent = mach.lanes.filter(d => !row[d].played || !(row[d].peak > 2e-3));
         const clipped = mach.lanes.filter(d => row[d].peak > 1.02);
         if (silent.length)
-          fail(`${kit}: lane(s) ${silent.join(",")} rendered silent — a lane a genre ` +
+          fail(`${kit}: lane(s) ${silent.join(",")} made no sound — a lane a genre ` +
                `can write and this machine cannot voice is a silent drum`);
         else if (clipped.length)
-          fail(`${kit}: lane(s) ${clipped.join(",")} rendered over full scale ` +
+          fail(`${kit}: lane(s) ${clipped.join(",")} rang over full scale ` +
                `(worst ${Math.max(...clipped.map(d => row[d].peak))}) — clipping`);
         else {
-          const min = Math.min(...mach.lanes.map(d => row[d].e));
+          const min = Math.min(...mach.lanes.map(d => row[d].peak));
           const pk = Math.max(...mach.lanes.map(d => row[d].peak));
-          ok(`${kit}: all ${mach.lanes.length} lanes voice, unclipped ` +
-             `(min energy ${min.toExponential(1)}, max peak ${pk.toFixed(3)})`);
+          ok(`${kit}: all ${mach.lanes.length} lanes sound through ` +
+             `${[...new Set(mach.modules[kit])].join("/")} ` +
+             `(quietest rms ${min.toFixed(4)}, loudest ${pk.toFixed(4)})`);
         }
       }
       // (b) THE MACHINE'S OWN MIX ROW, read off the node
@@ -2108,9 +2107,9 @@ async function pass(page, url) {
     }
     // (c) TWO BOUNCE RENDERS OF THE SAME MACHINE SONG ARE THE SAME TAKE.
     // "Same" is held to a FLOAT-NOISE fence, not the last bit, and the fence
-    // is measured rather than wished: the machine SOURCES are byte-stable
-    // (unit §44 compares two syntheses sample for sample) and one hit through
-    // the full chain rendered sample-identically — but a whole windowed tape
+    // is measured rather than wished: the machine's voices are the parent's
+    // precompiled modules, driven from one table (unit §44) — but a whole
+    // windowed tape
     // through chromium's offline pipeline measured a worst window ΔRMS of
     // 3.8e-6 (one window of 64, peaks byte-identical) across two cold
     // renders, which is −108 dB of arithmetic and not a take. A REAL

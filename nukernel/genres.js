@@ -247,8 +247,8 @@
       parents: { house: 0.7, electro: 0.15, funk: 0.15 },
       wants: [],
       instr: "clean_guitar",
-      // the kit vector below has always said "909, four on the floor" — now
-      // the SOUND is the machine it names (synthesized, audio/machines.js)
+      // the kit vector below has always said "909, four on the floor" — and
+      // the SOUND is the machine it names (the engine's kick909/snare_crack)
       drumkit: "tr909",
       entry: v => v, reg: v => -2 + v, realize: () => "line",
       harmony: "modal",

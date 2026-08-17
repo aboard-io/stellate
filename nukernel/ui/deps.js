@@ -66,6 +66,9 @@ export const { blank, emptyBox } = window.NuSong;
 export const { instrOf, familyOf, BASS_INSTR, DRUMDIR, DRUMFILE, FONTS, BASSSYNTH,
                STRIPS, stripFor, RANGES, STRETCH_UP, STRETCH_DOWN,
                DRUMMIX, DRUMBUS,
+               // the machine kits' place in that mix, and the ONE merge over
+               // DRUMMIX that the kit desk and the drum player both read
+               MACHINEMIX, mixFor, laneKey,
                // the per-family DYNAMIC RESPONSE (audio/voices.js) — the same
                // family walk stripFor uses, answering timbre instead of mix.
                // `dynCurve` is the arithmetic; the player only writes it onto

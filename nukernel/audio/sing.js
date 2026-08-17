@@ -84,10 +84,30 @@
 // that never sings never downloads it.
 import { SING, FP, CS } from "../ui/deps.js";
 import { ctx, voiceGritCurve } from "./graph.js";
-// the drum machines' seeded generator, borrowed whole for the vocoder's
-// unvoiced path: an "s" is noise, and noise on this page is deterministic or
-// it is not this page's noise (machines.js has the law).
-import { prng, hash } from "./machines.js";
+/* ---------- the vocoder's own deterministic noise ---------- */
+// An "s" is noise, and a whispered consonant that came out of Math.random would
+// be a different syllable on every load and a different bounce every time —
+// which is the one thing neither the espeak fresh-instance law nor the offline
+// render tolerates. FNV-1a over a name -> mulberry32: each syllable's noise
+// differs, every load is the same take, one seed per (voice, syllable).
+//
+// This pair used to be borrowed from audio/machines.js, which synthesized four
+// drum machines out of it. The machines are the parent engine's now and that
+// file is gone; the generator lives here, beside its only remaining reader.
+function hash(s) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function prng(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return (((t ^ (t >>> 14)) >>> 0) / 4294967296) * 2 - 1;
+  };
+}
 // THE TONE CHAIN, borrowed rather than bypassed. voices.js built one chair per
 // (channel, address) for vox/brass — a shared grit curve and breath-LFO tap,
 // "Add grit and tremolo to vocals and horns" — and every sung note used to
@@ -416,7 +436,7 @@ const VB_POST = { cutoff: 3400, res: 0.05 };
 // broadband noise with no pitch in it; run it through a bank of tuned filters
 // on a saw carrier and it comes out as a chord, which is why every vocoder
 // since the VP-330 has a separate sibilance channel. So the modulator's energy
-// above SIB_HZ drives SEEDED noise (machines.js prng — a whispered consonant
+// above SIB_HZ drives SEEDED noise (prng at the top of this file — a whispered consonant
 // must be the same take on every load and in every bounce) straight past the
 // bank and past the post filter, which is where the hardware puts it too.
 const SIB_HZ = 3800, SIB_ATT = 0.001, SIB_REL = 0.012;

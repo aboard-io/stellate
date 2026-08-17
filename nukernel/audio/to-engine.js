@@ -60,7 +60,9 @@ const DRUM_AMP_FLOOR = 0.12, DRUM_AMP_SPAN = 0.52;
 const ACCENT_LIFT = 1.15;
 const pitchAmp = (vel, acc) => clamp((PITCH_AMP_FLOOR + PITCH_AMP_SPAN * clamp(vel, 0, 9) / 9) *
   (acc ? ACCENT_LIFT : 1), 0.01, 0.34);
-const drumAmp = (vel, acc) => clamp((DRUM_AMP_FLOOR + DRUM_AMP_SPAN * clamp(vel, 0, 9) / 9) *
+// EXPORTED: the live page hits with this too, because velocity has to mean one
+// thing whichever engine is holding the stick.
+export const drumAmp = (vel, acc) => clamp((DRUM_AMP_FLOOR + DRUM_AMP_SPAN * clamp(vel, 0, 9) / 9) *
   (acc ? ACCENT_LIFT : 1), 0.02, 0.8);
 
 // ---- the kit, lane by lane -------------------------------------------------
@@ -73,7 +75,7 @@ const drumAmp = (vel, acc) => clamp((DRUM_AMP_FLOOR + DRUM_AMP_SPAN * clamp(vel,
 //   t/m/l  three toms -> the parent's ONE tom unit, repitched. That is exactly
 //      how the parent plays its own tom fills (mapEvents sends d.pitch in Hz
 //      against a 105 Hz root), so a tom sweep still sweeps.
-const LANE = {
+export const LANE = {
   k: { unit: "kick",  dur: 0.30 },
   s: { unit: "snare", dur: 0.25 },
   p: { unit: "rim",   dur: 0.15, perc: true },
@@ -89,18 +91,74 @@ const LANE = {
 };
 
 // ---- the kit, as a whole ---------------------------------------------------
-// Six of nukernel's nine kit names ARE the parent's sampled kits, byte for byte
+// Six of nukernel's ten kit names ARE the parent's sampled kits, byte for byte
 // (genre-kernel DRUMKITS: acoustic/room/power/electronic/jazz/brush), so they
-// resolve to real recorded one-shots through K.drumKitSpec. The other three are
-// DRUM MACHINES — nukernel synthesizes them — and the parent has the machines
-// as synthesis models, so they route to those instead of to a sampled kit that
-// would be the wrong instrument. kickModel/snareModel/hatModel is the parent's
-// own vocabulary (state-engine voiceUnits).
-const MACHINE_KIT = {
-  tr909: { kickModel: "909", snareModel: "crack", hatModel: "metal" },
-  tr808: { kickModel: "808", snareModel: "noise", hatModel: "noise" },
-  cr78:  { kickModel: "boom", snareModel: "noise", hatModel: "metal" },
+// resolve to real recorded one-shots through K.drumKitSpec. The other FOUR are
+// DRUM MACHINES, and the parent already owns every one of them as a synthesis
+// model — kickModel/snareModel/hatModel is its own vocabulary (state-engine
+// voiceUnits), and `tune` is the one knob its three kick modules take.
+//
+// THIS TABLE IS THE WHOLE DRUM SYSTEM AND THERE IS NO OTHER. It used to name
+// three machines here for the tape while the page voiced four of its own out of
+// a bank of oscillators — so a tr909 song was one drum machine live and a
+// different one on the record, and tr606 (which nothing here named) was a real
+// 606 live and the default kit on the tape. Now audio/voices.js resolves its
+// live hits from this same table through drumVoice() below: one row per box,
+// read twice.
+//
+// tr606 IS THE NEAREST-VOICE ROW, said out loud: the Drumatix kick is thin and
+// mid-forward with no boom in it, so it is `boom` tuned UP rather than the 808's
+// long fall; its snare is noise-led; its famous hats are square-wave metal like
+// every other box here.
+export const MACHINE_KIT = {
+  tr909: { kickModel: "909",  snareModel: "crack", hatModel: "metal", tune: 1.00 },
+  tr808: { kickModel: "808",  snareModel: "noise", hatModel: "metal", tune: 0.92 },
+  tr606: { kickModel: "boom", snareModel: "noise", hatModel: "metal", tune: 1.25 },
+  cr78:  { kickModel: "boom", snareModel: "noise", hatModel: "metal", tune: 0.88 },
 };
+// which kit names are machines rather than directories of recorded one-shots.
+// Exported because the loaders ask it: a machine has nothing to fetch.
+export const isMachine = (kit) => !!MACHINE_KIT[kit];
+
+// ---- a lane, as a parent MODULE --------------------------------------------
+// state-engine voiceUnits' own three model maps and its four fixed perc voices,
+// mirrored here and nowhere else, so the page and the tape name the same drum
+// for the same kit. UNIT_LVL is voiceUnits' own per-voice level (the hat rides
+// at 0.7, the cymbals at 0.9); the parent's mastering trims on top of it are the
+// tape's, the way nukernel's desk on top of it is the page's.
+const KICK_MODULE  = { boom: "kick_boom", "808": "kick_808", "909": "kick909" };
+const SNARE_MODULE = { noise: "snare_noise", crack: "snare_crack", clap: "snare_clap" };
+const HAT_MODULE   = { noise: "hat_noise", metal: "hat_metal" };
+const UNIT_MODULE  = { tom: "tom", clap: "snare_clap", rim: "snare_crack",
+                       ride: "hat_metal", crash: "hat_metal" };
+const UNIT_LVL = { hat: 0.7, ride: 0.9, crash: 0.9 };
+
+/**
+ * Which parent voice a nukernel drum lane is, under a given kit.
+ *
+ * Returns { unit, module, durB, lvl, gain, pitch, open } or null for a lane no
+ * parent voice covers — NEVER a quiet substitute. `durB` is in BEATS (the
+ * parent's drum events are, and mapEvents multiplies by the seconds-per-beat to
+ * get the module's `decay`), so a live caller must do the same multiplication or
+ * the page rings for a different length than the record.
+ *
+ * A SAMPLED kit answers the same modules: they are the metadata the parent
+ * keeps behind `u.sampler`, and they are what a lane falls back to when the
+ * recording never decoded.
+ */
+export function drumVoice(kit, lane) {
+  const L = LANE[lane];
+  if (!L) return null;
+  const M = MACHINE_KIT[kit] || {};
+  const module = L.unit === "kick" ? (KICK_MODULE[M.kickModel] || "kick_boom")
+    : L.unit === "snare" ? (SNARE_MODULE[M.snareModel] || "snare_noise")
+    : L.unit === "hat" ? (HAT_MODULE[M.hatModel] || "hat_noise")
+    : UNIT_MODULE[L.unit];
+  if (!module) return null;
+  return { unit: L.unit, module, durB: L.dur, lvl: UNIT_LVL[L.unit] || 1,
+    gain: L.gain || 1, pitch: L.pitch || 0, open: !!L.open,
+    tune: L.unit === "kick" ? (M.tune || 1) : 1 };
+}
 
 // ---- the chair, as a parent ROLE -------------------------------------------
 // nukernel seats seven chairs (kernel.js PARTS); the parent resolves four roles
@@ -305,6 +363,12 @@ export function toEngine(plan, deps) {
         pitched.push({ voice: "bass", beat, dur: durB, pch: pchOf(e.n),
           amp: pitchAmp(e.vel, e.acc), accent: e.acc ? 1 : 0, slide: e.sld ? 1 : 0 });
       } else if (e.kind === "hit") {
+        // A HIT AT ZERO IS SILENCE, on the record as on the page. The kit
+        // velocity vectors and the groove profiles both write velocity 0
+        // legitimately, and audio/voices.js has always played it as nothing;
+        // the amp scale above has a FLOOR, so without this line the tape would
+        // be the one path that hears them.
+        if ((e.vel == null ? 5 : e.vel) <= 0.009) continue;
         const L = LANE[e.d];
         if (!L) { unrouted.push({ what: "lane:" + e.d, why: "no parent drum unit for this lane" }); continue; }
         const d = { drum: L.unit, beat, dur: L.dur,

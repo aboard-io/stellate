@@ -75,13 +75,9 @@
   // The parent's drum strip (subsonic HPF + a whisper of glue saturation, NO
   // compressor) still sits under all of this on the drum bus — see DRUMBUS.
   //
-  // THESE ROWS ARE THE SAMPLED KITS' TRUTH, and the synthesized machine kits
-  // ride them through per-machine overrides (audio/machines.js MACHINEMIX,
-  // merged by its mixFor — one merge, read by the desk and the player both).
-  // The overrides exist because two of these numbers are compensations for
-  // flat-normalised RECORDINGS: `punch` re-manufactures a transient a
-  // synthesized hit already owns, and `room` puts a kit in a room a drum
-  // machine was never in.
+  // THESE ROWS ARE THE SAMPLED KITS' TRUTH, and the machine kits ride them
+  // through the per-machine overrides below (MACHINEMIX, merged by mixFor —
+  // one merge, read by the desk and the player both).
   const DRUMMIX = {
     k: { lvl: 1.00, pan:  0.00, room: 0.10, punch: 1.45, sus: 1.00 },
     s: { lvl: 1.00, pan: -0.02, room: 0.55, punch: 1.35, sus: 0.94 },
@@ -96,6 +92,54 @@
     r: { lvl: 0.72, pan:  0.24, room: 0.35, punch: 1.10, sus: 1.00 },
     x: { lvl: 0.80, pan: -0.20, room: 0.45, punch: 1.05, sus: 1.00 },
   };
+  // ---- THE MACHINES' PLACE IN THAT MIX -------------------------------------
+  // Four kits are DRUM MACHINES — tr808, tr909, tr606, cr78 — and the parent
+  // engine voices every one of them (audio/to-engine.js MACHINE_KIT is the
+  // whole routing table, live and pressed). What is left for this file is the
+  // half a machine changes about a MIX rather than about a sound, which is one
+  // number: `room`. A drum machine is a line-out, not a kit in a room, and the
+  // hats especially take far less of the ambience send than a recorded hat or
+  // the machine stops sounding like a machine. Levels ride down with it where
+  // the box was polite (the CR-78 sat behind an organ; every record that loved
+  // it mixed it quietly).
+  //
+  // NO punch/sus HERE, and their absence is the point: transient shaping is a
+  // gain envelope over a SAMPLE, and these lanes are not samples any more —
+  // they are the parent's modules, triggered per hit with their own attacks. A
+  // row that named a `punch` for them would be a number nobody reads.
+  const MACHINEMIX = {
+    tr808: { k: { room: 0.04 }, s: { room: 0.28 }, c: { room: 0.30 }, p: { room: 0.20 },
+             h: { room: 0.06 }, o: { room: 0.10 }, f: { room: 0.05 },
+             r: { room: 0.12, lvl: 0.6 }, x: { room: 0.18, lvl: 0.7 },
+             t: { room: 0.20 }, m: { room: 0.20 }, l: { room: 0.22 } },
+    tr909: { k: { room: 0.06 }, s: { room: 0.32 }, c: { room: 0.34 }, p: { room: 0.20 },
+             h: { room: 0.07 }, o: { room: 0.12 }, f: { room: 0.06 },
+             r: { room: 0.15, lvl: 0.62 }, x: { room: 0.20, lvl: 0.75 },
+             t: { room: 0.22 }, m: { room: 0.22 }, l: { room: 0.24 } },
+    tr606: { k: { room: 0.05 }, s: { room: 0.24 }, c: { room: 0.26, lvl: 0.8 }, p: { room: 0.18 },
+             h: { room: 0.06 }, o: { room: 0.10 }, f: { room: 0.05 },
+             r: { room: 0.12, lvl: 0.6 }, x: { room: 0.16, lvl: 0.7 },
+             t: { room: 0.18 }, m: { room: 0.18 }, l: { room: 0.20 } },
+    cr78:  { k: { room: 0.08, lvl: 0.9 }, s: { room: 0.30, lvl: 0.85 },
+             c: { room: 0.28, lvl: 0.7 }, p: { room: 0.22, lvl: 0.45 },
+             h: { room: 0.08, lvl: 0.7 }, o: { room: 0.12, lvl: 0.65 },
+             f: { room: 0.06, lvl: 0.5 }, r: { room: 0.14, lvl: 0.5 },
+             x: { room: 0.18, lvl: 0.6 }, t: { room: 0.22, lvl: 0.8 },
+             m: { room: 0.22, lvl: 0.8 }, l: { room: 0.24, lvl: 0.82 } },
+  };
+  // THE ONE MERGE — the kit desk's lane strips and the drum player both read
+  // this, so the table and the sound cannot drift apart. A sampled kit falls
+  // straight through to DRUMMIX.
+  const mixFor = (kit, lane) => {
+    const o = kit && MACHINEMIX[kit] && MACHINEMIX[kit][lane];
+    const base = DRUMMIX[lane];
+    return o ? { ...base, ...o } : base;
+  };
+  // which strip a hit lands on: sampled kits share one strip per lane (the
+  // original desk, node for node); a machine lane with its own row earns its own
+  const laneKey = (kit, lane) =>
+    (kit && MACHINEMIX[kit] && MACHINEMIX[kit][lane]) ? kit + "|" + lane : lane;
+
   // THE DRUM BUS. hpf/sat/satMix are the parent's transient-preserving drum
   // strip verbatim (state-engine STRIP_PROFILES.drum: no compressor, no dulling
   // filter — the attack IS the instrument). `room` is the bus trim on the whole
@@ -453,6 +497,7 @@
 
   const api = { instrOf, BASS_INSTR, DRUMDIR, DRUMFILE, FONTS, BASSSYNTH, STRIPS,
                 stripFor, familyOf, RANGES, STRETCH_UP, STRETCH_DOWN, DRUMMIX, DRUMBUS,
+                MACHINEMIX, mixFor, laneKey,
                 // DYN_ATK is the one raw constant the player still needs (the
                 // default attack for a note that asked for no treatment at all);
                 // DYN_ATK_OCT and DYN_SKIP stay private to dynCurve, which is

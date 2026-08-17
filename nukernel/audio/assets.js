@@ -11,7 +11,6 @@ import { SAMPLERS, GENRES, instrOf, BASS_INSTR, DRUMDIR, DRUMFILE,
 import { SONG, POOL } from "../ui/state.js";
 import { stackOf, instrIdOf } from "../ui/derive.js";
 import { ctx } from "./graph.js";
-import { isMachine, machineBuffer } from "./machines.js";
 
 // fetch/import paths are computed from THIS module's URL, not the document's —
 // a module's dynamic import() resolves against the module, and this file lives
@@ -201,22 +200,13 @@ export function instrumentsInSong() {
 // extraction the big engine plays. The file map is instruments.js data; the
 // decoding is here because it needs the AudioContext.
 export const drumBufs = new Map();                // "kit|lane" -> AudioBuffer
+// A MACHINE KIT NEVER REACHES HERE. tr808/tr909/tr606/cr78 have no recordings
+// to fetch and no buffers to hold: the parent engine voices them per hit
+// (audio/to-engine.js drumVoice, audio/voices.js), and warming them is building
+// worklets rather than decoding wavs — audio/transport.js ensureAssets sends
+// them to voices.warmKit instead. This loader is for the six kits that really
+// are directories.
 export async function loadKit(kit) {
-  // A MACHINE KIT IS SYNTHESIZED, NOT FETCHED — rendered once from a seeded
-  // source (audio/machines.js) into the same "kit|lane" buffers a decoded kit
-  // lands in, so playDrum never learns a second path. Every DRUMFILE lane gets
-  // a voice (the house law: a lane the map cannot name is a silent drum), and
-  // the buffers are context-free, so the offline bounce strikes the same bytes.
-  if (isMachine(kit)) {
-    for (const lane of Object.keys(DRUMFILE)) {
-      const key = kit + "|" + lane;
-      if (!drumBufs.has(key)) {
-        const b = machineBuffer(kit, lane, ctx);
-        if (b) drumBufs.set(key, b);
-      }
-    }
-    return;
-  }
   inFlight.add("kit:" + kit);
   await Promise.all(Object.entries(DRUMFILE).map(([lane, file]) =>
     decodeInto(drumBufs, kit + "|" + lane, DRUMDIR + kit + "/" + file)));

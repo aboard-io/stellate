@@ -7,14 +7,17 @@
 // Layer graph: deps -> state -> derive -> graph -> assets -> THIS FILE ->
 // mixer -> transport. Never imports a ui view.
 import { GENRES, VOX, VOXPARAM, BASSSYNTH, SP, RANGES, STRETCH_UP,
-         STRETCH_DOWN, DRUMBUS, STRIPS, dynFor, dynCurve,
+         STRETCH_DOWN, DRUMBUS, STRIPS, mixFor, dynFor, dynCurve,
          DYN_ATK } from "../ui/deps.js";
-import { SONG } from "../ui/state.js";
+import { SONG, bpm } from "../ui/state.js";
 import { stackOf } from "../ui/derive.js";
 // `noise` is gone from this import with the oscillator stubs it fed: nothing in
 // this file makes a waveform any more, it only drives the engine's.
 import { ctx, bus, buildVoiceChair } from "./graph.js";
-import { mixFor, isMachine } from "./machines.js";
+// THE DRUM TABLE IS THE TAPE'S DRUM TABLE. audio/to-engine.js resolves a lane
+// and a kit to a parent voice for the record; this file asks it the same
+// question for the page, so there is one drum system and not two.
+import { LANE, drumVoice, drumAmp, isMachine } from "./to-engine.js";
 import { FAUSTDIR, FONT, fontDef, isSynthFont, specOf, zoneBufs, drumBufs,
          inFlight } from "./assets.js";
 
@@ -794,7 +797,7 @@ const ctxOf = chan => (chan && chan.input ? chan.input.context : ctx);
 // strips (or no channel at all) still has the plain drum bus.
 // `kit` reaches the strip because the strip is per MIX ROW now: a machine
 // lane with its own MACHINEMIX row lands on its own strip, a sampled lane on
-// the shared one — audio/machines.js laneKey decides, inside the desk
+// the shared one — instruments.js laneKey decides, inside the desk
 const drumDest = (chan, lane, kit) => (chan && chan.laneIn ? chan.laneIn(lane, kit)
   : (chan && chan.drumIn) || bus);
 // the lane's trim is the STRIP's job when there is a strip; without one it has
@@ -805,17 +808,25 @@ const laneTrim = (chan, lane, kit) => {
   return m && m.lvl != null ? m.lvl : 1;
 };
 export function playDrum(kit, lane, when, acc, vel, chan) {
+  // THE MACHINES ARE THE PARENT'S MACHINES. tr808/tr909/tr606/cr78 are not
+  // directories of recorded one-shots, and this page used to answer that by
+  // synthesizing its own four boxes out of a bank of oscillators and playing
+  // them as buffers — while the tape, which cannot see those buffers, played
+  // the parent's kick_808 and kick909 for the same song and nothing at all for
+  // the 606. Two drum machines, one score. So a machine kit now takes exactly
+  // the voice audio/to-engine.js hands the record: same module, same decay,
+  // same velocity scale, resolved from the same row.
+  if (isMachine(kit)) return machineHit(kit, lane, when, acc, vel, chan);
   const buf = kit && drumBufs.get(kit + "|" + lane);
-  // a machine kit is never "in flight" (it synthesizes, no fetch), but a
-  // mid-play kit change can reach here a tick before ensureAssets has run
-  // loadKit — same law as a decoding kit: silence, never the oscillator stub
-  if (!buf) return !!kit && (inFlight.has("kit:" + kit) || isMachine(kit));
+  // silence while the kit decodes — same law as ever: never a stand-in for a
+  // kit that is on its way
+  if (!buf) return !!kit && inFlight.has("kit:" + kit);
   const lvl = (vel == null ? 5 : vel) / 9;
   // A HIT AT ZERO IS A HIT. Returning false here reads to the scheduler as
-  // "this kit could not play that lane", and the answer to that is the
-  // oscillator stub — so a velocity-0 event, which the kit-velocity vectors
-  // and the groove profiles both produce legitimately, came out as a BEEP.
-  // Ten of them in one 45-genre sweep. Silence is a successful hit.
+  // "this kit could not play that lane", and the answer to that is a stand-in
+  // voice — so a velocity-0 event, which the kit-velocity vectors and the
+  // groove profiles both produce legitimately, came out as somebody else's
+  // drum. Ten of them in one 45-genre sweep. Silence is a successful hit.
   if (lvl <= 0.001) return true;
   const c = ctxOf(chan);
   const src = c.createBufferSource(); src.buffer = buf;
@@ -826,10 +837,9 @@ export function playDrum(kit, lane, when, acc, vel, chan) {
   // one-shot fired from a buffer they cost one extra ramp each rather than an
   // envelope follower and a worklet. `punch` puts the stick back on a snare
   // whose sample was normalised flat; `sus` under 1 shortens the tail, which is
-  // what keeps hats and toms tight in a room that is now genuinely wet.
-  // (mixFor: a machine kit's own row rides DRUMMIX here — a synthesized 808
-  // kick was BUILT with its transient, and punching it manufactures a click
-  // the machine is famous for not having.)
+  // what keeps hats and toms tight in a room that is now genuinely wet. (Only
+  // the recorded kits reach this: a machine's hits are modules, with their own
+  // attacks, and they went past on the branch above.)
   const m = mixFor(kit, lane) || { punch: 1, sus: 1 };
   const punch = m.punch != null ? m.punch : 1, sus = m.sus != null ? m.sus : 1;
   if (punch !== 1 || sus !== 1) {
@@ -953,27 +963,79 @@ const toneSpec = (tone, padish, acc) => ({
     detune: padish ? 0.012 : 0.006,
   },
 });
-// nukernel's twelve lanes -> the parent's own drum voices, in two hops that are
-// both already written down: audio/to-engine.js LANE says which parent UNIT a
-// lane is (with its two substitutions named there — a pedal hat is the closed
-// hat quieter, three toms are one tom repitched), and state-engine voiceUnits
-// says which MODULE a unit resolves to at the parent's default kit models
-// (kick_boom / snare_noise / hat_noise, snare_crack for the rim, snare_clap
-// for the clap, hat_metal for both cymbals, tom for the perc lane).
-const STANDIN_DRUM = {
-  k: { dsp: "kick_boom",   dec: 0.30 },
-  s: { dsp: "snare_noise", dec: 0.25 },
-  p: { dsp: "snare_crack", dec: 0.15 },
-  c: { dsp: "snare_clap",  dec: 0.25 },
-  h: { dsp: "hat_noise",   dec: 0.10 },
-  o: { dsp: "hat_noise",   dec: 0.45 },
-  f: { dsp: "hat_noise",   dec: 0.09, gain: 0.62 },
-  r: { dsp: "hat_metal",   dec: 0.40 },
-  x: { dsp: "hat_metal",   dec: 1.40 },
-  t: { dsp: "tom", dec: 0.28, pitch: 132 },
-  m: { dsp: "tom", dec: 0.28, pitch: 105 },
-  l: { dsp: "tom", dec: 0.32, pitch: 88 },
-};
+/* ---------- ONE DRUM, PLAYED TWICE ---------- */
+// The twelve-lane table this file used to keep is gone: it named the parent's
+// default modules and nothing else, so it could only ever play one kit, and the
+// four machines went round it through a bank of oscillators. audio/to-engine.js
+// drumVoice(kit, lane) is the table now — the one the record is cut from — and
+// everything below is the WebAudio wiring for whatever it answers.
+//
+// The two numbers that have to be computed the same way or the page and the
+// tape ring for different lengths:
+//   DECAY   the parent's drum events carry `dur` in BEATS and its mapEvents
+//           multiplies by the seconds-per-beat. So does this. A kick at 120 is
+//           0.15 s of ring in both, and slowing the song lengthens it in both.
+//   LEVEL   drumAmp(vel, acc) — to-engine's own velocity scale — times the
+//           voice's level and the lane's gain, which is state-engine's
+//           `u.lvl * d.amp` with the same terms in it.
+const spbNow = () => 60 / (bpm || 120);
+function drumNote(kit, lane, when, acc, vel, chan, count) {
+  const V = drumVoice(kit, lane);
+  // A LANE WITH NO PARENT VOICE IS NOT QUIETLY DROPPED. It falls through to the
+  // ledger below (window.__nuFallback) and shows up in the readout, which is the
+  // only honest answer: this page has no second drum engine to hide it in.
+  if (!V) return false;
+  const lvl = (vel == null ? 5 : vel) / 9;
+  if (lvl <= 0.001) return true;                  // a hit at zero is a hit, and it is silence
+  const c = ctxOf(chan);
+  if (count) countFb(c);
+  if (!ctx || c !== ctx) return true;             // offline: silent by law (see the note above)
+  const spec = { dsp: V.module, root: V.module, level: 1, set: {} };
+  const dec = Math.min(2, Math.max(0.05, V.durB * spbNow()));
+  const node = standIn(spec, "d:" + (kit || "-") + ":" + lane, chan,
+                       drumDest(chan, lane, kit), when, dec + 0.25);
+  if (!node) return true;                         // the worklet is still building: silence, not a stub
+  // state-engine mapEvents' own writes for a drum module, and only those:
+  // level, decay, pitch (the tom's one knob) and tune (the kick's). The gate is
+  // a button — impulsify wants an edge — so it is raised at the hit and dropped
+  // a frame later.
+  const set = (nm, v) => {
+    const p = node.parameters.get("/" + V.module + "/" + nm);
+    if (p) p.setValueAtTime(v, when);
+  };
+  set("level", Math.min(2, Math.max(0, drumAmp(vel == null ? 5 : vel, acc) *
+      V.lvl * V.gain * laneTrim(chan, lane, kit))));
+  set("decay", dec);
+  if (V.pitch) set("pitch", V.pitch);
+  if (V.tune !== 1) set("tune", V.tune);
+  set("gate", 1);
+  const gate = node.parameters.get("/" + V.module + "/gate");
+  if (gate) gate.setValueAtTime(0, when + 0.02);
+  return true;
+}
+// A MACHINE HIT IS NOT A FALLBACK. The 808 was always going to be a synthesized
+// drum — that is what an 808 is — so it is the instrument, not a stand-in for
+// one, and it must not move the ledger the audio gate reads.
+const machineHit = (kit, lane, when, acc, vel, chan) =>
+  drumNote(kit, lane, when, acc, vel, chan, false);
+// WARMED BEFORE THE FIRST BAR, like a kit's fetch. A machine has nothing to
+// decode, but its worklets still have to be built, and standIn drops a note
+// whose node has not arrived — so audio/transport.js ensureAssets asks for the
+// lanes a song can write, once, and kitReady says when to stop asking.
+export function warmKit(kit) {
+  const jobs = [];
+  for (const lane of Object.keys(LANE)) {
+    const V = drumVoice(kit, lane);
+    if (!V) continue;
+    const addr = "d:" + kit + ":" + lane;
+    if (!standInNodes.has(addr))
+      jobs.push(loadStandIn({ dsp: V.module, root: V.module, level: 1, set: {} }, addr));
+  }
+  return Promise.all(jobs);
+}
+export const kitReady = (kit) => isMachine(kit)
+  ? Object.keys(LANE).every(l => !drumVoice(kit, l) || standInNodes.has("d:" + kit + ":" + l))
+  : drumBufs.has(kit + "|k");
 // WHERE A PITCHED SOURCE LANDS, the counterpart of drumDest above: a voice
 // index takes its chair's strip, a string names a part outright ("bass"), and
 // neither (or a channel from before the desk) is the section input.
@@ -1001,34 +1063,15 @@ export function line(t, n, dur, acc, sld, prev, tone, padish, vel, chan, where) 
   // second opinion about what velocity means.
   driveSynth(node, spec, n, t, dur, acc, sld, vel, null);
 }
-// ALL TWELVE LANES VOICE, and none of them is a stub any more. The kit grew to
-// twelve while the oscillator branch knew six, so a kit that failed to decode
-// played a fill with holes in it; STANDIN_DRUM above covers every lane the
-// tracker can write, because the parent has a real voice for every one.
+// THE KIT THAT DID NOT ARRIVE, counted. A recorded kit whose wavs never
+// decoded still has to make a drum sound, and the honest one is the parent's
+// own voice for that lane at the DEFAULT models — which is what a sampled kit's
+// unit falls back to in the engine too when its sampler is missing. Same table,
+// same call, one extra argument: this one moves the ledger, because a kit that
+// did not arrive IS a coverage hole even when it sounds like a drum.
+// A LANE THE TABLE CANNOT NAME lands in the ledger too, from here: drumNote
+// refuses it rather than guessing, and a refusal that nobody counted would be
+// the silent drop this file exists to make impossible.
 export function hit(t, d, acc, vel, chan) {
-  const lvl = (vel == null ? 5 : vel) / 9;
-  if (lvl <= 0.001) return;
-  const c = ctxOf(chan);
-  countFb(c);
-  if (!ctx || c !== ctx) return;                  // offline: counted above, silent by law
-  const L = STANDIN_DRUM[d];
-  if (!L) return;                                 // a lane the parent cannot voice: see the report
-  const spec = { dsp: L.dsp, root: L.dsp, level: 1, set: {} };
-  const node = standIn(spec, "d:" + d, chan, drumDest(chan, d), t, L.dec + 0.25);
-  if (!node) return;
-  // state-engine mapEvents' own writes for a synth drum, and only those:
-  // level (the unit level times the hit's amp), decay (how long it rings) and
-  // pitch (the tom's one knob). The gate is a button — impulsify wants an edge,
-  // so it is raised at the hit and dropped a frame later.
-  const a = (acc ? 1.15 : .85) * (0.45 + 0.55 * lvl) * (L.gain || 1) * laneTrim(chan, d);
-  const set = (nm, v) => {
-    const p = node.parameters.get("/" + L.dsp + "/" + nm);
-    if (p) p.setValueAtTime(v, t);
-  };
-  set("level", Math.min(2, Math.max(0, a)));
-  set("decay", L.dec);
-  if (L.pitch) set("pitch", L.pitch);
-  set("gate", 1);
-  const gate = node.parameters.get("/" + L.dsp + "/gate");
-  if (gate) gate.setValueAtTime(0, t + 0.02);
+  if (!drumNote(null, d, t, acc, vel, chan, true)) countFb(ctxOf(chan));
 }
