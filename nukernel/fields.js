@@ -581,24 +581,31 @@
   // twenty, so a treatment costs a CONSTANT on a bus and a MULTIPLE on a
   // strip.
   //
-  // `fx` IS THEREFORE OFF THE DESK, and it is the one field in this file that
-  // no surface offers. It is not deleted, and that is a stated decision rather
-  // than an oversight: songs saved before this carry per-part chains, the
-  // mixer still builds them, and test/browser/nukernel-drums.test.js measures
-  // three separate audio claims about them. Retiring the FIELD is a round with
-  // that gate in it. What this round removes is the only way to make a NEW
-  // one, so the expensive topology stops growing today. The BOX keeps its own
-  // `fx` chain as the group insert (FIELDS below), and the section strip is
-  // where it is reached.
+  // `fx` IS OFF THE DESK, PERIOD ("get rid of inserts, reverb, and echo — let
+  // me send to bus 1, bus 2, and bus 3 instead", Paul, 2026-08-17). A prior
+  // round stopped any surface from WRITING a new one and left the FIELD in
+  // place so an old save's chain would still play — but PARTMIX is also where
+  // the mix table reads its own column list from, so the field left every
+  // track strip still DRAWING an insert bar nobody could clear. There is no
+  // way to keep the declaration and keep the promise, so it is gone: a saved
+  // `parts.<key>.fx` from before this round is not an error, it is simply a
+  // key song.js's loader (which validates a part entry against this very
+  // list) no longer recognizes, and it is dropped on load exactly the way any
+  // other unknown key is — never thrown, never migrated to something else,
+  // because there is nothing left to migrate it TO: no live song can reach
+  // resolvePartMix's `fx` handling below again, since nothing copies a part
+  // entry through this list's `fx` any more (that line stays, for the offline
+  // desk gate that still hands it one on purpose — its own note says why).
+  // The BOX keeps its own `fx` chain as the
+  // group insert (FIELDS below), and the section strip is where it is
+  // reached — that one is a genre-wide treatment, not a per-track insert, and
+  // Paul never asked for it to go.
   //
   // mute/solo are the two that are NOT enums, because they are not choices
   // between values — they are the desk's own pair, and solo is the one control
   // here that reaches OTHER parts (audio/mixer.js partSpecs: any solo in the
   // box mutes every part that is not soloed).
   const PARTMIX = [
-    // retired from every surface — see the note above; the loader and the
-    // mixer still honour a chain a saved song brought with it
-    { key: "fx",   type: "list", table: FX,     labels: FXLABEL,   max: MAX_FX, default: [] },
     { key: "rev",  table: SENDS,  labels: SENDLABEL,  default: null },
     { key: "echo", table: SENDS,  labels: SENDLABEL,  default: null },
     { key: "room", table: SENDS,  labels: SENDLABEL,  default: null },
@@ -640,6 +647,16 @@
     const pick = (tbl, v, dflt) =>
       (v != null && Object.prototype.hasOwnProperty.call(tbl, String(v))) ? tbl[v] : dflt;
     return {
+      // UNREACHABLE FROM ANY LIVE SONG, not deleted here. PARTMIX no longer
+      // declares `fx`, so song.js's loader (which copies a part entry through
+      // this very list) can never hand this function an `e.fx` again, and
+      // no surface writes one either — a track really does carry only its
+      // three sends now. This line still resolves one IF handed one directly,
+      // because that is exactly what the offline desk gate does on purpose
+      // (test/browser/nukernel-drums.test.js partProbe) to prove the mixer's
+      // node-level isolation still holds for a chain a saved song brought
+      // with it — the claim the prior round promised this gate would keep
+      // making. Nothing manufactures that input anymore; only a test does.
       fx: (g.fx || []).filter(k => Object.prototype.hasOwnProperty.call(FX, k)).slice(0, MAX_FX),
       rev: pick(SENDS, g.rev, 0),
       del: pick(SENDS, g.echo, 0),      // the field is `echo`, the bus is `del`
@@ -1188,8 +1205,9 @@
       tab: "line",   group: "pipe",                    default: null },
     { key: "part",    scope: "layer", table: PARTCHOICES, labels: PARTCHOICES,
       tab: "voice",  group: "part",                    default: null },
-    // `parts` is the PER-PART MIX: a map of chair key -> {fx, rev, echo, lvl,
-    // pan, mute, solo}, each sub-field drawn from PARTMIX above. Type "parts"
+    // `parts` is the PER-PART MIX: a map of chair key -> {rev, echo, room,
+    // lvl, pan, mute, solo, fader, eq}, each sub-field drawn from PARTMIX
+    // above — three sends and nothing else, no insert. Type "parts"
     // because it is neither an enum nor a flat list — song.js validates the
     // map shape, exactly as it does the `vox` object and the `auto` entries.
     // Absent (the default) is the whole of today: audio/mixer.js builds no

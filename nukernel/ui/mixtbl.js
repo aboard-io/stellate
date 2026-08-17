@@ -209,9 +209,10 @@ const COLS = PARTMIX.filter(f => f.type !== "flag" && f.type !== "num" &&
 const SECCOLS = [
   { key: "verb",  table: VERBS,  labels: VERBS },
   { key: "dtime", table: DTIMES, labels: DTLABEL },
-  // …AND THE ONE INSERT LEFT ON THE MACHINE. A track has no rack any more
-  // (fields.js PARTMIX), but the BOX keeps its own chain — the group insert a
-  // real desk puts across a subgroup — and this is the only surface it is
+  // …AND THE ONE INSERT LEFT ON THE MACHINE. A track has no rack at all now
+  // (fields.js PARTMIX carries no `fx` field, so a track strip has no column
+  // to draw one from) — but the BOX keeps its own chain, the group insert a
+  // real desk puts across a subgroup, and this is the only surface it is
   // reachable from, so dropping it here would strand a field. It rides on the
   // SECTION strip and nowhere else.
   { key: "fx", type: "list", table: FX,
@@ -222,13 +223,12 @@ const SECCOLS = [
 // bands down the strip and you find the send you want by colour before you
 // have read a word.
 const KEYORD = ["lvl", "pan", "rev", "echo", "room", "verb", "dtime", "fx"];
-// ONE BAR PER KEY, and the LAST declaration wins. `fx` is declared twice —
-// fields.js PARTMIX still carries it (so every track strip draws one) and
-// SECCOLS above declares it again for the section strip — so the section drew
-// TWO identical group-insert bars, one of them without the labels, and every
-// selector aimed at it matched both. The SECCOLS one survives because it is
-// the declaration written for this surface and it carries the words the bar
-// reads out.
+// ONE BAR PER KEY. `fx` used to be declared twice — fields.js PARTMIX carried
+// a per-track entry (so every channel strip drew a group-insert bar nobody
+// could clear) and SECCOLS declared it again for the section strip, which
+// also drew a second, unlabeled one on top of the first. PARTMIX's is gone;
+// SECCOLS's is the only `fx` bar this board ever builds now, and it draws on
+// the section strip alone.
 const colsOf = row => {
   const by = new Map();
   for (const f of (row.sect ? [...COLS, ...SECCOLS] : COLS)) by.set(f.key, f);

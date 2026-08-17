@@ -867,6 +867,15 @@ async function deskUI(page) {
   await row.locator(".mbar.mstrip").click();
   await page.waitForTimeout(120);
   const partKey = await row.locator(".mval").first().getAttribute("data-part");
+  // THE ROUTING ITSELF, READ OFF THE OPEN STRIP (lane J1, 2026-08-17: "get rid
+  // of inserts… let me send to bus 1, bus 2, and bus 3 instead"). Every value
+  // bar a strip draws carries its own data-field, so what a track's routing
+  // IS is exactly the list of fields its own cells name — not a claim about
+  // fields.js, a read of the DOM the field removal was supposed to change.
+  const trackFields = await row.locator(".mval").evaluateAll(els =>
+    els.map(e => e.dataset.field));
+  const secFields = await page.locator(".mrow.msec .mval").evaluateAll(els =>
+    els.map(e => e.dataset.field));
   // A SEND on ONE part: the reverb-send cell, then a chip. Per-track INSERTS
   // are off the desk (fields.js PARTMIX: a track's routing is three bus sends
   // and nothing else), so what a person can put on one part from this surface
@@ -908,6 +917,7 @@ async function deskUI(page) {
   out.emptied = await page.evaluate(() => import("/nukernel/ui/state.js")
     .then((s) => s.SONG[0].parts));
   out.rows = rows; out.parts = parts; out.partKey = partKey;
+  out.trackFields = trackFields; out.secFields = secFields;
   // ---- THE TONE KNOBS (the strip-EQ round). Same discipline as everything
   // above: every claim is read off the STORE after a real gesture, and the
   // knob count is read against the registry's own arithmetic — three bands
@@ -1037,6 +1047,12 @@ async function slotOn(page) {
     document.getElementById("chassis").dataset.page === "compose",
     null, { timeout: 10000 });
   await slot0.click();
+  // ...and back. Every caller's next move is a .box dblclick on Arrange, and
+  // Compose is the only page on screen until this hops away from it.
+  await page.click('.pkey[data-page="song"]');
+  await page.waitForFunction(() =>
+    document.getElementById("chassis").dataset.page === "song",
+    null, { timeout: 10000 });
 }
 // compose a genre, loop its verse, play briefly — enough for the transport to
 // compile a timeline and decide its register homes
@@ -1121,6 +1137,15 @@ async function pass(page, url) {
   const browser = await launchChromium();
   const page = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
   const errs = capturePageErrors(page);
+  // THE SINGLE-LAYOUT SHELL: deskUI drives the board (.mrow/.mval/.mchip/
+  // .bstrip), which lives on the Mix page now and is display:none anywhere
+  // else — the same goPage the audio and survival gates already carry.
+  const goPage = async (p) => {
+    await page.click(`.pkey[data-page="${p}"]`);
+    await page.waitForFunction(
+      (n) => document.getElementById("chassis").dataset.page === n, p,
+      { timeout: 10000 });
+  };
   await page.addInitScript(taps);
   await page.addInitScript(offlineFft);   // the offline probes' shared banding + node counter
   // ?nobounce ON BOTH PASSES. The background bounce renders the whole song
@@ -1185,6 +1210,7 @@ async function pass(page, url) {
   const dry = await pass(page, base + "&dryroom");
   // the surface, last and on whatever song is loaded: it needs no audio, and
   // running it here costs one page's worth of clicks rather than a third load
+  await goPage("mix");                     // the board deskUI drives is its own page now
   const ui = await deskUI(page);
 
   // ---- (A) THE LANE STRIPS ARE NODES --------------------------------------
@@ -1536,6 +1562,22 @@ async function pass(page, url) {
       fail(`the mix table drew ${ui.rows} row(s) for ${ui.parts} part(s) — it must be ` +
            `one row per sound plus exactly one section row`);
     else ok(`the mix table draws ${ui.parts} sounds and one section row`);
+    // ---- JOB ONE: A TRACK HAS THREE SENDS AND NO INSERT ---------------------
+    if ((ui.trackFields || []).includes("fx"))
+      fail(`the track strip still draws an fx bar (${ui.trackFields.join(",")}) — ` +
+           `fields.js PARTMIX must not declare a per-track insert`);
+    else ok(`the track strip's routing is ${(ui.trackFields || []).join(",")} — no insert`);
+    for (const bus of ["rev", "echo", "room"])
+      if (!(ui.trackFields || []).includes(bus))
+        fail(`the track strip is missing its ${bus} send — a track's only ` +
+             `outward routing is its three bus sends`);
+    ok(`the three bus sends (rev, echo, room) are the whole of a track's routing`);
+    // …and the group insert did NOT vanish with it: it moved to the section
+    // strip, the box's own field, on purpose (fields.js PARTMIX's own note)
+    if (!(ui.secFields || []).includes("fx"))
+      fail(`the section strip lost its group insert too (${(ui.secFields || []).join(",")}) — ` +
+           `it should have moved off tracks, not off the board`);
+    else ok("the group insert survives on the section strip, the box's own field");
     if (!ui.stored || !ui.stored[ui.partKey])
       fail(`clicking the ${ui.partKey} row's chips stored ${JSON.stringify(ui.stored)}`);
     else {

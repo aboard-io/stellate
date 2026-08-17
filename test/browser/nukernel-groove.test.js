@@ -56,6 +56,28 @@ const liftedSw = loaded.find(x => x.r.ok && x.r.song.swing != null);
   await page.evaluate(() => localStorage.removeItem("nukernel.song.v1"));
   await page.reload({ waitUntil: "networkidle" });
 
+  // THE SINGLE-LAYOUT SHELL (2026-08-16): #groove/#swing/#preset moved onto
+  // the Mix page's session drawer, and a page not showing is display:none —
+  // so every control this file drives has to be navigated to first, the same
+  // goPage the audio and survival gates already carry.
+  const goPage = async (p) => {
+    await page.click(`.pkey[data-page="${p}"]`);
+    await page.waitForFunction(
+      (n) => document.getElementById("chassis").dataset.page === n, p,
+      { timeout: 10000 });
+  };
+  // ...and the session drawer itself is a closed <details> ("move all the
+  // sound definition and saving functionality into mix"), so #preset/#groove/
+  // #swing are hidden until it is opened.
+  const openSession = async () => {
+    await page.evaluate(() => {
+      const d = document.getElementById("preset").closest("details");
+      if (d && !d.open) d.open = true;
+    });
+  };
+  await goPage("mix");
+  await openSession();
+
   // (A) the controls exist, once each, legended, and read the current value
   for (const [id, legend, blank] of [["groove", "groove", "flat"],
                                      ["swing", "swing", "default"]]) {
@@ -132,6 +154,7 @@ const liftedSw = loaded.find(x => x.r.ok && x.r.song.swing != null);
   // the stepper claim below is exact (0 -> 1).
   await page.evaluate(() => localStorage.removeItem("nukernel.song.v1"));
   await page.reload({ waitUntil: "networkidle" });
+  await goPage("song");                    // the row/.bcell surface lives on Arrange
   {
     const tCells = await page.locator('.bcell[data-cell="timing"]').count();
     const tAny = await page.locator('#song [data-cell="timing"]').count();
