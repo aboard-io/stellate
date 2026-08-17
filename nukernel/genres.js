@@ -211,7 +211,11 @@
       // the missing third is the Lutheran chorale his subjects harmonized.
       parents: { counterpoint: 0.7, gregorian: 0.3 },
       wants: ["chorale"],
-      instr: "rock_organ",
+      // A FUGUE IS PIPES. `rock_organ` is a Hammond with a rotary cabinet and
+      // an overdrive on it — the right organ for sophisti-rock and the wrong
+      // century for Leipzig. church_organ is the same six-zone extraction with
+      // a flue rank in it, which is the instrument the subject was written for.
+      instr: "church_organ",
       entry: v => v, reg: v => 1 - v, realize: () => "line",
       kit: {}, harmony: "emergent",            // the empty kit IS the genre fact
       // `intro` is the anchor's OPENING STATEMENT — read by the composer
@@ -246,7 +250,13 @@
       // keeping a name it no longer needs.
       parents: { house: 0.7, electro: 0.15, funk: 0.15 },
       wants: [],
-      instr: "clean_guitar",
+      // A CLEAN ELECTRIC GUITAR, on an acid record. Nothing played it — the
+      // signature synth below covers both voices — but the desk said it, the
+      // cast pool offered it, and casting one really did put a guitar where
+      // the machine goes. GM 88 is "bass + lead", the one patch that names a
+      // monosynth doing both jobs, and to-engine.js routes it to the same
+      // tb303 declared below: the label and the sound are one thing again.
+      instr: "bass_lead",
       // the kit vector below has always said "909, four on the floor" — and
       // the SOUND is the machine it names (the engine's kick909/snare_crack)
       drumkit: "tr909",
@@ -327,7 +337,13 @@
       // chopped-and-screwed technique that taught it the wrong speed.
       parents: { citypop: 0.4, rnb: 0.3, ambient: 0.3 },
       wants: ["muzak", "chopped and screwed"],
-      instr: "strings",
+      // THE PAD IS A STRING MACHINE, NOT AN ORCHESTRA. What vaporwave slows
+      // down is a 1984 ballad, and the wash on that record is a Solina/ARP
+      // ensemble — chorus and all — rather than a section of players. GM 51
+      // is that machine's own patch id and to-engine.js plays it on the
+      // parent's `solina`, so the pad stops being a sampled string section
+      // pitched down and becomes the box it always was.
+      instr: ["synth_strings_1", "legend_ep_2"],
       drumkit: "room",              // the SAMPLED kit, not a sine and some noise
       // BOTH VOICES SIT LOW. The pad was always down here; the melody was an
       // octave above it, up where the DX7's declared freq ceiling (1000 Hz) is
@@ -338,7 +354,7 @@
       realize: v => (v === 0 ? "pad" : "line"),
       harmony: "cycle", roots: [3, 4, 2, 5],   // iv v III VI
       // FM, from a real cartridge. "E.PIANO 1" is the DX7 patch vaporwave is
-      // actually made of; the pad stays sampled strings because a DX7 node is
+      // actually made of; the pad stays off the DX7 because a DX7 node is
       // monophonic and a chord would collapse onto one voice.
       synth: { dsp: "dx7_alg5", root: "DX7", preset: "E.PIANO 1", level: 0.9, lineOnly: true },
       kit: { k: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],     // lazy, half-time at rate .5
@@ -371,7 +387,12 @@
       // is a missing anchor, so in this catalog the blues starts the tree.
       parents: {},
       wants: ["delta blues", "boogie-woogie", "jump blues"],
-      instr: "steel_string_guitar",
+      // AN ARCHTOP AND A HARP, because the anchor is a BAND and not a porch:
+      // Chess in 1952 is a hollow-body through a small valve amp with Little
+      // Walter's amplified harmonica answering it. The steel-string acoustic
+      // this used to cast is the Delta record the comment above says this
+      // deliberately is not.
+      instr: ["jazz_guitar", "harmonica"],
       drumkit: "jazz",              // the SAMPLED kit, not a sine and some noise
       scale: BLUES,
       entry: v => v * 4, reg: v => -v, realize: () => "line",
@@ -629,7 +650,11 @@
       // Chopin's nocturnes) is still owed.
       parents: { ambient: 0.4, postrock: 0.25, minimalism: 0.2, drone: 0.15 },
       wants: ["romantic piano miniature"],
-      instr: "felt_piano",
+      // THE SENTENCE ABOVE IS THE CAST: "sustained strings holding one chord
+      // a bar while a piano figure turns over them, and a second piano an
+      // octave up". Voice 0 is the pad chair, so it is the strings; the felt
+      // piano — still the anchor's own instrument — plays both figures.
+      instr: ["slow_strings", "felt_piano", "felt_piano"],
       entry: v => (v === 2 ? 4 : 0), reg: v => (v === 0 ? -1 : v - 1),
       realize: v => (v === 0 ? "pad" : "line"),
       kit: {}, harmony: "cycle", roots: [0,0, 5,5, 2,2, 6,6],
@@ -809,7 +834,11 @@
       // — Düsseldorf was the whole of this anchor's shopping list.
       parents: { synthpop: 0.4, motown: 0.25, kraftwerk: 0.2, funk: 0.15 },
       wants: [],
-      instr: "synth_strings_1",
+      // "nothing else in the room" — so not a string ensemble. The riff is a
+      // monosynth (the modeld below plays it) and the answer is a poly; both
+      // ids route to real analog modules, which is what the sentence above
+      // this entry has always claimed the room contains.
+      instr: ["saw_wave", "polysynth"],
       // "a drum machine and nothing else in the room" — the CR-era box, not a
       // sampled kit pretending to be one
       drumkit: "cr78",
@@ -1199,7 +1228,13 @@
       // half and is missing.
       parents: { disco: 0.7, gospel: 0.15, funk: 0.15 },
       wants: ["italo disco"],
-      instr: ["bright_yamaha_grand", "polysynth"],
+      // THE JUNO HOLDS THE CHORD AND THE PIANO PLAYS THE RIFF, which is the
+      // way round a Chicago record is made: voice 0 is the one that voices
+      // the chord, and a house stab is a poly (GM 91 -> the parent's juno60, chorus
+      // and all), with the piano — still the sound of "Move Your Body" —
+      // riding on top of it as the line. It was the other way round, so a
+      // grand piano was the first thing you heard and the synth was buried.
+      instr: ["polysynth", "bright_yamaha_grand"],
       drumkit: "tr909",            // Chicago's four on the floor is a 909's
       entry: v => v, reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),
@@ -1267,7 +1302,12 @@
       // missing citations.
       parents: { dub: 0.35, funk: 0.25, house: 0.2, techno: 0.2 },
       wants: ["hardcore rave", "the amen break"],
-      instr: ["fifth_sawtooth_wave", "echo_drops"],
+      // A REESE IS TWO SAWS BEATING AGAINST EACH OTHER, and the comment above
+      // says the line is in reese register — so GM 82, which to-engine.js
+      // plays on the parent's detuned `supersaw`, is literally that. The
+      // synced-fifths lead it used to cast belongs to techno's stab and put an
+      // interval nobody wrote into every jungle line.
+      instr: ["saw_wave", "echo_drops"],
       drumkit: "electronic",
       entry: v => v, reg: v => v - 2, realize: () => "line",
       harmony: "modal",
@@ -1377,7 +1417,11 @@
       // what the history claims.) Tin Pan Alley's song forms are still owed.
       parents: { gospel: 0.4, blues: 0.25, doowop: 0.35 },
       wants: ["tin pan alley"],
-      instr: ["upright_piano", "trumpet"],
+      // THE VIBES ARE THE FUNK BROTHERS' OWN COLOUR — Jack Ashford's bars on
+      // the hook, beside the tambourine the kit already plays. A lone trumpet
+      // answering a Motown vocal is a horn section that lost its section, and
+      // ska two rows down is where the single horn actually lives.
+      instr: ["upright_piano", "vibraphone"],
       drumkit: "acoustic",
       entry: v => v, reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),
@@ -1456,7 +1500,14 @@
       // the spirituals and hymnody he set it against are missing.
       parents: { blues: 1 },
       wants: ["spirituals", "hymnody"],
-      instr: ["drawbarorgan", "ahh_choir", "ohh_voices"],
+      // THE B-3, AND IT HAS SIX ZONES. `drawbarorgan` is a SINGLE sample
+      // rooted at MIDI 96 — measured on the shipped registry — so the organ
+      // holding this genre's chords was one C7 recording dragged three and a
+      // half octaves down: no key click, no drawbar body, just breath. Its
+      // whole tape came back with a spectral centroid of 249 Hz.
+      // percussive_organ is the same extraction WITH the percussion stop, and
+      // it is what a church organist plays with the left hand down.
+      instr: ["percussive_organ", "ahh_choir", "ohh_voices"],
       drumkit: "acoustic",
       entry: v => v * 2, reg: v => (v === 0 ? -1 : v - 1),
       realize: v => (v === 0 ? "pad" : "line"),
@@ -1491,7 +1542,11 @@
       // are missing too. (`near: dub` is the CHILD, not the parent.)
       parents: { ska: 1 },
       wants: ["rocksteady", "mento", "nyabinghi"],
-      instr: ["clean_guitar", "harmonica"],
+      // the skank is the guitar and the tune is the ORGAN — the bubble every
+      // Kingston session keyboard player was hired for. The harmonica this
+      // cast used to answer with is a Chicago instrument; it moves to dub,
+      // one row down, where it stands in for Augustus Pablo's melodica.
+      instr: ["clean_guitar", "percussive_organ"],
       drumkit: "room",
       entry: v => v, reg: v => v,
       realize: v => (v === 0 ? "pad" : "line"),
@@ -1521,7 +1576,11 @@
       // list is complete at one and the wants list is honestly empty.
       parents: { reggae: 1 },
       wants: [],
-      instr: ["clean_guitar", "echo_drops"],
+      // THE MELODICA, as near as the library gets to one: a free reed blown
+      // through a keyboard, which is a harmonica with a piano on it. Pablo's
+      // is the melody instrument dub was built around, and it takes the echo
+      // the way a struck bell never could — the tape repeats a BREATH.
+      instr: ["clean_guitar", "harmonica"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),
@@ -1560,7 +1619,13 @@
       // is the historical claim; the fit puts all of it on jazz.
       parents: { jazz: 0.5, blues: 0.5 },
       wants: ["mento", "calypso"],
-      instr: ["palm_muted_guitar", "trumpet"],
+      // DON DRUMMOND PLAYED TROMBONE. The Skatalites' front line is a bone
+      // out front with the trumpet behind it, and the squeak the register law
+      // spent a round chasing was partly a casting fault: ska's horn line is
+      // written high (as high as MIDI 100), so the instrument it folds into
+      // decides where the horn actually sits. A trombone's window is ten
+      // semitones lower and lands it an octave down.
+      instr: ["palm_muted_guitar", "trombone"],
       drumkit: "acoustic",
       entry: v => v, reg: v => v,
       realize: v => (v === 0 ? "pad" : "line"),
@@ -1776,7 +1841,12 @@
       // the one missing citation.
       parents: { toto: 0.35, steely: 0.35, disco: 0.3 },
       wants: ["boogie"],
-      instr: ["electric_piano", "clean_guitar"],
+      // 1984 IN TOKYO IS AN FM ELECTRIC PIANO — the digital, bell-edged EP
+      // that vaporwave two rows up literally slows a DX7 down to imitate.
+      // Three genres were casting the same seventies Wurlitzer, and the one
+      // that is a decade later and a continent away is the one that should
+      // not have been.
+      instr: ["legend_ep_2", "clean_guitar"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),
@@ -1890,7 +1960,12 @@
       // what electro IS, so the weight is the historical claim.)
       parents: { house: 0.3, kraftwerk: 0.25, electro: 0.2, funk: 0.2, synthpop: 0.05 },
       wants: [],
-      instr: ["charang", "metal_pad"],
+      // DETROIT IS SYNTHESIS, and `charang` is a fuzz GUITAR lead — the buzz
+      // belongs to big beat, one row over, where a guitar sample really is
+      // the sound. The stab here is GM 87, a saw hard-synced to its own fifth
+      // (the parent's `synclead`): the interval lives in the oscillator, which
+      // is what a Detroit riff is made of, over a Juno holding the chord.
+      instr: ["fifth_sawtooth_wave", "polysynth"],
       drumkit: "tr909",            // Detroit's kick-and-open-hat is the 909's
       entry: v => v * 2, reg: v => v - 2,
       realize: v => (v === 1 ? "pad" : "line"),
@@ -2829,9 +2904,13 @@
       // taught English congregations to sing in the first place, is missing.
       parents: { counterpoint: 0.45, gregorian: 0.3, gospel: 0.25 },
       wants: ["metrical psalter"],
-      // the drawbar organ, not a pipe organ — the same instrument gospel
-      // already plays the changes on, twenty years earlier and a step plainer
-      instr: "drawbarorgan",
+      // THE PIPES IN THE ROOM. This said "the drawbar organ, not a pipe
+      // organ" and it was right about the century and wrong about the sound:
+      // `drawbarorgan` is one zone rooted at MIDI 96, so four voices of a
+      // hymn were four copies of one C7 sample stretched down past hearing —
+      // measured, the whole tape peaked at 0.019 with nothing above 2.5 kHz
+      // in it. A Boston meeting house in 1831 has pipes anyway.
+      instr: "church_organ",
       entry: () => 0, reg: v => [2, 0, -2, -4][v], realize: () => "line",
       kit: {}, nobass: true, harmony: "cycle",
       mode: MODES.ionian, scale: SCALES.major, diatonic: true,
@@ -2990,7 +3069,12 @@
       // actually came out of is still the missing rung.
       parents: { techno: 0.35, punk: 0.35, dnb: 0.3 },
       wants: ["rave breakbeat"],
-      instr: ["distortion_guitar", "square_lead"],
+      // the guitar sample, and beside it the BUZZ: GM 85 charang is a
+      // guitar-synth lead and to-engine.js plays it on the parent's tanh-
+      // driven `lead_fuzz`, which is the Essex lead that fights a distorted
+      // sample and wins. (It came off techno, where a fuzz guitar lead was
+      // never Detroit's sound.)
+      instr: ["distortion_guitar", "charang"],
       drumkit: "power",
       entry: () => 0, reg: v => -v, realize: () => "line",
       harmony: "modal", mode: MODES.phrygian, scale: DIATONIC,
@@ -3049,7 +3133,12 @@
       // still missing.
       parents: { disco: 0.45, synthpop: 0.3, house: 0.25 },
       wants: ["danceteria"],
-      instr: ["synth_voice", "synth_strings_1"],
+      // a 1983 dance-pop single is a JUNO and a string machine, not a choir
+      // patch: the chord chair takes GM 91 (-> juno60, the chorus is the
+      // instrument) and the line keeps the ensemble. `synth_voice` was cast on
+      // twelve genres at once; it keeps the seven that really are vocoder
+      // records and gives back the five, of which this is one, that are not.
+      instr: ["polysynth", "synth_strings_1"],
       drumkit: "electronic",
       entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
       part: ["stab", "lead"],
@@ -3149,7 +3238,10 @@
       // itself came out of — is the missing rung between all three.
       parents: { reggae: 0.4, boombap: 0.35, trap: 0.25 },
       wants: ["dancehall"],
-      instr: ["synth_voice", "clean_guitar"],
+      // the dembow's top is a synth STAB — a poly chord hit hard and let go —
+      // with a guitar line over it. A choir patch holding the pad made every
+      // San Juan record breathe like a church.
+      instr: ["polysynth", "clean_guitar"],
       drumkit: "electronic",
       entry: v => v, reg: v => v, realize: v => (v === 0 ? "pad" : "line"),
       part: ["stab", "lead"],
@@ -3214,7 +3306,11 @@
       // uncredited.
       parents: { synthpop: 0.35, disco: 0.25, boombap: 0.2, rnb: 0.2 },
       wants: ["j-pop"],
-      instr: ["synth_voice", "polysynth"],
+      // the assembly method's two halves said as two instruments: a poly
+      // holding the chorus chord and a bright square hook riding it. Both are
+      // machines, which is the honest description of a genre that is a
+      // production method — and neither is the choir patch it used to lead on.
+      instr: ["polysynth", "square_lead"],
       drumkit: "electronic",
       entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
       part: ["stab", "lead"],
@@ -3497,7 +3593,11 @@
       // actually drew their repertoire from is still uncredited.
       parents: { skiffle: 0.4, countrypop: 0.35, counterpoint: 0.25 },
       wants: ["appalachian ballad"],
-      instr: ["nylon_string_guitar", "ohh_voices"],
+      // A DUO IN THE VILLAGE PLAYS A STEEL-STRING. The nylon is a classical
+      // and a bossa instrument (Rio, two rows up, keeps it); what is under
+      // two voices singing a third apart in 1964 is a dreadnought with bronze
+      // on it, and the difference is the whole top end of the record.
+      instr: ["steel_string_guitar", "ohh_voices"],
       entry: () => 0, reg: v => 1 - v, realize: () => "line",
       kit: {}, nobass: true, harmony: "modal",
       intro: "solo",                 // the guitar states the tune before the harmony joins
@@ -3525,7 +3625,12 @@
       // actually borrowed from, is the missing rung.
       parents: { afrobeat: 0.4, folkduo: 0.35, countrypop: 0.25 },
       wants: ["mbaqanga"],
-      instr: ["nylon_string_guitar", "marimba"],
+      // THE COMMENT ALREADY NAMED THE BAND: "guitar-and-kalimba interplay".
+      // The kalimba was sitting in the library unasked-for while a marimba
+      // stood in for it, and the guitar in Johannesburg is a bright clean
+      // ELECTRIC — the high, thin, picked tone of a mbaqanga session — not
+      // the nylon a folk duo brings.
+      instr: ["clean_guitar", "kalimba"],
       drumkit: "acoustic",
       entry: () => 0, reg: v => v, realize: () => "line",
       harmony: "cycle", roots: [0, 3, 4, 0, 0, 5, 3, 4], mode: MODES.mixo,
@@ -3767,11 +3872,18 @@
       // deadpan, detached vocal delivery underneath the melody.
       parents: { synthpop: 0.4, disco: 0.3, kraftwerk: 0.3 },
       wants: [],
-      instr: ["synth_voice", "synth_strings_1"],
+      // LEGATO means a sustained SAW, not a choir: the hook is one held
+      // monosynth line (the juno60 below rides it) over the string machine's
+      // wash. The choir patch this used to lead on belongs to the records
+      // that really are vocoders — kraftwerk, electro, robotic pop — and a
+      // sustained melodic hook is the opposite of a voice holding a vowel.
+      instr: ["saw_wave", "synth_strings_1"],
       drumkit: "tr909",
       // A JUNO, not a preset labelled "synth voice" — the melodic hook only
-      // (lineOnly: the sweeping pad stays the sampled strings). Vince Clarke's
-      // whole discography is this one machine legato over a dance floor.
+      // (lineOnly: the sweeping pad stays on the string machine — GM 51, which
+      // to-engine.js plays on the parent's `solina`, so the wash under the
+      // hook is an ARP ensemble and not a section). Vince Clarke's whole
+      // discography is this one machine legato over a dance floor.
       synth: { dsp: "juno60", root: "juno60", level: 0.75, lineOnly: true,
                set: { sawLevel: 0.8, pulseLevel: 0.3, subLevel: 0.15,
                       cutoff: 2200, res: 0.18, envAmount: 0.3, attack: 0.01,
@@ -3994,7 +4106,11 @@
       label: "New York 1972", rate: 1, bars: 4, voices: 2, near: "yachtsoul",
       parents: { crooner: 0.35, funk: 0.35, gospel: 0.3 },
       wants: ["laurel canyon scene"],
-      instr: ["electric_piano", "clean_guitar"],
+      // A REAL GRAND, not an EP: a 1972 New York singer's record is cut
+      // around a nine-foot piano in a studio, which is also what separates it
+      // from yacht rock's Rhodes two rows up — those two had the same cast
+      // and the same seating, so nothing but the drums told them apart.
+      instr: ["yamaha_grand_piano", "clean_guitar"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
       harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
@@ -4076,7 +4192,12 @@
       label: "Stourbridge 1990", rate: 1, bars: 4, voices: 3, near: "punk",
       parents: { punk: 0.4, rock: 0.35, funk: 0.25 },
       wants: ["stourbridge scene"],
-      instr: ["distortion_guitar", "acoustic_bass", "acoustic_bass"],
+      // TWO BASSISTS, TWO BASSES. The joke is that there are two of them, and
+      // it only lands if they are different players: one PICKED, pulsing the
+      // root, one FINGERED, answering with its own contour. Both voices were
+      // an upright double bass, which is a jazz instrument standing where a
+      // Stourbridge band's two Rickenbackers go.
+      instr: ["distortion_guitar", "picked_bass", "finger_bass"],
       drumkit: "power",
       entry: v => (v === 0 ? 0 : v), reg: v => (v === 0 ? 0 : v === 1 ? -1 : -2),
       realize: () => "line",
@@ -4230,7 +4351,11 @@
       label: "Basildon 1980", rate: 1, bars: 4, voices: 2, near: "eurythmics",
       parents: { synthpop: 0.5, kraftwerk: 0.3, disco: 0.2 },
       wants: ["new romantic synth pop"],
-      instr: ["synth_voice", "synth_strings_1"],
+      // "unmistakably one monosynth rather than a band" — so a thin square
+      // sequence out front and a poly behind it, and not a choir patch. The
+      // tb303 below plays both voices; these are the names the desk shows and
+      // the sounds a recast chair gets, and they should agree with the record.
+      instr: ["square_lead", "polysynth"],
       drumkit: "cr78",
       entry: v => v, reg: v => v - 1, realize: () => "line",
       harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
@@ -4386,7 +4511,11 @@
       label: "Manchester 1990", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "house",
       parents: { house: 0.35, funk: 0.35, rock: 0.3 },
       wants: ["hacienda scene"],
-      instr: ["clean_guitar", "drawbarorgan"],
+      // the baggy organ is a Hammond with the percussion stop up, and
+      // `drawbarorgan` is one zone rooted at MIDI 96 — a pad written at 45
+      // was that sample dragged two and a half octaves down, which is the
+      // breathy whistle Paul heard on every organ in the table.
+      instr: ["clean_guitar", "percussive_organ"],
       drumkit: "power",
       entry: v => v, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
       harmony: "cycle", roots: [0, 3, 4, 0], mode: MODES.mixo,

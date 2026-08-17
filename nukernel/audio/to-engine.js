@@ -259,8 +259,10 @@ function toneRecipe(tone) {
 // block drives it. Everything else — a guitar, a piano, a choir, a horn
 // section, a gospel organ — is a RECORDED instrument and stays sampled, which
 // is the parent's default sound for good reason. The test is what the id names:
-// only the twelve GM synth patches below are in here, and each row is that
-// patch's own instrument.
+// only the thirteen GM synth patches below are in here, and each row is that
+// patch's own instrument. (Twelve until the casting round — GM 88, "bass +
+// lead", is the 303 by another name and had no row, so the one machine this
+// whole table exists to defend was the one nobody could cast.)
 //
 // The sweep is the loudest thing the tone block ever said, and both spellings
 // of it are the SAME sweep: the parent's saw/fuzz voices take `fenv` as a
@@ -311,6 +313,21 @@ const PATCH_SYNTH = {
   // parent's `bell` takes its decay from the note length, which is what a drop
   // does; dub's delay send does the echoing, as it always did.
   echo_drops:  { dsp: "bell", set: (T) => ({ cutoff: T.cut, res: T.res }) },
+  // GM 88 Lead 8 (bass + lead) — the one GM patch whose NAME is a monosynth
+  // playing the bassline and the tune with the same voice, which is the 303's
+  // entire job. So the id routes to tb303 and the SQUELCH becomes castable:
+  // acid declares the machine as its own signature synth, and this is how any
+  // other chair in any other genre can hire one.
+  // Its ceilings are the module's own and not the table's — tb303 declares
+  // cutoff 60..6000 and decay 0.03..2.5, both narrower than the T bounds
+  // above, and a value written ON a declared edge is the failure the bounds
+  // paragraph exists to avoid. `waveform` is a 0..1 morph, not an index: 0 is
+  // the saw every acid record is, and only a tone block that says "square"
+  // gets one.
+  bass_lead:   { dsp: "tb303", wave: "saw", set: (T) => ({
+    cutoff: Math.min(5800, T.cut), resonance: Math.min(0.92, 0.3 + T.res),
+    envmod: Math.min(0.9, 0.25 + T.res), decay: Math.min(2.4, Math.max(0.1, T.rel)),
+    waveform: WAVES[T.wave] === "square" || WAVES[T.wave] === "pulse" ? 1 : 0 }) },
   // ---- the pads ----
   // GM 91 Pad 3 (polysynth) — a poly analog. The Juno-60 is one, with its BBD
   // chorus, and the chorus is why a Juno pad sounds wide without a reverb.

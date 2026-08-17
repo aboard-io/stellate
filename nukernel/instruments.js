@@ -184,8 +184,14 @@
   const RANGES = {
     // winds + reeds
     flute: [60, 96], harmonica: [60, 96], tenor_sax: [44, 77],
-    // brass
+    // brass. THE TROMBONE IS THE SKATALITES' FRONT LINE, and its ceiling is
+    // 74 — ten semitones under the trumpet's, which is the point. Composed ska
+    // writes its horn line as high as MIDI 100 and the register home folds it
+    // back down; folding it into a trombone's window puts the horn a full
+    // octave lower than folding it into a trumpet's, which is the difference
+    // between Don Drummond and a squeak.
     trumpet: [54, 84], muted_trumpet: [54, 84], brass_section: [40, 86],
+    trombone: [40, 74],
     // bowed
     violin: [55, 100], fiddle: [55, 100],
     // plucked + fretted (guitar tops around E6)
@@ -193,10 +199,20 @@
     jazz_guitar: [40, 88], clean_guitar: [40, 88], palm_muted_guitar: [40, 86],
     crunch_guitar: [40, 88], distortion_guitar: [40, 88], overdrive_guitar: [40, 88],
     banjo: [48, 84],
-    // keyed reeds + organs (the pedal board is the floor, not a rumble)
+    // keyed reeds + organs (the pedal board is the floor, not a rumble).
+    // THREE ORGANS, WHERE THERE WAS ONE PLAYABLE ONE. `drawbarorgan` is a
+    // SINGLE zone rooted at MIDI 96 — measured on the shipped registry — so a
+    // hymn at MIDI 50 was one C7 sample dragged down three and a half octaves,
+    // which is a breathy whistle and not a Hammond. It is nobody's cast any
+    // more (church_organ for the pipes, percussive_organ for the B-3's
+    // key-click) and the row stays only because the table is the compass.
     bandoneon: [41, 86], drawbarorgan: [36, 96], rock_organ: [36, 96],
+    church_organ: [36, 96], percussive_organ: [36, 96],
     // struck + tuned percussion
     marimba: [45, 91], harpsichord: [29, 89], clavinet: [36, 84],
+    // the Funk Brothers' vibes and a Highlife kalimba: two colours the table
+    // could name and no genre had ever asked for
+    vibraphone: [53, 89], kalimba: [60, 96],
     // music box: the parent's own window, RESTORED. It was deliberately absent
     // for one release because a bare per-note fold would have mangled trap's
     // melody — but the register home (audio/transport.js) now moves the WHOLE
@@ -225,8 +241,15 @@
     fifth_sawtooth_wave: [36, 96], echo_drops: [36, 96],
     polysynth: [36, 96], warm_pad: [33, 96], halo_pad: [36, 96],
     metal_pad: [36, 96], bowed_glass: [48, 96],
-    // the bass chair
-    acoustic_bass: [28, 60],
+    // GM 88, "bass + lead": the one GM patch that IS a monosynth doing both
+    // jobs at once, which is the 303's own job description (to-engine.js
+    // PATCH_SYNTH routes it there). Its window is a bassline's — an octave
+    // under the leads above, because that is where the box is played.
+    bass_lead: [28, 84],
+    // the bass chair — the upright, and the two electrics grebo needs. A
+    // player fingering a low B and a player picking eighths are two different
+    // recordings, and the joke only lands if they are two different players.
+    acoustic_bass: [28, 60], picked_bass: [28, 62], finger_bass: [28, 62],
   };
   // How far past its own zone ROOTS a sample may be stretched and still be the
   // instrument — the parent's numbers (SAMPLER_STRETCH_ST / SAMPLER_FLOOR_ST).

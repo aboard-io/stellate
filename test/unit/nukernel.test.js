@@ -6726,6 +6726,14 @@ console.log("the register law — the table, the home, and the per-note fold");
   cases.push(["sludge", 3, "music_box"], ["ska", 3, "palm_muted_guitar"],
              ["sludge", 7, "trumpet"]);
   let total = 0, out = 0, drops = 0, badHome = 0, badSign = 0, bassOut = 0;
+  // SKA'S HORN, ASKED FOR RATHER THAN SPELLED. The reported case was a squeaky
+  // trumpet; the casting round (2026-08-17) gave the Skatalites their trombone
+  // back, whose ceiling is ten semitones lower, so the same complaint is a
+  // harder case on a different instrument. Reading the id off the genre keeps
+  // this probe pointed at the horn ska actually hires — a literal here went
+  // silent the moment the cast moved, and a probe that captures nothing passes
+  // its own second claim vacuously.
+  const SKAHORN = NI.instrOf("ska", 1);
   const skaFinal = [], skaRaw = [];
   for (const [gk, seed, over] of cases) {
     // the adversarial chair is cast through the SONG POOL now — the per-layer
@@ -6776,7 +6784,7 @@ console.log("the register law — the table, the home, and the per-note fold");
       const fin = V.inRange(spec, id, e.n + home);
       if (fin == null) { drops++; continue; }
       if (fin < w[0] - 0.5 || fin > w[1] + 0.5) out++;
-      if (!over && gk === "ska" && id === "trumpet") { skaFinal.push(fin); skaRaw.push(e.n); }
+      if (!over && gk === "ska" && id === SKAHORN) { skaFinal.push(fin); skaRaw.push(e.n); }
     }
     // (c) CONTOUR: the home is a transposition, so every interval keeps its
     // sign — stated as the directive asks, per chair, raw vs homed
@@ -6795,17 +6803,17 @@ console.log("the register law — the table, the home, and the per-note fold");
   ok(badSign === 0, badSign + " interval(s) changed sign under the home — the " +
      "home broke a contour it exists to preserve");
 
-  // (b-reported) THE SKA TRUMPET ITSELF. The complaint must be real in the raw
-  // line and gone in the resolved one: composed ska writes trumpet above the
-  // table ceiling (measured: up to MIDI 100), and every scheduled trumpet note
-  // now lands inside the parent's own [54, 84].
-  const TR = NI.RANGES.trumpet;
+  // (b-reported) THE SKA HORN ITSELF. The complaint must be real in the raw
+  // line and gone in the resolved one: composed ska writes its horn above the
+  // table ceiling (measured: up to MIDI 100), and every scheduled note on it
+  // now lands inside the parent's own window for that instrument.
+  const TR = NI.RANGES[SKAHORN];
   ok(skaRaw.length > 0 && Math.max(...skaRaw) > TR[1],
-     "ska's raw trumpet line no longer exceeds " + TR[1] + " — the reported " +
-     "case has vanished from the composer and this gate is proving nothing");
+     "ska's raw " + SKAHORN + " line no longer exceeds " + TR[1] + " — the " +
+     "reported case has vanished from the composer and this gate is proving nothing");
   ok(skaFinal.every(n => n >= TR[0] - 0.5 && n <= TR[1] + 0.5),
-     "ska schedules a trumpet note outside [" + TR + "] — still squeaky " +
-     "(max " + Math.max(...skaFinal).toFixed(1) + ")");
+     "ska schedules a " + SKAHORN + " note outside [" + TR + "] — still " +
+     "squeaky (max " + Math.max(...skaFinal).toFixed(1) + ")");
 
   // (d) ...and the builder is deterministic over the same state, which is what
   // makes the bounce's walk the live walk: same song, same bars, same homes.
@@ -6830,8 +6838,9 @@ console.log("the register law — the table, the home, and the per-note fold");
            into the timeline. */
   console.log("the instrument pool — one band for the record, and it reaches the schedule");
   {
-    // house seats stab+lead (kernel scheme) and its lead is a polysynth, so a
-    // pooled trumpet is a real recast, not the default answering
+    // house seats stab+lead (kernel scheme) and its lead is a piano — the
+    // juno holds the stab and the piano rides it, since the casting round —
+    // so a pooled trumpet is a real recast, not the default answering
     const raw = C.compose("house", 3);
     ST.adoptSong(raw, "gate");
     const before = j(T.buildTimeline());
