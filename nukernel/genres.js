@@ -286,7 +286,8 @@
     newwave: {
       // named "London 1979" for the Buggles (the comment's first reference and
       // the CR-78 preset-box year); Boston 1978 would have honoured the Cars.
-      label: "London 1979", rate: 1, bars: 4, voices: 2,
+      // SING: the Buggles/Cars hook, one deadpan voice riding the clip.
+      label: "London 1979", sing: "lead", rate: 1, bars: 4, voices: 2,
       // LINEAGE: punk's clipped economy played by people who secretly loved
       // pop hooks (the Cars are beatlesque to the bone) over a straight
       // dance-floor eighth pulse disco normalized; the synth sheen on top is
@@ -365,7 +366,8 @@
     blues: {
       // named "Chicago 1952" not the Delta — the anchor is a BAND: jazz kit,
       // ride shuffle, walking bass. That is Chess-era electric blues.
-      label: "Chicago 1952", rate: 1, bars: 12, voices: 2, swing: 1 / 3,
+      // SING: one hard voice shouting over the band, the blues itself.
+      label: "Chicago 1952", sing: "lead", rate: 1, bars: 12, voices: 2, swing: 1 / 3,
       // LINEAGE: a root UNDER PROTEST — Chess electrified the Delta, and
       // every actual parent (delta blues, boogie-woogie piano, jump blues)
       // is a missing anchor, so in this catalog the blues starts the tree.
@@ -438,7 +440,8 @@
     rock: {
       // named "London 1969" — a riff doubled at the octave (guitar+bass as one
       // line) over a backbeat and a tom-fill turnaround is Led Zeppelin's move.
-      label: "London 1969", rate: 1, bars: 8, voices: 2,
+      // SING: the riff has a mouth — one wailing rock voice up front.
+      label: "London 1969", sing: "lead", rate: 1, bars: 8, voices: 2,
       // LINEAGE: Zeppelin is Chess blues played louder by a British beat
       // band — the riff-over-backbeat is electric blues, the band format and
       // the songs are the Beatles' invasion. Both of the ancestors this
@@ -488,7 +491,8 @@
     gregorian: {
       // named "Rome 600" for the name's own claim — Gregory's Rome and its
       // schola cantorum; the Frankish codification (~800, Metz) came later.
-      label: "Rome 600", rate: 0.5, bars: 4, voices: 2,
+      // SING: the schola — one chant line doubled an octave, men and boys.
+      label: "Rome 600", sing: "octaves", rate: 0.5, bars: 4, voices: 2,
       // LINEAGE: the one TRUE root. What chant descends from — synagogue
       // psalmody, Byzantine and Gallican practice — predates anything this
       // catalog could ever hold as an anchor, so the empty wants is honest.
@@ -515,7 +519,8 @@
     bulgarian: {
       // named "Sofia 1975" — Le Mystère des Voix Bulgares (the comment's own
       // reference) is the Sofia state radio choir, first issued 1975.
-      label: "Sofia 1975", rate: 1, bars: 4, voices: 2,
+      // SING: the open, held second above the tune — the choir's own dissonance.
+      label: "Sofia 1975", sing: "duet", rate: 1, bars: 4, voices: 2,
       // LINEAGE: a root under protest — the radio choir ARRANGED a village
       // diaphony older than notation; the ison under it is Orthodox chant's,
       // and neither parent is in the catalog. Gregorian is chant, but the
@@ -548,7 +553,8 @@
     spem: {
       // named "London 1570" — Tallis at the Chapel Royal; the forty-part motet
       // premiered in the Arundel/Nonsuch orbit around 1570.
-      label: "London 1570", rate: 0.5, bars: 8, voices: 8,
+      // SING: Tallis's choirs — four parts standing in for eight.
+      label: "London 1570", sing: "chorale", rate: 0.5, bars: 8, voices: 8,
       // LINEAGE: Tudor polyphony is species counterpoint at architectural
       // scale over chant-shaped lines. The label years invert — Fux's 1725
       // textbook CODIFIES the Palestrina-era practice Tallis worked in — so
@@ -680,7 +686,8 @@
     sludge: {
       // named "New Orleans 1991" — the half-speed phrygian ♭II riff under
       // crunch is NOLA sludge (Eyehategod/Crowbar), not Birmingham doom.
-      label: "New Orleans 1991", rate: 0.5, bars: 8, voices: 2,
+      // SING: a punk throat dragged to doom tempo, roared rather than sung.
+      label: "New Orleans 1991", sing: "holler", rate: 0.5, bars: 8, voices: 2,
       // LINEAGE: NOLA sludge is hardcore punk slowed into blues feel —
       // Eyehategod is a punk band playing at doom tempo with a blues hand;
       // the missing link between them is Sabbath, the doom that showed rock
@@ -759,7 +766,8 @@
     deathmetal: {
       // named "Tampa 1990" — the Morrisound era: blast beats ridden on the
       // cymbal and tremolo-picked walls are the Florida school's two techniques.
-      label: "Tampa 1990", rate: 1, bars: 8, voices: 2,
+      // SING: the death growl, unison and rough, over the blast.
+      label: "Tampa 1990", sing: "holler", rate: 1, bars: 8, voices: 2,
       // LINEAGE: the blast beat is hardcore's D-beat run past its limit and
       // the riff wall is rock's language forced chromatic — but the actual
       // parents, thrash and the NWOBHM it fed on, are the missing rungs of
@@ -798,7 +806,8 @@
     eurythmics: {
       // named "London 1983" — Sweet Dreams: the two-chord i-VI vamp, the
       // sequencer that never varies, the drum machine and nothing else.
-      label: "London 1983", rate: 1, bars: 4, voices: 2,
+      // SING: Lennox — one voice, cold and clear, over the sequence.
+      label: "London 1983", sing: "lead", rate: 1, bars: 4, voices: 2,
       // LINEAGE: Basildon's machines with a soul singer over them — Lennox
       // is Motown phrasing on a synthpop chassis, and the bass pulse is
       // funk's octave engine sequenced; the machine aesthetic itself is
@@ -842,7 +851,8 @@
     isley: {
       // named "Teaneck 1973" — T-Neck Records IS Teaneck NJ, the Isleys' label
       // and home; the Rhodes-plus-fuzz-lead anchor is 3+3.
-      label: "Teaneck 1973", rate: 1, bars: 8, voices: 3, swing: 0.16,
+      // SING: three brothers stacked in soul harmony.
+      label: "Teaneck 1973", sing: "thirds", rate: 1, bars: 8, voices: 3, swing: 0.16,
       // LINEAGE: church-trained voices (the brothers began in gospel), funk's
       // groove under the Rhodes, and the fuzz lead is rock's gift returned —
       // Hendrix was literally their sideman in 1964. The doo-wop they
@@ -901,7 +911,8 @@
     toto: {
       // named "Los Angeles 1982" — Toto IV: the Africa lope this comment
       // describes, cut by LA session players.
-      label: "Los Angeles 1982", rate: 1, bars: 8, voices: 3, swing: 0.08,
+      // SING: the session lead with its own close harmony answering.
+      label: "Los Angeles 1982", sing: "duet", rate: 1, bars: 8, voices: 3, swing: 0.08,
       // LINEAGE: session players raised on Steely Dan's studio craft playing
       // a rock band's form over funk's pocket; the rolling tom lope is the
       // African percussion loop the record borrows and the catalog lacks.
@@ -950,7 +961,8 @@
       // named "Charlotte 1991" — Forever My Lady's year, and the choir-over-808
       // anchor is the Hailey brothers' Charlotte church sound; the new jack
       // swing TECHNIQUE itself would be Harlem 1987 (Teddy Riley).
-      label: "Charlotte 1991", rate: 1, bars: 4, voices: 2, swing: 0.28,
+      // SING: the new jack quartet, church voices over the 808.
+      label: "Charlotte 1991", sing: "chorale", rate: 1, bars: 4, voices: 2, swing: 0.28,
       // LINEAGE: gospel melisma from the Haileys' church over funk's pocket
       // quantized into a drum machine, with Motown's songcraft underneath;
       // the swung-sixteenth TECHNIQUE is Teddy Riley's new jack swing, and
@@ -988,7 +1000,8 @@
     beatles: {
       // named "Liverpool 1962" — Love Me Do: the ♭VII already in the tune and
       // two voices in thirds, before the studio years moved them to London.
-      label: "Liverpool 1962", rate: 1, bars: 8, voices: 2,
+      // SING: Lennon and McCartney, a third apart, all the way through.
+      label: "Liverpool 1962", sing: "duet", rate: 1, bars: 8, voices: 2,
       // LINEAGE — the program's FOUNDING EXAMPLE ("Beatles is counterpoint
       // plus Bo Diddley plus skiffle"): rhythm & blues learned off Chess
       // imports, Motown covers all over the early setlists, Nashville
@@ -1037,7 +1050,8 @@
     steely: {
       // named "Los Angeles 1977" — Aja: the Rhodes/jazz-guitar/walking-bass
       // session polish is the LA years, not the NY bar band of 1972.
-      label: "Los Angeles 1977", rate: 1, bars: 8, voices: 3, swing: 0.2,
+      // SING: Fagen's smooth lead with the lush backing answer.
+      label: "Los Angeles 1977", sing: "duet", rate: 1, bars: 8, voices: 3, swing: 0.2,
       // LINEAGE: a rock band's format carrying blues changes dressed in
       // Motown's session polish — but the dorian IV7, the walking bass and
       // the shuffle all pointed at the catalog's one great hole: jazz. It is
@@ -1223,7 +1237,8 @@
     garage: {
       // named "London 1999" — the 2-step year (Re-Rewind): displaced second
       // snare, chopped vocal, the shuffle edited rather than played.
-      label: "London 1999", rate: 1, bars: 4, voices: 2, swing: 0.28, near: "house",
+      // SING: the pitched-up soulful hook 2-step garage is built on.
+      label: "London 1999", sing: "lead", rate: 1, bars: 4, voices: 2, swing: 0.28, near: "house",
       // LINEAGE: fully parented IN-CATALOG, the only club genre that is —
       // 2-step is US garage house with the four removed, R&B vocal science
       // chopped over the top, and jungle's broken-drum editing at pop tempo.
@@ -1299,7 +1314,8 @@
     disco: {
       // named "New York 1977" — the peak-of-the-floor year; Philadelphia 1974
       // owns the proto-disco strings, but this anchor is the full club machine.
-      label: "New York 1977", rate: 1, bars: 4, voices: 2, near: "newwave",
+      // SING: the diva out front, a stack of backing singers behind her.
+      label: "New York 1977", sing: "thirds", rate: 1, bars: 4, voices: 2, near: "newwave",
       // LINEAGE: funk's rhythm section made metronomic for the floor, under
       // Motown-descended pop song discipline and gospel's massed uplift; the
       // Philly-soul string section and the Latin percussion that actually
@@ -1334,7 +1350,8 @@
     funk: {
       // named "Cincinnati 1967" — Cold Sweat at King Records: the first
       // one-chord modal groove, which is exactly what this anchor is.
-      label: "Cincinnati 1967", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "isley",
+      // SING: Brown's shout — rhythm as much as pitch, one voice driving it.
+      label: "Cincinnati 1967", sing: "lead", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "isley",
       // LINEAGE: James Brown took gospel's scream and blues' shout, kept
       // Motown's showband discipline, and threw the harmony away — the
       // one-chord groove is subtraction, and what it subtracted FROM is the
@@ -1365,7 +1382,8 @@
     motown: {
       // named "Detroit 1965" — the Funk Brothers' snare-on-all-four at
       // Hitsville's peak.
-      label: "Detroit 1965", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "beatles",
+      // SING: the Hitsville group blend, three voices tight.
+      label: "Detroit 1965", sing: "thirds", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "beatles",
       // LINEAGE: gospel moved to the assembly line — the Funk Brothers were
       // church and jazz players, the writers blues-schooled — under pop
       // discipline whose actual teacher — doo-wop's harmony stack — is an
@@ -1409,7 +1427,8 @@
     rnb: {
       // named "Philadelphia 1994" — the straight-time maj7 ballad with a rim
       // on 3 and stacked thirds is Boyz II Men's Philadelphia.
-      label: "Philadelphia 1994", rate: 1, bars: 4, voices: 2, near: "jodeci",
+      // SING: a lead riding its own harmony — R&B's stacked ad-lib.
+      label: "Philadelphia 1994", sing: "duet", rate: 1, bars: 4, voices: 2, near: "jodeci",
       // LINEAGE: Boyz II Men is the doo-wop revival sung with gospel
       // technique over Motown songcraft, arriving through new jack's door
       // (the jodeci share); doo-wop itself is an anchor now and the parent
@@ -1448,7 +1467,8 @@
     gospel: {
       // named "Chicago 1932" — Thomas A. Dorsey at Pilgrim Baptist: the organ,
       // the shuffle, the secondary dominant and the plagal amen.
-      label: "Chicago 1932", rate: 1, bars: 4, voices: 3, swing: 1 / 3, near: "motown",
+      // SING: the church choir, four parts answering the organ.
+      label: "Chicago 1932", sing: "chorale", rate: 1, bars: 4, voices: 3, swing: 1 / 3, near: "motown",
       // LINEAGE: the label years invert and the claim survives it — Dorsey
       // was Georgia Tom, Ma Rainey's blues pianist, and carried the blues
       // HAND into church twenty years before the catalog's electric anchor;
@@ -1483,7 +1503,8 @@
     reggae: {
       // named "Kingston 1969" — the one-drop settling out of rocksteady the
       // year after Do the Reggay named it.
-      label: "Kingston 1969", rate: 1, bars: 4, voices: 2, near: "dub",
+      // SING: the vocal trio's close harmony over the one-drop.
+      label: "Kingston 1969", sing: "thirds", rate: 1, bars: 4, voices: 2, near: "dub",
       // LINEAGE: reggae is ska slowed twice — through rocksteady, the
       // missing intermediate — until the skank had room to breathe; the
       // mento underneath and the nyabinghi drumming that displaced the kick
@@ -1548,7 +1569,8 @@
     ska: {
       // named "Kingston 1962" — independence year, the first-wave double skank
       // with horns (Skatalites forming out of Studio One's session floor).
-      label: "Kingston 1962", rate: 1, bars: 4, voices: 2, near: "reggae",
+      // SING: the singer and the harmony answer, riding the offbeat.
+      label: "Kingston 1962", sing: "duet", rate: 1, bars: 4, voices: 2, near: "reggae",
       // LINEAGE: the shuffle came off American R&B radio picked up from New
       // Orleans — the catalog's blues anchor carries that shuffle — but
       // everything CARIBBEAN about ska (mento, calypso) is still missing. The
@@ -1585,7 +1607,8 @@
     afrobeat: {
       // named "Lagos 1971" — Fela's Africa '70 at the Shrine: two drummers,
       // threes against the four, a groove you stay in.
-      label: "Lagos 1971", rate: 1, bars: 8, voices: 3, near: "funk",
+      // SING: the chant lead, call over the horn jam.
+      label: "Lagos 1971", sing: "lead", rate: 1, bars: 8, voices: 3, near: "funk",
       // LINEAGE: Fela heard James Brown and built a bigger machine — the
       // one-chord modal groove is funk's own move, and it stays the plurality
       // — but the HORNS are not funk's horns: Fela wrote unison heads and blew
@@ -1627,7 +1650,8 @@
     bossa: {
       // named "Rio de Janeiro 1958" — Chega de Saudade, cut in Rio that July:
       // the clave, the brushes, the ii7-V7 in half a bar.
-      label: "Rio de Janeiro 1958", rate: 1, bars: 4, voices: 2, near: "steely",
+      // SING: the hushed, barely-doubled Gilberto whisper.
+      label: "Rio de Janeiro 1958", sing: "double", rate: 1, bars: 4, voices: 2, near: "steely",
       // LINEAGE: it stops being a root under protest. Jobim and Gilberto
       // folded samba's rhythm and cool jazz's harmony into the apartment
       // voice; cool jazz is bebop's chamber wing and IS in the catalog now —
@@ -1669,7 +1693,8 @@
     countrypop: {
       // named "Nashville 1945" — voice 0's word is literally "the banjo roll",
       // and the roll is Earl Scruggs', debuted with Monroe at the Ryman in 1945.
-      label: "Nashville 1945", rate: 1, bars: 4, voices: 2, swing: 0.1, near: "beatles",
+      // SING: the honky-tonk lead, plain and out front.
+      label: "Nashville 1945", sing: "lead", rate: 1, bars: 4, voices: 2, swing: 0.1, near: "beatles",
       // LINEAGE: bluegrass is Appalachian fiddle tunes driven with blues
       // phrasing and gospel's close harmony — the catalog holds the second
       // two and lacks the FIRST, which is the bigger half: the missing
@@ -1699,7 +1724,8 @@
     synthpop: {
       // named "Basildon 1981" — early Depeche Mode: all-synth staccato stabs
       // on the CR-era box, the aeolian anthem loop.
-      label: "Basildon 1981", rate: 1, bars: 4, voices: 2, near: "eurythmics",
+      // SING: the deadpan hook riding the clipped stabs.
+      label: "Basildon 1981", sing: "lead", rate: 1, bars: 4, voices: 2, near: "eurythmics",
       // LINEAGE: new wave with the guitars traded for sequencers and
       // disco's four still on the floor; the whole all-synth AESTHETIC is
       // Kraftwerk via Moroder, and one of those two ghosts is now an anchor.
@@ -1737,7 +1763,8 @@
       // named "London 1991" — Loveless: the held-second blur under fuzz, made
       // across a year of London studios (MBV formed in Dublin; the record is
       // London's).
-      label: "London 1991", rate: 1, bars: 8, voices: 2, near: "postrock",
+      // SING: the voice buried in the wash, doubled soft rather than loud.
+      label: "London 1991", sing: "double", rate: 1, bars: 8, voices: 2, near: "postrock",
       // LINEAGE: the held-second blur is DRONE logic run under fuzz, the
       // engine is punk's wall, and the tunes underneath are sixties pop —
       // MBV covered by anyone comes out as a Beatles song. The Velvets,
@@ -1768,7 +1795,8 @@
     citypop: {
       // named "Tokyo 1984" — Plastic Love's year: the royal road with slap
       // sixteenths under it.
-      label: "Tokyo 1984", rate: 1, bars: 4, voices: 2, swing: 0.1, near: "toto",
+      // SING: the smooth lead with its own studio-polished harmony.
+      label: "Tokyo 1984", sing: "duet", rate: 1, bars: 4, voices: 2, swing: 0.1, near: "toto",
       // LINEAGE: the best-documented lineage in the table — Japanese
       // session players explicitly absorbing Toto's polish and Steely Dan's
       // changes over disco's floor; the boogie/Chic half of the groove is
@@ -1802,7 +1830,8 @@
     punk: {
       // named "New York 1976" — the Ramones' debut: every-eighth downstrokes
       // at 160 is Johnny's right hand, a year before London took it up.
-      label: "New York 1976", rate: 1, bars: 4, voices: 2, near: "rock",
+      // SING: the shouted unison, rough on purpose — no harmony to soften it.
+      label: "New York 1976", sing: "holler", rate: 1, bars: 4, voices: 2, near: "rock",
       // LINEAGE: the Ramones are sixties pop played as fast and plainly as
       // possible — rock's power stripped of its solos, bubblegum hooks kept
       // whole. Chuck Berry's downstroke is an anchor now, but it arrives here
@@ -2084,7 +2113,8 @@
       // named "Chicago 1955" — Ellas McDaniel's first Chess single, cut in the
       // same room and for the same label as the electric-blues anchor three
       // years earlier, playing a rhythm nobody in that room had recorded.
-      label: "Chicago 1955", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "blues",
+      // SING: the Bo Diddley shout riding the beat.
+      label: "Chicago 1955", sing: "lead", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "blues",
       // LINEAGE: Chess blues is the MATERIAL — the guitar language, the band,
       // the room, the amp — and the sanctified church is where the shouted
       // call-and-response and the body-percussion pulse come from. The beat
@@ -2160,7 +2190,8 @@
       // this anchor models. Maybellene was cut in Chicago that May; the group
       // that walked into Chess was St. Louis's, and Johnnie Johnson's piano is
       // the half of it everybody forgets.
-      label: "St. Louis 1955", rate: 1, bars: 12, voices: 3, swing: 0.15, near: "rock",
+      // SING: the rock-and-roll lead, plain and forward.
+      label: "St. Louis 1955", sing: "lead", rate: 1, bars: 12, voices: 3, swing: 0.15, near: "rock",
       // LINEAGE: Chess blues played out of a hillbilly's songbook. Maybellene
       // is Ida Red, and the country side is not a costume — it is the straight
       // eighths, the major third and the diction that got him billed as a
@@ -2283,7 +2314,8 @@
       // named "Harlem 1955" — the Cadillacs cutting "Speedoo" for Josie and the
       // Harptones working the Apollo, the year the corner went on record;
       // uptown New York, not the Penguins' LA or the Moonglows' Chicago.
-      label: "Harlem 1955", rate: 1, bars: 8, voices: 3, swing: 1 / 3, near: "motown",
+      // SING: the corner quartet's four-part ooh/ahh.
+      label: "Harlem 1955", sing: "chorale", rate: 1, bars: 8, voices: 3, swing: 1 / 3, near: "motown",
       // LINEAGE: the jubilee/gospel quartet is where the parts, the blend and
       // the bass singer come from — every one of these groups had been singing
       // in church first — and the band behind them is the blues, playing the
@@ -2370,7 +2402,8 @@
       // bars full of teenagers with tea chests; Liverpool 1957 (the Quarrymen,
       // and Lennon meeting McCartney at the Woolton fête) is the other
       // claimant, and it is the one the beatles anchor downstream is made of.
-      label: "London 1956", rate: 1, bars: 8, voices: 3, swing: 0.15,
+      // SING: the amateur skiffle shout, one voice over the washboard.
+      label: "London 1956", sing: "lead", rate: 1, bars: 8, voices: 3, swing: 0.15,
       near: "countrypop",
       // LINEAGE: skiffle is a STRING BAND playing American blues off imported
       // 78s — Nashville's banjo-and-two-beat machinery arriving at the same
@@ -2585,7 +2618,8 @@
       // Bambaataa cut it up in the Bronx, Detroit built a genre on it.
       // Autobahn 1974 is where the machine arrives; 1977 is what was
       // inherited, and a label on an ancestor should name the inheritance.
-      label: "Düsseldorf 1977", rate: 1, bars: 8, voices: 3, near: "synthpop",
+      // SING: the man-machine — the Model D sings the deadpan hook.
+      label: "Düsseldorf 1977", sing: "moog", rate: 1, bars: 8, voices: 3, near: "synthpop",
       // LINEAGE: three parents, and two of them were meant to be the whole
       // list — most of Kraftwerk's ancestry is ghosts here: Stockhausen's
       // studio an hour down the Rhine, the krautrock the band's own first
@@ -2723,7 +2757,8 @@
       // named "New York 1982" — Planet Rock's city and year. Detroit's own
       // half of it (Cybotron's "Clear") is the same year and the same machine;
       // the twelve-inch went out of New York, so the label follows it.
-      label: "New York 1982", rate: 1, bars: 4, voices: 2, near: "trap",
+      // SING: the vocoder chant, Planet Rock's own machine voice.
+      label: "New York 1982", sing: "robot", rate: 1, bars: 4, voices: 2, near: "trap",
       // LINEAGE: Bambaataa was a FUNK DJ first — the syncopation, the body and
       // the break are James Brown's and P-funk's — playing to a floor disco
       // built and to a twelve-inch disco invented. The fourth is the one this
@@ -2819,7 +2854,8 @@
     // voice of its own — the bass part IS the fourth voice, exactly as
     // counterpoint and spem already declare it.
     hymn: {
-      label: "Boston 1831", rate: 1, bars: 8, voices: 4, near: "gospel",
+      // SING: the congregation in four parts, SATB over the organ.
+      label: "Boston 1831", sing: "chorale", rate: 1, bars: 8, voices: 4, near: "gospel",
       // LINEAGE: the four-part harmonization craft is counterpoint's — Fux's
       // rules, sung rather than played — over chant-shaped stepwise lines,
       // with gospel's plagal warmth already arguing for itself (a hymn tune
@@ -2853,7 +2889,8 @@
     // does the SAME job here it does in tango: a note the voice sits on has
     // to be a chord tone, and everything shorter is just diction.
     crooner: {
-      label: "Los Angeles 1953", rate: 0.5, bars: 8, voices: 2, swing: 0.15, near: "jazz",
+      // SING: one close, intimate voice, barely doubled — the crooner's own lean.
+      label: "Los Angeles 1953", sing: "double", rate: 0.5, bars: 8, voices: 2, swing: 0.15, near: "jazz",
       // LINEAGE: the changes and the walking rhythm section are bebop's own
       // vocabulary played straighter and slower for a singer to sit on; the
       // vocal-group blend behind the lead is doo-wop's, one voice standing
@@ -2887,7 +2924,8 @@
     // centuries older than any record of it, and a big-band Christmas
     // standard is just crooner's own dress plus one instrument: the bell.
     yuletide: {
-      label: "New York 1942", rate: 0.5, bars: 8, voices: 3, near: "crooner",
+      // SING: the same close crooner's lean, dressed for the season.
+      label: "New York 1942", sing: "double", rate: 0.5, bars: 8, voices: 3, near: "crooner",
       // LINEAGE: complete, and honestly so — a Christmas standard IS crooner
       // (the ballad-tempo dance-orchestra vocal) plus hymn (the carol's
       // stepwise, plagal-leaning tune), and nothing else needs naming.
@@ -2917,7 +2955,8 @@
     // built on the OFFBEAT HANDCLAP hook and a call that gets an answer,
     // which is the field the two genres actually differ on.
     merseybeat: {
-      label: "Liverpool 1963", rate: 1, bars: 4, voices: 2, near: "beatles",
+      // SING: the beat-group harmony, a third riding the hook.
+      label: "Liverpool 1963", sing: "duet", rate: 1, bars: 4, voices: 2, near: "beatles",
       // LINEAGE: the beat-group format is the catalog's own `beatles` anchor
       // taken as a scene rather than one band; doo-wop's vocal-group answer
       // figure and Chuck Berry's downstroke are the two things every Cavern
@@ -2948,7 +2987,8 @@
     // (one figure, arriving voice by voice, one crescendo) written for a pop
     // band with a gospel choir instead of a wall of guitars.
     psychpop: {
-      label: "London 1968", rate: 1, bars: 8, voices: 2, near: "beatles",
+      // SING: the psychedelic hook, harmonized and a little far away.
+      label: "London 1968", sing: "duet", rate: 1, bars: 8, voices: 2, near: "beatles",
       // LINEAGE: the songwriting craft is `beatles`' own, further along the
       // same career; the massed choir answering "na na na" into a long vamp
       // is gospel's call-and-response, not the band's own invention; and the
@@ -2981,7 +3021,8 @@
     // the KICK ITSELF: broken and syncopated where techno's is a plain four,
     // because a breakbeat under a machine floor is the entire joke.
     bigbeat: {
-      label: "Essex 1997", rate: 1, bars: 4, voices: 2, near: "techno",
+      // SING: one robotic phrase, chopped and looped — a sample chant, not a song.
+      label: "Essex 1997", sing: "robot", rate: 1, bars: 4, voices: 2, near: "techno",
       // LINEAGE: the machine floor is techno's, the guitar-sample aggression
       // and the couldn't-care-less attitude are punk's, and the broken kick
       // pattern is dnb's edit brought down to a dance-floor tempo. The
@@ -3040,7 +3081,8 @@
     // seventh forever — the field that actually separates a dance-pop single
     // from the club record it was cut for.
     clubpop: {
-      label: "New York 1983", rate: 1, bars: 4, voices: 2, near: "disco",
+      // SING: the club-pop hook, one clear voice over the floor.
+      label: "New York 1983", sing: "lead", rate: 1, bars: 4, voices: 2, near: "disco",
       // LINEAGE: the floor (four kick, offbeat clap, the open hat) is
       // disco's, played through synthpop's all-electronic chassis; house's
       // piano-stab feel is present in spirit but the piano is a synth voice
@@ -3071,7 +3113,8 @@
     // changes bar to bar, does the arriving here instead of the breaking a
     // jungle record needs it for: quiet on the even bars, huge on the odd.
     powerballad: {
-      label: "Los Angeles 1991", rate: 1, bars: 8, voices: 2, near: "crooner",
+      // SING: the big, belted solo voice the whole arrangement builds to.
+      label: "Los Angeles 1991", sing: "lead", rate: 1, bars: 8, voices: 2, near: "crooner",
       // LINEAGE: the sung, held, chord-tone-anchored lead over strings is
       // crooner's own arrangement grown an arena; the massed emotional
       // uplift and the plagal warmth under the chorus are gospel's; rock
@@ -3108,7 +3151,8 @@
     // I-vi-IV-V every four bars — the field that separates a funk pastiche
     // from the funk band it is impersonating.
     retrofunkpop: {
-      label: "Los Angeles 2013", rate: 1, bars: 4, voices: 2, swing: 0.1, near: "funk",
+      // SING: the retro-funk stack, backing singers answering the hook.
+      label: "Los Angeles 2013", sing: "thirds", rate: 1, bars: 4, voices: 2, swing: 0.1, near: "funk",
       // LINEAGE: the clavinet-and-horns vocabulary is funk's, played over
       // Motown's song discipline (a real changing progression rather than a
       // vamp) with disco's four-on-the-floor pop polish underneath.
@@ -3140,7 +3184,8 @@
     // minor two-chord vamp that never resolves anywhere, reggae's own
     // no-mode spareness kept exactly.
     reggaeton: {
-      label: "San Juan 2004", rate: 1, bars: 4, voices: 2, near: "reggae",
+      // SING: the dembow hook, sung as much as chanted.
+      label: "San Juan 2004", sing: "lead", rate: 1, bars: 4, voices: 2, near: "reggae",
       // LINEAGE: the one-drop skank's Caribbean root is reggae's; the
       // chopped, sample-built track underneath is boom bap's method aimed
       // at a different vocabulary; the sub-bass slide under it is trap's.
@@ -3173,7 +3218,8 @@
     // that separates a Bogotá/Barranquilla pop-rock record from the Rio
     // apartment sound it shares a rhythm section with.
     latinpop: {
-      label: "Miami 2001", rate: 1, bars: 4, voices: 2, near: "bossa",
+      // SING: the pop lead, bright and out front.
+      label: "Miami 2001", sing: "lead", rate: 1, bars: 4, voices: 2, near: "bossa",
       // LINEAGE: the sevenths-and-understatement harmonic language and the
       // rhythm-section restraint are bossa's own, transplanted out of the
       // apartment and into a rock band; the cross-rhythm percussion under
@@ -3204,7 +3250,8 @@
     // own honest description: it is a production METHOD, assembling
     // whichever record the section needs, more than it is one groove.
     kpop: {
-      label: "Seoul 2012", rate: 1, bars: 4, voices: 2, near: "synthpop",
+      // SING: the idol-group stack, several voices trading the hook.
+      label: "Seoul 2012", sing: "thirds", rate: 1, bars: 4, voices: 2, near: "synthpop",
       // LINEAGE: the all-synth stab chassis is synthpop's; the four-on-the-
       // floor pop-chorus floor is disco's; the stuttered, probability-edited
       // hat is boom bap's chopped hand brought to a machine kit; the vocal
@@ -3237,7 +3284,8 @@
     // declares (stacked sixths, chord-locked) does the backing-vocal work
     // here exactly as it does there, cited rather than reinvented.
     boyband: {
-      label: "Orlando 1997", rate: 1, bars: 4, voices: 3, near: "doowop",
+      // SING: a boyband is stacked, full stop.
+      label: "Orlando 1997", sing: "thirds", rate: 1, bars: 4, voices: 3, near: "doowop",
       // LINEAGE: the group-of-voices arithmetic (lead out front, a harmony
       // stack, a keyboard holding the changes) is doo-wop's own scheme,
       // inherited whole down to the `part` register spacing; the sixths-
@@ -3273,7 +3321,8 @@
     // this from punk, which refuses to develop AT ALL. Confessional means
     // legato where punk is staccato: a chord let ring instead of chopped.
     emo: {
-      label: "Chicago 1999", rate: 1, bars: 4, voices: 2, near: "punk",
+      // SING: the earnest, cracking lead the whole genre is named for.
+      label: "Chicago 1999", sing: "lead", rate: 1, bars: 4, voices: 2, near: "punk",
       // LINEAGE: the format (guitar/bass/drums, verse-chorus, three minutes)
       // and the raw energy are punk's; the major-key-read vi-IV-I-V loop and
       // the song discipline underneath are rock's; the wash the loud chorus
@@ -3314,7 +3363,8 @@
     // fills every step, is one riff stated twice; the second half of the
     // subject is a different riff), at hardcore tempo instead of a drone's.
     screamo: {
-      label: "San Diego 1994", rate: 1, bars: 4, voices: 2, near: "deathmetal",
+      // SING: the screamed unison, torn on purpose.
+      label: "San Diego 1994", sing: "holler", rate: 1, bars: 4, voices: 2, near: "deathmetal",
       // LINEAGE: emo's confessional dynamics are the base, pushed to the
       // edge by punk's raw directness and death metal's chromatic dissonance
       // and ridden cymbal. Hardcore, the actual scene emo and screamo both
@@ -3351,7 +3401,8 @@
     // a chorus that lifts a fourth into the pop half is the same "the
     // record changes costume mid-song" device psychpop already uses.
     confessionalpop: {
-      label: "Nashville 2008", rate: 1, bars: 4, voices: 2, near: "countrypop",
+      // SING: the intimate diary-voice, close and plain.
+      label: "Nashville 2008", sing: "lead", rate: 1, bars: 4, voices: 2, near: "countrypop",
       // LINEAGE: the fifths bass, the storytelling verse and the acoustic
       // guitar are countrypop's, kept whole; rock supplies the full-band
       // arrangement a country radio ballad graduates into; synthpop supplies
@@ -3381,7 +3432,8 @@
     // both already demand. `intro:"fade"` is ambient's own device: this
     // does not arrive, it surfaces.
     darkrnb: {
-      label: "Toronto 2011", rate: 1, bars: 4, voices: 2, near: "rnb",
+      // SING: the falsetto lead layered against its own harmony — a doubled ache.
+      label: "Toronto 2011", sing: "duet", rate: 1, bars: 4, voices: 2, near: "rnb",
       // LINEAGE: the sung, chord-tone-anchored maj7 ballad lead is R&B's own
       // vocabulary sung darker; the pulseless, surfacing stillness under it
       // is ambient's, not R&B's straight-time pocket; synthpop supplies the
@@ -3420,6 +3472,11 @@
       wants: ["dubstep"],
       instr: ["polysynth", "square_lead"],
       drumkit: "tr909",
+      // THE DROP LEAD IS A SUPERSAW, the term itself — lineOnly, so only the
+      // riding lead swaps (the stab underneath stays the sampled patch).
+      synth: { dsp: "supersaw", root: "supersaw", level: 0.85, lineOnly: true,
+               set: { voices: 5, wave: 1, detune: 0.35, octave: 1, cutoff: 4000,
+                      res: 0.15, attack: 0.005, release: 0.25, sustain: 0.8 } },
       entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
       part: ["stab", "lead"],
       harmony: "cycle", roots: [0, 5, 3, 4, 0, 5, 3, 4], mode: MODES.ionian,
@@ -3449,7 +3506,8 @@
     // snare-on-all-four thinned to a real backbeat — smoother, less showband,
     // more session — which is the whole genre in one sentence.
     blueeyedsoul: {
-      label: "Philadelphia 1976", rate: 1, bars: 4, voices: 2, near: "motown",
+      // SING: the Hall & Oates blend, two voices reading as one.
+      label: "Philadelphia 1976", sing: "duet", rate: 1, bars: 4, voices: 2, near: "motown",
       // LINEAGE: the changes (I-vi-IV-V-with-sevenths) and the stab-and-lead
       // register scheme are motown's own, kept nearly whole; funk supplies
       // the sixteenth-note bass hand in place of motown's walk; rock supplies
@@ -3482,7 +3540,8 @@
     // thing than that machinery — the same distinction drone draws against
     // gregorian one row up.
     folkduo: {
-      label: "Greenwich Village 1964", rate: 1, bars: 8, voices: 2, near: "skiffle",
+      // SING: a duo, literally — two voices trading the verse.
+      label: "Greenwich Village 1964", sing: "duet", rate: 1, bars: 8, voices: 2, near: "skiffle",
       // LINEAGE: the string-band-plays-American-song format is skiffle's;
       // countrypop's close vocal harmony and fifths-leaning guitar are the
       // other half; counterpoint contributes the two-voice-as-one-line
@@ -3510,7 +3569,8 @@
     // two acoustic voices, in a bright mixolydian that reads as both
     // traditions' ♭VII at once.
     worldfolk: {
-      label: "Johannesburg 1986", rate: 1, bars: 8, voices: 2, near: "afrobeat",
+      // SING: the Mambazo-style massed harmony, dense and close.
+      label: "Johannesburg 1986", sing: "chorale", rate: 1, bars: 8, voices: 2, near: "afrobeat",
       // LINEAGE: the folk-song discipline (a story, a verse, one guitar
       // carrying it) is folkduo's; the cross-rhythm percussion and the
       // interlocking-guitar technique are afrobeat's, thinned from a big
@@ -3543,7 +3603,8 @@
     // the sound of a solo that keeps discovering new material over the same
     // changes rather than repeating one lick.
     jamband: {
-      label: "San Francisco 1972", rate: 1, bars: 12, voices: 2, swing: 0.15, near: "blues",
+      // SING: the Dead's loose harmony, two voices leaning on each other.
+      label: "San Francisco 1972", sing: "duet", rate: 1, bars: 12, voices: 2, swing: 0.15, near: "blues",
       // LINEAGE: the twelve-bar form and the electric-band instrumentation
       // are blues' own, taken whole; rock supplies the extended-form,
       // two-guitar-interplay format; jazz supplies the walking bass and the
@@ -3576,7 +3637,8 @@
     // rather than a studio band with a rock format, which is the field
     // that separates the two.
     sophistirock: {
-      label: "London 1986", rate: 1, bars: 8, voices: 2, swing: 0.15, near: "steely",
+      // SING: the smooth sophisti-pop lead, cool over the changes.
+      label: "London 1986", sing: "lead", rate: 1, bars: 8, voices: 2, swing: 0.15, near: "steely",
       // LINEAGE: the band format and the muscular backbeat are rock's own;
       // funk's syncopated hand colours the groove underneath; jazz supplies
       // the dorian changes and the walking bass, the same vocabulary steely
@@ -3607,7 +3669,8 @@
     // sixteenths that never let up. NO FILL, ever, and that absence is the
     // whole discipline: the beat does not vary bar to bar, on principle.
     motorik: {
-      label: "Düsseldorf 1974", rate: 1, bars: 8, voices: 2, near: "kraftwerk",
+      // SING: the wordless process voice — even the vocoder repeats without varying.
+      label: "Düsseldorf 1974", sing: "moog", rate: 1, bars: 8, voices: 2, near: "kraftwerk",
       // LINEAGE: kraftwerk's own machine-pulse half, isolated from the pop-
       // song half that anchor also carries; minimalism's repeating,
       // barely-developing cell is the other whole ancestor — motorik IS a
@@ -3616,6 +3679,14 @@
       parents: { kraftwerk: 0.6, minimalism: 0.4 },
       wants: ["neu"],
       instr: ["polysynth", "synth_strings_1"],
+      // THE PULSE IS A MOOG, not a keyboard patch pretending to be one — both
+      // voices are line, so both get the real Model D kraftwerk's own line
+      // plays; a sampled pad cannot repeat eight bars with a machine's
+      // exactness, and that exactness is the whole genre.
+      synth: { dsp: "modeld", root: "modeld", level: 0.78,
+               set: { cutoff: 2000, res: 0.2, envAmount: 0.6, envAttack: 0.003,
+                      envDecay: 0.12, envSustain: 0.7, oscMix: 0.3, drive: 0.18,
+                      glide: 0, drift: 3 } },
       drumkit: "electronic",
       entry: v => (v === 1 ? 4 : 0), reg: v => v - 1, realize: () => "line",
       harmony: "modal", mode: MODES.mixo, scale: MODES.mixo,
@@ -3634,7 +3705,8 @@
     // by a vocoder rather than motorik's wordless process piece, which is
     // the field that separates the two Kraftwerk children.
     roboticpop: {
-      label: "Düsseldorf 1978", rate: 1, bars: 4, voices: 2, near: "synthpop",
+      // SING: the vocoder sings the hook the words already call it doing.
+      label: "Düsseldorf 1978", sing: "moog", rate: 1, bars: 4, voices: 2, near: "synthpop",
       // LINEAGE: the vocoder-and-sequencer chassis and the deadpan machine
       // delivery are kraftwerk's own; synthpop supplies the actual pop-song
       // form (a real changing progression, a hook) that anchor's motorik
@@ -3642,6 +3714,12 @@
       parents: { kraftwerk: 0.55, synthpop: 0.45 },
       wants: [],
       instr: ["synth_voice", "polysynth"],
+      // the vocoder hook and the octave-under sequence are the same machine
+      // playing two parts, not a sample bank standing in for it
+      synth: { dsp: "modeld", root: "modeld", level: 0.8,
+               set: { cutoff: 2600, res: 0.3, envAmount: 0.5, envAttack: 0.002,
+                      envDecay: 0.12, envSustain: 0.6, oscMix: 0.2, drive: 0.25,
+                      glide: 0, drift: 2 } },
       drumkit: "cr78",
       entry: v => v, reg: v => v - 1, realize: () => "line",
       harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
@@ -3666,7 +3744,8 @@
     // playing to a sequencer from a band playing itself, which is exactly
     // what Kraftwerk's own inheritance argues.
     industrialmetal: {
-      label: "Chicago 1988", rate: 1, bars: 8, voices: 2, near: "deathmetal",
+      // SING: the quantized scream riding the sequenced kick.
+      label: "Chicago 1988", sing: "holler", rate: 1, bars: 8, voices: 2, near: "deathmetal",
       // LINEAGE: the chromatic riff wall and the ♭5-is-home locrian colour
       // are death metal's own, cited whole; kraftwerk supplies the machine-
       // sequenced, unwavering kick underneath in place of a drummer; punk
@@ -3699,7 +3778,8 @@
     // the chant on the offbeats, then a straight run answered by the
     // sequence stabbing back), the club's version of a call and response.
     ebm: {
-      label: "Chicago 1989", rate: 1, bars: 4, voices: 2, near: "techno",
+      // SING: the militaristic chant, crushed to a brick — no words survive, and that's EBM.
+      label: "Chicago 1989", sing: "fat", rate: 1, bars: 4, voices: 2, near: "techno",
       // LINEAGE: the sequenced, pulsing bass and the four-on-the-floor club
       // discipline are techno's; kraftwerk supplies the machine chassis
       // underneath; punk supplies the shouted, direct chant vocal. New
@@ -3708,6 +3788,13 @@
       parents: { kraftwerk: 0.4, techno: 0.35, punk: 0.25 },
       wants: ["new beat"],
       instr: ["square_lead", "synth_voice"],
+      // the sequenced pulse is a resonant analog bass squeezed hard, which a
+      // GM square-lead sample cannot squelch any more than acid's 303 can be
+      // played on a guitar
+      synth: { dsp: "modeld", root: "modeld", level: 0.82,
+               set: { cutoff: 900, res: 0.55, envAmount: 0.8, envAttack: 0.002,
+                      envDecay: 0.1, envSustain: 0.3, oscMix: 0.1, drive: 0.4,
+                      glide: 0, drift: 1 } },
       drumkit: "tr909",
       entry: v => v, reg: v => -v, realize: () => "line",
       harmony: "modal", mode: MODES.phrygian, scale: MODES.phrygian,
@@ -3733,7 +3820,8 @@
     // disco floor rather than a clipped anthem chord, which is the field
     // that turns a synth-pop record into a dance-floor one.
     synthduo: {
-      label: "London 1985", rate: 1, bars: 4, voices: 2, near: "synthpop",
+      // SING: the deadpan two-voice duo, words riding on top of the synth line.
+      label: "London 1985", sing: "clear", rate: 1, bars: 4, voices: 2, near: "synthpop",
       // LINEAGE: the all-synth chassis and the anthem changes are synthpop's
       // own; disco supplies the four-on-the-floor club discipline and the
       // open hat where synthpop has none at all; kraftwerk supplies the
@@ -3742,6 +3830,14 @@
       wants: [],
       instr: ["synth_voice", "synth_strings_1"],
       drumkit: "tr909",
+      // A JUNO, not a preset labelled "synth voice" — the melodic hook only
+      // (lineOnly: the sweeping pad stays the sampled strings). Vince Clarke's
+      // whole discography is this one machine legato over a dance floor.
+      synth: { dsp: "juno60", root: "juno60", level: 0.75, lineOnly: true,
+               set: { sawLevel: 0.8, pulseLevel: 0.3, subLevel: 0.15,
+                      cutoff: 2200, res: 0.18, envAmount: 0.3, attack: 0.01,
+                      decay: 0.3, sustain: 0.7, release: 0.4, chorus: 1,
+                      spread: 0.6 } },
       entry: v => v, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
       harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
@@ -3774,7 +3870,8 @@
     // tradition itself — the songs Ray Davies was actually parodying — has no
     // anchor here yet.
     musichallrock: {
-      label: "Muswell Hill 1966", rate: 1, bars: 4, voices: 2,
+      // SING: Ray Davies' music-hall lead, wry and out front.
+      label: "Muswell Hill 1966", sing: "lead", rate: 1, bars: 4, voices: 2,
       parents: { rock: 0.45, skiffle: 0.3, doowop: 0.25 },
       wants: ["music hall"],
       instr: ["upright_piano", "clean_guitar"],
@@ -3804,7 +3901,8 @@
     // orchestral voicing. Brian Wilson's chamber-pop arranging, the actual
     // missing rung between the three, has no anchor of its own yet.
     orchpsych: {
-      label: "Oklahoma City 1999", rate: 1, bars: 4, voices: 3,
+      // SING: the Flaming Lips' doubled, slightly-off orchestral vocal.
+      label: "Oklahoma City 1999", sing: "double", rate: 1, bars: 4, voices: 3,
       parents: { beatles: 0.4, postrock: 0.35, neoclassical: 0.25 },
       wants: ["chamber pop"],
       instr: ["slow_strings", "clean_guitar", "halo_pad"],
@@ -3831,7 +3929,8 @@
     // than a Nashville session. Gram Parsons' "cosmic American" fusion, the
     // scene this style actually grew out of, is the missing rung.
     altcountry: {
-      label: "Chicago 1996", rate: 1, bars: 8, voices: 2, near: "countrypop",
+      // SING: the alt-country lead, plain over the twang.
+      label: "Chicago 1996", sing: "lead", rate: 1, bars: 8, voices: 2, near: "countrypop",
       parents: { countrypop: 0.4, rock: 0.35, blues: 0.25 },
       wants: ["cosmic american music"],
       instr: ["clean_guitar", "fiddle"],
@@ -3855,7 +3954,8 @@
     // borrowed halves. Quiet storm, the smoother FM-radio format this style
     // fed directly, is the missing rung.
     yachtsoul: {
-      label: "San Francisco 1976", rate: 1, bars: 8, voices: 2, near: "isley",
+      // SING: the smooth yacht-soul lead with its own close harmony.
+      label: "San Francisco 1976", sing: "duet", rate: 1, bars: 8, voices: 2, near: "isley",
       parents: { isley: 0.4, funk: 0.3, motown: 0.3 },
       wants: ["quiet storm"],
       instr: ["rhodes_ep", "clean_guitar"],
@@ -3881,7 +3981,8 @@
     // changes-sense. The Doobie Brothers/Michael McDonald crossover this
     // sound is actually named for has no anchor of its own yet.
     yachtrock: {
-      label: "Austin 1979", rate: 1, bars: 4, voices: 2, near: "toto",
+      // SING: the McDonald-style blend, lead and harmony inseparable.
+      label: "Austin 1979", sing: "duet", rate: 1, bars: 4, voices: 2, near: "toto",
       parents: { toto: 0.4, steely: 0.3, motown: 0.3 },
       wants: ["blue-eyed AOR"],
       instr: ["electric_piano", "clean_guitar"],
@@ -3906,7 +4007,8 @@
     // this record was written in before it was one artist's own, is the
     // missing rung.
     songwriterpiano: {
-      label: "New York 1971", rate: 1, bars: 8, voices: 2, near: "crooner",
+      // SING: the singer at the piano, one voice and nothing to hide behind.
+      label: "New York 1971", sing: "lead", rate: 1, bars: 8, voices: 2, near: "crooner",
       parents: { motown: 0.4, gospel: 0.3, crooner: 0.3 },
       wants: ["brill building pop"],
       instr: ["upright_piano", "ohh_voices"],
@@ -3932,7 +4034,8 @@
     // no second voice to harmonize WITH. Carolina fingerstyle guitar, the
     // actual technique this whole sound is built on, is the missing rung.
     softfolk: {
-      label: "Chapel Hill 1970", rate: 1, bars: 8, voices: 2, near: "folkduo",
+      // SING: the soft-folk duo, two acoustic voices close together.
+      label: "Chapel Hill 1970", sing: "duet", rate: 1, bars: 8, voices: 2, near: "folkduo",
       parents: { folkduo: 0.45, countrypop: 0.3, crooner: 0.25 },
       wants: ["carolina fingerstyle"],
       instr: ["steel_string_guitar", "steel_string_guitar"],
@@ -3956,7 +4059,8 @@
     // Laurel Canyon's communal songwriting scene, the actual milieu, is the
     // missing rung.
     singersongwriter: {
-      label: "New York 1972", rate: 1, bars: 4, voices: 2, near: "yachtsoul",
+      // SING: the singer-songwriter's own plain, unaccompanied-sounding lead.
+      label: "New York 1972", sing: "lead", rate: 1, bars: 4, voices: 2, near: "yachtsoul",
       parents: { crooner: 0.35, funk: 0.35, gospel: 0.3 },
       wants: ["laurel canyon scene"],
       instr: ["electric_piano", "clean_guitar"],
@@ -3982,7 +4086,8 @@
     coastrock: {
       // "Sausalito 1977" — Record Plant Sausalito, where Rumours was
       // actually tracked; "Los Angeles 1977" was already steely's own label.
-      label: "Sausalito 1977", rate: 1, bars: 4, voices: 2, near: "rock",
+      // SING: the Rumours-era three-voice blend.
+      label: "Sausalito 1977", sing: "thirds", rate: 1, bars: 4, voices: 2, near: "rock",
       parents: { rock: 0.35, motown: 0.3, countrypop: 0.35 },
       wants: ["california folk rock"],
       instr: ["clean_guitar", "electric_piano"],
@@ -4038,7 +4143,8 @@
     // caption. Punk's directness and rock's band format argue the rest;
     // funk supplies the syncopated pocket two basses need to not collide.
     grebo: {
-      label: "Stourbridge 1990", rate: 1, bars: 4, voices: 3, near: "punk",
+      // SING: the scrappy shouted indie vocal — two basses and one ragged voice.
+      label: "Stourbridge 1990", sing: "holler", rate: 1, bars: 4, voices: 3, near: "punk",
       parents: { punk: 0.4, rock: 0.35, funk: 0.25 },
       wants: ["stourbridge scene"],
       instr: ["distortion_guitar", "acoustic_bass", "acoustic_bass"],
@@ -4099,7 +4205,8 @@
     // pulse. Sheffield's Warp/bleep scene, the genre's own real birthplace,
     // is the missing rung — Manchester's 808 State crossed over into it.
     bleeptechno: {
-      label: "Manchester 1989", rate: 1, bars: 4, voices: 2, near: "acid",
+      // SING: the acid-adjacent bleep vocoder, squelching under the words.
+      label: "Manchester 1989", sing: "303", rate: 1, bars: 4, voices: 2, near: "acid",
       parents: { techno: 0.4, house: 0.3, electro: 0.3 },
       wants: ["sheffield bleep scene"],
       instr: ["square_lead", "saw_wave"],
@@ -4159,7 +4266,8 @@
     // Wax Trax! industrial-rock scene, the actual missing rung, is not yet
     // an anchor.
     industrialrock: {
-      label: "Cleveland 1989", rate: 1, bars: 4, voices: 2, near: "industrialmetal",
+      // SING: the aggressive processed scream over the fuzz.
+      label: "Cleveland 1989", sing: "holler", rate: 1, bars: 4, voices: 2, near: "industrialmetal",
       parents: { deathmetal: 0.4, kraftwerk: 0.3, punk: 0.3 },
       wants: ["wax trax industrial"],
       instr: ["distortion_guitar", "metal_pad"],
@@ -4192,7 +4300,8 @@
       // "Basildon 1980" — the year the band itself formed (as Composition of
       // Sound); "Basildon 1981" was already synthpop's own label, and
       // gothsynth below takes "Basildon 1990" for the same band nine years on.
-      label: "Basildon 1980", rate: 1, bars: 4, voices: 2, near: "eurythmics",
+      // SING: the vocoder singing through the same 303 playing the line.
+      label: "Basildon 1980", sing: "303", rate: 1, bars: 4, voices: 2, near: "eurythmics",
       parents: { synthpop: 0.5, kraftwerk: 0.3, disco: 0.2 },
       wants: ["new romantic synth pop"],
       instr: ["synth_voice", "synth_strings_1"],
@@ -4220,7 +4329,8 @@
     // huge plate is the tone.verb number, not an effect list. Gothic rock's
     // guitar-forward gloom is the missing rung this record actually leans on.
     gothsynth: {
-      label: "Basildon 1990", rate: 1, bars: 4, voices: 2, near: "analogsynthpop",
+      // SING: the deep gothic baritone, doubled and reverbed.
+      label: "Basildon 1990", sing: "double", rate: 1, bars: 4, voices: 2, near: "analogsynthpop",
       parents: { analogsynthpop: 0.45, rock: 0.3, kraftwerk: 0.25 },
       wants: ["gothic rock"],
       instr: ["crunch_guitar", "metal_pad"],
@@ -4249,7 +4359,8 @@
     // usually filed under, is the missing rung — this anchor is its pop
     // half, the way gothsynth above is its synth half.
     gothicpop: {
-      label: "Crawley 1987", rate: 1, bars: 4, voices: 2, near: "shoegaze",
+      // SING: the Cure's own aching, unmistakable lead.
+      label: "Crawley 1987", sing: "lead", rate: 1, bars: 4, voices: 2, near: "shoegaze",
       parents: { rock: 0.4, shoegaze: 0.3, synthpop: 0.3 },
       wants: ["gothic rock"],
       instr: ["clean_guitar", "synth_strings_1"],
@@ -4277,7 +4388,8 @@
     // production, the actual missing rung, is `fx:["echo"]` made explicit
     // and still lacks its own anchor.
     postpunk: {
-      label: "Manchester 1979", rate: 1, bars: 4, voices: 2, near: "kraftwerk",
+      // SING: Curtis's flat, deep baritone, alone over the bass.
+      label: "Manchester 1979", sing: "lead", rate: 1, bars: 4, voices: 2, near: "kraftwerk",
       parents: { punk: 0.4, kraftwerk: 0.3, rock: 0.3 },
       wants: ["cold wave"],
       instr: ["clean_guitar", "synth_strings_1"],
@@ -4302,7 +4414,8 @@
     // becoming a sequencer act. Everything the record needs is already a
     // parent; nothing here is missing.
     dancepostpunk: {
-      label: "Manchester 1983", rate: 1, bars: 4, voices: 2, near: "postpunk",
+      // SING: the deadpan New Order lead over the dance floor.
+      label: "Manchester 1983", sing: "lead", rate: 1, bars: 4, voices: 2, near: "postpunk",
       parents: { postpunk: 0.4, disco: 0.3, kraftwerk: 0.3 },
       wants: [],
       instr: ["synth_voice", "polysynth"],
@@ -4330,7 +4443,8 @@
     // rows. The Hacienda's own DJ culture, the actual room this scene
     // happened in, is the missing rung.
     madchester: {
-      label: "Manchester 1990", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "house",
+      // SING: the baggy indie lead riding the breakbeat.
+      label: "Manchester 1990", sing: "lead", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "house",
       parents: { house: 0.35, funk: 0.35, rock: 0.3 },
       wants: ["hacienda scene"],
       instr: ["clean_guitar", "drawbarorgan"],
@@ -4355,7 +4469,8 @@
     // without the engine's meter machinery. The Byrds' 12-string jangle,
     // the actual root of the technique, has no anchor here.
     janglepop: {
-      label: "Manchester 1984", rate: 1, bars: 4, voices: 2, swing: 1/3, near: "rock",
+      // SING: the jangling lead, one voice out front of the guitars.
+      label: "Manchester 1984", sing: "lead", rate: 1, bars: 4, voices: 2, swing: 1/3, near: "rock",
       parents: { rock: 0.4, motown: 0.35, folkduo: 0.25 },
       wants: ["byrds jangle"],
       instr: ["clean_guitar", "clean_guitar"],
@@ -4386,7 +4501,8 @@
     // underneath. Nothing named here is missing; the crossover itself IS
     // the genre.
     indiedance: {
-      label: "Glasgow 1990", rate: 1, bars: 4, voices: 2, near: "madchester",
+      // SING: the indie-rock voice bolted onto a dance groove.
+      label: "Glasgow 1990", sing: "lead", rate: 1, bars: 4, voices: 2, near: "madchester",
       parents: { madchester: 0.4, house: 0.35, rock: 0.25 },
       wants: [],
       instr: ["clean_guitar", "synth_strings_1"],
@@ -4520,7 +4636,8 @@
       // the authority's rate (the layer law): this is the tempo of a vocal
       // standing on its own. Measured, it is also most of what separates the
       // singer from `simple` on the confusion metric — 0.032 to 0.051.
-      label: "Vocal", rate: 0.5, bars: 8, voices: 1,
+      // SING: the function itself — one voice, the part this box IS.
+      label: "Vocal", sing: "lead", rate: 0.5, bars: 8, voices: 1,
       instr: "solo_vox",
       entry: () => 0, reg: () => -1, realize: () => "line",
       part: ["lead"],
@@ -4550,7 +4667,8 @@
     // or a fifth and the number is zero. Two singers in thirds is also just
     // what a backing part is.
     backing: {
-      label: "Backing vocals", rate: 0.5, bars: 4, voices: 1,
+      // SING: the stacked backing part, four voices under someone else's lead.
+      label: "Backing vocals", sing: "chorale", rate: 0.5, bars: 4, voices: 1,
       instr: "ahh_choir",
       entry: () => 0, reg: () => -1, realize: () => "line",
       part: ["counter"],

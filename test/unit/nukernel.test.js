@@ -11319,6 +11319,115 @@ console.log("one singer is a demo; a record is the same voice four times, slight
               "duet costs, and every single-voice chip plans byte-identical to before the stack existed");
 }
 
+/* §71 THE CATALOG FINDS ITS VOICE, and the machines get played by the
+   machines. Lane G2's own check (2026-08-17): every idiom that has a human
+   voice in it now declares one (84 of 110 — the other 26 are instrumental on
+   purpose, a fugue and a bebop solo and a four-on-the-floor machine among
+   them), and five more anchors whose identity is a specific synthesizer
+   (motorik/roboticpop/ebm on the Model D, synthduo on a Juno-60, bigroom's
+   drop lead on a supersaw) now play it instead of a sampled stand-in wearing
+   its name — the same law §68(f) proved for the batch before this one.
+
+   Three claims, all at the SCORE level (the audio half is a one-time offline
+   render read back as decoded PCM, reported alongside this file, not inside
+   it — a node gate cannot open an AudioContext):
+     (a) EVERY GENRE STILL RENDERS — the whole catalog, not just the 84 that
+         changed, on the same [render, drums, bass] walk §58/§68 already use.
+     (b) EVERY ARMED SINGER PLANS SOMETHING REAL — on that genre's OWN box,
+         with no chip override, so the claim is "the genre's default actually
+         sings", not "a singer exists somewhere in the table".
+     (c) EVERY SYNTH FIELD REACHES A BUILT MODULE — the five new ones by name,
+         and the other ten already in the table, so a typo in `dsp` cannot
+         hide behind "someone else's genre passed this before". */
+console.log("the catalog finds its voice, and the machines get played by the machines");
+{
+  const NS71 = require("../../nukernel/sing.js");
+  const S71 = require("../../nukernel/song.js");
+  const fs71 = require("fs"), path71 = require("path");
+
+  // ---- (a) NOTHING WENT SILENT. All 110, this genre's own bar count, the
+  // catalog-wide walk — a synth-field typo that made driveSynth throw would
+  // show up here as an exception, not just as dropped notes.
+  let rendered = 0;
+  for (const gk of GK) {
+    const g = GENRES[gk], bars = Math.max(4, g.bars);
+    let ev;
+    try { ev = allEvents(P, g, bars); }
+    catch (e) { ok(false, gk + ": allEvents threw — " + e.message); continue; }
+    ok(ev.length > 0, gk + ": renders silent at " + bars + " bars");
+    rendered++;
+  }
+  ok(rendered === GK.length, "§71(a) " + (GK.length - rendered) + " genres never reached the render walk");
+
+  // ---- (b) THE 84 ARMED GENRES SING ON THEIR OWN BOX. §67(a) proved the
+  // organ stayed silent until asked; this is the other half — asked, on
+  // every genre that now asks, it answers. `S71.emptyBox(gk)` is the same
+  // one-bar, one-slot box §67/§70 build a plan from; no `sing` override in
+  // opts, so this reads the GENRE'S OWN default exactly the way a fresh box
+  // dropped on the map would.
+  const ARMED71 = GK.filter(gk => !!GENRES[gk].sing);
+  const SILENT71 = GK.filter(gk => !GENRES[gk].sing);
+  ok(ARMED71.length === 84, "§71(b) the armed roster drifted from 84: " + ARMED71.length);
+  ok(SILENT71.length === 26, "§71(b) the silent roster drifted from 26: " + SILENT71.length);
+  for (const gk of ARMED71) {
+    const chip = GENRES[gk].sing;
+    ok(!!NS71.SINGS[chip], gk + ": sing=\"" + chip + "\" names a chip that does not exist");
+    const b = S71.emptyBox(gk); b.stack[0].slots = [0];
+    const ev = D.sectionEvents(b, [P], null).ev;
+    const plan = NS71.singPlan(ev, { gk, seed: 1 });
+    ok(plan.length > 0, gk + ": declares sing=\"" + chip + "\" but its own box plans nothing");
+    if (!plan.length) continue;
+    ok(plan.every(p => p.n != null && p.syl && p.colour),
+       gk + ": a planned syllable is missing its note, its word or its colour");
+    const resolved = NS71.singFor(gk, null);
+    ok(resolved === chip, gk + ": singFor resolved \"" + resolved + "\", not the genre's own \"" + chip + "\"");
+  }
+  // and the 26 left silent stay silent structurally, not by omission — a
+  // `sing` key typo'd into a truthy non-chip string would land here as a
+  // false positive, since singFor only trusts a key that SINGS actually has
+  for (const gk of SILENT71)
+    ok(GENRES[gk].sing == null, gk + ": counted silent but carries a sing field anyway");
+
+  // ---- (c) EVERY `synth` FIELD NAMES A REAL, BUILT FAUST MODULE. The five
+  // this round added, checked by name and by dsp — a genre whose identity IS
+  // a machine (Paul's note) has to actually reach that machine.
+  const NEW_SYNTH71 = { motorik: "modeld", roboticpop: "modeld", ebm: "modeld",
+    synthduo: "juno60", bigroom: "supersaw" };
+  for (const [gk, dsp] of Object.entries(NEW_SYNTH71))
+    ok(GENRES[gk].synth && GENRES[gk].synth.dsp === dsp,
+       gk + ": synth.dsp is \"" + (GENRES[gk].synth && GENRES[gk].synth.dsp) +
+       "\", expected \"" + dsp + "\"");
+  const distDir71 = path71.join(__dirname, "../../engine/faust/dist");
+  const allSynth71 = GK.filter(gk => GENRES[gk].synth);
+  ok(allSynth71.length === 15, "§71(c) the synth-bearing roster drifted from 15: " + allSynth71.length);
+  for (const gk of allSynth71) {
+    const spec = GENRES[gk].synth;
+    // every DX7 alg module addresses its params at /DX7/... regardless of
+    // which algorithm compiled it (VOICES.md's own dx7 contract) — root
+    // "DX7" is the one deliberate exception to "root names its own dsp"
+    ok(spec.root === spec.dsp || (spec.dsp.startsWith("dx7_") && spec.root === "DX7"),
+       gk + ": synth.root \"" + spec.root + "\" matches neither synth.dsp nor the DX7 address");
+    ok(fs71.existsSync(path71.join(distDir71, spec.dsp + "-module.wasm")),
+       gk + ": " + spec.dsp + "-module.wasm is not a built Faust module");
+    ok(fs71.existsSync(path71.join(distDir71, spec.dsp + "-meta.json")),
+       gk + ": " + spec.dsp + "-meta.json is not a built Faust module");
+    for (const [k, v] of Object.entries(spec.set || {}))
+      ok(typeof v === "number" && isFinite(v), gk + ": synth.set." + k + " is not a finite number");
+    // the lineOnly ones (synthduo, bigroom) must leave a pad voice sampled —
+    // that is the whole reason lineOnly exists rather than a whole-genre swap
+    if (spec.lineOnly) {
+      const g = GENRES[gk];
+      let hasPad = false;
+      for (let v = 0; v < g.voices; v++) if (g.realize(v) === "pad") hasPad = true;
+      ok(hasPad, gk + ": carries lineOnly but has no pad voice for it to protect");
+    }
+  }
+
+  console.log("  71: " + ARMED71.length + " genres sing on their own box (" + SILENT71.length +
+              " stay instrumental), and " + allSynth71.length + " synth fields (5 new) all reach a " +
+              "built Faust module");
+}
+
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }
