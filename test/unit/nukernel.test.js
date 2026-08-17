@@ -11765,6 +11765,107 @@ console.log("the seams are closed and the catalog sings");
    test/unit/fmp4.test.js, which is where they were always really held. */
 
 
+console.log("the syllabary — a dozen mouths, every genre pointed at one");
+{
+  // syllabary.js is its own lane's file (nukernel/syllabary.js), imported
+  // read-only here exactly the way §any-other-lane's file is checked from
+  // this suite: nothing below reaches into sing.js or genres.js to change
+  // them, it only reads what syllabary.js publishes and what sing.js's OWN
+  // syllabifier says about it — the brief's instruction ("IMPORT IT AND RUN
+  // IT... rather than eyeballing") taken literally.
+  const SY = require("../../nukernel/syllabary.js");
+  const SI = require("../../nukernel/sing.js");
+
+  // (a) THE SHAPE: roughly a dozen banks, roughly eighty words apiece, and
+  // the total sits at "about a thousand" — Paul's own ceiling, walked back
+  // from a hundred words times 110 genres. None of these bounds is exact
+  // because none of them were given as exact; they are the shape the ask
+  // described, so the checks are ranges, not equalities.
+  const names = SY.bankNames;
+  ok(names.length >= 10 && names.length <= 14,
+     "the syllabary has " + names.length + " banks — the ask was \"a dozen\"");
+  let total = 0;
+  for (const b of names) {
+    const n = SY.BANKS[b].length;
+    total += n;
+    ok(n >= 60 && n <= 100,
+       "bank " + b + " has " + n + " words — the ask was \"about eighty\"");
+  }
+  ok(total >= 800 && total <= 1200,
+     "the syllabary holds " + total + " words total — the ask was " +
+     "\"1000 words\", not the 11,000 a hundred-per-genre draft would have been");
+
+  // (b) EVERY WORD IS ESPEAK-SAFE AND SPLITS TO 1-4 SYLLABLES UNDER THE REAL
+  // SYLLABIFIER. sing.js's nsyl() is imported, not re-implemented — a second
+  // counter here could disagree with the one that actually cuts the plan,
+  // which is precisely the eyeballing the brief warned against.
+  let words = 0;
+  const dist = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  for (const b of names) {
+    for (const w of SY.BANKS[b]) {
+      words++;
+      ok(/^[a-zA-Z']+(-[a-zA-Z']+)*$/.test(w),
+         b + ': "' + w + '" is not ASCII letters/apostrophe/hyphen only — ' +
+         "espeak will read the punctuation aloud");
+      const n = SI.nsyl(w);
+      ok(n >= 1 && n <= 4,
+         b + ': "' + w + '" is ' + n + " syllables under sing.js's own " +
+         "syllabifier — the ask was one to four");
+      if (n >= 1 && n <= 4) dist[n]++;
+    }
+  }
+  ok(words === total, "counted " + words + " words, banks report " + total);
+  // A GOOD SPREAD, not a pile of one length: plenty short (fast material),
+  // some long (held lines) — both ends of the ask, measured rather than
+  // asserted by construction, since (a) already proved the counts but not
+  // the shape of the counts.
+  ok(dist[1] + dist[2] > dist[3] + dist[4],
+     "short words (1-2 syllables) do not outnumber long ones (3-4) — " +
+     JSON.stringify(dist) + " — \"plenty of short words for fast material\"");
+  ok(dist[3] + dist[4] > 0,
+     "no three-or-four-syllable words anywhere — \"some longer for held " +
+     "lines\" is not met — " + JSON.stringify(dist));
+
+  // (c) A CRUDE OBSCENITY/SLUR NET, independent of the one the build script
+  // used to cut this table — a fresh list here catches a hand-edit later
+  // that never ran through the generator at all.
+  const BLOCK = ["fuck", "shit", "cunt", "cock", "dick", "piss", "bitch",
+    "whore", "slut", "nigg", "fagg", "spic", "chink", "gook", "coon", "kike",
+    "wop", "dyke", "retard", "rape", "boob", "twat", "wank", "bastard",
+    "paki", "homo", "nazi", "porn", "anal", "semen", "vagina", "penis"];
+  for (const b of names) for (const w of SY.BANKS[b]) {
+    const low = w.replace(/[^a-z]/g, "").toLowerCase();
+    for (const bad of BLOCK)
+      ok(!low.includes(bad), b + ': "' + w + '" contains "' + bad + '"');
+  }
+
+  // (d) NO BANK DUPLICATES ANOTHER — the whole point of widening past
+  // sing.js's ten families was twelve DISTINCT rooms, not one room with two
+  // doorplates.
+  for (let i = 0; i < names.length; i++)
+    for (let j = i + 1; j < names.length; j++)
+      ok(JSON.stringify(SY.BANKS[names[i]]) !== JSON.stringify(SY.BANKS[names[j]]),
+         "bank " + names[i] + " is identical to bank " + names[j]);
+
+  // (e) EVERY ONE OF THE 110 CATALOGUE GENRES MAPS TO A BANK THAT EXISTS —
+  // no gaps (a genre GENRE_BANK forgot) and no ghosts (a key that names a
+  // genre genres.js no longer has, left behind by a rename).
+  const mapped = Object.keys(SY.GENRE_BANK);
+  for (const gk of GK)
+    ok(SY.GENRE_BANK[gk] && SY.BANKS[SY.GENRE_BANK[gk]],
+       gk + ": no bank in the syllabary, or it points at one that does not exist");
+  for (const gk of mapped)
+    ok(GENRES[gk], "GENRE_BANK names \"" + gk + "\", which is not a genre — a rename left a ghost");
+  ok(mapped.length === GK.length,
+     "the syllabary maps " + mapped.length + " genres, the catalogue has " +
+     GK.length);
+
+  console.log("  the syllabary: " + names.length + " banks, " + total +
+              " words (" + JSON.stringify(dist) + "), " + mapped.length +
+              " genres mapped, none unaccounted for");
+}
+
+
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }
