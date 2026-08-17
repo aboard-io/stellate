@@ -83,7 +83,7 @@
 // artifact is behind engine/speech.js's own lazy dynamic import(), so a page
 // that never sings never downloads it.
 import { SING, FP, CS } from "../ui/deps.js";
-import { ctx } from "./graph.js";
+import { ctx, voiceGritCurve } from "./graph.js";
 // the drum machines' seeded generator, borrowed whole for the vocoder's
 // unvoiced path: an "s" is noise, and noise on this page is deterministic or
 // it is not this page's noise (machines.js has the law).
@@ -93,7 +93,35 @@ import { prng, hash } from "./machines.js";
 // "Add grit and tremolo to vocals and horns" — and every sung note used to
 // skip it, landing on chan.input raw. A stacked voice is still a voice: see
 // the `dest` note on playSyllable below for where it now goes instead.
-import { voiceChairFor } from "./voices.js";
+import { voiceChairFor, VOICEFX } from "./voices.js";
+
+// ...AND THE CHAIR IS NOT LOUDNESS-NEUTRAL, WHICH A DOUBLE CANNOT AFFORD.
+// The vox chair opens with a 2.4x pre-gain into a tanh (voices.js VOICEFX,
+// tuned so a sampled vocal grits harder when it is pushed) and the stacked
+// part is the one thing on this page that goes through it while the part it
+// is doubling goes straight to the channel. Measured on a rendered syllable
+// before this existed: the double came back 8.5 dB OVER its own tune — which
+// is not "the same voice twice, slightly wrong", it is a second lead. So the
+// stacked part's own gain is divided by the chair's gain, and that number is
+// MEASURED OFF THE SAME CURVE rather than copied as a constant: change
+// VOICEFX and this follows it. 0.25 is the amplitude a sung slice actually
+// arrives at (LEVEL 0.5 into a boost-normalized clip), and a WaveShaper reads
+// its curve over [-1,1] with everything past it clamped, exactly as here.
+const chairMakeup = (fam) => {
+  const F = VOICEFX[fam]; if (!F) return 1;
+  const curve = voiceGritCurve(F.grit), N = curve.length;
+  let si = 0, so = 0;
+  for (let i = 0; i < 2048; i++) {
+    const x = 0.25 * Math.sin(2 * Math.PI * i / 2048);
+    const y = curve[Math.max(0, Math.min(N - 1,
+      Math.round((x * F.drive * 0.5 + 0.5) * (N - 1))))];
+    si += x * x; so += y * y;
+  }
+  const gain = Math.sqrt(so / (si || 1e-12));
+  return gain > 0 ? 1 / gain : 1;
+};
+let VOXMAKEUP = null;                          // measured once, lazily (the
+                                               // curve cache is graph.js's)
 
 // AN EAR SEAM, the ?dryroom / ?flatvel shape: ?nosing renders the page with
 // the singer switched off and everything else identical, which is the A/B that
@@ -723,9 +751,14 @@ export function playSyllable(ev, text, when, durSec, chan, colour, barSec) {
   const g = c.createGain();
   const heard = Math.min(dur, data.length / rate / sr);
   const atk = Math.min(0.012, heard * 0.25), rel = Math.min(0.05, heard * 0.4);
+  // the stacked parts pay the chair's own gain back here, at the one place a
+  // sung note's level is set (see chairMakeup at the top of this file)
+  const stacked = !!(ev.role && ev.role !== "tune");
+  if (stacked && VOXMAKEUP == null) VOXMAKEUP = chairMakeup("vox");
+  const lvl = stacked ? LEVEL * VOXMAKEUP : LEVEL;
   g.gain.setValueAtTime(0, when0);
-  g.gain.linearRampToValueAtTime(LEVEL, when0 + atk);
-  g.gain.setValueAtTime(LEVEL, when0 + Math.max(atk, heard - rel));
+  g.gain.linearRampToValueAtTime(lvl, when0 + atk);
+  g.gain.setValueAtTime(lvl, when0 + Math.max(atk, heard - rel));
   g.gain.linearRampToValueAtTime(0, when0 + heard);
   src.connect(g);
   // THE TONE CHAIN, not around it — for what THIS ROUND ADDS. A stacked part
@@ -746,7 +779,7 @@ export function playSyllable(ev, text, when, durSec, chan, colour, barSec) {
   // chip it did not touch. THEN the section channel either way, exactly as
   // before — the box's fx, sends, level and place still treat the singer
   // like everything else.
-  const dest = ev.role && ev.role !== "tune"
+  const dest = stacked
     ? voiceChairFor(chan, "sing", "vox", chan.input).in : chan.input;
   g.connect(dest);
   src.start(when0);

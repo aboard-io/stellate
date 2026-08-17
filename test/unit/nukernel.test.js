@@ -3824,8 +3824,17 @@ console.log("the per-part mix — addresses, chairs, defaults, and what the load
     const r = trial(b);
     ok(r.ok, "the loader refused a legal per-part mix: " + JSON.stringify(r.errors[0]));
     const p = r.ok && r.song.song[0].parts;
-    ok(p && p.lead && p.lead.fx.join(",") === "chorus",
-       "the fx filter rule does not apply inside a part");
+    // `fx` LEFT PARTMIX ("a track sends to a bus and nothing else",
+    // 2026-08-17): a track carries three sends and no insert chain, so a
+    // saved per-part `fx` is now an unrecognized key and is dropped exactly
+    // the way `nonsense` below is — never thrown, never migrated. This block
+    // used to assert the FILTER rule on it and crashed the whole gate on
+    // undefined the day the field went, which took every section after this
+    // one with it; the claim that is left is the one the loader still makes.
+    ok(p && p.lead && p.lead.fx === undefined,
+       "a retired per-part `fx` chain survived the load");
+    ok(p && p.lead && p.lead.rev === "wet",
+       "a part entry lost its send when its retired keys were dropped");
     ok(p && p.pad2 && p.pad2.pan === "l",
        "an address with no chair in this box was dropped — a genre A/B would eat it");
     ok(p && !("nonsense" in p), "a key that is not an address survived the load");
@@ -4511,6 +4520,19 @@ console.log("dissonance census — what the notes sound like against each other"
     roboticpop: 0.24, retrofunkpop: 0.23, worldfolk: 0.20, bigroom: 0.13,
     clubpop: 0.11, blueeyedsoul: 0.10, crooner: 0.09, ebm: 0.06, kpop: 0.04,
     bigbeat: 0.03, folkduo: 0, motorik: 0,
+    // THE TWENTY-THREE, measured the day they landed (NUKERNEL_CENSUS=1) and
+    // appended for the same reason: a first measurement, never a re-bake of a
+    // neighbour's. Twenty come in under the 1.5 bar, several of them at a flat
+    // zero (softfolk, grebo, bleeptechno, industrialrock and industrialbreaks
+    // sound one line over a root and nothing else). THREE ARE OVER and are on
+    // ALLOW below, all three by the same inherited mechanism.
+    altcountry: 2.39, janglepop: 2.38, indiedance: 1.72, spacerock: 1.11,
+    songwriterpiano: 0.96, yachtrock: 0.91, musichallrock: 0.80,
+    melodictechno: 0.79, dancepostpunk: 0.61, singersongwriter: 0.59,
+    analogsynthpop: 0.45, postpunk: 0.44, coastrock: 0.38, orchpsych: 0.30,
+    madchester: 0.29, gothicpop: 0.28, gothsynth: 0.25, yachtsoul: 0.21,
+    industrialbreaks: 0.01, softfolk: 0, grebo: 0, bleeptechno: 0,
+    industrialrock: 0,
   };
   const ceilOf = b => b * 1.5 + 0.20;      // one headroom rule for every genre
 
@@ -4554,6 +4576,21 @@ console.log("dissonance census — what the notes sound like against each other"
     sophistirock: "the same held-note mechanism as confessionalpop, over a dorian " +
                   "with both the ♭3 and the ♮6 — sophisti-pop's extended chords are " +
                   "suspensions that do not resolve inside the bar; also worth a listen",
+    // THE THREE OF THE TWENTY-THREE that came in over the bar, and all three
+    // by the mechanism the two rows above already name: a long maxHold under
+    // `cycle` harmony, which is a line that is still sounding when the chord
+    // moves. They are not a new kind of clash, they are the SAME one inherited
+    // — which is why each names its own mode as well, because the interval the
+    // hold lands on is the mode's, not the mechanism's.
+    altcountry: "mixolydian at maxHold 3 — the held ♭7 is what a pedal-steel bend " +
+                "leaves ringing over the IV, and mixolydian's ♭7 against the IV's " +
+                "own third is the semitone the census counts; it is the twang",
+    janglepop: "the LONGEST hold in the table (maxHold 4) over ionian `cycle` " +
+               "changes — a rung-out open chord on a twelve-string is a suspension " +
+               "that outlives its bar by design; worth an ear more than the other two",
+    indiedance: "mixolydian at maxHold 3 over a four-to-the-floor cycle: altcountry's " +
+                "interval on madchester's clock, and the loose ringing guitar over a " +
+                "moving bass is the whole joke of the genre",
   };
 
   const rows = GK.map(census).sort((a, b) => b.pct - a.pct);
@@ -6423,8 +6460,17 @@ console.log("the singer — syllables, the bank, the ladders, the plan");
 
   // (e) NEUTRALITY, the §22 law for the new field: a box with no `sing` is the
   // day before this existed, event for event. Read through the REAL derive.
+  // THE GENRE HAS TO BE A MUTE ONE. This read `beatles` until the catalog
+  // found its voice (§71) and beatles started declaring a singer of its own —
+  // at which point "no chip on the box" stopped meaning "no singer", because
+  // ui/derive.js resolves through singFor and the genre is the other half of
+  // that. The law being measured is unchanged; the example had to move to a
+  // genre that still says nothing.
   {
-    const song = C.compose("beatles", 7);
+    const NS22 = require("../../nukernel/sing.js");
+    const muteGk = GK.find(k => !(GENRES[k] && NS22.SINGS[GENRES[k].sing]));
+    ok(muteGk, "every genre sings — the absent-sing law has no example left");
+    const song = C.compose(muteGk, 7);
     for (const b of song.song) {
       const before = JSON.stringify(D.sectionEvents(b, song.slots).ev);
       ok(before.indexOf('"sing"') < 0,
@@ -7278,43 +7324,75 @@ console.log("the master harmonization engine — one tonality, every added voice
   // all — techno and backing, the two whose derived tonic lands on zero and
   // which ornament nothing — and that is what says this is those two changes
   // and not a third.
-  const REF = { simple: "4b9740e29df3", fugue: "fb66b85894fe", acid: "6e5ab21af5a4",
-    newwave: "edb0ef71a7a5", vaporwave: "149d5015f704", blues: "bd46f7197675",
-    rock: "6b17d2564f98", gregorian: "ba0f27385ffc", bulgarian: "0b32f160e171",
-    spem: "9151dae05ddf", counterpoint: "05be67334465",
+  // ...AND RE-MEASURED WHOLE AGAIN, later the same night, for ONE change: THE
+  // CATALOG SINGS. ui/derive.js singEvents used to gate on the box's own chip
+  // (`sec.sing`), which no genre default could ever satisfy — so eighty-four
+  // genres that had just learned to declare a singer planned one, warmed one
+  // and were never heard. It resolves through sing.js singFor now (the house
+  // law: box wins, absent falls to the genre), so a section of a singing
+  // genre carries `sing` events it did not carry yesterday and its signature
+  // moves. Sixty-three rows moved, twenty-three are new anchors, and EVERY
+  // ROW THAT DID NOT MOVE is a genre that declares no singer — postrock,
+  // house, dub, techno, ambient, jazz, drone, tango, the three function
+  // genres — which is what says this is that one change and not a second.
+  // (`NUKERNEL_REF=1` prints this block, below.)
+  const REF = { simple: "4b9740e29df3", fugue: "fb66b85894fe",
+    acid: "6e5ab21af5a4", newwave: "5717cb778837",
+    vaporwave: "149d5015f704", blues: "e992816fe37e", rock: "7da5273b42eb",
+    gregorian: "878e3db9b604", bulgarian: "a9febf4f8da0",
+    spem: "68d79fe43d42", counterpoint: "05be67334465",
     neoclassical: "182f2de5a1d1", drone: "c44769f4ff21",
-    sludge: "5084148f09aa", tango: "ee09103e8ed3", deathmetal: "b0851e6f2e38",
-    eurythmics: "98142ceabb51", isley: "9d5ab478f32a", toto: "29a92875bf17",
-    jodeci: "5e4ca9a37d79", beatles: "a459c2f9c282", steely: "01ea05a01d63",
+    sludge: "cc012c09833a", tango: "ee09103e8ed3",
+    deathmetal: "dfb27fd453a3", eurythmics: "18609e9690eb",
+    isley: "bc15362e0163", toto: "0e38f9a06f7c", jodeci: "4e15a51dbd81",
+    beatles: "cfcb9a476370", steely: "6cbe0f6192d0",
     postrock: "27b4a3b46e43", boombap: "b01f5cdbae1b", trap: "897203c2b00b",
-    house: "817eac80ba2a", garage: "cc3f5e1993db", dnb: "3999fdcb3980",
-    disco: "b11d4a93b0c3", funk: "b81633650abe", motown: "1141bdf06ece",
-    rnb: "9e78fac4619d", gospel: "e733eaf12546", reggae: "622440c9f04e",
-    dub: "54c3fb491042", ska: "ca92900b00b9", afrobeat: "4abfb20d688a",
-    bossa: "b635c3811e72", countrypop: "ea549aac9ee0",
-    synthpop: "c5fcb2c16fb3", shoegaze: "83b13c047a74",
-    citypop: "18c6c4b2a021", punk: "0596c10fdc60", ambient: "e5269e817b91",
-    techno: "c76899eec976", jazz: "8f2957718601", bodiddley: "652cb8966c48",
-    chuckberry: "bfa4069005a5", doowop: "aa80dab581fd",
-    skiffle: "c51f0f704a19", minimalism: "cd067bced87e",
-    kraftwerk: "6fa626f62c95", electro: "7bcbe33b8e14", hymn: "8d5cbbc2f790",
-    crooner: "ebcccb5c28e3", yuletide: "e85fe81904b2",
-    merseybeat: "367adb7076c1", psychpop: "4cd62eace8ad",
-    bigbeat: "2fd7eedbdd96", drill: "e7a238609e57", clubpop: "c3ad2b730725",
-    powerballad: "4ba645cf3184", retrofunkpop: "87bd139cb68b",
-    reggaeton: "aa5de4ddd707", latinpop: "0eef7a6d4277", kpop: "4fa1cc80588f",
-    boyband: "59b1645cfb57", emo: "97bca06289d7", screamo: "5f9e1fe98cce",
-    confessionalpop: "7caf072cfa2f", darkrnb: "0646ca452b56",
-    bigroom: "15833d9eadf3", blueeyedsoul: "611bb065f3c6",
-    folkduo: "e2436f24fe1e", worldfolk: "27c7432707c7",
-    jamband: "ddd0b4512600", sophistirock: "3f5356b33921",
-    motorik: "5eda4735ff86", roboticpop: "dbd9723b7f44",
-    industrialmetal: "bcbc410dce83", ebm: "a3fd12a0d312",
-    synthduo: "3f063b522c5d", solo: "219f51866bce", vocal: "732d368f1ec0",
-    backing: "dc681b7608c8", riff: "3c531d83afd9", pad: "ce08c515e400" };
+    house: "817eac80ba2a", garage: "f1cac91c36d5", dnb: "3999fdcb3980",
+    disco: "13ecc4e5cece", funk: "63dbf9e5f228", motown: "1cfc02d9f83d",
+    rnb: "1237ca043286", gospel: "011369d4a62f", reggae: "00decaf27935",
+    dub: "54c3fb491042", ska: "50422c601d13", afrobeat: "354f7ab0e380",
+    bossa: "d6c65027d041", countrypop: "60a5db06cfac",
+    synthpop: "4073379ba16a", shoegaze: "b27b6d368bc2",
+    citypop: "ad41f31ba215", punk: "ccb6fd54686f", ambient: "e5269e817b91",
+    techno: "c76899eec976", jazz: "8f2957718601", bodiddley: "96c2fe73deda",
+    chuckberry: "ce67f7e73a9c", doowop: "47cf5f4adcfd",
+    skiffle: "024eb7dbb2ca", minimalism: "cd067bced87e",
+    kraftwerk: "593e5cafcdd3", electro: "f61b83b8be03",
+    hymn: "42c362d76583", crooner: "bcce779eaa4c", yuletide: "d39158037cc8",
+    merseybeat: "ccf6ed4dc4a7", psychpop: "611140b0494e",
+    bigbeat: "5f57407002f7", drill: "e7a238609e57", clubpop: "9ef1751a2ba5",
+    powerballad: "779d94a84869", retrofunkpop: "335b4039ae44",
+    reggaeton: "cc2eee583635", latinpop: "513e350a2ee4",
+    kpop: "4fa1cc80588f", boyband: "491e5849b584", emo: "29c32da28ea9",
+    screamo: "098322f177b0", confessionalpop: "6e5d3c8c0168",
+    darkrnb: "113536484ec8", bigroom: "15833d9eadf3",
+    blueeyedsoul: "398778bb04a6", folkduo: "110c9173814b",
+    worldfolk: "6ad91dd72f71", jamband: "6d77799cf70f",
+    sophistirock: "9e06be895ac4", motorik: "4277a78e2735",
+    roboticpop: "acc9aa6c2a89", industrialmetal: "669cf728afcd",
+    ebm: "eead7a465859", synthduo: "e5b1c59de4df",
+    musichallrock: "173395a3e3dd", orchpsych: "e89a8c8588dd",
+    altcountry: "254d44ce9cf7", yachtsoul: "21f127a9215c",
+    yachtrock: "f63d0f41c9e1", songwriterpiano: "ed1a283201fd",
+    softfolk: "76758a37d604", singersongwriter: "bf3c8a71be98",
+    coastrock: "d1c26b288b19", spacerock: "bf510e0f500a",
+    grebo: "3860e0568cef", melodictechno: "b790604dd18f",
+    bleeptechno: "facb92b5ae8c", industrialbreaks: "8fd9b42455d7",
+    industrialrock: "ca2204fe4330", analogsynthpop: "ada1c6c03ec7",
+    gothsynth: "b80df7e239aa", gothicpop: "ee0b718ed928",
+    postpunk: "6b27594474e8", dancepostpunk: "622df48b27c4",
+    madchester: "5d719ae2eaf4", janglepop: "36c94ebc8d82",
+    indiedance: "c33e61453c40", solo: "219f51866bce", vocal: "0aae245803eb",
+    backing: "18c7c4cd850b", riff: "3c531d83afd9", pad: "ce08c515e400" };
+  // RE-MEASURING IS A COMMAND, not a hand copy off a failure log: the table
+  // above is 110 rows and a deliberate change moves most of them at once, so
+  // `NUKERNEL_REF=1` prints the whole block ready to paste, the way the
+  // dissonance census's own NUKERNEL_CENSUS=1 already does for BASELINE. It
+  // prints; it never writes. Weakening the tripwire is still the thing you
+  // may not do — re-measuring it, with the reason recorded above, is the
+  // thing you must.
+  const fresh = {};
   for (const gk of GK) {
-    if (!REF[gk]) { ok(false, gk + ": no pre-change reference hash — a new " +
-      "genre needs its single-layer baseline measured and added to REF"); continue; }
     let acc = "";
     for (const seed of [1, 2, 3]) {
       const song = C.compose(gk, seed);
@@ -7324,9 +7402,22 @@ console.log("the master harmonization engine — one tonality, every added voice
         acc += evsig(D.sectionEvents(one, song.slots, song.groove, song.swing).ev);
       }
     }
-    ok(sha(acc) === REF[gk],
+    fresh[gk] = sha(acc);
+    if (process.env.NUKERNEL_REF) continue;
+    if (!REF[gk]) { ok(false, gk + ": no pre-change reference hash — a new " +
+      "genre needs its single-layer baseline measured and added to REF"); continue; }
+    ok(fresh[gk] === REF[gk],
        gk + ": a single-layer song no longer renders byte-identical to the " +
        "pre-harmonization engine (the authority moved)");
+  }
+  if (process.env.NUKERNEL_REF) {
+    let line = "  const REF = {";
+    for (const gk of GK) {
+      const t = " " + gk + ': "' + fresh[gk] + '",';
+      if (line.length + t.length > 76) { console.log(line); line = "   "; }
+      line += t;
+    }
+    console.log(line.replace(/,$/, " };"));
   }
   {
     const arr = [{ t: 0, n: 60, dur: 1, kind: "line", v: 0 }];
@@ -10557,9 +10648,14 @@ console.log("the singer is asked, and it answers with a carrier");
   const F67 = require("../../nukernel/fields.js");
   const S67 = require("../../nukernel/song.js");
 
-  // ---- (a) NOTHING SINGS TODAY. Every shipped genre, on its OWN rendered
-  // section: the plan is empty, which is what "byte-identical" means at this
-  // layer — sectionEvents appends singPlan's output and nothing else.
+  // ---- (a) A GENRE THAT SAYS NOTHING SINGS NOTHING. This block was written
+  // the night the organ was wired and nothing in the catalog declared a
+  // singer, so it read "every shipped genre is quiet" — a true sentence about
+  // one evening, not a law. The catalog has since found its voice (§71: 84
+  // genres declare one) and the law that survives is the half that was always
+  // the point: a genre with no `sing` plans nothing, no utterance, no wasm,
+  // byte-identical to the day before this existed. Measured per genre against
+  // its OWN declaration rather than against a global count.
   // The events have to be a real box's or the claim is vacuous: an empty
   // stack renders no line, and "no line" would pass this check while proving
   // nothing at all.
@@ -10567,17 +10663,27 @@ console.log("the singer is asked, and it answers with a carrier");
     const b = S67.emptyBox(gk); b.stack[0].slots = [0];
     return D.sectionEvents(b, [P], null).ev;
   };
-  let quiet = 0, singable = null;
+  let wrong = 0, singable = null, mute = null;
   for (const gk of GK) {
     const ev = evOf67(gk);
-    if (!NS67.singPlan(ev, { gk, seed: 1 }).length) quiet++;
-    if (!singable && NS67.singPlan(ev, { gk, seed: 1, sing: "lead" }).length)
+    const planned = NS67.singPlan(ev, { gk, seed: 1 }).length > 0;
+    const declares = !!(GENRES[gk] && NS67.SINGS[GENRES[gk].sing]);
+    if (planned && !declares) wrong++;
+    // the genre this block ARMS by hand has to be one that declares nothing,
+    // or restoring it afterwards could not prove the organ went quiet again —
+    // chosen FIRST, because `mute` must then be a different one: the two
+    // cannot be the same genre or the "declares nothing resolves to nothing"
+    // checks would be reading the moog this block just wrote onto it
+    if (!singable && !declares &&
+        NS67.singPlan(ev, { gk, seed: 1, sing: "lead" }).length)
       singable = gk;
+    if (!declares && !mute && gk !== singable) mute = gk;
   }
-  ok(quiet === GK.length,
-     "§67(a) " + (GK.length - quiet) + " genres sing without being asked — the score moved");
+  ok(wrong === 0,
+     "§67(a) " + wrong + " genres sing without being asked — the score moved");
   ok(singable, "§67(a) not one shipped genre has a tune a singer could take");
-  ok(NS67.singFor(singable, null) === null && NS67.singFor("nosuchgenre", null) === null,
+  ok(mute, "§67(a) every genre declares a singer — the absent case is unmeasurable");
+  ok(NS67.singFor(mute, null) === null && NS67.singFor("nosuchgenre", null) === null,
      "§67(a) a genre that declares nothing resolved to a singer anyway");
 
   // ...AND THE MOMENT ONE ASKS, IT SINGS. The declaration is one string on the
@@ -10596,9 +10702,11 @@ console.log("the singer is asked, and it answers with a carrier");
        "§67(a) the box asked for a natural singer and got the genre's machine");
     // the registry's resolver and the singer's own agree, or a surface that
     // asks fields.js gets a different answer than the plan does
+    // (`mute` and not a named genre: rock stood here and rock has since
+    // learned to sing, which is exactly the rot a hardcoded example invites)
     ok(F67.resolveSing({ sing: null }, gk) === "moog" &&
        F67.resolveSing({ sing: "duet" }, gk) === "duet" &&
-       F67.resolveSing({}, "rock") === null,
+       F67.resolveSing({}, mute) === null,
        "§67(a) fields.resolveSing disagrees with sing.singFor");
     // A GENRE THAT NAMES A CHIP THAT IS NOT THERE IS NOT A CRASH, it is a
     // genre that does not sing — the same filter rule the ops/fx lists have
@@ -11303,7 +11411,10 @@ console.log("one singer is a demo; a record is the same voice four times, slight
   // does, once, against this exact round).
   const aSrc70 = fs70.readFileSync(
     path70.join(__dirname, "../../nukernel/audio/sing.js"), "utf8");
-  ok(/ev\.role && ev\.role !== "tune"[\s\S]{0,80}voiceChairFor\(chan, "sing", "vox", chan\.input\)/.test(aSrc70),
+  // (the predicate was named `stacked` on 2026-08-17 so the level makeup and
+  // the route could not disagree about which parts are stacked — §72(b))
+  ok(/const stacked = !!\(ev\.role && ev\.role !== "tune"\)/.test(aSrc70) &&
+     /const dest = stacked[\s\S]{0,80}voiceChairFor\(chan, "sing", "vox", chan\.input\)/.test(aSrc70),
      "§70(g) playSyllable no longer routes a stacked part through the vox chair");
   ok(/const ratio = drift \? Math\.pow\(2, drift\.cents \/ 1200\)/.test(aSrc70),
      "§70(g) playSyllable no longer bends a drifted part's pitch");
@@ -11426,6 +11537,133 @@ console.log("the catalog finds its voice, and the machines get played by the mac
   console.log("  71: " + ARMED71.length + " genres sing on their own box (" + SILENT71.length +
               " stay instrumental), and " + allSynth71.length + " synth fields (5 new) all reach a " +
               "built Faust module");
+}
+
+/* §72 — THE SEAMS BETWEEN THE FIVE LANES (integration, 2026-08-17).
+   Each of the five rounds above is right on its own and three of them met
+   somewhere nobody was measuring. This section is those meeting points, at
+   the score level; the audio half is the browser gates, which found two of
+   the three by rendering rather than by reading.
+
+     (a) A GENRE'S SINGER REACHES THE RENDERED SCORE. §71 proves 84 genres
+         PLAN a line and §67 proves the resolution law; neither of them goes
+         through ui/derive.js, which is the one path the transport, the tape
+         and the timeline all read. It gated on the box's own chip, so every
+         one of those 84 planned a line that was never emitted, never warmed
+         and never heard — the plan was right and the song was silent.
+     (b) A DOUBLE IS NOT A LOUDER LEAD. The stacked part goes through the vox
+         chair (H1's grit + tremolo) and the tune it doubles does not, and
+         that chair opens on a 2.4x pre-gain: measured on a rendered syllable,
+         the double came back 8.5 dB over its own tune. The makeup is computed
+         off the chair's own curve, so this asserts the ARITHMETIC agrees with
+         the numbers voices.js ships rather than re-copying a constant.
+     (c) THE BREATH LFO IS PER CONTEXT. Keyed on rate alone it handed the
+         first bounce's oscillators to the second, which threw on connect and
+         degraded — silently — to a voice with no grit and no tremolo on the
+         TAPE, which is the audible path on a phone. */
+console.log("the seams are closed and the catalog sings");
+{
+  const NS72 = require("../../nukernel/sing.js");
+  const S72 = require("../../nukernel/song.js");
+  const fs72 = require("fs"), path72 = require("path");
+  const rd = (p) => fs72.readFileSync(path72.join(__dirname, "../..", p), "utf8");
+
+  // ---- (a) THE GENRE'S SINGER REACHES sectionEvents. Read off the RENDERED
+  // stream, on a box with no chip of its own, for every armed genre.
+  // (skeleton(gk), not emptyBox(gk) — emptyBox takes no argument and is always
+  // `simple`, which is exactly why the sections above pass `gk` to singPlan by
+  // hand and could not have caught this: the real derive reads the genre off
+  // the box's own authority, gid(sec), and there is only one way to put it
+  // there.)
+  let sang72 = 0, leaked72 = 0;
+  for (const gk of GK) {
+    const b = S72.skeleton(gk, null); b.stack[0].slots = [0];
+    const ev = D.sectionEvents(b, [P], null).ev;
+    const sing = ev.filter(e => e.kind === "sing");
+    const armed = !!(GENRES[gk] && NS72.SINGS[GENRES[gk].sing]);
+    if (!armed) { if (sing.length) leaked72++; continue; }
+    if (!sing.length) continue;                  // a genre whose line is too short to take a word
+    sang72++;
+    const chip = GENRES[gk].sing;
+    ok(sing.every(e => e.text && e.syl && e.n != null && e.dur > 0),
+       "§72(a) " + gk + ": a sing event off the real derive is missing its word, note or length");
+    ok(sing[0].colour === NS72.SINGS[chip].colour,
+       "§72(a) " + gk + ": the emitted colour is not the genre's own chip's");
+    // the vocoder character has to travel on the EVENT — the box carries no
+    // chip for the colour string to be read off
+    if (NS72.SINGS[chip].voc)
+      ok(sing.every(e => e.voc && e.voc.car),
+         "§72(a) " + gk + ": a vocoded genre emitted events with no carrier");
+  }
+  ok(sang72 >= 60, "§72(a) only " + sang72 + " genres put a sung line in the rendered " +
+     "stream — the genre default is not reaching ui/derive.js");
+  ok(leaked72 === 0, "§72(a) " + leaked72 + " genres that declare no singer emitted sing events");
+  // the box still wins, through the real derive and not just through singFor
+  {
+    const b = S72.skeleton(GK.find(k => GENRES[k].sing === "moog") || "kraftwerk", null);
+    b.stack[0].slots = [0]; b.sing = "lead";
+    const sing = D.sectionEvents(b, [P], null).ev.filter(e => e.kind === "sing");
+    ok(!sing.length || sing.every(e => e.colour === "natural"),
+       "§72(a) the box's own chip lost to the genre's machine in the rendered stream");
+  }
+  // ...and the transport warms what the stream asks for, not what a chip says
+  ok(!/if \(!sec \|\| !sec\.sing\) continue;/.test(rd("nukernel/audio/transport.js")),
+     "§72(a) singWork skips a section on its chip again — the tape would carry a " +
+     "band with no singer while the live graph sings");
+
+  // ---- (b) THE DOUBLE'S MAKEUP. The chair's gain and its inverse, computed
+  // here from voices.js's own two numbers and graph.js's own curve shape —
+  // if either file re-tunes, this moves with it and the claim still holds.
+  {
+    const grit = /vox:\s*\{\s*grit:\s*([\d.]+),\s*drive:\s*([\d.]+)/.exec(
+      rd("nukernel/audio/voices.js"));
+    ok(grit, "§72(b) VOICEFX.vox no longer declares a grit and a drive");
+    if (grit) {
+      const g = +grit[1], drive = +grit[2];
+      const N = 1024, curve = new Float32Array(N);
+      const dr = 1 + g * 2.6, comp = 1 / (1 + g * 0.7), mix = Math.min(1, g * 8);
+      for (let i = 0; i < N; i++) {
+        const x = (i / (N - 1)) * 2 - 1;
+        curve[i] = x + (Math.tanh(x * dr) * comp - x) * mix;
+      }
+      let si = 0, so = 0;
+      for (let i = 0; i < 2048; i++) {
+        const x = 0.25 * Math.sin(2 * Math.PI * i / 2048);
+        const y = curve[Math.max(0, Math.min(N - 1,
+          Math.round((x * drive * 0.5 + 0.5) * (N - 1))))];
+        si += x * x; so += y * y;
+      }
+      const gain = Math.sqrt(so / si);
+      ok(gain > 1.5, "§72(b) the vox chair no longer adds level (" + gain.toFixed(2) +
+         "x) — a double would not need a makeup and this claim is stale");
+      ok(Math.abs(20 * Math.log10(gain) - 8.2) < 3,
+         "§72(b) the chair's gain moved to " + (20 * Math.log10(gain)).toFixed(1) +
+         " dB — re-measure the double against its tune before trusting the makeup");
+    }
+  }
+  // and the makeup is APPLIED at the one place a sung note's level is set
+  {
+    const src = rd("nukernel/audio/sing.js");
+    ok(/const lvl = stacked \? LEVEL \* VOXMAKEUP : LEVEL;/.test(src),
+       "§72(b) a stacked part no longer pays the chair's gain back — the double " +
+       "returns to being a second, louder lead");
+    ok(!/linearRampToValueAtTime\(LEVEL,/.test(src),
+       "§72(b) a sung note's envelope still writes LEVEL raw somewhere — one of " +
+       "the two paths is not making the makeup");
+  }
+
+  // ---- (c) THE BREATH LFO IS KEYED ON ITS CONTEXT.
+  {
+    const src = rd("nukernel/audio/graph.js");
+    ok(/const breathByCtx = new WeakMap\(\)/.test(src) &&
+       /breathByCtx\.get\(c\)/.test(src),
+       "§72(c) breathLFO is cached globally again — the second bounce of a page " +
+       "loses grit and tremolo on the tape, silently");
+  }
+
+  console.log("  72: the genre's singer reaches the rendered stream on " + sang72 +
+              " genres, a double pays the chair's gain back, and the breath LFO " +
+              "belongs to its own context");
 }
 
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +

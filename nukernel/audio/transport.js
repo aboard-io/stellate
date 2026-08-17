@@ -453,7 +453,13 @@ export function singWork() {
   if (singOff()) return [];
   const byText = new Map();
   for (const sec of SONG) {
-    if (!sec || !sec.sing) continue;
+    // NOT `!sec.sing`. The box's chip is one of two ways a section sings — the
+    // genre's own `sing` is the other, and skipping on the chip alone warmed
+    // nothing for a genre that arms itself, which is a line that plans, plays
+    // and is never heard. The RENDERED events are the authority: a section
+    // that is not singing emits no `sing` event and costs one walk it was
+    // already going to make (sectionRender is cached per box).
+    if (!sec) continue;
     for (const e of sectionRender(sec, SLOTS, GROOVE, SWING).ev) {
       if (e.kind !== "sing") continue;
       let w = byText.get(e.text);

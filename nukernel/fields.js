@@ -1089,19 +1089,13 @@
   // sing.js beside the table it validates against (this file reaches UP to
   // sing.js for the vocabulary already, and must not be reached back into).
   //
-  //   ui/derive.js singEvents is the ONE caller that matters and it still
-  //   gates on `sec.sing` being truthy, which no genre default can satisfy.
-  //   The four lines that finish the wiring, for whoever owns that file:
-  //       if (!SING || !subj) return [];                       // was !sec.sing ||
-  //       const gk = gid(sec), seed = strSeed(gk);
-  //       const plan = SING.singPlan(ev, { sing: sec.sing, gk, seed, pcsAt: … });
-  //       if (!plan.length) return plan;
-  //       const text = SING.utteranceFor(gk, seed);
-  //       return plan.map(p => ({ ...p, kind: "sing", text }));  // colour rides on p
-  //   singPlan already resolves the default itself and stamps `colour` and
-  //   `voc` on every entry, so that edit only DELETES the two lines that read
-  //   the chip directly. Until it lands, a genre's own singer is reachable by
-  //   tapping the chip and nothing arms itself.
+  //   ui/derive.js singEvents used to gate on `sec.sing` being truthy, which
+  //   no genre default can satisfy — so a catalog full of genres declaring
+  //   their own singer sang only where a finger had also tapped the chip.
+  //   That wiring landed 2026-08-17: singEvents resolves through singFor
+  //   exactly as this does, and audio/transport.js singWork stopped skipping
+  //   sections on the chip too (it warms what the RENDERED events ask for, so
+  //   the tape carries the voice the live graph does).
   const resolveSing = (box, gk) => NS.singFor(gk, box && box.sing);
 
   /* ---------- THE REGISTRY ---------- */

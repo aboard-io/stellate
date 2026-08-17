@@ -225,9 +225,19 @@ export function voiceGritCurve(amount) {
 // a chopper switching on a metronome. Never torn down — at most a handful of
 // distinct rates for the whole session, the reverb impulse cache's own
 // accounting.
-const breathLFOs = new Map();                  // "hz" -> { node, oscs }
+// ONE PER RATE **PER CONTEXT**, and the second half of that sentence was the
+// bug. Keyed on the rate alone, the first bounce's oscillators were handed to
+// the second bounce's chair and `.connect()` threw across contexts
+// (InvalidAccessError) — caught at voices.js voiceChairFor, which degrades to
+// a plain voice, so the failure was SILENT and the shape of it was: grit and
+// tremolo on the live graph, and neither of them on the tape, which is the
+// audible path on a phone. A WeakMap on the context keeps the per-rate law
+// intact and lets a finished OfflineAudioContext take its oscillators with it.
+const breathByCtx = new WeakMap();             // ctx -> Map("hz" -> { node, oscs })
 export function breathLFO(c, hz) {
   const key = hz.toFixed(2);
+  let breathLFOs = breathByCtx.get(c);
+  if (!breathLFOs) breathByCtx.set(c, breathLFOs = new Map());
   let L = breathLFOs.get(key);
   if (L) return L;
   const node = c.createGain(); node.gain.value = 1;   // the summed bus, ~[-1,1]

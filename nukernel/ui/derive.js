@@ -463,16 +463,27 @@ function pcsAtOf(subj, g, barSteps, nudge) {
     return c && c.pcs ? c.pcs : null;
   };
 }
+// WHO ASKS FIRST, and this line is why eighty-four armed genres were mute.
+// The chip on the box was read DIRECTLY here — `sec.sing` truthy or nothing
+// happens — which no genre default can satisfy, so a catalog that had just
+// learned to declare `sing: "double"` sang only where a finger had also
+// tapped the chip. fields.js resolveSing wrote the prescription and left it
+// in a comment; this is it. The resolution is sing.js's own singFor (box wins,
+// absent falls through to the genre, nothing declared sings nothing), and
+// singPlan already resolves it internally — so the box's chip may not be
+// passed on raw, or a genre default would reach the plan and never the colour.
 export function singEvents(sec, g, subj, ev, barSteps, nudge) {
-  if (!sec.sing || !SING || !subj) return [];
+  if (!SING || !subj) return [];
   const gk = gid(sec), seed = strSeed(gk);
-  const plan = SING.singPlan(ev, { sing: sec.sing, gk, seed,
+  const key = SING.singFor(gk, sec.sing);
+  if (!key) return [];
+  const plan = SING.singPlan(ev, { sing: key, gk, seed,
                                    pcsAt: pcsAtOf(subj, g, barSteps, nudge) });
   if (!plan.length) return plan;
   // the utterance and the colour are per BOX, not per note — hoisted because
   // sectionEvents is the deep-composition cost centre and utteranceFor rebuilds
   // a string from the bank every time it is called
-  const text = SING.utteranceFor(gk, seed), colour = SING.SINGS[sec.sing].colour;
+  const text = SING.utteranceFor(gk, seed), colour = SING.SINGS[key].colour;
   return plan.map(p => ({ ...p, kind: "sing", text, colour }));
 }
 
