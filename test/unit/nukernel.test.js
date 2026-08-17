@@ -75,6 +75,227 @@ if (process.argv.includes("--calibrate-sing")) {
   return;
 }
 
+// ---- node test/unit/nukernel.test.js --arrange-dom --------------------------
+// NOT PART OF THE PURE-NODE GATE — §57, lane D1's own check ("a section is one
+// shaded thing with its keys on top and no words anywhere", 2026-08-17).
+// Guarded and early-returning exactly like --calibrate-sing just above, for
+// the same reason: this file is otherwise pure node and CI-safe (no browser,
+// no network), and `npm run test:unit` counts on that. It lives up here,
+// beside the other flagged alternate mode, rather than after the pure-node
+// sections' own process.exit(0) — code placed after that call would never
+// run, flag or no flag, so this is the one place in the file a guard can
+// actually intercept the flow before it.
+//
+// WHY A REAL BROWSER FOR THIS ONE: songrow.js's rebuild is real DOM (SVG
+// icons, nested flexbox, a :has() selection ring, position:sticky) that a
+// hand-rolled stub could get subtly wrong in ways that would pass against
+// themselves rather than against the shipped file — exactly the mirror-drift
+// §31's own header warns about. One chromium session proves structure,
+// wiring and the rendered CSS together (VERIFICATION BUDGET: at most once),
+// which is also cheaper than a stub plus a separate screenshot pass.
+if (process.argv.includes("--arrange-dom")) {
+  (async () => {
+    const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
+    const path = require("path");
+    const ROOT = path.join(__dirname, "..", "..");
+    let fails57 = 0, checks57 = 0;
+    const ok57 = (cond, msg) => {
+      checks57++;
+      if (cond) console.log("  ok: " + msg);
+      else { fails57++; console.error("  FAIL: " + msg); }
+    };
+
+    const srv = await serve(ROOT, 8975);
+    const browser = await launchChromium();
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const errs = capturePageErrors(page);
+    await page.goto(`http://localhost:${srv.port}/nukernel/kernel-daw.html?nobounce`,
+      { waitUntil: "networkidle" });
+    await page.evaluate(() => localStorage.removeItem("nukernel.song.v1"));
+    await page.reload({ waitUntil: "networkidle" });
+    // a composed multi-section song — same recipe test/browser/nukernel-board.test.js
+    // uses — so there is more than one box and more than one phrase to test against.
+    await page.selectOption("#composeg", "beatles");
+    await page.click("#compose");
+    await page.waitForTimeout(600);
+
+    const box0 = () => page.$("#song .bgrp:first-child .box");
+    const grp0 = "#song .bgrp:first-child";
+
+    // ---- (a) THE ROW STRUCTURE, at 390 and at 1400 ----
+    // the exact order Paul drew it: # · genre · section type · duplicate ·
+    // add-empty-below · play · pin, then bars · mods · voice · rhythm · trans.
+    const order = () => page.evaluate((sel) => {
+      const grp = document.querySelector(sel);
+      const head = [...grp.querySelector(".bhead").children].map(c =>
+        c.dataset.cell || (c.className.match(/\bbi(dup|add|play|pin)\b/) || [null, "?"])[1]);
+      const icons = [...grp.querySelector(".bicons").children].map(c => c.dataset.cell);
+      return { head, icons };
+    }, grp0);
+    const wantHead = ["part", "genre", "role", "dup", "add", "play", "pin"];
+    const wantIcons = ["bars", "mods", "voice", "rhythm", "trans"];
+    const o390 = await order();
+    ok57(JSON.stringify(o390.head) === JSON.stringify(wantHead),
+      "§57(a) header cells at 390px: " + JSON.stringify(o390.head));
+    ok57(JSON.stringify(o390.icons) === JSON.stringify(wantIcons),
+      "§57(a) icon cells at 390px: " + JSON.stringify(o390.icons));
+    await page.setViewportSize({ width: 1400, height: 1000 });
+    const o1400 = await order();
+    ok57(JSON.stringify(o1400.head) === JSON.stringify(wantHead),
+      "§57(a) header cells at 1400px: " + JSON.stringify(o1400.head));
+    ok57(JSON.stringify(o1400.icons) === JSON.stringify(wantIcons),
+      "§57(a) icon cells at 1400px: " + JSON.stringify(o1400.icons));
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    // ---- (b) PIN WORKS, both directions ----
+    await (await box0()).$eval(".bicon.bipin", b => b.click());
+    let pinned = await page.evaluate(sel => {
+      const g = document.querySelector(sel);
+      return { boxOn: g.querySelector(".box").classList.contains("looped"),
+               keyOn: g.querySelector(".bicon.bipin").classList.contains("on") };
+    }, grp0);
+    ok57(pinned.boxOn && pinned.keyOn, "§57(b) pinning box 1 did not light the row or the key");
+    await (await box0()).$eval(".bicon.bipin", b => b.click());
+    pinned = await page.evaluate(sel => {
+      const g = document.querySelector(sel);
+      return { boxOn: g.querySelector(".box").classList.contains("looped"),
+               keyOn: g.querySelector(".bicon.bipin").classList.contains("on") };
+    }, grp0);
+    ok57(!pinned.boxOn && !pinned.keyOn, "§57(b) unpinning box 1 left the row or the key lit");
+
+    // ---- (c) PLAY WORKS ----
+    await (await box0()).$eval(".bicon.biplay", b => b.click());
+    await page.waitForFunction(() =>
+      document.querySelector("#play").classList.contains("on"), null, { timeout: 8000 })
+      .then(() => ok57(true, "§57(c) the header play key started the transport"))
+      .catch(() => ok57(false, "§57(c) the header play key never started the transport"));
+    await page.click("#play");                  // stop, so the screenshot is quiet
+    await page.waitForTimeout(150);
+
+    // ---- (d) ADD-EMPTY-BELOW INSERTS UNDER, AND FLAGS RED (the C1 law) ----
+    const before = await page.evaluate(() => document.querySelectorAll("#song .bgrp").length);
+    await (await box0()).$eval(".bicon.biadd", b => b.click());
+    const after57 = await page.evaluate(() => {
+      const rows = [...document.querySelectorAll("#song .bgrp")];
+      const second = rows[1].querySelector(".box");
+      return { count: rows.length, silent: second.classList.contains("noplay"),
+               chips: second.querySelectorAll(".bch:not(.bplus)").length };
+    });
+    ok57(after57.count === before + 1,
+      "§57(d) add-empty-below changed the song by " + (after57.count - before) + " boxes, not 1");
+    ok57(after57.silent && after57.chips === 0,
+      "§57(d) the new empty section did not flag red / had " + after57.chips + " phrases");
+    // leave it in place — it is harmless to every check below (they all
+    // address box 1 by name, and (f) wants a second, DIFFERENT box to prove
+    // the ring moves, which this one serves as well as any) — deselect it
+    // rather than deleting it, so the checks below are not also exercising
+    // the # cell's delete key
+    await page.evaluate(() => document.querySelectorAll("#song .bgrp")[1]
+      .querySelector(".box").dispatchEvent(new MouseEvent("click", { bubbles: true })));
+
+    // ---- (e) DISMISS TAKES ONLY ITS OWN PHRASE; THE BODY STILL OPENS COMPOSE ----
+    // guarantee at least two phrases on box 1's strip before testing removal
+    let n = await page.evaluate(sel =>
+      document.querySelector(sel).querySelectorAll(".bch:not(.bplus)").length, grp0);
+    while (n < 2) {
+      await (await box0()).$eval(".bch.bplus", b => b.click());
+      await page.click(".bbknew");
+      await page.waitForTimeout(200);
+      await page.goto(`http://localhost:${srv.port}/nukernel/kernel-daw.html?nobounce#/song/0`,
+        { waitUntil: "networkidle" });
+      n = await page.evaluate(sel =>
+        document.querySelector(sel).querySelectorAll(".bch:not(.bplus)").length, grp0);
+    }
+    const dismissedId = await page.evaluate(sel =>
+      document.querySelector(sel).querySelector(".bchw .bch b.bcn").textContent, grp0);
+    await (await box0()).$eval(".bchw .bcx", b => b.click());
+    const afterDismiss = await page.evaluate(sel => {
+      const g = document.querySelector(sel);
+      return { count: g.querySelectorAll(".bch:not(.bplus)").length,
+               ids: [...g.querySelectorAll(".bch:not(.bplus) b.bcn")].map(e => e.textContent),
+               page: document.querySelector("#chassis").dataset.page };
+    }, grp0);
+    ok57(afterDismiss.count === n - 1,
+      "§57(e) the dismiss badge removed " + (n - afterDismiss.count) + " phrases, not 1");
+    ok57(!afterDismiss.ids.includes(dismissedId),
+      "§57(e) phrase " + dismissedId + " is still on the strip after its own dismiss");
+    ok57(afterDismiss.page === "song",
+      "§57(e) tapping the dismiss badge navigated away from Arrange");
+    await (await box0()).$eval(".bchw .bch", b => b.click());
+    const navved = await page.evaluate(() => document.querySelector("#chassis").dataset.page);
+    ok57(navved === "compose", "§57(e) tapping a thumbnail's body did not open Compose");
+    await page.goto(`http://localhost:${srv.port}/nukernel/kernel-daw.html?nobounce#/song/0`,
+      { waitUntil: "networkidle" });
+
+    // ---- (f) SELECTION IS THE WHOLE SECTION, SHADED AND BORDERED AS ONE ----
+    await page.evaluate(sel => document.querySelector(sel)
+      .dispatchEvent(new MouseEvent("click", { bubbles: true })), grp0 + " .box");
+    const sel1 = await page.evaluate(sel => {
+      const g = document.querySelector(sel);
+      const cs = getComputedStyle(g);
+      return { shadow: cs.boxShadow, bg: cs.backgroundColor };
+    }, grp0);
+    ok57(sel1.shadow !== "none", "§57(f) the selected section's rowgroup carries no ring");
+    const grp1 = "#song .bgrp:nth-child(2)";
+    await page.evaluate(sel => document.querySelector(sel)
+      .dispatchEvent(new MouseEvent("click", { bubbles: true })), grp1 + " .box");
+    const sel0after = await page.evaluate(sel =>
+      getComputedStyle(document.querySelector(sel)).boxShadow, grp0);
+    const sel1now = await page.evaluate(sel =>
+      getComputedStyle(document.querySelector(sel)).boxShadow, grp1);
+    ok57(sel0after === "none" && sel1now !== "none",
+      "§57(f) the ring did not move with selection (was " + sel0after + " / " + sel1now + ")");
+
+    // ---- (g) NO PANEL CONTAINS A PARAGRAPH OF PROSE ----
+    for (const cell of ["mods", "voice", "trans"]) {
+      await page.evaluate(sel => document.querySelector(sel)
+        .dispatchEvent(new MouseEvent("click", { bubbles: true })), grp0 + " .box");
+      await page.click(grp0 + " .bcell.c-" + cell);
+      await page.waitForTimeout(80);
+      const ps = await page.evaluate(() =>
+        document.querySelectorAll("#rowpop .rpmount p").length);
+      ok57(ps === 0, "§57(g) the " + cell + " panel still carries " + ps + " paragraph(s)");
+    }
+
+    // ---- (h) THE SHRINK KEY STAYS VISIBLE WHILE SCROLLING A LONG PANEL ----
+    // position:sticky does not freeze the header at its OPENING position — it
+    // holds a fixed offset once you scroll PAST that point. So the real proof
+    // is that two DIFFERENT scroll depths land the header at the SAME spot
+    // (stuck), not that it never moved from wherever it opened.
+    await page.click(grp0 + " .bcell.c-genre");     // the chronological bank: the long one
+    await page.waitForTimeout(120);
+    await page.evaluate(() => document.querySelector(".deck").scrollBy(0, 600));
+    await page.waitForTimeout(80);
+    const stuckAt600 = await page.evaluate(() =>
+      document.querySelector("#rowpop .rphead").getBoundingClientRect().top);
+    await page.evaluate(() => document.querySelector(".deck").scrollBy(0, 400));
+    await page.waitForTimeout(80);
+    const stuckAt1000 = await page.evaluate(() =>
+      document.querySelector("#rowpop .rphead").getBoundingClientRect().top);
+    ok57(Math.abs(stuckAt1000 - stuckAt600) < 2,
+      "§57(h) the panel header kept scrolling (" + stuckAt600 + " -> " + stuckAt1000 +
+      ") instead of holding its stuck position");
+    const shrinkVisible = await page.evaluate(() => {
+      const r = document.querySelector("#rowpop .rpx").getBoundingClientRect();
+      return r.top >= 0 && r.bottom <= innerHeight;
+    });
+    ok57(shrinkVisible, "§57(h) the shrink key scrolled out of the viewport");
+    await page.click("#rowpop .rpx");
+
+    // ---- the one screenshot ----
+    await page.evaluate(() => document.querySelector(".deck").scrollTo(0, 0));
+    await page.screenshot({
+      path: "/home/ford/.claude/jobs/c1b341cb/tmp/arrange-390.png" });
+
+    ok57(errs.length === 0, "§57 page errors: " + JSON.stringify(errs));
+    await browser.close();
+    srv.close();
+    console.log("\n§57 arrange-dom: " + (checks57 - fails57) + "/" + checks57 + " checks pass");
+    process.exit(fails57 ? 1 : 0);
+  })().catch(e => { console.error("FAIL:", e && e.stack || e); process.exit(1); });
+  return;
+}
+
 let fails = 0, checks = 0;
 const ok = (cond, msg) => {
   checks++;
@@ -8848,6 +9069,87 @@ console.log("§55 — a url for every room in the house");
        "§55(d) .pagerail no longer paints unconditionally");
     console.log("  kernel-daw.css: the chassis/rail block is ungated, no desk dissolve remains");
   }
+}
+
+/* ------------------------------- 56. A PHRASE IS AS LONG AS THE MUSIC NEEDS
+   song.js's persistence half of "phrases may be up to 128 steps"
+   (2026-08-17) — score-level, not DOM: blank()/okPhrase read a phrase's
+   length off the vectors themselves rather than assuming sixteen, so this
+   reads that contract straight off nukernel/song.js, the way a save/load
+   round trip actually exercises it. ui/editor.js's grid/tray/playhead half
+   is proved on the rendered page instead (test/browser/nukernel-phrase-editor.test.js)
+   — this file stays pure node. */
+console.log("§56 — a phrase is as long as the music needs");
+{
+  const S56 = require("../../nukernel/song.js");
+  const z56 = n => new Array(n).fill(0);
+  const phrase56 = n => ({ deg: z56(n), oct: z56(n), vel: new Array(n).fill(5),
+                           inc: z56(n), stk: z56(n), gate: z56(n), acc: z56(n), sld: z56(n) });
+  const song56 = (slots) => ({
+    v: S56.VERSION, slots, bpm: null, genres: null, master: null, buses: null,
+    groove: null, swing: null, pool: null,
+    song: [{ stack: [{ g: "simple", slots: [0] }], len: 4, nudge: 0, ops: [], fx: [] }],
+  });
+
+  // (a) blank()/z() default to sixteen (every existing caller writes them
+  // bare) but take whatever length a caller — ui/editor.js's grow/shrink —
+  // actually asks for.
+  {
+    const b16 = S56.blank(), b128 = S56.blank(128);
+    ok(b16.deg.length === 16 && b16.gate.length === 16,
+       "§56(a) blank() with no argument is not sixteen steps");
+    ok(b128.deg.length === 128 && b128.sld.length === 128,
+       "§56(a) blank(128) did not build a 128-step phrase");
+    ok(S56.PHRASE_MIN === 1 && S56.PHRASE_MAX === 128,
+       "§56(a) PHRASE_MIN/PHRASE_MAX are not exported as 1/128 (got " +
+       S56.PHRASE_MIN + "/" + S56.PHRASE_MAX + ")");
+  }
+
+  // (b) validateSong ACCEPTS 1..128, at whatever length the vectors agree
+  // on — not nailed to sixteen, and not merely "whatever the first vector
+  // says" (every one of the eight must match).
+  {
+    for (const n of [1, 17, 64, 128]) {
+      const r = S56.validateSong(song56([phrase56(n)]));
+      ok(r.ok, "§56(b) a " + n + "-step phrase was refused: " +
+         (r.errors[0] && JSON.stringify(r.errors[0])));
+      if (r.ok) ok(r.song.slots[0].deg.length === n,
+        "§56(b) a " + n + "-step phrase round-tripped at a different length (" +
+        r.song.slots[0].deg.length + ")");
+    }
+    const over = S56.validateSong(song56([phrase56(129)]));
+    ok(!over.ok, "§56(b) a 129-step phrase was accepted — PHRASE_MAX did not hold");
+    const zero = S56.validateSong(song56([phrase56(0)]));
+    ok(!zero.ok, "§56(b) a zero-length phrase was accepted");
+    // one vector shorter than the rest of the SAME phrase — the length is
+    // read off deg, so every other vector must be held to it explicitly
+    const uneven = phrase56(32); uneven.oct = z56(16);
+    const uv = S56.validateSong(song56([uneven]));
+    ok(!uv.ok, "§56(b) a phrase whose vectors disagree in length was accepted");
+  }
+
+  // (c) migrate()'s ramp-vector backfill (old saves missing inc/stk) reads
+  // the phrase's OWN length off deg rather than assuming sixteen — every
+  // real old save IS sixteen, so this proves the fix on a synthetic phrase
+  // at another length, the case that would have silently mismatched before.
+  // The backfill only runs on the v:1 path (migrate()'s own early return
+  // skips it for v:2), which is also what makes it safe to assume real old
+  // saves are always sixteen — no v:2 writer has ever omitted inc/stk.
+  {
+    const raw = song56([phrase56(32)]); raw.v = 1;
+    delete raw.slots[0].inc; delete raw.slots[0].stk;
+    const m = S56.migrate(raw);
+    ok(Array.isArray(m.slots[0].inc) && m.slots[0].inc.length === 32,
+       "§56(c) migrate() backfilled inc at length " +
+       (m.slots[0].inc && m.slots[0].inc.length) + ", not the phrase's own 32");
+    ok(Array.isArray(m.slots[0].stk) && m.slots[0].stk.length === 32,
+       "§56(c) migrate() backfilled stk at length " +
+       (m.slots[0].stk && m.slots[0].stk.length) + ", not the phrase's own 32");
+    const r = S56.validateSong(m);
+    ok(r.ok, "§56(c) a migrated phrase failed validation: " +
+       (r.errors[0] && JSON.stringify(r.errors[0])));
+  }
+  console.log("  song.js: blank()/okPhrase read a phrase's length off its own vectors, 1..128");
 }
 
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +

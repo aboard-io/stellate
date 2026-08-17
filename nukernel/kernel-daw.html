@@ -100,52 +100,26 @@
              not a different view — and the same well, ruling and row states
              the pattern and the arrangement wear. -->
         <div class="song tbl" id="song"></div>
-        <!-- THE INSTRUMENT POOL — the band, hired for the RECORD ("the band
-             is hired for the record, not the scene", 2026-08-16). One labeled
-             row per chair (the kernel's own roles plus the bass); the current
-             pick sits on the row — the genre's own choice dim-lit until you
-             cast the chair — and tapping it unfolds the same twelve-family
-             instrument picker the VOICE cell used to carry, in place. It
-             lives HERE, above the session bank, because it is now THE place
-             you choose what plays: a song fact like the groove, not a box
-             field. ui/poolbank.js builds and wires it. -->
-        <div class="gbank tbl poolbank" id="poolbank" aria-label="instruments">
-          <!-- NO HEADER ROW. "Instruments" over a list of rows that each read
-               "drums · 909 kit" was the surface saying out loud what its own
-               values already say ("get rid of ... table headers",
-               2026-08-16). The aria-label keeps the name for anyone who
-               cannot see the rows. -->
+        <!-- THE INSTRUMENT POOL AND THE SESSION BANK ARE OFF THIS PAGE NOW
+             ("move all the sound definition and saving functionality into
+             mix", Paul, 2026-08-16) — lane A3 is building their real home on
+             the MIX page. HIDDEN here rather than deleted: ui/poolbank.js and
+             ui/chrome.js both bind these ids unconditionally at module load
+             (querySelector/getElementById().addEventListener with no null
+             guard on #savefile etc.), so removing the markup before the Mix
+             page grows the same ids would crash the whole app's boot for
+             every lane, not just this one's surface. `hidden` takes them out
+             of layout, the tab order and the accessibility tree — gone for
+             every purpose Paul asked for — while the ids stay live for the
+             modules that still reach for them. Delete this block outright
+             once the Mix-page versions exist. -->
+        <div class="gbank tbl poolbank" id="poolbank" aria-label="instruments" hidden>
           <div class="poolrows"></div>
         </div>
-        <!-- THE GLOBAL BANK — everything that outlives a box: the soundfont,
-             the shipped songs, the session as a file. It lives on the SONG
-             page (they are song operations, not performance controls) and on a
-             desk it is simply visible with everything else. A real
-             silkscreened bank: header, a legend over every control — the old
-             strip was two bare pickers whose labels a phone hid, which made
-             the soundfont a mystery knob. ids #font / #preset are gate-read.
-
-             The MASTER BUS row group is gone from here ("the SSL board",
-             2026-08-16): the master controls are the rack's MASTER knob row on
-             the MIX page now — one desk, every bus on it — with the #m-<key>
-             ids kept alive on the knobs (ui/mixtbl.js builds them). -->
-        <div class="gbank tbl" aria-label="session">
-          <!-- NO HEADER ROW here either: five controls that name themselves
-               Groove, Swing, Soundfont, Songs and Song file do not need the
-               word SESSION silkscreened above them. -->
+        <div class="gbank tbl" aria-label="session" hidden>
           <div class="gitems">
-            <!-- THE SONG'S GROOVE — a song fact like the tempo (one drummer
-                 for the record, not one per section), so its one control
-                 lives with the other things that outlive a box. The transport
-                 bar could not take a fourth control at phone width, and the
-                 bank's legend idiom is exactly what an enum this rare needs.
-                 ui/chrome.js fills and wires it; "flat" is the grid. -->
             <label class="gctl"><span class="glab">Groove</span>
               <select id="groove"></select></label>
-            <!-- ...AND ITS SWING, the same move made twice ("nothing in a
-                 section tells time"): one feel for the record, beside the
-                 groove. ui/chrome.js fills and wires it; "default" is the
-                 genre's own lean, "straight" the explicit zero. -->
             <label class="gctl"><span class="glab">Swing</span>
               <select id="swing"></select></label>
             <label class="gctl"><span class="glab">Soundfont</span>
@@ -169,13 +143,14 @@
     </section>
 
     <!-- THE COMPOSE PAGE — the phrase editor as a place you GO ("compose,
-         arrange, mix", 2026-08-16). ui/editor.js builds everything inside
-         #composewrap — the tracker (#stepgrid), Seed/Random/Clear, the (?)
-         paragraphs and the phrase bank (#slots) — with the ids the modal
-         carried, because the gates and the (?) wiring read them. A PATTERN
-         thumbnail or [+] on an Arrange row NAVIGATES here with that phrase
-         loaded; the phrase bank at the bottom is where a phrase toggles into
-         the selected box's focused layer. -->
+         arrange, mix", 2026-08-16; plain and icon-only, 2026-08-17). ui/editor.js
+         builds everything inside #composewrap — the tracker (#stepgrid, 1..128
+         rows), the length/Seed/Random/Clear icon row, and the phrase TRAY
+         (#slots) — with the ids the modal carried, because the gates read
+         them. A PHRASE thumbnail or [+] on an Arrange row NAVIGATES here with
+         that phrase loaded; the tray at the bottom is where a phrase toggles
+         into the selected box's focused layer, and where it is cloned or
+         deleted (each pad's own icons, not a paired bank [+]/[−] any more). -->
     <section class="page pg-compose" id="page-compose" aria-label="compose">
       <div class="ed composewrap" id="composewrap"></div>
     </section>

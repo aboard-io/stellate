@@ -3,58 +3,89 @@
 // the rail's three verbs, and openPhraseEditor() is now a NAVIGATION — it
 // loads the phrase and switches the deck to Compose (on a desk, where every
 // page is visible, it just scrolls the panel into view). Reached from the
-// rail, from a PATTERN thumbnail on an Arrange row, or from a row's [+].
-// The page carries everything the modal carried: the 16-row tracker, Seed/
-// Random/Clear, the (?) paragraphs, and the phrase bank with [+]/[−] — laid
-// out with a page's room instead of a dialog's crouch.
+// rail, from a PHRASE thumbnail on an Arrange row, or from a row's [+].
 //
-// The table itself follows the palette's law — BUILT ONCE, then patched.
-// The cells are permanent, their listeners bind once, and an edit patches
-// class/label/bar in place; "opening" is one data-page attribute write.
+// PLAIN, NOT DEEP (2026-08-17, "the phrase editor still has too much depth
+// and false embossing"). Seed/Random/Clear used to be a key row with WORDS on
+// it; every header used to print a numeric range under its name; the corner
+// said "st" and a binary column's aria fallback said "on/off". None of that
+// prints any more — icon + title tooltip is the whole control, "success is
+// almost no words". Legibility comes from ALTERNATE ROW SHADING
+// (kernel-daw.css .prow.alt) instead of any bevel; the load-bearing rings
+// (.slot.sel etc.) are the only shadows left, exactly as they always were.
 //
-// The modal-era column moves survive, because they were right anyway:
-//   COLUMN ORDER  gate acc sld FIRST, then deg oct vel inc stk — the groove
-//     keys under the step numeral where a 303's row starts, the values after.
-//   BARS, NOT NUMERALS. A value cell draws its value as a bar — zero-centred
-//     for the bipolar vectors (deg/oct/inc/stk fill from the midline), from
-//     the floor for vel — with a small numeral riding the bar where it fits.
-//     A bar reads at any cell size; a three-digit numeral is what forced the
-//     44px columns. All eight vectors now fit a 360px phone, so the RAMP
-//     latch (which existed to hide inc/stk under 900px) has nothing left to
-//     hide and is gone.
+// A PHRASE IS 1..128 STEPS now (song.js PHRASE_MIN/MAX), not nailed to
+// sixteen — the length lives in the eight vectors themselves, so growing or
+// shrinking one (the two length keys below) is resizing eight arrays
+// together. The grid is built once PER LENGTH: a fresh sixteen-step phrase
+// never rebuilds, opening a 128-step one does — the same "rare and
+// structural" exception the tray's own [+] already made for the bank's size.
+// `.steps` (kernel-daw.css) scrolls its OWN rows rather than growing the page
+// out from under the tray below it — "page or scroll the grid, don't shrink
+// the cells". The row loop below is deliberately `i < len`, never
+// `i < len - 1`: a generalized row count is exactly where that fencepost
+// bites, and it is what stands between a tap and the phrase's own last row.
+//
+// THE TRAY replaces the old bank's lone [+]/[−] pair with one clone icon and
+// one x PER PHRASE: clone lands at the end of the tray, x deletes THIS
+// phrase (not only the last one — see deletePhrase below, which renumbers
+// every stack entry in every box that referenced it, the whole reason the
+// old code restricted deletion to the tail). A box a deletion leaves with
+// nothing to play is flagged on the MODEL, not drawn here — `sec.silent`,
+// which ui/songrow.js's row renderer reads to paint that section red.
+//
+// THE ROTATION READ: thumbPath (below) already drew time left-to-right (x =
+// step index) and pitch bottom-to-top (a higher deg+oct sits at a SMALLER y)
+// before this pass touched it — generalizing its step axis to the phrase's
+// own length found no actual 90-degree swap to fix. It stays the one drawing
+// of a phrase, used by the tray here AND by ui/songrow.js's Arrange-row
+// chips, so the two faces of a phrase cannot disagree about which way it
+// reads.
+//
+// THE PLAYHEAD reads audio/transport's own clock (getPosition/passAt) — the
+// same accessor main.js's rAF loop already reads for the song row's fill bar
+// — never a second scheduler. It IS a second requestAnimationFrame CONSUMER
+// of that clock: main.js's one loop paints songrow and the mix board, and
+// this file is not on its call list because main.js belongs to another lane.
+// Started/stopped with the same playing-guard idiom that loop uses, and it
+// paints only refs this module owns. Folding it into that one loop is the
+// natural next step and is called out in this pass's report.
 //
 // Layer graph: ui view — imports state/derive/deps, palette (for toggle:
-// clicking a slot also toggles the phrase into the focused layer) and pages
-// (setPage IS the open verb now).
-import { GENRES, DEFAULT, blank, NSLOTS } from "./deps.js";
-import { SLOTS, SONG, SUBJ, slot, setSlot, putPhrase, curSection, commit, on,
-         emit } from "./state.js";
+// clicking a slot also toggles the phrase into the focused layer), pages
+// (setPage IS the open verb now) and — new this pass — audio/transport, for
+// the playhead only (a read of getPosition/passAt, never a control call).
+import { GENRES, DEFAULT, blank, NuSong, NSLOTS } from "./deps.js";
+import { SLOTS, SONG, SUBJ, slot, setSlot, putPhrase, curSection, commit,
+         on } from "./state.js";
 import { isBlank, focused } from "./derive.js";
 import { toggle } from "./palette.js";
 import { buzz, pointers } from "./touch.js";
 import { setPage } from "./pages.js";
 import { openFader, refresh as refreshFader } from "./popfader.js";
+import { playing, getPosition, passAt } from "../audio/transport.js";
 
 /* ---------- the page's insides ---------- */
 // Built HERE, into kernel-daw.html's #composewrap (the page section owns only
 // the shell). The ids the modal carried — #stepgrid #slots #seed #rnd #clear
 // #edslot — are kept on the page's own elements, because they are gate-read.
-// The two (?) pairs that used to be in that list (#edhelp/#edhint,
-// #phrhelp/#phrhint) are not "hidden by CSS": the elements are deleted, so
-// there is no dead id left behind.
 const mk = (tag, cls, txt) => {
   const n = document.createElement(tag);
   n.className = cls;
   if (txt != null) n.textContent = txt;
   return n;
 };
-const key = (id, cls, label, title) => {
-  const b = mk("button", cls);
+// AN ICON AND A TOOLTIP, NOTHING ELSE (Paul, 2026-08-17): every key in this
+// head row used to also carry a visible `.t` word. None of them do any more
+// — id/title/aria-label carry the name for a screen reader and the tooltip,
+// the icon carries the picture, and that is the whole control.
+const ikBtn = (id, cls, label, title) => {
+  const b = document.createElement("button");
   b.type = "button"; b.id = id; b.title = title;
-  b.append(Object.assign(document.createElement("span"),
-    { className: "k" }), Object.assign(document.createElement("span"),
-    { className: "t", textContent: label }));
-  b.querySelector(".k").setAttribute("aria-hidden", "true");
+  b.setAttribute("aria-label", label);
+  const k = document.createElement("span");
+  k.className = "k"; k.setAttribute("aria-hidden", "true");
+  b.append(k);
   return b;
 };
 const wrap = document.getElementById("composewrap");
@@ -62,23 +93,33 @@ const wrap = document.getElementById("composewrap");
 // NO HEADER, NO (?) — "get rid of headers and help buttons and table
 // headers" (Paul, 2026-08-16). What stood here was an h2 reading
 // "Compose · phrase 1" (the rail key already says COMPOSE, and the open
-// phrase is lit in the bank below), a round (?) over a paragraph explaining
+// phrase is lit in the tray below), a round (?) over a paragraph explaining
 // a tracker you can simply drag on, and a second h2 + (?) pair over the
-// phrase bank. All four are DELETED, not hidden — the paragraphs went with
+// phrase tray. All four are DELETED, not hidden — the paragraphs went with
 // them, because a surface that needs a paragraph is a surface that is wrong.
 //
 // #edslot survives the cull: it is the one thing the head said that the page
-// cannot say twice — WHICH phrase these sixteen rows are — so it rides the
-// key row as a plain value instead of inside a heading.
+// cannot say twice — WHICH phrase these rows are — so it rides the key row
+// as a plain value instead of inside a heading.
 const head = mk("div", "edhead");
 const edslotEl = Object.assign(mk("span", "edslot", "phrase 1"), { id: "edslot" });
-const seedBtn = key("seed", "btn ik ik-seed", "Seed", "write the starter phrase");
-const rndBtn = key("rnd", "btn ik ik-rnd", "Random", "roll a random phrase");
-const clearBtn = key("clear", "btn ik ik-clear", "Clear", "empty this phrase");
-head.append(edslotEl, mk("span", "spacer"), seedBtn, rndBtn, clearBtn);
+// LENGTH, not a typed number: the phrase doubles or halves, 16..PHRASE_MAX,
+// so the tracker never asks for a count — "don't bother with numbers and
+// ranges". Hidden at either end (patchGrid below), the way the tray's own
+// [+] already hides at a full bank.
+const shrinkBtn = ikBtn("shrink", "btn ik ik-shrink", "shorter phrase",
+  "halve the phrase's length");
+const growBtn = ikBtn("grow", "btn ik ik-grow", "longer phrase",
+  "double the phrase's length, up to " + NuSong.PHRASE_MAX + " steps");
+const seedBtn = ikBtn("seed", "btn ik ik-seed", "starter phrase", "write the starter phrase");
+const rndBtn = ikBtn("rnd", "btn ik ik-rnd", "random phrase", "roll a random phrase");
+const clearBtn = ikBtn("clear", "btn ik ik-clear", "clear phrase", "empty this phrase");
+head.append(edslotEl, mk("span", "spacer"), shrinkBtn, growBtn, seedBtn, rndBtn, clearBtn);
 
 const stepsWell = mk("div", "steps tbl");
 const gridEl = Object.assign(mk("div", "stepgrid"), { id: "stepgrid" });
+const gridPlay = mk("i", "phhead");            // the grid's own playhead, see below
+gridPlay.setAttribute("aria-hidden", "true");
 stepsWell.append(gridEl);
 
 const slotsEl = Object.assign(mk("div", "slots tbl"), { id: "slots" });
@@ -92,70 +133,69 @@ export const ROWS = ["gate", "acc", "sld", "deg", "oct", "vel", "inc", "stk"];
 export const RANGE = { deg: [-7, 7], oct: [-2, 2], vel: [0, 9], inc: [-3, 3], stk: [-2, 2] };
 const clampTo = (v, [lo, hi]) => Math.max(lo, Math.min(hi, v));
 
-const cells = {};                          // key -> [16 {b,bar,cv}], alive for ever
-function buildGrid() {
-  // ONE .prow PER 16TH, plus a header row of column labels. #stepgrid is the
-  // grid; every .prow is display:contents, so its children ARE the grid items
-  // and AUTO-PLACEMENT does the rest — each row contributes exactly one cell
-  // per column, so the columns line up with no explicit placement at all.
-  //
-  // The ARIA reads exactly as the picture does: rows are 16ths, headed by
-  // their step numeral; the vectors are columnheaders. The cells' own
-  // aria-labels ("step N deg V") are unchanged — they were always the step
-  // identity, and the audio gate reads them by name.
-  // NOT A HEADER ROW. Every silkscreened column-label row on the machine is
-  // deleted; this is the one caption that survives, and it survives because
-  // eight columns of bare numerals genuinely cannot name themselves — "deg"
-  // and "oct" and "vel" are not recoverable from a value the way "4 bars" or
-  // "Chicago 1987" are. It is plain quiet text now: no .thd, no sticky band,
-  // no rule beneath it, no uppercase.
-  const label = (key2) => {
-    const rl = Object.assign(document.createElement("div"), { className: "rowlab" });
-    const num = RANGE[key2];
-    rl.dataset.row = key2;                 // the skin's column hook
+const cells = {};                          // key -> [len {b,bar,cv}], alive until a resize
+let gridLen = 0;                           // the row count the grid is CURRENTLY built for
+// ONE CAPTION LEFT ON THE MACHINE, and it is not a header row: eight columns
+// of bare numerals cannot name themselves ("deg" is not recoverable from a
+// value), but the RANGE that used to ride under each name is gone — "don't
+// bother with numbers and ranges" — and so is the corner's "st" and the
+// binary columns' visible "on/off": nothing here prints a number or a word
+// that is not a column's own three-letter name.
+function buildHead() {
+  const label = key2 => {
+    const rl = document.createElement("div");
+    rl.className = "rowlab"; rl.dataset.row = key2;
     rl.setAttribute("role", "columnheader");
-    rl.append(Object.assign(document.createElement("span"),
-      { className: "rname", textContent: key2 }));
-    // the second line is the range ("−7…+7"): the column says what it is AND
-    // how far it goes. Narrow screens drop it; the desk dialog has the room.
-    rl.append(Object.assign(document.createElement("span"),
-      { className: "rrange", textContent: num
-        ? (num[0] < 0 ? num[0] + "…+" + num[1] : num[0] + "…" + num[1]) : "on/off" }));
+    rl.textContent = key2;
     return rl;
   };
   gridEl.setAttribute("role", "grid");
-  gridEl.setAttribute("aria-label", "step pattern");
-  const headRow = Object.assign(document.createElement("div"), { className: "prow" });
-  headRow.setAttribute("role", "row");
-  const corner = Object.assign(document.createElement("div"),
-    { className: "rowlab corner", textContent: "st" });
+  gridEl.setAttribute("aria-label", "phrase");
+  const headRow = document.createElement("div");
+  headRow.className = "prow"; headRow.setAttribute("role", "row");
+  const corner = document.createElement("div");
+  corner.className = "rowlab corner";
   corner.setAttribute("role", "columnheader");
-  corner.setAttribute("aria-label", "step");
+  corner.setAttribute("aria-label", "step");     // the one place "step" still lives: read, not shown
   headRow.append(corner);
   for (const key2 of ROWS) headRow.append(label(key2));
-  gridEl.append(headRow);
-
+  gridEl.append(headRow, gridPlay);
+}
+// THE ROWS, rebuilt only when the OPEN phrase's own length changed (opening
+// a differently-sized phrase, or a resize) — the same "rare and structural"
+// exception the tray's own [+] already made for the bank's size. `len` is
+// read off the phrase itself; the loop is `i < len`, never `i < len - 1` — a
+// generalized row count is exactly where that fencepost would cut the
+// phrase's own LAST row out of reach.
+function buildBody(len) {
+  while (gridEl.children.length > 1) gridEl.removeChild(gridEl.lastChild);
   for (const key2 of ROWS) cells[key2] = [];
-  for (let i = 0; i < 16; i++) {
-    // the beat ruling is a CLASS, not a :nth-child rule: every fourth row is
-    // the head of a quarter and the whole table rules across it
-    const r = Object.assign(document.createElement("div"),
-      { className: "prow" + (i % 4 === 0 ? " beat" : "") });
+  const beatEvery = Math.max(1, len / 4);        // four groups, whatever the length
+  for (let i = 0; i < len; i++) {
+    // the beat ruling and the zebra shading are both CLASSES, not :nth-child
+    // rules — every `beatEvery`th row heads a quarter and rules across it,
+    // every other row shades a touch darker (kernel-daw.css .prow.alt), the
+    // one legibility aid this table keeps now the depth is gone
+    const beat = i % beatEvery === 0;
+    const r = document.createElement("div");
+    r.className = "prow" + (beat ? " beat" : "") + (i % 2 ? " alt" : "");
     r.setAttribute("role", "row");
     r.dataset.step = String(i + 1);
+    const q = Math.min(4, 1 + Math.floor(i / beatEvery));
     // .tnum is the shared numeral column — the step here, the section number
     // in the song: one material for "which row is this"
-    const n = Object.assign(document.createElement("div"),
-      { className: "num tnum" + (i % 4 === 0 ? " q" : ""), textContent: String(i + 1) });
-    n.dataset.q = String(1 + (i >> 2));      // the row's quarter lamp (CSS reads it)
+    const n = document.createElement("div");
+    n.className = "num tnum" + (beat ? " q" : "");
+    n.textContent = String(i + 1);
+    n.dataset.q = String(q);                 // the row's quarter lamp (CSS reads it)
     n.setAttribute("role", "rowheader");
     r.append(n);
     for (const key2 of ROWS) {
       const b = document.createElement("button"); b.type = "button";
       // the skin reads these, the code never does: which COLUMN a cell sits in
-      // and which quarter of the bar — the 909's q1 red / q2 orange / q3 amber
-      // / q4 cream lives entirely in CSS off these two attributes.
-      b.dataset.row = key2; b.dataset.q = String(1 + (i >> 2));
+      // and which quarter of the phrase — the level ramp lives entirely in
+      // CSS off these two attributes.
+      b.dataset.row = key2; b.dataset.q = String(q);
       b.setAttribute("role", "gridcell");  // still a <button>: Enter/Space work
       const num = RANGE[key2];
       // TWO WAYS INTO A VALUE, both of them one-handed on a phone:
@@ -226,10 +266,16 @@ function buildGrid() {
     }
     gridEl.append(r);
   }
+  gridEl.append(gridPlay);                       // stays the grid's last child
+  gridLen = len;
 }
 function patchGrid() {
+  const len = SUBJ.gate.length;
+  if (gridLen !== len) buildBody(len);
   edslotEl.textContent = "phrase " + (slot + 1);
-  // a scrub commits per pointermove and this patches all 128 cells each time;
+  shrinkBtn.hidden = len <= 16;
+  growBtn.hidden = len >= NuSong.PHRASE_MAX;
+  // a scrub commits per pointermove and this patches every cell each time;
   // writing only what CHANGED keeps the style recalc to the one cell under
   // the finger instead of the whole grid (an unchanged className write still
   // invalidates the element)
@@ -239,7 +285,7 @@ function patchGrid() {
   };
   for (const key2 of ROWS) {
     const num = RANGE[key2];
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < len; i++) {
       const c = cells[key2][i], val = SUBJ[key2][i];
       if (num) {
         // the bar's geometry, as two custom properties the CSS positions by:
@@ -267,6 +313,27 @@ function patchGrid() {
     }
   }
 }
+// GROW/SHRINK: doubling and halving keep every existing step where it is — a
+// resize is never a reflow of the music, only more or less of it. New steps
+// land silent (gate 0) at a genre-true velocity of 5, matching blank()'s own
+// default, so a grown phrase does not need its new half re-tuned before it
+// is usable.
+function resizePhrase(mult) {
+  const cur = SUBJ.gate.length;
+  const next = Math.max(16, Math.min(NuSong.PHRASE_MAX, Math.round(cur * mult)));
+  if (next === cur) return;
+  const grow = next > cur;
+  for (const key2 of ROWS) {
+    const v = SUBJ[key2];
+    SUBJ[key2] = grow
+      ? v.concat(new Array(next - cur).fill(key2 === "vel" ? 5 : 0))
+      : v.slice(0, next);
+  }
+  buzz(4);
+  commit("phrase");
+}
+shrinkBtn.addEventListener("click", () => resizePhrase(0.5));
+growBtn.addEventListener("click", () => resizePhrase(2));
 
 /* ---------- the phrase THUMBNAIL ---------- */
 // THE ONE DRAWING OF A PHRASE, exported: A MINIATURE OF THE GRID ABOVE — not
@@ -277,32 +344,39 @@ function patchGrid() {
 //
 // THE REDUCTION, and it is a reduction on purpose — eight vectors in 24 user
 // units would be three-pixel lanes. The tracker's own column order runs down
-// the miniature (gate, acc, sld, then pitch), and the sixteen steps run
-// ACROSS, because a thumbnail is twice as wide as it is tall and the step
-// axis is the long one:
+// the miniature (gate, acc, sld, then pitch), and the steps run ACROSS,
+// because a thumbnail is twice as wide as it is tall and the step axis is
+// the long one. TIME LEFT-TO-RIGHT, PITCH BOTTOM-TO-TOP, always — the one
+// orientation this drawing has ever used, in the editor's tray and on the
+// Arrange row's chips alike, so "the phrase icons are rotated 90 degrees"
+// has nowhere left to hide:
 //   GATE   a full-width block in its lane: the rhythm, read as a row of teeth
 //   ACC    a narrower block, centred in the step: an accent is a gate with
 //          emphasis, so it is the same mark, smaller
 //   SLD    a TIE running from this step into the next, which is what a slide
-//          IS — and it wraps at step 16 because the phrase loops
+//          IS — and it wraps at the last step because the phrase loops
 //   PITCH  a mini piano roll over deg + 7·oct, clamped to ±10 (deg alone is
 //          ±7, so the clamp only bites on a phrase that octave-jumps), one
-//          block per gated step at the height its note sits
+//          block per gated step at the height its note sits — SMALLER y is
+//          HIGHER pitch, the same up-is-higher the tracker's own bars use
 // deg/vel/inc/stk are not drawn: velocity was the OLD picture and it told
 // phrases apart worst of all — two phrases with the same rhythm and different
 // tunes drew identically.
 //
 // THE GRID ITSELF IS CSS, not path data (.bcmini/.mini in kernel-daw.css): a
-// 16-column ruling with the beat lines stronger and one rule under the switch
+// column ruling with the beat lines stronger and one rule under the switch
 // lanes, painted as a static background-image. So an EMPTY phrase still draws
 // as an empty grid rather than as a blank key, and the repaint contract is
 // untouched — ONE <path d> string per thumbnail, one attribute write per
 // patch, which is what makes an editor scrub cheap (ui/songrow.js
-// patchChipPaths). Drawn by the Compose bank pads here AND the Arrange rows'
-// pattern thumbnails: one routine is the only way the pad and the thumbnail
-// can agree about what a phrase looks like.
-const STEP_W = 4;                          // 64 user units / 16 steps
-const CELL_W = 3.2;                        // the mark, with .8 of air after it
+// patchChipPaths). Drawn by the Compose tray pads here AND the Arrange rows'
+// phrase thumbnails: one routine is the only way the pad and the thumbnail
+// can agree about what a phrase looks like — including at a length other
+// than sixteen, since a phrase is 1..128 steps now: the geometry is read off
+// the phrase's OWN length (p.gate.length) rather than assuming, so the same
+// 64×24 viewBox holds a sixteen-step phrase's wide teeth or a 128-step one's
+// fine ones without a caller ever knowing the difference.
+const STEP_CELL = 0.8;                     // the mark is 4/5 of its step, .8 of air after
 // lane tops and heights, in the 64×24 viewBox — the CSS grid's horizontal
 // rule sits at 43%, i.e. between the sld lane and the pitch band
 const L_GATE = [0.5, 3.2], L_ACC = [4.5, 2.4], L_SLD = [7.7, 2.0];
@@ -311,41 +385,53 @@ const box = (x, y, w, h) =>
   "M" + x.toFixed(1) + " " + y.toFixed(1) + "h" + w.toFixed(1) +
   "v" + h.toFixed(1) + "h" + (-w).toFixed(1) + "Z";
 export function thumbPath(p) {
+  const len = p.gate.length, stepW = 64 / len, cellW = stepW * STEP_CELL;
   let d = "";
-  for (let i = 0; i < 16; i++) {
-    const x = i * STEP_W + 0.4;
+  for (let i = 0; i < len; i++) {
+    const x = i * stepW + (stepW - cellW) / 2;
     if (p.gate[i]) {
-      d += box(x, L_GATE[0], CELL_W, L_GATE[1]);
+      d += box(x, L_GATE[0], cellW, L_GATE[1]);
       // the note, where it sits: up is higher, the way the deg column's bar is
       const v = Math.max(-PITCH_SPAN, Math.min(PITCH_SPAN,
         p.deg[i] + 7 * p.oct[i]));
       const t = (v + PITCH_SPAN) / (2 * PITCH_SPAN);
-      d += box(x, BAND_TOP + (1 - t) * (BAND_H - NOTE_H), CELL_W, NOTE_H);
+      d += box(x, BAND_TOP + (1 - t) * (BAND_H - NOTE_H), cellW, NOTE_H);
     }
-    if (p.acc[i]) d += box(x + CELL_W / 4, L_ACC[0], CELL_W / 2, L_ACC[1]);
+    if (p.acc[i]) d += box(x + cellW / 4, L_ACC[0], cellW / 2, L_ACC[1]);
     // a slide REACHES: it is drawn as the tie it is, clipped at the right edge
     if (p.sld[i]) {
-      const sx = x + CELL_W / 2;
-      d += box(sx, L_SLD[0], Math.min(STEP_W, 64 - sx), L_SLD[1]);
+      const sx = x + cellW / 2;
+      d += box(sx, L_SLD[0], Math.min(stepW, 64 - sx), L_SLD[1]);
     }
   }
   return d;
 }
 
-/* ---------- phrase slots: click toggles into the box AND selects it ------- */
+/* ---------- the TRAY: a horizontal strip of phrases ---------- */
 // the picture is ONE <svg><path> per pad, not sixteen <i> bars — one node per
-// pad on the rail instead of sixteen, one attribute write per patch instead
-// of 32 style writes, and the picture survives the pad's moulded material.
+// pad on the strip instead of sixteen, one attribute write per patch instead
+// of 32 style writes, and the picture survives the pad's flat material.
 //
-// THE BANK IS VARIABLE (1..NSLOTS, fields.js): the rail shows the
-// phrases the SONG has, then [+] to grow it and [−] to take the last one
-// back. So the rail is rebuilt whenever the bank's SIZE moves (patch()
-// below compares lengths) — a size change is rare and structural, exactly
-// the case the built-once law carves out, and every cell listener still
-// binds once per build.
+// EACH PAD IS A GROUP NOW, not a single button: `.slot` is the flex item
+// (positions the two corner icons), `.slotbody` is the actual button (select
+// + toggle into the focused layer — everything the whole pad used to do), and
+// a small `.slotico` cluster overlays its top-right corner with a clone icon
+// and an x. The overlay sits OUTSIDE the body's own hit area, so a plain
+// centre tap/click still lands on .slotbody exactly as it always has — the
+// body fills the pad, the icons are a small claim on one corner of it.
+//
+// THE BANK IS VARIABLE (1..NSLOTS, fields.js): the tray shows the phrases the
+// SONG has, then [+] to grow it (a clone or the [+] both can reach the cap).
+// The tray is rebuilt whenever the bank's SIZE moves (patch() below compares
+// lengths) — a size change is rare and structural, exactly the case the
+// built-once law carves out, and every cell listener still binds once per
+// build.
 const SVGNS = "http://www.w3.org/2000/svg";
-const slotEls = [];                        // { b, sn, line: <path> }
-// the two bank keys, built ONCE and re-appended after every rail rebuild
+const slotEls = [];                        // { b, body, sn, line, ph }
+// the one bank key that survives, built ONCE and re-appended after every
+// tray rebuild: [+] grows the bank (to NSLOTS). Shrinking is now PER PHRASE
+// (the x on each pad, deletePhrase below) rather than tail-only, so there is
+// no more paired [−].
 const addKey = (() => {
   const b = document.createElement("button");
   b.type = "button"; b.className = "slotadd"; b.id = "slotadd"; b.textContent = "+";
@@ -359,41 +445,54 @@ const addKey = (() => {
   });
   return b;
 })();
-// DELETION IS LAST-SLOT-ONLY, and refused while anything plays it. Slots are
-// referenced BY INDEX from every stack entry in the song, so removing a
-// middle slot would renumber everything after it — every box quietly playing
-// a different phrase than the one it was built on. Popping the tail renumbers
-// nothing; the guard below is the readout saying WHY when the tail is in use.
-const dropKey = (() => {
-  const b = document.createElement("button");
-  b.type = "button"; b.className = "slotadd"; b.id = "slotdrop"; b.textContent = "−";
-  b.title = "remove the last phrase (only when no box plays it)";
-  b.setAttribute("aria-label", "remove the last phrase");
-  b.addEventListener("click", () => {
-    const last = SLOTS.length - 1;
-    if (last < 1) return;                  // hidden at one slot anyway
-    const holders = [];
-    SONG.forEach((sec, i) => {
-      if ((sec.stack || []).some(e => e.slots.includes(last))) holders.push(i + 1);
-    });
-    if (holders.length) {
-      emit("status", { text: "phrase " + (last + 1) + " is switched on in box " +
-        holders.join(", ") + " — take it off there first", sticky: true });
-      return;
-    }
-    SLOTS.pop();
-    if (slot > SLOTS.length - 1) setSlot(SLOTS.length - 1);
-    commit("phrase"); commit("selection");
-  });
-  return b;
-})();
+// THE RED FLAG. `sec.silent` is the fact — a box every one of whose stack
+// entries has an empty `slots` list, so nothing in it can play — set here on
+// the SONG's own box objects (not drawn here: ui/songrow.js's row renderer
+// owns painting a silent section red, the way it already owns every other
+// row state). Recomputed on every delete (the only edit on this page that can
+// empty a box's list) and on every song/box load, so a file that already had
+// the gap shows it too.
+function markSilence() {
+  for (const sec of SONG)
+    sec.silent = !!(sec.stack && sec.stack.length) &&
+      sec.stack.every(e => !e || !e.slots || !e.slots.length);
+}
+// DELETE RENUMBERS. Slots are referenced BY INDEX from every stack entry in
+// every box — the old tail-only rule existed only because a middle delete
+// used to leave every later reference pointing at the wrong phrase. An x on
+// every pad means a real middle delete now, so this walks the whole song: i
+// itself drops out of an entry's list (that voice falls silent), anything
+// past i steps down one to follow the phrase it actually names.
+function deletePhrase(i) {
+  if (SLOTS.length <= 1) return;             // the bank keeps its last phrase
+  SLOTS.splice(i, 1);
+  for (const sec of SONG) for (const e of sec.stack || []) {
+    if (!e || !Array.isArray(e.slots)) continue;
+    e.slots = e.slots.filter(x => x !== i).map(x => (x > i ? x - 1 : x));
+  }
+  if (slot === i) setSlot(Math.min(i, SLOTS.length - 1));
+  else if (slot > i) setSlot(slot - 1);
+  markSilence();
+  commit("phrase"); commit("box"); commit("selection");
+}
+// CLONE LANDS AT THE END. A copy is a new, independent phrase — editing it
+// never touches the one it came from — so it is pushed like any other new
+// phrase and opens immediately, the same as [+].
+function clonePhrase(i) {
+  if (SLOTS.length >= NSLOTS) return;        // the bank is full
+  SLOTS.push(structuredClone(SLOTS[i]));
+  setSlot(SLOTS.length - 1);
+  commit("phrase"); commit("selection");
+}
 function buildSlots() {
   slotEls.length = 0;
-  slotsEl.textContent = "";                // the keys survive: appended below
+  slotsEl.textContent = "";                // the [+] key survives: appended below
   SLOTS.forEach((p, i) => {
-    const b = document.createElement("button");
-    b.type = "button"; b.className = "slot";
-    const sn = Object.assign(document.createElement("span"), { className: "sn" });
+    const s = document.createElement("div");
+    s.className = "slot";
+    const body = document.createElement("button");
+    body.type = "button"; body.className = "slotbody";
+    const sn = document.createElement("span"); sn.className = "sn";
     const mini = document.createElementNS(SVGNS, "svg");
     mini.setAttribute("class", "mini");
     mini.setAttribute("viewBox", "0 0 64 24");
@@ -401,40 +500,113 @@ function buildSlots() {
     mini.setAttribute("aria-hidden", "true");
     const line = document.createElementNS(SVGNS, "path");
     mini.append(line);
-    b.append(sn, mini);
-    b.addEventListener("click", () => {
+    const ph = document.createElement("i");    // the tray's own playhead, see below
+    ph.className = "phth"; ph.setAttribute("aria-hidden", "true");
+    body.append(sn, mini, ph);
+    body.addEventListener("click", () => {
       setSlot(i);
       toggle("phrase", i);              // toggle() commits, which saves
       commit("selection");
     });
-    slotEls.push({ b, sn, line });
-    slotsEl.append(b);
+    const icos = document.createElement("span");
+    icos.className = "slotico";
+    const copyBtn = document.createElement("button");
+    copyBtn.type = "button"; copyBtn.className = "ico ico-copy";
+    copyBtn.title = "clone phrase " + (i + 1);
+    copyBtn.setAttribute("aria-label", "clone phrase " + (i + 1));
+    copyBtn.addEventListener("click", ev => { ev.stopPropagation(); clonePhrase(i); });
+    const delBtn = document.createElement("button");
+    delBtn.type = "button"; delBtn.className = "ico ico-x";
+    delBtn.title = "delete phrase " + (i + 1);
+    delBtn.setAttribute("aria-label", "delete phrase " + (i + 1));
+    delBtn.addEventListener("click", ev => { ev.stopPropagation(); deletePhrase(i); });
+    icos.append(copyBtn, delBtn);
+    s.append(body, icos);
+    slotEls.push({ b: s, body, sn, line, ph });
+    slotsEl.append(s);
   });
-  slotsEl.append(addKey, dropKey);
+  slotsEl.append(addKey);
 }
-// the picture is thumbPath above — the Arrange rows' pattern thumbnails draw
+// the picture is thumbPath above — the Arrange rows' phrase thumbnails draw
 // the same one, and one drawing routine is the only way the pad and the
 // thumbnail can agree about what a phrase looks like
 function patchSlots() {
   const sec = curSection(), ent = focused(sec);
   addKey.hidden = SLOTS.length >= NSLOTS;  // full bank: the key goes, not grey
-  dropKey.hidden = SLOTS.length <= 1;      // the bank keeps its last phrase
   SLOTS.forEach((p, i) => {
     const s = slotEls[i], inBox = ent.slots.includes(i);
-    s.b.className = "slot" + (i === slot ? " sel" : "") + (inBox ? " inbox" : "");
-    s.b.setAttribute("aria-pressed", String(inBox));
-    s.b.setAttribute("aria-label", "phrase " + (i + 1) + (isBlank(p) ? ", empty" : ", filled") +
+    // `live` is folded in here from the playhead's own record (liveSet,
+    // below) rather than left for the rAF loop to add on top — this function
+    // rewrites the WHOLE className on every phrase/box/selection event
+    // (a scrub included), and a separate classList.toggle("live",...) from
+    // the playhead loop would otherwise be stomped the next time either one
+    // runs, flickering the sounding ring while a scrub and a play overlap.
+    s.b.className = "slot" + (i === slot ? " sel" : "") + (inBox ? " inbox" : "") +
+      (liveSet.has(i) ? " live" : "");
+    s.body.setAttribute("aria-pressed", String(inBox));
+    s.body.setAttribute("aria-label", "phrase " + (i + 1) + (isBlank(p) ? ", empty" : ", filled") +
       (inBox ? ", in " + GENRES[ent.g].label : ""));
+    s.b.setAttribute("aria-pressed", String(inBox));   // the old test-visible attribute, kept
     s.sn.textContent = (i + 1) + (isBlank(p) ? "" : " •");
     const d = thumbPath(p);
     if (s.line.getAttribute("d") !== d) s.line.setAttribute("d", d);
   });
 }
 
+/* ---------- the playhead: the transport's own clock, read, not run ------- */
+// WHICH SLOTS ARE SOUNDING. A box's stack entries reference their phrases
+// SIMULTANEOUSLY (derive.js sectionEvents hands each of an entry's `slots` a
+// share of the genre's voices — never a per-bar rotation), so every index any
+// entry of the PLAYING box names is sounding for that box's whole run. That is
+// the set the tray lights.
+function soundingSet(si) {
+  const sec = SONG[si], out = new Set();
+  if (!sec) return out;
+  for (const e of sec.stack || []) for (const i of (e && e.slots) || []) out.add(i);
+  return out;
+}
+let liveSet = new Set();                   // read by patchSlots above, written here
+// the grid's own playhead position, across (header + len rows) as a percent
+// of #stepgrid's total height — every row (header included) shares one
+// height, so this is exact without measuring layout
+const gridPct = f => (100 * (1 + f * SUBJ.gate.length) /
+  (1 + SUBJ.gate.length)).toFixed(2) + "%";
+function paintLive(on, f) {
+  liveSet = on;
+  slotEls.forEach((s, i) => {
+    const lit = on.has(i);
+    s.b.classList.toggle("live", lit);
+    if (lit) s.ph.style.left = (f * 100).toFixed(1) + "%";
+  });
+  const openLive = on.has(slot);
+  gridEl.classList.toggle("live", openLive);
+  if (openLive) gridPlay.style.top = gridPct(f);
+}
+// STARTED/STOPPED WITH THE SAME GUARD main.js's OWN rAF loop uses (playing
+// fires "transport:state" on every startAt(), including a mid-play restart,
+// and two loops racing the same paint is the exact leak that guard exists to
+// avoid) — reading getPosition()/passAt(), transport's own clock, never a
+// second one. See this file's header for why this is its own loop rather
+// than a call folded into main.js's.
+let phRunning = false;
+function playFrame() {
+  if (!playing) { phRunning = false; paintLive(new Set(), 0); return; }
+  const pos = getPosition();
+  if (pos.si >= 0 && SONG[pos.si]) paintLive(soundingSet(pos.si), passAt(pos.now).f);
+  else paintLive(new Set(), 0);
+  requestAnimationFrame(playFrame);
+}
+on("transport:state", d => { if (d.playing && !phRunning) { phRunning = true; requestAnimationFrame(playFrame); } });
+
 /* ---------- the header buttons ---------- */
-function randomPhrase() {
-  const r = n => Math.floor(Math.random() * n), p = blank();
-  for (let i = 0; i < 16; i++) {
+// RANDOM AND CLEAR ACT AT THE PHRASE'S OWN LENGTH — a grown, 64-step phrase
+// stays 64 steps after either one, silenced or reshuffled in place, never
+// quietly snapped back to sixteen. SEED is the one exception on purpose: it
+// writes the CANONICAL starter (genres.js DEFAULT, sixteen steps), which is
+// a wholesale replacement by definition, length included.
+function randomPhrase(len) {
+  const r = n => Math.floor(Math.random() * n), p = blank(len);
+  for (let i = 0; i < len; i++) {
     p.deg[i] = r(11) - 3;
     p.oct[i] = r(8) === 0 ? -1 : r(5) === 0 ? 1 : 0;
     p.gate[i] = r(10) < 7 ? 1 : 0;
@@ -447,16 +619,16 @@ function randomPhrase() {
 }
 const put = make => () => { putPhrase(slot, make()); commit("phrase"); };
 seedBtn.addEventListener("click", put(() => structuredClone(DEFAULT)));
-rndBtn.addEventListener("click", put(randomPhrase));
-clearBtn.addEventListener("click", put(blank));
+rndBtn.addEventListener("click", put(() => randomPhrase(SUBJ.gate.length)));
+clearBtn.addEventListener("click", put(() => blank(SUBJ.gate.length)));
 // (hintKey — the exported (?) wiring, one round key toggling one paragraph,
 // used four times across the app — is GONE with the paragraphs it opened
 // ("get rid of ... help buttons", 2026-08-16). Nothing imports it any more;
 // if a surface needs explaining, that is a note about the surface.)
 
 /* ---------- navigation ---------- */
-// ONE way in: openPhraseEditor — from a song row's PATTERN thumbnails, and
-// from the trailing [+] that grows the bank into the box (ui/songrow.js).
+// ONE way in: openPhraseEditor — from a song row's PHRASE thumbnails, and
+// from the trailing [+] that grows the tray into the box (ui/songrow.js).
 // Takes a slot index or { slot }; with neither it opens on the current slot.
 // It is a NAVIGATION now, not an open: load the phrase, switch the deck to
 // the Compose page (one attribute — on a desk the rail is invisible and the
@@ -477,14 +649,18 @@ export function openPhraseEditor(opts) {
 }
 
 /* ---------- wiring ---------- */
-buildGrid();
+buildHead();
+buildBody(SUBJ.gate.length);
 buildSlots();
+markSilence();
 // refreshFader: an open fader shows a live value, and a song load or a second
-// finger scrubbing the same cell must move its LCD too. The slot rail is
-// REBUILT first whenever the bank's size moved (add/drop/load) — the only
-// structural change the phrase surface has.
+// finger scrubbing the same cell must move its LCD too. The tray is REBUILT
+// first whenever the bank's size moved (add/clone/delete/load) — the grid
+// rebuilds on its own, inside patchGrid, whenever the OPEN phrase's length
+// moved — the only two structural changes the phrase surface has.
 function patch() {
   if (slotEls.length !== SLOTS.length) buildSlots();
+  markSilence();
   patchGrid(); patchSlots(); refreshFader();
 }
 for (const t of ["song", "phrase", "box", "selection"]) on(t, patch);

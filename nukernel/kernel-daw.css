@@ -433,11 +433,13 @@ h1 em{font-style:normal;color:var(--ink)}
    that nothing else on the page says, so it stays, as a value rather than a
    heading */
 .edslot{font:600 var(--t-lg)/1.2 var(--f-ui);color:var(--ink)}
-/* an icon key: icon + word on a desk, icon alone under 560px (the title
-   attribute and the id keep the name). The icons are inline-SVG data-URI
-   masks painted with currentColor — self-contained silkscreen, no glyph
-   coverage lottery: ⚄ and ⌫ render as tofu boxes on enough phones that a
-   unicode die is not a die. */
+/* an icon key: icon + title tooltip, nothing printed (2026-08-17, "success is
+   almost no words" — Seed/Random/Clear used to also carry a `.t` word, shown
+   at every width down to a desk-narrow breakpoint; none of the head row's
+   keys do now, at any width). The icons are inline-SVG data-URI masks
+   painted with currentColor — self-contained silkscreen, no glyph coverage
+   lottery: ⚄ and ⌫ render as tofu boxes on enough phones that a unicode die
+   is not a die. */
 .btn.ik{display:inline-flex;align-items:center;justify-content:center;gap:6px}
 .btn.ik .k{
   width:13px;height:13px;flex:0 0 auto;background:currentColor;
@@ -449,6 +451,10 @@ h1 em{font-style:normal;color:var(--ink)}
 .ik-rnd{--ikm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Crect x='.8' y='.8' width='12.4' height='12.4' rx='2.6' fill='none' stroke='%23000' stroke-width='1.6'/%3E%3Ccircle cx='4.3' cy='4.3' r='1.25'/%3E%3Ccircle cx='9.7' cy='4.3' r='1.25'/%3E%3Ccircle cx='7' cy='7' r='1.25'/%3E%3Ccircle cx='4.3' cy='9.7' r='1.25'/%3E%3Ccircle cx='9.7' cy='9.7' r='1.25'/%3E%3C/svg%3E")}
 /* the backspace box: sweep the phrase away */
 .ik-clear{--ikm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M5 1.8h6.6A1.6 1.6 0 0 1 13.2 3.4v7.2a1.6 1.6 0 0 1-1.6 1.6H5L.9 7z' fill='none' stroke='%23000' stroke-width='1.5' stroke-linejoin='round'/%3E%3Cpath d='M6.6 4.9L10.8 9.1M10.8 4.9L6.6 9.1' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E")}
+/* the two length keys: double chevrons, the way a media player says
+   skip-ahead — pointing OUT (grow) or IN (shrink) rather than a typed number */
+.ik-grow{--ikm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M2 2l4 5-4 5M8 2l4 5-4 5' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.ik-shrink{--ikm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M12 2l-4 5 4 5M6 2l-4 5 4 5' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
 /* the session keys' silkscreen: down into the tray, up out of it, and the
    counter-clockwise return-to-zero — the ⌫-free family the utility row wears */
 .ik-save{--ikm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M1.8 9v2.4a1 1 0 0 0 1 1h8.4a1 1 0 0 0 1-1V9' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='M7 1.6v6.2M4.3 5.5L7 8.2l2.7-2.7' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
@@ -459,28 +465,40 @@ h1 em{font-style:normal;color:var(--ink)}
    the mix board's and the master bus's, each a round key over a paragraph
    explaining a surface you can simply tap. The explanations are deleted, not
    hidden: a control that needs a paragraph is a control that is wrong.) */
-/* THE PHRASE RAIL — a grid of phrase pads on the page's own surface.
-   auto-fill, not repeat(8,...): the bank's size is NSLOTS (fields.js), and the
-   grid must not need editing when that number moves. */
-.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));
-  gap:var(--sp-2);padding:0 var(--tbl-gut)}
-/* a phrase pad: a flat key carrying its number and its picture. Its one
-   state — "this phrase is in the focused layer of the selected box" — is a
-   dot in the corner, and the dot is the accent, not a lamp with a glow. */
-.slot{
-  appearance:none;font:inherit;cursor:pointer;padding:var(--sp-2);
+/* THE PHRASE TRAY — a horizontal strip of phrase pads, not a grid (2026-08-17,
+   "make a tray for them"): the pads run in one row and the strip scrolls
+   sideways, the way the transport's own faders never wrap. Each pad is a
+   fixed width, so the strip's own length is the only thing that grows. */
+.slots{display:flex;gap:var(--sp-2);padding:0 var(--tbl-gut) var(--sp-2);
+  overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+/* a phrase pad: a flat key carrying its number and its picture, PLUS a small
+   corner cluster of its own — clone and x (below). The pad is a GROUP now,
+   not one button: .slotbody is the button (select + toggle into the focused
+   layer, everything the whole pad used to do), sized to fill the group so a
+   plain centre tap still lands on it; the icon cluster claims one corner on
+   top, never the centre. Its "in the focused layer" state is a dot in the
+   corner of .slotbody, and the dot is the accent, not a lamp with a glow. */
+.slot{flex:0 0 128px;position:relative}
+.slotbody{
+  appearance:none;font:inherit;cursor:pointer;width:100%;padding:var(--sp-2);
   position:relative;
   background:var(--bg-key);color:var(--ink);
   border:1px solid var(--rule);border-radius:var(--r);
   display:flex;flex-direction:column;gap:var(--sp-1);align-items:stretch;
 }
-.slot:hover{background:var(--bg-key-hi)}
-.slot::after{
+.slot:hover .slotbody{background:var(--bg-key-hi)}
+.slotbody::after{
   content:"";position:absolute;top:var(--sp-2);right:var(--sp-2);
   width:7px;height:7px;border-radius:50%;background:var(--rule-strong);
 }
-.slot.inbox::after{background:var(--accent)}
-.slot.sel{box-shadow:inset 0 0 0 2px var(--st-sel)}
+.slot.inbox .slotbody::after{background:var(--accent)}
+.slot.sel .slotbody{box-shadow:inset 0 0 0 2px var(--st-sel)}
+/* SOUNDING: the same state language as everywhere else on the machine — an
+   accent-family ring, this one in --st-live so it never reads as "selected"
+   even when a phrase is both open and playing. Wins the ring when both apply
+   (declared after .sel), which is the one thing that actually needs to be
+   true at a glance while transport is running. */
+.slot.live .slotbody{box-shadow:inset 0 0 0 2px var(--st-live)}
 .slot .sn{font:600 var(--t-md)/1 var(--f-num);color:var(--ink-3);text-align:left}
 .slot.sel .sn,.slot.inbox .sn{color:var(--accent-txt)}
 /* the picture is ONE svg path per pad — thumbPath's FILLED gate/velocity
@@ -488,12 +506,33 @@ h1 em{font-style:normal;color:var(--ink)}
 .mini{display:block;width:100%;height:38px}
 .mini path{fill:var(--v0)}
 .slot.sel .mini path{fill:var(--accent)}
-/* the two BANK KEYS on the rail: [+] grows it (to NSLOTS), [−] takes the
-   last phrase back. Dashed like .addbox — the same "this makes room, it is
-   not a pad" language the song rack already speaks. editor.js hides the one
-   with nothing to do (full bank / single phrase). */
+/* THE TRAY'S OWN PLAYHEAD — a thin vertical bar over the picture, moving
+   left-to-right with the same fraction the grid's own playhead reads
+   (ui/editor.js paintLive). Hidden unless the pad is actually sounding: no
+   stale position to hide, since JS only ever writes `left` while `.live`. */
+.phth{position:absolute;top:0;bottom:0;left:0;width:2px;
+  background:var(--st-live);pointer-events:none;display:none}
+.slot.live .phth{display:block}
+/* THE CORNER ICONS: clone (⧉) and x, overlaid outside .slotbody's own hit
+   area so a plain tap on the pad still selects it. */
+.slotico{position:absolute;top:var(--sp-1);right:var(--sp-1);
+  display:flex;gap:2px;z-index:1}
+.ico{appearance:none;cursor:pointer;padding:0;border:0;border-radius:var(--r);
+  width:22px;height:22px;display:flex;align-items:center;justify-content:center;
+  background:color-mix(in srgb,var(--bg-key) 55%,transparent);color:var(--ink-3)}
+.ico:hover{background:var(--bg-key-hi);color:var(--ink)}
+.ico .k{width:11px;height:11px;background:currentColor;
+  -webkit-mask:var(--ikm) center/contain no-repeat;mask:var(--ikm) center/contain no-repeat}
+.ico-copy{--ikm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Crect x='1' y='1' width='8' height='8' rx='1.2' fill='none' stroke='%23000' stroke-width='1.3'/%3E%3Crect x='5' y='5' width='8' height='8' rx='1.2' fill='none' stroke='%23000' stroke-width='1.3'/%3E%3C/svg%3E")}
+.ico-x{--ikm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M2.5 2.5l9 9M11.5 2.5l-9 9' stroke='%23000' stroke-width='1.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E")}
+@media (pointer:coarse){.ico{width:44px;height:44px}}
+/* the ONE bank key left: [+] grows the tray (to NSLOTS). Shrinking is PER
+   PHRASE now (each pad's own x, ui/editor.js deletePhrase) rather than
+   tail-only, so there is no paired [−] any more. Dashed like .addbox — the
+   same "this makes room, it is not a pad" language the song rack speaks.
+   editor.js hides this key with nothing left to do (a full bank). */
 .slotadd{
-  appearance:none;cursor:pointer;min-height:100%;
+  appearance:none;cursor:pointer;flex:0 0 64px;
   font:600 20px/1 var(--f-num);color:var(--ink-3);
   display:flex;align-items:center;justify-content:center;
   background:none;border:1px dashed var(--rule-strong);border-radius:var(--r);
@@ -511,13 +550,19 @@ h1 em{font-style:normal;color:var(--ink)}
    The well, the sticky header, the numeral column, the beat ruling and the
    row hover are the .tbl component (top of this file); what is here is the
    column template and the 909 pad. */
-.steps{flex:1 1 auto;min-height:160px;padding:0 var(--tbl-gut)}
+/* BOUNDED, not just min-height'd (2026-08-17, "page or scroll the grid" — a
+   phrase is up to 128 steps now, and the grid must scroll ITSELF rather than
+   pushing the tray below it off-screen). `.tbl`'s own overflow:auto is what
+   does the scrolling; this is only the cap that makes it engage. */
+.steps{flex:1 1 auto;min-height:160px;max-height:min(58vh,640px);
+  padding:0 var(--tbl-gut)}
 /* A PAGE'S ROWS, not a popup's: the modal's 26px crouch is gone with the
    modal. 34px keeps sixteen rows on one phone screen-and-a-bit while every
    bar and numeral reads at arm's length; the desk block widens the columns
    and goes to 38px (still under the audio gate's 40px ceiling — the tracker
-   stays a tracker, not a spreadsheet). */
-.stepgrid{display:grid;gap:2px;padding:0;--tbl-rowh:36px;
+   stays a tracker, not a spreadsheet). position:relative is only for the
+   playhead below — it is the one absolutely-positioned thing in here. */
+.stepgrid{display:grid;gap:2px;padding:0;position:relative;--tbl-rowh:36px;
   grid-template-columns:26px repeat(3,minmax(30px,52px)) repeat(5,minmax(34px,1fr));
   grid-template-rows:auto;grid-auto-rows:minmax(36px,auto)}
 .prow{display:contents}
@@ -527,12 +572,33 @@ h1 em{font-style:normal;color:var(--ink)}
    "oct" and "vel" are not recoverable from a value, and a tracker you have
    to guess at is not self-evident, it is just unlabelled. So the names stay
    — as ordinary quiet text in the ink hierarchy, in the case they were
-   written in, with no sticky band, no rule under them and no silkscreen. */
-.rowlab{display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:1px;padding:0 2px var(--sp-2);cursor:default;
+   written in, with no sticky band, no rule under them and no silkscreen.
+   THE RANGE THAT USED TO RIDE A SECOND LINE UNDER EACH NAME IS GONE
+   ("don't bother with numbers and ranges", Paul, 2026-08-17), and so is the
+   corner's "st" — .rowlab.corner prints nothing now, its aria-label carries
+   "step" for a screen reader alone. */
+.rowlab{display:flex;align-items:center;justify-content:center;
+  padding:0 2px var(--sp-2);cursor:default;
   font:500 var(--t-xs)/1.2 var(--f-ui);color:var(--ink-3)}
 .rowlab.corner{color:var(--ink-3)}
-.rowlab .rrange{font:400 11px/1 var(--f-num);color:var(--ink-3);opacity:.75}
+/* ALTERNATE ROW SHADING, the one legibility aid this table keeps now the
+   depth is gone — no bevel, no ridge, a plain wash every other row so a long
+   (up to 128-row) phrase still reads left-to-right without the eye losing
+   its place. The value columns tint off their OWN ground (--bg-sunk) so a
+   .deg cell's zebra never fights its bar; the switch columns tint off the
+   key ground, but never on a LIT cell — a lit cell's fill is the read, and
+   this must not dull it on an odd row. */
+.prow.alt>.cell.deg{background:color-mix(in srgb,var(--ink) 4%,var(--bg-sunk))}
+.prow.alt>.cell:not(.deg):not(.on){background:color-mix(in srgb,var(--ink) 4%,var(--bg-key))}
+.prow.alt>.tnum{background:color-mix(in srgb,var(--ink) 4%,transparent)}
+/* THE GRID'S OWN PLAYHEAD — a hairline that moves DOWN through the rows
+   while the OPEN phrase is the one sounding (ui/editor.js paintLive sets
+   --top as a percent of the grid's own height, header row included, which is
+   what lets one number place it without measuring layout). Hidden the rest
+   of the time: no stale row to leave lit. */
+.phhead{position:absolute;left:0;right:0;height:2px;top:0;
+  background:var(--st-live);pointer-events:none;display:none;z-index:3}
+.stepgrid.live .phhead{display:block}
 /* the step numeral is the row's own address — the .tnum column, colour-coded
    on every beat */
 .stepgrid .tnum{font-size:var(--t-xs)}
@@ -640,28 +706,48 @@ h1 em{font-style:normal;color:var(--ink)}
    bottom sheet, at every width. No scrim: the table is not covered, it is
    unfolded, and the open cell reads pressed (.openc). ui/songrow.js empties
    .rpmount and mounts the cell's own keys plus its banks (ui/palette.js
-   mountBanks). The head is the title and ✕. */
+   mountBanks). The head is the title and the shrink key. */
 .rowpop[hidden]{display:none}
 .rowpop{
   display:block;padding:0 var(--tbl-gut) var(--sp-4);
   border-bottom:1px solid var(--tbl-hair);
-  /* the fold is a quieter band of the same table, named by one accent bar on
-     its leading edge — the same 3px the sounding row wears, so "this is the
-     row you are inside" reads as the table's own language */
+  /* the fold is DARKER than the row it opens under, not just a quieter band
+     — "the boxes should be a lot darker than their parents" (Paul,
+     2026-08-16), so depth reads as TONE rather than as a bevel: --bg-sunk is
+     the one ground darker than --bg-surface (the row's own ground, via #song
+     .tbl), named by one accent bar on its leading edge — the same 3px the
+     sounding row wears, so "this is the row you are inside" reads as the
+     table's own language. */
   background:var(--bg-sunk);
   border-left:3px solid var(--accent);
   border-radius:0;border-top:0;border-right:0;
 }
+/* THE NESTED BANKS MUST NOT RE-LIGHTEN THE FOLD. Every bank group carries
+   class "tbl" (ui/palette.js) for its chip-ground tokens, and .tbl also
+   paints a background — bg-surface, lighter than the sunk fold it sits
+   inside. Stripped here so the fold's own darker ground shows through the
+   whole panel, gaps and all, not just around the chips. */
+.rpmount .pgroup.tbl{background:none}
 .rpcell{display:flex;flex-direction:column;gap:var(--sp-3);min-width:0}
-.rphead{display:flex;align-items:center;gap:var(--sp-2);min-width:0;
-  padding-top:var(--sp-3)}
+/* THE HEADER STICKS. "Keep the parent element or sub-element fixed... so I
+   always know where I am and can jump to the next submenu" (Paul,
+   2026-08-16): .rphead pins to the top of the scrolling deck (the nearest
+   scroll container — .deck has the overflow, not the page) while the panel's
+   own banks scroll past underneath it, own background so the scrolling
+   content never shows through the title. */
+.rphead{
+  display:flex;align-items:center;gap:var(--sp-2);min-width:0;
+  padding-top:var(--sp-3);
+  position:sticky;top:0;z-index:2;
+  background:var(--bg-sunk);
+}
 .rptitle{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   font:600 var(--t-md)/1.3 var(--f-ui);letter-spacing:.01em;color:var(--ink-2)}
 /* the menu keys are the shared flat key, sized for thumbs */
 .rpk{flex:0 0 auto;min-width:44px;min-height:44px;padding:0 var(--sp-3);
   font:600 var(--t-lg)/1 var(--f-num)}
-.rpplay{color:var(--on-accent);background:var(--accent);border-color:var(--accent)}
-.rpplay:hover{background:color-mix(in srgb,var(--accent) 88%,black)}
+.rpx{padding:0}
+.rpx svg{display:block;width:16px;height:16px}
 .rpbars{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-4);align-items:center}
 .rpstep{display:flex;align-items:center;gap:var(--sp-2)}
 .rpstep .rlab{font:500 var(--t-xs)/1 var(--f-ui);color:var(--ink-3)}
@@ -695,13 +781,11 @@ h1 em{font-style:normal;color:var(--ink)}
 @media (min-width:900px){
   .rpmount .pgroup{flex:1 1 300px}
 }
-/* THE PART MENU'S KEY ROW: the row-level operations in one rank — ▶, the
-   two movers, duplicate, pin, remove — every one at the 44px floor. The ✕
-   here is the only parent-level delete, and it takes the layer sub-rows with
-   the row. */
+/* THE # CELL'S KEY ROW: what is left of the row-level operations once
+   duplicate/play/pin moved to the header line's own icon keys — the two
+   movers and remove, every one at the 44px floor. The ✕ here is the only
+   parent-level delete, and it takes the layer sub-rows with the row. */
 .rpkeys{flex:1 0 100%;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.rpkeys .pini{display:block;width:15px;height:15px;fill:currentColor}
-.rpk.rppin.on{color:var(--accent-txt)}
 .rpk.rpdel{margin-left:auto}
 
 /* ---- the COMPOSE page ----
@@ -723,17 +807,16 @@ h1 em{font-style:normal;color:var(--ink)}
    VOICE · RHYTHM · TRANSITIONS · the PATTERN chips — each showing its
    compact current value, each opening its own focused popup (no TIMING
    cell: nothing in a section tells time — nudge and articulation live in
-   MODS). The row reads
-   as a summary line of the whole section; the popups carry the controls, so
-   nothing here needs a second line, a lamp strip or a tool pad.
-   THE GRID IS REAL AT EVERY WIDTH ("a section is a row of keys"): shared
-   column tracks under a silkscreen header row, so the same cell lines up
-   vertically across section rows. >=900px: nine fixed tracks, one line per
-   section (the desk block at the end). <900px: a TWO-DECK grid per row —
-   identity on line 1 (# · genre · function · bars · patterns), treatment on
-   line 2 (mods · voice · rhythm · trans) — with the header row
-   still present, its words abbreviated by the span swap (.hf/.ha). No
-   flex-wrap anywhere: a busy section never re-flows into prose. */
+   MODS). Four stacked lines now, exactly as Paul drew them (2026-08-16, "a
+   section is one shaded thing with its keys on top"): .bhead (# · genre ·
+   section type · duplicate · add-empty-below · play · pin — roughly his own
+   10/50/30 across the three data cells, the four action keys at their own
+   icon footprint), .bicons (bars · mods · voice · rhythm · transitions, an
+   icon and a bare count each), the .bchips phrase strip, then the sub-rows
+   and the [+ layer] key. Both .bhead and .bicons are FLEXBOX, not a
+   width-gated grid — they read the same at 390px and 1400px, just tighter,
+   so there is no phone/desk fork to keep in sync here any more (the desk
+   block at the end of this file still widens the type and the padding). */
 .songwrap{gap:var(--sp-5)}
 /* EDGE TO EDGE, and no cap. The 60vh well is gone with the frame: a song
    scrolling inside its own box, inside a page that also scrolls, was two
@@ -747,7 +830,7 @@ h1 em{font-style:normal;color:var(--ink)}
 /* flex:none, or the well's max-height SQUASHES the rows: #song is a column
    flex container with a height cap, so a song longer than the cap made every
    row shrink to its min-height. The cap belongs to the SCROLLBAR. */
-.box,.sfoot{flex:0 0 auto}
+.box{flex:0 0 auto}
 /* a SECTION IS A ROWGROUP now: its row, its layer sub-rows, and — while a
    cell menu is open — the menu row, moving together through every reorder.
    THE BLOCK IS THE UNIT OF DIVISION ("subsections are all piled up with
@@ -762,12 +845,60 @@ h1 em{font-style:normal;color:var(--ink)}
 .bgrp{flex:0 0 auto;display:flex;flex-direction:column;
   padding-bottom:var(--sp-4);border-bottom:2px solid var(--tbl-rule)}
 .bgrp>*{flex:0 0 auto}
+/* SELECTION IS THE WHOLE SECTION, not just its header line ("it's unsettling
+   ... the entire section should be slightly shaded and wrapped in a border",
+   Paul, 2026-08-16). :has() reaches up from the header's own .sel/.open state
+   (the shared four-states law, above in this file) to shade and ring the
+   ENTIRE rowgroup — header, sub-rows, every pattern strip, the [+ layer] key
+   — as one object, then cancels the header's own inner ring so there is never
+   a second border nested inside the first. */
+.bgrp:has(>.box.sel),.bgrp:has(>.box.open){
+  background:color-mix(in srgb,var(--accent) 6%,transparent);
+  box-shadow:inset 0 0 0 2px var(--accent);
+  border-radius:var(--r-lg);
+}
+.bgrp:has(>.box.sel)>.box.sel,.bgrp:has(>.box.open)>.box.open{
+  background:none;box-shadow:none;
+}
 .box{
   position:relative;min-height:0;padding:var(--sp-4) var(--tbl-gut) 0;
   cursor:pointer;background:transparent;
   border:0;
-  align-items:center;
+  display:flex;flex-direction:column;gap:var(--sp-2);
 }
+/* THE HEADER LINE: # · genre · section type · duplicate · add-empty-below ·
+   play · pin. The three data cells carry Paul's own rough weights (10/50/30);
+   the four action keys are fixed icon buttons, never flexed, so they hold
+   their AA-floor size at any width while genre/section type give up room. */
+.bhead{display:flex;align-items:center;gap:var(--sp-1);min-width:0}
+.bhead>.c-part{flex:1 1 20px;justify-content:center;min-width:22px;
+  padding:var(--sp-1) 2px}
+.bhead>.c-genre{flex:5 1 60px;min-width:0}
+.bhead>.c-role{flex:3 1 40px;min-width:0}
+/* THE ICON LINE: bars · mods · voice · rhythm · transitions, five equal
+   tracks at every width — an icon and a bare count, never a word. */
+.bicons{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:var(--sp-1)}
+.bicons>.bcell{justify-content:center;padding:var(--sp-2) var(--sp-1)}
+.bicons>.bcell .cvx{font:700 var(--t-md)/1 var(--f-num)}
+/* THE FOUR ACTION KEYS — always their own icon size, light material (not the
+   filled .bcell key) so the header reads as one row of TEXT with four small
+   controls riding along it, not five equal keys. */
+.bicon{
+  appearance:none;cursor:pointer;flex:0 0 auto;
+  min-width:40px;min-height:40px;padding:0;border-radius:var(--r);
+  display:flex;align-items:center;justify-content:center;
+  background:none;color:var(--ink-3);border:1px solid transparent;
+}
+.bicon svg{width:16px;height:16px}
+.bicon .pini{fill:currentColor}     /* PIN_SVG is a filled path, not a stroke */
+.bicon.biplay{font:700 var(--t-md)/1 var(--f-ui);color:var(--st-play)}
+.bicon:hover{background:var(--bg-key-hi);color:var(--accent-txt)}
+.bicon:active{background:var(--bg-key-lo)}
+.bicon:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+/* PIN LIT = this box loops alone — the same accent-fill law every latched
+   key on the machine wears, now that the lamp beside the numeral is gone. */
+.bicon.bipin.on{background:var(--accent);color:var(--on-ink);border-color:var(--accent)}
 /* A CELL IS A KEY, not a caption — one flat fill, no border stack, no
    travel. `.unset` quiets the "—" cells so the set facts read first, but the
    KEY stays: an unset cell is still a place you tap.
@@ -873,11 +1004,9 @@ h1 em{font-style:normal;color:var(--ink)}
    thickest thing the row paints on that edge, and vertical space is free. */
 .bchips{grid-column:1/-1;display:flex;gap:var(--sp-2);align-items:stretch;min-width:0;
   flex-wrap:wrap;padding:var(--sp-2) 0 var(--sp-3)}
-.bplab{align-self:center;flex:0 0 auto;
-  font:500 var(--t-xs)/1 var(--f-ui);color:var(--ink-3)}
-/* a layer that plays no pattern shows only its [+] — the silkscreen recedes
-   rather than labelling an empty strip */
-.bchips.none .bplab{opacity:.55}
+/* (no "ptn" tag here any more — "get rid of 'ptn'", 2026-08-16 — the strip
+   sits directly under its own row/sub-row and needs no word to say whose it
+   is; a layer that plays no pattern simply shows only its [+].) */
 .bch{
   appearance:none;cursor:pointer;padding:3px 4px;flex:0 1 auto;
   width:104px;height:46px;border-radius:var(--r);position:relative;
@@ -961,34 +1090,32 @@ h1 em{font-style:normal;color:var(--ink)}
 .bch.bplus.openc{border-style:solid;border-color:var(--accent);
   color:var(--accent-txt);background:var(--tbl-hi)}
 
-/* ---- TAKING A PATTERN OFF, ON THE ROW, VISIBLE AT REST ----
-   "There's no way to remove a pattern" (Paul, 2026-08-16). There was one — a
-   second tap on the lit thumbnail inside the bank behind [+] — and it might as
-   well not have existed, because nothing on screen said so. So every thumbnail
-   the section plays now carries its own ✕.
-   NOT floated in the corner of the 46px face: a small target laid over a big
-   one is the mis-tap the previous pass refused, and it was right to. This is an
-   ATTACHED LANE — the pair rides a .bchw wrapper, the drawing keeps its whole
-   face for the tap that opens Compose, and the ✕ stands beside it full-height
-   behind a dashed seam. Two zones, no overlap, 32 × 46 (× 52 on a desk), so
-   the thumb gets the entire height of the key as slop on the axis it misses on.
-   It is TRANSLUCENT rather than keyed, which is how it takes the sounding and
-   looped washes for free instead of needing a rule per row state. */
+/* ---- TAKING A PATTERN OFF, ON TOP OF THE THUMBNAIL, VISIBLE AT REST ----
+   "There's no way to remove a pattern" (Paul, 2026-08-16) got an ATTACHED
+   LANE the first time — a 32px key beside the face. Paul's next pass asked
+   for a normal dismiss badge riding ON TOP of the thumbnail instead ("as a
+   normal dismiss button... light on dark"), so the face keeps its full
+   104px/112px width (more of it stays a picture) and the ✕ becomes a small
+   light dot over the dark corner of the drawing — the same "light on dark"
+   language a badge always wears, done with --ink (light in this machine's
+   default dark face) over the thumbnail's own key ground, so it inverts
+   correctly if the theme ever does. It is a SIBLING of .bch, not a child —
+   a button cannot nest a button — laid over it with position:absolute inside
+   the still-relative .bchw wrapper; its own click stops propagation (btn()'s
+   own law), so it never steals the face's tap-to-Compose gesture. */
 .bchw{position:relative;display:inline-flex;align-items:stretch;
   flex:0 1 auto;min-width:0}
-.bchw .bch{border-top-right-radius:0;border-bottom-right-radius:0}
 .bcx{
-  appearance:none;cursor:pointer;flex:0 0 auto;
-  width:32px;min-height:46px;padding:0;margin-left:-1px;
+  appearance:none;cursor:pointer;
+  position:absolute;top:3px;right:3px;z-index:1;
+  width:22px;height:22px;padding:0;border-radius:50%;border:0;
   display:flex;align-items:center;justify-content:center;
-  border:1px solid var(--rule-strong);border-left:1px dashed var(--rule-strong);
-  border-radius:0 var(--r) var(--r) 0;
-  background:color-mix(in srgb,var(--ink) 6%,transparent);
-  color:var(--ink-3);font:600 var(--t-sm)/1 var(--f-num);
+  background:var(--ink);color:var(--bg-app);
+  font:700 12px/1 var(--f-num);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--bg-app) 55%,transparent);
 }
-.bcx:hover{color:var(--accent-txt);border-color:var(--accent)}
-.bcx:active{background:color-mix(in srgb,var(--ink) 15%,transparent);
-  color:var(--accent-txt)}
+.bcx:hover{background:var(--accent);color:var(--on-accent)}
+.bcx:active{transform:scale(.9)}
 .bcx:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 
 /* THE PHRASE BANK BEHIND [+] — the same thumbnails, in the menu row, where
@@ -1012,6 +1139,11 @@ h1 em{font-style:normal;color:var(--ink)}
    dragged. */
 .box.over{box-shadow:inset 0 3px 0 var(--accent)}
 .box.dragging{opacity:.4}
+/* THE RED FLAG (lane C1): a section with nothing switched into any of its
+   layers would play silent start to end. The genre cell carries the ring —
+   it is the identity cell, and the fact belongs beside the name it is true
+   of — in the machine's record colour, never repurposed for anything else. */
+.box.noplay .c-genre{box-shadow:inset 0 0 0 2px var(--st-rec)}
 /* ---- THE LAYER SUB-ROWS ----
    One per genre stacked on the authority ("every layer gets its own line"):
    carrying what a layer owns — its genre, its voice, its mods, its phrase
@@ -1041,7 +1173,6 @@ h1 em{font-style:normal;color:var(--ink)}
 .lrow[data-li="4"]{--lhue:var(--v3)}
 .lmark{color:var(--lhue);font:600 var(--t-md)/1 var(--f-num);text-align:center;
   justify-self:center}
-.lrow .bplab{color:var(--lhue)}
 .lrow.foc{background:var(--tbl-hi)}
 .lrow.foc .lmark{color:var(--accent-txt)}
 .lrow.live{background:var(--tbl-lit)}
@@ -1095,48 +1226,11 @@ h1 em{font-style:normal;color:var(--ink)}
    genre and where it is from, the length cell says "4 bars", the function
    cell says VERSE. The header was the table repeating itself in caps.
    The .shead grid placements below are gone with it; only .box is placed.) */
-/* THE PHONE SONG GRID — the two-deck row. Identity cells on line 1 (the
-   numeral, the genre across two tracks, the function, the bars, the pattern
-   chips trailing), treatment cells on line 2, indented past the numeral
-   column. Six shared tracks, so every key lines up vertically with every
-   other row — the grid is real, not a wrap. (It used to line up with the
-   header row too; the header is gone, so the grid answers only to itself.)
-   Scoped to <900px: these placements must never leak into the desk's
-   eight-track template. */
+/* THE PHONE SONG GRID. .box itself needs no width-scoped grid any more — it
+   is a plain flex column of .bhead/.bicons/.bchips at every width, above —
+   only the LAYER SUB-ROW still forks by width, because it is one grid of six
+   cells rather than two stacked flexbox lines. */
 @media (max-width:899px){
-  .box{
-    display:grid;
-    grid-template-columns:26px repeat(5,minmax(0,1fr));
-    gap:var(--sp-1);align-items:stretch;
-  }
-  /* EVERY PLACEMENT BELOW IS SCOPED TO ITS OWN GRID (`.box>` / `.lrow>`), and
-     that scoping is the bug fix ("subsections are all piled up with patterns
-     on top"). The cell classes are shared by the parent row and the layer
-     sub-rows, so the unscoped `.c-voice{grid-row:2;grid-column:3/span 2}`
-     written for the parent ALSO placed the sub-row's voice cell at row 2 —
-     where the sub-row's own pattern strip is placed, full width. Two things
-     in one grid area do not wrap or push: they OVERLAP. The strip was drawn
-     straight over the layer's voice and mods cells at every width under
-     900px, which is exactly what the pile looked like. */
-  /* line 1 is the IDENTITY line. BARS TOOK A SECOND TRACK from FUNCTION when
-     the header row died: the cell has to print its own column name now, and
-     "4 bars" was arriving as "4 ba…" in one track. The function word is the
-     shorter of the two (VERSE, DROP, CHORUS) and gives the width up. */
-  .box>.c-part{grid-row:1;grid-column:1}
-  .box>.c-genre{grid-row:1;grid-column:2/span 2}
-  .box>.c-role{grid-row:1;grid-column:4}
-  .box>.c-bars{grid-row:1;grid-column:5/span 2}
-  /* line 2 lost the TIMING cell (nothing in a section tells time): four
-     treatment cells over five tracks, and the freed room goes to VOICE —
-     the one cell carrying a real instrument name rather than a count */
-  .box>.c-mods{grid-row:2;grid-column:2}
-  .box>.c-voice{grid-row:2;grid-column:3/span 2}
-  .box>.c-rhythm{grid-row:2;grid-column:5}
-  .box>.c-trans{grid-row:2;grid-column:6}
-  /* line 3 is the PATTERN ROW, full width past the numeral column */
-  .box>.bchips{grid-row:3;grid-column:1/-1}
-  /* the part key holds the numeral centred */
-  .bcell.c-part{justify-content:center;padding:var(--sp-1) 2px}
   /* THE LAYER SUB-ROW READS DOWN, exactly like the section it sits inside:
      line 1 names the layer (↳ · genre · ✕), line 2 is its treatment (voice ·
      mods), line 3 is ITS patterns — indented past the ↳ so the strip starts
@@ -1151,21 +1245,11 @@ h1 em{font-style:normal;color:var(--ink)}
   .lrow>.c-mods{grid-row:2;grid-column:3/span 2}
   .lrow>.bchips{grid-row:3;grid-column:2/-1}
 }
-/* THE FOOTER ROW: duplicate and add. They are table keys, not sections, so
-   they get their own row under the last one. */
-.sfoot{display:flex;padding:var(--sp-3) var(--tbl-gut)}
-.sfootcell{display:flex;gap:var(--sp-2);flex-wrap:wrap}
-.addbox{
-  cursor:pointer;appearance:none;font:inherit;min-height:44px;padding:0 var(--sp-4);
-  display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);
-  background:none;color:var(--ink-3);
-  border:1px dashed var(--rule-strong);border-radius:var(--r);
-}
-.addbox:hover{border-color:var(--accent);color:var(--accent-txt)}
-.addbox.copy{border-style:solid;border-color:var(--rule)}
-.addbox.copy svg{width:17px;height:17px;fill:none;stroke:currentColor;
-  stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
-.addbox .ab{font:500 var(--t-sm)/1 var(--f-ui);letter-spacing:.01em}
+/* (THE FOOTER ROW IS GONE: duplicate and add-a-box used to sit here as table
+   keys of their own — "get rid of Duplicate and Add a box" at the bottom of
+   a section, Paul, 2026-08-16. Duplicate is a header key now; appending to
+   the very end of the song is just ADD-EMPTY-BELOW tapped on the last
+   section, so nothing standalone was needed to replace "add a box".) */
 .pchip.role.on{background:var(--accent);border-color:var(--accent);color:var(--on-ink)}
 
 /* ---- THE BOARD ----
@@ -1919,17 +2003,13 @@ body{padding:0}
     gap:var(--sp-2)}
   .slot{min-height:56px}
   .mini{height:30px}
-  /* THE SONG TABLE AT 390: the mm:ss clock drops from the length cell and the
-     gutters tighten — the TYPE HOLDS, and so does the UNIT WORD. "4" under a
-     BARS silkscreen was fine; with the header gone the cell has to say "4
-     bars" itself, so .bu is no longer droppable and only .bd is. */
-  .bbars .bd{display:none}
+  /* THE SONG TABLE AT 390: gutters tighten, the row keeps its icon+count
+     cells (BARS is a bare number now — nothing left to drop at this width). */
   .bcell{padding:var(--sp-2) var(--sp-2);gap:var(--sp-1)}
   .bch{width:92px}
   .bch.bbk{width:100px}
   /* the superimposed numeral scales with the face it rides */
   .bch .bcn{font-size:22px}
-  .addbox{flex:1 1 auto}
   /* THE BOARD AT 390: ONE STRIP PER ROW, full width, and NOTHING SHRINKS.
      The old board bought its narrow fit by cutting the strips to 76px and
      hiding what each chair was playing; a bar that prints its own name is
@@ -1973,30 +2053,22 @@ body{padding:0}
     grid-template-columns:30px repeat(3,minmax(38px,60px)) repeat(5,minmax(48px,1fr))}
   .cell .cv{font-size:var(--t-md)}
 
-  /* THE SONG TABLE, WITH ROOM — the cells stop wrapping and become FIXED
-     grid tracks, so every row's columns line up with the header and with
-     each other: an auto column sized to "BREAKDOWN" on one row and "VERSE"
-     on the next is a table that shimmers as the song changes. Eight tracks
-     (the pattern thumbnails moved to their own full-width row beneath), the
-     freed width dealt to the cells that carry words:
-     part · genre · function · bars · mods · voice · rhythm · transitions. */
-  .box{
-    display:grid;
-    grid-template-columns:40px minmax(160px,1.4fr) 120px 150px 100px
-      minmax(130px,1.2fr) 116px minmax(116px,1fr);
-    gap:0 var(--sp-2);align-items:center;
-    padding:var(--sp-3) var(--tbl-gut)}
+  /* THE SONG TABLE, WITH ROOM — .bhead/.bicons stay flexbox (they already
+     read the same at every width); the desk buys them a wider gutter and
+     bigger type rather than a different grid. */
+  .box{padding:var(--sp-3) var(--tbl-gut)}
+  .bhead{gap:var(--sp-2)}
   .bnum{font-size:var(--t-lg)}
   .bcell{padding:var(--sp-2) var(--sp-3)}
   .bcell.bgenre{font-size:21px}
+  .bicon{min-width:44px;min-height:44px}
+  .bicon svg{width:18px;height:18px}
   /* the pattern row gets the desk's chunkier thumbnails */
   .bchips{gap:8px;padding:8px 0 var(--sp-3)}
   .bch{width:128px;height:52px}
   .bch.bbk{width:128px;height:56px}
   .bch .bcn{font-size:30px}
   .bch.bplus{height:52px}
-  /* the remove lane grows with the key it is attached to */
-  .bcx{width:36px}
   /* the layer sub-row, with the desk's room: ↳ · genre · voice · mods · ✕ on
      one line, its pattern strip on the next — placed explicitly, and scoped
      to `.lrow>` for the same reason the phone block is (a bare `.c-voice`

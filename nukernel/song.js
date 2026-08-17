@@ -98,9 +98,21 @@
   const FALLBACK_GENRE = "simple";
 
   /* ---------- constructors ---------- */
-  const z = () => new Array(16).fill(0);
-  const blank = () => ({ deg: z(), oct: z(), vel: new Array(16).fill(5),
-                         inc: z(), stk: z(), gate: z(), acc: z(), sld: z() });
+  // A PHRASE'S LENGTH IS NOT SIXTEEN ANY MORE, it is 1..PHRASE_MAX ("phrases
+  // may be up to 128 steps" — ui/editor.js's own +/- grows and shrinks one in
+  // place, doubling/halving so the tracker pages or scrolls rather than
+  // shrinking its cells to nothing). There is no separate length FIELD: the
+  // length lives in the arrays themselves, the way it always has, and
+  // okPhrase below reads it off them rather than assuming. z()/blank() still
+  // default to sixteen — every existing caller writes `blank()` with no
+  // argument (compose.js, the bank pad, an old save's padding) and sixteen is
+  // still the right size for those; a caller that wants a different length
+  // (ui/editor.js resizing the OPEN phrase) passes one.
+  const PHRASE_MIN = 1, PHRASE_MAX = 128;
+  const z = (n) => new Array(n || 16).fill(0);
+  const blank = (n) => { n = n || 16;
+    return { deg: z(n), oct: z(n), vel: new Array(n).fill(5),
+             inc: z(n), stk: z(n), gate: z(n), acc: z(n), sld: z(n) }; };
 
   // A BOX CARRIES A STACK OF GENRES, not one. The FIRST is the authority: it
   // owns the harmony, the rate and the drums, and everything layered on top
@@ -251,8 +263,12 @@
     }
     // early saves predate the ramp vectors
     for (const p of Array.isArray(r.slots) ? r.slots : []) {
-      if (p && !p.inc) p.inc = z();
-      if (p && !p.stk) p.stk = z();
+      // a phrase old enough to be missing inc/stk is always sixteen, but
+      // reading its OWN length off deg (rather than assuming) is what keeps
+      // this line honest now that phrases stop being sixteen going forward
+      const n = p && Array.isArray(p.deg) ? p.deg.length : 16;
+      if (p && !p.inc) p.inc = z(n);
+      if (p && !p.stk) p.stk = z(n);
     }
     r.v = VERSION;
     return r;
@@ -263,9 +279,16 @@
   // `song` is a cleaned deep copy: ops/fx filtered, len/nudge clamped, short
   // slot banks padded with blanks. On !ok, errors[0] names the first field
   // that failed — show its path, do not shrug.
-  const okPhrase = p => p && typeof p === "object" &&
-    ["deg", "oct", "vel", "inc", "stk", "gate", "acc", "sld"].every(k =>
-      Array.isArray(p[k]) && p[k].length === 16 && p[k].every(Number.isFinite));
+  // EVERY VECTOR THE SAME LENGTH, and that length 1..PHRASE_MAX rather than
+  // pinned to sixteen. Read off `deg` (there is no separate length field to
+  // disagree with it), then every other vector is held to that same count.
+  const okPhrase = p => {
+    if (!p || typeof p !== "object" || !Array.isArray(p.deg)) return false;
+    const n = p.deg.length;
+    if (!Number.isInteger(n) || n < PHRASE_MIN || n > PHRASE_MAX) return false;
+    return ["deg", "oct", "vel", "inc", "stk", "gate", "acc", "sld"].every(k =>
+      Array.isArray(p[k]) && p[k].length === n && p[k].every(Number.isFinite));
+  };
 
   function validateSong(raw) {
     const errors = [];
@@ -296,7 +319,8 @@
           "1.." + NSLOTS + " phrases");
     else
       s.slots.forEach((p, i) => { if (!okPhrase(p))
-        err("slots[" + i + "]", p, "eight 16-step finite vectors"); });
+        err("slots[" + i + "]", p, "eight finite vectors, " +
+            PHRASE_MIN + ".." + PHRASE_MAX + " steps, all the same length"); });
 
     // ---- one enum value against the registry. oct arrives as a number or a
     // string; the table is keyed on strings, so read it through String().
@@ -697,6 +721,7 @@
   const load = raw => validateSong(migrate(raw));
 
   const api = { VERSION, FILTERED, blank, skeleton, emptyBox,
+                PHRASE_MIN, PHRASE_MAX,
                 SESSION_NS, isSessionKey, sessionKey, MAX_PARENTS, FALLBACK_GENRE,
                 migrate, validateSong, load };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
