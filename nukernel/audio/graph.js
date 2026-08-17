@@ -77,8 +77,11 @@ import { mixFor, laneKey } from "./machines.js";
 
 // exported as live bindings — null until initAudio(), which must ride a user
 // gesture because that is the autoplay law
+// (`noise` used to live here too — half a second of Math.random built on every
+// initAudio, for the one consumer that is now gone: the oscillator drum stubs in
+// audio/voices.js. The parent's own drum worklets make their own noise.)
 export let ctx = null, masterIn = null, bus = null, outGain = null,
-           topLP = null, noise = null;
+           topLP = null;
 export let REV = null, delBus = null, roomBus = null;
 export let SENDBUS = null, KIT = null;
 // THE REVERB BUS'S OWN INPUT, which the three convolution returns never had.
@@ -827,9 +830,6 @@ export function initAudio() {
   delBus = echo.input;
   setDelayTime(0.1875);
   applyBusSends();                      // the cross-rack, if the song asks for one
-  const nl = ctx.sampleRate * .5; noise = makeBuffer(1, nl, ctx.sampleRate);
-  const nd = noise.getChannelData(0);
-  for (let i = 0; i < nl; i++) nd[i] = Math.random() * 2 - 1;
   // survival.js attaches ctx.onstatechange off this event — the layer graph
   // forbids graph importing anything above itself, so it announces instead
   emit("audio:ctx", {});

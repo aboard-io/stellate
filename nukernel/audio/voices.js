@@ -11,7 +11,9 @@ import { GENRES, VOX, VOXPARAM, BASSSYNTH, SP, RANGES, STRETCH_UP,
          DYN_ATK } from "../ui/deps.js";
 import { SONG } from "../ui/state.js";
 import { stackOf } from "../ui/derive.js";
-import { ctx, bus, noise, buildVoiceChair } from "./graph.js";
+// `noise` is gone from this import with the oscillator stubs it fed: nothing in
+// this file makes a waveform any more, it only drives the engine's.
+import { ctx, bus, buildVoiceChair } from "./graph.js";
 import { mixFor, isMachine } from "./machines.js";
 import { FAUSTDIR, FONT, fontDef, isSynthFont, specOf, zoneBufs, drumBufs,
          inFlight } from "./assets.js";
@@ -387,14 +389,18 @@ function retireGains(gains, at) {
   setTimeout(() => { for (const g of gains) { try { g.disconnect(); } catch (e) {} } },
              (t0 - t) * 1000 + 700);
 }
+// BOTH POOLS' ROUTES. The stand-in voices below fan out per channel exactly as
+// the signature pool does, so a dropped channel has to take their gains with it
+// too — a route left pointing at a retired strip is a gain node holding a dead
+// desk alive, which is the leak this pair of calls exists to prevent.
 export function clearRoutes() {
-  for (const m of synthOut.values()) {
+  for (const map of [synthOut, standInOut]) for (const m of map.values()) {
     retireGains([...m.values()]);
     m.clear();
   }
 }
 export function dropRoute(chanKey, at) {
-  for (const m of synthOut.values()) {
+  for (const map of [synthOut, standInOut]) for (const m of map.values()) {
     const g = m.get(chanKey);
     if (g) { retireGains([g], at); m.delete(chanKey); }
   }
@@ -837,12 +843,29 @@ export function playDrum(kit, lane, when, acc, vel, chan) {
   return true;
 }
 
-/* ---------- the fallback voices, counted ---------- */
+/* ---------- the stand-in voices are the engine's voices, counted ---------- */
 export const hz = m => 440 * Math.pow(2, (m - 69) / 12);
-// They are the sound of something not covered by a real instrument, they fire
-// silently, and test/browser/nukernel-audio.test.js fails on any of them — but
-// only if it can tell them apart from the oscillators the effect LFOs now
-// legitimately start, which is what this counter is for.
+// A note whose own instrument is not there — a zone that never decoded, a kit
+// that is a directory nobody fetched, a genre naming a dsp nobody built — still
+// has to come out of an instrument. Until today it came out of two oscillators
+// and a biquad, and that is precisely the sound this page's own audio gate
+// exists to fail on: a beep standing in for a Rhodes is not a degraded Rhodes,
+// it is a beep, and a snare made of filtered noise is not a quiet snare.
+//
+// So the stand-in is the ENGINE's now. engine/faust/dist ships 175 precompiled
+// worklets and the pool at the top of this file already loads them, so a
+// pitched stand-in is `pad_saw` driven by the SAME driveSynth walk a signature
+// synth takes, and a drum stand-in is the parent's own voice for that lane —
+// the identical module engine/faust/voices/state-engine.js voiceUnits resolves
+// at the default kit models, driven with the identical three params
+// (level / decay / pitch) its mapEvents writes. Nothing here synthesizes.
+//
+// THE LEDGER SURVIVES THE REWRITE AND MEANS WHAT IT ALWAYS MEANT. It never
+// counted oscillators; it counted NOTES THAT HAD NO INSTRUMENT, and a note
+// that had no instrument is a coverage hole whether it beeps or plays a saw.
+// test/browser/nukernel-audio.test.js still fails on any of them, which is
+// right — the point of this rewrite is that the hole now sounds like music
+// while you find it, not that the hole stopped mattering.
 //
 // TWO LEDGERS, one per context class. window.__nuFallback is the FROZEN gate
 // contract and counts the LIVE page only; a fallback fired inside an offline
@@ -853,16 +876,104 @@ export const hz = m => 440 * Math.pow(2, (m - 69) / 12);
 window.__nuFallback = 0;
 export const offFallback = { n: 0 };
 const countFb = c => { if (!ctx || c === ctx) window.__nuFallback++; else offFallback.n++; };
-function nz(t, dur, hp, gain, chan, lane) {
-  const c = ctxOf(chan);
-  const s = c.createBufferSource(); s.buffer = noise;
-  const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp;
-  const g = c.createGain();
-  g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(.0008, t + dur);
-  // nz is only ever a DRUM noise, so it lands on that LANE's strip — placed and
-  // sent to the room like the sample it stands in for
-  s.connect(f); f.connect(g); g.connect(drumDest(chan, lane)); s.start(t); s.stop(t + dur + .02);
+
+// ---- the stand-in pool ------------------------------------------------------
+// Keyed on the DESTINATION — a voice index, a part name, a drum lane — and not
+// on the module, because the destination is what decides where the note lands:
+// the chair's own bus, the part's strip, the lane's strip. One node per address,
+// fanned out to every channel through a gain exactly as routeSynth does above:
+// the worklet is expensive and channel-blind, the route is cheap and per
+// channel. Same monophony law as the signature pool, too — a Faust mono dsp is
+// mono, so an address is one line; two voices are two addresses.
+//
+// THE GATE OPENS AT THE NOTE AND SHUTS AFTER IT. focusSynths does that job for
+// the signature pool on the bar a section starts; a stand-in note is a rare
+// short event belonging to no section, so it opens its own door and closes it.
+//
+// LIVE CONTEXT ONLY, and said out loud rather than papered over: building a
+// worklet is async and an OfflineAudioContext is scheduled and rendered in one
+// synchronous pass (audio/bounce.js), so there is no moment in a render at
+// which a node could arrive. An offline stand-in note is therefore SILENT and
+// COUNTED — offFallback -> __nuBounce's `fallbacks` — which is the drop law
+// this page already keeps everywhere else (silence over wrongness) and is
+// visible in the readout rather than quietly beeped.
+const standInNodes = new Map();                   // addr -> node | null (final)
+const standInOut = new Map();                     // addr -> Map(chanKey -> gain)
+const standInFails = new Map();                   // addr -> runs
+const standInLoading = new Set();
+async function loadStandIn(spec, addr) {
+  if (standInLoading.has(addr)) return;
+  standInLoading.add(addr);
+  try { standInNodes.set(addr, await makeSynthNode(ctx, spec)); standInFails.delete(addr); }
+  catch (e) {
+    // the same tri-state as loadSynth: absent = retry on the next note, null =
+    // final, so one flaky wasm fetch does not silence a lane for the session
+    const runs = (standInFails.get(addr) || 0) + 1;
+    standInFails.set(addr, runs);
+    if (runs >= SYNTH_MAXRUNS) standInNodes.set(addr, null);
+  }
+  standInLoading.delete(addr);
 }
+function standIn(spec, addr, chan, dest, when, tail) {
+  if (!standInNodes.has(addr)) { loadStandIn(spec, addr); return null; }   // in flight: drop it
+  const node = standInNodes.get(addr);
+  if (!node || !dest) return null;
+  let m = standInOut.get(addr);
+  if (!m) standInOut.set(addr, m = new Map());
+  const ck = (chan && chan.key != null) ? chan.key : "-";
+  let g = m.get(ck);
+  if (!g) { g = ctx.createGain(); g.gain.value = 0; node.connect(g); g.connect(dest); m.set(ck, g); }
+  // CANCEL THE PENDING CLOSE FIRST. Two hats a sixteenth apart both want this
+  // door, and the first one's shut is scheduled a whole decay later — left
+  // standing it would slam on the second note mid-ring. Each note therefore
+  // withdraws whatever is scheduled from its own instant onward and writes its
+  // own pair, so the door is open exactly as long as something is sounding.
+  const t0 = Math.max(0, when - 0.002);
+  try {
+    g.gain.cancelScheduledValues(t0);
+    g.gain.setValueAtTime(1, t0);
+    g.gain.setValueAtTime(0, when + tail);
+  } catch (e) {}
+  return node;
+}
+// `tone` is nukernel's WebAudio voicing — one filter, one envelope, one gain —
+// and every field of it has a pad_saw param. The two conversions that are not
+// identity are the ones audio/to-engine.js toneRecipe already uses to say the
+// same block to the same engine for the TAPE, so a stand-in note sounds the
+// same on the page as it does on the record. `wave` has nowhere to go (pad_saw
+// is saws) and `prev`/`sld` have nowhere either (the voice has no portamento,
+// only freq's own si.smoo) — both are dropped here rather than approximated.
+const toneSpec = (tone, padish, acc) => ({
+  dsp: "pad_saw", root: "pad_saw",
+  level: Math.min(1, Math.max(0.15, ((tone && tone.gain) || 0.26) * 2.2)),
+  set: {
+    cutoff: Math.min(12000, Math.max(80, ((tone && tone.cut) || 1400) * (acc ? 2.4 : 1))),
+    res: Math.min(0.9, Math.max(0, (((tone && tone.q) || 0.7) - 0.7) / 12)),
+    attack: Math.min(5, Math.max(0.005, (tone && tone.atk) || 0.01)),
+    detune: padish ? 0.012 : 0.006,
+  },
+});
+// nukernel's twelve lanes -> the parent's own drum voices, in two hops that are
+// both already written down: audio/to-engine.js LANE says which parent UNIT a
+// lane is (with its two substitutions named there — a pedal hat is the closed
+// hat quieter, three toms are one tom repitched), and state-engine voiceUnits
+// says which MODULE a unit resolves to at the parent's default kit models
+// (kick_boom / snare_noise / hat_noise, snare_crack for the rim, snare_clap
+// for the clap, hat_metal for both cymbals, tom for the perc lane).
+const STANDIN_DRUM = {
+  k: { dsp: "kick_boom",   dec: 0.30 },
+  s: { dsp: "snare_noise", dec: 0.25 },
+  p: { dsp: "snare_crack", dec: 0.15 },
+  c: { dsp: "snare_clap",  dec: 0.25 },
+  h: { dsp: "hat_noise",   dec: 0.10 },
+  o: { dsp: "hat_noise",   dec: 0.45 },
+  f: { dsp: "hat_noise",   dec: 0.09, gain: 0.62 },
+  r: { dsp: "hat_metal",   dec: 0.40 },
+  x: { dsp: "hat_metal",   dec: 1.40 },
+  t: { dsp: "tom", dec: 0.28, pitch: 132 },
+  m: { dsp: "tom", dec: 0.28, pitch: 105 },
+  l: { dsp: "tom", dec: 0.32, pitch: 88 },
+};
 // WHERE A PITCHED SOURCE LANDS, the counterpart of drumDest above: a voice
 // index takes its chair's strip, a string names a part outright ("bass"), and
 // neither (or a channel from before the desk) is the section input.
@@ -877,61 +988,47 @@ export function line(t, n, dur, acc, sld, prev, tone, padish, vel, chan, where) 
   if (lvl <= 0.001) return;                       // a completed fade-out is silence
   const c = ctxOf(chan);
   countFb(c);
-  const o = c.createOscillator(), o2 = c.createOscillator();
-  const f = c.createBiquadFilter(), g = c.createGain();
-  o.type = o2.type = tone.wave; o2.detune.value = padish ? 9 : 4;
-  if (sld && prev != null) {
-    o.frequency.setValueAtTime(hz(prev), t); o2.frequency.setValueAtTime(hz(prev), t);
-    const e = t + Math.min(.11, dur * .55);
-    o.frequency.exponentialRampToValueAtTime(hz(n), e);
-    o2.frequency.exponentialRampToValueAtTime(hz(n), e);
-  } else { o.frequency.setValueAtTime(hz(n), t); o2.frequency.setValueAtTime(hz(n), t); }
-  f.type = "lowpass"; f.Q.value = tone.q;
-  const co = tone.cut * (acc ? 2.4 : 1);
-  f.frequency.setValueAtTime(Math.min(11000, co * 3.4), t);
-  f.frequency.exponentialRampToValueAtTime(Math.max(160, co), t + Math.max(.06, dur * .85));
-  const pk = tone.gain * (0.18 + 0.82 * lvl) * (acc ? 1.12 : 1);
-  g.gain.setValueAtTime(.0001, t);
-  g.gain.linearRampToValueAtTime(pk, t + tone.atk);
-  g.gain.setValueAtTime(pk, t + Math.max(tone.atk, dur * .7));
-  g.gain.exponentialRampToValueAtTime(.0008, t + dur + tone.rel * .25);
-  const dest = pitchDest(chan, where);
-  o.connect(f); o2.connect(f); f.connect(g); g.connect(dest);
-  const off = t + dur + tone.rel * .25 + .05;
-  o.start(t); o2.start(t); o.stop(off); o2.stop(off);
+  if (!ctx || c !== ctx) return;                  // offline: counted above, silent by law
+  const spec = toneSpec(tone, padish, acc);
+  // ONE ADDRESS PER CHAIR — `where` is the voice index the caller was already
+  // routing by, so two chairs standing in at once are two nodes and the
+  // counterpoint survives, exactly as the signature pool's dsp#voice key does.
+  const node = standIn(spec, "p:" + (where == null ? "-" : where), chan,
+                       pitchDest(chan, where), t, dur + 0.3);
+  if (!node) return;                              // in flight, or finally dead: drop it
+  // the SAME parameter walk a signature synth takes — the fold-or-refuse law,
+  // the velocity knobs, the gate pair. A stand-in that wrote its own would be a
+  // second opinion about what velocity means.
+  driveSynth(node, spec, n, t, dur, acc, sld, vel, null);
 }
+// ALL TWELVE LANES VOICE, and none of them is a stub any more. The kit grew to
+// twelve while the oscillator branch knew six, so a kit that failed to decode
+// played a fill with holes in it; STANDIN_DRUM above covers every lane the
+// tracker can write, because the parent has a real voice for every one.
 export function hit(t, d, acc, vel, chan) {
   const lvl = (vel == null ? 5 : vel) / 9;
   if (lvl <= 0.001) return;
   const c = ctxOf(chan);
   countFb(c);
-  const dest = drumDest(chan, d);
-  const a = (acc ? 1.15 : .85) * (0.45 + 0.55 * lvl) * laneTrim(chan, d);
-  if (d === "k") { const o = c.createOscillator(), g = c.createGain();
-    o.frequency.setValueAtTime(126, t); o.frequency.exponentialRampToValueAtTime(43, t + .09);
-    g.gain.setValueAtTime(.95 * a, t); g.gain.exponentialRampToValueAtTime(.001, t + .34);
-    o.connect(g); g.connect(dest); o.start(t); o.stop(t + .36); }
-  else if (d === "s") { nz(t, .19, 900, .42 * a, chan, d);
-    const o = c.createOscillator(), g = c.createGain(); o.type = "triangle";
-    o.frequency.setValueAtTime(196, t);
-    g.gain.setValueAtTime(.3 * a, t); g.gain.exponentialRampToValueAtTime(.001, t + .13);
-    o.connect(g); g.connect(dest); o.start(t); o.stop(t + .15); }
-  else if (d === "c") { [0, .011, .023].forEach(o2 => nz(t + o2, .1, 1400, .3 * a, chan, d)); }
-  else if (d === "o") { nz(t, .26, 6600, .14 * a, chan, d); }
-  else if (d === "h") { nz(t, .035, 7800, .13 * a, chan, d); }
-  else if (d === "p") { nz(t, .05, 2600, .16 * a, chan, d); }
-  // THE SIX NEW LANES GET STUBS TOO. The kit grew to twelve and this stub knew
-  // six of them, so a kit that failed to decode played a fill with holes in it
-  // — silently, since a lane with no branch here simply made no sound. Still a
-  // last resort (every one of these counts as a fallback voice and the audio
-  // gate fails on any of them); still better than a fill missing its toms.
-  else if (d === "t" || d === "m" || d === "l") {
-    const o = c.createOscillator(), g = c.createGain(); o.type = "sine";
-    const f0 = d === "t" ? 260 : d === "m" ? 190 : 130;
-    o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f0 * 0.62, t + .18);
-    g.gain.setValueAtTime(.55 * a, t); g.gain.exponentialRampToValueAtTime(.001, t + .3);
-    o.connect(g); g.connect(dest); o.start(t); o.stop(t + .32); }
-  else if (d === "r") { nz(t, .5, 5200, .1 * a, chan, d); }
-  else if (d === "x") { nz(t, 1.1, 3600, .18 * a, chan, d); }
-  else if (d === "f") { nz(t, .045, 6200, .12 * a, chan, d); }
+  if (!ctx || c !== ctx) return;                  // offline: counted above, silent by law
+  const L = STANDIN_DRUM[d];
+  if (!L) return;                                 // a lane the parent cannot voice: see the report
+  const spec = { dsp: L.dsp, root: L.dsp, level: 1, set: {} };
+  const node = standIn(spec, "d:" + d, chan, drumDest(chan, d), t, L.dec + 0.25);
+  if (!node) return;
+  // state-engine mapEvents' own writes for a synth drum, and only those:
+  // level (the unit level times the hit's amp), decay (how long it rings) and
+  // pitch (the tom's one knob). The gate is a button — impulsify wants an edge,
+  // so it is raised at the hit and dropped a frame later.
+  const a = (acc ? 1.15 : .85) * (0.45 + 0.55 * lvl) * (L.gain || 1) * laneTrim(chan, d);
+  const set = (nm, v) => {
+    const p = node.parameters.get("/" + L.dsp + "/" + nm);
+    if (p) p.setValueAtTime(v, t);
+  };
+  set("level", Math.min(2, Math.max(0, a)));
+  set("decay", L.dec);
+  if (L.pitch) set("pitch", L.pitch);
+  set("gate", 1);
+  const gate = node.parameters.get("/" + L.dsp + "/gate");
+  if (gate) gate.setValueAtTime(0, t + 0.02);
 }
