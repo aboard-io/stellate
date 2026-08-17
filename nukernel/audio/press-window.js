@@ -313,6 +313,14 @@ export async function pressWindow(bars, opts) {
       bars: rb, bpm, seed: 1, kit: kitOf(sec),
       seat: (v) => seats[v] || null,
       bass: { instr: (POOL && POOL.bass) || BASS_INSTR, synth: bs, tone: null },
+      // THE ROOM IS THE DESK'S, NOT THE PARENT'S. toEngine defaults the master
+      // fx scalars to 0.4/0.2 — a reverb and a delay the LIVE graph does not
+      // have, because live the engine's voices play into nukernel's own channel
+      // strips and their sends. Leaving them on put a second room on the tape
+      // and nowhere else: measured 2026-08-17, that was +3 dB of wet the ear had
+      // not been listening to. The band comes back dry and audio/bounce.js's
+      // desk pass sends it to the halls the box actually asked for.
+      reverb: 0, delay: 0,
     }, { SE, K, E });
     for (const u of t.unrouted) unrouted.push({ ...u, box: run.si });
     // the parent's own mapper: state + events -> unit-addressed schedule
@@ -358,7 +366,14 @@ export async function pressWindow(bars, opts) {
   // master compressor arrive at the seam carrying real state; their OUTPUT is
   // not ours. Everything after is exactly one window's worth of tape.
   const preSec = bars.slice(0, preBars).reduce((n, b) => n + b.barSteps * sd, 0);
-  const skip = Math.round(preSec * SR);
+  // …UNLESS THE CALLER STILL HAS A DESK TO RUN. The window's output is not the
+  // tape: audio/bounce.js puts it through the box's own strip and the song's
+  // master, and those carry state — a compressor, a room, a tape wobble — that
+  // has to be warm by the time the kept bars arrive, for exactly the reason the
+  // pre-roll is rendered in the first place. So `keepPre` hands the pre-roll
+  // back with the rest and `pre` says how many frames to drop once the desk has
+  // heard them. Absent, every existing caller gets the same bytes as before.
+  const skip = o.keepPre ? 0 : Math.round(preSec * SR);
 
   // ---- 4. drive the parent's offline walk ------------------------------------
   const sched = { events, found, sweeps, units, spb,
@@ -367,7 +382,7 @@ export async function pressWindow(bars, opts) {
   const chs = path === "worker"
     ? await pressOnWorker(first, sched, idPath, skip)
     : await pressOnThisThread(first, sched, idPath, skip);
-  return { chs, n: chs[0].length,
+  return { chs, n: chs[0].length, pre: Math.round(preSec * SR),
            unrouted, missing, lanes: [...lanes], units: Object.keys(units).length,
            procMs: Math.round(performance.now() - t0) };
 }

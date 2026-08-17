@@ -349,7 +349,12 @@ export function buildEq(c, bands, spec) {
 // composed beatles pinned at the limiter threshold, rock peaking OVER full
 // scale, crest 4.8 dB). The trim puts the sum back where the chain was
 // designed to receive it; the glue then glues and the limiter is a net.
-const MASTER_HEADROOM = 0.2;
+// EXPORTED because the TAPE has to stage against it. audio/bounce.js feeds the
+// press's finished stereo mix into a strip whose master then trims by this
+// number, so the tape's own trim is 1/this and not a second opinion about it:
+// move the headroom and the carrier moves with it, which is the only way the
+// two paths stay at one level.
+export const MASTER_HEADROOM = 0.2;
 export function buildMasterChain(c, master, dest) {
   const M = resolveMaster(master);
   const input = c.createGain();
