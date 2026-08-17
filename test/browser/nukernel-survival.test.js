@@ -108,18 +108,29 @@ function taps() {
   await page.goto(`http://localhost:${PORT}/nukernel/kernel-daw.html`,
     { waitUntil: "networkidle" });
 
+  // ONE PAGE AT A TIME, AT EVERY WIDTH ("one interface at every width",
+  // 2026-08-16): the deck shows the current page and hides the other three, so
+  // a control on another page is display:none — a focus() lands nowhere and a
+  // click times out. Every hop is the rail key a finger would press.
+  const goPage = async (p, n) => {
+    await p.click(`.pkey[data-page="${n}"]`);
+    await p.waitForFunction(
+      (x) => document.getElementById("chassis").dataset.page === x, n,
+      { timeout: 10000 });
+  };
   // THE PHRASE EDITOR IS THE COMPOSE PAGE ("compose, arrange, mix",
   // 2026-08-16): .slot and #seed live on it, reached through a PATTERN
-  // thumbnail on the row — the tap NAVIGATES (data-page flips to "compose";
-  // at this desk viewport every page is visible anyway, so nothing covers
-  // the deck and closeEditor has nothing left to close).
+  // thumbnail on the row — the tap NAVIGATES (data-page flips to "compose").
+  // Closing it is the ARRANGE key, because openEditor's own first act is a
+  // click on a row that exists only there.
   const openEditor = async (p) => {
+    await goPage(p, "song");
     await p.locator(".box").first().locator(".bch").first().click();
     await p.waitForFunction(() =>
       document.getElementById("chassis").dataset.page === "compose",
       null, { timeout: 10000 });
   };
-  const closeEditor = async (p) => {};
+  const closeEditor = async (p) => { await goPage(p, "song"); };
 
   // one phrase in the one box, and play — the same entry the audio gate uses.
   // The default song ships phrase 1 already ON in box 1 (the fresh page must
@@ -352,10 +363,24 @@ function taps() {
         fail(`hidden with a ready bounce: the carrier did not take over ` +
              `(carrying ${c1.b.carrying}, volume ${c1.b.elVolume}, paused ${c1.b.elPaused})`);
       else ok(`hidden with a ready bounce: the element is PLAYING at volume ${c1.b.elVolume}`);
-      if (c1.rms > RMS_FLOOR)
-        fail(`the graph still sounds while the element carries (RMS ${c1.rms.toFixed(4)}) — ` +
-             `double playback in the pocket`);
-      else ok("the graph is muted while the element carries");
+      // MUTED **OR** PARKED, and this gate's own analyser is why the second
+      // one has to be named. Since "the song plays like a radio" a desk that
+      // has ALREADY handed over does not mute again on hide — survival.js's
+      // carrier-first branch returns early and the room is PARKED instead
+      // (graph.js parkGraph: `outGain.disconnect(ctx.destination)`), which is
+      // cheaper and exactly as inaudible: nothing reaches a speaker. But the
+      // disconnect names the destination, so the extra edge taps() added at the
+      // top of this file — outGain → OUR analyser — survives it, and an
+      // analyser with no output is on the automatic-pull list, so it goes on
+      // pulling the whole chain and reading it at full level. Measured: 0.0911
+      // out of a graph that reaches nothing. So the question is asked of the
+      // PATH rather than of our own instrument, and the failure it exists to
+      // catch — a graph that is neither muted nor parked while the tape is up —
+      // still fails.
+      if (!c1.b.parked && c1.rms > RMS_FLOOR)
+        fail(`the graph still sounds while the element carries (RMS ${c1.rms.toFixed(4)}, ` +
+             `not parked) — double playback in the pocket`);
+      else ok(`the graph is ${c1.b.parked ? "parked" : "muted"} while the element carries`);
       // ADVANCE IS MEASURED ON THE LOOP, NOT ON THE NUMBER. The carrier is a
       // LOOPING element — that is the whole point of the insurance tape — so
       // `t1 > t0` is only true when the 600 ms window happens to miss the wrap.
@@ -516,6 +541,7 @@ function taps() {
         if ((await k.getAttribute("data-value")) !== (want || ""))
           fail(`the rack knob #${id} never reached "${want}" by keyboard`);
       };
+      await goPage(page, "mix");           // the rack is on the board's own page
       for (const [id, v] of [["m-drive", "dirt"], ["m-tape", "worn"],
                              ["m-space", "hall"], ["m-tilt", "dark"],
                              ["m-width", "huge"], ["m-glue", "pump"],
@@ -560,6 +586,7 @@ function taps() {
       for (const id of ["m-drive", "m-tape", "m-space", "m-tilt", "m-width",
                         "m-glue", "m-ceiling"])
         await setKnob(id, "");
+      await goPage(page, "song");          // ...and the deck goes back where it was
       await page.waitForTimeout(500);
       const back = await page.evaluate(() => window.__nuMix().master);
       // seven nodes: input, busComp, makeup, limiter, lp, SAFETY, out — the

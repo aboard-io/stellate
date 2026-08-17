@@ -169,6 +169,27 @@ function taps() {
     await page.keyboard.press("Escape");
     await page.waitForSelector("#rowpop", { state: "hidden" });
   };
+  // ONE PAGE AT A TIME, AT EVERY WIDTH ("one interface at every width",
+  // 2026-08-16). This gate used to lean on a desk viewport showing all four
+  // pages at once; the deck no longer has that branch, so a surface belonging
+  // to another page is not merely scrolled away, it is display:none and
+  // unclickable. Every hop below is the rail key a finger would press, and it
+  // waits for the chassis to agree rather than for a stopwatch.
+  const goPage = async (p) => {
+    await page.click(`.pkey[data-page="${p}"]`);
+    await page.waitForFunction(
+      (n) => document.getElementById("chassis").dataset.page === n, p,
+      { timeout: 10000 });
+  };
+  // ...and the SESSION DRAWER on the Mix page is a closed <details> ("move all
+  // the sound definition and saving functionality into mix"), so #preset,
+  // #font, #savefile and friends are hidden until it is opened.
+  const openSession = async () => {
+    await page.evaluate(() => {
+      const d = document.getElementById("preset").closest("details");
+      if (d && !d.open) d.open = true;
+    });
+  };
   // A GENRE LABEL IS NO LONGER UNIQUE ON THE PAGE. The lab bench lists the same
   // dated anchors as its parent chips, so every city-and-year string exists
   // twice: once in the box's genre popover, once on the bench. Both are real
@@ -194,16 +215,18 @@ function taps() {
   // THE PHRASE EDITOR IS THE COMPOSE PAGE ("compose, arrange, mix",
   // 2026-08-16): #stepgrid / .slot / #seed live on it, reached the way a
   // finger reaches them — a PATTERN thumbnail on the row NAVIGATES there
-  // (data-page flips to "compose"; at this desk viewport every page is
-  // visible anyway, so the deck is never covered and closeEditor has
-  // nothing left to close).
+  // (data-page flips to "compose"), and closing it is the ARRANGE key —
+  // openEditor's own first act is a click on a row that only exists on that
+  // page, so leaving the deck showing Compose left every later `.box` gesture
+  // clicking at something display:none.
   const openEditor = async () => {
+    await goPage("song");
     await page.locator(".box").first().locator(".bch").first().click();
     await page.waitForFunction(() =>
       document.getElementById("chassis").dataset.page === "compose",
       null, { timeout: 10000 });
   };
-  const closeEditor = async () => {};
+  const closeEditor = async () => { await goPage("song"); };
 
   // one phrase, in the one box, for every genre in turn. The default song
   // ships phrase 1 already switched ON in box 1 now (the fresh page must
@@ -314,10 +337,26 @@ function taps() {
   if (out.length) fail(`${out.length} freq write(s) outside the declared range entirely`);
   else ok("no freq write exceeds its range");
 
-  // (B) it makes a sound
+  // (B) it makes a sound.
+  //
+  // THE FIVE FUNCTION GENRES ARE HELD TO THE SILENCE FLOOR, not the band one.
+  // Solo, Vocal, Backing vocals, Riff and Pad are PARTS — one instrument
+  // written to be stacked on a host, which is what genres.js says they are and
+  // what the unit gate's §40 measures them stacked for. Alone they are a
+  // player in an empty room: Riff is twenty palm-muted guitar notes in four
+  // bars, and it reads 0.0013 against a 0.01 floor calibrated on full bands.
+  // That is quiet; it is not silence, which is ~1e-4 and an order of magnitude
+  // below it. So the question asked of a part is the question this gate is
+  // for — did anything come out at all — and the band floor stays exactly
+  // where it is for the eighty-two genres that are bands.
+  // DERIVED from the data tier, like the sweep list itself: the parts family
+  // is a fact about genres.js, not a literal to keep in step by hand.
+  const PARTS = new Set(Object.values(NG.GENRES)
+    .filter(g => g.family === "parts").map(g => g.label));
   for (const g of GENRES) {
-    if (seen.rms[g] >= RMS_FLOOR) ok(`${g}: peak RMS ${seen.rms[g]}`);
-    else fail(`${g}: peak RMS ${seen.rms[g]} — that is silence (floor ${RMS_FLOOR})`);
+    const floor = PARTS.has(g) ? 5e-4 : RMS_FLOOR;
+    if (seen.rms[g] >= floor) ok(`${g}: peak RMS ${seen.rms[g]}`);
+    else fail(`${g}: peak RMS ${seen.rms[g]} — that is silence (floor ${floor})`);
   }
 
   // (D) THE EDGES STILL TRIM. Length and nudge are the only controls with no
@@ -407,6 +446,7 @@ function taps() {
     await chip("New Orleans 1991").click();              // take the previous one off
     await closeCell();
     await row(0).dblclick();                             // loops it AND starts it
+    await goPage("mix");                                 // the board is its own page now
     await secCell("fx");                                 // the chain stays open
     for (const f of ["chorus", "tape echo"]) await mchip(f).click();
     await page.keyboard.press("Escape");
@@ -633,6 +673,8 @@ function taps() {
       const v = document.getElementById("vol");
       v.value = "37"; v.dispatchEvent(new Event("input", { bubbles: true }));
     });
+    await goPage("mix");                 // the songs picker moved onto the board
+    await openSession();                 // ...inside its own closed drawer
     const first = await page.locator("#preset option").nth(1).getAttribute("value");
     await page.selectOption("#preset", first);
     await page.waitForTimeout(300);
@@ -643,6 +685,7 @@ function taps() {
     await page.selectOption("#composeg", "rock");
     await page.click("#compose");
     await page.waitForTimeout(400);
+    await goPage("song");                // ...and the sections are read on Arrange
     const roles = await page.locator(".box .role").allTextContents();
     const readout = await page.locator("#readout").textContent();
     if (/rejected/.test(readout))
@@ -812,8 +855,13 @@ function taps() {
         down: Math.round(s2.top - s1.top), across: Math.round(deg.left - gate.left),
         rowH: Math.round(s1.height), vel, bip };
     });
-    if (ed.role !== "grid" || ed.rows !== 17 || ed.colh !== 9 || ed.rowh !== 16 || ed.cells !== 128)
-      fail("the pattern editor is not a 16-row × 8-column table: " + JSON.stringify(
+    // NINE VECTOR COLUMNS, not eight: the ninth is `orn`, the column of
+    // glyphs a hand writes a grace, a flam or a roll into ("a note can lean,
+    // slide, flam or pass"). So sixteen step rows carry 16 × 9 = 144
+    // gridcells under 10 column headers — nine vectors plus the step column's
+    // own corner — and the row headers are unchanged at sixteen.
+    if (ed.role !== "grid" || ed.rows !== 17 || ed.colh !== 10 || ed.rowh !== 16 || ed.cells !== 144)
+      fail("the pattern editor is not a 16-row × 9-column table: " + JSON.stringify(
         { role: ed.role, rows: ed.rows, colh: ed.colh, rowh: ed.rowh, cells: ed.cells }));
     else ok(`the editor popup is a table: ${ed.rows - 1} step rows × ${ed.colh - 1} vector ` +
             `columns (${ed.cells} gridcells, ${ed.rowh} rowheaders)`);
@@ -1005,15 +1053,26 @@ function taps() {
     const label = await first.getAttribute("aria-label");
     const bars = +(String(label).match(/(\d+) bars/) || [0, 0])[1];
     const cell = (await first.locator(".bbars").textContent()).trim();
+    // A BARE COUNT ON THE GLASS, THE WORDS IN THE ACCESSIBLE NAME. Five of the
+    // eight cells print an icon and a number and nothing else now ("get rid of
+    // all the metadata") — the word "bars" moved into the cell's own
+    // aria-label, which is the one place a screen reader still hears it, so
+    // that is where it is asked for. The DURATION CLOCK this used to require
+    // beside it is not hiding anywhere: it was retired outright, because
+    // NOTHING IN A SECTION TELLS TIME any more — a section's length is bars,
+    // and the tempo that turns bars into seconds is the song's (ui/songrow.js
+    // says so in its own header).
+    const cellName = (await first.locator(".bbars").getAttribute("aria-label")) || "";
     const s1 = await sideways();
     if (!(bars > 20))
       fail(`the bars stepper never lengthened the section past 20 bars ` +
            `(${before} -> ${label})`);
-    else if (!new RegExp("(^|\\D)" + bars + " bars\\b").test(cell))
+    else if (!new RegExp("(^|\\D)" + bars + "(\\D|$)").test(cell))
       fail(`the bars cell does not read the section's length: "${cell}" ` +
            `for a ${bars}-bar section`);
-    else if (!/\d+:\d\d/.test(cell))
-      fail(`the bars cell does not say how long the section runs: "${cell}"`);
+    else if (!new RegExp("(^|\\D)" + bars + " bars\\b").test(cellName))
+      fail(`the bars cell's accessible name lost the word: "${cellName}" ` +
+           `for a ${bars}-bar section`);
     else if (s1.scroll > s1.client)
       fail(`a ${bars}-bar section made the table scroll sideways ` +
            `(${s1.scroll} > ${s1.client}) — the row is encoding duration as width again`);

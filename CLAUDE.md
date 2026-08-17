@@ -535,16 +535,16 @@ docs in `docs/`.
     `npm run test:unit` runs them (concurrently, via `test/run.js`); before that
     runner existed nothing globbed them at all and gates only ever ran if
     somebody named the file.
-  - `test/browser/` (46) + `test/starcruise/` (8) — the gates that launch real
+  - `test/browser/` (47) + `test/starcruise/` (8) — the gates that launch real
     chromium via `test/lib/probe-harness.js`. `npm run test:browser` globs
     exactly these two folders and nothing else. They `goto /index.html` (or
     `test/browser/live-test.html`, the FaustLive harness page) and read the
     `window.__` debug hooks. `starcruise/` is the WebGL 3D-flight cohort;
     its three PURE proofs live in `unit/` (`flight`/`planet`/`traits`), which is
     what keeps the browser glob true.
-  - `test/probes/` (7) — `<name>.probe.js`, hand-run instruments, not gates and
+  - `test/probes/` (8) — `<name>.probe.js`, hand-run instruments, not gates and
     in no npm script (`reverb` `wah` `mbcomp` `autotune` are offline faust;
-    `modeld` `synthfont` `vapor` drive chromium).
+    `modeld` `synthfont` `vapor` `nukernel-return` drive chromium).
   - `test/lib/` — shared, never executed as a gate: `probe-harness.js` (static
     server + chromium + `ensureStarcruise`), `fixtures.js` (the KERNEL-V4
     byte-stability harness), `comment-only.js`, `margin-baseline.json`.
@@ -578,13 +578,20 @@ docs in `docs/`.
 
 ## nukernel/ — the song-box instrument
 
-A self-contained mobile hardware DAW inside stellate: 45 genres, a miniature
+A self-contained mobile hardware DAW inside stellate: **87 genres**, a miniature
 kernel of its own. Live at test.stellate.app/nukernel/kernel-daw.html; gates at
-`node test/unit/nukernel.test.js` (~95k checks, 15 s) and browser
+`node test/unit/nukernel.test.js` (~418k checks, ~2 min) and browser
 `test/browser/nukernel-audio.test.js` + `nukernel-survival.test.js`.
 
+**Two tables live OUTSIDE genres.js and every new anchor needs a row in both:**
+`compose.js` PLAN_OF (dance/song/arc) and BPM. There is no fallback on purpose
+("NO SILENT DEFAULTS"), so a genre added without them throws the moment anyone
+presses WRITE — and `nukernel/promote-genre.js` splices both at the LANDMARK
+comment each table ends with (never at the last data row: a batch of new genres
+would move it).
+
 **Architecture (one-way):** classic UMD data tier — `kernel.js` (algebra) →
-`genres.js` (45 anchors with per-genre instruments) → `fields.js` (THE REGISTRY:
+`genres.js` (87 anchors with per-genre instruments) → `fields.js` (THE REGISTRY:
 every control defined once, validation/defaults/palette rows/dispatch derive from
 it) → `song.js` (pure loader, typed errors, clamping) → `instruments.js` →
 `compose.js` → `presets.js`. ES modules for UI/audio: `ui/deps.js` →
@@ -592,12 +599,19 @@ state (adoptSong/commit bus, bpm/vol in state) → derive → `audio/` modules
 (graph/assets/voices/mixer/transport/bounce/survival) → UI views → `main.js`.
 Audio never imports a view; transport publishes position.
 
-**Transforms are seven types:** 1–5 from the original kernel plus 6. `g.period` —
-a per-bar operator word (a section speaks in sentences) and 7. `pipes` —
-harmonize/echoCanon/breathe/strum on the rendered stream. Progressions are chord
-OBJECTS (root/quality/inversion/borrow/beats + cadence); `maxHold` makes rests
-real; parts (lead/riff/counter/pad/stab/drone) replace the pad switch; `g.key`
-transposes after registration.
+**Transform types:** the original kernel's five, plus `g.period` — a per-bar
+operator word (a section speaks in sentences); `pipes` —
+harmonize/echoCanon/breathe/strum on the rendered stream; `orn` — the MARKS a
+hand writes on a step (grace/flam/roll) and the PASS a genre declares
+(pass/approach/grace/flam/roll), read in render() after the performance layer
+and before the tie fold; and the DRUM PHRASE — a phrase's second kind
+(`kind:"drum"`), a seven-lane grid over kernel.js DRUM_LANES that OVERRIDES the
+section's kit at drums()'s own choke point. Progressions are chord OBJECTS
+(root/quality/inversion/borrow/beats + cadence); `maxHold` makes rests real;
+parts (lead/riff/counter/pad/stab/drone) replace the pad switch; `key` is a BOX
+field carrying the record's own tonic (compose.js derives one per genre and
+stamps every section; the truck-driver lift and the relative-minor bridge are
+the only things that move off it), applied after registration.
 
 **Mobile survival via offline bounce:** the song is a closed finite loop, so
 `bounce.js` renders it whole on an OfflineAudioContext through the same
@@ -606,9 +620,16 @@ builders/bar-walk as live, keeps it looping muted in a gesture-unlocked `<audio>
 matching phase. Degrades to sampled-only, never silent. Channels are per-box
 identity; automation is point lists armed per pass.
 
-**Design language (as of 2026-08-16):** one ROW per section with named cells and
-tap-for-popup menus. Three pages (COMPOSE / ARRANGE / MIX) — compose is the
-pattern editor, arrange is the section rows, mix is the board. No tracker
+**Design language (as of 2026-08-17):** one ROW per section with named cells and
+tap-for-popup menus. FOUR pages (COMPOSE / ARRANGE / MIX / LAB) — compose is the
+phrase editor and its tray, arrange is the section rows, mix is the board (and,
+since "move all the sound definition and saving functionality into mix", the
+instrument pool and the session bank in two drawers), lab is the genre bench.
+**ONE LAYOUT AT EVERY WIDTH**: a wide window gets wider columns, never a second
+view — one page shows and the other three are `display:none`, which is why a
+gate must click the rail key before touching a surface on another page. Every
+page has a URL (`#/compose/<n>` `#/song/<n>` `#/mix/<n>` `#/lab`, ui/pages.js),
+and the rail keys are real `<a href>`. No tracker
 interface; menus insert below the row, never scrolling inside themselves. Type
 runs big and chunky; pattern chips are visual thumbnails. Stacked genre layers
 render as indented sub-rows. No tempo-reading control on section surfaces — tempo
@@ -617,20 +638,28 @@ and groove are song facts in the transport. NO headers, NO help keys, NO skeuomo
 **Verify at the SCORE level**, not by rendering audio: anything a schedule/DOM
 assertion can prove is proven pure-node in seconds.
 
-**Files:** `kernel.js` (125 KB, the algebra), `genres.js` (198 KB, 45 anchors),
-`fields.js` (67 KB, registry), `song.js` (40 KB, loader), `instruments.js` (29 KB),
-`compose.js` (104 KB), `presets.js` (49 KB), `lab.js` (79 KB, workbench),
-`promote-genre.js` (24 KB), `inherit.js` (33 KB), `genealogy.js` (16 KB), `sing.js`
-(22 KB), `hw.css` (10 KB), `kernel-daw.html` (16 KB), `kernel-daw.css` (124 KB),
+**Files:** `kernel.js` (144 KB, the algebra), `genres.js` (254 KB, 87 anchors),
+`fields.js` (75 KB, registry), `song.js` (41 KB, loader), `instruments.js` (29 KB),
+`compose.js` (108 KB), `presets.js` (49 KB), `lab.js` (78 KB, workbench),
+`promote-genre.js` (26 KB), `inherit.js` (33 KB), `genealogy.js` (17 KB), `sing.js`
+(22 KB), `hw.css` (11 KB), `kernel-daw.html` (19 KB), `kernel-daw.css` (130 KB),
 `audio/` (bounce/survival/voices/transport/mixer/graph/assets), `ui/` (views), docs
 `GENEALOGY.md` + `INHERITANCE.md`.
 
-**Gates and this box:** the 45-genre `nukernel-audio` sweep takes ~20 minutes on
+**Gates and this box:** `nukernel-audio` sweeps EVERY genre (the list is derived
+from genres.js, so it grew from 45 to 87 with the rooms) and now takes the better
+part of an hour on
 a sustained-idle box; something about this machine's environment reaps long-lived
 chromium under load. Instruments decode on a 60 ms-yield queue, so settle timing
 matters — short probes may read silence that longer settles read as audible. Run
 sweeps only when loadavg < 1 for 2+ minutes; never conclude "silent genre" from
-a fast probe.
+a fast probe. AND EVERY BROWSER GATE MUST NAVIGATE: since the single-layout
+shell landed, `nukernel-audio` and `nukernel-survival` carry a `goPage()` helper
+and hop to the page a surface lives on before touching it. `nukernel-drums`
+(its `deskUI` clicks `.mrow` cells on the MIX page) and `nukernel-groove` (it
+drives `#preset`/`#groove`/`#swing`, now inside a CLOSED `<details>` on Mix)
+have NOT been given one and are expected to fail on actionability until they
+are — a fix, not a mystery.
 
 ## Deployment
 

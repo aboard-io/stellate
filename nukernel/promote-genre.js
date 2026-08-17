@@ -62,6 +62,7 @@ const LAB = require("./lab.js");
 const NG = require("./genres.js");
 const NK = require("./kernel.js");
 const NS = require("./song.js");
+const NC = require("./compose.js");        // for PLAN_OF — the plan is inherited, not invented
 const { GENRES } = NG;
 
 const GENRES_JS = path.join(ROOT, "genres.js");
@@ -311,8 +312,21 @@ function spliceFamily(src, fam, key) {
   return src.slice(0, m.index) + "\n" + lines.join("\n") + src.slice(m.index + m[0].length);
 }
 
-// the tempo row, at the end of the BPM table where the newest entries already go
-const BPM_END = "solo: 128, vocal: 96, backing: 84, riff: 112, pad: 74 };";
+// the two compose.js rows, at the LANDMARK each table now carries. The old
+// anchor was the parts row's own text ("solo: 128, … pad: 74 };"), which was
+// the end of the BPM table right up until twenty-nine genres landed under it
+// — and then this tool refused to write anything at all. compose.js ends both
+// tables with a comment that says what it is for, and a comment cannot stop
+// being the last line of the thing it closes.
+//
+// AND THE PLAN, not just the tempo. compose() reads PLAN_OF[gk] and PLANS
+// with no fallback on purpose ("NO SILENT DEFAULTS"), so a genre promoted with
+// a tempo and no plan threw the moment anyone pressed WRITE on it. A promoted
+// genre arranges the way its DOMINANT PARENT arranges: the bench already
+// decided which parent that is, and a record's shape is the most inherited
+// thing about it.
+const PLAN_END = "    // PROMOTED PLANS GO ABOVE THIS LINE";
+const BPM_END = "                // PROMOTED TEMPOS GO ABOVE THIS LINE";
 
 /* ------------------------------------------------------------------ the run */
 function readRecipe(argv) {
@@ -373,18 +387,27 @@ function promote(opts) {
     "roots, the words — was drafted by the dice at this seed and kept.";
 
   const anchor = anchorText(key, cand, { seed: built.seed, why });
-  const bpmRow = "solo: 128, vocal: 96, backing: 84, riff: 112, pad: 74,\n" +
+  const bpmRow =
     "                // promoted from the LAB bench: the tempo its parents\n" +
     "                // average to (nukernel/lab.js combineBpm)\n" +
-    "                " + key + ": " + bpm + " };";
+    "                " + key + ": " + bpm + ",\n" + BPM_END;
+  // the plan comes from the dominant parent, and it must be one the table has
+  const plan = NC.PLAN_OF[built.dominant];
+  if (!plan)
+    throw new Error("promote: " + built.dominant + " has no plan to inherit");
+  const planRow =
+    "    // promoted from the LAB bench: it arranges the way its dominant\n" +
+    "    // parent " + built.dominant + " arranges\n" +
+    "    " + key + ": " + JSON.stringify(plan) + ",\n" + PLAN_END;
 
   let g = fs.readFileSync(opts.genres || GENRES_JS, "utf8");
   g = spliceOnce(g, GENRES_END, "\n\n" + anchor + GENRES_END, "the end of the GENRES table");
   g = spliceFamily(g, fam, key);
   let c = fs.readFileSync(opts.compose || COMPOSE_JS, "utf8");
+  c = spliceOnce(c, PLAN_END, planRow, "the end of the compose.js PLAN_OF table");
   c = spliceOnce(c, BPM_END, bpmRow, "the end of the compose.js BPM table");
 
-  return { key, fam, bpm, anchor, candidate: cand, genres: g, compose: c,
+  return { key, fam, bpm, plan, anchor, candidate: cand, genres: g, compose: c,
            label: cand.label, dominant: built.dominant };
 }
 
@@ -452,6 +475,10 @@ function run(argv) {
   verify(r.compose, cfile, mod => {
     if (mod.BPM[r.key] !== r.bpm)
       throw new Error("promote: the spliced BPM row reads " + mod.BPM[r.key]);
+    // ...and the plan, because a genre with a tempo and no plan is a genre
+    // that throws the first time anyone presses WRITE on it
+    if (mod.PLAN_OF[r.key] !== r.plan)
+      throw new Error("promote: the spliced PLAN_OF row reads " + mod.PLAN_OF[r.key]);
   });
   if (opts.write) {
     fs.writeFileSync(gfile, r.genres);

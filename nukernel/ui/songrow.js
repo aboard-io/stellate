@@ -83,7 +83,15 @@ import { toggle, mountBanks, refreshChips } from "./palette.js";
 // drawing of a phrase — a MINIATURE OF THE COMPOSE GRID, so a preview looks
 // like the thing you tap it to edit — shared with the Compose bank's pads so
 // both surfaces agree what a phrase looks like.
-import { openPhraseEditor, thumbPath } from "./editor.js";
+import { openPhraseEditor, thumbPath, thumbPathDrum } from "./editor.js";
+
+// ...and a phrase has TWO kinds now ("a drum phrase is a phrase you can hear
+// the machine in"), so there are two drawings and the row picks by kind the
+// same way the Compose tray does. Without this every one of the three call
+// sites below read `p.gate.length` off a phrase that has no gate vector at
+// all — the first drum phrase anyone added threw inside the store's own emit,
+// which is a place a throw takes the whole commit with it.
+const chipPath = p => (p && p.kind === "drum") ? thumbPathDrum(p) : thumbPath(p);
 
 const songEl = document.getElementById("song");
 // TABLE SEMANTICS, honestly and everywhere: each section is a ROWGROUP now
@@ -735,7 +743,7 @@ function patchChips(sec, i, slots, holder, layerWord) {
     c.b.classList.toggle("sel", i === viewSec && slot === c.si);
     const p = SLOTS[c.si];
     if (p) {
-      const d = thumbPath(p);
+      const d = chipPath(p);
       if (c.line.getAttribute("d") !== d) c.line.setAttribute("d", d);
     }
     c.b.setAttribute("aria-label", "phrase " + (c.si + 1) +
@@ -1070,7 +1078,7 @@ function patchBank() {
     c.b.setAttribute("aria-pressed", String(inLayer));
     const p = SLOTS[c.si];
     if (p) {
-      const d = thumbPath(p);
+      const d = chipPath(p);
       if (c.line.getAttribute("d") !== d) c.line.setAttribute("d", d);
     }
     c.b.setAttribute("aria-label", "phrase " + (c.si + 1) +
@@ -1222,7 +1230,7 @@ export function paintProgress(si, frac) {
 function patchChipPaths() {
   const p = SLOTS[slot];
   if (!p) return;
-  const d = thumbPath(p);
+  const d = chipPath(p);
   const paint = holder => {
     for (const c of holder.chips)
       if (c.si === slot && c.line.getAttribute("d") !== d) c.line.setAttribute("d", d);

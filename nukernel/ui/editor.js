@@ -126,7 +126,16 @@ const clearBtn = ikBtn("clear", "btn ik ik-clear", "clear phrase", "empty this p
 // SWING lives here too, not as a ninth column: a drum pattern's shuffle is
 // one setting for the whole grid, the way a real machine's dial is one knob
 // — shown only while a drum pattern is open (patchGrid).
-const swingBtn = ikBtn("swing", "btn ik ik-swing", "pattern swing", "cycle this pattern's shuffle");
+//
+// #pswing, NOT #swing: the SONG's swing picker is a <select id="swing"> in the
+// session drawer on the Mix page, and the two ids collided the moment both
+// lanes landed. Document order decides that fight and this page is built
+// first, so the button would have shadowed the select for every
+// getElementById("swing") in ui/chrome.js and for the `#swing` selector
+// nukernel-groove.test.js drives — the song's shuffle picker, silently dead.
+// A pattern's shuffle and a song's shuffle are different settings; they get
+// different names.
+const swingBtn = ikBtn("pswing", "btn ik ik-swing", "pattern swing", "cycle this pattern's shuffle");
 head.append(edslotEl, mk("span", "spacer"), shrinkBtn, growBtn, swingBtn, seedBtn, rndBtn, clearBtn);
 
 const stepsWell = mk("div", "steps tbl");

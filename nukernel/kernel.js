@@ -800,7 +800,17 @@
     return b => {
       let s = memo.get(b);
       if (s) return s;
-      const root = (g.harmony === "cycle" && !g.diatonic) ? mp(harm(subj, g, b), md) : 0;
+      // `g.roots` is asked for, not assumed. A CYCLE genre normally carries a
+      // roots schedule and harm() reads it — but a box that names a `prog` on
+      // a MODAL genre (ui/derive.js, the depth surface) turns harmony to
+      // "cycle" and supplies the progression INSTEAD of a roots vector, which
+      // is exactly the shape chordsOf's own first branch already steps around.
+      // Without the guard the ornament alphabet was the one reader that did
+      // not, and every prog chip on a modal genre threw inside render().
+      // Nothing shifts for a genre that does carry roots, so no rendered
+      // ornament moves.
+      const root = (g.harmony === "cycle" && !g.diatonic && g.roots)
+        ? mp(harm(subj, g, b), md) : 0;
       s = new Set(sc.map(x => pcw(x + root + key)));
       if (g.harmony === "cycle")
         for (const c of chordsOf(subj, g, b)) for (const n of c.pcs) s.add(pcw(n + key));

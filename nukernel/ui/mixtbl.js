@@ -222,8 +222,19 @@ const SECCOLS = [
 // bands down the strip and you find the send you want by colour before you
 // have read a word.
 const KEYORD = ["lvl", "pan", "rev", "echo", "room", "verb", "dtime", "fx"];
-const colsOf = row => [...(row.sect ? [...COLS, ...SECCOLS] : COLS)]
-  .sort((a, b) => KEYORD.indexOf(a.key) - KEYORD.indexOf(b.key));
+// ONE BAR PER KEY, and the LAST declaration wins. `fx` is declared twice —
+// fields.js PARTMIX still carries it (so every track strip draws one) and
+// SECCOLS above declares it again for the section strip — so the section drew
+// TWO identical group-insert bars, one of them without the labels, and every
+// selector aimed at it matched both. The SECCOLS one survives because it is
+// the declaration written for this surface and it carries the words the bar
+// reads out.
+const colsOf = row => {
+  const by = new Map();
+  for (const f of (row.sect ? [...COLS, ...SECCOLS] : COLS)) by.set(f.key, f);
+  return [...by.values()]
+    .sort((a, b) => KEYORD.indexOf(a.key) - KEYORD.indexOf(b.key));
+};
 // THE FAMILY of each value key — the hue token kernel-daw.css spends. One hue
 // per family, and a hue never means two things.
 const FAM = { lvl: "level", pan: "pan", rev: "send", echo: "send",

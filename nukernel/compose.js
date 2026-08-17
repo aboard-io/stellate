@@ -248,6 +248,44 @@
     // a solo composing its own record is the degenerate case, and the plan
     // should say so rather than pretend it is a pop song.)
     solo: "arc", vocal: "arc", backing: "arc", riff: "arc", pad: "arc",
+    // THE TWENTY-NINE ROOMS added 2026-08-17. Their own lane could not write
+    // this table (it owned genres.js and nothing else), so the registration
+    // lands here, and the split is the same one the dial made: a record that
+    // BUILDS and DROPS is a dance, a record with a verse and a chorus is a
+    // song, and a record that is one shape is an arc.
+    //
+    // The four dance records are the ones a DJ plays: big beat and EBM are
+    // floor music with a breakdown where a bridge would be, drill is trap's
+    // half-time grandchild, reggaeton is a dembow that never stops, bigroom
+    // is a genre named after its drop and clubpop is a twelve-inch with a
+    // singer on it. K-POP IS A SONG and that is the one to argue with: it has
+    // the biggest dance break of anything here, but everything around the
+    // break is verse-prechorus-chorus, and losing that would lose the genre.
+    //
+    // Three arcs. The hymn is a chorale — one text, one shape, no chorus to
+    // come back to. Motorik is one pulse held for eight minutes while things
+    // arrive on top of it (its parent minimalism is an arc for the same
+    // reason, and like minimalism it is NOT steady: the process goes
+    // somewhere). A jam band's record is one crescendo with the solos inside
+    // it, which is exactly what the arc plan is.
+    //
+    // Everything else is a song, because everything else was written to be
+    // sung twice.
+    hymn: "arc", motorik: "arc", jamband: "arc",
+    bigbeat: "dance", drill: "dance", clubpop: "dance", reggaeton: "dance",
+    bigroom: "dance", ebm: "dance",
+    crooner: "song", yuletide: "song", merseybeat: "song", psychpop: "song",
+    powerballad: "song", retrofunkpop: "song", latinpop: "song", kpop: "song",
+    boyband: "song", emo: "song", screamo: "song", confessionalpop: "song",
+    darkrnb: "song", blueeyedsoul: "song", folkduo: "song", worldfolk: "song",
+    sophistirock: "song", roboticpop: "song", industrialmetal: "song",
+    synthduo: "song",
+    // PROMOTED PLANS GO ABOVE THIS LINE — a landmark for promote-genre.js,
+    // which has to write both of these tables and can only anchor on text
+    // that is already here. Its old anchor was the parts row's own words;
+    // twenty-nine rooms later that row was no longer the end of the table and
+    // the tool refused to write at all. A landmark cannot stop being the end
+    // of the thing it marks.
   };
   // Where a genre wants to sit, in bpm. The tempo control tops out at 160 and
   // bottoms at 70, and a composer that leaves everything at 126 has not arranged
@@ -282,7 +320,27 @@
                 // played over an up record, a singer is slower than the band
                 // behind them, a riff is a mid-tempo thing and a pad has
                 // nowhere to be
-                solo: 128, vocal: 96, backing: 84, riff: 112, pad: 74 };
+                solo: 128, vocal: 96, backing: 84, riff: 112, pad: 74,
+                // ...and the twenty-nine rooms, at the tempo the room is. The
+                // dial's floor is 70 and its ceiling 160, so the two ends sit
+                // ON the fence rather than past it: darkrnb is a half-time
+                // record whose real pulse is 70 counted slow, and screamo and
+                // merseybeat rush the way punk and skiffle already do. 96 is
+                // the folk duo's guitar, 116 is the Graceland lope, 144 is a
+                // motorik eighth-note at the speed the pulse stops being
+                // heard as separate hits, and 128 is where every four-to-the-
+                // floor record in this batch agrees to meet.
+                hymn: 72, crooner: 88, yuletide: 84, merseybeat: 148,
+                psychpop: 112, bigbeat: 132, drill: 142, clubpop: 120,
+                powerballad: 76, retrofunkpop: 116, reggaeton: 94,
+                latinpop: 102, kpop: 128, boyband: 96, emo: 148, screamo: 152,
+                confessionalpop: 118, darkrnb: 70, bigroom: 128,
+                blueeyedsoul: 104, folkduo: 96, worldfolk: 116, jamband: 108,
+                sophistirock: 104, motorik: 144, roboticpop: 120,
+                industrialmetal: 126, ebm: 134, synthduo: 122,
+                // PROMOTED TEMPOS GO ABOVE THIS LINE — the same landmark
+                // PLAN_OF carries, for the same reason.
+              };
 
   // ---- HOW LONG A SECTION IS -----------------------------------------------
   // MEASURED, and backwards: a section was `G.bars` — the genre's own FORM
