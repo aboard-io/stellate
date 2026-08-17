@@ -280,6 +280,30 @@
     darkrnb: "song", blueeyedsoul: "song", folkduo: "song", worldfolk: "song",
     sophistirock: "song", roboticpop: "song", industrialmetal: "song",
     synthduo: "song",
+    // TWENTY-THREE MORE ROOMS, added 2026-08-17 by the same lane that wrote
+    // genres.js's own comment block for them — the split is the wave-1 split
+    // again: a record that builds and drops is a dance, one shape end to end
+    // is an arc, everything else was written to be sung twice. SIX are
+    // dance: the four machine-floor rooms (melodic techno, bleep techno,
+    // industrial breaks, dance post-punk) plus the two baggy/indie-dance
+    // crossovers that put a band ON that same floor (madchester, indie
+    // dance) — none of the six has a bridge, all six have a drop. ONE is an
+    // arc: space rock is postrock's own shape, not drone's — a slow line
+    // that DOES go somewhere, the same guitar-solo climb postrock already
+    // arcs into, so it takes the ordinary arc curve below and stays off
+    // `STEADY` (that list is for the two genres that refuse to arrive
+    // anywhere at all). The other SIXTEEN are
+    // songs, gothsynth and analogsynthpop included — a verse-chorus record
+    // played on a different synthesizer is still a verse-chorus record; the
+    // synth is a fact about the INSTRUMENT, not about the FORM.
+    musichallrock: "song", orchpsych: "song", altcountry: "song",
+    yachtsoul: "song", yachtrock: "song", songwriterpiano: "song",
+    softfolk: "song", singersongwriter: "song", coastrock: "song",
+    spacerock: "arc", grebo: "song",
+    melodictechno: "dance", bleeptechno: "dance", industrialbreaks: "dance",
+    industrialrock: "song", analogsynthpop: "song", gothsynth: "song",
+    gothicpop: "song", postpunk: "song", dancepostpunk: "dance",
+    madchester: "dance", janglepop: "song", indiedance: "dance",
     // PROMOTED PLANS GO ABOVE THIS LINE — a landmark for promote-genre.js,
     // which has to write both of these tables and can only anchor on text
     // that is already here. Its old anchor was the parts row's own words;
@@ -338,6 +362,30 @@
                 blueeyedsoul: 104, folkduo: 96, worldfolk: 116, jamband: 108,
                 sophistirock: 104, motorik: 144, roboticpop: 120,
                 industrialmetal: 126, ebm: 134, synthduo: 122,
+                // ...and the twenty-three rooms added 2026-08-17, at the
+                // tempo the record actually sits at. 70 (space rock) and 148
+                // (grebo) are the two that sit ON the fence rather than past
+                // it — a Floyd side breathes slower than the dial's floor
+                // wants to admit, and a Stourbridge grebo record is punk's
+                // own top speed. 82/88 are the two acoustic ballads (Tapestry
+                // counted slow, "Sweet Baby James" a hair up from it); 148 is
+                // Joy Division's own rush, the same number skiffle already
+                // sits at for the same reason (teenagers playing as hard as
+                // they can); 130/134 are where the two hardest machine floors
+                // (dance post-punk's "Blue Monday" pulse, industrial breaks'
+                // breakbeat) agree to meet; and 122/124 is the baggy/dance
+                // cluster's own shared home — madchester, indie dance and
+                // analog synth pop all land inside two bpm of each other on
+                // purpose, because that IS the early-90s crossover the three
+                // of them are arguing about from different rooms.
+                musichallrock: 118, orchpsych: 122, altcountry: 116,
+                yachtsoul: 104, yachtrock: 100, songwriterpiano: 82,
+                softfolk: 88, singersongwriter: 108, coastrock: 122,
+                spacerock: 70, grebo: 148,
+                melodictechno: 130, bleeptechno: 124, industrialbreaks: 134,
+                industrialrock: 128, analogsynthpop: 124, gothsynth: 122,
+                gothicpop: 118, postpunk: 138, dancepostpunk: 130,
+                madchester: 122, janglepop: 126, indiedance: 124,
                 // PROMOTED TEMPOS GO ABOVE THIS LINE — the same landmark
                 // PLAN_OF carries, for the same reason.
               };

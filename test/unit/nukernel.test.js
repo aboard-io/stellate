@@ -10669,6 +10669,165 @@ console.log("the singer is asked, and it answers with a carrier");
   }
 }
 
+/* §68 — TWENTY-THREE MORE ROOMS, and the ones made of synthesizers get
+   synthesizers. Lane G1's own check (2026-08-17), for the batch that named
+   its parents from artists Paul chose but built the STYLE, never a
+   transcription: musichallrock orchpsych altcountry yachtsoul yachtrock
+   songwriterpiano softfolk singersongwriter coastrock spacerock grebo
+   melodictechno bleeptechno industrialbreaks industrialrock analogsynthpop
+   gothsynth gothicpop postpunk dancepostpunk madchester janglepop indiedance.
+
+   This is the §58 template (lane E1, 2026-08-17) run again for a different
+   roster, plus a fourth clause this batch needed and that one did not: a
+   genre whose identity IS a synthesizer (Paul's own note, quoted in the
+   commit) has to actually reach the Faust voice it claims, not just carry a
+   comment saying so — `synth.dsp` naming a compiled module is the whole
+   claim, and a typo there would still pass every other check in this file. */
+console.log("twenty-three more rooms — non-silent, real instruments, distinct, and synths reach their engine");
+{
+  const ADDED68 = ["musichallrock", "orchpsych", "altcountry", "yachtsoul", "yachtrock",
+    "songwriterpiano", "softfolk", "singersongwriter", "coastrock", "spacerock", "grebo",
+    "melodictechno", "bleeptechno", "industrialbreaks", "industrialrock", "analogsynthpop",
+    "gothsynth", "gothicpop", "postpunk", "dancepostpunk", "madchester", "janglepop",
+    "indiedance"];
+  ok(ADDED68.length === 23, "the roster itself drifted from 23: " + ADDED68.length);
+  for (const gk of ADDED68)
+    ok(!!GENRES[gk], gk + ": named in the roster but missing from GENRES");
+
+  // (a) NON-SILENT, at each genre's own bar count, the same [render, drums,
+  // bass] walk every other section in this file reads.
+  for (const gk of ADDED68) {
+    const g = GENRES[gk], bars = Math.max(4, g.bars);
+    const ev = allEvents(P, g, bars);
+    ok(ev.length > 0, gk + ": renders silent — zero events at " + bars + " bars");
+  }
+
+  // (b) A REAL SAMPLER: instrOf must not throw, and every id it can return
+  // must be a key in the registry's SAMPLERS table.
+  {
+    const NI68 = require("../../nukernel/instruments.js");
+    const vm68 = require("vm"), fs68 = require("fs"), path68 = require("path");
+    const ctx68 = {}; ctx68.window = ctx68; vm68.createContext(ctx68);
+    vm68.runInContext(fs68.readFileSync(
+      path68.join(__dirname, "../../engine/registry-data.js"), "utf8"), ctx68);
+    const SAMPLERS68 = (ctx68.__REGISTRY && ctx68.__REGISTRY.SAMPLERS) || {};
+    ok(Object.keys(SAMPLERS68).length > 100, "registry-data.js did not yield SAMPLERS");
+    for (const gk of ADDED68) {
+      const g = GENRES[gk];
+      for (let v = 0; v < g.voices; v++)
+        ok(typeof NI68.instrOf(gk, v) === "string", gk + ": instrOf failed for voice " + v);
+      const ids = Array.isArray(g.instr) ? g.instr : [g.instr];
+      for (const id of ids)
+        ok(!!SAMPLERS68[id], gk + ": instr \"" + id + "\" is not a SAMPLERS id");
+    }
+  }
+
+  // (c) DISTINGUISHABLE FROM ITS OWN LINEAGE, on the shared DEFAULT/P phrase
+  // every render in this file uses — a genre that renders byte-for-byte
+  // identical to a declared parent or its `near` neighbour is the old room
+  // wearing a new door sign.
+  for (const gk of ADDED68) {
+    const g = GENRES[gk];
+    const rivals = new Set(Object.keys(g.parents || {}));
+    if (g.near) rivals.add(g.near);
+    ok(rivals.size > 0, gk + ": no parents and no `near` — nothing to prove distinct from");
+    for (const p of rivals) {
+      ok(!!GENRES[p], gk + ": rival \"" + p + "\" is not a real genre");
+      if (!GENRES[p]) continue;
+      const bars = Math.max(4, g.bars, GENRES[p].bars);
+      ok(sig(allEvents(P, g, bars)) !== sig(allEvents(P, GENRES[p], bars)),
+         gk + ": renders identical to its own parent/neighbour \"" + p + "\"");
+    }
+  }
+
+  // (d) FAMILY + DYNAMICS: every anchor added must resolve `family` and
+  // stress/phrase/touch — `club`'s five newcomers prove the explicit-row law
+  // they were added under, everyone else proves the family fallback reached
+  // them.
+  for (const gk of ADDED68) {
+    const g = GENRES[gk];
+    ok(!!g.family, gk + ": no family — the palette and the dynamics stamp both miss it");
+    ok(g.stress != null && g.phrase != null && g.touch != null,
+       gk + ": no dynamics row — neither a club-family override nor a family fallback landed");
+  }
+
+  // (e) COMPOSABLE: PLAN_OF and BPM are OUTSIDE genres.js by design (the
+  // comment at the top of compose.js's own table says so, in the same words
+  // this gate is here to prove) — a genre that landed in GENRES without a
+  // matching entry in both tables throws the moment anyone presses Write,
+  // which is exactly the mistake the wave-1 lane made and shipped. Composed
+  // at three seeds and run through the SAME validate-and-apply door the
+  // loader uses, because a song the loader would reject is not a passing
+  // song no matter what the composer emitted.
+  {
+    const C68 = require("../../nukernel/compose.js");
+    const S68 = require("../../nukernel/song.js");
+    for (const gk of ADDED68) {
+      ok(gk in C68.PLAN_OF, gk + ": no PLAN_OF entry — every genre added to genres.js needs one");
+      ok(gk in C68.BPM, gk + ": no BPM entry — every genre added to genres.js needs one");
+      ok(C68.PLAN_OF[gk] === "song" || C68.PLAN_OF[gk] === "dance" || C68.PLAN_OF[gk] === "arc",
+         gk + ": PLAN_OF names an unknown plan \"" + C68.PLAN_OF[gk] + "\"");
+      ok(C68.BPM[gk] >= 70 && C68.BPM[gk] <= 160,
+         gk + ": BPM " + C68.BPM[gk] + " is off the tempo dial (70..160)");
+      for (const seed of [1, 5, 7]) {
+        let song;
+        try { song = C68.compose(gk, seed); }
+        catch (e) { ok(false, gk + " seed " + seed + ": compose() threw — " + e.message); continue; }
+        ok(song && Array.isArray(song.song) && song.song.length > 0,
+           gk + " seed " + seed + ": compose() emitted an empty song");
+        const val = S68.validateSong(song);
+        ok(val.ok, gk + " seed " + seed + ": the composed song failed the loader's own validator — " +
+           JSON.stringify(val.errors || val));
+      }
+    }
+  }
+
+  // (f) THE SYNTHESIZERS REACH THE ENGINE. Six of the twenty-three declare
+  // `synth` because the STYLE is a synthesizer, not a sampled stand-in
+  // wearing its name (Paul's note, quoted in the commit): analog synth pop
+  // and bleep techno both ride a `tb303`, goth synth a `modeld`, melodic
+  // techno a `pad_saw`, industrial breaks and industrial rock a `lead_fuzz`.
+  // The claim is `spec.dsp` naming a REAL compiled Faust module — a typo
+  // there is invisible to (a)-(e) above, since a dead synth key just drops
+  // its notes (audio/voices.js's own documented law) rather than throwing —
+  // so this reads the actual built module off disk, engine/faust/VOICES.md's
+  // own filename law (`dist/<dsp>-module.wasm` + `-meta.json`).
+  {
+    const fs68b = require("fs"), path68b = require("path");
+    const SYNTH_GENRES = { analogsynthpop: "tb303", gothsynth: "modeld",
+      bleeptechno: "tb303", melodictechno: "pad_saw",
+      industrialbreaks: "lead_fuzz", industrialrock: "lead_fuzz" };
+    for (const [gk, dsp] of Object.entries(SYNTH_GENRES)) {
+      const g = GENRES[gk];
+      ok(!!g.synth, gk + ": no `synth` field — this genre's identity is a synthesizer");
+      ok(g.synth && g.synth.dsp === dsp,
+         gk + ": synth.dsp is \"" + (g.synth && g.synth.dsp) + "\", expected \"" + dsp + "\"");
+      ok(g.synth && g.synth.root === g.synth.dsp,
+         gk + ": synth.root does not match synth.dsp — driveSynth addresses params at /root/name");
+      const distDir = path68b.join(__dirname, "../../engine/faust/dist");
+      ok(fs68b.existsSync(path68b.join(distDir, dsp + "-module.wasm")),
+         gk + ": " + dsp + "-module.wasm is not a built Faust module");
+      ok(fs68b.existsSync(path68b.join(distDir, dsp + "-meta.json")),
+         gk + ": " + dsp + "-meta.json is not a built Faust module");
+      // every `set` value is a finite number — a stray string/undefined would
+      // reach node.parameters.get(...).setValueAtTime and throw at note-on
+      for (const [k, v] of Object.entries(g.synth.set || {}))
+        ok(typeof v === "number" && isFinite(v), gk + ": synth.set." + k + " is not a finite number");
+    }
+    // the other seventeen carry NO synth field at all — the "real sampled
+    // instruments, close and clean" half of the same note, and a genre that
+    // silently grew one would be exactly the kind of drift the parent's own
+    // SIGNATURE_MODELS law exists to keep visible
+    for (const gk of ADDED68) if (!SYNTH_GENRES[gk])
+      ok(!GENRES[gk].synth, gk + ": carries a `synth` field but was not built as a signature-synth genre");
+  }
+
+  console.log("  68: " + ADDED68.length + " genres — non-silent, real samplers, distinct, " +
+              "composable, and " + Object.keys({ analogsynthpop: 1, gothsynth: 1, bleeptechno: 1,
+              melodictechno: 1, industrialbreaks: 1, industrialrock: 1 }).length +
+              " synths verified against the built engine");
+}
+
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }

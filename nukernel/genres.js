@@ -3757,6 +3757,654 @@
       word: v => (v === 1 ? [drop(2)] : []),
     },
 
+    // ---- TWENTY-THREE MORE ROOMS (2026-08-17) ------------------------------
+    // Paul named artists; every anchor below is the STYLE the artist stands
+    // for, never the artist and never a transcription (SOURCES.md's
+    // provenance law holds exactly as it did for the ancestors). Six of the
+    // twenty-three are built OF a synthesizer and are given one — a real Faust
+    // voice with a resonant filter, not a sampled stand-in wearing the name —
+    // and the rest go the other way, close-mic'd sampled instruments played
+    // clean. Both are the same discipline: the instrument IS the genre.
+
+    // MUSIC HALL ROCK [The Kinks]. A rock band playing vaudeville changes —
+    // I-vi-IV-V, the oldest hook in the songbook — on a bright upright piano
+    // with the guitar doubling the turn. Skiffle's amateur string-band energy
+    // is where the Kinks actually came from; doo-wop supplies the close vocal-
+    // group harmony a music-hall chorus leans on. The Edwardian stage
+    // tradition itself — the songs Ray Davies was actually parodying — has no
+    // anchor here yet.
+    musichallrock: {
+      label: "Muswell Hill 1966", rate: 1, bars: 4, voices: 2,
+      parents: { rock: 0.45, skiffle: 0.3, doowop: 0.25 },
+      wants: ["music hall"],
+      instr: ["upright_piano", "clean_guitar"],
+      drumkit: "room",
+      entry: v => v, reg: v => v - 1, realize: () => "line",
+      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      // BASS STYLE: eighths, not a walk — the oom-pah two-beat a music-hall
+      // piano actually plays, and it happens to be the field that keeps this
+      // anchor clear of janglepop's own walking bass (both are I-vi-IV-V
+      // major-key guitar-pop; the census gate measures a genre by everything
+      // it renders, and a shared bass hand was most of what was left un-said).
+      artic: "staccato", maxHold: 2, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2200, q: 1.0, atk: .006, rel: .5, gain: .27, verb: .22 },
+      words: ["the piano, the vaudeville turn", "the guitar, doubling the hook an octave under"],
+      word: v => (v === 1 ? [rotate(2), drop(2), transpose(-12)] : []),
+    },
+
+    // ORCHESTRAL PSYCH [Flaming Lips]. A pop song dressed in a string
+    // section and a halo pad instead of a second guitar — the Beatles' own
+    // psychedelic turn (strings on a rock rhythm section), carried through
+    // post-rock's build-the-arrangement patience and neoclassical's real
+    // orchestral voicing. Brian Wilson's chamber-pop arranging, the actual
+    // missing rung between the three, has no anchor of its own yet.
+    orchpsych: {
+      label: "Oklahoma City 1999", rate: 1, bars: 4, voices: 3,
+      parents: { beatles: 0.4, postrock: 0.35, neoclassical: 0.25 },
+      wants: ["chamber pop"],
+      instr: ["slow_strings", "clean_guitar", "halo_pad"],
+      drumkit: "room",
+      entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
+      harmony: "cycle", roots: [0, 3, 4, 5], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 4, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,0,1, 1,0,1,0],
+              x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,8] },
+      tone: { wave: "sawtooth", cut: 1900, q: 1.1, atk: .02, rel: 1.6, gain: .24, verb: .55 },
+      words: ["the strings, holding the changes", "the guitar, the hook",
+              "the halo pad, shimmering an octave over"],
+      word: v => (v === 2 ? [rotate(3), drop(2), transpose(12)] : []),
+      fx: ["echo", "sweep"],
+    },
+
+    // ALT-COUNTRY [Wilco]. Country-pop's bright twang and rock's distorted
+    // band format, argued out by blues' loose, unhurried backbeat — a
+    // songwriter's record that happens to be played by a rock band rather
+    // than a Nashville session. Gram Parsons' "cosmic American" fusion, the
+    // scene this style actually grew out of, is the missing rung.
+    altcountry: {
+      label: "Chicago 1996", rate: 1, bars: 8, voices: 2, near: "countrypop",
+      parents: { countrypop: 0.4, rock: 0.35, blues: 0.25 },
+      wants: ["cosmic american music"],
+      instr: ["clean_guitar", "fiddle"],
+      drumkit: "room",
+      entry: v => v, reg: v => v - 1, realize: () => "line",
+      harmony: "cycle", roots: [0,0, 3,3, 4,4, 0,0], mode: MODES.mixo,
+      scale: MODES.mixo, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "walk",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,1, 1,0,1,0, 1,0,1,1] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "sawtooth", cut: 1800, q: 1.4, atk: .01, rel: .8, gain: .26, verb: .3 },
+      words: ["the guitar, the song", "the fiddle, the twang, an octave over"],
+      word: v => (v === 1 ? [rotate(2), drop(2), transpose(12)] : []),
+    },
+
+    // YACHT SOUL [Boz Scaggs]. Isley's Rhodes-and-groove chassis, funk's
+    // sixteenth-note hand under it in place of a slow shuffle, and Motown's
+    // session polish over both — "Lowdown"'s whole argument in three
+    // borrowed halves. Quiet storm, the smoother FM-radio format this style
+    // fed directly, is the missing rung.
+    yachtsoul: {
+      label: "San Francisco 1976", rate: 1, bars: 8, voices: 2, near: "isley",
+      parents: { isley: 0.4, funk: 0.3, motown: 0.3 },
+      wants: ["quiet storm"],
+      instr: ["rhodes_ep", "clean_guitar"],
+      drumkit: "room",
+      entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
+      harmony: "cycle", roots: [0,0, 3,3, 0,0, 4,4], mode: MODES.dorian,
+      scale: MODES.dorian, diatonic: true,
+      prog: PROGS.soul7,
+      artic: "legato", maxHold: 3, bassStyle: "sixteenths",
+      pipes: [{ id: "strum", spread: 0.05 }],
+      kit: { k: [1,0,0,1, 0,0,1,0, 1,0,0,0, 0,1,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,1] },
+      tone: { wave: "triangle", cut: 2200, q: 1.0, atk: .008, rel: .7, gain: .26, verb: .3 },
+      words: ["the Rhodes, comping the changes", "the guitar, the hook, up top"],
+      word: v => (v === 1 ? [transpose(7)] : []),
+    },
+
+    // YACHT ROCK [Christopher Cross]. Toto and Steely's session-band
+    // craftsmanship folded into a plainer, more Motown-major-key song than
+    // either — the smooth-radio middle where studio chops meet a soul
+    // changes-sense. The Doobie Brothers/Michael McDonald crossover this
+    // sound is actually named for has no anchor of its own yet.
+    yachtrock: {
+      label: "Austin 1979", rate: 1, bars: 4, voices: 2, near: "toto",
+      parents: { toto: 0.4, steely: 0.3, motown: 0.3 },
+      wants: ["blue-eyed AOR"],
+      instr: ["electric_piano", "clean_guitar"],
+      drumkit: "room",
+      entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
+      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,1] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,0,1, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2000, q: 1.0, atk: .01, rel: .9, gain: .25, verb: .3 },
+      words: ["the EP, comping", "the guitar, the hook, an octave up"],
+      word: v => (v === 1 ? [transpose(12), drop(3)] : []),
+    },
+
+    // SONGWRITER PIANO [Carole King]. Motown's Brill Building changes, sung
+    // from the piano bench instead of cut for a girl group — gospel's
+    // church-chord piano hand underneath, crooner's plain, close vocal
+    // delivery on top. The Brill Building factory itself, the actual room
+    // this record was written in before it was one artist's own, is the
+    // missing rung.
+    songwriterpiano: {
+      label: "New York 1971", rate: 1, bars: 8, voices: 2, near: "crooner",
+      parents: { motown: 0.4, gospel: 0.3, crooner: 0.3 },
+      wants: ["brill building pop"],
+      instr: ["upright_piano", "ohh_voices"],
+      drumkit: "brush",
+      entry: () => 0, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
+      harmony: "cycle", roots: [0,5,3,4, 0,5,3,4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 4, bassStyle: "walk",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2000, q: .9, atk: .02, rel: 1.0, gain: .24, verb: .3 },
+      words: ["the piano, the changes, sung from the bench",
+              "the voice, wordless, a third above"],
+      word: v => (v === 1 ? [transpose(4)] : []),
+    },
+
+    // SOFT FOLK [James Taylor]. A folk duo's two-voice discipline thinned to
+    // one guitar and one singer, in the major pentatonic a folk melody
+    // actually sings in — countrypop's warm, bright optimism colours the
+    // top, plainer than folkduo's parallel-third harmony because there is
+    // no second voice to harmonize WITH. Carolina fingerstyle guitar, the
+    // actual technique this whole sound is built on, is the missing rung.
+    softfolk: {
+      label: "Chapel Hill 1970", rate: 1, bars: 8, voices: 2, near: "folkduo",
+      parents: { folkduo: 0.45, countrypop: 0.3, crooner: 0.25 },
+      wants: ["carolina fingerstyle"],
+      instr: ["steel_string_guitar", "steel_string_guitar"],
+      drumkit: "brush",
+      entry: () => 0, reg: v => 1 - v, realize: () => "line",
+      harmony: "modal", scale: SCALES.majpent, artic: "legato",
+      intro: "solo",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2000, q: .8, atk: .01, rel: 1.0, gain: .22, verb: .32 },
+      words: ["the guitar, fingerpicked, the tune", "the second guitar, a third under"],
+      word: v => (v === 1 ? [transpose(-4)] : []),
+    },
+
+    // SINGER-SONGWRITER [Carly Simon]. A crooner's plain, direct vocal
+    // delivery over funk's sixteenth-note groove hand and gospel's church
+    // chords — a session band cut for one singer's record rather than a
+    // genre unto itself, which is the whole "New York piano-rock" sound.
+    // Laurel Canyon's communal songwriting scene, the actual milieu, is the
+    // missing rung.
+    singersongwriter: {
+      label: "New York 1972", rate: 1, bars: 4, voices: 2, near: "yachtsoul",
+      parents: { crooner: 0.35, funk: 0.35, gospel: 0.3 },
+      wants: ["laurel canyon scene"],
+      instr: ["electric_piano", "clean_guitar"],
+      drumkit: "room",
+      entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
+      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "sixteenths",
+      kit: { k: [1,0,0,1, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,0,1, 1,1,0,1, 1,1,0,1, 1,1,0,1] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,1] },
+      tone: { wave: "triangle", cut: 2100, q: 1.1, atk: .008, rel: .75, gain: .26, verb: .28 },
+      words: ["the EP, the vamp", "the guitar, the answer, up top"],
+      word: v => (v === 1 ? [transpose(7), drop(2)] : []),
+    },
+
+    // COAST ROCK [Fleetwood Mac]. A rock band's format carrying Motown's
+    // major-key pop hooks and countrypop's fingerpicked, twangy top —
+    // "Dreams"' whole trick, a studio band that never sounds like it is
+    // trying. The Buckingham/Nicks California folk-rock crossover this genre
+    // is actually named for has no anchor of its own.
+    coastrock: {
+      // "Sausalito 1977" — Record Plant Sausalito, where Rumours was
+      // actually tracked; "Los Angeles 1977" was already steely's own label.
+      label: "Sausalito 1977", rate: 1, bars: 4, voices: 2, near: "rock",
+      parents: { rock: 0.35, motown: 0.3, countrypop: 0.35 },
+      wants: ["california folk rock"],
+      instr: ["clean_guitar", "electric_piano"],
+      drumkit: "room",
+      entry: v => v, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
+      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "eighths",
+      pipes: [{ id: "strum", spread: 0.04 }],
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             o: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,0,1,0] },
+      tone: { wave: "sawtooth", cut: 2000, q: 1.2, atk: .01, rel: .8, gain: .27, verb: .26 },
+      words: ["the guitar, fingerpicked, the hook", "the piano, holding the changes"],
+      word: v => (v === 0 ? [] : [drop(2)]),
+    },
+
+    // SPACE ROCK [Pink Floyd]. An arc, not a song — one held drone under a
+    // slow, blues-schooled guitar line, argued through jazz's loose,
+    // unhurried sense of time rather than a fixed form. `fx:["echo","sweep"]`
+    // is the identity itself: a long automated filter opening across the
+    // section is the "tape-speed drift" this style is built from, and the
+    // echo send is the air around it. Berlin-school electronic minimalism,
+    // the other half of this sound, is the missing rung.
+    spacerock: {
+      label: "London 1973", rate: .5, bars: 8, voices: 2, near: "drone",
+      parents: { blues: 0.35, drone: 0.35, jazz: 0.3 },
+      wants: ["berlin school electronics"],
+      instr: ["warm_pad", "clean_guitar"],
+      drumkit: "room",
+      entry: v => v * 2, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
+      harmony: "cycle", roots: [0,0, 5,5, 3,3, 4,4],
+      artic: "legato", incClamp: 4, incMode: "reverse", bassStyle: "pedal",
+      kit: { k: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             h: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },
+      fill: { s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 1,0,1,0],
+              x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,8] },
+      tone: { wave: "sawtooth", cut: 1200, q: 1.4, atk: .1, rel: 2.5, gain: .2, verb: .75 },
+      words: ["the pad, holding the chord for bars at a time",
+              "the guitar, a slow line that surfaces and recedes"],
+      word: v => (v === 1 ? [drop(3)] : []),
+      fx: ["echo", "sweep"],
+    },
+
+    // GREBO [Ned's Atomic Dustbin]. THE JOKE IS LITERAL: two bass voices,
+    // not one doubled — `voices:3` puts a fuzzed guitar riff over TWO
+    // independent basslines a fifth apart in register, one pulsing the root
+    // and the other answering with its own contour, which is the entire
+    // Stourbridge-scene gimmick made into an arrangement rather than a
+    // caption. Punk's directness and rock's band format argue the rest;
+    // funk supplies the syncopated pocket two basses need to not collide.
+    grebo: {
+      label: "Stourbridge 1990", rate: 1, bars: 4, voices: 3, near: "punk",
+      parents: { punk: 0.4, rock: 0.35, funk: 0.25 },
+      wants: ["stourbridge scene"],
+      instr: ["distortion_guitar", "acoustic_bass", "acoustic_bass"],
+      drumkit: "power",
+      entry: v => (v === 0 ? 0 : v), reg: v => (v === 0 ? 0 : v === 1 ? -1 : -2),
+      realize: () => "line",
+      harmony: "cycle", roots: [0, 3, 0, 4],
+      artic: "staccato", maxHold: 2,
+      kit: { k: [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 1,0,1,0, 1,1,1,1],
+              x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,9] },
+      tone: { wave: "sawtooth", cut: 1600, q: 2.0, atk: .003, rel: .4, gain: .3, verb: .16 },
+      words: ["the guitar, the riff", "the first bass, pulsing the root",
+              "the second bass, its own line, a fifth under and answering"],
+      word: v => (v === 1 ? [only("gate", rotate(2))]
+                : v === 2 ? [invert(0), rotate(5)] : []),
+      fx: ["crunch"],
+    },
+
+    // MELODIC TECHNO [Orbital]. THE FILTER IS THE MELODY: one analog pad
+    // synth (`pad_saw`, a real Faust ladder) covers both the chord voice and
+    // the lead voice, and `fx:["sweep"]` automates its cutoff across the
+    // section — a static tone.cut cannot say "the line rises," a moving
+    // filter can. House and techno's floor argue the rhythm; ambient
+    // supplies the melodicism neither of those alone would grant. Named for
+    // the Hartnoll brothers' M25-orbital motorway, not a record.
+    melodictechno: {
+      label: "Kent 1991", rate: 1, bars: 8, voices: 2, near: "techno",
+      parents: { house: 0.35, techno: 0.35, ambient: 0.3 },
+      wants: ["berlin school electronics"],
+      instr: ["warm_pad", "polysynth"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
+      harmony: "cycle", roots: [0,5,3,4, 0,5,3,4], mode: MODES.dorian,
+      scale: MODES.dorian, diatonic: true,
+      artic: "legato", maxHold: 4, bassStyle: "eighths",
+      synth: { dsp: "pad_saw", root: "pad_saw", level: 0.75,
+               set: { cutoff: 900, res: 0.32, detune: 0.15, attack: 0.06 } },
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,1, 1,0,0,0],
+             o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { o: [0,0,1,0, 0,0,1,0, 1,0,1,0, 1,0,1,1] },
+      tone: { wave: "sawtooth", cut: 900, q: 1.6, atk: .06, rel: 1.4, gain: .22, verb: .4 },
+      words: ["the pad, the chord, opening across the section",
+              "the line, riding above it"],
+      word: v => (v === 1 ? [drop(2)] : []),
+      fx: ["sweep"],
+    },
+
+    // BLEEP TECHNO [808 State]. NO SAMPLED INSTRUMENT ANYWHERE: one `tb303`
+    // instance covers both voices — the bleep line up high, the sub bass an
+    // octave-and-a-half under it, the SAME machine at two registers, which is
+    // the actual bleep-techno trick (one box, two jobs). Techno's floor and
+    // house's swing argue the rhythm; electro supplies the bare, mechanical
+    // pulse. Sheffield's Warp/bleep scene, the genre's own real birthplace,
+    // is the missing rung — Manchester's 808 State crossed over into it.
+    bleeptechno: {
+      label: "Manchester 1989", rate: 1, bars: 4, voices: 2, near: "acid",
+      parents: { techno: 0.4, house: 0.3, electro: 0.3 },
+      wants: ["sheffield bleep scene"],
+      instr: ["square_lead", "saw_wave"],
+      drumkit: "tr808",
+      entry: v => v, reg: v => (v === 1 ? -3 : 1), realize: () => "line",
+      harmony: "modal",
+      artic: "staccato", maxHold: 1,
+      synth: { dsp: "tb303", root: "tb303", level: 0.8,
+               set: { cutoff: 1800, resonance: 0.35, envmod: 0.55, decay: 0.25, waveform: 1 } },
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             h: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
+      fill: { h: [0,0,1,0, 0,0,1,0, 0,0,1,1, 1,0,1,1] },
+      tone: { wave: "square", cut: 1800, q: 3.0, atk: .002, rel: .2, gain: .28, verb: .1 },
+      words: ["the bleep, up high", "the sub, an octave and a half under"],
+      // the sub answers a step behind rather than under the SAME step — one
+      // machine playing two parts must still be two parts, not one part
+      // copied (the quote-box law §51 holds every genre to).
+      word: v => (v === 1 ? [rotate(3)] : []),
+    },
+
+    // INDUSTRIAL BREAKS [Meat Beat Manifesto]. Drum & bass's broken kit and
+    // techno's mechanical floor, run through a distorted `lead_fuzz` line
+    // instead of a clean synth — noise and grit ARE the timbre, not an fx
+    // chain bolted on after. Punk supplies the raw directness underneath.
+    // The sample-collage industrial tradition this style actually descends
+    // from has no anchor here yet.
+    industrialbreaks: {
+      label: "Swindon 1989", rate: 1, bars: 4, voices: 2, near: "bigbeat",
+      parents: { dnb: 0.35, techno: 0.35, punk: 0.3 },
+      wants: ["sample-collage industrial"],
+      instr: ["distortion_guitar", "metal_pad"],
+      drumkit: "power",
+      entry: () => 0, reg: v => -v, realize: () => "line",
+      harmony: "modal", mode: MODES.phrygian, scale: MODES.phrygian,
+      artic: "staccato", bassStyle: "sixteenths",
+      synth: { dsp: "lead_fuzz", root: "lead_fuzz", level: 0.85,
+               set: { cutoff: 1100, res: 0.4, drive: 0.7, attack: 0.002, sustain: 0.3, release: 0.15 } },
+      kit: { k: [1,0,0,1, 0,0,0,0, 0,1,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [1,0,1,0, 1,0,1,0, 1,1,0,1, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 1100, q: 3.5, atk: .002, rel: .3, gain: .3, verb: .18 },
+      words: ["the fuzz riff, the machine's own grid", "the pad, underneath, doubling low"],
+      // rotated, not just transposed low — two identical machines are one
+      // machine, and the quote-box law (§51) holds every genre to distinct
+      // playing lanes once the band is stripped off.
+      word: v => (v === 0 ? [] : [rotate(2), transpose(-7)]),
+      fx: ["crunch", "sweep"],
+    },
+
+    // INDUSTRIAL ROCK [Nine Inch Nails]. Death metal's chromatic riff wall
+    // sung as a real verse-chorus song instead of a headlong blast, played
+    // to kraftwerk's quantized machine kick rather than a drummer's swing —
+    // the same `lead_fuzz` voice as industrial breaks, distortion and a real
+    // filter sweep as the identity itself, tuned longer and more sustained
+    // for a wall of a riff instead of a clipped break-line stab. Ministry's
+    // Wax Trax! industrial-rock scene, the actual missing rung, is not yet
+    // an anchor.
+    industrialrock: {
+      label: "Cleveland 1989", rate: 1, bars: 4, voices: 2, near: "industrialmetal",
+      parents: { deathmetal: 0.4, kraftwerk: 0.3, punk: 0.3 },
+      wants: ["wax trax industrial"],
+      instr: ["distortion_guitar", "metal_pad"],
+      drumkit: "electronic",
+      entry: () => 0, reg: v => -v, realize: () => "line",
+      harmony: "cycle", roots: [0, 3, 0, 4],
+      artic: "staccato", bassStyle: "sixteenths",
+      synth: { dsp: "lead_fuzz", root: "lead_fuzz", level: 0.85,
+               set: { cutoff: 1400, res: 0.3, drive: 0.85, attack: 0.004, sustain: 0.65, release: 0.4 } },
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 1,0,1,0, 1,1,1,1],
+              x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,9] },
+      tone: { wave: "sawtooth", cut: 1400, q: 2.4, atk: .004, rel: .8, gain: .3, verb: .3 },
+      words: ["the riff wall, chromatic, on the machine's grid",
+              "the bass line, doubling an octave under"],
+      word: v => (v === 0 ? [only("gate", fill(1))] : [rotate(3), transpose(-7)]),
+      fx: ["crunch", "sweep"],
+    },
+
+    // ANALOG SYNTH POP [Depeche Mode, Speak & Spell era]. THE FILTER IS
+    // OPEN: a `tb303` set bright and low-resonance (waveform square, envmod
+    // shallow) is the exact opposite performance from acid's squelch — thin,
+    // sequenced, unmistakably one monosynth rather than a band. Synthpop's
+    // anthem changes and kraftwerk's machine chassis argue the rest; disco's
+    // four-on-the-floor gives it a dance floor to live on. New romantic
+    // synth-pop, the wider scene this record broke out of, is missing.
+    analogsynthpop: {
+      // "Basildon 1980" — the year the band itself formed (as Composition of
+      // Sound); "Basildon 1981" was already synthpop's own label, and
+      // gothsynth below takes "Basildon 1990" for the same band nine years on.
+      label: "Basildon 1980", rate: 1, bars: 4, voices: 2, near: "eurythmics",
+      parents: { synthpop: 0.5, kraftwerk: 0.3, disco: 0.2 },
+      wants: ["new romantic synth pop"],
+      instr: ["synth_voice", "synth_strings_1"],
+      drumkit: "cr78",
+      entry: v => v, reg: v => v - 1, realize: () => "line",
+      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "octaves",
+      synth: { dsp: "tb303", root: "tb303", level: 0.85,
+               set: { cutoff: 3400, resonance: 0.22, envmod: 0.28, decay: 0.5, waveform: 1 } },
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,1,0] },
+      tone: { wave: "square", cut: 3000, q: 1.6, atk: .003, rel: .3, gain: .27, verb: .18 },
+      words: ["the sequence, thin and bright, the hook",
+              "the strings, a wash answering underneath"],
+      word: v => (v === 1 ? [drop(2)] : []),
+    },
+
+    // GOTH SYNTH [Depeche Mode, Violator era]. The same Basildon band nine
+    // years on, and the filter tells the whole story: `modeld` set dark and
+    // resonant (cutoff low, res pushed) is analog synth BASS with a real
+    // ladder, not a preset pad, under a sampled guitar's crunch bite — the
+    // huge plate is the tone.verb number, not an effect list. Gothic rock's
+    // guitar-forward gloom is the missing rung this record actually leans on.
+    gothsynth: {
+      label: "Basildon 1990", rate: 1, bars: 4, voices: 2, near: "analogsynthpop",
+      parents: { analogsynthpop: 0.45, rock: 0.3, kraftwerk: 0.25 },
+      wants: ["gothic rock"],
+      instr: ["crunch_guitar", "metal_pad"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => (v === 0 ? 1 : -2), realize: v => (v === 0 ? "pad" : "line"),
+      harmony: "cycle", roots: [0, 5, 3, 4],
+      artic: "staccato", maxHold: 2,
+      synth: { dsp: "modeld", root: "modeld", level: 0.85, lineOnly: true,
+               set: { cutoff: 380, res: 0.55, envAmount: 1.4, envAttack: 0.004,
+                      envDecay: 0.4, envSustain: 0.35, oscMix: 0.3, drive: 0.4,
+                      glide: 0.02, drift: 5 } },
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,0,1,1] },
+      tone: { wave: "sawtooth", cut: 1200, q: 2.4, atk: .006, rel: .5, gain: .28, verb: .62 },
+      words: ["the guitar, the bite, a chord at a time",
+              "the bass synth, the real resonant low end"],
+      word: v => (v === 0 ? [] : [drop(2)]),
+    },
+
+    // GOTHIC POP [The Cure]. Shoegaze's wall of reverbed guitar thinned
+    // back to a real pop-song hook, dorian for the bright-inside-minor
+    // colour the Cure lean on, synthpop's synth-string wash filling the
+    // gaps a second guitar would take. Gothic rock, the scene this band is
+    // usually filed under, is the missing rung — this anchor is its pop
+    // half, the way gothsynth above is its synth half.
+    gothicpop: {
+      label: "Crawley 1987", rate: 1, bars: 4, voices: 2, near: "shoegaze",
+      parents: { rock: 0.4, shoegaze: 0.3, synthpop: 0.3 },
+      wants: ["gothic rock"],
+      instr: ["clean_guitar", "synth_strings_1"],
+      drumkit: "room",
+      entry: v => v, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
+      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.dorian,
+      scale: MODES.dorian, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             o: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,0,1, 1,0,1,0] },
+      tone: { wave: "sawtooth", cut: 1800, q: 1.6, atk: .015, rel: 1.0, gain: .25, verb: .4 },
+      words: ["the guitar, chorused, the hook", "the strings, a wash underneath"],
+      word: v => (v === 0 ? [] : [drop(2)]),
+      fx: ["chorus"],
+    },
+
+    // POST-PUNK [Joy Division]. Punk's raw directness under kraftwerk's
+    // machine-pulse discipline — kick and snare landing TOGETHER, the
+    // motorik trick, but sung as a real song instead of held as one process
+    // — with a synth line running its own countermelody a tenth below the
+    // guitar rather than doubling it. Martin Hannett's spacious, dub-echoed
+    // production, the actual missing rung, is `fx:["echo"]` made explicit
+    // and still lacks its own anchor.
+    postpunk: {
+      label: "Manchester 1979", rate: 1, bars: 4, voices: 2, near: "kraftwerk",
+      parents: { punk: 0.4, kraftwerk: 0.3, rock: 0.3 },
+      wants: ["cold wave"],
+      instr: ["clean_guitar", "synth_strings_1"],
+      drumkit: "room",
+      entry: v => v, reg: v => v - 2, realize: () => "line",
+      harmony: "cycle", roots: [0, 3, 0, 4], mode: MODES.dorian,
+      scale: MODES.dorian, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,0,1,1] },
+      tone: { wave: "sawtooth", cut: 1600, q: 1.8, atk: .005, rel: .4, gain: .28, verb: .42 },
+      words: ["the guitar, the line", "the synth, a tenth under, its own countermelody"],
+      word: v => (v === 1 ? [rotate(5), transpose(-9)] : []),
+      fx: ["echo"],
+    },
+
+    // DANCE POST-PUNK [New Order]. Post-punk's own machine chassis, sent
+    // to disco's four-on-the-floor and open hat instead of a rock backbeat
+    // — the exact turn "Blue Monday" makes, a band that used to be a band
+    // becoming a sequencer act. Everything the record needs is already a
+    // parent; nothing here is missing.
+    dancepostpunk: {
+      label: "Manchester 1983", rate: 1, bars: 4, voices: 2, near: "postpunk",
+      parents: { postpunk: 0.4, disco: 0.3, kraftwerk: 0.3 },
+      wants: [],
+      instr: ["synth_voice", "polysynth"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
+      harmony: "cycle", roots: [0, 5, 3, 4],
+      artic: "staccato", maxHold: 2, bassStyle: "octaves",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      fill: { o: [0,0,1,0, 0,0,1,0, 1,0,1,0, 1,0,1,1] },
+      tone: { wave: "square", cut: 2400, q: 2.0, atk: .003, rel: .35, gain: .28, verb: .24 },
+      words: ["the sequence, the sequence, unchanged",
+              "the lead, riding above it"],
+      word: v => (v === 1 ? [drop(2)] : []),
+      fx: ["echo"],
+    },
+
+    // MADCHESTER [Happy Mondays]. House's dance-floor discipline and
+    // funk's loose sixteenth-note hand under a rock band, in mixolydian
+    // for the bright, baggy sway — THE LOOSE LIVE BREAK is the explicit
+    // `swing`, a real hand on the kit rather than a sequencer's certainty,
+    // which is what separates this from house or techno's own machine
+    // rows. The Hacienda's own DJ culture, the actual room this scene
+    // happened in, is the missing rung.
+    madchester: {
+      label: "Manchester 1990", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "house",
+      parents: { house: 0.35, funk: 0.35, rock: 0.3 },
+      wants: ["hacienda scene"],
+      instr: ["clean_guitar", "drawbarorgan"],
+      drumkit: "power",
+      entry: v => v, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
+      harmony: "cycle", roots: [0, 3, 4, 0], mode: MODES.mixo,
+      scale: MODES.mixo, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "sixteenths",
+      kit: { k: [1,0,0,1, 0,0,1,0, 1,0,0,0, 0,1,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,0,0],
+             h: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 1,0,1,0, 1,1,1,0] },
+      tone: { wave: "triangle", cut: 2000, q: 1.2, atk: .01, rel: .75, gain: .27, verb: .3 },
+      words: ["the guitar, the baggy hook", "the organ, swirling underneath"],
+      word: v => (v === 0 ? [] : [drop(2)]),
+    },
+
+    // JANGLE POP [The Smiths]. Motown's melodic, singing bassline under two
+    // interlocking rock guitars — Marr's multi-tracked chime, the one
+    // decision that makes this itself, said here as a triplet `swing` on a
+    // straight 4/4 grid: the compound-time lilt a real 6/8 would give
+    // without the engine's meter machinery. The Byrds' 12-string jangle,
+    // the actual root of the technique, has no anchor here.
+    janglepop: {
+      label: "Manchester 1984", rate: 1, bars: 4, voices: 2, swing: 1/3, near: "rock",
+      parents: { rock: 0.4, motown: 0.35, folkduo: 0.25 },
+      wants: ["byrds jangle"],
+      instr: ["clean_guitar", "clean_guitar"],
+      drumkit: "room",
+      entry: v => v, reg: v => v - 1, realize: () => "line",
+      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 4, bassStyle: "walk",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,0,1, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2400, q: 1.0, atk: .008, rel: 1.1, gain: .26, verb: .34 },
+      words: ["the first guitar, the chime", "the second, interlocking, a third above"],
+      // INTERLOCKING, not doubled: a bare third-above would be one hook
+      // played twice, and Marr's whole point was two guitars that fit
+      // together rather than one guitar heard twice (the §51 quote-box law
+      // catches exactly this — measured, this exact shape failed it).
+      word: v => (v === 1 ? [rotate(2), transpose(4), drop(2)] : []),
+      fx: ["chorus"],
+    },
+
+    // INDIE DANCE [Soup Dragons]. Madchester's baggy sway sent all the way
+    // onto the floor — house's four-on-the-floor discipline in full rather
+    // than borrowed, a walking bassline doing the melodic work a lead
+    // instrument would elsewhere carry (jazz and isley's own walking-bass
+    // idiom, read as the dance-floor's hook). Rock supplies the guitar body
+    // underneath. Nothing named here is missing; the crossover itself IS
+    // the genre.
+    indiedance: {
+      label: "Glasgow 1990", rate: 1, bars: 4, voices: 2, near: "madchester",
+      parents: { madchester: 0.4, house: 0.35, rock: 0.25 },
+      wants: [],
+      instr: ["clean_guitar", "synth_strings_1"],
+      drumkit: "power",
+      entry: v => v, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
+      harmony: "cycle", roots: [0, 3, 4, 0], mode: MODES.mixo,
+      scale: MODES.mixo, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "walk",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { o: [0,0,1,0, 0,0,1,0, 1,0,1,0, 1,0,1,1] },
+      tone: { wave: "sawtooth", cut: 2200, q: 1.4, atk: .008, rel: .6, gain: .27, verb: .28 },
+      words: ["the guitar, the hook", "the strings, a wash underneath"],
+      word: v => (v === 0 ? [] : [drop(2)]),
+    },
+
     // ---- THE FUNCTION GENRES ---------------------------------------------
     // A genre whose identity is a ROLE and not a style. "What is a Beatles song
     // without a couple of solos" — and until now there was no way to say it: a
@@ -3990,26 +4638,36 @@
     ["kernel", ["simple"]],
     ["vox",    ["gregorian", "bulgarian", "spem", "counterpoint", "fugue", "hymn"]],
     ["club",   ["acid", "house", "techno", "garage", "dnb", "trap", "boombap",
-                "electro", "bigbeat", "drill", "kpop", "bigroom", "ebm", "synthduo"]],
+                "electro", "bigbeat", "drill", "kpop", "bigroom", "ebm", "synthduo",
+                // the five newcomers below are the SAME "no family fallback"
+                // deal every existing member already signed: each gets its own
+                // DYNAMICS row rather than resolving to nothing (§39's law).
+                "melodictechno", "bleeptechno", "industrialbreaks", "madchester",
+                "indiedance"]],
     ["soul",   ["doowop", "motown", "isley", "funk", "disco", "gospel", "rnb",
                 "jodeci", "clubpop", "retrofunkpop", "boyband", "darkrnb",
                 "blueeyedsoul"]],
     ["groove", ["reggae", "dub", "ska", "afrobeat", "bossa", "reggaeton", "latinpop"]],
     ["band",   ["rock", "punk", "blues", "bodiddley", "chuckberry", "newwave",
                 "sludge", "deathmetal", "powerballad", "emo", "screamo",
-                "jamband", "sophistirock", "industrialmetal"]],
+                "jamband", "sophistirock", "industrialmetal",
+                "musichallrock", "grebo", "janglepop", "industrialrock",
+                "gothicpop", "postpunk"]],
     ["studio", ["beatles", "steely", "toto", "kraftwerk", "eurythmics",
                 "synthpop", "citypop", "merseybeat", "psychpop", "motorik",
-                "roboticpop", "confessionalpop"]],
+                "roboticpop", "confessionalpop",
+                "coastrock", "yachtrock", "yachtsoul", "analogsynthpop",
+                "gothsynth", "dancepostpunk", "orchpsych"]],
     ["drift",  ["ambient", "drone", "vaporwave", "shoegaze", "postrock",
-                "neoclassical", "minimalism"]],
+                "neoclassical", "minimalism", "spacerock"]],
     // the pre-rock traditions, and the two ancestors that joined them are
     // exactly that: Buenos Aires 1935, Nashville 1945, New York 1945,
     // London 1956. Kling Klang is `studio` and not `club` for the same kind of
     // reason — Kraftwerk made a record, and the floor is what the children
     // built out of it.
     ["roots",  ["countrypop", "skiffle", "tango", "jazz", "crooner", "yuletide",
-                "folkduo", "worldfolk"]],
+                "folkduo", "worldfolk",
+                "altcountry", "songwriterpiano", "softfolk", "singersongwriter"]],
     // ...and the one cluster that is not a tradition at all: the FUNCTION
     // genres, which are parts rather than styles. They sit last because that
     // is how they are used — you pick the music first and the part second.
@@ -4144,6 +4802,26 @@
     bigroom:   { stress: 0.3,  phrase: 0.25, touch: { t: 0.015, v: 0.45 } },
     ebm:       { stress: 0.3,  phrase: 0.15, touch: { t: 0.01,  v: 0.35 } },
     synthduo:  { stress: 0.28, phrase: 0.35, touch: { t: 0.02,  v: 0.5 } },
+    // ...and the five rooms added 2026-08-17, same law, same reason: `club`
+    // still has no fallback row, so a machine-floor newcomer that disagrees
+    // (which every one of these does, in a different direction) is named here
+    // rather than silently rendering flat.
+    //
+    // melodictechno and bleeptechno are the two REAL machines of the five —
+    // one hand slowly turning a filter knob, one hand pressing a sequencer
+    // key — so both sit near the five frozen machines' near-zero touch, not
+    // near boombap's loose hand. industrialbreaks gets boombap's own reading
+    // (a distortion pedal is a hand on a control, same as an MPC with the
+    // quantize off). madchester and indiedance are the two SAMPLED corners of
+    // this floor, same as boombap/garage already are — a baggy break played
+    // by a drummer, not triggered by one — so they sit with those two, and
+    // madchester sits a little looser (indiedance took itself all the way
+    // onto the floor; madchester never fully left the stage).
+    melodictechno:    { stress: 0.25, phrase: 0.4,  touch: { t: 0.02, v: 0.4 } },
+    bleeptechno:      { stress: 0.3,  phrase: 0.1,  touch: { t: 0.01, v: 0.3 } },
+    industrialbreaks: { stress: 0.4,  phrase: 0.15, touch: { t: 0.06, v: 0.9 } },
+    madchester:       { stress: 0.4,  phrase: 0.35, touch: { t: 0.07, v: 0.9 } },
+    indiedance:       { stress: 0.35, phrase: 0.3,  touch: { t: 0.05, v: 0.75 } },
     // THE THREE FUNCTION GENRES THAT DISAGREE WITH THEIR FAMILY. A riff is
     // metre — it is the part that is NOT expressive, that is its job. A pad has
     // no metre and barely a hand (the chord path reads stress and touch and
