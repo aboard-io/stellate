@@ -9905,6 +9905,148 @@ console.log("a song knows what key it is in, and sometimes it decides to move");
               "that lands on the boundary and never happens twice by accident");
 }
 
+/* ---------------------------------------------------------------- 64. THE DRUM PHRASE
+   Lane C3, built on lanes C1/C2's own infrastructure (the plain editor, the
+   `orn` marks): a phrase can be a DRUM PATTERN now — kernel.js kind:"drum",
+   a lane grid (DRUM_LANES) of composite marks (DMARK: hit/accent/ghost/flam/
+   roll of two-three-four, four of the eight values literally `orn`'s own) —
+   instead of a melodic line. Dropped into a section's lead slot it OVERRIDES
+   that section's genre kit for exactly its own bars; taken back out, the
+   genre's own kit plays again. Every claim below is read off the RENDERED
+   score, through the REAL ui/derive.js sectionEvents (§31's own law), never
+   off the saved phrase or box. */
+console.log("a drum phrase is a phrase you can hear the machine in, and it takes the kit");
+{
+  const NS64 = require("../../nukernel/song.js");
+  const hitsOf = ev => ev.filter(e => e.kind === "hit");
+  const lanesOf = ev => [...new Set(ev.map(e => e.d))].sort();
+  // a genre whose own kit is known to voice more than the two lanes the drum
+  // phrase below writes, so "the genre's own lane is gone" is a real claim
+  const gk = GENRES.dnb && GENRES.dnb.kit && GENRES.dnb.kit.h ? "dnb"
+    : GK.find(g2 => GENRES[g2].kit && GENRES[g2].kit.h && GENRES[g2].kit.k);
+  const baseBox = () => { const b = NS64.emptyBox(); b.stack[0].g = gk; b.len = 4; return b; };
+  const genreKit = hitsOf(D.sectionEvents(baseBox(), []).ev);
+  ok(genreKit.length && lanesOf(genreKit).includes("h"),
+     gk + ": no genre-kit baseline to override (no hats in its own kit)");
+
+  // (a) THE OVERRIDE IS TOTAL. A drum phrase in the lead slot plays ONLY its
+  // own lanes — none of the genre's, including the hats every bar of its own
+  // kit carries — and every hit lands on the lane and step the phrase wrote.
+  {
+    const dp = NS64.blankDrum();
+    dp.k = [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0];
+    dp.s = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0];
+    const b = baseBox(); b.stack[0].slots = [0];
+    const ev = hitsOf(D.sectionEvents(b, [dp]).ev);
+    ok(ev.length > 0 && lanesOf(ev).join(",") === "k,s",
+       "a drum phrase's lanes did not replace the genre kit's (" + lanesOf(ev).join(",") + ")");
+    ok(!ev.some(e => e.d === "h"),
+       "the genre's own hat kept sounding under a drum phrase");
+    // the phrase's own steps, not the genre's rhythm: a kick on every 4th
+    // sixteenth, four bars of it — read at the genre's own rate rather than
+    // assumed, since a drum phrase's sixteen steps still play at g.rate
+    const gRate = D.genreOf(b, b.stack[0]).rate, period = 16 / gRate;
+    const kSteps = new Set(ev.filter(e => e.d === "k").map(e => e.t % period));
+    const want = [0, 4, 8, 12].map(s => s / gRate);
+    ok(kSteps.size === 4 && want.every(t => kSteps.has(t)),
+       "the drum phrase's own kick pattern did not reach the score (" +
+       [...kSteps].join(",") + " vs " + want.join(","));
+  }
+
+  // (b) REMOVE IT AND THE GENRE'S OWN KIT COMES BACK, byte for byte — the
+  // SAME box, drum phrase taken back out of the slot, against a box that
+  // never held one at all.
+  {
+    const held = baseBox(); held.stack[0].slots = [0];
+    const dp = NS64.blankDrum(); dp.k[0] = 1;
+    const withPhrase = hitsOf(D.sectionEvents(held, [dp]).ev);
+    ok(withPhrase.length && lanesOf(withPhrase).join(",") === "k",
+       "setup: the held drum phrase did not override anything to remove");
+    held.stack[0].slots = [];                 // take it back out
+    const removed = D.sectionEvents(held, [dp]).ev;
+    const neverHad = D.sectionEvents(baseBox(), []).ev;
+    ok(removed.length && JSON.stringify(removed) === JSON.stringify(neverHad),
+       "taking the drum phrase out of the slot did not restore the genre's " +
+       "own kit byte-for-byte");
+    // and a MELODIC phrase in that same slot renders the genre's kit too —
+    // the override is the phrase's KIND, not the slot it sits in
+    const bMel = baseBox(); bMel.stack[0].slots = [0];
+    const melodicInSlot = D.sectionEvents(bMel, [NS64.blank()]).ev;
+    ok(lanesOf(hitsOf(melodicInSlot)).includes("h"),
+       "a melodic phrase in the lead slot did not render the genre's own kit");
+  }
+
+  // (c) ACCENT, FLAM AND ROLL EACH CHANGE THE SCORE AS CLAIMED, read through
+  // the same sectionEvents pipeline (a) and (b) used, not off K.drums alone.
+  {
+    const K64 = require("../../nukernel/kernel.js");
+    const mk = mark => { const dp = NS64.blankDrum(); dp.s[4] = mark; return dp; };
+    const b = baseBox(); b.stack[0].slots = [0];
+    const hitOf = (mark, at) => hitsOf(D.sectionEvents(b, [mk(mark)]).ev)
+      .filter(e => e.d === "s" && Math.abs(e.t - at) < 0.9);
+
+    const normal = hitOf(K64.DMARK.HIT, 4);
+    ok(normal.length === 1 && normal[0].vel === 5 && !normal[0].acc,
+       "a plain hit mark did not render as one ordinary hit");
+
+    const accent = hitOf(K64.DMARK.ACCENT, 4);
+    ok(accent.length === 1 && accent[0].acc === true && accent[0].vel > normal[0].vel,
+       "the accent mark did not raise the level or flag the accent");
+
+    const ghost = hitOf(K64.DMARK.GHOST, 4);
+    ok(ghost.length === 1 && ghost[0].vel < normal[0].vel,
+       "the ghost mark did not lower the level");
+
+    const flam = hitOf(K64.DMARK.FLAM, 4);
+    ok(flam.length === 2 && flam.some(e => e.grace) && flam.some(e => !e.grace),
+       "a flam did not add a quieter grace hit ahead of the beat (" +
+       JSON.stringify(flam) + ")");
+
+    const roll3 = hitOf(K64.DMARK.ROLL3, 4);
+    ok(roll3.length === 3 && roll3.every(e => e.roll === 3) &&
+       new Set(roll3.map(e => e.t)).size === 3,
+       "a roll of three did not strike three times inside the step (" +
+       JSON.stringify(roll3.map(e => e.t)) + ")");
+  }
+
+  // (d) A DRUM PHRASE SURVIVES SAVE AND LOAD — song.js's own path, not a
+  // hand-rolled shortcut around it: migrate() then validateSong(), same as
+  // any file this build opens.
+  {
+    const dp = NS64.blankDrum();
+    dp.k[0] = 1; dp.s[4] = 2; dp.h = new Array(16).fill(1); dp.h[3] = 4;
+    dp.swing = 2;
+    const raw = { v: NS64.VERSION, slots: [dp], song: [
+      { stack: [{ g: gk, slots: [0] }], len: 4, nudge: 0, ops: [], fx: [] } ] };
+    const { ok: loadedOk, song, errors } = NS64.validateSong(NS64.migrate(raw));
+    ok(loadedOk, "a song holding a drum phrase failed to load: " +
+       JSON.stringify(errors[0]));
+    const back = song && song.slots[0];
+    ok(back && back.kind === "drum" && back.swing === 2 &&
+       JSON.stringify(back.k) === JSON.stringify(dp.k) &&
+       JSON.stringify(back.h) === JSON.stringify(dp.h),
+       "the drum phrase did not round-trip through save/load intact");
+  }
+
+  // (e) THE OPS CHOKE POINT HOLDS. A box's `ops` chips are melodic-line
+  // transforms (kernel.js word()) that a drum phrase has no deg/gate for —
+  // they must pass over it rather than reach into it, at the one place
+  // (word()) rather than a second guard in the scheduler.
+  {
+    const dp = NS64.blankDrum(); dp.k = [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0];
+    const b = baseBox(); b.stack[0].slots = [0]; b.stack[0].ops = ["rev"];
+    let threw = false, ev = [];
+    try { ev = hitsOf(D.sectionEvents(b, [dp]).ev); } catch (e) { threw = true; }
+    ok(!threw, "an 'ops' chip crashed rendering a drum phrase's lead slot");
+    ok(ev.length && lanesOf(ev).join(",") === "k",
+       "an 'ops' chip changed which lanes a drum phrase plays");
+  }
+
+  console.log("  64: a drum phrase overrides the kit and only the kit, " +
+              "accent/flam/roll reach the score, it survives an ops chip, " +
+              "and it saves and loads whole");
+}
+
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }

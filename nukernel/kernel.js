@@ -25,6 +25,14 @@
 // a categorical flag that opens the filter and that operators key on (the ghost
 // layer is `only("acc", …)`). Level is continuous, accent is an event.
 //
+// A PHRASE HAS A KIND. Everything above is the MELODIC kind. The other is
+// DRUM (`kind:"drum"`): not five/nine parallel vectors but a small LANE GRID
+// — see DRUM_LANES/DMARK near drums() below — and it does not join this
+// algebra. The OPS words, render() and bass() all pass a drum phrase straight
+// through untouched; only drums() reads it, and reading it there is how it
+// OVERRIDES a section's genre kit for exactly the bars it sits in.
+//
+
 // TWO TYPES, not one: deg/oct/vel are integers, gate/acc/sld are binary. The
 // binary-only operators (`complement`, `crossmap`) are meaningless on the
 // integer pair — complementing an octave of -1 is not a musical idea. Every
@@ -157,8 +165,12 @@
   const drop = n => p => ({ ...p, gate: p.gate.map((g, i) => ((i + 1) % n === 0 ? 0 : g)) });
   const fill = n => p => ({ ...p, gate: p.gate.map((g, i) => ((i + 1) % n === 0 ? 1 : g)) });
 
-  // An operator WORD is a list of operators applied left to right.
-  const word = (p, ws) => ws.reduce((q, op) => op(q), p);
+  // An operator WORD is a list of operators applied left to right. A DRUM
+  // PHRASE has no deg/oct/gate for any of these operators to read — its shape
+  // is lanes, not a line — so a word passes over it exactly as an empty word
+  // would: the phrase, unchanged. (This is the same choke point ops already
+  // run through; it needs no second one in the callers.)
+  const word = (p, ws) => (p && p.kind === "drum") ? p : ws.reduce((q, op) => op(q), p);
 
   // ---- pitch ---------------------------------------------------------------
   // Two alphabets on purpose. The SUBJECT is pentatonic, which buys consonant
@@ -1184,6 +1196,8 @@
   };
 
   function render(subj, g, bars) {
+    // A DRUM PHRASE has no pitches — drums() plays it, this never does.
+    if (subj && subj.kind === "drum") return [];
     const N = subj.deg.length, ev = [], key = g.key | 0;
     // the alphabet an ornament leans through, per bar and memoized (see
     // ORNAMENTS above — under a chord cycle the notes available move with the
@@ -1507,6 +1521,33 @@
   // carry the form beat the parts that carry the time. This is the linear
   // drummer's own priority, written down.
   const LIMBORDER = ["x", "k", "s", "t", "m", "l", "c", "p", "r", "o", "f", "h"];
+
+  // A DRUM PHRASE is a phrase of a second KIND (kind:"drum"), not a variation
+  // of the melodic one: a hand-tapped lane grid rather than deg/oct/gate. It
+  // plays the seven voices a step sequencer actually offers — the LANES
+  // subset a person reaches for, not the full twelve-lane alphabet a genre
+  // author writes kits in code with (no ride, no crash, no pedal hat: those
+  // stay genre-authored colour). DROPPED INTO A SECTION'S SLOT, it OVERRIDES
+  // that section's genre kit for exactly its own bars — see drums() below,
+  // the one place that reads it — and taking it back out reverts the section
+  // to the genre's own kit, because nothing else in the render path ever
+  // learns the phrase was there.
+  const DRUM_LANES = ["k", "s", "h", "o", "c", "p", "t"];
+  // ONE VECTOR PER LANE (no chance/nudge/grace sidecars — a drum phrase is
+  // played back exactly as it was tapped in, not diced per bar the way a
+  // genre's own kit is), each step an integer 0..7: a small enum naming HOW
+  // the lane sounds there, not a level. Four of the eight values are the
+  // MELODIC `orn` vocabulary's own values, reused rather than reinvented — a
+  // flam ahead of the beat and a roll inside a step mean exactly the same
+  // thing on a drum lane that they mean on a melodic one.
+  const DMARK = { NONE: 0, HIT: 1, ACCENT: 2, GHOST: 3, FLAM: 4,
+                  ROLL2: 5, ROLL3: 6, ROLL4: 7 };
+  // the phrase's OWN shuffle — a single knob, not a per-step vector, because
+  // a drum pattern's feel is one setting for the whole grid the way a real
+  // machine's shuffle dial is. Same three fractions fields.js SWINGS already
+  // proved (straight/light/swing/shuffle), read by INDEX so a saved phrase
+  // never carries a raw float a future retune would have to chase down.
+  const DRUM_SWING = [0, 0.12, 0.22, 1 / 3];
 
   // FOUR VECTORS PER LANE, ONE ALPHABET. A kit is key -> sixteen integers; the
   // key says which of four things those integers are.
@@ -1908,7 +1949,51 @@
   // kit merged over the base on the LAST bar of the loop — the standard three-
   // bars-and-a-fill phrase, and the reason the drums have a four-bar shape
   // rather than a one-bar shape.
+  // ---- a drum phrase's own kit ----------------------------------------------
+  // THE OVERRIDE, entire: a drum phrase read here never reaches g.kit, g.kits,
+  // g.fill, g.kitProb or g.kitVel — it is not a variation on the genre's kit,
+  // it IS the kit for these bars. Take the phrase back out of the section's
+  // slot and `subj` is a melodic phrase again, drums() falls through to the
+  // branch below, and the genre's own kit plays exactly as it did before —
+  // which is the whole of "remove it and the genre's own kit comes back".
+  //
+  // No per-bar dice: a genre's kit is diced because it is authored once and
+  // has to breathe over a whole section; a drum phrase is hand-tapped and
+  // plays back the same every bar, the way a machine's own pattern does.
+  function drumPattern(ph, g, bars) {
+    const N = (ph[DRUM_LANES[0]] || []).length || 16;
+    const gg = ph.swing ? { ...g, swing: DRUM_SWING[ph.swing] || 0 } : g;
+    const ev = [];
+    for (let b = 0; b < bars; b++) {
+      for (const d of DRUM_LANES) {
+        const vec = ph[d];
+        if (!vec) continue;
+        for (let i = 0; i < N; i++) {
+          const m = at(vec, i);
+          if (!m) continue;
+          const t0 = (b * N + i + swing(gg, i)) / gg.rate;
+          const vel = m === DMARK.ACCENT ? 8 : m === DMARK.GHOST ? 2 : 5;
+          if (m === DMARK.FLAM) {
+            // a quieter hit a ninth of a step ahead, same lane — the same
+            // grace idiom drums() uses for a genre kit's own `!` sidecar
+            ev.push({ t: Math.max(0, t0 - 1 / (9 * gg.rate)), d, acc: false,
+                      vel: Math.max(1, Math.round(vel * 0.45)), grace: 1 });
+            ev.push({ t: t0, d, acc: false, vel });
+          } else if (m >= DMARK.ROLL2) {
+            // n strikes inside the step's own length — the ratchet
+            const n2 = m - DMARK.ROLL2 + 2, span = 1 / gg.rate;
+            for (let k = 0; k < n2; k++)
+              ev.push({ t: t0 + (k * span) / n2, d, acc: false, vel, roll: n2 });
+          } else {
+            ev.push({ t: t0, d, acc: m === DMARK.ACCENT, vel });
+          }
+        }
+      }
+    }
+    return ev.sort((a, b) => a.t - b.t);
+  }
   function drums(subj, g, bars) {
+    if (subj && subj.kind === "drum") return drumPattern(subj, g, bars);
     const ev = [], N = subj.deg.length;
     // the two seeded facts, read once: a hand that is not the grid, and the
     // salt that makes this genre's dice its own
@@ -1990,6 +2075,8 @@
   // pipeline — they are this object at a different density.
   function bass(subj, g, bars) {
     if (g.nobass) return [];              // a genre may simply not have a bass part
+    // A DRUM PHRASE carries no chord roots for a walking or root bass to read.
+    if (subj && subj.kind === "drum") return [];
     const ev = [], N = subj.deg.length;
 
     // WALKING — quarter notes that arrive somewhere. Root, third, fifth, then a
@@ -2396,6 +2483,7 @@
                 seatNote, tempoWarp, prng,
                 PARTS, partOf, periodOps, pipes, PIPES,
                 ORN, ORNNAME, ORNPARTS, ornament,
+                DRUM_LANES, DMARK, DRUM_SWING,
                 harm, render, drums, bass };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuKernel = api;

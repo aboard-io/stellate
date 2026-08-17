@@ -114,6 +114,19 @@
     return { deg: z(n), oct: z(n), vel: new Array(n).fill(5),
              inc: z(n), stk: z(n), gate: z(n), acc: z(n), sld: z(n) }; };
 
+  // A DRUM PHRASE is a phrase of the SECOND kind (kernel.js DRUM_LANES/DMARK):
+  // a lane grid rather than a line, always sixteen steps (a step sequencer's
+  // own length, not the melodic phrase's variable 1..PHRASE_MAX — there is no
+  // grow/shrink control for this kind). One vector per lane, every lane
+  // always present at all-zero (silent) rather than grown lazily the way
+  // `orn` was — a drum phrase's whole reason to exist is its lane grid, so
+  // there is no "phrase nobody ever marks" case to keep cheap the way a
+  // melodic phrase's ninth vector was.
+  const blankDrum = () => { const o = { kind: "drum", swing: 0 };
+    for (const d of K.DRUM_LANES) o[d] = z(16);
+    return o; };
+  const isDrumPhrase = p => !!(p && p.kind === "drum");
+
   // A BOX CARRIES A STACK OF GENRES, not one. The FIRST is the authority: it
   // owns the harmony, the rate and the drums, and everything layered on top
   // inherits them. Each entry in the stack carries ITS OWN phrases. A BOX IS
@@ -261,8 +274,10 @@
         delete b.del;
       }
     }
-    // early saves predate the ramp vectors
+    // early saves predate the ramp vectors — and predate the drum kind
+    // entirely, so a drum phrase (no `deg` at all) never had inc/stk to miss
     for (const p of Array.isArray(r.slots) ? r.slots : []) {
+      if (p && p.kind === "drum") continue;
       // a phrase old enough to be missing inc/stk is always sixteen, but
       // reading its OWN length off deg (rather than assuming) is what keeps
       // this line honest now that phrases stop being sixteen going forward
@@ -288,6 +303,17 @@
     if (!Number.isInteger(n) || n < PHRASE_MIN || n > PHRASE_MAX) return false;
     return ["deg", "oct", "vel", "inc", "stk", "gate", "acc", "sld"].every(k =>
       Array.isArray(p[k]) && p[k].length === n && p[k].every(Number.isFinite));
+  };
+  // THE DRUM KIND'S OWN CHECK, the same "every vector the same length" law at
+  // sixteen fixed steps: every lane a sixteen-integer vector 0..DMARK.ROLL4,
+  // and `swing` (absent = 0, straight) an index into kernel.js DRUM_SWING.
+  const okDrumPhrase = p => {
+    if (!isDrumPhrase(p)) return false;
+    const okLane = v => Array.isArray(v) && v.length === 16 &&
+      v.every(x => Number.isInteger(x) && x >= 0 && x <= K.DMARK.ROLL4);
+    return K.DRUM_LANES.every(d => okLane(p[d])) &&
+      (p.swing == null || (Number.isInteger(p.swing) &&
+        p.swing >= 0 && p.swing < K.DRUM_SWING.length));
   };
 
   function validateSong(raw) {
@@ -318,9 +344,10 @@
       err("slots", Array.isArray(s.slots) ? s.slots.length : typeof s.slots,
           "1.." + NSLOTS + " phrases");
     else
-      s.slots.forEach((p, i) => { if (!okPhrase(p))
+      s.slots.forEach((p, i) => { if (!okPhrase(p) && !okDrumPhrase(p))
         err("slots[" + i + "]", p, "eight finite vectors, " +
-            PHRASE_MIN + ".." + PHRASE_MAX + " steps, all the same length"); });
+            PHRASE_MIN + ".." + PHRASE_MAX + " steps, all the same length, " +
+            "or a sixteen-step drum pattern"); });
 
     // ---- one enum value against the registry. oct arrives as a number or a
     // string; the table is keyed on strings, so read it through String().
@@ -722,6 +749,7 @@
 
   const api = { VERSION, FILTERED, blank, skeleton, emptyBox,
                 PHRASE_MIN, PHRASE_MAX,
+                blankDrum, isDrumPhrase, okDrumPhrase,
                 SESSION_NS, isSessionKey, sessionKey, MAX_PARENTS, FALLBACK_GENRE,
                 migrate, validateSong, load };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

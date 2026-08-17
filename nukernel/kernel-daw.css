@@ -444,6 +444,11 @@ h1 em{font-style:normal;color:var(--ink)}
    lottery: ⚄ and ⌫ render as tofu boxes on enough phones that a unicode die
    is not a die. */
 .btn.ik{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+/* author display beats the UA [hidden] rule (the .popfader law) — every key
+   in this row is hidden/shown by ui/editor.js at some point (shrink/grow at
+   either length end, swing only while a drum pattern is open), so the
+   override has to be said here or the hide is silent. */
+.btn.ik[hidden]{display:none}
 .btn.ik .k{
   width:13px;height:13px;flex:0 0 auto;background:currentColor;
   -webkit-mask:var(--ikm) center/contain no-repeat;mask:var(--ikm) center/contain no-repeat;
@@ -458,6 +463,13 @@ h1 em{font-style:normal;color:var(--ink)}
    skip-ahead — pointing OUT (grow) or IN (shrink) rather than a typed number */
 .ik-grow{--ikm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M2 2l4 5-4 5M8 2l4 5-4 5' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
 .ik-shrink{--ikm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M12 2l-4 5 4 5M6 2l-4 5 4 5' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+/* three ticks stepping off the beat: a drum pattern's own shuffle key
+   (lane C3, "a drum phrase is a phrase you can hear the machine in") */
+.ik-swing{--ikm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M2 11V6.4M6.3 11V3M10.6 11V7.6' stroke='%23000' stroke-width='1.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E")}
+/* the drum pattern's own glyph — a small snare shell — shared by the
+   second tray [+] (.slotadd-drum) and the tray's own corner badge
+   (.icobadge) so the two never disagree about what "drum" looks like */
+.ik-drum{--ikm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cellipse cx='7' cy='3.3' rx='5.3' ry='2' fill='none' stroke='%23000' stroke-width='1.3'/%3E%3Cpath d='M1.7 3.3v6.6c0 1.2 2.4 2.1 5.3 2.1s5.3-.9 5.3-2.1V3.3' fill='none' stroke='%23000' stroke-width='1.3' stroke-linejoin='round'/%3E%3C/svg%3E")}
 /* the session keys' silkscreen: down into the tray, up out of it, and the
    counter-clockwise return-to-zero — the ⌫-free family the utility row wears */
 .ik-save{--ikm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M1.8 9v2.4a1 1 0 0 0 1 1h8.4a1 1 0 0 0 1-1V9' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='M7 1.6v6.2M4.3 5.5L7 8.2l2.7-2.7' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
@@ -502,6 +514,13 @@ h1 em{font-style:normal;color:var(--ink)}
    (declared after .sel), which is the one thing that actually needs to be
    true at a glance while transport is running. */
 .slot.live .slotbody{box-shadow:inset 0 0 0 2px var(--st-live)}
+/* A DRUM PATTERN'S OWN OUTLINE — "drawn differently... a distinct outline
+   and a drum glyph, not a colour alone" (the model Paul approved, lane C3).
+   Dashed, the same "this is a different thing" language .slotadd already
+   speaks for "not a pad yet"; the corner glyph (.icobadge below) is the
+   second half, so the two kinds cannot be told apart by hue alone. */
+.slot.drum .slotbody{border-style:dashed;border-color:var(--rule-strong)}
+.slot.drum.sel .slotbody{border-color:var(--st-sel)}
 .slot .sn{font:600 var(--t-md)/1 var(--f-num);color:var(--ink-3);text-align:left}
 .slot.sel .sn,.slot.inbox .sn{color:var(--accent-txt)}
 /* the picture is ONE svg path per pad — thumbPath's FILLED gate/velocity
@@ -529,13 +548,26 @@ h1 em{font-style:normal;color:var(--ink)}
 .ico-copy{--ikm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Crect x='1' y='1' width='8' height='8' rx='1.2' fill='none' stroke='%23000' stroke-width='1.3'/%3E%3Crect x='5' y='5' width='8' height='8' rx='1.2' fill='none' stroke='%23000' stroke-width='1.3'/%3E%3C/svg%3E")}
 .ico-x{--ikm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M2.5 2.5l9 9M11.5 2.5l-9 9' stroke='%23000' stroke-width='1.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E")}
 @media (pointer:coarse){.ico{width:44px;height:44px}}
-/* the ONE bank key left: [+] grows the tray (to NSLOTS). Shrinking is PER
-   PHRASE now (each pad's own x, ui/editor.js deletePhrase) rather than
-   tail-only, so there is no paired [−] any more. Dashed like .addbox — the
-   same "this makes room, it is not a pad" language the song rack speaks.
-   editor.js hides this key with nothing left to do (a full bank). */
+/* THE DRUM GLYPH, opposite the clone/delete corner: the small snare-shell
+   mask (.ik-drum) again, this time sitting quietly in the pad rather than on
+   a key. Always in the DOM (ui/editor.js buildSlots) and shown only on a
+   drum pattern's own pad — patch, not rebuild, the same law every other
+   pad state here follows. */
+.icobadge{display:none;position:absolute;bottom:var(--sp-1);left:var(--sp-1);
+  width:14px;height:14px;background:currentColor;color:var(--ink-3);
+  -webkit-mask:var(--ikm) center/contain no-repeat;mask:var(--ikm) center/contain no-repeat;
+  pointer-events:none}
+.slot.drum .icobadge{display:block}
+/* the ONE bank key left [+] grows the tray (to NSLOTS); the SECOND [+]
+   beside it (ui/editor.js addDrumKey) is the explicit "make it a drum
+   pattern instead" choice — same key, the drum glyph riding its own corner
+   is the only difference. Shrinking is PER PHRASE now (each pad's own x,
+   ui/editor.js deletePhrase) rather than tail-only, so there is no paired
+   [−] for either. Dashed like .addbox — the same "this makes room, it is
+   not a pad" language the song rack speaks. editor.js hides both keys with
+   nothing left to do (a full bank). */
 .slotadd{
-  appearance:none;cursor:pointer;flex:0 0 64px;
+  appearance:none;cursor:pointer;flex:0 0 64px;position:relative;
   font:600 20px/1 var(--f-num);color:var(--ink-3);
   display:flex;align-items:center;justify-content:center;
   background:none;border:1px dashed var(--rule-strong);border-radius:var(--r);
@@ -543,6 +575,11 @@ h1 em{font-style:normal;color:var(--ink)}
 }
 .slotadd:hover{border-color:var(--accent);color:var(--accent-txt)}
 .slotadd[hidden]{display:none}
+.slotadd-drum::after{
+  content:"";position:absolute;bottom:6px;right:6px;width:11px;height:11px;
+  background:currentColor;
+  -webkit-mask:var(--ikm) center/contain no-repeat;mask:var(--ikm) center/contain no-repeat;
+}
 /* ---- THE PATTERN AS A TRACKER TABLE, inside the editor popup ----
    Time runs DOWN: sixteen numbered rows, one per 16th, and the eight vectors
    are the columns — switches first (gate acc sld), then the five value
@@ -568,6 +605,10 @@ h1 em{font-style:normal;color:var(--ink)}
 .stepgrid{display:grid;gap:2px;padding:0;position:relative;--tbl-rowh:36px;
   grid-template-columns:26px repeat(4,minmax(30px,52px)) repeat(5,minmax(34px,1fr));
   grid-template-rows:auto;grid-auto-rows:minmax(36px,auto)}
+/* author display beats the UA [hidden] rule (the .popfader law, above), and
+   this grid is now toggled — ui/editor.js patchGrid hides it in favour of
+   .drumgrid while a drum pattern is open — so it must say so explicitly too. */
+.stepgrid[hidden]{display:none}
 .prow{display:contents}
 /* THE ONE CAPTION LEFT ON THE MACHINE, and it is not a header row.
    Every other column-label row is deleted, because every other column names
@@ -650,6 +691,29 @@ h1 em{font-style:normal;color:var(--ink)}
    word — the title tooltip carries the name. */
 .cell.mark{letter-spacing:.08em}
 .cell.mark.on{background:var(--st-auto);color:var(--on-accent)}
+/* THE DRUM GRID (lane C3) — a second grid beside .stepgrid, shown instead of
+   it when the open phrase is a drum PATTERN (ui/editor.js patchGrid). Same
+   ground, same row primitives (.rowlab, .cell.mark — an eight-value cycle is
+   exactly what the melodic mark column already draws), transposed: LANES
+   run down the rows, STEPS run across the columns, because a step
+   sequencer's own reading order is not the tracker's. Always sixteen
+   columns — a drum pattern does not grow or shrink the way a phrase does. */
+.drumgrid{display:grid;gap:2px;padding:0;--tbl-rowh:34px;
+  grid-template-columns:60px repeat(16,minmax(18px,1fr));
+  grid-auto-rows:minmax(34px,auto)}
+.drumgrid[hidden]{display:none}
+.drow{display:contents}
+/* NOT .tnum — that column is sticky-left, right for the melodic grid's row
+   numerals, wrong for this grid's numerals running across a header ROW.
+   .num.q/.num[data-q] (THE TABLE, shared) still light the quarter ramp. */
+.drumgrid .dhead{display:flex;align-items:center;justify-content:center;
+  font:500 var(--t-xs)/1 var(--f-num);color:var(--tbl-faint)}
+/* accent and ghost are two more stops on the SAME cycle .cell.mark.on
+   already lights — louder and quieter readings of one hit, not a fourth
+   state hue, the same "it is the glyph that names it" law the melodic
+   marks use. Flam and the three rolls stay the plain automation colour. */
+.cell.mark.accent{background:var(--st-arm);color:var(--on-accent)}
+.cell.mark.ghost{background:var(--st-auto);opacity:.5}
 /* the VALUE columns draw the value AS A BAR on the quiet ground — .cbar is
    an accent strip positioned by the two custom properties ui/editor.js
    patches (--b bottom, --h height): vel fills from the floor, the bipolar

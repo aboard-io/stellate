@@ -123,13 +123,22 @@ const growBtn = ikBtn("grow", "btn ik ik-grow", "longer phrase",
 const seedBtn = ikBtn("seed", "btn ik ik-seed", "starter phrase", "write the starter phrase");
 const rndBtn = ikBtn("rnd", "btn ik ik-rnd", "random phrase", "roll a random phrase");
 const clearBtn = ikBtn("clear", "btn ik ik-clear", "clear phrase", "empty this phrase");
-head.append(edslotEl, mk("span", "spacer"), shrinkBtn, growBtn, seedBtn, rndBtn, clearBtn);
+// SWING lives here too, not as a ninth column: a drum pattern's shuffle is
+// one setting for the whole grid, the way a real machine's dial is one knob
+// — shown only while a drum pattern is open (patchGrid).
+const swingBtn = ikBtn("swing", "btn ik ik-swing", "pattern swing", "cycle this pattern's shuffle");
+head.append(edslotEl, mk("span", "spacer"), shrinkBtn, growBtn, swingBtn, seedBtn, rndBtn, clearBtn);
 
 const stepsWell = mk("div", "steps tbl");
 const gridEl = Object.assign(mk("div", "stepgrid"), { id: "stepgrid" });
 const gridPlay = mk("i", "phhead");            // the grid's own playhead, see below
 gridPlay.setAttribute("aria-hidden", "true");
-stepsWell.append(gridEl);
+// THE DRUM GRID — a second, fixed-size (sixteen step) grid beside the
+// melodic one, lanes down the rows instead of steps: a step sequencer's own
+// orientation, not the tracker's. Built once (buildDrumGrid, below); which
+// of the two shows is patchGrid's call, off SUBJ.kind.
+const drumGridEl = Object.assign(mk("div", "drumgrid"), { id: "drumgrid" });
+stepsWell.append(gridEl, drumGridEl);
 
 const slotsEl = Object.assign(mk("div", "slots tbl"), { id: "slots" });
 
@@ -158,6 +167,34 @@ const clampTo = (v, [lo, hi]) => Math.max(lo, Math.min(hi, v));
 const MARKS = ["", "◜", "‖", "··", "···", "····"];
 const MARKNAME = ["no mark", "grace note", "flam", "roll of two",
                   "roll of three", "roll of four"];
+
+// ---------- THE DRUM PATTERN ----------
+// A phrase's SECOND KIND (kernel.js kind:"drum", DRUM_LANES/DMARK, lane
+// C3's own pass): a lane grid, not a line. This is its own small vocabulary,
+// kept here the way MARKS/MARKNAME above keep their own copy of the melodic
+// marks rather than reading kernel.js's names back out — a UI word and an
+// engine word are allowed to differ, but the LETTERS and the eight integers
+// they cycle through must stay the ones kernel.js DRUM_LANES/DMARK fixed.
+// "Pattern" is the one place that word survives (Paul: "this is the one
+// place 'pattern' survives") — every other surface in this file says phrase.
+const DLANES = [["k", "kick"], ["s", "snare"], ["h", "closed hat"],
+                ["o", "open hat"], ["c", "clap"], ["p", "rim"], ["t", "toms"]];
+// four of these eight are MARKS' own glyphs, reused rather than reinvented —
+// a flam and a roll mean the same thing on a drum lane that they mean on a
+// melodic one. Accent and ghost have no melodic analogue (vel/acc are a
+// separate column there); here they are two more steps of the same cycle.
+const DMARKS = ["", "●", "◆", "·", "◜●", "··", "···", "····"];
+const DMARKNAME = ["silent", "hit", "accent", "ghost", "flam",
+                    "roll of two", "roll of three", "roll of four"];
+// the pattern's OWN shuffle — one knob, not a per-step vector, cycled by a
+// single head key. Names only; the fractions themselves live in kernel.js
+// DRUM_SWING, read by index so this file never has to agree with a number.
+const DSWING = ["straight", "light", "swing", "shuffle"];
+// isBlank (derive.js) reads p.gate, which a drum pattern does not have —
+// this is the same question asked of either kind.
+const isBlankAny = p => p.kind === "drum"
+  ? DLANES.every(([d]) => !(p[d] || []).some(Boolean))
+  : isBlank(p);
 
 const cells = {};                          // key -> [len {b,bar,cv}], alive until a resize
 let gridLen = 0;                           // the row count the grid is CURRENTLY built for
@@ -315,7 +352,95 @@ function buildBody(len) {
   gridEl.append(gridPlay);                       // stays the grid's last child
   gridLen = len;
 }
+// ---------- THE DRUM GRID ----------
+// Lanes down the rows, sixteen steps across — a step sequencer's own
+// orientation, transposed from the tracker's (steps down, vectors across)
+// because the two things being arranged are different shapes: one line's
+// nine facts per step, versus seven lanes' one fact per step. Built ONCE —
+// a drum pattern is always sixteen steps, so there is no resize case to
+// rebuild for the way the melodic grid has.
+const dcells = {};                          // lane -> [16 buttons]
+function buildDrumGrid() {
+  drumGridEl.setAttribute("role", "grid");
+  drumGridEl.setAttribute("aria-label", "drum pattern");
+  const head2 = document.createElement("div");
+  head2.className = "drow"; head2.setAttribute("role", "row");
+  const corner = document.createElement("div");
+  corner.className = "rowlab corner"; corner.setAttribute("role", "columnheader");
+  corner.setAttribute("aria-label", "step");
+  head2.append(corner);
+  for (let i = 0; i < 16; i++) {
+    const n = document.createElement("div");
+    // NOT .tnum — that class sticks a cell to the left edge, right for the
+    // melodic grid's row-numeral COLUMN, wrong for this grid's numeral ROW.
+    n.className = "num dhead" + (i % 4 === 0 ? " q" : "");
+    n.textContent = String(i + 1);
+    n.dataset.q = String(1 + Math.floor(i / 4));
+    n.setAttribute("role", "columnheader");
+    head2.append(n);
+  }
+  drumGridEl.append(head2);
+  for (const [d, name] of DLANES) {
+    const row = document.createElement("div");
+    row.className = "drow"; row.setAttribute("role", "row");
+    const lab = document.createElement("div");
+    lab.className = "rowlab"; lab.textContent = name;
+    lab.setAttribute("role", "rowheader");
+    row.append(lab);
+    dcells[d] = [];
+    for (let i = 0; i < 16; i++) {
+      const b = document.createElement("button"); b.type = "button";
+      b.className = "cell mark"; b.dataset.lane = d; b.dataset.q = String(1 + Math.floor(i / 4));
+      b.setAttribute("role", "gridcell");
+      // ONE TAP CYCLES THE MARK — the same interaction as the melodic `orn`
+      // column, for the same reason: a small enum has nowhere for a drag to
+      // go, and a tap already shows the value the way it always has here.
+      b.addEventListener("click", () => {
+        const v = SUBJ[d];
+        v[i] = (v[i] + 1) % DMARKS.length;
+        buzz(4);
+        commit("phrase");
+      });
+      dcells[d][i] = b;
+      row.append(b);
+    }
+    drumGridEl.append(row);
+  }
+}
+function patchDrumGrid() {
+  for (const [d] of DLANES) {
+    for (let i = 0; i < 16; i++) {
+      const b = dcells[d][i], raw = SUBJ[d] ? SUBJ[d][i] : 0;
+      const m = raw > 0 && raw < DMARKS.length ? raw : 0;
+      if (b.textContent !== DMARKS[m]) b.textContent = DMARKS[m];
+      const t = name2(d) + " · step " + (i + 1) + " · " + DMARKNAME[m];
+      if (b.title !== t) b.title = t;
+      const cls = "cell mark" + (m ? " on" : "") +
+        (m === 2 ? " accent" : m === 3 ? " ghost" : "");
+      if (b.className !== cls) b.className = cls;
+      if (b.getAttribute("aria-label") !== t) b.setAttribute("aria-label", t);
+    }
+  }
+}
+const name2 = d => (DLANES.find(([l]) => l === d) || ["", d])[1];
+swingBtn.addEventListener("click", () => {
+  SUBJ.swing = ((SUBJ.swing || 0) + 1) % DSWING.length;
+  buzz(4);
+  commit("phrase");
+});
+
 function patchGrid() {
+  const isDrum = SUBJ.kind === "drum";
+  gridEl.hidden = isDrum;
+  drumGridEl.hidden = !isDrum;
+  swingBtn.hidden = !isDrum;
+  if (isDrum) {
+    shrinkBtn.hidden = true; growBtn.hidden = true;
+    edslotEl.textContent = "pattern " + (slot + 1);
+    swingBtn.title = "cycle this pattern's shuffle (" + DSWING[SUBJ.swing || 0] + ")";
+    patchDrumGrid();
+    return;
+  }
   const len = SUBJ.gate.length;
   ensureOrn(SUBJ, len);                          // before anything reads the column
   if (gridLen !== len) buildBody(len);
@@ -463,6 +588,22 @@ export function thumbPath(p) {
   }
   return d;
 }
+// A DRUM PATTERN'S OWN PICTURE — seven lane rows of hit dots, the same
+// 64×24 viewBox as thumbPath so a pad never resizes swapping between kinds.
+// It reads nothing like the melodic drawing (teeth, a piano-roll band) ON
+// PURPOSE: "drawn differently... a distinct outline and a drum glyph, not a
+// colour alone" (the model Paul approved) — the shape itself is the tell,
+// the outline (kernel-daw.css .slot.drum) and the corner glyph are the rest.
+export function thumbPathDrum(p) {
+  const rows = DLANES.length, rowH = 24 / rows, cellW = 64 / 16;
+  let d = "";
+  DLANES.forEach(([lane], r) => {
+    const y = r * rowH + rowH * 0.16, h = rowH * 0.68, vec = p[lane] || [];
+    for (let i = 0; i < 16; i++)
+      if (vec[i]) d += box(i * cellW + cellW * 0.12, y, cellW * 0.76, h);
+  });
+  return d;
+}
 
 /* ---------- the TRAY: a horizontal strip of phrases ---------- */
 // the picture is ONE <svg><path> per pad, not sixteen <i> bars — one node per
@@ -498,6 +639,23 @@ const addKey = (() => {
     if (SLOTS.length >= NSLOTS) return;    // the key is hidden at the cap anyway
     SLOTS.push(blank());
     setSlot(SLOTS.length - 1);             // the new phrase opens in the editor
+    commit("phrase"); commit("selection");
+  });
+  return b;
+})();
+// THE SECOND [+]. Creating a drum pattern is an explicit choice, not a menu
+// on the plain one — a second, iconic key beside it (kernel-daw.css
+// .slotadd-drum's own glyph carries the difference; the two keys otherwise
+// behave identically, cap included).
+const addDrumKey = (() => {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "slotadd slotadd-drum ik-drum"; b.id = "slotadddrum";
+  b.title = "add a drum pattern (up to " + NSLOTS + ")";
+  b.setAttribute("aria-label", "add a drum pattern");
+  b.addEventListener("click", () => {
+    if (SLOTS.length >= NSLOTS) return;
+    SLOTS.push(NuSong.blankDrum());
+    setSlot(SLOTS.length - 1);
     commit("phrase"); commit("selection");
   });
   return b;
@@ -578,34 +736,45 @@ function buildSlots() {
     delBtn.setAttribute("aria-label", "delete phrase " + (i + 1));
     delBtn.addEventListener("click", ev => { ev.stopPropagation(); deletePhrase(i); });
     icos.append(copyBtn, delBtn);
-    s.append(body, icos);
-    slotEls.push({ b: s, body, sn, line, ph });
+    // THE DRUM BADGE. Always in the DOM (patch, not rebuild, toggles it —
+    // the same law every other state here follows), a corner glyph opposite
+    // the clone/delete cluster so a drum pattern reads as one even before its
+    // picture is scanned — "a distinct outline and a drum glyph, not a
+    // colour alone" (kernel-daw.css .slot.drum draws the outline).
+    const badge = document.createElement("span");
+    badge.className = "icobadge ik-drum"; badge.setAttribute("aria-hidden", "true");
+    s.append(body, icos, badge);
+    slotEls.push({ b: s, body, sn, line, badge, ph });
     slotsEl.append(s);
   });
-  slotsEl.append(addKey);
+  slotsEl.append(addKey, addDrumKey);
 }
-// the picture is thumbPath above — the Arrange rows' phrase thumbnails draw
-// the same one, and one drawing routine is the only way the pad and the
-// thumbnail can agree about what a phrase looks like
+// the picture is thumbPath/thumbPathDrum above — the Arrange rows' phrase
+// thumbnails draw the same ones, and one drawing routine per kind is the
+// only way the pad and the thumbnail can agree about what a phrase looks
+// like
 function patchSlots() {
   const sec = curSection(), ent = focused(sec);
-  addKey.hidden = SLOTS.length >= NSLOTS;  // full bank: the key goes, not grey
+  addKey.hidden = SLOTS.length >= NSLOTS;  // full bank: the keys go, not grey
+  addDrumKey.hidden = SLOTS.length >= NSLOTS;
   SLOTS.forEach((p, i) => {
-    const s = slotEls[i], inBox = ent.slots.includes(i);
+    const s = slotEls[i], inBox = ent.slots.includes(i), isDrum = p.kind === "drum";
     // `live` is folded in here from the playhead's own record (liveSet,
     // below) rather than left for the rAF loop to add on top — this function
     // rewrites the WHOLE className on every phrase/box/selection event
     // (a scrub included), and a separate classList.toggle("live",...) from
     // the playhead loop would otherwise be stomped the next time either one
     // runs, flickering the sounding ring while a scrub and a play overlap.
-    s.b.className = "slot" + (i === slot ? " sel" : "") + (inBox ? " inbox" : "") +
-      (liveSet.has(i) ? " live" : "");
+    s.b.className = "slot" + (isDrum ? " drum" : "") + (i === slot ? " sel" : "") +
+      (inBox ? " inbox" : "") + (liveSet.has(i) ? " live" : "");
     s.body.setAttribute("aria-pressed", String(inBox));
-    s.body.setAttribute("aria-label", "phrase " + (i + 1) + (isBlank(p) ? ", empty" : ", filled") +
+    s.body.setAttribute("aria-label",
+      (isDrum ? "drum pattern " : "phrase ") + (i + 1) +
+      (isBlankAny(p) ? ", empty" : ", filled") +
       (inBox ? ", in " + GENRES[ent.g].label : ""));
     s.b.setAttribute("aria-pressed", String(inBox));   // the old test-visible attribute, kept
-    s.sn.textContent = (i + 1) + (isBlank(p) ? "" : " •");
-    const d = thumbPath(p);
+    s.sn.textContent = (i + 1) + (isBlankAny(p) ? "" : " •");
+    const d = isDrum ? thumbPathDrum(p) : thumbPath(p);
     if (s.line.getAttribute("d") !== d) s.line.setAttribute("d", d);
   });
 }
@@ -635,7 +804,10 @@ function paintLive(on, f) {
     s.b.classList.toggle("live", lit);
     if (lit) s.ph.style.left = (f * 100).toFixed(1) + "%";
   });
-  const openLive = on.has(slot);
+  // the grid's own hairline is the melodic grid's alone — a drum pattern has
+  // no phhead of its own yet, so an open, sounding drum pattern lights the
+  // tray pad above (already handled in the forEach) and stops there
+  const openLive = on.has(slot) && SUBJ.kind !== "drum";
   gridEl.classList.toggle("live", openLive);
   if (openLive) gridPlay.style.top = gridPct(f);
 }
@@ -674,10 +846,33 @@ function randomPhrase(len) {
   }
   return p;
 }
+// THE SAME THREE KEYS, KIND-AWARE. A drum pattern has no deg/gate for
+// randomPhrase/blank to fill, so each key reads SUBJ.kind and reaches for
+// the drum-shaped equivalent instead — the starter below is a four-on-the-
+// floor kick and a backbeat snare under straight hats, the closest thing
+// this machine has to a canonical drum pattern the way DEFAULT is a
+// canonical phrase.
+function defaultDrum() {
+  const p = NuSong.blankDrum();
+  p.k = [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0];
+  p.s = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0];
+  p.h = new Array(16).fill(1);
+  return p;
+}
+function randomDrum() {
+  const r = n => Math.floor(Math.random() * n), p = NuSong.blankDrum();
+  const odds = { k: 3, s: 3, h: 6, o: 1, c: 1, p: 1, t: 1 };
+  for (const [d] of DLANES) for (let i = 0; i < 16; i++)
+    if (r(10) < odds[d]) p[d][i] = r(6) === 0 ? 2 : 1;   // mostly hits, some accents
+  return p;
+}
 const put = make => () => { putPhrase(slot, make()); commit("phrase"); };
-seedBtn.addEventListener("click", put(() => structuredClone(DEFAULT)));
-rndBtn.addEventListener("click", put(() => randomPhrase(SUBJ.gate.length)));
-clearBtn.addEventListener("click", put(() => blank(SUBJ.gate.length)));
+seedBtn.addEventListener("click", put(() =>
+  SUBJ.kind === "drum" ? defaultDrum() : structuredClone(DEFAULT)));
+rndBtn.addEventListener("click", put(() =>
+  SUBJ.kind === "drum" ? randomDrum() : randomPhrase(SUBJ.gate.length)));
+clearBtn.addEventListener("click", put(() =>
+  SUBJ.kind === "drum" ? NuSong.blankDrum() : blank(SUBJ.gate.length)));
 // (hintKey — the exported (?) wiring, one round key toggling one paragraph,
 // used four times across the app — is GONE with the paragraphs it opened
 // ("get rid of ... help buttons", 2026-08-16). Nothing imports it any more;
@@ -707,7 +902,11 @@ export function openPhraseEditor(opts) {
 
 /* ---------- wiring ---------- */
 buildHead();
-buildBody(SUBJ.gate.length);
+// the initial OPEN phrase may itself be a drum pattern (a loaded song can
+// open on one) — buildBody always runs once at a safe length; patchGrid's
+// own kind check, right below, is what actually decides which grid shows
+buildBody(SUBJ.kind === "drum" ? 16 : SUBJ.gate.length);
+buildDrumGrid();
 buildSlots();
 markSilence();
 // refreshFader: an open fader shows a live value, and a song load or a second
