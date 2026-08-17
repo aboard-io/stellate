@@ -11666,6 +11666,211 @@ console.log("the seams are closed and the catalog sings");
               "belongs to its own context");
 }
 
+/* ── §73 EVERY FRAGMENT SAYS EXACTLY WHEN IT BELONGS ─────────────────────────
+   audio/stream-carrier.js is the consumer half of the two-lane engine: rendered
+   segments in, one continuous fMP4 stream into one <audio> element out. Its
+   whole reason for existing is a device report — on the mp3 route an iPhone
+   played the song and then "the snare and the lead and bass go out of whack over
+   time", because WebKit's audio/mpeg MSE stitching INFERS each append's
+   timestamp from the frames. The cure is that every fragment carries an explicit
+   baseMediaDecodeTime, and the three things that has to mean are all arithmetic,
+   which is why they are held here in node and not only in a browser:
+
+   (a) THE JOIN IS AN ADDITION AND THE STREAM ADVANCES BY N-OV. Segments overlap
+       by OV samples with the crossfade BAKED IN by the producer, so the carrier
+       adds the two windows and holds the tail back. Get that wrong by one sample
+       per segment and a twenty-minute session is a second out — the same class
+       of defect as the drift, arriving through the front door.
+   (b) MICROSECONDS BECOME SAMPLES ONCE, NOT PER FRAME. WebCodecs speaks µs and
+       1024 samples at 44100 is 23219.95 of them. Rounding each frame's timestamp
+       independently walks; rounding each frame's DURATION and letting the muxer
+       accumulate does not.
+   (c) THE TFDT IS THE RUNNING SUM AND NOTHING ELSE — across UNEVEN fragments
+       (a real stream's are), across a generation change, and anchored on a
+       NONZERO first chunk, because AAC-LC's ~2112 samples of encoder priming
+       arrive in that timestamp and assuming zero is how a stream starts 48 ms
+       into itself.
+
+   Plus the fallback tape, which is what a platform with no MediaSource plays:
+   it declares the score's frame count and not one byte more. */
+console.log("every fragment says exactly when it belongs");
+{
+  const SC = await import("../../nukernel/audio/stream-carrier.js");
+  const FM73 = require("../../engine/faust/codec/fmp4.js");
+
+  /* (a) THE JOIN IS AN ADDITION, and the stream advances by exactly N-OV */
+  {
+    // a producer's baked pair: segment k faded OUT over its last OV, segment
+    // k+1 faded IN over its first OV, both cut from ONE continuous source. The
+    // carrier's only job is to add them, and adding them must give the source
+    // back — sample for sample, because within a generation the two windows are
+    // the same audio and a unity-summing pair is what the producer bakes there.
+    const SR73 = 48000, OV = 5760, N = 96000, ADV = N - OV;   // 120 ms over 2 s
+    const K = 8, total = ADV * K;
+    const src = new Float32Array(total + N);
+    for (let i = 0; i < src.length; i++) src[i] = Math.sin(2 * Math.PI * 480 * i / SR73) * 0.8;
+    const segs = [];
+    for (let k = 0; k < K; k++) {
+      const from = k * ADV;
+      const L = new Float32Array(N), R = new Float32Array(N);
+      for (let i = 0; i < N; i++) {
+        let g = 1;
+        // the pair sums to one at every offset — head gain i/OV against the
+        // tail's 1 - i/OV at the SAME relative index. (Getting this backwards by
+        // one sample is a 1/OV = -75 dB error, which is exactly the size of the
+        // defect this check was written to be able to see.)
+        if (k > 0 && i < OV) g = i / OV;                      // baked fade-in
+        if (i >= N - OV) g = 1 - (i - (N - OV)) / OV;         // baked fade-out
+        L[i] = R[i] = src[from + i] * g;
+      }
+      segs.push({ pcm: [L, R], sampleRate: SR73, fromBar: k * 4, bars: 4,
+                  gen: 0, overlap: OV, endsSong: false });
+    }
+    let tail = null, out = [], fed = 0, badAdv = 0;
+    for (const s of segs) {
+      if (SC.advanceOf(s) !== ADV) badAdv++;
+      const j = SC.overlapAdd(tail, s.pcm, s.overlap);
+      tail = j.tail; out.push(j.out[0]); fed += j.emit;
+    }
+    ok(!badAdv, "§73(a) advanceOf() disagreed with N-overlap on " + badAdv + " segments");
+    ok(fed === total, "§73(a) " + K + " segments emitted " + fed + " samples, not " + total +
+                      " — the stream drifts by " + ((fed - total) / K) + " samples per join");
+    const flat = new Float32Array(fed);
+    { let o = 0; for (const c of out) { flat.set(c, o); o += c.length; } }
+    // the reconstruction, and the JOINS specifically: the largest single-sample
+    // error anywhere, and the largest at a join, against the source's own
+    // maximum step. A join that is even slightly wrong shows here as a step
+    // bigger than the signal can make.
+    let worst = 0, worstAt = 0, worstJoin = 0;
+    for (let i = 0; i < fed; i++) {
+      const e = Math.abs(flat[i] - src[i]);
+      if (e > worst) { worst = e; worstAt = i; }
+    }
+    for (let k = 1; k < K; k++)
+      for (let i = k * ADV - 4; i < k * ADV + OV + 4; i++)
+        worstJoin = Math.max(worstJoin, Math.abs(flat[i] - src[i]));
+    ok(worst < 1e-6, "§73(a) the overlap-add lost the signal — worst error " +
+                     worst.toExponential(2) + " at sample " + worstAt +
+                     " (that is a click, baked in at every join)");
+    let step = 0; for (let i = 1; i < fed; i++) step = Math.max(step, Math.abs(flat[i] - flat[i - 1]));
+    const analytic = 0.8 * 2 * Math.sin(Math.PI * 480 / SR73);
+    ok(step <= analytic * 1.02,
+       "§73(a) largest single-sample step " + step.toFixed(6) + " exceeds the signal's own " +
+       analytic.toFixed(6) + " — there is a discontinuity in the joined stream");
+    console.log("  join: " + K + " segments x " + N + " samples, " + OV + " overlap -> " +
+                fed + " emitted (exact); worst reconstruction error " + worst.toExponential(2) +
+                ", at a join " + worstJoin.toExponential(2) + "; largest step " +
+                step.toFixed(6) + " vs the sine's own " + analytic.toFixed(6));
+  }
+
+  /* (b) MICROSECONDS BECOME SAMPLES ONCE — no rounding walk over a long stream */
+  {
+    for (const [name, F, rate] of [["aac", 1024, 44100], ["opus", 960, 48000]]) {
+      const K = 3000;                                          // ~70 s of aac, 60 s of opus
+      const chunks = [];
+      for (let i = 0; i < K; i++)
+        chunks.push({ data: new Uint8Array(8), durationUs: F / rate * 1e6,
+                      timestampUs: i * F / rate * 1e6 });
+      const b = SC.frameBatch(chunks, rate);
+      const wrong = b.filter(c => c.duration !== F).length;
+      ok(!wrong, "§73(b) " + name + ": " + wrong + " of " + K + " frames rounded to a " +
+                 "duration that is not " + F + " samples");
+      ok(SC.batchSamples(b) === K * F,
+         "§73(b) " + name + ": " + K + " frames declare " + SC.batchSamples(b) +
+         " samples, not " + K * F + " — the µs->sample conversion walks");
+      console.log("  " + name + ": " + K + " frames (" + (K * F / rate).toFixed(1) +
+                  " s) convert to " + SC.batchSamples(b) + " samples, exactly");
+    }
+  }
+
+  /* (c) THE TFDT IS THE RUNNING SUM — uneven fragments, nonzero anchor */
+  {
+    // the minimal ISO-BMFF walker §53 uses, kept local so the two sections do
+    // not reach into each other
+    const boxes = (u8, from, to, want, out) => {
+      let o = from;
+      while (o + 8 <= to) {
+        const size = (u8[o] << 24 | u8[o + 1] << 16 | u8[o + 2] << 8 | u8[o + 3]) >>> 0;
+        const type = String.fromCharCode(u8[o + 4], u8[o + 5], u8[o + 6], u8[o + 7]);
+        if (size < 8 || o + size > to) break;
+        if (type === want) out.push({ o, size });
+        if (["moof", "traf"].includes(type)) boxes(u8, o + 8, o + size, want, out);
+        o += size;
+      }
+      return out;
+    };
+    const u32at = (u8, o) => (u8[o] << 24 | u8[o + 1] << 16 | u8[o + 2] << 8 | u8[o + 3]) >>> 0;
+    const u64at = (u8, o) => u32at(u8, o) * 0x100000000 + u32at(u8, o + 4);
+
+    for (const [name, F, rate, prime] of [["aac", 1024, 44100, 2112], ["opus", 960, 48000, 0]]) {
+      // fragments as a real stream makes them: a short first segment (time to
+      // first sound), then longer ones, then a generation change that does not
+      // change the arithmetic one bit — the tfdt is the sum of what came before
+      // and nothing about the music can move it.
+      const perFrag = [11, 43, 43, 43, 87, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43];
+      const mux = FM73.makeFmp4Mux({ codec: name, sampleRate: rate, channels: 2,
+        codecConfig: name === "opus"
+          ? new Uint8Array([79, 112, 117, 115, 72, 101, 97, 100, 1, 2,
+                            0x38, 0x01, 0x80, 0xbb, 0, 0, 0, 0, 0])
+          : null });
+      mux.initSegment();
+      let ts = prime, muxed = 0, bad = "";
+      for (let f = 0; f < perFrag.length && !bad; f++) {
+        const chunks = [];
+        for (let i = 0; i < perFrag[f]; i++) {
+          chunks.push({ data: new Uint8Array(24), durationUs: F / rate * 1e6,
+                        timestampUs: ts / rate * 1e6 });
+          ts += F;
+        }
+        const batch = SC.frameBatch(chunks, rate);
+        const frag = mux.pushChunks(batch);
+        const tf = boxes(frag, 0, frag.length, "tfdt", [])[0];
+        const tr = boxes(frag, 0, frag.length, "trun", [])[0];
+        if (!tf || !tr) { bad = "fragment " + f + " carries no tfdt/trun"; break; }
+        const t = u64at(frag, tf.o + 12);
+        const want = prime + muxed;
+        if (t !== want) { bad = "fragment " + f + " says " + t + ", the running sum is " + want; break; }
+        const cnt = u32at(frag, tr.o + 12);
+        let sum = 0, bytes = 0;
+        for (let i = 0; i < cnt; i++) { sum += u32at(frag, tr.o + 20 + i * 8);
+                                        bytes += u32at(frag, tr.o + 24 + i * 8); }
+        if (cnt !== perFrag[f]) { bad = "fragment " + f + " declares " + cnt + " samples, muxed " + perFrag[f]; break; }
+        if (sum !== perFrag[f] * F) { bad = "fragment " + f + " declares " + sum + " durations, not " + perFrag[f] * F; break; }
+        // sum(trun sizes) == mdat payload, or the demuxer reads past the fragment
+        const md = boxes(frag, 0, frag.length, "mdat", [])[0];
+        if (!md || md.size - 8 !== bytes) { bad = "fragment " + f + "'s mdat is " +
+          (md ? md.size - 8 : 0) + " bytes, trun declares " + bytes; break; }
+        muxed += sum;
+      }
+      ok(!bad, "§73(c) " + name + ": " + bad);
+      const total = perFrag.reduce((a, b2) => a + b2, 0) * F;
+      ok(mux.emitted() === total, "§73(c) " + name + ": the muxer emitted " + mux.emitted() +
+                                  " samples over " + perFrag.length + " fragments, not " + total);
+      ok(mux.decodeTime() === prime + total,
+         "§73(c) " + name + ": the next fragment would start at " + mux.decodeTime() +
+         ", not " + (prime + total) + " — the anchor or the sum is wrong");
+      if (!bad) console.log("  " + name + ": " + perFrag.length + " uneven fragments, " +
+        (total / rate).toFixed(1) + " s, anchored at " + prime + " — every tfdt is the " +
+        "running sum, every mdat is the size its trun declares");
+    }
+  }
+
+  /* (d) THE FALLBACK TAPE DECLARES THE SCORE'S LENGTH AND NOTHING MORE */
+  {
+    for (const [n, sr] of [[5760, 48000], [96000, 48000], [365205, 44100]]) {
+      const ab = SC.wavBytes([new Float32Array(n), new Float32Array(n)], n, sr);
+      const dv = new DataView(ab);
+      ok(ab.byteLength === 44 + n * 4, "§73(d) a " + n + "-frame segment encodes " +
+         ab.byteLength + " bytes, not " + (44 + n * 4));
+      ok(dv.getUint32(40, true) === n * 4,
+         "§73(d) a " + n + "-frame segment DECLARES " + dv.getUint32(40, true) / 4 + " frames");
+      ok(dv.getUint32(24, true) === sr, "§73(d) the segment claims " + dv.getUint32(24, true) + " Hz");
+    }
+    console.log("  fallback: three segment lengths encode and declare exactly their own frames");
+  }
+}
+
+
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }
