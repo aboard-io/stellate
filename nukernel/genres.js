@@ -2797,6 +2797,966 @@
                                : [excerpt(s % 2 ? 8 : 0, 8), drop(2)]),
     },
 
+    // ---- THE REST OF THE DIAL (2026-08-17) --------------------------------
+    // Twenty-nine more rooms, each one asked for by an artist or a record and
+    // translated into the STYLE it stands for rather than transcribed from
+    // it — SOURCES.md's provenance law: an idiom, not a quotation. Where a
+    // style's true ancestor is public domain (a hymn tune, a Christmas
+    // standard's big-band dress) the comment says so by name; everywhere
+    // else it names the movement, not the song. Parents are argued the same
+    // way the phase-2 ancestors above were — what genuinely explains the
+    // sound, sourced from anchors already in the table — and `wants` names
+    // what still isn't. A few of these are one another's parents (crooner
+    // feeds yuletide, folkduo feeds worldfolk, emo feeds screamo); JS
+    // doesn't care about key order inside one object literal, so they are
+    // grouped by ROOM rather than by dependency.
+
+    // HYMN [gospel]. The congregation, not the choir: four voices in block
+    // chords, homophonic rather than independent — fugue's own `wants` list
+    // asked for a chorale twenty-some anchors ago ("the Lutheran chorale his
+    // subjects harmonized"), and this is that answer, generalized past Bach's
+    // own harmonizations to the plain SATB a hymnal prints. No kit, no bass
+    // voice of its own — the bass part IS the fourth voice, exactly as
+    // counterpoint and spem already declare it.
+    hymn: {
+      label: "Boston 1831", rate: 1, bars: 8, voices: 4, near: "gospel",
+      // LINEAGE: the four-part harmonization craft is counterpoint's — Fux's
+      // rules, sung rather than played — over chant-shaped stepwise lines,
+      // with gospel's plagal warmth already arguing for itself (a hymn tune
+      // IS a plagal cadence's native home, twenty years before Dorsey put a
+      // shuffle under it). The Sternhold & Hopkins metrical psalter, which
+      // taught English congregations to sing in the first place, is missing.
+      parents: { counterpoint: 0.45, gregorian: 0.3, gospel: 0.25 },
+      wants: ["metrical psalter"],
+      // the drawbar organ, not a pipe organ — the same instrument gospel
+      // already plays the changes on, twenty years earlier and a step plainer
+      instr: "drawbarorgan",
+      entry: () => 0, reg: v => [2, 0, -2, -4][v], realize: () => "line",
+      kit: {}, nobass: true, harmony: "cycle",
+      mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      roots: [0, 3, 0, 4, 0, 5, 3, 4],           // I IV I V | I vi IV V
+      artic: "legato", maxHold: 4,
+      tone: { wave: "triangle", cut: 2200, q: 0.8, atk: .05, rel: 1.5, gain: .24, verb: .5 },
+      words: ["the soprano, the tune", "the alto, a third under",
+              "the tenor, a fifth under", "the bass, the octave and the root"],
+      // PARALLEL, NOT MIRRORED — the one field that separates a hymnal from
+      // counterpoint's contrary-motion mirror above: every voice sings the
+      // SAME tune, spaced by a fixed diatonic interval, because that is what
+      // four amateurs in a pew can actually do. transpose() in degree-space
+      // is a third/fifth/octave exactly because the scale is seven long.
+      word: v => (v === 0 ? [] : [transpose([0, -2, -4, -7][v])]),
+    },
+
+    // CROONER. A solo voice out front of a dance orchestra, at ballad tempo
+    // — half the rate of the band that plays behind it, so the singer can
+    // phrase across the bar the way a horn section never would. `anchor`
+    // does the SAME job here it does in tango: a note the voice sits on has
+    // to be a chord tone, and everything shorter is just diction.
+    crooner: {
+      label: "Los Angeles 1953", rate: 0.5, bars: 8, voices: 2, swing: 0.15, near: "jazz",
+      // LINEAGE: the changes and the walking rhythm section are bebop's own
+      // vocabulary played straighter and slower for a singer to sit on; the
+      // vocal-group blend behind the lead is doo-wop's, one voice standing
+      // out front of it instead of three trading it; gospel supplies the
+      // trained, held, unhurried breath. Tin Pan Alley's standard songbook
+      // — the actual repertoire a crooner sings — is still uncredited.
+      parents: { jazz: 0.55, doowop: 0.25, gospel: 0.2 },
+      wants: ["tin pan alley"],
+      instr: ["solo_vox", "slow_strings"],
+      drumkit: "brush",
+      entry: v => (v === 0 ? 2 : 0), reg: v => (v === 0 ? 0 : -1),
+      realize: v => (v === 0 ? "line" : "pad"),
+      part: ["lead", "pad"],
+      harmony: "cycle", roots: [0, 5, 1, 4, 0, 5, 1, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      prog: [{ d: 0, q: "maj7" }, { d: 5, q: "m7" }, { d: 1, q: "m7" }, { d: 4, q: "dom7" }],
+      artic: "legato", anchor: 2, maxHold: 4,
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             h: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             p: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0] },
+      fill: { p: [0,0,0,0, 0,0,0,0, 1,0,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2200, q: 0.9, atk: .02, rel: 1.2, gain: .24, verb: .4 },
+      words: ["the voice, held over the changes", "the strings, one wash under it"],
+      word: v => (v === 0 ? [] : [drop(2)]),
+    },
+
+    // YULETIDE. Crooner in its December coat — the one place this table
+    // names a specific season by name, because the ancestor really is public
+    // domain the way gregorian's is: a carol's melodic shape (stepwise, small
+    // range, built to be sung by a room that has never rehearsed) is
+    // centuries older than any record of it, and a big-band Christmas
+    // standard is just crooner's own dress plus one instrument: the bell.
+    yuletide: {
+      label: "New York 1942", rate: 0.5, bars: 8, voices: 3, near: "crooner",
+      // LINEAGE: complete, and honestly so — a Christmas standard IS crooner
+      // (the ballad-tempo dance-orchestra vocal) plus hymn (the carol's
+      // stepwise, plagal-leaning tune), and nothing else needs naming.
+      parents: { crooner: 0.5, hymn: 0.3, gospel: 0.2 },
+      wants: [],
+      instr: ["solo_vox", "slow_strings", "music_box"],
+      drumkit: "brush",
+      entry: v => [2, 0, 4][v], reg: v => [0, -1, 3][v],
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad", "riff"],
+      harmony: "cycle", roots: [0, 3, 0, 4, 0, 5, 1, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "legato", anchor: 2, maxHold: 3,
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             h: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             p: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
+      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .02, rel: 1.3, gain: .24, verb: .42 },
+      words: ["the voice, the carol tune", "the strings, holding the harmony",
+              "the bells, sparkling on top"],
+      word: v => (v === 0 ? [] : v === 1 ? [drop(2)]
+                                          : [only("gate", excerpt(0, 8)), transpose(2)]),
+    },
+
+    // MERSEYBEAT [beatles]. Same city, one year earlier, and a wider room:
+    // where the `beatles` anchor is one particular band's counterpoint-taught
+    // thirds, this is the whole 1962-63 Cavern circuit — cleaner and plainer,
+    // built on the OFFBEAT HANDCLAP hook and a call that gets an answer,
+    // which is the field the two genres actually differ on.
+    merseybeat: {
+      label: "Liverpool 1963", rate: 1, bars: 4, voices: 2, near: "beatles",
+      // LINEAGE: the beat-group format is the catalog's own `beatles` anchor
+      // taken as a scene rather than one band; doo-wop's vocal-group answer
+      // figure and Chuck Berry's downstroke are the two things every Cavern
+      // band actually played covers of before writing their own. Skiffle is
+      // the smallest share because by 1963 the tea-chest bass was long gone —
+      // it is the door the scene walked in through, not what it still plays.
+      parents: { beatles: 0.35, doowop: 0.3, chuckberry: 0.2, skiffle: 0.15 },
+      wants: [],
+      instr: ["clean_guitar", "ohh_voices"],
+      drumkit: "room",
+      entry: () => 0, reg: v => v, realize: () => "line",
+      harmony: "cycle", roots: [0, 4, 3, 0], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             c: [0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2400, q: 1.0, atk: .005, rel: .6, gain: .28, verb: .22 },
+      words: ["the tune, straight ahead",
+              "the harmony, a third above — answering the handclap hook"],
+      word: v => (v === 0 ? [] : [transpose(2), only("gate", offbeats(4))]),
+    },
+
+    // PSYCH POP [beatles]. The same songwriter, further out: an eight-bar
+    // form that spends its first half as a plain verse and its second half
+    // as one long vamp with a choir answering into it — postrock's shape
+    // (one figure, arriving voice by voice, one crescendo) written for a pop
+    // band with a gospel choir instead of a wall of guitars.
+    psychpop: {
+      label: "London 1968", rate: 1, bars: 8, voices: 2, near: "beatles",
+      // LINEAGE: the songwriting craft is `beatles`' own, further along the
+      // same career; the massed choir answering "na na na" into a long vamp
+      // is gospel's call-and-response, not the band's own invention; and the
+      // shape of the arrival — quiet, then one instrument at a time, then
+      // everything — is postrock's structural move, borrowed forty years
+      // before postrock existed to name it. The mellotron/orchestral half of
+      // the record is still missing.
+      parents: { beatles: 0.45, gospel: 0.35, postrock: 0.2 },
+      wants: ["mellotron", "orchestral pop"],
+      instr: ["clean_guitar", "ahh_choir"],
+      drumkit: "room",
+      entry: v => (v === 1 ? 4 : 0), reg: v => v, realize: () => "line",
+      harmony: "cycle", roots: [0, 0, 3, 3, 4, 4, 0, 0], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      maxHold: 3,
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,1,1,1],
+              x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,9] },
+      tone: { wave: "triangle", cut: 2200, q: 0.9, atk: .01, rel: 1.0, gain: .27, verb: .4 },
+      words: ["the tune, the verse as written",
+              "the choir, arriving at the vamp — na na na, a third up"],
+      word: v => (v === 1 ? [transpose(2), only("gate", offbeats(2))] : []),
+    },
+
+    // BIG BEAT [techno]. The rave floor played by a punk band — techno's
+    // machine kick and dnb's broken edit under a guitar sample distorted
+    // past the point of subtlety. The field that separates it from techno is
+    // the KICK ITSELF: broken and syncopated where techno's is a plain four,
+    // because a breakbeat under a machine floor is the entire joke.
+    bigbeat: {
+      label: "Essex 1997", rate: 1, bars: 4, voices: 2, near: "techno",
+      // LINEAGE: the machine floor is techno's, the guitar-sample aggression
+      // and the couldn't-care-less attitude are punk's, and the broken kick
+      // pattern is dnb's edit brought down to a dance-floor tempo. The
+      // original rave-breakbeat continuum both of the electronic parents
+      // actually came out of is still the missing rung.
+      parents: { techno: 0.35, punk: 0.35, dnb: 0.3 },
+      wants: ["rave breakbeat"],
+      instr: ["distortion_guitar", "square_lead"],
+      drumkit: "power",
+      entry: () => 0, reg: v => -v, realize: () => "line",
+      harmony: "modal", mode: MODES.phrygian, scale: DIATONIC,
+      artic: "staccato", maxHold: 2, bassStyle: "octaves",
+      kit: { k: [1,0,0,1, 0,0,1,0, 0,0,1,0, 0,1,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,1, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      fill: { x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,9] },
+      tone: { wave: "sawtooth", cut: 1000, q: 3.5, atk: .002, rel: .4, gain: .3, verb: .15 },
+      words: ["the guitar stab, breaking the grid", "the synth hook, an octave under"],
+      word: v => (v === 0 ? [only("gate", rotate(3))] : [drop(2)]),
+    },
+
+    // DRILL [trap]. Trap's half-time snare and tied 808 kept, the major
+    // triads thrown out for harmonic minor's raised seventh (the eerie lift
+    // that reads as menace rather than menace-lite), and the hats given a
+    // ROLL — a fast unpredictable run that trap's steady sixteenth never
+    // attempts, written as `kitProb` rather than a fixed subdivision because
+    // a drill hat roll's whole character is that you cannot see it coming.
+    drill: {
+      label: "Chicago 2012", rate: 1, bars: 4, voices: 2, near: "trap",
+      // LINEAGE: the 808 slide and the half-time snare are trap's own
+      // vocabulary, inherited whole; the chopped, minor-key sample loop
+      // underneath is boom bap's technique aimed at a darker crate; the
+      // sub-bass glide under everything is jungle's pedal, sped down. The
+      // scene's own regional rap traditions (Chicago drill, UK drill) are
+      // both missing — this anchor is the shared technique, not either city.
+      parents: { trap: 0.5, boombap: 0.3, dnb: 0.2 },
+      wants: ["chicago drill", "uk drill"],
+      instr: ["felt_piano", "warm_pad"],
+      drumkit: "electronic",
+      entry: () => 0, reg: v => -v, realize: () => "line",
+      harmony: "modal", mode: MODES.harmonic, scale: MODES.harmonic,
+      artic: "tie", bassStyle: "pedal",
+      kit: { k: [1,0,0,0, 0,0,0,1, 0,0,0,1, 0,0,0,0],
+             s: [0,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitProb: { h: [9,9,9,9, 9,9,6,9, 9,9,9,9, 9,9,4,9] },
+      fill: { s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 1,1,1,1] },
+      tone: { wave: "square", cut: 1800, q: 2.0, atk: .003, rel: .5, gain: .28, verb: .25 },
+      words: ["the piano loop, dark and minor", "the sub, sliding under it"],
+      word: v => (v === 0 ? [only("gate", rotate(5))] : [drop(3)]),
+    },
+
+    // CLUB POP [disco]. Same floor, four years later, with a SONG on top of
+    // it: house's stab feel over disco's kick, but the harmony resolves the
+    // way a pop chorus does (a plain I-vi-IV-V) rather than looping a modal
+    // seventh forever — the field that actually separates a dance-pop single
+    // from the club record it was cut for.
+    clubpop: {
+      label: "New York 1983", rate: 1, bars: 4, voices: 2, near: "disco",
+      // LINEAGE: the floor (four kick, offbeat clap, the open hat) is
+      // disco's, played through synthpop's all-electronic chassis; house's
+      // piano-stab feel is present in spirit but the piano is a synth voice
+      // here — the actual downtown-club scene the record came out of is
+      // still missing.
+      parents: { disco: 0.45, synthpop: 0.3, house: 0.25 },
+      wants: ["danceteria"],
+      instr: ["synth_voice", "synth_strings_1"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
+      part: ["stab", "lead"],
+      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      prog: [{ d: 0, q: "7" }, { d: 5, q: "7" }, { d: 3, q: "7" }, { d: 4, q: "7" }],
+      maxHold: 2, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      fill: { c: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,0,1,0] },
+      tone: { wave: "sawtooth", cut: 2600, q: 1.6, atk: .004, rel: .5, gain: .28, verb: .24 },
+      words: ["the vocal hook, on the tune's rhythm", "the synth strings, answering"],
+      word: v => (v === 1 ? [only("gate", rotate(4))] : []),
+    },
+
+    // POWER BALLAD [crooner]. A ballad that WAITS — the verse a crooner's
+    // arrangement, brushes and strings; the chorus rock's full backbeat with
+    // the crash reintroduced. `kits`, dnb's own device for a schedule that
+    // changes bar to bar, does the arriving here instead of the breaking a
+    // jungle record needs it for: quiet on the even bars, huge on the odd.
+    powerballad: {
+      label: "Los Angeles 1991", rate: 1, bars: 8, voices: 2, near: "crooner",
+      // LINEAGE: the sung, held, chord-tone-anchored lead over strings is
+      // crooner's own arrangement grown an arena; the massed emotional
+      // uplift and the plagal warmth under the chorus are gospel's; rock
+      // supplies the drums that finally arrive. Broadway's belted theatrical
+      // vocal, the actual training this style is sung with, is missing.
+      parents: { gospel: 0.4, crooner: 0.35, rock: 0.25 },
+      wants: ["broadway"],
+      instr: ["solo_vox", "slow_strings"],
+      drumkit: "power",
+      entry: () => 0, reg: v => -v, realize: v => (v === 1 ? "pad" : "line"),
+      harmony: "cycle", roots: [0, 5, 3, 4, 0, 5, 4, 0], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "legato", anchor: 2, maxHold: 4,
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             p: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0] },
+      kits: [
+        { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+          p: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0] },
+        { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+          s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+          x: [9,0,0,0, 0,0,0,0, 8,0,0,0, 0,0,0,0] },
+      ],
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,1,1,1],
+              x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,9] },
+      tone: { wave: "triangle", cut: 2000, q: 0.9, atk: .02, rel: 1.4, gain: .26, verb: .5 },
+      words: ["the voice, soaring over the changes",
+              "the strings and the band, quiet then huge"],
+      word: () => [],
+    },
+
+    // RETRO FUNK POP [funk]. Funk's clavinet-and-horns groove wired to a
+    // pop song that actually MOVES: where `funk` is one dorian chord for the
+    // whole record because the groove is the song, this resolves a real
+    // I-vi-IV-V every four bars — the field that separates a funk pastiche
+    // from the funk band it is impersonating.
+    retrofunkpop: {
+      label: "Los Angeles 2013", rate: 1, bars: 4, voices: 2, swing: 0.1, near: "funk",
+      // LINEAGE: the clavinet-and-horns vocabulary is funk's, played over
+      // Motown's song discipline (a real changing progression rather than a
+      // vamp) with disco's four-on-the-floor pop polish underneath.
+      parents: { funk: 0.45, motown: 0.3, disco: 0.25 },
+      wants: [],
+      instr: ["clavinet", "brass_section"],
+      drumkit: "room",
+      entry: v => v, reg: v => v - 1, realize: () => "line",
+      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      prog: [{ d: 0, q: "7" }, { d: 5, q: "7" }, { d: 3, q: "7" }, { d: 4, q: "7" }],
+      maxHold: 2, artic: "staccato", bassStyle: "sixteenths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,0, 1,1,1,0, 1,1,1,0, 1,1,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "square", cut: 2200, q: 1.8, atk: .003, rel: .35, gain: .28, verb: .16 },
+      words: ["the clavinet, on the changes",
+              "the horns, answering — the phrase's own gate, complemented"],
+      // A TRUE ANSWER, not a doubling: `complement("gate")` fires the horns
+      // exactly where the clavinet does not, so the two never land on the
+      // same step and cannot read as one hook stated twice.
+      word: v => (v === 1 ? [only("gate", complement("gate"))] : []),
+    },
+
+    // REGGAETON [reggae]. The one-drop's Caribbean cousin, played with a
+    // hip-hop rhythm section: the DEMBOW — a two-kick, double-snare figure —
+    // replaces the skank as the genre's absolute gate, sitting on top of a
+    // minor two-chord vamp that never resolves anywhere, reggae's own
+    // no-mode spareness kept exactly.
+    reggaeton: {
+      label: "San Juan 2004", rate: 1, bars: 4, voices: 2, near: "reggae",
+      // LINEAGE: the one-drop skank's Caribbean root is reggae's; the
+      // chopped, sample-built track underneath is boom bap's method aimed
+      // at a different vocabulary; the sub-bass slide under it is trap's.
+      // Dancehall — the actual Jamaican digital-riddim scene the dembow
+      // itself came out of — is the missing rung between all three.
+      parents: { reggae: 0.4, boombap: 0.35, trap: 0.25 },
+      wants: ["dancehall"],
+      instr: ["synth_voice", "clean_guitar"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => v, realize: v => (v === 0 ? "pad" : "line"),
+      part: ["stab", "lead"],
+      harmony: "cycle", roots: [0, 0, 5, 3],
+      artic: "staccato", maxHold: 2, bassStyle: "octaves",
+      // THE DEMBOW, written once: kick doubled at 1 and the a-of-2, snare
+      // doubled at the and-of-2 and 4 — "boom-ch-boom-chick" — the absolute
+      // grid every reggaeton record sits on regardless of what plays over it.
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,1, 0,0,0,0, 1,0,0,1],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 1,0,1,0, 1,1,1,1] },
+      tone: { wave: "square", cut: 2000, q: 1.6, atk: .004, rel: .4, gain: .28, verb: .2 },
+      words: ["the vocal hook, on the dembow's own rhythm",
+              "the guitar, answering — the phrase's own gate, untouched"],
+      word: v => (v === 0 ? [only("gate", excerpt(0, 8))] : []),
+    },
+
+    // LATIN POP [bossa]. A rock band's instrumentation carrying Latin
+    // percussion and a melody that leans on the raised seventh — harmonic
+    // minor rather than bossa's cool-jazz major sevenths, which is the field
+    // that separates a Bogotá/Barranquilla pop-rock record from the Rio
+    // apartment sound it shares a rhythm section with.
+    latinpop: {
+      label: "Miami 2001", rate: 1, bars: 4, voices: 2, near: "bossa",
+      // LINEAGE: the sevenths-and-understatement harmonic language and the
+      // rhythm-section restraint are bossa's own, transplanted out of the
+      // apartment and into a rock band; the cross-rhythm percussion under
+      // it is afrobeat's technique aimed at a different clave; rock supplies
+      // the electric backbone. Cumbia, the actual Colombian floor this
+      // style is built to move, is the missing parent.
+      parents: { afrobeat: 0.35, rock: 0.35, bossa: 0.3 },
+      wants: ["cumbia"],
+      instr: ["nylon_string_guitar", "clean_guitar"],
+      drumkit: "acoustic",
+      entry: () => 0, reg: v => v, realize: () => "line",
+      harmony: "cycle", roots: [0, 3, 4, 0], mode: MODES.harmonic,
+      scale: MODES.harmonic, diatonic: true,
+      artic: "staccato", maxHold: 3, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,0,1, 0,0,1,0, 0,1,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { p: [1,0,0,1, 0,1,1,0, 1,0,1,1, 1,0,1,0] },
+      tone: { wave: "sawtooth", cut: 2400, q: 1.4, atk: .006, rel: .5, gain: .27, verb: .24 },
+      words: ["the guitar, the hook", "the electric guitar, doubling an octave down"],
+      word: v => (v === 1 ? [drop(2), transpose(-7)] : []),
+    },
+
+    // K-POP [synthpop]. A pop-song chassis built from three different
+    // records at once — the synth-stab machine, the disco floor, the
+    // stutter-edited hat roll a hip-hop verse needs — which is the genre's
+    // own honest description: it is a production METHOD, assembling
+    // whichever record the section needs, more than it is one groove.
+    kpop: {
+      label: "Seoul 2012", rate: 1, bars: 4, voices: 2, near: "synthpop",
+      // LINEAGE: the all-synth stab chassis is synthpop's; the four-on-the-
+      // floor pop-chorus floor is disco's; the stuttered, probability-edited
+      // hat is boom bap's chopped hand brought to a machine kit; the vocal
+      // stack that answers itself is R&B's. J-pop's own idol-record
+      // tradition, the room this style first grew up next door to, is
+      // uncredited.
+      parents: { synthpop: 0.35, disco: 0.25, boombap: 0.2, rnb: 0.2 },
+      wants: ["j-pop"],
+      instr: ["synth_voice", "polysynth"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
+      part: ["stab", "lead"],
+      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      prog: [{ d: 0, q: "7" }, { d: 5, q: "7" }, { d: 3, q: "7" }, { d: 4, q: "7" }],
+      maxHold: 2, artic: "staccato", bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitProb: { h: [9,6,9,6, 9,6,9,6, 9,6,9,6, 9,6,4,9] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 2800, q: 2.2, atk: .003, rel: .4, gain: .28, verb: .24 },
+      words: ["the vocal hook, stabbing the changes", "the synth line, answering an octave up"],
+      word: v => (v === 1 ? [only("gate", rotate(4)), transpose(2)] : []),
+    },
+
+    // BOY BAND [doowop]. Doo-wop's group-blend arithmetic (a lead and two
+    // backing parts, a stab-and-riff-and-lead register scheme copied whole)
+    // run through a nineties R&B production — the harmonize PIPE rnb already
+    // declares (stacked sixths, chord-locked) does the backing-vocal work
+    // here exactly as it does there, cited rather than reinvented.
+    boyband: {
+      label: "Orlando 1997", rate: 1, bars: 4, voices: 3, near: "doowop",
+      // LINEAGE: the group-of-voices arithmetic (lead out front, a harmony
+      // stack, a keyboard holding the changes) is doo-wop's own scheme,
+      // inherited whole down to the `part` register spacing; the sixths-
+      // stacked backing vocal technique and the straight-time feel are
+      // R&B's; disco keeps the floor moving underneath. The vocal-audition
+      // pop-factory system that actually assembled these groups has no
+      // musical anchor to name.
+      parents: { motown: 0.3, doowop: 0.3, rnb: 0.25, disco: 0.15 },
+      wants: [],
+      instr: ["solo_vox", "ohh_voices", "legend_ep_2"],
+      drumkit: "electronic",
+      entry: v => (v === 2 ? 2 : 0), reg: () => 0,
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "riff", "stab"],
+      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      prog: [{ d: 0, q: "7" }, { d: 5, q: "7" }, { d: 3, q: "7" }, { d: 4, q: "7" }],
+      maxHold: 2,
+      pipes: [{ id: "harmonize", p: 0.5, gap: "sixth" }],
+      kit: { k: [1,0,0,1, 0,0,0,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,0,1, 0,1,0,0, 1,0,0,1, 0,0,1,0] },
+      fill: { h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2200, q: 1.0, atk: .008, rel: .8, gain: .27, verb: .32 },
+      words: ["the lead, the hook", "the harmony stack, a sixth under",
+              "the EP, holding the changes"],
+      word: () => [],
+    },
+
+    // EMO [punk]. Punk's downstroked directness with the dynamics power
+    // ballad already proved: `kits` alternates a quiet, arpeggiated verse
+    // against a loud, crashing chorus — the field that actually separates
+    // this from punk, which refuses to develop AT ALL. Confessional means
+    // legato where punk is staccato: a chord let ring instead of chopped.
+    emo: {
+      label: "Chicago 1999", rate: 1, bars: 4, voices: 2, near: "punk",
+      // LINEAGE: the format (guitar/bass/drums, verse-chorus, three minutes)
+      // and the raw energy are punk's; the major-key-read vi-IV-I-V loop and
+      // the song discipline underneath are rock's; the wash the loud chorus
+      // opens into is shoegaze's blur, thinned to a backbeat. Midwest emo's
+      // own tapped-arpeggio guitar language is still uncredited.
+      parents: { punk: 0.45, rock: 0.3, shoegaze: 0.25 },
+      wants: ["midwest emo"],
+      instr: ["clean_guitar", "overdrive_guitar"],
+      drumkit: "power",
+      entry: () => 0, reg: v => v, realize: () => "line",
+      harmony: "cycle", roots: [5, 3, 0, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      kits: [
+        { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+          s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+          h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+        { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+          s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+          h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+          x: [9,0,0,0, 0,0,0,0, 8,0,0,0, 0,0,0,0] },
+      ],
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 2000, q: 1.6, atk: .006, rel: .6, gain: .29, verb: .22 },
+      words: ["the guitar, arpeggiating the changes",
+              "the second guitar, an octave under, doubling in the loud half"],
+      word: v => (v === 1 ? [drop(2)] : []),
+    },
+
+    // SCREAMO [emo]. Emo's dynamics pushed past the point of song into the
+    // point of collapse: death metal's ridden cymbal and locrian ♭5-is-home
+    // scale (the exact array, cited whole — the ♭5 stays the point) under
+    // TWO guitars reading DIFFERENT HALVES of the phrase — not the held-second
+    // blur shoegaze and bulgarian use (a fixed transpose, against a wall that
+    // fills every step, is one riff stated twice; the second half of the
+    // subject is a different riff), at hardcore tempo instead of a drone's.
+    screamo: {
+      label: "San Diego 1994", rate: 1, bars: 4, voices: 2, near: "deathmetal",
+      // LINEAGE: emo's confessional dynamics are the base, pushed to the
+      // edge by punk's raw directness and death metal's chromatic dissonance
+      // and ridden cymbal. Hardcore, the actual scene emo and screamo both
+      // grew out of, is the one uncredited rung between all three.
+      parents: { emo: 0.5, punk: 0.25, deathmetal: 0.25 },
+      wants: ["hardcore"],
+      instr: ["distortion_guitar", "distortion_guitar"],
+      drumkit: "power",
+      entry: () => 0, reg: v => -v, realize: () => "line",
+      harmony: "cycle", roots: [0, 0, 1, 1], mode: MODES.phrygian,
+      scale: [0, 1, 3, 5, 6, 8, 10],
+      artic: "staccato", bassStyle: "sixteenths",
+      kit: { k: [1,0,1,0, 0,0,1,0, 1,0,1,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             r: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      fill: { s: [1,0,1,0, 1,0,1,0, 1,1,1,1, 1,1,1,1],
+              x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,9] },
+      tone: { wave: "sawtooth", cut: 1600, q: 2.2, atk: .002, rel: .35, gain: .3, verb: .18 },
+      words: ["the riff, screamed through — every step",
+              "the second guitar, the subject's own second half, a half-step under"],
+      // A DIFFERENT RIFF, NOT A DOUBLING: a fixed transpose of the SAME notes
+      // is one line restated, which against a wall that fills every step
+      // reads as the identical guitar twice. `excerpt(8,8)` hands the second
+      // guitar the phrase's own second half instead — a genuinely different
+      // sequence of notes, the way two rhythm guitars in a real band play
+      // related but not identical parts.
+      word: v => (v === 0 ? [only("gate", fill(1))] : [excerpt(8, 8), transpose(-1)]),
+      fx: ["crunch"],
+    },
+
+    // CONFESSIONAL POP [countrypop]. Country's fifths bass and storytelling
+    // guitar kept whole, the banjo traded out one section at a time for a
+    // synth as the arrangement modernizes — a verse that stays acoustic and
+    // a chorus that lifts a fourth into the pop half is the same "the
+    // record changes costume mid-song" device psychpop already uses.
+    confessionalpop: {
+      label: "Nashville 2008", rate: 1, bars: 4, voices: 2, near: "countrypop",
+      // LINEAGE: the fifths bass, the storytelling verse and the acoustic
+      // guitar are countrypop's, kept whole; rock supplies the full-band
+      // arrangement a country radio ballad graduates into; synthpop supplies
+      // the polished electronic chorus lift. Nothing about this reads as a
+      // missing ancestor — it is countrypop modernizing itself in real time.
+      parents: { countrypop: 0.4, rock: 0.3, synthpop: 0.3 },
+      wants: [],
+      instr: ["steel_string_guitar", "polysynth"],
+      drumkit: "room",
+      entry: () => 0, reg: v => v, realize: () => "line",
+      harmony: "cycle", roots: [3, 4, 5, 0], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "fifths",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2600, q: 1.1, atk: .005, rel: .6, gain: .27, verb: .24 },
+      words: ["the guitar, telling the story",
+              "the synth, answering a fourth up — the turn from acoustic to pop"],
+      word: v => (v === 1 ? [transpose(3)] : []),
+    },
+
+    // DARK R&B [rnb]. R&B's maj7 ballad harmony traded for a moody dorian
+    // pedal that never resolves — ambient's stillness and drone logic under
+    // a falsetto that holds notes the way tango's `anchor` and crooner's
+    // both already demand. `intro:"fade"` is ambient's own device: this
+    // does not arrive, it surfaces.
+    darkrnb: {
+      label: "Toronto 2011", rate: 1, bars: 4, voices: 2, near: "rnb",
+      // LINEAGE: the sung, chord-tone-anchored maj7 ballad lead is R&B's own
+      // vocabulary sung darker; the pulseless, surfacing stillness under it
+      // is ambient's, not R&B's straight-time pocket; synthpop supplies the
+      // all-electronic chassis. Nothing here reads as missing — this is two
+      // fully-anchored traditions meeting on purpose.
+      parents: { rnb: 0.45, ambient: 0.3, synthpop: 0.25 },
+      wants: [],
+      instr: ["synth_voice", "halo_pad"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
+      intro: "fade",
+      harmony: "cycle", roots: [0, 3, 5, 4], mode: MODES.dorian,
+      scale: MODES.dorian, diatonic: true,
+      artic: "legato", anchor: 2, maxHold: 4, bassStyle: "pedal",
+      kit: { k: [1,0,0,0, 0,0,0,1, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,1] },
+      fill: { s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 1600, q: 1.2, atk: .03, rel: 1.8, gain: .24, verb: .6 },
+      words: ["the falsetto, held over the changes", "the pad, drifting under it"],
+      word: v => (v === 1 ? [drop(2)] : []),
+    },
+
+    // BIG ROOM [techno]. An EDM drop written as `kits`' own alternation —
+    // the device dnb uses for a two-bar break and power ballad uses for a
+    // quiet-to-loud arc, here doing a BUILD (hats alone) against a DROP
+    // (the full four-on-the-floor plus the open hat) — house's stab chord
+    // and techno's kick-and-open-hat kit, aimed at a festival main stage.
+    bigroom: {
+      label: "Las Vegas 2012", rate: 1, bars: 8, voices: 2, near: "techno",
+      // LINEAGE: the seventh-loop stab progression is house's; the kick-and-
+      // open-hat floor is techno's, at festival scale; trap's half-time snare
+      // supplies the drop's low-end weight. Dubstep's own bass-design
+      // lineage, the other half of the "festival EDM" story, is missing.
+      parents: { house: 0.4, techno: 0.35, trap: 0.25 },
+      wants: ["dubstep"],
+      instr: ["polysynth", "square_lead"],
+      drumkit: "tr909",
+      entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
+      part: ["stab", "lead"],
+      harmony: "cycle", roots: [0, 5, 3, 4, 0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
+      // THE BUILD IS THINNER THAN THE DROP, on purpose: an even bar is a
+      // held riser (hats alone, half the density), an odd bar is the floor
+      // landing — which is also what makes the closing fill bar read as an
+      // arrival rather than just one more bar of the same kit.
+      kits: [
+        { h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+        { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+          c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+          o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
+      ],
+      fill: { o: [0,0,1,0, 0,0,1,0, 1,0,1,0, 1,0,1,1] },
+      tone: { wave: "sawtooth", cut: 2200, q: 2.4, atk: .003, rel: .4, gain: .29, verb: .2 },
+      words: ["the stab, huge, on the drop", "the lead, an octave up, riding the build"],
+      word: v => (v === 1 ? [transpose(2)] : []),
+    },
+
+    // BLUE-EYED SOUL [motown]. Motown's changes and stab-and-lead scheme
+    // kept, the walking bass swapped for funk's sixteenth-note hand and the
+    // snare-on-all-four thinned to a real backbeat — smoother, less showband,
+    // more session — which is the whole genre in one sentence.
+    blueeyedsoul: {
+      label: "Philadelphia 1976", rate: 1, bars: 4, voices: 2, near: "motown",
+      // LINEAGE: the changes (I-vi-IV-V-with-sevenths) and the stab-and-lead
+      // register scheme are motown's own, kept nearly whole; funk supplies
+      // the sixteenth-note bass hand in place of motown's walk; rock supplies
+      // the smoother, guitar-forward session-band backbone.
+      parents: { motown: 0.45, rock: 0.3, funk: 0.25 },
+      wants: [],
+      instr: ["electric_piano", "clean_guitar"],
+      drumkit: "room",
+      entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
+      part: ["stab", "lead"],
+      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      prog: [{ d: 0, q: "7" }, { d: 5, q: "7" }, { d: 3, q: "7" }, { d: 4, q: "7" }],
+      maxHold: 2, artic: "legato", bassStyle: "sixteenths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2400, q: 1.0, atk: .006, rel: .7, gain: .27, verb: .28 },
+      words: ["the EP, comping the changes", "the guitar, doubling the hook an octave up"],
+      word: v => (v === 1 ? [transpose(7)] : []),
+    },
+
+    // FOLK DUO [skiffle]. Two voices in close harmony over one acoustic
+    // guitar — MODAL, not counterpoint's emergent two-line machinery: a folk
+    // duo does not compute contrary motion by rule, it just sings the tune a
+    // third under, by ear, over one implied chord. `harmony:"emergent"` is
+    // the counterpoint family's own roster (the §48 ruling names it exactly
+    // fugue/spem/counterpoint) and a parallel third is a different, plainer
+    // thing than that machinery — the same distinction drone draws against
+    // gregorian one row up.
+    folkduo: {
+      label: "Greenwich Village 1964", rate: 1, bars: 8, voices: 2, near: "skiffle",
+      // LINEAGE: the string-band-plays-American-song format is skiffle's;
+      // countrypop's close vocal harmony and fifths-leaning guitar are the
+      // other half; counterpoint contributes the two-voice-as-one-line
+      // discipline, thinned from a mirror to a parallel third. The
+      // Appalachian ballad tradition both duo and trio folk revivalists
+      // actually drew their repertoire from is still uncredited.
+      parents: { skiffle: 0.4, countrypop: 0.35, counterpoint: 0.25 },
+      wants: ["appalachian ballad"],
+      instr: ["nylon_string_guitar", "ohh_voices"],
+      entry: () => 0, reg: v => 1 - v, realize: () => "line",
+      kit: {}, nobass: true, harmony: "modal",
+      intro: "solo",                 // the guitar states the tune before the harmony joins
+      // MAJOR PENTATONIC — the actual alphabet an Appalachian ballad sings
+      // in, and plainer than counterpoint's seven-note diatonic on purpose.
+      scale: SCALES.majpent, artic: "legato",
+      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .006, rel: .8, gain: .24, verb: .35 },
+      words: ["the guitar and the lead voice, the tune",
+              "the harmony voice, a third below — parallel, not mirrored"],
+      word: v => (v === 1 ? [transpose(-2)] : []),
+    },
+
+    // WORLD FOLK [afrobeat]. A folk duo's songwriting discipline carrying
+    // West African guitar-and-kalimba interplay and cross-rhythm percussion
+    // — afrobeat's threes against the four, thinned from a horn-led band to
+    // two acoustic voices, in a bright mixolydian that reads as both
+    // traditions' ♭VII at once.
+    worldfolk: {
+      label: "Johannesburg 1986", rate: 1, bars: 8, voices: 2, near: "afrobeat",
+      // LINEAGE: the folk-song discipline (a story, a verse, one guitar
+      // carrying it) is folkduo's; the cross-rhythm percussion and the
+      // interlocking-guitar technique are afrobeat's, thinned from a big
+      // band to a duo; countrypop's bright major-key optimism colours the
+      // top. Mbaqanga, the South African street-pop the guitar language is
+      // actually borrowed from, is the missing rung.
+      parents: { afrobeat: 0.4, folkduo: 0.35, countrypop: 0.25 },
+      wants: ["mbaqanga"],
+      instr: ["nylon_string_guitar", "marimba"],
+      drumkit: "acoustic",
+      entry: () => 0, reg: v => v, realize: () => "line",
+      harmony: "cycle", roots: [0, 3, 4, 0, 0, 5, 3, 4], mode: MODES.mixo,
+      scale: MODES.mixo, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             s: [0,0,0,0, 0,1,0,0, 0,0,0,0, 0,1,0,0],
+             p: [1,0,0,1, 0,0,1,0, 0,1,0,0, 1,0,1,0],
+             h: [1,1,1,0, 1,1,1,0, 1,1,1,0, 1,1,1,0] },
+      fill: { p: [1,0,1,1, 0,1,1,0, 1,0,1,1, 1,1,0,1] },
+      tone: { wave: "triangle", cut: 2400, q: 1.0, atk: .006, rel: .7, gain: .26, verb: .3 },
+      words: ["the guitar, the folk tune", "the marimba, the African line under it"],
+      word: v => (v === 1 ? [rotate(4), drop(2)] : []),
+    },
+
+    // JAM BAND [blues]. A twin-guitar band that never stops soloing over the
+    // same twelve bars blues already wrote — `PROGS.blues12` cited whole,
+    // because a jam band's entire repertoire IS the blues form, played
+    // longer and looser. Where blues' answer voice is one fixed rotate(8),
+    // this rotates a DIFFERENT amount every time the form comes back round —
+    // the sound of a solo that keeps discovering new material over the same
+    // changes rather than repeating one lick.
+    jamband: {
+      label: "San Francisco 1972", rate: 1, bars: 12, voices: 2, swing: 0.15, near: "blues",
+      // LINEAGE: the twelve-bar form and the electric-band instrumentation
+      // are blues' own, taken whole; rock supplies the extended-form,
+      // two-guitar-interplay format; jazz supplies the walking bass and the
+      // idea that a chorus is a launching point rather than a fixed part.
+      // Psychedelic rock's studio-born extended-jam ethos, the actual scene
+      // this style grew out of, is the missing rung.
+      parents: { blues: 0.4, rock: 0.35, jazz: 0.25 },
+      wants: ["psychedelic rock"],
+      instr: ["clean_guitar", "clean_guitar"],
+      drumkit: "room",
+      entry: () => 0, reg: v => -v, realize: () => "line",
+      harmony: "cycle", bassStyle: "walk",
+      roots: [0,0,0,0, 3,3,0,0, 4,3,0,4],
+      prog: PROGS.blues12,
+      maxHold: 5,
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 0,0,1,0, 0,0,0,0],
+              x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,8] },
+      tone: { wave: "sawtooth", cut: 1600, q: 1.6, atk: .006, rel: 1.0, gain: .28, verb: .24 },
+      words: ["the lead guitar, exploring the changes",
+              "the second guitar, answering — rotated a different amount every chorus"],
+      word: (v, s) => (v === 0 ? [] : [rotate((s % 4) + 2)]),
+    },
+
+    // SOPHISTI-ROCK [steely]. Steely's jazz-schooled changes and walking
+    // bass, played on a Hammond instead of a Rhodes and a real backbeat
+    // instead of a laid-back shuffle — a rock band with a jazz education
+    // rather than a studio band with a rock format, which is the field
+    // that separates the two.
+    sophistirock: {
+      label: "London 1986", rate: 1, bars: 8, voices: 2, swing: 0.15, near: "steely",
+      // LINEAGE: the band format and the muscular backbeat are rock's own;
+      // funk's syncopated hand colours the groove underneath; jazz supplies
+      // the dorian changes and the walking bass, the same vocabulary steely
+      // draws on but played harder. Progressive rock's extended-arrangement
+      // ambition, the format this style actually grew up inside, is the
+      // missing rung.
+      parents: { rock: 0.35, funk: 0.3, jazz: 0.35 },
+      wants: ["progressive rock"],
+      instr: ["rock_organ", "clean_guitar"],
+      drumkit: "room",
+      entry: () => 0, reg: v => -v, realize: () => "line",
+      harmony: "cycle", mode: MODES.dorian, scale: MODES.dorian, diatonic: true,
+      roots: [0, 3, 4, 0, 0, 3, 4, 5],
+      artic: "legato", maxHold: 3, bassStyle: "walk",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 1,0,1,0, 1,0,1,1] },
+      tone: { wave: "square", cut: 2000, q: 1.4, atk: .008, rel: .8, gain: .28, verb: .26 },
+      words: ["the organ, swirling through the changes", "the guitar, doubling low"],
+      word: v => (v === 1 ? [drop(2), transpose(-7)] : []),
+    },
+
+    // MOTORIK [kraftwerk]. Kraftwerk's own machine pulse, before the pop
+    // song arrived — kick and snare struck TOGETHER on every quarter
+    // (Jaki Liebezeit's beat, not a four-on-the-floor: the snare answers the
+    // kick rather than the backbeat answering it) under even, unaccented
+    // sixteenths that never let up. NO FILL, ever, and that absence is the
+    // whole discipline: the beat does not vary bar to bar, on principle.
+    motorik: {
+      label: "Düsseldorf 1974", rate: 1, bars: 8, voices: 2, near: "kraftwerk",
+      // LINEAGE: kraftwerk's own machine-pulse half, isolated from the pop-
+      // song half that anchor also carries; minimalism's repeating,
+      // barely-developing cell is the other whole ancestor — motorik IS a
+      // process piece with a rock band's instrumentation. Neu!, the actual
+      // other half of this sound, has no separate anchor to cite.
+      parents: { kraftwerk: 0.6, minimalism: 0.4 },
+      wants: ["neu"],
+      instr: ["polysynth", "synth_strings_1"],
+      drumkit: "electronic",
+      entry: v => (v === 1 ? 4 : 0), reg: v => v - 1, realize: () => "line",
+      harmony: "modal", mode: MODES.mixo, scale: MODES.mixo,
+      artic: "tie", swing: 0,
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             s: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 1800, q: 1.2, atk: .005, rel: .3, gain: .27, verb: .15 },
+      words: ["the sequence, repeating exactly",
+              "the second line, entering from bar 5 — the one change in eight bars"],
+      word: () => [],
+    },
+
+    // ROBOTIC POP [kraftwerk]. Motorik's mechanical pulse folded back into
+    // an actual verse-chorus SONG — synthpop's I-vi-IV-V-with-sevenths sung
+    // by a vocoder rather than motorik's wordless process piece, which is
+    // the field that separates the two Kraftwerk children.
+    roboticpop: {
+      label: "Düsseldorf 1978", rate: 1, bars: 4, voices: 2, near: "synthpop",
+      // LINEAGE: the vocoder-and-sequencer chassis and the deadpan machine
+      // delivery are kraftwerk's own; synthpop supplies the actual pop-song
+      // form (a real changing progression, a hook) that anchor's motorik
+      // sibling refuses to have.
+      parents: { kraftwerk: 0.55, synthpop: 0.45 },
+      wants: [],
+      instr: ["synth_voice", "polysynth"],
+      drumkit: "cr78",
+      entry: v => v, reg: v => v - 1, realize: () => "line",
+      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      prog: [{ d: 0, q: "7" }, { d: 5, q: "7" }, { d: 3, q: "7" }, { d: 4, q: "7" }],
+      artic: "staccato", maxHold: 2, bassStyle: "octaves",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,1,0] },
+      tone: { wave: "square", cut: 2400, q: 2.4, atk: .002, rel: .3, gain: .28, verb: .24 },
+      words: ["the vocoder, singing the hook, staccato",
+              "the sequence, answering an octave under — the phrase's own gate, complemented"],
+      // A CALL AND AN ANSWER, not the same hook twice: `complement("gate")`
+      // fires the sequence exactly where the vocoder is silent, so an octave
+      // doubling never lands on the SAME step as the line it doubles.
+      word: v => (v === 1 ? [only("gate", complement("gate")), transpose(-7)] : []),
+    },
+
+    // INDUSTRIAL METAL [deathmetal]. Death metal's chromatic riff wall and
+    // locrian ♭5-is-home scale, cited whole, played to a QUANTIZED machine
+    // kick instead of a drummer's blast — the field that separates a band
+    // playing to a sequencer from a band playing itself, which is exactly
+    // what Kraftwerk's own inheritance argues.
+    industrialmetal: {
+      label: "Chicago 1988", rate: 1, bars: 8, voices: 2, near: "deathmetal",
+      // LINEAGE: the chromatic riff wall and the ♭5-is-home locrian colour
+      // are death metal's own, cited whole; kraftwerk supplies the machine-
+      // sequenced, unwavering kick underneath in place of a drummer; punk
+      // supplies the raw, unsubtle directness. EBM's own club-industrial
+      // half is the missing rung — this anchor is the metal side of that
+      // same argument.
+      parents: { deathmetal: 0.4, kraftwerk: 0.35, punk: 0.25 },
+      wants: ["EBM"],
+      instr: ["distortion_guitar", "metal_pad"],
+      drumkit: "electronic",
+      entry: () => 0, reg: v => -v, realize: () => "line",
+      harmony: "cycle", mode: MODES.phrygian, scale: [0, 1, 3, 5, 6, 8, 10],
+      roots: [0, 0, 1, 1, 0, 0, 4, 4],
+      artic: "staccato", bassStyle: "sixteenths",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,1,1,1],
+              x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,9] },
+      tone: { wave: "square", cut: 1400, q: 2.8, atk: .002, rel: .3, gain: .3, verb: .14 },
+      words: ["the riff, chromatic, on the machine's grid",
+              "the bass synth, doubling an octave under"],
+      word: v => (v === 0 ? [only("gate", fill(1))] : [transpose(-7)]),
+      fx: ["crunch"],
+    },
+
+    // EBM [techno]. Electronic Body Music: techno's kick-driven floor and
+    // kraftwerk's machine pulse, made aggressive by a punk-direct vocal
+    // chant — the two lines TRADE PLACES bar to bar (the sequence solid,
+    // the chant on the offbeats, then a straight run answered by the
+    // sequence stabbing back), the club's version of a call and response.
+    ebm: {
+      label: "Chicago 1989", rate: 1, bars: 4, voices: 2, near: "techno",
+      // LINEAGE: the sequenced, pulsing bass and the four-on-the-floor club
+      // discipline are techno's; kraftwerk supplies the machine chassis
+      // underneath; punk supplies the shouted, direct chant vocal. New
+      // beat, the slowed-down Belgian club scene this style traded records
+      // with directly, is the missing rung.
+      parents: { kraftwerk: 0.4, techno: 0.35, punk: 0.25 },
+      wants: ["new beat"],
+      instr: ["square_lead", "synth_voice"],
+      drumkit: "tr909",
+      entry: v => v, reg: v => -v, realize: () => "line",
+      harmony: "modal", mode: MODES.phrygian, scale: MODES.phrygian,
+      artic: "staccato", maxHold: 2, bassStyle: "sixteenths",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitVel: { h: [8,4,8,4, 8,4,8,4, 8,4,8,4, 8,4,8,6] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,1,0] },
+      tone: { wave: "square", cut: 2000, q: 3.0, atk: .002, rel: .3, gain: .29, verb: .12 },
+      words: ["the sequence, pulsing every sixteenth",
+              "the vocal chant, the phrase's own rhythm ANDed with the offbeat"],
+      // BREATH, NOT SKANK — the field that separates the chant from the
+      // sequence: `fill(1)` is a total override (a machine that never
+      // listens to what it is handed), `breath` is an AND against the
+      // phrase's own gate (a chant that answers what it is actually given,
+      // the way reggae's skank does NOT and a shouted vocal DOES).
+      word: v => (v === 0 ? [only("gate", fill(1))] : [breath([0, 0, 1, 0])]),
+    },
+
+    // SYNTH DUO [synthpop]. Two people and a rack of machines, but LEGATO
+    // where synthpop's stabs are staccato — a melodic, sustained hook over a
+    // disco floor rather than a clipped anthem chord, which is the field
+    // that turns a synth-pop record into a dance-floor one.
+    synthduo: {
+      label: "London 1985", rate: 1, bars: 4, voices: 2, near: "synthpop",
+      // LINEAGE: the all-synth chassis and the anthem changes are synthpop's
+      // own; disco supplies the four-on-the-floor club discipline and the
+      // open hat where synthpop has none at all; kraftwerk supplies the
+      // deadpan, detached vocal delivery underneath the melody.
+      parents: { synthpop: 0.4, disco: 0.3, kraftwerk: 0.3 },
+      wants: [],
+      instr: ["synth_voice", "synth_strings_1"],
+      drumkit: "tr909",
+      entry: v => v, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
+      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      prog: [{ d: 0, q: "7" }, { d: 5, q: "7" }, { d: 3, q: "7" }, { d: 4, q: "7" }],
+      artic: "legato", maxHold: 3, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      fill: { o: [0,0,1,0, 0,0,1,0, 1,0,1,0, 1,0,1,1] },
+      tone: { wave: "triangle", cut: 2600, q: 1.6, atk: .01, rel: 1.0, gain: .27, verb: .32 },
+      words: ["the voice, deadpan over the changes", "the strings, sweeping in a wash above"],
+      word: v => (v === 1 ? [drop(2)] : []),
+    },
+
     // ---- THE FUNCTION GENRES ---------------------------------------------
     // A genre whose identity is a ROLE and not a style. "What is a Beatles song
     // without a couple of solos" — and until now there was no way to say it: a
@@ -3028,16 +3988,19 @@
   // table and belongs to no tradition.
   const FAMILIES = [
     ["kernel", ["simple"]],
-    ["vox",    ["gregorian", "bulgarian", "spem", "counterpoint", "fugue"]],
+    ["vox",    ["gregorian", "bulgarian", "spem", "counterpoint", "fugue", "hymn"]],
     ["club",   ["acid", "house", "techno", "garage", "dnb", "trap", "boombap",
-                "electro"]],
+                "electro", "bigbeat", "drill", "kpop", "bigroom", "ebm", "synthduo"]],
     ["soul",   ["doowop", "motown", "isley", "funk", "disco", "gospel", "rnb",
-                "jodeci"]],
-    ["groove", ["reggae", "dub", "ska", "afrobeat", "bossa"]],
+                "jodeci", "clubpop", "retrofunkpop", "boyband", "darkrnb",
+                "blueeyedsoul"]],
+    ["groove", ["reggae", "dub", "ska", "afrobeat", "bossa", "reggaeton", "latinpop"]],
     ["band",   ["rock", "punk", "blues", "bodiddley", "chuckberry", "newwave",
-                "sludge", "deathmetal"]],
+                "sludge", "deathmetal", "powerballad", "emo", "screamo",
+                "jamband", "sophistirock", "industrialmetal"]],
     ["studio", ["beatles", "steely", "toto", "kraftwerk", "eurythmics",
-                "synthpop", "citypop"]],
+                "synthpop", "citypop", "merseybeat", "psychpop", "motorik",
+                "roboticpop", "confessionalpop"]],
     ["drift",  ["ambient", "drone", "vaporwave", "shoegaze", "postrock",
                 "neoclassical", "minimalism"]],
     // the pre-rock traditions, and the two ancestors that joined them are
@@ -3045,7 +4008,8 @@
     // London 1956. Kling Klang is `studio` and not `club` for the same kind of
     // reason — Kraftwerk made a record, and the floor is what the children
     // built out of it.
-    ["roots",  ["countrypop", "skiffle", "tango", "jazz"]],
+    ["roots",  ["countrypop", "skiffle", "tango", "jazz", "crooner", "yuletide",
+                "folkduo", "worldfolk"]],
     // ...and the one cluster that is not a tradition at all: the FUNCTION
     // genres, which are parts rather than styles. They sit last because that
     // is how they are used — you pick the music first and the part second.
@@ -3162,6 +4126,24 @@
     kraftwerk: { stress: 0.3,  phrase: 0.15, touch: { t: 0.004, v: 0.25 } },
     eurythmics:{ stress: 0.25, phrase: 0.35, touch: { t: 0.02,  v: 0.55 } },
     synthpop:  { stress: 0.25, phrase: 0.35, touch: { t: 0.02,  v: 0.5 } },
+    // kraftwerk's two direct children keep its tiny hand rather than falling
+    // back to `studio`'s — motorik is the purer form of the pulse (barely a
+    // hand at all: the beat's whole discipline is that it does not lean),
+    // roboticpop lets a little more song-phrase back in now there is a verse
+    // and a chorus to shape.
+    motorik:    { stress: 0.28, phrase: 0.08, touch: { t: 0.002, v: 0.12 } },
+    roboticpop: { stress: 0.3,  phrase: 0.15, touch: { t: 0.005, v: 0.22 } },
+    // ...and there is deliberately NO `club` row above these six, same as
+    // there is none for the eight anchors already in that family: the floor
+    // is a machine by construction and each newcomer disagrees about it
+    // individually, so every one gets named here rather than inheriting a
+    // fallback that does not exist.
+    bigbeat:   { stress: 0.45, phrase: 0.2,  touch: { t: 0.03,  v: 0.9 } },
+    drill:     { stress: 0.35, phrase: 0.2,  touch: { t: 0.02,  v: 0.7 } },
+    kpop:      { stress: 0.28, phrase: 0.3,  touch: { t: 0.02,  v: 0.5 } },
+    bigroom:   { stress: 0.3,  phrase: 0.25, touch: { t: 0.015, v: 0.45 } },
+    ebm:       { stress: 0.3,  phrase: 0.15, touch: { t: 0.01,  v: 0.35 } },
+    synthduo:  { stress: 0.28, phrase: 0.35, touch: { t: 0.02,  v: 0.5 } },
     // THE THREE FUNCTION GENRES THAT DISAGREE WITH THEIR FAMILY. A riff is
     // metre — it is the part that is NOT expressive, that is its job. A pad has
     // no metre and barely a hand (the chord path reads stress and touch and
