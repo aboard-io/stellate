@@ -18,7 +18,7 @@ import { FONT, fontDef, isSynthFont, loadFont, specOf, zoneBufs,
 import { synthNodes, synthKey, loadSynth, focusSynths, playSynth, playSampled,
          playDrum, line, hit, synthDead, countDrop, playWindow,
          warmKit, kitReady } from "./voices.js";
-import { isMachine } from "./to-engine.js";
+import { isMachine, synthForInstr } from "./to-engine.js";
 import { channelFor, armAutomation, focusKit, refreshChannels } from "./mixer.js";
 import { setDelayTime } from "./graph.js";
 import { playSyllable, warm as warmSing, needsWarm, singOff } from "./sing.js";
@@ -374,7 +374,31 @@ export function scheduleBar(bar, sec, chan, kit, when, sd, synthFn) {
         : (over ? null : GENRES[owner].synth);
       const id = over || instrOf(owner, e.lv == null ? e.v : e.lv);
       const useSyn = gsyn && !(gsyn.lineOnly && e.pad && !isSynthFont());
+      // ...AND THE INSTRUMENT'S OWN SYNTH, where the sampled library has no
+      // business answering at all. Twelve GM ids are synthesisers being
+      // impersonated by a recording of one, and four of them (polysynth,
+      // warm_pad, halo_pad, metal_pad) are a SINGLE zone rooted at MIDI 84 —
+      // so a pad written at MIDI 45 is that one high sample dragged down two
+      // and a half octaves, breathy and formant-shifted. That is the flute
+      // Paul heard everywhere after the engine moved ("there's no more synth,
+      // there's flute everywhere"). to-engine.js PATCH_SYNTH names the parent
+      // module each id is a recording OF, and drives it from this genre's own
+      // tone block — the same seven numbers the old WebAudio voice used.
+      //
+      // It lands HERE as well as on the tape because the tape alone is half a
+      // fix: the press had it (audio/press-window.js) and the live graph did
+      // not, which is precisely the live/press split the drum lane spent a
+      // round closing. A pool override goes through it too — casting a
+      // polysynth in a chair means a juno60, because the table is keyed on the
+      // INSTRUMENT and not on the genre.
+      const patch = (!gsyn && !isSynthFont())
+        ? synthForInstr(id, bar.g.tone, e.pad) : null;
       if (useSyn && synthFn(gsyn, e.n, at, e.dur * sd, e.acc, e.sld, e.vel, e.v, chan, e.vox)) { /* signature voice */ }
+      // an unloaded patch module falls through to the sampled zone rather than
+      // dropping the note: unlike a signature genre this one HAS a legitimate
+      // second voice — the recording the patch is named for — so the whistle is
+      // the right sound to make for the bar or two before the wasm lands.
+      else if (patch && synthFn(patch, e.n, at, e.dur * sd, e.acc, e.sld, e.vel, e.v, chan, e.vox)) { /* the instrument's own synth */ }
       // a DEAD signature synth drops its notes rather than beeping: a
       // synth-identity genre has no legitimate second voice, and its sampled
       // `instr` was never fetched (ensureAssets skips it — the genre is
