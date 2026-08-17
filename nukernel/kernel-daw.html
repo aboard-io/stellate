@@ -216,21 +216,21 @@
       </div>
     </section>
 
-    <!-- THE LAB PAGE — the bench where genres are crossed (nukernel/lab.js is
-         the engine, ui/lab.js the view). Empty in the markup on purpose, like
-         #composewrap: the whole surface is built by its module, and the module
-         is not even fetched until the tab is first opened (ui/deps.js
-         loadLab()), because the bench and its two oracles are ~123 KB of
-         analysis tier that most sessions never ask for.
+    <!-- THE LAB PAGE — the bench where genres are crossed, and mixed
+         (nukernel/lab.js is the engine, ui/lab.js the view). Empty in the
+         markup on purpose, like #composewrap: the whole surface is built by
+         its module, and the module is not even fetched until the tab is
+         first opened (ui/deps.js loadLab()), because the bench and its two
+         oracles are ~123 KB of analysis tier that most sessions never ask
+         for.
 
-         WHAT IT IS FOR, in one line, because it decides the layout: measured
-         over the catalog (nukernel/INHERITANCE.md), crossing parents predicts a
-         genre's ARCHITECTURE (harmony 87%, realize 84%, rate 76%, drumkit 61%)
-         and essentially NONE of its MATERIAL (kit 16%, roots 7%, fill/instr 3%,
-         prog/words 0%). So the page reads as that division of labour: the
-         architecture arrives as read-only FACTS with their provenance printed,
-         and the material arrives as an INVENTION LIST with a roll key on every
-         row. -->
+         2026-08-17: picking a genre or moving a weight slider takes over the
+         transport immediately and plays the mix, transitioning one bar at a
+         time as the sliders move — the page is a live instrument now, not a
+         ledger. It still measures everything it always did (nukernel/
+         INHERITANCE.md's architecture/material split, novelty, the laws in
+         validate()); none of that prints any more, it is a `title` tooltip
+         on the control it gates. -->
     <section class="page pg-lab" id="page-lab" aria-label="lab">
       <div class="ed labwrap" id="labwrap"></div>
     </section>

@@ -1,31 +1,33 @@
-// ui/lab.js — THE LAB: a bench where genres are crossed. Pick two or three
-// parents, and the machine fills the half of a genre it can actually predict
-// while the other half is left, named and empty, for a person.
+// ui/lab.js — THE LAB: a bench where genres are crossed, and mixed. Pick two
+// or three parents and slide their weights; the machine fills the half of a
+// genre it can measure (nukernel/INHERITANCE.md: harmony 87%, realize 84%,
+// rate 76%, drumkit 61% cross from parent to child) and drafts the half it
+// cannot, on the dice, for a person to argue with.
 //
-// WHY THE PAGE IS SHAPED LIKE THIS, and it is the whole design: nukernel/
-// INHERITANCE.md measured what crosses from parents to child over the entire
-// catalog, field by field, and the answer split an anchor cleanly in two.
+// (2026-08-17, Paul: "success is almost no words".) The page used to print
+// its own working — a provenance table, a novelty verdict, a paragraph of
+// "why" under every roll. All of that is still computed (§3, §7 below, and
+// nukernel/lab.js itself — nothing there changed) because Keep still gates on
+// it; it is just no longer SAID. What stays on screen: the mix (sliders that
+// renormalise, so the blend on screen is always the whole blend), the shape
+// of the band (drum steps and the instrument roster — a bar or a shape, never
+// a sentence), the invention keys as icons with a tooltip, and the Keep gate.
 //
-//   INHERITED — the ARCHITECTURE.  harmony 87% · realize 84% · diatonic 83% ·
-//               rate 76% · tone.wave 74% · drumkit 61%
-//   INVENTED  — the MATERIAL.      kit 16% · roots 7% · fill 3% · instr 3% ·
-//               prog / words / kitVel / bassGrid 0%
-//
-// So the architecture arrives as READ-ONLY FACTS with their provenance printed
-// beside them — combined from whom, plucked from whom — because that is the
-// part the measurement says the machine is entitled to answer. And the material
-// arrives as an INVENTION LIST with a ROLL key on every row, because a machine
-// that offered to write the kit would be lying about exactly the half you would
-// listen to. The dice draft something plausible for THIS architecture and the
-// ear does the rest: a roll is a starting point with a seed on it, never an
-// answer. Inventing the material is the fun part, and the page must read that
-// way — the facts are quiet, the keys are on the material.
+// AND IT PLAYS ITSELF. Picking a genre or moving a slider takes over the
+// ordinary transport immediately (§5) — there is no "Hear it" key any more,
+// because on this page there is nothing else to hear. Every later change
+// updates the SAME scratch box in place instead of restarting it: the bar
+// already handed to WebAudio finishes exactly as it started, and only the
+// next bar the scheduler reaches hears the new blend — one bar, on the beat,
+// the same "something changed" path every other live edit on this machine
+// already takes (audio/transport.js `on("box", …)`, just asked more often).
 //
 // THE ENGINE IS nukernel/lab.js, unchanged and not reimplemented here. This
-// file picks parents, holds the seeds, paints the surface, plays the candidate
-// and hands what survives to keepCandidate(). Every musical decision —
-// synthesis, the pluck groups, the rollers, the novelty space, the place-year
-// offers, the laws in validate() — is the bench's, and the view asks it.
+// file picks parents, holds the seeds, keeps the scratch box in the ordinary
+// SONG in step with the candidate, and hands what survives to
+// keepCandidate(). Every musical decision — synthesis, the pluck groups, the
+// rollers, the novelty space, the place-year offers, the laws in validate()
+// — is the bench's, and the view asks it.
 //
 // Layer graph: ui view — imports deps/state/derive/palette and audio/transport
 // (a view may import audio; audio never imports back). It owns no audio path of
@@ -72,7 +74,6 @@ const LANEFIELDS = new Set(["kit", "fill"]);
 // a field's seed is the bench's, walked one stride per press of its roll key —
 // so a draft is named by (parents, seed, presses) and is reachable again
 const seedAt = n => LAB.seedAt(seed, n);
-const fieldSeed = f => seedAt(NONCE.get(f) || 0);
 // THE RECIPE — the four facts a kept genre is stored as, and the same four this
 // page is holding at any moment: parents + weights, the bench seed, the presses
 // and the hand edits. Assembling it here rather than only at the keep is what
@@ -132,9 +133,24 @@ function build() {
   // it deals the DATED anchors and a function genre carries no year — but the
   // refusal is the engine's to make, so it is reported rather than pre-empted.
   const recipe = recipeNow();
+  // THE STUB SEAT COLLIDES WITH THE LIVE SEAT — and only now that the page
+  // plays while you edit does that matter. nukernel/lab.js reserves ONE key,
+  // "__lab_candidate__" (its STUB), to seat a candidate for the length of a
+  // single synchronous call (§1 withStub) — validate() and novelty() both
+  // take that seat on every rebuild. This file reserves the SAME key, LABKEY,
+  // for the audition's live entry, and holds it for as long as the audition
+  // plays. So a rebuild fired WHILE auditioning finds its own seat already
+  // taken and refuses ("the bench is already occupied") — harmless once, when
+  // a person could only edit before pressing Hear It; a rebuild on every
+  // slider frame while it plays. So the live entry steps aside for the one
+  // synchronous call that needs the seat and is put straight back — nothing
+  // else runs in between (no await here) to find it missing.
+  const held = GENRES[LABKEY];
+  if (held) delete GENRES[LABKEY];
   let r;
   try { r = LAB.rebuild(recipe); }
   catch (e) { emit("status", { text: String(e.message || e), sticky: true }); return; }
+  finally { if (held) GENRES[LABKEY] = held; }
   B = { syn: r, cand: r.candidate, want: r.want, recipe,
         novelty: r.novelty, names: r.names, problems: r.problems };
 }
@@ -253,7 +269,7 @@ function startAudition() {
   if (!scratch) {
     saveNow();                          // the store holds the real song FIRST
     savedLoop = loopOnly;
-    scratch = Object.assign(emptyBox(), { len: B.cand.bars || 4 });
+    scratch = Object.assign(emptyBox(), { len: B.cand.bars || 4, labgen: 0 });
     scratch.stack = [{ g: LABKEY, slots: [subjectSlot()] }];
     SONG.push(scratch);
   } else scratch.len = B.cand.bars || 4;
@@ -261,6 +277,12 @@ function startAudition() {
   setLoopOnly(at);
   mine = true;
   transport.startAt(at);
+  // THE MAIN TRANSPORT IS NOW PLAYING THE LAB — said once, through the same
+  // status channel every other transport announcement uses (a sticky line
+  // survives exactly one readout render; ui/readout.js). The genre field on
+  // that same row reads the candidate's own name for as long as the scratch
+  // box keeps sounding, which is the ongoing half of this sentence.
+  emit("status", { text: "the transport is playing the lab", sticky: true });
   paint();
 }
 function endAudition() {
@@ -275,12 +297,41 @@ function endAudition() {
   saveNow();                            // …and holds the real song again
   paint();
 }
-// a candidate that changes while it is sounding is replaced, not layered —
-// debounced, because a weight slider changes it on every frame of a drag
+// A CHANGE UPDATES THE MIX IN PLACE, ON THE NEXT BAR — never a restart.
+// Debounced, because a weight slider fires on every frame of a drag and only
+// the SETTLED mix is worth a transition; once it fires, the scratch box does
+// not move and only what LABKEY names changes, so the bar already handed to
+// WebAudio (fire-and-forget, nothing recalls it) finishes exactly as it
+// started and the very next bar the scheduler reaches hears the new blend.
+//
+// `labgen` is a nonce ON THE SCRATCH BOX ITSELF, bumped every update.
+// ui/derive.js sectionRender caches a box's render keyed on JSON.stringify of
+// the box — blind to GENRES[LABKEY]'s own content changing underneath an
+// unchanged box — so without a changing key ON THE BOX the cache would keep
+// serving the OLD mix forever. `emit("box", …)`, not commit(): this is the
+// transport's own "something changed" signal (audio/transport.js
+// `on("box", changed)` recompiles the bar list, `on("box", remix)` reroutes
+// the channel at the next scheduled bar), with no restart and — because it is
+// emit and not commit — no save, which matters: the scratch box must never
+// reach the store (§5's own law, restated at endAudition).
+// SUPPRESSED ONLY AROUND OUR OWN emit — a real edit to any box, the scratch
+// one included, still ends the audition (below): the point of the flag is
+// only to stop this file's own "box" announcement from eating itself.
+let ownBoxEvent = false;
 function reaudition() {
-  if (!scratch) return;
   clearTimeout(restartT);
-  restartT = setTimeout(() => { if (scratch && B) startAudition(); }, 260);
+  if (!B) { endAudition(); return; }
+  if (!scratch) { startAudition(); return; }   // nothing sounding yet — now
+  restartT = setTimeout(() => {
+    if (!scratch || !B) return;
+    GENRES[LABKEY] = playable(B.cand);
+    scratch.len = B.cand.bars || 4;
+    scratch.labgen = (scratch.labgen || 0) + 1;
+    ownBoxEvent = true;
+    emit("box", {});
+    ownBoxEvent = false;
+    paint();
+  }, 220);
 }
 on("transport:state", d => {
   // somebody pressed PLAY somewhere else: the song is the audible thing again,
@@ -290,7 +341,12 @@ on("transport:state", d => {
   if (B) paint();                       // the play key's own legend follows it
 });
 on("song", endAudition);                // adopted a new song out from under it
-on("box", endAudition);                 // …or edited the one that is loaded
+on("box", () => { if (!ownBoxEvent) endAudition(); });  // …or a real edit, anywhere
+// THE LAB IS WHAT YOU ARE HEARING WHILE YOU ARE ON THE LAB PAGE — leaving it
+// ends the audition, the same way switching to a real play elsewhere does.
+// On the desk, where every page shows at once and the rail never fires this
+// event, there is nothing to leave and this simply never runs.
+on("page", d => { if (d.page !== "lab") endAudition(); });
 addEventListener("beforeunload", endAudition);
 addEventListener("visibilitychange", endAudition, true);
 
@@ -381,28 +437,6 @@ function say(v, n) {
   else s = typeof v === "string" ? v : String(v);
   return s.length > cap ? s.slice(0, cap - 1) + "…" : s;
 }
-const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII"];
-const degLine = ds => (ds || []).map(d => ROMAN[d % 7] || d).join(" · ");
-// the two sevenths are DIFFERENT CHORDS and the line says which: "7" is the
-// seventh the mode already owns, "dom7" the absolute stack natural minor cannot
-// spell (kernel.js QSTEPS/QFIX). Printing both as "7" would hide the one
-// decision the prog roller actually makes.
-const progLine = pr => (pr || []).map(s => {
-  const c = Array.isArray(s) ? s[0] : s;
-  return (ROMAN[(c.d || 0) % 7] || c.d) +
-         (c.q === "dom7" ? "7(dom)" : c.q === "7" ? "7" : c.q ? " " + c.q : "");
-}).join(" · ");
-// the rolled `word`, said in the bench's own words: PALETTE is exported for
-// exactly this, so the sentence on screen comes from the same table the
-// operator did and cannot promise a move the closure does not make
-function wordLines(word) {
-  const table = word && word.__labTable;
-  if (!table) return [];
-  return table.map((rows, v) => "voice " + (v + 1) + ": " + rows.map(ops =>
-    ops.length ? ops.map(o => LAB.PALETTE.find(p => p.id === o.id).say(o.arg)).join(" + ")
-               : "as written").join("  /  "));
-}
-
 /* ------------------------------------------------------------- §8 painting */
 // ONE REBUILD PER USER ACTION. Every other table on this machine patches
 // because it is repainted during a scrub or a playhead frame; this surface is
@@ -414,11 +448,10 @@ const el = (tag, cls, txt) => {
   if (txt != null) e.textContent = txt;
   return e;
 };
-function section(name) {
-  const s = el("div", "labsec");
-  s.append(el("span", "glab", name));
-  return s;
-}
+// NO LEGEND — the row of sections used to open each one with a name in
+// silkscreen ("architecture", "material", "novelty"); the hairline between
+// them is the only divider a wordless page needs.
+function section() { return el("div", "labsec"); }
 function key(txt, cls, fn) {
   const b = el("button", "btn " + (cls || ""), txt);
   b.type = "button";
@@ -431,31 +464,27 @@ function paint() {
   wrap.textContent = "";
   wrap.append(paintTop(), paintParents());
   if (!B) return;
-  wrap.append(paintHear(), paintArch(), paintMaterial(),
-              paintNovelty(), paintNames(), paintKeep());
+  wrap.append(paintBand(), paintNames(), paintKeep());
 }
 
-// THE HEAD: what this thing is called and what it is, in the biggest type on
-// the page, plus the seed it was drafted at. No word "lab" anywhere — the tab
-// said that already.
+// THE HEAD: what this thing is called, in the biggest type on the page, and
+// the seed it was drafted at — nothing else. No word "lab" anywhere, the tab
+// said that already; no bpm/bars/voices/harmony sentence either, because the
+// parents' own sliders below already say the one thing that changed them.
 function paintTop() {
   const t = el("div", "labtop");
   const c = B && B.cand;
   t.append(el("div", "labtitle" + (c && c.label ? "" : " un"),
     c ? (c.label || "an unnamed genre") : "cross two genres"));
-  t.append(el("div", "labsub", c
-    ? PICK.map(k => (GENRES[k].label || k) + " " +
-        Math.round(W.get(k) * 100) + "%").join("  ·  ") +
-      "   —   " + c.bpm + " bpm, " + c.bars + " bars, " + c.voices +
-      (c.voices === 1 ? " voice" : " voices") + ", " + c.harmony
-    : "the machine fills the architecture; the material is yours to invent"));
   const s = el("div", "labdice");
   s.append(el("output", "labseed", "seed " + seed));
-  s.append(key("⟳", "labre", () => {
+  const re = key("⟳", "labre", () => {
     seed = (seed % 9999) + 1;
     NONCE.clear();                      // a new seed is a new draft of everything
     build(); paint(); reaudition();
-  }));
+  });
+  re.title = "reroll the seed";
+  s.append(re);
   t.append(s);
   return t;
 }
@@ -465,7 +494,7 @@ function paintTop() {
 // the anchors that HAVE a history — a function genre is a part, not a style,
 // and the bench refuses one anyway.
 function paintParents() {
-  const s = section("parents");
+  const s = section();
   if (PICK.length) {
     const bar = el("div", "dnabar");
     const keys = el("div", "dnakeys");
@@ -545,89 +574,45 @@ function paintOnly() {
   }
   wrap.replaceChild(paintTop(), kids[0]);
   for (const n of kids.slice(2)) n.remove();
-  wrap.append(paintHear(), paintArch(), paintMaterial(),
-              paintNovelty(), paintNames(), paintKeep());
+  wrap.append(paintBand(), paintNames(), paintKeep());
 }
 
-// HEAR IT: one accent key, and the truth about what it is doing.
-function paintHear() {
-  const s = el("div", "labsec labhear");
-  s.append(key(scratch ? "■ Stop" : "▶ Hear it", "go labplay",
-    () => (scratch ? endAudition() : startAudition())));
-  s.append(el("span", "labstatus", scratch
-    ? "the candidate is looping in a scratch box — it is not in your song"
-    : "one box, looped, through the ordinary transport"));
+// THE BAND: the shape of the mix, and nothing about how it got that way. Only
+// the two things a listener would call "the composition" get a picture — the
+// kit (and its fill) as steps you can tap, and the instrument roster as
+// chips you can cycle. Every other invented field still has its roll key
+// (§6 of nukernel/lab.js, unchanged); it just does not get a paragraph
+// explaining what it is for, or a value printed out to argue with — a roll
+// is heard, not read.
+function paintBand() {
+  const s = section();
+  const want = new Set(B.syn.invention.map(i => i.field));
+  for (const f of LANEFIELDS)
+    if (want.has(f) && B.cand[f]) s.append(materialRow(f, laneGrid(f, B.cand[f])));
+  if (want.has("instr") && B.cand.instr != null)
+    s.append(materialRow("instr", instrRow(B.cand.instr)));
+  const rest = B.syn.invention.filter(i => !LANEFIELDS.has(i.field) && i.field !== "instr");
+  if (rest.length) {
+    const row = el("div", "labmore");
+    for (const inv of rest) row.append(rollKey(inv.field, inv.why));
+    s.append(row);
+  }
   return s;
 }
-
-// THE ARCHITECTURE: facts, with their provenance. Every row says where it came
-// from, because "combined" and "plucked from techno" are different claims and
-// the page must not blur them into "generated".
-function paintArch() {
-  const s = section("architecture — what the parents actually carry");
-  const t = el("div", "labtbl");
-  for (const m of B.syn.manifest) {
-    if (m.class === "invent") continue;
-    const row = el("div", "labarow");
-    row.dataset.field = m.field;
-    row.dataset.class = m.class;
-    row.append(el("b", "labf", m.field));
-    row.append(el("span", "labv", m.field === "parents"
-      ? PICK.map(k => k + " " + Math.round(W.get(k) * 100) + "%").join(" + ")
-      : say(m.value)));
-    const from = m.class === "plucked" ? "plucked from " + m.from
-      : m.class === "derived" ? "derived from " + m.from
-      : m.class === "snapped" ? "snapped to a parent's own value"
-      : m.class === "combined" ? "combined" + (m.from ? " (wave from " + m.from + ")" : "")
-      : m.class;
-    row.append(el("span", "labp " + m.class, from + (m.note ? " — " + m.note : "")));
-    t.append(row);
-  }
-  s.append(t);
-  return s;
+// ONE ICON, ONE TOOLTIP — the roll key's whole interface now. `title` carries
+// what `.labp`/`.labmine`/`.labfseed` used to print: the field, whether a
+// person already took it over, and the reason it is on the list at all.
+function rollKey(field, why) {
+  const b = key("⟳", "labroll" + (MINE.has(field) ? " on" : ""), () => rollField(field));
+  b.title = (MINE.has(field) ? field + " — yours; roll again" : "roll " + field) +
+            (why ? " — " + why : "");
+  return b;
 }
-
-// THE MATERIAL: the invention list. A roll key per row, the reason it is on the
-// list under it, and a direct control where one tap is a real edit.
-function paintMaterial() {
-  const s = section("material — the machine does not write this; you do");
-  const t = el("div", "labtbl");
-  for (const inv of B.syn.invention) {
-    const f = inv.field;
-    const row = el("div", "labmrow");
-    row.dataset.field = f;
-    const head = el("div", "labmhead");
-    head.append(el("b", "labf", f));
-    head.append(key("⟳ roll", "labroll", () => rollField(f)));
-    if (MINE.has(f)) head.append(el("span", "labmine", "yours"));
-    head.append(el("span", "labfseed", "seed " + fieldSeed(f)));
-    row.append(head, el("p", "labp", inv.why));
-    row.append(paintValue(f, B.cand[f]));
-    t.append(row);
-  }
-  s.append(t);
-  return s;
-}
-function paintValue(f, v) {
-  if (v == null) return el("div", "labmval", "—");
-  if (LANEFIELDS.has(f) && typeof v === "object") return laneGrid(f, v);
-  if (f === "roots") return el("div", "labmval big", degLine(v));
-  if (f === "prog") return el("div", "labmval big", progLine(v));
-  if (f === "instr") return instrRow(v);
-  if (f === "words") {
-    const d = el("div", "labmval");
-    for (const line of v) d.append(el("p", "labline", line));
-    return d;
-  }
-  if (f === "word") {
-    const d = el("div", "labmval");
-    for (const line of wordLines(v)) d.append(el("p", "labline", line));
-    if (!d.children.length) d.append(el("p", "labline", "nothing — every voice as written"));
-    return d;
-  }
-  if (f === "kitVel" || f === "bassGrid")
-    return el("div", "labmval mono", say(v, 220));
-  return el("div", "labmval mono", say(v, 220));
+function materialRow(field, visual) {
+  const inv = B.syn.invention.find(i => i.field === field);
+  const row = el("div", "labmrow");
+  row.append(rollKey(field, inv && inv.why), visual);
+  return row;
 }
 
 // A KIT AS SIXTEEN STEPS PER LANE, and tapping one is the edit. This is not the
@@ -691,30 +676,17 @@ function instrRow(v) {
   return d;
 }
 
-// NOVELTY: is this a new genre or an old one wearing a hat? The verdict is the
-// bench's sentence, printed whole — it is already the whole answer in one
-// clause, and paraphrasing it here would be a second opinion nobody measured.
-function paintNovelty() {
-  const s = section("novelty");
-  const n = B.novelty;
-  const v = el("div", "labverdict " + n.band);
-  v.dataset.band = n.band;
-  v.dataset.nearest = n.nearest;
-  v.textContent = n.verdict;
-  s.append(v);
-  s.append(el("p", "labp", "nearest " + n.nearest + " (" + n.label + ") at " +
-    n.dist.toFixed(2) + " — the table's own neighbours sit at " +
-    n.thresholds.p10.toFixed(2) + " / " + n.thresholds.median.toFixed(2) +
-    ".  next: " + n.ranked.slice(1).map(r => r.key + " " + r.dist.toFixed(1)).join(", ")));
-  if (n.note) s.append(el("p", "labp", n.note));
-  return s;
-}
+// NOVELTY still answers ("is this a new genre or an old one wearing a hat?",
+// nukernel/lab.js §3) — Keep's tooltip below reads it. It is no longer
+// printed of its own accord: a verdict-and-neighbour-table paragraph is
+// exactly the kind of analytical surface this pass removes.
 
 // THE NAME: place-year offers, and a field to coin one of your own. The bench
 // offers and never picks (§4 of lab.js), so nothing is filled in for you — and
-// every offer is already checked against the labels the table holds.
+// every offer is already checked against the labels the table holds. Why a
+// name was offered is a tooltip now, not a line under the chip.
 function paintNames() {
-  const s = section("name");
+  const s = section();
   const chips = el("div", "pchips labnames");
   for (const n of B.names) {
     const b = el("button", "pchip gen" + (label === n.label ? " on" : ""), n.label);
@@ -722,7 +694,6 @@ function paintNames() {
     b.dataset.name = n.label;
     b.title = n.why;
     b.setAttribute("aria-pressed", String(label === n.label));
-    b.append(el("span", "labwhy", n.why));
     b.addEventListener("click", () => {
       label = label === n.label ? "" : n.label;
       buzz(4); build(); paint();
@@ -742,10 +713,12 @@ function paintNames() {
   return s;
 }
 
-// KEEP: the gate, and what is behind it. Errors are printed by name — a genre
-// that cannot be kept says which law it broke, in the law's own words.
+// KEEP: the gate. What used to be printed under the key — the error count,
+// the novelty verdict, the law each problem broke, in the law's own words —
+// is now the key's own tooltip; a disabled key already says "not yet",
+// title says why.
 function paintKeep() {
-  const s = section("keep");
+  const s = section();
   const errs = B.problems.filter(p => p.level === "error");
   const warns = B.problems.filter(p => p.level === "warn");
   const k = key("+ Keep this genre", "go labkeep", () => {
@@ -753,15 +726,11 @@ function paintKeep() {
     if (r.ok) paint();
   });
   k.disabled = !!errs.length || !label;
+  k.title = errs.length
+    ? errs.map(e => (e.field ? e.field + ": " : "") + e.msg).join("; ")
+    : !label ? "name it first"
+    : B.novelty.verdict + (warns.length ? " — " + warns.length + " to look at" : "");
   s.append(k);
-  s.append(el("span", "labstatus", errs.length
-    ? errs.length + " error" + (errs.length === 1 ? "" : "s") + " — this cannot be kept"
-    : !label ? "a genre in a song needs a name — pick one above, or coin it"
-    : "it passes every law a hand-written anchor passes" +
-      (warns.length ? ", with " + warns.length + " to look at" : "")));
-  for (const p of B.problems)
-    s.append(el("p", "labprob " + p.level,
-      (p.field ? p.field + " — " : "") + p.msg));
   if (KEPT.length) {
     const kept = el("div", "pchips labkept");
     for (const e of KEPT) {
@@ -771,7 +740,7 @@ function paintKeep() {
       const b = el("button", "pchip gen on", e.recipe.label);
       b.type = "button";
       b.dataset.kept = e.key;
-      b.append(el("span", "labwhy", Object.keys(e.parents).join(" + ")));
+      b.title = Object.keys(e.parents).join(" + ");
       b.addEventListener("click", () => {
         // reopen a kept genre on the bench: the RECIPE is all it ever was —
         // parents, seed, presses, hand edits — so it comes back on the bench

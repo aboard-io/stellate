@@ -1710,41 +1710,39 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
 .slot.inbox{box-shadow:inset 0 0 0 1px var(--accent)}
 
 /* ================================================================
-   THE LAB — the bench where genres are crossed (ui/lab.js).
+   THE LAB — the bench where genres are crossed, and mixed (ui/lab.js).
    ================================================================
-   The page has one job and the type does most of it. Measured over the
-   catalog (nukernel/INHERITANCE.md), crossing parents predicts a genre's
-   ARCHITECTURE and none of its MATERIAL, so the surface is built as that
-   division of labour and nothing else:
+   (2026-08-17, Paul: "success is almost no words".) The page used to spend
+   most of its height on read-only ledgers — an architecture table with its
+   own provenance colour, a novelty verdict, a "why" line under every chip.
+   None of that is on screen any more; it is all still computed (ui/lab.js
+   §3/§7, nukernel/lab.js unchanged) and reachable as a `title` tooltip, not a
+   line of type. What is left:
 
-     THE FACTS ARE QUIET   the architecture rows are read-only, one hairline
-                           apart, the value at reading size and its provenance
-                           a rank below it in --ink-3. No keys, no chips, no
-                           colour — a fact you cannot change should not look
-                           like a control that is switched off.
-     THE KEYS ARE ON THE   every material row opens with its name and a ROLL
-     MATERIAL              key, and the two surfaces you can actually edit
-                           (the kit lanes, the band) are the only lit things
-                           in the middle of the page.
-     ONE THING IS HUGE     the candidate's name, at --t-xl, because it is the
-                           only thing on the page that is not yet true.
+     THE MIX IS THE CONTROL   the DNA bar and its faders (shared with the
+                               genre menu's own DNA strip, .dna* above) are
+                               the only thing that used to be a picture and
+                               still is — dragging one renormalises the rest,
+                               so the bar never has to be read to be trusted.
+     THE BAND IS A SHAPE      drum steps and instrument chips, not a value
+                               dump — "the basic composition of the tracks",
+                               wordlessly.
+     ONE THING IS HUGE        the candidate's name, at --t-xl, because it is
+                               the only thing on the page that is not yet true.
 
-   No frames, no cards, no header rows: sections are separated by the same
-   hairline every table on this machine uses, and each carries the .glab
-   legend the session bank already speaks. Edge to edge at every width — the
-   rows run to the glass and the gutter rides on them (--tbl-gut), exactly as
-   the song table does. */
+   No frames, no cards, no header rows, no section legends: sections are
+   separated by the same hairline every table on this machine uses. Edge to
+   edge at every width — the rows run to the glass and the gutter rides on
+   them (--tbl-gut), exactly as the song table does. */
 .labwrap{gap:0}
 .labsec{display:flex;flex-direction:column;gap:var(--sp-2);
   padding:var(--sp-4) 0 var(--sp-5);border-top:1px solid var(--rule)}
-.labsec>.glab{padding:0 var(--tbl-gut)}
 
-/* the head: the name, what it is made of, and the seed it was drafted at */
+/* the head: the name, and the seed it was drafted at */
 .labtop{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--sp-2) var(--sp-4);
   padding:var(--sp-3) var(--tbl-gut) var(--sp-4)}
 .labtitle{flex:1 1 100%;font:600 var(--t-xl)/1.15 var(--f-ui);color:var(--ink)}
 .labtitle.un{color:var(--ink-3);font-weight:500}
-.labsub{flex:1 1 300px;font:400 var(--t-md)/1.5 var(--f-ui);color:var(--ink-2)}
 .labdice{display:flex;align-items:center;gap:var(--sp-2);margin-left:auto}
 .labseed{font:600 var(--t-sm)/1 var(--f-num);color:var(--ink-2);
   background:var(--bg-sunk);border-radius:var(--r);padding:var(--sp-2) var(--sp-3)}
@@ -1769,52 +1767,24 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
 .labsec .dnabar{margin:0 var(--tbl-gut) var(--sp-2)}
 .labchips{max-height:none}
 
-/* HEAR IT: one accent key and one honest line about what it is doing */
-.labhear{flex-direction:row;flex-wrap:wrap;align-items:center;
-  gap:var(--sp-3);padding:var(--sp-4) var(--tbl-gut)}
-.labplay{min-height:52px;font-size:var(--t-lg);padding:var(--sp-3) var(--sp-5)}
-/* the status line is typography only — the flex basis belongs to the HEAR row
-   and nowhere else. Set on the class itself it also applied inside the KEEP
-   section, whose .labsec is a COLUMN, where a 220px basis is 220px of HEIGHT:
-   a fifth of a phone screen of nothing between the key and what it kept. */
-.labstatus{font:400 var(--t-sm)/1.5 var(--f-ui);color:var(--ink-3)}
-.labhear .labstatus{flex:1 1 220px}
-
-/* the two ledgers. A row is a row is a row: the same hairline cadence as the
-   song table, no zebra, no box. */
-.labtbl{display:flex;flex-direction:column}
-.labarow{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px var(--sp-3);
-  padding:var(--sp-2) var(--tbl-gut);border-top:1px solid var(--rule)}
-.labf{font:600 var(--t-md)/1.4 var(--f-ui);color:var(--ink);
-  flex:0 0 auto;min-width:104px}
-.labv{font:400 var(--t-lg)/1.35 var(--f-num);color:var(--ink);flex:1 1 260px;
-  overflow-wrap:anywhere}
-/* prose gets a MEASURE. A desk is 1280px wide and a provenance note set across
-   all of it is a line the eye loses its place in; every other reading surface
-   on this machine is a table cell and never had the problem. */
-.labp{flex:1 1 100%;margin:0;max-width:82ch;
-  font:400 var(--t-sm)/1.55 var(--f-ui);color:var(--ink-3)}
-/* PROVENANCE IS THE POINT, so the one word that says where a value came from
-   carries the only colour in the ledger — plucked from ONE parent is a
-   different claim from combined across all of them, and the page must not
-   blur them into "generated". */
-.labp.plucked{color:var(--accent-txt)}
-.labp.combined,.labp.snapped{color:var(--st-solo)}
-
-.labmrow{display:flex;flex-direction:column;gap:var(--sp-2);
+/* THE BAND: one roll key beside its shape — the kit and its fill as steps,
+   the instrument roster as chips. No header, no field name in type: the icon
+   IS the row, and `title` (§8's rollKey) carries what a person would ask by
+   hovering. */
+.labmrow{display:flex;align-items:flex-start;gap:var(--sp-3);
   padding:var(--sp-3) var(--tbl-gut) var(--sp-4);border-top:1px solid var(--rule)}
-.labmhead{display:flex;align-items:center;flex-wrap:wrap;gap:var(--sp-2)}
-.labmhead .labf{font-size:var(--t-lg)}
-.labroll{font:600 var(--t-sm)/1 var(--f-ui);min-height:40px;padding:0 var(--sp-3)}
-.labmine{font:600 var(--t-xs)/1 var(--f-ui);color:var(--on-accent);
-  background:var(--accent);border-radius:var(--r);padding:5px var(--sp-2)}
-.labfseed{font:400 var(--t-xs)/1 var(--f-num);color:var(--ink-3);margin-left:auto}
+.labmrow:first-child{border-top:0}
+/* the roll key: a plain square icon, latched orange when a person has
+   already taken the field over — the same on-state every chip on the
+   machine wears, never a second badge beside it saying "yours" in words */
+.labroll{font:600 20px/1 var(--f-ui);min-width:40px;min-height:40px;
+  padding:0;flex:0 0 auto}
+.labroll.on{background:var(--accent);border-color:var(--accent);color:var(--on-ink)}
+/* the leftover invention fields with no shape of their own (roots, prog,
+   words…) get nothing but their roll key, in a loose row */
+.labmore{display:flex;flex-wrap:wrap;gap:var(--sp-2);
+  padding:var(--sp-2) var(--tbl-gut) var(--sp-4)}
 .labmval{font:400 var(--t-md)/1.5 var(--f-ui);color:var(--ink)}
-.labmval.mono{font-family:var(--f-num);font-size:var(--t-sm);color:var(--ink-2);
-  overflow-wrap:anywhere}
-.labmval.big{font:600 var(--t-xl)/1.2 var(--f-num);color:var(--ink);
-  letter-spacing:.02em}
-.labline{margin:0;font:400 var(--t-md)/1.6 var(--f-ui);color:var(--ink-2)}
 .labinstr{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
   gap:var(--sp-2)}
 
@@ -1837,27 +1807,16 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
 .labstep.on.q3{background:var(--step-q3)}
 .labstep.on.q4{background:var(--step-q4)}
 
-/* the verdict is a sentence, set as one, and the band is the colour */
-.labverdict{font:500 var(--t-lg)/1.4 var(--f-ui);color:var(--ink);max-width:64ch;
-  padding:0 var(--tbl-gut);border-left:4px solid var(--rule-strong);
-  margin-left:calc(var(--tbl-gut) - 4px)}
-.labverdict.derivative{border-left-color:var(--st-rec)}
-.labverdict.cousin{border-left-color:var(--st-arm)}
-.labverdict.new{border-left-color:var(--st-play)}
-.labverdict.outlier{border-left-color:var(--st-solo)}
-.labnovelty .labp,.labsec>.labp{padding:0 var(--tbl-gut)}
-
-/* the names: chips that carry their own reason, and a field to coin one */
+/* the names: chips whose reason is a tooltip now (§8 title=), and a field to
+   coin one. The novelty verdict and every law a candidate broke live the same
+   way, on Keep's own title — see ui/lab.js paintKeep. */
 .labnames .pchip,.labkept .pchip{padding-top:var(--sp-2);padding-bottom:var(--sp-2)}
-.labwhy{display:block;font:400 var(--t-xs)/1.35 var(--f-ui);color:var(--ink-3);
-  margin-top:3px}
-.pchip.on .labwhy{color:var(--on-accent);opacity:.8}
 .labcoin{margin:var(--sp-1) var(--tbl-gut) 0;max-width:420px;min-height:48px;
   font:500 var(--t-md)/1.3 var(--f-ui);color:var(--ink);
   background:var(--bg-key);border:0;border-radius:var(--r);
   padding:var(--sp-2) var(--sp-3)}
 
-/* keep: the key, then every law the candidate broke, in the law's own words */
+/* keep: one key */
 .btn.labkeep{align-self:flex-start;margin:0 var(--tbl-gut);
   min-height:52px;font-size:var(--t-lg);padding:var(--sp-3) var(--sp-5)}
 /* a KEEP that cannot fire stops looking like the lit key it is not — the fill,
@@ -1865,10 +1824,6 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
    round a dead key is the one thing worse than no state at all */
 .btn.labkeep:disabled{background:var(--bg-key);color:var(--ink-3);
   border-color:var(--rule);cursor:default}
-.labsec>.labstatus{padding:0 var(--tbl-gut)}
-.labprob{margin:0;padding:0 var(--tbl-gut);
-  font:400 var(--t-sm)/1.6 var(--f-ui);color:var(--ink-3)}
-.labprob.error{color:var(--st-rec);font-weight:600}
 
 /* ---- touch ----
    A coarse pointer has no hover, no shift key and a fingertip about nine
