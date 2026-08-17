@@ -11501,10 +11501,18 @@ console.log("one singer is a demo; a record is the same voice four times, slight
   // `sing` is a part address now and partIn answers with the section input
   // where the box has no strip, so this reads the variable rather than the
   // literal it used to be)
+  // (the chair's FAMILY became `sing` on 2026-08-17, and that is a change of
+  // law rather than of wiring: the sung stack used to borrow the VOX chair,
+  // which carries a breath LFO. Paul, hearing it: "it sounds almost like an
+  // LFO is layered over it" — it was one, and on a voice it lands on top of an
+  // amplitude contour espeak already supplies. VOICEFX.sing is the vox chair
+  // with tremDepth 0: same grit, same drive, no modulation. The drive and grit
+  // are deliberately identical to vox so chairMakeup — which reads only those
+  // two — measures the same number and the double still pays its gain back.)
   ok(/const stacked = !!\(ev\.role && ev\.role !== "tune"\)/.test(aSrc70) &&
      /const strip = chan\.partIn \? chan\.partIn\("sing"\) : chan\.input/.test(aSrc70) &&
-     /const dest = stacked[\s\S]{0,80}voiceChairFor\(chan, "sing", "vox", strip\)/.test(aSrc70),
-     "§70(g) playSyllable no longer routes a stacked part through the vox chair");
+     /const dest = stacked[\s\S]{0,80}voiceChairFor\(chan, "sing", "sing", strip\)/.test(aSrc70),
+     "§70(g) playSyllable routes a stacked part through the SING chair, which has no breath LFO");
   ok(/const ratio = drift \? Math\.pow\(2, drift\.cents \/ 1200\)/.test(aSrc70),
      "§70(g) playSyllable no longer bends a drifted part's pitch");
   ok(/const when0 = Math\.max\(0, when \+ \(drift \? drift\.ms \/ 1000/.test(aSrc70),

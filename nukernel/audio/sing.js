@@ -820,7 +820,7 @@ export function playSyllable(ev, text, when, durSec, chan, colour, barSec) {
   // the stacked parts pay the chair's own gain back here, at the one place a
   // sung note's level is set (see chairMakeup at the top of this file)
   const stacked = !!(ev.role && ev.role !== "tune");
-  if (stacked && VOXMAKEUP == null) VOXMAKEUP = chairMakeup("vox");
+  if (stacked && VOXMAKEUP == null) VOXMAKEUP = chairMakeup("sing");
   const lvl = stacked ? LEVEL * VOXMAKEUP : LEVEL;
   g.gain.setValueAtTime(0, when0);
   g.gain.linearRampToValueAtTime(lvl, when0 + atk);
@@ -855,7 +855,7 @@ export function playSyllable(ev, text, when, durSec, chan, colour, barSec) {
   // here has to know whether a bus exists.
   const strip = chan.partIn ? chan.partIn("sing") : chan.input;
   const dest = stacked
-    ? voiceChairFor(chan, "sing", "vox", strip).in : strip;
+    ? voiceChairFor(chan, "sing", "sing", strip).in : strip;
   g.connect(dest);
   src.start(when0);
   src.stop(when0 + heard + 0.02);
