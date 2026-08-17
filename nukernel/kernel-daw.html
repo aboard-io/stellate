@@ -30,45 +30,69 @@
      section it is showing, round-trips through the URL (ui/pages.js). -->
 <div class="chassis" id="chassis" data-page="song">
 
-  <!-- ZONE 1 · TRANSPORT — always on screen. Play, the composer as a
-       hardware WRITE key (genre picker, the seed on its own little LCD, and
-       ⟳ to roll the same genre again), tempo and volume, and the position
-       readout. The session keys (save/load/reset/font/presets) are NOT here:
-       they are song operations, not performance controls, and they live on
-       the SONG page instead of under a thumb. -->
-  <!-- TWO CLUSTERS, one panel: the GO cluster (play + the write group) on the
-       left, the SETTINGS cluster (tempo, volume, position) pushed right as a
-       UNIT. The clusters are real wrappers so a narrow desk wraps a whole
-       cluster, never one lonely fader — VOLUME on a row of its own with the
-       position LCD floating far right was exactly the failure. On a phone both
-       dissolve (display:contents / a full-width row) into the two-line stack. -->
+  <!-- ZONE 1 · TRANSPORT — always on screen, ONE ROW at every width
+       (2026-08-17, Paul: "squeeze entire transport into one row"). Every key
+       is icon-only — a title= tooltip and an aria-label are its only words,
+       because a control that needs a sentence beside it is drawn wrong.
+       Tempo and volume ride inline in the same row as hairline faders with
+       the value on the cap, not a stacked knob+legend block. The seed stays
+       real (compose() still takes one, ⟳ still rolls a fresh one in the same
+       genre) — it just no longer prints anywhere; the phrase editor drops it
+       in the same pass. session keys (save/load/reset/font/presets) are NOT
+       here: they are song operations, not performance controls, and they
+       live on the SONG page instead of under a thumb. -->
   <header class="bar transport">
     <h1 class="mast">Song <em>boxes</em></h1>
-    <div class="tgo">
-      <button class="btn go" id="play">▶ Play</button>
-      <div class="write">
-        <button class="btn go" id="compose" title="write a whole song in the picked genre">✎ Write</button>
-        <label class="knob"><span>Genre</span>
-          <select id="composeg"></select></label>
-        <output class="seedlcd" id="seedlcd"
-          title="the composer's seed — the same number is the same song">········</output>
-        <button class="btn" id="reroll" title="same genre, new seed" aria-label="recompose: same genre, new seed">⟳</button>
-      </div>
-    </div>
-    <!-- the fader legends are TWO spans: the full word for a desk, the
-         abbreviation for a phone (the CSS swaps them). The phone used to hide
-         the labels entirely — two bare faders whose LCDs said 126 and 80 with
-         nothing saying WHAT — and abbreviating beats hiding: a legend is the
-         silkscreen, not decoration. The accessible name is the full word both
-         ways (aria-hidden on the abbreviation, never on the label). -->
-    <div class="tset">
-      <div class="knob"><label for="bpm">Tempo</label>
+    <div class="trow">
+      <button class="btn go ik ik-play" id="play" type="button"
+        title="play" aria-label="play"><span class="k" aria-hidden="true"></span></button>
+      <button class="btn go ik ik-write" id="compose" type="button"
+        title="write a whole song in the picked genre"
+        aria-label="write a whole song in the picked genre"><span class="k" aria-hidden="true"></span></button>
+      <!-- the song-loop toggle: ON by default, meaning the record repeats
+           forever — the behaviour the radio carrier has always assumed, and
+           the behaviour every render already had before this key existed
+           (audio/transport.js wraps unconditionally). OFF plays the
+           arrangement through once and stops (ui/chrome.js). -->
+      <button class="btn ik ik-loop" id="loop" type="button" aria-pressed="true"
+        title="song loops — tap to play once and stop"
+        aria-label="song loops — tap to play once and stop"><span class="k" aria-hidden="true"></span></button>
+      <!-- the genre picker: a record icon that OPENS the real picker. The
+           <select> beneath it is the whole control — real, focusable, its
+           option list built by chrome.js exactly as before — sized to the
+           icon and painted transparent, so what shows is the icon and what a
+           tap or a keyboard Enter opens is the native genre list. No custom
+           popup to keep in sync with it. -->
+      <span class="genrepick">
+        <span class="btn ik ik-genre" aria-hidden="true"><span class="k" aria-hidden="true"></span></span>
+        <select id="composeg" title="genre to write" aria-label="genre to write"></select>
+      </span>
+      <button class="btn ik ik-reroll" id="reroll" type="button"
+        title="same genre, new seed" aria-label="recompose: same genre, new seed"><span class="k" aria-hidden="true"></span></button>
+      <!-- the fader legends are TWO spans, always: a single-letter silkscreen
+           visible on the cap, the full word present for the accessible name
+           via the same clip-path swap the volume legend always used (never
+           display:none, so the name survives at every width). -->
+      <div class="knob"><label for="bpm"><span class="lf">Tempo</span><span
+          class="la" aria-hidden="true">T</span></label>
         <input type="range" id="bpm" min="70" max="160" value="126"><b id="bpmv">126</b></div>
       <div class="knob"><label for="vol"><span class="lf">Volume</span><span
-          class="la" aria-hidden="true">Vol</span></label>
+          class="la" aria-hidden="true">V</span></label>
         <input type="range" id="vol" min="0" max="100" value="80"><b id="volv">80</b></div>
-      <output class="poslcd" id="lcdpos" aria-label="playback position">--</output>
     </div>
+    <!-- ZONE 1, ROW 2: where the song is. Root genre · song position ·
+         section name — three fields, no label, no punctuation of their own
+         (a CSS rule divides them, not a character). This is the readout line
+         moved up from the bottom of the chassis, with the little play
+         symbol gone (ui/readout.js/ui/main.js). #lcdpos is main.js's own
+         element — written every bar by its playhead loop — living here now
+         instead of beside the faders. -->
+    <p class="readout posrow" id="readout">
+      <output class="posf" id="posgenre"></output>
+      <output class="posf poslcd" id="lcdpos" aria-label="playback position">--</output>
+      <output class="posf" id="possection"></output>
+      <output class="posmsg" id="posmsg"></output>
+    </p>
   </header>
 
   <!-- ZONE 2 · THE DECK — one page at a time on a phone, all four on a desk.
@@ -202,11 +226,6 @@
     </section>
 
   </main>
-
-  <!-- the LCD line: what the selected box is, or the last status. Chassis
-       level, not inside a page, so it stays lit on a phone whichever page is
-       up — hold a box and the words land HERE, visibly. -->
-  <p class="readout" id="readout"></p>
 
   <!-- ZONE 3 · PAGE RAIL — hardware mode keys, on screen at every width now.
        Lowercase in the markup (values, not silkscreen); the CSS uppercases

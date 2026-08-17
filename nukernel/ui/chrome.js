@@ -8,7 +8,7 @@
 // user gesture, which is why initAudio rides transport.startAt.
 import { GENRES, FONTS, compose, PRESETS, GROOVELABEL,
          SWINGLABEL } from "./deps.js";
-import { bpm, vol, setBpm, setVol, setLoopOnly, adoptSong, defaultSong,
+import { bpm, vol, loopOnly, setBpm, setVol, setLoopOnly, adoptSong, defaultSong,
          clearStore, loadErrorText, saveFile, loadFile, commit, on,
          GROOVE, setGroove, SWING, setSwing, DEFAULT_BPM } from "./state.js";
 import { buzz, pointers } from "./touch.js";
@@ -29,11 +29,49 @@ const $ = id => document.getElementById(id);
 $("play").addEventListener("click",
   () => playing ? stop() : (setLoopOnly(null), startAt(0)));
 on("transport:state", d => {
-  $("play").textContent = d.playing ? "■ Stop" : "▶ Play";
-  // the LED is a pseudo-element (textContent swaps would eat a child node);
-  // the class is all the CSS needs. Green while running — a state colour,
-  // the same in both faces.
+  // ICON ONLY (2026-08-17): the button used to swap its own textContent
+  // ("▶ Play"/"■ Stop"), which is exactly what would have eaten the icon
+  // <span> a plain assignment can't tell from a word. The triangle-to-square
+  // swap is CSS now (#play.on .k, kernel-daw.css) keyed off this same class;
+  // the word survives as the tooltip and the accessible name instead.
   $("play").classList.toggle("on", !!d.playing);
+  const word = d.playing ? "stop" : "play";
+  $("play").title = word; $("play").setAttribute("aria-label", word);
+});
+
+/* ---------- the song-loop toggle ---------- */
+// ON, THE DEFAULT, IS THE SILENCE OF DOING NOTHING: the bar list has always
+// wrapped forever (audio/transport.js tick(): nextBar cycles mod TL.length),
+// so the toggle's "on" state needs no code at all. OFF asks the scheduler to
+// do the one thing it was never built to — stop at the end of a single pass
+// — and transport.js's own nextBar/TL are module-private, not this lane's to
+// reach into (this lane owns chrome.js, not the scheduler). The honest way to
+// get "played through once" from outside is to watch the PUBLIC event the
+// scheduler already emits: "transport:section" names the box every time one
+// starts sounding, so remembering which box a pass STARTED on and stopping
+// the next time that same box comes back around IS one full pass. loopOnly
+// (a single box pinned solo, songrow.js) is an older, separate feature and
+// stays untouched — pinning already loops one box on purpose, regardless of
+// what the record's own switch says.
+//
+// THE KNOWN EDGE: a manual mid-pass jump (songrow.js's queued pendingStart,
+// clicking a different row while playing) does not reset the count the way a
+// fresh startAt() does, so a jump back to the pass's own starting box reads
+// as "the pass came around" a beat early. The real fix is a flag inside
+// tick() itself, which is out of this file's reach; noted rather than hidden.
+let songLoop = true, passStartSi = null;
+function paintLoop() {
+  $("loop").setAttribute("aria-pressed", String(songLoop));
+  const word = songLoop ? "song loops — tap to play once and stop"
+                         : "plays once and stops — tap to loop the song";
+  $("loop").title = word; $("loop").setAttribute("aria-label", word);
+}
+paintLoop();
+$("loop").addEventListener("click", () => { songLoop = !songLoop; paintLoop(); });
+on("transport:state", d => { if (d.playing) passStartSi = null; });
+on("transport:section", d => {
+  if (passStartSi == null) { passStartSi = d.si; return; }
+  if (d.si === passStartSi && loopOnly == null && !songLoop) stop();
 });
 
 /* ---------- tempo and volume ---------- */
@@ -213,13 +251,15 @@ fader($("vol"), 80);
 // If the composer ever emitted a song the loader would refuse, the loader
 // refuses it and says so, rather than there being a second, more trusted way in.
 //
-// THE SEED IS VISIBLE NOW. It was always real — the same number is the same
-// song, which is what makes the composer testable — and hiding it made the
-// key a slot machine. Eight hex digits printed beside the key, and
-// ⟳ rolls a fresh one IN THE SAME GENRE, which is the loop a person actually
-// plays: write, listen, reroll, reroll, keep.
+// THE SEED IS STILL REAL, JUST NOT PRINTED (2026-08-17, "almost no words" —
+// the phrase editor drops its own seed readout in the same pass, and a
+// number nobody asked to see has no more business in the transport than
+// there). It still drives compose(): the same seed is still the same song,
+// which is what keeps the composer testable; ⟳ still rolls a fresh one IN
+// THE SAME GENRE, the loop a person actually plays — write, listen, reroll,
+// reroll, keep.
 {
-  const sel = $("composeg"), seedEl = $("seedlcd");
+  const sel = $("composeg");
   sel.append(Object.assign(document.createElement("option"),
     { value: "", textContent: "surprise me" }));
   // oldest first, the yearless FUNCTION genres behind them — the GENRE menu's
@@ -238,9 +278,6 @@ fader($("vol"), 80);
       return;
     }
     lastG = gk;
-    seedEl.textContent = seed.toString(16).padStart(8, "0");
-    seedEl.dataset.on = "";
-    seedEl.title = "seed " + seed + " — the same number is the same song";
     buzz(4);
     status(GENRES[gk].label + " · seed " + seed + " · " +
       song.song.map(b => b.role).join(" → ") + "  —  press play", true);

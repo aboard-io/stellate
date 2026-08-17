@@ -1,69 +1,57 @@
-// ui/readout.js — the one-line #readout: what the selected box is, or a
-// transient status like "loading…". (The #src "what the selected box asks
-// for" pane went with the MOVE page — "the row and the board": its facts are
-// the cell values and popup states now.) Status messages from the audio tier
-// arrive as EVENTS rather than as a function call from transport into the UI.
+// ui/readout.js — ROW 2 of the transport: root genre, song position, section
+// name (2026-08-17, Paul: "success is almost no words" — the old line read
+// out roots, silence reasons and sung lyrics in full sentences; three quiet
+// fields replace it, no label and no punctuation of their own — a CSS rule
+// divides them, not a character). #lcdpos is main.js's own element, written
+// every bar by its playhead rAF loop; this file only ever READS its id off
+// the DOM to know where it sits, never rebuilds it, because a fresh node
+// would orphan main.js's cached reference to it. Status messages from the
+// audio tier still arrive as EVENTS, and still take the row over whole,
+// through #posmsg — a transient sentence (loading, a rejected song, the
+// mobile carrier's own honesty about a pending re-render) outranks the three
+// fields for exactly one render (the `hold` law below, unchanged).
 //
-// Layer graph: ui view — imports state/derive/deps, publishes nothing.
-import { GENRES, ROMAN, harm, blank } from "./deps.js";
-import { SLOTS, GROOVE, SWING, viewSec, curSection, on } from "./state.js";
-import { sectionRender, stackOf, stackLabel, opsOf } from "./derive.js";
-// the carrier's one line. On mobile the rendered tape IS the audible path
-// (audio/bounce.js), so an edit is heard when its re-render swaps at the loop
-// — a person is owed that sentence for as long as it is true, not for the one
-// frame a transient status message survives. Null on a desk, where the
-// carrier is invisible insurance.
+// Layer graph: ui view — imports state/derive/deps, publishes nothing. (The
+// import from audio/transport below is the same allowed direction chrome.js
+// already uses — a view reading the audio tier, never the reverse.)
+import { GENRES, ROLES } from "./deps.js";
+import { SONG, curSection, on } from "./state.js";
+import { gid } from "./derive.js";
 import { carrierNote } from "../audio/bounce.js";
+import { playing, playingSec } from "../audio/transport.js";
 
 const readoutEl = document.getElementById("readout");
+const genreEl = document.getElementById("posgenre");
+const secEl = document.getElementById("possection");
+const msgEl = document.getElementById("posmsg");
 
-// A STICKY status survives exactly one render. Renders are coalesced onto the
-// next animation frame now, so a message written right after a change (the
-// composer's "seed N — press play", a loader refusal) would be overwritten a
-// frame later by the box description that change triggered. Sticky means: let
-// that one render pass, then behave normally — which is precisely the lifetime
-// these messages had when draw() was synchronous.
+// A STICKY status survives exactly one render — unchanged from before. What
+// changed is the SOURCE of one recurring message: main.js used to announce
+// every playing-box change itself ("▶ box N · role · label", the little play
+// symbol Paul asked gone). This file now reads the playing section directly
+// (describe(), below) on the same event, so that announcement is swallowed
+// here rather than shown — the glyph it carried needed no replacement,
+// because the fact it carried is already on the row.
 let hold = false;
 export function status(text, sticky) {
-  readoutEl.textContent = text;
+  if (/^▶ box /.test(text)) return;
+  msgEl.textContent = text;
+  readoutEl.classList.add("msg");
   if (sticky) hold = true;
 }
 
-/* ---------- the box readout ---------- */
+/* ---------- the three fields ---------- */
+// WHICH SECTION: the box actually SOUNDING while the transport runs, else
+// the box a person is LOOKING at (state.js curSection/viewSec) — the same
+// section the position field (main.js's #lcdpos) is already describing,
+// which is the whole point of putting them on one row.
 function describe() {
-  const sec = curSection();
-  const { g, bars, ev } = sectionRender(sec, SLOTS, GROOVE, SWING);
-  const roots = g.harmony === "modal" ? "one mode, no motion"
-    : "roots " + Array.from({ length: bars }, (_, b) =>
-        ROMAN[harm(SLOTS[stackOf(sec)[0].slots[0]] || blank(), g, sec.nudge + b)]).join(" ") +
-      (g.harmony === "emergent" ? " (computed)" : "");
-  // Say WHY a box is silent rather than leaving it to be discovered by ear.
-  const quiet = [];
-  if (!ev.length) quiet.push("no events at all");
-  else {
-    if (!ev.some(e => e.kind === "line")) quiet.push(
-      opsOf(sec, stackOf(sec)[0]).includes("drop1") ? "no melody (drop 1)"
-        : !stackOf(sec).some(e => e.slots.length) ? "no melody (no phrase)" : "no melody");
-    if (ev.every(e => (e.vel == null ? 5 : e.vel) === 0)) quiet.push("velocity 0 (a completed fade)");
-  }
-  readoutEl.textContent =
-    "box " + (viewSec + 1) + " · " + stackLabel(sec) + " · " +
-    stackOf(sec).map(e => GENRES[e.g].label + " " +
-      (e.slots.length ? e.slots.map(i => i + 1).join("+") : "no phrase")).join(" | ") +
-    " · " + bars + " bar" + (bars === 1 ? "" : "s") +
-    (sec.nudge ? " nudged " + sec.nudge : "") + " · " + roots +
-    // WHAT IT IS SINGING, in the words. A sung line is the one thing on the
-    // page whose content is not visible anywhere else in this readout, and a
-    // box that sings nothing (the chip is on but the tune has no note long
-    // enough — see sing.js MIN_STEPS) has to be able to say so.
-    (sec.sing ? "  ·  " + (() => {
-      const sung = ev.filter(e => e.kind === "sing");
-      if (!sung.length) return sec.sing + ": nothing long enough to sing";
-      const words = sung.filter(e => e.vi === 0).map(e => e.syl).join(" ");
-      return sec.sing + ' "' + words + '"';
-    })() : "") +
-    (quiet.length ? "  —  " + quiet.join(", ") : "") +
-    (carrierNote() ? "  —  " + carrierNote() : "");
+  readoutEl.classList.remove("msg");
+  const sec = (playing && playingSec >= 0 && SONG[playingSec]) || curSection();
+  if (!sec) return;
+  genreEl.textContent = (GENRES[gid(sec)] || { label: gid(sec) }).label;
+  const note = carrierNote();
+  secEl.textContent = (sec.role ? ROLES[sec.role] : "—") + (note ? "  " + note : "");
 }
 
 export function update() {
@@ -71,15 +59,17 @@ export function update() {
   describe();
 }
 
-// SELF-SUBSCRIBED, COALESCED. The arrangement view used to call update() at
-// the end of its own coalesced render; the arrangement is gone, so the line
-// owns its schedule — one rAF per burst of change events, never one rewrite
-// per pointer event (a scrub commits "phrase" per pointermove).
+// SELF-SUBSCRIBED, COALESCED — one rAF per burst of change events, never one
+// rewrite per pointer event (a scrub commits "phrase" per pointermove).
+// "transport:section" joins the list here (it used to only drive main.js's
+// own status announcement): it is what moves the playing box, so it is what
+// this row now has to repaint on.
 let queued = false;
 const queue = () => {
   if (queued) return;
   queued = true;
   requestAnimationFrame(() => { queued = false; update(); });
 };
-for (const t of ["song", "box", "selection", "phrase", "refresh"]) on(t, queue);
+for (const t of ["song", "box", "selection", "phrase", "refresh", "transport:section"])
+  on(t, queue);
 on("status", d => status(d.text, d.sticky));

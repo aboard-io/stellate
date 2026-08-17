@@ -296,6 +296,109 @@ if (process.argv.includes("--arrange-dom")) {
   return;
 }
 
+// ---- node test/unit/nukernel.test.js --transport-dom ------------------------
+// NOT PART OF THE PURE-NODE GATE — §58, lane B2's own check ("the transport is
+// one row of keys, and under it the song says where it is", 2026-08-17).
+// Guarded and early-returning exactly like --arrange-dom just above, for the
+// same reason: this file is otherwise pure node and CI-safe, and a real
+// chromium session is the only honest way to prove a flex row DOESN'T wrap —
+// a hand-rolled layout stub could get that subtly wrong in a way that would
+// pass against itself rather than against the shipped CSS.
+if (process.argv.includes("--transport-dom")) {
+  (async () => {
+    const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
+    const path = require("path");
+    const ROOT = path.join(__dirname, "..", "..");
+    let fails58 = 0, checks58 = 0;
+    const ok58 = (cond, msg) => {
+      checks58++;
+      if (cond) console.log("  ok: " + msg);
+      else { fails58++; console.error("  FAIL: " + msg); }
+    };
+
+    const srv = await serve(ROOT, 8976);
+    const browser = await launchChromium();
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const errs = capturePageErrors(page);
+    await page.goto(`http://localhost:${srv.port}/nukernel/kernel-daw.html?nobounce`,
+      { waitUntil: "networkidle" });
+
+    // ---- (a) ONE ROW, at 390 and at 1400 ----
+    // every child of .trow shares one bounding-box top — a flex row that
+    // wrapped would split its children across two different tops instead.
+    const oneRow = () => page.evaluate(() => {
+      const kids = [...document.querySelector(".trow").children];
+      const tops = kids.map(k => Math.round(k.getBoundingClientRect().top));
+      return { tops, one: new Set(tops).size === 1 };
+    });
+    const r390 = await oneRow();
+    ok58(r390.one, "§58(a) the transport wraps at 390px — tops: " + JSON.stringify(r390.tops));
+    await page.setViewportSize({ width: 1400, height: 1000 });
+    const r1400 = await oneRow();
+    ok58(r1400.one, "§58(a) the transport wraps at 1400px — tops: " + JSON.stringify(r1400.tops));
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    // ---- (b) THE LOOP TOGGLE DEFAULTS ON ----
+    const loopDefault = await page.evaluate(() => document.getElementById("loop").getAttribute("aria-pressed"));
+    ok58(loopDefault === "true", '§58(b) the loop toggle did not default to aria-pressed="true": ' + loopDefault);
+
+    // ---- (c) EVERY CONTROL HAS AN ACCESSIBLE NAME ----
+    const names = await page.evaluate(() => {
+      const named = id => {
+        const el = document.getElementById(id);
+        return (el.getAttribute("aria-label") || "").trim();
+      };
+      const labelled = (forId) => {
+        const l = document.querySelector(`label[for="${forId}"]`);
+        return l ? l.textContent.trim() : "";
+      };
+      return {
+        play: named("play"), compose: named("compose"), loop: named("loop"),
+        reroll: named("reroll"), composeg: named("composeg"),
+        bpm: labelled("bpm"), vol: labelled("vol"),
+      };
+    });
+    for (const k of Object.keys(names))
+      ok58(!!names[k], `§58(c) "${k}" accessible name: ${JSON.stringify(names[k])}`);
+
+    // ---- (d) THE POSITION ROW: root genre / position / section, no ▶ ----
+    await page.selectOption("#composeg", "rock");
+    await page.click("#compose");
+    await page.waitForTimeout(400);
+    await page.click("#play");
+    await page.waitForFunction(() =>
+      document.getElementById("lcdpos").textContent !== "--", null, { timeout: 8000 })
+      .then(() => ok58(true, "§58(d) the transport started and the position field moved"))
+      .catch(() => ok58(false, "§58(d) the position field never left \"--\""));
+    const row = await page.evaluate(() => ({
+      genre: document.getElementById("posgenre").textContent.trim(),
+      pos: document.getElementById("lcdpos").textContent.trim(),
+      section: document.getElementById("possection").textContent.trim(),
+      whole: document.getElementById("readout").textContent,
+    }));
+    ok58(!!row.genre, "§58(d) #posgenre: " + JSON.stringify(row.genre));
+    ok58(!!row.pos && row.pos !== "--", "§58(d) #lcdpos: " + JSON.stringify(row));
+    ok58(!!row.section, "§58(d) #possection: " + JSON.stringify(row.section));
+    ok58(!row.whole.includes("▶"), '§58(d) the play glyph is still on the row: "' + row.whole + '"');
+    await page.click("#play");                    // stop, so the screenshots are quiet
+    await page.waitForTimeout(150);
+
+    // ---- the two screenshots ----
+    await page.screenshot({
+      path: "/home/ford/.claude/jobs/c1b341cb/tmp/transport-390.png" });
+    await page.setViewportSize({ width: 1400, height: 1000 });
+    await page.screenshot({
+      path: "/home/ford/.claude/jobs/c1b341cb/tmp/transport-1400.png" });
+
+    ok58(errs.length === 0, "§58 page errors: " + JSON.stringify(errs));
+    await browser.close();
+    srv.close();
+    console.log("\n§58 transport-dom: " + (checks58 - fails58) + "/" + checks58 + " checks pass");
+    process.exit(fails58 ? 1 : 0);
+  })().catch(e => { console.error("FAIL:", e && e.stack || e); process.exit(1); });
+  return;
+}
+
 let fails = 0, checks = 0;
 const ok = (cond, msg) => {
   checks++;
@@ -9150,6 +9253,85 @@ console.log("§56 — a phrase is as long as the music needs");
        (r.errors[0] && JSON.stringify(r.errors[0])));
   }
   console.log("  song.js: blank()/okPhrase read a phrase's length off its own vectors, 1..128");
+}
+
+/* ------------------------------- 58. TWENTY-NINE MORE ROOMS
+   Lane E1's own check (2026-08-17), for the twenty-nine genres added by that
+   pass: every one of them renders a non-silent score, names a real sampler
+   (the same registry-backed check §(d) above runs for the whole table, run
+   again here so a failure names the batch), and is measurably different from
+   the anchors it declares as parents and from its own `near` neighbour — the
+   thing "shipping a dud quietly" would look like is a new genre whose
+   rendered events are byte-identical to the genre it claims lineage from. */
+console.log("twenty-nine more rooms — non-silent, real instruments, distinguishable from parents");
+{
+  const ADDED = ["hymn", "crooner", "yuletide", "merseybeat", "psychpop", "bigbeat",
+    "drill", "clubpop", "powerballad", "retrofunkpop", "reggaeton", "latinpop",
+    "kpop", "boyband", "emo", "screamo", "confessionalpop", "darkrnb", "bigroom",
+    "blueeyedsoul", "folkduo", "worldfolk", "jamband", "sophistirock", "motorik",
+    "roboticpop", "industrialmetal", "ebm", "synthduo"];
+  ok(ADDED.length === 29, "the roster itself drifted from 29: " + ADDED.length);
+  for (const gk of ADDED)
+    ok(!!GENRES[gk], gk + ": named in the roster but missing from GENRES");
+
+  // (a) NON-SILENT: the same [render, drums, bass] walk every other section
+  // in this file reads, at each genre's own bar count.
+  for (const gk of ADDED) {
+    const g = GENRES[gk], bars = Math.max(4, g.bars);
+    const ev = allEvents(P, g, bars);
+    ok(ev.length > 0, gk + ": renders silent — zero events at " + bars + " bars");
+  }
+
+  // (b) A REAL SAMPLER: instrOf must not throw, and every id it can return
+  // must be a key in the registry's SAMPLERS table — the same check §(d)
+  // above runs for the shipped 58, run again so a failure names this batch.
+  {
+    const NI = require("../../nukernel/instruments.js");
+    const vm = require("vm"), fs = require("fs"), path = require("path");
+    const ctx = {}; ctx.window = ctx; vm.createContext(ctx);
+    vm.runInContext(fs.readFileSync(
+      path.join(__dirname, "../../engine/registry-data.js"), "utf8"), ctx);
+    const SAMPLERS = (ctx.__REGISTRY && ctx.__REGISTRY.SAMPLERS) || {};
+    ok(Object.keys(SAMPLERS).length > 100, "registry-data.js did not yield SAMPLERS");
+    for (const gk of ADDED) {
+      const g = GENRES[gk];
+      for (let v = 0; v < g.voices; v++)
+        ok(typeof NI.instrOf(gk, v) === "string", gk + ": instrOf failed for voice " + v);
+      const ids = Array.isArray(g.instr) ? g.instr : [g.instr];
+      for (const id of ids)
+        ok(!!SAMPLERS[id], gk + ": instr \"" + id + "\" is not a SAMPLERS id");
+    }
+  }
+
+  // (c) DISTINGUISHABLE FROM ITS OWN LINEAGE: a genre that renders byte-for-
+  // byte identical to a declared parent or its `near` neighbour is not a new
+  // room, it is the old one wearing a new door sign. Compared on the shared
+  // DEFAULT phrase (the same one every render in this file uses) so a genre
+  // whose only "difference" was a fact about the composer's own phrase bank
+  // does not pass by accident.
+  for (const gk of ADDED) {
+    const g = GENRES[gk];
+    const rivals = new Set(Object.keys(g.parents || {}));
+    if (g.near) rivals.add(g.near);
+    ok(rivals.size > 0, gk + ": no parents and no `near` — nothing to prove distinct from");
+    for (const p of rivals) {
+      const bars = Math.max(4, g.bars, GENRES[p].bars);
+      ok(sig(allEvents(P, g, bars)) !== sig(allEvents(P, GENRES[p], bars)),
+         gk + ": renders identical to its own parent/neighbour \"" + p + "\"");
+    }
+  }
+
+  // (d) FAMILY + DYNAMICS: every anchor added must resolve `family` (the
+  // FAMILIES stamp) and stress/phrase/touch (the DYNAMICS/DYN_FAMILY stamp,
+  // §39's own exhaustive law) — a genre that resolves to neither renders flat
+  // forever, and §39 above only proves that of the shipped 58.
+  for (const gk of ADDED) {
+    const g = GENRES[gk];
+    ok(!!g.family, gk + ": no family — the palette and the dynamics stamp both miss it");
+    ok(g.stress != null && g.phrase != null && g.touch != null,
+       gk + ": no dynamics row — neither a club-family override nor a family fallback landed");
+  }
+  console.log("  58: " + ADDED.length + " genres — non-silent, real samplers, distinct from lineage");
 }
 
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
