@@ -15,6 +15,11 @@
 //   gate  note or rest                   (binary)
 //   acc   accent                         (binary)
 //   sld   slide INTO this step           (binary, EDGE-valued — see reverse)
+//   orn   ORNAMENT MARK on this step — 0 none, 1 grace, 2 flam, 3/4/5 a roll
+//         of two, three or four. A ninth vector and a THIRD type: not a level
+//         and not a switch, but a small ENUM naming a way of PLAYING the note.
+//         Absent (an old phrase, a composed one) reads as the all-zero vector
+//         and renders byte-identically, which is why nothing needed migrating.
 //
 // vel and acc are NOT the same knob. vel is how loud; acc is the 303's accent,
 // a categorical flag that opens the filter and that operators key on (the ghost
@@ -34,9 +39,19 @@
   // Patterns are necklaces, not lists: they have no ends. Every read is cyclic.
   const at = (v, i) => v[((i % v.length) + v.length) % v.length];
   const Z = p => p.gate.map(() => 0);
-  const mapv = (p, f) => ({ deg: f(p.deg), oct: f(p.oct), vel: f(p.vel || p.gate.map(() => 5)),
-                            inc: f(p.inc || Z(p)), stk: f(p.stk || Z(p)),
-                            gate: f(p.gate), acc: f(p.acc), sld: f(p.sld) });
+  // `orn` rides along like every other NODE vector — a mark belongs to the step
+  // it is written on, so rotating or excerpting a phrase carries its marks with
+  // it. It is the ONE vector this does not manufacture when it is missing: the
+  // group laws are checked by deep-comparing a pattern with its own image, and
+  // a phrase that never had marks must come back out of rotate(0) as the same
+  // eight keys it went in as, not as nine.
+  const mapv = (p, f) => {
+    const o = { deg: f(p.deg), oct: f(p.oct), vel: f(p.vel || p.gate.map(() => 5)),
+                inc: f(p.inc || Z(p)), stk: f(p.stk || Z(p)),
+                gate: f(p.gate), acc: f(p.acc), sld: f(p.sld) };
+    if (p.orn) o.orn = f(p.orn);
+    return o;
+  };
 
   // ---- the group -----------------------------------------------------------
   const rotate = k => p => mapv(p, v => v.map((_, i) => at(v, i + k)));
@@ -116,6 +131,7 @@
         out.oct[j] = p.oct[i]; out.vel[j] = p.vel ? p.vel[i] : 5;
         out.inc[j] = step; out.stk[j] = p.stk ? p.stk[i] : 0;
         out.acc[j] = 0; out.sld[j] = 0;            // a subdivision is not an accent
+        if (out.orn) out.orn[j] = 0;               // …and it is not an ornament either
       }
     }
     return out;
@@ -721,6 +737,237 @@
     return out;
   }
 
+  // ---- ORNAMENTS: the NINTH type -------------------------------------------
+  // "The phrase editor has no way to do chromaticism or passing notes that I
+  // can see, or grace notes or flams" (Paul, 2026-08-17). It could not, and
+  // nothing already here could be made to: an operator is timeless and knows
+  // no pitch; an envelope is level-only; a pipe computes over the finished
+  // stream but has no idea which STEP a note was written on; and every one of
+  // them is a fact about a whole phrase, while an ornament is a fact about one
+  // NOTE. What was missing is the mark a player writes over a single note and
+  // the handful of moves a style adds without being asked.
+  //
+  // So there are two halves, and they meet at ONE choke point — the same
+  // discipline engine/pipes.js keeps upstream (docs/MUSIC-MIND.md: every
+  // expression transform runs at a single place in buildEvents, never
+  // sprinkled through the callers), because two places that add notes are two
+  // places that disagree about what is already there:
+  //
+  //   THE MARKS   the `orn` vector, written by hand in the tracker. A marked
+  //               step does exactly what its mark says, always.
+  //   THE PASS    `g.orn`, a genre's own ornament policy: passing tones into
+  //               leaps, chromatic approaches onto strong beats, graces, flams
+  //               and rolls, thrown with the same positional dice the kit and
+  //               the performance layer already use — so it is deterministic
+  //               from the genre's seed and bar 3 is not bar 1.
+  //
+  // AND THE MARKS WIN. The pass never touches a note the hand already marked,
+  // nor a note some other ornament produced: an ornament of an ornament is a
+  // mistake, and a genre policy quietly rewriting what somebody wrote down is
+  // the worst kind of instrument. A genre with no `g.orn` gets NOTHING — no
+  // default, no family fallback — so every anchor that predates this renders
+  // byte for byte as it did.
+  const ORN = { none: 0, grace: 1, flam: 2, roll2: 3, roll3: 4, roll4: 5 };
+  const ORNNAME = ["", "grace", "flam", "roll", "roll", "roll"];
+  const ORNPARTS = [0, 0, 0, 2, 3, 4];             // how many strokes a roll is
+
+  // THE SOUNDING ALPHABET OF ONE BAR, and it has to be per bar rather than per
+  // genre: under a chord cycle the line is transposed by the bar's root (the
+  // blues riff going up to the IV), so the notes available in bar 3 are the
+  // scale MOVED, plus whatever the sounding chord adds on top of it — a
+  // seventh in the progression is a rung an ornament may land on. Read the
+  // genre's scale against the tonic and a grace note in bar 3 is a wrong note
+  // in bar 3. Memoized because every note in a bar asks the same question.
+  //
+  // This is the same set §9 of the unit gate builds to decide whether a pitch
+  // class is inside the music at all, computed the same way on purpose: an
+  // ornament that stays inside it cannot put the line out of key. Only the
+  // CHROMATIC approach leaves it, deliberately and by name.
+  const ornAlphabet = (subj, g, key) => {
+    const sc = g.scale || PENT, md = g.mode || MODE, memo = new Map();
+    return b => {
+      let s = memo.get(b);
+      if (s) return s;
+      const root = (g.harmony === "cycle" && !g.diatonic) ? mp(harm(subj, g, b), md) : 0;
+      s = new Set(sc.map(x => pcw(x + root + key)));
+      if (g.harmony === "cycle")
+        for (const c of chordsOf(subj, g, b)) for (const n of c.pcs) s.add(pcw(n + key));
+      memo.set(b, s);
+      return s;
+    };
+  };
+  // ONE STEP AWAY IN THE ALPHABET — never a fixed interval, because "the note
+  // below" is a whole tone in one scale and three semitones in another, and an
+  // ornament that does not know which is the out-of-tune one. Nothing inside
+  // three semitones means the gap really is that wide (a pentatonic fourth)
+  // and the semitone is the honest answer; a missing alphabet means the caller
+  // is asking for the chromatic neighbour outright.
+  const ornStep = (n, dir, pcs) => {
+    if (!pcs) return n + dir;
+    for (let d = 1; d <= 3; d++) if (pcs.has(pcw(n + dir * d))) return n + dir * d;
+    return n + dir;
+  };
+  // A LEAD-IN NOTE STEALS FROM THE HAND THAT PLAYS IT. A grace, a flam stroke
+  // and a chromatic approach all sound BEFORE the beat, and the hand has to
+  // leave the note it is on to play them — so the predecessor is shortened by
+  // exactly as much as the ornament takes, and if there is no room at all (the
+  // note before starts later than the ornament would) the ornament is simply
+  // not played. Inserting one anyway would overlap two notes on one voice,
+  // which on a monophonic instrument is a dropped note rather than a flourish.
+  // `floor` is the bar line: nothing may lean back across it.
+  const leadIn = (list, k, n2, len, name, drop, floor) => {
+    const e = list[k], t = e.t - len;
+    if (t < floor - 1e-9) return false;
+    const prev = k > 0 ? list[k - 1] : null;
+    if (prev) {
+      if (prev.t >= t - 1e-9) return false;
+      if (prev.t + prev.dur > t) prev.dur = t - prev.t;
+    }
+    list.splice(k, 0, { ...e, t, dur: len * 0.82, n: n2, acc: 0, sld: 0,
+                        vel: Math.max(1, (e.vel == null ? 5 : e.vel) - drop),
+                        orn: name });
+    return true;
+  };
+  // A ROLL SUBDIVIDES THE NOTE, not the step: `split` up in the algebra already
+  // subdivides a step and it is a different idea — it makes new notes out of
+  // the phrase's own spans and climbs the ramp through them. This one takes a
+  // note that is already sounding and re-strikes it, which is the 909 ratchet
+  // and the drummer's roll, and it never lengthens anything. Each stroke stops
+  // a hair before the next so a `tie` genre cannot fold the roll back into the
+  // one long note it was.
+  const ratchet = (list, k, parts) => {
+    const e = list[k], slice = e.dur / parts;
+    if (!(slice > 0.02)) return false;             // too short to hear as strokes
+    e.dur = slice * 0.9; e.orn = "roll";
+    const add = [];
+    for (let j = 1; j < parts; j++)
+      add.push({ ...e, t: e.t + j * slice, dur: slice * 0.9, acc: 0, sld: 0,
+                 vel: Math.max(1, (e.vel == null ? 5 : e.vel) - 1), orn: "roll" });
+    list.splice(k + 1, 0, ...add);
+    return true;
+  };
+  // THE MARKS, on one voice's one bar, after the performance layer and before
+  // the tie fold — the same window `perform` runs in, and for the same reason:
+  // the notes are still separate events here, and `steps[k]` still says which
+  // step each one was written on, which is the only place the mark can be read.
+  // Walked BACKWARDS so a splice never moves a note this loop has yet to see.
+  const markBar = (bar, steps, marks, g, N, b, pcs) => {
+    if (!marks) return false;
+    const t0 = (b * N) / g.rate;
+    let did = false;
+    for (let k = bar.length - 1; k >= 0; k--) {
+      const m = marks[steps[k]] | 0;
+      if (!m || m > 5) continue;
+      const e = bar[k];
+      e.omark = 1;                                 // hands off, generated pass
+      did = true;
+      if (m >= ORN.roll2) { ratchet(bar, k, ORNPARTS[m]); continue; }
+      // WHICH SIDE THE ORNAMENT COMES FROM IS THE LINE'S OWN BUSINESS: it
+      // continues the direction of travel, so a rising phrase is led into from
+      // below and a falling one from above. Resolving one way by reflex is how
+      // an ornament turns a shape into a stutter.
+      const prev = k > 0 ? bar[k - 1] : null;
+      const dir = prev && prev.n > e.n ? 1 : -1;
+      const len = Math.min(0.4, e.dur * g.rate * 0.5) / g.rate;
+      if (m === ORN.grace) leadIn(bar, k, ornStep(e.n, dir, pcs), len, "grace", 2, t0);
+      else leadIn(bar, k, e.n, len * 0.6, "flam", 3, t0);   // a flam is the note itself
+    }
+    return did;
+  };
+  // THE PASS. Runs on the finished, sorted stream — where a pipe runs, and for
+  // the pipe's own reason: this is the first place a note knows its pitch, its
+  // neighbours and the chord under it. Per VOICE, because ornaments are a line's
+  // business and interleaving two lines would ornament each with the other's
+  // neighbours; pads and chord stabs are skipped outright (a held voicing has
+  // no line to decorate). Every die is `perfDice` — a pure hash of WHERE, so
+  // the same seed renders the same flourishes forever and the order the notes
+  // happen to be visited in cannot change one of them.
+  const ORNSALT = { pass: 21, approach: 22, grace: 23, flam: 24, roll: 25 };
+  function ornament(ev, g, ctx) {
+    const o = g.orn;
+    if (!o) return ev;                             // no policy, no ornaments, ever
+    const N = ctx.stepsPerBar, rate = ctx.rate;
+    const pcsAt = ctx.pcsAt || (() => null);
+    const lanes = new Map(), pass = [];
+    for (const e of ev) {
+      if (e.part === "pad" || e.pipe || e.d) { pass.push(e); continue; }
+      const k = e.v || 0;
+      if (!lanes.has(k)) lanes.set(k, []);
+      lanes.get(k).push(e);
+    }
+    let touched = false;
+    for (const [v, list] of lanes) {
+      const lane = String.fromCharCode(97 + (v % 26));
+      const barOf = e => Math.floor((e.t * rate) / N);
+      const stepOf = e => ((Math.round(e.t * rate) % N) + N) % N;
+      const die = (e, salt) => perfDice(g, barOf(e), stepOf(e), lane, salt);
+      // ONE ORNAMENT PER NOTE, ASKED IN ONE ORDER. A note that has already been
+      // rolled is not also graced: the order below IS the precedence, it never
+      // varies, and that is what keeps two runs identical.
+      for (let k = list.length - 1; k >= 0; k--) {
+        const e = list[k];
+        if (e.orn || e.omark) continue;            // the hand's, or another ornament's
+        const t0 = Math.floor((e.t * rate) / N) * N / rate;
+        const beats = Math.max(1, N / 4);
+        const strong = stepOf(e) % beats === 0;
+        if (o.roll && e.dur * rate >= 1.5 && die(e, ORNSALT.roll) < o.roll) {
+          if (ratchet(list, k, die(e, ORNSALT.roll + 1) < 0.5 ? 2 : 3)) { touched = true; continue; }
+        }
+        const prev = k > 0 ? list[k - 1] : null;
+        const dir = prev && prev.n > e.n ? 1 : -1;
+        const len = Math.min(0.4, e.dur * rate * 0.5) / rate;
+        // THE APPROACH IS THE ONE MOVE THAT LEAVES THE KEY, and that is the
+        // whole of it: a SEMITONE, onto a STRONG beat, resolving immediately.
+        // Both halves are what make it hear as an approach rather than as a
+        // wrong note, and it is the only thing this file emits that is outside
+        // the bar's own alphabet — §9 of the unit gate carves out exactly this
+        // and nothing else. A grace is the alphabet's own neighbour, anywhere.
+        if (o.approach && strong && die(e, ORNSALT.approach) < o.approach) {
+          if (leadIn(list, k, e.n + dir, len, "approach", 2, t0)) { touched = true; continue; }
+        }
+        if (o.grace && die(e, ORNSALT.grace) < o.grace) {
+          if (leadIn(list, k, ornStep(e.n, dir, pcsAt(barOf(e))), len, "grace", 2, t0)) {
+            touched = true; continue;
+          }
+        }
+        if (o.flam && die(e, ORNSALT.flam) < o.flam) {
+          if (leadIn(list, k, e.n, len * 0.6, "flam", 3, t0)) { touched = true; continue; }
+        }
+      }
+      // PASSING TONES, a second walk because they are the one move that is
+      // about a PAIR of notes rather than about one: a leap of a third or a
+      // fourth with a note's worth of room in it gets the step between, taken
+      // out of the first note's own length. Anything wider than a fourth wants
+      // two or three passing notes and a real melodic decision, and a machine
+      // guessing at that is how a line turns into a scale exercise.
+      if (o.pass) for (let k = list.length - 2; k >= 0; k--) {
+        const a = list[k], b2 = list[k + 1];
+        if (a.orn || a.omark || b2.orn || b2.omark) continue;
+        const gap = Math.abs(b2.n - a.n);
+        if (gap < 3 || gap > 5) continue;
+        if (a.dur * rate < 0.7) continue;          // nowhere to put it
+        if (die(a, ORNSALT.pass) >= o.pass) continue;
+        const dir = b2.n > a.n ? 1 : -1;
+        // ALWAYS the alphabet's own step, never a semitone: a chromatic filler
+        // is what the approach term is for, and a passing tone that leaves the
+        // key on a weak beat is just a wrong note with a job title
+        const mid = ornStep(a.n, dir, pcsAt(barOf(a)));
+        if (mid === a.n || (mid - a.n) * dir >= gap) continue;   // no note in between
+        const half = a.t + a.dur * 0.5;
+        if (half >= b2.t - 0.01) continue;
+        a.dur = a.dur * 0.5 * 0.9;
+        list.splice(k + 1, 0, { ...a, t: half, dur: (b2.t - half) * 0.9, n: mid,
+                                acc: 0, sld: 0,
+                                vel: Math.max(1, (a.vel == null ? 5 : a.vel) - 1),
+                                orn: "pass" });
+        touched = true;
+      }
+    }
+    if (!touched) return ev;
+    for (const list of lanes.values()) for (const e of list) pass.push(e);
+    return pass.sort((a, b2) => a.t - b2.t);
+  }
+
   // ---- PARTS: a role is an ASSIGNMENT, not a transform ----------------------
   // realize() was a two-value switch — pad or "a line" — so there were no
   // parts: no riff-vs-lead, no counter-melody, no chord stab. `g.part` names
@@ -938,6 +1185,10 @@
 
   function render(subj, g, bars) {
     const N = subj.deg.length, ev = [], key = g.key | 0;
+    // the alphabet an ornament leans through, per bar and memoized (see
+    // ORNAMENTS above — under a chord cycle the notes available move with the
+    // root, so this cannot be one set for the whole render)
+    const ornAt = ornAlphabet(subj, g, key);
     for (let v = 0; v < g.voices; v++) {
       // the part's register lean sits ON TOP of g.reg, and only when the genre
       // actually declares parts — the shim keeps every partless genre exact
@@ -950,6 +1201,8 @@
         // the genre's word plus the bar schedule's word for THIS bar — the
         // sixth type joins the pipeline exactly where the timeless one runs
         const p = word(subj, g.word(v, s).concat(periodOps(g, v, s)));
+        // a phrase with no mark on it costs one `some` per bar and nothing else
+        const marked = !!p.orn && p.orn.some(Boolean);
         const chords = chordsOf(subj, g, b), c0 = chords[0];
         const chordFor = i => (chords.length === 1 ? c0
           : chords.find(c => i >= c.start && i < c.start + c.len) || chords[chords.length - 1]);
@@ -1177,6 +1430,12 @@
         // whichever voicing note happened to land on top.
         perform(barEv, barAt, g, b, N, { lane: String.fromCharCode(97 + (v % 26)),
                                          ontime: artic === "tie", hold: barHold });
+        // THE MARKS (the ninth type, above), in the same window and one step
+        // later: the hand's own grace notes, flams and rolls, read off the
+        // step each note was written on. After the performance so an ornament
+        // inherits the level the player just leaned into, before the tie fold
+        // so a rolled note is still several events when the fold looks at it.
+        if (marked) markBar(barEv, barAt, p.orn, g, N, b, ornAt(b));
         // TIE. repeat(n) duplicates notes, and duplicated notes re-attack — a
         // machine-gun rather than a longer note. Under `tie`, consecutive events
         // at the same pitch that meet end-to-end become ONE held note, which is
@@ -1195,7 +1454,13 @@
         } else for (const e of barEv) ev.push(e);
       }
     }
-    const out = ev.sort((a, b) => a.t - b.t);
+    const sorted = ev.sort((a, b) => a.t - b.t);
+    // THE GENRE'S OWN ORNAMENT PASS (the ninth type, above), before the pipes
+    // and after everything that decided what the notes ARE: what a style adds
+    // to a line it has already written. A genre with no `g.orn` returns the
+    // same array object, so this is one property read for every anchor that
+    // predates it.
+    const out = ornament(sorted, g, { stepsPerBar: N, rate: g.rate, pcsAt: ornAt });
     // the SEVENTH type runs on the finished pitched stream — see pipes() below.
     // The chords handed to the pipes are KEYED: every event pitch above already
     // carries g.key, so a pitch-aware pipe (harmonize's pcSet walk) must see
@@ -2130,6 +2395,7 @@
                 QSTEPS, QFIX, chordsOf, chordAt, withCadence, harmonizeStage,
                 seatNote, tempoWarp, prng,
                 PARTS, partOf, periodOps, pipes, PIPES,
+                ORN, ORNNAME, ORNPARTS, ornament,
                 harm, render, drums, bass };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuKernel = api;

@@ -4164,8 +4164,76 @@
     GENRES[k].stress = d.stress; GENRES[k].phrase = d.phrase; GENRES[k].touch = d.touch;
   }
 
+  // ---- ORNAMENTS — what a style adds to a line it has already written ------
+  // kernel.js's ninth type (ORNAMENTS) reads exactly one field, `g.orn`, and a
+  // genre that does not appear in this table has none: no default, no family
+  // fallback, nothing. That is the opposite of the DYNAMICS table above and it
+  // is deliberate. Metre and touch are true of everyone — every music has a
+  // downbeat and every player has hands — but a passing tone is a CLAIM about
+  // an idiom, and a table that guessed one for all eighty-seven anchors would
+  // put bebop chromaticism into plainchant. So this table is short on purpose
+  // and stays that way; a genre earns a row by somebody deciding it should
+  // have one.
+  //
+  // The five terms, each a probability per eligible note (kernel.js throws them
+  // with the same positional dice as the kit, so a song ornaments identically
+  // every time it is played):
+  //   pass      fill a leap of a third or a fourth with the step between
+  //   approach  land on a strong beat from a SEMITONE away
+  //   grace     a quick neighbour of the scale, before the note
+  //   flam      the doubled strike
+  //   roll      re-strike a long note two or three times (the ratchet)
+  //
+  // NOT THE FIVE MACHINES. techno/acid/house/trap/electro are frozen by
+  // fingerprint in the unit gate ("a machine genre that starts breathing fails
+  // here by name") and that contract is the reason the dynamics layer stayed
+  // honest, so the ratchets live on the genres either side of them instead —
+  // dnb, drill, garage, bigbeat, boombap — which is also where a human finger
+  // on a pad actually put them.
+  const ORNAMENT = {
+    // BEBOP, and the reason `approach` exists at all: the note a semitone
+    // under the target, landing on the beat, is most of what the vocabulary IS.
+    jazz:        { pass: 0.4,  approach: 0.45, grace: 0.15 },
+    solo:        { pass: 0.35, approach: 0.2,  grace: 0.3 },
+    // THE CRUSHED NOTE. A blues line leans into its thirds from underneath and
+    // walks the gaps — the leaning is the style, the chromaticism is not.
+    blues:       { pass: 0.3,  grace: 0.45 },
+    bodiddley:   { grace: 0.3 },
+    chuckberry:  { pass: 0.2,  grace: 0.35 },
+    jamband:     { pass: 0.3,  grace: 0.2 },
+    gospel:      { pass: 0.35, grace: 0.25 },
+    countrypop:  { pass: 0.2,  grace: 0.4 },       // the hammer-on and the slide
+    skiffle:     { grace: 0.25 },
+    crooner:     { pass: 0.3,  grace: 0.2 },
+    // Buenos Aires 1935: the appoggiatura onto the beat, from a semitone away
+    tango:       { approach: 0.25, grace: 0.3 },
+    // THE PLAINCHANT ANSWER, and it is a different answer: passing tones only,
+    // read through the mode, no approach and no flam. Chant decorates by
+    // filling the line, never by striking twice.
+    gregorian:   { pass: 0.35 },
+    spem:        { pass: 0.3 },
+    counterpoint:{ pass: 0.35 },
+    fugue:       { pass: 0.3 },
+    hymn:        { pass: 0.2 },
+    bulgarian:   { grace: 0.35 },                  // the ornament IS the style
+    funk:        { grace: 0.2,  flam: 0.15 },
+    motown:      { grace: 0.15, flam: 0.12 },
+    isley:       { grace: 0.2 },
+    reggae:      { grace: 0.15 },
+    ska:         { grace: 0.15 },
+    rock:        { grace: 0.2 },
+    punk:        { flam: 0.12 },
+    // THE RATCHET, which is a finger on a pad and not a hand on a string
+    dnb:         { roll: 0.18 },
+    drill:       { roll: 0.25 },
+    garage:      { roll: 0.12 },
+    bigbeat:     { roll: 0.15 },
+    boombap:     { flam: 0.18 },
+  };
+  for (const k of Object.keys(ORNAMENT)) if (GENRES[k]) GENRES[k].orn = ORNAMENT[k];
+
   const api = { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL, SCALES, SCALELABEL,
-                PROGS, FAMILIES, DYNAMICS, DYN_FAMILY };
+                PROGS, FAMILIES, DYNAMICS, DYN_FAMILY, ORNAMENT };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuGenres = api;
 })(typeof window !== "undefined" ? window : globalThis);

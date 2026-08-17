@@ -26,6 +26,15 @@
 // `i < len - 1`: a generalized row count is exactly where that fencepost
 // bites, and it is what stands between a tap and the phrase's own last row.
 //
+// THE MARKS (2026-08-17, "no way to do chromaticism or passing notes that I
+// can see, or grace notes or flams"). A ninth column, `orn`, holding the three
+// marks that had nowhere to live — grace, flam, roll — beside acc and sld,
+// which were always marks and always had columns. It is a third kind of cell:
+// not a fader and not a switch but a small glyph that CYCLES, because the
+// value is an enum and neither existing shape can say one. The vector is grown
+// lazily (ensureOrn below), so no saved song is rewritten and a phrase nobody
+// marks stays the eight vectors song.js validates.
+//
 // THE TRAY replaces the old bank's lone [+]/[−] pair with one clone icon and
 // one x PER PHRASE: clone lands at the end of the tray, x deletes THIS
 // phrase (not only the last one — see deletePhrase below, which renumbers
@@ -129,13 +138,42 @@ wrap.append(head, stepsWell, slotsEl);
 /* ---------- the step grid ---------- */
 // the vector vocabulary, exported: the order here is the COLUMN order of the
 // tracker table — one definition. The switches lead, the values follow.
-export const ROWS = ["gate", "acc", "sld", "deg", "oct", "vel", "inc", "stk"];
+export const ROWS = ["gate", "acc", "sld", "orn", "deg", "oct", "vel", "inc", "stk"];
 export const RANGE = { deg: [-7, 7], oct: [-2, 2], vel: [0, 9], inc: [-3, 3], stk: [-2, 2] };
 const clampTo = (v, [lo, hi]) => Math.max(lo, Math.min(hi, v));
 
+// ---------- THE MARKS ----------
+// A THIRD KIND OF CELL, and the reason it is not a fader and not a switch:
+// `orn` is a small enum naming HOW a note is played (kernel.js ORNAMENTS), and
+// the two cell shapes this tracker already had cannot say it — a bar would put
+// a number on a thing that is not a quantity, and a toggle can only say one
+// mark. So the cell draws a MARK and a tap cycles it, which is exactly how a
+// musician reads it off paper: a corner tick is the grace note, a doubled edge
+// is the flam, and the dots ARE the subdivision, one per stroke. Nothing here
+// is a numeral, a word or a menu — the title tooltip is the whole explanation,
+// the same law as the icon keys in the head row above.
+//
+// acc and sld are marks too, and they already have their own columns; this is
+// the column for the three that had nowhere to live.
+const MARKS = ["", "◜", "‖", "··", "···", "····"];
+const MARKNAME = ["no mark", "grace note", "flam", "roll of two",
+                  "roll of three", "roll of four"];
+
 const cells = {};                          // key -> [len {b,bar,cv}], alive until a resize
 let gridLen = 0;                           // the row count the grid is CURRENTLY built for
-// ONE CAPTION LEFT ON THE MACHINE, and it is not a header row: eight columns
+// A PHRASE THAT PREDATES THE MARKS HAS NO `orn` VECTOR, and that is not a
+// migration — song.js validates the eight vectors it always did and carries
+// anything else through the save untouched, kernel.js reads an absent vector
+// as all-zero. So the vector is grown HERE, lazily, the first time this page
+// looks at a phrase: no version bump, no rewrite of anybody's saved song, and
+// a phrase nobody ever marks stays exactly the eight vectors it was.
+const ensureOrn = (p, len) => {
+  if (!Array.isArray(p.orn)) p.orn = new Array(len).fill(0);
+  while (p.orn.length < len) p.orn.push(0);
+  if (p.orn.length > len) p.orn.length = len;
+  return p.orn;
+};
+// ONE CAPTION LEFT ON THE MACHINE, and it is not a header row: nine columns
 // of bare numerals cannot name themselves ("deg" is not recoverable from a
 // value), but the RANGE that used to ride under each name is gone — "don't
 // bother with numbers and ranges" — and so is the corner's "st" and the
@@ -254,6 +292,14 @@ function buildBody(len) {
             set: v => { SUBJ[key2][i] = clampTo(v, num); commit("phrase"); },
           });
         });
+      } else if (key2 === "orn") {
+        // the mark cycles — none, grace, flam, then the three rolls, and round
+        b.addEventListener("click", () => {
+          const v = ensureOrn(SUBJ, len);
+          v[i] = (v[i] + 1) % MARKS.length;
+          buzz(4);
+          commit("phrase");
+        });
       } else {
         b.addEventListener("click", () => {
           SUBJ[key2][i] = SUBJ[key2][i] ? 0 : 1;
@@ -271,6 +317,7 @@ function buildBody(len) {
 }
 function patchGrid() {
   const len = SUBJ.gate.length;
+  ensureOrn(SUBJ, len);                          // before anything reads the column
   if (gridLen !== len) buildBody(len);
   edslotEl.textContent = "phrase " + (slot + 1);
   shrinkBtn.hidden = len <= 16;
@@ -304,6 +351,15 @@ function patchGrid() {
           "cell deg" + (key2 === "vel" ? "" : " bip") +
             (SUBJ.gate[i] ? "" : " rest") + (val === 0 ? " zero" : ""),
           "step " + (i + 1) + " " + key2 + " " + val);
+      } else if (key2 === "orn") {
+        // the mark itself is the whole cell: glyph, tooltip, aria. `m` is
+        // clamped because a save from a build that knows more marks than this
+        // one must draw as "no mark" rather than as undefined.
+        const m = val > 0 && val < MARKS.length ? val : 0;
+        if (c.b.textContent !== MARKS[m]) c.b.textContent = MARKS[m];
+        const t = "step " + (i + 1) + " · " + MARKNAME[m];
+        if (c.b.title !== t) c.b.title = t;
+        put(c.b, "cell mark" + (m ? " on" : ""), t);
       } else {
         if (c.b.textContent !== (val ? "●" : "")) c.b.textContent = val ? "●" : "";
         put(c.b,
@@ -323,6 +379,7 @@ function resizePhrase(mult) {
   const next = Math.max(16, Math.min(NuSong.PHRASE_MAX, Math.round(cur * mult)));
   if (next === cur) return;
   const grow = next > cur;
+  ensureOrn(SUBJ, cur);                          // the marks resize with the rest
   for (const key2 of ROWS) {
     const v = SUBJ[key2];
     SUBJ[key2] = grow

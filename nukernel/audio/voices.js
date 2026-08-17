@@ -618,6 +618,21 @@ export function playSampled(id, midi, when, durSec, vel, gainMul, chan, strip, v
       offsetSec = leadSec + Math.min(cv.skip, Math.max(0, buf.duration - leadSec - 0.02));
     }
   } else if (dyn) dynStats.flat++;
+  // ---- AN ORNAMENT MUST NOT OUTLAST ITSELF --------------------------------
+  // The release was a flat 120 ms, which is right for every note this machine
+  // could make until the ninth type landed (kernel.js ORNAMENTS): a grace note,
+  // a flam stroke and one stroke of a ratchet are 30-60 ms, and a 120 ms tail
+  // on a 40 ms note is a note whose fade is three times its body. Four of them
+  // in front of one beat is not a flourish, it is a chord of the same pitch —
+  // measured on paper before it was written: at rate 8 a roll of four inside a
+  // sixteenth puts its strokes 31 ms apart under a 120 ms fade, so all four are
+  // still sounding when the beat arrives.
+  //
+  // So a note shorter than the release gets a release no longer than itself,
+  // floored at 20 ms so it is a fade and not a click. NOTHING ELSE MOVES: the
+  // threshold is 60 ms, and at any tempo this machine plays, nothing but an
+  // ornament is that short — a sixteenth at 200 bpm is still 75 ms.
+  const rel = durSec < 0.06 ? Math.max(0.02, durSec) : 0.12;
   note.note(buf, when, {
     rate: SP.rateFor(z, midi2), durSec,
     gain: 0.42 * (0.2 + 0.8 * ((vel == null ? 5 : vel) / 9)) * (gainMul || 1),
@@ -626,7 +641,7 @@ export function playSampled(id, midi, when, durSec, vel, gainMul, chan, strip, v
     strip,
     // the sends are the SECTION's, not the note's: every tap goes to the channel
     // input and the channel decides how wet the whole box is
-    atk, rel: 0.12, dry: 1, rsend: 0, dsend: 0,
+    atk, rel, dry: 1, rsend: 0, dsend: 0,
     offsetSec,
     loop: !!z.loop,
     loopStartSec: (z.loopStart || 0) / spec.sr + leadSec,

@@ -566,12 +566,12 @@ h1 em{font-style:normal;color:var(--ink)}
    stays a tracker, not a spreadsheet). position:relative is only for the
    playhead below — it is the one absolutely-positioned thing in here. */
 .stepgrid{display:grid;gap:2px;padding:0;position:relative;--tbl-rowh:36px;
-  grid-template-columns:26px repeat(3,minmax(30px,52px)) repeat(5,minmax(34px,1fr));
+  grid-template-columns:26px repeat(4,minmax(30px,52px)) repeat(5,minmax(34px,1fr));
   grid-template-rows:auto;grid-auto-rows:minmax(36px,auto)}
 .prow{display:contents}
 /* THE ONE CAPTION LEFT ON THE MACHINE, and it is not a header row.
    Every other column-label row is deleted, because every other column names
-   itself in its cells. Eight columns of bare numerals cannot: "deg" and
+   itself in its cells. Nine columns of bare numerals cannot: "deg" and
    "oct" and "vel" are not recoverable from a value, and a tracker you have
    to guess at is not self-evident, it is just unlabelled. So the names stay
    — as ordinary quiet text in the ink hierarchy, in the case they were
@@ -641,6 +641,15 @@ h1 em{font-style:normal;color:var(--ink)}
 .cell[data-row="gate"].on{background:var(--q)}
 .cell[data-row="acc"].on{background:var(--st-arm)}
 .cell[data-row="sld"].on{background:var(--st-solo);color:#fff}
+/* THE MARK COLUMN. `orn` is neither a level nor a switch — it is a small enum
+   naming how a note is played — so the cell draws a MARK and nothing else: a
+   corner tick for the grace, a doubled edge for the flam, one dot per stroke
+   for a roll. Unlit it is the quiet ground the switches use; lit it takes the
+   automation colour rather than a fourth state hue, because an ornament is
+   something the machine will do to a note you already wrote. No numeral, no
+   word — the title tooltip carries the name. */
+.cell.mark{letter-spacing:.08em}
+.cell.mark.on{background:var(--st-auto);color:var(--on-accent)}
 /* the VALUE columns draw the value AS A BAR on the quiet ground — .cbar is
    an accent strip positioned by the two custom properties ui/editor.js
    patches (--b bottom, --h height): vel fills from the floor, the bipolar
@@ -1974,10 +1983,11 @@ body{padding:0}
    phone, it is the wrong thing to have on the phone. */
 @media (max-width:560px){
   .chassis{--tbl-gut:calc(var(--sp-2) + env(safe-area-inset-left))}
-  /* all eight columns, tighter tracks — no latch, no hidden column: a bar
-     cell narrows where a numeral cell could not. The type does NOT follow
-     the tracks down. */
-  .stepgrid{grid-template-columns:26px repeat(3,minmax(26px,40px))
+  /* all nine columns, tighter tracks — no latch, no hidden column: a bar
+     cell narrows where a numeral cell could not, and the mark column narrows
+     furthest because a glyph is the same size at any width. The type does NOT
+     follow the tracks down. */
+  .stepgrid{grid-template-columns:26px repeat(4,minmax(24px,40px))
     repeat(5,minmax(28px,1fr))}
   /* the tracker's caption keeps only the column name at this width — the
      range line is the one thing a 390px column cannot afford */
@@ -2041,7 +2051,7 @@ body{padding:0}
   /* the tracker with a desk's room: 38px rows (under the audio gate's 40px
      ceiling — a tracker, not a spreadsheet) and wider value columns */
   .stepgrid{--tbl-rowh:38px;grid-auto-rows:minmax(38px,auto);
-    grid-template-columns:30px repeat(3,minmax(38px,60px)) repeat(5,minmax(48px,1fr))}
+    grid-template-columns:30px repeat(4,minmax(38px,60px)) repeat(5,minmax(48px,1fr))}
   .cell .cv{font-size:var(--t-md)}
 
   /* THE SONG TABLE, WITH ROOM — .bhead/.bicons stay flexbox (they already

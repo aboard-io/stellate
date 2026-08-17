@@ -674,7 +674,15 @@ console.log("scale and mode overrides");
 // scale would forbid the thing that makes a progression audible.
 for (const gk of GK) {
   const g = GENRES[gk], sc = g.scale || K.PENT, bs = 16 / g.rate;
-  const ev = K.render(P, g, g.bars).filter(e => g.realize(e.v) !== "pad");
+  // THE ONE CARVE-OUT, and it is a single word wide: `approach` (kernel.js
+  // ORNAMENTS, §59) is a chromatic lead-in — a semitone under a strong beat,
+  // resolving on the next event — and being outside the alphabet is the whole
+  // definition of it. The law above is about the SUBJECT, and an ornament is
+  // not the subject. Every OTHER ornament this machine can emit — grace, pass,
+  // flam, roll, and every mark a hand can write — is still held to it here,
+  // which is why this filter names one tag rather than dropping `e.orn`.
+  const ev = K.render(P, g, g.bars)
+    .filter(e => g.realize(e.v) !== "pad" && e.orn !== "approach");
   for (let b = 0; b < g.bars; b++) {
     // A DIATONIC genre follows the chord by DEGREES, so its notes stay in ONE
     // scale all the way through — a stronger claim than the transposing kind,
@@ -9461,6 +9469,37 @@ console.log("§59 — a note can lean, slide, flam or pass");
       ok(K.render(P, g, 4).some(e => e.orn === tag),
          "the `" + term + "` term never reaches the rendered stream");
     }
+  }
+
+  // (c2) THE CARVE-OUT IS ONE WORD WIDE. §9 forbids a pitch class outside the
+  // bar's own alphabet and now lets `approach` past, because a chromatic
+  // lead-in is outside by definition. That exemption is only honest if nothing
+  // ELSE this file emits is outside — so the same containment is re-proved
+  // here for every other tag, on every genre that ornaments, against the same
+  // set §9 builds. If a grace or a passing tone ever leaves the key, it fails
+  // HERE rather than sliding through the hole the approach needed.
+  {
+    let checked = 0;
+    for (const gk of Object.keys(GENRES)) {
+      const g = GENRES[gk];
+      if (!g.orn) continue;
+      const sc = g.scale || K.PENT, bs = 16 / g.rate;
+      for (let b = 0; b < g.bars; b++) {
+        const root = (g.harmony === "cycle" && !g.diatonic)
+          ? K.mp(K.harm(P, g, b), g.mode || undefined) : 0;
+        const allowed = new Set(sc.map(x => (((x + root) % 12) + 12) % 12));
+        if (g.harmony === "cycle")
+          for (const c of K.chordsOf(P, g, b))
+            for (const n of c.pcs) allowed.add(((n % 12) + 12) % 12);
+        const bad = K.render(P, g, g.bars)
+          .filter(e => e.orn && e.orn !== "approach" && Math.floor(e.t / bs) === b)
+          .filter(e => !allowed.has(((e.n % 12) + 12) % 12));
+        checked++;
+        ok(bad.length === 0, gk + " bar " + (b + 1) + ": a " +
+           (bad[0] || {}).orn + " ornament left the bar's alphabet");
+      }
+    }
+    ok(checked > 40, "the containment law was checked on almost nothing (" + checked + ")");
   }
 
   // (d) NOTHING MOVED. Measured on the kernel at HEAD 7fc30e9, the commit
