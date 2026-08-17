@@ -848,9 +848,32 @@ export function initAudio() {
   // for a hall mid-play finds the buffer already made instead of running the
   // 282k-sample noise walk on the render path (ZERO-STATIC R2's rule: nothing
   // expensive is constructed inside the render window)
-  const warm = () => { for (const n of Object.keys(VERBSPEC)) irFor(n, ctx.sampleRate); };
-  if (typeof requestIdleCallback === "function") requestIdleCallback(warm, { timeout: 4000 });
-  else setTimeout(warm, 1500);
+  // ...BUT ONLY ONCE THE CONTEXT IS RUNNING, AND NEVER FATALLY. WebKit refuses
+  // to allocate audio resources on a context that is not running yet and says
+  // so with NotSupportedError, "Channel was not able to be created" — from BOTH
+  // the AudioBuffer constructor and the createBuffer fallback, which is what
+  // made it read as a bad argument rather than as bad timing (Paul, Safari,
+  // 2026-08-17: the whole trace was warm -> irFor -> impulse -> createBuffer).
+  // An idle callback can easily land before the first gesture has resumed the
+  // context, so this asks whether the room is open before it walks in, and
+  // re-arms on the state change if it was not.
+  //
+  // The throw was never fatal to the audio — a hall built late is built on the
+  // render path instead, which is only the cost this warming exists to avoid —
+  // but an uncaught error inside an idle callback is a page error, and a page
+  // error is a thing a person reasonably reads as "it broke".
+  let warmed = false;
+  const warm = () => {
+    if (warmed || !ctx || ctx.state !== "running") return;
+    try { for (const n of Object.keys(VERBSPEC)) irFor(n, ctx.sampleRate); warmed = true; }
+    catch (e) { /* the render path will build it; see above */ }
+  };
+  const armWarm = () => {
+    if (typeof requestIdleCallback === "function") requestIdleCallback(warm, { timeout: 4000 });
+    else setTimeout(warm, 1500);
+  };
+  armWarm();
+  try { ctx.addEventListener("statechange", armWarm); } catch (e) {}
 }
 /* ---------- the master chain, installed and swapped ---------- */
 // SWAP, DON'T MUTATE. Half these globals are nodes rather than numbers, so
