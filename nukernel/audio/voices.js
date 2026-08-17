@@ -529,11 +529,21 @@ export function foldToZones(zones, midi) {
 // them (only playSampled below does) but because a Float32Array curve and an
 // oscillator's own frequency are the artifact — test/unit/nukernel.test.js
 // §69 reads these back rather than keeping a second copy of the numbers.
+// PULLED WAY BACK (Paul, 2026-08-17, listening on staging: "The tremolo is
+// super fast and a bit much -- slower, and much less of it"). It was 5.4 Hz at
+// 0.09 on the voice and 4.6 at 0.06 on the horn. 5.4 is inside the range a real
+// singer's vibrato occupies, which is exactly why it read as WRONG rather than
+// as fast: paired with a depth that deep, and with the second oscillator
+// detuned 8.7% against it (graph.js breathLFO), the two beat against each other
+// and the result is a wobble with a rate of its own — a chorus effect wearing a
+// vibrato's clothes. So the rate comes down below the beating range and the
+// depth comes down further than the rate does: breath you notice only when it
+// stops, which is what it was for.
 export const VOICEFX = {
-  // a held, breathy voice: grit stays a small edge, the vibrato leads
-  vox:   { grit: 0.14, drive: 2.4, tremHz: 5.4, tremDepth: 0.09 },
-  // a blown horn: more edge when it is pushed, a shallower breath-wobble
-  brass: { grit: 0.20, drive: 2.8, tremHz: 4.6, tremDepth: 0.06 },
+  // a held, breathy voice: grit stays a small edge, the vibrato only leans
+  vox:   { grit: 0.14, drive: 2.4, tremHz: 3.2, tremDepth: 0.035 },
+  // a blown horn: more edge when it is pushed, and less wobble than the voice
+  brass: { grit: 0.20, drive: 2.8, tremHz: 2.8, tremDepth: 0.025 },
 };
 // WHICH FAMILY, if either — the strip IS the family (instruments.js hands out
 // one shared STRIPS object per family), so this is a lookup and not a second
