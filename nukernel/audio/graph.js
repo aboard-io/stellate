@@ -79,8 +79,12 @@ import { bpm, vol, MASTER, BUSES, on, emit } from "../ui/state.js";
 // (`noise` used to live here too — half a second of Math.random built on every
 // initAudio, for the one consumer that is now gone: the oscillator drum stubs in
 // audio/voices.js. The parent's own drum worklets make their own noise.)
-export let ctx = null, masterIn = null, bus = null, outGain = null,
-           topLP = null;
+// (`topLP` used to sit here too — a handle on the master's 16 kHz top, written
+// on every install and read by nobody once the master became a SWAPPABLE chain.
+// A stale handle on a retired chain is worse than no handle: it points at nodes
+// the crossfade has already stopped. What the top is doing is answered off the
+// live chain instead, by masterReport().ceiling.top.)
+export let ctx = null, masterIn = null, bus = null, outGain = null;
 export let REV = null, delBus = null, roomBus = null;
 export let SENDBUS = null, KIT = null;
 // THE REVERB BUS'S OWN INPUT, which the three convolution returns never had.
@@ -574,7 +578,9 @@ export function buildMasterChain(c, master, dest) {
                clip: M.ceiling.clip,
                top: +lp.frequency.value.toFixed(0) },
   });
-  return { input, lp, out, nodes, oscs, report };
+  // `lp` is not handed back: report() closes over it and answers what the top is
+  // set to, which is the only question anyone ever asked the handle
+  return { input, out, nodes, oscs, report };
 }
 // one PING-PONG echo bus. Cross-fed delays panned hard, so a section sent
 // to the echo throws its repeats across the stereo field instead of thickening
@@ -878,7 +884,6 @@ function installMaster() {
   }
   masterIn.connect(next.input);
   chain = next;
-  topLP = next.lp;
 }
 function retireMaster(old, at) {
   try {
@@ -1131,8 +1136,10 @@ export const busReport = () => (!ctx ? null : {
 // live.js records this: "can't defer"). The return path ramps 20 ms so the
 // un-mute does not click. `ducked` is why the volume-slider subscription below
 // must not helpfully restore the level while the page is hidden.
+// module-local, and not exported: the only reader that ever wanted it is the
+// subscription at the foot of this file, and a second opinion about whether the
+// page is muted is how the volume slider ends up fighting the hide path
 let ducked = false;
-export const isDucked = () => ducked;
 export function muteNow() {
   if (!outGain) return;
   ducked = true;

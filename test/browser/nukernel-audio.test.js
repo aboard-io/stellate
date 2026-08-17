@@ -20,21 +20,25 @@
 //       on a boundary is the signature of a clamp, and it is a failure.
 //   (B) IT MAKES A SOUND. An AnalyserNode on the destination measures real
 //       output RMS per genre — the artifact, not the intent.
-//   (C) IT IS THE REAL INSTRUMENTS. The page keeps a hand-rolled oscillator
-//       voice as a fallback for a zone that failed to decode. That fallback is
-//       audible — it is why a mix of piano and organ once still sounded like
-//       boops — and it fires silently. If it fires at all, the sampled or synth
-//       path did not cover something, and this fails.
+//   (C) IT IS THE REAL INSTRUMENTS. The page keeps a STAND-IN voice for a note
+//       whose own instrument is not there — a zone that failed to decode, a kit
+//       that is a directory nobody fetched. It used to be a hand-rolled
+//       oscillator, which is why a mix of piano and organ once still sounded
+//       like boops; since the engine move it is the parent's own pad_saw (and,
+//       for a drum, the lane's own module), so it now sounds like music. That
+//       makes it HARDER to notice by ear and no less a coverage hole, which is
+//       exactly why the ledger is gated: if it fires at all, the sampled or
+//       synth path did not cover something, and this fails.
 //
-//       COUNTING createOscillator NO LONGER MEASURES THAT. Since the mixer
-//       landed, a section carries a real insert chain (SP.buildInsertNodes, the
-//       same one live.js builds), and a chorus, a phaser, a tremolo and a leslie
-//       are all LFOs — which are oscillators, started legitimately, dozens of
-//       them. So the page counts its own fallback voices in window.__nuFallback,
-//       incremented inside line() and hit() themselves, and that is what this
-//       asserts. window.__osc is still captured and printed, because "how many
-//       oscillators is this page running" is worth seeing, but it is no longer
-//       the pass/fail question.
+//       COUNTING createOscillator NEVER MEASURED THAT, and today it could not.
+//       A section carries a real insert chain (SP.buildInsertNodes, the same one
+//       live.js builds), and a chorus, a phaser, a tremolo and a leslie are all
+//       LFOs — oscillators, started legitimately, dozens of them — while the
+//       stand-in starts none at all. So the page counts NOTES THAT HAD NO
+//       INSTRUMENT in window.__nuFallback, incremented inside line() and hit()
+//       themselves, and that is what this asserts. window.__osc is still
+//       captured and printed, because "how many LFOs is this page running" is
+//       worth seeing, but it is not the pass/fail question.
 //
 //   (E/E2) THE MIXER AND THE MASTER ARE REAL. A section's insert chain, sends
 //       and level are claims about NODES, and so are the song's master-bus
@@ -240,7 +244,7 @@ function taps() {
 
   // SWITCH WHILE IT PLAYS for all but the first: assets used to be fetched only
   // by the transport start, so a genre chosen mid-play had no instrument and no
-  // kit and fell straight through to the oscillator. That is the exact path a
+  // kit and fell straight through to the stand-in. That is the exact path a
   // person takes, and it was the only one not covered.
   const seen = { rms: {}, worst: null };
   // the two page-lifetime ledgers, saved across (H)'s reload so check (C) at the
@@ -1227,10 +1231,10 @@ function taps() {
   const fbNow = await page.evaluate(() => window.__nuFallback);
   const osc = carried.osc + (oscNow || 0);
   const fb = fbNow == null || carried.fb == null ? null : carried.fb + fbNow;
-  console.log(`  oscillators started   : ${osc} (effect LFOs + any fallback)`);
-  if (fb == null) fail("window.__nuFallback is missing — the page is not counting its fallback voices");
-  else if (fb) fail(`${fb} hand-rolled fallback voice(s) started — a sampled or synth ` +
-                    `voice did not cover something, and the fallback is audibly wrong`);
+  console.log(`  oscillators started   : ${osc} (effect LFOs — the stand-in starts none)`);
+  if (fb == null) fail("window.__nuFallback is missing — the page is not counting its stand-in voices");
+  else if (fb) fail(`${fb} stand-in voice(s) started — a sampled or synth voice did not ` +
+                    `cover something, and the note came out of the wrong instrument`);
   else ok("no fallback voice fired: every voice is a real instrument");
 
   if (errs.length) fail(`page errors: ${errs.slice(0, 3).join(" | ")}`);

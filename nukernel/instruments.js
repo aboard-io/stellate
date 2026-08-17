@@ -42,6 +42,20 @@
   // written. One letter per lane, matching kernel.js LANES exactly — the gate
   // holds the two tables against each other, because a lane the kernel can
   // write and this map cannot name is a silent drum.
+  //
+  // IT IS A SECOND COPY, KNOWINGLY, AND HERE IS WHY IT STAYS. The parent's
+  // genre-kernel DRUMKITS now names all twelve hits per kit (4ce6809), so this
+  // table could in principle be derived rather than kept — but deriving it
+  // would mean kernel-daw.html loading engine/genre-kernel.js and the ~800 KB
+  // of genres-data/registry-data it merges at boot, for twelve filenames, on a
+  // page whose whole design is that the data tier is small and classic. The two
+  // are not even the same shape: DRUMKITS is PER KIT, and its `electronic` row
+  // names one tom recording three times, while this page loads that kit's
+  // tomLo/tomHi off disk (they are there, byte-identical). So the derivation is
+  // a real thing to want and the wrong thing to buy at this price. What the
+  // kit's OWN spec answers, this page already asks: audio/to-engine.js LANE
+  // carries the hit name per lane (`tom: "tomHi"`, `pedal`), which is the half
+  // that had actually drifted, and the half a wrong answer is audible in.
   const DRUMDIR = "../found/samples/drums/";
   const DRUMFILE = { k: "kick.wav", s: "snare.wav", h: "hatClosed.wav",
                      o: "hatOpen.wav", c: "clap.wav", p: "rim.wav",

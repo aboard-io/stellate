@@ -81,8 +81,9 @@ const decGate = makeDecGate(4, 3, 500);
 // ensureAssets pass re-requests it; only after MAXRUNS exhausted gate-runs is
 // the null written and the zone final. The old cache set null on the FIRST
 // throw — a transient fetch drop on a phone downgraded an instrument to the
-// oscillator fallback for the whole session, which is the failure the audio
-// gate is written to fail on.
+// stand-in voice for the whole session, which is the failure the audio gate is
+// written to fail on: a guitar that plays a saw all song is a coverage hole
+// whether or not the saw sounds like music.
 const MAXRUNS = 2;
 const decFails = new Map();                       // key -> { runs, err }
 function noteFail(map, key, err) {
@@ -108,15 +109,16 @@ async function decodeInto(map, key, url) {
 }
 // what the gate and the ?debug readout may know about decode health
 // `inflight` is the SET ITSELF, named: the drop law reads it to choose silence
-// over a beep, so "which asset is holding this note back, right now" is the
-// only way to tell an honest wait from a reservation that was never released.
+// over a wrong instrument, so "which asset is holding this note back, right
+// now" is the only way to tell an honest wait from a reservation that was never
+// released.
 window.__nuDecode = () => ({ ...decGate.stats(), inflight: [...inFlight],
   failed: [...decFails].map(([k, f]) => ({ key: k, runs: f.runs, err: f.err })) });
 
 /* ---------- instrument zones ---------- */
 // Assets currently being fetched. A note whose instrument is IN FLIGHT is
-// dropped, not played on the fallback oscillator: a moment of silence while a
-// guitar decodes is honest, a beep in its place is not.
+// dropped, not stood in for: a moment of silence while a guitar decodes is
+// honest, and another instrument wearing its part is not.
 export const inFlight = new Set();
 export const zoneBufs = new Map();                // "font|id|file" -> AudioBuffer
 
@@ -152,10 +154,13 @@ export const specOf = id => {
 // ensureAssets loads instruments ONE AT A TIME with a breath between them (the
 // live scheduler owns that thread), so everything after the first sat in a gap
 // where it was neither decoded nor "in flight" — and playSampled reads exactly
-// that pair to decide between silence and the oscillator stub. Measured over a
-// 58-genre live sweep: ONE genre beeped, house, whose second chair is a
-// polysynth queued behind a six-zone grand piano — 10 fallback voices, five
-// notes, all of them in the bar between the switch and the piano finishing.
+// that pair to decide between silence and the stand-in. Measured over a
+// 58-genre live sweep, back when the stand-in was two oscillators: ONE genre
+// beeped, house, whose second chair is a polysynth queued behind a six-zone
+// grand piano — 10 fallback voices, five notes, all of them in the bar between
+// the switch and the piano finishing. The stand-in is the engine's pad_saw now
+// and that bar sounds like music, which changes nothing about the reservation:
+// the hole was always the fact, and the beep was only how you found it.
 // Reserving up front makes the drop law true for the queue and not just for
 // its head; loadInstrument's own delete below clears each key as it lands.
 export const reserveInstruments = ids => {

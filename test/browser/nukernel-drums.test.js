@@ -39,8 +39,10 @@
 //       differs, and it differs because of the treatment rather than because of
 //       the level — proved against the same instrument in the one role that
 //       deliberately has no dynamic response.
-//   (M) THE MACHINES ARE KITS. tr808/tr909/tr606/cr78 are DRUMKITS entries
-//       synthesized by audio/machines.js. The score-level claims (genre→kit,
+//   (M) THE MACHINES ARE KITS. tr808/tr909/tr606/cr78 are DRUMKITS entries with
+//       no recordings to fetch: they are voiced by the parent engine's own drum
+//       modules, one row per box in audio/to-engine.js MACHINE_KIT, read by the
+//       page and the tape alike. The score-level claims (genre→kit,
 //       lane coverage, byte-deterministic synthesis, the schedule not moving
 //       a millisecond under a kit swap) live in test/unit/nukernel.test.js
 //       §44 — pure node. Here, only what WebAudio can witness: every machine
@@ -1393,9 +1395,9 @@ async function pass(page, url) {
              `but the note reached the sampler unfolded`);
       else ok(`${HOME_GENRE}'s lowest zone stretch is ${lo2.toFixed(1)} st (was −28 before the law)`);
     }
-    // and the law's failure mode is SILENCE, COUNTED — never a beep
-    if (wet.fb) fail(`${wet.fb} fallback voice(s) fired — a note the register law could not ` +
-      `place came out of the oscillator instead of being dropped`);
+    // and the law's failure mode is SILENCE, COUNTED — never another instrument
+    if (wet.fb) fail(`${wet.fb} stand-in voice(s) fired — a note the register law could not ` +
+      `place came out of the stand-in instead of being dropped`);
     else ok("no fallback voice fired");
     console.log(`  notes dropped         : ${wet.dropped}`);
     if (wet.dropped > 40) fail(`${wet.dropped} notes were dropped in one pass — the drop law is ` +

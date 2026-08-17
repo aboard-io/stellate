@@ -1,8 +1,10 @@
 // audio/voices.js — the things that actually make sound: the Faust synth pool
 // and its per-channel routing, the sampled players (notes and drums), and the
-// counted oscillator fallback. window.__nuFallback lives HERE, beside the
-// fallback voices it counts — it is the browser gate's proof that every note
-// came from a real instrument.
+// counted STAND-IN pool. Nothing in this file synthesizes: a stand-in is one of
+// the parent engine's own worklets (pad_saw for a line, the lane's own drum
+// module for a hit), which is also how the four drum machines are voiced.
+// window.__nuFallback lives HERE, beside the notes it counts — it is the
+// browser gate's proof that every note came from the instrument it named.
 //
 // Layer graph: deps -> state -> derive -> graph -> assets -> THIS FILE ->
 // mixer -> transport. Never imports a ui view.
@@ -196,16 +198,6 @@ export async function loadSynth(spec, v, chan) {
     return null;
   }
 }
-// THE VOICE KNOBS, applied generically. A chip carries a NORMALIZED position, not
-// a number in Hz, so the same "bright" means bright on a 303 (cutoff 60..6000),
-// on a Model D (60..16000) and on a reese (60..6000) without a per-synth table —
-// and because the value is derived from the param's OWN declared range it can
-// never land on a boundary, which is the clamp the audio gate exists to catch.
-// (cutoff is heard in octaves, so it is interpolated in octaves — `log` below;
-// the first param name the DSP actually owns wins, and a DSP that owns none of
-// them, like the DX7, is simply left alone.)
-// Every voice takes freq/gate/level the same way; the rest is per-DSP and is
-// declared in the genre, so adding a synth is a data change rather than code.
 // a synth key whose load FINALLY failed (tri-state null, both runs spent).
 // The scheduler asks before falling anywhere else: a synth-identity genre has
 // no legitimate second voice — its identity IS the synthesis — so its notes
@@ -262,10 +254,24 @@ const valPos = (a, v, log) => {
 // and having velocity fight the articulation would be a second dynamics
 // argument rather than a second kind of dynamics.
 const VELKNOB = { cut: 0.20, emod: 0.10 };
+// THE VOICE KNOBS, applied generically. A chip carries a NORMALIZED position, not
+// a number in Hz, so the same "bright" means bright on a 303 (cutoff 60..6000),
+// on a Model D (60..16000) and on a reese (60..6000) without a per-synth table —
+// and because the value is derived from the param's OWN declared range it can
+// never land on a boundary, which is the clamp the audio gate exists to catch.
+// (cutoff is heard in octaves, so it is interpolated in octaves — `log` above;
+// the first param name the DSP actually owns wins, and a DSP that owns none of
+// them, like the DX7, is simply left alone.)
+// Every voice takes freq/gate/level the same way; the rest is per-DSP and is
+// declared in the genre, so adding a synth is a data change rather than code.
+//
 // the parameter walk alone, on a GIVEN node — split from the pool lookup so
 // the offline bounce can drive its own per-context pool through the exact
 // same writes (a forked copy of this walk is how the bounce would drift out
-// of tune with the live pass, one edit at a time)
+// of tune with the live pass, one edit at a time). THREE CALLERS NOW: the
+// signature pool (playSynth), the impersonated GM patches (transport.js
+// synthForInstr) and the pitched stand-in (line, below), so velocity means one
+// thing on this page whichever of the three is holding the note.
 export function driveSynth(node, spec, midi, when, durSec, acc, sld, vel, vox) {
   // FOLD FIRST, AND REFUSE BEFORE WRITING ANYTHING. A Faust freq param has a
   // declared min/max — DX7 stops at 1000 Hz, bass_reese at 500 — and setting a
@@ -803,9 +809,9 @@ export function playSampled(id, midi, when, durSec, vel, gainMul, chan, strip, v
 const ctxOf = chan => (chan && chan.input ? chan.input.context : ctx);
 // WHERE A DRUM LANDS. The channel builds a strip per lane on the lane's first
 // hit — level, placement, its own share of the room — and everything drum-shaped
-// on the page goes through it, the oscillator stubs included, so a fallback
-// snare is in the same room as a sampled one. A channel that predates the lane
-// strips (or no channel at all) still has the plain drum bus.
+// on the page goes through it, the machines and the stand-ins included, so a
+// stood-in snare is in the same room as a sampled one. A channel that predates
+// the lane strips (or no channel at all) still has the plain drum bus.
 // `kit` reaches the strip because the strip is per MIX ROW now: a machine
 // lane with its own MACHINEMIX row lands on its own strip, a sampled lane on
 // the shared one — instruments.js laneKey decides, inside the desk

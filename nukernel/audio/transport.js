@@ -399,13 +399,14 @@ export function scheduleBar(bar, sec, chan, kit, when, sd, synthFn) {
       // second voice — the recording the patch is named for — so the whistle is
       // the right sound to make for the bar or two before the wasm lands.
       else if (patch && synthFn(patch, e.n, at, e.dur * sd, e.acc, e.sld, e.vel, e.v, chan, e.vox)) { /* the instrument's own synth */ }
-      // a DEAD signature synth drops its notes rather than beeping: a
-      // synth-identity genre has no legitimate second voice, and its sampled
-      // `instr` was never fetched (ensureAssets skips it — the genre is
-      // "never sampled"), so falling through here reached the oscillator —
-      // measured: ten fallback beeps in one sweep when two wasm fetches
-      // flaked under IO load. Silence is the design; RMS gates catch it if
-      // it ever stops being transient.
+      // a DEAD signature synth drops its notes rather than standing in for
+      // them: a synth-identity genre has no legitimate second voice, and its
+      // sampled `instr` was never fetched (ensureAssets skips it — the genre is
+      // "never sampled"), so falling through here reached the stand-in —
+      // measured, back when that was two oscillators: ten fallback beeps in one
+      // sweep when two wasm fetches flaked under IO load. A pad_saw wearing a
+      // 303's part is a nicer wrong answer, not a right one. Silence is the
+      // design; RMS gates catch it if it ever stops being transient.
       else if (useSyn && synthFn === playSynth && synthDead(gsyn, e.v)) countDrop();
       // THE STRIP FOLLOWS THE INSTRUMENT, not just the role. Every non-pad
       // voice used to take the lead strip — 200 Hz high-pass and a 3 dB lift at
@@ -416,14 +417,14 @@ export function scheduleBar(bar, sec, chan, kit, when, sd, synthFn) {
       // it. `home` is the register home this section decided for the chair.
       else if (!playSampled(id, e.n + (e.home || 0), at, e.dur * sd, e.vel, 1, chan,
                             stripFor(id, e.pad), e.v)) {
-        // BOTH voices gone. For a plain sampled genre the oscillator stub is
-        // the ancient last resort (and the gate proves it never fires); for a
-        // SYNTH-identity genre it is the wrongest sound the page can make —
-        // an oscillator standing in for a 303 — and that is exactly what
-        // beeped ten times in one sweep when a wasm fetch and the zone fetch
-        // both flaked under IO load. Identity genres drop instead.
+        // BOTH voices gone. For a plain sampled genre the stand-in is the last
+        // resort (and the gate proves it never fires); for a SYNTH-identity
+        // genre it is still the wrongest sound the page can make — a pad_saw
+        // standing in for a 303 — and that is exactly what beeped ten times in
+        // one sweep when a wasm fetch and the zone fetch both flaked under IO
+        // load. Identity genres drop instead.
         if (useSyn) countDrop();
-        // the stub lands on the same chair's strip as the note it stands in
+        // the stand-in lands on the same chair's strip as the note it stands in
         // for — a fallback that jumps the desk would be audible under a solo —
         // and it plays the HOMED note: a register-shifted voice that fell back
         // must not jump an octave from the line it stands in for
@@ -555,8 +556,8 @@ export async function ensureAssets(announce) {
   // EVERY QUEUED INSTRUMENT COUNTS AS IN FLIGHT FROM HERE, not from the moment
   // its own fetch starts. The loop below is deliberately serial with a breath
   // between decodes, so a genre's second chair waits behind its first — and a
-  // note due in that gap read "no buffer, not loading" and took the oscillator
-  // stub. Silence over wrongness is the law for a loading instrument; this is
+  // note due in that gap read "no buffer, not loading" and took the stand-in.
+  // Silence over wrongness is the law for a loading instrument; this is
   // what makes the law cover the whole queue (assets.js reserveInstruments).
   reserveInstruments(need);
   for (const id of need) {
