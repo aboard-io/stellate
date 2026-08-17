@@ -304,7 +304,16 @@
       io = io || {};
       const buffers = io.buffers || {};
       const opts = io.opts || {};
-      const sched = SE.buildSchedule(E, state);
+      // A CALLER MAY BRING ITS OWN SCHEDULE. buildSchedule is state -> events,
+      // and every existing caller wants exactly that — so absent `io.sched` this
+      // is byte-identical to the line it replaces. It is optional because a
+      // schedule can also be ASSEMBLED: nukernel's tape is a run of boxes, each
+      // with its own kit and its own cast, translated one at a time
+      // (nukernel/audio/to-engine.js) and merged into one unit table with one
+      // clock — a shape `state` cannot say, and one this renderer needs to know
+      // nothing about. It still reads `state` for the master stage (fxParams,
+      // reverbColor, masterMb, chordEvery), which is the song-level half.
+      const sched = io.sched || SE.buildSchedule(E, state);
       const spb = sched.spb;
       let totalSec = sched.totalBeats * spb;
       if (opts.dur) totalSec = Math.min(totalSec, opts.dur);

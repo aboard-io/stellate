@@ -67,19 +67,22 @@
 // same parameterized builders the live graph uses (graph.buildMasterChain /
 // mixer.buildChannel / transport.scheduleBar), so the carrier is the same
 // mix — a fork of any of those walks is how it would drift out of tune.
-import { GENRES, BASSSYNTH, DTIMES } from "../ui/deps.js";
+import { DTIMES } from "../ui/deps.js";
 import { SONG, SLOTS, loopOnly, bpm, MASTER, BUSES, GROOVE, SWING, POOL,
          on, emit } from "../ui/state.js";
-import { stackOf, kitOf } from "../ui/derive.js";
+import { kitOf } from "../ui/derive.js";
 import { buildMasterChain, buildEchoBus, buildRoomBus, buildKitDesk, buildSendBus, makeVerb,
          masterVol, muteNow, unmuteRamp, parkGraph, unparkGraph, isParked,
          fadeUpAt, epDown, rmsNow, DRYROOM, ctx } from "./graph.js";
-import { FONT, isSynthFont, fontDef } from "./assets.js";
-import { makeSynthNode, driveSynth, offFallback } from "./voices.js";
+import { FONT } from "./assets.js";
+import { offFallback } from "./voices.js";
 import { chanSpec, buildChannel, armAutomation, focusKit } from "./mixer.js";
 import { buildTimeline, scheduleBar, stepDur, playing, getPosition, nextBarAt,
          onGesture, seekPhase, setQuietWhen, singWork } from "./transport.js";
 import { warm as warmSing } from "./sing.js";
+// THE PRESS. Everything that makes a sound inside a render window now happens
+// in the parent engine (engine/faust/), driven through this one door.
+import { pressWindow, pressReady, pressError } from "./press-window.js";
 
 /* ---------- the platform predicate ---------- */
 // IT LIVES HERE NOW, not in survival.js, because the thing it decides is the
@@ -122,7 +125,13 @@ const st = { state: "idle", stage: null, durSec: 0, gen: 0, sampledOnly: false,
              // report this file had no number for — beside what the SCORE for
              // that same tape asked for, and the difference. lanesMissing is
              // the bug; the other two are the working.
-             lanes: [], lanesWant: [], lanesMissing: [] };
+             lanes: [], lanesWant: [], lanesMissing: [],
+             // the press's own honesty: voices with no parent module, sources
+             // that would not decode. Empty on every tape that is whole.
+             unrouted: [], missing: [],
+             // how many windows the singer really reached, and how loud it got
+             // there — "it sang" as two numbers rather than as an intention
+             sung: 0, sungPeak: 0 };
 // one render's stopwatch: ph.mark("pool") closes the phase that was open and
 // opens 'pool'. Cheap enough to leave armed in production (five performance.now
 // calls per render), and the alternative is instrumenting it again next time.
@@ -193,6 +202,8 @@ window.__nuRender = () => ({ ms: st.lastRenderMs, durSec: st.durSec,
   hits: st.hits, misses: st.misses,
   nodes: st.nodes, pooled: st.pooled, lanes: st.lanes,
   lanesWant: st.lanesWant, lanesMissing: st.lanesMissing,
+  unrouted: st.unrouted, missing: st.missing,
+  sung: st.sung, sungPeak: st.sungPeak,
   stage: st.stage, sampledOnly: st.sampledOnly });
 // TEST SEAM: render a known length RIGHT NOW and hand back the phase report.
 // The budget gate cannot wait on the debounce (it would be timing the timer),
@@ -235,8 +246,14 @@ window.__nuRenderNow = async (capSec, opts) => {
              lanes: st.lanes, lanesWant: st.lanesWant,
              lanesMissing: st.lanesMissing,
              // the singer's own census of this render — an ADDED key, so every
-             // existing reader is untouched (nukernel-bounce (D) reads it)
+             // existing reader is untouched (nukernel-bounce (D) reads it).
+             // __nuSing's counters are the PAGE's, cumulative and shared with
+             // the live graph, so they cannot answer "did THIS tape sing";
+             // sung/sungPeak are this render's own and they can.
              sing: (typeof window.__nuSing === "function" ? window.__nuSing() : null),
+             sung: st.sung, sungPeak: st.sungPeak,
+             // NO SILENT FALLBACKS, readable from the outside
+             unrouted: st.unrouted, missing: st.missing,
              // { tap: [t0, t1] } returns the raw samples of that span, both
              // channels — the seam probes read the artifact, not a summary
              tap: (opts && opts.tap)
@@ -892,15 +909,17 @@ const withChunkSec = async (n, fn, preBars) => {
   if (preBars > 0) PRE_BARS = preBars;
   try { return await fn(); } finally { CHUNK_SEC = was; PRE_BARS = wasPre; }
 };
-// how many windows render at once. Chromium gives each OfflineAudioContext its
-// own render thread; one core is left for the page, which is still running the
-// LIVE graph while this happens — a bounce that starves the audible path has
-// made the wrong trade.
+// ONE AT A TIME, and that is a CONSEQUENCE of the press rather than a caution.
+// The old windows were OfflineAudioContexts, and chromium gives each one its own
+// render thread — so three at once really did overlap (measured 2.43x on this
+// 4-core box). The parent's press is faustwasm offline processors called
+// synchronously on THIS thread: `Promise.all` over them is a queue wearing a
+// wave's clothes, and it would hold three windows' buffers alive to buy nothing.
+// ?renderpar= survives for the same reason ?noseam does — the old path stays
+// walkable — but the default is honest.
 const PARALLEL = (() => {
   const q = /[?&]renderpar=(\d+)/.exec(typeof location !== "undefined" ? location.search : "");
-  if (q) return Math.max(1, +q[1]);
-  return Math.max(1, Math.min(4,
-    ((typeof navigator !== "undefined" && navigator.hardwareConcurrency) || 4) - 1));
+  return q ? Math.max(1, +q[1]) : 1;
 })();
 
 /* ---------- the window cache: an edit re-renders what it changed ---------- */
@@ -957,8 +976,14 @@ function winKey(TL, plan, ck, sd) {
   const sis = [];
   for (let i = ck.pre; i < ck.b; i++) if (!sis.includes(TL[i].si)) sis.push(TL[i].si);
   // BUSES rides in the key beside MASTER for the same reason: the builders bake
-  // the rack trims into every window, so a knob move must miss the cache
-  return JSON.stringify([sd, FONT, MASTER, BUSES,
+  // the rack trims into every window, so a knob move must miss the cache.
+  // ...AND SO DOES THE POOL, which was missing and mattered even before the
+  // press: recasting a chair changes which instrument every line of every box
+  // is played on (derive.js poolInstrOf, and press-window.js seatsFor reads the
+  // same answer), so a cache that could not see it would keep serving the old
+  // band. `sig()` at the top of this file has always named it; the window key
+  // simply had not caught up.
+  return JSON.stringify([sd, FONT, MASTER, BUSES, POOL,
                          ck.b === TL.length, +plan.from[ck.pre].toFixed(6),
                          TL.slice(ck.pre, ck.b), sis.map(i => SONG[i])]);
 }
@@ -1065,10 +1090,59 @@ export const SHORT_CAP = SHORT_SEC;
 // bound on node population for free, by never putting the nodes in one graph in
 // the first place, and it parallelises. Do not re-derive this.
 
-// ONE WINDOW. Everything the old whole-song render did, over a slice of the
-// timeline — the same builders, the same walk, the same law that the carrier is
-// the same TOPOLOGY as the live mix and not merely the same numbers.
+// ONE WINDOW, PRESSED. The whole of what used to be here — an
+// OfflineAudioContext, a master chain, a kit desk, a per-note WebAudio strip
+// for every note in the window and a Faust worklet pool bolted on — is gone.
+// audio/press-window.js hands the bars to the parent engine's own offline
+// render walk (engine/faust/live/stream-renderer.js, the walk node's press and
+// the desktop stream are both gated against), which knows how to play them
+// because engine/faust/voices/state-engine.js has always known.
+//
+// THE SUNG LINE IS THE ONE THING THAT STAYS ON THIS PAGE'S OWN PATH, and it is
+// named rather than dropped: nukernel's singer is espeak slices resampled and
+// vocoded by audio/sing.js, and the parent has no voice for it (to-engine.js
+// reports it in `unrouted`). It renders in its own small offline graph, below,
+// and is summed onto the pressed tape. A window with nothing sung builds no
+// context at all, which is nearly every window of nearly every song.
 async function renderChunk(TL, plan, ck, sd, tally) {
+  const bars = TL.slice(ck.pre, ck.b);
+  const preBars = ck.a - ck.pre;
+  const tailSec = ck.b === TL.length ? TAIL : 0;
+  const t0 = performance.now();
+  const res = await pressWindow(bars, { sd, preBars, tailSec });
+  const ms = performance.now() - t0;
+  tally.chunkMs += ms;
+  tally.each.push([Math.round(ms), +(plan.t0[ck.b] - plan.t0[ck.pre] + tailSec).toFixed(2),
+                   res ? res.units : 0]);
+  if (!res) return { chs: [new Float32Array(0), new Float32Array(0)], n: 0 };
+  tally.nodes += res.units;
+  for (const u of res.unrouted) tally.unrouted.push(u);
+  for (const m of res.missing) tally.missing.add(m);
+  for (const d of res.lanes) tally.lanes.add(d);
+  // ...and the singer, summed in at the same sample positions. Its PEAK is
+  // recorded, not assumed: "the tape sang" is a claim about samples, and a
+  // sing pass that runs, costs espeak instances and produces silence is a
+  // failure that reads exactly like success from the outside.
+  const sing = await renderSing(TL, plan, ck, sd, res.n);
+  if (sing) {
+    let pk = 0;
+    for (let c = 0; c < 2; c++) {
+      const a = res.chs[c], b = sing[c], n = Math.min(a.length, b.length);
+      for (let i = 0; i < n; i++) { const v = b[i]; if (v > pk) pk = v; a[i] += v; }
+    }
+    tally.sung++; tally.sungPeak = Math.max(tally.sungPeak, pk);
+  }
+  return { chs: res.chs, n: res.n };
+}
+
+// THE SINGER'S OWN WINDOW. The same rack the live graph builds, with ONLY the
+// sung events walked through it — every other kind is the press's now. Returns
+// [L,R] trimmed to the window's own output, or null when nothing sings.
+async function renderSing(TL, plan, ck, sd, wantN) {
+  let any = false;
+  for (let i = ck.pre; i < ck.b && !any; i++)
+    any = (TL[i].ev || []).some(e => e.kind === "sing");
+  if (!any) return null;
   const preSec = plan.t0[ck.a] - plan.t0[ck.pre];
   const outSec = plan.t0[ck.b] - plan.t0[ck.a];
   const tailSec = ck.b === TL.length ? TAIL : 0;
@@ -1115,74 +1189,11 @@ async function renderChunk(TL, plan, ck, sd, tally) {
     return c;
   };
 
-  // ---- the offline Faust pool ----
-  // Worklets on an OfflineAudioContext are a per-browser fact, not a given
-  // (addModule from a blob URL is a CSP question in production). ATTEMPT the
-  // real voices; on any failure degrade to sampled-only — the synth genres
-  // play their sampled instrument instead — and COUNT it. Never silently.
-  //
-  // PER WINDOW, and that is cheap where it counts: voices.js makeSynthNode
-  // caches the compiled DSP FACTORY in a module-level map keyed on the dsp
-  // name, so only createNode is paid again — the wasm is compiled once for the
-  // session however many windows ask for it. Only the specs this window's own
-  // bars can play are built, so a window of drums pays for no synths at all.
-  const pool = new Map();                          // "dsp#v" -> node
-  const routes = new Map();                        // node -> Map(chanKey -> gain)
-  const sis = new Set();
-  for (let i = ck.pre; i < ck.b; i++) sis.add(TL[i].si);
-  const mine = [...sis].map(i => SONG[i]).filter(Boolean);
-  const specs = [...new Set([
-    ...(isSynthFont() ? [fontDef().synth] : []),
-    ...mine.flatMap(x => stackOf(x).filter(e => GENRES[e.g] && GENRES[e.g].synth).map(e => GENRES[e.g].synth)),
-    ...mine.filter(x => BASSSYNTH[x.bassop]).map(x => BASSSYNTH[x.bassop])])];
-  if (specs.length) {
-    const depth = Math.min(8, Math.max(1, ...mine.map(sec =>
-      stackOf(sec).reduce((n, e) => n + (GENRES[e.g] ? GENRES[e.g].voices : 0), 0))));
-    try {
-      for (const sp of specs)
-        for (let v = 0; v < depth; v++)
-          pool.set(sp.dsp + "#" + v, await makeSynthNode(octx, sp));
-    } catch (e) {
-      pool.clear();
-      tally.sampledOnly = true;
-    }
-  }
-  // KEYED, like the live routeSynth, because the key is what says which PART
-  // strip this voice belongs on (mixer.synthIn) — a bounce that routed every
-  // synth straight at chan.input would render the per-part desk away, and the
-  // carrier would be a different mix from the one the ear just left
-  const routeTo = (key, node, chan) => {
-    let m = routes.get(node);
-    if (!m) routes.set(node, m = new Map());
-    let g = m.get(chan.key);
-    if (!g) {
-      g = octx.createGain(); g.gain.setValueAtTime(0, 0);
-      node.connect(g);
-      g.connect(chan.synthIn ? chan.synthIn(key) : chan.input);
-      m.set(chan.key, g);
-    }
-    return g;
-  };
-  // the offline focusSynths: at each section start, exactly one route is open
-  const focusAt = (chan, when) => {
-    for (const [key, node] of pool) {
-      routeTo(key, node, chan);
-      for (const [k, g] of routes.get(node))
-        try { g.gain.setValueAtTime(k === chan.key ? 1 : 0, when); } catch (e) {}
-    }
-  };
-  const offSynth = (sp, midi, when, durSec2, acc, sld, vel, v, chan, vox) => {
-    const key = sp.dsp + "#" + (v || 0);
-    const node = pool.get(key);
-    if (!node) return false;                       // degrades to the sampled voice
-    routeTo(key, node, chan);
-    // a note no octave of which fits the voice's freq param is dropped here
-    // too (the live path's law) — returning TRUE keeps it dropped rather than
-    // handing it to the sampled voice, which would make the carrier a
-    // different arrangement from the one the graph plays
-    driveSynth(node, sp, midi, when, durSec2, acc, sld, vel, vox);
-    return true;
-  };
+  // NO SYNTH POOL AND NO PLAYER INJECTION. Nothing in this pass makes a note
+  // except playSyllable, which the bar walk reaches directly — every other kind
+  // of event has already been pressed by the parent, so the walk below is fed
+  // bars whose event lists are the sung ones and nothing else.
+  const offSynth = () => false;
 
   // ---- the walk: the live tick's bar loop against offline time ----
   let t = LEAD, cur = null;
@@ -1208,43 +1219,26 @@ async function renderChunk(TL, plan, ck, sd, tally) {
       armAutomation(cur.chan, t, bar.boxSteps * sd,
                     sd * 4 * (bar.boxSteps / bar.boxNom),
                     bar.first ? 0 : plan.from[i]);
-      focusAt(cur.chan, t);
       focusKit(cur.chan, t);        // one kit desk for the render, one section at a time
     }
-    scheduleBar(bar, sec, cur.chan, cur.kit, t, sd, offSynth);
+    // ONLY THE SUNG EVENTS. The bar is handed to the live tick's own switch so
+    // the singer keeps its chair, its strip and its sends; the rest of the band
+    // is the press's, and passing it here would be two of everything.
+    scheduleBar({ ...bar, ev: (bar.ev || []).filter(e => e.kind === "sing") },
+                sec, cur.chan, cur.kit, t, sd, offSynth);
     t += TL[i].barSteps * sd;
   }
-  // WHICH DRUM LANES REALLY REACHED THIS TAPE. The channel's `played` ledger is
-  // written by mixer.js laneIn — a lane appears there when a hit was actually
-  // routed to its strip, which is a fact about the RENDER and not about the
-  // score. It is here because "one phrase repeats over and over — no drums" was
-  // a report nothing in this file could confirm or deny: the phases said how
-  // long the render took, the RMS windows said it was not silent, and neither
-  // of them can tell a band from a bass line. (test/browser/nukernel-bounce (E))
-  for (const c of chans.values())
-    if (c.played) for (const d of c.played) tally.lanes.add(d);
-  tally.nodes += chans.size; tally.pooled += pool.size;
-  const t0 = performance.now();
   const buf = await octx.startRendering();
-  // SUMMED, so the report can divide it by the wall clock and say what the
-  // concurrency actually bought — a number that is 1.0 is a wave that queued
-  const ms = performance.now() - t0;
-  tally.chunkMs += ms;
-  // PER WINDOW, because the sum hides the shape: a song whose choruses cost
-  // four times its verses is a density problem, and a flat profile is a fixed
-  // per-window overhead problem. They want different fixes.
-  tally.each.push([Math.round(ms), +(preSec + outSec + tailSec).toFixed(2), chans.size]);
-  // LIFTED OUT OF THE AudioBuffer HERE, not at assembly, because the cache has
-  // to hold the window's OUTPUT and not its pre-roll — and because holding an
-  // AudioBuffer holds the context that made it.
+  // trimmed to the window's own output — the pre-roll really played (a syllable
+  // ringing across the seam is produced, not guessed) and is then thrown away
   const skip = Math.round((LEAD + preSec) * SR);
-  const n = Math.max(0, buf.length - skip);
+  const n = Math.max(0, Math.min(wantN || Infinity, buf.length - skip));
   const chs = [new Float32Array(n), new Float32Array(n)];
   for (let c = 0; c < 2; c++) {
     const d = buf.getChannelData(Math.min(c, buf.numberOfChannels - 1));
     for (let i = 0; i < n; i++) chs[c][i] = d[skip + i];
   }
-  return { chs, n };
+  return chs;
 }
 
 async function renderSong(capSec) {
@@ -1275,11 +1269,16 @@ async function renderSong(capSec) {
   // the same line twice.
   ph.mark("voices");
   for (const w of singWork()) await warmSing(w.plan, w.text);
+  // THE PARENT PRESS, PROVED PRESENT BEFORE ANYTHING COMMITS TO IT. There is no
+  // second renderer to fall back to any more, so a page whose engine/faust is
+  // missing must say so once and loudly rather than per window.
+  if (!(await pressReady())) throw new Error("parent press unavailable: " + pressError());
   ph.mark("render");
   st.sampledOnly = false;
   offFallback.n = 0;
   const tally = { nodes: 0, pooled: 0, chunkMs: 0, each: [], sampledOnly: false,
-                  lanes: new Set() };
+                  lanes: new Set(), unrouted: [], missing: new Set(),
+                  sung: 0, sungPeak: 0 };
   const done = new Array(plan.chunks.length);
   // WAVES, not a free-for-all: PARALLEL contexts at a time. Unbounded
   // Promise.all over seventy windows would put seventy render threads and
@@ -1305,7 +1304,28 @@ async function renderSong(capSec) {
   // too, and a bounce that quietly kept a rack per section would show up here
   // and nowhere else.
   st.nodes = tally.nodes; st.pooled = tally.pooled;
+  st.sung = tally.sung; st.sungPeak = +tally.sungPeak.toFixed(5);
   st.lanes = [...tally.lanes].sort();
+  // NO SILENT FALLBACKS, as a field. `unrouted` is every nukernel voice the
+  // parent engine had no module for (audio/to-engine.js names each one and
+  // says why); `missing` is every sample source that would not decode. Both
+  // are audible holes, so both are readable from outside and neither is a
+  // console line nobody reads. Deduped on the reason, because a run of boxes
+  // sharing a cast reports the same hole once per box.
+  {
+    const seen = new Set(), out = [];
+    for (const u of tally.unrouted) {
+      const k = u.what + "|" + u.why;
+      if (seen.has(k)) continue;
+      seen.add(k); out.push(u);
+    }
+    st.unrouted = out;
+    st.missing = [...tally.missing];
+    if (out.length) console.warn("[nukernel] the press could not route:",
+      out.map(u => u.what).join(", "));
+    if (st.missing.length) console.warn("[nukernel] the press could not decode",
+      st.missing.length, "sample source(s)");
+  }
   // THE CENSUS, SUBTRACTED. st.lanes is what the channels really routed; the
   // score says what the bars asked for. A short tape is now a WHOLE BOX, so
   // "the box plays a snare and the tape has none" is a checkable sentence
