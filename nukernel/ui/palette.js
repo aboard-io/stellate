@@ -443,12 +443,10 @@ function makeBuilders(host, ent) {
     group(title, Object.keys(table).map(k => [kind, k, table[k], cls]));
   const opRow = (title, keys, cls) =>
     group(title, keys.map(k => ["op", k, OPLABEL[k], cls]));
-  const note = txt => {
-    const p = document.createElement("p");
-    p.className = "pnote"; p.textContent = txt;
-    host.append(p);
-  };
-  return { group, rowOf, opRow, note, dna: () => buildDna(host) };
+  // (there is no .note() any more: a panel's own rows are all it says now —
+  // "no text... none of that", Paul, 2026-08-16. Every caller that used to
+  // open with an explanatory paragraph had it deleted, not shortened.)
+  return { group, rowOf, opRow, dna: () => buildDna(host) };
 }
 
 // THE INSTRUMENT BANK'S SHAPE, built once: family -> ids, in a musical order
@@ -523,8 +521,10 @@ const CELLBANKS = {
   // The cell's two genuinely-per-pattern survivors moved into MODS: the nudge
   // stepper — ui/songrow.js mounts it — and the articulation row below.)
   mods: b => {
-    b.note("These apply to the layer you are editing, not to the whole box. " +
-           "They compose in the order you switch them on.");
+    // (no explanatory note here any more — "no text... none of that", Paul,
+    // 2026-08-16. These apply to the layer being edited, not the whole box,
+    // and compose in the order they are switched on; that is what the rest
+    // of the machine's chip material already says without a sentence.)
     // HOW THE PATTERN SPEAKS is a mod of the pattern — articulation rode the
     // retired timing cell only because it changes note LENGTHS
     b.rowOf("articulation", "artic", ARTICS, "art");
@@ -547,11 +547,9 @@ const CELLBANKS = {
     b.rowOf("pipe", "pipe", PIPELABEL, "env");
   },
   voice: b => {
-    b.note("Per layer: how this layer's lines SPEAK — register, width, " +
-           "alphabet, part, and the five synth knobs any voice that has them " +
-           "answers to (the 303, the Model D, the reese and wobble basses). " +
-           "WHICH instrument plays is the song's: cast the band once, in the " +
-           "INSTRUMENTS bank on the song page.");
+    // (no explanatory note here any more, same law as MODS above. What this
+    // popup covers — register, width, alphabet, part, the five synth knobs —
+    // is exactly what its rows say; no prose repeats it.)
     // (no instrument banks here: the band is hired for the RECORD, not the
     // scene — the same twelve-family picker lives in the SONG page's
     // INSTRUMENT POOL bank, ui/poolbank.js, one pick per chair.)
@@ -577,8 +575,7 @@ const CELLBANKS = {
     b.rowOf("bass", "bassop", BASSOPS, "bas");
   },
   trans: b => {
-    b.note("Intro and outro replace the first and last bar; level and filter " +
-           "shape the whole section; the auto rows write a moving shape over it.");
+    // (no explanatory note here any more, same law as MODS/VOICE above.)
     b.rowOf("intro", "intro", INLABEL, "env");
     b.rowOf("outro", "outro", OUTLABEL, "env");
     b.rowOf("level over the section", "env", ENVLABEL, "env");
