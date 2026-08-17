@@ -41,7 +41,7 @@ something to re-run):
 - `engine/genres-data.js` (~5,300 lines, ~645 KB) — `GENRES`, the 274 anchors.
   `Object.keys` order is load-bearing: it drives the confusion-matrix row order
   and the star layout. Append, never reorder.
-- `engine/registry-data.js` (~950 lines, ~155 KB) — `SOURCES` / `SOURCE_POOLS` /
+- `engine/registry-data.js` (~1,000 lines, ~160 KB) — `SOURCES` / `SOURCE_POOLS` /
   `VOICE_FAMILIES` / `SAMPLES` / `VOXBANK` / `SAMPLERS` / `PERCBANK`: the ids the
   fetch recipes write and the engine resolves.
 
@@ -95,7 +95,7 @@ node tools/kernel-cli.js journey path.json --hours 4 --out journey/ --render
                                # explorer path -> mp3s + gapless journey mix (GENRE-SPACE.md)
 # headless browser gates (need `npm install && npm run setup:browser` at the repo root, once):
 npm run test:browser                     # every browser gate, CONCURRENTLY (test/run.js)
-npm run test:unit                        # the 33 pure-node gates in test/unit — nothing else runs them
+npm run test:unit                        # the 46 pure-node gates in test/unit — nothing else runs them
 npm run test:all                         # unit + browser
 node test/browser/explorer-ui.test.js   # (+ genre-viz / demo-layer / live / wavout / live-resilience / bg-survival)
 node test/browser/blend-arrival.test.js  # live-blend ARRIVAL contract: drums ≤3 bars, kit/lead identity ≤7
@@ -499,8 +499,8 @@ docs in `docs/`.
   - `tools/deploy/` (3) — `ship.sh`, `deploy-staging.sh` and `deploy-stellate.sh`.
     **STAGING IS THE DEFAULT TARGET**: bare `ship.sh` deploys to
     test.stellate.app; the public site moves only on `ship.sh --prod`.
-  - `tools/audit/` (4) — read-only measurement: `audio-verifier.py`,
-    `font-coverage.js`, `measure-loop-cap.js`, `simulate-path.js`.
+  - `tools/audit/` (5) — read-only measurement: `audio-verifier.py`,
+    `bed-budget.js`, `font-coverage.js`, `measure-loop-cap.js`, `simulate-path.js`.
 
   (All rendering is Faust-press now; the csound `render.sh` is on
   `legacy-csound`.)
@@ -528,14 +528,14 @@ docs in `docs/`.
     `genre-specs` `pos-coverage` `coords-coverage` `live-walk-parity`
     `boot-smoke` `doc-counts`) plus the MUSIC-MIND/speech organ gates
     `theory`/`pipes`/`speech`. Pure node, CI-safe.
-  - `test/unit/` (49) — pure-node gates outside the release suite
+  - `test/unit/` (46) — pure-node gates outside the release suite
     (`meter` `invariants` `musicality` `melody-cells` `melody-weave`
     `theory-tables` `midi-mine` `corpus-db` `snare-law` `strip-fuzz`
     `nukernel` …).
     `npm run test:unit` runs them (concurrently, via `test/run.js`); before that
-    runner existed nothing globbed them at all and 33 gates only ever ran if
+    runner existed nothing globbed them at all and gates only ever ran if
     somebody named the file.
-  - `test/browser/` (41) + `test/starcruise/` (8) — the gates that launch real
+  - `test/browser/` (46) + `test/starcruise/` (8) — the gates that launch real
     chromium via `test/lib/probe-harness.js`. `npm run test:browser` globs
     exactly these two folders and nothing else. They `goto /index.html` (or
     `test/browser/live-test.html`, the FaustLive harness page) and read the
@@ -575,6 +575,62 @@ docs in `docs/`.
   (`workflows/verify.yml` CI gate, PR template)
 - `docs/HOSTING.md` — the stellate.app hosting plan (droplet + nginx,
   same-origin media, COOP/COEP, R2 growth path)
+
+## nukernel/ — the song-box instrument
+
+A self-contained mobile hardware DAW inside stellate: 45 genres, a miniature
+kernel of its own. Live at test.stellate.app/nukernel/kernel-daw.html; gates at
+`node test/unit/nukernel.test.js` (~95k checks, 15 s) and browser
+`test/browser/nukernel-audio.test.js` + `nukernel-survival.test.js`.
+
+**Architecture (one-way):** classic UMD data tier — `kernel.js` (algebra) →
+`genres.js` (45 anchors with per-genre instruments) → `fields.js` (THE REGISTRY:
+every control defined once, validation/defaults/palette rows/dispatch derive from
+it) → `song.js` (pure loader, typed errors, clamping) → `instruments.js` →
+`compose.js` → `presets.js`. ES modules for UI/audio: `ui/deps.js` →
+state (adoptSong/commit bus, bpm/vol in state) → derive → `audio/` modules
+(graph/assets/voices/mixer/transport/bounce/survival) → UI views → `main.js`.
+Audio never imports a view; transport publishes position.
+
+**Transforms are seven types:** 1–5 from the original kernel plus 6. `g.period` —
+a per-bar operator word (a section speaks in sentences) and 7. `pipes` —
+harmonize/echoCanon/breathe/strum on the rendered stream. Progressions are chord
+OBJECTS (root/quality/inversion/borrow/beats + cadence); `maxHold` makes rests
+real; parts (lead/riff/counter/pad/stab/drone) replace the pad switch; `g.key`
+transposes after registration.
+
+**Mobile survival via offline bounce:** the song is a closed finite loop, so
+`bounce.js` renders it whole on an OfflineAudioContext through the same
+builders/bar-walk as live, keeps it looping muted in a gesture-unlocked `<audio>`
+(WAV-FIRST law, never MediaStreamDestination), and hide/lock is a volume swap at
+matching phase. Degrades to sampled-only, never silent. Channels are per-box
+identity; automation is point lists armed per pass.
+
+**Design language (as of 2026-08-16):** one ROW per section with named cells and
+tap-for-popup menus. Three pages (COMPOSE / ARRANGE / MIX) — compose is the
+pattern editor, arrange is the section rows, mix is the board. No tracker
+interface; menus insert below the row, never scrolling inside themselves. Type
+runs big and chunky; pattern chips are visual thumbnails. Stacked genre layers
+render as indented sub-rows. No tempo-reading control on section surfaces — tempo
+and groove are song facts in the transport. NO headers, NO help keys, NO skeuomorphism
+— flat surfaces, type hierarchy, whitespace, thin rules only where a boundary is real.
+**Verify at the SCORE level**, not by rendering audio: anything a schedule/DOM
+assertion can prove is proven pure-node in seconds.
+
+**Files:** `kernel.js` (125 KB, the algebra), `genres.js` (198 KB, 45 anchors),
+`fields.js` (67 KB, registry), `song.js` (40 KB, loader), `instruments.js` (29 KB),
+`compose.js` (104 KB), `presets.js` (49 KB), `lab.js` (79 KB, workbench),
+`promote-genre.js` (24 KB), `inherit.js` (33 KB), `genealogy.js` (16 KB), `sing.js`
+(22 KB), `hw.css` (10 KB), `kernel-daw.html` (16 KB), `kernel-daw.css` (124 KB),
+`audio/` (bounce/survival/voices/transport/mixer/graph/assets), `ui/` (views), docs
+`GENEALOGY.md` + `INHERITANCE.md`.
+
+**Gates and this box:** the 45-genre `nukernel-audio` sweep takes ~20 minutes on
+a sustained-idle box; something about this machine's environment reaps long-lived
+chromium under load. Instruments decode on a 60 ms-yield queue, so settle timing
+matters — short probes may read silence that longer settles read as audible. Run
+sweeps only when loadavg < 1 for 2+ minutes; never conclude "silent genre" from
+a fast probe.
 
 ## Deployment
 
