@@ -279,8 +279,20 @@ fader($("vol"), 80);
     }
     lastG = gk;
     buzz(4);
+    // ...AND IT PLAYS, FROM THE TOP (Paul, 2026-08-17: "When I click 'reload'
+    // or 'write' just start playing from the beginning of the song"). Writing a
+    // song and then being told to press play is a machine asking permission to
+    // do the thing you just asked for — and on a reroll it is worse, because the
+    // whole point of ⟳ is the loop write-listen-reroll-reroll-keep, which a
+    // second tap between every pair of steps is exactly what breaks. The click
+    // that got here IS a user gesture, so this is the same unlock the ▶ key
+    // rides (see the play handler at the top of this file); startAt(0) restarts
+    // from bar 0 whether or not it was already playing, and clearing loopOnly
+    // means you hear the ARRANGEMENT and not whichever box was soloed before.
+    setLoopOnly(null);
+    startAt(0);
     status(GENRES[gk].label + " · seed " + seed + " · " +
-      song.song.map(b => b.role).join(" → ") + "  —  press play", true);
+      song.song.map(b => b.role).join(" → "), true);
   };
   const pick = () => {
     const keys = Object.keys(GENRES);
