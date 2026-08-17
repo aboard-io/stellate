@@ -145,11 +145,21 @@
   const midiToFreq = (m) => 440 * Math.pow(2, (m - 69) / 12);
   // fixed keymap the drum sampler zones are cut against (genre-kernel drumKitSpec):
   //   kick/snare  -> one zone root 60, played at midi 60 => rate 1 (natural pitch)
-  //   hat         -> closed zone (root 60, keys 0-65) / open zone (root 72, 66-127)
-  //   tom         -> one zone rooted at DRUM_TOM_ROOT; the hit's tom pitch (Hz) is
-  //                  emitted as freq so the sample repitches (105Hz => rate 1)
+  //   hat         -> pedal (root 48, keys 0-53) / closed (root 60, 54-65) / open
+  //                  (root 72, 66-127). The pedal was added UNDER the closed hat
+  //                  when the overlay widened to the whole extraction, so the two
+  //                  triggers that existed before still land where they landed.
+  //   tom         -> the kit's three toms, split by pitch at the midpoint between
+  //                  neighbours; the hit's tom pitch (Hz) is emitted as freq, so
+  //                  the nearest drum is chosen AND repitched (105Hz => the middle
+  //                  tom at rate 1, unchanged)
   const DRUM_KS_FREQ = midiToFreq(60);      // kick/snare + closed-hat trigger
   const DRUM_HAT_OPEN_FREQ = midiToFreq(72); // open-hat trigger (selects the open zone)
+  // pedal-hat trigger. buildEvents never sets d.pedal — this repo's own score has
+  // no foot lane — so nothing here reaches it; it is the address a caller that DOES
+  // write the lane (nukernel's `f`) uses to get the real recording instead of a
+  // closed hat cut short and turned down.
+  const DRUM_HAT_PEDAL_FREQ = midiToFreq(48);
   const DRUM_TOM_ROOT = 69 + 12 * Math.log2(105 / 440);   // ~44.2: tom base = synth tom default 105Hz
   // velocity->sample-gain calibration: press mixes at (u.lvl)*(sets.gain)*sampler
   // GAIN(1.35); real kit samples peak near full scale, so this lands a sampled
@@ -2153,16 +2163,19 @@
       // SAMPLED DRUM: the voice unit carries a native sampler (a genre's drums.kit).
       // Emit the hit as a one-shot for the shared sampler path (press/stream read
       // sets.freq/gain exactly like a pitched sampler note): fixed pitch for
-      // kick/snare (rate 1), closed/open zone select for hats, real repitch for
-      // toms (d.pitch Hz). Hold: kick/snare/tom play their FULL sample (body +
-      // natural decay, release-declicked at the end); hats use the notated dur so
+      // kick/snare (rate 1), pedal/closed/open zone select for hats, nearest-drum
+      // select AND repitch for toms (d.pitch Hz — the kit has three of them now,
+      // so a fill lands on the drum it asked for). Hold: kick/snare/tom play their
+      // FULL sample — the LONGEST of the three toms, so a floor tom is not cut off
+      // at the middle tom's length — body + natural decay, release-declicked at the
+      // end; hats use the notated dur so
       // closed stays tight and open rings only as long as the pattern asks. amp ->
       // sample gain (velocity), calibrated by DRUM_SAMP_GAIN. Ping-pong (d.pp) is
       // not sent on sampled drums (the sampler mix has no pp bus).
       if (u.sampler) {
         let freq, durSec;
         if (d.drum === "tom") { freq = clamp(d.pitch || 105, 40, 400); }
-        else if (d.drum === "hat") { freq = d.open ? DRUM_HAT_OPEN_FREQ : DRUM_KS_FREQ; }
+        else if (d.drum === "hat") { freq = d.open ? DRUM_HAT_OPEN_FREQ : d.pedal ? DRUM_HAT_PEDAL_FREQ : DRUM_KS_FREQ; }
         else if (d.drum === "perc") { freq = midiToFreq(d.note || 60); }   // GM-note zone select (natural pitch)
         else { freq = DRUM_KS_FREQ; }   // kick/snare/clap/rim/ride/crash: root-60 zone, rate 1
         if (d.drum === "hat") durSec = Math.max(0.02, d.dur * spb);

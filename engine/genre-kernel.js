@@ -349,23 +349,117 @@
   // opts in with `drums:{kit:"acoustic",…}` and its kick/snare/hat/tom voices play
   // the real one-shots (drumKitSpec below -> instruments.drums.<x>Sampler ->
   // faust/state-engine drumSamp). Electronic-identity genres (techno/trap/…) keep
-  // their synth kicks — 808/909 ARE those genres. Only kick/snare/hatClosed/
-  // hatOpen/tomMid are wired (the engine's four drum voices); the other extracted
-  // hits (rim/clap/crash/ride) ride the manifest for future use. `len` = sample
-  // frames at sr (44100); the tom repitches from a 105Hz base per hit.
+  // their synth kicks — 808/909 ARE those genres. `len` = sample frames at sr
+  // (44100); a tom hit carries a pitch in Hz and repitches from a 105Hz base.
+  //
+  // A KIT IS ONE KIT. The extraction has carried TWELVE hits per kit since the day
+  // it was cut, and this table named nine of them: the pedal hat and the outer two
+  // toms were on disk, in all six kits, unreachable. So the tom lane repitched the
+  // MIDDLE tom across the whole range of a fill, and a pedal hat could only ever be
+  // a closed hat made short and quiet. That was survivable while nothing else
+  // played these directories — and then nukernel started playing them, straight off
+  // disk, and named the real files. One kit, two sounds, depending on which path
+  // you were listening to. Told about the gap, Paul: "Widen the overlay."
+  // So the three rows are here now, and NO new playback machinery came with them:
+  // both lanes are addressed the way the hat was already addressed, by the trigger
+  // note picking a zone.
+  //   tomLo/tomHi  `st` is the tom's measured interval from the MIDDLE tom of its
+  //                own kit — yin over the recorded body and the spectral peak of
+  //                the head, averaged, rounded to a tenth of a semitone. Relative
+  //                and not absolute ON PURPOSE: the mid tom keeps DRUM_TOM_ROOT
+  //                exactly, so every render that only ever hit the middle of the
+  //                kit is unchanged, and a fill asking for 66 Hz now draws the
+  //                floor tom sped up under three semitones instead of the mid tom
+  //                dragged down eight.
+  //   hatPedal     one shared recording across all six kits (GM note 44), sitting
+  //                UNDER the closed hat in the keymap. buildEvents has no pedal
+  //                lane, so nothing in this repo's own score reaches it — it is
+  //                what lets a caller that CAN write the lane name the recording
+  //                instead of a quiet short closed hat.
   const DRUMKITS = {
     // clap/rim/crash/ride ARE extracted per kit (faust/sf2.js drumkit; kit.json)
     // and shared byte-for-byte across the six presets (GM notes 39/37/49/51 aren't
     // kit-specific) — wired here so the per-genre PERC LANE can trigger the REAL
     // recorded hits.
-    acoustic:   { label:"Acoustic Kit (FluidR3 Standard, MIT)",   dir:"acoustic",   sr:44100, hits:{ kick:{file:"kick.wav",len:12462}, snare:{file:"snare.wav",len:20640}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, tom:{file:"tomMid.wav",len:44544}, clap:{file:"clap.wav",len:16896}, rim:{file:"rim.wav",len:64000}, crash:{file:"crash.wav",len:375830}, ride:{file:"ride.wav",len:113920} } },
-    room:       { label:"Room Kit (FluidR3 Room, MIT)",           dir:"room",       sr:44100, hits:{ kick:{file:"kick.wav",len:19950}, snare:{file:"snare.wav",len:20640}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, tom:{file:"tomMid.wav",len:44544}, clap:{file:"clap.wav",len:16896}, rim:{file:"rim.wav",len:64000}, crash:{file:"crash.wav",len:375830}, ride:{file:"ride.wav",len:113920} } },
-    power:      { label:"Power Kit (FluidR3 Power, MIT)",          dir:"power",      sr:44100, hits:{ kick:{file:"kick.wav",len:36224}, snare:{file:"snare.wav",len:56110}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, tom:{file:"tomMid.wav",len:45343}, clap:{file:"clap.wav",len:16896}, rim:{file:"rim.wav",len:64000}, crash:{file:"crash.wav",len:375830}, ride:{file:"ride.wav",len:113920} } },
-    electronic: { label:"Electronic Kit (FluidR3 Electronic, MIT)",dir:"electronic", sr:44100, hits:{ kick:{file:"kick.wav",len:13712}, snare:{file:"snare.wav",len:30976}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, tom:{file:"tomMid.wav",len:37351}, clap:{file:"clap.wav",len:16896}, rim:{file:"rim.wav",len:64000}, crash:{file:"crash.wav",len:375830}, ride:{file:"ride.wav",len:113920} } },
-    jazz:       { label:"Jazz Kit (FluidR3 Jazz, MIT)",            dir:"jazz",       sr:44100, hits:{ kick:{file:"kick.wav",len:16768}, snare:{file:"snare.wav",len:15488}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, tom:{file:"tomMid.wav",len:44544}, clap:{file:"clap.wav",len:16896}, rim:{file:"rim.wav",len:64000}, crash:{file:"crash.wav",len:375830}, ride:{file:"ride.wav",len:113920} } },
-    brush:      { label:"Brush Kit (FluidR3 Brush, MIT)",          dir:"brush",      sr:44100, hits:{ kick:{file:"kick.wav",len:16768}, snare:{file:"snare.wav",len:14900}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, tom:{file:"tomMid.wav",len:44544}, clap:{file:"clap.wav",len:16896}, rim:{file:"rim.wav",len:64000}, crash:{file:"crash.wav",len:375830}, ride:{file:"ride.wav",len:113920} } },
+    acoustic:   { label:"Acoustic Kit (FluidR3 Standard, MIT)",   dir:"acoustic",   sr:44100, hits:{ kick:{file:"kick.wav",len:12462}, snare:{file:"snare.wav",len:20640}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, hatPedal:{file:"hatPedal.wav",len:22528}, tom:{file:"tomMid.wav",len:44544}, tomLo:{file:"tomLo.wav",len:43776,st:-10.8}, tomHi:{file:"tomHi.wav",len:44160,st:2.8}, clap:{file:"clap.wav",len:16896}, rim:{file:"rim.wav",len:64000}, crash:{file:"crash.wav",len:375830}, ride:{file:"ride.wav",len:113920} } },
+    room:       { label:"Room Kit (FluidR3 Room, MIT)",           dir:"room",       sr:44100, hits:{ kick:{file:"kick.wav",len:19950}, snare:{file:"snare.wav",len:20640}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, hatPedal:{file:"hatPedal.wav",len:22528}, tom:{file:"tomMid.wav",len:44544}, tomLo:{file:"tomLo.wav",len:43776,st:-10.8}, tomHi:{file:"tomHi.wav",len:44160,st:2.8}, clap:{file:"clap.wav",len:16896}, rim:{file:"rim.wav",len:64000}, crash:{file:"crash.wav",len:375830}, ride:{file:"ride.wav",len:113920} } },
+    power:      { label:"Power Kit (FluidR3 Power, MIT)",          dir:"power",      sr:44100, hits:{ kick:{file:"kick.wav",len:36224}, snare:{file:"snare.wav",len:56110}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, hatPedal:{file:"hatPedal.wav",len:22528}, tom:{file:"tomMid.wav",len:45343}, tomLo:{file:"tomLo.wav",len:74596,st:-8.2}, tomHi:{file:"tomHi.wav",len:44273,st:1.9}, clap:{file:"clap.wav",len:16896}, rim:{file:"rim.wav",len:64000}, crash:{file:"crash.wav",len:375830}, ride:{file:"ride.wav",len:113920} } },
+    // ELECTRONIC HAS ONE TOM. Its three GM notes are the same recording byte for
+    // byte in the extraction, so the table names that file three times and the
+    // spec builder rides it in once — the lanes are there, the decode is not
+    // tripled, and this kit's toms come out exactly as they always have.
+    electronic: { label:"Electronic Kit (FluidR3 Electronic, MIT)",dir:"electronic", sr:44100, hits:{ kick:{file:"kick.wav",len:13712}, snare:{file:"snare.wav",len:30976}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, hatPedal:{file:"hatPedal.wav",len:22528}, tom:{file:"tomMid.wav",len:37351}, tomLo:{file:"tomMid.wav",len:37351,st:0}, tomHi:{file:"tomMid.wav",len:37351,st:0}, clap:{file:"clap.wav",len:16896}, rim:{file:"rim.wav",len:64000}, crash:{file:"crash.wav",len:375830}, ride:{file:"ride.wav",len:113920} } },
+    jazz:       { label:"Jazz Kit (FluidR3 Jazz, MIT)",            dir:"jazz",       sr:44100, hits:{ kick:{file:"kick.wav",len:16768}, snare:{file:"snare.wav",len:15488}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, hatPedal:{file:"hatPedal.wav",len:22528}, tom:{file:"tomMid.wav",len:44544}, tomLo:{file:"tomLo.wav",len:43776,st:-10.8}, tomHi:{file:"tomHi.wav",len:44160,st:2.8}, clap:{file:"clap.wav",len:16896}, rim:{file:"rim.wav",len:64000}, crash:{file:"crash.wav",len:375830}, ride:{file:"ride.wav",len:113920} } },
+    brush:      { label:"Brush Kit (FluidR3 Brush, MIT)",          dir:"brush",      sr:44100, hits:{ kick:{file:"kick.wav",len:16768}, snare:{file:"snare.wav",len:14900}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, hatPedal:{file:"hatPedal.wav",len:22528}, tom:{file:"tomMid.wav",len:44544}, tomLo:{file:"tomLo.wav",len:43776,st:-10.8}, tomHi:{file:"tomHi.wav",len:44160,st:2.8}, clap:{file:"clap.wav",len:16896}, rim:{file:"rim.wav",len:64000}, crash:{file:"crash.wav",len:375830}, ride:{file:"ride.wav",len:113920} } },
   };
   const DRUM_TOM_ROOT = 69 + 12*Math.log2(105/440);   // must match faust/state-engine DRUM_TOM_ROOT (105Hz => rate 1)
+
+  // SAMPLED DRUM KIT resolution (drums.kit -> per-drum native sampler specs on
+  // instruments.drums; faust/state-engine drumSamp overlays them onto the
+  // kick/snare/hat/tom voices). Each hit is one UNLOOPED one-shot zone. The wavs
+  // ride foundSources (vol 0) like instrument zones. Returns the drums-instrument
+  // overlay {kickSampler,snareSampler,hatSampler,tomSampler,…} + the foundSources
+  // to inject + the tom pitches a caller can ask for by name, or null (unknown/
+  // absent kit -> synth kit unchanged).
+  //
+  // THERE IS ONE OF THESE. There used to be two — this builder inlined in toState
+  // and a comment-flagged mirror of it beside applySampledOnly, "kept separate so
+  // toState stays byte-exact" — which meant widening the kit meant widening it
+  // twice and hoping. A kit that is one kit cannot be described by two functions.
+  const drumKitSpec=(name)=>{
+    const K=DRUMKITS[name]; if(!K) return null;
+    const H=K.hits, srcs=[], idOf={};
+    // ONE SOURCE PER FILE. electronic names its single tom recording three times
+    // (see the table), and three foundSources of the same bytes would be three
+    // decodes and three cache entries for one drum.
+    const src=(h)=>{ const f=H[h].file; if(idOf[f]) return idOf[f];
+      const id="drum_"+name+"_"+h; srcs.push({id, file:f}); return (idOf[f]=id); };
+    // The nine hits that were always here register FIRST, in the order they always
+    // did: a source's table number is its index in the state's foundSources, so
+    // the three widened rows ride in AFTER them and no existing source renumbers.
+    for(const h of ["kick","snare","hatClosed","hatOpen","tom","clap","rim","ride","crash"]) if(H[h]) src(h);
+    const overlay={};
+    if(H.kick)  overlay.kickSampler ={ id:"drum_"+name+"_kick",  sr:K.sr, oneShotSec:H.kick.len/K.sr,  zones:[{srcId:src("kick"),  root:60, lo:0, hi:127, loop:0}] };
+    if(H.snare) overlay.snareSampler={ id:"drum_"+name+"_snare", sr:K.sr, oneShotSec:H.snare.len/K.sr, zones:[{srcId:src("snare"), root:60, lo:0, hi:127, loop:0}] };
+    // HAT: closed / open / pedal, picked by the trigger note. The pedal sits UNDER
+    // the closed hat rather than displacing it, so the closed trigger (midi 60) and
+    // the open one (72) land exactly where they always did.
+    if(H.hatClosed&&H.hatOpen){
+      const zones=[{srcId:src("hatClosed"), root:60, lo:H.hatPedal?54:0, hi:65, loop:0},
+                   {srcId:src("hatOpen"),   root:72, lo:66, hi:127, loop:0}];
+      if(H.hatPedal) zones.unshift({srcId:src("hatPedal"), root:48, lo:0, hi:53, loop:0});
+      overlay.hatSampler={ id:"drum_"+name+"_hat", sr:K.sr, oneShotSec:H.hatOpen.len/K.sr, zones };
+    }
+    // TOM: the three drums of the kit, split by pitch at the MIDPOINT between
+    // neighbours, so a fill asking for a pitch takes the drum it is nearest and
+    // repitches from there. The middle tom keeps DRUM_TOM_ROOT (105Hz => rate 1)
+    // whatever the neighbours measure; the gate is the longest of the three, so a
+    // floor tom is not cut off at the mid tom's length.
+    if(H.tom){
+      const LO=H.tomLo, HI=H.tomHi;
+      const stLo=LO?(LO.st||0):0, stHi=HI?(HI.st||0):0;
+      const cutLo=DRUM_TOM_ROOT+stLo/2, cutHi=DRUM_TOM_ROOT+stHi/2;
+      const zones=[];
+      if(LO) zones.push({srcId:src("tomLo"), root:DRUM_TOM_ROOT+stLo, lo:0, hi:cutLo, loop:0});
+      zones.push({srcId:src("tom"), root:DRUM_TOM_ROOT, lo:LO?cutLo:0, hi:HI?cutHi:127, loop:0});
+      if(HI) zones.push({srcId:src("tomHi"), root:DRUM_TOM_ROOT+stHi, lo:cutHi, hi:127, loop:0});
+      const len=Math.max(H.tom.len, LO?LO.len:0, HI?HI.len:0);
+      overlay.tomSampler={ id:"drum_"+name+"_tom", sr:K.sr, oneShotSec:len/K.sr, zones };
+    }
+    // perc-lane wiring: the real recorded clap/rim/ride/crash (fixed
+    // pitch, one zone each). Fed by state.perc lanes; synth fallback in state-engine.
+    for(const h of ["clap","rim","ride","crash"]) if(H[h])
+      overlay[h+"Sampler"]={ id:"drum_"+name+"_"+h, sr:K.sr, oneShotSec:H[h].len/K.sr, zones:[{srcId:src(h), root:60, lo:0, hi:127, loop:0}] };
+    // THE PITCH OF EACH TOM, in Hz, so a caller that writes three tom LANES rather
+    // than a pitch curve can ask for the drum by name and get the recording at its
+    // own natural rate. Kit-dependent by nature (a power floor tom is not an
+    // acoustic one), which is why it travels with the spec instead of being
+    // guessed at the far end.
+    const hz=(h,s)=>H[h] ? 105*Math.pow(2,(s||0)/12) : 0;
+    return { overlay, srcs, dir:K.dir, label:K.label,
+      tomPitch:{ tomLo:hz("tomLo",H.tomLo&&H.tomLo.st), tom:hz("tom",0), tomHi:hz("tomHi",H.tomHi&&H.tomHi.st) } };
+  };
+
   // ---------- SHARED GM PERCUSSION BANK (the "million elements") ----------
   // The wide GM bank-128 percussion map beyond the kit backbone: hand percussion
   // (congas/bongos), latin (timbale/agogo/cowbell/claves/guiro), shakers
@@ -2127,34 +2221,6 @@
       if(SF){ const v=SF.voiceFor(id,role); return { model:v.voice, ...v.params, sampler:null, dx7:v.voice==="dx7"?v.dx7:null }; }
       return { model:"sampler", sampler:samplerSpec(id) };
     };
-    // SAMPLED DRUM KIT resolution (drums.kit -> per-drum native sampler specs on
-    // instruments.drums; faust/state-engine drumSamp overlays them onto the
-    // kick/snare/hat/tom voices). Each hit is one UNLOOPED one-shot zone; the hat
-    // carries closed+open zones selected by trigger freq (see state-engine). The
-    // wavs ride foundSources (vol 0) like instrument zones. Returns the drums-
-    // instrument overlay {kickSampler,snareSampler,hatSampler,tomSampler} + the
-    // foundSources to inject, or null (unknown/absent kit -> synth kit unchanged).
-    const drumKitSpec=(name)=>{
-      const K=DRUMKITS[name]; if(!K) return null;
-      const H=K.hits, srcs=[];
-      const one=(hit,zones)=>{
-        const push=(h)=>{ if(H[h]) srcs.push({id:"drum_"+name+"_"+h, file:H[h].file}); };
-        if(hit==="hat"){ push("hatClosed"); push("hatOpen"); } else push(hit==="tom"?"tom":hit);
-        return zones;
-      };
-      const overlay={};
-      if(H.kick)  overlay.kickSampler ={ id:"drum_"+name+"_kick",  sr:K.sr, oneShotSec:H.kick.len/K.sr,  zones: one("kick", [{srcId:"drum_"+name+"_kick",  root:60, lo:0, hi:127, loop:0}]) };
-      if(H.snare) overlay.snareSampler={ id:"drum_"+name+"_snare", sr:K.sr, oneShotSec:H.snare.len/K.sr, zones: one("snare",[{srcId:"drum_"+name+"_snare", root:60, lo:0, hi:127, loop:0}]) };
-      if(H.hatClosed&&H.hatOpen) overlay.hatSampler={ id:"drum_"+name+"_hat", sr:K.sr, oneShotSec:H.hatOpen.len/K.sr,
-        zones: one("hat", [{srcId:"drum_"+name+"_hatClosed", root:60, lo:0, hi:65, loop:0},
-                           {srcId:"drum_"+name+"_hatOpen",   root:72, lo:66, hi:127, loop:0}]) };
-      if(H.tom)   overlay.tomSampler  ={ id:"drum_"+name+"_tom",   sr:K.sr, oneShotSec:H.tom.len/K.sr,   zones: one("tom", [{srcId:"drum_"+name+"_tom", root:DRUM_TOM_ROOT, lo:0, hi:127, loop:0}]) };
-      // perc-lane wiring: the real recorded clap/rim/ride/crash (fixed
-      // pitch, one zone each). Fed by state.perc lanes; synth fallback in state-engine.
-      for(const h of ["clap","rim","ride","crash"]) if(H[h])
-        overlay[h+"Sampler"]={ id:"drum_"+name+"_"+h, sr:K.sr, oneShotSec:H[h].len/K.sr, zones: one(h, [{srcId:"drum_"+name+"_"+h, root:60, lo:0, hi:127, loop:0}]) };
-      return { overlay, srcs, dir:K.dir, label:K.label };
-    };
     // the shared GM perc bank -> instruments.drums.percSampler (multi-zone: each
     // element at its GM note, natural pitch). Built with ONLY the elements the
     // genre's lanes actually play (percBankElements) so a genre decodes/injects
@@ -2646,23 +2712,6 @@
     return { id, sr:S.sr, zones:S.zones.map((z,i)=>({srcId:zoneSrcId(S.base,id,i), root:z.root, lo:z.lo, hi:z.hi,
       vlo:z.vlo, vhi:z.vhi, loop:!!z.loop, loopStart:z.ls, loopEnd:z.le, len:z.len, sr:S.sr })) };
   };
-  // mirrors toState's inner drumKitSpec (kept separate so toState stays byte-exact)
-  const _sampledOnlyKit=(name)=>{
-    const K=DRUMKITS[name]; if(!K) return null;
-    const H=K.hits, srcs=[];
-    const one=(hit,zones)=>{ const push=(h)=>{ if(H[h]) srcs.push({id:"drum_"+name+"_"+h, file:H[h].file}); };
-      if(hit==="hat"){ push("hatClosed"); push("hatOpen"); } else push(hit==="tom"?"tom":hit); return zones; };
-    const overlay={};
-    if(H.kick)  overlay.kickSampler ={ id:"drum_"+name+"_kick",  sr:K.sr, oneShotSec:H.kick.len/K.sr,  zones: one("kick", [{srcId:"drum_"+name+"_kick",  root:60, lo:0, hi:127, loop:0}]) };
-    if(H.snare) overlay.snareSampler={ id:"drum_"+name+"_snare", sr:K.sr, oneShotSec:H.snare.len/K.sr, zones: one("snare",[{srcId:"drum_"+name+"_snare", root:60, lo:0, hi:127, loop:0}]) };
-    if(H.hatClosed&&H.hatOpen) overlay.hatSampler={ id:"drum_"+name+"_hat", sr:K.sr, oneShotSec:H.hatOpen.len/K.sr,
-      zones: one("hat", [{srcId:"drum_"+name+"_hatClosed", root:60, lo:0, hi:65, loop:0},
-                         {srcId:"drum_"+name+"_hatOpen",   root:72, lo:66, hi:127, loop:0}]) };
-    if(H.tom)   overlay.tomSampler  ={ id:"drum_"+name+"_tom",   sr:K.sr, oneShotSec:H.tom.len/K.sr,   zones: one("tom", [{srcId:"drum_"+name+"_tom", root:DRUM_TOM_ROOT, lo:0, hi:127, loop:0}]) };
-    for(const h of ["clap","rim","ride","crash"]) if(H[h])
-      overlay[h+"Sampler"]={ id:"drum_"+name+"_"+h, sr:K.sr, oneShotSec:H[h].len/K.sr, zones: one(h, [{srcId:"drum_"+name+"_"+h, root:60, lo:0, hi:127, loop:0}]) };
-    return { overlay, srcs, dir:K.dir, label:K.label };
-  };
   function applySampledOnly(state, seed){
     if(!state || (state.sampledOnly && state.samplerLib)) return state;   // idempotent
     seed = seed!=null ? seed : (state.seed!=null ? state.seed : 1);
@@ -2687,7 +2736,7 @@
     const D=state.instruments&&state.instruments.drums;
     if(D && !D.kickSampler && !activeSynthFont()){
       const kits=Object.keys(DRUMKITS);
-      const spec=_sampledOnlyKit(kits[(((seed>>>0)*2654435761)>>>0)%kits.length]);
+      const spec=drumKitSpec(kits[(((seed>>>0)*2654435761)>>>0)%kits.length]);
       if(spec){ Object.assign(D, spec.overlay);
         for(const s of spec.srcs){ if(have.has(s.id)) continue; have.add(s.id);
           state.foundSources.push({id:s.id,label:spec.label,url:"",samplePath:"found/samples/drums/"+spec.dir+"/"+s.file,vol:0,pitch:1,stretch:0.5,cutoff:18000}); } }
@@ -2699,10 +2748,10 @@
   // when a genre carries none, which is right for a genre that never named one
   // and wrong for a caller that did: nukernel's boxes name their kit ("tr909",
   // "jazz", "room") and want THAT kit's overlay, not a hashed one. Exposing the
-  // spec builder (the same `_sampledOnlyKit` applySampledOnly already calls) is
-  // additive — no existing caller, no behaviour moved, nothing the matrix reads.
+  // spec builder (the one every path in here now calls) is additive — nothing the
+  // matrix reads.
   const api={ GENRES, SOURCES, SAMPLES, SAMPLERS, SOURCE_POOLS, expandPools, DX7_PATCHES, FORM_NAMES:Object.keys(FORMS), FORM_ENTRY, PERC_STYLES, PERC_STYLE_GENRES, PERC_ELEMENTS, resolve, resolveMulti, track, blend, mix, playlist, journey, applySampledOnly, deriveMind, registerFont, setFont, activeFont, fontList, instrFamily,
-    DRUMKIT_NAMES:Object.keys(DRUMKITS), drumKitSpec:_sampledOnlyKit };
+    DRUMKIT_NAMES:Object.keys(DRUMKITS), drumKitSpec };
   if(isNode) module.exports=api; else root.GenreKernel=api;
 
 })(typeof window!=="undefined"?window:globalThis);

@@ -68,13 +68,27 @@ export const drumAmp = (vel, acc) => clamp((DRUM_AMP_FLOOR + DRUM_AMP_SPAN * cla
 // ---- the kit, lane by lane -------------------------------------------------
 // nukernel writes twelve lanes (kernel.js DRUM_LANES); the parent resolves
 // nine drum UNITS (kick/snare/hat/tom always, and clap/rim/ride/crash/perc
-// only when `state.perc` is set — see state-engine voiceUnits). The two
-// SUBSTITUTIONS are named here rather than hidden:
-//   f  pedal hat -> the CLOSED hat, quieter and shorter. The parent's hat unit
-//      is one voice with a closed and an open zone; there is no third.
-//   t/m/l  three toms -> the parent's ONE tom unit, repitched. That is exactly
-//      how the parent plays its own tom fills (mapEvents sends d.pitch in Hz
-//      against a 105 Hz root), so a tom sweep still sweeps.
+// only when `state.perc` is set — see state-engine voiceUnits).
+//
+// THE SUBSTITUTIONS ARE GONE. There were two, and they were the last place the
+// page and the tape played different drums for the same kit: `f` was a closed
+// hat made short and quiet because the parent's hat had no third zone, and
+// t/m/l were the middle tom repitched across the whole range because the
+// parent's kit named one tom. Meanwhile this page, loading the same directory
+// off disk, played hatPedal.wav and tomHi.wav and tomLo.wav — the real
+// recordings, sitting there, that the record could not name. So the parent's
+// DRUMKITS overlay widened to the whole extraction (twelve hits, not nine) and
+// these lanes now ASK FOR THE FILE:
+//   f      `pedal` selects the pedal zone, which sits under the closed hat in
+//          the kit's keymap. A drum MACHINE has no pedal hat and none is
+//          invented: the flag is inert without a sampler and `f` is a closed
+//          hat on a 909, which is what a 909 is.
+//   t/m/l  the tom lanes ask for the drum by NAME (`tom`), and toEngine below
+//          turns that into the pitch of that kit's own drum, read off the kit
+//          spec — a power floor tom and an acoustic one are not the same pitch,
+//          so the number cannot live in this table. The `pitch` here is the
+//          fallback for a kit that has no recordings to name (the machines, and
+//          the stand-in voices), where a repitched membrane is the whole point.
 export const LANE = {
   k: { unit: "kick",  dur: 0.30 },
   s: { unit: "snare", dur: 0.25 },
@@ -82,12 +96,12 @@ export const LANE = {
   c: { unit: "clap",  dur: 0.25, perc: true },
   h: { unit: "hat",   dur: 0.10, open: false },
   o: { unit: "hat",   dur: 0.45, open: true },
-  f: { unit: "hat",   dur: 0.09, open: false, gain: 0.62 },   // the pedal substitution
+  f: { unit: "hat",   dur: 0.09, open: false, pedal: true },
   r: { unit: "ride",  dur: 0.40, perc: true },
   x: { unit: "crash", dur: 1.40, perc: true },
-  t: { unit: "tom",   dur: 0.28, pitch: 132 },
-  m: { unit: "tom",   dur: 0.28, pitch: 105 },                // 105 Hz = the parent's tom root
-  l: { unit: "tom",   dur: 0.32, pitch: 88 },
+  t: { unit: "tom",   dur: 0.28, pitch: 132, tom: "tomHi" },
+  m: { unit: "tom",   dur: 0.28, pitch: 105, tom: "tom" },    // 105 Hz = the parent's tom root
+  l: { unit: "tom",   dur: 0.32, pitch: 88,  tom: "tomLo" },
 };
 
 // ---- the kit, as a whole ---------------------------------------------------
@@ -374,7 +388,13 @@ export function toEngine(plan, deps) {
         const d = { drum: L.unit, beat, dur: L.dur,
           amp: drumAmp(e.vel, e.acc) * (L.gain || 1) };
         if (L.open != null) d.open = L.open;
-        if (L.pitch) d.pitch = L.pitch;
+        if (L.pedal) d.pedal = 1;
+        // THE TOM'S PITCH IS THE KIT'S TOM'S PITCH. Asking for a flat 88 Hz would
+        // draw the floor tom on one kit and the middle one on another, and would
+        // play whichever it drew at somebody else's pitch — so a recorded kit
+        // answers with its own drum, from the same table the page loads.
+        if (L.pitch) d.pitch = (kitSpec && L.tom && kitSpec.tomPitch
+          && kitSpec.tomPitch[L.tom]) || L.pitch;
         drums.push(d);
       } else if (e.kind === "sing") {
         unrouted.push({ what: "sing", why: "the sung line is nukernel's espeak organ, not a parent voice" });
