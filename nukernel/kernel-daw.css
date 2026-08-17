@@ -1256,22 +1256,22 @@ h1 em{font-style:normal;color:var(--ink)}
 .pchip.role.on{background:var(--accent);border-color:var(--accent);color:var(--on-ink)}
 
 /* ---- THE BOARD ----
-   The MIX page, flat (ui/mixtbl.js; Paul, 2026-08-16: "Mix is too
-   skeuomorphic. Just give everything except master level sliders a horizontal
-   slider type with inner labeled indicators… Use color. Make the effects
-   busses into special channel strips. Label the channels at the top"). This
-   is the deliberate reversal of the SSL 4000 dress: the moulded caps, the
-   colorway plastic, the milled slots and the rotary rack are all gone.
+   The MIX page as THREE FOLDS — tracks, buses, main (ui/mixtbl.js; Paul,
+   2026-08-17: "Keep everything 100% width including master volume and
+   readout. Everything is horizontal now. Instead of flowing bunches of
+   elements together, we need a tappable hierarchical set of sections.
+   Compress all the elements into single bars which show their volume
+   graphically, like a graphic EQ.").
 
-   ONE CONTROL, .mbar: a flat track, a FILL that is the value, and the two
-   words printed INSIDE it — name at the left, number at the right. There is
-   no legend row anywhere on this page because every bar says its own name.
-   Level, sends, pan, the EQ bands, the returns' trims and the master's seven
-   stages are that one object at different scales. The one exception Paul
-   named is the master LEVEL, which stays vertical beside its meter.
+   NOTHING IS A COLUMN AND NOTHING IS A CARD. Every strip is a full-width
+   LINE: one bar whose fill is its level, the instrument's name printed at the
+   left of it, the trim at the right, and — on a track — cut and solo beside
+   it. Tapping the bar unfolds that channel underneath; one is open at a time.
+   The board is therefore about eight lines tall at rest at every width, and
+   there is no second layout to fork.
 
    COLOR IS THE WAYFINDING. One hue per control FAMILY, declared once on the
-   board and spent through data-fam, so a strip reads as bands of colour and
+   board and spent through data-fam, so a fold reads as bands of colour and
    you find the send you want before you have read a word. A hue never means
    two things here.
 
@@ -1279,68 +1279,75 @@ h1 em{font-style:normal;color:var(--ink)}
    the genre's wetness, the enum default); a bright one is a value YOU set.
    That is the same dim-vs-lit law the chips have always spoken.
 
-   STRIPS ARE CARDS IN A GRID, not columns in a sideways scroller: one column
-   on a phone (full-width bars, nothing shrinks), as many as fit on a desk.
-   The board therefore never scrolls sideways and the page never forks.
-
    .mrow / .msec / .mval / .mk-* / .mchip / .eqk / .fcap keep their names and
-   the #m-* / #b-* ids survive the rack's absorption, because four browser
-   gates drive this surface through exactly those hooks — and only CHANNEL
-   strips carry .mrow, since the drums gate counts them against the roster. */
+   the #m-* / #b-* ids survive, because four browser gates drive this surface
+   through exactly those hooks — and only CHANNEL strips carry .mrow, since
+   the drums gate counts them against the roster. */
 .mixtbl.board{
-  display:flex;flex-direction:column;gap:var(--sp-3);
+  display:flex;flex-direction:column;gap:var(--sp-3);width:100%;
   max-height:none;overflow:visible;padding:var(--sp-2) 0 var(--sp-3);
   /* THE FAMILY HUES. Mid-tones from the meaning palette, so they read on both
      faces; re-point them here and the whole board changes key at once. */
   --mx-level:var(--accent);            /* how loud */
   --mx-pan:var(--st-auto);             /* where */
-  --mx-send:var(--st-solo);            /* how much goes to a shared room */
-  --mx-fx:var(--ink-2);                /* what is inserted (no hue: it is a list) */
+  --mx-send:var(--st-solo);            /* how much goes to a bus */
+  --mx-fx:var(--ink-2);                /* the group insert (no hue: it is a list) */
   --mx-eq:var(--st-play);              /* tone */
   --mx-bus:var(--v3);                  /* a return, not a voice */
   --mx-master:var(--st-arm);           /* the sum */
 }
-.strips{display:grid;gap:var(--sp-3) var(--sp-4);align-items:stretch;
-  grid-template-columns:repeat(auto-fill,minmax(232px,1fr));
+/* ---- A GROUP: a bar with strips under it ---- */
+.mgroup{display:flex;flex-direction:column;gap:var(--sp-2);width:100%;
   padding:0 var(--tbl-gut)}
-/* THE RETURN BAY: the buses are strips in the same grammar, past the one rule
-   on this page that marks a real division — everything above feeds everything
-   below it */
-.strips.buses{padding-top:var(--sp-3);border-top:2px solid var(--tbl-rule)}
-.strip{display:flex;flex-direction:column;gap:var(--sp-2);min-width:0;
+.mbar.mghead{min-height:34px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;background:var(--bg-sunk)}
+.mbar.mghead .blab{color:var(--ink)}
+.mgroup.shut .mghead{opacity:.6}
+/* the strips themselves: ONE COLUMN, FULL WIDTH, at every size. The board
+   never scrolls sideways and there is no second grid to keep in step. */
+.strips{display:flex;flex-direction:column;gap:var(--sp-2);width:100%;
+  align-items:stretch}
+.strips[hidden]{display:none}
+.strip{display:flex;flex-direction:column;gap:var(--sp-2);min-width:0;width:100%;
   --hue-strip:var(--accent)}
-/* THE SECTION STRIP: every part bus feeds it, so it wears the accent at its
-   head rather than a heavier frame */
+/* the strip's ONE LINE: the bar takes the room, cut/solo sit at its end */
+.mline{display:flex;align-items:stretch;gap:var(--sp-2);width:100%;min-width:0}
+.mline .fwell,.mline>.mbar{flex:1 1 auto;min-width:0}
+/* what is under the bar, when it is open */
+.mfold{display:flex;flex-direction:column;gap:var(--sp-2);width:100%;
+  padding:var(--sp-2) 0 var(--sp-3) var(--sp-3);
+  border-left:2px solid color-mix(in srgb,var(--hue-strip) 45%,transparent)}
+.mfold[hidden]{display:none}
+.strip.open .mbar.mstrip{outline:2px solid var(--accent);outline-offset:-2px}
+/* THE SECTION STRIP: the box's own group channel, every part bus feeds it, so
+   it wears the accent and never folds away */
 .strip.msec{--hue-strip:var(--accent)}
-.strip.msec .mpn{color:var(--accent-txt)}
 .strip.bstrip{--hue-strip:var(--mx-bus)}
 .strip.bstrip.send{--hue-strip:var(--mx-fx)}
-.strip.mstr{--hue-strip:var(--mx-master);grid-column:1/-1}
-/* a part the desk has silenced — muted, or not the one being soloed — steps
-   back whole; every value stays legible (you are about to un-mute it) */
-.strip.off .mlabel,.strip.off .mvals,.strip.off .fwell,.strip.off .eqrow{opacity:.45}
+.strip.mstr{--hue-strip:var(--mx-master);gap:var(--sp-2)}
+/* A CUT TRACK IS CUT, NOT GREYED ("don't gray out tracks — cut/mute them!").
+   audio/mixer.js holds its gate at zero with every send behind it, so nothing
+   of it reaches the section, the buses or the master; the strip says so with
+   the record hue rather than by fading, because a faded strip reads as
+   "unavailable" and this one is very much available — you are about to switch
+   it back on. */
+.strip.off .mline{border-left:3px solid var(--st-rec);padding-left:var(--sp-2)}
+.strip.off .bfill{background:color-mix(in srgb,var(--st-rec) 14%,transparent)}
+.strip.off .blab,.strip.off .bval{color:var(--ink-3)}
 /* AN IDLE CHAIR — on the song's desk but not in the sounding section (the
-   fixed-roster law, ui/mixtbl.js songRows): the strip stays where it is,
-   parked on its resolved statics, and dims a shade lighter than .off — idle
-   is "waiting", not "silenced", and the two must read differently */
-.strip.idle .mlabel,.strip.idle .mvals,.strip.idle .eqrow,.strip.idle .mms{opacity:.36}
-.strip.idle .fwell{opacity:.52}
-.strip.idle:hover .mlabel,.strip.idle:hover .mvals,.strip.idle:hover .eqrow,
-.strip.idle:hover .mms,.strip.idle:hover .fwell{opacity:.9}
+   fixed-roster law, ui/mixtbl.js songRows): parked on its resolved statics,
+   dimmed a shade. Idle is "waiting", not "silenced", and the two must read
+   differently — which is why only this one dims at all. */
+.strip.idle .mline{opacity:.42}
+.strip.idle:hover .mline{opacity:.9}
 
-/* ---- THE HEAD: the channel says who it is, at the top, in the largest type
-   on the strip ("Label the channels at the top"). The hairline under it is a
-   real boundary — name above, controls below — and on a bus or the master it
-   takes that strip's hue, which is the whole of "visually distinguished". */
+/* ---- THE FOLD'S HEAD: who this chair is and what plays it ---- */
 .mlabel{display:flex;flex-direction:column;gap:2px;min-width:0;
-  padding-bottom:var(--sp-2);border-bottom:1px solid var(--rule)}
-.bstrip .mlabel,.strip.msec .mlabel{
-  border-bottom:2px solid color-mix(in srgb,var(--hue-strip) 60%,transparent)}
+  padding-bottom:var(--sp-1)}
 .mtop{display:flex;align-items:baseline;gap:var(--sp-2);min-width:0}
-.mpn{flex:1 1 auto;min-width:0;font:600 var(--t-lg)/1.15 var(--f-ui);
-  color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mpn{flex:1 1 auto;min-width:0;font:600 var(--t-md)/1.15 var(--f-ui);
+  color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mnum{flex:0 0 auto;font:500 var(--t-xs)/1 var(--f-num);color:var(--ink-3)}
-/* the marker a return wears instead of a voice's number */
 .btag{flex:0 0 auto;font:500 var(--t-xs)/1.4 var(--f-ui);font-style:normal;
   color:var(--ink);padding:2px 8px;border-radius:999px;
   background:color-mix(in srgb,var(--hue-strip) 32%,transparent)}
@@ -1350,24 +1357,25 @@ h1 em{font-style:normal;color:var(--ink)}
    same nameplate line, still a button that unfolds the pool picker — cast
    bright (.set), the genre's own answer dim, the one state language */
 button.mps.minstr{appearance:none;border:0;background:none;margin:0;
-  padding:2px 0;width:100%;text-align:left;cursor:pointer;border-radius:var(--r)}
+  padding:2px 0;width:100%;text-align:left;cursor:pointer;border-radius:var(--r);
+  min-height:32px}
 button.mps.minstr:hover{color:var(--ink)}
 button.mps.minstr.set{color:var(--accent-txt);font-weight:600}
 button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
-.mfeed{font:400 var(--t-xs)/1.35 var(--f-ui);color:var(--ink-3);
+.mfeed{font:400 var(--t-xs)/1.35 var(--f-num);color:var(--ink-3);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mstages{color:var(--accent-txt)}
 
 /* ---- THE BAR ----
    The fill is spelled as two edges, --a and --b, in fractions of the track:
-   unipolar controls run 0 → f, BIPOLAR ones (pan, the EQ bands) run out of
-   the .5 centre, so "flat" is a hairline in the middle and the direction of a
-   cut is visible without reading the number. --f carries the raw fraction
-   beside them (it is what the board gate reads off .fcap).
+   unipolar controls run 0 → f, BIPOLAR ones (pan) run out of the .5 centre,
+   so "flat" is a hairline in the middle and the direction of a move is
+   visible without reading the number. --f carries the raw fraction beside
+   them (it is what the board gate reads off .fcap).
    NO transition: these are repainted per frame off live AudioParams. */
 .mbar{
   position:relative;display:flex;align-items:center;gap:var(--sp-2);
-  width:100%;min-height:36px;padding:0 var(--sp-2);overflow:hidden;
+  width:100%;min-height:36px;padding:0 var(--sp-3);overflow:hidden;
   appearance:none;border:0;border-radius:var(--r);cursor:pointer;
   touch-action:none;text-align:left;
   background:var(--tbl-key);color:var(--ink);
@@ -1399,22 +1407,52 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
 .mbar.set .blab{color:var(--ink)}
 .mbar.set .bval{color:var(--ink)}
 .mbar.open{outline:2px solid var(--accent);outline-offset:-2px}
+/* A REFUSED BUS SEND: the plan dropped this edge because it would close a
+   feedback loop (fields.js busSendPlan). The bar keeps its value and says so
+   with the record hue and a strike — it is not off, it is not allowed. */
+.mbar.refused .bfill{background:color-mix(in srgb,var(--st-rec) 30%,transparent)}
+.mbar.refused .blab{color:var(--st-rec);text-decoration:line-through}
 
-/* ---- the value keys: one bar each, tap opens that key's chip set ---- */
-.mvals{display:flex;flex-direction:column;gap:var(--sp-1)}
+/* ---- the value keys inside a fold: one bar each ---- */
+.mvals{display:flex;flex-direction:column;gap:var(--sp-1);width:100%}
 .mfxc{font-style:normal;font:500 var(--t-xs)/1.4 var(--f-ui);padding:2px 6px;
   border-radius:var(--r);color:var(--ink);max-width:96px;overflow:hidden;
   text-overflow:ellipsis;background:color-mix(in srgb,var(--mx-fx) 30%,transparent)}
 .mfxc.none{background:transparent;color:var(--ink-3);padding:0}
 
-/* ---- the tone bars: three per channel strip, the lo/hi pair per return ---- */
-.eqrow{display:flex;flex-direction:column;gap:var(--sp-1)}
+/* ---- THE EQ CURVE ----
+   "Make a visual EQ with beziers and a bell" (2026-08-17). One plot per
+   strip: the REAL magnitude response of the biquads audio/graph.js builds
+   (ui/mixtbl.js mag, RBJ cookbook), a node on each band, and no numbers at
+   all until a node is under a finger. 160 px tall over ±12 dB is 6.667 px per
+   dB — which is exactly the 0.15 dB/px every other continuous control on this
+   board drags at, so the node tracks the finger and the arithmetic is one. */
+.eqrow.eqplot{position:relative;width:100%;height:160px;border-radius:var(--r);
+  background:var(--bg-sunk);overflow:hidden}
+.eqcurve{position:absolute;inset:0;display:block;width:100%;height:100%}
+.eqzero{stroke:var(--rule-strong);stroke-width:1}
+.eqline{fill:none;stroke:var(--mx-eq);stroke-width:2;
+  vector-effect:non-scaling-stroke}
+.eqfill{fill:color-mix(in srgb,var(--mx-eq) 16%,transparent);stroke:none}
+/* THE NODE. Positioned over the stretched plot rather than inside it, so it is
+   round at every width; the ::before is the touch target the 26px face does
+   not have to grow into. */
+.eqk{position:absolute;appearance:none;padding:0;cursor:ns-resize;
+  left:var(--x,50%);top:var(--y,80px);width:26px;height:26px;margin:-13px 0 0 -13px;
+  border-radius:50%;background:var(--bg-key);border:2px solid var(--mx-eq);
+  touch-action:none}
+.eqk::before{content:"";position:absolute;left:-9px;right:-9px;top:-9px;bottom:-9px}
+.eqk.set{background:var(--mx-eq);border-color:var(--mx-eq)}
+.eqk:hover{border-color:var(--accent)}
+.eqk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.eqtip{position:absolute;left:var(--sp-2);top:var(--sp-2);
+  font:600 var(--t-sm)/1.2 var(--f-num);color:var(--ink);pointer-events:none}
 
 /* ---- CUT and SOLO: the two controls that LATCH rather than take a value,
    so they are the one pair on the page that is not a bar ---- */
-.mms{display:flex;gap:var(--sp-2);margin-top:auto;padding-top:var(--sp-1)}
+.mms{display:flex;gap:var(--sp-1);flex:0 0 auto}
 .mkey{
-  appearance:none;cursor:pointer;flex:1 1 0;min-height:32px;padding:0;
+  appearance:none;cursor:pointer;min-width:52px;min-height:36px;padding:0;
   border:1px solid var(--rule);border-radius:var(--r);background:transparent;
   color:var(--ink-2);font:500 var(--t-sm)/1 var(--f-ui);
 }
@@ -1428,46 +1466,38 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
    over it, and the hairline is unity — a real boundary, so it is a rule. */
 .fwell{display:block}
 .mbar.fslot{min-height:44px;font-weight:600}
+.mbar.mstrip{min-height:46px;font-size:var(--t-md)}
 .fzero{position:absolute;top:3px;bottom:3px;width:1px;pointer-events:none;
   left:calc(var(--f,0)*100%);background:var(--rule-strong)}
 .foff{color:var(--accent-txt)}
 .mbar.fslot .foff.dflt{color:var(--ink-3)}
 
-/* ---- THE MASTER STRIP: full width, because seven stages want the room and
-   because the sum is not one voice among the others. The vertical slider is
-   the exception Paul kept — flat: a track, a fill, a 2px cap. ---- */
-.mbody{display:flex;gap:var(--sp-4);align-items:flex-start}
-/* the meter and the one vertical slider left on the page, under one word:
-   a caption, because this is the single control too narrow to print its own
-   name inside itself */
-.mlevel{flex:0 0 auto;display:grid;gap:var(--sp-1) var(--sp-2);
-  grid-template-columns:14px 48px;grid-template-rows:auto 1fr auto;
-  height:180px}
-.vlab{grid-column:1/-1;font-style:normal;color:var(--ink-2);
-  font:500 var(--t-xs)/1.2 var(--f-ui)}
-.fslot.vslot{position:relative;display:block;padding:0;border:0;
+/* ---- THE MASTER STRIP: everything at 100% width, horizontal. The volume is
+   a bar like every other bar; the meter lies under it at the same width so
+   the two read as one instrument. ---- */
+.mlevel{display:flex;flex-direction:column;gap:var(--sp-1);width:100%}
+.fslot.hslot{position:relative;display:flex;align-items:center;gap:var(--sp-2);
+  width:100%;min-height:48px;padding:0 var(--sp-3);overflow:hidden;
   background:var(--tbl-key);border-radius:var(--r);
-  cursor:ns-resize;touch-action:none}
-.vslot .fcap{position:absolute;left:0;right:0;bottom:0;border-radius:var(--r);
-  height:calc(var(--f,0)*100%);
+  cursor:ew-resize;touch-action:none;font:600 var(--t-md)/1.2 var(--f-ui)}
+.hslot .fcap{position:absolute;left:0;top:0;bottom:0;border-radius:var(--r);
+  width:calc(var(--f,0)*100%);pointer-events:none;
   background:color-mix(in srgb,var(--mx-master) 45%,transparent)}
-.vslot .fcap::after{content:"";position:absolute;left:0;right:0;top:0;height:2px;
+.hslot .fcap::after{content:"";position:absolute;right:0;top:0;bottom:0;width:2px;
   background:var(--mx-master)}
-.mlevel .foff{grid-column:1/-1;text-align:center;
-  font:600 var(--t-md)/1.2 var(--f-num)}
 /* the meter: length is the reading, and the colour says which third of the
    headroom that length is in. The gradient is sized to the FULL track and
-   anchored at the foot, so the same dBFS always paints the same colour. */
-.meter{position:relative;border-radius:var(--r);background:var(--bg-sunk);
-  overflow:hidden}
-.mfill{position:absolute;left:0;right:0;bottom:0;height:calc(var(--f,0)*100%);
+   anchored at the left, so the same dBFS always paints the same colour. */
+.meter{position:relative;height:10px;border-radius:var(--r);
+  background:var(--bg-sunk);overflow:hidden}
+.mfill{position:absolute;left:0;top:0;bottom:0;width:calc(var(--f,0)*100%);
   background-color:var(--st-play);
-  background-image:linear-gradient(0deg,var(--st-play) 0 62%,
+  background-image:linear-gradient(90deg,var(--st-play) 0 62%,
     var(--st-arm) 62% 84%,var(--st-rec) 84% 100%);
-  background-repeat:no-repeat;background-position:bottom;
-  background-size:100% calc(100% / max(var(--f,1),.02))}
-.mgrid{flex:1 1 auto;display:grid;gap:var(--sp-2);
-  grid-template-columns:repeat(auto-fit,minmax(212px,1fr));align-content:start}
+  background-repeat:no-repeat;background-position:left;
+  background-size:calc(100% / max(var(--f,1),.02)) 100%}
+.mgrid{width:100%;display:grid;gap:var(--sp-1);
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));align-content:start}
 
 /* ---- WHAT IS LEFT BELOW THE BOARD ----
    Nothing at all. The EFFECTS RACK is gone: its per-bus knob rows are the
@@ -1494,13 +1524,16 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
   /* the pool picker is twelve families deep: the sheet scrolls inside its
      own glass rather than growing past the viewport */
   max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain;
-  display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:8px;
-  background:
-    linear-gradient(180deg,var(--hw-panel-hi) 0,var(--hw-panel) 38%,var(--hw-panel-lo) 100%),
-    repeating-linear-gradient(90deg,rgba(255,255,255,.014) 0 1px,transparent 1px 3px);
-  border:1px solid var(--hw-edge);border-top-color:var(--hw-bevel-hi);
-  box-shadow:inset 0 1px 0 var(--hw-bevel-hi),0 1px 0 var(--hw-edge),
-    0 14px 30px rgba(0,0,0,.55);
+  display:flex;flex-direction:column;gap:var(--sp-2);padding:var(--sp-3);
+  border-radius:var(--r-lg);
+  /* THE COSTUME COMES OFF HERE TOO. This sheet was the last brushed panel on
+     the machine — a three-stop panel gradient, a noise texture, a bevel
+     border and a 30px drop shadow, all of it vocabulary that no longer exists
+     anywhere else in this file. It is a floating sheet, so it keeps the one
+     legitimate shadow (--sheet-shadow, hw.css) and nothing else. */
+  background:var(--bg-surface);
+  border:1px solid var(--rule-strong);
+  box-shadow:var(--sheet-shadow);
 }
 .mixpop.beside{
   right:auto;bottom:auto;width:min(320px,calc(100vw - 16px));
@@ -1508,8 +1541,7 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
 }
 .mphead{display:flex;align-items:center;gap:8px;min-width:0}
 .mptitle{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  font:600 10px/1.2 var(--f-legend);letter-spacing:.12em;text-transform:uppercase;
-  color:var(--dim)}
+  font:600 var(--t-sm)/1.2 var(--f-ui);color:var(--ink-2)}
 /* THE CHIPS ARE THE PALETTE'S CHIPS, materially — flat fill, one corner lamp,
    the same lit/dim-lit/off language — but they are .mchip and not .pchip on
    purpose: the browser gates click .pchip by exact text ("chorus", "drown"),
@@ -1518,26 +1550,22 @@ button.mps.minstr.open{outline:2px solid var(--accent);outline-offset:1px}
 .mchips{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:5px}
 /* the pool picker's family headers inside the same grid (ui/mixtbl.js
    buildPop pool branch): a silkscreen line spanning the row */
-.mgrp{grid-column:1/-1;margin-top:4px;font:600 8.5px/1.2 var(--f-legend);
-  letter-spacing:.12em;text-transform:uppercase;color:var(--tbl-faint)}
+.mgrp{grid-column:1/-1;margin-top:var(--sp-2);
+  font:500 var(--t-xs)/1.2 var(--f-ui);color:var(--ink-3)}
 .mgrp:first-child{margin-top:0}
+/* FLAT, like every other key on the machine: no moulded top bevel, no LED
+   pseudo-element. The fill says lit; nothing says "plastic". */
 .mchip{
-  appearance:none;font:500 11.5px/1.2 var(--f-legend);letter-spacing:.02em;cursor:pointer;
+  appearance:none;font:500 var(--t-sm)/1.2 var(--f-ui);cursor:pointer;
   position:relative;text-align:left;min-height:36px;
-  background:var(--hw-key-mid);color:var(--ink);
-  border:0;border-top:1px solid rgba(255,255,255,.07);
-  border-bottom:1px solid rgba(0,0,0,.55);
-  border-radius:3px;padding:7px 8px 7px 15px;
+  background:var(--bg-key);color:var(--ink);
+  border:1px solid var(--rule);border-radius:var(--r);
+  padding:var(--sp-2) var(--sp-2);
 }
-.mchip::after{
-  content:"";position:absolute;left:5px;top:50%;margin-top:-2px;
-  width:4px;height:4px;border-radius:1px;background:var(--led-off);
-}
-.mchip.on{background:var(--accent);color:var(--on-ink)}
-.mchip.on::after{background:var(--a-cream)}
-.mchip.on.dflt{background:color-mix(in srgb,var(--accent) 24%,var(--hw-key-mid));
-  color:var(--ink)}
-.mchip.on.dflt::after{background:color-mix(in srgb,var(--a-orange) 55%,var(--led-off))}
+.mchip:hover{background:var(--bg-key-hi)}
+.mchip.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.mchip.on.dflt{background:color-mix(in srgb,var(--accent) 24%,var(--bg-key));
+  border-color:color-mix(in srgb,var(--accent) 45%,transparent);color:var(--ink)}
 
 /* ---- the chip banks ----
    The palette is a LIBRARY now (ui/palette.js mountBanks) — there is no tab
@@ -1976,14 +2004,11 @@ body{padding:0}
   .bch.bbk{width:100px}
   /* the superimposed numeral scales with the face it rides */
   .bch .bcn{font-size:22px}
-  /* THE BOARD AT 390: ONE STRIP PER ROW, full width, and NOTHING SHRINKS.
-     The old board bought its narrow fit by cutting the strips to 76px and
-     hiding what each chair was playing; a bar that prints its own name is
-     exactly the control that does not need that, so the phone gets the whole
-     sentence — the name, the number, the fill — and simply scrolls down. */
-  .strips{grid-template-columns:1fr;gap:var(--sp-4);padding:0 var(--sp-3)}
-  .mbody{flex-direction:column;gap:var(--sp-3)}
-  .mlevel{height:168px}
+  /* THE BOARD AT 390: nothing forks. One strip per row, full width, and every
+     bar prints its own name — which is the layout at every width now, so all
+     the phone asks for is a tighter gutter. */
+  .mgroup{padding:0 var(--sp-3)}
+  .mkey{min-width:44px}
   /* THE LAB AT 390. Sixteen steps stay sixteen steps: a bar is not eight
      cells wide, and folding it in half would lie about the grid the pattern
      is written on. The gap tightens and the cells grow TALLER instead — the
@@ -2054,12 +2079,15 @@ body{padding:0}
   .lrow>.ldel{grid-row:1;grid-column:5}
   .lrow>.bchips{grid-row:2;grid-column:2/6}
 
-  /* THE BOARD, WITH ROOM: the same strips and the same bars, dealt into as
-     many columns as fit and given a taller bar to read — what a desk buys
-     this board is COMPARISON (eight chairs side by side), not a longer throw. */
-  .strips{grid-template-columns:repeat(auto-fill,minmax(268px,1fr))}
+  /* THE BOARD, WITH ROOM: the SAME single column of full-width lines — a desk
+     does not get a different board, it gets a longer bar to read and a taller
+     EQ to draw on. Dealing the strips into columns is what stopped them being
+     100% wide, and 100% wide is the whole instruction. */
   .mbar{min-height:40px;font-size:var(--t-md)}
   .mbar.fslot{min-height:48px}
-  .mkey{min-height:36px;font-size:var(--t-md)}
-  .mlevel{height:216px}
+  .mbar.mstrip{min-height:52px;font-size:var(--t-lg)}
+  .mkey{min-height:40px;min-width:64px;font-size:var(--t-md)}
+  /* the EQ plot's height is NOT a taste at any width: 160px over ±12 dB is
+     the 6.667 px/dB that makes the node track the finger at the board's one
+     drag rate. Stretching it here would silently break that arithmetic. */
 }

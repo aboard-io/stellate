@@ -9334,6 +9334,383 @@ console.log("twenty-nine more rooms — non-silent, real instruments, distinguis
   console.log("  58: " + ADDED.length + " genres — non-silent, real samplers, distinct from lineage");
 }
 
+/* §59 — A NOTE CAN LEAN, SLIDE, FLAM OR PASS ---------------------------------
+   The ninth type (kernel.js ORNAMENTS), in both halves: the `orn` MARKS a hand
+   writes on a step, and the genre PASS that adds what a style would add. The
+   four things this has to prove are the four ways it could ship broken, and
+   three of them are the ways features have shipped broken here before:
+
+     (a) every mark reaches the score, and does the specific thing it claims —
+         a grace is a different pitch before the beat, a flam is the SAME pitch
+         before the beat, a roll is n strikes inside the note's own length;
+     (b) the marks BEAT the pass: on a genre with a policy, a marked step plays
+         its mark and nothing the policy would have chosen instead;
+     (c) the pass is deterministic — two renders of one state are byte-equal,
+         tags included, and it is the SEED that decides, not the clock;
+     (d) nothing moved. Every term is opt-in and a genre with no `g.orn` row
+         renders exactly what it rendered the commit before this one — held
+         against hashes measured on the PRE-CHANGE kernel, the same tripwire
+         idiom §39's five machines already keep (and those five are in the list
+         below, at the same values, which is how this table proves it is
+         measuring the same thing they are). */
+console.log("§59 — a note can lean, slide, flam or pass");
+{
+  const crypto = require("crypto");
+  const fp = ev => crypto.createHash("sha1").update(JSON.stringify(ev.map(e =>
+    [+e.t.toFixed(6), e.n, e.d, +(e.dur || 0).toFixed(6), e.vel, e.acc, e.sld])))
+    .digest("hex").slice(0, 12);
+  const ORN = K.ORN;
+  // a plain rising-and-falling line: every gated step two apart, so there is
+  // always room in front of a note for something to lean into it
+  const LINE = {
+    deg:  [0, 0, 2, 0, 4, 0, 5, 0, 7, 0, 5, 0, 4, 0, 2, 0],
+    oct:  new Array(16).fill(0), vel: new Array(16).fill(6),
+    inc:  new Array(16).fill(0), stk: new Array(16).fill(0),
+    gate: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+    acc:  new Array(16).fill(0), sld: new Array(16).fill(0),
+  };
+  const withMarks = f => {
+    const p = clone(LINE);
+    p.orn = new Array(16).fill(0);
+    f(p.orn);
+    return p;
+  };
+  // `simple` carries no ornament policy, so anything in ITS stream is the mark
+  // and only the mark — the pass cannot be the explanation for what shows up
+  const plainG = GENRES.simple;
+  const v0 = ev => ev.filter(e => e.v === 0).sort((a, b) => a.t - b.t);
+  const base = v0(K.render(LINE, plainG, 1));
+
+  // (a) THE MARKS, one at a time, each read off the RENDERED stream
+  {
+    const marked = 4;                       // the fifth step, a gated note
+    const at = ev => ev.findIndex(e => Math.abs(e.t - base[2].t) < 1e-9);
+    ok(base.length === 8, "the test line did not render its eight notes");
+
+    const gr = v0(K.render(withMarks(o => { o[marked] = ORN.grace; }), plainG, 1));
+    ok(gr.length === base.length + 1, "a grace mark did not add exactly one note");
+    const gi = at(gr);
+    ok(gi > 0, "the graced note is not in the stream at its own time");
+    const lead = gr[gi - 1];
+    ok(lead.orn === "grace", "the note before a graced note is not tagged a grace");
+    ok(lead.n !== gr[gi].n, "a grace note is the same pitch as the note it decorates");
+    ok(lead.t < gr[gi].t, "the grace does not sound before the beat");
+    ok(lead.vel < gr[gi].vel, "the grace is not quieter than its note");
+    ok(lead.t + lead.dur <= gr[gi].t + 1e-9, "the grace runs into the note it leads");
+
+    const fl = v0(K.render(withMarks(o => { o[marked] = ORN.flam; }), plainG, 1));
+    ok(fl.length === base.length + 1, "a flam mark did not add exactly one note");
+    const fi = at(fl);
+    ok(fl[fi - 1].orn === "flam", "the note before a flammed note is not tagged a flam");
+    ok(fl[fi - 1].n === fl[fi].n, "a flam stroke is NOT the same pitch — that is a grace");
+    ok(fl[fi - 1].t < fl[fi].t, "the flam stroke does not sound before the beat");
+
+    for (const [mark, parts] of [[ORN.roll2, 2], [ORN.roll3, 3], [ORN.roll4, 4]]) {
+      const rl = v0(K.render(withMarks(o => { o[marked] = mark; }), plainG, 1));
+      ok(rl.length === base.length + parts - 1,
+         "a roll of " + parts + " did not put " + parts + " strikes in the stream");
+      const ri = at(rl), strokes = rl.slice(ri, ri + parts);
+      ok(strokes.every(e => e.n === base[2].n),
+         "a roll of " + parts + " changed the note's pitch");
+      ok(strokes.every(e => e.orn === "roll"),
+         "a roll of " + parts + " left a stroke untagged");
+      const span = strokes[parts - 1].t + strokes[parts - 1].dur - strokes[0].t;
+      ok(span <= base[2].dur + 1e-9,
+         "a roll of " + parts + " sounds longer than the note it subdivides");
+      // the strokes must not MEET end to end, or a `tie` genre folds the roll
+      // straight back into the one long note it came from
+      for (let k = 1; k < parts; k++)
+        ok(strokes[k].t - (strokes[k - 1].t + strokes[k - 1].dur) > 1e-6,
+           "a roll of " + parts + " has strokes that meet end to end");
+    }
+    // ...and an unmarked phrase is the phrase, exactly
+    ok(fp(v0(K.render(withMarks(() => {}), plainG, 1))) === fp(base),
+       "an all-zero orn vector is not the same as no orn vector");
+  }
+
+  // (b) THE MARKS BEAT THE PASS. blues declares grace and pass; mark every
+  // gated step a FLAM and the stream must carry flams and nothing else.
+  {
+    const g = GENRES.blues;
+    ok(!!g.orn, "blues lost its ornament policy — this check would pass vacuously");
+    const loose = K.render(LINE, g, 4).filter(e => e.orn);
+    ok(loose.length > 0, "blues' own ornament pass produced nothing to be beaten");
+    const allFlam = withMarks(o => { for (let i = 0; i < 16; i++) if (LINE.gate[i]) o[i] = ORN.flam; });
+    const tags = new Set(K.render(allFlam, g, 4).filter(e => e.orn).map(e => e.orn));
+    ok(tags.size === 1 && tags.has("flam"),
+       "the genre pass ornamented a step the hand had already marked: " +
+       [...tags].join("/"));
+  }
+
+  // (c) DETERMINISM, and the seed is what decides it
+  {
+    for (const gk of ["jazz", "gregorian", "drill", "funk"]) {
+      const g = GENRES[gk];
+      const a = K.render(P, g, 4), b = K.render(P, g, 4);
+      ok(JSON.stringify(a) === JSON.stringify(b),
+         gk + ": two renders of one state are not identical — the pass is not seeded");
+      ok(a.some(e => e.orn), gk + ": an ornament policy that reaches no note at all");
+    }
+    const j = GENRES.jazz;
+    ok(fp(K.render(P, j, 4)) !== fp(K.render(P, { ...j, kitSeed: (j.kitSeed | 0) + 1 }, 4)),
+       "jazz ornaments identically at two different seeds — the dice are not thrown");
+    // every term must reach the stream on its own, or it is a dead field
+    for (const [term, tag] of [["pass", "pass"], ["approach", "approach"],
+                               ["grace", "grace"], ["flam", "flam"], ["roll", "roll"]]) {
+      const g = { ...plainG, orn: { [term]: 1 } };
+      ok(K.render(P, g, 4).some(e => e.orn === tag),
+         "the `" + term + "` term never reaches the rendered stream");
+    }
+  }
+
+  // (d) NOTHING MOVED. Measured on the kernel at HEAD 7fc30e9, the commit
+  // before the ninth type existed, over the same allEvents() recipe §39 uses.
+  // A genre appears here because it has NO ornament policy: the whole claim of
+  // this lane is that such a genre is untouched, and a hash is the only way to
+  // say that out loud. If a row moves, either an ornament leaked into a genre
+  // that declared none, or somebody gave it a policy and owes this table a
+  // re-measurement with an argued reason — it does not get weakened.
+  {
+    const FROZEN = { simple: "47f696fee4b2", ambient: "1a68804b1e4a",
+      drone: "977ce5507005", vaporwave: "4c3009be0416", kraftwerk: "da1af676f72d",
+      disco: "4e4071bdc24e", rnb: "df510d2bdb36", dub: "0548dcbca6fd",
+      bossa: "c69c70383a0e", synthpop: "58bff8df43db", shoegaze: "91230469bf69",
+      citypop: "84ee282d372a", newwave: "95d03b9fb4fe", doowop: "9ce0e377735e",
+      minimalism: "7f9485e9a06d", toto: "760d4470921b", beatles: "0b3ce4a5ca49",
+      steely: "22e3bdce30e2", postrock: "d70f3fde7b93", neoclassical: "497406f3443e",
+      // §39's five machines, at the same values that section freezes them at —
+      // which is what says this table and that one are measuring one thing
+      techno: "036036ec46ed", acid: "c047f764a472", house: "2f1c41112ac0",
+      trap: "addcf7d93d0f", electro: "1b4dccccfb12",
+      pad: "8fc2877a4554", riff: "b70f7f837d8d", vocal: "18fdd7ab8497",
+      backing: "e0cbb6146f64" };
+    for (const gk of Object.keys(FROZEN)) {
+      const g = GENRES[gk];
+      ok(!g.orn, gk + ": now carries an ornament policy — this row is a claim " +
+         "that it does not, and one of the two is wrong");
+      ok(fp(allEvents(P, g, Math.max(4, g.bars))) === FROZEN[gk],
+         gk + ": a genre with no ornament policy no longer renders what it " +
+         "rendered before the ninth type existed");
+    }
+    // and the pass itself is a no-op for them, object-identically: `ornament`
+    // hands back the very array it was given rather than a rebuilt copy
+    const arr = [{ t: 0, n: 60, dur: 1, v: 0, vel: 5 }];
+    ok(K.ornament(arr, plainG, { stepsPerBar: 16, rate: 4, pcs: null }) === arr,
+       "the ornament pass rebuilt the stream for a genre that has no policy");
+  }
+  console.log("  59: marks, the genre pass, and " +
+              Object.keys(GENRES).filter(k => GENRES[k].orn).length +
+              " genres that ornament");
+}
+
+
+/* ------------------------------- 62. THE DESK IS THREE BUSES AND A FADER
+   Lane A2's own gate, and it reads the BUILT GRAPH rather than the source that
+   built it. Paul, 2026-08-17: "get rid of inserts, reverb, and echo — let me
+   send to bus 1, bus 2, and bus 3 instead — buses should be named, though";
+   "don't gray out tracks — cut/mute them!"; "let buses send to other buses and
+   back". The claims:
+     (a) THREE NAMED BUSES exist in the registry, every one renameable through
+         a table song.js will actually keep, and every one addressable from a
+         track by a send field of its own;
+     (b) A CUT TRACK IS INAUDIBLE, not dimmed — propagate a unit signal through
+         the real nodes audio/mixer.js buildChannel returns and the sum that
+         arrives at the master, at the verb, at the echo and at the room is
+         EXACTLY zero, because every path out of the strip is behind the gate;
+     (c) A SEND REACHES ITS BUS — the same propagation, non-zero at the right
+         destination and at the SENDS-table depth the chip names;
+     (d) A BUS->BUS CYCLE IS REFUSED, deterministically and by the plan, so no
+         node is ever built for the edge that would close the loop;
+     (e) A TRACK MIXED FROM THE DESK HAS NO RACK: the three buses are the whole
+         of its routing, which is the flat-cost topology audio/graph.js
+         measured for. (The `fx` field survives for songs saved before the
+         chips came off; no surface writes it — fields.js PARTMIX says why.)
+   The propagation is a DAG walk over the returned node objects, multiplying
+   GainNode.gain.value along each path — it cannot pass if the wiring is wrong,
+   and it says nothing at all about the code that wrote the wiring. */
+console.log("the desk is three buses and a fader — bus routing, the cut, the cycle");
+{
+  const F = require("../../nukernel/fields.js");
+  const MX = await import("../../nukernel/audio/mixer.js");
+
+  // ---- (a) three named buses, each with a send field on a track ----
+  ok(F.BUSES.length === 3, "the registry does not carry three buses (" + F.BUSES.length + ")");
+  const busIds = F.BUSES.map(b => b.bus);
+  for (const b of F.BUSES) {
+    const nm = b.knobs.find(k => k.key === "name");
+    ok(!!nm, b.bus + ": no `name` knob — the bus cannot be renamed");
+    ok(Object.keys(nm.table).length >= 4,
+       b.bus + ": the name vocabulary is too small to be a rename");
+    // a name that song.js will keep: it validates a bus knob by table membership
+    const pick = Object.keys(nm.table)[0];
+    ok(F.busNameOf({ [b.bus]: { name: pick } }, b.bus) === nm.table[pick],
+       b.bus + ": busNameOf does not return the picked name");
+    ok(F.busNameOf(null, b.bus) === b.label,
+       b.bus + ": an unnamed bus does not fall back to its shipped label");
+    // …and the cross-sends: one per OTHER bus, never to itself
+    const tos = b.knobs.filter(k => k.to).map(k => k.to).sort();
+    ok(JSON.stringify(tos) === JSON.stringify(busIds.filter(x => x !== b.bus).sort()),
+       b.bus + ": cross-sends are " + tos + ", not the other two buses");
+  }
+  // a track addresses all three, and carries no insert list (claim e)
+  const partKeys = F.PARTMIX.map(f => f.key);
+  for (const k of ["rev", "echo", "room"])
+    ok(partKeys.includes(k), "a track has no `" + k + "` send field");
+  ok(F.resolvePartMix({ room: "wet" }).room === F.SENDS.wet,
+     "resolvePartMix does not resolve the third send");
+
+  // ---- the stub context: nodes that remember what they were connected to ----
+  // Every builder in audio/mixer.js / audio/graph.js takes its context as an
+  // argument (the offline-bounce law), so the real code runs unmodified here.
+  const stub = () => {
+    const P = v => ({ value: v, setValueAtTime(x) { this.value = x; },
+      setTargetAtTime(x) { this.value = x; }, linearRampToValueAtTime(x) { this.value = x; },
+      exponentialRampToValueAtTime(x) { this.value = x; }, cancelScheduledValues() {} });
+    const c = { sampleRate: 44100, currentTime: 0 };
+    const N = (kind, extra) => {
+      const n = { kind, outs: [], context: c,
+        connect(d) { this.outs.push(d); return d; }, disconnect() {} };
+      return Object.assign(n, extra || {});
+    };
+    c.destination = N("dest");
+    c.createGain = () => N("gain", { gain: P(1) });
+    c.createStereoPanner = () => N("pan", { pan: P(0) });
+    c.createBiquadFilter = () => N("biquad",
+      { type: "peaking", frequency: P(1000), Q: P(1), gain: P(0) });
+    c.createWaveShaper = () => N("shaper", { curve: null, oversample: "none" });
+    c.createDynamicsCompressor = () => N("comp",
+      { threshold: P(0), knee: P(0), ratio: P(1), attack: P(0), release: P(0) });
+    c.createDelay = () => N("delay", { delayTime: P(0) });
+    c.createChannelSplitter = () => N("split");
+    c.createChannelMerger = () => N("merge");
+    c.createOscillator = () => N("osc", { frequency: P(1), start() {}, stop() {} });
+    c.createConvolver = () => N("conv", { buffer: null });
+    c.createAnalyser = () => N("anl", { fftSize: 2048 });
+    c.createBuffer = () => ({ getChannelData: () => new Float32Array(1) });
+    return c;
+  };
+  // HOW MUCH OF A UNIT SIGNAL AT `from` ARRIVES AT `to` — every path, summed,
+  // each path the product of the gains along it. Zero means inaudible, and it
+  // means it for the whole graph rather than for the one wire somebody
+  // remembered to check.
+  const reach = (from, to, seen) => {
+    if (from === to) return 1;
+    const guard = seen || new Set();
+    if (guard.has(from)) return 0;          // no cycles are built, but be safe
+    guard.add(from);
+    let s = 0;
+    for (const o of from.outs) {
+      const g = o.kind === "gain" ? o.gain.value : 1;
+      if (g === 0) continue;                // a closed gate carries nothing
+      s += g * reach(o, to, guard);
+    }
+    guard.delete(from);
+    return s;
+  };
+
+  const build = (parts) => {
+    const c = stub();
+    const master = c.createGain(), verb = c.createGain();
+    const echoIn = c.createGain(), room = c.createGain();
+    const spec = { roster: [], fx: [], rev: 0, del: 0, room: 0, verb: "room",
+                   eq: null, mot: null, auto: [], lvl: 1, pan: 0, parts };
+    const ch = MX.buildChannel(c, spec, {
+      master, verb: () => verb, echoIn, room, send: () => null });
+    return { c, ch, master, verb, echoIn, room };
+  };
+
+  // ---- (b) the cut is a cut, everywhere ----
+  {
+    const cut = { key: "lead", rev: F.SENDS.drown, del: F.SENDS.drown,
+                  room: F.SENDS.drown, lvl: 1, pan: 0, fader: 0, tdb: 0,
+                  eq: null, mute: true };
+    const { ch, master, verb, echoIn, room } = build([cut]);
+    const src = ch.partIn("lead");
+    ok(src !== ch.input, "a muted part got no bus of its own to be muted on");
+    for (const [name, dest] of [["the section/master", master], ["the reverb bus", verb],
+                                ["the delay bus", echoIn], ["the room bus", room]]) {
+      const g = reach(src, dest);
+      ok(g === 0, "a CUT track still reaches " + name + " at " + g +
+         " — muted-but-audible is exactly the state that was forbidden");
+    }
+    const rep = [...ch.parts.values()][0];
+    ok(rep.gate.gain.value === 0, "the cut gate is not at zero");
+  }
+
+  // ---- (c) …and un-cut, each send reaches its own bus at its own depth ----
+  {
+    const on = { key: "lead", rev: F.SENDS.wet, del: F.SENDS.touch,
+                 room: F.SENDS.some, lvl: 1, pan: 0, fader: 0, tdb: 0,
+                 eq: null, mute: false };
+    const { ch, master, verb, echoIn, room } = build([on]);
+    const src = ch.partIn("lead");
+    const near = (a, b) => Math.abs(a - b) < 1e-6;
+    ok(near(reach(src, verb), F.SENDS.wet),
+       "the reverb send does not arrive at the reverb bus at its own depth (" +
+       reach(src, verb) + " vs " + F.SENDS.wet + ")");
+    ok(near(reach(src, echoIn), F.SENDS.touch),
+       "the delay send does not arrive at the delay bus (" + reach(src, echoIn) + ")");
+    ok(near(reach(src, room), F.SENDS.some),
+       "the room send does not arrive at the room bus (" + reach(src, room) + ")");
+    ok(reach(src, master) > 0, "the dry path does not reach the master");
+    // (e) …AND THAT IS THE WHOLE OF A TRACK'S ROUTING. A part mixed only from
+    // the desk builds NO private rack — the three buses are everywhere it can
+    // go, which is the flat-cost topology audio/graph.js measured for. A
+    // saved-song `fx` chain is the one thing that can still build one, and no
+    // surface writes that field any more (fields.js PARTMIX).
+    const P = [...ch.parts.values()][0];
+    ok(P.rack === false, "a desk-only mix grew a private insert rack");
+    ok(P.fs.length === 0, "a desk-only mix grew a character send");
+    // and SOLO on one part cuts the others — the one control that reaches out.
+    // The chairs come from the mixer's own roster, never from a guess: a genre
+    // whose stack has no `lead` would make a hand-written key prove nothing.
+    const gk = Object.keys(GENRES).find(k =>
+      MX.partKeysOf({ stack: [{ g: k, slots: [0] }], len: 4 }).length >= 2);
+    const bare = { stack: [{ g: gk, slots: [0] }], len: 4 };
+    const chairs = MX.partKeysOf(bare);
+    ok(chairs.length >= 2, "no shipped genre offers two chairs to solo between");
+    const sec = { ...bare, parts: { [chairs[0]]: { solo: true } } };
+    const specs = MX.chanSpec(sec).parts;
+    const other = specs.filter(p => p.key !== chairs[0]);
+    ok(other.length === chairs.length - 1 && other.every(p => p.mute),
+       "a solo does not mute the parts beside it (" +
+       other.map(p => p.key + ":" + p.mute).join(", ") + ")");
+  }
+
+  // ---- (d) the bus->bus cycle is refused, by the plan, deterministically ----
+  {
+    const [A, B, C] = busIds;
+    const one = F.busSendPlan({ [A]: { ["x" + B]: "some" } });
+    ok(one.edges.length === 1 && one.refused.length === 0,
+       "a single bus->bus send was not planned (" + JSON.stringify(one) + ")");
+    ok(one.edges[0].from === A && one.edges[0].to === B && one.edges[0].amt === F.SENDS.some,
+       "the planned edge is not the one that was asked for");
+    // the loop: A->B and B->A. One survives, the other is refused — never both,
+    // and never neither (a desk that silently drops both is a desk that lies).
+    const two = F.busSendPlan({ [A]: { ["x" + B]: "some" }, [B]: { ["x" + A]: "wet" } });
+    ok(two.edges.length === 1, "a two-bus loop planned " + two.edges.length +
+       " edges — exactly one must survive");
+    ok(two.refused.length === 1 && two.refused[0].from === B && two.refused[0].to === A,
+       "the refused edge is not the one that would close the loop: " +
+       JSON.stringify(two.refused));
+    // and the THREE-bus loop, which no pairwise check would catch
+    const three = F.busSendPlan({ [A]: { ["x" + B]: "some" }, [B]: { ["x" + C]: "some" },
+                                  [C]: { ["x" + A]: "some" } });
+    ok(three.edges.length === 2 && three.refused.length === 1,
+       "a three-bus loop was not broken exactly once: " + JSON.stringify(three));
+    // determinism: the same spec plans the same way every time, which is what
+    // lets audio/graph.js and the board agree about what was refused
+    ok(JSON.stringify(F.busSendPlan({ [A]: { ["x" + B]: "some" },
+                                      [B]: { ["x" + A]: "wet" } })) === JSON.stringify(two),
+       "busSendPlan is not deterministic");
+    // a bus never feeds itself, whatever a save says
+    ok(F.busSendPlan({ [A]: { ["x" + A]: "drown" } }).edges.length === 0,
+       "a bus was planned to feed itself");
+  }
+  console.log("  62: three named buses, a cut that is silent in the built graph, " +
+              "a refused cycle");
+}
+
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }

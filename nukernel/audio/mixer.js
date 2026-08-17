@@ -92,9 +92,11 @@ const LANEIDS = Object.keys(DRUMFILE);
 // pitched chair with eight the deepest stack the page can deal. That is 26;
 // the extra is the collision carve. MEASURED on the composed eleven-section
 // Beatles song: 8 to 13.
-// PER PART, 11: pan, level, mute gate, dry trim, two sends, up to three
-// character sends and up to three EQ biquads. Six or seven in practice, and a
-// part only exists at all once somebody has mixed it.
+// PER PART, 12: pan, level, cut gate, the THREE bus sends, up to three EQ
+// biquads and — only for a song saved before the chips came off the desk — a
+// dry trim and up to three character sends. Six or seven in practice. The
+// ceiling below stays at 11 because that is what the gates hold and no NEW mix
+// can reach past it: nothing on the surface writes a part `fx` any more.
 // THE SHARED RACK, 230: the master chain (30 fully dressed) + three convolution
 // reverbs (4 each) + the echo (9 — the rack's return gain is the ninth, the
 // one shared node the board round added) + the drum room (26) + the kit desk (40 with
@@ -365,6 +367,12 @@ export function resolvedPart(sec, key, roster) {
 // where the box's whole address list is known: any solo anywhere in the box
 // mutes every part that is not soloed, and a muted part needs a bus precisely
 // so there is a gain to close.
+//
+// AND A TRACK NOW CARRIES THREE SENDS. `room` is the third — the ambience
+// return the kit's lanes already feed, reachable by anything. The per-part
+// `fx` chain is off every surface (fields.js PARTMIX has the reasoning and the
+// stated reason it is not deleted); what a NEW mix can ask for is three shared
+// buses, which is the flat-cost half of audio/graph.js's own measurement.
 function partSpecs(sec, roster) {
   const P = sec.parts && typeof sec.parts === "object" ? sec.parts : null;
   const keys = partKeysOf(sec, roster);
@@ -376,10 +384,10 @@ function partSpecs(sec, roster) {
     const t = derivedPartTone(sec, k, roster);
     const eq = mergeEq(t.eq, ent && ent.eq);
     const mute = m.mute || (solo && !m.solo);
-    if (!mute && !m.fx.length && !m.rev && !m.del && m.lvl === 1 && m.pan === 0 &&
-        m.fader === 0 && !eq && !t.db) continue;
-    out.push({ key: k, fx: m.fx, rev: m.rev, del: m.del, lvl: m.lvl, pan: m.pan,
-               fader: m.fader, tdb: t.db, eq, mute });
+    if (!mute && !m.fx.length && !m.rev && !m.del && !m.room && m.lvl === 1 &&
+        m.pan === 0 && m.fader === 0 && !eq && !t.db) continue;
+    out.push({ key: k, fx: m.fx, rev: m.rev, del: m.del, room: m.room,
+               lvl: m.lvl, pan: m.pan, fader: m.fader, tdb: t.db, eq, mute });
   }
   return out;
 }
@@ -404,6 +412,10 @@ export function chanSpec(sec) {
     rev: sendOf(sec, "rev", g.tone && g.tone.verb != null ? g.tone.verb : 0.15),
     del: sendOf(sec, "echo", 0),   // the box field is `echo` since v:2; the
                                    // channel key stays `del` — it names the bus
+    // BUS 3, the send the box never had. It lands on the same ambience return
+    // the kit's lanes feed, which is what makes it a bus rather than a fourth
+    // private effect: one room, whoever asks for it.
+    room: sendOf(sec, "room", 0),
     verb: sec.verb || (g.tone && g.tone.verb > 0.4 ? "hall" : "room"),
     // the fader OFFSET multiplies the resolved level — the enum, the
     // composer's arc and any level automation keep meaning what they meant,
@@ -502,29 +514,25 @@ export function buildChannel(c, spec, env) {
     return out;
   };
   // ---- THE PART SUB-BUSSES, one small desk channel each ----
-  // "Not every track should go through the effects." Everything below this
-  // point is the SECTION strip — pan, level, two sends — and until now every
-  // voice in the box arrived at `input` and took all of it. A part bus is the
-  // same strip, smaller, in front of that:
   //
-  //   sources of one part -> pan -> level -> mute gate -> dry trim -> input
-  //                                              |-> rev send  -> the section's verb
-  //                                              |-> echo send -> the echo bus
-  //                                              \-> fx send   -> the page's chorus/crunch/…
+  // THE SIGNAL FLOW IS THE BRITISH IN-LINE DESK'S, in its own order — input,
+  // EQ, fader, sends, bus, master (SSL 4000 / Neve 88R; the parent's own
+  // channel strips are the same order, engine/faust/voices/state-engine.js
+  // STRIP_PROFILES). Read down a strip and you are reading the path:
+  //
+  //   one part's sources -> EQ -> pan -> level -> CUT -> input (the section)
+  //                                                |-> bus 1  (reverb)
+  //                                                |-> bus 2  (delay)
+  //                                                \-> bus 3  (room)
+  //
+  // (a saved-song `fx` chain still splices its retired rack in ahead of the
+  // EQ and trims the dry leg by (1-mix); nothing on the desk can add one)
   //
   // So the section keeps its job (the treatment on the whole box) and gains a
-  // desk under it. The rev/echo sends land on the SAME two returns the section
-  // uses — a part chooses how much it goes, the section still chooses which
-  // room — and every send taps POST the mute gate, because a muted part whose
+  // desk under it. The three sends land on the SAME three shared returns the
+  // section uses — a part chooses how much it goes, the section still chooses
+  // which hall — and every send taps POST the cut, because a muted part whose
   // reverb keeps ringing is not muted.
-  //
-  // WHERE THE FX SEND IS AUDIBLY DIFFERENT, and it is the one place in this
-  // rebuild that is: a part's character send returns at the MASTER, not at this
-  // channel's input, so the section's own strip does not treat it. The part's
-  // own level and pan do (the tap is post-mute, which is post-both), but a
-  // section-wide `pump` will not duck that part's chorus and a hard-left
-  // section will not carry its wet across. That is the price of one chorus for
-  // the page instead of one per part, and it is paid where it shows least.
   //
   // AND THEY ARE CHEAP NODES, NOT VOICES. A sub-bus is gains and a panner; the
   // synth pool is still keyed (dsp, voice) and still routed through per-channel
@@ -534,18 +542,18 @@ export function buildChannel(c, spec, env) {
   for (const p of (spec.parts || [])) {
     // THE PANNER IS THE INPUT. A strip used to open with a unity Gain purely to
     // give the part a stable address — a node a bus, for nothing, since a
-    // StereoPanner sums its inputs perfectly well. With a private rack the
-    // rack's own input gain takes the job instead (buildInsertNodes builds one
-    // either way), so neither case pays for a second summing node.
+    // StereoPanner sums its inputs perfectly well.
     const ppan = c.createStereoPanner(); ppan.pan.value = p.pan;
     const pnodes = [ppan];
     let pn = ppan;
     const pchain = x => { pn.connect(x); pn = x; pnodes.push(x); };
+    // the retired private rack: only a SAVED chain can still ask for one (no
+    // surface offers it), and when it does the graph is the one it always was
     const px = spend(p.fx);
     let pin = ppan;
     if (px.rack) { px.rack.output.connect(ppan); pin = px.rack.input; pnodes.push(...(px.rack.nodes || [])); }
     // the part's STRIP EQ, at the very front for the section strip's reason:
-    // everything on the strip — rack, pan, level, every send — hears the tone
+    // everything on the strip — pan, level, every send — hears the tone
     // block. Zero nodes when flat, the same law.
     let peq = null;
     if (p.eq) {
@@ -559,6 +567,12 @@ export function buildChannel(c, spec, env) {
     plvl.gain.value = +(p.lvl * Math.pow(10, ((p.fader || 0) + (p.tdb || 0)) / 20))
       .toFixed(4);
     pchain(plvl);
+    // THE CUT IS A GATE AT ZERO AND EVERY PATH OUT OF THIS STRIP IS BEHIND IT.
+    // "Don't gray out tracks — cut/mute them!" (Paul, 2026-08-17). The dry
+    // path AND all three sends tap POST this gain, so a cut track contributes
+    // nothing to the section, nothing to the reverb, nothing to the delay and
+    // nothing to the room: there is no wet path left ringing under a silent
+    // strip, which is what "muted but still audible" always turns out to be.
     const pmute = c.createGain(); pmute.gain.value = p.mute ? 0 : 1; pchain(pmute);
     if (px.dry !== 1) {
       const pdry = c.createGain(); pdry.gain.value = px.dry;
@@ -569,6 +583,12 @@ export function buildChannel(c, spec, env) {
     const pds = c.createGain(); pds.gain.value = p.del;
     pmute.connect(pds); pds.connect(env.echoIn);
     pnodes.push(prs, pds);
+    // …and bus 3, when the page has a room to send to (?dryroom has none)
+    let pms = null;
+    if (env.room) {
+      pms = c.createGain(); pms.gain.value = p.room || 0;
+      pmute.connect(pms); pms.connect(env.room); pnodes.push(pms);
+    }
     const pfs = [];
     for (const s of px.sends) {
       const g = c.createGain(); g.gain.value = s.amt;
@@ -577,8 +597,8 @@ export function buildChannel(c, spec, env) {
     }
     nodes.push(...pnodes);
     parts.set(p.key, { in: pin, pan: ppan, lvl: plvl, gate: pmute, rs: prs, ds: pds,
-                       fs: pfs, rack: !!px.rack, stages: px.stages, spec: p,
-                       eq: peq ? peq.by : null });
+                       ms: pms, fs: pfs, rack: !!px.rack, stages: px.stages,
+                       spec: p, eq: peq ? peq.by : null });
   }
   // WHERE A SOURCE LANDS: its part's bus if that part has one, the section
   // input if it does not. Every player, route and fallback on the page asks
@@ -612,6 +632,13 @@ export function buildChannel(c, spec, env) {
   rs.connect(env.verb(spec.verb));
   const ds = c.createGain(); ds.gain.value = spec.del; lvl.connect(ds); ds.connect(env.echoIn);
   nodes.push(rs, ds);
+  // …and the section's own bus 3, on the same tap: post pan and level, so the
+  // box's move carries into the room the way it carries into the other two
+  let ms = null;
+  if (env.room) {
+    ms = c.createGain(); ms.gain.value = spec.room || 0;
+    lvl.connect(ms); ms.connect(env.room); nodes.push(ms);
+  }
   // ...and the character sends, tapping the same place rev and echo tap: POST
   // pan and level, so a hard-left hushed section is hard-left and hushed on the
   // chorus bus too. What the reverb does NOT hear is the bus's wet — an insert
@@ -808,7 +835,7 @@ export function buildChannel(c, spec, env) {
            player, autos, autoParam, fs, dryTrim, rack: !!sx.rack,
            parts, partIn, voiceIn, synthIn, partPlayer,
            eq: secEq ? secEq.by : null,
-           motKind: spec.mot, oscs, nodes, spec, stages, rs, ds, lvl };
+           motKind: spec.mot, oscs, nodes, spec, stages, rs, ds, ms, lvl };
   // the desk holds the gate ledger, so focusKit needs no second registry and a
   // retired channel's gates stop being written to (an open gate on a dead
   // channel is the zombie ZERO-STATIC R1 is about, one level up)
@@ -925,6 +952,9 @@ window.__nuMix = () => ({
   channels: [...CHAN.values()].map(c => ({
     fx: c.spec.fx, stages: c.stages, motion: c.motKind,
     rev: +c.rs.gain.value.toFixed(3), del: +c.ds.gain.value.toFixed(3),
+    // bus 3, read off the gain like its two siblings (null where ?dryroom
+    // means the page has no room to send to at all)
+    room: c.ms ? +c.ms.gain.value.toFixed(3) : null,
     // the BUILT value, like rev/del beside it — reporting c.spec.lvl echoed
     // the declaration, and a buildChannel that left the gain at 1 kept every
     // gate green while the composed arc went flat
@@ -982,9 +1012,14 @@ window.__nuMix = () => ({
       fx: P.spec.fx, stages: P.stages,
       via: P.rack ? "insert" : (P.fs.length ? "send" : null),
       sends: P.fs.map(s => ({ key: s.key, amt: +s.gain.gain.value.toFixed(3) })),
+      // THE THREE BUS SENDS, read off the three gains
       rev: +P.rs.gain.value.toFixed(3), echo: +P.ds.gain.value.toFixed(3),
+      room: P.ms ? +P.ms.gain.value.toFixed(3) : null,
       level: +P.lvl.gain.value.toFixed(3), pan: +P.pan.pan.value.toFixed(3),
       eq: eqRead(P.eq), tdb: P.spec.tdb || 0,
+      // THE CUT, read off the gate itself. `muted` true here is the claim the
+      // unit gate checks against the RENDER: every path out of this strip is
+      // behind this gain, so a strip at 0 contributes nothing anywhere.
       muted: P.gate.gain.value < 0.5 })),
   })),
 });

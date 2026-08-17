@@ -858,12 +858,21 @@ async function deskUI(page) {
   const rows = await page.locator(".mrow").count();
   const parts = await page.locator(".mrow:not(.msec)").count();
   const row = page.locator(".mrow:not(.msec)").first();
+  // THE STRIP IS A FOLD NOW (lane A2, 2026-08-17: the board is tracks / buses
+  // / main, and a channel is ONE bar until you tap it). Its value cells still
+  // carry the same .mval[data-field] hooks and write the same fields; they are
+  // simply behind the bar, so the gate opens the channel first — the same tap
+  // a person makes. The SECTION strip is never folded, so the msec locators
+  // below are untouched.
+  await row.locator(".mbar.mstrip").click();
+  await page.waitForTimeout(120);
   const partKey = await row.locator(".mval").first().getAttribute("data-part");
-  // an insert on ONE part: the fx cell, then a chip. The sheet stays open on
-  // effects (a chain is several decisions), so it is dismissed by hand.
-  await row.locator('.mval[data-field="fx"]').click();
-  await page.locator(".mchip", { hasText: /^crunch$/ }).click();
-  await page.keyboard.press("Escape");
+  // A SEND on ONE part: the reverb-send cell, then a chip. Per-track INSERTS
+  // are off the desk (fields.js PARTMIX: a track's routing is three bus sends
+  // and nothing else), so what a person can put on one part from this surface
+  // is a send — and that is what this drives.
+  await row.locator('.mval[data-field="rev"]').click();
+  await page.locator(".mchip", { hasText: /^wet$/ }).click();
   // ...a level on the same part: a one-of-these cell closes on the choice
   await row.locator('.mval[data-field="lvl"]').click();
   await page.locator(".mchip", { hasText: /^hush$/ }).click();
@@ -892,9 +901,8 @@ async function deskUI(page) {
   // absent-is-today law reachable from the surface
   await row.locator('.mval[data-field="lvl"]').click();
   await page.locator(".mchip.on", { hasText: /^hush$/ }).click();
-  await row.locator('.mval[data-field="fx"]').click();
-  await page.locator(".mchip.on", { hasText: /^crunch$/ }).click();
-  await page.keyboard.press("Escape");
+  await row.locator('.mval[data-field="rev"]').click();
+  await page.locator(".mchip.on", { hasText: /^wet$/ }).click();
   await row.locator(".mk-solo").click();
   await page.waitForTimeout(150);
   out.emptied = await page.evaluate(() => import("/nukernel/ui/state.js")
@@ -946,6 +954,10 @@ async function deskUI(page) {
   // misses its own target is not a product failure.
   const busLo = page.locator('.eqk[data-bus="rev"][data-band="lo"]');
   {
+    // …and the bus is a fold too: its return bar is the strip, the effect and
+    // the tone are inside it
+    await page.locator("#b-rev-ret").click();
+    await page.waitForTimeout(120);
     await busLo.scrollIntoViewIfNeeded();
     await page.waitForTimeout(150);
     const bb = await busLo.boundingBox();
@@ -1528,7 +1540,7 @@ async function pass(page, url) {
       fail(`clicking the ${ui.partKey} row's chips stored ${JSON.stringify(ui.stored)}`);
     else {
       const e = ui.stored[ui.partKey];
-      if (e.fx && e.fx[0] === "crunch" && e.lvl === "hush" && e.solo === true)
+      if (e.rev === "wet" && e.lvl === "hush" && e.solo === true)
         ok(`the table writes song.js's own spelling: ${ui.partKey} ${JSON.stringify(e)}`);
       else fail(`the ${ui.partKey} entry came out ${JSON.stringify(e)} — the table is writing ` +
                 `a shape the loader does not validate`);
@@ -1536,9 +1548,9 @@ async function pass(page, url) {
     const s = (ui.spec || []).find(p => p.key === ui.partKey);
     if (!s) fail(`chanSpec built no bus for ${ui.partKey} after the table asked for one — ` +
                  `the surface and the mixer disagree about the address`);
-    else if (s.fx[0] === "crunch" && Math.abs(s.lvl - 0.4) < 1e-3)
+    else if (Math.abs(s.rev - 0.55) < 1e-3 && Math.abs(s.lvl - 0.4) < 1e-3)
       ok(`the audio tier resolves what the table wrote: ${ui.partKey} -> ` +
-         `[${s.fx}] at ${s.lvl}`);
+         `rev ${s.rev} at ${s.lvl}`);
     else fail(`the ${ui.partKey} bus resolved to ${JSON.stringify(s)}`);
     // a solo on one part must silence the others, resolved across the box
     const others = (ui.spec || []).filter(p => p.key !== ui.partKey);

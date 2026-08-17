@@ -50,6 +50,12 @@ let checks = 0; const ok = (m) => { checks++; console.log("  ok:", m); };
   await page.selectOption("#composeg", "beatles");
   await page.click("#compose");
   await page.waitForTimeout(600);
+  // …AND GO TO THE MIX PAGE. The machine pages at every width now (d4e272d,
+  // "one interface at every width"), so #page-mix is display:none until the
+  // rail says otherwise — which the painted reads below survive (a style
+  // property is set whether or not it is on screen) and a real CLICK does not.
+  await page.evaluate(() => import("/nukernel/ui/pages.js").then(p => p.setPage("mix")));
+  await page.waitForTimeout(200);
 
   // one board snapshot: every channel strip's chair, idle state, cap height
   // and tone faces — read off the painted styles, not off any model call
@@ -58,13 +64,13 @@ let checks = 0; const ok = (m) => { checks++; console.log("  ok:", m); };
       part: r.querySelector(".mval") ? r.querySelector(".mval").dataset.part : null,
       idle: r.classList.contains("idle"),
       cap: r.querySelector(".fcap").style.getPropertyValue("--f"),
-      // THE TONE FACE, ON THE FLAT DESK. This read `--ka` — a rotary knob's
-      // ANGLE — and the hardware costume came off: an EQ band is a bipolar bar
-      // now (ui/mixtbl.js buildEqBar) and the value it shows is the fill
-      // fraction `--f`. Reading a custom property nothing writes handed back ""
-      // for every strip, so the seeding check below could only ever report the
-      // desk as identical — a gate that fails on its own dead selector rather
-      // than on the product. Same claim, the surface that exists.
+      // THE TONE FACE. This has now been a knob ANGLE (`--ka`), a bar's fill
+      // and — since the EQ became a drawn response curve (ui/mixtbl.js
+      // buildEqCurve) — the fraction on each draggable NODE. `--f` survived
+      // all three shapes on purpose, and it is still written on every paint
+      // whether or not the strip is unfolded, so the same claim reads the same
+      // way. A gate that dies on its own dead selector is a gate that fails on
+      // itself rather than on the product.
       kas: [...r.querySelectorAll(".eqface")]
         .map(f => f.style.getPropertyValue("--f")).join("|"),
       derived: [...r.querySelectorAll(".eqk")].map(b => b.dataset.derived).join("|"),
@@ -154,6 +160,14 @@ let checks = 0; const ok = (m) => { checks++; console.log("  ok:", m); };
     const row = page.locator(".mrow:not(.msec)").first();
     const lo = row.locator('.eqk[data-band="lo"]');
     {
+      // OPEN THE CHANNEL FIRST. A strip is ONE bar until it is tapped (lane
+      // A2, 2026-08-17: "a tappable hierarchical set of sections"), and the
+      // tone plot lives inside the fold — the same tap a person makes. The
+      // painted values above are read without opening anything, deliberately:
+      // the board paints every strip whether or not it is unfolded, and a
+      // reading that needed the fold open would be measuring the fold.
+      await row.locator(".mbar.mstrip").click();
+      await page.waitForTimeout(150);
       // the board sits below the song table and the pool bank — raw mouse
       // coordinates outside the glass are silently dead, so bring the knob in
       await lo.scrollIntoViewIfNeeded();

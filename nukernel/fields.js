@@ -525,19 +525,42 @@
     });
   }
   // WHAT ONE PART MAY BE TOLD, and it is deliberately the box's own vocabulary
-  // narrowed rather than a second one: the same FX chips under the same
-  // MAX_FX, the same discrete sends, the same four levels and five places.
-  // A mixer whose channel strip speaks a different language from the master
-  // strip is two things to learn.
+  // narrowed rather than a second one: the same discrete sends, the same four
+  // levels and five places. A mixer whose channel strip speaks a different
+  // language from the master strip is two things to learn.
+  //
+  // A TRACK HAS THREE SENDS AND NO INSERTS ("get rid of inserts, reverb, and
+  // echo — let me send to bus 1, bus 2, and bus 3 instead", Paul, 2026-08-17).
+  // The three sends ARE the three buses — `rev`, `echo`, `room` keep their
+  // saved names and are what BUS_FIELDS names bus 1, bus 2 and bus 3 — so a
+  // song written before this loads with its reverb and echo intact and simply
+  // finds a third send it never used. The reason it is sends and not inserts
+  // is measured rather than tidy: audio/graph.js's head note counts a
+  // compressor or a convolver as the same arithmetic feeding one voice or
+  // twenty, so a treatment costs a CONSTANT on a bus and a MULTIPLE on a
+  // strip.
+  //
+  // `fx` IS THEREFORE OFF THE DESK, and it is the one field in this file that
+  // no surface offers. It is not deleted, and that is a stated decision rather
+  // than an oversight: songs saved before this carry per-part chains, the
+  // mixer still builds them, and test/browser/nukernel-drums.test.js measures
+  // three separate audio claims about them. Retiring the FIELD is a round with
+  // that gate in it. What this round removes is the only way to make a NEW
+  // one, so the expensive topology stops growing today. The BOX keeps its own
+  // `fx` chain as the group insert (FIELDS below), and the section strip is
+  // where it is reached.
   //
   // mute/solo are the two that are NOT enums, because they are not choices
   // between values — they are the desk's own pair, and solo is the one control
   // here that reaches OTHER parts (audio/mixer.js partSpecs: any solo in the
   // box mutes every part that is not soloed).
   const PARTMIX = [
+    // retired from every surface — see the note above; the loader and the
+    // mixer still honour a chain a saved song brought with it
     { key: "fx",   type: "list", table: FX,     labels: FXLABEL,   max: MAX_FX, default: [] },
     { key: "rev",  table: SENDS,  labels: SENDLABEL,  default: null },
     { key: "echo", table: SENDS,  labels: SENDLABEL,  default: null },
+    { key: "room", table: SENDS,  labels: SENDLABEL,  default: null },
     { key: "lvl",  table: LEVELS, labels: LEVELLABEL, default: null },
     { key: "pan",  table: PANS,   labels: PANLABEL,   default: null },
     { key: "mute", type: "flag",  default: false },
@@ -579,6 +602,7 @@
       fx: (g.fx || []).filter(k => Object.prototype.hasOwnProperty.call(FX, k)).slice(0, MAX_FX),
       rev: pick(SENDS, g.rev, 0),
       del: pick(SENDS, g.echo, 0),      // the field is `echo`, the bus is `del`
+      room: pick(SENDS, g.room, 0),     // bus 3, the one a track never had
       lvl: pick(LEVELS, g.lvl, 1),
       pan: pick(PANS, g.pan, 0),
       mute: !!g.mute,
@@ -737,19 +761,98 @@
   // stored as `buses.<bus>.eq = { lo, hi }` in dB beside the knobs, drawn on
   // the bus STRIP rather than in the rack row, and — the same law as a part's
   // — flat builds not one filter node on the return.
-  const BUSES = [
+  //
+  // A BUS HAS A NAME, AND THE NAME IS A KNOB. "name buses" (Paul, 2026-08-17).
+  // The name is stored exactly like every other bus value — `buses.<bus>.name`
+  // — and it is a WORD FROM A TABLE rather than free text for a structural
+  // reason, not a taste one: song.js validates a saved bus by walking this
+  // row's `knobs` and refusing any value its table does not hold, so a free
+  // string would be dropped on the next save. Picking from the desk's own
+  // vocabulary of return names keeps the rename inside the one law this file
+  // exists to enforce, and a name that survives a save is worth more than a
+  // name you can type. Absent = the bus's shipped label.
+  const BUSNAMES = { plate: "plate", hall: "hall", chamber: "chamber",
+                     spring: "spring", room: "room", air: "air",
+                     delay: "delay", slap: "slap", echo: "echo",
+                     tape: "tape", wash: "wash", drive: "drive" };
+  // …AND A BUS MAY FEED ANOTHER BUS. A real desk lets a return go to a return
+  // (delay into the plate is the oldest trick on one), so each row carries a
+  // send to each OTHER bus at the same five depths a track uses. The cycle
+  // that convention invites is handled once, in busSendPlan below.
+  const BUSROWS = [
     { bus: "rev",  label: "reverb", feed: "fed by the reverb sends", eq: BUS_EQ_BANDS,
       knobs: [
         { key: "ret",  label: "return", table: BUSRETS, labels: BUSRETLABEL, default: null } ] },
-    { bus: "echo", label: "echo",   feed: "ping-pong · fed by the echo sends", eq: BUS_EQ_BANDS,
+    { bus: "echo", label: "delay",  feed: "ping-pong · fed by the echo sends", eq: BUS_EQ_BANDS,
       knobs: [
         { key: "ret",  label: "return", table: BUSRETS, labels: BUSRETLABEL, default: null },
         { key: "fb",   label: "repeats", table: EFBS,   labels: EFBLABEL,    default: null },
         { key: "tone", label: "tone",   table: ETONES,  labels: ETONELABEL,  default: null } ] },
-    { bus: "room", label: "drum room", feed: "fed by the kit's lane sends", eq: BUS_EQ_BANDS,
+    { bus: "room", label: "room",   feed: "fed by the kit's lane sends", eq: BUS_EQ_BANDS,
       knobs: [
         { key: "ret",  label: "return", table: BUSRETS, labels: BUSRETLABEL, default: null } ] },
   ];
+  // the name knob and the two cross-sends are spliced onto every row from ONE
+  // place, so a fourth bus would inherit them by existing rather than by being
+  // remembered — and so song.js/resolveBuses/busesIsDefault pick them up with
+  // no edit at all (they all walk `knobs`)
+  const BUSES = BUSROWS.map(r => ({ ...r, knobs: [
+    { key: "name", label: "name", table: BUSNAMES, labels: BUSNAMES, default: null },
+    ...r.knobs,
+    ...BUSROWS.filter(o => o.bus !== r.bus).map(o => ({
+      key: "x" + o.bus, label: "→ " + o.label, to: o.bus,
+      table: SENDS, labels: SENDLABEL, default: null })),
+  ] }));
+  // what a bus is CALLED right now — the set name, else its shipped label.
+  // One reader for the board's nameplate and one for the send bars that name
+  // their destination, so a renamed bus is renamed everywhere at once.
+  const busNameOf = (v, bus) => {
+    const row = BUSES.find(b => b.bus === bus);
+    if (!row) return String(bus);
+    const set = v && v[bus] && v[bus].name;
+    return (set && BUSNAMES[set]) || row.label;
+  };
+  // WHICH BUS-TO-BUS SENDS MAY ACTUALLY BE WIRED, and which are refused.
+  //
+  // A desk allows delay → plate and plate → delay at the same time; an audio
+  // graph does not. Web Audio's own rule is that a cycle containing no
+  // DelayNode is muted outright, so the "allow it and see" answer is silence
+  // rather than feedback — and the cycles that DO contain a delay are a
+  // runaway with a shared reverb's own tail inside them, which is worse. So
+  // the plan is computed here, once, over the three buses, and the audio tier
+  // never builds an edge this refuses (audio/graph.js applyBusSends) while the
+  // board shows the refusal on the bar the person just moved.
+  //
+  // GREEDY, IN REGISTRY ORDER, so the answer is deterministic and the same on
+  // both sides: walk the sends in BUSES order, keep an edge when its
+  // destination cannot already reach its source, refuse it when it can. First
+  // send wins; the one that would close the loop is the one that is dropped.
+  function busSendPlan(v) {
+    const R = resolveBuses(v);
+    const order = BUSES.map(b => b.bus);
+    const adj = new Map(order.map(b => [b, []]));
+    const reaches = (from, to) => {
+      const seen = new Set(), st = [from];
+      while (st.length) {
+        const n = st.pop();
+        if (n === to) return true;
+        if (seen.has(n)) continue;
+        seen.add(n);
+        for (const m of adj.get(n) || []) st.push(m);
+      }
+      return false;
+    };
+    const edges = [], refused = [];
+    for (const a of order) for (const b of order) {
+      if (a === b) continue;               // a bus never feeds itself
+      const amt = R[a] ? R[a]["x" + b] : null;
+      if (!amt) continue;
+      if (reaches(b, a)) { refused.push({ from: a, to: b, amt }); continue; }
+      adj.get(a).push(b);
+      edges.push({ from: a, to: b, amt });
+    }
+    return { edges, refused };
+  }
   const BUSBY = {};
   for (const b of BUSES) BUSBY[b.bus] = b;
   // ONE SPEC -> ENGINE VALUES, resolveMaster's shape: `ret` resolves to its
@@ -988,6 +1091,10 @@
       tab: "fx",     group: "echo",                    default: null },
     { key: "dtime",   scope: "box",   table: DTIMES,   labels: DTLABEL,
       tab: "fx",     group: "echo time",               default: null },
+    // the box's THIRD send, so the section strip speaks the same three-bus
+    // sentence its own tracks do (PARTMIX `room` above has the law)
+    { key: "room",    scope: "box",   table: SENDS,    labels: SENDLABEL,
+      tab: "fx",     group: "room",                    default: null },
     { key: "lvl",     scope: "box",   table: LEVELS,   labels: LEVELLABEL,
       tab: "fx",     group: "level",                   default: null },
     { key: "pan",     scope: "box",   table: PANS,     labels: PANLABEL,
@@ -1076,6 +1183,7 @@
                 CEILINGS, CEILINGLABEL, MASTER, MASTERBY,
                 resolveMaster, masterIsDefault,
                 BUSES, BUSBY, resolveBuses, busesIsDefault,
+                BUSNAMES, busNameOf, busSendPlan,
                 AUTOPARAMS, AUTOPARAMLABEL, AUTOSHAPES, AUTOSHAPELABEL, autoShape,
                 SINGS, SINGLABEL, INSTRCHOICES, POOLCHAIRS,
                 ROLES, FIELDS, FIELD };

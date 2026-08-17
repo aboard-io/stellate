@@ -179,19 +179,16 @@
       <div class="ed composewrap" id="composewrap"></div>
     </section>
 
-    <!-- THE MIX PAGE — the BOARD over the RACK ("the SSL board", 2026-08-16).
-         The board is vertical channel strips, one per part the selected box
-         sounds (the same roster audio/mixer.js builds channels from), then the
-         SECTION strip under a heavier rule (every part bus feeds it), then the
-         shared-bus strips (reverb, echo, drum room — graph.js's own roster)
-         and the MASTER strip with its meter. Each channel strip carries its
-         label block, its value keys (fx/rev/echo/lvl/pan — the same chips,
-         the same saved fields the old table wrote), M/S, and a long-throw
-         AUTOMATED fader: the cap follows the level actually driving the
-         channel and a drag stores a dB OFFSET on top of it (fields.js
-         `fader`). Below the board, the EFFECTS RACK: one knob row per shared
-         bus plus the MASTER row, moved here off the SONG page (ids #m-<key>
-         kept). ui/mixtbl.js builds both wells. -->
+    <!-- THE MIX PAGE — THREE FOLDS, all of it 100% wide and horizontal
+         ("everything is horizontal now… a tappable hierarchical set of
+         sections", 2026-08-17). TRACKS: one full-width bar per instrument,
+         the fill its level, the word its instrument name, cut/solo beside
+         it, and a tap unfolds that channel's pan, its three BUS SENDS and its
+         EQ curve. BUSES: three named, renameable returns with the effects
+         inside them and a send from each to the others (a cycle is refused —
+         fields.js busSendPlan). MAIN: the section's own group strip and the
+         master, whose volume is a full-width bar over a full-width meter.
+         ui/mixtbl.js builds all three wells; #rack stays empty. -->
     <section class="page pg-mix" id="page-mix" aria-label="mix">
       <div class="ed">
         <!-- NO HEAD, NO (?). The page is reached by a lit MIX key and its

@@ -68,7 +68,7 @@
 // the bounce gets them by construction and there is nowhere for a second
 // opinion about the master to live.
 import { resolveMaster, resolveBuses, BUS_EQ_BANDS, FX, SP,
-         DRUMBUS } from "../ui/deps.js";
+         DRUMBUS, BUS_FIELDS, NuFields } from "../ui/deps.js";
 import { bpm, vol, MASTER, BUSES, on, emit } from "../ui/state.js";
 // the per-lane mix rows, MERGED: instruments.js DRUMMIX for the sampled kits,
 // audio/machines.js MACHINEMIX riding it for the synthesized machines — one
@@ -81,6 +81,14 @@ export let ctx = null, masterIn = null, bus = null, outGain = null,
            topLP = null, noise = null;
 export let REV = null, delBus = null, roomBus = null;
 export let SENDBUS = null, KIT = null;
+// THE REVERB BUS'S OWN INPUT, which the three convolution returns never had.
+// verbFor builds a hall lazily and PER NAME, so "the reverb bus" has no single
+// node a cross-send could land on — every channel sends to whichever verb its
+// section named. revIn is that address: one gain, fanned into every verb the
+// page has built so far, each leg at 1/n so a song running a hall AND a plate
+// gets one wash out of a bus send rather than two.
+export let revIn = null;
+const revFan = [];                                 // one gain per built verb
 
 // TEST SEAM, the ?nobounce shape (audio/bounce.js): ?dryroom builds the page
 // with no drum-room bus at all, which is how it sounded before the room
@@ -721,6 +729,7 @@ export function initAudio() {
   // sent to it. Most songs use one of these; building all three at boot was
   // paying for a hall and a plate to render silence.
   REV = {};
+  revIn = ctx.createGain();
   // ...and the aux send rack beside them, on the same law: a chorus bus is
   // built the first time anything asks to be chorused, and then never again
   SENDBUS = {};
@@ -732,6 +741,7 @@ export function initAudio() {
   echo = buildEchoBus(ctx, masterIn);
   delBus = echo.input;
   setDelayTime(0.1875);
+  applyBusSends();                      // the cross-rack, if the song asks for one
   const nl = ctx.sampleRate * .5; noise = makeBuffer(1, nl, ctx.sampleRate);
   const nd = noise.getChannelData(0);
   for (let i = 0; i < nl; i++) nd[i] = Math.random() * 2 - 1;
@@ -805,8 +815,89 @@ export function verbFor(name) {
   const n = VERBSPEC[name] ? name : "room";
   if (REV[n]) return REV[n];
   REV[n] = makeVerb(ctx, n, masterIn);
+  fanRev(n);
+  applyBusSends();            // the new hall joins the cross-send taps
   return REV[n];
 }
+// revIn -> this verb, and every leg re-weighted so the bus stays one wash
+function fanRev(name) {
+  if (!revIn || !REV[name]) return;
+  const g = ctx.createGain(); g.gain.value = 0;
+  revIn.connect(g); g.connect(REV[name]);
+  revFan.push(g);
+  const w = 1 / revFan.length, t = ctx.currentTime;
+  for (const x of revFan) { try { x.gain.setTargetAtTime(w, t, 0.02); } catch (e) { x.gain.value = w; } }
+}
+
+/* ---------- BUS -> BUS: the send a real desk allows and a graph does not --- */
+// "let buses send to other buses and back… use best practice here, like a real
+// mixing desk would" (Paul, 2026-08-17). A desk lets a return feed a return —
+// delay into the plate is the oldest trick on one — and the reason a patchbay
+// can do it and an AudioContext cannot is that the desk's loop is analogue and
+// bounded while Web Audio's own rule is that a cycle containing no DelayNode is
+// MUTED OUTRIGHT. So "allow it and see" is silence, and the loops that DO
+// contain a delay run away with a shared reverb's whole tail inside them.
+//
+// THE CYCLE IS THEREFORE BROKEN IN THE PLAN, NOT IN THE GRAPH: fields.js
+// busSendPlan walks the sends in registry order and keeps an edge only when its
+// destination cannot already reach its source. This file builds exactly the
+// edges that survive and never creates a node for the one that would close the
+// loop, so there is no muted-cycle state to discover by ear — and busReport
+// names the refusal, which is what the board shows on the bar you just moved.
+//
+// CHEAP BY CONSTRUCTION, which is the topology rule at the head of this file:
+// six gains for the whole page, whatever the song does. A send is a gain; the
+// effect at the far end of it is one that already exists.
+const XG = new Map();                              // "from>to" -> gain node
+let refusedSends = [];                             // [{from,to,amt}] this pass
+// WHERE A BUS IS TAPPED and WHERE IT IS FED. The tap is each return's own gain
+// (pre its return EQ, so a cross-send carries the bus's level and not its tone
+// — the tone belongs to what the bus sends to the MASTER). The feed is the
+// bus's input, which for the reverb is revIn above.
+const busOutsOf = (bus) => {
+  if (bus === "rev") return Object.keys(REV || {})
+    .map(n => busRet.get(REV[n])).filter(Boolean).map(r => r.g);
+  if (bus === "echo") return echo ? [echo.ret] : [];
+  if (bus === "room") { const r = roomBus && busRet.get(roomBus); return r ? [r.g] : []; }
+  return [];
+};
+const busInOf = (bus) => (bus === "rev" ? revIn
+  : bus === "echo" ? (echo && echo.input)
+  : bus === "room" ? roomBus : null);
+function applyBusSends() {
+  if (!ctx) return;
+  const plan = NuFields.busSendPlan(BUSES);
+  refusedSends = plan.refused;
+  const want = new Map(plan.edges.map(e => [e.from + ">" + e.to, e.amt]));
+  const t = ctx.currentTime;
+  for (const a of BUS_FIELDS) for (const b of BUS_FIELDS) {
+    if (a.bus === b.bus) continue;
+    const k = a.bus + ">" + b.bus;
+    const amt = want.get(k) || 0;
+    let g = XG.get(k);
+    if (!g) {
+      if (!amt) continue;                          // never built = never paid for
+      const dest = busInOf(b.bus);
+      if (!dest) continue;
+      g = ctx.createGain(); g.gain.value = 0;
+      g.connect(dest);
+      XG.set(k, g);
+    }
+    // re-taps every pass: a verb built after this edge was must feed it too,
+    // and connect() of a pair that is already connected is a no-op per spec
+    for (const src of busOutsOf(a.bus)) { try { src.connect(g); } catch (e) {} }
+    try { g.gain.cancelScheduledValues(t); g.gain.setTargetAtTime(amt, t, 0.02); } catch (e) {}
+  }
+}
+// what the cross-rack ACTUALLY sits at, read off the gains — the __nuMix law
+export const busSendReport = () => (!ctx ? null : {
+  sends: [...XG.entries()].map(([k, g]) => {
+    const [from, to] = k.split(">");
+    return { from, to, amt: +g.gain.value.toFixed(3) };
+  }).filter(s => s.amt > 0),
+  refused: refusedSends.map(r => ({ from: r.from, to: r.to })),
+  nodes: XG.size + (revIn ? 1 : 0) + revFan.length,
+});
 // ONE BUS PER EFFECT, BUILT ON FIRST USE — the same shape verbFor has always
 // had, applied to the character effects. A box that asks for crunch and a part
 // that asks for crunch send to the same distortion; nobody owns a copy.
@@ -839,11 +930,13 @@ export function sharedReport() {
     master: chain ? chain.nodes.length : 0,
     verbs, echo: echo ? echo.nodes : 0,
     room: countOf(roomBus), kit: KIT ? KIT.nodes : 0, sends,
+    // the bus->bus rack: six gains at the very most, plus revIn and its fan
+    cross: XG.size + (revIn ? 1 : 0) + revFan.length,
     // the two extra anchors initAudio holds outside the swappable middle
     anchors: masterIn ? 2 : 0,
     sendBuses: Object.keys(SENDBUS || {}).filter(k => SENDBUS[k]),
     get total() { return this.master + this.verbs + this.echo + this.room +
-                         this.kit + this.sends + this.anchors; },
+                         this.kit + this.sends + this.anchors + this.cross; },
   };
 }
 export function setDelayTime(bars) {
@@ -936,6 +1029,9 @@ export const busReport = () => (!ctx ? null : {
     return { rev: read(rv && rv.eq), echo: read(echo && echo.eq),
              room: read(rm && rm.eq) };
   })(),
+  // the bus->bus rack, and what it REFUSED — read off the gains that exist
+  // (and the plan's own answer for the one that never got a node)
+  cross: busSendReport(),
   set: BUSES || null,
 });
 
@@ -1043,6 +1139,6 @@ on("transport", () => {
 // swap the chain; before initAudio both are no-ops, and the first build picks
 // up whatever MASTER holds by then.
 on("master", () => installMaster());
-on("song", () => { installMaster(); applyBuses(); });
+on("song", () => { installMaster(); applyBuses(); applyBusSends(); });
 // a rack knob moved: params only, no swap
-on("buses", () => applyBuses());
+on("buses", () => { applyBuses(); applyBusSends(); });
