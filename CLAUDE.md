@@ -583,6 +583,16 @@ kernel of its own. Live at test.stellate.app/nukernel/kernel-daw.html; gates at
 `node test/unit/nukernel.test.js` (~418k checks, ~2 min) and browser
 `test/browser/nukernel-audio.test.js` + `nukernel-survival.test.js`.
 
+**nukernel DOES NOT SING, and must not be taught to again.** It briefly carried
+its own espeak singer (`sing.js` + `audio/sing.js` + `syllabary.js`), borrowing
+the parent's `engine/speech.js`. That organ's law is a fresh Emscripten heap per
+utterance — espeak's wavegen consumes libc `rand()`, so only a fresh instance is
+byte-identical — and once the MIN_NOTE fix took a song from 3 syllables to 127,
+Safari answered with "RangeError: Out of memory" and the page died mid-bar. The
+whole layer came out on 2026-08-17 (tombstones in `kernel-daw.html` and at every
+site it attached; the proof it stays out is `nukernel.test.js` §74). **The PARENT's
+speech organ is untouched** and still ships on stellate.app.
+
 **Two tables live OUTSIDE genres.js and every new anchor needs a row in both:**
 `compose.js` PLAN_OF (dance/song/arc) and BPM. There is no fallback on purpose
 ("NO SILENT DEFAULTS"), so a genre added without them throws the moment anyone
@@ -641,8 +651,8 @@ assertion can prove is proven pure-node in seconds.
 **Files:** `kernel.js` (144 KB, the algebra), `genres.js` (254 KB, 87 anchors),
 `fields.js` (75 KB, registry), `song.js` (41 KB, loader), `instruments.js` (29 KB),
 `compose.js` (108 KB), `presets.js` (49 KB), `lab.js` (78 KB, workbench),
-`promote-genre.js` (26 KB), `inherit.js` (33 KB), `genealogy.js` (17 KB), `sing.js`
-(22 KB), `hw.css` (11 KB), `kernel-daw.html` (19 KB), `kernel-daw.css` (130 KB),
+`promote-genre.js` (26 KB), `inherit.js` (33 KB), `genealogy.js` (17 KB),
+`hw.css` (11 KB), `kernel-daw.html` (19 KB), `kernel-daw.css` (130 KB),
 `audio/` (bounce/survival/voices/transport/mixer/graph/assets), `ui/` (views), docs
 `GENEALOGY.md` + `INHERITANCE.md`.
 

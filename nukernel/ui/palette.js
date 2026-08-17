@@ -19,7 +19,7 @@ import { GENRES, MODELABEL, SCALELABEL, VOX, OPLABEL, MAX_FX, ROLES,
          BASSOPS, INSTRCHOICES, familyOf,
          INLABEL, OUTLABEL, ENVLABEL, MOTLABEL,
          KEYLABEL, PROGLABEL, PERIODLABEL, BREATHLABEL, PIPELABEL, PARTCHOICES,
-         SINGLABEL, AUTOPARAMLABEL, AUTOSHAPELABEL, autoShape,
+         AUTOPARAMLABEL, AUTOSHAPELABEL, autoShape,
          MAX_NUDGE } from "./deps.js";
 import { curSection, commit } from "./state.js";
 import { LAYER_OPTS, stackOf, focusOf, focused, opsOf, optOf, voxOf,
@@ -191,7 +191,7 @@ export function toggle(kind, value, ent) {
 // controls, and no section surface may tell time.)
 const BOXOPTS = new Set(["kit", "drumkit", "bassop", "rev", "echo",
                          "verb", "dtime", "lvl", "pan", "mot", "intro", "outro", "role",
-                         "key", "prog", "period", "breath", "pipe", "sing"]);
+                         "key", "prog", "period", "breath", "pipe"]);
 
 /* ---------- is this chip on? ---------- */
 // ONE function for the build path and the refresh path, so they can never
@@ -558,9 +558,9 @@ const CELLBANKS = {
                       ["op", "tight", OPLABEL.tight, "rng"]]);
     b.rowOf("alphabet", "scale", SCALELABEL, "rng");
     b.rowOf("part", "part", PARTCHOICES, "rng");
-    // BOX-scope on a layer popup, like breath in mods: the box has one lyric
-    // and one singer, but what a voice IS belongs here
-    b.rowOf("sing", "sing", SINGLABEL, "vox");
+    // (a "sing" row opened this group — box-scope on a layer popup, like
+    // breath in mods — until the espeak singer came out on 2026-08-17. See the
+    // tombstone in kernel-daw.html.)
     b.rowOf("filter", "cut", VOX.cut.labels, "vox");
     b.rowOf("resonance", "res", VOX.res.labels, "vox");
     b.rowOf("env mod", "emod", VOX.emod.labels, "vox");

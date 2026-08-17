@@ -63,7 +63,7 @@
 import { GENRES, FX, MAX_FX, fxChain, fxMix, fxSendable, SENDS, LEVELS, PANS,
          RATES, SP, DRUMFILE, DRUMMIX, DRUMBUS, instrOf, BASSSYNTH,
          partOf, chairKeys, resolvePartMix, faderDb, EQ_BANDS,
-         eqDb, familyOf, SING } from "../ui/deps.js";
+         eqDb, familyOf } from "../ui/deps.js";
 import { SONG, POOL, on } from "../ui/state.js";
 import { gid, stackOf, genreOf, kitOf, poolInstrOf } from "../ui/derive.js";
 import { ctx, masterIn, delBus, roomBus, verbFor, sendFor, kitFor, buildKitDesk,
@@ -204,12 +204,9 @@ export function partKeysOf(sec, roster) {
   const keys = (roster || voiceRoster(sec)).map(r => r.key);
   if (!genreOf(sec).nobass) keys.push("bass");
   if (kitOf(sec)) keys.push("drums");
-  // ...AND THE SINGER, on the same terms as those two: a track with no chair
-  // in the voice roster (it is one lyric per box, not one per genre voice) and
-  // an address the box must not offer when nothing can ever sound on it. Who
-  // sings is the box's chip OR the genre's own declaration, so it is asked the
-  // one way the whole page asks it (sing.js singFor).
-  if (SING && SING.singFor(gid(sec), sec.sing)) keys.push("sing");
+  // (a third such address, `sing`, was pushed here on the same terms whenever
+  // the box had a singer. The espeak organ came out on 2026-08-17 — the
+  // tombstone is in kernel-daw.html — so the desk is the band's again.)
   return keys;
 }
 /* ---------- THE DERIVED TONE: the song seats its own desk ------------------ */

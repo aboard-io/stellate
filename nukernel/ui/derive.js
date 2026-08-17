@@ -6,9 +6,9 @@
 //
 // Layer graph: deps -> state -> THIS FILE -> audio -> ui views -> main.
 import { GENRES, MODES, SCALES, RATES, SWINGS, KITOPS, OPS,
-         render, drums, bass, word, envelope, edges, groove, chordAt,
+         render, drums, bass, word, envelope, edges, groove,
          blank, VOX, PROGS, PERIODS, BREATHS, PIPESETS, withCadence,
-         SING, instrOf, partOf, PARTNAMES,
+         instrOf, partOf, PARTNAMES,
          chordsOf, MODE, harmonizeStage,
          tempoWarp, seatNote, prng, TOMS } from "./deps.js";
 
@@ -423,72 +423,26 @@ export function sectionEvents(sec, slots, songGroove, songSwing) {
   // where the section's final stream exists.
   const ev = groove(edges(envelope(win, sec.env, span), sec.intro, sec.outro, span, barSteps),
                     songGroove, barSteps, 1);
-  // ...AND THE SINGER AFTER EVEN THAT. A sung line follows the tune, so it has
-  // to read the FINAL stream: planning it before the groove would put the
-  // words on the grid while the melody they are singing had moved off it.
-  // It is appended rather than merged into the walk because it is a different
-  // KIND of event — `sing` carries a syllable and a voice index, not a note
-  // and a chair — and because appending is what keeps every song saved before
-  // this byte-identical: `sec.sing` absent, singPlan returns [], nothing here
-  // touches `ev` at all.
-  for (const s of singEvents(sec, g, phrases[0], ev, barSteps, nudge))
-    ev.push(s);
+  // (a singEvents pass appended `sing` events here — a syllable and a voice
+  // index rather than a note and a chair — after the groove, so the words
+  // followed the tune off the grid. It left with the espeak organ on
+  // 2026-08-17; kernel-daw.html holds the tombstone. The stream is the band's
+  // again, and every event in it is a note, a hit or a bass note.)
   return { g, bars: len, vBase, ev };
 }
 
-/* ---------- the sung line ---------- */
-// THE LYRIC IS THE GENRE'S, and the seed is the AUTHORITY GENRE KEY and
-// nothing else. Two consequences, both wanted: every box of a one-genre song
-// sings the same words (a song has one hook, not one per section), and the
-// whole song therefore warms ONE set of espeak utterances instead of one per
-// box — which is the difference between a two-second warm and a twenty-second
-// one. djb2, because it has to be stable across reloads and machines.
+/* ---------- a stable seed from a string ---------- */
+// djb2, because a seed has to be stable across reloads and machines: the same
+// song must deal the same lead-in and the same bar seeds on every device.
 const strSeed = s => {
   let h = 5381;
   for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
   return h;
 };
-// WHICH CHORD IS SOUNDING UNDER A STEP, in the coordinates chordAt wants. The
-// chord windows are indexed in PHRASE steps (kernel.js chordsOf splits the
-// subject's own 16), while an event's `t` is in output steps (16/rate to the
-// bar), so the bar fraction is the conversion — and the bar is ABSOLUTE
-// (nudge + the window's own offset), because a progression cycles by bar and
-// a nudged box starts partway through the cycle.
-function pcsAtOf(subj, g, barSteps, nudge) {
-  return (t) => {
-    const b = nudge + Math.floor(t / barSteps);
-    const step = Math.min(15, Math.max(0,
-      Math.floor(((t % barSteps) / barSteps) * 16)));
-    const c = chordAt(subj, g, b, step);
-    return c && c.pcs ? c.pcs : null;
-  };
-}
-// WHO ASKS FIRST, and this line is why eighty-four armed genres were mute.
-// The chip on the box was read DIRECTLY here — `sec.sing` truthy or nothing
-// happens — which no genre default can satisfy, so a catalog that had just
-// learned to declare `sing: "double"` sang only where a finger had also
-// tapped the chip. fields.js resolveSing wrote the prescription and left it
-// in a comment; this is it. The resolution is sing.js's own singFor (box wins,
-// absent falls through to the genre, nothing declared sings nothing), and
-// singPlan already resolves it internally — so the box's chip may not be
-// passed on raw, or a genre default would reach the plan and never the colour.
-export function singEvents(sec, g, subj, ev, barSteps, nudge) {
-  if (!SING || !subj) return [];
-  const gk = gid(sec), seed = strSeed(gk);
-  const key = SING.singFor(gk, sec.sing);
-  if (!key) return [];
-  // `barSteps` is the box's real bar (the rate chip moves it), and the singer
-  // needs it for one thing only: a line that has run out waits for the top of
-  // a bar before starting again (sing.js THE LINE BREATHES).
-  const plan = SING.singPlan(ev, { sing: key, gk, seed, barSteps,
-                                   pcsAt: pcsAtOf(subj, g, barSteps, nudge) });
-  if (!plan.length) return plan;
-  // the utterance and the colour are per BOX, not per note — hoisted because
-  // sectionEvents is the deep-composition cost centre and utteranceFor rebuilds
-  // a string from the bank every time it is called
-  const text = SING.utteranceFor(gk, seed), colour = SING.SINGS[key].colour;
-  return plan.map(p => ({ ...p, kind: "sing", text, colour }));
-}
+// (singEvents and its pcsAtOf chord reader stood here — the plan half of the
+// espeak singer, which asked which chord was sounding under a step so a
+// syllable could land on a chord tone. Both went with the organ on
+// 2026-08-17.)
 
 /* ---------- the shared render ---------- */
 // ONE render per change, not three. draw(), compile() and writeSrc() each used

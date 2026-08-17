@@ -88,9 +88,8 @@ import { buildMasterChain, buildEchoBus, buildRoomBus, buildKitDesk, buildSendBu
 import { FONT } from "./assets.js";
 import { offFallback } from "./voices.js";
 import { chanSpec, buildChannel, armAutomation, focusKit } from "./mixer.js";
-import { buildTimeline, scheduleBar, stepDur, playing, getPosition, nextBarAt,
-         onGesture, seekPhase, setQuietWhen, singWork } from "./transport.js";
-import { warm as warmSing } from "./sing.js";
+import { buildTimeline, stepDur, playing, getPosition, nextBarAt,
+         onGesture, seekPhase, setQuietWhen } from "./transport.js";
 // THE PRESS. Everything that makes a sound inside a render window now happens
 // in the parent engine (engine/faust/), driven through this one door.
 import { pressWindow, pressReady, pressError, pressPath } from "./press-window.js";
@@ -139,11 +138,7 @@ const st = { state: "idle", stage: null, durSec: 0, gen: 0, sampledOnly: false,
              lanes: [], lanesWant: [], lanesMissing: [],
              // the press's own honesty: voices with no parent module, sources
              // that would not decode. Empty on every tape that is whole.
-             unrouted: [], missing: [],
-             // how many windows the singer really reached, and how many
-             // syllables it was handed there — "it sang" as two numbers rather
-             // than as an intention
-             sung: 0, sungNotes: 0 };
+             unrouted: [], missing: [] };
 // one render's stopwatch: ph.mark("pool") closes the phase that was open and
 // opens 'pool'. Cheap enough to leave armed in production (five performance.now
 // calls per render), and the alternative is instrumenting it again next time.
@@ -219,7 +214,6 @@ window.__nuRender = () => ({ ms: st.lastRenderMs, durSec: st.durSec,
   nodes: st.nodes, pooled: st.pooled, lanes: st.lanes,
   lanesWant: st.lanesWant, lanesMissing: st.lanesMissing,
   unrouted: st.unrouted, missing: st.missing,
-  sung: st.sung, sungNotes: st.sungNotes,
   stage: st.stage, sampledOnly: st.sampledOnly });
 // TEST SEAM: render a known length RIGHT NOW and hand back the phase report.
 // The budget gate cannot wait on the debounce (it would be timing the timer),
@@ -261,13 +255,6 @@ window.__nuRenderNow = async (capSec, opts) => {
              // than eyeball
              lanes: st.lanes, lanesWant: st.lanesWant,
              lanesMissing: st.lanesMissing,
-             // the singer's own census of this render — an ADDED key, so every
-             // existing reader is untouched (nukernel-bounce (D) reads it).
-             // __nuSing's counters are the PAGE's, cumulative and shared with
-             // the live graph, so they cannot answer "did THIS tape sing";
-             // sung/sungNotes are this render's own and they can.
-             sing: (typeof window.__nuSing === "function" ? window.__nuSing() : null),
-             sung: st.sung, sungNotes: st.sungNotes,
              // NO SILENT FALLBACKS, readable from the outside
              unrouted: st.unrouted, missing: st.missing,
              // { tap: [t0, t1] } returns the raw samples of that span, both
@@ -1134,11 +1121,10 @@ export const SHORT_CAP = SHORT_SEC;
 // the desktop stream are both gated against), which knows how to play them
 // because engine/faust/voices/state-engine.js has always known.
 //
-// THE SUNG LINE IS THE ONE THING THAT STAYS ON THIS PAGE'S OWN PATH, and it is
-// named rather than dropped: nukernel's singer is espeak slices resampled and
-// vocoded by audio/sing.js, and the parent has no voice for it (to-engine.js
-// reports it in `unrouted`). It is played in the desk pass below, through the
-// same strip the band lands on — one desk, one master, one take.
+// (the sung line used to be the one thing that stayed on this page's own path:
+// espeak slices the parent press has no voice for, played live in the desk pass
+// below. The singer came out on 2026-08-17 — kernel-daw.html has the tombstone
+// — so everything on this tape now arrives from the press as bytes.)
 //
 // AND THE PRESSED BAND IS NOT THE TAPE (2026-08-17). It is the BAND: what came
 // back from the press is a room full of players, and the mix Paul was listening
@@ -1174,10 +1160,10 @@ async function renderChunk(TL, plan, ck, sd, tally) {
 // THE DESK, OVER ONE WINDOW. The band arrives as bytes and is played back
 // through the box's own channel strip (audio/mixer.js buildChannel — the same
 // EQ, inserts, level, pan, automation and the same three sends the live tick
-// builds), the singer plays live beside it into the same strip, and the whole
-// window leaves through this song's master chain (graph.buildMasterChain, the
-// same spec, the same numbers). Returns { chs, n } trimmed to the window's own
-// output — the pre-roll really played and is then thrown away.
+// builds), and the whole window leaves through this song's master chain
+// (graph.buildMasterChain, the same spec, the same numbers). Returns { chs, n }
+// trimmed to the window's own output — the pre-roll really played and is then
+// thrown away.
 //
 // WHAT IS STILL THE PRESS'S AND NOT THE DESK'S, said out loud because a silent
 // gap is how this bug happened: the PART desk under the strip (a per-chair
@@ -1237,11 +1223,12 @@ async function renderDesk(TL, plan, ck, sd, band, tally) {
     return c;
   };
 
-  // NO SYNTH POOL AND NO PLAYER INJECTION. Nothing in this pass makes a note
-  // except playSyllable, which the bar walk reaches directly — every other kind
-  // of event has already been pressed by the parent, so the walk below is fed
-  // bars whose event lists are the sung ones and nothing else.
-  const offSynth = () => false;
+  // NOTHING IN THIS PASS MAKES A NOTE. Every event was pressed by the parent
+  // and arrives as bytes; the walk below only states the room per bar — the
+  // channel, the echo time, the automation walker and the kit focus — so that
+  // the band's own tape is treated the way the live tick would treat it. (It
+  // once also played the sung line, live, beside the bytes; that was the
+  // singer's, and the singer is gone.)
 
   // ---- the band, played back through the box it belongs to ----
   // One buffer, one source per RUN OF BARS SHARING A BOX, because the strip is
@@ -1282,7 +1269,7 @@ async function renderDesk(TL, plan, ck, sd, band, tally) {
   }
 
   // ---- the walk: the live tick's bar loop against offline time ----
-  let t = LEAD, cur = null, mine = 0;
+  let t = LEAD, cur = null;
   for (let i = ck.pre; i < ck.b; i++) {
     const bar = TL[i], sec = SONG[bar.si];
     if (!sec) continue;
@@ -1307,22 +1294,12 @@ async function renderDesk(TL, plan, ck, sd, band, tally) {
                     bar.first ? 0 : plan.from[i]);
       focusKit(cur.chan, t);        // one kit desk for the render, one section at a time
     }
-    // ONLY THE SUNG EVENTS. The bar is handed to the live tick's own switch so
-    // the singer keeps its chair, its strip and its sends; the rest of the band
-    // arrived as bytes above and is already on that same strip.
-    const sung = (bar.ev || []).filter(e => e.kind === "sing");
-    mine += sung.length;
-    scheduleBar({ ...bar, ev: sung },
-                sec, cur.chan, cur.kit, t, sd, offSynth);
+    // (the bar's own events were handed to the live tick's scheduleBar here,
+    // filtered to the sung ones — the one voice the press could not play. With
+    // the singer gone there is nothing left in an event list this pass makes a
+    // sound for, so the walk states the room and nothing else.)
     t += TL[i].barSteps * sd;
   }
-  // "IT SANG", AS TWO NUMBERS AND NOT AS AN INTENTION: how many windows carried
-  // a sung line and how many syllables were handed to the singer in them. The
-  // peak this used to report is gone with the separate sing pass — the sung
-  // line is inside the mix now and cannot be measured apart from it — and a
-  // count of the notes really scheduled says the same thing the peak was there
-  // to say, which is that the espeak instances bought samples.
-  if (mine) { tally.sung++; tally.sungNotes += mine; }
   const buf = await octx.startRendering();
   // trimmed to the window's own output — the pre-roll really played (a syllable
   // ringing across the seam is produced, not guessed, and the master arrives at
@@ -1353,18 +1330,11 @@ async function renderSong(capSec) {
   const plan = planChunks(TL, sd, CHUNK_SEC);
   const durSec = plan.total;
   st.wantSec = durSec; st.wantBars = TL.length; st.chunks = plan.chunks.length;
-  // THE SINGER, WARMED BEFORE ANY WINDOW OPENS — and this is not a nicety on
-  // mobile, it is the difference between a sung line existing and not. The
-  // carrier IS the audible path on a phone (the WAV-FIRST decision at the top
-  // of this file), so a voice that only ever warms on the live graph's own
-  // ensureAssets is silent on the device most likely to be listening.
-  // renderChunk's walk is synchronous by construction; every espeak instance
-  // has to be paid here, once for the whole tape, or not at all. Idempotent
-  // and cached, so the second stage and every re-render after an edit hit the
-  // same slices — which also means the two-stage render does not synthesize
-  // the same line twice.
-  ph.mark("voices");
-  for (const w of singWork()) await warmSing(w.plan, w.text);
+  // (a "voices" phase sat here: every espeak instance the tape would need,
+  // paid once before any window opened, because renderChunk's walk is
+  // synchronous and cannot wait on wasm. It went with the singer on
+  // 2026-08-17 — kernel-daw.html has the tombstone — and the tape now goes
+  // straight from its chunk plan to the press.)
   // THE PARENT PRESS, PROVED PRESENT BEFORE ANYTHING COMMITS TO IT. There is no
   // second renderer to fall back to any more, so a page whose engine/faust is
   // missing must say so once and loudly rather than per window.
@@ -1373,8 +1343,7 @@ async function renderSong(capSec) {
   st.sampledOnly = false;
   offFallback.n = 0;
   const tally = { nodes: 0, pooled: 0, chunkMs: 0, each: [], sampledOnly: false,
-                  lanes: new Set(), unrouted: [], missing: new Set(),
-                  sung: 0, sungNotes: 0 };
+                  lanes: new Set(), unrouted: [], missing: new Set() };
   const done = new Array(plan.chunks.length);
   // WAVES, not a free-for-all: PARALLEL contexts at a time. Unbounded
   // Promise.all over seventy windows would put seventy render threads and
@@ -1400,7 +1369,6 @@ async function renderSong(capSec) {
   // too, and a bounce that quietly kept a rack per section would show up here
   // and nowhere else.
   st.nodes = tally.nodes; st.pooled = tally.pooled;
-  st.sung = tally.sung; st.sungNotes = tally.sungNotes;
   st.lanes = [...tally.lanes].sort();
   // NO SILENT FALLBACKS, as a field. `unrouted` is every nukernel voice the
   // parent engine had no module for (audio/to-engine.js names each one and

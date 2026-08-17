@@ -21,7 +21,6 @@ import { synthNodes, synthKey, loadSynth, focusSynths, playSynth, playSampled,
 import { isMachine, synthForInstr } from "./to-engine.js";
 import { channelFor, armAutomation, focusKit, refreshChannels } from "./mixer.js";
 import { setDelayTime } from "./graph.js";
-import { playSyllable, warm as warmSing, needsWarm, singOff } from "./sing.js";
 
 export let playing = false;
 export let playingSec = -1;
@@ -461,40 +460,11 @@ export function scheduleBar(bar, sec, chan, kit, when, sd, synthFn) {
           { wave: "square", cut: 340, q: 5, atk: .006, rel: .8, gain: .26 }, false, e.vel,
           chan, "bass");
     }
-    // THE SINGER. No fallback of any kind: a syllable with nothing warmed for
-    // it is SILENT, which is the same law the page already keeps for a dead
-    // signature synth and an in-flight zone — silence over wrongness. A wrong
-    // syllable is not a near miss, it is a different word.
-    else if (e.kind === "sing")
-      playSyllable(e, e.text, at, e.dur * sd, chan, e.colour, bar.barSteps * sd);
+    // (a fourth arm read `sing` and handed the syllable to playSyllable. The
+    // espeak organ came out on 2026-08-17 — see kernel-daw.html — and with it
+    // singWork(), the per-song utterance census this file exported for
+    // bounce.js. Every event the tick sees is a note, a hit or a bass note.)
   }
-}
-
-/* ---------- what this song sings ---------- */
-// EVERY UTTERANCE THE SONG NEEDS, deduped by (line text). Exported because
-// audio/bounce.js needs the identical answer before it renders windows — the
-// carrier is the audible path on mobile, so a voice warmed only for the live
-// graph is a voice that does not exist on a phone. One walk, two callers, no
-// second opinion about what is being sung.
-export function singWork() {
-  if (singOff()) return [];
-  const byText = new Map();
-  for (const sec of SONG) {
-    // NOT `!sec.sing`. The box's chip is one of two ways a section sings — the
-    // genre's own `sing` is the other, and skipping on the chip alone warmed
-    // nothing for a genre that arms itself, which is a line that plans, plays
-    // and is never heard. The RENDERED events are the authority: a section
-    // that is not singing emits no `sing` event and costs one walk it was
-    // already going to make (sectionRender is cached per box).
-    if (!sec) continue;
-    for (const e of sectionRender(sec, SLOTS, GROOVE, SWING).ev) {
-      if (e.kind !== "sing") continue;
-      let w = byText.get(e.text);
-      if (!w) byText.set(e.text, w = { text: e.text, plan: [] });
-      w.plan.push(e);
-    }
-  }
-  return [...byText.values()];
 }
 
 /* ---------- assets for the current song ---------- */
@@ -532,18 +502,16 @@ export async function ensureAssets(announce) {
   for (const sp of synths)
     for (let v = 0; v < depth; v++)
       if (!synthNodes.has(synthKey(sp, v))) wantSynth.push([sp, v, null]);
-  // THE SINGER WARMS HERE, beside the zone fetches, because it is the same
-  // kind of thing: ~2 s of wasm work that the audio clock cannot wait for.
-  // scheduleBar is a synchronous walk on the WebAudio clock and the offline
-  // render is a synchronous walk with no clock at all, so an espeak instance
-  // (~210 ms, one per voice per pitch rung) can only ever happen before the
-  // first note is due. A song with no `sing` chip anywhere returns an empty
-  // list here and nothing is fetched — the 1.7 MB artifact included.
-  const sings = singWork().filter(w => needsWarm(w.plan, w.text));
-  if (!need.length && !wantSynth.length && !kits.length && !sings.length) return false;
+  // (the singer warmed here too, beside the zone fetches — one espeak instance
+  // per voice per pitch rung, before the first note was due, because neither
+  // the live walk nor the offline one can wait on wasm mid-bar. That warm is
+  // what fell over: a fresh Emscripten heap per utterance against a
+  // 127-syllable song is an out-of-memory on Safari, so the organ came out on
+  // 2026-08-17. Nothing here fetches a voice any more.)
+  if (!need.length && !wantSynth.length && !kits.length) return false;
   if (announce) emit("status", { text:
-    "loading " + [...need, ...new Set(wantSynth.map(x => x[0].dsp)), ...kits,
-                  ...(sings.length ? ["voices"] : [])].join(", ") + "…" });
+    "loading " + [...need, ...new Set(wantSynth.map(x => x[0].dsp)), ...kits]
+      .join(", ") + "…" });
   const t0 = performance.now();
   // synths and kits in parallel (the decode gate caps the kit decodes anyway),
   // but instruments one at a time with a breath between WHILE PLAYING — the
@@ -551,8 +519,7 @@ export async function ensureAssets(announce) {
   // decode burst with no yield starves it for whole bars
   const nap = ms => new Promise(r => setTimeout(r, ms));
   const rest = Promise.all([...wantSynth.map(([sp, v, c]) => loadSynth(sp, v, c)),
-                            ...kits.map(k => isMachine(k) ? warmKit(k) : loadKit(k)),
-                            ...sings.map(w => warmSing(w.plan, w.text))]);
+                            ...kits.map(k => isMachine(k) ? warmKit(k) : loadKit(k))]);
   // EVERY QUEUED INSTRUMENT COUNTS AS IN FLIGHT FROM HERE, not from the moment
   // its own fetch starts. The loop below is deliberately serial with a breath
   // between decodes, so a genre's second chair waits behind its first — and a

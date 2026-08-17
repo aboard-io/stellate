@@ -46,7 +46,7 @@ export const { NSLOTS, MAX_LEN, MAX_NUDGE, MAX_FX,
                EQ_BANDS, BUS_EQ_BANDS, EQ_RANGE, eqDb, resolveEq, eqIsFlat,
                resolveMaster, masterIsDefault, resolveBuses, busesIsDefault,
                AUTOPARAMS, AUTOPARAMLABEL, AUTOSHAPELABEL, autoShape,
-               SINGLABEL, INSTRCHOICES, POOLCHAIRS,
+               INSTRCHOICES, POOLCHAIRS,
                ROLES } = window.NuFields;
 // THE ONE RENAME IN THIS FILE. fields.js calls the master-bus registry MASTER;
 // ui/state.js calls the song's master-bus VALUES the same thing. One says what
@@ -79,11 +79,6 @@ export const { instrOf, familyOf, BASS_INSTR, DRUMDIR, DRUMFILE, FONTS, BASSSYNT
 export const { compose } = window.NuCompose;
 export const PRESETS = window.PRESETS;
 
-// ---- the singer as data (sing.js) ----
-// The plan tier: syllables, the word banks, the measured espeak pitch ladders,
-// which note gets which word in which voice. audio/sing.js renders it.
-export const SING = window.NuSing || null;
-
 // ---- the big engine's sampled layer ----
 // engine/faust/voices/sampler.js is the same SamplerLive live.js drives, and
 // __REGISTRY carries the same zone tables the main app plays.
@@ -91,20 +86,12 @@ export const SP = window.FaustSampler;
 export const REG = window.__REGISTRY;
 export const SAMPLERS = (REG && REG.SAMPLERS) || {};
 
-// ---- the big engine's SPEECH and FOUND organs ----
-// Two more borrowings from the parent, and they are read HERE for the same
-// reason everything else is: audio/sing.js must not touch a global.
-//   CsdSpeech  engine/speech.js — deterministic espeak-ng, the fresh-instance
-//              law, the single-flight queue, the shared cache key. It lazily
-//              dynamic-imports the ~1.7 MB wasm, so referencing it costs
-//              nothing until something actually sings.
-//   FoundPlayer engine/faust/voices/found-player.js — read for f0Profile /
-//              detectMedianHz ONLY, the deterministic clip-snap's measuring
-//              half. Nothing here fetches a found source or builds a grain.
-// Both are optional: a page served without them degrades to a silent singer
-// (audio/sing.js counts it) rather than to a thrown module.
-export const CS = window.CsdSpeech || null;
-export const FP = window.FoundPlayer || null;
+// (window.CsdSpeech and window.FoundPlayer were read here, for the singer:
+// the parent's espeak organ and found-player's pitch measurer. The singer
+// came out on 2026-08-17 — the tombstone is in kernel-daw.html — and with it
+// the only reader either global ever had on this page. found-player is still
+// SCRIPTED in, because audio/press-window.js's need() takes window.FoundPlayer
+// as a preload rather than importing it again.)
 
 // ---- the bench (nukernel/lab.js), LOADED ON DEMAND ----
 // The LAB tab's engine and its two oracles are ~123 KB of analysis tier that

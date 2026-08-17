@@ -559,17 +559,10 @@ export const VOICEFX = {
   vox:   { grit: 0.14, drive: 2.4, tremHz: 3.2, tremDepth: 0.035 },
   // a blown horn: more edge when it is pushed, and less wobble than the voice
   brass: { grit: 0.20, drive: 2.8, tremHz: 2.8, tremDepth: 0.025 },
-  // THE SUNG VOICE: the same edge, and NO LFO AT ALL. Paul, hearing the stack:
-  // "Explain your vocal chain it sounds almost like an LFO is layered over it."
-  // It was one, and layered is the exact word — graph.js breathLFO is TWO sines
-  // at hz and hz*1.087, so the tremolo carries a beat of its own at 8.7% of its
-  // rate, and that beat is what a listener hears as a second, unrelated thing
-  // riding the voice. On a horn that reads as breath, because a sampled horn
-  // has no amplitude story of its own. Espeak output DOES: real speech already
-  // arrives with its own contour, so modulating it again lays one envelope over
-  // another and the ear separates them. The grit stays — that is the edge a
-  // pushed voice has, and it is not periodic.
-  sing:  { grit: 0.14, drive: 2.4, tremHz: 3.2, tremDepth: 0 },
+  // (a third row, `sing`, was the espeak singer's own chair — the same edge as
+  // `vox` with the LFO at zero, because real speech arrives with an amplitude
+  // contour of its own and modulating it again lays one envelope over another.
+  // The singer came out on 2026-08-17; kernel-daw.html has the tombstone.)
 };
 // WHICH FAMILY, if either — the strip IS the family (instruments.js hands out
 // one shared STRIPS object per family), so this is a lookup and not a second

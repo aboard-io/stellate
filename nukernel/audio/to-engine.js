@@ -597,9 +597,10 @@ export function toEngine(plan, deps) {
         if (L.pitch) d.pitch = (kitSpec && L.tom && kitSpec.tomPitch
           && kitSpec.tomPitch[L.tom]) || L.pitch;
         drums.push(d);
-      } else if (e.kind === "sing") {
-        unrouted.push({ what: "sing", why: "the sung line is nukernel's espeak organ, not a parent voice" });
       }
+      // (a `sing` arm reported the sung line as unrouted here — honestly, since
+      // the parent has no voice for espeak slices. The organ came out on
+      // 2026-08-17; nothing emits that kind any more.)
     }
     beat0 += barBeats;
   }

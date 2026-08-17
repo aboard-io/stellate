@@ -298,16 +298,21 @@
      script is deferred, so it always runs after every classic script here. -->
 <script src="../engine/registry-data.js"></script>
 <script src="../engine/faust/voices/sampler.js"></script>
-<!-- the parent's SPEECH and FOUND organs, borrowed whole (nukernel/audio/sing.js
-     says exactly what for). speech.js resolves the vendored espeak glue
-     relative to ITS OWN src, so loading it from ../engine/ lands on
-     /vendor/espeak-ng/ and not on /nukernel/vendor/ — and it only dynamic-
-     imports that 1.7 MB the first time something actually sings. -->
-<script src="../engine/speech.js"></script>
+<!-- TOMBSTONE: ../engine/speech.js and sing.js hung here (removed 2026-08-17).
+     nukernel had its own singer — espeak syllables cut on phoneme marks,
+     resampled onto the tune and vocoded — and it borrowed the PARENT's speech
+     organ to make them. That organ's law is a fresh Emscripten heap per
+     utterance (espeak's wavegen eats libc rand(), so only a fresh instance is
+     byte-identical), which was affordable at the three syllables a song the
+     old MIN_NOTE fence let through and fatal at the 127 the fixed fence asks
+     for: Safari threw "failed to asynchronously prepare wasm: RangeError: Out
+     of memory" and the page died mid-bar — "plays four drum hits then stops
+     and the browser won't reload". Paul: "Strip out espeak entirely." Do not
+     reattach it here. The parent's organ is untouched and still sings on
+     stellate.app (engine/speech.js, gated by test/gates/speech.test.js). -->
 <script src="../engine/faust/voices/found-player.js"></script>
 <script src="kernel.js"></script>
 <script src="genres.js"></script>
-<script src="sing.js"></script>
 <script src="fields.js"></script>
 <script src="song.js"></script>
 <script src="instruments.js"></script>

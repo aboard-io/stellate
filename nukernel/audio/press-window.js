@@ -42,10 +42,10 @@
 // box change is not a seam at all — the tails cross it because they are the
 // same buses. The old walk rebuilt the entire room per section.
 //
-// THE SUNG LINE IS NOT HERE. nukernel's singer is espeak slices resampled and
-// vocoded by audio/sing.js; the parent has no voice for it and to-engine.js
-// reports it in `unrouted`. bounce.js keeps it on its own offline pass and mixes
-// it in — named, not hidden.
+// (a paragraph here said why the sung line was NOT in this window: espeak
+// slices the parent has no voice for, kept on bounce.js's own offline pass.
+// The singer came out on 2026-08-17 — kernel-daw.html has the tombstone — and
+// this walk is now the whole record.)
 
 import { GENRES, BASSSYNTH, BASS_INSTR, instrOf } from "../ui/deps.js";
 import { SONG, bpm, POOL } from "../ui/state.js";

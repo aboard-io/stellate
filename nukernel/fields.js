@@ -20,16 +20,9 @@
     ? require("./kernel.js") : root.NuKernel;
   const NG = (typeof module !== "undefined" && module.exports)
     ? require("./genres.js") : root.NuGenres;
-  // sing.js is DATA for this registry the way genres.js is: the four chips a
-  // box may be told to sing are vocabulary, and vocabulary lives here. The
-  // dependency is one-way — sing.js imports genres.js and nothing else, so it
-  // sits below this file and cannot reach back for a label.
-  const NS = (typeof module !== "undefined" && module.exports)
-    ? require("./sing.js") : root.NuSing;
   const { reverse, invert, rotate, fill, spread, split, del, drop,
           transpose, complement, crossmap, excerpt, only, KITOPS, LANES, MODE } = K;
   const { MODES, MODELABEL, SCALES, SCALELABEL } = NG;
-  const { SINGS, SINGLABEL } = NS;
 
   // ---- limits --------------------------------------------------------------
   // The numeric fences persistence and the grips both enforce. They live here
@@ -527,24 +520,15 @@
   // already the word the palette uses for the part chip. Nothing new had to
   // be invented — the roles were there, they just had nowhere to plug in.
   //
-  // ...AND THE TENTH IS THE SINGER, added 2026-08-17. "not as a track" (Paul,
-  // on hearing the speech organ arrive): every other part of a box had a chair
-  // — a fader, a cut, three sends — and the voice landed straight on the
-  // section input behind all of them, so the one thing on the record you
-  // cannot mix was the singer. `sing` is an address like the other nine; it
-  // is not a kernel role (no voice is ever assigned it — audio/mixer.js
-  // partKeysOf adds it the way it adds `bass` and `drums`, when the box
-  // actually sings), and it takes no ordinal, because a box has one lyric.
+  // (a tenth address, `sing`, sat here for one day: the singer's own chair on
+  // the desk. It went out with the singer on 2026-08-17 — kernel-daw.html
+  // carries the tombstone — so the track list is the nine again.)
   const PARTNAMES = { line: "line", lead: "lead", riff: "riff",
                       counter: "counter", pad: "pad", stab: "stab",
-                      drone: "drone", bass: "bass", drums: "drums",
-                      sing: "sing" };
+                      drone: "drone", bass: "bass", drums: "drums" };
   const PARTLABEL = { line: "line", lead: "lead", riff: "riff",
                       counter: "counter", pad: "pad", stab: "stab",
-                      drone: "drone", bass: "bass", drums: "drums",
-                      // the label is what the DESK says, and a desk says
-                      // "voice" for the thing with a person in front of it
-                      sing: "voice" };
+                      drone: "drone", bass: "bass", drums: "drums" };
   // …AND A CHAIR WHEN THERE ARE SEVERAL OF ONE. Post rock is a pad and two
   // clean guitars; rock is two crunch guitars. Both would collapse onto one
   // address if the role were the whole key, so the second voice of a role is
@@ -1095,21 +1079,11 @@
   const POOLCHAIRS = ["lead", "line", "riff", "counter", "pad", "stab",
                      "drone", "bass"];
 
-  // WHAT THIS BOX SINGS, resolved — the registry's own answer, so no surface
-  // has to know that the fallback exists. The same two-line shape as
-  // resolvePartMix / resolveMaster above: an explicit chip wins, absent means
-  // "as the genre asks", and the arithmetic itself lives one file up in
-  // sing.js beside the table it validates against (this file reaches UP to
-  // sing.js for the vocabulary already, and must not be reached back into).
-  //
-  //   ui/derive.js singEvents used to gate on `sec.sing` being truthy, which
-  //   no genre default can satisfy — so a catalog full of genres declaring
-  //   their own singer sang only where a finger had also tapped the chip.
-  //   That wiring landed 2026-08-17: singEvents resolves through singFor
-  //   exactly as this does, and audio/transport.js singWork stopped skipping
-  //   sections on the chip too (it warms what the RENDERED events ask for, so
-  //   the tape carries the voice the live graph does).
-  const resolveSing = (box, gk) => NS.singFor(gk, box && box.sing);
+  // (there is no `sing` field here any more, and no resolveSing beside the
+  // other resolvers: the singer was pulled out whole on 2026-08-17 — see the
+  // tombstone in kernel-daw.html. A `sing` left on an older save is not in
+  // FIELDS, so song.js's loader never looks at it and nothing reads it: an
+  // old song opens as itself, minus a voice.)
 
   /* ---------- THE REGISTRY ---------- */
   // One entry per control. Shape:
@@ -1227,18 +1201,9 @@
     // the object-shape validation.
     { key: "auto",    scope: "box",   type: "list", table: AUTOPARAMS,
       labels: AUTOPARAMLABEL, tab: "fx", group: "automation", default: [] },
-    // ---- the singer (sing.js + audio/sing.js) — appended, never reordered --
-    // BOX scope, on the `voice` page: a box has one lyric and one singer, the
-    // way it has one groove and one key. Absent is NOT silence any more — it
-    // is the house law this registry states everywhere else, "as the genre
-    // asks" (sing.js singFor: the box's chip wins, absent falls through to
-    // GENRES[gk].sing, and a genre that declares nothing still sings nothing,
-    // singPlan returns [], no wasm is fetched, the score is byte-identical).
-    // The table grew nine chips wide with the carriers (sing.js SINGS): the
-    // row is drawn from this table by ui/palette.js, so a new machine is one
-    // entry there and no line of UI at all.
-    { key: "sing",    scope: "box",   table: SINGS,       labels: SINGLABEL,
-      tab: "voice",  group: "sing",                      default: null },
+    // (the `sing` chip lived here — appended after `auto`, ahead of the board
+    // — and came out with the singer on 2026-08-17. Nothing took its slot: the
+    // rule is still append, never reorder.)
     // ---- the board (2026-08-16) — appended, never reordered ----------------
     // the SECTION strip's fader offset, the same dB-over-the-automated-value
     // law as PARTMIX `fader` (see the note there): it multiplies the channel's
@@ -1280,7 +1245,7 @@
                 BUSES, BUSBY, resolveBuses, busesIsDefault,
                 BUSNAMES, busNameOf, busSendPlan,
                 AUTOPARAMS, AUTOPARAMLABEL, AUTOSHAPES, AUTOSHAPELABEL, autoShape,
-                SINGS, SINGLABEL, resolveSing, INSTRCHOICES, POOLCHAIRS,
+                INSTRCHOICES, POOLCHAIRS,
                 ROLES, FIELDS, FIELD };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuFields = api;

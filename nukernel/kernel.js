@@ -713,7 +713,7 @@
     const pitched = [];
     for (let j = 0; j < out.length; j++) {
       const x = out[j];
-      if (x.n == null || !(x.dur > 0) || x.d || x.kind === "sing") continue;
+      if (x.n == null || !(x.dur > 0) || x.d) continue;
       pitched.push(j);
     }
     const icOne = (a, b) => { const ic = Math.abs(a - b) % 12; return ic === 1 || ic === 11; };
