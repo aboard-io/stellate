@@ -88,6 +88,12 @@ import { ctx } from "./graph.js";
 // unvoiced path: an "s" is noise, and noise on this page is deterministic or
 // it is not this page's noise (machines.js has the law).
 import { prng, hash } from "./machines.js";
+// THE TONE CHAIN, borrowed rather than bypassed. voices.js built one chair per
+// (channel, address) for vox/brass — a shared grit curve and breath-LFO tap,
+// "Add grit and tremolo to vocals and horns" — and every sung note used to
+// skip it, landing on chan.input raw. A stacked voice is still a voice: see
+// the `dest` note on playSyllable below for where it now goes instead.
+import { voiceChairFor } from "./voices.js";
 
 // AN EAR SEAM, the ?dryroom / ?flatvel shape: ?nosing renders the page with
 // the singer switched off and everything else identical, which is the A/B that
@@ -640,6 +646,20 @@ export function playSyllable(ev, text, when, durSec, chan, colour, barSec) {
   // test/browser/nukernel-bounce.test.js at the seam rather than believed.
   const dur = Math.max(0.05, Math.min(durSec, barSec || 4));
   const targetHz = hzOf(r.midi);
+  // A DOUBLE'S WHOLE REALISM, applied here and nowhere upstream: sing.js
+  // singPlan stamps a deterministic {ms, cents} lean on any stacked part
+  // that asked for one (SING.driftFor), and this is where it becomes sound.
+  // `ratio` bends the PITCH (a synth's fine-tune, not a different note — it
+  // never touches which rung was chosen or which slice was warmed) and the
+  // ms term leans the ONSET, which together are what a doubled take actually
+  // differs by. Neither one is a second synthesis: the natural path resamples
+  // the SAME slice at a hair different rate, and the vocoder path builds its
+  // carrier a hair off pitch — the modulator underneath (`s`, below) is
+  // identical either way, which is the whole cost claim in THE STACK's
+  // comment (sing.js): a double never asks espeak for anything new.
+  const drift = ev.drift;
+  const ratio = drift ? Math.pow(2, drift.cents / 1200) : 1;
+  const when0 = Math.max(0, when + (drift ? drift.ms / 1000 : 0));
   let data, rate;
   // THE PLAN'S OWN ANSWER FIRST. singPlan stamps `colour` and the resolved
   // vocoder character on every entry, because the chip is not the only thing
@@ -652,31 +672,39 @@ export function playSyllable(ev, text, when, durSec, chan, colour, barSec) {
     // IN TUNE BY CONSTRUCTION: the carrier is SYNTHESIZED at a known pitch, so
     // there is no bend at all — rate stays exactly 1 and the formants espeak
     // produced survive untouched. That is the whole reason the vocoder is
-    // offered as a colour rather than as an effect.
+    // offered as a colour rather than as an effect. A drifted double still
+    // leans — the carrier is just built a few cents off `ratio` instead.
     rate = 1;
     const vm = vocMidiOf(ev.n);
     const want = fitFrames(s, ev, dur, 1);
     // THE CHARACTER IS PART OF THE CACHE COORDINATE. Two boxes singing the
     // same syllable at the same note through different carriers are two
     // different sounds, and a key that could not tell them apart would serve
-    // the Model D's take to the DX7.
+    // the Model D's take to the DX7. The lean joins it for the same reason —
+    // a double's carrier is a genuinely different render (vocode() runs
+    // again; no wasm, no espeak, see the cost note above) and must not serve
+    // its neighbour's un-leaned take.
     const sp = vocSpec(ev.voc);
     const cch = sp.car + ":" + sp.bands + ":" + (sp.grip || "firm");
     const key = "v:" + ev.vi + ":" + r.pitch + ":" + text + ":" + si + ":" +
-                want + ":" + vm.toFixed(2) + ":" + cch;
+                want + ":" + vm.toFixed(2) + ":" + cch +
+                (drift ? ":d" + drift.cents.toFixed(1) : "");
     data = FITS.get(key);
     // vocode() builds the carrier at freq*0.5 (robot_choir's own line), so it
     // is handed the octave ABOVE the carrier we want to hear
     if (!data) {
-      data = vocode(stretchVowel(s, want), sr, hzOf(vm + 12), sp,
+      data = vocode(stretchVowel(s, want), sr, hzOf(vm + 12) * ratio, sp,
                     ev.vi + ":" + si + ":" + cch);
       fitPut(key, data);
     }
   } else {
     // THE CLIP-SNAP: bend the MEASURED median onto the note. A slice with no
     // detectable F0 (an unvoiced fricative that swallowed its vowel) plays
-    // unbent rather than being multiplied by infinity.
-    rate = targetHz / hzOf(s.srcMidi);
+    // unbent rather than being multiplied by infinity. A drifted double bends
+    // to `ratio` past the note, which is resampling the IDENTICAL slice a
+    // hair differently — no new cache entry needed for the raw case, and the
+    // stretched case keys on `want`, which the lean already moves.
+    rate = (targetHz * ratio) / hzOf(s.srcMidi);
     if (!(rate > 0.25 && rate < 4)) rate = 1;
     const want = fitFrames(s, ev, dur, rate);
     if (want > s.data.length) {
@@ -695,18 +723,34 @@ export function playSyllable(ev, text, when, durSec, chan, colour, barSec) {
   const g = c.createGain();
   const heard = Math.min(dur, data.length / rate / sr);
   const atk = Math.min(0.012, heard * 0.25), rel = Math.min(0.05, heard * 0.4);
-  g.gain.setValueAtTime(0, when);
-  g.gain.linearRampToValueAtTime(LEVEL, when + atk);
-  g.gain.setValueAtTime(LEVEL, when + Math.max(atk, heard - rel));
-  g.gain.linearRampToValueAtTime(0, when + heard);
+  g.gain.setValueAtTime(0, when0);
+  g.gain.linearRampToValueAtTime(LEVEL, when0 + atk);
+  g.gain.setValueAtTime(LEVEL, when0 + Math.max(atk, heard - rel));
+  g.gain.linearRampToValueAtTime(0, when0 + heard);
   src.connect(g);
-  // THE SECTION CHANNEL, not a chair and not a private rack. The box's fx,
-  // sends, level and place then treat the singer like everything else in the
-  // box, which is the point of the 2026-08-15 bus rebuild: a voice that
-  // carried its own reverb would be a second opinion about the room.
-  g.connect(chan.input);
-  src.start(when);
-  src.stop(when + heard + 0.02);
+  // THE TONE CHAIN, not around it — for what THIS ROUND ADDS. A stacked part
+  // (`role` anything but "tune": a double, an octave, a harmony line — see
+  // sing.js THE STACK) is one address on this box's own vox chair (voices.js
+  // voiceChairFor, H1's "Add grit and tremolo to vocals and horns"): one
+  // WaveShaper and one breath-LFO tap for the WHOLE stack, built once and
+  // reused note for note, same as the sampled ahh_choir line already gets —
+  // a boyband's stacked third grits and wobbles exactly as one voice would.
+  // THE BASE `tune` PART DOES NOT, and that is not a smaller claim than "pass
+  // through the tone chain" — it is the boundary of what changed. A lone
+  // singer (`lead`/`robot`/every vocoder chip, which are one `tune` and
+  // nothing else) has no doubling to route anywhere, and MEASURED the chair's
+  // own drive (2.4x into a tanh) is not loudness-neutral: it moved the dry
+  // singer off the level the vocoder's own RMS-match targets
+  // (test/browser/nukernel-sing.test.js (C), which reads dry-vs-vocoded level
+  // as its own claim) — a real cost this round does not get to spend on a
+  // chip it did not touch. THEN the section channel either way, exactly as
+  // before — the box's fx, sends, level and place still treat the singer
+  // like everything else.
+  const dest = ev.role && ev.role !== "tune"
+    ? voiceChairFor(chan, "sing", "vox", chan.input).in : chan.input;
+  g.connect(dest);
+  src.start(when0);
+  src.stop(when0 + heard + 0.02);
   // LET GO WHEN THE NOTE DOES — ON THE LIVE CONTEXT ONLY, which is voices.js's
   // countFb two-ledgers law applied to teardown. `ended` is delivered AFTER
   // startRendering resolves, so offline it would only keep a closure alive for

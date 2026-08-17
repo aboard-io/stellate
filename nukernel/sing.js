@@ -359,13 +359,27 @@
 
   /* ================================================================== CHIPS
      WHAT A BOX MAY BE TOLD TO SING. One field, chips only (fields.js), and it
-     answers voices x colour x carrier at once — which is not three questions
-     to a finger. It is "who sings this", and the answer is a person or a
-     machine, named.
-       lead    one singer on the tune, as synthesized
-       duet    two singers, the second on a chord tone above (see harmonyOf)
-       robot   one singer, through the channel vocoder (audio/sing.js)
-       choir   two singers, both vocoded — always in tune by construction
+     answers stack x colour x carrier at once — which is not three questions
+     to a finger. It is "who sings this", and the answer is a person, several
+     people, or a machine, named. Every `stack` below is built from the four
+     parts THE STACK section above defines (tune/double/octave/harmony) — a
+     chip is a CAST, not a count.
+       lead     one singer on the tune, as synthesized
+       double   the same singer again, barely — a crooner's own close double
+       duet     two singers, the second on a chord tone above (harmonyOf)
+       thirds   a boyband stack: tune, harmony above, and the harmony
+                double-tracked — three takes, two pitches
+       octaves  the tune and the same words an octave apart, on the OTHER
+                voice's ladder — a gothic/darkwave low-over-high pair
+       chorale  four parts: tune, a harmony above, a harmony below, an
+                octave — a hymn's approximation of SATB from two ladders
+       holler   the tune shouted over itself, WIDE drift — screamo's unison
+                double, rough on purpose
+       robot    one singer, through the channel vocoder (audio/sing.js)
+       choir    a vocoded crowd: tune, harmony, and a wide double of each —
+                doubling taken far enough to stop being two of anything
+       clear    two singers vocoded at half grip: the synth line stays
+                audible and the words sit on it
 
      ...AND THEN THE MACHINES, appended 2026-08-17, because the vocoder had
      exactly one voice and a vocoder is its carrier. Each of these is `robot`
@@ -378,8 +392,6 @@
        303     one saw and a screaming ladder, 24 bands
        fat     the saw, EIGHT bands, imposed to the limit: a 1978 brick, no
                words survive, which is the point of it
-       clear   the saw, 48 bands, half grip: the synth line stays audible and
-               the words sit on it
      BANDS ARE THE WHOLE CHARACTER of a vocoder and the trade is one-sided in
      the middle: 8 bands cannot resolve two formants so every vowel collapses
      to one honk, 16 gets you vowels, 32 (robot_choir's own) gets you
@@ -388,20 +400,61 @@
      roughly a quarter-tone apart down at the bottom where speech has nothing
      to say anyway. Spacing stays logarithmic at every count because formants
      move in ratios, not in hertz. */
+  const TUNE = { role: "tune", vi: 0 };
   const SINGS = {
-    lead:  { voices: 1, colour: "natural" },
-    duet:  { voices: 2, colour: "natural" },
-    robot: { voices: 1, colour: "vocoder", voc: { car: "saw", bands: 32, grip: "firm" } },
-    choir: { voices: 2, colour: "vocoder", voc: { car: "saw", bands: 32, grip: "firm" } },
-    moog:  { voices: 1, colour: "vocoder", voc: { car: "moog", bands: 32, grip: "firm" } },
-    dx7:   { voices: 1, colour: "vocoder", voc: { car: "dx7", bands: 40, grip: "firm" } },
-    "303": { voices: 1, colour: "vocoder", voc: { car: "303", bands: 24, grip: "full" } },
-    fat:   { voices: 1, colour: "vocoder", voc: { car: "saw", bands: 8, grip: "full" } },
-    clear: { voices: 2, colour: "vocoder", voc: { car: "saw", bands: 48, grip: "half" } },
+    lead:    { colour: "natural", stack: [TUNE] },
+    double:  { colour: "natural",
+               stack: [TUNE, { role: "double", vi: 0, drift: "tight" }] },
+    duet:    { colour: "natural",
+               stack: [TUNE, { role: "harmony", vi: 1, dir: "up" }] },
+    thirds:  { colour: "natural",
+               stack: [TUNE, { role: "harmony", vi: 1, dir: "up" },
+                        { role: "double", vi: 1, of: "harmony", dir: "up", drift: "tight" }] },
+    octaves: { colour: "natural",
+               stack: [TUNE, { role: "octave", vi: 1 }] },
+    chorale: { colour: "natural",
+               stack: [TUNE, { role: "harmony", vi: 1, dir: "up" },
+                        { role: "harmony", vi: 0, dir: "down" }, { role: "octave", vi: 1 }] },
+    holler:  { colour: "natural",
+               stack: [TUNE, { role: "double", vi: 0, drift: "wide" }] },
+    robot:   { colour: "vocoder", voc: { car: "saw", bands: 32, grip: "firm" },
+               stack: [TUNE] },
+    choir:   { colour: "vocoder", voc: { car: "saw", bands: 32, grip: "firm" },
+               stack: [TUNE, { role: "harmony", vi: 1, dir: "up" },
+                        { role: "double", vi: 0, drift: "wide" },
+                        { role: "double", vi: 1, of: "harmony", dir: "up", drift: "wide" }] },
+    moog:    { colour: "vocoder", voc: { car: "moog", bands: 32, grip: "firm" },
+               stack: [TUNE] },
+    dx7:     { colour: "vocoder", voc: { car: "dx7", bands: 40, grip: "firm" },
+               stack: [TUNE] },
+    "303":   { colour: "vocoder", voc: { car: "303", bands: 24, grip: "full" },
+               stack: [TUNE] },
+    fat:     { colour: "vocoder", voc: { car: "saw", bands: 8, grip: "full" },
+               stack: [TUNE] },
+    clear:   { colour: "vocoder", voc: { car: "saw", bands: 48, grip: "half" },
+               stack: [TUNE, { role: "harmony", vi: 1, dir: "up" }] },
   };
-  const SINGLABEL = { lead: "lead", duet: "duet", robot: "robot", choir: "choir",
+  const SINGLABEL = { lead: "lead", double: "double", duet: "duet",
+                      thirds: "thirds", octaves: "octaves", chorale: "chorale",
+                      holler: "holler", robot: "robot", choir: "choir",
                       moog: "moog", dx7: "dx7", "303": "303", fat: "fat",
                       clear: "clear" };
+  // a stack this wide is already a crowd; four parts (chorale, choir) is the
+  // ceiling THE STACK section's cost note counts against, and a table entry
+  // past it would be paying utterances the cost note no longer bounds
+  const MAX_STACK = 4;
+  // `voices` STAYS, as a plain count derived from the stack rather than a
+  // second table someone has to keep in step with it — the pre-stack round's
+  // own gate reads it (test/unit/nukernel.test.js "the singer — syllables,
+  // the bank, the ladders, the plan" (i), widened from "1 or 2" to "1..
+  // MAX_STACK" the day this round landed) and nothing here loses a field by
+  // gaining `stack`.
+  for (const k of Object.keys(SINGS)) {
+    const s = SINGS[k];
+    if (s.stack.length > MAX_STACK)
+      throw new Error("sing.js: " + k + " stacks " + s.stack.length + " parts, over MAX_STACK");
+    s.voices = s.stack.length;
+  }
 
   /* --------------------------------------------------------- WHO ASKS FIRST
      THE GENRE MAY DECLARE ITS OWN SINGER, and until 2026-08-17 nothing could:
@@ -483,14 +536,97 @@
   // chord offers nothing in the window — a two-note pedal, a sus over a
   // scale-degree gap — the fallback is the OCTAVE, which is consonant against
   // any chord containing the melody note and is never a wrong answer.
+  // `dir` widens the same search downward: an alto or a tenor sits UNDER the
+  // tune as often as a boyband's harmony sits over it, and the window is the
+  // same third-to-sixth span read the other way — never a hardcoded interval,
+  // because the interval IS whichever chord tone the song's own harmony (the
+  // pcs this file is handed) actually offers there. The octave fallback
+  // follows the same sign, so a chord with nothing in the window still gets a
+  // consonant answer below rather than one that silently flipped above.
   const HARM_LO = 3, HARM_HI = 9;
-  function harmonyOf(midi, pcs) {
+  function harmonyOf(midi, pcs, dir) {
+    const down = dir === "down";
     if (pcs && pcs.length) {
       const set = new Set(pcs.map(p => ((p % 12) + 12) % 12));
-      for (let d = HARM_LO; d <= HARM_HI; d++)
-        if (set.has(((Math.round(midi) + d) % 12 + 12) % 12)) return midi + d;
+      for (let d = HARM_LO; d <= HARM_HI; d++) {
+        const want = down ? midi - d : midi + d;
+        if (set.has(((Math.round(want) % 12) + 12) % 12)) return want;
+      }
     }
-    return midi + 12;
+    return down ? midi - 12 : midi + 12;
+  }
+
+  /* ================================================================ THE STACK
+     ONE SINGER IS A DEMO; A RECORD IS THE SAME VOICE SEVERAL TIMES, SLIGHTLY
+     WRONG. "Figure out some polyphony where appropriate for vocals — doubling
+     etc" (Paul, 2026-08-17), and the word that matters is APPROPRIATE: which
+     kind a genre gets is a genre fact, not a knob everyone turns the same way.
+     Four kinds, and every SINGS chip below is built from the same four parts:
+
+       tune     the plan as it always was — vi 0, the note as written, no drift
+       double   the SAME line, the SAME voice, the SAME pitch target — the
+                realism is entirely in a few ms of timing lean and a few cents
+                of pitch lean, because an identical copy summed with itself is
+                not a double, it is 6 dB
+       octave   the same words, same pitch class, sung by the OTHER voice's
+                ladder (VOICES[1] sits roughly an octave over VOICES[0] by
+                measurement — the ladder note at the top of this file) — the
+                same move gregorian's sampled `ahh_choir` line already makes
+                with a register fold, done here with the second singer instead
+                of a second sample
+       harmony  a chord tone strictly above or below the tune (harmonyOf), so
+                it is DIATONIC BY CONSTRUCTION — the interval is whichever
+                chord tone the song's own pcs offer in the window, never a
+                fixed semitone count, and it stays diatonic through a key
+                change because the caller's pcs already carry the key (nothing
+                here reads g.key directly; see the caller's own comment)
+
+     A "choir" is doubling taken far enough to stop being two of anything: a
+     stack that mixes several doubles of the tune AND of the harmony line, each
+     with its OWN deterministic drift, reads as a small crowd rather than a
+     duet — SINGS.choir and SINGS.chorale below are exactly that, one vocoded
+     and one not.
+
+     THE COST IS BOUNDED BY THE TWO LADDERS, NOT BY THE STACK. Every part above
+     names vi 0 or vi 1 — there is no third voice — so warmSpecs (which dedupes
+     by (voice, rung)) can never ask for more than NRUNGS x 2 = 8 utterances no
+     matter how many parts a chip stacks: `double` reuses its source part's own
+     rung exactly (same vi, same target pitch, so rungFor picks the identical
+     rung and the SLICES cache serves the same clip), and `octave`/`harmony`
+     only ever draw from the rung set their vi already has. So a four-part
+     chorale costs what a duet costs. What is genuinely spent twice: a
+     vocoded double still runs its OWN buffer-domain filter bank (vocode() in
+     audio/sing.js) — cheap (no wasm, no network) but not free, and it is
+     cached in FITS by its own drift so two different doubles are two entries. */
+  // TIMING AND PITCH LEAN, in two sizes. `tight` is a barely-doubled crooner —
+  // close enough that it reads as one warmer voice rather than two; `wide` is
+  // a shouted screamo unison or a choir voice that has to sound like a
+  // DIFFERENT person, not the same one twice. Both are small next to a real
+  // mistake (nobody sings 40 cents flat on purpose) and both are DIRECTIONAL
+  // per note — a double that always leant sharp would just be an out-of-tune
+  // single voice, not a second one.
+  const DRIFT = { tight: { ms: 9, cents: 7 }, wide: { ms: 24, cents: 19 } };
+  // deterministic per (seed, stack slot, note index) — the same seed doubles
+  // the same way twice (the gate's own claim), two different parts in one
+  // stack lean differently from each other (the slot term), and consecutive
+  // notes do not all lean the same way (the note-index term) the way a real
+  // take wanders rather than sitting on one fixed offset. A local mix rather
+  // than a call into compose.js's own hash: this file may not import
+  // compose.js (compose.js sits ABOVE it in the layer graph) or fields.js, so
+  // it keeps a two-line mix of its own exactly the way it keeps its own rng.
+  function driftFor(seed, slot, si, mag) {
+    const M = DRIFT[mag] || DRIFT.tight;
+    let h = ((seed | 0) ^ Math.imul(slot + 1, 0x9e3779b1) ^ Math.imul(si + 1, 0x85ebca6b)) >>> 0;
+    const r = rng(h);
+    return { ms: (r() * 2 - 1) * M.ms, cents: (r() * 2 - 1) * M.cents };
+  }
+  // ONE PART -> ITS BASE PITCH, before any drift. `double`/`octave` sing the
+  // SAME target the part they shadow sings (`of: "harmony"` says which one);
+  // `harmony` computes its own chord tone. Kept as one function so a stack
+  // entry never has to duplicate harmonyOf's own call.
+  function partPitch(p, midi, pcsAt, t) {
+    if (p.role === "harmony" || p.of === "harmony") return harmonyOf(midi, pcsAt(t), p.dir);
+    return midi;
   }
 
   // singPlan(evs, opts) -> [{ t, dur, n, vi, syl, hold }]
@@ -530,15 +666,23 @@
       picked.push(e); lastT = e.t;
       if (picked.length >= MAX_SYL) break;
     }
+    // THE STACK, walked once per picked note. `slot` is the part's own index
+    // in spec.stack — fixed for the whole song, which is what makes driftFor
+    // deterministic per PART and not just per note (two different doubles in
+    // one chip must not happen to draw the same lean). The tune part (slot 0,
+    // vi 0, no drift, no `of`) reduces to exactly the single push this loop
+    // used to make, so `lead`/`robot`/etc. plan byte-identically to before
+    // this round.
     const out = [];
     picked.forEach((e, i) => {
       const syl = words[i % words.length];
       const hold = e.dur >= HOLD_STEPS;
-      out.push({ t: e.t, dur: e.dur, n: e.n, vi: 0, syl, hold, si: i,
-                 colour: spec.colour, voc });
-      if (spec.voices > 1)
-        out.push({ t: e.t, dur: e.dur, n: harmonyOf(e.n, pcsAt(e.t)), vi: 1,
-                   syl, hold, si: i, colour: spec.colour, voc });
+      spec.stack.forEach((p, slot) => {
+        const base = partPitch(p, e.n, pcsAt, e.t);
+        const drift = p.drift ? driftFor((opts && opts.seed) | 0, slot, i, p.drift) : null;
+        out.push({ t: e.t, dur: e.dur, n: base, vi: p.vi, syl, hold, si: i,
+                   colour: spec.colour, voc, role: p.role, drift });
+      });
     });
     return out;
   }
@@ -559,10 +703,11 @@
   }
 
   const api = { SINGS, SINGLABEL, CARRIERS, GRIPS, singFor, vocFor,
-                VOICES, NRUNGS, MIN_STEPS, MAX_SYL, HOLD_STEPS,
+                VOICES, NRUNGS, MIN_STEPS, MAX_SYL, HOLD_STEPS, MAX_STACK,
                 HARM_LO, HARM_HI, BANKS, syllables, nsyl, bankFor, lyricFor,
                 ladderMidi, ladderPitch, rungsOf, voiceMidi, foldToVoice,
-                rungFor, harmonyOf, singPlan, utteranceFor, warmSpecs };
+                rungFor, harmonyOf, DRIFT, driftFor, partPitch,
+                singPlan, utteranceFor, warmSpecs };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuSing = api;
 })(typeof window !== "undefined" ? window : globalThis);

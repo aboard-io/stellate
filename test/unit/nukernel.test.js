@@ -6546,7 +6546,10 @@ console.log("the singer — syllables, the bank, the ladders, the plan");
   ok(Object.keys(NF.SINGS).length === Object.keys(NF.SINGLABEL).length,
      "a sing value has no label");
   for (const [k, v] of Object.entries(NF.SINGS)) {
-    ok(v.voices === 1 || v.voices === 2, k + ": " + v.voices + " voices");
+    // widened from "1 or 2" the day the stack (lane H2, 2026-08-17) let a chip
+    // stack more than a duet — the ceiling is sing.js's own MAX_STACK, not a
+    // number re-guessed here, so this line cannot go stale a second time
+    ok(v.voices >= 1 && v.voices <= S.MAX_STACK, k + ": " + v.voices + " voices");
     ok(v.colour === "natural" || v.colour === "vocoder", k + ": colour " + v.colour);
   }
 
@@ -11081,6 +11084,239 @@ console.log("a voice pushes and a horn is blown, and you can hear that they were
 
   console.log("  69: grit adds harmonics and tracks velocity, tremolo modulates at its own " +
               "rate, one chair per voice (not per note), and every other strip is untouched");
+}
+
+/* §70 — ONE SINGER IS A DEMO; A RECORD IS THE SAME VOICE FOUR TIMES, SLIGHTLY
+   WRONG (lane H2, 2026-08-17). Paul: "Figure out some polyphony where
+   appropriate for vocals — doubling etc," and the word that matters is
+   APPROPRIATE — which kind a chip gets is read off THE STACK sing.js builds
+   (double/octave/harmony), never off a second system beside it. Every claim
+   here is at the SCORE level: a plan entry's own t/n/vi/drift, nothing
+   rendered. The audio half — that a double actually reuses its source's
+   cached slice, that the vocoder still matches the dry line's loudness once
+   the base voice's routing did not change — is
+   test/browser/nukernel-sing.test.js, run once against this round (it
+   caught a real bug: graph.js's breathLFO cache is keyed on rate alone, so
+   the second of two OfflineAudioContexts in one page throws on connect —
+   worked around at its OWN call site, voiceChairFor, below). */
+console.log("one singer is a demo; a record is the same voice four times, slightly wrong");
+{
+  const NS70 = require("../../nukernel/sing.js");
+  const fs70 = require("fs"), path70 = require("path");
+  // a minimal, hand-built line — one note per bar step, so every claim below
+  // is read off numbers this block chose, not off whatever a genre's own
+  // phrase happened to contain
+  const lineOf70 = (n) => Array.from({ length: n },
+    (_, i) => ({ kind: "line", v: 0, t: i * NS70.MIN_STEPS * 2, dur: NS70.MIN_STEPS,
+                 n: 60 + (i % 5), pad: false, layer: false }));
+
+  // ---- (a) DOUBLING: the same line, the same voice, the same pitch target —
+  // the realism is the LEAN, not the pitch, and the lean is deterministic and
+  // note-to-note varied.
+  {
+    const evs = lineOf70(6);
+    const p1 = NS70.singPlan(evs, { gk: "x", seed: 11, sing: "double" });
+    const p2 = NS70.singPlan(evs, { gk: "x", seed: 11, sing: "double" });
+    ok(p1.length === evs.length * 2, "§70(a) `double` did not emit two parts per picked note");
+    const tunes = p1.filter(p => p.role === "tune"), dbls = p1.filter(p => p.role === "double");
+    ok(tunes.length === dbls.length && tunes.length > 0, "§70(a) tune/double counts disagree");
+    for (let i = 0; i < tunes.length; i++) {
+      ok(dbls[i].n === tunes[i].n, "§70(a) a double sang a different NOTE than its tune — that is a harmony, not a double");
+      ok(dbls[i].vi === tunes[i].vi, "§70(a) a double left its tune's own voice register");
+      ok(dbls[i].drift && dbls[i].drift.ms !== 0 && dbls[i].drift.cents !== 0,
+         "§70(a) a double carries no measurable lean — it would sum to +6 dB, not a second voice");
+      ok(Math.abs(dbls[i].drift.ms) <= NS70.DRIFT.tight.ms + 1e-9 &&
+         Math.abs(dbls[i].drift.cents) <= NS70.DRIFT.tight.cents + 1e-9,
+         "§70(a) a `double` chip's lean is outside its own declared `tight` bound");
+      ok(tunes[i].drift == null, "§70(a) the tune itself carries a lean — only the double should");
+    }
+    // DETERMINISTIC: the same seed doubles the same way twice —
+    const p1s = JSON.stringify(p1);
+    ok(p1s === JSON.stringify(NS70.singPlan(evs, { gk: "x", seed: 11, sing: "double" })),
+       "§70(a) two runs at the same seed produced two different doubles");
+    // ...and a DIFFERENT seed leans differently (not just re-picks a lyric —
+    // compare the DRIFT values alone, seed-indexed independent of the words)
+    const p3 = NS70.singPlan(evs, { gk: "x", seed: 4, sing: "double" });
+    const d1 = p1.filter(p => p.role === "double").map(p => p.drift.ms + "," + p.drift.cents).join("|");
+    const d3 = p3.filter(p => p.role === "double").map(p => p.drift.ms + "," + p.drift.cents).join("|");
+    ok(d1 !== d3, "§70(a) a different seed produced the identical double lean — the drift is not seeded at all");
+    // ...and the lean WANDERS note to note rather than sitting on one offset —
+    // a real double does not just play flat, it drifts around the target
+    const msSet = new Set(dbls.map(p => p.drift.ms.toFixed(6)));
+    ok(msSet.size > 1, "§70(a) every doubled note leant by the exact same amount — that is mistuning, not doubling");
+  }
+
+  // ---- (b) OCTAVES: the same words, same pitch CLASS, on the OTHER voice's
+  // ladder — not a chord tone, not a drift, a different register entirely.
+  {
+    const evs = lineOf70(4);
+    const plan = NS70.singPlan(evs, { gk: "x", seed: 3, sing: "octaves" });
+    const tunes = plan.filter(p => p.role === "tune"), octs = plan.filter(p => p.role === "octave");
+    ok(tunes.length === octs.length && tunes.length > 0, "§70(b) `octaves` did not pair a tune with an octave part");
+    for (let i = 0; i < tunes.length; i++) {
+      ok(octs[i].n === tunes[i].n, "§70(b) an octave part changed the TARGET pitch — the register comes from `vi`, not from `n`");
+      ok(octs[i].vi !== tunes[i].vi, "§70(b) an octave part stayed on its tune's own voice — it would fold back to the same register");
+      ok(octs[i].drift == null, "§70(b) a bare octave part carries a lean it never asked for");
+    }
+    // and the two ladders really do sit roughly an octave apart at that pitch
+    // class — the claim `octaves` exists to make, read off VOICES itself
+    const foldedLow = NS70.foldToVoice(0, tunes[0].n), foldedHigh = NS70.foldToVoice(1, octs[0].n);
+    ok(Math.abs(Math.abs(foldedHigh - foldedLow) - 12) <= 4,
+       "§70(b) the two voices' ladders are not roughly an octave apart at this pitch (" +
+       foldedLow + " vs " + foldedHigh + ")");
+  }
+
+  // ---- (c) HARMONY: diatonic BY CONSTRUCTION — harmonyOf never adds a fixed
+  // semitone count, it returns whichever chord tone the caller's OWN pcs offer
+  // in the third-to-sixth window, so it stays diatonic under a transposition
+  // the way a fixed "+4" never would.
+  {
+    // two different chords under the identical melody note: the interval
+    // chosen must differ, because the interval is a FUNCTION of the chord,
+    // not a constant this file decided in advance
+    const cMaj = [0, 4, 7], fMaj = [5, 9, 0];   // C major triad, F major triad
+    const upMaj = NS70.harmonyOf(60, cMaj, "up"), upSub = NS70.harmonyOf(60, fMaj, "up");
+    ok(upMaj !== upSub, "§70(c) two different chords under the same note produced the identical harmony — the interval is hardcoded");
+    ok(cMaj.includes(((Math.round(upMaj) % 12) + 12) % 12), "§70(c) the harmony note is not in its OWN chord's pitch classes");
+    ok(fMaj.includes(((Math.round(upSub) % 12) + 12) % 12), "§70(c) the harmony note is not in its OWN chord's pitch classes");
+    // `dir` mirrors the same search downward
+    const down = NS70.harmonyOf(60, cMaj, "down");
+    ok(down < 60 && cMaj.includes(((Math.round(down) % 12) + 12) % 12),
+       "§70(c) dir:\"down\" did not return a lower, still-diatonic tone");
+
+    // A KEY CHANGE, simulated the way the real score carries one: kernel.js
+    // adds `key` to every rendered pitch AND to the chord's own pcs (the
+    // `key` note beside harmonyOf's own comment) — so a transposed melody
+    // over a transposed chord is exactly this loop, run at every key.
+    for (const key of [-6, -3, 0, 2, 5, 9]) {
+      const midi = 60 + key, pcs = cMaj.map(p => p + key);
+      const h = NS70.harmonyOf(midi, pcs, "up");
+      ok(pcs.map(p => ((p % 12) + 12) % 12).includes(((Math.round(h) % 12) + 12) % 12),
+         "§70(c) key " + key + ": the harmony fell off its own (transposed) chord");
+      // and the INTERVAL travels with the transposition, not the absolute
+      // pitch — this key's answer is the untransposed answer plus the key
+      ok(h === upMaj + key, "§70(c) key " + key + ": harmonyOf is not simply transposing with the song — " +
+         h + " vs " + (upMaj + key));
+    }
+
+    // ...and through singPlan, with a pcsAt that carries the same key —
+    // stacked harmony chips stay diatonic end to end, not just at the raw
+    // function call
+    const evs = lineOf70(3);
+    for (const key of [0, 4, -5]) {
+      const pcsAt = () => cMaj.map(p => p + key);
+      const keyedEvs = evs.map(e => ({ ...e, n: e.n + key }));
+      const plan = NS70.singPlan(keyedEvs, { gk: "x", seed: 1, sing: "duet", pcsAt });
+      const harm = plan.filter(p => p.role === "harmony");
+      ok(harm.length === keyedEvs.length, "§70(c) duet dropped a harmony note at key " + key);
+      for (const h of harm)
+        ok(cMaj.map(p => ((p + key) % 12 + 12) % 12).includes(((Math.round(h.n) % 12) + 12) % 12),
+           "§70(c) duet's harmony left the key " + key + " chord");
+    }
+  }
+
+  // ---- (d) THE COST IS BOUNDED BY THE TWO LADDERS, NOT BY THE STACK. A
+  // four-part chorale never asks warmSpecs for more than VOICES.length x
+  // NRUNGS entries — the ceiling the two-voice system already had before this
+  // round — and a `double` part draws EXACTLY its source part's own rung, so
+  // it adds no entry warmSpecs had not already asked for.
+  {
+    const evs = lineOf70(16);           // enough notes to spread across every rung
+    for (const key of ["chorale", "choir"]) {
+      const plan = NS70.singPlan(evs, { gk: "x", seed: 5, sing: key,
+                                        pcsAt: () => [0, 4, 7] });
+      const specs = NS70.warmSpecs(plan);
+      ok(specs.length <= NS70.VOICES.length * NS70.NRUNGS,
+         "§70(d) " + key + ": " + specs.length + " utterances — over the " +
+         (NS70.VOICES.length * NS70.NRUNGS) + "-utterance ceiling the two ladders promise");
+      // every (vi, rung) warmSpecs asks for is one this stack's TUNE or
+      // HARMONY parts alone already needed — the doubles are free riders
+      const need = new Set();
+      for (const p of plan) if (p.role !== "double") {
+        const r = NS70.rungFor(p.vi, p.n);
+        need.add(p.vi + ":" + r.pitch);
+      }
+      for (const sp of specs)
+        ok(need.has(sp.vi + ":" + sp.pitch),
+           key + ": warmSpecs asked for a (voice, rung) no tune/harmony part in the stack used — a double paid for its own utterance");
+    }
+    // and directly: a double's own rung is bit-identical to the part it doubles
+    const dplan = NS70.singPlan(evs, { gk: "x", seed: 5, sing: "double" });
+    const tunes70 = dplan.filter(p => p.role === "tune"), dbls70 = dplan.filter(p => p.role === "double");
+    for (let i = 0; i < tunes70.length; i++)
+      ok(NS70.rungFor(dbls70[i].vi, dbls70[i].n).pitch === NS70.rungFor(tunes70[i].vi, tunes70[i].n).pitch,
+         "§70(d) a double picked a different rung than its own tune — that is a second utterance, uncounted");
+  }
+
+  // ---- (e) A GENRE DECLARING NO POLYPHONY RENDERS BYTE-IDENTICAL TO BEFORE.
+  // Every single-`tune` chip (the whole roster this file shipped with:
+  // lead/robot/moog/dx7/303/fat) reduces to exactly the one push singPlan
+  // always made — same fields, no `drift`, `vi` 0, `n` the melody's own note —
+  // and a box that never asks to sing still gets nothing at all.
+  {
+    const evs = lineOf70(3);
+    for (const key of ["lead", "robot", "moog", "dx7", "303", "fat"]) {
+      ok(NS70.SINGS[key].stack.length === 1 && NS70.SINGS[key].stack[0].role === "tune",
+         "§70(e) " + key + " is no longer a single voice — the roster grew a part on a chip this round did not touch");
+      const plan = NS70.singPlan(evs, { gk: "x", seed: 2, sing: key });
+      ok(plan.length === evs.length, "§70(e) " + key + ": planned a different note count than before the stack existed");
+      plan.forEach((p, i) => {
+        ok(p.role === "tune" && p.drift == null && p.vi === 0 && p.n === evs[i].n,
+           "§70(e) " + key + ": a single-voice chip's plan shape moved — vi/n/role/drift must match the pre-stack shape");
+      });
+    }
+    // and a box/genre that names nothing still sings nothing, exactly as
+    // §67(a) already proved for the ONE example that gate uses — held here
+    // again because this round rewrote the function that law lives in
+    ok(NS70.singPlan(evs, { gk: "nosuchgenre37", seed: 1 }).length === 0,
+       "§70(e) an unset singer produced a plan anyway");
+  }
+
+  // ---- (f) THE ROSTER ITSELF: every stack is well-formed (a real voice, a
+  // real role, under the ceiling THE STACK's own cost note counts against),
+  // and the new cast names Paul asked for are actually reachable.
+  {
+    const ROLES = new Set(["tune", "double", "octave", "harmony"]);
+    for (const [k, s] of Object.entries(NS70.SINGS)) {
+      ok(s.stack.length >= 1 && s.stack.length <= NS70.MAX_STACK,
+         "§70(f) " + k + ": stack of " + s.stack.length + " is outside 1.." + NS70.MAX_STACK);
+      ok(s.stack[0].role === "tune", "§70(f) " + k + ": the stack's first part is not the tune");
+      for (const p of s.stack) {
+        ok(ROLES.has(p.role), "§70(f) " + k + ": unknown stack role \"" + p.role + "\"");
+        ok(p.vi === 0 || p.vi === 1, "§70(f) " + k + ": stack part names a voice past the two ladders");
+      }
+    }
+    for (const k of ["double", "thirds", "octaves", "chorale", "holler"])
+      ok(NS70.SINGS[k], "§70(f) the new cast is missing \"" + k + "\"");
+    ok(NS70.SINGS.thirds.stack.some(p => p.role === "double") &&
+       NS70.SINGS.thirds.stack.some(p => p.role === "harmony"),
+       "§70(f) \"thirds\" is not a doubled harmony — a boyband stack needs both");
+    ok(NS70.SINGS.chorale.stack.length === 4, "§70(f) \"chorale\" is not a four-part stack");
+    ok(NS70.SINGS.holler.stack.some(p => p.drift === "wide"),
+       "§70(f) \"holler\" does not shout — it should carry the wide lean");
+    ok(NS70.SINGS.choir.stack.filter(p => p.role === "double").length >= 2,
+       "§70(f) \"choir\" is not several doubled voices — it should read as a crowd, not a duet");
+  }
+
+  // ---- (g) THE WIRING IS IN THE COMMITTED SOURCE, structurally — the audio
+  // half a pure-node gate cannot render (test/browser/nukernel-sing.test.js
+  // does, once, against this exact round).
+  const aSrc70 = fs70.readFileSync(
+    path70.join(__dirname, "../../nukernel/audio/sing.js"), "utf8");
+  ok(/ev\.role && ev\.role !== "tune"[\s\S]{0,80}voiceChairFor\(chan, "sing", "vox", chan\.input\)/.test(aSrc70),
+     "§70(g) playSyllable no longer routes a stacked part through the vox chair");
+  ok(/const ratio = drift \? Math\.pow\(2, drift\.cents \/ 1200\)/.test(aSrc70),
+     "§70(g) playSyllable no longer bends a drifted part's pitch");
+  ok(/const when0 = Math\.max\(0, when \+ \(drift \? drift\.ms \/ 1000/.test(aSrc70),
+     "§70(g) playSyllable no longer leans a drifted part's onset");
+  const vSrc70 = fs70.readFileSync(
+    path70.join(__dirname, "../../nukernel/audio/voices.js"), "utf8");
+  ok(/try \{\s*\n\s*ch = buildVoiceChair/.test(vSrc70),
+     "§70(g) voiceChairFor lost its cross-context guard — two offline bounces in one page would crash again");
+
+  console.log("  70: doubling leans deterministically and wanders note to note, octaves sit on the " +
+              "other ladder, harmony stays diatonic through six keys, a four-part stack costs what a " +
+              "duet costs, and every single-voice chip plans byte-identical to before the stack existed");
 }
 
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +

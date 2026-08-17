@@ -552,7 +552,27 @@ export function voiceChairFor(chan, addr, fam, dest) {
   let ch = m.get(addr);
   if (ch) return ch;
   const F = VOICEFX[fam];
-  ch = buildVoiceChair(ctxOf(chan), F.grit, F.drive, F.tremHz, F.tremDepth, dest);
+  // A CROSS-CONTEXT CACHE, ONE LEVEL DOWN, THAT THIS FUNCTION DOES NOT OWN.
+  // graph.js's breathLFO keeps its shared oscillator pair in a MODULE-GLOBAL
+  // map keyed on rate alone — right for the live page (one AudioContext for
+  // its whole life) and wrong for this file's own offline callers: bounce.js
+  // renders each song in its OWN OfflineAudioContext, and a page that bounces
+  // a second vox/brass song reuses the first bounce's cached oscillators,
+  // whose `.connect()` then throws (InvalidAccessError, a different context)
+  // — found by singing's own gate (test/browser/nukernel-sing.test.js), which
+  // is the first caller of this function to build chairs across more than one
+  // context in one page load. Not this file's cache to fix (graph.js owns
+  // breathLFO and sits below this file in the layer graph), so the guard
+  // lives at THIS call site instead: a chair that cannot be built loses its
+  // tremolo and its grit for that one voice rather than taking the whole
+  // render down. `dest` is exactly what an untreated note already connects to
+  // (playSampled's own `dest` before this round existed), so the fallback is
+  // silence-over-wrongness's own law — a plain voice, not a crash.
+  try {
+    ch = buildVoiceChair(ctxOf(chan), F.grit, F.drive, F.tremHz, F.tremDepth, dest);
+  } catch (e) {
+    ch = { in: dest, out: dest };
+  }
   m.set(addr, ch);
   return ch;
 }
