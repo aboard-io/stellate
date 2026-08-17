@@ -98,12 +98,17 @@
 // another lane's file this round — see the commit report for the exact
 // patch that makes bankFor() consult GENRE_BANK first and fall back to
 // today's family banks for anything unmapped, and the load-order note for
-// kernel-daw.html.
+// kernel-daw.html. AND IT DOES NOT `require` sing.js EITHER, on purpose:
+// the wiring patch has sing.js reach for THIS file (bankFor -> GENRE_BANK),
+// so the dependency has to run one way only or node's circular-require
+// returns a half-built module to whichever file asked first. The syllable
+// count sing.js's nsyl() would check is verified at BUILD time (the script
+// that cut this table ran every word through it) and again by the gate
+// (test/unit/nukernel.test.js, which imports both files side by side — a
+// test file is not part of either module's own require graph, so it is
+// the one place that can safely hold both).
 (function (root) {
   "use strict";
-  const SI = (typeof module !== "undefined" && module.exports)
-    ? require("./sing.js") : root.NuSing;
-  const nsyl = SI.nsyl;
 
   /* ============================================================== THE BANKS
      Twelve phonetic worlds. See the file header for what each one is FOR;
