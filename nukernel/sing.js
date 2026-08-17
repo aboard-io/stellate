@@ -18,13 +18,6 @@
   const NG = (typeof module !== "undefined" && module.exports)
     ? require("./genres.js") : root.NuGenres;
   const { GENRES } = NG;
-  // THE SYLLABARY, if it is there. Its own file for the reason genres-data.js
-  // is separate from genre-kernel.js upstairs: a thousand inert words next to
-  // the arithmetic that draws them would hide which half is growing. It has
-  // NO dependencies of its own — deliberately, because this file is about to
-  // read it and a require cycle was one draft away.
-  const SY = (typeof module !== "undefined" && module.exports)
-    ? require("./syllabary.js") : root.NuSyllabary;
 
   /* ================================================================ SYLLABLES
      HOW A WORD IS SPLIT, AND WHY IT IS SPLIT TWICE.
@@ -139,49 +132,8 @@
              ["oh", "oh", "oh", "way", "oh"]],
   };
   const FALLBACK_BANK = "kernel";
-  // A GENRE'S OWN MOUTH FIRST, its family's second. The ten banks below are
-  // keyed on FAMILY and carry five to seven words each — about sixty-four words
-  // for a hundred and ten genres, which is why every soul genre used to sing
-  // the same seven. The syllabary is twelve MOUTHS of ~84 words grouped by what
-  // a genre actually sounds like rather than by the family field it happens to
-  // carry (the band family alone splits three ways: holler, belt, or plain
-  // sing). The family banks stay as the fallback rather than being deleted:
-  // they are what answers when the syllabary is absent — node callers that
-  // never load it, and a page whose script tag has not run yet.
-  // A BANK IS A LIST OF LINES, NOT OF WORDS, and that is the contract every
-  // caller below is written to: lyricFor picks ONE ELEMENT and hands it on as a
-  // line, so an element must be an array of words. The syllabary ships a flat
-  // vocabulary — a mouth, not a lyric — so it is cut into lines here, at the
-  // boundary, rather than either side being bent to the other. (Handed the flat
-  // list directly, lyricFor picked a single WORD and every reader downstream
-  // walked its characters; that is what threw in singEvents.)
-  //
-  // LINE_WORDS is six because that is the length the hand-written banks settled
-  // on and the length singPlan's note-fitting expects to place; 84 words cut
-  // this way give fourteen distinct lines per mouth, against the two a family
-  // bank carried. Cut sequentially and cached, so a genre's lines are the same
-  // every load — a lyric is a fact about the record, like its seed.
-  const LINE_WORDS = 6;
-  const lineCache = new Map();
-  const linesOf = (mouth, words) => {
-    let L = lineCache.get(mouth);
-    if (L) return L;
-    L = [];
-    for (let i = 0; i + LINE_WORDS <= words.length; i += LINE_WORDS)
-      L.push(words.slice(i, i + LINE_WORDS));
-    // a remainder shorter than a line joins the last one rather than singing
-    // a stub — the tail of a mouth is still that mouth
-    const rest = words.length % LINE_WORDS;
-    if (rest && L.length) L[L.length - 1] = L[L.length - 1].concat(words.slice(-rest));
-    else if (rest) L.push(words.slice(-rest));
-    lineCache.set(mouth, L);
-    return L;
-  };
   const bankFor = gk => {
     const g = GENRES[gk];
-    const mouth = SY && SY.GENRE_BANK && SY.GENRE_BANK[gk];
-    const words = mouth && SY.BANKS && SY.BANKS[mouth];
-    if (words && words.length >= LINE_WORDS) return linesOf(mouth, words);
     return BANKS[(g && g.family) || FALLBACK_BANK] || BANKS[FALLBACK_BANK];
   };
   // mulberry32, compose.js's own generator — a seed is a song, and a seed is
