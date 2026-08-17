@@ -748,6 +748,7 @@ export function initAudio() {
   // survival.js attaches ctx.onstatechange off this event — the layer graph
   // forbids graph importing anything above itself, so it announces instead
   emit("audio:ctx", {});
+  startLoadMonitor();                   // the corner chip has something to read from bar one
   // warm the three impulse responses IN IDLE TIME, so the first box that asks
   // for a hall mid-play finds the buffer already made instead of running the
   // 282k-sample noise walk on the render path (ZERO-STATIC R2's rule: nothing
@@ -1177,6 +1178,89 @@ export function rmsNow() {
   let s = 0; for (const v of d) s += v * v;
   return Math.sqrt(s / d.length);
 }
+
+/* ---------- THE LOAD MONITOR: what the desk is costing, quietly -----------
+   Paul: "do you want to sneak a cpu monitor on mobile." Yes — it says WHICH
+   problem a glitch is. A spike here when the page comes back means the live
+   graph got too expensive to rebuild; a flat line with a glitch anyway means
+   the handoff itself is wrong (2675312's whole subject). Without a number,
+   both read the same to an ear, and we were guessing.
+
+   THE BROWSER GIVES NO CPU NUMBER, so this reads the one thing that is real
+   and already free: how late THIS timer's own callback lands against what it
+   asked for. That is not a proxy for "the audio thread is busy" — Web Audio's
+   built-in nodes render on their own high-priority thread and this file owns
+   no worklet ring to poll (that machinery is the PARENT app's engine, not
+   this one: engine/faust/live/live.js's SharedArrayBuffer ring). It IS a
+   direct reading of the thread audio/transport.js schedules bars from —
+   tick() rides a 25 ms interval and, once the tape has the ear, a lookahead
+   narrowed to 0.25 s (2675312, the other half of the same commit). A stall
+   long enough to hold THIS timer up past that same 0.25 s budget is a stall
+   that would have held tick() up long enough to miss a bar, whether or not a
+   bar was actually in flight when it happened. So `load` is headroom against
+   ONE cited budget, not a percentage of anything the OS would recognise —
+   said here so nobody downstream reads it as one.
+
+   CHEAP BY CONSTRUCTION: one interval, once a second — no AnalyserNode, no
+   rAF, and it piggybacks the analyser rmsNow() above already pays for on
+   nothing at all. `voices`/`nodes` are not counted here; they are read off
+   numbers the mixer and the synth pool already keep for their OWN budgets
+   (window.__nuMix, window.__nuNodes — mixer.js/voices.js's "the desk holds
+   the count" law), so the only new work this file does every second is a
+   subtraction and two property reads. Its own cost is measured, not assumed:
+   `selfMs` on the report is that same performance.now() span, and the gate in
+   test/unit/nukernel.test.js holds it to a fraction of a millisecond. */
+export const LOAD_PERIOD = 1000;                 // ms between samples — slow, on purpose
+export const SCHED_BUDGET_MS = 250;              // audio/transport.js's own live lookahead
+// THE PURE HALF, for the same reason returnStep()/carrierWant() are pure: a
+// headroom number from a timer gap is arithmetic, not a browser fact, so it
+// is tested as arithmetic (test/unit/nukernel.test.js). 1.0 = the timer fired
+// inside its own budget with room to spare; 0 = it landed a whole SCHED_BUDGET
+// late or later, which is the point past which the live scheduler could not
+// have absorbed the same stall either.
+export function loadHeadroom(gapMs, periodMs, budgetMs) {
+  const over = Math.max(0, gapMs - periodMs);
+  return Math.max(0, 1 - over / budgetMs);
+}
+let loadTimer = null, lastLoadAt = 0, engineLoad = 1, dropCount = 0;
+export function sampleLoad() {
+  const t0 = performance.now();
+  if (lastLoadAt) {
+    const gap = t0 - lastLoadAt;
+    engineLoad = loadHeadroom(gap, LOAD_PERIOD, SCHED_BUDGET_MS);
+    // a stall the live scheduler could not have absorbed either — a genuine
+    // missed beat, not this interval's ordinary jitter
+    if (gap - LOAD_PERIOD > SCHED_BUDGET_MS) dropCount++;
+  }
+  lastLoadAt = t0;
+  // READ, NEVER RECOMPUTED: the same two ledgers __nuMix/__nuNodes already
+  // hold open for their own node-budget reporting (mixer.js BUDGET, voices.js
+  // nodeStats) — "parts" is the mixer's own count of instrument voices
+  // actually wired into the playing channel(s), "alive" is the synth pool's.
+  // Neither exists before the first channel is built, hence the guards.
+  const mix = window.__nuMix ? window.__nuMix() : null;
+  const nv = window.__nuNodes ? window.__nuNodes() : null;
+  emit("load", {
+    load: +engineLoad.toFixed(3),
+    drops: dropCount,
+    voices: (mix ? mix.nodes.parts : 0) + (nv ? nv.alive : 0),
+    nodes: mix ? mix.nodes.total : 0,
+    selfMs: +(performance.now() - t0).toFixed(3),
+  });
+}
+export function startLoadMonitor() {
+  if (loadTimer) return;
+  sampleLoad();
+  loadTimer = setInterval(sampleLoad, LOAD_PERIOD);
+}
+// what the report last read, for a caller that arrives after the tick rather
+// than waiting a second for the next "load" event (ui/readout.js's first paint)
+export const lastLoadReport = () =>
+  ({ load: +engineLoad.toFixed(3), drops: dropCount });
+// "SINCE PLAY STARTED" (the brief's own words) — a fresh play is a fresh
+// count and a fresh clock, the same law the return path's own stall counter
+// follows (audio/bounce.js st.returnStalled)
+on("transport:state", d => { if (d.playing) { dropCount = 0; lastLoadAt = 0; } });
 
 // the volume slider is a view over state; the graph follows it from here —
 // unless the survival mute owns the gain right now

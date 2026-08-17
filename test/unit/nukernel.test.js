@@ -431,7 +431,13 @@ const allEvents = (p, g, bars) =>
 // "the first event in the bar" or "bar 0 == bar 2" is asking a question that
 // only had one answer while nothing ever moved. Where a gate measures the
 // PLAYING, it uses the shipped anchor and says so.
-const plain = g => ({ ...g, stress: 0, phrase: 0, touch: null });
+// THE PLAYER TAKEN OUT — the whole player. `orn` joined stress/phrase/touch
+// when genres learned to lean, slide, flam and pass: an ornament policy is
+// drawn on the same positional dice the hand is and it varies bar to bar, so
+// leaving it in meant "with the player taken out" still handed back a
+// different bar every pass, and the checks that exist to tell the phrase from
+// the performance could not.
+const plain = g => ({ ...g, stress: 0, phrase: 0, touch: null, orn: null });
 
 // A GENRE THAT IS NOTHING BUT THE WASH. The pad path (kernel.js render) fires
 // one voicing at the phrase's first gate and holds it to the next chord: it
@@ -2617,22 +2623,31 @@ console.log("song arc, prechorus, topline — the radio shape, measured on ui/de
        Math.round(100 * up / n2) + "% of songs — the arc never reaches the render");
   }
   // ...and the peak chorus carries the extra layer; the key lift, when drawn,
-  // moves the rendered pitches by exactly its own amount
+  // moves the rendered pitches by exactly its own amount.
+  //
+  // RELATIVE TO THE SONG'S OWN KEY, not to zero. Since "a song knows what key
+  // it is in" the composer derives a tonic off the genre's name and stamps it
+  // on EVERY box, so `b.key` is no longer "the truck-driver lift or nothing" —
+  // it is the record's key, which is a number, and reading it as a flag said
+  // every chorus was lifted. HOME is the key the record opens in; a lift is a
+  // peak chorus that has left it.
   {
     let lifted = 0;
     for (const s of seeds) {
       const song = C.compose("rock", s);
+      const home = song.song[0].key || 0;
       const ch = song.song.filter(b => b.role === "chorus" && !b.cue);
       const last = ch[ch.length - 1];
       ok(last.stack.length >= 2, "rock/" + s + ": the peak chorus has no extra layer");
-      if (last.key) {
+      if ((last.key || 0) !== home) {
         lifted++;
         // every PITCHED consumer — lines, layers AND the bass — moves by
-        // exactly the key; the drums (no n) are untouched by construction
-        const a = sectionEv(song, { ...last, key: 0 }).filter(e => e.n != null);
+        // exactly the lift; the drums (no n) are untouched by construction
+        const lift = (last.key || 0) - home;
+        const a = sectionEv(song, { ...last, key: home }).filter(e => e.n != null);
         const b = sectionEv(song, last).filter(e => e.n != null);
-        ok(a.length === b.length && a.every((e, i) => b[i].n - e.n === last.key),
-           "rock/" + s + ": the truck-driver lift does not move the band by +" + last.key);
+        ok(a.length === b.length && a.every((e, i) => b[i].n - e.n === lift),
+           "rock/" + s + ": the truck-driver lift does not move the band by +" + lift);
       }
     }
     ok(lifted > 3 && lifted < seeds.length, "the key lift is never/always drawn (" +
@@ -2662,10 +2677,14 @@ console.log("song arc, prechorus, topline — the radio shape, measured on ui/de
          "prechorus " + i + " does not lift (env " + b.env + " / mot " + b.mot +
          " / cadence " + !!b.cadence + ")");
       // the cadence reaches the BASS in the window's last bar: its root is
-      // the dominant's, not the prog's own final chord
+      // the dominant's, not the prog's own final chord. READ AGAINST THE
+      // SECTION'S OWN KEY — the record has a tonic now and the whole band is
+      // stamped with it, so a bare pc 7 is only the dominant of a song in the
+      // one key that used to be assumed.
       const r = D.sectionEvents(b, song.slots), bs = 16 / r.g.rate;
+      const home = ((((b.key || 0) % 12) + 12) % 12);
       const bpc = r.ev.filter(e => e.kind === "bass" && e.t >= (r.bars - 1) * bs)
-        .map(e => ((e.n % 12) + 12) % 12);
+        .map(e => ((((e.n - home) % 12) + 12) % 12));
       ok(bpc.length > 0 && bpc.every(pc => pc === 7 || pc === 6),
          "the beatles prechorus cadence never reaches the bass in the rendered window: " +
          bpc.join(","));
@@ -2678,9 +2697,10 @@ console.log("song arc, prechorus, topline — the radio shape, measured on ui/de
       const b2 = song2.song.find(b3 => b3.cue === "prechorus");
       ok(!!b2, "isley's song plan lost its prechorus");
       const r2 = D.sectionEvents(b2, song2.slots), bs2 = 16 / r2.g.rate;
+      const home2 = ((((b2.key || 0) % 12) + 12) % 12);   // ...and the same, in isley's key
       const pcs2 = new Set(r2.ev
         .filter(e => e.kind === "line" && e.part === "pad" && e.t >= (r2.bars - 1) * bs2)
-        .map(e => ((e.n % 12) + 12) % 12));
+        .map(e => ((((e.n - home2) % 12) + 12) % 12)));
       ok(pcs2.has(11),
          "the prechorus cadence never sounds the dominant's third in the rendered window");
     }
@@ -2937,8 +2957,12 @@ console.log("the box surface — key/prog/period/breath/pipe/part/auto reach the
   // "1bar" strips a genre's own sentence (beatles carries one)
   {
     const G = GENRES.rock;
+    // THE WRITTEN NOTES, not the decorated ones (`!e.orn`): the period is a
+    // claim about how many GATES a bar opens, and rock ornaments — a grace or
+    // a flam thrown per note on its own dice adds a note to whichever bar it
+    // lands in, which is exactly enough to level 12 against 11.
     const counts = g2 => Array.from({ length: 4 }, (_, b) =>
-      K.render(P, g2, 4).filter(e => e.v === 0 && Math.floor(e.t / 16) === b).length);
+      K.render(P, g2, 4).filter(e => e.v === 0 && !e.orn && Math.floor(e.t / 16) === b).length);
     const four = counts(boxGenre(G, { ...NUL, period: "4bar" }));
     ok(four[2] > four[0], "period 4bar: bar 3 is not busier than bar 1 (" + four.join(",") + ")");
     // TIMES ONLY, on the one-voice genre: P carries a ramp, so pitches climb
@@ -3004,7 +3028,12 @@ console.log("the box surface — key/prog/period/breath/pipe/part/auto reach the
     const ev = K.render(P, boxGenre(G, { ...NUL, part: "stab" }), 4);
     ok(ev.length > 0 && ev.every(e => e.part === "stab"),
        "part \"stab\" did not reassign every voice of the box");
+    // ORNAMENTS ARE NOT THE PART'S PITCHES. "stab" chord-locks the notes the
+    // part scheme places; a grace, an approach or a flam is a decoration
+    // played into one of them, and a neighbour of a chord tone is a non-chord
+    // tone by definition — §59 is where those are held to the bar's alphabet.
     for (const e of ev) {
+      if (e.orn) continue;
       const c = K.chordsOf(P, G, Math.floor(e.t / 16));
       ok(c.some(ch => ch.pcSet.has(((e.n % 12) + 12) % 12)),
          "a box-level stab pitch left its bar's chord");
@@ -4469,12 +4498,31 @@ console.log("dissonance census — what the notes sound like against each other"
     // the census cannot see — a part STACKED on a host — which is what §40's
     // Beatles test measures instead.
     solo: 0, vocal: 0, backing: 0, riff: 0, pad: 0,
+    // THE TWENTY-NINE ROOMS, measured the day after they landed
+    // (NUKERNEL_CENSUS=1), appended the way the ancestors were rather than
+    // merged into the sorted rows above — these are their own first
+    // measurement, not a re-bake of anyone else's. Twenty-five of the
+    // twenty-nine come in under the 1.5 bar. FOUR DO NOT and are on ALLOW
+    // below, each for a mechanism you can name.
+    screamo: 3.26, confessionalpop: 2.18, drill: 1.95, sophistirock: 1.79,
+    industrialmetal: 1.17, latinpop: 0.81, merseybeat: 0.78, hymn: 0.65,
+    psychpop: 0.62, jamband: 0.56, synthduo: 0.40, boyband: 0.37, emo: 0.33,
+    yuletide: 0.32, darkrnb: 0.29, powerballad: 0.28, reggaeton: 0.26,
+    roboticpop: 0.24, retrofunkpop: 0.23, worldfolk: 0.20, bigroom: 0.13,
+    clubpop: 0.11, blueeyedsoul: 0.10, crooner: 0.09, ebm: 0.06, kpop: 0.04,
+    bigbeat: 0.03, folkduo: 0, motorik: 0,
   };
   const ceilOf = b => b * 1.5 + 0.20;      // one headroom rule for every genre
 
   // THE BAR — the 90th percentile of the measured distribution above, rounded
   // up to the next 0.25. Derived, not chosen: recompute it when the table is
   // re-baked. Everything over it must be on ALLOW.
+  //
+  // AND IT STAYS AT 1.5 with eighty-seven genres in the table. Recomputing the
+  // rule over the widened distribution says 1.75, and that is exactly the move
+  // the paragraph below forbids: it would drop shoegaze and vaporwave under
+  // the bar and turn two argued exemptions into dead ones, which is a bar
+  // loosened to suit the table rather than a table held to the bar.
   const BAR = 1.5;
   // LEGITIMATELY DISSONANT, one reason each. This list is the ONLY way past
   // the bar; raising the bar to admit a genre would exempt the whole table.
@@ -4489,6 +4537,23 @@ console.log("dissonance census — what the notes sound like against each other"
               "degree apart, which its own entry calls detune as counterpoint",
     vaporwave: "the semitone follow lands a pentatonic minor third over a major III — " +
                "the blues' mechanism exactly, and the haze is the point",
+    // THE FOUR OF THE TWENTY-NINE that came in over the bar on their first
+    // measurement. Two of them are a scale — the material is dissonant and
+    // that is the genre — and two are one held note, which is a different
+    // claim and the one to point an ear at.
+    screamo: "it declares death metal's own locrian scale and mode, so the same " +
+             "sentence applies: the tonic sonority is a tritone and the ♭2 over it " +
+             "is the scream",
+    drill: "harmonic minor under modal harmony — the ♭6 against the ♮7 is an " +
+           "augmented second, the one interval nothing else in the table plays, " +
+           "and it is the whole menace of the genre",
+    confessionalpop: "legato lines with maxHold 3 SUSTAIN THROUGH THE CHANGE, so " +
+                     "the diatonic tritone (the IV's fourth held into the V's " +
+                     "leading tone) reads as unprepared by construction — the " +
+                     "suspension is the writing, but this one is worth a listen",
+    sophistirock: "the same held-note mechanism as confessionalpop, over a dorian " +
+                  "with both the ♭3 and the ♮6 — sophisti-pop's extended chords are " +
+                  "suspensions that do not resolve inside the bar; also worth a listen",
   };
 
   const rows = GK.map(census).sort((a, b) => b.pct - a.pct);
@@ -5176,8 +5241,14 @@ console.log("function genres — the part, the Beatles test, and what a singer d
     const g = GENRES[gk], bars = 8, bs = 16 / g.rate;
     let breath = 0, n = 0, ivals = 0, big = 0, span = 0;
     for (let s = 1; s <= 12; s++) {
+      // ...and NOT the ornaments (`!e.orn`). This measures how a part is
+      // WRITTEN — a singer steps, a soloist leaps — and `solo` grew an
+      // ornament policy of its own ("a note can lean, slide, flam or pass"),
+      // whose graces and flams are neighbours and unisons by construction. Left
+      // in, they halved the soloist's measured leap and the singer came out
+      // wider than the horn, which is a fact about decoration, not about line.
       const ev = K.render(C.compose("beatles", s).slots[5], g, bars)
-        .filter(e => e.part !== "pad").sort((a, b) => a.t - b.t);
+        .filter(e => e.part !== "pad" && !e.orn).sort((a, b) => a.t - b.t);
       if (!ev.length) continue;
       n++;
       let end = 0, sil = 0;
@@ -6873,9 +6944,32 @@ console.log("the register law — the table, the home, and the per-note fold");
     ok(pDrops === 0 && pOut === 0, "the pooled trumpet escapes its register " +
        "(" + pOut + " out, " + pDrops + " dropped) — the fold does not follow the pool");
     // (c) cast, then clear: the timeline returns to the exact bytes of the
-    // never-pooled song — null pool IS the genre's own band
-    ok(j(TLp) !== before,
-       "casting the lead changed nothing in the schedule — the pool is dead");
+    // never-pooled song — null pool IS the genre's own band.
+    //
+    // THE "NOT DEAD" SENTINEL READS THE RESOLVED INSTRUMENT, not the timeline's
+    // bytes. A pool only ever reached those bytes through the register home,
+    // and the home fires only when a chair does NOT already fit its new
+    // instrument's window — so the moment the song carried a key of its own
+    // ("a song knows what key it is in") house's lead landed inside the
+    // trumpet's [54, 84] as written, nothing shifted, and a perfectly live
+    // recast read as a dead pool. What the pool actually changes is the id
+    // transport.js hands to playSampled, so that is what this asks: every
+    // scheduled lead note answers "trumpet" with the pool and something else
+    // without it.
+    {
+      let recast = 0;
+      for (const bar of TLp) for (const e of bar.ev) {
+        if (e.kind !== "line") continue;
+        const sec = ST.SONG[bar.si];
+        const owner = e.layer || D.gid(sec);
+        const lv = e.lv == null ? e.v : e.lv;
+        const ent = D.stackOf(sec).find(x => x.g === owner);
+        if (D.chairOf(sec, ent, lv) !== "lead") continue;
+        if (D.instrIdOf(sec, owner, lv, null) !== "trumpet") recast++;
+      }
+      ok(recast > 0,
+         "casting the lead changed nothing in the schedule — the pool is dead");
+    }
     ST.setPoolChair("lead", null);
     ok(ST.POOL === null, "clearing the one cast chair did not normalize to null");
     ok(j(T.buildTimeline()) === before,
@@ -7170,31 +7264,51 @@ console.log("the master harmonization engine — one tonality, every added voice
   // alone", compose.js), or a quote whose deal changed. The forty-six rows
   // that draw none of the three did NOT move, which is what says these are
   // those three changes and not a fourth.
-  const REF = { simple: "59e6bbccf152", fugue: "28bd4816aea5", acid: "0611a30234fe",
-    newwave: "d479d03fc358", vaporwave: "6038a5ad3c29", blues: "7ab1afc4b18e",
-    rock: "5b0638589dd6", gregorian: "4de589451798", bulgarian: "b1567d4849e7",
-    spem: "fe970b7b00f7", counterpoint: "def5746d9dab", neoclassical: "84a10e704550",
-    drone: "55b6a223f5c5", sludge: "5745aec1ef02", tango: "451fb8967612",
-    deathmetal: "1bd247981e0f", eurythmics: "659d98a1aac1", isley: "5dda0c12a84c",
-    toto: "858359aa7ab5", jodeci: "d8e045832fed", beatles: "8690d077ccbb",
-    steely: "e253dcb6e03c", postrock: "89753782089f", boombap: "6f720e4e55c7",
-    trap: "71f4effe33d2", house: "01351b861ddc", garage: "08246e315cbc",
-    dnb: "8ff495da1ee9", disco: "f8355f5e40ca", funk: "0fcf09bd9114",
-    motown: "9b5e3f90e3c4", rnb: "46cf80b96895", gospel: "8acbcf41ec97",
-    reggae: "30f63535c3b7", dub: "9488d28b22b6", ska: "2a968bb0154f",
-    afrobeat: "ee953899945c", bossa: "64c65c2b95b1", countrypop: "457ae63a4a73",
-    synthpop: "2c1f8f3b879b", shoegaze: "a14544749e08", citypop: "317fd2caf3c4",
-    punk: "0be5aaaa6134", ambient: "066d2634daf1", techno: "c76899eec976",
-    solo: "bd4d51b66ed6", vocal: "ea099fbc12d1", backing: "dc681b7608c8",
-    riff: "e5974f77ea07", pad: "284988fc92d1",
-    // THE ANCESTORS — measured the day they landed, on this tree, with the
-    // ride fix above already in. Same contract as every row here: a hash is a
-    // tripwire, and the fifty rows above it did NOT move when these eight were
-    // spliced in, which is the proof that a new anchor is an addition and not
-    // an edit to the table's existing sound.
-    jazz: "18f55c904384", bodiddley: "6d65deba5f42", chuckberry: "69a8e26199e8",
-    doowop: "00dc69e9c6a8", skiffle: "672f68713330", minimalism: "9f06ff4c0613",
-    kraftwerk: "d67bd8e0ecb5", electro: "c9d21f5f0711" };
+  // ...AND RE-MEASURED WHOLE on 2026-08-17, for the two changes of that night
+  // and no others. A song KNOWS WHAT KEY IT IS IN now — the composer derives a
+  // tonic off the genre's own name and stamps it on every box — so every
+  // pitched number in this stream moved by a constant per genre; and 29 genres
+  // grew an ORNAMENT POLICY, which adds graces, flams, approaches and rolls to
+  // the lines they decorate. Both are argued, both have their own gates (§63
+  // and §59 respectively), and a tripwire whose two tripwires are proven
+  // elsewhere is re-measured rather than weakened. TWO rows did not move at
+  // all — techno and backing, the two whose derived tonic lands on zero and
+  // which ornament nothing — and that is what says this is those two changes
+  // and not a third.
+  const REF = { simple: "4b9740e29df3", fugue: "fb66b85894fe", acid: "6e5ab21af5a4",
+    newwave: "edb0ef71a7a5", vaporwave: "149d5015f704", blues: "bd46f7197675",
+    rock: "6b17d2564f98", gregorian: "ba0f27385ffc", bulgarian: "0b32f160e171",
+    spem: "9151dae05ddf", counterpoint: "05be67334465",
+    neoclassical: "182f2de5a1d1", drone: "c44769f4ff21",
+    sludge: "5084148f09aa", tango: "ee09103e8ed3", deathmetal: "b0851e6f2e38",
+    eurythmics: "98142ceabb51", isley: "9d5ab478f32a", toto: "29a92875bf17",
+    jodeci: "5e4ca9a37d79", beatles: "a459c2f9c282", steely: "01ea05a01d63",
+    postrock: "27b4a3b46e43", boombap: "b01f5cdbae1b", trap: "897203c2b00b",
+    house: "817eac80ba2a", garage: "cc3f5e1993db", dnb: "3999fdcb3980",
+    disco: "b11d4a93b0c3", funk: "b81633650abe", motown: "1141bdf06ece",
+    rnb: "9e78fac4619d", gospel: "e733eaf12546", reggae: "622440c9f04e",
+    dub: "54c3fb491042", ska: "ca92900b00b9", afrobeat: "4abfb20d688a",
+    bossa: "b635c3811e72", countrypop: "ea549aac9ee0",
+    synthpop: "c5fcb2c16fb3", shoegaze: "83b13c047a74",
+    citypop: "18c6c4b2a021", punk: "0596c10fdc60", ambient: "e5269e817b91",
+    techno: "c76899eec976", jazz: "8f2957718601", bodiddley: "652cb8966c48",
+    chuckberry: "bfa4069005a5", doowop: "aa80dab581fd",
+    skiffle: "c51f0f704a19", minimalism: "cd067bced87e",
+    kraftwerk: "6fa626f62c95", electro: "7bcbe33b8e14", hymn: "8d5cbbc2f790",
+    crooner: "ebcccb5c28e3", yuletide: "e85fe81904b2",
+    merseybeat: "367adb7076c1", psychpop: "4cd62eace8ad",
+    bigbeat: "2fd7eedbdd96", drill: "e7a238609e57", clubpop: "c3ad2b730725",
+    powerballad: "4ba645cf3184", retrofunkpop: "87bd139cb68b",
+    reggaeton: "aa5de4ddd707", latinpop: "0eef7a6d4277", kpop: "4fa1cc80588f",
+    boyband: "59b1645cfb57", emo: "97bca06289d7", screamo: "5f9e1fe98cce",
+    confessionalpop: "7caf072cfa2f", darkrnb: "0646ca452b56",
+    bigroom: "15833d9eadf3", blueeyedsoul: "611bb065f3c6",
+    folkduo: "e2436f24fe1e", worldfolk: "27c7432707c7",
+    jamband: "ddd0b4512600", sophistirock: "3f5356b33921",
+    motorik: "5eda4735ff86", roboticpop: "dbd9723b7f44",
+    industrialmetal: "bcbc410dce83", ebm: "a3fd12a0d312",
+    synthduo: "3f063b522c5d", solo: "219f51866bce", vocal: "732d368f1ec0",
+    backing: "dc681b7608c8", riff: "3c531d83afd9", pad: "ce08c515e400" };
   for (const gk of GK) {
     if (!REF[gk]) { ok(false, gk + ": no pre-change reference hash — a new " +
       "genre needs its single-layer baseline measured and added to REF"); continue; }
@@ -7229,7 +7343,13 @@ console.log("the master harmonization engine — one tonality, every added voice
   };
   function hMetrics(ev, ctx) {
     const cache = new Map();
-    const isL = e => ctx.conform(e) && e.dur > 0;
+    // NOT THE ORNAMENTS. Every number below was hand-measured against the
+    // stream a layer CONTRIBUTES, and the harmonization engine conforms
+    // exactly those notes; a grace or a flam is added after the fact, by the
+    // ornament pass, on top of a note already conformed. Counting them moved
+    // the strong-beat totals (house+blues 12 -> 16) and read as a baseline
+    // that had rotted, when nothing about the harmonization had changed.
+    const isL = e => !e.orn && ctx.conform(e) && e.dur > 0;
     const L = ev.filter(isL);
     const beat = ctx.stepsPerBar / 4;
     let strongOn = 0, strongTot = 0, viol = 0;
@@ -10240,6 +10360,173 @@ console.log("coming back is a fade and a loading line");
     ok(typeof b.graphRms === "number",
        "§65(d) the pre-mute master reading is not published — the readiness " +
        "proof cannot be read from outside");
+  }
+}
+
+/* ── §66 THE DESK SAYS WHAT IT IS COSTING, QUIETLY, IN THE CORNER ──────────
+   Paul: "do you want to sneak a cpu monitor on mobile" — yes, because it says
+   WHICH problem a glitch is (audio/graph.js's own comment carries the
+   argument in full: a spike means the graph got too heavy to rebuild, a flat
+   line with a glitch anyway means the handoff itself is wrong).
+
+   Two things are held here, the same split §65 uses:
+   (a) THE ARITHMETIC — loadHeadroom() is a pure function of a timer gap, so
+       it is tested as arithmetic, no browser required.
+   (b) THE REAL WIRING, read off the RENDERED DOM: the actual sampleLoad()
+       emitting the actual "load" event onto the actual bus ui/readout.js
+       actually subscribes to, painting an actual chip element — nothing
+       here is reimplemented. window.__nuMix/__nuNodes are stubbed (the same
+       way this file already stands in for window.NuGenres elsewhere)
+       because driving the real mixer to a CHOSEN voice count needs a real
+       song, decoded and playing — which is what the browser probe this lane
+       also wrote is for (test/probes/nukernel-load.probe.js: a real page, a
+       real handoff, the chip's path label read before and after — run once,
+       not swept). What stays state-INDEPENDENT here on purpose is "which
+       path is audible": rather than assume carrying is false, the check
+       reads bounce.js's own isCarrying() and asks the chip to agree with
+       whatever it currently says — true regardless of what an earlier
+       section in this file left the shared audio singletons doing. */
+console.log("the desk says what it is costing, quietly, in the corner");
+{
+  const G66 = await import("../../nukernel/audio/graph.js?load66=1");
+
+  /* (a) THE ARITHMETIC */
+  {
+    const h = (gap) => G66.loadHeadroom(gap, G66.LOAD_PERIOD, G66.SCHED_BUDGET_MS);
+    ok(h(G66.LOAD_PERIOD) === 1, "§66(a) dead on schedule is not full headroom");
+    ok(h(G66.LOAD_PERIOD - 400) === 1, "§66(a) EARLY is not full headroom either");
+    const mid = h(G66.LOAD_PERIOD + G66.SCHED_BUDGET_MS / 2);
+    ok(Math.abs(mid - 0.5) < 1e-9, `§66(a) half the budget burned reads ${mid}, not 0.5`);
+    ok(h(G66.LOAD_PERIOD + G66.SCHED_BUDGET_MS) === 0,
+       "§66(a) exactly the whole budget burned is not yet zero");
+    ok(h(G66.LOAD_PERIOD + G66.SCHED_BUDGET_MS * 9) === 0,
+       "§66(a) headroom went negative instead of floor-ing at zero");
+    // MONOTONIC — a longer gap never reads a HEALTHIER number
+    let worstMono = 0;
+    for (let g = 900; g < 2000; g += 17) worstMono = Math.max(worstMono, h(g) - h(g - 17));
+    ok(worstMono <= 1e-9, `§66(a) loadHeadroom rose ${worstMono} for a LONGER gap`);
+  }
+
+  /* (b) THE REAL WIRING, ON THE REAL MODULES */
+  {
+    class Elem66 {
+      constructor(tag) { this.tag = tag; this._cls = new Set(); this._on = {};
+                          this._kids = []; this._attrs = {}; this.style = {}; this.textContent = ""; }
+      get classList() {
+        const s = this._cls;
+        return { add: (...c) => c.forEach(x => s.add(x)),
+                 remove: (...c) => c.forEach(x => s.delete(x)),
+                 toggle: (c, f) => { const on = f === undefined ? !s.has(c) : !!f;
+                                      s[on ? "add" : "delete"](c); return on; },
+                 contains: c => s.has(c) };
+      }
+      set className(v) { this._cls = new Set(String(v).split(/\s+/).filter(Boolean)); }
+      get className() { return [...this._cls].join(" "); }
+      setAttribute(k, v) { this._attrs[k] = String(v); }
+      getAttribute(k) { return this._attrs[k]; }
+      addEventListener(t, fn) { (this._on[t] = this._on[t] || []).push(fn); }
+      appendChild(el) { this._kids.push(el); return el; }
+      append(...els) { this._kids.push(...els); }
+      click() { for (const fn of (this._on.click || [])) fn({}); }
+    }
+    // an in-memory localStorage, so "survives a reload" (the brief's own
+    // words) can actually be asked: a SECOND fresh import of readout.js below
+    // reads the same store a FIRST import wrote to, exactly as two loads of
+    // the real page would through the real one.
+    const store66 = new Map();
+    globalThis.localStorage = {
+      getItem: k => (store66.has(k) ? store66.get(k) : null),
+      setItem: (k, v) => store66.set(k, String(v)),
+      removeItem: k => store66.delete(k),
+    };
+    const mkDoc66 = () => {
+      const byId = {};
+      return { getElementById: id => (byId[id] = byId[id] || new Elem66()),
+               createElement: tag => new Elem66(tag),
+               body: { appendChild: () => {} },
+               addEventListener: () => {} };
+    };
+    globalThis.document = mkDoc66();
+
+    const B66 = await import("../../nukernel/audio/bounce.js");   // the SAME instance readout.js imports
+    const R66 = await import("../../nukernel/ui/readout.js?load66=1");
+    const readoutEl66 = globalThis.document.getElementById("readout");
+    const chip66 = readoutEl66._kids.find(k => k.className === "loadchip");
+    const detail66 = readoutEl66._kids.find(k => k.className === "loaddetail");
+    ok(chip66 && detail66, "§66(b) the chip (or its detail line) never joined the readout row");
+    ok(chip66 && chip66.getAttribute("aria-label"),
+       "§66(b) the collapsed chip has no accessible name — it is an icon with nothing behind it");
+
+    // CLOSED BY DEFAULT, and silent: no stray localStorage key reads as open
+    ok(!readoutEl66.classList.contains("loadopen") && detail66.textContent === "",
+       "§66(b) the chip opens on its own before anybody has tapped it");
+
+    // STUB THE TWO LEDGERS sampleLoad() reads — mixer.js/voices.js's own
+    // budgets, standing in for a real song the way window.NuGenres already
+    // stands in elsewhere in this file. Saved and restored so nothing after
+    // this block inherits a fake mixer.
+    const savedMix = globalThis.__nuMix, savedNodes = globalThis.__nuNodes;
+    let parts66 = 2, alive66 = 1;
+    globalThis.__nuMix = () => ({ nodes: { parts: parts66, total: 40 + parts66 } });
+    globalThis.__nuNodes = () => ({ alive: alive66 });
+
+    G66.sampleLoad();                                 // the FIRST tick: baseline, no gap to judge yet
+    const wantPath66 = () => (B66.isCarrying() ? "tape" : "live");
+    chip66.click();                                    // open the detail line
+    ok(readoutEl66.classList.contains("loadopen"), "§66(b) a tap did not open the detail line");
+    ok(detail66.textContent.includes("3v"),
+       `§66(b) 2 parts + 1 alive synth read as "${detail66.textContent}", not 3v — the ` +
+       "mixer's own two ledgers never reached the chip");
+    ok(detail66.textContent.includes(wantPath66()),
+       `§66(b) the chip says "${detail66.textContent}" while isCarrying() says ${B66.isCarrying()}`);
+    ok(String(store66.get("nukernel.loadopen.v1")) === "1",
+       "§66(b) the open/closed flag never reached localStorage — a reload would forget it");
+
+    // ADD VOICES, WATCH IT RISE (the brief's own words) — the real sampleLoad(),
+    // reading the real (stubbed) ledgers a second time
+    parts66 = 9; alive66 = 4;
+    G66.sampleLoad();
+    ok(detail66.textContent.includes("13v"),
+       `§66(b) parts 2->9 and alive 1->4 did not move the chip past "${detail66.textContent}"`);
+
+    // A REAL STALL, not a mock of one — the same 250 ms budget loadHeadroom()
+    // is built on, burned by an ACTUAL busy main thread rather than an
+    // argument handed to a pure function, so this is the timer path itself
+    // under test, not the arithmetic behind it a second time.
+    const until = performance.now() + G66.LOAD_PERIOD + G66.SCHED_BUDGET_MS * 2;
+    while (performance.now() < until) { /* a main thread that will not yield */ }
+    const before66 = store66.get("nukernel.loadopen.v1");
+    G66.sampleLoad();
+    ok(chip66.classList.contains("bad"),
+       "§66(b) a stall well past the whole scheduling budget did not read as `bad`");
+    ok(detail66.textContent.includes("0.00x"),
+       `§66(b) a stalled tick reads "${detail66.textContent}", not a floored 0.00x`);
+    ok(/\d⚠/.test(detail66.textContent),
+       "§66(b) a genuine dropped beat never reached the detail line");
+    ok(store66.get("nukernel.loadopen.v1") === before66,
+       "§66(b) reading a load sample rewrote the open/closed flag it should never touch");
+
+    // CHEAP BY CONSTRUCTION — the monitor's own cost, measured, not assumed
+    void R66;                        // kept alive: its "load" subscription is what painted the chip above
+    let selfMax = 0;
+    const seenSelf = [];
+    const { on: on66 } = await import("../../nukernel/ui/state.js");
+    on66("load", d => seenSelf.push(d.selfMs));
+    for (let i = 0; i < 5; i++) G66.sampleLoad();
+    for (const ms of seenSelf) selfMax = Math.max(selfMax, ms);
+    ok(selfMax < 5, `§66(b) the monitor's own sample cost ${selfMax} ms — that is not negligible`);
+    console.log(`  ${seenSelf.length} samples, worst self-cost ${selfMax.toFixed(3)} ms`);
+
+    globalThis.__nuMix = savedMix; globalThis.__nuNodes = savedNodes;
+
+    // …AND IT SURVIVES A RELOAD (the brief's own words): a second, independent
+    // import of readout.js, a fresh document, the SAME localStorage — open
+    // stays open with nothing tapped
+    globalThis.document = mkDoc66();
+    await import("../../nukernel/ui/readout.js?load66b=1");
+    const readoutEl66b = globalThis.document.getElementById("readout");
+    ok(readoutEl66b.classList.contains("loadopen"),
+       "§66(b) a reload with the flag already set to open came back closed");
   }
 }
 

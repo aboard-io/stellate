@@ -356,6 +356,36 @@ h1 em{font-style:normal;color:var(--ink)}
   .readout.loading .posload.stall{animation:none;opacity:.55}
 }
 
+/* ---- the CPU monitor chip (2026-08-17) ----
+   "sneak a cpu monitor on mobile" (Paul) — three bars, no text, pinned to
+   the end of row 2 by the one auto margin in this row. audio/graph.js's
+   `load` sets the colour, never a size: three bars stay three bars whether
+   the desk is idle or straining, because a meter that also RESIZES is a
+   second thing to read at a glance in a moving vehicle. warn/bad reuse the
+   transport's own state colours (arm/rec) rather than invent a second
+   amber-and-red vocabulary for one chip; .carrier tints the shortest bar the
+   same blue solo already uses, because "which path has the ear" and "is the
+   desk working" are the same question asked from two angles, so they share
+   one glance. A tap prints one line after it (.loaddetail, the numeral
+   column's own type) and folds it away again — the chip itself never
+   leaves, only the sentence behind it does. */
+.loadchip{
+  flex:0 0 auto;display:flex;align-items:flex-end;gap:2px;
+  height:14px;padding:0 var(--sp-2);margin-left:auto;min-width:0;
+  background:none;border:0;border-left:1px solid var(--rule);cursor:pointer;
+}
+.loadchip .lb{display:block;width:3px;border-radius:1px;background:var(--rule-strong)}
+.loadchip .lb:nth-child(1){height:5px}
+.loadchip .lb:nth-child(2){height:9px}
+.loadchip .lb:nth-child(3){height:14px}
+.loadchip:not(.warn):not(.bad) .lb{background:var(--ink-3)}
+.loadchip.warn .lb{background:var(--st-arm)}
+.loadchip.bad .lb{background:var(--st-rec)}
+.loadchip.carrier .lb:nth-child(1){background:var(--st-solo)}
+.loaddetail{padding:0 0 0 var(--sp-1);color:var(--ink-3);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;max-width:44vw;display:none}
+.readout.loadopen .loaddetail{display:inline}
+
 /* ================================================================
    ---- THE TABLE ----
    ONE COMPONENT, FOUR USERS. The pattern editor, the song, the mix

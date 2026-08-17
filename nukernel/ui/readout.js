@@ -17,8 +17,9 @@
 import { GENRES, ROLES } from "./deps.js";
 import { SONG, curSection, on } from "./state.js";
 import { gid } from "./derive.js";
-import { carrierNote } from "../audio/bounce.js";
+import { carrierNote, isCarrying } from "../audio/bounce.js";
 import { playing, playingSec } from "../audio/transport.js";
+import { lastLoadReport } from "../audio/graph.js";
 
 const readoutEl = document.getElementById("readout");
 const genreEl = document.getElementById("posgenre");
@@ -85,6 +86,65 @@ on("return", d => {
   loadEl.classList.toggle("stall", !!d.stalled);
   readoutEl.classList.toggle("loading", !!d.on);
 });
+
+/* ---------- the CPU monitor: what the desk is costing, in the corner ------
+   "sneak a cpu monitor on mobile" (Paul) — SNEAK is the operative word. A
+   three-bar chip lives at the end of this row always, wordless, and says
+   nothing on its own; a tap unfolds one line of the numbers behind it, the
+   same terse currency the parent app's own chyron reads load out in
+   (app/panels/readouts.js: "engine 0.97x"). It never steals a row — the chip
+   sits IN row 2, and the unfolded line replaces nothing, it just prints
+   after the chip until the next tap folds it away again.
+
+   audio/graph.js publishes the numbers (see its own comment for what `load`
+   IS and is not); this file only ever reads them and adds ONE fact graph.js
+   is structurally forbidden to know — audio/bounce.js's isCarrying(), which
+   path the ear is actually on right now. Graph sits BELOW bounce in the
+   layer order (bounce imports graph, never the reverse), so "which path is
+   audible" can only be answered from up here, where both are in reach. */
+const loadChip = document.createElement("button");
+loadChip.type = "button";
+loadChip.className = "loadchip";
+loadChip.setAttribute("aria-label", "engine load");
+loadChip.innerHTML = '<i class="lb"></i><i class="lb"></i><i class="lb"></i>';
+const loadDetail = document.createElement("output");
+loadDetail.className = "loaddetail";
+readoutEl.append(loadChip, loadDetail);
+
+// OPEN/CLOSED SURVIVES A RELOAD ("must survive a reload either way") — the
+// chip itself never leaves the row, so what persists is only whether the
+// detail line is unfolded, the same sticky-flag law VOLSTORE/RUBSTORE use.
+const LOADSTORE = "nukernel.loadopen.v1";
+let loadOpen = false;
+try { loadOpen = localStorage.getItem(LOADSTORE) === "1"; } catch (e) { /* private mode */ }
+let lastLoad = { load: 1, drops: 0, voices: 0, nodes: 0 };
+function paintLoad() {
+  const path = isCarrying() ? "tape" : "live";
+  loadChip.classList.toggle("warn", lastLoad.load < 0.9);
+  loadChip.classList.toggle("bad", lastLoad.load < 0.6);
+  loadChip.classList.toggle("carrier", isCarrying());
+  readoutEl.classList.toggle("loadopen", loadOpen);
+  // one line, numbers first — the same "engine 0.97x" idiom the parent's
+  // chyron already reads this exact ratio out in, so a reader of both apps
+  // is reading one language. Blank when folded: an aria-hidden width:0 line
+  // would still be there for a screen reader to stumble into.
+  loadDetail.textContent = loadOpen
+    ? lastLoad.load.toFixed(2) + "x · " + lastLoad.voices + "v · " + path +
+      (lastLoad.drops ? " · " + lastLoad.drops + "⚠" : "")
+    : "";
+}
+loadChip.addEventListener("click", () => {
+  loadOpen = !loadOpen;
+  try { localStorage.setItem(LOADSTORE, loadOpen ? "1" : "0"); } catch (e) { /* private mode */ }
+  paintLoad();
+});
+on("load", d => { lastLoad = d; paintLoad(); });
+// the audible path can flip with no new load sample under it (a return
+// crossfade lands between two 1 s ticks) — "return"'s own milestones already
+// fire often enough to keep the chip honest without a poll of its own
+on("return", () => paintLoad());
+{ const r = lastLoadReport(); if (r) lastLoad = { ...lastLoad, ...r }; }
+paintLoad();
 
 // SELF-SUBSCRIBED, COALESCED — one rAF per burst of change events, never one
 // rewrite per pointer event (a scrub commits "phrase" per pointermove).
