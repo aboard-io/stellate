@@ -2695,7 +2695,14 @@
     return state;
   }
 
-  const api={ GENRES, SOURCES, SAMPLES, SAMPLERS, SOURCE_POOLS, expandPools, DX7_PATCHES, FORM_NAMES:Object.keys(FORMS), FORM_ENTRY, PERC_STYLES, PERC_STYLE_GENRES, PERC_ELEMENTS, resolve, resolveMulti, track, blend, mix, playlist, journey, applySampledOnly, deriveMind, registerFont, setFont, activeFont, fontList, instrFamily };
+  // DRUMKITS + drumKitSpec, said out loud. applySampledOnly picks a kit BY SEED
+  // when a genre carries none, which is right for a genre that never named one
+  // and wrong for a caller that did: nukernel's boxes name their kit ("tr909",
+  // "jazz", "room") and want THAT kit's overlay, not a hashed one. Exposing the
+  // spec builder (the same `_sampledOnlyKit` applySampledOnly already calls) is
+  // additive — no existing caller, no behaviour moved, nothing the matrix reads.
+  const api={ GENRES, SOURCES, SAMPLES, SAMPLERS, SOURCE_POOLS, expandPools, DX7_PATCHES, FORM_NAMES:Object.keys(FORMS), FORM_ENTRY, PERC_STYLES, PERC_STYLE_GENRES, PERC_ELEMENTS, resolve, resolveMulti, track, blend, mix, playlist, journey, applySampledOnly, deriveMind, registerFont, setFont, activeFont, fontList, instrFamily,
+    DRUMKIT_NAMES:Object.keys(DRUMKITS), drumKitSpec:_sampledOnlyKit };
   if(isNode) module.exports=api; else root.GenreKernel=api;
 
 })(typeof window!=="undefined"?window:globalThis);
