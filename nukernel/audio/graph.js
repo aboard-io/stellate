@@ -197,6 +197,81 @@ function clipCurve(limit) {
   return c;
 }
 
+// ---- THE PER-VOICE EFFECT CHAIN: grit + tremolo, for vocals and horns -----
+// Paul: "Add grit and tremolo to vocals and horns." Read against the CPU
+// note at the top of this file — a WaveShaper has no memory, so it costs the
+// same whether it is fed a whisper or a shout, but it SUMS whatever reaches
+// it before it shapes. The master drive above gets to share one node because
+// it is fed the whole mix on purpose; a voice's grit must be fed only that
+// voice, or a horn would distort a vocal's tail. So the CURVE is shared (a
+// Float32Array is data, and building one is the expensive part — a thousand-
+// sample tanh walk, same as satCurve/gritCurve above) while the NODE is not:
+// audio/voices.js builds one chair PER VOICE and keeps it for that voice's
+// whole life, never per note — the 195-per-song throwaway WaveShapers this
+// file's own CPU note measures are exactly the mistake that would repeat.
+const voiceGritCurves = new Map();             // "amount" -> Float32Array
+export function voiceGritCurve(amount) {
+  const key = amount.toFixed(3);
+  let c = voiceGritCurves.get(key);
+  if (!c) voiceGritCurves.set(key, c = gritCurve(amount));
+  return c;
+}
+// TREMOLO IS STATE OVER TIME — an LFO — which the same CPU note says belongs
+// on a shared bus, so the oscillator pair is built ONCE PER RATE for the
+// whole page, the law the tape wow/flutter oscillators already follow a few
+// hundred lines down in buildMasterChain. TWO SINES NEAR THE SAME RATE, not
+// one: summed, they beat slowly against each other, which is what makes the
+// modulation read as a breath or a voice's own vibrato wandering rather than
+// a chopper switching on a metronome. Never torn down — at most a handful of
+// distinct rates for the whole session, the reverb impulse cache's own
+// accounting.
+const breathLFOs = new Map();                  // "hz" -> { node, oscs }
+export function breathLFO(c, hz) {
+  const key = hz.toFixed(2);
+  let L = breathLFOs.get(key);
+  if (L) return L;
+  const node = c.createGain(); node.gain.value = 1;   // the summed bus, ~[-1,1]
+  const oscs = [];
+  for (const [mul, amt] of [[1, 0.7], [1.087, 0.3]]) {
+    const o = c.createOscillator(); o.type = "sine"; o.frequency.value = hz * mul;
+    const g = c.createGain(); g.gain.value = amt;
+    o.connect(g); g.connect(node);
+    try { o.start(0); } catch (e) {}
+    oscs.push(o);
+  }
+  breathLFOs.set(key, L = { node, oscs });
+  return L;
+}
+// ONE TAP PER VOICE onto the shared bus above — a depth gain between the LFO
+// sum and this voice's own AudioParam, so many chairs ride the SAME two
+// oscillators at DIFFERENT depths instead of paying for a second LFO per
+// chair (the exact trick fanRev runs below for the reverb send). AudioParam
+// automation SUMS with the value set here, so `param` ends up riding at
+// `base` plus up to ±`depth` — real amplitude modulation with a rate and a
+// depth, on a param the caller already owns.
+export function tapBreath(c, hz, depth, param, base) {
+  const L = breathLFO(c, hz);
+  const g = c.createGain(); g.gain.value = depth;
+  L.node.connect(g); g.connect(param);
+  if (base != null) try { param.setValueAtTime(base, c.currentTime); } catch (e) {}
+  return g;
+}
+// THE CHAIR ITSELF: drive -> shape -> tremolo -> dest, built once and handed
+// back to audio/voices.js to route every note of one vox or brass chair
+// through. `drive` is a flat pre-gain, not a per-note write — the note's OWN
+// signal already carries its velocity (playSampled's own gain term), so
+// pushing that signal into a FIXED curve is what makes a loud note grit more
+// than a quiet one: the curve never changes, only how hard the note hits it.
+export function buildVoiceChair(c, grit, drive, tremHz, tremDepth, dest) {
+  const pre = c.createGain(); pre.gain.value = drive;
+  const shape = c.createWaveShaper();
+  shape.curve = voiceGritCurve(grit); shape.oversample = "none";
+  const trem = c.createGain(); trem.gain.value = 1;
+  pre.connect(shape); shape.connect(trem); trem.connect(dest);
+  if (tremDepth > 0) tapBreath(c, tremHz, tremDepth, trem.gain, 1);
+  return { in: pre, out: trem };
+}
+
 // THE SAFETY NET, which is not a colour. Identity below `knee`, then a
 // tanh knee that asymptotes to 1.0 — so nothing can leave this graph above
 // full scale, and nothing below the knee is touched at all. It exists because

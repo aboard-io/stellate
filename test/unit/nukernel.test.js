@@ -10828,6 +10828,261 @@ console.log("twenty-three more rooms — non-silent, real instruments, distinct,
               " synths verified against the built engine");
 }
 
+/* §69 — A VOICE PUSHES AND A HORN IS BLOWN, AND YOU CAN HEAR THAT THEY WERE
+   (lane H1, 2026-08-17). Paul: "Add grit and tremolo to vocals and horns."
+   Both live in audio/voices.js (the family lookup + the per-chair cache) and
+   audio/graph.js (the per-voice effect chain: the shared curve cache, the
+   shared breath-LFO bus, and buildVoiceChair). Nothing here needs a real
+   AudioContext to check: a WaveShaper's curve is a plain Float32Array
+   interpolated exactly the way this section interpolates it, and the
+   tremolo bus is two sines summed exactly the way this section sums them —
+   so the checks read the REAL exported curve and the REAL built graph
+   (via a stub context that records connections and param writes, the same
+   trick §the-desk-is-three-buses uses on audio/mixer.js) rather than a
+   second copy of the math. */
+console.log("a voice pushes and a horn is blown, and you can hear that they were");
+{
+  globalThis.addEventListener = globalThis.addEventListener || (() => {});
+  globalThis.document = globalThis.document ||
+    { visibilityState: "visible", addEventListener: () => {} };
+  globalThis.localStorage = globalThis.localStorage ||
+    { getItem: () => null, setItem: () => {}, removeItem: () => {} };
+  const G69 = await import("../../nukernel/audio/graph.js");
+  const V69 = await import("../../nukernel/audio/voices.js");
+  const NI69 = require("../../nukernel/instruments.js");
+  const fs69 = require("fs"), path69 = require("path");
+
+  // ---- a minimal stub context: nodes that remember what they were
+  // connected to, and AudioParams that remember what was written to them —
+  // just enough of the Web Audio surface for graph.js's grit+tremolo
+  // builders, the audio/mixer.js stub's own shape (test §"the desk is
+  // three buses") narrowed to what THIS chain actually calls.
+  const stub69 = () => {
+    const P = v => ({ value: v, outs: [],
+      setValueAtTime(x) { this.value = x; },
+      setTargetAtTime(x) { this.value = x; },
+      linearRampToValueAtTime(x) { this.value = x; },
+      exponentialRampToValueAtTime(x) { this.value = x; },
+      cancelScheduledValues() {},
+      connect(d) { this.outs.push(d); return d; } });
+    const c = { sampleRate: 44100, currentTime: 0 };
+    const N = (kind, extra) => Object.assign(
+      { kind, outs: [], context: c,
+        connect(d) { this.outs.push(d); return d; }, disconnect() {} }, extra || {});
+    c.createGain = () => N("gain", { gain: P(1) });
+    c.createWaveShaper = () => N("shaper", { curve: null, oversample: "none" });
+    c.createOscillator = () => N("osc", { frequency: P(1), type: "sine",
+      start() {}, stop() {} });
+    return c;
+  };
+  // gain along every path from `from` to `to`, treating a "gain" node's
+  // value as the multiplier and anything else as a pass-through — the
+  // §"three buses" section's own reach(), rebuilt here because that one is
+  // local to its own block.
+  const reach69 = (from, to, seen) => {
+    if (from === to) return 1;
+    const guard = seen || new Set();
+    if (guard.has(from)) return 0;
+    guard.add(from);
+    let s = 0;
+    for (const o of from.outs) {
+      const g = o.kind === "gain" ? o.gain.value : 1;
+      if (g === 0) continue;
+      s += g * reach69(o, to, guard);
+    }
+    guard.delete(from);
+    return s;
+  };
+
+  // ---- (a) the family lookup is exact, and everything that is not vox or
+  // brass reads null — which is the whole byte-identity claim: playSampled
+  // only reroutes `dest` when this returns truthy, so every other strip's
+  // signal path is untouched by this round.
+  ok(V69.voiceFamily(NI69.STRIPS.vox) === "vox", "STRIPS.vox does not read as the vox family");
+  ok(V69.voiceFamily(NI69.STRIPS.brass) === "brass", "STRIPS.brass does not read as the brass family");
+  let others69 = 0;
+  for (const [k, s] of Object.entries(NI69.STRIPS)) {
+    if (k === "vox" || k === "brass") continue;
+    others69++;
+    ok(V69.voiceFamily(s) === null,
+       "STRIPS." + k + " reads as a grit/tremolo family — it would stop rendering byte-identically");
+  }
+  ok(others69 >= 10, "the strip table shrank under this gate's feet (" + others69 + " non-family strips)");
+
+  // ---- (b) the two family numbers are sane, and the dial is a ceiling —
+  // horns lean gritty, vocals lean toward the wobble, both audibly nonzero.
+  for (const fam of ["vox", "brass"]) {
+    const F = V69.VOICEFX[fam];
+    ok(F && F.grit > 0 && F.grit < 1, fam + ": grit is not a fraction in (0,1)");
+    ok(F && F.drive >= 1, fam + ": drive is not a boost — a quiet note would never reach the curve's knee");
+    ok(F && F.tremHz > 1 && F.tremHz < 12, fam + ": tremHz is not a breath/vibrato rate");
+    ok(F && F.tremDepth > 0 && F.tremDepth < 0.5, fam + ": tremDepth is not a subtle wobble");
+  }
+  ok(V69.VOICEFX.brass.grit > V69.VOICEFX.vox.grit, "a blown horn does not grit harder than a held voice");
+
+  // ---- (c) GRIT MEASURABLY ADDS HARMONICS, AND TRACKS THE NOTE'S OWN
+  // DYNAMICS. Interpolate the REAL curve (voiceGritCurve, the exact array a
+  // WaveShaperNode would read) over a pure sine at two levels standing in
+  // for a quiet and a loud note — playSampled's own gain term runs from
+  // 0.42*0.2=0.084 to 0.42*1=0.42 — boosted by the family's own `drive`,
+  // exactly as buildVoiceChair's pre-gain does. A pure sine has NO energy at
+  // 2x/3x/…/6x its own frequency; any that appears after shaping is grit,
+  // and none of it should appear before.
+  {
+    const shapeAt = (curve, x) => {                    // linear WaveShaper read
+      const N = curve.length;
+      const t = Math.max(-1, Math.min(1, x));
+      const p = (t + 1) / 2 * (N - 1);
+      const i = Math.min(N - 2, Math.floor(p)), f = p - i;
+      return curve[i] * (1 - f) + curve[i + 1] * f;
+    };
+    const magAt = (x, freq, fs) => {                    // a plain single-bin DFT
+      let re = 0, im = 0;
+      for (let n = 0; n < x.length; n++) {
+        const w = 2 * Math.PI * freq * n / fs;
+        re += x[n] * Math.cos(w); im -= x[n] * Math.sin(w);
+      }
+      return Math.hypot(re, im) / x.length;
+    };
+    const fs = 44100, f0 = 861.33, N = 2048;             // f0*N/fs is not integer
+    // on purpose — a real note is not bin-aligned either — so the harmonic
+    // read below sums several bins around each partial rather than trusting
+    // one exact bin
+    const harmEnergy = (curve, drive) => {
+      let e = 0;
+      for (const A of [0]) void A;                       // (kept for symmetry, unused)
+      const x = new Float64Array(N);
+      for (let n = 0; n < N; n++) {
+        const s = drive * Math.sin(2 * Math.PI * f0 * n / fs);
+        x[n] = curve ? shapeAt(curve, s) : s;
+      }
+      for (let h = 2; h <= 6; h++) e += magAt(x, f0 * h, fs) ** 2;
+      return e;
+    };
+    const F = V69.VOICEFX.vox;
+    const quiet = 0.42 * (0.2 + 0.8 * (0 / 9)), loud = 0.42 * (0.2 + 0.8 * (9 / 9));
+    const curve = G69.voiceGritCurve(F.grit);
+    const hOffQuiet = harmEnergy(null, quiet * F.drive);
+    const hOnQuiet = harmEnergy(curve, quiet * F.drive);
+    const hOnLoud = harmEnergy(curve, loud * F.drive);
+    ok(hOffQuiet < 1e-9, "an unshaped sine carries harmonic energy — the test's own DFT is broken");
+    ok(hOnQuiet > hOffQuiet * 50, "grit-on does not measurably add harmonics over grit-off at a quiet note");
+    ok(hOnLoud > hOnQuiet * 1.3,
+       "grit does not track dynamics — a hammered note (vel 9) does not out-grit a ghosted one (vel 0): " +
+       hOnLoud.toFixed(6) + " vs " + hOnQuiet.toFixed(6));
+  }
+
+  // ---- (d) the curve is CACHED BY AMOUNT (shared data) and the CHAIR is
+  // NOT (private nodes) — the whole cost claim in one pair of identities.
+  {
+    const c1 = G69.voiceGritCurve(0.14), c2 = G69.voiceGritCurve(0.14);
+    ok(c1 === c2, "voiceGritCurve rebuilds an identical amount instead of reusing the cached array");
+    ok(G69.voiceGritCurve(0.20) !== c1, "voiceGritCurve returns the SAME curve for two different amounts");
+    const cx = stub69(), destA = cx.createGain(), destB = cx.createGain();
+    const chairA = G69.buildVoiceChair(cx, 0.14, 2.4, 5.4, 0.09, destA);
+    const chairA2 = G69.buildVoiceChair(cx, 0.14, 2.4, 5.4, 0.09, destB);
+    ok(chairA.in !== chairA2.in, "two buildVoiceChair calls share a node — one voice's grit would sum another's signal");
+  }
+
+  // ---- (e) TREMOLO IS REAL AMPLITUDE MODULATION AT THE RATE IT CLAIMS, and
+  // it is a shared bus: two callers at the same rate ride the SAME
+  // oscillators (breathLFO's own cache), and a caller reads back the exact
+  // frequencies graph.js built rather than a hardcoded copy of them.
+  {
+    const cx = stub69();
+    const L1 = G69.breathLFO(cx, 5.4), L2 = G69.breathLFO(cx, 5.4);
+    ok(L1 === L2, "breathLFO rebuilds a second oscillator pair at a rate it already built");
+    ok(L1.oscs.length === 2, "breathLFO is not two oscillators — the instability comes from the pair beating");
+    const freqs = L1.oscs.map(o => o.frequency.value).sort((a, b) => a - b);
+    const wts = L1.node.outs.length ? null : null;      // (taps are on the sum node's INPUTS, not outs)
+    void wts;
+    ok(Math.abs(freqs[0] - 5.4) < 1e-6, "breathLFO's base oscillator is not at the requested rate");
+    ok(freqs[1] > freqs[0], "breathLFO's second oscillator does not sit above the first — there is nothing to beat against");
+    // simulate the REAL sum this graph computes — same frequencies just read
+    // off the built oscillators, same weights read off the taps feeding them
+    // into L1.node (each osc -> a gain -> L1.node; the gain IS the weight)
+    const weightOf = o => { for (const g of o.outs) if (g.kind === "gain") return g.gain.value; return 1; };
+    const w = L1.oscs.map(weightOf);
+    const fsT = 1000, T = 3, NT = fsT * T;
+    const y = new Float64Array(NT);
+    for (let n = 0; n < NT; n++)
+      for (let k = 0; k < L1.oscs.length; k++)
+        y[n] += w[k] * Math.sin(2 * Math.PI * L1.oscs[k].frequency.value * n / fsT);
+    const magAtT = (x, freq, fs) => {
+      let re = 0, im = 0;
+      for (let n = 0; n < x.length; n++) {
+        const wgt = 2 * Math.PI * freq * n / fs;
+        re += x[n] * Math.cos(wgt); im -= x[n] * Math.sin(wgt);
+      }
+      return Math.hypot(re, im) / x.length;
+    };
+    const mNear = magAtT(y, 5.4, fsT), mFar = magAtT(y, 40, fsT);
+    ok(mNear > 0.25, "the breath LFO carries no measurable energy at the rate it was asked to run at");
+    ok(mNear > mFar * 4, "the breath LFO's energy is not concentrated near its declared rate");
+
+    // tapBreath: a depth gain riding the shared bus onto a real AudioParam,
+    // and the param's own base value is set the way an ordinary GainNode's
+    // `.gain` would need it (1 — unity, so the modulation rides ± depth).
+    const param = cx.createGain().gain;
+    const tap = G69.tapBreath(cx, 5.4, 0.09, param, 1);
+    ok(param.value === 1, "tapBreath does not set the base value on the param it is about to modulate");
+    ok(tap.kind === "gain" && Math.abs(tap.gain.value - 0.09) < 1e-9,
+       "tapBreath's depth gain is not the requested depth");
+    ok(tap.outs.includes(param), "tapBreath's depth gain does not reach the param it was asked to modulate");
+  }
+
+  // ---- (f) THE CHAIN WIRES DRIVE -> SHAPE -> TREMOLO -> DEST, structurally.
+  // reach69 deliberately excludes the STARTING node's own gain (it answers
+  // "how much of the signal already AT this node's output reaches `to`",
+  // the same convention §"three buses" built it under) — so the drive is
+  // read directly off the node the chair hands back, and the shape of the
+  // chain is read off what each node actually connects to.
+  {
+    const cx = stub69(), dest = cx.createGain();
+    const chair = G69.buildVoiceChair(cx, 0.14, 2.4, 5.4, 0.09, dest);
+    ok(Math.abs(chair.in.gain.value - 2.4) < 1e-9,
+       "the voice chair's drive gain is not set to the requested amount");
+    ok(chair.in.outs[0] && chair.in.outs[0].kind === "shaper",
+       "the voice chair's drive does not feed a WaveShaper next — the curve would never be heard");
+    ok(chair.out.outs.includes(dest),
+       "the voice chair's tremolo gain does not connect straight to dest");
+    ok(reach69(chair.in, dest) > 0,
+       "the voice chair's signal path does not reach dest at all — the chain is not wired in");
+  }
+
+  // ---- (g) ONE CHAIR PER VOICE, NOT PER NOTE — audio/voices.js's own
+  // cache, read back through its export: the same (chan, address) returns
+  // the SAME chair on a second call (no rebuild, the whole cost claim this
+  // round makes), a different address on the same channel gets its own
+  // chair (a horn and a vocal in the same box do not share a WaveShaper),
+  // and a different channel object gets its own chair even at the same
+  // address (a dropped section's chairs do not leak into the next one).
+  {
+    const cx = stub69(), destX = cx.createGain();
+    const chanA = { input: { context: cx } }, chanB = { input: { context: cx } };
+    const a1 = V69.voiceChairFor(chanA, "v0", "vox", destX);
+    const a2 = V69.voiceChairFor(chanA, "v0", "vox", destX);
+    ok(a1 === a2, "voiceChairFor rebuilds a chair on a second note — the per-note anti-pattern is back");
+    const a3 = V69.voiceChairFor(chanA, "v1", "vox", destX);
+    ok(a3 !== a1, "two different voices on one channel share a chair — one would grit under the other's signal");
+    const b1 = V69.voiceChairFor(chanB, "v0", "vox", destX);
+    ok(b1 !== a1, "two different channels share a chair — a retired section's chair would outlive it");
+  }
+
+  // ---- (h) THE REROUTE IS GATED ON `fam`, IN THE COMMITTED SOURCE — the
+  // structural half of the byte-identity claim (b) proves in the abstract:
+  // a strip that is not vox or brass never reaches either line below, so
+  // its `dest`/`note` are exactly what this file computed before this round.
+  const vSrc69 = fs69.readFileSync(path69.join(__dirname, "../../nukernel/audio/voices.js"), "utf8");
+  ok(/if \(fam && chan\) \{[\s\S]{0,120}dest = voiceChairFor\(chan, addr, fam, dest\)\.in;/.test(vSrc69),
+     "playSampled's dest-reroute is not gated on `fam` — every family would be rerouted");
+  ok(/if \(fam\) \{\s*\n\s*try \{ note = SP\.SamplerLive\(c, \{ dry: dest, rev: dest, del: dest \}\)/.test(vSrc69),
+     "the flat-velocity fallback's throwaway player is not gated on `fam` — every note would rebuild one");
+
+  console.log("  69: grit adds harmonics and tracks velocity, tremolo modulates at its own " +
+              "rate, one chair per voice (not per note), and every other strip is untouched");
+}
+
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }

@@ -11,7 +11,7 @@ import { GENRES, VOX, VOXPARAM, BASSSYNTH, SP, RANGES, STRETCH_UP,
          DYN_ATK } from "../ui/deps.js";
 import { SONG } from "../ui/state.js";
 import { stackOf } from "../ui/derive.js";
-import { ctx, bus, noise } from "./graph.js";
+import { ctx, bus, noise, buildVoiceChair } from "./graph.js";
 import { mixFor, isMachine } from "./machines.js";
 import { FAUSTDIR, FONT, fontDef, isSynthFont, specOf, zoneBufs, drumBufs,
          inFlight } from "./assets.js";
@@ -504,6 +504,58 @@ export function foldToZones(zones, midi) {
   while (m > sp.hi && m - 12 >= sp.lo) m -= 12;
   return Math.max(sp.lo, Math.min(sp.hi, m));
 }
+// ---- GRIT + TREMOLO, for vocals and horns ----------------------------------
+// Paul: "Add grit and tremolo to vocals and horns." Two families get a chair
+// of their own — STRIPS.vox and STRIPS.brass, the same identity check the
+// dyn shelf below already trusts for STRIPS.pad — built ONCE per voice
+// (graph.js buildVoiceChair: the per-voice effect chain) and reused for
+// every note that voice plays, so the cost is one WaveShaper and two Gains
+// per VOX OR BRASS CHAIR on the page, not per note: a composed song rarely
+// carries more than one or two of either, against the 195-per-song
+// throwaway-node pattern graph.js's own CPU note measures and warns against.
+//
+// THE AMOUNT IS TWO NUMBERS, one per family, not a per-genre dial — nothing
+// that reaches this file names a genre (playSampled only ever sees the
+// resolved sample id and the family strip it already carries, same as
+// instruments.js DYN above it). What still makes a crooner and a hard-blown
+// horn line read as different amounts of the same two controls is the note
+// underneath: grit reads THIS note's own velocity (below), and a genre's
+// phrase writes that velocity — kernel.js stress/touch, `artic`, `anchor` —
+// long before any of this file sees it. A held, legato vocal line grits
+// little because its notes rarely leave the default velocity; a hammered,
+// accented one grits hard because its notes do. The two numbers below are
+// the CEILING each family can reach, not the amount either always gets.
+// EXPORTED alongside the players, not because anything else in the app calls
+// them (only playSampled below does) but because a Float32Array curve and an
+// oscillator's own frequency are the artifact — test/unit/nukernel.test.js
+// §69 reads these back rather than keeping a second copy of the numbers.
+export const VOICEFX = {
+  // a held, breathy voice: grit stays a small edge, the vibrato leads
+  vox:   { grit: 0.14, drive: 2.4, tremHz: 5.4, tremDepth: 0.09 },
+  // a blown horn: more edge when it is pushed, a shallower breath-wobble
+  brass: { grit: 0.20, drive: 2.8, tremHz: 4.6, tremDepth: 0.06 },
+};
+// WHICH FAMILY, if either — the strip IS the family (instruments.js hands out
+// one shared STRIPS object per family), so this is a lookup and not a second
+// classifier reading the id's name.
+export const voiceFamily = strip =>
+  strip === STRIPS.vox ? "vox" : strip === STRIPS.brass ? "brass" : null;
+// ONE CHAIR PER (channel, address), keyed on the CHANNEL OBJECT so a dropped
+// channel drops its chairs with it — no cleanup call this file would have to
+// remember to make, the same law focusSynths/pruneSynths keep for the synth
+// pool's own per-channel routes, applied to a WeakMap instead of a retire
+// call because there is no per-note event that tells this file a channel died.
+const voiceChairs = new WeakMap();             // chan -> Map(addr -> chair)
+export function voiceChairFor(chan, addr, fam, dest) {
+  let m = voiceChairs.get(chan);
+  if (!m) voiceChairs.set(chan, m = new Map());
+  let ch = m.get(addr);
+  if (ch) return ch;
+  const F = VOICEFX[fam];
+  ch = buildVoiceChair(ctxOf(chan), F.grit, F.drive, F.tremHz, F.tremDepth, dest);
+  m.set(addr, ch);
+  return ch;
+}
 export function playSampled(id, midi, when, durSec, vel, gainMul, chan, strip, v, part) {
   const spec = specOf(id);
   // THE VOICE'S OWN CHAIR, when the caller has one. Each pitched voice has its
@@ -523,6 +575,15 @@ export function playSampled(id, midi, when, durSec, vel, gainMul, chan, strip, v
     player = chan.partPlayer(part); dest = chan.partIn(part);
   } else if (chan && chan.player) { player = chan.player; dest = chan.input; }
   if (!spec || !player) return false;
+  // GRIT + TREMOLO: vox and brass reach through their own chair before
+  // anything else touches `dest` — the shelf below, when it builds one, has
+  // to sit in FRONT of the chair (bright first, then the edge) so the two
+  // features compose the way a real strike into a driven amp does.
+  const fam = voiceFamily(strip);
+  if (fam && chan) {
+    const addr = v != null ? "v" + v : "p:" + part;
+    dest = voiceChairFor(chan, addr, fam, dest).in;
+  }
   // THE INSTRUMENT-REGISTER LAW (playWindow above): fold into the window the
   // instrument and its samples can both honestly play. This replaces the old
   // fold into the zones' DECLARED lo..hi span — which the shipped registry
@@ -567,10 +628,10 @@ export function playSampled(id, midi, when, durSec, vel, gainMul, chan, strip, v
   // threading a second flag down from the scheduler.
   const dyn = (FLATVEL || !dest) ? null : dynFor(id, strip === STRIPS.pad);
   const u = dyn ? velU(vel) : 0;
+  const c = ctxOf(chan);
   let atk = DYN_ATK, offsetSec = leadSec, note = player, filt = null;
   if (u) {
     dynStats.shaped++;
-    const c = ctxOf(chan);
     const cv = dynCurve(u, dyn);
     // ONE BIQUAD, ALIVE FOR ONE NOTE, AND ONLY WHEN THE NOTE ASKED FOR IT.
     // That is the whole per-note budget of this feature: a high shelf, hinged
@@ -617,7 +678,18 @@ export function playSampled(id, midi, when, durSec, vel, gainMul, chan, strip, v
       // the loop with it would detune the wrap.
       offsetSec = leadSec + Math.min(cv.skip, Math.max(0, buf.duration - leadSec - 0.02));
     }
-  } else if (dyn) dynStats.flat++;
+  } else {
+    if (dyn) dynStats.flat++;
+    // NO SHELF WAS BUILT, but a vox/brass note must still reach its chair.
+    // The persistent `player` this branch would otherwise fall back to was
+    // wired by the mixer straight onto the channel bus, before this chair
+    // existed — so it is exactly as blind to `dest` moving as sampler.js
+    // itself is, and the same throwaway-player trick above is the fix.
+    if (fam) {
+      try { note = SP.SamplerLive(c, { dry: dest, rev: dest, del: dest }); }
+      catch (e) { note = player; }
+    }
+  }
   // ---- AN ORNAMENT MUST NOT OUTLAST ITSELF --------------------------------
   // The release was a flat 120 ms, which is right for every note this machine
   // could make until the ninth type landed (kernel.js ORNAMENTS): a grace note,
