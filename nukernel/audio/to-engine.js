@@ -190,12 +190,13 @@ const CHAIR_ROLE = { pad: "pad", drone: "pad", stab: "pad",
 
 // ---- a nukernel `synth` block, as a parent RECIPE ---------------------------
 // nukernel's genres already name parent dsp ids (genres.js `synth: {dsp}`), and
-// their `set` keys are already parent RECIPE keys almost everywhere — because
-// they were written by reading state-engine. The four renames below are the
-// places the two spellings genuinely differ, and `role` is the one thing that
-// cannot be inferred: the parent picks pad_saw vs supersaw from the ROLE, and
-// modeld/tb303 are mono voices it will only build for a lead. So a genre that
-// names a lead dsp gets a lead chair for that voice, whatever the chair said.
+// a `set` block is written in the DSP's OWN param names — that is the spelling
+// audio/voices.js driveSynth writes straight onto the worklet, so it has to be.
+// The renames below are the places the parent's RECIPE spells the same knob
+// differently, and `role` is the one thing that cannot be inferred: the parent
+// picks pad_saw vs supersaw from the ROLE, and modeld/tb303/synclead are mono
+// voices it will only build for a lead. So a genre that names a lead dsp gets a
+// lead chair for that voice, whatever the chair said.
 const SYNTH = {
   modeld:    { model: "modeld", role: "melody" },
   tb303:     { model: "tb303",  role: "melody", rename: { resonance: "res" } },
@@ -204,6 +205,16 @@ const SYNTH = {
   juno60:    { model: "juno60", rename: { spread: "chorusSpread" } },
   lead_fuzz: { model: "fuzz",   role: "melody" },
   dx7_alg5:  { model: "rhodes", role: "melody" },
+  // the rest of the fleet the patch table reaches for. Nothing here is new
+  // synthesis — every one is a precompiled dist/ module the parent has been
+  // able to play all along and nothing in nukernel had ever asked for.
+  solina:    { model: "solina",   rename: { tone: "cutoff" } },
+  oberheim:  { model: "oberheim", rename: { detune: "obDetune" } },
+  ppg:       { model: "ppg" },
+  vp330:     { model: "vp330",    rename: { detune: "vpDetune" } },
+  casiocz:   { model: "casiocz",  rename: { wave: "czWave", detune: "czDetune" } },
+  synclead:  { model: "synclead", role: "melody", rename: { detune: "syncDetune" } },
+  bell:      { model: "bell" },
 };
 const WAVES = ["sine", "saw", "square", "pulse"];
 
@@ -224,8 +235,195 @@ function toneRecipe(tone) {
   return out;
 }
 
-// a chair's recipe: the sampled instrument by default (the parent's default
-// sound too), the genre's signature synth where it declares one.
+// ---- THE TONE BLOCK IS A SYNTHESISER, and it always was ---------------------
+// Every one of the 110 genres carries a `tone` block, and under nukernel's own
+// WebAudio voice that block WAS the sound: two oscillators of `wave`, detuned a
+// few cents, into a resonant lowpass that opened at cut x 3.4 and shut to `cut`
+// across the note, under an atk/rel envelope at `gain`. A subtractive synth,
+// one per genre, written out in seven numbers.
+//
+// Crossing to the parent, the tone block became DECORATION — four recipe keys
+// riding on a sampled General MIDI patch — and only the 15 genres that also
+// declared a `synth` block reached a synthesiser at all. So a genre whose whole
+// identity was a saw through a filter played whatever GM instrument its `instr`
+// id happened to name, and the worst of those name synths: measured on the
+// shipped registry, `polysynth`, `warm_pad`, `halo_pad` and `metal_pad` are
+// ONE ZONE each, rooted at MIDI 84. A pad written at MIDI 45 is that single
+// high sample dragged down two and a half octaves, which is not a pad — it is
+// a breathy whistle. That is the "flute everywhere" Paul heard, and it is a
+// photograph of a synthesiser standing in for the synthesiser.
+//
+// THE FIX IS A RE-MAP, NOT NEW SYNTHESIS. The parent owns the real instruments
+// under their real names (engine/faust/dsp, VOICES.md), so a GM synth PATCH id
+// resolves to the analog voice it is a recording of, and the genre's own tone
+// block drives it. Everything else — a guitar, a piano, a choir, a horn
+// section, a gospel organ — is a RECORDED instrument and stays sampled, which
+// is the parent's default sound for good reason. The test is what the id names:
+// only the twelve GM synth patches below are in here, and each row is that
+// patch's own instrument.
+//
+// The sweep is the loudest thing the tone block ever said, and both spellings
+// of it are the SAME sweep: the parent's saw/fuzz voices take `fenv` as a
+// multiplier above cutoff (cut x (1 + fenv)), its analog fleet takes
+// `envAmount` in OCTAVES. 2.4 and log2(3.4) are cut x 3.4 said twice.
+const SWEEP = 2.4, SWEEP_OCT = 1.77;
+// the parent's oscillator alphabet has no triangle. A triangle is a sine with a
+// little edge on it, so `sine` is the honest nearest and `saw` would be a lie —
+// and measured across the table, no genre that reaches a wave-bearing row here
+// asks for one anyway.
+const WAVEOF = { sawtooth: "saw", saw: "saw", square: "square",
+                 pulse: "pulse", triangle: "sine", sine: "sine" };
+const PATCH_SYNTH = {
+  // ---- the leads ----
+  // GM 82 Lead 2 / GM 81 Lead 1: literally "a sawtooth" and "a square". Two
+  // voices, four cents apart, because that is what the old tone block built.
+  // `padDsp` is the SAME instrument seated differently: two detuned saws under a
+  // chord are pad_saw and under a line are supersaw, which is precisely the pair
+  // the old tone block collapsed into one WebAudio voice. Naming the real module
+  // rather than the parent's role-resolved "stack" is what keeps this spec
+  // loadable by BOTH readers — a recipe key can be abstract, a `dist/` fetch and
+  // a `/root/param` address cannot. (One spec, two modules, so the attack floor
+  // is pad_saw's 5 ms; four milliseconds is not a sound either way.)
+  saw_wave:    { dsp: "supersaw", padDsp: "pad_saw", wave: "saw", set: (T) => ({
+    wave: T.wave, voices: 2, detune: 0.004, octave: 0.12,
+    cutoff: T.cut, res: T.res, fenv: SWEEP,
+    attack: Math.max(0.006, T.atk), release: T.rel, sustain: 0.85 }) },
+  square_lead: { dsp: "supersaw", padDsp: "pad_saw", wave: "square", set: (T) => ({
+    wave: T.wave, voices: 2, detune: 0.004, octave: 0.12,
+    cutoff: T.cut, res: T.res, fenv: SWEEP,
+    attack: Math.max(0.006, T.atk), release: T.rel, sustain: 0.85 }) },
+  // GM 85 Lead 5 (charang) — the buzzing guitar-synth lead. lead_fuzz is the
+  // parent's tanh-driven voice and the buzz IS the drive.
+  // (lead_fuzz's own resonance stops at 0.47 — its tanh drive is doing half the
+  // work a ladder would, and a tone block screaming q 11 must not be written
+  // onto the ceiling)
+  charang:     { dsp: "lead_fuzz", wave: "saw", set: (T) => ({
+    cutoff: T.cut, res: Math.min(0.45, T.res), drive: 0.5, fenv: SWEEP,
+    attack: T.atk, release: T.rel, sustain: 0.7 }) },
+  // GM 87 Lead 7 (fifths) — a saw and its fifth. synclead hard-syncs at
+  // syncRatio, and 1.5 is that fifth: the interval is in the oscillator rather
+  // than in a second sample, which is the whole difference.
+  fifth_sawtooth_wave: { dsp: "synclead", wave: "saw", set: (T) => ({
+    cutoff: T.cut, res: T.res, syncRatio: 1.5, syncSweep: 1.2, syncDecay: 0.18,
+    envAmount: SWEEP_OCT, envDecay: 0.16, detune: 8, drive: 0.3,
+    attack: T.atk, release: T.rel, sustain: 0.8 }) },
+  // GM 103 (echoes / echo drops) — a struck metallic ping that rings away. The
+  // parent's `bell` takes its decay from the note length, which is what a drop
+  // does; dub's delay send does the echoing, as it always did.
+  echo_drops:  { dsp: "bell", set: (T) => ({ cutoff: T.cut, res: T.res }) },
+  // ---- the pads ----
+  // GM 91 Pad 3 (polysynth) — a poly analog. The Juno-60 is one, with its BBD
+  // chorus, and the chorus is why a Juno pad sounds wide without a reverb.
+  polysynth:   { dsp: "juno60", set: (T) => ({
+    cutoff: T.cut, res: T.res, envAmount: SWEEP_OCT,
+    sawLevel: 0.7, pulseLevel: 0.5, subLevel: 0.2, pwmBase: 0.48, pwmLfo: 0.15,
+    chorus: 1.2, spread: 0.8,
+    attack: T.atk, decay: 0.6, sustain: 0.6, release: T.rel }) },
+  // GM 90 Pad 2 (warm) and GM 93 Pad 5 (bowed glass) are the SAME instrument
+  // arriving differently — a Prophet/SEM-class poly — so they share `oberheim`
+  // and differ where they actually differ: the bow takes a second and a half to
+  // speak and half the sweep, the warm pad speaks at the tone block's own
+  // attack. Naming two models to make a table look varied would be the lie.
+  warm_pad:    { dsp: "oberheim", set: (T) => ({
+    cutoff: T.cut, res: T.res, envAmount: SWEEP_OCT,
+    envAttack: 0.6, envDecay: 1.4, envSustain: 0.7, detune: 9, drive: 0.12,
+    attack: T.atk, release: T.rel, sustain: 0.8 }) },
+  bowed_glass: { dsp: "oberheim", set: (T) => ({
+    cutoff: T.cut, res: T.res, envAmount: SWEEP_OCT * 0.5,
+    envAttack: 1.6, envDecay: 2.4, envSustain: 0.85, detune: 6, drive: 0.06,
+    attack: Math.max(T.atk, 0.25), release: T.rel, sustain: 0.9 }) },
+  // GM 95 Pad 7 (halo) — the bright scanning wash. ppg's `scan` is a wavetable
+  // position and sweeping it slowly is what a halo is.
+  halo_pad:    { dsp: "ppg", set: (T) => ({
+    cutoff: T.cut, res: T.res, scan: 0.3, scanEnv: 0.35, scanLfo: 0.08,
+    scanRate: 0.22, envAmount: SWEEP_OCT * 0.6, sub: 0.2, drive: 0.1,
+    attack: T.atk, release: T.rel, sustain: 0.9 }) },
+  // GM 94 Pad 6 (metallic) — the CZ's phase distortion is where that clangy
+  // digital edge comes from, and `dcw*` is the contour that makes it metal.
+  metal_pad:   { dsp: "casiocz", set: (T) => ({
+    cutoff: T.cut, wave: 0.75, index: 0.45,
+    dcwAmount: 0.8, dcwAttack: 0.004, dcwDecay: 0.5, dcwSustain: 0.3, detune: 7,
+    attack: T.atk, decay: 0.3, sustain: 0.8, release: T.rel }) },
+  // GM 55 (synth voice) — the VP-330 IS the synthesised choir, vowel and all.
+  // (a choir cannot speak in two milliseconds and the module says so: vp330's
+  // attack floor is 5 ms, so the tone block's snappiest is held just off it
+  // rather than written onto it)
+  synth_voice: { dsp: "vp330", set: (T) => ({
+    cutoff: T.cut, vowel: 0.35, breath: 0.18, ensemble: 0.7, detune: 0.45,
+    attack: Math.max(0.006, T.atk), sustain: 0.9, release: T.rel }) },
+  // GM 51 (synth strings) — the Solina/ARP string ensemble, which is what every
+  // record meaning "synth strings" was actually playing. Its chorus is the
+  // instrument, so the parent drops inserts on it and so should we.
+  synth_strings_1: { dsp: "solina", set: (T) => ({
+    tone: T.cut, octave: 0.55, ensemble: 0.85, chorusRate: 0.62, chorusDepth: 0.9,
+    attack: T.atk, release: T.rel }) },
+};
+
+/**
+ * The synthesiser a GM synth-patch id is a recording of, driven by the genre's
+ * own tone block — or null for an id that names a real recorded instrument.
+ *
+ * `padish` is whether the chair holds the chord: it only ever picks between two
+ * seatings of one instrument (pad_saw / supersaw), never a different sound.
+ *
+ * Returns a spec in the genre `synth:{dsp, root, level, set}` shape ON PURPOSE:
+ * that is the shape audio/voices.js playSynth already plays and the shape
+ * recipeFor already translates, so the page and the tape can read one table.
+ * Exported for the same reason drumVoice is — the drum lanes learned the hard
+ * way what two tables for one sound costs. NOTE for whoever wires the live
+ * page: audio/transport.js scheduleBar still reaches for `playSampled(id)` on
+ * every voice a genre has not declared a `synth` for, so today this table is
+ * heard on the pressed tape (audio/press-window.js, and on mobile the tape IS
+ * the audible path) and not yet under the live graph. One import here and one
+ * branch there closes it — the same shape playSynth already takes.
+ */
+export function synthForInstr(id, tone, padish) {
+  const P = PATCH_SYNTH[id];
+  if (!P) return null;
+  const dsp = (padish && P.padDsp) || P.dsp;
+  const t = tone || {};
+  // THE BOUNDS ARE THE NARROWEST OF THE FLEET, not the widest, and that is
+  // deliberate: a spec written here is played by TWO readers — the parent's
+  // recipe (which clamps) and audio/voices.js driveSynth (which writes the
+  // number straight onto the AudioParam, where a value ON the declared edge is
+  // the exact failure the audio gate exists to catch). So resonance is held off
+  // zero, the longest release stops short of the 3 s ceiling three of these
+  // modules declare, and each row floors its own attack where its module asks.
+  const T = {
+    cut: clamp(t.cut != null ? t.cut : 1400, 60, 16000),
+    res: clamp(((t.q != null ? t.q : 0.7) - 0.7) / 12, 0.02, 0.9),
+    atk: clamp(t.atk != null ? t.atk : 0.01, 0.001, 5),
+    rel: clamp(t.rel != null ? t.rel : 0.4, 0.05, 2.8),
+    wave: Math.max(0, WAVES.indexOf(WAVEOF[t.wave] || P.wave || "saw")),
+  };
+  // the tone block's `gain` is a WebAudio node gain; the declared synths sit at
+  // 0.75-0.9 voice level, and this puts a typical 0.28 in the same band rather
+  // than at the sampled path's own trim
+  return { dsp, root: dsp,
+    level: clamp((t.gain != null ? t.gain : 0.28) * 2.8, 0.5, 0.92),
+    set: P.set(T) };
+}
+
+// a {dsp, level, set} spec — a genre's own `synth` block or a patch row above —
+// as the parent's recipe. ONE conversion for both, because a spec is written in
+// the DSP's param names either way and SYNTH's rename table is the only
+// dictionary between that and the parent's recipe keys.
+function synthRecipe(sy, tone, role) {
+  const S = SYNTH[sy.dsp];
+  if (!S) return null;
+  const m = { ...tone, model: S.model,
+    level: clamp(sy.level != null ? sy.level : 0.8, 0.05, 1) };
+  for (const [k, v] of Object.entries(sy.set || {})) {
+    const key = (S.rename && S.rename[k]) || k;
+    m[key] = (S.waveIndex && key === "wave") ? (WAVES[v | 0] || "saw") : v;
+  }
+  return { role: S.role || role, m };
+}
+
+// a chair's recipe: the genre's signature synth where it declares one, then the
+// synthesiser its GM patch id is a photograph of, then — for every id that
+// names a real recorded instrument — the sampled one, which is the parent's
+// default sound too.
 function recipeFor(chair, seat, lib, unrouted) {
   const role = CHAIR_ROLE[chair] || "melody";
   const tone = toneRecipe(seat.tone);
@@ -237,13 +435,16 @@ function recipeFor(chair, seat, lib, unrouted) {
   const wantSynth = sy && SYNTH[sy.dsp] && !(sy.lineOnly && role === "pad");
   if (sy && !SYNTH[sy.dsp])
     unrouted.push({ what: "synth:" + sy.dsp, why: "no parent model names this dsp", chair });
-  if (wantSynth) {
-    const S = SYNTH[sy.dsp], m = { ...tone, model: S.model, level: clamp(sy.level != null ? sy.level : 0.8, 0.05, 1) };
-    for (const [k, v] of Object.entries(sy.set || {})) {
-      const key = (S.rename && S.rename[k]) || k;
-      m[key] = (S.waveIndex && key === "wave") ? (WAVES[v | 0] || "saw") : v;
-    }
-    return { role: S.role || role, m, source: "synth:" + sy.dsp };
+  if (wantSynth) return { ...synthRecipe(sy, tone, role), source: "synth:" + sy.dsp };
+  // the patch table, and NO SILENT FALLBACK out of it: a row naming a dsp the
+  // SYNTH dictionary has no entry for is reported, never quietly sampled — that
+  // is precisely the failure that put a one-zone whistle where a pad belonged.
+  const patch = synthForInstr(seat.instr, seat.tone, role === "pad");
+  if (patch) {
+    const r = synthRecipe(patch, tone, role);
+    if (r) return { ...r, source: "patch:" + seat.instr + ">" + patch.dsp };
+    unrouted.push({ what: "patch:" + seat.instr,
+      why: "no parent model names dsp " + patch.dsp, chair });
   }
   const spec = lib[seat.instr];
   if (!spec) {
