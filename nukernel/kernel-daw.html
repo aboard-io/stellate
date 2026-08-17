@@ -307,6 +307,11 @@
 <script src="../engine/faust/voices/found-player.js"></script>
 <script src="kernel.js"></script>
 <script src="genres.js"></script>
+<!-- the syllabary BEFORE sing.js, which reads window.NuSyllabary at its own
+     load time — the same rule as genres-data.js before genre-kernel.js
+     upstairs. It has no dependencies, so anywhere above this line would do;
+     it sits here because it is sing.js's data and reads as such. -->
+<script src="syllabary.js"></script>
 <script src="sing.js"></script>
 <script src="fields.js"></script>
 <script src="song.js"></script>
