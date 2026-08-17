@@ -18,6 +18,16 @@
 // Nothing here schedules a note, shapes an envelope or opens an AudioContext
 // for anything but decoding a file.
 //
+// AND THE DRIVING HAPPENS ON ANOTHER THREAD. It used to happen on this one, and
+// that is what Paul was hearing on 2026-08-17: renderChunk is a synchronous WASM
+// call, a window is several of them in a row, and the ear's thread was gone for
+// up to eleven seconds at a time while transport.js's 0.15 s lookahead ran dry
+// and the fill bar froze in the same task. audio/press-worker.js is the same
+// walk in a module Worker; everything above this line still runs here, because
+// translating a nukernel bar reads GENRES, POOL and SONG and a second opinion
+// about those would be a different band. Only the samples and the schedule
+// cross, and the tape they make is the tape it was.
+//
 // WHY A RUN OF BOXES AND NOT A SONG. The parent's `state` is one band playing
 // one arrangement: one kit, one cast, one set of instrument recipes. A nukernel
 // song is a row of BOXES, and a box may change the kit, recast every chair and
@@ -56,10 +66,15 @@ const ROOTDIR = new URL("../../", import.meta.url).href;
 // engine/faust/live/stream-worker.js makes inside its Worker. A guard skips
 // anything the page already defined so nothing is re-executed under the app's
 // feet.
+//
+// THE TRANSLATE HALF ONLY: the score algebra the page itself needs to turn bars
+// into a parent schedule. The render half (found-player, sampler,
+// stream-renderer, the faustwasm env) does NOT arrive here any more — it lives
+// in the worker, and a page that never falls back never pays for it twice.
+const need = async (g, url) => { if (!window[g]) await import(url); return window[g]; };
 let depsP = null;
 async function deps() { return depsP || (depsP = loadDeps()); }
 async function loadDeps() {
-  const need = async (g, url) => { if (!window[g]) await import(url); return window[g]; };
   await need("__GENRES", ROOTDIR + "engine/genres-data.js");
   await need("__REGISTRY", ROOTDIR + "engine/registry-data.js");
   await need("CsdTheory", ROOTDIR + "engine/theory.js");
@@ -67,6 +82,17 @@ async function loadDeps() {
   const E = await need("CsdEngine", ROOTDIR + "engine/csd-engine.js");
   const K = await need("GenreKernel", ROOTDIR + "engine/genre-kernel.js");
   const SE = await need("FaustStateEngine", FAUSTDIR + "voices/state-engine.js");
+  return { E, K, SE };
+}
+// ...and the render half, ON THIS THREAD, which is the FALLBACK and nothing
+// else. A module Worker is not a thing every browser in the world has (and a
+// page opened off a file:// URL has none at all), and a tape made in a blocking
+// window is still better than no tape — so the old path stays walkable, and
+// `pressPath()` says out loud which one is in use.
+let mainP = null;
+async function mainDeps() { return mainP || (mainP = loadMainDeps()); }
+async function loadMainDeps() {
+  const { E, K, SE } = await deps();
   await need("FaustRenderCore", FAUSTDIR + "press/render-core.js");
   const FP = await need("FoundPlayer", FAUSTDIR + "voices/found-player.js");
   const SP = await need("FaustSampler", FAUSTDIR + "voices/sampler.js");
@@ -75,17 +101,64 @@ async function loadDeps() {
   const benv = await BE.makeBrowserEnv({ base: FAUSTDIR });
   return { E, K, SE, FP, SP, SRnd, benv };
 }
-// Is the parent press available at all? Asked before a render commits to it, so
-// a page whose engine/faust/node_modules is missing says so instead of throwing
-// per window. The answer is remembered either way.
-let readyP = null;
+
+/* ---------- the worker: where the walk actually runs ---------- */
+// One worker for the life of the page. It accumulates the decoded sample layer,
+// so every window after the first ships only the files that window is the first
+// to ask for.
+let wk = null, wkSeq = 0;
+const wkPend = new Map();                 // press id -> {res, rej}
+const wkSent = new Set();                 // samplePath -> already in the worker
+function startWorker() {
+  return new Promise((res, rej) => {
+    const w = new Worker(new URL("./press-worker.js", import.meta.url), { type: "module" });
+    const bad = (e) => { try { w.terminate(); } catch (x) {} rej(new Error(e)); };
+    w.onerror = (e) => bad((e && e.message) || "worker error");
+    w.onmessage = (ev) => {
+      const m = ev.data || {};
+      if (m.t === "ready") { wk = w; res(w); return; }
+      if (m.t === "initfail") { bad(m.error); return; }
+      const p = wkPend.get(m.id);
+      if (!p) return;
+      wkPend.delete(m.id);
+      if (m.t === "pressed") p.res(m);
+      else p.rej(new Error(m.error || "press failed"));
+    };
+    w.postMessage({ t: "init" });
+  });
+}
+function wkPress(msg, transfer) {
+  return new Promise((res, rej) => {
+    wkPend.set(msg.id, { res, rej });
+    wk.postMessage(msg, transfer);
+  });
+}
+
+// Is the parent press available at all, and where does it run? Asked before a
+// render commits to it, so a page whose engine/faust/node_modules is missing
+// says so once instead of throwing per window — and so the DECODE below knows
+// whether it may give its samples away (the worker path transfers them) or must
+// keep them (the fallback renders here). The answer is remembered either way,
+// which is what makes that one-time choice safe.
+let readyP = null, path = null;
 export function pressReady() {
-  return readyP || (readyP = deps().then(() => true, (e) => {
+  return readyP || (readyP = start().then(() => true, (e) => {
     console.warn("[nukernel] the parent press is unavailable:", e && e.message);
     lastError = String((e && e.message) || e).slice(0, 140);
     return false;
   }));
 }
+async function start() {
+  await deps();                            // the translate half, either way
+  try { await startWorker(); path = "worker"; }
+  catch (e) {
+    console.warn("[nukernel] the press worker would not start — the tape will "
+      + "be made on this thread and you may hear it:", (e && e.message) || e);
+    await mainDeps();
+    path = "main";
+  }
+}
+export const pressPath = () => path;
 let lastError = null;
 export const pressError = () => lastError;
 
@@ -95,8 +168,16 @@ export const pressError = () => lastError;
 // decodeAudioData on a 44.1k context, which is the same two facts. Channels are
 // AVERAGED rather than channel-0-taken, because that is what ffmpeg's -ac 1
 // does and a stereo zone would otherwise lose half its body.
+//
+// TWO MAPS, because on the worker path the page does not keep the samples at
+// all: `pcmLen` is what it remembers (how many frames the file decoded to, 0 for
+// one that would not decode, which is the whole of what `missing` needs), and
+// `pcmData` holds the Float32Arrays only until they are transferred away. On the
+// fallback path nothing is transferred and pcmData IS the cache. Either way a
+// file is fetched and decoded exactly once per page.
 let decCtx = null;
-const pcmCache = new Map();          // samplePath -> Float32Array | null
+const pcmLen = new Map();            // samplePath -> frames, 0 = would not decode
+const pcmData = new Map();           // samplePath -> Float32Array (until given away)
 const DEC_PAR = 8;
 async function decodeOne(url) {
   if (!decCtx) decCtx = new OfflineAudioContext(1, 1, SR);
@@ -113,25 +194,27 @@ async function decodeOne(url) {
   return out;
 }
 async function decodeAll(paths, missing) {
-  const todo = [...paths].filter(([, p]) => !pcmCache.has(p));
+  const todo = [...paths].filter(([, p]) => !pcmLen.has(p));
   let next = 0;
-  const worker = async () => {
+  const dec = async () => {
     for (;;) {
       const i = next++;
       if (i >= todo.length) return;
       const p = todo[i][1];
-      try { pcmCache.set(p, await decodeOne(ROOTDIR + p)); }
-      catch (e) { pcmCache.set(p, null); }
+      try { const pcm = await decodeOne(ROOTDIR + p); pcmData.set(p, pcm); pcmLen.set(p, pcm.length); }
+      catch (e) { pcmLen.set(p, 0); }
     }
   };
-  await Promise.all(Array.from({ length: Math.min(DEC_PAR, todo.length) }, worker));
-  const buffers = {};
+  await Promise.all(Array.from({ length: Math.min(DEC_PAR, todo.length) }, dec));
+  // WHICH FILE EACH SOURCE ID WANTS — the map the worker resolves its own buffer
+  // table from, and the reason its cache is keyed on the path: a schedule
+  // addresses zones by id, and two ids may well name the same wav.
+  const idPath = {};
   for (const [id, p] of paths) {
-    const pcm = pcmCache.get(p);
-    if (pcm && pcm.length) buffers[id] = pcm;
+    if (pcmLen.get(p)) idPath[id] = p;
     else missing.push(id);
   }
-  return buffers;
+  return idPath;
 }
 
 /* ---------- a box, as a parent plan ---------- */
@@ -199,7 +282,10 @@ function runsOf(bars) {
  */
 export async function pressWindow(bars, opts) {
   const o = opts || {};
-  const { E, K, SE, FP, SP, SRnd, benv } = await deps();
+  // the thread is chosen ONCE per page (pressReady), and every window after
+  // asks the same question and gets the same answer
+  if (!path) await pressReady();
+  const { E, K, SE } = await deps();
   const sd = o.sd || (60 / bpm / 4);
   const spb = sd * 4;                       // the parent counts in beats
   const preBars = o.preBars || 0;
@@ -264,17 +350,58 @@ export async function pressWindow(bars, opts) {
   // ---- 2. decode -------------------------------------------------------------
   const paths = [...srcPaths].filter(([, p]) => p);
   const missing = [];
-  const buffers = await decodeAll(paths, missing);
+  const idPath = await decodeAll(paths, missing);
   for (const [id, p] of srcPaths) if (!p) missing.push(id);
 
-  // ---- 3. drive the parent's offline walk ------------------------------------
+  // ---- 3. the pre-roll's length, which the walk needs before it walks ---------
+  // The window replayed the bars before its own so the reverb, the delay and the
+  // master compressor arrive at the seam carrying real state; their OUTPUT is
+  // not ours. Everything after is exactly one window's worth of tape.
+  const preSec = bars.slice(0, preBars).reduce((n, b) => n + b.barSteps * sd, 0);
+  const skip = Math.round(preSec * SR);
+
+  // ---- 4. drive the parent's offline walk ------------------------------------
   const sched = { events, found, sweeps, units, spb,
                   totalBeats: beat0 + tailSec / spb };
+  const t0 = performance.now();
+  const chs = path === "worker"
+    ? await pressOnWorker(first, sched, idPath, skip)
+    : await pressOnThisThread(first, sched, idPath, skip);
+  return { chs, n: chs[0].length,
+           unrouted, missing, lanes: [...lanes], units: Object.keys(units).length,
+           procMs: Math.round(performance.now() - t0) };
+}
+
+// THE WORKER PATH — the ordinary one. Every sample file the worker has not seen
+// goes with this message and is TRANSFERRED, so the page hands over the buffer
+// rather than copying it; after the first window that list is nearly always
+// empty and the message is a schedule and nothing else.
+async function pressOnWorker(state, sched, idPath, skip) {
+  const addPaths = {}, give = [];
+  for (const id in idPath) {
+    const p = idPath[id];
+    if (wkSent.has(p)) continue;
+    wkSent.add(p);
+    const pcm = pcmData.get(p);
+    if (!pcm) continue;
+    pcmData.delete(p);
+    addPaths[p] = pcm; give.push(pcm.buffer);
+  }
+  const r = await wkPress({ t: "press", id: ++wkSeq, state, sched, idPath, addPaths, skip }, give);
+  return [r.L, r.R];
+}
+
+// THE FALLBACK — the same walk, here, blocking. Kept honest rather than kept
+// quiet: this is the arrangement that made the mix go bare, and the only reason
+// to run it is that the alternative on this page is no tape at all.
+async function pressOnThisThread(state, sched, idPath, skip) {
+  const { E, SE, FP, SP, SRnd, benv } = await mainDeps();
+  const buffers = {};
+  for (const id in idPath) buffers[id] = pcmData.get(idPath[id]);
   const eng = SRnd.makeStreamEngine({ E, SE, FP, SP,
     mergeIvals: window.FaustRenderCore.mergeIvals,
     mkProc: benv.mkProc, rootOf: benv.rootOf, SR, BS, dx7Presets: benv.dx7Presets });
-  const t0 = performance.now();
-  const info = await eng.open(first, { buffers, sched });
+  const info = await eng.open(state, { buffers, sched });
   const L = new Float32Array(info.TOTAL), R = new Float32Array(info.TOTAL);
   for (let n = 0; n < info.nChunks; n++) {
     const c = eng.renderChunk(n);
@@ -282,18 +409,8 @@ export async function pressWindow(bars, opts) {
     R.set(c.R.subarray(0, c.length), c.startSample);
   }
   eng.close();
-
-  // ---- 4. cut the pre-roll off ------------------------------------------------
-  // The window replayed the bars before its own so the reverb, the delay and the
-  // master compressor arrive at the seam carrying real state; their OUTPUT is
-  // not ours. Everything after is exactly one window's worth of tape.
-  const preSec = bars.slice(0, preBars).reduce((n, b) => n + b.barSteps * sd, 0);
-  const skip = Math.round(preSec * SR);
-  const n = Math.max(0, L.length - skip);
+  const cut = Math.min(skip, L.length);
   // COPIED, not sliced: bounce.js's window cache holds these for the session, and
   // a subarray would pin the whole pre-roll-and-tail buffer behind every entry.
-  const chs = [L.slice(skip, skip + n), R.slice(skip, skip + n)];
-  return { chs, n,
-           unrouted, missing, lanes: [...lanes], units: Object.keys(units).length,
-           procMs: Math.round(performance.now() - t0) };
+  return [L.slice(cut), R.slice(cut)];
 }

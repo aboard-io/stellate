@@ -82,7 +82,7 @@ import { buildTimeline, scheduleBar, stepDur, playing, getPosition, nextBarAt,
 import { warm as warmSing } from "./sing.js";
 // THE PRESS. Everything that makes a sound inside a render window now happens
 // in the parent engine (engine/faust/), driven through this one door.
-import { pressWindow, pressReady, pressError } from "./press-window.js";
+import { pressWindow, pressReady, pressError, pressPath } from "./press-window.js";
 
 /* ---------- the platform predicate ---------- */
 // IT LIVES HERE NOW, not in survival.js, because the thing it decides is the
@@ -199,6 +199,10 @@ window.__nuRender = () => ({ ms: st.lastRenderMs, durSec: st.durSec,
   ratio: st.ratio, phases: st.phases, phase: st.phase,
   wantSec: st.wantSec, wantBars: st.wantBars, chunks: st.chunks,
   parallel: PARALLEL, chunkSec: CHUNK_SEC, chunkMs: st.chunkMs, each: st.each,
+  // WHICH THREAD MADE IT — "worker" is the ordinary answer and "main" is the
+  // fallback, which is audible (it is the block that made the mix go bare), so
+  // it belongs in the report rather than in a console line nobody reads.
+  thread: pressPath(),
   hits: st.hits, misses: st.misses,
   nodes: st.nodes, pooled: st.pooled, lanes: st.lanes,
   lanesWant: st.lanesWant, lanesMissing: st.lanesMissing,
@@ -912,9 +916,18 @@ const withChunkSec = async (n, fn, preBars) => {
 // ONE AT A TIME, and that is a CONSEQUENCE of the press rather than a caution.
 // The old windows were OfflineAudioContexts, and chromium gives each one its own
 // render thread — so three at once really did overlap (measured 2.43x on this
-// 4-core box). The parent's press is faustwasm offline processors called
-// synchronously on THIS thread: `Promise.all` over them is a queue wearing a
-// wave's clothes, and it would hold three windows' buffers alive to buy nothing.
+// 4-core box). The parent's press is faustwasm offline processors called in a
+// straight line, and audio/press-worker.js serializes them on its own queue, so
+// `Promise.all` over them is a queue wearing a wave's clothes: it would hold
+// three windows' buffers alive to buy nothing.
+//
+// AND THE THREAD IT IS A LINE ON IS NOT THIS ONE (2026-08-17). It was, for one
+// commit, and that is the whole of what Paul heard as a jumpy fill bar and a mix
+// that went bare for a measure — 47% of wall clock with the ear's thread simply
+// gone. A second worker would buy parallelism back at the price of another core
+// beside the audio thread on a four-core box, which is the trade this file
+// already refuses to make ("a bounce that starves the audible path has made the
+// wrong trade"); the answer to a slow tape is a cache hit, not a busier box.
 // ?renderpar= survives for the same reason ?noseam does — the old path stays
 // walkable — but the default is honest.
 const PARALLEL = (() => {
