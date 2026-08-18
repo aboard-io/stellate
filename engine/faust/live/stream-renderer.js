@@ -98,6 +98,21 @@
     async function mkChain(inserts) {
       const chain = [];
       for (const eff of (inserts || [])) {
+        // AN INSERT YOU CANNOT BUILD COSTS YOU THE INSERT, NOT THE SONG. An
+        // effect with no `module` used to be interpolated into a URL, 404, and
+        // carry on; a loader guard then made it throw, which took mkChain with
+        // it and left the whole chain unbuilt — nothing played, and the readout
+        // said "0v · stream" while the console named a line inside the worker.
+        // That is the wrong trade twice over: the first version hid the fault,
+        // the second turned one bad effect into silence. Skip it, name it, and
+        // let every other insert and every voice still sound. Same law the
+        // carrier already states: demote rather than go silent.
+        if (!eff || !eff.module) {
+          try { (self.console || console).warn(
+            "stream-renderer: insert skipped, no module —",
+            JSON.stringify(eff && eff.params ? Object.keys(eff.params) : eff)); } catch (e) {}
+          continue;
+        }
         const proc = await mkProc(eff.module);
         const R = "/" + rootOf(eff.module) + "/";
         for (const [k, pv] of Object.entries(eff.params || {})) proc.setParamValue(R + k, pv);
