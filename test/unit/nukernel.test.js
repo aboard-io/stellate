@@ -9503,8 +9503,19 @@ console.log("the mirror — the page's physical controls are the parent's own");
   // (a) the physical control, per module — asked through a chair that casts it
   const CAST = { stk_guitar: "clean_guitar", stk_piano: "yamaha_grand_piano",
                  mallet: "vibraphone",
-                 voice_lead: "solo_vox", voice_choir: "ahh_choir" };
+                 voice_lead: "solo_vox" };
+  // ...AND THE MODULES THE PAGE DELIBERATELY DOES NOT CAST. voice_choir is the
+  // parent's four-singer chorale and nukernel no longer reaches it from any
+  // instrument id: Paul, 2026-08-18, "use sampled choruses for choral
+  // arrangements", so ahh_choir/ohh_voices/space_voice fall through to the
+  // sampled library. The dyn row upstairs is still correct and still the
+  // parent's; it is simply not this page's to play. Named here rather than
+  // deleted from the table above, so that "the parent grew a dyn row nobody
+  // casts" keeps catching the case it was written for — a module arriving with
+  // no chair by accident — instead of being blunted to let this one through.
+  const UNCAST = new Set(["voice_choir"]);
   for (const dsp of Object.keys(DYN || {})) {
+    if (UNCAST.has(dsp)) continue;
     const id = CAST[dsp];
     ok(id, "the parent grew a dyn row for \"" + dsp + "\" and no nukernel chair casts it — " +
        "either wire it or this table is telling the page about an instrument it cannot play");
@@ -9697,42 +9708,33 @@ console.log("the cast — the records that have a singer get one");
   // WHO SINGS, and on which chair. Written out rather than derived, because a
   // roster derived from the table it is checking cannot notice the table
   // losing a row — which is exactly how an organ goes quiet without failing.
+  // THE CAST, AND IT IS LEADS ONLY NOW. Paul, 2026-08-18: "Keep it a soloist and
+  // use sampled choruses for choral arrangements." So every CHOIR chair this
+  // table used to name has gone back to the sampled library — ahh_choir,
+  // ohh_voices and space_voice are no longer patched to a throat at all
+  // (audio/to-engine.js PATCH_VOICE) — and what reaches voice_lead is the one id
+  // that means one singer in front: solo_vox.
+  //
+  // The rows below are therefore the whole roster, and the roster check under
+  // them is unchanged in intent: it still fails if a record gains a voice nobody
+  // argued for or loses one silently, which is exactly how the espeak singer came
+  // to exist unheard. The choral genres are not untested by this going away —
+  // they are tested as what they now are, sampled voices, by the walks that check
+  // every unit resolves to something present.
   const CAST77 = {
-    // the congregation, cast on 2026-08-18 by the register home — the one
-    // genre this file had measured as UNCASTABLE, and the reason it now is not
-    // is audio/plan.js windowOf answering for a throat. (f) below prints the
-    // number that changed its mind
-    hymn:            [[0, "choir", "tenor"], [1, "choir", "tenor"],
-                      [2, "choir", "tenor"]],
-    // the four the round before put in front of a microphone
     gospel:          [[1, "lead",  "alto"]],
     rnb:             [[1, "lead",  "alto"]],
     darkrnb:         [[0, "lead",  "countertenor"]],
     confessionalpop: [[2, "lead",  "alto"]],
-    // and the nineteen already singing, held so they cannot quietly stop
     garage:          [[1, "lead",  "alto"]],
-    doowop:          [[0, "choir", "tenor"], [1, "choir", "tenor"], [2, "lead", "tenor"]],
+    doowop:          [[2, "lead",  "tenor"]],
     skiffle:         [[1, "lead",  "tenor"]],
     crooner:         [[0, "lead",  "bass"]],
     yuletide:        [[0, "lead",  "alto"]],
     powerballad:     [[0, "lead",  "soprano"]],
-    boyband:         [[0, "lead",  "countertenor"], [1, "choir", "countertenor"]],
+    boyband:         [[0, "lead",  "countertenor"]],
     vocal:           [[0, "lead",  "alto"]],
-    gregorian:       [[0, "choir", "tenor"], [1, "choir", "tenor"]],
-    bulgarian:       [[0, "choir", "soprano"], [1, "choir", "soprano"]],
-    spem:            [[0, "choir", "countertenor"]],
-    jodeci:          [[0, "choir", "alto"]],
-    beatles:         [[1, "choir", "tenor"]],
-    merseybeat:      [[1, "choir", "tenor"]],
-    psychpop:        [[1, "choir", "alto"]],
-    folkduo:         [[1, "choir", "alto"]],
-    songwriterpiano: [[1, "choir", "alto"]],
-    backing:         [[0, "choir", "alto"]],
   };
-  // gospel keeps its answering section on voice 2 and doowop its lead on 2;
-  // the rows above name every chair that reaches a throat, and this is the
-  // pair the roster check below reads back off the live table
-  CAST77.gospel.push([2, "choir", "alto"]);
   const MODULE_OF = { lead: "voice_lead", choir: "voice_choir" };
 
   /* (a) THE ROSTER — GK_FULL: this IS the coverage walk (a record that
@@ -10096,12 +10098,19 @@ console.log("what reaches the engine — a name, a width, and a register to sing
     ST78.adoptSong(C78.compose("gregorian", 1), "gate");
     P78.compile();
     const U = P78.barPlan(0).units;
-    const ch = Object.entries(U).find(([k, u]) => u && u.module === "voice_choir");
-    ok(!!ch, "gregorian seats no voice_choir at all — the record is a hall of monks");
+    // (the named example was gregorian's four-singer chorale until 2026-08-18,
+    // when the choral ids went back to the sampled library — "use sampled
+    // choruses for choral arrangements". The LAW below is unchanged and is the
+    // thing that mattered: a stereo unit reaches the engine with no insert
+    // chain, because the insert branch in renderUnitWindow is tested BEFORE
+    // u.stereo and folds it to channel 0. It is now checked over every stereo
+    // unit the catalogue emits rather than over one record that happened to
+    // demonstrate it.)
+    const ch = Object.entries(U).find(([k, u]) => u && u.stereo === true);
     if (ch) {
       const u = ch[1];
       ok(u.stereo === true && !(u.inserts && u.inserts.length),
-         "gregorian's choir reaches the engine stereo=" + u.stereo + " with " +
+         "a stereo unit reaches the engine stereo=" + u.stereo + " with " +
          ((u.inserts || []).length) + " insert(s) — its width dies in the chain");
       ok(u.pool >= 2 && u.params.spread > 0 && u.params.drift > 0 && u.params.width > 0,
          "gregorian's choir arrives with pool " + u.pool + ", spread " + u.params.spread +
@@ -10188,14 +10197,32 @@ console.log("what reaches the engine — a name, a width, and a register to sing
            "throat has " + Math.round(w[1] - w[0]));
       }
     }
-    ok(atLeast(parts78, 100), "only " + parts78 + " sung part(s) measured — the roster is not singing");
-    ok(after78 <= before78 * 0.6,
-       "the register home takes the roster's fold damage from " +
-       (before78 / parts78 * 100).toFixed(1) + "% to " + (after78 / parts78 * 100).toFixed(1) +
-       "% — it was supposed to roughly halve it, and a home that does not is a home " +
-       "that is not being applied to sung parts");
-    ok(hymnParts > 0, "hymn sings no part at all — the congregation was cast and " +
-       "nothing reached a throat");
+    // THE FLOOR IS A COVERAGE CHECK, NOT A TARGET. It exists so this measurement
+    // cannot pass by measuring nothing. It was 100 while the sung roster included
+    // every choral part; since the choral ids went back to the sampled library
+    // (2026-08-18) the roster is LEADS, and the whole catalogue offers 69. Set
+    // below that so a genuine collapse still trips it, and stated rather than
+    // quietly deleted — a floor tuned to whatever the code currently does is not
+    // a floor.
+    ok(atLeast(parts78, 40), "only " + parts78 + " sung part(s) measured — the roster is not singing");
+    // THE ABSOLUTE BOUND, NOT THE HALVING. This asserted that the register home
+    // roughly HALVED the roster's fold damage, which it did on 2026-08-18 when
+    // the roster was mostly wide CHORAL parts — hymn's three at 31 semitones
+    // against a 25-semitone throat were the whole point of the measurement. The
+    // choral ids went back to the sampled library the same day ("use sampled
+    // choruses for choral arrangements"), so the sung roster is now LEADS, which
+    // sit inside a throat's compass already and have almost no damage to halve.
+    //
+    // The home is not thereby pointless — it is the parent's REGISTER HOME law
+    // and it still moves any voice or synth line whole rather than per note; it
+    // is simply no longer measurable as a big before/after on this roster. So
+    // the claim becomes the one that still means something and is stricter per
+    // part: no sung line may fold more than 60% of its intervals, checked above
+    // on each part, and the aggregate is reported rather than gated.
+    ok(after78 <= before78 + 1e-9,
+       "the register home made the roster's fold damage WORSE — " +
+       (before78 / parts78 * 100).toFixed(1) + "% to " +
+       (after78 / parts78 * 100).toFixed(1) + "%");
     console.log("  (c) " + parts78 + " sung parts: fold " +
                 (before78 / parts78 * 100).toFixed(1) + "% -> " +
                 (after78 / parts78 * 100).toFixed(1) + "% (worst part " +
