@@ -80,7 +80,11 @@ const listing = (dir) => {
 // speech-live.test.js, which runs fine two-up and should stay in the fast lane.
 // live-audit-throttled rides a CDP-throttled link and asserts an anomaly ceiling —
 // the decode-vs-bar-clock races it measures are exactly what a busy box distorts.
-const SOLO = /(^|\/)(wavout-seam|wavout|stem-parity|crossfade-seam|live|live-resilience|live-audit-throttled|sampler-inserts-live|wedge-demo|nukernel-bounce)\.test\.js$/;
+// nukernel-webkit-tape joins them for the same reason and one more: it is the
+// only gate that launches WEBKIT, it renders a whole composed song there, and
+// what it asserts is that the render ENDS inside a deadline. Sharing a box with
+// five chromiums is exactly how a deadline gate goes red without a defect.
+const SOLO = /(^|\/)(wavout-seam|wavout|stem-parity|crossfade-seam|live|live-resilience|live-audit-throttled|sampler-inserts-live|wedge-demo|nukernel-bounce|nukernel-webkit-tape)\.test\.js$/;
 
 const SETS = {
   browser: { files: [...listing("test/browser"), ...listing("test/starcruise")], jobs: HEAVY,

@@ -61,14 +61,40 @@ function serve(root, port) {
 
 // launch headless chromium (autoplay allowed, no sandbox) via playwright's
 // own executable resolution. Throws with install instructions when the
-// browser is missing.
+// browser is missing. Thirty-odd gates call this by name, so it stays exactly
+// what it was and hands the work to launchBrowser below.
 async function launchChromium(opts) {
+  return launchBrowser("chromium", opts);
+}
+
+// …AND THE OTHER ENGINE, because Paul is on Safari and every gate in this repo
+// was chromium (2026-08-18). That is not a detail: the carrier's full render
+// never completed under WebKit at all — __nuBounce().state sat on "rendering"
+// for ever — and the whole suite was green throughout, because nothing in it
+// had ever asked WebKit anything. One argument now chooses the engine, so a
+// gate that needs the other one is a word rather than a rewrite.
+//
+// WHAT A WEBKIT PASS DOES AND DOES NOT PROVE. playwright's webkit on Linux is
+// WebKit's own engine (its WebAudio, its OfflineAudioContext, its worker and
+// media plumbing) built for this platform — so it is the right instrument for
+// asking whether a code path EXISTS there. It is not an iPhone, so its
+// absolute speed is nobody's phone's speed; a gate that reads a stopwatch
+// under it is measuring this box. Assert reachability and boundedness here;
+// leave throughput budgets to the chromium gates that were calibrated on one.
+//
+// The chromium-only flags are chromium's: webkit refuses unknown args, and it
+// needs neither (headless webkit autoplays and has no sandbox to disable).
+async function launchBrowser(kind, opts) {
   opts = opts || {};
-  const { chromium } = require("playwright");
-  const exe = chromium.executablePath();
+  const pw = require("playwright");
+  const eng = pw[kind];
+  if (!eng) throw new Error(`probe-harness: no such playwright engine "${kind}"`);
+  const exe = eng.executablePath();
   if (!exe || !fs.existsSync(exe))
-    throw new Error("playwright chromium not found — run `npm install && npm run setup:browser` at the repo root");
-  return chromium.launch({ headless: true, args: ["--autoplay-policy=no-user-gesture-required", "--no-sandbox"] });
+    throw new Error(`playwright ${kind} not found — run \`npm install && npm run setup:browser\` at the repo root`);
+  const args = kind === "chromium"
+    ? ["--autoplay-policy=no-user-gesture-required", "--no-sandbox"] : [];
+  return eng.launch({ headless: true, args });
 }
 
 // wire pageerror + console-error capture; returns the growing errors array.
@@ -139,4 +165,4 @@ async function ensureStarcruise(page, timeoutMs) {
   await page.waitForFunction(() => !!(window.__STARCRUISE && window.__STARCRUISE.start), null, { timeout: timeoutMs || 60000 });
 }
 
-module.exports = { MIME, serve, launchChromium, capturePageErrors, installOfflineRoute, ensureStarcruise };
+module.exports = { MIME, serve, launchChromium, launchBrowser, capturePageErrors, installOfflineRoute, ensureStarcruise };

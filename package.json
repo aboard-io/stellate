@@ -10,7 +10,7 @@
     "verify": "./verify.sh",
     "test:pure": "node test/gates/theory.test.js && node test/gates/pipes.test.js && node test/gates/boot-smoke.test.js",
     "test:browser": "node test/run.js browser",
-    "setup:browser": "playwright install chromium",
+    "setup:browser": "playwright install chromium webkit",
     "test:unit": "node test/run.js unit",
     "test:all": "node test/run.js all"
   },

@@ -256,7 +256,22 @@
       const spb = 60 / st.bpm;
       const CBEATS = Math.max(2, Math.round(st.chordEvery || (st.meter ? 6 : 8)));   // meter default mirrors buildEvents (kernel states carry explicit chordEvery; this covers hand states — odd meter)
       const lo = ci * CBEATS, hi = lo + CBEATS;
-      const ev = E.buildEvents(one);
+      // ...OR EVENTS THE CALLER ALREADY HAS. The parent generates its own music
+      // from a state; a caller with its OWN composer does not want that — it wants
+      // this engine's scheduler, voice pools, ring and mixer playing ITS notes.
+      // stream-renderer.js took exactly this seam for the offline side (`io.sched
+      // || SE.buildSchedule(E, state)`), and this is the live half of it: absent
+      // opts.events every existing caller is byte-identical, because this is the
+      // same call it always made.
+      //
+      // WHY IT IS ONE LINE AND NOT A PORT: nukernel had grown its own scheduler,
+      // mixer, graph and render — about 5,500 lines duplicating what is already
+      // here — and every seam between the two engines was a bug (the desk missing
+      // from the tape, drums disagreeing across paths, velocity meaning two
+      // different things, a render that hangs on WebKit and kills the tab). One
+      // engine, one signal path; the app above it keeps its own composer and desk.
+      const ev = ((opts && opts.events) ? opts.events(one, { sec, secIdx, ci, serial, spb }) : null)
+              || E.buildEvents(one);
       // SECTION IDENTITY IS THE INDEX, NOT THE NAME. This walk selects secs[secIdx]
       // — the name is only a label — and the app mutates the playing state under it
       // (a glide across a genre boundary replaces st.sections wholesale with a form
