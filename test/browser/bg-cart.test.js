@@ -28,7 +28,7 @@ const H = require(path.join(__dirname, "..", "lib", "probe-harness.js"));
   const fails = [];
   const ok = (cond, msg) => { console.log((cond ? "PASS  " : "FAIL  ") + msg); if (!cond) fails.push(msg); return cond; };
 
-  await page.goto(`http://localhost:${PORT}/index.html?bgAltMs=1200`, { waitUntil: "domcontentloaded", timeout: 60000 });
+  await page.goto(`http://localhost:${PORT}/screensaver.html?bgAltMs=1200`, { waitUntil: "domcontentloaded", timeout: 60000 });
   await page.waitForFunction(() => window.DemoLayer && window.__BGALT && window.__BGALT.state().mode === 2, null, { timeout: 30000 });
   await page.waitForFunction(() => window.DemoLayer.enabled && window.DemoLayer.enabled(), null, { timeout: 30000 });
 

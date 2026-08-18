@@ -175,7 +175,7 @@ async function main() {
   const fails = [];
   const ok = (cond, msg) => { console.log((cond ? "  PASS  " : "  FAIL  ") + msg); if (!cond) fails.push(msg); return cond; };
 
-  await page.goto(`http://localhost:${PORT}/index.html`);
+  await page.goto(`http://localhost:${PORT}/screensaver.html`);
   await page.waitForFunction(() => document.readyState === "complete", { timeout: 20000 });
   await page.waitForTimeout(300);
 

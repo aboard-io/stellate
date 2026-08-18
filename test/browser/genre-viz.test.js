@@ -56,7 +56,7 @@ async function main() {
   const fails = [];
   const ok = (cond, msg) => { if (!cond) fails.push(msg); return cond; };
 
-  await page.goto(`http://localhost:${PORT}/index.html`);
+  await page.goto(`http://localhost:${PORT}/screensaver.html`);
   await page.waitForFunction(() => window.__VIZ && window.__S && window.__X && window.__X.POS, { timeout: 20000 });
   await page.waitForTimeout(400);
 

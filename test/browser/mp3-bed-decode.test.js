@@ -35,7 +35,7 @@ async function main() {
     if (/\/found\/.*\.mp3(\?|$)/.test(r.url())) mp3Responses.push({ url: r.url(), status: r.status() });
   });
 
-  await page.goto(`http://localhost:${PORT}/index.html`);
+  await page.goto(`http://localhost:${PORT}/screensaver.html`);
   await page.waitForFunction(() => window.__X && window.__S && window.__LOOP, { timeout: 20000 });
   await page.waitForTimeout(500);
 

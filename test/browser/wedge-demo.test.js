@@ -27,7 +27,7 @@ async function main() {
   // fault injection: fail the target voice module's wasm so mkNode() rejects
   await page.route(`**/dist/${FAIL_MODULE}-module.wasm`, r => r.fulfill({ status: 500, body: "nope" }));
 
-  await page.goto(`http://localhost:${PORT}/index.html`);
+  await page.goto(`http://localhost:${PORT}/screensaver.html`);
   await page.waitForFunction(() => window.__X && window.__S);
   await page.waitForTimeout(500);
   await page.evaluate((mode) => {

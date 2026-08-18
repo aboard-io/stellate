@@ -66,7 +66,7 @@ const SITE_WIDE = [["og:site_name", "property"], ["og:image", "property"], ["og:
 
 // og:image variants are page-specific; embed.html is intentionally noindex and
 // canonicalises to the app root, so it is checked with the same tag set.
-const PAGES = ["index.html", "access.html", "embed.html", "how.html", "colophon.html", "daw.html", "ca.html", "fugue.html", "spec.html"];
+const PAGES = ["index.html", "screensaver.html", "access.html", "embed.html", "how.html", "colophon.html", "daw.html", "ca.html", "fugue.html", "spec.html"];
 const NEEDS_OEMBED = new Set(["index.html", "access.html", "embed.html"]);
 const NEEDS_JSONLD = new Set(["index.html", "access.html"]);
 
@@ -148,7 +148,7 @@ for (const f of PAGES) {
 // it and script-src does not apply. It is allowed, and only it.
 let CSP_COUNT = 0;
 {
-  const CSP_PAGES = ["index.html", "access.html", "embed.html", "how.html", "colophon.html", "404.html", "daw.html",
+  const CSP_PAGES = ["index.html", "screensaver.html", "access.html", "embed.html", "how.html", "colophon.html", "404.html", "daw.html",
                      "nukernel/kernel-daw.html"];
   CSP_COUNT = CSP_PAGES.length;
   const ON_ATTR = /\son[a-z]+\s*=\s*["']/gi;

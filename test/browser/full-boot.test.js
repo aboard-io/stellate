@@ -44,7 +44,7 @@ let PORT = 8795;
   page.on("crash", () => { crashed = true; });
 
   const t0 = Date.now();
-  try { await page.goto(`http://localhost:${PORT}/index.html`, { waitUntil: "domcontentloaded", timeout: 40000 }); }
+  try { await page.goto(`http://localhost:${PORT}/screensaver.html`, { waitUntil: "domcontentloaded", timeout: 40000 }); }
   catch (e) { errs.push("GOTO: " + e.message); }
   await page.waitForTimeout(8000);
   const bootMs = Date.now() - t0;

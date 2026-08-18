@@ -206,7 +206,7 @@ async function frameEval(frame, fn, arg) {
   // silently demoted every desktop listener to the mobile route.
   const ctl = await browser.newPage();
   await installTwoOriginOfflineRoute(ctl);
-  await ctl.goto(`${CHILD_ORIGIN}/index.html`, { waitUntil: "domcontentloaded", timeout: 40000 });
+  await ctl.goto(`${CHILD_ORIGIN}/screensaver.html`, { waitUntil: "domcontentloaded", timeout: 40000 });
   let ctlRoute = null;
   for (let i = 0; i < 60; i++) {
     ctlRoute = await ctl.evaluate(() => window.__AUDIOROUTE || null).catch(() => null);

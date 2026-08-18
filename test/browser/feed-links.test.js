@@ -96,7 +96,7 @@ async function main() {
       if (u.pathname !== "/") { ok(`${it.id.slice(0, 7)} points at ${u.pathname} (a surface, not the map) — skipped`); continue; }
       const want = u.searchParams.get("genre");
       const wantPath = u.searchParams.get("path");
-      await page.goto(`http://localhost:${PORT}/index.html${u.search}`);
+      await page.goto(`http://localhost:${PORT}/screensaver.html${u.search}`);
       await page.waitForFunction(() => window.__X && window.__S, { timeout: 30000 });
       await page.waitForTimeout(300);
       const st = await page.evaluate(() => ({

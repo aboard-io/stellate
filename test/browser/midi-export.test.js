@@ -137,7 +137,7 @@ async function main() {
   const errs = capturePageErrors(page);
   const tmp = fs.mkdtempSync(path.join(require("os").tmpdir(), "stellate-midi-"));
 
-  await page.goto(`http://localhost:${PORT}/index.html?seed=${SEED}&path=${PATH_Q}&m=33`);
+  await page.goto(`http://localhost:${PORT}/screensaver.html?seed=${SEED}&path=${PATH_Q}&m=33`);
   await page.waitForFunction(() => window.__X && window.__S && window.__S.playing, { timeout: 30000 });
   await page.waitForTimeout(400);
 

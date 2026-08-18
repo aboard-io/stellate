@@ -43,7 +43,7 @@ async function main() {
   const fails = [];
   const ok = (cond, msg) => { console.log((cond ? "  PASS  " : "  FAIL  ") + msg); if (!cond) fails.push(msg); return cond; };
 
-  await page.goto(`http://localhost:${PORT}/index.html`);
+  await page.goto(`http://localhost:${PORT}/screensaver.html`);
   await page.waitForTimeout(200);
 
   // Everything runs in-page (needs a real GL context). Builds a city + a farm,

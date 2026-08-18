@@ -57,7 +57,7 @@ async function main() {
   const fails = [];
   const ok = (cond, msg) => { console.log((cond ? "  PASS  " : "  FAIL  ") + msg); if (!cond) fails.push(msg); return cond; };
 
-  await page.goto(`http://localhost:${PORT}/index.html`, { waitUntil: "commit" });
+  await page.goto(`http://localhost:${PORT}/screensaver.html`, { waitUntil: "commit" });
   await page.waitForFunction(() => !!document.getElementById("chips"), null, { timeout: 120000 });
   // the aliens controller is a DEFERRED import (index.html no longer loads it) —
   // arm it through the loader hook rather than polling for the global.

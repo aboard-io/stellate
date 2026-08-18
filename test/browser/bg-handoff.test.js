@@ -38,7 +38,7 @@ function coiServe(root, port) {
     const srv = http.createServer((req, rsp) => {
       if (req.url === "/favicon.ico") { rsp.writeHead(204); return rsp.end(); }
       let rel = decodeURIComponent(req.url.split("?")[0]);
-      if (rel === "/") rel = "/index.html";
+      if (rel === "/") rel = "/screensaver.html";
       const p = path.normalize(path.join(root, rel));
       if (!p.startsWith(root) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { rsp.writeHead(404); return rsp.end("nf"); }
       rsp.writeHead(200, {
@@ -81,7 +81,7 @@ function coiServe(root, port) {
   // arms it for `forceMediaEl || forceBgWav || isMobile || isSafari`, so desktop
   // Safari ships it. wavOut=0 is how you reach the ring path deliberately, and it
   // keeps the mobile UA so the isMobile arm of `wantBg` is the one under test.
-  await page.goto(`http://localhost:${PORT}/index.html?clicktest=1&wavOut=0`, { waitUntil: "domcontentloaded" });
+  await page.goto(`http://localhost:${PORT}/screensaver.html?clicktest=1&wavOut=0`, { waitUntil: "domcontentloaded" });
 
   const isolated = await page.evaluate(() => crossOriginIsolated);
   if (!isolated) fails.push("crossOriginIsolated=false — SharedArrayBuffer unavailable");

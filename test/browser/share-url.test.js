@@ -31,7 +31,7 @@ async function main() {
 
   // (a) restore: 3 waypoints, seed 42, pace 64, measure 97
   const PATH = "1691.4502,1826.3140,1101.20620";
-  await page.goto(`http://localhost:${PORT}/index.html?seed=42&path=${PATH}&pace=64&m=97`);
+  await page.goto(`http://localhost:${PORT}/screensaver.html?seed=42&path=${PATH}&pace=64&m=97`);
   await page.waitForFunction(() => window.__X && window.__S, { timeout: 20000 });
   await page.waitForTimeout(400);
   const st = await page.evaluate(() => ({

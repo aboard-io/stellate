@@ -51,7 +51,7 @@ async function main() {
   const fails = [];
   const ok = (cond, msg) => { if (!cond) fails.push(msg); return cond; };
 
-  await page.goto(`http://localhost:${PORT}/index.html?bgAltMs=1200`);   // fast idle bg-alt clock for the H test
+  await page.goto(`http://localhost:${PORT}/screensaver.html?bgAltMs=1200`);   // fast idle bg-alt clock for the H test
   await page.waitForFunction(() => window.__X && window.__S && window.__LOOP, { timeout: 20000 });
   await page.waitForTimeout(500);
   const loadErrs = errs.slice();
@@ -410,7 +410,7 @@ async function main() {
 
   // ---- H6: ?bg=off is the escape hatch — a FRESH load boots mode 0, layer
   // disabled (goes last: it navigates away from the main probe page).
-  await page.goto(`http://localhost:${PORT}/index.html?bg=off`);
+  await page.goto(`http://localhost:${PORT}/screensaver.html?bg=off`);
   await page.waitForFunction(() => window.__BGALT && window.DemoLayer, { timeout: 20000 });
   await page.waitForTimeout(1200);   // past init — the layer must STAY off
   const off = await page.evaluate(() => ({

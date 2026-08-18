@@ -24,7 +24,7 @@ const path = require("path");
 const vm = require("vm");
 
 const ROOT = path.resolve(__dirname, "..", "..");
-const INDEX = path.join(ROOT, "index.html");
+const INDEX = path.join(ROOT, "screensaver.html");   // the explorer page (the daw-first landing made index.html a redirect)
 
 // The contract: each classic engine <script src> -> the window global it must
 // publish once loaded. Keep in sync with index.html's <script> block; the test

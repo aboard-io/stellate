@@ -45,7 +45,7 @@ async function main() {
   const fails = [];
   const ok = (c, m) => { console.log((c ? "  PASS  " : "  FAIL  ") + m); if (!c) fails.push(m); };
 
-  await page.goto(`http://localhost:${PORT}/index.html?seed=7`);
+  await page.goto(`http://localhost:${PORT}/screensaver.html?seed=7`);
   await page.waitForFunction(() => window.__X && window.__S, { timeout: 20000 });
   await page.waitForTimeout(400);
 

@@ -45,7 +45,7 @@ async function main() {
   const browser = await launchChromium({ requireChromium: true });
   const page = await browser.newPage();
   const errs = capturePageErrors(page);
-  await page.goto(`http://localhost:${PORT}/index.html`);
+  await page.goto(`http://localhost:${PORT}/screensaver.html`);
   await page.waitForFunction(() => window.__X && window.__S, { timeout: 20000 });
   await page.waitForTimeout(400);
 

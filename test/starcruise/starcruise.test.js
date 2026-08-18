@@ -56,7 +56,7 @@ async function main() {
   // under headless SwiftShader with a zero-size <svg> viewport, is very slow. We
   // gate on the real readiness signal (the chip row) instead, with a generous
   // timeout that absorbs that boot.
-  await page.goto(`http://localhost:${PORT}/index.html`, { waitUntil: "commit" });
+  await page.goto(`http://localhost:${PORT}/screensaver.html`, { waitUntil: "commit" });
   await page.waitForFunction(() => !!document.getElementById("chips"), null, { timeout: 120000 });
   await page.waitForTimeout(300);
 
