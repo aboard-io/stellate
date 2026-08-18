@@ -1502,13 +1502,20 @@ console.log("the composer writes songs that are songs");
       // its NINE kinds of material, no blank padding. The ninth is the verse
       // line: the chorus topline's own development, which is what makes the
       // singer a through-line rather than a part that turns up twice.
-      ok(song.v === 2 && song.slots.length === 9 && song.slots.length <= NSLOTS &&
-         song.song.length >= 6,
+      // nine kinds of material — TEN on a machine record, whose tenth is the
+      // 32-step sequencer line (compose.js MACHINE_SEQ, 2026-08-18: "I expect
+      // it to really go")
+      ok(song.v === 2 && (song.slots.length === 9 || song.slots.length === 10) &&
+         song.slots.length <= NSLOTS && song.song.length >= 6,
          gk + "/" + s + ": not the saved shape");
       ok(song.bpm >= 70 && song.bpm <= 160, gk + "/" + s + ": bpm outside the control's range");
-      ok(song.slots.every(p => ["deg", "oct", "vel", "gate", "acc", "sld", "inc", "stk"]
-        .every(k => Array.isArray(p[k]) && p[k].length === 16 && p[k].every(Number.isFinite))),
-        gk + "/" + s + ": a phrase is not a valid pattern");
+      // a phrase's lanes agree on ONE length, 16 or 32 (the machine line is
+      // the composer's first pattern longer than a bar)
+      ok(song.slots.every(p => {
+        const n = p.deg.length;
+        return (n === 16 || n === 32) && ["deg", "oct", "vel", "gate", "acc", "sld", "inc", "stk"]
+          .every(k => Array.isArray(p[k]) && p[k].length === n && p[k].every(Number.isFinite));
+      }), gk + "/" + s + ": a phrase is not a valid pattern");
       const used = new Set();
       for (const b of song.song) {
         ok(C.ROLES[b.role], gk + "/" + s + ": a section has no role");
@@ -2863,7 +2870,12 @@ console.log("song arc, prechorus, topline — the radio shape, measured on ui/de
       // that thought: a fade from silence is something a RECORD does at its
       // ends, and in the middle of one it is a bar nobody can hear between two
       // bars playing forty events. `cresc` is the same gesture with a floor.
-      ok(b.env === (i ? "lift" : "cresc") && b.mot === "rise" && b.cadence,
+      // (mot "rise" came OFF this record on 2026-08-18: the era law strips
+      // filter moves from pre-1964 records, and Liverpool 1962 is one — and
+      // the rise compiled to an hpf sweep the desk has never had a home for
+      // (audio/desk.js deskSweeps), so the word was config that rendered
+      // nothing. The lift is the env and the cadence.)
+      ok(b.env === (i ? "lift" : "cresc") && b.mot == null && b.cadence,
          "prechorus " + i + " does not lift (env " + b.env + " / mot " + b.mot +
          " / cadence " + !!b.cadence + ")");
       // the cadence reaches the BASS in the window's last bar: its root is
@@ -6049,8 +6061,12 @@ console.log("the songwriter's read — lengths, irregularity, memory, stops, voi
       ok(!!v, gk + ": no plain verse to measure");
       if (v) {
         const r = D.sectionEvents(v, song.slots);
-        ok(r.bars === C.fullLen(GENRES[gk]) && r.bars === v.len,
-           gk + ": the verse renders " + r.bars + " bars, not " + v.len);
+        // the window is the box's own length; since the sixteen-bar law
+        // (2026-08-18) a long verse may have given the length back, so the
+        // family answer is fullLen OR its half — never anything else
+        ok(r.bars === v.len &&
+           (v.len === C.fullLen(GENRES[gk]) || v.len === Math.max(2, Math.floor(C.fullLen(GENRES[gk]) / 2))),
+           gk + ": the verse renders " + r.bars + " bars against len " + v.len);
       }
     }
   }
@@ -7388,54 +7404,56 @@ console.log("the master harmonization engine — one tonality, every added voice
   // third stream of events. EXACTLY ONE OF 110 ROWS, which is the whole claim
   // this round makes about the other 109.
   // (`NUKERNEL_REF=1` prints this block, below.)
+// (re-measured 2026-08-18: the sixteen-bar law, the era law, the
+  // instrumental-cast law and the machine line — 28 genres' composed
+  // records changed by argument; the commit carries the reasons.)
   const REF = { simple: "1bc5928ecc4c", fugue: "dabf3451bc56",
-    acid: "4a2994f6756c",   // re-measured 2026-08-18: the kitVel hand + 124 bpm
-    newwave: "ae3805f144ab",
-    vaporwave: "fe63ec2cbd88", blues: "5a0419bf37af", rock: "9f1728ebc87c",
+    acid: "db0730dafc3b", newwave: "ae3805f144ab",
+    vaporwave: "fe63ec2cbd88", blues: "0b72d6a84f9b", rock: "9f1728ebc87c",
     gregorian: "ba0f27385ffc", bulgarian: "3120a30d7a93",
-    spem: "3447084f51d8", counterpoint: "2956a2b2a39f",
+    spem: "3447084f51d8", counterpoint: "b6eb0a3f8c98",
     neoclassical: "d6901221c508", drone: "6ccd49d4d442",
     sludge: "dd2d7d9d6934", tango: "e0d57168b2c6",
     deathmetal: "b30b532ca8d1", eurythmics: "49ac4aee2208",
     isley: "30a3d6d9d7f2", toto: "83d3fdbb1cb8", jodeci: "76e685510e04",
     beatles: "073652eb81d6", steely: "373bf8af0978",
-    postrock: "44c6272086f4", boombap: "1cdeed22a051", trap: "32c4b9e0f455",
-    house: "eb8f1af781ea", garage: "ca2877fe6257", dnb: "3dc79a48769a",
+    postrock: "44c6272086f4", boombap: "80f1373776dd", trap: "fe4461aebb90",
+    house: "73cb98b8623b", garage: "2774679a9e05", dnb: "33e85a127690",
     disco: "a53b890ababb", funk: "9a6b5dbfb590", motown: "d93bb14e1bc6",
-    rnb: "a319e8a7e212", gospel: "91db241683d2", reggae: "6f6b5f63f6f5",
-    dub: "d49af7227b12", ska: "ca49362922d0", afrobeat: "9c801cc05daa",
-    bossa: "dbabc761a62c", countrypop: "7b8ab1d48148",
+    rnb: "a319e8a7e212", gospel: "91db241683d2", reggae: "0a2f4f4b2713",
+    dub: "b841e9c62a3a", ska: "6416b09a5310", afrobeat: "96f6ff839d91",
+    bossa: "3064b6dad9aa", countrypop: "7b8ab1d48148",
     synthpop: "646712dee82f", shoegaze: "1ac1f4be2c1b",
     citypop: "86c4d7e7b6b0", punk: "38c228074709", ambient: "3b7e853fedcb",
-    techno: "e298a46934f9", jazz: "dee85985f1f1", bodiddley: "7cee43db4155",
+    techno: "07394da15dd6", jazz: "dee85985f1f1", bodiddley: "7cee43db4155",
     chuckberry: "937eabc87a9b", doowop: "1b2591a4eb61",
     skiffle: "2e33cd41b027", minimalism: "a6761a5298da",
-    kraftwerk: "4fa1f2eb961b", electro: "079ab9da664f",
+    kraftwerk: "4fa1f2eb961b", electro: "67916d4e5384",
     hymn: "8d5cbbc2f790", crooner: "707e28bf68b4", yuletide: "9ee6612e1c03",
     merseybeat: "7a91c830d288", psychpop: "8d49dc6d5ab2",
-    bigbeat: "f0e4beac3894", drill: "e3b02bb90562", clubpop: "f5a60f566551",
+    bigbeat: "60746720fdac", drill: "ac035d75cf11", clubpop: "f5a60f566551",
     powerballad: "cc1789909e0c", retrofunkpop: "83152243b7b4",
-    reggaeton: "9d8d59931b64", latinpop: "d89b38f89066",
-    kpop: "fe59dee5027b", boyband: "3d1a4e2e5010", emo: "675bd3256def",
+    reggaeton: "464ee83adb83", latinpop: "68d9e321bd9f",
+    kpop: "a5ff3e8b54fa", boyband: "3d1a4e2e5010", emo: "675bd3256def",
     screamo: "9d669b30cb8e", confessionalpop: "966d679470a7",
-    darkrnb: "f504a72492ea", bigroom: "73ce0eb74d51",
+    darkrnb: "f504a72492ea", bigroom: "6ead5a814488",
     blueeyedsoul: "f8aa6f3c3f09", folkduo: "19d32f689966",
     worldfolk: "b3ce041832d3", jamband: "02a7f875ff41",
     sophistirock: "9a5fa8d5d566", motorik: "5eda4735ff86",
     roboticpop: "95c3e8e56881", industrialmetal: "9324c16b04fe",
-    ebm: "b43e767106a5", synthduo: "b4cc5875745b",
+    ebm: "2d6638c05d72", synthduo: "fb0a872494b0",
     musichallrock: "b0841f69e2f4", orchpsych: "a26404ef8c1c",
     altcountry: "fbd588c686dc", yachtsoul: "38e2cbe538d0",
     yachtrock: "ce82749b82b1", songwriterpiano: "c2ee67c2b33e",
     softfolk: "0176b7e1f337", singersongwriter: "2d43bca021b2",
     coastrock: "60bc46e0646d", spacerock: "048a18907907",
-    grebo: "d8e61abacf7f", melodictechno: "84a7ce11174b",
-    bleeptechno: "02a5d827422b", industrialbreaks: "bdfa35798585",
+    grebo: "d8e61abacf7f", melodictechno: "100e653229cd",
+    bleeptechno: "a75602e4687d", industrialbreaks: "1a60701d6f0f",
     industrialrock: "3a0679f8c36b", analogsynthpop: "bc6e73fca79c",
     gothsynth: "80d6711288ba", gothicpop: "14b61c1edac0",
     postpunk: "37a92eb4e185", dancepostpunk: "84e2c82c1aa9",
-    madchester: "60ccf8ff4c1f", janglepop: "e1e89d2a95f1",
-    indiedance: "5bb07e661bbd", solo: "e19a9b7ba0df", vocal: "19c0b11b9f68",
+    madchester: "5dffbdd175d9", janglepop: "e1e89d2a95f1",
+    indiedance: "65915bfd86aa", solo: "e19a9b7ba0df", vocal: "19c0b11b9f68",
     backing: "dc681b7608c8", riff: "79a83db951e2", pad: "b9d3acb4a9f8" };
   // RE-MEASURING IS A COMMAND, not a hand copy off a failure log: the table
   // above is 110 rows and a deliberate change moves most of them at once, so

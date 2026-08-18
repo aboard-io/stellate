@@ -901,7 +901,10 @@
   // would be backing has stopped playing. It is filtered at this call site
   // rather than kept off the ballot, because the chorus — which is where a
   // backing part belongs — wants it.
-  const soloCast = G => castOf(G).filter(w => w !== "backing");
+  // ...and an INSTRUMENTAL record's solo is never sung either (the same law
+  // guestCast applies at its own door: "the lead should be 303, not vocal")
+  const soloCast = (G, gk) => castOf(G).filter(w => w !== "backing" &&
+    !(INSTRUMENTAL[gk] && w === "vocal"));
   // WHICH PHRASE the part is handed. A singer gets the topline — the melody the
   // composer wrote to be sung, with its motif, its breath and its one climax
   // (phrase("topline") below) — and the instrumental parts get the material
@@ -945,6 +948,22 @@
                   drift: null, parts: null };
   const INSTRUMENTAL = { techno: 1, dnb: 1, acid: 1, dub: 1,
                          fugue: 1, counterpoint: 1, tango: 1 };
+  // ---- THE ERA LAW ("Why would Chicago 1932 have enormous amounts of
+  // delay?", 2026-08-18). Every place-year anchor states its year in its own
+  // label (ui/palette.js genreYear — the same trailing-digit parse, kept in
+  // step by the era-law gate), and an effect cannot arrive on a record cut
+  // before the effect existed. The table is each effect's arrival year —
+  // tape echo 1950, the pedals their own decades — tuned no tighter than the
+  // shipped anchors' own claims (drone's 1964 filter sweep, the Isleys' 1973
+  // modulation are real records). Applied as a draw-free filter at the end
+  // of build(), so no stream moves and ALL hundred-ten genres are swept.
+  const genreYear = gk2 => {
+    const m = /(\d{3,4})\s*$/.exec((GENRES[gk2] || {}).label || "");
+    return m ? +m[1] : null;
+  };
+  const FX_YEAR = { echo: 1950, ringmod: 1956, sweep: 1964, flanger: 1966,
+                    wah: 1966, phaser: 1968, chorus: 1968, fenv: 1972,
+                    crunch: 1951, leslie: 1941, tremolo: 1938, vibrato: 1938 };
   const SINGER_GENRE = { shoegaze: "vocal" };
   const singerOf = (G, gk) => {
     if (INSTRUMENTAL[gk]) return null;
@@ -955,6 +974,44 @@
   // rearranging which lanes fire — the only ones whose dynamics survive the
   // melody being taken away. See the solo break below for why that matters.
   const BREAK_KIT = ["accents", "accents", "crescendo", "loud"];
+
+  // THE SEQUENCER LINE — the machine genres' own material (Paul, on the
+  // staged acid: "there's no real 16-step intense acid riff … I expect it to
+  // really go"). A 303 pattern is not a topline: it RUNS — nearly every step
+  // gated, no breath, a narrow cell bounced through octaves, slides
+  // everywhere, and the accents on a rotating mask rather than the strong
+  // beats. `steps` 16 or 32; the 32-step form is the two-bar line (the
+  // composer's first pattern longer than one bar) whose second bar DEVELOPS
+  // the first — cell shifted, one new rest, the accent mask rotated — so the
+  // long pattern evolves instead of repeating.
+  function seqPhrase(r, steps) {
+    const p = blank();
+    for (const k of ["gate", "deg", "oct", "vel", "inc", "stk", "acc", "sld"])
+      p[k] = new Array(steps).fill(0);
+    // the cell: four degrees around the root, mostly root — the acid alphabet
+    const cell = [0, pick(r, [0, 1, -1]), pick(r, [0, 2, -2, 1]), pick(r, [-1, 1, 3, 0])];
+    const shift = pick(r, [1, 2, -2, 4]);          // where bar two goes
+    const rests = [pick(r, [3, 7, 11]), pick(r, [6, 10, 13])];
+    // 4-5 accents per bar, offbeats included — the accent line IS the funk
+    const accAt = [];
+    { let i = pick(r, [0, 1, 2]); while (i < 16) { accAt.push(i); i += pick(r, [3, 3, 4, 5]); } }
+    for (let i = 0; i < steps; i++) {
+      const q = i % 16, two = i >= 16;
+      p.gate[i] = (q === rests[0] || (two && q === rests[1])) ? 0 : 1;
+      p.deg[i] = cell[q % 4] + (two ? shift : 0);
+      p.acc[i] = p.gate[i] && accAt.includes((q + (two ? 2 : 0)) % 16) ? 1 : 0;
+      p.sld[i] = p.gate[i] && !p.acc[i] && chance(r, 0.3) ? 1 : 0;
+      p.vel[i] = p.acc[i] ? 9 : 5 + Math.floor(r() * 2);
+    }
+    // THE OCTAVE BOUNCE IS THE HOOK: three fixed slots per bar, the same
+    // slots both bars, so the bounce reads as the pattern's identity
+    for (const at of [pick(r, [2, 6]), pick(r, [8, 10]), pick(r, [12, 14])]) {
+      const up = chance(r, 0.6) ? 1 : -1;
+      for (let b = 0; b * 16 + at < steps; b++)
+        if (p.gate[b * 16 + at]) p.oct[b * 16 + at] = up;
+    }
+    return p;
+  }
 
   function build(role, G, gk, r, S, a) {
     const kit = Object.keys(G.kit || {}).length > 0;   // does this genre have drums at all
@@ -1013,8 +1070,12 @@
       // phrase is a loop with a label on it — and, measured across 560 composed
       // songs, an arrangement that only ever reached for three of the eight
       // phrases it had just written. The variants are what spend the material.
-      b.stack[0].slots = pick(r, [[S.hook], [S.hook, S.answer],
-                                  [S.hook, S.riff], [S.answer, S.counter]]);
+      // a MACHINE song's verse is its sequencer line — the 303 runs from the
+      // first bar (same single draw either way, so no stream shifts)
+      b.stack[0].slots = pick(r, S.seq != null
+        ? [[S.seq], [S.seq], [S.seq, S.pad], [S.seq, S.sparse]]
+        : [[S.hook], [S.hook, S.answer],
+           [S.hook, S.riff], [S.answer, S.counter]]);
       if (kit) b.bassop = pick(r, ["walk", "octaves", null, null]);
       if (chance(r, 0.35)) b.ops = [pick(r, ["rot4", "gat4", "pit4", "rev"])];
       // A VERSE VARIES ITS DRUMS TOO. It used to be the one role that never
@@ -1099,7 +1160,7 @@
       // guest ballots and off the chorus cast, so the only two boxes in a
       // composed song that can carry one are the solo section and this.
       if (a && a.i != null && a.i === S.visit) {
-        const cast = soloCast(G);
+        const cast = soloCast(G, gk);
         if (cast.length) layer(pick(S.out, cast), [S.climb]);
       }
       // the arc decides the size: only the PEAK chorus goes forward, so the
@@ -1176,7 +1237,8 @@
       // ...and the other thing the floor drops out FOR: the voice on its own
       voice(0.4, [S.sparse]);
     } else if (role === "drop") {
-      b.stack[0].slots = [S.riff, S.climb];
+      // the machine drop is the line at full intensity, the climb on top
+      b.stack[0].slots = S.seq != null ? [S.seq, S.climb] : [S.riff, S.climb];
       b.lvl = "fwd";
       // the drop is the one place a NAMED pattern earns its keep: four on the
       // floor, or the break the whole floor knows, or the family's own move
@@ -1226,7 +1288,7 @@
       // SOMEBODY TAKES IT. The section's whole job is that a part arrives which
       // was not there before, so the layer is not a coin — it is what the role
       // means. (Only the function genres themselves have nobody to call.)
-      const cast = soloCast(G);
+      const cast = soloCast(G, gk);
       if (cast.length) {
         const who = pick(S.out, cast);
         layer(who, [partSlot(who, S)]);
@@ -1272,7 +1334,15 @@
     // for — which is what makes the last chorus bigger than the first verse
     // without either of them being told what a chorus or a verse is.
     if (!b.env) b.env = dynOf(a);
-    b.fx = b.fx.filter(Boolean);
+    // THE ERA LAW, applied: chips from after the record's year drop, and a
+    // pre-tape record sends nothing to the echo bus.
+    const year = genreYear(gk);
+    b.fx = b.fx.filter(Boolean).filter(f => !(year && FX_YEAR[f] > year));
+    if (year && year < 1950) { b.echo = null; if (b.dtime) b.dtime = null; }
+    // ...and motion arcs / automation lanes are DESK moves (a filter sweep,
+    // a sidechain pump): a record from before them keeps its fades (`env`)
+    // and loses the sweep, whichever role wrote it
+    if (year && year < FX_YEAR.sweep) { b.mot = null; b.auto = []; }
     return b;
   }
   // the genres worth stacking UNDER something else — a line, no drums of its
@@ -1350,8 +1420,14 @@
   // The record's own voice turning up as its own visitor would stack `vocal`
   // twice in one chorus, which is one line played by two people.
   function guestCast(G, gk, rG, singer) {
+    // AN INSTRUMENTAL RECORD BOOKS NO SINGING GUESTS (Paul, on the staged
+    // acid: "the lead should be 303, not vocal! Watch out for that across
+    // genres") — the INSTRUMENTAL table already says these records have no
+    // singer, and a vocal arriving as a guest was the same wrong lead
+    // through the side door.
     const pool = (GUEST_LEAN[G.family] || GUEST_LEAN.kernel)
-      .filter(w => w !== gk && w !== singer);
+      .filter(w => w !== gk && w !== singer)
+      .filter(w => !(INSTRUMENTAL[gk] && (w === "vocal" || w === "backing")));
     if (!pool.length) return null;
     const a = pick(rG, pool);
     const rest = pool.filter(w => w !== a);
@@ -1477,9 +1553,68 @@
   // and about the anchor second, and the exceptions are the ones that matter.
   // Vaporwave is a tape being played back; dub is an echo chamber; sludge and
   // death metal are the two ends of what a distorted bus sounds like.
+  // ...WIDENED 2026-08-18 ("The drums are always kind of the same, the
+  // synths always sound kind of the same. We've lost the sense of true pro
+  // mixing per genre, those signature sounds"). Twenty-five records whose
+  // MASTERING is part of their name, each row the character a mastering
+  // engineer of that idiom would reach for: the SP-1200's dark squash on
+  // boom bap, the pumped glue of a house record, Rudy Van Gelder's soft
+  // hand on a jazz date, the Motown tape-and-brightness, dnb's loud clean
+  // ceiling. Same ballot machinery as the family rows — a couple of options
+  // per knob keeps seed-to-seed weather, but the CHARACTER is fixed by the
+  // row, which is the whole point.
   const MASTER_GENRE = {
     vaporwave: { tape: ["wow", "wow", "worn"], space: ["hall", "cavern"],
                  tilt: ["dark", "dark", "warm"], ceiling: ["open"] },
+    boombap:   { glue: ["squash", "pump", "squash"], tape: ["warm", "worn"],
+                 tilt: ["dark", "dark", "warm"], drive: ["hair", "warm"],
+                 // dry on purpose — and it keeps shoegaze the ONE genre that
+                 // turns every knob (the full-desk gate's own law)
+                 space: [null], width: [null] },
+    trap:      { ceiling: ["louder", "louder", "loud"], glue: ["tight", "pump"],
+                 tilt: ["bright", "clear"], space: ["touch", null] },
+    jazz:      { glue: ["soft", "soft", "glue"], space: ["room", "room", "hall"],
+                 tape: ["warm", "tape"], ceiling: ["open", "open", "safe"] },
+    motown:    { tape: ["tape", "tape", "warm"], glue: ["glue", "tight"],
+                 tilt: ["bright", "clear"], space: ["room", "touch"] },
+    disco:     { glue: ["pump", "pump", "glue"], space: ["room", "hall"],
+                 ceiling: ["loud", "loud", "safe"], tilt: ["bright", null] },
+    funk:      { glue: ["tight", "tight", "pump"], drive: ["hair", "warm"],
+                 space: ["touch", "room"], ceiling: ["loud", "safe"] },
+    dnb:       { glue: ["pump", "squash"], ceiling: ["louder", "louder", "loud"],
+                 tilt: ["bright", "clear"], space: ["touch", null] },
+    bigbeat:   { drive: ["dirt", "dirt", "warm"], glue: ["squash", "pump"],
+                 ceiling: ["louder", "loud"], tilt: ["bright", null] },
+    ambient:   { glue: ["soft", "soft"], space: ["cavern", "hall", "cavern"],
+                 ceiling: ["open", "open"], tape: ["warm", null] },
+    gospel:    { space: ["hall", "hall", "room"], glue: ["soft", "glue"],
+                 tape: ["warm", "tape"], ceiling: ["open", "safe"] },
+    acid:      { glue: ["pump", "pump", "tight"], drive: ["hair", "warm"],
+                 ceiling: ["loud", "louder"], space: ["touch", null] },
+    house:     { glue: ["pump", "pump", "glue"], space: ["touch", "room"],
+                 ceiling: ["loud", "loud", "louder"], tilt: [null, "bright"] },
+    rnb:       { glue: ["glue", "glue", "soft"], tilt: ["warm", "warm", "clear"],
+                 space: ["room", "room", "touch"], tape: ["warm", "warm", "tape"] },
+    punk:      { drive: ["dirt", "dirt", "hair"], glue: ["tight", "pump"],
+                 ceiling: ["loud", "loud"], space: [null, "touch"] },
+    kraftwerk: { glue: ["tight", "tight"], space: ["touch", "touch", "room"],
+                 tilt: ["clear", "clear", "bright"], width: ["wide", "wide", "huge"] },
+    bossa:     { glue: ["soft", "soft"], tape: ["warm", "warm", "tape"],
+                 space: ["room", "room", "touch"], ceiling: ["open", "safe"] },
+    reggae:    { glue: ["glue", "soft"], tape: ["warm", "worn"],
+                 tilt: ["warm", "dark"], space: ["room", "hall"] },
+    motorik:   { glue: ["tight", "tight", "glue"], space: ["touch", "room"],
+                 tilt: ["clear", null], ceiling: ["safe", "open"] },
+    doowop:    { space: ["room", "hall", "room"], tape: ["tape", "tape", "warm"],
+                 glue: ["soft", "glue"], tilt: ["warm", null] },
+    garage:    { glue: ["pump", "tight"], ceiling: ["loud", "loud", "safe"],
+                 tilt: ["bright", null], space: ["touch", "room"] },
+    ebm:       { glue: ["tight", "squash"], drive: ["warm", "dirt"],
+                 ceiling: ["loud", "louder"], tilt: ["clear", "bright"] },
+    bleeptechno: { glue: ["tight", "pump"], space: ["touch", "touch", "room"],
+                 tilt: ["clear", "dark"], ceiling: ["safe", "loud"] },
+    citypop:   { glue: ["soft", "glue"], tape: ["warm", "tape"],
+                 tilt: ["bright", "clear"], width: ["wide", "wide"], space: ["room", null] },
     dub:       { space: ["cavern", "cavern", "hall"], tape: ["worn", "tape"],
                  tilt: ["dark", "warm"] },
     shoegaze:  { width: ["huge", "huge", "wide"], space: ["cavern", "hall"],
@@ -1748,8 +1883,21 @@
                    phrase(r, "counter"), phrase(r, "pad"), phrase(r, "topline"),
                    phrase(r, "sparse"), phrase(r, "climb")];
     slots.push(phrase(r, "topline", slots[5]));
+    // ...AND SLOT 9, MACHINES ONLY: the two-bar sequencer line (seqPhrase
+    // above), dealt LAST and from its OWN genre-salted stream, so every
+    // other genre's record — and every draw the nine slots above make — is
+    // byte-identical to before this slot existed.
+    const MACHINE_SEQ = { acid: 32, techno: 32, house: 32, bleeptechno: 32, ebm: 32 };
+    const seqSteps = MACHINE_SEQ[gk] || 0;
+    if (seqSteps)
+      slots.push(seqPhrase(rng(ihash(gk + "/seq/" + (seed == null ? 1 : seed))), seqSteps));
     const S = { hook: 0, answer: 1, riff: 2, counter: 3, pad: 4,
                 topline: 5, sparse: 6, climb: 7, verseline: 8,
+                seq: seqSteps ? 9 : null,
+                // the sixteen-bar law's own stream (the policy below), on the
+                // same law as every stream here: retuning how a long section
+                // evolves must not move a drum, a guest or a bar line
+                evo: rng(ihash(gk + "/evolve/" + (seed == null ? 1 : seed))),
                 // THE DRUM DECISIONS GET THEIR OWN, GENRE-SALTED STREAM, for
                 // the reason the intro chooser needed one: the phrase bank
                 // consumes the same number of draws whatever the genre, so a
@@ -1832,6 +1980,46 @@
     // `drop` as a value that is taken and spreads the fades easeEdges turned
     // back into sizes.
     bendLengths(song, G, S.bend);
+    // THE SIXTEEN-BAR LAW ("We shouldn't have 16-bar measures unless they
+    // evolve in significant ways", 2026-08-18). AFTER the bends, because a
+    // bend can stretch a section past sixteen and a law that ran inside
+    // build() missed exactly those. A section keeps sixteen bars only by
+    // SPENDING them on a long arc the ear can ride — a period sentence (the
+    // notes evolve bar to bar), a motion arc or a filter automation (the mix
+    // evolves) — and nearly half the time it draws a SECOND device of a
+    // different kind, because one sweep over sixteen static bars is a
+    // gesture, not an evolution. A section that draws the short straw gives
+    // the length back instead. One unconditional draw-set per section (the
+    // stream-position law), on the song's own /evolve stream.
+    // ...and the ERA LAW binds the devices too: a motion arc and a cutoff
+    // automation are FILTER moves (FX_YEAR's own 1964), so a record from
+    // before them evolves in its NOTES — the period sentence — or gives the
+    // length back. A 1570 motet with a filter sweep is the 1932 delay again.
+    const evYear = genreYear(gk);
+    const evArcOK = !evYear || evYear >= FX_YEAR.sweep;
+    // ...and the law does not impose on the THROUGH-COMPOSED forms (pre-1900:
+    // the motet, the fugue, the hymn) — their long sections evolve by
+    // construction (subject entries, verses), and an imposed period sentence
+    // measured as pushing spem INTO counterpoint on the confusion matrix:
+    // homogenization wearing evolution's name.
+    const evImpose = !evYear || evYear >= 1900;
+    for (const b of song) {
+      const evDev0 = pick(S.evo, ["period", "period", "mot", "auto", "short"]);
+      const evPer = pick(S.evo, ["4bar", "4bar", "2bar"]);
+      const evArc = pick(S.evo, ["open", "close"]);
+      const evTwo = chance(S.evo, 0.45);
+      const evDev = evArcOK ? evDev0
+        : (evDev0 === "mot" || evDev0 === "auto" ? "period" : evDev0);
+      if (!evImpose) continue;
+      if ((b.len || 0) < 16 || b.period || b.mot || (b.auto && b.auto.length)) continue;
+      if (evDev === "short") b.len = halfLen(G);
+      else {
+        if (evDev === "period") b.period = evPer;
+        else if (evDev === "mot") b.mot = evArc;
+        else b.auto = [NF.autoShape("cutoff", evArc, b.len * 4 / G.rate)];
+        if (evTwo && evArcOK) { if (evDev === "period") b.mot = evArc; else b.period = evPer; }
+      }
+    }
     thinFills(song, S.fill);
     placeStops(song, G, S.stop);
     easeEdges(song);
