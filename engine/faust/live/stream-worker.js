@@ -155,9 +155,24 @@ async function initDeps() {
   const gen = new FaustMonoDspGenerator();
   const factories = {};   // module -> Promise<factory> (fetch+compile once)
   const resolved = {};    // module -> factory (for rootOf)
-  const factory = (mod) => factories[mod] || (factories[mod] =
+  // A UNIT WITH NO MODULE IS A BUG UPSTREAM, AND IT MUST SAY SO RATHER THAN
+  // FETCH `undefined`. Without this the name is interpolated straight into the
+  // URL, the worker asks for dist/undefined-module.wasm, gets a 404, and the
+  // only thing that reaches a person is faustwasm's own
+  // "loadDSPFactory@.../index.js:1695" — which names the loader and not the
+  // voice, so the actual question (WHICH unit arrived without a module) is
+  // unanswerable from the console. Paul hit exactly that on staging.
+  //
+  // Now it throws with the unit's own name in the message, and one bad unit
+  // cannot make the engine look broken: every other unit still loads.
+  const factory = (mod) => {
+    if (!mod) return Promise.reject(new Error(
+      "stream-worker: a voice unit arrived with no `module` — the state that " +
+      "produced it named a model the state-engine could not resolve"));
+    return factories[mod] || (factories[mod] =
     FaustWasmInstantiator.loadDSPFactory(FAUST + `dist/${mod}-module.wasm`, FAUST + `dist/${mod}-meta.json`)
       .then((f) => { if (!f) throw new Error("no factory for " + mod); resolved[mod] = f; return f; }));
+  };
   const mkProc = async (mod) => gen.createOfflineProcessor(SR, BS, await factory(mod));
   // PARAM ROOT off the UI tree, not the declared name (render-core.paramRoot):
   // dx7.lib's top-level "DX7" group renames the path root; every other module
