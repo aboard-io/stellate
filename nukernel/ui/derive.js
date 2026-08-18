@@ -101,8 +101,40 @@ export const poolInstrOf = (sec, owner, v, pool) => {
   const ent = stackOf(sec).find(x => x.g === owner) || null;
   return pool[chairOf(sec, ent, v)] || null;
 };
+// A GUEST BRINGS ITS LINE, NOT ITS INSTRUMENT — and this is the measured law of
+// this project rather than a taste. nukernel/INHERITANCE.md put numbers on what
+// crossing two genres actually predicts: ARCHITECTURE travels (harmony 87%,
+// realize 84%, rate 76%) and MATERIAL does not (kit 16%, roots 7%, instr 3%).
+// The composer layers the FUNCTION genres — solo/vocal/backing/riff/pad — onto
+// a record to add a topline, a pad, a counter-line; that is architecture, and it
+// is the whole reason they exist. But each of them also declares a literal
+// `instr`, and that instrument is what played: measured on a composed Chicago
+// 1986 house song, ten boxes of `house` carried four of `vocal` (solo_vox), two
+// of `pad` (warm_pad) and one of `drone` (slow_strings). Paul heard the result
+// exactly: "All piano, vox, and nothing vaguely acidlike."
+//
+// So a function layer is seated at the HOST's instrument for the same chair —
+// the authority is stack[0], the genre whose record this is. A house record's
+// topline is played by what house plays; a hymn's is played by what the hymn
+// plays. The layer still contributes everything it was added FOR (its line, its
+// rhythm, its register, its part), which is the 84% that travels.
+//
+// A guest that is a REAL genre (counterpoint on a pop single, the string
+// quartet the studio families deal) is deliberately left alone here: bringing
+// its own colour is the point of that gesture. Its material problem is a
+// different one, and it is smaller — a handful of sections, not every record.
+const FUNCTION_GENRES = ["solo", "vocal", "backing", "riff", "pad"];
+export const hostInstrOf = (sec, owner, v) => {
+  if (FUNCTION_GENRES.indexOf(owner) < 0) return null;
+  const host = stackOf(sec)[0];
+  if (!host || !host.g || host.g === owner || !GENRES[host.g]) return null;
+  // the host's own chair for this voice: clamp into its instr list the way
+  // instruments.js does, so a two-voice host lending to a one-voice guest
+  // answers with something rather than undefined
+  try { return instrOf(host.g, v); } catch (e) { return null; }
+};
 export const instrIdOf = (sec, owner, v, pool) =>
-  poolInstrOf(sec, owner, v, pool) || instrOf(owner, v);
+  poolInstrOf(sec, owner, v, pool) || hostInstrOf(sec, owner, v) || instrOf(owner, v);
 export const stackOf = sec => sec.stack || [];
 export const focusOf = sec => Math.min(sec.focus || 0, stackOf(sec).length - 1);
 export const focused = sec => stackOf(sec)[focusOf(sec)];
