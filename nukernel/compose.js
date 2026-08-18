@@ -1661,6 +1661,65 @@
     }
   }
 
+  // ---- AN EDGE IS A GESTURE, NOT A GAP -------------------------------------
+  // "Often halfway through a section the whole tone of the song just changes
+  // and there's a pause." Every edge in the vocabulary is defensible on its
+  // own — a drop that opens on a hit, a section that ends by hushing, a
+  // breakdown that fades back in — and the trouble is entirely arithmetic:
+  // a ten-box record deals ten of them, so one lands every thirty seconds, and
+  // a near-empty bar between two full ones does not read as production. It
+  // reads as the machine stopping.
+  //
+  // Two of the three repairs are in the gestures themselves (kernel.js: a hit
+  // costs a beat and not a bar, a hush thins and falls instead of emptying, a
+  // crash lands the band's own chord rather than switching it off). The third
+  // is a fact about POSITION, which no gesture can know, so it is a pass like
+  // the other three — and this is the pass.
+  //
+  // THE THINNING EDGES, by name. A kind is on these lists if the bar it writes
+  // has LESS in it than the bar before. `fill` / `roll` / `tomfill` / `hatrun`
+  // / `doubles` are edges too and are deliberately absent: they put MORE in the
+  // bar, and two busy bars either side of a bar line is a drummer, not a hole.
+  const THIN_OUT = { hush: 1, cut: 1, break: 1, tail: 1, crash: 1 };
+  const THIN_IN = { hit: 1, count: 1, kit: 1, riser: 1, padin: 1, bassin: 1,
+                    stabs: 1, solo: 1, swell: 1, fade: 1 };
+  // ...and the two envelopes that start AT SILENCE. Every other shape in
+  // kernel.js SHAPES has a floor you can hear; these two are fades, and a fade
+  // is a thing a RECORD does at its ends, not a thing a section does in the
+  // middle of one. The replacements are the same gesture with a floor — `in`
+  // wants "arriving over what came before", which is `cresc` (0.5 climbing past
+  // 1.1), and `out` wants "leaving", which is `dim`. A hushed breakdown still
+  // has something moving through it.
+  const FADE_ENV = { in: "cresc", out: "dim" };
+  // the sections that ARE the record's ends: the opening run (the beds and the
+  // head the intro pass wrote) and the closing run. `in` and `out` are theirs.
+  const isHead = b => BEDS[b.role] || b.role === "intro";
+  function easeEdges(song) {
+    let head = 0, tail = song.length;
+    while (head < song.length && isHead(song[head])) head++;
+    while (tail > head && song[tail - 1].role === "outro") tail--;
+    for (let i = 0; i < song.length; i++) {
+      const b = song[i];
+      // (a) a fade from silence, anywhere but the record's own ends
+      if (FADE_ENV[b.env] && i >= head && i < tail) b.env = FADE_ENV[b.env];
+      if (!i) continue;
+      // (b) NO TWO EDGES BACK TO BACK, and the ending owns the seam. A verse
+      // that stops on a hush has already said "something is about to change";
+      // the drop then opening on a bare cymbal says it twice, with the bar
+      // line in between, and what the ear gets is one long hole with a crash
+      // in the middle of it. So the incoming section arrives WHOLE. It is the
+      // ending that keeps its gesture because the ending was placed by a pass
+      // that already reasoned about what follows it (thinFills, placeStops),
+      // and undoing that work here would be two passes arguing.
+      const p = song[i - 1];
+      if (THIN_IN[b.intro] && (THIN_OUT[p.outro] || p.env === "drop" || p.env === "stutter"))
+        b.intro = null;
+      // ...and the same law inside ONE box: a section too short to put two
+      // full bars between its edges is a section with one edge.
+      if (THIN_IN[b.intro] && THIN_OUT[b.outro] && (b.len || 0) < 4) b.intro = null;
+    }
+  }
+
   // ---- the whole song ------------------------------------------------------
   function compose(gk, seed) {
     if (!GENRES[gk]) gk = "simple";
@@ -1763,16 +1822,19 @@
                     build(role, G, gk, r, S,
                           { x: xs[i + 1], next: xs[i + 2], peak: xs[i + 1] === 1,
                             i: i + 1, again: ord[i + 1] }))];
-    // ---- THE THREE PASSES OVER THE FINISHED RECORD --------------------------
+    // ---- THE FOUR PASSES OVER THE FINISHED RECORD ---------------------------
     // Each of them is a fact about a section's NEIGHBOURS, which is exactly
     // what build() cannot see, and the ORDER between them is load-bearing:
     // lengths first (a bend changes nothing else), then the stops (which write
-    // the one env value that is a hole rather than a size), then the dynamics
-    // ladder, which must see the stops already placed so it treats `drop` as a
-    // value that is taken and does not deal it to somebody else.
+    // the one env value that is a hole rather than a size), then the seams —
+    // which must see the stops placed to know where the record's holes already
+    // are — and then the dynamics ladder, which must see BOTH so it treats
+    // `drop` as a value that is taken and spreads the fades easeEdges turned
+    // back into sizes.
     bendLengths(song, G, S.bend);
     thinFills(song, S.fill);
     placeStops(song, G, S.stop);
+    easeEdges(song);
     if (!STEADY[gk]) spreadDynamics(song);
     // NO SECTION RESTATES ITS NEIGHBOUR. Two drops in a row (the dance plan
     // has them on purpose) must be two different bars of music, not one bar
@@ -1810,6 +1872,10 @@
                 // indirectly, and then it fails for the wrong reason
                 SECTION_BARS, SQUARE, BENDS, fullLen, halfLen,
                 STOPS, STOP_KIT, STOP_NOKIT, STEADY, DYNLADDER, spreadDynamics, sectionWord,
+                // the seam pass and its two lists, exported for the same reason
+                // the stop tables are: a policy the suite cannot read is a
+                // policy the suite can only measure indirectly
+                THIN_IN, THIN_OUT, FADE_ENV, easeEdges,
                 SINGS, INSTRUMENTAL, SINGER_GENRE, singerOf, ordinals };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuCompose = api;

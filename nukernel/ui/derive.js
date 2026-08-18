@@ -446,6 +446,11 @@ export function sectionEvents(sec, slots, songGroove, songSwing) {
   // a curve over the whole section, so it must see the section as written; the
   // intro and outro REPLACE bars, so they must go last or the curve would fade
   // the fill it never knew about.
+  //
+  // The envelope takes the BAR as well as the span now, for the one shape that
+  // is a hole rather than a curve: `drop` cuts the section's last eighth, and
+  // a hole is measured in bars, not in eighths of however long this section
+  // happens to be (kernel.js says why). Every other shape ignores the argument.
   const span = len * barSteps;
   // GROOVE LAST, so the drum fill grooves too. It is the only stage that moves
   // events in TIME rather than in pitch or level, and it has to see the final
@@ -453,7 +458,7 @@ export function sectionEvents(sec, slots, songGroove, songSwing) {
   // sitting flat on the grid, which is exactly what you notice. The groove is
   // the SONG's (one drummer for the record), applied here because this is
   // where the section's final stream exists.
-  const ev = groove(edges(envelope(win, sec.env, span), sec.intro, sec.outro, span, barSteps),
+  const ev = groove(edges(envelope(win, sec.env, span, barSteps), sec.intro, sec.outro, span, barSteps),
                     songGroove, barSteps, 1);
   // (a singEvents pass appended `sing` events here — a syllable and a voice
   // index rather than a note and a chair — after the groove, so the words

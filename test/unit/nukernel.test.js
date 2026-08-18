@@ -1228,7 +1228,18 @@ console.log("intro and outro rewrite the first and last bar");
   ok(lastBar(K.outro(ev, "break", span, bs)).every(e => e.kind === "hit"),
      "outro break left the melody playing");
   ok(K.outro(ev, "cut", span, bs).every(e => e.t < span - bs / 4), "cut did not cut");
-  ok(lastBar(K.outro(ev, "crash", span, bs)).length === 2, "the crash is not one gesture");
+  // THE CRASH IS ONE GESTURE — everything in the bar lands TOGETHER on the bar
+  // line and nothing plays after it. What lands is the cymbal, the kick and the
+  // band's own last chord: the bar used to hold the two drums alone, which on
+  // the page is two events between two bars of sixty and by ear is a record
+  // that ends its chorus by switching the band off.
+  {
+    const cb = lastBar(K.outro(ev, "crash", span, bs));
+    ok(cb.every(e => Math.abs(e.t - (span - bs)) < 1e-9), "the crash is not one gesture");
+    ok(cb.filter(e => e.kind === "hit").map(e => e.d).sort().join("") === "kx",
+       "the crash bar is not exactly one cymbal and one kick");
+    ok(cb.some(e => e.kind !== "hit"), "the band did not land on the crash");
+  }
   // and the two ends compose without either eating the other
   const both = K.edges(ev, "count", "fill", span, bs);
   ok(inBar(both).length === 4, "the outro ate the intro");
@@ -2771,14 +2782,17 @@ console.log("song arc, prechorus, topline — the radio shape, measured on ui/de
     ok(pre.length === 2, "the song plan does not carry two prechoruses");
     pre.forEach((b, i) => {
       ok(C.ROLES[b.role], "a prechorus is stored under an illegal role: " + b.role);
-      // THE SECOND ONE DOES NOT FADE IN AGAIN. Both point forward — riser
-      // armed, dominant cadence stamped — but a band that fades up twice in
-      // one record has a desk problem, so the first prechorus arrives (`in`,
-      // a fade from zero) and the second pushes (`lift`, held flat then
-      // climbing hard). It is also what keeps two same-role sections from
-      // carrying the identical dynamic where the ladder pass cannot help,
-      // because a fade is not on the ladder.
-      ok(b.env === (i ? "lift" : "in") && b.mot === "rise" && b.cadence,
+      // NEITHER OF THEM FADES IN. Both point forward — riser armed, dominant
+      // cadence stamped — and they are different sizes: the first arrives
+      // (`cresc`, from half level up past the written one) and the second
+      // pushes (`lift`, held flat then climbing hard).
+      //
+      // The first one used to be `in`, a fade from ZERO, on the argument that a
+      // band only has a desk problem if it fades up TWICE. easeEdges finished
+      // that thought: a fade from silence is something a RECORD does at its
+      // ends, and in the middle of one it is a bar nobody can hear between two
+      // bars playing forty events. `cresc` is the same gesture with a floor.
+      ok(b.env === (i ? "lift" : "cresc") && b.mot === "rise" && b.cadence,
          "prechorus " + i + " does not lift (env " + b.env + " / mot " + b.mot +
          " / cadence " + !!b.cadence + ")");
       // the cadence reaches the BASS in the window's last bar: its root is
@@ -6185,17 +6199,34 @@ console.log("the songwriter's read — lengths, irregularity, memory, stops, voi
         const r = D.sectionEvents(b, song.slots), bs = 16 / r.g.rate, span = r.bars * bs;
         const last = r.ev.filter(e => e.t >= span - bs);
         const at = gk + "/" + s + " (" + b.stop + " on " + word(b) + "): ";
-        if (b.stop === "drop")
-          ok(!r.ev.some(e => e.t >= span * 0.875), at + "the last eighth of the " +
-             "section is not silent — " + r.ev.filter(e => e.t >= span * 0.875).length +
-             " events in the hole");
-        else if (b.stop === "cut")
+        if (b.stop === "drop") {
+          // the hole is the section's last eighth AND AT MOST ITS LAST BAR: a
+          // hole is measured in bars, so a sixteen-bar section drops for one of
+          // them and not for two (kernel.js envelope says why)
+          const hole = span - Math.min(span / 8, bs);
+          ok(!r.ev.some(e => e.t >= hole), at + "the hole before the drop is not " +
+             "silent — " + r.ev.filter(e => e.t >= hole).length + " events in it");
+          ok(r.ev.some(e => e.t >= span - bs && e.t < hole) || span / 8 >= bs,
+             at + "the drop silenced more than the last bar");
+        } else if (b.stop === "cut")
           ok(!r.ev.some(e => e.t > span - bs / 4 + bs / 16),
              at + "the band did not stop before the bar line");
-        else if (b.stop === "hush")
-          ok(last.length === 1 && last[0].kind === "hit" && last[0].t > span - bs / 8,
-             at + "the bar of silence has " + last.length + " events in it");
-        else if (b.stop === "tail")
+        else if (b.stop === "hush") {
+          // A HUSH THINS AND FALLS; it does not empty. The hole is the bar's
+          // second HALF — two beats of air is plenty of room to notice — with
+          // one cymbal on the last sixteenth, and the first half plays the
+          // section's own material getting quieter into it. It used to delete
+          // the whole bar, which by ear is not a hush, it is the transport
+          // dropping out: thirty-four events, then one, then thirty.
+          const hole = last.filter(e => e.t < span - bs / 16 && e.t >= span - bs / 2);
+          ok(!hole.length, at + "the hole before the cymbal has " + hole.length +
+             " events in it");
+          const cym = last.filter(e => e.t >= span - bs / 16);
+          ok(cym.length === 1 && cym[0].kind === "hit",
+             at + "the hush does not land one cymbal on the last sixteenth");
+          const fell = last.filter(e => e.t < span - bs / 2);
+          ok(fell.length > 1, at + "the hush emptied the bar instead of thinning it");
+        } else if (b.stop === "tail")
           ok(!last.some(e => e.kind === "hit"),
              at + "the drums are still playing the last bar");
         else if (b.stop === "break")
@@ -6224,6 +6255,80 @@ console.log("the songwriter's read — lengths, irregularity, memory, stops, voi
           ok(!b.stop || b.stop === "drop" || b.stop === "cut",
              gk + "/" + s + ": a kitless genre stopped with \"" + b.stop + "\"");
     }
+  }
+
+  // (d2) AN EDGE IS A GESTURE, NOT A GAP — the same claim as (d) read from the
+  // other side. (d) proves the holes the arranger MEANT are there; this proves
+  // the ones it did not mean are not, and it is the check that would have
+  // caught the complaint that prompted it: "often halfway through a section the
+  // whole tone of the song just changes and there's a pause."
+  //
+  // Nobody wrote that pause. It was three defensible gestures stacking — a drop
+  // opening on a bare cymbal, a section ending by hushing to nothing, a
+  // breakdown fading up from silence — dealt often enough on a ten-box record
+  // that one landed every few sections. So the gate is a CENSUS over the whole
+  // song rather than an assertion about any one gesture: walk the bar list the
+  // transport actually schedules and count the bars that are near-empty
+  // BETWEEN TWO FULL ONES, which is the only arrangement in which a thin bar
+  // reads as the machine stopping. A thin bar after a thin bar is a breakdown;
+  // a thin bar at the end of the record is an ending.
+  //
+  // Measured before the repair: 541 such bars across 110 genres × 4 seeds, in
+  // four families — 192 hushes, 150 hits, 145 fades from silence, 64 drops.
+  // After: 102, of which 87 are the composed `drop` STOP, which is the one hole
+  // that is the whole point (at most one to a record, at most one bar wide, and
+  // never beside another edge). The budget below is written against that.
+  {
+    const census = { bars: 0, gaps: [], byStop: 0 };
+    for (const gk of GK) for (const s of seeds.slice(0, 4)) {
+      const song = C.compose(gk, s);
+      const bars = D.songBars(song.song, song.slots, song.groove, song.swing);
+      if (!bars.length) continue;
+      census.bars += bars.length;
+      const last = bars[bars.length - 1].si;
+      // AUDIBLE, not present: a fade to zero leaves every event in the stream
+      // at velocity 0, which is exactly the bar nobody can hear.
+      const aud = bars.map(b => b.ev.filter(e => (e.vel == null ? 5 : e.vel) > 0).length);
+      for (let i = 1; i + 1 < bars.length; i++) {
+        if (bars[i].si === last) continue;         // the record is allowed to leave
+        if (Math.min(aud[i - 1], aud[i + 1]) < 8 || aud[i] > 4) continue;
+        const sec = song.song[bars[i].si];
+        if (sec.stop) { census.byStop++; continue; }
+        census.gaps.push(gk + "/" + s + " bar " + i + " (" + sec.role + ", intro " +
+          sec.intro + " / outro " + sec.outro + " / env " + sec.env + "): " +
+          aud[i - 1] + " → " + aud[i] + " → " + aud[i + 1] + " events");
+      }
+    }
+    console.log("  " + census.gaps.length + " unmeant gap bars and " + census.byStop +
+                " composed stops in " + census.bars + " bars");
+    ok(census.gaps.length <= 20, census.gaps.length + " near-empty bars sit between " +
+       "two full ones without a stop being written there — an edge is a gesture, " +
+       "not a gap. First five:\n    " + census.gaps.slice(0, 5).join("\n    "));
+    // ...AND NO TWO EDGES BACK TO BACK, which is the arranger half of the same
+    // law (compose.js easeEdges): however many edges a record deals, an ending
+    // gesture and the next section's opening gesture never share a bar line.
+    let stacked = 0;
+    for (const gk of GK) for (const s of seeds.slice(0, 6)) {
+      const song = C.compose(gk, s).song;
+      for (let i = 1; i < song.length; i++)
+        if (C.THIN_IN[song[i].intro] &&
+            (C.THIN_OUT[song[i - 1].outro] || song[i - 1].env === "drop" ||
+             song[i - 1].env === "stutter")) stacked++;
+    }
+    ok(!stacked, stacked + " seams stack a thinning ending against a thinning " +
+       "opening — two edges landed back to back");
+    // ...and a fade from SILENCE only where the record itself starts or stops.
+    let mid = 0;
+    for (const gk of GK) for (const s of seeds.slice(0, 6)) {
+      const song = C.compose(gk, s).song;
+      const head = song.findIndex(b => !C.BEDS[b.role] && b.role !== "intro");
+      let tail = song.length;
+      while (tail > 0 && song[tail - 1].role === "outro") tail--;
+      for (let i = head < 0 ? song.length : head; i < tail; i++)
+        if (song[i].env === "in" || song[i].env === "out") mid++;
+    }
+    ok(!mid, mid + " interior sections fade from or to silence — a fade is a " +
+       "thing a record does at its ends");
   }
 
   // (e) THE VOCAL IS A GUEST, AND IT SHOULD BE THE THROUGH-LINE. Measured on
@@ -7218,55 +7323,71 @@ console.log("the master harmonization engine — one tonality, every added voice
   // function genres) did not move at all, exactly as they sat still through
   // both singer rounds. That is what says this is the singer coming out and
   // nothing else riding along with it.
+  // ...AND ONCE MORE, on 2026-08-18, for the SEAMS: an edge is a gesture, not a
+  // gap. Four gestures were rewritten where they had been leaving a near-empty
+  // bar between two full ones — a `hit` intro now costs a beat instead of the
+  // whole first bar, a `hush` outro thins and falls into its hole instead of
+  // deleting the bar, a `crash` lands the band's own chord with the cymbal
+  // instead of switching the band off, and the `drop` envelope's hole is capped
+  // at one bar — plus a new arranger pass (compose.js easeEdges) that keeps a
+  // fade-from-silence at the record's own ends and never lets two thinning
+  // edges land back to back. 106 of 110 rows moved, which is what a change to
+  // the shared edge vocabulary looks like; the four that did not — gregorian,
+  // hymn, motorik and backing — deal none of the four gestures at seeds 1/2/3,
+  // and that is what says this is the seams and nothing riding along with them.
+  // The measured claim is in the census the change was made against: bars that
+  // are near-empty between two full ones fell from 541 to 102 across 110 genres
+  // × 4 seeds, and 87 of the 102 left are the composed `drop` STOP, at most one
+  // to a record and now at most one bar wide.
   // (`NUKERNEL_REF=1` prints this block, below.)
-  const REF = { simple: "4b9740e29df3", fugue: "fb66b85894fe",
-    acid: "6e5ab21af5a4", newwave: "edb0ef71a7a5",
-    vaporwave: "149d5015f704", blues: "bd46f7197675", rock: "6b17d2564f98",
-    gregorian: "ba0f27385ffc", bulgarian: "0b32f160e171",
-    spem: "9151dae05ddf", counterpoint: "05be67334465",
-    neoclassical: "182f2de5a1d1", drone: "c44769f4ff21",
-    sludge: "5084148f09aa", tango: "ee09103e8ed3",
-    deathmetal: "b0851e6f2e38", eurythmics: "98142ceabb51",
-    isley: "9d5ab478f32a", toto: "29a92875bf17", jodeci: "5e4ca9a37d79",
-    beatles: "a459c2f9c282", steely: "01ea05a01d63",
-    postrock: "27b4a3b46e43", boombap: "b01f5cdbae1b", trap: "897203c2b00b",
-    house: "817eac80ba2a", garage: "cc3f5e1993db", dnb: "3999fdcb3980",
-    disco: "b11d4a93b0c3", funk: "b81633650abe", motown: "1141bdf06ece",
-    rnb: "9e78fac4619d", gospel: "e733eaf12546", reggae: "622440c9f04e",
-    dub: "54c3fb491042", ska: "ca92900b00b9", afrobeat: "4abfb20d688a",
-    bossa: "b635c3811e72", countrypop: "ea549aac9ee0",
-    synthpop: "c5fcb2c16fb3", shoegaze: "83b13c047a74",
-    citypop: "18c6c4b2a021", punk: "0596c10fdc60", ambient: "e5269e817b91",
-    techno: "c76899eec976", jazz: "8f2957718601", bodiddley: "652cb8966c48",
-    chuckberry: "bfa4069005a5", doowop: "aa80dab581fd",
-    skiffle: "c51f0f704a19", minimalism: "cd067bced87e",
-    kraftwerk: "6fa626f62c95", electro: "7bcbe33b8e14",
-    hymn: "8d5cbbc2f790", crooner: "ebcccb5c28e3", yuletide: "e85fe81904b2",
-    merseybeat: "367adb7076c1", psychpop: "4cd62eace8ad",
-    bigbeat: "2fd7eedbdd96", drill: "e7a238609e57", clubpop: "c3ad2b730725",
-    powerballad: "4ba645cf3184", retrofunkpop: "87bd139cb68b",
-    reggaeton: "aa5de4ddd707", latinpop: "0eef7a6d4277",
-    kpop: "4fa1cc80588f", boyband: "59b1645cfb57", emo: "97bca06289d7",
-    screamo: "5f9e1fe98cce", confessionalpop: "7caf072cfa2f",
-    darkrnb: "0646ca452b56", bigroom: "15833d9eadf3",
-    blueeyedsoul: "611bb065f3c6", folkduo: "e2436f24fe1e",
-    worldfolk: "27c7432707c7", jamband: "ddd0b4512600",
-    sophistirock: "3f5356b33921", motorik: "5eda4735ff86",
-    roboticpop: "dbd9723b7f44", industrialmetal: "bcbc410dce83",
-    ebm: "a3fd12a0d312", synthduo: "3f063b522c5d",
-    musichallrock: "072ee227059e", orchpsych: "ceddc6af7b52",
-    altcountry: "85afd4ce96f7", yachtsoul: "3210004c4af8",
-    yachtrock: "2d182f487095", songwriterpiano: "2d1736670125",
-    softfolk: "25029d3e3599", singersongwriter: "8cb4378e7f98",
-    coastrock: "3d9b0a9f2d56", spacerock: "bf510e0f500a",
-    grebo: "933ceee8b1f8", melodictechno: "b790604dd18f",
-    bleeptechno: "b2b38f2438e0", industrialbreaks: "8fd9b42455d7",
-    industrialrock: "f8032a77d905", analogsynthpop: "40404ae5a3e0",
-    gothsynth: "a0a3f1a2d5e3", gothicpop: "d8c0dbf94660",
-    postpunk: "55445502c4d9", dancepostpunk: "35410bc555be",
-    madchester: "eb9caab42811", janglepop: "787d6bcd1c5c",
-    indiedance: "469766c5adff", solo: "219f51866bce", vocal: "732d368f1ec0",
-    backing: "dc681b7608c8", riff: "3c531d83afd9", pad: "ce08c515e400" };
+  const REF = { simple: "1bc5928ecc4c", fugue: "dabf3451bc56",
+    acid: "b5b135f70d6b", newwave: "ae3805f144ab",
+    vaporwave: "fe63ec2cbd88", blues: "5a0419bf37af", rock: "9f1728ebc87c",
+    gregorian: "ba0f27385ffc", bulgarian: "3120a30d7a93",
+    spem: "3447084f51d8", counterpoint: "2956a2b2a39f",
+    neoclassical: "d6901221c508", drone: "6ccd49d4d442",
+    sludge: "dd2d7d9d6934", tango: "e0d57168b2c6",
+    deathmetal: "b30b532ca8d1", eurythmics: "49ac4aee2208",
+    isley: "30a3d6d9d7f2", toto: "83d3fdbb1cb8", jodeci: "76e685510e04",
+    beatles: "073652eb81d6", steely: "373bf8af0978",
+    postrock: "44c6272086f4", boombap: "1cdeed22a051", trap: "32c4b9e0f455",
+    house: "eb8f1af781ea", garage: "ca2877fe6257", dnb: "3dc79a48769a",
+    disco: "a53b890ababb", funk: "9a6b5dbfb590", motown: "d93bb14e1bc6",
+    rnb: "a319e8a7e212", gospel: "91db241683d2", reggae: "6f6b5f63f6f5",
+    dub: "d49af7227b12", ska: "ca49362922d0", afrobeat: "9c801cc05daa",
+    bossa: "dbabc761a62c", countrypop: "7b8ab1d48148",
+    synthpop: "646712dee82f", shoegaze: "1ac1f4be2c1b",
+    citypop: "86c4d7e7b6b0", punk: "38c228074709", ambient: "3b7e853fedcb",
+    techno: "e298a46934f9", jazz: "dee85985f1f1", bodiddley: "7cee43db4155",
+    chuckberry: "937eabc87a9b", doowop: "1b2591a4eb61",
+    skiffle: "2e33cd41b027", minimalism: "a6761a5298da",
+    kraftwerk: "4fa1f2eb961b", electro: "079ab9da664f",
+    hymn: "8d5cbbc2f790", crooner: "707e28bf68b4", yuletide: "9ee6612e1c03",
+    merseybeat: "7a91c830d288", psychpop: "8d49dc6d5ab2",
+    bigbeat: "f0e4beac3894", drill: "e3b02bb90562", clubpop: "f5a60f566551",
+    powerballad: "cc1789909e0c", retrofunkpop: "83152243b7b4",
+    reggaeton: "9d8d59931b64", latinpop: "d89b38f89066",
+    kpop: "fe59dee5027b", boyband: "3d1a4e2e5010", emo: "675bd3256def",
+    screamo: "9d669b30cb8e", confessionalpop: "a20cabd98cb5",
+    darkrnb: "f504a72492ea", bigroom: "73ce0eb74d51",
+    blueeyedsoul: "f8aa6f3c3f09", folkduo: "19d32f689966",
+    worldfolk: "b3ce041832d3", jamband: "02a7f875ff41",
+    sophistirock: "9a5fa8d5d566", motorik: "5eda4735ff86",
+    roboticpop: "95c3e8e56881", industrialmetal: "9324c16b04fe",
+    ebm: "b43e767106a5", synthduo: "b4cc5875745b",
+    musichallrock: "b0841f69e2f4", orchpsych: "a26404ef8c1c",
+    altcountry: "fbd588c686dc", yachtsoul: "38e2cbe538d0",
+    yachtrock: "ce82749b82b1", songwriterpiano: "c2ee67c2b33e",
+    softfolk: "0176b7e1f337", singersongwriter: "2d43bca021b2",
+    coastrock: "60bc46e0646d", spacerock: "048a18907907",
+    grebo: "d8e61abacf7f", melodictechno: "84a7ce11174b",
+    bleeptechno: "02a5d827422b", industrialbreaks: "bdfa35798585",
+    industrialrock: "3a0679f8c36b", analogsynthpop: "bc6e73fca79c",
+    gothsynth: "80d6711288ba", gothicpop: "14b61c1edac0",
+    postpunk: "37a92eb4e185", dancepostpunk: "84e2c82c1aa9",
+    madchester: "60ccf8ff4c1f", janglepop: "e1e89d2a95f1",
+    indiedance: "5bb07e661bbd", solo: "e19a9b7ba0df", vocal: "19c0b11b9f68",
+    backing: "dc681b7608c8", riff: "79a83db951e2", pad: "b9d3acb4a9f8" };
   // RE-MEASURING IS A COMMAND, not a hand copy off a failure log: the table
   // above is 110 rows and a deliberate change moves most of them at once, so
   // `NUKERNEL_REF=1` prints the whole block ready to paste, the way the

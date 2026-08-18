@@ -2244,11 +2244,19 @@
     soft:  () => 0.68,
     big:   () => 1.14,
   };
-  const envelope = (ev, kind, span) => {
+  const envelope = (ev, kind, span, bs) => {
     if (!kind || !span) return ev;
-    // DROP — the last eighth of the section goes silent. The oldest trick in
-    // dance music and still the loudest: what you hear is the bar that follows.
-    if (kind === "drop") return ev.filter(e => e.t < span * 0.875);
+    // DROP — the section's last eighth goes silent, AND AT MOST ITS LAST BAR.
+    // The oldest trick in dance music and still the loudest: what you hear is
+    // the bar that follows — which is the tell that this is a BAR-scale gesture
+    // that was written as a proportion. On an eight-bar section an eighth is a
+    // bar and the two readings agree; on a sixteen-bar one it is two bars of
+    // digital silence in the middle of a record, which is not a drop, it is a
+    // dropout. Measured across 110 genres × 4 seeds, 24 records had one.
+    // A caller that does not say how long a bar is gets the proportion, so the
+    // gesture is unchanged wherever nobody knows better.
+    if (kind === "drop")
+      return ev.filter(e => e.t < span - Math.min(span / 8, bs || span));
     // STUTTER — the last eighth repeats its own first quarter, four times. The
     // events are real events, so it stutters whatever was actually there.
     if (kind === "stutter") {
@@ -2365,11 +2373,21 @@
       return out.sort((a, b) => a.t - b.t);
     }
     if (kind === "hit") {
-      // one downbeat and then space — the oldest way to say "here we go". The
-      // cymbal is a CRASH now: it was written as "o", an open hat, for the
+      // one downbeat and then the band — the oldest way to say "here we go".
+      // The cymbal is a CRASH now: it was written as "o", an open hat, for the
       // years there was no crash lane to write, and an open hat is not the
       // sound of a band starting.
-      return [D(0, "k", 1, 9), D(0, "x", 1, 9), ...rest].sort((a, b) => a.t - b.t);
+      //
+      // THE SPACE IS ONE BEAT, NOT ONE BAR, and that is the whole repair. This
+      // threw the entire first bar away, so a drop opened with a cymbal and
+      // then four beats of nothing between two bars playing forty-five events
+      // apiece — and a hole that wide does not read as production, it reads as
+      // the machine stopping. Measured across 110 genres × 4 seeds it was the
+      // single commonest near-empty bar in the catalogue (150 of them). A hit
+      // marks the downbeat and then the section ARRIVES: the band is back on
+      // beat 2, which is what everybody actually plays.
+      return [D(0, "k", 1, 9), D(0, "x", 1, 9),
+              ...bar.filter(e => e.t >= bs / 4 - 1e-9), ...rest].sort((a, b) => a.t - b.t);
     }
     // SOLO MEANS ONE VOICE. It used to keep the whole pitched layer, which on
     // any genre whose voices are one phrase dealt twice — the octave-doubled
@@ -2433,8 +2451,28 @@
       return out.sort((a, b) => a.t - b.t);
     }
     if (kind === "crash") {
-      // everything stops and one cymbal holds the door open
-      return [...rest, D(from, "x", 1, 9), D(from, "k", 1, 9)].sort((a, b) => a.t - b.t);
+      // THE BAND LANDS ON THE CYMBAL and holds the door open with it. Everything
+      // still stops together on the bar line — that is what this gesture is —
+      // but what stops is a CHORD. It used to leave the kick and the cymbal
+      // alone in an otherwise deleted bar, which on the page is two events
+      // between two bars of sixty, and by ear is a record that ends its chorus
+      // by switching the band off. A real band hits the last chord with the
+      // drummer and lets it ring.
+      //
+      // The chord is each lane's own first note in the bar, re-seated on the
+      // downbeat and held: the same "refire what is already there" move `stabs`
+      // makes at the other edge, so the landing is always in the section's own
+      // harmony and never a chord this file invented.
+      const laneKey = e => e.kind + "/" + (e.lv == null ? e.v : e.lv);
+      const first = new Map();
+      for (const e of bar) {
+        if (e.kind === "hit") continue;
+        const k = laneKey(e), got = first.get(k);
+        if (!got || e.t < got.t) first.set(k, e);
+      }
+      const land = [...first.values()].map(e => ({ ...e, t: from, dur: 0.9 * bs, sld: 0,
+                                                   vel: Math.max(6, e.vel == null ? 5 : e.vel) }));
+      return [...rest, ...land, D(from, "x", 1, 9), D(from, "k", 1, 9)].sort((a, b) => a.t - b.t);
     }
     // ---- THE FILLS THAT ARE NOT A SNARE FILL --------------------------------
     // Every outro above is the same gesture at three densities, which is why
@@ -2465,10 +2503,23 @@
       return out.sort((a, b) => a.t - b.t);
     }
     if (kind === "hush") {
-      // SILENCE, THEN THE CRASH. Everything stops on the bar line and one
-      // cymbal lands on the LAST sixteenth — the hole is the gesture, and it
-      // is the only outro here whose bar is mostly empty on purpose.
-      return [...rest, D(from + 15 * bs / 16, "x", 1, 9)].sort((a, b) => a.t - b.t);
+      // THINNING, THEN THE CRASH. A hush is a diminuendo with a hole at the end
+      // of it, not a power cut: the band plays the first half of the bar getting
+      // quieter, the second half is the hole, and one cymbal lands on the LAST
+      // sixteenth. The hole is still the gesture — two beats of air is plenty of
+      // room to notice — but the section now FALLS into it instead of vanishing.
+      //
+      // It used to delete the whole bar, which is 192 near-empty bars across
+      // 110 genres × 4 seeds, and by ear it is indistinguishable from the
+      // transport dropping out: bar 70 plays thirty-four events, bar 71 plays
+      // one, bar 72 plays thirty. Nobody hears "hush" there, they hear a stop.
+      const half = from + bs / 2;
+      const fall = e => {
+        const x = (e.t - from) / (bs / 2);                 // 0 at the bar line, 1 at the hole
+        return { ...e, vel: Math.max(1, Math.round((e.vel == null ? 5 : e.vel) * (1 - 0.55 * x))) };
+      };
+      return [...rest, ...bar.filter(e => e.t < half - 1e-9).map(fall),
+              D(from + 15 * bs / 16, "x", 1, 9)].sort((a, b) => a.t - b.t);
     }
     if (kind === "doubles") {
       // the kick-and-snare double-time bar: no acceleration, no cymbal, just
