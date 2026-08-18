@@ -10,7 +10,7 @@
 //   3. journey CLI full render — node tools/kernel-cli.js journey … --render.
 //
 // HOW IT WORKS (no forked logic — the app's own modules do the riding):
-//   - serve the repo + boot index.html in the pinned headless chromium
+//   - serve the repo + boot screensaver.html (the explorer) in the pinned headless chromium
 //     (probe-harness pattern), WITHOUT goLive: no engine, no worklets, no clock;
 //   - dynamic-import app/audio/targeting.js IN PAGE — ES-module identity means we get
 //     the exact singleton main.js wired (same S, same glide queue, same holds),
@@ -30,7 +30,7 @@
 //     arrived state that neighborhood reached; a peak-weight snapshot can
 //     catch a mid-glide chimera whose "sample" flip hasn't landed and fail
 //     bloom on a state the dwell then repairs) and run the musicality audit
-//     on it (engine/musicality.js is injected — index.html doesn't load it),
+//     on it (engine/musicality.js is injected — the page doesn't load it),
 //     plus the ARRIVAL check: bars from dominance until the playing state's
 //     identity (kit AND lead) matches the target's — the transit-arrival
 //     contract (<= 8 bars), applied path-wide to EVERY crossed genre.
@@ -156,7 +156,7 @@ async function main() {
   await page.setViewportSize({ width: 1200, height: 850 });
   const errs = capturePageErrors(page);
 
-  await page.goto(`http://localhost:${PORT}/index.html`);
+  await page.goto(`http://localhost:${PORT}/screensaver.html`);
   await page.waitForFunction(() => window.__X && window.__S && window.__LOOP, { timeout: 20000 });
   // DETERMINISM: main.js boot fetches the DX7 bank async and forceRetarget()s
   // when it lands — wait for it so the bank can't land MID-ride and reshuffle
@@ -164,7 +164,7 @@ async function main() {
   await page.waitForFunction(() => Object.keys((window.GenreKernel || {}).DX7_PATCHES || {}).length > 0,
     { timeout: 10000 }).catch(() => {});
   await page.waitForTimeout(300);
-  // the musicality law library isn't loaded by index.html — inject it (classic
+  // the musicality law library isn't loaded by the page — inject it (classic
   // script, registers window.Musicality; READ-ONLY use of another agent's file)
   await page.addScriptTag({ url: `http://localhost:${PORT}/engine/musicality.js` });
   await page.waitForFunction(() => window.Musicality && window.Musicality.audit, { timeout: 5000 });

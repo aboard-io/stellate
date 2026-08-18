@@ -8,12 +8,13 @@
 #   ./serve.sh            -> http://localhost:8777
 #   ./serve.sh 9000       -> choose a port
 #
-# Then open:  http://localhost:8777/index.html (STELLATE)
+# Then open:  http://localhost:8777/  (lands on the daw; screensaver.html is the star map)
 set -euo pipefail
 cd "$(dirname "$0")"
 port="${1:-8777}"
 echo "Serving $(pwd) (cross-origin isolated)"
-echo "  explorer: http://localhost:${port}/index.html"
+echo "  daw:         http://localhost:${port}/  (nukernel/kernel-daw.html)"
+echo "  screensaver: http://localhost:${port}/screensaver.html"
 exec python3 - "$port" <<'PY'
 import sys
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
