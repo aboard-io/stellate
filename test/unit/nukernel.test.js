@@ -2190,7 +2190,10 @@ console.log("neutrality — absent equals neutral for every new field");
   // group for everything: the performance layer wires four of the five, and
   // its own absent-equals-neutral law is §39(b), which strips the three fields
   // it added rather than pretending nobody set them.)
-  for (const gk of ["acid", "fugue", "vaporwave", "gregorian", "rock"]) {
+  // (acid left this control group on 2026-08-18: its drum mix is a kitVel
+  // hand now, so it is wired for one of the fields under test — motorik is
+  // the machine-four control in its place.)
+  for (const gk of ["motorik", "fugue", "vaporwave", "gregorian", "rock"]) {
     const g = GENRES[gk];
     const neutral = { ...g, maxHold: 0, key: 0, period: null, kits: null,
                       kitVel: null, prog: null, pipes: null, part: null, anchor: 0 };
@@ -4870,7 +4873,11 @@ console.log("dynamics — metrical stress, phrase arch, the hand, and the sectio
   // anchor that arrived after it. The contract is the same one: an 808 says
   // its weight with an accent switch (`kitVel`), so if this genre ever starts
   // breathing it fails here by name.
-  const MACHINE = { techno: "036036ec46edb986", acid: "c047f764a47233de",
+  // (acid re-measured 2026-08-18: its 909 gained a kitVel hand — kick 9,
+  // clap 8, open-hat 7, tick 3/4 — and the record moved to 124. kitVel is the
+  // accent switch the electro row's own comment blesses; stress/phrase/touch
+  // stay undeclared, so the machine still does not breathe.)
+  const MACHINE = { techno: "036036ec46edb986", acid: "6442d27c8bfb9828",
                     house: "2f1c41112ac01206", trap: "addcf7d93d0fdcfa",
                     electro: "1b4dccccfb127a5e" };
   for (const gk of Object.keys(MACHINE)) {
@@ -7382,7 +7389,8 @@ console.log("the master harmonization engine — one tonality, every added voice
   // this round makes about the other 109.
   // (`NUKERNEL_REF=1` prints this block, below.)
   const REF = { simple: "1bc5928ecc4c", fugue: "dabf3451bc56",
-    acid: "b5b135f70d6b", newwave: "ae3805f144ab",
+    acid: "4a2994f6756c",   // re-measured 2026-08-18: the kitVel hand + 124 bpm
+    newwave: "ae3805f144ab",
     vaporwave: "fe63ec2cbd88", blues: "5a0419bf37af", rock: "9f1728ebc87c",
     gregorian: "ba0f27385ffc", bulgarian: "3120a30d7a93",
     spem: "3447084f51d8", counterpoint: "2956a2b2a39f",
@@ -8983,7 +8991,8 @@ console.log("§59 — a note can lean, slide, flam or pass");
       steely: "22e3bdce30e2", postrock: "d70f3fde7b93", neoclassical: "497406f3443e",
       // §39's five machines, at the same values that section freezes them at —
       // which is what says this table and that one are measuring one thing
-      techno: "036036ec46ed", acid: "c047f764a472", house: "2f1c41112ac0",
+      techno: "036036ec46ed", acid: "6442d27c8bfb",   // acid re-measured 2026-08-18 (kitVel hand; no orn policy)
+      house: "2f1c41112ac0",
       trap: "addcf7d93d0f", electro: "1b4dccccfb12",
       pad: "8fc2877a4554", riff: "b70f7f837d8d", vocal: "18fdd7ab8497",
       backing: "e0cbb6146f64" };

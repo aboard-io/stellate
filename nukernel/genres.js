@@ -399,6 +399,14 @@
              c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
              h: [0,1,0,1, 0,1,0,1, 0,1,0,1, 0,1,0,1] },
+      // THE DRUM MIX IS A HAND, not a switch: every lane at level 1 rendered
+      // kick, hat tick, open hat and clap at one loudness — a drum machine
+      // with every fader at unity. The 909 on an acid record sits kick-first
+      // (9), the offbeat OPEN hat is the pump and rides just under it (7),
+      // the closed 16th ticks are air between the beats (3, lifted to 4 into
+      // beat 3), and the clap answers at 8. Velocity, not pattern: the grid
+      // above is untouched.
+      kitVel: { k: [9], c: [8], o: [7], h: [0,3,0,3, 0,4,0,3, 0,3,0,4, 0,3,0,3] },
       ghost: [only("acc", rotate(3))],         // accents alone, against an unrotated gate
       fill: { o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 1,0,1,0],   // bar 4: hats double, clap answers
               c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,1,0] },

@@ -314,7 +314,7 @@
   // Where a genre wants to sit, in bpm. The tempo control tops out at 160 and
   // bottoms at 70, and a composer that leaves everything at 126 has not arranged
   // anything — half of what "sounds like sludge" means is the tempo.
-  const BPM = { acid: 130, vaporwave: 88, newwave: 138, rock: 132, blues: 104,
+  const BPM = { acid: 124, vaporwave: 88, newwave: 138, rock: 132, blues: 104,
                 sludge: 74, simple: 112, fugue: 108, counterpoint: 100,
                 gregorian: 76, spem: 80, bulgarian: 96, neoclassical: 86, drone: 70,
                 // 126 is not a guess: it is the tempo of "Sweet Dreams"
