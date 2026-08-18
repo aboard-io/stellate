@@ -797,11 +797,30 @@ const PATCH_MODEL = {
 // So the id ROTATES the genre's word: the aahs sing it from the top, the oohs a
 // syllable behind. Doowop's "ou" comes out as o-u against u-o, which is what
 // four men round a microphone actually do, and it costs no new vocabulary.
+// A LEAD IS SYNTHESISED; A CHORUS IS RECORDED. Paul, 2026-08-18: "Keep it a
+// soloist and use sampled choruses for choral arrangements."
+//
+// This reverses a judgement made the day before, and the reversal is right. The
+// lane that built voice_choir argued the sampled choirs are the flattest thing in
+// the catalogue — six zones, one recording, one dynamic, and the take's own
+// vibrato baked in and beating against every other note of the chord. All true,
+// and all of it matters on an EXPOSED LEAD, where one voice is naked and its one
+// vibrato is the only movement there is. It matters much less under a PAD, and a
+// recorded ensemble brings the two things four detuned formant voices cannot
+// synthesise: a room, and forty people not agreeing.
+//
+// The measurement agreed before the ear did. gregorian's choir read 0.998-1.000
+// L/R correlation at the master while its width demonstrably arrived at the unit
+// — so the synthesised chorus was not even delivering the spread it was chosen
+// for, and was paying four voices for a mono result.
+//
+// So solo_vox keeps voice_lead, which is where a formant model earns its place:
+// one voice, moving continuously through a vowel, in front. The three CHORAL ids
+// fall through to the sampled library again. Fourteen genres change back —
+// gregorian, spem, bulgarian, hymn, doowop, the Beatles' and the boy band's
+// backing stacks — and every one of them is a chorus, not a soloist.
 const PATCH_VOICE = {
   solo_vox:    { dsp: "voice_lead",  voice: "tenor", vowels: "ao", syll: 0.5, phase: 0 },
-  ahh_choir:   { dsp: "voice_choir", voice: "alto",  vowels: "a",  syll: 4, phase: 0 },
-  ohh_voices:  { dsp: "voice_choir", voice: "alto",  vowels: "ou", syll: 4, phase: 1 },
-  space_voice: { dsp: "voice_choir", voice: "soprano", vowels: "u", syll: 8, phase: 2 },
 };
 
 /**
