@@ -4610,6 +4610,39 @@
    "/tom/pitch"
   ]
  },
+ "tract_voice": {
+  "inputs": 0,
+  "outputs": 1,
+  "params": [
+   "/tract_voice/artic",
+   "/tract_voice/attack",
+   "/tract_voice/babble",
+   "/tract_voice/breath",
+   "/tract_voice/cutoff",
+   "/tract_voice/freq",
+   "/tract_voice/fric",
+   "/tract_voice/fricX",
+   "/tract_voice/gain",
+   "/tract_voice/gate",
+   "/tract_voice/glide",
+   "/tract_voice/level",
+   "/tract_voice/lips",
+   "/tract_voice/open",
+   "/tract_voice/push",
+   "/tract_voice/rate",
+   "/tract_voice/release",
+   "/tract_voice/seed",
+   "/tract_voice/tongue",
+   "/tract_voice/tongueD",
+   "/tract_voice/tongueL",
+   "/tract_voice/velum",
+   "/tract_voice/vibRate",
+   "/tract_voice/vibRise",
+   "/tract_voice/vibrato",
+   "/tract_voice/voiced",
+   "/tract_voice/vowel"
+  ]
+ },
  "voice_choir": {
   "inputs": 0,
   "outputs": 2,

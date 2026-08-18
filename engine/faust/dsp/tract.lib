@@ -1,0 +1,379 @@
+// tract.lib — A TUBE WITH A TONGUE IN IT, which is what a consonant needs.
+//
+// dsp/voice_tract.lib beside this file is a SOURCE-FILTER voice: a glottal wave
+// through five resonant bandpasses on the CSOUND manual's measured formant
+// tables. It is good, it sings, and it stays. But a bandpass bank can only ever
+// hold a vowel and glide between vowels, because a vowel is a set of resonances
+// and A CONSONANT IS NOT. A consonant is something that happens to the SHAPE OF
+// A TUBE: a closure, a constriction, a release. There is no centre frequency you
+// can write on a filter that makes it a /b/, because what makes a /b/ is that
+// the tube was shut at one end and then was not — and the ear hears the SHUTTING
+// and the OPENING, not the steady state either side of it.
+//
+// So this is the tube. A Kelly-Lochbaum waveguide vocal tract: 21 cylindrical
+// sections, a bidirectional delay in each, and a scattering junction between
+// neighbours whose reflection coefficient is the area ratio across it. A tongue
+// that is a position and a diameter, shaping the area function. A nasal branch
+// off a three-port junction at the velum. Turbulence injected AT the
+// constriction. Lip radiation at the open end.
+//
+// WRITTEN FROM THE PHYSICS, not from anyone's source. Kelly & Lochbaum's
+// junction is from 1962 and the derivation is the two-line one every textbook
+// does — pressure is continuous across the junction, volume velocity sums to
+// zero, solve for the outgoing pair — which is written out at ktScat below so
+// the next person does not have to trust it. The three-port at the velum is the
+// same algebra with a third tube. The glottal pulse is Rosenberg's (1971). The
+// area function is the classical constriction parametrisation (Fant 1960;
+// Stevens & House 1955): where the constriction is, how tight, how long, and
+// how open the lips are. Paul pointed at Pink Trombone early and then said "use
+// the physical modeling in faust library, i doubt you need neil thapen at all";
+// that turned out to be exactly right, and it leaves the repo with no licence
+// question in it at all. Nothing here was copied from that program.
+//
+// THE LENGTH OF THE TRACT IS THE SAMPLE RATE. This is the one thing about a
+// waveguide that surprises people. Each element of a pm.chain carries one
+// sample of delay each way, so a chain of 22 elements is a tube 22 samples long,
+// which at 350 m/s and 44.1 kHz is 17.5 cm — a man's vocal tract, arrived at by
+// counting delays rather than by choosing a number. Measured on the uniform
+// tube with no constriction in it, the resonances come out 495, 1460, 2436,
+// 3412: the odd-quarter-wave series 500/1500/2500/3500 that a tube closed at one
+// end and open at the other has, which is the schwa, and which is the whole
+// proof that this is a tube and not a bank of filters that has been told what to
+// say. THE COROLLARY IS A LIMITATION and it is stated here rather than hidden:
+// at a 48 kHz context the same 22 samples are 16.0 cm, and every formant rises
+// 8.8%. The tract is a smaller head at 48 kHz. Fixing it means fractional delays
+// in every section, which is four times the cost for a shift most listeners hear
+// as a different singer.
+//
+// WHAT IS MEASURED. build/measure-tract.js renders this offline through
+// faustwasm and checks the physics — the five cardinal vowels against Peterson
+// & Barney's male means, the F2 transition out of a /b/ /d/ /g/ closure, the
+// velar pinch, the nose, the fricative's front cavity, pitch, and every
+// parameter at both stops. It also FITS the vowel table below: those numbers
+// are not asserted, they are the articulations that measured nearest the
+// published formants, found by search inside phonetic boxes, on the shipping
+// instrument, with the analyser the checks use.
+declare name "tract";
+import("stdfaust.lib");
+
+// ---- geometry --------------------------------------------------------------
+KT_NSEC = 21;                       // cylindrical sections, glottis .. lips
+KT_VELJ = 10;                       // the junction the nose hangs off
+KT_AMIN = 0.0025;                   // never exactly zero: a zero area is a 0/0 junction
+KT_LIPX = 0.83;                     // where the lip funnel starts, in tract lengths
+KT_NOSED = 16;                      // nasal branch, one-way, in samples = 12.7 cm
+KT_NREFL = -0.72;                   // nostril reflection
+// NOSTRIL RADIATION. The tap on the oral side reads the pressure ARRIVING at
+// the lips, so both ends have to be read on the same terms. What each end
+// radiates is (1+r) times the wave arriving at it; the nose's return `bn` is
+// already r times its arriving wave, so undoing that and matching the lip end's
+// (1+r) is (1 + KT_NREFL)/(1 + lip r)/KT_NREFL, which is 2.0/KT_NREFL here.
+KT_NRADK = 2.0/KT_NREFL;
+KT_NASALA = 1.6;                    // nasal cavity area when the port is fully open
+
+ktSq(v) = v*v;
+ktXs(i) = (i + 0.5)/KT_NSEC;
+ktBump(c, w, x) = ktSq(max(0.0, 1.0 - ktSq((x-c)/w)));
+
+// area of section i, in arbitrary units (only ratios reach the junctions)
+ktArea(i, tpos, tdia, tlen, lipa) = max(KT_AMIN, lipScale * mouth)
+with {
+  mouth = 1.0 - (1.0 - tdia)*ktBump(tpos, max(0.05, tlen), ktXs(i));
+  // THE FUNNEL MUST REACH 1 AT THE LAST SECTION, or a shut mouth is not shut.
+  // Normalised against 1.0 instead of the last section's own centre, the ramp
+  // topped out at 0.83, which left the lip section 17% open at lips=0: the seal
+  // leaked, a sealed tract measured only 4.4 dB under an /m/, and the plosive
+  // had nothing to release.
+  lipScale = 1.0 - (1.0 - lipa)*max(0.0, min(1.0, (ktXs(i) - KT_LIPX)/(ktXs(KT_NSEC-1) - KT_LIPX)));
+};
+
+ktRefl(i, tpos, tdia, tlen, lipa) = (a1 - a2)/(a1 + a2)
+with {
+  a1 = ktArea(i,   tpos, tdia, tlen, lipa);
+  a2 = ktArea(i+1, tpos, tdia, tlen, lipa);
+};
+
+// ---- one scattering junction ------------------------------------------------
+// KELLY-LOCHBAUM. Two tubes meet. Pressure is continuous across the joint and
+// volume velocity is conserved, so with p1+ arriving from the left and p2-
+// arriving from the right:
+//
+//     p1+ + p1- = p2+ + p2-                  (pressure)
+//     A1(p1+ - p1-) = A2(p2+ - p2-)          (volume velocity)
+//
+// Solve the pair for the two outgoing waves and everything collapses onto one
+// number, k = (A1 - A2)/(A1 + A2):
+//
+//     out right = (1+k)*p1+ - k*p2-
+//     out left  =    k *p1+ + (1-k)*p2-
+//
+// which is the whole tract. k = +1 is a closed end and reflects pressure in
+// phase; k = -1 is an open one and inverts it; k = 0 is no junction at all, and
+// the tube is uniform. Four multiplies per junction, nineteen junctions.
+//
+// pm chain convention: in1/out1 carry LEFT-going waves, in2/out2 RIGHT-going,
+// in3/out3 the accumulated output. So p1+ is `r` and p2- is `l`.
+ktScat(i, tpos, tdia, tlen, lipa, turbx, turb, l, r, o) =
+  k*r + (1.0-k)*l,
+  (1.0+k)*r - k*l + inj,
+  o
+with {
+  k   = ktRefl(i, tpos, tdia, tlen, lipa);
+  inj = turb * ktBump(turbx, 0.11, ktXs(i));
+};
+
+// ---- the velum: a three-port junction with a nose on it ---------------------
+// /m/ AND /n/ ARE NOT FILTERS. They are a closed mouth and an open nose, and no
+// setting of a formant bank is that, because what makes a nasal is a SIDE BRANCH
+// — a second tube hanging off the first, which puts a zero in the oral transfer
+// function and radiates from its own end. The same algebra as ktScat with a
+// third tube: pressure at the junction is p = 2*sum(A_i p_i+)/sum(A_i), and each
+// tube gets back p minus what it sent. The velar port area is the third A, so
+// `vel` opens and closes the nose by changing a number in a sum.
+//
+// THE PORT MUST GATE THE NOSE, not just leave its area at zero. With A_n = 0 the
+// nasal branch drops out of p correctly, but the formula still hands it p - bn
+// to propagate — a wave in a tube of no cross-section, which carries no power
+// and yet still arrives at the nostril and radiates. `ng` shuts the door.
+ktVelum(tpos, tdia, tlen, lipa, vel) = (vstep ~ nose) : (!,_,_,_)
+with {
+  vstep(bn, l, r, o) = (pj - bn)*ng, pj - r, pj - l, o + bn*KT_NRADK
+  with {
+    ap = ktArea(KT_VELJ,   tpos, tdia, tlen, lipa);
+    ao = ktArea(KT_VELJ+1, tpos, tdia, tlen, lipa);
+    an = max(0.0, vel) * KT_NASALA;
+    pj = 2.0*(ap*r + ao*l + an*bn) / max(1e-5, ap + ao + an);
+    ng = an/(an + 0.05);
+  };
+  nose = de.delay(256, 2*KT_NOSED-1) : fi.lowpass(1, 2200) : *(KT_NREFL);
+};
+
+// ---- chain plumbing --------------------------------------------------------
+// THE LIP TAP. pm.outRightWave hands the accumulator the PRESSURE arriving at
+// the lips, and pressure is continuous across a closure — so with the mouth
+// shut the tap reads the back cavity's own resonance at nearly full strength
+// and a plosive never goes quiet. What radiates is volume velocity, which is
+// pressure times the APERTURE, so the tap is scaled by the area of the last
+// section. Measured together with the lip funnel's own reach: before the two
+// fixes, opening the velum on a closed mouth made it 13.0 dB QUIETER, because
+// the oral leak was the loud path and the nose only damped it. After, it is
+// 27.1 dB louder, which is an /m/.
+ktLipTap(area, x, y, s) = x, y, y*area + s;
+
+ktSeg(A, rest) = ((ro.crossnn(1),_',_ : _,A : ro.crossnn(1),_,_ : _,rest : ro.crossnn(1),_,_)) ~ _ : !,_,_,_;
+ktRun(a, 1, tp, td, tl, lp, tx, tb) = ktScat(a, tp, td, tl, lp, tx, tb);
+ktRun(a, n, tp, td, tl, lp, tx, tb) = ktSeg(ktScat(a, tp, td, tl, lp, tx, tb), ktRun(a+1, n-1, tp, td, tl, lp, tx, tb));
+
+// ---- the tube ---------------------------------------------------------------
+// THE CHAIN IS BUILT BY A MACRO, WHICH IS WHY ktSeg EXISTS. pm.chain does the
+// same job and does it well, but its `A:As` pattern only decomposes a `:` list
+// written out literally in the source: hand it seq(i,N,...) or a recursive
+// definition and it matches the whole thing as ONE element, so a 20-section
+// ladder came out three samples long and every tract length was identical.
+// Measured on the uniform tube: literal chains gave one sample of delay per
+// element, generated ones gave three in total no matter how many sections were
+// asked for. ktSeg is pm.chain's body with the element passed in, so the
+// recursion below can be a macro over an integer and the section count can be a
+// constant at the top of the file rather than twenty lines of copy-paste.
+//
+// Element count IS tract length: inRightWave, 19 scattering junctions, the
+// velum, the lip tap, and one more sample from pm.terminations = 22.
+ktTube(tp, td, tl, lp, vel, turbx, turb, src) = pm.endChain(pm.terminations(glotEnd, body, lipEnd))
+with {
+  body = ktSeg(pm.inRightWave(src),
+          ktSeg(ktRun(0, KT_VELJ, tp, td, tl, lp, turbx, turb),
+           ktSeg(ktVelum(tp, td, tl, lp, vel),
+            ktSeg(ktRun(KT_VELJ+1, KT_NSEC-2-KT_VELJ, tp, td, tl, lp, turbx, turb),
+             ktLipTap(ktArea(KT_NSEC-1, tp, td, tl, lp))))));
+  // THE TWO ENDS. The glottis is nearly a wall — it reflects almost everything
+  // in phase — but not at DC: a voiceless stop holds a closed tract for 80 ms
+  // with the lungs still pushing, and a rigid wall at 0 Hz means that pressure
+  // has nowhere to go and the ladder integrates. The highpass IS the leak, and
+  // it is the reason a sealed tract stays bounded instead of ramping. The lip
+  // end inverts (an open end reflects pressure out of phase) and loses its top,
+  // which is where the formant bandwidths come from: two filters in a 44-sample
+  // round trip give about 70 Hz, which is what a real vocal tract has.
+  glotEnd = *(0.96) : fi.highpass(1, 22);
+  lipEnd  = *(-0.86) : fi.lowpass(1, 5000);
+};
+
+// ---- the glottis ------------------------------------------------------------
+// THE GLOTTIS. A Rosenberg-B flow pulse (Rosenberg 1971): a raised-cosine
+// opening, a quarter-cosine close, silence for the rest of the period. `push`
+// shortens the CLOSING limb, which is what a fold under more pressure does and
+// what puts harmonics above the second formant — the tilt is the fold, not an
+// EQ. `oq` is the open quotient: how much of the period the folds are apart at
+// all, breathy at 0.9 and pressed at 0.2.
+//
+// TWO COMPENSATIONS, and both are for the same thing. Lip radiation is a
+// differentiator, so its gain rises with frequency, and the tract hands it a
+// pulse whose sharpness rises with BOTH f0 and 1/oq. Measured on a held /a/,
+// uncompensated: 27.8 dB of level across 60-900 Hz, and 18.7 dB across the open
+// quotient — an instrument whose top octave is nine times its bottom one and
+// whose pressed voice is eight times its breathy one, neither of which anybody
+// asked for. Dividing the source by f0 and multiplying by oq is the exact
+// inverse of the two slopes, and brings those to 7.2 dB and 2.8 dB.
+ktGlottis(f, push, oq, breath) = ((1.0-breath)*voiced + breath*asp) * comp
+with {
+  comp   = (130.0/max(30.0, f)) * (min(0.95, max(0.15, oq))/0.62);
+  p    = os.lf_sawpos(f);
+  op   = max(0.15, min(0.95, oq));
+  clf  = 0.12 + 0.24*(1.0 - max(0.0, min(1.0, push)));
+  a    = op*(1.0 - clf);
+  b    = op*clf;
+  rise = 0.5*(1.0 - cos(ma.PI * p/a));
+  fall = cos(ma.PI * (p - a)/(2.0*b));
+  g    = select2(p < a, select2(p < op, 0.0, fall), rise);
+  voiced = g : fi.dcblocker;
+  // TWO THINGS ABOUT THE BREATH, both learned from the measurement.
+  //
+  // A breathy voice has its noise chopped by the folds; a WHISPER does not,
+  // because the folds are apart and never close. Modulating the aspiration at
+  // f0 even at breath=1 laid a comb under the spectrum that dragged the LPC's
+  // lowest pole off F1 by an octave on /i/, /o/ and /u/, so the vowel check was
+  // reading the source and calling it the tract.
+  //
+  // And aspiration is not WHITE. Left flat and then differentiated by the lip
+  // radiation, the excitation rises at 6 dB/oct and a whispered /a/ read F1 848
+  // / F2 2607 against a true 730/1090. Turbulence at the folds falls about
+  // 6 dB/oct, so this is a shelf — one pole at 700 Hz over a floor 18 dB down —
+  // which lands the excitation flat once radiation has had it. (The thing that
+  // finally made the vowel measurement trustworthy was the analyser's adaptive
+  // pre-emphasis, not this shelf. The shelf is here because a whisper with a
+  // flat spectrum is not a whisper.)
+  nz     = no.noise;
+  aspN   = nz*0.12 + (nz : fi.lowpass(1, 700))*1.4;
+  // 0.32, fitted: at 0.5 a full whisper through a near-closure with the
+  // fricative wide open peaked 7% over full scale at the shipping defaults.
+  asp    = aspN * ((0.25 + 0.75*g)*(1.0 - breath) + breath) * 0.32;
+};
+
+// ---- the vowel table --------------------------------------------------------
+// FOUND, NOT ASSERTED. `measure-tract.js --fit` searches tongue position, area,
+// length and lip aperture for the articulation whose F1/F2 land nearest the
+// Peterson & Barney (1952) male means, inside boxes that a phonetician would
+// recognise — /a/'s constriction has to be in the pharynx with the mouth open,
+// /u/'s at the velum with the lips rounded — because an unboxed search finds
+// acoustically perfect articulations that are anatomically nonsense, and a
+// nonsense articulation has no locus and cannot make a consonant.
+//
+// What `measure-tract.js` reads back off the shipping module, in Hz, published
+// male mean in brackets:
+//   /i/ 317 [270] / 2223 [2290]      /e/ 502 [530] / 1521 [1840]
+//   /a/ 723 [730] / 1133 [1090]      /o/ 573 [570] /  817 [ 840]
+//   /u/ 371 [300] /  923 [ 870]
+//
+// EVERY F2 IS INSIDE 7% AND THREE ARE INSIDE 3%. /e/ is the one that misses, by
+// 17%, and it misses for a structural reason worth writing down: a mid-front
+// vowel wants a WIDE pharynx behind a mid constriction, and one bump on a
+// uniform tube has no way to widen anything — every shape it can make is the
+// neutral tube with something taken out of it. The search's answer is to barely
+// constrict at all (0.554 is half open) and accept a near-schwa. A second degree
+// of freedom in the area function would fix it and would cost a parameter; five
+// vowels of which four are on the nose is where this stops.
+//
+// The order is the vowel triangle, i-e-a-o-u, so that ba.listInterp's continuous
+// index is a walk a mouth could make and a `vowel` glide is a diphthong.
+ktVowTp(v) = v : ba.listInterp((0.598, 0.630, 0.168, 0.265, 0.520));
+ktVowTd(v) = v : ba.listInterp((0.060, 0.554, 0.060, 0.102, 0.068));
+ktVowTl(v) = v : ba.listInterp((0.420, 0.095, 0.420, 0.320, 0.268));
+ktVowLp(v) = v : ba.listInterp((0.695, 1.000, 0.885, 0.178, 0.118));
+
+// ---- the consonant table ----------------------------------------------------
+// Eight articulations, in the order the driver draws them:
+//   0 /b/  1 /d/  2 /g/  3 /m/  4 /n/  5 /s/  6 /f/  7 /l/
+// A LABIAL DOES NOT MOVE THE TONGUE. The first cut of this table put /b/ and
+// /m/ at tongue position 0.97, which closes the tract at the right place and is
+// still wrong: it drags a narrow constriction the length of the palate on the
+// way to the vowel, and the F2 that comes out of the release is the closed back
+// cavity's third resonance (1720 Hz measured) instead of a labial locus. Real
+// lips close while the tongue is already sitting in the vowel. So `Ot` and `Ol`
+// say who OWNS the closure, and whoever does not own it holds the vowel's value.
+ktConPl(c) = c : ba.listInterp((0.50, 0.80, 0.55, 0.50, 0.80, 0.84, 0.50, 0.78));
+ktConDi(c) = c : ba.listInterp((0.50, 0.00, 0.00, 0.50, 0.00, 0.055, 0.50, 0.20));
+ktConLn(c) = c : ba.listInterp((0.20, 0.10, 0.13, 0.20, 0.10, 0.090, 0.20, 0.14));
+ktConLb(c) = c : ba.listInterp((0.00, 1.00, 1.00, 0.00, 1.00, 1.00, 0.05, 1.00));
+ktConVe(c) = c : ba.listInterp((0.00, 0.00, 0.00, 0.85, 0.85, 0.00, 0.00, 0.00));
+ktConFr(c) = c : ba.listInterp((0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.75, 0.00));
+ktConBu(c) = c : ba.listInterp((1.00, 1.00, 0.90, 0.00, 0.00, 0.00, 0.00, 0.00));
+ktConVo(c) = c : ba.listInterp((0.15, 0.15, 0.15, 1.00, 1.00, 0.00, 0.00, 1.00));
+ktConTx(c) = c : ba.listInterp((0.99, 0.90, 0.66, 0.99, 0.90, 0.91, 0.99, 0.86));
+ktConOt(c) = c : ba.listInterp((0.00, 1.00, 1.00, 0.00, 1.00, 1.00, 0.00, 1.00));
+ktConOl(c) = c : ba.listInterp((1.00, 0.00, 0.00, 1.00, 0.00, 0.00, 1.00, 0.00));
+
+// ---- determinism ------------------------------------------------------------
+// A SEED IS A SENTENCE, and it has to be one on a voice that gets POOLED. The
+// obvious way to randomise a syllable is no.noise sampled and held, and it is
+// wrong here: no.noise's state depends on how long this instance has been
+// running, so a voice reused for its ninth note babbles differently from the
+// same voice on its first, and the offline press and the browser diverge the
+// moment their instance histories do. Instead the syllable counter resets on
+// the gate and every choice is a HASH of (counter, seed) — a pure function, so
+// note number seven of seed 3 says the same thing wherever it is played and
+// however old the voice unit is. Integer mix, the usual shift-xor-multiply
+// shape; the mask keeps it positive and the reciprocal turns it into 0..1.
+ktHash(x) = h3 & 2147483647
+with {
+  h0 = int(x)*374761393 + 668265263;
+  h1 = h0 xor (h0 >> 13);
+  h2 = h1*1274126177;
+  h3 = h2 xor (h2 >> 16);
+};
+ktRnd(x) = float(ktHash(x)) * 4.656613e-10;
+
+// ---- the syllable clock -----------------------------------------------------
+// Phase inside the current syllable, and which syllable it is. Kept as a
+// fraction plus an integer rather than one running count because a float
+// counting samples stops being an integer after about six minutes at 44.1 kHz,
+// and a syllable index that starts skipping is a sentence that starts skipping.
+ktClock(rate, gate) = clk ~ (_,_)
+with {
+  clk(p0, k0) = p, k
+  with {
+    adv  = p0 + rate/ma.SR;
+    wrap = adv >= 1.0;
+    p    = ba.if(gate < 0.5, 0.0, ba.if(wrap, adv - 1.0, adv));
+    k    = ba.if(gate < 0.5, 0.0, k0 + wrap);
+  };
+};
+
+// ---- the driver -------------------------------------------------------------
+// A SYLLABLE IS A CLOSURE, A MOVE, AND A VOWEL. Each one holds its consonant
+// articulation for `hold` of the syllable, slides to the vowel over the next
+// stretch on a smoothstep, and sits there until the next syllable begins. The
+// slide is the whole point: it is a linear walk in ARTICULATION, and what comes
+// out of the far end is a formant transition, which is what an ear hears as a
+// consonant. Which consonant, which vowel, and how long the two gestures take
+// are all drawn from ktRnd on the syllable counter, so a seed is a sentence.
+ktBabble(seed, rate, gate) = tp, td, tl, lp, ve, tx, tb, vo
+with {
+  ck = ktClock(rate, gate);
+  p  = ck : (_,!);
+  k  = ck : (!,_);
+  h(j)   = ktRnd(k*8.0 + seed*104729.0 + j);
+  ci     = floor(h(0)*7.999);
+  vi     = floor(h(1)*4.999);
+  hold   = 0.20 + 0.10*h(2);
+  glidee = hold + 0.12 + 0.14*h(3);
+  u  = max(0.0, min(1.0, (p - hold)/(glidee - hold)));
+  m  = u*u*(3.0 - 2.0*u);
+  mix(a, b) = a*(1.0 - m) + b*m;
+  ot = ktConOt(ci) > 0.5;
+  ol = ktConOl(ci) > 0.5;
+  vTp = ktVowTp(vi); vTd = ktVowTd(vi); vTl = ktVowTl(vi); vLp = ktVowLp(vi);
+  tp = mix(ba.if(ot, ktConPl(ci), vTp), vTp);
+  td = mix(ba.if(ot, ktConDi(ci), vTd), vTd);
+  tl = mix(ba.if(ot, ktConLn(ci), vTl), vTl);
+  lp = mix(ba.if(ol, ktConLb(ci), vLp), vLp);
+  ve = mix(ktConVe(ci), 0.0);
+  vo = mix(ktConVo(ci), 1.0);
+  tx = ktConTx(ci);
+  // THE RELEASE. A plosive is a closure that stops, and then a transient — the
+  // pressure behind the closure discharging through a gap that is still narrow.
+  // The trigger is the moment the articulation starts to move; the 4.5 ms decay
+  // is the burst, and it is injected at the constriction like any other
+  // turbulence, which is what makes /b/ /d/ /g/ burst in three different places.
+  trig   = (p >= hold) * (p' < hold) * ktConBu(ci);
+  bdecay = trig : + ~ *(exp(-1.0/(0.0045*ma.SR)));
+  tb = mix(ktConFr(ci), 0.0)*0.45 + bdecay*0.9;
+};
