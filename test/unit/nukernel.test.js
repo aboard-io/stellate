@@ -9557,12 +9557,15 @@ console.log("one engine: the second one is gone and cannot come back quietly");
      (e) THE INSTRUMENTAL CATALOGUE IS BYTE-IDENTICAL, held against HEAD through
          the rendered events — not the config — so "we left techno alone" is
          measured rather than asserted.
-     (f) THE COMPASS. A voice unit is not a sampler, so audio/plan.js homeFor
-         gives it no whole-line octave home (windowOf returns null) and all it
-         gets is the parent's PER-NOTE fold into the voice type's own window.
-         A line wider than that window comes back with its intervals rewritten,
-         so the fold damage is measured here and printed: it is the number that
-         says whether a chosen voice type can say the part at all. */
+     (f) THE COMPASS. A voice unit is not a sampler, and it used to be refused
+         the whole-line octave home for exactly that reason — windowOf answered
+         null for anything without a `sampler`, so all a sung part got was the
+         parent's PER-NOTE fold into the voice type's window, and a line wider
+         than that window came back with its intervals rewritten. windowOf now
+         reads the compass a voice declares, so the pair BEFORE (the bare fold)
+         and AFTER (the fold under the home) is printed per part: it is the
+         number that says whether a chosen voice type can say the part at all,
+         and it is what made `hymn` castable. */
 console.log("the cast — the records that have a singer get one");
 {
   const fs77 = require("fs"), path77 = require("path"), cp77 = require("child_process");
@@ -9575,7 +9578,13 @@ console.log("the cast — the records that have a singer get one");
   // roster derived from the table it is checking cannot notice the table
   // losing a row — which is exactly how an organ goes quiet without failing.
   const CAST77 = {
-    // the four this round put in front of a microphone
+    // the congregation, cast on 2026-08-18 by the register home — the one
+    // genre this file had measured as UNCASTABLE, and the reason it now is not
+    // is audio/plan.js windowOf answering for a throat. (f) below prints the
+    // number that changed its mind
+    hymn:            [[0, "choir", "tenor"], [1, "choir", "tenor"],
+                      [2, "choir", "tenor"]],
+    // the four the round before put in front of a microphone
     gospel:          [[1, "lead",  "alto"]],
     rnb:             [[1, "lead",  "alto"]],
     darkrnb:         [[0, "lead",  "countertenor"]],
@@ -9678,7 +9687,10 @@ console.log("the cast — the records that have a singer get one");
     // the four cast this round, and the thing each one was not allowed to lose
     const KEPT = { gospel: ["percussive_organ"], rnb: ["legend_ep_2"],
                    darkrnb: ["halo_pad"],
-                   confessionalpop: ["steel_string_guitar", "polysynth"] };
+                   confessionalpop: ["steel_string_guitar", "polysynth"],
+                   // the pipes hold the hymn's bass part, which at MIDI 7-38 is
+                   // nobody's part to sing — and keep the record a band
+                   hymn: ["church_organ"] };
     for (const [gk, must] of Object.entries(KEPT)) {
       const g = GENRES[gk];
       const cast = [];
@@ -9724,7 +9736,7 @@ console.log("the cast — the records that have a singer get one");
     if (HEADG) {
       let same = 0;
       for (const gk of GK) {
-        if (CAST77[gk] || gk === "hymn") continue;   // hymn's change is comment-only, held below
+        if (CAST77[gk]) continue;
         const a = GENRES[gk], b = HEADG[gk];
         ok(!!b, gk + " is new and was not part of casting singers");
         if (!b) continue;
@@ -9741,14 +9753,15 @@ console.log("the cast — the records that have a singer get one");
            gk + "'s tone block moved and it has no singer");
         if (mine === head) same++;
       }
-      // hymn is the one genre that was READ this round and deliberately not
-      // cast (its four parts are 31 semitones wide and no throat is), so its
-      // score must be exactly what it was — the change there is prose only
-      const h = GENRES.hymn, hb = HEADG.hymn;
-      ok(sig(K.render(P, h, h.bars)) === sig(K.render(P, hb, hb.bars)) &&
-         JSON.stringify(h.instr) === JSON.stringify(hb.instr),
-         "hymn moved — it was measured as uncastable and left alone, so the only " +
-         "change there should have been the comment that says why");
+      // hymn IS cast now, and the one thing that must not have moved with it is
+      // the SCORE: the register home moves a line at the plan, not at the
+      // composer, so the notes a hymnal prints are the notes it printed before.
+      {
+        const h = GENRES.hymn, hb = HEADG.hymn;
+        ok(sig(K.render(P, h, h.bars)) === sig(K.render(P, hb, hb.bars)),
+           "hymn's four parts render differently than they did at HEAD — casting " +
+           "the congregation was supposed to change who sings the line, not the line");
+      }
       console.log("  (e) " + same + " untouched genres render byte-identical to HEAD");
     }
   }
@@ -9768,7 +9781,12 @@ console.log("the cast — the records that have a singer get one");
     // octaves up to the floor, PER NOTE (mapEvents; there is no whole-line home
     // for a unit that is not a sampler — audio/plan.js windowOf returns null)
     const foldTo = (n, lo, hi) => { let m = n; while (m > hi) m -= 12; while (m < lo) m += 12; return m; };
-    const NEW77 = new Set(["gospel", "rnb", "darkrnb", "confessionalpop"]);
+    // ...and the WHOLE-LINE HOME above it, which a voice now gets. This is the
+    // shipped function, not a copy: audio/plan.js homeFor is what the compile
+    // calls, and windowOf hands it exactly [midi(freqMin), midi(freqMax)] for a
+    // throat, which is the compass VOICE_TYPE above declares.
+    const P77 = await import("../../nukernel/audio/plan.js");
+    const NEW77 = new Set(["gospel", "rnb", "darkrnb", "confessionalpop", "hymn"]);
     const rows77 = [];
     for (const [gk, rows] of Object.entries(CAST77)) {
       if (!VT77) break;
@@ -9787,11 +9805,18 @@ console.log("the cast — the records that have a singer get one");
         ok(!!W, gk + " voice " + v + " names a voice type the parent has never heard of: " + voice);
         if (!W) continue;
         const lo = midiOf(W.lo), hi = midiOf(W.hi);
-        const f = ps.map(p => foldTo(p, lo, hi));
-        let moved = 0;
-        for (let i = 1; i < ps.length; i++) if (f[i] - f[i - 1] !== ps[i] - ps[i - 1]) moved++;
-        const dmg = ps.length > 1 ? moved / (ps.length - 1) : 0;
-        rows77.push([gk, v, seat, voice, Math.min(...ps), Math.max(...ps), dmg]);
+        const dmgOf = (f) => {
+          let moved = 0;
+          for (let i = 1; i < ps.length; i++) if (f[i] - f[i - 1] !== ps[i] - ps[i - 1]) moved++;
+          return ps.length > 1 ? moved / (ps.length - 1) : 0;
+        };
+        // BEFORE is the per-note fold standing alone, which is all a voice used
+        // to get; AFTER is the same fold under the whole-line home. The pair is
+        // the measurement that made hymn castable, so both are printed.
+        const bare = dmgOf(ps.map(p => foldTo(p, lo, hi)));
+        const home = P77.homeFor(ps, [lo, hi]) * 12;
+        const dmg = dmgOf(ps.map(p => foldTo(p + home, lo, hi)));
+        rows77.push([gk, v, seat, voice, Math.min(...ps), Math.max(...ps), dmg, bare, home / 12]);
         // THE HARD FLOOR, for the whole roster: above four intervals in five
         // rewritten, the fold is louder than the tune and the part is not being
         // sung, it is being wrapped.
@@ -9808,11 +9833,248 @@ console.log("the cast — the records that have a singer get one");
              "voice is worse than no voice");
       }
     }
-    rows77.sort((a, b) => b[6] - a[6]);
-    for (const [gk, v, seat, voice, lo, hi, dmg] of rows77)
+    rows77.sort((a, b) => b[7] - a[7]);
+    for (const [gk, v, seat, voice, lo, hi, dmg, bare, home] of rows77)
       console.log("  (f) " + (gk + " v" + v).padEnd(22) + seat.padEnd(6) +
                   voice.padEnd(13) + ("MIDI " + lo + "-" + hi).padEnd(14) +
-                  "fold " + (dmg * 100).toFixed(0) + "%");
+                  ("home " + (home >= 0 ? "+" : "") + home).padEnd(10) +
+                  "fold " + (bare * 100).toFixed(0) + "% -> " + (dmg * 100).toFixed(0) + "%");
+  }
+}
+
+/* ---------------------------------------------------------------- 78. WHAT REACHES THE ENGINE
+   THREE THINGS THE PLAN HANDS THE PARENT, AND ONE WALK THAT ASKS FOR ALL OF THEM.
+
+   audio/plan.js barPlan is a PURE function over a song — the same answer for the
+   live walk and for anything that renders — so every question below is a walk in
+   node over the shipped compile, not a session in a browser. That matters
+   because all three of these shipped broken while every check passed: the page
+   said "0v · stream", the console named a line inside a worker, and nothing in
+   test/ was reading the table the engine was actually being handed.
+
+     (a) NOTHING SHIPS NAMELESS. Every unit in every box's table either plays a
+         sampler or names a module compiled into engine/faust/dist, and so does
+         every INSERT on it. The desk's chips used to be appended raw — the
+         `{type, params}` recipe dialect, which is the INPUT to state-engine
+         insertChain and carried no `module` — so the renderer interpolated
+         `undefined` into a wasm URL on every box with an effect chip. That is
+         the "engine error: loadDSPFactory" a listener saw, and once a loader
+         guard made it throw it was the whole song. Both ends are fixed now
+         (fields.js fxChain names the module, audio/desk.js insertsFor finishes
+         the recipe through the parent's chain), and this is the walk that says
+         so for every box rather than for the one somebody happened to play.
+     (b) A WIDE UNIT KEEPS ITS WIDTH. The renderer tests a unit's INSERT chain
+         before it tests `u.stereo`, so a chained unit renders through a mono
+         buffer and only channel 0 survives — four singers arrive as one. So
+         nothing stereo may reach the engine carrying inserts.
+     (c) A SUNG PART GETS A REGISTER HOME. windowOf answers for a throat now, so
+         homeFor moves a whole sung line into the voice's compass before the
+         parent's per-note fold can wrap it note by note. Measured as the fold
+         damage that found the bug: the share of a part's intervals the engine
+         rewrites, before the home and after it. */
+console.log("what reaches the engine — a name, a width, and a register to sing in");
+{
+  const fs78 = require("fs"), path78 = require("path");
+  const ROOT78 = path78.join(__dirname, "../..");
+  const ST78 = await import("../../nukernel/ui/state.js");
+  const P78 = await import("../../nukernel/audio/plan.js");
+  const { SE: SE78 } = await P78.warmEngine();
+  const C78 = require("../../nukernel/compose.js");
+  const TE78 = await import("../../nukernel/audio/to-engine.js");
+  // WHO SINGS, derived — §77(a) is where the roster is PINNED by hand, so
+  // deriving it here reads the same list without a second copy to drift
+  const SINGERS78 = GK.filter((gk) => {
+    const g = GENRES[gk];
+    for (let v = 0; v < (g.voices || 1); v++)
+      if (TE78.voiceForInstr(Array.isArray(g.instr)
+        ? g.instr[Math.min(v, g.instr.length - 1)] : g.instr, g.tone)) return true;
+    return false;
+  });
+  // what is actually compiled and servable. A module id that is not a file here
+  // is a 404 at the worklet, which is the same silence as no module at all.
+  const DIST78 = new Set(fs78.readdirSync(path78.join(ROOT78, "engine/faust/dist"))
+    .filter(f => f.endsWith("-module.wasm")).map(f => f.slice(0, -12)));
+  const SEEDS78 = [1, 3, 7];
+
+  // ONE WALK, ONE BAR PER BOX. The desk is a per-BOX fact (a section's chips, a
+  // part's chips, the box's own sends), so the first bar of every box is the
+  // whole space of unit tables a song can hand the engine — and asking every bar
+  // of every genre at every seed is the same answer several hundred thousand
+  // times, which is the difference between a gate people run and one they skip.
+  let nUnits78 = 0, nIns78 = 0, nBox78 = 0, stereo78 = 0;
+  const nameless78 = [], wide78 = [];
+  for (const gk of GK) for (const sd of SEEDS78) {
+    ST78.adoptSong(C78.compose(gk, sd), "gate");
+    P78.compile();
+    const TL78 = P78.timeline();
+    for (let i = 0; i < TL78.length; i++) {
+      if (!TL78[i].first) continue;
+      const bp = P78.barPlan(i);
+      if (!bp) continue;
+      nBox78++;
+      for (const [key, u] of Object.entries(bp.units)) {
+        if (!u || key.slice(0, 2) === "__") continue;
+        nUnits78++;
+        if (!u.sampler && !(u.module && DIST78.has(u.module)))
+          nameless78.push(gk + "/" + sd + " " + key + " unit module=" + u.module);
+        if (u.stereo) {
+          stereo78++;
+          if (u.inserts && u.inserts.length)
+            wide78.push(gk + "/" + sd + " " + key + " " + u.module + " carries " +
+                        u.inserts.length + " insert(s)");
+        }
+        for (const eff of (u.inserts || [])) {
+          nIns78++;
+          if (!eff || !eff.module || !DIST78.has(eff.module))
+            nameless78.push(gk + "/" + sd + " " + key + " insert type=" +
+                            (eff && eff.type) + " module=" + (eff && eff.module));
+        }
+      }
+    }
+  }
+
+  /* (a) NOTHING SHIPS NAMELESS */
+  ok(nUnits78 > 5000 && nIns78 > 5000,
+     "the walk saw " + nUnits78 + " units and " + nIns78 + " inserts — it is not walking");
+  ok(nameless78.length === 0, nameless78.length + " thing(s) reach the engine with no " +
+     "module the loader can fetch, first three: " + nameless78.slice(0, 3).join(" | ") +
+     " — an effect with no module is a 404 in a URL and, with the loader guarded, silence");
+  console.log("  (a) " + nUnits78 + " units + " + nIns78 + " inserts across " + nBox78 +
+              " boxes, every one of them named");
+
+  /* (b) A WIDE UNIT KEEPS ITS WIDTH */
+  ok(stereo78 > 100, "only " + stereo78 + " stereo unit(s) in the whole catalogue — " +
+     "this claim is proving nothing");
+  ok(wide78.length === 0, wide78.length + " stereo unit(s) reach the engine with an " +
+     "insert chain, first three: " + wide78.slice(0, 3).join(" | ") + " — the renderer " +
+     "folds a chained unit to channel 0, so those arrive mono");
+  {
+    // WHY the law is the law, held against the engine's own source: the insert
+    // branch is tested BEFORE the stereo branch, so a chain wins and the width
+    // never reaches the wide buses. If that order ever changes, this whole
+    // trade (the chorus, or the room) is worth reopening.
+    const sr78 = fs78.readFileSync(
+      path78.join(ROOT78, "engine/faust/live/stream-renderer.js"), "utf8");
+    ok(/if \(ubuf\) \{[\s\S]{0,400}?\} else if \(u\.stereo && buses\.wL\)/.test(sr78),
+       "stream-renderer no longer folds a chained unit to channel 0 before it looks " +
+       "at u.stereo — audio/desk.js widthKept is trading away inserts for a width " +
+       "the engine may now be able to keep anyway");
+  }
+  {
+    // and the choir that started it, by name: gregorian's section arrives wide,
+    // pooled and spread — the four singers, not one of them four times
+    ST78.adoptSong(C78.compose("gregorian", 1), "gate");
+    P78.compile();
+    const U = P78.barPlan(0).units;
+    const ch = Object.entries(U).find(([k, u]) => u && u.module === "voice_choir");
+    ok(!!ch, "gregorian seats no voice_choir at all — the record is a hall of monks");
+    if (ch) {
+      const u = ch[1];
+      ok(u.stereo === true && !(u.inserts && u.inserts.length),
+         "gregorian's choir reaches the engine stereo=" + u.stereo + " with " +
+         ((u.inserts || []).length) + " insert(s) — its width dies in the chain");
+      ok(u.pool >= 2 && u.params.spread > 0 && u.params.drift > 0 && u.params.width > 0,
+         "gregorian's choir arrives with pool " + u.pool + ", spread " + u.params.spread +
+         ", drift " + u.params.drift + ", width " + u.params.width + " — a choir with no " +
+         "spread is one singer");
+      console.log("  (b) " + stereo78 + " stereo units, none chained; gregorian's choir " +
+                  "pool " + u.pool + " spread " + (+u.params.spread).toFixed(2) +
+                  " width " + (+u.params.width).toFixed(2));
+    }
+  }
+
+  /* (c) A SUNG PART GETS A REGISTER HOME */
+  {
+    // the parent's own compasses, read off its source (the §77(f) mirror), so a
+    // window this file asserts is the window the engine folds into
+    const se78 = fs78.readFileSync(
+      path78.join(ROOT78, "engine/faust/voices/state-engine.js"), "utf8");
+    const mv78 = se78.match(/const VOICE_TYPE = \{([\s\S]*?)\n  \};/);
+    const VT78 = mv78 ? new Function("return {" + mv78[1] + "}")() : null;
+    ok(!!VT78, "cannot read VOICE_TYPE out of state-engine.js");
+    const midiOf78 = (hz) => 69 + 12 * Math.log2(hz / 440);
+    // the five throats, as the parent declares them: none of them is wider than
+    // ~25 semitones, which is the whole reason a wide part needs a HOME and not
+    // just a fold
+    if (VT78) for (const [n, V] of Object.entries(VT78))
+      ok(midiOf78(V.hi) - midiOf78(V.lo) >= 12,
+         "the " + n + " throat is narrower than an octave — no line fits it in key");
+    const foldTo78 = (n, w) => { let m = n; while (m > w[1]) m -= 12; while (m < w[0]) m += 12; return m; };
+
+    // A CEILING IS NOT A WINDOW. Every synth unit carries the base freqMax
+    // (4000 Hz) and most declare no floor at all, and those must still answer
+    // null — the home is for a part with somewhere to be, not for every voice
+    // in the catalogue suddenly moving an octave.
+    {
+      const bare = SE78.pitchedUnit("melody", { model: "saw" },
+                                    { bpm: 120, seed: 1, sampledOnly: true });
+      ok(bare.freqMax > 0 && !(bare.freqMin > 0),
+         "a plain saw now declares a floor — the null case below is no longer the null case");
+      ok(P78.windowOf(SE78, bare) === null,
+         "windowOf answers a window for a unit that declares only a ceiling — every " +
+         "synth in the table would start moving octaves it never moved before");
+    }
+
+    let before78 = 0, after78 = 0, parts78 = 0, worst78 = 0, hymnParts = 0;
+    const rows78 = [];
+    for (const gk of SINGERS78) for (const sd of SEEDS78) {
+      ST78.adoptSong(C78.compose(gk, sd), "gate");
+      P78.compile();
+      const homes = P78.homes(), units = P78.unitTable();
+      const notes = new Map();
+      for (const bar of P78.timeline()) for (const e of bar.ev)
+        if (e._seat != null && e.n != null) {
+          let a = notes.get(e._seat); if (!a) notes.set(e._seat, a = []);
+          a.push(e.n);
+        }
+      for (const [v, ps] of notes) {
+        const u = units["v" + v];
+        if (!u || !u.module || u.module.slice(0, 6) !== "voice_" || ps.length < 2) continue;
+        const w = P78.windowOf(SE78, u);
+        ok(!!w, gk + "/" + sd + " v" + v + ": a " + u.module + " still answers no window " +
+           "— the throat has no register to be moved into");
+        if (!w) continue;
+        // the window IS the compass the parent folds into, not a number this
+        // file invented: freqMin/freqMax are the voice type's own two Hz
+        ok(Math.abs(w[0] - midiOf78(u.freqMin)) < 1e-9 &&
+           Math.abs(w[1] - midiOf78(u.freqMax)) < 1e-9,
+           gk + " v" + v + ": windowOf and the unit's declared compass disagree");
+        const dmg = (f) => { let mv = 0;
+          for (let i = 1; i < ps.length; i++) if (f[i] - f[i - 1] !== ps[i] - ps[i - 1]) mv++;
+          return mv / (ps.length - 1); };
+        const bare = dmg(ps.map(p => foldTo78(p, w)));
+        const h = homes[v] * 12;
+        const home = dmg(ps.map(p => foldTo78(p + h, w)));
+        before78 += bare; after78 += home; parts78++;
+        worst78 = Math.max(worst78, home);
+        if (gk === "hymn") { hymnParts++; rows78.push([gk + "/" + sd, v, u.module, ps, w, h, bare, home]); }
+        // THE HARD FLOOR, on the line the engine is handed rather than on the
+        // genre alone: a composed song stacks layers, so a seat can be wider
+        // than any one genre writes, and past three intervals in five rewritten
+        // the fold is louder than the tune.
+        ok(home <= 0.6, gk + "/" + sd + " v" + v + ": a " + u.module + " still folds " +
+           (home * 100).toFixed(0) + "% of the line's intervals after the home — the " +
+           "part is " + (Math.max(...ps) - Math.min(...ps)) + " semitones wide and the " +
+           "throat has " + Math.round(w[1] - w[0]));
+      }
+    }
+    ok(parts78 > 100, "only " + parts78 + " sung part(s) measured — the roster is not singing");
+    ok(after78 <= before78 * 0.6,
+       "the register home takes the roster's fold damage from " +
+       (before78 / parts78 * 100).toFixed(1) + "% to " + (after78 / parts78 * 100).toFixed(1) +
+       "% — it was supposed to roughly halve it, and a home that does not is a home " +
+       "that is not being applied to sung parts");
+    ok(hymnParts > 0, "hymn sings no part at all — the congregation was cast and " +
+       "nothing reached a throat");
+    console.log("  (c) " + parts78 + " sung parts: fold " +
+                (before78 / parts78 * 100).toFixed(1) + "% -> " +
+                (after78 / parts78 * 100).toFixed(1) + "% (worst part " +
+                (worst78 * 100).toFixed(0) + "%)");
+    for (const [gk, v, mod, ps, w, h, bare, home] of rows78.slice(0, 6))
+      console.log("      " + (gk + " v" + v).padEnd(14) + mod.padEnd(12) +
+                  ("MIDI " + Math.min(...ps) + "-" + Math.max(...ps)).padEnd(14) +
+                  ("home " + (h / 12 >= 0 ? "+" : "") + h / 12).padEnd(10) +
+                  "fold " + (bare * 100).toFixed(0) + "% -> " + (home * 100).toFixed(0) + "%");
   }
 }
 

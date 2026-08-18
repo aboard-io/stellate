@@ -3045,28 +3045,41 @@
       // measured, the whole tape peaked at 0.019 with nothing above 2.5 kHz
       // in it. A Boston meeting house in 1831 has pipes anyway.
       //
-      // AND THE CONGREGATION DOES NOT SING IT, WHICH IS MEASURED AND NOT AN
-      // OVERSIGHT. This is the one genre in the table whose own words name four
-      // SINGERS ("the soprano, the tune"), so it was the first candidate for
-      // the vocal tract, and it is the one that cannot have it: the four parts
-      // render at MIDI 79-110 / 52-83 / 24-55 / 7-38 — six octaves apart, each
-      // line 31 semitones wide — and no throat in the formant tables has a
-      // window wider than 25. A SAMPLER survives that because audio/plan.js
-      // homeFor moves the whole line by octaves with its contour intact; a
-      // voice module is not a sampler, windowOf returns null for it, and all it
-      // gets is the parent's PER-NOTE fold. Measured against all five voice
-      // types, every part comes back with 44-51% of its intervals changed — the
-      // fold would be louder than the tune. Casting a congregation here needs
-      // either this genre's registers rewritten or an octave home for voice
-      // units, and both of those are another file's decision. A wrong voice is
-      // worse than no voice, so the pipes keep it.
-      instr: "church_organ",
+      // AND NOW THE CONGREGATION SINGS IT. This is the one genre in the table
+      // whose own words name four SINGERS ("the soprano, the tune"), and it was
+      // refused one for a measured reason: the four parts render at MIDI 79-110
+      // / 52-83 / 24-55 / 7-38 — six octaves apart, each line 31 semitones wide
+      // — against a formant throat no wider than 25, and all a voice module got
+      // was the parent's PER-NOTE fold, which wrapped 44-51% of every part's
+      // intervals. A sampler survived the same spread because audio/plan.js
+      // homeFor moves a whole line by octaves with its contour intact, and
+      // windowOf answered null for anything that was not one.
+      //
+      // windowOf now reads a voice's own declared compass, so the congregation
+      // moves whole like everybody else, and the same measurement reads
+      // 51/24/51% -> 19/24/12%: the fold is quieter than the tune. THE THROAT IS
+      // ONE THROAT — a mouth is a genre fact, not a chair fact — so the voice
+      // type is the one whose window holds all three sung parts after the home,
+      // which measured across the five is the tenor (alto, the hymnal's own,
+      // comes back 19/27/35%). And the BASS PART IS STILL THE PIPES: at MIDI
+      // 7-38 it is nobody's part to sing, an organ is what holds a hymn's bass
+      // in a meeting house anyway, and it keeps this record a band rather than
+      // an a-cappella one.
+      instr: ["ahh_choir", "ohh_voices", "ahh_choir", "church_organ"],
       entry: () => 0, reg: v => [2, 0, -2, -4][v], realize: () => "line",
       kit: {}, nobass: true, harmony: "cycle",
       mode: MODES.ionian, scale: SCALES.major, diatonic: true,
       roots: [0, 3, 0, 4, 0, 5, 3, 4],           // I IV I V | I vi IV V
       artic: "legato", maxHold: 4,
-      tone: { wave: "triangle", cut: 2200, q: 0.8, atk: .05, rel: 1.5, gain: .24, verb: .5 },
+      tone: { wave: "triangle", cut: 2200, q: 0.8, atk: .05, rel: 1.5, gain: .24, verb: .5,
+              // WHO SINGS: the hymnal mouth — round vowels, a little wobble, and
+              // the loosest blend in the table, because a pew is not a choir
+              // stall — on the tenor throat the measurement above chose. The two
+              // choir ids alternate so the three parts do not all arrive on the
+              // same syllable: `ohh_voices` rotates the same word one place
+              // (audio/to-engine.js PATCH_VOICE `phase`), which is a-o against
+              // o-a, which is what a room full of people sounds like.
+              mouth: { ...MOUTHS.hymnal, voice: "tenor" } },
       words: ["the soprano, the tune", "the alto, a third under",
               "the tenor, a fifth under", "the bass, the octave and the root"],
       // PARALLEL, NOT MIRRORED — the one field that separates a hymnal from

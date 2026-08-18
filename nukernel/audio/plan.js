@@ -37,7 +37,7 @@
 import { GENRES, BASSSYNTH, BASS_INSTR, instrOf } from "../ui/deps.js";
 import { SONG, SLOTS, GROOVE, SWING, POOL, RUBATO, loopOnly, bpm } from "../ui/state.js";
 import { gid, songBars, poolInstrOf, kitOf } from "../ui/derive.js";
-import { toEngine, samplerLibFor } from "./to-engine.js";
+import { toEngine, samplerLibFor, recipeFor } from "./to-engine.js";
 import { deskUnits, deskAmp, deskSweeps, voiceRoster } from "./desk.js";
 import { isSynthFont, fontDef } from "./fonts.js";
 
@@ -93,15 +93,39 @@ export async function warmEngine() { D = await deps(); return D; }
 const HOME_MAX = 3;                                // ±3 octaves is already absurd
 const REGISTER_FIT = 0.95;                         // the parent's threshold, verbatim
 const midiOfHz = (hz) => 69 + 12 * Math.log2(hz / 440);
+// A VOICE HAS A COMPASS, AND IT USED TO BE THE ONE THING THIS COULD NOT SAY.
+// This read `unit.sampler` and returned null for everything else — "a synth
+// voice folds by its own law" — which was true and was not a law, it was the
+// PER-NOTE fold and nothing above it. So a sung part got no whole-line home and
+// every note wider than the throat was wrapped where it stood: measured on
+// hymn, four parts 31 semitones wide against a 25-semitone throat came back
+// with 44-51% of their intervals rewritten, which is why the most obviously
+// vocal record in the catalogue was refused a singer.
+//
+// The window is still the PARENT'S OWN, exactly as it is for a sampler. A voice
+// or synth unit declares `freqMin`/`freqMax` (state-engine pitchedUnit — the
+// chorale and singer cases carry the voice type's compass verbatim), and the
+// parent's per-note fold reads those two numbers and nothing else, with a 52 Hz
+// floor for dx7 whose freq slider is compiled [50,1000]. Reading the same two
+// here is what puts a throat under the whole-line law rather than beside it —
+// and a model that declares no floor still answers null, so every synth that
+// only ever had a ceiling folds exactly as it did.
 export function windowOf(SE, unit) {
-  const s = unit && unit.sampler;
-  if (!s) return null;                             // a synth voice folds by its own law
+  if (!unit) return null;
+  const s = unit.sampler;
   let lo = -Infinity, hi = Infinity;
-  const R = SE.INSTRUMENT_RANGE && SE.INSTRUMENT_RANGE[s.id];
-  if (R) { lo = R[0]; hi = R[1]; }
-  if (s.stretchMinHz > 0 && s.stretchMaxHz > 0) {
-    lo = Math.max(lo, midiOfHz(s.stretchMinHz));
-    hi = Math.min(hi, midiOfHz(s.stretchMaxHz));
+  if (s) {
+    const R = SE.INSTRUMENT_RANGE && SE.INSTRUMENT_RANGE[s.id];
+    if (R) { lo = R[0]; hi = R[1]; }
+    if (s.stretchMinHz > 0 && s.stretchMaxHz > 0) {
+      lo = Math.max(lo, midiOfHz(s.stretchMinHz));
+      hi = Math.min(hi, midiOfHz(s.stretchMaxHz));
+    }
+  } else {
+    const fmax = unit.freqMax;
+    const fmin = unit.freqMin != null ? unit.freqMin : (unit.dx7 ? 52 : 0);
+    if (!(fmax > 0) || !(fmin > 0)) return null;
+    lo = midiOfHz(fmin); hi = midiOfHz(fmax);
   }
   if (!isFinite(lo) || !isFinite(hi)) return null;
   // an octave is the floor: a window narrower than twelve semitones cannot hold
@@ -220,18 +244,34 @@ export function compile() {
   // The old walk decided per BOX; the cast is the song's, so the decision is too
   // — and a chair that keeps its instrument across a key change keeps its octave
   // with it, which is what stopped a bridge sounding an octave off its verse.
-  const probe = seats.map((s) => SE.pitchedUnit(s.chair === "pad" ? "pad" : s.chair === "bass" ? "bass" : "melody",
-    recipeProbe(s, K), { bpm, seed: 1, sampledOnly: true }));
+  // THE PROBE IS THE TAPE'S OWN RESOLUTION, not a second opinion about it. It
+  // used to ask the sampler library directly, which answered `ahh_choir` with a
+  // recording of a choir while the tape seated the same chair on voice_choir —
+  // so the line was moved to fit a window the engine was never going to use.
+  // to-engine.recipeFor is the one chain (signature synth, then the patch the
+  // GM id photographs, then the sampled default), and it is what recipeFor's
+  // own caller uses one line later.
+  const lib = samplerLibFor(K, 1).samplerLib || {};
+  const probe = seats.map((s) => {
+    const r = recipeFor(s.chair, s, lib, []);
+    return SE.pitchedUnit(s.chair === "bass" ? "bass" : r.role, r.m,
+                          { bpm, seed: 1, sampledOnly: true });
+  });
+  // EVERY SEAT WITH A WINDOW GETS A HOME, whatever is making the sound. The
+  // `_syn` exclusion here said "a synth folds by its own law" and was the other
+  // half of windowOf's old refusal; with the window honest, a model that
+  // declares no floor still answers null and still gets home 0, and the ones
+  // that declare a compass — the throat above all — move whole.
   const notesOf = new Map();
   for (const bar of TL) for (const e of bar.ev)
-    if (e._seat != null && e.n != null && !e._syn) {
+    if (e._seat != null && e.n != null) {
       let a = notesOf.get(e._seat); if (!a) notesOf.set(e._seat, a = []);
       a.push(e.n);
     }
   const home = seats.map((s, v) => homeFor(notesOf.get(v) || [], windowOf(SE, probe[v])));
   HOMES = home; SEATS = seats;
   for (const bar of TL) for (const e of bar.ev)
-    if (e._seat != null && e.n != null) e.home = e._syn ? 0 : home[e._seat] * 12;
+    if (e._seat != null && e.n != null) e.home = home[e._seat] * 12;
 
   // ---- the translation: once per KIT ----------------------------------------
   // ONE KIT PER TRANSLATION, because the parent's drum lanes are named — kick,
@@ -295,14 +335,6 @@ export function compile() {
   for (const b of BARS) b.drums.sort((x, y) => x.beat - y.beat);
   return TL;
 }
-// the minimum recipe the register probe needs — the same resolution toEngine
-// makes, asked of one seat. Kept here rather than exported from to-engine so the
-// translator has exactly one entry point.
-function recipeProbe(s, K) {
-  if (s.synth) return { model: s.synth.dsp, ...(s.synth.set || {}) };
-  const spec = (samplerLibFor(K, 1).samplerLib || {})[s.instr];
-  return spec && !spec.synth ? { model: "sampler", sampler: spec } : {};
-}
 
 /* ---------- the handoff ---------- */
 // how long bar n is, in beats — the parent's walk asks per bar
@@ -335,7 +367,7 @@ export function barPlan(n) {
   }
   return { ev: { pitched, drums, found: [], sfx: deskSweeps(sec, b.beats, boxBeatOf),
                  srcById: {}, totalBeats: b.beats },
-           units: deskUnits(KITS[b.kit] || UNITS, A, sec, boxBeatOf) };
+           units: deskUnits(KITS[b.kit] || UNITS, A, sec, boxBeatOf, D && D.SE) };
 }
 export const firstBarOfBox = (si) => TL.findIndex((b) => b.si === si && b.first);
 // where the box this bar belongs to STARTED, in song beats — the automation

@@ -50,11 +50,18 @@
 //   character chips (fields.js FX)
 //                            -> per-voice INSERTS on the units of the part that
 //                               asked, and on every seated voice when the SECTION
-//                               asks. The parent has no page-wide effect bus, so
-//                               the tails are per voice rather than pooled — a
-//                               real difference in the sound of a long reverb
-//                               chip, and the one place the surface is served by
-//                               a different mechanism underneath.
+//                               asks — FINISHED through the parent's own
+//                               state-engine insertChain on the way (insertsFor
+//                               below), which clamps a chip's knobs to the
+//                               module's declared sliders and stamps `barSec` on
+//                               the two tempo-synced ones. The parent
+//                               has no page-wide effect bus, so the tails are per
+//                               voice rather than pooled — a real difference in
+//                               the sound of a long reverb chip, and the one
+//                               place the surface is served by a different
+//                               mechanism underneath. A STEREO voice takes no
+//                               chips at all: the renderer's insert path is mono
+//                               (widthKept below).
 //
 // WHAT HAS NO HOME, said out loud rather than faked:
 //   * `hpf` — the mot "rise" compiles to a HIGHPASS sweep, and the parent's
@@ -71,7 +78,10 @@ import { GENRES, FX, MAX_FX, fxChain, SENDS, LEVELS, PANS, RATES, instrOf, BASSS
          partOf, chairKeys, resolvePartMix, faderDb, EQ_BANDS,
          eqDb, familyOf } from "../ui/deps.js";
 import { NuFields } from "../ui/deps.js";
-import { POOL } from "../ui/state.js";
+// bpm rides along for insertsFor: the parent resolves a chip's `rateBars` to Hz
+// off the state's tempo, so a chip that asks for a bar-locked wobble has to be
+// normalised against the song's own clock and not a default one.
+import { POOL, bpm } from "../ui/state.js";
 import { gid, stackOf, genreOf, kitOf, poolInstrOf } from "../ui/derive.js";
 
 const sendOf = (sec, k, dflt) => (sec[k] != null ? SENDS[sec[k]] : dflt);
@@ -384,6 +394,96 @@ function stripWith(strip, eq) {
 }
 
 /**
+ * A CHIP NAMES ITS MODULE; THE PARENT'S CHAIN IS WHAT FINISHES IT.
+ *
+ * fields.js fxChain now stamps `module: "insert_" + type` on every chip, which
+ * is what stopped the renderer interpolating `undefined` into a wasm URL and
+ * 404ing on every box that carried an effect. That is the name. This is the
+ * rest of the sentence, and it matters because a chip is written in the
+ * parent's `{type, params}` RECIPE dialect — the INPUT to state-engine's
+ * insertChain — and the recipe is not the resolved insert:
+ *
+ *   * insertChain CLAMPS every knob to the slider the module actually declares,
+ *     which is the difference between a value the DSP reads and one it ignores;
+ *   * it stamps `barSec` on the two tempo-synced inserts, and the renderer only
+ *     writes a chain's bar length when it sees that flag (runChain) — so
+ *     without it the tape echo and the bar-locked sweep run at whatever the
+ *     module's default clock is, tempo or no tempo;
+ *   * and it is the same function the units' OWN inserts already came through
+ *     (pitchedUnit), so a chip and a default insert end up the same shape.
+ *
+ * ONE CHIP AT A TIME, because the two ends count differently. insertChain caps
+ * a chain at two — the parent's DEFAULT policy for a chain it picked itself —
+ * and the desk's count is the page's own law (fields.js MAX_FX, three per part
+ * plus three per section). Asking for one chip per call gets the translation
+ * without the cap, so a board with four chips still sounds four.
+ *
+ * AND THE SWEEP SPEAKS A DIFFERENT DIALECT, which only shows up here. Every
+ * other chip's params are read by insertChain under the same names; filtersweep
+ * alone reads `lo`/`hi` as OCTAVES either side of the voice's cutoff, while the
+ * page (and the module itself) speak the Hz a sweep runs between. Anchoring the
+ * parent's base at the chip's own low end and asking for the octaves up to its
+ * high end is that translation, exactly: 400 -> 5200 comes back 400 -> 5200.
+ *
+ * A TYPE THE PARENT HAS NO CASE FOR KEEPS THE CHIP THE REGISTRY RESOLVED. The
+ * chain's switch is silent on anything it does not know, and a chip that
+ * vanishes is worse than one that is merely unclamped — so the registry's own
+ * answer stands where the parent has none.
+ */
+function insertsFor(SE, u, chips) {
+  if (!chips.length) return [];
+  if (!SE || !SE.insertChain) return chips;
+  const out = [];
+  for (const c of chips) {
+    let it = c, base = (u.params && u.params.cutoff) || u.cutoff || 2000;
+    if (c.type === "filtersweep" && c.params && c.params.lo > 20 && c.params.hi > c.params.lo) {
+      base = c.params.lo;
+      it = { ...c, params: { ...c.params, lo: 0, hi: Math.log2(c.params.hi / c.params.lo) } };
+    }
+    const r = SE.insertChain({ inserts: [{ type: it.type, ...it.params }] },
+                             base, null, { bpm });
+    if (r.length) for (const x of r) out.push(x);
+    else out.push(c);
+  }
+  return out;
+}
+
+/**
+ * A UNIT THAT IS WIDE KEEPS ITS WIDTH, WHICH MEANS IT KEEPS NO INSERTS.
+ *
+ * gregorian resolves its section to voice_choir with `stereo: true`, pool 3,
+ * spread 0.77, drift 0.715, width 0.725 — four detuned, staggered, separately
+ * placed singers — and it arrived at the master reading an L/R correlation of
+ * 0.998 with the drums muted, i.e. mono. The width was not lost on a bus: read
+ * the renderer's per-unit walk (stream-renderer renderUnitWindow, and
+ * render-core beside it) and the INSERT branch is tested first — a unit with a
+ * chain renders into a unit-local MONO buffer and only channel 0 survives, so
+ * `u.stereo`'s route onto the wide buses is never reached. render-core says so
+ * in its own margin: "stereo voices are folded to channel 0 through the mono
+ * insert chain — graceful; the wired stereo genres carry no inserts."
+ *
+ * nukernel's do, because the parent's default two-insert policy hands every pad
+ * a chorus and a phaser, and the desk then adds the box's chips on top. So the
+ * choice here is which of the two to keep, and it is not close: all three
+ * stereo modules this catalogue can reach are instruments whose WIDTH IS THE
+ * IDENTITY and whose built-in effect is the one being duplicated — a Juno's
+ * chorus, a VP-330's ensemble, a room of singers spread across it. The parent
+ * already states exactly this law for the one mono ensemble it owns (solina:
+ * "Ensemble chorus is built in — NEVER stack an insert_chorus, so inserts are
+ * dropped for this voice"). This is that sentence, applied to the units where
+ * the stacking also costs the stereo field.
+ */
+function widthKept(units) {
+  let out = null;
+  for (const [key, u] of Object.entries(units)) {
+    if (!u || !u.stereo || !(u.inserts && u.inserts.length)) continue;
+    if (!out) out = { ...units };
+    out[key] = { ...u, inserts: [] };
+  }
+  return out || units;
+}
+
+/**
  * THE BOX'S MIX, ON THE BOX'S UNITS. Returns a SHALLOW-COPIED unit table —
  * shallow because the parent keys its stream signature on unit modules only
  * (live.js sigOf), so a desk move changes level, pan, sends and tone and leaves
@@ -393,7 +493,8 @@ function stripWith(strip, eq) {
  *   addr   unit key -> desk address for THIS box
  *   sec    the box
  */
-export function deskUnits(units, addr, sec, boxBeatOf) {
+export function deskUnits(units, addr, sec, boxBeatOf, SE) {
+  units = widthKept(units);
   if (!sec) return units;
   const S = sectionOf(sec), P = partsOf(sec);
   // the three lanes that move slower than a note and are read once per bar. A
@@ -438,7 +539,8 @@ export function deskUnits(units, addr, sec, boxBeatOf) {
     // change, which the engine answers by rebuilding the chain and draining the
     // old one (live.js samplerOf). A voice that is not playing gets nothing.
     const seated = !!addr[key] || isDrum;
-    const chips = seated ? fxChain([...(p ? p.fx : []), ...S.fx]) : [];
+    const chips = seated && !u.stereo
+      ? insertsFor(SE, u, fxChain([...(p ? p.fx : []), ...S.fx])) : [];
     if (chips.length) v.inserts = [...(u.inserts || []), ...chips];
     // the parent's placement pass already carved this voice's stereo seat; the
     // box's pan chip and a part's place RIDE ON it rather than replacing it

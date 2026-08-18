@@ -788,21 +788,20 @@ const PATCH_VOICE = {
  * makes a crooner, a boy band, a plainchant and a Bulgarian choir four
  * different singers rather than four volumes of the same one.
  *
- * ONE THING TO KNOW BEFORE CASTING ANOTHER GENRE ONTO THIS, measured on the
- * 2026-08-18 casting round and written here because this is where the next
- * person will look: A VOICE GETS NO WHOLE-LINE OCTAVE HOME. audio/plan.js
- * windowOf reads `unit.sampler` and returns null for anything that is not one —
- * "a synth voice folds by its own law" — so homeFor never moves a sung part,
- * and the only thing between the score and the throat is the parent's PER-NOTE
- * fold into `freqMin`/`freqMax` (state-engine mapEvents). A sampler's line is
- * moved whole with its contour intact; a singer's line is folded note by note,
- * which REWRITES the intervals of anything wider than the voice type's own
- * window — and the widest of the five is 25 semitones. So the question to ask
- * of a candidate is not "would this record have a singer" but "how wide is the
- * part": measured over the shipped 22, the fold rewrites 0% of a line that fits
- * and 75% of one that does not, and `hymn` — the most obviously vocal genre in
- * the table, four parts each 31 semitones wide — is uncastable for exactly this
- * reason. test/unit/nukernel.test.js §77(f) prints the number per cast part.
+ * ONE THING TO KNOW BEFORE CASTING ANOTHER GENRE ONTO THIS, written here
+ * because this is where the next person will look: A VOICE HAS A COMPASS AND
+ * THE LINE IS MOVED TO IT, but only by whole octaves. audio/plan.js windowOf
+ * reads the `freqMin`/`freqMax` a voice unit declares — the same two numbers
+ * the parent's PER-NOTE fold reads (state-engine mapEvents) — and homeFor moves
+ * the WHOLE part into that window before the fold ever runs. What the fold then
+ * rewrites is whatever a single octave cannot fix: a part WIDER than the throat
+ * still wraps at one end or the other, and the widest of the five throats is 25
+ * semitones. So the question to ask of a candidate is still "how wide is the
+ * part", it is just no longer "and where does it sit": measured over the shipped
+ * roster, the home takes the worst part in the table from 75% of its intervals
+ * rewritten to 49%, `hymn` — four parts each 31 semitones wide — from 51% to
+ * 19%, and a dozen parts to 0%. test/unit/nukernel.test.js §77(f) prints the
+ * pair per cast part.
  */
 export function voiceForInstr(id, tone) {
   const P = PATCH_VOICE[id];
@@ -1006,13 +1005,19 @@ export function patchForInstr(id, tone, padish) {
     || voiceForInstr(id, tone);
 }
 
+// EXPORTED for the same reason samplerLibFor is: the CAST has to probe a seat
+// before there is a bar to translate (audio/plan.js resolves one unit per seat
+// to read its register window off), and a probe that resolves a chair by its
+// own shorter rule is a probe that measures a different instrument than the one
+// that plays. One chain, two readers, no second opinion.
+//
 // a chair's recipe: the genre's signature synth where it declares one, then the
 // synthesiser its GM patch id is a photograph of, then the INSTRUMENT that id
 // names where the parent can play one better than a recording of it can
 // (PATCH_MODEL — the electrics and the struck bars), then the SINGER for the
 // four ids that name a person (PATCH_VOICE), then — for every other id, which
 // is most of them — the sampled one, the parent's default sound.
-function recipeFor(chair, seat, lib, unrouted) {
+export function recipeFor(chair, seat, lib, unrouted) {
   const role = CHAIR_ROLE[chair] || "melody";
   const tone = toneRecipe(seat.tone);
   const sy = seat.synth;
