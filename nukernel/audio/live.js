@@ -389,4 +389,5 @@ on("box", changed);
 on("groove", changed);            // the groove is baked into the events
 on("swing", changed);             // ...and so is the swing
 on("pool", changed);              // the band changed: register homes and zones with it
+on("mix", changed);               // a board offset moved: next bar carries it
 on("song", () => { if (playing) stop(); });

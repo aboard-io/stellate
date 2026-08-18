@@ -27,7 +27,7 @@ import "./editor.js";
 // from it, and it reads the roster out of audio/desk (a view importing audio
 // is the allowed direction; audio never imports back). paintBoard rides the
 // one rAF loop below — the board's fader caps follow the desk model live.
-import * as board from "./mixtbl.js";
+import * as board from "./mixer.js";
 import "./chrome.js";
 // the INSTRUMENT POOL bank on the SONG page — the band, hired for the record
 // (one instrument per chair, per song; ui/poolbank.js owns the rows and the

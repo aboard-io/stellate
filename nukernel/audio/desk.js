@@ -81,7 +81,7 @@ import { NuFields } from "../ui/deps.js";
 // bpm rides along for insertsFor: the parent resolves a chip's `rateBars` to Hz
 // off the state's tempo, so a chip that asks for a bar-locked wobble has to be
 // normalised against the song's own clock and not a default one.
-import { POOL, bpm } from "../ui/state.js";
+import { POOL, bpm, MIXER } from "../ui/state.js";
 import { gid, stackOf, genreOf, kitOf, poolInstrOf } from "../ui/derive.js";
 
 const sendOf = (sec, k, dflt) => (sec[k] != null ? SENDS[sec[k]] : dflt);
@@ -315,6 +315,21 @@ export function resolvedPart(sec, key, roster) {
            eq: mergeEq(t.eq, sec.parts && sec.parts[key] && sec.parts[key].eq),
            tdb: t.db };
 }
+// THE CHANNEL'S COMPOSED BASE, for the mixer surface: the "real" mix the
+// offsets ride on, one function for the drawn number and the built one.
+export function deskChannelBase(sec, key) {
+  if (!sec) return { gain: 1, pan: 0, rev: 0, del: 0, eq: null, mute: false };
+  const S = sectionOf(sec);
+  const m = resolvePartMix(sec.parts && sec.parts[key]);
+  const r = resolvedPart(sec, key);
+  return {
+    gain: +(r.gain * S.lvl).toFixed(4),
+    pan: (S.pan || 0) + (m.pan || 0),
+    rev: Math.min(1, (m.rev || 0) + (m.room || 0) + S.rev + (key === "drums" ? S.room : 0)),
+    del: Math.min(1, (m.del || 0) + S.del),
+    eq: r.eq, mute: m.mute };
+}
+
 /* ================== THE DESK, ON THE PARENT'S BUSES ======================= */
 // Everything above is the model the board draws. What follows is the only place
 // it touches sound, and it touches it by writing numbers onto the parent's own
@@ -493,6 +508,18 @@ function widthKept(units) {
  *   addr   unit key -> desk address for THIS box
  *   sec    the box
  */
+// OFFSET EQ: the mixer layer's bands ADD to the effective eq (offset
+// semantics — unlike mergeEq's user-over-derived, an offset is a delta).
+const addEq = (base, off) => {
+  const out = {}; let any = false;
+  for (const b of ["lo", "mid", "hi"]) {
+    const v = eqDb((base ? base[b] || 0 : 0) + (off[b] || 0));
+    out[b] = v; if (v) any = true;
+  }
+  return any ? out : null;
+};
+const c01 = v => Math.max(0, Math.min(1, v));
+
 export function deskUnits(units, addr, sec, boxBeatOf, SE) {
   units = widthKept(units);
   if (!sec) return units;
@@ -520,12 +547,27 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
     // both asking for more of the one reverb everything already shares — the box's
     // room reaches the DRUMS (whose room it was), a part's reaches that part.
     const isDrum = !!u.drum || !!(u.__meta && u.__meta.drum);
+    // THE MIX-OFFSET LAYER (ui/state.js MIXER): the mixer surface's own hand,
+    // per CHANNEL (part key or "drums") for the whole song, applied last —
+    // OVER the composed per-section values, never instead of them. null =
+    // byte-identical.
+    const chan = addr[key] || (isDrum ? "drums" : "");
+    const o = chan && MIXER ? MIXER[chan] : null;
     const rev = (p ? (p.rev || 0) + (p.room || 0) : 0)
       + (autoRev != null ? autoRev : S.rev) + (isDrum ? S.room : 0);
     const del = (p && p.del ? p.del : 0) + (autoDel != null ? autoDel : S.del);
     const v = { ...u,
       lvl: (u.lvl != null ? u.lvl : 1) * S.lvl * (p ? p.gain : 1),
       rev: Math.min(1, rev), del: Math.min(1, del) };
+    if (o) {
+      if (o.mute) v.lvl = 0;
+      else if (o.fader) v.lvl *= Math.pow(10, faderDb(o.fader) / 20);
+      if (o.rev) v.rev = c01(v.rev + o.rev);
+      if (o.del) v.del = c01(v.del + o.del);
+    }
+    // ...and the master channel's fader: one trim over every seated voice
+    const mo = MIXER && MIXER.master;
+    if (mo && mo.fader && v.lvl) v.lvl *= Math.pow(10, faderDb(mo.fader) / 20);
     // A CHIP IS AN INSERT HERE. The page's own vocabulary calls it a send and had
     // one shared bus per effect; the parent has no page-wide effect bus and a
     // per-voice INSERT chain instead (state-engine insertChain -> sampler.js
@@ -544,9 +586,11 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
     if (chips.length) v.inserts = [...(u.inserts || []), ...chips];
     // the parent's placement pass already carved this voice's stereo seat; the
     // box's pan chip and a part's place RIDE ON it rather than replacing it
-    const pan = (autoPan != null ? autoPan : S.pan) + (p ? p.pan : 0);
+    const pan = (autoPan != null ? autoPan : S.pan) + (p ? p.pan : 0)
+      + (o && o.pan ? o.pan : 0);
     if (pan) v.pan = Math.max(-1, Math.min(1, (u.pan || 0) + pan));
-    if (u.sampler) v.sampler = { ...u.sampler, strip: stripWith(u.sampler.strip, eq) };
+    const eqAll = o && o.eq ? addEq(eq, o.eq) : eq;
+    if (u.sampler) v.sampler = { ...u.sampler, strip: stripWith(u.sampler.strip, eqAll) };
     out[key] = v;
   }
   return out;
@@ -652,16 +696,33 @@ export function deskLevelAt(sec, f) {
 const GLUE_COMP = { soft: 0.2, glue: 0.35, tight: 0.55, pump: 0.75, squash: 0.95 };
 export function masterState(MASTER) {
   const m = MASTER && typeof MASTER === "object" ? MASTER : null;
-  if (!m) return null;
   const out = {};
   const { DRIVES, TAPES, SPACES } = NuFields;
-  const d = DRIVES[m.drive];
-  if (d != null) out.grit = d;                       // fx_bus `grit`, same 0..1 scale
-  const g = GLUE_COMP[m.glue];
-  if (g != null) out.comp = g;                       // fx_bus `comp` — the bus compressor's amount
-  const t = TAPES[m.tape];
-  if (t) { out.wob = t.wob; out.tsat = t.sat; }      // fx_bus `wob` + `tsat`, verbatim
-  const s = SPACES[m.space];
-  if (s) out.mrev = s.mix;                           // fx_bus `mrev`, the global dry bleed
+  if (m) {
+    const d = DRIVES[m.drive];
+    if (d != null) out.grit = d;                     // fx_bus `grit`, same 0..1 scale
+    const g = GLUE_COMP[m.glue];
+    if (g != null) out.comp = g;                     // fx_bus `comp` — the bus compressor's amount
+    const t = TAPES[m.tape];
+    if (t) { out.wob = t.wob; out.tsat = t.sat; }    // fx_bus `wob` + `tsat`, verbatim
+    const s = SPACES[m.space];
+    if (s) out.mrev = s.mix;                         // fx_bus `mrev`, the global dry bleed
+  }
+  // THE MIX-OFFSET LAYER's master channel: deltas over the resolved value —
+  // or, when the song's master says nothing, over the DSP's own defaults
+  // (state-engine fxParams: tsat 0.18, mrev 0.07, the rest 0). Absent = the
+  // untouched branch: identical output.
+  const o = MIXER && MIXER.master;
+  if (o) {
+    const over = (k, dflt, off, hi) => {
+      if (!off) return;
+      out[k] = Math.max(0, Math.min(hi, (out[k] != null ? out[k] : dflt) + off));
+    };
+    over("grit", 0, o.drive, 1);
+    over("comp", 0, o.glue, 1);
+    over("wob", 0, o.tape ? o.tape * 0.5 : 0, 1);    // tape moves both halves,
+    over("tsat", 0.18, o.tape ? o.tape * 0.5 : 0, 1); // gently
+    over("mrev", 0.07, o.space ? o.space * 0.5 : 0, 0.5);
+  }
   return Object.keys(out).length ? out : null;
 }

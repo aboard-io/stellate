@@ -70,6 +70,12 @@ export let MASTER = null;
 // page's, null = the engine's buses exactly as the state resolves them (song.js
 // validates; audio/desk.js writes them onto the units the engine is handed).
 export let BUSES = null;
+// …AND THE MIX OFFSETS (the board's layer): a song-level map of channel ->
+// offsets riding OVER the composed mix. The composer/WRITE and the section
+// fields stay the "real" mix; what the mixer surface writes lands here, once,
+// for the whole record — so a tweak does not revert at the next section.
+// null = no offsets = byte-identical engine output (absent is today).
+export let MIXER = null;
 // …AND THE GROOVE (2026-08-16): a song fact, the way the tempo is — one
 // drummer for the record, not one per section. It was a box field once, and
 // compose.js stamped the same value on every box, which was the tell. null is
@@ -147,6 +153,27 @@ export function setMaster(m) { MASTER = masterIsDefault(m) ? null : m; }
 // rack recognizes becomes null, so "every knob cleared" and "never touched"
 // are one state in the save and in the graph's as-built branch
 export function setBuses(b) { BUSES = busesIsDefault(b) ? null : b; }
+// ONE WRITER for the mix-offset layer. val == null (or 0 / false) deletes the
+// field; an emptied channel and an emptied map normalize away, so "no offsets"
+// keeps one spelling and the engine's absent-is-today branch stays reachable.
+export function setMixOffset(chan, key, val) {
+  const M = MIXER ? { ...MIXER } : {};
+  const o = { ...(M[chan] || {}) };
+  if (key === "eq") {
+    if (val && typeof val === "object" && Object.keys(val).length) o.eq = val;
+    else delete o.eq;
+  } else if (val == null || val === 0 || val === false) delete o[key];
+  else o[key] = val;
+  if (Object.keys(o).length) M[chan] = o; else delete M[chan];
+  MIXER = Object.keys(M).length ? M : null;
+  emit("mix", { chan, key });
+  save();
+}
+export const mixOffsetOf = chan => (MIXER && MIXER[chan]) || null;
+export function clearMixOffsets() {
+  if (MIXER == null) return;
+  MIXER = null; emit("mix", {}); save();
+}
 // one writer for the song's groove, normalizing through the registry table the
 // way setMaster does: anything GROOVELABEL does not name is the grid, spelled
 // null — the same rule song.js applies on the way in
@@ -307,7 +334,7 @@ function writeStore() {
   try {
     localStorage.setItem(STORE, JSON.stringify(
       { v: NuSong.VERSION, slots: SLOTS, song: SONG, master: MASTER,
-        buses: BUSES, groove: GROOVE, swing: SWING, pool: POOL,
+        buses: BUSES, mix: MIXER, groove: GROOVE, swing: SWING, pool: POOL,
         genres: GENRESET, bpm }));
   } catch (e) { /* private mode, or quota: not worth interrupting the music */ }
 }
@@ -372,6 +399,10 @@ export function adoptSong(raw, reason) {
   SLOTS = s.slots; SONG = s.song; slot = 0; SUBJ = SLOTS[0];
   MASTER = s.master;                   // validateSong normalizes absent to null
   BUSES = s.buses;                     // same normalizer, same law
+  // the board's offset layer: a document that carries one states it; WRITE
+  // (the composer) states nothing about your hands on the board, so the
+  // offsets you set survive a recompose — they are yours, not the song's draft
+  MIXER = s.mix != null ? s.mix : (reason === "composer" ? MIXER : null);
   GROOVE = s.groove;                   // ...and the song's groove, same law
   SWING = s.swing;                     // ...and its swing, the same move made twice
   POOL = s.pool;                       // ...and the band, hired for the record
@@ -399,7 +430,7 @@ export function songJSON() {
   // for producers inside this session, never for a document leaving it
   return JSON.stringify(
     { v: NuSong.VERSION, slots: SLOTS, song: SONG, master: MASTER,
-      buses: BUSES, groove: GROOVE, swing: SWING, pool: POOL,
+      buses: BUSES, mix: MIXER, groove: GROOVE, swing: SWING, pool: POOL,
       genres: GENRESET, bpm },
     null, 1);
 }

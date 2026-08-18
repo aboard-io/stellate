@@ -696,6 +696,44 @@
       }
     } else s.buses = null;
 
+    // ---- THE MIX OFFSETS: the board's own layer. A song-level map of
+    // channel -> offsets the mixer surface wrote OVER the composed mix
+    // (audio/desk.js applies them last). Channels are part keys plus "drums"
+    // and "master". Every field is a clamped number (a gesture, so out-of-range
+    // clamps rather than rejects); unknown fields drop; empty normalizes to
+    // null — absent is today.
+    if (s.mix != null) {
+      if (typeof s.mix !== "object" || Array.isArray(s.mix))
+        err("mix", s.mix, "a map of channel -> offset values");
+      else {
+        const num = (v, lo, hi) => (typeof v === "number" && Number.isFinite(v))
+          ? Math.max(lo, Math.min(hi, Math.round(v * 100) / 100)) : null;
+        const clean = {};
+        for (const [chan, e] of Object.entries(s.mix)) {
+          if (e == null) continue;
+          if (typeof e !== "object" || Array.isArray(e)) {
+            err("mix." + chan, e, "an offset object"); continue;
+          }
+          const o = {};
+          const put = (k, lo, hi) => { const v = num(e[k], lo, hi); if (v) o[k] = v; };
+          put("fader", -24, 12); put("pan", -1, 1);
+          put("rev", -1, 1); put("del", -1, 1);
+          if (chan === "master") { put("drive", -1, 1); put("glue", -1, 1);
+                                   put("tape", -1, 1); put("space", -1, 1); }
+          if (e.mute === true) o.mute = true;
+          if (e.eq != null && typeof e.eq === "object" && !Array.isArray(e.eq)) {
+            const q = {};
+            for (const b of ["lo", "mid", "hi"]) {
+              const v = num(e.eq[b], -12, 12); if (v) q[b] = v;
+            }
+            if (Object.keys(q).length) o.eq = q;
+          }
+          if (Object.keys(o).length) clean[chan] = o;
+        }
+        s.mix = Object.keys(clean).length ? clean : null;
+      }
+    } else s.mix = null;
+
     // ---- THE GROOVE, a song fact like the tempo (the box field it replaced
     // died at the registry; migrate() lifts old per-box saves). The tempo's own
     // policy: an unknown groove means "no groove", never "refuse the song" —
