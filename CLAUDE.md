@@ -97,6 +97,7 @@ node tools/kernel-cli.js journey path.json --hours 4 --out journey/ --render
 npm run test:browser                     # every browser gate, CONCURRENTLY (test/run.js)
 npm run test:unit                        # the 46 pure-node gates in test/unit — nothing else runs them
 npm run test:all                         # unit + browser
+npm run test:sweep                       # the gates that ALSO carry an exhaustive --sweep mode, run in full (before a ship)
 node test/browser/explorer-ui.test.js   # (+ genre-viz / demo-layer / live / wavout / live-resilience / bg-survival)
 node test/browser/blend-arrival.test.js  # live-blend ARRIVAL contract: drums ≤3 bars, kit/lead identity ≤7
 node test/browser/speech-live.test.js    # speech organ live: espeak WASM synthesizes + feeds the found pipeline
@@ -580,9 +581,28 @@ docs in `docs/`.
 
 A self-contained mobile hardware DAW inside stellate: **87 genres**, a miniature
 kernel of its own. Live at test.stellate.app/nukernel/kernel-daw.html; gates at
-`node test/unit/nukernel.test.js` (~418k checks, ~2 min) and browser
-`test/browser/nukernel-engine.test.js` (chromium) + `nukernel-webkit-tape.test.js`
-(webkit — the only gate in the repo that asks Safari anything).
+`node test/unit/nukernel.test.js` and browser `test/browser/nukernel-engine.test.js`
+(chromium) + `nukernel-webkit-tape.test.js` (webkit — the only gate in the repo
+that asks Safari anything).
+
+**`nukernel.test.js` runs in two sizes.** Bare, it is the FAST CORE a person
+runs on every change: ~1,270 written assertions, each law proved once on
+`GK_SAMPLE` (one genre per family/mechanism the file has ever caught a real
+bug through — every drum machine, the corpus-table genre, the singer cast,
+the five FUNCTION genres, hymn's own worst-case register fold) instead of on
+all 110 genres, ~90k checks, roughly a minute. `--sweep` restores the full
+cross-product (110 genres x up to 40 seeds, ~480k checks, ~4 min) for the run
+before a ship (`npm run test:sweep`, or `node test/unit/nukernel.test.js
+--sweep` directly) — that breadth is the whole point for a handful of checks
+named `GK_FULL` at their own loop: the byte-identity tripwires (this file's
+own history — "exactly 84 rows moved" when the singer came out — needs to
+see every row to say that) and the coverage walks that catch a genre
+throwing on write (a rotted PLAN_OF/BPM row, a synth id naming no built dsp).
+A `CENSUS SIZE` claim ("the sweep saw over 100,000 notes") is asserted for
+real only in `--sweep`; FAST asks the weaker "not zero" version of the same
+claim (`atLeast()`) so a smaller sample is never mistaken for a regression.
+No law was deleted to make the fast number smaller — CLAUDE.md's own commit
+history is the record of which sections shrank and why.
 
 **ONE ENGINE. nukernel does NOT have an audio engine and must not grow another.**
 It had one — 7,753 lines across `audio/transport.js` (its own scheduler),

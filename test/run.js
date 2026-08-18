@@ -4,6 +4,7 @@
 //   node test/run.js browser          # test/browser + test/starcruise (needs chromium)
 //   node test/run.js unit             # test/unit — pure node, nothing else runs these
 //   node test/run.js all              # both
+//   node test/run.js sweep            # the FAST-CORE/EXHAUSTIVE-SWEEP gates, run in full
 //   node test/run.js browser -j 4     # cap the concurrency by hand
 //
 // WHY THIS EXISTS. verify.sh has forked its 13 rows concurrently for a long time and
@@ -86,15 +87,28 @@ const listing = (dir) => {
 // five chromiums is exactly how a deadline gate goes red without a defect.
 const SOLO = /(^|\/)(wavout-seam|wavout|stem-parity|crossfade-seam|live|live-resilience|live-audit-throttled|sampler-inserts-live|wedge-demo|nukernel-webkit-tape)\.test\.js$/;
 
+// A few pure-node gates carry TWO modes: a FAST default (a representative
+// sample of whatever the gate walks — genres, cases, seeds — proving every
+// law once) that `unit` runs like any other file, and an exhaustive
+// `--sweep` (the full cross-product, restoring every count this project has
+// calibrated a census floor against) for the run before a ship. `sweep`
+// re-runs just the gates that grew one, passing the flag — nukernel.test.js
+// is first (test/unit/nukernel.test.js: 481k checks / ~250s collapsed to
+// ~90k / roughly a minute by asking each law once instead of 110 times;
+// --sweep asks it the old way).
+const SWEEPABLE = ["test/unit/nukernel.test.js"];
+
 const SETS = {
   browser: { files: [...listing("test/browser"), ...listing("test/starcruise")], jobs: HEAVY,
     note: "real chromium — needs `npm install && npm run setup:browser`" },
   unit: { files: listing("test/unit"), jobs: LIGHT, note: "pure node" },
+  sweep: { files: SWEEPABLE, jobs: LIGHT, args: ["--sweep"],
+    note: "pure node, full breadth — run before a ship, not on every change" },
 };
 SETS.all = { files: [...SETS.unit.files, ...SETS.browser.files], jobs: HEAVY, note: "everything" };
 
 const set = SETS[which];
-if (!set) { console.error(`usage: node test/run.js [browser|unit|all] [-j N]\n  unknown set: ${which}`); process.exit(2); }
+if (!set) { console.error(`usage: node test/run.js [browser|unit|all|sweep] [-j N]\n  unknown set: ${which}`); process.exit(2); }
 const JOBS = jFlag >= 0 ? Math.max(1, +argv[jFlag + 1] || 1) : set.jobs;
 
 if (!set.files.length) { console.error(`no gates found for "${which}"`); process.exit(2); }
@@ -118,7 +132,7 @@ function launch() {
     running++;
     const t0 = Date.now();
     const out = [];
-    const p = spawn(process.execPath, [file], { cwd: ROOT, env: process.env });
+    const p = spawn(process.execPath, [file, ...(set.args || [])], { cwd: ROOT, env: process.env });
     p.stdout.on("data", (d) => out.push(d));
     p.stderr.on("data", (d) => out.push(d));
     p.on("close", (code) => {

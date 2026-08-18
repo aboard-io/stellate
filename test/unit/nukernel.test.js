@@ -25,6 +25,58 @@ const { DEFAULT, GENRES, MODES, SCALES, FAMILIES } = require("../../nukernel/gen
 
 const GK = Object.keys(GENRES);
 
+// FAST CORE (default) vs EXHAUSTIVE SWEEP (`--sweep`). Paul: "do you really
+// need to pass 481,687 tests" — no. That number is a cross-product (110
+// genres x seeds x bars), not 481,687 distinct laws — the file holds 1,270
+// WRITTEN assertions — and two sections alone (the composer's own round trip,
+// the songwriter's census) cost 127 of this file's ~250 seconds by asking the
+// SAME question 110 times over instead of once. GK_SAMPLE is one genre per
+// mechanism this suite has ever caught a real bug through — a family from
+// each cluster in genres.js FAMILIES, every drum machine, the corpus-table
+// genre, the singer cast, the FUNCTION genres (a role rather than a style),
+// and hymn (the register fold's own worst case, printed at the bottom of
+// every run) — so every LAW below still gets proved, just once instead of
+// 110 times. `atLeast` carries the other half of that same idea for a
+// handful of checks that are not laws but CENSUS SIZE claims ("the sweep saw
+// over 100,000 notes — it is not sweeping"): the floor only means anything
+// against the full cross-product, so it is asserted in SWEEP and relaxed to
+// "non-zero" in FAST, which still catches the sweep going dead without
+// flagging a smaller sample as a regression.
+//
+// A few checks are not laws or census claims but WALKS whose whole job IS
+// the breadth, and stay on GK_FULL in BOTH modes, named explicitly at their
+// own loop rather than folded into this switch: the byte-identity tripwires
+// (this file's own history: "exactly 84 rows moved" when the singer came
+// out, "the ride stopped carrying a stroke") and the coverage walks that
+// catch a genre throwing on write (a rotted PLAN_OF/BPM row, a synth id
+// naming no built dsp, a singer nobody armed) — sampling either one defeats
+// its entire purpose, which is that no genre can hide behind the ones not
+// drawn.
+const SWEEP = process.argv.includes("--sweep");
+const GK_FULL = GK.slice();
+const GK_SAMPLE = [
+  "simple",                                    // kernel: the zero, one bar
+  "fugue", "gregorian", "bulgarian", "hymn",   // vox: modal harmony, choir cast, the register fold's worst case
+  "acid", "boombap", "dnb", "trap",            // club: tr909/tr808, a sampled kit, a drum phrase
+  "jazz",                                      // roots: reharm, the mined corpus tables, swing
+  "reggae", "ska",                             // groove: offbeat, echo pipes; ska's horn is the register law's own adversarial case
+  "motown", "isley",                           // soul: walks in on the bass, by tradition
+  "beatles", "kraftwerk",                      // studio: singer cast over a full band, a motorik ostinato
+  "rock",                                      // band: the plain four-on-the-floor backbeat
+  "drone",                                     // drift: the STEADY dedup exemption lives here
+  "solo", "vocal", "backing", "riff", "pad",   // parts: the FUNCTION genres — a role, not a style, each its own shape
+];
+if (!SWEEP) { GK.length = 0; GK.push(...GK_SAMPLE); }
+// seed counts below were sized for the full sweep (16-40 deep, to catch a
+// seed-rare pattern); a fast run keeps the same law on far fewer draws.
+// `floor` lifts the fast-mode draw count for a law that is a COIN FLIP
+// rather than a per-seed fact ("the key lift is drawn sometimes, not never
+// or always") — three draws cannot tell a coin from a constant, so those
+// specific call sites pass a floor sized to their own tolerance rather than
+// widening every seed loop in the file.
+const seedCount = (n, floor = 3) => SWEEP ? n : Math.min(n, floor);
+const atLeast = (n, floorFull) => SWEEP ? n > floorFull : n > 0;
+
 // (a --calibrate-sing mode lived here: the recipe that measured the espeak
 // pitch ladders baked into nukernel/sing.js, 1260 utterances for nine singers.
 // nukernel's singer came out on 2026-08-17 — nukernel/kernel-daw.html carries
@@ -582,10 +634,13 @@ console.log("roster — every shipped genre key still exists; labels are unique"
     "jazz", "bodiddley", "chuckberry", "doowop", "skiffle", "minimalism",
     "kraftwerk", "electro"];
   for (const k of SHIPPED) ok(GENRES[k], "shipped genre key vanished: " + k);
-  const labels = GK.map(k => GENRES[k].label);
+  // GK_FULL: a duplicate or missing label anywhere in the 110 is the bug, and
+  // this is a string compare over the table, not a render — full breadth
+  // costs nothing here even in FAST mode.
+  const labels = GK_FULL.map(k => GENRES[k].label);
   ok(new Set(labels).size === labels.length,
      "two genres display the same name");
-  ok(GK.every(k => typeof GENRES[k].label === "string" && GENRES[k].label),
+  ok(GK_FULL.every(k => typeof GENRES[k].label === "string" && GENRES[k].label),
      "a genre has no display name");
 }
 
@@ -1434,7 +1489,10 @@ console.log("the composer writes songs that are songs");
 {
   const C = require("../../nukernel/compose.js");
   const { NSLOTS } = require("../../nukernel/fields.js");
-  const seeds = Array.from({ length: 40 }, (_, i) => i + 1);
+  // floor 15: several checks below are COIN-FLIP laws over `seeds` alone
+  // (reggae opening on a bed, a phrase kind drawing enough gated notes to
+  // judge) — three draws cannot tell a coin from a constant.
+  const seeds = Array.from({ length: seedCount(40, 15) }, (_, i) => i + 1);
   let silent = 0, unused = 0, leaps = 0, notes = 0;
   for (const gk of GK) {
     for (const s of seeds) {
@@ -1585,7 +1643,11 @@ console.log("the composer writes songs that are songs");
     };
     ok(share("club", ["riser", "kit", "cold"]) >= 0.5,
        "club does not lean riser/kit/cold");
-    ok(share("soul", ["bassin", "stabs", "drumbass"]) >= 0.4,
+    // family LEAN is a weighted-ballot statistic — real at the full roster
+    // (13 soul genres x 8 seeds), noisy at the two-genre fast sample, so FAST
+    // only asks that the bass-walk-in happens at all, not that it dominates.
+    ok(SWEEP ? share("soul", ["bassin", "stabs", "drumbass"]) >= 0.4
+             : share("soul", ["bassin", "stabs", "drumbass"]) > 0,
        "soul does not walk in on the bass");
     ok(share("drift", ["padin", "fade", "solo", "swell"]) >= 0.5,
        "drift does not lean padin/fade/solo/swell");
@@ -1681,7 +1743,7 @@ console.log("the loader — round trip, typed errors, clamps, migration");
   const NI = require("../../nukernel/instruments.js");
   const C = require("../../nukernel/compose.js");
   const { PRESETS } = require("../../nukernel/presets.js");
-  const seeds = Array.from({ length: 40 }, (_, i) => i + 1);
+  const seeds = Array.from({ length: seedCount(40) }, (_, i) => i + 1);
 
   // (a) ROUND TRIP: everything the composer can emit, the loader accepts —
   // the contract that used to be one browser smoke check, now exhaustive.
@@ -1808,7 +1870,10 @@ console.log("the loader — round trip, typed errors, clamps, migration");
   // (d) GENRE COVERAGE: a genre is instrument + plan + tempo as much as it is
   // a kit — and none of them may default silently. Three tables used to fall
   // back (piano / pop plan / 120 bpm) and nothing could notice a rotted entry.
-  for (const gk of GK) {
+  // GK_FULL: this IS the coverage walk that catches a genre throwing on
+  // write (CLAUDE.md: "a genre added without them throws the moment anyone
+  // presses WRITE") — a sample can't tell a rotted row from a row not drawn.
+  for (const gk of GK_FULL) {
     const g = GENRES[gk];
     ok(typeof g.instr === "string" ||
        (Array.isArray(g.instr) && g.instr.length && g.instr.every(x => typeof x === "string")),
@@ -2711,7 +2776,10 @@ console.log("song arc, prechorus, topline — the radio shape, measured on ui/de
 {
   const C = require("../../nukernel/compose.js");
   const NF = require("../../nukernel/fields.js");
-  const seeds = Array.from({ length: 30 }, (_, i) => i + 1);
+  // floor 16: (a) below reads seeds.slice(0, 16) and wants >=14 of them to
+  // land a real chorus pair, and the key-lift coin needs enough draws to
+  // land strictly between "never" and "always".
+  const seeds = Array.from({ length: seedCount(30, 16) }, (_, i) => i + 1);
 
   // the REAL render path: everything a box plays, windowed to nudge+len,
   // enveloped, edged and grooved — the stream the transport schedules
@@ -2973,11 +3041,14 @@ console.log("confusion — every genre is provably not a relabelled neighbour");
   // headroom, and the render is deterministic so there is no flake in it.
   const EPS = 0.03;
   const F = {};
-  for (const gk of GK) F[gk] = featOf(gk, GENRES[gk]);
-  for (let i = 0; i < GK.length; i++)
-    for (let j = i + 1; j < GK.length; j++) {
-      const d = dist(F[GK[i]], F[GK[j]]);
-      ok(d > EPS, GK[i] + " and " + GK[j] + " render " + d.toFixed(4) +
+  // GK_FULL: the whole claim is that NO pair among every shipped genre is a
+  // relabel of another — a sample can only prove the pairs it happens to
+  // draw apart, which is a different and much weaker claim.
+  for (const gk of GK_FULL) F[gk] = featOf(gk, GENRES[gk]);
+  for (let i = 0; i < GK_FULL.length; i++)
+    for (let j = i + 1; j < GK_FULL.length; j++) {
+      const d = dist(F[GK_FULL[i]], F[GK_FULL[j]]);
+      ok(d > EPS, GK_FULL[i] + " and " + GK_FULL[j] + " render " + d.toFixed(4) +
          " apart — closer than " + EPS + ", one is a relabel of the other");
     }
   // the canaries: a relabelled clone measures zero, a clone that only changed
@@ -2993,8 +3064,8 @@ console.log("confusion — every genre is provably not a relabelled neighbour");
      "a rate-doubled bpm-halved clone — audio-identical by construction — " +
      "does not measure as a clone: config scalars are doing the separating");
   // every declared neighbour is a real genre, so the identity comments and the
-  // matrix stay honest together
-  for (const gk of GK)
+  // matrix stay honest together (GK_FULL: a table walk, no render)
+  for (const gk of GK_FULL)
     if (GENRES[gk].near)
       ok(!!GENRES[GENRES[gk].near],
          gk + ": declares an unknown nearest neighbour \"" + GENRES[gk].near + "\"");
@@ -3221,7 +3292,9 @@ console.log("the box surface — key/prog/period/breath/pipe/part/auto reach the
   // the "2bar" one, and the peak drop of a dance plan carries a real point
   // list on a public param — all through the same loader as everything else
   {
-    const seeds = Array.from({ length: 20 }, (_, i) => i + 1);
+    // floor 20 == n: only 20 to begin with, over two fixed genres — cheap
+    // regardless of mode, and >10/20 needs real depth to not be a coin flip.
+    const seeds = Array.from({ length: seedCount(20, 20) }, (_, i) => i + 1);
     let four = 0, two = 0, autos = 0;
     for (const s of seeds) {
       const song = C.compose("rock", s);
@@ -3334,7 +3407,9 @@ console.log("every genre carries exactly one family from the palette's set");
       seen.set(k, (seen.get(k) || 0) + 1);
     }
   }
-  for (const gk of GK) {
+  // GK_FULL: a table walk, no render — cheap, and a coverage walk by nature
+  // (the whole claim is that NO genre is missing or doubled).
+  for (const gk of GK_FULL) {
     ok(seen.get(gk) === 1, "genre \"" + gk + "\" is in " + (seen.get(gk) || 0) +
        " families — must be exactly one");
     ok(ALLOWED.has(GENRES[gk].family), "genre \"" + gk + "\" carries family \"" +
@@ -4712,7 +4787,11 @@ console.log("dissonance census — what the notes sound like against each other"
                 "moving bass is the whole joke of the genre",
   };
 
-  const rows = GK.map(census).sort((a, b) => b.pct - a.pct);
+  // GK_FULL: every genre carries its own baked BASELINE ceiling and the
+  // allowance list is keyed by name (down to two genres checked by name at
+  // the bottom) — a regression ceiling is a coverage law, not a sample of
+  // one, and the whole census cost well under a second at 110 anyway.
+  const rows = GK_FULL.map(census).sort((a, b) => b.pct - a.pct);
   const f = x => x.toFixed(2).padStart(7);
   if (process.env.NUKERNEL_CENSUS) {
     console.log("  genre           %bad    ic1    ic6  (raw1) (raw6)   nct%     mb     mp");
@@ -4722,7 +4801,7 @@ console.log("dissonance census — what the notes sound like against each other"
   } else {
     console.log("  worst six: " + rows.slice(0, 6)
       .map(r => r.gk + " " + r.pct.toFixed(2)).join("  ") +
-      "   (NUKERNEL_CENSUS=1 for all " + GK.length + ")");
+      "   (NUKERNEL_CENSUS=1 for all " + GK_FULL.length + ")");
   }
 
   for (const r of rows) {
@@ -4844,9 +4923,13 @@ console.log("dynamics — metrical stress, phrase arch, the hand, and the sectio
          gk + ": no dynamics row — it is neither a declared machine nor a genre " +
          "with stress/phrase/touch, so it will render flat forever");
     }
-    ok(wired === GK.length - Object.keys(MACHINE).length,
+    // "GK.length - |MACHINE|" only equals "genres in GK that are not
+    // machines" when GK is the whole catalog; counted directly it holds at
+    // any sample size, fast or sweep.
+    const expectWired = GK.filter(gk => MACHINE[gk] == null).length;
+    ok(wired === expectWired,
        wired + " genres declare dynamics; expected " +
-       (GK.length - Object.keys(MACHINE).length) + " (everything but the machines)");
+       expectWired + " (everything but the machines)");
     ok(wider >= wired - 2, "only " + wider + "/" + wired + " wired genres widened " +
        "their velocity spread; the flat 1.45 is what this layer exists to break");
     ok(lower >= wired * 0.6, "only " + lower + "/" + wired + " genres reached below " +
@@ -4983,7 +5066,7 @@ console.log("dynamics — metrical stress, phrase arch, the hand, and the sectio
 console.log("the arranged dynamic — the chorus outweighs the verse, on the real render path");
 {
   const C = require("../../nukernel/compose.js");
-  const seeds = Array.from({ length: 12 }, (_, i) => i + 1);
+  const seeds = Array.from({ length: seedCount(12) }, (_, i) => i + 1);
   const meanVel = ev => (ev.length
     ? ev.reduce((s, e) => s + (e.vel == null ? 5 : e.vel), 0) / ev.length : 0);
   // (a) EVERY SECTION IS DEALT A DYNAMIC. A composed song with eight flat
@@ -5337,7 +5420,7 @@ console.log("function genres — the part, the Beatles test, and what a singer d
 
   // (c) THE COMPOSER PLACES THEM. Not "can" — does, across the table.
   {
-    const seeds = Array.from({ length: 40 }, (_, i) => i + 1);
+    const seeds = Array.from({ length: seedCount(40) }, (_, i) => i + 1);
     let soloSecs = 0, withPart = 0, strips = 0, chorusParts = 0;
     const used = new Set();
     for (const gk of GK) {
@@ -5362,16 +5445,20 @@ console.log("function genres — the part, the Beatles test, and what a singer d
     }
     // every family but `parts` has a soloist, so all but five genres * their
     // seeds must carry one — written as a share so a table edit does not
-    // require re-counting by hand
-    ok(soloSecs > 400, "only " + soloSecs + " solo sections in the whole sweep");
-    ok(withPart / soloSecs >= 0.85, "only " + Math.round(100 * withPart / soloSecs) +
+    // require re-counting by hand. The FLOORS below are census-size claims
+    // (atLeast: real in SWEEP, non-degenerate in FAST — a 21-genre sample
+    // also over-weights the five `parts` genres 5x versus their true 4.5%
+    // share, so the RATIO itself is only a fair claim at full breadth).
+    ok(atLeast(soloSecs, 400), "only " + soloSecs + " solo sections in the whole sweep");
+    ok(SWEEP ? withPart / soloSecs >= 0.85 : withPart > 0,
+       "only " + Math.round(100 * withPart / soloSecs) +
        "% of solo sections have anybody playing the solo");
     // the strip is a COIN, not a constant: always would make every solo section
     // a drum break, never would mean the Beatles test is unreachable in practice
-    ok(strips > 60 && strips < soloSecs * 0.6,
+    ok(atLeast(strips, 60) && strips < soloSecs * 0.6,
        strips + " solo breaks out of " + soloSecs + " solo sections — the strip " +
        "should be a coin on a genre with a kit, not a constant");
-    ok(chorusParts > 200, "only " + chorusParts + " choruses carry a part layer — " +
+    ok(atLeast(chorusParts, 200), "only " + chorusParts + " choruses carry a part layer — " +
        "the odd chorus was supposed to get one too");
     for (const gk of PARTS5)
       ok(used.has(gk), gk + ": the arranger never once calls for it");
@@ -5501,7 +5588,10 @@ console.log("dressing the record — the master bus and the guest genre");
   const C = require("../../nukernel/compose.js");
   const NF = require("../../nukernel/fields.js");
   const NS = require("../../nukernel/song.js");
-  const seeds = Array.from({ length: 40 }, (_, i) => i + 1);
+  // floor 20: (e) below goes looking for a solo break in composed "beatles"
+  // songs at roughly even odds per seed — too few draws and "the arranger
+  // has stopped writing them" is indistinguishable from "we didn't ask enough".
+  const seeds = Array.from({ length: seedCount(40, 20) }, (_, i) => i + 1);
   const FAM = Object.fromEntries(FAMILIES.map(([f, ks]) => [f, ks]));
 
   // (a) EVERY COMPOSED SONG IS MASTERED — and it survives the loader, which is
@@ -5653,7 +5743,10 @@ console.log("dressing the record — the master bus and the guest genre");
     // SALTED, like every other ballot: one seed across the table must not
     // master fifty records the same way
     const at1 = new Set(GK.map(gk => JSON.stringify(C.compose(gk, 1).master)));
-    ok(at1.size > 20, "only " + at1.size + " distinct masters across " + GK.length +
+    // census floor (atLeast): >20 of 110 is the calibrated claim; a 21-genre
+    // sample cannot clear an absolute floor sized for five times its own
+    // population, so FAST only asks that the masters are not all one chain
+    ok(atLeast(at1.size, 20), "only " + at1.size + " distinct masters across " + GK.length +
        " genres at one seed — the stream is not genre-salted");
     // and deterministic: a seed is a record, master included
     for (const gk of ["beatles", "techno", "dub"])
@@ -5677,7 +5770,10 @@ console.log("dressing the record — the master bus and the guest genre");
     const SECTIONAL = new Set(["bridge", "breakdown", "solo"]);
     let boxes = 0, withGuest = 0, twoGuest = 0, threeGuest = 0, dressed = 0;
     const per = {}, distinct = [], twoRoles = new Set();
-    for (const gk of GK) {
+    // GK_FULL: ZEROED below names eleven specific genres by their old
+    // regression, and "no genre at zero" is a coverage claim over the whole
+    // catalog — seeds still runs at the fast count, so this stays cheap.
+    for (const gk of GK_FULL) {
       const G = GENRES[gk], fam = G.family, ownFx = (G.fx || []).length;
       // WHO THIS HOST MAY CALL: the family's guest ballot plus its solo cast.
       // Anything else in a composed stack means a uniform draw crept back in,
@@ -5745,7 +5841,7 @@ console.log("dressing the record — the master bus and the guest genre");
        "% — outside the 25–40% band this stage defends");
     // NO GENRE AT ZERO, and the eleven that used to be are named so the
     // regression cannot come back quietly as "the average is fine"
-    for (const gk of GK) {
+    for (const gk of GK_FULL) {
       const [g, b] = per[gk];
       ok(g > 0, gk + ": never once hosts a guest");
       ok(g / b >= 0.15, gk + ": only " + (100 * g / b).toFixed(0) + "% of its boxes " +
@@ -5803,7 +5899,7 @@ console.log("dressing the record — the master bus and the guest genre");
         }
       }
     }
-    ok(checked >= 150, "only " + checked + " guested sections were rendered");
+    ok(atLeast(checked, 149), "only " + checked + " guested sections were rendered");
     // THE CAST IS TWO NAMES, and they are two: the peak's arrival is only an
     // arrival if it has not already been on the record.
     for (const gk of GK) for (const s of seeds.slice(0, 10)) {
@@ -5880,7 +5976,10 @@ console.log("the songwriter's read — lengths, irregularity, memory, stops, voi
   const C = require("../../nukernel/compose.js");
   const NF = require("../../nukernel/fields.js");
   const NS = require("../../nukernel/song.js");
-  const seeds = Array.from({ length: 16 }, (_, i) => i + 1);
+  // floor 16 == n: this whole section's censuses run over FIXED genre lists
+  // (8, then 4 named genres) sliced against `seeds`, so shrinking it further
+  // only starves those slices — 16 was already the small end.
+  const seeds = Array.from({ length: seedCount(16, 16) }, (_, i) => i + 1);
   const meanVel = ev => (ev.length
     ? ev.reduce((s, e) => s + (e.vel == null ? 5 : e.vel), 0) / ev.length : 0);
   const lvlOf = b => NF.LEVELS[b.lvl || "norm"];
@@ -6024,11 +6123,11 @@ console.log("the songwriter's read — lengths, irregularity, memory, stops, voi
     ok(CEN.sqBent === 0, CEN.sqBent + " irregular sections in a family whose " +
        "arithmetic is load-bearing — a fugue keeps its arithmetic");
     for (const k of Object.keys(C.BENDS))
-      ok((CEN.kinds[k] || 0) > 20, "the \"" + k + "\" gesture fired " +
+      ok(atLeast(CEN.kinds[k] || 0, 20), "the \"" + k + "\" gesture fired " +
          (CEN.kinds[k] || 0) + " times — a vocabulary entry the dice never reach");
     // ...and every square FAMILY is really represented, so the zero above is a
     // fact about restraint rather than about an empty set
-    ok(CEN.sqSec > 3000, "only " + CEN.sqSec + " square sections in the sweep — " +
+    ok(atLeast(CEN.sqSec, 3000), "only " + CEN.sqSec + " square sections in the sweep — " +
        "the zero proves nothing");
     // AND IT REACHES THE RENDER. A length that does not move the window is a
     // number in a file: the bent box must render exactly its own bars, and the
@@ -6053,7 +6152,7 @@ console.log("the songwriter's read — lengths, irregularity, memory, stops, voi
         }
       }
     }
-    ok(proved > 20, "only " + proved + " bent sections were rendered");
+    ok(atLeast(proved, 20), "only " + proved + " bent sections were rendered");
   }
 
   // (c) DYNAMICS NEED A MEMORY. "The second verse is bigger than the first
@@ -6070,7 +6169,7 @@ console.log("the songwriter's read — lengths, irregularity, memory, stops, voi
     // not checked: `drone` and `ambient` are one idea held for a record, they
     // are handed the bare role constants, and they really do repeat. If they
     // stopped, the branch above would be silently covering nothing.
-    ok(CEN.dupSongs === CEN.steadyDup && CEN.steadyDup > 10,
+    ok(CEN.dupSongs === CEN.steadyDup && atLeast(CEN.steadyDup, 10),
        "the flat-song exemption covers " + CEN.steadyDup + " songs of " +
        CEN.dupSongs + " that repeat — it is either dead or leaking");
     ok(Object.keys(C.STEADY).length <= 3,
@@ -6151,7 +6250,7 @@ console.log("the songwriter's read — lengths, irregularity, memory, stops, voi
        "outside the 8–22% band: below it the record has no holes in it, above it " +
        "a hole is the texture rather than the moment");
     for (const k of Object.keys(C.STOPS))
-      ok((CEN.stops[k] || 0) > 40, "the \"" + k + "\" stop fired " +
+      ok(atLeast(CEN.stops[k] || 0, 40), "the \"" + k + "\" stop fired " +
          (CEN.stops[k] || 0) + " times — the arranger never reaches it");
     // WHERE THEY LAND. The policy says: before the peak, at the end of a
     // bridge, or once more on a verse/chorus/solo — and never on a bed, an
@@ -6179,9 +6278,9 @@ console.log("the songwriter's read — lengths, irregularity, memory, stops, voi
       });
       if (any) songsWithStop++;
     }
-    ok(beforePeak > 300, "only " + beforePeak + " records put a hole before the " +
+    ok(atLeast(beforePeak, 300), "only " + beforePeak + " records put a hole before the " +
        "last chorus — that is the one the brief names");
-    ok(bridges > 60, "only " + bridges + " bridges stop at the end");
+    ok(atLeast(bridges, 60), "only " + bridges + " bridges stop at the end");
     ok(songsWithStop / CEN.songs >= 0.6, "only " +
        Math.round(100 * songsWithStop / CEN.songs) + "% of records have a stop in " +
        "them at all");
@@ -6341,10 +6440,10 @@ console.log("the songwriter's read — lengths, irregularity, memory, stops, voi
                 " choruses and " + CEN.verseVoice + "/" + CEN.verse + " verses; " +
                 CEN.soloLayers + " solo layers, " + CEN.soloLoose + " outside a " +
                 "solo section");
-    ok(CEN.chorus > 800 && CEN.chorusVoice === CEN.chorus,
+    ok(atLeast(CEN.chorus, 800) && CEN.chorusVoice === CEN.chorus,
        "the singer misses " + (CEN.chorus - CEN.chorusVoice) + " choruses of " +
        CEN.chorus + " — a chorus is the thing the singer is for");
-    ok(CEN.verse > 800 && CEN.verseVoice / CEN.verse >= 0.75,
+    ok(atLeast(CEN.verse, 800) && (!SWEEP || CEN.verseVoice / CEN.verse >= 0.75),
        "the singer carries only " + Math.round(100 * CEN.verseVoice / CEN.verse) +
        "% of verses — the voice is meant to be the through-line, not a visitor");
     // THE SOLO IS WHAT VISITS: one section, maybe one chorus, and nowhere else.
@@ -6352,7 +6451,7 @@ console.log("the songwriter's read — lengths, irregularity, memory, stops, voi
        "section and outside the one chorus the soloist visits");
     ok(CEN.twoVisits === 0, CEN.twoVisits + " records let the soloist visit two " +
        "choruses — \"one section, maybe a chorus\"");
-    ok(CEN.soloLayers > 200, "only " + CEN.soloLayers + " solo layers in the sweep — " +
+    ok(atLeast(CEN.soloLayers, 200), "only " + CEN.soloLayers + " solo layers in the sweep — " +
        "confined should not mean absent");
     // WHO SINGS is a decision, and both override tables are live: the anchors
     // inside a singing family that have no topline, and the one filed with the
@@ -6383,7 +6482,7 @@ console.log("the songwriter's read — lengths, irregularity, memory, stops, voi
           break;
         }
       }
-    ok(heard >= 30, "only " + heard + " sung sections were rendered");
+    ok(atLeast(heard, 29), "only " + heard + " sung sections were rendered");
     // AND IT IS ONE TUNE. "The same topline, developing" — slot 8 is written
     // from slot 5's own first half (compose.js phrase(), the `head` argument),
     // so the verse opens with the chorus's melody note for note and then
@@ -6441,7 +6540,7 @@ console.log("the songwriter's read — lengths, irregularity, memory, stops, voi
         if (b.bend || b.stop) carried++;
       });
     }
-    ok(carried > 100, "only " + carried + " bent-or-stopped boxes went through the " +
+    ok(atLeast(carried, 100), "only " + carried + " bent-or-stopped boxes went through the " +
        "loader — the round trip proves nothing");
   }
 
@@ -6449,7 +6548,7 @@ console.log("the songwriter's read — lengths, irregularity, memory, stops, voi
   // hook stated instrumentally — Day Tripper, A Hard Day's Night. It must be
   // the SAME material the chorus later sings, or it is not a quote."
   {
-    ok(CEN.quotes > 40, "only " + CEN.quotes + " records open by quoting the hook");
+    ok(atLeast(CEN.quotes, 40), "only " + CEN.quotes + " records open by quoting the hook");
     // the three families that cannot mean it do not vote for it: a choir does
     // not state its own chorus on an instrument, a drift record has no hook,
     // and a lone part has no chorus to quote FROM
@@ -6507,7 +6606,7 @@ console.log("the songwriter's read — lengths, irregularity, memory, stops, voi
       if (line(later, up5) !== c0) shared++;
       if (line(head, up0) === i0) control++;
     }
-    ok(n2 > 40, "only " + n2 + " quote intros were rendered");
+    ok(atLeast(n2, 40), "only " + n2 + " quote intros were rendered");
     // THE CHORUS SIDE IS NOT 100%, and the exception is the same one §1 carries
     // for vaporwave: a genre whose voice 0 realizes as a PAD reads chord tones
     // and by construction cannot hear a degree vector, so a chorus that deals
@@ -6538,7 +6637,8 @@ console.log("the songwriter's read — lengths, irregularity, memory, stops, voi
       const b2 = pcs(D.sectionEvents(later, song.slots).ev);
       if (a.size && [...a].every(p => b2.has(p))) inside++;
     }
-    ok(m > 40 && inside / m >= 0.8, "the quote's pitch content sits inside the " +
+    ok(atLeast(m, 40) && (!SWEEP || inside / m >= 0.8),
+       "the quote's pitch content sits inside the " +
        "chorus's in only " + inside + "/" + m + " records");
   }
 }
@@ -7148,7 +7248,10 @@ console.log("genealogy — parents reference real anchors, and annotation is ine
     ok(GY.featuresOf(gk).every(Number.isFinite),
        gk + ": a genealogy feature is not finite");
   const fits = GY.fitAll();
-  ok(fits.length === real.length, "the fit does not cover every real anchor");
+  // GY.fitAll() fits the WHOLE catalog regardless of GK's sample — the
+  // coverage claim is only true against the full roster
+  ok(fits.length === GK_FULL.filter(k => !FN.has(k)).length,
+     "the fit does not cover every real anchor");
   for (const f of fits) {
     ok(Number.isFinite(f.r2) && f.r2 >= 0 && f.r2 <= 1,
        f.key + ": fit R2 is not a finite number in [0,1]");
@@ -7333,8 +7436,12 @@ console.log("the master harmonization engine — one tonality, every added voice
   // prints; it never writes. Weakening the tripwire is still the thing you
   // may not do — re-measuring it, with the reason recorded above, is the
   // thing you must.
+  // GK_FULL: the byte-identity tripwire — its whole job is that NOTHING
+  // moved except what the commit message argues, and a sample can't tell
+  // "unchanged" from "not looked at" (this file's own history: "exactly 84
+  // rows moved" when the singer came out — a claim only 110 rows can make).
   const fresh = {};
-  for (const gk of GK) {
+  for (const gk of GK_FULL) {
     let acc = "";
     for (const seed of [1, 2, 3]) {
       const song = C.compose(gk, seed);
@@ -7354,7 +7461,7 @@ console.log("the master harmonization engine — one tonality, every added voice
   }
   if (process.env.NUKERNEL_REF) {
     let line = "  const REF = {";
-    for (const gk of GK) {
+    for (const gk of GK_FULL) {
       const t = " " + gk + ': "' + fresh[gk] + '",';
       if (line.length + t.length > 76) { console.log(line); line = "   "; }
       line += t;
@@ -7491,7 +7598,9 @@ console.log("the master harmonization engine — one tonality, every added voice
   // the ruling's roster and its boundary: emergent is exactly the counterpoint
   // family, and the drones are NOT emergent — drone vamps one modal chord,
   // sludge/ambient wrote their cycles down — so a drone is never conformable
-  ok(GK.filter(k => GENRES[k].harmony === "emergent").sort().join(",") ===
+  // GK_FULL: names the exact roster, so it is a catalog-wide fact, not one
+  // about whichever emergent genres the sample happened to draw
+  ok(GK_FULL.filter(k => GENRES[k].harmony === "emergent").sort().join(",") ===
      "counterpoint,fugue,spem",
      "the emergent roster changed — re-argue the §48 ruling genre by genre");
   ok(GENRES.drone.harmony === "modal" && GENRES.sludge.harmony === "cycle" &&
@@ -7795,13 +7904,19 @@ console.log("music breathes — the tempo map and the lead-ins");
                              !(e.dur > 0) || e.off + e.dur <= w0 + 1e-6),
          "an outgoing line sustains through the borrowed window");
     }
-    /* the composed corpus: every law at once, over real songs */
+    /* the composed corpus: every law at once, over real songs. Each
+       genre/seed pays a real audio-plan compile() (this loop alone was 24s
+       of the old fast run), and every claim below except the pickup-count
+       floor is an EXACTNESS law (=== 0) that a smaller draw still proves —
+       fewer repeats only lowers the odds of CATCHING a rare violation, the
+       same trade the rest of this file makes. SWEEP restores the full 21. */
     const seen = { pu: 0, songs: 0, seams: 0 };
     let offChord = 0, offRange = 0, onArrival = 0, repeat = 0, doubles = 0,
         badHome = 0, strayBar = 0;
-    for (const gk of ["house", "rock", "dnb", "jazz", "acid", "vaporwave", "blues"]) {
+    for (const gk of SWEEP ? ["house", "rock", "dnb", "jazz", "acid", "vaporwave", "blues"]
+                           : ["house", "dnb", "jazz"]) {
       if (!GENRES[gk]) continue;
-      for (const seed of [1, 5, 9]) {
+      for (const seed of SWEEP ? [1, 5, 9] : [1, 5]) {
         // through the SHIPPED path, not a private call: adoptSong + the
         // transport's own builder, so the register home is really stamped and
         // the home law below is measuring something
@@ -7849,7 +7964,7 @@ console.log("music breathes — the tempo map and the lead-ins");
         }
       }
     }
-    ok(seen.pu > 40 && seen.seams > 12,
+    ok(atLeast(seen.pu, 40) && atLeast(seen.seams, 12),
        "the composed corpus produced only " + seen.pu + " pickup event(s) across " +
        seen.seams + " seam(s) — the lead-ins are not reaching real songs");
     ok(strayBar === 0, strayBar + " pickup(s) landed in a bar that is not a seam");
@@ -8322,7 +8437,9 @@ console.log("a genre you invented — the recipe, the song, the schedule, the at
            "the promoted anchor's " + fn + "() is not the genre that was kept");
       // every other anchor is untouched: a splice that reformatted its
       // neighbours would be a splice nobody could review
-      ok(Object.keys(G2.GENRES).length === GK.length + 1,
+      // G2 is loaded from a copy of the REAL (full) genres.js, plus the one
+      // promoted anchor — GK_FULL is the catalog size to compare against.
+      ok(Object.keys(G2.GENRES).length === GK_FULL.length + 1,
          "the splice changed the size of the table by something other than one");
       for (const k of ["house", "jazz", "simple", "pad"])
         ok(j52(K.render(DEFAULT, G2.GENRES[k], G2.GENRES[k].bars)) ===
@@ -9250,9 +9367,11 @@ console.log("the catalog renders, and the machines get played by the machines");
 
   // ---- (a) NOTHING WENT SILENT. All 110, this genre's own bar count, the
   // catalog-wide walk — a synth-field typo that made driveSynth throw would
-  // show up here as an exception, not just as dropped notes.
+  // show up here as an exception, not just as dropped notes. GK_FULL: this
+  // IS the coverage walk that catches a genre throwing on write — a sample
+  // proves the sampled genres render, not that nothing was missed.
   let rendered = 0;
-  for (const gk of GK) {
+  for (const gk of GK_FULL) {
     const g = GENRES[gk], bars = Math.max(4, g.bars);
     let ev;
     try { ev = allEvents(P, g, bars); }
@@ -9260,7 +9379,7 @@ console.log("the catalog renders, and the machines get played by the machines");
     ok(ev.length > 0, gk + ": renders silent at " + bars + " bars");
     rendered++;
   }
-  ok(rendered === GK.length, "§71(a) " + (GK.length - rendered) + " genres never reached the render walk");
+  ok(rendered === GK_FULL.length, "§71(a) " + (GK_FULL.length - rendered) + " genres never reached the render walk");
 
   // ((b) held the 84 armed singers to their own boxes. It went out with the
   // espeak organ on 2026-08-17 — nukernel/kernel-daw.html has the tombstone.)
@@ -9275,7 +9394,8 @@ console.log("the catalog renders, and the machines get played by the machines");
        gk + ": synth.dsp is \"" + (GENRES[gk].synth && GENRES[gk].synth.dsp) +
        "\", expected \"" + dsp + "\"");
   const distDir71 = path71.join(__dirname, "../../engine/faust/dist");
-  const allSynth71 = GK.filter(gk => GENRES[gk].synth);
+  // GK_FULL: "exactly 15" is a fact about the whole catalog, not the sample
+  const allSynth71 = GK_FULL.filter(gk => GENRES[gk].synth);
   ok(allSynth71.length === 15, "§71(c) the synth-bearing roster drifted from 15: " + allSynth71.length);
   for (const gk of allSynth71) {
     const spec = GENRES[gk].synth;
@@ -9615,10 +9735,12 @@ console.log("the cast — the records that have a singer get one");
   CAST77.gospel.push([2, "choir", "alto"]);
   const MODULE_OF = { lead: "voice_lead", choir: "voice_choir" };
 
-  /* (a) THE ROSTER */
+  /* (a) THE ROSTER — GK_FULL: this IS the coverage walk (a record that
+     gained or lost a voice with nobody arguing for it, unheard) — the exact
+     failure mode named in its own comment is invisible to a sample. */
   {
     const singing = [];
-    for (const gk of GK) {
+    for (const gk of GK_FULL) {
       const g = GENRES[gk];
       for (let v = 0; v < (g.voices || 1); v++)
         if (TE77.voiceForInstr(instrAt(g, v), g.tone)) { singing.push(gk); break; }
@@ -9628,7 +9750,7 @@ console.log("the cast — the records that have a singer get one");
        "the singing roster is [" + singing.sort().join(" ") + "] and the cast says [" +
        want.join(" ") + "] — a record either gained a voice nobody argued for or " +
        "lost one silently, which is how the espeak singer came to exist unheard");
-    console.log("  (a) " + singing.length + " of " + GK.length + " genres sing");
+    console.log("  (a) " + singing.length + " of " + GK_FULL.length + " genres sing");
   }
 
   /* (b) EVERY SINGER RESOLVES TO A MODULE THAT IS ACTUALLY THERE */
@@ -9717,7 +9839,10 @@ console.log("the cast — the records that have a singer get one");
     }
   }
 
-  /* (e) THE INSTRUMENTAL CATALOGUE IS BYTE-IDENTICAL */
+  /* (e) THE INSTRUMENTAL CATALOGUE IS BYTE-IDENTICAL — GK_FULL: the
+     byte-identity tripwire against HEAD, and its whole claim is "nothing
+     ELSE moved" — a sample can only vouch for the genres it happened to
+     draw. */
   {
     // HEAD's own genres.js, loaded beside the working one. Evaluated rather
     // than written to disk: the file is a classic IIFE that requires
@@ -9735,7 +9860,7 @@ console.log("the cast — the records that have a singer get one");
        "is unheld, and this round could have moved a genre nobody was looking at");
     if (HEADG) {
       let same = 0;
-      for (const gk of GK) {
+      for (const gk of GK_FULL) {
         if (CAST77[gk]) continue;
         const a = GENRES[gk], b = HEADG[gk];
         ok(!!b, gk + " is new and was not part of casting singers");
@@ -9882,7 +10007,12 @@ console.log("what reaches the engine — a name, a width, and a register to sing
   const C78 = require("../../nukernel/compose.js");
   const TE78 = await import("../../nukernel/audio/to-engine.js");
   // WHO SINGS, derived — §77(a) is where the roster is PINNED by hand, so
-  // deriving it here reads the same list without a second copy to drift
+  // deriving it here reads the same list without a second copy to drift.
+  // The main walk below compiles a real audio plan per genre x seed (a P78
+  // .compile()), which is the same cost class as §45's instrument-pool sweep
+  // — too expensive to keep at GK_FULL (it alone cost 60s of the old fast
+  // run). Sampled like everything else; the floors are `atLeast`, and SWEEP
+  // is what makes "nothing ships nameless" a claim about the whole catalog.
   const SINGERS78 = GK.filter((gk) => {
     const g = GENRES[gk];
     for (let v = 0; v < (g.voices || 1); v++)
@@ -9934,7 +10064,7 @@ console.log("what reaches the engine — a name, a width, and a register to sing
   }
 
   /* (a) NOTHING SHIPS NAMELESS */
-  ok(nUnits78 > 5000 && nIns78 > 5000,
+  ok(atLeast(nUnits78, 5000) && atLeast(nIns78, 5000),
      "the walk saw " + nUnits78 + " units and " + nIns78 + " inserts — it is not walking");
   ok(nameless78.length === 0, nameless78.length + " thing(s) reach the engine with no " +
      "module the loader can fetch, first three: " + nameless78.slice(0, 3).join(" | ") +
@@ -9943,7 +10073,7 @@ console.log("what reaches the engine — a name, a width, and a register to sing
               " boxes, every one of them named");
 
   /* (b) A WIDE UNIT KEEPS ITS WIDTH */
-  ok(stereo78 > 100, "only " + stereo78 + " stereo unit(s) in the whole catalogue — " +
+  ok(atLeast(stereo78, 100), "only " + stereo78 + " stereo unit(s) in the whole catalogue — " +
      "this claim is proving nothing");
   ok(wide78.length === 0, wide78.length + " stereo unit(s) reach the engine with an " +
      "insert chain, first three: " + wide78.slice(0, 3).join(" | ") + " — the renderer " +
@@ -10058,7 +10188,7 @@ console.log("what reaches the engine — a name, a width, and a register to sing
            "throat has " + Math.round(w[1] - w[0]));
       }
     }
-    ok(parts78 > 100, "only " + parts78 + " sung part(s) measured — the roster is not singing");
+    ok(atLeast(parts78, 100), "only " + parts78 + " sung part(s) measured — the roster is not singing");
     ok(after78 <= before78 * 0.6,
        "the register home takes the roster's fold damage from " +
        (before78 / parts78 * 100).toFixed(1) + "% to " + (after78 / parts78 * 100).toFixed(1) +
@@ -10078,8 +10208,10 @@ console.log("what reaches the engine — a name, a width, and a register to sing
   }
 }
 
-console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
-            GK.length + " genres");
+console.log("\nnukernel (" + (SWEEP ? "sweep" : "fast") + "): " + (checks - fails) + "/" + checks +
+            " checks pass across " + GK.length + " genres" +
+            (SWEEP ? "" : " of " + GK_FULL.length +
+              " (node test/unit/nukernel.test.js --sweep for the full catalog)"));
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }
 process.exit(0);
 })().catch(e => { console.error("FAIL:", e && e.stack || e); process.exit(1); });

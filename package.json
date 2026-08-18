@@ -12,9 +12,10 @@
     "test:browser": "node test/run.js browser",
     "setup:browser": "playwright install chromium webkit",
     "test:unit": "node test/run.js unit",
-    "test:all": "node test/run.js all"
+    "test:all": "node test/run.js all",
+    "test:sweep": "node test/run.js sweep"
   },
-  "//": "Every gate is named <name>.test.js and the FOLDER says what it needs: test/gates (the verify.sh suite), test/unit (pure node), test/browser + test/starcruise (real WebGL/WebAudio via Playwright), test/probes (hand-run instruments, *.probe.js), test/lib (shared harnesses, not gates). The MATRIX/VALIDATE/ENGINE gates (verify.sh) and everything under test/gates + test/unit need NO deps beyond Node. test:browser globs exactly the two browser folders; they need this one devDependency: run `npm install` then `npm run setup:browser`, after which `node test/browser/<name>.test.js` works with no NODE_PATH. Faust's own build dep installs separately under engine/faust (see CONTRIBUTING).",
+  "//": "Every gate is named <name>.test.js and the FOLDER says what it needs: test/gates (the verify.sh suite), test/unit (pure node), test/browser + test/starcruise (real WebGL/WebAudio via Playwright), test/probes (hand-run instruments, *.probe.js), test/lib (shared harnesses, not gates). The MATRIX/VALIDATE/ENGINE gates (verify.sh) and everything under test/gates + test/unit need NO deps beyond Node. test:browser globs exactly the two browser folders; they need this one devDependency: run `npm install` then `npm run setup:browser`, after which `node test/browser/<name>.test.js` works with no NODE_PATH. Faust's own build dep installs separately under engine/faust (see CONTRIBUTING). test:unit runs each gate's FAST default (a representative sample proving every law once); test:sweep re-runs the gates that also carry an exhaustive `--sweep` mode (full cross-product — run before a ship, not on every change).",
   "devDependencies": {
     "playwright": "^1.57.0"
   }
