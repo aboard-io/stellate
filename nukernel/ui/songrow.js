@@ -72,7 +72,7 @@ import { SONG, SLOTS, slot, viewSec, loopOnly, pendingStart, setViewSec,
          setLoopOnly, setPendingStart, setSlot, commit, on } from "./state.js";
 import { stackOf, stackLabel, boxBars, focusOf, opsOf, optOf,
          voxAll } from "./derive.js";
-import { playing, playingSec, startAt, resetBar } from "../audio/transport.js";
+import { playing, playingSec, startAt, resetBar } from "../audio/live.js";
 import { buzz } from "./touch.js";
 // toggle() is the ONE dispatcher every chip goes through; mountBanks builds a
 // cell's banks into the menu mount and refreshChips re-lights them per commit

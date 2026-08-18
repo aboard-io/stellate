@@ -148,7 +148,7 @@ const num = x => (Number.isFinite(x) ? x : 0);
 
 // ---- the score, as this file reads it ---------------------------------------
 // Everything below is measured on the bar list ui/derive.js songBars returns —
-// the same buckets audio/transport.js schedules. `off` is the event's position
+// the same buckets audio/plan.js compiles. `off` is the event's position
 // inside its bar in GRID steps, so pos is where in the bar it lands, 0..1, and
 // pos·16 is the sixteenth it is nearest. That normalisation matters: a half-rate
 // genre writes 32 steps to the bar and a straight one 16, and "on the backbeat"

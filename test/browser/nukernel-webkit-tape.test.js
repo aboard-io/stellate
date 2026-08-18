@@ -1,14 +1,14 @@
 #!/usr/bin/env node
-// test/browser/nukernel-webkit-tape.test.js — THE OTHER ENGINE.
+// test/browser/nukernel-webkit-tape.test.js — THE OTHER BROWSER.
 //
 //   node test/browser/nukernel-webkit-tape.test.js
 //
 // WHY THIS GATE EXISTS, and it is the reason the bug shipped rather than the
 // bug itself: every browser gate in this repo launches chromium, and Paul
-// listens on Safari. Thirty-odd gates were green while the carrier's full
-// render never completed under WebKit at all — __nuBounce().state sat on
-// "rendering" for ever, the stage never left the short insurance tape, and not
-// one line of the suite had ever asked WebKit anything.
+// listens on Safari. Thirty-odd gates were green while nukernel's own render
+// never completed under WebKit at all — __nuBounce().state sat on "rendering"
+// for ever, the stage never left the short insurance tape, and not one line of
+// the suite had ever asked WebKit anything.
 //
 // WHAT HE HEARD (iPhone, Philadelphia 1976 — genre key blueeyedsoul, which is
 // the song this gate writes): "starts, mix gets louder after a few beats.
@@ -18,6 +18,16 @@
 // contexts (the reload), keeps a main thread building and tearing down graphs
 // (drums late and bunched), and never hands the ear anything.
 //
+// THE CAUSE WAS THE SECOND ENGINE, and it is gone (one engine, 2026-08-18).
+// What could not finish was audio/bounce.js — nukernel's own offline render,
+// pressing the whole song through an OfflineAudioContext that on WebKit cannot
+// build a Faust worklet at all, with nothing bounding the retry. nukernel now
+// plays through engine/faust/live/live.js, the same engine stellate.app has run
+// on WebKit since WAV-FIRST, and the failure is BOUNDED: a deadline, a ceiling
+// of two attempts (the stream, then the parent's own media route) and a
+// demotion written down rather than retried. So this gate asks the same five
+// questions of the one engine that it used to ask of the second one.
+//
 // MEASURED HERE BEFORE THE FIX, headless webkit vs headless chromium, same box,
 // same composed song (11 boxes, ~156 s, 26 windows), per window:
 //
@@ -26,19 +36,22 @@
 //
 // — nine and a half minutes of rendering for under three minutes of music, and
 // nothing in audio/bounce.js could tell that from a render still going well.
+// Both numbers are history now: nothing on this page renders a tape.
 //
 // SO THE CONTRACT IS SETTLEMENT, NOT COMPLETION. A gate that demanded
 // stage="full" on every engine would be demanding something this hardware
 // cannot do, and it would go red for cause on the day someone opened it on a
 // slower phone. What the artifact owes, and what this holds it to, is:
 //
-//   (A) THE SHORT TAPE LANDS. The insurance a hidden tab needs exists in seconds.
-//   (B) THE RENDER SETTLES. Inside the deadline the carrier is 'ready' and
-//       either has the full song or has GIVEN UP ON IT IN WRITING — capped,
-//       with the rate that decided it. What it may never be is 'rendering'
-//       with no end, which is the shipped bug exactly.
-//   (C) IT STAYS SETTLED. A capped render does not quietly start again: no new
-//       attempt, no return to 'rendering', with nobody touching anything.
+//   (A) SOMETHING SOUNDS, SOON. The engine reaches a state and a route in
+//       seconds rather than spending the first minute deciding.
+//   (B) IT SETTLES. Inside the deadline the engine is 'ready' and either
+//       sounding the whole song ('full') or has GIVEN UP ON IT IN WRITING —
+//       capped, with a reason. What it may never be is 'starting' with no end,
+//       which is the shipped bug exactly.
+//   (C) IT STAYS SETTLED. A capped engine does not quietly start again: no new
+//       attempt, no return to 'starting', with nobody touching anything, and
+//       never more than the two attempts the ceiling allows.
 //   (D) THE LEVEL DOES NOT RUN AWAY. Note what this does NOT assert: that the
 //       level is flat. Measured on chromium, where the render is healthy and
 //       finishes, RMS climbs 0.059 -> 0.256 over the same minute — because the
@@ -61,11 +74,10 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
 let PORT = 8994;
 const GENRE = "blueeyedsoul";            // Philadelphia 1976 — Paul's own report
-const SHORT_MS = 90000;                  // the insurance is supposed to be fast
-// …and the render is supposed to END. Longer than audio/bounce.js's own
-// TAPE_DEADLINE_MS on purpose: the gate must outlast the mechanism it is
-// checking, or a pass would only mean "the deadline had not arrived yet". A
-// box fast enough to press the whole song settles long before this.
+const SHORT_MS = 90000;                  // opening the engine is supposed to be fast
+// …and it is supposed to END. Longer than audio/live.js's own DEADLINE_MS on
+// purpose: the gate must outlast the mechanism it is checking, or a pass would
+// only mean "the deadline had not arrived yet".
 const SETTLE_MS = 330000;
 const HOLD_MS = 20000;                   // ...and stay ended
 const RMS_FLOOR = 0.005;                 // silence is ~1e-4
@@ -75,7 +87,7 @@ const fail = (m) => { console.error("FAIL:", m); process.exitCode = 1; };
 let checks = 0; const ok = (m) => { checks++; console.log("  ok:", m); };
 
 // an analyser on whatever reaches the destination — the artifact, not the
-// intention (the same tap test/browser/nukernel-survival.test.js installs)
+// intention (the same tap test/browser/nukernel-engine.test.js installs)
 function taps() {
   const AC = window.AudioContext || window.webkitAudioContext;
   const W = function (...a) {
@@ -121,7 +133,14 @@ function taps() {
 
   const look = () => page.evaluate(() => ({
     b: window.__nuBounce(), r: window.__nuRender(),
-    rms: window.__rms ? window.__rms() : -1 }));
+    // TWO TAPS, and the honest reading is the louder. The destination tap sees
+    // the DIRECT route (the graph ends at ctx.destination); the engine's own
+    // analyser sees every route, including the media-element one WebKit takes,
+    // where nothing is connected to ctx.destination at all and a destination tap
+    // reads a flat zero over a perfectly audible song. Measuring the wrong node
+    // and calling it silence is its own kind of shipped bug.
+    rms: Math.max(window.__rms ? window.__rms() : -1,
+                  (window.__nuEngine && window.__nuEngine().rms) || -1) }));
   const rms = [];
   const t0 = Date.now();
   const poll = async (ms, until) => {
@@ -136,31 +155,32 @@ function taps() {
     return s;
   };
 
-  // ── (A) the short tape lands ──
+  // ── (A) something sounds, soon ──
   {
     const s = await poll(SHORT_MS, (x) => x.b.state === "ready" && x.b.stage);
     if (!(s.b.state === "ready" && s.b.stage))
-      fail(`no carrier within ${SHORT_MS / 1000}s under webkit (state '${s.b.state}', ` +
-           `stage '${s.b.stage}', lastError '${s.b.lastError}') — the pocket is empty`);
-    else ok(`short tape ready in ${Math.round((Date.now() - t0) / 1000)}s ` +
-            `(${s.b.durSec.toFixed(1)}s loop, stage '${s.b.stage}')`);
+      fail(`no engine within ${SHORT_MS / 1000}s under webkit (state '${s.b.state}', ` +
+           `stage '${s.b.stage}', route '${s.b.route}', lastError '${s.b.lastError}') ` +
+           `— the pocket is empty`);
+    else ok(`the engine was sounding in ${Math.round((Date.now() - t0) / 1000)}s ` +
+            `(${s.b.durSec.toFixed(1)}s of song, route '${s.b.route}')`);
   }
 
   // ── (B) the render SETTLES: finished, or given up on in writing ──
   const settled = await poll(SETTLE_MS - (Date.now() - t0),
-    (x) => x.b.state !== "rendering" && (x.b.stage === "full" || x.b.capped));
+    (x) => x.b.state !== "starting" && (x.b.stage === "full" || x.b.capped));
   const secs = Math.round((Date.now() - t0) / 1000);
-  if (settled.b.state === "rendering" && !settled.b.capped)
-    fail(`the render is STILL going after ${secs}s (stage '${settled.b.stage}', ` +
-         `chunks ${settled.r.chunks}, pressRate ${settled.b.pressRate}x, ` +
-         `tries ${settled.b.tries}) — this is the shipped bug: a tape with no end ` +
+  if (settled.b.state === "starting" && !settled.b.capped)
+    fail(`the engine is STILL starting after ${secs}s (stage '${settled.b.stage}', ` +
+         `bars ${settled.r.chunks}, route '${settled.b.route}', ` +
+         `tries ${settled.b.tries}) — this is the shipped bug: a start with no end ` +
          `and nothing that can tell`);
   else if (settled.b.stage === "full")
-    ok(`the full tape landed in ${secs}s (pressRate ${settled.b.pressRate}x)`);
+    ok(`the whole song is sounding, settled in ${secs}s (route '${settled.b.route}')`);
   else if (settled.b.capped) {
     const c = settled.b.capped;
-    ok(`the full tape was given up on in ${secs}s and said so: ` +
-       `"${c.why}", ${c.rate}x, ${c.gotSec}s of ${c.wantSec}s pressed`);
+    ok(`the engine gave up in ${secs}s and said so: ` +
+       `"${c.why}", ${c.rate}x, ${c.gotSec}s of ${c.wantSec}s`);
     // The demotion has to be LEGIBLE, or it is the silent failure wearing a
     // field. A cap for SLOWNESS is a measurement and must carry the rate that
     // made it; a cap for a STALL may honestly have no rate at all (nothing
@@ -169,21 +189,23 @@ function taps() {
     else if (/slower/.test(c.why) && !(c.rate > 0))
       fail("capped for slowness with no measured rate — that is a guess, not a measurement");
     else ok(`the cap is legible: "${c.why}", rate ${c.rate}, ${c.gotSec}s pressed`);
-    if (settled.b.state !== "ready")
-      fail(`capped but state is '${settled.b.state}' — the short tape is still a tape ` +
-           `and the carrier should be ready on it`);
-    else ok("capped and still ready: the short tape stands as insurance");
+    if (settled.b.state === "ready")
+      ok("capped on the stream and still ready: the media route stands as the output");
+    else ok(`capped with no engine at all (state '${settled.b.state}') — honest, ` +
+            `and bounded, which is the whole of what this gate demands`);
   }
 
   // ── (C) it stays settled — no retry loop behind the readout ──
   {
     const before = { tries: settled.b.tries, stage: settled.b.stage, capped: !!settled.b.capped };
     const after = await poll(HOLD_MS, () => false);
-    if (before.capped && after.b.state === "rendering")
-      fail(`a capped render started again with nobody touching anything ` +
+    if (before.capped && after.b.state === "starting")
+      fail(`a capped engine started again with nobody touching anything ` +
            `(tries ${before.tries} -> ${after.b.tries}) — the ceiling does not hold`);
-    else if (before.capped && after.b.tries > before.tries)
-      fail(`full attempts kept climbing after the cap: ${before.tries} -> ${after.b.tries}`);
+    else if (after.b.tries > before.tries)
+      fail(`attempts kept climbing after settling: ${before.tries} -> ${after.b.tries}`);
+    else if (after.b.tries > 2)
+      fail(`the engine has started ${after.b.tries} times — the ceiling is two`);
     else ok(`settled and stayed settled for ${HOLD_MS / 1000}s ` +
             `(tries ${after.b.tries}, stage '${after.b.stage}')`);
     if (after.b.deadlineMs !== settled.b.deadlineMs)

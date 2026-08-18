@@ -60,12 +60,12 @@ const listing = (dir) => {
 //   wavout-seam           render+encode 57.3% against a 33% budget   (solo: comfortable)
 //   crossfade-seam        197 and 1738 underrun quanta, budget 34    (solo: passes)
 //   live / live-resilience / sampler-inserts-live / wedge-demo       (solo: all pass)
-//   nukernel-bounce       the carrier's offline render, asserted as a fraction of
-//                         the song's own duration — three whole-song renders of a
-//                         composed beatles song, measured end to end. Two of those
-//                         renders already run three OfflineAudioContexts at once
-//                         (audio/bounce.js PARALLEL), so this gate is a full box on
-//                         its own and cannot share one.
+//   nukernel-webkit-tape  a second browser ENGINE, launched beside chromium, with a
+//                         settlement deadline in it — a gate about termination must
+//                         not be starved by neighbours or it measures the box.
+//   (nukernel-bounce was here: the carrier's offline render, three whole-song
+//   presses of a composed beatles song. Both the gate and the render went out with
+//   nukernel's second engine on 2026-08-18 — one engine, no offline press.)
 //
 // Every one of them passes serially and fails only for want of CPU. Letting that stand
 // would be the worst outcome available: a suite that goes red without a defect is a
@@ -84,7 +84,7 @@ const listing = (dir) => {
 // only gate that launches WEBKIT, it renders a whole composed song there, and
 // what it asserts is that the render ENDS inside a deadline. Sharing a box with
 // five chromiums is exactly how a deadline gate goes red without a defect.
-const SOLO = /(^|\/)(wavout-seam|wavout|stem-parity|crossfade-seam|live|live-resilience|live-audit-throttled|sampler-inserts-live|wedge-demo|nukernel-bounce|nukernel-webkit-tape)\.test\.js$/;
+const SOLO = /(^|\/)(wavout-seam|wavout|stem-parity|crossfade-seam|live|live-resilience|live-audit-throttled|sampler-inserts-live|wedge-demo|nukernel-webkit-tape)\.test\.js$/;
 
 const SETS = {
   browser: { files: [...listing("test/browser"), ...listing("test/starcruise")], jobs: HEAVY,

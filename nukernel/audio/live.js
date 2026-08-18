@@ -1,0 +1,392 @@
+// audio/live.js — nukernel plays through THE PARENT ENGINE. All of it.
+//
+// WHAT THIS FILE REPLACED, and why it is a hundredth of the size: nukernel had
+// grown a second engine beside engine/faust/ — a scheduler (transport.js, 735
+// lines), channel strips (mixer.js, 1,184), a master chain and three reverbs
+// (graph.js, 1,395), a voice router (voices.js, 1,204) and an offline render
+// (bounce.js, 2,165). Every one of them is something engine/faust/ already does,
+// and every bug of the two days before this round was a SEAM between the two:
+// the desk absent from the tape (8.7 dB down, no sends, no automation), drums
+// playing a different 606 on each path, velocity meaning a filter on one side
+// and a fader on the other, and a render that never completed on WebKit — which
+// killed the tab on iOS, because an OfflineAudioContext there cannot build a
+// Faust worklet and nothing bounded the retry.
+//
+// So there is one engine now. FaustLive.exploreLive does the scheduling, the
+// voice pools, the ring, the buses, the master chain, the reverbs and — on a
+// phone — the WAV-first media element that is the reason audio survives a
+// pocket. What arrives from nukernel is NOTES: `opts.events` hands the walk one
+// bar of audio/plan.js's translation, and `opts.barBeats` tells it how long that
+// bar is, because nukernel's tempo map warps every bar by its own ratio.
+//
+// THERE IS NO SECOND PATH AND NO FLAG THAT MAKES ONE. A dormant engine is what
+// this round exists to end; the only thing below that resembles a fallback is
+// the parent's OWN route demotion (ring -> wav-first), which is the parent
+// choosing between two of its own outputs, bounded to one attempt and reported.
+//
+// Layer graph: deps -> state -> derive -> plan/desk -> THIS FILE -> ui views.
+// It publishes ("transport:state", "transport:section", "status", "refresh")
+// and never imports a view.
+import { SONG, MASTER, bpm, vol, on, emit, pendingStart, setPendingStart } from "../ui/state.js";
+import { GENRES } from "../ui/deps.js";
+import { stackOf } from "../ui/derive.js";
+import { compile, timeline, barCount, barBeatsAt, barPlan, parentState,
+         stepDur, songDurSec, warmEngine, firstBarOfBox,
+         unrouted } from "./plan.js";
+import { FONT, setFont } from "./fonts.js";
+import { masterState } from "./desk.js";
+
+const FAUSTDIR = new URL("../../engine/faust/", import.meta.url).href;
+
+export let playing = false;
+export let playingSec = -1;
+
+let handle = null;                 // the parent's live handle
+let barBase = 0;                   // which nukernel bar the walk's serial 0 is
+let passStart = 0, passBar = 0, loopStart = 0, lastBar = -1;
+let deps = null;
+
+/* ---------- the failure is BOUNDED ---------- */
+// THIS IS THE iOS BUG'S FIX, in three numbers. What killed the tab was not a
+// slow render — it was an UNBOUNDED one: a walk that could not finish kept
+// allocating, kept retrying, and nothing could tell the difference between "still
+// going" and "never going to finish". So: a DEADLINE (the engine has this long to
+// make a sound), a CEILING (two starts, ever — the ring and then the parent's own
+// media route) and a DEMOTION that is written down rather than retried.
+const DEADLINE_MS = 45000;         // generous: a cold phone decodes a GM bank first
+const MAX_TRIES = 2;               // ring, then wav-first. There is no third.
+const st = {
+  state: "idle",                   // idle | starting | ready | failed
+  stage: "",                       // "" | "full" — the engine is sounding the song
+  route: "",                       // the parent's own outputRoute
+  tries: 0,
+  capped: null,                    // { why, rate, gotSec, wantSec } — the give-up, in writing
+  deadlineMs: DEADLINE_MS,
+  lastError: null,
+  startedAt: 0,
+};
+let deadlineTimer = null;
+// THE REPORT. The hooks hang off `window` in a browser and off globalThis in a
+// pure-node gate, so this module can be imported and read without a DOM — which
+// is what lets the one-engine contract be gated without launching chromium.
+// `window.__nuBounce` is the name the gates already call, and it
+// still answers the same question — "is there sound, and if not will there ever
+// be" — about a live engine instead of a rendered tape. `stage:"full"` used to
+// mean the whole song had been pressed; it now means the engine is sounding the
+// whole song, which is the same promise kept by a shorter route.
+const W = typeof window !== "undefined" ? window : globalThis;
+W.__nuBounce = () => ({ ...st, durSec: songDurSec(), playing,
+  pressRate: st.route ? 1 : 0, unrouted: unrouted().length });
+W.__nuRender = () => ({ chunks: lastBar + 1, bars: barCount(),
+  route: st.route, errors: handle ? (handle.errors || []).slice(0, 6) : [] });
+// THE MIX, AS THE ENGINE WAS ACTUALLY HANDED IT. `window.__nuMix` used to
+// report the nodes audio/mixer.js had built — the second engine's own graph. It
+// now reports the numbers the desk wrote onto the parent's voice units for the
+// bar that is sounding, which is the same question asked of the thing that
+// makes the sound rather than of a copy beside it: what is this voice's level,
+// where is it placed, how much of it goes to the reverb and the delay, and what
+// tone is on its strip. A gate that reads this is reading the artifact.
+W.__nuMix = () => {
+  const p = barPlan(Math.max(0, lastBar));
+  if (!p) return null;
+  const units = {};
+  for (const [k, u] of Object.entries(p.units)) {
+    if (!u || k.slice(0, 2) === "__") continue;
+    units[k] = { module: u.module || null, sampler: u.sampler ? u.sampler.id : null,
+      drum: !!u.drum, role: u.role || null,
+      lvl: +(u.lvl != null ? u.lvl : 1).toFixed(4), pan: +(u.pan || 0).toFixed(4),
+      rev: +(u.rev || 0).toFixed(4), del: +(u.del || 0).toFixed(4),
+      strip: (u.sampler && u.sampler.strip) || null };
+  }
+  return { si: playingSec, bar: lastBar, route: st.route, units,
+           notes: p.ev.pitched.length, hits: p.ev.drums.length,
+           sweeps: p.ev.sfx.length, master: engineReport() };
+};
+W.__nuEngine = () => ({ route: st.route, state: st.state,
+  rms: handle ? safeRms() : 0, load: loadRatio, bars: barCount(),
+  units: Object.keys((barPlan(Math.max(0, lastBar)) || { units: {} }).units).length });
+
+function settle(stage, why, extra) {
+  clearTimeout(deadlineTimer); deadlineTimer = null;
+  if (stage === "full") { st.state = "ready"; st.stage = "full"; return; }
+  // GIVEN UP ON, IN WRITING. A cap carries its reason and, where one was
+  // measured, its rate — a cap for slowness with no number is a guess.
+  st.state = handle ? "ready" : "failed";
+  st.capped = { why, rate: (extra && extra.rate) || 0,
+                gotSec: (extra && extra.gotSec) || 0, wantSec: songDurSec() };
+}
+
+/* ---------- the state the parent walks ---------- */
+// ONE SECTION, ONE CYCLE, forever. The parent's walk uses `sections` to shape
+// ITS composer's form — fills on the last cycle, sweeps at the edges, the swell
+// a voice gets on its first entrance. nukernel's composer has already decided all
+// of that, bar by bar, so the walk is handed a single flat section and its form
+// machinery becomes inert. What it keeps doing — and what it is here for — is the
+// clock, the runway, the ring, the buses and the master stage.
+const LIVE_SECTION = { name: "nukernel", drums: "full", bass: "root", pads: true,
+                       melody: "lead", cycles: 1, fill: "off", sweep: "off" };
+function getState() {
+  const base = parentState();
+  if (!base) return null;
+  // THE MASTER STRIP IS PART OF THE STATE, not a chain of its own — the parent
+  // resolves fx_bus and master_mb from exactly these fields, so a board move
+  // lands on the next bar the walk asks for (audio/desk.js masterState says
+  // which field is which, and which three have no home).
+  return { ...base, bpm, sections: [LIVE_SECTION], vapor: 0, ...(masterState(MASTER) || {}) };
+}
+
+/* ---------- the two hooks: notes in, bar lengths in ---------- */
+const barOfSerial = (serial) => {
+  const n = barCount();
+  return n ? (((barBase + serial) % n) + n) % n : 0;
+};
+const events = (one, meta) => {
+  const p = barPlan(barOfSerial(meta.serial));
+  return p ? { ev: p.ev, units: p.units } : null;
+};
+const barBeats = ({ serial }) => barBeatsAt(barOfSerial(serial));
+
+/* ---------- the playhead ---------- */
+// The parent tells us when each bar actually SOUNDS (live.js onBar fires off the
+// read cursor on the ring path and off the element's own currentTime on the
+// media one). That instant is the only clock the UI needs: everything the old
+// transport computed from its own lookahead is arithmetic on it.
+let loadRatio = 0;
+function onBar(info) {
+  const n = barOfSerial(info.serial);
+  const TL = timeline();
+  const bar = TL[n];
+  if (!bar) return;
+  lastBar = n;
+  if (st.state === "starting") settle("full");
+  if (bar.first) {
+    passStart = info.when; passBar = n;
+    if (bar.si !== playingSec) {
+      // The playhead marks which box is SOUNDING; it must not move the SELECTION,
+      // or a click lands on whatever bar happened to be playing.
+      playingSec = bar.si;
+      emit("transport:section", { si: playingSec });
+    }
+  }
+  if (n === 0) loopStart = info.when;
+  // A QUEUED JUMP LANDS ON A BAR LINE. The parent schedules a runway ahead, so
+  // the jump takes effect as soon as the walk reaches it rather than on the very
+  // next bar the ear hears — which is the honest cost of one engine with a
+  // runway, and it is bars, not seconds.
+  if (pendingStart != null && bar.first) {
+    const at = firstBarOfBox(pendingStart);
+    setPendingStart(null);
+    if (at >= 0) barBase = (at - info.serial - 1 + barCount() * 2) % Math.max(1, barCount());
+  }
+}
+const safeRms = () => { try { return handle && handle.rms ? handle.rms() : 0; } catch (e) { return 0; } };
+export const rmsNow = () => (playing ? safeRms() : 0);
+export const lastLoadReport = () => ({ ratio: loadRatio, eco: 0,
+  route: st.route, gapMs: 0, budgetMs: 0 });
+export const engineHandle = () => handle;
+// WHICH OUTPUT THE EAR IS ON. There is no carrier and no tape any more — there
+// is one engine with two of its own outputs, and this is which one it opened.
+// The readout used to say "tape" or "live" about two different engines; it now
+// says which route the ONE engine took, which is the fact that was actually
+// wanted (the parent's own `outputRoute`, verbatim).
+export const onMedia = () => /^(mms|mse|segAB|media)/.test(st.route || "");
+// WHAT THE MASTER STAGE ACTUALLY IS, for the board's readouts. It used to be
+// read off nodes this page had built (graph.masterReport / busReport); the
+// stages are the parent's now, so the answer comes from the parent's own
+// resolvers over the same state the stream was opened with. Same question, one
+// engine's answer instead of a second engine's.
+export function engineReport() {
+  const base = parentState();
+  if (!base || !deps) return null;
+  const { SE } = deps;
+  const fx = SE.fxParams(base) || {};
+  const rc = SE.reverbColor(base);
+  const mb = SE.masterMb(base);
+  const stages = [];
+  if (rc) stages.push(rc.module.replace(/^reverb_/, "") + " " + rc.rgain.toFixed(2));
+  if (mb) stages.push(mb.module.replace(/^master_/, "") + " " + mb.mbdrive.toFixed(2));
+  stages.push("limit");
+  return { stages,
+    rev: rc ? { [rc.module.replace(/^reverb_/, "")]: rc.rgain.toFixed(2) } : {},
+    echo: fx.dtime != null ? { ret: (fx.dgain || 0).toFixed(2),
+                               fb: (fx.dfb || 0).toFixed(2),
+                               tone: Math.round(fx.dcut || 0) } : null,
+    room: rc ? rc.rtone.toFixed(2) : null };
+}
+export function routeNote() {
+  if (st.capped) return "capped: " + st.capped.why;
+  if (st.state === "starting") return "starting…";
+  if (st.state === "failed") return "no engine";
+  if (!st.route) return "";
+  return onMedia() ? "media " + st.route : "stream";
+}
+
+/* ---------- the OS-facing identity ---------- */
+// WHAT THE LOCK SCREEN SAYS is the app's to say and the engine's to set — the
+// parent takes it as a callback (live.js setMediaMeta) precisely so a host does
+// not have to fight a 1 Hz re-assert. nukernel's whole audio/survival.js (296
+// lines of resume hooks, revive-on-gesture, playbackState and positionState)
+// existed because the page had no engine that did any of that; the parent has
+// done all of it since WAV-FIRST, so what is left of that file is these four
+// lines and the action handlers below.
+const mediaMeta = () => {
+  const names = [...new Set(SONG.flatMap(b =>
+    stackOf(b).map(e => GENRES[e.g] && GENRES[e.g].label).filter(Boolean)))];
+  return { title: names.length ? names.join(" + ") : "song boxes",
+           artist: "stellate nukernel", album: "song boxes" };
+};
+if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
+  const set = (n, fn) => { try { navigator.mediaSession.setActionHandler(n, fn); } catch (e) {} };
+  set("play", () => { if (!playing) startAt(0); });
+  set("pause", () => stop());
+  set("stop", () => stop());
+  on("transport:state", (d) => {
+    try { navigator.mediaSession.playbackState = d.playing ? "playing" : "paused"; } catch (e) {}
+  });
+}
+
+/* ---------- start / stop ---------- */
+// The parent's scripts arrive here, by dynamic import, in its own order. A guard
+// skips anything the page already defined (kernel-daw.html carries three of
+// them) so nothing is re-executed under the app's feet.
+const need = async (g, url) => { if (!window[g]) await import(url); return window[g]; };
+async function loadEngine() {
+  deps = await warmEngine();
+  await need("FoundPlayer", FAUSTDIR + "voices/found-player.js");
+  await need("FaustSampler", FAUSTDIR + "voices/sampler.js");
+  await need("FaustLive", FAUSTDIR + "live/live.js");
+  return window.FaustLive;
+}
+
+// THE GESTURE HOOKS. Some machinery is only ALLOWED to exist inside a user
+// gesture — the parent's media element must be created and unlocked there or iOS
+// refuses every later play(). exploreLive does that itself; what registers here
+// is anything the page wants to do in the same call stack.
+const gestureFns = [];
+export const onGesture = fn => gestureFns.push(fn);
+
+export async function startAt(boxIndex) {
+  for (const fn of gestureFns) { try { fn(); } catch (e) {} }
+  if (playing) { setPendingStart(boxIndex); return; }
+  // ...AND A SECOND PRESS WHILE THE FIRST IS STILL OPENING IS NOT A SECOND
+  // ENGINE. `playing` only goes true after the compile, so two quick taps used to
+  // race two exploreLive calls into the same page — two rings, two contexts, and
+  // a `tries` count that walked straight past its own ceiling. The opening press
+  // owns the gesture; the second one queues a jump like any other.
+  if (st.state === "starting") { setPendingStart(boxIndex); return; }
+  st.state = "starting"; st.capped = null; st.lastError = null;
+  st.startedAt = Date.now();
+  emit("status", { text: "starting the engine…" });
+  const FL = await loadEngine();
+  // the chosen soundfont has to be REGISTERED AND ACTIVE on the kernel before the
+  // first compile resolves an instrument through it — a font that is merely
+  // fetched is a font the translation never sees
+  await setFont(FONT, deps.K);
+  compile();
+  if (!barCount()) {
+    st.state = "idle";
+    emit("status", { text: "nothing to play — click a genre to fill a box first", sticky: true });
+    return;
+  }
+  const at = firstBarOfBox(boxIndex);
+  barBase = at < 0 ? 0 : at;
+  playing = true; playingSec = -1; lastBar = -1;
+  emit("transport:state", { playing });
+
+  // the deadline is armed BEFORE the engine is asked for anything, because the
+  // failure it bounds is "the ask never returns"
+  clearTimeout(deadlineTimer);
+  deadlineTimer = setTimeout(() => {
+    if (st.state !== "starting") return;
+    settle(null, "the engine made no sound within " + Math.round(DEADLINE_MS / 1000) + "s",
+           { gotSec: 0 });
+    emit("status", { text: "the engine did not start in time — " + st.capped.why, sticky: true });
+  }, DEADLINE_MS);
+
+  await open(FL, false);
+}
+
+async function open(FL, forceMedia) {
+  st.tries++;
+  try {
+    handle = await FL.exploreLive(getState, (m) => emit("status", { text: m }), {
+      events, barBeats, onBar,
+      onLoad: (r) => { loadRatio = r; },
+      masterVol: vol / 100,
+      mediaMeta,
+      ...(forceMedia ? { wavOut: true } : {}),
+    });
+    st.route = handle.outputRoute || (forceMedia ? "media" : "ring");
+  } catch (e) {
+    st.lastError = String((e && e.message) || e).slice(0, 160);
+    handle = null;
+    // THE CEILING. One demotion — to the parent's own media route, which needs
+    // no SharedArrayBuffer and no worklet in an offline context — and then the
+    // give-up is written down. It is never tried a third time and never retried
+    // on a timer: an unbounded retry is what turned a WebKit quirk into a dead
+    // tab, and a loop nobody can see is worse than a silence somebody can read.
+    if (st.tries < MAX_TRIES && !forceMedia) {
+      emit("status", { text: "the streaming route would not open — trying the media route" });
+      return open(FL, true);
+    }
+    settle(null, "the engine would not open: " + st.lastError, { gotSec: 0 });
+    playing = false;
+    emit("transport:state", { playing });
+    emit("status", { text: "no engine — " + st.lastError, sticky: true });
+  }
+}
+
+export function stop() {
+  playing = false; playingSec = -1; setPendingStart(null);
+  clearTimeout(deadlineTimer); deadlineTimer = null;
+  if (handle) { try { handle.stop(); } catch (e) {} handle = null; }
+  st.state = "idle"; st.stage = ""; st.tries = 0;
+  emit("transport:state", { playing });
+}
+
+export function resetBar() { barBase = 0; }
+// THE FADER RIDES THE ENGINE'S OWN MASTER. It used to ride a gain node this page
+// built, which meant it existed only while that graph did; the parent's handle
+// takes the same number and smooths it on the audio thread. Subscribed rather
+// than exported-and-forgotten: "transport" is what every volume writer commits
+// (ui/chrome.js's slider, ui/mixtbl.js's blend), and a slider that only writes
+// localStorage is a slider that does nothing until the next play.
+on("transport", () => { try { if (handle) handle.setMasterVol(vol / 100); } catch (e) {} });
+
+/* ---------- what the UI is allowed to know ---------- */
+const nowSec = () => { try { return handle && handle.ctx ? handle.ctx.currentTime : 0; } catch (e) { return 0; } };
+export const getPosition = () => ({
+  playing, si: playingSec, passStart, now: nowSec(), stepDur: stepDur(),
+  loopStart, durSec: songDurSec(),
+});
+// WHERE THE EAR IS IN THE SOUNDING BOX — the fraction through it and the bar it
+// is in, measured off the bar list's OWN durations. Under the tempo map every bar
+// of a box is a different length, so `sec.len × 16 / rate × stepDur` is a lie
+// worth up to a beat by the end of an outro.
+export function passAt(now) {
+  const TL = timeline();
+  if (!TL.length) return { f: 0, bar: 1, bars: 1 };
+  const sd = stepDur(), b0 = TL[passBar] || TL[0];
+  const bars = b0.boxBars || 1, tot = (b0.boxSteps || b0.barSteps) * sd;
+  const e = Math.max(0, now - passStart);
+  let acc = 0, i = 0;
+  for (; i < bars - 1; i++) {
+    const d = (TL[(passBar + i) % TL.length] || b0).barSteps * sd;
+    if (acc + d > e) break;
+    acc += d;
+  }
+  return { f: tot > 0 ? Math.max(0, Math.min(1, e / tot)) : 0, bar: i + 1, bars };
+}
+
+/* ---------- the "something changed" law ---------- */
+// A musical change recompiles the score; the parent picks the new bars up on the
+// next walk step, because `events` reads the compiled result rather than a copy
+// of it. There is nothing to rebuild, re-arm or re-fetch — which is the whole
+// difference between one engine and two.
+const changed = () => { if (playing) compile(); };
+on("phrase", changed);
+on("box", changed);
+on("groove", changed);            // the groove is baked into the events
+on("swing", changed);             // ...and so is the swing
+on("pool", changed);              // the band changed: register homes and zones with it
+on("song", () => { if (playing) stop(); });

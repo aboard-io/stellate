@@ -27,13 +27,13 @@
 // with internal role keys is a desk you have to translate.
 //
 // A TRACK HAS THREE SENDS AND NO INSERTS. fields.js PARTMIX carries the model
-// change and audio/graph.js's head note carries the reason: a shared bus costs
+// change and the parent's own bus structure carries the reason: a shared bus costs
 // a constant, a per-track insert costs a multiple of the note count. The three
 // sends are the three buses, named — and the send bar prints the bus's CURRENT
 // name, so renaming bus 2 renames it on every strip at once.
 //
 // THE SIGNAL FLOW IS THE BRITISH IN-LINE DESK'S: input → EQ → fader → sends →
-// bus → master (SSL 4000 / Neve 88R). audio/mixer.js buildChannel builds it in
+// bus → master (SSL 4000 / Neve 88R). The parent's render-core builds it in
 // that order and this surface draws it in that order, so reading down a strip
 // is reading the path.
 //
@@ -72,8 +72,8 @@
 //
 // THE AUTOMATED LEVEL BAR'S LAW (unchanged from the fader it replaces): the
 // FILL follows the level actually driving the channel — the enum level, the
-// composer's arc, a `pump` — read per frame off the built gain nodes (CHAN,
-// audio/mixer.js). A drag does NOT fight that: it writes a persistent dB
+// composer's arc, a `pump` — read per frame off the desk MODEL (audio/desk.js,
+// audio/desk.js). A drag does NOT fight that: it writes a persistent dB
 // OFFSET (fields.js `fader`, PARTMIX `fader`) that multiplies the automated
 // value, and that offset is the NUMBER printed in the bar. Automation keeps
 // moving under your trim. During the drag the target gain is eased onto the
@@ -103,7 +103,7 @@
 // meter, the blend, and nothing else." The fader and the meter were already
 // here. The EQ is buildEqCurve called a THIRD time rather than written a
 // second — over the same two shelves fields.js TILT already builds
-// (buildMasterChain: −t at 250 Hz, +t at 3000 Hz), so dragging the curve's
+// (the master tilt: −t at 250 Hz, +t at 3000 Hz), so dragging the curve's
 // right side up is the real high trim he asked for, landing on the exact
 // node graph.js already wires. `#m-tilt` keeps its own detented bar on the
 // processing strip too — two views over one store, the law the master
@@ -116,9 +116,9 @@
 // own floor, up pushes them toward its own ceiling, and any one bus's own
 // strip reads the same word this bar just chose. It is NOT yet a true
 // dry/kill crossfade — nothing in fields.js trims the dry sum at master, so
-// a fourth field (`MASTER.blend`, resolved in graph.js buildMasterChain the
+// a fourth field (`MASTER.blend`, resolved in the master stage the
 // way `space`/`width` already are) is the honest next stage of this, and it
-// needs fields.js + audio/graph.js, both outside this lane's file list.
+// needs fields.js + the engine's master stage, both outside this lane's file list.
 //
 // WHAT SURVIVES, deliberately: rowsOf (the track list is still the mixer's
 // own roster), readField/writeField (one writer, absent the only spelling of
@@ -145,13 +145,12 @@ import { INSTRFAMS } from "./palette.js";
 // READ-ONLY, and the allowed direction (a view importing audio — main.js does
 // the same): the two live bindings that say which box is SOUNDING, so the desk
 // can play along instead of staring at the selection while the song moves on.
-import { playing as transportOn, playingSec } from "../audio/transport.js";
+import { playing as transportOn, playingSec, rmsNow, engineReport,
+         passAt, getPosition } from "../audio/live.js";
 import { stackOf, kitOf, voiceOwners } from "./derive.js";
-import { voiceRoster, partKeysOf, CHAN, resolvedPart, derivedPartTone,
-         derivedSecEq } from "../audio/mixer.js";
-import { initAudio, rmsNow, masterReport, busReport,
-         SENDBUS } from "../audio/graph.js";
-import { isSynthFont, fontDef } from "../audio/assets.js";
+import { voiceRoster, partKeysOf, resolvedPart, derivedPartTone,
+         derivedSecEq, deskLevelAt } from "../audio/desk.js";
+import { isSynthFont, fontDef } from "../audio/fonts.js";
 import { openFader } from "./popfader.js";
 import { buzz } from "./touch.js";
 
@@ -378,7 +377,7 @@ function defaultOf(sec, key, f) {
   if (f === "rev" || f === "echo" || f === "room") return { v: "none" };
   if (f === "lvl") return { v: "norm" };
   if (f === "pan") return { v: "c" };
-  // the two section-only fields resolve exactly as chanSpec/scheduleBar do:
+  // the two section-only fields resolve exactly as audio/desk.js sectionOf does:
   // the genre's own wetness picks the hall, the echo rides the dotted eighth
   if (f === "verb") {
     const g = GENRES[stackOf(sec)[0].g];
@@ -407,51 +406,28 @@ function staticGain(sec, key) {
   if (key == null) return secBase(sec) * Math.pow(10, faderDb(sec.fader) / 20);
   return resolvedPart(sec, key).gain;
 }
-// the LIVE gain: the built nodes when the channel exists (automation included
-// — AudioParam.value reads the timeline), the resolved static value when not.
-// Node reads only while the transport runs or a finger is down (the drag's
-// eased param is its own feedback) — at rest the fills PARK on the resolved
-// statics rather than on wherever a pump's duck happened to freeze.
+// THE LIVE GAIN. It used to read an AudioParam off a channel this page built —
+// which is exactly the second engine, and the reason the number on the board and
+// the number on the tape could differ. There are no channel nodes now, so the
+// fill reads the MODEL: the resolved static gain times whatever the box's level
+// automation is worth at the playhead. That is the same arithmetic audio/desk.js
+// hands the engine per note, so the cap sits where the ear is.
 function liveGain(sec, key) {
-  const c = (transportOn || touching) && CHAN.get(sec);
-  if (c) {
-    if (key == null) {
-      let g = c.lvl.gain.value;
-      const ap = c.autoParam && c.autoParam("level");
-      if (ap) g *= ap.value;
-      return g;
-    }
-    const P = c.parts.get(key);
-    if (P) return P.lvl.gain.value;
-  }
-  return staticGain(sec, key);
+  const g = staticGain(sec, key);
+  // only the SOUNDING box moves. Every other box's fill parks on its resolved
+  // static value, which is what a stopped desk should show.
+  if (!(transportOn || touching) || SONG[playingSec] !== sec) return g;
+  return g * deskLevelAt(sec, passAt(getPosition().now).f);
 }
 const offsetOf = (sec, key) => {
   const e = entryOf(sec, key);
   return e && e.fader != null ? faderDb(e.fader) : null;   // null = unset
 };
-// ease the drag onto the LIVE param so the hand hears itself before the
-// commit rebuilds the channel — the offset is a separate multiplicand, so
-// this cannot fight a level automation (which rides its own node)
-function easeLive(sec, key, off) {
-  const c = CHAN.get(sec);
-  if (!c) return;
-  // the drag's target rides ON the derived seating (derivedPartTone.db), the
-  // same composition buildChannel bakes — or the first frame after pointerup
-  // would snap to a different gain than the hand just heard
-  const base = key == null ? secBase(sec)
-    : resolvePartMix(sec.parts && sec.parts[key]).lvl *
-      Math.pow(10, derivedPartTone(sec, key).db / 20);
-  const target = base * Math.pow(10, off / 20);
-  const P = key == null ? null : c.parts.get(key);
-  const p = key == null ? c.lvl.gain : (P ? P.lvl.gain : null);
-  if (!p) return;                          // no bus yet: the commit builds one
-  try {
-    const t = c.input.context.currentTime;
-    p.cancelScheduledValues(t); p.setTargetAtTime(target, t, 0.02);
-  } catch (e) {}
-}
-
+// THE DRAG NO LONGER EASES A NODE. There is nothing on this page to ease: the
+// desk is a model and the engine reads it per bar, so a fader move is heard on
+// the next bar line rather than under the finger. The fill still follows the
+// hand — it is drawn from the same model — and what is gone is the ONE place the
+// board's number and the engine's number were two different quantities.
 /* ---------- the strip EQ ---------- */
 // ONE READER, ONE WRITER, the field law: a band is read off the entry's `eq`
 // map and written back through writeField, with zero (flat) deleted so absent
@@ -466,21 +442,6 @@ function writeEqBand(sec, key, band, db) {
   const v = db == null ? 0 : eqDb(db);
   if (v) cur[band] = v; else delete cur[band];
   writeField(sec, key, "eq", Object.keys(cur).length ? cur : null);
-}
-// ease the drag onto the LIVE biquad so the hand hears the tone move before
-// the commit rebuilds the channel — easeLive's law for the level, per band.
-// A flat strip has no node to ease (zero-nodes law); the commit builds one.
-function easeEqLive(sec, key, band, db) {
-  const c = CHAN.get(sec);
-  if (!c) return;
-  const by = key == null ? c.eq
-    : (() => { const P = c.parts.get(key); return P && P.eq; })();
-  const f = by && by[band];
-  if (!f) return;
-  try {
-    const t = c.input.context.currentTime;
-    f.gain.cancelScheduledValues(t); f.gain.setTargetAtTime(db || 0, t, 0.02);
-  } catch (e) {}
 }
 // short dB for a bar-sized readout: "+4", "-2.5", "0" dim when flat
 const fmtEq = v => (v > 0 ? "+" : "") +
@@ -548,7 +509,7 @@ function makeBar({ cls, fillCls, fam, legend, label, bipolar, aria }) {
 //
 // THE CURVE IS THE REAL TRANSFER FUNCTION, not a drawn suggestion. `mag` below
 // is the RBJ Audio EQ Cookbook biquad — the same lowshelf / peaking /
-// highshelf the graph builds (audio/graph.js buildEq puts one BiquadFilter per
+// highshelf the strip carries (the parent's STRIP stage puts one band per
 // fields.js EQ_BANDS entry, type/freq/q straight onto the node), evaluated on
 // the unit circle at 44.1 kHz. Drawing an approximation of a filter the page
 // then builds differently is exactly the class of lie this project keeps
@@ -840,7 +801,7 @@ function buildLevelBar({ label, legend, onTap, getOffset, getGain, write, drag }
   wrap.append(b);
   const R = { wrap, slot: b, lab, off: val,
     paint() {
-      // the fill follows the live gain even under a finger (easeLive is moving
+      // the fill follows the live gain even under a finger (the model is moving
       // the real param — the fill IS the feedback); the offset readout is the
       // drag's own while one is down, or the two writers fight per frame
       setF(gainToF(getGain()));
@@ -1006,7 +967,6 @@ function build() {
       getOffset: () => offsetOf(boardSec(), row.key),
       getGain: () => liveGain(boardSec(), row.key),
       write: off => writeField(boardSec(), row.key, "fader", off),
-      drag: off => easeLive(boardSec(), row.key, off),
     });
     // .mstrip is "this bar IS the strip" — the one every fold hangs off, the
     // channel's and the bus's alike, so one selector reaches every door
@@ -1014,7 +974,7 @@ function build() {
     line.append(level.wrap);
     // ---- CUT and SOLO: the two that LATCH rather than take a value, so they
     // are the one pair on the page that is not a bar. A cut is a gain at zero
-    // in audio/mixer.js buildChannel with every send behind it — nothing here
+    // in audio/desk.js deskUnits with every send behind it — nothing here
     // dims a track and leaves it playing. ----
     const ms = mk("div", "mms");
     ms.setAttribute("role", "cell");
@@ -1123,7 +1083,6 @@ function build() {
                            : derivedPartTone(boardSec(), row.key).eq;
         return e && e[bk] ? e[bk] : null;
       },
-      drag: (bk, db) => easeEqLive(boardSec(), row.key, bk, db),
       write: (bk, db) => writeEqBand(boardSec(), row.key, bk, db),
     });
     fold.append(eq.el);
@@ -1411,7 +1370,6 @@ const busWrite = (bus, key, val) => {
   if (val) e[key] = val; else delete e[key];
   if (!Object.keys(e).length) delete next[bus];
   setBuses(next);
-  initAudio();                             // a bar move is a user gesture
   commit("buses");
 };
 const busVal = (bus, key) => (BUSES && BUSES[bus] && BUSES[bus][key]) || "";
@@ -1433,7 +1391,6 @@ const busEqWrite = (bus, band, db) => {
   if (Object.keys(eq).length) e.eq = eq; else delete e.eq;
   if (!Object.keys(e).length) delete next[bus];
   setBuses(next);
-  initAudio();                             // a bar move is a user gesture
   commit("buses");
 };
 
@@ -1524,7 +1481,7 @@ function buildBusStrip(row) {
       if (kn.to) B.setLegend("→ " + NuFields.busNameOf(BUSES, kn.to));
     // THE REFUSED SEND, said on the bar that asked for it. A bus->bus loop is
     // silence in Web Audio and a runaway on a desk, so fields.js busSendPlan
-    // drops the edge that would close one and audio/graph.js never builds it;
+    // drops the edge that would close one and the engine never builds it;
     // the bar that lost goes .refused and says why in its own title, which is
     // the only place on this page a sentence is allowed to live.
     const plan = NuFields.busSendPlan(BUSES);
@@ -1535,9 +1492,11 @@ function buildBusStrip(row) {
       B.el.title = no ? "refused: " + NuFields.busNameOf(BUSES, kn.to) +
         " already feeds " + nm + ", and a feedback loop is silence here" : "";
     }
-    // the built state, read off the nodes (graph.busReport): which returns
-    // exist and where they actually sit — dim silence before initAudio
-    const rep = busReport();
+    // WHAT THE ENGINE RESOLVED, asked of the engine. This used to read the nodes
+    // this page built; the reverb, the echo and the room are the parent's stages
+    // now, so the readout asks the parent's own resolvers (audio/live.js
+    // engineReport) over the state the stream was opened with.
+    const rep = engineReport();
     let t = "";
     if (rep) {
       if (row.bus === "rev") {
@@ -1554,58 +1513,20 @@ function buildBusStrip(row) {
   } });
 }
 
-// a slim page-lifetime strip per BUILT character send bus: its bar is the
-// bus's own `ret` gain, a trim on the page rather than on the song (which is
-// why it commits nothing and appears only once the bus exists)
-const sendStrips = new Map();              // fx key -> strip element
-function ensureSendStrips() {
-  const list = SENDBUS ? Object.keys(SENDBUS).filter(k => SENDBUS[k]) : [];
-  for (const k of list) {
-    if (sendStrips.has(k)) continue;
-    const bus = SENDBUS[k];
-    const name = (FX[k] && FX[k].label) || k;
-    const tr = mk("div", "strip bstrip send");
-    tr.setAttribute("role", "row");
-    const line = mk("div", "mline");
-    const { b, val, setF, setLit } = makeBar({
-      cls: "mval mstrip", fam: "bus", legend: name, label: name + " bus return",
-      aria: { "aria-valuemin": "0", "aria-valuemax": "1.6" },
-    });
-    b.title = "a session trim on the shared " + name + " bus";
-    line.append(b);
-    tr.append(line);
-    const paint = () => {
-      const v = bus.ret.gain.value;
-      setF(Math.max(0, Math.min(1, v / 1.6)));
-      setLit(Math.abs(v - 1) > 0.001);
-      val.textContent = v.toFixed(2);
-      b.setAttribute("aria-valuenow", v.toFixed(2));
-    };
-    let d = null;
-    b.addEventListener("pointerdown", ev => {
-      if (ev.button) return;
-      ev.preventDefault();
-      try { b.setPointerCapture(ev.pointerId); } catch (e) {}
-      d = { x0: ev.clientX, y0: ev.clientY, v0: bus.ret.gain.value };
-    });
-    b.addEventListener("pointermove", ev => {
-      if (!d) return;
-      const v = Math.max(0, Math.min(1.6, d.v0 + axis(ev, d) * 0.01));
-      try { bus.ret.gain.value = v; } catch (e) {}
-      paint();
-    });
-    b.addEventListener("pointerup", () => { d = null; });
-    b.addEventListener("pointercancel", () => { d = null; });
-    busWell.append(tr);
-    sendStrips.set(k, tr);
-    busRefs.push({ paint });
-  }
-}
+// THE PER-EFFECT SEND BUSES ARE GONE, and with them their strips. They were a
+// page-lifetime WebAudio bus per character chip — one of the three private
+// graphs audio/mixer.js kept beside the parent's own buses. The parent has no
+// page-wide effect bus and does not want one: an effect is a per-voice INSERT in
+// its chain (state-engine insertChain), so a chip now lands on the units of the
+// part that asked for it. That is a real difference in the tails — per voice,
+// not pooled — and it is named in audio/desk.js rather than papered over with a
+// second graph nobody could see. There is no session trim to draw because there
+// is no shared return to trim.
 
 /* ---------- the master EQ curve and the blend: two views each ---------- */
 // THE MASTER EQ is buildEqCurve pointed at fields.js TILT — a real shelf
 // pair, not a new field: −t at 250 Hz, +t at 3000 Hz, the exact nodes
-// graph.js buildMasterChain already wires when `#m-tilt` moves. Dragging the
+// the master stage already carries when `#m-tilt` moves. Dragging the
 // curve snaps to the same four words the knob offers (nearest(), the law
 // every continuous-over-enum bridge on this board already uses for `rev`'s
 // default) and writes the SAME MASTER.tilt the knob does, so the two can
@@ -1625,13 +1546,13 @@ function tiltWrite(bandKey, db) {
   if (db == null) {
     if (cur == null) return;
     const next = { ...(MASTER || {}) }; delete next.tilt;
-    setMaster(next); initAudio(); commit("master");
+    setMaster(next); commit("master");
     return;
   }
   const k = nearest(TILT_FIELD.table, bandKey === "hi" ? db : -db);
   if (k === cur) return;                   // same detent: no chain rebuild
   const next = { ...(MASTER || {}) }; next.tilt = k;
-  setMaster(next); initAudio(); commit("master");
+  setMaster(next); commit("master");
 }
 // THE BLEND is a second view over the three buses' own `ret` (fields.js
 // BUS_FIELDS), moved together — see the header note on why this stands in
@@ -1666,7 +1587,7 @@ function blendWrite(x) {
 // sit here are gone from this strip; buildProcessingStrip below is their new
 // home. The volume fader IS the transport's volume fader (ui/state.js
 // VOLSTORE), two views over one store, deliberately NOT in the song; the
-// meter reads graph.rmsNow() per frame (the sum, pre-volume).
+// meter reads the ENGINE's own analyser per frame (audio/live.js rmsNow).
 let masterStrip = null;
 {
   const tr = mk("div", "strip bstrip mstr");
@@ -1799,7 +1720,6 @@ function buildProcessingStrip() {
       const next = { ...(MASTER || {}) };
       if (v) next[f.key] = v; else delete next[f.key];
       setMaster(next);
-      initAudio();                         // a bar move is a user gesture
       commit("master");
     },
     status: true,
@@ -1808,7 +1728,7 @@ function buildProcessingStrip() {
   tr.append(grid);
   busWell.append(tr);
   busRefs.push({ paint() {
-    const rep = masterReport();
+    const rep = engineReport();
     const t = rep && rep.stages.length ? rep.stages.join(" · ") : "default chain";
     if (stages.textContent !== t) stages.textContent = t;
   } });
@@ -1831,7 +1751,6 @@ const paintKnobs = () => { for (const p of detBars) p(); };
 export function paintBoard() {
   const sec = boardSec();
   for (let i = 0; i < rows.length; i++) refs[i] && refs[i].fader.paint(sec);
-  ensureSendStrips();
   for (const r of busRefs) r.paint();
 }
 

@@ -20,7 +20,7 @@
 // already handed to WebAudio finishes exactly as it started, and only the
 // next bar the scheduler reaches hears the new blend — one bar, on the beat,
 // the same "something changed" path every other live edit on this machine
-// already takes (audio/transport.js `on("box", …)`, just asked more often).
+// already takes (audio/live.js `on("box", …)`, just asked more often).
 //
 // THE ENGINE IS nukernel/lab.js, unchanged and not reimplemented here. This
 // file picks parents, holds the seeds, keeps the scratch box in the ordinary
@@ -39,7 +39,7 @@ import { SONG, SLOTS, loopOnly, setLoopOnly, saveNow, GENRESET,
 import { chronoGenres, eraOf } from "./palette.js";
 import { isBlank } from "./derive.js";
 import { buzz } from "./touch.js";
-import * as transport from "../audio/transport.js";
+import * as transport from "../audio/live.js";
 
 const wrap = document.getElementById("labwrap");
 
@@ -309,7 +309,7 @@ function endAudition() {
 // the box — blind to GENRES[LABKEY]'s own content changing underneath an
 // unchanged box — so without a changing key ON THE BOX the cache would keep
 // serving the OLD mix forever. `emit("box", …)`, not commit(): this is the
-// transport's own "something changed" signal (audio/transport.js
+// the transport's own "something changed" signal (audio/live.js
 // `on("box", changed)` recompiles the bar list, `on("box", remix)` reroutes
 // the channel at the next scheduled bar), with no restart and — because it is
 // emit and not commit — no save, which matters: the scratch box must never

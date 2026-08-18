@@ -3175,11 +3175,11 @@ console.log("the box surface — key/prog/period/breath/pipe/part/auto reach the
   for (const [k, v] of Object.entries(NF.BREATHS))
     ok(Number.isFinite(v), "BREATHS." + k + " is not a number");
 
-  // AUTOSHAPE: the palette's point-list writer, provable in node. The ARMING
-  // (setValueAtTime/ramps on real AudioParams) has no node-side surface — it
-  // is covered by section (J) of test/browser/nukernel-audio.test.js, which
-  // sets a shape through the real palette and reads __nuMix().automation
-  // plus the spectral change.
+  // AUTOSHAPE: the palette's point-list writer, provable in node. There is no
+  // ARMING to cover any more — a lane is no longer a ramp scheduled on an
+  // AudioParam but a value READ per bar (cutoff -> the engine's own master
+  // sweep) or per NOTE (level -> the note's amp), so the whole of it is
+  // arithmetic, and audio/desk.js laneAt is where it lives.
   {
     const beats = 16;
     for (const param of Object.keys(NF.AUTOPARAMS)) {
@@ -6660,18 +6660,20 @@ console.log("the machines — genre→kit, one drum table, and the schedule does
     ok(row.tune > 0.5 && row.tune < 2, kit + ": tune " + row.tune + " is outside the parent's own knob range");
   }
 
-  // (c) ONE TABLE, TWO READERS — anchored in the shipped text, because a second
-  // drum table is exactly the thing that is invisible until somebody presses a
-  // record and hears a different box than the one they were dancing to
-  const vSrc44 = fs44.readFileSync(path44.join(__dirname, "../../nukernel/audio/voices.js"), "utf8");
-  ok(/import \{[^}]*drumVoice[^}]*\} from "\.\/to-engine\.js"/.test(vSrc44),
-     "audio/voices.js no longer reads the drum table from to-engine.js — the page " +
-     "and the tape are free to disagree about which drum machine is playing");
-  ok(!/"(kick_boom|kick_808|kick909|snare_noise|snare_crack|snare_clap|hat_noise|hat_metal)"/
-       .test(vSrc44),
-     "audio/voices.js names a drum module directly — that is a second drum table");
-  ok(!fs44.existsSync(path44.join(__dirname, "../../nukernel/audio/machines.js")),
-     "audio/machines.js is back — a dormant second drum engine beside the real one");
+  // (c) ONE TABLE, ONE READER. There used to be two readers and the check was
+  // that they agreed; there is one engine now, so the check is that there is
+  // one table: to-engine.js's MACHINE_KIT + drumVoice is the whole routing
+  // layer, nothing else in nukernel names a parent drum module, and neither of
+  // the two retired synthesis paths is back.
+  for (const f of ["nukernel/audio/machines.js", "nukernel/audio/voices.js"])
+    ok(!fs44.existsSync(path44.join(__dirname, "../..", f)),
+       f + " is back — a dormant second drum engine beside the real one");
+  for (const f of ["desk.js", "plan.js", "live.js", "fonts.js"]) {
+    const src = fs44.readFileSync(path44.join(__dirname, "../../nukernel/audio", f), "utf8");
+    ok(!/"(kick_boom|kick_808|kick909|snare_noise|snare_crack|snare_clap|hat_noise|hat_metal)"/
+         .test(src),
+       "audio/" + f + " names a drum module directly — that is a second drum table");
+  }
 
   // (d) the DESK rows, which is all that survives of the machines here: a mix,
   // not a sound. No punch/sus (there is no sample to shape), and the one merge
@@ -6726,297 +6728,223 @@ console.log("the machines — genre→kit, one drum table, and the schedule does
 }
 
 /* ------------------------------- 45. A TRUMPET KNOWS WHERE IT LIVES
-   The INSTRUMENT-REGISTER LAW, gated at the score. The parent states it in
-   two tiers (engine/faust/voices/state-engine.js INSTRUMENT_RANGE + the
-   mapEvents per-note fold; engine/csd-engine.js SAMPLER REGISTER HOME), and
-   this round gave nukernel the same two layers after Paul heard the gap:
-   "the ska trumpet is squeaky" (2026-08-16) — ska's composed trumpet line
-   reaches MIDI 100 against a table ceiling of 84, the old register home was
-   too shy to fire on a straddling line, and the per-note fold's six-semitone
-   soft edge let the spill sustain at 89.
+   The INSTRUMENT-REGISTER LAW, gated at the score. The parent states it in two
+   tiers (engine/faust/voices/state-engine.js INSTRUMENT_RANGE + the mapEvents
+   per-note fold; engine/csd-engine.js SAMPLER REGISTER HOME), and nukernel has
+   the same two after Paul heard the gap: "the ska trumpet is squeaky"
+   (2026-08-16) — ska's composed horn reaches MIDI 100 against a ceiling of 84.
+
+   ONE TABLE, NOT TWO, as of the one-engine round. The window used to be read
+   off a nukernel copy of the ranges (instruments.js RANGES) beside a nukernel
+   copy of the zone spans (audio/voices.js playWindow); it is now
+   SE.INSTRUMENT_RANGE and the resolved unit's own stretch bounds —
+   audio/plan.js windowOf — which is the SAME table the parent's per-note fold
+   uses as the net under this. Two copies of a register table is how a page and
+   a tape come to disagree about where a trumpet lives.
 
    Four claims, all score-level (the schedule IS the artifact at this layer —
    no renders, no browser):
-     (a) the TABLE covers everything choosable — every id a genre can voice
-         (fields.js INSTRCHOICES is the union of every genre's `instr`) plus
-         the bass chair has a RANGES row, and every value shared with the
-         parent's table is BORROWED, not reinvented;
+     (a) the WINDOW is real and borrowed: every id a genre can voice resolves
+         to a parent sampler spec with an honest window, and where nukernel's
+         own RANGES row names the same id the values still match the parent's,
+         because a surface that shows a range must show the one that binds;
      (b) the SWEEP — every scheduled pitched note, all genres × seeds ×
-         (default + adversarial overrides), lands inside its instrument's
-         window after home + fold, and the DROP LAW never fires on shipped
-         content;
-     (c) CONTOUR — the register home moves whole octaves, one constant per
-         (section, chair), so interval signs are untouched;
-     (d) ONE RESOLVER — the offline bounce walks the same buildTimeline +
-         scheduleBar the live tick schedules, the schedule is deterministic,
-         and scheduleBar hands the homed note to both the sampler and the
-         oscillator fallback. */
+         adversarial casting, lands inside its instrument's window after the
+         home, and the composed ska horn in particular;
+     (c) CONTOUR — the home moves whole octaves, one constant per SEAT, so
+         interval signs are untouched;
+     (d) ONE RESOLVER — the compile is deterministic and there is exactly one
+         thing in nukernel that translates a bar for the engine. */
 console.log("the register law — the table, the home, and the per-note fold");
 {
-  // the audio tier's browser surface, stubbed only as far as import needs:
-  // state.js listens for storage events, transport.js registers a visibility
-  // catch-up and reads localStorage for the volume — none of it schedules
+  // the audio tier's browser surface, stubbed only as far as import needs
   globalThis.addEventListener = globalThis.addEventListener || (() => {});
   globalThis.document = globalThis.document ||
     { visibilityState: "visible", addEventListener: () => {} };
   globalThis.localStorage = globalThis.localStorage ||
     { getItem: () => null, setItem: () => {}, removeItem: () => {} };
   const ST = await import("../../nukernel/ui/state.js");
-  const A = await import("../../nukernel/audio/assets.js");
-  const V = await import("../../nukernel/audio/voices.js");
-  const T = await import("../../nukernel/audio/transport.js");
+  const P45 = await import("../../nukernel/audio/plan.js");
+  const { SE, K: K45, E: E45 } = await P45.warmEngine();
   const NI = require("../../nukernel/instruments.js");
   const C = require("../../nukernel/compose.js");
   const fs = require("fs"), path = require("path");
 
-  // (a) COVERAGE + BORROWING. Every choosable id and the bass chair is in the
-  // table; unlisted stays legal only for ids nothing can currently voice.
+  // (a) THE WINDOW IS REAL AND BORROWED. Every choosable id resolves through
+  // the parent's own sampled library to a unit with an honest window; and where
+  // nukernel keeps a RANGES row for the same id (the surface reads it), it says
+  // what the parent says.
   const choosable = new Set([NI.BASS_INSTR]);
   for (const g of Object.values(GENRES)) {
     const e = g.instr;
     if (Array.isArray(e)) e.forEach(x => choosable.add(x));
     else if (e) choosable.add(e);
   }
-  for (const id of choosable)
-    ok(Array.isArray(NI.RANGES[id]) && NI.RANGES[id][0] < NI.RANGES[id][1],
-       id + " is choosable but has no RANGES row — a squeak nothing can stop");
-  // ...and where the parent's INSTRUMENT_RANGE names the same id, the values
-  // match: the directive was borrow, never invent
-  const seSrc = fs.readFileSync(
-    path.join(__dirname, "../../engine/faust/voices/state-engine.js"), "utf8");
-  const m = seSrc.match(/const INSTRUMENT_RANGE = \{([\s\S]*?)\n  \};/);
-  ok(!!m, "cannot find the parent's INSTRUMENT_RANGE table to borrow from");
-  const PARENT = m ? new Function("return {" + m[1] + "};")() : {};
+  const lib45 = (() => { const st = { seed: 1, foundSources: [] };
+    K45.applySampledOnly(st, 1); return st.samplerLib || {}; })();
+  let noWin = 0;
+  for (const id of choosable) {
+    const spec = lib45[id];
+    ok(!!spec, id + " is choosable but the parent's sampled library has no spec for it");
+    if (!spec || spec.synth) continue;
+    const u = SE.pitchedUnit("melody", { model: "sampler", sampler: spec },
+                             { bpm: 120, seed: 1, sampledOnly: true });
+    if (!P45.windowOf(SE, u)) noWin++;
+  }
+  ok(noWin === 0, noWin + " choosable instrument(s) resolve to no honest window — " +
+     "a squeak nothing can stop");
   for (const id of Object.keys(NI.RANGES))
-    if (PARENT[id])
-      ok(PARENT[id][0] === NI.RANGES[id][0] && PARENT[id][1] === NI.RANGES[id][1],
+    if (SE.INSTRUMENT_RANGE[id])
+      ok(SE.INSTRUMENT_RANGE[id][0] === NI.RANGES[id][0] &&
+         SE.INSTRUMENT_RANGE[id][1] === NI.RANGES[id][1],
          id + ": nukernel says [" + NI.RANGES[id] + "] but the parent says [" +
-         PARENT[id] + "] — borrowed values must not drift");
+         SE.INSTRUMENT_RANGE[id] + "] — borrowed values must not drift");
 
-  // (d-source) ONE RESOLVER, anchored in the shipped text so the sweep below
-  // cannot mirror-drift from what actually schedules: the bounce builds its bar
-  // list with the transport's own builder, and scheduleBar hands the HOMED note
-  // (e.n + e.home) to the sampled player and the oscillator fallback both.
-  // (bounce.js imported scheduleBar too, until 2026-08-17: its desk pass played
-  // the sung line live beside the pressed band, and nothing else. With the
-  // espeak singer gone there is no event on that pass to schedule, so the
-  // import went with it — buildTimeline is the shared law that remains.)
-  const bSrc = fs.readFileSync(path.join(__dirname, "../../nukernel/audio/bounce.js"), "utf8");
-  ok(/import \{[^}]*buildTimeline[^}]*\} from "\.\/transport\.js"/.test(bSrc),
-     "bounce.js does not import buildTimeline from transport.js — " +
-     "the carrier would resolve registers with a different law than the live tick");
-  const tSrc = fs.readFileSync(path.join(__dirname, "../../nukernel/audio/transport.js"), "utf8");
-  ok((tSrc.match(/e\.n \+ \(e\.home \|\| 0\)/g) || []).length >= 2,
-     "scheduleBar does not hand the homed note to both the sampler and the fallback");
-
-  // (b) THE SWEEP. Every genre × three seeds as composed, plus the adversarial
-  // chairs: a piccolo-ish music box ([72,100]) on sludge's floor-scraping
-  // guitar line (raw MIDI down to 19), a guitar whose ceiling is ~76 on ska's
-  // trumpet line (raw up to 100), and a trumpet on sludge. The resolution here
-  // is playSampled's own, via the same exports it calls: home rides the event
-  // (buildTimeline), then inRange folds — one law, asserted in aggregate so a
-  // quarter-million notes stay one gate.
-  const synthBound = (sec, owner, e) => {
-    // mirror of scheduleBar's branch, anchored by the source check above: a
-    // signature-synth line (no pool pick on its chair) never reaches the
-    // sampled fold
-    const over = D.poolInstrOf(sec, owner, e.lv == null ? e.v : e.lv, ST.POOL);
-    const gsyn = over ? null : GENRES[owner].synth;
-    return gsyn && !(gsyn.lineOnly && e.pad);
-  };
+  // (b) THE SWEEP + (c) CONTOUR. Every genre × three seeds as composed, plus
+  // the adversarial casting: a piccolo-ish music box on sludge's floor-scraping
+  // line, a palm-muted guitar on ska's horn line, a trumpet on sludge. The
+  // resolution is the SHIPPED one — plan.compile() is what the engine is fed —
+  // so this measures the artifact, not a mirror of it.
   const NF45 = require("../../nukernel/fields.js");
   const seeds = [1, 3, 7];
   const cases = [];
   for (const gk of GK) for (const s of seeds) cases.push([gk, s, null]);
   cases.push(["sludge", 3, "music_box"], ["ska", 3, "palm_muted_guitar"],
              ["sludge", 7, "trumpet"]);
-  let total = 0, out = 0, drops = 0, badHome = 0, badSign = 0, bassOut = 0;
-  // SKA'S HORN, ASKED FOR RATHER THAN SPELLED. The reported case was a squeaky
-  // trumpet; the casting round (2026-08-17) gave the Skatalites their trombone
-  // back, whose ceiling is ten semitones lower, so the same complaint is a
-  // harder case on a different instrument. Reading the id off the genre keeps
-  // this probe pointed at the horn ska actually hires — a literal here went
-  // silent the moment the cast moved, and a probe that captures nothing passes
-  // its own second claim vacuously.
   const SKAHORN = NI.instrOf("ska", 1);
-  const skaFinal = [], skaRaw = [];
+  let total = 0, out = 0, badHome = 0, skaSeen = 0, skaOut = 0;
   for (const [gk, seed, over] of cases) {
-    // the adversarial chair is cast through the SONG POOL now — the per-layer
-    // `instr` override died at the registry ("the band is hired for the
-    // record") — every pitched seat at once, the bass left to its own so the
-    // bass half of the sweep keeps measuring the acoustic bass
     const raw = C.compose(gk, seed);
     if (over) {
       raw.pool = {};
       for (const c of NF45.POOLCHAIRS) if (c !== "bass") raw.pool[c] = over;
     }
     ST.adoptSong(raw, "gate");
-    const TL = T.buildTimeline();
-    const chairs = new Map();                    // si|owner|lv -> [raw..], home
-    for (const bar of TL) for (const e of bar.ev) {
-      const sec = ST.SONG[bar.si];
-      if (e.kind === "bass") {
-        // the bass chair rides the same law with no home (registerHome is a
-        // line pass); synth basses are their own instrument
-        if (NI.BASSSYNTH[sec.bassop]) continue;
-        const bs = A.specOf(NI.BASS_INSTR);
-        const fin = V.inRange(bs, NI.BASS_INSTR, e.n);
-        total++;
-        if (fin == null) drops++;
-        else if (fin < NI.RANGES[NI.BASS_INSTR][0] - 0.5 ||
-                 fin > NI.RANGES[NI.BASS_INSTR][1] + 0.5) bassOut++;
-        continue;
-      }
-      if (e.kind !== "line") continue;
-      const owner = e.layer || D.gid(sec);
-      if (synthBound(sec, owner, e)) continue;
-      const lv = e.lv == null ? e.v : e.lv;
-      const id = D.instrIdOf(sec, owner, lv, ST.POOL);
-      const spec = A.specOf(id), w = V.playWindow(spec, id);
-      const home = e.home || 0;
-      if (home % 12 !== 0) badHome++;
-      // the chair is keyed by the box the note BELONGS to, not the box whose
-      // bar it sounds in: a lead-in pickup (§49) plays in the closing bar of
-      // the previous box and rides the entering box's home, which is the only
-      // way it can arrive in tune with the note it leads to
-      const ck = (e.puSi == null ? bar.si : e.puSi) + "|" + owner + "|" + lv;
-      let ch = chairs.get(ck);
-      if (!ch) chairs.set(ck, ch = { raw: [], home });
-      if (ch.home !== home) badHome++;           // one constant per (section, chair)
-      ch.raw.push(e.n);
-      total++;
-      if (!w) continue;                          // an id outside the tables: untouched
-      const fin = V.inRange(spec, id, e.n + home);
-      if (fin == null) { drops++; continue; }
-      if (fin < w[0] - 0.5 || fin > w[1] + 0.5) out++;
-      if (!over && gk === "ska" && id === SKAHORN) { skaFinal.push(fin); skaRaw.push(e.n); }
+    P45.compile();
+    const seats = P45.seats(), homes = P45.homes(), units = P45.unitTable();
+    // (c) the home is a WHOLE OCTAVE and one constant per seat, which is what
+    // the arrays being per-seat says structurally; assert the octave half here
+    for (const h of homes) if (!Number.isInteger(h)) badHome++;
+    // (b) THE NOTE THE ENGINE ACTUALLY PLAYS. The bar's events carry the WRITTEN
+    // pitch; the frequency a voice sounds at is what SE.mapEvents resolves —
+    // the parent's per-note fold is the net under the whole-line home, and
+    // reading the events before it would be measuring the intention. So the
+    // check runs the shipped mapper over the shipped bar and reads `sets.freq`,
+    // which is the number the sampler is handed.
+    const win = seats.map((s, v) => P45.windowOf(SE, units["v" + v]));
+    const state45 = P45.parentState();
+    // ONE MAP PER SONG, not per bar. The register law is a fact about NOTES and
+    // the mapper is pure over its event list, so the bars are concatenated (each
+    // bar's beats pushed out by the bars before it) and resolved in one call —
+    // a hundred-fold fewer calls for the same hundred thousand notes, which is
+    // the difference between a gate people run and a gate people skip.
+    const all = { pitched: [], drums: [], found: [], sfx: [], srcById: {}, totalBeats: 0 };
+    let at = 0;
+    for (let i = 0; i < P45.barCount(); i++) {
+      const b = P45.barPlan(i);
+      for (const e of b.ev.pitched) all.pitched.push({ ...e, beat: e.beat + at });
+      at += b.ev.totalBeats;
     }
-    // (c) CONTOUR: the home is a transposition, so every interval keeps its
-    // sign — stated as the directive asks, per chair, raw vs homed
-    for (const ch of chairs.values())
-      for (let i = 1; i < ch.raw.length; i++)
-        if (Math.sign(ch.raw[i] - ch.raw[i - 1]) !==
-            Math.sign((ch.raw[i] + ch.home) - (ch.raw[i - 1] + ch.home))) badSign++;
+    all.totalBeats = at;
+    for (const e of SE.mapEvents(E45, state45, all, { units }).events) {
+      if (e.drum || String(e.unit)[0] !== "v") continue;
+      const v = +String(e.unit).slice(1);
+      const w = win[v];
+      total++;
+      if (!w || !e.sets || !(e.sets.freq > 0)) continue;
+      const midi = 69 + 12 * Math.log2(e.sets.freq / 440);
+      if (midi < w[0] - 0.6 || midi > w[1] + 0.6) out++;
+      if (!over && gk === "ska" && seats[v] && seats[v].instr === SKAHORN) {
+        skaSeen++;
+        if (midi < w[0] - 0.6 || midi > w[1] + 0.6) skaOut++;
+      }
+    }
   }
   ok(total > 100000, "the sweep saw only " + total + " notes — it is not sweeping");
   ok(out === 0, out + " scheduled note(s) land outside their instrument's window");
-  ok(bassOut === 0, bassOut + " bass note(s) escape the acoustic bass's [28,60]");
-  ok(drops === 0, drops + " note(s) hit the DROP LAW — shipped content must " +
-     "always have an in-window octave");
-  ok(badHome === 0, badHome + " register-home violation(s): a home that is not " +
-     "a whole octave, or not one constant per (section, chair)");
-  ok(badSign === 0, badSign + " interval(s) changed sign under the home — the " +
-     "home broke a contour it exists to preserve");
+  ok(badHome === 0, badHome + " register-home violation(s): a home that is not a whole octave");
+  ok(skaSeen > 0, "ska's horn never appeared in the sweep — this gate is proving nothing");
+  ok(skaOut === 0, "ska schedules " + skaOut + " " + SKAHORN + " note(s) outside " +
+     "their window — still squeaky");
 
-  // (b-reported) THE SKA HORN ITSELF. The complaint must be real in the raw
-  // line and gone in the resolved one: composed ska writes its horn above the
-  // table ceiling (measured: up to MIDI 100), and every scheduled note on it
-  // now lands inside the parent's own window for that instrument.
-  const TR = NI.RANGES[SKAHORN];
-  ok(skaRaw.length > 0 && Math.max(...skaRaw) > TR[1],
-     "ska's raw " + SKAHORN + " line no longer exceeds " + TR[1] + " — the " +
-     "reported case has vanished from the composer and this gate is proving nothing");
-  ok(skaFinal.every(n => n >= TR[0] - 0.5 && n <= TR[1] + 0.5),
-     "ska schedules a " + SKAHORN + " note outside [" + TR + "] — still " +
-     "squeaky (max " + Math.max(...skaFinal).toFixed(1) + ")");
-
-  // (d) ...and the builder is deterministic over the same state, which is what
-  // makes the bounce's walk the live walk: same song, same bars, same homes.
+  // (d) ONE RESOLVER: the compile is deterministic over the same state, and
+  // exactly one file in nukernel calls the translator — the structural half of
+  // "the page and the tape cannot disagree", since there is one of each now.
   ST.adoptSong(C.compose("ska", 3), "gate");
-  const j = TL2 => JSON.stringify(TL2.map(b => [b.si, b.barSteps, b.ev]));
-  ok(j(T.buildTimeline()) === j(T.buildTimeline()),
-     "buildTimeline is not deterministic — live and bounce would disagree");
+  const snap = () => { P45.compile();
+    return JSON.stringify(Array.from({ length: P45.barCount() }, (_, i) => P45.barPlan(i).ev)); };
+  ok(snap() === snap(), "compile is not deterministic — two plays would be two songs");
+  {
+    const dir = path.join(__dirname, "../../nukernel/audio");
+    const callers = fs.readdirSync(dir).filter(f => f.endsWith(".js") && f !== "to-engine.js")
+      .filter(f => /from "\.\/to-engine\.js"/.test(fs.readFileSync(path.join(dir, f), "utf8")));
+    ok(callers.length === 1 && callers[0] === "plan.js",
+       "to-engine.js has " + callers.length + " readers (" + callers.join(", ") +
+       ") — one translator, or the two paths are free to disagree again");
+  }
 
   /* ------------------------------- 46. THE BAND IS HIRED FOR THE RECORD
-     The INSTRUMENT POOL, gated at the score (the schedule IS the artifact at
-     this layer): one pool per song, one pick per chair, resolved by the same
-     instrIdOf walk scheduleBar and the register home make. Four claims:
-       (a) a pooled trumpet reaches EVERY section's scheduled lead — every
-           lead-chair note in the whole timeline resolves to the pool's pick;
-       (b) the register fold from "a trumpet knows where it lives" applies to
-           the pooled chair unchanged — home + per-note fold land every one
-           of those notes inside the trumpet's own window, no drops;
-       (c) a NULL pool is the genre's own band, byte-identical: cast a chair,
-           clear it, and the timeline is the very bytes it was before;
-       (d) the bass seat reaches the bass line — anchored in the shipped
-           scheduleBar text, since the bass is scheduled per bar, not baked
-           into the timeline. */
+     The INSTRUMENT POOL, gated at the score: one pool per song, one pick per
+     chair, resolved by the same walk the cast makes. Three claims:
+       (a) a pooled trumpet reaches EVERY section's scheduled lead;
+       (b) the register law applies to the pooled chair unchanged;
+       (c) a NULL pool is the genre's own band, byte-identical. */
   console.log("the instrument pool — one band for the record, and it reaches the schedule");
   {
-    // house seats stab+lead (kernel scheme) and its lead is a piano — the
-    // juno holds the stab and the piano rides it, since the casting round —
-    // so a pooled trumpet is a real recast, not the default answering
+    const D46 = await import("../../nukernel/ui/derive.js");
     const raw = C.compose("house", 3);
     ST.adoptSong(raw, "gate");
-    const before = j(T.buildTimeline());
+    const before = snap();
     const raw2 = C.compose("house", 3); raw2.pool = { lead: "trumpet" };
     ST.adoptSong(raw2, "gate");
     ok(JSON.stringify(ST.POOL) === JSON.stringify({ lead: "trumpet" }),
        "adoptSong did not land the pool in state");
-    const TLp = T.buildTimeline();
-    const w = V.playWindow(A.specOf("trumpet"), "trumpet");
-    const leadSecs = new Set(); let leadN = 0, misres = 0, pOut = 0, pDrops = 0;
-    for (const bar of TLp) for (const e of bar.ev) {
-      if (e.kind !== "line") continue;
-      const sec = ST.SONG[bar.si];
-      const owner = e.layer || D.gid(sec);
-      const lv = e.lv == null ? e.v : e.lv;
-      const ent = D.stackOf(sec).find(x => x.g === owner);
-      if (D.chairOf(sec, ent, lv) !== "lead") continue;
-      leadSecs.add(bar.si); leadN++;
-      if (D.instrIdOf(sec, owner, lv, ST.POOL) !== "trumpet") misres++;
-      const fin = V.inRange(A.specOf("trumpet"), "trumpet", e.n + (e.home || 0));
-      if (fin == null) pDrops++;
-      else if (fin < w[0] - 0.5 || fin > w[1] + 0.5) pOut++;
-    }
-    ok(leadN > 50 && leadSecs.size >= 2, "the pooled song schedules only " +
-       leadN + " lead notes across " + leadSecs.size + " sections — nothing to prove");
-    ok(misres === 0, misres + " lead note(s) resolve past the pool — " +
-       "the trumpet does not reach every section's lead");
-    ok(pDrops === 0 && pOut === 0, "the pooled trumpet escapes its register " +
-       "(" + pOut + " out, " + pDrops + " dropped) — the fold does not follow the pool");
-    // (c) cast, then clear: the timeline returns to the exact bytes of the
-    // never-pooled song — null pool IS the genre's own band.
-    //
-    // THE "NOT DEAD" SENTINEL READS THE RESOLVED INSTRUMENT, not the timeline's
-    // bytes. A pool only ever reached those bytes through the register home,
-    // and the home fires only when a chair does NOT already fit its new
-    // instrument's window — so the moment the song carried a key of its own
-    // ("a song knows what key it is in") house's lead landed inside the
-    // trumpet's [54, 84] as written, nothing shifted, and a perfectly live
-    // recast read as a dead pool. What the pool actually changes is the id
-    // transport.js hands to playSampled, so that is what this asks: every
-    // scheduled lead note answers "trumpet" with the pool and something else
-    // without it.
-    {
-      let recast = 0;
-      for (const bar of TLp) for (const e of bar.ev) {
-        if (e.kind !== "line") continue;
-        const sec = ST.SONG[bar.si];
-        const owner = e.layer || D.gid(sec);
-        const lv = e.lv == null ? e.v : e.lv;
-        const ent = D.stackOf(sec).find(x => x.g === owner);
-        if (D.chairOf(sec, ent, lv) !== "lead") continue;
-        if (D.instrIdOf(sec, owner, lv, null) !== "trumpet") recast++;
+    P45.compile();
+    const seats = P45.seats(), units = P45.unitTable();
+    const tr = seats.filter(s => s.instr === "trumpet" && !s.synth);
+    ok(tr.length > 0, "the pooled trumpet never reached the cast");
+    // every pitched seat that is a LEAD chair resolves to the pool's pick
+    let mis = 0;
+    for (const sec of ST.SONG) {
+      for (const ent of D46.stackOf(sec)) {
+        const g = GENRES[ent.g]; if (!g) continue;
+        for (let v = 0; v < g.voices; v++)
+          if (D46.chairOf(sec, ent, v) === "lead" &&
+              D46.instrIdOf(sec, ent.g, v, ST.POOL) !== "trumpet") mis++;
       }
-      ok(recast > 0,
-         "casting the lead changed nothing in the schedule — the pool is dead");
     }
+    ok(mis === 0, mis + " lead chair(s) resolve past the pool");
+    // (b) and the register law follows it — read, again, off what the mapper
+    // resolves rather than off what was written
+    let tout = 0, tn = 0;
+    const tw = tr.map(s => P45.windowOf(SE, units["v" + seats.indexOf(s)]));
+    const stateP = P45.parentState();
+    const allP = { pitched: [], drums: [], found: [], sfx: [], srcById: {}, totalBeats: 0 };
+    let atP = 0;
+    for (let i = 0; i < P45.barCount(); i++) {
+      const b = P45.barPlan(i);
+      for (const e of b.ev.pitched) allP.pitched.push({ ...e, beat: e.beat + atP });
+      atP += b.ev.totalBeats;
+    }
+    allP.totalBeats = atP;
+    for (const e of SE.mapEvents(E45, stateP, allP, { units }).events) {
+      if (e.drum || String(e.unit)[0] !== "v") continue;
+      const si = tr.indexOf(seats[+String(e.unit).slice(1)]);
+      if (si < 0 || !tw[si] || !e.sets || !(e.sets.freq > 0)) continue;
+      const midi = 69 + 12 * Math.log2(e.sets.freq / 440);
+      tn++;
+      if (midi < tw[si][0] - 0.6 || midi > tw[si][1] + 0.6) tout++;
+    }
+    ok(tn > 20 && tout === 0, "the pooled trumpet escapes its register (" + tout +
+       " of " + tn + ") — the home does not follow the pool");
+    // (c) cast, then clear
     ST.setPoolChair("lead", null);
     ok(ST.POOL === null, "clearing the one cast chair did not normalize to null");
-    ok(j(T.buildTimeline()) === before,
-       "a cleared pool is not byte-identical to the genre's own band");
-    // (d) the bass seat, anchored in the shipped text the way §45 anchors the
-    // homed note: scheduleBar plays the POOLED bass, bassop synths still win
-    const tSrc2 = fs.readFileSync(
-      path.join(__dirname, "../../nukernel/audio/transport.js"), "utf8");
-    ok(/\(POOL && POOL\.bass\) \|\| BASS_INSTR/.test(tSrc2),
-       "scheduleBar does not seat the pool's bass chair");
+    ok(snap() === before, "a cleared pool is not byte-identical to the genre's own band");
   }
 }
-
 /* ------------------------------- 47. THE DESK STOPS FLATTERING
-   THE DERIVED PER-PART TONE, gated at the model (audio/mixer.js
+   THE DERIVED PER-PART TONE, gated at the model (audio/desk.js
    derivedPartTone / derivedSecEq / mergeEq / resolvedPart — no DOM, no
    render). Paul, on the shipped board, 2026-08-16: "All the EQ settings and
    all the faders are always the same and never move… but never inside a
@@ -7041,7 +6969,7 @@ console.log("the register law — the table, the home, and the per-note fold");
          same chanSpec, so the carrier carries the derivation by construction. */
 console.log("the desk stops flattering — derived per-part (gain, eq)");
 {
-  const MX = await import("../../nukernel/audio/mixer.js");
+  const MX = await import("../../nukernel/audio/desk.js");
   const ST = await import("../../nukernel/ui/state.js");
   const C = require("../../nukernel/compose.js");
   const S = require("../../nukernel/song.js");
@@ -7100,10 +7028,10 @@ console.log("the desk stops flattering — derived per-part (gain, eq)");
     ok(t.db === 0 && t.eq === null,
        "a chair with no tonal source derived " + JSON.stringify(t) +
        " — flat-when-no-source is broken");
-    const built = MX.chanSpec(sec).parts.map(p => p.key);
-    ok(!built.includes(keys[0]),
-       "the identity chair " + keys[0] + " still built a part spec [" + built +
-       "] — absent-is-today no longer survives where nothing derives");
+    const r0 = MX.resolvedPart(sec, keys[0]);
+    ok(r0.gain === 1 && r0.eq === null,
+       "the identity chair " + keys[0] + " resolved to " + JSON.stringify(r0) +
+       " — absent-is-today no longer survives where nothing derives");
     ok(MX.derivedSecEq(sec) === null,
        "dnb's mid-range tone derived a section EQ — the character thresholds " +
        "have widened past neutral");
@@ -7112,10 +7040,10 @@ console.log("the desk stops flattering — derived per-part (gain, eq)");
   {
     ST.adoptSong(C.compose("beatles", 3), "gate");
     const sec = ST.SONG.find(s => MX.partKeysOf(s).length >= 2);
-    ok(JSON.stringify(MX.chanSpec(sec)) === JSON.stringify(MX.chanSpec(sec)),
-       "chanSpec is not deterministic — live and bounce would disagree about " +
-       "the derived desk");
-    const parts = MX.chanSpec(sec).parts;
+    const spec = (x) => MX.partKeysOf(x).map(k => ({ key: k, ...MX.resolvedPart(x, k) }));
+    ok(JSON.stringify(spec(sec)) === JSON.stringify(spec(sec)),
+       "the resolved desk is not deterministic — two bars would be two mixes");
+    const parts = spec(sec);
     const seen = new Set();
     for (const p of parts) {
       ok(!seen.has(p.key), "part " + p.key + " appears twice in one spec — " +
@@ -7130,7 +7058,7 @@ console.log("the desk stops flattering — derived per-part (gain, eq)");
     // derive the same part eq, so the character cannot be applied twice
     const g = ST.SONG && MX.derivedSecEq(sec);
     if (g) {
-      const merged = MX.chanSpec(sec).eq;
+      const merged = MX.mergeEq(MX.derivedSecEq(sec), sec.eq);
       ok(merged && ["lo", "mid", "hi"].every(b => merged[b] === (g[b] || 0)),
          "the untouched section strip does not carry the genre's derived " +
          "character (" + JSON.stringify(merged) + " vs " + JSON.stringify(g) + ")");
@@ -7634,7 +7562,7 @@ console.log("music breathes — the tempo map and the lead-ins");
   globalThis.localStorage = globalThis.localStorage ||
     { getItem: () => null, setItem: () => {}, removeItem: () => {} };
   const ST49 = await import("../../nukernel/ui/state.js");
-  const T49 = await import("../../nukernel/audio/transport.js");
+  const T49 = await import("../../nukernel/audio/plan.js");
   const NS49 = require("../../nukernel/song.js");
   const C49 = require("../../nukernel/compose.js");
   const fs49 = require("fs"), path49 = require("path");
@@ -7715,27 +7643,31 @@ console.log("music breathes — the tempo map and the lead-ins");
   /* (b) ONE CLOCK for the live tick and the rendered carrier */
   {
     ST49.adoptSong(C49.compose("house", 7), "gate");
-    const TL = T49.buildTimeline();
+    const TL = T49.compile();
     const durs = TL.map(b => b.barSteps);
     ok(new Set(durs.map(d => d.toFixed(6))).size > 5,
        "the transport's bar list carries no tempo map — the live tick plays a grid");
     ok(TL.every(b => b.steps > 0 && Math.abs(b.barSteps - b.steps) < b.steps * 0.6),
        "a transport bar lost its musical grid (`steps`) or its clock ran away from it");
-    // the BOUNCE reads the same number: its bar durations are barSteps × the
-    // step duration, so warping barSteps is what makes the carrier honour the
-    // map without knowing there is one. Anchored in the shipped text — a
-    // rewrite that computed bar times from bpm × bars would silently drift.
-    const bSrc49 = fs49.readFileSync(
-      path49.join(__dirname, "../../nukernel/audio/bounce.js"), "utf8");
-    ok(/b\.barSteps \* sd/.test(bSrc49) && /TL\[i\]\.barSteps \* sd/.test(bSrc49),
-       "audio/bounce.js no longer measures its bars off barSteps × stepDur — " +
-       "the carrier would render a different tempo map from the one you hear");
+    // AND THE ENGINE IS HANDED THE SAME NUMBER. There used to be a second reader
+    // here — the carrier's own bar durations, anchored in bounce.js's text, so
+    // the tape could not drift from the graph. There is one engine now, so the
+    // check is that the one handoff carries the warp: `barBeats` is what
+    // engine/faust/live/live.js asks per bar (opts.barBeats), and it must be the
+    // bar list's own length, not a nominal one.
+    const beats = TL.map((b, i) => T49.barBeatsAt(i));
+    ok(beats.every((v, i) => Math.abs(v - TL[i].barSteps / 4) < 1e-12),
+       "audio/plan.js hands the engine a bar length that is not the bar list's — " +
+       "the engine would play a grid under a song that breathes");
+    ok(new Set(beats.map(v => v.toFixed(6))).size > 5,
+       "every bar handed to the engine is the same length — the tempo map stops " +
+       "at the handoff");
     const dSrc49 = fs49.readFileSync(
       path49.join(__dirname, "../../nukernel/ui/derive.js"), "utf8");
     ok(/export function songBars/.test(dSrc49) &&
        /songBars/.test(fs49.readFileSync(
-         path49.join(__dirname, "../../nukernel/audio/transport.js"), "utf8")),
-       "audio/transport.js does not build its timeline with ui/derive.js songBars — " +
+         path49.join(__dirname, "../../nukernel/audio/plan.js"), "utf8")),
+       "audio/plan.js does not build its timeline with ui/derive.js songBars — " +
        "there are two walks again");
   }
 
@@ -7865,7 +7797,7 @@ console.log("music breathes — the tempo map and the lead-ins");
         // the home law below is measuring something
         const s = load(gk, seed);
         ST49.adoptSong(C49.compose(gk, seed), "gate");
-        const tl = T49.buildTimeline();
+        const tl = T49.compile();
         seen.songs++;
         // the arrival chord of each box, read through the SAME masterCtx the
         // engine corrects by (§48's discipline: one reading, not two)
@@ -7948,7 +7880,7 @@ console.log("music breathes — the tempo map and the lead-ins");
        "dice per compile, and the bounce would render a different record");
     ST49.adoptSong(C49.compose("dnb", 5), "gate");
     const k = TL2 => JSON.stringify(TL2.map(b => [b.si, b.barSteps, b.ev]));
-    ok(k(T49.buildTimeline()) === k(T49.buildTimeline()),
+    ok(k(T49.compile()) === k(T49.compile()),
        "buildTimeline is not deterministic with the tempo map and the lead-ins in it");
   }
 }
@@ -8015,8 +7947,7 @@ console.log("the loop ends where the music does, and the tape carries the whole 
     { userAgent: "node", platform: "", maxTouchPoints: 0, hardwareConcurrency: 4 };
   globalThis.Audio = globalThis.Audio || function () {};
   const ST50 = await import("../../nukernel/ui/state.js");
-  const T50 = await import("../../nukernel/audio/transport.js");
-  const B50 = await import("../../nukernel/audio/bounce.js");
+  const T50 = await import("../../nukernel/audio/plan.js");
   const NS50 = require("../../nukernel/song.js");
   const C50 = require("../../nukernel/compose.js");
   const fs50 = require("fs"), path50 = require("path");
@@ -8083,25 +8014,28 @@ console.log("the loop ends where the music does, and the tape carries the whole 
                 " beats (" + worstAt + ")");
   }
 
-  /* (b) NO RULER LEFT — the three readers, in the shipped text */
+  /* (b) NO RULER LEFT — the readers, in the shipped text. There used to be
+     three (the live tick's automation arm, the bounce's, the playhead) and two
+     of them were the second engine's. What is left is the two that survive one
+     engine: the playhead asks the bar list how far through the box it is, and
+     the desk's automation is stretched onto the warped box by the bar list's
+     own ratio rather than by a nominal multiplication. */
   {
-    const t50 = src50("audio/transport.js"), b50 = src50("audio/bounce.js"),
+    const p50 = src50("audio/plan.js"), l50 = src50("audio/live.js"),
           m50 = src50("ui/main.js");
-    ok(/armAutomation\(cur\.chan, nextBarTime, bar\.boxSteps \* sd/.test(t50) &&
-       /armAutomation\(chan, now, first\.boxSteps \* sd/.test(t50),
-       "audio/transport.js arms a box's automation off something other than " +
-       "boxSteps — a sweep that ends where the box does not");
-    ok(/armAutomation\(cur\.chan, t, bar\.boxSteps \* sd/.test(b50),
-       "audio/bounce.js arms the carrier's automation off something other than " +
-       "boxSteps — the tape's mix would drift from the graph's");
-    ok(!/barSteps \* sd \* boxBars/.test(t50) && !/barSteps \* sd \* boxBars/.test(b50),
-       "a `barSteps × boxBars` box length is back in the audio tier — that is the " +
-       "ruler the tempo map made a lie");
+    ok(/boxNom \|\| bar\.boxSteps\) \/ bar\.boxSteps/.test(p50) ||
+       /bar\.boxSteps > 0 \? \(bar\.boxNom/.test(p50),
+       "audio/plan.js stretches an automation lane onto something other than the " +
+       "box's own warped span — a sweep that ends where the box does not");
+    for (const [f, src] of [["audio/plan.js", p50], ["audio/live.js", l50]])
+      ok(!/barSteps \* sd \* boxBars/.test(src),
+         "a `barSteps × boxBars` box length is back in " + f + " — that is the " +
+         "ruler the tempo map made a lie");
     ok(/transport\.passAt\(/.test(m50) && !/sec\.len \* 16 \/ rate/.test(m50),
        "ui/main.js computes the playhead from the nominal box again — the fill bar " +
        "and the LCD would wrap a beat before or after the music does");
-    ok(/export function passAt/.test(t50),
-       "audio/transport.js no longer exports passAt — the playhead has nowhere " +
+    ok(/export function passAt/.test(l50),
+       "audio/live.js no longer exports passAt — the playhead has nowhere " +
        "honest to ask how far through the box it is");
   }
 
@@ -8110,477 +8044,24 @@ console.log("the loop ends where the music does, and the tape carries the whole 
     for (const [gk, seed] of CORPUS50.slice(0, 4)) {
       ST50.adoptSong(C50.compose(gk, seed), "gate");
       T50.compile();                     // songDurSec reads the COMPILED list
-      const TL = T50.buildTimeline(), sd = T50.stepDur();
+      const TL = T50.compile(), sd = T50.stepDur();
       const sum = TL.reduce((a, b) => a + b.barSteps, 0) * sd;
       ok(Math.abs(T50.songDurSec() - sum) < 1e-9,
          gk + "/" + seed + ": the transport's song duration is not the sum of its " +
          "bars — the live loop wraps somewhere other than the end of the music");
-      const plan = B50.planFor(TL, sd);
-      ok(Math.abs(plan.total - sum) < 1e-9,
-         gk + "/" + seed + ": the tape the bounce plans is " +
-         (plan.total - sum).toFixed(4) + " s longer than the music — the carrier " +
-         "would loop early or late");
     }
   }
 
-  /* (d) CARRIER PARITY — every bar of the live walk, once, where it belongs */
-  {
-    for (const [gk, seed] of CORPUS50) {
-      ST50.adoptSong(C50.compose(gk, seed), "gate");
-      const TL = T50.buildTimeline(), sd = T50.stepDur();
-      const plan = B50.planFor(TL, sd);
-      // the windows PARTITION the bar list: contiguous, in order, no gap, no
-      // overlap. A window also replays its pre-roll bars, but it throws that
-      // output away, so every bar's samples come from exactly one window.
-      let next = 0, bad = 0;
-      for (const ck of plan.chunks) {
-        if (ck.a !== next || ck.b <= ck.a || ck.pre > ck.a) bad++;
-        next = ck.b;
-      }
-      ok(bad === 0 && next === TL.length,
-         gk + "/" + seed + ": the bounce's windows do not cover the bar list exactly " +
-         "once (" + next + " of " + TL.length + " bars, " + bad + " broken window(s)) " +
-         "— the tape is not the song");
-      // ...and each bar lands at the time the live walk puts it
-      let acc = 0, drift = 0;
-      for (let i = 0; i < TL.length; i++) {
-        drift = Math.max(drift, Math.abs(plan.t0[i] - acc));
-        acc += TL[i].barSteps * sd;
-      }
-      ok(drift < 1e-9 && Math.abs(plan.t0[TL.length] - acc) < 1e-9,
-         gk + "/" + seed + ": a bar sits " + drift.toFixed(6) + " s from where the " +
-         "live walk puts it — the carrier is a different performance");
-      // THE EVENT SET IS THE SAME EVENT SET — same voices, same count, same
-      // order. The bounce walks TL[pre..b) and keeps [a,b), so the union of the
-      // kept spans is the whole walk; anything else is a lost voice.
-      const ident = list => list.flatMap((b, i) => b.ev.map(e =>
-        [i, e.kind, e.d || "", e.n == null ? "" : e.n, e.v == null ? "" : e.v,
-         e.vel == null ? "" : e.vel, +e.off.toFixed(6)].join("|")));
-      const live = ident(TL);
-      const tape = plan.chunks.flatMap(ck =>
-        ident(TL.slice(ck.a, ck.b)).map(k => {           // re-index onto the song
-          const p = k.indexOf("|");
-          return (ck.a + +k.slice(0, p)) + k.slice(p);
-        }));
-      ok(live.length === tape.length && live.every((k, i) => k === tape[i]),
-         gk + "/" + seed + ": the carrier's event set is not the live walk's (" +
-         tape.length + " vs " + live.length + " events) — this is what 'no drums " +
-         "on the tape' looks like from the score");
-      // and the lanes, said out loud, because a count can match while a lane
-      // vanishes: every drum lane the band plays is on the tape
-      const lanes = l => new Set(l.filter(k => k.split("|")[1] === "hit")
-                                  .map(k => k.split("|")[2]));
-      const L = lanes(live), Tp = lanes(tape);
-      ok(L.size === Tp.size && [...L].every(d => Tp.has(d)),
-         gk + "/" + seed + ": the tape is missing drum lane(s) " +
-         [...L].filter(d => !Tp.has(d)).join(",") + " that the live walk plays");
-    }
-  }
+  /* (d) AND (e) WERE THE CARRIER'S — the bounce's window plan covering the bar
+     list exactly once, and the insurance tape being a whole box rather than a
+     truncated phrase. Both were properties of a SECOND ENGINE rendering the
+     same song beside the live one, and the whole class of question ("does the
+     tape play the same bars as the page") stops being askable when there is one
+     engine: the bars the ear hears are the bars audio/plan.js compiled, because
+     nothing else produces any. What replaced the carrier's own promise is the
+     BOUND in audio/live.js — a deadline, a ceiling of two attempts, and a
+     demotion written down rather than retried — which §76 holds. */
 
-  /* (e) THE INSURANCE TAPE IS A WHOLE PHRASE */
-  {
-    // the boxes a bar list opens, as [start, end) spans. `first` is the
-    // timeline's own box stamp, which is the boundary shortCut is required to
-    // cut on and the one the live tick arms automation against — so this gate
-    // and the shipped arithmetic are reading the same line, not two opinions
-    // about where a section begins.
-    const boxes50 = TL => {
-      const out = []; let a = 0;
-      for (let i = 1; i <= TL.length; i++)
-        if (i === TL.length || TL[i].first) { out.push([a, i]); a = i; }
-      return out;
-    };
-    // the drum lanes a span really plays, from the events themselves — the
-    // score half of the census the render reports as st.lanes
-    const lanes50 = list => new Set(list.flatMap(b =>
-      (b.ev || []).filter(e => e.kind === "hit").map(e => e.d)));
-    let minSec = Infinity, maxSec = 0, drumless = 0, twoBox = 0, sum = 0;
-    const named = {};
-    for (const [gk, seed] of CORPUS50) {
-      ST50.adoptSong(C50.compose(gk, seed), "gate");
-      const TL = T50.buildTimeline(), sd = T50.stepDur();
-      const cut = B50.shortCut(TL, sd, B50.SHORT_CAP);
-      const at = gk + "/" + seed + ": ";
-      const secs = cut.reduce((a, b) => a + b.barSteps * sd, 0);
-      ok(cut.length >= 1 && cut.length < TL.length,
-         at + "the short stage is not a short cut of the song (" +
-         cut.length + " of " + TL.length + " bars)");
-
-      // (1) IT IS A WHOLE BOX, AND WHOLE BOXES ONLY. The cut is the head of
-      // the bar list, so "whole boxes" is two facts: it starts where box 0
-      // starts, and it ENDS where a box ends — the bar after it opens the next
-      // one. A cut that stops in the middle of a section is the two-bar
-      // fragment this section is named after, wearing a longer coat.
-      const B = boxes50(TL);
-      ok(B.length > 1, at + "the song is one box — §50(e) proves nothing here");
-      const whole = B.filter(([a, b]) => b <= cut.length);
-      ok(whole.length >= 1, at + "the short tape is not even one complete box (" +
-         cut.length + " bars, first box is " + B[0][1] + ")");
-      ok(whole[whole.length - 1][1] === cut.length,
-         at + "the short tape ends " + cut.length + " bars in, inside the box that " +
-         "runs bars " + B[whole.length].join("-") +
-         " — a truncated phrase is the defect, not the fix");
-      // ...stated the other way round, which is the LOOP law: the wrap lands on
-      // a bar the composer stamped as a box opening, so the tape comes round on
-      // a downbeat the music itself has. (foldAndEncode folds the ring-out onto
-      // that downbeat; a wrap anywhere else is the seam law's forbidden cut.)
-      ok(TL[cut.length].first === true,
-         at + "the short tape wraps onto a bar that does not open a box — the " +
-         "insurance loops against the music instead of with it");
-      // and the timing law is the FULL tape's, unchanged: the plan the bounce
-      // makes over the cut is exactly as long as the bars in it, so the loop
-      // point is the music's own end and not a rounded one
-      const plan = B50.planFor(cut, sd);
-      ok(Math.abs(plan.total - secs) < 1e-9,
-         at + "the short tape's plan is " + (plan.total - secs).toFixed(6) +
-         " s off its own bar list — it would loop early or late");
-
-      // (2) AT LEAST ONE COMPLETE BOX EVEN WHEN THE BOX IS LONGER THAN THE CAP.
-      // The cap refuses a SECOND box; it never truncates the first.
-      ok(cut.length >= B[0][1],
-         at + "the cap cut the first box short at " + cut.length + " of " +
-         B[0][1] + " bars — SHORT_CAP is a ceiling on extra boxes, not a knife");
-      ok(whole.length === 1 || secs <= B50.SHORT_CAP,
-         at + "the short tape took " + whole.length + " boxes and " +
-         secs.toFixed(2) + " s, past the " + B50.SHORT_CAP + " s cap");
-      if (whole.length > 1) twoBox++;
-
-      // (3) THE DRUM-LANE CENSUS MATCHES THE BOX. Not "the tape has drums" —
-      // a drift record's opening section genuinely has none, and demanding
-      // otherwise would be demanding a different song. The law is that the
-      // tape's lanes are EXACTLY the lanes the boxes it contains play: nothing
-      // lost between the box and the cut, and nothing borrowed from a box the
-      // cut does not reach. bounce.js publishes the same arithmetic as
-      // scoreLanes and hands it to the render as st.lanesWant, so the browser
-      // gate can subtract it from what the channels really routed.
-      const want = lanes50(TL.slice(0, cut.length));
-      const got = new Set(B50.scoreLanes(cut));
-      ok(want.size === got.size && [...want].every(d => got.has(d)),
-         at + "the shipped lane census disagrees with the score (" +
-         [...got].sort().join(",") + " vs " + [...want].sort().join(",") + ")");
-      const boxLanes = new Set(whole.flatMap(([a, b]) => [...lanes50(TL.slice(a, b))]));
-      ok(boxLanes.size === want.size && [...boxLanes].every(d => want.has(d)),
-         at + "the short tape does not carry the lanes its own boxes play — " +
-         "missing " + [...boxLanes].filter(d => !want.has(d)).join(","));
-      // the FRAGMENT's own failure, held as a regression: the 4 s bar-aligned
-      // cut this replaced took one bar of Lagos 1971 and got the bass alone.
-      // A whole box cannot do that unless the box is genuinely drumless.
-      const headHasDrums = lanes50(TL.slice(B[0][0], B[0][1])).size > 0;
-      ok(!headHasDrums || want.size > 0,
-         at + "the opening box plays drums and the insurance tape has none — " +
-         "this is the Lagos report exactly");
-      if (!want.size) drumless++;
-
-      minSec = Math.min(minSec, secs); maxSec = Math.max(maxSec, secs); sum += secs;
-      named[gk + "/" + seed] = secs.toFixed(2) + "s/" + cut.length + "b/[" +
-                               [...want].sort().join("") + "]";
-    }
-    // THE COST, SAID OUT LOUD. The tape is now several times the old fragment,
-    // and the render is roughly linear in the music it renders, so the first
-    // tape arrives correspondingly later. That is the trade — a phrase that is
-    // worth hearing, later — and it belongs in the log where the next person
-    // measuring the first-tape latency will find it rather than rediscover it.
-    ok(minSec > 4, "the shortest insurance tape in the corpus is " +
-       minSec.toFixed(2) + " s — at or under the old 4 s cap, which means the " +
-       "box law is not reaching the cut");
-    ok(maxSec <= 32, "an insurance tape has reached " + maxSec.toFixed(2) +
-       " s — one box was supposed to be a phrase, not a side");
-    ok(drumless === 0, drumless + " of " + CORPUS50.length + " insurance tapes in " +
-       "this corpus have no drums, and every one of these songs opens with a kit — " +
-       "the box cut is not carrying the band");
-    console.log("  the insurance tape is a whole box: " +
-                minSec.toFixed(2) + "-" + maxSec.toFixed(2) + " s (mean " +
-                (sum / CORPUS50.length).toFixed(2) + "), " + twoBox + " of " +
-                CORPUS50.length + " take two boxes, " + drumless +
-                " have no drums — " + Object.entries(named)
-                  .map(([k, v]) => k + " " + v).join(", "));
-    // THE LAW: the insurance may only take the ear where the alternative is
-    // silence. Both doors — the carrier-first takeover and the hide handoff —
-    // refuse it, and the hide handoff makes the one exception iOS, whose
-    // context genuinely freezes. A whole phrase is a better thing to hand that
-    // listener than two bars; it is still not the record, so the refusals stand.
-    const b50 = src50("audio/bounce.js");
-    ok(/shortIsInsurance\(\)\) return false;/.test(b50),
-       "audio/bounce.js goCarrier no longer refuses the short tape — one section " +
-       "on loop would become the whole performance");
-    ok(/if \(shortIsInsurance\(\) && !isIOS && ctx && ctx\.state === "running"\) return false;/
-         .test(b50),
-       "audio/bounce.js carry() hands the ear whatever blob exists on hide — for " +
-       "the first stretch of any song that is one box of its head, on loop. " +
-       "The refusal is conditional on there being something to replace: a frozen " +
-       "or suspended context still takes the insurance, because the alternative " +
-       "there really is silence");
-    // ...and the cut is cut on the STAMP, in the shipped text. A bar-count or a
-    // seconds-only walk here is the regression, and it is invisible in the
-    // numbers above on any song whose boxes happen to divide the cap.
-    ok(/for \(; j < TL\.length && !TL\[j\]\.first; j\+\+\)/.test(b50),
-       "audio/bounce.js shortCut no longer scans to the next box stamp — the " +
-       "insurance tape is being cut on something other than a section boundary");
-    ok(/if \(cut\.length && acc \+ box > capSec\) break;/.test(b50),
-       "audio/bounce.js shortCut's cap can now refuse the FIRST box — that is a " +
-       "truncated phrase, which is the thing this stage stopped doing");
-    // ...and NOTHING ELSE ON THE PAGE LOOPS. The carrier element is the only
-    // thing entitled to `loop = true`; a drum or a note that looped natively
-    // would keep ringing through a handoff the master gain cannot reach.
-    const v50 = src50("audio/voices.js");
-    ok(!/\.loop\s*=\s*true/.test(v50),
-       "audio/voices.js sets loop = true on a source — nothing in the band loops " +
-       "itself; the score says when a sound comes round again");
-    ok(/loop: !!z\.loop/.test(v50),
-       "the sampler no longer takes its zone loop from the zone spec — a sustaining " +
-       "instrument's loop is a fact about the sample, not a default");
-  }
-}
-
-
-/* ------------------------------- 51. THE CHESS BAND PLAYS AGAIN, AND A VOICE
-   ANNOUNCES ITSELF ONLY ONCE
-   Two reports from Paul on one afternoon, and both turned out to be the same
-   shape of mistake — a comment describing music the code was not making:
-
-     "The drums in Chicago 1952 are completely off."
-     "Intros seem weirdly doubled."
-
-   (a) THE SHUFFLE IS IN THE HAND, NOT ON THE DIAL. `swing` bends ODD
-       sixteenths. Every hit on the blues kit — kick 0/6/8, snare 4/12, ride on
-       all eight eighths, pedal hat 4/12 — is written on an EVEN one, so the
-       anchor's declared `swing: 1/3` reached exactly ONE hit in a twelve-bar
-       form out of 183 (the turnaround crash, on step 15), and the lane's own
-       comment said "shuffled by swing" about a lane that had never shuffled.
-       The GUITAR meanwhile swung, because a line's odd sixteenths are odd:
-       measured at ~107 bpm the two players were up to 47 ms apart, which is
-       not stiffness, it is two people in different time. The repair is the one
-       the `jazz` anchor already documents — the off-beat eighths placed by
-       hand in the nudge lane — and the laws here say what "placed by hand" has
-       to MEAN, so the next hand that edits the array has to keep the shuffle
-       rather than keep the numbers.
-
-   (b) A NAKED OPENING STATES ITS MATERIAL ONCE. A box deals its slots ACROSS
-       the genre's voices (derive.js: voice v reads phrase v % nP), so a
-       ONE-slot box hands the same rendered phrase to every voice, separated
-       only by `reg`. Everywhere else in a record that is a colour inside a
-       band; in an intro the composer has already taken the drums and the bass
-       off, so it is the whole texture — punk's quote came out as one riff and
-       its own octave, jazz's as two horns on the same pitches six milliseconds
-       apart, which is a flanger and not two players. Measured over 348
-       composed songs (every genre × seeds 1,2,3,5,7,11): the naked `quote`
-       opening had two PLAYING lanes in constant-interval parallel in 4 of 30
-       boxes — one of them, jazz/7, at interval ZERO — and a solo-edged first
-       bar carried more than one lane in 31 of 67. After the repair: 0 and 0.
-
-       Two things the repair had to learn the hard way, both kept as
-       conditions in compose.js and kernel.js rather than as prose:
-       a PAD takes its pitches from the CHORD and only its rhythm from the
-       phrase, so on a genre that comps (toto, citypop, jodeci) giving the
-       second voice a companion left the quoted MELODY nowhere at all — 25
-       genre/seed pairs stopped quoting — and the same fact is why the law
-       here counts non-pad lanes only: two pads in parallel is voicing.
-       And `cold` was deliberately left alone: it keeps the whole kit and the
-       bass, and giving it a second slot measured WORSE (11 doubled boxes →
-       13), because two phrases across four voices is two doubled pairs where
-       one phrase across four was one. */
-console.log("the Chess band plays again, and a voice announces itself only once");
-{
-  // ---- (a) the shuffle ----
-  // THE ROOT CAUSE, stated algebraically, because it is the fact that makes
-  // every nudge sidecar in the table necessary rather than decorative.
-  for (let i = 0; i < 16; i += 2)
-    ok(K.swing({ swing: 1 / 3 }, i) === 0,
-       "the swing dial reached step " + i + ", an EVEN sixteenth — if it can bend " +
-       "these, the hand-placed shuffles in blues and jazz are the wrong repair");
-  ok(K.swing({ swing: 1 / 3 }, 1) > 0,
-       "the swing dial no longer bends odd sixteenths at all");
-
-  const B51 = GENRES.blues, N51 = 16;
-  const dr51 = K.drums(P, { ...B51, humanize: 0 }, B51.bars);
-  const stepOf = e => Math.round(e.t) % N51;
-  const lateOf = e => e.t - Math.floor(e.t + 1e-9);
-  const off8 = dr51.filter(e => stepOf(e) % 4 === 2);      // the ands of every beat
-  const onBeat = dr51.filter(e => stepOf(e) % 4 === 0);    // 1, 2, 3, 4
-
-  ok(off8.length > 0, "Chicago 1952 sounds nothing on an off-beat eighth — the " +
-     "shuffle has nowhere to live");
-  // THE SHUFFLE EXISTS. Every off-beat eighth arrives late, all by the same
-  // amount: a shuffle is one ratio, not a scatter.
-  const lates = new Set(off8.map(e => +lateOf(e).toFixed(6)));
-  ok(lates.size === 1,
-     "Chicago 1952's off-beat eighths arrive at " + lates.size + " different " +
-     "places (" + [...lates].join(", ") + ") — a shuffle is one ratio for the " +
-     "whole kit, not a lane-by-lane opinion");
-  const swung = [...lates][0];
-  // ...and it is AUDIBLY a shuffle and still ITS OWN step: a third of a step is
-  // ~62 ms at this tempo, and half a step is the ceiling because a hit pushed
-  // further is nearer the next step than the one it was written on — which is
-  // why a literal 2:1 triplet (6/9) is not sayable in the nudge alphabet and
-  // 1.6:1 (4/9) is the shuffle a rhythm section actually plays.
-  ok(swung >= 1 / 3 && swung < 0.5,
-     "Chicago 1952's off-beat eighths sit " + swung.toFixed(3) + " of a step late — " +
-     "a shuffle has to be past a third of a step to be heard as one and inside " +
-     "half a step to still belong to its own beat");
-  // THE BEAT ITSELF DID NOT MOVE. A shuffle bends the ands; it does not drag.
-  ok(onBeat.every(e => lateOf(e) < 1e-9),
-     onBeat.filter(e => lateOf(e) >= 1e-9).length + " on-beat hit(s) in Chicago " +
-     "1952 arrive late — the shuffle leaked onto the beat and became a drag");
-  // THE BACKBEAT SURVIVES: 2 and 4, dead on, which is the other half of what a
-  // blues band sounds like and the thing a global nudge would have eaten.
-  const snare = dr51.filter(e => e.d === "s" && !e.fill);
-  ok(snare.length > 0 && snare.every(e => [4, 12].includes(stepOf(e)) && lateOf(e) < 1e-9),
-     "Chicago 1952's backbeat is no longer 2 and 4 on the grid");
-  // NO LIMB FLAMS AGAINST ANOTHER. Two lanes written on the SAME step have to
-  // land at the same time — blues's kick plays the and-of-2 with the ride, and
-  // leaving it on the grid while the ride shuffled would have flammed them 62 ms
-  // apart at the busiest point in the bar, which is worse than not shuffling.
-  // (Deliberately a law about THIS anchor and not the table: toto's `s.disp`
-  // lays the snare back against a kick on the beat on purpose, and that is what
-  // a laid-back backbeat IS.)
-  const atStep = new Map();
-  for (const e of dr51) {
-    if (e.grace) continue;
-    const key = Math.floor(e.t / N51) + ":" + stepOf(e);
-    let g51 = atStep.get(key); if (!g51) atStep.set(key, g51 = []);
-    g51.push(e);
-  }
-  const flams = [...atStep.values()]
-    .filter(g => new Set(g.map(e => +e.t.toFixed(6))).size > 1);
-  ok(flams.length === 0,
-     flams.length + " step(s) in Chicago 1952 have two limbs written together and " +
-     "landing apart — " + (flams[0] || []).map(e => e.d + "@" + e.t.toFixed(3)).join("/"));
-  // A NUDGE MOVES A HIT; IT NEVER ADDS OR REMOVES ONE. Stripping the sidecars
-  // has to give back the same number of hits in the same bars.
-  const strip = k => Object.fromEntries(Object.entries(k).filter(([d]) => d[0] !== "~"));
-  const flat51 = K.drums(P, { ...B51, humanize: 0, kit: strip(B51.kit),
-                              fill: strip(B51.fill) }, B51.bars);
-  const perBar = ev => ev.reduce((a, e) => {
-    const b = Math.floor(e.t / N51); a[b] = (a[b] || 0) + 1; return a;
-  }, []);
-  ok(JSON.stringify(perBar(flat51)) === JSON.stringify(perBar(dr51)),
-     "the nudge lanes changed WHICH BAR the hits are in (" +
-     perBar(flat51).join(",") + " → " + perBar(dr51).join(",") + ") — a hand moves " +
-     "a stroke inside its own bar, it does not add one and it does not push one " +
-     "over the bar line");
-
-  // THE HAND MOVES, THE FOOT STAYS. `ride` and `tomtime` sweep the hats onto
-  // another surface, and `f` is a hat by taxonomy but a FOOT by limb: sweeping
-  // it in deleted the left foot outright on the two anchors whose ride already
-  // covers 2 and 4, which is pure subtraction dressed as an arrangement.
-  for (const gk of GK) {
-    const k = GENRES[gk].kit;
-    if (!k || !(Array.isArray(k.f) && k.f.some(x => x))) continue;
-    for (const op of ["ride", "tomtime"]) {
-      const out = K.KITOPS[op](k);
-      ok(Array.isArray(out.f) && out.f.some(x => x),
-         gk + "/" + op + " deleted the pedal hat — a kit op that moves the HAND " +
-         "to another surface may not take the left foot with it");
-    }
-  }
-
-  // ---- (b) the doubling ----
-  const NS51 = require("../../nukernel/song.js");
-  const C51 = require("../../nukernel/compose.js");
-  const SEEDS51 = [1, 2, 3, 5, 7, 11];
-  const barsOf51 = (s, si) => D.songBars(s.song, s.slots, s.groove, s.swing, si, {});
-  // two lanes DOUBLE each other when most of the shorter one's onsets have a
-  // partner within a 64th (humanize drift, not a rhythm) and every partnered
-  // interval is the same number of semitones — an octave copy and a unison
-  // flange are the same defect at two intervals
-  const doubles51 = (A, B2) => {
-    const oa = [...new Map(A.map(e => [e.t.toFixed(3), e])).values()];
-    const ob = [...new Map(B2.map(e => [e.t.toFixed(3), e])).values()];
-    if (oa.length < 2 || ob.length < 2) return false;
-    let nn = 0, iv = null;
-    for (const a of oa) {
-      const b = ob.find(x => Math.abs(x.t - a.t) <= 0.25);
-      if (!b) continue;
-      if (iv === null) iv = b.n - a.n; else if (b.n - a.n !== iv) return false;
-      nn++;
-    }
-    return nn > 1 && nn / Math.min(oa.length, ob.length) >= 0.75;
-  };
-  // PLAYERS ONLY. A pad takes its pitches from the chord and only its rhythm
-  // from the phrase, so two pads — or a pad and the line it comps under — moving
-  // in parallel is voicing, which is what comping IS. The defect is two PLAYERS
-  // handed the same part, so the lanes that count are the non-pad ones.
-  const lanesOf51 = (evs, playersOnly) => {
-    const m = new Map();
-    for (const e of evs) if (e.kind === "line" && !(playersOnly && e.pad)) {
-      let a = m.get(e.lv); if (!a) m.set(e.lv, a = []); a.push(e);
-    }
-    return m;
-  };
-  const anyDouble51 = lanes => {
-    const vs = [...lanes.keys()];
-    for (let i = 0; i < vs.length; i++)
-      for (let j = i + 1; j < vs.length; j++)
-        if (doubles51(lanes.get(vs[i]), lanes.get(vs[j]))) return vs[i] + "+" + vs[j];
-    return null;
-  };
-  let soloBoxes = 0, soloBad = [], quoteBoxes = 0, quoteBad = [], silent = 0;
-  for (const gk of GK) for (const seed of SEEDS51) {
-    let r51; try { r51 = NS51.load(C51.compose(gk, seed)); } catch (e) { continue; }
-    if (!r51 || !r51.ok) continue;
-    const s51 = r51.song;
-    s51.song.forEach((sec, si) => {
-      if (sec.role !== "intro") return;
-      const bars51 = barsOf51(s51, si);
-      if (!bars51.length) { silent++; return; }
-      // THE DEAL, measured on the RENDERED box rather than on the slot array,
-      // because "two slots" is the mechanism and "two players are not one
-      // player twice" is the law. A quote is the opening the composer strips to
-      // no drums and no bass, so it is the one where a doubled part is the
-      // whole texture: no two PLAYING lanes in it may be constant-interval
-      // copies of one another. (Measured pre-repair: 4 of 30 boxes, one of them
-      // — jazz/7 — at interval ZERO, two horns on the same pitches.)
-      if (sec.cue === "quote") {
-        quoteBoxes++;
-        const all = [];
-        for (const b of bars51) for (const e of (b.ev || [])) all.push(e);
-        const hit = anyDouble51(lanesOf51(all, true));
-        if (hit) quoteBad.push(gk + "/" + seed + " lanes " + hit);
-      }
-      // THE EDGE. compose.js bridges `quote` and `padin` onto the `solo` intro
-      // kind with the words "a quote IS the melody alone"; solo has to mean one
-      // lane, or the announcement is the flange the report described.
-      if (sec.intro === "solo") {
-        soloBoxes++;
-        const lanes = lanesOf51(bars51[0].ev || []);
-        if (lanes.size > 1)
-          soloBad.push(gk + "/" + seed + " lanes " + [...lanes.keys()].join(","));
-      }
-    });
-  }
-  ok(quoteBoxes > 20 && soloBoxes > 40,
-     "the corpus produced only " + quoteBoxes + " quote box(es) and " + soloBoxes +
-     " solo-edged opening(s) — this section is measuring nothing");
-  ok(silent === 0, silent + " intro box(es) render no events at all — songBars " +
-     "drops an empty box, so a thinned opening would vanish from the record");
-  ok(quoteBad.length === 0,
-     quoteBad.length + " quote box(es) state their hook twice — one phrase dealt " +
-     "to two playing lanes, which with the band stripped off is the whole sound: " +
-     quoteBad.slice(0, 4).join(" | "));
-  ok(soloBad.length === 0,
-     soloBad.length + " solo-edged opening(s) sound more than one lane in their " +
-     "first bar: " + soloBad.slice(0, 4).join(" | "));
-
-  // ...AND IT HAS TEETH. Put a quote box back to one slot and the doubling
-  // comes back, on the anchor Paul would have been listening to — so the two
-  // laws above are load-bearing and not a description of an accident.
-  {
-    const r51 = NS51.load(C51.compose("punk", 5));
-    ok(r51.ok, "punk/5 no longer composes — the teeth below measure nothing");
-    const s51 = r51.song, si = s51.song.findIndex(x => x.cue === "quote");
-    ok(si >= 0, "punk/5 no longer opens with a quote — pick another witness");
-    if (si >= 0) {
-      const one = clone(s51);
-      one.song[si].stack[0].slots = [one.song[si].stack[0].slots[0]];
-      one.song[si].intro = null;
-      const all = [];
-      for (const b of barsOf51(one, si)) for (const e of (b.ev || [])) all.push(e);
-      ok(!!anyDouble51(lanesOf51(all, true)),
-         "a one-slot quote box on punk/5 no longer doubles — either the " +
-         "deal changed in derive.js (and the compose-side repair is now dead " +
-         "weight) or this detector stopped detecting");
-    }
-  }
 }
 
 /* ------------------------------- 52. A GENRE YOU INVENTED IS A GENRE THE SONG
@@ -8856,381 +8337,20 @@ console.log("a genre you invented — the recipe, the song, the schedule, the at
   }
 }
 
-/* ── §53 THE TAPE WRAPS WHERE THE BAR DOES ───────────────────────────────────
-   The carrier is a loop, and a loop is only a loop if the wrap costs nothing.
-   It cost 812 samples — 18.4 ms of silence, measured on the real tape in
-   headless chromium at every single pass — because a `loop=true` <audio>
-   element wraps by SEEKING and a seek flushes the decode pipeline. The music
-   was never the problem: foldLoop() had already made sample N-1 -> 0
-   continuous, and the container threw the join away.
-
-   audio/bounce.js now streams instead of looping: the folded loop is encoded
-   ONCE and the same fMP4 fragment is appended again and again, each push
-   carrying an explicit baseMediaDecodeTime exactly one loop later. Two facts
-   have to hold for that to be gapless, and BOTH are things a pure-node gate
-   can hold, which is why they are here rather than only in a browser:
-
-   (a) THE LOOP IS A WHOLE NUMBER OF CODEC FRAMES. The first attempt declared a
-       SHORT final frame in the trun so the fragment's timeline summed to the
-       loop exactly — and chromium honoured that for the buffered range (exact
-       to a microsecond) while playing the frame's full decoded output anyway.
-       Measured: 514 samples of encoder padding at every wrap, the same 514
-       five times running. loopSamplesFor() is the answer to that.
-   (b) NOTHING IS PADDED AND NOTHING IS DROPPED. The frame list's declared
-       sample sum must equal the loop, and pushing the same list again must
-       advance the fragment's tfdt by exactly that — a container that pads by
-       one sample per pass is a container that drifts, which is the parent's
-       own diagnosis of the mp3 route (docs/WAV-FIRST.md v4).
-
-   The same law over the FALLBACK tape, which is still what a browser without
-   WebCodecs plays: the WAV the carrier falls back to declares exactly the
-   score's sample count and not one byte more. */
-console.log("the tape wraps where the bar does");
-{
-  globalThis.location = globalThis.location || { search: "" };
-  globalThis.navigator = globalThis.navigator ||
-    { userAgent: "node", platform: "", maxTouchPoints: 0, hardwareConcurrency: 4 };
-  globalThis.Audio = globalThis.Audio || function () {};
-  const B53 = await import("../../nukernel/audio/bounce.js");
-  const FM53 = require("../../engine/faust/codec/fmp4.js");
-  const SR53 = 44100;
-  // the two frame sizes the shipping ladder can pick: aac is 1024 samples at
-  // the tape's own rate, opus is 20 ms of its own 48 kHz
-  const FRAMES53 = [["aac", 1024, 44100], ["opus", 960, 48000]];
-
-  /* (a) THE LENGTH IS A WHOLE NUMBER OF FRAMES, and it is the RIGHT length */
-  {
-    // REAL tape lengths first — the short insurance cut and the full song, as
-    // this composer actually renders them (the ones quoted in bounce.js's own
-    // carry() note: Liverpool 1962 7.75 s, Lagos 1971 8.69 s, New York 1945
-    // 6.82 s, Chicago 1952 13.90 s), plus the 2.17 s one-bar fragment the short
-    // stage used to be and the 141.6 s composed beatles song the budget gate
-    // renders. The SHORTEST is the hard case: the rounding error is half a
-    // frame however long the tape is, so a short tape wears the most of it.
-    const ns = [2.171, 6.82, 7.608456979328381, 7.75, 8.69, 13.9, 141.6]
-      .map(d => Math.round(d * SR53));
-    // …plus the pathological neighbours of a frame boundary (one sample over,
-    // one under, exactly on), where a rounding rule goes wrong if it is going to
-    const edge53 = [];
-    for (const f of [960, 1024]) for (const k of [1, 2, 380]) for (const off of [-1, 0, 1])
-      edge53.push(k * f + off);
-    for (const [name, F, rate] of FRAMES53) {
-      let worst = 0, worstAt = "", bad = 0;
-      for (const n of ns.concat(edge53)) {
-        const want = n * rate / SR53;
-        const M = B53.loopSamplesFor(want, F);
-        if (M % F !== 0 || M < F) {
-          bad++;
-          ok(false, `§53(a) ${name}: ${n} samples -> ${M}, which is not a whole ${F}-sample frame`);
-        }
-      }
-      // the ERROR is only meaningful over lengths that are songs. The edge
-      // cases above are one and two frames long — a millisecond of tape — and
-      // rounding half a frame there is 100%, which says nothing about music.
-      for (const n of ns) {
-        const want = n * rate / SR53;
-        const err = Math.abs(B53.loopSamplesFor(want, F) - want) / want;
-        if (err > worst) { worst = err; worstAt = (n / SR53).toFixed(2) + "s"; }
-      }
-      // half a frame over the whole loop is the arithmetic ceiling; the number
-      // that matters is that the SHORTEST real tape is still inside a cent or
-      // three of its own tempo, which is what makes this trade payable
-      // half a frame over the shortest tape this composer cuts (2.17 s) is
-      // ~0.5%, nine cents; over a real song it is a hundredth of that. Anything
-      // above 1% would be a tempo the ear can name, and this trade is only
-      // payable while it cannot.
-      ok(worst <= 0.01, `§53(a) ${name}: worst length error ${(worst * 100).toFixed(3)}% ` +
-                        `at ${worstAt} — that is audible as a tempo change, not a rounding`);
-      console.log(`  ${name}: every length rounds to whole ${F}-sample frames ` +
-                  `(${ns.length + edge53.length} of them, ${bad} wrong); worst tempo cost ` +
-                  `${(worst * 100).toFixed(3)}% at ${worstAt}`);
-    }
-  }
-
-  /* (b) THE FRAME LIST IS THE LOOP, EXACTLY — no short frame, no spare frame */
-  {
-    for (const [name, F] of FRAMES53) {
-      const M = B53.loopSamplesFor(365205, F);
-      const K = M / F;
-      // what the encoder hands back: whole frames, and MORE of them than the
-      // loop needs (the encoder pads its last input frame), which is the case
-      // loopFrames has to cut — by dropping frames, never by shortening one
-      const chunks = [];
-      for (let i = 0; i < K + 3; i++) chunks.push({ data: new Uint8Array(64), duration: F });
-      const r = B53.loopFrames(chunks, M);
-      ok(r.sum === M, `§53(b) ${name}: frame list sums to ${r.sum}, loop is ${M} — ` +
-                      `the fragment's timeline is not the song's length`);
-      ok(r.frames.length === K, `§53(b) ${name}: ${r.frames.length} frames for a ${K}-frame loop`);
-      ok(r.frames.every(f => f.duration === F),
-         `§53(b) ${name}: a frame came back SHORTENED — that is the trim chromium ` +
-         `ignores, and 514 samples of padding play at every wrap when it does`);
-    }
-  }
-
-  /* (c) THE WRAP IS SAMPLE-EXACT IN THE CONTAINER — box-walked, four passes */
-  {
-    // a minimal ISO-BMFF walker: enough to find tfdt + trun and read them back
-    const boxes = (u8, from, to, want, out) => {
-      let o = from;
-      while (o + 8 <= to) {
-        const size = (u8[o] << 24 | u8[o + 1] << 16 | u8[o + 2] << 8 | u8[o + 3]) >>> 0;
-        const type = String.fromCharCode(u8[o + 4], u8[o + 5], u8[o + 6], u8[o + 7]);
-        if (size < 8 || o + size > to) break;
-        if (type === want) out.push({ o, size });
-        if (["moof", "traf"].includes(type)) boxes(u8, o + 8, o + size, want, out);
-        o += size;
-      }
-      return out;
-    };
-    const u32at = (u8, o) => (u8[o] << 24 | u8[o + 1] << 16 | u8[o + 2] << 8 | u8[o + 3]) >>> 0;
-    const u64at = (u8, o) => u32at(u8, o) * 0x100000000 + u32at(u8, o + 4);
-
-    for (const [name, F, rate] of FRAMES53) {
-      const M = B53.loopSamplesFor(365205 * rate / SR53, F), K = M / F;
-      const frames = [];
-      for (let i = 0; i < K; i++) frames.push({ data: new Uint8Array(48), duration: F });
-      const mux = FM53.makeFmp4Mux({ codec: name === "aac" ? "aac" : "opus",
-                                     sampleRate: rate, channels: 2,
-                                     codecConfig: name === "opus"
-                                       ? new Uint8Array([79, 112, 117, 115, 72, 101, 97, 100, 1, 2,
-                                                         0x38, 0x01, 0x80, 0xbb, 0, 0, 0, 0, 0])
-                                       : null });
-      mux.initSegment();
-      let bad = "";
-      for (let pass = 0; pass < 4; pass++) {
-        const frag = mux.pushChunks(frames.map(f => ({ data: f.data, duration: f.duration })));
-        const tf = boxes(frag, 0, frag.length, "tfdt", [])[0];
-        const tr = boxes(frag, 0, frag.length, "trun", [])[0];
-        if (!tf || !tr) { bad = "pass " + pass + " carries no tfdt/trun"; break; }
-        // tfdt: 4-byte size + 4-byte type + 4-byte version/flags, then a 64-bit time
-        const t = u64at(frag, tf.o + 12);
-        if (t !== pass * M) { bad = `pass ${pass} starts at ${t}, not ${pass * M}`; break; }
-        // trun: version/flags, sample_count, data_offset, then (duration,size) pairs
-        const cnt = u32at(frag, tr.o + 12);
-        let sum = 0;
-        for (let i = 0; i < cnt; i++) sum += u32at(frag, tr.o + 20 + i * 8);
-        if (sum !== M) { bad = `pass ${pass} declares ${sum} samples, loop is ${M}`; break; }
-      }
-      ok(!bad, `§53(c) ${name}: ${bad} — the tape does not wrap where the bar does`);
-      if (!bad) console.log(`  ${name}: four passes of ${K} frames, tfdt ` +
-                            `0/${M}/${2 * M}/${3 * M} — sample-exact, no padding`);
-    }
-  }
-
-  /* (d) THE FALLBACK TAPE DECLARES THE SCORE'S LENGTH AND NOTHING MORE */
-  {
-    // the WAV the carrier still plays wherever WebCodecs is missing. It is not
-    // gapless (that is the element's own wrap seek), but it must not ALSO pad:
-    // a container that declares more samples than the score has is a hole this
-    // gate would have to find twice.
-    for (const durSec of [2.171, 7.608456979328381, 141.6]) {
-      const N = Math.round(durSec * SR53);
-      const ab = B53.wavBytes([new Float32Array(N), new Float32Array(N)], N, SR53);
-      const dv = new DataView(ab);
-      const riff = dv.getUint32(4, true), fmtRate = dv.getUint32(24, true);
-      const dataLen = dv.getUint32(40, true);
-      ok(ab.byteLength === 44 + N * 4,
-         `§53(d) a ${durSec}s tape encodes ${ab.byteLength} bytes, not ${44 + N * 4}`);
-      ok(dataLen === N * 4,
-         `§53(d) a ${durSec}s tape DECLARES ${dataLen / 4} frames, the score has ${N}`);
-      ok(riff === 36 + N * 4, `§53(d) the RIFF length disagrees with the data chunk`);
-      ok(fmtRate === SR53, `§53(d) the tape claims ${fmtRate} Hz`);
-    }
-    console.log("  fallback wav: declared frames == round(durSec x 44100), exactly, at three lengths");
-  }
-}
-
-/* ── §54 THE SONG PLAYS LIKE A RADIO ─────────────────────────────────────────
-   "When the browser sleeps the song turns off. It's very vexing especially
-   since we solved it." We had solved it — for phones. A desk kept the live
-   WebAudio graph as its audible path, and a hidden tab is not a page a browser
-   feels much duty toward: it throttles the timers, deprioritises the audio
-   thread and suspends the context on a sleeping display, every one of which is
-   fatal to something that must schedule a bar every 1.9 seconds forever. A
-   playing <audio> element is MEDIA, and media is the one thing an OS keeps
-   alive. So audio/bounce.js makes the rendered tape the playback path
-   EVERYWHERE and leaves the live graph exactly one job: being audible while
-   somebody is touching the machine, because no tape can make an edit audible
-   in the bar it was made.
-
-   The whole thing is one decision — carrierWant() — and it is a pure function
-   of its arguments precisely so it can be walked here rather than only in a
-   browser, where a handoff is a race against a render that takes a minute.
-   Three things are held:
-
-   (a) THE TRUTH TABLE, over every world the machine can be in. Two laws have
-       to survive it: nothing carries a FRAGMENT (a desk waits for the full
-       tape — the short cut is one box on loop, which is worse than the live
-       graph the listener already has), and nothing carries at all without an
-       armed, undemoted element, because a mute with no carrier behind it is
-       silence.
-   (b) THE SEQUENCE PAUL ASKED FOR, walked in order: touching -> live, quiet
-       -> tape, hidden -> tape, touching -> live. At no point are two sources
-       audible, which here means: the decision is TOTAL and single-valued, so
-       there is no world in which the machine believes both.
-   (c) THE WIRING, on the real module rather than on a copy of its reasoning.
-       bounce.js is imported with a document that records its listeners, and
-       then the events the browser would send are sent: a hide sets `away`, a
-       pointerdown clears it and restarts the idle clock, becoming visible
-       counts as a touch. This is the half a truth table cannot prove — that
-       the function is connected to anything. */
-console.log("the song plays like a radio");
-{
-  // the same browser stubs §53 installs, plus a DOCUMENT — which §53
-  // deliberately does not have, so bounce.js's first instance registered no
-  // listeners at all. This one records them and then fires them.
-  const H54 = new Map();
-  const winH54 = new Map();
-  globalThis.location = globalThis.location || { search: "" };
-  globalThis.navigator = globalThis.navigator ||
-    { userAgent: "node", platform: "", maxTouchPoints: 0, hardwareConcurrency: 4 };
-  globalThis.Audio = globalThis.Audio || function () {};
-  globalThis.document = {
-    visibilityState: "visible",
-    addEventListener: (t, f) => H54.set(t, f),
-    removeEventListener: () => {},
-    body: { appendChild: () => {} },
-  };
-  globalThis.addEventListener = (t, f) => winH54.set(t, f);
-  // a FRESH evaluation of the module (the query string busts the ES module
-  // cache; its own imports resolve to the instances §53 already loaded), so
-  // the listeners are registered against the document above
-  const B54 = await import("../../nukernel/audio/bounce.js?radio=1");
-  const want = B54.carrierWant;
-
-  /* (a) THE TRUTH TABLE */
-  {
-    const base = { armed: true, disarmed: false, demoted: null, playing: true,
-                   mobile: false, hidden: false, away: false, idleMs: 0,
-                   ready: true, full: true, after: 30000 };
-    const w = (o) => want({ ...base, ...o });
-    const cases = [
-      // [world, expected, why]
-      [{}, "graph", "someone is touching the machine, so the live graph is audible"],
-      [{ idleMs: 29999 }, "graph", "one millisecond short of the idle threshold"],
-      [{ idleMs: 30000 }, "carrier", "the idle threshold, reached"],
-      [{ hidden: true, idleMs: 0 }, "carrier", "hidden hands over with no wait at all"],
-      [{ away: true, idleMs: 0 }, "carrier", "another window on top is the same fact"],
-      [{ idleMs: 1e6, full: false }, "graph",
-       "a SHORT tape is insurance, never the performance — the desk waits"],
-      [{ idleMs: 1e6, ready: false }, "graph", "nothing rendered, nothing to hand over"],
-      [{ idleMs: 1e6, armed: false }, "graph", "no element: a mute with no carrier is silence"],
-      [{ idleMs: 1e6, disarmed: true }, "graph", "?nobounce disarms the whole tier"],
-      [{ idleMs: 1e6, demoted: "element-refused" }, "graph",
-       "a demoted carrier never gets a second chance by idling"],
-      [{ playing: false, hidden: true }, "graph", "stopped is not carried"],
-      [{ mobile: true, idleMs: 0 }, "carrier", "the phone's answer, unchanged by any of this"],
-      [{ mobile: true, playing: false }, "graph", "…except that it too must be playing"],
-      [{ mobile: true, demoted: "x" }, "graph", "…and must not be demoted"],
-    ];
-    for (const [o, exp, why] of cases) {
-      const got = w(o);
-      ok(got === exp, `§54(a) ${why}: carrierWant said "${got}", not "${exp}" ` +
-                      `(${JSON.stringify(o)})`);
-    }
-    // TOTAL AND SINGLE-VALUED, over the whole cross product — this is the
-    // "never two audible sources" claim in the only form a pure function can
-    // carry it: there is no third answer and no world without one.
-    let worlds = 0, carried = 0;
-    for (const armed of [0, 1]) for (const playing of [0, 1])
-      for (const mobile of [0, 1]) for (const hidden of [0, 1])
-        for (const away of [0, 1]) for (const ready of [0, 1])
-          for (const full of [0, 1]) for (const idleMs of [0, 30000])
-            for (const demoted of [null, "why"]) {
-              const r = want({ armed: !!armed, disarmed: false, demoted,
-                               playing: !!playing, mobile: !!mobile,
-                               hidden: !!hidden, away: !!away, ready: !!ready,
-                               full: !!full, idleMs, after: 30000 });
-              worlds++;
-              if (r === "carrier") carried++;
-              else if (r !== "graph") ok(false, `§54(a) a third state: "${r}"`);
-              // the law, restated at every point: a carrier that is not armed,
-              // not playing or demoted is a silent page
-              if (r === "carrier" && (!armed || !playing || demoted))
-                ok(false, `§54(a) carrying with armed=${armed} playing=${playing} ` +
-                          `demoted=${demoted} — that is a mute with nothing behind it`);
-              // …and on a desk, never a fragment
-              if (r === "carrier" && !mobile && !(ready && full))
-                ok(false, `§54(a) a desk carried a tape that is ready=${ready} full=${full}`);
-            }
-    ok(worlds === 512 && carried > 0 && carried < worlds,
-       `§54(a) the walk is degenerate: ${carried}/${worlds} worlds carry`);
-    console.log(`  the decision is total over ${worlds} worlds; ${carried} of them carry`);
-  }
-
-  /* (b) THE SEQUENCE, IN ORDER */
-  {
-    // one world, mutated by the events a listener would deliver, asserted at
-    // every step — interact -> live, idle -> tape, hide -> tape, interact ->
-    // live. The tape is READY and FULL throughout, so every transition below
-    // is the machine's decision and never a missing render.
-    const W = { armed: true, disarmed: false, demoted: null, playing: true,
-                mobile: false, hidden: false, away: false, idleMs: 0,
-                ready: true, full: true, after: 30000 };
-    const step = (label, mutate, exp) => {
-      mutate();
-      const got = want(W);
-      ok(got === exp, `§54(b) ${label}: "${got}", not "${exp}"`);
-      return got;
-    };
-    const seen = [];
-    seen.push(step("play, hand on the desk", () => {}, "graph"));
-    seen.push(step("ten seconds of quiet", () => { W.idleMs = 10000; }, "graph"));
-    seen.push(step("thirty seconds of quiet", () => { W.idleMs = 30000; }, "carrier"));
-    seen.push(step("a touch", () => { W.idleMs = 0; W.away = false; }, "graph"));
-    seen.push(step("the tab is hidden", () => { W.hidden = true; }, "carrier"));
-    seen.push(step("back, and touched", () => { W.hidden = false; W.idleMs = 0; }, "graph"));
-    seen.push(step("another app on top", () => { W.away = true; }, "carrier"));
-    seen.push(step("clicked back into", () => { W.away = false; W.idleMs = 0; }, "graph"));
-    seen.push(step("stop", () => { W.playing = false; W.idleMs = 1e6; }, "graph"));
-    const sig54 = seen.join(">");
-    ok(sig54 === "graph>graph>carrier>graph>carrier>graph>carrier>graph>graph",
-       `§54(b) the walk came out ${sig54}`);
-    console.log("  interact -> live, idle -> tape, hide -> tape, interact -> live");
-  }
-
-  /* (c) THE WIRING, ON THE REAL MODULE */
-  {
-    // the constant is NAMED and it is the one Paul asked for
-    ok(B54.IDLE_MS === 30000,
-       `§54(c) the idle threshold is ${B54.IDLE_MS} ms, not the 30 s it is documented as`);
-    // every signal the machine listens for is really listened for. touchstart
-    // and wheel are there so a finger on a phone-sized desk and a scroll both
-    // count as touching; blur is there because ANOTHER APP ON TOP is not a
-    // visibilitychange and is exactly the tab-away being fixed.
-    for (const ev of ["pointerdown", "keydown", "wheel", "touchstart", "visibilitychange"])
-      ok(H54.has(ev), `§54(c) nothing listens for "${ev}" — the idle clock cannot be reset`);
-    for (const ev of ["focus", "blur"])
-      ok(winH54.has(ev), `§54(c) the window does not listen for "${ev}"`);
-    const read = () => globalThis.window.__nuBounce();
-    // a hide sets `away` and the machine says so
-    globalThis.document.visibilityState = "hidden";
-    H54.get("visibilitychange")();
-    ok(read().away === true, "§54(c) a hide did not put the page away");
-    // …and coming back counts as touching: `away` clears and the idle clock
-    // restarts, which is why a person who tabs back gets the live graph
-    globalThis.document.visibilityState = "visible";
-    H54.get("visibilitychange")();
-    const back = read();
-    ok(back.away === false, "§54(c) becoming visible did not clear `away`");
-    ok(back.idleMs < 50, `§54(c) becoming visible left the idle clock at ${back.idleMs} ms`);
-    // the window losing focus is the same fact by another door
-    winH54.get("blur")();
-    ok(read().away === true, "§54(c) a window blur did not put the page away");
-    // and a pointer on the machine takes it all back
-    H54.get("pointerdown")();
-    const touched54 = read();
-    ok(touched54.away === false, "§54(c) a pointerdown did not clear `away`");
-    ok(touched54.idleMs < 50, `§54(c) a pointerdown left the idle clock at ${touched54.idleMs} ms`);
-    // nothing carries in a page that never pressed play, whatever it is told
-    ok(touched54.want === "graph" && touched54.carrying === false &&
-       touched54.desk === false && touched54.parked === false,
-       `§54(c) a page with no transport claims ${JSON.stringify(
-         { want: touched54.want, carrying: touched54.carrying,
-           desk: touched54.desk, parked: touched54.parked })}`);
-    console.log("  the listeners are real: hide/blur -> away, touch/visible -> the clock restarts");
-  }
-}
+/* §53 WAS THE TAPE'S WRAP and §54 WAS THE CARRIER'S TRUTH TABLE (one engine,
+   2026-08-18). Both were about audio/bounce.js — a 2,165-line offline render
+   that pressed the whole song into an fMP4 loop and handed it to an <audio>
+   element so a sleeping tab kept playing. Every one of those jobs is
+   engine/faust/live/live.js's WAV-FIRST path, which nukernel now simply takes:
+   the same media element, the same continuous append, the same reason (media is
+   the one thing an OS keeps alive), rendered by the same engine that renders
+   the desktop stream instead of by a second one.
+   The arithmetic those sections held is not lost — the muxer is
+   engine/faust/codec/fmp4.js and its gate is test/unit/fmp4.test.js, which is
+   where the frame-count and tfdt laws were always really held. What replaced
+   the carrier's truth table is §76's: the engine gets a DEADLINE and a CEILING
+   and demotes in writing, which is the half the carrier never had and the half
+   that killed the tab on iOS. */
 
 /* ------------------------------- 55. A URL FOR EVERY ROOM IN THE HOUSE
    ui/pages.js's router, run FOR REAL — imported as the module it is (the §31
@@ -9760,212 +8880,13 @@ console.log("§59 — a note can lean, slide, flam or pass");
 }
 
 
-/* ------------------------------- 62. THE DESK IS THREE BUSES AND A FADER
-   Lane A2's own gate, and it reads the BUILT GRAPH rather than the source that
-   built it. Paul, 2026-08-17: "get rid of inserts, reverb, and echo — let me
-   send to bus 1, bus 2, and bus 3 instead — buses should be named, though";
-   "don't gray out tracks — cut/mute them!"; "let buses send to other buses and
-   back". The claims:
-     (a) THREE NAMED BUSES exist in the registry, every one renameable through
-         a table song.js will actually keep, and every one addressable from a
-         track by a send field of its own;
-     (b) A CUT TRACK IS INAUDIBLE, not dimmed — propagate a unit signal through
-         the real nodes audio/mixer.js buildChannel returns and the sum that
-         arrives at the master, at the verb, at the echo and at the room is
-         EXACTLY zero, because every path out of the strip is behind the gate;
-     (c) A SEND REACHES ITS BUS — the same propagation, non-zero at the right
-         destination and at the SENDS-table depth the chip names;
-     (d) A BUS->BUS CYCLE IS REFUSED, deterministically and by the plan, so no
-         node is ever built for the edge that would close the loop;
-     (e) A TRACK MIXED FROM THE DESK HAS NO RACK: the three buses are the whole
-         of its routing, which is the flat-cost topology audio/graph.js
-         measured for. (The `fx` field survives for songs saved before the
-         chips came off; no surface writes it — fields.js PARTMIX says why.)
-   The propagation is a DAG walk over the returned node objects, multiplying
-   GainNode.gain.value along each path — it cannot pass if the wiring is wrong,
-   and it says nothing at all about the code that wrote the wiring. */
-console.log("the desk is three buses and a fader — bus routing, the cut, the cycle");
-{
-  const F = require("../../nukernel/fields.js");
-  const MX = await import("../../nukernel/audio/mixer.js");
-
-  // ---- (a) three named buses, each with a send field on a track ----
-  ok(F.BUSES.length === 3, "the registry does not carry three buses (" + F.BUSES.length + ")");
-  const busIds = F.BUSES.map(b => b.bus);
-  for (const b of F.BUSES) {
-    const nm = b.knobs.find(k => k.key === "name");
-    ok(!!nm, b.bus + ": no `name` knob — the bus cannot be renamed");
-    ok(Object.keys(nm.table).length >= 4,
-       b.bus + ": the name vocabulary is too small to be a rename");
-    // a name that song.js will keep: it validates a bus knob by table membership
-    const pick = Object.keys(nm.table)[0];
-    ok(F.busNameOf({ [b.bus]: { name: pick } }, b.bus) === nm.table[pick],
-       b.bus + ": busNameOf does not return the picked name");
-    ok(F.busNameOf(null, b.bus) === b.label,
-       b.bus + ": an unnamed bus does not fall back to its shipped label");
-    // …and the cross-sends: one per OTHER bus, never to itself
-    const tos = b.knobs.filter(k => k.to).map(k => k.to).sort();
-    ok(JSON.stringify(tos) === JSON.stringify(busIds.filter(x => x !== b.bus).sort()),
-       b.bus + ": cross-sends are " + tos + ", not the other two buses");
-  }
-  // a track addresses all three, and carries no insert list (claim e)
-  const partKeys = F.PARTMIX.map(f => f.key);
-  for (const k of ["rev", "echo", "room"])
-    ok(partKeys.includes(k), "a track has no `" + k + "` send field");
-  ok(F.resolvePartMix({ room: "wet" }).room === F.SENDS.wet,
-     "resolvePartMix does not resolve the third send");
-
-  // ---- the stub context: nodes that remember what they were connected to ----
-  // Every builder in audio/mixer.js / audio/graph.js takes its context as an
-  // argument (the offline-bounce law), so the real code runs unmodified here.
-  const stub = () => {
-    const P = v => ({ value: v, setValueAtTime(x) { this.value = x; },
-      setTargetAtTime(x) { this.value = x; }, linearRampToValueAtTime(x) { this.value = x; },
-      exponentialRampToValueAtTime(x) { this.value = x; }, cancelScheduledValues() {} });
-    const c = { sampleRate: 44100, currentTime: 0 };
-    const N = (kind, extra) => {
-      const n = { kind, outs: [], context: c,
-        connect(d) { this.outs.push(d); return d; }, disconnect() {} };
-      return Object.assign(n, extra || {});
-    };
-    c.destination = N("dest");
-    c.createGain = () => N("gain", { gain: P(1) });
-    c.createStereoPanner = () => N("pan", { pan: P(0) });
-    c.createBiquadFilter = () => N("biquad",
-      { type: "peaking", frequency: P(1000), Q: P(1), gain: P(0) });
-    c.createWaveShaper = () => N("shaper", { curve: null, oversample: "none" });
-    c.createDynamicsCompressor = () => N("comp",
-      { threshold: P(0), knee: P(0), ratio: P(1), attack: P(0), release: P(0) });
-    c.createDelay = () => N("delay", { delayTime: P(0) });
-    c.createChannelSplitter = () => N("split");
-    c.createChannelMerger = () => N("merge");
-    c.createOscillator = () => N("osc", { frequency: P(1), start() {}, stop() {} });
-    c.createConvolver = () => N("conv", { buffer: null });
-    c.createAnalyser = () => N("anl", { fftSize: 2048 });
-    c.createBuffer = () => ({ getChannelData: () => new Float32Array(1) });
-    return c;
-  };
-  // HOW MUCH OF A UNIT SIGNAL AT `from` ARRIVES AT `to` — every path, summed,
-  // each path the product of the gains along it. Zero means inaudible, and it
-  // means it for the whole graph rather than for the one wire somebody
-  // remembered to check.
-  const reach = (from, to, seen) => {
-    if (from === to) return 1;
-    const guard = seen || new Set();
-    if (guard.has(from)) return 0;          // no cycles are built, but be safe
-    guard.add(from);
-    let s = 0;
-    for (const o of from.outs) {
-      const g = o.kind === "gain" ? o.gain.value : 1;
-      if (g === 0) continue;                // a closed gate carries nothing
-      s += g * reach(o, to, guard);
-    }
-    guard.delete(from);
-    return s;
-  };
-
-  const build = (parts) => {
-    const c = stub();
-    const master = c.createGain(), verb = c.createGain();
-    const echoIn = c.createGain(), room = c.createGain();
-    const spec = { roster: [], fx: [], rev: 0, del: 0, room: 0, verb: "room",
-                   eq: null, mot: null, auto: [], lvl: 1, pan: 0, parts };
-    const ch = MX.buildChannel(c, spec, {
-      master, verb: () => verb, echoIn, room, send: () => null });
-    return { c, ch, master, verb, echoIn, room };
-  };
-
-  // ---- (b) the cut is a cut, everywhere ----
-  {
-    const cut = { key: "lead", rev: F.SENDS.drown, del: F.SENDS.drown,
-                  room: F.SENDS.drown, lvl: 1, pan: 0, fader: 0, tdb: 0,
-                  eq: null, mute: true };
-    const { ch, master, verb, echoIn, room } = build([cut]);
-    const src = ch.partIn("lead");
-    ok(src !== ch.input, "a muted part got no bus of its own to be muted on");
-    for (const [name, dest] of [["the section/master", master], ["the reverb bus", verb],
-                                ["the delay bus", echoIn], ["the room bus", room]]) {
-      const g = reach(src, dest);
-      ok(g === 0, "a CUT track still reaches " + name + " at " + g +
-         " — muted-but-audible is exactly the state that was forbidden");
-    }
-    const rep = [...ch.parts.values()][0];
-    ok(rep.gate.gain.value === 0, "the cut gate is not at zero");
-  }
-
-  // ---- (c) …and un-cut, each send reaches its own bus at its own depth ----
-  {
-    const on = { key: "lead", rev: F.SENDS.wet, del: F.SENDS.touch,
-                 room: F.SENDS.some, lvl: 1, pan: 0, fader: 0, tdb: 0,
-                 eq: null, mute: false };
-    const { ch, master, verb, echoIn, room } = build([on]);
-    const src = ch.partIn("lead");
-    const near = (a, b) => Math.abs(a - b) < 1e-6;
-    ok(near(reach(src, verb), F.SENDS.wet),
-       "the reverb send does not arrive at the reverb bus at its own depth (" +
-       reach(src, verb) + " vs " + F.SENDS.wet + ")");
-    ok(near(reach(src, echoIn), F.SENDS.touch),
-       "the delay send does not arrive at the delay bus (" + reach(src, echoIn) + ")");
-    ok(near(reach(src, room), F.SENDS.some),
-       "the room send does not arrive at the room bus (" + reach(src, room) + ")");
-    ok(reach(src, master) > 0, "the dry path does not reach the master");
-    // (e) …AND THAT IS THE WHOLE OF A TRACK'S ROUTING. A part mixed only from
-    // the desk builds NO private rack — the three buses are everywhere it can
-    // go, which is the flat-cost topology audio/graph.js measured for. A
-    // saved-song `fx` chain is the one thing that can still build one, and no
-    // surface writes that field any more (fields.js PARTMIX).
-    const P = [...ch.parts.values()][0];
-    ok(P.rack === false, "a desk-only mix grew a private insert rack");
-    ok(P.fs.length === 0, "a desk-only mix grew a character send");
-    // and SOLO on one part cuts the others — the one control that reaches out.
-    // The chairs come from the mixer's own roster, never from a guess: a genre
-    // whose stack has no `lead` would make a hand-written key prove nothing.
-    const gk = Object.keys(GENRES).find(k =>
-      MX.partKeysOf({ stack: [{ g: k, slots: [0] }], len: 4 }).length >= 2);
-    const bare = { stack: [{ g: gk, slots: [0] }], len: 4 };
-    const chairs = MX.partKeysOf(bare);
-    ok(chairs.length >= 2, "no shipped genre offers two chairs to solo between");
-    const sec = { ...bare, parts: { [chairs[0]]: { solo: true } } };
-    const specs = MX.chanSpec(sec).parts;
-    const other = specs.filter(p => p.key !== chairs[0]);
-    ok(other.length === chairs.length - 1 && other.every(p => p.mute),
-       "a solo does not mute the parts beside it (" +
-       other.map(p => p.key + ":" + p.mute).join(", ") + ")");
-  }
-
-  // ---- (d) the bus->bus cycle is refused, by the plan, deterministically ----
-  {
-    const [A, B, C] = busIds;
-    const one = F.busSendPlan({ [A]: { ["x" + B]: "some" } });
-    ok(one.edges.length === 1 && one.refused.length === 0,
-       "a single bus->bus send was not planned (" + JSON.stringify(one) + ")");
-    ok(one.edges[0].from === A && one.edges[0].to === B && one.edges[0].amt === F.SENDS.some,
-       "the planned edge is not the one that was asked for");
-    // the loop: A->B and B->A. One survives, the other is refused — never both,
-    // and never neither (a desk that silently drops both is a desk that lies).
-    const two = F.busSendPlan({ [A]: { ["x" + B]: "some" }, [B]: { ["x" + A]: "wet" } });
-    ok(two.edges.length === 1, "a two-bus loop planned " + two.edges.length +
-       " edges — exactly one must survive");
-    ok(two.refused.length === 1 && two.refused[0].from === B && two.refused[0].to === A,
-       "the refused edge is not the one that would close the loop: " +
-       JSON.stringify(two.refused));
-    // and the THREE-bus loop, which no pairwise check would catch
-    const three = F.busSendPlan({ [A]: { ["x" + B]: "some" }, [B]: { ["x" + C]: "some" },
-                                  [C]: { ["x" + A]: "some" } });
-    ok(three.edges.length === 2 && three.refused.length === 1,
-       "a three-bus loop was not broken exactly once: " + JSON.stringify(three));
-    // determinism: the same spec plans the same way every time, which is what
-    // lets audio/graph.js and the board agree about what was refused
-    ok(JSON.stringify(F.busSendPlan({ [A]: { ["x" + B]: "some" },
-                                      [B]: { ["x" + A]: "wet" } })) === JSON.stringify(two),
-       "busSendPlan is not deterministic");
-    // a bus never feeds itself, whatever a save says
-    ok(F.busSendPlan({ [A]: { ["x" + A]: "drown" } }).edges.length === 0,
-       "a bus was planned to feed itself");
-  }
-  console.log("  62: three named buses, a cut that is silent in the built graph, " +
-              "a refused cycle");
-}
+/* §62 WAS THE DESK IS THREE BUSES AND A FADER — the node-level proof that
+   audio/mixer.js built the strip it declared, against a stub AudioContext that
+   counted the nodes (one engine, 2026-08-18). There is no channel strip to
+   count: the desk is a model that writes level, pan, sends and tone onto the
+   parent's own voice units, and the buses are the parent's four
+   (render-core's { dry, rev, del, pp }). What the board's numbers mean is
+   gated at the model in §47, and the mapping onto the parent is §76. */
 
 /* ---------------------------------------------------------------- 63. THE KEY
    "How do I change key? … There should be a variety of keys … defaulting per
@@ -10264,786 +9185,34 @@ console.log("a drum phrase is a phrase you can hear the machine in, and it takes
               "and it saves and loads whole");
 }
 
-/* ── §65 COMING BACK IS A FADE AND A LOADING LINE ────────────────────────────
-   Paul, on the build that shipped the night before: "There are definitely
-   glitches when I come back in to the browser. Why don't you fade out radio and
-   come back to live with a loading graphic on page?"
+/* §65 WAS COMING BACK FROM THE TAPE and §66 WAS THE LOAD CHIP'S ARITHMETIC
+   (one engine, 2026-08-18). Both were about the SEAM between two engines: a
+   rendered carrier handing the ear back to a live WebAudio graph, and a monitor
+   measuring how much of the live scheduler's budget that graph had burned.
+   There is no handback, because there is nothing to hand back to — the parent
+   engine is the only thing making sound, and its own route (ring or media) is
+   its choice to make and to report (audio/live.js routeNote). Its load ratio is
+   the number the chip reads now, and it is measured where the rendering
+   happens rather than by a timer on this page. The lessons those sections were
+   written from live in the parent: docs/WAV-FIRST.md, docs/history/ZERO-STATIC.md
+   and the browser gates over engine/faust/live/. */
 
-   §54 made the rendered tape the playback path whenever nobody is touching the
-   machine, and going OUT to it is easy — the render already exists. Coming BACK
-   is the hard direction and it is where the glitch lives: the live graph has
-   been PARKED (disconnected from the destination, therefore not computed at
-   all) while the transport counted bars without scheduling a note into any of
-   them, so at the instant of a handback there is nothing in it. The shipped
-   code dropped the quiet flag, took the very next bar line and hoped. Measured
-   across a hide/return cycle in a real browser (test/probes/nukernel-return.probe.js,
-   the ?jumpcut seam is that old path kept walkable):
+/* §68 WAS TWENTY-THREE MORE ROOMS — the reverb, echo and character-effect
+   buses audio/graph.js built for this page (one engine, 2026-08-18). The rooms
+   are the parent's: five reverbs, fx_bus, master_mb and master_limit, resolved
+   by SE.reverbColor / SE.fxParams / SE.masterMb from the state the stream was
+   opened with, and gated in the engine that renders them. What nukernel keeps
+   is the SURFACE — a box says how wet it is and the desk writes that onto the
+   unit's own `rev` and `del` (audio/desk.js deskUnits). §76 holds the absence
+   of the second set. */
 
-     BEFORE  tape cut at 3370 ms, the graph's first sound at 3406 ms
-             -> a 30 ms HOLE, 1323 samples at 44.1 kHz, hard-cut at both ends
-     AFTER   0 ms, 0 samples: the tape keeps the song until the graph has
-             proved it can render a bar, then they cross equal-power on a
-             downbeat; ready at 1125 ms, crossed at 3047 ms
-
-   Two things are held here, in node, where a handback is a truth table instead
-   of a race:
-
-   (a) THE DECISION — returnStep(), the same shape §54's carrierWant() is
-       written in and for the same reason. Never a cross without a bar the graph
-       has actually been given; never a cross anywhere but a bar line; and no
-       world in which the machine believes both sources or neither.
-   (b) THE CROSSFADE ITSELF, as the envelope it really is: the 65-point equal-
-       power curve graph.js hands setValueCurveAtTime against the cosine
-       audio/bounce.js steps the element down with. A click IS a step
-       discontinuity, so the measurement is the largest one-sample step in the
-       summed envelope — which is the difference between a jump cut and a
-       fade, in a number. */
-console.log("coming back is a fade and a loading line");
-{
-  const B65 = await import("../../nukernel/audio/bounce.js?ret=1");
-  const G65 = await import("../../nukernel/audio/graph.js?ret=1");
-  const step = B65.returnStep;
-
-  /* (a) THE DECISION */
-  {
-    const base = { carrying: true, playing: true, primed: false, sounding: false,
-                   waited: 0, ceiling: 6000, atBar: true };
-    const w = o => step({ ...base, ...o });
-    const cases = [
-      [{}, "warm", "the tape keeps the song while the graph is still cold"],
-      [{ primed: true }, "warm", "a bar scheduled is not yet a bar sounding"],
-      [{ primed: true, sounding: true }, "cross",
-       "scheduled AND sounding, on a bar line: cross"],
-      [{ primed: true, sounding: true, atBar: false }, "wait",
-       "ready, but the downbeat is too close to ramp into — take the next one"],
-      [{ sounding: true }, "warm",
-       "an analyser reading the tail of the last bar is not a primed graph"],
-      [{ waited: 6000 }, "stay",
-       "the ceiling with nothing scheduled: the tape keeps the song"],
-      [{ waited: 6000, primed: true }, "cross",
-       "the ceiling with bars scheduled: the structural proof stands alone"],
-      [{ waited: 6000, primed: true, atBar: false }, "wait",
-       "...but still only ever on a bar line"],
-      [{ carrying: false }, "graph", "nothing is carrying: there is nothing to cross from"],
-      [{ playing: false }, "stop", "the transport went away under the return"],
-    ];
-    for (const [o, exp, why] of cases) {
-      const got = w(o);
-      ok(got === exp, `§65(a) ${why}: returnStep said "${got}", not "${exp}" ` +
-                      `(${JSON.stringify(o)})`);
-    }
-    // TOTAL AND SINGLE-VALUED over the whole cross product — the only form in
-    // which "never two audible sources and never none" can be carried by a pure
-    // function: one answer, always, and only ONE of the five moves the ear.
-    const ANS = new Set(["warm", "wait", "cross", "stay", "graph", "stop"]);
-    let worlds = 0, crosses = 0;
-    for (const carrying of [0, 1]) for (const playing of [0, 1])
-      for (const primed of [0, 1]) for (const sounding of [0, 1])
-        for (const atBar of [0, 1]) for (const waited of [0, 6000, 60000]) {
-          const r = step({ carrying: !!carrying, playing: !!playing,
-                           primed: !!primed, sounding: !!sounding,
-                           atBar: !!atBar, waited, ceiling: 6000 });
-          worlds++;
-          ok(ANS.has(r), `§65(a) a sixth answer: "${r}"`);
-          if (r === "cross") {
-            crosses++;
-            // the two laws, restated at every point in the space
-            ok(carrying && playing, `§65(a) a cross with carrying=${carrying} ` +
-               `playing=${playing} — that is a fade from nothing`);
-            ok(primed, "§65(a) a cross to a graph that has been given no bar");
-            ok(atBar, "§65(a) a cross somewhere other than a bar line");
-          }
-        }
-    ok(worlds === 96 && crosses > 0 && crosses < worlds,
-       `§65(a) the walk is degenerate: ${crosses}/${worlds} worlds cross`);
-    console.log(`  the return is total over ${worlds} worlds; ${crosses} of them cross`);
-  }
-
-  /* (b) THE SEQUENCE, AS THE WARM-UP RUNS IT */
-  {
-    const W = { carrying: true, playing: true, primed: false, sounding: false,
-                waited: 0, ceiling: 6000, atBar: false };
-    const seen = [];
-    const go = (label, mutate, exp) => {
-      mutate();
-      const got = step(W);
-      ok(got === exp, `§65(b) ${label}: "${got}", not "${exp}"`);
-      seen.push(got);
-    };
-    go("the touch lands, the room is only just reconnected", () => {}, "warm");
-    go("the transport hands the graph a bar", () => { W.primed = true; W.waited = 200; }, "warm");
-    go("the analyser hears it, mid-bar", () => { W.sounding = true; W.waited = 1300; }, "wait");
-    go("the downbeat", () => { W.atBar = true; }, "cross");
-    ok(seen.join(">") === "warm>warm>wait>cross", `§65(b) the walk came out ${seen.join(">")}`);
-    console.log("  cold -> a bar scheduled -> a bar sounding -> the downbeat");
-  }
-
-  /* (c) THE CROSSFADE, MEASURED */
-  {
-    // the artifact, not the intention: the 65-point equal-power curve graph.js
-    // hands to setValueCurveAtTime (which interpolates it LINEARLY between the
-    // points, so that is how it is reconstructed here) against the cosine
-    // bounce.js steps the element down with, at 44.1 kHz.
-    const SR = 44100, XF = 0.08, N = Math.round(SR * XF);
-    const up = new Float32Array(65);
-    for (let i = 0; i < 65; i++) up[i] = Math.sin((i / 64) * Math.PI / 2);
-    const curveAt = x => {                          // the UA's own reconstruction
-      const p = Math.max(0, Math.min(1, x)) * 64, i = Math.min(63, Math.floor(p));
-      return up[i] + (up[i + 1] - up[i]) * (p - i);
-    };
-    const down = G65.epDown;                        // the shipped element half
-    ok(Math.abs(down(0) - 1) < 1e-9 && Math.abs(down(1)) < 1e-9,
-       "§65(c) the element's curve does not run from 1 to 0");
-    // EQUAL POWER: sin²+cos² is 1 everywhere, which is the whole reason for the
-    // shape — two takes of the same bar at the same phase, correlated at the
-    // bottom of the spectrum and not at the top, must not dip in the middle.
-    let worstPow = 0;
-    for (let i = 0; i <= N; i++) {
-      const x = i / N, p = curveAt(x) ** 2 + down(x) ** 2;
-      worstPow = Math.max(worstPow, Math.abs(p - 1));
-    }
-    ok(worstPow < 0.002, `§65(c) the crossfade is not equal power: the summed ` +
-       `power wanders ${worstPow.toFixed(5)} from unity`);
-    // NEVER TWO SOURCES AT FULL, and never a hole: at the midpoint both sit at
-    // .707, which is the definition of the fade rather than double playback.
-    let bothFull = 0, sumMin = 9;
-    for (let i = 0; i <= N; i++) {
-      const x = i / N, a = curveAt(x), b = down(x);
-      if (a > 0.95 && b > 0.95) bothFull++;
-      sumMin = Math.min(sumMin, a + b);
-    }
-    ok(!bothFull, `§65(c) ${bothFull} samples with both sources at full level`);
-    ok(sumMin > 0.99, `§65(c) the summed amplitude falls to ${sumMin.toFixed(3)} ` +
-       `mid-fade — that is an audible dip`);
-    // THE CLICK, AS A NUMBER. A click is a step discontinuity, so measure the
-    // largest one-sample step in each envelope. BEFORE is the shipped handback:
-    // the element's volume written to 0 in one instant while the graph ramps up
-    // from nothing over unmuteRamp(12)'s twelve milliseconds — a full-scale step
-    // in a single sample. AFTER is the curve pair above.
-    const worstStep = f => {
-      let worst = 0;
-      for (let i = 0; i <= N; i++) worst = Math.max(worst, Math.abs(f(i) - f(i - 1)));
-      return worst;
-    };
-    // the shipped handback, as one envelope through the seam: the element's
-    // volume is written to 0 at sample 0 and the graph ramps linearly from
-    // nothing over unmuteRamp(12) — so the sum drops the height of the whole
-    // signal between two adjacent samples
-    const before = i => (i <= 0 ? 1 : Math.min(1, (i / SR) / 0.012));
-    const after = i => curveAt(i / N) + down(i / N);
-    const sBefore = worstStep(before), sAfter = worstStep(after);
-    ok(sBefore > 0.9, `§65(c) the before-envelope does not reproduce the jump cut ` +
-       `(largest step ${sBefore.toFixed(4)})`);
-    ok(sAfter < 0.001, `§65(c) the crossfade steps ${sAfter.toFixed(6)} per sample ` +
-       `— at ${SR} Hz that is a corner the ear hears`);
-    console.log(`  the seam, largest one-sample step at 44.1k: jump cut ` +
-                `${sBefore.toFixed(4)}, equal-power fade ${sAfter.toFixed(6)} ` +
-                `(${Math.round(sBefore / sAfter)}x smaller), summed power flat to ` +
-                `${worstPow.toFixed(6)}`);
-  }
-
-  /* (d) THE CEILING IS A NUMBER, AND IT IS THE MEASURED ONE */
-  {
-    // the probe says a cold return reaches "the graph is making the sound"
-    // in 1.1–1.4 s (one bar of counter plus the bar it must play), so a ceiling
-    // under a second would be a promise the machine cannot keep and one over
-    // ten would be a loading line nobody waits through. Held as a range, not a
-    // constant, so a tempo change is not a test failure.
-    const b = globalThis.window.__nuBounce();
-    ok(b.returnCeil >= 3000 && b.returnCeil <= 10000,
-       `§65(d) the return ceiling is ${b.returnCeil} ms, outside the measured range`);
-    ok(b.returning === false && b.returnFrac === 0,
-       "§65(d) a page that never played claims a return in flight");
-    ok(typeof b.graphRms === "number",
-       "§65(d) the pre-mute master reading is not published — the readiness " +
-       "proof cannot be read from outside");
-  }
-}
-
-/* ── §66 THE DESK SAYS WHAT IT IS COSTING, QUIETLY, IN THE CORNER ──────────
-   Paul: "do you want to sneak a cpu monitor on mobile" — yes, because it says
-   WHICH problem a glitch is (audio/graph.js's own comment carries the
-   argument in full: a spike means the graph got too heavy to rebuild, a flat
-   line with a glitch anyway means the handoff itself is wrong).
-
-   Two things are held here, the same split §65 uses:
-   (a) THE ARITHMETIC — loadHeadroom() is a pure function of a timer gap, so
-       it is tested as arithmetic, no browser required.
-   (b) THE REAL WIRING, read off the RENDERED DOM: the actual sampleLoad()
-       emitting the actual "load" event onto the actual bus ui/readout.js
-       actually subscribes to, painting an actual chip element — nothing
-       here is reimplemented. window.__nuMix/__nuNodes are stubbed (the same
-       way this file already stands in for window.NuGenres elsewhere)
-       because driving the real mixer to a CHOSEN voice count needs a real
-       song, decoded and playing — which is what the browser probe this lane
-       also wrote is for (test/probes/nukernel-load.probe.js: a real page, a
-       real handoff, the chip's path label read before and after — run once,
-       not swept). What stays state-INDEPENDENT here on purpose is "which
-       path is audible": rather than assume carrying is false, the check
-       reads bounce.js's own isCarrying() and asks the chip to agree with
-       whatever it currently says — true regardless of what an earlier
-       section in this file left the shared audio singletons doing. */
-console.log("the desk says what it is costing, quietly, in the corner");
-{
-  const G66 = await import("../../nukernel/audio/graph.js?load66=1");
-
-  /* (a) THE ARITHMETIC */
-  {
-    const h = (gap) => G66.loadHeadroom(gap, G66.LOAD_PERIOD, G66.SCHED_BUDGET_MS);
-    ok(h(G66.LOAD_PERIOD) === 1, "§66(a) dead on schedule is not full headroom");
-    ok(h(G66.LOAD_PERIOD - 400) === 1, "§66(a) EARLY is not full headroom either");
-    const mid = h(G66.LOAD_PERIOD + G66.SCHED_BUDGET_MS / 2);
-    ok(Math.abs(mid - 0.5) < 1e-9, `§66(a) half the budget burned reads ${mid}, not 0.5`);
-    ok(h(G66.LOAD_PERIOD + G66.SCHED_BUDGET_MS) === 0,
-       "§66(a) exactly the whole budget burned is not yet zero");
-    ok(h(G66.LOAD_PERIOD + G66.SCHED_BUDGET_MS * 9) === 0,
-       "§66(a) headroom went negative instead of floor-ing at zero");
-    // MONOTONIC — a longer gap never reads a HEALTHIER number
-    let worstMono = 0;
-    for (let g = 900; g < 2000; g += 17) worstMono = Math.max(worstMono, h(g) - h(g - 17));
-    ok(worstMono <= 1e-9, `§66(a) loadHeadroom rose ${worstMono} for a LONGER gap`);
-  }
-
-  /* (b) THE REAL WIRING, ON THE REAL MODULES */
-  {
-    class Elem66 {
-      constructor(tag) { this.tag = tag; this._cls = new Set(); this._on = {};
-                          this._kids = []; this._attrs = {}; this.style = {}; this.textContent = ""; }
-      get classList() {
-        const s = this._cls;
-        return { add: (...c) => c.forEach(x => s.add(x)),
-                 remove: (...c) => c.forEach(x => s.delete(x)),
-                 toggle: (c, f) => { const on = f === undefined ? !s.has(c) : !!f;
-                                      s[on ? "add" : "delete"](c); return on; },
-                 contains: c => s.has(c) };
-      }
-      set className(v) { this._cls = new Set(String(v).split(/\s+/).filter(Boolean)); }
-      get className() { return [...this._cls].join(" "); }
-      setAttribute(k, v) { this._attrs[k] = String(v); }
-      getAttribute(k) { return this._attrs[k]; }
-      addEventListener(t, fn) { (this._on[t] = this._on[t] || []).push(fn); }
-      appendChild(el) { this._kids.push(el); return el; }
-      append(...els) { this._kids.push(...els); }
-      click() { for (const fn of (this._on.click || [])) fn({}); }
-    }
-    // an in-memory localStorage, so "survives a reload" (the brief's own
-    // words) can actually be asked: a SECOND fresh import of readout.js below
-    // reads the same store a FIRST import wrote to, exactly as two loads of
-    // the real page would through the real one.
-    const store66 = new Map();
-    globalThis.localStorage = {
-      getItem: k => (store66.has(k) ? store66.get(k) : null),
-      setItem: (k, v) => store66.set(k, String(v)),
-      removeItem: k => store66.delete(k),
-    };
-    const mkDoc66 = () => {
-      const byId = {};
-      return { getElementById: id => (byId[id] = byId[id] || new Elem66()),
-               createElement: tag => new Elem66(tag),
-               body: { appendChild: () => {} },
-               addEventListener: () => {} };
-    };
-    globalThis.document = mkDoc66();
-
-    const B66 = await import("../../nukernel/audio/bounce.js");   // the SAME instance readout.js imports
-    const R66 = await import("../../nukernel/ui/readout.js?load66=1");
-    const readoutEl66 = globalThis.document.getElementById("readout");
-    const chip66 = readoutEl66._kids.find(k => k.className === "loadchip");
-    const detail66 = readoutEl66._kids.find(k => k.className === "loaddetail");
-    ok(chip66 && detail66, "§66(b) the chip (or its detail line) never joined the readout row");
-    ok(chip66 && chip66.getAttribute("aria-label"),
-       "§66(b) the collapsed chip has no accessible name — it is an icon with nothing behind it");
-
-    // CLOSED BY DEFAULT, and silent: no stray localStorage key reads as open
-    ok(!readoutEl66.classList.contains("loadopen") && detail66.textContent === "",
-       "§66(b) the chip opens on its own before anybody has tapped it");
-
-    // STUB THE TWO LEDGERS sampleLoad() reads — mixer.js/voices.js's own
-    // budgets, standing in for a real song the way window.NuGenres already
-    // stands in elsewhere in this file. Saved and restored so nothing after
-    // this block inherits a fake mixer.
-    const savedMix = globalThis.__nuMix, savedNodes = globalThis.__nuNodes;
-    let parts66 = 2, alive66 = 1;
-    globalThis.__nuMix = () => ({ nodes: { parts: parts66, total: 40 + parts66 } });
-    globalThis.__nuNodes = () => ({ alive: alive66 });
-
-    G66.sampleLoad();                                 // the FIRST tick: baseline, no gap to judge yet
-    const wantPath66 = () => (B66.isCarrying() ? "tape" : "live");
-    chip66.click();                                    // open the detail line
-    ok(readoutEl66.classList.contains("loadopen"), "§66(b) a tap did not open the detail line");
-    ok(detail66.textContent.includes("3v"),
-       `§66(b) 2 parts + 1 alive synth read as "${detail66.textContent}", not 3v — the ` +
-       "mixer's own two ledgers never reached the chip");
-    ok(detail66.textContent.includes(wantPath66()),
-       `§66(b) the chip says "${detail66.textContent}" while isCarrying() says ${B66.isCarrying()}`);
-    ok(String(store66.get("nukernel.loadopen.v1")) === "1",
-       "§66(b) the open/closed flag never reached localStorage — a reload would forget it");
-
-    // ADD VOICES, WATCH IT RISE (the brief's own words) — the real sampleLoad(),
-    // reading the real (stubbed) ledgers a second time
-    parts66 = 9; alive66 = 4;
-    G66.sampleLoad();
-    ok(detail66.textContent.includes("13v"),
-       `§66(b) parts 2->9 and alive 1->4 did not move the chip past "${detail66.textContent}"`);
-
-    // A REAL STALL, not a mock of one — the same 250 ms budget loadHeadroom()
-    // is built on, burned by an ACTUAL busy main thread rather than an
-    // argument handed to a pure function, so this is the timer path itself
-    // under test, not the arithmetic behind it a second time.
-    const until = performance.now() + G66.LOAD_PERIOD + G66.SCHED_BUDGET_MS * 2;
-    while (performance.now() < until) { /* a main thread that will not yield */ }
-    const before66 = store66.get("nukernel.loadopen.v1");
-    G66.sampleLoad();
-    ok(chip66.classList.contains("bad"),
-       "§66(b) a stall well past the whole scheduling budget did not read as `bad`");
-    ok(detail66.textContent.includes("0.00x"),
-       `§66(b) a stalled tick reads "${detail66.textContent}", not a floored 0.00x`);
-    ok(/\d⚠/.test(detail66.textContent),
-       "§66(b) a genuine dropped beat never reached the detail line");
-    ok(store66.get("nukernel.loadopen.v1") === before66,
-       "§66(b) reading a load sample rewrote the open/closed flag it should never touch");
-
-    // CHEAP BY CONSTRUCTION — the monitor's own cost, measured, not assumed
-    void R66;                        // kept alive: its "load" subscription is what painted the chip above
-    let selfMax = 0;
-    const seenSelf = [];
-    const { on: on66 } = await import("../../nukernel/ui/state.js");
-    on66("load", d => seenSelf.push(d.selfMs));
-    for (let i = 0; i < 5; i++) G66.sampleLoad();
-    for (const ms of seenSelf) selfMax = Math.max(selfMax, ms);
-    ok(selfMax < 5, `§66(b) the monitor's own sample cost ${selfMax} ms — that is not negligible`);
-    console.log(`  ${seenSelf.length} samples, worst self-cost ${selfMax.toFixed(3)} ms`);
-
-    globalThis.__nuMix = savedMix; globalThis.__nuNodes = savedNodes;
-
-    // …AND IT SURVIVES A RELOAD (the brief's own words): a second, independent
-    // import of readout.js, a fresh document, the SAME localStorage — open
-    // stays open with nothing tapped
-    globalThis.document = mkDoc66();
-    await import("../../nukernel/ui/readout.js?load66b=1");
-    const readoutEl66b = globalThis.document.getElementById("readout");
-    ok(readoutEl66b.classList.contains("loadopen"),
-       "§66(b) a reload with the flag already set to open came back closed");
-  }
-}
-
-/* (§67 asked whether a GENRE could declare its own singer, and whether the
-   vocoder's carrier travelled with the plan. Both questions went out with the
-   espeak organ on 2026-08-17.) */
-
-/* §68 — TWENTY-THREE MORE ROOMS, and the ones made of synthesizers get
-   synthesizers. Lane G1's own check (2026-08-17), for the batch that named
-   its parents from artists Paul chose but built the STYLE, never a
-   transcription: musichallrock orchpsych altcountry yachtsoul yachtrock
-   songwriterpiano softfolk singersongwriter coastrock spacerock grebo
-   melodictechno bleeptechno industrialbreaks industrialrock analogsynthpop
-   gothsynth gothicpop postpunk dancepostpunk madchester janglepop indiedance.
-
-   This is the §58 template (lane E1, 2026-08-17) run again for a different
-   roster, plus a fourth clause this batch needed and that one did not: a
-   genre whose identity IS a synthesizer (Paul's own note, quoted in the
-   commit) has to actually reach the Faust voice it claims, not just carry a
-   comment saying so — `synth.dsp` naming a compiled module is the whole
-   claim, and a typo there would still pass every other check in this file. */
-console.log("twenty-three more rooms — non-silent, real instruments, distinct, and synths reach their engine");
-{
-  const ADDED68 = ["musichallrock", "orchpsych", "altcountry", "yachtsoul", "yachtrock",
-    "songwriterpiano", "softfolk", "singersongwriter", "coastrock", "spacerock", "grebo",
-    "melodictechno", "bleeptechno", "industrialbreaks", "industrialrock", "analogsynthpop",
-    "gothsynth", "gothicpop", "postpunk", "dancepostpunk", "madchester", "janglepop",
-    "indiedance"];
-  ok(ADDED68.length === 23, "the roster itself drifted from 23: " + ADDED68.length);
-  for (const gk of ADDED68)
-    ok(!!GENRES[gk], gk + ": named in the roster but missing from GENRES");
-
-  // (a) NON-SILENT, at each genre's own bar count, the same [render, drums,
-  // bass] walk every other section in this file reads.
-  for (const gk of ADDED68) {
-    const g = GENRES[gk], bars = Math.max(4, g.bars);
-    const ev = allEvents(P, g, bars);
-    ok(ev.length > 0, gk + ": renders silent — zero events at " + bars + " bars");
-  }
-
-  // (b) A REAL SAMPLER: instrOf must not throw, and every id it can return
-  // must be a key in the registry's SAMPLERS table.
-  {
-    const NI68 = require("../../nukernel/instruments.js");
-    const vm68 = require("vm"), fs68 = require("fs"), path68 = require("path");
-    const ctx68 = {}; ctx68.window = ctx68; vm68.createContext(ctx68);
-    vm68.runInContext(fs68.readFileSync(
-      path68.join(__dirname, "../../engine/registry-data.js"), "utf8"), ctx68);
-    const SAMPLERS68 = (ctx68.__REGISTRY && ctx68.__REGISTRY.SAMPLERS) || {};
-    ok(Object.keys(SAMPLERS68).length > 100, "registry-data.js did not yield SAMPLERS");
-    for (const gk of ADDED68) {
-      const g = GENRES[gk];
-      for (let v = 0; v < g.voices; v++)
-        ok(typeof NI68.instrOf(gk, v) === "string", gk + ": instrOf failed for voice " + v);
-      const ids = Array.isArray(g.instr) ? g.instr : [g.instr];
-      for (const id of ids)
-        ok(!!SAMPLERS68[id], gk + ": instr \"" + id + "\" is not a SAMPLERS id");
-    }
-  }
-
-  // (c) DISTINGUISHABLE FROM ITS OWN LINEAGE, on the shared DEFAULT/P phrase
-  // every render in this file uses — a genre that renders byte-for-byte
-  // identical to a declared parent or its `near` neighbour is the old room
-  // wearing a new door sign.
-  for (const gk of ADDED68) {
-    const g = GENRES[gk];
-    const rivals = new Set(Object.keys(g.parents || {}));
-    if (g.near) rivals.add(g.near);
-    ok(rivals.size > 0, gk + ": no parents and no `near` — nothing to prove distinct from");
-    for (const p of rivals) {
-      ok(!!GENRES[p], gk + ": rival \"" + p + "\" is not a real genre");
-      if (!GENRES[p]) continue;
-      const bars = Math.max(4, g.bars, GENRES[p].bars);
-      ok(sig(allEvents(P, g, bars)) !== sig(allEvents(P, GENRES[p], bars)),
-         gk + ": renders identical to its own parent/neighbour \"" + p + "\"");
-    }
-  }
-
-  // (d) FAMILY + DYNAMICS: every anchor added must resolve `family` and
-  // stress/phrase/touch — `club`'s five newcomers prove the explicit-row law
-  // they were added under, everyone else proves the family fallback reached
-  // them.
-  for (const gk of ADDED68) {
-    const g = GENRES[gk];
-    ok(!!g.family, gk + ": no family — the palette and the dynamics stamp both miss it");
-    ok(g.stress != null && g.phrase != null && g.touch != null,
-       gk + ": no dynamics row — neither a club-family override nor a family fallback landed");
-  }
-
-  // (e) COMPOSABLE: PLAN_OF and BPM are OUTSIDE genres.js by design (the
-  // comment at the top of compose.js's own table says so, in the same words
-  // this gate is here to prove) — a genre that landed in GENRES without a
-  // matching entry in both tables throws the moment anyone presses Write,
-  // which is exactly the mistake the wave-1 lane made and shipped. Composed
-  // at three seeds and run through the SAME validate-and-apply door the
-  // loader uses, because a song the loader would reject is not a passing
-  // song no matter what the composer emitted.
-  {
-    const C68 = require("../../nukernel/compose.js");
-    const S68 = require("../../nukernel/song.js");
-    for (const gk of ADDED68) {
-      ok(gk in C68.PLAN_OF, gk + ": no PLAN_OF entry — every genre added to genres.js needs one");
-      ok(gk in C68.BPM, gk + ": no BPM entry — every genre added to genres.js needs one");
-      ok(C68.PLAN_OF[gk] === "song" || C68.PLAN_OF[gk] === "dance" || C68.PLAN_OF[gk] === "arc",
-         gk + ": PLAN_OF names an unknown plan \"" + C68.PLAN_OF[gk] + "\"");
-      ok(C68.BPM[gk] >= 70 && C68.BPM[gk] <= 160,
-         gk + ": BPM " + C68.BPM[gk] + " is off the tempo dial (70..160)");
-      for (const seed of [1, 5, 7]) {
-        let song;
-        try { song = C68.compose(gk, seed); }
-        catch (e) { ok(false, gk + " seed " + seed + ": compose() threw — " + e.message); continue; }
-        ok(song && Array.isArray(song.song) && song.song.length > 0,
-           gk + " seed " + seed + ": compose() emitted an empty song");
-        const val = S68.validateSong(song);
-        ok(val.ok, gk + " seed " + seed + ": the composed song failed the loader's own validator — " +
-           JSON.stringify(val.errors || val));
-      }
-    }
-  }
-
-  // (f) THE SYNTHESIZERS REACH THE ENGINE. Six of the twenty-three declare
-  // `synth` because the STYLE is a synthesizer, not a sampled stand-in
-  // wearing its name (Paul's note, quoted in the commit): analog synth pop
-  // and bleep techno both ride a `tb303`, goth synth a `modeld`, melodic
-  // techno a `pad_saw`, industrial breaks and industrial rock a `lead_fuzz`.
-  // The claim is `spec.dsp` naming a REAL compiled Faust module — a typo
-  // there is invisible to (a)-(e) above, since a dead synth key just drops
-  // its notes (audio/voices.js's own documented law) rather than throwing —
-  // so this reads the actual built module off disk, engine/faust/VOICES.md's
-  // own filename law (`dist/<dsp>-module.wasm` + `-meta.json`).
-  {
-    const fs68b = require("fs"), path68b = require("path");
-    const SYNTH_GENRES = { analogsynthpop: "tb303", gothsynth: "modeld",
-      bleeptechno: "tb303", melodictechno: "pad_saw",
-      industrialbreaks: "lead_fuzz", industrialrock: "lead_fuzz" };
-    for (const [gk, dsp] of Object.entries(SYNTH_GENRES)) {
-      const g = GENRES[gk];
-      ok(!!g.synth, gk + ": no `synth` field — this genre's identity is a synthesizer");
-      ok(g.synth && g.synth.dsp === dsp,
-         gk + ": synth.dsp is \"" + (g.synth && g.synth.dsp) + "\", expected \"" + dsp + "\"");
-      ok(g.synth && g.synth.root === g.synth.dsp,
-         gk + ": synth.root does not match synth.dsp — driveSynth addresses params at /root/name");
-      const distDir = path68b.join(__dirname, "../../engine/faust/dist");
-      ok(fs68b.existsSync(path68b.join(distDir, dsp + "-module.wasm")),
-         gk + ": " + dsp + "-module.wasm is not a built Faust module");
-      ok(fs68b.existsSync(path68b.join(distDir, dsp + "-meta.json")),
-         gk + ": " + dsp + "-meta.json is not a built Faust module");
-      // every `set` value is a finite number — a stray string/undefined would
-      // reach node.parameters.get(...).setValueAtTime and throw at note-on
-      for (const [k, v] of Object.entries(g.synth.set || {}))
-        ok(typeof v === "number" && isFinite(v), gk + ": synth.set." + k + " is not a finite number");
-    }
-    // the other seventeen carry NO synth field at all — the "real sampled
-    // instruments, close and clean" half of the same note, and a genre that
-    // silently grew one would be exactly the kind of drift the parent's own
-    // SIGNATURE_MODELS law exists to keep visible
-    for (const gk of ADDED68) if (!SYNTH_GENRES[gk])
-      ok(!GENRES[gk].synth, gk + ": carries a `synth` field but was not built as a signature-synth genre");
-  }
-
-  console.log("  68: " + ADDED68.length + " genres — non-silent, real samplers, distinct, " +
-              "composable, and " + Object.keys({ analogsynthpop: 1, gothsynth: 1, bleeptechno: 1,
-              melodictechno: 1, industrialbreaks: 1, industrialrock: 1 }).length +
-              " synths verified against the built engine");
-}
-
-/* §69 — A VOICE PUSHES AND A HORN IS BLOWN, AND YOU CAN HEAR THAT THEY WERE
-   (lane H1, 2026-08-17). Paul: "Add grit and tremolo to vocals and horns."
-   Both live in audio/voices.js (the family lookup + the per-chair cache) and
-   audio/graph.js (the per-voice effect chain: the shared curve cache, the
-   shared breath-LFO bus, and buildVoiceChair). Nothing here needs a real
-   AudioContext to check: a WaveShaper's curve is a plain Float32Array
-   interpolated exactly the way this section interpolates it, and the
-   tremolo bus is two sines summed exactly the way this section sums them —
-   so the checks read the REAL exported curve and the REAL built graph
-   (via a stub context that records connections and param writes, the same
-   trick §the-desk-is-three-buses uses on audio/mixer.js) rather than a
-   second copy of the math. */
-console.log("a voice pushes and a horn is blown, and you can hear that they were");
-{
-  globalThis.addEventListener = globalThis.addEventListener || (() => {});
-  globalThis.document = globalThis.document ||
-    { visibilityState: "visible", addEventListener: () => {} };
-  globalThis.localStorage = globalThis.localStorage ||
-    { getItem: () => null, setItem: () => {}, removeItem: () => {} };
-  const G69 = await import("../../nukernel/audio/graph.js");
-  const V69 = await import("../../nukernel/audio/voices.js");
-  const NI69 = require("../../nukernel/instruments.js");
-  const fs69 = require("fs"), path69 = require("path");
-
-  // ---- a minimal stub context: nodes that remember what they were
-  // connected to, and AudioParams that remember what was written to them —
-  // just enough of the Web Audio surface for graph.js's grit+tremolo
-  // builders, the audio/mixer.js stub's own shape (test §"the desk is
-  // three buses") narrowed to what THIS chain actually calls.
-  const stub69 = () => {
-    const P = v => ({ value: v, outs: [],
-      setValueAtTime(x) { this.value = x; },
-      setTargetAtTime(x) { this.value = x; },
-      linearRampToValueAtTime(x) { this.value = x; },
-      exponentialRampToValueAtTime(x) { this.value = x; },
-      cancelScheduledValues() {},
-      connect(d) { this.outs.push(d); return d; } });
-    const c = { sampleRate: 44100, currentTime: 0 };
-    const N = (kind, extra) => Object.assign(
-      { kind, outs: [], context: c,
-        connect(d) { this.outs.push(d); return d; }, disconnect() {} }, extra || {});
-    c.createGain = () => N("gain", { gain: P(1) });
-    c.createWaveShaper = () => N("shaper", { curve: null, oversample: "none" });
-    c.createOscillator = () => N("osc", { frequency: P(1), type: "sine",
-      start() {}, stop() {} });
-    return c;
-  };
-  // gain along every path from `from` to `to`, treating a "gain" node's
-  // value as the multiplier and anything else as a pass-through — the
-  // §"three buses" section's own reach(), rebuilt here because that one is
-  // local to its own block.
-  const reach69 = (from, to, seen) => {
-    if (from === to) return 1;
-    const guard = seen || new Set();
-    if (guard.has(from)) return 0;
-    guard.add(from);
-    let s = 0;
-    for (const o of from.outs) {
-      const g = o.kind === "gain" ? o.gain.value : 1;
-      if (g === 0) continue;
-      s += g * reach69(o, to, guard);
-    }
-    guard.delete(from);
-    return s;
-  };
-
-  // ---- (a) the family lookup is exact, and everything that is not vox or
-  // brass reads null — which is the whole byte-identity claim: playSampled
-  // only reroutes `dest` when this returns truthy, so every other strip's
-  // signal path is untouched by this round.
-  ok(V69.voiceFamily(NI69.STRIPS.vox) === "vox", "STRIPS.vox does not read as the vox family");
-  ok(V69.voiceFamily(NI69.STRIPS.brass) === "brass", "STRIPS.brass does not read as the brass family");
-  let others69 = 0;
-  for (const [k, s] of Object.entries(NI69.STRIPS)) {
-    if (k === "vox" || k === "brass") continue;
-    others69++;
-    ok(V69.voiceFamily(s) === null,
-       "STRIPS." + k + " reads as a grit/tremolo family — it would stop rendering byte-identically");
-  }
-  ok(others69 >= 10, "the strip table shrank under this gate's feet (" + others69 + " non-family strips)");
-
-  // ---- (b) the two family numbers are sane, and the dial is a ceiling —
-  // horns lean gritty, vocals lean toward the wobble, both audibly nonzero.
-  for (const fam of ["vox", "brass"]) {
-    const F = V69.VOICEFX[fam];
-    ok(F && F.grit > 0 && F.grit < 1, fam + ": grit is not a fraction in (0,1)");
-    ok(F && F.drive >= 1, fam + ": drive is not a boost — a quiet note would never reach the curve's knee");
-    ok(F && F.tremHz > 1 && F.tremHz < 12, fam + ": tremHz is not a breath/vibrato rate");
-    ok(F && F.tremDepth > 0 && F.tremDepth < 0.5, fam + ": tremDepth is not a subtle wobble");
-  }
-  ok(V69.VOICEFX.brass.grit > V69.VOICEFX.vox.grit, "a blown horn does not grit harder than a held voice");
-
-  // ---- (c) GRIT MEASURABLY ADDS HARMONICS, AND TRACKS THE NOTE'S OWN
-  // DYNAMICS. Interpolate the REAL curve (voiceGritCurve, the exact array a
-  // WaveShaperNode would read) over a pure sine at two levels standing in
-  // for a quiet and a loud note — playSampled's own gain term runs from
-  // 0.42*0.2=0.084 to 0.42*1=0.42 — boosted by the family's own `drive`,
-  // exactly as buildVoiceChair's pre-gain does. A pure sine has NO energy at
-  // 2x/3x/…/6x its own frequency; any that appears after shaping is grit,
-  // and none of it should appear before.
-  {
-    const shapeAt = (curve, x) => {                    // linear WaveShaper read
-      const N = curve.length;
-      const t = Math.max(-1, Math.min(1, x));
-      const p = (t + 1) / 2 * (N - 1);
-      const i = Math.min(N - 2, Math.floor(p)), f = p - i;
-      return curve[i] * (1 - f) + curve[i + 1] * f;
-    };
-    const magAt = (x, freq, fs) => {                    // a plain single-bin DFT
-      let re = 0, im = 0;
-      for (let n = 0; n < x.length; n++) {
-        const w = 2 * Math.PI * freq * n / fs;
-        re += x[n] * Math.cos(w); im -= x[n] * Math.sin(w);
-      }
-      return Math.hypot(re, im) / x.length;
-    };
-    const fs = 44100, f0 = 861.33, N = 2048;             // f0*N/fs is not integer
-    // on purpose — a real note is not bin-aligned either — so the harmonic
-    // read below sums several bins around each partial rather than trusting
-    // one exact bin
-    const harmEnergy = (curve, drive) => {
-      let e = 0;
-      for (const A of [0]) void A;                       // (kept for symmetry, unused)
-      const x = new Float64Array(N);
-      for (let n = 0; n < N; n++) {
-        const s = drive * Math.sin(2 * Math.PI * f0 * n / fs);
-        x[n] = curve ? shapeAt(curve, s) : s;
-      }
-      for (let h = 2; h <= 6; h++) e += magAt(x, f0 * h, fs) ** 2;
-      return e;
-    };
-    const F = V69.VOICEFX.vox;
-    const quiet = 0.42 * (0.2 + 0.8 * (0 / 9)), loud = 0.42 * (0.2 + 0.8 * (9 / 9));
-    const curve = G69.voiceGritCurve(F.grit);
-    const hOffQuiet = harmEnergy(null, quiet * F.drive);
-    const hOnQuiet = harmEnergy(curve, quiet * F.drive);
-    const hOnLoud = harmEnergy(curve, loud * F.drive);
-    ok(hOffQuiet < 1e-9, "an unshaped sine carries harmonic energy — the test's own DFT is broken");
-    ok(hOnQuiet > hOffQuiet * 50, "grit-on does not measurably add harmonics over grit-off at a quiet note");
-    ok(hOnLoud > hOnQuiet * 1.3,
-       "grit does not track dynamics — a hammered note (vel 9) does not out-grit a ghosted one (vel 0): " +
-       hOnLoud.toFixed(6) + " vs " + hOnQuiet.toFixed(6));
-  }
-
-  // ---- (d) the curve is CACHED BY AMOUNT (shared data) and the CHAIR is
-  // NOT (private nodes) — the whole cost claim in one pair of identities.
-  {
-    const c1 = G69.voiceGritCurve(0.14), c2 = G69.voiceGritCurve(0.14);
-    ok(c1 === c2, "voiceGritCurve rebuilds an identical amount instead of reusing the cached array");
-    ok(G69.voiceGritCurve(0.20) !== c1, "voiceGritCurve returns the SAME curve for two different amounts");
-    const cx = stub69(), destA = cx.createGain(), destB = cx.createGain();
-    const chairA = G69.buildVoiceChair(cx, 0.14, 2.4, 5.4, 0.09, destA);
-    const chairA2 = G69.buildVoiceChair(cx, 0.14, 2.4, 5.4, 0.09, destB);
-    ok(chairA.in !== chairA2.in, "two buildVoiceChair calls share a node — one voice's grit would sum another's signal");
-  }
-
-  // ---- (e) TREMOLO IS REAL AMPLITUDE MODULATION AT THE RATE IT CLAIMS, and
-  // it is a shared bus: two callers at the same rate ride the SAME
-  // oscillators (breathLFO's own cache), and a caller reads back the exact
-  // frequencies graph.js built rather than a hardcoded copy of them.
-  {
-    const cx = stub69();
-    const L1 = G69.breathLFO(cx, 5.4), L2 = G69.breathLFO(cx, 5.4);
-    ok(L1 === L2, "breathLFO rebuilds a second oscillator pair at a rate it already built");
-    ok(L1.oscs.length === 2, "breathLFO is not two oscillators — the instability comes from the pair beating");
-    const freqs = L1.oscs.map(o => o.frequency.value).sort((a, b) => a - b);
-    const wts = L1.node.outs.length ? null : null;      // (taps are on the sum node's INPUTS, not outs)
-    void wts;
-    ok(Math.abs(freqs[0] - 5.4) < 1e-6, "breathLFO's base oscillator is not at the requested rate");
-    ok(freqs[1] > freqs[0], "breathLFO's second oscillator does not sit above the first — there is nothing to beat against");
-    // simulate the REAL sum this graph computes — same frequencies just read
-    // off the built oscillators, same weights read off the taps feeding them
-    // into L1.node (each osc -> a gain -> L1.node; the gain IS the weight)
-    const weightOf = o => { for (const g of o.outs) if (g.kind === "gain") return g.gain.value; return 1; };
-    const w = L1.oscs.map(weightOf);
-    const fsT = 1000, T = 3, NT = fsT * T;
-    const y = new Float64Array(NT);
-    for (let n = 0; n < NT; n++)
-      for (let k = 0; k < L1.oscs.length; k++)
-        y[n] += w[k] * Math.sin(2 * Math.PI * L1.oscs[k].frequency.value * n / fsT);
-    const magAtT = (x, freq, fs) => {
-      let re = 0, im = 0;
-      for (let n = 0; n < x.length; n++) {
-        const wgt = 2 * Math.PI * freq * n / fs;
-        re += x[n] * Math.cos(wgt); im -= x[n] * Math.sin(wgt);
-      }
-      return Math.hypot(re, im) / x.length;
-    };
-    const mNear = magAtT(y, 5.4, fsT), mFar = magAtT(y, 40, fsT);
-    ok(mNear > 0.25, "the breath LFO carries no measurable energy at the rate it was asked to run at");
-    ok(mNear > mFar * 4, "the breath LFO's energy is not concentrated near its declared rate");
-
-    // tapBreath: a depth gain riding the shared bus onto a real AudioParam,
-    // and the param's own base value is set the way an ordinary GainNode's
-    // `.gain` would need it (1 — unity, so the modulation rides ± depth).
-    const param = cx.createGain().gain;
-    const tap = G69.tapBreath(cx, 5.4, 0.09, param, 1);
-    ok(param.value === 1, "tapBreath does not set the base value on the param it is about to modulate");
-    ok(tap.kind === "gain" && Math.abs(tap.gain.value - 0.09) < 1e-9,
-       "tapBreath's depth gain is not the requested depth");
-    ok(tap.outs.includes(param), "tapBreath's depth gain does not reach the param it was asked to modulate");
-  }
-
-  // ---- (f) THE CHAIN WIRES DRIVE -> SHAPE -> TREMOLO -> DEST, structurally.
-  // reach69 deliberately excludes the STARTING node's own gain (it answers
-  // "how much of the signal already AT this node's output reaches `to`",
-  // the same convention §"three buses" built it under) — so the drive is
-  // read directly off the node the chair hands back, and the shape of the
-  // chain is read off what each node actually connects to.
-  {
-    const cx = stub69(), dest = cx.createGain();
-    const chair = G69.buildVoiceChair(cx, 0.14, 2.4, 5.4, 0.09, dest);
-    ok(Math.abs(chair.in.gain.value - 2.4) < 1e-9,
-       "the voice chair's drive gain is not set to the requested amount");
-    ok(chair.in.outs[0] && chair.in.outs[0].kind === "shaper",
-       "the voice chair's drive does not feed a WaveShaper next — the curve would never be heard");
-    ok(chair.out.outs.includes(dest),
-       "the voice chair's tremolo gain does not connect straight to dest");
-    ok(reach69(chair.in, dest) > 0,
-       "the voice chair's signal path does not reach dest at all — the chain is not wired in");
-  }
-
-  // ---- (g) ONE CHAIR PER VOICE, NOT PER NOTE — audio/voices.js's own
-  // cache, read back through its export: the same (chan, address) returns
-  // the SAME chair on a second call (no rebuild, the whole cost claim this
-  // round makes), a different address on the same channel gets its own
-  // chair (a horn and a vocal in the same box do not share a WaveShaper),
-  // and a different channel object gets its own chair even at the same
-  // address (a dropped section's chairs do not leak into the next one).
-  {
-    const cx = stub69(), destX = cx.createGain();
-    const chanA = { input: { context: cx } }, chanB = { input: { context: cx } };
-    const a1 = V69.voiceChairFor(chanA, "v0", "vox", destX);
-    const a2 = V69.voiceChairFor(chanA, "v0", "vox", destX);
-    ok(a1 === a2, "voiceChairFor rebuilds a chair on a second note — the per-note anti-pattern is back");
-    const a3 = V69.voiceChairFor(chanA, "v1", "vox", destX);
-    ok(a3 !== a1, "two different voices on one channel share a chair — one would grit under the other's signal");
-    const b1 = V69.voiceChairFor(chanB, "v0", "vox", destX);
-    ok(b1 !== a1, "two different channels share a chair — a retired section's chair would outlive it");
-  }
-
-  // ---- (h) THE REROUTE IS GATED ON `fam`, IN THE COMMITTED SOURCE — the
-  // structural half of the byte-identity claim (b) proves in the abstract:
-  // a strip that is not vox or brass never reaches either line below, so
-  // its `dest`/`note` are exactly what this file computed before this round.
-  const vSrc69 = fs69.readFileSync(path69.join(__dirname, "../../nukernel/audio/voices.js"), "utf8");
-  ok(/if \(fam && chan\) \{[\s\S]{0,120}dest = voiceChairFor\(chan, addr, fam, dest\)\.in;/.test(vSrc69),
-     "playSampled's dest-reroute is not gated on `fam` — every family would be rerouted");
-  ok(/if \(fam\) \{\s*\n\s*try \{ note = SP\.SamplerLive\(c, \{ dry: dest, rev: dest, del: dest \}\)/.test(vSrc69),
-     "the flat-velocity fallback's throwaway player is not gated on `fam` — every note would rebuild one");
-
-  console.log("  69: grit adds harmonics and tracks velocity, tremolo modulates at its own " +
-              "rate, one chair per voice (not per note), and every other strip is untouched");
-}
+/* §69 WAS THE VOICE'S GRIT AND THE HORN'S TREMOLO, built as a WebAudio chain
+   in audio/graph.js and cached per chair in audio/voices.js (one engine,
+   2026-08-18). Both files are gone. The feature is not: per-voice character is
+   the parent's STRIP stage inside its own note chain (state-engine
+   STRIP_PROFILES -> sampler.js SamplerLive), which is where nukernel's desk
+   now writes its tone (audio/desk.js stripWith). One stage, gated once, in the
+   engine that renders it. */
 
 /* (§70 was the vocal polyphony — doubles, octaves, harmony parts and the
    deterministic lean that keeps a double from summing to +6 dB. It was built
@@ -11125,35 +9294,12 @@ console.log("the catalog renders, and the machines get played by the machines");
               " synth fields (5 new) all reach a built Faust module");
 }
 
-/* §72 — THE SEAMS BETWEEN THE FIVE LANES (integration, 2026-08-17).
-   Each of the five rounds above is right on its own and three of them met
-   somewhere nobody was measuring. Two of the three meeting points were the
-   singer's — that a genre's declared voice reached ui/derive.js at all, and
-   that a vocal double paid back the vox chair's 8 dB rather than reading as a
-   louder lead — and both went out with the espeak organ on 2026-08-17. What
-   is left is the one that was never the singer's alone:
-
-     (c) THE BREATH LFO IS PER CONTEXT. Keyed on rate alone it handed the
-         first bounce's oscillators to the second, which threw on connect and
-         degraded — silently — to a voice with no grit and no tremolo on the
-         TAPE, which is the audible path on a phone. The horn still rides it
-         (voices.js VOICEFX.brass), so the seam is still real. */
-console.log("the seams are closed");
-{
-  const fs72 = require("fs"), path72 = require("path");
-  const rd = (p) => fs72.readFileSync(path72.join(__dirname, "../..", p), "utf8");
-
-  // ---- (c) THE BREATH LFO IS KEYED ON ITS CONTEXT.
-  {
-    const src = rd("nukernel/audio/graph.js");
-    ok(/const breathByCtx = new WeakMap\(\)/.test(src) &&
-       /breathByCtx\.get\(c\)/.test(src),
-       "§72(c) breathLFO is cached globally again — the second bounce of a page " +
-       "loses grit and tremolo on the tape, silently");
-  }
-
-  console.log("  72: the breath LFO belongs to its own context");
-}
+/* §72 WAS THE BREATH LFO, and it is the parent's breath now (one engine,
+   2026-08-18). Its one surviving check read audio/graph.js for a per-context
+   WeakMap cache on the tremolo oscillators — a bug that could only exist in a
+   page that built its own oscillators for its own bounce. There is one engine
+   and one context; per-voice character is engine/faust/voices/sampler.js's
+   STRIP stage, gated where it lives. §76 holds the absence. */
 
 /* §73 WAS THE CARRIER, and the carrier is gone (2026-08-17). It held the
    arithmetic of audio/stream-carrier.js — the overlap-add join, the µs->sample
@@ -11258,6 +9404,118 @@ console.log("the mirror — the page's physical controls are the parent's own");
   ok(JSON.stringify((wk && wk.live && wk.live.vowels) || []) ===
      JSON.stringify([...(VW || "")].map((_, i) => i)),
      "the page spells the vowels \"" + VW + "\" in a different order than the formant tables do");
+}
+
+/* ---------------------------------------------------------------- 76. ONE ENGINE
+   Paul, three times, and finally in the plainest terms: "Are you reusing the
+   scheduler and audio engine we built Claude or making yet another one … It's
+   not even that hard!!!! They're the same except for the buses but those are
+   trivial."
+
+   He was right and the measurement agreed. nukernel had grown a SECOND ENGINE
+   beside engine/faust/ — 7,753 lines of it:
+
+     audio/transport.js   735   its own scheduler      vs live/live.js
+     audio/mixer.js      1184   its own channel strips vs the Faust bus structure
+     audio/graph.js      1395   its own master+reverbs vs fx_bus + reverb_*.dsp
+     audio/bounce.js     2165   its own render         vs press/render-core.js
+     audio/voices.js     1204   its own voice routing
+     audio/assets.js      219   its own zone decode    vs sampler.js
+     audio/survival.js    296   its own pocket survival vs the WAV-FIRST path
+     audio/press-*.js     555   its own press driver
+
+   and every bug of the two days before this round was a SEAM between the two:
+   the desk absent from the tape, drums playing a different 606 on each path,
+   velocity meaning a filter on one side and a fader on the other, and a render
+   that never completed on WebKit — which killed the tab on iOS, because an
+   OfflineAudioContext there cannot build a Faust worklet and nothing bounded
+   the retry.
+
+   This section is what stops it growing back. Four claims, all readable in
+   node, because the way a second engine returns is one file at a time:
+
+     (a) THE NINE ARE GONE, and no shipped file imports one.
+     (b) ONE TRANSLATOR. audio/to-engine.js has exactly one reader, so the live
+         path and anything that renders cannot be handed different notes — that
+         disagreement was the bug three separate times.
+     (c) NOTHING IN nukernel/audio/ OPENS AN AudioContext, builds a node, or
+         schedules a note. If it did, that would be the second engine again,
+         whatever it was called.
+     (d) THE FAILURE IS BOUNDED, in the shipped source: a deadline, a ceiling,
+         and a demotion that is written down rather than retried. */
+console.log("one engine: the second one is gone and cannot come back quietly");
+{
+  const fs76 = require("fs"), path76 = require("path");
+  const AUD = path76.join(__dirname, "../../nukernel/audio");
+  const rd = (f) => fs76.readFileSync(path76.join(AUD, f), "utf8");
+  const GONE = ["transport.js", "graph.js", "mixer.js", "voices.js", "bounce.js",
+                "assets.js", "survival.js", "press-window.js", "press-worker.js"];
+
+  /* (a) THE NINE ARE GONE */
+  for (const f of GONE)
+    ok(!fs76.existsSync(path76.join(AUD, f)),
+       "nukernel/audio/" + f + " is back — that is the second engine returning");
+  const shipped = [];
+  for (const dir of ["nukernel", "nukernel/audio", "nukernel/ui"])
+    for (const f of fs76.readdirSync(path76.join(__dirname, "../..", dir)))
+      if (f.endsWith(".js")) shipped.push([dir + "/" + f,
+        fs76.readFileSync(path76.join(__dirname, "../..", dir, f), "utf8")]);
+  for (const [name, src] of shipped)
+    for (const g of GONE)
+      ok(!new RegExp('from "[^"]*audio/' + g.replace(".", "\\.") + '"').test(src),
+         name + " still imports audio/" + g);
+
+  /* (b) ONE TRANSLATOR */
+  {
+    const readers = fs76.readdirSync(AUD).filter(f => f.endsWith(".js") && f !== "to-engine.js")
+      .filter(f => /from "\.\/to-engine\.js"/.test(rd(f)));
+    ok(readers.length === 1 && readers[0] === "plan.js",
+       "audio/to-engine.js has readers [" + readers.join(", ") + "] — one translator, " +
+       "or the two paths are free to disagree about the same bar again");
+  }
+
+  /* (c) THE AUDIO TIER MAKES NO AUDIO */
+  {
+    const files = fs76.readdirSync(AUD).filter(f => f.endsWith(".js"));
+    ok(files.length === 5, "nukernel/audio now holds " + files.length +
+       " modules (" + files.join(", ") + ") — five is the whole tier: the bridge, " +
+       "the plan, the desk, the driver and the font choice");
+    const BANNED = [
+      [/new (Offline)?AudioContext\b/, "opens an AudioContext"],
+      [/createGain|createBiquadFilter|createConvolver|createDynamicsCompressor|createWaveShaper|createDelay|createOscillator|createBufferSource/,
+       "builds a WebAudio node"],
+      [/audioWorklet\.addModule/, "loads a worklet"],
+      [/startRendering\(/, "renders offline"],
+    ];
+    for (const f of files) {
+      // audio/live.js may READ the engine's context for the clock — that is the
+      // parent's context, not one of its own — so the ban is on CREATING, which
+      // is what every pattern above matches.
+      const src = rd(f);
+      for (const [re, what] of BANNED)
+        ok(!re.test(src), "audio/" + f + " " + what + " — the audio tier is a " +
+           "translator and a desk; the engine that makes sound is engine/faust/");
+    }
+  }
+
+  /* (d) THE FAILURE IS BOUNDED */
+  {
+    const L = rd("live.js");
+    ok(/const DEADLINE_MS = \d+/.test(L),
+       "audio/live.js has no deadline — an engine that never starts is the iOS bug");
+    ok(/const MAX_TRIES = [12]\b/.test(L),
+       "audio/live.js has no ceiling on attempts, or the ceiling is above two");
+    ok(/clearTimeout\(deadlineTimer\)/.test(L),
+       "the deadline is never cleared — it would fire over a healthy engine");
+    ok(!/setInterval\([^)]*open\(|setTimeout\([^)]*open\(/.test(L),
+       "audio/live.js re-opens the engine on a timer — an unbounded retry is " +
+       "exactly what turned a WebKit quirk into a dead tab");
+    ok(/capped = \{ why/.test(L) || /st\.capped = \{ why/.test(L),
+       "the give-up carries no reason — a silent demotion is the failure wearing a field");
+  }
+
+  console.log("  76: nine modules gone, one translator, no node built here, " +
+              "and the engine has a deadline and a ceiling");
 }
 
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +

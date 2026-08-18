@@ -1,0 +1,347 @@
+// audio/plan.js — the SCORE, compiled once, handed to the parent engine one bar
+// at a time. This is the whole of what used to be audio/transport.js's 735-line
+// scheduler: what survives is the two things the parent cannot know — which bar
+// of nukernel's song is next, and who is playing in it — and everything the old
+// file did with that knowledge (build nodes, ramp gains, tear them down) is now
+// the parent's job.
+//
+// ONE TRANSLATOR, BOTH PATHS. audio/to-engine.js turns nukernel bars into the
+// parent's {pitched,drums,found,sfx}; this file is the only thing that calls it,
+// and both the live walk and whatever renders read the SAME per-bar answer out
+// of it. That is not tidiness — the live page and the offline tape disagreeing
+// about the same bar was the bug three separate times (the desk missing from the
+// tape, a different 606 on each path, velocity meaning a filter here and a fader
+// there). Two callers of one function cannot have that argument.
+//
+// THE SHAPE OF THE HANDOFF, because it decides everything below:
+//
+//   compile()    walks the song ONCE — ui/derive.js songBars for the notes, the
+//                register home for the octaves, audio/to-engine.js for the
+//                translation — and keeps a per-bar slice of the result.
+//   barBeats(n)  how long bar n is, in beats. The parent's walk asks this per
+//                bar (live.js `opts.barBeats`) because nukernel's tempo map
+//                warps every bar by its own ratio and a rounded grid would put
+//                the rubato back.
+//   barPlan(n)   that bar's events, rebased to beat 0, plus the unit table with
+//                the desk applied. The parent takes it from there: scheduling,
+//                voice pools, the ring, the buses, the master chain.
+//
+// THE CAST IS THE SONG'S, NOT THE BAR'S. Every seat any box ever fills gets one
+// parent unit, for the life of the compile. That is what keeps the unit table's
+// TOPOLOGY constant across a box change — the parent crossfades a whole new
+// stream when the module set moves (live.js sigOf), and a song that changed
+// bands every four bars would spend its life bridging. What DOES move per bar is
+// level, pan, sends and tone, and none of those are in the signature, so the
+// desk rides in on a glide (stream-renderer feedBar applies changed params to
+// the persistent procs and the DSP smooths them).
+import { GENRES, BASSSYNTH, BASS_INSTR, instrOf } from "../ui/deps.js";
+import { SONG, SLOTS, GROOVE, SWING, POOL, RUBATO, loopOnly, bpm } from "../ui/state.js";
+import { gid, songBars, poolInstrOf, kitOf } from "../ui/derive.js";
+import { toEngine, samplerLibFor } from "./to-engine.js";
+import { deskUnits, deskAmp, deskSweeps, voiceRoster } from "./desk.js";
+import { isSynthFont, fontDef } from "./fonts.js";
+
+/* ---------- the parent, loaded once ---------- */
+// The engine ships as CLASSIC scripts that publish onto `window` (CLAUDE.md:
+// genre-kernel merges __GENRES/__REGISTRY at load, so order is load-bearing).
+// kernel-daw.html already carries three of them; the rest arrive here, by
+// dynamic import, in the parent's own order. A guard skips anything the page
+// already defined so nothing is re-executed under the app's feet.
+const ROOTDIR = new URL("../../", import.meta.url).href;
+const FAUSTDIR = new URL("../../engine/faust/", import.meta.url).href;
+// A BROWSER GETS A GLOBAL; NODE GETS A MODULE. The engine ships UMD — it
+// assigns to `window` in a page and to `module.exports` under a CommonJS
+// loader — so a pure-node gate importing this file would otherwise wait
+// forever for a global that is never written. Take whichever arrived, and
+// publish it, so everything downstream reads one name.
+const need = async (g, url) => {
+  const W = typeof window !== "undefined" ? window : globalThis;
+  if (!W[g]) {
+    const m = await import(url);
+    if (!W[g]) W[g] = (m && (m.default || m)) || W[g];
+  }
+  return W[g];
+};
+let depsP = null;
+export function deps() { return depsP || (depsP = loadDeps()); }
+async function loadDeps() {
+  await need("__GENRES", ROOTDIR + "engine/genres-data.js");
+  await need("__REGISTRY", ROOTDIR + "engine/registry-data.js");
+  await need("CsdTheory", ROOTDIR + "engine/theory.js");
+  await need("CsdPipes", ROOTDIR + "engine/pipes.js");
+  const E = await need("CsdEngine", ROOTDIR + "engine/csd-engine.js");
+  const K = await need("GenreKernel", ROOTDIR + "engine/genre-kernel.js");
+  const SE = await need("FaustStateEngine", FAUSTDIR + "voices/state-engine.js");
+  return { E, K, SE };
+}
+let D = null;                                    // set once deps() resolves
+export async function warmEngine() { D = await deps(); return D; }
+
+/* ---------- the register home ---------- */
+// A WHOLE LINE MOVES, OR THE LINE BREAKS. Sixteen of the twenty-one voices that
+// need a fold STRADDLE their instrument's window — rock's rhythm guitar writes
+// MIDI 22..41 against a guitar window that starts at 40 — so a per-note fold
+// would lift sixty-two notes an octave and leave two where they were. The
+// intervals are the music; what may move is the octave the whole part sits in.
+//
+// THE WINDOW IS THE PARENT'S OWN. It used to be read off a nukernel copy of the
+// instrument ranges beside a nukernel copy of the zone spans; it is now
+// SE.INSTRUMENT_RANGE and the resolved unit's own stretch bounds, which is the
+// same table the parent's per-note fold (state-engine mapEvents) uses as the net
+// under this. Two copies of that table is how the page and the tape came to
+// disagree about where a trumpet lives.
+const HOME_MAX = 3;                                // ±3 octaves is already absurd
+const REGISTER_FIT = 0.95;                         // the parent's threshold, verbatim
+const midiOfHz = (hz) => 69 + 12 * Math.log2(hz / 440);
+export function windowOf(SE, unit) {
+  const s = unit && unit.sampler;
+  if (!s) return null;                             // a synth voice folds by its own law
+  let lo = -Infinity, hi = Infinity;
+  const R = SE.INSTRUMENT_RANGE && SE.INSTRUMENT_RANGE[s.id];
+  if (R) { lo = R[0]; hi = R[1]; }
+  if (s.stretchMinHz > 0 && s.stretchMaxHz > 0) {
+    lo = Math.max(lo, midiOfHz(s.stretchMinHz));
+    hi = Math.min(hi, midiOfHz(s.stretchMaxHz));
+  }
+  if (!isFinite(lo) || !isFinite(hi)) return null;
+  // an octave is the floor: a window narrower than twelve semitones cannot hold
+  // every pitch class, so the fold would start refusing notes in key
+  return hi - lo >= 12 ? [lo, hi] : null;
+}
+export function homeFor(notes, win) {
+  if (!win || !notes.length) return 0;
+  const inAt = (k) => {
+    let inside = 0;
+    for (const n of notes) { const m = n + 12 * k; if (m >= win[0] - 0.5 && m <= win[1] + 0.5) inside++; }
+    return inside;
+  };
+  const home = inAt(0);
+  if (home >= REGISTER_FIT * notes.length) return 0;
+  let best = 0, bestIn = home;
+  for (let k = -HOME_MAX; k <= HOME_MAX; k++) {
+    const inside = inAt(k);
+    // strictly better, or as good and a smaller move: the tie-break is what keeps
+    // an already-fitting line exactly where it was written
+    if (inside > bestIn || (inside === bestIn && Math.abs(k) < Math.abs(best))) { bestIn = inside; best = k; }
+  }
+  return best;
+}
+
+/* ---------- the cast: who plays what, across the whole song ---------- */
+// Resolved exactly the way the score resolves it — the pool cast wins over the
+// genre's signature synth, the synth FONT wins over both, and `instrOf` names the
+// chair's sampled instrument. A second opinion about any of those is a band that
+// is not the one on screen.
+function castOf(bars) {
+  const seats = [];                  // global voice index -> { chair, instr, synth, tone }
+  const ix = new Map();              // recipe key -> global index
+  // WHICH DESK TRACK EACH UNIT ANSWERS TO, per box. The cast is the SONG's, so a
+  // unit key is song-wide; a desk address (fields.js chairKeys — lead / pad2 /
+  // bass / drums) is the BOX's, and the same guitar is `lead` in one box and
+  // `line2` in the next. So the mapping is per box and the desk is asked with it.
+  const addr = new Map();            // si -> { unitKey: partKey }
+  const rosters = new Map();
+  const font = isSynthFont() ? fontDef().synth : null;
+  const seatFor = (chair, instr, synth, tone) => {
+    const key = chair + "|" + instr + "|" + (synth ? synth.dsp : "") + "|" + (tone ? JSON.stringify(tone) : "");
+    let v = ix.get(key);
+    if (v == null) { v = seats.length; ix.set(key, v); seats.push({ chair, instr, synth: synth || null, tone: tone || null }); }
+    return v;
+  };
+  for (const bar of bars) {
+    const sec = SONG[bar.si];
+    if (!sec) continue;
+    let A = addr.get(bar.si);
+    if (!A) { addr.set(bar.si, A = { drums: "drums" }); rosters.set(bar.si, voiceRoster(sec)); }
+    const roster = rosters.get(bar.si);
+    for (const e of bar.ev) {
+      if (e.kind === "line") {
+        const owner = e.layer || gid(sec);
+        const vi = e.lv == null ? e.v : e.lv;
+        const over = poolInstrOf(sec, owner, vi, POOL);
+        const G = GENRES[owner] || {};
+        const gsyn = font || (over ? null : G.synth);
+        // lineOnly: the riding lead swaps to the signature synth, the chord under
+        // it stays sampled — the score's own predicate, verbatim
+        const useSyn = !!(gsyn && !(gsyn.lineOnly && e.pad && !font));
+        const chair = e.pad ? "pad" : "line";
+        e._seat = seatFor(chair, over || instrOf(owner, vi), useSyn ? gsyn : null, G.tone || null);
+        e._syn = useSyn;
+        const r = roster.find((x) => x.v === e.v);
+        if (r) A["v" + e._seat] = r.key;
+      } else if (e.kind === "bass") {
+        const bs = BASSSYNTH[sec.bassop] || null;
+        e._seat = seatFor("bass", (POOL && POOL.bass) || BASS_INSTR, bs, null);
+        e._syn = !!bs;
+        A["v" + e._seat] = "bass";
+      }
+    }
+  }
+  return { seats, addr };
+}
+
+/* ---------- the compile ---------- */
+let TL = [];                 // the bar list
+let BARS = [];               // per bar: { beats, pitched, drums, si }
+let UNITS = {};              // the cast's unit table (topology-constant)
+let KITS = {};               // kit name -> that kit's copy of it
+let STATE = null;            // the parent state the units were resolved from
+let UNROUTED = [];
+let ADDR = new Map();        // box index -> { unit key: the desk address it answers to }
+let HOMES = [], SEATS = [];  // the cast, and the octave each seat was moved by
+let totalBeats = 0;
+
+export const timeline = () => TL;
+export const barCount = () => BARS.length;
+export const unitTable = () => UNITS;
+export const parentState = () => STATE;
+export const unrouted = () => UNROUTED;
+export const stepDur = () => 60 / bpm / 4;
+export const songDurSec = () => TL.reduce((s, b) => s + b.barSteps, 0) * stepDur();
+// the register decision the last compile made, per seat — a shift nobody can
+// see is a shift nobody can check (the old window.__nuHome, kept)
+export const homes = () => HOMES.slice();
+export const seats = () => SEATS.slice();
+export const barBeatsAt = (n) => (BARS.length ? BARS[((n % BARS.length) + BARS.length) % BARS.length].beats : 4);
+
+// PURE over the current state: build the bar list, the cast and the translation.
+// Runs on every musical edit while playing (the "something changed" law), so it
+// must be a walk and nothing else — no fetch, no context, no node.
+export function compile() {
+  TL = songBars(SONG, SLOTS, GROOVE, SWING, loopOnly, { rubato: RUBATO });
+  let beat0 = 0;
+  for (const bar of TL) { bar.beat0 = beat0; beat0 += bar.barSteps / 4; }
+  if (!D || !TL.length) { BARS = []; UNITS = {}; KITS = {}; STATE = null; totalBeats = 0; return TL; }
+  const { E, K, SE } = D;
+  const { seats, addr } = castOf(TL);
+  ADDR = addr;
+
+  // ---- the register home, one decision per seat over the WHOLE song ----------
+  // The old walk decided per BOX; the cast is the song's, so the decision is too
+  // — and a chair that keeps its instrument across a key change keeps its octave
+  // with it, which is what stopped a bridge sounding an octave off its verse.
+  const probe = seats.map((s) => SE.pitchedUnit(s.chair === "pad" ? "pad" : s.chair === "bass" ? "bass" : "melody",
+    recipeProbe(s, K), { bpm, seed: 1, sampledOnly: true }));
+  const notesOf = new Map();
+  for (const bar of TL) for (const e of bar.ev)
+    if (e._seat != null && e.n != null && !e._syn) {
+      let a = notesOf.get(e._seat); if (!a) notesOf.set(e._seat, a = []);
+      a.push(e.n);
+    }
+  const home = seats.map((s, v) => homeFor(notesOf.get(v) || [], windowOf(SE, probe[v])));
+  HOMES = home; SEATS = seats;
+  for (const bar of TL) for (const e of bar.ev)
+    if (e._seat != null && e.n != null) e.home = e._syn ? 0 : home[e._seat] * 12;
+
+  // ---- the translation: once per KIT ----------------------------------------
+  // ONE KIT PER TRANSLATION, because the parent's drum lanes are named — kick,
+  // snare, hat, tom — and its own mapper reads those names for the choke law,
+  // the hat's three zones and the tom's repitch. Namespacing them per box would
+  // break every one of those. So a song with two kits is two passes, identical
+  // in the cast and different in the drums, and the box that changes kit changes
+  // the unit table's SIGNATURE — which is the parent asking for a crossfade,
+  // which is exactly what a new drummer is.
+  const rb = TL.map((bar) => ({ ...bar,
+    ev: bar.ev.map((e) => (e._seat == null ? e
+      : { ...e, kind: "line", v: e._seat, part: seats[e._seat].chair,
+          n: e.n == null ? null : e.n + (e.home || 0) })) }));
+  const kitAt = TL.map((bar) => kitOf(SONG[bar.si]) || "");
+  const kits = [...new Set(kitAt)];
+  KITS = {}; UNROUTED = []; STATE = null;
+  let pitched = null;
+  const drumsByKit = {};
+  for (const kit of kits) {
+    // every bar is present so the beat arithmetic is the song's; the bars that
+    // are not this kit's simply carry no hits
+    const bars = rb.map((b, i) => (kitAt[i] === kit ? b : { ...b, ev: b.ev.filter((e) => e.kind !== "hit") }));
+    const t = toEngine({ bars, bpm, seed: 1, kit: kit || null,
+      seat: (v) => seats[v] || null,
+      // the room is the DESK's: toEngine's own master-fx defaults would put a
+      // second reverb and a second delay under a song that already says how wet
+      // each box is (desk.js, the send mapping)
+      reverb: 0, delay: 0 }, { SE, K, E });
+    KITS[kit] = t.units;
+    drumsByKit[kit] = t.ev.drums;
+    for (const u of t.unrouted) UNROUTED.push({ ...u, kit });
+    if (!STATE) { STATE = t.state; pitched = t.ev.pitched; totalBeats = t.ev.totalBeats; }
+    // EVERY KIT'S WAVS, ON THE ONE STATE. The engine decodes a zone by looking
+    // its source id up in `state.foundSources` (live.js kickSamplerBuf) — and a
+    // source that is not there when the zone is first asked for is cached as
+    // unplayable and never retried. Keeping only the first kit's crate is
+    // therefore not "the second kit is quiet", it is "the second kit is silent
+    // for the rest of the session", which is precisely the shape of the bug this
+    // whole round is about.
+    else for (const src of (t.state.foundSources || []))
+      if (!STATE.foundSources.some((x) => x.id === src.id)) STATE.foundSources.push(src);
+  }
+  UNITS = KITS[kits[0]];
+
+  // ---- the per-bar slice -----------------------------------------------------
+  // Every event carries an absolute beat; a bar owns [beat0, beat0+beats). A
+  // groove that pushes the last sixteenth past the bar line keeps it in the bar
+  // it was written in — the same clamp songBars makes.
+  BARS = TL.map((bar, i) => ({ si: bar.si, first: bar.first, beats: bar.barSteps / 4,
+                               kit: kitAt[i], beat0: bar.beat0, pitched: [], drums: [] }));
+  const put = (arr, key) => {
+    let i = 0;
+    for (const e of arr) {
+      while (i + 1 < BARS.length && e.beat >= BARS[i + 1].beat0) i++;
+      while (i > 0 && e.beat < BARS[i].beat0) i--;
+      BARS[i][key].push({ ...e, beat: e.beat - BARS[i].beat0 });
+    }
+  };
+  put(pitched, "pitched");
+  for (const kit of kits) put(drumsByKit[kit], "drums");
+  for (const b of BARS) b.drums.sort((x, y) => x.beat - y.beat);
+  return TL;
+}
+// the minimum recipe the register probe needs — the same resolution toEngine
+// makes, asked of one seat. Kept here rather than exported from to-engine so the
+// translator has exactly one entry point.
+function recipeProbe(s, K) {
+  if (s.synth) return { model: s.synth.dsp, ...(s.synth.set || {}) };
+  const spec = (samplerLibFor(K, 1).samplerLib || {})[s.instr];
+  return spec && !spec.synth ? { model: "sampler", sampler: spec } : {};
+}
+
+/* ---------- the handoff ---------- */
+// how long bar n is, in beats — the parent's walk asks per bar
+export const barBeats = ({ serial }) => barBeatsAt(serial);
+
+// bar n, in the parent's own language, with the desk on it.
+export function barPlan(n) {
+  if (!BARS.length) return null;
+  const i = ((n % BARS.length) + BARS.length) % BARS.length;
+  const b = BARS[i];
+  const sec = SONG[b.si];
+  const A = ADDR.get(b.si) || { drums: "drums" };
+  // AUTOMATION IS WRITTEN ON THE GRID AND HEARD ON THE TAPE. A lane's beats are
+  // the box's NOMINAL beats; the bars it plays over have been warped by the
+  // tempo map. One ratio carries a lane onto the box the ear is hearing — the
+  // same ratio the old armAutomation used, and the reason it existed.
+  const bar = TL[i];
+  const ratio = bar.boxSteps > 0 ? (bar.boxNom || bar.boxSteps) / bar.boxSteps : 1;
+  const b0 = (bar.beat0 - boxStartBeat(i)) * ratio;
+  const boxBeatOf = (beat) => b0 + beat * ratio;
+  const amp = deskAmp(sec, A, boxBeatOf);
+  const pitched = [], drums = [];
+  for (const e of b.pitched) {
+    const g = amp(e.voice, e.beat);
+    if (g > 0) pitched.push(g === 1 ? e : { ...e, amp: e.amp * g });
+  }
+  for (const e of b.drums) {
+    const g = amp("drums", e.beat);
+    if (g > 0) drums.push(g === 1 ? e : { ...e, amp: e.amp * g });
+  }
+  return { ev: { pitched, drums, found: [], sfx: deskSweeps(sec, b.beats, boxBeatOf),
+                 srcById: {}, totalBeats: b.beats },
+           units: deskUnits(KITS[b.kit] || UNITS, A, sec, boxBeatOf) };
+}
+export const firstBarOfBox = (si) => TL.findIndex((b) => b.si === si && b.first);
+// where the box this bar belongs to STARTED, in song beats — the automation
+// lanes are written in box beats and the tempo map has already moved them
+function boxStartBeat(i) {
+  let j = i;
+  while (j > 0 && TL[j].barIn > 0) j--;
+  return TL[j].beat0;
+}

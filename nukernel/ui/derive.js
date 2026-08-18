@@ -139,7 +139,7 @@ export const stackOf = sec => sec.stack || [];
 export const focusOf = sec => Math.min(sec.focus || 0, stackOf(sec).length - 1);
 export const focused = sec => stackOf(sec)[focusOf(sec)];
 // WHICH LAYER OWNS EACH VOICE, as a flat list in voice order. It is the SAME
-// walk audio/mixer.js voiceRoster makes — stackOf in order, g.voices apiece,
+// walk audio/desk.js voiceRoster makes — stackOf in order, g.voices apiece,
 // an unknown genre skipped — so the two arrays are joinable BY INDEX: entry i
 // of the roster is the chair, entry i here is the genre that put it there.
 // The mixer only needs the chair; the mix table also needs the genre, because
@@ -508,7 +508,7 @@ export function sectionRender(sec, slots, songGroove, songSwing) {
 // THE ONE WALK from boxes to bars, and the two facts a bar list knows that no
 // single section can: what happens at a SEAM (the voice about to enter may
 // start before the bar line) and how long a bar actually LASTS (the tempo
-// moves). It lived inside audio/transport.js buildTimeline, so both of those
+// moves). It lived inside the transport's own timeline builder, so both of those
 // could only ever be proved in a browser. They are SCORE facts and they are
 // derived here with everything else; the transport keeps exactly the half that
 // needs the audio tier — the register home, which has to ask the sampler how

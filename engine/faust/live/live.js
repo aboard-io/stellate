@@ -254,8 +254,18 @@
         instrumentSeed: st.instrumentSeed != null ? st.instrumentSeed : (st.seed || 1),   // instrument identity rides the SONG seed, not the per-bar reseed
         _liveEdge: liveEdge, _voiceRun: voiceRun, _seamWin: true });
       const spb = 60 / st.bpm;
-      const CBEATS = Math.max(2, Math.round(st.chordEvery || (st.meter ? 6 : 8)));   // meter default mirrors buildEvents (kernel states carry explicit chordEvery; this covers hand states — odd meter)
-      const lo = ci * CBEATS, hi = lo + CBEATS;
+      // THE BAR IS AS LONG AS THE STATE SAYS — rounded to a whole beat, because for
+      // the parent's own music chordEvery is a grid and a fraction would only ever
+      // be a typo. A FOREIGN COMPOSER measures its own bars: nukernel's tempo map
+      // warps every one of them by a different ratio, and rounding that back to a
+      // beat would put the rubato on the grid it was written to leave. So it may
+      // answer `barBeats` per bar, and then the bar is ITS length and the window
+      // opens at zero (there is no chord cycle to sit inside).
+      const fedCB = (opts && opts.barBeats)
+        ? +opts.barBeats({ serial, secIdx, ci, cycIdx, st }) : 0;
+      const CBEATS = fedCB > 0 ? fedCB
+        : Math.max(2, Math.round(st.chordEvery || (st.meter ? 6 : 8)));
+      const lo = fedCB > 0 ? 0 : ci * CBEATS, hi = lo + CBEATS;
       // ...OR EVENTS THE CALLER ALREADY HAS. The parent generates its own music
       // from a state; a caller with its OWN composer does not want that — it wants
       // this engine's scheduler, voice pools, ring and mixer playing ITS notes.
@@ -270,8 +280,15 @@
       // from the tape, drums disagreeing across paths, velocity meaning two
       // different things, a render that hangs on WebKit and kills the tab). One
       // engine, one signal path; the app above it keeps its own composer and desk.
-      const ev = ((opts && opts.events) ? opts.events(one, { sec, secIdx, ci, serial, spb }) : null)
-              || E.buildEvents(one);
+      // …AND ITS OWN CAST. voiceUnits below resolves the parent's four chairs off
+      // the state; a foreign composer seats a whole band per bar (nukernel gives
+      // every voice of every box its own unit), so `events` may answer with
+      // { ev, units } and keep the unit table it built in the same breath as the
+      // notes. One object, one translator — the two cannot disagree, which is the
+      // whole point. Answer with the bare four arrays and the parent seats it.
+      const fed = (opts && opts.events) ? opts.events(one, { sec, secIdx, ci, serial, spb }) : null;
+      const ev = (fed && (fed.pitched ? fed : fed.ev)) || E.buildEvents(one);
+      const fedUnits = (fed && fed.units) || null;
       // SECTION IDENTITY IS THE INDEX, NOT THE NAME. This walk selects secs[secIdx]
       // — the name is only a label — and the app mutates the playing state under it
       // (a glide across a genre boundary replaces st.sections wholesale with a form
@@ -305,9 +322,12 @@
       // only ever fires inside a single pumpOnce/priming loop (up to 24 bars back to
       // back — exactly the burst the finding is about) and is a provable no-op in
       // steady state, where one bar is produced per pump tick.
-      const memoKey = cur0 === memoSec && sec.fill === memoFill && sec.sweep === memoSweep && st === memoSt;
+      // (a fed cast is per-bar by construction — the box under the playhead names
+      // it — so the burst memo cannot speak for it and is skipped outright.)
+      const memoKey = !fedUnits && cur0 === memoSec && sec.fill === memoFill && sec.sweep === memoSweep && st === memoSt;
       let units, fxParams;
-      if (memoKey && memoUnits) { units = memoUnits; fxParams = memoFx; }
+      if (fedUnits) { units = fedUnits; fxParams = SE.fxParams(one); }
+      else if (memoKey && memoUnits) { units = memoUnits; fxParams = memoFx; }
       else {
         units = SE.voiceUnits(E, one);
         fxParams = SE.fxParams(one);
@@ -800,6 +820,21 @@
         setTimeout(() => teardownSamplerChain(old), 8000);   // drain tails, then free
         samplerPlayers.delete(key); ent = null;
       }
+      // THE DESK MOVES; THE CHAIN IS BUILT ONCE. A chained voice taps its dry/rev/
+      // del off the chain OUTPUT through three gains created at build time — so a
+      // host that changes a unit's sends per bar (nukernel's desk, whose reverb
+      // send is a box field a finger can move) would be heard on every unrouted
+      // voice and on none of the chained ones. Re-read them here, where the bar's
+      // own unit is in hand; unchanged numbers write the same value and cost
+      // nothing.
+      if (ent && ent.chain) {
+        const want = [u.dry != null ? u.dry : 1, u.rev || 0, u.del || 0];
+        for (let i = 0; i < 3; i++) {
+          const g = ent.chain.sends[i];
+          if (g && g.gain.value !== want[i])
+            try { g.gain.setTargetAtTime(want[i], ctx.currentTime, 0.02); } catch (e) { g.gain.value = want[i]; }
+        }
+      }
       if (!ent) {
         let dests = foundDests, chain = null;
         if (ins && SP.buildInsertNodes) {
@@ -1257,7 +1292,7 @@
     }
 
     // ONE authoritative section/ci/serial walk, shared with the WAV-FIRST path (makeWalk).
-    const stepWalk = makeWalk(getState, E, SE, (opts && opts.startBar) | 0);   // drop-in at the bookmarked measure
+    const stepWalk = makeWalk(getState, E, SE, (opts && opts.startBar) | 0, opts);   // drop-in at the bookmarked measure; `opts` carries the foreign-composer seam (opts.events)
 
     // decide glide (feedBar into the one stream) vs crossfade (new stream + ring)
     function produceAndRoute() {
@@ -2342,7 +2377,7 @@
 
     // ── THE WALK: the one authoritative section/ci/serial walk, shared with the ring
     // conductor (makeWalk). Polls getState() each bar; steering takes effect next bar. ──
-    const stepWalk = makeWalk(getState, E, SE, (opts && opts.startBar) | 0);   // drop-in at the bookmarked measure
+    const stepWalk = makeWalk(getState, E, SE, (opts && opts.startBar) | 0, opts);   // drop-in at the bookmarked measure; `opts` carries the foreign-composer seam (opts.events)
 
     // ── the producer workers: TWO, ping-ponged per gen (gen%2) so a new gen renders
     // its first segment IN PARALLEL with the OLD gen still feeding+playing (the ring

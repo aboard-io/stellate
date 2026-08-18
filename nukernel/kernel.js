@@ -2196,7 +2196,7 @@
   // can do — and they are the two transitions that actually mark a boundary
   // rather than smoothing one. (The third family, the filter sweeps, cannot live
   // here at all: they are a property of the SOUND, not of the event stream, so
-  // they are automation on the section's mixer channel — see audio/mixer.js.)
+  // they are automation on the section's desk track — see audio/desk.js.)
   // THE DYNAMIC ARC IS `env`, STRENGTHENED — not a second box field, and the
   // argument is not economy, it is that there is only one question here. `env`
   // already is "level over the section": one curve, multiplied onto the

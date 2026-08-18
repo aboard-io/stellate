@@ -27,9 +27,7 @@
 import { GENRES, ROLES } from "./deps.js";
 import { SONG, curSection, on } from "./state.js";
 import { gid } from "./derive.js";
-import { carrierNote, isCarrying } from "../audio/bounce.js";
-import { playing, playingSec } from "../audio/transport.js";
-import { lastLoadReport } from "../audio/graph.js";
+import { playing, playingSec, routeNote, onMedia, lastLoadReport } from "../audio/live.js";
 
 const readoutEl = document.getElementById("readout");
 const genreEl = document.getElementById("posgenre");
@@ -88,7 +86,7 @@ function describe() {
   readoutEl.classList.remove("msg");
   const sec = here();
   if (!sec) return;
-  const note = carrierNote();
+  const note = routeNote();
   secEl.textContent = (sec.role ? ROLES[sec.role] : "—") + (note ? "  " + note : "");
 }
 
@@ -134,12 +132,11 @@ on("return", d => {
    sits IN row 2, and the unfolded line replaces nothing, it just prints
    after the chip until the next tap folds it away again.
 
-   audio/graph.js publishes the numbers (see its own comment for what `load`
-   IS and is not); this file only ever reads them and adds ONE fact graph.js
-   is structurally forbidden to know — audio/bounce.js's isCarrying(), which
-   path the ear is actually on right now. Graph sits BELOW bounce in the
-   layer order (bounce imports graph, never the reverse), so "which path is
-   audible" can only be answered from up here, where both are in reach. */
+   audio/live.js publishes both halves now: the parent engine's own load ratio
+   and the ROUTE it opened. There used to be a second fact here that no single
+   module could answer — whether the rendered carrier or the live graph had the
+   ear — because they were two engines and neither could see the other. One
+   engine has one output, and it knows which one it is. */
 const loadChip = document.createElement("button");
 loadChip.type = "button";
 loadChip.className = "loadchip";
@@ -157,10 +154,10 @@ let loadOpen = false;
 try { loadOpen = localStorage.getItem(LOADSTORE) === "1"; } catch (e) { /* private mode */ }
 let lastLoad = { load: 1, drops: 0, voices: 0, nodes: 0 };
 function paintLoad() {
-  const path = isCarrying() ? "tape" : "live";
+  const path = onMedia() ? "media" : "stream";
   loadChip.classList.toggle("warn", lastLoad.load < 0.9);
   loadChip.classList.toggle("bad", lastLoad.load < 0.6);
-  loadChip.classList.toggle("carrier", isCarrying());
+  loadChip.classList.toggle("carrier", onMedia());
   readoutEl.classList.toggle("loadopen", loadOpen);
   // one line, numbers first — the same "engine 0.97x" idiom the parent's
   // chyron already reads this exact ratio out in, so a reader of both apps

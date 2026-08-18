@@ -61,14 +61,14 @@ const readRubato = () => {
 };
 export let RUBATO = readRubato();
 // THE MASTER BUS belongs to the SONG, not to the page (song.js says why), so it
-// rides here with the boxes rather than in the audio tier: audio/graph.js reads
-// it, audio/bounce.js renders through it, and neither owns it. null is the whole
-// of the old behaviour — song.js normalizes an empty spec away, so there is one
-// spelling of "no globals" for the graph's absent-is-today branch to key on.
+// rides here with the boxes rather than in the audio tier: audio/desk.js reads
+// it and the parent engine renders it, and neither owns it. null is the whole of
+// the old behaviour — song.js normalizes an empty spec away, so there is one
+// spelling of "no globals" for the absent-is-today branch to key on.
 export let MASTER = null;
 // …AND THE SHARED-BUS TRIMS beside it, on the same terms: the song's, not the
-// page's, null = the graph exactly as built (song.js validates; audio/graph.js
-// applies; audio/bounce.js bakes them into the carrier).
+// page's, null = the engine's buses exactly as the state resolves them (song.js
+// validates; audio/desk.js writes them onto the units the engine is handed).
 export let BUSES = null;
 // …AND THE GROOVE (2026-08-16): a song fact, the way the tempo is — one
 // drummer for the record, not one per section. It was a box field once, and
@@ -197,8 +197,8 @@ export const curSection = () => SONG[Math.min(viewSec, SONG.length - 1)];
 //                        transport recompiles (register homes are per
 //                        instrument) and fetches what the new chair needs,
 //                        the bounce re-cuts the carrier, the board relabels
-//   "transport:state"    published by audio/transport — playing flipped
-//   "transport:section"  published by audio/transport — the sounding box moved
+//   "transport:state"    published by audio/live — playing flipped
+//   "transport:section"  published by audio/live — the sounding box moved
 //   "refresh"            assets finished loading mid-play; views re-render
 //   "page"               published by ui/pages — the phone deck switched pages
 //   "status"             {text} for the #readout line (readout.js listens)

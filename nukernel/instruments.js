@@ -77,7 +77,7 @@
   //          sweep left as they get lower. The crash takes the empty side: the
   //          ride already owns the right, and a real kit has cymbals on both.
   //   room   how much of it goes to the DRUM ROOM — a short ambience send that
-  //          is NOT the section's reverb (audio/graph.js buildRoomBus). Kick
+  //          is NOT the section's reverb (the engine's own room). Kick
   //          barely, snare and toms plenty, hats a hint: that ratio IS the
   //          sound of a kit in a room rather than twelve samples in a line.
   //   punch/ TRANSIENT SHAPING, per hit, as a gain envelope on the sample
@@ -215,7 +215,7 @@
     vibraphone: [53, 89], kalimba: [60, 96],
     // music box: the parent's own window, RESTORED. It was deliberately absent
     // for one release because a bare per-note fold would have mangled trap's
-    // melody — but the register home (audio/transport.js) now moves the WHOLE
+    // melody — but the register home (audio/plan.js) now moves the WHOLE
     // line by octaves first, contour intact, so trap's plinks land in the
     // register a music box actually has tines for.
     music_box: [72, 100],
@@ -426,7 +426,7 @@
   // VELOCITY and picks a velocity LAYER — a genuinely differently-recorded
   // sample for a soft note — and its comment records the measured bug where a
   // mix-staged gain capped that velocity at 61 over 10,109 notes so every forte
-  // layer was unreachable. audio/voices.js now passes velocity through to it
+  // layer was unreachable. the engine's own sampler passes velocity through to it
   // (correct the day a layered font lands, see there). But the precondition
   // fails here: measured on the shipped registry, 123 samplers / 629 zones,
   // zone keys are file,root,lo,hi,loop,ls,le — no vlo/vhi, ONE layer per
@@ -473,7 +473,7 @@
   //          40 ms; a bowed one takes a sixth of a second.
   //   hand   0..1, how much of this sound IS the strike — it scales BOTH the
   //          amp-attack shortening and the sample-start offset (see
-  //          audio/voices.js). A plucked string is all hand; a string section
+  //          the parent's STRIP stage). A plucked string is all hand; a string section
   //          has none.
   //
   // TWO FAMILIES ARE ABSENT ON PURPOSE, and absent means the old path exactly:

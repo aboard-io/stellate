@@ -573,7 +573,7 @@
   // saved names and are what BUS_FIELDS names bus 1, bus 2 and bus 3 — so a
   // song written before this loads with its reverb and echo intact and simply
   // finds a third send it never used. The reason it is sends and not inserts
-  // is measured rather than tidy: audio/graph.js's head note counts a
+  // is measured rather than tidy: the engine's own bus measurement counts a
   // compressor or a convolver as the same arithmetic feeding one voice or
   // twenty, so a treatment costs a CONSTANT on a bus and a MULTIPLE on a
   // strip.
@@ -600,7 +600,7 @@
   //
   // mute/solo are the two that are NOT enums, because they are not choices
   // between values — they are the desk's own pair, and solo is the one control
-  // here that reaches OTHER parts (audio/mixer.js partSpecs: any solo in the
+  // here that reaches OTHER parts (audio/desk.js partsOf: any solo in the
   // box mutes every part that is not soloed).
   const PARTMIX = [
     { key: "rev",  table: SENDS,  labels: SENDLABEL,  default: null },
@@ -678,7 +678,7 @@
   // section in one stereo module" — read in its own order (transport wobble →
   // grit → comp → makeup → tone tilt → tape saturation → clip), plus the two
   // things live.js adds on top of it (the glue/makeup/brickwall bus and the
-  // MASTER TOP ceiling, both already in audio/graph.js buildMasterChain). What
+  // MASTER TOP ceiling, both already in the parent's master stage). What
   // this file does is give those numbers NAMES a finger can choose between.
   //
   // ABSENT IS TODAY, the same law `parts` carries: a song with no `master`
@@ -689,7 +689,7 @@
   // default" — a chip toggles off (ui/mixtbl.js), the session bank's pickers
   // carry an empty "—" (ui/chrome.js) — so an explicit off/flat/normal would be
   // a SECOND spelling of absent, and two spellings of a default is exactly what
-  // song.js and audio/graph.js both spend a branch normalizing away.
+  // song.js and audio/desk.js both spend a branch normalizing away.
 
   // DRIVE — fx_bus `grit`: tanh drive with a level compensation and a mix that
   // reaches 1 by grit=0.125, so the low settings are genuinely a hair of it.
@@ -875,7 +875,7 @@
   // rather than feedback — and the cycles that DO contain a delay are a
   // runaway with a shared reverb's own tail inside them, which is worse. So
   // the plan is computed here, once, over the three buses, and the audio tier
-  // never builds an edge this refuses (audio/graph.js applyBusSends) while the
+  // never builds an edge this refuses while the
   // board shows the refusal on the bar the person just moved.
   //
   // GREEDY, IN REGISTRY ORDER, so the answer is deterministic and the same on
@@ -989,7 +989,7 @@
   /* ---------- automation ---------- */
   // A box's `auto` list is the REAL automation surface: [{param, points:
   // [[beat, value], …], curve}], armed on the section's mixer channel every
-  // pass (audio/mixer.js armAutomation) and rendered identically by the
+  // pass (audio/desk.js deskAmp folds it per note) and rendered identically by the
   // bounce. The PALETTE writes it through shape presets — off/open/close/
   // rise/fall/pump — which bake a point list for the section's current length
   // in beats. Hand-drawn breakpoints can land later without the save shape
@@ -1191,7 +1191,7 @@
     // above — three sends and nothing else, no insert. Type "parts"
     // because it is neither an enum nor a flat list — song.js validates the
     // map shape, exactly as it does the `vox` object and the `auto` entries.
-    // Absent (the default) is the whole of today: audio/mixer.js builds no
+    // Absent (the default) is the whole of today: audio/desk.js writes no
     // sub-bus at all and every voice lands on the section input as before.
     { key: "parts",   scope: "box",   type: "parts", table: PARTNAMES,
       labels: PARTLABEL, tab: "fx", group: "per part", default: null },
@@ -1207,7 +1207,7 @@
     // ---- the board (2026-08-16) — appended, never reordered ----------------
     // the SECTION strip's fader offset, the same dB-over-the-automated-value
     // law as PARTMIX `fader` (see the note there): it multiplies the channel's
-    // resolved `lvl` in audio/mixer.js chanSpec, so the enum level, the
+    // resolved `lvl` in audio/desk.js sectionOf, so the enum level, the
     // composer's arc and a level automation all keep meaning what they meant.
     { key: "fader",   scope: "box",   type: "num", min: -24, max: 12,
       tab: "fx",     group: "fader",                     default: null },

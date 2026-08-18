@@ -543,7 +543,7 @@
       //     box may simply not have a chair for — swap the genre and it is
       //     back — so an address is dropped only when it is not an address at
       //     all. A key naming a chair the current stack lacks is KEPT: the
-      //     mixer ignores it (audio/mixer.js partSpecs walks the box's real
+      //     the desk ignores it (audio/desk.js partsOf walks the box's real
       //     chairs), and losing it here would mean a genre A/B silently ate
       //     the mix you set on the way past.
       //   the VALUE is rejected, exactly like the box's own send or level —
@@ -641,7 +641,7 @@
     // lose itself), the VALUE is REJECTED (an unknown ceiling means the file is
     // from a build this one cannot honestly play back). Normalized on the way
     // through, so "no master" has exactly one spelling — which is what lets
-    // audio/graph.js key its absent-is-today branch on a null.
+    // audio/desk.js key its absent-is-today branch on a null.
     if (s.master != null) {
       if (typeof s.master !== "object" || Array.isArray(s.master))
         err("master", s.master, "a map of global -> value");
@@ -664,7 +664,7 @@
     // way its author left it. Same filter split as master: an unknown BUS or
     // KNOB is dropped (that vocabulary will grow and shrink), an unknown VALUE
     // rejects. Normalized to null when nothing survives — absent keeps one
-    // spelling, and audio/graph.js keys its as-built branch on it.
+    // spelling, and audio/desk.js keys its as-built branch on it.
     if (s.buses != null) {
       if (typeof s.buses !== "object" || Array.isArray(s.buses))
         err("buses", s.buses, "a map of bus -> knob values");

@@ -5,11 +5,11 @@
 // of a hand-copied eleven-statement epilogue.
 //
 // Layer graph: ui view — imports state/audio; the play button is the page's
-// user gesture, which is why initAudio rides transport.startAt.
+// user gesture, which is why the engine is opened inside startAt.
 import { GENRES, FONTS, compose, PRESETS, GROOVELABEL,
          SWINGLABEL } from "./deps.js";
 import { bpm, vol, loopOnly, setBpm, setVol, setLoopOnly, adoptSong, defaultSong,
-         clearStore, loadErrorText, saveFile, loadFile, commit, on,
+         clearStore, loadErrorText, saveFile, loadFile, commit, on, emit,
          GROOVE, setGroove, SWING, setSwing, DEFAULT_BPM } from "./state.js";
 import { buzz, pointers } from "./touch.js";
 // the WRITE picker lists genres in the same order the GENRE menu does — by
@@ -18,9 +18,9 @@ import { buzz, pointers } from "./touch.js";
 // menu banks; two surfaces sorting the same list two different ways is how a
 // person learns a place in a list that is not there on the other screen.
 import { chronoGenres } from "./palette.js";
-import { playing, startAt, stop, ensureAssets } from "../audio/transport.js";
-import { initAudio } from "../audio/graph.js";
-import { setFont, fontDef, FONT } from "../audio/assets.js";
+import { playing, startAt, stop } from "../audio/live.js";
+import { warmEngine } from "../audio/plan.js";
+import { setFont, fontDef, FONT } from "../audio/fonts.js";
 import { status } from "./readout.js";
 
 const $ = id => document.getElementById(id);
@@ -41,7 +41,7 @@ on("transport:state", d => {
 
 /* ---------- the song-loop toggle ---------- */
 // ON, THE DEFAULT, IS THE SILENCE OF DOING NOTHING: the bar list has always
-// wrapped forever (audio/transport.js tick(): nextBar cycles mod TL.length),
+// wrapped forever (audio/live.js: the bar walk cycles mod the bar count),
 // so the toggle's "on" state needs no code at all. OFF asks the scheduler to
 // do the one thing it was never built to — stop at the end of a single pass
 // — and transport.js's own nextBar/TL are module-private, not this lane's to
@@ -235,10 +235,16 @@ fader($("vol"), 80);
   }
   sel.value = FONT;
   sel.addEventListener("change", async e => {
-    setFont(e.target.value);
-    initAudio();                       // a select change is a user gesture
+    // THE FONT IS THE KERNEL'S. setFont registers it with engine/genre-kernel.js
+    // and the next compile resolves every instrument through it — there is no
+    // second zone cache on this page to warm any more (audio/fonts.js).
+    const { K } = await warmEngine();
     status("loading " + fontDef().label + "…");
-    await ensureAssets(false);
+    await setFont(e.target.value, K);
+    // the cast resolves its instruments through the kernel's active font, so a
+    // font change is a band change — the same signal a recast sends, and the
+    // same recompile it earns (audio/live.js `on("pool", …)`)
+    emit("pool");
     commit("box");                     // the sound changed: re-render, recompile
   });
 }

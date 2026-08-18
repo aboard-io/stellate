@@ -10,8 +10,8 @@
 // a stronger ordering guarantee than app/'s classic tier ever had.
 //
 // LAYER GRAPH (one-way, stated once here and enforced by import direction):
-//   deps -> state -> derive -> audio/graph -> audio/assets -> audio/voices
-//        -> audio/mixer -> audio/transport -> ui views (readout,
+//   deps -> state -> derive -> audio/to-engine -> audio/desk -> audio/plan
+//        -> audio/live -> ui views (readout,
 //        songrow, palette, editor, mixtbl, chrome) -> main
 // audio never imports a ui VIEW module; ui views may import audio; state
 // publishes events, it does not draw; derive is pure over its arguments.
@@ -69,7 +69,7 @@ export const { instrOf, familyOf, BASS_INSTR, DRUMDIR, DRUMFILE, FONTS, BASSSYNT
                // the machine kits' place in that mix, and the ONE merge over
                // DRUMMIX that the kit desk and the drum player both read
                MACHINEMIX, mixFor, laneKey,
-               // the per-family DYNAMIC RESPONSE (audio/voices.js) — the same
+               // the per-family DYNAMIC RESPONSE (the parent's STRIP stage) — the same
                // family walk stripFor uses, answering timbre instead of mix.
                // `dynCurve` is the arithmetic; the player only writes it onto
                // AudioParams, so the table and the sound cannot drift apart
@@ -90,7 +90,7 @@ export const SAMPLERS = (REG && REG.SAMPLERS) || {};
 // the parent's espeak organ and found-player's pitch measurer. The singer
 // came out on 2026-08-17 — the tombstone is in kernel-daw.html — and with it
 // the only reader either global ever had on this page. found-player is still
-// SCRIPTED in, because audio/press-window.js's need() takes window.FoundPlayer
+// SCRIPTED in, because audio/plan.js's need() takes window.FoundPlayer
 // as a preload rather than importing it again.)
 
 // ---- the bench (nukernel/lab.js), LOADED ON DEMAND ----

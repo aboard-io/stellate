@@ -72,7 +72,7 @@ import { toggle } from "./palette.js";
 import { buzz, pointers } from "./touch.js";
 import { setPage } from "./pages.js";
 import { openFader, refresh as refreshFader } from "./popfader.js";
-import { playing, getPosition, passAt } from "../audio/transport.js";
+import { playing, getPosition, passAt } from "../audio/live.js";
 
 /* ---------- the page's insides ---------- */
 // Built HERE, into kernel-daw.html's #composewrap (the page section owns only

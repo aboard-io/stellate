@@ -2200,6 +2200,18 @@
       // wavOut via this one fxParams choke point.
       shelf: MASTER_AIR_SHELF_DB,
       mcut: 21000, scmix: 0,
+      // ── THE TAPE AND THE GLOBAL ROOM. fx_bus has carried `wob` (wow+flutter
+      // on a fractional delay), `tsat` (the level-preserving head saturation)
+      // and `mrev` (a little of the DRY mix into the reverb, so the whole mix
+      // shares one room) since the fx wings, and nothing ever WROTE them — the
+      // renderer left the sliders at their compiled defaults. A caller with a
+      // master surface of its own (nukernel's tape / space chips) had nowhere to
+      // land, so it built a second tape machine in WebAudio. Emitted here with
+      // the sliders' OWN defaults, so every existing state writes exactly the
+      // value the DSP already had: byte-identical, and now reachable.
+      wob: clamp(state.wob || 0, 0, 1),
+      tsat: clamp(state.tsat != null ? state.tsat : 0.18, 0, 1),
+      mrev: clamp(state.mrev != null ? state.mrev : 0.07, 0, 0.5),
     };
   }
   const MASTER_AIR_SHELF_DB = -3;   // dB above the fx_bus AIR_FC (8 kHz) — the headphone ask
@@ -2560,6 +2572,12 @@
   }
 
   return { WAVES, clamp, cpspch, MODEL_DYN, mergedInstruments, insertChain, pitchedUnit, voiceUnits, fxParams, fxLabels, reverbColor, REVERB_COLORS, autoTune, masterMb, mapEvents, buildSchedule, COST, unitCost, stateCost, effectivePool, BUDGET, trimToBudget, stemClass, STEM_COST_MIN, pickSampledId, genreTagOf, STRIP_PROFILES,
+    // the instrument's MUSICAL range, published because a caller with its own
+    // composer needs the same answer this file's per-note fold uses: nukernel
+    // moves a WHOLE LINE by octaves to sit in its instrument's register, and a
+    // second copy of this table is how the page and the tape came to disagree
+    // about where a trumpet lives.
+    INSTRUMENT_RANGE,
     // MASTERING STAGE surface (renderers + test/unit/mastering.test.js)
     panGains, notePan, reverbScale, collisionCarve, MASTER_PAN };
 });

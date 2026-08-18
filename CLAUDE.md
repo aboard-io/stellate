@@ -535,16 +535,16 @@ docs in `docs/`.
     `npm run test:unit` runs them (concurrently, via `test/run.js`); before that
     runner existed nothing globbed them at all and gates only ever ran if
     somebody named the file.
-  - `test/browser/` (47) + `test/starcruise/` (8) — the gates that launch real
+  - `test/browser/` (45) + `test/starcruise/` (8) — the gates that launch real
     chromium via `test/lib/probe-harness.js`. `npm run test:browser` globs
     exactly these two folders and nothing else. They `goto /index.html` (or
     `test/browser/live-test.html`, the FaustLive harness page) and read the
     `window.__` debug hooks. `starcruise/` is the WebGL 3D-flight cohort;
     its three PURE proofs live in `unit/` (`flight`/`planet`/`traits`), which is
     what keeps the browser glob true.
-  - `test/probes/` (8) — `<name>.probe.js`, hand-run instruments, not gates and
+  - `test/probes/` (7) — `<name>.probe.js`, hand-run instruments, not gates and
     in no npm script (`reverb` `wah` `mbcomp` `autotune` are offline faust;
-    `modeld` `synthfont` `vapor` `nukernel-return` drive chromium).
+    `modeld` `synthfont` `vapor` drive chromium).
   - `test/lib/` — shared, never executed as a gate: `probe-harness.js` (static
     server + chromium + `ensureStarcruise`), `fixtures.js` (the KERNEL-V4
     byte-stability harness), `comment-only.js`, `margin-baseline.json`.
@@ -581,7 +581,23 @@ docs in `docs/`.
 A self-contained mobile hardware DAW inside stellate: **87 genres**, a miniature
 kernel of its own. Live at test.stellate.app/nukernel/kernel-daw.html; gates at
 `node test/unit/nukernel.test.js` (~418k checks, ~2 min) and browser
-`test/browser/nukernel-audio.test.js` + `nukernel-survival.test.js`.
+`test/browser/nukernel-engine.test.js` (chromium) + `nukernel-webkit-tape.test.js`
+(webkit — the only gate in the repo that asks Safari anything).
+
+**ONE ENGINE. nukernel does NOT have an audio engine and must not grow another.**
+It had one — 7,753 lines across `audio/transport.js` (its own scheduler),
+`mixer.js` (its own channel strips), `graph.js` (its own master + reverbs),
+`bounce.js` (its own offline render), `voices.js` (its own voice routing),
+`assets.js`, `survival.js` and `press-*.js` — every one of them a second copy of
+something `engine/faust/` already does, and every bug of 2026-08-16..17 was a
+SEAM between the two (the desk absent from the tape, a different 606 on each
+path, velocity meaning a filter here and a fader there, and a render that never
+terminated on WebKit, which killed the tab on iOS). All nine came out on
+2026-08-18. What plays now is `FaustLive.exploreLive` — the parent's scheduler,
+voice pools, ring, buses, master chain, reverbs and WAV-first mobile path — fed
+through two one-line seams it already carried: `opts.events` (the caller's own
+notes) and `opts.barBeats` (the caller's own bar lengths). `nukernel.test.js`
+§76 is the proof it stays out.
 
 **nukernel DOES NOT SING, and must not be taught to again.** It briefly carried
 its own espeak singer (`sing.js` + `audio/sing.js` + `syllabary.js`), borrowing
@@ -605,9 +621,11 @@ would move it).
 every control defined once, validation/defaults/palette rows/dispatch derive from
 it) → `song.js` (pure loader, typed errors, clamping) → `instruments.js` →
 `compose.js` → `presets.js`. ES modules for UI/audio: `ui/deps.js` →
-state (adoptSong/commit bus, bpm/vol in state) → derive → `audio/` modules
-(graph/assets/voices/mixer/transport/bounce/survival) → UI views → `main.js`.
-Audio never imports a view; transport publishes position.
+state (adoptSong/commit bus, bpm/vol in state) → derive → `audio/` (FIVE modules,
+and none of them makes a sound: `to-engine.js` the bridge into the parent's event
+shape, `plan.js` the compile + the per-bar handoff, `desk.js` the mix as a MODEL,
+`live.js` the driver over `FaustLive`, `fonts.js` the soundfont choice) → UI views
+→ `main.js`. Audio never imports a view; `live.js` publishes position.
 
 **Transform types:** the original kernel's five, plus `g.period` — a per-bar
 operator word (a section speaks in sentences); `pipes` —
@@ -623,12 +641,31 @@ field carrying the record's own tonic (compose.js derives one per genre and
 stamps every section; the truck-driver lift and the relative-minor bridge are
 the only things that move off it), applied after registration.
 
-**Mobile survival via offline bounce:** the song is a closed finite loop, so
-`bounce.js` renders it whole on an OfflineAudioContext through the same
-builders/bar-walk as live, keeps it looping muted in a gesture-unlocked `<audio>`
-(WAV-FIRST law, never MediaStreamDestination), and hide/lock is a volume swap at
-matching phase. Degrades to sampled-only, never silent. Channels are per-box
-identity; automation is point lists armed per pass.
+**Mobile survival is the parent's:** `exploreLive` takes the WAV-FIRST route on a
+phone (a real `<audio>` element fed rendered media segments — docs/WAV-FIRST.md)
+and the SharedArrayBuffer ring on desktop, and chooses between them itself.
+nukernel's job is to bound the failure: `audio/live.js` gives the open a DEADLINE
+(45 s), a CEILING (two attempts — the stream, then the media route) and a
+demotion that is WRITTEN DOWN (`window.__nuBounce().capped` carries a reason)
+rather than retried. An unbounded retry is what turned a WebKit quirk into a dead
+tab, and there is no third attempt and no timer that starts one.
+
+**The desk is a surface over the parent's buses**, not a graph: `desk.js` names
+where every control lands — box fader/level → the unit's `lvl`, pan → `pan`, part
+mute (and a solo elsewhere) → `lvl` 0 so a mute CUTS, EQ/family tone/seat shading
+→ the unit's `sampler.strip` bands, reverb send → `rev`, echo → `del`, room → the
+drum units' `rev`, the motion filter → the parent's own master `sweep` lane, and
+`level` automation folded per NOTE (a `pump` is faster than a bar). The MASTER strip lands on the parent's own fx_bus — drive→`grit`, glue→`comp`,
+tape→`wob`+`tsat`, space→`mrev` (fx_bus has carried those three sliders since the
+fx wings and nothing ever wrote them; `fxParams` now emits them at the DSP's own
+defaults, so every other caller is byte-identical). Character chips land as
+per-VOICE inserts rather than a shared bus — a real difference in the tails, and
+written down. FOUR things have no home and the file says so rather than
+approximating them: `hpf` (the mot "rise" wants a master highpass; the parent has
+a lowpass ceiling and no floor), master `width` (a mid/side trim — the parent gets
+width from placement), master `tilt` (a shelf pair, where the parent's tone stage
+is a pair of cuts) and `ceiling.push` (a gain into a limiter whose threshold is
+fixed in the DSP).
 
 **Design language (as of 2026-08-17):** one ROW per section with named cells and
 tap-for-popup menus. FOUR pages (COMPOSE / ARRANGE / MIX / LAB) — compose is the
@@ -653,23 +690,22 @@ assertion can prove is proven pure-node in seconds.
 `compose.js` (108 KB), `presets.js` (49 KB), `lab.js` (78 KB, workbench),
 `promote-genre.js` (26 KB), `inherit.js` (33 KB), `genealogy.js` (17 KB),
 `hw.css` (11 KB), `kernel-daw.html` (19 KB), `kernel-daw.css` (130 KB),
-`audio/` (bounce/survival/voices/transport/mixer/graph/assets), `ui/` (views), docs
+`audio/` (to-engine/plan/desk/live/fonts — no engine), `ui/` (views), docs
 `GENEALOGY.md` + `INHERITANCE.md`.
 
-**Gates and this box:** `nukernel-audio` sweeps EVERY genre (the list is derived
-from genres.js, so it grew from 45 to 87 with the rooms) and now takes the better
-part of an hour on
-a sustained-idle box; something about this machine's environment reaps long-lived
-chromium under load. Instruments decode on a 60 ms-yield queue, so settle timing
-matters — short probes may read silence that longer settles read as audible. Run
-sweeps only when loadavg < 1 for 2+ minutes; never conclude "silent genre" from
-a fast probe. AND EVERY BROWSER GATE MUST NAVIGATE: since the single-layout
-shell landed, `nukernel-audio` and `nukernel-survival` carry a `goPage()` helper
-and hop to the page a surface lives on before touching it. `nukernel-drums`
-(its `deskUI` clicks `.mrow` cells on the MIX page) and `nukernel-groove` (it
-drives `#preset`/`#groove`/`#swing`, now inside a CLOSED `<details>` on Mix)
-have NOT been given one and are expected to fail on actionability until they
-are — a fix, not a mystery.
+**Gates and this box:** the four browser gates over the old audio tier
+(`nukernel-audio` / `nukernel-drums` / `nukernel-bounce` / `nukernel-survival`)
+went out with the engine they gated — a gate for a deleted engine is dead weight
+— and `nukernel-engine.test.js` replaced all four: it plays three genres on the
+real page and asks the ARTIFACT whether the sound is FaustLive's own handle,
+whether every unit resolves to a real module, whether a fader/send/mute moves the
+numbers the engine is handed, and whether the failure is bounded. The four
+carrier probes (`nukernel-block` / `nukernel-return` / `nukernel-load` /
+`nukernel-section`) went with them. EVERY BROWSER GATE MUST NAVIGATE: since the
+single-layout shell landed, a gate has to click the rail key before touching a
+surface on another page — `nukernel-groove` (it drives `#preset`/`#groove`/
+`#swing`, now inside a CLOSED `<details>` on Mix) has NOT been given one and is
+expected to fail on actionability until it is: a fix, not a mystery.
 
 ## Deployment
 

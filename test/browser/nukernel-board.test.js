@@ -114,7 +114,7 @@ let checks = 0; const ok = (m) => { checks++; console.log("  ok:", m); };
   // differs from section 0's — the model's own answer, then the DOM's
   const j = await page.evaluate(async () => {
     const [stm, mx] = await Promise.all([
-      import("/nukernel/ui/state.js"), import("/nukernel/audio/mixer.js")]);
+      import("/nukernel/ui/state.js"), import("/nukernel/audio/desk.js")]);
     const t = (sec, k) => JSON.stringify(mx.resolvedPart(sec, k));
     const k0 = mx.partKeysOf(stm.SONG[0]);
     for (let i = 1; i < stm.SONG.length; i++) {
@@ -146,7 +146,7 @@ let checks = 0; const ok = (m) => { checks++; console.log("  ok:", m); };
     // does not sound
     const expectIdle = await page.evaluate(async (n) => {
       const [stm, mx] = await Promise.all([
-        import("/nukernel/ui/state.js"), import("/nukernel/audio/mixer.js")]);
+        import("/nukernel/ui/state.js"), import("/nukernel/audio/desk.js")]);
       return mx.partKeysOf(stm.SONG[n]);
     }, j);
     const wrong = sj.filter(r => r.idle === expectIdle.includes(r.part));

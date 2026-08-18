@@ -9,11 +9,10 @@
 import { ROLES } from "./deps.js";
 import { SONG, readStore, adoptSong, defaultSong, on, emit } from "./state.js";
 import { stackLabel } from "./derive.js";
-import * as transport from "../audio/transport.js";
-// the survival tier (context recovery + MediaSession + the bounce carrier):
-// importing it IS the wiring — it registers its listeners, its gesture hook
-// and its subscriptions at module evaluation, exactly like the views below
-import "../audio/survival.js";
+import * as transport from "../audio/live.js";
+// (audio/survival.js hung here — context recovery, MediaSession, the carrier
+// handoff. All three are the parent engine's own machinery, so importing
+// audio/live.js is now the whole of that wiring.)
 // the views: importing them IS the wiring — each subscribes to the events it
 // cares about and binds its own DOM listeners at module evaluation.
 // (There is no ui/arrange.js — the MOVE tracker went with "the row and the
@@ -25,9 +24,9 @@ import * as songrow from "./songrow.js";
 import "./palette.js";
 import "./editor.js";
 // the board: after editor, because it borrows the panel-head (?) wiring
-// from it, and it reads the roster out of audio/mixer (a view importing audio
+// from it, and it reads the roster out of audio/desk (a view importing audio
 // is the allowed direction; audio never imports back). paintBoard rides the
-// one rAF loop below — the board's fader caps follow the built gains live.
+// one rAF loop below — the board's fader caps follow the desk model live.
 import * as board from "./mixtbl.js";
 import "./chrome.js";
 // the INSTRUMENT POOL bank on the SONG page — the band, hired for the record

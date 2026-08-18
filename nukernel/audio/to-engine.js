@@ -23,7 +23,7 @@
 //           is the whole conversion and it is exact: the semitone half is an
 //           integer, so no float rounds the wrong way.
 //   TIME    the parent schedules in BEATS. nukernel schedules in STEPS, and a
-//           step is a sixteenth (audio/transport.js stepDur = 60/bpm/4), so
+//           step is a sixteenth (audio/plan.js stepDur = 60/bpm/4), so
 //           beats = steps/4 and nothing else. The tempo map has already been
 //           integrated into `bar.barSteps` and every event's `off` by
 //           ui/derive.js warpBars, so dividing by four carries the rubato
@@ -116,7 +116,7 @@ export const LANE = {
 // three machines here for the tape while the page voiced four of its own out of
 // a bank of oscillators — so a tr909 song was one drum machine live and a
 // different one on the record, and tr606 (which nothing here named) was a real
-// 606 live and the default kit on the tape. Now audio/voices.js resolves its
+// 606 live and the default kit on the tape. There is one engine now and it resolves its
 // live hits from this same table through drumVoice() below: one row per box,
 // read twice.
 //
@@ -191,7 +191,7 @@ const CHAIR_ROLE = { pad: "pad", drone: "pad", stab: "pad",
 // ---- a nukernel `synth` block, as a parent RECIPE ---------------------------
 // nukernel's genres already name parent dsp ids (genres.js `synth: {dsp}`), and
 // a `set` block is written in the DSP's OWN param names — that is the spelling
-// audio/voices.js driveSynth writes straight onto the worklet, so it has to be.
+// the parent writes these straight onto the worklet, so they have to be.
 // The renames below are the places the parent's RECIPE spells the same knob
 // differently, and `role` is the one thing that cannot be inferred: the parent
 // picks pad_saw vs supersaw from the ROLE, and modeld/tb303/synclead are mono
@@ -228,6 +228,16 @@ const SYNTH = {
   // strip is the one that does not high-pass the body out of four people.
   voice_lead:  { model: "singer",  role: "melody" },
   voice_choir: { model: "chorale", role: "pad" },
+  // THE TWO SYNTH BASSES, which the tape could not play at all until the
+  // one-engine round. nukernel's BASSSYNTH names them by their dsp file
+  // (bass_reese / bass_wobble) and the parent names them by their SEAT — its
+  // bass switch reads `model` "reese" / "wobble" and hands back exactly those
+  // modules — so the two tables never met and every reese and every wobble came
+  // back `unrouted`. A reese IS its detuned beating and a wobble IS its LFO;
+  // neither can be a sample, so an unrouted one is not a quieter bass, it is a
+  // different song. Role stated: the parent only reaches this switch for a bass.
+  bass_reese:  { model: "reese",  role: "bass" },
+  bass_wobble: { model: "wobble", role: "bass" },
 };
 const WAVES = ["sine", "saw", "square", "pulse"];
 
@@ -420,7 +430,7 @@ const LIVE_DYN = {
  * level, its master chain, its makeup. nukernel's page is a different chain
  * with its own sampler gain staging and its own master, and measured on it the
  * same modules land well under the zones they replace. So the page carries one
- * number per module, and it is a ROUTE gain (audio/voices.js routeSynth), not a
+ * number per module, and it is a ROUTE gain, not a
  * louder `level` or a hotter `gain`: on the guitar amp `gain` is the input of
  * the shaper, so lifting it would buy level by adding dirt, and `level` has
  * only 3 dB of headroom left anyway. Trimming the route moves nothing but the
@@ -469,7 +479,7 @@ const VOICE_TYPE = {
 // [0,3], and this is the only place in nukernel that knows which letter is which
 // row of the formant table.
 const VOWELS = "aeiou";
-// WHAT THE LIVE PLAYER NEEDS AND THE RECIPE DOES NOT. audio/voices.js
+// WHAT THE LIVE PLAYER NEEDS AND THE RECIPE DOES NOT. The old live player
 // driveSynth writes a spec's `set` straight onto the worklet's AudioParams;
 // the parent's recipe reads the same `set` as WORDS and resolves them in its
 // own unit table (a voice type is a name there, an index here). So a spec that
@@ -895,7 +905,7 @@ export function modelForInstr(id, tone) {
  * seatings of one instrument (pad_saw / supersaw), never a different sound.
  *
  * Returns a spec in the genre `synth:{dsp, root, level, set}` shape ON PURPOSE:
- * that is the shape audio/voices.js playSynth already plays and the shape
+ * that is the shape the old live player played and the shape
  * recipeFor already translates, so the page and the tape can read one table.
  * Exported for the same reason drumVoice is — the drum lanes learned the hard
  * way what two tables for one sound costs.
@@ -924,7 +934,7 @@ export function synthForInstr(id, tone, padish) {
   const t = tone || {};
   // THE BOUNDS ARE THE NARROWEST OF THE FLEET, not the widest, and that is
   // deliberate: a spec written here is played by TWO readers — the parent's
-  // recipe (which clamps) and audio/voices.js driveSynth (which writes the
+  // recipe (which clamps) and the parent's own param write (which writes the
   // number straight onto the AudioParam, where a value ON the declared edge is
   // the exact failure the audio gate exists to catch). So resonance is held off
   // zero, the longest release stops short of the 3 s ceiling three of these
@@ -967,10 +977,12 @@ function synthRecipe(sy, tone, role) {
  * is a choir and a "synth voice" is not somebody singing.
  *
  * Every reader asks THIS, never the three tables one at a time: the tape
- * (recipeFor below), the live scheduler (audio/transport.js scheduleBar) and
- * the thing that warms the live pool (audio/voices.js songPatches). A reader
- * that asked only the first of the three is exactly how the page came to be
- * playing recordings of the instruments the tape was playing.
+ * (recipeFor below) and the CAST that seats the whole song (audio/plan.js).
+ * There used to be a third — a live scheduler with its own pool to warm — and
+ * a reader that asked only the first of the three is exactly how the page came
+ * to be playing recordings of the instruments the tape was playing. There is
+ * one engine now, so there is one reader of each, which is the structural
+ * version of the same promise.
  */
 export function patchForInstr(id, tone, padish) {
   return synthForInstr(id, tone, padish)
@@ -1038,6 +1050,26 @@ function recipeFor(chair, seat, lib, unrouted) {
  *
  * returns { state, ev, units, unrouted, notes }
  */
+// the sampler library for (seed, active font), built once and kept. Cleared by
+// nothing: a font switch changes the KEY, so the old entry simply stops being
+// asked for and the new one is built on the next bar.
+const libCache = new Map();
+// EXPORTED, because the caller needs the same answer to probe a seat with
+// before it ever builds a bar (audio/plan.js's register home resolves one unit
+// per seat). Asking applySampledOnly again per seat is what made a compile take
+// 1.7 seconds on a twenty-box song — the whole GM library, rebuilt per chair.
+export function samplerLibFor(K, seed) { return libFor(K, seed); }
+function libFor(K, seed) {
+  const key = seed + "|" + (K.activeFont ? K.activeFont() : "");
+  let v = libCache.get(key);
+  if (!v) {
+    v = { seed, foundSources: [] };
+    K.applySampledOnly(v, seed);
+    libCache.set(key, v);
+  }
+  return v;
+}
+
 export function toEngine(plan, deps) {
   const { SE, K, E } = deps;
   const bpm = plan.bpm || 120;
@@ -1053,8 +1085,15 @@ export function toEngine(plan, deps) {
   // through the paths they already have. (With `instruments` present it would
   // also force a kit picked BY SEED, which is the one behaviour a caller that
   // names its own kit must not get.)
-  const libState = { seed, foundSources: [] };
-  K.applySampledOnly(libState, seed);
+  //
+  // MEMOIZED, because the LIVE path asks per BAR. applySampledOnly walks the
+  // whole GM library and rides every zone of it onto `foundSources` — tens of
+  // milliseconds, and the answer depends on exactly two things: the seed and
+  // which soundfont is registered active. Neither moves inside a bar, so a
+  // one-entry cache keyed on both is a memo of a pure function and nothing
+  // more. (Before it, translating a two-second bar cost more than rendering
+  // one.)
+  const libState = libFor(K, seed);
   const lib = libState.samplerLib || {};
 
   // ---- 2. the chairs -------------------------------------------------------
@@ -1140,7 +1179,7 @@ export function toEngine(plan, deps) {
       } else if (e.kind === "hit") {
         // A HIT AT ZERO IS SILENCE, on the record as on the page. The kit
         // velocity vectors and the groove profiles both write velocity 0
-        // legitimately, and audio/voices.js has always played it as nothing;
+        // legitimately, and the page has always played it as nothing;
         // the amp scale above has a FLOOR, so without this line the tape would
         // be the one path that hears them.
         if ((e.vel == null ? 5 : e.vel) <= 0.009) continue;
@@ -1172,7 +1211,12 @@ export function toEngine(plan, deps) {
   // real rather than from the empty default.
   state.instruments.pad = firstOf("pad") || {};
   state.instruments.melody = firstOf("melody") || {};
-  state.instruments.bass = bassSeat ? bassSeat.m : {};
+  // A BASS MAY BE A CHAIR. The `plan.bass` argument names one bass for a whole
+  // run, which is right for a caller with one; a caller whose CAST is the song's
+  // seats the bass like every other voice (audio/plan.js) and there may be two of
+  // them. Either way the parent's own bass unit is resolved from something real,
+  // because its reverb budget and its stereo pass read it.
+  state.instruments.bass = bassSeat ? bassSeat.m : (firstOf("bass") || {});
 
   // ---- 6. the unit table ---------------------------------------------------
   // The parent builds the whole table (drums, the perc lane, stab, sfx, the
@@ -1189,6 +1233,10 @@ export function toEngine(plan, deps) {
   // chairs that resolved the same GM instrument read as soup otherwise, and
   // voiceUnits ran its pass before these chairs existed.
   for (const c of chairs.values()) {
+    // BASS IS CENTRE and the parent says so by having no MASTER_PAN entry for it
+    // — reading the melody seat for a bass chair would put the low end off axis,
+    // which is the one placement no mix makes.
+    if (c.role === "bass") continue;
     const p = SE.MASTER_PAN[c.role === "pad" ? "pad" : "melody"];
     if (p != null) units[c.key].pan = p * (1 + 0.6 * ((c.key.charCodeAt(1) % 3) - 1));
   }
