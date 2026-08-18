@@ -262,8 +262,28 @@
   const FXLABEL = {};
   for (const k of Object.keys(FX)) FXLABEL[k] = FX[k].label;
   // the {type, params} list buildInsertNodes wants, from the box's chip keys
+  // ...AND THE MODULE THAT TYPE NAMES, because there are TWO consumers and they
+  // key on different things. sampler.js buildInsertNodes(ctx, …) builds WebAudio
+  // nodes and reads `type` — that was nukernel's only reader while it had its own
+  // graph. Since the one-engine move the chain goes to stream-renderer.js mkChain
+  // instead, which is context-free Faust and reads `module`. Nothing translated
+  // between the two vocabularies, so EVERY ONE OF THE ELEVEN CHIPS emitted an
+  // insert the engine could not build: it interpolated `undefined` into a module
+  // URL, 404'd, and the chip did nothing. Paul: "The crunch doesn't seem to be
+  // there" — crunch is one of these, and it had no module to be there with.
+  //
+  // The mapping is a prefix and nothing more: engine/faust/dist ships
+  // insert_chorus, insert_phaser, insert_flanger, insert_tremolo, insert_leslie,
+  // insert_wah, insert_ringmod, insert_filtersweep, insert_fenv, insert_delay and
+  // insert_higain — one per type this table can emit. The PARAMS already match
+  // those modules name for name (crunch writes drive/stages/gate/low/mid/high/
+  // presence/level/mix and insert_higain declares exactly those), which says this
+  // vocabulary was written against them from the start and only the name of the
+  // thing to load was ever missing. Both keys ride together so either reader is
+  // satisfied and neither has to know about the other.
   const fxChain = keys => (keys || []).filter(k => FX[k])
-    .map(k => ({ type: FX[k].type || k, params: { ...FX[k].params } }));
+    .map(k => { const type = FX[k].type || k;
+      return { type, module: "insert_" + type, params: { ...FX[k].params } }; });
 
   /* ---------- A CHIP IS A SEND; A CHAIN IS AN INSERT ---------- */
   // "Maybe we need a few effects buses feeding into one master effects bus
