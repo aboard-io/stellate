@@ -228,6 +228,13 @@ const SYNTH = {
   // strip is the one that does not high-pass the body out of four people.
   voice_lead:  { model: "singer",  role: "melody" },
   voice_choir: { model: "chorale", role: "pad" },
+  // and the THIRD seating of a mouth, which is the one that can shut: the
+  // Kelly-Lochbaum tube (engine/faust/dsp/tract_voice.dsp), where the two above
+  // are formant banks. `role: "melody"` is not a preference here the way it is
+  // for the singer, it is the COST: the parent will only build this module for a
+  // line, and falls a pad through to the choir, because one tract is most of what
+  // a phone has left. See PATCH_MOUTH below for who gets one and why.
+  tract_voice: { model: "mouth",   role: "melody" },
   // THE TWO SYNTH BASSES, which the tape could not play at all until the
   // one-engine round. nukernel's BASSSYNTH names them by their dsp file
   // (bass_reese / bass_wobble) and the parent names them by their SEAT — its
@@ -421,6 +428,18 @@ const LIVE_DYN = {
   voice_lead:  { push: [0.06, 0.95] },
   voice_choir: { push: [0.05, 0.68] },
 };
+// THE TUBE'S OWN ROW, and it is beside the table rather than in it for the same
+// reason the parent keeps it beside MODEL_DYN rather than in it: that table is
+// the models a chair reaches BY NAME, and both copies of it are read as "an
+// instrument id is enough to cast this". A tract is reached by an id AND a
+// chair — GM 54 on a line, never on a pad — so a row in the table above would
+// promise a seating that does not exist. Same axis as the singers': `push` is
+// the glottal fold, which is the spectral tilt and not the level. Wider than
+// voice_lead's at both ends, because a talker's soft end is nearly a whisper
+// and its loud end is a shout. Mirrored from state-engine.js TRACT_DYN and held
+// against it by test/unit/tract-cast.test.js, exactly as LIVE_DYN is held
+// against MODEL_DYN.
+const TRACT_DYN = { push: [0.12, 0.9] };
 /**
  * THE PAGE'S OWN A/B, per module: what puts a played instrument level with the
  * recording it stands in for ON THIS PAGE.
@@ -461,6 +480,12 @@ const PAGE_TRIM = {
   mallet:      2.16,
   voice_lead:  8.2,
   voice_choir: 15,
+  // DERIVED, not measured on the page — the second row here that is, and it says
+  // so for stk_piano's reason. tract_voice.dsp's own header states the fit: with
+  // both modules at their defaults voice_lead peaks 0.39 and the tract babbles at
+  // 0.33, which is 1.4 dB under, so the page's deficit for one is the page's
+  // deficit for the other times that ratio. It is waiting on ears like the piano.
+  tract_voice: 9.7,
 };
 /** the page's trim for a pooled module, by dsp id — 1 for everything else. */
 export const pageTrim = (dsp) => PAGE_TRIM[dsp] || 1;
@@ -479,6 +504,14 @@ const VOICE_TYPE = {
 // [0,3], and this is the only place in nukernel that knows which letter is which
 // row of the formant table.
 const VOWELS = "aeiou";
+// ...and the SAME FIVE LETTERS IN THE TUBE'S ORDER, because the tract does not
+// read the formant tables. tract.lib's fitted table is indexed i-e-a-o-u — the
+// vowel triangle, so that a continuous glide between two of them is a walk a
+// real mouth could make — where the CSOUND tables the singers read are a-e-i-o-u.
+// Two rows swapped, and nothing would ever fail: a genre asking for "a" would
+// simply say "i" for the whole record. The parent keeps the same array under the
+// same name (state-engine.js TRACT_ROW) and the gate holds the two together.
+const TRACT_ROW = [2, 1, 0, 3, 4];
 // WHAT THE LIVE PLAYER NEEDS AND THE RECIPE DOES NOT. The old live player
 // driveSynth writes a spec's `set` straight onto the worklet's AudioParams;
 // the parent's recipe reads the same `set` as WORDS and resolves them in its
@@ -863,6 +896,154 @@ export function voiceForInstr(id, tone) {
       ...(choir ? {} : { slideParam: "glide", slideSec: 0.09 }) } };
 }
 
+// ---- AND THE MOUTH THAT TALKS ---------------------------------------------
+// GM 54 IS "SYNTH VOICE" AND THE NAME HAS TWO HONEST READINGS. Both are real
+// records; the CHAIR is what decides which one a genre meant.
+//
+//   ON A PAD it is the machine that SINGS — a Roland VP-330, a string choir
+//     holding a vowel behind the band, which is what the preset meant on a pad
+//     in 1979 and what PATCH_SYNTH above has always played it as. That reading
+//     does not move: kraftwerk's vocoder chorale and dance post-punk's held
+//     sequence are both pads, and both keep their string machine.
+//   ON A LINE it is the machine that TALKS — the formant speech synthesiser
+//     that put a robot at the FRONT of a record in 1978. That is a tube with a
+//     tongue in it, and until engine/faust/dsp/tract_voice.dsp there was nothing
+//     in the tree that could play one, so those three lines were being sung by
+//     a string ensemble holding one vowel: the same complaint the whole vocal
+//     round started from ("the vocals are just squeaky"), one table over.
+//
+// THE CHAIR IS ALSO THE COST CEILING, and that is why this is a rule rather
+// than a habit. Measured at 48 kHz on the machine that wrote this, tract_voice
+// renders 0.353x realtime against voice_lead's 0.089x and stk_piano's 0.035x —
+// about TWO simultaneous voices, where the formant singer affords eleven. A pad
+// is a held chord and wants three or four of whatever it is given, so a pad must
+// not be able to ask for a tube, and here it cannot: mouthForInstr refuses
+// `padish`, the parent's own switch falls a pad through to the choir even if a
+// later reader forgets the flag, and the unit it builds for a line is `mono`
+// with `pool: 1`. Three locks, none of them a comment.
+//
+// THERE ARE NO VOICE TYPES ON A TRACT, which is the other half of why this is
+// its own table rather than a fourth PATCH_VOICE row. The five singers each pick
+// a formant set and a compass because the CSOUND tables only tell the truth
+// inside one voice's range; the tube has one size, so it has one mouth and one
+// register, and what a genre says about it is not WHO is speaking but WHAT THE
+// MOUTH IS DOING.
+const PATCH_MOUTH = {
+  // ONE ROW. Adding a second id here is adding a second way to buy the most
+  // expensive voice in the fleet, so it should be an argument somebody makes.
+  //
+  // The defaults are what the ID itself means — a machine voice, pronouncing,
+  // fairly dry-mouthed and only slightly nasal — and they are what a genre with
+  // no mouth of its own gets, exactly as PATCH_VOICE's `vowels` are.
+  //   talk   how much of the seeded syllable driver is steering. 0.82 is
+  //          speech with the vowel axis still tinting it; 1 is the driver alone
+  //          and 0 is a held vowel, which is not a tract's job and refuses.
+  //   hiss   the fricative — the s and the sh, the part of a voice a formant
+  //          bank simply does not have
+  //   nasal  the velum, barely open: a machine voice with a little nose in it
+  //   vowels the walk under the driver, and the three that keep a robot from
+  //          sounding like a yawn
+  synth_voice: { dsp: "tract_voice", vowels: "aeo", syll: 0.5,
+                 talk: 0.82, hiss: 0.16, nasal: 0.06, air: 0.05, vib: 0.1 },
+};
+
+/**
+ * The TALKING mouth a GM id names — or null for every id that is not one, and
+ * for every chair that cannot afford one.
+ *
+ * Same `{dsp, root, level, set, live}` shape and the same contract as
+ * voiceForInstr beside it, so one translation still serves the page and the
+ * tape. It is asked FIRST (see patchForInstr), because a machine that talks is
+ * a more specific claim than a machine that holds a chord.
+ *
+ * WHAT A GENRE MAY SAY, in its own `tone.mouth` block, beside the five dials a
+ * SINGING mouth already takes. Every one of these is a real param on the module
+ * and the parent resolves it in state-engine.js `case "mouth"`:
+ *   talk    0..1, the driver's share. Writing 0 is how a genre OPTS OUT and
+ *           keeps the string machine — a mouth that says nothing is not a tract.
+ *   rate    syllables a second. ABSENT ON PURPOSE by default: the parent then
+ *           takes it from the TEMPO (two syllables a beat), so the mouth speaks
+ *           in eighths with the record instead of at a number somebody typed.
+ *   seed    which sentence. Absent by default too, and then it is derived from
+ *           the mouth itself (see below) — the module's own doctrine is that a
+ *           seed IS a sentence, so this is the field to write when a record
+ *           should say a particular thing forever.
+ *   nasal   0..1, the velum
+ *   hiss    0..1, the fricative
+ *   voiced  0..1 — drop it and the tube whispers, which is a real vocal effect
+ *           and one no formant bank in this tree can do
+ *   vowels / syll / vib / air  read exactly as they are for a singer
+ */
+export function mouthForInstr(id, tone, padish) {
+  const P = PATCH_MOUTH[id];
+  // A PAD NEVER GETS ONE. First lock, and the cheapest: the caller already knows
+  // whether the chair holds chords, so the answer is no before anything is built.
+  if (!P || padish) return null;
+  const t = tone || {};
+  const M = t.mouth || {};
+  const talk = clamp(M.talk != null ? M.talk : P.talk, 0, 1);
+  if (talk <= 0) return null;          // opted out — PATCH_SYNTH's VP-330 stands
+  const dial = (v, d, hi) => clamp((v != null ? v : d) * hi, 0, hi * 0.98);
+  // A MOUTH'S `cut` IS THE MIC AND THE ROOM, and it needs MORE lift here than it
+  // does on a singer: a formant bank's top formant sits around 3-5 kHz, but a
+  // fricative is broadband to eight and beyond, and an /s/ rolled off at 2 kHz
+  // is not a quieter consonant, it is a vowel with a click in front of it. So the
+  // floor is above where the singers' is and the ceiling is a condenser's.
+  const cut = clamp((t.cut != null ? t.cut : 2600) * 2.6, 3200, 14000);
+  const word = String(M.vowels || P.vowels || "a");
+  const set = {
+    vowels: word,
+    vowelEvery: M.syll != null ? M.syll : P.syll,
+    babble: talk,
+    nasal: dial(M.nasal, P.nasal, 1),
+    fric: dial(M.hiss, P.hiss, 1),
+    voiced: clamp(M.voiced != null ? M.voiced : 1, 0, 1),
+    breath: dial(M.air, P.air, 1),
+    vibrato: dial(M.vib, P.vib, 0.05),
+    cutoff: cut,
+    // a tube cannot open in two milliseconds — there is a whole glottis to start
+    // — and it should not take a second either, because that is a swell and not
+    // a syllable
+    attack: clamp(t.atk != null ? t.atk : 0.03, 0.012, 0.4),
+    release: clamp(t.rel != null ? t.rel : 0.22, 0.05, 1.2),
+  };
+  // THE RATE IS WRITTEN ONLY IF THE GENRE ASKED. Absent, the parent derives it
+  // from the TEMPO — two syllables a beat — which is a better answer than any
+  // number typed here, because it is the same answer at 92 and at 174.
+  if (M.rate != null) set.rate = clamp(M.rate, 0.5, 12);
+  // THE SENTENCE IS A FACT ABOUT THE RECORD, and this bridge is handed exactly
+  // one fact about the record: its `tone` block. The parent's default is the
+  // SONG's seed, which is the right answer and the one the press gets — but
+  // audio/plan.js pins the engine's seed to 1 for every song on this page (the
+  // sampled library has to be stable across a compile), so left alone all three
+  // talking records would say the identical sentence at different speeds. So the
+  // page supplies one from the mouth it was given. It is stable forever for a
+  // given voicing, different between two genres that voice differently, and it
+  // moves if somebody re-voices a genre — which is the correct behaviour for a
+  // mouth rather than a bug: a different mouth is a different take.
+  if (M.seed != null) set.seed = Math.round(clamp(M.seed, 0, 4096));
+  else {
+    let h = 2166136261;
+    const txt = JSON.stringify(t) + "|" + id;
+    for (let i = 0; i < txt.length; i++) { h ^= txt.charCodeAt(i); h = Math.imul(h, 16777619); }
+    set.seed = ((h >>> 0) % 4096);
+  }
+  return { dsp: P.dsp, root: P.dsp,
+    level: clamp((t.gain != null ? t.gain : 0.28) * 2.8, 0.35, 0.92),
+    set,
+    // the numeric half, for the reader that writes onto params. No `voice`: the
+    // tube has no voice types, and its compass is the parent's TRACT_COMPASS —
+    // one mouth, one register, F2 to roughly G4 — mirrored here for the reason
+    // every number in this file is mirrored, and gated the same way.
+    live: { dyn: TRACT_DYN, amp: LIVE_AMP, lo: 90, hi: 400,
+            vowels: [...word].map(ch => TRACT_ROW[VOWELS.indexOf(ch)])
+                             .filter(i => i != null && i >= 0),
+            vowelEvery: set.vowelEvery,
+            // a talker slurs between notes exactly as a soloist does
+            slideParam: "glide", slideSec: 0.09 },
+  };
+}
+
 /**
  * The instrument a GM id NAMES, played rather than replayed — or null for an id
  * whose sampled recording is the better sound (which is most of them).
@@ -1000,7 +1181,15 @@ function synthRecipe(sy, tone, role) {
  * version of the same promise.
  */
 export function patchForInstr(id, tone, padish) {
-  return synthForInstr(id, tone, padish)
+  // THE MOUTH GOES FIRST, and it is the only entry in this chain that reads the
+  // CHAIR as well as the id. "This machine is talking" is a more specific claim
+  // than "this preset is a photograph of a VP-330", and the two are the same GM
+  // number; asking the specific one first is what lets one id mean both without
+  // a second id that means neither. It answers null for a pad, for an id that is
+  // not GM 54, and for a genre that wrote `talk: 0` — so every other chair in the
+  // catalogue reaches exactly the row it reached before.
+  return mouthForInstr(id, tone, padish)
+    || synthForInstr(id, tone, padish)
     || modelForInstr(id, tone)
     || voiceForInstr(id, tone);
 }
@@ -1028,6 +1217,17 @@ export function recipeFor(chair, seat, lib, unrouted) {
   const wantSynth = sy && SYNTH[sy.dsp] && !(sy.lineOnly && role === "pad");
   if (sy && !SYNTH[sy.dsp])
     unrouted.push({ what: "synth:" + sy.dsp, why: "no parent model names this dsp", chair });
+  // A SIGNATURE SYNTH DOES NOT DISPLACE A CHAIR THAT WAS CAST AS A VOICE, and
+  // this is the same law `lineOnly` already states from the other side: the
+  // synthesis is the identity of ONE voice, not of the whole band. Kraftwerk's
+  // Model D is the sequence and the tune; it was never the thing at the front
+  // saying words, and before this line every genre that declared a signature
+  // synth was quietly playing it on the chair it had cast a machine VOICE on —
+  // robotic pop's hook and EBM's chant were both a Minimoog doubling the part
+  // beside them. Asked before `wantSynth` rather than after, because after is
+  // the same as never.
+  const mouth = mouthForInstr(seat.instr, seat.tone, role === "pad");
+  if (mouth) return { ...synthRecipe(mouth, tone, role), source: "mouth:" + seat.instr };
   if (wantSynth) return { ...synthRecipe(sy, tone, role), source: "synth:" + sy.dsp };
   // the patch table, and NO SILENT FALLBACK out of it: a row naming a dsp the
   // SYNTH dictionary has no entry for is reported, never quietly sampled — that

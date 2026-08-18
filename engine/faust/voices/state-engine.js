@@ -1037,6 +1037,72 @@
     return out.length ? out : [0];
   }
 
+  // ---- THE MOUTH THAT IS NOT A SINGER (dsp/tract_voice.dsp) -----------------
+  // The two throats above are FORMANT BANKS — a glottal pulse through five
+  // bandpasses — which is a very good model of a held vowel and no model at all
+  // of a consonant, because a bank of filters cannot SHUT. The tract is the
+  // other half: a Kelly-Lochbaum waveguide, twenty-one sections, a three-port
+  // velum with a nasal branch off it. Measured on the tube itself
+  // (engine/faust/build/measure-tract.js, 23/23): the uniform tube gives
+  // 495/1460/2436/3412 Hz, the odd-quarter-wave series a pipe closed at one end
+  // actually has; /ba/'s second formant climbs out of the labial closure while
+  // /da/'s falls 155 Hz every 10 ms out of the alveolar one. That difference IS
+  // a consonant, and it is the reason this is a separate model rather than a
+  // sixth vowel on voice_lead.
+  //
+  // IT IS A SOLOIST AND IT CANNOT BE ANYTHING ELSE. Measured at 48 kHz on the
+  // machine this was written on: tract_voice renders 0.353x realtime against
+  // voice_lead's 0.089x and stk_piano's 0.035x — about two simultaneous voices,
+  // where the formant singer affords eleven and the piano twenty-eight. So the
+  // unit below is `mono` with `pool: 1`, effectivePool pins it at one whatever a
+  // recipe says, and a PAD CHAIR NEVER REACHES IT AT ALL: the case falls through
+  // to the choir, which is four times cheaper and is what a held chord wanted in
+  // the first place. One throat, one note, by construction rather than by
+  // somebody remembering.
+  //
+  // THE SAMPLE RATE IS THE TUBE'S LENGTH, AND IT IS NOT COMPENSATED. The model's
+  // own header says it: length is elements times c/SR, so a browser at 48 kHz
+  // gives a 16.0 cm mouth and one at 44.1 kHz a 17.4 cm one, and every formant
+  // moves 8.8% with it. There is no length knob to correct it with — the tube is
+  // its delay line — and correcting it by transposing would be worse than the
+  // problem: 8.8% of formant is a slightly smaller or larger head, which is a
+  // different PERSON, while the PITCH does not move at all, because `freq` drives
+  // the glottis in Hz and the glottis is not the tube. So a 48 kHz browser hears
+  // a younger speaker than a 44.1 kHz one, the vowels stay the vowels and the
+  // note stays the note. Written down rather than hidden: a secret SR-dependent
+  // transpose would make the press and the browser two different takes.
+  //
+  // WHAT VELOCITY MOVES, and why the row is here and not in MODEL_DYN above:
+  // that table is the models a chair reaches BY NAME, and every reader of it
+  // (nukernel's LIVE_DYN mirror included) assumes an instrument id alone is
+  // enough to cast one. A tract is reached by an id AND A CHAIR — GM 54 on a
+  // line and never on a pad, over in nukernel/audio/to-engine.js — so a row up
+  // there would promise a seating that does not exist. Same axis as the
+  // singers': `push` is the glottal fold, the spectral tilt and not the level.
+  // Wider than voice_lead's at both ends, because a talker's soft end is nearly
+  // a whisper and its loud end is a shout. nukernel mirrors it as TRACT_DYN and
+  // test/unit/tract-cast.test.js holds the two together, exactly as §75 of the
+  // nukernel gate holds LIVE_DYN against MODEL_DYN.
+  const TRACT_DYN = { push: [0.12, 0.9] };
+  // ONE TUBE, ONE SIZE, ONE REGISTER. The five singers each carry their own
+  // compass because the formant tables only tell the truth inside one voice's
+  // range; the tract has no voice types at all — it is one mouth, and its
+  // compass is that mouth's. The floor is where a chest voice stops being
+  // periodic and the ceiling is where the fundamental climbs over /a/'s first
+  // formant and the vowel stops being audible as a vowel (the module's own
+  // slider goes to 900, which is a shriek, not a range).
+  const TRACT_COMPASS = { lo: 90, hi: 400 };
+  // THE SAME FIVE VOWELS, IN THE TUBE'S OWN ORDER — the one trap in wiring this
+  // up. tract.lib's fitted table is indexed i-e-a-o-u (the vowel triangle, so a
+  // continuous `vowel` glide is a walk a real mouth could make); the CSOUND
+  // formant tables the two singers read are a-e-i-o-u. Same five letters, two
+  // rows swapped, and NOTHING WOULD EVER FAIL: a genre asking for "a" would
+  // simply say "i" for the whole record. So the walk is remapped once, here, at
+  // unit build — mapEvents writes `u.vowels[step]` straight onto the module, and
+  // a remap at the param would have to be repeated at every writer.
+  const TRACT_ROW = [2, 1, 0, 3, 4];        // a e i o u -> the tube's own rows
+  const tractWalk = (v) => vowelWalk(v).map((i) => TRACT_ROW[clamp(Math.round(i), 0, 4)]);
+
   // ---- TRANSLATING THE OLD GUITAR'S KNOBS -----------------------------------
   // Every recipe in the tree that casts an electric guitar was written against
   // the hand-rolled waveguide's parameters, and the toolkit's string asks the
@@ -1435,6 +1501,84 @@
             release: relV,
             cutoff: clamp((c || 5000), 800, 16000) } };
       }
+      // `mouth` is the TRACT (dsp/tract_voice.dsp) — the third seating, and the
+      // only one that can say a consonant. See TRACT_DYN above for the cost
+      // argument, the sample-rate caveat and the vowel-row trap.
+      //
+      // A genre says what its mouth is DOING the way it already says what its
+      // filter is doing: `babble` is how much of the seeded syllable driver is
+      // steering (0 holds a vowel, 1 is speech), `rate` is syllables a second,
+      // `seed` is which sentence, and under all of that `nasal` opens the velum,
+      // `fric` puts a hiss at `fricX` along the tube, and `artic`/`tongue`/
+      // `tongueD`/`tongueL`/`lips` hand the four articulators straight to the
+      // recipe for a mouth the vowel axis cannot spell. Everything else — the
+      // glottis (`push`/`open`/`breath`/`voiced`), the wobble, the portamento —
+      // is named exactly as it is on the singers, because it is the same organ.
+      //
+      // NOT IN NOTE_PARAMS, deliberately, for the singers' reason: a throat's
+      // brightness is the fold, and the fold is velocity's, not a pipe's.
+      case "mouth":
+        if (!isPad) {
+          const relT = mp("release", 0.22, 0.02, 3);
+          const word = tractWalk(m.vowels);
+          return { ...base, module: "tract_voice", mono: true,
+            pool: 1,   // MONO: one tube, ever — and effectivePool pins it again
+            freqMin: TRACT_COMPASS.lo, freqMax: TRACT_COMPASS.hi,
+            tail: Math.max(base.tail, relT + 0.3),
+            dyn: TRACT_DYN, slideParam: "glide", slideSec: 0.09,
+            vowels: word, vowelEvery: clamp(m.vowelEvery || 0.5, 0.25, 8),
+            params: { ...base.params,
+              vowel: word[0],
+              // THE DRIVER, WHICH IS THE INSTRUMENT.
+              babble: clamp(m.babble != null ? m.babble : 0.7, 0, 1),
+              // SYLLABLES COME OFF THE TEMPO, not off a number somebody typed.
+              // A recipe may still name a rate — a drawl and a patter are real
+              // choices — but the DEFAULT is two syllables a beat, so a mouth
+              // speaks in eighths with the record it is on rather than at 3.6 Hz
+              // over a 92 bpm ballad and a 174 bpm jungle alike. The driver is
+              // free-running, not gate-synced, so this is a tempo of speech and
+              // not a quantise: syllables land near the eighths and drift, which
+              // is what talking over a beat sounds like.
+              rate: m.rate != null ? clamp(m.rate, 0.5, 12)
+                : clamp(((state && state.bpm) || 120) / 60 * 2, 0.5, 12),
+              // A SEED IS A SENTENCE — the module's own words. So the default is
+              // the SONG's seed: seed 3 says something else than seed 1, the same
+              // seed says the same thing forever, and the press and the browser
+              // hear the same take because the driver is a hash of a syllable
+              // counter and nothing else.
+              seed: Math.round(clamp(m.seed != null ? m.seed
+                : ((state && state.seed) || 1), 0, 4096)),
+              // the articulators, for a host that wants the wheel
+              artic: clamp(m.artic || 0, 0, 1),
+              tongue: mp("tongue", 0.5, 0, 1),
+              tongueD: mp("tongueD", 1, 0, 1),
+              tongueL: mp("tongueL", 0.2, 0.05, 0.5),
+              lips: mp("lips", 1, 0, 1),
+              // the nose and the hiss. `nasal` rather than `velum` because a
+              // recipe should name the sound, not the flap.
+              velum: clamp(m.nasal || 0, 0, 1),
+              fric: clamp(m.fric || 0, 0, 1),
+              fricX: mp("fricX", 0.9, 0, 1),
+              // the glottis, which is the same five words the singers use
+              voiced: mp("voiced", 1, 0, 1),
+              open: mp("open", 0.62, 0.15, 0.95),
+              breath: mp("breath", 0.06, 0, 1),
+              vibrato: mp("vibrato", 0.008, 0, 0.05),
+              vibRate: mp("vibRate", 5.2, 3, 8),
+              vibRise: mp("vibRise", 0.6, 0.05, 3),
+              attack: clamp(m.attack != null ? m.attack : 0.02, 0.002, 2),
+              release: relT,
+              // a mouth's `cutoff` is the mic and the room, and the consonants
+              // live at the top of it — a fricative that has been rolled off at
+              // 2 kHz is a vowel with a click in front of it
+              cutoff: clamp((c || 7000), 800, 16000) } };
+        }
+        // A PAD IS A HELD CHORD AND A TRACT IS ONE THROAT, so a mouth asked for
+        // on the pad chair falls through to the section below rather than
+        // seating a second and third tube. This is the shed that makes the
+        // two-voice ceiling structural: there is no path from role "pad" to
+        // module "tract_voice" anywhere in this file.
+        /* falls through */
       // the choir is a PAD whatever chair asks for it: four singers holding a
       // chord is not a line, and the pad strip (120 Hz high-pass, chorus) is the
       // one that does not take the body out of it.
@@ -1644,6 +1788,15 @@
     // the second-heaviest voice in the fleet after the DX7, and HEAVY_FLEET
     // below caps its pool for exactly that reason.
     voice_lead: 2.4, voice_choir: 3.8,
+    // and the tube, which is the most expensive voice in the fleet by a wide
+    // margin — heavier than the DX7. Not measured through the same probe as the
+    // rows above (it is newer than the probe run) but through realtime factors
+    // taken interleaved on this box at 48 kHz: tract_voice 0.353x against
+    // voice_lead's 0.089x, which is 3.97 of a voice_lead, which is 9.5 of a
+    // pad_saw. It is priced honestly rather than politely because everything
+    // downstream reads this number — the budget, the eco shed, the stem split —
+    // and a soloist that is really four singers wide should look like it here.
+    tract_voice: 9.5,
     // bass
     bass_saw: 0.84, bass_sub: 0.47, bass_acid: 0.94, bass_reese: 0.5, bass_wobble: 1.15,
     // mono synths
@@ -1676,6 +1829,13 @@
     let n = POOL_SIZE[u.role] || u.pool || 2;
     if (u.dx7) n = Math.min(n, 2);
     if (HEAVY_FLEET.includes(u.module)) n = Math.min(n, 3);
+    // THE TUBE IS ALWAYS ONE. `mono` below already says so for every unit the
+    // switch builds, and this line says it again for any that some later hand
+    // builds another way: at 0.353x realtime a second tract is most of a phone's
+    // remaining headroom, and a two-voice tract is not a richer sound, it is the
+    // same mouth twice. Belt and braces on purpose — the whole point of casting
+    // this model is that it CANNOT be a choir.
+    if (u.module === "tract_voice") n = 1;
     if (u.mono) n = 1;
     if (u.poolCap != null) n = Math.min(n, u.poolCap);   // trim-to-budget shed
     return n;

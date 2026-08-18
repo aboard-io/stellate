@@ -105,6 +105,39 @@
   //   syll    beats per syllable, where the default (half a beat for a line, a
   //           bar for a held chord) is wrong for the music.
   //
+  // AND THE OTHER KIND OF MOUTH, added 2026-08-18: the two singers above are
+  // FORMANT BANKS, which model a held vowel very well and a consonant not at
+  // all, because a bank of filters cannot SHUT. The engine now also has a TUBE
+  // — engine/faust/dsp/tract_voice.dsp, a Kelly-Lochbaum waveguide with a
+  // tongue, a velum and a nose — and a tube can close, build pressure and let
+  // go, which is what a consonant is. A genre reaches it by casting `synth_voice`
+  // (GM 54, "synth voice") on a LINE chair, and it may say four more things:
+  //
+  //   talk    0..1, how much of the seeded syllable driver is steering the
+  //           articulators. 1 is speech; 0 is a held vowel and OPTS OUT, back to
+  //           the VP-330 string machine, because a tract that is not articulating
+  //           is a formant bank that costs four times as much.
+  //   hiss    0..1, the fricative — the s and the sh
+  //   nasal   0..1, the velum
+  //   voiced  0..1 — take it down and the tube whispers, which no formant bank
+  //           in this tree can do at all
+  //
+  // (`rate` and `seed` are deliberately NOT in that list. Syllables a second
+  // comes off the TEMPO, two to a beat, so a mouth speaks in eighths with the
+  // record rather than at a number somebody typed over a ballad and a jungle
+  // alike; and which sentence comes off the voicing, so a genre says the same
+  // thing forever and two genres do not say the same thing. Both are overridable
+  // and neither should need to be.)
+  //
+  // ON A PAD CHAIR THE SAME ID STILL MEANS THE STRING MACHINE, and that is not a
+  // fallback, it is the other true reading of the name: "synth voice" on a pad in
+  // 1979 was a Roland VP-330 holding a vowel, and on a lead in 1978 it was a
+  // formant speech synthesiser. The chair decides. It is also the cost ceiling —
+  // the tube renders at 0.353x realtime against the formant singer's 0.089x, so
+  // it affords about TWO voices where the singer affords eleven, and a pad wants
+  // four of whatever it is handed. Three records talk (electro, robotic pop,
+  // EBM); the roster is pinned by name in test/unit/tract-cast.test.js.
+  //
   // A mouth lives INSIDE the genre's `tone` block, which is where the bridge
   // (audio/to-engine.js voiceForInstr) is already handed the genre's voicing on
   // both the live path and the tape. `tone` is a NOUN in this file's own
@@ -2945,7 +2978,14 @@
       parents: { funk: 0.35, kraftwerk: 0.25, synthpop: 0.2, disco: 0.2 },
       wants: ["moroder", "yellow magic orchestra", "hip-hop dj culture"],
       // the square-wave sequencer and the vocoder: the two voices on every
-      // electro record, and the second one is a MACHINE SINGING
+      // electro record, and the second one is a MACHINE SINGING — which, from
+      // 2026-08-18, it finally is. `synth_voice` on a LINE chair reaches the
+      // vocal tract (audio/to-engine.js PATCH_MOUTH) where before it reached a
+      // VP-330 holding one vowel, and the word this anchor already uses for the
+      // part is its own argument: "eight steps of the phrase, EVERY OTHER NOTE
+      // GONE". A hook that starts and stops eight times a bar is a mouth opening
+      // and closing, and closing is the one thing a formant bank cannot do. The
+      // cast did not move — the id was always right, there was nothing behind it.
       instr: ["square_lead", "synth_voice"],
       drumkit: "tr808",            // not a stand-in — the 808 IS the genre
       entry: v => v, reg: v => 1 - v, realize: () => "line",
@@ -3965,6 +4005,14 @@
       // sibling refuses to have.
       parents: { kraftwerk: 0.55, synthpop: 0.45 },
       wants: [],
+      // DÜSSELDORF 1978 IS A FORMANT SPEECH SYNTHESISER, not a metaphor for one:
+      // the deadpan machine at the front of those records is a Votrax, a Speak &
+      // Spell — a tube driven by an articulatory table, which is exactly what
+      // engine/faust/dsp/tract_voice.dsp is. `synth_voice` on voice 0's LINE chair
+      // reaches it. The sequence answering an octave under keeps the Model D, so
+      // the two parts stay two machines rather than one machine twice — and until
+      // the mouth was asked BEFORE the signature synth (to-engine.js recipeFor),
+      // the hook was a Model D too, doubling the part beside it.
       instr: ["synth_voice", "polysynth"],
       // the vocoder hook and the octave-under sequence are the same machine
       // playing two parts, not a sample bank standing in for it
@@ -4037,6 +4085,17 @@
       // with directly, is the missing rung.
       parents: { kraftwerk: 0.4, techno: 0.35, punk: 0.25 },
       wants: ["new beat"],
+      // THE CHANT IS SHOUTED, AND A SHOUT IS MOSTLY CONSONANTS — and until
+      // 2026-08-18 it was not even a voice: the Model D below is declared without
+      // `lineOnly`, so the signature synth took BOTH chairs and the "vocal chant"
+      // was a second copy of the sequence pulsing beside the first. (Before that
+      // it was the VP-330, a string ensemble holding an "aah", which is the miscast
+      // this GM id has always invited.) `synth_voice` on voice 1's LINE chair now
+      // reaches the vocal tract, because to-engine.js recipeFor asks the mouth
+      // BEFORE the signature synth. The anchor's own word operator is the rest of
+      // the argument: `breath` is an AND against the phrase's own gate, which this
+      // file already glosses as "a chant that answers what it is actually given",
+      // and a mouth that shuts is what makes that audible.
       instr: ["square_lead", "synth_voice"],
       // the sequenced pulse is a resonant analog bass squeezed hard, which a
       // GM square-lead sample cannot squelch any more than acid's 303 can be
