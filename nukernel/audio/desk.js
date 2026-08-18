@@ -565,9 +565,14 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
       if (o.rev) v.rev = c01(v.rev + o.rev);
       if (o.del) v.del = c01(v.del + o.del);
     }
-    // ...and the master channel's fader: one trim over every seated voice
+    // ...and the master channel: its fader is one trim over every seated
+    // voice, and its rev/del are the whole record's wet — an offset on every
+    // unit's send at once, which is the one true global reverb/echo the
+    // engine has (the WebAudio bus rack went out with the one-engine round)
     const mo = MIXER && MIXER.master;
     if (mo && mo.fader && v.lvl) v.lvl *= Math.pow(10, faderDb(mo.fader) / 20);
+    if (mo && mo.rev) v.rev = c01(v.rev + mo.rev);
+    if (mo && mo.del) v.del = c01(v.del + mo.del);
     // A CHIP IS AN INSERT HERE. The page's own vocabulary calls it a send and had
     // one shared bus per effect; the parent has no page-wide effect bus and a
     // per-voice INSERT chain instead (state-engine insertChain -> sampler.js

@@ -146,6 +146,15 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
      && Math.abs(mf.kick.lvl / base.kick.lvl - Math.pow(10, -6 / 20)) < 1e-6,
      "(e) master fader is not one trim over every voice");
   ST.setMixOffset("master", "fader", null);
+  // ...and the master's rev/del: the whole record's wet, an offset on every
+  // unit's send at once (the one true global reverb/echo since the WebAudio
+  // bus rack went out with the one-engine round)
+  ST.setMixOffset("master", "rev", 0.3);
+  const mw = deskOf(secs[0], keys);
+  ok(mw["u_" + lead].rev >= base["u_" + lead].rev + 0.29 - 1e-9
+     && mw.kick.rev >= base.kick.rev + 0.29 - 1e-9,
+     "(e) master rev is not the whole record's wet");
+  ST.setMixOffset("master", "rev", null);
   ok(ST.MIXER === null, "(e) the emptied master did not normalize away");
 
   /* (f) song.js round-trips and disciplines `mix` */

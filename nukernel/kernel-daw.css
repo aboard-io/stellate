@@ -1594,6 +1594,27 @@ h1 em{font-style:normal;color:var(--ink)}
 .mxzero{min-height:40px;display:flex;align-items:center;justify-content:center;
   color:var(--ink-2);border:1px dashed var(--rule);border-radius:var(--r);
   cursor:pointer;margin-top:var(--sp-2)}
+/* THE EQ CURVE, back on the desk ("bring back the bar-height visual EQ bell
+   bezier"): the real biquad response (ui/mixer.js mag, RBJ cookbook), a node
+   per band dragged vertically — its own touch-action:none, so the page still
+   scrolls everywhere else. The lit node is a band YOU moved off the mix. */
+.eqrow.eqplot{position:relative;width:100%;height:160px;border-radius:var(--r);
+  background:var(--bg-sunk);overflow:hidden}
+.eqcurve{position:absolute;inset:0;display:block;width:100%;height:100%}
+.eqzero{stroke:var(--rule-strong);stroke-width:1}
+.eqline{fill:none;stroke:var(--mx-eq);stroke-width:2;
+  vector-effect:non-scaling-stroke}
+.eqfill{fill:color-mix(in srgb,var(--mx-eq) 16%,transparent);stroke:none}
+.eqk{position:absolute;appearance:none;padding:0;cursor:ns-resize;
+  left:var(--x,50%);top:var(--y,80px);width:26px;height:26px;margin:-13px 0 0 -13px;
+  border-radius:50%;background:var(--bg-key);border:2px solid var(--mx-eq);
+  touch-action:none}
+.eqk::before{content:"";position:absolute;left:-9px;right:-9px;top:-9px;bottom:-9px}
+.eqk.set{background:var(--mx-eq);border-color:var(--mx-eq)}
+.eqk:hover{border-color:var(--accent)}
+.eqk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.eqtip{position:absolute;left:var(--sp-2);top:var(--sp-2);
+  font:600 var(--t-sm)/1.2 var(--f-num);color:var(--ink);pointer-events:none}
 
 /* ---- THE MIX PAGE'S TWO DRAWERS: casting the band, and the file keys ----
    "Move all the sound definition and saving functionality into mix… you'll
