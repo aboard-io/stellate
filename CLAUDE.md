@@ -253,7 +253,12 @@ ES modules (`app/`), and the deterministic **engine** as classic-global scripts
 (`engine/`, incl. `engine/faust/`). Node CLIs live in `tools/`, gates in `test/`,
 docs in `docs/`.
 
-- `index.html` — the lean entry (STELLATE). `<head>` links `app/app.css`;
+- `index.html` — THE FRONT DOOR, and it lands on the DAW (branch `daw-first`,
+  2026-08-18): the site's social identity plus a meta refresh to
+  `nukernel/kernel-daw.html`, no inline script. The star-map explorer lives
+  whole at `screensaver.html`, linked from the daw's page rail; the browser
+  gates read the explorer there now.
+- `screensaver.html` — the explorer (STELLATE). `<head>` links `app/app.css`;
   `<body>` holds the DOM skeleton, the `engine/…` classic `<script src>` tags
   (order matters — they define `window.CsdEngine`/`GenreKernel`/`FaustStateEngine`/
   `FaustLive`/`DemoLayer`/`NameBank` before the app runs), then the
@@ -579,7 +584,8 @@ docs in `docs/`.
 
 ## nukernel/ — the song-box instrument
 
-A self-contained mobile hardware DAW inside stellate: **87 genres**, a miniature
+A self-contained mobile hardware DAW inside stellate: **110 genres** (as of
+2026-08-18), a miniature
 kernel of its own. Live at test.stellate.app/nukernel/kernel-daw.html; gates at
 `node test/unit/nukernel.test.js` and browser `test/browser/nukernel-engine.test.js`
 (chromium) + `nukernel-webkit-tape.test.js` (webkit — the only gate in the repo
@@ -590,8 +596,10 @@ runs on every change: ~1,270 written assertions, each law proved once on
 `GK_SAMPLE` (one genre per family/mechanism the file has ever caught a real
 bug through — every drum machine, the corpus-table genre, the singer cast,
 the five FUNCTION genres, hymn's own worst-case register fold) instead of on
-all 110 genres, ~90k checks, roughly a minute. `--sweep` restores the full
-cross-product (110 genres x up to 40 seeds, ~480k checks, ~4 min) for the run
+the whole catalog (110 genres as of 2026-08-18), ~90k checks, roughly a
+minute. `--sweep` restores the full
+cross-product (as of 2026-08-18: 110 genres x up to 40 seeds, ~480k checks,
+~4 min) for the run
 before a ship (`npm run test:sweep`, or `node test/unit/nukernel.test.js
 --sweep` directly) — that breadth is the whole point for a handful of checks
 named `GK_FULL` at their own loop: the byte-identity tripwires (this file's
@@ -637,7 +645,7 @@ comment each table ends with (never at the last data row: a batch of new genres
 would move it).
 
 **Architecture (one-way):** classic UMD data tier — `kernel.js` (algebra) →
-`genres.js` (87 anchors with per-genre instruments) → `fields.js` (THE REGISTRY:
+`genres.js` (the anchors with per-genre instruments) → `fields.js` (THE REGISTRY:
 every control defined once, validation/defaults/palette rows/dispatch derive from
 it) → `song.js` (pure loader, typed errors, clamping) → `instruments.js` →
 `compose.js` → `presets.js`. ES modules for UI/audio: `ui/deps.js` →
@@ -689,9 +697,17 @@ fixed in the DSP).
 
 **Design language (as of 2026-08-17):** one ROW per section with named cells and
 tap-for-popup menus. FOUR pages (COMPOSE / ARRANGE / MIX / LAB) — compose is the
-phrase editor and its tray, arrange is the section rows, mix is the board (and,
+phrase editor and its tray, arrange is the section rows, mix is a DRILLDOWN
+LIST (and,
 since "move all the sound definition and saving functionality into mix", the
 instrument pool and the session bank in two drawers), lab is the genre bench.
+**THE MIX IS OFFSETS (2026-08-18):** `ui/mixer.js` draws one row per channel;
+tap opens the channel's modules, a sideways drag trims, vertical drag scrolls
+(no popups on this page). A drag writes a song-level OFFSET (`ui/state.js`
+MIXER, song key `mix`, validated in `song.js`) that `audio/desk.js` applies
+OVER the composed per-section mix — nothing reverts at a section line, absent
+offsets are byte-identical, WRITE keeps your trims. Gate:
+`test/unit/mixer-offsets.test.js` (pure node).
 **ONE LAYOUT AT EVERY WIDTH**: a wide window gets wider columns, never a second
 view — one page shows and the other three are `display:none`, which is why a
 gate must click the rail key before touching a surface on another page. Every
@@ -705,13 +721,14 @@ and groove are song facts in the transport. NO headers, NO help keys, NO skeuomo
 **Verify at the SCORE level**, not by rendering audio: anything a schedule/DOM
 assertion can prove is proven pure-node in seconds.
 
-**Files:** `kernel.js` (144 KB, the algebra), `genres.js` (254 KB, 87 anchors),
+**Files:** `kernel.js` (144 KB, the algebra), `genres.js` (the anchors),
 `fields.js` (75 KB, registry), `song.js` (41 KB, loader), `instruments.js` (29 KB),
 `compose.js` (108 KB), `presets.js` (49 KB), `lab.js` (78 KB, workbench),
 `promote-genre.js` (26 KB), `inherit.js` (33 KB), `genealogy.js` (17 KB),
 `hw.css` (11 KB), `kernel-daw.html` (19 KB), `kernel-daw.css` (130 KB),
-`audio/` (to-engine/plan/desk/live/fonts — no engine), `ui/` (views), docs
-`GENEALOGY.md` + `INHERITANCE.md`.
+`audio/` (to-engine/plan/desk/live/fonts — no engine), `ui/` (views), and
+`GENEALOGY.md` (a committed finding the palette fetches at runtime — data,
+not prose; INHERITANCE.md was deleted in the 2026-08-18 tidy).
 
 **Gates and this box:** the four browser gates over the old audio tier
 (`nukernel-audio` / `nukernel-drums` / `nukernel-bounce` / `nukernel-survival`)
