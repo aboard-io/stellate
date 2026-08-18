@@ -974,10 +974,52 @@
   //                 it, and across MIDI 67-79 a ghosted note measures 2252 Hz of
   //                 spectral centroid against a hammered one's 3722, at the same
   //                 loudness. The sampled zone it replaces: 922 against 940.
+  //   voice_*.push  the glottal fold — how hard the cords are driven, which is
+  //                 the SPECTRAL TILT and not the level. Measured on the render
+  //                 at equal loudness, MIDI 57/64/71 on a tenor 'a': spectral
+  //                 centroid x1.46, x1.53, x1.72 from the softest dynamic to the
+  //                 hardest, with the RMS moving 0.1 dB. A singer opens; the
+  //                 sampled `solo_vox` zone is one recording of one dynamic and
+  //                 can only get quieter. The choir's span stops short of the
+  //                 top because a section does not belt — that is what a soloist
+  //                 is for. (Under MIDI ~50 the claim inverts on a tenor: at the
+  //                 softest fold the tilt is already under the second formant
+  //                 and the breath is the brightest thing in the note, which is
+  //                 also true of the real instrument.)
   const MODEL_DYN = {
-    gtr_amp: { pick: [0.12, 1] },
-    mallet:  { hard: [0.05, 1] },
+    gtr_amp:     { pick: [0.12, 1] },
+    mallet:      { hard: [0.05, 1] },
+    voice_lead:  { push: [0.06, 0.95] },
+    voice_choir: { push: [0.05, 0.68] },
   };
+  // WHICH SINGER, AND HOW HIGH THEY GO. The library's five voice types are an
+  // index into the formant tables (0 alto, 1 bass, 2 countertenor, 3 soprano,
+  // 4 tenor) and the tables only tell the truth inside that voice's own
+  // compass — a bass's formants over a soprano's line is a chipmunk. So each
+  // one carries its range and the register law folds the part into it, which is
+  // what a singer does when the line runs off the top of their voice.
+  const VOICE_TYPE = {
+    alto:         { n: 0, lo: 175, hi: 698 },
+    bass:         { n: 1, lo: 82,  hi: 330 },
+    countertenor: { n: 2, lo: 175, hi: 622 },
+    soprano:      { n: 3, lo: 247, hi: 1047 },
+    tenor:        { n: 4, lo: 123, hi: 494 },
+  };
+
+  // THE FIVE VOWELS, as the tables index them. A recipe may write them as
+  // letters ("ao" — a mouth is easier to read as a word than as [0,3]) or as
+  // numbers; either way this is the only place the alphabet is spelled, and an
+  // empty or unreadable mouth sings the open vowel rather than nothing.
+  const VOWELS = "aeiou";
+  function vowelWalk(v) {
+    const out = [];
+    if (typeof v === "string") for (const ch of v.toLowerCase()) {
+      const i = VOWELS.indexOf(ch); if (i >= 0) out.push(i);
+    } else if (Array.isArray(v)) for (const x of v) {
+      const n = Number(x); if (isFinite(n)) out.push(clamp(n, 0, 4));
+    }
+    return out.length ? out : [0];
+  }
 
   function pitchedUnitRaw(role, m, state) {
     // param-reader: clamp(m[k]!=null?m[k]:d,lo,hi) — the null-coalescing default
@@ -1275,6 +1317,61 @@
             ring, exPos: mp("exPos", 1, 0, 4), tilt: mp("tilt", 5, 1, 12),
             release: clamp(m.release != null ? m.release : 1.5, 0.02, 3) } };
       }
+      // ---- THE THROAT (dsp/voice_lead.dsp, dsp/voice_choir.dsp) ------------
+      // Two seatings of ONE vocal tract (dsp/voice_tract.lib) — a glottal
+      // source through the CSOUND formant tables — and the third FAMILY in here
+      // that answers the player rather than replaying a take of one.
+      // Every sung sample in the library is six zones and ONE recording, so a
+      // sampled vocal has one dynamic, one vibrato baked into the take, and one
+      // vowel it can never leave; the whole reason a model is here is that a
+      // vowel is a signal and a line can move THROUGH it.
+      //
+      // `voice` is which of the five voice types is singing and `vowels` is
+      // what they sing — a genre's own mouth, carried from its recipe. Both are
+      // NOUNS: they snap, they do not blend. The vowel walk itself is in
+      // mapEvents, because which vowel a note takes is a fact about the note.
+      case "singer": {
+        const V = VOICE_TYPE[m.voice] || VOICE_TYPE.tenor;
+        const relV = mp("release", 0.25, 0.02, 3);
+        const word = vowelWalk(m.vowels);
+        return { ...base, module: "voice_lead",
+          freqMin: V.lo, freqMax: V.hi,
+          tail: Math.max(base.tail, relV + 0.3),
+          dyn: MODEL_DYN.voice_lead, slideParam: "glide", slideSec: 0.09,
+          vowels: word, vowelEvery: clamp(m.vowelEvery || 0.5, 0.25, 8),
+          params: { ...base.params, voice: V.n,
+            vowel: word[0],
+            breath: mp("breath", 0.05, 0, 0.6),
+            vibrato: mp("vibrato", 0.012, 0, 0.05),
+            vibRate: mp("vibRate", 5.4, 3, 8),
+            vibRise: mp("vibRise", 0.6, 0.05, 3),
+            attack: clamp(m.attack != null ? m.attack : 0.05, 0.005, 2),
+            release: relV,
+            cutoff: clamp((c || 5000), 800, 16000) } };
+      }
+      // the choir is a PAD whatever chair asks for it: four singers holding a
+      // chord is not a line, and the pad strip (120 Hz high-pass, chorus) is the
+      // one that does not take the body out of it.
+      case "chorale": {
+        const V = VOICE_TYPE[m.voice] || VOICE_TYPE.alto;
+        const relC = mp("release", 0.7, 0.02, 4);
+        const word = vowelWalk(m.vowels);
+        return { ...base, module: "voice_choir", stereo: true, pool: 3,
+          freqMin: V.lo, freqMax: V.hi,
+          tail: Math.max(base.tail, relC + 0.5),
+          dyn: MODEL_DYN.voice_choir,
+          vowels: word, vowelEvery: clamp(m.vowelEvery || 4, 0.5, 16),
+          params: { ...base.params, voice: V.n,
+            vowel: word[0],
+            breath: mp("breath", 0.08, 0, 0.6),
+            spread: mp("spread", 1, 0, 2),
+            drift: mp("drift", 1, 0, 1.5),
+            vibrato: mp("vibrato", 0.008, 0, 0.04),
+            attack: clamp(m.attack != null ? m.attack : (isPad ? 0.3 : 0.12), 0.01, 3),
+            release: relC,
+            width: mp("width", 0.8, 0, 1),
+            cutoff: clamp((c || 4500), 800, 16000) } };
+      }
       case "vocoder": return { ...base, module: "robot_choir", vocoder: true, params: { ...base.params, cutoff: clamp(isPad ? Math.min(9000, c * 2) : c, 200, 14000), res, makeup: 5 } };
       // ---- synth fleet: nine classic-synth voices (dsp/*.dsp) ----
       // juno60 — Roland Juno-60 poly pad/keys, STEREO (BBD chorus is the width).
@@ -1455,6 +1552,12 @@
     supersaw: 2.47, fm2op: 0.53, lead_pluck: 1.3, lead_kpluck: 0.56, lead_fuzz: 1.43,
     lead_guitar: 0.55, synclead: 1.68, casiocz: 1.82, bell: 1.24, piano: 0.45,
     brass: 1.16, hammond: 0.89, robot_choir: 2.07,
+    // the throat (measured interleaved min-of-9 against pad_saw on this box,
+    // which reproduced vp330 at 2.05 against its table 1.96 and supersaw at
+    // 2.53 against 2.47). The choir is two tracts and is priced like one: it is
+    // the second-heaviest voice in the fleet after the DX7, and HEAVY_FLEET
+    // below caps its pool for exactly that reason.
+    voice_lead: 2.4, voice_choir: 3.8,
     // bass
     bass_saw: 0.84, bass_sub: 0.47, bass_acid: 0.94, bass_reese: 0.5, bass_wobble: 1.15,
     // mono synths
@@ -1481,7 +1584,7 @@
   // Faust worklets render EVERY block whether or not a note is gated, so the whole
   // pool is always-on cost. cost = effectivePool * moduleCost.
   const POOL_SIZE = { pad: 4, bass: 2, melody: 3, solo: 2 };
-  const HEAVY_FLEET = ["juno60", "hammond", "vp330", "solina", "ppg"];
+  const HEAVY_FLEET = ["juno60", "hammond", "vp330", "solina", "ppg", "voice_choir"];
   function effectivePool(u) {
     if (u.drum || u.hold) return (u.pool > 1 ? 2 : 1);
     let n = POOL_SIZE[u.role] || u.pool || 2;
@@ -2198,6 +2301,20 @@
       // line is the note before — and `slide` is only ever written on line and
       // bass events, which are single lines.
       if (u.slideParam) sets[u.slideParam] = p.slide ? u.slideSec : 0;
+      // THE VOWEL WALKS ALONG THE LINE. A sung note takes the next vowel in the
+      // genre's own mouth, and the module glides between them — which is the
+      // one thing a recording of a vowel can never do, and the reason a formant
+      // model is in here at all. The step is read off the note's DRAWLESS
+      // musical position (`beat0` where the live conductor stamps one, as the
+      // seam law above uses it), so the live window and the press choose the
+      // same syllable for the same note, and a repeated bar sings the same word
+      // twice — which is what a lyric is. `vowelEvery` is the syllable length in
+      // beats: half a beat for a line, a whole bar for a choir holding one.
+      if (u.vowels) {
+        const b = p.beat0 != null ? p.beat0 : p.beat;
+        const step = Math.round(b / u.vowelEvery);
+        sets.vowel = u.vowels[((step % u.vowels.length) + u.vowels.length) % u.vowels.length];
+      }
       if (u.flangeFromTime) sets.flangePos = clamp(p.beat * spb / 164, 0, 1);
       // tb303 per-note ACCENT/SLIDE (u.acid): buildEvents tags acid bass steps
       // with ev.accent/ev.slide (0..1); set on the voice BEFORE the note's

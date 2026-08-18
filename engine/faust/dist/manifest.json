@@ -4576,6 +4576,48 @@
    "/tom/pitch"
   ]
  },
+ "voice_choir": {
+  "inputs": 0,
+  "outputs": 2,
+  "params": [
+   "/voice_choir/attack",
+   "/voice_choir/breath",
+   "/voice_choir/cutoff",
+   "/voice_choir/drift",
+   "/voice_choir/freq",
+   "/voice_choir/gain",
+   "/voice_choir/gate",
+   "/voice_choir/level",
+   "/voice_choir/push",
+   "/voice_choir/release",
+   "/voice_choir/spread",
+   "/voice_choir/vibrato",
+   "/voice_choir/voice",
+   "/voice_choir/vowel",
+   "/voice_choir/width"
+  ]
+ },
+ "voice_lead": {
+  "inputs": 0,
+  "outputs": 1,
+  "params": [
+   "/voice_lead/attack",
+   "/voice_lead/breath",
+   "/voice_lead/cutoff",
+   "/voice_lead/freq",
+   "/voice_lead/gain",
+   "/voice_lead/gate",
+   "/voice_lead/glide",
+   "/voice_lead/level",
+   "/voice_lead/push",
+   "/voice_lead/release",
+   "/voice_lead/vibRate",
+   "/voice_lead/vibRise",
+   "/voice_lead/vibrato",
+   "/voice_lead/voice",
+   "/voice_lead/vowel"
+  ]
+ },
  "vp330": {
   "inputs": 0,
   "outputs": 2,

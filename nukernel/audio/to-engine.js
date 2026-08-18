@@ -220,6 +220,12 @@ const SYNTH = {
   // and so does a marimba (minimalism has two of them doing both).
   gtr_amp:   { model: "eguitar" },
   mallet:    { model: "mallet" },
+  // THE THROAT. Both roles are declared, because a singer and a section are not
+  // interchangeable seatings of one thing the way pad_saw and supersaw are: a
+  // lead follows the TUNE and a choir holds the HARMONY, and the parent's `pad`
+  // strip is the one that does not high-pass the body out of four people.
+  voice_lead:  { model: "singer",  role: "melody" },
+  voice_choir: { model: "chorale", role: "pad" },
 };
 const WAVES = ["sine", "saw", "square", "pulse"];
 
@@ -492,6 +498,115 @@ const PATCH_MODEL = {
   // recording is the better music box and it keeps the job.
 };
 
+// ---- AND THE ONE INSTRUMENT EVERY LISTENER OWNS ----------------------------
+// A voice is the only thing in the catalogue the ear grades against something
+// it hears all day, and sampled it is the flattest sound in the library.
+// Measured on the shipped registry: `solo_vox`, `ahh_choir` and `ohh_voices`
+// are six zones and ONE recording each. So a sung line is that one held "aah"
+// transposed — one dynamic, one vowel it can never leave, and the take's own
+// vibrato baked in and beating against every other note in the chord. That is
+// the squeak Paul heard ("the vocals are just squeaky"), and unlike the pads it
+// is not even a bad recording: it is what a recording of a vowel IS.
+//
+// The parent grew a vocal tract for it (engine/faust/dsp/voice_tract.lib and
+// its two seatings), and the point of a tract is that the VOWEL IS A SIGNAL: a
+// line can move through it, a section can hold one, and the dynamic opens the
+// voice instead of turning it up. Same claim as the guitar amp and the struck
+// bar one table up, on the instrument where it matters most.
+//
+// WHICH ID IS WHICH SEATING is decided by what the id has always named:
+// GM 85 "Lead 6 (voice)" is a soloist and gets the LEAD; GM 52/53/91 are choir
+// aahs, voice oohs and a choir pad, and get the SECTION. GM 54 "synth voice" is
+// NOT here on purpose — it is a photograph of a VP-330, an actual machine the
+// parent owns, and PATCH_SYNTH already sends it there. A Roland string-choir is
+// not a person and should not be modelled as one.
+//
+// The `vowels` on each row are what the GM id itself means — aahs are open,
+// oohs are round — and they are what a genre with no mouth of its own sings.
+//
+// `phase` is what happens when a genre DOES have a mouth and casts two of these
+// at once, which four of them do (gospel and doowop take both the aahs and the
+// oohs). One mouth per genre is right — a group is one group — but two sections
+// singing the identical syllable at the identical moment is one section twice.
+// So the id ROTATES the genre's word: the aahs sing it from the top, the oohs a
+// syllable behind. Doowop's "ou" comes out as o-u against u-o, which is what
+// four men round a microphone actually do, and it costs no new vocabulary.
+const PATCH_VOICE = {
+  solo_vox:    { dsp: "voice_lead",  voice: "tenor", vowels: "ao", syll: 0.5, phase: 0 },
+  ahh_choir:   { dsp: "voice_choir", voice: "alto",  vowels: "a",  syll: 4, phase: 0 },
+  ohh_voices:  { dsp: "voice_choir", voice: "alto",  vowels: "ou", syll: 4, phase: 1 },
+  space_voice: { dsp: "voice_choir", voice: "soprano", vowels: "u", syll: 8, phase: 2 },
+};
+
+/**
+ * The SINGER a vocal GM id names — voice type, vowels and all — or null for
+ * every id that is not a person.
+ *
+ * Same `{dsp, root, level, set}` shape and the same contract as synthForInstr
+ * and modelForInstr beside it, so one translation serves the page and the tape.
+ *
+ * THE MOUTH IS THE GENRE'S, and it arrives in the genre's own `tone` block
+ * (genres.js MOUTHS) because that block is the one thing this bridge is already
+ * handed for every chair, on both paths — press-window's `seat.tone` and
+ * transport.js's `bar.g.tone` — and because `tone` is already a NOUN in that
+ * file's own doctrine: it snaps, it does not blend. A mouth is five dials and a
+ * word: which of the five voice types, which vowels, how much they wobble, how
+ * much air is in it, and (for a section) how ragged they are. That is what
+ * makes a crooner, a boy band, a plainchant and a Bulgarian choir four
+ * different singers rather than four volumes of the same one.
+ */
+export function voiceForInstr(id, tone) {
+  const P = PATCH_VOICE[id];
+  if (!P) return null;
+  const t = tone || {};
+  const M = t.mouth || {};
+  const choir = P.dsp === "voice_choir";
+  // the dials, 0..1 as a genre writes them, against each module's own declared
+  // range. Held off the TOP for the reason the bounds paragraph above gives —
+  // two readers write these numbers and one of them writes them onto a param —
+  // but not off the bottom, because zero vibrato is not a rounding error: it is
+  // plainchant, and it is the Bulgarian sound, and both of them are ruined by a
+  // wobble nobody asked for.
+  const dial = (v, d, hi) => clamp((v != null ? v : d) * hi, 0, hi * 0.98);
+  // A VOICE'S `cut` IS THE MIC AND THE ROOM, not a synth filter, and it needs
+  // the same lift the guitar cabinet needed: a formant bank's top formants live
+  // at 3-5 kHz, so a genre writing cut 1400 read literally would take the
+  // consonants and the air off every singer in the catalogue. The floor is
+  // where a close ribbon sits and the ceiling where a condenser stops.
+  const cut = clamp((t.cut != null ? t.cut : 2600) * 2.2, 2400, 12000);
+  const word = String(M.vowels || P.vowels || "a");
+  const ph = (P.phase || 0) % word.length;
+  const set = {
+    voice: M.voice || P.voice,
+    vowels: word.slice(ph) + word.slice(0, ph),
+    vowelEvery: M.syll != null ? M.syll : P.syll,
+    breath: dial(M.air, choir ? 0.22 : 0.14, 0.6),
+    cutoff: cut,
+    // a mouth cannot open in three milliseconds and a section cannot open in
+    // thirty, so the genre's attack is a floor away from the module's edge
+    attack: clamp(t.atk != null ? t.atk : 0.05, choir ? 0.12 : 0.03, choir ? 3 : 2),
+    release: clamp(t.rel != null ? t.rel : (choir ? 0.7 : 0.3), 0.05, choir ? 4 : 3),
+  };
+  if (choir) {
+    set.vibrato = dial(M.vib, 0.3, 0.04);
+    // ONE DIAL FOR THE SECTION: `blend` is how ragged they are, and it moves
+    // the detune and the entry stagger together because those are the same
+    // fact about a choir — a tight studio stack is close in tune AND on the
+    // beat, and a room full of people is neither.
+    const b = M.blend != null ? M.blend : 0.75;
+    set.spread = clamp(b * 1.4, 0.05, 2);
+    set.drift = clamp(b * 1.3, 0.02, 1.5);
+    set.width = clamp(0.45 + b * 0.5, 0.1, 1);
+  } else {
+    set.vibrato = dial(M.vib, 0.45, 0.05);
+    set.vibRate = clamp(M.vibRate != null ? M.vibRate : 5.4, 3.1, 7.9);
+    set.vibRise = clamp(M.vibRise != null ? M.vibRise : 0.6, 0.06, 2.9);
+  }
+  return { dsp: P.dsp, root: P.dsp,
+    level: clamp((t.gain != null ? t.gain : 0.28) * 2.8, 0.35, 0.92),
+    set };
+}
+
 /**
  * The instrument a GM id NAMES, played rather than replayed — or null for an id
  * whose sampled recording is the better sound (which is most of them).
@@ -566,6 +681,15 @@ export function modelForInstr(id, tone) {
  * the code, not off a browser: loadSynth has exactly one caller. The fix is one
  * line in that list (add the patch/model specs the song's cast resolves to);
  * this file has nothing left to give it.
+ *
+ * IT IS THREE TABLES NOW, not one, and whoever writes that line should wire all
+ * three at once: PATCH_SYNTH here, PATCH_MODEL (the electrics and the struck
+ * bars) and PATCH_VOICE (the singers). transport.js reaches for synthForInstr
+ * alone, so modelForInstr and voiceForInstr are not even ASKED live — the tape
+ * has a guitar amp, a marimba and a vocal tract on it and the page has three
+ * recordings. The right shape is one call — `synthForInstr(...) ||
+ * modelForInstr(...) || voiceForInstr(...)`, exactly the chain recipeFor uses
+ * below — in both places, and the pool warmed from the same chain.
  */
 export function synthForInstr(id, tone, padish) {
   const P = PATCH_SYNTH[id];
@@ -613,8 +737,9 @@ function synthRecipe(sy, tone, role) {
 // a chair's recipe: the genre's signature synth where it declares one, then the
 // synthesiser its GM patch id is a photograph of, then the INSTRUMENT that id
 // names where the parent can play one better than a recording of it can
-// (PATCH_MODEL — the electrics and the struck bars), then — for every other id,
-// which is most of them — the sampled one, the parent's default sound.
+// (PATCH_MODEL — the electrics and the struck bars), then the SINGER for the
+// four ids that name a person (PATCH_VOICE), then — for every other id, which
+// is most of them — the sampled one, the parent's default sound.
 function recipeFor(chair, seat, lib, unrouted) {
   const role = CHAIR_ROLE[chair] || "melody";
   const tone = toneRecipe(seat.tone);
@@ -631,7 +756,8 @@ function recipeFor(chair, seat, lib, unrouted) {
   // SYNTH dictionary has no entry for is reported, never quietly sampled — that
   // is precisely the failure that put a one-zone whistle where a pad belonged.
   const patch = synthForInstr(seat.instr, seat.tone, role === "pad")
-    || modelForInstr(seat.instr, seat.tone);
+    || modelForInstr(seat.instr, seat.tone)
+    || voiceForInstr(seat.instr, seat.tone);
   if (patch) {
     const r = synthRecipe(patch, tone, role);
     if (r) return { ...r, source: "patch:" + seat.instr + ">" + patch.dsp };

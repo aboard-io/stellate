@@ -1,0 +1,89 @@
+// voice_tract.lib — ONE THROAT, and both singers are seated at it.
+//
+// A voice is the only instrument in the catalogue that everyone in the room has
+// and can judge. Sampled, it is the flattest thing here: `solo_vox` and
+// `ahh_choir` are six zones and one recording each, so a sung line is that one
+// held "aah" transposed, at one dynamic, on one vowel, with the take's own
+// vibrato baked in and beating against every other note. That is the squeak.
+//
+// pm.SFFormantModelBP is a SOURCE AND A TRACT: a glottal wave through five
+// resonant bandpasses whose centre frequencies, gains and bandwidths are the
+// CSOUND manual's measured formant tables for five voice types and five vowels,
+// linearly interpolated — so the vowel is a continuous signal and a line can
+// move THROUGH it, which is the thing a recording of a vowel can never do.
+//
+// THE LEAD AND THE CHOIR ARE THE SAME THROAT. They import this file; nothing
+// below is duplicated in either, because two copies of a vocal tract is exactly
+// how a lead and a choir stop being the same singer. (build.js writes every
+// dsp/*.lib into libfaust's virtual filesystem before it compiles, which is
+// what makes a local import resolve at all.)
+//
+// FOUR THINGS THIS ADDS TO THE LIBRARY MODEL, each because the bare call is
+// not yet an instrument:
+//
+//   THE NORMALIZER. resonbp's Q runs to 30, so whether a harmonic happens to
+//   land on a formant peak swings the tract 13.4 dB across two octaves —
+//   measured, MIDI 48-79 on a tenor 'a'. That is an accident of pitch and not a
+//   musical intention, and a singer whose every note is a different loudness is
+//   unusable. voxAgc normalizes the tract's STEADY STATE (30 ms, before the
+//   note envelope, on a source that never stops running, so there is nothing
+//   for it to pump against) and the same sweep comes back inside 4.6 dB.
+//
+//   THE GLOTTAL TILT. The library's source is a raw sawtooth: a fixed −6 dB/oct
+//   buzz at every dynamic. A real fold closes HARDER when it is pushed and
+//   leaves more harmonic above the second formant, so `push` opens a two-pole
+//   corner from 500 Hz to 6 kHz. Measured at equal loudness, spectral centroid
+//   goes x1.27 (MIDI 55), x1.28 (62), x1.31 (69) between the softest dynamic
+//   and the hardest, with the RMS moving 0.1 dB. The voice opens; it does not
+//   just get louder — the same claim gtr_amp and mallet make, and the reason
+//   velocity on a sampled vocal can only ever be a fader.
+//
+//   THE BREATH BEFORE THE VOWEL. `exType` is the library's voice/fricative
+//   ratio, held at a constant in the ready-made _ui. Here it starts high and
+//   falls over ~30 ms, which is an h before the note, and it is most of what
+//   makes the ear hear a person rather than a filtered saw.
+//
+//   THE VIBRATO THAT GROWS. A singer does not arrive vibrating; the wobble
+//   comes in after the note is established and widens while it is held.
+//   voxVib delays it by a breath and ramps it, and it modulates the SOURCE
+//   ONLY — the formants are read at the note's nominal pitch, because a mouth
+//   does not change shape at 5 Hz, and because feeding a modulated frequency
+//   into the filterbank re-reads 15 interpolated formant tables every sample
+//   and measured 2.2x the cost for a mouth that wobbles.
+declare name "voice_tract";
+import("stdfaust.lib");
+
+// seconds since this gate opened; zero while it is shut
+voxSince(gate) = (\(t). (gate * (t + 1.0/ma.SR))) ~ _;
+
+// the vibrato a singer actually has: nothing for the first breath of the note,
+// then in over `rise`
+voxVib(depth, rise, t) = depth * min(1.0, max(0.0, (t - 0.12) / max(0.02, rise)));
+
+// THE FOLD. `push` is how hard it is driven — the spectral tilt, not the level.
+// The tilt is factored out because it is LINEAR: two cords sounding into one
+// throat is the same signal as their sum through one fold, and the choir sums
+// its pair before folding rather than carrying a second filter for it.
+voxTilt(push) = fi.lowpass(2, 500.0 + push*push*5500.0);
+voxGlottis(push, f) = os.sawtooth(f) : voxTilt(push);
+
+// steady-state normalizer (see THE NORMALIZER above). Feed-forward, no envelope
+// in its input, so it follows pitch and vowel and never the note.
+voxAgc(target, tau, x) = x * gg
+with {
+  r  = x*x : si.smooth(ba.tau2pole(tau)) : sqrt;
+  gg = target / max(0.0005, r) : min(80.0) : max(0.02) : si.smooth(ba.tau2pole(tau));
+};
+
+// THE TRACT ITSELF. `fnom` is the note's nominal pitch — what the formant
+// correction (autobend, vocal effort) is read at; `src` is the glottal wave,
+// which may be detuned and wobbling away from it.
+voxTract(voice, vowel, breath, fnom, src, gate) =
+  pm.SFFormantModel(voice, vowel, fric, fnom, 0.7, src, pm.formantFilterbankBP, 0)
+  : voxAgc(0.10, 0.030)
+with {
+  fric = min(1.0, breath + 0.55*(1.0 - (gate : si.smooth(ba.tau2pole(0.03)))));
+};
+
+// the breath in and the breath out
+voxEnv(attack, release, gate) = en.asr(attack, 1.0, release, gate);

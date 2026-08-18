@@ -23,6 +23,18 @@ async function main() {
   console.log("faust compiler:", compiler.version());
 
   fs.mkdirSync(OUT, { recursive: true });
+  // LOCAL LIBRARIES FIRST. A .dsp is compiled from a STRING, so libfaust has no
+  // directory to resolve `import("voice_tract.lib")` against — only its own
+  // virtual filesystem, which is where the standard library lives. Writing
+  // every dsp/*.lib into it before the first compile is what lets two modules
+  // share one piece of synthesis instead of carrying two copies of it: the lead
+  // singer and the choir are the same vocal tract, and a duplicated tract is
+  // exactly how they would stop being the same voice.
+  const libDir = path.join(__dirname, "..", "dsp");
+  for (const f of fs.readdirSync(libDir).filter((x) => x.endsWith(".lib")).sort()) {
+    compiler.fs().writeFile(f, fs.readFileSync(path.join(libDir, f), "utf8"));
+    console.log("lib:", f);
+  }
   const only = process.argv.slice(2);           // build.js [name ...] = subset rebuild
   const dsps = fs.readdirSync(path.join(__dirname, "..", "dsp")).filter(f => f.endsWith(".dsp")).sort()
     .filter(f => !only.length || only.includes(f.replace(/\.dsp$/, "")));

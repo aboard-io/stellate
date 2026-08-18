@@ -81,6 +81,70 @@
                        augmented: "augmented", quartal: "quartal",
                        major: "major", majpent: "major pent." };
 
+  // ---- THE MOUTHS ----------------------------------------------------------
+  // WHO IS SINGING. A genre that casts a vocal instrument used to get one held
+  // "aah" — six zones, one recording, one dynamic, one vowel it could never
+  // leave — for a crooner, a plainchant, a boy band and a Bulgarian women's
+  // choir alike, which is why every voice on the record sounded like the same
+  // squeak with a different reverb on it. The engine now has a vocal tract
+  // (engine/faust/dsp/voice_tract.lib) and the tract wants to be TOLD things,
+  // so a mouth is what a genre says about its singer:
+  //
+  //   voice   which of the five voice types the formant tables know —
+  //           alto, bass, countertenor, soprano, tenor. It picks the whole
+  //           formant set AND the compass the line is folded into.
+  //   vowels  what they sing, one per syllable, walked along the line. This is
+  //           the field a sample cannot have at all.
+  //   vib     how much they wobble, 0..1. 0 is a straight tone, which is not an
+  //           absence of expression — it is plainchant, and it is the Bulgarian
+  //           sound, and it is what makes both of them not sound like opera.
+  //   air     how much breath is in it, 0..1.
+  //   blend   sections only: how ragged they are, 0..1. It moves the detune and
+  //           the entry stagger together, because a tight studio stack is close
+  //           in tune AND on the beat and a room full of people is neither.
+  //   syll    beats per syllable, where the default (half a beat for a line, a
+  //           bar for a held chord) is wrong for the music.
+  //
+  // A mouth lives INSIDE the genre's `tone` block, which is where the bridge
+  // (audio/to-engine.js voiceForInstr) is already handed the genre's voicing on
+  // both the live path and the tape. `tone` is a NOUN in this file's own
+  // doctrine — it snaps, it does not blend — and so is a singer.
+  //
+  // These are named after the RECORD and not after the vocal technique, the
+  // same way the kits and the progressions are.
+  const MOUTHS = {
+    // the sacred ones, and what separates them is almost entirely the VIBRATO
+    plainchant: { voice: "tenor",  vowels: "ae",  vib: 0,    air: 0.30, blend: 0.55 },
+    motet:      { voice: "countertenor", vowels: "aeo", vib: 0.12, air: 0.26, blend: 0.7, syll: 8 },
+    hymnal:     { voice: "alto",   vowels: "ao",  vib: 0.2,  air: 0.22, blend: 0.8 },
+    // the fourth sacred one, and the least European-sounding: the open-throated
+    // straight tone of a Bulgarian women's choir — no wobble at all, pressed
+    // hard, and packed tight enough that the seconds grind
+    bulgar:     { voice: "soprano", vowels: "eai", vib: 0,   air: 0.10, blend: 0.35, syll: 2 },
+    // the American church and what came out of it
+    gospelchoir:{ voice: "alto",   vowels: "aoe", vib: 0.55, air: 0.20, blend: 0.9 },
+    // a man alone at a microphone in 1955: low, slow, and the vibrato arrives
+    // late in the note, which is the whole trick
+    crooning:   { voice: "bass",   vowels: "oau", vib: 0.7,  air: 0.18, vibRate: 4.6, vibRise: 1.1, syll: 1 },
+    // four men round one mic, and the lead on top of them
+    doowopstack:{ voice: "tenor",  vowels: "ou",  vib: 0.3,  air: 0.16, blend: 0.65, syll: 2 },
+    // the British group harmony: bright, close, and only a little wobble
+    merseystack:{ voice: "tenor",  vowels: "aou", vib: 0.25, air: 0.14, blend: 0.45, syll: 2 },
+    // a boy band is a COUNTERTENOR pushed high and stacked TIGHT — the tightness
+    // is the production, and it is what makes it sound like a machine of people
+    boygroup:   { voice: "countertenor", vowels: "ieo", vib: 0.35, air: 0.12, blend: 0.25, syll: 1 },
+    // one voice at the front of a big chorus, belting
+    belter:     { voice: "soprano", vowels: "aei", vib: 0.75, air: 0.16, vibRate: 6.1, vibRise: 0.4, syll: 1 },
+    // rough, close, and almost no air in it
+    skiffler:   { voice: "tenor",  vowels: "eao", vib: 0.15, air: 0.34, vibRate: 5.9, syll: 0.5 },
+    // the modern pop lead: bright, breathy, wobble late
+    poplead:    { voice: "alto",   vowels: "aei", vib: 0.4,  air: 0.28, vibRise: 0.9, syll: 0.5 },
+    // the soft dreaming ones — a wash of voices, barely articulated
+    dreamchoir: { voice: "alto",   vowels: "uo",  vib: 0.25, air: 0.4,  blend: 0.85, syll: 8 },
+    // and the room-in-the-back backing vocal: quiet, round, out of the way
+    backingroom:{ voice: "alto",   vowels: "ou",  vib: 0.2,  air: 0.3,  blend: 0.7, syll: 4 },
+  };
+
   // ---- NAMED PROGRESSIONS --------------------------------------------------
   // Chord OBJECTS per bar (kernel.js chordsOf: {d, q, inv, borrow, beats}),
   // named so the composer can deal a DIFFERENT one per section role — the
@@ -521,7 +585,9 @@
       intro: "solo",                 // chant begins as one voice, always
       mode: MODES.dorian, scale: DIATONIC,
       artic: "legato", incClamp: 2,
-      tone: { wave: "triangle", cut: 2100, q: 0.7, atk: .09, rel: 2.2, gain: .26, verb: .78 },
+      tone: { wave: "triangle", cut: 2100, q: 0.7, atk: .09, rel: 2.2, gain: .26, verb: .78,
+              // WHO SINGS: a hall of monks on one line: no vibrato at all, which is what makes it
+              mouth: MOUTHS.plainchant },
       words: ["the chant", "the same line an octave below"],
       word: () => [],
     },
@@ -552,7 +618,9 @@
       kit: { k: [1,0,0,0, 0,0,0,1, 0,0,0,0, 0,0,1,0],
              p: [0,0,1,0, 1,0,0,0, 0,1,0,1, 0,0,0,1] },
       artic: "legato",
-      tone: { wave: "sawtooth", cut: 2600, q: 1.4, atk: .03, rel: 1.1, gain: .26, verb: .5 },
+      tone: { wave: "sawtooth", cut: 2600, q: 1.4, atk: .03, rel: 1.1, gain: .26, verb: .5,
+              // WHO SINGS: the open-throated straight tone, packed tight enough that the seconds grind
+              mouth: MOUTHS.bulgar },
       words: ["the melody", "a second above it, and staying there"],
       word: v => (v === 0 ? [] : [transpose(1)]),
     },
@@ -580,7 +648,9 @@
       entry: v => v, reg: v => (v % 4) - 1, realize: () => "line",
       kit: {}, nobass: true, harmony: "emergent",
       mode: MODES.dorian, scale: DIATONIC, artic: "legato",
-      tone: { wave: "triangle", cut: 2400, q: 0.8, atk: .07, rel: 2.6, gain: .17, verb: .85 },
+      tone: { wave: "triangle", cut: 2400, q: 0.8, atk: .07, rel: 2.6, gain: .17, verb: .85,
+              // WHO SINGS: forty parts of countertenor, one vowel to the phrase
+              mouth: MOUTHS.motet },
       words: ["choir 1", "choir 2", "choir 3", "choir 4",
               "choir 5", "choir 6", "choir 7", "choir 8"],
       word: (v, s) => [transpose([0, 4, 2, -3, 3, -2, 5, 1][v % 8]),
@@ -1003,7 +1073,9 @@
              c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1],
              h: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1] },
       fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,1,1,0] },
-      tone: { wave: "triangle", cut: 2400, q: 1.1, atk: .01, rel: 1.0, gain: .26, verb: .42 },
+      tone: { wave: "triangle", cut: 2400, q: 1.1, atk: .01, rel: 1.0, gain: .26, verb: .42,
+              // WHO SINGS: the bed of voices under the Rhodes, barely articulated
+              mouth: MOUTHS.dreamchoir },
       words: ["the vocal stack, one chord a bar", "the Rhodes, playing around it"],
       word: () => [],
       fx: ["chorus"],
@@ -1052,7 +1124,9 @@
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
       fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,0,1,0] },
-      tone: { wave: "triangle", cut: 2600, q: 0.9, atk: .005, rel: .7, gain: .28, verb: .26 },
+      tone: { wave: "triangle", cut: 2600, q: 0.9, atk: .005, rel: .7, gain: .28, verb: .26,
+              // WHO SINGS: three men round one microphone, bright and only a little wobble
+              mouth: MOUTHS.merseystack },
       words: ["the tune", "the harmony, a third above, all the way"],
       word: v => (v === 1 ? [transpose(2)] : []),
     },
@@ -1283,7 +1357,9 @@
       // are the same every time you press play and different every bar.
       kitProb: { h: [9,9,9,6, 9,9,8,5, 9,9,9,6, 9,9,7,7] },
       fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,1, 1,0,1,0] },
-      tone: { wave: "triangle", cut: 2600, q: 1.4, atk: .004, rel: .4, gain: .27, verb: .24 },
+      tone: { wave: "triangle", cut: 2600, q: 1.4, atk: .004, rel: .4, gain: .27, verb: .24,
+              // WHO SINGS: the diva sample the genre is built on, breathy and up top
+              mouth: MOUTHS.poplead },
       words: ["the chopped vocal", "the answer, shuffled off the beat"],
       word: v => (v === 0 ? [] : [only("gate", rotate(3)), drop(3)]),
     },
@@ -1521,7 +1597,9 @@
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
       fill: { s: [0,0,0,0, 1,0,1,0, 1,0,1,0, 1,1,1,0] },
-      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .02, rel: 1.2, gain: .26, verb: .45 },
+      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .02, rel: 1.2, gain: .26, verb: .45,
+              // WHO SINGS: the widest wobble in the table, and a section that never quite agrees
+              mouth: MOUTHS.gospelchoir },
       words: ["the organ, walking the changes", "the lead voice",
               "the choir, answering a third up from bar 5"],
       word: v => (v === 2 ? [transpose(2), drop(2)] : []),
@@ -2418,7 +2496,9 @@
       fill: { s: [0,0,0,0, 1,0,0,0, 1,1,0,1, 1,1,0,1] },
       // no `fx` either: a 1955 vocal record's only effect is the room it was
       // cut in, and the room is `verb`
-      tone: { wave: "triangle", cut: 2400, q: 0.8, atk: .014, rel: 1.1, gain: .26, verb: .5 },
+      tone: { wave: "triangle", cut: 2400, q: 0.8, atk: .014, rel: 1.1, gain: .26, verb: .5,
+              // WHO SINGS: the round 'ooh' under the lead, on the corner
+              mouth: MOUTHS.doowopstack },
       words: ["the group — \"doo-wop\", the bar's chord, on their own grid",
               "the bass singer, under everything", "the lead tenor, from bar 3"],
       word: (v, s) => (v === 0 ? [breath([1,0,0,1, 0,0,0,0, 1,0,0,1, 0,0,0,0])]
@@ -2523,7 +2603,9 @@
       // on; the only thing that can get louder is the board.
       fill: { p: [0,0,0,0, 1,0,1,0, 1,0,1,0, 1,1,1,0],
               "!p": [0,0,0,0, 1,0,0,0, 0,0,0,0, 0,0,0,0] },
-      tone: { wave: "triangle", cut: 3000, q: 1.0, atk: .004, rel: .45, gain: .28, verb: .16 },
+      tone: { wave: "triangle", cut: 3000, q: 1.0, atk: .004, rel: .45, gain: .28, verb: .16,
+              // WHO SINGS: rough and close, more air in it than tone
+              mouth: MOUTHS.skiffler },
       intro: "cold",                 // one voice counts it off and the band is in
       words: ["the strum — an eighth-note grid, all downstrokes",
               "the tune, hollered, as written",
@@ -2955,7 +3037,9 @@
              h: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
              p: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0] },
       fill: { p: [0,0,0,0, 0,0,0,0, 1,0,1,0, 1,0,1,0] },
-      tone: { wave: "triangle", cut: 2200, q: 0.9, atk: .02, rel: 1.2, gain: .24, verb: .4 },
+      tone: { wave: "triangle", cut: 2200, q: 0.9, atk: .02, rel: 1.2, gain: .24, verb: .4,
+              // WHO SINGS: low and slow, and the vibrato arrives LATE in the note — the whole trick
+              mouth: MOUTHS.crooning },
       words: ["the voice, held over the changes", "the strings, one wash under it"],
       word: v => (v === 0 ? [] : [drop(2)]),
     },
@@ -2984,7 +3068,9 @@
       kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
              h: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
              p: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
-      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .02, rel: 1.3, gain: .24, verb: .42 },
+      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .02, rel: 1.3, gain: .24, verb: .42,
+              // WHO SINGS: a carol, sung by somebody who learned it in a church
+              mouth: MOUTHS.hymnal },
       words: ["the voice, the carol tune", "the strings, holding the harmony",
               "the bells, sparkling on top"],
       word: v => (v === 0 ? [] : v === 1 ? [drop(2)]
@@ -3016,7 +3102,9 @@
              c: [0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0],
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
       fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,0,1,0] },
-      tone: { wave: "triangle", cut: 2400, q: 1.0, atk: .005, rel: .6, gain: .28, verb: .22 },
+      tone: { wave: "triangle", cut: 2400, q: 1.0, atk: .005, rel: .6, gain: .28, verb: .22,
+              // WHO SINGS: the same close harmony as beatles, one town and two years earlier
+              mouth: MOUTHS.merseystack },
       words: ["the tune, straight ahead",
               "the harmony, a third above — answering the handclap hook"],
       word: v => (v === 0 ? [] : [transpose(2), only("gate", offbeats(4))]),
@@ -3049,7 +3137,9 @@
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
       fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,1,1,1],
               x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,9] },
-      tone: { wave: "triangle", cut: 2200, q: 0.9, atk: .01, rel: 1.0, gain: .27, verb: .4 },
+      tone: { wave: "triangle", cut: 2200, q: 0.9, atk: .01, rel: 1.0, gain: .27, verb: .4,
+              // WHO SINGS: voices as a wash, which is what the studio was for
+              mouth: MOUTHS.dreamchoir },
       words: ["the tune, the verse as written",
               "the choir, arriving at the vamp — na na na, a third up"],
       word: v => (v === 1 ? [transpose(2), only("gate", offbeats(2))] : []),
@@ -3186,7 +3276,9 @@
       ],
       fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,1,1,1],
               x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,9] },
-      tone: { wave: "triangle", cut: 2000, q: 0.9, atk: .02, rel: 1.4, gain: .26, verb: .5 },
+      tone: { wave: "triangle", cut: 2000, q: 0.9, atk: .02, rel: 1.4, gain: .26, verb: .5,
+              // WHO SINGS: the key change is coming and this is the voice that survives it
+              mouth: MOUTHS.belter },
       words: ["the voice, soaring over the changes",
               "the strings and the band, quiet then huge"],
       word: () => [],
@@ -3358,7 +3450,9 @@
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              h: [1,0,0,1, 0,1,0,0, 1,0,0,1, 0,0,1,0] },
       fill: { h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
-      tone: { wave: "triangle", cut: 2200, q: 1.0, atk: .008, rel: .8, gain: .27, verb: .32 },
+      tone: { wave: "triangle", cut: 2200, q: 1.0, atk: .008, rel: .8, gain: .27, verb: .32,
+              // WHO SINGS: stacked TIGHT — the tightness is the production
+              mouth: MOUTHS.boygroup },
       words: ["the lead, the hook", "the harmony stack, a sixth under",
               "the EP, holding the changes"],
       word: () => [],
@@ -3604,7 +3698,9 @@
       // MAJOR PENTATONIC — the actual alphabet an Appalachian ballad sings
       // in, and plainer than counterpoint's seven-note diatonic on purpose.
       scale: SCALES.majpent, artic: "legato",
-      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .006, rel: .8, gain: .24, verb: .35 },
+      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .006, rel: .8, gain: .24, verb: .35,
+              // WHO SINGS: two people who have sung together for years: closer than a choir
+              mouth: { ...MOUTHS.hymnal, blend: 0.4, syll: 2 } },
       words: ["the guitar and the lead voice, the tune",
               "the harmony voice, a third below — parallel, not mirrored"],
       word: v => (v === 1 ? [transpose(-2)] : []),
@@ -4066,7 +4162,9 @@
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              h: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0] },
       fill: { s: [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,1,0] },
-      tone: { wave: "triangle", cut: 2000, q: .9, atk: .02, rel: 1.0, gain: .24, verb: .3 },
+      tone: { wave: "triangle", cut: 2000, q: .9, atk: .02, rel: 1.0, gain: .24, verb: .3,
+              // WHO SINGS: the voice at the back of the room, out of the piano's way
+              mouth: MOUTHS.backingroom },
       words: ["the piano, the changes, sung from the bench",
               "the voice, wordless, a third above"],
       word: v => (v === 1 ? [transpose(4)] : []),
@@ -4711,7 +4809,9 @@
       incClamp: 2, incMode: "reverse",   // a singer's range is two rungs, not seven
       intro: "solo",
       pipes: [{ id: "breathe" }],
-      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .03, rel: 1.1, gain: .28, verb: .40 },
+      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .03, rel: 1.1, gain: .28, verb: .40,
+              // WHO SINGS: the layer you stack on anything, so it is the plain modern lead
+              mouth: MOUTHS.poplead },
       words: ["the topline: two phrases and two breaths"],
       word: () => [spread(0.5), breath(SUNG)],
     },
@@ -4742,7 +4842,9 @@
       incClamp: 2, incMode: "reverse",
       intro: "swell",
       pipes: [{ id: "harmonize", p: 1 }],
-      tone: { wave: "triangle", cut: 2000, q: 0.8, atk: .06, rel: 1.6, gain: .24, verb: .55 },
+      tone: { wave: "triangle", cut: 2000, q: 0.8, atk: .06, rel: 1.6, gain: .24, verb: .55,
+              // WHO SINGS: this whole genre IS the backing vocal, so it says so
+              mouth: MOUTHS.backingroom },
       words: ["the stack: the line, and a third over it"],
       word: () => [breath(SUNG), drop(3)],
     },
@@ -5093,7 +5195,7 @@
   for (const k of Object.keys(ORNAMENT)) if (GENRES[k]) GENRES[k].orn = ORNAMENT[k];
 
   const api = { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL, SCALES, SCALELABEL,
-                PROGS, FAMILIES, DYNAMICS, DYN_FAMILY, ORNAMENT };
+                MOUTHS, PROGS, FAMILIES, DYNAMICS, DYN_FAMILY, ORNAMENT };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuGenres = api;
 })(typeof window !== "undefined" ? window : globalThis);

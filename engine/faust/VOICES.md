@@ -483,3 +483,58 @@ UNIFIED deterministic clip-snap lives in found-player.js:
   detect a slightly different median than press's raw ffmpeg decode — each
   engine is internally deterministic, cross-engine parity is approximate (true
   of all found audio).
+
+## The THROAT — a vocal tract, and two singers seated at it (2026-08)
+
+`dsp/voice_tract.lib` + `dsp/voice_lead.dsp` + `dsp/voice_choir.dsp`. Models
+`singer` and `chorale` in state-engine `pitchedUnit`; a genre reaches them the
+way it reaches any model, and nukernel reaches them through its own mouths
+(`nukernel/audio/to-engine.js` PATCH_VOICE).
+
+WHY, and it is the same argument the guitar amp and the struck bar made one
+round earlier, on the instrument where it matters most: every sung sample in
+the library is six zones and ONE recording. `solo_vox`, `ahh_choir`,
+`ohh_voices` — one dynamic, one vibrato baked into the take and beating against
+every other note of the chord, and one vowel the line can never leave. A voice
+is also the only instrument in the catalogue that every listener owns and can
+grade. Paul, on the shipped build: "the vocals are just squeaky."
+
+The tract is `pm.SFFormantModelBP`'s two halves called directly — a glottal
+source into `pm.formantFilterbankBP`, whose five resonant bandpasses read the
+CSOUND manual's measured formant tables for five voice types and five vowels,
+**interpolated**, which is the whole point: the vowel is a SIGNAL.
+
+Four things the bare library call is not yet an instrument without, all measured
+on renders:
+
+| addition | why | measured |
+|---|---|---|
+| steady-state normalizer (`voxAgc`) | resonbp Q runs to 30, so whether a harmonic lands on a formant peak swings the tract by pitch alone | 13.4 dB spread over MIDI 48-79 → 4.6 dB; the five vowels come back the same loudness and different sounds |
+| glottal tilt (`push`) | the library source is a fixed sawtooth: one dynamic. A fold closes harder when driven | centroid ×1.46/×1.53/×1.72 (MIDI 57/64/71) at 0.1 dB of level change — the voice OPENS |
+| breath before the vowel | `exType` held constant in the ready-made `_ui`; here it falls over ~30 ms, which is an h | most of what makes the ear hear a person |
+| vibrato that GROWS | a singer arrives straight and widens | 0 cents for the first 0.35 s, 21-25 cents after |
+
+- **voice_lead** (mono, cost 2.4): vowel written per note by `mapEvents` from the
+  unit's `vowels` walk and glided by `si.smoo` — a phrase diphthongs; `glide` is
+  a real portamento on the pitch (`slideParam`, same contract as `gtr_amp`);
+  `push` is `MODEL_DYN`. Pitch exact to 0 cents, MIDI 45-76.
+- **voice_choir** (**stereo**, cost 3.8, HEAVY_FLEET pool cap 3): four singers
+  over two throats, detuned, four free-running vibrato rates never reset by the
+  gate, the second throat's whole gate 52 ms late with a longer attack, the two
+  placed at opposite ends of the field. Four IDENTICAL singers vs the four as
+  built, 220 Hz alto 'a': L/R correlation 1.000 → 0.235, 50 ms envelope wander
+  0.5% → 13.6%, and the locked stack is 0.7 dB LOUDER — identical voices sum
+  coherently and that is all they do.
+- **The formants are read at the note's NOMINAL pitch**, not the vibrato'd one: a
+  mouth does not change shape at 5 Hz, and feeding a modulated frequency into
+  the bank re-reads 15 interpolated tables every sample (measured 2.2x cost).
+- **The two throats share one vowel signal**, which was measured rather than
+  assumed: 0.22 of a vowel apart moved the correlation and the wander by 0.02
+  and 0.1 of a point and cost 1.8x the module, because one vowel lets the
+  compiler walk the formant tables once for both.
+- **Levels** are A/B'd against the sampled zones they stand in for, on the
+  press's own pre-makeup peak so the master normalizer cannot hide the answer:
+  lead vs `solo_vox` −0.2 dB RMS, choir vs `ahh_choir` +0.2 dB RMS.
+- **build.js now writes `dsp/*.lib` into libfaust's virtual filesystem** before
+  compiling, which is what lets two modules `import` one tract instead of
+  carrying two copies of it.
