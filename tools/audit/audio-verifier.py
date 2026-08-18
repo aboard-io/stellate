@@ -18,7 +18,12 @@ warnings.filterwarnings("ignore")
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(HERE)   # this script lives in tools/; models/ is at the repo root
+# tools/audit/ -> tools/ -> the repo root. TWO levels, not one: this script was
+# written when it lived in tools/, and the 2026-07 reorg that split tools into
+# six folders moved it a directory deeper without moving this line, so every
+# model path resolved to tools/models/ and the classifier died on "could not
+# open the Tensorflow graph file" for anyone who tried to use it since.
+ROOT = os.path.dirname(os.path.dirname(HERE))
 EMB = os.path.join(ROOT, "models", "discogs-effnet-bs64-1.pb")
 HEAD = os.path.join(ROOT, "models", "genre_discogs400-discogs-effnet-1.pb")
 META = os.path.join(ROOT, "models", "genre_discogs400-discogs-effnet-1.json")

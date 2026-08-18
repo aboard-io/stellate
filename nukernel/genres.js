@@ -334,8 +334,17 @@
       // oscillating filter re-sweeps from scratch on every note, which reads as a
       // bleep rather than a bassline. Saw instead of square, a filter that opens
       // less far and closes slower, and the resonance backed off the edge.
+      // ...AND THE SQUELCH IS TURNED BACK UP. Measured on a rendered Chicago
+      // 1987 (2026-08-18): the resonant peak moved 1.14 octaves and Essentia's
+      // Discogs classifier heard Electro, Experimental and AMBIENT — no acid
+      // house at all. A 303 line sweeps two to three octaves; that is the whole
+      // sound. resonance 0.58 and envmod 0.42 are both about half of what the
+      // instrument does, and the comment above admits the reason — the chirp was
+      // read as a bleep and both knobs were backed off to stop it. That trade
+      // removed the genre. envmod x resonance IS the squelch: a big envelope
+      // into a near-self-oscillating filter, re-sweeping on every accented note.
       synth: { dsp: "tb303", root: "tb303", level: 0.85,
-               set: { cutoff: 340, resonance: 0.58, envmod: 0.42, decay: 0.78, waveform: 0 } },
+               set: { cutoff: 300, resonance: 0.86, envmod: 0.85, decay: 0.62, waveform: 0 } },
       kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],     // 909, four on the floor
              c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
