@@ -143,6 +143,23 @@
     dreamchoir: { voice: "alto",   vowels: "uo",  vib: 0.25, air: 0.4,  blend: 0.85, syll: 8 },
     // and the room-in-the-back backing vocal: quiet, round, out of the way
     backingroom:{ voice: "alto",   vowels: "ou",  vib: 0.2,  air: 0.3,  blend: 0.7, syll: 4 },
+    // THE THREE THAT WERE BEING SUNG BY A MACHINE. Each of these genres already
+    // said in its own `words` that a PERSON was singing — "the melisma, with
+    // its rests", "the falsetto, held over the changes", "telling the story" —
+    // and each was cast on a synthesiser: two on `synth_voice` (the VP-330, a
+    // Roland string-choir, which the bridge is right to refuse to model as a
+    // person) and one on nothing at all.
+    //   a nineties ballad lead holds ONE vowel over many notes, which is what
+    // the word melisma means: `syll` 2 is two beats before the mouth moves, and
+    // it is the only place in this table that number goes above one for a solo
+    melisma:    { voice: "alto",   vowels: "aoe", vib: 0.5,  air: 0.24, vibRate: 5.7, vibRise: 0.5, syll: 2 },
+    // the falsetto is a COUNTERTENOR by construction — that is what the fifth
+    // formant set is — and it is nearly straight, because the wobble is the
+    // thing a moody head-voice record deliberately does not have
+    falsetto:   { voice: "countertenor", vowels: "uoa", vib: 0.12, air: 0.42, vibRate: 5.0, vibRise: 1.4, syll: 4 },
+    // close, plain and full of breath: a voice a foot from the mic telling you
+    // something. The wobble arrives late and never gets wide.
+    confessional:{ voice: "alto",  vowels: "aoe", vib: 0.28, air: 0.32, vibRate: 5.2, vibRise: 0.85, syll: 0.5 },
   };
 
   // ---- NAMED PROGRESSIONS --------------------------------------------------
@@ -1550,7 +1567,15 @@
       // late-night radio format is still owed.
       parents: { gospel: 0.3, motown: 0.25, jodeci: 0.25, doowop: 0.2 },
       wants: ["quiet storm"],
-      instr: ["legend_ep_2", "synth_voice"],
+      // THE MELISMA IS A PERSON. It was cast on `synth_voice`, and the round
+      // that sorted that id kept it here on the theory that this was one of the
+      // seven real vocoder records — it is not. A 1994 Philadelphia ballad is
+      // three men and a bass singer round a microphone; the only machine on it
+      // is the drum machine. The chord chair does not move, and that is the
+      // point Paul made about this exact record: a Philadelphia soul record
+      // without its EP is not an improvement, so the EP holds the sevenths
+      // exactly as before and the voice takes the line chair it already had.
+      instr: ["legend_ep_2", "solo_vox"],
       drumkit: "electronic",
       entry: v => v, reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),
@@ -1565,7 +1590,11 @@
              p: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
              h: [1,0,0,1, 0,1,0,0, 1,0,0,1, 0,0,1,0] },
       fill: { h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
-      tone: { wave: "triangle", cut: 2200, q: 1.0, atk: .01, rel: .9, gain: .26, verb: .38 },
+      tone: { wave: "triangle", cut: 2200, q: 1.0, atk: .01, rel: .9, gain: .26, verb: .38,
+              // WHO SINGS: one vowel held over many notes — that IS a melisma,
+              // and it is the one thing the recording of an "aah" could fake
+              // and the one thing the sung word could not
+              mouth: MOUTHS.melisma },
       words: ["the EP, holding the sevenths", "the melisma, with its rests"],
       word: () => [],
     },
@@ -1592,7 +1621,17 @@
       // whole tape came back with a spectral centroid of 249 Hz.
       // percussive_organ is the same extraction WITH the percussion stop, and
       // it is what a church organist plays with the left hand down.
-      instr: ["percussive_organ", "ahh_choir", "ohh_voices"],
+      //
+      // AND VOICE 1 IS ONE WOMAN, not four. Its own word has said "the lead
+      // voice" since the day this genre was written and it was cast on the
+      // SECTION patch, so the soloist and the choir answering her were the
+      // same four detuned singers at two levels — which is precisely the
+      // failure voice_choir.dsp's own header names ("a doubled voice that is
+      // two identical copies is still one voice"), made twice over. solo_vox
+      // is the tract seated on a line; ohh_voices behind it stays the section.
+      // Nothing moves off the organ: the pad chair is untouched, which is the
+      // whole test — a gospel record without its B-3 is not an improvement.
+      instr: ["percussive_organ", "solo_vox", "ohh_voices"],
       drumkit: "acoustic",
       entry: v => v * 2, reg: v => (v === 0 ? -1 : v - 1),
       realize: v => (v === 0 ? "pad" : "line"),
@@ -1607,7 +1646,11 @@
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
       fill: { s: [0,0,0,0, 1,0,1,0, 1,0,1,0, 1,1,1,0] },
       tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .02, rel: 1.2, gain: .26, verb: .45,
-              // WHO SINGS: the widest wobble in the table, and a section that never quite agrees
+              // WHO SINGS: the widest wobble in the table, and a section that
+              // never quite agrees. ONE mouth serves both seatings on purpose —
+              // the soloist and the choir behind her are the same church, and
+              // the bridge reads `blend` only for the section and `vibRate`
+              // only for the soloist, so the row says both without conflict
               mouth: MOUTHS.gospelchoir },
       words: ["the organ, walking the changes", "the lead voice",
               "the choir, answering a third up from bar 5"],
@@ -3001,6 +3044,22 @@
       // hymn were four copies of one C7 sample stretched down past hearing —
       // measured, the whole tape peaked at 0.019 with nothing above 2.5 kHz
       // in it. A Boston meeting house in 1831 has pipes anyway.
+      //
+      // AND THE CONGREGATION DOES NOT SING IT, WHICH IS MEASURED AND NOT AN
+      // OVERSIGHT. This is the one genre in the table whose own words name four
+      // SINGERS ("the soprano, the tune"), so it was the first candidate for
+      // the vocal tract, and it is the one that cannot have it: the four parts
+      // render at MIDI 79-110 / 52-83 / 24-55 / 7-38 — six octaves apart, each
+      // line 31 semitones wide — and no throat in the formant tables has a
+      // window wider than 25. A SAMPLER survives that because audio/plan.js
+      // homeFor moves the whole line by octaves with its contour intact; a
+      // voice module is not a sampler, windowOf returns null for it, and all it
+      // gets is the parent's PER-NOTE fold. Measured against all five voice
+      // types, every part comes back with 44-51% of its intervals changed — the
+      // fold would be louder than the tune. Casting a congregation here needs
+      // either this genre's registers rewritten or an octave home for voice
+      // units, and both of those are another file's decision. A wrong voice is
+      // worse than no voice, so the pipes keep it.
       instr: "church_organ",
       entry: () => 0, reg: v => [2, 0, -2, -4][v], realize: () => "line",
       kit: {}, nobass: true, harmony: "cycle",
@@ -3551,7 +3610,7 @@
     // a chorus that lifts a fourth into the pop half is the same "the
     // record changes costume mid-song" device psychpop already uses.
     confessionalpop: {
-      label: "Nashville 2008", rate: 1, bars: 4, voices: 2, near: "countrypop",
+      label: "Nashville 2008", rate: 1, bars: 4, voices: 3, near: "countrypop",
       // LINEAGE: the fifths bass, the storytelling verse and the acoustic
       // guitar are countrypop's, kept whole; rock supplies the full-band
       // arrangement a country radio ballad graduates into; synthpop supplies
@@ -3559,9 +3618,22 @@
       // missing ancestor — it is countrypop modernizing itself in real time.
       parents: { countrypop: 0.4, rock: 0.3, synthpop: 0.3 },
       wants: [],
-      instr: ["steel_string_guitar", "polysynth"],
+      // THE ONE GENRE HERE THAT GAINS A CHAIR RATHER THAN SWAPPING ONE. The
+      // other three singers this round arrived by correcting a cast — a
+      // section standing in for a soloist, a string machine standing in for a
+      // throat — but a confessional record's problem was simpler: both of its
+      // instruments are its identity (the acoustic guitar countrypop hands it
+      // whole, and the synth that IS the turn from acoustic to pop), so there
+      // was nothing a voice could take without taking the record with it.
+      //
+      // So the singer SITS BESIDE, in unison with the guitar: voice 2 is
+      // written at voice 0's register with voice 0's word, which is one line
+      // played and sung at once — the oldest arrangement there is, and the
+      // only one that costs the guitar nothing. `reg` says that explicitly
+      // rather than letting `v` run on to a third octave, where no throat is.
+      instr: ["steel_string_guitar", "polysynth", "solo_vox"],
       drumkit: "room",
-      entry: () => 0, reg: v => v, realize: () => "line",
+      entry: () => 0, reg: v => (v === 2 ? 0 : v), realize: () => "line",
       harmony: "cycle", roots: [3, 4, 5, 0], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       artic: "legato", maxHold: 3, bassStyle: "fifths",
@@ -3569,9 +3641,14 @@
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
       fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,0] },
-      tone: { wave: "triangle", cut: 2600, q: 1.1, atk: .005, rel: .6, gain: .27, verb: .24 },
+      tone: { wave: "triangle", cut: 2600, q: 1.1, atk: .005, rel: .6, gain: .27, verb: .24,
+              // WHO SINGS: close, plain, breathy, a foot from the microphone —
+              // the wobble arrives late and never gets wide, because a voice
+              // telling you something does not perform the note
+              mouth: MOUTHS.confessional },
       words: ["the guitar, telling the story",
-              "the synth, answering a fourth up — the turn from acoustic to pop"],
+              "the synth, answering a fourth up — the turn from acoustic to pop",
+              "the voice, singing the story with the guitar"],
       word: v => (v === 1 ? [transpose(3)] : []),
     },
 
@@ -3589,7 +3666,13 @@
       // fully-anchored traditions meeting on purpose.
       parents: { rnb: 0.45, ambient: 0.3, synthpop: 0.25 },
       wants: [],
-      instr: ["synth_voice", "halo_pad"],
+      // A FALSETTO IS A THROAT, not a string machine. Same correction as the
+      // parent row: `synth_voice` is a VP-330 and the genre's own first word is
+      // "the falsetto", which the formant tables have a whole voice type for.
+      // The pad chair is untouched — the drifting halo under it is half the
+      // record, and this genre is `intro:"fade"` precisely because that pad is
+      // what surfaces first.
+      instr: ["solo_vox", "halo_pad"],
       drumkit: "electronic",
       entry: v => v, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
       intro: "fade",
@@ -3600,7 +3683,11 @@
              s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,1] },
       fill: { s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 1,1,1,1] },
-      tone: { wave: "triangle", cut: 1600, q: 1.2, atk: .03, rel: 1.8, gain: .24, verb: .6 },
+      tone: { wave: "triangle", cut: 1600, q: 1.2, atk: .03, rel: 1.8, gain: .24, verb: .6,
+              // WHO SINGS: head voice, nearly straight, and more air in it than
+              // anything else in the table — the wobble arriving late and never
+              // widening is what keeps a held note sounding cold
+              mouth: MOUTHS.falsetto },
       words: ["the falsetto, held over the changes", "the pad, drifting under it"],
       word: v => (v === 1 ? [drop(2)] : []),
     },

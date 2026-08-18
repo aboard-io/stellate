@@ -7267,6 +7267,16 @@ console.log("the master harmonization engine — one tonality, every added voice
   // are near-empty between two full ones fell from 541 to 102 across 110 genres
   // × 4 seeds, and 87 of the 102 left are the composed `drop` STOP, at most one
   // to a record and now at most one bar wide.
+  // ...AND ONE ROW, on 2026-08-18, for the SINGERS (§77). Four records that
+  // said in their own words that a person was singing got one, and three of
+  // them cost this table nothing at all: gospel, rnb and darkrnb only swapped
+  // WHICH instrument a chair already had (a section standing in for a soloist,
+  // a Roland string-choir standing in for a throat), and an instrument id is
+  // not a score. `confessionalpop` is the one that moved, because it is the one
+  // that gained a chair: both of its instruments were its identity, so the
+  // voice had to sit beside them rather than take one, and a third voice is a
+  // third stream of events. EXACTLY ONE OF 110 ROWS, which is the whole claim
+  // this round makes about the other 109.
   // (`NUKERNEL_REF=1` prints this block, below.)
   const REF = { simple: "1bc5928ecc4c", fugue: "dabf3451bc56",
     acid: "b5b135f70d6b", newwave: "ae3805f144ab",
@@ -7296,7 +7306,7 @@ console.log("the master harmonization engine — one tonality, every added voice
     powerballad: "cc1789909e0c", retrofunkpop: "83152243b7b4",
     reggaeton: "9d8d59931b64", latinpop: "d89b38f89066",
     kpop: "fe59dee5027b", boyband: "3d1a4e2e5010", emo: "675bd3256def",
-    screamo: "9d669b30cb8e", confessionalpop: "a20cabd98cb5",
+    screamo: "9d669b30cb8e", confessionalpop: "966d679470a7",
     darkrnb: "f504a72492ea", bigroom: "73ce0eb74d51",
     blueeyedsoul: "f8aa6f3c3f09", folkduo: "19d32f689966",
     worldfolk: "b3ce041832d3", jamband: "02a7f875ff41",
@@ -9516,6 +9526,294 @@ console.log("one engine: the second one is gone and cannot come back quietly");
 
   console.log("  76: nine modules gone, one translator, no node built here, " +
               "and the engine has a deadline and a ceiling");
+}
+
+/* ---------------------------------------------------------------- 77. THE CAST
+   THE RECORDS THAT HAVE A SINGER GET ONE.
+
+   engine/faust/dsp/voice_tract.lib and its two seatings — voice_lead on a line,
+   voice_choir under the harmony — were built, compiled into dist/ and routed by
+   audio/to-engine.js, and this is the second organ in this project to be fully
+   wired and never asked for. The first was the espeak singer: its field
+   defaulted to null, no genre declared it, and nobody ever heard a note of it.
+   An organ nobody asks for is an organ that does not exist, so the check that
+   matters is not "does the module compile" — it is "which records sing", by
+   name, so that un-arming one is a failing test rather than a silence.
+
+   Six claims, all readable off the SCORE:
+
+     (a) THE ROSTER, named. Adding or dropping a singer must be a deliberate
+         edit to this list, which is the whole defence against the espeak shape.
+     (b) EVERY SINGER RESOLVES TO A MODULE THAT IS ACTUALLY THERE — the dsp
+         source and the compiled dist/ wasm both, because a cast that resolves
+         to a missing module is silence wearing a name.
+     (c) THE CHAIR IS THE ONE INTENDED. A lead takes the tune (the genre's own
+         `realize` says "line"); a section is a PAD in the parent whatever chair
+         asked for it, which is the chorale case's own law.
+     (d) NOBODY LOST THE INSTRUMENT THAT WAS THE RECORD. Paul's test, verbatim:
+         a Philadelphia soul record without its Rhodes is not an improvement.
+         Every singing genre still carries a non-vocal instrument, and the four
+         cast this round each still carry the named one.
+     (e) THE INSTRUMENTAL CATALOGUE IS BYTE-IDENTICAL, held against HEAD through
+         the rendered events — not the config — so "we left techno alone" is
+         measured rather than asserted.
+     (f) THE COMPASS. A voice unit is not a sampler, so audio/plan.js homeFor
+         gives it no whole-line octave home (windowOf returns null) and all it
+         gets is the parent's PER-NOTE fold into the voice type's own window.
+         A line wider than that window comes back with its intervals rewritten,
+         so the fold damage is measured here and printed: it is the number that
+         says whether a chosen voice type can say the part at all. */
+console.log("the cast — the records that have a singer get one");
+{
+  const fs77 = require("fs"), path77 = require("path"), cp77 = require("child_process");
+  const ROOT77 = path77.join(__dirname, "../..");
+  const TE77 = await import("../../nukernel/audio/to-engine.js");
+  const instrAt = (g, v) => (Array.isArray(g.instr)
+    ? g.instr[Math.min(v, g.instr.length - 1)] : g.instr);
+
+  // WHO SINGS, and on which chair. Written out rather than derived, because a
+  // roster derived from the table it is checking cannot notice the table
+  // losing a row — which is exactly how an organ goes quiet without failing.
+  const CAST77 = {
+    // the four this round put in front of a microphone
+    gospel:          [[1, "lead",  "alto"]],
+    rnb:             [[1, "lead",  "alto"]],
+    darkrnb:         [[0, "lead",  "countertenor"]],
+    confessionalpop: [[2, "lead",  "alto"]],
+    // and the nineteen already singing, held so they cannot quietly stop
+    garage:          [[1, "lead",  "alto"]],
+    doowop:          [[0, "choir", "tenor"], [1, "choir", "tenor"], [2, "lead", "tenor"]],
+    skiffle:         [[1, "lead",  "tenor"]],
+    crooner:         [[0, "lead",  "bass"]],
+    yuletide:        [[0, "lead",  "alto"]],
+    powerballad:     [[0, "lead",  "soprano"]],
+    boyband:         [[0, "lead",  "countertenor"], [1, "choir", "countertenor"]],
+    vocal:           [[0, "lead",  "alto"]],
+    gregorian:       [[0, "choir", "tenor"], [1, "choir", "tenor"]],
+    bulgarian:       [[0, "choir", "soprano"], [1, "choir", "soprano"]],
+    spem:            [[0, "choir", "countertenor"]],
+    jodeci:          [[0, "choir", "alto"]],
+    beatles:         [[1, "choir", "tenor"]],
+    merseybeat:      [[1, "choir", "tenor"]],
+    psychpop:        [[1, "choir", "alto"]],
+    folkduo:         [[1, "choir", "alto"]],
+    songwriterpiano: [[1, "choir", "alto"]],
+    backing:         [[0, "choir", "alto"]],
+  };
+  // gospel keeps its answering section on voice 2 and doowop its lead on 2;
+  // the rows above name every chair that reaches a throat, and this is the
+  // pair the roster check below reads back off the live table
+  CAST77.gospel.push([2, "choir", "alto"]);
+  const MODULE_OF = { lead: "voice_lead", choir: "voice_choir" };
+
+  /* (a) THE ROSTER */
+  {
+    const singing = [];
+    for (const gk of GK) {
+      const g = GENRES[gk];
+      for (let v = 0; v < (g.voices || 1); v++)
+        if (TE77.voiceForInstr(instrAt(g, v), g.tone)) { singing.push(gk); break; }
+    }
+    const want = Object.keys(CAST77).sort();
+    ok(JSON.stringify(singing.slice().sort()) === JSON.stringify(want),
+       "the singing roster is [" + singing.sort().join(" ") + "] and the cast says [" +
+       want.join(" ") + "] — a record either gained a voice nobody argued for or " +
+       "lost one silently, which is how the espeak singer came to exist unheard");
+    console.log("  (a) " + singing.length + " of " + GK.length + " genres sing");
+  }
+
+  /* (b) EVERY SINGER RESOLVES TO A MODULE THAT IS ACTUALLY THERE */
+  for (const [gk, rows] of Object.entries(CAST77)) {
+    const g = GENRES[gk];
+    for (const [v, seat, voice] of rows) {
+      const id = instrAt(g, v);
+      const sp = TE77.voiceForInstr(id, g.tone);
+      ok(!!sp, gk + " voice " + v + " (" + id + ") reaches no throat at all");
+      if (!sp) continue;
+      ok(sp.dsp === MODULE_OF[seat], gk + " voice " + v + " sings through " + sp.dsp +
+         " where the cast says " + MODULE_OF[seat]);
+      ok(sp.set.voice === voice, gk + " voice " + v + " is a " + sp.set.voice +
+         " and the cast says " + voice + " — two singing genres sounding like the " +
+         "same patch twice is the whole thing the voice type exists to stop");
+      // the module, on disk, both halves: a cast that resolves to a missing
+      // wasm is a silence with a name on it
+      ok(fs77.existsSync(path77.join(ROOT77, "engine/faust/dsp", sp.dsp + ".dsp")),
+         gk + ": engine/faust/dsp/" + sp.dsp + ".dsp is missing");
+      ok(fs77.existsSync(path77.join(ROOT77, "engine/faust/dist", sp.dsp + "-module.wasm")),
+         gk + ": " + sp.dsp + " is not compiled into engine/faust/dist — the cast is silent");
+      // the mouth reaches the module: a vowel walk and a compass, not a default
+      ok(sp.live && sp.live.vowels && sp.live.vowels.length >= 1 &&
+         sp.live.lo > 0 && sp.live.hi > sp.live.lo,
+         gk + " voice " + v + ": the mouth carries no vowel walk or no compass");
+      // and the genre actually SAYS who is singing, rather than inheriting the
+      // patch id's default — the field that makes a crooner not a soprano
+      ok(g.tone && g.tone.mouth && g.tone.mouth.voice,
+         gk + " casts a voice and declares no mouth — it would sing the GM id's " +
+         "default, which is the same singer every other genre gets");
+    }
+  }
+
+  /* (c) THE CHAIR IS THE ONE INTENDED */
+  {
+    const src77 = fs77.readFileSync(path77.join(ROOT77, "nukernel/audio/to-engine.js"), "utf8");
+    ok(/voice_lead:\s*\{\s*model:\s*"singer",\s*role:\s*"melody"\s*\}/.test(src77),
+       "to-engine.js no longer seats voice_lead on the melody strip — a lead that " +
+       "is not on the lead chair is a backing vocal");
+    ok(/voice_choir:\s*\{\s*model:\s*"chorale",\s*role:\s*"pad"\s*\}/.test(src77),
+       "to-engine.js no longer seats voice_choir on the pad strip — the melody " +
+       "strip's high-pass takes the body out of four people");
+    for (const [gk, rows] of Object.entries(CAST77)) {
+      const g = GENRES[gk];
+      for (const [v, seat] of rows) {
+        const realize = g.realize ? g.realize(v) : "line";
+        if (seat === "lead")
+          ok(realize === "line", gk + " voice " + v + " sings the LEAD off a \"" +
+             realize + "\" chair — a soloist takes the tune or is not a soloist");
+      }
+    }
+  }
+
+  /* (d) NOBODY LOST THE INSTRUMENT THAT WAS THE RECORD */
+  {
+    // the four cast this round, and the thing each one was not allowed to lose
+    const KEPT = { gospel: ["percussive_organ"], rnb: ["legend_ep_2"],
+                   darkrnb: ["halo_pad"],
+                   confessionalpop: ["steel_string_guitar", "polysynth"] };
+    for (const [gk, must] of Object.entries(KEPT)) {
+      const g = GENRES[gk];
+      const cast = [];
+      for (let v = 0; v < (g.voices || 1); v++) cast.push(instrAt(g, v));
+      for (const id of must)
+        ok(cast.includes(id), gk + " lost " + id + " to the singer — a Philadelphia " +
+           "soul record without its Rhodes is not an improvement");
+    }
+    // and nothing anywhere became all voice: a record is a band, EXCEPT where
+    // the record genuinely is nothing but people. Four sacred rooms, four men
+    // round one microphone, and the two utility rows the cast pool deals from —
+    // named, so that a genre joining this list is an argument somebody made
+    // rather than a guitar that quietly vanished under a singer.
+    const ACAPPELLA = new Set(["gregorian", "spem", "bulgarian", "backing",
+                               "doowop", "vocal"]);
+    for (const gk of Object.keys(CAST77)) {
+      const g = GENRES[gk];
+      let played = 0;
+      for (let v = 0; v < (g.voices || 1); v++)
+        if (!TE77.voiceForInstr(instrAt(g, v), g.tone)) played++;
+      ok(played > 0 || ACAPPELLA.has(gk),
+         gk + " is nothing but voices — every instrument on the record was " +
+         "displaced by the singer");
+    }
+  }
+
+  /* (e) THE INSTRUMENTAL CATALOGUE IS BYTE-IDENTICAL */
+  {
+    // HEAD's own genres.js, loaded beside the working one. Evaluated rather
+    // than written to disk: the file is a classic IIFE that requires
+    // ./kernel.js, so it only needs a module shim and the real kernel.
+    let HEADG = null;
+    try {
+      const src = cp77.execSync("git show HEAD:nukernel/genres.js",
+        { cwd: ROOT77, encoding: "utf8", maxBuffer: 32 << 20 });
+      const mod = { exports: {} };
+      new Function("module", "exports", "require", src)(
+        mod, mod.exports, (p) => require(p === "./kernel.js" ? "../../nukernel/kernel.js" : p));
+      HEADG = mod.exports.GENRES;
+    } catch (e) { HEADG = null; }
+    ok(!!HEADG, "cannot load HEAD's genres.js — the untouched half of the catalogue " +
+       "is unheld, and this round could have moved a genre nobody was looking at");
+    if (HEADG) {
+      let same = 0;
+      for (const gk of GK) {
+        if (CAST77[gk] || gk === "hymn") continue;   // hymn's change is comment-only, held below
+        const a = GENRES[gk], b = HEADG[gk];
+        ok(!!b, gk + " is new and was not part of casting singers");
+        if (!b) continue;
+        const bars = a.bars || 8;
+        const mine = sig(K.render(P, a, bars)) + "|" + sig(K.drums(P, a, bars)) +
+                     "|" + sig(K.bass(P, a, bars));
+        const head = sig(K.render(P, b, bars)) + "|" + sig(K.drums(P, b, bars)) +
+                     "|" + sig(K.bass(P, b, bars));
+        ok(mine === head, gk + " renders differently than it did at HEAD — casting " +
+           "singers moved a genre that was deliberately instrumental");
+        ok(JSON.stringify(a.instr) === JSON.stringify(b.instr),
+           gk + "'s instrument cast moved and it has no singer");
+        ok(JSON.stringify(a.tone) === JSON.stringify(b.tone),
+           gk + "'s tone block moved and it has no singer");
+        if (mine === head) same++;
+      }
+      // hymn is the one genre that was READ this round and deliberately not
+      // cast (its four parts are 31 semitones wide and no throat is), so its
+      // score must be exactly what it was — the change there is prose only
+      const h = GENRES.hymn, hb = HEADG.hymn;
+      ok(sig(K.render(P, h, h.bars)) === sig(K.render(P, hb, hb.bars)) &&
+         JSON.stringify(h.instr) === JSON.stringify(hb.instr),
+         "hymn moved — it was measured as uncastable and left alone, so the only " +
+         "change there should have been the comment that says why");
+      console.log("  (e) " + same + " untouched genres render byte-identical to HEAD");
+    }
+  }
+
+  /* (f) THE COMPASS, MEASURED */
+  {
+    // the parent's own windows, read off its source the way §75 reads the rest
+    // of the mirror — a copy of these numbers is how the page and the tape came
+    // to disagree about where a trumpet lives
+    const se77 = fs77.readFileSync(
+      path77.join(ROOT77, "engine/faust/voices/state-engine.js"), "utf8");
+    const m77 = se77.match(/const VOICE_TYPE = \{([\s\S]*?)\n  \};/);
+    const VT77 = m77 ? new Function("return {" + m77[1] + "}")() : null;
+    ok(!!VT77, "cannot read VOICE_TYPE out of state-engine.js — the compass below is guesswork");
+    const midiOf = (hz) => 69 + 12 * Math.log2(hz / 440);
+    // the parent's fold, verbatim in shape: octaves down to the ceiling, then
+    // octaves up to the floor, PER NOTE (mapEvents; there is no whole-line home
+    // for a unit that is not a sampler — audio/plan.js windowOf returns null)
+    const foldTo = (n, lo, hi) => { let m = n; while (m > hi) m -= 12; while (m < lo) m += 12; return m; };
+    const NEW77 = new Set(["gospel", "rnb", "darkrnb", "confessionalpop"]);
+    const rows77 = [];
+    for (const [gk, rows] of Object.entries(CAST77)) {
+      if (!VT77) break;
+      const g = GENRES[gk];
+      // DEFAULT, not the torture phrase P every section above renders. P exists
+      // to make every vector move — octave leaps in both directions, degrees
+      // out to a seventh — and it is three octaves wide before a genre's own
+      // register touches it, so measuring a throat against it says something
+      // about the test phrase and nothing about the cast. This is the seed the
+      // page actually boots with, so this is the line the record actually sings.
+      const ev = K.render(DEFAULT, g, g.bars || 8);
+      for (const [v, seat, voice] of rows) {
+        const ps = ev.filter(e => e.v === v).sort((a, b) => a.t - b.t).map(e => e.n);
+        if (!ps.length) continue;
+        const W = VT77[voice];
+        ok(!!W, gk + " voice " + v + " names a voice type the parent has never heard of: " + voice);
+        if (!W) continue;
+        const lo = midiOf(W.lo), hi = midiOf(W.hi);
+        const f = ps.map(p => foldTo(p, lo, hi));
+        let moved = 0;
+        for (let i = 1; i < ps.length; i++) if (f[i] - f[i - 1] !== ps[i] - ps[i - 1]) moved++;
+        const dmg = ps.length > 1 ? moved / (ps.length - 1) : 0;
+        rows77.push([gk, v, seat, voice, Math.min(...ps), Math.max(...ps), dmg]);
+        // THE HARD FLOOR, for the whole roster: above four intervals in five
+        // rewritten, the fold is louder than the tune and the part is not being
+        // sung, it is being wrapped.
+        ok(dmg <= 0.8, gk + " voice " + v + ": a " + voice + " folds " +
+           (dmg * 100).toFixed(0) + "% of the line's intervals — the part is " +
+           (Math.max(...ps) - Math.min(...ps)) + " semitones wide and that throat has " +
+           Math.round(hi - lo));
+        // and the four cast THIS round were chosen against this number, so they
+        // are held tighter: the type had to be both the right singer and one
+        // that can say the part
+        if (NEW77.has(gk))
+          ok(dmg < 0.5, gk + " voice " + v + " was cast this round onto a " + voice +
+             " that rewrites " + (dmg * 100).toFixed(0) + "% of its intervals — a wrong " +
+             "voice is worse than no voice");
+      }
+    }
+    rows77.sort((a, b) => b[6] - a[6]);
+    for (const [gk, v, seat, voice, lo, hi, dmg] of rows77)
+      console.log("  (f) " + (gk + " v" + v).padEnd(22) + seat.padEnd(6) +
+                  voice.padEnd(13) + ("MIDI " + lo + "-" + hi).padEnd(14) +
+                  "fold " + (dmg * 100).toFixed(0) + "%");
+  }
 }
 
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +

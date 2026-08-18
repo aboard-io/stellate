@@ -787,6 +787,22 @@ const PATCH_VOICE = {
  * much air is in it, and (for a section) how ragged they are. That is what
  * makes a crooner, a boy band, a plainchant and a Bulgarian choir four
  * different singers rather than four volumes of the same one.
+ *
+ * ONE THING TO KNOW BEFORE CASTING ANOTHER GENRE ONTO THIS, measured on the
+ * 2026-08-18 casting round and written here because this is where the next
+ * person will look: A VOICE GETS NO WHOLE-LINE OCTAVE HOME. audio/plan.js
+ * windowOf reads `unit.sampler` and returns null for anything that is not one —
+ * "a synth voice folds by its own law" — so homeFor never moves a sung part,
+ * and the only thing between the score and the throat is the parent's PER-NOTE
+ * fold into `freqMin`/`freqMax` (state-engine mapEvents). A sampler's line is
+ * moved whole with its contour intact; a singer's line is folded note by note,
+ * which REWRITES the intervals of anything wider than the voice type's own
+ * window — and the widest of the five is 25 semitones. So the question to ask
+ * of a candidate is not "would this record have a singer" but "how wide is the
+ * part": measured over the shipped 22, the fold rewrites 0% of a line that fits
+ * and 75% of one that does not, and `hymn` — the most obviously vocal genre in
+ * the table, four parts each 31 semitones wide — is uncastable for exactly this
+ * reason. test/unit/nukernel.test.js §77(f) prints the number per cast part.
  */
 export function voiceForInstr(id, tone) {
   const P = PATCH_VOICE[id];
