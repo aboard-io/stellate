@@ -215,6 +215,11 @@ const SYNTH = {
   casiocz:   { model: "casiocz",  rename: { wave: "czWave", detune: "czDetune" } },
   synclead:  { model: "synclead", role: "melody", rename: { detune: "syncDetune" } },
   bell:      { model: "bell" },
+  // the two the parent grew for the table below — an instrument you PLAY rather
+  // than a recording you edit. No `role`: a guitar holds chords and plays lines,
+  // and so does a marimba (minimalism has two of them doing both).
+  gtr_amp:   { model: "eguitar" },
+  mallet:    { model: "mallet" },
 };
 const WAVES = ["sine", "saw", "square", "pulse"];
 
@@ -376,6 +381,166 @@ const PATCH_SYNTH = {
     attack: T.atk, release: T.rel }) },
 };
 
+// ---- AND THE ONES THAT ARE INSTRUMENTS, NOT PHOTOGRAPHS OF THEM ------------
+// PATCH_SYNTH above is a rescue: those thirteen GM ids are recordings OF
+// synthesisers, so playing the synthesiser instead is simply telling the truth.
+// This table is a different claim, and a bigger one — that for a handful of
+// REAL instruments a physical model is BETTER than the recording, because the
+// thing those instruments do that a recording cannot is ANSWER THE PLAYER.
+//
+// The test is one question: is this instrument's character its DYNAMICS? Every
+// sampler in the library is one velocity layer — six zones across the keyboard
+// and one recording per zone — so on a sampled voice velocity is a fader and
+// nothing else. That is fine for a piano (whose sampled zones are ten deep and
+// whose character is its body) and it is a lie for the two families here:
+//
+//   THE ELECTRIC GUITAR is a string, a pickup and an AMPLIFIER, and the
+//   amplifier is the part that answers how hard you hit it. A sampled
+//   distortion guitar plays a quiet recording of a loud note; the model plays
+//   a quiet note, which comes out clean, on the same instrument that screams
+//   when you dig in. This is the "crunch" that was missing: not a fuzz box on
+//   the strip, a gain structure inside the voice.
+//   THE STRUCK BAR (marimba, vibraphone, kalimba tine) is nothing but its
+//   strike: a soft yarn mallet excites the fundamental and a hard plastic one
+//   rings the bar modes where the click lives. Measured on the tape at equal
+//   loudness, a ghosted note and a hammered one differ by a factor of two in
+//   spectral centroid; the sampled zone they replace differs by nothing.
+//
+// AND THE ACOUSTIC GUITARS ARE NOT HERE, on purpose. A steel-string, a nylon
+// and a banjo are BODIES — a soundboard, a back, a membrane head — and a
+// recording of a body is exactly what a sample is good at. The waveguide would
+// give up the one thing that makes them themselves. Same for the pianos, the
+// organs, the choirs and the voices: ten-deep zones and a body, both times.
+//
+// THREE MORE WERE TRIED AND MEASURED OUT, which is worth writing down because
+// "we did not get to it" and "we got to it and it was worse" are different
+// facts. Compiled against this repo's own libfaust and rendered:
+//   pm.brassModel   SILENT below 300 Hz — a trumpet's bottom octave produces
+//                   nothing at all — and it collapses above pressure 0.5 at
+//                   330 Hz, so its usable window is a fifth wide and the
+//                   failure mode outside it is silence. Its pitch also runs 5%
+//                   sharp. The parent's saw-stack `brass` (which already takes
+//                   its bite from the note's amp) keeps the horns.
+//   pm.violinModel  loudness is NOT monotone in bow force: at 262 Hz the middle
+//                   dynamic measured QUIETER than the softest one, and two of
+//                   six pitches came back an octave out. A bowed string whose
+//                   forte might be its pianissimo is not an instrument.
+//   pm.clarinetModel is the one that works — pitch exact from 147 to 587 Hz and
+//                   a reed that genuinely opens up (centroid 667 -> 1347 Hz
+//                   across its breath range) — and it is not here because
+//                   nothing in the catalogue casts a clarinet. A cylindrical
+//                   reed standing in for the conical tenor sax two genres DO
+//                   cast would be a different instrument wearing its name.
+//
+// The genre's own tone block drives these too — `cut` becomes the speaker
+// cabinet's corner (a guitar cab lives an octave or so above where a synth
+// filter sits, hence the lift), `rel` how long the hand lets the note ring,
+// `gain` the voice level — exactly as it drives the synth table above.
+const PATCH_MODEL = {
+  // ---- the electrics ----
+  // GM 28 (clean electric). The most-cast instrument in the table by a factor
+  // of four, and the one whose sampled version has the least to say: a clean
+  // electric IS its pick attack, and the sample has one.
+  clean_guitar:      { dsp: "gtr_amp", set: (M) => ({
+    drive: 0.09, pluckPos: 0.78, pickup: 0.30, stiff: 0.30, damp: 0.9998,
+    cutoff: M.cab, release: M.rel }) },
+  // GM 27 (jazz electric) — neck pickup, no dirt, and the tone rolled off. The
+  // pickup is the whole difference between this and the clean above.
+  jazz_guitar:       { dsp: "gtr_amp", set: (M) => ({
+    drive: 0.04, pluckPos: 0.62, pickup: 0.50, stiff: 0.22, damp: 0.9997,
+    cutoff: Math.min(M.cab, 3200), release: M.rel }) },
+  // GM 29 (palm muted) — the mute is the STRING's damping and a short hand,
+  // which is what a palm mute physically is, plus enough gain to chug.
+  palm_muted_guitar: { dsp: "gtr_amp", set: (M) => ({
+    drive: 0.38, pluckPos: 0.9, pickup: 0.12, stiff: 0.4, damp: 0.9955,
+    cutoff: M.cab, release: 0.06 }) },
+  // crunch, overdrive, distortion: ONE instrument at three amounts of
+  // amplifier, which is what those three words have always meant. The sampled
+  // trio are three separate recordings pretending to be that, and none of them
+  // can be played quietly.
+  crunch_guitar:     { dsp: "gtr_amp", set: (M) => ({
+    drive: 0.45, pluckPos: 0.84, pickup: 0.2, stiff: 0.34, damp: 0.99975,
+    cutoff: M.cab, release: M.rel }) },
+  overdrive_guitar:  { dsp: "gtr_amp", set: (M) => ({
+    drive: 0.58, pluckPos: 0.84, pickup: 0.22, stiff: 0.34, damp: 0.99978,
+    cutoff: M.cab, release: M.rel }) },
+  distortion_guitar: { dsp: "gtr_amp", set: (M) => ({
+    drive: 0.82, pluckPos: 0.88, pickup: 0.16, stiff: 0.38, damp: 0.9998,
+    cutoff: Math.min(M.cab, 4600), release: M.rel }) },
+  // ---- the struck bars ----
+  // GM 12 (marimba) — rosewood. `ring` is the T60 of the LOWEST bar mode and
+  // the library's own 0.1 s is a bar that has stopped before the player's hand
+  // has: measured against the sampled zone it stands in for, the model was 14 dB
+  // down on the tape purely because the note was over. Half a second is a real
+  // rosewood bar, and `tilt` still kills the upper modes first, which is what
+  // makes it read short.
+  marimba:    { dsp: "mallet", set: (M) => ({
+    ring: 0.5, exPos: 1, tilt: 6, cutoff: M.mcut, release: 1.5 }) },
+  // GM 11 (vibraphone) — aluminium bars and a pedal, so it rings for a second
+  // and a half and note-off means something (the damper comes down).
+  vibraphone: { dsp: "mallet", mul: 0.58, set: (M) => ({
+    ring: 2.2, exPos: 1, tilt: 4, cutoff: M.mcut, release: 0.35 }) },
+  // GM 108 (kalimba) — a plucked tine over a box: between the two, and softer
+  // up top, because a thumb is the softest mallet there is.
+  kalimba:    { dsp: "mallet", mul: 0.50, set: (M) => ({
+    ring: 0.8, exPos: 1.4, tilt: 7, cutoff: Math.min(M.mcut, 7000), release: 1.5 }) },
+  // AND NOT THE MUSIC BOX, which was in this table for a day. Every row here is
+  // a bar over a RESONATOR TUBE, because that is what the model is; a music box
+  // is a comb tooth screwed to a wooden case and has no tube at all, and the one
+  // it was given pulled it down where a music box does not live — measured, a
+  // centroid of 1145-2243 Hz against the sampled comb's 2788-3014. The zone
+  // recording is the better music box and it keeps the job.
+};
+
+/**
+ * The instrument a GM id NAMES, played rather than replayed — or null for an id
+ * whose sampled recording is the better sound (which is most of them).
+ *
+ * Same shape and same contract as synthForInstr below: a `{dsp, level, set}`
+ * spec in the genre `synth:` shape, so one translation serves the page and the
+ * tape and nothing has to learn a second dialect. It rides the same rail, and
+ * inherits the same unfinished half — see synthForInstr's note about the pool.
+ *
+ * AND WHEN THAT LINE IS WRITTEN, the live path needs one more thing these two
+ * modules have and no other voice does: the physical control velocity moves.
+ * The ranges are FaustStateEngine.MODEL_DYN, keyed by dsp id, and the position
+ * is the note's own velocity over nine — which is exactly what the tape
+ * computes (amp runs 0.06 at velocity 0 to 0.26 at 9, and mapEvents normalises
+ * over the same two numbers), so the two agree by construction rather than by
+ * coincidence. Accent is a x1.15 on the way in, on both sides.
+ */
+export function modelForInstr(id, tone) {
+  const P = PATCH_MODEL[id];
+  if (!P) return null;
+  const t = tone || {};
+  // the tone block, read as an ACOUSTIC instruction rather than a filter
+  // setting. A synth's cut sits at 1.1-4 kHz; a guitar cabinet's cliff and a
+  // mallet's air are an octave or so above that, so the lift is the translation
+  // and not a fudge — and both ends are clamped inside the modules' own slider
+  // ranges, because a value written ON a declared edge is the failure the
+  // bounds paragraph above exists to avoid.
+  //   THE 4.2 kHz FLOOR IS LOAD-BEARING and was measured, not chosen: blues
+  // writes cut 1100, which read literally puts a 4x12 cabinet's cliff at 2.9 kHz
+  // and takes every guitar in the catalogue back to the blanket this whole round
+  // exists to lift. A real cab dies around 5 kHz (which is where the parent's
+  // own insert_higain puts its, fixed), so the genre's number tilts the cabinet
+  // and does not get to close it.
+  const M = {
+    cab:  clamp((t.cut != null ? t.cut : 2600) * 2.6, 4200, 9000),
+    mcut: clamp((t.cut != null ? t.cut : 3000) * 2.6, 3000, 15000),
+    rel:  clamp(t.rel != null ? t.rel : 0.3, 0.05, 1.8),
+  };
+  // `mul` is the per-instrument level A/B, and it is a RING tax: the modules'
+  // own output trims were fitted on one setting each (a marimba, a clean amp),
+  // and a bar told to ring four times longer puts four times the energy on the
+  // tape for the same strike. Measured against the sampled zone each row stands
+  // in for, the long-ringing three came back 5-6 dB hot; this is that, and
+  // nothing else, which is why the two short ones do not carry one.
+  return { dsp: P.dsp, root: P.dsp,
+    level: clamp((t.gain != null ? t.gain : 0.28) * 2.8 * (P.mul || 1), 0.35, 0.92),
+    set: P.set(M) };
+}
+
 /**
  * The synthesiser a GM synth-patch id is a recording of, driven by the genre's
  * own tone block — or null for an id that names a real recorded instrument.
@@ -387,12 +552,20 @@ const PATCH_SYNTH = {
  * that is the shape audio/voices.js playSynth already plays and the shape
  * recipeFor already translates, so the page and the tape can read one table.
  * Exported for the same reason drumVoice is — the drum lanes learned the hard
- * way what two tables for one sound costs. NOTE for whoever wires the live
- * page: audio/transport.js scheduleBar still reaches for `playSampled(id)` on
- * every voice a genre has not declared a `synth` for, so today this table is
- * heard on the pressed tape (audio/press-window.js, and on mobile the tape IS
- * the audible path) and not yet under the live graph. One import here and one
- * branch there closes it — the same shape playSynth already takes.
+ * way what two tables for one sound costs.
+ *
+ * THE LIVE PAGE STILL DOES NOT HEAR THIS TABLE, and the import in
+ * audio/transport.js is not enough on its own. scheduleBar does call
+ * synthForInstr and hand the spec to playSynth — but playSynth looks the voice
+ * up in the pool (`synthNodes.get(synthKey(spec, v))`) and returns false when
+ * it is not there, and the ONLY thing that ever puts a voice in that pool is
+ * ensureAssets' `wantSynth`, which is built from the genre's own `synth` block,
+ * BASSSYNTH and the synth font — never from a patch. So every patched note
+ * falls through the `else if` to the sampled zone, silently and correctly, and
+ * the page plays the recording while the tape plays the instrument. Read off
+ * the code, not off a browser: loadSynth has exactly one caller. The fix is one
+ * line in that list (add the patch/model specs the song's cast resolves to);
+ * this file has nothing left to give it.
  */
 export function synthForInstr(id, tone, padish) {
   const P = PATCH_SYNTH[id];
@@ -438,9 +611,10 @@ function synthRecipe(sy, tone, role) {
 }
 
 // a chair's recipe: the genre's signature synth where it declares one, then the
-// synthesiser its GM patch id is a photograph of, then — for every id that
-// names a real recorded instrument — the sampled one, which is the parent's
-// default sound too.
+// synthesiser its GM patch id is a photograph of, then the INSTRUMENT that id
+// names where the parent can play one better than a recording of it can
+// (PATCH_MODEL — the electrics and the struck bars), then — for every other id,
+// which is most of them — the sampled one, the parent's default sound.
 function recipeFor(chair, seat, lib, unrouted) {
   const role = CHAIR_ROLE[chair] || "melody";
   const tone = toneRecipe(seat.tone);
@@ -456,7 +630,8 @@ function recipeFor(chair, seat, lib, unrouted) {
   // the patch table, and NO SILENT FALLBACK out of it: a row naming a dsp the
   // SYNTH dictionary has no entry for is reported, never quietly sampled — that
   // is precisely the failure that put a one-zone whistle where a pad belonged.
-  const patch = synthForInstr(seat.instr, seat.tone, role === "pad");
+  const patch = synthForInstr(seat.instr, seat.tone, role === "pad")
+    || modelForInstr(seat.instr, seat.tone);
   if (patch) {
     const r = synthRecipe(patch, tone, role);
     if (r) return { ...r, source: "patch:" + seat.instr + ">" + patch.dsp };

@@ -47,7 +47,22 @@ async function main() {
     manifest[name] = { inputs: meta.inputs, outputs: meta.outputs, params };
     console.log(`${name}: ${dsp.factory.code.length}B wasm, ins=${meta.inputs} outs=${meta.outputs}, ${Date.now() - t0}ms`);
   }
-  if (!only.length) fs.writeFileSync(path.join(OUT, "manifest.json"), JSON.stringify(manifest, null, 1));
+  // THE MANIFEST IS MERGED, NOT REWRITTEN, and a subset build updates it too.
+  // It used to be written only on a FULL build, which sounds harmless and is
+  // not: a full build re-emits all 88 artifacts with a fresh compile nonce in
+  // every `code` field, so adding one module churned 141 committed binaries
+  // that were functionally identical to the ones already there. Merging keeps
+  // the diff to the module that actually changed, and a subset build stops
+  // leaving the manifest stale — which is how a new module could ship with no
+  // entry at all and nothing notice, since nothing reads this file at runtime.
+  const mpath = path.join(OUT, "manifest.json");
+  let merged = manifest;
+  if (only.length && fs.existsSync(mpath)) {
+    const prev = JSON.parse(fs.readFileSync(mpath, "utf8"));
+    merged = {};
+    for (const k of Object.keys({ ...prev, ...manifest }).sort()) merged[k] = manifest[k] || prev[k];
+  }
+  fs.writeFileSync(mpath, JSON.stringify(merged, null, 1));
   console.log("wrote", OUT, failed ? `(${failed} FAILED)` : "(all ok)");
   if (failed) process.exit(1);
 }

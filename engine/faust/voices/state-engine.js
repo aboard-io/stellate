@@ -959,6 +959,26 @@
     if (m.fenvAttack != null && fm.atk) P[fm.atk[0]] = clamp(m.fenvAttack, fm.atk[1], fm.atk[2]);
     if (m.fenvDecay != null && fm.dec) P[fm.dec[0]] = clamp(m.fenvDecay, fm.dec[1], fm.dec[2]);
   }
+  // ---- WHAT VELOCITY MEANS ON AN INSTRUMENT YOU PLAY -----------------------
+  // The physical control each model answers to, and the span the note's own
+  // force moves it across. ONE HOME, because two would drift: mapEvents reads
+  // it for the tape, and the live page reads it off this same export
+  // (FaustStateEngine.MODEL_DYN) rather than keeping a second copy.
+  //   gtr_amp.pick  how hard the plectrum is — the excitation's brightness and
+  //                 its length. 0.12 is a thumb on the string, 1 is a hard
+  //                 nylon triangle. (The note's LOUDNESS does a second job on
+  //                 top, inside the module, where it lands on the preamp's
+  //                 input: hard is also dirtier. That one needs no table.)
+  //   mallet.hard   the mallet head — yarn at 0.05, plastic at 1. This is the
+  //                 whole instrument: a bar's spectrum is chosen by what hits
+  //                 it, and across MIDI 67-79 a ghosted note measures 2252 Hz of
+  //                 spectral centroid against a hammered one's 3722, at the same
+  //                 loudness. The sampled zone it replaces: 922 against 940.
+  const MODEL_DYN = {
+    gtr_amp: { pick: [0.12, 1] },
+    mallet:  { hard: [0.05, 1] },
+  };
+
   function pitchedUnitRaw(role, m, state) {
     // param-reader: clamp(m[k]!=null?m[k]:d,lo,hi) — the null-coalescing default
     // idiom. NOT for `m.x||d` sites (0-is-falsy glide/drive/vibrato keep that).
@@ -1213,6 +1233,48 @@
       case "fuzz":    return { ...base, module: "lead_fuzz",   params: { ...base.params, cutoff: clamp(c, 200, 14000), res, drive: clamp(m.drive || 0, 0, 1), vibrato: clamp(m.vibrato || 0, 0, 0.03), vibRate: clamp(m.vibRate || 5.2, 0.1, 12),
         ...(plucky ? { attack: clamp(m.attack != null ? m.attack : 0.05, 0.001, 5), sustain: sus, release: rel, fenv: fev } : {}) } };
       case "guitar":  return { ...base, module: "lead_guitar", params: { ...base.params, cutoff: clamp(c || 4500, 200, 14000), pluckPos: 0.75 } };
+      // ---- the two INSTRUMENTS YOU PLAY (dsp/gtr_amp.dsp, dsp/mallet.dsp) ----
+      // Both carry `dyn`, which is the point of them: mapEvents turns the note's
+      // own amp into a PHYSICAL control — how hard the plectrum hits, how hard
+      // the mallet is — so a loud note is a different sound and not the same
+      // sound louder. Every sampled voice above is one recording per zone and
+      // physically CANNOT do that; these two can, so they do.
+      //
+      // eguitar — string, pickup, amp. freqMax 700 is the top of a guitar's own
+      // neck AND the top of this waveguide's honest tuning: measured, MIDI 40-67
+      // lands inside three cents and MIDI 72 inside seven, then it drifts sharp
+      // (+15c at 76, +37 at 79) while the string goes quiet. So the register
+      // law's octave fold above it is the drop a player makes when the line runs
+      // off the fingerboard. `drive` is the amp's character; the note's loudness
+      // lands on the shaper's INPUT inside the module, which is why hard is
+      // dirtier as well as louder.
+      case "eguitar": return { ...base, module: "gtr_amp",
+        freqMax: 700, freqMin: 70, pool: role === "pad" ? 4 : 3,
+        dyn: MODEL_DYN.gtr_amp, slideParam: "glide", slideSec: 0.06,
+        params: { ...base.params,
+          cutoff: clamp(c || 4200, 200, 14000),
+          drive: mp("drive", 0.18, 0, 1),
+          pluckPos: mp("pluckPos", 0.78, 0.02, 0.98),
+          pickup: mp("pickup", 0.28, 0.05, 0.5),
+          stiff: mp("stiff", 0.32, 0, 1),
+          damp: mp("damp", 0.9998, 0.99, 1),
+          release: clamp(m.release != null ? m.release : 0.25, 0.02, 2) } };
+      // mallet — a struck bar over a tube, and the widest honest range of
+      // anything here: measured inside FOUR cents from MIDI 45 to 91, which is
+      // a marimba's whole instrument, once the module's tube correction is in.
+      // The bounds are the marimba/vibraphone family's own compass rather than
+      // the model's limit. tail follows `ring` so a vibraphone with the pedal
+      // down is not cut off mid-ring by the render walk.
+      case "mallet": {
+        const ring = mp("ring", 0.1, 0.02, 3);
+        return { ...base, module: "mallet", freqMax: 2600, freqMin: 100,
+          tail: Math.max(base.tail, ring + 0.6),
+          dyn: MODEL_DYN.mallet,
+          params: { ...base.params,
+            cutoff: clamp(Math.min(16000, (c || 9000) * 2), 400, 16000),
+            ring, exPos: mp("exPos", 1, 0, 4), tilt: mp("tilt", 5, 1, 12),
+            release: clamp(m.release != null ? m.release : 1.5, 0.02, 3) } };
+      }
       case "vocoder": return { ...base, module: "robot_choir", vocoder: true, params: { ...base.params, cutoff: clamp(isPad ? Math.min(9000, c * 2) : c, 200, 14000), res, makeup: 5 } };
       // ---- synth fleet: nine classic-synth voices (dsp/*.dsp) ----
       // juno60 — Roland Juno-60 poly pad/keys, STEREO (BBD chorus is the width).
@@ -2013,7 +2075,30 @@
     juno60:  { cut: ["cutoff", 60, 16000], pw: ["pwmBase", 0.05, 0.5] },
     vp330:   { cut: ["cutoff", 300, 12000] },
     solina:  { cut: ["tone", 300, 12000] },   // solina's brightness param is `tone` (no res, no cutoff)
+    gtr_amp: { cut: ["cutoff", 200, 14000] },  // the cab's cliff; the STRING's brightness is `pick`, and that belongs to velocity
+    mallet:  { cut: ["cutoff", 400, 16000] },  // likewise: the mallet's own hardness is velocity's, not a pipe's
   };
+
+  // ---- VELOCITY IS A CHANGE OF TIMBRE, on an instrument you play ------------
+  // A sampled zone is one recording of one performance at one intensity, so the
+  // only honest thing an engine can do with velocity there is move the fader —
+  // which is why every sampled voice in this file takes amp as `gain` and stops.
+  // A physical model is different in kind: the plectrum, the mallet, the bow and
+  // the breath are INPUTS, and changing them changes the spectrum, not the
+  // level. `u.dyn` is the wiring for that — { param: [atSoftest, atHardest] } —
+  // and the two units that carry it (gtr_amp, mallet) are measured doing it:
+  // hard notes come back with 1.3-3.4x the spectral centroid of soft ones after
+  // both have been normalized to the same loudness.
+  //
+  // THE REFERENCE WINDOW is the parent's own pitched amp range: buildEvents
+  // emits roughly 0.14-0.26 and nukernel's bridge 0.06-0.34, so 0.06 is a
+  // ghosted note and 0.30 is a hammered one. Accent is already IN the amp (both
+  // producers multiply it in), and it lands here as extra hardness for free —
+  // which is what an accent is on a real instrument.
+  // 0.26 is where a velocity-9 note actually lands (nukernel's bridge tops out
+  // there and buildEvents rarely goes past it), so full force reaches the top of
+  // the physical control instead of stopping four fifths of the way up it.
+  const DYN_AMP_LO = 0.06, DYN_AMP_HI = 0.26;
 
   // ---- map a buildEvents result into unit events ----
   // opts.lo/hi: beat window (live chord-bar injection); opts.bedAll: include
@@ -2098,6 +2183,21 @@
       if (u.decayFromDur) sets.decay = clamp(durB * spb, 0.1, u.module === "bell" ? 6 : 8);
       if (u.fmLead) sets.idxTime = clamp(durB * spb / 2, 0.01, 4);
       if (u.biteFromAmp) sets.bite = clamp(p.amp, 0, 1);
+      // the physical controls (see DYN_AMP_LO above). Written on EVERY note of a
+      // dyn unit, not only annotated ones: on these models there is no such
+      // thing as a note with no excitation, so there is nothing to leave alone.
+      if (u.dyn) {
+        const du = clamp((p.amp - DYN_AMP_LO) / (DYN_AMP_HI - DYN_AMP_LO), 0, 1);
+        for (const k of Object.keys(u.dyn)) {
+          const r = u.dyn[k]; sets[k] = r[0] + (r[1] - r[0]) * du;
+        }
+      }
+      // A SLIDE IS A REAL PORTAMENTO on a waveguide: the string's delay length
+      // is its pitch, so `glide` bends it rather than crossfading two notes. The
+      // bend starts from whatever this pool voice last played, which on a single
+      // line is the note before — and `slide` is only ever written on line and
+      // bass events, which are single lines.
+      if (u.slideParam) sets[u.slideParam] = p.slide ? u.slideSec : 0;
       if (u.flangeFromTime) sets.flangePos = clamp(p.beat * spb / 164, 0, 1);
       // tb303 per-note ACCENT/SLIDE (u.acid): buildEvents tags acid bass steps
       // with ev.accent/ev.slide (0..1); set on the voice BEFORE the note's
@@ -2255,7 +2355,7 @@
     return mapEvents(E, state, ev, { bedAll: true });
   }
 
-  return { WAVES, clamp, cpspch, mergedInstruments, insertChain, pitchedUnit, voiceUnits, fxParams, fxLabels, reverbColor, REVERB_COLORS, autoTune, masterMb, mapEvents, buildSchedule, COST, unitCost, stateCost, effectivePool, BUDGET, trimToBudget, stemClass, STEM_COST_MIN, pickSampledId, genreTagOf, STRIP_PROFILES,
+  return { WAVES, clamp, cpspch, MODEL_DYN, mergedInstruments, insertChain, pitchedUnit, voiceUnits, fxParams, fxLabels, reverbColor, REVERB_COLORS, autoTune, masterMb, mapEvents, buildSchedule, COST, unitCost, stateCost, effectivePool, BUDGET, trimToBudget, stemClass, STEM_COST_MIN, pickSampledId, genreTagOf, STRIP_PROFILES,
     // MASTERING STAGE surface (renderers + test/unit/mastering.test.js)
     panGains, notePan, reverbScale, collisionCarve, MASTER_PAN };
 });

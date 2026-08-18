@@ -3875,6 +3875,25 @@
    "/fx_bus/scmix"
   ]
  },
+ "gtr_amp": {
+  "inputs": 0,
+  "outputs": 1,
+  "params": [
+   "/gtr_amp/cutoff",
+   "/gtr_amp/damp",
+   "/gtr_amp/drive",
+   "/gtr_amp/freq",
+   "/gtr_amp/gain",
+   "/gtr_amp/gate",
+   "/gtr_amp/glide",
+   "/gtr_amp/level",
+   "/gtr_amp/pick",
+   "/gtr_amp/pickup",
+   "/gtr_amp/pluckPos",
+   "/gtr_amp/release",
+   "/gtr_amp/stiff"
+  ]
+ },
  "hammond": {
   "inputs": 0,
   "outputs": 2,
@@ -4186,6 +4205,22 @@
    "/lead_pluck/level",
    "/lead_pluck/release",
    "/lead_pluck/res"
+  ]
+ },
+ "mallet": {
+  "inputs": 0,
+  "outputs": 1,
+  "params": [
+   "/mallet/cutoff",
+   "/mallet/exPos",
+   "/mallet/freq",
+   "/mallet/gain",
+   "/mallet/gate",
+   "/mallet/hard",
+   "/mallet/level",
+   "/mallet/release",
+   "/mallet/ring",
+   "/mallet/tilt"
   ]
  },
  "master_mb": {
