@@ -12,7 +12,7 @@
 // LAYER GRAPH (one-way, stated once here and enforced by import direction):
 //   deps -> state -> derive -> audio/to-engine -> audio/desk -> audio/plan
 //        -> audio/live -> ui views (readout,
-//        songrow, palette, editor, mixtbl, chrome) -> main
+//        songrow, palette, editor, mixer, chrome) -> main
 // audio never imports a ui VIEW module; ui views may import audio; state
 // publishes events, it does not draw; derive is pure over its arguments.
 

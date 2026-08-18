@@ -102,7 +102,7 @@ export const poolInstrOf = (sec, owner, v, pool) => {
   return pool[chairOf(sec, ent, v)] || null;
 };
 // A GUEST BRINGS ITS LINE, NOT ITS INSTRUMENT — and this is the measured law of
-// this project rather than a taste. nukernel/INHERITANCE.md put numbers on what
+// this project rather than a taste. the inheritance study put numbers on what
 // crossing two genres actually predicts: ARCHITECTURE travels (harmony 87%,
 // realize 84%, rate 76%) and MATERIAL does not (kit 16%, roots 7%, instr 3%).
 // The composer layers the FUNCTION genres — solo/vocal/backing/riff/pad — onto
@@ -463,7 +463,7 @@ export function sectionEvents(sec, slots, songGroove, songSwing) {
   // (a singEvents pass appended `sing` events here — a syllable and a voice
   // index rather than a note and a chair — after the groove, so the words
   // followed the tune off the grid. It left with the espeak organ on
-  // 2026-08-17; kernel-daw.html holds the tombstone. The stream is the band's
+ // 2026-08-17; kernel-daw.html holds the tombstone. The stream is the band's
   // again, and every event in it is a note, a hit or a bass note.)
   return { g, bars: len, vBase, ev };
 }

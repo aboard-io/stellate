@@ -163,7 +163,7 @@ export function partKeysOf(sec, roster) {
   if (!genreOf(sec).nobass) keys.push("bass");
   if (kitOf(sec)) keys.push("drums");
   // (a third such address, `sing`, was pushed here on the same terms whenever
-  // the box had a singer. The espeak organ came out on 2026-08-17 — the
+ // the box had a singer. The espeak organ came out on 2026-08-17 — the
   // tombstone is in kernel-daw.html — so the desk is the band's again.)
   return keys;
 }

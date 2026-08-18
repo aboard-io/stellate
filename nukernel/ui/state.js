@@ -26,7 +26,7 @@ export let slot = 0;
 export let SUBJ = SLOTS[slot];       // by reference: cell edits mutate the slot
 export let SONG = Array.from({ length: NBOXES }, emptyBox);
 export let viewSec = 0, loopOnly = null, pendingStart = null;
-// VOLUME IS A DEVICE SETTING, NOT A SONG FIELD (2026-08-16). It lives in its
+// VOLUME IS A DEVICE SETTING, NOT A SONG FIELD . It lives in its
 // own key, restored at boot, written only by the volume fader — adoptSong
 // never touches it, so Write/preset/reset stop yanking the room's level
 // around. bpm stays a song fact on purpose: a song owns its tempo, nobody's
@@ -45,7 +45,7 @@ const readVol = () => {
   } catch (e) { return 80; }
 };
 export let bpm = DEFAULT_BPM, vol = readVol();
-// THE TEMPO MOVES, AND THAT IS NOT A SETTING (2026-08-16, "music breathes").
+// THE TEMPO MOVES, AND THAT IS NOT A SETTING .
 // A song's tempo map — a breakdown sitting under the tempo, a ritard into the
 // outro, the drift underneath all of it — is DERIVED from the arrangement in
 // ui/derive.js songBars, so it is a fact about the song and there is no chip
@@ -76,7 +76,7 @@ export let BUSES = null;
 // for the whole record — so a tweak does not revert at the next section.
 // null = no offsets = byte-identical engine output (absent is today).
 export let MIXER = null;
-// …AND THE GROOVE (2026-08-16): a song fact, the way the tempo is — one
+// …AND THE GROOVE : a song fact, the way the tempo is — one
 // drummer for the record, not one per section. It was a box field once, and
 // compose.js stamped the same value on every box, which was the tell. null is
 // the grid. ui/derive.js reads it as an argument (it stays pure), the
@@ -92,7 +92,7 @@ export let GROOVE = null;
 // recompiles on "swing", the bounce re-renders, song.js migrates old per-box
 // saves up to it.
 export let SWING = null;
-// …AND THE INSTRUMENT POOL (2026-08-16, "the band is hired for the record"):
+// …AND THE INSTRUMENT POOL :
 // a song fact like all three above — the band is cast once, for the record,
 // not re-auditioned per section. A map of CHAIR (fields.js POOLCHAIRS: the
 // kernel's own roles plus the bass) -> instrument id (INSTRCHOICES), null

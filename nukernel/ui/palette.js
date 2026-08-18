@@ -26,7 +26,7 @@ import { LAYER_OPTS, stackOf, focusOf, focused, opsOf, optOf, voxOf,
          genreOf } from "./derive.js";
 
 /* ---------- THE CHRONOLOGY ---------- */
-// "Organize the genres chronologically in the menu" (Paul, 2026-08-16). Every
+// "Organize the genres chronologically in the menu" . Every
 // real anchor is named PLACE YEAR — "Rome 600", "Leipzig 1725", "Portland
 // 2011" ("every genre is a city and a year", 102bb37) — so the ordering key
 // is already printed on the chip, and the year is READ OFF THE LABEL rather
@@ -241,7 +241,7 @@ const isDflt = kind => {
 };
 
 /* ---------- THE DNA OF A GENRE ---------- */
-// "Show the DNA of a genre somewhere" (Paul, 2026-08-16). Somewhere is the
+// "Show the DNA of a genre somewhere" . Somewhere is the
 // GENRE menu, over the chronological bank, reading the genre the menu is
 // currently pointed at: a flat bar of its weighted parents, one colour each,
 // ending in THE INVENTION — the share of this music that its parents do not
@@ -413,7 +413,7 @@ function makeBuilders(host, ent) {
     // dozen banks stacked in the same fold this one is ("instrument ·
     // strings"), which no chip inside it can say for itself. That is the
     // whole test the header cull applies ("get rid of ... table headers",
-    // 2026-08-16) — a column label goes, a thing's own name stays — and the
+ // 2026-08-16) — a column label goes, a thing's own name stays — and the
     // .thd class goes with the rest.
     const g = document.createElement("div");
     g.className = "pgroup tbl" + (gcls ? " " + gcls : "");
@@ -444,7 +444,7 @@ function makeBuilders(host, ent) {
   const opRow = (title, keys, cls) =>
     group(title, keys.map(k => ["op", k, OPLABEL[k], cls]));
   // (there is no .note() any more: a panel's own rows are all it says now —
-  // "no text... none of that", Paul, 2026-08-16. Every caller that used to
+ // "no text... none of that", Paul, 2026-08-16. Every caller that used to
   // open with an explanatory paragraph had it deleted, not shortened.)
   return { group, rowOf, opRow, dna: () => buildDna(host) };
 }
@@ -477,8 +477,8 @@ export const INSTRFAMS = (() => {
 
 // WHICH BANKS A CELL OWNS — the inventory made code (nukernel-plan.md §1e is
 // the law; ui/songrow.js names the cells). What is NOT here is deliberate:
-// fx / rev / verb / echo / dtime / lvl / pan are the MIX page's section row
-// (ui/mixtbl.js writes the same box fields), and the genre FOCUS list is the
+// fx / rev / verb / echo / dtime / lvl / pan are the record's own composed
+// mix (the mixer page trims OVER them, ui/mixer.js), and the genre FOCUS list is the
 // GENRE popup's own layer rows, built by songrow because it is rows, not chips.
 const CELLBANKS = {
   genre: b => {
@@ -521,8 +521,8 @@ const CELLBANKS = {
   // The cell's two genuinely-per-pattern survivors moved into MODS: the nudge
   // stepper — ui/songrow.js mounts it — and the articulation row below.)
   mods: b => {
-    // (no explanatory note here any more — "no text... none of that", Paul,
-    // 2026-08-16. These apply to the layer being edited, not the whole box,
+ // (no explanatory note here any more — "no text... none of that", Paul,
+ // 2026-08-16. These apply to the layer being edited, not the whole box,
     // and compose in the order they are switched on; that is what the rest
     // of the machine's chip material already says without a sentence.)
     // HOW THE PATTERN SPEAKS is a mod of the pattern — articulation rode the
@@ -559,7 +559,7 @@ const CELLBANKS = {
     b.rowOf("alphabet", "scale", SCALELABEL, "rng");
     b.rowOf("part", "part", PARTCHOICES, "rng");
     // (a "sing" row opened this group — box-scope on a layer popup, like
-    // breath in mods — until the espeak singer came out on 2026-08-17. See the
+ // breath in mods — until the espeak singer came out on 2026-08-17. See the
     // tombstone in kernel-daw.html.)
     b.rowOf("filter", "cut", VOX.cut.labels, "vox");
     b.rowOf("resonance", "res", VOX.res.labels, "vox");

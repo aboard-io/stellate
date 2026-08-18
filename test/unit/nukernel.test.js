@@ -122,7 +122,7 @@ if (process.argv.includes("--arrange-dom")) {
       { waitUntil: "networkidle" });
     await page.evaluate(() => localStorage.removeItem("nukernel.song.v1"));
     await page.reload({ waitUntil: "networkidle" });
-    // a composed multi-section song — same recipe test/browser/nukernel-board.test.js
+    // a composed multi-section song — the recipe the retired board gate used
     // uses — so there is more than one box and more than one phrase to test against.
     await page.selectOption("#composeg", "beatles");
     await page.click("#compose");

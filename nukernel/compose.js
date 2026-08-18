@@ -248,7 +248,7 @@
     // a solo composing its own record is the degenerate case, and the plan
     // should say so rather than pretend it is a pop song.)
     solo: "arc", vocal: "arc", backing: "arc", riff: "arc", pad: "arc",
-    // THE TWENTY-NINE ROOMS added 2026-08-17. Their own lane could not write
+ // THE TWENTY-NINE ROOMS added 2026-08-17. Their own lane could not write
     // this table (it owned genres.js and nothing else), so the registration
     // lands here, and the split is the same one the dial made: a record that
     // BUILDS and DROPS is a dance, a record with a verse and a chorus is a
@@ -280,7 +280,7 @@
     darkrnb: "song", blueeyedsoul: "song", folkduo: "song", worldfolk: "song",
     sophistirock: "song", roboticpop: "song", industrialmetal: "song",
     synthduo: "song",
-    // TWENTY-THREE MORE ROOMS, added 2026-08-17 by the same lane that wrote
+ // TWENTY-THREE MORE ROOMS, added 2026-08-17 by the same lane that wrote
     // genres.js's own comment block for them — the split is the wave-1 split
     // again: a record that builds and drops is a dance, one shape end to end
     // is an arc, everything else was written to be sung twice. SIX are
@@ -362,7 +362,7 @@
                 blueeyedsoul: 104, folkduo: 96, worldfolk: 116, jamband: 108,
                 sophistirock: 104, motorik: 144, roboticpop: 120,
                 industrialmetal: 126, ebm: 134, synthduo: 122,
-                // ...and the twenty-three rooms added 2026-08-17, at the
+ // ...and the twenty-three rooms added 2026-08-17, at the
                 // tempo the record actually sits at. 70 (space rock) and 148
                 // (grebo) are the two that sit ON the fence rather than past
                 // it — a Floyd side breathes slower than the dial's floor
@@ -1265,7 +1265,7 @@
     // (No groove and no swing stamped here: BOTH ride the song object now —
     // compose's return — the way the tempo does. Each was decided once and
     // STAMPED on every box, which was the tell that neither was ever a box
-    // fact at all; the swing followed the groove up on 2026-08-16, "nothing
+ // fact at all; the swing followed the groove up on 2026-08-16, "nothing
     // in a section tells time".)
     // THE ARC, SPENT. Where the role has not already claimed the field with a
     // fade of its own, the section gets the dynamic its place in the song asks

@@ -124,7 +124,7 @@ on("return", d => {
 });
 
 /* ---------- the CPU monitor: what the desk is costing, in the corner ------
-   "sneak a cpu monitor on mobile" (Paul) — SNEAK is the operative word. A
+ "sneak a cpu monitor on mobile" (Paul) — SNEAK is the operative word. A
    three-bar chip lives at the end of this row always, wordless, and says
    nothing on its own; a tap unfolds one line of the numbers behind it, the
    same terse currency the parent app's own chyron reads load out in

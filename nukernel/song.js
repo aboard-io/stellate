@@ -47,7 +47,7 @@
   // The GROOVE MOVE (box field -> song fact) did not need a v:3 either: the
   // retired box field is unmistakable — no new writer emits it — so migrate()
   // lifts on its presence, exactly the period-interregnum idiom below. The
-  // SWING MOVE (2026-08-16, "nothing in a section tells time") is the same
+ // SWING MOVE is the same
   // move made twice, and takes the same presence-keyed lift — as does the
   // INSTR MOVE ("the band is hired for the record"): the per-layer `instr`
   // override lifts, per chair, into the song's one INSTRUMENT POOL.
@@ -176,7 +176,7 @@
         if (hit) b.period = hit; else delete b.period;
       }
     }
-    // THE GROOVE LIFT (2026-08-16, "the groove belongs to the song"). `groove`
+ // THE GROOVE LIFT . `groove`
     // was a box field through every earlier save; it is a song fact now, like
     // the tempo. Keyed on the PRESENCE of the retired field rather than on v —
     // the period-interregnum precedent above — because both v:1 and v:2 saves
@@ -184,7 +184,7 @@
     // A song whose sections disagreed (only a hand-edit could) adopts the
     // groove most sections agree on; ties go to the section nearest the top,
     // which is the authority the box's own stack rule already names.
-    // ...AND THE SWING LIFT beside it (2026-08-16, "nothing in a section tells
+ // ...AND THE SWING LIFT beside it (2026-08-16, "nothing in a section tells
     // time"): the same move made twice, so it is the same code run twice —
     // presence-keyed, majority wins, ties to the section nearest the top (the
     // authority), the box field dies on the way through.
@@ -205,7 +205,7 @@
       }
       for (const b of r.song) if (b) delete b[key];
     }
-    // THE INSTR LIFT (2026-08-16, "the band is hired for the record"). For one
+ // THE INSTR LIFT . For one
     // release a stack entry could carry `instr` — a per-layer override of what
     // that layer's voices play. The band is the SONG's now: one INSTRUMENT
     // POOL, one pick per CHAIR (fields.js POOLCHAIRS), so the same lift the

@@ -84,7 +84,7 @@ const mk = (tag, cls, txt) => {
   if (txt != null) n.textContent = txt;
   return n;
 };
-// AN ICON AND A TOOLTIP, NOTHING ELSE (Paul, 2026-08-17): every key in this
+// AN ICON AND A TOOLTIP, NOTHING ELSE : every key in this
 // head row used to also carry a visible `.t` word. None of them do any more
 // — id/title/aria-label carry the name for a screen reader and the tooltip,
 // the icon carries the picture, and that is the whole control.
@@ -100,7 +100,7 @@ const ikBtn = (id, cls, label, title) => {
 const wrap = document.getElementById("composewrap");
 
 // NO HEADER, NO (?) — "get rid of headers and help buttons and table
-// headers" (Paul, 2026-08-16). What stood here was an h2 reading
+// headers" . What stood here was an h2 reading
 // "Compose · phrase 1" (the rail key already says COMPOSE, and the open
 // phrase is lit in the tray below), a round (?) over a paragraph explaining
 // a tracker you can simply drag on, and a second h2 + (?) pair over the
@@ -884,7 +884,7 @@ clearBtn.addEventListener("click", put(() =>
   SUBJ.kind === "drum" ? NuSong.blankDrum() : blank(SUBJ.gate.length)));
 // (hintKey — the exported (?) wiring, one round key toggling one paragraph,
 // used four times across the app — is GONE with the paragraphs it opened
-// ("get rid of ... help buttons", 2026-08-16). Nothing imports it any more;
+// . Nothing imports it any more;
 // if a surface needs explaining, that is a note about the surface.)
 
 /* ---------- navigation ---------- */

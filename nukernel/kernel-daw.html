@@ -6,41 +6,20 @@
 <title>Song Boxes — nukernel</title>
 <meta name="description" content="Build a song from boxes. One 16-step phrase reads as a fugue, acid house, vaporwave, twelve-bar blues or rock.">
 <meta name="robots" content="noindex">
-<!-- hw.css first: it owns every token, size and face; kernel-daw.css finishes
-     the declarations it leaves open (the pages.css + how.css pattern). The
-     static data-theme="light" on <html> pins the LIGHT face as the shipped
-     default; the dark face is one attribute away. Since the flat pass
-     (2026-08-16) hw.css carries no material recipes at all — surfaces, rules,
-     ink, one accent, the state/category/level colours, a type scale and a
-     space scale. The meaning colours never invert. -->
+<!-- hw.css owns the tokens; kernel-daw.css finishes the declarations it
+     leaves open. data-theme="light" pins the shipped face. -->
 <link rel="stylesheet" href="hw.css">
 <link rel="stylesheet" href="kernel-daw.css">
 </head>
 <body>
 
-<!-- THE CHASSIS. Three fixed zones AT EVERY WIDTH now (2026-08-16, "get rid
-     of the non-mobile vertical UX") — transport strip on top, the current
-     PAGE in the middle, the page rail under the thumb. A wide window does
-     not dissolve the zones into a stacked column; it gives the same tables
-     more room (wider columns, taller rows — kernel-daw.css's own media step).
-     One mental model, never a second layout to keep in sync with this one.
-     Switching pages is ONE attribute write (data-page below); no view is ever
-     rebuilt for it, so every module's elements stay alive and patched
-     whichever page is showing — and the page, plus whichever phrase or
-     section it is showing, round-trips through the URL (ui/pages.js). -->
+<!-- THE CHASSIS: transport on top, one PAGE in the middle, the rail under
+     the thumb — the same three zones at every width. Switching pages is one
+     data-page write; every page's elements stay alive. Routing: ui/pages.js. -->
 <div class="chassis" id="chassis" data-page="song">
 
-  <!-- ZONE 1 · TRANSPORT — always on screen, ONE ROW at every width
-       (2026-08-17, Paul: "squeeze entire transport into one row"). Every key
-       is icon-only — a title= tooltip and an aria-label are its only words,
-       because a control that needs a sentence beside it is drawn wrong.
-       Tempo and volume ride inline in the same row as hairline faders with
-       the value on the cap, not a stacked knob+legend block. The seed stays
-       real (compose() still takes one, ⟳ still rolls a fresh one in the same
-       genre) — it just no longer prints anywhere; the phrase editor drops it
-       in the same pass. session keys (save/load/reset/font/presets) are NOT
-       here: they are song operations, not performance controls, and they
-       live on the SONG page instead of under a thumb. -->
+  <!-- ZONE 1 · TRANSPORT: one row, icon-only keys, tempo/volume inline.
+       Session keys live in the mix page's drawers, not here. -->
   <header class="bar transport">
     <h1 class="mast">Song <em>boxes</em></h1>
     <div class="trow">
@@ -49,28 +28,16 @@
       <button class="btn go ik ik-write" id="compose" type="button"
         title="write a whole song in the picked genre"
         aria-label="write a whole song in the picked genre"><span class="k" aria-hidden="true"></span></button>
-      <!-- the song-loop toggle: ON by default, meaning the record repeats
-           forever — the behaviour the radio carrier has always assumed, and
-           the behaviour every render already had before this key existed
-           (the bar walk wraps unconditionally — audio/live.js). OFF plays the
-           arrangement through once and stops (ui/chrome.js). -->
+      <!-- loop: ON = the record repeats; OFF = once through, then stop
+           (ui/chrome.js). -->
       <button class="btn ik ik-loop" id="loop" type="button" aria-pressed="true"
         title="song loops — tap to play once and stop"
         aria-label="song loops — tap to play once and stop"><span class="k" aria-hidden="true"></span></button>
-      <!-- (THE GENRE PICKER MOVED DOWN A ROW, 2026-08-17: "move the genre
-           selector into the little bar below and make the genre a clickable
-           lozenge. That'll be where we pick genre." It was a record icon here
-           with the <select> stretched invisibly over it, sitting one row above
-           a readout that printed the genre actually on the platter — the same
-           fact in two places, and the picker in the place where you press
-           things rather than the place where you read them. It is one control
-           in row 2 now.) -->
+
       <button class="btn ik ik-reroll" id="reroll" type="button"
         title="same genre, new seed" aria-label="recompose: same genre, new seed"><span class="k" aria-hidden="true"></span></button>
-      <!-- the fader legends are TWO spans, always: a single-letter silkscreen
-           visible on the cap, the full word present for the accessible name
-           via the same clip-path swap the volume legend always used (never
-           display:none, so the name survives at every width). -->
+      <!-- fader legends: one-letter silkscreen visible, full word kept for
+           the accessible name (clip-path, never display:none). -->
       <div class="knob"><label for="bpm"><span class="lf">Tempo</span><span
           class="la" aria-hidden="true">T</span></label>
         <input type="range" id="bpm" min="70" max="160" value="126"><b id="bpmv">126</b></div>
@@ -78,28 +45,9 @@
           class="la" aria-hidden="true">V</span></label>
         <input type="range" id="vol" min="0" max="100" value="80"><b id="volv">80</b></div>
     </div>
-    <!-- ZONE 1, ROW 2: WHERE GENRE IS PICKED, and where the song is. The
-         genre lozenge · surprise · song position · section name — no label,
-         no punctuation of their own (a CSS rule divides the readouts, not a
-         character).
-
-         THE LOZENGE IS ONE CONTROL, not a readout beside a menu (2026-08-17,
-         Paul). The pill both SAYS the genre — ui/readout.js writes #posgenre,
-         the root genre of the box that is sounding or being looked at — and
-         OPENS the picker: #composeg is the same real <select> that lived
-         upstairs, same id (eight gates drive this page through it), stretched
-         invisibly over the pill. Choosing from it writes a song in that
-         genre; the machine has no pending state you have to press a second
-         key to cash in.
-
-         SURPRISE IS ITS OWN KEY. It used to be the first OPTION inside that
-         list — open the menu, scroll to the top, pick the one entry that is
-         not a genre — which is three gestures for the least deliberate act on
-         the machine. One tap now, and the list holds only genres.
-
-         #lcdpos is main.js's own element, written every bar by its playhead
-         loop; #possection is readout.js's. Neither is a control and neither
-         wears a border — that is the whole vocabulary this row demonstrates. -->
+    <!-- ROW 2: the genre lozenge (says the genre AND opens the picker —
+         #composeg is a real <select> stretched over the pill; gates drive it
+         by id), the surprise key, and the position readouts. -->
     <p class="readout posrow" id="readout">
       <span class="genrelz">
         <span class="k" aria-hidden="true"></span>
@@ -117,57 +65,23 @@
     </p>
   </header>
 
-  <!-- ZONE 2 · THE DECK — one page at a time on a phone, all four on a desk.
-       FOUR pages ("compose, arrange, mix" + the LAB, 2026-08-16): ARRANGE (the
-       song table — internal key "song", the section rows and the song-level
-       banks), COMPOSE (the phrase editor as a FULL PAGE again — the modal died;
-       a PATTERN thumbnail on Arrange navigates here with that phrase loaded,
-       ui/editor.js builds the page's insides into #composewrap, ids intact),
-       MIX (the board) and LAB (the bench where genres are crossed — pick two or
-       three parents and the machine fills the ARCHITECTURE it can actually
-       predict, leaving the MATERIAL to a person; ui/lab.js builds it into
-       #labwrap). Every per-box control is still a menu off the song
-       row's cells (ui/songrow.js + ui/palette.js mountBanks). There is no
-       context strip: a menu opens ON the row it edits, so nothing edits a box
-       from a page the box is not on. -->
+  <!-- ZONE 2 · THE DECK: COMPOSE (phrase editor, ui/editor.js →
+       #composewrap), ARRANGE (song table, internal key "song"), MIX
+       (ui/mixer.js), LAB (ui/lab.js → #labwrap). One page shows at a time;
+       menus open on the row they edit. -->
   <main class="deck">
 
     <section class="page pg-song" id="page-song" aria-label="arrange">
       <div class="ed songwrap">
-        <!-- NO HEAD. The page is reached by a lit SONG tab and its first
-             element is the song table, so an h2 reading "Song" named what the
-             tab already said, and the (?) beside it explained a table you can
-             simply tap (Ford, 2026-08-15: "get rid of the song title for the
-             song area and the question ... we're just going to tap on things
-             and figure it out"). -->
-        <!-- THE SONG TABLE: ui/songrow.js builds a header row, one row per
-             section (kept alive and patched, never rebuilt) and a footer row
-             of table keys. Rows at every width — the desk gets more columns,
-             not a different view — and the same well, ruling and row states
-             the pattern and the arrangement wear. -->
+        <!-- THE SONG TABLE: ui/songrow.js — a header row, one row per
+             section, kept alive and patched. -->
         <div class="song tbl" id="song"></div>
-        <!-- THE INSTRUMENT POOL AND THE SESSION BANK MOVED TO THE MIX PAGE
-             ("move all the sound definition and saving functionality into
-             mix", Paul, 2026-08-16) — lane A3's #poolbank / #groove / #swing /
-             #font / #preset / #savefile / #loadfile / #loadinput / #reset now
-             live there, inside two <details> beside the desk. This is the
-             block that used to sit here `hidden` as a placeholder for exactly
-             that move; deleted rather than left behind, because a second copy
-             of these ids would have shadowed the Mix page's live ones
-             (getElementById answers the first match in the document, and the
-             song page comes before the mix page in it). -->
+
       </div>
     </section>
 
-    <!-- THE COMPOSE PAGE — the phrase editor as a place you GO ("compose,
-         arrange, mix", 2026-08-16; plain and icon-only, 2026-08-17). ui/editor.js
-         builds everything inside #composewrap — the tracker (#stepgrid, 1..128
-         rows), the length/Seed/Random/Clear icon row, and the phrase TRAY
-         (#slots) — with the ids the modal carried, because the gates read
-         them. A PHRASE thumbnail or [+] on an Arrange row NAVIGATES here with
-         that phrase loaded; the tray at the bottom is where a phrase toggles
-         into the selected box's focused layer, and where it is cloned or
-         deleted (each pad's own icons, not a paired bank [+]/[−] any more). -->
+    <!-- COMPOSE: ui/editor.js builds the grid, the icon row and the phrase
+         tray into #composewrap (gate-read ids). -->
     <section class="page pg-compose" id="page-compose" aria-label="compose">
       <div class="ed composewrap" id="composewrap"></div>
     </section>
@@ -215,48 +129,17 @@
       </div>
     </section>
 
-    <!-- THE LAB PAGE — the bench where genres are crossed, and mixed
-         (nukernel/lab.js is the engine, ui/lab.js the view). Empty in the
-         markup on purpose, like #composewrap: the whole surface is built by
-         its module, and the module is not even fetched until the tab is
-         first opened (ui/deps.js loadLab()), because the bench and its two
-         oracles are ~123 KB of analysis tier that most sessions never ask
-         for.
-
-         2026-08-17: picking a genre or moving a weight slider takes over the
-         transport immediately and plays the mix, transitioning one bar at a
-         time as the sliders move — the page is a live instrument now, not a
-         ledger. It still measures everything it always did (nukernel/
-         INHERITANCE.md's architecture/material split, novelty, the laws in
-         validate()); none of that prints any more, it is a `title` tooltip
-         on the control it gates. -->
+    <!-- LAB: the genre bench (nukernel/lab.js engine, ui/lab.js view).
+         Fetched on first open (ui/deps.js loadLab()); plays what you cross. -->
     <section class="page pg-lab" id="page-lab" aria-label="lab">
       <div class="ed labwrap" id="labwrap"></div>
     </section>
 
   </main>
 
-  <!-- ZONE 3 · PAGE RAIL — hardware mode keys, on screen at every width now.
-       Lowercase in the markup (values, not silkscreen); the CSS uppercases
-       the legends. Each key wears a small silkscreen icon above its word
-       (.pi, an SVG-mask painted with currentColor — self-contained, no
-       glyph-coverage lottery).
-
-       REAL LINKS NOW (Paul: "every nav element should have a URL") — a real
-       href beside the tab semantics, so a right-click copies a real address
-       and a modified click opens a real tab, while a plain tap still runs
-       through ui/pages.js setPage() so the address it lands on carries the
-       phrase or section that page is showing, not a bare page name
-       (ui/pages.js's own router comment says the scheme).
-
-       FOUR KEYS: COMPOSE (the phrase editor page), ARRANGE (the song table —
-       its internal key stays "song": nothing but the silkscreen ever said the
-       word, and the CSS/gate hooks .pg-song/[data-page="song"] stay true), MIX
-       (the board) and LAB (the genre bench). The rail order is the verbs'
-       order — what you do to a phrase, a song, a sum, and then the thing you
-       make the parts out of. LAB is LAST: it is where a new genre comes from,
-       not where a song is made, and it must never sit between a person and
-       their song. -->
+  <!-- ZONE 3 · PAGE RAIL: real <a href> keys; a plain tap routes through
+       ui/pages.js setPage(). The last key is a plain link out to the
+       screensaver (the star map). -->
   <nav class="pagerail" role="tablist" aria-label="pages">
     <a class="pkey" role="tab" href="#/compose" data-page="compose" aria-controls="page-compose" aria-selected="false"><span class="pi" aria-hidden="true"></span>compose</a>
     <a class="pkey" role="tab" href="#/song" data-page="song" aria-controls="page-song" aria-selected="true"><span class="pi" aria-hidden="true"></span>arrange</a>
@@ -267,27 +150,14 @@
 
 </div>
 
-<!-- order matters, and it is the layer graph: the sampled engine, the algebra
-     (kernel), the genre table (genres), the control vocabulary (fields), pure
-     persistence (song), the sound sources (instruments), arranger policy
-     (compose), the shipped songs (presets), then — only then — the UI.
-     The UI is ONE module entry: ui/main.js imports the ui/ and audio/ tiers
-     in layer order (ui/deps.js is the sole reader of these globals). A module
-     script is deferred, so it always runs after every classic script here. -->
+<!-- LOAD ORDER IS THE LAYER GRAPH: engine, kernel, genres, fields, song,
+     instruments, compose, presets, then the one module entry (ui/main.js,
+     deferred, so it runs after every classic script). -->
 <script src="../engine/registry-data.js"></script>
 <script src="../engine/faust/voices/sampler.js"></script>
-<!-- TOMBSTONE: ../engine/speech.js and sing.js hung here (removed 2026-08-17).
-     nukernel had its own singer — espeak syllables cut on phoneme marks,
-     resampled onto the tune and vocoded — and it borrowed the PARENT's speech
-     organ to make them. That organ's law is a fresh Emscripten heap per
-     utterance (espeak's wavegen eats libc rand(), so only a fresh instance is
-     byte-identical), which was affordable at the three syllables a song the
-     old MIN_NOTE fence let through and fatal at the 127 the fixed fence asks
-     for: Safari threw "failed to asynchronously prepare wasm: RangeError: Out
-     of memory" and the page died mid-bar — "plays four drum hits then stops
-     and the browser won't reload". Paul: "Strip out espeak entirely." Do not
-     reattach it here. The parent's organ is untouched and still sings on
-     stellate.app (engine/speech.js, gated by test/gates/speech.test.js). -->
+<!-- No speech.js here: nukernel does not sing (a fresh espeak heap per
+     utterance took Safari out of memory). test/unit/nukernel.test.js §74
+     holds it out; the parent's organ is untouched. -->
 <script src="../engine/faust/voices/found-player.js"></script>
 <script src="kernel.js"></script>
 <script src="genres.js"></script>

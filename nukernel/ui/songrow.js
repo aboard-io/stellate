@@ -1,5 +1,5 @@
 // ui/songrow.js — THE SONG TABLE (the ARRANGE page since "compose, arrange,
-// mix", 2026-08-16), and since "the section speaks up" (2026-08-16) THE WHOLE
+// mix", 2026-08-16), and since "the section speaks up" THE WHOLE
 // PER-BOX INTERFACE. Four stacked lines a section, since "a section is one
 // shaded thing with its keys on top" (2026-08-16, Paul's own drawing):
 //   HEADER   # · genre · section type · duplicate · add-empty-below · play ·
@@ -136,7 +136,7 @@ const CELLNAME = { part: "part", genre: "genre", role: "function", bars: "bars",
    The silkscreened row that named # · GENRE · FUNCTION · BARS · MODS · VOICE
    · RHYTHM · TRANSITIONS across the top of the table is DELETED — DOM, CSS
    and the .hf/.ha phone abbreviation swap with it ("get rid of headers and
-   help buttons and table headers", Paul, 2026-08-16).
+ help buttons and table headers", Paul, 2026-08-16).
 
    It goes because every one of those columns already prints a self-naming
    value in its own cells: the genre cell says the genre and the city and
@@ -467,13 +467,13 @@ function buildBox(sec) {
     vals[k] = v;
   }
   // THE BARS CELL IS A NUMBER NOW, like its four neighbours in .bicons — the
-  // unit word and the mm:ss clock were the metadata Paul asked cut ("get rid
+ // unit word and the mm:ss clock were the metadata Paul asked cut ("get rid
   // of all the metadata"); the bar count is the one fact that is not a
   // description of a description, so it is the whole of what the cell says.
   const bn = Object.assign(document.createElement("b"), { className: "bn" });
   vals.bars.append(bn);
   // THE HEADER LINE — # · genre · section type · duplicate · add-empty-below
-  // · play · pin, "roughly" 10/50/30 across the three data cells (Paul's own
+ // · play · pin, "roughly" 10/50/30 across the three data cells (Paul's own
   // numbers) with the four action keys taking their fixed icon footprint
   // beside them; kernel-daw.css .bhead carries the actual weights.
   // .bhead/.bicons are layout only — role="presentation" so the accessibility
@@ -644,7 +644,7 @@ function buildSub(sec, ent) {
   const ph = document.createElement("div");
   ph.className = "bchips"; ph.setAttribute("role", "cell");
   // A LAYER'S STRIP NEEDS NO WORD TO SAY WHOSE IT IS ("get rid of 'ptn'",
-  // Paul, 2026-08-16): it sits directly under this sub-row, and the spine
+ // Paul, 2026-08-16): it sits directly under this sub-row, and the spine
   // down the sub-row's left edge already wears the layer's hue.
   const plus = buildPlus(sec, ent);
   ph.append(plus);
@@ -957,7 +957,7 @@ rpCell.setAttribute("role", "cell");
 const rpTitle = Object.assign(document.createElement("span"),
   { className: "rptitle", textContent: "box" });
 // SHRINK, not close: a collapse verb, drawn as arrows pulling back into their
-// own corner rather than an ✕ (Paul, 2026-08-16: "not an X to close but a
+// own corner rather than an ✕ ("not an X to close but a
 // 'shrink' icon"). It sits inside .rphead, which kernel-daw.css pins with
 // position:sticky at the top of the scrolling deck — so the title and this
 // key both stay on screen for the whole length of a long bank, and dismissal
@@ -1115,7 +1115,7 @@ function openPop(sec, kind, ent) {
   // (it is the menu's title bar) and the whole fold stands below it, visible
   // even when the tap landed at the bottom of the glass.
   //
-  // TWO HARD-WON RULES ABOUT THAT NUDGE (2026-08-16, "I can't remove sections
+ // TWO HARD-WON RULES ABOUT THAT NUDGE (2026-08-16, "I can't remove sections
   // any more"). The pin used to be an unconditional SMOOTH scroll, and a
   // smooth scroll is three hundred milliseconds of every key on the page
   // being a moving target: a thumb that opened the PART menu and went for its

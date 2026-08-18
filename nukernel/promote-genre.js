@@ -21,7 +21,7 @@
 //     block and leaves every byte around it alone.
 //   * WRITE A FLAT LITERAL. Not `blend(parents)` — the expanded anchor, in
 //     house style, readable straight through, so a musician can argue with it.
-//     nukernel/INHERITANCE.md §1 spends four paragraphs on why the expansion is
+//     the inheritance study, 1 spends four paragraphs on why the expansion is
 //     COMPILE-TIME and this is the tool that does the compiling.
 //   * REFUSE RATHER THAN GUESS. A duplicate key, a recipe the bench will not
 //     validate, a family the table does not have, an anchor whose own file will
@@ -383,7 +383,7 @@ function promote(opts) {
     .map(([p, w]) => GENRES[p].label + " " + Math.round(w * 100) + "%").join(" + ");
   const why = cand.label + " — invented on the LAB bench and promoted by hand: " +
     parentLine + ". The architecture is combined and plucked from those parents " +
-    "(nukernel/INHERITANCE.md's field law); the material below — the kit, the " +
+    "(the inheritance study's field law); the material below — the kit, the " +
     "roots, the words — was drafted by the dice at this seed and kept.";
 
   const anchor = anchorText(key, cand, { seed: built.seed, why });

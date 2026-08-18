@@ -349,7 +349,7 @@ export function resetBar() { barBase = 0; }
 // built, which meant it existed only while that graph did; the parent's handle
 // takes the same number and smooths it on the audio thread. Subscribed rather
 // than exported-and-forgotten: "transport" is what every volume writer commits
-// (ui/chrome.js's slider, ui/mixtbl.js's blend), and a slider that only writes
+// (ui/chrome.js's slider), and a slider that only writes
 // localStorage is a slider that does nothing until the next play.
 on("transport", () => { try { if (handle) handle.setMasterVol(vol / 100); } catch (e) {} });
 

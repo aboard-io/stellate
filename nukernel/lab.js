@@ -10,7 +10,7 @@
 //
 // WHY THIS FILE REFUSES TO WRITE THE MUSIC.
 //
-// nukernel/INHERITANCE.md measured what actually crosses from parents to child
+// the inheritance study measured what actually crosses from parents to child
 // over the whole catalog, field by field, and the answer split an anchor
 // cleanly in two:
 //
@@ -96,7 +96,7 @@ const canon = I.canon;
 // ---------------------------------------------------------------------------
 // §0. THE MATERIAL LAW
 // ---------------------------------------------------------------------------
-// Which fields the machine will not fill, and it is INHERITANCE.md's own table
+// Which fields the machine will not fill, and it is the inheritance study's own table
 // read as an instruction rather than as a finding. The test is not "is this
 // field a noun" — `drumkit` and `harmony` are nouns and they cross over 61% and
 // 87% of the time. The test is the one the measurement actually drew: a field
@@ -243,7 +243,7 @@ function combineBpm(parents) {
 }
 
 // A COMBINED INTEGER IS A COIN FLIP, so it is snapped to a parent's own value
-// rather than to the nearest whole number. INHERITANCE.md §5 measured the naive
+// rather than to the nearest whole number. the inheritance study, 5 measured the naive
 // version: `bars` overridden by 23 of 38 children with only 2 landing within
 // 15%, gospel inheriting a twelve-bar blues form as a four-bar hymn (200% off),
 // `voices` a median 33% off. The meter law's comment is the reason and it
@@ -384,7 +384,7 @@ function synthesize(parentSpec, opts) {
     put(f, "snapped", s.value,
         { raw: s.raw, note: "the average was " + s.raw.toFixed(2) + "; a " +
           (f === "bars" ? "form length" : "headcount") +
-          " is picked, not averaged (INHERITANCE.md §5)" });
+          " is picked, not averaged (the inheritance study, 5)" });
   }
 
   // 5. PLUCK — every group noun that is not material, from the group's parent
@@ -1113,7 +1113,7 @@ function validate(cand, opts) {
     if (v == null || (Array.isArray(v) && !v.length) ||
         (typeof v === "object" && !Array.isArray(v) && !Object.keys(v).length))
       err("empty-material", f, f + " is still empty — the machine does not fill this one " +
-          "(INHERITANCE.md: " + f + " is invented, not inherited)");
+          "(the inheritance study: " + f + " is invented, not inherited)");
   }
 
   // --- the kit: real lanes, real numbers, no silent lane
@@ -1335,7 +1335,7 @@ function printBench(b) {
       "   [seed " + b.seed + "]");
   say("=".repeat(74));
   say("");
-  say("ARCHITECTURE — what the parents actually carry (INHERITANCE.md: 87% harmony, " +
+  say("ARCHITECTURE — what the parents actually carry (the inheritance study: 87% harmony, " +
       "84% realize, 76% rate, 61% drumkit)");
   for (const m of b.manifest) {
     if (m.class === "invent") continue;

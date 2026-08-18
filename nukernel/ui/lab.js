@@ -1,10 +1,10 @@
 // ui/lab.js — THE LAB: a bench where genres are crossed, and mixed. Pick two
 // or three parents and slide their weights; the machine fills the half of a
-// genre it can measure (nukernel/INHERITANCE.md: harmony 87%, realize 84%,
+// genre it can measure (the inheritance study: harmony 87%, realize 84%,
 // rate 76%, drumkit 61% cross from parent to child) and drafts the half it
 // cannot, on the dice, for a person to argue with.
 //
-// (2026-08-17, Paul: "success is almost no words".) The page used to print
+// The page used to print
 // its own working — a provenance table, a novelty verdict, a paragraph of
 // "why" under every roll. All of that is still computed (§3, §7 below, and
 // nukernel/lab.js itself — nothing there changed) because Keep still gates on

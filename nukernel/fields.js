@@ -104,7 +104,7 @@
   // are the only transforms allowed to write events that were not there: a drum
   // fill is a different bar, not a louder one.
   // ELEVEN WAYS IN, not five — and only four of them are drum gestures. The
-  // 2026-08-14 widening ("everything opens with a drum hit… there are so many
+ // 2026-08-14 widening ("everything opens with a drum hit… there are so many
   // different kinds of intros in the world"): cold is the NAMED absence of an
   // intro, fade is the two-bar exception to the one-bar law, and padin/bassin/
   // riser/stabs are the entrances kernel.js intro() renders from the events
@@ -132,7 +132,7 @@
   // a step. "straight" is an explicit 0: it OVERRIDES a genre's own lean, which
   // null never does (a genre's swing is identity, kernel.js reads g.swing).
   //
-  // AND IT IS A SONG FACT NOW, NOT A BOX FIELD (2026-08-16, "nothing in a
+ // AND IT IS A SONG FACT NOW, NOT A BOX FIELD (2026-08-16, "nothing in a
   // section tells time" — the groove's move, finished). A record swings or it
   // does not; a swing that changed per section would be the drummer changing
   // hands mid-song. compose.js stamped ONE swing on every box, the same tell
@@ -150,7 +150,7 @@
   // mined rather than written (engine/pipes.js ACCENT_PROFILES, off the MIDIMAN
   // dub rip).
   //
-  // AND IT IS A SONG FACT, NOT A BOX FIELD (2026-08-16, "the groove belongs to
+ // AND IT IS A SONG FACT, NOT A BOX FIELD (2026-08-16, "the groove belongs to
   // the song"). A groove that changed per section would not be a groove, it
   // would be several drummers — compose.js already stamped ONE groove on every
   // box for exactly that reason, which was the tell. So there is no `groove`
@@ -252,7 +252,7 @@
     // EDGE, not a second amp. Every genre that reaches for crunch already
     // plays a PRE-DISTORTED sample (distortion/overdrive guitar) — the fuzz
     // is baked into the recording, and a two-stage high-gain sim on top of it
-    // re-fried the fry into mush ("WAYYYY TOO MUCH", the artist, 2026-08-14).
+ // re-fried the fry into mush ("WAYYYY TOO MUCH", the artist, 2026-08-14).
     // One stage, low drive, half mix: grit that thickens what the sample
     // already is instead of replacing it.
     crunch:   { label: "crunch",     type: "higain",
@@ -288,7 +288,7 @@
   /* ---------- A CHIP IS A SEND; A CHAIN IS AN INSERT ---------- */
   // "Maybe we need a few effects buses feeding into one master effects bus
   // instead of everything having its own effects" — the artist, hearing the
-  // page glitch, 2026-08-15. He is describing AUX SENDS, which is what the big
+ // page glitch, 2026-08-15. He is describing AUX SENDS, which is what the big
   // engine has always had: engine/faust/press/render-core.js renders every unit
   // into FOUR shared buses (`{ dry, rev, del, pp }`, line 19) with a gain
   // apiece, and engine/faust/live/live.js gives the whole found layer ONE
@@ -385,9 +385,9 @@
   // read off the rendered score rather than assumed — see the nukernel gate's
   // "a song knows what key it is in" section): every pitch kernel.js builds
   // adds `key` as its very last step, so a phrase is transposed whole, never
-  // broken. Widened from the truck-driver's own small range (2026-08-16) to
+ // broken. Widened from the truck-driver's own small range to
   // the full twelve: "there should be a variety of keys… I should be able to
-  // change keys" (Paul, 2026-08-17). Nothing in this engine carries an
+ // change keys" . Nothing in this engine carries an
   // inherent pitch class — every phrase is scale DEGREES, and a genre's own
   // harmony is written the same relative way — so "0" is a naming convention
   // and not a measurement: call the phrase as written "C", the way any
@@ -414,7 +414,7 @@
   // and the composer never reaches for the extremes of this table on its own.
 
   // MODE, reread as the other half of "the key" now that the tonic is a real
-  // picker: "a major/minor (or modal) toggle" (Paul). The seven-way modal
+ // picker: "a major/minor (or modal) toggle" (Paul). The seven-way modal
   // chip already existed below; the one thing it could never say was "minor"
   // itself, because minor is what an UNSET chip already plays (kernel.js:
   // `g.mode || MODE`, and MODE there is natural minor). `minor` joins the
@@ -541,7 +541,7 @@
   // be invented — the roles were there, they just had nowhere to plug in.
   //
   // (a tenth address, `sing`, sat here for one day: the singer's own chair on
-  // the desk. It went out with the singer on 2026-08-17 — kernel-daw.html
+ // the desk. It went out with the singer on 2026-08-17 — kernel-daw.html
   // carries the tombstone — so the track list is the nine again.)
   const PARTNAMES = { line: "line", lead: "lead", riff: "riff",
                       counter: "counter", pad: "pad", stab: "stab",
@@ -588,7 +588,7 @@
   // language from the master strip is two things to learn.
   //
   // A TRACK HAS THREE SENDS AND NO INSERTS ("get rid of inserts, reverb, and
-  // echo — let me send to bus 1, bus 2, and bus 3 instead", Paul, 2026-08-17).
+ // echo — let me send to bus 1, bus 2, and bus 3 instead", Paul, 2026-08-17).
   // The three sends ARE the three buses — `rev`, `echo`, `room` keep their
   // saved names and are what BUS_FIELDS names bus 1, bus 2 and bus 3 — so a
   // song written before this loads with its reverb and echo intact and simply
@@ -599,7 +599,7 @@
   // strip.
   //
   // `fx` IS OFF THE DESK, PERIOD ("get rid of inserts, reverb, and echo — let
-  // me send to bus 1, bus 2, and bus 3 instead", Paul, 2026-08-17). A prior
+ // me send to bus 1, bus 2, and bus 3 instead", Paul, 2026-08-17). A prior
   // round stopped any surface from WRITING a new one and left the FIELD in
   // place so an old save's chain would still play — but PARTMIX is also where
   // the mix table reads its own column list from, so the field left every
@@ -706,7 +706,7 @@
   // makeup ×1.4, the brickwall at −1.5, the 16 kHz ceiling — and builds not one
   // extra node. That is why there is no "off"/"flat"/"normal" entry in any table
   // below: every surface on this machine already has a way to say "back to the
-  // default" — a chip toggles off (ui/mixtbl.js), the session bank's pickers
+  // default" — a chip toggles off, the session bank's pickers
   // carry an empty "—" (ui/chrome.js) — so an explicit off/flat/normal would be
   // a SECOND spelling of absent, and two spellings of a default is exactly what
   // song.js and audio/desk.js both spend a branch normalizing away.
@@ -722,7 +722,7 @@
   // numbers under a name, so choosing it explicitly is a no-op, and the other
   // four walk the same two nodes from a slower, gentler ride to a pumped one.
   // No new node is built for any of them: this is a param write.
-  // MAKEUPS RESTAGED 2026-08-16, measured rather than felt. At makeup 2.2 a
+ // MAKEUPS RESTAGED 2026-08-16, measured rather than felt. At makeup 2.2 a
   // composed song rendered at −6 to −7 dBFS RMS with its peaks PINNED on the
   // brickwall (beatles peak −1.53 dBFS == the limiter threshold; rock 1.10,
   // OVER full scale through the safety shaper's oversampling overshoot, which
@@ -837,7 +837,7 @@
   // the bus STRIP rather than in the rack row, and — the same law as a part's
   // — flat builds not one filter node on the return.
   //
-  // A BUS HAS A NAME, AND THE NAME IS A KNOB. "name buses" (Paul, 2026-08-17).
+ // A BUS HAS A NAME, AND THE NAME IS A KNOB. "name buses" .
   // The name is stored exactly like every other bus value — `buses.<bus>.name`
   // — and it is a WORD FROM A TABLE rather than free text for a structural
   // reason, not a taste one: song.js validates a saved bus by walking this
@@ -1068,7 +1068,7 @@
                   bridge: "bridge", breakdown: "breakdown", drop: "drop",
                   solo: "solo", outro: "outro" };
 
-  // THE INSTRUMENT CHOICES (2026-08-16, "the section speaks up"): the union of
+ // THE INSTRUMENT CHOICES : the union of
   // every sampled instrument the genre table itself plays — 48 ids, every one
   // a SAMPLERS id the coverage gate already proves real, so a pick here can
   // never name a sound the page cannot fetch. Since "the band is hired for the
@@ -1100,7 +1100,7 @@
                      "drone", "bass"];
 
   // (there is no `sing` field here any more, and no resolveSing beside the
-  // other resolvers: the singer was pulled out whole on 2026-08-17 — see the
+ // other resolvers: the singer was pulled out whole on 2026-08-17 — see the
   // tombstone in kernel-daw.html. A `sing` left on an older save is not in
   // FIELDS, so song.js's loader never looks at it and nothing reads it: an
   // old song opens as itself, minus a voice.)
@@ -1222,9 +1222,9 @@
     { key: "auto",    scope: "box",   type: "list", table: AUTOPARAMS,
       labels: AUTOPARAMLABEL, tab: "fx", group: "automation", default: [] },
     // (the `sing` chip lived here — appended after `auto`, ahead of the board
-    // — and came out with the singer on 2026-08-17. Nothing took its slot: the
+ // — and came out with the singer on 2026-08-17. Nothing took its slot: the
     // rule is still append, never reorder.)
-    // ---- the board (2026-08-16) — appended, never reordered ----------------
+ // ---- the board — appended, never reordered ----------------
     // the SECTION strip's fader offset, the same dB-over-the-automated-value
     // law as PARTMIX `fader` (see the note there): it multiplies the channel's
     // resolved `lvl` in audio/desk.js sectionOf, so the enum level, the

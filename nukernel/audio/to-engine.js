@@ -797,7 +797,7 @@ const PATCH_MODEL = {
 // So the id ROTATES the genre's word: the aahs sing it from the top, the oohs a
 // syllable behind. Doowop's "ou" comes out as o-u against u-o, which is what
 // four men round a microphone actually do, and it costs no new vocabulary.
-// A LEAD IS SYNTHESISED; A CHORUS IS RECORDED. Paul, 2026-08-18: "Keep it a
+// A LEAD IS SYNTHESISED; A CHORUS IS RECORDED. "Keep it a
 // soloist and use sampled choruses for choral arrangements."
 //
 // This reverses a judgement made the day before, and the reversal is right. The
@@ -1439,7 +1439,7 @@ export function toEngine(plan, deps) {
       }
       // (a `sing` arm reported the sung line as unrouted here — honestly, since
       // the parent has no voice for espeak slices. The organ came out on
-      // 2026-08-17; nothing emits that kind any more.)
+ // 2026-08-17; nothing emits that kind any more.)
     }
     beat0 += barBeats;
   }

@@ -751,7 +751,7 @@
 
   // ---- ORNAMENTS: the NINTH type -------------------------------------------
   // "The phrase editor has no way to do chromaticism or passing notes that I
-  // can see, or grace notes or flams" (Paul, 2026-08-17). It could not, and
+ // can see, or grace notes or flams" . It could not, and
   // nothing already here could be made to: an operator is timeless and knows
   // no pitch; an envelope is level-only; a pipe computes over the finished
   // stream but has no idea which STEP a note was written on; and every one of

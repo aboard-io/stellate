@@ -105,7 +105,7 @@
   //   syll    beats per syllable, where the default (half a beat for a line, a
   //           bar for a held chord) is wrong for the music.
   //
-  // AND THE OTHER KIND OF MOUTH, added 2026-08-18: the two singers above are
+ // AND THE OTHER KIND OF MOUTH, added 2026-08-18: the two singers above are
   // FORMANT BANKS, which model a held vowel very well and a consonant not at
   // all, because a bank of filters cannot SHUT. The engine now also has a TUBE
   // — engine/faust/dsp/tract_voice.dsp, a Kelly-Lochbaum waveguide with a
@@ -271,7 +271,7 @@
   };
 
   // ---- LINEAGE — genre as a combination of earlier genres ------------------
-  // Paul, 2026-08: "Beatles is counterpoint plus Bo Diddley plus skiffle…
+ // "Beatles is counterpoint plus Bo Diddley plus skiffle…
   // that might be interesting if we started to see genre as mixing." Every
   // real (place-year) anchor below declares `parents`: weighted references to
   // OTHER anchors in this table, the weights a claim about SHARE (they sum to
@@ -385,7 +385,7 @@
       // bleep rather than a bassline. Saw instead of square, a filter that opens
       // less far and closes slower, and the resonance backed off the edge.
       // ...AND THE SQUELCH IS TURNED BACK UP. Measured on a rendered Chicago
-      // 1987 (2026-08-18): the resonant peak moved 1.14 octaves and Essentia's
+ // 1987 : the resonant peak moved 1.14 octaves and Essentia's
       // Discogs classifier heard Electro, Experimental and AMBIENT — no acid
       // house at all. A 303 line sweeps two to three octaves; that is the whole
       // sound. resonance 0.58 and envmod 0.42 are both about half of what the
@@ -2987,7 +2987,7 @@
       wants: ["moroder", "yellow magic orchestra", "hip-hop dj culture"],
       // the square-wave sequencer and the vocoder: the two voices on every
       // electro record, and the second one is a MACHINE SINGING — which, from
-      // 2026-08-18, it finally is. `synth_voice` on a LINE chair reaches the
+ // 2026-08-18, it finally is. `synth_voice` on a LINE chair reaches the
       // vocal tract (audio/to-engine.js PATCH_MOUTH) where before it reached a
       // VP-330 holding one vowel, and the word this anchor already uses for the
       // part is its own argument: "eight steps of the phrase, EVERY OTHER NOTE
@@ -3055,7 +3055,7 @@
                                : [excerpt(s % 2 ? 8 : 0, 8), drop(2)]),
     },
 
-    // ---- THE REST OF THE DIAL (2026-08-17) --------------------------------
+ // ---- THE REST OF THE DIAL --------------------------------
     // Twenty-nine more rooms, each one asked for by an artist or a record and
     // translated into the STYLE it stands for rather than transcribed from
     // it — SOURCES.md's provenance law: an idiom, not a quotation. Where a
@@ -4094,7 +4094,7 @@
       parents: { kraftwerk: 0.4, techno: 0.35, punk: 0.25 },
       wants: ["new beat"],
       // THE CHANT IS SHOUTED, AND A SHOUT IS MOSTLY CONSONANTS — and until
-      // 2026-08-18 it was not even a voice: the Model D below is declared without
+ // 2026-08-18 it was not even a voice: the Model D below is declared without
       // `lineOnly`, so the signature synth took BOTH chairs and the "vocal chant"
       // was a second copy of the sequence pulsing beside the first. (Before that
       // it was the VP-330, a string ensemble holding an "aah", which is the miscast
@@ -4176,7 +4176,7 @@
       word: v => (v === 1 ? [drop(2)] : []),
     },
 
-    // ---- TWENTY-THREE MORE ROOMS (2026-08-17) ------------------------------
+ // ---- TWENTY-THREE MORE ROOMS ------------------------------
     // Paul named artists; every anchor below is the STYLE the artist stands
     // for, never the artist and never a transcription (SOURCES.md's
     // provenance law holds exactly as it did for the ancestors). Six of the
@@ -4664,7 +4664,7 @@
       harmony: "cycle", roots: [0, 5, 3, 4],
       artic: "staccato", maxHold: 2,
       // THE LADDER IS THE IDENTITY; THE DRIVE WAS NOT. "The organs have gain
-      // applied in Basildon 1990 and are very loud" (Paul, 2026-08-17) — and
+ // applied in Basildon 1990 and are very loud" — and
       // he is describing this line, the held resonant modeld chord that reads
       // as a synth organ. Measured against the shipped table this was the
       // loudest and the most driven modeld in the catalogue at once: level
@@ -5262,7 +5262,7 @@
     bigroom:   { stress: 0.3,  phrase: 0.25, touch: { t: 0.015, v: 0.45 } },
     ebm:       { stress: 0.3,  phrase: 0.15, touch: { t: 0.01,  v: 0.35 } },
     synthduo:  { stress: 0.28, phrase: 0.35, touch: { t: 0.02,  v: 0.5 } },
-    // ...and the five rooms added 2026-08-17, same law, same reason: `club`
+ // ...and the five rooms added 2026-08-17, same law, same reason: `club`
     // still has no fallback row, so a machine-floor newcomer that disagrees
     // (which every one of these does, in a different direction) is named here
     // rather than silently rendering flat.

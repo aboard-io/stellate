@@ -234,7 +234,7 @@ function report() {
   // The fit before the eight ancestors landed, committed as data rather than
   // as prose, so this section is a MEASUREMENT and not a memory: PHASE1 is the
   // R²/residue of every child in the 44-anchor table (the run this file held
-  // on 2026-08-16, before jazz/bodiddley/chuckberry/doowop/skiffle/minimalism/
+ // on 2026-08-16, before jazz/bodiddley/chuckberry/doowop/skiffle/minimalism/
   // kraftwerk/electro), and bossa is in it as a root, which is why it carries
   // a null R² and only its residue. A child not in the table below is one of
   // the eight themselves, or a child that has not moved because it never

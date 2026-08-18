@@ -29,7 +29,7 @@ const $ = id => document.getElementById(id);
 $("play").addEventListener("click",
   () => playing ? stop() : (setLoopOnly(null), startAt(0)));
 on("transport:state", d => {
-  // ICON ONLY (2026-08-17): the button used to swap its own textContent
+ // ICON ONLY : the button used to swap its own textContent
   // ("▶ Play"/"■ Stop"), which is exactly what would have eaten the icon
   // <span> a plain assignment can't tell from a word. The triangle-to-square
   // swap is CSS now (#play.on .k, kernel-daw.css) keyed off this same class;
@@ -310,7 +310,7 @@ fader($("vol"), 80);
     // (ui/readout.js), and the two must never be able to disagree
     if (sel.value !== gk) sel.value = gk;
     buzz(4);
-    // ...AND IT PLAYS, FROM THE TOP (Paul, 2026-08-17: "When I click 'reload'
+ // ...AND IT PLAYS, FROM THE TOP ("When I click 'reload'
     // or 'write' just start playing from the beginning of the song"). Writing a
     // song and then being told to press play is a machine asking permission to
     // do the thing you just asked for — and on a reroll it is worse, because the
@@ -362,14 +362,12 @@ fader($("vol"), 80);
   });
 }
 
-/* (There is no master-bus row group here any more: the master's mastering
-   stages are the MIX page's processing strip — ui/mixtbl.js buildProcessingStrip,
-   a fourth bstrip in BUSES, from the same fields.js MASTER registry, ids
-   #m-<key> kept — because "those feel like a bus" (Paul, 2026-08-17), and the
-   desk lives on the board.) */
+/* (No master-bus row group here: the master's character is composed
+   (compose.js MASTER_LEAN) and trimmed on the mixer page's master channel —
+   ui/mixer.js.) */
 
 /* THE GROOVE/SWING/FONT/SONGS/SAVE ROW LIVES ON THE MIX PAGE NOW ("move all
-   the sound definition and saving functionality into mix", Paul, 2026-08-16)
+ the sound definition and saving functionality into mix", Paul, 2026-08-16)
    — two <details> beside the desk (kernel-daw.html's MIX PAGE markup), not
    the Arrange page. This file's wiring below did not move with it: every
    selector here is a plain getElementById, so it binds to whichever page's

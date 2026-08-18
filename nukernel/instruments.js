@@ -173,7 +173,7 @@
   //
   // EVERY id a genre can voice is listed — the 48 choosable ids (fields.js
   // INSTRCHOICES is the union of every genre's `instr`) plus the bass chair —
-  // because the squeaky-ska-trumpet round (2026-08-16) showed what an absent
+ // because the squeaky-ska-trumpet round showed what an absent
   // row costs: an unlisted instrument still passes through untouched (future
   // ids degrade to the zone window, the parent's law for the unlisted), but the
   // gate in test/unit/nukernel.test.js now proves nothing choosable is
