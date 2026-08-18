@@ -11225,7 +11225,8 @@ console.log("the mirror — the page's physical controls are the parent's own");
      "the mirror below is unheld, and a drift in either copy is now silent");
 
   // (a) the physical control, per module — asked through a chair that casts it
-  const CAST = { gtr_amp: "clean_guitar", mallet: "vibraphone",
+  const CAST = { stk_guitar: "clean_guitar", stk_piano: "yamaha_grand_piano",
+                 mallet: "vibraphone",
                  voice_lead: "solo_vox", voice_choir: "ahh_choir" };
   for (const dsp of Object.keys(DYN || {})) {
     const id = CAST[dsp];

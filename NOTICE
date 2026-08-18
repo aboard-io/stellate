@@ -66,6 +66,41 @@ the exception expressly allows compiler OUTPUT to be relicensed by its author.
 The generated modules are therefore distributed here under this repository's
 MIT license, with thanks to the Faust project.
 
+## FAUST-STK physical models — STK-4.3 (MIT-style), permitted
+
+`engine/faust/dsp/stk_guitar.dsp` and `engine/faust/dsp/stk_piano.dsp` are
+derived from the **FAUST Synthesis ToolKit** (`examples/physicalModeling/
+faust-stk/` in https://github.com/grame-cncm/faust), by **Romain Michon**
+(CIEREC EA 3068, Université Jean Monnet / CCRMA, Stanford) with **Julius O.
+Smith III** — a Faust port of instruments from the Synthesis ToolKit and the
+SynthBuilder models. Every source file in that directory carries
+`declare licence "STK-4.3"`, the license of **The Synthesis ToolKit in C++**,
+© 1995–2023 **Perry R. Cook and Gary P. Scavone**
+(https://ccrma.stanford.edu/software/stk/ — full text at
+https://github.com/thestk/stk/blob/master/LICENSE).
+
+STK-4.3 is an MIT-style permission grant: use, copy, modify, merge, publish,
+distribute, sublicense and sell, provided the copyright notice and permission
+notice travel with the work — which is what this section is. It adds one
+NON-BINDING request, that modifications be sent back to the original developer
+so they can be folded into the canonical version; the license says in its own
+words that this is "not a binding provision". It is compatible with this
+repository's MIT grant, so no carve-out is needed: unlike lamejs and eSpeak NG
+above, nothing here is excluded.
+
+What was taken and what was changed is written at the top of each `.dsp` file.
+In summary: `stk_guitar.dsp` uses the extended Karplus-Strong string of
+`NLFeks.dsp` (Smith's "Virtual Electric Guitars in Faust",
+https://ccrma.stanford.edu/~jos/pasp/vegf.html) with its dynamic-level
+filter reconnected, feeding this project's own pickup, preamp and cabinet;
+`stk_piano.dsp` is the commuted waveguide piano of `piano.dsp`/`piano1.dsp`
+(David Braun's pure-Faust revision, which replaces the C++ `ffunction` lookup
+tables with Faust `waveform` tables and is what makes it compilable to
+WebAssembly at all) with its per-key hammer velocity crossfade reconnected, a
+fitted tuning correction, and a mono, reverb-free output stage. The synthesis
+— every coefficient table, every filter topology — is the toolkit's. Thanks to
+Romain Michon, Julius Smith, David Braun, Perry Cook and Gary Scavone.
+
 ## FluidR3 GM/GS SoundFont — © Frank Wen, MIT
 
 The sampled instrument, drum-kit, and percussion layers are extracted at fetch

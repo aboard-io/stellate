@@ -215,11 +215,13 @@ const SYNTH = {
   casiocz:   { model: "casiocz",  rename: { wave: "czWave", detune: "czDetune" } },
   synclead:  { model: "synclead", role: "melody", rename: { detune: "syncDetune" } },
   bell:      { model: "bell" },
-  // the two the parent grew for the table below — an instrument you PLAY rather
-  // than a recording you edit. No `role`: a guitar holds chords and plays lines,
-  // and so does a marimba (minimalism has two of them doing both).
-  gtr_amp:   { model: "eguitar" },
-  mallet:    { model: "mallet" },
+  // the instruments you PLAY rather than recordings you edit. No `role`: a
+  // guitar holds chords and plays lines, and so does a marimba (minimalism has
+  // two of them doing both), and so does a piano.
+  stk_guitar: { model: "eguitar" },
+  stk_piano:  { model: "piano" },
+  gtr_amp:    { model: "eguitar" },   // the hand-rolled string, kept nameable
+  mallet:     { model: "mallet" },
   // THE THROAT. Both roles are declared, because a singer and a section are not
   // interchangeable seatings of one thing the way pad_saw and supersaw are: a
   // lead follows the TUNE and a choir holds the HARMONY, and the parent's `pad`
@@ -403,7 +405,8 @@ const PATCH_SYNTH = {
 // test/unit/nukernel.test.js holds all three tables against the parent's row
 // for row and fails on the first number that moves.
 const LIVE_DYN = {
-  gtr_amp:     { pick: [0.12, 1] },
+  stk_guitar:  { pick: [0.12, 1] },
+  stk_piano:   { hammer: [0.3, 1] },
   mallet:      { hard: [0.05, 1] },
   voice_lead:  { push: [0.06, 0.95] },
   voice_choir: { push: [0.05, 0.68] },
@@ -426,8 +429,16 @@ const LIVE_DYN = {
  * MEASURED, on captured page output, one chair sounding and no drums — which
  * is what the one-voice genres (Solo, Riff, Vocal, Backing vocals) are for.
  * Each row is the deficit that measurement found:
- *   gtr_amp      Solo (overdrive) -7.4 dB, Riff (palm-muted) -8.8 dB
+ *   stk_guitar   Solo (overdrive) -7.4 dB, Riff (palm-muted) -8.8 dB — measured
+ *                on the waveguide this module replaced, and inherited because
+ *                the replacement was fitted level with it note for note
+ *                (stk_guitar.dsp's own two trims, worst residual 0.9 dB)
  *   mallet       Riff cast to a vibraphone, -6.7 dB
+ *   stk_piano    NOT MEASURED ON THE PAGE, and the only row here that is not.
+ *                Its number is the average of the two that were, because both
+ *                of those deficits are a staging offset between the press's
+ *                master chain and this page's rather than anything about the
+ *                instrument. It is the one line in this file waiting on ears.
  *   voice_lead   Vocal (solo_vox), -18.3 dB
  *   voice_choir  Backing vocals -27.2 dB, Rome 600 -19.5 dB. The spread is the
  *                instrument being an instrument: an /u/ through a formant bank
@@ -435,7 +446,8 @@ const LIVE_DYN = {
  *                right for both vowels. This one splits them.
  */
 const PAGE_TRIM = {
-  gtr_amp:     2.55,
+  stk_guitar:  2.55,
+  stk_piano:   2.35,
   mallet:      2.16,
   voice_lead:  8.2,
   voice_choir: 15,
@@ -474,10 +486,10 @@ const VOWELS = "aeiou";
 // buy volume by driving the guitar amp's shaper harder — which is dirt, not
 // level.
 const LIVE_AMP = [PITCH_AMP_FLOOR, PITCH_AMP_FLOOR + PITCH_AMP_SPAN];
-const liveModel = (dsp) => dsp === "gtr_amp"
+const liveModel = (dsp) => dsp === "stk_guitar"
   // a slide on a waveguide is a real portamento: the string's delay length IS
   // its pitch, so `glide` bends it rather than crossfading two notes
-  ? { dyn: LIVE_DYN.gtr_amp, slideParam: "glide", slideSec: 0.06, amp: LIVE_AMP }
+  ? { dyn: LIVE_DYN.stk_guitar, slideParam: "glide", slideSec: 0.06, amp: LIVE_AMP }
   : { dyn: LIVE_DYN[dsp], amp: LIVE_AMP };
 
 // ---- AND THE ONES THAT ARE INSTRUMENTS, NOT PHOTOGRAPHS OF THEM ------------
@@ -505,11 +517,17 @@ const liveModel = (dsp) => dsp === "gtr_amp"
 //   loudness, a ghosted note and a hammered one differ by a factor of two in
 //   spectral centroid; the sampled zone they replace differs by nothing.
 //
-// AND THE ACOUSTIC GUITARS ARE NOT HERE, on purpose. A steel-string, a nylon
-// and a banjo are BODIES — a soundboard, a back, a membrane head — and a
-// recording of a body is exactly what a sample is good at. The waveguide would
-// give up the one thing that makes them themselves. Same for the pianos, the
-// organs, the choirs and the voices: ten-deep zones and a body, both times.
+// AND THE ACOUSTIC GUITARS ARE STILL NOT HERE, on purpose. A steel-string, a
+// nylon and a banjo are BODIES — a soundboard, a back, a membrane head — and a
+// recording of a body is exactly what a sample is good at. Neither the old
+// waveguide nor the toolkit's string has a body at all, so both would give up
+// the one thing that makes those three themselves. Same for the organs, whose
+// sound is a rank of pipes and not an excitation.
+//
+// THE PIANOS USED TO BE IN THAT SENTENCE AND THEY ARE NOT ANY MORE. The reason
+// given was "ten-deep zones", and it was wrong — counted, not remembered, the
+// deepest piano in the library has ONE recording per key range like everything
+// else. The piano rows below are what that correction bought.
 //
 // THREE MORE WERE TRIED AND MEASURED OUT, which is worth writing down because
 // "we did not get to it" and "we got to it and it was worse" are different
@@ -531,41 +549,153 @@ const liveModel = (dsp) => dsp === "gtr_amp"
 //                   reed standing in for the conical tenor sax two genres DO
 //                   cast would be a different instrument wearing its name.
 //
+// AND THEN THE WHOLE FAUST SYNTHESIS TOOLKIT WAS MEASURED, 2026-08, because
+// three hand-rolled models is not a good answer when the reference
+// implementations exist. Nineteen faust-stk instruments, compiled against this
+// repo's own libfaust (2.85.8) and rendered offline in node — never a browser,
+// never a render farm, one note at a time through
+// engine/faust/build/measure-instrument.js. Four could not compile at all
+// (bass, harpsi, modalBar, voiceForm call C++ `ffunction` lookup tables, which
+// wasm has no way to link; porting their .h files to Faust `waveform` tables is
+// a day's work each and nobody has needed them yet). Of the fifteen that did:
+//
+//   ADOPTED
+//   NLFeks          in tune to 0.0 CENTS at 82/165/330/659 Hz with no
+//                   correction at all, and its own dynamic-level filter was
+//                   commented out in the published file. -> stk_guitar
+//   piano1          fundamental is the loudest partial, decay 1.0-1.4 s and it
+//                   varies with register and with velocity, and its per-key
+//                   soft/loud hammer tables were wired to the constant 1.
+//                   -> stk_piano
+//
+//   MEASURED OUT
+//   brass           the octave-and-a-fifth problem again, from the other
+//                   direction: asked for 165 Hz it produced 347, asked for 330
+//                   it produced 698, and at MIDI 76 it is silent below full
+//                   pressure. Non-monotone at MIDI 52. Same verdict as
+//                   pm.brassModel, now reached twice by two different codebases.
+//   fluteStk        +19 to +49 cents at full pressure and a different OCTAVE at
+//                   anything less; at 0.6 pressure a 262 Hz ask came back 574.
+//   sitar           -11 to -15 cents and an octave error at MIDI 76. The jawari
+//                   is a randomly modulated delay line and up top the modulation
+//                   is a larger fraction of the period than the period.
+//   tunedBar,       pitch is excellent (within 3 cents) and the bodies are pure,
+//   uniBar,         but all four peak at 1e-3 to 1e-4 — 60-80 dB down — and
+//   glassHarmonica, three of them are NON-MONOTONE in the strike at the top of
+//   tibetanBowl     their range. `mallet` beside them is louder, monotone and
+//                   already cast; these are colour nobody has asked for yet.
+//
+//   MEASURED GOOD AND PARKED, which is a third thing and worth writing down
+//   clarinet        pitch -5 to -21 cents, 86-96% of its energy in the
+//                   fundamental, monotone, and the reed genuinely opens.
+//   saxophony       pitch +2 to +10 cents from 116 to 466 Hz, up to 92% body,
+//                   monotone. tenor_sax is cast twice in this catalogue and
+//                   this would be an improvement on the zone.
+//                   BOTH have a hard speaking threshold — under about 0.75
+//                   pressure they do not sound at all, which is physically
+//                   correct for a reed and dangerous in a generative engine
+//                   that will hand a voice any velocity. Adopting either means
+//                   mapping velocity into a narrow band ABOVE the threshold and
+//                   letting the note's amp carry the rest, which is a design
+//                   decision and not a port. Next round.
+//   bowed           +5 to +17 cents (consistently sharp, so fittable) and this
+//                   time loudness IS monotone in bow force, unlike
+//                   pm.violinModel. But its body share jumps between 0.6% and
+//                   39% across three pitches at one bow pressure, which is the
+//                   bow slipping between regimes. Not until that is understood.
+//
 // The genre's own tone block drives these too — `cut` becomes the speaker
 // cabinet's corner (a guitar cab lives an octave or so above where a synth
 // filter sits, hence the lift), `rel` how long the hand lets the note ring,
 // `gain` the voice level — exactly as it drives the synth table above.
 const PATCH_MODEL = {
   // ---- the electrics ----
+  // THE STRING UNDER ALL SIX IS THE TOOLKIT'S NOW (engine/faust/dsp/
+  // stk_guitar.dsp — Julius Smith's extended Karplus-Strong out of faust-stk,
+  // through the amp and cabinet this repo fitted against the sampled zones).
+  // The waveguide these rows were written for is still in the tree and it was
+  // measured out: at MIDI 40 its loudest partial was the SEVENTH and the
+  // fundamental was 34.6 dB down — 0.0% of the note's energy inside a semitone
+  // of 82 Hz — which is the "plinky" this whole family was named for. The EKS
+  // is in tune to under one cent from MIDI 40 to 96 with no fitted correction,
+  // and its spectral centroid moves x1.5 to x2.7 across the plectrum where the
+  // waveguide's moved x1.05.
+  //
+  // The six recipes below are the SAME SIX GUITARS, translated: `damp` (a loop
+  // coefficient) becomes `ring` (the string's -60 dB time in seconds), `stiff`
+  // becomes `bright` (the damping filter's tilt, which is what string stiffness
+  // audibly is), and `pluckPos` is measured from the nearer end so 0.78 and
+  // 0.22 are the same pluck. Nothing about which guitar is which has moved.
+  //
   // GM 28 (clean electric). The most-cast instrument in the table by a factor
   // of four, and the one whose sampled version has the least to say: a clean
   // electric IS its pick attack, and the sample has one.
-  clean_guitar:      { dsp: "gtr_amp", set: (M) => ({
-    drive: 0.09, pluckPos: 0.78, pickup: 0.30, stiff: 0.30, damp: 0.9998,
+  clean_guitar:      { dsp: "stk_guitar", set: (M) => ({
+    drive: 0.09, pluckPos: 0.22, pickup: 0.30, bright: 0.55, ring: 4.0,
     cutoff: M.cab, release: M.rel }) },
   // GM 27 (jazz electric) — neck pickup, no dirt, and the tone rolled off. The
   // pickup is the whole difference between this and the clean above.
-  jazz_guitar:       { dsp: "gtr_amp", set: (M) => ({
-    drive: 0.04, pluckPos: 0.62, pickup: 0.50, stiff: 0.22, damp: 0.9997,
+  jazz_guitar:       { dsp: "stk_guitar", set: (M) => ({
+    drive: 0.04, pluckPos: 0.38, pickup: 0.50, bright: 0.30, ring: 3.0,
     cutoff: Math.min(M.cab, 3200), release: M.rel }) },
-  // GM 29 (palm muted) — the mute is the STRING's damping and a short hand,
-  // which is what a palm mute physically is, plus enough gain to chug.
-  palm_muted_guitar: { dsp: "gtr_amp", set: (M) => ({
-    drive: 0.38, pluckPos: 0.9, pickup: 0.12, stiff: 0.4, damp: 0.9955,
+  // GM 29 (palm muted) — the mute is the STRING's own decay and a short hand,
+  // which is what a palm mute physically is, plus enough gain to chug. 0.23 s
+  // of ring measures as a 140 ms chug on a real pluck; the old coefficient
+  // spelling of the same idea left the string sustaining for a full second.
+  palm_muted_guitar: { dsp: "stk_guitar", set: (M) => ({
+    drive: 0.38, pluckPos: 0.10, pickup: 0.12, bright: 0.62, ring: 0.23,
     cutoff: M.cab, release: 0.06 }) },
   // crunch, overdrive, distortion: ONE instrument at three amounts of
   // amplifier, which is what those three words have always meant. The sampled
   // trio are three separate recordings pretending to be that, and none of them
   // can be played quietly.
-  crunch_guitar:     { dsp: "gtr_amp", set: (M) => ({
-    drive: 0.45, pluckPos: 0.84, pickup: 0.2, stiff: 0.34, damp: 0.99975,
+  crunch_guitar:     { dsp: "stk_guitar", set: (M) => ({
+    drive: 0.45, pluckPos: 0.16, pickup: 0.2, bright: 0.58, ring: 5.0,
     cutoff: M.cab, release: M.rel }) },
-  overdrive_guitar:  { dsp: "gtr_amp", set: (M) => ({
-    drive: 0.58, pluckPos: 0.84, pickup: 0.22, stiff: 0.34, damp: 0.99978,
+  overdrive_guitar:  { dsp: "stk_guitar", set: (M) => ({
+    drive: 0.58, pluckPos: 0.16, pickup: 0.22, bright: 0.58, ring: 5.5,
     cutoff: M.cab, release: M.rel }) },
-  distortion_guitar: { dsp: "gtr_amp", set: (M) => ({
-    drive: 0.82, pluckPos: 0.88, pickup: 0.16, stiff: 0.38, damp: 0.9998,
+  distortion_guitar: { dsp: "stk_guitar", set: (M) => ({
+    drive: 0.82, pluckPos: 0.12, pickup: 0.16, bright: 0.64, ring: 6.0,
     cutoff: Math.min(M.cab, 4600), release: M.rel }) },
+  // ---- the pianos ----
+  // AND THE PIANOS ARE HERE NOW, on a measurement that overturns the reason
+  // they were not. The note that used to sit below this table said pianos stay
+  // sampled because their "zones are ten deep" — ten VELOCITY layers, which
+  // would make a recording the better piano. Counted on the shipped registry:
+  // yamaha_grand_piano and bright_yamaha_grand are 6 zones and upright_piano
+  // and felt_piano are 10, and in every one of the four the zones tile the
+  // KEYBOARD with exactly ONE recording per key range. There is not a second
+  // dynamic anywhere in the library. A sampled fortissimo is a sampled
+  // pianissimo turned up, on the instrument whose entire expressive range is
+  // the hammer.
+  //
+  // What plays them now is the FAUST-STK commuted waveguide piano — a
+  // noise-excited soundboard through a frequency-dependent hammer into three
+  // coupled strings per note, with the hammer's soft and loud filter poles
+  // MEASURED per key and crossfaded by velocity. Dumped partial by partial at
+  // MIDI 52: soft, the fundamental leads and the fourth harmonic is 17.8 dB
+  // down; hard, the fourth harmonic IS the loudest thing in the note. That is
+  // the sound a piano makes when you lean on it, and no zone can make it.
+  //
+  // `hammer` is not set here — the note's own velocity writes it, through
+  // LIVE_DYN above, the same way the plectrum is written on the six guitars.
+  // `bright`/`stiff`/`detune` are the four pianos' own characters.
+  yamaha_grand_piano:  { dsp: "stk_piano", set: (M) => ({
+    bright: 0.25, stiff: 0.28, detune: 0.10, cutoff: M.mcut, release: M.rel }) },
+  bright_yamaha_grand: { dsp: "stk_piano", set: (M) => ({
+    bright: 0.55, stiff: 0.34, detune: 0.12, cutoff: M.mcut, release: M.rel }) },
+  // an upright is a shorter string in a smaller box: stiffer (more
+  // inharmonicity per unit length), less unison spread, and it stops sooner.
+  upright_piano:       { dsp: "stk_piano", set: (M) => ({
+    bright: 0.32, stiff: 0.44, detune: 0.16, cutoff: Math.min(M.mcut, 7000),
+    release: Math.min(M.rel, 0.4) }) },
+  // felt is a strip of cloth between hammer and string — the top of the
+  // spectrum simply does not happen, and the unisons drift because nobody
+  // tunes a prepared piano twice.
+  felt_piano:          { dsp: "stk_piano", set: (M) => ({
+    bright: 0.0, stiff: 0.22, detune: 0.22, cutoff: Math.min(M.mcut, 4200),
+    release: M.rel }) },
   // ---- the struck bars ----
   // GM 12 (marimba) — rosewood. `ring` is the T60 of the LOWEST bar mode and
   // the library's own 0.1 s is a bar that has stopped before the player's hand

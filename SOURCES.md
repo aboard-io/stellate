@@ -647,6 +647,25 @@ grant. Curation: all 114 decoded patches render non-silent (scratch audit,
   to encode the continuous `audio/mpeg` append stream; served as unmodified
   source alongside this repo, which satisfies LGPL for a scripting-language use.
 
+## FAUST-STK instruments (engine/faust/dsp/stk_*.dsp — committed source, not audio)
+
+`stk_guitar.dsp` and `stk_piano.dsp` are DERIVED SOURCE, not fetched media, so
+they live in the tree and are covered by the licence note in NOTICE rather than
+by the media policy above. They come from the **FAUST Synthesis ToolKit**
+(`examples/physicalModeling/faust-stk/` in
+[github.com/grame-cncm/faust](https://github.com/grame-cncm/faust)) — Romain
+Michon's Faust port of the Synthesis ToolKit and SynthBuilder instruments, with
+Julius O. Smith III — under **STK-4.3**, the MIT-style licence of The Synthesis
+ToolKit in C++ (© 1995–2023 Perry R. Cook and Gary P. Scavone,
+[ccrma.stanford.edu/software/stk](https://ccrma.stanford.edu/software/stk/)).
+STK-4.3 permits redistribution and modification with the notice attached; there
+is no carve-out. Fetched with `curl` from the raw GitHub URLs, one file at a
+time, and nothing binary was taken — these are `.dsp` text sources.
+
+Credit and thanks to Romain Michon, Julius Smith, David Braun (whose pure-Faust
+`piano1.dsp` revision is what makes the commuted piano compile to WebAssembly),
+Perry Cook and Gary Scavone.
+
 ## hogcore speech roster (found/samples/speech/hp_*.wav — generated, no external source)
 
 The 24-name hogcore cast (Harry Potter character NAMES, names only — no book

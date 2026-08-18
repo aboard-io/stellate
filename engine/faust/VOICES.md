@@ -40,7 +40,7 @@ Conventions shared by all voice modules:
 | acid | `bass_acid` | cutoff, res, release, fenv | fenv default 3 = the stock note-on cutoff×4 zap, settles at 0.16 s; per-recipe override |
 | reese | `bass_reese` | cutoff | ±0.6 % saw pair → LP → tanh |
 | wobble | `bass_wobble` | cutoff, res, wobbleHz | LFO on ladder cutoff |
-| piano | `piano` | (shared module) | engine maps cutoff·2.5 capped 4 k |
+| piano | `stk_piano` | cutoff, bright/stiff/detune, release, **hammer** (velocity) | FAUST-STK commuted waveguide piano; engine maps cutoff·2.5 capped 4 k |
 
 ## Pads / shared timbres (pad ↔ lead via attack/cutoff mapping)
 
@@ -53,7 +53,7 @@ Conventions shared by all voice modules:
 | fm (pad) | `fm2op` | ratio=2.001 idx0=2.6 idx1=0.9 idxTime=1.1 | pass min(8000, cutoff·1.7) |
 | fm (lead) | `fm2op` | ratio=1.4 idx0=3.5 idx1=1.0 idxTime=dur/2 (+decay/sustain/release/fenv when the recipe is plucky) | pass recipe cutoff |
 | brass | `brass` | cutoff (cap), bite, attack | bite = note velocity (csound p5·16000 brightness) |
-| piano | `piano` | cutoff, decay(=note dur) | pad min(8k,c·2) / lead min(9k,c·2) |
+| piano | `stk_piano` | cutoff, bright/stiff/detune, release, **hammer** (velocity) | pad min(8k,c·2) / lead min(9k,c·2). Replaced the 4-oscillator `piano` 2026-08: that module had nothing above the 4th partial (the 5th is 132 dB down), the same centroid at every dynamic, and the same 1.28 s decay at MIDI 40 as at MIDI 76 |
 | bell | `bell` | cutoff, res, decay(=note dur) | internal butlp(c·2.5 cap 10k) + moog(c) like instr 4 |
 | rhodes | **DX7 E.PIANO 1** | — | substitution, see below |
 
@@ -213,9 +213,11 @@ Adopted substitutions and available upgrades:
 - `supersaw` computes 7 voices × 4 waves and gates at runtime — pure-param
   timbre morphs, ~28 cheap oscillators. If worklet CPU matters, split
   per-wave variants at build time.
-- `piano`/`bell` take `decay` = note duration (csound decays span p3); the
-  scheduler must pass it per note. Their attacks are fixed-fast; a pad-slow
-  attack param is a possible refinement (pads currently use them rarely).
+- `bell` takes `decay` = note duration (csound decays span p3); the scheduler
+  must pass it per note. `stk_piano` no longer does and must not be told to:
+  its decay is three coupled strings and a soundboard with measured per-key
+  loop filters, so it is already right for the register, and `release` is the
+  DAMPER — how fast the felt stops a released note, not how long the note is.
 - kpluck's song-length flanger evolution is a param (`flangePos`), so the
   scheduler owns the 164 s ramp.
 - Drum `decay` = csound p3: kick 0.3, snare 0.15, hat 0.06–0.3 (open), tom 0.4

@@ -4484,6 +4484,40 @@
    "/stab/level"
   ]
  },
+ "stk_guitar": {
+  "inputs": 0,
+  "outputs": 1,
+  "params": [
+   "/stk_guitar/bright",
+   "/stk_guitar/cutoff",
+   "/stk_guitar/drive",
+   "/stk_guitar/freq",
+   "/stk_guitar/gain",
+   "/stk_guitar/gate",
+   "/stk_guitar/glide",
+   "/stk_guitar/level",
+   "/stk_guitar/pick",
+   "/stk_guitar/pickup",
+   "/stk_guitar/pluckPos",
+   "/stk_guitar/release",
+   "/stk_guitar/ring"
+  ]
+ },
+ "stk_piano": {
+  "inputs": 0,
+  "outputs": 1,
+  "params": [
+   "/stk_piano/bright",
+   "/stk_piano/cutoff",
+   "/stk_piano/detune",
+   "/stk_piano/freq",
+   "/stk_piano/gate",
+   "/stk_piano/hammer",
+   "/stk_piano/level",
+   "/stk_piano/release",
+   "/stk_piano/stiff"
+  ]
+ },
  "strings": {
   "inputs": 0,
   "outputs": 1,

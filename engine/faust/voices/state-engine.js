@@ -964,11 +964,26 @@
   // force moves it across. ONE HOME, because two would drift: mapEvents reads
   // it for the tape, and the live page reads it off this same export
   // (FaustStateEngine.MODEL_DYN) rather than keeping a second copy.
-  //   gtr_amp.pick  how hard the plectrum is — the excitation's brightness and
-  //                 its length. 0.12 is a thumb on the string, 1 is a hard
-  //                 nylon triangle. (The note's LOUDNESS does a second job on
-  //                 top, inside the module, where it lands on the preamp's
-  //                 input: hard is also dirtier. That one needs no table.)
+  //   stk_guitar.pick  how hard the plectrum is — the excitation's brightness
+  //                 and its energy, through the EKS dynamic-level filter. 0.12
+  //                 is a thumb on the string, 1 is a hard nylon triangle. (The
+  //                 note's LOUDNESS does a second job on top, inside the module,
+  //                 where it lands on the preamp's input: hard is also dirtier.
+  //                 That one needs no table.) Measured across the neck, the
+  //                 spectral centroid moves x1.5 to x2.7 over this range; the
+  //                 hand-rolled waveguide it replaced moved x1.05, which is a
+  //                 fader with a physical name.
+  //   stk_piano.hammer  the felt, and the blow. The toolkit's commuted piano
+  //                 carries soft/loud hammer-filter poles and gains MEASURED per
+  //                 key and crossfades them by velocity — a mechanism the
+  //                 published file leaves wired to the constant 1, so every note
+  //                 is fortissimo. Reconnected, a pianissimo and a fortissimo at
+  //                 MIDI 52 differ by 18 dB in the FOURTH partial (which is the
+  //                 loudest one when you dig in and 17.8 dB down when you do
+  //                 not); before, they were identical to a tenth of a decibel at
+  //                 every harmonic. The floor is 0.3 rather than 0: under it the
+  //                 soundboard's own decay collapses and the note stops before
+  //                 it speaks, which is not a pianissimo, it is a missing note.
   //   mallet.hard   the mallet head — yarn at 0.05, plastic at 1. This is the
   //                 whole instrument: a bar's spectrum is chosen by what hits
   //                 it, and across MIDI 67-79 a ghosted note measures 2252 Hz of
@@ -987,7 +1002,8 @@
   //                 and the breath is the brightest thing in the note, which is
   //                 also true of the real instrument.)
   const MODEL_DYN = {
-    gtr_amp:     { pick: [0.12, 1] },
+    stk_guitar:  { pick: [0.12, 1] },
+    stk_piano:   { hammer: [0.3, 1] },
     mallet:      { hard: [0.05, 1] },
     voice_lead:  { push: [0.06, 0.95] },
     voice_choir: { push: [0.05, 0.68] },
@@ -1020,6 +1036,39 @@
     }
     return out.length ? out : [0];
   }
+
+  // ---- TRANSLATING THE OLD GUITAR'S KNOBS -----------------------------------
+  // Every recipe in the tree that casts an electric guitar was written against
+  // the hand-rolled waveguide's parameters, and the toolkit's string asks the
+  // same two questions in different units. Translating is the honest move:
+  // dropping the recipes would silently reset six carefully-set guitar voices
+  // to one default, and clamping them would push half of them onto a rail.
+  //
+  // `damp` was a per-sample loop coefficient with no unit anyone can hear;
+  // `ring` is the string's -60 dB time in seconds. Fitted through the two
+  // settings that mattered — 0.9998 is the ringing clean electric (4 s) and
+  // 0.9955 is the palm mute (0.23 s, which measures as a 140 ms chug on a real
+  // pluck) — with the pole's own 1/(1-d) shape in between, because that is what
+  // a decay coefficient means.
+  const dampToRing = (d) => clamp(0.05 + 0.0008 / Math.max(1e-5, 1 - d), 0.05, 12);
+  // `pluckPos` ran 0.02..0.98 along the whole string; the EKS asks for the
+  // distance from the NEARER end, which stops at the middle. A pluck at 0.78 and
+  // a pluck at 0.22 are the same pluck from the other end of the same string, so
+  // the old numbers reflect rather than clamp — 0.78 stays near the bridge, the
+  // jazz recipe's 0.62 stays toward the middle, and the palm mute's 0.9 stays
+  // right on top of the saddle.
+  const dampToPluck = (p) => (p > 0.5 ? 1 - p : p);
+  // WHICH PIANO IT IS. Three numbers and they are the whole difference between
+  // a concert grand, an upright and a felt: how bright the hammer felt is, how
+  // stiff the string is (the inharmonicity that makes a short piano a short
+  // piano), and how far apart the three unisons per note are tuned. Written
+  // once here because both seatings — the left hand and the two hands — are the
+  // same instrument and must not drift into two.
+  const pianoBody = (mp) => ({
+    bright: mp("bright", 0.25, 0, 1),
+    stiff: mp("stiff", 0.28, 0, 1),
+    detune: mp("detune", 0.1, 0, 1),
+  });
 
   function pitchedUnitRaw(role, m, state) {
     // param-reader: clamp(m[k]!=null?m[k]:d,lo,hi) — the null-coalescing default
@@ -1245,7 +1294,15 @@
           wobbleHz: clamp((m.wobbleBars != null && state && state.bpm)
             ? 1 / (Math.max(0.02, m.wobbleBars) * 4 * (60 / state.bpm))
             : (m.wobbleHz || 2.4), 0.1, 12) } };
-        case "piano":  return { ...base, module: "piano", decayFromDur: true, params: { ...base.params, cutoff: clamp(Math.min(4000, c * 2.5), 200, 14000) } };
+        // a piano playing the BASS line — the toolkit's commuted model, same as
+        // the pad and lead seatings below, with the tone rolled down where a
+        // left hand lives. No decayFromDur: the old four-oscillator piano needed
+        // to be told how long the note was because its decay was an envelope;
+        // this one's decay is three coupled strings and a soundboard, and it is
+        // already right for the register.
+        case "piano":  return { ...base, module: "stk_piano", dyn: MODEL_DYN.stk_piano,
+          params: { ...base.params, cutoff: clamp(Math.min(4000, c * 2.5), 200, 16000),
+            ...pianoBody(mp), release: clamp(m.release != null ? m.release : 0.35, 0.02, 3) } };
         case "sampler": return samplerUnit();   // the upright &co (native path)
         default:       return { ...base, module: "bass_saw",   params: { ...base.params, cutoff: clamp(c, 80, 12000), res, ...bassArt } };
       }
@@ -1258,7 +1315,16 @@
       case "strings": return { ...base, module: "strings", params: { ...base.params, cutoff: clamp(c, 80, 12000), attack: atk } };
       case "choir":   return { ...base, module: "choir",   params: { ...base.params, cutoff: clamp(Math.min(isPad ? 8000 : 9000, c * 2.5), 200, 12000), attack: atk } };
       case "bell":    return { ...base, module: "bell", decayFromDur: true, params: { ...base.params, cutoff: clamp(c, 200, 14000), res: clamp(res, 0, 0.95) } };
-      case "piano":   return { ...base, module: "piano", decayFromDur: true, params: { ...base.params, cutoff: clamp(Math.min(isPad ? 8000 : 9000, c * 2), 200, 14000) } };
+      // piano — dsp/stk_piano.dsp, the FAUST-STK commuted waveguide piano. What
+      // stood here was four sine oscillators at 1 / 2.004 / 3.011 / 4.022 and a
+      // noise burst, and measured it had NOTHING above the fourth partial (the
+      // fifth is 132 dB down — silence), the same spectral centroid at every
+      // dynamic, and the same 1.28 s decay at MIDI 40 as at MIDI 76. A real
+      // piano's bass rings five times longer than its treble and its forte is a
+      // different spectrum. `hammer` is where that now comes from.
+      case "piano":   return { ...base, module: "stk_piano", dyn: MODEL_DYN.stk_piano,
+        params: { ...base.params, cutoff: clamp(Math.min(isPad ? 8000 : 9000, c * 2), 200, 16000),
+          ...pianoBody(mp), release: clamp(m.release != null ? m.release : (isPad ? 0.5 : 0.35), 0.02, 3) } };
       case "brass":   return { ...base, module: "brass", biteFromAmp: true, params: { ...base.params, cutoff: clamp(Math.min(12000, c), 500, 12000), attack: clamp(isPad ? atk : (m.attack != null ? m.attack : 0.08), 0.005, 3) } };
       case "fm":      return isPad
         ? { ...base, module: "fm2op", params: { ...base.params, cutoff: clamp(Math.min(8000, c * 1.7), 200, 14000), ratio: 2.001, idx0: 2.6, idx1: 0.9, idxTime: 1.1, attack: atk, vibrato: 0 } }
@@ -1275,31 +1341,51 @@
       case "fuzz":    return { ...base, module: "lead_fuzz",   params: { ...base.params, cutoff: clamp(c, 200, 14000), res, drive: clamp(m.drive || 0, 0, 1), vibrato: clamp(m.vibrato || 0, 0, 0.03), vibRate: clamp(m.vibRate || 5.2, 0.1, 12),
         ...(plucky ? { attack: clamp(m.attack != null ? m.attack : 0.05, 0.001, 5), sustain: sus, release: rel, fenv: fev } : {}) } };
       case "guitar":  return { ...base, module: "lead_guitar", params: { ...base.params, cutoff: clamp(c || 4500, 200, 14000), pluckPos: 0.75 } };
-      // ---- the two INSTRUMENTS YOU PLAY (dsp/gtr_amp.dsp, dsp/mallet.dsp) ----
+      // ---- the INSTRUMENTS YOU PLAY (dsp/stk_guitar.dsp, dsp/mallet.dsp; the
+      // piano case below is the third, dsp/stk_piano.dsp) ----
       // Both carry `dyn`, which is the point of them: mapEvents turns the note's
       // own amp into a PHYSICAL control — how hard the plectrum hits, how hard
       // the mallet is — so a loud note is a different sound and not the same
       // sound louder. Every sampled voice above is one recording per zone and
       // physically CANNOT do that; these two can, so they do.
       //
-      // eguitar — string, pickup, amp. freqMax 700 is the top of a guitar's own
-      // neck AND the top of this waveguide's honest tuning: measured, MIDI 40-67
-      // lands inside three cents and MIDI 72 inside seven, then it drifts sharp
-      // (+15c at 76, +37 at 79) while the string goes quiet. So the register
-      // law's octave fold above it is the drop a player makes when the line runs
-      // off the fingerboard. `drive` is the amp's character; the note's loudness
-      // lands on the shaper's INPUT inside the module, which is why hard is
-      // dirtier as well as louder.
-      case "eguitar": return { ...base, module: "gtr_amp",
-        freqMax: 700, freqMin: 70, pool: role === "pad" ? 4 : 3,
-        dyn: MODEL_DYN.gtr_amp, slideParam: "glide", slideSec: 0.06,
+      // eguitar — string, pickup, amp. THE STRING IS NOW THE TOOLKIT'S
+      // (dsp/stk_guitar.dsp): the hand-rolled waveguide that used to sit here
+      // was measured putting 0.0% of an 82 Hz note's energy inside a semitone of
+      // 82 Hz, with the SEVENTH partial as its loudest — the "plinky" this whole
+      // family was named for. The extended Karplus-Strong under it now is in
+      // tune to under ONE CENT from MIDI 40 to MIDI 96, measured, with no fitted
+      // correction at all, because its loop delay is an integer plus a
+      // linear-phase filter rather than a group delay somebody had to fit.
+      //
+      // That is why freqMax moves from 700 Hz to 1250: the old cap was the top
+      // of the old waveguide's honest tuning (+15 cents at MIDI 76, +37 at 79),
+      // not the top of a guitar. 1250 Hz is MIDI 86, which is the 22nd fret of
+      // the high E and where the instrument itself actually stops.
+      //
+      // `ring` replaces `damp` and is the same physical fact in a readable unit:
+      // the string's own -60 dB time in SECONDS. A recipe that still writes the
+      // old loop coefficient is translated rather than dropped — 0.9998 per
+      // sample is about four seconds, and a genre that wrote 0.9955 meant a palm
+      // mute and gets one.
+      case "eguitar": return { ...base, module: "stk_guitar",
+        freqMax: 1250, freqMin: 70, pool: role === "pad" ? 4 : 3,
+        dyn: MODEL_DYN.stk_guitar, slideParam: "glide", slideSec: 0.06,
         params: { ...base.params,
           cutoff: clamp(c || 4200, 200, 14000),
           drive: mp("drive", 0.18, 0, 1),
-          pluckPos: mp("pluckPos", 0.78, 0.02, 0.98),
+          // the EKS pick position is a FRACTION OF THE STRING and stops at the
+          // middle (past halfway is the same distance from the other end), where
+          // the old model's went to 0.98. A recipe that asked for 0.78 was
+          // asking for near-the-bridge, so it is reflected, not clamped.
+          pluckPos: clamp(dampToPluck(mp("pluckPos", 0.78, 0.02, 0.98)), 0.02, 0.5),
           pickup: mp("pickup", 0.28, 0.05, 0.5),
-          stiff: mp("stiff", 0.32, 0, 1),
-          damp: mp("damp", 0.9998, 0.99, 1),
+          // `bright` is the damping filter's tilt and `stiff` was the old
+          // waveguide's string stiffness — different mechanisms, the same
+          // audible axis (how much top the string keeps as it rings), so a
+          // recipe written in either word is heard. New writers say `bright`.
+          bright: m.bright != null ? clamp(m.bright, 0, 1) : mp("stiff", 0.32, 0, 1),
+          ring: m.ring != null ? clamp(m.ring, 0.05, 12) : dampToRing(mp("damp", 0.9998, 0.99, 1)),
           release: clamp(m.release != null ? m.release : 0.25, 0.02, 2) } };
       // mallet — a struck bar over a tube, and the widest honest range of
       // anything here: measured inside FOUR cents from MIDI 45 to 91, which is
@@ -2178,7 +2264,8 @@
     juno60:  { cut: ["cutoff", 60, 16000], pw: ["pwmBase", 0.05, 0.5] },
     vp330:   { cut: ["cutoff", 300, 12000] },
     solina:  { cut: ["tone", 300, 12000] },   // solina's brightness param is `tone` (no res, no cutoff)
-    gtr_amp: { cut: ["cutoff", 200, 14000] },  // the cab's cliff; the STRING's brightness is `pick`, and that belongs to velocity
+    stk_guitar: { cut: ["cutoff", 200, 14000] },  // the cab's cliff; the STRING's brightness is `pick`, and that belongs to velocity
+    stk_piano:  { cut: ["cutoff", 200, 16000] },  // the lid; the HAMMER's brightness is `hammer`, same rule
     mallet:  { cut: ["cutoff", 400, 16000] },  // likewise: the mallet's own hardness is velocity's, not a pipe's
   };
 
@@ -2189,9 +2276,9 @@
   // A physical model is different in kind: the plectrum, the mallet, the bow and
   // the breath are INPUTS, and changing them changes the spectrum, not the
   // level. `u.dyn` is the wiring for that — { param: [atSoftest, atHardest] } —
-  // and the two units that carry it (gtr_amp, mallet) are measured doing it:
-  // hard notes come back with 1.3-3.4x the spectral centroid of soft ones after
-  // both have been normalized to the same loudness.
+  // and the units that carry it (stk_guitar, stk_piano, mallet, the two throats)
+  // are measured doing it: hard notes come back with 1.3-4.3x the spectral
+  // centroid of soft ones after both have been normalized to the same loudness.
   //
   // THE REFERENCE WINDOW is the parent's own pitched amp range: buildEvents
   // emits roughly 0.14-0.26 and nukernel's bridge 0.06-0.34, so 0.06 is a
