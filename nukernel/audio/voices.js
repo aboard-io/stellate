@@ -10,16 +10,16 @@
 // mixer -> transport. Never imports a ui view.
 import { GENRES, VOX, VOXPARAM, BASSSYNTH, SP, RANGES, STRETCH_UP,
          STRETCH_DOWN, DRUMBUS, STRIPS, mixFor, dynFor, dynCurve,
-         DYN_ATK } from "../ui/deps.js";
-import { SONG, bpm } from "../ui/state.js";
-import { stackOf } from "../ui/derive.js";
+         DYN_ATK, instrOf } from "../ui/deps.js";
+import { SONG, POOL, bpm } from "../ui/state.js";
+import { stackOf, poolInstrOf } from "../ui/derive.js";
 // `noise` is gone from this import with the oscillator stubs it fed: nothing in
 // this file makes a waveform any more, it only drives the engine's.
 import { ctx, bus, buildVoiceChair } from "./graph.js";
 // THE DRUM TABLE IS THE TAPE'S DRUM TABLE. audio/to-engine.js resolves a lane
 // and a kit to a parent voice for the record; this file asks it the same
 // question for the page, so there is one drum system and not two.
-import { LANE, drumVoice, drumAmp, isMachine } from "./to-engine.js";
+import { LANE, drumVoice, drumAmp, isMachine, patchForInstr, pageTrim } from "./to-engine.js";
 import { FAUSTDIR, FONT, fontDef, isSynthFont, specOf, zoneBufs, drumBufs,
          inFlight } from "./assets.js";
 
@@ -114,6 +114,15 @@ export function routeSynth(key, node, chan) {
   }
   return g;
 }
+// HOW FAR OPEN "OPEN" IS, for one pooled module. Almost always 1 — a route is a
+// gate, not a fader. The exception is a module the page plays as an INSTRUMENT
+// (to-engine.js PAGE_TRIM): those were level-fitted inside the parent's press
+// chain and land under the recordings they replace on this page's, so the gate
+// carries the difference. It rides here rather than on the module's own `gain`
+// because on the guitar amp `gain` is the input of the shaper — buying level
+// there would buy dirt with it — and because a route gain is the one thing in
+// this file that is per MODULE, which is exactly what the trim is.
+const openGain = (key) => pageTrim(String(key).split("#")[0]);
 // Opened on the bar a section starts, with a 4 ms ramp — long enough not to
 // click, short enough that the first note of the section is not clipped.
 export function focusSynths(chan, when) {
@@ -122,7 +131,7 @@ export function focusSynths(chan, when) {
     const node = synthNodes.get(key);
     if (node && !m.has(chan.key)) routeSynth(key, node, chan);
     for (const [k, g] of m)
-      try { g.gain.setTargetAtTime(k === chan.key ? 1 : 0, when, 0.004); } catch (e) {}
+      try { g.gain.setTargetAtTime(k === chan.key ? openGain(key) : 0, when, 0.004); } catch (e) {}
   }
 }
 // the compiled DSP factory is reusable across CONTEXTS (faustwasm compiles the
@@ -211,7 +220,7 @@ export const synthDead = (spec, v) =>
 // the design working); it exists so a real coverage hole is diagnosable.
 window.__nuDropped = 0;
 export const countDrop = () => { window.__nuDropped++; };
-export function playSynth(spec, midi, when, durSec, acc, sld, vel, v, chan, vox) {
+export function playSynth(spec, midi, when, durSec, acc, sld, vel, v, chan, vox, beat) {
   const key = synthKey(spec, v || 0), node = synthNodes.get(key);
   if (!node) return false;
   const g = routeSynth(key, node, chan);
@@ -221,10 +230,10 @@ export function playSynth(spec, midi, when, durSec, acc, sld, vel, v, chan, vox)
   // section — and with the parked pool (no bus fallback) silence would be
   // the only sound it ever made. Idempotent: re-opening an open gate is a
   // no-op, and a gate focusSynths closes later carries the later timestamp.
-  if (g) { try { g.gain.setTargetAtTime(1, when, 0.004); } catch (e) {} }
+  if (g) { try { g.gain.setTargetAtTime(openGain(key), when, 0.004); } catch (e) {} }
   // a note the voice cannot say in any octave is DROPPED and counted, not
   // clamped onto the ceiling — driveSynth refuses before it writes
-  if (!driveSynth(node, spec, midi, when, durSec, acc, sld, vel, vox)) {
+  if (!driveSynth(node, spec, midi, when, durSec, acc, sld, vel, vox, beat)) {
     countDrop();
     return true;                                  // handled: silence, on purpose
   }
@@ -269,10 +278,11 @@ const VELKNOB = { cut: 0.20, emod: 0.10 };
 // the offline bounce can drive its own per-context pool through the exact
 // same writes (a forked copy of this walk is how the bounce would drift out
 // of tune with the live pass, one edit at a time). THREE CALLERS NOW: the
-// signature pool (playSynth), the impersonated GM patches (transport.js
-// synthForInstr) and the pitched stand-in (line, below), so velocity means one
-// thing on this page whichever of the three is holding the note.
-export function driveSynth(node, spec, midi, when, durSec, acc, sld, vel, vox) {
+// signature pool (playSynth), the CAST's own instruments (transport.js
+// patchForInstr — the impersonated synthesisers, the guitar amp, the struck bar
+// and the throats) and the pitched stand-in (line, below), so velocity means
+// one thing on this page whichever of the three is holding the note.
+export function driveSynth(node, spec, midi, when, durSec, acc, sld, vel, vox, beat) {
   // FOLD FIRST, AND REFUSE BEFORE WRITING ANYTHING. A Faust freq param has a
   // declared min/max — DX7 stops at 1000 Hz, bass_reese at 500 — and setting a
   // value past it does not error, it CLAMPS, so every note above the ceiling
@@ -281,16 +291,31 @@ export function driveSynth(node, spec, midi, when, durSec, acc, sld, vel, vox) {
   // that reason. Fold by octaves (pitch class kept, register moved); if no
   // octave fits, follow the DROP LAW the sampled path keeps — write nothing,
   // return false, let the caller count it — rather than write the clamp.
+  //   A SINGER'S CEILING IS NOT THE PARAM'S. The vocal modules accept 50-1600 Hz
+  // because five voice types share one module, and the formant tables only tell
+  // the truth inside the compass of the voice that is actually singing — a bass's
+  // formants on a soprano's line is a chipmunk. So a spec that names a throat
+  // (`live.lo/hi`) folds into THAT window, which is the same register law the
+  // tape keeps, and what a real singer does with a line that runs off the top.
   const fa = node.parameters.get("/" + spec.root + "/freq");
   let f = hz(midi);
   if (fa) {
-    while (f > fa.maxValue && f / 2 >= fa.minValue) f /= 2;
-    while (f < fa.minValue && f * 2 <= fa.maxValue) f *= 2;
-    if (f > fa.maxValue || f < fa.minValue) return false;
+    const L = spec.live || {};
+    const lo = Math.max(fa.minValue, L.lo || 0);
+    const hi = Math.min(fa.maxValue, L.hi || Infinity);
+    while (f > hi && f / 2 >= lo) f /= 2;
+    while (f < lo && f * 2 <= hi) f *= 2;
+    if (f > hi || f < lo) return false;
   }
+  // NUMBERS ONLY. A spec is read by two players — the parent's recipe, which
+  // resolves a word ("tenor") in its own unit table, and this walk, which
+  // writes onto an AudioParam. setValueAtTime coerces, so a word arrives as NaN
+  // and throws mid-note; the numeric half of an instrument spec is `live`
+  // (to-engine.js), and anything that is not a number here belongs to the other
+  // reader and is not ours to write.
   const set = (n, val, t) => {
     const a = node.parameters.get("/" + spec.root + "/" + n);
-    if (a && val != null) a.setValueAtTime(val, t);
+    if (a && typeof val === "number" && isFinite(val)) a.setValueAtTime(val, t);
   };
   for (const [k, val] of Object.entries(spec.set || {})) set(k, val, when);
   // the section's own knobs, AFTER the genre's — that is what makes them an
@@ -320,8 +345,15 @@ export function driveSynth(node, spec, midi, when, durSec, acc, sld, vel, vox) {
   // section's chip if one is set, else the genre's own `set`, else the param's
   // declared default — inverted back onto 0..1 so the velocity term is an
   // offset rather than a replacement. u === 0 writes nothing at all.
+  //
+  // AN INSTRUMENT DOES NOT GET BOTH. A string, a bar and a throat each own a
+  // real excitation control — the plectrum, the mallet head, the glottal fold —
+  // and it is written below on every note, hard or soft. Sweeping the cabinet
+  // as well would be a second dynamics argument the tape never makes (its
+  // MODEL_DYN units move the excitation and nothing else), and two pages of the
+  // same song would not sound alike.
   const uv = FLATVEL ? 0 : velU(vel);
-  if (uv) {
+  if (uv && !(spec.live && spec.live.dyn)) {
     dynStats.synth++;
     for (const k of Object.keys(VELKNOB)) {
       const def = VOX[k];
@@ -336,14 +368,94 @@ export function driveSynth(node, spec, midi, when, durSec, acc, sld, vel, vox) {
       }
     }
   }
+  // ---- ...AND THE HAND ON A PHYSICAL CONTROL ------------------------------
+  // The models the page plays as INSTRUMENTS rather than as recordings
+  // (to-engine.js PATCH_MODEL/PATCH_VOICE) answer velocity where the player's
+  // hand actually is. `live.dyn` is {param: [atSoftest, atHardest]} and the
+  // position is the note's own velocity over nine, accented x1.15 — the same
+  // two numbers the tape normalises over, so the page and the tape land on the
+  // same plectrum by construction rather than by coincidence.
+  const du = clamp01((vel == null ? 5 : vel) / 9 * (acc ? 1.15 : 1));
+  if (spec.live) {
+    const L = spec.live;
+    if (L.dyn) for (const [k, r] of Object.entries(L.dyn))
+      set(k, r[0] + (r[1] - r[0]) * du, when);
+    // a bend, where the module has a string or a throat to bend
+    if (L.slideParam) set(L.slideParam, sld ? L.slideSec : 0, when);
+    if (L.voice != null) set("voice", L.voice, when);
+    // THE VOWEL WALKS ALONG THE LINE, and it walks by MUSICAL position, not by
+    // note count: a syllable is a length of time, so a held note and four
+    // sixteenths inside one syllable both say it once. `vowelEvery` is that
+    // length in beats and `beat` is where this note is in the song, which is
+    // what makes a lyric repeat with the phrase instead of drifting against it.
+    if (L.vowels && L.vowels.length) {
+      const step = Math.round((beat || 0) / (L.vowelEvery || 1));
+      set("vowel", L.vowels[((step % L.vowels.length) + L.vowels.length) % L.vowels.length], when);
+    }
+  }
   set("accent", acc ? 1 : 0, when);
   set("slide", sld ? 1 : 0, when);
-  const lvl = spec.level * (0.25 + 0.75 * ((vel == null ? 5 : vel) / 9));
-  set("level", lvl, when); set("gain", Math.min(1, lvl), when);
+  // ---- HOW LOUD, AND WHAT THAT MEANS ON EACH KIND OF VOICE -----------------
+  // On a synth, `level` and `gain` are both volume and the page drives them
+  // together with velocity. On an instrument they are NOT: the guitar amp
+  // multiplies its input by `gain` BEFORE the shaper — louder is dirtier, which
+  // is the whole instrument — and the bar and the throat take it as the
+  // strike and the breath, with `level` a trim that was fitted once against
+  // the recording the model stands in for. So loudness rides gain over the
+  // parent's own amp range (`live.amp`, the same 0.06..0.26 to-engine maps a
+  // velocity onto for the tape) and level is left where it was fitted. Driving
+  // both with velocity, the way a synth wants, is what made the page's guitar
+  // quieter AND dirtier than the same guitar on the record.
+  //   The page's own level A/B against the recording the model replaces is NOT
+  // here: it is a trim on the route (to-engine.js PAGE_TRIM, opened by
+  // routeSynth below), because a module that is quiet on this page is quiet
+  // after its output, not before its shaper.
+  if (spec.live && spec.live.amp) {
+    const A = spec.live.amp;
+    set("gain", A[0] + (A[1] - A[0]) * du, when);
+    set("level", spec.level, when);
+  } else {
+    const lvl = spec.level * (0.25 + 0.75 * ((vel == null ? 5 : vel) / 9));
+    set("level", lvl, when); set("gain", Math.min(1, lvl), when);
+  }
   set("freq", f, when);
   set("gate", 1, when);
   set("gate", 0, Math.max(when + 0.02, when + durSec * 0.92));
   return true;
+}
+// EVERY INSTRUMENT THIS SONG'S CAST RESOLVES TO, as specs, keyed by module.
+// A GM id that names a synthesiser, an electric guitar, a struck bar or a
+// person is played by the parent's module for it (to-engine.js patchForInstr)
+// and not by a recording of one — but only if the module is IN THE POOL when
+// the note is due, because playSynth's whole contract is "no node, no sound,
+// take the sampled zone instead". So the pool is warmed from this list and
+// pruneSynths keeps what is in it. One walk answers both, because a warm list
+// and a keep list that disagree is a worklet built every song change and
+// thrown away before it plays a note.
+//
+// Both seatings of a padded id are warmed (pad_saw and supersaw are one row's
+// two chairs) — the second costs one node and removes the case where holding
+// the chord is the one thing the page has no voice for.
+export function songPatches() {
+  const out = new Map();                            // dsp -> spec
+  if (isSynthFont()) return out;                    // a font plays everything itself
+  for (const sec of SONG) for (const e of stackOf(sec)) {
+    const g = GENRES[e.g];
+    if (!g) continue;
+    for (let v = 0; v < (g.voices || 1); v++) {
+      // the pool pick overrides the genre's own synth (transport.js scheduleBar
+      // keeps that law at the note; the warm has to keep the same one or the
+      // recast chair is the one voice with nothing built for it)
+      const over = poolInstrOf(sec, e.g, v, POOL);
+      if (!over && g.synth) continue;
+      const id = over || instrOf(e.g, v);
+      for (const pad of [false, true]) {
+        const sp = patchForInstr(id, g.tone, pad);
+        if (sp && !out.has(sp.dsp)) out.set(sp.dsp, sp);
+      }
+    }
+  }
+  return out;
 }
 // THE POOL IS NOT A CACHE. Nodes survive a channel — they are channel-blind and
 // expensive to build, so keeping them across an edit is right — but they must
@@ -359,6 +471,11 @@ export function pruneSynths() {
     for (const e of stackOf(sec)) if (GENRES[e.g] && GENRES[e.g].synth) want.add(GENRES[e.g].synth.dsp);
     if (BASSSYNTH[sec.bassop]) want.add(BASSSYNTH[sec.bassop].dsp);
   }
+  // ...and the cast's own instruments, which are just as much this song's
+  // sound as a signature synth is — pruning a guitar amp the song is still
+  // playing means rebuilding it on the next bar and taking the recording in
+  // the meantime, once per edit
+  for (const dsp of songPatches().keys()) want.add(dsp);
   for (const [k, node] of [...synthNodes]) {
     if (want.has(k.split("#")[0])) continue;
     const m = synthOut.get(k);

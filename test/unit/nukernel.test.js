@@ -11074,6 +11074,70 @@ console.log("the singer is gone, and the parent still sings");
 }
 
 
+/* ---------------------------------------------------------------- 75. THE MIRROR
+   THE PAGE AND THE TAPE PLAY THE SAME INSTRUMENT, or they do not.
+
+   The live scheduler now asks to-engine.js patchForInstr for a chair's voice
+   exactly as the press walk does, so a genre casting a clean guitar gets the
+   parent's amp on both paths. Three tables decide what that instrument DOES
+   with a note, and they live in the parent (engine/faust/voices/state-engine.js
+   MODEL_DYN, VOICE_TYPE and the vowel alphabet) because the press resolves them
+   there. The page cannot read them: kernel-daw.html loads no state-engine — the
+   press walk runs in a worker — so to-engine.js mirrors the rows.
+
+   A mirror is a copy, and a copy drifts silently: change the plectrum range in
+   the parent and the tape gets a new guitar while the page keeps the old one,
+   and nothing fails. So the mirror is held against the parent's own source text
+   (§44's idiom, for §44's reason) through the SPEC A NOTE IS ACTUALLY PLAYED
+   WITH, not through a private export — the artifact, not the intent. */
+console.log("the mirror — the page's physical controls are the parent's own");
+{
+  const fs75 = require("fs"), path75 = require("path");
+  const M75 = await import("../../nukernel/audio/to-engine.js");
+  const se75 = fs75.readFileSync(
+    path75.join(__dirname, "../../engine/faust/voices/state-engine.js"), "utf8");
+  const litOf = (re) => { const m = se75.match(re); return m ? new Function("return {" + m[1] + "}")() : null; };
+  const DYN = litOf(/const MODEL_DYN = \{([\s\S]*?)\n  \};/);
+  const VT = litOf(/const VOICE_TYPE = \{([\s\S]*?)\n  \};/);
+  const VW = (se75.match(/const VOWELS = "([a-z]+)";/) || [])[1];
+  ok(DYN && VT && VW, "cannot find MODEL_DYN / VOICE_TYPE / VOWELS in state-engine.js — " +
+     "the mirror below is unheld, and a drift in either copy is now silent");
+
+  // (a) the physical control, per module — asked through a chair that casts it
+  const CAST = { gtr_amp: "clean_guitar", mallet: "vibraphone",
+                 voice_lead: "solo_vox", voice_choir: "ahh_choir" };
+  for (const dsp of Object.keys(DYN || {})) {
+    const id = CAST[dsp];
+    ok(id, "the parent grew a dyn row for \"" + dsp + "\" and no nukernel chair casts it — " +
+       "either wire it or this table is telling the page about an instrument it cannot play");
+    if (!id) continue;
+    const sp = M75.patchForInstr(id, GENRES.blues.tone, false);
+    ok(sp && sp.dsp === dsp, id + " no longer patches to " + dsp);
+    const mine = (sp && sp.live && sp.live.dyn) || {};
+    ok(JSON.stringify(mine) === JSON.stringify(DYN[dsp]),
+       dsp + ": the page plays " + JSON.stringify(mine) + " where the tape plays " +
+       JSON.stringify(DYN[dsp]) + " — one note, two instruments");
+  }
+
+  // (b) who is singing, and how high they go: every voice type the parent knows,
+  // asked through a mouth that names it
+  for (const [name, row] of Object.entries(VT || {})) {
+    const sp = M75.patchForInstr("solo_vox", { mouth: { voice: name } }, false);
+    const L = (sp && sp.live) || {};
+    ok(L.voice === row.n, "voice type " + name + " is index " + L.voice +
+       " on the page and " + row.n + " on the tape — the page sings through another throat's formants");
+    ok(L.lo === row.lo && L.hi === row.hi,
+       name + ": the page folds into " + L.lo + "-" + L.hi + " Hz and the tape into " +
+       row.lo + "-" + row.hi + " — the same line lands an octave apart");
+  }
+
+  // (c) the vowel alphabet, in the parent's own order
+  const wk = M75.patchForInstr("solo_vox", { mouth: { vowels: VW } }, false);
+  ok(JSON.stringify((wk && wk.live && wk.live.vowels) || []) ===
+     JSON.stringify([...(VW || "")].map((_, i) => i)),
+     "the page spells the vowels \"" + VW + "\" in a different order than the formant tables do");
+}
+
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }

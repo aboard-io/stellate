@@ -387,6 +387,99 @@ const PATCH_SYNTH = {
     attack: T.atk, release: T.rel }) },
 };
 
+// ---- WHAT VELOCITY MOVES ON AN INSTRUMENT YOU PLAY -------------------------
+// On a synth, velocity opens a filter. On a string, a bar and a throat it moves
+// the thing that EXCITES them — the plectrum, the mallet head, the glottal fold
+// — and that is a different sound at the same loudness, which is the whole
+// argument for the two tables below this one.
+//
+// The tape gets these ranges from the parent's own
+// engine/faust/voices/state-engine.js MODEL_DYN (and VOICE_TYPE for who is
+// singing and how high they go). The PAGE does not load state-engine — the
+// press walk runs in a worker — so the rows are mirrored here, beside the
+// tables that name the modules, exactly as PITCH_AMP_FLOOR/SPAN above mirror
+// the parent's DYN_AMP_LO/HI. A mirror that drifts would make the page and the
+// tape two different instruments wearing one name, so
+// test/unit/nukernel.test.js holds all three tables against the parent's row
+// for row and fails on the first number that moves.
+const LIVE_DYN = {
+  gtr_amp:     { pick: [0.12, 1] },
+  mallet:      { hard: [0.05, 1] },
+  voice_lead:  { push: [0.06, 0.95] },
+  voice_choir: { push: [0.05, 0.68] },
+};
+/**
+ * THE PAGE'S OWN A/B, per module: what puts a played instrument level with the
+ * recording it stands in for ON THIS PAGE.
+ *
+ * The modules' own output trims (the `*3.7` at the end of voice_lead.dsp and
+ * its three siblings) were fitted against the parent's press — its recipe
+ * level, its master chain, its makeup. nukernel's page is a different chain
+ * with its own sampler gain staging and its own master, and measured on it the
+ * same modules land well under the zones they replace. So the page carries one
+ * number per module, and it is a ROUTE gain (audio/voices.js routeSynth), not a
+ * louder `level` or a hotter `gain`: on the guitar amp `gain` is the input of
+ * the shaper, so lifting it would buy level by adding dirt, and `level` has
+ * only 3 dB of headroom left anyway. Trimming the route moves nothing but the
+ * volume.
+ *
+ * MEASURED, on captured page output, one chair sounding and no drums — which
+ * is what the one-voice genres (Solo, Riff, Vocal, Backing vocals) are for.
+ * Each row is the deficit that measurement found:
+ *   gtr_amp      Solo (overdrive) -7.4 dB, Riff (palm-muted) -8.8 dB
+ *   mallet       Riff cast to a vibraphone, -6.7 dB
+ *   voice_lead   Vocal (solo_vox), -18.3 dB
+ *   voice_choir  Backing vocals -27.2 dB, Rome 600 -19.5 dB. The spread is the
+ *                instrument being an instrument: an /u/ through a formant bank
+ *                really is quieter than an /a/, and no single number can be
+ *                right for both vowels. This one splits them.
+ */
+const PAGE_TRIM = {
+  gtr_amp:     2.55,
+  mallet:      2.16,
+  voice_lead:  8.2,
+  voice_choir: 15,
+};
+/** the page's trim for a pooled module, by dsp id — 1 for everything else. */
+export const pageTrim = (dsp) => PAGE_TRIM[dsp] || 1;
+// the five voice types as the formant tables index them, and their compass. The
+// index is which singer; the compass is the register law — a bass's formants
+// over a soprano's line is a chipmunk, so a part that runs off the top of a
+// voice is folded into it rather than sung where nobody has that throat.
+const VOICE_TYPE = {
+  alto:         { n: 0, lo: 175, hi: 698 },
+  bass:         { n: 1, lo: 82,  hi: 330 },
+  countertenor: { n: 2, lo: 175, hi: 622 },
+  soprano:      { n: 3, lo: 247, hi: 1047 },
+  tenor:        { n: 4, lo: 123, hi: 494 },
+};
+// the vowel alphabet, spelled once. A mouth is easier to read as a word than as
+// [0,3], and this is the only place in nukernel that knows which letter is which
+// row of the formant table.
+const VOWELS = "aeiou";
+// WHAT THE LIVE PLAYER NEEDS AND THE RECIPE DOES NOT. audio/voices.js
+// driveSynth writes a spec's `set` straight onto the worklet's AudioParams;
+// the parent's recipe reads the same `set` as WORDS and resolves them in its
+// own unit table (a voice type is a name there, an index here). So a spec that
+// is an instrument carries a second, numeric half — `live` — and the two
+// readers never have to agree about anything except the module's name.
+//
+// HOW LOUD, ON AN INSTRUMENT. `gain` on these four modules is not a fader — it
+// is the input of the guitar amp's shaper and the strike/breath term of the bar
+// and the throat — so the note's own amp rides it, over exactly the range this
+// bridge already maps a velocity onto for the tape (see AMP at the top). The
+// module's `level` stays where its author fitted it and velocity does not touch
+// it. What the page needs ON TOP of that is a level trim, and it is not here:
+// it is PAGE_TRIM above, on the route, because a trim written into `gain` would
+// buy volume by driving the guitar amp's shaper harder — which is dirt, not
+// level.
+const LIVE_AMP = [PITCH_AMP_FLOOR, PITCH_AMP_FLOOR + PITCH_AMP_SPAN];
+const liveModel = (dsp) => dsp === "gtr_amp"
+  // a slide on a waveguide is a real portamento: the string's delay length IS
+  // its pitch, so `glide` bends it rather than crossfading two notes
+  ? { dyn: LIVE_DYN.gtr_amp, slideParam: "glide", slideSec: 0.06, amp: LIVE_AMP }
+  : { dyn: LIVE_DYN[dsp], amp: LIVE_AMP };
+
 // ---- AND THE ONES THAT ARE INSTRUMENTS, NOT PHOTOGRAPHS OF THEM ------------
 // PATCH_SYNTH above is a rescue: those thirteen GM ids are recordings OF
 // synthesisers, so playing the synthesiser instead is simply telling the truth.
@@ -602,9 +695,17 @@ export function voiceForInstr(id, tone) {
     set.vibRate = clamp(M.vibRate != null ? M.vibRate : 5.4, 3.1, 7.9);
     set.vibRise = clamp(M.vibRise != null ? M.vibRise : 0.6, 0.06, 2.9);
   }
+  // the numeric half, for the player that writes onto params (see `live`
+  // above): who is singing, their compass, and the walk itself as table rows.
+  const V = VOICE_TYPE[set.voice] || VOICE_TYPE[P.voice] || VOICE_TYPE.tenor;
+  const walk = [...set.vowels].map(ch => VOWELS.indexOf(ch)).filter(i => i >= 0);
   return { dsp: P.dsp, root: P.dsp,
     level: clamp((t.gain != null ? t.gain : 0.28) * 2.8, 0.35, 0.92),
-    set };
+    set,
+    live: { dyn: LIVE_DYN[P.dsp], amp: LIVE_AMP, voice: V.n, lo: V.lo, hi: V.hi,
+      vowels: walk.length ? walk : [0], vowelEvery: set.vowelEvery,
+      // a soloist bends between notes; a section does not slide as one person
+      ...(choir ? {} : { slideParam: "glide", slideSec: 0.09 }) } };
 }
 
 /**
@@ -653,7 +754,7 @@ export function modelForInstr(id, tone) {
   // nothing else, which is why the two short ones do not carry one.
   return { dsp: P.dsp, root: P.dsp,
     level: clamp((t.gain != null ? t.gain : 0.28) * 2.8 * (P.mul || 1), 0.35, 0.92),
-    set: P.set(M) };
+    set: P.set(M), live: liveModel(P.dsp) };
 }
 
 /**
@@ -669,27 +770,22 @@ export function modelForInstr(id, tone) {
  * Exported for the same reason drumVoice is — the drum lanes learned the hard
  * way what two tables for one sound costs.
  *
- * THE LIVE PAGE STILL DOES NOT HEAR THIS TABLE, and the import in
- * audio/transport.js is not enough on its own. scheduleBar does call
- * synthForInstr and hand the spec to playSynth — but playSynth looks the voice
- * up in the pool (`synthNodes.get(synthKey(spec, v))`) and returns false when
- * it is not there, and the ONLY thing that ever puts a voice in that pool is
- * ensureAssets' `wantSynth`, which is built from the genre's own `synth` block,
- * BASSSYNTH and the synth font — never from a patch. So every patched note
- * falls through the `else if` to the sampled zone, silently and correctly, and
- * the page plays the recording while the tape plays the instrument. Read off
- * the code, not off a browser: loadSynth has exactly one caller. The fix is one
- * line in that list (add the patch/model specs the song's cast resolves to);
- * this file has nothing left to give it.
+ * THE PAGE HEARS THIS TABLE NOW, and it took more than the import. The live
+ * scheduler always called synthForInstr and handed the spec to playSynth — but
+ * playSynth looks the voice up in the pool (`synthNodes.get(synthKey(spec, v))`)
+ * and returns false when it is not there, and the only thing that ever filled
+ * that pool was ensureAssets' `wantSynth`, built from the genre's own `synth`
+ * block, BASSSYNTH and the synth font — never from a patch. So every patched
+ * note fell through to the sampled zone, silently, and the page played the
+ * recording while the tape played the instrument. Measured, not read: eight
+ * genres swept live built six worklets between them — the four drum machines
+ * and acid's 303 — and not one juno60, synclead, guitar amp, marimba or throat.
  *
- * IT IS THREE TABLES NOW, not one, and whoever writes that line should wire all
- * three at once: PATCH_SYNTH here, PATCH_MODEL (the electrics and the struck
- * bars) and PATCH_VOICE (the singers). transport.js reaches for synthForInstr
- * alone, so modelForInstr and voiceForInstr are not even ASKED live — the tape
- * has a guitar amp, a marimba and a vocal tract on it and the page has three
- * recordings. The right shape is one call — `synthForInstr(...) ||
- * modelForInstr(...) || voiceForInstr(...)`, exactly the chain recipeFor uses
- * below — in both places, and the pool warmed from the same chain.
+ * The list is warmed from patchForInstr below (voices.js songPatches feeds
+ * ensureAssets and pruneSynths from the one chain), so the pool contains
+ * whatever the song's cast resolves to and the recording is what a note falls
+ * back to while the wasm is still arriving — which is what it should always
+ * have been for.
  */
 export function synthForInstr(id, tone, padish) {
   const P = PATCH_SYNTH[id];
@@ -734,6 +830,24 @@ function synthRecipe(sy, tone, role) {
   return { role: S.role || role, m };
 }
 
+/**
+ * THE ONE CHAIN, asked in one place. A GM id is a photograph of a synthesiser,
+ * or the name of an instrument the parent can genuinely play, or the name of a
+ * person — in that order, because a Roland string-choir is a machine before it
+ * is a choir and a "synth voice" is not somebody singing.
+ *
+ * Every reader asks THIS, never the three tables one at a time: the tape
+ * (recipeFor below), the live scheduler (audio/transport.js scheduleBar) and
+ * the thing that warms the live pool (audio/voices.js songPatches). A reader
+ * that asked only the first of the three is exactly how the page came to be
+ * playing recordings of the instruments the tape was playing.
+ */
+export function patchForInstr(id, tone, padish) {
+  return synthForInstr(id, tone, padish)
+    || modelForInstr(id, tone)
+    || voiceForInstr(id, tone);
+}
+
 // a chair's recipe: the genre's signature synth where it declares one, then the
 // synthesiser its GM patch id is a photograph of, then the INSTRUMENT that id
 // names where the parent can play one better than a recording of it can
@@ -755,9 +869,7 @@ function recipeFor(chair, seat, lib, unrouted) {
   // the patch table, and NO SILENT FALLBACK out of it: a row naming a dsp the
   // SYNTH dictionary has no entry for is reported, never quietly sampled — that
   // is precisely the failure that put a one-zone whistle where a pad belonged.
-  const patch = synthForInstr(seat.instr, seat.tone, role === "pad")
-    || modelForInstr(seat.instr, seat.tone)
-    || voiceForInstr(seat.instr, seat.tone);
+  const patch = patchForInstr(seat.instr, seat.tone, role === "pad");
   if (patch) {
     const r = synthRecipe(patch, tone, role);
     if (r) return { ...r, source: "patch:" + seat.instr + ">" + patch.dsp };

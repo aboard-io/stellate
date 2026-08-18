@@ -17,8 +17,8 @@ import { FONT, fontDef, isSynthFont, loadFont, specOf, zoneBufs,
          instrumentsInSong, reserveInstruments } from "./assets.js";
 import { synthNodes, synthKey, loadSynth, focusSynths, playSynth, playSampled,
          playDrum, line, hit, synthDead, countDrop, playWindow,
-         warmKit, kitReady } from "./voices.js";
-import { isMachine, synthForInstr } from "./to-engine.js";
+         warmKit, kitReady, songPatches, pruneSynths } from "./voices.js";
+import { isMachine, patchForInstr } from "./to-engine.js";
 import { channelFor, armAutomation, focusKit, refreshChannels } from "./mixer.js";
 import { setDelayTime } from "./graph.js";
 
@@ -153,6 +153,14 @@ export function buildTimeline() {
       e.home = oct * 12;                 // songBars' events are ours to stamp
     }
   }
+  // WHERE EACH BAR SITS IN THE SONG, in beats. A note's own musical position is
+  // not a fact any single bar carries — `off` is an offset inside one — and the
+  // sung vowel walks by musical position (audio/voices.js driveSynth), so a
+  // syllable that reset every bar would be one syllable. Steps are already
+  // warped by the tempo map, and a beat is four of them, so the sum carries the
+  // rubato through untouched.
+  let beat0 = 0;
+  for (const bar of TL2) { bar.beat0 = beat0; beat0 += bar.barSteps / 4; }
   return TL2;
 }
 export function compile() { TL = buildTimeline(); }
@@ -390,14 +398,21 @@ export function scheduleBar(bar, sec, chan, kit, when, sd, synthFn) {
       // round closing. A pool override goes through it too — casting a
       // polysynth in a chair means a juno60, because the table is keyed on the
       // INSTRUMENT and not on the genre.
+      //
+      // AND IT IS THREE TABLES, asked as one (to-engine.js patchForInstr): the
+      // photographed synthesisers, then the instruments the parent can play
+      // better than a recording of them can — the guitar amp, the struck bar —
+      // then the throats. Asking only the first is how blues came to be a
+      // sampled guitar on the page and a played one on the tape.
       const patch = (!gsyn && !isSynthFont())
-        ? synthForInstr(id, bar.g.tone, e.pad) : null;
-      if (useSyn && synthFn(gsyn, e.n, at, e.dur * sd, e.acc, e.sld, e.vel, e.v, chan, e.vox)) { /* signature voice */ }
+        ? patchForInstr(id, bar.g.tone, e.pad) : null;
+      const beat = (bar.beat0 || 0) + e.off / 4;
+      if (useSyn && synthFn(gsyn, e.n, at, e.dur * sd, e.acc, e.sld, e.vel, e.v, chan, e.vox, beat)) { /* signature voice */ }
       // an unloaded patch module falls through to the sampled zone rather than
       // dropping the note: unlike a signature genre this one HAS a legitimate
       // second voice — the recording the patch is named for — so the whistle is
       // the right sound to make for the bar or two before the wasm lands.
-      else if (patch && synthFn(patch, e.n, at, e.dur * sd, e.acc, e.sld, e.vel, e.v, chan, e.vox)) { /* the instrument's own synth */ }
+      else if (patch && synthFn(patch, e.n, at, e.dur * sd, e.acc, e.sld, e.vel, e.v, chan, e.vox, beat)) { /* the instrument's own synth */ }
       // a DEAD signature synth drops its notes rather than standing in for
       // them: a synth-identity genre has no legitimate second voice, and its
       // sampled `instr` was never fetched (ensureAssets skips it — the genre is
@@ -492,10 +507,31 @@ export async function ensureAssets(announce) {
   // ONE POOL, sized by the widest box in the song — a four-voice fugue over a
   // two-voice rock riff needs six, and nothing needs more than it uses. The
   // pool is NOT multiplied by the number of channels; see synthKey.
-  const synths = [...new Set([
-    ...(isSynthFont() ? [fontDef().synth] : []),
-    ...SONG.flatMap(x => stackOf(x).filter(e => GENRES[e.g].synth).map(e => GENRES[e.g].synth)),
-    ...SONG.filter(x => BASSSYNTH[x.bassop]).map(x => BASSSYNTH[x.bassop])])];
+  //   AND THE CAST'S OWN INSTRUMENTS, which is the half that was missing. A
+  // genre's `synth` block is only the voices a genre declares as its identity;
+  // the guitar in blues, the juno in house, the marimba in worldfolk and the
+  // throat in crooner are named by the CHAIR (voices.js songPatches, over
+  // to-engine.js patchForInstr), and with nothing warming them every one of
+  // those notes found no node and took the sampled zone instead. Measured
+  // before the fix: eight genres swept live built six worklets between them,
+  // all four drum machines and one 303.
+  //   DEDUPED BY MODULE, not by spec object, because the pool is keyed by module
+  // (voices.js synthKey is dsp#voice). Two specs naming one dsp — three genres
+  // declare a tb303, and a patch may name a module a genre already declares —
+  // used to queue two loadSynth calls for one key in the same pass; both see an
+  // empty slot, both build, and the loser is a disconnected Faust worklet
+  // computing every block forever (the ZERO-STATIC zombie, invisible to any
+  // node count). One entry per module is the fix and costs nothing: the params
+  // are written per NOTE from the spec the scheduler holds, never from this one.
+  const byDsp = new Map();
+  const addSynth = sp => { if (sp && sp.dsp && !byDsp.has(sp.dsp)) byDsp.set(sp.dsp, sp); };
+  if (isSynthFont()) addSynth(fontDef().synth);
+  for (const x of SONG) {
+    for (const e of stackOf(x)) if (GENRES[e.g] && GENRES[e.g].synth) addSynth(GENRES[e.g].synth);
+    addSynth(BASSSYNTH[x.bassop]);
+  }
+  for (const sp of songPatches().values()) addSynth(sp);
+  const synths = [...byDsp.values()];
   const depth = Math.min(8, Math.max(1, ...SONG.map(sec2 =>
     stackOf(sec2).reduce((n, e) => n + (GENRES[e.g] ? GENRES[e.g].voices : 0), 0))));
   const wantSynth = [];
@@ -508,6 +544,17 @@ export async function ensureAssets(announce) {
   // what fell over: a fresh Emscripten heap per utterance against a
   // 127-syllable song is an out-of-memory on Safari, so the organ came out on
   // 2026-08-17. Nothing here fetches a voice any more.)
+  // ...AND LET GO OF WHAT THIS SONG NO LONGER PLAYS. A Faust worklet computes
+  // every 128-sample block whether or not a note is sounding, so an audition
+  // sweep left one behind per genre — silent, and costing exactly as much as a
+  // sounding one. That was true before the cast reached the pool and it is
+  // truer now that most genres warm a module: the pool was only ever pruned on
+  // a full song reset (mixer.dropChannels), so nothing between the first play
+  // and the last let go of anything. It runs BEFORE the early return, because
+  // the switch that needs no new asset is exactly the one that leaves the most
+  // behind, and it cannot take a voice this song still plays: pruneSynths keeps
+  // whatever songPatches names, which is the same list warmed just above.
+  pruneSynths();
   if (!need.length && !wantSynth.length && !kits.length) return false;
   if (announce) emit("status", { text:
     "loading " + [...need, ...new Set(wantSynth.map(x => x[0].dsp)), ...kits]
