@@ -7,7 +7,8 @@
 // each retractable (tap it in the ledger). WRITE or a load clears the couch —
 // the words were about that record.
 import { parse, continuations, describeFx, MAX_CMDS, LEXICON } from "./rubin-lang.js";
-import { SONG, bpm, setBpm, on, emit, commit, MIXER, setMixOffset } from "./state.js";
+import { SONG, SLOTS, bpm, setBpm, on, emit, commit, MIXER, setMixOffset,
+         POOL, setPoolChair } from "./state.js";
 import { NuFields, GENRES } from "./deps.js";
 import { partKeysOf } from "../audio/desk.js";
 import { gid } from "./derive.js";
@@ -105,6 +106,32 @@ function applyOne(e) {
         commit("box");
       } };
     }
+    case "fx": {
+      const prev = (MIXER && MIXER[e.chan] && MIXER[e.chan].fx) || null;
+      const next = e.on ? [...new Set([...(prev || []), e.chip])]
+                        : (prev || []).filter(x => x !== e.chip);
+      setMixOffset(e.chan, "fx", next.length ? next : null);
+      return { undo: () => setMixOffset(e.chan, "fx", prev && prev.length ? prev : null) };
+    }
+    case "cast": {
+      const prev = e.chairs.map(c => (POOL && POOL[c]) || null);
+      for (const c of e.chairs) setPoolChair(c, e.id);
+      return { undo: () => e.chairs.forEach((c, i) => setPoolChair(c, prev[i])) };
+    }
+    case "redo": {
+      // the next phrase in the bank, for whatever this node aims at: the
+      // material changes, nothing about the mix does
+      const targets = aim.scope === "song"
+        ? SONG.filter(b => (b.stack || []).some(x => x.slots && x.slots.length)) : [secOf()];
+      const prev = targets.map(b => b.stack.map(x => ({ ...x, slots: [...(x.slots || [])] })));
+      const n = SLOTS.length;
+      for (const b of targets)
+        for (const st of b.stack)
+          if (st.slots && st.slots.length)
+            st.slots = st.slots.map(i => (i + 1) % Math.max(1, n));
+      commit("box");
+      return { undo: () => { targets.forEach((b, i) => { b.stack = prev[i]; }); commit("box"); } };
+    }
     case "think": {
       const targets = aim.scope === "song"
         ? SONG.filter(b => (b.stack || []).some(x => x.slots && x.slots.length)) : [secOf()];
@@ -162,7 +189,8 @@ function ctxOf() {
     ? SONG.filter(b => (b.stack || []).some(x => x.slots && x.slots.length))
     : [secOf()].filter(Boolean);
   const facts = { drumsOn: false, drumsOff: false,
-    parts: { bass: false, melody: false, chords: false },
+    parts: { bass: false, melody: false, chords: false, vocals: false },
+    insts: {}, fx: {},
     rev: 1, revMax: SENDORDER.length - 1, echo: 1, echoMax: SENDORDER.length - 1,
     stacked: {} };
   for (const sec of secs) {
@@ -178,8 +206,28 @@ function ctxOf() {
       else if (k.startsWith("pad")) facts.parts.chords = true;
       else if (k !== "drums") facts.parts.melody = true;
     }
-    for (const x of (sec.stack || []).slice(1)) facts.stacked[x.g] = true;
+    for (const x of (sec.stack || []).slice(1)) {
+      facts.stacked[x.g] = true;
+      if (x.g === "vocal" || x.g === "backing" || x.as === "voice") facts.parts.vocals = true;
+    }
+    // WHICH INSTRUMENTS THIS RECORD SEATS — the genre's own cast plus the
+    // pool's overrides, matched against the couch's instrument families
+    const ids = [].concat(g.instr || [], Object.values(POOL || {}));
+    for (const id of ids) {
+      const t = String(id || "");
+      if (/guitar/.test(t)) facts.insts.guitar = true;
+      if (/piano|clav|rhodes|wurl/.test(t)) facts.insts.piano = true;
+      if (/organ/.test(t)) facts.insts.organ = true;
+      if (/string|violin|cello|ensemble/.test(t)) facts.insts.strings = true;
+      if (/trumpet|brass|sax|horn|trombone|tuba/.test(t)) facts.insts.horns = true;
+      if (/bell|celesta|glocken|vibraphone|marimba|music_box/.test(t)) facts.insts.bells = true;
+      if (/voice|choir|vox|voices/.test(t)) facts.parts.vocals = true;
+    }
   }
+  // the board's standing chips, per chan — so a chip already on cannot be
+  // added twice and one that is not on cannot be cut
+  for (const [chan, o] of Object.entries(MIXER || {}))
+    if (o && o.fx) { facts.fx[chan] = {}; for (const c of o.fx) facts.fx[chan][c] = true; }
   if (aim.scope !== "song" && secs[0]) {
     const i = SENDORDER.indexOf(secs[0].rev); facts.rev = i < 0 ? 1 : i;
     const j = SENDORDER.indexOf(secs[0].echo); facts.echo = j < 0 ? 1 : j;
@@ -247,8 +295,11 @@ export function draw() {
     // form — the lexicon lists are authored best-form-first.
     const oneEach = (role) => {
       const seen = new Set(), out = [];
+      const synsOf = (T) => Object.fromEntries(Object.entries(T).map(([k, g]) => [k, g.syns]));
       const table = role === "verb" ? LEXICON.V : role === "subj" ? LEXICON.S
-        : role === "gen" ? Object.fromEntries(Object.entries(LEXICON.G).map(([k, g]) => [k, g.syns]))
+        : role === "unit" ? synsOf(LEXICON.U) : role === "inst" ? synsOf(LEXICON.I)
+        : role === "gen" ? synsOf(LEXICON.G) : role === "fxadj" ? synsOf(LEXICON.FXA)
+        : role === "fxn" ? LEXICON.FXN : role === "glue" ? { on: ["on"] }
         : LEXICON.A;
       for (const [canon, syns] of Object.entries(table)) {
         const w = syns.find(x => next.has(x));
@@ -256,7 +307,9 @@ export function draw() {
       }
       return out;
     };
-    const groups = [["say", "verb"], ["about", "subj"], ["like", "gen"], ["how", "adj"]];
+    const groups = [["say", "verb"], ["about", "subj"], ["about", "unit"],
+                    ["about", "inst"], ["on", "glue"], ["like", "gen"],
+                    ["how", "adj"], ["how", "fxadj"], ["effect", "fxn"]];
     for (const [label, role] of groups) {
       const words = oneEach(role);
       if (!words.length) continue;

@@ -508,6 +508,13 @@ function widthKept(units) {
  *   addr   unit key -> desk address for THIS box
  *   sec    the box
  */
+// the instrument-chan matchers: which units answer to "guitar", "piano"…
+const INST_CHANS = [
+  ["guitar", /guitar/], ["piano", /piano/], ["organ", /organ/],
+  ["strings", /string|violin|cello|ensemble/], ["horns", /trumpet|brass|sax|horn|tuba|trombone/],
+  ["bells", /bell|celesta|glocken|vibraphone|marimba|music_box/],
+];
+
 // OFFSET EQ: the mixer layer's bands ADD to the effective eq (offset
 // semantics — unlike mergeEq's user-over-derived, an offset is a delta).
 const addEq = (base, off) => {
@@ -552,7 +559,22 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
     // OVER the composed per-section values, never instead of them. null =
     // byte-identical.
     const chan = addr[key] || (isDrum ? "drums" : "");
-    const o = chan && MIXER ? MIXER[chan] : null;
+    // THE BOARD'S THREE ADDRESS KINDS (RUBINESQUE speaks all three): the part
+    // chan ("drums", "lead"), the UNIT chan ("unit:kick" — the couch says
+    // MAKE THE KICK HUGE), and the INSTRUMENT chan ("inst:guitar", "vocals" —
+    // whatever seat happens to hold that instrument). Offsets from every
+    // matching address stack, most specific applied last.
+    const chans = [];
+    if (chan) chans.push(chan);
+    chans.push("unit:" + key);
+    const mid = (u.sampler && (u.sampler.id || u.sampler.instr)) || u.module || "";
+    if (/voice_|vox|choir|voices/.test(mid)) chans.push("vocals");
+    for (const [fam, re] of INST_CHANS) if (re.test(mid)) chans.push("inst:" + fam);
+    const os = MIXER ? chans.map(c => MIXER[c]).filter(Boolean) : [];
+    const sum = (k2) => os.reduce((a, x) => a + (x[k2] || 0), 0) || undefined;
+    const o = os.length === 1 ? os[0] : os.length ? Object.assign({}, ...os,
+      { fader: sum("fader"), rev: sum("rev"), del: sum("del"), pan: sum("pan"),
+        fx: os.flatMap(x => x.fx || []) }) : null;
     const rev = (p ? (p.rev || 0) + (p.room || 0) : 0)
       + (autoRev != null ? autoRev : S.rev) + (isDrum ? S.room : 0);
     const del = (p && p.del ? p.del : 0) + (autoDel != null ? autoDel : S.del);
@@ -586,8 +608,11 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
     // change, which the engine answers by rebuilding the chain and draining the
     // old one (live.js samplerOf). A voice that is not playing gets nothing.
     const seated = !!addr[key] || isDrum;
+    // ...and the board's own chips ("make guitar distorted"): the offset
+    // layer may carry an fx list per chan, finished through the same
+    // insertsFor door as every section chip
     const chips = seated && !u.stereo
-      ? insertsFor(SE, u, fxChain([...(p ? p.fx : []), ...S.fx])) : [];
+      ? insertsFor(SE, u, fxChain([...(p ? p.fx : []), ...S.fx, ...((o && o.fx) || [])])) : [];
     if (chips.length) v.inserts = [...(u.inserts || []), ...chips];
     // the parent's placement pass already carved this voice's stereo seat; the
     // box's pan chip and a part's place RIDE ON it rather than replacing it

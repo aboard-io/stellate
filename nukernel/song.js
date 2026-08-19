@@ -721,6 +721,12 @@
           if (chan === "master") { put("drive", -1, 1); put("glue", -1, 1);
                                    put("tape", -1, 1); put("space", -1, 1); }
           if (e.mute === true) o.mute = true;
+          // the board's own chips ("make guitar distorted"): known FX only, capped
+          if (Array.isArray(e.fx)) {
+            const fx = e.fx.filter(k => typeof k === "string" &&
+              Object.prototype.hasOwnProperty.call(FX, k)).slice(0, MAX_FX);
+            if (fx.length) o.fx = fx;
+          }
           if (e.eq != null && typeof e.eq === "object" && !Array.isArray(e.eq)) {
             const q = {};
             for (const b of ["lo", "mid", "hi"]) {

@@ -39,18 +39,77 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
   ok(!!say(["make", "it", "slower"], "song"), "MAKE IT SLOWER does not compile");
   ok(!say(["make", "it", "slower"], "section"), "tempo compiled at a section — tempo is a song fact");
 
+  /* (a2) THE SENTENCES OF 2026-08-19, each landing on a real writer */
+  {
+    const NF2 = require("../../nukernel/fields.js");
+    const cases = [
+      [["bring up", "echo", "on", "drums"], "song", "mix"],
+      [["add", "more", "compression"], "song", "mix"],
+      [["make", "the kick", "huge"], "song", "mix"],
+      [["redo", "the melody"], "song", "redo"],
+      [["make", "everything", "funkier"], "song", "think"],
+      [["make", "the melody", "piano"], "song", "cast"],
+      [["make", "guitar", "distorted"], "song", "fx"],
+      [["make", "vocals", "crunch"], "song", "fx"],
+      [["add", "distortion", "on", "guitar"], "song", "fx"],
+      [["think", "more", "punk"], "section", "think"],
+    ];
+    for (const [words, scope, kind] of cases) {
+      const p = L.parse(words, scope);
+      ok(!!p, words.join(" ").toUpperCase() + " does not compile");
+      if (p) ok(p.fx.some(e => e.t === kind),
+        words.join(" ").toUpperCase() + " compiles to " + p.fx.map(e => e.t).join("/") +
+        ", not " + kind);
+      // ...and every word of it is tappable at its step
+      let t = [];
+      for (const w of words) {
+        ok(L.continuations(t, scope).has(w),
+           scope + ": the tray never offers \"" + w + "\" after \"" + t.join(" ") + "\"");
+        t = [...t, w];
+      }
+    }
+    // every chip the language can ask for is a registry chip; every cast id
+    // is an instrument the pool offers
+    for (const [c, g] of Object.entries(L.LEXICON.FXA))
+      ok(!!NF2.FX[g.chip], "effect \"" + c + "\" names a chip the registry does not have: " + g.chip);
+    const CH2 = Array.isArray(NF2.INSTRCHOICES) ? NF2.INSTRCHOICES : Object.keys(NF2.INSTRCHOICES || {});
+    for (const [c, g] of Object.entries(L.LEXICON.I))
+      ok(CH2.includes(g.cast), "instrument \"" + c + "\" casts " + g.cast + ", which the pool does not offer");
+  }
+  /* (a3) VERB AGREEMENT — the survey's own findings, held as law */
+  for (const [words, why] of [
+      [["bring up", "drums", "bigger"], "an adjective sentence is MADE, not brought up"],
+      [["bring up", "punk"], "a genre is thought/made/added/cut, never brought up"],
+      [["add", "sparser", "rock"], "ADD disagrees with a shrinking adjective"],
+      [["bring up", "distortion", "on", "guitar"], "an effect is added or cut"],
+      [["bring up", "notes"], "notes are added or cut"]])
+    ok(!L.parse(words, "song"), words.join(" ").toUpperCase() + " still compiles — " + why);
+
   /* (b) THE EXACTNESS LAW, walked to closure at both scopes */
   for (const scope of SCOPES) {
+    // every OFFERED word is checked for a dead end at every node visited; the
+    // recursion descends on one representative per canon, which is the same
+    // question the semantics ask (they only ever see canons)
     let offered = 0, dead = 0;
+    const repSeen = new Set(), reps = [];
+    for (const [w, r] of Object.entries(L.LEXICON.WORDS)) {
+      const k = r.role + ":" + r.canon;
+      if (!repSeen.has(k)) { repSeen.add(k); reps.push(w); }
+    }
     const walk = (tokens) => {
       const next = L.continuations(tokens, scope);
       for (const w of next) {
         offered++;
         const t2 = [...tokens, w];
         const done = L.parse(t2, scope);
-        const more = t2.length < 3 ? L.continuations(t2, scope) : new Set();
+        const more = t2.length < L.MAX_WORDS ? L.continuations(t2, scope) : new Set();
         if (!done && !more.size) { dead++; if (dead < 4) console.log("  dead end:", scope, t2.join(" / ")); }
-        if (!done && more.size && t2.length < 3) walk(t2);
+      }
+      if (tokens.length >= L.MAX_WORDS - 1) return;
+      for (const w of reps) {
+        if (!next.has(w)) continue;
+        if (L.parse([...tokens, w], scope)) continue;
+        walk([...tokens, w]);
       }
     };
     walk([]);
@@ -61,7 +120,8 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
   /* (c) every reachable sentence's effects name real vocabulary */
   {
     const shapes = new Set(["mix", "mixeq", "bpm", "secnum", "seceq", "secsend",
-                            "seckit", "secmot", "secper", "ops", "drums", "think"]);
+                            "seckit", "secmot", "secper", "ops", "drums", "think",
+                            "fx", "cast", "redo"]);
     let sentences = 0;
     for (const scope of SCOPES) {
       const first = L.continuations([], scope);
@@ -79,8 +139,19 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
               p.text + ": kit word " + e.word);
             if (e.t === "secmot") ok(["open", "close", "rise", "pump"].includes(e.word),
               p.text + ": mot word " + e.word);
-            if (e.t === "mix") ok(["drums", "bass", "lead", "pad", "master"].includes(e.chan)
-              && ["fader", "rev", "del"].includes(e.key), p.text + ": mix target " + e.chan + "." + e.key);
+            // the board addresses three ways now (audio/desk.js): a part chan,
+            // a UNIT chan, an INSTRUMENT chan — plus the record itself
+            if (e.t === "mix" || e.t === "fx") {
+              const okChan = ["drums", "bass", "lead", "pad", "master", "vocals"].includes(e.chan)
+                || /^unit:(kick|snare|hat)$/.test(e.chan)
+                || /^inst:(guitar|piano|organ|strings|horns|bells)$/.test(e.chan);
+              ok(okChan, p.text + ": unknown board address " + e.chan);
+              if (e.t === "mix") ok(["fader", "rev", "del", "glue"].includes(e.key),
+                p.text + ": mix key " + e.key);
+              if (e.t === "fx") ok(!!NF.FX[e.chip], p.text + ": chip " + e.chip + " is not in the registry");
+            }
+            if (e.t === "cast") ok(Array.isArray(e.chairs) && e.chairs.length && typeof e.id === "string",
+              p.text + ": malformed cast");
           }
         };
         check(p2);
