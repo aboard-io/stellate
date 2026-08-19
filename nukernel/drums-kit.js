@@ -249,7 +249,11 @@
       tone: { wave: "sine", cut: 1200, q: 1, atk: 0.01, rel: 0.2, gain: 0.001, verb: 0.1 },
       words: [], word: () => [],
     };
-    if (m.swing) g.swing = m.swing;
+    // (NO g.swing HERE. The kernel's swing is a NUMBER — swing(g,i) =
+    // (i%2) * (g.swing||0) — and handing it the WORD "swing" made every
+    // event time NaN and stopped the engine dead: "when I click swing audio
+    // stops". The swing is a SONG fact anyway, and ui/derive.js maps the
+    // word to its number (SWINGS) on the way in; the page sets it there.)
     if (m.vel.all) g.kitVel = Object.fromEntries(LANES.map(l => [l, VELROW(m.vel.all)]));
     return g;
   }

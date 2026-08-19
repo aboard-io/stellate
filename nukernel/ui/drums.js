@@ -6,7 +6,7 @@
 // off window exactly as ui/deps.js reads the rest of it
 const { blank, catalog, say, says, toGenre, LANEOF, LANES } = window.NuDrums;
 import { GENRES, NuSong } from "./deps.js";
-import { adoptSong, on, commit, setBpm } from "./state.js";
+import { adoptSong, on, commit, setBpm, setSwing } from "./state.js";
 import { startAt, stop, playing, warmup, getPosition, passAt } from "../audio/live.js";
 import { setPendingStart } from "./state.js";
 
@@ -33,13 +33,16 @@ function push(first) {
   // kit it ever saw)
   GENRES[GK] = { ...toGenre(model), __v: ++ver };
   setBpm(model.bpm);
+  // the swing is the SONG's, and derive.js turns the word into the number
+  // the kernel wants (the genre must never carry the word itself)
+  setSwing(model.swing || null);
   if (first) {
     // the loader's own shapes, or the box is refused for a field nobody here
     // has an opinion about (song[0].nudge, the first time this was tried)
     const box = { ...NuSong.emptyBox(), stack: [{ g: GK, slots: [0] }], len: 4 };
     adoptSong({ v: NuSong.VERSION, bpm: model.bpm, genres: {},
                 slots: [NuSong.blank()], song: [box] }, "drums");
-  } else commit("box");
+  } else { commit("box"); commit("swing"); }
   commit("transport");
   // AND IT LANDS SOON. The engine schedules a bar ahead, so an edit is heard
   // on the next bar at best; jumping the walk to the top of the loop means

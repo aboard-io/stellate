@@ -116,6 +116,35 @@ console.log("the model is a genre: real lanes, real bars, real fills");
   ok(D.toGenre(m4).drumkit === "tr808", "the machine word did not reach the kit sound");
 }
 
+/* (d2) NOTHING A WORD CAN SAY MAKES A NUMBER THAT IS NOT A NUMBER.
+   "When I click swing audio stops": the model handed the kernel the WORD
+   "swing" where swing(g,i) wants a number, every event time became NaN and
+   the engine stopped. One word, one silent machine — so every instruction
+   is now rendered and every time, duration and velocity checked finite. */
+console.log("every word leaves the render finite");
+{
+  const walk = (m0, depth) => {
+    for (const i of D.offered(m0)) {
+      const m1 = D.say(m0, i.id);
+      const ev = render(m1, 4);
+      for (const e of ev) {
+        ok(Number.isFinite(e.t), "\"" + i.words[0] + "\" renders an event at t=" + e.t);
+        ok(e.dur == null || Number.isFinite(e.dur), "\"" + i.words[0] + "\" renders dur=" + e.dur);
+        ok(e.vel == null || Number.isFinite(e.vel), "\"" + i.words[0] + "\" renders vel=" + e.vel);
+      }
+      // ...and the genre it hands the engine carries no WORD where the
+      // kernel reads a number
+      const g = D.toGenre(m1);
+      for (const k of ["swing", "humanize", "rate", "bars", "voices"])
+        ok(g[k] == null || typeof g[k] === "number",
+           "\"" + i.words[0] + "\" puts " + JSON.stringify(g[k]) + " in genre." + k +
+           ", which the kernel reads as a number");
+      if (depth > 0) walk(m1, depth - 1);
+    }
+  };
+  walk(D.say(D.blank(), "start"), 1);
+}
+
 /* (e) EVERY MACHINE WORD NAMES A KIT THE ENGINE HAS */
 console.log("every machine word is a kit the engine can route");
 {
