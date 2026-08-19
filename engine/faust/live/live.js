@@ -2363,7 +2363,18 @@
     // WITHOUT decoding — v3.1 opens producers immediately with whatever PCM is already
     // cached and streams the rest in as it decodes (never awaits the fetch before bar 1).
     function neededBuffers(state) {
-      const sched = SE.buildSchedule(E, state);
+      // THE FOREIGN-COMPOSER SEAM, honoured here too: a caller on opts.events
+      // (nukernel) hands the walk its own notes, and the parent's composer may
+      // not be able to schedule that state at all (no progression — it was
+      // never the parent's song). The warm set is an OPTIMIZATION (the
+      // addBuffers net below streams anything missed), so an unschedulable
+      // state warms nothing rather than killing the boot — the same
+      // try/catch the ring path's unit memo already wears. Found the hard
+      // way: every phone route died at "decoding…" on the daw while desktop
+      // played (2026-08-19).
+      let sched;
+      try { sched = SE.buildSchedule(E, state); }
+      catch (e) { return { foundSrcs: [], samplerSrcs: [], speechSrc: null }; }
       const byId = {}; for (const s of (state.foundSources || [])) byId[s.id] = s;
       const foundSrcs = [], samplerSrcs = [];
       const seenF = new Set(), seenS = new Set();
