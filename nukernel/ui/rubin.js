@@ -454,7 +454,7 @@ export function draw() {
   const tray = el("div", "rtray");
   if (nodeCmds().length >= MAX_CMDS)
     tray.append(el("div", "rfull", "this " + (scope === "song" ? "record" : "section") +
-      " has heard five things — retract one to say more"));
+      " has heard " + MAX_CMDS + " things — take one back to say more"));
   else {
     const next = continuations(tokens, scope, ctx);
     // ONE CHIP PER MEANING ("get rid of options I shouldn't click"): the

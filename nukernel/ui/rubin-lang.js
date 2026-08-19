@@ -461,7 +461,7 @@ function compile(q, scope, ctx) {
 }
 
 /* ---------- grammar ---------- */
-export const MAX_CMDS = 5;
+export const MAX_CMDS = 20;   // standing commands per node
 export const MAX_WORDS = 3;   // the tap budget, and the whole grammar fits
 function slots(tokens) {
   const q = { verb: null, adj: null, gen: null, fxadj: null, fxn: null,

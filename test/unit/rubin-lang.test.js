@@ -8,7 +8,7 @@
 //   (c) every compiled effect names real vocabulary: ops in the registry's own
 //       OPS table, kit words the kit chip already takes, eq bands lo/hi, a
 //       known effect shape — nothing a sentence says is unlandable.
-//   (d) five commands per node is the cap the module exports.
+//   (d) twenty commands per node is the cap the module exports.
 "use strict";
 let pass = 0, fails = 0;
 const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + msg); } };
@@ -325,10 +325,10 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
       ok(/^on /.test(w), "on-chip \"" + w + "\" does not read as a phrase");
   }
   /* (d) the cap */
-  ok(L.MAX_CMDS === 5, "five commands per node is the law (got " + L.MAX_CMDS + ")");
+  ok(L.MAX_CMDS === 20, "twenty commands per node is the law (got " + L.MAX_CMDS + ")");
 
   console.log(fails ? "\nrubin-lang: FAIL — " + fails + " of " + (pass + fails)
     : "rubin-lang: PASS — " + pass + " checks (the founding sentences, the exactness law "
-      + "walked to closure, every effect lands on real vocabulary, five per node)");
+      + "walked to closure, every effect lands on real vocabulary, twenty per node)");
   process.exit(fails ? 1 : 0);
 })().catch(e => { console.error("rubin-lang: CRASH — " + (e && e.stack || e)); process.exit(1); });
