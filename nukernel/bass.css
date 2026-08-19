@@ -1,0 +1,10 @@
+/* bass.css — what differs from the drum page: there are no lanes, there is
+   one LINE, and its height in the bar is the note's height in the player's
+   own range. A bassist reads shape, not a grid. */
+.bassrow .dbar{align-items:flex-end;height:74px}
+.bassrow .dcell{width:11px;height:6px;align-self:flex-end;
+  transform:translateY(calc(-1 * var(--h, 0%)))}
+.bassrow .dcell.hit{height:10px;background:var(--ink);border-color:var(--ink)}
+.bassrow .dcell.hit.now{background:var(--accent);border-color:var(--accent)}
+.bassrow .dcell.beat{border-color:color-mix(in srgb,var(--ink) 30%,transparent)}
+@media (max-width:700px){ .bassrow .dcell{width:8px} .bassrow .dbar{height:60px} }
