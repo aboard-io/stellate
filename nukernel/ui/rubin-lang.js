@@ -186,7 +186,14 @@ function compile(q, scope, ctx) {
   /* THINK MORE PUNK · MAKE EVERYTHING FUNKIER */
   if (q.gen) {
     if (q.fxadj || q.fxn || q.glue || q.instAdj) return null;
-    if (n && !(n.kind === "subj" && n.canon === "song")) return null;
+    // A GENRE ALREADY MEANS THE WHOLE NODE. "ADD SHOEGAZE MORE EVERYTHING"
+    // (2026-08-19) — the tray let EVERYTHING and MORE both trail a genre and
+    // the line read as gibberish. Only MAKE takes the pronoun, because only
+    // MAKE needs it to be a sentence at all: MAKE EVERYTHING FUNKIER.
+    if (n) {
+      if (!(n.kind === "subj" && n.canon === "song")) return null;
+      if (q.verb !== "make") return null;
+    }
     // the adjective's own polarity (absent = none), and the verb's
     const adjD = q.adj == null ? 0 : q.adj === "more" ? 1 : q.adj === "fewer" ? -1 : null;
     if (adjD === null) return null;              // any other adjective: not a genre sentence
@@ -395,10 +402,14 @@ function slots(tokens) {
 // HIGH NOTES, not "cut notes high" (the survey's own reading test).
 const PRENOM = new Set(["high", "low", "more", "fewer"]);
 function pretty(tokens, q) {
-  if (!q.adj || !q.nominal || !PRENOM.has(q.adj)) return tokens.join(" ").toUpperCase();
+  if (!q.adj || !PRENOM.has(q.adj)) return tokens.join(" ").toUpperCase();
+  if (!q.nominal && !q.gen) return tokens.join(" ").toUpperCase();
   const adjW = tokens.find(w => { const r = WORDS[w]; const alt = ALT[w];
     return (r.role === "adj" && r.canon === q.adj) || (alt && alt.canon === q.adj); });
-  const nomW = tokens.find(w => ["subj", "unit", "inst"].includes(WORDS[w].role));
+  // the HEAD is the thing being modified: a genre when there is one (ADD MORE
+  // SHOEGAZE), otherwise the nominal (CUT HIGH NOTES)
+  const nomW = tokens.find(w => (q.gen ? WORDS[w].role === "gen"
+    : ["subj", "unit", "inst"].includes(WORDS[w].role)));
   if (!adjW || !nomW) return tokens.join(" ").toUpperCase();
   const out = tokens.filter(w => w !== adjW);
   out.splice(out.indexOf(nomW), 0, adjW);

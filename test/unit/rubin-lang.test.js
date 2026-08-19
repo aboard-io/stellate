@@ -82,7 +82,10 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
       [["bring up", "punk"], "a genre is thought/made/added/cut, never brought up"],
       [["add", "sparser", "rock"], "ADD disagrees with a shrinking adjective"],
       [["bring up", "distortion", "on", "guitar"], "an effect is added or cut"],
-      [["bring up", "notes"], "notes are added or cut"]])
+      [["bring up", "notes"], "notes are added or cut"],
+      [["add", "shoegaze", "more", "everything"], "a genre already means the whole node"],
+      [["add", "shoegaze", "everything"], "a genre takes no pronoun except under MAKE"],
+      [["think", "punk", "everything"], "same, for THINK"]])
     ok(!L.parse(words, "song"), words.join(" ").toUpperCase() + " still compiles — " + why);
 
   /* (b) THE EXACTNESS LAW, walked to closure at both scopes */
@@ -233,6 +236,15 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
   {
     const KITLESS = { ...L.OPEN_CTX, drumsOn: false, drumsOff: true };
     ok(!!L.parse(["add", "drums"], "section", KITLESS), "ADD DRUMS refused on a kitless record");
+  }
+  /* (a4) THE LINE READS AS ENGLISH: pre-nominal adjectives lead their head,
+     genre or noun, whatever order the couch tapped them in */
+  for (const [words, want] of [[["add", "shoegaze", "more"], "ADD MORE SHOEGAZE"],
+      [["cut", "notes", "high"], "CUT HIGH NOTES"],
+      [["add", "notes", "more"], "ADD MORE NOTES"],
+      [["think", "punk", "more"], "THINK MORE PUNK"]]) {
+    const p = L.parse(words, "song");
+    ok(p && p.text === want, words.join(" ") + " prints as " + (p ? p.text : "NO") + ", want " + want);
   }
   /* (c3) every compiled sentence TRANSLATES: describeFx says something real */
   {
