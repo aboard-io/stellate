@@ -26,11 +26,18 @@ let tokens = [];
 // sentence that applies to just that track": clicking a seat in the band
 // pins its subject, so the sentence is VERB + HOW — two taps — and the
 // subject word is filled in for you.
-let pinned = null;                     // the subject word, e.g. "bass"
-const PINWORD = { bass: "bass", drums: "drums", pad: "pad", pad2: "pad",
+let pinned = null;                     // the SUBJECT CANON, e.g. "bass"
+const PINWORD = { bass: "bass", drums: "drums", pad: "chords", pad2: "chords",
                   lead: "melody", line: "melody", line2: "melody", line3: "melody",
-                  riff: "melody", counter: "melody", stab: "melody", drone: "pad" };
+                  riff: "melody", counter: "melody", stab: "melody", drone: "chords" };
 const pinFor = (seat) => PINWORD[seat.key] || PINWORD[seat.part] || null;
+// the two words a pin can put into a sentence: its SUBJECT (MAKE BASS
+// SLAPPIER) and its TARGET (ADD DISTORTION ON BASS)
+const pinSubj = () => pinned && LEXICON.S[pinned] ? LEXICON.S[pinned][0] : pinned;
+const pinOn = () => { if (!pinned) return null;
+  for (const [w, t] of Object.entries(LEXICON.ONWORD))
+    if (t.kind === "subj" && t.canon === pinned) return w;
+  return null; };
 let ledger = { song: [], secs: {} };       // node -> [{text, fx, prev}]
 const nodeCmds = () => aim.scope === "song" ? ledger.song
   : (ledger.secs[aim.si] = ledger.secs[aim.si] || []);
@@ -373,23 +380,29 @@ function rosterOf(sec) {
   // WHICH VOICES ACTUALLY SOUND: a stack entry with no phrase is a player
   // holding an instrument and no part, so it is not in the room. This is what
   // lets a record start from NOTHING and fill up as the couch hires.
-  const live = [];
+  const live = [], slotOf = [];
   for (const ent of stackOf(sec)) {
     const g = GENRES[ent.g];
-    for (let v = 0; v < ((g && g.voices) || 0); v++) live.push(!!(ent.slots && ent.slots.length));
+    for (let v = 0; v < ((g && g.voices) || 0); v++) {
+      live.push(!!(ent.slots && ent.slots.length));
+      slotOf.push(ent.slots && ent.slots.length ? ent.slots[0] : null);
+    }
   }
+  const authSlot = (stackOf(sec)[0] || {}).slots || [];
   const out = roster.map((r, i) => ({ key: r.key, role: partChairLabel(r.key),
     sound: soundOf(GENRES[owners[i]], r), pad: r.pad, part: r.part,
-    silent: live[i] === false }))
+    slot: slotOf[i], silent: live[i] === false }))
     .filter(r => !r.silent);
   if (keys.includes("bass")) {
     const bs = BASSSYNTH[sec.bassop];
     out.push({ key: "bass", role: partChairLabel("bass"), part: "bass",
+      slot: authSlot.length ? authSlot[0] : null,
       sound: bs ? (bs.root || bs.dsp) : humanize((POOL && POOL.bass) || BASS_INSTR) });
   }
   if (keys.includes("drums")) {
     const k = kitOf(sec);
     out.push({ key: "drums", role: partChairLabel("drums"), part: "drums",
+      slot: authSlot.length ? authSlot[0] : null, kitWord: sec.kit || null,
       sound: DRUMKITS[k] || k || "drums" });
   }
   return out;
@@ -514,6 +527,12 @@ export function draw() {
         seat.addEventListener("click", () => {
           pinned = pinned === w ? null : w; tokens = []; draw(); }); }
       seat.append(el("b", null, r.role), document.createTextNode(" " + r.sound));
+      // WHICH PATTERN IT PLAYS — the phrase out of the bank, and for the kit
+      // the operator word on top of it
+      const tag = r.part === "drums"
+        ? (r.kitWord ? "kit " + r.kitWord : "the genre's kit")
+        : (r.slot != null ? "phrase " + (r.slot + 1) : null);
+      if (tag) seat.append(el("i", "rpat", tag));
       strip.append(seat);
     }
     wrap.append(strip);
@@ -525,13 +544,13 @@ export function draw() {
   const p = tokens.length ? parse(tokens, scope, ctx) : null;
   const sent = el("div", "rsent" + (p ? " ok" : ""));
   if (pinned) {
-    const pin = el("button", "rpin", pinned.toUpperCase() + " ✕");
+    const pin = el("button", "rpin", pinSubj().toUpperCase() + " ✕");
     pin.type = "button"; pin.title = "stop talking about just this track";
     pin.addEventListener("click", () => { pinned = null; tokens = []; draw(); });
     sent.append(pin);
   }
   sent.append(el("span", "rwords", tokens.length ? tokens.join(" ").toUpperCase()
-    : pinned ? "SAY SOMETHING ABOUT THE " + pinned.toUpperCase() : "SAY SOMETHING"));
+    : pinned ? "SAY SOMETHING ABOUT THE " + pinSubj().toUpperCase() : "SAY SOMETHING"));
   if (p) {
     const go = el("button", "rgo", "SAY IT");
     go.type = "button";
@@ -557,6 +576,14 @@ export function draw() {
       " has heard " + MAX_CMDS + " things — take one back to say more"));
   else {
     const next = continuations(tokens, scope, ctx);
+    // WITH A TRACK PINNED, the effects it can take are offered right after
+    // the verb — the ON-target is the pin's, so the person never taps it
+    if (pinned && tokens.length === 2) {
+      const on = pinOn();
+      if (on) for (const w of Object.keys(LEXICON.WORDS))
+        if (LEXICON.WORDS[w].role === "fxn" && parse([tokens[0], w, on], scope, ctx))
+          next.add(w);
+    }
     // ONE CHIP PER MEANING ("get rid of options I shouldn't click"): the
     // language holds every synonym, but a tray that offers "delay" and "the
     // delay" side by side is one thought twice. Each canon shows its first
@@ -595,16 +622,28 @@ export function draw() {
         c.type = "button";
         c.addEventListener("click", () => {
           tokens = [...tokens, w];
+          let filled = false;
           // the pinned track IS the subject: the verb brings it along, so a
           // sentence about one player is VERB + HOW
           if (pinned && tokens.length === 1 && LEXICON.WORDS[w].role === "verb") {
-            const two = [w, pinned];
-            if (parse(two, scope, ctx) || continuations(two, scope, ctx).size)
-              tokens = two;
+            const two = [w, pinSubj()];
+            if (parse(two, scope, ctx) || continuations(two, scope, ctx).size) {
+              tokens = two; filled = true;
+            }
+          }
+          // AN EFFECT ON THE PINNED TRACK: the subject the verb brought along
+          // steps aside for the effect's own ON-target, so ADD + DISTORTION
+          // is the whole sentence when a track is pinned
+          if (pinned && LEXICON.WORDS[w] && LEXICON.WORDS[w].role === "fxn") {
+            const on = pinOn();
+            const t3 = [tokens[0], w, on].filter(Boolean);
+            if (on && parse(t3, scope, ctx)) tokens = t3;
           }
           const c2 = ctxOf();
           const done = parse(tokens, scope, c2);
-          if (done && !continuations(tokens, scope, c2).size) speak(done);
+          // a sentence the PIN completed is not a sentence the person
+          // finished — never speak on their behalf
+          if (done && !filled && !continuations(tokens, scope, c2).size) speak(done);
           else draw();
         });
         g.append(c);

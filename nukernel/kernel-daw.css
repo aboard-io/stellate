@@ -1617,6 +1617,10 @@ button.rseat:hover{border-color:var(--rule)}
   font-weight:700;letter-spacing:.04em}
 .rseat b{color:var(--ink);font-weight:600;text-transform:uppercase;
   letter-spacing:.04em;margin-right:.35em}
+.rpat{display:inline-block;margin-left:.5em;padding:0 .45em;border-radius:999px;
+  background:var(--bg-key);color:var(--ink-2);font-style:normal;font-size:.9em}
+.rseat.on .rpat{background:color-mix(in srgb,var(--on-accent) 22%,transparent);
+  color:var(--on-accent)}
 .rnothing{appearance:none;cursor:pointer;min-height:40px;padding:0 var(--sp-3);
   border:1px dashed var(--rule);border-radius:var(--r);background:transparent;
   color:var(--ink-2);margin-left:auto}
