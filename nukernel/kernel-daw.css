@@ -1623,7 +1623,10 @@ h1 em{font-style:normal;color:var(--ink)}
   padding:0 var(--sp-3);border:1px solid var(--rule);border-radius:var(--r);
   background:color-mix(in srgb,var(--accent) 14%,var(--bg-key));
   color:var(--ink);font-weight:600}
-.rcmd:hover{text-decoration:line-through}
+.rcmd{display:flex;flex-direction:column;align-items:flex-start;gap:2px;
+  padding:var(--sp-1) var(--sp-3)}
+.rcmd:hover .rct{text-decoration:line-through}
+.rdid{font-size:var(--t-sm);color:var(--ink-2);font-weight:400}
 
 /* the board-is-trimmed dot on the rail's MIX key (ui/mixer.js drawMix) */
 .pkey.trimmed{position:relative}

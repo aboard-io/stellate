@@ -91,6 +91,28 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
     console.log("  reachable compiled sentences across both scopes:", sentences);
   }
 
+  /* (c2) COMPLETENESS: the founding sentences are TAPPABLE — every word on
+     the path is offered by the tray at its step (the MAKE family was once
+     parseable but never offered; exactness held while completeness didn't) */
+  for (const [words, scope] of [[["make", "drums", "bigger"], "song"],
+      [["cut", "high", "notes"], "song"], [["add", "more", "notes"], "section"],
+      [["bring up", "reverb"], "song"], [["make", "the bed", "warmer"], "song"]]) {
+    let t = [];
+    for (const w of words) {
+      ok(L.continuations(t, scope).has(w),
+         scope + ": the tray never offers \"" + w + "\" after \"" + t.join(" ") + "\"");
+      t = [...t, w];
+    }
+  }
+  /* (c3) every compiled sentence TRANSLATES: describeFx says something real */
+  {
+    const p = L.parse(["make", "drums", "bigger"], "song");
+    const d = L.describeFx(p.fx, "song");
+    ok(/drums/.test(d) && /dB/.test(d), "MAKE DRUMS BIGGER translates to: " + d);
+    ok(L.describeFx(L.parse(["bring up", "reverb"], "song").fx, "song").includes("reverb"),
+       "BRING UP REVERB's translation never says reverb");
+  }
+
   /* (d) the cap */
   ok(L.MAX_CMDS === 5, "five commands per node is the law (got " + L.MAX_CMDS + ")");
 

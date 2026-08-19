@@ -174,23 +174,54 @@ export function parse(tokens, scope) {
 }
 
 /* ---------- the tray's law: only words that still work exactly ------------- */
+// a token list can still become a sentence within the 3-word budget
+function reachable(tokens, scope) {
+  if (parse(tokens, scope)) return true;
+  if (tokens.length >= 3) return false;
+  for (const w of Object.keys(WORDS)) {
+    if (WORDS[w].role === "verb") continue;
+    if (reachable([...tokens, w], scope)) return true;
+  }
+  return false;
+}
 export function continuations(tokens, scope) {
+  // COMPLETE as well as exact: a word is offered iff SOME completion inside
+  // the three-word budget compiles — looked all the way ahead, because the
+  // MAKE family always needs three words and a one-word lookahead silently
+  // never offered it (found live: the tray had 29 verbs and no MAKE).
   const ok = new Set();
-  const cands = Object.keys(WORDS);
-  for (const w of cands) {
+  for (const w of Object.keys(WORDS)) {
     const r = WORDS[w];
     if (!tokens.length) { if (r.role !== "verb") continue; }
     else if (r.role === "verb") continue;
-    const t2 = [...tokens, w];
-    // a word survives if t2 parses, or if some third word completes it
-    if (parse(t2, scope)) { ok.add(w); continue; }
-    if (t2.length >= 3) continue;
-    for (const w3 of cands) {
-      if (WORDS[w3].role === "verb") continue;
-      if (parse([...t2, w3], scope)) { ok.add(w); break; }
-    }
+    if (reachable([...tokens, w], scope)) ok.add(w);
   }
   return ok;
+}
+
+/* ---------- the translation: what the engineer actually moved ------------- */
+const CHNAME = { drums: "drums", bass: "bass", lead: "melody", pad: "chords", master: "the whole record" };
+const signed = (v, unit) => (v > 0 ? "+" : "") + (Math.round(v * 100) / 100) + (unit || "");
+export function describeFx(fx, scope) {
+  return fx.map((e) => {
+    switch (e.t) {
+      case "mix": return "board: " + CHNAME[e.chan] + " " +
+        (e.key === "fader" ? signed(e.delta, " dB") :
+         (e.key === "rev" ? "reverb send " : "echo send ") + signed(e.delta));
+      case "mixeq": return "board: " + CHNAME[e.chan] + " eq " + e.band + " " + signed(e.delta, " dB");
+      case "bpm": return "tempo " + signed(e.delta) + " bpm";
+      case "secnum": return "this section's fader " + signed(e.delta, " dB");
+      case "seceq": return "this section's eq " + e.band + " " + signed(e.delta, " dB");
+      case "secsend": return "this section's " + (e.key === "rev" ? "reverb" : "echo") +
+        " " + (e.step > 0 ? "up" : "down") + " one step";
+      case "seckit": return "this section's kit → " + e.word;
+      case "secmot": return "this section's filter → " + e.word;
+      case "secper": return "this section's period → " + e.word;
+      case "ops": return (scope === "song" ? "every section: " : "this section: ") +
+        "notes op “" + e.add + "”";
+    }
+    return e.t;
+  }).join(" · ");
 }
 
 export const LEXICON = { V, S, A, WORDS };

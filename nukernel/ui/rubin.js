@@ -6,7 +6,7 @@
 // fields, the ops list, the tempo. Up to five standing commands per node,
 // each retractable (tap it in the ledger). WRITE or a load clears the couch —
 // the words were about that record.
-import { parse, continuations, MAX_CMDS, LEXICON } from "./rubin-lang.js";
+import { parse, continuations, describeFx, MAX_CMDS, LEXICON } from "./rubin-lang.js";
 import { SONG, bpm, setBpm, on, emit, commit, MIXER, setMixOffset } from "./state.js";
 import { NuFields } from "./deps.js";
 
@@ -99,7 +99,7 @@ function speak(p) {
   const cmds = nodeCmds();
   if (cmds.length >= MAX_CMDS) return;      // the tray already said so
   const undos = p.fx.map(applyOne);
-  cmds.push({ text: p.text, undos });
+  cmds.push({ text: p.text, undos, did: describeFx(p.fx, aim.scope) });
   tokens = [];
   draw();
 }
@@ -146,6 +146,10 @@ export function draw() {
     go.addEventListener("click", () => speak(p));
     sent.append(go);
   }
+  // ...and what it would MOVE, said before it is said ("show me what it
+  // translated to"): the compiled effects in the engineer's own words
+  if (p) wrap.append(Object.assign(el("div", "rdid"),
+    { textContent: "→ " + describeFx(p.fx, scope) }));
   if (tokens.length) {
     const x = el("button", "rclear", "✕");
     x.type = "button";
@@ -191,9 +195,10 @@ export function draw() {
     const lg = el("div", "rledger");
     lg.append(el("i", "rg", "standing"));
     for (const c of cmds) {
-      const row = el("button", "rcmd", c.text);
+      const row = el("button", "rcmd");
       row.type = "button";
       row.title = "tap to retract";
+      row.append(el("b", "rct", c.text), el("span", "rdid", "→ " + (c.did || "")));
       row.addEventListener("click", () => retract(c));
       lg.append(row);
     }
