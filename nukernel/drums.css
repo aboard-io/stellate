@@ -1,0 +1,41 @@
+/* drums.css — the machine you talk to. Type, space, and one accent; there is
+   no grid to draw because the pattern has no visual form here. */
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-ui)}
+.dpage{max-width:56rem;margin:0 auto;padding:0 var(--sp-3) var(--sp-5);
+  display:flex;flex-direction:column;gap:var(--sp-3);min-height:100vh}
+.dbar{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) 0;
+  position:sticky;top:0;background:var(--bg);z-index:2}
+.dmast{margin:0;font-size:clamp(20px,4vw,30px);letter-spacing:.02em}
+.dplay{appearance:none;cursor:pointer;margin-left:auto;width:56px;height:56px;
+  border:1px solid var(--rule);border-radius:50%;background:var(--bg-key);
+  position:relative}
+.dplay::before{content:"";position:absolute;left:21px;top:16px;
+  border-left:18px solid var(--ink);border-top:12px solid transparent;
+  border-bottom:12px solid transparent}
+.dplay.on{background:var(--accent);border-color:var(--accent)}
+.dplay.on::before{left:19px;top:17px;width:16px;height:22px;border:0;
+  background:var(--on-accent);
+  clip-path:polygon(0 0,38% 0,38% 100%,0 100%,0 0,62% 0,100% 0,100% 100%,62% 100%,62% 0)}
+
+/* WHAT IT IS DOING — the only readout, and it is prose */
+.dsaid{min-height:5.5rem;padding:var(--sp-3);border-radius:var(--r);
+  background:var(--bg-sunk)}
+.dline{margin:0 0 .25em;font-size:clamp(15px,2.4vw,19px);color:var(--ink)}
+.dline:last-child{font-weight:700}
+.dhint{margin:0;color:var(--ink-2)}
+
+.dpin{display:flex;align-items:center;gap:var(--sp-2)}
+.dpl{font-style:normal;color:var(--ink-2);font-size:var(--t-sm);
+  letter-spacing:.14em;text-transform:uppercase}
+.dpinkey{appearance:none;cursor:pointer;min-height:36px;padding:0 var(--sp-3);
+  border:0;border-radius:var(--r);background:var(--accent);color:var(--on-accent);
+  font-weight:700;letter-spacing:.04em}
+
+.dgroup{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.dg{flex:0 0 100%;font-style:normal;font-size:var(--t-sm);letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-2);margin-top:var(--sp-2)}
+.dchip{appearance:none;cursor:pointer;min-height:46px;padding:0 var(--sp-3);
+  border:1px solid var(--rule);border-radius:999px;background:var(--bg-key);
+  color:var(--ink);font-size:clamp(15px,2.2vw,18px)}
+.dchip:hover{background:var(--bg-key-hi)}
+.dchip.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}

@@ -1,0 +1,231 @@
+// nukernel/drums/kit.js — THE KIT, as a model. Pure: no DOM, no audio, no
+// state. A drum machine you talk to, and every word it knows is a function
+// from a kit to a kit — which is what makes the whole vocabulary provable in
+// node before a single sound is made.
+//
+// WHAT THIS LEARNED FROM THE COUCH (ui/rubin-lang.js) AND THEN DROPPED:
+// there are no VERBS here. On the couch a sentence was verb + thing + how,
+// which is right when the subject could be anything on the record; a machine
+// that only plays drums already knows the subject, so an instruction is ONE
+// WORD-PHRASE and one tap. "breakbeat". "hats". "fourth measure fill." The
+// exactness law survives: a word is offered only when it would change the
+// kit, so nothing tappable is decorative.
+//
+// The model is the kernel's own drum vocabulary and nothing else:
+//   lanes   k kick · s snare · h hat · o open hat · c clap · p perc · t tom
+//   bars    four, each with its own kit (kernel.js `kits` is read per bar,
+//           which is how a fill lands on the fourth measure and nowhere else)
+//   feel    humanize (a hand), swing, and a per-lane velocity contour
+(function (root, factory) {
+  const api = factory();
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  else root.NuDrums = api;
+})(typeof self !== "undefined" ? self : this, function () {
+  "use strict";
+  const LANES = ["k", "s", "h", "o", "c", "p", "t"];
+  const BARS = 4, N = 16;
+  const z = () => new Array(N).fill(0);
+  const on = (...ix) => { const v = z(); for (const i of ix) v[i] = 1; return v; };
+  const every = (n, from) => { const v = z(); for (let i = from || 0; i < N; i += n) v[i] = 1; return v; };
+  const clone = (kit) => Object.fromEntries(Object.entries(kit).map(([l, v]) => [l, v.slice()]));
+  const empty = () => Object.fromEntries(LANES.map(l => [l, z()]));
+  const has = (kit, l) => (kit[l] || []).some(Boolean);
+  const hits = (kit) => LANES.reduce((a, l) => a + (kit[l] || []).filter(Boolean).length, 0);
+
+  // a MODEL is the kit, the four bars' worth of variation, and the feel
+  const blank = () => ({ on: false, kit: empty(), fills: {}, drumkit: "acoustic",
+                         humanize: 0, swing: null, vel: {}, bpm: 92 });
+
+  /* ---------- the grooves: real bars, written out ---------- */
+  const GROOVES = {
+    four:      { k: on(0, 4, 8, 12), h: every(2), o: on(2, 6, 10, 14) },
+    breakbeat: { k: on(0, 10), s: on(4, 12), h: every(2, 0), p: on(7, 14) },
+    boombap:   { k: on(0, 3, 8, 11), s: on(4, 12), h: every(2) },
+    amen:      { k: on(0, 10, 11), s: on(4, 7, 12, 14), h: every(2) },
+    halftime:  { k: on(0, 6), s: on(8), h: every(2) },
+    doubletime:{ k: on(0, 4, 8, 12), s: on(2, 6, 10, 14), h: every(1) },
+    motorik:   { k: on(0, 8), s: on(4, 12), h: every(1) },
+    tresillo:  { k: on(0, 3, 6, 11), s: on(4, 12), h: every(4) },
+    disco:     { k: on(0, 4, 8, 12), o: on(2, 6, 10, 14), c: on(4, 12) },
+    blast:     { k: every(2), s: every(2, 1), h: every(1) },
+    sparse:    { k: on(0, 8), s: on(4, 12) },
+  };
+  const GROOVEWORD = {
+    four: ["four on the floor"], breakbeat: ["breakbeat"], boombap: ["boom bap"],
+    amen: ["amen break"], halftime: ["half time"], doubletime: ["double time"],
+    motorik: ["motorik"], tresillo: ["tresillo"], disco: ["disco"],
+    blast: ["blast beat"], sparse: ["bare bones"],
+  };
+
+  /* ---------- the lanes, as things you ask for ---------- */
+  const LANEWORD = {
+    hats:     { word: "hats", lane: "h", give: every(2), more: every(1) },
+    openhats: { word: "open hats", lane: "o", give: on(2, 6, 10, 14), more: on(2, 4, 6, 10, 12, 14) },
+    claps:    { word: "claps", lane: "c", give: on(4, 12), more: on(4, 7, 12, 15) },
+    perc:     { word: "percussion", lane: "p", give: on(2, 7, 10, 14), more: every(2, 1) },
+    toms:     { word: "toms", lane: "t", give: on(6, 14), more: on(2, 6, 10, 14) },
+    kick:     { word: "kick", lane: "k", give: on(0, 8), more: on(0, 3, 8, 11) },
+    snare:    { word: "snare", lane: "s", give: on(4, 12), more: on(4, 7, 12, 14) },
+  };
+  const DROPWORD = { k: "no kick", s: "no snare", h: "no hats", o: "no open hats",
+                     c: "no claps", p: "no percussion", t: "no toms" };
+
+  /* ---------- the fill: one bar that is not the others ---------- */
+  const FILLBAR = (kit) => {
+    const f = clone(kit);
+    f.t = on(8, 10, 12, 14);
+    f.s = on(0, 4, 6, 13, 15);
+    f.c = z();
+    return f;
+  };
+  const FILLWORD = { 2: "second measure fill", 3: "third measure fill", 4: "fourth measure fill" };
+
+  const MACHINES = { tr808: "808", tr909: "909", tr606: "606", linn: "linn drum",
+                     acoustic: "acoustic kit", room: "room kit", power: "big kit",
+                     brush: "brushes", jazz: "jazz kit", electronic: "electronic kit" };
+
+  /* ---------- THE VOCABULARY: word-phrase -> what it does to the kit ------
+     Each entry answers two questions and nothing else: is it worth offering
+     right now (`when`), and what does it make (`apply`). */
+  const V = {};
+  const add = (id, group, words, when, apply, says) =>
+    { V[id] = { id, group, words, when, apply, says }; };
+
+  add("start", "start", ["add drums"], m => !m.on,
+      m => ({ ...m, on: true, kit: { ...empty(), ...GROOVES.four } }),
+      () => "a four on the floor, and the machine is on");
+
+  for (const [g, words] of Object.entries(GROOVEWORD))
+    add("groove:" + g, "the groove", words,
+        m => m.on && JSON.stringify({ ...empty(), ...GROOVES[g] }) !== JSON.stringify(m.kit),
+        m => ({ ...m, kit: { ...empty(), ...GROOVES[g] }, fills: {} }),
+        () => "the kit plays a " + words[0]);
+
+  for (const [id, L] of Object.entries(LANEWORD))
+    add("lane:" + id, "the kit", [L.word],
+        m => m.on && JSON.stringify(m.kit[L.lane]) !== JSON.stringify(L.more),
+        m => { const kit = clone(m.kit);
+               kit[L.lane] = has(kit, L.lane) ? L.more.slice() : L.give.slice();
+               return { ...m, kit }; },
+        m => (has(m.kit, L.lane) ? "more " : "") + L.word);
+
+  for (const [lane, word] of Object.entries(DROPWORD))
+    add("drop:" + lane, "take away", [word],
+        m => m.on && has(m.kit, lane),
+        m => { const kit = clone(m.kit); kit[lane] = z(); return { ...m, kit }; },
+        () => word);
+
+  for (const [bar, word] of Object.entries(FILLWORD))
+    add("fill:" + bar, "the fills", [word],
+        m => m.on && !m.fills[bar],
+        m => ({ ...m, fills: { ...m.fills, [bar]: true } }),
+        () => "a fill in the " + (bar === "2" ? "second" : bar === "3" ? "third" : "fourth") + " measure");
+  add("nofills", "the fills", ["no fills"], m => Object.keys(m.fills).length > 0,
+      m => ({ ...m, fills: {} }), () => "the fills come out");
+
+  for (const [k, word] of Object.entries(MACHINES))
+    add("kit:" + k, "the machine", [word], m => m.on && m.drumkit !== k,
+        m => ({ ...m, drumkit: k }), () => "it is " + word + " now");
+
+  add("looser", "the feel", ["looser"], m => m.on && m.humanize < 0.06,
+      m => ({ ...m, humanize: +(m.humanize + 0.03).toFixed(2) }),
+      () => "a hand on it — the hits stop landing exactly");
+  add("tighter", "the feel", ["tighter"], m => m.on && m.humanize > 0,
+      m => ({ ...m, humanize: +(m.humanize - 0.03).toFixed(2) }),
+      () => "back toward the grid");
+  add("swing", "the feel", ["swing it"], m => m.on && m.swing !== "swing",
+      m => ({ ...m, swing: "swing" }), () => "it swings");
+  add("shuffle", "the feel", ["shuffle it"], m => m.on && m.swing !== "shuffle",
+      m => ({ ...m, swing: "shuffle" }), () => "a shuffle");
+  add("straight", "the feel", ["straighten it"], m => m.on && m.swing != null,
+      m => ({ ...m, swing: null }), () => "straight again");
+  add("harder", "the feel", ["harder"], m => m.on && (m.vel.all || 0) < 2,
+      m => ({ ...m, vel: { ...m.vel, all: (m.vel.all || 0) + 1 } }), () => "hit harder");
+  add("softer", "the feel", ["softer"], m => m.on && (m.vel.all || 0) > -2,
+      m => ({ ...m, vel: { ...m.vel, all: (m.vel.all || 0) - 1 } }), () => "played back");
+
+  add("faster", "the tempo", ["faster"], m => m.on && m.bpm < 180,
+      m => ({ ...m, bpm: m.bpm + 8 }), m => (m.bpm + 8) + " bpm");
+  add("slower", "the tempo", ["slower"], m => m.on && m.bpm > 60,
+      m => ({ ...m, bpm: m.bpm - 8 }), m => (m.bpm - 8) + " bpm");
+
+  /* ---------- PROGRAMMING THE PATTERN, IN WORDS -------------------------
+     "I want to program the drum pattern with language only." A step is not a
+     cell in a grid here, it is a place in the bar the way a drummer counts
+     one — a bar is ONE e AND a, TWO e AND a — so every sixteenth has a name
+     and saying the name puts a hit there or takes it away. The lane is
+     PINNED (tap "hats" and you are talking about hats), which is what keeps
+     one tap per decision: the machine already knows the subject. */
+  const SUB = ["", "e", "and", "a"];
+  const COUNT = ["one", "two", "three", "four"];
+  const stepWord = (i) => (i % 4 === 0) ? "on " + COUNT[i >> 2]
+    : "on the " + SUB[i % 4] + " of " + COUNT[i >> 2];
+  const stepId = (lane, i) => "step:" + lane + ":" + i;
+  function stepsFor(lane) {
+    const out = [];
+    for (let i = 0; i < N; i++) out.push({
+      id: stepId(lane, i), group: "the bar", lane, step: i, words: [stepWord(i)],
+      when: (m) => m.on,
+      apply: (m) => { const kit = clone(m.kit);
+        kit[lane] = (kit[lane] || z()).slice();
+        kit[lane][i] = kit[lane][i] ? 0 : 1;
+        return { ...m, kit }; },
+      says: (m) => (m.kit[lane] && m.kit[lane][i] ? "no " : "") +
+        LANEOF(lane) + " " + stepWord(i),
+    });
+    // the shapes a drummer asks for by name rather than by counting
+    const SHAPE = {
+      "on every beat": every(4), "on the ands": on(2, 6, 10, 14),
+      "on every eighth": every(2), "on every sixteenth": every(1),
+      "on two and four": on(4, 12), "on one and three": on(0, 8),
+      "nowhere": z(),
+    };
+    for (const [w, v] of Object.entries(SHAPE)) out.push({
+      id: "shape:" + lane + ":" + w, group: "the bar", lane, words: [w],
+      when: (m) => m.on && JSON.stringify(m.kit[lane]) !== JSON.stringify(v),
+      apply: (m) => { const kit = clone(m.kit); kit[lane] = v.slice(); return { ...m, kit }; },
+      says: () => LANEOF(lane) + " " + w,
+    });
+    return out;
+  }
+  const LANENAME = { k: "kick", s: "snare", h: "hats", o: "open hats",
+                     c: "claps", p: "percussion", t: "toms" };
+  const LANEOF = (l) => LANENAME[l] || l;
+
+  /* ---------- what can be said right now — the exactness law ---------- */
+  // with a lane PINNED the bar itself is the vocabulary; without one, the
+  // machine's own words
+  const offered = (m, lane) => lane
+    ? stepsFor(lane).filter(i => { try { return !!i.when(m); } catch (e) { return false; } })
+    : Object.values(V).filter(i => { try { return !!i.when(m); } catch (e) { return false; } });
+  const findInstr = (id, lane) => V[id] ||
+    (lane ? stepsFor(lane).find(i => i.id === id) : null) ||
+    (/^(step|shape):([ksho cpt]):/.test(id) ? stepsFor(id.split(":")[1]).find(i => i.id === id) : null);
+  const say = (m, id) => { const i = findInstr(id, id.split(":")[1]);
+    return (i && i.when(m)) ? i.apply(m) : m; };
+  const says = (m, id) => { const i = findInstr(id, id.split(":")[1]);
+    if (!i) return "";
+    return typeof i.says === "function" ? i.says(m) : i.says; };
+
+  /* ---------- the model as a GENRE the engine already knows how to play --- */
+  const VELROW = (n) => { const v = new Array(N).fill(Math.max(2, Math.min(9, 6 + n * 2))); return v; };
+  function toGenre(m) {
+    const bars = [];
+    for (let b = 1; b <= BARS; b++) bars.push(m.fills[b] ? FILLBAR(m.kit) : m.kit);
+    const g = {
+      label: "Drums", family: "club", rate: 1, bars: BARS, voices: 1,
+      entry: () => 0, reg: () => 0, realize: () => "line", harmony: "modal",
+      instr: "yamaha_grand_piano", nobass: true, drumkit: m.drumkit,
+      kit: m.kit, kits: bars, humanize: m.humanize || 0,
+      tone: { wave: "sine", cut: 1200, q: 1, atk: 0.01, rel: 0.2, gain: 0.001, verb: 0.1 },
+      words: [], word: () => [],
+    };
+    if (m.swing) g.swing = m.swing;
+    if (m.vel.all) g.kitVel = Object.fromEntries(LANES.map(l => [l, VELROW(m.vel.all)]));
+    return g;
+  }
+
+  return { LANES, BARS, N, blank, V, offered, say, says, toGenre, stepWord,
+           stepsFor, LANENAME, LANEOF, GROOVES, LANEWORD, FILLWORD, MACHINES,
+           hits, has, clone, empty };
+});
