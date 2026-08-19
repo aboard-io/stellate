@@ -95,7 +95,8 @@ const A = {
   fewer:    ["fewer", "less", "sparser"],
   faster:   ["faster", "quicker", "uptempo"],
   slower:   ["slower", "lazier", "laid back"],
-  busier:   ["busier", "busy", "wilder"],
+  busier:   ["busier", "busy"],          // "wilder" belongs to the KIT's own
+                                          // chaos operator (KITWORD below)
   simpler:  ["simpler", "simple", "sparse"],
   open:     ["open", "opening", "blooming"],
   different: ["different", "new", "another way"],
@@ -517,8 +518,10 @@ function compile(q, scope, ctx) {
     case "minimal":  return [{ t: "ops", add: "thin2" }, ...(n.canon === "drums"
                         ? [{ t: "seckit", word: "sparse" }] : [])];
     case "doubled":  return [{ t: "pipes", set: "3rds" }];
-    case "lower":    return [{ t: "oct", by: -1 }];
-    case "higher":   return [{ t: "oct", by: 1 }];
+    // the octave lands on the thing the sentence NAMED: the bass has its own
+    // register, a layer has its own, and the record moves every line
+    case "lower":  return [{ t: "oct", by: -1, what: n.canon, kind: n.kind }];
+    case "higher": return [{ t: "oct", by: 1, what: n.canon, kind: n.kind }];
     case "open":     return isSong ? [{ t: "secmot", word: "open" }] : null;
     case "closed":   return isSong ? [{ t: "secmot", word: "close" }] : null;
     default: return null;
@@ -686,7 +689,8 @@ export function describeFx(fx, scope) {
       case "pipes": return (scope === "song" ? "every section" : "this section") +
         (e.set === "off" ? " stops its pipes" : ": the " + e.set + " pipe on the notes");
       case "oct": return (scope === "song" ? "every section" : "this section") +
-        "'s line moves an octave " + (e.by > 0 ? "up" : "down");
+        "'s " + (e.what === "bass" ? "bass" : e.what === "song" ? "lines"
+          : e.what) + " moves an octave " + (e.by > 0 ? "up" : "down");
       case "insert": return "a " + e.role + " section goes in after this one";
       case "drop": return "the " + e.role + " sections come out";
       case "secfx": return "every " + e.role + " takes the " + e.chip + " chip";

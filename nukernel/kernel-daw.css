@@ -1606,7 +1606,15 @@ h1 em{font-style:normal;color:var(--ink)}
 .rband{display:flex;flex-wrap:wrap;gap:var(--sp-1) var(--sp-3);align-items:baseline;
   padding:var(--sp-2) var(--sp-3);border-radius:var(--r);background:var(--bg-sunk)}
 .rband .rg{flex:0 0 100%}
-.rseat{color:var(--ink-2);font-size:var(--t-sm)}
+.rseat{color:var(--ink-2);font-size:var(--t-sm);appearance:none;background:transparent;
+  border:1px solid transparent;border-radius:var(--r);padding:2px 6px;text-align:left}
+button.rseat{cursor:pointer}
+button.rseat:hover{border-color:var(--rule)}
+.rseat.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.rseat.on b{color:var(--on-accent)}
+.rpin{appearance:none;cursor:pointer;flex:0 0 auto;min-height:36px;padding:0 var(--sp-2);
+  border:0;border-radius:var(--r);background:var(--accent);color:var(--on-accent);
+  font-weight:700;letter-spacing:.04em}
 .rseat b{color:var(--ink);font-weight:600;text-transform:uppercase;
   letter-spacing:.04em;margin-right:.35em}
 .rnothing{appearance:none;cursor:pointer;min-height:40px;padding:0 var(--sp-3);

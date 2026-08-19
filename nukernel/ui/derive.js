@@ -390,7 +390,8 @@ export function sectionEvents(sec, slots, songGroove, songSwing) {
   for (let r = 0; r < total / g.bars; r++)
     for (const e of dr) out.push({ ...e, kind: "hit", t: e.t + r * loopSteps });
   for (const e of bass(lead, g, total))
-    out.push({ ...e, kind: "bass", vox: voxAll(sec, null) });
+    out.push({ ...e, kind: "bass", n: e.n + 12 * (+(sec.boct || 0)),
+               vox: voxAll(sec, null) });
 
   // LAYERS. Each extra genre contributes only its pitched voices, rendered
   // through the authority's harmony, rate and mode — its own kit, bass and

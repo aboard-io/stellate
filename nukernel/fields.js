@@ -1133,6 +1133,12 @@
       tab: "sound",  group: "tempo",                   default: null },
     { key: "artic",   scope: "layer", table: ARTICS,   labels: ARTICS,
       tab: "sound",  group: "articulation",            default: null },
+    // THE BASS HAS A REGISTER TOO. The line's `oct` never reached it — the
+    // bass renders at its own fixed octave in kernel.js — so "make bass an
+    // octave higher" moved every line and left the bass where it was
+    // (2026-08-19). Box scope, because the bass is the box's, not a layer's.
+    { key: "boct",    scope: "box",   table: OCTAVES,  labels: OCTAVES,
+      tab: "voice",   group: "register",                default: null },
     { key: "oct",     scope: "layer", table: OCTAVES,  labels: OCTAVES,
       tab: "voice",  group: "register",                default: null },
     { key: "scale",   scope: "layer", table: SCALES,   labels: SCALELABEL,

@@ -22,6 +22,15 @@ const wrap = $("rubinwrap");
 /* ---------- the aim: song, or one section ---------- */
 let aim = { scope: "song", si: -1 };
 let tokens = [];
+// THE PINNED TRACK. "When I click on a track I should be able to tap in a
+// sentence that applies to just that track": clicking a seat in the band
+// pins its subject, so the sentence is VERB + HOW — two taps — and the
+// subject word is filled in for you.
+let pinned = null;                     // the subject word, e.g. "bass"
+const PINWORD = { bass: "bass", drums: "drums", pad: "pad", pad2: "pad",
+                  lead: "melody", line: "melody", line2: "melody", line3: "melody",
+                  riff: "melody", counter: "melody", stab: "melody", drone: "pad" };
+const pinFor = (seat) => PINWORD[seat.key] || PINWORD[seat.part] || null;
 let ledger = { song: [], secs: {} };       // node -> [{text, fx, prev}]
 const nodeCmds = () => aim.scope === "song" ? ledger.song
   : (ledger.secs[aim.si] = ledger.secs[aim.si] || []);
@@ -123,16 +132,19 @@ function applyOne(e) {
         else b.pipes = prev[i]; }); commit("box"); } };
     }
     case "oct": {
-      const targets = aim.scope === "song"
-        ? SONG.slice() : [secOf()].filter(Boolean);
-      const prev = targets.map(b => b.oct);
+      // the BASS has its own register (fields.js boct — the line's `oct`
+      // never reached it, which is why "make bass an octave higher" moved
+      // every line and left the bass alone); everything else moves the lines
+      const F = e.what === "bass" ? "boct" : "oct";
+      const targets = aim.scope === "song" ? SONG.slice() : [secOf()].filter(Boolean);
+      const prev = targets.map(b => b[F]);
       for (const b of targets) {
-        const at = clamp((+b.oct || 0) + e.by, -2, 2);
-        if (at) b.oct = String(at); else delete b.oct;
+        const at = clamp((+b[F] || 0) + e.by, -2, 2);
+        if (at) b[F] = String(at); else delete b[F];
       }
       commit("box");
-      return { undo: () => { targets.forEach((b, i) => { if (prev[i] == null) delete b.oct;
-        else b.oct = prev[i]; }); commit("box"); } };
+      return { undo: () => { targets.forEach((b, i) => { if (prev[i] == null) delete b[F];
+        else b[F] = prev[i]; }); commit("box"); } };
     }
     case "insert": {
       // a new section, cloned from its neighbour so it keeps the record's own
@@ -315,7 +327,7 @@ function speak(p) {
   cmds.push(cmd);
   more(cmd);                                 // the first dose IS the sentence
   tokens = [];
-  draw();
+  draw();                                     // the pin stays: say another thing about it
 }
 // say it again. The apply layer is aimed at the node that spoke, so a dose
 // added while looking elsewhere still lands where the words were said.
@@ -496,7 +508,11 @@ export function draw() {
       ? "playing · " + (SONG[playingSec].cue || SONG[playingSec].role || "section") : "the band")));
     if (!band.length) strip.append(el("span", "rseat", "nobody yet — say ADD DRUMS, ADD BASS, ADD PIANO"));
     for (const r of band) {
-      const seat = el("span", "rseat");
+      const w = pinFor(r);
+      const seat = el(w ? "button" : "span", "rseat" + (w && pinned === w ? " on" : ""));
+      if (w) { seat.type = "button"; seat.title = "say something about just this track";
+        seat.addEventListener("click", () => {
+          pinned = pinned === w ? null : w; tokens = []; draw(); }); }
       seat.append(el("b", null, r.role), document.createTextNode(" " + r.sound));
       strip.append(seat);
     }
@@ -508,7 +524,14 @@ export function draw() {
   const ctx = ctxOf();
   const p = tokens.length ? parse(tokens, scope, ctx) : null;
   const sent = el("div", "rsent" + (p ? " ok" : ""));
-  sent.append(el("span", "rwords", tokens.length ? tokens.join(" ").toUpperCase() : "SAY SOMETHING"));
+  if (pinned) {
+    const pin = el("button", "rpin", pinned.toUpperCase() + " ✕");
+    pin.type = "button"; pin.title = "stop talking about just this track";
+    pin.addEventListener("click", () => { pinned = null; tokens = []; draw(); });
+    sent.append(pin);
+  }
+  sent.append(el("span", "rwords", tokens.length ? tokens.join(" ").toUpperCase()
+    : pinned ? "SAY SOMETHING ABOUT THE " + pinned.toUpperCase() : "SAY SOMETHING"));
   if (p) {
     const go = el("button", "rgo", "SAY IT");
     go.type = "button";
@@ -572,6 +595,13 @@ export function draw() {
         c.type = "button";
         c.addEventListener("click", () => {
           tokens = [...tokens, w];
+          // the pinned track IS the subject: the verb brings it along, so a
+          // sentence about one player is VERB + HOW
+          if (pinned && tokens.length === 1 && LEXICON.WORDS[w].role === "verb") {
+            const two = [w, pinned];
+            if (parse(two, scope, ctx) || continuations(two, scope, ctx).size)
+              tokens = two;
+          }
           const c2 = ctxOf();
           const done = parse(tokens, scope, c2);
           if (done && !continuations(tokens, scope, c2).size) speak(done);
@@ -616,7 +646,8 @@ export function draw() {
 }
 
 /* ---------- the couch resets with the record ---------- */
-on("song", () => { ledger = { song: [], secs: {} }; tokens = []; aim = { scope: "song", si: -1 }; draw(); });
+on("song", () => { ledger = { song: [], secs: {} }; tokens = []; pinned = null;
+  aim = { scope: "song", si: -1 }; draw(); });
 // the grammar reads the record, so the tray re-reads it when the record moves
 on("box", draw);
 on("mix", draw);
