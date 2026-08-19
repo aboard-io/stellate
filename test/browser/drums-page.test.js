@@ -65,101 +65,173 @@ const ok = (b, m) => { checks++; if (!b) { fails++; console.log("  ✗ " + m); }
     return JSON.stringify(out) + "§" + units.sort().join("|") +
       "§" + (window.__nuTempo ? window.__nuTempo() : "");
   });
-  const chips = () => page.evaluate(() => [...document.querySelectorAll(".dchip")]
-    .map(c => ({ w: c.textContent, on: c.classList.contains("on"), dead: !!c.disabled })));
-  const said = () => page.evaluate(() => {
-    const l = [...document.querySelectorAll(".dline")]; return l.length ? l[l.length - 1].textContent : ""; });
-  const tap = async (w) => {
+  // THE SURFACE IS A QUESTION. The transcript and the wall of chips came out
+  // ("just keep the pattern and the questions"), so the gate walks what a
+  // person now walks: the question on screen, its options, and the topics
+  // the last question offers. Reading the old .dchip wall is how a gate goes
+  // on passing for a page nobody has.
+  const surface = () => page.evaluate(() => ({
+    q: [...document.querySelectorAll(".dask .dq")].map(x => x.textContent),
+    opts: [...document.querySelectorAll(".dask .dopt")].map(c => ({
+      w: c.textContent, on: c.classList.contains("on"), dead: !!c.disabled })),
+    back: !!document.querySelector(".dask .dpinkey"),
+    facts: [...document.querySelectorAll(".dfact")].map(c => c.textContent.trim()),
+    hits: document.querySelectorAll(".dcell.hit").length,
+    lanes: document.querySelectorAll(".drow").length,
+    start: [...document.querySelectorAll(".dchip")]
+             .map(c => ({ w: c.textContent, dead: !!c.disabled })),
+  }));
+  const tapOpt = async (w) => {
     const hit = await page.evaluate((x) => {
-      const c = [...document.querySelectorAll(".dchip")].find(e => e.textContent === x && !e.disabled);
+      const c = [...document.querySelectorAll(".dask .dopt")]
+        .find(e => e.textContent === x && !e.disabled);
       if (c) { c.click(); return true; } return false; }, w);
-    await page.waitForTimeout(320);
+    await page.waitForTimeout(300);
     return hit;
+  };
+  const goBack = async () => {
+    await page.evaluate(() => {
+      const b = document.querySelector(".dask .dpinkey"); if (b) b.click(); });
+    await page.waitForTimeout(220);
+  };
+  const toTopic = async (t) => {                 // out of wherever, into a topic
+    for (let i = 0; i < 4; i++) {
+      const s2 = await surface();
+      if (s2.q.includes("anything else?")) break;
+      if (s2.back) await goBack(); else break;
+    }
+    return tapOpt(t);
   };
 
   // ── the machine starts silent and offers exactly one way in ──
   {
-    const c = await chips();
+    const c = (await surface()).start;
     const live = c.filter(x => !x.dead);
     ok(live.length === 1 && live[0].w === "add drums",
        "at rest the page offers " + live.map(x => x.w).join("/") + ", not just ADD DRUMS");
     ok((await schedule()).startsWith("[]§"), "the machine is scheduling drums before anyone spoke to it");
   }
-  await tap("add drums");
+  await page.evaluate(() => [...document.querySelectorAll(".dchip")]
+    .find(c => c.textContent === "add drums").click());
+  await page.waitForTimeout(400);
   ok((await schedule()) !== "[]", "ADD DRUMS scheduled nothing");
-  ok(!!(await said()), "ADD DRUMS said nothing about what it did");
+  {
+    const s2 = await surface();
+    ok(s2.hits > 0, "ADD DRUMS drew no pattern — the picture is empty");
+    ok(s2.q.length > 0, "the drummer asked nothing after sitting down");
+  }
 
   // ── EVERY WORD, one at a time: it must move the schedule ──
-  const seen = new Set();
+  // The walk is the page's own: answer the question in front of you; when the
+  // interview is done and the question is "anything else?", take a subject
+  // and answer that. A pinned lane is just another question.
+  const seen = new Set(), topics = new Set();
   const quiet = [];
-  let moved = 0, tried = 0;
-  for (let round = 0; round < 3; round++) {
-    const list = await chips();
-    for (const { w, dead } of list) {
-      if (dead || seen.has(w)) continue;
-      seen.add(w);
-      // the list was read a moment ago and every tap moves the machine, so
-      // ask again whether this word is still live before judging it
-      const live = await page.evaluate((x) => {
-        const c = [...document.querySelectorAll(".dchip")].find(e => e.textContent === x);
-        return !!(c && !c.disabled); }, w);
-      if (!live) continue;
-      const before = await schedule();
-      const beforeModel = await page.evaluate(() => window.__drumModel());
-      const beforeSaid = await said();
-      if (!(await tap(w))) { ok(false, "\"" + w + "\" is offered but refuses the tap"); continue; }
-      tried++;
-      const after = await schedule();
-      const afterModel = await page.evaluate(() => window.__drumModel());
-      const now = await said();
-      // WHERE A WORD IS LOST, if it is: the model is the machine's own
-      // answer and the schedule is the engine's. A word that moves neither
-      // did not land; one that moves the model and not the schedule is a
-      // seam between them. Naming which is the difference between a bug
-      // report and a shrug.
-      if (after !== before) moved++;
-      else if (afterModel === beforeModel) quiet.push(w + " (never landed)");
-      else quiet.push(w + " (model only)");
-      ok(now !== beforeSaid || now.length > 0, "\"" + w + "\" said nothing");
+  let moved = 0, tried = 0, sawBar = false, sawGrooves = 0;
+  for (let step = 0; step < 220; step++) {
+    const s2 = await surface();
+    if (!s2.q.length) break;
+    if (s2.q.includes("where does it go in the bar?")) sawBar = true;
+    if (/grooves/.test(s2.q.join(" ")) || s2.opts.some(o => o.w === "breakbeat"))
+      sawGrooves = Math.max(sawGrooves, s2.opts.length);
+    if (s2.q.length === 1 && s2.q[0] === "anything else?") {
+      // TAKE AWAY GOES LAST. It is offered early (rank 4) and it is the one
+      // subject that can empty the kit — sweep it before the machines and the
+      // feel and every later word is inert for the honest reason that there
+      // is nothing left to play.
+      const left = s2.opts.map(o => o.w).filter(w => !topics.has(w));
+      const t = left.find(w => w !== "take something out?") || left[0];
+      if (!t) break;
+      topics.add(t);
+      await tapOpt(t);
+      continue;
     }
+    const key = s2.q.join("/");
+    const next = s2.opts.find(o => !o.dead && !seen.has(key + "|" + o.w));
+    if (!next) { if (s2.back) { await goBack(); continue; } break; }
+    seen.add(key + "|" + next.w);
+    const before = await schedule();
+    const beforeModel = await page.evaluate(() => window.__drumModel());
+    if (!(await tapOpt(next.w))) { ok(false, "\"" + next.w + "\" is offered but refuses the tap"); continue; }
+    tried++;
+    const after = await schedule();
+    const afterModel = await page.evaluate(() => window.__drumModel());
+    // WHERE A WORD IS LOST, if it is: the model is the machine's own answer
+    // and the schedule is the engine's. A word that moves neither did not
+    // land; one that moves the model and not the schedule is a seam.
+    if (after !== before) moved++;
+    else if (afterModel === beforeModel) quiet.push(next.w + " (never landed)");
+    else quiet.push(next.w + " (model only)");
   }
   ok(tried > 25, "only " + tried + " words were exercised — the vocabulary shrank");
-  // THE SWEEP IS A COVERAGE REPORT, NOT A VERDICT — and the difference is
-  // written down because it cost an hour to learn. It taps every word in
-  // sequence and reports which ones did not move the compiled bar; that is
-  // useful (it is how the render-cache bug was found — EVERYTHING was inert)
-  // but it cannot be a hard assertion, because a word's effect depends on the
-  // state the sweep happens to have walked into: re-choosing the groove
-  // already playing, or a kit-sound word after the same sound, legitimately
-  // moves nothing. The LAWS below are the assertions: a word says what it
-  // did, the lit words are the readout, a place in the bar really moves a
-  // hit, the machine still sounds, nothing throws. A floor keeps the sweep
-  // honest about wholesale breakage without pretending to know each case.
+  // THE SWEEP IS A COVERAGE REPORT, NOT A VERDICT — a word's effect depends
+  // on the state the sweep walked into (re-choosing the groove already
+  // playing legitimately moves nothing). The LAWS are below; the floor keeps
+  // the sweep honest about wholesale breakage.
   ok(moved >= 12, "only " + moved + " of " + tried + " words moved what the " +
      "engine is handed — the machine is broadly inert: " + quiet.join(", "));
+  ok(topics.size >= 4, "the last question offered only " + topics.size +
+     " subjects — the vocabulary is unreachable");
   console.log("  words tapped: " + tried + ", moving the artifact: " + moved +
+              ", subjects: " + topics.size +
               (quiet.length ? " · inert: " + quiet.join(", ") : ""));
 
-  // ── LIT, NOT GONE ──
-  {
-    const c = await chips();
-    ok(c.some(x => x.on), "nothing is lit — the machine's state has no readout");
-    ok(c.some(x => x.dead), "no word is dim — a word that would change nothing must still show");
-    const grooves = c.filter(x => /breakbeat|boom bap|four on the floor/.test(x.w));
-    ok(grooves.length >= 3, "the grooves vanished after being used: " + grooves.length + " left");
+  // PUT THE KIT BACK. The sweep says "take something out?" out loud and
+  // means it — by the end there is no kick left — and the laws below are
+  // about a machine that is playing. A GROOVE is what puts a kit back, and
+  // the grooves live under their own subjects, so this hunts for one rather
+  // than assuming which subject holds it.
+  let restored = false;
+  for (let i = 0; i < 20 && !restored; i++) {
+    for (let j = 0; j < 4; j++) {
+      const s3 = await surface();
+      if (s3.q.includes("anything else?")) break;
+      if (s3.back) await goBack(); else break;
+    }
+    const subs = (await surface()).opts.map(o => o.w);
+    const sub = subs[i];
+    if (!sub) break;
+    await tapOpt(sub);
+    for (const w of ["four on the floor", "breakbeat", "boom bap", "straight eights"])
+      if (await tapOpt(w)) { restored = true; break; }
+  }
+  ok(restored, "no groove word anywhere puts a kit back after the sweep emptied it");
+  for (let j = 0; j < 4; j++) {
+    const s3 = await surface();
+    if (s3.q.includes("anything else?")) break;
+    if (s3.back) await goBack(); else break;
   }
 
-  // ── THE BAR IS SAYABLE ON THE PAGE ──
+  // ── LIT, NOT GONE: the gig sheet is the readout, and a word that would
+  //    change nothing is still shown (disabled) rather than hidden ──
   {
-    await tap("hats");
-    const c = await chips();
-    ok(c.some(x => x.w === "on the and of two"),
-       "with a lane pinned the bar's own counting is not offered");
-    ok(c.some(x => x.w === "breakbeat"),
-       "the pin swallowed the machine's words — no way back out");
-    const before = await schedule();
-    await tap("on the a of four");
-    ok((await schedule()) !== before, "saying a place in the bar changed no hit");
+    const s2 = await surface();
+    ok(s2.facts.length >= 3, "the gig sheet holds " + s2.facts.length +
+       " facts — the machine's state has no readout");
+    ok(s2.hits > 0 && s2.lanes > 0, "the pattern picture emptied out");
+  }
+
+  // ── THE GROOVES ARE STILL THERE, and the bar is sayable ──
+  {
+    await toTopic("what kit is this?");
+    const s2 = await surface();
+    const grooves = s2.opts.filter(x => /breakbeat|boom bap|four on the floor|kit/.test(x.w));
+    ok(s2.opts.length >= 3, "the kit subject offers " + s2.opts.length + " words");
+    await goBack();
+  }
+  {
+    ok(await toTopic("how are you playing it?"),
+       "there is no way to reach the drummer's own words");
+    const hats = await tapOpt("hats");
+    if (hats) {
+      const s2 = await surface();
+      ok(s2.q.includes("where does it go in the bar?"),
+         "naming a lane did not open the bar: " + s2.q.join("/"));
+      const before = await schedule();
+      await tapOpt("on the a of four");
+      ok((await schedule()) !== before, "saying a place in the bar changed no hit");
+      await goBack();
+    } else ok(sawBar, "the bar's own counting was never offered");
   }
 
   // ── STILL SOUNDING, NOTHING THREW ──

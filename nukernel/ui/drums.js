@@ -21,6 +21,7 @@ let model = blank();
 model.bpm = 112;                   // a machine tempo: shorter bars, sooner changes
 let lane = null;                   // the pinned lane, or null
 let ledger = [];                   // what has been said, in order
+let topic = null;                  // a group of words being asked about
 
 /* ---------- the model reaches the engine ---------- */
 // the kit becomes a GENRE (kit.js toGenre) installed in the live table, and
@@ -109,6 +110,7 @@ function draw() {
   // this is and what their job in it is. So the questions come first, in the
   // order a drummer answers them, and everything else is what you say after
   // you have sat down.
+  let q = null;
   if (model.on) {
     const ds = decisions(model);
     const sheet = el("div", "dsheet");
@@ -123,7 +125,7 @@ function draw() {
     }
     if (sheet.childNodes.length) box.append(sheet);
 
-    const q = asking ? ds.find(d => d.id === asking) : nextAsk(model);
+    q = asking ? ds.find(d => d.id === asking) : nextAsk(model);
     if (q) {
       const ask = el("div", "dask");
       ask.append(el("h2", "dq", q.ask));
@@ -146,28 +148,12 @@ function draw() {
     }
   }
 
-  // WHAT IT IS DOING, in words — the transcript
-  const said = el("div", "dsaid");
-  if (!ledger.length) said.append(el("p", "dhint", "tap a word"));
-  for (const line of ledger.slice(-3)) said.append(el("p", "dline", line));
-  box.append(said);
-
-  // the pinned lane, if one is open
-  if (lane) {
-    const pin = el("div", "dpin");
-    const b = el("button", "dpinkey", LANEOF(lane) + " ✕");
-    b.type = "button";
-    b.addEventListener("click", () => { lane = null; push(false); draw(); });
-    pin.append(el("i", "dpl", "talking about the"), b,
-               el("i", "dpl", "· looping one bar so you hear it"));
-    box.append(pin);
-  }
-
-  // THE WORDS — ALL of them, grouped, with whatever is already true LIT.
-  // A word that would change nothing is still shown (it is the readout: the
-  // machine's state IS which words are lit); a pinned lane ADDS the bar's
-  // own counting rather than replacing the machine's words, so naming a
-  // hi-hat never strands you inside the hats.
+  // NOTHING BELOW THE PATTERN BUT QUESTIONS. The transcript and the wall of
+  // chips are gone: what you are looking at is the pattern, and what you are
+  // being asked is one question. Every word the machine knows is still
+  // reachable — the groups it used to print as headings are now the options
+  // of the last question ("anything else?"), so a word is two taps instead of
+  // a scroll past ninety dim buttons.
   const words = lane ? [...catalog(model, lane), ...catalog(model, null)]
                      : catalog(model, null);
   const groups = new Map();
@@ -175,19 +161,14 @@ function draw() {
     if (!groups.has(i.group)) groups.set(i.group, []);
     groups.get(i.group).push(i);
   }
-  // THE DRUMMER'S WORDS COME FIRST. They describe PLAYING rather than
-  // choosing, so they are what you reach for once a groove is down — and the
-  // bar you have open beats even those.
   const RANK = { "the bar": 0, "at the kit": 1, "the kit": 3, "take away": 4,
                  "the fills": 5, "the machine": 6, "the feel": 7, "the tempo": 8,
                  "start": 9 };
   const rank = (g) => (RANK[g] != null ? RANK[g] : g.startsWith("grooves") ? 2 : 10);
-  // BEFORE THE MACHINE IS ON there is exactly one thing to say, and burying
-  // it under a hundred dim words was the difference between "a new thing"
-  // and "the same wall as yesterday". A word that would change nothing is
-  // shown ONLY once the machine is playing — that is when a dim word is a
-  // readout rather than noise.
-  const scroll = el("div", "dscroll");
+  const ordered = [...groups.entries()].sort((a, b) => rank(a[0]) - rank(b[0]))
+                    .filter(([g]) => g !== "start");
+
+  // BEFORE THE MACHINE IS ON there is exactly one thing to say.
   if (!model.on) {
     const start = el("div", "dstart");
     start.append(el("p", "dwhat", "a drummer, sitting down. tap once and it starts asking."));
@@ -202,33 +183,79 @@ function draw() {
     box.append(start);
     return;
   }
-  scroll.append(el("i", "dg dgtop", "or say something specific"));
-  for (const [g, list] of [...groups.entries()].sort((a, b) => rank(a[0]) - rank(b[0]))) {
-    const wrap = el("div", "dgroup");
-    wrap.append(el("i", "dg", g));
+
+  // a group of words, asked. Saying one keeps you in the group — you are
+  // placing hits or trying kits, and one tap per visit was the old wall's
+  // other problem.
+  const askGroup = (g, list, close) => {
+    const ask = el("div", "dask");
+    ask.append(el("h2", "dq", GROUPQ[g] || g));
+    const row = el("div", "dopts");
     for (const i of list) {
-      const c = el("button", "dchip" + (i.active ? " on" : "") +
-                             (!i.changes && !i.active ? " dim" : ""), i.words[0]);
+      if (!i.changes && !i.active) continue;
+      const c = el("button", "dopt" + (i.active ? " on" : ""), i.words[0]);
       c.type = "button";
       if (!i.changes) c.disabled = true;
       c.addEventListener("click", () => {
-        // a LANE word pins that lane (and seeds it if it is empty)
         const laneId = i.id.startsWith("lane:") ? LANEWORDLANE(i.id) : null;
         const before = model;
         const line = says(model, i.id);
         model = say(model, i.id);
         if (model !== before) ledger.push(line);
         const wasLane = lane;
-        if (laneId) lane = laneId;
+        if (laneId) { lane = laneId; topic = "the bar"; }
         if (model !== before || lane !== wasLane) push(false);
         draw();
       });
-      wrap.append(c);
+      row.append(c);
     }
-    scroll.append(wrap);
+    ask.append(row);
+    const back = el("button", "dpinkey", close);
+    back.type = "button";
+    back.addEventListener("click", () => {
+      if (lane) { lane = null; push(false); }
+      topic = null; draw();
+    });
+    ask.append(back);
+    box.append(ask);
+  };
+
+  // a pinned lane IS a question — the bar's own counting, looping one bar
+  if (lane) {
+    askGroup("the bar", groups.get("the bar") || [],
+             "done with the " + LANEOF(lane) + " ✕");
+    return;
   }
-  box.append(scroll);
+  if (q) return;                       // one question at a time
+  if (topic && groups.has(topic)) { askGroup(topic, groups.get(topic), "back ✕"); return; }
+
+  // ...and when the interview is over, the LAST question is which of the
+  // machine's own subjects you want to talk about.
+  const ask = el("div", "dask");
+  ask.append(el("h2", "dq", "anything else?"));
+  const row = el("div", "dopts");
+  for (const [g] of ordered) {
+    const c = el("button", "dopt", GROUPQ[g] || g);
+    c.type = "button";
+    c.addEventListener("click", () => { topic = g; draw(); });
+    row.append(c);
+  }
+  ask.append(row);
+  box.append(ask);
 }
+
+// what each group of words is ASKING. A heading is a label; a question is an
+// invitation, and this page is a drummer talking.
+const GROUPQ = {
+  "the bar": "where does it go in the bar?",
+  "at the kit": "how are you playing it?",
+  "the kit": "what kit is this?",
+  "take away": "take something out?",
+  "the fills": "what about the fills?",
+  "the machine": "which machine?",
+  "the feel": "how does it feel?",
+  "the tempo": "how fast?",
+};
 const LANEWORDLANE = (id) => {
   const key = id.slice(5);
   const L = { hats: "h", openhats: "o", claps: "c", perc: "p", toms: "t",

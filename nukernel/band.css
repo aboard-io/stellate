@@ -1,0 +1,25 @@
+/* band.css — three seats and a form. What differs from one player's page:
+   you can see whose chair you are in, and the picture is the arrangement. */
+.dseats{flex:0 0 auto;display:flex;gap:6px}
+.dseat{appearance:none;cursor:pointer;flex:1 1 0;min-height:52px;padding:0 var(--sp-2);
+  border:1px solid var(--rule);border-radius:var(--r);background:var(--bg-key);
+  color:var(--ink-2);display:flex;flex-direction:column;align-items:flex-start;
+  justify-content:center;gap:1px}
+.dseat b{color:var(--ink);text-transform:uppercase;letter-spacing:.08em;font-size:var(--t-sm)}
+.dseat i{font-style:normal;font-size:var(--t-sm);opacity:.8}
+.dseat.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.dseat.on b{color:var(--on-accent)}
+.dseat.asking:not(.on){border-color:var(--accent)}
+/* the form: one block per section, the sounding one lit */
+.dsec{flex:1 1 0;min-width:70px;padding:var(--sp-2);border-radius:var(--r);
+  background:var(--bg-key);border:1px solid var(--rule);
+  display:flex;flex-direction:column;gap:2px}
+.dsec b{text-transform:uppercase;letter-spacing:.06em;font-size:var(--t-sm)}
+.dsec i{font-style:normal;font-size:var(--t-sm);color:var(--ink-2)}
+.dsec.now{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.dsec.now i{color:var(--on-accent);opacity:.85}
+.dgrid .drow{gap:6px}
+.dsec{cursor:pointer;text-align:left}
+.dsec.open{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.ddiff{font-size:var(--t-sm);color:var(--accent);font-style:normal}
+.dsec.now .ddiff{color:var(--on-accent)}
