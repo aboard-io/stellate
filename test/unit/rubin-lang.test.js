@@ -61,7 +61,7 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
   /* (c) every reachable sentence's effects name real vocabulary */
   {
     const shapes = new Set(["mix", "mixeq", "bpm", "secnum", "seceq", "secsend",
-                            "seckit", "secmot", "secper", "ops", "drums"]);
+                            "seckit", "secmot", "secper", "ops", "drums", "think"]);
     let sentences = 0;
     for (const scope of SCOPES) {
       const first = L.continuations([], scope);
@@ -138,6 +138,30 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
     const NO_CHORDS = { ...L.OPEN_CTX, parts: { bass: true, melody: true, chords: false } };
     ok(!L.parse(["make", "chords", "warmer"], "song", NO_CHORDS),
        "MAKE CHORDS WARMER compiled on a record with no chords");
+  }
+  /* (c2d) THINK — the genre system on the couch. MORE stacks, LESS unstacks,
+     LESS only where stacked, MORE not where already thinking it; every
+     THINKable word answers to a REAL anchor. */
+  {
+    const { GENRES } = require("../../nukernel/genres.js");
+    for (const [canon, g] of Object.entries(L.LEXICON.G))
+      ok(!!GENRES[g.anchor], "THINK " + canon + " names a missing anchor: " + g.anchor);
+    ok(!!L.parse(["think", "more", "punk"], "section"), "THINK MORE PUNK does not compile");
+    ok(!!L.parse(["think", "jazzy"], "song"), "THINK JAZZY (bare = more) does not compile");
+    const NOSTACK = { ...L.OPEN_CTX, stacked: {} };
+    ok(!L.parse(["think", "less", "pop"], "song", NOSTACK),
+       "THINK LESS POP compiled with no pop layer standing");
+    ok(!!L.parse(["think", "less", "pop"], "song", { ...L.OPEN_CTX, stacked: { clubpop: true } }),
+       "THINK LESS POP refused where a pop layer stands");
+    ok(!L.parse(["think", "more", "punk"], "song", { ...L.OPEN_CTX, stacked: { punk: true } }),
+       "THINK MORE PUNK offered where punk is already thinking");
+    ok(!L.parse(["make", "punk", "bigger"], "song"), "a genre took MAKE — genres are only THINKable");
+  }
+  /* (c2e) ADD DRUMS invents where a genre never had a kit (ctx.drumsOff covers
+     the kitless case; the apply layer's kit word "four" is the mechanism) */
+  {
+    const KITLESS = { ...L.OPEN_CTX, drumsOn: false, drumsOff: true };
+    ok(!!L.parse(["add", "drums"], "section", KITLESS), "ADD DRUMS refused on a kitless record");
   }
   /* (c3) every compiled sentence TRANSLATES: describeFx says something real */
   {

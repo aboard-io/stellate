@@ -90,7 +90,12 @@ function applyOne(e) {
       const prevKits = targets.map(b => b.kit);
       const prevMute = !!(MIXER && MIXER.drums && MIXER.drums.mute);
       if (e.on) {
-        for (const b of targets) if (b.kit === "nodrums") delete b.kit;
+        for (const b of targets) {
+          const kitted = Object.keys((GENRES[gid(b)] || {}).kit || {}).length > 0;
+          if (!kitted) b.kit = "four";            // the kit word that INVENTS lanes:
+                                                  // drums for a genre that never had any
+          else if (b.kit === "nodrums") delete b.kit;
+        }
         setMixOffset("drums", "mute", null);      // the other door drums leave through
       } else for (const b of targets) b.kit = "nodrums";
       commit("box");
@@ -99,6 +104,25 @@ function applyOne(e) {
         if (e.on && prevMute) setMixOffset("drums", "mute", true);
         commit("box");
       } };
+    }
+    case "think": {
+      const targets = aim.scope === "song"
+        ? SONG.filter(b => (b.stack || []).some(x => x.slots && x.slots.length)) : [secOf()];
+      const prevStacks = targets.map(b => b.stack.map(x => ({ ...x, slots: [...(x.slots || [])] })));
+      if (e.on) {
+        for (const b of targets) {
+          if (b.stack.some(x => x.g === e.g)) continue;
+          const slots = (b.stack[0].slots || []).slice(0, 1);
+          if (!slots.length) continue;            // a bed has no phrase to rethink
+          b.stack.push({ g: e.g, slots });
+        }
+      } else for (const b of targets) {
+        b.stack = [b.stack[0], ...b.stack.slice(1).filter(x => x.g !== e.g)];
+        if (b.focus != null) b.focus = Math.min(b.focus, b.stack.length - 1);
+      }
+      commit("box");
+      return { undo: () => { targets.forEach((b, i) => { b.stack = prevStacks[i];
+        if (b.focus != null) b.focus = Math.min(b.focus, b.stack.length - 1); }); commit("box"); } };
     }
     case "ops": {
       const targets = aim.scope === "song"
@@ -139,13 +163,14 @@ function ctxOf() {
     : [secOf()].filter(Boolean);
   const facts = { drumsOn: false, drumsOff: false,
     parts: { bass: false, melody: false, chords: false },
-    rev: 1, revMax: SENDORDER.length - 1, echo: 1, echoMax: SENDORDER.length - 1 };
+    rev: 1, revMax: SENDORDER.length - 1, echo: 1, echoMax: SENDORDER.length - 1,
+    stacked: {} };
   for (const sec of secs) {
     const g = GENRES[gid(sec)] || {};
     const kitted = Object.keys(g.kit || {}).length > 0;
     const has = kitted && sec.kit !== "nodrums";
     if (has) facts.drumsOn = true;
-    if (kitted && !has) facts.drumsOff = true;
+    if (!has) facts.drumsOff = true;         // missing OR never-had: ADD invents (kit "four")
     let keys = [];
     try { keys = partKeysOf(sec); } catch (e) { /* an empty box has no parts */ }
     for (const k of keys) {
@@ -153,6 +178,7 @@ function ctxOf() {
       else if (k.startsWith("pad")) facts.parts.chords = true;
       else if (k !== "drums") facts.parts.melody = true;
     }
+    for (const x of (sec.stack || []).slice(1)) facts.stacked[x.g] = true;
   }
   if (aim.scope !== "song" && secs[0]) {
     const i = SENDORDER.indexOf(secs[0].rev); facts.rev = i < 0 ? 1 : i;
@@ -221,14 +247,16 @@ export function draw() {
     // form — the lexicon lists are authored best-form-first.
     const oneEach = (role) => {
       const seen = new Set(), out = [];
-      const table = role === "verb" ? LEXICON.V : role === "subj" ? LEXICON.S : LEXICON.A;
+      const table = role === "verb" ? LEXICON.V : role === "subj" ? LEXICON.S
+        : role === "gen" ? Object.fromEntries(Object.entries(LEXICON.G).map(([k, g]) => [k, g.syns]))
+        : LEXICON.A;
       for (const [canon, syns] of Object.entries(table)) {
         const w = syns.find(x => next.has(x));
         if (w && !seen.has(canon)) { seen.add(canon); out.push(syns[0] !== w && next.has(syns[0]) ? syns[0] : w); }
       }
       return out;
     };
-    const groups = [["say", "verb"], ["about", "subj"], ["how", "adj"]];
+    const groups = [["say", "verb"], ["about", "subj"], ["like", "gen"], ["how", "adj"]];
     for (const [label, role] of groups) {
       const words = oneEach(role);
       if (!words.length) continue;

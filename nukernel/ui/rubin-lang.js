@@ -56,12 +56,47 @@ const A = {           // adjectives. canon -> synonyms
   open:     ["open", "opening", "blooming"],
   closed:   ["closed", "closing", "sinking"],
 };
+const G = {           // genres the couch can THINK toward -> the anchor that answers
+  punk:      { syns: ["punk", "punk rock"], anchor: "punk" },
+  pop:       { syns: ["pop", "pop music", "poppy"], anchor: "clubpop" },
+  rock:      { syns: ["rock", "rock and roll"], anchor: "rock" },
+  jazz:      { syns: ["jazz", "jazzy"], anchor: "jazz" },
+  funk:      { syns: ["funk", "funky"], anchor: "funk" },
+  disco:     { syns: ["disco"], anchor: "disco" },
+  techno:    { syns: ["techno"], anchor: "techno" },
+  acid:      { syns: ["acid", "acid house"], anchor: "acid" },
+  house:     { syns: ["house"], anchor: "house" },
+  dub:       { syns: ["dub", "dubby"], anchor: "dub" },
+  reggae:    { syns: ["reggae"], anchor: "reggae" },
+  gospel:    { syns: ["gospel", "church"], anchor: "gospel" },
+  blues:     { syns: ["blues", "bluesy"], anchor: "blues" },
+  soul:      { syns: ["soul", "soulful"], anchor: "blueeyedsoul" },
+  rnb:       { syns: ["r&b", "rnb"], anchor: "rnb" },
+  hiphop:    { syns: ["hip hop", "hip-hop", "rap", "boom bap"], anchor: "boombap" },
+  trap:      { syns: ["trap"], anchor: "trap" },
+  metal:     { syns: ["metal", "heavy metal"], anchor: "industrialmetal" },
+  folk:      { syns: ["folk", "folky"], anchor: "softfolk" },
+  country:   { syns: ["country"], anchor: "altcountry" },
+  ambient:   { syns: ["ambient", "atmospheric"], anchor: "ambient" },
+  motown:    { syns: ["motown"], anchor: "motown" },
+  dnb:       { syns: ["drum and bass", "jungle"], anchor: "dnb" },
+  vaporwave: { syns: ["vaporwave"], anchor: "vaporwave" },
+  shoegaze:  { syns: ["shoegaze", "wall of sound"], anchor: "shoegaze" },
+  newwave:   { syns: ["new wave"], anchor: "newwave" },
+  kraftwerk: { syns: ["kraftwerk", "robotic"], anchor: "kraftwerk" },
+  choir:     { syns: ["choir", "choral"], anchor: "spem" },
+  bossa:     { syns: ["bossa nova", "bossa"], anchor: "bossa" },
+  garage:    { syns: ["garage", "uk garage"], anchor: "garage" },
+};
 // one flat word -> {role, canon} map; multiword synonyms are single TOKENS
 // (a chip is a phrase, not a word — "bring up" is one tap)
 const WORDS = {};
 for (const [canon, syns] of Object.entries(V)) for (const w of syns) WORDS[w] = { role: "verb", canon };
 for (const [canon, syns] of Object.entries(S)) for (const w of syns) WORDS[w] = { role: "subj", canon };
 for (const [canon, syns] of Object.entries(A)) for (const w of syns) WORDS[w] = { role: "adj", canon };
+for (const [canon, g] of Object.entries(G)) for (const w of g.syns) WORDS[w] = WORDS[w] || { role: "gen", canon };
+// THINK, the genre verb ("think more punk", "think less pop")
+for (const w of ["think", "channel", "feel", "lean", "go a little"]) WORDS[w] = { role: "verb", canon: "think" };
 
 /* ---------- the semantics: (verb, subj, adj|null, scope) -> effects --------
    Effect shapes (the APPLY layer in ui/rubin.js lands each on its one writer):
@@ -90,7 +125,8 @@ const FADER = 2.5, SEND = 0.12, EQ = 3, BPMSTEP = 6;
 // of them (the gate's closure walk).
 export const OPEN_CTX = { drumsOn: true, drumsOff: true,
   parts: { bass: true, melody: true, chords: true },
-  rev: 1, revMax: 4, echo: 1, echoMax: 4 };
+  rev: 1, revMax: 4, echo: 1, echoMax: 4,
+  stacked: null };            // null = unknown: THINK both ways stays sayable
 
 function compileOne(verb, subj, adj, scope, ctx) {
   ctx = ctx || OPEN_CTX;
@@ -113,6 +149,21 @@ function compileOne(verb, subj, adj, scope, ctx) {
     }
     return [{ t: "mix", chan: "master", key, delta: dir * SEND }];
   }
+  // THINK MORE PUNK / THINK LESS POP — the genre system on the couch: MORE
+  // stacks the genre as a LAYER playing the authority's own phrase (the
+  // layer law hands it the box's harmony, so any anchor stacks safely);
+  // LESS removes a standing layer, and is only a sentence where one stands.
+  if (verb === "think") {
+    if (!G[subj]) return null;
+    const dir2 = adj === "less" || adj === "fewer" ? -1 : adj == null || adj === "more" ? 1 : 0;
+    if (!dir2) return null;
+    const anchor = G[subj].anchor;
+    if (dir2 > 0 && ctx.stacked && ctx.stacked[anchor]) return null;   // already thinking it
+    if (dir2 < 0 && ctx.stacked && !ctx.stacked[anchor]) return null;  // nothing to unthink
+    return [{ t: "think", g: anchor, on: dir2 > 0 }];
+  }
+  if (G[subj]) return null;                 // a genre is only THINKable
+
   // ADD DRUMS / CUT THE DRUMS — presence, not level ("if there aren't drums
   // and I say add drums then you need to add drums"): ADD reopens every door
   // the drums left through (a nodrums kit word, a board mute); CUT writes
@@ -196,7 +247,7 @@ export function parse(tokens, scope, ctx) {
   if (roles.some(r => !r) || roles[0].role !== "verb") return null;
   let subj = null, adj = null;
   for (const r of roles.slice(1)) {
-    if (r.role === "subj" && !subj) subj = r.canon;
+    if ((r.role === "subj" || r.role === "gen") && !subj) subj = r.canon;
     else if (r.role === "adj" && !adj) adj = r.canon;
     else return null;                       // two subjects, two adjectives: not a sentence
   }
@@ -251,6 +302,9 @@ export function describeFx(fx, scope) {
       case "secper": return "this section's period → " + e.word;
       case "ops": return (scope === "song" ? "every section: " : "this section: ") +
         "notes op “" + e.add + "”";
+      case "think": return e.on
+        ? (scope === "song" ? "every section: " : "this section: ") + e.g + " layered on the phrase"
+        : "the " + e.g + " layer comes off";
       case "drums": return e.on
         ? "drums back in (kit restored, board unmuted)"
         : (scope === "song" ? "every section's kit → nodrums" : "this section's kit → nodrums");
@@ -259,4 +313,4 @@ export function describeFx(fx, scope) {
   }).join(" · ");
 }
 
-export const LEXICON = { V, S, A, WORDS };
+export const LEXICON = { V, S, A, G, WORDS };
