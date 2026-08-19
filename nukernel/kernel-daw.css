@@ -1609,6 +1609,10 @@ h1 em{font-style:normal;color:var(--ink)}
 .rseat{color:var(--ink-2);font-size:var(--t-sm)}
 .rseat b{color:var(--ink);font-weight:600;text-transform:uppercase;
   letter-spacing:.04em;margin-right:.35em}
+.rnothing{appearance:none;cursor:pointer;min-height:40px;padding:0 var(--sp-3);
+  border:1px dashed var(--rule);border-radius:var(--r);background:transparent;
+  color:var(--ink-2);margin-left:auto}
+.rnothing:hover{border-color:var(--accent);color:var(--ink)}
 .rsent{display:flex;align-items:center;gap:var(--sp-3);min-height:64px;
   padding:var(--sp-2) var(--sp-3);border-radius:var(--r);background:var(--bg-sunk)}
 .rsent .rwords{flex:1 1 auto;font-size:clamp(20px,4.5vw,34px);font-weight:700;

@@ -46,13 +46,13 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
       [["bring up", "echo", "on drums"], "song", "mix"],
       [["add", "more", "compression"], "song", "mix"],
       [["make", "the kick", "huge"], "song", "mix"],
-      [["redo", "the melody"], "song", "redo"],
+      [["make", "the melody", "different"], "song", "redo"],
       [["make", "everything", "funkier"], "song", "think"],
       [["make", "the melody", "piano"], "song", "cast"],
       [["make", "guitar", "distorted"], "song", "fx"],
       [["make", "vocals", "crunch"], "song", "fx"],
       [["add", "distortion", "on guitar"], "song", "fx"],
-      [["think", "more", "punk"], "section", "think"],
+      [["add", "more", "punk"], "section", "think"],
     ];
     for (const [words, scope, kind] of cases) {
       const p = L.parse(words, scope);
@@ -79,13 +79,13 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
   /* (a3) VERB AGREEMENT — the survey's own findings, held as law */
   for (const [words, why] of [
       [["bring up", "drums", "bigger"], "an adjective sentence is MADE, not brought up"],
-      [["bring up", "punk"], "a genre is thought/made/added/cut, never brought up"],
+
       [["add", "sparser", "rock"], "ADD disagrees with a shrinking adjective"],
-      [["bring up", "distortion", "on guitar"], "an effect is added or cut"],
-      [["bring up", "notes"], "notes are added or cut"],
+
+
       [["add", "shoegaze", "more", "everything"], "a genre already means the whole node"],
       [["add", "shoegaze", "everything"], "a genre takes no pronoun except under MAKE"],
-      [["think", "punk", "everything"], "same, for THINK"]])
+      [["make", "punk", "everything", "more"], "over the tap budget"]])
     ok(!L.parse(words, "song"), words.join(" ").toUpperCase() + " still compiles — " + why);
 
   /* (b) THE EXACTNESS LAW, walked to closure at both scopes */
@@ -125,7 +125,7 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
     const shapes = new Set(["mix", "mixeq", "bpm", "secnum", "seceq", "secsend",
                             "seckit", "secmot", "secper", "ops", "drums", "think",
                             "fx", "cast", "redo", "hire", "fire", "secbass",
-                            "groove", "swing"]);
+                            "groove", "swing", "pipes", "oct", "insert", "drop", "secfx"]);
     let sentences = 0;
     for (const scope of SCOPES) {
       const first = L.continuations([], scope);
@@ -182,13 +182,18 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
   }
   /* (c2b) ADD DRUMS is presence, BRING UP is level — the two must differ */
   {
-    const add = L.parse(["add", "drums"], "song");
-    const up = L.parse(["bring up", "drums"], "song");
-    ok(add && add.fx[0].t === "drums" && add.fx[0].on === true, "ADD DRUMS is not presence");
-    ok(!!L.parse(["cut", "the drums"], "section") &&
-       L.parse(["cut", "the drums"], "section").fx[0].on === false, "CUT THE DRUMS is not removal");
+    // ADD RESOLVES AGAINST THE RECORD: hire what is missing, lift what plays
+    const NOD = { ...L.OPEN_CTX, drumsOn: false, drumsOff: true };
+    const YESD = { ...L.OPEN_CTX, drumsOn: true, drumsOff: false };
+    const add = L.parse(["add", "drums"], "song", NOD);
+    const up = L.parse(["add", "drums"], "song", YESD);
+    ok(add && add.fx[0].t === "drums" && add.fx[0].on === true,
+       "ADD DRUMS on a drumless record is not presence");
     ok(up && up.fx[0].t === "mix" && up.fx[0].key === "fader",
-       "BRING UP DRUMS stopped being the fader");
+       "ADD DRUMS on a drumming record is not more of them");
+    ok(!!L.parse(["cut", "the drums"], "section", YESD) &&
+       L.parse(["cut", "the drums"], "section", YESD).fx[0].on === false,
+       "CUT THE DRUMS is not removal");
   }
   /* (c2c) THE GRAMMAR READS THE RECORD: no drums means no drum sentences
      except ADD DRUMS; drums present means ADD DRUMS is not offered; a send at
@@ -198,10 +203,11 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
     const ALL_DRUMS = { ...L.OPEN_CTX, drumsOn: true, drumsOff: false };
     ok(!L.parse(["make", "drums", "louder"], "song", NO_DRUMS),
        "MAKE DRUMS LOUDER compiled with no drums on the record");
-    ok(!L.parse(["bring up", "drums"], "song", NO_DRUMS),
-       "BRING UP DRUMS compiled with no drums on the record");
+    ok(L.parse(["add", "drums"], "song", NO_DRUMS).fx[0].t === "drums",
+       "ADD DRUMS on a drumless record must HIRE, not fade");
     ok(!!L.parse(["add", "drums"], "song", NO_DRUMS), "ADD DRUMS refused where drums are missing");
-    ok(!L.parse(["add", "drums"], "song", ALL_DRUMS), "ADD DRUMS offered where drums already play");
+    ok(L.parse(["add", "drums"], "song", ALL_DRUMS).fx[0].t === "mix",
+       "ADD DRUMS where drums play must be MORE of them");
     ok(!!L.parse(["cut", "the drums"], "song", ALL_DRUMS), "CUT THE DRUMS refused where drums play");
     ok(!L.parse(["cut", "the drums"], "song", NO_DRUMS), "CUT THE DRUMS offered with nothing to cut");
     ok(!L.continuations(["make"], "song", NO_DRUMS).has("drums"),
@@ -221,15 +227,15 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
     const { GENRES } = require("../../nukernel/genres.js");
     for (const [canon, g] of Object.entries(L.LEXICON.G))
       ok(!!GENRES[g.anchor], "THINK " + canon + " names a missing anchor: " + g.anchor);
-    ok(!!L.parse(["think", "more", "punk"], "section"), "THINK MORE PUNK does not compile");
-    ok(!!L.parse(["think", "jazzy"], "song"), "THINK JAZZY (bare = more) does not compile");
+    ok(!!L.parse(["add", "more", "punk"], "section"), "ADD MORE PUNK does not compile");
+    ok(!!L.parse(["make", "it", "jazzy"], "song"), "MAKE IT JAZZY does not compile");
     const NOSTACK = { ...L.OPEN_CTX, stacked: {} };
-    ok(!L.parse(["think", "less", "pop"], "song", NOSTACK),
-       "THINK LESS POP compiled with no pop layer standing");
-    ok(!!L.parse(["think", "less", "pop"], "song", { ...L.OPEN_CTX, stacked: { clubpop: true } }),
-       "THINK LESS POP refused where a pop layer stands");
-    ok(!L.parse(["think", "more", "punk"], "song", { ...L.OPEN_CTX, stacked: { punk: true } }),
-       "THINK MORE PUNK offered where punk is already thinking");
+    ok(!L.parse(["cut", "pop"], "song", NOSTACK),
+       "CUT POP compiled with no pop layer standing");
+    ok(!!L.parse(["cut", "pop"], "song", { ...L.OPEN_CTX, stacked: { clubpop: true } }),
+       "CUT POP refused where a pop layer stands");
+    ok(!L.parse(["add", "punk"], "song", { ...L.OPEN_CTX, stacked: { punk: true } }),
+       "ADD PUNK offered where punk is already layered");
     ok(!L.parse(["make", "punk", "bigger"], "song"), "a genre took MAKE — genres are only THINKable");
   }
   /* (c2e) ADD DRUMS invents where a genre never had a kit (ctx.drumsOff covers
@@ -243,7 +249,7 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
   for (const [words, want] of [[["add", "shoegaze", "more"], "ADD MORE SHOEGAZE"],
       [["cut", "notes", "high"], "CUT HIGH NOTES"],
       [["add", "notes", "more"], "ADD MORE NOTES"],
-      [["think", "punk", "more"], "THINK MORE PUNK"]]) {
+      [["add", "punk", "more"], "ADD MORE PUNK"]]) {
     const p = L.parse(words, "song");
     ok(p && p.text === want, words.join(" ") + " prints as " + (p ? p.text : "NO") + ", want " + want);
   }
@@ -268,7 +274,8 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
       insts: { guitar: true, piano: true, organ: true, strings: true, horns: true, bells: true } };
     for (const w of ["bass", "chords", "the vocals", "piano", "guitar", "strings"]) {
       ok(!!L.parse(["add", w], "song", EMPTY), "ADD " + w.toUpperCase() + " is refused on an empty record");
-      ok(!L.parse(["add", w], "song", FULL), "ADD " + w.toUpperCase() + " is offered where it already plays");
+      ok(L.parse(["add", w], "song", FULL).fx[0].t === "mix",
+         "ADD " + w.toUpperCase() + " where it plays must be MORE of it");
       ok(!!L.parse(["cut", w], "song", FULL), "CUT " + w.toUpperCase() + " is refused where it plays");
       ok(!L.parse(["cut", w], "song", EMPTY), "CUT " + w.toUpperCase() + " is offered with nothing to cut");
     }
@@ -324,6 +331,19 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
     for (const w of Object.keys(L.LEXICON.ONWORD))
       ok(/^on /.test(w), "on-chip \"" + w + "\" does not read as a phrase");
   }
+  /* (c5) THREE VERBS. The whole language speaks with add / cut / make, and
+     the first tap is never the interesting decision. */
+  {
+    ok(Object.keys(L.LEXICON.V).length === 3,
+       "the verb count drifted to " + Object.keys(L.LEXICON.V).join("/"));
+    for (const v of ["add", "cut", "make"])
+      ok(!!L.LEXICON.V[v], "the verb \"" + v + "\" is missing");
+    // and every sentence in the language opens with one of them
+    const first = L.continuations([], "song");
+    for (const w of first) ok(["add", "cut", "make"].includes(L.LEXICON.WORDS[w].canon),
+      "the tray opens with \"" + w + "\", which is not one of the three verbs");
+  }
+
   /* (d) the cap */
   ok(L.MAX_CMDS === 20, "twenty commands per node is the law (got " + L.MAX_CMDS + ")");
 

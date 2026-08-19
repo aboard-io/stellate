@@ -19,25 +19,30 @@
 
 /* ---------- the lexicon ---------- */
 const V = {
-  up:   ["bring up", "turn up", "push", "boost", "raise", "lift", "pump up", "crank", "up"],
-  down: ["bring down", "turn down", "pull back", "lower", "drop", "ease", "back off", "down"],
-  more: ["add", "add more", "give me more", "more", "double", "stack"],
-  less: ["cut", "remove", "strip", "lose", "kill", "less", "fewer", "thin out", "take out"],
-  make: ["make", "get", "i want", "make it", "let it be"],
-  think: ["think", "channel", "feel", "lean"],
-  redo: ["redo", "rewrite", "try another", "flip"],
+  // THREE VERBS, and the whole language. ADD and CUT are not levels — they
+  // are DIRECTION, resolved against the record: add a thing that is missing
+  // and it is hired, add a thing that is playing and there is more of it.
+  // MAKE carries every quality, every genre and every instruction to a
+  // player. Everything the couch used to spell with seven verbs says itself
+  // with these three, which is what "push towards quick resolution" means:
+  // the first tap is almost never the interesting decision.
+  add: ["add", "give", "insert", "bring up", "more", "boost", "push", "raise",
+        "lift", "crank", "double", "stack", "give me more", "put in"],
+  cut: ["cut", "drop", "lose", "kill", "take out", "bring down", "less",
+        "lower", "pull back", "ease", "strip", "remove", "thin out"],
+  make: ["make", "get", "i want", "make it", "let it be", "keep it"],
 };
 const S = {
   drums:  ["drums", "the drums", "kit", "the kit", "beat", "the beat", "percussion"],
   bass:   ["bass", "the bass", "low end", "the bottom"],
   melody: ["melody", "the melody", "lead", "the lead", "the tune", "top line", "the hook"],
-  chords: ["chords", "the chords", "pads", "the pad", "harmony", "the bed"],
+  chords: ["pad", "pads", "the pad", "chords", "the chords", "harmony", "the bed"],
   vocals: ["vocals", "the vocals", "the voice", "the singer", "vox"],
   notes:  ["notes", "the notes"],
   reverb: ["reverb", "the reverb", "verb", "space", "the room", "air"],
   echo:   ["echo", "the echo", "delay", "the delay", "repeats"],
   compression: ["compression", "glue", "squash", "comp"],
-  song:   ["everything", "it", "it all", "the song", "the whole thing", "the record", "the track"],
+  song:   ["it", "everything", "it all", "the song", "the whole thing", "the record", "the track"],
 };
 const U = {
   kick:  { syns: ["kick", "the kick", "kick drum", "bass drum"], unit: "kick" },
@@ -46,11 +51,33 @@ const U = {
 };
 const I = {
   guitar:  { syns: ["guitar", "the guitar", "guitars"], chan: "guitar", cast: "clean_guitar" },
-  piano:   { syns: ["piano", "the piano", "keys"], chan: "piano", cast: "yamaha_grand_piano" },
+  piano:   { syns: ["piano", "the piano", "keys", "a key"], chan: "piano", cast: "yamaha_grand_piano" },
   organ:   { syns: ["organ", "the organ"], chan: "organ", cast: "rock_organ" },
   strings: { syns: ["strings", "the strings"], chan: "strings", cast: "slow_strings" },
   horns:   { syns: ["horns", "brass", "the horns"], chan: "horns", cast: "brass_section" },
   bells:   { syns: ["bells", "vibes"], chan: "bells", cast: "vibraphone" },
+};
+// THINGS A PART CAN BE GIVEN — the phrase operators and pipes, as nouns the
+// couch can add: ADD ARPEGGIOS, ADD ECHOES, ADD HARMONIES.
+const GIVE = {
+  arpeggios: { syns: ["arpeggios", "an arpeggio"], fx: [{ t: "ops", add: "rep4" }, { t: "pipes", set: "strum" }] },
+  harmonies: { syns: ["harmonies", "thirds"], fx: [{ t: "pipes", set: "3rds" }] },
+  sixths:    { syns: ["sixths"], fx: [{ t: "pipes", set: "6ths" }] },
+  echoes:    { syns: ["echoes", "a canon"], fx: [{ t: "pipes", set: "echo" }] },
+  strum:     { syns: ["a strum"], fx: [{ t: "pipes", set: "strum" }] },
+  breath:    { syns: ["breath", "space between notes"], fx: [{ t: "pipes", set: "breathe" }] },
+  slides:    { syns: ["slides"], fx: [{ t: "ops", add: "slides" }] },
+};
+// SECTIONS, as things you insert: INSERT A SOLO · ADD A CHORUS
+const SEC = {
+  solo:      { syns: ["a solo", "a guitar solo"], role: "solo" },
+  chorus:    { syns: ["a chorus"], role: "chorus" },
+  verse:     { syns: ["a verse"], role: "verse" },
+  bridge:    { syns: ["a bridge"], role: "bridge" },
+  breakdown: { syns: ["a breakdown"], role: "breakdown" },
+  drop:      { syns: ["a drop"], role: "drop" },
+  intro:     { syns: ["an intro"], role: "intro" },
+  outro:     { syns: ["an outro"], role: "outro" },
 };
 const A = {
   bigger:   ["bigger", "big", "fatter", "fat", "huge", "massive", "thicker"],
@@ -69,8 +96,13 @@ const A = {
   faster:   ["faster", "quicker", "uptempo"],
   slower:   ["slower", "lazier", "laid back"],
   busier:   ["busier", "busy", "wilder"],
-  simpler:  ["simpler", "simple", "sparse", "minimal"],
+  simpler:  ["simpler", "simple", "sparse"],
   open:     ["open", "opening", "blooming"],
+  different: ["different", "new", "another way"],
+  minimal:  ["minimalist", "minimal", "spare"],
+  doubled:  ["doubled", "twice"],
+  lower:    ["an octave lower", "deeper down"],
+  higher:   ["an octave higher", "up an octave"],
   closed:   ["closed", "closing", "sinking"],
 };
 // HOW THE PLAYERS PLAY — the direction a producer gives a musician, in that
@@ -181,6 +213,8 @@ for (const [c, syns] of Object.entries(A)) for (const w of syns) put(w, "adj", c
 for (const [c, g] of Object.entries(FXA)) for (const w of g.syns) put(w, "fxadj", c);
 for (const [c, syns] of Object.entries(FXN)) for (const w of syns) put(w, "fxn", c);
 for (const [c, g] of Object.entries(G)) for (const w of g.syns) put(w, "gen", c);
+for (const [c, g] of Object.entries(GIVE)) for (const w of g.syns) put(w, "give", c);
+for (const [c, g] of Object.entries(SEC)) for (const w of g.syns) put(w, "sect", c);
 for (const [c, syns] of Object.entries(BASSWORD)) for (const w of syns) put(w, "bassadj", c);
 for (const [c, syns] of Object.entries(KITWORD)) for (const w of syns) put(w, "kitadj", c);
 for (const [c, syns] of Object.entries(FEELSYN)) for (const w of syns) put(w, "feeladj", c);
@@ -195,6 +229,7 @@ for (const c of ["drums", "bass", "melody", "chords", "vocals"])
   onTok("on " + (c === "vocals" ? "the vocals" : c), "subj", c);
 for (const [c, g] of Object.entries(U)) onTok("on the " + c, "unit", c);
 for (const [c] of Object.entries(I)) onTok("on " + c, "inst", c);
+for (const [c, g] of Object.entries(SEC)) onTok("on the " + c, "sect", c);
 // A WORD MAY WEAR TWO HATS. "more"/"less" are verbs in the first slot and
 // adjectives after one (THINK MORE PUNK, ADD MORE NOTES), and WORDS is
 // first-come — so the alternate reading is kept beside it and slots() reaches
@@ -210,6 +245,7 @@ export const OPEN_CTX = {
   insts: null,          // null = unknown: every instrument subject sayable
   fx: null,             // null = unknown: adding a chip is sayable, removing is not
   stacked: null,        // null = unknown: THINK both ways sayable
+  sections: null,       // null = unknown: every section kind addressable
   rev: 1, revMax: 4, echo: 1, echoMax: 4,
 };
 
@@ -239,8 +275,7 @@ function compile(q, scope, ctx) {
   ctx = ctx || OPEN_CTX;
   const sec = scope !== "song";
   const n = q.nominal;
-  const dir = q.verb === "up" || q.verb === "more" ? 1
-    : q.verb === "down" || q.verb === "less" ? -1 : 0;
+  const dir = q.verb === "add" ? 1 : q.verb === "cut" ? -1 : 0;
 
   /* THINK MORE PUNK · MAKE EVERYTHING FUNKIER */
   if (q.gen) {
@@ -258,29 +293,43 @@ function compile(q, scope, ctx) {
     if (adjD === null) return null;              // any other adjective: not a genre sentence
     // ADD takes MORE, CUT takes LESS — "ADD SPARSER ROCK" was the survey's
     // funniest nonsense and it compiled cleanly
-    if (q.verb === "more" && adjD < 0) return null;
-    if (q.verb === "less" && adjD > 0) return null;
+    if (q.verb === "add" && adjD < 0) return null;
+    if (q.verb === "cut" && adjD > 0) return null;
     // VERB AGREEMENT: a genre is THOUGHT, MADE, ADDED or CUT — never "brought
     // up" (the survey's own finding: BRING UP PUNK read as nonsense while
     // compiling perfectly).
-    const dd = q.verb === "less" ? -1 : q.verb === "more" ? 1
-      : (q.verb === "think" || q.verb === "make") ? (adjD || 1) : 0;
+    const dd = q.verb === "cut" ? -1 : q.verb === "add" ? 1
+      : q.verb === "make" ? (adjD || 1) : 0;
     if (!dd) return null;
     const anchor = G[q.gen].anchor;
     if (dd > 0 && ctx.stacked && ctx.stacked[anchor]) return null;
     if (dd < 0 && ctx.stacked && !ctx.stacked[anchor]) return null;
     return [{ t: "think", g: anchor, on: dd > 0 }];
   }
-  if (q.verb === "think") return null;
 
-  /* REDO THE MELODY */
-  if (q.verb === "redo") {
-    if (q.adj || q.fxadj || q.fxn || q.glue || q.instAdj) return null;
+  /* MAKE THE MELODY DIFFERENT — what REDO used to be its own verb for */
+  if (q.adj === "different") {
+    if (q.verb !== "make" || q.fxadj || q.fxn || q.glue || q.instAdj || q.gen || q.play) return null;
     if (!n || n.kind !== "subj") return null;
     if (n.canon !== "melody" && n.canon !== "notes" && n.canon !== "song") return null;
     if (n.canon === "melody" && !ctx.parts.melody) return null;
     return [{ t: "redo" }];
   }
+  /* ADD ARPEGGIOS · ADD HARMONIES · ADD ECHOES — a thing a part is given */
+  if (n && n.kind === "give") {
+    if (q.adj || q.fxadj || q.fxn || q.glue || q.instAdj || q.gen || q.play) return null;
+    if (!dir) return null;
+    return dir > 0 ? GIVE[n.canon].fx.map(e => ({ ...e }))
+      : GIVE[n.canon].fx.some(e => e.t === "pipes") ? [{ t: "pipes", set: "off" }] : null;
+  }
+  /* INSERT A SOLO · ADD A CHORUS — the arrangement itself */
+  if (n && n.kind === "sect") {
+    if (q.adj || q.fxadj || q.fxn || q.glue || q.instAdj || q.gen || q.play) return null;
+    if (dir > 0) return [{ t: "insert", role: SEC[n.canon].role, canon: n.canon }];
+    if (ctx.sections && !ctx.sections[SEC[n.canon].role]) return null;
+    return [{ t: "drop", role: SEC[n.canon].role, canon: n.canon }];
+  }
+
   /* HOW THE PLAYERS PLAY: MAKE BASS SLAPPIER · MAKE DRUMS SHUFFLING ·
      MAKE IT SWINGING — the musician's own vocabulary, straight onto the
      sequencer's operators. */
@@ -303,13 +352,14 @@ function compile(q, scope, ctx) {
   if (q.play) return null;
 
   /* HIRING: ADD BASS · ADD PIANO · ADD CHORDS — the couch builds a band */
-  if ((q.verb === "more" || q.verb === "less") && !q.adj && !q.glue && !q.fxadj &&
-      !q.fxn && !q.instAdj && !q.gen && n) {
+  if (dir && !q.adj && !q.glue && !q.fxadj && !q.fxn && !q.instAdj && !q.gen && !q.play && n) {
     const hirePart = (n.kind === "inst") ? (["strings", "organ"].includes(n.canon) ? "chords" : "melody")
       : (n.kind === "subj" && ["melody", "chords", "vocals", "bass"].includes(n.canon)) ? n.canon : null;
     if (hirePart && n.canon !== "drums") {
       const there = present(n, ctx);
-      if (q.verb === "more") return there ? null
+      // ADD resolves: hire what is missing, lift what is already playing
+      if (dir > 0) return there
+        ? [{ t: "mix", chan: chanOf(n), key: "fader", delta: FADER }]
         : [{ t: "hire", part: hirePart, id: n.kind === "inst" ? I[n.canon].cast : null,
              what: n.canon }];
       return there ? [{ t: "fire", part: hirePart, what: n.canon,
@@ -322,6 +372,13 @@ function compile(q, scope, ctx) {
     const target = q.onNominal;
     if (!target || !present(target, ctx) || q.adj || q.instAdj) return null;
     if (!n && !q.fxn) return null;
+    if (target.kind === "sect") {
+      if (!q.fxn || !dir) return null;
+      // ...and only a section the record HAS ("add distortion on the chorus"
+      // compiled cleanly against a record with no chorus and moved nothing)
+      if (ctx.sections && !ctx.sections[SEC[target.canon].role]) return null;
+      return [{ t: "secfx", role: SEC[target.canon].role, chip: FXA[q.fxn].chip, on: dir > 0 }];
+    }
     const chan = chanOf(target);
     if (!chan || chan === "master") return null;
     if (n && n.kind === "subj" && (n.canon === "reverb" || n.canon === "echo")) {
@@ -335,7 +392,6 @@ function compile(q, scope, ctx) {
     }
     if (q.fxn) {
       // an effect is ADDED or CUT, never "brought up" (survey again)
-      if (q.verb !== "more" && q.verb !== "less") return null;
       if (!dir) return null;
       const chip = FXA[q.fxn].chip;
       if (dir > 0 && hasChip(ctx, chan, chip)) return null;
@@ -387,16 +443,20 @@ function compile(q, scope, ctx) {
   }
 
   /* ADD DRUMS / CUT THE DRUMS — presence */
-  if (n.kind === "subj" && n.canon === "drums" && (q.verb === "more" || q.verb === "less") && !q.adj)
-    return q.verb === "more" ? (ctx.drumsOff ? [{ t: "drums", on: true }] : null)
-                             : (ctx.drumsOn ? [{ t: "drums", on: false }] : null);
+  if (n.kind === "subj" && n.canon === "drums" && dir && !q.adj)
+    return dir > 0 ? (ctx.drumsOff ? [{ t: "drums", on: true }]
+                                   : [{ t: "mix", chan: "drums", key: "fader", delta: FADER }])
+                   : (ctx.drumsOn ? [{ t: "drums", on: false }] : null);
   if (!present(n, ctx)) return null;
 
   const chan = chanOf(n);
   const isSong = n.kind === "subj" && n.canon === "song";
 
-  /* BRING UP THE DRUMS / PUSH THE KICK — level */
-  if ((q.verb === "up" || q.verb === "down") && !q.adj) {
+  /* ADD / CUT a drum PIECE or the record itself — level, and for a piece a
+     CUT takes the lane out (the kit has an operator for exactly that) */
+  if (dir && !q.adj) {
+    if (n.kind === "unit" && dir < 0)
+      return [{ t: "seckit", word: { kick: "nokick", hats: "nohats", snare: "snareonly" }[n.canon] }];
     if (isSong) return sec ? [{ t: "secnum", key: "fader", delta: dir * FADER }]
                            : [{ t: "mix", chan: "master", key: "fader", delta: dir * FADER }];
     if (!chan) return null;
@@ -405,20 +465,20 @@ function compile(q, scope, ctx) {
 
   /* NOTES */
   if (n.kind === "subj" && n.canon === "notes") {
-    if (q.verb !== "more" && q.verb !== "less") return null;   // ADD/CUT notes; nothing is "brought up"
-    if (q.verb === "more" && (!q.adj || q.adj === "more")) return [{ t: "ops", add: "dens2" }];
-    if (q.verb === "less" && (!q.adj || q.adj === "fewer")) return [{ t: "ops", add: "thin2" }];
+    if (!dir) return null;
+    if (dir > 0 && (!q.adj || q.adj === "more")) return [{ t: "ops", add: "dens2" }];
+    if (dir < 0 && (!q.adj || q.adj === "fewer")) return [{ t: "ops", add: "thin2" }];
     if (q.adj === "high")
-      return (q.verb === "less" || q.verb === "down")
+      return dir < 0
         ? [{ t: "ops", add: "tight" }, sec ? { t: "seceq", band: "hi", delta: -EQ }
                                            : { t: "mixeq", chan: "master", band: "hi", delta: -EQ }]
-        : (q.verb === "more" || q.verb === "up")
+        : dir > 0
         ? [{ t: "ops", add: "wide" }, sec ? { t: "seceq", band: "hi", delta: EQ }
                                           : { t: "mixeq", chan: "master", band: "hi", delta: EQ }] : null;
     if (q.adj === "low")
-      return (q.verb === "less" || q.verb === "down")
+      return dir < 0
         ? [sec ? { t: "seceq", band: "lo", delta: -EQ } : { t: "mixeq", chan: "master", band: "lo", delta: -EQ }]
-        : (q.verb === "more" || q.verb === "up")
+        : dir > 0
         ? [sec ? { t: "seceq", band: "lo", delta: EQ } : { t: "mixeq", chan: "master", band: "lo", delta: EQ }] : null;
     return null;
   }
@@ -454,6 +514,11 @@ function compile(q, scope, ctx) {
     case "busier":   return n.canon === "drums" ? [{ t: "seckit", word: "busy" }] : null;
     case "simpler":  return n.canon === "drums" ? [{ t: "seckit", word: "sparse" }]
                         : isSong ? [{ t: "ops", add: "thin2" }] : null;
+    case "minimal":  return [{ t: "ops", add: "thin2" }, ...(n.canon === "drums"
+                        ? [{ t: "seckit", word: "sparse" }] : [])];
+    case "doubled":  return [{ t: "pipes", set: "3rds" }];
+    case "lower":    return [{ t: "oct", by: -1 }];
+    case "higher":   return [{ t: "oct", by: 1 }];
     case "open":     return isSong ? [{ t: "secmot", word: "open" }] : null;
     case "closed":   return isSong ? [{ t: "secmot", word: "close" }] : null;
     default: return null;
@@ -478,6 +543,10 @@ function slots(tokens) {
       const t = ONWORD[r.canon];
       q.glue = true; q.onNominal = { kind: t.kind, canon: t.canon };
       afterOn = true; continue;
+    }
+    if (r.role === "give" || r.role === "sect") {
+      if (q.nominal || afterOn) return null;
+      q.nominal = { kind: r.role, canon: r.canon }; continue;
     }
     if (r.role === "subj" || r.role === "unit" || r.role === "inst") {
       const nom = { kind: r.role, canon: r.canon };
@@ -614,6 +683,13 @@ export function describeFx(fx, scope) {
       case "think": return e.on
         ? (scope === "song" ? "every section: " : "this section: ") + e.g + " layered on the phrase"
         : "the " + e.g + " layer comes off";
+      case "pipes": return (scope === "song" ? "every section" : "this section") +
+        (e.set === "off" ? " stops its pipes" : ": the " + e.set + " pipe on the notes");
+      case "oct": return (scope === "song" ? "every section" : "this section") +
+        "'s line moves an octave " + (e.by > 0 ? "up" : "down");
+      case "insert": return "a " + e.role + " section goes in after this one";
+      case "drop": return "the " + e.role + " sections come out";
+      case "secfx": return "every " + e.role + " takes the " + e.chip + " chip";
       case "secbass": return (scope === "song" ? "every section" : "this section") +
         "'s bass plays " + e.op;
       case "groove": return "the record's groove → " + e.word;
@@ -629,5 +705,5 @@ export function describeFx(fx, scope) {
   }).join(" · ");
 }
 
-export const LEXICON = { V, S, U, I, A, FXA, FXN, G, ONWORD,
+export const LEXICON = { V, S, U, I, A, FXA, FXN, G, GIVE, SEC, ONWORD,
   BASSWORD, KITWORD, FEELSYN, WORDS };

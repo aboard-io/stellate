@@ -7,11 +7,12 @@
 // each retractable (tap it in the ledger). WRITE or a load clears the couch —
 // the words were about that record.
 import { parse, continuations, describeFx, MAX_CMDS, LEXICON } from "./rubin-lang.js";
-import { SONG, SLOTS, bpm, setBpm, on, emit, commit, MIXER, setMixOffset,
+import { SONG, SLOTS, bpm, setBpm, on, emit, commit, MIXER, setMixOffset, adoptSong,
          POOL, setPoolChair, setGroove, setSwing, GROOVE, SWING } from "./state.js";
-import { NuFields, GENRES, DRUMKITS, BASS_INSTR, BASSSYNTH, partChairLabel } from "./deps.js";
+import { NuFields, GENRES, DRUMKITS, BASS_INSTR, BASSSYNTH, partChairLabel,
+         NuSong, MAX_FX } from "./deps.js";
 import { partKeysOf, voiceRoster } from "../audio/desk.js";
-import { gid, voiceOwners, kitOf, genreOf } from "./derive.js";
+import { gid, voiceOwners, kitOf, genreOf, stackOf } from "./derive.js";
 import { isSynthFont, fontDef } from "../audio/fonts.js";
 import { playing as transportOn, playingSec } from "../audio/live.js";
 
@@ -84,7 +85,7 @@ function applyOne(e) {
     case "seckit": case "secmot": case "secper": {
       const F = { seckit: "kit", secmot: "mot", secper: "period" }[e.t];
       const targets = aim.scope === "song"
-        ? SONG.filter(b => (b.stack || []).some(x => x.slots && x.slots.length)) : [secOf()];
+        ? SONG.slice() : [secOf()].filter(Boolean);
       const prev = targets.map(b => b[F]);
       for (const b of targets) b[F] = e.word;
       commit("box");
@@ -93,7 +94,7 @@ function applyOne(e) {
     }
     case "drums": {
       const targets = aim.scope === "song"
-        ? SONG.filter(b => (b.stack || []).some(x => x.slots && x.slots.length)) : [secOf()];
+        ? SONG.slice() : [secOf()].filter(Boolean);
       const prevKits = targets.map(b => b.kit);
       const prevMute = !!(MIXER && MIXER.drums && MIXER.drums.mute);
       if (e.on) {
@@ -112,12 +113,71 @@ function applyOne(e) {
         commit("box");
       } };
     }
+    case "pipes": {
+      const targets = aim.scope === "song"
+        ? SONG.slice() : [secOf()].filter(Boolean);
+      const prev = targets.map(b => b.pipes);
+      for (const b of targets) { if (e.set === "off") delete b.pipes; else b.pipes = e.set; }
+      commit("box");
+      return { undo: () => { targets.forEach((b, i) => { if (prev[i] == null) delete b.pipes;
+        else b.pipes = prev[i]; }); commit("box"); } };
+    }
+    case "oct": {
+      const targets = aim.scope === "song"
+        ? SONG.slice() : [secOf()].filter(Boolean);
+      const prev = targets.map(b => b.oct);
+      for (const b of targets) {
+        const at = clamp((+b.oct || 0) + e.by, -2, 2);
+        if (at) b.oct = String(at); else delete b.oct;
+      }
+      commit("box");
+      return { undo: () => { targets.forEach((b, i) => { if (prev[i] == null) delete b.oct;
+        else b.oct = prev[i]; }); commit("box"); } };
+    }
+    case "insert": {
+      // a new section, cloned from its neighbour so it keeps the record's own
+      // genre and phrase, then given its role (and its player, for a solo)
+      if (SONG.length >= 16) return { undo: () => {} };
+      const at = aim.scope === "song" ? SONG.length - 1 : aim.si;
+      const src = SONG[Math.max(0, at)] || SONG[0];
+      const box = JSON.parse(JSON.stringify(src));
+      box.role = e.role; box.cue = e.role;
+      if (e.canon === "solo" && !box.stack.some(x => x.g === "solo")) {
+        const sl = (box.stack[0].slots || []).slice(0, 1);
+        box.stack.push({ g: "solo", slots: sl.length ? sl : [0] });
+      }
+      SONG.splice(at + 1, 0, box);
+      commit("box"); emit("selection", {});
+      return { undo: () => { const i = SONG.indexOf(box); if (i >= 0) SONG.splice(i, 1);
+        commit("box"); emit("selection", {}); } };
+    }
+    case "drop": {
+      const gone = [];
+      for (let i = SONG.length - 1; i >= 0 && SONG.length > 1; i--)
+        if ((SONG[i].cue || SONG[i].role) === e.role) gone.push([i, SONG.splice(i, 1)[0]]);
+      commit("box"); emit("selection", {});
+      return { undo: () => { for (const [i, b] of gone.reverse()) SONG.splice(i, 0, b);
+        commit("box"); emit("selection", {}); } };
+    }
+    case "secfx": {
+      const hit = SONG.filter(b => (b.cue || b.role) === e.role);
+      const prev = hit.map(b => (b.fx || []).slice());
+      for (const b of hit) {
+        const fx = (b.fx || []).filter(x => x !== e.chip);
+        if (e.on) fx.push(e.chip);
+        b.fx = fx.slice(0, MAX_FX);
+        if (!b.fx.length) delete b.fx;
+      }
+      commit("box");
+      return { undo: () => { hit.forEach((b, i) => { if (prev[i].length) b.fx = prev[i];
+        else delete b.fx; }); commit("box"); } };
+    }
     case "hire": {
       // THE COUCH BUILDS A BAND. A part arrives as a stacked FUNCTION genre
       // (they exist for exactly this: one voice, no kit, no prog, written to
       // be stacked) and the instrument is CAST onto the chair it takes.
       const targets = aim.scope === "song"
-        ? SONG.filter(b => (b.stack || []).some(x => x.slots && x.slots.length)) : [secOf()];
+        ? SONG.slice() : [secOf()].filter(Boolean);
       const prev = targets.map(b => b.stack.map(x => ({ ...x, slots: [...(x.slots || [])] })));
       const prevBass = targets.map(b => b.bassop);
       const prevPool = POOL ? { ...POOL } : null;
@@ -133,7 +193,10 @@ function applyOne(e) {
       const needCast = !BYINST[e.what] && !!e.id;
       for (const b of targets) {
         if (e.part === "bass") { b.bassop = "walk"; continue; }
-        if (!g || b.stack.some(x => x.g === g)) continue;
+        // only the LAYERS are checked for a duplicate: on a record whose
+        // AUTHORITY is the same function genre (a from-nothing record is
+        // `simple`, which is a grand piano) the hire was silently skipped
+        if (!g || b.stack.slice(1).some(x => x.g === g)) continue;
         const slots = (b.stack[0].slots || []).slice(0, 1);
         b.stack.push({ g, slots: slots.length ? slots : [0] });
       }
@@ -152,7 +215,7 @@ function applyOne(e) {
     }
     case "fire": {
       const targets = aim.scope === "song"
-        ? SONG.filter(b => (b.stack || []).some(x => x.slots && x.slots.length)) : [secOf()];
+        ? SONG.slice() : [secOf()].filter(Boolean);
       const prev = targets.map(b => b.stack.map(x => ({ ...x, slots: [...(x.slots || [])] })));
       const prevBass = targets.map(b => b.bassop);
       const FN = { melody: ["solo", "riff", "simple"], chords: ["pad"], vocals: ["vocal", "backing"] };
@@ -168,7 +231,7 @@ function applyOne(e) {
     }
     case "secbass": {
       const targets = aim.scope === "song"
-        ? SONG.filter(b => (b.stack || []).some(x => x.slots && x.slots.length)) : [secOf()];
+        ? SONG.slice() : [secOf()].filter(Boolean);
       const prev = targets.map(b => b.bassop);
       for (const b of targets) b.bassop = e.op;
       commit("box");
@@ -195,7 +258,7 @@ function applyOne(e) {
       // the next phrase in the bank, for whatever this node aims at: the
       // material changes, nothing about the mix does
       const targets = aim.scope === "song"
-        ? SONG.filter(b => (b.stack || []).some(x => x.slots && x.slots.length)) : [secOf()];
+        ? SONG.slice() : [secOf()].filter(Boolean);
       const prev = targets.map(b => b.stack.map(x => ({ ...x, slots: [...(x.slots || [])] })));
       const n = SLOTS.length;
       for (const b of targets)
@@ -207,14 +270,13 @@ function applyOne(e) {
     }
     case "think": {
       const targets = aim.scope === "song"
-        ? SONG.filter(b => (b.stack || []).some(x => x.slots && x.slots.length)) : [secOf()];
+        ? SONG.slice() : [secOf()].filter(Boolean);
       const prevStacks = targets.map(b => b.stack.map(x => ({ ...x, slots: [...(x.slots || [])] })));
       if (e.on) {
         for (const b of targets) {
-          if (b.stack.some(x => x.g === e.g)) continue;
+          if (b.stack.slice(1).some(x => x.g === e.g)) continue;
           const slots = (b.stack[0].slots || []).slice(0, 1);
-          if (!slots.length) continue;            // a bed has no phrase to rethink
-          b.stack.push({ g: e.g, slots });
+          b.stack.push({ g: e.g, slots: slots.length ? slots : [0] });
         }
       } else for (const b of targets) {
         b.stack = [b.stack[0], ...b.stack.slice(1).filter(x => x.g !== e.g)];
@@ -226,7 +288,7 @@ function applyOne(e) {
     }
     case "ops": {
       const targets = aim.scope === "song"
-        ? SONG.filter(b => (b.stack || []).some(x => x.slots && x.slots.length)) : [secOf()];
+        ? SONG.slice() : [secOf()].filter(Boolean);
       for (const b of targets) b.ops = [...(b.ops || []), e.add];
       commit("box");
       return { undo: () => { for (const b of targets) {
@@ -296,8 +358,18 @@ function rosterOf(sec) {
   let roster = [], owners = [], keys = [];
   try { roster = voiceRoster(sec); owners = voiceOwners(sec); keys = partKeysOf(sec, roster); }
   catch (e) { return []; }
+  // WHICH VOICES ACTUALLY SOUND: a stack entry with no phrase is a player
+  // holding an instrument and no part, so it is not in the room. This is what
+  // lets a record start from NOTHING and fill up as the couch hires.
+  const live = [];
+  for (const ent of stackOf(sec)) {
+    const g = GENRES[ent.g];
+    for (let v = 0; v < ((g && g.voices) || 0); v++) live.push(!!(ent.slots && ent.slots.length));
+  }
   const out = roster.map((r, i) => ({ key: r.key, role: partChairLabel(r.key),
-    sound: soundOf(GENRES[owners[i]], r), pad: r.pad, part: r.part }));
+    sound: soundOf(GENRES[owners[i]], r), pad: r.pad, part: r.part,
+    silent: live[i] === false }))
+    .filter(r => !r.silent);
   if (keys.includes("bass")) {
     const bs = BASSSYNTH[sec.bassop];
     out.push({ key: "bass", role: partChairLabel("bass"), part: "bass",
@@ -315,15 +387,14 @@ function rosterOf(sec) {
 // what the aimed node actually HAS — the language refuses sentences about
 // anything else ("align the grammar with the state of the song")
 function ctxOf() {
-  const secs = aim.scope === "song"
-    ? SONG.filter(b => (b.stack || []).some(x => x.slots && x.slots.length))
-    : [secOf()].filter(Boolean);
+  const secs = aim.scope === "song" ? SONG.slice() : [secOf()].filter(Boolean);
   const facts = { drumsOn: false, drumsOff: false,
     parts: { bass: false, melody: false, chords: false, vocals: false },
     insts: {}, fx: {},
     rev: 1, revMax: SENDORDER.length - 1, echo: 1, echoMax: SENDORDER.length - 1,
-    stacked: {} };
+    stacked: {}, sections: {} };
   for (const sec of secs) {
+    facts.sections[sec.cue || sec.role || "section"] = true;
     const g = GENRES[gid(sec)] || {};
     // the RESOLVED kit, not the anchor's: a kit word can invent lanes on a
     // genre that never had any (that is what ADD DRUMS does), and a ctx that
@@ -356,19 +427,10 @@ function ctxOf() {
       facts.stacked[x.g] = true;
       if (x.g === "vocal" || x.g === "backing" || x.as === "voice") facts.parts.vocals = true;
     }
-    // WHICH INSTRUMENTS THIS RECORD SEATS — the genre's own cast plus the
-    // pool's overrides, matched against the couch's instrument families
-    const ids = [].concat(g.instr || [], Object.values(POOL || {}));
-    for (const id of ids) {
-      const t = String(id || "");
-      if (/guitar/.test(t)) facts.insts.guitar = true;
-      if (/piano|clav|rhodes|wurl/.test(t)) facts.insts.piano = true;
-      if (/organ/.test(t)) facts.insts.organ = true;
-      if (/string|violin|cello|ensemble/.test(t)) facts.insts.strings = true;
-      if (/trumpet|brass|sax|horn|trombone|tuba/.test(t)) facts.insts.horns = true;
-      if (/bell|celesta|glocken|vibraphone|marimba|music_box/.test(t)) facts.insts.bells = true;
-      if (/voice|choir|vox|voices/.test(t)) facts.parts.vocals = true;
-    }
+    // (the genre's DECLARED cast is not read here: a from-nothing record's
+    // authority declares a grand piano and plays nothing, and counting it
+    // made ADD PIANO mean "louder piano" on a silent record. Only the
+    // sounding roster below counts.)
   }
   // the board's standing chips, per chan — so a chip already on cannot be
   // added twice and one that is not on cannot be cut
@@ -384,6 +446,17 @@ function ctxOf() {
 /* ---------- draw ---------- */
 const el = (tag, cls, text) => { const n = document.createElement(tag);
   if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+// A RECORD THAT STARTS FROM NOTHING. Four sections on the plainest authority
+// the table has, carrying NO phrase — so nothing sounds, nobody is in the
+// room, and every sentence the couch says is a hire. The bank rides along so
+// a hired player has something to play.
+function startFromNothing() {
+  const slots = JSON.parse(JSON.stringify(SLOTS.length ? SLOTS : [NuSong.blank()]));
+  const song = Array.from({ length: 4 }, () => ({
+    ...NuSong.emptyBox(), stack: [{ g: "simple", slots: [] }] }));
+  adoptSong({ v: NuSong.VERSION, slots, song, bpm, genres: {} }, "nothing");
+}
+
 export function draw() {
   if (!wrap) return;
   wrap.textContent = "";
@@ -400,10 +473,15 @@ export function draw() {
     return n;
   };
   graph.append(node("THE SONG", "song", -1));
-  SONG.forEach((b, i) => {
-    if (!(b.stack || []).some(x => x.slots && x.slots.length)) return;
-    graph.append(node((i + 1) + " " + (b.cue || b.role || "section"), "section", i));
-  });
+  {
+    const z = el("button", "rnothing", "start from nothing");
+    z.type = "button";
+    z.title = "an empty record: no players, no parts — build it by saying things";
+    z.addEventListener("click", startFromNothing);
+    graph.append(z);
+  }
+  SONG.forEach((b, i) => graph.append(
+    node((i + 1) + " " + (b.cue || b.role || "section"), "section", i)));
   wrap.append(graph);
 
   // THE BAND, ROLE BY ROLE — of the section sounding, or the one aimed at.
@@ -411,8 +489,7 @@ export function draw() {
   // see, and the panel and the grammar read the same roster.
   {
     const shown = (transportOn && playingSec >= 0 && SONG[playingSec]) ? SONG[playingSec]
-      : (aim.scope === "section" ? secOf() : SONG.find(b => (b.stack || [])
-          .some(x => x.slots && x.slots.length)));
+      : (aim.scope === "section" ? secOf() : SONG[0]);
     const band = rosterOf(shown);
     const strip = el("div", "rband");
     strip.append(el("i", "rg", (transportOn && playingSec >= 0
@@ -469,6 +546,7 @@ export function draw() {
         : role === "gen" ? synsOf(LEXICON.G) : role === "fxadj" ? synsOf(LEXICON.FXA)
         : role === "fxn" ? LEXICON.FXN
         : role === "on" ? Object.fromEntries(Object.keys(LEXICON.ONWORD).map(w => [w, [w]]))
+        : role === "give" ? synsOf(LEXICON.GIVE) : role === "sect" ? synsOf(LEXICON.SEC)
         : role === "bassadj" ? LEXICON.BASSWORD : role === "kitadj" ? LEXICON.KITWORD
         : role === "feeladj" ? LEXICON.FEELSYN
         : LEXICON.A;
@@ -479,7 +557,8 @@ export function draw() {
       return out;
     };
     const groups = [["say", "verb"], ["about", "subj"], ["about", "unit"],
-                    ["about", "inst"], ["like", "gen"], ["how", "adj"],
+                    ["about", "inst"], ["give it", "give"], ["a section", "sect"],
+                    ["like", "gen"], ["how", "adj"],
                     ["how to play", "bassadj"], ["how to play", "kitadj"],
                     ["the feel", "feeladj"], ["how", "fxadj"],
                     ["effect", "fxn"], ["on what", "on"]];
