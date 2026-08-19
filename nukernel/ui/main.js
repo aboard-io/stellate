@@ -104,6 +104,10 @@ on("transport:section", d => {
 // user gesture, long after load.
 const raw = readStore();
 if (!raw || !adoptSong(raw, "boot")) adoptSong(defaultSong(), "boot");
+// ...and warm the engine off the boot path (audio/live.js warmup: the idle
+// fetch that keeps "loading engine…" out of the play gesture — a tap that
+// outlives its transient activation is a media element iOS keeps silent)
+transport.warmup();
 // the URL, read AFTER the song is real — restores a shared link's page and
 // index, or else writes the boot page back as the canonical address
 // (ui/pages.js says why it has to run this late).

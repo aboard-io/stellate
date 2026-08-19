@@ -466,7 +466,16 @@
         mediaEl.playsInline = true;
         mediaEl.srcObject = msDest.stream;
         if (typeof document.body !== "undefined" && document.body) { mediaEl.style.display = "none"; document.body.appendChild(mediaEl); }
-        const pr = mediaEl.play(); if (pr && pr.catch) pr.catch(() => {});
+        // A REFUSED BOOT PLAY ARMS THE REVIVAL. If this open ran outside a live
+        // user gesture (a caller that awaited an engine fetch first — the daw's
+        // cold boot), iOS refuses this play() and the walk would run over a
+        // silent element forever: the stripe moves, no sound (2026-08-19).
+        // armGestureResume is this closure's own next-touch revival; the
+        // rejection lands async, after its definition initializes.
+        const pr = mediaEl.play();
+        if (pr && pr.catch) pr.catch(() => {
+          try { if (typeof armGestureResume === "function") armGestureResume(); } catch (e) {}
+        });
       } catch (e) { msDest = null; mediaEl = null; }
     }
     // periodic element recycle (opt-in: opts.elRecycleSec > 0) — resets the media

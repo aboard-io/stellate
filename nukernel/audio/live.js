@@ -265,7 +265,35 @@ async function loadEngine() {
 const gestureFns = [];
 export const onGesture = fn => gestureFns.push(fn);
 
+// THE IN-GESTURE UNLOCK. iOS grants media playback to a page whose user
+// gesture successfully started an <audio>; the parent's own element is born
+// several awaits after the tap (engine fetch, font, compile), which on a cold
+// boot outlives the transient activation and gets its play() refused — the
+// stripe moves, no sound. So the tap's SYNCHRONOUS frame plays a one-sample
+// silent wav first: cheap, kept on a module ref, and it makes the page one
+// that has played media before the parent's element ever asks.
+let unlockEl = null;
+const SILENT_WAV = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+function gestureUnlock() {
+  try {
+    if (typeof document === "undefined" || typeof Audio === "undefined") return;
+    if (!unlockEl) { unlockEl = new Audio(SILENT_WAV); unlockEl.setAttribute("playsinline", ""); }
+    const pr = unlockEl.play(); if (pr && pr.catch) pr.catch(() => {});
+  } catch (e) { /* the parent's own revival is the second net */ }
+}
+
+// THE IDLE WARM-UP: fetch the engine and the font before anyone presses play,
+// so the tap's awaits resolve in microtasks and the parent's media element is
+// created while the gesture's transient activation is still live. Fired by
+// ui/main.js after boot; costless on repeat (loadEngine memoises).
+export function warmup() {
+  const kick = () => { loadEngine().then((FL) => setFont(FONT, deps.K)).catch(() => {}); };
+  try { (typeof requestIdleCallback === "function" ? requestIdleCallback(kick, { timeout: 4000 }) : setTimeout(kick, 1500)); }
+  catch (e) { setTimeout(kick, 1500); }
+}
+
 export async function startAt(boxIndex) {
+  gestureUnlock();
   for (const fn of gestureFns) { try { fn(); } catch (e) {} }
   if (playing) { setPendingStart(boxIndex); return; }
   // ...AND A SECOND PRESS WHILE THE FIRST IS STILL OPENING IS NOT A SECOND
