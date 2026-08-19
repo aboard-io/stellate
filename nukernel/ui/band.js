@@ -124,8 +124,12 @@ function draw() {
     }
     if (sheet.childNodes.length) box.append(sheet);
 
+    // THE SEAT YOU ARE IN IS THE SEAT THAT IS ASKED. `nextAsk` defaults to
+    // the model's own seat, which is not the chair the page is showing, so
+    // sitting down at the drums used to hand you the arranger's next
+    // question with the drummer's name over it.
     q = section != null ? null
-      : (asking ? ds.find(d => d.id === asking) : nextAsk(model));
+      : (asking ? ds.find(d => d.id === asking) : nextAsk(model, seat));
     if (q) {
       const ask = el("div", "dask");
       ask.append(el("h2", "dq", q.ask));

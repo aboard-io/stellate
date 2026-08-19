@@ -168,6 +168,140 @@ console.log("what happens in the chorus stays in the chorus");
      "\"same as before\" did not put the section back");
 }
 
+/* (f) THE ARRANGER CALLS THE GENRE, and it NARROWS the players */
+// A bandleader says "it's a jazz date" before anybody plays. Everything a
+// row here names has to be a word the player actually knows — the LINN DRUM
+// lesson, where a machine word named a kit the engine did not have — and the
+// narrowing has to leave the player something to decide, or the arranger is
+// playing the drums.
+console.log("the genre is called first, and it narrows without deciding");
+{
+  const m0 = on();
+  const first = Band.nextAnywhere(m0);
+  ok(first && first.id === "genre",
+     "the band's first question is " + (first && first.id) + ", not the genre");
+  const arr = Band.seatDecisions(m0, "arranger");
+  const gq = arr.find((d) => d.id === "genre");
+  ok(!!gq && gq.opts.length >= 8, "only " + (gq ? gq.opts.length : 0) + " records to call");
+
+  // the words each player knows, to hold the table against
+  const D = Band.D, B = Band.B;
+  const dm = { ...Band.blank().drums, on: true };
+  const grooveWords = new Set(D.catalog(dm, null)
+    .filter((i) => i.group.startsWith("grooves")).map((i) => i.words[0]));
+  const machineWords = new Set(D.catalog(dm, null)
+    .filter((i) => i.group === "the machine").map((i) => i.words[0]));
+  const styleWords = new Set(Object.values(B.STYLEWORD));
+  const instrWords = new Set(Object.values(B.INSTRUMENTS));
+  const changeWords = new Set(Object.values(B.CHANGEWORD));
+
+  for (const [key, gk] of Object.entries(Band.GENRES)) {
+    ok(!!gk.w && !!gk.fam, key + " is not a record anybody can call");
+    for (const w of gk.grooves) ok(grooveWords.has(w), key + ": no drummer knows \"" + w + "\"");
+    for (const w of gk.machines) ok(machineWords.has(w), key + ": there is no machine called \"" + w + "\"");
+    for (const w of gk.styles) ok(styleWords.has(w), key + ": no bassist knows \"" + w + "\"");
+    for (const w of gk.instr) ok(instrWords.has(w), key + ": there is no bass called \"" + w + "\"");
+    for (const w of gk.chg) ok(changeWords.has(w), key + ": there are no changes called \"" + w + "\"");
+    ok(gk.grooves.length >= 2, key + " leaves the drummer " + gk.grooves.length + " groove");
+    ok(gk.machines.length >= 2, key + " leaves the drummer " + gk.machines.length + " machine");
+    ok(gk.styles.length >= 2, key + " leaves the bassist " + gk.styles.length + " line");
+    ok(gk.instr.length >= 2, key + " leaves the bassist " + gk.instr.length + " instrument");
+
+    // CALLED: the record narrows what the players are offered, and every
+    // groove offered belongs to the family the arranger named
+    const m = Band.answer(on(), "arranger", "genre", gk.w);
+    ok(m.drums.fam === gk.fam, key + ": the drummer was told " + m.drums.fam);
+    ok(!Band.seatDecisions(m, "drums").some((d) => d.id === "record"),
+       key + ": the drummer is still asked what kind of record this is");
+    const offered = (seat, id) => {
+      const d = Band.seatDecisions(m, seat).find((x) => x.id === id);
+      return d ? d.opts.map((o) => o.w) : [];
+    };
+    for (const [seat, id, allow] of [["drums", "groove", gk.grooves],
+                                     ["bass", "job", gk.styles],
+                                     ["bass", "instr", gk.instr]]) {
+      const opts = offered(seat, id);
+      ok(opts.length >= 2, key + "/" + id + ": the player is left " + opts.length + " answer");
+      for (const w of opts) ok(allow.includes(w),
+        key + "/" + id + ": \"" + w + "\" is not this kind of record");
+    }
+    // ...and the words beyond the interview are narrowed the same way
+    const cat = Band.catalog(m, "drums");
+    for (const i of cat) {
+      if (i.group.startsWith("grooves")) ok(gk.grooves.includes(i.words[0]),
+        key + ": the tray still offers the groove \"" + i.words[0] + "\"");
+      if (i.group === "the machine") ok(gk.machines.includes(i.words[0]),
+        key + ": the tray still offers the machine \"" + i.words[0] + "\"");
+    }
+    ok(cat.some((i) => i.group === "at the kit"),
+       key + ": narrowing took the drummer's own hands away");
+    // the record still plays
+    for (const sec of Band.toSong(m, MODES)) {
+      const ev = play(sec.genre);
+      ok(ev.drums.length + ev.bass.length > 0, key + ": the " + sec.role + " is silent");
+      ok(ev.drums.every((e) => Number.isFinite(e.t) && Number.isFinite(e.vel)) &&
+         ev.bass.every((e) => Number.isFinite(e.t) && Number.isFinite(e.n)),
+         key + ": the " + sec.role + " is not finite");
+    }
+  }
+  // A PLAYER STILL CHOOSES. Calling the record must not answer the player's
+  // own questions for them.
+  const jazz = Band.answer(on(), "arranger", "genre", "a jazz date");
+  ok(Band.nextAsk(jazz, "drums") !== null, "the drummer has nothing left to decide");
+  ok(Band.nextAsk(jazz, "bass") !== null, "the bassist has nothing left to decide");
+}
+
+/* (g) HOW SLOW IT CAN GO */
+// One kick per four measures, one bass note per four measures, and the note
+// HOLDS across the gap. Tempo is not the axis here — a schedule is.
+console.log("a band can leave four measures between two notes");
+{
+  let m = Band.answer(on(), "arranger", "genre", "a rock record");
+  const full = Band.toSong(m, MODES)[0];
+  const fullEv = play(full.genre);
+  const counts = {};
+  for (const [key, sp] of Object.entries(Band.SPACE)) {
+    const m2 = Band.answer(m, "arranger", "space", sp.w);
+    ok((m2.song.answers || {}).space === sp.w, key + ": the space was not recorded");
+    const sec = Band.toSong(m2, MODES)[0];
+    const ev = play(sec.genre);
+    counts[key] = [ev.drums.length, ev.bass.length];
+    ok(ev.drums.every((e) => Number.isFinite(e.t)) && ev.bass.every((e) => Number.isFinite(e.n)),
+       key + " does not render finite events");
+  }
+  ok(counts.none[0] === fullEv.drums.length && counts.none[1] === fullEv.bass.length,
+     "\"keep it going\" changed the band");
+  ok(counts.half[0] < counts.none[0] && counts.half[1] < counts.none[1],
+     "a bar on and a bar off is as busy as before: " + JSON.stringify(counts));
+  ok(counts.bar[0] < counts.half[0], "one hit a bar is busier than half of one");
+  ok(counts.four[0] === 1, "one hit every four bars played " + counts.four[0] + " drum hits");
+  ok(counts.four[1] === 1, "one hit every four bars played " + counts.four[1] + " bass notes");
+  // ...and the one hit each is a KICK and a note that lasts
+  const sec = Band.toSong(Band.answer(m, "arranger", "space", "one hit every four bars"), MODES)[0];
+  const ev = play(sec.genre);
+  ok(ev.drums[0].d === "k" && ev.drums[0].t === 0,
+     "the one hit in four bars is a " + ev.drums[0].d + " at " + ev.drums[0].t);
+  ok(ev.bass[0].dur > 48, "the bass note lasts " + ev.bass[0].dur.toFixed(1) +
+     " steps — it stopped instead of holding");
+  // a section can still say something different in all that space
+  const busy = Band.setSection(
+    Band.answer(m, "arranger", "space", "one hit every four bars"), 0, "drums", "busier");
+  ok(play(Band.toSong(busy, MODES)[0].genre).drums.length > 1,
+     "a section that asked to be busier stayed empty");
+  // and every form survives the sparsest setting
+  for (const [form, f] of Object.entries(Band.FORMS)) {
+    const m3 = Band.answer(Band.answer(m, "arranger", "form", f.w),
+                           "arranger", "space", "one hit every four bars");
+    for (const s2 of Band.toSong(m3, MODES)) {
+      const ev2 = play(s2.genre);
+      ok(ev2.drums.every((e) => Number.isFinite(e.t)) && ev2.bass.every((e) => Number.isFinite(e.n)),
+         form + "/" + s2.role + " is not finite at its sparsest");
+      ok(ev2.drums.length + ev2.bass.length >= 1,
+         form + "/" + s2.role + " went completely silent");
+    }
+  }
+}
+
 /* (e) NOTHING NUMERIC CARRIES A WORD */
 // The swing NaN: the genre once held the WORD "swing" where the kernel
 // computes (i % 2) * (g.swing || 0), and every time in the record became

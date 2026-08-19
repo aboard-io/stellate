@@ -2170,6 +2170,27 @@
     const grid = STYLEGRID[g.bassStyle]
       || (subj.acc.some(Boolean) ? subj.acc : (g.bassGrid || QUARTERS));
     const sp = spans(grid);                                     // holds to the next hit
+    // A BASS SCHEDULE, READ PER BAR — the shape `kits` already gives the
+    // drums, and for the same reason: a grid is one bar restated, and some
+    // parts are slower than a bar. `bassBars` is read with `at`, so a
+    // four-entry schedule under a twelve-bar form repeats the way a kit
+    // schedule does, and an entry of 0 is a bar the bass does not play.
+    // The note before a silent bar HOLDS across it: a part with four
+    // measures between two notes is holding, not stopping. Absent = the
+    // stream above, byte-identical.
+    const barGrid = (b) => (g.bassBars ? (at(g.bassBars, b) || null) : grid);
+    const held = (() => {
+      if (!g.bassBars) return null;
+      const pos = [];
+      for (let b = 0; b < bars; b++) {
+        const gb = barGrid(b); if (!gb) continue;
+        for (let i = 0; i < N; i++) if (at(gb, i)) pos.push(b * N + i);
+      }
+      const out = new Map();
+      pos.forEach((x, k) => { let d = pos[(k + 1) % pos.length] - x;
+                              if (d <= 0) d += bars * N; out.set(x, d); });
+      return out;
+    })();
     let alt = 0;
     for (let b = 0; b < bars; b++) {
       // PEDAL ignores the progression and sits on the tonic. It is the one bass
@@ -2181,9 +2202,11 @@
       // the dominant half is the turnaround not happening. One chord a bar is
       // the common case and reads chords[0] exactly as before.
       const cs = g.bassStyle === "pedal" ? null : chordsOf(subj, g, b);
+      const gb = barGrid(b);
+      if (!gb) continue;                       // a bar the bass sits out
       const bar = [], barAt = [];
       for (let i = 0; i < N; i++)
-        if (at(grid, i)) {
+        if (at(gb, i)) {
           const c = !cs ? null : cs.length === 1 ? cs[0]
             : cs.find(x => i >= x.start && i < x.start + x.len) || cs[cs.length - 1];
           const r = c ? c.deg : 0;
@@ -2198,7 +2221,8 @@
           const n0 = !c ? mp(0, md)
             : deg !== r ? mp(deg, md) + c.borrow
             : fold(c.bassPc, c.rootPc);
-          bar.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: sp[i] * 0.94 / g.rate,
+          const hold = held ? held.get(b * N + i) : sp[i];
+          bar.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: hold * 0.94 / g.rate,
                      n: n0 + 36 + oct + key, r, vel: vel(subj, i) });
           barAt.push(i);
         }

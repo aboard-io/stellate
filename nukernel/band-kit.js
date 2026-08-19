@@ -21,7 +21,8 @@
   // the questions the ARRANGER has already answered, so the players stop
   // asking them: a drummer does not set the tempo, a bassist does not pick
   // the key
-  const TAKEN = { drums: ["tempo", "feel"], bass: ["key", "mode", "changes", "tempo", "feel"] };
+  const TAKEN = { drums: ["tempo", "feel", "record"],
+                  bass: ["key", "mode", "changes", "tempo", "feel"] };
 
   const blank = () => ({ on: false, seat: "arranger",
     song: { key: "C", minor: false, form: null, chg: {}, bpm: 96, swing: null, answers: {} },
@@ -56,6 +57,130 @@
     out:    { w: "lay out", out: true },
   };
 
+  /* ---------- WHAT KIND OF RECORD: the arranger calls the genre ----------
+     A bandleader says "it's a jazz date" or "this one's a house record"
+     before anybody plays a note, and everything after that is narrowed by
+     it — narrowed, NOT decided. The drummer still picks the groove and the
+     kit, the bassist still picks the line and the instrument; the genre
+     only says which of them are on the table. A constraint that leaves one
+     answer is not a constraint, it is a decision, and the arranger does not
+     get to make the players' decisions for them (see `narrow`).
+
+     Everything here is stored as the WORD the player actually knows, so a
+     row that names a groove or a machine nobody has fails the gate rather
+     than quietly offering nothing. */
+  const GENRES = {
+    house:   { w: "a house record", fam: "the floor", bpm: 120,
+               grooves: ["house", "four on the floor", "disco", "uk garage"],
+               machines: ["909", "808", "electronic kit"],
+               styles: ["hold the root", "octaves", "eighths, driving"],
+               instr: ["a synth bass", "fingers on a P-bass"],
+               chg: ["the four-chord one", "a minor vamp", "one chord, all night"] },
+    techno:  { w: "a techno record", fam: "the floor", bpm: 120,
+               grooves: ["techno", "four on the floor", "gabber"],
+               machines: ["909", "606", "electronic kit"],
+               styles: ["hold the root", "eighths, driving", "sixteenths, busy"],
+               instr: ["a synth bass", "with a pick"],
+               chg: ["one chord, all night", "a pedal point", "a minor vamp"] },
+    disco:   { w: "a disco record", fam: "the floor", bpm: 120,
+               grooves: ["disco", "four on the floor", "two step"],
+               machines: ["acoustic kit", "room kit", "909"],
+               styles: ["octaves", "eighths, driving", "hold the root"],
+               instr: ["fingers on a P-bass", "with a pick"],
+               chg: ["the four-chord one", "two-five-one", "the fifties changes"] },
+    hiphop:  { w: "a boom-bap record", fam: "breaks", bpm: 96,
+               grooves: ["boom bap", "breakbeat", "trap"],
+               machines: ["808", "909", "acoustic kit"],
+               styles: ["hold the root", "octaves"],
+               instr: ["a synth bass", "fingers on a P-bass"],
+               chg: ["a minor vamp", "one chord, all night", "two-five-one"] },
+    jungle:  { w: "a jungle record", fam: "breaks", bpm: 144,
+               grooves: ["amen break", "jungle", "breakbeat"],
+               machines: ["electronic kit", "909", "acoustic kit"],
+               styles: ["hold the root", "octaves"],
+               instr: ["a synth bass", "with a pick"],
+               chg: ["a minor vamp", "one chord, all night"] },
+    rock:    { w: "a rock record", fam: "rock", bpm: 120,
+               grooves: ["straight rock", "driving rock", "stomp", "half time"],
+               machines: ["acoustic kit", "room kit", "big kit"],
+               styles: ["hold the root", "eighths, driving", "root and fifth"],
+               instr: ["with a pick", "fingers on a P-bass"],
+               chg: ["the fifties changes", "the four-chord one", "a twelve-bar blues"] },
+    punk:    { w: "a punk record", fam: "rock", bpm: 144,
+               grooves: ["punk", "driving rock", "stomp"],
+               machines: ["acoustic kit", "big kit"],
+               styles: ["eighths, driving", "hold the root"],
+               instr: ["with a pick", "fingers on a P-bass"],
+               chg: ["the four-chord one", "the fifties changes"] },
+    kraut:   { w: "a krautrock record", fam: "rock", bpm: 120,
+               grooves: ["motorik", "bare bones", "half time"],
+               machines: ["electronic kit", "room kit", "606"],
+               styles: ["hold the root", "eighths, driving"],
+               instr: ["a synth bass", "with a pick"],
+               chg: ["one chord, all night", "a pedal point"] },
+    jazz:    { w: "a jazz date", fam: "jazz", bpm: 144, swing: "swing",
+               grooves: ["jazz ride", "bebop", "brush swing"],
+               machines: ["jazz kit", "brushes", "acoustic kit"],
+               styles: ["walk it", "hold the root"],
+               instr: ["fingers on a P-bass", "with a pick"],
+               chg: ["two-five-one", "a twelve-bar blues", "the fifties changes"] },
+    blues:   { w: "a blues", fam: "rock", bpm: 96, swing: "shuffle",
+               grooves: ["shuffle", "train beat", "straight rock"],
+               machines: ["acoustic kit", "room kit", "brushes"],
+               styles: ["walk it", "root and fifth", "hold the root"],
+               instr: ["fingers on a P-bass", "with a pick"],
+               chg: ["a twelve-bar blues", "the fifties changes"] },
+    funk:    { w: "a funk record", fam: "funk", bpm: 96,
+               grooves: ["funk", "linear funk", "new orleans", "motown"],
+               machines: ["acoustic kit", "room kit", "808"],
+               styles: ["sixteenths, busy", "octaves", "hold the root"],
+               instr: ["fingers on a P-bass", "with a pick"],
+               chg: ["one chord, all night", "a minor vamp"] },
+    reggae:  { w: "a reggae record", fam: "latin", bpm: 96,
+               grooves: ["one drop", "steppers", "rockers"],
+               machines: ["acoustic kit", "room kit", "808"],
+               styles: ["hold the root", "octaves"],
+               instr: ["fingers on a P-bass", "a synth bass"],
+               chg: ["a minor vamp", "one chord, all night"] },
+    bossa:   { w: "a bossa", fam: "latin", bpm: 120,
+               grooves: ["bossa nova", "samba", "rumba", "cha cha"],
+               machines: ["jazz kit", "brushes", "acoustic kit"],
+               styles: ["hold the root", "octaves"],
+               instr: ["fingers on a P-bass", "with a pick"],
+               chg: ["two-five-one", "the four-chord one"] },
+    slow:    { w: "something slow and open", fam: "rock", bpm: 72, space: "four",
+               grooves: ["bare bones", "half time"],
+               machines: ["electronic kit", "room kit", "808"],
+               styles: ["hold the root", "octaves"],
+               instr: ["a synth bass", "fingers on a P-bass"],
+               chg: ["a pedal point", "one chord, all night"] },
+  };
+  const genreOf = (m) => GENRES[m.song.genre] || null;
+
+  /* ---------- HOW MUCH SPACE: the slowest thing a band can do -------------
+     Tempo is not the only way to be slow, and below about 60 bpm it stops
+     being the useful one — what makes a record feel enormous is a bar with
+     one hit in it and three bars of nothing after. That is not a tempo, it
+     is a SCHEDULE: the drums read `kits` per bar and the bass now reads
+     `bassBars` the same way (kernel.js), so "one hit every four measures"
+     is four entries where three of them are empty, and the bass note
+     HOLDS across the gap rather than stopping. */
+  const one16 = () => { const v = z16(); v[0] = 1; return v; };
+  const SPACE = {
+    none: { w: "keep it going" },
+    half: { w: "a bar on, a bar off", bars: [1, 0, 1, 0] },
+    bar:  { w: "one hit a bar", bars: [1, 1, 1, 1], one: true },
+    four: { w: "one hit every four bars", bars: [1, 0, 0, 0], one: true },
+  };
+  const spaceOut = (g, sp) => {
+    if (!sp || !sp.bars) return g;
+    const kits = (g.kits && g.kits.length ? g.kits : [g.kit || {}]);
+    const out = sp.bars.map((keep, b) => !keep ? {}
+      : sp.one ? { k: one16() } : (kits[b % kits.length] || {}));
+    return { ...g, kits: out, kit: out[0],
+             bassBars: sp.bars.map((keep) => (keep ? one16() : 0)) };
+  };
+
   /* ---------- THE FORM: what the arranger calls out ----------------------
      WHO DECIDES THE CHANGES? Not the bassist — a bass player REALIZES the
      root motion, they do not choose it. In a band the changes belong to
@@ -82,6 +207,19 @@
 
   /* ---------- WHAT THE ARRANGER DECIDES ---------- */
   const ARR = [
+    // THE GENRE COMES FIRST because everything else is narrowed by it — and
+    // because it is the question a band actually asks first ("what are we
+    // playing?"). It sets what the players may choose from, the tempo and
+    // the feel the record usually takes, and in one case ("something slow
+    // and open") how much space there is; none of those are locked, they
+    // are just what the room assumes until somebody says otherwise.
+    { id: "genre", ask: "what are we playing?", opts:
+      Object.entries(GENRES).map(([k, gk]) => ({
+        w: gk.w, is: (s) => s.genre === k,
+        apply: (s) => ({ ...s, genre: k,
+          bpm: gk.bpm != null && !(s.answers || {}).tempo ? gk.bpm : s.bpm,
+          swing: !(s.answers || {}).feel ? (gk.swing || null) : s.swing,
+          space: !(s.answers || {}).space ? (gk.space || "none") : s.space }) })) },
     { id: "key", ask: "what key are we in?", opts: Object.keys(B.KEYS).map((k) => ({
         w: "in " + k, is: (s) => s.key === k, apply: (s) => ({ ...s, key: k }) })) },
     { id: "mode", ask: "major or minor?", opts: [
@@ -90,6 +228,11 @@
     { id: "form", ask: "what's the form?", opts:
       Object.entries(FORMS).map(([k, f]) => ({
         w: f.w, is: (s) => s.form === k, apply: (s) => ({ ...s, form: k }) })) },
+    // 72 IS THE FLOOR ON PURPOSE. nukernel's tempo dial runs 70..160 and
+    // song.js drops a document that says otherwise, so a band that agreed
+    // to play at 48 would lose it the moment anyone pressed WRITE. Below 72
+    // the honest axis is not the tempo, it is the SPACE question underneath:
+    // one hit every four bars at 72 leaves thirteen seconds between kicks.
     { id: "tempo", ask: "how fast do we take it?", opts: [
       { w: "slow, 72", is: (s) => s.bpm === 72, apply: (s) => ({ ...s, bpm: 72 }) },
       { w: "medium, 96", is: (s) => s.bpm === 96, apply: (s) => ({ ...s, bpm: 96 }) },
@@ -99,6 +242,12 @@
       { w: "straight", is: (s) => !s.swing, apply: (s) => ({ ...s, swing: null }) },
       { w: "swung", is: (s) => s.swing === "swing", apply: (s) => ({ ...s, swing: "swing" }) },
       { w: "shuffled", is: (s) => s.swing === "shuffle", apply: (s) => ({ ...s, swing: "shuffle" }) } ] },
+    // HOW SLOW CAN THIS GO: a tempo of 48 is still four hits a bar. This is
+    // the other axis — how much of the bar is nothing.
+    { id: "space", ask: "how much space is there?", opts:
+      Object.entries(SPACE).map(([k, sp]) => ({
+        w: sp.w, is: (s) => (s.space || "none") === k,
+        apply: (s) => ({ ...s, space: k }) })) },
   ];
   // ...and one CALL per role the form contains: "what are the chorus
   // changes?" is a thing a bandleader says out loud
@@ -113,12 +262,34 @@
     opts: d.opts.map((o) => ({ ...o, answered: (m.song.answers || {})[d.id] === o.w,
       active: (() => { try { return !!o.is(m.song); } catch (e) { return false; } })() })) }));
 
-  /* ---------- the three seats, one question at a time ---------- */
+  /* ---------- the three seats, one question at a time ----------
+     NARROWED, NOT DECIDED. The genre says which grooves, which machines,
+     which lines and which instruments are on the table; the player still
+     picks. A filter that would leave fewer than two answers is dropped
+     whole — at that point it is not a constraint, it is the arranger
+     playing the drums. */
+  const WORDSOF = { groove: "grooves", job: "styles", instr: "instr" };
+  const narrow = (m, seat, ds) => {
+    const gk = genreOf(m);
+    if (!gk) return ds;
+    return ds.map((d) => {
+      const keep = gk[WORDSOF[d.id]];
+      if (!keep) {
+        // ...and the changes the arranger calls are the genre's own
+        if (!d.id.startsWith("chg:") || !gk.chg) return d;
+        const o2 = d.opts.filter((o) => gk.chg.includes(o.w));
+        return o2.length >= 2 ? { ...d, opts: o2 } : d;
+      }
+      const opts = d.opts.filter((o) => keep.includes(o.w));
+      return opts.length >= 2 ? { ...d, opts } : d;
+    });
+  };
   const seatDecisions = (m, seat) => {
-    if (seat === "arranger") return arrDecisions(m);
+    if (seat === "arranger") return narrow(m, seat, arrDecisions(m));
     const drop = TAKEN[seat] || [];
     const ds = seat === "drums" ? D.decisions(m.drums) : B.decisions(m.bass);
-    return ds.filter((d) => !drop.includes(d.id)).map((d) => ({ ...d, seat }));
+    return narrow(m, seat, ds.filter((d) => !drop.includes(d.id))
+      .map((d) => ({ ...d, seat })));
   };
   const decisions = (m) => SEATS.flatMap((s) => seatDecisions(m, s));
   const nextAsk = (m, seat) => seatDecisions(m, seat || m.seat).find((d) => !d.answered) || null;
@@ -134,14 +305,37 @@
       const o = d && d.opts.find((x) => x.w === w);
       if (!o) return m;
       const song = { ...o.apply(m.song), answers: { ...(m.song.answers || {}), [id]: w } };
-      return { ...m, song };
+      const out = { ...m, song };
+      // WHAT KIND OF RECORD IS THIS is the drummer's own first question, and
+      // the arranger has just answered it out loud. It is recorded on the
+      // drummer (so their groove question is narrowed to that family) and
+      // taken off their list — they are not asked what they were told.
+      if (id === "genre") {
+        const gk = GENRES[song.genre];
+        if (gk) out.drums = D.answer(m.drums, "record", gk.fam);
+      }
+      return out;
     }
     if (seat === "drums") return { ...m, drums: D.answer(m.drums, id, w) };
     return { ...m, bass: B.answer(m.bass, id, w) };
   }
   // the words each seat still has, beyond its interview
-  const catalog = (m, seat) => (seat === "drums" ? D.catalog(m.drums)
-    : seat === "bass" ? B.catalog(m.bass) : []);
+  const catalog = (m, seat) => {
+    const list = seat === "drums" ? D.catalog(m.drums)
+      : seat === "bass" ? B.catalog(m.bass) : [];
+    const gk = genreOf(m);
+    if (!gk) return list;
+    // the same law as the questions: a genre hides the grooves and the
+    // machines that are not this record, and nothing else. Everything a
+    // player does WITH a kit — the hands, the fills, the bar itself —
+    // belongs to the player in every genre there is.
+    return list.filter((i) => {
+      const w = i.words[0];
+      if (i.group.startsWith("grooves")) return (gk.grooves || []).includes(w);
+      if (i.group === "the machine") return (gk.machines || []).includes(w);
+      return true;
+    });
+  };
   const say = (m, seat, id) => (seat === "drums" ? { ...m, drums: D.say(m.drums, id) }
     : seat === "bass" ? { ...m, bass: B.say(m.bass, id) } : m);
   const says = (m, seat, id) => (seat === "drums" ? D.says(m.drums, id)
@@ -158,7 +352,11 @@
     const f = FORMS[m.song.form || "vamp"];
     return f.secs.map((role, i) => {
       const key = (role === "intro" || role === "outro") ? "verse" : role;
-      const g = toGenre(m, MODES, (m.song.chg || {})[key] || "fourchord");
+      let g = toGenre(m, MODES, (m.song.chg || {})[key] || "fourchord");
+      // how much space there is, before anything a section says: a section
+      // that asks for busier hats over one-hit-every-four-bars gets them,
+      // which is what asking meant
+      g = spaceOut(g, SPACE[m.song.space || "none"]);
       const per = (m.per || {})[i] || {};
       // ...and what each player is doing HERE, if they said
       const dsec = SECDRUMS[per.drums];
@@ -216,7 +414,8 @@
     };
   }
 
-  return { SEATS, TAKEN, FORMS, CALLED, rolesIn, blank, decisions, seatDecisions,
+  return { SEATS, TAKEN, FORMS, CALLED, GENRES, SPACE, genreOf, rolesIn,
+           blank, decisions, seatDecisions,
            nextAsk, nextAnywhere, answer, catalog, say, says, toGenre, toSong,
            SECDRUMS, SECBASS, sectionAsks, setSection, D, B };
 });
