@@ -195,11 +195,25 @@ export const genreOf = (sec, ent) => {
   const out = { ...g, ...(sec.mode ? { mode: MODES[sec.mode] } : {}),
                 ...(scale ? { scale: SCALES[scale] } : {}),
                 ...(sec.rate ? { rate: g.rate * RATES[sec.rate] } : {}) };
+  // A BOX THAT NAMES A BASS PATTERN HAS A BASS. `nobass` is the GENRE's
+  // statement about itself (a pad plays no bass), and a section that asks for
+  // a walking bass is overruling exactly that — which is what lets the couch
+  // hire one onto a record that never had one (ui/rubin.js "hire"). The
+  // explicit "nobass" op still means silence, and a box that says nothing is
+  // byte-identical.
+  if (sec.bassop && sec.bassop !== "nobass") out.nobass = false;
   if (sec.drumkit) out.drumkit = sec.drumkit;      // borrow another kit's SOUND
   // (no sec.swing branch: the swing is the SONG's now, like the groove — it
   // arrives as sectionEvents' own argument and lands on the genre there)
   if (sec.kit) {
-    out.kit = KITOPS[sec.kit](g.kit || {}); out.fill = null;
+    // A KIT WORD ON A KITLESS GENRE IMPLIES A FOUR UNDERNEATH. The operators
+    // are kit->kit, so on a genre that never had lanes every word but `four`
+    // and `offbeat` returned nothing — which meant the couch could give a pad
+    // record drums and then lose them again by asking for a shuffle. Asking
+    // for a shuffled kit on a record with no kit means a shuffled four.
+    const base = Object.keys(g.kit || {}).length ? (g.kit || {})
+      : (sec.kit === "nodrums" ? {} : KITOPS.four({}));
+    out.kit = KITOPS[sec.kit](base); out.fill = null;
     // the operator reaches the kit SCHEDULE too — drums() prefers g.kits over
     // kit, so mapping the kit alone made every kit chip a no-op on a kits
     // genre (dnb's breakdown kept the full break under "no drums")
@@ -263,7 +277,11 @@ export const kitOf = sec => {
   if (sec.drumkit) return sec.drumkit;
   const g = GENRES[gid(sec)];
   if (g.drumkit) return g.drumkit;
-  const k = sec.kit && KITOPS[sec.kit] ? KITOPS[sec.kit](g.kit || {}) : (g.kit || {});
+  // the same base law genreOf applies: a kit word on a kitless genre implies
+  // a four underneath, so asking a hired kit to shuffle does not delete it
+  const base = Object.keys(g.kit || {}).length ? (g.kit || {})
+    : (sec.kit && sec.kit !== "nodrums" ? KITOPS.four({}) : {});
+  const k = sec.kit && KITOPS[sec.kit] ? KITOPS[sec.kit](base) : base;
   return Object.keys(k).length || g.ghost ? "acoustic" : null;
 };
 

@@ -73,6 +73,52 @@ const A = {
   open:     ["open", "opening", "blooming"],
   closed:   ["closed", "closing", "sinking"],
 };
+// HOW THE PLAYERS PLAY — the direction a producer gives a musician, in that
+// musician's own vocabulary ("I want to tell the musicians how to be. Make
+// bass slappier"). Each table is <adjective> -> the registry word that IS
+// that instruction, so the couch reaches the sequencer's own operators.
+const BASSFEEL = {                       // fields.js BASSOPS
+  slappier: "sixteenths", walking: "walk", bouncier: "octaves",
+  simpler_bass: "pedal", driving: "eighths", growlier: "reese",
+  wobblier: "wobble", wider: "fifths",
+};
+const BASSWORD = {
+  slappier: ["slappier", "slappy", "poppier"], walking: ["walking", "walky"],
+  bouncier: ["bouncier", "in octaves"], simpler_bass: ["on one note", "pedalling"],
+  driving: ["driving", "on eighths"], growlier: ["growlier", "nastier"],
+  wobblier: ["wobblier", "wobbly"], wider: ["in fifths"],
+};
+const KITFEEL = {                        // kernel.js KITOPS, by ear
+  four_floor: "four", offbeat_kit: "offbeat", halftime: "halftime",
+  doubletime: "doubletime", shuffling: "shuffle", ghosted: "ghosts",
+  flammed: "flams", riding: "ride", tighter: "tight", looser: "humanize",
+  wilder_kit: "chaos", harder: "loud", gentler: "soft", linear_kit: "linear",
+  stomping: "stomp", clapping: "claps", rolling: "roll",
+};
+const KITWORD = {
+  four_floor: ["four on the floor"], offbeat_kit: ["offbeat"],
+  halftime: ["half time"], doubletime: ["double time"],
+  shuffling: ["shuffling"], ghosted: ["ghosted", "with ghost notes"],
+  flammed: ["flammed"], riding: ["on the ride"], tighter: ["tighter"],
+  looser: ["looser", "sloppier"], wilder_kit: ["wilder"], harder: ["harder"],
+  gentler: ["gentler"], linear_kit: ["linear"], stomping: ["stomping"],
+  clapping: ["with claps"], rolling: ["rolling"],
+};
+const FEELWORD = {                       // the record's own groove and swing
+  swinging: { groove: null, swing: "swing" },
+  shuffled:  { swing: "shuffle" },
+  straighter: { swing: "straight" },
+  laidback:  { groove: "laidback" },
+  pushed:    { groove: "push" },
+  funkier_feel: { groove: "funk" },
+  dubbed:    { groove: "dub" },
+  backbeaten: { groove: "backbeat" },
+};
+const FEELSYN = {
+  swinging: ["swinging"], shuffled: ["shuffled"], straighter: ["straighter"],
+  laidback: ["laid back behind"], pushed: ["pushing"], funkier_feel: ["with a funk feel"],
+  dubbed: ["with a dub feel"], backbeaten: ["on the backbeat"],
+};
 const FXA = {
   crunch:  { syns: ["distorted", "crunchy", "crunch", "dirty", "gritty", "overdriven", "fuzzy"], chip: "crunch" },
   chorus:  { syns: ["chorused", "watery", "lush"], chip: "chorus" },
@@ -135,6 +181,9 @@ for (const [c, syns] of Object.entries(A)) for (const w of syns) put(w, "adj", c
 for (const [c, g] of Object.entries(FXA)) for (const w of g.syns) put(w, "fxadj", c);
 for (const [c, syns] of Object.entries(FXN)) for (const w of syns) put(w, "fxn", c);
 for (const [c, g] of Object.entries(G)) for (const w of g.syns) put(w, "gen", c);
+for (const [c, syns] of Object.entries(BASSWORD)) for (const w of syns) put(w, "bassadj", c);
+for (const [c, syns] of Object.entries(KITWORD)) for (const w of syns) put(w, "kitadj", c);
+for (const [c, syns] of Object.entries(FEELSYN)) for (const w of syns) put(w, "feeladj", c);
 // THE TARGET IS ONE TAP ("only three taps for any sentence"). "on" was a word
 // of its own, which made BRING UP ECHO ON DRUMS four taps; the phrase is one
 // chip now — the same compounding "bring up" has always used — so every
@@ -232,6 +281,42 @@ function compile(q, scope, ctx) {
     if (n.canon === "melody" && !ctx.parts.melody) return null;
     return [{ t: "redo" }];
   }
+  /* HOW THE PLAYERS PLAY: MAKE BASS SLAPPIER · MAKE DRUMS SHUFFLING ·
+     MAKE IT SWINGING — the musician's own vocabulary, straight onto the
+     sequencer's operators. */
+  if (q.play) {
+    if (q.verb !== "make" || q.adj || q.fxadj || q.fxn || q.glue || q.instAdj || q.gen) return null;
+    if (!n || !present(n, ctx)) return null;
+    if (q.play.role === "bassadj")
+      return (n.kind === "subj" && n.canon === "bass")
+        ? [{ t: "secbass", op: BASSFEEL[q.play.canon] }] : null;
+    if (q.play.role === "kitadj")
+      return (n.kind === "subj" && n.canon === "drums")
+        ? [{ t: "seckit", word: KITFEEL[q.play.canon] }] : null;
+    // the FEEL is the record's, so it only answers to the whole thing
+    if (!(n.kind === "subj" && n.canon === "song") || sec) return null;
+    const f = FEELWORD[q.play.canon], out = [];
+    if (f.groove) out.push({ t: "groove", word: f.groove });
+    if (f.swing) out.push({ t: "swing", word: f.swing });
+    return out.length ? out : null;
+  }
+  if (q.play) return null;
+
+  /* HIRING: ADD BASS · ADD PIANO · ADD CHORDS — the couch builds a band */
+  if ((q.verb === "more" || q.verb === "less") && !q.adj && !q.glue && !q.fxadj &&
+      !q.fxn && !q.instAdj && !q.gen && n) {
+    const hirePart = (n.kind === "inst") ? (["strings", "organ"].includes(n.canon) ? "chords" : "melody")
+      : (n.kind === "subj" && ["melody", "chords", "vocals", "bass"].includes(n.canon)) ? n.canon : null;
+    if (hirePart && n.canon !== "drums") {
+      const there = present(n, ctx);
+      if (q.verb === "more") return there ? null
+        : [{ t: "hire", part: hirePart, id: n.kind === "inst" ? I[n.canon].cast : null,
+             what: n.canon }];
+      return there ? [{ t: "fire", part: hirePart, what: n.canon,
+                        id: n.kind === "inst" ? I[n.canon].cast : null }] : null;
+    }
+  }
+
   /* ON-PHRASES: BRING UP ECHO ON DRUMS · ADD DISTORTION ON GUITAR */
   if (q.glue) {
     const target = q.onNominal;
@@ -364,11 +449,13 @@ function compile(q, scope, ctx) {
     case "drier":    return only(sendFx(-SEND));
     case "faster":   return (isSong && !sec) ? [{ t: "bpm", delta: BPMSTEP }] : null;
     case "slower":   return (isSong && !sec) ? [{ t: "bpm", delta: -BPMSTEP }] : null;
-    case "busier":   return (n.canon === "drums" && sec) ? [{ t: "seckit", word: "busy" }] : null;
-    case "simpler":  return (n.canon === "drums" && sec) ? [{ t: "seckit", word: "sparse" }]
-                        : (isSong && sec) ? [{ t: "ops", add: "thin2" }] : null;
-    case "open":     return (sec && isSong) ? [{ t: "secmot", word: "open" }] : null;
-    case "closed":   return (sec && isSong) ? [{ t: "secmot", word: "close" }] : null;
+    // (these four used to be section-only because the apply layer could not
+    // reach past one box; it writes every playing section at song scope now)
+    case "busier":   return n.canon === "drums" ? [{ t: "seckit", word: "busy" }] : null;
+    case "simpler":  return n.canon === "drums" ? [{ t: "seckit", word: "sparse" }]
+                        : isSong ? [{ t: "ops", add: "thin2" }] : null;
+    case "open":     return isSong ? [{ t: "secmot", word: "open" }] : null;
+    case "closed":   return isSong ? [{ t: "secmot", word: "close" }] : null;
     default: return null;
   }
 }
@@ -378,7 +465,7 @@ export const MAX_CMDS = 5;
 export const MAX_WORDS = 3;   // the tap budget, and the whole grammar fits
 function slots(tokens) {
   const q = { verb: null, adj: null, gen: null, fxadj: null, fxn: null,
-              instAdj: null, glue: false, nominal: null, onNominal: null };
+              instAdj: null, play: null, glue: false, nominal: null, onNominal: null };
   let afterOn = false;
   for (let i = 0; i < tokens.length; i++) {
     let r = WORDS[tokens[i]];
@@ -402,6 +489,9 @@ function slots(tokens) {
     }
     if (afterOn) return null;
     if (r.role === "adj")   { if (q.adj)   return null; q.adj = r.canon; continue; }
+    if (r.role === "bassadj" || r.role === "kitadj" || r.role === "feeladj") {
+      if (q.play) return null; q.play = { role: r.role, canon: r.canon }; continue;
+    }
     if (r.role === "fxadj") { if (q.fxadj) return null; q.fxadj = r.canon; continue; }
     if (r.role === "fxn")   { if (q.fxn)   return null; q.fxn = r.canon; continue; }
     if (r.role === "gen")   { if (q.gen)   return null; q.gen = r.canon; continue; }
@@ -414,6 +504,16 @@ function slots(tokens) {
 // HIGH NOTES, not "cut notes high" (the survey's own reading test).
 const PRENOM = new Set(["high", "low", "more", "fewer"]);
 function pretty(tokens, q) {
+  // a DIRECTION follows its player: MAKE DRUMS WITH GHOST NOTES
+  if (q.play && q.nominal) {
+    const pw = tokens.find(w => ["bassadj", "kitadj", "feeladj"].includes(WORDS[w].role));
+    const nw = tokens.find(w => ["subj", "unit", "inst"].includes(WORDS[w].role));
+    if (pw && nw && tokens.indexOf(pw) < tokens.indexOf(nw)) {
+      const out = tokens.filter(w => w !== pw);
+      out.splice(out.indexOf(nw) + 1, 0, pw);
+      return out.join(" ").toUpperCase();
+    }
+  }
   if (!q.adj || !PRENOM.has(q.adj)) return tokens.join(" ").toUpperCase();
   if (!q.nominal && !q.gen) return tokens.join(" ").toUpperCase();
   const adjW = tokens.find(w => { const r = WORDS[w]; const alt = ALT[w];
@@ -514,6 +614,13 @@ export function describeFx(fx, scope) {
       case "think": return e.on
         ? (scope === "song" ? "every section: " : "this section: ") + e.g + " layered on the phrase"
         : "the " + e.g + " layer comes off";
+      case "secbass": return (scope === "song" ? "every section" : "this section") +
+        "'s bass plays " + e.op;
+      case "groove": return "the record's groove → " + e.word;
+      case "swing": return "the record's swing → " + e.word;
+      case "hire": return (e.id ? e.id.replace(/_/g, " ") : e.what) + " joins the band" +
+        (e.part === "bass" ? " on bass" : e.part === "chords" ? " on chords" : "");
+      case "fire": return "the " + e.what + " leaves the band";
       case "drums": return e.on
         ? "drums back in (kit restored, board unmuted)"
         : (scope === "song" ? "every section's kit → nodrums" : "this section's kit → nodrums");
@@ -522,4 +629,5 @@ export function describeFx(fx, scope) {
   }).join(" · ");
 }
 
-export const LEXICON = { V, S, U, I, A, FXA, FXN, G, ONWORD, WORDS };
+export const LEXICON = { V, S, U, I, A, FXA, FXN, G, ONWORD,
+  BASSWORD, KITWORD, FEELSYN, WORDS };

@@ -1599,6 +1599,16 @@ h1 em{font-style:normal;color:var(--ink)}
   border-radius:var(--r);background:var(--bg-key);color:var(--ink-2)}
 .rnode.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .rnode .rn{font-variant-numeric:tabular-nums;opacity:.75}
+/* the sounding section, lit on the graph */
+.rnode.live{box-shadow:inset 0 0 0 2px var(--st-play)}
+.rnode.live.on{box-shadow:inset 0 0 0 2px var(--on-accent)}
+/* THE BAND: role and what is in it */
+.rband{display:flex;flex-wrap:wrap;gap:var(--sp-1) var(--sp-3);align-items:baseline;
+  padding:var(--sp-2) var(--sp-3);border-radius:var(--r);background:var(--bg-sunk)}
+.rband .rg{flex:0 0 100%}
+.rseat{color:var(--ink-2);font-size:var(--t-sm)}
+.rseat b{color:var(--ink);font-weight:600;text-transform:uppercase;
+  letter-spacing:.04em;margin-right:.35em}
 .rsent{display:flex;align-items:center;gap:var(--sp-3);min-height:64px;
   padding:var(--sp-2) var(--sp-3);border-radius:var(--r);background:var(--bg-sunk)}
 .rsent .rwords{flex:1 1 auto;font-size:clamp(20px,4.5vw,34px);font-weight:700;

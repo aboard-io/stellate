@@ -124,7 +124,8 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
   {
     const shapes = new Set(["mix", "mixeq", "bpm", "secnum", "seceq", "secsend",
                             "seckit", "secmot", "secper", "ops", "drums", "think",
-                            "fx", "cast", "redo"]);
+                            "fx", "cast", "redo", "hire", "fire", "secbass",
+                            "groove", "swing"]);
     let sentences = 0;
     for (const scope of SCOPES) {
       const first = L.continuations([], scope);
@@ -138,8 +139,8 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
             if (e.t === "ops") ok(!!NF.OPS[e.add], p.text + ": op \"" + e.add + "\" is not in the registry");
             if (e.t === "seceq" || e.t === "mixeq")
               ok(["lo", "mid", "hi"].includes(e.band), p.text + ": eq band " + e.band);
-            if (e.t === "seckit") ok(["busy", "sparse", "four", "nodrums"].includes(e.word),
-              p.text + ": kit word " + e.word);
+            if (e.t === "seckit") ok(!!require("../../nukernel/kernel.js").KITOPS[e.word],
+              p.text + ": kit word " + e.word + " is not a KITOPS operator");
             if (e.t === "secmot") ok(["open", "close", "rise", "pump"].includes(e.word),
               p.text + ": mot word " + e.word);
             // the board addresses three ways now (audio/desk.js): a part chan,
@@ -253,6 +254,48 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
     ok(/drums/.test(d) && /dB/.test(d), "MAKE DRUMS BIGGER translates to: " + d);
     ok(L.describeFx(L.parse(["bring up", "reverb"], "song").fx, "song").includes("reverb"),
        "BRING UP REVERB's translation never says reverb");
+  }
+
+  /* (c3b) THE COUCH BUILDS A BAND, AND DIRECTS IT. Hiring exists only where
+     the player is missing, firing only where present, and every direction
+     lands on the registry's own operator vocabulary. */
+  {
+    const NF3 = require("../../nukernel/fields.js");
+    const EMPTY = { ...L.OPEN_CTX, drumsOn: false, drumsOff: true,
+      parts: { bass: false, melody: false, chords: false, vocals: false }, insts: {} };
+    const FULL = { ...L.OPEN_CTX, drumsOn: true, drumsOff: false,
+      parts: { bass: true, melody: true, chords: true, vocals: true },
+      insts: { guitar: true, piano: true, organ: true, strings: true, horns: true, bells: true } };
+    for (const w of ["bass", "chords", "the vocals", "piano", "guitar", "strings"]) {
+      ok(!!L.parse(["add", w], "song", EMPTY), "ADD " + w.toUpperCase() + " is refused on an empty record");
+      ok(!L.parse(["add", w], "song", FULL), "ADD " + w.toUpperCase() + " is offered where it already plays");
+      ok(!!L.parse(["cut", w], "song", FULL), "CUT " + w.toUpperCase() + " is refused where it plays");
+      ok(!L.parse(["cut", w], "song", EMPTY), "CUT " + w.toUpperCase() + " is offered with nothing to cut");
+    }
+    // ...and a player nobody hired takes no direction
+    ok(!L.parse(["make", "bass", "slappier"], "song", EMPTY), "a missing bass took direction");
+    ok(!!L.parse(["make", "bass", "slappier"], "song", FULL), "MAKE BASS SLAPPIER is refused on a real bass");
+    // every direction word names a real operator
+    const bassOps = new Set(Object.keys(NF3.BASSOPS));
+    const kitOps = new Set(Object.keys(require("../../nukernel/kernel.js").KITOPS));
+    for (const [canon] of Object.entries(L.LEXICON.BASSWORD)) {
+      const p = L.parse(["make", "bass", L.LEXICON.BASSWORD[canon][0]], "song", FULL);
+      ok(p && p.fx[0].t === "secbass" && bassOps.has(p.fx[0].op),
+         "bass direction \"" + canon + "\" does not name a BASSOPS word");
+    }
+    for (const [canon] of Object.entries(L.LEXICON.KITWORD)) {
+      const p = L.parse(["make", "drums", L.LEXICON.KITWORD[canon][0]], "song", FULL);
+      ok(p && p.fx[0].t === "seckit" && kitOps.has(p.fx[0].word),
+         "drum direction \"" + canon + "\" does not name a KITOPS word");
+    }
+    const GRV = new Set(Object.keys(NF3.GROOVELABEL)), SWG = new Set(Object.keys(NF3.SWINGLABEL));
+    for (const [canon, syns] of Object.entries(L.LEXICON.FEELSYN)) {
+      const p = L.parse(["make", "everything", syns[0]], "song", FULL);
+      ok(!!p, "the feel \"" + canon + "\" does not compile");
+      if (p) for (const e of p.fx)
+        ok((e.t === "groove" && GRV.has(e.word)) || (e.t === "swing" && SWG.has(e.word)),
+           "the feel \"" + canon + "\" names " + JSON.stringify(e) + ", not a groove or a swing");
+    }
   }
 
   /* (c4) THE TAP BUDGET: three, for every sentence in the language, at both
