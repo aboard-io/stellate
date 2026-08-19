@@ -32,7 +32,7 @@ import { GENRES } from "../ui/deps.js";
 import { stackOf } from "../ui/derive.js";
 import { compile, timeline, barCount, barBeatsAt, barPlan, parentState,
          stepDur, songDurSec, warmEngine, firstBarOfBox,
-         unrouted } from "./plan.js";
+         unrouted, warmSources } from "./plan.js";
 import { FONT, setFont } from "./fonts.js";
 import { masterState } from "./desk.js";
 
@@ -339,6 +339,11 @@ async function open(FL, forceMedia) {
   try {
     handle = await FL.exploreLive(getState, (m) => emit("status", { text: m }), {
       events, barBeats, onBar,
+      // the caller's own warm set (plan.js warmSources): the stream routes
+      // bake bars against the buffers held at bake time, so the zones this
+      // cast plays must be named BEFORE the open — the parent cannot derive
+      // them from a state it did not compose
+      warmSrcs: () => warmSources(),
       onLoad: (r) => { loadRatio = r; },
       masterVol: vol / 100,
       mediaMeta,

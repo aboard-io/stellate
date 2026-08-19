@@ -227,6 +227,27 @@ export const songDurSec = () => TL.reduce((s, b) => s + b.barSteps, 0) * stepDur
 export const homes = () => HOMES.slice();
 export const seats = () => SEATS.slice();
 export const barBeatsAt = (n) => (BARS.length ? BARS[((n % BARS.length) + BARS.length) % BARS.length].beats : 4);
+// THE WARM SET, NAMED BY THE CALLER (the parent's opts.warmSrcs seam): every
+// sampler zone the song's whole cast references — the unit table is topology-
+// constant and already spans every kit — resolved to the crate entries the
+// one STATE carries. This is the foreign-composer half of the parent's own
+// buildSchedule enumeration: without it the stream routes bake every sampled
+// bar against an empty buffer table and the record arrives as its synth
+// minority ("like you inverted the mix", 2026-08-19).
+export function warmSources() {
+  if (!STATE) return { foundSrcs: [], samplerSrcs: [], speechSrc: null };
+  const byId = {};
+  for (const src of (STATE.foundSources || [])) byId[src.id] = src;
+  const wants = new Set();
+  const takeUnits = (units) => {
+    for (const u of Object.values(units || {}))
+      if (u && u.sampler) for (const z of (u.sampler.zones || []))
+        if (z && z.srcId && byId[z.srcId]) wants.add(z.srcId);
+  };
+  takeUnits(UNITS);
+  for (const t of Object.values(KITS)) takeUnits(t);
+  return { foundSrcs: [], samplerSrcs: [...wants].map((id) => byId[id]), speechSrc: null };
+}
 
 // PURE over the current state: build the bar list, the cast and the translation.
 // Runs on every musical edit while playing (the "something changed" law), so it

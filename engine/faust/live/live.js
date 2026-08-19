@@ -2373,14 +2373,23 @@
     // cached and streams the rest in as it decodes (never awaits the fetch before bar 1).
     function neededBuffers(state) {
       // THE FOREIGN-COMPOSER SEAM, honoured here too: a caller on opts.events
-      // (nukernel) hands the walk its own notes, and the parent's composer may
-      // not be able to schedule that state at all (no progression — it was
-      // never the parent's song). The warm set is an OPTIMIZATION (the
-      // addBuffers net below streams anything missed), so an unschedulable
-      // state warms nothing rather than killing the boot — the same
-      // try/catch the ring path's unit memo already wears. Found the hard
-      // way: every phone route died at "decoding…" on the daw while desktop
-      // played (2026-08-19).
+      // hands the walk its own notes, and the parent's composer may not be
+      // able to schedule that state at all (no progression — it was never the
+      // parent's song). Such a caller NAMES ITS OWN WARM SET via
+      // opts.warmSrcs — and it must, because a bar bakes against the buffers
+      // held at bake time (the DECODE-THEN-RENDER note below): "warm nothing
+      // and stream it in later" left every sampled voice of the daw
+      // permanently silent on the phone routes — the record arrived as its
+      // synth minority, "like you inverted the mix" (2026-08-19). The bare
+      // empty fallback survives only for a caller that neither schedules nor
+      // declares.
+      if (opts && typeof opts.warmSrcs === "function") {
+        try {
+          const w = opts.warmSrcs(state) || {};
+          return { foundSrcs: w.foundSrcs || [], samplerSrcs: w.samplerSrcs || [],
+                   speechSrc: w.speechSrc || null };
+        } catch (e) { return { foundSrcs: [], samplerSrcs: [], speechSrc: null }; }
+      }
       let sched;
       try { sched = SE.buildSchedule(E, state); }
       catch (e) { return { foundSrcs: [], samplerSrcs: [], speechSrc: null }; }
