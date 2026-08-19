@@ -38,7 +38,7 @@ const FX_YEAR = { echo: 1950, ringmod: 1956, sweep: 1964, flanger: 1966,
                   wah: 1966, phaser: 1968, chorus: 1968, fenv: 1972,
                   crunch: 1951, leslie: 1941, tremolo: 1938, vibrato: 1938 };
 const MACHINES = ["acid", "techno", "house", "bleeptechno", "ebm"];
-const INSTRUMENTAL = ["techno", "dnb", "acid", "dub", "fugue", "counterpoint", "tango"];
+const INSTRUMENTAL = ["techno", "dnb", "acid", "dub", "fugue", "counterpoint", "tango", "spem"];
 
 /* (a) + (c) + (d): one walk over the whole catalog */
 console.log("the sixteen-bar law, the era law, and the instrumental cast — all 110");

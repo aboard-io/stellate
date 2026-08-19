@@ -7411,7 +7411,7 @@ console.log("the master harmonization engine — one tonality, every added voice
     acid: "db0730dafc3b", newwave: "ae3805f144ab",
     vaporwave: "fe63ec2cbd88", blues: "0b72d6a84f9b", rock: "9f1728ebc87c",
     gregorian: "ba0f27385ffc", bulgarian: "3120a30d7a93",
-    spem: "3447084f51d8", counterpoint: "b6eb0a3f8c98",
+    spem: "38d8911045b9", counterpoint: "b6eb0a3f8c98",
     neoclassical: "d6901221c508", drone: "6ccd49d4d442",
     sludge: "dd2d7d9d6934", tango: "e0d57168b2c6",
     deathmetal: "b30b532ca8d1", eurythmics: "49ac4aee2208",

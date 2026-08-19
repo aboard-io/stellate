@@ -946,8 +946,12 @@
   const SINGS = { vox: "vocal", soul: "vocal", studio: "vocal", roots: "vocal",
                   band: "vocal", groove: "vocal", club: "vocal", kernel: "vocal",
                   drift: null, parts: null };
+  // ...spem included (2026-08-19, "Spem should be choir samples not vocal
+  // sim"): its every chair IS the sampled choir (the anchor's own ahh_choir),
+  // and the singer this table blocks was a formant cantor composed over the
+  // top of a forty-part motet that never had one.
   const INSTRUMENTAL = { techno: 1, dnb: 1, acid: 1, dub: 1,
-                         fugue: 1, counterpoint: 1, tango: 1 };
+                         fugue: 1, counterpoint: 1, tango: 1, spem: 1 };
   // ---- THE ERA LAW ("Why would Chicago 1932 have enormous amounts of
   // delay?", 2026-08-18). Every place-year anchor states its year in its own
   // label (ui/palette.js genreYear — the same trailing-digit parse, kept in
