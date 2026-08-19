@@ -6,7 +6,7 @@
 // off window exactly as ui/deps.js reads the rest of it
 const { blank, catalog, say, says, toGenre, LANEOF, LANES } = window.NuDrums;
 import { GENRES, NuSong } from "./deps.js";
-import { adoptSong, on, commit, setBpm, setSwing } from "./state.js";
+import { adoptSong, SONG, on, commit, setBpm, setSwing } from "./state.js";
 import { startAt, stop, playing, warmup, getPosition, passAt } from "../audio/live.js";
 
 const $ = (id) => document.getElementById(id);
@@ -25,6 +25,13 @@ let ledger = [];                   // what has been said, in order
 // the song is four bars of it — which is every mechanism the engine already
 // has for drums and no new one.
 let ver = 0;
+// LIVE WHILE EDITING. With a lane pinned you are placing hits one at a time,
+// and waiting out a four-bar form to hear each one is the difference between
+// an instrument and a form. So the loop SHORTENS to one bar while a lane is
+// open — the same engine, the same kit, the bar you are working on coming
+// round every couple of seconds — and the whole four-bar form (with its
+// fills) comes back the moment you close the lane.
+const loopBars = () => (lane ? 1 : 4);
 function push(first) {
   // THE VERSION IS THE POINT: this genre is rewritten in place on every
   // word, and ui/derive.js's per-box render cache reads `__v` to know that
@@ -38,10 +45,14 @@ function push(first) {
   if (first) {
     // the loader's own shapes, or the box is refused for a field nobody here
     // has an opinion about (song[0].nudge, the first time this was tried)
-    const box = { ...NuSong.emptyBox(), stack: [{ g: GK, slots: [0] }], len: 4 };
+    const box = { ...NuSong.emptyBox(), stack: [{ g: GK, slots: [0] }], len: loopBars() };
     adoptSong({ v: NuSong.VERSION, bpm: model.bpm, genres: {},
                 slots: [NuSong.blank()], song: [box] }, "drums");
-  } else { commit("box"); commit("swing"); }
+  } else {
+    const box = SONG[0];
+    if (box && box.len !== loopBars()) box.len = loopBars();
+    commit("box"); commit("swing");
+  }
   commit("transport");
   // (NO JUMP HERE. Sending the walk back to the top of the loop on every
   // word was a latency hack and it cost more than it bought: the record
@@ -71,7 +82,8 @@ function draw() {
       const row = el("div", "drow");
       row.append(el("i", "dlane", LANEOF(l)));
       g.kits.forEach((bar, bi) => {
-        const b = el("div", "dbar" + (model.fills[bi + 1] ? " fill" : ""));
+        const b = el("div", "dbar" + (model.fills[bi + 1] ? " fill" : "")
+          + (bi >= loopBars() ? " out" : ""));
         for (let i = 0; i < 16; i++) {
           // the step's LEVEL is its velocity (a ghost is a 2, an accent a 9),
           // so the picture shows how hard as well as whether
@@ -100,8 +112,9 @@ function draw() {
     const pin = el("div", "dpin");
     const b = el("button", "dpinkey", LANEOF(lane) + " ✕");
     b.type = "button";
-    b.addEventListener("click", () => { lane = null; draw(); });
-    pin.append(el("i", "dpl", "talking about the"), b);
+    b.addEventListener("click", () => { lane = null; push(false); draw(); });
+    pin.append(el("i", "dpl", "talking about the"), b,
+               el("i", "dpl", "· looping one bar so you hear it"));
     box.append(pin);
   }
 
@@ -117,8 +130,15 @@ function draw() {
     if (!groups.has(i.group)) groups.set(i.group, []);
     groups.get(i.group).push(i);
   }
+  // THE DRUMMER'S WORDS COME FIRST. They describe PLAYING rather than
+  // choosing, so they are what you reach for once a groove is down — and the
+  // bar you have open beats even those.
+  const RANK = { "the bar": 0, "at the kit": 1, "the kit": 3, "take away": 4,
+                 "the fills": 5, "the machine": 6, "the feel": 7, "the tempo": 8,
+                 "start": 9 };
+  const rank = (g) => (RANK[g] != null ? RANK[g] : g.startsWith("grooves") ? 2 : 10);
   const scroll = el("div", "dscroll");
-  for (const [g, list] of groups) {
+  for (const [g, list] of [...groups.entries()].sort((a, b) => rank(a[0]) - rank(b[0]))) {
     const wrap = el("div", "dgroup");
     wrap.append(el("i", "dg", g));
     for (const i of list) {
@@ -133,8 +153,9 @@ function draw() {
         const line = says(model, i.id);
         model = say(model, i.id);
         if (model !== before) ledger.push(line);
+        const wasLane = lane;
         if (laneId) lane = laneId;
-        if (model !== before || laneId) push(false);
+        if (model !== before || lane !== wasLane) push(false);
         draw();
       });
       wrap.append(c);
@@ -160,8 +181,9 @@ function tick() {
     let step = -1;
     try {
       const p = getPosition();
-      const f = p ? passAt(p.now).f : 0;            // 0..1 across the four bars
-      step = Math.max(0, Math.min(63, Math.floor(f * 64)));
+      const f = p ? passAt(p.now).f : 0;            // 0..1 across whatever loops
+      const n = loopBars() * 16;
+      step = Math.max(0, Math.min(n - 1, Math.floor(f * n)));
     } catch (e) { step = -1; }
     if (step !== at) {
       const off = (n) => { const b = (n / 16) | 0, i = n % 16;

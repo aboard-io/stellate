@@ -31,6 +31,8 @@
   const empty = () => Object.fromEntries(LANES.map(l => [l, z()]));
   const has = (kit, l) => (kit[l] || []).some(Boolean);
   const hits = (kit) => LANES.reduce((a, l) => a + (kit[l] || []).filter(Boolean).length, 0);
+  // the sidecars are not lanes: "!s" is a hand on the snare, not a drum
+  const laneKeys = (kit) => Object.keys(kit).filter(k => LANES.includes(k));
 
   // a MODEL is the kit, the four bars' worth of variation, and the feel
   const blank = () => ({ on: false, kit: empty(), fills: {}, drumkit: "acoustic",
@@ -165,6 +167,13 @@
     quarters: every(4), eighths: every(2), sixteenths: every(1),
     shuffled: on(0, 3, 4, 7, 8, 11, 12, 15), offbeats: on(2, 6, 10, 14),
   };
+  // THE SIDECARS — the kernel's own per-step hands, and the reason a lot of
+  // this vocabulary can be honest rather than decorative. Beside a lane it
+  // reads "!k" (grace notes: 1 flam, 2 drag, 3 ruff), "~k" (nudge, in ninths
+  // of a step — ahead of the beat or behind it) and "?k" (chance, in ninths).
+  // A drummer's push, lay-back, flam and "sometimes" are all right there.
+  const side = (kit, mark, lane, vec) => { const k = clone(kit); k[mark + lane] = vec; return k; };
+  const onHits = (kit, lane, n) => (kit[lane] || z()).map(v => (v ? n : 0));
   const DRUMMER = {
     "hands in quarters":   (m) => ({ ...m, kit: { ...clone(m.kit), h: HANDS.quarters.slice() } }),
     "hands in eighths":    (m) => ({ ...m, kit: { ...clone(m.kit), h: HANDS.eighths.slice() } }),
@@ -185,6 +194,37 @@
     "nothing on the one":  (m) => { const kit = clone(m.kit);
       kit.k = kit.k.slice(); kit.k[0] = 0; return { ...m, kit }; },
     "kick on the one only": (m) => ({ ...m, kit: { ...clone(m.kit), k: on(0) } }),
+    "kick on the ands":    (m) => ({ ...m, kit: { ...clone(m.kit), k: on(2, 6, 10, 14) } }),
+    "double the kick":     (m) => { const k = clone(m.kit); const out = k.k.slice();
+      k.k.forEach((v, i) => { if (v && i + 3 < 16 && !out[i + 3]) out[i + 3] = 1; });
+      k.k = out; return { ...m, kit: k }; },
+    "snare on every beat": (m) => ({ ...m, kit: { ...clone(m.kit), s: every(4) } }),
+    "toms, not the snare": (m) => { const k = clone(m.kit);
+      k.t = k.s.slice(); k.s = z(); return { ...m, kit: k }; },
+    "floor tom on the ands": (m) => ({ ...m, kit: { ...clone(m.kit), t: on(2, 6, 10, 14) } }),
+    "open the hat on four": (m) => { const k = clone(m.kit);
+      k.o = k.o.slice(); k.o[14] = 1; if (k.h) { k.h = k.h.slice(); k.h[14] = 0; }
+      return { ...m, kit: k }; },
+    /* the sidecars — a hand, not a hit */
+    "flam the backbeat":   (m) => ({ ...m, kit: side(m.kit, "!", "s", onHits(m.kit, "s", 1)) }),
+    "drag the backbeat":   (m) => ({ ...m, kit: side(m.kit, "!", "s", onHits(m.kit, "s", 2)) }),
+    "flam the kick":       (m) => ({ ...m, kit: side(m.kit, "!", "k", onHits(m.kit, "k", 1)) }),
+    "play it straight again": (m) => { const k = clone(m.kit);
+      for (const key of Object.keys(k)) if (/^[!~?]/.test(key)) delete k[key];
+      return { ...m, kit: k }; },
+    "push the hats":       (m) => ({ ...m, kit: side(m.kit, "~", "h", onHits(m.kit, "h", -1)) }),
+    "lay the snare back":  (m) => ({ ...m, kit: side(m.kit, "~", "s", onHits(m.kit, "s", 1)) }),
+    "push the kick":       (m) => ({ ...m, kit: side(m.kit, "~", "k", onHits(m.kit, "k", -1)) }),
+    "let the hats breathe": (m) => ({ ...m, kit: side(m.kit, "?", "h", onHits(m.kit, "h", 7)) }),
+    "sometimes the perc":  (m) => ({ ...m, kit: side(m.kit, "?", "p", onHits(m.kit, "p", 5)) }),
+    "crescendo the bar":   (m) => { const k = clone(m.kit);
+      for (const l of ["s", "h"]) if (has(k, l))
+        k[l] = k[l].map((v, i) => (v ? Math.max(2, Math.min(9, 3 + Math.round(i * 6 / 15))) : 0));
+      return { ...m, kit: k }; },
+    "accent the ands":     (m) => { const k = clone(m.kit);
+      for (const l of LANES) if (has(k, l))
+        k[l] = k[l].map((v, i) => (v && [2, 6, 10, 14].includes(i) ? 9 : v));
+      return { ...m, kit: k }; },
   };
 
   /* ---------- the fill: one bar that is not the others ---------- */
@@ -382,7 +422,7 @@
   }
 
   return { LANES, BARS, N, blank, V, offered, catalog, say, says, toGenre, stepWord,
-           GROOVEWORD, GROOVEFAM,
+           GROOVEWORD, GROOVEFAM, laneKeys,
            stepsFor, LANENAME, LANEOF, GROOVES, LANEWORD, FILLWORD, MACHINES,
            hits, has, clone, empty };
 });

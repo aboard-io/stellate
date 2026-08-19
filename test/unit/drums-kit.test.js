@@ -93,10 +93,16 @@ console.log("the model is a genre: real lanes, real bars, real fills");
   const g = D.toGenre(m);
   ok(g.bars === 4 && Array.isArray(g.kits) && g.kits.length === 4,
      "the genre does not carry four bars");
+  // a key is either a LANE or one of the kernel's own sidecars beside a lane
+  // ("!k" grace, "~k" nudge, "?k" chance) — the drummer's hands
   for (const lane of Object.keys(g.kit))
-    ok(K.DRUM_LANES.includes(lane), "lane \"" + lane + "\" is not a kernel drum lane");
+    ok(K.DRUM_LANES.includes(lane) ||
+       (/^[!~?]/.test(lane) && K.DRUM_LANES.includes(lane.slice(1))),
+       "kit key \"" + lane + "\" is neither a kernel lane nor a sidecar on one");
   for (const bar of g.kits) for (const [lane, v] of Object.entries(bar)) {
-    ok(K.DRUM_LANES.includes(lane), "a bar carries a lane the kernel has no name for");
+    ok(K.DRUM_LANES.includes(lane) ||
+       (/^[!~?]/.test(lane) && K.DRUM_LANES.includes(lane.slice(1))),
+       "a bar carries a key the kernel has no name for: " + lane);
     ok(Array.isArray(v) && v.length === 16, "a lane is not sixteen steps");
   }
   // the fill is on the FOURTH bar and nowhere else
@@ -158,9 +164,11 @@ console.log("every groove is sixteen real steps, and no two are the same");
     const m = i.apply(D.say(D.blank(), "start"));
     let hits = 0;
     for (const [lane, v] of Object.entries(m.kit)) {
-      ok(K.DRUM_LANES.includes(lane), i.words[0] + ": lane " + lane + " is not a kernel lane");
+      ok(K.DRUM_LANES.includes(lane) ||
+         (/^[!~?]/.test(lane) && K.DRUM_LANES.includes(lane.slice(1))),
+         i.words[0] + ": key " + lane + " is neither a lane nor a sidecar");
       ok(Array.isArray(v) && v.length === 16, i.words[0] + ": " + lane + " is not sixteen steps");
-      hits += v.filter(Boolean).length;
+      if (K.DRUM_LANES.includes(lane)) hits += v.filter(Boolean).length;
     }
     ok(hits >= 4, i.words[0] + " has " + hits + " hits in it");
     ok(render(m, 1).length > 0, i.words[0] + " renders nothing");
@@ -186,6 +194,30 @@ console.log("ghosts and accents are velocities, not decorations");
   const ride = D.say(m, "drum:ride it, not the hats");
   ok(!D.has(ride.kit, "h") && D.has(ride.kit, "p"),
      "RIDE IT did not move the ostinato off the hats");
+}
+
+/* (d5) THE HANDS ARE REAL. A flam is an extra, quieter hit in FRONT of the
+   beat; a lay-back moves the hit late; a breathing hat does not play the
+   same number of hits in every bar. All three are kernel sidecars, and all
+   three are checked in the render rather than in the model. */
+console.log("flams land in front, lay-backs land late, a breathing hat varies");
+{
+  const base = D.say(D.say(D.blank(), "start"), "groove:rock");
+  const at = (m, d) => render(m, 1).filter(e => e.d === d).map(e => +e.t.toFixed(2));
+  const plain = at(base, "s");
+  const flam = at(D.say(base, "drum:flam the backbeat"), "s");
+  ok(flam.length > plain.length, "FLAM THE BACKBEAT added no grace note");
+  ok(flam.some(t => plain.some(p => t < p && p - t < 0.5)),
+     "the flam is not in FRONT of the beat: " + flam.join(","));
+  const late = at(D.say(base, "drum:lay the snare back"), "s");
+  ok(late.every((t, i) => t > plain[i]), "LAY THE SNARE BACK did not move it late");
+  const br = D.say(base, "drum:let the hats breathe");
+  const b1 = render(br, 2).filter(e => e.d === "h" && e.t < 16).length;
+  const b2 = render(br, 2).filter(e => e.d === "h" && e.t >= 16).length;
+  ok(b1 !== b2 || b1 < 8, "a BREATHING hat plays every bar identically (" + b1 + "/" + b2 + ")");
+  const straight = D.say(D.say(base, "drum:flam the backbeat"), "drum:play it straight again");
+  ok(Object.keys(straight.kit).every(k => !/^[!~?]/.test(k)),
+     "PLAY IT STRAIGHT AGAIN left a hand on the kit");
 }
 
 /* (e) EVERY MACHINE WORD NAMES A KIT THE ENGINE HAS */
