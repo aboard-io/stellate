@@ -1591,6 +1591,10 @@ h1 em{font-style:normal;color:var(--ink)}
 .mxr.cut{background:color-mix(in srgb,var(--st-rec) 30%,var(--bg-key))}
 .mxr.cut .val{color:var(--st-rec);font-weight:700}
 .mxr:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+/* the board-is-trimmed dot on the rail's MIX key (ui/mixer.js drawMix) */
+.pkey.trimmed{position:relative}
+.pkey.trimmed::after{content:"";position:absolute;top:4px;right:14%;
+  width:7px;height:7px;border-radius:50%;background:var(--accent)}
 .mxzero{min-height:40px;display:flex;align-items:center;justify-content:center;
   color:var(--ink-2);border:1px dashed var(--rule);border-radius:var(--r);
   cursor:pointer;margin-top:var(--sp-2)}

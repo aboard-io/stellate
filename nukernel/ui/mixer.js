@@ -156,6 +156,11 @@ export function drawMix() {
     }
     el.appendChild(chan);
   }
+  // THE HAND IS VISIBLE FROM EVERY PAGE: a lit dot on the MIX rail key
+  // whenever the board carries offsets — a muted drum bus must never be a
+  // secret ("New York 1976 sounds like bluegrass now… and it has no drums").
+  const mk = document.querySelector('.pkey[data-page="mix"]');
+  if (mk) mk.classList.toggle("trimmed", !!MIXER);
   const z = document.createElement("div");
   z.className = "mxzero";
   z.textContent = MIXER ? "zero the board" : "the board is at zero";
