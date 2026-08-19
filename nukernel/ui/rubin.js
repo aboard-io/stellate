@@ -164,21 +164,47 @@ function applyOne(e) {
   }
   return { undo: () => {} };
 }
+// A SPOKEN SENTENCE HAS A DOSE. "Once you've written a sentence add a button
+// beside it for more and for less": a command is not a switch, it is an
+// amount, so every ledger row keeps a STACK of applications — + says it again
+// (the deltas add), − takes the last one back, and the row empties into
+// nothing. A sentence whose effects are one-shot (a chip, a recast, a layer)
+// has no + : saying it twice would say it once.
+const DOSABLE = new Set(["mix", "mixeq", "bpm", "secnum", "seceq", "secsend", "ops", "redo"]);
+const dosable = (fx) => fx.every(e => DOSABLE.has(e.t));
 function speak(p) {
   const cmds = nodeCmds();
   if (cmds.length >= MAX_CMDS) return;      // the tray already said so
-  const undos = p.fx.map(applyOne);
-  cmds.push({ text: p.text, undos, did: describeFx(p.fx, aim.scope) });
+  const cmd = { text: p.text, fx: p.fx, scope: aim.scope, node: aim.si,
+                did: describeFx(p.fx, aim.scope), doses: [], dosable: dosable(p.fx) };
+  cmds.push(cmd);
+  more(cmd);                                 // the first dose IS the sentence
   tokens = [];
   draw();
 }
-function retract(cmd) {
-  const cmds = nodeCmds();
-  const i = cmds.indexOf(cmd);
-  if (i < 0) return;
-  for (const u of [...cmd.undos].reverse()) { try { u.undo(); } catch (e) { /* held */ } }
-  cmds.splice(i, 1);
+// say it again. The apply layer is aimed at the node that spoke, so a dose
+// added while looking elsewhere still lands where the words were said.
+function more(cmd) {
+  if (cmd.doses.length && !cmd.dosable) return;
+  const held = aim;
+  aim = { scope: cmd.scope, si: cmd.node };
+  try { cmd.doses.push(cmd.fx.map(applyOne)); } finally { aim = held; }
   draw();
+}
+// take one back; the last one takes the sentence with it
+function less(cmd) {
+  const undos = cmd.doses.pop();
+  if (undos) for (const u of [...undos].reverse()) { try { u.undo(); } catch (e) { /* held */ } }
+  if (!cmd.doses.length) {
+    const cmds = aim.scope === cmd.scope && aim.si === cmd.node ? nodeCmds()
+      : (cmd.scope === "song" ? ledger.song : (ledger.secs[cmd.node] || []));
+    const i = cmds.indexOf(cmd);
+    if (i >= 0) cmds.splice(i, 1);
+  }
+  draw();
+}
+function retract(cmd) {
+  while (cmd.doses.length) less(cmd);
 }
 
 /* ---------- the record's facts, for the state-aware grammar ---------- */
@@ -338,11 +364,25 @@ export function draw() {
     const lg = el("div", "rledger");
     lg.append(el("i", "rg", "standing"));
     for (const c of cmds) {
-      const row = el("button", "rcmd");
-      row.type = "button";
-      row.title = "tap to retract";
-      row.append(el("b", "rct", c.text), el("span", "rdid", "→ " + (c.did || "")));
-      row.addEventListener("click", () => retract(c));
+      const row = el("div", "rcmdrow");
+      const said = el("button", "rcmd");
+      said.type = "button";
+      said.title = "tap to take it back";
+      said.append(el("b", "rct", c.text + (c.doses.length > 1 ? "  ×" + c.doses.length : "")),
+                  el("span", "rdid", "→ " + (c.did || "")));
+      said.addEventListener("click", () => retract(c));
+      row.append(said);
+      // THE DOSE KEYS, beside the sentence
+      const dn = el("button", "rdose", "−");
+      dn.type = "button"; dn.title = "less of that";
+      dn.addEventListener("click", (ev) => { ev.stopPropagation(); less(c); });
+      row.append(dn);
+      if (c.dosable) {
+        const up = el("button", "rdose", "+");
+        up.type = "button"; up.title = "more of that";
+        up.addEventListener("click", (ev) => { ev.stopPropagation(); more(c); });
+        row.append(up);
+      }
       lg.append(row);
     }
     wrap.append(lg);

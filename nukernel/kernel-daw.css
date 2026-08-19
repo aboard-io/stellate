@@ -1623,6 +1623,12 @@ h1 em{font-style:normal;color:var(--ink)}
   padding:0 var(--sp-3);border:1px solid var(--rule);border-radius:var(--r);
   background:color-mix(in srgb,var(--accent) 14%,var(--bg-key));
   color:var(--ink);font-weight:600}
+.rcmdrow{display:flex;align-items:stretch;gap:var(--sp-1)}
+.rcmdrow .rcmd{flex:1 1 auto;min-width:0}
+.rdose{appearance:none;cursor:pointer;flex:0 0 auto;width:48px;min-height:44px;
+  border:1px solid var(--rule);border-radius:var(--r);background:var(--bg-key);
+  color:var(--ink);font-size:1.3em;font-weight:700;line-height:1}
+.rdose:hover{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .rcmd{display:flex;flex-direction:column;align-items:flex-start;gap:2px;
   padding:var(--sp-1) var(--sp-3)}
 .rcmd:hover .rct{text-decoration:line-through}
