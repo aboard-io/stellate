@@ -43,7 +43,7 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
   {
     const NF2 = require("../../nukernel/fields.js");
     const cases = [
-      [["bring up", "echo", "on", "drums"], "song", "mix"],
+      [["bring up", "echo", "on drums"], "song", "mix"],
       [["add", "more", "compression"], "song", "mix"],
       [["make", "the kick", "huge"], "song", "mix"],
       [["redo", "the melody"], "song", "redo"],
@@ -51,7 +51,7 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
       [["make", "the melody", "piano"], "song", "cast"],
       [["make", "guitar", "distorted"], "song", "fx"],
       [["make", "vocals", "crunch"], "song", "fx"],
-      [["add", "distortion", "on", "guitar"], "song", "fx"],
+      [["add", "distortion", "on guitar"], "song", "fx"],
       [["think", "more", "punk"], "section", "think"],
     ];
     for (const [words, scope, kind] of cases) {
@@ -81,7 +81,7 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
       [["bring up", "drums", "bigger"], "an adjective sentence is MADE, not brought up"],
       [["bring up", "punk"], "a genre is thought/made/added/cut, never brought up"],
       [["add", "sparser", "rock"], "ADD disagrees with a shrinking adjective"],
-      [["bring up", "distortion", "on", "guitar"], "an effect is added or cut"],
+      [["bring up", "distortion", "on guitar"], "an effect is added or cut"],
       [["bring up", "notes"], "notes are added or cut"],
       [["add", "shoegaze", "more", "everything"], "a genre already means the whole node"],
       [["add", "shoegaze", "everything"], "a genre takes no pronoun except under MAKE"],
@@ -255,6 +255,32 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
        "BRING UP REVERB's translation never says reverb");
   }
 
+  /* (c4) THE TAP BUDGET: three, for every sentence in the language, at both
+     scopes — walked over the whole reachable space, not asserted */
+  {
+    ok(L.MAX_WORDS === 3, "the tap budget drifted from three (got " + L.MAX_WORDS + ")");
+    const reps = (() => { const seen = new Set(), out = [];
+      for (const [w, r] of Object.entries(L.LEXICON.WORDS)) {
+        const k = r.role + ":" + r.canon; if (!seen.has(k)) { seen.add(k); out.push(w); } }
+      return out; })();
+    const verbs = reps.filter(w => L.LEXICON.WORDS[w].role === "verb");
+    const rest = reps.filter(w => L.LEXICON.WORDS[w].role !== "verb");
+    let worst = 0, n = 0;
+    for (const scope of SCOPES) for (const v of verbs)
+      for (const a2 of [null, ...rest]) for (const b2 of [null, ...rest]) {
+        const t = [v, a2, b2].filter(Boolean);
+        if (t.length !== new Set(t).size) continue;
+        if (L.parse(t, scope)) { n++; if (t.length > worst) worst = t.length; }
+      }
+    ok(worst <= 3, "a sentence needs " + worst + " taps");
+    ok(n > 2000, "only " + n + " sentences fit in three taps — the language shrank");
+    console.log("  sentences inside the three-tap budget:", n);
+    // and every ON-phrase is ONE chip, never a bare "on"
+    ok(!L.LEXICON.WORDS.on || L.LEXICON.WORDS.on.role === "on",
+       "a bare \"on\" is tappable again — the target must stay one chip");
+    for (const w of Object.keys(L.LEXICON.ONWORD))
+      ok(/^on /.test(w), "on-chip \"" + w + "\" does not read as a phrase");
+  }
   /* (d) the cap */
   ok(L.MAX_CMDS === 5, "five commands per node is the law (got " + L.MAX_CMDS + ")");
 

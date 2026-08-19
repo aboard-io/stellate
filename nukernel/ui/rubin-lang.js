@@ -135,7 +135,17 @@ for (const [c, syns] of Object.entries(A)) for (const w of syns) put(w, "adj", c
 for (const [c, g] of Object.entries(FXA)) for (const w of g.syns) put(w, "fxadj", c);
 for (const [c, syns] of Object.entries(FXN)) for (const w of syns) put(w, "fxn", c);
 for (const [c, g] of Object.entries(G)) for (const w of g.syns) put(w, "gen", c);
-put("on", "glue", "on");
+// THE TARGET IS ONE TAP ("only three taps for any sentence"). "on" was a word
+// of its own, which made BRING UP ECHO ON DRUMS four taps; the phrase is one
+// chip now — the same compounding "bring up" has always used — so every
+// sentence in the language fits in three.
+const ONWORD = {};
+const onTok = (label, kind, canon) => { ONWORD[label] = { kind, canon };
+  put(label, "on", label); };
+for (const c of ["drums", "bass", "melody", "chords", "vocals"])
+  onTok("on " + (c === "vocals" ? "the vocals" : c), "subj", c);
+for (const [c, g] of Object.entries(U)) onTok("on the " + c, "unit", c);
+for (const [c] of Object.entries(I)) onTok("on " + c, "inst", c);
 // A WORD MAY WEAR TWO HATS. "more"/"less" are verbs in the first slot and
 // adjectives after one (THINK MORE PUNK, ADD MORE NOTES), and WORDS is
 // first-come — so the alternate reading is kept beside it and slots() reaches
@@ -365,7 +375,7 @@ function compile(q, scope, ctx) {
 
 /* ---------- grammar ---------- */
 export const MAX_CMDS = 5;
-export const MAX_WORDS = 4;
+export const MAX_WORDS = 3;   // the tap budget, and the whole grammar fits
 function slots(tokens) {
   const q = { verb: null, adj: null, gen: null, fxadj: null, fxn: null,
               instAdj: null, glue: false, nominal: null, onNominal: null };
@@ -376,9 +386,11 @@ function slots(tokens) {
     if (i === 0) { if (r.role !== "verb") return null; q.verb = r.canon; continue; }
     if (r.role === "verb" && ALT[tokens[i]]) r = ALT[tokens[i]];      // the second hat
     if (r.role === "verb") return null;
-    if (r.role === "glue") {
-      if (q.glue || (!q.nominal && !q.fxn)) return null;
-      q.glue = true; afterOn = true; continue;
+    if (r.role === "on") {
+      if (q.glue || (!q.nominal && !q.fxn) || q.onNominal) return null;
+      const t = ONWORD[r.canon];
+      q.glue = true; q.onNominal = { kind: t.kind, canon: t.canon };
+      afterOn = true; continue;
     }
     if (r.role === "subj" || r.role === "unit" || r.role === "inst") {
       const nom = { kind: r.role, canon: r.canon };
@@ -510,4 +522,4 @@ export function describeFx(fx, scope) {
   }).join(" · ");
 }
 
-export const LEXICON = { V, S, U, I, A, FXA, FXN, G, WORDS };
+export const LEXICON = { V, S, U, I, A, FXA, FXN, G, ONWORD, WORDS };

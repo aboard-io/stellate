@@ -325,7 +325,8 @@ export function draw() {
       const table = role === "verb" ? LEXICON.V : role === "subj" ? LEXICON.S
         : role === "unit" ? synsOf(LEXICON.U) : role === "inst" ? synsOf(LEXICON.I)
         : role === "gen" ? synsOf(LEXICON.G) : role === "fxadj" ? synsOf(LEXICON.FXA)
-        : role === "fxn" ? LEXICON.FXN : role === "glue" ? { on: ["on"] }
+        : role === "fxn" ? LEXICON.FXN
+        : role === "on" ? Object.fromEntries(Object.keys(LEXICON.ONWORD).map(w => [w, [w]]))
         : LEXICON.A;
       for (const [canon, syns] of Object.entries(table)) {
         const w = syns.find(x => next.has(x));
@@ -334,8 +335,8 @@ export function draw() {
       return out;
     };
     const groups = [["say", "verb"], ["about", "subj"], ["about", "unit"],
-                    ["about", "inst"], ["on", "glue"], ["like", "gen"],
-                    ["how", "adj"], ["how", "fxadj"], ["effect", "fxn"]];
+                    ["about", "inst"], ["like", "gen"], ["how", "adj"],
+                    ["how", "fxadj"], ["effect", "fxn"], ["on what", "on"]];
     for (const [label, role] of groups) {
       const words = oneEach(role);
       if (!words.length) continue;
