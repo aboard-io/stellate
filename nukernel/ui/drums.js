@@ -182,8 +182,27 @@ function draw() {
                  "the fills": 5, "the machine": 6, "the feel": 7, "the tempo": 8,
                  "start": 9 };
   const rank = (g) => (RANK[g] != null ? RANK[g] : g.startsWith("grooves") ? 2 : 10);
+  // BEFORE THE MACHINE IS ON there is exactly one thing to say, and burying
+  // it under a hundred dim words was the difference between "a new thing"
+  // and "the same wall as yesterday". A word that would change nothing is
+  // shown ONLY once the machine is playing — that is when a dim word is a
+  // readout rather than noise.
   const scroll = el("div", "dscroll");
-  if (model.on) scroll.append(el("i", "dg dgtop", "or say something specific"));
+  if (!model.on) {
+    const start = el("div", "dstart");
+    start.append(el("p", "dwhat", "a drummer, sitting down. tap once and it starts asking."));
+    for (const i of words) {
+      if (!i.changes) continue;
+      const c = el("button", "dchip dbig", i.words[0]);
+      c.type = "button";
+      c.addEventListener("click", () => {
+        ledger.push(says(model, i.id)); model = say(model, i.id); push(false); draw(); });
+      start.append(c);
+    }
+    box.append(start);
+    return;
+  }
+  scroll.append(el("i", "dg dgtop", "or say something specific"));
   for (const [g, list] of [...groups.entries()].sort((a, b) => rank(a[0]) - rank(b[0]))) {
     const wrap = el("div", "dgroup");
     wrap.append(el("i", "dg", g));
