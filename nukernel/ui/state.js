@@ -399,10 +399,14 @@ export function adoptSong(raw, reason) {
   SLOTS = s.slots; SONG = s.song; slot = 0; SUBJ = SLOTS[0];
   MASTER = s.master;                   // validateSong normalizes absent to null
   BUSES = s.buses;                     // same normalizer, same law
-  // the board's offset layer: a document that carries one states it; WRITE
-  // (the composer) states nothing about your hands on the board, so the
-  // offsets you set survive a recompose — they are yours, not the song's draft
-  MIXER = s.mix != null ? s.mix : (reason === "composer" ? MIXER : null);
+  // the board's offset layer: a document that carries one states it; any
+  // adopt without one — WRITE included — clears the board. Offsets briefly
+  // survived a recompose ("they are yours"), and the trap arrived in a day:
+  // drums muted while auditioning one record silently followed every record
+  // written after it ("New York 1976 sounds like bluegrass now… and it has
+  // no drums", 2026-08-19). A new record gets a zeroed desk; trims travel
+  // with the SONG they were set on, via its own saved `mix`.
+  MIXER = s.mix != null ? s.mix : null;
   GROOVE = s.groove;                   // ...and the song's groove, same law
   SWING = s.swing;                     // ...and its swing, the same move made twice
   POOL = s.pool;                       // ...and the band, hired for the record

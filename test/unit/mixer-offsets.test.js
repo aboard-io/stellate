@@ -177,16 +177,23 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
   const res3 = NuSong.load(raw3);
   ok(res3.ok && res3.song.mix === null, "(f) an emptied mix did not normalize to null");
 
-  /* (g) WRITE keeps your hands on the board; a file states its own */
+  /* (g) A NEW RECORD GETS A ZEROED DESK. WRITE briefly kept your trims and
+     the trap arrived in a day: a drum mute set on one record silently
+     followed every record after it. Offsets travel only with the song that
+     saved them. */
   ST.setMixOffset(lead, "fader", -3);
   ok(ST.adoptSong(C.compose("acid", 7), "composer"), "(g) recompose failed to load");
+  ok(ST.MIXER === null, "(g) WRITE carried the last record's trims onto a new one");
+  const withMix = JSON.parse(JSON.stringify(raw));
+  withMix.mix = { [lead]: { fader: -3 } };
+  ok(ST.adoptSong(withMix, "file"), "(g) file-with-mix load failed");
   ok(ST.MIXER && ST.MIXER[lead] && ST.MIXER[lead].fader === -3,
-     "(g) WRITE dropped the board's offsets");
+     "(g) a document's own mix did not arrive with it");
   ok(ST.adoptSong(JSON.parse(JSON.stringify(raw)), "file"), "(g) file load failed");
   ok(ST.MIXER === null, "(g) a file without `mix` did not clear the board");
 
   console.log(fails ? "\nmixer-offsets: FAIL — " + fails + " of " + (pass + fails)
     : "mixer-offsets: PASS — " + pass + " checks (offset layer: absent-is-today, "
-      + "one hand over every section, clamps, master, round-trip, WRITE keeps your trims)");
+      + "one hand over every section, clamps, master, round-trip, WRITE zeroes the board)");
   process.exit(fails ? 1 : 0);
 })().catch(e => { console.error("mixer-offsets: CRASH — " + (e && e.stack || e)); process.exit(1); });

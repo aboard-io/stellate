@@ -1014,6 +1014,12 @@
       for (let b = 0; b * 16 + at < steps; b++)
         if (p.gate[b * 16 + at]) p.oct[b * 16 + at] = up;
     }
+    // QUESTION, ANSWER: bar one states from home, bar two speaks from the
+    // shift — and its LAST gated step lands back on the root, so the two-bar
+    // sentence resolves at its own seam instead of merely starting over.
+    if (steps > 16)
+      for (let i = steps - 1; i >= 16; i--)
+        if (p.gate[i]) { p.deg[i] = 0; p.oct[i] = 0; break; }
     return p;
   }
 
@@ -2007,15 +2013,25 @@
     // measured as pushing spem INTO counterpoint on the confusion matrix:
     // homogenization wearing evolution's name.
     const evImpose = !evYear || evYear >= 1900;
-    for (const b of song) {
+    // ...AND THE ARC POINTS AT THE FORM (the tension/release read, 2026-08-19,
+    // measured on acid seed 1: a DROP drew mot:close — a tension device spent
+    // on the release section). The device kind stays the stream's draw; the
+    // DIRECTION is the form's: a drop opens (the release), the section before
+    // a drop closes (the tension into it), and only a section pointing at
+    // nothing keeps the drawn coin.
+    for (let bi = 0; bi < song.length; bi++) {
+      const b = song[bi];
       const evDev0 = pick(S.evo, ["period", "period", "mot", "auto", "short"]);
       const evPer = pick(S.evo, ["4bar", "4bar", "2bar"]);
-      const evArc = pick(S.evo, ["open", "close"]);
+      const evArcDrawn = pick(S.evo, ["open", "close"]);
       const evTwo = chance(S.evo, 0.45);
       const evDev = evArcOK ? evDev0
         : (evDev0 === "mot" || evDev0 === "auto" ? "period" : evDev0);
       if (!evImpose) continue;
       if ((b.len || 0) < 16 || b.period || b.mot || (b.auto && b.auto.length)) continue;
+      const next = song[bi + 1];
+      const evArc = b.role === "drop" ? "open"
+        : (next && next.role === "drop") ? "close" : evArcDrawn;
       if (evDev === "short") b.len = halfLen(G);
       else {
         if (evDev === "period") b.period = evPer;
