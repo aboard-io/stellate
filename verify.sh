@@ -152,7 +152,7 @@ declare -A DONE
 for _ in "${PIDS[@]}"; do
   wait -n
   for f in "$TMP"/*.res; do
-    [ -e "$f" ] || continue
+    [ -s "$f" ] || continue      # empty/mid-write: not this pass (see run())
     name=$(basename "$f" .res)
     [ -n "${DONE[$name]:-}" ] && continue
     DONE[$name]=1
