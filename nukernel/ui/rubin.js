@@ -165,11 +165,22 @@ export function draw() {
       " has heard five things — retract one to say more"));
   else {
     const next = continuations(tokens, scope);
-    const groups = [["say", w => LEXICON.WORDS[w].role === "verb"],
-                    ["about", w => LEXICON.WORDS[w].role === "subj"],
-                    ["how", w => LEXICON.WORDS[w].role === "adj"]];
-    for (const [label, fits] of groups) {
-      const words = [...next].filter(fits).sort();
+    // ONE CHIP PER MEANING ("get rid of options I shouldn't click"): the
+    // language holds every synonym, but a tray that offers "delay" and "the
+    // delay" side by side is one thought twice. Each canon shows its first
+    // form — the lexicon lists are authored best-form-first.
+    const oneEach = (role) => {
+      const seen = new Set(), out = [];
+      const table = role === "verb" ? LEXICON.V : role === "subj" ? LEXICON.S : LEXICON.A;
+      for (const [canon, syns] of Object.entries(table)) {
+        const w = syns.find(x => next.has(x));
+        if (w && !seen.has(canon)) { seen.add(canon); out.push(syns[0] !== w && next.has(syns[0]) ? syns[0] : w); }
+      }
+      return out;
+    };
+    const groups = [["say", "verb"], ["about", "subj"], ["how", "adj"]];
+    for (const [label, role] of groups) {
+      const words = oneEach(role);
       if (!words.length) continue;
       const g = el("div", "rgroup");
       g.append(el("i", "rg", label));
