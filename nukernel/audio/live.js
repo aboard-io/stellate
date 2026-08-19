@@ -125,9 +125,17 @@ function settle(stage, why, extra) {
 // clock, the runway, the ring, the buses and the master stage.
 const LIVE_SECTION = { name: "nukernel", drums: "full", bass: "root", pads: true,
                        melody: "lead", cycles: 1, fill: "off", sweep: "off" };
+// THE WALK IS NEVER HANDED NULL. The parent's stepWalk reads the state's
+// progression the moment it is asked for a bar, and a recompile can leave
+// `parentState()` momentarily empty (a song mid-edit, a jump landing between
+// compiles) — which surfaced as "FaustLive pump TypeError: reading
+// 'progression'" and a dead pump, on the drum machine's every other word.
+// The last good state stands in until the next one exists.
+let lastState = null;
 function getState() {
-  const base = parentState();
+  const base = parentState() || lastState;
   if (!base) return null;
+  lastState = base;
   // THE MASTER STRIP IS PART OF THE STATE, not a chain of its own — the parent
   // resolves fx_bus and master_mb from exactly these fields, so a board move
   // lands on the next bar the walk asks for (audio/desk.js masterState says
@@ -142,7 +150,14 @@ const barOfSerial = (serial) => {
 };
 const events = (one, meta) => {
   const p = barPlan(barOfSerial(meta.serial));
-  return p ? { ev: p.ev, units: p.units } : null;
+  if (p) return { ev: p.ev, units: p.units };
+  // NEVER NULL. The parent reads a null as "this caller has nothing to say
+  // about this bar, compose it yourself" — and it cannot compose a foreign
+  // state (no progression), so a bar asked for mid-recompile killed the pump
+  // with "unknown progression 'undefined'". A bar we have no plan for is a
+  // bar of silence, which is the truth.
+  return { ev: { pitched: [], drums: [], found: [], sfx: [], srcById: {}, totalBeats: 4 },
+           units: {} };
 };
 const barBeats = ({ serial }) => barBeatsAt(barOfSerial(serial));
 

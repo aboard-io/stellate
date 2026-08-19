@@ -39,3 +39,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-ui)}
   color:var(--ink);font-size:clamp(15px,2.2vw,18px)}
 .dchip:hover{background:var(--bg-key-hi)}
 .dchip.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+/* a word that is already true is LIT; one that would change nothing is dim
+   and unpressable — the vocabulary is the readout */
+.dchip.dim{opacity:.38;cursor:default}
+.dchip[disabled]{cursor:default}

@@ -88,8 +88,12 @@
      Each entry answers two questions and nothing else: is it worth offering
      right now (`when`), and what does it make (`apply`). */
   const V = {};
-  const add = (id, group, words, when, apply, says) =>
-    { V[id] = { id, group, words, when, apply, says }; };
+  // `is` — is this already the case? The tray LIGHTS those rather than
+  // hiding them ("when I tap something light it up, don't make it
+  // disappear"), so the vocabulary doubles as the readout: what the machine
+  // is doing is which words are lit.
+  const add = (id, group, words, when, apply, says, is) =>
+    { V[id] = { id, group, words, when, apply, says, is: is || (() => false) }; };
 
   add("start", "start", ["add drums"], m => !m.on,
       m => ({ ...m, on: true, kit: { ...empty(), ...GROOVES.four } }),
@@ -99,7 +103,8 @@
     add("groove:" + g, "the groove", words,
         m => m.on && JSON.stringify({ ...empty(), ...GROOVES[g] }) !== JSON.stringify(m.kit),
         m => ({ ...m, kit: { ...empty(), ...GROOVES[g] }, fills: {} }),
-        () => "the kit plays a " + words[0]);
+        () => "the kit plays a " + words[0],
+        m => JSON.stringify({ ...empty(), ...GROOVES[g] }) === JSON.stringify(m.kit));
 
   for (const [id, L] of Object.entries(LANEWORD))
     add("lane:" + id, "the kit", [L.word],
@@ -107,25 +112,32 @@
         m => { const kit = clone(m.kit);
                kit[L.lane] = has(kit, L.lane) ? L.more.slice() : L.give.slice();
                return { ...m, kit }; },
-        m => (has(m.kit, L.lane) ? "more " : "") + L.word);
+        m => (has(m.kit, L.lane) ? "more " : "") + L.word,
+        m => has(m.kit, L.lane));
 
   for (const [lane, word] of Object.entries(DROPWORD))
     add("drop:" + lane, "take away", [word],
         m => m.on && has(m.kit, lane),
         m => { const kit = clone(m.kit); kit[lane] = z(); return { ...m, kit }; },
-        () => word);
+        () => word, m => !has(m.kit, lane));
 
   for (const [bar, word] of Object.entries(FILLWORD))
-    add("fill:" + bar, "the fills", [word],
-        m => m.on && !m.fills[bar],
-        m => ({ ...m, fills: { ...m.fills, [bar]: true } }),
-        () => "a fill in the " + (bar === "2" ? "second" : bar === "3" ? "third" : "fourth") + " measure");
+    // a fill TOGGLES: saying it again takes it out, the same law the bar's
+    // own steps follow
+    add("fill:" + bar, "the fills", [word], m => m.on,
+        m => { const fills = { ...m.fills };
+               if (fills[bar]) delete fills[bar]; else fills[bar] = true;
+               return { ...m, fills }; },
+        m => (m.fills[bar] ? "no fill in the " : "a fill in the ") +
+             (bar === "2" ? "second" : bar === "3" ? "third" : "fourth") + " measure",
+        m => !!m.fills[bar]);
   add("nofills", "the fills", ["no fills"], m => Object.keys(m.fills).length > 0,
       m => ({ ...m, fills: {} }), () => "the fills come out");
 
   for (const [k, word] of Object.entries(MACHINES))
     add("kit:" + k, "the machine", [word], m => m.on && m.drumkit !== k,
-        m => ({ ...m, drumkit: k }), () => "it is " + word + " now");
+        m => ({ ...m, drumkit: k }), () => "it is " + word + " now",
+        m => m.drumkit === k);
 
   add("looser", "the feel", ["looser"], m => m.on && m.humanize < 0.06,
       m => ({ ...m, humanize: +(m.humanize + 0.03).toFixed(2) }),
@@ -134,9 +146,9 @@
       m => ({ ...m, humanize: +(m.humanize - 0.03).toFixed(2) }),
       () => "back toward the grid");
   add("swing", "the feel", ["swing it"], m => m.on && m.swing !== "swing",
-      m => ({ ...m, swing: "swing" }), () => "it swings");
+      m => ({ ...m, swing: "swing" }), () => "it swings", m => m.swing === "swing");
   add("shuffle", "the feel", ["shuffle it"], m => m.on && m.swing !== "shuffle",
-      m => ({ ...m, swing: "shuffle" }), () => "a shuffle");
+      m => ({ ...m, swing: "shuffle" }), () => "a shuffle", m => m.swing === "shuffle");
   add("straight", "the feel", ["straighten it"], m => m.on && m.swing != null,
       m => ({ ...m, swing: null }), () => "straight again");
   add("harder", "the feel", ["harder"], m => m.on && (m.vel.all || 0) < 2,
@@ -195,6 +207,19 @@
   /* ---------- what can be said right now — the exactness law ---------- */
   // with a lane PINNED the bar itself is the vocabulary; without one, the
   // machine's own words
+  // THE CATALOG: every word, whether it is already true, and whether saying
+  // it would do anything. The tray draws all of it; `offered` stays for the
+  // gate and for anything that wants only the live half.
+  const catalog = (m, lane) => {
+    const list = lane ? stepsFor(lane) : Object.values(V);
+    return list.map(i => {
+      let active = false, changes = false;
+      try { active = !!(i.is ? i.is(m) : false); } catch (e) {}
+      try { changes = !!i.when(m); } catch (e) {}
+      if (i.step != null) active = !!(m.kit[i.lane] && m.kit[i.lane][i.step]);
+      return { ...i, active, changes };
+    });
+  };
   const offered = (m, lane) => lane
     ? stepsFor(lane).filter(i => { try { return !!i.when(m); } catch (e) { return false; } })
     : Object.values(V).filter(i => { try { return !!i.when(m); } catch (e) { return false; } });
@@ -225,7 +250,7 @@
     return g;
   }
 
-  return { LANES, BARS, N, blank, V, offered, say, says, toGenre, stepWord,
+  return { LANES, BARS, N, blank, V, offered, catalog, say, says, toGenre, stepWord,
            stepsFor, LANENAME, LANEOF, GROOVES, LANEWORD, FILLWORD, MACHINES,
            hits, has, clone, empty };
 });

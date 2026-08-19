@@ -513,8 +513,15 @@ export function sectionRender(sec, slots, songGroove, songSwing) {
   // the song groove AND swing are IN the signature: neither is a key of `sec`
   // any more, and a cache that ignored them would keep serving the old feel
   // after a change
+  // ...AND THE GENRE'S OWN VERSION. A session genre can be REWRITTEN IN
+  // PLACE under an unchanged key (the drum machine at nukernel/drums.html
+  // does it on every word), and a signature that read only the box served
+  // the old render forever — "I tap groove and nothing happens to the
+  // sound". A writer that mutates a genre bumps its `__v`; a genre that
+  // never moves has none and this term is the empty string it always was.
+  const gv = stackOf(sec).map(e => e.g + ":" + ((GENRES[e.g] || {}).__v || 0)).join(",");
   const sig = JSON.stringify(sec) + "§g:" + (songGroove || "") +
-    "§s:" + (songSwing || "") + "§" +
+    "§s:" + (songSwing || "") + "§gv:" + gv + "§" +
     [...ids].map(i => i + ":" + JSON.stringify(slots[i])).join("");
   const c = rcache.get(sec);
   if (c && c.sig === sig) return c.out;
