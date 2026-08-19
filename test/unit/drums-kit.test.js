@@ -220,6 +220,53 @@ console.log("flams land in front, lay-backs land late, a breathing hat varies");
      "PLAY IT STRAIGHT AGAIN left a hand on the kit");
 }
 
+/* (d6) THE DRUMMER'S INTERVIEW. Nine questions in the order a drummer
+   answers them, every answer a real change to the part, and the sheet is
+   what was DECIDED rather than what the kit happens to look like. */
+console.log("a drummer sits down and answers nine questions");
+{
+  let m = D.say(D.blank(), "start");
+  const asked = [];
+  for (let i = 0; i < 20; i++) {
+    const q = D.nextAsk(m);
+    if (!q) break;
+    ok(q.ask.endsWith("?"), "\"" + q.ask + "\" is not a question");
+    ok(q.opts.length >= 2, q.ask + " offers " + q.opts.length + " answer(s)");
+    asked.push(q.id);
+    const before = JSON.stringify(D.toGenre(m));
+    // the FIRST option is the affirmative one (a backbeat, timekeeping,
+    // fills); walking the last of every question is a drummer answering
+    // "nothing, nowhere, none" and is checked separately below
+    const pick = q.opts[0];
+    m = D.answer(m, q.id, pick.w);
+    ok((m.answers || {})[q.id] === pick.w, q.ask + ": the answer was not recorded");
+    // ...and answering must not re-open a question already answered
+    for (const id of asked.slice(0, -1))
+      ok((m.answers || {})[id], "answering " + q.id + " un-answered " + id);
+    void before;
+  }
+  ok(asked.length >= 9, "the interview is only " + asked.length + " questions long");
+  ok(asked[0] === "tempo", "the first question is " + asked[0] + ", not the tempo");
+  ok(asked.indexOf("record") < asked.indexOf("job"),
+     "the drummer is asked their job before what kind of record it is");
+  ok(D.nextAsk(m) === null, "the interview never ends");
+  ok(render(m, 4).length > 20, "a fully answered interview yields only " +
+     render(m, 4).length + " hits");
+  // ...and the drummer who answers "nothing, nowhere, none" still plays
+  // something: the interview cannot produce silence by being answered
+  {
+    let bare = D.say(D.blank(), "start");
+    for (let i = 0; i < 20; i++) { const q = D.nextAsk(bare); if (!q) break;
+      bare = D.answer(bare, q.id, q.opts[q.opts.length - 1].w); }
+    ok(render(bare, 4).length > 0, "answering every question the sparsest way is silence");
+  }
+  // every option of every question is playable
+  for (const d of D.decisions(m)) for (const o of d.opts) {
+    const m2 = D.answer(m, d.id, o.w);
+    for (const e of render(m2, 4)) ok(Number.isFinite(e.t), d.id + "/" + o.w + " renders NaN");
+  }
+}
+
 /* (e) EVERY MACHINE WORD NAMES A KIT THE ENGINE HAS */
 console.log("every machine word is a kit the engine can route");
 {

@@ -4,7 +4,8 @@
 // audio tier the daw uses — one engine, still.
 // the kit model is the classic UMD data tier (nukernel/drums-kit.js), read
 // off window exactly as ui/deps.js reads the rest of it
-const { blank, catalog, say, says, toGenre, LANEOF, LANES } = window.NuDrums;
+const { blank, catalog, say, says, toGenre, LANEOF, LANES,
+        decisions, nextAsk, answer } = window.NuDrums;
 import { GENRES, NuSong } from "./deps.js";
 import { adoptSong, SONG, on, commit, setBpm, setSwing } from "./state.js";
 import { startAt, stop, playing, warmup, getPosition, passAt } from "../audio/live.js";
@@ -15,6 +16,7 @@ const el = (tag, cls, text) => { const n = document.createElement(tag);
 
 const GK = "lab.drums";            // the session genre this machine writes
 let cells = [];                    // the pattern's cells, for the playhead
+let asking = null;                 // a decision being revisited, if any
 let model = blank();
 model.bpm = 112;                   // a machine tempo: shorter bars, sooner changes
 let lane = null;                   // the pinned lane, or null
@@ -101,6 +103,49 @@ function draw() {
     box.append(grid);
   }
 
+  // THE GIG SHEET — what this drummer has decided, and the one thing they
+  // have not decided yet. A drummer sitting down does not reach for a step
+  // grid; they want to know how fast, whether it swings, what kind of record
+  // this is and what their job in it is. So the questions come first, in the
+  // order a drummer answers them, and everything else is what you say after
+  // you have sat down.
+  if (model.on) {
+    const ds = decisions(model);
+    const sheet = el("div", "dsheet");
+    for (const d of ds) {
+      if (!d.answered) continue;
+      const c = el("button", "dfact");
+      c.type = "button";
+      c.title = "change it: " + d.ask;
+      c.append(el("b", null, d.id), document.createTextNode(" " + d.answered));
+      c.addEventListener("click", () => { asking = d.id; draw(); });
+      sheet.append(c);
+    }
+    if (sheet.childNodes.length) box.append(sheet);
+
+    const q = asking ? ds.find(d => d.id === asking) : nextAsk(model);
+    if (q) {
+      const ask = el("div", "dask");
+      ask.append(el("h2", "dq", q.ask));
+      const row = el("div", "dopts");
+      for (const o of q.opts) {
+        const b = el("button", "dopt" + (o.answered ? " on" : "") +
+                              (!o.answered && o.active ? " istrue" : ""), o.w);
+        b.type = "button";
+        b.addEventListener("click", () => {
+          const before = model;
+          model = answer(model, q.id, o.w);
+          if (model !== before) { ledger.push(q.ask + " " + o.w); push(false); }
+          asking = null;
+          draw();
+        });
+        row.append(b);
+      }
+      ask.append(row);
+      box.append(ask);
+    }
+  }
+
   // WHAT IT IS DOING, in words — the transcript
   const said = el("div", "dsaid");
   if (!ledger.length) said.append(el("p", "dhint", "tap a word"));
@@ -138,6 +183,7 @@ function draw() {
                  "start": 9 };
   const rank = (g) => (RANK[g] != null ? RANK[g] : g.startsWith("grooves") ? 2 : 10);
   const scroll = el("div", "dscroll");
+  if (model.on) scroll.append(el("i", "dg dgtop", "or say something specific"));
   for (const [g, list] of [...groups.entries()].sort((a, b) => rank(a[0]) - rank(b[0]))) {
     const wrap = el("div", "dgroup");
     wrap.append(el("i", "dg", g));

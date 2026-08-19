@@ -88,3 +88,23 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-ui)}
 /* the bars that are not in the loop right now (a lane is open, so the
    machine is looping bar one until you close it) */
 .dbar.out{opacity:.3}
+
+/* THE GIG SHEET: what has been decided, and the question you are on */
+.dsheet{flex:0 0 auto;display:flex;flex-wrap:wrap;gap:5px}
+.dfact{appearance:none;cursor:pointer;min-height:30px;padding:0 var(--sp-2);
+  border:1px solid var(--rule);border-radius:999px;background:var(--bg-key);
+  color:var(--ink-2);font-size:var(--t-sm)}
+.dfact b{color:var(--ink-2);text-transform:uppercase;letter-spacing:.1em;
+  margin-right:.4em;font-weight:600;opacity:.75}
+.dfact:hover{border-color:var(--accent);color:var(--ink)}
+.dask{flex:0 0 auto;padding:var(--sp-2) var(--sp-3);border-radius:var(--r);
+  background:color-mix(in srgb,var(--accent) 10%,var(--bg-sunk))}
+.dq{margin:0 0 var(--sp-2);font-size:clamp(17px,3vw,23px);letter-spacing:.01em}
+.dopts{display:flex;flex-wrap:wrap;gap:8px}
+.dopt{appearance:none;cursor:pointer;min-height:46px;padding:0 var(--sp-3);
+  border:1px solid var(--rule);border-radius:var(--r);background:var(--bg-key);
+  color:var(--ink);font-size:clamp(15px,2.2vw,18px);font-weight:600}
+.dopt:hover{background:var(--bg-key-hi)}
+.dopt.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.dopt.istrue{border-color:color-mix(in srgb,var(--accent) 60%,transparent)}
+.dgtop{margin-top:0}

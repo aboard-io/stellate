@@ -36,7 +36,8 @@
 
   // a MODEL is the kit, the four bars' worth of variation, and the feel
   const blank = () => ({ on: false, kit: empty(), fills: {}, drumkit: "acoustic",
-                         humanize: 0, swing: null, vel: {}, bpm: 92 });
+                         humanize: 0, swing: null, vel: {}, bpm: 92,
+                         answers: {}, fam: null, job: null });
 
   /* ---------- THE GROOVES: real bars, written out ------------------------
      A vocabulary of styles, AUTHORED HERE. Paul pointed at
@@ -371,6 +372,112 @@
                      c: "claps", p: "percussion", t: "toms" };
   const LANEOF = (l) => LANENAME[l] || l;
 
+  /* ---------- WHAT A DRUMMER DECIDES, IN THE ORDER THEY DECIDE IT --------
+     "More of a drummer decision-making simulator than a drum machine."
+     Sitting down at a kit, nobody thinks about steps: they want to know how
+     fast, whether it swings, what kind of record this is, what their JOB in
+     it is, what they are keeping time on, where the backbeat sits, how hard
+     and how loose to play it, and where the fills go. That is nine
+     questions, they have an order, and answering them yields a part — which
+     is what this table is. Everything else in this file is what you say
+     AFTER you have sat down.
+
+     Each option is an ordinary kit->kit function, so the decisions are not a
+     second engine: they are the same vocabulary, asked in a drummer's
+     order. */
+  const bpmSet = (n) => (m) => ({ ...m, bpm: n });
+  const kitSet = (fn) => (m) => fn(m);
+  const DECISIONS = [
+    { id: "tempo", ask: "how fast is it?", opts: [
+      { w: "slow, 72", is: (m) => m.bpm === 72, apply: bpmSet(72) },
+      { w: "medium, 96", is: (m) => m.bpm === 96, apply: bpmSet(96) },
+      { w: "up, 120", is: (m) => m.bpm === 120, apply: bpmSet(120) },
+      { w: "fast, 144", is: (m) => m.bpm === 144, apply: bpmSet(144) } ] },
+    { id: "feel", ask: "straight or swung?", opts: [
+      { w: "straight", is: (m) => !m.swing, apply: (m) => ({ ...m, swing: null }) },
+      { w: "swung", is: (m) => m.swing === "swing", apply: (m) => ({ ...m, swing: "swing" }) },
+      { w: "shuffled", is: (m) => m.swing === "shuffle", apply: (m) => ({ ...m, swing: "shuffle" }) },
+      { w: "half-time feel", is: (m) => JSON.stringify(m.kit.s) === JSON.stringify(on(8)),
+        apply: kitSet(DRUMMER["backbeat on three"]) } ] },
+    { id: "record", ask: "what kind of record is this?", opts:
+      ["the floor", "breaks", "rock", "latin", "funk", "jazz"].map((f) => ({
+        w: f, is: (m) => m.fam === f, apply: (m) => ({ ...m, fam: f }) })) },
+    { id: "groove", ask: "which one?", when: (m) => !!m.fam, opts: null },   // filled below
+    { id: "job", ask: "what is your job in it?", opts: [
+      { w: "hold it down", is: (m) => m.job === "hold",
+        apply: (m) => ({ ...m, job: "hold", kit: DRUMMER["hands in eighths"](m).kit }) },
+      { w: "drive it", is: (m) => m.job === "drive",
+        apply: (m) => ({ ...m, job: "drive", kit: DRUMMER["hands in sixteenths"](m).kit }) },
+      { w: "stay out of the way", is: (m) => m.job === "out",
+        apply: (m) => ({ ...m, job: "out", kit: { ...clone(m.kit), h: HANDS.quarters.slice(), o: z(), p: z() } }) },
+      { w: "push it", is: (m) => m.job === "push",
+        apply: (m) => ({ ...m, job: "push",
+          kit: DRUMMER["accent the downbeats"](DRUMMER["ghost notes"](m)).kit }) } ] },
+    { id: "time", ask: "what are you keeping time on?", opts: [
+      { w: "the hats", is: (m) => has(m.kit, "h") && !has(m.kit, "p"),
+        apply: kitSet(DRUMMER["back to the hats"]) },
+      { w: "the ride", is: (m) => has(m.kit, "p") && !has(m.kit, "h"),
+        apply: kitSet(DRUMMER["ride it, not the hats"]) },
+      { w: "nothing — just kick and snare", is: (m) => !has(m.kit, "h") && !has(m.kit, "p"),
+        apply: (m) => ({ ...m, kit: { ...clone(m.kit), h: z(), p: z() } }) } ] },
+    { id: "backbeat", ask: "where is the backbeat?", opts: [
+      { w: "two and four", is: (m) => JSON.stringify(m.kit.s) === JSON.stringify(on(4, 12)),
+        apply: kitSet(DRUMMER["backbeat on two and four"]) },
+      { w: "three", is: (m) => JSON.stringify(m.kit.s) === JSON.stringify(on(8)),
+        apply: kitSet(DRUMMER["backbeat on three"]) },
+      { w: "nowhere — no backbeat", is: (m) => !has(m.kit, "s"),
+        apply: (m) => ({ ...m, kit: { ...clone(m.kit), s: z() } }) } ] },
+    { id: "loud", ask: "how hard are you hitting?", opts: [
+      { w: "back", is: (m) => (m.vel.all || 0) < 0, apply: (m) => ({ ...m, vel: { all: -1 } }) },
+      { w: "normal", is: (m) => !(m.vel.all || 0), apply: (m) => ({ ...m, vel: {} }) },
+      { w: "hard", is: (m) => (m.vel.all || 0) > 0, apply: (m) => ({ ...m, vel: { all: 1 } }) } ] },
+    { id: "loose", ask: "how tight to the grid?", opts: [
+      { w: "on the grid", is: (m) => !m.humanize, apply: (m) => ({ ...m, humanize: 0 }) },
+      { w: "human", is: (m) => m.humanize === 0.03, apply: (m) => ({ ...m, humanize: 0.03 }) },
+      { w: "loose", is: (m) => m.humanize >= 0.06, apply: (m) => ({ ...m, humanize: 0.06 }) } ] },
+    { id: "fills", ask: "where do the fills go?", opts: [
+      { w: "end of every four", is: (m) => !!m.fills[4] && !m.fills[2],
+        apply: (m) => ({ ...m, fills: { 4: true } }) },
+      { w: "halfway too", is: (m) => !!m.fills[2] && !!m.fills[4],
+        apply: (m) => ({ ...m, fills: { 2: true, 4: true } }) },
+      { w: "no fills", is: (m) => !Object.keys(m.fills).length,
+        apply: (m) => ({ ...m, fills: {} }) } ] },
+  ];
+  // the second question about the record: which groove, out of the family
+  // just chosen — the same grooves, asked the way a drummer would ask
+  DECISIONS.find((d) => d.id === "groove").opts = null;
+  const grooveOpts = (m) => Object.keys(GROOVES)
+    .filter((g) => (GROOVEFAM[g] || "other") === m.fam)
+    .map((g) => ({ w: (GROOVEWORD[g] || [g])[0],
+      is: (mm) => JSON.stringify({ ...empty(), ...GROOVES[g] }) === JSON.stringify(mm.kit),
+      apply: (mm) => ({ ...mm, kit: { ...empty(), ...GROOVES[g] }, fills: mm.fills }) }));
+  // A DECISION IS RECORDED, NOT INFERRED. Reading the answers back off the
+  // kit looked clever and behaved badly: choosing a job changed the hats, so
+  // the question about which groove re-opened itself. What a drummer decided
+  // is a fact about the drummer — it stays decided until they change it, and
+  // the sheet shows it whatever the kit has been edited into since.
+  const decisions = (m) => DECISIONS.map((d) => ({
+    ...d,
+    answered: (m.answers || {})[d.id] || null,
+    opts: (d.id === "groove" ? grooveOpts(m) : d.opts).map((o) => ({
+      ...o,
+      answered: (m.answers || {})[d.id] === o.w,
+      // ...and whether it happens to be TRUE right now, which is a different
+      // question and worth showing when it disagrees with the answer
+      active: (() => { try { return !!o.is(m); } catch (e) { return false; } })() })),
+  })).filter((d) => !d.when || d.when(m));
+  const nextAsk = (m) => decisions(m).find((d) => !d.answered) || null;
+  const answer = (m, id, w) => {
+    const d = decisions(m).find((x) => x.id === id);
+    const o = d && d.opts.find((x) => x.w === w);
+    if (!o) return m;
+    const out = o.apply(m);
+    const answers = { ...(out.answers || m.answers || {}), [id]: w };
+    // a new family means the groove under it must be chosen again
+    if (id === "record" && (m.answers || {}).record !== w) delete answers.groove;
+    return { ...out, answers };
+  };
+
   /* ---------- what can be said right now — the exactness law ---------- */
   // with a lane PINNED the bar itself is the vocabulary; without one, the
   // machine's own words
@@ -422,7 +529,7 @@
   }
 
   return { LANES, BARS, N, blank, V, offered, catalog, say, says, toGenre, stepWord,
-           GROOVEWORD, GROOVEFAM, laneKeys,
+           GROOVEWORD, GROOVEFAM, laneKeys, DECISIONS, decisions, nextAsk, answer,
            stepsFor, LANENAME, LANEOF, GROOVES, LANEWORD, FILLWORD, MACHINES,
            hits, has, clone, empty };
 });
