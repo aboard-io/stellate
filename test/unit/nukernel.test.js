@@ -2651,8 +2651,11 @@ console.log("kit schedule and kit dynamics");
   const A = g.kit, B = K.KITOPS.swap(g.kit);
   const sched = { ...g, kits: [A, B], fill: null };
   const dr = K.drums(P, sched, 4);
+  // positions QUANTIZED to the grid: the schedule's question is which steps
+  // fire, and since the hand law an acoustic kit carries per-bar micro-timing
+  // (the same hit breathes differently in bar 3), which is not the schedule
   const shape = b => JSON.stringify(dr.filter(e => Math.floor(e.t / 16) === b)
-    .map(e => [+(e.t % 16).toFixed(3), e.d]).sort());
+    .map(e => [Math.round(e.t % 16), e.d]).sort());
   ok(shape(0) !== shape(1), "kits[A,B]: bar 2 has bar 1's positions — the schedule is unread");
   ok(shape(0) === shape(2) && shape(1) === shape(3), "the kit schedule does not cycle");
   ok(sig(K.drums(P, { ...g, kits: null }, 4)) === sig(K.drums(P, g, 4)),
@@ -2667,10 +2670,15 @@ console.log("kit schedule and kit dynamics");
     ok(JSON.stringify(kick.map(e => e.vel)) !==
        JSON.stringify(kickSteps.map(i => P.vel[i])),
        "the kick still borrows the melody's velocities under kitVel");
-    // ...and the other lanes keep the old law
+    // ...and the other lanes do NOT inherit it: since the hand law an
+    // acoustic kit's hats follow the HAND contour (varied, never the kick's
+    // 9-1-1-1 row and never one flat loudness), so the leak signature is a
+    // hat at the kick row's ghost value or a flat hat line
     const hat = K.drums(P, kv, 1).filter(e => e.d === "h");
-    ok(hat.every((e, j) => e.vel === P.vel[g.kit.h.map((x, i) => (x ? i : -1))
+    ok(!hat.every((e, j) => e.vel === kv.kitVel.k[g.kit.h.map((x, i) => (x ? i : -1))
       .filter(i => i >= 0)[j]]), "kitVel on one lane leaked into another");
+    ok(new Set(hat.map(e => e.vel)).size >= 3,
+       "an acoustic kit's hats play one flat loudness — the hand law is unread");
   }
   // the wired genre: toto's hat hand is its own, kick untouched
   {
@@ -7409,51 +7417,51 @@ console.log("the master harmonization engine — one tonality, every added voice
   // records changed by argument; the commit carries the reasons.)
   const REF = { simple: "1bc5928ecc4c", fugue: "dabf3451bc56",
     acid: "89216dff87dc", newwave: "ae3805f144ab",
-    vaporwave: "fe63ec2cbd88", blues: "0b72d6a84f9b", rock: "9f1728ebc87c",
-    gregorian: "ba0f27385ffc", bulgarian: "3120a30d7a93",
+    vaporwave: "e9d90a45402d", blues: "b8556e374706", rock: "7ed6e7823b28",
+    gregorian: "ba0f27385ffc", bulgarian: "b4443fedf749",
     spem: "38d8911045b9", counterpoint: "b6eb0a3f8c98",
     neoclassical: "d6901221c508", drone: "6ccd49d4d442",
-    sludge: "dd2d7d9d6934", tango: "e0d57168b2c6",
-    deathmetal: "b30b532ca8d1", eurythmics: "49ac4aee2208",
-    isley: "30a3d6d9d7f2", toto: "83d3fdbb1cb8", jodeci: "76e685510e04",
-    beatles: "073652eb81d6", steely: "373bf8af0978",
-    postrock: "44c6272086f4", boombap: "80f1373776dd", trap: "fe4461aebb90",
+    sludge: "c0920188d206", tango: "5fdbdee5ff08",
+    deathmetal: "616ae65cc466", eurythmics: "49ac4aee2208",
+    isley: "57d1d5a45cd3", toto: "66b2c2120c95", jodeci: "76e685510e04",
+    beatles: "593e6da08ffd", steely: "107aec95725c",
+    postrock: "158192a3da07", boombap: "126821faa96f", trap: "fe4461aebb90",
     house: "2e723c46d7d2", garage: "2774679a9e05", dnb: "33e85a127690",
-    disco: "a53b890ababb", funk: "9a6b5dbfb590", motown: "d93bb14e1bc6",
-    rnb: "a319e8a7e212", gospel: "91db241683d2", reggae: "0a2f4f4b2713",
-    dub: "b841e9c62a3a", ska: "6416b09a5310", afrobeat: "96f6ff839d91",
-    bossa: "3064b6dad9aa", countrypop: "7b8ab1d48148",
-    synthpop: "646712dee82f", shoegaze: "1ac1f4be2c1b",
-    citypop: "86c4d7e7b6b0", punk: "38c228074709", ambient: "3b7e853fedcb",
-    techno: "d09b7ce4a8cd", jazz: "dee85985f1f1", bodiddley: "7cee43db4155",
-    chuckberry: "937eabc87a9b", doowop: "1b2591a4eb61",
-    skiffle: "2e33cd41b027", minimalism: "a6761a5298da",
+    disco: "2f4da6621f13", funk: "d72aff9f131e", motown: "6fe748524a9e",
+    rnb: "a319e8a7e212", gospel: "15b6fe4a7cc0", reggae: "bd0401a875f1",
+    dub: "e1982bdc1822", ska: "8152c037406c", afrobeat: "515bdd57b1f4",
+    bossa: "eea38807f78b", countrypop: "508d48bcec38",
+    synthpop: "646712dee82f", shoegaze: "dc57e27ef9fe",
+    citypop: "7422d4bcebc3", punk: "4b6af4138778", ambient: "3b7e853fedcb",
+    techno: "d09b7ce4a8cd", jazz: "dee85985f1f1", bodiddley: "226d8d526b50",
+    chuckberry: "c127d6eec6f0", doowop: "944dc51099c3",
+    skiffle: "cc710f0540a0", minimalism: "4292a1ae23f0",
     kraftwerk: "4fa1f2eb961b", electro: "67916d4e5384",
-    hymn: "8d5cbbc2f790", crooner: "707e28bf68b4", yuletide: "9ee6612e1c03",
-    merseybeat: "7a91c830d288", psychpop: "8d49dc6d5ab2",
-    bigbeat: "60746720fdac", drill: "ac035d75cf11", clubpop: "f5a60f566551",
-    powerballad: "cc1789909e0c", retrofunkpop: "83152243b7b4",
-    reggaeton: "464ee83adb83", latinpop: "68d9e321bd9f",
-    kpop: "a5ff3e8b54fa", boyband: "3d1a4e2e5010", emo: "675bd3256def",
-    screamo: "9d669b30cb8e", confessionalpop: "966d679470a7",
+    hymn: "8d5cbbc2f790", crooner: "93217fb551cb", yuletide: "5590c4ef5d85",
+    merseybeat: "7474611c758c", psychpop: "f76376c0e6d6",
+    bigbeat: "5a356ff36ee0", drill: "ac035d75cf11", clubpop: "f5a60f566551",
+    powerballad: "eb70b9ea94fe", retrofunkpop: "282d2564b305",
+    reggaeton: "464ee83adb83", latinpop: "800268e1e9a4",
+    kpop: "a5ff3e8b54fa", boyband: "3d1a4e2e5010", emo: "865ef54b02db",
+    screamo: "87b9c2606424", confessionalpop: "9a68f4dd051f",
     darkrnb: "f504a72492ea", bigroom: "6ead5a814488",
-    blueeyedsoul: "f8aa6f3c3f09", folkduo: "19d32f689966",
-    worldfolk: "b3ce041832d3", jamband: "02a7f875ff41",
-    sophistirock: "9a5fa8d5d566", motorik: "5eda4735ff86",
+    blueeyedsoul: "6bd8ec6c35c9", folkduo: "19d32f689966",
+    worldfolk: "5e373d1d113c", jamband: "19c2bc74e2f3",
+    sophistirock: "c9f4a980bbc3", motorik: "5eda4735ff86",
     roboticpop: "95c3e8e56881", industrialmetal: "9324c16b04fe",
     ebm: "ce5ad2a44fea", synthduo: "fb0a872494b0",
-    musichallrock: "b0841f69e2f4", orchpsych: "a26404ef8c1c",
-    altcountry: "fbd588c686dc", yachtsoul: "38e2cbe538d0",
-    yachtrock: "ce82749b82b1", songwriterpiano: "c2ee67c2b33e",
-    softfolk: "0176b7e1f337", singersongwriter: "2d43bca021b2",
-    coastrock: "60bc46e0646d", spacerock: "048a18907907",
-    grebo: "d8e61abacf7f", melodictechno: "100e653229cd",
-    bleeptechno: "db4ee878cbd0", industrialbreaks: "1a60701d6f0f",
+    musichallrock: "1b95624032cb", orchpsych: "7a23efe7ab5e",
+    altcountry: "5ff06cdaec71", yachtsoul: "1894c15448bc",
+    yachtrock: "47c6e514a1e6", songwriterpiano: "90a13926e81f",
+    softfolk: "df86fa1e2cd7", singersongwriter: "f4caf12bf245",
+    coastrock: "d37bd8764bf0", spacerock: "a784bea92e46",
+    grebo: "da7cfb7086d0", melodictechno: "100e653229cd",
+    bleeptechno: "db4ee878cbd0", industrialbreaks: "ebe9a18a9380",
     industrialrock: "3a0679f8c36b", analogsynthpop: "bc6e73fca79c",
-    gothsynth: "80d6711288ba", gothicpop: "14b61c1edac0",
-    postpunk: "37a92eb4e185", dancepostpunk: "84e2c82c1aa9",
-    madchester: "5dffbdd175d9", janglepop: "e1e89d2a95f1",
-    indiedance: "65915bfd86aa", solo: "e19a9b7ba0df", vocal: "19c0b11b9f68",
+    gothsynth: "80d6711288ba", gothicpop: "f2ff33468636",
+    postpunk: "f679a8d7bdd8", dancepostpunk: "84e2c82c1aa9",
+    madchester: "aaf9d0de020a", janglepop: "013c85c3e9a9",
+    indiedance: "395eebcea290", solo: "e19a9b7ba0df", vocal: "19c0b11b9f68",
     backing: "dc681b7608c8", riff: "79a83db951e2", pad: "b9d3acb4a9f8" };
   // RE-MEASURING IS A COMMAND, not a hand copy off a failure log: the table
   // above is 110 rows and a deliberate change moves most of them at once, so
@@ -9000,13 +9008,17 @@ console.log("§59 — a note can lean, slide, flam or pass");
   // that declared none, or somebody gave it a policy and owes this table a
   // re-measurement with an argued reason — it does not get weakened.
   {
-    const FROZEN = { simple: "47f696fee4b2", ambient: "1a68804b1e4a",
-      drone: "977ce5507005", vaporwave: "4c3009be0416", kraftwerk: "da1af676f72d",
-      disco: "4e4071bdc24e", rnb: "df510d2bdb36", dub: "0548dcbca6fd",
-      bossa: "c69c70383a0e", synthpop: "58bff8df43db", shoegaze: "91230469bf69",
-      citypop: "84ee282d372a", newwave: "95d03b9fb4fe", doowop: "9ce0e377735e",
-      minimalism: "7f9485e9a06d", toto: "760d4470921b", beatles: "0b3ce4a5ca49",
-      steely: "22e3bdce30e2", postrock: "d70f3fde7b93", neoclassical: "497406f3443e",
+    const FROZEN = {
+      // (acoustic-kit rows re-measured 2026-08-19: the HAND LAW — an
+      // acoustic kit is played by a hand by default, so these rows moved
+      // by argument; the machine rows did not move, which is the law
+      // proving itself.) simple: "47f696fee4b2", ambient: "1a68804b1e4a",
+      drone: "977ce5507005", vaporwave: "e816f4b25c7d", kraftwerk: "da1af676f72d",
+      disco: "cd4fbb90a180", rnb: "df510d2bdb36", dub: "a3a70994da87",
+      bossa: "569bc9a76144", synthpop: "58bff8df43db", shoegaze: "e30c4bfa2fa0",
+      citypop: "29be11ac1a88", newwave: "95d03b9fb4fe", doowop: "90898fe89360",
+      minimalism: "560d7e0977bc", toto: "7df4e47e134e", beatles: "66d29703ad8e",
+      steely: "c05013ed477b", postrock: "ba4c7a772eff", neoclassical: "497406f3443e",
       // §39's five machines, at the same values that section freezes them at —
       // which is what says this table and that one are measuring one thing
       techno: "036036ec46ed", acid: "6442d27c8bfb",   // acid re-measured 2026-08-18 (kitVel hand; no orn policy)

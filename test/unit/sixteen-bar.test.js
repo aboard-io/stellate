@@ -169,6 +169,31 @@ console.log("the signature masters — the catalog is not one compressor");
     }
 }
 
+/* (f) THE HAND LAW — "humanize the drums… it feels like an organic drum
+   machine." An acoustic kit's hats spread across a hand's dynamics and
+   breathe off the grid; a machine kit stays exact. */
+console.log("the hand law — acoustic kits breathe, machines do not");
+{
+  const P = { deg: new Array(16).fill(0), oct: new Array(16).fill(0),
+    vel: new Array(16).fill(6), inc: new Array(16).fill(0), stk: new Array(16).fill(0),
+    gate: new Array(16).fill(1), acc: new Array(16).fill(0), sld: new Array(16).fill(0) };
+  for (const gk of ["bossa", "beatles", "rock", "motown", "funk", "disco"]) {
+    const hats = K.drums(P, GENRES[gk], 4).filter(e => e.d === "h");
+    if (!hats.length) continue;
+    ok(new Set(hats.map(e => e.vel)).size >= 4,
+       gk + ": an acoustic kit's hats play " + new Set(hats.map(e => e.vel)).size +
+       " loudnesses — the organic drum machine again");
+    const off = hats.filter(e => Math.abs(e.t - Math.round(e.t)) > 1e-6).length;
+    ok(off >= hats.length / 2, gk + ": only " + off + "/" + hats.length +
+       " hat hits breathe off the grid");
+  }
+  for (const gk of ["acid", "techno", "electro"]) {
+    const dr = K.drums(P, GENRES[gk], 4);
+    ok(dr.every(e => Math.abs(e.t - Math.round(e.t)) < 1e-6),
+       gk + ": a machine kit drifted off the grid — exactness is its identity");
+  }
+}
+
 console.log(fails ? "\nsixteen-bar: FAIL — " + fails + " of " + (pass + fails)
   : "sixteen-bar: PASS — " + pass + " checks (long sections evolve, machines run a " +
     "32-step line, no effect precedes its own invention, instrumental records stay instrumental)");

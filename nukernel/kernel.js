@@ -2002,12 +2002,35 @@
     }
     return ev.sort((a, b) => a.t - b.t);
   }
+  // THE HAND LAW ("humanize the drums more for non-digital genres… it feels
+  // like an organic drum machine", 2026-08-19). A lane with no step levels and
+  // no kitVel used to borrow the MELODY's velocities — which is why every hat
+  // and rim on an acoustic kit landed at one loudness. An acoustic kit is
+  // played by a HAND by default now: a per-lane accent contour (downbeats
+  // lean, offbeats breathe, the backbeat cracks) plus the humanize jitter the
+  // four genres that declared one already had. Machine kits (tr808/909,
+  // cr78, electronic) are untouched — a machine's exactness is its identity,
+  // and the MACHINE fingerprint gates pin it. An anchor opts out of the hand
+  // with `hand: "exact"`; a declared kitVel or step level still outranks it.
+  const HAND_KITS = { room: 1, jazz: 1, power: 1, acoustic: 1, brush: 1 };
+  const HAND_VEL = {
+    k: [9,5,7,5, 8,5,7,5, 9,5,7,6, 8,5,7,5],
+    s: [8,4,6,4, 9,4,6,5, 8,4,6,4, 9,5,6,4],
+    h: [7,3,5,3, 6,3,5,3, 7,3,5,4, 6,3,5,3],
+    o: [7,4,6,4, 7,4,5,4, 7,4,6,4, 7,4,5,5],
+    c: [8,5,7,5, 8,5,6,5, 8,5,7,5, 8,5,6,5],
+    p: [6,4,5,4, 6,4,5,5, 6,4,5,4, 6,5,5,4],
+    t: [7,5,6,5, 7,5,6,6, 7,5,6,5, 8,6,7,6],
+  };
+  const HAND_HUM = 0.03;              // gentler than blues' own 0.05
   function drums(subj, g, bars) {
     if (subj && subj.kind === "drum") return drumPattern(subj, g, bars);
     const ev = [], N = subj.deg.length;
     // the two seeded facts, read once: a hand that is not the grid, and the
     // salt that makes this genre's dice its own
-    const hum = humanOf(g.humanize), seed = g.kitSeed | 0;
+    const handed = HAND_KITS[g.drumkit] === 1 && g.hand !== "exact";
+    const hum = humanOf(g.humanize != null ? g.humanize
+      : (handed ? HAND_HUM : null)), seed = g.kitSeed | 0;
     for (let b = 0; b < bars; b++) {
       // KIT SCHEDULE: `g.kits` is the kit read per BAR — a two-bar groove, a
       // hat that opens on bar 4 — where `g.kit` is one bar restated. It is not
@@ -2039,7 +2062,9 @@
           // level of 1 is the old binary "on" and defers, so every kit ever
           // written renders exactly as before.
           const v0 = cell > 1 ? cell
-            : g.kitVel && g.kitVel[d] ? at(g.kitVel[d], i) : vel(subj, i);
+            : g.kitVel && g.kitVel[d] ? at(g.kitVel[d], i)
+            : handed && HAND_VEL[d] ? at(HAND_VEL[d], i)
+            : vel(subj, i);
           // NUDGE: the baked hand (ninths of a step) plus the per-bar drift of
           // g.humanize. Both move the hit and neither adds or removes one.
           const push = (nu ? at(nu, i) / 9 : 0) +
