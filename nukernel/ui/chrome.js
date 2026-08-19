@@ -283,7 +283,15 @@ fader($("vol"), 80);
   // own order. A <select> may not be grouped by era either: the labels print
   // the years, which is the whole organisation.
   const chrono = chronoGenres();
-  for (const k of [...chrono.dated, ...chrono.undated])
+  // ...AND THE OPTION SAYS THE GENRE ("Add the genres to the menu",
+  // 2026-08-19): a place-year label is the record's name, not its kind, and
+  // a list of 104 city-years is a quiz. The dated options append the genre
+  // word — the same key the save and the URL carry; the FUNCTION genres'
+  // labels already are their word.
+  for (const k of chrono.dated)
+    sel.append(Object.assign(document.createElement("option"),
+      { value: k, textContent: GENRES[k].label + " — " + k }));
+  for (const k of chrono.undated)
     sel.append(Object.assign(document.createElement("option"),
       { value: k, textContent: GENRES[k].label }));
   const anyGenre = () => {
