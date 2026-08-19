@@ -105,13 +105,21 @@ const ok = (b, m) => { checks++; if (!b) { fails++; console.log("  ✗ " + m); }
         return !!(c && !c.disabled); }, w);
       if (!live) continue;
       const before = await schedule();
+      const beforeModel = await page.evaluate(() => window.__drumModel());
       const beforeSaid = await said();
       if (!(await tap(w))) { ok(false, "\"" + w + "\" is offered but refuses the tap"); continue; }
       tried++;
       const after = await schedule();
+      const afterModel = await page.evaluate(() => window.__drumModel());
       const now = await said();
+      // WHERE A WORD IS LOST, if it is: the model is the machine's own
+      // answer and the schedule is the engine's. A word that moves neither
+      // did not land; one that moves the model and not the schedule is a
+      // seam between them. Naming which is the difference between a bug
+      // report and a shrug.
       if (after !== before) moved++;
-      else quiet.push(w);
+      else if (afterModel === beforeModel) quiet.push(w + " (never landed)");
+      else quiet.push(w + " (model only)");
       ok(now !== beforeSaid || now.length > 0, "\"" + w + "\" said nothing");
     }
   }

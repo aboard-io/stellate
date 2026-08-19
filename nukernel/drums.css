@@ -1,25 +1,34 @@
 /* drums.css — the machine you talk to. Type, space, and one accent; there is
    no grid to draw because the pattern has no visual form here. */
+html,body{height:100%;overflow:hidden}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-ui)}
-.dpage{max-width:56rem;margin:0 auto;padding:0 var(--sp-3) var(--sp-5);
-  display:flex;flex-direction:column;gap:var(--sp-3);min-height:100vh}
-.dbar{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) 0;
-  position:sticky;top:0;background:var(--bg);z-index:2}
+*,*::before,*::after{box-sizing:border-box}
+/* IT FITS. The bar, the pattern and the transcript are fixed; only the words
+   scroll, inside their own pane — so the thing you are making never leaves
+   the screen while you look for something to say to it. */
+.dpage{max-width:56rem;margin:0 auto;padding:0 var(--sp-3) var(--sp-2);
+  display:flex;flex-direction:column;gap:var(--sp-2);
+  height:100dvh;overflow:hidden}
+/* the pane the page draws into: it owns the remaining height */
+.dwrap{flex:1 1 auto;display:flex;flex-direction:column;gap:var(--sp-2);
+  min-height:0}
+.dbar{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-2) 0;
+  flex:0 0 auto;background:var(--bg)}
 .dmast{margin:0;font-size:clamp(20px,4vw,30px);letter-spacing:.02em}
-.dplay{appearance:none;cursor:pointer;margin-left:auto;width:56px;height:56px;
+.dplay{appearance:none;cursor:pointer;margin-left:auto;width:48px;height:48px;
   border:1px solid var(--rule);border-radius:50%;background:var(--bg-key);
   position:relative}
-.dplay::before{content:"";position:absolute;left:21px;top:16px;
-  border-left:18px solid var(--ink);border-top:12px solid transparent;
-  border-bottom:12px solid transparent}
+.dplay::before{content:"";position:absolute;left:18px;top:13px;
+  border-left:16px solid var(--ink);border-top:11px solid transparent;
+  border-bottom:11px solid transparent}
 .dplay.on{background:var(--accent);border-color:var(--accent)}
 .dplay.on::before{left:19px;top:17px;width:16px;height:22px;border:0;
   background:var(--on-accent);
   clip-path:polygon(0 0,38% 0,38% 100%,0 100%,0 0,62% 0,100% 0,100% 100%,62% 100%,62% 0)}
 
 /* WHAT IT IS DOING — the only readout, and it is prose */
-.dsaid{min-height:5.5rem;padding:var(--sp-3);border-radius:var(--r);
-  background:var(--bg-sunk)}
+.dsaid{flex:0 0 auto;min-height:3.4rem;padding:var(--sp-2) var(--sp-3);
+  border-radius:var(--r);background:var(--bg-sunk)}
 .dline{margin:0 0 .25em;font-size:clamp(15px,2.4vw,19px);color:var(--ink)}
 .dline:last-child{font-weight:700}
 .dhint{margin:0;color:var(--ink-2)}
@@ -48,7 +57,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-ui)}
    is playing; a fill bar wears the accent's own edge so the fourth measure
    reads as different at a glance. Not an editor — you change it by saying
    things — so nothing here takes a pointer. */
-.dgrid{display:flex;flex-direction:column;gap:3px;padding:var(--sp-2);
+.dgrid{flex:0 0 auto;display:flex;flex-direction:column;gap:2px;padding:var(--sp-2);
   border-radius:var(--r);background:var(--bg-sunk);overflow-x:auto}
 .drow{display:flex;align-items:center;gap:6px}
 .dlane{flex:0 0 4.6em;font-style:normal;font-size:var(--t-sm);color:var(--ink-2);
@@ -62,3 +71,12 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-ui)}
 .dcell.hit{background:var(--ink);border-color:var(--ink)}
 .dcell.hit.lit{background:var(--accent);border-color:var(--accent)}
 @media (max-width:700px){ .dcell{width:7px;height:12px} .dlane{flex-basis:3.6em} }
+
+/* the words are the only thing that scrolls */
+.dscroll{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;gap:var(--sp-1);padding-bottom:var(--sp-3)}
+.dgroup{gap:6px}
+.dchip{min-height:40px;font-size:clamp(14px,2vw,16px)}
+/* THE PLAYHEAD: the column you are hearing */
+.dcell.now{box-shadow:0 0 0 2px var(--accent)}
+.dcell.hit.now{background:var(--accent);border-color:var(--accent)}

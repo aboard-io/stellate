@@ -7,7 +7,7 @@
 const { blank, catalog, say, says, toGenre, LANEOF, LANES } = window.NuDrums;
 import { GENRES, NuSong } from "./deps.js";
 import { adoptSong, on, commit, setBpm } from "./state.js";
-import { startAt, stop, playing, warmup } from "../audio/live.js";
+import { startAt, stop, playing, warmup, getPosition, passAt } from "../audio/live.js";
 import { setPendingStart } from "./state.js";
 
 const $ = (id) => document.getElementById(id);
@@ -15,6 +15,7 @@ const el = (tag, cls, text) => { const n = document.createElement(tag);
   if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
 
 const GK = "lab.drums";            // the session genre this machine writes
+let cells = [];                    // the pattern's cells, for the playhead
 let model = blank();
 model.bpm = 112;                   // a machine tempo: shorter bars, sooner changes
 let lane = null;                   // the pinned lane, or null
@@ -60,6 +61,8 @@ function draw() {
     const g = toGenre(model);
     const rows = LANES.filter(l => g.kits.some(b => (b[l] || []).some(Boolean)));
     const grid = el("div", "dgrid");
+    cells = [];                      // [bar][step] -> the elements in that column
+    for (let b = 0; b < 4; b++) { cells[b] = []; for (let i = 0; i < 16; i++) cells[b][i] = []; }
     for (const l of rows) {
       const row = el("div", "drow");
       row.append(el("i", "dlane", LANEOF(l)));
@@ -68,6 +71,7 @@ function draw() {
         for (let i = 0; i < 16; i++) {
           const cell = el("i", "dcell" + ((bar[l] || [])[i] ? " hit" : "")
             + (i % 4 === 0 ? " beat" : "") + (l === lane ? " lit" : ""));
+          cells[bi][i].push(cell);
           b.append(cell);
         }
         row.append(b);
@@ -80,7 +84,7 @@ function draw() {
   // WHAT IT IS DOING, in words — the transcript
   const said = el("div", "dsaid");
   if (!ledger.length) said.append(el("p", "dhint", "tap a word"));
-  for (const line of ledger.slice(-8)) said.append(el("p", "dline", line));
+  for (const line of ledger.slice(-3)) said.append(el("p", "dline", line));
   box.append(said);
 
   // the pinned lane, if one is open
@@ -105,6 +109,7 @@ function draw() {
     if (!groups.has(i.group)) groups.set(i.group, []);
     groups.get(i.group).push(i);
   }
+  const scroll = el("div", "dscroll");
   for (const [g, list] of groups) {
     const wrap = el("div", "dgroup");
     wrap.append(el("i", "dg", g));
@@ -126,8 +131,9 @@ function draw() {
       });
       wrap.append(c);
     }
-    box.append(wrap);
+    scroll.append(wrap);
   }
+  box.append(scroll);
 }
 const LANEWORDLANE = (id) => {
   const key = id.slice(5);
@@ -135,6 +141,35 @@ const LANEWORDLANE = (id) => {
               kick: "k", snare: "s" };
   return L[key] || null;
 };
+
+/* ---------- THE PLAYHEAD -------------------------------------------------
+   One rAF loop, and it never redraws: it moves a class along the columns it
+   was handed at draw time. The position comes from the engine's own clock
+   (audio/live.js getPosition / passAt), so what lights is what you hear. */
+let at = -1;
+function tick() {
+  if (playing && cells.length) {
+    let step = -1;
+    try {
+      const p = getPosition();
+      const f = p ? passAt(p.now).f : 0;            // 0..1 across the four bars
+      step = Math.max(0, Math.min(63, Math.floor(f * 64)));
+    } catch (e) { step = -1; }
+    if (step !== at) {
+      const off = (n) => { const b = (n / 16) | 0, i = n % 16;
+        for (const c of (cells[b] && cells[b][i]) || []) c.classList.remove("now"); };
+      if (at >= 0) off(at);
+      if (step >= 0) { const b = (step / 16) | 0, i = step % 16;
+        for (const c of (cells[b] && cells[b][i]) || []) c.classList.add("now"); }
+      at = step;
+    }
+  } else if (at >= 0) {
+    for (const bar of cells) for (const col of bar) for (const c of col) c.classList.remove("now");
+    at = -1;
+  }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
 
 /* ---------- the transport ---------- */
 $("dplay").addEventListener("click", () => {
@@ -146,6 +181,8 @@ on("transport:state", () => $("dplay").classList.toggle("on", playing));
 /* ---------- boot ---------- */
 GENRES[GK] = toGenre(model);
 window.__nuTempo = () => model.bpm;      // the gate reads tempo as part of the artifact
+window.__drumModel = () => JSON.stringify(model);   // ...and the model, so a
+// word that is lost can be located: did the MODEL move, or only the plan?
 push(true);
 warmup();
 draw();
