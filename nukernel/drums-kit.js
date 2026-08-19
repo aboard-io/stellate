@@ -80,7 +80,11 @@
   };
   const FILLWORD = { 2: "second measure fill", 3: "third measure fill", 4: "fourth measure fill" };
 
-  const MACHINES = { tr808: "808", tr909: "909", tr606: "606", linn: "linn drum",
+  // EVERY NAME HERE IS A KIT THE ENGINE HAS (fields.js DRUMKITS + the four
+  // machines to-engine.js knows). "linn drum" was in this list and was not
+  // one of them: it routed nowhere, silently, and the page's own gate caught
+  // it as a word that changed the machine and not the sound.
+  const MACHINES = { tr808: "808", tr909: "909", tr606: "606", cr78: "cr-78",
                      acoustic: "acoustic kit", room: "room kit", power: "big kit",
                      brush: "brushes", jazz: "jazz kit", electronic: "electronic kit" };
 

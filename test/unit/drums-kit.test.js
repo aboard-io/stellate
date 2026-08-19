@@ -116,6 +116,19 @@ console.log("the model is a genre: real lanes, real bars, real fills");
   ok(D.toGenre(m4).drumkit === "tr808", "the machine word did not reach the kit sound");
 }
 
+/* (e) EVERY MACHINE WORD NAMES A KIT THE ENGINE HAS */
+console.log("every machine word is a kit the engine can route");
+{
+  const NF = require("../../nukernel/fields.js");
+  const KITS = new Set(Object.keys(NF.DRUMKITS || {}));
+  for (const [id, i] of Object.entries(D.V)) {
+    if (!id.startsWith("kit:")) continue;
+    const name = id.slice(4);
+    ok(KITS.has(name), "\"" + i.words[0] + "\" names kit \"" + name +
+       "\", which is not one the engine knows (" + [...KITS].join(", ") + ")");
+  }
+}
+
 console.log(fails ? "\ndrums-kit: FAIL — " + fails + " of " + (pass + fails)
   : "drums-kit: PASS — " + pass + " checks (the sequence, the exactness law, "
     + "a bar you can say, and a genre the engine plays)");

@@ -43,3 +43,22 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-ui)}
    and unpressable — the vocabulary is the readout */
 .dchip.dim{opacity:.38;cursor:default}
 .dchip[disabled]{cursor:default}
+
+/* THE PATTERN, above the transcript. Four bars across, one row per lane that
+   is playing; a fill bar wears the accent's own edge so the fourth measure
+   reads as different at a glance. Not an editor — you change it by saying
+   things — so nothing here takes a pointer. */
+.dgrid{display:flex;flex-direction:column;gap:3px;padding:var(--sp-2);
+  border-radius:var(--r);background:var(--bg-sunk);overflow-x:auto}
+.drow{display:flex;align-items:center;gap:6px}
+.dlane{flex:0 0 4.6em;font-style:normal;font-size:var(--t-sm);color:var(--ink-2);
+  text-transform:uppercase;letter-spacing:.08em;text-align:right}
+.dbar{display:flex;gap:2px;padding:2px;border-radius:3px;
+  border:1px solid transparent}
+.dbar.fill{border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+.dcell{width:9px;height:14px;border-radius:2px;background:var(--bg-key);
+  border:1px solid var(--rule)}
+.dcell.beat{border-color:color-mix(in srgb,var(--ink) 30%,transparent)}
+.dcell.hit{background:var(--ink);border-color:var(--ink)}
+.dcell.hit.lit{background:var(--accent);border-color:var(--accent)}
+@media (max-width:700px){ .dcell{width:7px;height:12px} .dlane{flex-basis:3.6em} }

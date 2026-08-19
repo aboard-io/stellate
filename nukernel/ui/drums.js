@@ -4,7 +4,7 @@
 // audio tier the daw uses — one engine, still.
 // the kit model is the classic UMD data tier (nukernel/drums-kit.js), read
 // off window exactly as ui/deps.js reads the rest of it
-const { blank, catalog, say, says, toGenre, LANEOF } = window.NuDrums;
+const { blank, catalog, say, says, toGenre, LANEOF, LANES } = window.NuDrums;
 import { GENRES, NuSong } from "./deps.js";
 import { adoptSong, on, commit, setBpm } from "./state.js";
 import { startAt, stop, playing, warmup } from "../audio/live.js";
@@ -52,8 +52,32 @@ function draw() {
   const box = $("dwrap");
   box.textContent = "";
 
-  // WHAT IT IS DOING, in words — the only readout, because the pattern has
-  // no other form here
+  // THE PATTERN ITSELF, above the transcript: four bars, the lanes that are
+  // playing, one cell per sixteenth. It is a PICTURE, not an editor — you
+  // still change it by saying things — but a drum machine you cannot see is
+  // a drum machine you have to hold in your head.
+  if (model.on) {
+    const g = toGenre(model);
+    const rows = LANES.filter(l => g.kits.some(b => (b[l] || []).some(Boolean)));
+    const grid = el("div", "dgrid");
+    for (const l of rows) {
+      const row = el("div", "drow");
+      row.append(el("i", "dlane", LANEOF(l)));
+      g.kits.forEach((bar, bi) => {
+        const b = el("div", "dbar" + (model.fills[bi + 1] ? " fill" : ""));
+        for (let i = 0; i < 16; i++) {
+          const cell = el("i", "dcell" + ((bar[l] || [])[i] ? " hit" : "")
+            + (i % 4 === 0 ? " beat" : "") + (l === lane ? " lit" : ""));
+          b.append(cell);
+        }
+        row.append(b);
+      });
+      grid.append(row);
+    }
+    box.append(grid);
+  }
+
+  // WHAT IT IS DOING, in words — the transcript
   const said = el("div", "dsaid");
   if (!ledger.length) said.append(el("p", "dhint", "tap a word"));
   for (const line of ledger.slice(-8)) said.append(el("p", "dline", line));

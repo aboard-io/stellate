@@ -50,12 +50,18 @@ const ok = (b, m) => { checks++; if (!b) { fails++; console.log("  ✗ " + m); }
     const PL = await import("/nukernel/audio/plan.js");
     PL.compile();
     const out = [];
+    // THE EVENT'S OWN FIELDS. A plan drum event is { drum, beat, dur, amp } —
+    // not { d, vel }, which is the kernel's shape one layer up. Reading the
+    // wrong two made every velocity and feel word look inert for an hour.
     for (let i = 0; i < PL.barCount(); i++)
       for (const e of PL.barPlan(i).ev.drums)
-        out.push([i, +e.beat.toFixed(3), e.d, e.vel]);
+        out.push([i, +e.beat.toFixed(3), e.drum, e.amp != null ? +e.amp.toFixed(3) : null]);
+    // ...and the SOUND: a machine kit changes the module, a sampled kit
+    // changes the zones under an unchanged module name
     const units = Object.entries(PL.unitTable() || {})
       .filter(([, u]) => u && u.drum)
-      .map(([k, u]) => k + ":" + (u.module || "") + ":" + JSON.stringify(u.params || {}));
+      .map(([k, u]) => k + ":" + (u.module || "") + ":" + JSON.stringify(u.params || {}) +
+        ":" + ((u.sampler && (u.sampler.zones || []).map(z => z.srcId).join("+")) || ""));
     return JSON.stringify(out) + "§" + units.sort().join("|") +
       "§" + (window.__nuTempo ? window.__nuTempo() : "");
   });
