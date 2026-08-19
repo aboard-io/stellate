@@ -61,7 +61,7 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
   /* (c) every reachable sentence's effects name real vocabulary */
   {
     const shapes = new Set(["mix", "mixeq", "bpm", "secnum", "seceq", "secsend",
-                            "seckit", "secmot", "secper", "ops"]);
+                            "seckit", "secmot", "secper", "ops", "drums"]);
     let sentences = 0;
     for (const scope of SCOPES) {
       const first = L.continuations([], scope);
@@ -94,7 +94,8 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
   /* (c2) COMPLETENESS: the founding sentences are TAPPABLE — every word on
      the path is offered by the tray at its step (the MAKE family was once
      parseable but never offered; exactness held while completeness didn't) */
-  for (const [words, scope] of [[["make", "drums", "bigger"], "song"],
+  for (const [words, scope] of [[["add", "drums"], "section"], [["cut", "the drums"], "song"],
+      [["make", "drums", "bigger"], "song"],
       [["cut", "high", "notes"], "song"], [["add", "more", "notes"], "section"],
       [["bring up", "reverb"], "song"], [["make", "the bed", "warmer"], "song"]]) {
     let t = [];
@@ -103,6 +104,40 @@ const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + m
          scope + ": the tray never offers \"" + w + "\" after \"" + t.join(" ") + "\"");
       t = [...t, w];
     }
+  }
+  /* (c2b) ADD DRUMS is presence, BRING UP is level — the two must differ */
+  {
+    const add = L.parse(["add", "drums"], "song");
+    const up = L.parse(["bring up", "drums"], "song");
+    ok(add && add.fx[0].t === "drums" && add.fx[0].on === true, "ADD DRUMS is not presence");
+    ok(!!L.parse(["cut", "the drums"], "section") &&
+       L.parse(["cut", "the drums"], "section").fx[0].on === false, "CUT THE DRUMS is not removal");
+    ok(up && up.fx[0].t === "mix" && up.fx[0].key === "fader",
+       "BRING UP DRUMS stopped being the fader");
+  }
+  /* (c2c) THE GRAMMAR READS THE RECORD: no drums means no drum sentences
+     except ADD DRUMS; drums present means ADD DRUMS is not offered; a send at
+     its ceiling cannot be brought up further; a missing part is no subject */
+  {
+    const NO_DRUMS = { ...L.OPEN_CTX, drumsOn: false, drumsOff: true };
+    const ALL_DRUMS = { ...L.OPEN_CTX, drumsOn: true, drumsOff: false };
+    ok(!L.parse(["make", "drums", "louder"], "song", NO_DRUMS),
+       "MAKE DRUMS LOUDER compiled with no drums on the record");
+    ok(!L.parse(["bring up", "drums"], "song", NO_DRUMS),
+       "BRING UP DRUMS compiled with no drums on the record");
+    ok(!!L.parse(["add", "drums"], "song", NO_DRUMS), "ADD DRUMS refused where drums are missing");
+    ok(!L.parse(["add", "drums"], "song", ALL_DRUMS), "ADD DRUMS offered where drums already play");
+    ok(!!L.parse(["cut", "the drums"], "song", ALL_DRUMS), "CUT THE DRUMS refused where drums play");
+    ok(!L.parse(["cut", "the drums"], "song", NO_DRUMS), "CUT THE DRUMS offered with nothing to cut");
+    ok(!L.continuations(["make"], "song", NO_DRUMS).has("drums"),
+       "the tray offers DRUMS after MAKE on a drumless record");
+    const CEIL = { ...L.OPEN_CTX, rev: 4, revMax: 4 };
+    ok(!L.parse(["bring up", "reverb"], "section", CEIL),
+       "BRING UP REVERB compiled at a section whose send is already at its ceiling");
+    ok(!!L.parse(["bring down", "reverb"], "section", CEIL), "…but DOWN must still work there");
+    const NO_CHORDS = { ...L.OPEN_CTX, parts: { bass: true, melody: true, chords: false } };
+    ok(!L.parse(["make", "chords", "warmer"], "song", NO_CHORDS),
+       "MAKE CHORDS WARMER compiled on a record with no chords");
   }
   /* (c3) every compiled sentence TRANSLATES: describeFx says something real */
   {

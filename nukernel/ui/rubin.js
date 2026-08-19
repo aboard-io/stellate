@@ -8,7 +8,9 @@
 // the words were about that record.
 import { parse, continuations, describeFx, MAX_CMDS, LEXICON } from "./rubin-lang.js";
 import { SONG, bpm, setBpm, on, emit, commit, MIXER, setMixOffset } from "./state.js";
-import { NuFields } from "./deps.js";
+import { NuFields, GENRES } from "./deps.js";
+import { partKeysOf } from "../audio/desk.js";
+import { gid } from "./derive.js";
 
 const $ = (id) => document.getElementById(id);
 const wrap = $("rubinwrap");
@@ -82,6 +84,22 @@ function applyOne(e) {
       return { undo: () => { if (prev == null) delete sec.mot; else sec.mot = prev; commit("box"); } }; }
     case "secper": { const prev = sec.period; sec.period = e.word; commit("box");
       return { undo: () => { if (prev == null) delete sec.period; else sec.period = prev; commit("box"); } }; }
+    case "drums": {
+      const targets = aim.scope === "song"
+        ? SONG.filter(b => (b.stack || []).some(x => x.slots && x.slots.length)) : [secOf()];
+      const prevKits = targets.map(b => b.kit);
+      const prevMute = !!(MIXER && MIXER.drums && MIXER.drums.mute);
+      if (e.on) {
+        for (const b of targets) if (b.kit === "nodrums") delete b.kit;
+        setMixOffset("drums", "mute", null);      // the other door drums leave through
+      } else for (const b of targets) b.kit = "nodrums";
+      commit("box");
+      return { undo: () => {
+        targets.forEach((b, i) => { if (prevKits[i] == null) delete b.kit; else b.kit = prevKits[i]; });
+        if (e.on && prevMute) setMixOffset("drums", "mute", true);
+        commit("box");
+      } };
+    }
     case "ops": {
       const targets = aim.scope === "song"
         ? SONG.filter(b => (b.stack || []).some(x => x.slots && x.slots.length)) : [secOf()];
@@ -112,6 +130,37 @@ function retract(cmd) {
   draw();
 }
 
+/* ---------- the record's facts, for the state-aware grammar ---------- */
+// what the aimed node actually HAS — the language refuses sentences about
+// anything else ("align the grammar with the state of the song")
+function ctxOf() {
+  const secs = aim.scope === "song"
+    ? SONG.filter(b => (b.stack || []).some(x => x.slots && x.slots.length))
+    : [secOf()].filter(Boolean);
+  const facts = { drumsOn: false, drumsOff: false,
+    parts: { bass: false, melody: false, chords: false },
+    rev: 1, revMax: SENDORDER.length - 1, echo: 1, echoMax: SENDORDER.length - 1 };
+  for (const sec of secs) {
+    const g = GENRES[gid(sec)] || {};
+    const kitted = Object.keys(g.kit || {}).length > 0;
+    const has = kitted && sec.kit !== "nodrums";
+    if (has) facts.drumsOn = true;
+    if (kitted && !has) facts.drumsOff = true;
+    let keys = [];
+    try { keys = partKeysOf(sec); } catch (e) { /* an empty box has no parts */ }
+    for (const k of keys) {
+      if (k === "bass") facts.parts.bass = true;
+      else if (k.startsWith("pad")) facts.parts.chords = true;
+      else if (k !== "drums") facts.parts.melody = true;
+    }
+  }
+  if (aim.scope !== "song" && secs[0]) {
+    const i = SENDORDER.indexOf(secs[0].rev); facts.rev = i < 0 ? 1 : i;
+    const j = SENDORDER.indexOf(secs[0].echo); facts.echo = j < 0 ? 1 : j;
+  }
+  return facts;
+}
+
 /* ---------- draw ---------- */
 const el = (tag, cls, text) => { const n = document.createElement(tag);
   if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
@@ -137,7 +186,8 @@ export function draw() {
 
   // THE SENTENCE: what has been tapped; tap it to speak when it compiles
   const scope = aim.scope;
-  const p = tokens.length ? parse(tokens, scope) : null;
+  const ctx = ctxOf();
+  const p = tokens.length ? parse(tokens, scope, ctx) : null;
   const sent = el("div", "rsent" + (p ? " ok" : ""));
   sent.append(el("span", "rwords", tokens.length ? tokens.join(" ").toUpperCase() : "SAY SOMETHING"));
   if (p) {
@@ -164,7 +214,7 @@ export function draw() {
     tray.append(el("div", "rfull", "this " + (scope === "song" ? "record" : "section") +
       " has heard five things — retract one to say more"));
   else {
-    const next = continuations(tokens, scope);
+    const next = continuations(tokens, scope, ctx);
     // ONE CHIP PER MEANING ("get rid of options I shouldn't click"): the
     // language holds every synonym, but a tray that offers "delay" and "the
     // delay" side by side is one thought twice. Each canon shows its first
@@ -189,8 +239,9 @@ export function draw() {
         c.type = "button";
         c.addEventListener("click", () => {
           tokens = [...tokens, w];
-          const done = parse(tokens, scope);
-          if (done && !continuations(tokens, scope).size) speak(done);
+          const c2 = ctxOf();
+          const done = parse(tokens, scope, c2);
+          if (done && !continuations(tokens, scope, c2).size) speak(done);
           else draw();
         });
         g.append(c);
@@ -219,4 +270,7 @@ export function draw() {
 
 /* ---------- the couch resets with the record ---------- */
 on("song", () => { ledger = { song: [], secs: {} }; tokens = []; aim = { scope: "song", si: -1 }; draw(); });
+// the grammar reads the record, so the tray re-reads it when the record moves
+on("box", draw);
+on("mix", draw);
 draw();

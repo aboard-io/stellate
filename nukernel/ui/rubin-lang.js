@@ -80,7 +80,20 @@ for (const [canon, syns] of Object.entries(A)) for (const w of syns) WORDS[w] = 
 const CH = { drums: "drums", bass: "bass", melody: "lead", chords: "pad", song: "master" };
 const FADER = 2.5, SEND = 0.12, EQ = 3, BPMSTEP = 6;
 
-function compileOne(verb, subj, adj, scope) {
+// THE GRAMMAR READS THE RECORD ("align the grammar with the state of the
+// song"): ctx is a facts object about the aimed node, and a sentence about a
+// thing the record does not have — or a step with nowhere to go — simply is
+// not a sentence there. drumsOn/drumsOff are separate because at song scope
+// some sections may have drums and some may not: ADD needs a place missing
+// them, everything else needs a place that has them. The permissive default
+// keeps the language total for tools that speak without a record in front
+// of them (the gate's closure walk).
+export const OPEN_CTX = { drumsOn: true, drumsOff: true,
+  parts: { bass: true, melody: true, chords: true },
+  rev: 1, revMax: 4, echo: 1, echoMax: 4 };
+
+function compileOne(verb, subj, adj, scope, ctx) {
+  ctx = ctx || OPEN_CTX;
   const sec = scope !== "song";
   const fx = [];
   const chan = CH[subj];
@@ -90,9 +103,28 @@ function compileOne(verb, subj, adj, scope) {
   if ((subj === "reverb" || subj === "echo") && (verb === "up" || verb === "down" ||
        verb === "more" || verb === "less") && !adj) {
     const key = subj === "reverb" ? "rev" : "del";
-    return sec ? [{ t: "secsend", key: subj === "reverb" ? "rev" : "echo", step: dir }]
-               : [{ t: "mix", chan: "master", key, delta: dir * SEND }];
+    if (sec) {
+      // a step with nowhere to go is not a sentence (the send is at its end)
+      const at = subj === "reverb" ? ctx.rev : ctx.echo;
+      const max = subj === "reverb" ? ctx.revMax : ctx.echoMax;
+      if (dir > 0 && at >= max) return null;
+      if (dir < 0 && at <= 0) return null;
+      return [{ t: "secsend", key: subj === "reverb" ? "rev" : "echo", step: dir }];
+    }
+    return [{ t: "mix", chan: "master", key, delta: dir * SEND }];
   }
+  // ADD DRUMS / CUT THE DRUMS — presence, not level ("if there aren't drums
+  // and I say add drums then you need to add drums"): ADD reopens every door
+  // the drums left through (a nodrums kit word, a board mute); CUT writes
+  // nodrums on the aimed sections. BRING UP/DOWN stays the fader.
+  if (subj === "drums" && (verb === "more" || verb === "less") && !adj)
+    return verb === "more"
+      ? (ctx.drumsOff ? [{ t: "drums", on: true }] : null)
+      : (ctx.drumsOn ? [{ t: "drums", on: false }] : null);
+  // ...and every OTHER drum sentence needs drums to be there at all
+  if (subj === "drums" && !ctx.drumsOn) return null;
+  // ...and a part the record does not seat is not a subject
+  if ((subj === "bass" || subj === "melody" || subj === "chords") && !ctx.parts[subj]) return null;
   // BRING UP THE DRUMS — an instrument subject, no adjective: a fader move
   if (chan && (verb === "up" || verb === "down") && !adj)
     return sec && subj === "song" ? [{ t: "secnum", key: "fader", delta: dir * FADER }]
@@ -158,7 +190,7 @@ function compileOne(verb, subj, adj, scope) {
 
 /* ---------- grammar: a token list -> a compiled sentence, or nothing ------- */
 export const MAX_CMDS = 5;                 // five statements per node, the law
-export function parse(tokens, scope) {
+export function parse(tokens, scope, ctx) {
   if (!tokens.length || tokens.length > 3) return null;
   const roles = tokens.map(w => WORDS[w]);
   if (roles.some(r => !r) || roles[0].role !== "verb") return null;
@@ -169,22 +201,22 @@ export function parse(tokens, scope) {
     else return null;                       // two subjects, two adjectives: not a sentence
   }
   if (!subj) return null;
-  const fx = compileOne(roles[0].canon, subj, adj, scope);
+  const fx = compileOne(roles[0].canon, subj, adj, scope, ctx);
   return fx ? { verb: roles[0].canon, subj, adj, fx, text: tokens.join(" ").toUpperCase() } : null;
 }
 
 /* ---------- the tray's law: only words that still work exactly ------------- */
 // a token list can still become a sentence within the 3-word budget
-function reachable(tokens, scope) {
-  if (parse(tokens, scope)) return true;
+function reachable(tokens, scope, ctx) {
+  if (parse(tokens, scope, ctx)) return true;
   if (tokens.length >= 3) return false;
   for (const w of Object.keys(WORDS)) {
     if (WORDS[w].role === "verb") continue;
-    if (reachable([...tokens, w], scope)) return true;
+    if (reachable([...tokens, w], scope, ctx)) return true;
   }
   return false;
 }
-export function continuations(tokens, scope) {
+export function continuations(tokens, scope, ctx) {
   // COMPLETE as well as exact: a word is offered iff SOME completion inside
   // the three-word budget compiles — looked all the way ahead, because the
   // MAKE family always needs three words and a one-word lookahead silently
@@ -194,7 +226,7 @@ export function continuations(tokens, scope) {
     const r = WORDS[w];
     if (!tokens.length) { if (r.role !== "verb") continue; }
     else if (r.role === "verb") continue;
-    if (reachable([...tokens, w], scope)) ok.add(w);
+    if (reachable([...tokens, w], scope, ctx)) ok.add(w);
   }
   return ok;
 }
@@ -219,6 +251,9 @@ export function describeFx(fx, scope) {
       case "secper": return "this section's period → " + e.word;
       case "ops": return (scope === "song" ? "every section: " : "this section: ") +
         "notes op “" + e.add + "”";
+      case "drums": return e.on
+        ? "drums back in (kit restored, board unmuted)"
+        : (scope === "song" ? "every section's kit → nodrums" : "this section's kit → nodrums");
     }
     return e.t;
   }).join(" · ");
