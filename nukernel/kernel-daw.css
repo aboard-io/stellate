@@ -1591,6 +1591,40 @@ h1 em{font-style:normal;color:var(--ink)}
 .mxr.cut{background:color-mix(in srgb,var(--st-rec) 30%,var(--bg-key))}
 .mxr.cut .val{color:var(--st-rec);font-weight:700}
 .mxr:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+/* ---- RUBINESQUE: the couch (ui/rubin.js) ---- */
+.rubinwrap{display:flex;flex-direction:column;gap:var(--sp-3);padding:var(--sp-3) var(--tbl-gut)}
+.rgraph{display:flex;flex-wrap:wrap;gap:var(--sp-1)}
+.rnode{appearance:none;cursor:pointer;display:flex;align-items:center;gap:.5em;
+  min-height:40px;padding:0 var(--sp-3);border:1px solid var(--rule);
+  border-radius:var(--r);background:var(--bg-key);color:var(--ink-2)}
+.rnode.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.rnode .rn{font-variant-numeric:tabular-nums;opacity:.75}
+.rsent{display:flex;align-items:center;gap:var(--sp-3);min-height:64px;
+  padding:var(--sp-2) var(--sp-3);border-radius:var(--r);background:var(--bg-sunk)}
+.rsent .rwords{flex:1 1 auto;font-size:clamp(20px,4.5vw,34px);font-weight:700;
+  letter-spacing:.02em;color:var(--ink-2)}
+.rsent.ok .rwords{color:var(--ink)}
+.rgo{appearance:none;cursor:pointer;min-height:48px;padding:0 var(--sp-4);
+  border:0;border-radius:var(--r);background:var(--accent);color:var(--on-accent);
+  font-size:1.05em;font-weight:700;letter-spacing:.04em}
+.rclear{appearance:none;cursor:pointer;min-height:40px;min-width:40px;border:1px solid var(--rule);
+  border-radius:var(--r);background:var(--bg-key);color:var(--ink-2)}
+.rtray{display:flex;flex-direction:column;gap:var(--sp-2)}
+.rgroup{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.rg{flex:0 0 100%;font-style:normal;font-size:var(--t-sm);letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-2)}
+.rchip{appearance:none;cursor:pointer;min-height:40px;padding:0 var(--sp-3);
+  border:1px solid var(--rule);border-radius:999px;background:var(--bg-key);
+  color:var(--ink);font-size:1em}
+.rchip:hover{background:var(--bg-key-hi)}
+.rfull{color:var(--ink-2);padding:var(--sp-2) 0}
+.rledger{display:flex;flex-direction:column;gap:var(--sp-1)}
+.rcmd{appearance:none;cursor:pointer;text-align:left;min-height:40px;
+  padding:0 var(--sp-3);border:1px solid var(--rule);border-radius:var(--r);
+  background:color-mix(in srgb,var(--accent) 14%,var(--bg-key));
+  color:var(--ink);font-weight:600}
+.rcmd:hover{text-decoration:line-through}
+
 /* the board-is-trimmed dot on the rail's MIX key (ui/mixer.js drawMix) */
 .pkey.trimmed{position:relative}
 .pkey.trimmed::after{content:"";position:absolute;top:4px;right:14%;
@@ -1961,6 +1995,8 @@ details .c{color:var(--ink-3)}
 .pkey[data-page="mix"] .pi{--pim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M2.6 1.4v12.2M7.5 1.4v12.2M12.4 1.4v12.2' stroke='%23000' stroke-width='1.3'/%3E%3Crect x='1' y='3.4' width='3.2' height='3' rx='.8'/%3E%3Crect x='5.9' y='8.2' width='3.2' height='3' rx='.8'/%3E%3Crect x='10.8' y='5.2' width='3.2' height='3' rx='.8'/%3E%3C/svg%3E")}
 /* the lab: a flask, because the tab is a bench and the thing on it is not a
    song yet */
+/* rubin: the couch — a lotus-ish open hand */
+.pkey[data-page="rubin"] .pi{--pim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M7.5 2c1.2 2 1.2 4 0 6-1.2-2-1.2-4 0-6zM3 5c2 .6 3.3 2 3.8 4C4.7 8.6 3.4 7.2 3 5zm9 0c-.4 2.2-1.7 3.6-3.8 4 .5-2 1.8-3.4 3.8-4zM2 10.5h11c-.6 1.8-2.6 3-5.5 3s-4.9-1.2-5.5-3z'/%3E%3C/svg%3E")}
 /* the screensaver link (no data-page — a plain link out): a four-point star */
 .pkey:not([data-page]) .pi{--pim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M7.5 1l1.4 5.1L14 7.5l-5.1 1.4L7.5 14l-1.4-5.1L1 7.5l5.1-1.4z'/%3E%3C/svg%3E")}
 .pkey[data-page="lab"] .pi{--pim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='M6 1.6v4.3L2.3 12.1a1 1 0 0 0 .9 1.5h8.6a1 1 0 0 0 .9-1.5L9 5.9V1.6' fill='none' stroke='%23000' stroke-width='1.5' stroke-linejoin='round'/%3E%3Cpath d='M4.9 1.6h5.2' stroke='%23000' stroke-width='1.5' stroke-linecap='round'/%3E%3Ccircle cx='7.5' cy='10.6' r='1.15'/%3E%3C/svg%3E")}
@@ -2021,6 +2057,7 @@ body{padding:0}
 .chassis[data-page="song"] .pg-song{display:block}
 .chassis[data-page="mix"]  .pg-mix{display:block}
 .chassis[data-page="lab"]  .pg-lab{display:block}
+.chassis[data-page="rubin"] .pg-rubin{display:block}
 
 /* ---- the narrow band ----
    Under 560px the tables give up GUTTER, never TYPE ("make the text big and

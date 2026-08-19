@@ -28,6 +28,7 @@ import "./editor.js";
 // is the allowed direction; audio never imports back). paintBoard rides the
 // one rAF loop below — the board's fader caps follow the desk model live.
 import * as board from "./mixer.js";
+import "./rubin.js";                       // RUBINESQUE: the couch (its own subs)
 import "./chrome.js";
 // the INSTRUMENT POOL bank on the SONG page — the band, hired for the record
 // (one instrument per chair, per song; ui/poolbank.js owns the rows and the
