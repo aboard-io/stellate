@@ -145,6 +145,49 @@ console.log("every word leaves the render finite");
   walk(D.say(D.blank(), "start"), 1);
 }
 
+/* (d3) THE GROOVE VOCABULARY IS REAL, AND ITS OWN. Every style is sixteen
+   steps of kernel lanes, non-empty, and DISTINCT from every other — a name
+   that plays another name's bar is a name that means nothing. (Nothing here
+   is copied from any transcription: see the note over GROOVES.) */
+console.log("every groove is sixteen real steps, and no two are the same");
+{
+  const seen = new Map();
+  const grooves = Object.entries(D.V).filter(([id]) => id.startsWith("groove:"));
+  ok(grooves.length >= 40, "the groove vocabulary is only " + grooves.length + " deep");
+  for (const [id, i] of grooves) {
+    const m = i.apply(D.say(D.blank(), "start"));
+    let hits = 0;
+    for (const [lane, v] of Object.entries(m.kit)) {
+      ok(K.DRUM_LANES.includes(lane), i.words[0] + ": lane " + lane + " is not a kernel lane");
+      ok(Array.isArray(v) && v.length === 16, i.words[0] + ": " + lane + " is not sixteen steps");
+      hits += v.filter(Boolean).length;
+    }
+    ok(hits >= 4, i.words[0] + " has " + hits + " hits in it");
+    ok(render(m, 1).length > 0, i.words[0] + " renders nothing");
+    const sig = JSON.stringify(m.kit);
+    ok(!seen.has(sig), i.words[0] + " is the same bar as " + seen.get(sig));
+    seen.set(sig, i.words[0]);
+  }
+}
+
+/* (d4) THE DRUMMER'S OWN WORDS reach the render as DYNAMICS, not just
+   placement: a ghost arrives quieter and an accent louder. */
+console.log("ghosts and accents are velocities, not decorations");
+{
+  let m = D.say(D.say(D.blank(), "start"), "groove:rock");
+  const snare = (mm) => render(mm, 1).filter(e => e.d === "s").map(e => e.vel);
+  const plain = snare(m);
+  const ghosted = snare(D.say(m, "drum:ghost notes"));
+  ok(ghosted.length > plain.length, "GHOST NOTES added no notes");
+  ok(Math.min(...ghosted) < Math.min(...plain) || Math.min(...ghosted) <= 3,
+     "the ghosts are not quieter than the backbeat (" + ghosted.join(",") + ")");
+  const acc = render(D.say(m, "drum:accent the downbeats"), 1).filter(e => e.d === "k");
+  ok(acc.some(e => e.vel >= 9), "ACCENT THE DOWNBEATS made nothing louder");
+  const ride = D.say(m, "drum:ride it, not the hats");
+  ok(!D.has(ride.kit, "h") && D.has(ride.kit, "p"),
+     "RIDE IT did not move the ostinato off the hats");
+}
+
 /* (e) EVERY MACHINE WORD NAMES A KIT THE ENGINE HAS */
 console.log("every machine word is a kit the engine can route");
 {

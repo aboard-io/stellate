@@ -8,7 +8,6 @@ const { blank, catalog, say, says, toGenre, LANEOF, LANES } = window.NuDrums;
 import { GENRES, NuSong } from "./deps.js";
 import { adoptSong, on, commit, setBpm, setSwing } from "./state.js";
 import { startAt, stop, playing, warmup, getPosition, passAt } from "../audio/live.js";
-import { setPendingStart } from "./state.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const n = document.createElement(tag);
@@ -44,11 +43,13 @@ function push(first) {
                 slots: [NuSong.blank()], song: [box] }, "drums");
   } else { commit("box"); commit("swing"); }
   commit("transport");
-  // AND IT LANDS SOON. The engine schedules a bar ahead, so an edit is heard
-  // on the next bar at best; jumping the walk to the top of the loop means
-  // the new kit arrives on a DOWNBEAT rather than halfway through bar three,
-  // which is the difference between "it worked" and "did that do anything".
-  if (!first && playing) setPendingStart(0);
+  // (NO JUMP HERE. Sending the walk back to the top of the loop on every
+  // word was a latency hack and it cost more than it bought: the record
+  // RESTARTED at bar one each time you said something, so the four-bar
+  // cycle never reached its own fourth measure — "you reset after the first
+  // measure instead of still looping". The loop keeps running; the edit
+  // lands on the next bar the engine asks for, which is measurably ONE bar
+  // ahead of the ear.)
 }
 
 /* ---------- draw ---------- */
@@ -72,7 +73,11 @@ function draw() {
       g.kits.forEach((bar, bi) => {
         const b = el("div", "dbar" + (model.fills[bi + 1] ? " fill" : ""));
         for (let i = 0; i < 16; i++) {
-          const cell = el("i", "dcell" + ((bar[l] || [])[i] ? " hit" : "")
+          // the step's LEVEL is its velocity (a ghost is a 2, an accent a 9),
+          // so the picture shows how hard as well as whether
+          const v = (bar[l] || [])[i] || 0;
+          const cell = el("i", "dcell" + (v ? " hit" : "")
+            + (v > 1 && v <= 4 ? " ghost" : "") + (v >= 9 ? " accent" : "")
             + (i % 4 === 0 ? " beat" : "") + (l === lane ? " lit" : ""));
           cells[bi][i].push(cell);
           b.append(cell);

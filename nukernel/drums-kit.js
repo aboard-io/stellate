@@ -36,7 +36,17 @@
   const blank = () => ({ on: false, kit: empty(), fills: {}, drumkit: "acoustic",
                          humanize: 0, swing: null, vel: {}, bpm: 92 });
 
-  /* ---------- the grooves: real bars, written out ---------- */
+  /* ---------- THE GROOVES: real bars, written out ------------------------
+     A vocabulary of styles, AUTHORED HERE. Paul pointed at
+     github.com/stephenhandley/DrumMachinePatterns, which is a transcription
+     of René-Pierre Bardet's "260 Drum Machine Patterns" (Hal Leonard) and
+     carries no licence — so nothing is copied from it: this project's own
+     provenance rule (SOURCES.md) is exactly about not doing that. What a
+     style NAME describes is a convention, and these bars are written from
+     the convention: a bossa is a bossa because of where the kick and the rim
+     fall, not because someone's transcription says so. Every one of them is
+     held by the gate to be sixteen steps of real kernel lanes, non-empty,
+     and distinct from every other. */
   const GROOVES = {
     four:      { k: on(0, 4, 8, 12), h: every(2), o: on(2, 6, 10, 14) },
     breakbeat: { k: on(0, 10), s: on(4, 12), h: every(2, 0), p: on(7, 14) },
@@ -49,12 +59,84 @@
     disco:     { k: on(0, 4, 8, 12), o: on(2, 6, 10, 14), c: on(4, 12) },
     blast:     { k: every(2), s: every(2, 1), h: every(1) },
     sparse:    { k: on(0, 8), s: on(4, 12) },
+
+    /* ROCK AND POP */
+    rock:      { k: on(0, 8), s: on(4, 12), h: every(2) },
+    rockdrive: { k: on(0, 6, 8, 14), s: on(4, 12), h: every(2) },
+    punkbeat:  { k: every(2), s: on(4, 12), h: every(2) },
+    stomp:     { k: on(0, 4, 8, 12), c: on(4, 12), t: on(6, 14) },
+    surf:      { k: on(0, 6, 8), s: on(4, 12), h: every(1) },
+    shufflerock:{ k: on(0, 6, 8, 14), s: on(4, 12), h: on(0, 3, 4, 7, 8, 11, 12, 15) },
+    motownbeat:{ k: on(0, 8), s: on(4, 12), h: every(2), c: on(4, 12), p: every(2, 1) },
+    train:     { k: on(0, 8), s: on(2, 4, 6, 10, 12, 14), h: every(2) },
+    marchbeat: { k: on(0, 4, 8, 12), s: on(2, 3, 6, 7, 10, 11, 14, 15) },
+
+    /* LATIN AND CARIBBEAN */
+    bossa:     { k: on(0, 3, 8, 11), s: on(0, 6, 10), h: every(2) },
+    samba:     { k: on(0, 3, 6, 8, 11, 14), s: on(2, 6, 10, 14), h: every(1) },
+    rumba:     { k: on(0, 3, 6, 10, 12), s: on(4, 12), p: every(2) },
+    chacha:    { k: on(0, 4, 8, 12), s: on(6, 14), c: on(4, 12), h: every(2) },
+    mambo:     { k: on(0, 6, 8, 14), p: on(0, 2, 4, 6, 8, 10, 12, 14), s: on(4, 12) },
+    songo:     { k: on(0, 6, 10), s: on(4, 12), t: on(2, 14), h: every(2) },
+    onedrop:   { k: on(8), s: on(8), h: every(2) },
+    steppers:  { k: on(0, 4, 8, 12), s: on(8), h: every(2) },
+    rockers:   { k: on(0, 8), s: on(4, 12), h: on(2, 6, 10, 14) },
+
+    /* FUNK AND SOUL */
+    funk:      { k: on(0, 3, 10), s: on(4, 12), h: every(1) },
+    neworleans:{ k: on(0, 3, 6, 8, 14), s: on(4, 12), t: on(10) },
+    linear:    { k: on(0, 6), s: on(4, 12), h: on(2, 8, 10, 14) },
+    purdie:    { k: on(0, 6, 10), s: on(4, 12), h: every(2), p: on(2, 14) },
+
+    /* JAZZ */
+    jazzride:  { p: on(0, 4, 6, 8, 12, 14), k: on(0, 8), s: on(6, 14) },
+    bebop:     { p: on(0, 4, 6, 8, 12, 14), s: on(2, 10), k: on(0) },
+    brushes:   { p: every(2), s: on(4, 12), k: on(0, 8) },
+
+    /* THE FLOOR */
+    house:     { k: on(0, 4, 8, 12), o: on(2, 6, 10, 14), c: on(4, 12), h: every(2, 1) },
+    techno:    { k: on(0, 4, 8, 12), h: every(1), o: on(2, 6, 10, 14) },
+    garage:    { k: on(0, 10), s: on(4, 12), h: on(2, 3, 6, 10, 11, 14) },
+    twostep:   { k: on(0, 10), s: on(4, 12), h: every(2, 1) },
+    jungle:    { k: on(0, 10, 11), s: on(4, 12), h: every(2), p: on(7, 15) },
+    dubstep:   { k: on(0), s: on(8), h: on(2, 6, 10, 14) },
+    trapbeat:  { k: on(0, 6, 10), s: on(8), h: on(0, 2, 4, 6, 8, 9, 10, 12, 14, 15) },
+    gabber:    { k: every(2), c: on(4, 12) },
   };
+  // word, and which family it belongs to (the tray groups by family, because
+  // forty grooves in one row is a list, not a vocabulary)
   const GROOVEWORD = {
     four: ["four on the floor"], breakbeat: ["breakbeat"], boombap: ["boom bap"],
     amen: ["amen break"], halftime: ["half time"], doubletime: ["double time"],
     motorik: ["motorik"], tresillo: ["tresillo"], disco: ["disco"],
     blast: ["blast beat"], sparse: ["bare bones"],
+    rock: ["straight rock"], rockdrive: ["driving rock"], punkbeat: ["punk"],
+    stomp: ["stomp"], surf: ["surf"], shufflerock: ["shuffle"],
+    motownbeat: ["motown"], train: ["train beat"], marchbeat: ["march"],
+    bossa: ["bossa nova"], samba: ["samba"], rumba: ["rumba"], chacha: ["cha cha"],
+    mambo: ["mambo"], songo: ["songo"], onedrop: ["one drop"],
+    steppers: ["steppers"], rockers: ["rockers"],
+    funk: ["funk"], neworleans: ["new orleans"], linear: ["linear funk"],
+    purdie: ["half-time shuffle"],
+    jazzride: ["jazz ride"], bebop: ["bebop"], brushes: ["brush swing"],
+    house: ["house"], techno: ["techno"], garage: ["uk garage"],
+    twostep: ["two step"], jungle: ["jungle"], dubstep: ["dubstep"],
+    trapbeat: ["trap"], gabber: ["gabber"],
+  };
+  const GROOVEFAM = {
+    four: "the floor", disco: "the floor", house: "the floor", techno: "the floor",
+    garage: "the floor", twostep: "the floor", gabber: "the floor",
+    breakbeat: "breaks", amen: "breaks", jungle: "breaks", dubstep: "breaks",
+    trapbeat: "breaks", boombap: "breaks", blast: "breaks",
+    rock: "rock", rockdrive: "rock", punkbeat: "rock", stomp: "rock", surf: "rock",
+    shufflerock: "rock", motorik: "rock", train: "rock", marchbeat: "rock",
+    halftime: "rock", doubletime: "rock", sparse: "rock",
+    bossa: "latin", samba: "latin", rumba: "latin", chacha: "latin", mambo: "latin",
+    songo: "latin", tresillo: "latin", onedrop: "latin", steppers: "latin",
+    rockers: "latin",
+    funk: "funk", neworleans: "funk", linear: "funk", purdie: "funk",
+    motownbeat: "funk",
+    jazzride: "jazz", bebop: "jazz", brushes: "jazz",
   };
 
   /* ---------- the lanes, as things you ask for ---------- */
@@ -69,6 +151,41 @@
   };
   const DROPWORD = { k: "no kick", s: "no snare", h: "no hats", o: "no open hats",
                      c: "no claps", p: "no percussion", t: "no toms" };
+
+  /* ---------- HOW A DRUMMER SAYS IT --------------------------------------
+     Nobody at a kit thinks "kick on step ten". They think about where the
+     BACKBEAT is, what the HANDS are keeping, whether the ghosts are in, and
+     which limb has the ostinato — so those are words here too, and they act
+     on whichever lanes they are about. Ghost notes are real: the kernel
+     reads a step's LEVEL as its velocity (cell > 1), so a ghost is a 2 and
+     an accent is a 9, and they arrive quieter and louder in the render
+     rather than as a note somebody drew smaller. */
+  const lvl = (v, ix, n) => { const out = v.slice(); for (const i of ix) out[i] = n; return out; };
+  const HANDS = {
+    quarters: every(4), eighths: every(2), sixteenths: every(1),
+    shuffled: on(0, 3, 4, 7, 8, 11, 12, 15), offbeats: on(2, 6, 10, 14),
+  };
+  const DRUMMER = {
+    "hands in quarters":   (m) => ({ ...m, kit: { ...clone(m.kit), h: HANDS.quarters.slice() } }),
+    "hands in eighths":    (m) => ({ ...m, kit: { ...clone(m.kit), h: HANDS.eighths.slice() } }),
+    "hands in sixteenths": (m) => ({ ...m, kit: { ...clone(m.kit), h: HANDS.sixteenths.slice() } }),
+    "hands shuffled":      (m) => ({ ...m, kit: { ...clone(m.kit), h: HANDS.shuffled.slice() } }),
+    "backbeat on two and four": (m) => ({ ...m, kit: { ...clone(m.kit), s: on(4, 12) } }),
+    "backbeat on three":   (m) => ({ ...m, kit: { ...clone(m.kit), s: on(8) } }),
+    "ghost notes":         (m) => { const kit = clone(m.kit);
+      kit.s = lvl(kit.s, [2, 6, 10, 14].filter(i => !kit.s[i]), 2); return { ...m, kit }; },
+    "accent the downbeats": (m) => { const kit = clone(m.kit);
+      for (const l of LANES) if (has(kit, l))
+        kit[l] = lvl(kit[l], [0, 4, 8, 12].filter(i => kit[l][i]), 9);
+      return { ...m, kit }; },
+    "ride it, not the hats": (m) => { const kit = clone(m.kit);
+      kit.p = kit.h.slice(); kit.h = z(); return { ...m, kit }; },
+    "back to the hats":    (m) => { const kit = clone(m.kit);
+      kit.h = kit.p.slice(); kit.p = z(); return { ...m, kit }; },
+    "nothing on the one":  (m) => { const kit = clone(m.kit);
+      kit.k = kit.k.slice(); kit.k[0] = 0; return { ...m, kit }; },
+    "kick on the one only": (m) => ({ ...m, kit: { ...clone(m.kit), k: on(0) } }),
+  };
 
   /* ---------- the fill: one bar that is not the others ---------- */
   const FILLBAR = (kit) => {
@@ -104,7 +221,7 @@
       () => "a four on the floor, and the machine is on");
 
   for (const [g, words] of Object.entries(GROOVEWORD))
-    add("groove:" + g, "the groove", words,
+    add("groove:" + g, "grooves · " + (GROOVEFAM[g] || "other"), words,
         m => m.on && JSON.stringify({ ...empty(), ...GROOVES[g] }) !== JSON.stringify(m.kit),
         m => ({ ...m, kit: { ...empty(), ...GROOVES[g] }, fills: {} }),
         () => "the kit plays a " + words[0],
@@ -137,6 +254,12 @@
         m => !!m.fills[bar]);
   add("nofills", "the fills", ["no fills"], m => Object.keys(m.fills).length > 0,
       m => ({ ...m, fills: {} }), () => "the fills come out");
+
+  for (const [word, fn] of Object.entries(DRUMMER))
+    add("drum:" + word, "at the kit", [word],
+        m => m.on && JSON.stringify(fn(m).kit) !== JSON.stringify(m.kit),
+        fn, () => word,
+        m => m.on && JSON.stringify(fn(m).kit) === JSON.stringify(m.kit));
 
   for (const [k, word] of Object.entries(MACHINES))
     add("kit:" + k, "the machine", [word], m => m.on && m.drumkit !== k,
@@ -259,6 +382,7 @@
   }
 
   return { LANES, BARS, N, blank, V, offered, catalog, say, says, toGenre, stepWord,
+           GROOVEWORD, GROOVEFAM,
            stepsFor, LANENAME, LANEOF, GROOVES, LANEWORD, FILLWORD, MACHINES,
            hits, has, clone, empty };
 });

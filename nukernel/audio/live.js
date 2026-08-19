@@ -149,6 +149,11 @@ const barOfSerial = (serial) => {
   return n ? (((barBase + serial) % n) + n) % n : 0;
 };
 const events = (one, meta) => {
+  // WHEN THE ENGINE ASKS, AND FOR WHICH BAR — the only honest way to measure
+  // how far ahead of the ear an edit has to land (a page can compare the bar
+  // it was on when a word was said to the first bar the engine asked for
+  // afterwards). Costs one assignment per bar.
+  try { if (typeof window !== "undefined") window.__nuAsk = meta.serial; } catch (e) {}
   const p = barPlan(barOfSerial(meta.serial));
   if (p) return { ev: p.ev, units: p.units };
   // NEVER NULL. The parent reads a null as "this caller has nothing to say
