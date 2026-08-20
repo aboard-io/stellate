@@ -732,6 +732,53 @@ not prose; INHERITANCE.md was deleted in the 2026-08-18 tidy).
 
 **The instrument pages — `drums.html` and `band.html`.** Two self-contained
 pages beside the daw, each a MUSICIAN you talk to rather than a grid you edit.
+
+THE BAND PAGE IS THREE MODULES — SONG (the tune and its form), BAND (the six
+chairs), IDEAS (the melody) — with no chrome on it: no headings, no captions,
+no "tap a section", no dismiss keys. The only word that is not a decision is
+the play button; tapping the floor closes whatever is open, and there is a
+reset key beside play for the whole session.
+
+THE FRONT DOOR IS NOT A MENU. A session opens with *what decade is it? · where
+are you? · where do you play?* and the record is what those three add up to —
+Chicago in the eighties in a warehouse is one record, Chicago in the fifties
+in a bar is another, and nobody had to name either. Every option offered is
+one that leaves a record standing (no dead ends by construction), and when one
+is left it is CALLED rather than asked: 208 routes in, 181 of them naming one
+record, every record reachable. The genre survives as a FACT read without the
+room — the neighbours of that decade and that city — so changing it is one tap.
+
+AND IT DOES NOT NEED THE INTERNET (2026-08-20). It did: these pages never
+registered the service worker, so every load was a network load and every
+sample was fetched again the first time it played. `nukernel/audio/offline.js`
+is the sixth module of the audio tier and makes no sound either — it registers
+the root `sw.js` (app stale-while-revalidate, `/found/` cache-first-forever),
+warms the SHELL by asking `performance.getEntriesByType("resource")` what this
+page actually loaded (no hand-written manifest to rot), and on every record
+change warms what that record's cast can ask for: the crate via `plan.js
+warmSources()`, the instrument zones via the registry's own
+`SAMPLERS[id].dir/zones[].file`, and the kernel's own `BASS_INSTR` — which is
+not in the unit table and was, measured with the wire cut, the only thing
+still going to the network. The session is remembered in `localStorage`
+(`nu.band.session`), because a cached record you cannot come back to is a
+cached record nobody hears twice. Gate:
+`test/browser/band-offline.test.js` warms a record, CUTS THE WIRE, reloads and
+plays — the page comes back, the session with it, it sounds, zero requests
+fail.
+
+HOW TO ADD A CHAIR (vocalist, rhythm guitarist, chorus, brass, strings, a
+trumpeter): 1. a KIT FILE (`<role>-kit.js`, classic UMD, pure) with `JOBS`
+(each a kernel PART — pad/stab/riff/counter/line/lead/drone — plus a 16-step
+phrase), `INSTRUMENTS` (only ids `genres.js` already names, since the pool is
+built from them), `REG`, a `PANEL`, the BAR, an interview, and the two things
+a pitched voice IS: `toPattern` + `toGenre`. 2. BAND-KIT seats it (`SEATS`,
+`TAKEN`, `blank()`, the switches, a `chairs[]` entry in `toGenre`, a section
+question, a row in every `GENRES` record so the record narrows it). 3. THE
+PAGE gives it a phrase bank and a pool chair. The one real constraint is that
+the pool casts by ROLE, so a chair whose instrument must be its own takes a
+STACK LAYER rather than a voice — exactly how the melody layer
+(`lab.idea.<n>`) already works. Vocalist, brass and orchestra want that shape;
+a rhythm guitarist can be a second voice the way keys and guitar are.
 `drums-kit.js` is the drummer (44 grooves, 30+ drummer words, a ten-question
 interview, and THREE TOMS — the kernel has routed t/m/l to tomHi/tom/tomLo all
 along and this file only ever wrote `t`, so a tom was a texture and never a
