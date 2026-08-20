@@ -1,4 +1,0 @@
-{
-  "type": "module",
-  "//": "The espeak-ng WASM glue is an ES module (it uses import.meta.url to locate espeak-ng.data). Without this, node resolves .js against the repo root package.json, which is type=commonjs, and the glue fails to parse with \"Cannot use import.meta outside a module\" — which is why test/gates/speech.test.js could not synthesize under plain node. prove-browser.cjs keeps the .cjs suffix because it is the one CommonJS script in here."
-}

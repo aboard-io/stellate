@@ -1,4 +1,0 @@
-{
-  "type": "module",
-  "//": "Same marker, same reason as vendor/espeak-ng/package.json: simplex-noise.js is an ES module (`export function createNoise3D`), and without this node resolves .js against the repo root package.json, which is type=commonjs, so `import { createNoise3D }` from app/starcruise/planet.js fails with \"Named export not found ... is a CommonJS module\". That is what stopped test/unit/planet.test.mjs from running. The browser never reads this file."
-}
