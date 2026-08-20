@@ -346,6 +346,18 @@ export function sectionEvents(sec, slots, songGroove, songSwing) {
   // the render read what the palette wrote; with no entry-level values set
   // (every composed song, every shipped preset) it is byte-identical.
   const a0 = stackOf(sec)[0];
+  // AN UNREGISTERED GENRE RENDERS AS SILENCE, NOT A CRASH — the law
+  // voiceOwners already writes ("an unknown genre skipped"), applied here
+  // too. The window is real and measured: the dice replaces GENRES' lab.*
+  // entries and the SONG's boxes in separate steps, and a compile landing
+  // between them (the gate's timing; the live transport's recompile-on-
+  // commit if you roll while playing) walked a stack whose genre had just
+  // been swept — GENRES held the new roll's six sections while SONG still
+  // held the old record's one box, and reading .voices off the vanished
+  // authority killed the schedule. A transient frame without its genre
+  // renders empty; the roll's final push recompiles and the section comes
+  // back whole.
+  if (!GENRES[(a0 && a0.g) || gid(sec)]) return [];
   const g = genreOf(sec, a0);
   // THE SONG'S SWING lands on the authority's genre, first thing: the kernel
   // reads g.swing per note, the layers copy it (lg below), and the drums and
@@ -400,6 +412,7 @@ export function sectionEvents(sec, slots, songGroove, songSwing) {
   let vBase = g.voices;
   for (const ent of stackOf(sec).slice(1)) {
     const extra = ent.g, L = GENRES[extra], lPh = phrasesFor(ent), lnP = lPh.length;
+    if (!L) continue;                 // a layer mid-swap: skipped, same law as above
     // The layer inherits EVERY section-level override, not some of them. The
     // section's `scale` is the subject's alphabet, and leaving it out let the
     // authority read quartal while the layer read pentatonic — two alphabets
