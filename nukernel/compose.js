@@ -208,187 +208,63 @@
       }
     }
   }
-  const PLAN_OF = {
-    acid: "dance", vaporwave: "dance", newwave: "dance",
-    rock: "song", blues: "song", sludge: "song", simple: "song",
-    fugue: "arc", counterpoint: "arc", gregorian: "arc", spem: "arc",
-    bulgarian: "arc", neoclassical: "arc", drone: "arc",
-    // a tango is an arc and not a pop song; death metal, soul and the
-    // Eurythmics all are songs, but the last one is a DANCE record first —
-    // "Sweet Dreams" has a drop where a bridge would be
-    tango: "arc", deathmetal: "song", isley: "song", eurythmics: "dance",
-    // post rock is an arc by construction — it is one crescendo — and the four
-    // studio records are songs, because that is what they are
-    postrock: "arc", toto: "song", jodeci: "song", beatles: "song", steely: "song",
-    // THE RADIO DIAL. The floor genres are dance records — they build and
-    // drop, they do not bridge. The pop half are songs, verse-chorus by
-    // birthright. Afrobeat and ambient are arcs: one is a groove you stay
-    // inside while the horns arrive, the other is one long breath.
-    boombap: "song", trap: "dance", house: "dance", garage: "dance",
-    dnb: "dance", disco: "dance", techno: "dance", dub: "dance",
-    funk: "song", motown: "song", rnb: "song", gospel: "song",
-    reggae: "song", ska: "song", bossa: "song", countrypop: "song",
-    synthpop: "song", shoegaze: "song", citypop: "song", punk: "song",
-    afrobeat: "arc", ambient: "arc",
-    // THE ANCESTORS. Seven of the eight are songs, which is most of what an
-    // ancestor turns out to be: jazz is a head, solos and the head again — a
-    // song whose middle is the blowing — and doo-wop, skiffle, Bo Diddley,
-    // Chuck Berry and Kraftwerk all wrote singles, whatever their children did
-    // with them (Düsseldorf's half that is the Beatles is the half that decided
-    // on verses and three minutes). Electro is the one that is a floor record,
-    // and minimalism is the one that is neither: one process, one shape, which
-    // is an arc — it is NOT on the steady list, because the process goes
-    // somewhere, and that is the whole difference from drone and ambient.
-    jazz: "song", doowop: "song", skiffle: "song", bodiddley: "song",
-    chuckberry: "song", kraftwerk: "song", electro: "dance", minimalism: "arc",
-    // THE FUNCTION GENRES arrange as ARCS, every one of them, and it is not a
-    // shrug. A part on its own has no verse and no chorus — there is nothing
-    // for it to be the chorus OF — so what is left is one shape with a peak,
-    // which is what an unaccompanied line is. (They are written to be STACKED;
-    // a solo composing its own record is the degenerate case, and the plan
-    // should say so rather than pretend it is a pop song.)
-    solo: "arc", vocal: "arc", backing: "arc", riff: "arc", pad: "arc",
- // THE TWENTY-NINE ROOMS added 2026-08-17. Their own lane could not write
-    // this table (it owned genres.js and nothing else), so the registration
-    // lands here, and the split is the same one the dial made: a record that
-    // BUILDS and DROPS is a dance, a record with a verse and a chorus is a
-    // song, and a record that is one shape is an arc.
-    //
-    // The four dance records are the ones a DJ plays: big beat and EBM are
-    // floor music with a breakdown where a bridge would be, drill is trap's
-    // half-time grandchild, reggaeton is a dembow that never stops, bigroom
-    // is a genre named after its drop and clubpop is a twelve-inch with a
-    // singer on it. K-POP IS A SONG and that is the one to argue with: it has
-    // the biggest dance break of anything here, but everything around the
-    // break is verse-prechorus-chorus, and losing that would lose the genre.
-    //
-    // Three arcs. The hymn is a chorale — one text, one shape, no chorus to
-    // come back to. Motorik is one pulse held for eight minutes while things
-    // arrive on top of it (its parent minimalism is an arc for the same
-    // reason, and like minimalism it is NOT steady: the process goes
-    // somewhere). A jam band's record is one crescendo with the solos inside
-    // it, which is exactly what the arc plan is.
-    //
-    // Everything else is a song, because everything else was written to be
-    // sung twice.
-    hymn: "arc", motorik: "arc", jamband: "arc",
-    bigbeat: "dance", drill: "dance", clubpop: "dance", reggaeton: "dance",
-    bigroom: "dance", ebm: "dance",
-    crooner: "song", yuletide: "song", merseybeat: "song", psychpop: "song",
-    powerballad: "song", retrofunkpop: "song", latinpop: "song", kpop: "song",
-    boyband: "song", emo: "song", screamo: "song", confessionalpop: "song",
-    darkrnb: "song", blueeyedsoul: "song", folkduo: "song", worldfolk: "song",
-    sophistirock: "song", roboticpop: "song", industrialmetal: "song",
-    synthduo: "song",
- // TWENTY-THREE MORE ROOMS, added 2026-08-17 by the same lane that wrote
-    // genres.js's own comment block for them — the split is the wave-1 split
-    // again: a record that builds and drops is a dance, one shape end to end
-    // is an arc, everything else was written to be sung twice. SIX are
-    // dance: the four machine-floor rooms (melodic techno, bleep techno,
-    // industrial breaks, dance post-punk) plus the two baggy/indie-dance
-    // crossovers that put a band ON that same floor (madchester, indie
-    // dance) — none of the six has a bridge, all six have a drop. ONE is an
-    // arc: space rock is postrock's own shape, not drone's — a slow line
-    // that DOES go somewhere, the same guitar-solo climb postrock already
-    // arcs into, so it takes the ordinary arc curve below and stays off
-    // `STEADY` (that list is for the two genres that refuse to arrive
-    // anywhere at all). The other SIXTEEN are
-    // songs, gothsynth and analogsynthpop included — a verse-chorus record
-    // played on a different synthesizer is still a verse-chorus record; the
-    // synth is a fact about the INSTRUMENT, not about the FORM.
-    musichallrock: "song", orchpsych: "song", altcountry: "song",
-    yachtsoul: "song", yachtrock: "song", songwriterpiano: "song",
-    softfolk: "song", singersongwriter: "song", coastrock: "song",
-    spacerock: "arc", grebo: "song",
-    melodictechno: "dance", bleeptechno: "dance", industrialbreaks: "dance",
-    industrialrock: "song", analogsynthpop: "song", gothsynth: "song",
-    gothicpop: "song", postpunk: "song", dancepostpunk: "dance",
-    madchester: "dance", janglepop: "song", indiedance: "dance",
+  // ---- WHERE THE PLAN AND TEMPO TABLES WENT --------------------------------
+  // Two 110-row genre-keyed tables lived here — PLAN_OF (dance|song|arc) and
+  // BPM (70..160) — and both moved ONTO THE ANCHORS on 2026-08-20: every
+  // GENRES row in genres.js now carries `plan:` and `bpm:` beside its label,
+  // and each row's research note ("144 is medium-up bebop") moved with it. A
+  // keyed table a file away from the genre it describes is how a new anchor
+  // ships without a tempo; a field beside the label is one a reviewer cannot
+  // miss, and compose() below throws BY NAME on a genre that lacks either.
+  //
+  // The framing the tables carried, kept here because it is the POLICY and
+  // not any one row's note:
+  //   - The split is one rule applied three times: a record that BUILDS and
+  //     DROPS is a dance (the floor genres do not bridge), a record with a
+  //     verse and a chorus is a song, and a record that is one shape end to
+  //     end is an arc. Everything else was written to be sung twice — a
+  //     synth is a fact about the instrument, never about the form.
+  //   - Seven of the eight ancestors are songs, which is most of what an
+  //     ancestor turns out to be: they wrote singles, whatever their
+  //     children did with them. Electro is the one floor record; minimalism
+  //     is the arc whose process actually goes somewhere.
+  //   - The FUNCTION genres arrange as arcs, every one of them: a part on
+  //     its own has no verse and no chorus — there is nothing for it to be
+  //     the chorus OF — so what is left is one shape with a peak.
+  //   - Tempo: the dial bottoms at 70 and tops at 160, and a composer that
+  //     leaves everything at 126 has not arranged anything — half of what
+  //     "sounds like sludge" means is the tempo. The genres at the ends
+  //     (dnb, punk, darkrnb, spacerock, grebo) sit ON the fence rather than
+  //     past it. One 2026-08-17 note did not survive the move because it
+  //     matches no row: "148 is Joy Division's own rush, the same number
+  //     skiffle already sits at" — postpunk's row is 138, and the only 148
+  //     in that batch is grebo's. Recorded here rather than invented onto an
+  //     anchor it does not describe.
+  //
+  // WHAT REMAINS BELOW is the derived view plus the PROMOTION SEAM. lab.js
+  // (combineBpm) and the gates read compose's PLAN_OF/BPM exports by key, so
+  // both are rebuilt from the anchors — the anchors are the source of truth;
+  // these are views, never a place to write a genre's own row. And
+  // promote-genre.js (the daw-first tool) splices a promoted genre's rows
+  // above the two landmark comments, so each view keeps an override literal
+  // whose last line IS the landmark: a promoted anchor lands in genres.js
+  // without the fields, and its plan and tempo land here, winning by
+  // Object.assign order. The BPM landmark keeps its sixteen-space indent —
+  // the splicer anchors on the exact text, indent included.
+  const PLAN_OF = {};
+  for (const k of Object.keys(GENRES)) PLAN_OF[k] = GENRES[k].plan;
+  Object.assign(PLAN_OF, {
     // PROMOTED PLANS GO ABOVE THIS LINE — a landmark for promote-genre.js,
-    // which has to write both of these tables and can only anchor on text
-    // that is already here. Its old anchor was the parts row's own words;
-    // twenty-nine rooms later that row was no longer the end of the table and
-    // the tool refused to write at all. A landmark cannot stop being the end
-    // of the thing it marks.
-  };
-  // Where a genre wants to sit, in bpm. The tempo control tops out at 160 and
-  // bottoms at 70, and a composer that leaves everything at 126 has not arranged
-  // anything — half of what "sounds like sludge" means is the tempo.
-  const BPM = { acid: 124, vaporwave: 88, newwave: 138, rock: 132, blues: 104,
-                sludge: 74, simple: 112, fugue: 108, counterpoint: 100,
-                gregorian: 76, spem: 80, bulgarian: 96, neoclassical: 86, drone: 70,
-                // 126 is not a guess: it is the tempo of "Sweet Dreams"
-                tango: 118, deathmetal: 158, eurythmics: 126, isley: 96,
-                toto: 92, jodeci: 74, beatles: 124, steely: 100, postrock: 72,
-                // the dial tops out at 160, so dnb and punk sit ON the fence
-                // rather than past it — the kit density says the rest
-                boombap: 92, trap: 140, house: 122, garage: 132, dnb: 160,
-                disco: 118, funk: 100, motown: 122, rnb: 72, gospel: 76,
-                reggae: 76, dub: 74, ska: 156, afrobeat: 108, bossa: 132,
-                countrypop: 120, synthpop: 118, shoegaze: 104, citypop: 108,
-                punk: 160, ambient: 70, techno: 132,
-                // THE ANCESTORS. 144 is medium-up bebop, the tempo the jazz
-                // ride's 1.6:1 lean is measured for; 84 is the 12/8 side of
-                // doo-wop; 148 makes skiffle the fastest thing in the roots
-                // family, because these records rush and nobody stops them;
-                // 128 is the one-bar reading of the Bo Diddley clave AND
-                // Planet Rock; 150 is the honest mid between Roll Over
-                // Beethoven and a Johnny B. Goode past the dial's ceiling;
-                // 120 is Trans-Europe Express and the number a metronome
-                // picks, and it is also where minimalism's sixteenths run at
-                // eight a second — under about 100 the phase stops shimmering
-                // and just sounds late
-                jazz: 144, doowop: 84, skiffle: 148, bodiddley: 128,
-                chuckberry: 150, kraftwerk: 120, electro: 128, minimalism: 120,
-                // the parts, at the tempo the part itself implies: a solo is
-                // played over an up record, a singer is slower than the band
-                // behind them, a riff is a mid-tempo thing and a pad has
-                // nowhere to be
-                solo: 128, vocal: 96, backing: 84, riff: 112, pad: 74,
-                // ...and the twenty-nine rooms, at the tempo the room is. The
-                // dial's floor is 70 and its ceiling 160, so the two ends sit
-                // ON the fence rather than past it: darkrnb is a half-time
-                // record whose real pulse is 70 counted slow, and screamo and
-                // merseybeat rush the way punk and skiffle already do. 96 is
-                // the folk duo's guitar, 116 is the Graceland lope, 144 is a
-                // motorik eighth-note at the speed the pulse stops being
-                // heard as separate hits, and 128 is where every four-to-the-
-                // floor record in this batch agrees to meet.
-                hymn: 72, crooner: 88, yuletide: 84, merseybeat: 148,
-                psychpop: 112, bigbeat: 132, drill: 142, clubpop: 120,
-                powerballad: 76, retrofunkpop: 116, reggaeton: 94,
-                latinpop: 102, kpop: 128, boyband: 96, emo: 148, screamo: 152,
-                confessionalpop: 118, darkrnb: 70, bigroom: 128,
-                blueeyedsoul: 104, folkduo: 96, worldfolk: 116, jamband: 108,
-                sophistirock: 104, motorik: 144, roboticpop: 120,
-                industrialmetal: 126, ebm: 134, synthduo: 122,
- // ...and the twenty-three rooms added 2026-08-17, at the
-                // tempo the record actually sits at. 70 (space rock) and 148
-                // (grebo) are the two that sit ON the fence rather than past
-                // it — a Floyd side breathes slower than the dial's floor
-                // wants to admit, and a Stourbridge grebo record is punk's
-                // own top speed. 82/88 are the two acoustic ballads (Tapestry
-                // counted slow, "Sweet Baby James" a hair up from it); 148 is
-                // Joy Division's own rush, the same number skiffle already
-                // sits at for the same reason (teenagers playing as hard as
-                // they can); 130/134 are where the two hardest machine floors
-                // (dance post-punk's "Blue Monday" pulse, industrial breaks'
-                // breakbeat) agree to meet; and 122/124 is the baggy/dance
-                // cluster's own shared home — madchester, indie dance and
-                // analog synth pop all land inside two bpm of each other on
-                // purpose, because that IS the early-90s crossover the three
-                // of them are arguing about from different rooms.
-                musichallrock: 118, orchpsych: 122, altcountry: 116,
-                yachtsoul: 104, yachtrock: 100, songwriterpiano: 82,
-                softfolk: 88, singersongwriter: 108, coastrock: 122,
-                spacerock: 70, grebo: 148,
-                melodictechno: 130, bleeptechno: 124, industrialbreaks: 134,
-                industrialrock: 128, analogsynthpop: 124, gothsynth: 122,
-                gothicpop: 118, postpunk: 138, dancepostpunk: 130,
-                madchester: 122, janglepop: 126, indiedance: 124,
+    // which has to write a plan for every genre it promotes and can only
+    // anchor on text that is already here. A landmark cannot stop being the
+    // end of the thing it marks.
+  });
+  const BPM = {};
+  for (const k of Object.keys(GENRES)) BPM[k] = GENRES[k].bpm;
+  Object.assign(BPM, {
                 // PROMOTED TEMPOS GO ABOVE THIS LINE — the same landmark
                 // PLAN_OF carries, for the same reason.
-              };
+              });
 
   // ---- HOW LONG A SECTION IS -----------------------------------------------
   // MEASURED, and backwards: a section was `G.bars` — the genre's own FORM
@@ -1955,11 +1831,22 @@
     // places that move off it — that IS the modulation, drawn on the seeded
     // stream like everything else a section decides.
     S.tonic = (ihash(gk + "/key") % 12) - 6;
-    // NO SILENT DEFAULTS. Every genre must carry a plan and a tempo — the old
-    // `|| "song"` / `|| 120` fallbacks meant a new genre arranged like pop at
-    // 120 and every gate passed. The coverage gate in test/unit/nukernel.test.js
-    // fails loudly on a missing entry instead.
-    const plan = PLANS[PLAN_OF[gk]];
+    // NO SILENT DEFAULTS, and the law is EXPLICIT now instead of an accident
+    // of table shape. Every genre must carry a plan and a tempo ON ITS ANCHOR
+    // — the old `|| "song"` / `|| 120` fallbacks meant a new genre arranged
+    // like pop at 120 and every gate passed, and the keyed tables that
+    // replaced them could still rot to `undefined` for a genre added without
+    // a row. Reading the anchor and throwing BY NAME means a genre added
+    // without the fields dies the moment anyone presses WRITE, saying which
+    // genre and which field — not `Cannot read properties of undefined`.
+    const plan = PLANS[G.plan];
+    if (!plan)
+      throw new Error(`compose: genre "${gk}" declares no plan ` +
+                      `(plan: "dance"|"song"|"arc" on its GENRES row)`);
+    const bpm0 = G.bpm;
+    if (!Number.isInteger(bpm0) || bpm0 < 70 || bpm0 > 160)
+      throw new Error(`compose: genre "${gk}" declares no bpm ` +
+                      `(bpm: an integer 70..160 on its GENRES row)`);
     const xs = arcOf(plan, !!STEADY[gk]);
     const ord = ordinals(plan);
     // THE ONE CHORUS THE SOLOIST VISITS, or none — drawn here, before a section
@@ -2067,7 +1954,7 @@
              // the record, drawn once up with the cast, written HERE rather
              // than stamped on every box.
              swing: S.swing,
-             bpm: Math.max(70, Math.min(160, BPM[gk] + Math.floor(r() * 9) - 4)),
+             bpm: Math.max(70, Math.min(160, bpm0 + Math.floor(r() * 9) - 4)),
              vol: 80 };
   }
 

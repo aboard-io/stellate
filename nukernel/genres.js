@@ -300,7 +300,8 @@
       // FOUR bars, not one: a per-loop ramp has nothing to accumulate over in a
       // one-bar form, so inc and stk were inert in the one genre people reach
       // for first. Simple is the phrase looping; four loops is the natural unit.
-      label: "Simple", rate: 1, bars: 4, voices: 1,
+      label: "Simple", voices: 1,
+      plan: "song", bpm: 112,
       instr: "yamaha_grand_piano",
       entry: () => 0, reg: () => 0, realize: () => "line",
       kit: {}, nobass: true, harmony: "modal",
@@ -319,7 +320,8 @@
     fugue: {
       // named "Leipzig 1725" — the subject/answer-at-the-fifth machinery is
       // Bach's, Thomaskantor at Leipzig by then.
-      label: "Leipzig 1725", rate: 1, bars: 4, voices: 4,
+      label: "Leipzig 1725", voices: 4,
+      plan: "arc", bpm: 108,
       // LINEAGE: a fugue is species counterpoint set in MOTION — Bach taught
       // from Fux's Gradus — over subjects whose stepwise grammar is chant's;
       // the missing third is the Lutheran chorale his subjects harmonized.
@@ -355,7 +357,8 @@
     acid: {
       // named "Chicago 1987" — Phuture's Acid Tracks: the 303 squelch this
       // anchor's signature-synth law exists for.
-      label: "Chicago 1987", rate: 1, bars: 4, voices: 2,
+      label: "Chicago 1987",
+      plan: "dance", bpm: 124,
       // LINEAGE: Phuture were house DJs — acid is house with the bassline
       // machine abused until the filter became the melody; the machine-funk
       // lean underneath is P-funk, and it reached Chicago through ELECTRO,
@@ -427,7 +430,8 @@
     newwave: {
       // named "London 1979" for the Buggles (the comment's first reference and
       // the CR-78 preset-box year); Boston 1978 would have honoured the Cars.
-      label: "London 1979", rate: 1, bars: 4, voices: 2,
+      label: "London 1979",
+      plan: "dance", bpm: 138,
       // LINEAGE: punk's clipped economy played by people who secretly loved
       // pop hooks (the Cars are beatlesque to the bone) over a straight
       // dance-floor eighth pulse disco normalized; the synth sheen on top is
@@ -438,7 +442,7 @@
       wants: ["glam rock"],
       instr: ["clean_guitar", "synth_strings_1"],
       entry: v => v, reg: v => v - 1, realize: () => "line",
-      harmony: "cycle", roots: [0, 4, 5, 3],     // I V vi IV
+      roots: [0, 4, 5, 3],     // I V vi IV
       mode: MODES.mixo, scale: MODES.mixo, diatonic: true,
       artic: "staccato",                         // no sustain anywhere
       drumkit: "cr78",             // 1979's preset box — the machine of the era
@@ -461,7 +465,8 @@
     vaporwave: {
       // named "Portland 2011" — Vektroid's Floral Shoppe: the slowed record
       // with the DX7 E.PIANO 1 this anchor literally loads.
-      label: "Portland 2011", rate: .5, bars: 4, voices: 2,
+      label: "Portland 2011", rate: .5,
+      plan: "dance", bpm: 88,
       // LINEAGE: the records vaporwave actually slows down ARE city pop and
       // quiet-storm R&B; the stillness it slows them into is Eno's ambient.
       // The missing parents are the unglamorous ones — muzak, and the
@@ -483,7 +488,7 @@
       // wrong speed is DOWN — the line belongs under the pad's top, not over it.
       entry: () => 0, reg: () => -1,
       realize: v => (v === 0 ? "pad" : "line"),
-      harmony: "cycle", roots: [3, 4, 2, 5],   // iv v III VI
+      roots: [3, 4, 2, 5],   // iv v III VI
       // FM, from a real cartridge. "E.PIANO 1" is the DX7 patch vaporwave is
       // actually made of; the pad stays off the DX7 because a DX7 node is
       // monophonic and a chord would collapse onto one voice.
@@ -512,7 +517,8 @@
     blues: {
       // named "Chicago 1952" not the Delta — the anchor is a BAND: jazz kit,
       // ride shuffle, walking bass. That is Chess-era electric blues.
-      label: "Chicago 1952", rate: 1, bars: 12, voices: 2, swing: 1 / 3,
+      label: "Chicago 1952", bars: 12, swing: 1 / 3,
+      plan: "song", bpm: 104,
       // LINEAGE: a root UNDER PROTEST — Chess electrified the Delta, and
       // every actual parent (delta blues, boogie-woogie piano, jump blues)
       // is a missing anchor, so in this catalog the blues starts the tree.
@@ -527,7 +533,7 @@
       drumkit: "jazz",              // the SAMPLED kit, not a sine and some noise
       scale: BLUES,
       entry: v => v * 4, reg: v => -v, realize: () => "line",
-      harmony: "cycle", bassStyle: "walk",
+      bassStyle: "walk",
       roots: [0,0,0,0, 3,3,0,0, 4,3,0,4],    // twelve bars, I IV V, turnaround
       // THE SEVENTHS. A blues where every chord is a dominant seventh is not a
       // decoration, it is the identity — the minor-pentatonic riff over an I7
@@ -590,7 +596,8 @@
     rock: {
       // named "London 1969" — a riff doubled at the octave (guitar+bass as one
       // line) over a backbeat and a tom-fill turnaround is Led Zeppelin's move.
-      label: "London 1969", rate: 1, bars: 8, voices: 2,
+      label: "London 1969", bars: 8,
+      plan: "song", bpm: 132,
       // LINEAGE: Zeppelin is Chess blues played louder by a British beat
       // band — the riff-over-backbeat is electric blues, the band format and
       // the songs are the Beatles' invasion. Both of the ancestors this
@@ -604,7 +611,7 @@
       instr: "crunch_guitar",
       drumkit: "power",              // the SAMPLED kit, not a sine and some noise
       entry: () => 0, reg: v => v - 2, realize: () => "line",
-      harmony: "cycle", roots: [0, 0, 6, 6, 3, 3, 0, 0],   // i i VII VII iv iv i i
+      roots: [0, 0, 6, 6, 3, 3, 0, 0],   // i i VII VII iv iv i i
       kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,1, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],      // the backbeat
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
@@ -640,7 +647,8 @@
     gregorian: {
       // named "Rome 600" for the name's own claim — Gregory's Rome and its
       // schola cantorum; the Frankish codification (~800, Metz) came later.
-      label: "Rome 600", rate: 0.5, bars: 4, voices: 2,
+      label: "Rome 600", rate: 0.5,
+      plan: "arc", bpm: 76,
       // LINEAGE: the one TRUE root. What chant descends from — synagogue
       // psalmody, Byzantine and Gallican practice — predates anything this
       // catalog could ever hold as an anchor, so the empty wants is honest.
@@ -669,7 +677,8 @@
     bulgarian: {
       // named "Sofia 1975" — Le Mystère des Voix Bulgares (the comment's own
       // reference) is the Sofia state radio choir, first issued 1975.
-      label: "Sofia 1975", rate: 1, bars: 4, voices: 2,
+      label: "Sofia 1975",
+      plan: "arc", bpm: 96,
       // LINEAGE: a root under protest — the radio choir ARRANGED a village
       // diaphony older than notation; the ison under it is Orthodox chant's,
       // and neither parent is in the catalog. Gregorian is chant, but the
@@ -705,6 +714,7 @@
       // named "London 1570" — Tallis at the Chapel Royal; the forty-part motet
       // premiered in the Arundel/Nonsuch orbit around 1570.
       label: "London 1570", rate: 0.5, bars: 8, voices: 8,
+      plan: "arc", bpm: 80,
       // LINEAGE: Tudor polyphony is species counterpoint at architectural
       // scale over chant-shaped lines. The label years invert — Fux's 1725
       // textbook CODIFIES the Palestrina-era practice Tallis worked in — so
@@ -733,7 +743,8 @@
     counterpoint: {
       // named "Vienna 1725" — Fux's Gradus ad Parnassum, the species exercise
       // this anchor implements, published in Vienna that year.
-      label: "Vienna 1725", rate: 1, bars: 4, voices: 2,
+      label: "Vienna 1725",
+      plan: "arc", bpm: 100,
       // LINEAGE: the cantus firmus IS a chant-shaped line — Fux's whole
       // method is rules for adding a voice to one, which is organum's move
       // formalized five centuries later. One parent, and it is the root.
@@ -776,7 +787,8 @@
     neoclassical: {
       // named "Berlin 2011" — Nils Frahm's Felt: the anchor's instrument IS
       // felt_piano, and that record is Berlin, 2011.
-      label: "Berlin 2011", rate: 1, bars: 8, voices: 3,
+      label: "Berlin 2011", bars: 8, voices: 3,
+      plan: "arc", bpm: 86,
       // LINEAGE: Frahm is ambient's production values and drone's patience
       // applied to a piano figure, with post-rock's slow-arrival arc; the
       // parent that owns the FIGURE is minimalism, now anchored: Frahm's and
@@ -794,7 +806,7 @@
       instr: ["slow_strings", "felt_piano", "felt_piano"],
       entry: v => (v === 2 ? 4 : 0), reg: v => (v === 0 ? -1 : v - 1),
       realize: v => (v === 0 ? "pad" : "line"),
-      kit: {}, harmony: "cycle", roots: [0,0, 5,5, 2,2, 6,6],
+      kit: {}, roots: [0,0, 5,5, 2,2, 6,6],
       scale: DIATONIC, diatonic: true, artic: "legato",
       bassGrid: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
       tone: { wave: "triangle", cut: 2600, q: 0.8, atk: .02, rel: 1.4, gain: .24, verb: .52 },
@@ -813,7 +825,8 @@
     drone: {
       // named "New York 1964" — La Monte Young's Theatre of Eternal Music:
       // strings holding tones over a pedal that never moves.
-      label: "New York 1964", rate: 0.25, bars: 4, voices: 2,
+      label: "New York 1964", rate: 0.25,
+      plan: "arc", bpm: 70,
       // LINEAGE: a root under protest — Young's held tones came from
       // Hindustani raga (he studied under Pran Nath), gagaku and organum's
       // sustained fifths, none of which the catalog holds. Chant is the
@@ -842,7 +855,9 @@
     sludge: {
       // named "New Orleans 1991" — the half-speed phrygian ♭II riff under
       // crunch is NOLA sludge (Eyehategod/Crowbar), not Birmingham doom.
-      label: "New Orleans 1991", rate: 0.5, bars: 8, voices: 2,
+      label: "New Orleans 1991", rate: 0.5, bars: 8,
+      // 74: half of what "sounds like sludge" means is the tempo
+      plan: "song", bpm: 74,
       // LINEAGE: NOLA sludge is hardcore punk slowed into blues feel —
       // Eyehategod is a punk band playing at doom tempo with a blues hand;
       // the missing link between them is Sabbath, the doom that showed rock
@@ -852,7 +867,7 @@
       instr: "overdrive_guitar",
       drumkit: "power",
       entry: () => 0, reg: v => v - 3, realize: () => "line",
-      harmony: "cycle", mode: MODES.phrygian, roots: [0,0,0,0, 1,1,0,0],
+      mode: MODES.phrygian, roots: [0,0,0,0, 1,1,0,0],
       bassStyle: "octaves",
       kit: { k: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
              s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
@@ -875,7 +890,9 @@
     tango: {
       // named "Buenos Aires 1935" — the golden age's dance-hall orquestas
       // (D'Arienzo's rise): bandoneón, violin, the habanera driving.
-      label: "Buenos Aires 1935", rate: 1, bars: 4, voices: 3,
+      label: "Buenos Aires 1935", voices: 3,
+      // an arc and not a pop song
+      plan: "arc", bpm: 118,
       // LINEAGE: a root under protest — the habanera cell, the milonga it
       // sped up from, candombe's drums and the European salon harmony all
       // predate the catalog; the 3-3-2 arrived by boat and none of the boats
@@ -886,7 +903,7 @@
       entry: v => (v === 2 ? 2 : 0), reg: v => (v === 1 ? 1 : v - 1),
       realize: v => (v === 0 ? "pad" : "line"),
       drumkit: "acoustic",
-      harmony: "cycle", roots: [0, 3, 4, 0],
+      roots: [0, 3, 4, 0],
       mode: MODES.harmonic, scale: [0, 2, 3, 5, 7, 8, 11], diatonic: true,
       // THE DOMINANT IS THE ONE CHORD WHOSE SCALE IS NOT THE TONIC'S, and a
       // tango is nothing but dominants arriving. `diatonic` keeps the line in
@@ -921,7 +938,8 @@
     deathmetal: {
       // named "Tampa 1990" — the Morrisound era: blast beats ridden on the
       // cymbal and tremolo-picked walls are the Florida school's two techniques.
-      label: "Tampa 1990", rate: 1, bars: 8, voices: 2,
+      label: "Tampa 1990", bars: 8,
+      plan: "song", bpm: 158,
       // LINEAGE: the blast beat is hardcore's D-beat run past its limit and
       // the riff wall is rock's language forced chromatic — but the actual
       // parents, thrash and the NWOBHM it fed on, are the missing rungs of
@@ -931,7 +949,7 @@
       instr: "distortion_guitar",
       drumkit: "power",
       entry: () => 0, reg: v => v - 3, realize: () => "line",
-      harmony: "cycle", mode: MODES.phrygian, roots: [0,0,1,1, 0,0,4,4],
+      mode: MODES.phrygian, roots: [0,0,1,1, 0,0,4,4],
       scale: [0, 1, 3, 5, 6, 8, 10],                        // locrian: the ♭5 is home
       bassStyle: "sixteenths",
       kit: { k: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],       // the blast
@@ -960,7 +978,11 @@
     eurythmics: {
       // named "London 1983" — Sweet Dreams: the two-chord i-VI vamp, the
       // sequencer that never varies, the drum machine and nothing else.
-      label: "London 1983", rate: 1, bars: 4, voices: 2,
+      label: "London 1983",
+      // a song by birthright but a DANCE record first — "Sweet Dreams" has a
+      // drop where a bridge would be; and 126 is not a guess: it is the tempo
+      // of "Sweet Dreams"
+      plan: "dance", bpm: 126,
       // LINEAGE: Basildon's machines with a soul singer over them — Lennox
       // is Motown phrasing on a synthpop chassis, and the bass pulse is
       // funk's octave engine sequenced; the machine aesthetic itself is
@@ -980,7 +1002,7 @@
       // sampled kit pretending to be one
       drumkit: "cr78",
       entry: v => v, reg: v => v - 1, realize: () => "line",
-      harmony: "cycle", roots: [0, 0, 5, 5],
+      roots: [0, 0, 5, 5],
       scale: DIATONIC, diatonic: true,
       bassStyle: "octaves",
       synth: { dsp: "modeld", root: "modeld", level: 0.8,
@@ -1008,7 +1030,8 @@
     isley: {
       // named "Teaneck 1973" — T-Neck Records IS Teaneck NJ, the Isleys' label
       // and home; the Rhodes-plus-fuzz-lead anchor is 3+3.
-      label: "Teaneck 1973", rate: 1, bars: 8, voices: 3, swing: 0.16,
+      label: "Teaneck 1973", bars: 8, voices: 3, swing: 0.16,
+      plan: "song", bpm: 96,
       // LINEAGE: church-trained voices (the brothers began in gospel), funk's
       // groove under the Rhodes, and the fuzz lead is rock's gift returned —
       // Hendrix was literally their sideman in 1964. The doo-wop they
@@ -1022,7 +1045,7 @@
       drumkit: "room",
       entry: v => (v === 1 ? 2 : 0), reg: v => (v === 1 ? 1 : v - 1),
       realize: v => (v === 0 ? "pad" : "line"),
-      harmony: "cycle", roots: [0,0, 3,3, 0,0, 4,4], mode: MODES.dorian,
+      roots: [0,0, 3,3, 0,0, 4,4], mode: MODES.dorian,
       scale: [0, 2, 3, 5, 7, 9, 10], diatonic: true,        // dorian, as the subject too
       // EXTENDED CHORDS ARE THE RHODES. A soul pad playing bare triads is a
       // rehearsal; the i7 and the bright IV7 are the record. Voice-led, so
@@ -1067,7 +1090,8 @@
     toto: {
       // named "Los Angeles 1982" — Toto IV: the Africa lope this comment
       // describes, cut by LA session players.
-      label: "Los Angeles 1982", rate: 1, bars: 8, voices: 3, swing: 0.08,
+      label: "Los Angeles 1982", bars: 8, voices: 3, swing: 0.08,
+      plan: "song", bpm: 92,
       // LINEAGE: session players raised on Steely Dan's studio craft playing
       // a rock band's form over funk's pocket; the rolling tom lope is the
       // African percussion loop the record borrows and the catalog lacks.
@@ -1077,7 +1101,7 @@
       drumkit: "room",
       entry: v => (v === 2 ? 4 : 0), reg: v => (v === 1 ? 1 : v - 1),
       realize: v => (v === 0 ? "pad" : "line"),
-      harmony: "cycle", mode: MODES.mixo, scale: MODES.mixo, diatonic: true,
+      mode: MODES.mixo, scale: MODES.mixo, diatonic: true,
       roots: [0,0, 5,5, 3,3, 6,6],               // I vi IV ♭VII
       bassStyle: "eighths",
       kit: { k: [1,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0],
@@ -1117,7 +1141,8 @@
       // anchor is the Hailey brothers' Charlotte church sound; the new jack
       // swing TECHNIQUE itself would be Harlem 1987 (Teddy Riley).
       label: "Charlotte 1991",
-      rate: 1, bars: 4, voices: 2, swing: 0.28,
+      plan: "song", bpm: 74,
+      swing: 0.28,
       // LINEAGE: gospel melisma from the Haileys' church over funk's pocket
       // quantized into a drum machine, with Motown's songcraft underneath;
       // the swung-sixteenth TECHNIQUE is Teddy Riley's new jack swing, and
@@ -1129,7 +1154,7 @@
       // ours, exactly as new jack applied it
       drumkit: "tr808",
       entry: () => 0, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
-      harmony: "cycle", mode: MODES.dorian, scale: MODES.dorian, diatonic: true,
+      mode: MODES.dorian, scale: MODES.dorian, diatonic: true,
       roots: [0, 3, 0, 4],                       // i IV i v — dorian's bright IV
       prog: PROGS.jack7,                         // the same cycle, sevenths said out loud
       maxHold: 3,                                // melisma is phrases WITH ENDS
@@ -1157,7 +1182,8 @@
     beatles: {
       // named "Liverpool 1962" — Love Me Do: the ♭VII already in the tune and
       // two voices in thirds, before the studio years moved them to London.
-      label: "Liverpool 1962", rate: 1, bars: 8, voices: 2,
+      label: "Liverpool 1962", bars: 8,
+      plan: "song", bpm: 124,
       // LINEAGE — the program's FOUNDING EXAMPLE ("Beatles is counterpoint
       // plus Bo Diddley plus skiffle"): rhythm & blues learned off Chess
       // imports, Motown covers all over the early setlists, Nashville
@@ -1179,7 +1205,7 @@
       instr: ["steel_string_guitar", "ohh_voices"],
       drumkit: "acoustic",
       entry: () => 0, reg: v => v, realize: () => "line",
-      harmony: "cycle", mode: MODES.mixo, scale: MODES.mixo, diatonic: true,
+      mode: MODES.mixo, scale: MODES.mixo, diatonic: true,
       roots: [0,0, 6,6, 3,3, 0,0],               // I ♭VII IV I
       // THE FOUR-BAR SENTENCE — the sixth type's first customer. Three bars as
       // written and a thinned fourth is how a sixties verse breathes: the
@@ -1208,7 +1234,8 @@
     steely: {
       // named "Los Angeles 1977" — Aja: the Rhodes/jazz-guitar/walking-bass
       // session polish is the LA years, not the NY bar band of 1972.
-      label: "Los Angeles 1977", rate: 1, bars: 8, voices: 3, swing: 0.2,
+      label: "Los Angeles 1977", bars: 8, voices: 3, swing: 0.2,
+      plan: "song", bpm: 100,
       // LINEAGE: a rock band's format carrying blues changes dressed in
       // Motown's session polish — but the dorian IV7, the walking bass and
       // the shuffle all pointed at the catalog's one great hole: jazz. It is
@@ -1222,7 +1249,7 @@
       drumkit: "jazz",
       entry: v => (v === 1 ? 2 : 0), reg: v => (v === 1 ? 1 : v - 1),
       realize: v => (v === 0 ? "pad" : "line"),
-      harmony: "cycle", mode: MODES.dorian, scale: MODES.dorian, diatonic: true,
+      mode: MODES.dorian, scale: MODES.dorian, diatonic: true,
       roots: [0,0, 3,3, 4,4, 2,2],               // i IV v III
       bassStyle: "walk", artic: "legato",
       kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
@@ -1247,6 +1274,8 @@
       // named "Austin 2003" — dotted-eighth echo on clean guitars arriving one
       // at a time is Explosions in the Sky; Glasgow 1997 was the other claimant.
       label: "Austin 2003", rate: 0.5, bars: 8, voices: 3,
+      // an arc by construction — it is one crescendo
+      plan: "arc", bpm: 72,
       // LINEAGE: a rock band playing ambient's material — guitars, bass and
       // drums refusing the song in favour of the arc — through shoegaze's
       // wall of reverb; the motorik patience underneath is krautrock's, still
@@ -1260,7 +1289,7 @@
       drumkit: "room",
       entry: v => v * 2, reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),
-      harmony: "cycle", scale: DIATONIC, diatonic: true,
+      scale: DIATONIC, diatonic: true,
       roots: [0,0, 5,5, 3,3, 4,4],               // i VI iv v
       artic: "legato", incClamp: 4, incMode: "reverse",
       kit: { k: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
@@ -1292,7 +1321,8 @@
     boombap: {
       // named "New York 1994" — Illmatic-era: the chopped soul loop with the
       // snare hand at 9 on every backbeat.
-      label: "New York 1994", rate: 1, bars: 4, voices: 2, swing: 0.2, near: "isley",
+      label: "New York 1994", swing: 0.2, near: "isley",
+      plan: "song", bpm: 92,
       // LINEAGE: the `near` field already told the truth — boom bap's chops
       // ARE the Isley-shaped soul records it samples, its breaks are funk
       // and disco 45s. Boom bap does not sample electro, but electro is the
@@ -1308,7 +1338,7 @@
       entry: v => v * 2, reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),
       part: ["stab", "lead"],
-      harmony: "cycle", roots: [0, 0, 3, 3], mode: MODES.dorian,
+      roots: [0, 0, 3, 3], mode: MODES.dorian,
       scale: MODES.dorian, diatonic: true,
       prog: [{ d: 0, q: "7" }, { d: 0, q: "7" }, { d: 3, q: "7" }, { d: 3, q: "7" }],
       maxHold: 3,
@@ -1332,7 +1362,8 @@
     trap: {
       // named "Atlanta 2003" — T.I.'s Trap Muzik named the thing: 808 ties,
       // half-time snare, the bell up top.
-      label: "Atlanta 2003", rate: 1, bars: 4, voices: 2, near: "deathmetal",
+      label: "Atlanta 2003", near: "deathmetal",
+      plan: "dance", bpm: 140,
       // LINEAGE: Southern hip-hop is boom bap's one declared parent in the
       // catalog — but the 808 sub, the ties and the half-time snare came up
       // through Miami bass and crunk, the electro lineage the table lacks.
@@ -1341,7 +1372,7 @@
       instr: ["music_box", "square_lead"],
       drumkit: "tr808",            // "the 808 ties" — it does, and now it is one
       entry: v => v * 2, reg: v => 1 - 2 * v, realize: () => "line",
-      harmony: "cycle", roots: [0, 0, 5, 5],
+      roots: [0, 0, 5, 5],
       artic: "tie",
       bassStyle: "octaves",
       kit: { k: [1,0,0,0, 0,0,0,0, 0,0,0,1, 0,0,0,0],
@@ -1361,7 +1392,8 @@
     house: {
       // named "Chicago 1986" not 1985 — the anchor's identity is the PIANO
       // STAB over the four, and that is Move Your Body's year.
-      label: "Chicago 1986", rate: 1, bars: 4, voices: 2, near: "acid",
+      label: "Chicago 1986", near: "acid",
+      plan: "dance", bpm: 122,
       // LINEAGE: house is disco's revenge — Knuckles re-editing disco
       // records for the Warehouse until the edit became the genre — with
       // gospel's piano hands (the stab IS a church chord) and funk's
@@ -1380,7 +1412,7 @@
       entry: v => v, reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),
       part: ["stab", "lead"],
-      harmony: "cycle", roots: [1, 4, 0, 5], mode: MODES.ionian,
+      roots: [1, 4, 0, 5], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       prog: [{ d: 1, q: "7" }, { d: 4, q: "7" }, { d: 0, q: "7" }, { d: 5, q: "7" }],
       bassStyle: "eighths",
@@ -1400,7 +1432,8 @@
     garage: {
       // named "London 1999" — the 2-step year (Re-Rewind): displaced second
       // snare, chopped vocal, the shuffle edited rather than played.
-      label: "London 1999", rate: 1, bars: 4, voices: 2, swing: 0.28, near: "house",
+      label: "London 1999", swing: 0.28, near: "house",
+      plan: "dance", bpm: 132,
       // LINEAGE: fully parented IN-CATALOG, the only club genre that is —
       // 2-step is US garage house with the four removed, R&B vocal science
       // chopped over the top, and jungle's broken-drum editing at pop tempo.
@@ -1409,7 +1442,7 @@
       instr: ["electric_piano", "solo_vox"],
       drumkit: "electronic",
       entry: v => v, reg: v => v - 1, realize: () => "line",
-      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       prog: [{ d: 0, q: "7" }, { d: 5, q: "7" }, { d: 3, q: "7" }, { d: 4, q: "7" }],
       maxHold: 2,                              // the chopped vocal breathes
@@ -1438,7 +1471,10 @@
     dnb: {
       // named "London 1994" — the year jungle became drum & bass: the two-bar
       // break schedule over a reese and a pedal sub.
-      label: "London 1994", rate: 1, bars: 4, voices: 2, near: "house",
+      label: "London 1994", near: "house",
+      // 160: the dial tops out there, so dnb sits ON the fence rather than past
+      // it — the kit density says the rest
+      plan: "dance", bpm: 160,
       // LINEAGE: jungle is soundsystem dub bass under funk breaks sped past
       // 160, launched off the hardcore-rave continuum house and techno
       // started; the rave itself and the Amen break's own record are the
@@ -1483,7 +1519,8 @@
     disco: {
       // named "New York 1977" — the peak-of-the-floor year; Philadelphia 1974
       // owns the proto-disco strings, but this anchor is the full club machine.
-      label: "New York 1977", rate: 1, bars: 4, voices: 2, near: "newwave",
+      label: "New York 1977", near: "newwave",
+      plan: "dance", bpm: 118,
       // LINEAGE: funk's rhythm section made metronomic for the floor, under
       // Motown-descended pop song discipline and gospel's massed uplift; the
       // Philly-soul string section and the Latin percussion that actually
@@ -1495,7 +1532,7 @@
       entry: v => v, reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),
       part: ["stab", "lead"],
-      harmony: "cycle", roots: [0, 3, 2, 4], mode: MODES.dorian,
+      roots: [0, 3, 2, 4], mode: MODES.dorian,
       scale: MODES.dorian, diatonic: true,
       prog: [{ d: 0, q: "7" }, { d: 3, q: "7" }, { d: 2, q: "7" }, { d: 4, q: "7" }],
       maxHold: 2,
@@ -1518,7 +1555,8 @@
     funk: {
       // named "Cincinnati 1967" — Cold Sweat at King Records: the first
       // one-chord modal groove, which is exactly what this anchor is.
-      label: "Cincinnati 1967", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "isley",
+      label: "Cincinnati 1967", swing: 0.12, near: "isley",
+      plan: "song", bpm: 100,
       // LINEAGE: James Brown took gospel's scream and blues' shout, kept
       // Motown's showband discipline, and threw the harmony away — the
       // one-chord groove is subtraction, and what it subtracted FROM is the
@@ -1549,7 +1587,8 @@
     motown: {
       // named "Detroit 1965" — the Funk Brothers' snare-on-all-four at
       // Hitsville's peak.
-      label: "Detroit 1965", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "beatles",
+      label: "Detroit 1965", swing: 0.12, near: "beatles",
+      plan: "song", bpm: 122,
       // LINEAGE: gospel moved to the assembly line — the Funk Brothers were
       // church and jazz players, the writers blues-schooled — under pop
       // discipline whose actual teacher — doo-wop's harmony stack — is an
@@ -1569,7 +1608,7 @@
       entry: v => v, reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),
       part: ["stab", "lead"],
-      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       prog: [{ d: 0, q: "7" }, { d: 5, q: "7" }, { d: 3, q: "7" }, { d: 4, q: "dom7" }],
       maxHold: 3,
@@ -1597,7 +1636,8 @@
     rnb: {
       // named "Philadelphia 1994" — the straight-time maj7 ballad with a rim
       // on 3 and stacked thirds is Boyz II Men's Philadelphia.
-      label: "Philadelphia 1994", rate: 1, bars: 4, voices: 2, near: "jodeci",
+      label: "Philadelphia 1994", near: "jodeci",
+      plan: "song", bpm: 72,
       // LINEAGE: Boyz II Men is the doo-wop revival sung with gospel
       // technique over Motown songcraft, arriving through new jack's door
       // (the jodeci share); doo-wop itself is an anchor now and the parent
@@ -1620,7 +1660,7 @@
       drumkit: "electronic",
       entry: v => v, reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),
-      harmony: "cycle", roots: [0, 2, 5, 3], mode: MODES.ionian,
+      roots: [0, 2, 5, 3], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       prog: [{ d: 0, q: "7" }, { d: 2, q: "7" }, { d: 5, q: "7" }, { d: 3, q: "7" }],
       maxHold: 2, artic: "legato",
@@ -1648,7 +1688,8 @@
     gospel: {
       // named "Chicago 1932" — Thomas A. Dorsey at Pilgrim Baptist: the organ,
       // the shuffle, the secondary dominant and the plagal amen.
-      label: "Chicago 1932", rate: 1, bars: 4, voices: 3, swing: 1 / 3, near: "motown",
+      label: "Chicago 1932", voices: 3, swing: 1 / 3, near: "motown",
+      plan: "song", bpm: 76,
       // LINEAGE: the label years invert and the claim survives it — Dorsey
       // was Georgia Tom, Ma Rainey's blues pianist, and carried the blues
       // HAND into church twenty years before the catalog's electric anchor;
@@ -1676,7 +1717,7 @@
       drumkit: "acoustic",
       entry: v => v * 2, reg: v => (v === 0 ? -1 : v - 1),
       realize: v => (v === 0 ? "pad" : "line"),
-      harmony: "cycle", roots: [0, 0, 3, 3], mode: MODES.ionian,
+      roots: [0, 0, 3, 3], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       prog: [{ d: 0, q: "7" }, { d: 0, q: "dom7" }, { d: 3, q: "7" },
              [{ d: 3, q: "six", beats: 8 }, { d: 0, q: "7", beats: 8 }]],
@@ -1706,7 +1747,8 @@
     reggae: {
       // named "Kingston 1969" — the one-drop settling out of rocksteady the
       // year after Do the Reggay named it.
-      label: "Kingston 1969", rate: 1, bars: 4, voices: 2, near: "dub",
+      label: "Kingston 1969", near: "dub",
+      plan: "song", bpm: 76,
       // LINEAGE: reggae is ska slowed twice — through rocksteady, the
       // missing intermediate — until the skank had room to breathe; the
       // mento underneath and the nyabinghi drumming that displaced the kick
@@ -1722,7 +1764,7 @@
       entry: v => v, reg: v => v,
       realize: v => (v === 0 ? "pad" : "line"),
       part: ["stab", "lead"],
-      harmony: "cycle", roots: [0, 0, 3, 4],
+      roots: [0, 0, 3, 4],
       maxHold: 6,
       bassGrid: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
       kit: { k: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
@@ -1741,7 +1783,8 @@
     dub: {
       // named "Kingston 1973" — King Tubby's mixing desk: the sends as the
       // instrument, the song taken away.
-      label: "Kingston 1973", rate: 1, bars: 4, voices: 2, near: "reggae",
+      label: "Kingston 1973", near: "reggae",
+      plan: "dance", bpm: 74,
       // LINEAGE: the one lineage that is literally SUBTRACTION — a dub is a
       // reggae record with the song taken away at the desk, so the parent
       // list is complete at one and the wants list is honestly empty.
@@ -1779,7 +1822,8 @@
     ska: {
       // named "Kingston 1962" — independence year, the first-wave double skank
       // with horns (Skatalites forming out of Studio One's session floor).
-      label: "Kingston 1962", rate: 1, bars: 4, voices: 2, near: "reggae",
+      label: "Kingston 1962", near: "reggae",
+      plan: "song", bpm: 156,
       // LINEAGE: the shuffle came off American R&B radio picked up from New
       // Orleans — the catalog's blues anchor carries that shuffle — but
       // everything CARIBBEAN about ska (mento, calypso) is still missing. The
@@ -1801,7 +1845,7 @@
       entry: v => v, reg: v => v,
       realize: v => (v === 0 ? "pad" : "line"),
       part: ["stab", "lead"],
-      harmony: "cycle", roots: [0, 3, 4, 0], mode: MODES.ionian,
+      roots: [0, 3, 4, 0], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       artic: "staccato", maxHold: 2,
       bassStyle: "walk",
@@ -1822,7 +1866,9 @@
     afrobeat: {
       // named "Lagos 1971" — Fela's Africa '70 at the Shrine: two drummers,
       // threes against the four, a groove you stay in.
-      label: "Lagos 1971", rate: 1, bars: 8, voices: 3, near: "funk",
+      label: "Lagos 1971", bars: 8, voices: 3, near: "funk",
+      // an arc: a groove you stay inside while the horns arrive
+      plan: "arc", bpm: 108,
       // LINEAGE: Fela heard James Brown and built a bigger machine — the
       // one-chord modal groove is funk's own move, and it stays the plurality
       // — but the HORNS are not funk's horns: Fela wrote unison heads and blew
@@ -1864,7 +1910,8 @@
     bossa: {
       // named "Rio de Janeiro 1958" — Chega de Saudade, cut in Rio that July:
       // the clave, the brushes, the ii7-V7 in half a bar.
-      label: "Rio de Janeiro 1958", rate: 1, bars: 4, voices: 2, near: "steely",
+      label: "Rio de Janeiro 1958", near: "steely",
+      plan: "song", bpm: 132,
       // LINEAGE: it stops being a root under protest. Jobim and Gilberto
       // folded samba's rhythm and cool jazz's harmony into the apartment
       // voice; cool jazz is bebop's chamber wing and IS in the catalog now —
@@ -1878,7 +1925,7 @@
       drumkit: "brush",
       entry: v => v, reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),
-      harmony: "cycle", roots: [0, 1, 0, 5], mode: MODES.ionian,
+      roots: [0, 1, 0, 5], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       prog: [[{ d: 0, q: "7" }],
              [{ d: 1, q: "7", beats: 8 }, { d: 4, q: "dom7", beats: 8 }],
@@ -1906,7 +1953,8 @@
     countrypop: {
       // named "Nashville 1945" — voice 0's word is literally "the banjo roll",
       // and the roll is Earl Scruggs', debuted with Monroe at the Ryman in 1945.
-      label: "Nashville 1945", rate: 1, bars: 4, voices: 2, swing: 0.1, near: "beatles",
+      label: "Nashville 1945", swing: 0.1, near: "beatles",
+      plan: "song", bpm: 120,
       // LINEAGE: bluegrass is Appalachian fiddle tunes driven with blues
       // phrasing and gospel's close harmony — the catalog holds the second
       // two and lacks the FIRST, which is the bigger half: the missing
@@ -1916,7 +1964,7 @@
       instr: ["banjo", "fiddle"],
       drumkit: "acoustic",
       entry: () => 0, reg: v => v, realize: () => "line",
-      harmony: "cycle", roots: [0, 4, 5, 3], mode: MODES.ionian,
+      roots: [0, 4, 5, 3], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       maxHold: 3,
       bassStyle: "fifths",
@@ -1936,7 +1984,8 @@
     synthpop: {
       // named "Basildon 1981" — early Depeche Mode: all-synth staccato stabs
       // on the CR-era box, the aeolian anthem loop.
-      label: "Basildon 1981", rate: 1, bars: 4, voices: 2, near: "eurythmics",
+      label: "Basildon 1981", near: "eurythmics",
+      plan: "song", bpm: 118,
       // LINEAGE: new wave with the guitars traded for sequencers and
       // disco's four still on the floor; the whole all-synth AESTHETIC is
       // Kraftwerk via Moroder, and one of those two ghosts is now an anchor.
@@ -1952,7 +2001,7 @@
       entry: v => v, reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),
       part: ["stab", "lead"],
-      harmony: "cycle", roots: [0, 5, 2, 6],
+      roots: [0, 5, 2, 6],
       scale: DIATONIC, diatonic: true,
       artic: "staccato",
       bassStyle: "eighths",
@@ -1974,7 +2023,8 @@
       // named "London 1991" — Loveless: the held-second blur under fuzz, made
       // across a year of London studios (MBV formed in Dublin; the record is
       // London's).
-      label: "London 1991", rate: 1, bars: 8, voices: 2, near: "postrock",
+      label: "London 1991", bars: 8, near: "postrock",
+      plan: "song", bpm: 104,
       // LINEAGE: the held-second blur is DRONE logic run under fuzz, the
       // engine is punk's wall, and the tunes underneath are sixties pop —
       // MBV covered by anyone comes out as a Beatles song. The Velvets,
@@ -1984,7 +2034,7 @@
       instr: ["overdrive_guitar", "overdrive_guitar"],
       drumkit: "room",
       entry: () => 0, reg: v => v - 1, realize: () => "line",
-      harmony: "cycle", roots: [0, 3, 5, 4], mode: MODES.ionian,
+      roots: [0, 3, 5, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       artic: "legato", incClamp: 4, incMode: "reverse",
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
@@ -2005,7 +2055,8 @@
     citypop: {
       // named "Tokyo 1984" — Plastic Love's year: the royal road with slap
       // sixteenths under it.
-      label: "Tokyo 1984", rate: 1, bars: 4, voices: 2, swing: 0.1, near: "toto",
+      label: "Tokyo 1984", swing: 0.1, near: "toto",
+      plan: "song", bpm: 108,
       // LINEAGE: the best-documented lineage in the table — Japanese
       // session players explicitly absorbing Toto's polish and Steely Dan's
       // changes over disco's floor; the boogie/Chic half of the groove is
@@ -2022,7 +2073,7 @@
       entry: v => v, reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),
       part: ["stab", "lead"],
-      harmony: "cycle", roots: [3, 4, 2, 5], mode: MODES.ionian,
+      roots: [3, 4, 2, 5], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       prog: [{ d: 3, q: "7" }, { d: 4, q: "7" }, { d: 2, q: "7" }, { d: 5, q: "7" }],
       maxHold: 2,
@@ -2044,7 +2095,10 @@
     punk: {
       // named "New York 1976" — the Ramones' debut: every-eighth downstrokes
       // at 160 is Johnny's right hand, a year before London took it up.
-      label: "New York 1976", rate: 1, bars: 4, voices: 2, near: "rock",
+      label: "New York 1976", near: "rock",
+      // 160: ON the dial's fence rather than past it, like dnb — the kit
+      // density says the rest
+      plan: "song", bpm: 160,
       // LINEAGE: the Ramones are sixties pop played as fast and plainly as
       // possible — rock's power stripped of its solos, bubblegum hooks kept
       // whole. Chuck Berry's downstroke is an anchor now, but it arrives here
@@ -2056,7 +2110,7 @@
       instr: ["distortion_guitar", "crunch_guitar"],
       drumkit: "power",
       entry: () => 0, reg: v => -1 - v, realize: () => "line",
-      harmony: "cycle", roots: [0, 3, 4, 4], mode: MODES.ionian,
+      roots: [0, 3, 4, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       artic: "staccato",
       bassStyle: "eighths",
@@ -2083,7 +2137,9 @@
     ambient: {
       // named "London 1978" — Music for Airports: the moving maj7 chord inside
       // the stillness, which this comment calls the entire difference.
-      label: "London 1978", rate: 0.5, bars: 8, voices: 2, near: "drone",
+      label: "London 1978", rate: 0.5, bars: 8, near: "drone",
+      // an arc: one long breath
+      plan: "arc", bpm: 70,
       // LINEAGE: Eno put a moving harmony inside drone's stillness — the
       // catalog's one parent — and minimalism's PROCESS, which is the other
       // thing he added: Music for Airports is loops of unequal length going
@@ -2098,7 +2154,7 @@
       realize: v => (v === 0 ? "pad" : "line"),
       kit: {}, nobass: true,
       intro: "fade",                 // ambient does not arrive, it surfaces
-      harmony: "cycle", roots: [0, 0, 3, 3, 5, 5, 4, 4],
+      roots: [0, 0, 3, 3, 5, 5, 4, 4],
       mode: MODES.lydian, scale: MODES.lydian, diatonic: true,
       prog: [{ d: 0, q: "7" }, { d: 0, q: "7" }, { d: 3, q: "7" }, { d: 3, q: "7" },
              { d: 5, q: "7" }, { d: 5, q: "7" }, { d: 4, q: "7" }, { d: 4, q: "7" }],
@@ -2118,7 +2174,8 @@
     techno: {
       // named "Detroit 1988" — the Belleville Three's comp that named the
       // sound: the 909 kick and open hat, everything else stripped.
-      label: "Detroit 1988", rate: 1, bars: 8, voices: 2, near: "acid",
+      label: "Detroit 1988", bars: 8, near: "acid",
+      plan: "dance", bpm: 132,
       // LINEAGE: Derrick May's own formula — "Kraftwerk and George Clinton
       // stuck in an elevator" — and BOTH halves of it are now in the table,
       // plus the road between them: Juan Atkins made Cybotron before he made
@@ -2198,7 +2255,11 @@
       // lands on even steps, where the scalar cannot reach it; 0.2 is the lean
       // it CAN say — the same lean its own descendant steely reads as feel
       // rather than as shuffle.
-      label: "New York 1945", rate: 1, bars: 8, voices: 3, swing: 0.2,
+      label: "New York 1945", bars: 8, voices: 3, swing: 0.2,
+      // a head, solos and the head again — a song whose middle is the blowing;
+      // 144 is medium-up bebop, the tempo the jazz ride's 1.6:1 lean is
+      // measured for
+      plan: "song", bpm: 144,
       // LINEAGE: a parent under protest. Bebop's real ancestors are all
       // missing — the swing band's four-to-the-bar, ragtime's left hand, the
       // Tin Pan Alley song whose changes it plays over, and the New Orleans
@@ -2232,7 +2293,7 @@
       reg: () => -1,
       part: ["stab", "lead", "lead"],
       realize: v => (v === 0 ? "pad" : "line"),
-      harmony: "cycle", mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      mode: MODES.ionian, scale: SCALES.major, diatonic: true,
       // THE TURNAROUND THAT NEVER LANDS — I vi ii V, twice, with the second vi
       // turned into a VI7. Eight bars of the cycle every standard is made of,
       // and the whole point is that it comes back round rather than resolving:
@@ -2331,7 +2392,9 @@
       // named "Chicago 1955" — Ellas McDaniel's first Chess single, cut in the
       // same room and for the same label as the electric-blues anchor three
       // years earlier, playing a rhythm nobody in that room had recorded.
-      label: "Chicago 1955", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "blues",
+      label: "Chicago 1955", swing: 0.12, near: "blues",
+      // 128 is the one-bar reading of the Bo Diddley clave
+      plan: "song", bpm: 128,
       // LINEAGE: Chess blues is the MATERIAL — the guitar language, the band,
       // the room, the amp — and the sanctified church is where the shouted
       // call-and-response and the body-percussion pulse come from. The beat
@@ -2407,7 +2470,10 @@
       // this anchor models. Maybellene was cut in Chicago that May; the group
       // that walked into Chess was St. Louis's, and Johnnie Johnson's piano is
       // the half of it everybody forgets.
-      label: "St. Louis 1955", rate: 1, bars: 12, voices: 3, swing: 0.15, near: "rock",
+      label: "St. Louis 1955", bars: 12, voices: 3, swing: 0.15, near: "rock",
+      // 150 is the honest mid between "Roll Over Beethoven" and a "Johnny B.
+      // Goode" past the dial's ceiling
+      plan: "song", bpm: 150,
       // LINEAGE: Chess blues played out of a hillbilly's songbook. Maybellene
       // is Ida Red, and the country side is not a costume — it is the straight
       // eighths, the major third and the diction that got him billed as a
@@ -2433,7 +2499,7 @@
       // chords. The ♭7 in the subject is the same ♭7 as in the chords, which
       // is why this alphabet can take the semitone follow the seven-note
       // genres had to give up.
-      harmony: "cycle", mode: MODES.mixo, scale: MODES.mixo,
+      mode: MODES.mixo, scale: MODES.mixo,
       roots: [0,3,0,0, 3,3,0,0, 4,3,0,4],
       // THE QUICK CHANGE — bar 2 goes to the IV and comes straight back — is
       // most of what separates a rock'n'roll twelve from the Chess twelve that
@@ -2530,7 +2596,9 @@
       // named "Harlem 1955" — the Cadillacs cutting "Speedoo" for Josie and the
       // Harptones working the Apollo, the year the corner went on record;
       // uptown New York, not the Penguins' LA or the Moonglows' Chicago.
-      label: "Harlem 1955", rate: 1, bars: 8, voices: 3, swing: 1 / 3, near: "motown",
+      label: "Harlem 1955", bars: 8, voices: 3, swing: 1 / 3, near: "motown",
+      // 84 is the 12/8 side of doo-wop
+      plan: "song", bpm: 84,
       // LINEAGE: the jubilee/gospel quartet is where the parts, the blend and
       // the bass singer come from — every one of these groups had been singing
       // in church first — and the band behind them is the blues, playing the
@@ -2553,7 +2621,7 @@
       // motown's does — it is a chord, not a line, and the octave law reads it
       // that way
       realize: v => (v === 0 ? "pad" : "line"),
-      harmony: "cycle", mode: MODES.ionian, scale: MODES.ionian, diatonic: true,
+      mode: MODES.ionian, scale: MODES.ionian, diatonic: true,
       roots: [0,5, 3,4, 0,5, 1,4],               // I vi IV V | I vi ii V
       prog: [{ d: 0, q: "six" }, { d: 5, q: "7" }, { d: 3, q: "six" }, { d: 4, q: "dom7" },
              { d: 0, q: "six" }, { d: 5, q: "7" }, { d: 1, q: "7" },
@@ -2619,7 +2687,10 @@
       // bars full of teenagers with tea chests; Liverpool 1957 (the Quarrymen,
       // and Lennon meeting McCartney at the Woolton fête) is the other
       // claimant, and it is the one the beatles anchor downstream is made of.
-      label: "London 1956", rate: 1, bars: 8, voices: 3, swing: 0.15,
+      label: "London 1956", bars: 8, voices: 3, swing: 0.15,
+      // 148 makes skiffle the fastest thing in the roots family, because these
+      // records rush and nobody stops them
+      plan: "song", bpm: 148,
       near: "countrypop",
       // LINEAGE: skiffle is a STRING BAND playing American blues off imported
       // 78s — Nashville's banjo-and-two-beat machinery arriving at the same
@@ -2658,7 +2729,7 @@
       // the songs: an Anglo-Celtic ballad and a Lead Belly holler are both
       // five notes, and the friction the blues anchor gets from a flat third is
       // not available here because nobody in the band could find one.
-      harmony: "cycle", mode: MODES.ionian, scale: SCALES.majpent,
+      mode: MODES.ionian, scale: SCALES.majpent,
       // THE EIGHT-BAR FOLK BLUES — I I IV I V IV I I, the shape of "Key to the
       // Highway" and of half the songbook. Not the twelve: skiffle got its
       // repertoire off records but its FORM off the page and the campfire, and
@@ -2724,7 +2795,13 @@
       // pianos, one figure, one player walking a sixteenth ahead. Glass's
       // additive cells (Two Pages, 1969) are the same downtown loft scene two
       // years on, which is why one anchor can honestly hold both.
-      label: "New York 1967", rate: 1, bars: 8, voices: 3,
+      label: "New York 1967", bars: 8, voices: 3,
+      // the ancestor that is neither song nor dance: one process, one shape,
+      // which is an arc — and NOT on compose.js STEADY, because the process
+      // goes somewhere, which is the whole difference from drone and ambient.
+      // 120 is where the sixteenths run at eight a second; under about 100 the
+      // phase stops shimmering and just sounds late
+      plan: "arc", bpm: 120,
       // LINEAGE: Young's Theatre of Eternal Music is the room Riley and Reich
       // came out of, so drone is the catalog's one true ancestor here — and a
       // phase piece is also, exactly, a CANON, which is counterpoint's half:
@@ -2758,7 +2835,7 @@
       // Everything is attack; the sustain is an illusion made of repetitions,
       // which is what a marimba ensemble is.
       realize: () => "line",
-      harmony: "cycle", mode: MODES.dorian, scale: MODES.dorian, diatonic: true,
+      mode: MODES.dorian, scale: MODES.dorian, diatonic: true,
       // i · ♭VII four times, then IV · ♭VII: not a progression, a ROCKING. And
       // dorian because it has no leading tone — nothing here ever cadences,
       // the top of the loop is the only resolution the music offers.
@@ -2836,7 +2913,11 @@
       // Bambaataa cut it up in the Bronx, Detroit built a genre on it.
       // Autobahn 1974 is where the machine arrives; 1977 is what was
       // inherited, and a label on an ancestor should name the inheritance.
-      label: "Düsseldorf 1977", rate: 1, bars: 8, voices: 3, near: "synthpop",
+      label: "Düsseldorf 1977", bars: 8, voices: 3, near: "synthpop",
+      // a song: Düsseldorf's half that is the Beatles is the half that decided
+      // on verses and three minutes; 120 is Trans-Europe Express and the number
+      // a metronome picks
+      plan: "song", bpm: 120,
       // LINEAGE: three parents, and two of them were meant to be the whole
       // list — most of Kraftwerk's ancestry is ghosts here: Stockhausen's
       // studio an hour down the Rhine, the krautrock the band's own first
@@ -2883,7 +2964,7 @@
       // Eurythmics' i-VI vamp is one move out of it, synth pop's i-VI-III-VII
       // anthem its four corners. EIGHT bars because harmony is the slow layer
       // here: the sequence turns over every bar and the chord waits two.
-      harmony: "cycle", roots: [0,0, 6,6, 5,5, 0,0],
+      roots: [0,0, 6,6, 5,5, 0,0],
       // stepwise and in one key. A Kraftwerk tune is a nursery melody played
       // by a machine — it steps, it does not leap — so the subject reads
       // through the full seven, and `diatonic` follows the chord by DEGREES
@@ -2974,7 +3055,10 @@
       // named "New York 1982" — Planet Rock's city and year. Detroit's own
       // half of it (Cybotron's "Clear") is the same year and the same machine;
       // the twelve-inch went out of New York, so the label follows it.
-      label: "New York 1982", rate: 1, bars: 4, voices: 2, near: "trap",
+      label: "New York 1982", near: "trap",
+      // the one ancestor that is a floor record; 128 is Planet Rock — the same
+      // one-bar clave reading as bodiddley
+      plan: "dance", bpm: 128,
       // LINEAGE: Bambaataa was a FUNK DJ first — the syncopation, the body and
       // the break are James Brown's and P-funk's — playing to a floor disco
       // built and to a twelve-inch disco invented. The fourth is the one this
@@ -3006,7 +3090,7 @@
       // soul chord and there is not one on a Cybotron record. Two bars of
       // tonic to lock the sequence in, then the two-chord lift that every
       // minor-key machine record uses to get back to the top.
-      harmony: "cycle", roots: [0, 0, 5, 6],
+      roots: [0, 0, 5, 6],
       scale: DIATONIC, diatonic: true,
       // THE OCTAVE JUMP IS THE BASSLINE — Numbers, Al-Naafiysh, Nunk, all of
       // it: one note, alternating registers, on the phrase's own accents, so
@@ -3077,7 +3161,9 @@
     // voice of its own — the bass part IS the fourth voice, exactly as
     // counterpoint and spem already declare it.
     hymn: {
-      label: "Boston 1831", rate: 1, bars: 8, voices: 4, near: "gospel",
+      label: "Boston 1831", bars: 8, voices: 4, near: "gospel",
+      // a chorale — one text, one shape, no chorus to come back to
+      plan: "arc", bpm: 72,
       // LINEAGE: the four-part harmonization craft is counterpoint's — Fux's
       // rules, sung rather than played — over chant-shaped stepwise lines,
       // with gospel's plagal warmth already arguing for itself (a hymn tune
@@ -3115,7 +3201,7 @@
       // an a-cappella one.
       instr: ["ahh_choir", "ohh_voices", "ahh_choir", "church_organ"],
       entry: () => 0, reg: v => [2, 0, -2, -4][v], realize: () => "line",
-      kit: {}, nobass: true, harmony: "cycle",
+      kit: {}, nobass: true,
       mode: MODES.ionian, scale: SCALES.major, diatonic: true,
       roots: [0, 3, 0, 4, 0, 5, 3, 4],           // I IV I V | I vi IV V
       artic: "legato", maxHold: 4,
@@ -3144,7 +3230,8 @@
     // does the SAME job here it does in tango: a note the voice sits on has
     // to be a chord tone, and everything shorter is just diction.
     crooner: {
-      label: "Los Angeles 1953", rate: 0.5, bars: 8, voices: 2, swing: 0.15, near: "jazz",
+      label: "Los Angeles 1953", rate: 0.5, bars: 8, swing: 0.15, near: "jazz",
+      plan: "song", bpm: 88,
       // LINEAGE: the changes and the walking rhythm section are bebop's own
       // vocabulary played straighter and slower for a singer to sit on; the
       // vocal-group blend behind the lead is doo-wop's, one voice standing
@@ -3158,7 +3245,7 @@
       entry: v => (v === 0 ? 2 : 0), reg: v => (v === 0 ? 0 : -1),
       realize: v => (v === 0 ? "line" : "pad"),
       part: ["lead", "pad"],
-      harmony: "cycle", roots: [0, 5, 1, 4, 0, 5, 1, 4], mode: MODES.ionian,
+      roots: [0, 5, 1, 4, 0, 5, 1, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       prog: [{ d: 0, q: "maj7" }, { d: 5, q: "m7" }, { d: 1, q: "m7" }, { d: 4, q: "dom7" }],
       artic: "legato", anchor: 2, maxHold: 4,
@@ -3181,6 +3268,7 @@
     // standard is just crooner's own dress plus one instrument: the bell.
     yuletide: {
       label: "New York 1942", rate: 0.5, bars: 8, voices: 3, near: "crooner",
+      plan: "song", bpm: 84,
       // LINEAGE: complete, and honestly so — a Christmas standard IS crooner
       // (the ballad-tempo dance-orchestra vocal) plus hymn (the carol's
       // stepwise, plagal-leaning tune), and nothing else needs naming.
@@ -3191,7 +3279,7 @@
       entry: v => [2, 0, 4][v], reg: v => [0, -1, 3][v],
       realize: v => (v === 1 ? "pad" : "line"),
       part: ["lead", "pad", "riff"],
-      harmony: "cycle", roots: [0, 3, 0, 4, 0, 5, 1, 4], mode: MODES.ionian,
+      roots: [0, 3, 0, 4, 0, 5, 1, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       artic: "legato", anchor: 2, maxHold: 3,
       kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
@@ -3212,7 +3300,9 @@
     // built on the OFFBEAT HANDCLAP hook and a call that gets an answer,
     // which is the field the two genres actually differ on.
     merseybeat: {
-      label: "Liverpool 1963", rate: 1, bars: 4, voices: 2, near: "beatles",
+      label: "Liverpool 1963", near: "beatles",
+      // 148: rushes the way punk and skiffle already do
+      plan: "song", bpm: 148,
       // LINEAGE: the beat-group format is the catalog's own `beatles` anchor
       // taken as a scene rather than one band; doo-wop's vocal-group answer
       // figure and Chuck Berry's downstroke are the two things every Cavern
@@ -3224,7 +3314,7 @@
       instr: ["clean_guitar", "ohh_voices"],
       drumkit: "room",
       entry: () => 0, reg: v => v, realize: () => "line",
-      harmony: "cycle", roots: [0, 4, 3, 0], mode: MODES.ionian,
+      roots: [0, 4, 3, 0], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
@@ -3245,7 +3335,8 @@
     // (one figure, arriving voice by voice, one crescendo) written for a pop
     // band with a gospel choir instead of a wall of guitars.
     psychpop: {
-      label: "London 1968", rate: 1, bars: 8, voices: 2, near: "beatles",
+      label: "London 1968", bars: 8, near: "beatles",
+      plan: "song", bpm: 112,
       // LINEAGE: the songwriting craft is `beatles`' own, further along the
       // same career; the massed choir answering "na na na" into a long vamp
       // is gospel's call-and-response, not the band's own invention; and the
@@ -3258,7 +3349,7 @@
       instr: ["clean_guitar", "ahh_choir"],
       drumkit: "room",
       entry: v => (v === 1 ? 4 : 0), reg: v => v, realize: () => "line",
-      harmony: "cycle", roots: [0, 0, 3, 3, 4, 4, 0, 0], mode: MODES.ionian,
+      roots: [0, 0, 3, 3, 4, 4, 0, 0], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       maxHold: 3,
       kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
@@ -3280,7 +3371,9 @@
     // the KICK ITSELF: broken and syncopated where techno's is a plain four,
     // because a breakbeat under a machine floor is the entire joke.
     bigbeat: {
-      label: "Essex 1997", rate: 1, bars: 4, voices: 2, near: "techno",
+      label: "Essex 1997", near: "techno",
+      // floor music with a breakdown where a bridge would be
+      plan: "dance", bpm: 132,
       // LINEAGE: the machine floor is techno's, the guitar-sample aggression
       // and the couldn't-care-less attitude are punk's, and the broken kick
       // pattern is dnb's edit brought down to a dance-floor tempo. The
@@ -3314,7 +3407,9 @@
     // attempts, written as `kitProb` rather than a fixed subdivision because
     // a drill hat roll's whole character is that you cannot see it coming.
     drill: {
-      label: "Chicago 2012", rate: 1, bars: 4, voices: 2, near: "trap",
+      label: "Chicago 2012", near: "trap",
+      // trap's half-time grandchild
+      plan: "dance", bpm: 142,
       // LINEAGE: the 808 slide and the half-time snare are trap's own
       // vocabulary, inherited whole; the chopped, minor-key sample loop
       // underneath is boom bap's technique aimed at a darker crate; the
@@ -3344,7 +3439,9 @@
     // seventh forever — the field that actually separates a dance-pop single
     // from the club record it was cut for.
     clubpop: {
-      label: "New York 1983", rate: 1, bars: 4, voices: 2, near: "disco",
+      label: "New York 1983", near: "disco",
+      // a twelve-inch with a singer on it
+      plan: "dance", bpm: 120,
       // LINEAGE: the floor (four kick, offbeat clap, the open hat) is
       // disco's, played through synthpop's all-electronic chassis; house's
       // piano-stab feel is present in spirit but the piano is a synth voice
@@ -3361,7 +3458,7 @@
       drumkit: "electronic",
       entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
       part: ["stab", "lead"],
-      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       prog: [{ d: 0, q: "7" }, { d: 5, q: "7" }, { d: 3, q: "7" }, { d: 4, q: "7" }],
       maxHold: 2, bassStyle: "eighths",
@@ -3380,7 +3477,8 @@
     // changes bar to bar, does the arriving here instead of the breaking a
     // jungle record needs it for: quiet on the even bars, huge on the odd.
     powerballad: {
-      label: "Los Angeles 1991", rate: 1, bars: 8, voices: 2, near: "crooner",
+      label: "Los Angeles 1991", bars: 8, near: "crooner",
+      plan: "song", bpm: 76,
       // LINEAGE: the sung, held, chord-tone-anchored lead over strings is
       // crooner's own arrangement grown an arena; the massed emotional
       // uplift and the plagal warmth under the chorus are gospel's; rock
@@ -3391,7 +3489,7 @@
       instr: ["solo_vox", "slow_strings"],
       drumkit: "power",
       entry: () => 0, reg: v => -v, realize: v => (v === 1 ? "pad" : "line"),
-      harmony: "cycle", roots: [0, 5, 3, 4, 0, 5, 4, 0], mode: MODES.ionian,
+      roots: [0, 5, 3, 4, 0, 5, 4, 0], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       artic: "legato", anchor: 2, maxHold: 4,
       kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
@@ -3419,7 +3517,9 @@
     // I-vi-IV-V every four bars — the field that separates a funk pastiche
     // from the funk band it is impersonating.
     retrofunkpop: {
-      label: "Los Angeles 2013", rate: 1, bars: 4, voices: 2, swing: 0.1, near: "funk",
+      label: "Los Angeles 2013", swing: 0.1, near: "funk",
+      // 116, the Graceland-era lope worldfolk sits at too
+      plan: "song", bpm: 116,
       // LINEAGE: the clavinet-and-horns vocabulary is funk's, played over
       // Motown's song discipline (a real changing progression rather than a
       // vamp) with disco's four-on-the-floor pop polish underneath.
@@ -3428,7 +3528,7 @@
       instr: ["clavinet", "brass_section"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1, realize: () => "line",
-      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       prog: [{ d: 0, q: "7" }, { d: 5, q: "7" }, { d: 3, q: "7" }, { d: 4, q: "7" }],
       maxHold: 2, artic: "staccato", bassStyle: "sixteenths",
@@ -3451,7 +3551,9 @@
     // minor two-chord vamp that never resolves anywhere, reggae's own
     // no-mode spareness kept exactly.
     reggaeton: {
-      label: "San Juan 2004", rate: 1, bars: 4, voices: 2, near: "reggae",
+      label: "San Juan 2004", near: "reggae",
+      // a dembow that never stops
+      plan: "dance", bpm: 94,
       // LINEAGE: the one-drop skank's Caribbean root is reggae's; the
       // chopped, sample-built track underneath is boom bap's method aimed
       // at a different vocabulary; the sub-bass slide under it is trap's.
@@ -3466,7 +3568,7 @@
       drumkit: "electronic",
       entry: v => v, reg: v => v, realize: v => (v === 0 ? "pad" : "line"),
       part: ["stab", "lead"],
-      harmony: "cycle", roots: [0, 0, 5, 3],
+      roots: [0, 0, 5, 3],
       artic: "staccato", maxHold: 2, bassStyle: "octaves",
       // THE DEMBOW, written once: kick doubled at 1 and the a-of-2, snare
       // doubled at the and-of-2 and 4 — "boom-ch-boom-chick" — the absolute
@@ -3487,7 +3589,8 @@
     // that separates a Bogotá/Barranquilla pop-rock record from the Rio
     // apartment sound it shares a rhythm section with.
     latinpop: {
-      label: "Miami 2001", rate: 1, bars: 4, voices: 2, near: "bossa",
+      label: "Miami 2001", near: "bossa",
+      plan: "song", bpm: 102,
       // LINEAGE: the sevenths-and-understatement harmonic language and the
       // rhythm-section restraint are bossa's own, transplanted out of the
       // apartment and into a rock band; the cross-rhythm percussion under
@@ -3499,7 +3602,7 @@
       instr: ["nylon_string_guitar", "clean_guitar"],
       drumkit: "acoustic",
       entry: () => 0, reg: v => v, realize: () => "line",
-      harmony: "cycle", roots: [0, 3, 4, 0], mode: MODES.harmonic,
+      roots: [0, 3, 4, 0], mode: MODES.harmonic,
       scale: MODES.harmonic, diatonic: true,
       artic: "staccato", maxHold: 3, bassStyle: "eighths",
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
@@ -3518,7 +3621,12 @@
     // own honest description: it is a production METHOD, assembling
     // whichever record the section needs, more than it is one groove.
     kpop: {
-      label: "Seoul 2012", rate: 1, bars: 4, voices: 2, near: "synthpop",
+      label: "Seoul 2012", near: "synthpop",
+      // a SONG, and the one to argue with: it has the biggest dance break of
+      // anything in its batch, but everything around the break is
+      // verse-prechorus-chorus, and losing that would lose the genre; 128 is
+      // where every four-to-the-floor record in that batch agrees to meet
+      plan: "song", bpm: 128,
       // LINEAGE: the all-synth stab chassis is synthpop's; the four-on-the-
       // floor pop-chorus floor is disco's; the stuttered, probability-edited
       // hat is boom bap's chopped hand brought to a machine kit; the vocal
@@ -3535,7 +3643,7 @@
       drumkit: "electronic",
       entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
       part: ["stab", "lead"],
-      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       prog: [{ d: 0, q: "7" }, { d: 5, q: "7" }, { d: 3, q: "7" }, { d: 4, q: "7" }],
       maxHold: 2, artic: "staccato", bassStyle: "eighths",
@@ -3555,7 +3663,8 @@
     // declares (stacked sixths, chord-locked) does the backing-vocal work
     // here exactly as it does there, cited rather than reinvented.
     boyband: {
-      label: "Orlando 1997", rate: 1, bars: 4, voices: 3, near: "doowop",
+      label: "Orlando 1997", voices: 3, near: "doowop",
+      plan: "song", bpm: 96,
       // LINEAGE: the group-of-voices arithmetic (lead out front, a harmony
       // stack, a keyboard holding the changes) is doo-wop's own scheme,
       // inherited whole down to the `part` register spacing; the sixths-
@@ -3570,7 +3679,7 @@
       entry: v => (v === 2 ? 2 : 0), reg: () => 0,
       realize: v => (v === 2 ? "pad" : "line"),
       part: ["lead", "riff", "stab"],
-      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       prog: [{ d: 0, q: "7" }, { d: 5, q: "7" }, { d: 3, q: "7" }, { d: 4, q: "7" }],
       maxHold: 2,
@@ -3593,7 +3702,9 @@
     // this from punk, which refuses to develop AT ALL. Confessional means
     // legato where punk is staccato: a chord let ring instead of chopped.
     emo: {
-      label: "Chicago 1999", rate: 1, bars: 4, voices: 2, near: "punk",
+      label: "Chicago 1999", near: "punk",
+      // 148: rushes the way punk and skiffle already do
+      plan: "song", bpm: 148,
       // LINEAGE: the format (guitar/bass/drums, verse-chorus, three minutes)
       // and the raw energy are punk's; the major-key-read vi-IV-I-V loop and
       // the song discipline underneath are rock's; the wash the loud chorus
@@ -3604,7 +3715,7 @@
       instr: ["clean_guitar", "overdrive_guitar"],
       drumkit: "power",
       entry: () => 0, reg: v => v, realize: () => "line",
-      harmony: "cycle", roots: [5, 3, 0, 4], mode: MODES.ionian,
+      roots: [5, 3, 0, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       artic: "legato", maxHold: 3, bassStyle: "eighths",
       kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
@@ -3634,7 +3745,9 @@
     // fills every step, is one riff stated twice; the second half of the
     // subject is a different riff), at hardcore tempo instead of a drone's.
     screamo: {
-      label: "San Diego 1994", rate: 1, bars: 4, voices: 2, near: "deathmetal",
+      label: "San Diego 1994", near: "deathmetal",
+      // 152: rushes the way punk and skiffle already do
+      plan: "song", bpm: 152,
       // LINEAGE: emo's confessional dynamics are the base, pushed to the
       // edge by punk's raw directness and death metal's chromatic dissonance
       // and ridden cymbal. Hardcore, the actual scene emo and screamo both
@@ -3644,7 +3757,7 @@
       instr: ["distortion_guitar", "distortion_guitar"],
       drumkit: "power",
       entry: () => 0, reg: v => -v, realize: () => "line",
-      harmony: "cycle", roots: [0, 0, 1, 1], mode: MODES.phrygian,
+      roots: [0, 0, 1, 1], mode: MODES.phrygian,
       scale: [0, 1, 3, 5, 6, 8, 10],
       artic: "staccato", bassStyle: "sixteenths",
       kit: { k: [1,0,1,0, 0,0,1,0, 1,0,1,0, 0,0,1,0],
@@ -3671,7 +3784,8 @@
     // a chorus that lifts a fourth into the pop half is the same "the
     // record changes costume mid-song" device psychpop already uses.
     confessionalpop: {
-      label: "Nashville 2008", rate: 1, bars: 4, voices: 3, near: "countrypop",
+      label: "Nashville 2008", voices: 3, near: "countrypop",
+      plan: "song", bpm: 118,
       // LINEAGE: the fifths bass, the storytelling verse and the acoustic
       // guitar are countrypop's, kept whole; rock supplies the full-band
       // arrangement a country radio ballad graduates into; synthpop supplies
@@ -3695,7 +3809,7 @@
       instr: ["steel_string_guitar", "polysynth", "solo_vox"],
       drumkit: "room",
       entry: () => 0, reg: v => (v === 2 ? 0 : v), realize: () => "line",
-      harmony: "cycle", roots: [3, 4, 5, 0], mode: MODES.ionian,
+      roots: [3, 4, 5, 0], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       artic: "legato", maxHold: 3, bassStyle: "fifths",
       kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
@@ -3719,7 +3833,10 @@
     // both already demand. `intro:"fade"` is ambient's own device: this
     // does not arrive, it surfaces.
     darkrnb: {
-      label: "Toronto 2011", rate: 1, bars: 4, voices: 2, near: "rnb",
+      label: "Toronto 2011", near: "rnb",
+      // a half-time record whose real pulse is 70 counted slow — ON the dial's
+      // floor rather than past it
+      plan: "song", bpm: 70,
       // LINEAGE: the sung, chord-tone-anchored maj7 ballad lead is R&B's own
       // vocabulary sung darker; the pulseless, surfacing stillness under it
       // is ambient's, not R&B's straight-time pocket; synthpop supplies the
@@ -3737,7 +3854,7 @@
       drumkit: "electronic",
       entry: v => v, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
       intro: "fade",
-      harmony: "cycle", roots: [0, 3, 5, 4], mode: MODES.dorian,
+      roots: [0, 3, 5, 4], mode: MODES.dorian,
       scale: MODES.dorian, diatonic: true,
       artic: "legato", anchor: 2, maxHold: 4, bassStyle: "pedal",
       kit: { k: [1,0,0,0, 0,0,0,1, 0,0,1,0, 0,0,0,0],
@@ -3759,7 +3876,9 @@
     // (the full four-on-the-floor plus the open hat) — house's stab chord
     // and techno's kick-and-open-hat kit, aimed at a festival main stage.
     bigroom: {
-      label: "Las Vegas 2012", rate: 1, bars: 8, voices: 2, near: "techno",
+      label: "Las Vegas 2012", bars: 8, near: "techno",
+      // a genre named after its drop
+      plan: "dance", bpm: 128,
       // LINEAGE: the seventh-loop stab progression is house's; the kick-and-
       // open-hat floor is techno's, at festival scale; trap's half-time snare
       // supplies the drop's low-end weight. Dubstep's own bass-design
@@ -3775,7 +3894,7 @@
                       res: 0.15, attack: 0.005, release: 0.25, sustain: 0.8 } },
       entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
       part: ["stab", "lead"],
-      harmony: "cycle", roots: [0, 5, 3, 4, 0, 5, 3, 4], mode: MODES.ionian,
+      roots: [0, 5, 3, 4, 0, 5, 3, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       artic: "staccato", maxHold: 2, bassStyle: "eighths",
       kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
@@ -3802,7 +3921,8 @@
     // snare-on-all-four thinned to a real backbeat — smoother, less showband,
     // more session — which is the whole genre in one sentence.
     blueeyedsoul: {
-      label: "Philadelphia 1976", rate: 1, bars: 4, voices: 2, near: "motown",
+      label: "Philadelphia 1976", near: "motown",
+      plan: "song", bpm: 104,
       // LINEAGE: the changes (I-vi-IV-V-with-sevenths) and the stab-and-lead
       // register scheme are motown's own, kept nearly whole; funk supplies
       // the sixteenth-note bass hand in place of motown's walk; rock supplies
@@ -3813,7 +3933,7 @@
       drumkit: "room",
       entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
       part: ["stab", "lead"],
-      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       prog: [{ d: 0, q: "7" }, { d: 5, q: "7" }, { d: 3, q: "7" }, { d: 4, q: "7" }],
       maxHold: 2, artic: "legato", bassStyle: "sixteenths",
@@ -3835,7 +3955,9 @@
     // thing than that machinery — the same distinction drone draws against
     // gregorian one row up.
     folkduo: {
-      label: "Greenwich Village 1964", rate: 1, bars: 8, voices: 2, near: "skiffle",
+      label: "Greenwich Village 1964", bars: 8, near: "skiffle",
+      // 96 is the folk duo's guitar
+      plan: "song", bpm: 96,
       // LINEAGE: the string-band-plays-American-song format is skiffle's;
       // countrypop's close vocal harmony and fifths-leaning guitar are the
       // other half; counterpoint contributes the two-voice-as-one-line
@@ -3869,7 +3991,9 @@
     // two acoustic voices, in a bright mixolydian that reads as both
     // traditions' ♭VII at once.
     worldfolk: {
-      label: "Johannesburg 1986", rate: 1, bars: 8, voices: 2, near: "afrobeat",
+      label: "Johannesburg 1986", bars: 8, near: "afrobeat",
+      // 116 is the Graceland lope
+      plan: "song", bpm: 116,
       // LINEAGE: the folk-song discipline (a story, a verse, one guitar
       // carrying it) is folkduo's; the cross-rhythm percussion and the
       // interlocking-guitar technique are afrobeat's, thinned from a big
@@ -3886,7 +4010,7 @@
       instr: ["clean_guitar", "kalimba"],
       drumkit: "acoustic",
       entry: () => 0, reg: v => v, realize: () => "line",
-      harmony: "cycle", roots: [0, 3, 4, 0, 0, 5, 3, 4], mode: MODES.mixo,
+      roots: [0, 3, 4, 0, 0, 5, 3, 4], mode: MODES.mixo,
       scale: MODES.mixo, diatonic: true,
       artic: "legato", maxHold: 3, bassStyle: "eighths",
       kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
@@ -3907,7 +4031,10 @@
     // the sound of a solo that keeps discovering new material over the same
     // changes rather than repeating one lick.
     jamband: {
-      label: "San Francisco 1972", rate: 1, bars: 12, voices: 2, swing: 0.15, near: "blues",
+      label: "San Francisco 1972", bars: 12, swing: 0.15, near: "blues",
+      // a jam band's record is one crescendo with the solos inside it, which is
+      // exactly what the arc plan is
+      plan: "arc", bpm: 108,
       // LINEAGE: the twelve-bar form and the electric-band instrumentation
       // are blues' own, taken whole; rock supplies the extended-form,
       // two-guitar-interplay format; jazz supplies the walking bass and the
@@ -3919,7 +4046,7 @@
       instr: ["clean_guitar", "clean_guitar"],
       drumkit: "room",
       entry: () => 0, reg: v => -v, realize: () => "line",
-      harmony: "cycle", bassStyle: "walk",
+      bassStyle: "walk",
       roots: [0,0,0,0, 3,3,0,0, 4,3,0,4],
       prog: PROGS.blues12,
       maxHold: 5,
@@ -3940,7 +4067,8 @@
     // rather than a studio band with a rock format, which is the field
     // that separates the two.
     sophistirock: {
-      label: "London 1986", rate: 1, bars: 8, voices: 2, swing: 0.15, near: "steely",
+      label: "London 1986", bars: 8, swing: 0.15, near: "steely",
+      plan: "song", bpm: 104,
       // LINEAGE: the band format and the muscular backbeat are rock's own;
       // funk's syncopated hand colours the groove underneath; jazz supplies
       // the dorian changes and the walking bass, the same vocabulary steely
@@ -3952,7 +4080,7 @@
       instr: ["rock_organ", "clean_guitar"],
       drumkit: "room",
       entry: () => 0, reg: v => -v, realize: () => "line",
-      harmony: "cycle", mode: MODES.dorian, scale: MODES.dorian, diatonic: true,
+      mode: MODES.dorian, scale: MODES.dorian, diatonic: true,
       roots: [0, 3, 4, 0, 0, 3, 4, 5],
       artic: "legato", maxHold: 3, bassStyle: "walk",
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
@@ -3971,7 +4099,12 @@
     // sixteenths that never let up. NO FILL, ever, and that absence is the
     // whole discipline: the beat does not vary bar to bar, on principle.
     motorik: {
-      label: "Düsseldorf 1974", rate: 1, bars: 8, voices: 2, near: "kraftwerk",
+      label: "Düsseldorf 1974", bars: 8, near: "kraftwerk",
+      // one pulse held for eight minutes while things arrive on top of it (its
+      // parent minimalism is an arc for the same reason, and like minimalism it
+      // is NOT steady: the process goes somewhere); 144 is a motorik
+      // eighth-note at the speed the pulse stops being heard as separate hits
+      plan: "arc", bpm: 144,
       // LINEAGE: kraftwerk's own machine-pulse half, isolated from the pop-
       // song half that anchor also carries; minimalism's repeating,
       // barely-developing cell is the other whole ancestor — motorik IS a
@@ -4006,7 +4139,8 @@
     // by a vocoder rather than motorik's wordless process piece, which is
     // the field that separates the two Kraftwerk children.
     roboticpop: {
-      label: "Düsseldorf 1978", rate: 1, bars: 4, voices: 2, near: "synthpop",
+      label: "Düsseldorf 1978", near: "synthpop",
+      plan: "song", bpm: 120,
       // LINEAGE: the vocoder-and-sequencer chassis and the deadpan machine
       // delivery are kraftwerk's own; synthpop supplies the actual pop-song
       // form (a real changing progression, a hook) that anchor's motorik
@@ -4030,7 +4164,7 @@
                       glide: 0, drift: 2 } },
       drumkit: "cr78",
       entry: v => v, reg: v => v - 1, realize: () => "line",
-      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       prog: [{ d: 0, q: "7" }, { d: 5, q: "7" }, { d: 3, q: "7" }, { d: 4, q: "7" }],
       artic: "staccato", maxHold: 2, bassStyle: "octaves",
@@ -4052,7 +4186,8 @@
     // playing to a sequencer from a band playing itself, which is exactly
     // what Kraftwerk's own inheritance argues.
     industrialmetal: {
-      label: "Chicago 1988", rate: 1, bars: 8, voices: 2, near: "deathmetal",
+      label: "Chicago 1988", bars: 8, near: "deathmetal",
+      plan: "song", bpm: 126,
       // LINEAGE: the chromatic riff wall and the ♭5-is-home locrian colour
       // are death metal's own, cited whole; kraftwerk supplies the machine-
       // sequenced, unwavering kick underneath in place of a drummer; punk
@@ -4064,7 +4199,7 @@
       instr: ["distortion_guitar", "metal_pad"],
       drumkit: "electronic",
       entry: () => 0, reg: v => -v, realize: () => "line",
-      harmony: "cycle", mode: MODES.phrygian, scale: [0, 1, 3, 5, 6, 8, 10],
+      mode: MODES.phrygian, scale: [0, 1, 3, 5, 6, 8, 10],
       roots: [0, 0, 1, 1, 0, 0, 4, 4],
       artic: "staccato", bassStyle: "sixteenths",
       kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
@@ -4085,7 +4220,9 @@
     // the chant on the offbeats, then a straight run answered by the
     // sequence stabbing back), the club's version of a call and response.
     ebm: {
-      label: "Chicago 1989", rate: 1, bars: 4, voices: 2, near: "techno",
+      label: "Chicago 1989", near: "techno",
+      // floor music with a breakdown where a bridge would be, like bigbeat
+      plan: "dance", bpm: 134,
       // LINEAGE: the sequenced, pulsing bass and the four-on-the-floor club
       // discipline are techno's; kraftwerk supplies the machine chassis
       // underneath; punk supplies the shouted, direct chant vocal. New
@@ -4137,7 +4274,8 @@
     // disco floor rather than a clipped anthem chord, which is the field
     // that turns a synth-pop record into a dance-floor one.
     synthduo: {
-      label: "London 1985", rate: 1, bars: 4, voices: 2, near: "synthpop",
+      label: "London 1985", near: "synthpop",
+      plan: "song", bpm: 122,
       // LINEAGE: the all-synth chassis and the anthem changes are synthpop's
       // own; disco supplies the four-on-the-floor club discipline and the
       // open hat where synthpop has none at all; kraftwerk supplies the
@@ -4162,7 +4300,7 @@
                       decay: 0.3, sustain: 0.7, release: 0.4, chorus: 1,
                       spread: 0.6 } },
       entry: v => v, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
-      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       prog: [{ d: 0, q: "7" }, { d: 5, q: "7" }, { d: 3, q: "7" }, { d: 4, q: "7" }],
       artic: "legato", maxHold: 3, bassStyle: "eighths",
@@ -4193,13 +4331,14 @@
     // tradition itself — the songs Ray Davies was actually parodying — has no
     // anchor here yet.
     musichallrock: {
-      label: "Muswell Hill 1966", rate: 1, bars: 4, voices: 2,
+      label: "Muswell Hill 1966",
+      plan: "song", bpm: 118,
       parents: { rock: 0.45, skiffle: 0.3, doowop: 0.25 },
       wants: ["music hall"],
       instr: ["upright_piano", "clean_guitar"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1, realize: () => "line",
-      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       // BASS STYLE: eighths, not a walk — the oom-pah two-beat a music-hall
       // piano actually plays, and it happens to be the field that keeps this
@@ -4223,13 +4362,14 @@
     // orchestral voicing. Brian Wilson's chamber-pop arranging, the actual
     // missing rung between the three, has no anchor of its own yet.
     orchpsych: {
-      label: "Oklahoma City 1999", rate: 1, bars: 4, voices: 3,
+      label: "Oklahoma City 1999", voices: 3,
+      plan: "song", bpm: 122,
       parents: { beatles: 0.4, postrock: 0.35, neoclassical: 0.25 },
       wants: ["chamber pop"],
       instr: ["slow_strings", "clean_guitar", "halo_pad"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
-      harmony: "cycle", roots: [0, 3, 4, 5], mode: MODES.ionian,
+      roots: [0, 3, 4, 5], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       artic: "legato", maxHold: 4, bassStyle: "eighths",
       kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
@@ -4250,13 +4390,14 @@
     // than a Nashville session. Gram Parsons' "cosmic American" fusion, the
     // scene this style actually grew out of, is the missing rung.
     altcountry: {
-      label: "Chicago 1996", rate: 1, bars: 8, voices: 2, near: "countrypop",
+      label: "Chicago 1996", bars: 8, near: "countrypop",
+      plan: "song", bpm: 116,
       parents: { countrypop: 0.4, rock: 0.35, blues: 0.25 },
       wants: ["cosmic american music"],
       instr: ["clean_guitar", "fiddle"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1, realize: () => "line",
-      harmony: "cycle", roots: [0,0, 3,3, 4,4, 0,0], mode: MODES.mixo,
+      roots: [0,0, 3,3, 4,4, 0,0], mode: MODES.mixo,
       scale: MODES.mixo, diatonic: true,
       artic: "legato", maxHold: 3, bassStyle: "walk",
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
@@ -4274,13 +4415,14 @@
     // borrowed halves. Quiet storm, the smoother FM-radio format this style
     // fed directly, is the missing rung.
     yachtsoul: {
-      label: "San Francisco 1976", rate: 1, bars: 8, voices: 2, near: "isley",
+      label: "San Francisco 1976", bars: 8, near: "isley",
+      plan: "song", bpm: 104,
       parents: { isley: 0.4, funk: 0.3, motown: 0.3 },
       wants: ["quiet storm"],
       instr: ["rhodes_ep", "clean_guitar"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
-      harmony: "cycle", roots: [0,0, 3,3, 0,0, 4,4], mode: MODES.dorian,
+      roots: [0,0, 3,3, 0,0, 4,4], mode: MODES.dorian,
       scale: MODES.dorian, diatonic: true,
       prog: PROGS.soul7,
       artic: "legato", maxHold: 3, bassStyle: "sixteenths",
@@ -4300,13 +4442,14 @@
     // changes-sense. The Doobie Brothers/Michael McDonald crossover this
     // sound is actually named for has no anchor of its own yet.
     yachtrock: {
-      label: "Austin 1979", rate: 1, bars: 4, voices: 2, near: "toto",
+      label: "Austin 1979", near: "toto",
+      plan: "song", bpm: 100,
       parents: { toto: 0.4, steely: 0.3, motown: 0.3 },
       wants: ["blue-eyed AOR"],
       instr: ["electric_piano", "clean_guitar"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
-      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       artic: "legato", maxHold: 3, bassStyle: "eighths",
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
@@ -4325,13 +4468,15 @@
     // this record was written in before it was one artist's own, is the
     // missing rung.
     songwriterpiano: {
-      label: "New York 1971", rate: 1, bars: 8, voices: 2, near: "crooner",
+      label: "New York 1971", bars: 8, near: "crooner",
+      // 82 is Tapestry counted slow
+      plan: "song", bpm: 82,
       parents: { motown: 0.4, gospel: 0.3, crooner: 0.3 },
       wants: ["brill building pop"],
       instr: ["upright_piano", "ohh_voices"],
       drumkit: "brush",
       entry: () => 0, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
-      harmony: "cycle", roots: [0,5,3,4, 0,5,3,4], mode: MODES.ionian,
+      roots: [0,5,3,4, 0,5,3,4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       artic: "legato", maxHold: 4, bassStyle: "walk",
       kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
@@ -4353,7 +4498,9 @@
     // no second voice to harmonize WITH. Carolina fingerstyle guitar, the
     // actual technique this whole sound is built on, is the missing rung.
     softfolk: {
-      label: "Chapel Hill 1970", rate: 1, bars: 8, voices: 2, near: "folkduo",
+      label: "Chapel Hill 1970", bars: 8, near: "folkduo",
+      // 88 is "Sweet Baby James", a hair up from Tapestry
+      plan: "song", bpm: 88,
       parents: { folkduo: 0.45, countrypop: 0.3, crooner: 0.25 },
       wants: ["carolina fingerstyle"],
       instr: ["steel_string_guitar", "steel_string_guitar"],
@@ -4377,7 +4524,8 @@
     // Laurel Canyon's communal songwriting scene, the actual milieu, is the
     // missing rung.
     singersongwriter: {
-      label: "New York 1972", rate: 1, bars: 4, voices: 2, near: "yachtsoul",
+      label: "New York 1972", near: "yachtsoul",
+      plan: "song", bpm: 108,
       parents: { crooner: 0.35, funk: 0.35, gospel: 0.3 },
       wants: ["laurel canyon scene"],
       // A REAL GRAND, not an EP: a 1972 New York singer's record is cut
@@ -4387,7 +4535,7 @@
       instr: ["yamaha_grand_piano", "clean_guitar"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
-      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       artic: "legato", maxHold: 3, bassStyle: "sixteenths",
       kit: { k: [1,0,0,1, 0,0,1,0, 1,0,0,0, 0,0,1,0],
@@ -4407,13 +4555,14 @@
     coastrock: {
       // "Sausalito 1977" — Record Plant Sausalito, where Rumours was
       // actually tracked; "Los Angeles 1977" was already steely's own label.
-      label: "Sausalito 1977", rate: 1, bars: 4, voices: 2, near: "rock",
+      label: "Sausalito 1977", near: "rock",
+      plan: "song", bpm: 122,
       parents: { rock: 0.35, motown: 0.3, countrypop: 0.35 },
       wants: ["california folk rock"],
       instr: ["clean_guitar", "electric_piano"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
-      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       artic: "legato", maxHold: 3, bassStyle: "eighths",
       pipes: [{ id: "strum", spread: 0.04 }],
@@ -4435,13 +4584,19 @@
     // echo send is the air around it. Berlin-school electronic minimalism,
     // the other half of this sound, is the missing rung.
     spacerock: {
-      label: "London 1973", rate: .5, bars: 8, voices: 2, near: "drone",
+      label: "London 1973", rate: .5, bars: 8, near: "drone",
+      // postrock's own shape, not drone's — a slow line that DOES go somewhere,
+      // the same guitar-solo climb postrock already arcs into, so it stays off
+      // compose.js STEADY (that list is for the genres that refuse to arrive
+      // anywhere at all); 70 sits ON the dial's floor, because a Floyd side
+      // breathes slower than the floor wants to admit
+      plan: "arc", bpm: 70,
       parents: { blues: 0.35, drone: 0.35, jazz: 0.3 },
       wants: ["berlin school electronics"],
       instr: ["warm_pad", "clean_guitar"],
       drumkit: "room",
       entry: v => v * 2, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
-      harmony: "cycle", roots: [0,0, 5,5, 3,3, 4,4],
+      roots: [0,0, 5,5, 3,3, 4,4],
       artic: "legato", incClamp: 4, incMode: "reverse", bassStyle: "pedal",
       kit: { k: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
              s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
@@ -4463,7 +4618,10 @@
     // caption. Punk's directness and rock's band format argue the rest;
     // funk supplies the syncopated pocket two basses need to not collide.
     grebo: {
-      label: "Stourbridge 1990", rate: 1, bars: 4, voices: 3, near: "punk",
+      label: "Stourbridge 1990", voices: 3, near: "punk",
+      // 148 sits ON the dial's fence: a Stourbridge grebo record is punk's own
+      // top speed
+      plan: "song", bpm: 148,
       parents: { punk: 0.4, rock: 0.35, funk: 0.25 },
       wants: ["stourbridge scene"],
       // TWO BASSISTS, TWO BASSES. The joke is that there are two of them, and
@@ -4475,7 +4633,7 @@
       drumkit: "power",
       entry: v => (v === 0 ? 0 : v), reg: v => (v === 0 ? 0 : v === 1 ? -1 : -2),
       realize: () => "line",
-      harmony: "cycle", roots: [0, 3, 0, 4],
+      roots: [0, 3, 0, 4],
       artic: "staccato", maxHold: 2,
       kit: { k: [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,0,1,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
@@ -4498,13 +4656,15 @@
     // supplies the melodicism neither of those alone would grant. Named for
     // the Hartnoll brothers' M25-orbital motorway, not a record.
     melodictechno: {
-      label: "Kent 1991", rate: 1, bars: 8, voices: 2, near: "techno",
+      label: "Kent 1991", bars: 8, near: "techno",
+      // a machine floor — no bridge, a drop
+      plan: "dance", bpm: 130,
       parents: { house: 0.35, techno: 0.35, ambient: 0.3 },
       wants: ["berlin school electronics"],
       instr: ["warm_pad", "polysynth"],
       drumkit: "electronic",
       entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
-      harmony: "cycle", roots: [0,5,3,4, 0,5,3,4], mode: MODES.dorian,
+      roots: [0,5,3,4, 0,5,3,4], mode: MODES.dorian,
       scale: MODES.dorian, diatonic: true,
       artic: "legato", maxHold: 4, bassStyle: "eighths",
       synth: { dsp: "pad_saw", root: "pad_saw", level: 0.75,
@@ -4529,7 +4689,9 @@
     // pulse. Sheffield's Warp/bleep scene, the genre's own real birthplace,
     // is the missing rung — Manchester's 808 State crossed over into it.
     bleeptechno: {
-      label: "Manchester 1989", rate: 1, bars: 4, voices: 2, near: "acid",
+      label: "Manchester 1989", near: "acid",
+      // a machine floor — no bridge, a drop
+      plan: "dance", bpm: 124,
       parents: { techno: 0.4, house: 0.3, electro: 0.3 },
       wants: ["sheffield bleep scene"],
       instr: ["square_lead", "saw_wave"],
@@ -4557,7 +4719,10 @@
     // The sample-collage industrial tradition this style actually descends
     // from has no anchor here yet.
     industrialbreaks: {
-      label: "Swindon 1989", rate: 1, bars: 4, voices: 2, near: "bigbeat",
+      label: "Swindon 1989", near: "bigbeat",
+      // a machine floor; 134 is its breakbeat's own meeting point with the
+      // "Blue Monday" pulse next door
+      plan: "dance", bpm: 134,
       parents: { dnb: 0.35, techno: 0.35, punk: 0.3 },
       wants: ["sample-collage industrial"],
       instr: ["distortion_guitar", "metal_pad"],
@@ -4589,13 +4754,14 @@
     // Wax Trax! industrial-rock scene, the actual missing rung, is not yet
     // an anchor.
     industrialrock: {
-      label: "Cleveland 1989", rate: 1, bars: 4, voices: 2, near: "industrialmetal",
+      label: "Cleveland 1989", near: "industrialmetal",
+      plan: "song", bpm: 128,
       parents: { deathmetal: 0.4, kraftwerk: 0.3, punk: 0.3 },
       wants: ["wax trax industrial"],
       instr: ["distortion_guitar", "metal_pad"],
       drumkit: "electronic",
       entry: () => 0, reg: v => -v, realize: () => "line",
-      harmony: "cycle", roots: [0, 3, 0, 4],
+      roots: [0, 3, 0, 4],
       artic: "staccato", bassStyle: "sixteenths",
       synth: { dsp: "lead_fuzz", root: "lead_fuzz", level: 0.85,
                set: { cutoff: 1400, res: 0.3, drive: 0.85, attack: 0.004, sustain: 0.65, release: 0.4 } },
@@ -4622,7 +4788,12 @@
       // "Basildon 1980" — the year the band itself formed (as Composition of
       // Sound); "Basildon 1981" was already synthpop's own label, and
       // gothsynth below takes "Basildon 1990" for the same band nine years on.
-      label: "Basildon 1980", rate: 1, bars: 4, voices: 2, near: "eurythmics",
+      label: "Basildon 1980", near: "eurythmics",
+      // a verse-chorus record on a different synthesizer is still a
+      // verse-chorus record; 124 lands inside two bpm of madchester and indie
+      // dance on purpose — that IS the early-90s crossover the three argue
+      // about from different rooms
+      plan: "song", bpm: 124,
       parents: { synthpop: 0.5, kraftwerk: 0.3, disco: 0.2 },
       wants: ["new romantic synth pop"],
       // "unmistakably one monosynth rather than a band" — so a thin square
@@ -4632,7 +4803,7 @@
       instr: ["square_lead", "polysynth"],
       drumkit: "cr78",
       entry: v => v, reg: v => v - 1, realize: () => "line",
-      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       artic: "staccato", maxHold: 2, bassStyle: "octaves",
       synth: { dsp: "tb303", root: "tb303", level: 0.85,
@@ -4655,13 +4826,17 @@
     // guitar-forward gloom is the missing rung this record actually leans on.
     gothsynth: {
       label: "Basildon 1990",
-      rate: 1, bars: 4, voices: 2, near: "analogsynthpop",
+      // a verse-chorus record played on a different synthesizer is still a
+      // verse-chorus record — the synth is a fact about the INSTRUMENT, not
+      // about the FORM
+      plan: "song", bpm: 122,
+      near: "analogsynthpop",
       parents: { analogsynthpop: 0.45, rock: 0.3, kraftwerk: 0.25 },
       wants: ["gothic rock"],
       instr: ["crunch_guitar", "metal_pad"],
       drumkit: "electronic",
       entry: v => v, reg: v => (v === 0 ? 1 : -2), realize: v => (v === 0 ? "pad" : "line"),
-      harmony: "cycle", roots: [0, 5, 3, 4],
+      roots: [0, 5, 3, 4],
       artic: "staccato", maxHold: 2,
       // THE LADDER IS THE IDENTITY; THE DRIVE WAS NOT. "The organs have gain
  // applied in Basildon 1990 and are very loud" — and
@@ -4701,13 +4876,14 @@
     // usually filed under, is the missing rung — this anchor is its pop
     // half, the way gothsynth above is its synth half.
     gothicpop: {
-      label: "Crawley 1987", rate: 1, bars: 4, voices: 2, near: "shoegaze",
+      label: "Crawley 1987", near: "shoegaze",
+      plan: "song", bpm: 118,
       parents: { rock: 0.4, shoegaze: 0.3, synthpop: 0.3 },
       wants: ["gothic rock"],
       instr: ["clean_guitar", "synth_strings_1"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
-      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.dorian,
+      roots: [0, 5, 3, 4], mode: MODES.dorian,
       scale: MODES.dorian, diatonic: true,
       artic: "legato", maxHold: 3, bassStyle: "eighths",
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
@@ -4729,13 +4905,14 @@
     // production, the actual missing rung, is `fx:["echo"]` made explicit
     // and still lacks its own anchor.
     postpunk: {
-      label: "Manchester 1979", rate: 1, bars: 4, voices: 2, near: "kraftwerk",
+      label: "Manchester 1979", near: "kraftwerk",
+      plan: "song", bpm: 138,
       parents: { punk: 0.4, kraftwerk: 0.3, rock: 0.3 },
       wants: ["cold wave"],
       instr: ["clean_guitar", "synth_strings_1"],
       drumkit: "room",
       entry: v => v, reg: v => v - 2, realize: () => "line",
-      harmony: "cycle", roots: [0, 3, 0, 4], mode: MODES.dorian,
+      roots: [0, 3, 0, 4], mode: MODES.dorian,
       scale: MODES.dorian, diatonic: true,
       artic: "staccato", maxHold: 2, bassStyle: "eighths",
       kit: { k: [1,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,0,0],
@@ -4754,13 +4931,15 @@
     // becoming a sequencer act. Everything the record needs is already a
     // parent; nothing here is missing.
     dancepostpunk: {
-      label: "Manchester 1983", rate: 1, bars: 4, voices: 2, near: "postpunk",
+      label: "Manchester 1983", near: "postpunk",
+      // a machine floor — no bridge, a drop; 130 is the "Blue Monday" pulse
+      plan: "dance", bpm: 130,
       parents: { postpunk: 0.4, disco: 0.3, kraftwerk: 0.3 },
       wants: [],
       instr: ["synth_voice", "polysynth"],
       drumkit: "electronic",
       entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
-      harmony: "cycle", roots: [0, 5, 3, 4],
+      roots: [0, 5, 3, 4],
       artic: "staccato", maxHold: 2, bassStyle: "octaves",
       kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
              o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
@@ -4782,7 +4961,10 @@
     // rows. The Hacienda's own DJ culture, the actual room this scene
     // happened in, is the missing rung.
     madchester: {
-      label: "Manchester 1990", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "house",
+      label: "Manchester 1990", swing: 0.12, near: "house",
+      // baggy: a band ON the machine floor — no bridge, a drop; 122 is the
+      // baggy/dance cluster's shared home
+      plan: "dance", bpm: 122,
       parents: { house: 0.35, funk: 0.35, rock: 0.3 },
       wants: ["hacienda scene"],
       // the baggy organ is a Hammond with the percussion stop up, and
@@ -4792,7 +4974,7 @@
       instr: ["clean_guitar", "percussive_organ"],
       drumkit: "power",
       entry: v => v, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
-      harmony: "cycle", roots: [0, 3, 4, 0], mode: MODES.mixo,
+      roots: [0, 3, 4, 0], mode: MODES.mixo,
       scale: MODES.mixo, diatonic: true,
       artic: "legato", maxHold: 3, bassStyle: "sixteenths",
       kit: { k: [1,0,0,1, 0,0,1,0, 1,0,0,0, 0,1,0,0],
@@ -4811,13 +4993,14 @@
     // without the engine's meter machinery. The Byrds' 12-string jangle,
     // the actual root of the technique, has no anchor here.
     janglepop: {
-      label: "Manchester 1984", rate: 1, bars: 4, voices: 2, swing: 1/3, near: "rock",
+      label: "Manchester 1984", swing: 1/3, near: "rock",
+      plan: "song", bpm: 126,
       parents: { rock: 0.4, motown: 0.35, folkduo: 0.25 },
       wants: ["byrds jangle"],
       instr: ["clean_guitar", "clean_guitar"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1, realize: () => "line",
-      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       artic: "legato", maxHold: 4, bassStyle: "walk",
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
@@ -4842,13 +5025,16 @@
     // underneath. Nothing named here is missing; the crossover itself IS
     // the genre.
     indiedance: {
-      label: "Glasgow 1990", rate: 1, bars: 4, voices: 2, near: "madchester",
+      label: "Glasgow 1990", near: "madchester",
+      // a band ON the machine floor, like madchester — no bridge, a drop; 124
+      // keeps it inside two bpm of the cluster on purpose
+      plan: "dance", bpm: 124,
       parents: { madchester: 0.4, house: 0.35, rock: 0.25 },
       wants: [],
       instr: ["clean_guitar", "synth_strings_1"],
       drumkit: "power",
       entry: v => v, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
-      harmony: "cycle", roots: [0, 3, 4, 0], mode: MODES.mixo,
+      roots: [0, 3, 4, 0], mode: MODES.mixo,
       scale: MODES.mixo, diatonic: true,
       artic: "legato", maxHold: 3, bassStyle: "walk",
       kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
@@ -4912,7 +5098,13 @@
     // what the rest of the table reads, so a solo and its host share one
     // alphabet by construction, which is the §9e law.
     solo: {
-      label: "Solo", rate: 1, bars: 8, voices: 1,
+      label: "Solo", bars: 8, voices: 1,
+      // a part on its own has no verse and no chorus — there is nothing for it
+      // to be the chorus OF — so an arc: one shape with a peak (a solo
+      // composing its own record is the degenerate case, and the plan says so
+      // rather than pretend it is a pop song); 128 because a solo is played
+      // over an up record
+      plan: "arc", bpm: 128,
       instr: "overdrive_guitar",
       entry: () => 0, reg: () => -1, realize: () => "line",
       part: ["lead"],
@@ -4977,6 +5169,9 @@
       // standing on its own. Measured, it is also most of what separates the
       // singer from `simple` on the confusion metric — 0.032 to 0.051.
       label: "Vocal", rate: 0.5, bars: 8, voices: 1,
+      // an arc, like every FUNCTION genre; 96 because a singer is slower than
+      // the band behind them
+      plan: "arc", bpm: 96,
       instr: "solo_vox",
       entry: () => 0, reg: () => -1, realize: () => "line",
       part: ["lead"],
@@ -5008,7 +5203,9 @@
     // or a fifth and the number is zero. Two singers in thirds is also just
     // what a backing part is.
     backing: {
-      label: "Backing vocals", rate: 0.5, bars: 4, voices: 1,
+      label: "Backing vocals", rate: 0.5, voices: 1,
+      // an arc, like every FUNCTION genre — one shape with a peak
+      plan: "arc", bpm: 84,
       instr: "ahh_choir",
       entry: () => 0, reg: () => -1, realize: () => "line",
       part: ["counter"],
@@ -5035,7 +5232,10 @@
     // Low, short (the two-step hold is what makes it a stab rather than a pad),
     // and it does not develop — a riff that develops is a solo.
     riff: {
-      label: "Riff", rate: 1, bars: 2, voices: 1,
+      label: "Riff", bars: 2, voices: 1,
+      // an arc, like every FUNCTION genre; 112 because a riff is a mid-tempo
+      // thing
+      plan: "arc", bpm: 112,
       instr: "palm_muted_guitar",
       entry: () => 0, reg: () => 0, realize: () => "line",
       part: ["riff"],
@@ -5057,6 +5257,8 @@
     // not a piece of music, it is a pad.
     pad: {
       label: "Pad", rate: 0.5, bars: 8, voices: 1,
+      // an arc, like every FUNCTION genre; 74 because a pad has nowhere to be
+      plan: "arc", bpm: 74,
       instr: "warm_pad",
       entry: () => 0, reg: () => -1, realize: () => "pad",
       part: ["pad"],
@@ -5082,6 +5284,34 @@
   const DRUMNAME = { k: "Kick", s: "Snare", c: "Clap", o: "Open hat",
                      h: "Hat", p: "Ghost perc", f: "Pedal hat", r: "Ride",
                      x: "Crash", t: "High tom", m: "Mid tom", l: "Low tom" };
+
+  // ---- DEFAULTS — the table's dominant values, said once -------------------
+  // (Below DRUMNAME rather than hard against the GENRES close: promote-genre.js
+  // splices a new anchor at the exact text "};" + blank line + the ARRANGEMENT
+  // heading, and a block between them breaks the tool's landmark.)
+  // Four fields were carried by every one of the 110 anchors, and one value
+  // dominated each: rate 1 (97 of 110), bars 4 (67), harmony "cycle" (83),
+  // voices 2 (82). Folded here 2026-08-20 so an anchor states only what makes
+  // it DIFFERENT — vaporwave says `rate: .5` because half speed IS the genre;
+  // nobody says `rate: 1`, because 1 is not a fact about a genre, it is the
+  // absence of one. Applied at load, before the family/dynamics stamps below,
+  // so every anchor still RESOLVES with all four fields present and every
+  // downstream reader sees the object it always saw (the fold was verified
+  // deep-equal across all 110 resolved anchors).
+  //
+  // NOT in this table, on purpose, two kinds of field:
+  //   - diatonic / nobass / ghost / incMode and their kin, where ABSENT means
+  //     OFF: absence is already the value, and a default would erase the
+  //     difference between "off" and "unstated".
+  //   - plan / bpm (the compose.js contract): REQUIRED, per anchor, never
+  //     defaulted — compose() throws by name on a genre missing either, and a
+  //     row here would turn that law back into the silent fallback it exists
+  //     to replace.
+  const DEFAULTS = { rate: 1, bars: 4, harmony: "cycle", voices: 2 };
+  for (const k of Object.keys(GENRES))
+    for (const f of Object.keys(DEFAULTS))
+      if (!(f in GENRES[k])) GENRES[k][f] = DEFAULTS[f];
+
 
   // ---- FAMILIES — the palette's bank-select clusters -----------------------
   // Forty-five chips in one heap is not a menu, it is a haystack; the palette
