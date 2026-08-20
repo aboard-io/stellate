@@ -1048,15 +1048,13 @@
       const shape = arc && arc.at ? arc.at(role, nth, of, i, f.secs.length) : null;
       const box = { ...((SECMIX[per.mix] || {}).box || {}),
                     ...((SECMOVE[per.move] || {}).box || {}) };
-      // AN ARC RAISES, IT NEVER LOWERS. Written as a plain overwrite it took
-      // the FIRST chorus down from the level its role gives it — "each
-      // chorus bigger than the last" turning the first one into the
-      // quietest thing in the record, which is the opposite of the ask.
-      if (shape && shape.lvl && !((m.per || {})[i] || {}).mix) {
-        const now = LEVELS4.indexOf(box.lvl || "norm");
-        const want = LEVELS4.indexOf(shape.lvl);
-        if (want > now) box.lvl = shape.lvl;
-      }
+      // THE ARC OWNS THE LEVEL of the sections it shapes, and that includes
+      // taking the FIRST chorus down a notch: "each chorus bigger than the
+      // last" is a statement about the first one as much as the last, and a
+      // rule that could only raise made the arc a no-op on a form whose
+      // chorus already comes forward. A section somebody mixed by hand keeps
+      // what they said — the arc is what happens when nobody did.
+      if (shape && shape.lvl && !((m.per || {})[i] || {}).mix) box.lvl = shape.lvl;
       if (shape && shape.busier && !((m.per || {})[i] || {}).drums)
         { const fn = SECDRUMS.busier.fn; g.kit = fn(g.kit); g.kits = (g.kits || []).map(fn); }
       // THE MELODY IS ITS OWN LAYER. A two-bar phrase cannot ride the bar

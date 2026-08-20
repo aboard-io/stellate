@@ -1123,6 +1123,11 @@ console.log("a record has an arc, and the same chorus twice is two moments");
   ok(built.length >= 2, "the form has one chorus to compare");
   ok((LVL[(built[built.length - 1].box || {}).lvl] || 1) > (LVL[(built[0].box || {}).lvl] || 1),
      "the last chorus is no bigger than the first");
+  // ...and no arc leaves a section below a whisper, which would be a mix
+  // decision rather than a shape
+  for (const [, v] of Object.entries(Band.ARC))
+    for (const L of levels(Band.answer(m, "arranger", "arc", v.w)))
+      ok(L >= 0.4, "\"" + v.w + "\" put a section under a whisper");
   // ...and a section somebody mixed by hand keeps its own level
   const said = Band.setSection(Band.answer(m, "arranger", "arc", Band.ARC.build.w), 4, "mix", "hush");
   ok((Band.toSong(said, MODES)[4].box || {}).lvl === "hush",
