@@ -105,6 +105,60 @@ console.log("how long a note is held is something a bassist can say");
   ok(t && t.cut > 0 && t.rel > 0, "the bass chair carries no tone of its own");
 }
 
+/* (c3) A FIGURE: A BASS LINE, WRITTEN OUT */
+// Density words cannot say what an acid line is. A figure can: these
+// sixteenths, that octave, an accent there, a slide into the next note —
+// and the 303's accent and slide reach the engine, which nothing in the
+// vocabulary could set before.
+console.log("named lines, and a bar you can write one note at a time");
+{
+  const base = B.say(B.blank(), "start");
+  const ev = (m) => { const g = B.toGenre(m, MODES); return K.bass(P, g, g.bars); };
+  ok(Object.keys(B.FIGURES).length >= 6, "only " + Object.keys(B.FIGURES).length + " lines to call");
+  for (const [k, f] of Object.entries(B.FIGURES)) {
+    ok(f.grid.length === 16, k + ": a figure that is not a bar");
+    ok(f.grid.some(Boolean), k + ": a figure with no notes in it");
+    for (const v of ["oct", "acc", "sld"])
+      if (f[v]) ok(f[v].length === 16 && f[v].every((x) => Number.isFinite(x)),
+        k + ": " + v + " is not sixteen numbers");
+    const m = B.say(base, "fig:" + k);
+    const line = ev(m);
+    ok(line.length > 0, k + " plays nothing");
+    ok(line.every((e) => Number.isFinite(e.t) && Number.isFinite(e.n)), k + " is not finite");
+    // the figure's own notes, in the render
+    const inBar = line.filter((e) => e.t < 16);
+    ok(inBar.length === f.grid.filter(Boolean).length,
+       k + ": " + inBar.length + " notes for a figure of " + f.grid.filter(Boolean).length);
+    if (f.acc && f.acc.some(Boolean)) ok(inBar.some((e) => e.acc), k + ": no accent survived");
+    if (f.sld && f.sld.some(Boolean)) ok(inBar.some((e) => e.sld), k + ": no slide survived");
+    if (f.oct && f.oct.some(Boolean))
+      ok(new Set(inBar.map((e) => e.n)).size > 1, k + ": the octave jump never happened");
+    ok(B.say(m, "fig:" + k) === m || JSON.stringify(B.say(m, "fig:" + k).fig) ===
+       JSON.stringify(m.fig), k + ": saying it twice changed it");
+  }
+  // AN ACID LINE IS THE POINT: sixteenths, octaves, accents, slides
+  const acid = ev(B.say(base, "fig:acid")).filter((e) => e.t < 16);
+  ok(acid.length >= 8, "an acid line of " + acid.length + " notes");
+  ok(acid.some((e) => e.acc) && acid.some((e) => e.sld) &&
+     new Set(acid.map((e) => e.n)).size > 1, "an acid line with no acid in it");
+  // THE BAR: one note at a time, and the three marks a note can carry
+  let mine = B.say(base, "note:3");
+  ok(ev(mine).filter((e) => e.t < 16).some((e) => Math.round(e.t) === 3),
+     "a note said on the a of one did not sound there");
+  mine = B.say(mine, "oct:3");
+  ok(ev(mine).filter((e) => Math.round(e.t) === 3)[0].n >
+     ev(B.say(base, "note:3")).filter((e) => Math.round(e.t) === 3)[0].n,
+     "the octave did not go up");
+  mine = B.say(B.say(mine, "acc:0"), "sld:0");
+  const one = ev(mine).filter((e) => e.t === 0)[0];
+  ok(one && one.acc === 1 && one.sld === 1, "the accent and the slide did not land on the one");
+  // said again, taken back
+  ok(!B.say(B.say(base, "note:3"), "note:3").fig.grid[3], "a note could not be taken out");
+  ok(!B.say(base, "note:3").fig.grid[7], "writing one note wrote another");
+  // ...and the figure can be forgotten
+  ok(B.say(B.say(base, "fig:acid"), "fig:none").fig === null, "the figure could not be dropped");
+}
+
 /* (d) EVERY WORD, AND EVERY ANSWER, LEAVES SOMETHING PLAYABLE */
 console.log("nothing a bassist can say makes an unplayable line");
 {

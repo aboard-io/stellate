@@ -2163,7 +2163,16 @@
       eighths:    [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
       sixteenths: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],
     };
-    const grid = STYLEGRID[g.bassStyle]
+    // A FIGURE — a bass line written out rather than described. `bassStyle`
+    // says how DENSE the line is and `bassGrid` where the genre's own notes
+    // fall; a figure says all of it at once and per step: where the note is,
+    // which octave it takes, whether it is accented and whether it slides
+    // into the next one. That last pair is what an acid line IS — the 303's
+    // accent and slide have been carried to the engine (to-engine reads
+    // e.acc/e.sld) since the bass chair existed, and nothing could ever set
+    // them. Absent = every stream below is what it was.
+    const fig = g.bassFig || null;
+    const grid = (fig && fig.grid) || STYLEGRID[g.bassStyle]
       || (subj.acc.some(Boolean) ? subj.acc : (g.bassGrid || QUARTERS));
     const sp = spans(grid);                                     // holds to the next hit
     // A BASS SCHEDULE, READ PER BAR — the shape `kits` already gives the
@@ -2263,7 +2272,8 @@
           const k = alt++;
           // octaves alternates register; fifths alternates the DEGREE, which is
           // the boogie/country figure rather than a doubling
-          const oct = g.bassStyle === "octaves" ? 12 * (k % 2) : 0;
+          const oct = fig && fig.oct ? at(fig.oct, i)
+            : g.bassStyle === "octaves" ? 12 * (k % 2) : 0;
           const deg = g.bassStyle === "fifths" && k % 2 ? r + 4 : r;
           // the root note is the chord's BASS pc — an inversion puts the third
           // under the band, folded beside the root so the register holds; with
@@ -2272,8 +2282,14 @@
             : deg !== r ? mp(deg, md) + c.borrow
             : fold(c.bassPc, c.rootPc);
           const hold = held ? held.get(b * N + i) : sp[i];
-          bar.push({ t: leant((b * N + i + swing(g, i)) / g.rate), dur: hold * bart / g.rate,
-                     n: n0 + 36 + oct + key, r, vel: vel(subj, i) });
+          const acc = fig && fig.acc ? at(fig.acc, i) : 0;
+          const sld = fig && fig.sld ? at(fig.sld, i) : 0;
+          const e = { t: leant((b * N + i + swing(g, i)) / g.rate), dur: hold * bart / g.rate,
+                      n: n0 + 36 + oct + key, r,
+                      vel: acc ? Math.min(9, vel(subj, i) + 3) : vel(subj, i) };
+          if (acc) e.acc = 1;
+          if (sld) e.sld = 1;
+          bar.push(e);
           barAt.push(i);
         }
       played = perform(bar, barAt, bg, b, N, { lane: "B" }) || played;

@@ -209,6 +209,30 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
     ok(ev > 0, "mixing the record silenced it");
   }
 
+  // ── THE PAGE SCROLLS ──
+  // Nothing on this page scrolled once the wall of chips came out, and a
+  // section asks six questions.
+  {
+    await page.evaluate(() => { const s = document.querySelectorAll(".dsec"); if (s[0]) s[0].click(); });
+    await page.waitForTimeout(400);
+    const sc = await page.evaluate(() => { const w = document.querySelector(".dwrap");
+      w.scrollTop = w.scrollHeight;
+      return { h: w.scrollHeight, view: w.clientHeight, top: w.scrollTop,
+               lastVisible: (() => { const a = [...document.querySelectorAll(".dask")].pop();
+                 if (!a) return false; const r = a.getBoundingClientRect();
+                 return r.top >= 0 && r.bottom <= window.innerHeight + 2; })() }; });
+    ok(sc.h > sc.view, "a section with six questions in it fits the screen exactly?");
+    ok(sc.top > 0, "the page will not scroll");
+    ok(sc.lastVisible, "the last question cannot be reached by scrolling");
+    // ...and the section offers the players' own words AND the mix
+    const whos = await page.evaluate(() => [...document.querySelectorAll(".dq")].map(x => x.textContent));
+    for (const w of ["the drums", "at the kit", "the bass", "the mix", "everybody"])
+      ok(whos.some(x => x.includes(w)), "a section does not ask about " + w);
+    await page.evaluate(() => { const b = [...document.querySelectorAll(".dpinkey")].pop();
+      if (b) b.click(); });
+    await page.waitForTimeout(250);
+  }
+
   // ── AND IT STILL SOUNDS ──
   let rms = 0;
   for (let i = 0; i < 22; i++) { await page.waitForTimeout(900);

@@ -58,9 +58,60 @@
     bass_lead: "a synth bass",
   };
 
+  /* ---------- A FIGURE: A BASS LINE, WRITTEN OUT ---------------------------
+     "Hold the root" and "eighths, driving" describe a line's DENSITY. What
+     an acid line is cannot be described that way — it is a specific figure:
+     these sixteenths, that octave jump, an accent there, a slide into the
+     next note. The 303's accent and slide have been carried all the way to
+     the engine since the bass chair existed (to-engine reads e.acc/e.sld)
+     and nothing in the vocabulary could set them, which is why every synth
+     bass we made was a straight pulse.
+
+     A figure is four 16-step vectors: where the notes are, what octave each
+     takes, which are accented, which slide into the next. The BAR below
+     lets you write your own the way the drummer writes a kit. */
+  const g16 = (...ix) => { const v = new Array(16).fill(0); for (const i of ix) v[i] = 1; return v; };
+  const o16 = (...ix) => { const v = new Array(16).fill(0); for (const i of ix) v[i] = 12; return v; };
+  const FIGURES = {
+    acid:    { w: "an acid line",
+               grid: [1,0,1,1, 0,1,1,0, 1,0,1,1, 0,1,0,1],
+               oct:  [0,0,0,12, 0,0,0,0, 0,0,12,0, 0,0,0,12],
+               acc:  [1,0,0,0, 0,1,0,0, 1,0,0,0, 0,0,0,1],
+               sld:  [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,0,0] },
+    acid2:   { w: "a rolling 303",
+               grid: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],
+               oct:  [0,0,0,0, 12,0,0,0, 0,0,0,0, 12,0,12,0],
+               acc:  [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+               sld:  [0,1,0,0, 0,1,1,0, 0,1,0,0, 0,1,0,0] },
+    offbeat: { w: "house offbeats", grid: g16(2, 6, 10, 14), acc: g16(2, 10) },
+    pump:    { w: "a pumping eighth", grid: g16(0, 2, 4, 6, 8, 10, 12, 14), acc: g16(0, 8) },
+    // the octave lands on the note, not between two — the alternation has to
+    // sit on the steps the grid actually plays
+    discoct: { w: "disco octaves", grid: g16(0, 2, 4, 6, 8, 10, 12, 14),
+               oct: o16(2, 6, 10, 14), acc: g16(0, 8) },
+    bubble:  { w: "a reggae bubble", grid: g16(3, 6, 11, 14), acc: g16(6, 14) },
+    stab:    { w: "one stab a bar", grid: g16(0), acc: g16(0) },
+    funk16:  { w: "a sixteenth pop", grid: [1,0,1,1, 0,0,1,0, 1,0,1,1, 0,1,0,0],
+               acc: g16(0, 8), oct: o16(6, 13) },
+  };
   const blank = () => ({ on: false, key: "C", changes: "fourchord", minor: false,
                          style: "root", instr: "finger_bass", oct: 0, artic: null,
-                         swing: null, bpm: 96, sit: 0, answers: {} });
+                         swing: null, bpm: 96, sit: 0, fig: null, answers: {} });
+  // the figure a model is playing, as vectors you can edit: a model with no
+  // figure of its own is asked what its STYLE would play, so writing a note
+  // into the bar starts from the line you can already hear
+  const Z16 = () => new Array(16).fill(0);
+  const STYLEFIG = {
+    pedal: g16(0, 4, 8, 12), walk: g16(0, 4, 8, 12), octaves: g16(0, 4, 8, 12),
+    fifths: g16(0, 4, 8, 12), eighths: g16(0, 2, 4, 6, 8, 10, 12, 14),
+    sixteenths: new Array(16).fill(1),
+  };
+  const figOf = (m) => m.fig || { grid: (STYLEFIG[STYLES[m.style]] || g16(0, 4, 8, 12)).slice(),
+                                  oct: Z16(), acc: Z16(), sld: Z16() };
+  const figSet = (m, f) => ({ ...m, fig: { grid: f.grid.slice(), oct: (f.oct || Z16()).slice(),
+                                           acc: (f.acc || Z16()).slice(), sld: (f.sld || Z16()).slice() } });
+  const sameFig = (a, b2) => JSON.stringify([a.grid, a.oct, a.acc, a.sld]) ===
+    JSON.stringify([b2.grid, b2.oct || Z16(), b2.acc || Z16(), b2.sld || Z16()]);
 
   /* ---------- the words, beyond the interview ---------- */
   const V = {};
@@ -69,6 +120,47 @@
 
   add("start", "start", ["pick up the bass"], (m) => !m.on,
       (m) => ({ ...m, on: true }), () => "a bass, in C, holding the root");
+
+  // the figures, by name
+  for (const [k, f] of Object.entries(FIGURES))
+    add("fig:" + k, "the figure", [f.w], (m) => m.on && !sameFig(figOf(m), f),
+        (m) => figSet(m, f), () => f.w, (m) => sameFig(figOf(m), f));
+  add("fig:none", "the figure", ["forget the figure"], (m) => m.on && !!m.fig,
+      (m) => ({ ...m, fig: null }), () => "back to the line, no figure",
+      (m) => !m.fig);
+
+  // THE BAR — a bass line built one note at a time, the way the drummer
+  // builds a kit. Sixteen places, and three MARKS a bass note can carry that
+  // no density word can say: which octave it takes, whether it is accented,
+  // whether it slides into the next.
+  const COUNT = ["one", "two", "three", "four"], SUB = ["", "e", "and", "a"];
+  const stepWord = (i) => (i % 4 === 0) ? "on " + COUNT[i >> 2]
+    : "on the " + SUB[i % 4] + " of " + COUNT[i >> 2];
+  for (let i = 0; i < 16; i++) {
+    add("note:" + i, "the bar", [stepWord(i)], (m) => m.on,
+        (m) => { const f = figOf(m); const g2 = f.grid.slice(); g2[i] = g2[i] ? 0 : 1;
+                 return figSet(m, { ...f, grid: g2 }); },
+        (m) => (figOf(m).grid[i] ? "no note " : "a note ") + stepWord(i),
+        (m) => !!figOf(m).grid[i]);
+    add("oct:" + i, "the octave", ["octave up " + stepWord(i)],
+        (m) => m.on && !!figOf(m).grid[i],
+        (m) => { const f = figOf(m); const o = f.oct.slice(); o[i] = o[i] ? 0 : 12;
+                 return figSet(m, { ...f, oct: o }); },
+        (m) => (figOf(m).oct[i] ? "back down " : "octave up ") + stepWord(i),
+        (m) => !!figOf(m).oct[i]);
+    add("acc:" + i, "the accents", ["accent it " + stepWord(i)],
+        (m) => m.on && !!figOf(m).grid[i],
+        (m) => { const f = figOf(m); const a2 = f.acc.slice(); a2[i] = a2[i] ? 0 : 1;
+                 return figSet(m, { ...f, acc: a2 }); },
+        (m) => (figOf(m).acc[i] ? "no accent " : "accent ") + stepWord(i),
+        (m) => !!figOf(m).acc[i]);
+    add("sld:" + i, "the slides", ["slide out of " + stepWord(i)],
+        (m) => m.on && !!figOf(m).grid[i],
+        (m) => { const f = figOf(m); const s2 = f.sld.slice(); s2[i] = s2[i] ? 0 : 1;
+                 return figSet(m, { ...f, sld: s2 }); },
+        (m) => (figOf(m).sld[i] ? "no slide " : "slide out of ") + stepWord(i),
+        (m) => !!figOf(m).sld[i]);
+  }
 
   for (const [k, w] of Object.entries(STYLEWORD))
     add("style:" + k, "the line", [w], (m) => m.on && m.style !== k,
@@ -189,6 +281,7 @@
       bassStyle: STYLES[m.style], key: (KEYS[m.key] || 0) + 12 * (m.oct || 0),
       mode: MODES ? (m.minor ? MODES.dorian : MODES.ionian) : undefined,
       kit: {}, artic: m.artic || undefined, bassArtic: m.artic || undefined,
+      bassFig: m.fig || undefined,
       // behind the beat or on top of it, in ninths of a step
       bassNudge: m.sit ? m.sit * 2 : undefined,
       // a bass with a tone of its own: without this the chair runs on the
@@ -201,5 +294,6 @@
   }
 
   return { blank, V, catalog, offered, say, says, toGenre, decisions, nextAsk,
-           answer, CHANGES, CHANGEWORD, KEYS, STYLES, STYLEWORD, INSTRUMENTS };
+           answer, CHANGES, CHANGEWORD, KEYS, STYLES, STYLEWORD, INSTRUMENTS,
+           FIGURES, figOf, figSet, stepWord };
 });

@@ -54,7 +54,9 @@ function push(first) {
   for (const [chan, vals] of Object.entries(Band.mixOf(model)))
     for (const [k, v] of Object.entries(vals)) setMixOffset(chan, k, v);
   const boxes = song.map((s2, i) => ({ ...NuSong.emptyBox(),
-    stack: [{ g: GKP + i, slots: [0] }], len: s2.bars, role: s2.role, cue: s2.role }));
+    stack: [{ g: GKP + i, slots: [0] }], len: s2.bars, role: s2.role, cue: s2.role,
+    // ...and the engineer's hand on THIS section: the box's own strip
+    ...(s2.box || {}) }));
   if (first) adoptSong({ v: NuSong.VERSION, bpm: model.song.bpm, genres: {},
                          slots: [NuSong.blank()], song: boxes }, "band");
   else {

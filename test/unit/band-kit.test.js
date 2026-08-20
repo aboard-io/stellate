@@ -131,7 +131,7 @@ console.log("what happens in the chorus stays in the chorus");
   let m = Band.answer(on(), "arranger", "form", Band.FORMS.pop.w);
   const before = Band.toSong(m, MODES).map((s) => sig(play(s.genre)));
   const asks = Band.sectionAsks(m, 1);
-  ok(asks.map((a) => a.id).join(",") === "drums,dwords,bass,bwords,band",
+  ok(asks.map((a) => a.id).join(",") === "drums,dwords,bass,bwords,mix,band",
      "a section asks " + asks.map((a) => a.id).join(","));
   let movers = 0;
   for (const a of asks) {
@@ -437,13 +437,19 @@ console.log("every record says what its bass sounds like");
        key + ": the record's bass tone does not reach the section");
     ok(g.bassArtic === gk.artic, key + ": the record's note length does not reach the section");
     // a plucked record really is shorter than a ringing one, in the render
-    const first = play(g).bass[0];
+    const notes = play(g).bass;
+    const first = notes[0];
     ok(first && first.dur > 0, key + ": the first bass note has no length");
-    const gap = 4;                                   // a quarter, in steps
+    // THE GAP IS THE RECORD'S OWN. A quarter is not the unit here — a reggae
+    // bubble puts its notes three sixteenths apart, and a note that fills a
+    // three-step gap is as legato as one that fills four.
+    const gap = notes.length > 1 ? notes[1].t - notes[0].t : 4;
     if (gk.artic === "staccato") ok(first.dur < gap * 0.7,
-      key + ": a staccato bass note lasts " + first.dur.toFixed(2) + " of a " + gap + "-step gap");
+      key + ": a staccato bass note lasts " + first.dur.toFixed(2) +
+      " of a " + gap.toFixed(2) + "-step gap");
     if (gk.artic === "legato") ok(first.dur >= gap * 0.9,
-      key + ": a ringing bass note lasts only " + first.dur.toFixed(2));
+      key + ": a ringing bass note lasts " + first.dur.toFixed(2) +
+      " of a " + gap.toFixed(2) + "-step gap");
   }
   // ...and the player still outranks the record
   const m = Band.answer(on(), "arranger", "genre", "a house record");
@@ -511,6 +517,107 @@ console.log("the engineer has the fourth chair, and it lands on the desk");
   ok(mix["unit:snare"] && mix["unit:snare"].del > 0 && mix["unit:snare"].rev > 0,
      "two answers on the snare did not stack: " + JSON.stringify(mix["unit:snare"]));
   ok(mix.drums && mix.drums.rev === 0.5, "the room went missing when the snare was set");
+}
+
+/* (m) THE FORMS ARE THE RECORD'S OWN, and so is the line */
+// A house record has no bridge. Song forms and dance forms are different
+// shapes with different words, and offering "AABA" for a twelve-inch was the
+// same mistake as offering a jazz ride to a punk drummer.
+console.log("a house record has no bridge, and every record brings its own line");
+{
+  for (const [key, gk] of Object.entries(Band.GENRES)) {
+    ok(Array.isArray(gk.forms) && gk.forms.length >= 2,
+       key + " offers " + ((gk.forms || []).length) + " forms");
+    for (const f of gk.forms) ok(!!Band.FORMS[f], key + ": there is no form called " + f);
+    const m = Band.answer(on(), "arranger", "genre", gk.w);
+    const fq = Band.seatDecisions(m, "arranger").find((d) => d.id === "form");
+    ok(fq.opts.length === gk.forms.length,
+       key + ": the form question offers " + fq.opts.length + " of " + gk.forms.length);
+    for (const o of fq.opts)
+      ok(gk.forms.some((f) => Band.FORMS[f].w === o.w),
+         key + ": \"" + o.w + "\" is not a form this record has");
+    // every form it names plays, section by section, with its changes called
+    for (const f of gk.forms) {
+      let m2 = Band.answer(m, "arranger", "form", Band.FORMS[f].w);
+      for (const r of Band.rolesIn(m2)) {
+        const d = Band.seatDecisions(m2, "arranger").find((x) => x.id === "chg:" + r);
+        ok(!!d, key + "/" + f + ": nobody is asked for the " + r + " changes");
+        if (d) m2 = Band.answer(m2, "arranger", d.id, d.opts[0].w);
+      }
+      const secs = Band.toSong(m2, MODES);
+      ok(secs.length === Band.FORMS[f].secs.length, key + "/" + f + ": wrong length");
+      for (const s2 of secs) {
+        const ev = play(s2.genre);
+        ok(ev.drums.every((e) => Number.isFinite(e.t)) && ev.bass.every((e) => Number.isFinite(e.n)),
+           key + "/" + f + "/" + s2.role + " is not finite");
+        // every role a form uses has a part of its own, or is the plain one
+        ok(s2.role === "verse" || s2.role === "head" || Band.ROLE[s2.role],
+           key + "/" + f + ": nobody knows what a " + s2.role + " is");
+      }
+    }
+  }
+  // THE LINE: a figure is a written-out bass part, and a record brings one
+  const B2 = Band.B;
+  for (const [key, gk] of Object.entries(Band.GENRES)) {
+    if (!gk.fig) continue;
+    ok(!!B2.FIGURES[gk.fig], key + ": there is no figure called " + gk.fig);
+    const g = Band.toSong(Band.answer(on(), "arranger", "genre", gk.w), MODES)[0].genre;
+    ok(g.bassFig && JSON.stringify(g.bassFig.grid) === JSON.stringify(B2.FIGURES[gk.fig].grid),
+       key + ": the record's figure does not reach the section");
+    const notes = play(g).bass;
+    ok(notes.length > 0, key + ": the figure plays nothing");
+    ok(notes.some((e) => e.acc), key + ": the figure has no accents in the render");
+  }
+  // ...and an acid line is what an acid line is: sixteenths, octaves, slides
+  const acid = B2.FIGURES.acid;
+  const g = { ...Band.toSong(Band.answer(on(), "arranger", "genre", "a techno record"), MODES)[0].genre };
+  const ev = play(g).bass;
+  ok(ev.some((e) => e.sld), "an acid line with nothing sliding");
+  ok(new Set(ev.map((e) => e.n)).size > 1, "an acid line on one note");
+  ok(ev.length >= acid.grid.filter(Boolean).length, "the acid line lost notes on the way");
+}
+
+/* (n) A SECTION CAN BE MIXED, TOO */
+// "The engineer doesn't seem to be able to adjust sections." A section's own
+// strip is not the offset board — it is the box fields nukernel's song has
+// always carried, composed under everything else by audio/desk.js.
+console.log("a breakdown can go wet without the verse moving");
+{
+  let m = Band.answer(Band.answer(on(), "arranger", "genre", "a house record"),
+                      "arranger", "form", Band.FORMS.twelve.w);
+  const boxes = () => Band.toSong(m, MODES).map((s2) => JSON.stringify(s2.box));
+  const before = boxes();
+  const ask = Band.sectionAsks(m, 1).find((a) => a.id === "mix");
+  ok(!!ask && ask.opts.length >= 6, "a section is offered " +
+     (ask ? ask.opts.length : 0) + " mix moves");
+  ok(ask.opts.some((o) => o.answered), "a section arrives with no mix at all");
+  for (const o of ask.opts) {
+    const m2 = Band.setSection(m, 1, "mix", o.key);
+    const after = Band.toSong(m2, MODES);
+    for (let i = 0; i < after.length; i++)
+      if (i !== 1) ok(JSON.stringify(after[i].box) === before[i],
+        "\"" + o.w + "\" on the build changed section " + i);
+    const box = after[1].box;
+    if (o.key !== "same") {
+      ok(box && Object.keys(box).length > 0, "\"" + o.w + "\" said nothing to the desk");
+      for (const [k, v] of Object.entries(box || {})) {
+        ok(["lvl", "rev", "echo", "fx", "pan", "verb"].includes(k),
+           "\"" + o.w + "\": a box has no \"" + k + "\"");
+        if (k === "lvl") ok(["hush", "back", "norm", "fwd"].includes(v), "lvl " + v);
+        if (k === "rev" || k === "echo")
+          ok(["none", "touch", "some", "wet", "drown"].includes(v), k + " " + v);
+        if (k === "fx") ok(Array.isArray(v), "fx is not a list");
+      }
+    }
+    // ...and mixing a section changes nobody's part
+    ok(JSON.stringify(after.map((x) => sig(play(x.genre)))) ===
+       JSON.stringify(Band.toSong(m, MODES).map((x) => sig(play(x.genre)))),
+       "\"" + o.w + "\" changed what somebody plays");
+  }
+  // a breakdown is wet and an outro is back before anybody says so
+  const secs = Band.toSong(m, MODES);
+  ok(secs.find((s2) => s2.role === "break").box, "a breakdown arrives dry as the verse");
+  ok(secs[secs.length - 1].box, "the outro arrives at full level");
 }
 
 /* (e) NOTHING NUMERIC CARRIES A WORD */
