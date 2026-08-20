@@ -14,10 +14,11 @@
     typeof require !== "undefined" ? require("./bass-kit.js") : root.NuBass,
     typeof require !== "undefined" ? require("./keys-kit.js") : root.NuKeys,
     typeof require !== "undefined" ? require("./ideas-kit.js") : root.NuIdeas,
-    typeof require !== "undefined" ? require("./guitar-kit.js") : root.NuGuitar);
+    typeof require !== "undefined" ? require("./guitar-kit.js") : root.NuGuitar,
+    typeof require !== "undefined" ? require("./askable.js") : root.NuAskable);
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuBand = api;
-})(typeof self !== "undefined" ? self : this, function (D, B, Ky, Id, Gt) {
+})(typeof self !== "undefined" ? self : this, function (D, B, Ky, Id, Gt, Ask) {
   "use strict";
 
   const SEATS = ["arranger", "drums", "bass", "keys", "guitar", "engineer"];
@@ -640,13 +641,24 @@
   // the MODES table toSong needs, remembered from the first call the page or
   // a gate makes — the kits are pure and this file never imports genres.js
   let MODESREF = null;
+  const HEARD = typeof WeakMap !== "undefined" ? new WeakMap() : null;
   const heardOpts = (m, seat, d) => {
+    if (HEARD) {
+      let per = HEARD.get(m);
+      if (!per) HEARD.set(m, per = {});
+      const key = seat + "\u0000" + d.id;
+      if (per[key]) return per[key];
+      return (per[key] = heardOptsNow(m, seat, d));
+    }
+    return heardOptsNow(m, seat, d);
+  };
+  const heardOptsNow = (m, seat, d) => {
     // A NARROWING QUESTION IS WORTH ASKING BEFORE IT CHANGES ANYTHING.
     // "What decade is it?" moves no note until the three answers collapse to
     // one record — and the pruner, which drops answers that change nothing,
     // ate the whole front door. Its options are already only the ones that
     // leave a record standing, which is the same law by a different route.
-    if (d.three) return d.opts;
+    if (d.three || d.cheap) return d.opts;   // distinct by construction
     const now = sigOf(m);
     const seen = new Map();
     return d.opts.filter((o) => {
@@ -659,15 +671,49 @@
     });
   };
 
+  // MEMOISED PER MODEL. A model is immutable — every word returns a new
+  // object — so a chair's question list for one model is a fact, and both
+  // the page (five chairs, every draw) and the gates (a walk that asks the
+  // same model several times) recompute it otherwise. Measured: nextAsk was
+  // 6.8 ms, and most of it was rebuilding lists it had already built.
+  const DEC = typeof WeakMap !== "undefined" ? new WeakMap() : null;
   const seatDecisions = (m, seat) => {
-    if (seat === "arranger") return narrow(m, seat, arrDecisions(m));
+    if (DEC) {
+      let per = DEC.get(m);
+      if (!per) DEC.set(m, per = {});
+      if (per[seat]) return per[seat];
+      const out = seatDecisionsNow(m, seat);
+      per[seat] = out;
+      return out;
+    }
+    return seatDecisionsNow(m, seat);
+  };
+  // THE ANNOTATED KNOBS. One row per kernel field (askable.js) says which
+  // chair is asked and what the answers are; the value lands on the song and
+  // is merged into every section's genre. Distinct by construction — one
+  // field, distinct values — so the pruner never has to render a section to
+  // know two of these answers differ, which is what makes them free.
+  const knobDecisions = (m, seat) => Ask.forRole(seat).map((row) => ({
+    id: "knob:" + row.field, seat, ask: row.ask, knob: row.field, cheap: true,
+    answered: ((m.song.knobs || {}).__said || {})[row.field] || null,
+    opts: row.opts.map(([w, v]) => ({ w,
+      answered: ((m.song.knobs || {}).__said || {})[row.field] === w,
+      active: JSON.stringify((m.song.knobs || {})[row.field]) === JSON.stringify(v),
+      apply: (s2) => ({ ...s2,
+        knobs: { ...(s2.knobs || {}), [row.field]: v,
+                 __said: { ...((s2.knobs || {}).__said || {}), [row.field]: w } } }) })),
+  }));
+
+  const seatDecisionsNow = (m, seat) => {
+    if (seat === "arranger")
+      return [...narrow(m, seat, arrDecisions(m)), ...knobDecisions(m, seat)];
     if (seat === "engineer") return engDecisions(m);
     const drop = TAKEN[seat] || [];
     const ds = seat === "drums" ? D.decisions(m.drums)
       : seat === "keys" ? Ky.decisions(m.keys)
       : seat === "guitar" ? Gt.decisions(m.guitar) : B.decisions(m.bass);
-    return narrow(m, seat, ds.filter((d) => !drop.includes(d.id))
-      .map((d) => ({ ...d, seat })));
+    return [...narrow(m, seat, ds.filter((d) => !drop.includes(d.id))
+      .map((d) => ({ ...d, seat }))), ...knobDecisions(m, seat)];
   };
   // every seat's questions, with the answers that would change nothing
   // dropped — and a question left with one answer dropped whole
@@ -704,6 +750,11 @@
     return null;
   };
   function answer(m, seat, id, w) {
+    if (id.startsWith("knob:")) {
+      const d = knobDecisions(m, seat).find((x) => x.id === id);
+      const o = d && d.opts.find((x) => x.w === w);
+      return o ? { ...m, song: o.apply(m.song) } : m;
+    }
     if (seat === "arranger") {
       const d = arrDecisions(m).find((x) => x.id === id);
       const o = d && d.opts.find((x) => x.w === w);
@@ -750,6 +801,12 @@
       return { ...m, eng: { ...(m.eng || {}), [id]: w } };
     }
     if (seat === "drums") return { ...m, drums: D.answer(m.drums, id, w) };
+    // an annotated knob answers onto the SONG, whichever chair was asked
+    if (id.startsWith("knob:")) {
+      const d = knobDecisions(m, seat).find((x) => x.id === id);
+      const o = d && d.opts.find((x) => x.w === w);
+      return o ? { ...m, song: o.apply(m.song) } : m;
+    }
     if (seat === "keys") return { ...m, keys: Ky.answer(m.keys, id, w) };
     if (seat === "guitar") return { ...m, guitar: Gt.answer(m.guitar, id, w) };
     return { ...m, bass: B.answer(m.bass, id, w) };
@@ -852,6 +909,10 @@
         if (bsec.oct) g.key = g.key + 12 * bsec.oct;
         if (bsec.out) g.nobass = true;
       }
+      // ...and the annotated knobs, over whatever the chairs made: they are
+      // the kernel's own fields, asked by name
+      g = Ask.merge(g, (m.song.knobs || {}));
+      delete g.__said;
       // ...and what the band does to what it played
       const pp = (SECPIPE[per.pipe] || {}).p;
       if (pp) g.pipes = pp;
@@ -1172,10 +1233,11 @@
       words: [], word: () => [],
     };
   }
+  // (the annotated knobs are merged in toSong, over whatever the chairs made)
 
   return { SEATS, TAKEN, FORMS, CALLED, GENRES, SPACE, ROLE, ENG, SECMIX, SECMOVE, mixOf,
            resetSeat,
-           genreOf, rolesIn, asked, pending, sigOf, secSigOf, survivors, FIELDS3,
+           genreOf, rolesIn, asked, pending, sigOf, secSigOf, survivors, FIELDS3, Ask,
            secWords, partOf,
            blank, decisions, seatDecisions,
            nextAsk, nextAnywhere, answer, catalog, say, says, toGenre, toSong,

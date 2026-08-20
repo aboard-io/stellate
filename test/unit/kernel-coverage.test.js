@@ -42,6 +42,15 @@ const DATA = [...READS].filter((r) => !isFn(r)).sort();
 /* ---------- what the graph writes --------------------------------------- */
 // every answer, one hop: what did the section genre come out as, and which
 // fields moved? (Plus the melody's own genre, which is a layer of its own.)
+// THE DECLARATION IS THE MAP; THE WALK IS A CROSS-CHECK. Before askable.js
+// the only way to know what the graph reached was to walk every record's
+// every chair's every answer and diff the renders — 16 s, and it was the
+// source of truth. Now the annotations SAY which field each question writes
+// and the gate proves each one lands (above), so the walk exists to catch
+// what the table cannot know: fields the kit files write as a side effect.
+// Three records is enough for that and it is written down here rather than
+// silently sampled — the roles differ, the vocabularies do not.
+const WALKED = ["a house record", "a rock record", "a jazz date"];
 const RECORDS = Object.values(Band.GENRES).map((g) => g.w);
 const fieldsOf = (m) => {
   const out = {};
@@ -57,7 +66,7 @@ const note = (a, b) => {
   for (const k2 of new Set([...Object.keys(a), ...Object.keys(b)]))
     if (a[k2] !== b[k2]) REACHED.add(k2.replace(/^mel:/, ""));
 };
-for (const rec of RECORDS) {
+for (const rec of WALKED) {
   const seed = Band.answer(on(), "arranger", "genre", rec);
   const base = fieldsOf(seed);
   note(fieldsOf(on()), base);                       // the record itself moves fields
@@ -86,35 +95,41 @@ for (const rec of RECORDS) {
 // WHAT NOBODY CAN TURN, and why. Moving a row out of here means a question
 // somewhere now reaches it; adding one means writing down why it cannot be
 // asked. Neither may happen silently.
-const UNREACHED = {
-  // ...because it is not a musical decision
-  kitSeed:  "the dice, not a choice: the seed a genre's own kit chance draws from",
-  anchor:   "an identity field the daw's own catalog uses; a session has no anchor",
-  // ...because something else owns it
-  swing:    "the SONG's, not the genre's — the word in a numeric field was the " +
-            "NaN that stopped the engine dead, so it is routed through setSwing",
-  bassGrid: "superseded by `bassFig`, which says where the notes fall AND which " +
-            "octave, accent and slide each one takes",
-  // ...because nobody has written the question yet. THIS IS THE WORK LIST.
-  scale:    "TODO — melodies default to PENT and nothing can say otherwise",
-  stress:   "TODO — metrical accent, the performance layer the drummer has " +
-            "(humanize) and no pitched chair does",
-  phrase:   "TODO — the line's own arch, same layer",
-  touch:    "TODO — the HAND: seeded micro-timing and micro-level, same layer",
-  orn:      "TODO — a genre's ornament policy (passing tones, grace notes)",
-  ghost:    "TODO — a ghost line under the part",
-  maxHold:  "TODO — how long a note may hold, which is what makes a rest real",
-  kitProb:  "TODO — per-lane chance; the drummer says it per STEP (?lane) but " +
-            "cannot say 'sometimes' about a whole lane",
-  hand:     "TODO — the kit's hand (exact vs human), one notch above humanize",
-  fill:     "TODO — the genre's own last-bar fill, which the drummer writes per bar",
-  diatonic: "TODO — hold the line to the mode",
-  incMode:  "TODO — how the line's `inc` steps are read",
-  incClamp: "TODO — the ceiling on those steps",
-};
+// WHERE THE ANSWER LIVES NOW: askable.js, one row per kernel field saying
+// which musical role owns it — and, for a field no question should reach,
+// why not. This gate reads that table rather than carrying its own, which is
+// the difference between a measurement and a declaration.
+const Ask = require("../../nukernel/askable.js");
+const UNREACHED = { ...Ask.NOT_ASKED, ...Ask.WRITTEN };
 
 console.log("the kernel reads " + READS.size + " genre fields: " + DATA.length +
             " data, " + FNS.length + " called as functions");
+{
+  // THE ANNOTATIONS THEMSELVES: every row names a field the kernel reads,
+  // a role that exists, a question, and at least two distinct values.
+  for (const row of Ask.ASKABLE) {
+    ok(DATA.includes(row.field) || FNS.includes(row.field),
+       "askable row `" + row.field + "` names a field the kernel does not read");
+    ok(Band.SEATS.includes(row.role), row.field + " is owned by " + row.role +
+       ", which is not a chair");
+    ok(/\?$/.test(row.ask), row.field + ": \"" + row.ask + "\" is not a question");
+    ok(row.opts.length >= 2, row.field + " offers " + row.opts.length + " answer(s)");
+    const vals = row.opts.map(([, v]) => JSON.stringify(v));
+    ok(new Set(vals).size === vals.length, row.field + " offers the same value twice");
+    const words = row.opts.map(([w]) => w);
+    ok(new Set(words).size === words.length, row.field + " says the same word twice");
+    // ...and answering it really reaches the kernel field
+    const m = Band.answer(on(), row.role, "knob:" + row.field, row.opts[1][0]);
+    const g = Band.toSong(m, MODES)[0].genre;
+    ok(JSON.stringify(g[row.field]) === JSON.stringify(row.opts[1][1]),
+       row.field + ": answering \"" + row.opts[1][0] + "\" put " +
+       JSON.stringify(g[row.field]) + " on the genre");
+  }
+  console.log("    " + Ask.ASKABLE.length + " annotated knobs across " +
+              new Set(Ask.ASKABLE.map((r) => r.role)).size + " roles · the " +
+              "side-effect walk covers " + WALKED.length + " of " + RECORDS.length +
+              " records (" + WALKED.join(", ") + ")");
+}
 {
   // the six function fields: supplied from tables by the chairs, and that is
   // the right shape — a finite question tree cannot name an arbitrary function
@@ -127,10 +142,15 @@ console.log("the kernel reads " + READS.size + " genre fields: " + DATA.length +
   ok(missing.length === 0,
      "the kernel reads " + missing.join(", ") + " and no question reaches it — " +
      "either write the question or write down why it cannot be asked");
-  const stale = Object.keys(UNREACHED).filter((f) => REACHED.has(f));
+  // NOT_ASKED must really be unreached; WRITTEN must really be written. Two
+  // different claims, and mixing them is how a gap hides as a decision.
+  const stale = Object.keys(Ask.NOT_ASKED).filter((f) => REACHED.has(f));
   ok(stale.length === 0,
-     "listed as unreachable but the graph writes it now: " + stale.join(", ") +
-     " — take the row out");
+     "listed as not-asked but the graph writes it: " + stale.join(", ") +
+     " — it belongs in WRITTEN, or somebody made it askable");
+  const unwritten = Object.keys(Ask.WRITTEN).filter((f) => !REACHED.has(f));
+  ok(unwritten.length === 0,
+     "listed as written-without-a-question but nothing writes it: " + unwritten.join(", "));
   const gone = Object.keys(UNREACHED).filter((f) => !DATA.includes(f) && !FNS.includes(f));
   ok(gone.length === 0, "listed as unreachable but the kernel no longer reads it: " +
      gone.join(", "));
@@ -144,7 +164,7 @@ console.log("the kernel reads " + READS.size + " genre fields: " + DATA.length +
    about what a musician can ask for. */
 {
   const seen = { prog: new Set(), kit: new Set(), part: new Set(), instr: new Set() };
-  for (const rec of RECORDS) {
+  for (const rec of RECORDS) {                      // the value-level pass is cheap
     const seed = Band.answer(on(), "arranger", "genre", rec);
     for (const s of Band.toSong(seed, MODES)) {
       for (const slot of (s.genre.prog || []))
@@ -171,13 +191,13 @@ console.log("the kernel reads " + READS.size + " genre fields: " + DATA.length +
   const pct = Math.round(got.length / DATA.length * 100);
   console.log("    reached by answering questions: " + got.length + "/" + DATA.length +
               " (" + pct + "%)");
-  console.log("    not asked, on purpose: " +
-              Object.keys(UNREACHED).filter((f) => !UNREACHED[f].startsWith("TODO")).join(", "));
-  console.log("    not asked YET (" + todo.length + "): " + todo.map(([f]) => f).join(", "));
+  console.log("    not asked, on purpose: " + Object.keys(Ask.NOT_ASKED).join(", "));
+  console.log("    written without a question: " + Object.keys(Ask.WRITTEN).join(", "));
+  if (todo.length) console.log("    not asked YET: " + todo.map(([f]) => f).join(", "));
   // THE RATCHET: coverage may go up and may not go down. A number in a gate
   // is a promise; this is the one that keeps the graph growing toward the
   // kernel instead of away from it.
-  ok(got.length >= 21, "coverage fell to " + got.length + " of " + DATA.length +
+  ok(got.length >= 28, "coverage fell to " + got.length + " of " + DATA.length +
      " — the graph reaches less of the kernel than it did");
 }
 

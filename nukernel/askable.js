@@ -1,0 +1,111 @@
+// nukernel/askable.js — THE GRAPH AS ANNOTATIONS ON THE KERNEL.
+//
+// The chairs grew the other way round: each kit file knew its own words and
+// wrote whatever kernel fields it happened to need, and "how much of the
+// kernel can you reach by answering questions" could only be answered by
+// walking the whole graph and diffing renders (test/unit/kernel-coverage).
+// That works, but it is a measurement of an accident.
+//
+// This is the inversion: one row per kernel field, saying WHO owns it (which
+// musical role is asked), WHAT the question is, and WHICH answers exist —
+// or, for a field no question should reach, why not. The chairs become views
+// over these rows, the coverage gate reads the table instead of inferring
+// it, and a kernel that grows a knob has an obvious place to declare it.
+//
+// WHAT STAYS IN THE KITS: content. A drum groove, a bass figure, a melodic
+// cell and a keys phrase are not knob VALUES, they are music — sixteen-step
+// vectors somebody wrote. The annotations cover the kernel's SCALAR and
+// ENUM surface, which is exactly the part a question tree can be complete
+// over. That split is the honest one, and it is why "complete access via
+// Q&A" is true of the fields and not of the value space.
+//
+// A row's `opts` are distinct BY CONSTRUCTION (distinct values on one
+// field), which is also what makes them cheap: the pruner does not need to
+// render a section to know two answers differ.
+(function (root, factory) {
+  const api = factory();
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  else root.NuAskable = api;
+})(typeof self !== "undefined" ? self : this, function () {
+  "use strict";
+
+  // the kernel's own alphabets, by name (kernel.js PENT / MODE and friends)
+  const SCALES = {
+    pent:  { w: "the pentatonic", v: [0, 3, 5, 7, 10] },
+    mode:  { w: "the whole mode", v: [0, 2, 3, 5, 7, 8, 10] },
+    blues: { w: "the blues scale", v: [0, 3, 5, 6, 7, 10] },
+    major: { w: "a major pentatonic", v: [0, 2, 4, 7, 9] },
+  };
+
+  // ONE ROW PER FIELD. `role` is the chair that is asked; `ask` is the
+  // question; `opts` are [word, value]. Everything here lands on the genre
+  // the section hands the kernel.
+  const ASKABLE = [
+    { field: "stress", role: "drums", ask: "how much does the band lean on the beat?",
+      opts: [["dead straight", 0], ["a little", 0.35], ["hard on the one", 0.8]] },
+    { field: "touch", role: "drums", ask: "how human is the hand?",
+      opts: [["a machine", 0], ["a hand", 0.35], ["loose", 0.75]] },
+    { field: "phrase", role: "keys", ask: "does the line breathe?",
+      opts: [["flat", 0], ["a little", 0.4], ["it arches", 0.85]] },
+    { field: "maxHold", role: "keys", ask: "how long may a note hold?",
+      opts: [["let them ring", 0], ["a beat", 4], ["half a bar", 8]] },
+    { field: "orn", role: "guitar", ask: "how much decoration?",
+      opts: [["none", null], ["a grace here and there", { grace: 0.22 }],
+             ["passing notes too", { grace: 0.25, approach: 0.3, pass: 0.3 }],
+             ["ornamented", { grace: 0.4, approach: 0.4, pass: 0.4, roll: 0.2 }]] },
+    { field: "scale", role: "arranger", ask: "what notes is the tune made of?",
+      opts: Object.values(SCALES).map((s) => [s.w, s.v]) },
+    { field: "diatonic", role: "arranger", ask: "does the line follow the chords?",
+      opts: [["it follows the chords", false], ["it stays in the key", true]] },
+    { field: "hand", role: "drums", ask: "is the kit played or programmed?",
+      opts: [["played", null], ["programmed", "exact"]] },
+  ];
+
+  // ...and the fields no question reaches, with the reason. A row here is a
+  // decision, not an oversight — the coverage gate reads this table, so a
+  // field that is neither askable nor listed fails.
+  const NOT_ASKED = {
+    kitSeed:  "the dice, not a choice: the seed a genre's kit chance draws from",
+    anchor:   "an identity field the daw's catalog uses; a session has no anchor",
+    swing:    "the SONG's, not the genre's — the word in a numeric field was the " +
+              "NaN that stopped the engine dead, so it is routed through setSwing",
+    bassGrid: "superseded by `bassFig`, which says where the notes fall AND which " +
+              "octave, accent and slide each one takes",
+    kitProb:  "per-LANE chance, and the drummer already says it per STEP (?lane); " +
+              "a lane-wide 'sometimes' would be a second way to say one thing",
+    fill:     "the genre's own last-bar fill — the drummer writes fills per BAR, " +
+              "which is the same decision with a place attached",
+    ghost:    "takes a WORD LIST (an operator phrase), not a value: it is content, " +
+              "and content lives in a kit file",
+    incMode:  "how the line's `inc` steps are read — an internal of the line " +
+              "writer, and nothing in this box writes `inc`",
+    incClamp: "the ceiling on those same steps, and unreachable for the same reason",
+  };
+
+  // ...and a third kind: fields the chairs WRITE without anybody being asked.
+  // Not a gap and not a question — a consequence. (`prog` is the interesting
+  // one: the melody layer writes it to pair the changes into a longer
+  // phrase, so the FIELD is covered while chord QUALITY, which is what
+  // `prog` is for, is still unsayable. The coverage gate holds that
+  // separately, at the value level, rather than letting the field count as
+  // done.)
+  const WRITTEN = {
+    prog:  "written by the melody layer, pairing the changes into a longer " +
+           "phrase. Chord QUALITY (q/inv/borrow) is the real gap and has its " +
+           "own value-level check in test/unit/kernel-coverage.test.js",
+    label: "the genre's NAME, written by the chairs and never chosen",
+  };
+
+  const forRole = (role) => ASKABLE.filter((r) => r.role === role);
+  // the value a word names, for one row
+  const valueOf = (row, w) => { const o = row.opts.find((x) => x[0] === w); return o ? o[1] : undefined; };
+  // every knob a song carries, as the genre fields the kernel reads
+  const merge = (genre, knobs) => {
+    if (!knobs) return genre;
+    const out = { ...genre };
+    for (const [f, v] of Object.entries(knobs)) if (v !== undefined && v !== null) out[f] = v;
+    return out;
+  };
+
+  return { ASKABLE, NOT_ASKED, WRITTEN, SCALES, forRole, valueOf, merge };
+});

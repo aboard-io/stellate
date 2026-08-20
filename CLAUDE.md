@@ -755,6 +755,27 @@ echo*. Not a player's decision and not the desk's. Measured: 96 events become
 151 in thirds, 192 with the echo, 292 with both, other sections do not move,
 and nobody's phrase is rewritten — a pipe is what happens to the notes after.
 
+THE GRAPH IS ANNOTATIONS ON THE KERNEL, PER ROLE (`nukernel/askable.js`).
+The chairs grew the other way round — each kit knew its own words and wrote
+whatever fields it happened to need — so "how much of the kernel can you
+reach" could only be answered by walking the graph and diffing renders. That
+is a measurement of an accident. `askable.js` inverts it: ONE ROW PER KERNEL
+FIELD saying which musical ROLE owns it, what the question is and which
+answers exist (`stress`/`touch`/`hand` → the drummer, `phrase`/`maxHold` →
+the keys, `orn` → the guitar, `scale`/`diatonic` → the arranger), plus two
+tables of what is deliberately NOT asked and what the chairs write without
+anybody being asked. The chairs are views over those rows; the value lands on
+the song and is merged into every section's genre.
+WHAT STAYS IN THE KITS IS CONTENT — a groove, a figure, a melodic cell, a
+keys phrase are music, not knob values — which is exactly why "complete
+access by Q&A" is true of the FIELDS and not of the value space.
+Two things fell out of it: coverage went 21/38 → 29/38 (55% → 76%) in one
+move, and the pruner got free — an annotated question's answers are distinct
+BY CONSTRUCTION (one field, distinct values), so no section has to be
+rendered to know they differ. The coverage gate now reads the declaration and
+uses the expensive walk only to catch side-effect writes the table cannot
+know about, over three named records: 16.7 s → 4.7 s.
+
 HOW MUCH OF THE KERNEL CAN YOU REACH BY ANSWERING QUESTIONS?
 `test/unit/kernel-coverage.test.js` answers it as a number and holds it. It
 scrapes the kernel's own read set out of kernel.js (44 `g.<field>` reads, six
@@ -762,12 +783,11 @@ CALLED AS FUNCTIONS — entry/part/period/realize/reg/word, which no finite
 question tree can name and which the chairs rightly supply from tables), walks
 every chair, every question, every answer and every section question, diffs
 what the section genre comes out as, and asserts every DATA field is either
-REACHED or written down with the reason it is not. 21 of 38 today (55%): four
+REACHED or written down with the reason it is not. 21 of 38 today (76%): nine
 are not asked on purpose (`kitSeed` the dice, `anchor` an identity field,
 `swing` the SONG's — the word in a numeric field was the NaN that stopped the
-engine — and `bassGrid`, superseded by `bassFig`), and thirteen are the WORK
-LIST by name: scale, stress, phrase, touch, orn, ghost, maxHold, kitProb,
-hand, fill, diatonic, incMode, incClamp. The gate RATCHETS: coverage may go up
+engine — and `bassGrid`, superseded by `bassFig`), and two more are written by
+the chairs without anybody being asked (`prog`, `label`). The gate RATCHETS: coverage may go up
 and may not go down, a kernel that grows a knob no question turns fails here,
 and a row that becomes reachable must come out of the table. It also holds
 VALUE-level claims where the field alone is not the point — `prog` is written
