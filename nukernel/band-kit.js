@@ -507,7 +507,17 @@
       idea: true, iid: d.id })) }));
   const threeOpts = (m, f) => openOf(m.song, f).map((v) => ({
     w: v, is: (s2) => s2[f] === v, apply: (s2) => ({ ...s2, [f]: v }) }));
-  const arrDecisions = (m) => [...ARR, ...callDecisions(m), ...ideaDecisions(m)]
+  // memoised per model, like the chairs' lists: `answer` builds this to find
+  // one row, and a fresh model on every answer made composing a record cost
+  // milliseconds per tap for lists nobody read
+  const ARRD = typeof WeakMap !== "undefined" ? new WeakMap() : null;
+  const arrDecisions = (m) => {
+    if (!ARRD) return arrDecisionsNow(m);
+    let hit = ARRD.get(m);
+    if (!hit) ARRD.set(m, hit = arrDecisionsNow(m));
+    return hit;
+  };
+  const arrDecisionsNow = (m) => [...ARR, ...callDecisions(m), ...ideaDecisions(m)]
     .map((d) => (d.three ? { ...d, opts: threeOpts(m, d.id) }
       : d.id === "genre"
         // THE RECORDS STILL STANDING — but read WITHOUT the room, so the
@@ -788,7 +798,15 @@
       return o ? { ...m, song: o.apply(m.song) } : m;
     }
     if (seat === "arranger") {
-      const d = arrDecisions(m).find((x) => x.id === id);
+      // FIND THE ROW, DON'T BUILD THE LIST. Answering one question used to
+      // construct every arranger question there is — the calls, the tune's
+      // own five, the narrowing — to find one row, which measured at 9 ms a
+      // tap and is most of what composing a record cost.
+      const d = (id.startsWith("idea:") ? ideaDecisions(m)
+        : id.startsWith("chg:") ? callDecisions(m).map((x) => ({ ...x, seat: "arranger",
+            opts: x.opts.map((o) => ({ ...o })) }))
+        : ARR.map((x) => (x.three ? { ...x, opts: threeOpts(m, x.id) } : x)))
+        .find((x) => x.id === id) || arrDecisions(m).find((x) => x.id === id);
       const o = d && d.opts.find((x) => x.w === w);
       if (!o) return m;
       // ...the melody's own answers land on the idea, not on the tune

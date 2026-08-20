@@ -113,7 +113,24 @@
   // fourth of where the last bar ended, and the one big drop in the phrase is
   // the QUESTION note falling into the answer, which is the phrase working.
   // So there is no smoothing pass here, deliberately.)
+  // MEMOISED, because the dedup asks for phrases in squares. Deciding which
+  // shapes are worth offering compares every contour against every earlier
+  // one, and each comparison built two phrases — measured, answering a
+  // single arranger question cost 9 ms of phrase-building nobody heard.
+  // `toPhrase` is pure, so the answer to "what does this model sound like"
+  // can be remembered by the values that make it.
+  const PHCACHE = new Map();
   function toPhrase(m, roots) {
+    const key = m.cell + "|" + m.contour + "|" + m.land + "|" + m.len + "|" +
+                m.reg + "|" + (m.answer ? 1 : 0) + "|" + (roots ? roots.length : 0);
+    let hit = PHCACHE.get(key);
+    if (hit) return hit;
+    hit = phraseNow(m, roots);
+    if (PHCACHE.size > 500) PHCACHE.clear();
+    PHCACHE.set(key, hit);
+    return hit;
+  }
+  function phraseNow(m, roots) {
     const bars = barsOf(m), cell = cellOf(m).g, con = CONTOURS[m.contour] || CONTOURS.arch;
     const land = (LANDINGS[m.land] || LANDINGS.root).d;
     const n = bars * N;
