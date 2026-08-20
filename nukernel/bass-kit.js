@@ -347,7 +347,9 @@
       roots: c.roots.slice(), instr: "yamaha_grand_piano", nobass: false,
       // the register rides IN the key, because that is the one number
       // kernel.bass() adds to every note it plays
-      bassStyle: STYLES[m.style], key: (KEYS[m.key] || 0) + 12 * (m.oct || 0),
+      // the register is the BASS's own (`bassReg`), not the key: on its own
+      // page nothing else is listening, but the band shares this genre
+      bassStyle: STYLES[m.style], key: (KEYS[m.key] || 0), bassReg: m.oct || 0,
       mode: MODES ? (m.minor ? MODES.dorian : MODES.ionian) : undefined,
       kit: {}, artic: m.artic || undefined, bassArtic: m.artic || undefined,
       bassFig: m.fig || undefined,

@@ -345,6 +345,34 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
        "clearing the bass chair uncalled the record");
   }
 
+  // ── THE DICE ──
+  // A whole record by answering every question at random, which is only
+  // possible because the graph is complete. It is the ordinary path taken
+  // quickly, so if it can make an unplayable record so can a person.
+  {
+    const before = await page.evaluate(() => window.__bandModel());
+    await page.evaluate(() => document.getElementById("ddice").click());
+    await page.waitForTimeout(900);
+    const after = await page.evaluate(() => window.__bandModel());
+    ok(after !== before, "the dice made the same record");
+    const m = JSON.parse(after);
+    ok(!!m.song.genre, "the dice rolled no record at all");
+    ok(!!m.song.form, "the dice rolled no form");
+    const ev = await page.evaluate(async () => {
+      const PL = await import("/nukernel/audio/plan.js"); PL.compile();
+      let n = 0, bars = PL.barCount();
+      for (let i = 0; i < bars; i++)
+        n += PL.barPlan(i).ev.drums.length + PL.barPlan(i).ev.pitched.length;
+      return { n, bars }; });
+    ok(ev.bars > 0 && ev.n > 0, "the dice rolled a silent record: " + JSON.stringify(ev));
+    // ...and it plays without being asked twice
+    let rms = 0;
+    for (let i = 0; i < 16; i++) { await page.waitForTimeout(900);
+      rms = Math.max(rms, await page.evaluate(() => (window.__rms ? window.__rms() : -1)));
+      if (rms > 0.02) break; }
+    ok(rms > 0.004, "the dice rolled a record that made no sound (peak " + rms.toFixed(4) + ")");
+  }
+
   // ── START AGAIN ──
   // Every chair can be cleared on its own sheet; this is the one that puts
   // the room back to empty.

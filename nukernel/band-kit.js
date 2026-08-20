@@ -704,6 +704,54 @@
       return opts.length >= 2 ? { ...d, opts } : d;
     });
   };
+  /* ---------- THE DICE -----------------------------------------------------
+     A whole record by answering every question at random — which is only
+     possible because the graph is complete: every question has at least two
+     answers, every answer leaves something playable, and nothing can be
+     answered into a dead end. So the dice is not a special path through the
+     app, it is the ORDINARY path taken quickly, and if it can produce an
+     unplayable record then so can a person.
+
+     `rnd` is injectable so a gate can seed it: the same seed makes the same
+     record, which is what lets a thousand of them be checked. */
+  function randomSong(rnd) {
+    const R = rnd || Math.random;
+    const pick = (a) => a[Math.floor(R() * a.length) % a.length];
+    let m = { ...blank(), on: true };
+    // where and when: the front door, whose options never lead to nothing
+    for (const [f] of FIELDS3) {
+      const opts = openOf(m.song, f);
+      if (opts.length) m = answer(m, "arranger", f, pick(opts));
+    }
+    if (!m.song.genre) {                       // several records still fit: call one
+      const left = survivors(m.song);
+      if (left.length) m = answer(m, "arranger", "genre", pick(left)[1].w);
+    }
+    // then every chair, question by question, until nobody has anything left.
+    // The UNPRUNED list on purpose: pruning asks what every answer would
+    // sound like before offering it, which is right for a person choosing
+    // and pure cost for a dice that is about to choose anyway (measured,
+    // 640 ms a roll against 90).
+    for (const seat of SEATS)
+      for (let round = 0; round < 3; round++) {
+        const left = seatDecisions(m, seat).filter((d) => !d.answered);
+        if (!left.length) break;
+        for (const d of left) if (d.opts.length) m = answer(m, seat, d.id, pick(d.opts).w);
+      }
+    // ...and an arrangement: about half the sections get one thing said
+    // about them, which is what makes two dice rolls different records
+    const secs = toSong(m, MODESREF);
+    for (let i = 0; i < secs.length; i++) {
+      if (R() < 0.5) continue;
+      const asks = sectionAsks(m, i, true);   // raw: a dice does not need pruning
+      if (!asks.length) continue;
+      const a = pick(asks);
+      const o = pick(a.opts);
+      if (o) m = setSection(m, i, a.id, o.key);
+    }
+    return m;
+  }
+
   // START OVER, one chair at a time. A session where the only way back is
   // reloading the page is a session you stop experimenting in.
   function resetSeat(m, seat) {
@@ -1143,7 +1191,7 @@
       const vg = Vo.toGenre(vm);
       const voice = vg.silent ? null : { phrase: Vo.toPattern(vm), genre: {
         ...g, label: "Voice", voices: 1, part: () => vg.part,
-        realize: () => (vg.pad ? "pad" : "line"), reg: () => vg.reg,
+        realize: () => (vg.pad ? "pad" : "line"), reg: () => stand(vg.part, vg.reg),
         instr: vg.instr, tone: vg.tone, nobass: true, kit: {}, kits: null,
         bassFig: undefined, pipes: undefined } };
       // THE KEYS PLAYER'S PHRASE is the box's own pattern — a pitched voice
@@ -1307,7 +1355,7 @@
       s0.voice ? [s0.voice.phrase, genreSig(s0.voice.genre)] : null]);
   }
 
-  const sectionAsks = (m, i) => {
+  const sectionAsks = (m, i, raw) => {
     const per = partOf(m, i);
     // ...and the same law as the chairs': an option that would make the
     // identical section is not an option, and a question left with one is
@@ -1354,7 +1402,7 @@
       { id: "band", who: "everybody", opts: [
           { w: "give it a lift", key: "lift", answered: per.lift },
           { w: "follow the kick", key: "follow", answered: per.follow } ] },
-    ].map(prune).filter((a) => a.opts.length >= 2)
+    ].map((a) => (raw ? a : prune(a))).filter((a) => a.opts.length >= 2)
       // WHAT A SECTION IS ABOUT COMES FIRST. Twelve questions is a lot of
       // floor, and the melody — the one arrangement decision that changes
       // who is playing the tune — was ninth ("where is the melody question
@@ -1387,6 +1435,22 @@
     return { ...m, per };
   };
 
+  // A PART STAYS ON ITS INSTRUMENT. The register and the part's own centre
+  // both shift octaves and they STACK — a drone ("down low", ctr −12) under a
+  // low key landed at MIDI 19, two octaves below the bottom of a piano. The
+  // engine's register home would lift it, but a part written there is wrong
+  // before anybody plays it. Found by rolling three hundred random records;
+  // a person choosing those two answers would have found it too.
+  // ...and the ceiling matters as much as the floor: a pad "right at the
+  // top" over a high chord reached MIDI 109, which is above the top of a
+  // piano (21..108 is the whole instrument). Both ends, per part, because a
+  // drone sits an octave below where it is told to and a lead an octave
+  // above.
+  const FLOOR = { riff: 0, drone: 1, pad: 0, stab: 0, line: -1, counter: 0, lead: -1 };
+  const CEIL  = { riff: 1, drone: 2, pad: 1, stab: 1, line: 1, counter: 1, lead: 1 };
+  const stand = (part, reg) => Math.max(FLOOR[part] == null ? -1 : FLOOR[part],
+                                        Math.min(CEIL[part] == null ? 1 : CEIL[part], reg));
+
   function toGenre(m, MODES, changes, dm, bm, km, gm) {
     const drums = dm || m.drums, bass = bm || m.bass, keys = km || m.keys;
     const gtr = gm || m.guitar;
@@ -1397,10 +1461,15 @@
     // its own part, its own register and its own instrument. A chair that is
     // out keeps its voice and hands back an empty phrase, so nothing
     // downstream has to know who is in the room.
-    const chairs = [{ part: kg.part(0), reg: kg.reg(0), instr: kg.instr, tone: kg.tone,
-                      pad: kg.realize(0) === "pad" },
-                    { part: gg.part, reg: gg.reg, instr: gg.instr, tone: gg.tone,
-                      pad: gg.pad }];
+    // A PART STAYS ON ITS INSTRUMENT. The register and the part's own centre
+    // both shift octaves and they STACK — a drone ("down low", ctr −12) under
+    // a low key landed at MIDI 19, two octaves under the bottom of a piano.
+    // The engine's register home would lift it, but a part written there is
+    // wrong before anybody plays it. Found by rolling three hundred records.
+    const chairs = [{ part: kg.part(0), reg: stand(kg.part(0), kg.reg(0)),
+                      instr: kg.instr, tone: kg.tone, pad: kg.realize(0) === "pad" },
+                    { part: gg.part, reg: stand(gg.part, gg.reg), instr: gg.instr,
+                      tone: gg.tone, pad: gg.pad }];
     const dg = D.toGenre(drums);
     const c = B.CHANGES[changes || (m.song.chg || {}).verse || "fourchord"];
     return {
@@ -1424,7 +1493,15 @@
       kitVel: dg.kitVel,
       // the bassist's line, in the arranger's key
       nobass: false, bassStyle: B.STYLES[bass.style],
-      key: (B.KEYS[m.song.key] || 0) + 12 * (bass.oct || 0),
+      // THE KEY IS THE TUNE'S, NOT THE BASSIST'S. Folding their register in
+      // here moved the key centre for every chair — the keys and the guitar
+      // went down an octave because the bass player did, which is how a pad
+      // ended up at MIDI 14.
+      key: (B.KEYS[m.song.key] || 0),
+      bassReg: bass.oct || 0,
+      // a band's pads are voice-led over a real progression, and this is the
+      // room they are allowed to walk in
+      padRoom: true,
       mode: MODES ? (m.song.minor ? MODES.dorian : MODES.ionian) : undefined,
       artic: bass.artic || (gk && gk.artic) || undefined,
       bassArtic: bass.artic || (gk && gk.artic) || undefined,
@@ -1449,7 +1526,7 @@
   // (the annotated knobs are merged in toSong, over whatever the chairs made)
 
   return { SEATS, TAKEN, FORMS, CALLED, GENRES, SPACE, ROLE, ENG, SECMIX, SECMOVE, mixOf,
-           resetSeat,
+           resetSeat, randomSong,
            genreOf, rolesIn, asked, pending, sigOf, secSigOf, survivors, FIELDS3, Ask,
            secWords, partOf,
            blank, decisions, seatDecisions,

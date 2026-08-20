@@ -427,6 +427,19 @@ $("dreset").addEventListener("click", () => {
   try { localStorage.removeItem(SAVE); } catch (e) {}
   push(true); draw();
 });
+// THE DICE — a whole record by answering every question at random, which is
+// only possible because the graph is complete: every question has at least
+// two answers and none of them leads anywhere unplayable. It is the ordinary
+// path taken quickly, not a special one.
+$("ddice").addEventListener("click", () => {
+  model = Band.randomSong();
+  said.clear(); asking = null; section = null; module_ = "song";
+  ledger.length = 0;
+  clearMixOffsets();
+  push(true); draw();
+  if (!playing) startAt(0);
+  $("dplay").classList.toggle("on", true);
+});
 $("dplay").addEventListener("click", () => {
   if (playing) { stop(); $("dplay").classList.remove("on"); }
   else if (model.on) { startAt(0); $("dplay").classList.add("on"); }

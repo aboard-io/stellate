@@ -1379,6 +1379,17 @@
               // beats < N is the half-bar turnaround/ii-V that was inexpressible
               for (const c of chords) {
                 voicing = voiceLead(voicing, c.pcs, ctr);
+                // A VOICE-LED PAD MAY NOT WALK OUT OF THE ROOM — for a genre
+                // that asks. Leading from the last voicing is what makes
+                // chords move smoothly and over enough bars it can walk
+                // downhill: found at MIDI 21 on a random record, two octaves
+                // under where the chair sits. Five genres in the catalog
+                // (jodeci, gospel, bossa…) voice wider than two octaves on
+                // purpose, so this is `padRoom` rather than a law.
+                if (g.padRoom) voicing = voicing.map((n) => { let x = n;
+                  while (x < ctr - 24) x += 12;
+                  while (x > ctr + 12) x -= 12;
+                  return x; });
                 for (const n of voicing)
                   ev.push({ t: (b * N + c.start) / g.rate, dur: c.len / g.rate, v, part,
                             n: n + key, acc: 0, sld: 0, vel: vel(p, first) });
@@ -2136,6 +2147,25 @@
     // A bass note at 92% of a quarter never lets go of the one behind it —
     // measured, the level never came off the peak — so a bass's "normal" is
     // shorter than a line's. Same words, different instrument.
+    // A BASS STAYS ON THE BASS. The key and the register are both octave
+    // offsets and they stack: "in F" (−7) under "down an octave" (−12) put
+    // the line at MIDI 17, which is below the bottom of every bass ever
+    // built and below what most speakers reproduce. Found by rolling three
+    // hundred random records — a person picking the same two answers would
+    // have found it too. Fold, do not clamp: an octave keeps the line.
+    // ...and the bass's OWN octave, which is not the key. A band-kit that
+    // folded the bassist's register into `g.key` moved the KEY CENTRE for
+    // everybody — the keys and the guitar went down an octave because the
+    // bass player did. One field, read here and nowhere else.
+    const bassReg = 12 * (+g.bassReg || 0);
+    const LO = 28, HI = 67;                       // E1 to G4, the instrument
+    // fold the HARMONY into the instrument, and let the player's own octave
+    // (`bassReg`) move it from there — folding after it would undo the one
+    // thing the bassist actually asked for
+    const onBass = (n) => { let x = n;
+      while (x < LO) x += 12;
+      while (x > HI) x -= 12;
+      return x; };
     const BART = { staccato: 0.5, normal: 0.8, legato: 1, tie: 1 };
     // ...and it is `bassArtic`, not `artic`: `artic` is the LINE's, genres
     // carry it (drone ties, others slur) and reading it here moved the bass
@@ -2237,7 +2267,8 @@
              // tripwire exists
              dur: (held ? held.get(b * N + i) * bart
                         : (g.bassArtic ? 3.94 * bart : 3.7)) / g.rate,
-             n: tones[i / 4] + 36 + key, r, walk: true, vel: k === 0 ? 7 : 5 }));
+             n: Math.max(24, onBass(tones[i / 4] + 36 + key) + bassReg), r, walk: true,
+             vel: k === 0 ? 7 : 5 }));
         played = perform(bar, steps, bg, b, N, { lane: "B" }) || played;
         for (const e of bar) ev.push(e);
       }
@@ -2297,7 +2328,7 @@
           const acc = fig && fig.acc ? at(fig.acc, i) : 0;
           const sld = fig && fig.sld ? at(fig.sld, i) : 0;
           const e = { t: leant((b * N + i + swing(g, i)) / g.rate), dur: hold * bart / g.rate,
-                      n: n0 + 36 + oct + key, r,
+                      n: Math.max(24, onBass(n0 + 36 + oct + key) + bassReg), r,
                       vel: acc ? Math.min(9, vel(subj, i) + 3) : vel(subj, i) };
           if (acc) e.acc = 1;
           if (sld) e.sld = 1;

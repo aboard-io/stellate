@@ -755,6 +755,23 @@ echo*. Not a player's decision and not the desk's. Measured: 96 events become
 151 in thirds, 192 with the echo, 292 with both, other sections do not move,
 and nobody's phrase is rewritten — a pipe is what happens to the notes after.
 
+THE DICE (⚄, beside play). A whole record by answering every question at
+random — which is only possible because the graph is complete: every question
+has at least two answers, every answer leaves something playable, and nothing
+can be answered into a dead end. It is not a special path through the app, it
+is the ORDINARY path taken quickly (64 ms a roll), which makes it the
+strongest property test this box has: `test/unit/dice.test.js` rolls three
+hundred seeded records and asserts every event of every one — 350k checks,
+every note on a piano (21..108), nothing numeric carrying a word, no section
+silent, and the same seed making the same record. It found four real bugs on
+its first run, all of them things a person could have tapped their way into:
+a walking bass at MIDI 16 (key and register both shift octaves and they
+STACK), the bassist's register folded into `g.key` so the KEYS and the GUITAR
+went down an octave because the bass player did, a voice-led pad walking
+downhill out of the room over enough bars (`padRoom`, opt-in because five
+catalog genres voice wider on purpose), and a pad "right at the top" reaching
+MIDI 109, above the top of a piano.
+
 SEVEN CHAIRS. The singer (`vocal-kit.js`) is the seventh and the first whose
 main job is somebody else's material — a singer mostly sings THE TUNE, which
 lives in ideas-kit because it belongs to the room. So the chair is two things:

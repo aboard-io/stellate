@@ -38,3 +38,6 @@
   color:var(--ink-2);font:inherit;font-size:20px;line-height:1}
 .dreset:hover{color:var(--ink);border-color:var(--accent)}
 .dbar .dplay{margin-left:10px}
+/* the dice sits with the other two keys in the bar */
+#ddice{margin-left:auto}
+#dreset{margin-left:10px}
