@@ -199,9 +199,14 @@
         kit[l] = lvl(kit[l], [0, 4, 8, 12].filter(i => kit[l][i]), 9);
       return { ...m, kit }; },
     "ride it, not the hats": (m) => { const kit = clone(m.kit);
-      kit.p = kit.h.slice(); kit.h = z(); return { ...m, kit }; },
+      kit.p = has(m.kit, "h") ? kit.h.slice() : HANDS.quarters.slice();
+      kit.h = z(); return { ...m, kit }; },
+    // ...and if there is nothing on the ride either, "back to the hats"
+    // means PLAY SOME: moving an empty ride onto an empty hat lane said the
+    // word and made no sound, which is the one thing no word here may do.
     "back to the hats":    (m) => { const kit = clone(m.kit);
-      kit.h = kit.p.slice(); kit.p = z(); return { ...m, kit }; },
+      kit.h = has(m.kit, "p") ? kit.p.slice() : HANDS.eighths.slice();
+      kit.p = z(); return { ...m, kit }; },
     "nothing on the one":  (m) => { const kit = clone(m.kit);
       kit.k = kit.k.slice(); kit.k[0] = 0; return { ...m, kit }; },
     "kick on the one only": (m) => ({ ...m, kit: { ...clone(m.kit), k: on(0) } }),

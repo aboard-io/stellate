@@ -44,7 +44,15 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
         .find(e => e.textContent === x && !e.disabled);
       if (b) { b.click(); return true; } return false; }, w);
     await page.waitForTimeout(320); return hit; };
-  const seat = async (name) => { await page.evaluate((n) => {
+  // THREE MODULES: song (the tune and its form), band (the chairs), ideas
+  // (the melody). A chair only exists inside `band`.
+  const mod = async (name) => { await page.evaluate((n) => {
+      const b = [...document.querySelectorAll(".dmod")].find(x => x.textContent === n);
+      if (b) b.click(); }, name); await page.waitForTimeout(300); };
+  const seat = async (name) => {
+    if (name === "arranger") { await mod("song"); return; }
+    await mod("band");
+    await page.evaluate((n) => {
       const b = [...document.querySelectorAll(".dseat")].find(x => x.textContent.startsWith(n));
       if (b) b.click(); }, name); await page.waitForTimeout(320); };
   const plan = () => page.evaluate(async () => {
@@ -74,10 +82,12 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
   // It said "1 question" for every chair that had any question at all, so a
   // chair with nine things to decide and a chair with one looked identical.
   {
+    await mod("band");
     const labels = await page.evaluate(() => [...document.querySelectorAll(".dseat")]
       .map(x => x.textContent));
-    ok(labels.length === 6, "the session has " + labels.length + " chairs");
-    const counts = labels.map(l => parseInt((l.match(/(\d+) question/) || [])[1] || "0", 10));
+    ok(labels.length === 5, "the band has " + labels.length + " chairs beside the arranger");
+    // the count is one character now — "drums6", "engineer10", "bass✓"
+    const counts = labels.map(l => parseInt((l.match(/(\d+)$/) || [])[1] || "0", 10));
     ok(counts.some(c => c > 1), "every chair claims one question: " + JSON.stringify(labels));
     ok(new Set(counts).size > 1, "every chair has the same number of questions left");
   }
@@ -380,6 +390,7 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
   }
   {
     // the filter movement, per section, on the bar's own automation
+    await mod("song");
     await page.evaluate(() => { const s = document.querySelectorAll(".dsec"); if (s[0]) s[0].click(); });
     await page.waitForTimeout(400);
     const swept = () => page.evaluate(async () => {
@@ -471,6 +482,7 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
   // Nothing on this page scrolled once the wall of chips came out, and a
   // section asks six questions.
   {
+    await mod("song");
     await page.evaluate(() => { const s = document.querySelectorAll(".dsec"); if (s[0]) s[0].click(); });
     await page.waitForTimeout(400);
     const sc = await page.evaluate(() => { const w = document.querySelector(".dwrap");

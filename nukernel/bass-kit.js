@@ -150,7 +150,7 @@
   const TONALITY = {
     root:   { w: "just the root",       deg: () => new Array(16).fill(0) },
     third:  { w: "the minor third in it", deg: (g) => g.map((v, i) => (v && i % 4 === 2 ? 2 : 0)) },
-    fifth:  { w: "root and fifth",      deg: (g) => g.map((v, i) => (v && i % 2 ? 4 : 0)) },
+    fifth:  { w: "fifths in the line",  deg: (g) => g.map((v, i) => (v && i % 2 ? 4 : 0)) },
     acid:   { w: "a full acid scale",   deg: (g) => g.map((v, i) =>
                                           (!v ? 0 : [0, 0, 2, 0, 4, 6, 2, 0][i % 8])) },
     walk:   { w: "walk it up",          deg: (g) => { let k = 0;

@@ -756,9 +756,21 @@ sit out a section. HOW SLOW IT GOES is a schedule, not a tempo: the drums
 have always read `kits` per bar and the bass now reads `bassBars` the same
 way (kernel.js), so "one hit every four bars" is one kick and one bass note
 per four measures with the note holding across the gap. Gates:
-`test/unit/drums-kit.test.js` (1.84M), `bass-kit.test.js`, `band-kit.test.js`
-(7,618), and the browser pair `test/browser/drums-page.test.js` +
-`band-page.test.js`, which ask the compiled bar rather than the model.
+`test/unit/drums-kit.test.js` (2.07M), `bass-kit.test.js`, `keys-kit.test.js`,
+`guitar-kit.test.js`, `ideas-kit.test.js`, `band-kit.test.js` (15.7k), the
+browser pair `test/browser/drums-page.test.js` + `band-page.test.js` (which
+ask the compiled bar rather than the model), and
+`test/unit/question-trees.test.js` — the TREES, walked as a GRAPH. Path
+enumeration is exponential (a chair with seven questions of five answers is
+78,125 paths, and deduping states does not help because the distinct
+answer-sets ARE the product; that walk ran ten minutes and was still going).
+The tree factorizes into near-independent axes, so the gate walks one SPINE
+per chair, checks each node on it (out-degree ≥ 2, no word said twice, no two
+answers making the same take, every edge answering one more question — which
+is what makes the graph a DAG that ends), then follows the dependency edges
+the vocabulary actually has. 6,707 checks over 558 questions in ~12 s, after
+the pruner learned to build ONE section for a signature and `nextAsk` learned
+to prune lazily (110 s → 12 s).
 
 **Gates and this box:** the four browser gates over the old audio tier
 (`nukernel-audio` / `nukernel-drums` / `nukernel-bounce` / `nukernel-survival`)

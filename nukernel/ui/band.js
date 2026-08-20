@@ -102,13 +102,41 @@ function push(first) {
 }
 
 /* ---------- draw ---------- */
+// THREE MODULES, because there are three kinds of decision and they were
+// all on one floor: SONG is the tune and its form, BAND is who plays what,
+// IDEAS is the melody. Nothing else is chrome — no headings, no captions, no
+// "tap a section": the only word on the page that is not a decision is the
+// play button, and everything else is a thing you can tap.
+const MODULES = ["song", "band", "ideas"];
+let module_ = "song";
+
 function draw() {
   const box = $("dwrap");
   box.textContent = "";
+  // TAP AWAY FROM ANYTHING. Nothing here has to be dismissed: tapping the
+  // floor closes whatever is open (a section being arranged, a fact being
+  // changed), and tapping another thing just opens that one instead.
+  box.onclick = (e) => {
+    if (e.target !== box) return;
+    if (asking == null && section == null) return;
+    asking = null; section = null; draw();
+  };
 
-  // THE TAKE, section by section: what the arranger called, with the one
-  // that is sounding lit. A band's picture is its FORM.
   if (model.on) {
+    const rail = el("div", "dmods");
+    for (const k of MODULES) {
+      const b = el("button", "dmod" + (module_ === k ? " on" : ""), k);
+      b.type = "button";
+      b.addEventListener("click", () => {
+        module_ = k; section = null; asking = null; draw(); });
+      rail.append(b);
+    }
+    box.append(rail);
+  }
+
+  // THE FORM, in SONG: what the arranger called, with the one that is
+  // sounding lit. A band's picture is its form.
+  if (model.on && module_ === "song") {
     const song = toSong(model, MODES);
     const form = el("div", "dgrid");
     const row = el("div", "drow");
@@ -133,20 +161,20 @@ function draw() {
     box.append(form);
   }
 
-  // WHO YOU ARE TALKING TO. A session is three jobs, and the questions you
-  // are asked depend on whose chair you are in.
-  if (model.on) {
+  // WHO YOU ARE TALKING TO — in BAND. The arranger is not a chair here: the
+  // tune is the SONG module and the melody is IDEAS, which is what those
+  // modules are.
+  if (model.on && module_ === "band") {
     const bar = el("div", "dseats");
-    for (const s2 of SEATS) {
+    for (const s2 of SEATS.filter((x) => x !== "arranger")) {
       // HOW MANY, NOT WHETHER. This said "1 question" for every chair that
       // had any question left at all — a chair with nine things still to
       // decide and a chair with one looked identical, which is exactly the
       // thing a session needs to tell you.
-      const left = seatDecisions(model, s2).filter(d => !d.answered).length;
+      const left = Band.pending(model, s2);
       const b = el("button", "dseat" + (seat === s2 ? " on" : "") + (left ? " asking" : ""));
       b.type = "button";
-      b.append(el("b", null, s2), el("i", null,
-        left ? left + (left === 1 ? " question" : " questions") : "ready"));
+      b.append(el("b", null, s2), el("i", null, left ? String(left) : "✓"));
       b.addEventListener("click", () => { seat = s2; asking = null; draw(); });
       bar.append(b);
     }
@@ -160,7 +188,6 @@ function draw() {
   // the band arranges, in the players' own words.
   if (!model.on) {
     const start = el("div", "dstart");
-    start.append(el("p", "dwhat", "an arranger and two players. tap once and the session starts."));
     const c = el("button", "dchip dbig", "count it in");
     c.type = "button";
     c.addEventListener("click", () => {
@@ -196,18 +223,17 @@ function draw() {
       ask2.append(row2);
       box.append(ask2);
     }
-    const done = el("button", "dpinkey", "done with this section ✕");
-    done.type = "button";
-    done.addEventListener("click", () => { section = null; draw(); });
-    box.append(done);
     return;
   }
 
+  // WHOSE QUESTIONS ARE ON THE FLOOR: the module says. SONG and IDEAS are
+  // both the arranger's chair, split by what they are about.
+  const who = module_ === "band" ? seat : "arranger";
+  const ideasOnly = module_ === "ideas";
   // this seat's questions: the interview, then one per subject of whatever
-  // words the player still has (the arranger has none — their vocabulary is
-  // the questions above and the sections below)
+  // words the player still has
   const groups = new Map();
-  for (const i of catalog(model, seat)) {
+  for (const i of catalog(model, who)) {
     if (i.group === "start") continue;
     if (!groups.has(i.group)) groups.set(i.group, []);
     groups.get(i.group).push(i);
@@ -233,13 +259,14 @@ function draw() {
   // handing the bassist "faster"/"slower" and the drummer the feel.
   const NOTYOURS = { drums: ["the tempo", "the feel"],
                      bass: ["the tempo", "the feel", "the key", "the changes"] };
-  const asks0 = seatDecisions(model, seat);
+  const asks0 = Band.asked(model, who)
+    .filter((d) => (ideasOnly ? d.id.startsWith("idea:") : !d.id.startsWith("idea:")));
   const asked = new Set(asks0
     .flatMap(d => d.opts.map(o => o.w)));
   const asks = [
     ...asks0.map(d => ({ id: d.id, ask: d.ask, label: d.id,
       answered: d.answered, opts: d.opts.map(o => ({ w: o.w, on: o.answered,
-        istrue: o.active, take: () => { model = answer(model, seat, d.id, o.w); } })) })),
+        istrue: o.active, take: () => { model = answer(model, who, d.id, o.w); } })) })),
     ...[...groups.entries()].sort((a, b) => rank(a[0]) - rank(b[0])).map(([g, list]) => ({
       id: "grp:" + g, ask: GROUPQ[g] || g, label: g,
       answered: (list.find(i => i.active) || {}).words?.[0] || said.get("grp:" + g) || null,
@@ -254,15 +281,15 @@ function draw() {
         on: i.active || said.get("grp:" + g) === i.words[0],
         dead: false,
         take: () => {
-          const line = says(model, seat, i.id);
+          const line = says(model, who, i.id);
           const before = model;
-          model = say(model, seat, i.id);
+          model = say(model, who, i.id);
           if (model !== before) ledger.push(line);
           said.set("grp:" + g, i.words[0]);
         } })) })),
   ].filter(d => d.opts.length &&
     !(COVERS[d.label] && asks0.some(x => x.id === COVERS[d.label])) &&
-    !((NOTYOURS[seat] || []).includes(d.label)));
+    !((NOTYOURS[who] || []).includes(d.label)));
 
   // THE GIG SHEET — every fact of it tappable
   const sheet = el("div", "dsheet");
@@ -282,22 +309,18 @@ function draw() {
     again.type = "button";
     again.title = "clear this chair and ask again";
     again.addEventListener("click", () => {
-      model = Band.resetSeat(model, seat);
+      model = Band.resetSeat(model, who);
       said.clear(); asking = null; push(false); draw();
     });
     sheet.append(again);
     box.append(sheet);
   }
 
+  // NOTHING LEFT TO ASK IS NOTHING TO SAY. There is no line telling you to
+  // tap something: everything on this page is already tappable, and a
+  // sentence explaining that is the sentence a good surface does not need.
   const q = asking ? asks.find(d => d.id === asking) : asks.find(d => !d.answered);
-  if (!q) {
-    const ask = el("div", "dask");
-    ask.append(el("h2", "dq", seat === "arranger"
-      ? "tap a section to say what happens in it"
-      : "tap anything above to change it"));
-    box.append(ask);
-    return;
-  }
+  if (!q) return;
   const ask = el("div", "dask");
   ask.append(el("h2", "dq", q.ask));
   const row = el("div", "dopts");
@@ -316,12 +339,6 @@ function draw() {
     row.append(b);
   }
   ask.append(row);
-  if (asking) {
-    const done = el("button", "dpinkey", "done ✕");
-    done.type = "button";
-    done.addEventListener("click", () => { asking = null; draw(); });
-    ask.append(done);
-  }
   box.append(ask);
 }
 
@@ -383,6 +400,7 @@ on("transport:state", () => $("dplay").classList.toggle("on", playing));
 
 /* ---------- boot ---------- */
 window.__nuTempo = () => model.song.bpm;      // the gate reads tempo as part of the artifact
+window.__bandDraw = () => draw();                  // the gate times a redraw
 window.__bandModel = () => JSON.stringify(model);   // ...and the model, so a
 // word that is lost can be located: did the MODEL move, or only the plan?
 push(true);

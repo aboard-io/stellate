@@ -416,7 +416,12 @@
       apply: (s2) => s2,                       // the melody is not a song field
       idea: true, iid: d.id })) }));
   const arrDecisions = (m) => [...ARR, ...callDecisions(m), ...ideaDecisions(m)].map((d) => ({
-    ...d, seat: "arranger", answered: (m.song.answers || {})[d.id] || null,
+    // ...and an IDEA question is answered on the idea, not on the song, so
+    // its own answer stands (overwriting it with the song's made the tune's
+    // questions unanswerable — the arranger was asked "how long is it?"
+    // forever)
+    ...d, seat: "arranger",
+    answered: d.id.startsWith("idea:") ? d.answered : ((m.song.answers || {})[d.id] || null),
     opts: d.opts.map((o) => ({ ...o, answered: (m.song.answers || {})[d.id] === o.w,
       active: (() => { try { return !!o.is(m.song); } catch (e) { return false; } })() })) }));
 
@@ -518,6 +523,66 @@
     // where they are — and the per-section arrangement goes with the form
     return { ...m, song: { ...blank().song }, per: {} };
   }
+  /* ---------- AN ANSWER THAT CHANGES NOTHING IS NOT AN ANSWER -------------
+     Two words that make the identical take are one answer wearing two hats,
+     and a question whose options all make the same take is a question with
+     one answer — "why ask?". The trees are walked by a gate now
+     (test/unit/question-trees.test.js) and that gate found eighteen of them
+     across six chairs, every one a real thing you could tap twice for the
+     same music.
+
+     The signature is the FIRST section only, and no kernel render: that is
+     enough to tell answers apart (a part, a phrase, a register, a tone, a
+     desk offset, a tempo) and cheap enough to run on every draw. */
+  const SIGS = typeof WeakMap !== "undefined" ? new WeakMap() : null;
+  function sigOf(m) {
+    // a model is immutable here — every word returns a new object — so the
+    // signature of one can be remembered for as long as it exists. Without
+    // this the trees are re-rendered once per option per draw, which
+    // measured at minutes for a full walk.
+    if (SIGS && SIGS.has(m)) return SIGS.get(m);
+    const out = sigNow(m);
+    if (SIGS) SIGS.set(m, out);
+    return out;
+  }
+  function sigNow(m) {
+    let s0;
+    try { s0 = toSong(m, MODESREF, 0)[0]; } catch (e) { return "?"; }
+    if (!s0) return "?";
+    const g = s0.genre;
+    // A SILENT LANE IS NOT A LANE. `{h:[0,0,…]}` and `{}` are the same drum
+    // part and different objects, and comparing the objects said two answers
+    // differed when the record did not — which is exactly the lie this
+    // signature exists to catch.
+    const norm = (kit) => Object.fromEntries(Object.entries(kit || {})
+      .filter(([, v]) => (Array.isArray(v) ? v.some(Boolean) : !!v)));
+    return JSON.stringify([
+      norm(g.kit), (g.kits || []).map(norm), g.drumkit, g.humanize, g.kitVel, g.bassStyle, g.bassFig,
+      g.bassArtic, g.bassNudge, g.bassTone, g.key, g.nobass, g.instr, g.tone,
+      [0, 1].map((v) => [g.part(v), g.reg(v)]),
+      s0.pattern.gate, s0.pattern.deg, s0.guitar.gate, s0.guitar.deg, s0.box,
+      s0.melody ? s0.melody.phrase.gate : null,
+      mixOf(m), Id.toPhrase(m.idea).deg, Id.toPhrase(m.idea).gate, Id.regOf(m.idea),
+      m.song.bpm, m.song.swing, m.song.key, m.song.minor, m.song.space, m.song.form,
+      m.song.chg, m.keys.tone, m.guitar.tone, m.bass.tone,
+    ]);
+  }
+  // the MODES table toSong needs, remembered from the first call the page or
+  // a gate makes — the kits are pure and this file never imports genres.js
+  let MODESREF = null;
+  const heardOpts = (m, seat, d) => {
+    const now = sigOf(m);
+    const seen = new Map();
+    return d.opts.filter((o) => {
+      if (o.answered || o.active) return true;
+      let sig;
+      try { sig = sigOf(answer(m, seat, d.id, o.w)); } catch (e) { return true; }
+      if (sig === now || seen.has(sig)) return false;
+      seen.set(sig, o.w);
+      return true;
+    });
+  };
+
   const seatDecisions = (m, seat) => {
     if (seat === "arranger") return narrow(m, seat, arrDecisions(m));
     if (seat === "engineer") return engDecisions(m);
@@ -528,8 +593,34 @@
     return narrow(m, seat, ds.filter((d) => !drop.includes(d.id))
       .map((d) => ({ ...d, seat })));
   };
+  // every seat's questions, with the answers that would change nothing
+  // dropped — and a question left with one answer dropped whole
+  const asked = (m, seat) => seatDecisions(m, seat)
+    .map((d) => ({ ...d, opts: heardOpts(m, seat, d) }))
+    .filter((d) => d.opts.length >= 2 || d.answered);
   const decisions = (m) => SEATS.flatMap((s) => seatDecisions(m, s));
-  const nextAsk = (m, seat) => seatDecisions(m, seat || m.seat).find((d) => !d.answered) || null;
+  // LAZY. `asked` prunes every question, which means rendering every answer
+  // of every question — and `nextAsk` needs exactly one. So it walks the
+  // unanswered ones in order and prunes them one at a time, stopping at the
+  // first that still has something to ask.
+  const nextAsk = (m, seat) => {
+    const s2 = seat || m.seat;
+    for (const d of seatDecisions(m, s2)) {
+      if (d.answered) continue;
+      const opts = heardOpts(m, s2, d);
+      if (opts.length >= 2) return { ...d, opts };
+    }
+    return null;
+  };
+  // ...and the same walk, counted — what the chair rail shows
+  const pending = (m, seat) => {
+    let n = 0;
+    for (const d of seatDecisions(m, seat)) {
+      if (d.answered) continue;
+      if (heardOpts(m, seat, d).length >= 2) n++;
+    }
+    return n;
+  };
   // the whole band's next question, in session order: the tune first, then
   // the drummer, then the bass
   const nextAnywhere = (m) => {
@@ -628,9 +719,17 @@
     return out.length ? out : [[{ d: 0, beats: 16 }]];
   };
 
-  function toSong(m, MODES) {
+  // `only` builds ONE section. Every signature below asks what one section
+  // sounds like, and building the whole form to answer that made the
+  // pruner — which runs per option, per question, per draw — cost the
+  // length of the record. Absent, this is the whole take, as it was.
+  function toSong(m, MODES, only) {
+    if (MODES && !MODESREF) MODESREF = MODES;
     const f = FORMS[m.song.form || "vamp"];
-    return f.secs.map((role, i) => {
+    const secs = only == null ? f.secs
+      : (f.secs[only] === undefined ? [] : [f.secs[only]]);
+    return secs.map((role, ix) => {
+      const i = only == null ? ix : only;
       const key = CHGROLE[role] || role;
       const per = partOf(m, i);
       // WHAT A PLAYER DOES HERE IS SAID IN THEIR OWN WORDS. A bandleader
@@ -825,8 +924,38 @@
       .map((x) => ({ w: x.words[0], key: "w:" + x.id, answered: said.includes(x.id) }));
   };
   // what a section can be asked, and how it is answered
+  // WHAT ONE SECTION SOUNDS LIKE, in one place: the pruner uses it to drop
+  // answers that change nothing, and the tree gate uses the same function so
+  // the two can never disagree about what "different" means.
+  function secSigOf(mm, i) {
+    let s0;
+    try { s0 = toSong(mm, MODESREF, i)[0]; } catch (e) { return "?"; }
+    if (!s0) return "?";
+    const g = s0.genre;
+    return JSON.stringify([g.kit, g.kits, g.drumkit, g.humanize, g.kitVel,
+      g.bassStyle, g.bassFig, g.bassBars, g.bassArtic, g.bassNudge, g.bassTone,
+      g.instr, g.tone, g.key, g.nobass,
+      [0, 1].map((v) => [g.part(v), g.reg(v)]), s0.pattern.gate, s0.pattern.deg,
+      s0.guitar.gate, s0.guitar.deg, s0.box,
+      s0.melody ? [s0.melody.phrase.gate, s0.melody.genre.instr] : null]);
+  }
+
   const sectionAsks = (m, i) => {
     const per = partOf(m, i);
+    // ...and the same law as the chairs': an option that would make the
+    // identical section is not an option, and a question left with one is
+    // not asked. (The signature here is the SECTION's, not the first one's.)
+    const secSig = (mm) => secSigOf(mm, i);
+    const prune = (a) => {
+      const now = secSig(m), seen = new Map();
+      const opts = a.opts.filter((o) => {
+        if (o.answered) return true;
+        let sg; try { sg = secSig(setSection(m, i, a.id, o.key)); } catch (e) { return true; }
+        if (sg === now || seen.has(sg)) return false;
+        seen.set(sg, o.w); return true;
+      });
+      return { ...a, opts };
+    };
     return [
       { id: "drums", who: "the drums", opts: Object.entries(SECDRUMS).map(([k, v]) => ({
           w: v.w, key: k, answered: per.drums === k || (!per.drums && k === "same") })) },
@@ -851,7 +980,7 @@
       { id: "band", who: "everybody", opts: [
           { w: "give it a lift", key: "lift", answered: per.lift },
           { w: "follow the kick", key: "follow", answered: per.follow } ] },
-    ].filter((a) => a.opts.length);
+    ].map(prune).filter((a) => a.opts.length >= 2);
   };
   const setSection = (m, i, who, key) => {
     const per = { ...(m.per || {}) };
@@ -934,7 +1063,7 @@
 
   return { SEATS, TAKEN, FORMS, CALLED, GENRES, SPACE, ROLE, ENG, SECMIX, SECMOVE, mixOf,
            resetSeat,
-           genreOf, rolesIn,
+           genreOf, rolesIn, asked, pending, sigOf, secSigOf,
            secWords, partOf,
            blank, decisions, seatDecisions,
            nextAsk, nextAnywhere, answer, catalog, say, says, toGenre, toSong,

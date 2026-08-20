@@ -2272,7 +2272,12 @@
           const k = alt++;
           // octaves alternates register; fifths alternates the DEGREE, which is
           // the boogie/country figure rather than a doubling
-          const oct = fig && fig.oct ? at(fig.oct, i)
+          // A FIGURE THAT SAYS NOTHING ABOUT OCTAVES SAYS NOTHING ABOUT
+          // OCTAVES. Reading an all-zero `oct` vector as an instruction
+          // silenced the octaves STYLE under every figure, which made two
+          // different answers to "what's your job" the identical line.
+          const figOct = fig && fig.oct && fig.oct.some(Boolean) ? at(fig.oct, i) : null;
+          const oct = figOct != null ? figOct
             : g.bassStyle === "octaves" ? 12 * (k % 2) : 0;
           const deg = g.bassStyle === "fifths" && k % 2 ? r + 4 : r;
           // the root note is the chord's BASS pc — an inversion puts the third

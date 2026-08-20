@@ -29,7 +29,7 @@
 // Cached Response objects keep their original headers, so COOP/COEP isolation
 // (SharedArrayBuffer for the render worker) survives offline replay.
 
-const VERSION = "v142";                       // bump every deploy that must reach users
+const VERSION = "v143";                       // bump every deploy that must reach users
 const APP_PREFIX = "stellate-app-";
 const APP_CACHE = APP_PREFIX + VERSION;
 const MEDIA_CACHE = "stellate-media-v1";     // NOT tied to VERSION — see above
