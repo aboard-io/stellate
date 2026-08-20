@@ -84,6 +84,27 @@ console.log("the key moves the notes, the changes move the roots, the job the sh
      "the minor line is not lower anywhere than the major one — where is the third?");
 }
 
+/* (c2) THE NOTES HAVE LENGTH, and the words that say so are heard */
+// "Short, off the string" and "let them ring" moved the model and nothing
+// else: the bass gated every note to 94% of the gap whatever anybody said,
+// which is a bass with no envelope. They are rendered facts now.
+console.log("how long a note is held is something a bassist can say");
+{
+  const base = B.say(B.blank(), "start");
+  const dur = (m) => line(m)[0].dur;
+  const shorter = B.answer(base, "notes", "short, off the string");
+  const longer = B.answer(base, "notes", "let them ring");
+  ok(dur(shorter) < dur(base), "short notes are " + dur(shorter).toFixed(2) +
+     " against a normal " + dur(base).toFixed(2));
+  ok(dur(longer) > dur(base), "let them ring is " + dur(longer).toFixed(2));
+  ok(dur(shorter) < dur(longer) * 0.7, "the two ends of the articulation are the same length");
+  for (const m of [base, shorter, longer])
+    ok(line(m).every((e) => e.dur > 0 && Number.isFinite(e.dur)), "a note of no length");
+  // ...and the chair has a sound of its own rather than the engine's default
+  const t = B.toGenre(base, MODES).bassTone;
+  ok(t && t.cut > 0 && t.rel > 0, "the bass chair carries no tone of its own");
+}
+
 /* (d) EVERY WORD, AND EVERY ANSWER, LEAVES SOMETHING PLAYABLE */
 console.log("nothing a bassist can say makes an unplayable line");
 {

@@ -285,8 +285,10 @@ console.log("a band can leave four measures between two notes");
   const ev = play(sec.genre);
   ok(ev.drums[0].d === "k" && ev.drums[0].t === 0,
      "the one hit in four bars is a " + ev.drums[0].d + " at " + ev.drums[0].t);
-  ok(ev.bass[0].dur > 48, "the bass note lasts " + ev.bass[0].dur.toFixed(1) +
-     " steps — it stopped instead of holding");
+  // it rings for a bar and leaves three bars of air — a held gate is not an
+  // envelope, and four bars of unbroken tone is a drone, not a bass note
+  ok(ev.bass[0].dur > 12 && ev.bass[0].dur <= 16,
+     "the bass note lasts " + ev.bass[0].dur.toFixed(1) + " steps — a bar is 16");
   // a section can still say something different in all that space
   const busy = Band.setSection(
     Band.answer(m, "arranger", "space", "one hit every four bars"), 0, "drums", "busier");
@@ -411,6 +413,41 @@ console.log("a section is arranged in the players' own words");
     }
     ok(moved >= 4, who + ": only " + moved + " of the player's words changed the section");
   }
+}
+
+/* (k) EVERY RECORD HAS A BASS SOUND, AND THE NOTES HAVE ENDS */
+// The bass chair was handed no tone at all, so a synth bass ran on the
+// engine's defaults in every genre — no filter of its own, and a gate as
+// long as the note ("the synth bass just plays continually"). A record names
+// its own filter, its own decay and how long its notes are held.
+console.log("every record says what its bass sounds like");
+{
+  for (const [key, gk] of Object.entries(Band.GENRES)) {
+    ok(gk.tone && gk.tone.cut >= 60 && gk.tone.cut <= 16000,
+       key + ": a bass cutoff of " + (gk.tone && gk.tone.cut));
+    ok(gk.tone.q >= 0.7 && gk.tone.q <= 12, key + ": a bass q of " + gk.tone.q);
+    ok(gk.tone.rel >= 0.05 && gk.tone.rel <= 2.8, key + ": a bass decay of " + gk.tone.rel);
+    ok(["staccato", "normal", "legato"].includes(gk.artic),
+       key + ": the bass notes are held \"" + gk.artic + "\"");
+    const m = Band.answer(on(), "arranger", "genre", gk.w);
+    const g = Band.toSong(m, MODES)[0].genre;
+    ok(g.bassTone && g.bassTone.cut === gk.tone.cut,
+       key + ": the record's bass tone does not reach the section");
+    ok(g.bassArtic === gk.artic, key + ": the record's note length does not reach the section");
+    // a plucked record really is shorter than a ringing one, in the render
+    const first = play(g).bass[0];
+    ok(first && first.dur > 0, key + ": the first bass note has no length");
+    const gap = 4;                                   // a quarter, in steps
+    if (gk.artic === "staccato") ok(first.dur < gap * 0.7,
+      key + ": a staccato bass note lasts " + first.dur.toFixed(2) + " of a " + gap + "-step gap");
+    if (gk.artic === "legato") ok(first.dur >= gap * 0.9,
+      key + ": a ringing bass note lasts only " + first.dur.toFixed(2));
+  }
+  // ...and the player still outranks the record
+  const m = Band.answer(on(), "arranger", "genre", "a house record");
+  const said = Band.answer(m, "bass", "notes", "let them ring");
+  ok(Band.toSong(said, MODES)[0].genre.bassArtic === "legato",
+     "a bassist told to let them ring is still playing the record's staccato");
 }
 
 /* (e) NOTHING NUMERIC CARRIES A WORD */

@@ -111,6 +111,61 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
   ok(sparse.kicks.every((b, i) => b === i * 4),
      "the hits land on bars " + sparse.kicks.join(",") + " — not every fourth one");
 
+  // ── THE BASS HAS A SOUND OF ITS OWN ──
+  // The bass chair was handed no tone, so a synth bass ran on the engine's
+  // defaults (cutoff 1400, decay 0.4) in every record there is — no filter
+  // and a gate as long as the note. This asks the VOICE the engine built.
+  // the unit the bass notes are actually played by — the plan names it on
+  // the event, and reading "the first pitched-looking unit" found the sfx
+  const voice = () => page.evaluate(async () => {
+    const PL = await import("/nukernel/audio/plan.js"); PL.compile();
+    const U = PL.unitTable() || {}, p = PL.barPlan(0);
+    const e = p.ev.pitched[0];
+    const u = e && U[e.voice];
+    return { module: u ? u.module : null, params: u ? u.params : null,
+             zones: u && u.sampler ? (u.sampler.zones || []).length : 0,
+             dur: e ? e.dur : 0 }; });
+  const asArranger = async (w) => {
+    await seat("arranger");
+    for (let i = 0; i < 20; i++) {
+      const cur = (await q())[0] || "";
+      if (/what are we playing/.test(cur)) break;
+      await page.evaluate(() => { const f = [...document.querySelectorAll(".dfact")]
+        .find(x => (x.querySelector("b") || {}).textContent === "genre"); if (f) f.click(); });
+      await page.waitForTimeout(260);
+      if (/what are we playing/.test((await q())[0] || "")) break;
+      const list = (await opts()).filter(o => !o.dead);
+      if (!list.length) break;
+      await tap(list[0].w);
+    }
+    return tap(w); };
+  {
+    // out of the sparsest setting first — a held note is a bar long whatever
+    // the record says, and the question here is the record's own sound
+    await seat("arranger");
+    await page.evaluate(() => { const f = [...document.querySelectorAll(".dfact")]
+      .find(x => (x.querySelector("b") || {}).textContent === "space"); if (f) f.click(); });
+    await page.waitForTimeout(260);
+    await tap("keep it going");
+    ok(await asArranger("a techno record"), "the record could not be changed");
+    await page.waitForTimeout(600);
+    const techno = await voice();
+    ok(await asArranger("something slow and open"), "the record could not be changed again");
+    await page.waitForTimeout(600);
+    const slow = await voice();
+    for (const [name, v] of [["techno", techno], ["slow", slow]]) {
+      ok(!!v.params, name + ": the bass voice has no params at all");
+      if (!v.params) continue;
+      ok(v.params.cutoff !== 1400, name + ": the bass is still on the engine's default cutoff");
+      ok(v.dur > 0, name + ": the bass note has no length");
+    }
+    ok(techno.params && slow.params &&
+       JSON.stringify(techno.params) !== JSON.stringify(slow.params),
+       "two records built the same bass voice: " + JSON.stringify(techno.params));
+    ok(techno.dur < slow.dur, "a plucked record holds its bass as long as a ringing one (" +
+       techno.dur.toFixed(2) + " vs " + slow.dur.toFixed(2) + ")");
+  }
+
   // ── AND IT STILL SOUNDS ──
   let rms = 0;
   for (let i = 0; i < 22; i++) { await page.waitForTimeout(900);

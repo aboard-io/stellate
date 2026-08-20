@@ -188,9 +188,12 @@
       // kernel.bass() adds to every note it plays
       bassStyle: STYLES[m.style], key: (KEYS[m.key] || 0) + 12 * (m.oct || 0),
       mode: MODES ? (m.minor ? MODES.dorian : MODES.ionian) : undefined,
-      kit: {}, artic: m.artic || undefined,
+      kit: {}, artic: m.artic || undefined, bassArtic: m.artic || undefined,
       // behind the beat or on top of it, in ninths of a step
       bassNudge: m.sit ? m.sit * 2 : undefined,
+      // a bass with a tone of its own: without this the chair runs on the
+      // engine's defaults and a synth bass never closes
+      bassTone: { wave: "saw", cut: 800, q: 4, atk: 0.004, rel: 0.22, gain: 0.26 },
       swing: m.swing === "swing" ? 1 : undefined,
       tone: { wave: "sine", cut: 900, q: 1, atk: 0.01, rel: 0.25, gain: 0.001, verb: 0.08 },
       words: [], word: () => [],

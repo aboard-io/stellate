@@ -195,7 +195,15 @@ function castOf(bars) {
         if (r) A["v" + e._seat] = r.key;
       } else if (e.kind === "bass") {
         const bs = BASSSYNTH[sec.bassop] || null;
-        e._seat = seatFor("bass", (POOL && POOL.bass) || BASS_INSTR, bs, null);
+        // THE BASS CHAIR CAN BE TOLD WHAT IT SOUNDS LIKE. Every other chair
+        // hands its genre's `tone` down; the bass handed null, so a synth
+        // bass ran on to-engine's defaults (cutoff 1400, decay 0.4) in every
+        // genre there is — no filter of its own and a gate as long as the
+        // note. It is `bassTone` rather than `tone` on purpose: absent, this
+        // is byte-identical for all 110 genres, and a genre that wants its
+        // bass shaped says so.
+        e._seat = seatFor("bass", (POOL && POOL.bass) || BASS_INSTR, bs,
+                          (GENRES[e.layer || gid(sec)] || {}).bassTone || null);
         e._syn = !!bs;
         A["v" + e._seat] = "bass";
       }

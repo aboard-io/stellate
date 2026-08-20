@@ -2126,6 +2126,22 @@
     // already uses), added to every onset. Absent = dead centre, and every
     // stream above is byte-identical without it.
     const lean = (+g.bassNudge || 0) / 9 / g.rate;
+    // HOW LONG THE NOTE IS HELD, which the bass never read. The line has
+    // honoured `artic` since it existed; the bass gated every note to 94% of
+    // the gap whatever anybody said, so "short, off the string" moved the
+    // model and nothing else — and a bass that never lets go is a bass with
+    // no envelope, which is what it sounded like. Absent = 0.94, the number
+    // that was hard-coded here, so every existing genre is unmoved.
+    // The line's own table says normal = 0.92, and on a LINE that is right.
+    // A bass note at 92% of a quarter never lets go of the one behind it —
+    // measured, the level never came off the peak — so a bass's "normal" is
+    // shorter than a line's. Same words, different instrument.
+    const BART = { staccato: 0.5, normal: 0.8, legato: 1, tie: 1 };
+    // ...and it is `bassArtic`, not `artic`: `artic` is the LINE's, genres
+    // carry it (drone ties, others slur) and reading it here moved the bass
+    // of all 110 at once. A field of the bass's own is opt-in by
+    // construction.
+    const bart = (g.bassArtic && BART[g.bassArtic] != null) ? BART[g.bassArtic] : 0.94;
     // a push on the very first note would land before the section starts,
     // where nothing can play it
     const leant = (t) => Math.max(0, t + lean);
@@ -2167,8 +2183,13 @@
         for (let i = 0; i < N; i++) if (at(gb, i)) pos.push(b * N + i);
       }
       const out = new Map();
+      // ...and a note HOLDS to the next one, but no longer than a bar. A
+      // gate is not an envelope: on a sampled bass a four-bar hold decays by
+      // itself, on a synth it is four bars of unbroken tone ("the synth bass
+      // just plays continually"). One bar of ring and three bars of air is
+      // what one note every four measures is supposed to sound like.
       pos.forEach((x, k) => { let d = pos[(k + 1) % pos.length] - x;
-                              if (d <= 0) d += bars * N; out.set(x, d); });
+                              if (d <= 0) d += bars * N; out.set(x, Math.min(d, N)); });
       return out;
     })();
     let played = false;
@@ -2201,7 +2222,12 @@
         const steps = tones.map((_, q) => q * 4).filter((i) => !gw || at(gw, i));
         const bar = steps.map((i, k) =>
           ({ t: leant((b * N + i) / g.rate),
-             dur: held ? held.get(b * N + i) * 0.94 / g.rate : 3.7 / g.rate,
+             // 3.7 is the number the walk has always written; scaling it by
+             // bart/0.94 came back 3.6999999999999997 and broke byte
+             // identity for all 110 genres, which is the whole reason that
+             // tripwire exists
+             dur: (held ? held.get(b * N + i) * bart
+                        : (g.bassArtic ? 3.94 * bart : 3.7)) / g.rate,
              n: tones[i / 4] + 36 + key, r, walk: true, vel: k === 0 ? 7 : 5 }));
         played = perform(bar, steps, bg, b, N, { lane: "B" }) || played;
         for (const e of bar) ev.push(e);
@@ -2246,7 +2272,7 @@
             : deg !== r ? mp(deg, md) + c.borrow
             : fold(c.bassPc, c.rootPc);
           const hold = held ? held.get(b * N + i) : sp[i];
-          bar.push({ t: leant((b * N + i + swing(g, i)) / g.rate), dur: hold * 0.94 / g.rate,
+          bar.push({ t: leant((b * N + i + swing(g, i)) / g.rate), dur: hold * bart / g.rate,
                      n: n0 + 36 + oct + key, r, vel: vel(subj, i) });
           barAt.push(i);
         }
