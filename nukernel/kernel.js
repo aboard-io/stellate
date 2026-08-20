@@ -182,14 +182,24 @@
   const PENT  = [0, 3, 5, 7, 10];                       // minor pentatonic
   const MODE  = [0, 2, 3, 5, 7, 8, 10];                 // natural minor
 
+  // THE PITCH TOOLKIT. The primitives every harmony site below is a
+  // parameterization of, each defined ONCE — a wrap, a tie-break or a register
+  // window that lives in one place cannot drift apart in nine.
+  //
+  // the canonical pitch-class wrap: mod 12 that survives negative pitches
+  const pcw = n => ((n % 12) + 12) % 12;
+  // degree -> semitones through a cyclic alphabet, carrying whole octaves.
+  // ONE body for both alphabets; `pitch` and `mp` below are the two names,
+  // kept because the subject-vs-chord distinction is a real one (see above),
+  // not because the arithmetic ever differed.
+  const degPitch = (d, a) =>
+    a[((d % a.length) + a.length) % a.length] + 12 * Math.floor(d / a.length);
   // The subject's alphabet is a GENRE fact, not a constant: blues needs the
   // flat five, and the blue note is a passing tone the pentatonic cannot say.
-  const pitch = (d, sc = PENT) =>
-    sc[((d % sc.length) + sc.length) % sc.length] + 12 * Math.floor(d / sc.length);
+  const pitch = (d, sc = PENT) => degPitch(d, sc);
   // MODE is overridable per genre or per section, the same way `scale` is: the
   // subject's alphabet and the chords' alphabet are separate decisions.
-  const mp = (d, md = MODE) =>
-    md[((d % md.length) + md.length) % md.length] + 12 * Math.floor(d / md.length);
+  const mp = (d, md = MODE) => degPitch(d, md);
 
   // The operators are closed on PATTERNS but NOT on REGISTER: transposition
   // and per-voice offset compound without bound, so a four-voice fugue answered
@@ -207,7 +217,33 @@
   // displacement is added. Include oct and the shift simply cancels it out, and
   // the oct vector goes dead again. Per-note fold survives for pad CHORDS,
   // where wrapping a voicing into a register is the right thing.
-  const fold = (n, c) => { while (n < c - 6) n += 12; while (n > c + 6) n -= 12; return n; };
+  // The MECHANISM, parameterized: move by whole octaves until n sits inside
+  // [lo, hi]. Every register window in the file is this loop with different
+  // walls — the ±6 fold here, voiceLead's window around the previous voice,
+  // the pad's asymmetric room, the bass's absolute E1..G4 — and only the
+  // walls differ from site to site.
+  const foldInto = (n, lo, hi) => { while (n < lo) n += 12; while (n > hi) n -= 12; return n; };
+  const fold = (n, c) => foldInto(n, c - 6, c + 6);
+
+  // NEAREST-TONE SEARCH — the one walk behind every "snap this pitch to the
+  // harmony" site in the file. Expanding rings around n, the preferred
+  // direction FIRST at every distance (that order IS the tie-break, and it is
+  // anchored's own, for anchored's own reason: a rising phrase resolved
+  // downward by reflex becomes a repeated note); `oneWay` never looks behind;
+  // `from: 0` admits n itself. `pcs` is a Set of pitches read mod 12, or one
+  // pitch whose class is meant. A miss returns null: the fallback is the
+  // CALLER's policy — stay put, step anyway, keep walking — and each site
+  // states its own.
+  const nearestPc = (n, pcs, o) => {
+    const dir = o.dir == null ? 1 : o.dir;
+    const hit = typeof pcs === "number" ? x => pcw(x) === pcw(pcs)
+                                        : x => pcs.has(pcw(x));
+    for (let d = o.from == null ? 1 : o.from; d <= o.radius; d++) {
+      if (hit(n + dir * d)) return n + dir * d;
+      if (d && !o.oneWay && hit(n - dir * d)) return n - dir * d;
+    }
+    return null;
+  };
 
   // nearest mode degree to a pitch class — how a transposition becomes a root
   const near = (pc, md = MODE) => {
@@ -274,6 +310,13 @@
   };
 
   const swing = (g, i) => (i % 2) * (g.swing || 0);
+  // WHERE STEP i OF BAR b LANDS, swing included — the one spelling of the
+  // clock expression every renderer writes. The arithmetic ORDER is
+  // load-bearing: re-associating a float expression once turned the walking
+  // bass's 3.7 into 3.6999999999999997 and broke byte identity for all 110
+  // genres (the tripwire comment in bass()), so this is the verbatim
+  // expression, named, never rearranged.
+  const timeOf = (g, b, N, i) => (b * N + i + swing(g, i)) / g.rate;
 
   // ---- GROOVE: the part of a performance that is not in the notes -----------
   // Swing bends the grid. GROOVE bends the grid AND the dynamics, per sixteenth,
@@ -419,8 +462,11 @@
         if (e.part === "pad" || e.d) continue;
         if (rnd() >= (o.p == null ? 0.6 : o.p)) continue;
         const c = ctx.chordFor(e);
-        let n = e.n + (o.gap === "sixth" ? 8 : 3), guard = 0;
-        while (!c.pcSet.has(((n % 12) + 12) % 12) && guard++ < 12) n++;
+        // upward only, the raw interval admitted first: the third may widen
+        // to the next chord tone above but never falls back through the line
+        const n0 = e.n + (o.gap === "sixth" ? 8 : 3);
+        const up = nearestPc(n0, c.pcSet, { radius: 12, from: 0, oneWay: 1 });
+        const n = up == null ? n0 + 12 : up;
         add.push({ ...e, n, vel: Math.max(1, (e.vel == null ? 5 : e.vel) - 2),
                    acc: 0, sld: 0, pipe: "harmonize" });
       }
@@ -490,7 +536,7 @@
       let cs = cache.get(bar);
       if (!cs) { cs = ctx0.chords(bar); cache.set(bar, cs); }
       const s = ((step % ctx0.stepsPerBar) + ctx0.stepsPerBar) % ctx0.stepsPerBar;
-      return cs.find(c => s >= c.start && s < c.start + c.len) || cs[cs.length - 1];
+      return chordIn(cs, s);
     } };
     let out = ev;
     list.forEach((op, i) => {
@@ -518,7 +564,7 @@
       // after it — an eight-bar fugue used to sit on one chord from bar 4.
       const v = Math.min(bar, g.voices - 1), sc = g.scale || PENT;
       const q = word(subj, g.word(v, Math.max(0, bar - g.entry(v))));
-      return near((((pitch(q.deg[0], sc) - pitch(subj.deg[0], sc)) % 12) + 12) % 12, md);
+      return near(pcw(pitch(q.deg[0], sc) - pitch(subj.deg[0], sc)), md);
     }
     return 0;                                            // modal: no motion
   }
@@ -558,7 +604,7 @@
   // last chord absorbs the remainder, so the bar is always exactly covered.
   function chordsOf(subj, g, bar) {
     const md = g.mode || MODE, N = subj.deg.length;
-    const one = c => ({ ...c, pcSet: new Set(c.pcs.map(n => ((n % 12) + 12) % 12)) });
+    const one = c => ({ ...c, pcSet: new Set(c.pcs.map(n => pcw(n))) });
     if (!g.prog || g.harmony !== "cycle") {
       const r = harm(subj, g, bar);
       return [one({ start: 0, len: N, deg: r, q: "triad", inv: 0, borrow: 0,
@@ -581,10 +627,17 @@
     });
     return out;
   }
-  const chordAt = (subj, g, bar, step) => {
-    const cs = chordsOf(subj, g, bar);
-    return cs.find(c => step >= c.start && step < c.start + c.len) || cs[cs.length - 1];
-  };
+  // WHICH CHORD SOUNDS at step s of a bar's chord list — one lookup for its
+  // five readers (chordAt here, the pipes' ctx, the master harmonization, the
+  // render's per-step chordFor, the bass). Past the last window the LAST
+  // chord answers: the bar is exactly covered by construction, so the
+  // fallback only speaks for float dust at the bar line. `eps` widens each
+  // window's left edge by a hair — the master harmonization reads re-timed
+  // events, so it alone asks with a tolerance.
+  const chordIn = (cs, s, eps) =>
+    (cs.length === 1 ? cs[0]
+     : cs.find(c => s >= c.start - (eps || 0) && s < c.start + c.len) || cs[cs.length - 1]);
+  const chordAt = (subj, g, bar, step) => chordIn(chordsOf(subj, g, bar), step);
   // materialize a cyclic prog over a section and land a CADENCE on its last
   // bar — how the composer says "this verse ends on the chorus's door".
   const withCadence = (prog, bars, cad) =>
@@ -597,13 +650,9 @@
   // progression leapt where a keyboard player's hand would barely move.
   const voiceLead = (prev, pcs, ctr) => {
     if (!prev) return pcs.map(n => fold(n, ctr));
-    return pcs.map((n, i) => {
-      const from = prev[i % prev.length];
-      let x = n;
-      while (x < from - 6) x += 12;
-      while (x > from + 6) x -= 12;
-      return x;
-    });
+    // the same ±6 fold, anchored on the PREVIOUS voice instead of the
+    // register centre: the nearest realization of the next chord tone
+    return pcs.map((n, i) => fold(n, prev[i % prev.length]));
   };
 
   // ---- THE MASTER HARMONIZATION ENGINE: one tonality per box ----------------
@@ -664,11 +713,10 @@
   // same rule its own voices did. `c` is a chord from ui/derive.js masterCtx
   // (pcs + pcSet); `_legal` caches the chord's union with the scale on the
   // chord object, which is why the walk below keeps calling legalOf.
-  const pcw = n => ((n % 12) + 12) % 12;
+  // radius 6 covers the octave; a miss (nothing legal at all) leaves the note
   const nearestIn = (n, set, dir) => {
-    for (let d = 1; d <= 6; d++)
-      for (const s of [dir, -dir]) if (set.has(pcw(n + s * d))) return n + s * d;
-    return n;
+    const x = nearestPc(n, set, { radius: 6, dir });
+    return x == null ? n : x;
   };
   const legalWith = (c, scalePcs) =>
     c._legal || (c._legal = new Set([...c.pcSet, ...scalePcs]));
@@ -689,7 +737,7 @@
       let cs = cache.get(bar);
       if (!cs) { cs = ctx.chords(bar); cache.set(bar, cs); }
       const s = ((step % N) + N) % N;
-      return cs.find(c => s >= c.start - 1e-9 && s < c.start + c.len) || cs[cs.length - 1];
+      return chordIn(cs, s, 1e-9);
     };
     const out = ev.slice();
     // one order for everything: voice, then time — the direction of travel
@@ -739,8 +787,9 @@
       if (!cost(e.n)) continue;                  // no grind, no stacked unison
       let best = e.n, bc = cost(e.n) + 0;        // moving must beat staying
       for (const p of c.pcs) {
-        const d0 = pcw(p - e.n);
-        const cand = e.n + (d0 <= 6 ? d0 : d0 - 12);
+        // the nearest realization of this chord tone: ±6 around the note,
+        // ties upward — the dir-first ring with n itself admitted
+        const cand = nearestPc(e.n, p, { radius: 6, from: 0 });
         const cc = cost(cand) + Math.abs(cand - e.n) * 0.01;
         if (cc < bc - 1e-9 || (Math.abs(cc - bc) < 1e-9 && cand < best)) { best = cand; bc = cc; }
       }
@@ -826,8 +875,8 @@
   // is asking for the chromatic neighbour outright.
   const ornStep = (n, dir, pcs) => {
     if (!pcs) return n + dir;
-    for (let d = 1; d <= 3; d++) if (pcs.has(pcw(n + dir * d))) return n + dir * d;
-    return n + dir;
+    const x = nearestPc(n, pcs, { radius: 3, dir, oneWay: 1 });
+    return x == null ? n + dir : x;
   };
   // A LEAD-IN NOTE STEALS FROM THE HAND THAT PLAYS IT. A grace, a flam stroke
   // and a chromatic approach all sound BEFORE the beat, and the hand has to
@@ -1228,8 +1277,7 @@
         // a phrase with no mark on it costs one `some` per bar and nothing else
         const marked = !!p.orn && p.orn.some(Boolean);
         const chords = chordsOf(subj, g, b), c0 = chords[0];
-        const chordFor = i => (chords.length === 1 ? c0
-          : chords.find(c => i >= c.start && i < c.start + c.len) || chords[chords.length - 1]);
+        const chordFor = i => chordIn(chords, i);
         const sp = spans(p.gate);
         // FOLLOW THE CHORD. A melody sitting on the same pitches while the roots
         // move under it is what makes a progression inaudible — the blues riff
@@ -1263,7 +1311,7 @@
         // first. Folded to the nearer direction (up 3 or down 3, never up 6) so
         // the line stays in its register the way near6 keeps the semitone one in
         // its own.
-        const near6 = x => ((((x + 6) % 12) + 12) % 12) - 6;
+        const near6 = x => pcw(x + 6) - 6;
         const diat = !!g.diatonic && g.harmony === "cycle";
         // PER STEP, not per bar: a beats-split bar holds TWO chords, and the
         // stab path and the ramp's chordWalk already read chordFor(i) — the
@@ -1294,8 +1342,10 @@
           if (!set || !k) return base;
           let n = base; const dir = k > 0 ? 1 : -1;
           for (let c = 0; c < Math.abs(k) && c < 24; c++) {
-            let guard = 0;
-            do { n += dir; guard++; } while (!set.has(((n % 12) + 12) % 12) && guard < 24);
+            // one rung: the next chord tone STRICTLY beyond n in the ramp's
+            // own direction, the old guard's 24-step ceiling kept verbatim
+            const x = nearestPc(n, set, { radius: 24, dir, oneWay: 1 });
+            n = x == null ? n + 24 * dir : x;
           }
           return n;
         };
@@ -1335,14 +1385,12 @@
         let prevN = null;
         const anchored = (n, sounding, set) => {
           if (!anchor || !set || sounding <= anchor) return n;
-          if (set.has(((n % 12) + 12) % 12)) return n;
+          if (set.has(pcw(n))) return n;
           const up = prevN != null && n > prevN ? 1 : -1;
-          for (let d = 1; d <= 2; d++)
-            for (const s of [up, -up]) {
-              const x = n + s * d;
-              if (set.has(((x % 12) + 12) % 12)) return x;
-            }
-          return n;
+          // radius 2: more than a whole tone from every chord tone is a
+          // deliberate outside note, not a near miss (the argument above)
+          const x = nearestPc(n, set, { radius: 2, dir: up });
+          return x == null ? n : x;
         };
         // one octave shift for the whole line, from its degree-pitch mean
         // REGISTER THE PHRASE, NOT THE RAMP. The shift is computed from the
@@ -1386,10 +1434,9 @@
                 // under where the chair sits. Five genres in the catalog
                 // (jodeci, gospel, bossa…) voice wider than two octaves on
                 // purpose, so this is `padRoom` rather than a law.
-                if (g.padRoom) voicing = voicing.map((n) => { let x = n;
-                  while (x < ctr - 24) x += 12;
-                  while (x > ctr + 12) x -= 12;
-                  return x; });
+                // (asymmetric on purpose: two octaves of floor below the
+                // chair, one octave of ceiling above it)
+                if (g.padRoom) voicing = voicing.map(n => foldInto(n, ctr - 24, ctr + 12));
                 for (const n of voicing)
                   ev.push({ t: (b * N + c.start) / g.rate, dur: c.len / g.rate, v, part,
                             n: n + key, acc: 0, sld: 0, vel: vel(p, first) });
@@ -1414,7 +1461,7 @@
             // guitar. It moves as one, though — see chordFeel.
             const cf = chordFeel(g, b, i, lane, N);
             const t = Math.min(t1 - 1e-9, Math.max(t0,
-              (b * N + i + swing(g, i)) / g.rate + (cf ? cf.push : 0)));
+              timeOf(g, b, N, i) + (cf ? cf.push : 0)));
             for (const n of c.pcs)
               ev.push({ t, dur: hold * 0.92 / g.rate,
                         v, part, n: fold(n, ctr) + key, acc: p.acc[i], sld: 0,
@@ -1451,7 +1498,7 @@
                   held * legato, set)
               : fold(n, ctr);                                    // chords voice per note
             prevN = pitchOf;
-            barEv.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: held * legato / g.rate, v, part,
+            barEv.push({ t: timeOf(g, b, N, i), dur: held * legato / g.rate, v, part,
                          n: pitchOf + key, acc: p.acc[i], sld: p.sld[i], vel: vel(p, i) });
             barAt.push(i); barHold.push(held / g.rate);
           }
@@ -1502,7 +1549,7 @@
     // the transposed chord or it snaps the keyed line to old-key chord tones.
     const keyChords = cs => (key ? cs.map(c => ({ ...c,
       pcs: c.pcs.map(n => n + key),
-      pcSet: new Set(c.pcs.map(n => (((n + key) % 12) + 12) % 12)) })) : cs);
+      pcSet: new Set(c.pcs.map(n => pcw(n + key))) })) : cs);
     return g.pipes && g.pipes.length
       ? pipes(out, g.pipes, { chords: b2 => keyChords(chordsOf(subj, g, b2)),
                               stepsPerBar: N, rate: g.rate })
@@ -1992,7 +2039,7 @@
         for (let i = 0; i < N; i++) {
           const m = at(vec, i);
           if (!m) continue;
-          const t0 = (b * N + i + swing(gg, i)) / gg.rate;
+          const t0 = timeOf(gg, b, N, i);
           const vel = m === DMARK.ACCENT ? 8 : m === DMARK.GHOST ? 2 : 5;
           if (m === DMARK.FLAM) {
             // a quieter hit a ninth of a step ahead, same lane — the same
@@ -2087,7 +2134,7 @@
           // at a section edge the window simply cuts it. So the push is
           // clamped to the bar it was written in; only a GRACE note is allowed
           // to sit in front of the bar, because that is what a grace note is.
-          const t0 = (b * N + i + swing(g, i)) / g.rate;
+          const t0 = timeOf(g, b, N, i);
           const e = { t: push
                       ? Math.min(((b + 1) * N) / g.rate - 1e-9,
                                  Math.max((b * N) / g.rate, t0 + push / g.rate))
@@ -2111,7 +2158,7 @@
       for (let b = 0; b < bars; b++)
         for (let i = 0; i < N; i++)
           if (q.acc[i] && !q.gate[i])
-            ev.push({ t: (b * N + i + swing(g, i)) / g.rate, d: "p", acc: 0, vel: vel(q, i) });
+            ev.push({ t: timeOf(g, b, N, i), d: "p", acc: 0, vel: vel(q, i) });
     }
     return ev.sort((a, b) => a.t - b.t);
   }
@@ -2162,10 +2209,7 @@
     // fold the HARMONY into the instrument, and let the player's own octave
     // (`bassReg`) move it from there — folding after it would undo the one
     // thing the bassist actually asked for
-    const onBass = (n) => { let x = n;
-      while (x < LO) x += 12;
-      while (x > HI) x -= 12;
-      return x; };
+    const onBass = n => foldInto(n, LO, HI);
     const BART = { staccato: 0.5, normal: 0.8, legato: 1, tie: 1 };
     // ...and it is `bassArtic`, not `artic`: `artic` is the LINE's, genres
     // carry it (drone ties, others slur) and reading it here moved the bass
@@ -2297,8 +2341,7 @@
       const bar = [], barAt = [];
       for (let i = 0; i < N; i++)
         if (at(gb, i)) {
-          const c = !cs ? null : cs.length === 1 ? cs[0]
-            : cs.find(x => i >= x.start && i < x.start + x.len) || cs[cs.length - 1];
+          const c = !cs ? null : chordIn(cs, i);
           const r = c ? c.deg : 0;
           const k = alt++;
           // octaves alternates register; fifths alternates the DEGREE, which is
@@ -2327,7 +2370,7 @@
           const hold = held ? held.get(b * N + i) : sp[i];
           const acc = fig && fig.acc ? at(fig.acc, i) : 0;
           const sld = fig && fig.sld ? at(fig.sld, i) : 0;
-          const e = { t: leant((b * N + i + swing(g, i)) / g.rate), dur: hold * bart / g.rate,
+          const e = { t: leant(timeOf(g, b, N, i)), dur: hold * bart / g.rate,
                       n: Math.max(24, onBass(n0 + 36 + oct + key) + bassReg), r,
                       vel: acc ? Math.min(9, vel(subj, i) + 3) : vel(subj, i) };
           if (acc) e.acc = 1;
