@@ -17,10 +17,10 @@
 //           which is how a fill lands on the fourth measure and nowhere else)
 //   feel    humanize (a hand), swing, and a per-lane velocity contour
 (function (root, factory) {
-  const api = factory();
+  const api = factory(typeof require !== "undefined" ? require("./chair.js") : root.NuChair);
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuDrums = api;
-})(typeof self !== "undefined" ? self : this, function () {
+})(typeof self !== "undefined" ? self : this, function (C) {
   "use strict";
   // THE TOMS ARE THREE DRUMS. The kernel has had `t`/`m`/`l` — high, mid and
   // floor, routed to tomHi/tom/tomLo at 132/105/88 Hz — since the tom lanes
@@ -31,9 +31,9 @@
   // lanes here now, with their own words.
   const LANES = ["k", "s", "h", "o", "c", "p", "t", "m", "l"];
   const BARS = 4, N = 16;
-  const z = () => new Array(N).fill(0);
-  const on = (...ix) => { const v = z(); for (const i of ix) v[i] = 1; return v; };
-  const every = (n, from) => { const v = z(); for (let i = from || 0; i < N; i += n) v[i] = 1; return v; };
+  // the bar's vectors and its count are the chair's (chair.js) — the same
+  // sixteen places every musician in this box builds from
+  const { z, on, every } = C;
   const clone = (kit) => Object.fromEntries(Object.entries(kit).map(([l, v]) => [l, v.slice()]));
   const empty = () => Object.fromEntries(LANES.map(l => [l, z()]));
   const has = (kit, l) => (kit[l] || []).some(Boolean);
@@ -282,13 +282,11 @@
   /* ---------- THE VOCABULARY: word-phrase -> what it does to the kit ------
      Each entry answers two questions and nothing else: is it worth offering
      right now (`when`), and what does it make (`apply`). */
-  const V = {};
   // `is` — is this already the case? The tray LIGHTS those rather than
   // hiding them ("when I tap something light it up, don't make it
   // disappear"), so the vocabulary doubles as the readout: what the machine
-  // is doing is which words are lit.
-  const add = (id, group, words, when, apply, says, is) =>
-    { V[id] = { id, group, words, when, apply, says, is: is || (() => false) }; };
+  // is doing is which words are lit. The registrar is the chair's.
+  const { V, add } = C.vocab();
 
   add("start", "start", ["add drums"], m => !m.on,
       m => ({ ...m, on: true, kit: { ...empty(), ...GROOVES.four } }),
@@ -377,10 +375,7 @@
      and saying the name puts a hit there or takes it away. The lane is
      PINNED (tap "hats" and you are talking about hats), which is what keeps
      one tap per decision: the machine already knows the subject. */
-  const SUB = ["", "e", "and", "a"];
-  const COUNT = ["one", "two", "three", "four"];
-  const stepWord = (i) => (i % 4 === 0) ? "on " + COUNT[i >> 2]
-    : "on the " + SUB[i % 4] + " of " + COUNT[i >> 2];
+  const stepWord = C.stepWord;
   const stepId = (lane, i) => "step:" + lane + ":" + i;
   function stepsFor(lane) {
     const out = [];
@@ -440,10 +435,16 @@
       { w: "shuffled", is: (m) => m.swing === "shuffle", apply: (m) => ({ ...m, swing: "shuffle" }) },
       { w: "half-time feel", is: (m) => JSON.stringify(m.kit.s) === JSON.stringify(on(8)),
         apply: kitSet(DRUMMER["backbeat on three"]) } ] },
-    { id: "record", ask: "what kind of record is this?", opts:
+    // a new family means the groove under it must be chosen again — the
+    // dependency is DECLARED here and the chair's walker honours it
+    { id: "record", ask: "what kind of record is this?", invalidates: ["groove"], opts:
       ["the floor", "breaks", "rock", "latin", "funk", "jazz"].map((f) => ({
         w: f, is: (m) => m.fam === f, apply: (m) => ({ ...m, fam: f }) })) },
-    { id: "groove", ask: "which one?", when: (m) => !!m.fam, opts: null },   // filled below
+    // the second question about the record: which groove, out of the family
+    // just chosen — the options are a FUNCTION of the model, and the row is
+    // only asked once there is a family (the chair reads both declarations)
+    { id: "groove", ask: "which one?", when: (m) => !!m.fam,
+      opts: (m) => grooveOpts(m) },
     { id: "job", ask: "what is your job in it?", opts: [
       { w: "hold it down", is: (m) => m.job === "hold",
         apply: (m) => ({ ...m, job: "hold", kit: DRUMMER["hands in eighths"](m).kit }) },
@@ -484,9 +485,7 @@
       { w: "no fills", is: (m) => !Object.keys(m.fills).length,
         apply: (m) => ({ ...m, fills: {} }) } ] },
   ];
-  // the second question about the record: which groove, out of the family
-  // just chosen — the same grooves, asked the way a drummer would ask
-  DECISIONS.find((d) => d.id === "groove").opts = null;
+  // the same grooves, asked the way a drummer would ask
   const grooveOpts = (m) => Object.keys(GROOVES)
     .filter((g) => (GROOVEFAM[g] || "other") === m.fam)
     .map((g) => ({ w: (GROOVEWORD[g] || [g])[0],
@@ -496,28 +495,11 @@
   // kit looked clever and behaved badly: choosing a job changed the hats, so
   // the question about which groove re-opened itself. What a drummer decided
   // is a fact about the drummer — it stays decided until they change it, and
-  // the sheet shows it whatever the kit has been edited into since.
-  const decisions = (m) => DECISIONS.map((d) => ({
-    ...d,
-    answered: (m.answers || {})[d.id] || null,
-    opts: (d.id === "groove" ? grooveOpts(m) : d.opts).map((o) => ({
-      ...o,
-      answered: (m.answers || {})[d.id] === o.w,
-      // ...and whether it happens to be TRUE right now, which is a different
-      // question and worth showing when it disagrees with the answer
-      active: (() => { try { return !!o.is(m); } catch (e) { return false; } })() })),
-  })).filter((d) => !d.when || d.when(m));
-  const nextAsk = (m) => decisions(m).find((d) => !d.answered) || null;
-  const answer = (m, id, w) => {
-    const d = decisions(m).find((x) => x.id === id);
-    const o = d && d.opts.find((x) => x.w === w);
-    if (!o) return m;
-    const out = o.apply(m);
-    const answers = { ...(out.answers || m.answers || {}), [id]: w };
-    // a new family means the groove under it must be chosen again
-    if (id === "record" && (m.answers || {}).record !== w) delete answers.groove;
-    return { ...out, answers };
-  };
+  // the sheet shows it whatever the kit has been edited into since. That law
+  // lives in the chair's walker now; `live` makes answering go through the
+  // rendered list, so an unasked question (no family yet) cannot be answered
+  // and a groove answer must exist in the family just chosen.
+  const { decisions, nextAsk, answer } = C.interview(DECISIONS, { live: true });
 
   /* ---------- what can be said right now — the exactness law ---------- */
   // with a lane PINNED the bar itself is the vocabulary; without one, the

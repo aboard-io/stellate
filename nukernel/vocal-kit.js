@@ -11,17 +11,18 @@
 // (the tombstones are in kernel-daw.html and nukernel.test.js §74). This is
 // a VOICE in the sampled sense — ahh/ooh/solo vox from the pool, played like
 // any other instrument — and it must stay that way.
+//
+// CONTENT ONLY. The mechanism is chair.js (NuChair) — one engine, six
+// chairs. What is left here is what makes this chair a VOICE: the parts it
+// sings, the voices the pool can cast, the mic panel, and toGenre.
 (function (root, factory) {
-  const api = factory();
+  const api = factory(typeof require !== "undefined" ? require("./chair.js") : root.NuChair);
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuVocal = api;
-})(typeof self !== "undefined" ? self : this, function () {
+})(typeof self !== "undefined" ? self : this, function (C) {
   "use strict";
 
-  const N = 16;
-  const z = () => new Array(N).fill(0);
-  const on = (...ix) => { const v = z(); for (const i of ix) v[i] = 1; return v; };
-  const deg = (...d) => { const v = z(); d.forEach((x, i) => { v[i] = x; }); return v; };
+  const { N, z, on, deg } = C;
 
   const JOBS = {
     oohs:   { w: "oohs under it", part: "pad", gate: on(0), reg: 0,
@@ -52,83 +53,22 @@
       { w: "swelling in", v: 0.7 } ] },
   ];
 
-  const blank = () => ({ on: false, job: "oohs", instr: "ahh_choir", reg: "mid",
-                         tone: null, gate: null, answers: {} });
-  const jobOf = (m) => JOBS[m.job] || JOBS.oohs;
-  const gateOf = (m) => (m.gate ? m.gate.slice() : jobOf(m).gate.slice());
-  const toneOf = (m) => m.tone || {};
-  const rhythmic = (m) => { const p = jobOf(m).part; return !!p && p !== "pad" && p !== "drone"; };
-
-  const V = {};
-  const add = (id, group, words, when, apply, says, is) =>
-    { V[id] = { id, group, words, when, apply, says, is: is || (() => false) }; };
-  add("start", "start", ["step up to the mic"], (m) => !m.on,
-      (m) => ({ ...m, on: true }), () => "a voice, holding oohs under it");
-  for (const [k, j] of Object.entries(JOBS))
-    add("job:" + k, "what you are singing", [j.w],
-        (m) => m.on && (m.job !== k || !!m.gate),
-        (m) => ({ ...m, job: k, gate: null }), () => j.says,
-        (m) => m.job === k && !m.gate);
-  for (const [k, w] of Object.entries(INSTRUMENTS))
-    add("instr:" + k, "the voice", [w], (m) => m.on && m.instr !== k,
-        (m) => ({ ...m, instr: k }), () => w, (m) => m.instr === k);
-  for (const [k, r] of Object.entries(REG))
-    add("reg:" + k, "the register", [r.w], (m) => m.on && m.reg !== k,
-        (m) => ({ ...m, reg: k }), () => r.w, (m) => m.reg === k);
-  for (const p of PANEL)
-    for (const o of p.opts)
-      add("mach:" + p.id + ":" + o.w, "at the mic", [o.w],
-          (m) => m.on && toneOf(m)[p.key] !== o.v,
-          (m) => ({ ...m, tone: { ...toneOf(m), [p.key]: o.v } }),
-          () => p.ask.replace("?", ": ") + o.w,
-          (m) => toneOf(m)[p.key] === o.v);
-  const COUNT = ["one", "two", "three", "four"], SUB = ["", "e", "and", "a"];
-  const stepWord = (i) => (i % 4 === 0) ? "on " + COUNT[i >> 2]
-    : "on the " + SUB[i % 4] + " of " + COUNT[i >> 2];
-  for (let i = 0; i < N; i++)
-    add("hit:" + i, "the bar", [stepWord(i)], (m) => m.on && rhythmic(m),
-        (m) => { const g = gateOf(m); g[i] = g[i] ? 0 : 1; return { ...m, gate: g }; },
-        (m) => (gateOf(m)[i] ? "nothing " : "sing ") + stepWord(i),
-        (m) => !!gateOf(m)[i]);
-
-  const DECISIONS = [
-    { id: "instr", ask: "whose voice is it?", opts:
-      Object.entries(INSTRUMENTS).map(([k, w]) => ({
-        w, is: (m) => m.instr === k, apply: (m) => ({ ...m, instr: k }) })) },
-    { id: "job", ask: "what are you singing?", opts:
-      Object.entries(JOBS).map(([k, j]) => ({
-        w: j.w, is: (m) => m.job === k, apply: (m) => ({ ...m, job: k, gate: null }) })) },
-    { id: "reg", ask: "where does it sit?", opts:
-      Object.entries(REG).map(([k, r]) => ({
-        w: r.w, is: (m) => m.reg === k, apply: (m) => ({ ...m, reg: k }) })) },
-    ...PANEL.map((p) => ({ id: p.id, ask: p.ask, opts: p.opts.map((o) => ({
-      w: o.w, is: (m) => toneOf(m)[p.key] === o.v,
-      apply: (m) => ({ ...m, tone: { ...toneOf(m), [p.key]: o.v } }) })) })),
-  ];
-  const decisions = (m) => DECISIONS.map((d) => ({
-    ...d, answered: (m.answers || {})[d.id] || null,
-    opts: d.opts.map((o) => ({ ...o, answered: (m.answers || {})[d.id] === o.w,
-      active: (() => { try { return !!o.is(m); } catch (e) { return false; } })() })) }));
-  const nextAsk = (m) => decisions(m).find((d) => !d.answered) || null;
-  function answer(m, id, w) {
-    const d = DECISIONS.find((x) => x.id === id);
-    const o = d && d.opts.find((x) => x.w === w);
-    return o ? { ...o.apply(m), answers: { ...(m.answers || {}), [id]: w } } : m;
-  }
-  const catalog = (m) => Object.values(V).map((i) => {
-    let changes = false, active = false;
-    try { changes = !!i.when(m) && JSON.stringify(i.apply(m)) !== JSON.stringify(m); } catch (e) {}
-    try { active = !!i.is(m); } catch (e) {}
-    return { id: i.id, group: i.group, words: i.words, changes, active };
+  // the chair itself, from the tables above — a voice names itself plainly
+  // ("one singer", not "on one singer") and sings everything at 6
+  const chair = C.pitchedChair({
+    jobs: JOBS, instruments: INSTRUMENTS, reg: REG, panel: PANEL,
+    model: { job: "oohs", instr: "ahh_choir", reg: "mid" },
+    start: { words: ["step up to the mic"], says: "a voice, holding oohs under it" },
+    groups: { job: "what you are singing", instr: "the voice", panel: "at the mic" },
+    asks: { instr: "whose voice is it?", job: "what are you singing?",
+            reg: "where does it sit?" },
+    instrSays: (w) => w,
+    hit: { on: "sing ", off: "nothing " },
+    vel: () => 6,
   });
-  const say = (m, id) => (V[id] && V[id].when(m) ? V[id].apply(m) : m);
-  const says = (m, id) => (V[id] ? V[id].says(m) : "");
+  const { rhythmic, blank, V, catalog, say, says,
+          decisions, nextAsk, answer, toPattern, jobOf, gateOf, stepWord } = chair;
 
-  function toPattern(m) {
-    const j = jobOf(m);
-    return { deg: (j.dg || z()).slice(), oct: z(), vel: new Array(N).fill(6),
-             inc: z(), stk: z(), gate: gateOf(m), acc: z(), sld: z() };
-  }
   function toGenre(m) {
     const j = jobOf(m);
     return { part: j.part || "line", reg: (REG[m.reg] || REG.mid).v + (j.reg || 0),

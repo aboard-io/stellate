@@ -10,6 +10,7 @@
 // the changes from the arranger.
 (function (root, factory) {
   const api = factory(
+    typeof require !== "undefined" ? require("./chair.js") : root.NuChair,
     typeof require !== "undefined" ? require("./drums-kit.js") : root.NuDrums,
     typeof require !== "undefined" ? require("./bass-kit.js") : root.NuBass,
     typeof require !== "undefined" ? require("./keys-kit.js") : root.NuKeys,
@@ -19,7 +20,7 @@
     typeof require !== "undefined" ? require("./vocal-kit.js") : root.NuVocal);
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuBand = api;
-})(typeof self !== "undefined" ? self : this, function (D, B, Ky, Id, Gt, Ask, Vo) {
+})(typeof self !== "undefined" ? self : this, function (C, D, B, Ky, Id, Gt, Ask, Vo) {
   "use strict";
 
   const SEATS = ["arranger", "drums", "bass", "keys", "guitar", "voice", "engineer"];
@@ -615,8 +616,9 @@
     // forever)
     ...d, seat: "arranger",
     answered: d.id.startsWith("idea:") ? d.answered : ((m.song.answers || {})[d.id] || null),
-    opts: d.opts.map((o) => ({ ...o, answered: (m.song.answers || {})[d.id] === o.w,
-      active: (() => { try { return !!o.is(m.song); } catch (e) { return false; } })() })) }));
+    // the chair's own option mapper, aimed at the SONG: what was said, and
+    // what is true of the tune right now
+    opts: C.mapOpts(d.opts, (m.song.answers || {})[d.id], m.song) }));
 
   // ...what calling a record actually does to the players
   function called(m, gk) {

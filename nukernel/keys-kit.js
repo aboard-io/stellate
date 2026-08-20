@@ -14,18 +14,19 @@
 // register law already key on. So this file writes two things the engine
 // already reads: a PART, and a PHRASE (the box's own 16-step pattern —
 // deg/gate/vel/oct, the same shape song.js blank() makes).
+//
+// CONTENT ONLY. The interview walker, the vocabulary registrar, the bar's
+// step words and the phrase assembler live in chair.js (NuChair) — one
+// engine, six chairs. What is left here is what makes this chair the KEYS:
+// the jobs, the instruments the pool can cast, the panel, and toGenre.
 (function (root, factory) {
-  const api = factory();
+  const api = factory(typeof require !== "undefined" ? require("./chair.js") : root.NuChair);
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuKeys = api;
-})(typeof self !== "undefined" ? self : this, function () {
+})(typeof self !== "undefined" ? self : this, function (C) {
   "use strict";
 
-  const N = 16;
-  const z = () => new Array(N).fill(0);
-  const on = (...ix) => { const v = z(); for (const i of ix) v[i] = 1; return v; };
-  const every = (n, from) => { const v = z(); for (let i = from || 0; i < N; i += n) v[i] = 1; return v; };
-  const deg = (...d) => { const v = z(); d.forEach((x, i) => { v[i] = x; }); return v; };
+  const { N, z, on, every, deg } = C;
 
   /* ---------- WHAT A PAIR OF HANDS DOES ----------------------------------
      Each job is a PART the kernel already plays and a PHRASE to play it
@@ -93,106 +94,29 @@
       { w: "clean", v: 0.8 }, { w: "some", v: 3 }, { w: "singing", v: 7 } ] },
   ];
 
-  const blank = () => ({ on: false, job: "pads", instr: "warm_pad", reg: "high",
-                         tone: null, gate: null, answers: {} });
-
-  const jobOf = (m) => JOBS[m.job] || JOBS.pads;
-  const gateOf = (m) => (m.gate ? m.gate.slice() : jobOf(m).gate.slice());
-  const toneOf = (m) => m.tone || {};
-
-  /* ---------- the words, beyond the interview ---------- */
-  const V = {};
-  const add = (id, group, words, when, apply, says, is) =>
-    { V[id] = { id, group, words, when, apply, says, is: is || (() => false) }; };
-
-  add("start", "start", ["sit down at the keys"], (m) => !m.on,
-      (m) => ({ ...m, on: true }), () => "a pair of hands, playing pads");
-
-  for (const [k, j] of Object.entries(JOBS))
-    add("job:" + k, "what you are playing", [j.w],
-        (m) => m.on && (m.job !== k || !!m.gate),
-        (m) => ({ ...m, job: k, gate: null }), () => j.says,
-        (m) => m.job === k && !m.gate);
-
-  for (const [k, w] of Object.entries(INSTRUMENTS))
-    add("instr:" + k, "what it is", [w], (m) => m.on && m.instr !== k,
-        (m) => ({ ...m, instr: k }), () => "on " + w, (m) => m.instr === k);
-
-  for (const [k, r] of Object.entries(REG))
-    add("reg:" + k, "the register", [r.w], (m) => m.on && m.reg !== k,
-        (m) => ({ ...m, reg: k }), () => r.w, (m) => m.reg === k);
-
-  for (const p of PANEL)
-    for (const o of p.opts)
-      add("mach:" + p.id + ":" + o.w, "at the machine", [o.w],
-          (m) => m.on && toneOf(m)[p.key] !== o.v,
-          (m) => ({ ...m, tone: { ...toneOf(m), [p.key]: o.v } }),
-          () => p.ask.replace("?", ": ") + o.w,
-          (m) => toneOf(m)[p.key] === o.v);
-
-  // THE BAR — where the hands fall, one place at a time, the same sixteen
-  // places the drummer and the bassist count.
-  const COUNT = ["one", "two", "three", "four"], SUB = ["", "e", "and", "a"];
-  const stepWord = (i) => (i % 4 === 0) ? "on " + COUNT[i >> 2]
-    : "on the " + SUB[i % 4] + " of " + COUNT[i >> 2];
-  // A PAD DOES NOT HEAR THE BAR. The kernel holds a pad to the next CHORD on
-  // purpose — extra hits inside the bar read as a stutter, not a pad — so
-  // the places are offered to the jobs that can play them and to nobody
-  // else. A word the instrument cannot hear is not a word.
-  const rhythmic = (m) => { const p2 = jobOf(m).part; return !!p2 && p2 !== "pad" && p2 !== "drone"; };
-  for (let i = 0; i < N; i++)
-    add("hit:" + i, "the bar", [stepWord(i)], (m) => m.on && rhythmic(m),
-        (m) => { const g = gateOf(m); g[i] = g[i] ? 0 : 1; return { ...m, gate: g }; },
-        (m) => (gateOf(m)[i] ? "no chord " : "a chord ") + stepWord(i),
-        (m) => !!gateOf(m)[i]);
-
-  /* ---------- the interview ---------- */
-  const DECISIONS = [
-    { id: "instr", ask: "what are you playing?", opts:
-      Object.entries(INSTRUMENTS).map(([k, w]) => ({
-        w, is: (m) => m.instr === k, apply: (m) => ({ ...m, instr: k }) })) },
-    { id: "job", ask: "what's your job in it?", opts:
-      Object.entries(JOBS).map(([k, j]) => ({
-        w: j.w, is: (m) => m.job === k, apply: (m) => ({ ...m, job: k, gate: null }) })) },
-    { id: "reg", ask: "where do you sit?", opts:
-      Object.entries(REG).map(([k, r]) => ({
-        w: r.w, is: (m) => m.reg === k, apply: (m) => ({ ...m, reg: k }) })) },
-    ...PANEL.map((p) => ({ id: p.id, ask: p.ask, opts: p.opts.map((o) => ({
-      w: o.w, is: (m) => toneOf(m)[p.key] === o.v,
-      apply: (m) => ({ ...m, tone: { ...toneOf(m), [p.key]: o.v } }) })) })),
-  ];
-  const decisions = (m) => DECISIONS.map((d) => ({
-    ...d, answered: (m.answers || {})[d.id] || null,
-    opts: d.opts.map((o) => ({ ...o, answered: (m.answers || {})[d.id] === o.w,
-      active: (() => { try { return !!o.is(m); } catch (e) { return false; } })() })) }));
-  const nextAsk = (m) => decisions(m).find((d) => !d.answered) || null;
-  function answer(m, id, w) {
-    const d = DECISIONS.find((x) => x.id === id);
-    const o = d && d.opts.find((x) => x.w === w);
-    if (!o) return m;
-    return { ...o.apply(m), answers: { ...(m.answers || {}), [id]: w } };
-  }
-
-  const catalog = (m) => Object.values(V).map((i) => {
-    let changes = false, active = false;
-    try { changes = !!i.when(m) && JSON.stringify(i.apply(m)) !== JSON.stringify(m); } catch (e) {}
-    try { active = !!i.is(m); } catch (e) {}
-    return { id: i.id, group: i.group, words: i.words, changes, active };
+  /* ---------- the chair itself, from the tables above --------------------
+     Every mechanism — the vocabulary, the bar, the interview, the catalog,
+     the phrase — is chair.js's; the spec is the nouns. A pad plays at 5,
+     everything else at 6: the hands lean into a line and sit back under a
+     chord. */
+  const chair = C.pitchedChair({
+    jobs: JOBS, instruments: INSTRUMENTS, reg: REG, panel: PANEL,
+    model: { job: "pads", instr: "warm_pad", reg: "high" },
+    start: { words: ["sit down at the keys"], says: "a pair of hands, playing pads" },
+    groups: { job: "what you are playing", instr: "what it is", panel: "at the machine" },
+    asks: { instr: "what are you playing?", job: "what's your job in it?",
+            reg: "where do you sit?" },
+    instrSays: (w) => "on " + w,
+    hit: { on: "a chord ", off: "no chord " },
+    vel: (j) => (j.part === "pad" ? 5 : 6),
   });
-  const offered = (m) => catalog(m).filter((i) => i.changes);
-  const say = (m, id) => (V[id] && V[id].when(m) ? V[id].apply(m) : m);
-  const says = (m, id) => (V[id] ? V[id].says(m) : "");
+  const { rhythmic, blank, V, catalog, offered, say, says,
+          decisions, nextAsk, answer, toPattern, jobOf, gateOf, stepWord } = chair;
 
   /* ---------- what the engine is handed ----------
      TWO things, because a pitched voice is two things: the PART (how the
      note behaves) lives on the genre, and the PHRASE (where the hands fall)
-     is the box's own pattern. */
-  function toPattern(m) {
-    const j = jobOf(m), g = gateOf(m);
-    const dg = m.gate ? (j.dg || z()) : (j.dg || z());
-    return { deg: dg.slice(), oct: z(), vel: new Array(N).fill(j.part === "pad" ? 5 : 6),
-             inc: z(), stk: z(), gate: g, acc: z(), sld: z() };
-  }
+     is the box's own pattern — toPattern, which is the chair's. */
   // the genre fields a keys player owns — merged into the band's own genre
   function toGenre(m) {
     const j = jobOf(m);

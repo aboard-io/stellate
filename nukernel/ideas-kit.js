@@ -20,16 +20,20 @@
 // than uniform when this repo's parent mined it — tools/mine/mine-weave.js)
 // and not an average of anything (the median of a thousand melodies is a
 // monotone — tools/mine/mine-melody.js uses a MEDOID for exactly this reason).
+//
+// The interview walker, the vocabulary registrar and the step words are
+// chair.js's (NuChair); the phrase generator — the one mechanism that is
+// genuinely this file's own — stays here whole.
 (function (root, factory) {
-  const api = factory();
+  const api = factory(typeof require !== "undefined" ? require("./chair.js") : root.NuChair);
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuIdeas = api;
-})(typeof self !== "undefined" ? self : this, function () {
+})(typeof self !== "undefined" ? self : this, function (C) {
   "use strict";
 
   const N = 16;
-  const z = (n) => new Array(n || N).fill(0);
-  const g16 = (...ix) => { const v = z(); for (const i of ix) v[i] = 1; return v; };
+  const { z, stepWord } = C;
+  const g16 = C.on;
 
   /* ---------- 1. THE RHYTHM: where the notes fall, and where they don't ---- */
   const CELLS = {
@@ -187,9 +191,7 @@
                            (LANDINGS[m.land] || {}).w].join(", ");
 
   /* ---------- the words ---------- */
-  const V = {};
-  const add = (id, group, words, when, apply, says, is) =>
-    { V[id] = { id, group, words, when, apply, says, is: is || (() => false) }; };
+  const { V, add } = C.vocab();
 
   add("start", "start", ["write something"], (m) => !m.on,
       (m) => ({ ...m, on: true }), () => "a phrase, two bars, arching over");
@@ -217,7 +219,6 @@
   };
   const conFirst = firstOf("contour", Object.keys(CONTOURS));
   const cellFirst = firstOf("cell", Object.keys(CELLS));
-  const heard = (mk) => (m) => m.on && sounds(mk(m)) !== sounds(m);
   for (const [k, c] of Object.entries(CELLS))
     add("cell:" + k, "the rhythm of it", [c.w],
         (m) => m.on && m.cell !== k && cellFirst(m, k),
@@ -236,9 +237,6 @@
     add("reg:" + k, "the register", [r.w], (m) => m.on && m.reg !== k,
         (m) => ({ ...m, reg: k }), () => r.w, (m) => m.reg === k);
   // THE BAR, and the two things you can say about one note in it
-  const COUNT = ["one", "two", "three", "four"], SUB = ["", "e", "and", "a"];
-  const stepWord = (i) => (i % 4 === 0) ? "on " + COUNT[i >> 2]
-    : "on the " + SUB[i % 4] + " of " + COUNT[i >> 2];
   for (let i = 0; i < N; i++) {
     add("note:" + i, "the bar", [stepWord(i)], (m) => m.on,
         (m) => { const g = gridOf(m); g[i] = g[i] ? 0 : 1;
@@ -263,7 +261,12 @@
       (m) => (m.answer ? "both halves end the same way" : "the first half asks, the second answers"),
       (m) => !!m.answer);
 
-  /* ---------- the interview ---------- */
+  /* ---------- the interview ----------
+     chair.js walks it; the one law that is this file's own rides on the
+     options as `heard` — over the rhythm you chose, two shapes that come
+     out identical are one answer, not two — and the walker filters by it
+     when OFFERING while still accepting the answer by the raw table, which
+     is how band-kit answers through the gap on the idea's behalf. */
   const DECISIONS = [
     { id: "len", ask: "how long is it?", opts: Object.entries(LENGTHS).map(([k, l]) => ({
         w: l.w, is: (m) => m.len === k, apply: (m) => ({ ...m, len: k }) })) },
@@ -272,34 +275,15 @@
     { id: "contour", ask: "what shape does it make?",
       opts: Object.entries(CONTOURS).map(([k, c]) => ({
         w: c.w, is: (m) => m.contour === k, apply: (m) => ({ ...m, contour: k }),
-        // ...and the same law in the interview: over the rhythm you chose,
-        // two shapes that come out identical are one answer, not two
         heard: (m) => conFirst(m, k) })) },
     { id: "land", ask: "where does it end?", opts: Object.entries(LANDINGS).map(([k, l]) => ({
         w: l.w, is: (m) => m.land === k, apply: (m) => ({ ...m, land: k }) })) },
     { id: "reg", ask: "how high does it sit?", opts: Object.entries(REG).map(([k, r]) => ({
         w: r.w, is: (m) => m.reg === k, apply: (m) => ({ ...m, reg: k }) })) },
   ];
-  const decisions = (m) => DECISIONS.map((d) => ({
-    ...d, answered: (m.answers || {})[d.id] || null,
-    opts: d.opts.filter((o) => !o.heard || o.heard(m))
-      .map((o) => ({ ...o, answered: (m.answers || {})[d.id] === o.w,
-      active: (() => { try { return !!o.is(m); } catch (e) { return false; } })() })) }));
-  const nextAsk = (m) => decisions(m).find((d) => !d.answered) || null;
-  function answer(m, id, w) {
-    const d = DECISIONS.find((x) => x.id === id);
-    const o = d && d.opts.find((x) => x.w === w);
-    if (!o) return m;
-    return { ...o.apply(m), answers: { ...(m.answers || {}), [id]: w } };
-  }
-  const catalog = (m) => Object.values(V).map((i) => {
-    let changes = false, active = false;
-    try { changes = !!i.when(m) && JSON.stringify(i.apply(m)) !== JSON.stringify(m); } catch (e) {}
-    try { active = !!i.is(m); } catch (e) {}
-    return { id: i.id, group: i.group, words: i.words, changes, active };
-  });
-  const say = (m, id) => (V[id] && V[id].when(m) ? V[id].apply(m) : m);
-  const says = (m, id) => (V[id] ? V[id].says(m) : "");
+  const { decisions, nextAsk, answer } = C.interview(DECISIONS, {});
+  const catalog = C.catalogSlimOf(V);
+  const say = C.sayOf(V), says = C.saysOf(V);
 
   const regOf = (m) => (REG[m.reg] || REG.mid).v;
   return { N, CELLS, CONTOURS, LANDINGS, LENGTHS, REG, regOf, gridOf, liftOf, stepWord,

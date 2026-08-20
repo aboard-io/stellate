@@ -10,18 +10,18 @@
 // GM ships clean/overdrive/distortion as separate recordings, so "how dirty"
 // is a casting decision here, which is also how a guitarist actually thinks
 // about it (a different amp is a different guitar).
+//
+// CONTENT ONLY. The mechanism is chair.js (NuChair) — one engine, six
+// chairs. What is left here is what makes this chair a GUITAR: the jobs,
+// the amps-as-instruments, the panel, and toGenre.
 (function (root, factory) {
-  const api = factory();
+  const api = factory(typeof require !== "undefined" ? require("./chair.js") : root.NuChair);
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuGuitar = api;
-})(typeof self !== "undefined" ? self : this, function () {
+})(typeof self !== "undefined" ? self : this, function (C) {
   "use strict";
 
-  const N = 16;
-  const z = () => new Array(N).fill(0);
-  const on = (...ix) => { const v = z(); for (const i of ix) v[i] = 1; return v; };
-  const every = (n, from) => { const v = z(); for (let i = from || 0; i < N; i += n) v[i] = 1; return v; };
-  const deg = (...d) => { const v = z(); d.forEach((x, i) => { v[i] = x; }); return v; };
+  const { N, z, on, every, deg } = C;
 
   const JOBS = {
     chug:   { w: "a palm-muted chug", part: "riff", gate: every(2), reg: -1,
@@ -67,86 +67,22 @@
       { w: "damped", v: 0.15 }, { w: "ringing", v: 0.7 }, { w: "hanging on", v: 2 } ] },
   ];
 
-  const blank = () => ({ on: false, job: "strum", instr: "clean_guitar", reg: "mid",
-                         tone: null, gate: null, answers: {} });
-  const jobOf = (m) => JOBS[m.job] || JOBS.strum;
-  const gateOf = (m) => (m.gate ? m.gate.slice() : jobOf(m).gate.slice());
-  const toneOf = (m) => m.tone || {};
-  const rhythmic = (m) => { const p = jobOf(m).part; return !!p && p !== "pad" && p !== "drone"; };
-
-  const V = {};
-  const add = (id, group, words, when, apply, says, is) =>
-    { V[id] = { id, group, words, when, apply, says, is: is || (() => false) }; };
-
-  add("start", "start", ["pick up the guitar"], (m) => !m.on,
-      (m) => ({ ...m, on: true }), () => "a guitar, strumming it");
-  for (const [k, j] of Object.entries(JOBS))
-    add("job:" + k, "what you are playing", [j.w],
-        (m) => m.on && (m.job !== k || !!m.gate),
-        (m) => ({ ...m, job: k, gate: null }), () => j.says,
-        (m) => m.job === k && !m.gate);
-  for (const [k, w] of Object.entries(INSTRUMENTS))
-    add("instr:" + k, "what it is", [w], (m) => m.on && m.instr !== k,
-        (m) => ({ ...m, instr: k }), () => "on " + w, (m) => m.instr === k);
-  for (const [k, r] of Object.entries(REG))
-    add("reg:" + k, "the register", [r.w], (m) => m.on && m.reg !== k,
-        (m) => ({ ...m, reg: k }), () => r.w, (m) => m.reg === k);
-  for (const p of PANEL)
-    for (const o of p.opts)
-      add("mach:" + p.id + ":" + o.w, "at the amp", [o.w],
-          (m) => m.on && toneOf(m)[p.key] !== o.v,
-          (m) => ({ ...m, tone: { ...toneOf(m), [p.key]: o.v } }),
-          () => p.ask.replace("?", ": ") + o.w,
-          (m) => toneOf(m)[p.key] === o.v);
-  const COUNT = ["one", "two", "three", "four"], SUB = ["", "e", "and", "a"];
-  const stepWord = (i) => (i % 4 === 0) ? "on " + COUNT[i >> 2]
-    : "on the " + SUB[i % 4] + " of " + COUNT[i >> 2];
-  for (let i = 0; i < N; i++)
-    add("hit:" + i, "the bar", [stepWord(i)], (m) => m.on && rhythmic(m),
-        (m) => { const g = gateOf(m); g[i] = g[i] ? 0 : 1; return { ...m, gate: g }; },
-        (m) => (gateOf(m)[i] ? "no strum " : "a strum ") + stepWord(i),
-        (m) => !!gateOf(m)[i]);
-
-  const DECISIONS = [
-    { id: "instr", ask: "what are you playing?", opts:
-      Object.entries(INSTRUMENTS).map(([k, w]) => ({
-        w, is: (m) => m.instr === k, apply: (m) => ({ ...m, instr: k }) })) },
-    { id: "job", ask: "what's your job in it?", opts:
-      Object.entries(JOBS).map(([k, j]) => ({
-        w: j.w, is: (m) => m.job === k, apply: (m) => ({ ...m, job: k, gate: null }) })) },
-    { id: "reg", ask: "where do you sit?", opts:
-      Object.entries(REG).map(([k, r]) => ({
-        w: r.w, is: (m) => m.reg === k, apply: (m) => ({ ...m, reg: k }) })) },
-    ...PANEL.map((p) => ({ id: p.id, ask: p.ask, opts: p.opts.map((o) => ({
-      w: o.w, is: (m) => toneOf(m)[p.key] === o.v,
-      apply: (m) => ({ ...m, tone: { ...toneOf(m), [p.key]: o.v } }) })) })),
-  ];
-  const decisions = (m) => DECISIONS.map((d) => ({
-    ...d, answered: (m.answers || {})[d.id] || null,
-    opts: d.opts.map((o) => ({ ...o, answered: (m.answers || {})[d.id] === o.w,
-      active: (() => { try { return !!o.is(m); } catch (e) { return false; } })() })) }));
-  const nextAsk = (m) => decisions(m).find((d) => !d.answered) || null;
-  function answer(m, id, w) {
-    const d = DECISIONS.find((x) => x.id === id);
-    const o = d && d.opts.find((x) => x.w === w);
-    if (!o) return m;
-    return { ...o.apply(m), answers: { ...(m.answers || {}), [id]: w } };
-  }
-  const catalog = (m) => Object.values(V).map((i) => {
-    let changes = false, active = false;
-    try { changes = !!i.when(m) && JSON.stringify(i.apply(m)) !== JSON.stringify(m); } catch (e) {}
-    try { active = !!i.is(m); } catch (e) {}
-    return { id: i.id, group: i.group, words: i.words, changes, active };
+  // the chair itself, from the tables above — a riff digs in at 7, the rest
+  // of the jobs sit at 6
+  const chair = C.pitchedChair({
+    jobs: JOBS, instruments: INSTRUMENTS, reg: REG, panel: PANEL,
+    model: { job: "strum", instr: "clean_guitar", reg: "mid" },
+    start: { words: ["pick up the guitar"], says: "a guitar, strumming it" },
+    groups: { job: "what you are playing", instr: "what it is", panel: "at the amp" },
+    asks: { instr: "what are you playing?", job: "what's your job in it?",
+            reg: "where do you sit?" },
+    instrSays: (w) => "on " + w,
+    hit: { on: "a strum ", off: "no strum " },
+    vel: (j) => (j.part === "riff" ? 7 : 6),
   });
-  const say = (m, id) => (V[id] && V[id].when(m) ? V[id].apply(m) : m);
-  const says = (m, id) => (V[id] ? V[id].says(m) : "");
+  const { rhythmic, blank, V, catalog, say, says,
+          decisions, nextAsk, answer, toPattern, jobOf, gateOf, stepWord } = chair;
 
-  function toPattern(m) {
-    const j = jobOf(m), g = gateOf(m);
-    return { deg: (j.dg || z()).slice(), oct: z(),
-             vel: new Array(N).fill(j.part === "riff" ? 7 : 6),
-             inc: z(), stk: z(), gate: g, acc: z(), sld: z() };
-  }
   function toGenre(m) {
     const j = jobOf(m);
     return { part: j.part || "line", reg: (REG[m.reg] || REG.mid).v + (j.reg || 0),

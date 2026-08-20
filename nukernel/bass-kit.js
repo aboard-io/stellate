@@ -12,11 +12,15 @@
 // reads `bassStyle` (walk / octaves / fifths / pedal / eighths / sixteenths),
 // the changes are chord objects the same shape genres.js writes, the key is
 // the box's own, and the register is the `boct` field the couch added.
+//
+// The interview walker, the vocabulary registrar and the step words are
+// chair.js's (NuChair); what is left here is the bassist — the changes, the
+// figures, the 303's panel, the tonality table, and toGenre.
 (function (root, factory) {
-  const api = factory();
+  const api = factory(typeof require !== "undefined" ? require("./chair.js") : root.NuChair);
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuBass = api;
-})(typeof self !== "undefined" ? self : this, function () {
+})(typeof self !== "undefined" ? self : this, function (C) {
   "use strict";
 
   /* ---------- the changes, as a bassist names them ---------- */
@@ -70,7 +74,7 @@
      A figure is four 16-step vectors: where the notes are, what octave each
      takes, which are accented, which slide into the next. The BAR below
      lets you write your own the way the drummer writes a kit. */
-  const g16 = (...ix) => { const v = new Array(16).fill(0); for (const i of ix) v[i] = 1; return v; };
+  const g16 = C.on;
   const o16 = (...ix) => { const v = new Array(16).fill(0); for (const i of ix) v[i] = 12; return v; };
   const FIGURES = {
     acid:    { w: "an acid line",
@@ -158,9 +162,7 @@
   };
 
   /* ---------- the words, beyond the interview ---------- */
-  const V = {};
-  const add = (id, group, words, when, apply, says, is) =>
-    { V[id] = { id, group, words, when, apply, says, is: is || (() => false) }; };
+  const { V, add } = C.vocab();
 
   add("start", "start", ["pick up the bass"], (m) => !m.on,
       (m) => ({ ...m, on: true }), () => "a bass, in C, holding the root");
@@ -194,9 +196,7 @@
   // builds a kit. Sixteen places, and three MARKS a bass note can carry that
   // no density word can say: which octave it takes, whether it is accented,
   // whether it slides into the next.
-  const COUNT = ["one", "two", "three", "four"], SUB = ["", "e", "and", "a"];
-  const stepWord = (i) => (i % 4 === 0) ? "on " + COUNT[i >> 2]
-    : "on the " + SUB[i % 4] + " of " + COUNT[i >> 2];
+  const stepWord = C.stepWord;
   for (let i = 0; i < 16; i++) {
     add("note:" + i, "the bar", [stepWord(i)], (m) => m.on,
         (m) => { const f = figOf(m); const g2 = f.grid.slice(); g2[i] = g2[i] ? 0 : 1;
@@ -273,7 +273,7 @@
   /* ---------- WHAT A BASSIST DECIDES, IN ORDER ---------------------------
      The tune first, because a bass line is a line through harmony: key,
      changes, tempo, feel. Then the job, then the instrument, then where you
-     sit and how the notes are played. */
+     sit and how the notes are played. chair.js walks the table. */
   const DEC = [
     { id: "key", ask: "what key?", opts: Object.keys(KEYS).map((k) => ({
         w: "in " + k, is: (m) => m.key === k, apply: (m) => ({ ...m, key: k }) })) },
@@ -312,29 +312,12 @@
       { w: "where it sits", is: (m) => m.oct === 0, apply: (m) => ({ ...m, oct: 0 }) },
       { w: "up the neck", is: (m) => m.oct > 0, apply: (m) => ({ ...m, oct: 1 }) } ] },
   ];
-  const decisions = (m) => DEC.map((d) => ({
-    ...d, answered: (m.answers || {})[d.id] || null,
-    opts: d.opts.map((o) => ({ ...o, answered: (m.answers || {})[d.id] === o.w,
-      active: (() => { try { return !!o.is(m); } catch (e) { return false; } })() })) }));
-  const nextAsk = (m) => decisions(m).find((d) => !d.answered) || null;
-  const answer = (m, id, w) => {
-    const d = decisions(m).find((x) => x.id === id);
-    const o = d && d.opts.find((x) => x.w === w);
-    if (!o) return m;
-    const out = o.apply(m);
-    return { ...out, answers: { ...(m.answers || {}), [id]: w } };
-  };
+  const { decisions, nextAsk, answer } = C.interview(DEC, { live: true });
 
-  const catalog = (m) => Object.values(V).map((i) => {
-    let active = false, changes = false;
-    try { active = !!i.is(m); } catch (e) {}
-    try { changes = !!i.when(m); } catch (e) {}
-    return { ...i, active, changes };
-  });
+  const catalog = C.catalogFullOf(V);
   const offered = (m) => catalog(m).filter((i) => i.changes);
-  const say = (m, id) => (V[id] && V[id].when(m)) ? V[id].apply(m) : m;
-  const says = (m, id) => { const i = V[id]; if (!i) return "";
-    return typeof i.says === "function" ? i.says(m) : i.says; };
+  const say = C.sayOf(V);
+  const says = C.saysLooseOf(V);
 
   /* ---------- the model as a genre the engine already plays ---------- */
   // one voice (silent — the page hands it a gateless phrase, so what you hear
