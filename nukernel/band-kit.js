@@ -141,7 +141,8 @@
     double:   { w: "double time", fn: (k) => ({ ...k, s: hitsAt(2, 6, 10, 14) }) },
     hatsonly: { w: "just the hats", fn: (k) => ({ h: k.h || z16() }) },
     nokit:    { w: "lay out", fn: () => ({}) },
-    busier:   { w: "busier", fn: (k) => ({ ...k, h: new Array(16).fill(1) }) },
+    busier:   { w: "busier", fn: (k) => ({ ...k, h: new Array(16).fill(1),
+                                           o: hitsAt(0, 8) }) },
     sparser:  { w: "sparser", fn: (k) => ({ k: hitsAt(0, 8), s: hitsAt(4, 12) }) },
     ride:     { w: "move to the ride", fn: (k) => ({ ...k, p: k.h || z16(), h: z16() }) },
   };
@@ -424,6 +425,25 @@
   // to know WHICH changes it takes — a drop is the chorus of a twelve-inch
   const CHGROLE = { intro: "verse", outro: "verse", build: "verse", drop: "chorus",
                     break: "verse", head: "verse", solo: "chorus" };
+  /* ---------- HOW LONG IS IT ----------------------------------------------
+     A section was as long as the changes it was called with, and nothing
+     could say otherwise: the only lengths reachable anywhere in the graph
+     were 4 and 12 (twelve only via a blues). Every record came out a
+     rectangle — six four-bar sections, forty-eight seconds — and proportion
+     is most of what form IS. So the LENGTH is its own question, per role,
+     and the changes simply repeat inside it (the kernel reads `at(roots,
+     bar)`, so a four-chord cycle under an eight-bar chorus goes round
+     twice). */
+  const LENS = { short: { w: "four bars", v: 4 }, eight: { w: "eight bars", v: 8 },
+                 long: { w: "sixteen bars", v: 16 } };
+  const lenOf = (m, role) => {
+    // ...by its OWN role, not the one whose CHANGES it borrows: an intro
+    // takes the verse's chords and is not eight bars long because the verse
+    // is. Unasked roles keep the length of their changes, which is four.
+    const said = (m.song.lens || {})[role];
+    return said ? (LENS[said] || {}).v || null : null;
+  };
+
   // the roles that need their own changes called (an intro and an outro take
   // the verse's, the way a band would)
   const CALLED = ["verse", "chorus", "bridge"];
@@ -492,6 +512,13 @@
   ];
   // ...and one CALL per role the form contains: "what are the chorus
   // changes?" is a thing a bandleader says out loud
+  // ...one length question per role the form contains, beside its changes
+  const lenDecisions = (m) => (m.song.form ? rolesIn(m) : []).map((r) => ({
+    id: "len:" + r, seat: "arranger", ask: "how long is the " + r + "?",
+    opts: Object.entries(LENS).map(([k, v]) => ({
+      w: v.w, is: (s2) => ((s2.lens || {})[r] || "short") === k,
+      apply: (s2) => ({ ...s2, lens: { ...(s2.lens || {}), [r]: k } }) })),
+  }));
   const callDecisions = (m) => (m.song.form ? rolesIn(m) : []).map((r) => ({
     id: "chg:" + r, seat: "arranger", ask: "what are the " + r + " changes?",
     opts: Object.entries(B.CHANGEWORD).map(([k, w]) => ({
@@ -517,7 +544,7 @@
     if (!hit) ARRD.set(m, hit = arrDecisionsNow(m));
     return hit;
   };
-  const arrDecisionsNow = (m) => [...ARR, ...callDecisions(m), ...ideaDecisions(m)]
+  const arrDecisionsNow = (m) => [...ARR, ...callDecisions(m), ...lenDecisions(m), ...ideaDecisions(m)]
     .map((d) => (d.three ? { ...d, opts: threeOpts(m, d.id) }
       : d.id === "genre"
         // THE RECORDS STILL STANDING — but read WITHOUT the room, so the
@@ -803,6 +830,7 @@
       // own five, the narrowing — to find one row, which measured at 9 ms a
       // tap and is most of what composing a record cost.
       const d = (id.startsWith("idea:") ? ideaDecisions(m)
+        : id.startsWith("len:") ? lenDecisions(m)
         : id.startsWith("chg:") ? callDecisions(m).map((x) => ({ ...x, seat: "arranger",
             opts: x.opts.map((o) => ({ ...o })) }))
         : ARR.map((x) => (x.three ? { ...x, opts: threeOpts(m, x.id) } : x)))
@@ -996,7 +1024,18 @@
       // the changes PAIRED to its length (chordsOf reads a bar that carries
       // several chords), and the player who picks it up lends it their
       // instrument and their register.
+      // WHOEVER TAKES THE TUNE LEAVES A HOLE, and a band fills it. One chair
+      // is one pair of hands: a guitarist playing the hook is not also
+      // playing the chords, and measured, a chorus where that happened came
+      // out THINNER than its verse (26 events a bar against 29) — the
+      // biggest moment in the record, quieter, because the part that carried
+      // it left. So the other pitched chair steps up, which is what the
+      // other player would do.
       const taker = TAKERS[per.idea] || TAKERS.no;
+      if (taker.chair === "guitar" && !(per.keys && per.keys !== "same"))
+        km = Ky.say(km, "job:comp");
+      if (taker.chair === "keys" && !(per.guitar && per.guitar !== "same"))
+        gm = Gt.say(gm, "job:strum");
       let melody = null;
       if (taker.chair && m.idea && m.idea.on) {
         const ph = Id.toPhrase(m.idea, c.roots);
@@ -1017,7 +1056,9 @@
       // THE KEYS PLAYER'S PHRASE is the box's own pattern — a pitched voice
       // is a part AND a phrase, and only the phrase can say where the hands
       // fall. A chair that is out hands back a silent one.
-      return { role, i, genre: g, bars: g.bars, per, melody,
+      // THE SECTION'S OWN LENGTH, with the changes repeating inside it
+      const bars = lenOf(m, role) || g.bars;
+      return { role, i, genre: g, bars, per, melody,
                pattern: Ky.toPattern(taker.chair === "keys" && melody
                  ? Ky.say(km, "job:out") : km),
                guitar: Gt.toPattern(taker.chair === "guitar" && melody
@@ -1034,16 +1075,23 @@
      in it, per instrument, and everything you say about that section is an
      override of something already musical rather than a blank to fill. */
   const ROLE = {
-    intro:  { drums: "hatsonly", bass: "pedal" },
+    // an intro is the band ARRIVING: hats, a pedalled root, and one chord
+    // ringing rather than the guitar part that has not started yet
+    intro:  { drums: "hatsonly", bass: "pedal", guitar: "ring", keys: "pads" },
     verse:  {},
-    chorus: { drums: "busier", bass: "octave" },
+    // A CHORUS LIFTS BY MOVING FOUR THINGS AT ONCE, which is what a band
+    // does: the drums open up, the bass goes to octaves, the level comes
+    // forward and THE TUNE ARRIVES. Measured before this, the chorus was
+    // 1.07× the verse — a rounding error where the biggest moment in the
+    // record should be.
+    chorus: { drums: "busier", bass: "octave", mix: "fwd", idea: "keys" },
     bridge: { drums: "ride", bass: "walk" },
-    outro:  { drums: "sparser", bass: "pedal", mix: "back" },
+    outro:  { drums: "sparser", bass: "pedal", mix: "back", guitar: "ring" },
     // ...and the dance-record roles, which are the same kind of fact: a
     // build is hats and eighths climbing, a drop is everything at once, a
     // breakdown is the drums gone and the bass holding the room
     build:  { drums: "hatsonly", bass: "eighths", move: "rise" },
-    drop:   { drums: "busier", bass: "same", move: "open" },
+    drop:   { drums: "busier", bass: "same", move: "open", mix: "fwd", idea: "keys" },
     break:  { drums: "nokit", bass: "pedal", mix: "wet", move: "close" },
     head:   {},
     solo:   { drums: "ride", bass: "walk" },
@@ -1297,6 +1345,7 @@
            secWords, partOf,
            blank, decisions, seatDecisions,
            nextAsk, nextAnywhere, answer, catalog, say, says, toGenre, toSong,
-           SECDRUMS, SECBASS, SECKEYS, SECPIPE, CHORDKIND, TAKERS, sectionAsks, setSection,
+           SECDRUMS, SECBASS, SECKEYS, SECPIPE, CHORDKIND, LENS, TAKERS,
+           sectionAsks, setSection,
            D, B, Ky, Id, Gt };
 });

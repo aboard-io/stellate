@@ -755,6 +755,22 @@ echo*. Not a player's decision and not the desk's. Measured: 96 events become
 151 in thirds, 192 with the echo, 292 with both, other sections do not move,
 and nobody's phrase is rewritten — a pipe is what happens to the notes after.
 
+A RECORD HAS PROPORTIONS (2026-08-20). A section used to be as long as the
+CHANGES it was called with and nothing could say otherwise — the only lengths
+reachable anywhere in the graph were 4 and 12 — so every record came out a
+rectangle: six four-bar sections, forty-eight seconds. LENGTH is its own
+question now, one per role the form contains ("how long is the chorus?" —
+four / eight / sixteen bars), and the changes go round INSIDE it (the kernel
+reads `at(roots, bar)`, so a four-chord cycle under a sixteen-bar chorus goes
+round four times). And a CHORUS LIFTS by moving four things at once, which is
+what a band does: the drums open up (measured 1.5× the verse), the level
+comes forward, the bass goes to octaves and THE TUNE ARRIVES — the hook plays
+in every chorus by default, because a melody that appears once is an event,
+not a structure. Whoever takes the tune leaves a hole and the other pitched
+chair fills it: one chair is one pair of hands, and measured before that
+rule, a chorus where the guitarist took the hook came out THINNER than its
+verse.
+
 THE ARRANGER CALLS CHORDS, NOT JUST ROOTS. `CHANGES` is a roots array and
 the kernel's `prog` takes chord OBJECTS — quality, inversion, borrow — which
 is why the keys player, the first chair that plays harmony, could only ever

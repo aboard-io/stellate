@@ -836,20 +836,28 @@ console.log("a melody is written once and picked up by whoever is asked");
   ok(JSON.stringify(m2.song) === before, "writing the tune changed the tune's SONG fields");
   ok(JSON.stringify(m2.idea) !== JSON.stringify(m.idea), "the answer never reached the idea");
 
-  // nobody plays it until a section says so
+  // THE HOOK IS WHERE THE CHORUS IS. A tune that plays in one section is an
+  // event, not a structure — so the chorus takes it by default, every time
+  // it comes round, and a section that is not a chorus takes it only when
+  // somebody says so.
   const secs = Band.toSong(m, MODES);
-  ok(secs.every((s2) => !s2.melody), "the melody is playing before anybody picked it up");
-  const took = Band.setSection(m, 1, "idea", "keys");
+  const choruses = secs.filter((s2) => s2.role === "chorus");
+  ok(choruses.length > 0 && choruses.every((s2) => s2.melody),
+     "the hook does not play in every chorus");
+  ok(secs.filter((s2) => s2.role !== "chorus").every((s2) => !s2.melody),
+     "the melody is playing somewhere nobody asked for it");
+  const took = Band.setSection(m, 0, "idea", "keys");
   const secs2 = Band.toSong(took, MODES);
-  ok(!!secs2[1].melody, "the keys were asked to take it and did not");
-  ok(secs2.filter((s2) => s2.melody).length === 1, "the melody leaked into another section");
+  ok(!!secs2[0].melody, "the keys were asked to take it in the verse and did not");
+  ok(secs2.filter((s2) => s2.melody).length === choruses.length + 1,
+     "asking for the tune in the verse changed where else it plays");
   // the player who takes it stops playing their own part there
-  ok(secs2[1].pattern.gate.filter(Boolean).length === 0,
+  ok(secs2[0].pattern.gate.filter(Boolean).length === 0,
      "the keys are playing the melody AND their own part in the same hands");
-  ok(secs2[0].pattern.gate.join() === secs[0].pattern.gate.join(),
-     "picking the melody up in the chorus changed the verse");
+  ok(secs2[1].pattern.gate.join() === secs[1].pattern.gate.join(),
+     "picking the melody up in the verse changed the chorus");
   // it renders, it lands in a singable range, and it follows the changes
-  const g = secs2[1].melody.genre, ph = secs2[1].melody.phrase;
+  const g = secs2[0].melody.genre, ph = secs2[0].melody.phrase;
   const ev = K.render(ph, g, g.bars);
   ok(ev.length > 0, "the melody plays nothing");
   ok(ev.every((e) => Number.isFinite(e.n) && e.n >= 48 && e.n <= 96),
@@ -869,7 +877,7 @@ console.log("a melody is written once and picked up by whoever is asked");
   for (const i of Id2.catalog(m.idea)) {
     if (!i.changes) continue;
     const m3 = { ...took, idea: Id2.say(m.idea, i.id) };
-    const s3 = Band.toSong(m3, MODES)[1];
+    const s3 = Band.toSong(m3, MODES)[0];
     const ev3 = K.render(s3.melody.phrase, s3.melody.genre, s3.melody.genre.bars);
     ok(ev3.every((e) => Number.isFinite(e.t) && Number.isFinite(e.n)),
        "\"" + i.words[0] + "\" made an unplayable tune");
@@ -954,28 +962,30 @@ console.log("the pipes are reachable, and they only touch their own section");
   const ev = (mm, i) => { const s2 = Band.toSong(mm, MODES)[i];
     return K.render(s2.pattern, s2.genre, s2.bars); };
   const base = [0, 1, 2, 3].map((i) => ev(m, i).length);
-  const ask = Band.sectionAsks(m, 1).find((a) => a.id === "pipe");
+  // ...asked of a VERSE: a chorus hands the tune to the keys, so their own
+  // part is empty there and a pipe over nothing is honestly nothing
+  const ask = Band.sectionAsks(m, 0).find((a) => a.id === "pipe");
   ok(!!ask && ask.opts.length >= 5, "a section cannot be told what comes out");
   let moved = 0;
   for (const o of ask.opts) {
-    const m2 = Band.setSection(m, 1, "pipe", o.key);
+    const m2 = Band.setSection(m, 0, "pipe", o.key);
     const now = [0, 1, 2, 3].map((i) => ev(m2, i).length);
     for (let i = 0; i < 4; i++)
-      if (i !== 1) ok(now[i] === base[i], "\"" + o.w + "\" changed section " + i);
-    if (now[1] !== base[1]) moved++;
-    const g = Band.toSong(m2, MODES)[1].genre;
+      if (i !== 0) ok(now[i] === base[i], "\"" + o.w + "\" changed section " + i);
+    if (now[0] !== base[0]) moved++;
+    const g = Band.toSong(m2, MODES)[0].genre;
     if (o.key !== "none") {
       ok(Array.isArray(g.pipes) && g.pipes.length, "\"" + o.w + "\" wrote no pipes");
       for (const p2 of g.pipes)
         ok(p2 && typeof p2.id === "string", "\"" + o.w + "\": a pipe with no id");
     }
-    ok(ev(m2, 1).every((e) => Number.isFinite(e.t) && Number.isFinite(e.n)),
+    ok(ev(m2, 0).every((e) => Number.isFinite(e.t) && Number.isFinite(e.n)),
        "\"" + o.w + "\" made something unplayable");
   }
   ok(moved >= 3, "only " + moved + " of the pipes changed what comes out");
   // ...and nobody's PART moved: a pipe is what happens to the notes after
-  ok(JSON.stringify(Band.toSong(Band.setSection(m, 1, "pipe", "thirds"), MODES)[1].pattern) ===
-     JSON.stringify(Band.toSong(m, MODES)[1].pattern),
+  ok(JSON.stringify(Band.toSong(Band.setSection(m, 0, "pipe", "thirds"), MODES)[0].pattern) ===
+     JSON.stringify(Band.toSong(m, MODES)[0].pattern),
      "a pipe rewrote somebody's phrase, which is not what a pipe is");
 }
 
@@ -1027,6 +1037,58 @@ console.log("what kind of chords is a question, and the voicing hears it");
   const said = Band.answer(Band.answer(on(), "arranger", "chords", "ninths"),
                            "arranger", "genre", "a house record");
   ok(said.song.chords === "nines", "calling a record overruled the arranger's own chords");
+}
+
+/* (u) A RECORD HAS PROPORTIONS */
+// Every section used to be as long as the changes it was called with, and
+// the only lengths reachable anywhere were 4 and 12 — so every record came
+// out a rectangle, six four-bar sections, forty-eight seconds. Proportion is
+// most of what form IS.
+console.log("a section is as long as it was told to be, and a chorus lifts");
+{
+  const P2 = { deg: new Array(16).fill(0), oct: new Array(16).fill(0),
+    vel: new Array(16).fill(6), inc: new Array(16).fill(0), stk: new Array(16).fill(0),
+    gate: new Array(16).fill(0), acc: new Array(16).fill(0), sld: new Array(16).fill(0) };
+  let m = Band.answer(Band.answer(on(), "arranger", "genre", "a rock record"),
+                      "arranger", "form", Band.FORMS.full.w);
+  // the question exists, once per role the form contains
+  const lens = Band.seatDecisions(m, "arranger").filter((d) => d.id.startsWith("len:"));
+  ok(lens.length >= 2, "the arranger is asked about " + lens.length + " section lengths");
+  for (const d of lens) {
+    ok(/^how long is the /.test(d.ask), "\"" + d.ask + "\" is not asking a length");
+    ok(d.opts.length >= 3, d.ask + " offers " + d.opts.length + " lengths");
+  }
+  const before = Band.toSong(m, MODES).map((s2) => s2.bars);
+  m = Band.answer(m, "arranger", "len:verse", "eight bars");
+  m = Band.answer(m, "arranger", "len:chorus", "sixteen bars");
+  const secs = Band.toSong(m, MODES);
+  const by = {};
+  secs.forEach((s2) => { by[s2.role] = s2.bars; });
+  ok(by.verse === 8, "the verse is " + by.verse + " bars");
+  ok(by.chorus === 16, "the chorus is " + by.chorus + " bars");
+  ok(by.intro === 4, "the intro took the verse's length: " + by.intro);
+  ok(new Set(secs.map((s2) => s2.bars)).size > 1, "the record is still a rectangle");
+  // ...and the changes go round INSIDE it rather than stretching
+  const g = secs.find((s2) => s2.role === "chorus").genre;
+  ok(g.bars <= 12, "the progression stretched to fill the section: " + g.bars + " bars");
+  // every section still renders, at every length
+  for (const s2 of secs) {
+    const d = K.drums(P2, s2.genre, s2.genre.bars);
+    ok(d.every((e) => Number.isFinite(e.t)), s2.role + " is not finite at " + s2.bars + " bars");
+  }
+
+  // A CHORUS LIFTS: the drums open up, the level comes forward, and THE TUNE
+  // ARRIVES — measured against the verse it follows.
+  const ev = (s2) => K.drums(P2, s2.genre, s2.genre.bars).length / s2.genre.bars;
+  const v = secs.find((s2) => s2.role === "verse"), c = secs.find((s2) => s2.role === "chorus");
+  ok(ev(c) > ev(v) * 1.2, "the chorus drums are " + (ev(c) / ev(v)).toFixed(2) +
+     "× the verse's — that is not a lift");
+  ok(c.box && c.box.lvl === "fwd", "the chorus does not come forward");
+  ok(!!c.melody, "the hook does not arrive in the chorus");
+  // ...and whoever takes it does not leave a hole: the other pitched chair
+  // steps up, or the biggest moment in the record is its thinnest
+  const others = c.pattern.gate.filter(Boolean).length + c.guitar.gate.filter(Boolean).length;
+  ok(others > 0, "the chorus handed the tune to somebody and nobody else is playing");
 }
 
 /* (e) NOTHING NUMERIC CARRIES A WORD */
