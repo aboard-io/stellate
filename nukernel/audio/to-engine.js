@@ -54,8 +54,44 @@ export function pchOf(midi) {
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Number(v) || 0));
 const STEPS_PER_BEAT = 4;
 
-// velocity 0..9 -> the parent's amp range (see AMP above)
-const PITCH_AMP_FLOOR = 0.06, PITCH_AMP_SPAN = 0.20;
+// ---- the parent's tables and the instrument rows, READ rather than mirrored -
+// This bridge used to keep byte-for-byte COPIES of the parent's physical-
+// control tables (MODEL_DYN, TRACT_DYN, VOICE_TYPE, the vowel alphabet, the
+// dyn amp window) with unit gates diffing every copy against the parent's own
+// source text — a maintenance tax paid on every retune, and a silent-drift
+// hazard the moment a gate was loosened. The copies are gone: the parent
+// exports the tables now and this file reads them, so the page and the tape
+// play one instrument by CONSTRUCTION instead of by two files agreeing.
+//
+// HOW THE PARENT ARRIVES, without giving up the node gates: this is
+// audio/plan.js's own `need` idiom. A BROWSER page has instruments.js as a
+// classic script already (kernel-daw/band/drums all load it before any module
+// runs) and takes state-engine.js as a one-time dynamic import that the UMD
+// header publishes onto window — the same URL plan.js loads, so it is fetched
+// and executed exactly once between them. NODE has neither global and takes
+// both through CommonJS interop (`m.default` is the api), which is what lets
+// a pure-node gate import this file bare and call patchForInstr with no
+// window, no stub and no browser. Top-level await makes the handles
+// synchronous for everything below; the module graph simply finishes when
+// they have.
+const G = typeof window !== "undefined" ? window : globalThis;
+if (!G.FaustStateEngine) {
+  const m = await import("../../engine/faust/voices/state-engine.js");
+  if (!G.FaustStateEngine) G.FaustStateEngine = (m && (m.default || m)) || G.FaustStateEngine;
+}
+if (!G.NuInstruments) {
+  const m = await import("../instruments.js");
+  if (!G.NuInstruments) G.NuInstruments = (m && (m.default || m)) || G.NuInstruments;
+}
+const SE = G.FaustStateEngine, NI = G.NuInstruments;
+
+// velocity 0..9 -> the parent's amp range (see AMP above). THE WINDOW IS THE
+// PARENT'S OWN DYN_AMP_LO/HI — the two numbers mapEvents normalises a note's
+// amp over before writing a physical control — so a velocity-9 note lands ON
+// the top of the plectrum by construction. (0.26 − 0.06 === 0.2 exactly in
+// IEEE doubles, checked, so the derived span is byte-identical to the literal
+// 0.20 this file used to carry.)
+const PITCH_AMP_FLOOR = SE.DYN_AMP_LO, PITCH_AMP_SPAN = SE.DYN_AMP_HI - SE.DYN_AMP_LO;
 const DRUM_AMP_FLOOR = 0.12, DRUM_AMP_SPAN = 0.52;
 const ACCENT_LIFT = 1.15;
 const pitchAmp = (vel, acc) => clamp((PITCH_AMP_FLOOR + PITCH_AMP_SPAN * clamp(vel, 0, 9) / 9) *
@@ -246,7 +282,9 @@ const SYNTH = {
   bass_reese:  { model: "reese",  role: "bass" },
   bass_wobble: { model: "wobble", role: "bass" },
 };
-const WAVES = ["sine", "saw", "square", "pulse"];
+// the parent's own oscillator alphabet — the same four words in the same order,
+// read off the api rather than spelled a second time
+const WAVES = SE.WAVES;
 
 // The genre's `tone` block is nukernel's WebAudio voicing — one filter, one
 // envelope, one send. Every field of it has a parent recipe key, so it carries
@@ -265,147 +303,27 @@ function toneRecipe(tone) {
   return out;
 }
 
-// ---- THE TONE BLOCK IS A SYNTHESISER, and it always was ---------------------
-// Every one of the 110 genres carries a `tone` block, and under nukernel's own
-// WebAudio voice that block WAS the sound: two oscillators of `wave`, detuned a
-// few cents, into a resonant lowpass that opened at cut x 3.4 and shut to `cut`
-// across the note, under an atk/rel envelope at `gain`. A subtractive synth,
-// one per genre, written out in seven numbers.
-//
-// Crossing to the parent, the tone block became DECORATION — four recipe keys
-// riding on a sampled General MIDI patch — and only the 15 genres that also
-// declared a `synth` block reached a synthesiser at all. So a genre whose whole
-// identity was a saw through a filter played whatever GM instrument its `instr`
-// id happened to name, and the worst of those name synths: measured on the
-// shipped registry, `polysynth`, `warm_pad`, `halo_pad` and `metal_pad` are
-// ONE ZONE each, rooted at MIDI 84. A pad written at MIDI 45 is that single
-// high sample dragged down two and a half octaves, which is not a pad — it is
-// a breathy whistle. That is the "flute everywhere" Paul heard, and it is a
-// photograph of a synthesiser standing in for the synthesiser.
-//
-// THE FIX IS A RE-MAP, NOT NEW SYNTHESIS. The parent owns the real instruments
-// under their real names (engine/faust/dsp, VOICES.md), so a GM synth PATCH id
-// resolves to the analog voice it is a recording of, and the genre's own tone
-// block drives it. Everything else — a guitar, a piano, a choir, a horn
-// section, a gospel organ — is a RECORDED instrument and stays sampled, which
-// is the parent's default sound for good reason. The test is what the id names:
-// only the thirteen GM synth patches below are in here, and each row is that
-// patch's own instrument. (Twelve until the casting round — GM 88, "bass +
-// lead", is the 303 by another name and had no row, so the one machine this
-// whole table exists to defend was the one nobody could cast.)
-//
-// The sweep is the loudest thing the tone block ever said, and both spellings
-// of it are the SAME sweep: the parent's saw/fuzz voices take `fenv` as a
-// multiplier above cutoff (cut x (1 + fenv)), its analog fleet takes
-// `envAmount` in OCTAVES. 2.4 and log2(3.4) are cut x 3.4 said twice.
-const SWEEP = 2.4, SWEEP_OCT = 1.77;
+// ---- THE TONE BLOCK IS A SYNTHESISER — the story, the thirteen GM synth
+// rows it argues for, and the SWEEP constants they share, all live in
+// nukernel/instruments.js now (PATCHES, and the essay above it): every row is
+// an instrument-keyed fact and the instrument-keyed facts live with RANGES and
+// STRIPS. What stays HERE is the arithmetic that drives the rows — the T and M
+// tone-block translations in synthForInstr/modelForInstr below are keyed by
+// parent DSP and by this bridge's own conventions, not by instrument.
+
 // the parent's oscillator alphabet has no triangle. A triangle is a sine with a
 // little edge on it, so `sine` is the honest nearest and `saw` would be a lie —
 // and measured across the table, no genre that reaches a wave-bearing row here
 // asks for one anyway.
 const WAVEOF = { sawtooth: "saw", saw: "saw", square: "square",
                  pulse: "pulse", triangle: "sine", sine: "sine" };
-const PATCH_SYNTH = {
-  // ---- the leads ----
-  // GM 82 Lead 2 / GM 81 Lead 1: literally "a sawtooth" and "a square". Two
-  // voices, four cents apart, because that is what the old tone block built.
-  // `padDsp` is the SAME instrument seated differently: two detuned saws under a
-  // chord are pad_saw and under a line are supersaw, which is precisely the pair
-  // the old tone block collapsed into one WebAudio voice. Naming the real module
-  // rather than the parent's role-resolved "stack" is what keeps this spec
-  // loadable by BOTH readers — a recipe key can be abstract, a `dist/` fetch and
-  // a `/root/param` address cannot. (One spec, two modules, so the attack floor
-  // is pad_saw's 5 ms; four milliseconds is not a sound either way.)
-  saw_wave:    { dsp: "supersaw", padDsp: "pad_saw", wave: "saw", set: (T) => ({
-    wave: T.wave, voices: 2, detune: 0.004, octave: 0.12,
-    cutoff: T.cut, res: T.res, fenv: SWEEP,
-    attack: Math.max(0.006, T.atk), release: T.rel, sustain: 0.85 }) },
-  square_lead: { dsp: "supersaw", padDsp: "pad_saw", wave: "square", set: (T) => ({
-    wave: T.wave, voices: 2, detune: 0.004, octave: 0.12,
-    cutoff: T.cut, res: T.res, fenv: SWEEP,
-    attack: Math.max(0.006, T.atk), release: T.rel, sustain: 0.85 }) },
-  // GM 85 Lead 5 (charang) — the buzzing guitar-synth lead. lead_fuzz is the
-  // parent's tanh-driven voice and the buzz IS the drive.
-  // (lead_fuzz's own resonance stops at 0.47 — its tanh drive is doing half the
-  // work a ladder would, and a tone block screaming q 11 must not be written
-  // onto the ceiling)
-  charang:     { dsp: "lead_fuzz", wave: "saw", set: (T) => ({
-    cutoff: T.cut, res: Math.min(0.45, T.res), drive: 0.5, fenv: SWEEP,
-    attack: T.atk, release: T.rel, sustain: 0.7 }) },
-  // GM 87 Lead 7 (fifths) — a saw and its fifth. synclead hard-syncs at
-  // syncRatio, and 1.5 is that fifth: the interval is in the oscillator rather
-  // than in a second sample, which is the whole difference.
-  fifth_sawtooth_wave: { dsp: "synclead", wave: "saw", set: (T) => ({
-    cutoff: T.cut, res: T.res, syncRatio: 1.5, syncSweep: 1.2, syncDecay: 0.18,
-    envAmount: SWEEP_OCT, envDecay: 0.16, detune: 8, drive: 0.3,
-    attack: T.atk, release: T.rel, sustain: 0.8 }) },
-  // GM 103 (echoes / echo drops) — a struck metallic ping that rings away. The
-  // parent's `bell` takes its decay from the note length, which is what a drop
-  // does; dub's delay send does the echoing, as it always did.
-  echo_drops:  { dsp: "bell", set: (T) => ({ cutoff: T.cut, res: T.res }) },
-  // GM 88 Lead 8 (bass + lead) — the one GM patch whose NAME is a monosynth
-  // playing the bassline and the tune with the same voice, which is the 303's
-  // entire job. So the id routes to tb303 and the SQUELCH becomes castable:
-  // acid declares the machine as its own signature synth, and this is how any
-  // other chair in any other genre can hire one.
-  // Its ceilings are the module's own and not the table's — tb303 declares
-  // cutoff 60..6000 and decay 0.03..2.5, both narrower than the T bounds
-  // above, and a value written ON a declared edge is the failure the bounds
-  // paragraph exists to avoid. `waveform` is a 0..1 morph, not an index: 0 is
-  // the saw every acid record is, and only a tone block that says "square"
-  // gets one.
-  bass_lead:   { dsp: "tb303", wave: "saw", set: (T) => ({
-    cutoff: Math.min(5800, T.cut), resonance: Math.min(0.92, 0.3 + T.res),
-    envmod: T.env != null ? T.env : Math.min(0.9, 0.25 + T.res),
-    decay: Math.min(2.4, Math.max(0.1, T.rel)),
-    waveform: WAVES[T.wave] === "square" || WAVES[T.wave] === "pulse" ? 1 : 0 }) },
-  // ---- the pads ----
-  // GM 91 Pad 3 (polysynth) — a poly analog. The Juno-60 is one, with its BBD
-  // chorus, and the chorus is why a Juno pad sounds wide without a reverb.
-  polysynth:   { dsp: "juno60", set: (T) => ({
-    cutoff: T.cut, res: T.res, envAmount: SWEEP_OCT,
-    sawLevel: 0.7, pulseLevel: 0.5, subLevel: 0.2, pwmBase: 0.48, pwmLfo: 0.15,
-    chorus: 1.2, spread: 0.8,
-    attack: T.atk, decay: 0.6, sustain: 0.6, release: T.rel }) },
-  // GM 90 Pad 2 (warm) and GM 93 Pad 5 (bowed glass) are the SAME instrument
-  // arriving differently — a Prophet/SEM-class poly — so they share `oberheim`
-  // and differ where they actually differ: the bow takes a second and a half to
-  // speak and half the sweep, the warm pad speaks at the tone block's own
-  // attack. Naming two models to make a table look varied would be the lie.
-  warm_pad:    { dsp: "oberheim", set: (T) => ({
-    cutoff: T.cut, res: T.res, envAmount: SWEEP_OCT,
-    envAttack: 0.6, envDecay: 1.4, envSustain: 0.7, detune: 9, drive: 0.12,
-    attack: T.atk, release: T.rel, sustain: 0.8 }) },
-  bowed_glass: { dsp: "oberheim", set: (T) => ({
-    cutoff: T.cut, res: T.res, envAmount: SWEEP_OCT * 0.5,
-    envAttack: 1.6, envDecay: 2.4, envSustain: 0.85, detune: 6, drive: 0.06,
-    attack: Math.max(T.atk, 0.25), release: T.rel, sustain: 0.9 }) },
-  // GM 95 Pad 7 (halo) — the bright scanning wash. ppg's `scan` is a wavetable
-  // position and sweeping it slowly is what a halo is.
-  halo_pad:    { dsp: "ppg", set: (T) => ({
-    cutoff: T.cut, res: T.res, scan: 0.3, scanEnv: 0.35, scanLfo: 0.08,
-    scanRate: 0.22, envAmount: SWEEP_OCT * 0.6, sub: 0.2, drive: 0.1,
-    attack: T.atk, release: T.rel, sustain: 0.9 }) },
-  // GM 94 Pad 6 (metallic) — the CZ's phase distortion is where that clangy
-  // digital edge comes from, and `dcw*` is the contour that makes it metal.
-  metal_pad:   { dsp: "casiocz", set: (T) => ({
-    cutoff: T.cut, wave: 0.75, index: 0.45,
-    dcwAmount: 0.8, dcwAttack: 0.004, dcwDecay: 0.5, dcwSustain: 0.3, detune: 7,
-    attack: T.atk, decay: 0.3, sustain: 0.8, release: T.rel }) },
-  // GM 55 (synth voice) — the VP-330 IS the synthesised choir, vowel and all.
-  // (a choir cannot speak in two milliseconds and the module says so: vp330's
-  // attack floor is 5 ms, so the tone block's snappiest is held just off it
-  // rather than written onto it)
-  synth_voice: { dsp: "vp330", set: (T) => ({
-    cutoff: T.cut, vowel: 0.35, breath: 0.18, ensemble: 0.7, detune: 0.45,
-    attack: Math.max(0.006, T.atk), sustain: 0.9, release: T.rel }) },
-  // GM 51 (synth strings) — the Solina/ARP string ensemble, which is what every
-  // record meaning "synth strings" was actually playing. Its chorus is the
-  // instrument, so the parent drops inserts on it and so should we.
-  synth_strings_1: { dsp: "solina", set: (T) => ({
-    tone: T.cut, octave: 0.55, ensemble: 0.85, chorusRate: 0.62, chorusDepth: 0.9,
-    attack: T.atk, release: T.rel }) },
-};
+// THE FOUR TABLES, under their old names. Keyed by KIND first in
+// instruments.js because `synth_voice` honestly appears twice — the VP-330
+// photograph in `synth` (a pad's reading) and the talking tract in `mouth`
+// (a line's) — and the CHAIR, not the data, decides which a genre meant
+// (see patchForInstr below).
+const { synth: PATCH_SYNTH, model: PATCH_MODEL,
+        voice: PATCH_VOICE, mouth: PATCH_MOUTH } = NI.PATCHES;
 
 // ---- WHAT VELOCITY MOVES ON AN INSTRUMENT YOU PLAY -------------------------
 // On a synth, velocity opens a filter. On a string, a bar and a throat it moves
@@ -413,34 +331,27 @@ const PATCH_SYNTH = {
 // — and that is a different sound at the same loudness, which is the whole
 // argument for the two tables below this one.
 //
-// The tape gets these ranges from the parent's own
-// engine/faust/voices/state-engine.js MODEL_DYN (and VOICE_TYPE for who is
-// singing and how high they go). The PAGE does not load state-engine — the
-// press walk runs in a worker — so the rows are mirrored here, beside the
-// tables that name the modules, exactly as PITCH_AMP_FLOOR/SPAN above mirror
-// the parent's DYN_AMP_LO/HI. A mirror that drifts would make the page and the
-// tape two different instruments wearing one name, so
-// test/unit/nukernel.test.js holds all three tables against the parent's row
-// for row and fails on the first number that moves.
-const LIVE_DYN = {
-  stk_guitar:  { pick: [0.12, 1] },
-  stk_piano:   { hammer: [0.3, 1] },
-  mallet:      { hard: [0.05, 1] },
-  voice_lead:  { push: [0.06, 0.95] },
-  voice_choir: { push: [0.05, 0.68] },
-};
+// The ranges are the parent's own engine/faust/voices/state-engine.js
+// MODEL_DYN (and VOICE_TYPE below for who is singing and how high they go) —
+// READ off the api now, not mirrored. The rows used to be copied here because
+// the page loaded no state-engine; it loads it at the top of this file (the
+// same one-time import plan.js makes), so a mirror that could drift became a
+// read that cannot: a retune of the plectrum in the parent IS the retune on
+// this page, and test/unit/nukernel.test.js §75 still holds what
+// patchForInstr hands the live player against the parent's own source text —
+// the artifact, not the wiring.
+const LIVE_DYN = SE.MODEL_DYN;
 // THE TUBE'S OWN ROW, and it is beside the table rather than in it for the same
 // reason the parent keeps it beside MODEL_DYN rather than in it: that table is
-// the models a chair reaches BY NAME, and both copies of it are read as "an
+// the models a chair reaches BY NAME, and every reader of it takes "an
 // instrument id is enough to cast this". A tract is reached by an id AND a
 // chair — GM 54 on a line, never on a pad — so a row in the table above would
 // promise a seating that does not exist. Same axis as the singers': `push` is
 // the glottal fold, which is the spectral tilt and not the level. Wider than
 // voice_lead's at both ends, because a talker's soft end is nearly a whisper
-// and its loud end is a shout. Mirrored from state-engine.js TRACT_DYN and held
-// against it by test/unit/tract-cast.test.js, exactly as LIVE_DYN is held
-// against MODEL_DYN.
-const TRACT_DYN = { push: [0.12, 0.9] };
+// and its loud end is a shout. The parent's own row (state-engine.js
+// TRACT_DYN), read for LIVE_DYN's reason: one copy, one instrument.
+const TRACT_DYN = SE.TRACT_DYN;
 /**
  * THE PAGE'S OWN A/B, per module: what puts a played instrument level with the
  * recording it stands in for ON THIS PAGE.
@@ -494,17 +405,13 @@ export const pageTrim = (dsp) => PAGE_TRIM[dsp] || 1;
 // index is which singer; the compass is the register law — a bass's formants
 // over a soprano's line is a chipmunk, so a part that runs off the top of a
 // voice is folded into it rather than sung where nobody has that throat.
-const VOICE_TYPE = {
-  alto:         { n: 0, lo: 175, hi: 698 },
-  bass:         { n: 1, lo: 82,  hi: 330 },
-  countertenor: { n: 2, lo: 175, hi: 622 },
-  soprano:      { n: 3, lo: 247, hi: 1047 },
-  tenor:        { n: 4, lo: 123, hi: 494 },
-};
-// the vowel alphabet, spelled once. A mouth is easier to read as a word than as
-// [0,3], and this is the only place in nukernel that knows which letter is which
-// row of the formant table.
-const VOWELS = "aeiou";
+// The parent's own table, read for LIVE_DYN's reason.
+const VOICE_TYPE = SE.VOICE_TYPE;
+// the vowel alphabet — the parent's own, spelled exactly once in the whole
+// tree now (state-engine.js VOWELS). A mouth is easier to read as a word than
+// as [0,3], and this binding is the only thing in nukernel that knows which
+// letter is which row of the formant table.
+const VOWELS = SE.VOWELS;
 // ...and the SAME FIVE LETTERS IN THE TUBE'S ORDER, because the tract does not
 // read the formant tables. tract.lib's fitted table is indexed i-e-a-o-u — the
 // vowel triangle, so that a continuous glide between two of them is a walk a
@@ -535,294 +442,6 @@ const liveModel = (dsp) => dsp === "stk_guitar"
   // its pitch, so `glide` bends it rather than crossfading two notes
   ? { dyn: LIVE_DYN.stk_guitar, slideParam: "glide", slideSec: 0.06, amp: LIVE_AMP }
   : { dyn: LIVE_DYN[dsp], amp: LIVE_AMP };
-
-// ---- AND THE ONES THAT ARE INSTRUMENTS, NOT PHOTOGRAPHS OF THEM ------------
-// PATCH_SYNTH above is a rescue: those thirteen GM ids are recordings OF
-// synthesisers, so playing the synthesiser instead is simply telling the truth.
-// This table is a different claim, and a bigger one — that for a handful of
-// REAL instruments a physical model is BETTER than the recording, because the
-// thing those instruments do that a recording cannot is ANSWER THE PLAYER.
-//
-// The test is one question: is this instrument's character its DYNAMICS? Every
-// sampler in the library is one velocity layer — six zones across the keyboard
-// and one recording per zone — so on a sampled voice velocity is a fader and
-// nothing else. That is fine for a piano (whose sampled zones are ten deep and
-// whose character is its body) and it is a lie for the two families here:
-//
-//   THE ELECTRIC GUITAR is a string, a pickup and an AMPLIFIER, and the
-//   amplifier is the part that answers how hard you hit it. A sampled
-//   distortion guitar plays a quiet recording of a loud note; the model plays
-//   a quiet note, which comes out clean, on the same instrument that screams
-//   when you dig in. This is the "crunch" that was missing: not a fuzz box on
-//   the strip, a gain structure inside the voice.
-//   THE STRUCK BAR (marimba, vibraphone, kalimba tine) is nothing but its
-//   strike: a soft yarn mallet excites the fundamental and a hard plastic one
-//   rings the bar modes where the click lives. Measured on the tape at equal
-//   loudness, a ghosted note and a hammered one differ by a factor of two in
-//   spectral centroid; the sampled zone they replace differs by nothing.
-//
-// AND THE ACOUSTIC GUITARS ARE STILL NOT HERE, on purpose. A steel-string, a
-// nylon and a banjo are BODIES — a soundboard, a back, a membrane head — and a
-// recording of a body is exactly what a sample is good at. Neither the old
-// waveguide nor the toolkit's string has a body at all, so both would give up
-// the one thing that makes those three themselves. Same for the organs, whose
-// sound is a rank of pipes and not an excitation.
-//
-// THE PIANOS USED TO BE IN THAT SENTENCE AND THEY ARE NOT ANY MORE. The reason
-// given was "ten-deep zones", and it was wrong — counted, not remembered, the
-// deepest piano in the library has ONE recording per key range like everything
-// else. The piano rows below are what that correction bought.
-//
-// THREE MORE WERE TRIED AND MEASURED OUT, which is worth writing down because
-// "we did not get to it" and "we got to it and it was worse" are different
-// facts. Compiled against this repo's own libfaust and rendered:
-//   pm.brassModel   SILENT below 300 Hz — a trumpet's bottom octave produces
-//                   nothing at all — and it collapses above pressure 0.5 at
-//                   330 Hz, so its usable window is a fifth wide and the
-//                   failure mode outside it is silence. Its pitch also runs 5%
-//                   sharp. The parent's saw-stack `brass` (which already takes
-//                   its bite from the note's amp) keeps the horns.
-//   pm.violinModel  loudness is NOT monotone in bow force: at 262 Hz the middle
-//                   dynamic measured QUIETER than the softest one, and two of
-//                   six pitches came back an octave out. A bowed string whose
-//                   forte might be its pianissimo is not an instrument.
-//   pm.clarinetModel is the one that works — pitch exact from 147 to 587 Hz and
-//                   a reed that genuinely opens up (centroid 667 -> 1347 Hz
-//                   across its breath range) — and it is not here because
-//                   nothing in the catalogue casts a clarinet. A cylindrical
-//                   reed standing in for the conical tenor sax two genres DO
-//                   cast would be a different instrument wearing its name.
-//
-// AND THEN THE WHOLE FAUST SYNTHESIS TOOLKIT WAS MEASURED, 2026-08, because
-// three hand-rolled models is not a good answer when the reference
-// implementations exist. Nineteen faust-stk instruments, compiled against this
-// repo's own libfaust (2.85.8) and rendered offline in node — never a browser,
-// never a render farm, one note at a time through
-// engine/faust/build/measure-instrument.js. Four could not compile at all
-// (bass, harpsi, modalBar, voiceForm call C++ `ffunction` lookup tables, which
-// wasm has no way to link; porting their .h files to Faust `waveform` tables is
-// a day's work each and nobody has needed them yet). Of the fifteen that did:
-//
-//   ADOPTED
-//   NLFeks          in tune to 0.0 CENTS at 82/165/330/659 Hz with no
-//                   correction at all, and its own dynamic-level filter was
-//                   commented out in the published file. -> stk_guitar
-//   piano1          fundamental is the loudest partial, decay 1.0-1.4 s and it
-//                   varies with register and with velocity, and its per-key
-//                   soft/loud hammer tables were wired to the constant 1.
-//                   -> stk_piano
-//
-//   MEASURED OUT
-//   brass           the octave-and-a-fifth problem again, from the other
-//                   direction: asked for 165 Hz it produced 347, asked for 330
-//                   it produced 698, and at MIDI 76 it is silent below full
-//                   pressure. Non-monotone at MIDI 52. Same verdict as
-//                   pm.brassModel, now reached twice by two different codebases.
-//   fluteStk        +19 to +49 cents at full pressure and a different OCTAVE at
-//                   anything less; at 0.6 pressure a 262 Hz ask came back 574.
-//   sitar           -11 to -15 cents and an octave error at MIDI 76. The jawari
-//                   is a randomly modulated delay line and up top the modulation
-//                   is a larger fraction of the period than the period.
-//   tunedBar,       pitch is excellent (within 3 cents) and the bodies are pure,
-//   uniBar,         but all four peak at 1e-3 to 1e-4 — 60-80 dB down — and
-//   glassHarmonica, three of them are NON-MONOTONE in the strike at the top of
-//   tibetanBowl     their range. `mallet` beside them is louder, monotone and
-//                   already cast; these are colour nobody has asked for yet.
-//
-//   MEASURED GOOD AND PARKED, which is a third thing and worth writing down
-//   clarinet        pitch -5 to -21 cents, 86-96% of its energy in the
-//                   fundamental, monotone, and the reed genuinely opens.
-//   saxophony       pitch +2 to +10 cents from 116 to 466 Hz, up to 92% body,
-//                   monotone. tenor_sax is cast twice in this catalogue and
-//                   this would be an improvement on the zone.
-//                   BOTH have a hard speaking threshold — under about 0.75
-//                   pressure they do not sound at all, which is physically
-//                   correct for a reed and dangerous in a generative engine
-//                   that will hand a voice any velocity. Adopting either means
-//                   mapping velocity into a narrow band ABOVE the threshold and
-//                   letting the note's amp carry the rest, which is a design
-//                   decision and not a port. Next round.
-//   bowed           +5 to +17 cents (consistently sharp, so fittable) and this
-//                   time loudness IS monotone in bow force, unlike
-//                   pm.violinModel. But its body share jumps between 0.6% and
-//                   39% across three pitches at one bow pressure, which is the
-//                   bow slipping between regimes. Not until that is understood.
-//
-// The genre's own tone block drives these too — `cut` becomes the speaker
-// cabinet's corner (a guitar cab lives an octave or so above where a synth
-// filter sits, hence the lift), `rel` how long the hand lets the note ring,
-// `gain` the voice level — exactly as it drives the synth table above.
-const PATCH_MODEL = {
-  // ---- the electrics ----
-  // THE STRING UNDER ALL SIX IS THE TOOLKIT'S NOW (engine/faust/dsp/
-  // stk_guitar.dsp — Julius Smith's extended Karplus-Strong out of faust-stk,
-  // through the amp and cabinet this repo fitted against the sampled zones).
-  // The waveguide these rows were written for is still in the tree and it was
-  // measured out: at MIDI 40 its loudest partial was the SEVENTH and the
-  // fundamental was 34.6 dB down — 0.0% of the note's energy inside a semitone
-  // of 82 Hz — which is the "plinky" this whole family was named for. The EKS
-  // is in tune to under one cent from MIDI 40 to 96 with no fitted correction,
-  // and its spectral centroid moves x1.5 to x2.7 across the plectrum where the
-  // waveguide's moved x1.05.
-  //
-  // The six recipes below are the SAME SIX GUITARS, translated: `damp` (a loop
-  // coefficient) becomes `ring` (the string's -60 dB time in seconds), `stiff`
-  // becomes `bright` (the damping filter's tilt, which is what string stiffness
-  // audibly is), and `pluckPos` is measured from the nearer end so 0.78 and
-  // 0.22 are the same pluck. Nothing about which guitar is which has moved.
-  //
-  // GM 28 (clean electric). The most-cast instrument in the table by a factor
-  // of four, and the one whose sampled version has the least to say: a clean
-  // electric IS its pick attack, and the sample has one.
-  clean_guitar:      { dsp: "stk_guitar", set: (M) => ({
-    drive: 0.09, pluckPos: 0.22, pickup: 0.30, bright: 0.55, ring: 4.0,
-    cutoff: M.cab, release: M.rel }) },
-  // GM 27 (jazz electric) — neck pickup, no dirt, and the tone rolled off. The
-  // pickup is the whole difference between this and the clean above.
-  jazz_guitar:       { dsp: "stk_guitar", set: (M) => ({
-    drive: 0.04, pluckPos: 0.38, pickup: 0.50, bright: 0.30, ring: 3.0,
-    cutoff: Math.min(M.cab, 3200), release: M.rel }) },
-  // GM 29 (palm muted) — the mute is the STRING's own decay and a short hand,
-  // which is what a palm mute physically is, plus enough gain to chug. 0.23 s
-  // of ring measures as a 140 ms chug on a real pluck; the old coefficient
-  // spelling of the same idea left the string sustaining for a full second.
-  palm_muted_guitar: { dsp: "stk_guitar", set: (M) => ({
-    drive: 0.38, pluckPos: 0.10, pickup: 0.12, bright: 0.62, ring: 0.23,
-    cutoff: M.cab, release: 0.06 }) },
-  // crunch, overdrive, distortion: ONE instrument at three amounts of
-  // amplifier, which is what those three words have always meant. The sampled
-  // trio are three separate recordings pretending to be that, and none of them
-  // can be played quietly.
-  crunch_guitar:     { dsp: "stk_guitar", set: (M) => ({
-    drive: 0.45, pluckPos: 0.16, pickup: 0.2, bright: 0.58, ring: 5.0,
-    cutoff: M.cab, release: M.rel }) },
-  overdrive_guitar:  { dsp: "stk_guitar", set: (M) => ({
-    drive: 0.58, pluckPos: 0.16, pickup: 0.22, bright: 0.58, ring: 5.5,
-    cutoff: M.cab, release: M.rel }) },
-  distortion_guitar: { dsp: "stk_guitar", set: (M) => ({
-    drive: 0.82, pluckPos: 0.12, pickup: 0.16, bright: 0.64, ring: 6.0,
-    cutoff: Math.min(M.cab, 4600), release: M.rel }) },
-  // ---- the pianos ----
-  // AND THE PIANOS ARE HERE NOW, on a measurement that overturns the reason
-  // they were not. The note that used to sit below this table said pianos stay
-  // sampled because their "zones are ten deep" — ten VELOCITY layers, which
-  // would make a recording the better piano. Counted on the shipped registry:
-  // yamaha_grand_piano and bright_yamaha_grand are 6 zones and upright_piano
-  // and felt_piano are 10, and in every one of the four the zones tile the
-  // KEYBOARD with exactly ONE recording per key range. There is not a second
-  // dynamic anywhere in the library. A sampled fortissimo is a sampled
-  // pianissimo turned up, on the instrument whose entire expressive range is
-  // the hammer.
-  //
-  // What plays them now is the FAUST-STK commuted waveguide piano — a
-  // noise-excited soundboard through a frequency-dependent hammer into three
-  // coupled strings per note, with the hammer's soft and loud filter poles
-  // MEASURED per key and crossfaded by velocity. Dumped partial by partial at
-  // MIDI 52: soft, the fundamental leads and the fourth harmonic is 17.8 dB
-  // down; hard, the fourth harmonic IS the loudest thing in the note. That is
-  // the sound a piano makes when you lean on it, and no zone can make it.
-  //
-  // `hammer` is not set here — the note's own velocity writes it, through
-  // LIVE_DYN above, the same way the plectrum is written on the six guitars.
-  // `bright`/`stiff`/`detune` are the four pianos' own characters.
-  yamaha_grand_piano:  { dsp: "stk_piano", set: (M) => ({
-    bright: 0.25, stiff: 0.28, detune: 0.10, cutoff: M.mcut, release: M.rel }) },
-  bright_yamaha_grand: { dsp: "stk_piano", set: (M) => ({
-    bright: 0.55, stiff: 0.34, detune: 0.12, cutoff: M.mcut, release: M.rel }) },
-  // an upright is a shorter string in a smaller box: stiffer (more
-  // inharmonicity per unit length), less unison spread, and it stops sooner.
-  upright_piano:       { dsp: "stk_piano", set: (M) => ({
-    bright: 0.32, stiff: 0.44, detune: 0.16, cutoff: Math.min(M.mcut, 7000),
-    release: Math.min(M.rel, 0.4) }) },
-  // felt is a strip of cloth between hammer and string — the top of the
-  // spectrum simply does not happen, and the unisons drift because nobody
-  // tunes a prepared piano twice.
-  felt_piano:          { dsp: "stk_piano", set: (M) => ({
-    bright: 0.0, stiff: 0.22, detune: 0.22, cutoff: Math.min(M.mcut, 4200),
-    release: M.rel }) },
-  // ---- the struck bars ----
-  // GM 12 (marimba) — rosewood. `ring` is the T60 of the LOWEST bar mode and
-  // the library's own 0.1 s is a bar that has stopped before the player's hand
-  // has: measured against the sampled zone it stands in for, the model was 14 dB
-  // down on the tape purely because the note was over. Half a second is a real
-  // rosewood bar, and `tilt` still kills the upper modes first, which is what
-  // makes it read short.
-  marimba:    { dsp: "mallet", set: (M) => ({
-    ring: 0.5, exPos: 1, tilt: 6, cutoff: M.mcut, release: 1.5 }) },
-  // GM 11 (vibraphone) — aluminium bars and a pedal, so it rings for a second
-  // and a half and note-off means something (the damper comes down).
-  vibraphone: { dsp: "mallet", mul: 0.58, set: (M) => ({
-    ring: 2.2, exPos: 1, tilt: 4, cutoff: M.mcut, release: 0.35 }) },
-  // GM 108 (kalimba) — a plucked tine over a box: between the two, and softer
-  // up top, because a thumb is the softest mallet there is.
-  kalimba:    { dsp: "mallet", mul: 0.50, set: (M) => ({
-    ring: 0.8, exPos: 1.4, tilt: 7, cutoff: Math.min(M.mcut, 7000), release: 1.5 }) },
-  // AND NOT THE MUSIC BOX, which was in this table for a day. Every row here is
-  // a bar over a RESONATOR TUBE, because that is what the model is; a music box
-  // is a comb tooth screwed to a wooden case and has no tube at all, and the one
-  // it was given pulled it down where a music box does not live — measured, a
-  // centroid of 1145-2243 Hz against the sampled comb's 2788-3014. The zone
-  // recording is the better music box and it keeps the job.
-};
-
-// ---- AND THE ONE INSTRUMENT EVERY LISTENER OWNS ----------------------------
-// A voice is the only thing in the catalogue the ear grades against something
-// it hears all day, and sampled it is the flattest sound in the library.
-// Measured on the shipped registry: `solo_vox`, `ahh_choir` and `ohh_voices`
-// are six zones and ONE recording each. So a sung line is that one held "aah"
-// transposed — one dynamic, one vowel it can never leave, and the take's own
-// vibrato baked in and beating against every other note in the chord. That is
-// the squeak Paul heard ("the vocals are just squeaky"), and unlike the pads it
-// is not even a bad recording: it is what a recording of a vowel IS.
-//
-// The parent grew a vocal tract for it (engine/faust/dsp/voice_tract.lib and
-// its two seatings), and the point of a tract is that the VOWEL IS A SIGNAL: a
-// line can move through it, a section can hold one, and the dynamic opens the
-// voice instead of turning it up. Same claim as the guitar amp and the struck
-// bar one table up, on the instrument where it matters most.
-//
-// WHICH ID IS WHICH SEATING is decided by what the id has always named:
-// GM 85 "Lead 6 (voice)" is a soloist and gets the LEAD; GM 52/53/91 are choir
-// aahs, voice oohs and a choir pad, and get the SECTION. GM 54 "synth voice" is
-// NOT here on purpose — it is a photograph of a VP-330, an actual machine the
-// parent owns, and PATCH_SYNTH already sends it there. A Roland string-choir is
-// not a person and should not be modelled as one.
-//
-// The `vowels` on each row are what the GM id itself means — aahs are open,
-// oohs are round — and they are what a genre with no mouth of its own sings.
-//
-// `phase` is what happens when a genre DOES have a mouth and casts two of these
-// at once, which four of them do (gospel and doowop take both the aahs and the
-// oohs). One mouth per genre is right — a group is one group — but two sections
-// singing the identical syllable at the identical moment is one section twice.
-// So the id ROTATES the genre's word: the aahs sing it from the top, the oohs a
-// syllable behind. Doowop's "ou" comes out as o-u against u-o, which is what
-// four men round a microphone actually do, and it costs no new vocabulary.
-// A LEAD IS SYNTHESISED; A CHORUS IS RECORDED. "Keep it a
-// soloist and use sampled choruses for choral arrangements."
-//
-// This reverses a judgement made the day before, and the reversal is right. The
-// lane that built voice_choir argued the sampled choirs are the flattest thing in
-// the catalogue — six zones, one recording, one dynamic, and the take's own
-// vibrato baked in and beating against every other note of the chord. All true,
-// and all of it matters on an EXPOSED LEAD, where one voice is naked and its one
-// vibrato is the only movement there is. It matters much less under a PAD, and a
-// recorded ensemble brings the two things four detuned formant voices cannot
-// synthesise: a room, and forty people not agreeing.
-//
-// The measurement agreed before the ear did. gregorian's choir read 0.998-1.000
-// L/R correlation at the master while its width demonstrably arrived at the unit
-// — so the synthesised chorus was not even delivering the spread it was chosen
-// for, and was paying four voices for a mono result.
-//
-// So solo_vox keeps voice_lead, which is where a formant model earns its place:
-// one voice, moving continuously through a vowel, in front. The three CHORAL ids
-// fall through to the sampled library again. Fourteen genres change back —
-// gregorian, spem, bulgarian, hymn, doowop, the Beatles' and the boy band's
-// backing stacks — and every one of them is a chorus, not a soloist.
-const PATCH_VOICE = {
-  solo_vox:    { dsp: "voice_lead",  voice: "tenor", vowels: "ao", syll: 0.5, phase: 0 },
-};
 
 /**
  * The SINGER a vocal GM id names — voice type, vowels and all — or null for
@@ -942,31 +561,9 @@ export function voiceForInstr(id, tone) {
 // later reader forgets the flag, and the unit it builds for a line is `mono`
 // with `pool: 1`. Three locks, none of them a comment.
 //
-// THERE ARE NO VOICE TYPES ON A TRACT, which is the other half of why this is
-// its own table rather than a fourth PATCH_VOICE row. The five singers each pick
-// a formant set and a compass because the CSOUND tables only tell the truth
-// inside one voice's range; the tube has one size, so it has one mouth and one
-// register, and what a genre says about it is not WHO is speaking but WHAT THE
-// MOUTH IS DOING.
-const PATCH_MOUTH = {
-  // ONE ROW. Adding a second id here is adding a second way to buy the most
-  // expensive voice in the fleet, so it should be an argument somebody makes.
-  //
-  // The defaults are what the ID itself means — a machine voice, pronouncing,
-  // fairly dry-mouthed and only slightly nasal — and they are what a genre with
-  // no mouth of its own gets, exactly as PATCH_VOICE's `vowels` are.
-  //   talk   how much of the seeded syllable driver is steering. 0.82 is
-  //          speech with the vowel axis still tinting it; 1 is the driver alone
-  //          and 0 is a held vowel, which is not a tract's job and refuses.
-  //   hiss   the fricative — the s and the sh, the part of a voice a formant
-  //          bank simply does not have
-  //   nasal  the velum, barely open: a machine voice with a little nose in it
-  //   vowels the walk under the driver, and the three that keep a robot from
-  //          sounding like a yawn
-  synth_voice: { dsp: "tract_voice", vowels: "aeo", syll: 0.5,
-                 talk: 0.82, hiss: 0.16, nasal: 0.06, air: 0.05, vib: 0.1 },
-};
-
+// (The table half — PATCH_MOUTH's one row and why a tract has no voice types —
+// lives with the other patch rows in nukernel/instruments.js; what belongs
+// HERE is the chair law above, because the chair is this dispatch's argument.)
 /**
  * The TALKING mouth a GM id names — or null for every id that is not one, and
  * for every chair that cannot afford one.

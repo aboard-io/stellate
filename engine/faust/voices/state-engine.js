@@ -2738,6 +2738,19 @@
     // second copy of this table is how the page and the tape came to disagree
     // about where a trumpet lives.
     INSTRUMENT_RANGE,
+    // THE PHYSICAL-CONTROL TABLES, published for INSTRUMENT_RANGE's reason:
+    // nukernel's bridge (nukernel/audio/to-engine.js) drives the same modules
+    // from its own composer, and it used to MIRROR these rows — VOICE_TYPE,
+    // VOWELS, TRACT_DYN and the dyn window — with a gate diffing the copies
+    // line by line (MODEL_DYN has been on this api all along, and the bridge
+    // mirrored it anyway). A mirror plus a gate is a maintenance tax on every
+    // retune; an export is the table itself, so a retune here IS the retune
+    // everywhere. DYN_AMP_LO/HI ride along because they are the other half of
+    // the same contract: the window mapEvents normalises a note's amp over
+    // before writing the physical control, which is exactly the window a
+    // velocity-producing caller must map onto or full force stops short of
+    // the top of the plectrum.
+    VOICE_TYPE, VOWELS, TRACT_DYN, DYN_AMP_LO, DYN_AMP_HI,
     // MASTERING STAGE surface (renderers + test/unit/mastering.test.js)
     panGains, notePan, reverbScale, collisionCarve, MASTER_PAN };
 });
