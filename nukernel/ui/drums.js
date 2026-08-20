@@ -21,7 +21,7 @@ let model = blank();
 model.bpm = 112;                   // a machine tempo: shorter bars, sooner changes
 let lane = null;                   // the pinned lane, or null
 let ledger = [];                   // what has been said, in order
-let topic = null;                  // a group of words being asked about
+const said = new Map();            // subjects you have answered, and with what
 
 /* ---------- the model reaches the engine ---------- */
 // the kit becomes a GENRE (kit.js toGenre) installed in the live table, and
@@ -104,75 +104,18 @@ function draw() {
     box.append(grid);
   }
 
-  // THE GIG SHEET — what this drummer has decided, and the one thing they
-  // have not decided yet. A drummer sitting down does not reach for a step
-  // grid; they want to know how fast, whether it swings, what kind of record
-  // this is and what their job in it is. So the questions come first, in the
-  // order a drummer answers them, and everything else is what you say after
-  // you have sat down.
-  let q = null;
-  if (model.on) {
-    const ds = decisions(model);
-    const sheet = el("div", "dsheet");
-    for (const d of ds) {
-      if (!d.answered) continue;
-      const c = el("button", "dfact");
-      c.type = "button";
-      c.title = "change it: " + d.ask;
-      c.append(el("b", null, d.id), document.createTextNode(" " + d.answered));
-      c.addEventListener("click", () => { asking = d.id; draw(); });
-      sheet.append(c);
-    }
-    if (sheet.childNodes.length) box.append(sheet);
-
-    q = asking ? ds.find(d => d.id === asking) : nextAsk(model);
-    if (q) {
-      const ask = el("div", "dask");
-      ask.append(el("h2", "dq", q.ask));
-      const row = el("div", "dopts");
-      for (const o of q.opts) {
-        const b = el("button", "dopt" + (o.answered ? " on" : "") +
-                              (!o.answered && o.active ? " istrue" : ""), o.w);
-        b.type = "button";
-        b.addEventListener("click", () => {
-          const before = model;
-          model = answer(model, q.id, o.w);
-          if (model !== before) { ledger.push(q.ask + " " + o.w); push(false); }
-          asking = null;
-          draw();
-        });
-        row.append(b);
-      }
-      ask.append(row);
-      box.append(ask);
-    }
-  }
-
-  // NOTHING BELOW THE PATTERN BUT QUESTIONS. The transcript and the wall of
-  // chips are gone: what you are looking at is the pattern, and what you are
-  // being asked is one question. Every word the machine knows is still
-  // reachable — the groups it used to print as headings are now the options
-  // of the last question ("anything else?"), so a word is two taps instead of
-  // a scroll past ninety dim buttons.
-  const words = lane ? [...catalog(model, lane), ...catalog(model, null)]
-                     : catalog(model, null);
-  const groups = new Map();
-  for (const i of words) {
-    if (!groups.has(i.group)) groups.set(i.group, []);
-    groups.get(i.group).push(i);
-  }
-  const RANK = { "the bar": 0, "at the kit": 1, "the kit": 3, "take away": 4,
-                 "the fills": 5, "the machine": 6, "the feel": 7, "the tempo": 8,
-                 "start": 9 };
-  const rank = (g) => (RANK[g] != null ? RANK[g] : g.startsWith("grooves") ? 2 : 10);
-  const ordered = [...groups.entries()].sort((a, b) => rank(a[0]) - rank(b[0]))
-                    .filter(([g]) => g !== "start");
-
-  // BEFORE THE MACHINE IS ON there is exactly one thing to say.
+  // THERE IS NO MENU. Every word this machine knows is a QUESTION it asks
+  // you, in the order a drummer answers them — the interview first, then one
+  // question per subject (the kit, the hands, the fills, the machine). An
+  // answered question moves up to the GIG SHEET, and the sheet is not a
+  // readout: tap any fact on it and you are asked that question again, with
+  // what you said lit. ("Ask the questions and then let me change my answers
+  // by clicking them" — the wall of chips, and then the subject menu that
+  // replaced it, were both a way of avoiding that.)
   if (!model.on) {
     const start = el("div", "dstart");
     start.append(el("p", "dwhat", "a drummer, sitting down. tap once and it starts asking."));
-    for (const i of words) {
+    for (const i of catalog(model, null)) {
       if (!i.changes) continue;
       const c = el("button", "dchip dbig", i.words[0]);
       c.type = "button";
@@ -184,63 +127,95 @@ function draw() {
     return;
   }
 
-  // a group of words, asked. Saying one keeps you in the group — you are
-  // placing hits or trying kits, and one tap per visit was the old wall's
-  // other problem.
-  const askGroup = (g, list, close) => {
-    const ask = el("div", "dask");
-    ask.append(el("h2", "dq", GROUPQ[g] || g));
-    const row = el("div", "dopts");
-    for (const i of list) {
-      if (!i.changes && !i.active) continue;
-      const c = el("button", "dopt" + (i.active ? " on" : ""), i.words[0]);
-      c.type = "button";
-      if (!i.changes) c.disabled = true;
-      c.addEventListener("click", () => {
-        const laneId = i.id.startsWith("lane:") ? LANEWORDLANE(i.id) : null;
-        const before = model;
-        const line = says(model, i.id);
-        model = say(model, i.id);
-        if (model !== before) ledger.push(line);
-        const wasLane = lane;
-        if (laneId) { lane = laneId; topic = "the bar"; }
-        if (model !== before || lane !== wasLane) push(false);
-        draw();
-      });
-      row.append(c);
-    }
-    ask.append(row);
-    const back = el("button", "dpinkey", close);
-    back.type = "button";
-    back.addEventListener("click", () => {
-      if (lane) { lane = null; push(false); }
-      topic = null; draw();
-    });
-    ask.append(back);
-    box.append(ask);
-  };
-
-  // a pinned lane IS a question — the bar's own counting, looping one bar
-  if (lane) {
-    askGroup("the bar", groups.get("the bar") || [],
-             "done with the " + LANEOF(lane) + " ✕");
-    return;
+  // the machine's own questions, and then the subjects, as questions
+  const words = lane ? [...catalog(model, lane), ...catalog(model, null)]
+                     : catalog(model, null);
+  const groups = new Map();
+  for (const i of words) {
+    if (i.group === "start") continue;
+    if (!groups.has(i.group)) groups.set(i.group, []);
+    groups.get(i.group).push(i);
   }
-  if (q) return;                       // one question at a time
-  if (topic && groups.has(topic)) { askGroup(topic, groups.get(topic), "back ✕"); return; }
+  const RANK = { "the bar": 0, "at the kit": 1, "the kit": 3, "take away": 4,
+                 "the fills": 5, "the machine": 6, "the feel": 7, "the tempo": 8 };
+  const rank = (g) => (RANK[g] != null ? RANK[g] : g.startsWith("grooves") ? 2 : 10);
+  const asks = [
+    ...decisions(model).map(d => ({ id: d.id, ask: d.ask, label: d.id,
+      answered: d.answered, opts: d.opts.map(o => ({ w: o.w, on: o.answered,
+        istrue: o.active, take: () => { model = answer(model, d.id, o.w); } })) })),
+    ...[...groups.entries()].sort((a, b) => rank(a[0]) - rank(b[0])).map(([g, list]) => ({
+      id: "grp:" + g, ask: GROUPQ[g] || g, label: g,
+      // a subject is ANSWERED when one of its words is already true of the
+      // machine, or when you have said one — some words (a fill, a step) are
+      // toggles that no state can be read back off, and a question you can
+      // never finish is a question that blocks every one behind it
+      answered: (list.find(i => i.active) || {}).words?.[0] || said.get("grp:" + g) || null,
+      // WHAT YOU SAID IS SHOWN AS SAID. Some words leave a state the machine
+      // can read back (a groove, a machine) and some do not (a fill, a step,
+      // a hand) — for those the answer is what you told it, so a question
+      // you come back to never re-opens with nothing lit.
+      opts: list.map(i => ({ w: i.words[0],
+        on: i.active || said.get("grp:" + g) === i.words[0],
+        dead: !i.changes && !i.active,
+        take: () => {
+          const laneId = i.id.startsWith("lane:") ? LANEWORDLANE(i.id) : null;
+          const line = says(model, i.id);
+          const before = model;
+          model = say(model, i.id);
+          if (model !== before) ledger.push(line);
+          said.set("grp:" + g, i.words[0]);
+          if (laneId) lane = laneId;
+        } })) })),
+  ];
 
-  // ...and when the interview is over, the LAST question is which of the
-  // machine's own subjects you want to talk about.
-  const ask = el("div", "dask");
-  ask.append(el("h2", "dq", "anything else?"));
-  const row = el("div", "dopts");
-  for (const [g] of ordered) {
-    const c = el("button", "dopt", GROUPQ[g] || g);
+  // THE GIG SHEET — what this drummer has decided, every fact of it tappable
+  const sheet = el("div", "dsheet");
+  for (const d of asks) {
+    if (!d.answered) continue;
+    const c = el("button", "dfact" + (asking === d.id ? " open" : ""));
     c.type = "button";
-    c.addEventListener("click", () => { topic = g; draw(); });
-    row.append(c);
+    c.title = "change it: " + d.ask;
+    c.append(el("b", null, d.label), document.createTextNode(" " + d.answered));
+    c.addEventListener("click", () => { asking = asking === d.id ? null : d.id; draw(); });
+    sheet.append(c);
+  }
+  if (sheet.childNodes.length) box.append(sheet);
+
+  // ...and the one question in front of you
+  const q = asking ? asks.find(d => d.id === asking)
+    : (lane ? asks.find(d => d.id === "grp:the bar") : null)
+      || asks.find(d => !d.answered);
+  if (!q) return;
+  const ask = el("div", "dask");
+  ask.append(el("h2", "dq", q.ask));
+  const row = el("div", "dopts");
+  for (const o of q.opts) {
+    const b = el("button", "dopt" + (o.on ? " on" : "") +
+                           (!o.on && o.istrue ? " istrue" : ""), o.w);
+    b.type = "button";
+    if (o.dead) b.disabled = true;
+    b.addEventListener("click", () => {
+      const before = model, wasLane = lane;
+      o.take();
+      if (model !== before || lane !== wasLane) push(false);
+      // a question you answered from the sheet closes; a question the machine
+      // asked you moves on by itself
+      if (asking && asking !== "grp:the bar") asking = null;
+      draw();
+    });
+    row.append(b);
   }
   ask.append(row);
+  // a pinned lane is the one question you are IN rather than passing through
+  if (lane || asking) {
+    const done = el("button", "dpinkey", lane ? "done with the " + LANEOF(lane) + " ✕" : "done ✕");
+    done.type = "button";
+    done.addEventListener("click", () => {
+      if (lane) { lane = null; push(false); }
+      asking = null; draw();
+    });
+    ask.append(done);
+  }
   box.append(ask);
 }
 

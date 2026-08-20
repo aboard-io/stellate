@@ -262,6 +262,34 @@
     opts: d.opts.map((o) => ({ ...o, answered: (m.song.answers || {})[d.id] === o.w,
       active: (() => { try { return !!o.is(m.song); } catch (e) { return false; } })() })) }));
 
+  // ...what calling a record actually does to the players
+  function called(m, gk) {
+    let d = m.drums, b = m.bass;
+    const keep = (ans, list) => ans && list.includes(ans);
+    // the groove and the kit the record is made of
+    if (!keep((d.answers || {}).groove, gk.grooves)) d = D.answer(d, "groove", gk.grooves[0]);
+    const mach = D.catalog(d, null).filter((i) => i.group === "the machine");
+    const has = mach.find((i) => i.active && gk.machines.includes(i.words[0]));
+    if (!has) {
+      const want = mach.find((i) => i.words[0] === gk.machines[0]);
+      if (want) d = D.say(d, want.id);
+    }
+    // the line and the bass it is played on
+    if (!keep((b.answers || {}).job, gk.styles)) b = B.answer(b, "job", gk.styles[0]);
+    if (!keep((b.answers || {}).instr, gk.instr)) b = B.answer(b, "instr", gk.instr[0]);
+    // ...and the changes, which are the arranger's own but still have to be
+    // changes this record has
+    const chg = { ...(m.song.chg || {}) }, answers = { ...(m.song.answers || {}) };
+    for (const r of CALLED) {
+      const w = B.CHANGEWORD[chg[r]];
+      if (chg[r] && !gk.chg.includes(w)) {
+        chg[r] = Object.keys(B.CHANGEWORD).find((k) => B.CHANGEWORD[k] === gk.chg[0]);
+        answers["chg:" + r] = gk.chg[0];
+      }
+    }
+    return { ...m, drums: d, bass: b, song: { ...m.song, chg, answers } };
+  }
+
   /* ---------- the three seats, one question at a time ----------
      NARROWED, NOT DECIDED. The genre says which grooves, which machines,
      which lines and which instruments are on the table; the player still
@@ -305,7 +333,7 @@
       const o = d && d.opts.find((x) => x.w === w);
       if (!o) return m;
       const song = { ...o.apply(m.song), answers: { ...(m.song.answers || {}), [id]: w } };
-      const out = { ...m, song };
+      let out = { ...m, song };
       // WHAT KIND OF RECORD IS THIS is the drummer's own first question, and
       // the arranger has just answered it out loud. It is recorded on the
       // drummer (so their groove question is narrowed to that family) and
@@ -313,6 +341,16 @@
       if (id === "genre") {
         const gk = GENRES[song.genre];
         if (gk) out.drums = D.answer(m.drums, "record", gk.fam);
+        // CALLING A RECORD MAKES THE RECORD. Narrowing what a player MAY
+        // choose is not the same as changing what they ARE playing, and a
+        // genre that only edits a menu is a genre you cannot hear ("I change
+        // the genre and nothing changes in the song"). So the call also
+        // MOVES anything nobody has spoken for, and anything whose answer
+        // this record does not have — a jazz ride in a punk record is not a
+        // decision to respect, it is a groove that is no longer on the
+        // table. A player's own answer, still available here, is untouched:
+        // that is the half of the law that matters.
+        if (gk) out = called(out, gk);
       }
       return out;
     }
@@ -352,12 +390,22 @@
     const f = FORMS[m.song.form || "vamp"];
     return f.secs.map((role, i) => {
       const key = (role === "intro" || role === "outro") ? "verse" : role;
-      let g = toGenre(m, MODES, (m.song.chg || {})[key] || "fourchord");
+      const per = partOf(m, i);
+      // WHAT A PLAYER DOES HERE IS SAID IN THEIR OWN WORDS. A bandleader
+      // does not hand the drummer eight canned options for the chorus; they
+      // say "swap hands", "ride it", "ghost the snare", "leave the kick" —
+      // the same things the drummer says to themselves. So a section runs
+      // the player's OWN vocabulary over a copy of that player, and what
+      // comes out is this section's part. The player's song-wide decisions
+      // are untouched: this is one chorus, not a new drummer.
+      let dm = m.drums, bm = m.bass;
+      for (const id of per.dwords || []) dm = D.say(dm, id);
+      for (const id of per.bwords || []) bm = B.say(bm, id);
+      let g = toGenre(m, MODES, (m.song.chg || {})[key] || "fourchord", dm, bm);
       // how much space there is, before anything a section says: a section
       // that asks for busier hats over one-hit-every-four-bars gets them,
       // which is what asking meant
       g = spaceOut(g, SPACE[m.song.space || "none"]);
-      const per = (m.per || {})[i] || {};
       // ...and what each player is doing HERE, if they said
       const dsec = SECDRUMS[per.drums];
       if (dsec && dsec.fn) {
@@ -370,30 +418,134 @@
         if (bsec.oct) g.key = g.key + 12 * bsec.oct;
         if (bsec.out) g.nobass = true;
       }
-      // an intro is the band arriving and an outro is the band leaving
-      if (role === "intro" && !per.drums) g.kit = { ...g.kit, s: (g.kit.s || []).map(() => 0) };
+      // TWO THINGS A BAND SAYS THAT NEITHER PLAYER OWNS ALONE. "Give it a
+      // lift" is a fill in the last bar, played INTO the next section —
+      // arrangement, not drumming. "Follow the kick" is the bass locking to
+      // the drummer's own kick pattern, which is a thing one player asks
+      // another for and neither can do by themselves.
+      if (per.lift && per.drums !== "nokit") {
+        const k = g.kits && g.kits.length ? g.kits.slice() : [g.kit || {}];
+        const last = { ...(k[k.length - 1] || {}) };
+        last.s = FILLBAR.s; last.t = FILLBAR.t;
+        k[k.length - 1] = last;
+        g.kits = k; g.kit = k[0];
+      }
+      if (per.follow) {
+        const kick = (g.kits && g.kits.length ? g.kits : [g.kit || {}])
+          .map((bar) => (bar && bar.k && bar.k.some(Boolean)) ? bar.k.map((v) => (v ? 1 : 0)) : 0);
+        if (kick.some((x) => x)) g.bassBars = kick;
+      }
       return { role, i, genre: g, bars: g.bars, per };
     });
   }
+  /* ---------- WHAT A SECTION IS, BEFORE ANYBODY SAYS ANYTHING -------------
+     Nobody in a band asks what to play in the intro. A chorus is bigger
+     than the verse, a bridge goes somewhere else, an outro thins out, and
+     the bar before a change gets a fill — that is not an arrangement
+     decision, it is what the roles MEAN, and a band plays it on the first
+     take without discussing it. So a section arrives with its part already
+     in it, per instrument, and everything you say about that section is an
+     override of something already musical rather than a blank to fill. */
+  const ROLE = {
+    intro:  { drums: "hatsonly", bass: "pedal" },
+    verse:  {},
+    chorus: { drums: "busier", bass: "octave" },
+    bridge: { drums: "ride", bass: "walk" },
+    outro:  { drums: "sparser", bass: "pedal" },
+  };
+  const defaultsFor = (m, i) => {
+    const f = FORMS[m.song.form || "vamp"];
+    const role = f.secs[i], next = f.secs[i + 1];
+    const d = { ...(ROLE[role] || {}) };
+    // the drummer plays the band into the change; nobody has to ask
+    if (next && next !== role) d.lift = true;
+    return d;
+  };
+  // what this section actually is: the role's own part, with anything said
+  // about it on top
+  const partOf = (m, i) => {
+    const per = (m.per || {})[i] || {}, d = defaultsFor(m, i);
+    // A SECTION THAT HAS BEEN ARRANGED IN WORDS IS NOT ALSO HANDED THE
+    // ROLE'S CANNED PART. Otherwise the chorus's default "octaves" quietly
+    // overwrote every line the bassist was actually told to play here, and
+    // the words looked broken when they were only outranked.
+    const spoke = (k) => (per[k] || []).length > 0;
+    return { drums: per.drums != null ? per.drums
+               : (spoke("dwords") ? undefined : d.drums),
+             bass: per.bass != null ? per.bass
+               : (spoke("bwords") ? undefined : d.bass),
+             lift: per.lift != null ? per.lift : !!d.lift,
+             follow: per.follow != null ? per.follow : !!d.follow,
+             dwords: per.dwords || [], bwords: per.bwords || [] };
+  };
+
+  // the fill a drummer plays into the next section — the one bar of an
+  // arrangement everybody in a band can name
+  const FILLBAR = { s: [0,0,0,0, 0,0,0,0, 1,0,1,1, 1,0,1,1],
+                    t: [0,0,0,0, 0,0,0,0, 0,1,0,0, 0,1,0,0] };
+  // the groups of a player's vocabulary that make sense said about ONE
+  // SECTION. A machine is the record's, a tempo is the band's, and the bar's
+  // own counting belongs to the drummer's own page; the hands, the kit, what
+  // comes out and what is taken away are things you say about a chorus.
+  const DGROUPS = ["at the kit", "the kit", "take away", "the fills"];
+  // WHAT A BASSIST IS TOLD ABOUT ONE SECTION: the line, how the notes come
+  // out, the register, and where they sit against the drums. Not which bass
+  // they are holding — nobody changes instrument for the chorus — and not
+  // the changes, the key or the tempo, which are the arranger's.
+  const BGROUPS = ["the line", "how you play them", "the register", "the feel"];
+  const secWords = (m, i, who) => {
+    const per = partOf(m, i);
+    const said = (who === "drums" ? per.dwords : per.bwords) || [];
+    let pm = who === "drums" ? m.drums : m.bass;
+    for (const id of said) pm = (who === "drums" ? D : B).say(pm, id);
+    const groups = who === "drums" ? DGROUPS : BGROUPS;
+    // the HANDS first, then what is playing, then what comes out — the
+    // order the words matter in when you are talking about one section
+    return (who === "drums" ? D.catalog(pm) : B.catalog(pm))
+      .filter((x) => groups.includes(x.group))
+      .sort((a, b) => groups.indexOf(a.group) - groups.indexOf(b.group))
+      .map((x) => ({ w: x.words[0], key: "w:" + x.id, answered: said.includes(x.id) }));
+  };
   // what a section can be asked, and how it is answered
-  const sectionAsks = (m, i) => [
-    { id: "drums", who: "the drums", opts: Object.entries(SECDRUMS).map(([k, v]) => ({
-        w: v.w, key: k, answered: ((m.per || {})[i] || {}).drums === k ||
-          (!((m.per || {})[i] || {}).drums && k === "same") })) },
-    { id: "bass", who: "the bass", opts: Object.entries(SECBASS).map(([k, v]) => ({
-        w: v.w, key: k, answered: ((m.per || {})[i] || {}).bass === k ||
-          (!((m.per || {})[i] || {}).bass && k === "same") })) },
-  ];
+  const sectionAsks = (m, i) => {
+    const per = partOf(m, i);
+    return [
+      { id: "drums", who: "the drums", opts: Object.entries(SECDRUMS).map(([k, v]) => ({
+          w: v.w, key: k, answered: per.drums === k || (!per.drums && k === "same") })) },
+      { id: "dwords", who: "at the kit", opts: secWords(m, i, "drums") },
+      { id: "bass", who: "the bass", opts: Object.entries(SECBASS).map(([k, v]) => ({
+          w: v.w, key: k, answered: per.bass === k || (!per.bass && k === "same") })) },
+      { id: "bwords", who: "the bass player", opts: secWords(m, i, "bass") },
+      { id: "band", who: "everybody", opts: [
+          { w: "give it a lift", key: "lift", answered: per.lift },
+          { w: "follow the kick", key: "follow", answered: per.follow } ] },
+    ].filter((a) => a.opts.length);
+  };
   const setSection = (m, i, who, key) => {
     const per = { ...(m.per || {}) };
     const one = { ...(per[i] || {}) };
-    if (key === "same") delete one[who]; else one[who] = key;
+    if (who === "band") {
+      // an explicit false is a real answer here: the lift is ON by default
+      // in the bar before a change, so "give it a lift" has to be sayable
+      // in reverse — a band saying "don't" is saying something
+      one[key] = !partOf(m, i)[key];
+    } else if (who === "dwords" || who === "bwords") {
+      // a word said about a section is said again to take it back
+      const k = who === "dwords" ? "dwords" : "bwords";
+      const id = String(key).slice(2);
+      const list = (one[k] || []).slice();
+      const at = list.indexOf(id);
+      if (at >= 0) list.splice(at, 1); else list.push(id);
+      if (list.length) one[k] = list; else delete one[k];
+    } else if (key === "same") delete one[who];
+    else one[who] = key;
     if (Object.keys(one).length) per[i] = one; else delete per[i];
     return { ...m, per };
   };
 
-  function toGenre(m, MODES, changes) {
-    const dg = D.toGenre(m.drums);
+  function toGenre(m, MODES, changes, dm, bm) {
+    const drums = dm || m.drums, bass = bm || m.bass;
+    const dg = D.toGenre(drums);
     const c = B.CHANGES[changes || (m.song.chg || {}).verse || "fourchord"];
     return {
       label: "Band", family: "kernel", rate: 1, bars: c.bars, voices: 1,
@@ -405,16 +557,18 @@
       kit: dg.kit, kits: dg.kits, drumkit: dg.drumkit, humanize: dg.humanize,
       kitVel: dg.kitVel,
       // the bassist's line, in the arranger's key
-      nobass: false, bassStyle: B.STYLES[m.bass.style],
-      key: (B.KEYS[m.song.key] || 0) + 12 * (m.bass.oct || 0),
+      nobass: false, bassStyle: B.STYLES[bass.style],
+      key: (B.KEYS[m.song.key] || 0) + 12 * (bass.oct || 0),
       mode: MODES ? (m.song.minor ? MODES.dorian : MODES.ionian) : undefined,
-      artic: m.bass.artic || undefined,
+      artic: bass.artic || undefined,
+      bassNudge: bass.sit ? bass.sit * 2 : undefined,
       tone: { wave: "sine", cut: 900, q: 1, atk: 0.01, rel: 0.25, gain: 0.001, verb: 0.08 },
       words: [], word: () => [],
     };
   }
 
-  return { SEATS, TAKEN, FORMS, CALLED, GENRES, SPACE, genreOf, rolesIn,
+  return { SEATS, TAKEN, FORMS, CALLED, GENRES, SPACE, ROLE, genreOf, rolesIn,
+           secWords, partOf,
            blank, decisions, seatDecisions,
            nextAsk, nextAnywhere, answer, catalog, say, says, toGenre, toSong,
            SECDRUMS, SECBASS, sectionAsks, setSection, D, B };

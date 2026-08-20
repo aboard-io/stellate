@@ -730,6 +730,27 @@ assertion can prove is proven pure-node in seconds.
 `GENEALOGY.md` (a committed finding the palette fetches at runtime — data,
 not prose; INHERITANCE.md was deleted in the 2026-08-18 tidy).
 
+**The instrument pages — `drums.html` and `band.html`.** Two self-contained
+pages beside the daw, each a MUSICIAN you talk to rather than a grid you edit.
+`drums-kit.js` is the drummer (44 grooves, 29 drummer words, a ten-question
+interview), `bass-kit.js` the bassist, `band-kit.js` an ARRANGER over both:
+the arranger calls the genre (15 records) which NARROWS what the players may
+choose without deciding for them, plus key/mode/form/tempo/feel and the
+changes per role. There is no menu on either page: the machine asks its
+questions in order, an answered question lands on the GIG SHEET, and tapping
+a fact asks it again with your answer lit. A section arrives with its role's
+own part already in it (an intro is hats, a chorus is busier, a bridge rides,
+an outro thins, and the bar before a change gets a fill) and is arranged in
+the players' OWN words — "swap hands", "ride it", "walk it" — plus two calls
+neither player owns alone ("give it a lift", "follow the kick"). Anybody can
+sit out a section. HOW SLOW IT GOES is a schedule, not a tempo: the drums
+have always read `kits` per bar and the bass now reads `bassBars` the same
+way (kernel.js), so "one hit every four bars" is one kick and one bass note
+per four measures with the note holding across the gap. Gates:
+`test/unit/drums-kit.test.js` (1.84M), `bass-kit.test.js`, `band-kit.test.js`
+(7,618), and the browser pair `test/browser/drums-page.test.js` +
+`band-page.test.js`, which ask the compiled bar rather than the model.
+
 **Gates and this box:** the four browser gates over the old audio tier
 (`nukernel-audio` / `nukernel-drums` / `nukernel-bounce` / `nukernel-survival`)
 went out with the engine they gated — a gate for a deleted engine is dead weight

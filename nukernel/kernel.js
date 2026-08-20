@@ -2119,6 +2119,16 @@
     // needs to look one bar ahead: a walking line is defined by where it is
     // going, not by the chord it is sitting on.
     const md = g.mode || MODE, key = g.key | 0;
+    // WHERE THE BASS SITS AGAINST THE DRUMS. `touch` is a HAND — a seeded
+    // wobble in both directions — and this is the other thing, the one a
+    // band actually says out loud: behind the beat, or on top of it. One
+    // number, in ninths of a step (the units the drum `~lane` sidecar
+    // already uses), added to every onset. Absent = dead centre, and every
+    // stream above is byte-identical without it.
+    const lean = (+g.bassNudge || 0) / 9 / g.rate;
+    // a push on the very first note would land before the section starts,
+    // where nothing can play it
+    const leant = (t) => Math.max(0, t + lean);
     // THE BASS IS A PLAYER TOO. Same performance layer as the line (the eighth
     // type), minus the phrase arch: a bass part's shape is the harmony's, not
     // its own contour, and tenting a walking line onto its highest note would
@@ -2126,36 +2136,6 @@
     // the sort only runs when the hand actually moved something, so a genre
     // without `touch` cannot even be reordered by accident.
     const bg = (g.stress || g.touch || g.phrase) ? { ...g, phrase: 0 } : g;
-    let played = false;
-    if (g.bassStyle === "walk") {
-      for (let b = 0; b < bars; b++) {
-        const c = chordsOf(subj, g, b)[0], nc = chordsOf(subj, g, (b + 1) % bars)[0];
-        const r = c.deg, p4 = c.pcs;
-        // alternate the direction of the middle two so three bars of one chord
-        // do not walk the identical line three times — and when the chord
-        // carries a SEVENTH, the odd bars walk up through it: a walking line
-        // that never sounds the seventh of a seventh chord does not have one
-        const mid = b % 2 === 0 ? [p4[1], p4[2]]
-          : (p4.length > 3 ? [p4[2], p4[3]] : [p4[2], p4[1]]);
-        // the walk starts from bassPc, so an inversion is audible from the
-        // first beat, and it AIMS at the next chord's bassPc — a walking line
-        // is defined by where it is going
-        const tones = [c.bassPc, mid[0], mid[1], nc.bassPc - 1];
-        const bar = tones.map((n, q) =>
-          ({ t: (b * N + q * 4) / g.rate, dur: 3.7 / g.rate, n: n + 36 + key, r,
-             walk: true, vel: q === 0 ? 7 : 5 }));
-        played = perform(bar, tones.map((_, q) => q * 4), bg, b, N, { lane: "B" }) || played;
-        for (const e of bar) ev.push(e);
-      }
-      return played ? ev.sort((a, b) => a.t - b.t) : ev;
-    }
-
-    // The root bass borrows its rhythm from the melody's ACCENTS, which reads
-    // well until the melody has none — then the bass vanishes entirely, and an
-    // empty or cleared phrase has none by definition. A bass part should not
-    // depend on the tune being emphatic, so fall back to the genre's own pulse
-    // (quarter notes unless it says otherwise). With accents present this is
-    // byte-identical to before.
     const QUARTERS = [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0];
     // A STYLE MAY OWN THE RHYTHM. `eighths` and `sixteenths` are not a different
     // choice of NOTE, they are a different DENSITY, so they override the accent
@@ -2191,6 +2171,50 @@
                               if (d <= 0) d += bars * N; out.set(x, d); });
       return out;
     })();
+    let played = false;
+    if (g.bassStyle === "walk") {
+      for (let b = 0; b < bars; b++) {
+        // A WALKING BASS READS THE SCHEDULE TOO. It used to return before
+        // `bassBars` was even computed, so a band told to leave four
+        // measures between two notes got four walking quarters a bar from
+        // anyone whose job was to walk — the instruction silently applied
+        // to five of the six bass styles.
+        // ...and it reads ONLY that schedule. The walk has never read the
+        // melody's accent grid — its rhythm is four to the bar by
+        // definition — so `barGrid`'s fallback is not for this branch, and
+        // wiring it in here quietly turned a walking bass into whatever the
+        // tune happened to accent.
+        const gw = g.bassBars ? (at(g.bassBars, b) || null) : null;
+        if (g.bassBars && !gw) continue;
+        const c = chordsOf(subj, g, b)[0], nc = chordsOf(subj, g, (b + 1) % bars)[0];
+        const r = c.deg, p4 = c.pcs;
+        // alternate the direction of the middle two so three bars of one chord
+        // do not walk the identical line three times — and when the chord
+        // carries a SEVENTH, the odd bars walk up through it: a walking line
+        // that never sounds the seventh of a seventh chord does not have one
+        const mid = b % 2 === 0 ? [p4[1], p4[2]]
+          : (p4.length > 3 ? [p4[2], p4[3]] : [p4[2], p4[1]]);
+        // the walk starts from bassPc, so an inversion is audible from the
+        // first beat, and it AIMS at the next chord's bassPc — a walking line
+        // is defined by where it is going
+        const tones = [c.bassPc, mid[0], mid[1], nc.bassPc - 1];
+        const steps = tones.map((_, q) => q * 4).filter((i) => !gw || at(gw, i));
+        const bar = steps.map((i, k) =>
+          ({ t: leant((b * N + i) / g.rate),
+             dur: held ? held.get(b * N + i) * 0.94 / g.rate : 3.7 / g.rate,
+             n: tones[i / 4] + 36 + key, r, walk: true, vel: k === 0 ? 7 : 5 }));
+        played = perform(bar, steps, bg, b, N, { lane: "B" }) || played;
+        for (const e of bar) ev.push(e);
+      }
+      return played ? ev.sort((a, b) => a.t - b.t) : ev;
+    }
+
+    // The root bass borrows its rhythm from the melody's ACCENTS, which reads
+    // well until the melody has none — then the bass vanishes entirely, and an
+    // empty or cleared phrase has none by definition. A bass part should not
+    // depend on the tune being emphatic, so fall back to the genre's own pulse
+    // (quarter notes unless it says otherwise). With accents present this is
+    // byte-identical to before.
     let alt = 0;
     for (let b = 0; b < bars; b++) {
       // PEDAL ignores the progression and sits on the tonic. It is the one bass
@@ -2222,7 +2246,7 @@
             : deg !== r ? mp(deg, md) + c.borrow
             : fold(c.bassPc, c.rootPc);
           const hold = held ? held.get(b * N + i) : sp[i];
-          bar.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: hold * 0.94 / g.rate,
+          bar.push({ t: leant((b * N + i + swing(g, i)) / g.rate), dur: hold * 0.94 / g.rate,
                      n: n0 + 36 + oct + key, r, vel: vel(subj, i) });
           barAt.push(i);
         }

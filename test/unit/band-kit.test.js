@@ -129,11 +129,15 @@ console.log("what happens in the chorus stays in the chorus");
   let m = Band.answer(on(), "arranger", "form", Band.FORMS.pop.w);
   const before = Band.toSong(m, MODES).map((s) => sig(play(s.genre)));
   const asks = Band.sectionAsks(m, 1);
-  ok(asks.map((a) => a.id).join(",") === "drums,bass",
+  ok(asks.map((a) => a.id).join(",") === "drums,dwords,bass,bwords,band",
      "a section asks " + asks.map((a) => a.id).join(","));
   let movers = 0;
   for (const a of asks) {
-    ok(a.opts.some((o) => o.answered), a.who + ": nothing is the default in a fresh section");
+    // the two PART questions always have an answer — the role's own, if
+    // nobody said anything. The word lists start with nothing said, which is
+    // exactly what "nothing different here" looks like.
+    if (a.id === "drums" || a.id === "bass")
+      ok(a.opts.some((o) => o.answered), a.who + ": nothing is the default in a fresh section");
     for (const o of a.opts) {
       const m2 = Band.setSection(m, 1, a.id, o.key);
       const after = Band.toSong(m2, MODES).map((s) => sig(play(s.genre)));
@@ -299,6 +303,113 @@ console.log("a band can leave four measures between two notes");
       ok(ev2.drums.length + ev2.bass.length >= 1,
          form + "/" + s2.role + " went completely silent");
     }
+  }
+}
+
+/* (h) A SECTION ARRIVES WITH ITS PART ALREADY IN IT */
+// Nobody in a band asks what to play in the intro. A chorus is bigger than
+// the verse, a bridge goes somewhere else, an outro thins out, and somebody
+// plays a fill into every change — before a word is said about any of it.
+console.log("a chorus is bigger than the verse before anybody says so");
+{
+  const m = Band.answer(Band.answer(on(), "arranger", "genre", "a rock record"),
+                        "arranger", "form", Band.FORMS.full.w);
+  const secs = Band.toSong(m, MODES);
+  const by = {};
+  secs.forEach((s2) => { by[s2.role] = by[s2.role] || play(s2.genre); });
+  ok(by.chorus.drums.length > by.verse.drums.length,
+     "the chorus (" + by.chorus.drums.length + ") is no bigger than the verse (" +
+     by.verse.drums.length + ")");
+  ok(by.intro.drums.length < by.verse.drums.length, "the intro comes in at full size");
+  ok(by.outro.drums.length < by.verse.drums.length, "the outro goes out at full size");
+  ok(sig(by.bridge) !== sig(by.verse), "the bridge is the verse again");
+  // every default part is a part the section could have been TOLD to play —
+  // no role invents vocabulary of its own
+  for (const [role, d] of Object.entries(Band.ROLE)) {
+    if (d.drums) ok(!!Band.SECDRUMS[d.drums], role + " defaults the drums to " + d.drums);
+    if (d.bass) ok(!!Band.SECBASS[d.bass], role + " defaults the bass to " + d.bass);
+  }
+  // THE FILL INTO THE CHANGE: the last bar of a section followed by a
+  // different one, and nowhere else
+  const tomsIn = (g) => (g.kits || [g.kit]).map((bar) => ((bar.t || []).some(Boolean) ? 1 : 0));
+  secs.forEach((s2, i) => {
+    const next = secs[i + 1], lift = tomsIn(s2.genre);
+    if (next && next.role !== s2.role) {
+      ok(lift[lift.length - 1] === 1, s2.role + " does not play the band into the " + next.role);
+      ok(lift.slice(0, -1).every((x) => !x), s2.role + " fills in a bar that is not the last one");
+    } else if (!next) ok(lift.every((x) => !x), "the last section fills into nothing");
+  });
+  // ...and it can be called off, which is a thing a band says
+  const no = Band.setSection(m, 1, "band", "lift");
+  ok(tomsIn(Band.toSong(no, MODES)[1].genre).every((x) => !x),
+     "\"give it a lift\" said in reverse still filled");
+  // FOLLOW THE KICK: the bass plays where the kick plays — one player asking
+  // another for something neither can do alone
+  const f = Band.setSection(m, 1, "band", "follow");
+  const sec = Band.toSong(f, MODES)[1];
+  const kicks = (sec.genre.kits || [sec.genre.kit])
+    .reduce((n, b2) => n + (b2.k || []).filter(Boolean).length, 0);
+  const notes = play(sec.genre).bass.length;
+  ok(notes === kicks, "following the kick played " + notes + " notes over " + kicks + " kicks");
+}
+
+/* (i) A MUSICIAN CAN SIT OUT */
+// The oldest arrangement instruction there is: sayable per instrument, per
+// section, and it leaves everybody else playing.
+console.log("anybody can sit out a section, and the rest of the band plays on");
+{
+  const m = Band.answer(Band.answer(on(), "arranger", "genre", "a rock record"),
+                        "arranger", "form", Band.FORMS.pop.w);
+  const base = Band.toSong(m, MODES).map((s2) => play(s2.genre));
+  const dOut = Band.toSong(Band.setSection(m, 1, "drums", "nokit"), MODES).map((s2) => play(s2.genre));
+  const bOut = Band.toSong(Band.setSection(m, 1, "bass", "out"), MODES).map((s2) => play(s2.genre));
+  ok(dOut[1].drums.length === 0, "the drummer sat out and still played " + dOut[1].drums.length);
+  ok(dOut[1].bass.length === base[1].bass.length, "the drummer sitting out took the bass with them");
+  ok(bOut[1].bass.length === 0, "the bassist sat out and still played " + bOut[1].bass.length);
+  ok(bOut[1].drums.length === base[1].drums.length, "the bassist sitting out took the drums with them");
+  for (const [w, out] of [["drums", dOut], ["bass", bOut]])
+    for (let i = 0; i < base.length; i++)
+      if (i !== 1) ok(sig(out[i]) === sig(base[i]),
+        "the " + w + " sitting out of the chorus changed section " + i);
+  const both = Band.toSong(Band.setSection(Band.setSection(m, 1, "drums", "nokit"),
+                                           1, "bass", "out"), MODES).map((s2) => play(s2.genre));
+  ok(both[1].drums.length + both[1].bass.length === 0, "the whole band could not drop out");
+  ok(both[0].drums.length > 0, "everybody dropped out everywhere");
+}
+
+/* (j) A SECTION IS ARRANGED IN THE PLAYERS' OWN WORDS */
+// "Swap hands", "ride it", "ghost the snare" — a bandleader does not hand a
+// drummer eight canned options for the chorus, they say the things a drummer
+// says. Said once it lands on that section; said again it is taken back; the
+// player's song-wide decisions never move.
+console.log("a section is arranged in the players' own words");
+{
+  const m = Band.answer(Band.answer(on(), "arranger", "genre", "a rock record"),
+                        "arranger", "form", Band.FORMS.pop.w);
+  const base = Band.toSong(m, MODES).map((s2) => play(s2.genre));
+  for (const who of ["dwords", "bwords"]) {
+    const a = Band.sectionAsks(m, 1).find((x) => x.id === who);
+    ok(!!a && a.opts.length >= 6, who + ": a section is offered " +
+       (a ? a.opts.length : 0) + " of the player's own words");
+    let moved = 0;
+    for (const o of a.opts.slice(0, 12)) {
+      const m2 = Band.setSection(m, 1, who, o.key);
+      const after = Band.toSong(m2, MODES).map((s2) => play(s2.genre));
+      if (sig(after[1]) !== sig(base[1])) moved++;
+      for (let i = 0; i < after.length; i++)
+        if (i !== 1) ok(sig(after[i]) === sig(base[i]),
+          "\"" + o.w + "\" said about the chorus changed section " + i);
+      ok(after.every((x) => x.drums.every((e) => Number.isFinite(e.t)) &&
+                            x.bass.every((e) => Number.isFinite(e.n))),
+         "\"" + o.w + "\" made something unplayable");
+      const back = Band.setSection(m2, 1, who, o.key);
+      ok(sig(play(Band.toSong(back, MODES)[1].genre)) === sig(base[1]),
+         "\"" + o.w + "\" could not be taken back");
+      ok(JSON.stringify(m2.drums) === JSON.stringify(m.drums) &&
+         JSON.stringify(m2.bass) === JSON.stringify(m.bass),
+         "\"" + o.w + "\" said about one section changed the player for the whole song");
+    }
+    ok(moved >= 4, who + ": only " + moved + " of the player's words changed the section");
   }
 }
 

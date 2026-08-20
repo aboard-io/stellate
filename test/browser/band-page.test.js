@@ -71,10 +71,16 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
   const dq = (await q())[0] || "";
   ok(!/key|form|how fast|changes/.test(dq),
      "in the drums chair the drummer is asked \"" + dq + "\" — that is the arranger's question");
+  // ...and the groove the record picked is on their sheet, still theirs to
+  // change — narrowed to the three a jazz date has
+  await page.evaluate(() => { const f = [...document.querySelectorAll(".dfact")]
+    .find(x => (x.querySelector("b") || {}).textContent === "groove"); if (f) f.click(); });
+  await page.waitForTimeout(300);
   const grooves = (await opts()).map(o => o.w);
   ok(grooves.length >= 2, "the drummer is left " + grooves.length + " groove");
   ok(grooves.every(w => ["jazz ride", "bebop", "brush swing"].includes(w)),
      "a jazz date offers " + grooves.join("/"));
+  ok((await opts()).some(o => o.w === grooves[0]), "the groove question is not answerable");
   await tap(grooves[0]);
   await seat("bass");
   const bq = (await q())[0] || "";

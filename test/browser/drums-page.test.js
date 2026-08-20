@@ -65,17 +65,20 @@ const ok = (b, m) => { checks++; if (!b) { fails++; console.log("  ✗ " + m); }
     return JSON.stringify(out) + "§" + units.sort().join("|") +
       "§" + (window.__nuTempo ? window.__nuTempo() : "");
   });
-  // THE SURFACE IS A QUESTION. The transcript and the wall of chips came out
-  // ("just keep the pattern and the questions"), so the gate walks what a
-  // person now walks: the question on screen, its options, and the topics
-  // the last question offers. Reading the old .dchip wall is how a gate goes
-  // on passing for a page nobody has.
+  // THE SURFACE IS A QUESTION, AND THE SHEET IS HOW YOU GO BACK. There is
+  // no menu on this page: the machine asks its questions in order, an
+  // answered question becomes a fact on the gig sheet, and tapping a fact
+  // asks it again. (The wall of chips became a subject menu became this.)
+  // A gate that walks a menu nobody has is a gate that passes for a page
+  // nobody has, so this walks what a person walks.
   const surface = () => page.evaluate(() => ({
-    q: [...document.querySelectorAll(".dask .dq")].map(x => x.textContent),
+    q: (document.querySelector(".dask .dq") || {}).textContent || "",
     opts: [...document.querySelectorAll(".dask .dopt")].map(c => ({
       w: c.textContent, on: c.classList.contains("on"), dead: !!c.disabled })),
+    facts: [...document.querySelectorAll(".dfact")].map(c => ({
+      label: (c.querySelector("b") || {}).textContent || "",
+      text: c.textContent.trim() })),
     back: !!document.querySelector(".dask .dpinkey"),
-    facts: [...document.querySelectorAll(".dfact")].map(c => c.textContent.trim()),
     hits: document.querySelectorAll(".dcell.hit").length,
     lanes: document.querySelectorAll(".drow").length,
     start: [...document.querySelectorAll(".dchip")]
@@ -89,18 +92,17 @@ const ok = (b, m) => { checks++; if (!b) { fails++; console.log("  ✗ " + m); }
     await page.waitForTimeout(300);
     return hit;
   };
-  const goBack = async () => {
-    await page.evaluate(() => {
-      const b = document.querySelector(".dask .dpinkey"); if (b) b.click(); });
-    await page.waitForTimeout(220);
+  const tapFact = async (label) => {
+    const hit = await page.evaluate((x) => {
+      const c = [...document.querySelectorAll(".dfact")]
+        .find(e => (e.querySelector("b") || {}).textContent === x);
+      if (c) { c.click(); return true; } return false; }, label);
+    await page.waitForTimeout(260);
+    return hit;
   };
-  const toTopic = async (t) => {                 // out of wherever, into a topic
-    for (let i = 0; i < 4; i++) {
-      const s2 = await surface();
-      if (s2.q.includes("anything else?")) break;
-      if (s2.back) await goBack(); else break;
-    }
-    return tapOpt(t);
+  const goBack = async () => {
+    await page.evaluate(() => { const b = document.querySelector(".dask .dpinkey"); if (b) b.click(); });
+    await page.waitForTimeout(220);
   };
 
   // ── the machine starts silent and offers exactly one way in ──
@@ -118,120 +120,104 @@ const ok = (b, m) => { checks++; if (!b) { fails++; console.log("  ✗ " + m); }
   {
     const s2 = await surface();
     ok(s2.hits > 0, "ADD DRUMS drew no pattern — the picture is empty");
-    ok(s2.q.length > 0, "the drummer asked nothing after sitting down");
+    ok(!!s2.q, "the drummer asked nothing after sitting down");
   }
 
-  // ── EVERY WORD, one at a time: it must move the schedule ──
-  // The walk is the page's own: answer the question in front of you; when the
-  // interview is done and the question is "anything else?", take a subject
-  // and answer that. A pinned lane is just another question.
-  const seen = new Set(), topics = new Set();
-  const quiet = [];
-  let moved = 0, tried = 0, sawBar = false, sawGrooves = 0;
-  for (let step = 0; step < 220; step++) {
+  // ── THE INTERVIEW: answer what is in front of you, all the way down ──
+  const seen = new Set(), quiet = [];
+  let moved = 0, tried = 0, questions = 0, menu = false;
+  for (let step = 0; step < 200; step++) {
     const s2 = await surface();
-    if (!s2.q.length) break;
-    if (s2.q.includes("where does it go in the bar?")) sawBar = true;
-    if (/grooves/.test(s2.q.join(" ")) || s2.opts.some(o => o.w === "breakbeat"))
-      sawGrooves = Math.max(sawGrooves, s2.opts.length);
-    if (s2.q.length === 1 && s2.q[0] === "anything else?") {
-      // TAKE AWAY GOES LAST. It is offered early (rank 4) and it is the one
-      // subject that can empty the kit — sweep it before the machines and the
-      // feel and every later word is inert for the honest reason that there
-      // is nothing left to play.
-      const left = s2.opts.map(o => o.w).filter(w => !topics.has(w));
-      const t = left.find(w => w !== "take something out?") || left[0];
-      if (!t) break;
-      topics.add(t);
-      await tapOpt(t);
-      continue;
-    }
-    const key = s2.q.join("/");
-    const next = s2.opts.find(o => !o.dead && !seen.has(key + "|" + o.w));
+    if (!s2.q) break;
+    if (/anything else/.test(s2.q)) menu = true;
+    if (!seen.has(s2.q)) { seen.add(s2.q); questions++; }
+    const next = s2.opts.find(o => !o.dead && !seen.has(s2.q + "|" + o.w));
     if (!next) { if (s2.back) { await goBack(); continue; } break; }
-    seen.add(key + "|" + next.w);
+    seen.add(s2.q + "|" + next.w);
     const before = await schedule();
     const beforeModel = await page.evaluate(() => window.__drumModel());
     if (!(await tapOpt(next.w))) { ok(false, "\"" + next.w + "\" is offered but refuses the tap"); continue; }
     tried++;
     const after = await schedule();
     const afterModel = await page.evaluate(() => window.__drumModel());
-    // WHERE A WORD IS LOST, if it is: the model is the machine's own answer
-    // and the schedule is the engine's. A word that moves neither did not
-    // land; one that moves the model and not the schedule is a seam.
     if (after !== before) moved++;
     else if (afterModel === beforeModel) quiet.push(next.w + " (never landed)");
     else quiet.push(next.w + " (model only)");
   }
-  ok(tried > 25, "only " + tried + " words were exercised — the vocabulary shrank");
-  // THE SWEEP IS A COVERAGE REPORT, NOT A VERDICT — a word's effect depends
-  // on the state the sweep walked into (re-choosing the groove already
-  // playing legitimately moves nothing). The LAWS are below; the floor keeps
-  // the sweep honest about wholesale breakage.
-  ok(moved >= 12, "only " + moved + " of " + tried + " words moved what the " +
-     "engine is handed — the machine is broadly inert: " + quiet.join(", "));
-  ok(topics.size >= 4, "the last question offered only " + topics.size +
-     " subjects — the vocabulary is unreachable");
-  console.log("  words tapped: " + tried + ", moving the artifact: " + moved +
-              ", subjects: " + topics.size +
-              (quiet.length ? " · inert: " + quiet.join(", ") : ""));
+  ok(!menu, "the page still offers a menu of subjects instead of asking");
+  ok(questions >= 8, "the drummer only asked " + questions + " questions");
 
-  // PUT THE KIT BACK. The sweep says "take something out?" out loud and
-  // means it — by the end there is no kick left — and the laws below are
-  // about a machine that is playing. A GROOVE is what puts a kit back, and
-  // the grooves live under their own subjects, so this hunts for one rather
-  // than assuming which subject holds it.
-  let restored = false;
-  for (let i = 0; i < 20 && !restored; i++) {
-    for (let j = 0; j < 4; j++) {
-      const s3 = await surface();
-      if (s3.q.includes("anything else?")) break;
-      if (s3.back) await goBack(); else break;
+  // ── ...AND THE SHEET IS THE REST OF THE VOCABULARY. An answered question
+  //    leaves the floor and lands on the gig sheet; every other answer it
+  //    had is still sayable by tapping the fact. That is where the rest of
+  //    the words live now, so that is where the sweep goes.
+  const visited = new Set();
+  let changed = 0;
+  for (let round = 0; round < 40; round++) {
+    const facts = (await surface()).facts.map(f => f.label);
+    const label = facts.find(l => !visited.has(l));
+    if (!label) break;
+    visited.add(label);
+    if (!(await tapFact(label))) continue;      // a fact can stop being one
+    const open = await surface();
+    ok(!!open.q, "tapping \"" + label + "\" asked nothing");
+    ok(open.opts.some(o => o.on), "\"" + label + "\" re-opened with nothing lit — " +
+       "what you said is not shown as said");
+    for (const o of open.opts) {
+      if (o.dead || seen.has(label + "|" + o.w)) continue;
+      seen.add(label + "|" + o.w);
+      const before = await schedule();
+      const beforeModel = await page.evaluate(() => window.__drumModel());
+      if (!(await tapOpt(o.w))) continue;
+      tried++;
+      const after = await schedule();
+      if (after !== before) { moved++; changed++; }
+      else if ((await page.evaluate(() => window.__drumModel())) !== beforeModel)
+        quiet.push(o.w + " (model only)");
+      else quiet.push(o.w + " (never landed)");
+      await tapFact(label);                      // stay in this question
     }
-    const subs = (await surface()).opts.map(o => o.w);
-    const sub = subs[i];
-    if (!sub) break;
-    await tapOpt(sub);
-    for (const w of ["four on the floor", "breakbeat", "boom bap", "straight eights"])
-      if (await tapOpt(w)) { restored = true; break; }
-  }
-  ok(restored, "no groove word anywhere puts a kit back after the sweep emptied it");
-  for (let j = 0; j < 4; j++) {
-    const s3 = await surface();
-    if (s3.q.includes("anything else?")) break;
-    if (s3.back) await goBack(); else break;
-  }
-
-  // ── LIT, NOT GONE: the gig sheet is the readout, and a word that would
-  //    change nothing is still shown (disabled) rather than hidden ──
-  {
-    const s2 = await surface();
-    ok(s2.facts.length >= 3, "the gig sheet holds " + s2.facts.length +
-       " facts — the machine's state has no readout");
-    ok(s2.hits > 0 && s2.lanes > 0, "the pattern picture emptied out");
-  }
-
-  // ── THE GROOVES ARE STILL THERE, and the bar is sayable ──
-  {
-    await toTopic("what kit is this?");
-    const s2 = await surface();
-    const grooves = s2.opts.filter(x => /breakbeat|boom bap|four on the floor|kit/.test(x.w));
-    ok(s2.opts.length >= 3, "the kit subject offers " + s2.opts.length + " words");
     await goBack();
   }
+  ok(visited.size >= 6, "the gig sheet held only " + visited.size + " facts to go back to");
+  ok(changed >= 3, "only " + changed + " answers could be changed from the sheet");
+  ok(tried > 25, "only " + tried + " words were exercised — the vocabulary shrank");
+  // THE SWEEP IS A COVERAGE REPORT, NOT A VERDICT — a word's effect depends
+  // on the state the walk happened into (re-choosing the groove already
+  // playing legitimately moves nothing). The LAWS are below.
+  ok(moved >= 12, "only " + moved + " of " + tried + " words moved what the " +
+     "engine is handed — the machine is broadly inert: " + quiet.join(", "));
+  console.log("  questions asked: " + questions + " · words tapped: " + tried +
+              ", moving the artifact: " + moved +
+              (quiet.length ? " · inert: " + quiet.join(", ") : ""));
+
   {
-    ok(await toTopic("how are you playing it?"),
-       "there is no way to reach the drummer's own words");
-    const hats = await tapOpt("hats");
-    if (hats) {
-      const s2 = await surface();
-      ok(s2.q.includes("where does it go in the bar?"),
-         "naming a lane did not open the bar: " + s2.q.join("/"));
+    const s2 = await surface();
+    ok(s2.facts.length >= 6, "the gig sheet holds " + s2.facts.length +
+       " facts — an answered question vanished instead of landing there");
+  }
+
+  // ── THE BAR IS SAYABLE, and a lane is a question you are IN ──
+  {
+    // find the kit question on the sheet and name a lane from it
+    let pinned = false;
+    const s2 = await surface();
+    for (const f of s2.facts) {
+      await tapFact(f.label);
+      if (await tapOpt("hats")) { pinned = true; break; }
+      await goBack();
+    }
+    ok(pinned, "there is no question anywhere that lets you name the hats");
+    if (pinned) {
+      const bar = await surface();
+      ok(/bar/.test(bar.q), "naming a lane did not open the bar: \"" + bar.q + "\"");
       const before = await schedule();
       await tapOpt("on the a of four");
       ok((await schedule()) !== before, "saying a place in the bar changed no hit");
       await goBack();
-    } else ok(sawBar, "the bar's own counting was never offered");
+    }
+    const back = await surface();
+    ok(back.hits > 0 && back.lanes > 0, "the pattern picture emptied out");
   }
 
   // ── STILL SOUNDING, NOTHING THREW ──

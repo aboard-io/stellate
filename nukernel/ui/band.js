@@ -23,7 +23,7 @@ model.bpm = 112;                   // a machine tempo: shorter bars, sooner chan
 let seat = "arranger";             // who you are talking to
 let ledger = [];                   // what has been said, in order
 let section = null;                // a section being arranged, if any
-let topic = null;                  // a group of words being asked about
+const said = new Map();            // subjects you have answered, and with what
 
 /* ---------- the model reaches the engine ---------- */
 // the kit becomes a GENRE (kit.js toGenre) installed in the live table, and
@@ -80,7 +80,7 @@ function draw() {
                    .filter(Boolean);
       if (diff.length) b.append(el("i", "ddiff", diff.join(" · ")));
       b.addEventListener("click", () => {
-        section = section === i ? null : i; asking = null; topic = null; draw(); });
+        section = section === i ? null : i; asking = null; draw(); });
       cells[i][0].push(b);
       row.append(b);
     });
@@ -103,73 +103,11 @@ function draw() {
     box.append(bar);
   }
 
-  // THE GIG SHEET — what this drummer has decided, and the one thing they
-  // have not decided yet. A drummer sitting down does not reach for a step
-  // grid; they want to know how fast, whether it swings, what kind of record
-  // this is and what their job in it is. So the questions come first, in the
-  // order a drummer answers them, and everything else is what you say after
-  // you have sat down.
-  let q = null;
-  if (model.on) {
-    const ds = seatDecisions(model, seat);
-    const sheet = el("div", "dsheet");
-    for (const d of ds) {
-      if (!d.answered) continue;
-      const c = el("button", "dfact");
-      c.type = "button";
-      c.title = "change it: " + d.ask;
-      c.append(el("b", null, d.id), document.createTextNode(" " + d.answered));
-      c.addEventListener("click", () => { asking = d.id; draw(); });
-      sheet.append(c);
-    }
-    if (sheet.childNodes.length) box.append(sheet);
-
-    // THE SEAT YOU ARE IN IS THE SEAT THAT IS ASKED. `nextAsk` defaults to
-    // the model's own seat, which is not the chair the page is showing, so
-    // sitting down at the drums used to hand you the arranger's next
-    // question with the drummer's name over it.
-    q = section != null ? null
-      : (asking ? ds.find(d => d.id === asking) : nextAsk(model, seat));
-    if (q) {
-      const ask = el("div", "dask");
-      ask.append(el("h2", "dq", q.ask));
-      const row = el("div", "dopts");
-      for (const o of q.opts) {
-        const b = el("button", "dopt" + (o.answered ? " on" : "") +
-                              (!o.answered && o.active ? " istrue" : ""), o.w);
-        b.type = "button";
-        b.addEventListener("click", () => {
-          const before = model;
-          model = answer(model, seat, q.id, o.w);
-          if (model !== before) { ledger.push(q.ask + " " + o.w); push(false); }
-          asking = null;
-          draw();
-        });
-        row.append(b);
-      }
-      ask.append(row);
-      box.append(ask);
-    }
-  }
-
-  // NOTHING BELOW THE PICTURE BUT QUESTIONS. No transcript, no wall of
-  // chips: the form is what you look at, and one question is what you answer.
-  // Every word each seat knows is still reachable — the groups the wall used
-  // to print as headings are the options of the last question.
-  const words = catalog(model, seat);
-  const groups = new Map();
-  for (const i of words) {
-    if (!groups.has(i.group)) groups.set(i.group, []);
-    groups.get(i.group).push(i);
-  }
-  const RANK = { "at the kit": 0, "the line": 0, "the changes": 1, "the key": 1,
-                 "the kit": 3, "what you are playing": 3, "take away": 4,
-                 "how you play them": 4, "the fills": 5, "the register": 5,
-                 "the machine": 6, "the feel": 7, "the tempo": 8, "start": 9 };
-  const rank = (g) => (RANK[g] != null ? RANK[g] : g.startsWith("grooves") ? 2 : 10);
-  const ordered = [...groups.entries()].sort((a, b) => rank(a[0]) - rank(b[0]))
-                    .filter(([g]) => g !== "start");
-
+  // ONE SURFACE, THREE KINDS OF QUESTION, AND NO MENU. The seat you are in
+  // is asked its own questions in order; an answered one lands on the GIG
+  // SHEET and stays tappable, so changing your mind is tapping what you
+  // said. A section that is open takes the floor entirely — that is where
+  // the band arranges, in the players' own words.
   if (!model.on) {
     const start = el("div", "dstart");
     start.append(el("p", "dwhat", "an arranger and two players. tap once and the session starts."));
@@ -184,9 +122,10 @@ function draw() {
     return;
   }
 
-  // A SECTION IS OPEN: the questions become what each player does HERE. The
-  // gig sheet set the tune up; this is the part where a band decides the
-  // chorus is different from the verse.
+  // A SECTION IS OPEN: everything on the floor is about this section. Each
+  // player's canned parts, then their OWN words — "swap hands", "ride it",
+  // "walk it" — then the two things a band says that neither player owns
+  // alone ("give it a lift", "follow the kick").
   if (section != null) {
     const secs = toSong(model, MODES);
     const here = secs[section];
@@ -214,53 +153,85 @@ function draw() {
     return;
   }
 
-  if (q) return;                       // one question at a time
+  // this seat's questions: the interview, then one per subject of whatever
+  // words the player still has (the arranger has none — their vocabulary is
+  // the questions above and the sections below)
+  const groups = new Map();
+  for (const i of catalog(model, seat)) {
+    if (i.group === "start") continue;
+    if (!groups.has(i.group)) groups.set(i.group, []);
+    groups.get(i.group).push(i);
+  }
+  const RANK = { "at the kit": 0, "the line": 0, "the kit": 3,
+                 "what you are playing": 3, "take away": 4,
+                 "how you play them": 4, "the fills": 5, "the register": 5,
+                 "the machine": 6, "the feel": 7 };
+  const rank = (g) => (RANK[g] != null ? RANK[g] : g.startsWith("grooves") ? 2 : 10);
+  const asks = [
+    ...seatDecisions(model, seat).map(d => ({ id: d.id, ask: d.ask, label: d.id,
+      answered: d.answered, opts: d.opts.map(o => ({ w: o.w, on: o.answered,
+        istrue: o.active, take: () => { model = answer(model, seat, d.id, o.w); } })) })),
+    ...[...groups.entries()].sort((a, b) => rank(a[0]) - rank(b[0])).map(([g, list]) => ({
+      id: "grp:" + g, ask: GROUPQ[g] || g, label: g,
+      answered: (list.find(i => i.active) || {}).words?.[0] || said.get("grp:" + g) || null,
+      opts: list.map(i => ({ w: i.words[0],
+        on: i.active || said.get("grp:" + g) === i.words[0],
+        dead: !i.changes && !i.active,
+        take: () => {
+          const line = says(model, seat, i.id);
+          const before = model;
+          model = say(model, seat, i.id);
+          if (model !== before) ledger.push(line);
+          said.set("grp:" + g, i.words[0]);
+        } })) })),
+  ];
 
-  const askGroup = (g, list) => {
-    const ask2 = el("div", "dask");
-    ask2.append(el("h2", "dq", GROUPQ[g] || g));
-    const row2 = el("div", "dopts");
-    for (const i of list) {
-      if (!i.changes && !i.active) continue;
-      const c = el("button", "dopt" + (i.active ? " on" : ""), i.words[0]);
-      c.type = "button";
-      if (!i.changes) c.disabled = true;
-      c.addEventListener("click", () => {
-        const before = model;
-        const line = says(model, seat, i.id);
-        model = say(model, seat, i.id);
-        if (model !== before) { ledger.push(line); push(false); }
-        draw();
-      });
-      row2.append(c);
-    }
-    ask2.append(row2);
-    const back = el("button", "dpinkey", "back ✕");
-    back.type = "button";
-    back.addEventListener("click", () => { topic = null; draw(); });
-    ask2.append(back);
-    box.append(ask2);
-  };
-  if (topic && groups.has(topic)) { askGroup(topic, groups.get(topic)); return; }
+  // THE GIG SHEET — every fact of it tappable
+  const sheet = el("div", "dsheet");
+  for (const d of asks) {
+    if (!d.answered) continue;
+    const c = el("button", "dfact" + (asking === d.id ? " open" : ""));
+    c.type = "button";
+    c.title = "change it: " + d.ask;
+    c.append(el("b", null, d.label), document.createTextNode(" " + d.answered));
+    c.addEventListener("click", () => { asking = asking === d.id ? null : d.id; draw(); });
+    sheet.append(c);
+  }
+  if (sheet.childNodes.length) box.append(sheet);
 
-  const ask = el("div", "dask");
-  // THE ARRANGER HAS NO WORDS OF THEIR OWN — an arranger's whole vocabulary
-  // is the questions above and the sections below, so saying "anything
-  // else?" over an empty row is a dead end. They get pointed at the form.
-  if (!ordered.length) {
-    ask.append(el("h2", "dq", "tap a section to say what happens in it"));
+  const q = asking ? asks.find(d => d.id === asking) : asks.find(d => !d.answered);
+  if (!q) {
+    const ask = el("div", "dask");
+    ask.append(el("h2", "dq", seat === "arranger"
+      ? "tap a section to say what happens in it"
+      : "tap anything above to change it"));
     box.append(ask);
     return;
   }
-  ask.append(el("h2", "dq", "anything else?"));
+  const ask = el("div", "dask");
+  ask.append(el("h2", "dq", q.ask));
   const row = el("div", "dopts");
-  for (const [g] of ordered) {
-    const c = el("button", "dopt", GROUPQ[g] || g);
-    c.type = "button";
-    c.addEventListener("click", () => { topic = g; draw(); });
-    row.append(c);
+  for (const o of q.opts) {
+    const b = el("button", "dopt" + (o.on ? " on" : "") +
+                           (!o.on && o.istrue ? " istrue" : ""), o.w);
+    b.type = "button";
+    if (o.dead) b.disabled = true;
+    b.addEventListener("click", () => {
+      const before = model;
+      o.take();
+      if (model !== before) push(false);
+      if (asking) asking = null;
+      draw();
+    });
+    row.append(b);
   }
   ask.append(row);
+  if (asking) {
+    const done = el("button", "dpinkey", "done ✕");
+    done.type = "button";
+    done.addEventListener("click", () => { asking = null; draw(); });
+    ask.append(done);
+  }
   box.append(ask);
 }
 
