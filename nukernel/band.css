@@ -32,3 +32,9 @@
 .dmod.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 /* a chair says how many questions are left, in one character */
 .dseat i{font-size:var(--t-sm);opacity:.8}
+/* start again — the only other key in the bar */
+.dreset{appearance:none;cursor:pointer;margin-left:auto;width:44px;height:44px;
+  border:1px solid var(--rule);border-radius:50%;background:var(--bg-key);
+  color:var(--ink-2);font:inherit;font-size:20px;line-height:1}
+.dreset:hover{color:var(--ink);border-color:var(--accent)}
+.dbar .dplay{margin-left:10px}

@@ -8,6 +8,7 @@ const { blank, catalog, say, says, toGenre, LANEOF, LANES,
         decisions, nextAsk, answer } = window.NuDrums;
 import { GENRES, NuSong } from "./deps.js";
 import { adoptSong, SONG, on, commit, setBpm, setSwing } from "./state.js";
+import { registerSW, warmCache, warmShell } from "../audio/offline.js";
 import { startAt, stop, playing, warmup, getPosition, passAt } from "../audio/live.js";
 
 const $ = (id) => document.getElementById(id);
@@ -57,6 +58,7 @@ function push(first) {
     commit("box"); commit("swing");
   }
   commit("transport");
+  warmCache();
   // (NO JUMP HERE. Sending the walk back to the top of the loop on every
   // word was a latency hack and it cost more than it bought: the record
   // RESTARTED at bar one each time you said something, so the four-bar
@@ -307,6 +309,8 @@ on("transport:state", () => $("dplay").classList.toggle("on", playing));
 
 /* ---------- boot ---------- */
 GENRES[GK] = toGenre(model);
+registerSW();
+warmShell();
 window.__nuTempo = () => model.bpm;      // the gate reads tempo as part of the artifact
 window.__drumModel = () => JSON.stringify(model);   // ...and the model, so a
 // word that is lost can be located: did the MODEL move, or only the plan?

@@ -50,7 +50,7 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
       const b = [...document.querySelectorAll(".dmod")].find(x => x.textContent === n);
       if (b) b.click(); }, name); await page.waitForTimeout(300); };
   const seat = async (name) => {
-    if (name === "arranger") { await mod("song"); return; }
+    if (name === "arranger" || name === "song") { await mod("song"); return; }
     await mod("band");
     await page.evaluate((n) => {
       const b = [...document.querySelectorAll(".dseat")].find(x => x.textContent.startsWith(n));
@@ -69,14 +69,30 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
     }
     return out; });
 
-  // ── THE FIRST QUESTION IS WHAT WE ARE PLAYING ──
+  // ── THE FRONT DOOR: WHEN, WHERE, AND WHAT ROOM ──
+  // Nobody starts by picking a genre off a list. The record is what the
+  // decade, the city and the room ADD UP TO — and when one is left it is
+  // called without being asked.
   ok(await tap("count it in"), "the session will not start");
-  ok((await q())[0] === "what are we playing?",
+  ok((await q())[0] === "what decade is it?",
      "the band's first question is \"" + (await q())[0] + "\"");
-  const records = (await opts()).map(o => o.w);
-  ok(records.length >= 8, "only " + records.length + " records to call");
-  ok(records.includes("a jazz date"), "you cannot call a jazz date");
-  ok(await tap("a jazz date"), "calling the record was refused");
+  const decades = (await opts()).map(o => o.w);
+  ok(decades.length >= 5, "only " + decades.length + " decades to be in");
+  ok(decades[0] === "the fifties" && decades[decades.length - 1] === "now",
+     "the decades are not in order: " + decades.join(", "));
+  ok(await tap("the fifties"), "the fifties were refused");
+  ok((await q())[0] === "where are you?", "after the decade it asks \"" + (await q())[0] + "\"");
+  const cities = (await opts()).map(o => o.w);
+  ok(cities.length >= 2, "only " + cities.length + " place(s) to be in the fifties");
+  ok(cities.includes("New York"), "New York is not in the fifties: " + cities.join(", "));
+  await tap("New York");
+  ok(/where do you play/.test((await q())[0] || ""),
+     "after the city it asks \"" + (await q())[0] + "\"");
+  await tap((await opts())[0].w);
+  // ...and by now a record has been called, without a list of fifteen
+  const called = await page.evaluate(() => JSON.parse(window.__bandModel()).song.genre);
+  ok(!!called, "three answers and no record: " + called);
+  ok(called === "jazz", "the fifties in New York came out as " + called);
 
   // ── EVERY CHAIR SAYS HOW MUCH IT HAS LEFT ──
   // It said "1 question" for every chair that had any question at all, so a
@@ -98,7 +114,8 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
   ok(!/key|form|how fast|changes/.test(dq),
      "in the drums chair the drummer is asked \"" + dq + "\" — that is the arranger's question");
   // ...and the groove the record picked is on their sheet, still theirs to
-  // change — narrowed to the three a jazz date has
+  // change — narrowed to the three a jazz date has (which is what the fifties
+  // in New York added up to)
   await page.evaluate(() => { const f = [...document.querySelectorAll(".dfact")]
     .find(x => (x.querySelector("b") || {}).textContent === "groove"); if (f) f.click(); });
   await page.waitForTimeout(300);
@@ -156,7 +173,41 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
              chair: bassV ? bassV.chair : null,
              zones: u && u.sampler ? (u.sampler.zones || []).length : 0,
              dur: e ? e.dur : 0 }; });
+  // CHANGING THE RECORD MEANS CHANGING WHEN AND WHERE YOU ARE. There is no
+  // list of fifteen any more: a record is what the decade, the city and the
+  // room add up to, so a gate that wants a techno record goes to Detroit in
+  // the eighties like everybody else.
+  const BandKit = require(path.join(process.cwd(), "nukernel/band-kit.js"));
+  const tapFact = async (label) => page.evaluate((l) => {
+    const f = [...document.querySelectorAll(".dfact")]
+      .find(x => (x.querySelector("b") || {}).textContent === l);
+    if (f) { f.click(); return true; } return false; }, label);
   const asArranger = async (w) => {
+    await seat("song");
+    const key = Object.keys(BandKit.GENRES).find(k => BandKit.GENRES[k].w === w);
+    if (key) {
+      const gk = BandKit.GENRES[key];
+      // the three are answered in order, and each one narrows the next — so
+      // a value that is not offered yet becomes offered once the one before
+      // it is answered. Fact first (it is on the sheet once answered), then
+      // the question in front of you.
+      for (const [f, v] of [["when", gk.when[0]], ["where", gk.where[0]],
+                            ["venue", gk.venue[0]]]) {
+        for (let i = 0; i < 4; i++) {
+          if ((await opts()).some(o => o.w === v)) break;
+          if (await tapFact(f)) { await page.waitForTimeout(260); continue; }
+          const list = (await opts()).filter(o => !o.dead);
+          if (!list.length) break;
+          await tap(list[0].w);
+        }
+        await tap(v);
+        await page.waitForTimeout(200);
+      }
+      await page.waitForTimeout(300);
+      if (await page.evaluate((k) => JSON.parse(window.__bandModel()).song.genre === k, key))
+        return true;
+      if (await tapFact("genre")) { await page.waitForTimeout(240); if (await tap(w)) return true; }
+    }
     await seat("arranger");
     // the record is a FACT once it is called, so the way back to it is the
     // gig sheet — walking the interview only works before it is answered
@@ -292,6 +343,28 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
     ok(JSON.parse(after).bass.fig === null, "start over left the bassist's line behind");
     ok(JSON.parse(after).song.genre === JSON.parse(before).song.genre,
        "clearing the bass chair uncalled the record");
+  }
+
+  // ── START AGAIN ──
+  // Every chair can be cleared on its own sheet; this is the one that puts
+  // the room back to empty.
+  {
+    await page.evaluate(() => document.getElementById("dreset").click());
+    await page.waitForTimeout(600);
+    const m = await page.evaluate(() => JSON.parse(window.__bandModel()));
+    ok(!m.song.genre && !m.song.form && !m.song.when,
+       "start again left the record called: " + JSON.stringify(m.song).slice(0, 120));
+    ok(m.on, "start again put the band away");
+    ok((await q())[0] === "what decade is it?",
+       "after start again the first question is \"" + (await q())[0] + "\"");
+    // ...and the room really is empty: nothing is playing but the count-in
+    const ev = await page.evaluate(async () => {
+      const PL = await import("/nukernel/audio/plan.js"); PL.compile();
+      let n = 0; for (let i = 0; i < PL.barCount(); i++) n += PL.barPlan(i).ev.pitched.length;
+      return n; });
+    ok(Number.isFinite(ev), "the page stopped compiling after start again");
+    // put a record back for the rest of the gate
+    ok(await asArranger("a techno record"), "the record could not be called after start again");
   }
 
   // ── A 303 YOU CAN TURN, AND A FILTER THAT MOVES ──

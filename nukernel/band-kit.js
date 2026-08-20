@@ -203,85 +203,85 @@
      row that names a groove or a machine nobody has fails the gate rather
      than quietly offering nothing. */
   const GENRES = {
-    house:   { w: "a house record", fam: "the floor", bpm: 120, gtr: ["a clean electric", "a jazz box", "a muted one"], gjob: "skank", keys: ["a warm pad", "a polysynth", "a Rhodes", "an electric piano", "strings"], kjob: "pads", forms: ["vamp", "dance", "twelve", "dj"], fig: "offbeat", artic: "staccato", tone: { cut: 700,  q: 6,  rel: 0.16 },
+    house:   { w: "a house record", fam: "the floor", bpm: 120, when: ["the eighties", "the nineties", "now"], where: ["Chicago", "New York", "London"], venue: ["a warehouse", "a club"], gtr: ["a clean electric", "a jazz box", "a muted one"], gjob: "skank", keys: ["a warm pad", "a polysynth", "a Rhodes", "an electric piano", "strings"], kjob: "pads", forms: ["vamp", "dance", "twelve", "dj"], fig: "offbeat", artic: "staccato", tone: { cut: 700,  q: 6,  rel: 0.16 },
                grooves: ["house", "four on the floor", "disco", "uk garage"],
                machines: ["909", "808", "electronic kit"],
                styles: ["hold the root", "octaves", "eighths, driving"],
                instr: ["a synth bass", "fingers on a P-bass"],
                chg: ["the four-chord one", "a minor vamp", "one chord, all night"] },
-    techno:  { w: "a techno record", fam: "the floor", bpm: 120, gtr: ["a muted one", "a clean electric", "a crunchy one"], gjob: "out", keys: ["a glassy pad", "a polysynth", "a warm pad", "strings"], kjob: "drone", forms: ["vamp", "dance", "twelve", "dj"], fig: "acid", artic: "staccato", tone: { cut: 600,  q: 8,  rel: 0.13 },
+    techno:  { w: "a techno record", fam: "the floor", bpm: 120, when: ["the eighties", "the nineties", "now"], where: ["Detroit", "Berlin"], venue: ["a warehouse", "a club"], gtr: ["a muted one", "a clean electric", "a crunchy one"], gjob: "out", keys: ["a glassy pad", "a polysynth", "a warm pad", "strings"], kjob: "drone", forms: ["vamp", "dance", "twelve", "dj"], fig: "acid", artic: "staccato", tone: { cut: 600,  q: 8,  rel: 0.13 },
                grooves: ["techno", "four on the floor", "gabber"],
                machines: ["909", "606", "electronic kit"],
                styles: ["hold the root", "eighths, driving", "sixteenths, busy"],
                instr: ["a synth bass", "with a pick"],
                chg: ["one chord, all night", "a pedal point", "a minor vamp"] },
-    disco:   { w: "a disco record", fam: "the floor", bpm: 120, gtr: ["a clean electric", "a jazz box", "a muted one"], gjob: "skank", keys: ["a Rhodes", "strings", "a clav", "an electric piano"], kjob: "comp", forms: ["dance", "versechorus", "vamp", "twelve"], fig: "discoct", artic: "staccato", tone: { cut: 950,  q: 3,  rel: 0.20 },
+    disco:   { w: "a disco record", fam: "the floor", bpm: 120, when: ["the seventies", "the eighties"], where: ["New York", "Philadelphia"], venue: ["a club", "a wedding"], gtr: ["a clean electric", "a jazz box", "a muted one"], gjob: "skank", keys: ["a Rhodes", "strings", "a clav", "an electric piano"], kjob: "comp", forms: ["dance", "versechorus", "vamp", "twelve"], fig: "discoct", artic: "staccato", tone: { cut: 950,  q: 3,  rel: 0.20 },
                grooves: ["disco", "four on the floor", "two step"],
                machines: ["acoustic kit", "room kit", "909"],
                styles: ["octaves", "eighths, driving", "hold the root"],
                instr: ["fingers on a P-bass", "with a pick"],
                chg: ["the four-chord one", "two-five-one", "the fifties changes"] },
-    hiphop:  { w: "a boom-bap record", fam: "breaks", bpm: 96, gtr: ["a clean electric", "a jazz box", "a muted one"], gjob: "out", keys: ["a Rhodes", "an electric piano", "a warm pad", "a grand piano"], kjob: "pads", forms: ["versechorus", "pop", "vamp"], artic: "normal", tone: { cut: 520,  q: 2,  rel: 0.45 },
+    hiphop:  { w: "a boom-bap record", fam: "breaks", bpm: 96, when: ["the eighties", "the nineties", "the two-thousands"], where: ["New York", "Los Angeles"], venue: ["a block party", "a basement", "a club"], gtr: ["a clean electric", "a jazz box", "a muted one"], gjob: "out", keys: ["a Rhodes", "an electric piano", "a warm pad", "a grand piano"], kjob: "pads", forms: ["versechorus", "pop", "vamp"], artic: "normal", tone: { cut: 520,  q: 2,  rel: 0.45 },
                grooves: ["boom bap", "breakbeat", "trap"],
                machines: ["808", "909", "acoustic kit"],
                styles: ["hold the root", "octaves"],
                instr: ["a synth bass", "fingers on a P-bass"],
                chg: ["a minor vamp", "one chord, all night", "two-five-one"] },
-    jungle:  { w: "a jungle record", fam: "breaks", bpm: 144, gtr: ["a clean electric", "a muted one", "a jazz box"], gjob: "out", keys: ["a glassy pad", "a warm pad", "a polysynth", "strings"], kjob: "pads", forms: ["dance", "twelve", "vamp", "dj"], artic: "normal", tone: { cut: 480,  q: 5,  rel: 0.70 },
+    jungle:  { w: "a jungle record", fam: "breaks", bpm: 144, when: ["the nineties", "the two-thousands"], where: ["London", "Bristol"], venue: ["a warehouse", "a club"], gtr: ["a clean electric", "a muted one", "a jazz box"], gjob: "out", keys: ["a glassy pad", "a warm pad", "a polysynth", "strings"], kjob: "pads", forms: ["dance", "twelve", "vamp", "dj"], artic: "normal", tone: { cut: 480,  q: 5,  rel: 0.70 },
                grooves: ["amen break", "jungle", "breakbeat"],
                machines: ["electronic kit", "909", "acoustic kit"],
                styles: ["hold the root", "octaves"],
                instr: ["a synth bass", "with a pick"],
                chg: ["a minor vamp", "one chord, all night"] },
-    rock:    { w: "a rock record", fam: "rock", bpm: 120, gtr: ["an overdriven one", "a crunchy one", "a distorted one", "a clean electric"], gjob: "power", keys: ["an organ", "a rock organ", "a grand piano", "an upright"], kjob: "comp", forms: ["versechorus", "pop", "full", "aaba"], artic: "normal", tone: { cut: 1100, q: 2,  rel: 0.24 },
+    rock:    { w: "a rock record", fam: "rock", bpm: 120, when: ["the sixties", "the seventies", "the eighties", "the nineties"], where: ["London", "Los Angeles", "New York"], venue: ["a stadium", "a bar", "a festival"], gtr: ["an overdriven one", "a crunchy one", "a distorted one", "a clean electric"], gjob: "power", keys: ["an organ", "a rock organ", "a grand piano", "an upright"], kjob: "comp", forms: ["versechorus", "pop", "full", "aaba"], artic: "normal", tone: { cut: 1100, q: 2,  rel: 0.24 },
                grooves: ["straight rock", "driving rock", "stomp", "half time"],
                machines: ["acoustic kit", "room kit", "big kit"],
                styles: ["hold the root", "eighths, driving", "root and fifth"],
                instr: ["with a pick", "fingers on a P-bass"],
                chg: ["the fifties changes", "the four-chord one", "a twelve-bar blues"] },
-    punk:    { w: "a punk record", fam: "rock", bpm: 144, gtr: ["a distorted one", "an overdriven one", "a crunchy one"], gjob: "drive", keys: ["a rock organ", "an organ", "an upright"], kjob: "comp", forms: ["versechorus", "pop", "vamp"], fig: "pump", artic: "staccato", tone: { cut: 1400, q: 2,  rel: 0.18 },
+    punk:    { w: "a punk record", fam: "rock", bpm: 144, when: ["the seventies", "the eighties"], where: ["London", "New York", "Manchester"], venue: ["a basement", "a bar", "a club"], gtr: ["a distorted one", "an overdriven one", "a crunchy one"], gjob: "drive", keys: ["a rock organ", "an organ", "an upright"], kjob: "comp", forms: ["versechorus", "pop", "vamp"], fig: "pump", artic: "staccato", tone: { cut: 1400, q: 2,  rel: 0.18 },
                grooves: ["punk", "driving rock", "stomp"],
                machines: ["acoustic kit", "big kit"],
                styles: ["eighths, driving", "hold the root"],
                instr: ["with a pick", "fingers on a P-bass"],
                chg: ["the four-chord one", "the fifties changes"] },
-    kraut:   { w: "a krautrock record", fam: "rock", bpm: 120, gtr: ["a clean electric", "a crunchy one", "a muted one"], gjob: "chug", keys: ["a polysynth", "a glassy pad", "a warm pad", "an organ"], kjob: "arp", forms: ["vamp", "dance", "full"], fig: "pump", artic: "normal", tone: { cut: 850,  q: 5,  rel: 0.30 },
+    kraut:   { w: "a krautrock record", fam: "rock", bpm: 120, when: ["the seventies", "the eighties"], where: ["Berlin", "Düsseldorf"], venue: ["a studio", "a festival"], gtr: ["a clean electric", "a crunchy one", "a muted one"], gjob: "chug", keys: ["a polysynth", "a glassy pad", "a warm pad", "an organ"], kjob: "arp", forms: ["vamp", "dance", "full"], fig: "pump", artic: "normal", tone: { cut: 850,  q: 5,  rel: 0.30 },
                grooves: ["motorik", "bare bones", "half time"],
                machines: ["electronic kit", "room kit", "606"],
                styles: ["hold the root", "eighths, driving"],
                instr: ["a synth bass", "with a pick"],
                chg: ["one chord, all night", "a pedal point"] },
-    jazz:    { w: "a jazz date", fam: "jazz", bpm: 144, gtr: ["a jazz box", "a nylon-string", "a clean electric"], gjob: "strum", keys: ["a grand piano", "a Rhodes", "an upright", "a church organ"], kjob: "comp", forms: ["head", "aaba", "blues"], swing: "swing", artic: "legato", tone: { cut: 1200, q: 1,  rel: 0.35 },
+    jazz:    { w: "a jazz date", fam: "jazz", bpm: 144, when: ["the fifties", "the sixties", "now"], where: ["New York", "New Orleans", "Paris"], venue: ["a club", "a bar", "a studio"], gtr: ["a jazz box", "a nylon-string", "a clean electric"], gjob: "strum", keys: ["a grand piano", "a Rhodes", "an upright", "a church organ"], kjob: "comp", forms: ["head", "aaba", "blues"], swing: "swing", artic: "legato", tone: { cut: 1200, q: 1,  rel: 0.35 },
                grooves: ["jazz ride", "bebop", "brush swing"],
                machines: ["jazz kit", "brushes", "acoustic kit"],
                styles: ["walk it", "hold the root"],
                instr: ["fingers on a P-bass", "with a pick"],
                chg: ["two-five-one", "a twelve-bar blues", "the fifties changes"] },
-    blues:   { w: "a blues", fam: "rock", bpm: 96, gtr: ["a crunchy one", "a clean electric", "a steel-string acoustic"], gjob: "riff", keys: ["an upright", "a rock organ", "a grand piano", "a Rhodes"], kjob: "comp", forms: ["blues", "versechorus", "aaba"], swing: "shuffle", artic: "normal", tone: { cut: 1000, q: 1,  rel: 0.30 },
+    blues:   { w: "a blues", fam: "rock", bpm: 96, when: ["the fifties", "the sixties"], where: ["Chicago", "Memphis", "New Orleans"], venue: ["a bar", "a club", "a porch"], gtr: ["a crunchy one", "a clean electric", "a steel-string acoustic"], gjob: "riff", keys: ["an upright", "a rock organ", "a grand piano", "a Rhodes"], kjob: "comp", forms: ["blues", "versechorus", "aaba"], swing: "shuffle", artic: "normal", tone: { cut: 1000, q: 1,  rel: 0.30 },
                grooves: ["shuffle", "train beat", "straight rock"],
                machines: ["acoustic kit", "room kit", "brushes"],
                styles: ["walk it", "root and fifth", "hold the root"],
                instr: ["fingers on a P-bass", "with a pick"],
                chg: ["a twelve-bar blues", "the fifties changes"] },
-    funk:    { w: "a funk record", fam: "funk", bpm: 96, gtr: ["a clean electric", "a muted one", "a jazz box"], gjob: "skank", keys: ["a clav", "a Rhodes", "an organ", "an electric piano"], kjob: "skank", forms: ["vamp", "versechorus", "dance"], fig: "funk16", artic: "staccato", tone: { cut: 900,  q: 7,  rel: 0.14 },
+    funk:    { w: "a funk record", fam: "funk", bpm: 96, when: ["the seventies", "the eighties"], where: ["New Orleans", "Detroit", "Los Angeles"], venue: ["a club", "a bar", "a festival"], gtr: ["a clean electric", "a muted one", "a jazz box"], gjob: "skank", keys: ["a clav", "a Rhodes", "an organ", "an electric piano"], kjob: "skank", forms: ["vamp", "versechorus", "dance"], fig: "funk16", artic: "staccato", tone: { cut: 900,  q: 7,  rel: 0.14 },
                grooves: ["funk", "linear funk", "new orleans", "motown"],
                machines: ["acoustic kit", "room kit", "808"],
                styles: ["sixteenths, busy", "octaves", "hold the root"],
                instr: ["fingers on a P-bass", "with a pick"],
                chg: ["one chord, all night", "a minor vamp"] },
-    reggae:  { w: "a reggae record", fam: "latin", bpm: 96, gtr: ["a clean electric", "a muted one", "a jazz box"], gjob: "skank", keys: ["an organ", "a Rhodes", "a rock organ", "a grand piano"], kjob: "skank", forms: ["vamp", "dub", "versechorus"], fig: "bubble", artic: "legato", tone: { cut: 420,  q: 2,  rel: 0.55 },
+    reggae:  { w: "a reggae record", fam: "latin", bpm: 96, when: ["the seventies", "the eighties"], where: ["Kingston", "London"], venue: ["a dancehall", "a festival", "a yard"], gtr: ["a clean electric", "a muted one", "a jazz box"], gjob: "skank", keys: ["an organ", "a Rhodes", "a rock organ", "a grand piano"], kjob: "skank", forms: ["vamp", "dub", "versechorus"], fig: "bubble", artic: "legato", tone: { cut: 420,  q: 2,  rel: 0.55 },
                grooves: ["one drop", "steppers", "rockers"],
                machines: ["acoustic kit", "room kit", "808"],
                styles: ["hold the root", "octaves"],
                instr: ["fingers on a P-bass", "a synth bass"],
                chg: ["a minor vamp", "one chord, all night"] },
-    bossa:   { w: "a bossa", fam: "latin", bpm: 120, gtr: ["a nylon-string", "a jazz box", "a steel-string acoustic"], gjob: "strum", keys: ["a grand piano", "a Rhodes", "a felt piano", "an upright"], kjob: "comp", forms: ["aaba", "versechorus", "head"], artic: "normal", tone: { cut: 1000, q: 1,  rel: 0.28 },
+    bossa:   { w: "a bossa", fam: "latin", bpm: 120, when: ["the sixties", "the seventies"], where: ["Rio", "New York"], venue: ["a bar", "a studio", "a club"], gtr: ["a nylon-string", "a jazz box", "a steel-string acoustic"], gjob: "strum", keys: ["a grand piano", "a Rhodes", "a felt piano", "an upright"], kjob: "comp", forms: ["aaba", "versechorus", "head"], artic: "normal", tone: { cut: 1000, q: 1,  rel: 0.28 },
                grooves: ["bossa nova", "samba", "rumba", "cha cha"],
                machines: ["jazz kit", "brushes", "acoustic kit"],
                styles: ["hold the root", "octaves"],
                instr: ["fingers on a P-bass", "with a pick"],
                chg: ["two-five-one", "the four-chord one"] },
-    slow:    { w: "something slow and open", fam: "rock", bpm: 72, gtr: ["a clean electric", "a steel-string acoustic", "a nylon-string"], gjob: "ring", keys: ["a warm pad", "strings", "a felt piano", "a glassy pad"], kjob: "swell", forms: ["vamp", "full", "dub"], fig: "stab", space: "four", artic: "legato", tone: { cut: 520,  q: 3,  rel: 1.20 },
+    slow:    { w: "something slow and open", fam: "rock", bpm: 72, when: ["the nineties", "the two-thousands", "now"], where: ["Berlin", "Reykjavík", "London"], venue: ["a bedroom", "a studio", "a church"], gtr: ["a clean electric", "a steel-string acoustic", "a nylon-string"], gjob: "ring", keys: ["a warm pad", "strings", "a felt piano", "a glassy pad"], kjob: "swell", forms: ["vamp", "full", "dub"], fig: "stab", space: "four", artic: "legato", tone: { cut: 520,  q: 3,  rel: 1.20 },
                grooves: ["bare bones", "half time"],
                machines: ["electronic kit", "room kit", "808"],
                styles: ["hold the root", "octaves"],
@@ -289,6 +289,36 @@
                chg: ["a pedal point", "one chord, all night"] },
   };
   const genreOf = (m) => GENRES[m.song.genre] || null;
+
+  /* ---------- WHERE A RECORD COMES FROM -----------------------------------
+     Nobody starts a session by picking a genre off a list of fifteen. They
+     know when it is, where they are and what room they are playing — and a
+     genre is what those three things ADD UP TO. Chicago in the eighties in a
+     warehouse is one record; Chicago in the fifties in a bar is a different
+     one, and nobody had to name either.
+
+     Every record carries `when`/`where`/`room` and the three questions
+     narrow: an option is only offered if some record still standing has it,
+     which means there are no dead ends by construction — you cannot answer
+     your way to nothing. When one record is left it is CALLED, without being
+     asked. */
+  const FIELDS3 = [["when", "what decade is it?"], ["where", "where are you?"],
+                   ["venue", "where do you play?"]];
+  const fits = (gk, s2) => FIELDS3.every(([f]) =>
+    !s2[f] || (gk[f] || []).includes(s2[f]));
+  const survivors = (s2) => Object.entries(GENRES).filter(([, gk]) => fits(gk, s2));
+  // the values still worth offering for one field, given the others
+  // ...and a decade is asked in the order decades happen, which no table
+  // order can be relied on to give
+  const DECADES = ["the fifties", "the sixties", "the seventies", "the eighties",
+                   "the nineties", "the two-thousands", "now"];
+  const openOf = (s2, field) => {
+    const out = [];
+    for (const [, gk] of survivors({ ...s2, [field]: null }))
+      for (const v of gk[field] || []) if (!out.includes(v)) out.push(v);
+    return field === "when"
+      ? DECADES.filter((d) => out.includes(d)) : out;
+  };
 
   /* ---------- HOW MUCH SPACE: the slowest thing a band can do -------------
      Tempo is not the only way to be slow, and below about 60 bpm it stops
@@ -358,6 +388,14 @@
 
   /* ---------- WHAT THE ARRANGER DECIDES ---------- */
   const ARR = [
+    // ...and before the genre, the three things a genre is MADE of. Each
+    // one's options are the ones still standing, so every answer leaves at
+    // least one record — and when one is left it is called without being
+    // asked.
+    ...FIELDS3.map(([f, ask]) => ({ id: f, ask, opts: null, three: true })),
+    // ...and before the genre, the three things a genre is MADE of. Each
+    // one's options are the ones still standing, so every answer leaves at
+    // least one record and the last one is called for you.
     // THE GENRE COMES FIRST because everything else is narrowed by it — and
     // because it is the question a band actually asks first ("what are we
     // playing?"). It sets what the players may choose from, the tempo and
@@ -415,7 +453,22 @@
     opts: d.opts.map((o) => ({ ...o,
       apply: (s2) => s2,                       // the melody is not a song field
       idea: true, iid: d.id })) }));
-  const arrDecisions = (m) => [...ARR, ...callDecisions(m), ...ideaDecisions(m)].map((d) => ({
+  const threeOpts = (m, f) => openOf(m.song, f).map((v) => ({
+    w: v, is: (s2) => s2[f] === v, apply: (s2) => ({ ...s2, [f]: v }) }));
+  const arrDecisions = (m) => [...ARR, ...callDecisions(m), ...ideaDecisions(m)]
+    .map((d) => (d.three ? { ...d, opts: threeOpts(m, d.id) }
+      : d.id === "genre"
+        // THE RECORDS STILL STANDING — but read WITHOUT the room, so the
+        // question keeps something to offer after the third answer has
+        // called one. It is answered by then, so nobody is asked it; it sits
+        // on the sheet as a fact, and tapping it offers the neighbours (the
+        // other records of that decade and that city) rather than a list of
+        // fifteen. Removing it outright left no way to say "actually, make
+        // it a punk record".
+        ? { ...d, opts: d.opts.filter((o) =>
+            survivors({ ...m.song, venue: null }).some(([, gk]) => gk.w === o.w)) }
+        : d))
+    .map((d) => ({
     // ...and an IDEA question is answered on the idea, not on the song, so
     // its own answer stands (overwriting it with the song's made the tune's
     // questions unanswerable — the arranger was asked "how long is it?"
@@ -571,6 +624,12 @@
   // a gate makes — the kits are pure and this file never imports genres.js
   let MODESREF = null;
   const heardOpts = (m, seat, d) => {
+    // A NARROWING QUESTION IS WORTH ASKING BEFORE IT CHANGES ANYTHING.
+    // "What decade is it?" moves no note until the three answers collapse to
+    // one record — and the pruner, which drops answers that change nothing,
+    // ate the whole front door. Its options are already only the ones that
+    // leave a record standing, which is the same law by a different route.
+    if (d.three) return d.opts;
     const now = sigOf(m);
     const seen = new Map();
     return d.opts.filter((o) => {
@@ -634,6 +693,18 @@
       if (!o) return m;
       // ...the melody's own answers land on the idea, not on the tune
       if (o.idea) return { ...m, idea: Id.answer(m.idea, o.iid, w) };
+      // THE LAST ONE STANDING IS CALLED. Answering the third question when
+      // only one record fits is answering the genre — asking "and which of
+      // these one records is it?" is the kind of question this box exists
+      // not to ask.
+      if (d.three) {
+        const song2 = { ...o.apply(m.song), answers: { ...(m.song.answers || {}), [id]: w } };
+        const left = survivors(song2);
+        let out2 = { ...m, song: song2 };
+        if (left.length === 1 && song2.genre !== left[0][0])
+          out2 = answer(out2, "arranger", "genre", left[0][1].w);
+        return out2;
+      }
       const song = { ...o.apply(m.song), answers: { ...(m.song.answers || {}), [id]: w } };
       let out = { ...m, song };
       // WHAT KIND OF RECORD IS THIS is the drummer's own first question, and
@@ -980,8 +1051,17 @@
       { id: "band", who: "everybody", opts: [
           { w: "give it a lift", key: "lift", answered: per.lift },
           { w: "follow the kick", key: "follow", answered: per.follow } ] },
-    ].map(prune).filter((a) => a.opts.length >= 2);
+    ].map(prune).filter((a) => a.opts.length >= 2)
+      // WHAT A SECTION IS ABOUT COMES FIRST. Twelve questions is a lot of
+      // floor, and the melody — the one arrangement decision that changes
+      // who is playing the tune — was ninth ("where is the melody question
+      // in song????"). The canned parts and the calls are what you arrange
+      // with; the players' whole vocabularies are underneath, for when you
+      // want to say something specific.
+      .sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
   };
+  const ORDER = ["idea", "drums", "keys", "guitar", "bass", "mix", "move", "band",
+                 "dwords", "kwords", "gwords", "bwords"];
   const setSection = (m, i, who, key) => {
     const per = { ...(m.per || {}) };
     const one = { ...(per[i] || {}) };
@@ -1063,7 +1143,7 @@
 
   return { SEATS, TAKEN, FORMS, CALLED, GENRES, SPACE, ROLE, ENG, SECMIX, SECMOVE, mixOf,
            resetSeat,
-           genreOf, rolesIn, asked, pending, sigOf, secSigOf,
+           genreOf, rolesIn, asked, pending, sigOf, secSigOf, survivors, FIELDS3,
            secWords, partOf,
            blank, decisions, seatDecisions,
            nextAsk, nextAnywhere, answer, catalog, say, says, toGenre, toSong,

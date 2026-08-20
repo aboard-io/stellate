@@ -26,7 +26,7 @@ const P = { deg: new Array(16).fill(0), oct: new Array(16).fill(0),
   vel: new Array(16).fill(6), inc: new Array(16).fill(0), stk: new Array(16).fill(0),
   gate: new Array(16).fill(0), acc: new Array(16).fill(0), sld: new Array(16).fill(0) };
 const on = () => ({ ...Band.blank(), on: true });
-const ENGIDS = Band.ENG.map((d) => d.id);
+const ENGIDS = Band.ENG.map((d) => d.id);   // (the engineer's own question ids)
 const play = (g) => ({ drums: K.drums(P, g, g.bars), bass: K.bass(P, g, g.bars) });
 const sig = (o) => JSON.stringify(o.drums.map((e) => [+e.t.toFixed(3), e.d, e.vel])) +
                    "|" + JSON.stringify(o.bass.map((e) => [+e.t.toFixed(3), e.n]));
@@ -132,7 +132,9 @@ console.log("what happens in the chorus stays in the chorus");
   const before = Band.toSong(m, MODES).map((s) => sig(play(s.genre)));
   const asks = Band.sectionAsks(m, 1);
   ok(asks.map((a) => a.id).join(",") ===
-     "drums,dwords,keys,kwords,guitar,gwords,bass,bwords,idea,mix,move,band",
+     // ordered so the arrangement decisions come first and the players'
+     // whole vocabularies sit underneath — the melody was ninth of twelve
+     "idea,drums,keys,guitar,bass,mix,move,band,dwords,kwords,gwords,bwords",
      "a section asks " + asks.map((a) => a.id).join(","));
   let movers = 0;
   for (const a of asks) {
@@ -184,9 +186,34 @@ console.log("what happens in the chorus stays in the chorus");
 console.log("the genre is called first, and it narrows without deciding");
 {
   const m0 = on();
+  // THE FRONT DOOR IS NOT A MENU. Nobody starts a session by picking a
+  // genre off a list of fifteen — they know when it is, where they are and
+  // what room they are playing, and the record is what those add up to.
   const first = Band.nextAnywhere(m0);
-  ok(first && first.id === "genre",
-     "the band's first question is " + (first && first.id) + ", not the genre");
+  ok(first && first.id === "when",
+     "the band's first question is " + (first && first.id) + ", not the decade");
+  for (const [f, ask] of Band.FIELDS3) {
+    const d = Band.seatDecisions(m0, "arranger").find((x) => x.id === f);
+    ok(!!d && d.ask === ask, "nobody is asked \"" + ask + "\"");
+    ok(d.opts.length >= 2, ask + " offers " + d.opts.length + " answer(s)");
+  }
+  // ...and every record is reachable through it
+  const reach = new Set();
+  for (const [k, gk] of Object.entries(Band.GENRES)) {
+    ok(Array.isArray(gk.when) && gk.when.length, k + " comes from no decade");
+    ok(Array.isArray(gk.where) && gk.where.length, k + " comes from nowhere");
+    ok(Array.isArray(gk.venue) && gk.venue.length, k + " is played nowhere");
+    for (const w of gk.when)
+      for (const p of gk.where)
+        for (const v of gk.venue) {
+          const left = Band.survivors({ when: w, where: p, venue: v });
+          ok(left.length >= 1, k + ": " + w + "/" + p + "/" + v + " leads to nothing");
+          if (left.some(([k2]) => k2 === k)) reach.add(k);
+        }
+  }
+  ok(reach.size === Object.keys(Band.GENRES).length,
+     "only " + reach.size + " of " + Object.keys(Band.GENRES).length +
+     " records can be arrived at");
   const arr = Band.seatDecisions(m0, "arranger");
   const gq = arr.find((d) => d.id === "genre");
   ok(!!gq && gq.opts.length >= 8, "only " + (gq ? gq.opts.length : 0) + " records to call");

@@ -9657,9 +9657,11 @@ console.log("one engine: the second one is gone and cannot come back quietly");
   /* (c) THE AUDIO TIER MAKES NO AUDIO */
   {
     const files = fs76.readdirSync(AUD).filter(f => f.endsWith(".js"));
-    ok(files.length === 5, "nukernel/audio now holds " + files.length +
-       " modules (" + files.join(", ") + ") — five is the whole tier: the bridge, " +
-       "the plan, the desk, the driver and the font choice");
+    ok(files.length === 6, "nukernel/audio now holds " + files.length +
+       " modules (" + files.join(", ") + ") — six is the whole tier: the bridge, " +
+       "the plan, the desk, the driver, the font choice and the offline cache " +
+       "(offline.js registers the service worker and warms the record's own " +
+       "samples; it makes no sound either, and the ban below still holds it)");
     const BANNED = [
       [/new (Offline)?AudioContext\b/, "opens an AudioContext"],
       [/createGain|createBiquadFilter|createConvolver|createDynamicsCompressor|createWaveShaper|createDelay|createOscillator|createBufferSource/,

@@ -11,6 +11,7 @@ import { GENRES, NuSong, MODES } from "./deps.js";
 import { adoptSong, SONG, SLOTS, putPhrase, on, commit, setBpm, setSwing, setPoolChair,
          setMixOffset, clearMixOffsets } from "./state.js";
 import { startAt, stop, playing, warmup, getPosition, passAt } from "../audio/live.js";
+import { registerSW, warmCache, warmShell, warmed } from "../audio/offline.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const n = document.createElement(tag);
@@ -99,6 +100,11 @@ function push(first) {
     commit("box"); commit("swing");
   }
   commit("transport");
+  // ONCE THE RECORD IS CALLED, IT IS YOURS: the samples this cast can ask
+  // for are fetched once, and the service worker keeps them. After that the
+  // record plays with the network off.
+  warmCache();
+  remember();
 }
 
 /* ---------- draw ---------- */
@@ -400,6 +406,19 @@ function tick() {
 requestAnimationFrame(tick);
 
 /* ---------- the transport ---------- */
+// START AGAIN — the whole session, not one chair. Every chair has its own
+// `start over` on its own sheet; this is the one that puts the room back to
+// empty, so the next record can begin from "what decade is it?" rather than
+// from whatever the last one decided.
+$("dreset").addEventListener("click", () => {
+  if (playing) { stop(); $("dplay").classList.remove("on"); }
+  model = { ...Band.blank(), on: true };
+  said.clear(); asking = null; section = null; module_ = "song"; seat = "drums";
+  ledger.length = 0;
+  clearMixOffsets();
+  try { localStorage.removeItem(SAVE); } catch (e) {}
+  push(true); draw();
+});
 $("dplay").addEventListener("click", () => {
   if (playing) { stop(); $("dplay").classList.remove("on"); }
   else if (model.on) { startAt(0); $("dplay").classList.add("on"); }
@@ -408,9 +427,33 @@ on("transport:state", () => $("dplay").classList.toggle("on", playing));
 
 /* ---------- boot ---------- */
 window.__nuTempo = () => model.song.bpm;      // the gate reads tempo as part of the artifact
+// THE SESSION SURVIVES A RELOAD, which is what makes the offline cache worth
+// having: coming back to a dead network and being handed an empty room is
+// the same as not having cached anything. One key, the model as it stands.
+const SAVE = "nu.band.session";
+function remember() {
+  try { localStorage.setItem(SAVE, JSON.stringify(model)); } catch (e) {}
+}
+function recall() {
+  try {
+    const raw = localStorage.getItem(SAVE);
+    if (!raw) return false;
+    const m = JSON.parse(raw);
+    if (!m || !m.on || !m.song || !m.drums || !m.bass || !m.keys) return false;
+    model = { ...Band.blank(), ...m };
+    return true;
+  } catch (e) { return false; }
+}
+
+registerSW();
+warmShell();
+window.__bandWarm = () => warmed();               // the gate asks what is cached
 window.__bandDraw = () => draw();                  // the gate times a redraw
 window.__bandModel = () => JSON.stringify(model);   // ...and the model, so a
 // word that is lost can be located: did the MODEL move, or only the plan?
+// ...and the session you left, if there is one. A cached record you cannot
+// come back to is a cached record nobody hears twice.
+recall();
 push(true);
 warmup();
 draw();

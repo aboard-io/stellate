@@ -39,7 +39,7 @@ Band.toSong(on(), MODES);                    // hand band-kit its MODES table
 
 const RECORDS = Object.values(Band.GENRES).map((g) => g.w);
 const answered = (m, seat) =>
-  Band.seatDecisions(m, seat).filter((d) => d.answered).length;
+  Band.seatDecisions(m, seat).filter((d) => d.answered).length;   // (reported, not asserted)
 const wordsOf = (m, seat) => Object.fromEntries(
   Band.seatDecisions(m, seat).map((d) => [d.id, d.opts.map((o) => o.w).join("|")]));
 
@@ -48,15 +48,18 @@ let Q = 0, A = 0, DEP = 0;
 
 /* ---------- 1 + 2: THE SPINE, AND EVERY NODE ON IT ----------------------- */
 console.log("every chair's tree: it ends, and every question on it is worth asking");
-for (const rec of RECORDS) {
-  const seed = Band.answer(on(), "arranger", "genre", rec);
+for (const rec of [null, ...RECORDS]) {
+  // the FIRST pass is the front door itself: an arranger who has not been
+  // told what the record is, walking when → where → room → what are we
+  // playing, which is the state a person actually starts in
+  const seed = rec ? Band.answer(on(), "arranger", "genre", rec) : on();
   for (const seat of Band.SEATS) {
     let m = seed;
     const seen = new Set();
     for (let step = 0; step < 40; step++) {
       const q = Band.nextAsk(m, seat);
       if (!q) break;
-      const at = rec + "/" + seat + "/" + q.id;
+      const at = (rec || "an empty room") + "/" + seat + "/" + q.id;
       ok(!seen.has(q.id), at + " was asked twice");
       seen.add(q.id); Q++;
 
@@ -66,22 +69,101 @@ for (const rec of RECORDS) {
       const words = q.opts.map((o) => o.w);
       ok(new Set(words).size === words.length, at + " says a word twice");
 
-      // every EDGE: it makes its own record, and it moves the walk forward
+      // every EDGE: it makes its own record, and it moves the walk forward.
+      // A NARROWING question (when/where/room) is judged on what it rules
+      // OUT rather than on what it changes: it moves no note until the three
+      // of them collapse to one record, which is the whole point of it.
       const fps = new Map();
-      const before = answered(m, seat);
       for (const o of q.opts) {
         const to = Band.answer(m, seat, q.id, o.w); A++;
-        ok(answered(to, seat) > before, at + ": \"" + o.w + "\" answered nothing");
-        const fp = Band.sigOf(to);
-        if (fps.has(fp)) ok(false, at + ": \"" + o.w + "\" and \"" + fps.get(fp) +
+        // THE DAG ARGUMENT, stated exactly: an edge marks ITS OWN question
+        // answered. (Counting answers instead was wrong the moment a
+        // question could leave the list — answering the city can CALL the
+        // record, which retires "what are we playing?" and leaves the count
+        // where it was.)
+        const now = Band.seatDecisions(to, seat).find((x) => x.id === q.id);
+        ok(!now || now.answered, at + ": \"" + o.w + "\" answered nothing");
+        // ...and once the record IS called, where you are is a fact about
+        // the session rather than a narrowing — two cities that leave the
+        // same one record standing are not a duplicate answer, they are two
+        // true things.
+        const narrowing = q.three && !m.song.genre;
+        const fp = q.three
+          ? Band.survivors(to.song).map(([k]) => k).join(",") : Band.sigOf(to);
+        // TWO ANSWERS THAT LEAVE ONE RECORD ARE TWO TRUE THINGS. Chicago
+        // and Memphis in the fifties are both a blues as far as fourteen
+        // records know, and asking where you are is still worth asking —
+        // the duplicate law is about answers that leave the SAME CHOICE
+        // open, not about places that agree.
+        const oneLeft = q.three && Band.survivors(to.song).length <= 1;
+        if (q.three && (!narrowing || oneLeft)) { /* a fact, not a fork */ }
+        else if (fps.has(fp)) ok(false, at + ": \"" + o.w + "\" and \"" + fps.get(fp) +
           "\" make the identical take");
         else fps.set(fp, o.w);
       }
       m = Band.answer(m, seat, q.id, q.opts[0].w);
     }
-    ok(seen.size > 0, rec + "/" + seat + ": nothing is ever asked");
-    ok(Band.nextAsk(m, seat) === null, rec + "/" + seat + ": the interview never ends");
+    ok(seen.size > 0, (rec || "an empty room") + "/" + seat + ": nothing is ever asked");
+    ok(Band.nextAsk(m, seat) === null,
+       (rec || "an empty room") + "/" + seat + ": the interview never ends");
   }
+}
+
+/* ---------- THE FRONT DOOR: when × where × room, exhaustively ------------ */
+// This one IS small enough to enumerate — three fields over fourteen records
+// — and it is the one place where a wrong answer could strand you: a room
+// nobody plays in that decade, in that city, is a question with no record
+// behind it. The law is that the offered options never allow it.
+console.log("no answer to when/where/room leads to nothing");
+{
+  const base = { ...on().song };
+  const openOf = (s2, f) => {
+    const out = [];
+    for (const [, gk] of Band.survivors({ ...s2, [f]: null }))
+      for (const v of gk[f] || []) if (!out.includes(v)) out.push(v);
+    return out;
+  };
+  let triples = 0, called = 0;
+  for (const when of openOf(base, "when")) {
+    const s1 = { ...base, when };
+    ok(Band.survivors(s1).length >= 1, when + " leads to no record at all");
+    for (const where of openOf(s1, "where")) {
+      const s2 = { ...s1, where };
+      ok(Band.survivors(s2).length >= 1, when + " in " + where + " leads to nothing");
+      for (const room of openOf(s2, "venue")) {
+        const s3 = { ...s2, venue: room };
+        const left = Band.survivors(s3);
+        triples++;
+        ok(left.length >= 1, when + " in " + where + ", " + room + " leads to nothing");
+        // ...and when exactly one is left, answering the third question
+        // CALLS it rather than asking which of the one records it is
+        let m = on();
+        m = Band.answer(m, "arranger", "when", when);
+        m = Band.answer(m, "arranger", "where", where);
+        m = Band.answer(m, "arranger", "venue", room);
+        if (left.length === 1) {
+          called++;
+          ok(m.song.genre === left[0][0],
+             when + "/" + where + "/" + room + ": one record left and it was not called");
+        } else {
+          // THE NEIGHBOURHOOD, NOT THE ROOM. The genre question is read
+          // without the venue on purpose — after the third answer has called
+          // a record there has to be something left to offer if you tap the
+          // fact, and "the other records of that decade and that city" is
+          // the honest neighbourhood. So the offered set must CONTAIN every
+          // record that fits all three, and never anything from elsewhere.
+          const q = Band.seatDecisions(m, "arranger").find((d) => d.id === "genre");
+          const hood = Band.survivors({ when, where }).map(([, gk]) => gk.w);
+          ok(q && left.every(([, gk]) => q.opts.some((o) => o.w === gk.w)),
+             when + "/" + where + "/" + room + ": a record that fits is not offered");
+          ok(q && q.opts.every((o) => hood.includes(o.w)),
+             when + "/" + where + "/" + room + ": a record from another town is offered");
+        }
+      }
+    }
+  }
+  ok(triples > 40, "only " + triples + " ways into a record");
+  console.log("    " + triples + " routes in, " + called + " of them naming one record");
 }
 
 /* ---------- 3: INDEPENDENCE, which is what makes pass 2 enough ---------- */
@@ -107,7 +189,7 @@ for (const rec of ["a house record", "a rock record", "a jazz date"]) {
           DEP++;
           // a DEPENDENCY: re-check that node under this answer
           const dd = Band.seatDecisions(to, seat).find((x) => x.id === other.id);
-          if (!dd) continue;                                 // the question left, fine
+          if (!dd || dd.answered) continue;   // the question left, or was answered for you
           const live = dd.opts.filter((x) => !x.dead);
           ok(live.length >= 2, rec + "/" + seat + ": after \"" + o.w + "\", " +
              other.id + " offers " + live.length + " answer(s)");
