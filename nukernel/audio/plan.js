@@ -65,10 +65,21 @@ const need = async (g, url) => {
 let depsP = null;
 export function deps() { return depsP || (depsP = loadDeps()); }
 async function loadDeps() {
-  await need("__GENRES", ROOTDIR + "engine/genres-data.js");
+  // THE PARENT'S MOUTH, NOT ITS BRAIN. This box brings its own genres, its own
+  // arranger and its own tempo map; the parent is consumed strictly as a sound
+  // engine (state → units → schedule → audio). Three loads used to sit here out
+  // of habit and were measured dead — 683 KB and ~100 ms of blocking boot:
+  //   * genres-data.js (645 KB, the parent's 274 anchors) — zero reads anywhere
+  //     in nukernel; genre-kernel only walks it inside resolve/track/blend/
+  //     deriveMind, none of which this box calls. genre-kernel's init still
+  //     wants the key to exist, so a 20-byte stub stands where 645 KB stood.
+  //   * theory.js / pipes.js — csd-engine guards both (CsdTheoryRef/
+  //     CsdPipesRef null-checks) and no nukernel state carries `theory` or
+  //     `pipes`, so the branches were dead twice over. The stream worker loads
+  //     its own copies regardless, so the renderer never saw these anyway.
+  const W = typeof window !== "undefined" ? window : globalThis;
+  if (!W.__GENRES) W.__GENRES = { GENRES: {} };
   await need("__REGISTRY", ROOTDIR + "engine/registry-data.js");
-  await need("CsdTheory", ROOTDIR + "engine/theory.js");
-  await need("CsdPipes", ROOTDIR + "engine/pipes.js");
   const E = await need("CsdEngine", ROOTDIR + "engine/csd-engine.js");
   const K = await need("GenreKernel", ROOTDIR + "engine/genre-kernel.js");
   const SE = await need("FaustStateEngine", FAUSTDIR + "voices/state-engine.js");
