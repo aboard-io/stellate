@@ -311,6 +311,26 @@
   };
   const genreOf = (m) => GENRES[m.song.genre] || null;
 
+  /* ---------- WHERE THE RECORD GOES ---------------------------------------
+     Measured on two takes: the second chorus was bigger than the first only
+     because a different player happened to be handed the tune. "Each chorus
+     is bigger than the last" — the shape of a whole record, and the oldest
+     arrangement idea there is — was unsayable. It is a song fact, not a
+     section one: the same chorus in two places is two different moments.  */
+  const LEVELS4 = ["hush", "back", "norm", "fwd"];
+  const ARC = {
+    flat:  { w: "it stays where it is" },
+    build: { w: "each chorus bigger than the last",
+             at: (role, n, of) => (role === "chorus" || role === "drop"
+               ? { lvl: LEVELS4[Math.min(3, 2 + n)], busier: n > 0 } : null) },
+    rise:  { w: "it builds all the way through",
+             at: (role, n, of, i, secs) => ({ lvl: LEVELS4[Math.min(3, 1 + Math.floor(i / Math.max(1, secs / 3)))] }) },
+    drop:  { w: "it builds, then drops away at the end",
+             at: (role, n, of, i, secs) => (i >= secs - 2
+               ? { lvl: LEVELS4[Math.max(0, 2 - (i - (secs - 2)))] }
+               : { lvl: LEVELS4[Math.min(3, 1 + Math.floor(i / Math.max(1, (secs - 2) / 3)))] }) },
+  };
+
   /* ---------- WHAT KIND OF CHORDS ----------------------------------------
      The arranger has been calling ROOTS. `CHANGES` is a roots array, and the
      kernel's `prog` takes chord OBJECTS — quality, inversion, borrow, beats
@@ -477,6 +497,10 @@
         chords: !(s.answers || {}).chords ? (gk.chords || "plain") : s.chords,
           swing: !(s.answers || {}).feel ? (gk.swing || null) : s.swing,
           space: !(s.answers || {}).space ? (gk.space || "none") : s.space }) })) },
+    { id: "arc", ask: "where does it go?", opts:
+      Object.entries(ARC).map(([k, v]) => ({
+        w: v.w, is: (s2) => (s2.arc || "flat") === k,
+        apply: (s2) => ({ ...s2, arc: k }) })) },
     { id: "chords", ask: "what kind of chords?", opts:
       Object.entries(CHORDKIND).map(([k, v]) => ({
         w: v.w, is: (s2) => (s2.chords || "plain") === k,
@@ -1015,8 +1039,26 @@
       }
       // the section's own strip, as the box fields nukernel's song already
       // has — the page writes them onto the box it builds
+      // THE ARC, by where this section is in the record: the second chorus
+      // is not the first one. A section that was told its own level keeps it
+      // — the arc is what happens when nobody said.
+      const arc = ARC[m.song.arc || "flat"];
+      const nth = f.secs.slice(0, i).filter((r) => r === role).length;
+      const of = f.secs.filter((r) => r === role).length;
+      const shape = arc && arc.at ? arc.at(role, nth, of, i, f.secs.length) : null;
       const box = { ...((SECMIX[per.mix] || {}).box || {}),
                     ...((SECMOVE[per.move] || {}).box || {}) };
+      // AN ARC RAISES, IT NEVER LOWERS. Written as a plain overwrite it took
+      // the FIRST chorus down from the level its role gives it — "each
+      // chorus bigger than the last" turning the first one into the
+      // quietest thing in the record, which is the opposite of the ask.
+      if (shape && shape.lvl && !((m.per || {})[i] || {}).mix) {
+        const now = LEVELS4.indexOf(box.lvl || "norm");
+        const want = LEVELS4.indexOf(shape.lvl);
+        if (want > now) box.lvl = shape.lvl;
+      }
+      if (shape && shape.busier && !((m.per || {})[i] || {}).drums)
+        { const fn = SECDRUMS.busier.fn; g.kit = fn(g.kit); g.kits = (g.kits || []).map(fn); }
       // THE MELODY IS ITS OWN LAYER. A two-bar phrase cannot ride the bar
       // clock the rhythm section keeps — the kernel reads a phrase's own
       // length AS the bar, so a 32-step tune over a four-chord progression
@@ -1085,7 +1127,10 @@
     // 1.07× the verse — a rounding error where the biggest moment in the
     // record should be.
     chorus: { drums: "busier", bass: "octave", mix: "fwd", idea: "keys" },
-    bridge: { drums: "ride", bass: "walk" },
+    // a bridge is a CONTRAST, not a peak: measured, it was the loudest thing
+    // in the record because four dense bars sat next to eight-bar verses.
+    // The ride, a walking bass and the keys on pads — different, thinner.
+    bridge: { drums: "ride", bass: "walk", keys: "pads", guitar: "ring" },
     outro:  { drums: "sparser", bass: "pedal", mix: "back", guitar: "ring" },
     // ...and the dance-record roles, which are the same kind of fact: a
     // build is hats and eighths climbing, a drop is everything at once, a
@@ -1345,7 +1390,7 @@
            secWords, partOf,
            blank, decisions, seatDecisions,
            nextAsk, nextAnywhere, answer, catalog, say, says, toGenre, toSong,
-           SECDRUMS, SECBASS, SECKEYS, SECPIPE, CHORDKIND, LENS, TAKERS,
+           SECDRUMS, SECBASS, SECKEYS, SECPIPE, CHORDKIND, LENS, ARC, TAKERS,
            sectionAsks, setSection,
            D, B, Ky, Id, Gt };
 });

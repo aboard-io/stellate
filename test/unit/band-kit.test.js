@@ -1091,6 +1091,57 @@ console.log("a section is as long as it was told to be, and a chorus lifts");
   ok(others > 0, "the chorus handed the tune to somebody and nobody else is playing");
 }
 
+/* (v) THE RECORD GOES SOMEWHERE */
+// "Each chorus bigger than the last" is the oldest arrangement idea there
+// is, and it was unsayable: measured on two takes, the second chorus was
+// bigger than the first only because a different player happened to be
+// handed the tune.
+console.log("a record has an arc, and the same chorus twice is two moments");
+{
+  let m = Band.answer(Band.answer(on(), "arranger", "genre", "a rock record"),
+                      "arranger", "form", Band.FORMS.full.w);
+  const q = Band.seatDecisions(m, "arranger").find((d) => d.id === "arc");
+  ok(!!q && q.opts.length >= 3, "the arranger cannot say where the record goes");
+  const LVL = { hush: 0.4, back: 0.7, norm: 1, fwd: 1.35 };
+  const levels = (mm) => Band.toSong(mm, MODES).map((s2) => LVL[(s2.box || {}).lvl] || 1);
+  const flat = levels(Band.answer(m, "arranger", "arc", Band.ARC.flat.w));
+  for (const [k, v] of Object.entries(Band.ARC)) {
+    const m2 = Band.answer(m, "arranger", "arc", v.w);
+    const L = levels(m2);
+    ok(L.every((x) => x > 0), v.w + ": a section at no level at all");
+    if (k !== "flat") ok(JSON.stringify(L) !== JSON.stringify(flat),
+      "\"" + v.w + "\" makes the same record as no arc at all");
+    // ...and it still plays
+    for (const s2 of Band.toSong(m2, MODES)) {
+      const ev = play(s2.genre);
+      ok(ev.drums.every((e) => Number.isFinite(e.t)), v.w + "/" + s2.role + " is not finite");
+    }
+  }
+  // the point of "build": the LAST chorus is louder than the first
+  const built = Band.toSong(Band.answer(m, "arranger", "arc", Band.ARC.build.w), MODES)
+    .filter((s2) => s2.role === "chorus");
+  ok(built.length >= 2, "the form has one chorus to compare");
+  ok((LVL[(built[built.length - 1].box || {}).lvl] || 1) > (LVL[(built[0].box || {}).lvl] || 1),
+     "the last chorus is no bigger than the first");
+  // ...and a section somebody mixed by hand keeps its own level
+  const said = Band.setSection(Band.answer(m, "arranger", "arc", Band.ARC.build.w), 4, "mix", "hush");
+  ok((Band.toSong(said, MODES)[4].box || {}).lvl === "hush",
+     "the arc overruled a level somebody set by hand");
+
+  // A BRIDGE CONTRASTS, IT DOES NOT PEAK. Measured before this rule, it was
+  // the loudest thing in the record — four dense bars beside eight-bar verses.
+  let m3 = Band.answer(m, "arranger", "len:verse", "eight bars");
+  m3 = Band.answer(m3, "arranger", "len:chorus", "eight bars");
+  const secs = Band.toSong(m3, MODES);
+  const per = (s2) => (K.drums(P, s2.genre, s2.genre.bars).length +
+    K.render(s2.pattern, s2.genre, s2.bars).length +
+    K.render(s2.guitar, s2.genre, s2.bars).length) / s2.bars;
+  const bridge = secs.find((s2) => s2.role === "bridge");
+  const chorus = secs.find((s2) => s2.role === "chorus");
+  ok(per(bridge) < per(chorus), "the bridge (" + per(bridge).toFixed(0) +
+     "/bar) is busier than the chorus (" + per(chorus).toFixed(0) + "/bar)");
+}
+
 /* (e) NOTHING NUMERIC CARRIES A WORD */
 // The swing NaN: the genre once held the WORD "swing" where the kernel
 // computes (i % 2) * (g.swing || 0), and every time in the record became
