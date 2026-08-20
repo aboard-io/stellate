@@ -104,10 +104,15 @@ function draw() {
   if (model.on) {
     const bar = el("div", "dseats");
     for (const s2 of SEATS) {
-      const q = nextAsk(model, s2);
-      const b = el("button", "dseat" + (seat === s2 ? " on" : "") + (q ? " asking" : ""));
+      // HOW MANY, NOT WHETHER. This said "1 question" for every chair that
+      // had any question left at all — a chair with nine things still to
+      // decide and a chair with one looked identical, which is exactly the
+      // thing a session needs to tell you.
+      const left = seatDecisions(model, s2).filter(d => !d.answered).length;
+      const b = el("button", "dseat" + (seat === s2 ? " on" : "") + (left ? " asking" : ""));
       b.type = "button";
-      b.append(el("b", null, s2), el("i", null, q ? "1 question" : "ready"));
+      b.append(el("b", null, s2), el("i", null,
+        left ? left + (left === 1 ? " question" : " questions") : "ready"));
       b.addEventListener("click", () => { seat = s2; asking = null; draw(); });
       bar.append(b);
     }

@@ -66,6 +66,18 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
   ok(records.includes("a jazz date"), "you cannot call a jazz date");
   ok(await tap("a jazz date"), "calling the record was refused");
 
+  // ── EVERY CHAIR SAYS HOW MUCH IT HAS LEFT ──
+  // It said "1 question" for every chair that had any question at all, so a
+  // chair with nine things to decide and a chair with one looked identical.
+  {
+    const labels = await page.evaluate(() => [...document.querySelectorAll(".dseat")]
+      .map(x => x.textContent));
+    ok(labels.length === 4, "the session has " + labels.length + " chairs");
+    const counts = labels.map(l => parseInt((l.match(/(\d+) question/) || [])[1] || "0", 10));
+    ok(counts.some(c => c > 1), "every chair claims one question: " + JSON.stringify(labels));
+    ok(new Set(counts).size > 1, "every chair has the same number of questions left");
+  }
+
   // ── THE CALL REACHES THE PLAYERS ──
   await seat("drums");
   const dq = (await q())[0] || "";
