@@ -5,7 +5,12 @@ the decisions already taken — the measurements are kept so nobody re-derives t
 and nobody re-litigates a settled call. The queue this file carried through
 Stages A–F is finished, and the history of it is in git rather than here.
 
-**Nothing is open.** The soundfont ROTATION shipped 2026-07-29 (below); every gate
+**THE BAND IS OPEN.** The queue below (2026-08-20) is the band pages
+(`nukernel/band.html`, `drums.html`) — seven chairs, three modules and a
+question graph over the kernel. Everything above it in this file is the
+older, settled record.
+
+The soundfont ROTATION shipped 2026-07-29 (below); every gate
 in the repository passes, the instrument palette
 is widened and the last 15 real instruments are registered and wired, and the
 media budget has a pinned, reproducible definition (`tools/audit/bed-budget.js`).
@@ -16,6 +21,90 @@ measurements and nobody re-litigates a settled call.
 `diagonal dominant: 274/274`. **Every gate in the repository passes** — the
 release suite, the browser cohort, the starcruise cohort and `test/unit/`,
 including `corpus-db` where the external MIDI drive is mounted.
+
+---
+
+## The band — the queue, 2026-08-20
+
+Seven chairs (arranger, drums, bass, keys, guitar, voice, engineer), three
+modules (SONG / BAND / IDEAS), a question graph that reaches 33 of the
+kernel's 40 genre fields, and a dice that rolls a whole record because the
+graph is complete enough to be walked at random. What follows is what is NOT
+built, in the order I would build it, with the measurements that say why.
+
+### 1. Inversions and borrowed chords — the last real harmonic gap
+`prog` carries QUALITY now (the arranger calls plain triads / sevenths by
+function / on everything / ninths / suspended / sixths, measured: a jazz
+date's first chord is 7 notes as triads, 9 as sevenths, 11 as ninths). It does
+not carry `inv` or `borrow`, and those are what turn a progression into a
+VOICE-LED one — a bass moving by step under a static top, a borrowed IV in a
+major key. `kernel-coverage` prints the gap at value level rather than
+counting the field as done. This is the only thing left in the kernel that
+changes how the music MOVES.
+
+### 2. The arc caps out
+"Each chorus bigger than the last" runs out at `fwd`: the level ladder has
+four rungs (hush/back/norm/fwd) and nothing else grows with repetition. A
+third chorus cannot be bigger than the second. What a record actually does —
+another voice arrives, the register lifts, the drums open further — is not
+expressible as a level, and the arc should reach those instead of (only) the
+fader.
+
+### 3. The hook returns literally
+It plays in every chorus, identically, which is already better than the once
+it managed before. Missing: a first-time/second-time ending, "the last one up
+an octave", an instrumental verse. A hook that never varies is a loop with a
+form around it.
+
+### 4. Nothing balances ACROSS sections
+Each section is built from its own role defaults; nothing looks at the record
+whole and asks whether the bridge is louder than the chorus. Measured, it was
+(40 events/bar against 27), and the fix was a role default written by hand —
+a rule, not a balance. The honest version reads all the sections and moves the
+outliers.
+
+### 5. One idea per record
+The arranger writes THE hook. There is no second idea, no B-section melody,
+no relationship between them (a bridge that quotes the verse inverted, a
+chorus that answers the intro). `ideas-kit.js` is one model, not a bank.
+
+### 6. The rest of the roles
+The recipe is in CLAUDE.md ("HOW TO ADD A CHAIR") and the singer is the worked
+example of the layer shape. Unbuilt: a rhythm guitarist (a second voice, the
+way keys and guitar already are), a brass section, strings, a chorus, a
+trumpeter — each a stack layer of its own so its instrument is not fighting
+the pool's role casting.
+
+### 7. Genre-adaptive question trees (deferred, on purpose)
+"I'm just not going to have an acid bassline on a rock song." The narrowing
+exists for grooves, machines, guitars, keyboards, changes and forms; it does
+NOT reach the bass FIGURES or most section words. Deferred by request, listed
+so it is not forgotten.
+
+### 8. The drums page is orphaned
+`drums.html` has the drummer, the interview and the gig sheet, but none of the
+last two days: no arc, no proportion, no reset, no dice. It is an older shape
+of the same idea and should either grow the same spine or be folded into the
+band page as its drums chair.
+
+### 9. The daw is a parallel world
+`kernel-daw.html` — the front door `index.html` still redirects to — is
+untouched by any of this. Two instruments in one box, sharing an engine and
+nothing else.
+
+### 10. `npm run test:sweep` has not run since this began
+The fast core is green everywhere (nukernel 89,057 across 23 of 110 genres),
+but the full 110 × 40-seed cross-product has not been asked in about forty
+commits. Before any ship that matters, run it.
+
+### And the thing no gate can say
+Everything above is measured: event counts, ranges, densities, levels, RMS in
+a real browser. **None of that is the same as it sounding good.** All four
+bugs the dice found — a bass at MIDI 16, a key carrying the bassist's octave,
+a pad walking out of the room, a pad above the top of a piano — were shipping
+before anything caught them, and they were caught by counting, not by ears.
+The gates prove the record is playable; only listening proves it is worth
+playing.
 
 ---
 
