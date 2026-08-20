@@ -979,6 +979,56 @@ console.log("the pipes are reachable, and they only touch their own section");
      "a pipe rewrote somebody's phrase, which is not what a pipe is");
 }
 
+/* (t) THE ARRANGER CALLS CHORDS, NOT JUST ROOTS */
+// `CHANGES` is a roots array and the kernel's `prog` takes chord OBJECTS —
+// quality, inversion, borrow. That gap is why the keys player, the first
+// chair that plays harmony, could only ever voice triads.
+console.log("what kind of chords is a question, and the voicing hears it");
+{
+  const P2 = { deg: new Array(16).fill(0), oct: new Array(16).fill(0),
+    vel: new Array(16).fill(6), inc: new Array(16).fill(0), stk: new Array(16).fill(0),
+    gate: new Array(16).fill(0), acc: new Array(16).fill(0), sld: new Array(16).fill(0) };
+  const m0 = Band.answer(on(), "arranger", "genre", "a jazz date");
+  const q = Band.seatDecisions(m0, "arranger").find((d) => d.id === "chords");
+  ok(!!q && q.opts.length >= 4, "the arranger is offered " +
+     (q ? q.opts.length : 0) + " kinds of chord");
+  const sizes = new Map();
+  for (const [k, v] of Object.entries(Band.CHORDKIND)) {
+    const m = Band.answer(m0, "arranger", "chords", v.w);
+    ok(m.song.chords === k, v.w + " was not recorded");
+    const s2 = Band.toSong(m, MODES)[0];
+    // the PROG the kernel reads, and the notes that come out of it
+    if (k !== "plain") {
+      ok(Array.isArray(s2.genre.prog) && s2.genre.prog.length,
+         v.w + ": no chord objects reached the genre");
+      for (const c of s2.genre.prog)
+        ok(c && typeof c.q === "string", v.w + ": a chord with no quality");
+    }
+    const first = K.render(s2.pattern, s2.genre, s2.bars).filter((e) => e.t < 1);
+    ok(first.length > 0, v.w + " voices nothing");
+    ok(first.every((e) => Number.isFinite(e.n)), v.w + " is not finite");
+    sizes.set(k, first.length);
+    // ...and the bass hears it too: a seventh in the changes is a note the
+    // line may pass through
+    const b2 = K.bass(P2, s2.genre, s2.genre.bars);
+    ok(b2.every((e) => Number.isFinite(e.n)), v.w + ": the bass came apart");
+  }
+  ok(sizes.get("sevens") > sizes.get("plain"),
+     "sevenths voice " + sizes.get("sevens") + " notes against a triad's " + sizes.get("plain"));
+  ok(sizes.get("nines") >= sizes.get("sevens"), "ninths are no bigger than sevenths");
+  ok(new Set([...sizes.values()]).size >= 3,
+     "every kind of chord voices the same number of notes");
+  // a record brings its own harmony, and the arranger still outranks it
+  for (const [key, gk] of Object.entries(Band.GENRES)) {
+    ok(!!Band.CHORDKIND[gk.chords], key + " calls for chords nobody has: " + gk.chords);
+    const m = Band.answer(on(), "arranger", "genre", gk.w);
+    ok(m.song.chords === gk.chords, key + ": the record's harmony did not arrive");
+  }
+  const said = Band.answer(Band.answer(on(), "arranger", "chords", "ninths"),
+                           "arranger", "genre", "a house record");
+  ok(said.song.chords === "nines", "calling a record overruled the arranger's own chords");
+}
+
 /* (e) NOTHING NUMERIC CARRIES A WORD */
 // The swing NaN: the genre once held the WORD "swing" where the kernel
 // computes (i % 2) * (g.swing || 0), and every time in the record became

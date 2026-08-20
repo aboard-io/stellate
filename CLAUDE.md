@@ -755,6 +755,19 @@ echo*. Not a player's decision and not the desk's. Measured: 96 events become
 151 in thirds, 192 with the echo, 292 with both, other sections do not move,
 and nobody's phrase is rewritten — a pipe is what happens to the notes after.
 
+THE ARRANGER CALLS CHORDS, NOT JUST ROOTS. `CHANGES` is a roots array and
+the kernel's `prog` takes chord OBJECTS — quality, inversion, borrow — which
+is why the keys player, the first chair that plays harmony, could only ever
+voice triads. *What kind of chords?* — plain triads · sevenths by function ·
+sevenths on everything · ninths · suspended · sixths. By FUNCTION rather than
+flat, because that is what the word means: "sevenths" on a major tune is
+Imaj7 / ii m7 / V7, not four dominant sevenths in a row. Every record brings
+its own (a jazz date sevenths, a blues sevenths on everything, funk ninths,
+the slow one suspended) and the arranger outranks it. Measured on the page,
+the first chord of a jazz date: 7 notes as triads, 9 as sevenths, 11 as
+ninths, and the suspended one swaps the third for the fourth. The bass hears
+it too — a seventh in the changes is a note the line may pass through.
+
 THE GRAPH IS ANNOTATIONS ON THE KERNEL, PER ROLE (`nukernel/askable.js`).
 The chairs grew the other way round — each kit knew its own words and wrote
 whatever fields it happened to need — so "how much of the kernel can you

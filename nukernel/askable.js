@@ -90,9 +90,11 @@
   // separately, at the value level, rather than letting the field count as
   // done.)
   const WRITTEN = {
-    prog:  "written by the melody layer, pairing the changes into a longer " +
-           "phrase. Chord QUALITY (q/inv/borrow) is the real gap and has its " +
-           "own value-level check in test/unit/kernel-coverage.test.js",
+    prog:  "the arranger CALLS it now (what kind of chords? — plain triads / " +
+           "sevenths by function / on everything / ninths / suspended / sixths), " +
+           "and the melody layer pairs the same objects into its longer phrase. " +
+           "Not an `askable` row because the question writes chord OBJECTS " +
+           "derived from the changes, not one value onto one field",
     label: "the genre's NAME, written by the chairs and never chosen",
   };
 

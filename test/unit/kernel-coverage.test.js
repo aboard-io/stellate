@@ -180,9 +180,12 @@ console.log("the kernel reads " + READS.size + " genre fields: " + DATA.length +
      [...seen.part].join(", "));
   ok(seen.instr.size >= 8, "only " + seen.instr.size + " instruments are ever cast");
   // THE ONE THAT IS NOT TRUE YET, written as the claim it will be:
-  const qualities = [...seen.prog];
-  console.log("    chord qualities reachable: " + qualities.join(", ") +
-              (qualities.length < 2 ? "  ← the arranger calls roots, not chords" : ""));
+  // THE CLAIM THAT WAS NOT TRUE YET, now asserted: the arranger calls chord
+  // QUALITY, so the catalog reaches more than one.
+  const qualities = [...seen.prog].filter(Boolean);
+  ok(qualities.length >= 3, "only " + qualities.length + " chord quality reachable: " +
+     qualities.join(", ") + " — the arranger is calling roots, not chords");
+  console.log("    chord qualities reachable: " + qualities.join(", "));
 }
 
 {
