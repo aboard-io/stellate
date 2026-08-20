@@ -748,6 +748,33 @@ is left it is CALLED rather than asked: 208 routes in, 181 of them naming one
 record, every record reachable. The genre survives as a FACT read without the
 room — the neighbours of that decade and that city — so changing it is one tap.
 
+WHAT THE BAND DOES TO WHAT IT PLAYED — the pipes (kernel.js PIPES, the
+kernel's second organ) are a section-level call now: *double it in thirds · in
+sixths · echo it round · spread the chords · let it breathe · thirds and an
+echo*. Not a player's decision and not the desk's. Measured: 96 events become
+151 in thirds, 192 with the echo, 292 with both, other sections do not move,
+and nobody's phrase is rewritten — a pipe is what happens to the notes after.
+
+HOW MUCH OF THE KERNEL CAN YOU REACH BY ANSWERING QUESTIONS?
+`test/unit/kernel-coverage.test.js` answers it as a number and holds it. It
+scrapes the kernel's own read set out of kernel.js (44 `g.<field>` reads, six
+CALLED AS FUNCTIONS — entry/part/period/realize/reg/word, which no finite
+question tree can name and which the chairs rightly supply from tables), walks
+every chair, every question, every answer and every section question, diffs
+what the section genre comes out as, and asserts every DATA field is either
+REACHED or written down with the reason it is not. 21 of 38 today (55%): four
+are not asked on purpose (`kitSeed` the dice, `anchor` an identity field,
+`swing` the SONG's — the word in a numeric field was the NaN that stopped the
+engine — and `bassGrid`, superseded by `bassFig`), and thirteen are the WORK
+LIST by name: scale, stress, phrase, touch, orn, ghost, maxHold, kitProb,
+hand, fill, diatonic, incMode, incClamp. The gate RATCHETS: coverage may go up
+and may not go down, a kernel that grows a knob no question turns fails here,
+and a row that becomes reachable must come out of the table. It also holds
+VALUE-level claims where the field alone is not the point — `prog` is written
+(the melody layer pairs the changes into a longer phrase) while chord QUALITY,
+which is what `prog` is FOR, is still unsayable, so the gate prints that
+rather than counting the field as done.
+
 AND IT DOES NOT NEED THE INTERNET (2026-08-20). It did: these pages never
 registered the service worker, so every load was a network load and every
 sample was fetched again the first time it played. `nukernel/audio/offline.js`
