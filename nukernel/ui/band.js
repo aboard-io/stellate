@@ -292,6 +292,9 @@ function draw() {
 }
 
 const GROUPQ = {
+  "at the machine": "what is the machine set to?",
+  "what notes it plays": "what notes does the line use?",
+  "notes in the bar": "which notes take a different degree?",
   "the figure": "what's the line, exactly?",
   "the bar": "where do the notes go?",
   "octaves in the bar": "which notes jump an octave?",

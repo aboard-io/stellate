@@ -75,6 +75,12 @@
       { w: "none", mix: {} },
       { w: "warm", mix: { master: { tape: 0.35 } } },
       { w: "cooking", mix: { master: { tape: 0.7, drive: 0.3 } } } ] },
+    { id: "bassfx", ask: "anything on the bass?", opts: [
+      { w: "dry", mix: {} },
+      { w: "a room on it", mix: { bass: { rev: 0.22 } } },
+      { w: "echo on it", mix: { bass: { del: 0.3 } } },
+      { w: "dub echo", mix: { bass: { del: 0.5, rev: 0.3 } } },
+      { w: "thicken it", mix: { bass: { eq: { lo: 3, mid: 2 } } } } ] },
     { id: "bassmix", ask: "where does the bass sit?", opts: [
       { w: "under everything", mix: { bass: { fader: -3 } } },
       { w: "with the kick", mix: {} },
@@ -144,6 +150,17 @@
     echo:  { w: "throw an echo", box: { echo: "some" } },
     dub:   { w: "dub it out", box: { echo: "wet", rev: "wet", fx: ["echo"] } },
     dry:   { w: "bone dry", box: { rev: "none", echo: "none" } },
+  };
+  // THE MOVEMENT — a filter sweep over one section, which is the engineer's
+  // signature move on a dance record and the reason a build sounds like a
+  // build. It is the box's own `mot` lane (audio/desk.js compileAuto), so it
+  // rides the parent's master sweep exactly as the mixer page's does.
+  const SECMOVE = {
+    none:  { w: "no movement" },
+    open:  { w: "open the filter over it", box: { mot: "open" } },
+    close: { w: "close it down", box: { mot: "close" } },
+    rise:  { w: "rise into the change", box: { mot: "rise" } },
+    pump:  { w: "pump it on the beat", box: { mot: "pump" } },
   };
   const SECBASS = {
     same:   { w: "same as before" },
@@ -581,8 +598,10 @@
       }
       // the section's own strip, as the box fields nukernel's song already
       // has — the page writes them onto the box it builds
-      const box = (SECMIX[per.mix] || {}).box || null;
-      return { role, i, genre: g, bars: g.bars, per, box };
+      const box = { ...((SECMIX[per.mix] || {}).box || {}),
+                    ...((SECMOVE[per.move] || {}).box || {}) };
+      return { role, i, genre: g, bars: g.bars, per,
+               box: Object.keys(box).length ? box : null };
     });
   }
   /* ---------- WHAT A SECTION IS, BEFORE ANYBODY SAYS ANYTHING -------------
@@ -602,9 +621,9 @@
     // ...and the dance-record roles, which are the same kind of fact: a
     // build is hats and eighths climbing, a drop is everything at once, a
     // breakdown is the drums gone and the bass holding the room
-    build:  { drums: "hatsonly", bass: "eighths" },
-    drop:   { drums: "busier", bass: "same" },
-    break:  { drums: "nokit", bass: "pedal", mix: "wet" },
+    build:  { drums: "hatsonly", bass: "eighths", move: "rise" },
+    drop:   { drums: "busier", bass: "same", move: "open" },
+    break:  { drums: "nokit", bass: "pedal", mix: "wet", move: "close" },
     head:   {},
     solo:   { drums: "ride", bass: "walk" },
   };
@@ -630,6 +649,7 @@
              bass: per.bass != null ? per.bass
                : (spoke("bwords") ? undefined : d.bass),
              mix: per.mix != null ? per.mix : d.mix,
+             move: per.move != null ? per.move : d.move,
              lift: per.lift != null ? per.lift : !!d.lift,
              follow: per.follow != null ? per.follow : !!d.follow,
              dwords: per.dwords || [], bwords: per.bwords || [] };
@@ -648,8 +668,8 @@
   // out, the register, and where they sit against the drums. Not which bass
   // they are holding — nobody changes instrument for the chorus — and not
   // the changes, the key or the tempo, which are the arranger's.
-  const BGROUPS = ["the line", "the figure", "how you play them", "the register",
-                   "the feel"];
+  const BGROUPS = ["the line", "the figure", "what notes it plays", "at the machine",
+                   "how you play them", "the register", "the feel"];
   const secWords = (m, i, who) => {
     const per = partOf(m, i);
     const said = (who === "drums" ? per.dwords : per.bwords) || [];
@@ -675,6 +695,8 @@
       { id: "bwords", who: "the bass player", opts: secWords(m, i, "bass") },
       { id: "mix", who: "the mix", opts: Object.entries(SECMIX).map(([k, v]) => ({
           w: v.w, key: k, answered: per.mix === k || (!per.mix && k === "same") })) },
+      { id: "move", who: "the filter", opts: Object.entries(SECMOVE).map(([k, v]) => ({
+          w: v.w, key: k, answered: per.move === k || (!per.move && k === "none") })) },
       { id: "band", who: "everybody", opts: [
           { w: "give it a lift", key: "lift", answered: per.lift },
           { w: "follow the kick", key: "follow", answered: per.follow } ] },
@@ -732,14 +754,16 @@
       // — no filter, and a gate that lasted as long as the note. A record
       // names its own: a house bass is short and closed, a jazz bass is open
       // and long, and the slow one rings.
+      // ...with the PLAYER'S OWN PANEL over it: a bassist sitting at a 303
+      // turns the filter, and the record does not get to hold it shut
       bassTone: { wave: "saw", ...(gk && gk.tone ? gk.tone : { cut: 800, q: 4, rel: 0.22 }),
-                  atk: 0.004, gain: 0.34 },
+                  atk: 0.004, gain: 0.34, ...(bass.tone || {}) },
       tone: { wave: "sine", cut: 900, q: 1, atk: 0.01, rel: 0.25, gain: 0.001, verb: 0.08 },
       words: [], word: () => [],
     };
   }
 
-  return { SEATS, TAKEN, FORMS, CALLED, GENRES, SPACE, ROLE, ENG, SECMIX, mixOf,
+  return { SEATS, TAKEN, FORMS, CALLED, GENRES, SPACE, ROLE, ENG, SECMIX, SECMOVE, mixOf,
            resetSeat,
            genreOf, rolesIn,
            secWords, partOf,

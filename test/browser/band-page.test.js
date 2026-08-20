@@ -139,6 +139,12 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
              dur: e ? e.dur : 0 }; });
   const asArranger = async (w) => {
     await seat("arranger");
+    // the record is a FACT once it is called, so the way back to it is the
+    // gig sheet — walking the interview only works before it is answered
+    await page.evaluate(() => { const f = [...document.querySelectorAll(".dfact")]
+      .find(x => (x.querySelector("b") || {}).textContent === "genre"); if (f) f.click(); });
+    await page.waitForTimeout(280);
+    if (await tap(w)) return true;
     for (let i = 0; i < 20; i++) {
       const cur = (await q())[0] || "";
       if (/what are we playing/.test(cur)) break;
@@ -261,6 +267,100 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
     ok(JSON.parse(after).bass.fig === null, "start over left the bassist's line behind");
     ok(JSON.parse(after).song.genre === JSON.parse(before).song.genre,
        "clearing the bass chair uncalled the record");
+  }
+
+  // ── A 303 YOU CAN TURN, AND A FILTER THAT MOVES ──
+  // The panel is only a panel if it reaches the voice the engine builds, and
+  // a sweep is only a sweep if it reaches the bar's own automation.
+  {
+    // ...on a record whose bass IS a machine — a jazz date is holding a
+    // P-bass, and a P-bass has no filter to open
+    ok(await asArranger("a techno record"), "the record could not be changed to techno");
+    await page.waitForTimeout(400);
+    ok(/techno/.test(await page.evaluate(() => window.__bandModel())),
+       "the record did not become a techno record");
+    await seat("bass");
+    const voiceNow = () => page.evaluate(async () => {
+      const PL = await import("/nukernel/audio/plan.js"); PL.compile();
+      const U = (PL.barPlan(0) || {}).units || {}, p = PL.barPlan(0);
+      const e = p.ev.pitched[0], u = e && U[e.voice];
+      return { params: u ? u.params : null, notes: p.ev.pitched.map(x => x.pch) }; });
+    const before = await voiceNow();
+    // reach the machine panel through the sheet
+    // A SUBJECT IS EITHER A FACT OR THE QUESTION IN FRONT OF YOU. An
+    // untouched panel has never been answered, so it is still in the queue —
+    // reading only the sheet says a chair has no panel when it has one.
+    const reach = async (label, heading) => {
+      for (let i = 0; i < 20; i++) {
+        if (await page.evaluate((l) => { const f = [...document.querySelectorAll(".dfact")]
+          .find(x => (x.querySelector("b") || {}).textContent === l);
+          if (f) { f.click(); return true; } return false; }, label)) {
+          await page.waitForTimeout(280); return true; }
+        const cur = (await q())[0] || "";
+        if (cur.includes(heading)) return true;
+        const list = (await opts()).filter(o => !o.dead);
+        if (!list.length) return false;
+        await tap(list[0].w);
+      }
+      return false;
+    };
+    const opened = await reach("at the machine", "what is the machine set to?");
+    ok(opened, "there is no machine panel on a synth bass · sheet: " +
+       JSON.stringify(await page.evaluate(() => [...document.querySelectorAll(".dfact")]
+         .map(x => (x.querySelector("b") || {}).textContent))) + " · bass: " +
+       (await page.evaluate(() => JSON.stringify(JSON.parse(window.__bandModel()).bass.instr))));
+    if (opened) {
+      await page.waitForTimeout(300);
+      const controls = (await opts()).map(o => o.w);
+      for (const w of ["dark filter", "screaming", "all the way", "snappy", "square"])
+        ok(controls.includes(w), "the panel has no \"" + w + "\": " + JSON.stringify(controls.slice(0, 6)));
+      // ...open it WIDE, since a techno record already ships dark and a
+      // control that asks for what is already true proves nothing
+      await tap("wide open filter");
+      await page.waitForTimeout(400);
+      const after = await voiceNow();
+      ok(after.params && after.params.cutoff !== (before.params || {}).cutoff,
+         "opening the filter did not reach the voice (" +
+         JSON.stringify([(before.params || {}).cutoff, (after.params || {}).cutoff]) + ")");
+      ok(after.params.cutoff === 5000, "the filter opened to " + after.params.cutoff);
+      // ...and the squelch is its own knob, not derived from the filter
+      const env0 = after.params.envmod;
+      await reach("at the machine", "what is the machine set to?");
+      await tap("all the way");
+      await page.waitForTimeout(400);
+      const after2 = await voiceNow();
+      ok(after2.params.envmod !== env0 && after2.params.envmod > 0.8,
+         "the envelope amount is still tied to the resonance: " + after2.params.envmod);
+    }
+    // ...and the notes the line uses
+    const tonal = await reach("what notes it plays", "what notes does the line use?");
+    if (tonal) {
+      await page.waitForTimeout(300);
+      const was = (await voiceNow()).notes.join();
+      await tap("a full acid scale");
+      await page.waitForTimeout(400);
+      ok((await voiceNow()).notes.join() !== was, "a full acid scale played the same notes");
+    }
+  }
+  {
+    // the filter movement, per section, on the bar's own automation
+    await page.evaluate(() => { const s = document.querySelectorAll(".dsec"); if (s[0]) s[0].click(); });
+    await page.waitForTimeout(400);
+    const swept = () => page.evaluate(async () => {
+      const PL = await import("/nukernel/audio/plan.js"); PL.compile();
+      const p = PL.barPlan(0);
+      // a sweep is an sfx event on the bar (desk.js deskSweeps)
+      return JSON.stringify((p.ev.sfx || []).map(s => [s.from, s.to])); });
+    const flat = await swept();
+    const hit = await page.evaluate(() => { const b = [...document.querySelectorAll(".dopt")]
+      .find(e => e.textContent === "open the filter over it");
+      if (b) { b.click(); return true; } return false; });
+    ok(hit, "a section cannot be told to open the filter");
+    await page.waitForTimeout(500);
+    ok(await swept() !== flat, "the filter sweep never reached the bar: " + flat);
+    await page.evaluate(() => { const b = [...document.querySelectorAll(".dpinkey")].pop();
+      if (b) b.click(); });
+    await page.waitForTimeout(250);
   }
 
   // ── THE PAGE SCROLLS ──

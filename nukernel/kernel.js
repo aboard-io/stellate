@@ -2278,7 +2278,14 @@
           // the root note is the chord's BASS pc — an inversion puts the third
           // under the band, folded beside the root so the register holds; with
           // no prog, bassPc === rootPc === mp(r, md) and this is the old note
-          const n0 = !c ? mp(0, md)
+          // A FIGURE CAN NAME ITS NOTES. `deg` is a scale degree per step,
+          // over whatever the chord (or the pedal tonic) already is — the
+          // minor third and the seventh an acid line lives on, which no
+          // amount of octave-jumping can say. Absent = the note the harmony
+          // chose, exactly as before.
+          const fd = fig && fig.deg ? at(fig.deg, i) : 0;
+          const n0 = !c ? mp(0 + fd, md)
+            : fd ? mp(r + fd, md) + c.borrow
             : deg !== r ? mp(deg, md) + c.borrow
             : fold(c.bassPc, c.rootPc);
           const hold = held ? held.get(b * N + i) : sp[i];

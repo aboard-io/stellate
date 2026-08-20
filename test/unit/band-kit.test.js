@@ -131,7 +131,7 @@ console.log("what happens in the chorus stays in the chorus");
   let m = Band.answer(on(), "arranger", "form", Band.FORMS.pop.w);
   const before = Band.toSong(m, MODES).map((s) => sig(play(s.genre)));
   const asks = Band.sectionAsks(m, 1);
-  ok(asks.map((a) => a.id).join(",") === "drums,dwords,bass,bwords,mix,band",
+  ok(asks.map((a) => a.id).join(",") === "drums,dwords,bass,bwords,mix,move,band",
      "a section asks " + asks.map((a) => a.id).join(","));
   let movers = 0;
   for (const a of asks) {
@@ -601,7 +601,7 @@ console.log("a breakdown can go wet without the verse moving");
     if (o.key !== "same") {
       ok(box && Object.keys(box).length > 0, "\"" + o.w + "\" said nothing to the desk");
       for (const [k, v] of Object.entries(box || {})) {
-        ok(["lvl", "rev", "echo", "fx", "pan", "verb"].includes(k),
+        ok(["lvl", "rev", "echo", "fx", "pan", "verb", "mot"].includes(k),
            "\"" + o.w + "\": a box has no \"" + k + "\"");
         if (k === "lvl") ok(["hush", "back", "norm", "fwd"].includes(v), "lvl " + v);
         if (k === "rev" || k === "echo")
@@ -614,6 +614,45 @@ console.log("a breakdown can go wet without the verse moving");
        JSON.stringify(Band.toSong(m, MODES).map((x) => sig(play(x.genre)))),
        "\"" + o.w + "\" changed what somebody plays");
   }
+  // THE FILTER MOVES, and it is the engineer's signature move on a dance
+  // record — the reason a build sounds like a build rather than a loop with
+  // more hats on it.
+  {
+    const ask2 = Band.sectionAsks(m, 1).find((a) => a.id === "move");
+    ok(!!ask2 && ask2.opts.length >= 4, "a section is offered " +
+       (ask2 ? ask2.opts.length : 0) + " ways for the filter to move");
+    for (const o of ask2.opts) {
+      const m2 = Band.setSection(m, 1, "move", o.key);
+      const box = Band.toSong(m2, MODES)[1].box || {};
+      if (o.key === "none") ok(!box.mot, "\"no movement\" still swept");
+      else ok(["open", "close", "rise", "pump"].includes(box.mot),
+        "\"" + o.w + "\" wrote mot=" + box.mot);
+      // ...and it changes nobody's notes
+      ok(JSON.stringify(Band.toSong(m2, MODES).map((x) => sig(play(x.genre)))) ===
+         JSON.stringify(Band.toSong(m, MODES).map((x) => sig(play(x.genre)))),
+         "\"" + o.w + "\" changed what somebody plays");
+    }
+    // a build rises and a drop opens without anybody saying so
+    const secs2 = Band.toSong(m, MODES);
+    ok((secs2.find((x) => x.role === "build").box || {}).mot === "rise",
+       "a build does not rise");
+    ok((secs2.find((x) => x.role === "drop").box || {}).mot === "open",
+       "a drop does not open up");
+  }
+
+  // ...and the BASS can reach the effects, which it could not at all
+  {
+    const q = Band.seatDecisions(on(), "engineer").find((d) => d.id === "bassfx");
+    ok(!!q, "the engineer cannot put anything on the bass");
+    const wet = q.opts.filter((o) => Object.keys(o.mix).length);
+    ok(wet.length >= 3, "only " + wet.length + " things can be done to the bass");
+    for (const o of wet) {
+      const mix = Band.mixOf(Band.answer(on(), "engineer", "bassfx", o.w));
+      ok(mix.bass && Object.keys(mix.bass).length,
+         "\"" + o.w + "\" did not reach the bass channel");
+    }
+  }
+
   // a breakdown is wet and an outro is back before anybody says so
   const secs = Band.toSong(m, MODES);
   ok(secs.find((s2) => s2.role === "break").box, "a breakdown arrives dry as the verse");

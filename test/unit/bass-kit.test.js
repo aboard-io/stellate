@@ -159,6 +159,54 @@ console.log("named lines, and a bar you can write one note at a time");
   ok(B.say(B.say(base, "fig:acid"), "fig:none").fig === null, "the figure could not be dropped");
 }
 
+/* (c4) THE MACHINE, IF IT IS ONE — and what notes the line uses */
+// A 303 whose filter you cannot open is not a 303. The record set a bass
+// tone and that was the end of it: no cutoff, no resonance, no envelope, no
+// decay, no waveform. And an acid line is not the root sixteen times — it
+// lives on the minor third and the flat seventh, which no octave-jump can
+// say.
+console.log("a synth bass has a panel, and a line has notes of its own");
+{
+  const synth = B.answer(B.say(B.blank(), "start"), "instr", "a synth bass");
+  const wood = B.answer(B.say(B.blank(), "start"), "instr", "fingers on a P-bass");
+  const panelOf = (m) => B.catalog(m).filter((i) => i.group === "at the machine");
+  ok(panelOf(synth).length >= 15, "the machine has " + panelOf(synth).length + " controls");
+  ok(panelOf(wood).every((i) => !i.changes),
+     "a P-bass was offered a filter to open");
+  ok(B.isSynth(synth) && !B.isSynth(wood), "the machine is not told apart from the wood");
+  // every control reaches the tone the engine is handed
+  for (const p2 of B.PANEL)
+    for (const o of p2.opts) {
+      const m = B.say(synth, "mach:" + p2.id + ":" + o.w);
+      const t = B.toGenre(m, MODES).bassTone;
+      ok(t[p2.key] === o.v, p2.id + "/" + o.w + ": the tone says " + t[p2.key]);
+      ok(line(m).length > 0, p2.id + "/" + o.w + " silenced the bass");
+      ok(line(m).every((e) => Number.isFinite(e.n)), p2.id + "/" + o.w + " is not finite");
+    }
+  // ...and the player's panel beats the record's tone
+  const dark = B.say(synth, "mach:cut:dark");
+  ok(B.toGenre(dark, MODES).bassTone.cut === 600, "the player cannot close the filter");
+
+  // WHAT NOTES: a scale degree per step, over whatever the harmony chose
+  const acid = B.say(synth, "fig:acid");
+  const notes = (m) => line(m).filter((e) => e.t < 16).map((e) => e.n);
+  for (const [k, t] of Object.entries(B.TONALITY)) {
+    const m = B.say(acid, "tone:" + k);
+    ok(line(m).length > 0, k + " plays nothing");
+    ok(line(m).every((e) => Number.isFinite(e.n)), k + " is not finite");
+    if (k !== "root") ok(JSON.stringify(notes(m)) !== JSON.stringify(notes(acid)),
+      "\"" + t.w + "\" left every note where it was");
+  }
+  const full = B.say(acid, "tone:acid");
+  ok(new Set(notes(full)).size >= 4,
+     "a full acid scale uses " + new Set(notes(full)).size + " notes");
+  // one note at a time, too
+  const third = B.say(acid, "deg:0:2");
+  ok(notes(third)[0] !== notes(acid)[0], "the third on the one did not move the note");
+  ok(notes(third).slice(1).join() === notes(acid).slice(1).join(),
+     "asking for one third moved the rest of the bar");
+}
+
 /* (d) EVERY WORD, AND EVERY ANSWER, LEAVES SOMETHING PLAYABLE */
 console.log("nothing a bassist can say makes an unplayable line");
 {

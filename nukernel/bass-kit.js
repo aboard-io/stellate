@@ -96,7 +96,7 @@
   };
   const blank = () => ({ on: false, key: "C", changes: "fourchord", minor: false,
                          style: "root", instr: "finger_bass", oct: 0, artic: null,
-                         swing: null, bpm: 96, sit: 0, fig: null, answers: {} });
+                         swing: null, bpm: 96, sit: 0, fig: null, tone: null, answers: {} });
   // the figure a model is playing, as vectors you can edit: a model with no
   // figure of its own is asked what its STYLE would play, so writing a note
   // into the bar starts from the line you can already hear
@@ -107,11 +107,55 @@
     sixteenths: new Array(16).fill(1),
   };
   const figOf = (m) => m.fig || { grid: (STYLEFIG[STYLES[m.style]] || g16(0, 4, 8, 12)).slice(),
-                                  oct: Z16(), acc: Z16(), sld: Z16() };
+                                  oct: Z16(), acc: Z16(), sld: Z16(), deg: Z16() };
   const figSet = (m, f) => ({ ...m, fig: { grid: f.grid.slice(), oct: (f.oct || Z16()).slice(),
-                                           acc: (f.acc || Z16()).slice(), sld: (f.sld || Z16()).slice() } });
+                                           acc: (f.acc || Z16()).slice(), sld: (f.sld || Z16()).slice(),
+                                           deg: (f.deg || Z16()).slice() } });
   const sameFig = (a, b2) => JSON.stringify([a.grid, a.oct, a.acc, a.sld]) ===
     JSON.stringify([b2.grid, b2.oct || Z16(), b2.acc || Z16(), b2.sld || Z16()]);
+
+  /* ---------- THE MACHINE, IF IT IS ONE ----------------------------------
+     A 303 whose filter you cannot open is not a 303. The record sets a bass
+     tone and until now that was the end of it — the player, sitting at a
+     synth, had no cutoff, no resonance, no envelope, no decay and no
+     waveform. These are that panel, in words, and they only exist when the
+     bass in your hands is a synth: a P-bass has no filter to open. */
+  const SYNTHS = ["bass_lead"];
+  const isSynth = (m) => SYNTHS.includes(m.instr);
+  const PANEL = [
+    { id: "cut", ask: "how open is the filter?", key: "cut", opts: [
+      { w: "shut", v: 320 }, { w: "dark", v: 600 }, { w: "halfway", v: 1200 },
+      { w: "open", v: 2600 }, { w: "wide open", v: 5000 } ] },
+    { id: "squelch", ask: "how much squelch?", key: "q", opts: [
+      { w: "none", v: 1 }, { w: "a little", v: 4 }, { w: "squelchy", v: 8 },
+      { w: "screaming", v: 11.5 } ] },
+    { id: "env", ask: "how far does the envelope open it?", key: "env", opts: [
+      { w: "barely", v: 0.1 }, { w: "some", v: 0.4 },
+      { w: "a long way", v: 0.7 }, { w: "all the way", v: 0.92 } ] },
+    { id: "close", ask: "how fast does it close?", key: "rel", opts: [
+      { w: "snappy", v: 0.1 }, { w: "short", v: 0.25 },
+      { w: "long", v: 0.8 }, { w: "hanging on", v: 2 } ] },
+    { id: "wave", ask: "saw or square?", key: "wave", opts: [
+      { w: "saw", v: "saw" }, { w: "square", v: "square" } ] },
+  ];
+  const toneOf = (m) => m.tone || {};
+
+  /* ---------- WHAT NOTES THE LINE USES ------------------------------------
+     An acid line is not the root sixteen times with octave jumps — it lives
+     on the minor third, the fifth and the flat seventh, and the figure could
+     not say any of them. `deg` is a scale degree per step over whatever the
+     harmony already chose (kernel: bassFig.deg), so a third here and a
+     seventh there is a thing you can ask for by name. */
+  const DEGWORD = { 2: "the third", 4: "the fifth", 6: "the seventh" };
+  const TONALITY = {
+    root:   { w: "just the root",       deg: () => new Array(16).fill(0) },
+    third:  { w: "the minor third in it", deg: (g) => g.map((v, i) => (v && i % 4 === 2 ? 2 : 0)) },
+    fifth:  { w: "root and fifth",      deg: (g) => g.map((v, i) => (v && i % 2 ? 4 : 0)) },
+    acid:   { w: "a full acid scale",   deg: (g) => g.map((v, i) =>
+                                          (!v ? 0 : [0, 0, 2, 0, 4, 6, 2, 0][i % 8])) },
+    walk:   { w: "walk it up",          deg: (g) => { let k = 0;
+                                          return g.map((v) => (v ? [0, 2, 4, 6][k++ % 4] : 0)); } },
+  };
 
   /* ---------- the words, beyond the interview ---------- */
   const V = {};
@@ -120,6 +164,23 @@
 
   add("start", "start", ["pick up the bass"], (m) => !m.on,
       (m) => ({ ...m, on: true }), () => "a bass, in C, holding the root");
+
+  // the machine's own panel — only when there is a machine
+  for (const p2 of PANEL)
+    for (const o of p2.opts)
+      add("mach:" + p2.id + ":" + o.w, "at the machine", [o.w + (p2.id === "cut" ? " filter" : "")],
+          (m) => m.on && isSynth(m) && toneOf(m)[p2.key] !== o.v,
+          (m) => ({ ...m, tone: { ...toneOf(m), [p2.key]: o.v } }),
+          () => p2.ask.replace("?", ": ") + o.w,
+          (m) => toneOf(m)[p2.key] === o.v);
+
+  // what notes the line uses
+  for (const [k, t] of Object.entries(TONALITY))
+    add("tone:" + k, "what notes it plays", [t.w], (m) => m.on,
+        (m) => { const f = figOf(m); return figSet(m, { ...f, deg: t.deg(f.grid) }); },
+        () => t.w,
+        (m) => JSON.stringify(figOf(m).deg || new Array(16).fill(0)) ===
+               JSON.stringify(t.deg(figOf(m).grid)));
 
   // the figures, by name
   for (const [k, f] of Object.entries(FIGURES))
@@ -154,6 +215,13 @@
                  return figSet(m, { ...f, acc: a2 }); },
         (m) => (figOf(m).acc[i] ? "no accent " : "accent ") + stepWord(i),
         (m) => !!figOf(m).acc[i]);
+    for (const [d, w] of Object.entries(DEGWORD))
+      add("deg:" + i + ":" + d, "notes in the bar", [w + " " + stepWord(i)],
+          (m) => m.on && !!figOf(m).grid[i] && (figOf(m).deg || [])[i] !== +d,
+          (m) => { const f = figOf(m); const g2 = (f.deg || new Array(16).fill(0)).slice();
+                   g2[i] = +d; return figSet(m, { ...f, deg: g2 }); },
+          () => w + " " + stepWord(i),
+          (m) => (figOf(m).deg || [])[i] === +d);
     add("sld:" + i, "slides in the bar", ["slide out of " + stepWord(i).replace(/^on /, "")],
         (m) => m.on && !!figOf(m).grid[i],
         (m) => { const f = figOf(m); const s2 = f.sld.slice(); s2[i] = s2[i] ? 0 : 1;
@@ -287,7 +355,9 @@
       bassNudge: m.sit ? m.sit * 2 : undefined,
       // a bass with a tone of its own: without this the chair runs on the
       // engine's defaults and a synth bass never closes
-      bassTone: { wave: "saw", cut: 800, q: 4, atk: 0.004, rel: 0.22, gain: 0.26 },
+      // the record's tone, with the player's own panel over it
+      bassTone: { wave: "saw", cut: 800, q: 4, atk: 0.004, rel: 0.22, gain: 0.26,
+                  ...(m.tone || {}) },
       swing: m.swing === "swing" ? 1 : undefined,
       tone: { wave: "sine", cut: 900, q: 1, atk: 0.01, rel: 0.25, gain: 0.001, verb: 0.08 },
       words: [], word: () => [],
@@ -296,5 +366,5 @@
 
   return { blank, V, catalog, offered, say, says, toGenre, decisions, nextAsk,
            answer, CHANGES, CHANGEWORD, KEYS, STYLES, STYLEWORD, INSTRUMENTS,
-           FIGURES, figOf, figSet, stepWord };
+           FIGURES, figOf, figSet, stepWord, PANEL, TONALITY, isSynth };
 });

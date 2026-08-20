@@ -356,7 +356,8 @@ const PATCH_SYNTH = {
   // gets one.
   bass_lead:   { dsp: "tb303", wave: "saw", set: (T) => ({
     cutoff: Math.min(5800, T.cut), resonance: Math.min(0.92, 0.3 + T.res),
-    envmod: Math.min(0.9, 0.25 + T.res), decay: Math.min(2.4, Math.max(0.1, T.rel)),
+    envmod: T.env != null ? T.env : Math.min(0.9, 0.25 + T.res),
+    decay: Math.min(2.4, Math.max(0.1, T.rel)),
     waveform: WAVES[T.wave] === "square" || WAVES[T.wave] === "pulse" ? 1 : 0 }) },
   // ---- the pads ----
   // GM 91 Pad 3 (polysynth) — a poly analog. The Juno-60 is one, with its BBD
@@ -1160,6 +1161,12 @@ export function synthForInstr(id, tone, padish) {
     atk: clamp(t.atk != null ? t.atk : 0.01, 0.001, 5),
     rel: clamp(t.rel != null ? t.rel : 0.4, 0.05, 2.8),
     wave: Math.max(0, WAVES.indexOf(WAVEOF[t.wave] || P.wave || "saw")),
+    // HOW FAR THE ENVELOPE OPENS THE FILTER. Every row that wants it derived
+    // it from resonance (0.25 + res), which ties two knobs a 303 has always
+    // had separately: you cannot ask for a wide sweep at low resonance, and
+    // that is most of what a filter sound IS. Absent = the derived value, so
+    // every row that does not say otherwise is byte-identical.
+    env: t.env != null ? clamp(t.env, 0, 0.95) : null,
   };
   // the tone block's `gain` is a WebAudio node gain; the declared synths sit at
   // 0.75-0.9 voice level, and this puts a typical 0.28 in the same band rather
