@@ -599,43 +599,70 @@ const DRIFT = 0.006;                                     // the human wobble, ±
 // neighbours. That shared array IS the continuity law: no gesture below can put
 // a step into the tempo even by accident, because there is only one number at
 // each seam and both bars read it.
-function tempoNodes(bars, song, seed) {
+// THE TIMELINE KNOWS WHETHER IT ENDS OR WRAPS. The live transport only loops
+// — the parent's serial runs forever and plan.js serves the bar list modulo —
+// so a final ritard baked into the last bar is an ending that plays every
+// pass: the record drags 13% under tempo into the wrap and then snaps back
+// +10..15% in one bar line, which the ear hears as "it slows down at the end
+// and picks back up" (PLAN.md Phase 1a names it). Default is therefore WRAP:
+// the wrap is a seam like any other — the endpoints share one number, the
+// band breathes into the top of the pass the way it breathes into any
+// section, and continuity is forced across the join. `ending: true` is the
+// true-ending path — a future tape/bounce or play-once transport gets the
+// real ritard, because a record still goes somewhere when it actually stops.
+function tempoNodes(bars, song, seed, ending) {
   const n = bars.length, rnd = prng(seed);
   const base = bars.map(b => TEMPOROLE[roleOf(song[b.si])] || 1);
   const N = new Array(2 * n + 1);
+  // On loop the two endpoints ARE one seam, so they take the interior-seam
+  // law — the average of the section rates either side of the join. On a
+  // true ending they stay the sections' own rates, as ever.
+  const edge = ending ? null : (base[n - 1] + base[0]) / 2;
   for (let k = 0; k <= 2 * n; k++)
     N[k] = k % 2 ? base[k >> 1]
-      : (k === 0 ? base[0] : k === 2 * n ? base[n - 1]
+      : (k === 0 ? (ending ? base[0] : edge)
+         : k === 2 * n ? (ending ? base[n - 1] : edge)
          : (base[k / 2 - 1] + base[k / 2]) / 2);
   const many = new Set(bars.map(b => b.si)).size > 1;
   for (let i = 0; i < n; i++) {
     const nxt = i === n - 1 ? null : bars[i + 1];
     if (nxt && nxt.si === bars[i].si) continue;          // mid-section: no gesture
-    const ra = roleOf(song[bars[i].si]), rb = nxt ? roleOf(song[nxt.si]) : null;
+    const ra = roleOf(song[bars[i].si]),
+          rb = nxt ? roleOf(song[nxt.si])
+                   : (ending ? null : roleOf(song[bars[0].si]));
     const r = rnd();
     let g;
-    if (!nxt) {
+    if (!nxt && ending) {
       // THE FINAL RITARD, and only when there is a song to end. One box on
       // loop that slowed down every pass would be a hiccup, not an ending.
       if (!many) continue;
       g = -(0.09 + 0.05 * r);
-    } else if (PUSH[ra] && LIFT[rb]) g = 0.020 + 0.020 * r;   // the build runs at it
+    } else if (!nxt && !many) continue;   // one box on loop: no gesture at all
+    else if (PUSH[ra] && LIFT[rb]) g = 0.020 + 0.020 * r;   // the build runs at it
     else if (rb === "breakdown" || rb === "outro") g = -(0.035 + 0.025 * r);
     else if (LIFT[rb]) g = -(0.012 + 0.012 * r);              // the chorus is leaned into
     else g = -(0.008 + 0.014 * r);                            // every seam breathes a little
     N[2 * i + 2] *= 1 + g;
     N[2 * i + 1] *= 1 + g * 0.35;
+    // The wrap seam's gesture lands on ONE node that happens to be stored
+    // twice: the last bar's end is bar 0's start. Writing both keeps bar 0
+    // recovering over its first half exactly as every post-seam bar does.
+    if (!nxt && !ending) N[0] *= 1 + g;
   }
   const P = 5 + (seed % 5), ph = ((seed >>> 5) % 1000) / 1000 * 2 * Math.PI;
   for (let k = 0; k <= 2 * n; k++)
     N[k] *= 1 + DRIFT * Math.cos(2 * Math.PI * (k / 2) / P + ph);
+  // The drift reads its cosine at k/2, so the two copies of the wrap node
+  // picked up different phases — a ≤1.2% step at the join. On loop there is
+  // one number at the seam, so there is one number in the array.
+  if (!ending) N[2 * n] = N[0];
   return N;
 }
-function warpBars(bars, song) {
+function warpBars(bars, song, ending) {
   if (!bars.length) return;
   const seed = strSeed(bars.map(b => b.si + ":" + roleOf(song[b.si]) + ":" +
                                      gid(song[b.si]) + ":" + b.barSteps).join("|"));
-  const N = tempoNodes(bars, song, seed);
+  const N = tempoNodes(bars, song, seed, ending);
   const W = tempoWarp(bars.map((b, i) =>
     ({ steps: b.barSteps, rs: [N[2 * i], N[2 * i + 1], N[2 * i + 2]] })));
   bars.forEach((b, i) => {
@@ -949,7 +976,9 @@ export function songBars(song, slots, songGroove, songSwing, loopOnly, opts) {
       out.push({ si, g, barSteps, steps: barSteps, first: b === 0, ev: buckets[b] });
   }
   if (o.pickups !== false) leadIns(out, song, slots);
-  if (o.rubato !== false) warpBars(out, song);
+  // `o.ending` — see tempoNodes: absent means WRAP (the live transport only
+  // loops), true means a genuine ending that keeps its final ritard.
+  if (o.rubato !== false) warpBars(out, song, o.ending === true);
   stampBoxSpan(out);
   return out;
 }

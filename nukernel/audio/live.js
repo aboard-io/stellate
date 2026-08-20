@@ -46,6 +46,13 @@ let barBase = 0;                   // which nukernel bar the walk's serial 0 is
 let passStart = 0, passBar = 0, loopStart = 0, lastBar = -1;
 let deps = null;
 
+/* ---------- the position + pending feeds' state ---------- */
+let curBar = null;                 // the SOUNDING bar: { n, serial, when, beats, spb }
+let posTimer = null;               // the one ticker under both feeds
+let lastPos = null;                // last emitted { bar, beat }, so "pos" only fires on change
+let lastAsked = -1;                // the last serial the walk asked events() for
+const pendings = new Map();        // label -> { label, landsSerial, landsBar, lastLeft }
+
 /* ---------- the failure is BOUNDED ---------- */
 // THIS IS THE iOS BUG'S FIX, in three numbers. What killed the tab was not a
 // slow render — it was an UNBOUNDED one: a walk that could not finish kept
@@ -152,7 +159,10 @@ const events = (one, meta) => {
   // WHEN THE ENGINE ASKS, AND FOR WHICH BAR — the only honest way to measure
   // how far ahead of the ear an edit has to land (a page can compare the bar
   // it was on when a word was said to the first bar the engine asked for
-  // afterwards). Costs one assignment per bar.
+  // afterwards). Costs one assignment per bar. The module keeps its own copy
+  // (`lastAsked`) rather than reading the window global back, because the
+  // pending-change feed below computes with it on every announce.
+  lastAsked = meta.serial;
   try { if (typeof window !== "undefined") window.__nuAsk = meta.serial; } catch (e) {}
   const p = barPlan(barOfSerial(meta.serial));
   if (p) return { ev: p.ev, units: p.units };
@@ -178,6 +188,22 @@ function onBar(info) {
   const bar = TL[n];
   if (!bar) return;
   lastBar = n;
+  // the position feed's anchor: this bar's downbeat on the engine's own clock.
+  // `when` is exact on the ring route (and still exact while hidden, where the
+  // parent fires early); on the media routes it is the poll instant — either
+  // way it is the one clock the beat math below may honestly ride.
+  curBar = { n, serial: info.serial, when: info.when,
+             beats: barBeatsAt(n), spb: info.spb || 60 / bpm };
+  // A COUNTDOWN THAT LANDED IS OVER, whatever the arithmetic said. On the
+  // crossfade path the parent prunes queued bars and jumps serials, so a
+  // change can sound EARLIER than the serial rule predicted — the honest
+  // detector on every route is the first heard bar at or past the landing.
+  for (const p of [...pendings.values()])
+    if (info.serial >= p.landsSerial) {
+      pendings.delete(p.label);
+      emit("pending", { label: p.label, beatsLeft: 0,
+                        landsBar: p.landsBar, landsSerial: p.landsSerial });
+    }
   if (st.state === "starting") settle("full");
   if (bar.first) {
     passStart = info.when; passBar = n;
@@ -340,6 +366,7 @@ export async function startAt(boxIndex) {
   barBase = at < 0 ? 0 : at;
   playing = true; playingSec = -1; lastBar = -1;
   emit("transport:state", { playing });
+  startPosFeed();
 
   // the deadline is armed BEFORE the engine is asked for anything, because the
   // failure it bounds is "the ask never returns"
@@ -384,6 +411,7 @@ async function open(FL, forceMedia) {
     }
     settle(null, "the engine would not open: " + st.lastError, { gotSec: 0 });
     playing = false;
+    stopPosFeed();                 // no engine, no clock — the ticker goes too
     emit("transport:state", { playing });
     emit("status", { text: "no engine — " + st.lastError, sticky: true });
   }
@@ -391,6 +419,7 @@ async function open(FL, forceMedia) {
 
 export function stop() {
   playing = false; playingSec = -1; setPendingStart(null);
+  stopPosFeed();
   clearTimeout(deadlineTimer); deadlineTimer = null;
   if (handle) { try { handle.stop(); } catch (e) {} handle = null; }
   st.state = "idle"; st.stage = ""; st.tries = 0;
@@ -429,6 +458,78 @@ export function passAt(now) {
     acc += d;
   }
   return { f: tot > 0 ? Math.max(0, Math.min(1, e / tot)) : 0, bar: i + 1, bars };
+}
+
+/* ---------- the position feed ---------- */
+// A BEAT COUNTER OFF THE ENGINE'S OWN CLOCK. onBar hands us each downbeat's
+// exact `when`; the beat within the bar is arithmetic on it, because spb is
+// constant for the whole record (the rubato lives in fractional barBeats, not
+// in the second-per-beat). One setInterval rather than rAF, on purpose: the
+// counter must keep ticking in a hidden tab, where rAF stops but the parent's
+// clock — and a phone in a pocket — do not. 60 ms is well under a beat (536 ms
+// at 112 bpm) and it emits only when the number changes, so subscribers redraw
+// per beat, not per tick.
+function tickPos() {
+  if (!curBar) return;
+  const beats = Math.max(1, Math.ceil(curBar.beats));
+  const beat = 1 + Math.min(beats - 1,
+    Math.max(0, Math.floor((nowSec() - curBar.when) / curBar.spb)));
+  if (!lastPos || lastPos.bar !== curBar.n || lastPos.beat !== beat) {
+    lastPos = { bar: curBar.n, beat };
+    emit("pos", { bar: curBar.n, beat, beats: curBar.beats, bpm,
+                  si: playingSec, serial: curBar.serial });
+  }
+  // ...and the countdowns ride the same tick: beats left = the rest of this
+  // bar plus every whole bar between here and the landing. (The in-flight
+  // bars were fed at the OLD lengths, so after a tempo edit the sum can be
+  // off by fractions of a beat — the onBar landing clamp is the truth.)
+  for (const p of pendings.values()) {
+    let left = Math.max(0, curBar.beats - (nowSec() - curBar.when) / curBar.spb);
+    for (let s = curBar.serial + 1; s < p.landsSerial; s++)
+      left += barBeatsAt(barOfSerial(s));
+    const whole = Math.max(1, Math.ceil(left));   // 0 is the landing's to say
+    if (p.lastLeft !== whole) {
+      p.lastLeft = whole;
+      emit("pending", { label: p.label, beatsLeft: whole,
+                        landsBar: p.landsBar, landsSerial: p.landsSerial });
+    }
+  }
+}
+function startPosFeed() {
+  stopPosFeed();
+  posTimer = setInterval(tickPos, 60);
+}
+function stopPosFeed() {
+  clearInterval(posTimer); posTimer = null;
+  curBar = null; lastPos = null; lastAsked = -1;
+  pendings.clear();
+}
+
+/* ---------- the pending-change feed ---------- */
+// WHERE AN EDIT ACTUALLY LANDS. The walk runs a runway ahead of the ear, and
+// every serial it has already asked events() for is baked with the old score
+// — so a change committed now first sounds at `lastAsked + 1` (the serial
+// rule; events() records the ask for exactly this measurement). A
+// section-scoped answer can only be HEARD when that section next comes round,
+// so its landing advances to the first future serial whose bar belongs to the
+// box. The UI calls this right after push(); everything after that is the
+// ticker's countdown and the onBar clamp — including the crossfade path,
+// where the parent prunes bars and the change arrives early.
+export function announceChange(label, si) {
+  if (!playing || !label) return;
+  const n = barCount();
+  if (!n) return;
+  let lands = Math.max(lastAsked + 1, curBar ? curBar.serial + 1 : 0);
+  if (si != null) {
+    const TL = timeline();
+    for (let k = 0; k < n; k++)
+      if (TL[barOfSerial(lands + k)] && TL[barOfSerial(lands + k)].si === si) {
+        lands += k; break;
+      }
+  }
+  pendings.set(label, { label, landsSerial: lands,
+                        landsBar: barOfSerial(lands), lastLeft: null });
+  tickPos();                       // say it now, not a tick later
 }
 
 /* ---------- the "something changed" law ---------- */
