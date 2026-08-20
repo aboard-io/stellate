@@ -35,7 +35,7 @@ const sig = (o) => JSON.stringify(o.drums.map((e) => [+e.t.toFixed(3), e.d, e.ve
 console.log("an arranger and two players, each asked what is theirs");
 {
   const m = on();
-  ok(Band.SEATS.join(",") === "arranger,drums,bass,keys,engineer",
+  ok(Band.SEATS.join(",") === "arranger,drums,bass,keys,guitar,engineer",
      "the band is " + Band.SEATS.join(","));
   for (const seat of Band.SEATS) {
     const ds = Band.seatDecisions(m, seat);
@@ -132,7 +132,7 @@ console.log("what happens in the chorus stays in the chorus");
   const before = Band.toSong(m, MODES).map((s) => sig(play(s.genre)));
   const asks = Band.sectionAsks(m, 1);
   ok(asks.map((a) => a.id).join(",") ===
-     "drums,dwords,keys,kwords,bass,bwords,idea,mix,move,band",
+     "drums,dwords,keys,kwords,guitar,gwords,bass,bwords,idea,mix,move,band",
      "a section asks " + asks.map((a) => a.id).join(","));
   let movers = 0;
   for (const a of asks) {
@@ -850,6 +850,72 @@ console.log("a melody is written once and picked up by whoever is asked");
   }
 }
 
+/* (r) A SIXTH CHAIR, AND TWO PITCHED VOICES */
+// A guitarist is not a second keyboard: it chugs, it strums the offbeat, and
+// its dirt is an INSTRUMENT rather than a knob. Two pitched chairs mean two
+// voices, each with its own phrase, part, register and instrument.
+console.log("the guitarist takes the second pitched voice");
+{
+  const Gt = Band.Gt;
+  const m0 = on();
+  ok(Band.SEATS.includes("guitar"), "nobody is playing guitar");
+  const ds = Band.seatDecisions(m0, "guitar");
+  ok(ds.length >= 4, "the guitarist is asked " + ds.length + " things");
+  for (const id of Band.TAKEN.guitar)
+    ok(!ds.some((d) => d.id === id), "the guitarist is still asked " + id);
+  const s2 = Band.toSong(m0, MODES)[0];
+  ok(s2.genre.voices === 2, "the band has " + s2.genre.voices + " pitched voice(s)");
+  ok(Array.isArray(s2.genre.instr) && s2.genre.instr.length === 2,
+     "the two chairs share one instrument: " + JSON.stringify(s2.genre.instr));
+  ok(s2.genre.instr[0] !== s2.genre.instr[1], "both chairs picked up the same thing");
+  ok(!!s2.guitar && s2.guitar.gate.length === 16, "the section carries no guitar phrase");
+  // every job is a real part, plays, and is its own phrase
+  const shapes = new Set();
+  for (const [k, j] of Object.entries(Gt.JOBS)) {
+    const m = { ...m0, guitar: Gt.say(m0.guitar, "job:" + k) };
+    const sec = Band.toSong(m, MODES)[0];
+    ok(["riff", "stab", "counter", "line", "pad", "lead", undefined, null].includes(j.part),
+       k + ": the kernel has no part called " + j.part);
+    if (k === "out") ok(sec.guitar.gate.every((x) => !x), "laying out still strums");
+    else {
+      ok(sec.guitar.gate.some(Boolean), k + " strums nothing");
+      shapes.add(sec.guitar.gate.join(""));
+      const ev = K.render(sec.guitar, { ...sec.genre, voices: 1,
+        part: () => j.part, reg: () => 0 }, sec.bars);
+      ok(ev.length > 0 && ev.every((e) => Number.isFinite(e.n)), k + " is not playable");
+    }
+  }
+  ok(shapes.size >= 5, "the guitar jobs are " + shapes.size + " different phrases");
+  // every guitar is one the pool can cast
+  const fs = require("fs");
+  const src = fs.readFileSync(require("path").join(__dirname, "../../nukernel/genres.js"), "utf8");
+  const known = new Set((src.match(/"[a-z0-9_]+"/g) || []).map((x) => x.slice(1, -1)));
+  for (const id of Object.keys(Gt.INSTRUMENTS))
+    ok(known.has(id), "no genre in the catalog plays \"" + id + "\"");
+  // a section can tell the guitarist something, and it stays there
+  let m = Band.answer(Band.answer(on(), "arranger", "genre", "a rock record"),
+                      "arranger", "form", Band.FORMS.pop.w);
+  const before = Band.toSong(m, MODES).map((x) => x.guitar.gate.join(""));
+  const ask = Band.sectionAsks(m, 1).find((a) => a.id === "guitar");
+  ok(!!ask && ask.opts.length >= 6, "a section cannot tell the guitar anything");
+  for (const o of ask.opts.slice(0, 6)) {
+    const m2 = Band.setSection(m, 1, "guitar", o.key);
+    const after = Band.toSong(m2, MODES).map((x) => x.guitar.gate.join(""));
+    for (let i = 0; i < after.length; i++)
+      if (i !== 1) ok(after[i] === before[i], "\"" + o.w + "\" changed section " + i);
+    ok(JSON.stringify(m2.guitar) === JSON.stringify(m.guitar),
+       "\"" + o.w + "\" changed the player for the whole song");
+  }
+  // ...and the guitarist can take the melody, on their own instrument
+  const took = Band.setSection(m, 1, "idea", "guitar");
+  const sec = Band.toSong(took, MODES)[1];
+  ok(!!sec.melody, "the guitar was asked for the tune and did not take it");
+  ok(sec.melody.genre.instr === took.guitar.instr,
+     "the tune is not on the guitar that took it: " + sec.melody.genre.instr);
+  ok(sec.guitar.gate.every((x) => !x),
+     "the guitarist is playing the tune AND their own part in the same hands");
+}
+
 /* (e) NOTHING NUMERIC CARRIES A WORD */
 // The swing NaN: the genre once held the WORD "swing" where the kernel
 // computes (i % 2) * (g.swing || 0), and every time in the record became
@@ -874,5 +940,5 @@ console.log("no word ever sits in a numeric field");
 }
 
 console.log(fails ? `\nband-kit: FAIL — ${fails} of ${pass + fails}`
-  : `\nband-kit: PASS — ${pass} checks (five chairs, the arranger owns the tune, every form plays, a section is its own, the engineer mixes it)`);
+  : `\nband-kit: PASS — ${pass} checks (six chairs, the arranger owns the tune, every form plays, a section is its own, the engineer mixes it)`);
 process.exit(fails ? 1 : 0);

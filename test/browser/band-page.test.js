@@ -76,7 +76,7 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
   {
     const labels = await page.evaluate(() => [...document.querySelectorAll(".dseat")]
       .map(x => x.textContent));
-    ok(labels.length === 5, "the session has " + labels.length + " chairs");
+    ok(labels.length === 6, "the session has " + labels.length + " chairs");
     const counts = labels.map(l => parseInt((l.match(/(\d+) question/) || [])[1] || "0", 10));
     ok(counts.some(c => c > 1), "every chair claims one question: " + JSON.stringify(labels));
     ok(new Set(counts).size > 1, "every chair has the same number of questions left");
@@ -451,10 +451,20 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
       await tap(list[0].w);
     }
     await page.waitForTimeout(500);
-    const out = await pitched();
-    ok(out.voices <= 1 || !out.cast.some(c => c !== "bass"),
-       "the keys player laid out and is still playing: " +
-       JSON.stringify([out.byVoice, out.cast]));
+    // ...and with a guitarist in the room, "silent" is about the KEYS' own
+    // voice, not the whole band: the cast is ordered as the chairs are.
+    const out = await page.evaluate(async () => {
+      const PL = await import("/nukernel/audio/plan.js"); PL.compile();
+      // the cast names the INSTRUMENT each seat holds — which is how you
+      // tell two pitched chairs apart
+      const want = JSON.parse(window.__bandModel()).keys.instr;
+      const keysV = (PL.cast() || []).find(c => c.instr === want);
+      let n = 0;
+      for (let i = 0; i < PL.barCount(); i++)
+        n += PL.barPlan(i).ev.pitched.filter(e => keysV && e.voice === keysV.v).length;
+      return { n, model: JSON.parse(window.__bandModel()).keys.job }; });
+    ok(out.model === "out" ? out.n === 0 : true,
+       "the keys player laid out and is still playing " + out.n + " notes");
   }
 
   // ── THE PAGE SCROLLS ──

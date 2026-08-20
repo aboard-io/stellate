@@ -48,8 +48,14 @@ function push(first) {
   setPoolChair("bass", model.bass.instr);
   // the keys player sits in whichever chair their JOB names — the pool casts
   // by role, which is exactly what a part is
-  for (const chair of ["pad", "stab", "riff", "counter", "line", "drone"])
-    setPoolChair(chair, model.keys.job === "out" ? null : model.keys.instr);
+  // the pool casts by ROLE, and two chairs can want the same role — the one
+  // whose part it actually is wins, and the guitar's roles are its own
+  const kj = Band.Ky.JOBS[model.keys.job] || {}, gj = Band.Gt.JOBS[model.guitar.job] || {};
+  for (const chair of ["pad", "stab", "riff", "counter", "line", "drone", "lead"]) {
+    const mine = gj.part === chair ? model.guitar.instr
+      : kj.part === chair ? model.keys.instr : null;
+    setPoolChair(chair, mine);
+  }
   // THE ENGINEER'S HAND ON THE DESK. Everything the fourth chair decides is
   // a mix OFFSET (ui/state.js MIXER, applied in audio/desk.js over the
   // composed mix), so the engineer needs no audio path of its own — it is
@@ -61,8 +67,12 @@ function push(first) {
   // THE KEYS PLAYER'S PHRASE, per section: a pitched voice is a part and a
   // PHRASE, and only the phrase says where the hands fall. One slot per
   // section, so a chorus can comp while the verse holds pads.
-  song.forEach((s2, i) => putPhrase(i, s2.pattern));
-  for (let i = song.length * 2; i < SLOTS.length; i++) putPhrase(i, NuSong.blank());
+  // THREE BANKS OF PHRASES, one per pitched thing: the keys, the guitar and
+  // whatever melody is being picked up. derive.js walks phrase pi to voice
+  // pi, so the order of a box's slots IS the order of its chairs.
+  const NS = song.length;
+  song.forEach((s2, i) => { putPhrase(i, s2.pattern); putPhrase(NS + i, s2.guitar); });
+  for (let i = NS * 3; i < SLOTS.length; i++) putPhrase(i, NuSong.blank());
   // ...and the MELODY is a layer of its own, with its own genre and its own
   // phrase: a two-bar tune cannot ride the bar clock the rhythm section
   // keeps (the kernel reads a phrase's own length AS the bar), so it gets a
@@ -70,16 +80,17 @@ function push(first) {
   song.forEach((s2, i) => {
     if (!s2.melody) { delete GENRES[MELP + i]; return; }
     GENRES[MELP + i] = { ...s2.melody.genre, __v: ++ver };
-    putPhrase(song.length + i, s2.melody.phrase);
+    putPhrase(NS * 2 + i, s2.melody.phrase);
   });
   const boxes = song.map((s2, i) => ({ ...NuSong.emptyBox(),
-    stack: [{ g: GKP + i, slots: [i] },
-            ...(s2.melody ? [{ g: MELP + i, slots: [song.length + i] }] : [])],
+    stack: [{ g: GKP + i, slots: [i, NS + i] },
+            ...(s2.melody ? [{ g: MELP + i, slots: [NS * 2 + i] }] : [])],
     len: s2.bars, role: s2.role, cue: s2.role,
     // ...and the engineer's hand on THIS section: the box's own strip
     ...(s2.box || {}) }));
   if (first) adoptSong({ v: NuSong.VERSION, bpm: model.song.bpm, genres: {},
                          slots: [...song.map((s2) => s2.pattern),
+                                 ...song.map((s2) => s2.guitar),
                                  ...song.map((s2) => (s2.melody ? s2.melody.phrase : NuSong.blank()))],
                          song: boxes }, "band");
   else {
