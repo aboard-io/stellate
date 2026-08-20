@@ -169,6 +169,25 @@
     dub:   { w: "dub it out", box: { echo: "wet", rev: "wet", fx: ["echo"] } },
     dry:   { w: "bone dry", box: { rev: "none", echo: "none" } },
   };
+  /* ---------- WHAT THE BAND DOES TO WHAT IT PLAYED ------------------------
+     The pipes are the kernel's second organ (kernel.js PIPES) and no chair
+     could reach them: seeded transforms on the RENDERED stream — a
+     chord-locked third above the line, a canon a few steps behind it, a
+     strum that spreads a chord, a breath that thins it. They are not a
+     player's decision and not the desk's: they are what the band does to
+     what it has already played, which is why they live beside "give it a
+     lift" as a section-level call.  */
+  const SECPIPE = {
+    none:   { w: "as played" },
+    thirds: { w: "double it in thirds", p: [{ id: "harmonize", p: 0.6 }] },
+    sixths: { w: "double it in sixths", p: [{ id: "harmonize", p: 0.6, gap: "sixth" }] },
+    echo:   { w: "echo it round", p: [{ id: "echoCanon", delay: 3 }] },
+    strum:  { w: "spread the chords", p: [{ id: "strum", spread: 0.06 }] },
+    breathe:{ w: "let it breathe", p: [{ id: "breathe" }] },
+    both:   { w: "thirds and an echo",
+              p: [{ id: "harmonize", p: 0.5 }, { id: "echoCanon", delay: 3 }] },
+  };
+
   // THE MOVEMENT — a filter sweep over one section, which is the engineer's
   // signature move on a dance record and the reason a build sounds like a
   // build. It is the box's own `mot` lane (audio/desk.js compileAuto), so it
@@ -609,13 +628,11 @@
     // signature exists to catch.
     const norm = (kit) => Object.fromEntries(Object.entries(kit || {})
       .filter(([, v]) => (Array.isArray(v) ? v.some(Boolean) : !!v)));
+    const g2 = { ...g, kit: norm(g.kit), kits: (g.kits || []).map(norm) };
     return JSON.stringify([
-      norm(g.kit), (g.kits || []).map(norm), g.drumkit, g.humanize, g.kitVel, g.bassStyle, g.bassFig,
-      g.bassArtic, g.bassNudge, g.bassTone, g.key, g.nobass, g.instr, g.tone,
-      [0, 1].map((v) => [g.part(v), g.reg(v)]),
-      s0.pattern.gate, s0.pattern.deg, s0.guitar.gate, s0.guitar.deg, s0.box,
-      s0.melody ? s0.melody.phrase.gate : null,
-      mixOf(m), Id.toPhrase(m.idea).deg, Id.toPhrase(m.idea).gate, Id.regOf(m.idea),
+      genreSig(g2), s0.pattern, s0.guitar, s0.box,
+      s0.melody ? [s0.melody.phrase, genreSig(s0.melody.genre)] : null,
+      mixOf(m), Id.toPhrase(m.idea), Id.regOf(m.idea),
       m.song.bpm, m.song.swing, m.song.key, m.song.minor, m.song.space, m.song.form,
       m.song.chg, m.keys.tone, m.guitar.tone, m.bass.tone,
     ]);
@@ -835,6 +852,9 @@
         if (bsec.oct) g.key = g.key + 12 * bsec.oct;
         if (bsec.out) g.nobass = true;
       }
+      // ...and what the band does to what it played
+      const pp = (SECPIPE[per.pipe] || {}).p;
+      if (pp) g.pipes = pp;
       // TWO THINGS A BAND SAYS THAT NEITHER PLAYER OWNS ALONE. "Give it a
       // lift" is a fill in the last bar, played INTO the next section —
       // arrangement, not drumming. "Follow the kick" is the bass locking to
@@ -940,6 +960,7 @@
              guitar: per.guitar != null ? per.guitar : d.guitar,
              gwords: per.gwords || [],
              kwords: per.kwords || [],
+             pipe: per.pipe != null ? per.pipe : d.pipe,
              mix: per.mix != null ? per.mix : d.mix,
              move: per.move != null ? per.move : d.move,
              lift: per.lift != null ? per.lift : !!d.lift,
@@ -998,17 +1019,26 @@
   // WHAT ONE SECTION SOUNDS LIKE, in one place: the pruner uses it to drop
   // answers that change nothing, and the tree gate uses the same function so
   // the two can never disagree about what "different" means.
+  // EVERY FIELD, NOT A LIST OF THEM. Hand-listing what a section sounds like
+  // meant that every new thing a chair could write was invisible to the
+  // pruner until somebody remembered to add it — and an invisible field makes
+  // its own question look like it changes nothing, so the question
+  // disappears. That is exactly how the pipes vanished the day they were
+  // wired: `g.pipes` was not on the list, so "what comes out" was pruned to
+  // one answer and dropped. The genre's own keys are the list now; the
+  // functions are dropped and the values they return are read beside them.
+  const genreSig = (g) => JSON.stringify([
+    Object.entries(g).filter(([, v]) => typeof v !== "function")
+      .sort(([a], [b]) => (a < b ? -1 : 1)),
+    [0, 1].map((v) => { try { return [g.part(v), g.reg(v), g.realize(v)]; }
+                        catch (e) { return null; } }),
+  ]);
   function secSigOf(mm, i) {
     let s0;
     try { s0 = toSong(mm, MODESREF, i)[0]; } catch (e) { return "?"; }
     if (!s0) return "?";
-    const g = s0.genre;
-    return JSON.stringify([g.kit, g.kits, g.drumkit, g.humanize, g.kitVel,
-      g.bassStyle, g.bassFig, g.bassBars, g.bassArtic, g.bassNudge, g.bassTone,
-      g.instr, g.tone, g.key, g.nobass,
-      [0, 1].map((v) => [g.part(v), g.reg(v)]), s0.pattern.gate, s0.pattern.deg,
-      s0.guitar.gate, s0.guitar.deg, s0.box,
-      s0.melody ? [s0.melody.phrase.gate, s0.melody.genre.instr] : null]);
+    return JSON.stringify([genreSig(s0.genre), s0.pattern, s0.guitar, s0.box,
+      s0.melody ? [s0.melody.phrase, genreSig(s0.melody.genre)] : null]);
   }
 
   const sectionAsks = (m, i) => {
@@ -1044,6 +1074,8 @@
       { id: "bwords", who: "the bass player", opts: secWords(m, i, "bass") },
       { id: "idea", who: "the melody", opts: Object.entries(TAKERS).map(([k, v]) => ({
           w: v.w, key: k, answered: per.idea === k || (!per.idea && k === "no") })) },
+      { id: "pipe", who: "what comes out", opts: Object.entries(SECPIPE).map(([k, v]) => ({
+          w: v.w, key: k, answered: per.pipe === k || (!per.pipe && k === "none") })) },
       { id: "mix", who: "the mix", opts: Object.entries(SECMIX).map(([k, v]) => ({
           w: v.w, key: k, answered: per.mix === k || (!per.mix && k === "same") })) },
       { id: "move", who: "the filter", opts: Object.entries(SECMOVE).map(([k, v]) => ({
@@ -1060,7 +1092,7 @@
       // want to say something specific.
       .sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
   };
-  const ORDER = ["idea", "drums", "keys", "guitar", "bass", "mix", "move", "band",
+  const ORDER = ["idea", "drums", "keys", "guitar", "bass", "pipe", "mix", "move", "band",
                  "dwords", "kwords", "gwords", "bwords"];
   const setSection = (m, i, who, key) => {
     const per = { ...(m.per || {}) };
@@ -1147,5 +1179,6 @@
            secWords, partOf,
            blank, decisions, seatDecisions,
            nextAsk, nextAnywhere, answer, catalog, say, says, toGenre, toSong,
-           SECDRUMS, SECBASS, SECKEYS, TAKERS, sectionAsks, setSection, D, B, Ky, Id, Gt };
+           SECDRUMS, SECBASS, SECKEYS, SECPIPE, TAKERS, sectionAsks, setSection,
+           D, B, Ky, Id, Gt };
 });

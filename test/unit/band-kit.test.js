@@ -134,7 +134,7 @@ console.log("what happens in the chorus stays in the chorus");
   ok(asks.map((a) => a.id).join(",") ===
      // ordered so the arrangement decisions come first and the players'
      // whole vocabularies sit underneath — the melody was ninth of twelve
-     "idea,drums,keys,guitar,bass,mix,move,band,dwords,kwords,gwords,bwords",
+     "idea,drums,keys,guitar,bass,pipe,mix,move,band,dwords,kwords,gwords,bwords",
      "a section asks " + asks.map((a) => a.id).join(","));
   let movers = 0;
   for (const a of asks) {
@@ -941,6 +941,42 @@ console.log("the guitarist takes the second pitched voice");
      "the tune is not on the guitar that took it: " + sec.melody.genre.instr);
   ok(sec.guitar.gate.every((x) => !x),
      "the guitarist is playing the tune AND their own part in the same hands");
+}
+
+/* (s) WHAT THE BAND DOES TO WHAT IT PLAYED */
+// The pipes are the kernel's second organ and no chair could reach them:
+// seeded transforms on the RENDERED stream. Not a player's decision and not
+// the desk's — what the band does to what it has already played.
+console.log("the pipes are reachable, and they only touch their own section");
+{
+  let m = Band.answer(Band.answer(on(), "arranger", "genre", "a rock record"),
+                      "arranger", "form", Band.FORMS.pop.w);
+  const ev = (mm, i) => { const s2 = Band.toSong(mm, MODES)[i];
+    return K.render(s2.pattern, s2.genre, s2.bars); };
+  const base = [0, 1, 2, 3].map((i) => ev(m, i).length);
+  const ask = Band.sectionAsks(m, 1).find((a) => a.id === "pipe");
+  ok(!!ask && ask.opts.length >= 5, "a section cannot be told what comes out");
+  let moved = 0;
+  for (const o of ask.opts) {
+    const m2 = Band.setSection(m, 1, "pipe", o.key);
+    const now = [0, 1, 2, 3].map((i) => ev(m2, i).length);
+    for (let i = 0; i < 4; i++)
+      if (i !== 1) ok(now[i] === base[i], "\"" + o.w + "\" changed section " + i);
+    if (now[1] !== base[1]) moved++;
+    const g = Band.toSong(m2, MODES)[1].genre;
+    if (o.key !== "none") {
+      ok(Array.isArray(g.pipes) && g.pipes.length, "\"" + o.w + "\" wrote no pipes");
+      for (const p2 of g.pipes)
+        ok(p2 && typeof p2.id === "string", "\"" + o.w + "\": a pipe with no id");
+    }
+    ok(ev(m2, 1).every((e) => Number.isFinite(e.t) && Number.isFinite(e.n)),
+       "\"" + o.w + "\" made something unplayable");
+  }
+  ok(moved >= 3, "only " + moved + " of the pipes changed what comes out");
+  // ...and nobody's PART moved: a pipe is what happens to the notes after
+  ok(JSON.stringify(Band.toSong(Band.setSection(m, 1, "pipe", "thirds"), MODES)[1].pattern) ===
+     JSON.stringify(Band.toSong(m, MODES)[1].pattern),
+     "a pipe rewrote somebody's phrase, which is not what a pipe is");
 }
 
 /* (e) NOTHING NUMERIC CARRIES A WORD */
