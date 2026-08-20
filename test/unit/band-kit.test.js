@@ -132,7 +132,7 @@ console.log("what happens in the chorus stays in the chorus");
   const before = Band.toSong(m, MODES).map((s) => sig(play(s.genre)));
   const asks = Band.sectionAsks(m, 1);
   ok(asks.map((a) => a.id).join(",") ===
-     "drums,dwords,keys,kwords,bass,bwords,mix,move,band",
+     "drums,dwords,keys,kwords,bass,bwords,idea,mix,move,band",
      "a section asks " + asks.map((a) => a.id).join(","));
   let movers = 0;
   for (const a of asks) {
@@ -786,6 +786,67 @@ console.log("the fifth chair plays the harmony that was being called");
         "\"" + o.w + "\" in the chorus changed section " + i);
     ok(JSON.stringify(m2.keys) === JSON.stringify(m.keys),
        "\"" + o.w + "\" said about one section changed the player for the whole song");
+  }
+}
+
+/* (q) THE MELODY BELONGS TO THE ROOM */
+// The arranger writes it and a section says whose hands are on it — which is
+// why it does not live in any chair's file. A player who picks it up lends
+// it their instrument and stops playing their own part for that section.
+console.log("a melody is written once and picked up by whoever is asked");
+{
+  const Id2 = Band.Id;
+  let m = Band.answer(Band.answer(on(), "arranger", "genre", "a house record"),
+                      "arranger", "form", Band.FORMS.pop.w);
+  ok(m.idea && m.idea.on, "the room has no idea in it");
+  // the arranger is asked about it, in the ideas module's own words
+  const ds = Band.seatDecisions(m, "arranger").filter((d) => d.id.startsWith("idea:"));
+  ok(ds.length >= 4, "the arranger is asked " + ds.length + " things about the tune");
+  for (const d of ds) ok(d.opts.length >= 2, "\"" + d.ask + "\" offers one answer");
+  // ...and answering one moves the tune, not the song
+  const before = JSON.stringify(m.song);
+  const m2 = Band.answer(m, "arranger", ds[0].id, ds[0].opts[1].w);
+  ok(JSON.stringify(m2.song) === before, "writing the tune changed the tune's SONG fields");
+  ok(JSON.stringify(m2.idea) !== JSON.stringify(m.idea), "the answer never reached the idea");
+
+  // nobody plays it until a section says so
+  const secs = Band.toSong(m, MODES);
+  ok(secs.every((s2) => !s2.melody), "the melody is playing before anybody picked it up");
+  const took = Band.setSection(m, 1, "idea", "keys");
+  const secs2 = Band.toSong(took, MODES);
+  ok(!!secs2[1].melody, "the keys were asked to take it and did not");
+  ok(secs2.filter((s2) => s2.melody).length === 1, "the melody leaked into another section");
+  // the player who takes it stops playing their own part there
+  ok(secs2[1].pattern.gate.filter(Boolean).length === 0,
+     "the keys are playing the melody AND their own part in the same hands");
+  ok(secs2[0].pattern.gate.join() === secs[0].pattern.gate.join(),
+     "picking the melody up in the chorus changed the verse");
+  // it renders, it lands in a singable range, and it follows the changes
+  const g = secs2[1].melody.genre, ph = secs2[1].melody.phrase;
+  const ev = K.render(ph, g, g.bars);
+  ok(ev.length > 0, "the melody plays nothing");
+  ok(ev.every((e) => Number.isFinite(e.n) && e.n >= 48 && e.n <= 96),
+     "the melody is off the end of the keyboard: " + ev.map((e) => e.n).join(" "));
+  ok(g.part(0) === "lead", "the melody is not a lead part");
+  ok(ph.deg.length % 16 === 0, "the phrase is not a whole number of bars");
+  // A LONGER PHRASE READS THE CHANGES: the kernel takes a phrase's own
+  // length AS the bar, so a two-bar tune over four chords would hear two —
+  // unless the changes are paired into it, which is what `prog` is for here
+  if (ph.deg.length > 16) {
+    ok(Array.isArray(g.prog) && g.prog.length >= 1,
+       "a two-bar tune was handed no paired changes");
+    const roots = new Set(ev.map((e) => e.n % 12));
+    ok(roots.size > 1, "the tune never hears the changes move");
+  }
+  // every idea word still leaves something playable, in the band
+  for (const i of Id2.catalog(m.idea)) {
+    if (!i.changes) continue;
+    const m3 = { ...took, idea: Id2.say(m.idea, i.id) };
+    const s3 = Band.toSong(m3, MODES)[1];
+    const ev3 = K.render(s3.melody.phrase, s3.melody.genre, s3.melody.genre.bars);
+    ok(ev3.every((e) => Number.isFinite(e.t) && Number.isFinite(e.n)),
+       "\"" + i.words[0] + "\" made an unplayable tune");
+    ok(ev3.length > 0, "\"" + i.words[0] + "\" silenced the tune");
   }
 }
 

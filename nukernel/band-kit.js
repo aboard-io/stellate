@@ -12,10 +12,11 @@
   const api = factory(
     typeof require !== "undefined" ? require("./drums-kit.js") : root.NuDrums,
     typeof require !== "undefined" ? require("./bass-kit.js") : root.NuBass,
-    typeof require !== "undefined" ? require("./keys-kit.js") : root.NuKeys);
+    typeof require !== "undefined" ? require("./keys-kit.js") : root.NuKeys,
+    typeof require !== "undefined" ? require("./ideas-kit.js") : root.NuIdeas);
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuBand = api;
-})(typeof self !== "undefined" ? self : this, function (D, B, Ky) {
+})(typeof self !== "undefined" ? self : this, function (D, B, Ky, Id) {
   "use strict";
 
   const SEATS = ["arranger", "drums", "bass", "keys", "engineer"];
@@ -116,7 +117,10 @@
   const blank = () => ({ on: false, seat: "arranger",
     song: { key: "C", minor: false, form: null, chg: {}, bpm: 96, swing: null, answers: {} },
     drums: D.say(D.blank(), "start"), bass: B.say(B.blank(), "start"),
-    keys: Ky.say(Ky.blank(), "start") });
+    keys: Ky.say(Ky.blank(), "start"),
+    // THE IDEA belongs to the room. The arranger writes it; a section says
+    // who picks it up. One melody to start with — the hook.
+    idea: Id.say(Id.blank(), "start") });
 
   /* ---------- WHAT EACH PLAYER DOES IN EACH SECTION -----------------------
      The gig sheet sets up the SONG; a section is where a band actually
@@ -143,6 +147,13 @@
   // audio/desk.js composes under everything else. A breakdown that goes wet
   // and a chorus that comes forward are mix decisions about one section,
   // and they belong to whoever is mixing.
+  // WHO PICKS IT UP. A melody belongs to the room; a section says whose
+  // hands are on it. (The vocalist and the guitarist take the same idea when
+  // their chairs exist — that is the whole reason it does not live in one.)
+  const TAKERS = {
+    no:   { w: "nobody plays it" },
+    keys: { w: "the keys take it", chair: "keys" },
+  };
   const SECMIX = {
     same:  { w: "same as before" },
     fwd:   { w: "bring it forward", box: { lvl: "fwd" } },
@@ -393,7 +404,14 @@
       w, is: (s) => (s.chg || {})[r] === k,
       apply: (s) => ({ ...s, chg: { ...(s.chg || {}), [r]: k } }) })),
   }));
-  const arrDecisions = (m) => [...ARR, ...callDecisions(m)].map((d) => ({
+  // the melody is the arranger's, and it is asked in the ideas module's own
+  // words — one question per thing that makes a tune
+  const ideaDecisions = (m) => Id.decisions(m.idea).map((d) => ({
+    ...d, id: "idea:" + d.id, seat: "arranger",
+    opts: d.opts.map((o) => ({ ...o,
+      apply: (s2) => s2,                       // the melody is not a song field
+      idea: true, iid: d.id })) }));
+  const arrDecisions = (m) => [...ARR, ...callDecisions(m), ...ideaDecisions(m)].map((d) => ({
     ...d, seat: "arranger", answered: (m.song.answers || {})[d.id] || null,
     opts: d.opts.map((o) => ({ ...o, answered: (m.song.answers || {})[d.id] === o.w,
       active: (() => { try { return !!o.is(m.song); } catch (e) { return false; } })() })) }));
@@ -502,6 +520,8 @@
       const d = arrDecisions(m).find((x) => x.id === id);
       const o = d && d.opts.find((x) => x.w === w);
       if (!o) return m;
+      // ...the melody's own answers land on the idea, not on the tune
+      if (o.idea) return { ...m, idea: Id.answer(m.idea, o.iid, w) };
       const song = { ...o.apply(m.song), answers: { ...(m.song.answers || {}), [id]: w } };
       let out = { ...m, song };
       // WHAT KIND OF RECORD IS THIS is the drummer's own first question, and
@@ -537,7 +557,8 @@
   const catalog = (m, seat) => {
     const list = seat === "drums" ? D.catalog(m.drums)
       : seat === "bass" ? B.catalog(m.bass)
-      : seat === "keys" ? Ky.catalog(m.keys) : [];
+      : seat === "keys" ? Ky.catalog(m.keys)
+      : seat === "arranger" ? Id.catalog(m.idea).filter((i) => i.group !== "start") : [];
     const gk = genreOf(m);
     if (!gk) return list;
     // the same law as the questions: a genre hides the grooves and the
@@ -557,10 +578,12 @@
       return true;
     });
   };
-  const say = (m, seat, id) => (seat === "keys" ? { ...m, keys: Ky.say(m.keys, id) }
+  const say = (m, seat, id) => (seat === "arranger" ? { ...m, idea: Id.say(m.idea, id) }
+    : seat === "keys" ? { ...m, keys: Ky.say(m.keys, id) }
     : seat === "drums" ? { ...m, drums: D.say(m.drums, id) }
     : seat === "bass" ? { ...m, bass: B.say(m.bass, id) } : m);
-  const says = (m, seat, id) => (seat === "keys" ? Ky.says(m.keys, id)
+  const says = (m, seat, id) => (seat === "arranger" ? Id.says(m.idea, id)
+    : seat === "keys" ? Ky.says(m.keys, id)
     : seat === "drums" ? D.says(m.drums, id)
     : seat === "bass" ? B.says(m.bass, id) : "");
 
@@ -571,6 +594,14 @@
   // THE WHOLE TAKE: one section per part of the form, each with its own
   // changes, and the players' own decisions under all of them. What a band
   // plays is a FORM, not a loop.
+  // the same changes, read by a voice whose bar is `per16` bars long
+  const pairProg = (roots, per16) => {
+    const out = [];
+    for (let i = 0; i < roots.length; i += per16)
+      out.push(roots.slice(i, i + per16).map((d) => ({ d, beats: 16 })));
+    return out.length ? out : [[{ d: 0, beats: 16 }]];
+  };
+
   function toSong(m, MODES) {
     const f = FORMS[m.song.form || "vamp"];
     return f.secs.map((role, i) => {
@@ -588,6 +619,7 @@
       for (const id of per.bwords || []) bm = B.say(bm, id);
       for (const id of per.kwords || []) km = Ky.say(km, id);
       if (per.keys && KEYJOB[per.keys]) km = Ky.say(km, "job:" + KEYJOB[per.keys]);
+      const c = B.CHANGES[(m.song.chg || {})[key] || "fourchord"];
       let g = toGenre(m, MODES, (m.song.chg || {})[key] || "fourchord", dm, bm, km);
       // how much space there is, before anything a section says: a section
       // that asks for busier hats over one-hit-every-four-bars gets them,
@@ -626,11 +658,35 @@
       // has — the page writes them onto the box it builds
       const box = { ...((SECMIX[per.mix] || {}).box || {}),
                     ...((SECMOVE[per.move] || {}).box || {}) };
+      // THE MELODY IS ITS OWN LAYER. A two-bar phrase cannot ride the bar
+      // clock the rhythm section keeps — the kernel reads a phrase's own
+      // length AS the bar, so a 32-step tune over a four-chord progression
+      // hears two chords, not four. So the idea gets a genre of its own with
+      // the changes PAIRED to its length (chordsOf reads a bar that carries
+      // several chords), and the player who picks it up lends it their
+      // instrument and their register.
+      const taker = TAKERS[per.idea] || TAKERS.no;
+      let melody = null;
+      if (taker.chair && m.idea && m.idea.on) {
+        const ph = Id.toPhrase(m.idea, c.roots);
+        const per16 = ph.deg.length / 16;
+        const kg = Ky.toGenre(km);
+        melody = { phrase: ph, genre: {
+          ...g, label: "Idea", voices: 1, part: () => "lead",
+          // the idea's OWN register — a tune is not where the chords are
+          realize: () => "line", reg: () => Id.regOf(m.idea),
+          instr: kg.instr, tone: kg.tone,
+          nobass: true, kit: {}, kits: null, bassFig: undefined,
+          bars: Math.max(1, Math.ceil(g.bars / per16)),
+          prog: per16 > 1 ? pairProg(c.roots, per16) : undefined,
+        } };
+      }
       // THE KEYS PLAYER'S PHRASE is the box's own pattern — a pitched voice
       // is a part AND a phrase, and only the phrase can say where the hands
       // fall. A chair that is out hands back a silent one.
-      return { role, i, genre: g, bars: g.bars, per,
-               pattern: Ky.toPattern(km),
+      return { role, i, genre: g, bars: g.bars, per, melody,
+               pattern: Ky.toPattern(taker.chair === "keys" && melody
+                 ? Ky.say(km, "job:out") : km),
                box: Object.keys(box).length ? box : null };
     });
   }
@@ -678,6 +734,7 @@
                : (spoke("dwords") ? undefined : d.drums),
              bass: per.bass != null ? per.bass
                : (spoke("bwords") ? undefined : d.bass),
+             idea: per.idea != null ? per.idea : d.idea,
              keys: per.keys != null ? per.keys : d.keys,
              kwords: per.kwords || [],
              mix: per.mix != null ? per.mix : d.mix,
@@ -743,6 +800,8 @@
       { id: "bass", who: "the bass", opts: Object.entries(SECBASS).map(([k, v]) => ({
           w: v.w, key: k, answered: per.bass === k || (!per.bass && k === "same") })) },
       { id: "bwords", who: "the bass player", opts: secWords(m, i, "bass") },
+      { id: "idea", who: "the melody", opts: Object.entries(TAKERS).map(([k, v]) => ({
+          w: v.w, key: k, answered: per.idea === k || (!per.idea && k === "no") })) },
       { id: "mix", who: "the mix", opts: Object.entries(SECMIX).map(([k, v]) => ({
           w: v.w, key: k, answered: per.mix === k || (!per.mix && k === "same") })) },
       { id: "move", who: "the filter", opts: Object.entries(SECMOVE).map(([k, v]) => ({
@@ -824,5 +883,5 @@
            secWords, partOf,
            blank, decisions, seatDecisions,
            nextAsk, nextAnywhere, answer, catalog, say, says, toGenre, toSong,
-           SECDRUMS, SECBASS, SECKEYS, sectionAsks, setSection, D, B, Ky };
+           SECDRUMS, SECBASS, SECKEYS, TAKERS, sectionAsks, setSection, D, B, Ky, Id };
 });

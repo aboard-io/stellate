@@ -17,6 +17,7 @@ const el = (tag, cls, text) => { const n = document.createElement(tag);
   if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
 
 const GKP = "lab.band.";           // one session genre per section of the form
+const MELP = "lab.idea.";          // ...and the melody's own, when somebody takes it
 let cells = [];                    // the pattern's cells, for the playhead
 let asking = null;                 // a decision being revisited, if any
 let model = blank();
@@ -41,7 +42,7 @@ function push(first) {
   const song = toSong(model, MODES);
   song.forEach((s2, i) => { GENRES[GKP + i] = { ...s2.genre, __v: ++ver }; });
   // any genre from a longer previous form must stop being referenced
-  for (let i = song.length; i < 24; i++) delete GENRES[GKP + i];
+  for (let i = song.length; i < 24; i++) { delete GENRES[GKP + i]; delete GENRES[MELP + i]; }
   setBpm(model.song.bpm);
   setSwing(model.song.swing || null);
   setPoolChair("bass", model.bass.instr);
@@ -61,13 +62,26 @@ function push(first) {
   // PHRASE, and only the phrase says where the hands fall. One slot per
   // section, so a chorus can comp while the verse holds pads.
   song.forEach((s2, i) => putPhrase(i, s2.pattern));
-  for (let i = song.length; i < SLOTS.length; i++) putPhrase(i, NuSong.blank());
+  for (let i = song.length * 2; i < SLOTS.length; i++) putPhrase(i, NuSong.blank());
+  // ...and the MELODY is a layer of its own, with its own genre and its own
+  // phrase: a two-bar tune cannot ride the bar clock the rhythm section
+  // keeps (the kernel reads a phrase's own length AS the bar), so it gets a
+  // stack entry rather than a voice.
+  song.forEach((s2, i) => {
+    if (!s2.melody) { delete GENRES[MELP + i]; return; }
+    GENRES[MELP + i] = { ...s2.melody.genre, __v: ++ver };
+    putPhrase(song.length + i, s2.melody.phrase);
+  });
   const boxes = song.map((s2, i) => ({ ...NuSong.emptyBox(),
-    stack: [{ g: GKP + i, slots: [i] }], len: s2.bars, role: s2.role, cue: s2.role,
+    stack: [{ g: GKP + i, slots: [i] },
+            ...(s2.melody ? [{ g: MELP + i, slots: [song.length + i] }] : [])],
+    len: s2.bars, role: s2.role, cue: s2.role,
     // ...and the engineer's hand on THIS section: the box's own strip
     ...(s2.box || {}) }));
   if (first) adoptSong({ v: NuSong.VERSION, bpm: model.song.bpm, genres: {},
-                         slots: song.map((s2) => s2.pattern), song: boxes }, "band");
+                         slots: [...song.map((s2) => s2.pattern),
+                                 ...song.map((s2) => (s2.melody ? s2.melody.phrase : NuSong.blank()))],
+                         song: boxes }, "band");
   else {
     // the form can change length, so the box list is replaced in place
     SONG.length = 0; for (const b of boxes) SONG.push(b);
