@@ -6,9 +6,9 @@
 <title>The band — say it</title>
 <meta name="description" content="A band: an arranger, a drummer, a bass player, a keys player and an engineer. The arranger calls the tune; everyone else decides what is theirs.">
 <meta name="robots" content="noindex">
-<link rel="stylesheet" href="nukernel/hw.css">
-<link rel="stylesheet" href="nukernel/drums.css">
-<link rel="stylesheet" href="nukernel/band.css">
+<link rel="stylesheet" href="hw.css">
+<link rel="stylesheet" href="drums.css">
+<link rel="stylesheet" href="band.css">
 </head>
 <body>
 
@@ -27,27 +27,27 @@
   <div class="dwrap" id="dwrap"></div>
 </main>
 
-<script src="engine/registry-data.js"></script>
-<script src="engine/faust/voices/sampler.js"></script>
+<script src="../engine/registry-data.js"></script>
+<script src="../engine/faust/voices/sampler.js"></script>
 <!-- No speech.js here: nukernel does not sing (a fresh espeak heap per
      utterance took Safari out of memory). test/unit/nukernel.test.js §74
      holds it out; the parent's organ is untouched. -->
-<script src="engine/faust/voices/found-player.js"></script>
-<script src="nukernel/kernel.js"></script>
-<script src="nukernel/genres.js"></script>
-<script src="nukernel/fields.js"></script>
-<script src="nukernel/song.js"></script>
-<script src="nukernel/instruments.js"></script>
-<script src="nukernel/compose.js"></script>
-<script src="nukernel/presets.js"></script>
-<script src="nukernel/drums-kit.js"></script>
-<script src="nukernel/bass-kit.js"></script>
-<script src="nukernel/keys-kit.js"></script>
-<script src="nukernel/ideas-kit.js"></script>
-<script src="nukernel/guitar-kit.js"></script>
-<script src="nukernel/vocal-kit.js"></script>
-<script src="nukernel/askable.js"></script>
-<script src="nukernel/band-kit.js"></script>
-<script type="module" src="nukernel/ui/band.js"></script>
+<script src="../engine/faust/voices/found-player.js"></script>
+<script src="kernel.js"></script>
+<script src="genres.js"></script>
+<script src="fields.js"></script>
+<script src="song.js"></script>
+<script src="instruments.js"></script>
+<script src="compose.js"></script>
+<script src="presets.js"></script>
+<script src="drums-kit.js"></script>
+<script src="bass-kit.js"></script>
+<script src="keys-kit.js"></script>
+<script src="ideas-kit.js"></script>
+<script src="guitar-kit.js"></script>
+<script src="vocal-kit.js"></script>
+<script src="askable.js"></script>
+<script src="band-kit.js"></script>
+<script type="module" src="ui/band.js"></script>
 </body>
 </html>
