@@ -15,20 +15,22 @@
     typeof require !== "undefined" ? require("./keys-kit.js") : root.NuKeys,
     typeof require !== "undefined" ? require("./ideas-kit.js") : root.NuIdeas,
     typeof require !== "undefined" ? require("./guitar-kit.js") : root.NuGuitar,
-    typeof require !== "undefined" ? require("./askable.js") : root.NuAskable);
+    typeof require !== "undefined" ? require("./askable.js") : root.NuAskable,
+    typeof require !== "undefined" ? require("./vocal-kit.js") : root.NuVocal);
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuBand = api;
-})(typeof self !== "undefined" ? self : this, function (D, B, Ky, Id, Gt, Ask) {
+})(typeof self !== "undefined" ? self : this, function (D, B, Ky, Id, Gt, Ask, Vo) {
   "use strict";
 
-  const SEATS = ["arranger", "drums", "bass", "keys", "guitar", "engineer"];
+  const SEATS = ["arranger", "drums", "bass", "keys", "guitar", "voice", "engineer"];
   // the questions the ARRANGER has already answered, so the players stop
   // asking them: a drummer does not set the tempo, a bassist does not pick
   // the key
   const TAKEN = { drums: ["tempo", "feel", "record"],
                   bass: ["key", "mode", "changes", "tempo", "feel"],
                   keys: ["key", "mode", "changes", "tempo", "feel"],
-                  guitar: ["key", "mode", "changes", "tempo", "feel"] };
+                  guitar: ["key", "mode", "changes", "tempo", "feel"],
+                  voice: ["key", "mode", "changes", "tempo", "feel"] };
 
   /* ---------- THE FOURTH CHAIR: SOMEBODY IS MIXING THIS -------------------
      A band in a room is four jobs, not three. The drummer decides what they
@@ -81,6 +83,29 @@
       { w: "none", mix: {} },
       { w: "warm", mix: { master: { tape: 0.35 } } },
       { w: "cooking", mix: { master: { tape: 0.7, drive: 0.3 } } } ] },
+    // A PATH FOR EVERY INSTRUMENT, not just the kit and the bass. The desk
+    // addresses an instrument by family (audio/desk.js INST_CHANS), so these
+    // land wherever that chair's instrument actually is.
+    { id: "keysfx", ask: "anything on the keys?", opts: [
+      { w: "dry", mix: {} },
+      { w: "a room on them", mix: { "inst:keys": { rev: 0.25 }, "inst:pads": { rev: 0.25 } } },
+      { w: "echo on them", mix: { "inst:keys": { del: 0.3 }, "inst:pads": { del: 0.3 } } },
+      { w: "wide and wet", mix: { "inst:keys": { rev: 0.5, del: 0.15 },
+                                  "inst:pads": { rev: 0.55, del: 0.2 } } },
+      { w: "darker", mix: { "inst:keys": { eq: { hi: -3, lo: 2 } },
+                            "inst:pads": { eq: { hi: -3, lo: 2 } } } } ] },
+    { id: "gtrfx", ask: "anything on the guitar?", opts: [
+      { w: "straight in", mix: {} },
+      { w: "a room on it", mix: { "inst:guitar": { rev: 0.25 } } },
+      { w: "a slapback", mix: { "inst:guitar": { del: 0.22 } } },
+      { w: "washed out", mix: { "inst:guitar": { rev: 0.55, del: 0.3 } } },
+      { w: "brighter", mix: { "inst:guitar": { eq: { hi: 4 } } } } ] },
+    { id: "voxfx", ask: "anything on the voice?", opts: [
+      { w: "close and dry", mix: {} },
+      { w: "a plate on it", mix: { vocals: { rev: 0.4 } } },
+      { w: "a long echo", mix: { vocals: { del: 0.4, rev: 0.25 } } },
+      { w: "in the distance", mix: { vocals: { rev: 0.7, fader: -3 } } },
+      { w: "up front", mix: { vocals: { fader: 3, eq: { hi: 2 } } } } ] },
     { id: "bassfx", ask: "anything on the bass?", opts: [
       { w: "dry", mix: {} },
       { w: "a room on it", mix: { bass: { rev: 0.22 } } },
@@ -124,7 +149,8 @@
     // THE IDEA belongs to the room. The arranger writes it; a section says
     // who picks it up. One melody to start with — the hook.
     idea: Id.say(Id.blank(), "start"),
-    guitar: Gt.say(Gt.blank(), "start") });
+    guitar: Gt.say(Gt.blank(), "start"),
+    voice: Vo.say(Vo.blank(), "start") });
 
   /* ---------- WHAT EACH PLAYER DOES IN EACH SECTION -----------------------
      The gig sheet sets up the SONG; a section is where a band actually
@@ -159,6 +185,7 @@
     no:   { w: "nobody plays it" },
     keys: { w: "the keys take it", chair: "keys" },
     guitar: { w: "the guitar takes it", chair: "guitar" },
+    voice:  { w: "the singer takes it", chair: "voice" },
   };
   const SECMIX = {
     same:  { w: "same as before" },
@@ -683,6 +710,7 @@
     if (seat === "drums") return { ...m, drums: D.say(D.blank(), "start") };
     if (seat === "keys") return { ...m, keys: Ky.say(Ky.blank(), "start") };
     if (seat === "guitar") return { ...m, guitar: Gt.say(Gt.blank(), "start") };
+    if (seat === "voice") return { ...m, voice: Vo.say(Vo.blank(), "start") };
     if (seat === "bass") return { ...m, bass: B.say(B.blank(), "start") };
     if (seat === "engineer") return { ...m, eng: {} };
     // the arranger's own reset takes the tune back but leaves the players
@@ -726,6 +754,10 @@
     return JSON.stringify([
       genreSig(g2), s0.pattern, s0.guitar, s0.box,
       s0.melody ? [s0.melody.phrase, genreSig(s0.melody.genre)] : null,
+      // ...and the singer, who is a layer of their own. Left out of this,
+      // every question the singer has looked like it changed nothing and was
+      // pruned away — the chair existed and was never asked anything.
+      s0.voice ? [s0.voice.phrase, genreSig(s0.voice.genre)] : null,
       mixOf(m), Id.toPhrase(m.idea), Id.regOf(m.idea),
       m.song.bpm, m.song.swing, m.song.key, m.song.minor, m.song.space, m.song.form,
       m.song.chg, m.keys.tone, m.guitar.tone, m.bass.tone,
@@ -804,7 +836,8 @@
     const drop = TAKEN[seat] || [];
     const ds = seat === "drums" ? D.decisions(m.drums)
       : seat === "keys" ? Ky.decisions(m.keys)
-      : seat === "guitar" ? Gt.decisions(m.guitar) : B.decisions(m.bass);
+      : seat === "guitar" ? Gt.decisions(m.guitar)
+      : seat === "voice" ? Vo.decisions(m.voice) : B.decisions(m.bass);
     return [...narrow(m, seat, ds.filter((d) => !drop.includes(d.id))
       .map((d) => ({ ...d, seat }))), ...knobDecisions(m, seat)];
   };
@@ -911,6 +944,7 @@
     }
     if (seat === "keys") return { ...m, keys: Ky.answer(m.keys, id, w) };
     if (seat === "guitar") return { ...m, guitar: Gt.answer(m.guitar, id, w) };
+    if (seat === "voice") return { ...m, voice: Vo.answer(m.voice, id, w) };
     return { ...m, bass: B.answer(m.bass, id, w) };
   }
   // the words each seat still has, beyond its interview
@@ -919,6 +953,7 @@
       : seat === "bass" ? B.catalog(m.bass)
       : seat === "keys" ? Ky.catalog(m.keys)
       : seat === "guitar" ? Gt.catalog(m.guitar)
+      : seat === "voice" ? Vo.catalog(m.voice)
       : seat === "arranger" ? Id.catalog(m.idea).filter((i) => i.group !== "start") : [];
     const gk = genreOf(m);
     if (!gk) return list;
@@ -940,12 +975,14 @@
       return true;
     });
   };
-  const say = (m, seat, id) => (seat === "guitar" ? { ...m, guitar: Gt.say(m.guitar, id) }
+  const say = (m, seat, id) => (seat === "voice" ? { ...m, voice: Vo.say(m.voice, id) }
+    : seat === "guitar" ? { ...m, guitar: Gt.say(m.guitar, id) }
     : seat === "arranger" ? { ...m, idea: Id.say(m.idea, id) }
     : seat === "keys" ? { ...m, keys: Ky.say(m.keys, id) }
     : seat === "drums" ? { ...m, drums: D.say(m.drums, id) }
     : seat === "bass" ? { ...m, bass: B.say(m.bass, id) } : m);
-  const says = (m, seat, id) => (seat === "guitar" ? Gt.says(m.guitar, id)
+  const says = (m, seat, id) => (seat === "voice" ? Vo.says(m.voice, id)
+    : seat === "guitar" ? Gt.says(m.guitar, id)
     : seat === "arranger" ? Id.says(m.idea, id)
     : seat === "keys" ? Ky.says(m.keys, id)
     : seat === "drums" ? D.says(m.drums, id)
@@ -1080,7 +1117,8 @@
       if (taker.chair && m.idea && m.idea.on) {
         const ph = Id.toPhrase(m.idea, c.roots);
         const per16 = ph.deg.length / 16;
-        const lend = taker.chair === "guitar" ? Gt.toGenre(gm) : Ky.toGenre(km);
+        const lend = taker.chair === "guitar" ? Gt.toGenre(gm)
+          : taker.chair === "voice" ? Vo.toGenre(m.voice) : Ky.toGenre(km);
         melody = { phrase: ph, genre: {
           ...g, label: "Idea", voices: 1, part: () => "lead",
           // the idea's OWN register — a tune is not where the chords are
@@ -1093,12 +1131,27 @@
                           : progOf(c.roots, m.song.chords),
         } };
       }
+      // THE SINGER IS A LAYER OF ITS OWN. Two pitched chairs already share
+      // the band's genre as two voices; a third would want a role the pool
+      // has to cast, and a voice must not lose its own recording to whatever
+      // else happens to hold that role. So it rides beside the melody, with
+      // its own genre and its own instrument — the shape CLAUDE.md's chair
+      // recipe names for exactly this case.
+      let vm = m.voice;
+      for (const id of per.vwords || []) vm = Vo.say(vm, id);
+      if (per.voice && per.voice !== "same") vm = Vo.say(vm, "job:" + per.voice);
+      const vg = Vo.toGenre(vm);
+      const voice = vg.silent ? null : { phrase: Vo.toPattern(vm), genre: {
+        ...g, label: "Voice", voices: 1, part: () => vg.part,
+        realize: () => (vg.pad ? "pad" : "line"), reg: () => vg.reg,
+        instr: vg.instr, tone: vg.tone, nobass: true, kit: {}, kits: null,
+        bassFig: undefined, pipes: undefined } };
       // THE KEYS PLAYER'S PHRASE is the box's own pattern — a pitched voice
       // is a part AND a phrase, and only the phrase can say where the hands
       // fall. A chair that is out hands back a silent one.
       // THE SECTION'S OWN LENGTH, with the changes repeating inside it
       const bars = lenOf(m, role) || g.bars;
-      return { role, i, genre: g, bars, per, melody,
+      return { role, i, genre: g, bars, per, melody, voice,
                pattern: Ky.toPattern(taker.chair === "keys" && melody
                  ? Ky.say(km, "job:out") : km),
                guitar: Gt.toPattern(taker.chair === "guitar" && melody
@@ -1164,6 +1217,8 @@
              keys: per.keys != null ? per.keys : d.keys,
              guitar: per.guitar != null ? per.guitar : d.guitar,
              gwords: per.gwords || [],
+             voice: per.voice != null ? per.voice : d.voice,
+             vwords: per.vwords || [],
              kwords: per.kwords || [],
              pipe: per.pipe != null ? per.pipe : d.pipe,
              mix: per.mix != null ? per.mix : d.mix,
@@ -1184,6 +1239,7 @@
   const DGROUPS = ["at the kit", "the kit", "take away", "the fills"];
   const KGROUPS = ["what you are playing", "the bar", "the register", "at the machine"];
   const GGROUPS = ["what you are playing", "the bar", "the register", "at the amp"];
+  const VGROUPS = ["what you are singing", "the bar", "the register", "at the mic"];
   // the section's own shorthand for the keys, on top of their whole vocabulary
   const KEYJOB = { pads: "pads", comp: "comp", skank: "skank", riff: "riff",
                    arp: "arp", drone: "drone", out: "out" };
@@ -1205,14 +1261,15 @@
                    "how you play them", "the register", "the feel"];
   const secWords = (m, i, who) => {
     const per = partOf(m, i);
-    const KIT = who === "drums" ? D : who === "keys" ? Ky : who === "guitar" ? Gt : B;
+    const KIT = who === "drums" ? D : who === "keys" ? Ky : who === "guitar" ? Gt
+      : who === "voice" ? Vo : B;
     const said = (who === "drums" ? per.dwords : who === "keys" ? per.kwords
-      : who === "guitar" ? per.gwords : per.bwords) || [];
+      : who === "guitar" ? per.gwords : who === "voice" ? per.vwords : per.bwords) || [];
     let pm = who === "drums" ? m.drums : who === "keys" ? m.keys
-      : who === "guitar" ? m.guitar : m.bass;
+      : who === "guitar" ? m.guitar : who === "voice" ? m.voice : m.bass;
     for (const id of said) pm = KIT.say(pm, id);
     const groups = who === "drums" ? DGROUPS : who === "keys" ? KGROUPS
-      : who === "guitar" ? GGROUPS : BGROUPS;
+      : who === "guitar" ? GGROUPS : who === "voice" ? VGROUPS : BGROUPS;
     // the HANDS first, then what is playing, then what comes out — the
     // order the words matter in when you are talking about one section
     return KIT.catalog(pm)
@@ -1243,7 +1300,11 @@
     try { s0 = toSong(mm, MODESREF, i)[0]; } catch (e) { return "?"; }
     if (!s0) return "?";
     return JSON.stringify([genreSig(s0.genre), s0.pattern, s0.guitar, s0.box,
-      s0.melody ? [s0.melody.phrase, genreSig(s0.melody.genre)] : null]);
+      s0.melody ? [s0.melody.phrase, genreSig(s0.melody.genre)] : null,
+      // ...and the singer, who is a layer of their own — left out of this,
+      // every question about the voice looked like it changed nothing and
+      // was pruned away, which is the pipes' bug all over again
+      s0.voice ? [s0.voice.phrase, genreSig(s0.voice.genre)] : null]);
   }
 
   const sectionAsks = (m, i) => {
@@ -1274,6 +1335,11 @@
           ...Object.entries(Gt.JOBS).map(([k, j]) => ({
             w: j.w, key: k, answered: per.guitar === k }))] },
       { id: "gwords", who: "at the amp", opts: secWords(m, i, "guitar") },
+      { id: "voice", who: "the voice", opts: [{ w: "same as before", key: "same",
+            answered: !per.voice || per.voice === "same" },
+          ...Object.entries(Vo.JOBS).map(([k, j]) => ({
+            w: j.w, key: k, answered: per.voice === k }))] },
+      { id: "vwords", who: "at the mic", opts: secWords(m, i, "voice") },
       { id: "bass", who: "the bass", opts: Object.entries(SECBASS).map(([k, v]) => ({
           w: v.w, key: k, answered: per.bass === k || (!per.bass && k === "same") })) },
       { id: "bwords", who: "the bass player", opts: secWords(m, i, "bass") },
@@ -1297,8 +1363,8 @@
       // want to say something specific.
       .sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
   };
-  const ORDER = ["idea", "drums", "keys", "guitar", "bass", "pipe", "mix", "move", "band",
-                 "dwords", "kwords", "gwords", "bwords"];
+  const ORDER = ["idea", "drums", "keys", "guitar", "bass", "voice", "pipe", "mix", "move", "band",
+                 "dwords", "kwords", "gwords", "bwords", "vwords"];
   const setSection = (m, i, who, key) => {
     const per = { ...(m.per || {}) };
     const one = { ...(per[i] || {}) };
@@ -1307,7 +1373,7 @@
       // in the bar before a change, so "give it a lift" has to be sayable
       // in reverse — a band saying "don't" is saying something
       one[key] = !partOf(m, i)[key];
-    } else if (who === "dwords" || who === "bwords" || who === "kwords" || who === "gwords") {
+    } else if (["dwords", "bwords", "kwords", "gwords", "vwords"].includes(who)) {
       // a word said about a section is said again to take it back
       const k = who;
       const id = String(key).slice(2);
@@ -1390,5 +1456,5 @@
            nextAsk, nextAnywhere, answer, catalog, say, says, toGenre, toSong,
            SECDRUMS, SECBASS, SECKEYS, SECPIPE, CHORDKIND, LENS, ARC, TAKERS,
            sectionAsks, setSection,
-           D, B, Ky, Id, Gt };
+           D, B, Ky, Id, Gt, Vo };
 });

@@ -101,7 +101,7 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
     await mod("band");
     const labels = await page.evaluate(() => [...document.querySelectorAll(".dseat")]
       .map(x => x.textContent));
-    ok(labels.length === 5, "the band has " + labels.length + " chairs beside the arranger");
+    ok(labels.length === 6, "the band has " + labels.length + " chairs beside the arranger");
     // the count is one character now — "drums6", "engineer10", "bass✓"
     const counts = labels.map(l => parseInt((l.match(/(\d+)$/) || [])[1] || "0", 10));
     ok(counts.some(c => c > 1), "every chair claims one question: " + JSON.stringify(labels));

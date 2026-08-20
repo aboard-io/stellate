@@ -57,6 +57,18 @@
       opts: Object.values(SCALES).map((s) => [s.w, s.v]) },
     { field: "diatonic", role: "arranger", ask: "does the line follow the chords?",
       opts: [["it follows the chords", false], ["it stays in the key", true]] },
+    { field: "kitProb", role: "drums", ask: "does every hat land?",
+      opts: [["every one", null],
+             ["most of them", { h: [7,7,7,7, 7,7,7,7, 7,7,7,7, 7,7,7,7] }],
+             ["about half", { h: [5,5,5,5, 5,5,5,5, 5,5,5,5, 5,5,5,5] }],
+             ["now and then", { h: [3,3,3,3, 3,3,3,3, 3,3,3,3, 3,3,3,3] }]] },
+    { field: "fill", role: "drums", ask: "does the last bar fill?",
+      opts: [["no", null],
+             ["a snare fill", { s: [0,0,0,0, 0,0,0,0, 1,0,1,1, 1,0,1,1] }],
+             ["round the toms", { s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+                                  t: [0,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
+                                  m: [0,0,0,0, 0,0,0,0, 0,0,0,0, 1,0,0,0],
+                                  l: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,1] }]] },
     { field: "hand", role: "drums", ask: "is the kit played or programmed?",
       opts: [["played", null], ["programmed", "exact"]] },
   ];
@@ -71,10 +83,6 @@
               "NaN that stopped the engine dead, so it is routed through setSwing",
     bassGrid: "superseded by `bassFig`, which says where the notes fall AND which " +
               "octave, accent and slide each one takes",
-    kitProb:  "per-LANE chance, and the drummer already says it per STEP (?lane); " +
-              "a lane-wide 'sometimes' would be a second way to say one thing",
-    fill:     "the genre's own last-bar fill — the drummer writes fills per BAR, " +
-              "which is the same decision with a place attached",
     ghost:    "takes a WORD LIST (an operator phrase), not a value: it is content, " +
               "and content lives in a kit file",
     incMode:  "how the line's `inc` steps are read — an internal of the line " +

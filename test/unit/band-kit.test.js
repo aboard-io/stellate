@@ -35,7 +35,7 @@ const sig = (o) => JSON.stringify(o.drums.map((e) => [+e.t.toFixed(3), e.d, e.ve
 console.log("an arranger and two players, each asked what is theirs");
 {
   const m = on();
-  ok(Band.SEATS.join(",") === "arranger,drums,bass,keys,guitar,engineer",
+  ok(Band.SEATS.join(",") === "arranger,drums,bass,keys,guitar,voice,engineer",
      "the band is " + Band.SEATS.join(","));
   for (const seat of Band.SEATS) {
     const ds = Band.seatDecisions(m, seat);
@@ -134,7 +134,8 @@ console.log("what happens in the chorus stays in the chorus");
   ok(asks.map((a) => a.id).join(",") ===
      // ordered so the arrangement decisions come first and the players'
      // whole vocabularies sit underneath — the melody was ninth of twelve
-     "idea,drums,keys,guitar,bass,pipe,mix,move,band,dwords,kwords,gwords,bwords",
+     "idea,drums,keys,guitar,bass,voice,pipe,mix,move,band," +
+     "dwords,kwords,gwords,bwords,vwords",
      "a section asks " + asks.map((a) => a.id).join(","));
   let movers = 0;
   for (const a of asks) {
@@ -492,7 +493,9 @@ console.log("every record says what its bass sounds like");
 // squeezed are decisions no amount of drumming makes.
 console.log("the engineer has the fourth chair, and it lands on the desk");
 {
-  const CHAN = /^(drums|bass|lead|master|unit:[a-z]+)$/;
+  // ...and the instrument families the desk knows (audio/desk.js INST_CHANS),
+  // which is how a path reaches the keys, the guitar and the voice
+  const CHAN = /^(drums|bass|lead|master|vocals|unit:[a-z]+|inst:[a-z]+)$/;
   const KEYS = ["fader", "rev", "del", "pan", "eq", "mute",
                 "glue", "drive", "tape", "space"];
   ok(Band.SEATS.includes("engineer"), "there is nobody mixing this");
@@ -1147,6 +1150,63 @@ console.log("a record has an arc, and the same chorus twice is two moments");
      "/bar) is busier than the chorus (" + per(chorus).toFixed(0) + "/bar)");
 }
 
+/* (w) SOMEBODY IS SINGING, AND EVERY INSTRUMENT HAS A PATH */
+console.log("the seventh chair sings, on a layer of its own");
+{
+  const Vo = Band.Vo;
+  const m0 = on();
+  ok(Band.SEATS.includes("voice"), "nobody is singing");
+  const ds = Band.seatDecisions(m0, "voice");
+  ok(ds.length >= 4, "the singer is asked " + ds.length + " things");
+  for (const id of Band.TAKEN.voice)
+    ok(!ds.some((d) => d.id === id), "the singer is still asked " + id);
+  // every job is a kernel part, and the voice is its OWN layer with its own
+  // instrument — a voice must not lose its recording to whatever else holds
+  // the role the pool casts
+  for (const [k, j] of Object.entries(Vo.JOBS)) {
+    const m = { ...m0, voice: Vo.say(m0.voice, "job:" + k) };
+    const s2 = Band.toSong(m, MODES)[0];
+    if (k === "out") { ok(!s2.voice, "the singer laid out and is still on the record"); continue; }
+    ok(!!s2.voice, k + ": the singer is not on the record");
+    ok(s2.voice.genre.instr === m.voice.instr,
+       k + ": the voice is singing through " + s2.voice.genre.instr);
+    const ev = K.render(s2.voice.phrase, s2.voice.genre, s2.bars);
+    ok(ev.length > 0, k + " sings nothing");
+    ok(ev.every((e) => Number.isFinite(e.n) && e.n >= 40 && e.n <= 96),
+       k + ": the voice is off the end of its range");
+  }
+  // ...and every voice id is one the pool can cast, and is a voice
+  const fs2 = require("fs");
+  const src2 = fs2.readFileSync(require("path").join(__dirname, "../../nukernel/genres.js"), "utf8");
+  const known2 = new Set((src2.match(/"[a-z0-9_]+"/g) || []).map((x) => x.slice(1, -1)));
+  for (const id of Object.keys(Vo.INSTRUMENTS)) {
+    ok(known2.has(id), "no genre in the catalog sings \"" + id + "\"");
+    ok(/vox|voice|choir|ahh|ohh/.test(id), id + " is not a voice");
+  }
+  // the singer can take the tune, on their own voice
+  let m = Band.answer(Band.answer(on(), "arranger", "genre", "a rock record"),
+                      "arranger", "form", Band.FORMS.pop.w);
+  const took = Band.setSection(m, 0, "idea", "voice");
+  const s3 = Band.toSong(took, MODES)[0];
+  ok(!!s3.melody && s3.melody.genre.instr === m.voice.instr,
+     "the singer was handed the tune and it came out on " +
+     (s3.melody ? s3.melody.genre.instr : "nothing"));
+
+  // A PATH FOR EVERY INSTRUMENT: the desk could shape the kit and the bass
+  // and nothing else.
+  const paths = Band.ENG.filter((d) => /fx$/.test(d.id));
+  ok(paths.length >= 4, "only " + paths.length + " instruments have a path");
+  const CH = /^(drums|bass|lead|master|vocals|unit:[a-z]+|inst:[a-z]+)$/;
+  for (const d of paths)
+    for (const o of d.opts)
+      for (const chan of Object.keys(o.mix)) {
+        ok(CH.test(chan), d.id + "/" + o.w + ": \"" + chan + "\" is not an address");
+        const mix = Band.mixOf(Band.answer(on(), "engineer", d.id, o.w));
+        ok(Object.keys(mix).length > 0 || !Object.keys(o.mix).length,
+           d.id + "/" + o.w + " reached no channel");
+      }
+}
+
 /* (e) NOTHING NUMERIC CARRIES A WORD */
 // The swing NaN: the genre once held the WORD "swing" where the kernel
 // computes (i % 2) * (g.swing || 0), and every time in the record became
@@ -1171,5 +1231,5 @@ console.log("no word ever sits in a numeric field");
 }
 
 console.log(fails ? `\nband-kit: FAIL — ${fails} of ${pass + fails}`
-  : `\nband-kit: PASS — ${pass} checks (six chairs, the arranger owns the tune, every form plays, a section is its own, the engineer mixes it)`);
+  : `\nband-kit: PASS — ${pass} checks (seven chairs, the arranger owns the tune, every form plays, a section is its own, the engineer mixes it)`);
 process.exit(fails ? 1 : 0);

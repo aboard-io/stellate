@@ -96,7 +96,15 @@
 
   const blank = () => ({ on: false, cell: "three", contour: "arch", land: "root",
                          len: "two", reg: "mid", answer: true, name: "the hook",
-                         answers: {} });
+                         grid: null, lift: null, answers: {} });
+  // THE TUNE, NOTE BY NOTE. Every other chair can refine what it plays — the
+  // drummer says a place in the bar, the bassist writes a figure a note at a
+  // time — and the melody could only be described by its parameters. `grid`
+  // is the rhythm once you have moved it (the named cell until then) and
+  // `lift` is a scale step up or down on one place, so "that third note is
+  // too high" is a thing you can say.
+  const gridOf = (m) => (m.grid ? m.grid.slice() : cellOf(m).g.slice());
+  const liftOf = (m) => ({ ...(m.lift || {}) });
 
   const cellOf = (m) => CELLS[m.cell] || CELLS.three;
   const barsOf = (m) => (LENGTHS[m.len] || LENGTHS.two).bars;
@@ -122,7 +130,8 @@
   const PHCACHE = new Map();
   function toPhrase(m, roots) {
     const key = m.cell + "|" + m.contour + "|" + m.land + "|" + m.len + "|" +
-                m.reg + "|" + (m.answer ? 1 : 0) + "|" + (roots ? roots.length : 0);
+                m.reg + "|" + (m.answer ? 1 : 0) + "|" + (roots ? roots.length : 0) +
+                "|" + (m.grid ? m.grid.join("") : "") + "|" + JSON.stringify(m.lift || {});
     let hit = PHCACHE.get(key);
     if (hit) return hit;
     hit = phraseNow(m, roots);
@@ -131,7 +140,8 @@
     return hit;
   }
   function phraseNow(m, roots) {
-    const bars = barsOf(m), cell = cellOf(m).g, con = CONTOURS[m.contour] || CONTOURS.arch;
+    const bars = barsOf(m), cell = gridOf(m), con = CONTOURS[m.contour] || CONTOURS.arch;
+    const lift = liftOf(m);
     const land = (LANDINGS[m.land] || LANDINGS.root).d;
     const n = bars * N;
     const gate = z(n), deg = z(n), vel = new Array(n).fill(6), oct = z(n);
@@ -165,6 +175,10 @@
         if (mid.length) deg[mid[mid.length - 1]] = land === 0 ? 4 : 0;
       }
     }
+    // THE HAND MOVES LAST. A step you lifted by hand is lifted even if it is
+    // the note the phrase lands on — otherwise "that one is too high" did
+    // nothing to exactly the notes anybody would say it about.
+    for (const at of onsets) if (lift[at % N]) deg[at] += lift[at % N];
     return { deg, oct, vel, inc: z(n), stk: z(n), gate, acc: z(n), sld: z(n) };
   }
 
@@ -221,6 +235,29 @@
   for (const [k, r] of Object.entries(REG))
     add("reg:" + k, "the register", [r.w], (m) => m.on && m.reg !== k,
         (m) => ({ ...m, reg: k }), () => r.w, (m) => m.reg === k);
+  // THE BAR, and the two things you can say about one note in it
+  const COUNT = ["one", "two", "three", "four"], SUB = ["", "e", "and", "a"];
+  const stepWord = (i) => (i % 4 === 0) ? "on " + COUNT[i >> 2]
+    : "on the " + SUB[i % 4] + " of " + COUNT[i >> 2];
+  for (let i = 0; i < N; i++) {
+    add("note:" + i, "the bar", [stepWord(i)], (m) => m.on,
+        (m) => { const g = gridOf(m); g[i] = g[i] ? 0 : 1;
+                 return { ...m, grid: g, cell: m.cell }; },
+        (m) => (gridOf(m)[i] ? "no note " : "a note ") + stepWord(i),
+        (m) => !!gridOf(m)[i]);
+    add("up:" + i, "higher", ["up a step " + stepWord(i)],
+        (m) => m.on && !!gridOf(m)[i] && (liftOf(m)[i] || 0) < 2,
+        (m) => ({ ...m, lift: { ...liftOf(m), [i]: (liftOf(m)[i] || 0) + 1 } }),
+        () => "up a step " + stepWord(i));
+    add("down:" + i, "lower", ["down a step " + stepWord(i)],
+        (m) => m.on && !!gridOf(m)[i] && (liftOf(m)[i] || 0) > -2,
+        (m) => ({ ...m, lift: { ...liftOf(m), [i]: (liftOf(m)[i] || 0) - 1 } }),
+        () => "down a step " + stepWord(i));
+  }
+  add("flatten", "the bar", ["straighten it out"], (m) => m.on && (m.grid || m.lift),
+      (m) => ({ ...m, grid: null, lift: null }),
+      () => "back to the rhythm it was written with");
+
   add("answer", "the answer", ["answer itself"], (m) => m.on && barsOf(m) > 1,
       (m) => ({ ...m, answer: !m.answer }),
       (m) => (m.answer ? "both halves end the same way" : "the first half asks, the second answers"),
@@ -265,6 +302,7 @@
   const says = (m, id) => (V[id] ? V[id].says(m) : "");
 
   const regOf = (m) => (REG[m.reg] || REG.mid).v;
-  return { N, CELLS, CONTOURS, LANDINGS, LENGTHS, REG, regOf, blank, V, catalog, say, says,
+  return { N, CELLS, CONTOURS, LANDINGS, LENGTHS, REG, regOf, gridOf, liftOf, stepWord,
+           blank, V, catalog, say, says,
            decisions, nextAsk, answer, toPhrase, describe, barsOf, cellOf };
 });

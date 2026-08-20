@@ -12,7 +12,7 @@
 // routes are fed. So: register the worker, and when the record changes,
 // fetch that set once so the worker files it. After that the record plays
 // with the network off.
-import { warmSources, unitTable } from "./plan.js";
+import { warmSources, unitTable, compile } from "./plan.js";
 
 const SITE = new URL("../../", import.meta.url).href;   // the site root, from /nukernel/audio/
 const done = new Set();                                 // asked for once, ever
@@ -32,6 +32,11 @@ export function registerSW() {
 const CAP = 120, PARALLEL = 6;
 export function warmCache() {
   if (!("serviceWorker" in navigator)) return;
+  // THE PLAN FIRST. The warm runs on a record change, and the unit table it
+  // reads is whatever the LAST compile left — so a chair that just joined
+  // (measured: the singer, eighteen ahh_choir zones) was warmed on the next
+  // change instead of this one, which with the wire cut is never.
+  try { compile(); } catch (e) {}
   const urls = [];
   const add = (p) => {
     if (!p || /^https?:/i.test(p)) return;               // cross-origin: the worker cannot cache it

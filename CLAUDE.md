@@ -755,6 +755,31 @@ echo*. Not a player's decision and not the desk's. Measured: 96 events become
 151 in thirds, 192 with the echo, 292 with both, other sections do not move,
 and nobody's phrase is rewritten — a pipe is what happens to the notes after.
 
+SEVEN CHAIRS. The singer (`vocal-kit.js`) is the seventh and the first whose
+main job is somebody else's material — a singer mostly sings THE TUNE, which
+lives in ideas-kit because it belongs to the room. So the chair is two things:
+a TAKER of the idea, and parts of its own for when the tune is elsewhere
+(oohs under it · aahs, high · an answering phrase · a chant on the beat · one
+long note · lay out). It rides a LAYER of its own with its own genre and its
+own instrument, the shape the chair recipe names for exactly this case — a
+voice must not lose its recording to whatever else holds the role the pool is
+casting. IT DOES NOT SYNTHESISE SPEECH: nukernel's espeak singer was pulled
+out on 2026-08-17 (Safari, a fresh heap per utterance) and this is a sampled
+voice like any other instrument.
+
+A PATH FOR EVERY INSTRUMENT. The engineer could shape the kit and the bass
+and nothing else, because the desk had no address for an electric piano (not
+a `piano` by name) or a pad (not `strings`). `audio/desk.js INST_CHANS` grew
+two families — `keys` and `pads` — and the engineer grew three questions:
+anything on the keys? · on the guitar? · on the voice?
+
+A TUNE, NOTE BY NOTE. Every other chair could refine what it plays and the
+melody could only be described by its parameters. `grid` is the rhythm once
+you have moved it (the named cell until then) and `lift` is a scale step up
+or down on one place, so "that third note is too high" is sayable. The hand
+moves LAST — a step you lifted stays lifted even if it is the note the phrase
+lands on.
+
 A RECORD HAS PROPORTIONS (2026-08-20). A section used to be as long as the
 CHANGES it was called with and nothing could say otherwise — the only lengths
 reachable anywhere in the graph were 4 and 12 — so every record came out a
@@ -812,7 +837,7 @@ CALLED AS FUNCTIONS — entry/part/period/realize/reg/word, which no finite
 question tree can name and which the chairs rightly supply from tables), walks
 every chair, every question, every answer and every section question, diffs
 what the section genre comes out as, and asserts every DATA field is either
-REACHED or written down with the reason it is not. 21 of 38 today (76%): nine
+REACHED or written down with the reason it is not. 21 of 38 today (82%): seven
 are not asked on purpose (`kitSeed` the dice, `anchor` an identity field,
 `swing` the SONG's — the word in a numeric field was the NaN that stopped the
 engine — and `bassGrid`, superseded by `bassFig`), and two more are written by

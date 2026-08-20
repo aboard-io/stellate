@@ -513,6 +513,13 @@ const INST_CHANS = [
   ["guitar", /guitar/], ["piano", /piano/], ["organ", /organ/],
   ["strings", /string|violin|cello|ensemble/], ["horns", /trumpet|brass|sax|horn|tuba|trombone/],
   ["bells", /bell|celesta|glocken|vibraphone|marimba|music_box/],
+  // ...and two families the band's own chairs actually hold: an electric
+  // piano is not a `piano` by name and a pad is not `strings`, so the desk
+  // had no address for either — which meant the engineer could shape the
+  // kit and the bass and nothing else. (`keys` deliberately includes the
+  // pianos too: one chair, one address.)
+  ["keys", /rhodes|_ep|electric_piano|clavinet|piano|organ|harpsichord/],
+  ["pads", /pad|polysynth|synth_strings|slow_strings|saw_wave|square_lead|fifth_/],
 ];
 
 // OFFSET EQ: the mixer layer's bands ADD to the effective eq (offset
