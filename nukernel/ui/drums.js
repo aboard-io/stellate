@@ -139,8 +139,22 @@ function draw() {
   const RANK = { "the bar": 0, "at the kit": 1, "the kit": 3, "take away": 4,
                  "the fills": 5, "the machine": 6, "the feel": 7, "the tempo": 8 };
   const rank = (g) => (RANK[g] != null ? RANK[g] : g.startsWith("grooves") ? 2 : 10);
+  // NOT TWICE. The interview asks "how low?" and the tray carried "down an
+  // octave"/"up an octave" as a subject of its own — the same question in
+  // two costumes ("you ask twice about octaves"). Any word a decision
+  // already offers is not offered again as a subject, and a subject with
+  // nothing else in it stops being asked.
+  // ...and where the same question is asked in DIFFERENT words, say which:
+  // "how low?" and a subject called "the register" are one decision, and
+  // word-matching cannot see that ("you ask twice about octaves").
+  const COVERS = { "the register": "reg", "the feel": "sit", "the tempo": "tempo",
+                   "how you play them": "notes", "the line": "job",
+                   "what you are playing": "instr" };
+  const asks0 = decisions(model);
+  const asked = new Set(asks0
+    .flatMap(d => d.opts.map(o => o.w)));
   const asks = [
-    ...decisions(model).map(d => ({ id: d.id, ask: d.ask, label: d.id,
+    ...asks0.map(d => ({ id: d.id, ask: d.ask, label: d.id,
       answered: d.answered, opts: d.opts.map(o => ({ w: o.w, on: o.answered,
         istrue: o.active, take: () => { model = answer(model, d.id, o.w); } })) })),
     ...[...groups.entries()].sort((a, b) => rank(a[0]) - rank(b[0])).map(([g, list]) => ({
@@ -154,9 +168,13 @@ function draw() {
       // can read back (a groove, a machine) and some do not (a fill, a step,
       // a hand) — for those the answer is what you told it, so a question
       // you come back to never re-opens with nothing lit.
-      opts: list.map(i => ({ w: i.words[0],
+      // A QUESTION NEVER OPENS WITH NOTHING YOU CAN TAP: a word that cannot
+      // be said and is not already true is not shown, and a subject with
+      // nothing left in it is not asked.
+      opts: list.filter(i => (i.changes || i.active) && !asked.has(i.words[0]))
+        .map(i => ({ w: i.words[0],
         on: i.active || said.get("grp:" + g) === i.words[0],
-        dead: !i.changes && !i.active,
+        dead: false,
         take: () => {
           const laneId = i.id.startsWith("lane:") ? LANEWORDLANE(i.id) : null;
           const line = says(model, i.id);
@@ -166,7 +184,8 @@ function draw() {
           said.set("grp:" + g, i.words[0]);
           if (laneId) lane = laneId;
         } })) })),
-  ];
+  ].filter(d => d.opts.length &&
+    !(COVERS[d.label] && asks0.some(x => x.id === COVERS[d.label])));
 
   // THE GIG SHEET — what this drummer has decided, every fact of it tappable
   const sheet = el("div", "dsheet");
@@ -179,7 +198,18 @@ function draw() {
     c.addEventListener("click", () => { asking = asking === d.id ? null : d.id; draw(); });
     sheet.append(c);
   }
-  if (sheet.childNodes.length) box.append(sheet);
+  if (sheet.childNodes.length) {
+    // ...and one way back, which a machine you talk to has to have.
+    const again = el("button", "dfact dagain", "start over");
+    again.type = "button";
+    again.title = "clear the kit and start asking again";
+    again.addEventListener("click", () => {
+      model = { ...blank(), on: true, bpm: model.bpm };
+      said.clear(); asking = null; lane = null; push(false); draw();
+    });
+    sheet.append(again);
+    box.append(sheet);
+  }
 
   // ...and the one question in front of you
   const q = asking ? asks.find(d => d.id === asking)

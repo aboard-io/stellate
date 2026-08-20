@@ -392,6 +392,12 @@
     }
     // the line and the bass it is played on
     if (!keep((b.answers || {}).job, gk.styles)) b = B.answer(b, "job", gk.styles[0]);
+    // THE RECORD'S FIGURE BECOMES THE BASSIST'S OWN. It used to sit only on
+    // the genre, so the bass chair showed the STYLE's quarters while an acid
+    // line was playing — and writing one note into that bar replaced the
+    // acid line with quarters. "The bass drops out on techno." A bassist who
+    // has written their own figure keeps it.
+    if (gk.fig && B.FIGURES[gk.fig] && !b.fig) b = B.figSet(b, B.FIGURES[gk.fig]);
     if (!keep((b.answers || {}).instr, gk.instr)) b = B.answer(b, "instr", gk.instr[0]);
     // ...and the changes, which are the arranger's own but still have to be
     // changes this record has
@@ -430,6 +436,16 @@
       return opts.length >= 2 ? { ...d, opts } : d;
     });
   };
+  // START OVER, one chair at a time. A session where the only way back is
+  // reloading the page is a session you stop experimenting in.
+  function resetSeat(m, seat) {
+    if (seat === "drums") return { ...m, drums: D.say(D.blank(), "start") };
+    if (seat === "bass") return { ...m, bass: B.say(B.blank(), "start") };
+    if (seat === "engineer") return { ...m, eng: {} };
+    // the arranger's own reset takes the tune back but leaves the players
+    // where they are — and the per-section arrangement goes with the form
+    return { ...m, song: { ...blank().song }, per: {} };
+  }
   const seatDecisions = (m, seat) => {
     if (seat === "arranger") return narrow(m, seat, arrDecisions(m));
     if (seat === "engineer") return engDecisions(m);
@@ -495,6 +511,10 @@
       const w = i.words[0];
       if (i.group.startsWith("grooves")) return (gk.grooves || []).includes(w);
       if (i.group === "the machine") return (gk.machines || []).includes(w);
+      // ...and the same law for the bassist's own tray: a record that does
+      // not have a walking line in it does not offer one here either
+      if (i.group === "the line") return (gk.styles || []).includes(w);
+      if (i.group === "what you are playing") return (gk.instr || []).includes(w);
       return true;
     });
   };
@@ -720,6 +740,7 @@
   }
 
   return { SEATS, TAKEN, FORMS, CALLED, GENRES, SPACE, ROLE, ENG, SECMIX, mixOf,
+           resetSeat,
            genreOf, rolesIn,
            secWords, partOf,
            blank, decisions, seatDecisions,

@@ -142,23 +142,24 @@
                  return figSet(m, { ...f, grid: g2 }); },
         (m) => (figOf(m).grid[i] ? "no note " : "a note ") + stepWord(i),
         (m) => !!figOf(m).grid[i]);
-    add("oct:" + i, "the octave", ["octave up " + stepWord(i)],
+    add("oct:" + i, "octaves in the bar", ["octave up " + stepWord(i)],
         (m) => m.on && !!figOf(m).grid[i],
         (m) => { const f = figOf(m); const o = f.oct.slice(); o[i] = o[i] ? 0 : 12;
                  return figSet(m, { ...f, oct: o }); },
         (m) => (figOf(m).oct[i] ? "back down " : "octave up ") + stepWord(i),
         (m) => !!figOf(m).oct[i]);
-    add("acc:" + i, "the accents", ["accent it " + stepWord(i)],
+    add("acc:" + i, "accents in the bar", ["accent it " + stepWord(i)],
         (m) => m.on && !!figOf(m).grid[i],
         (m) => { const f = figOf(m); const a2 = f.acc.slice(); a2[i] = a2[i] ? 0 : 1;
                  return figSet(m, { ...f, acc: a2 }); },
         (m) => (figOf(m).acc[i] ? "no accent " : "accent ") + stepWord(i),
         (m) => !!figOf(m).acc[i]);
-    add("sld:" + i, "the slides", ["slide out of " + stepWord(i)],
+    add("sld:" + i, "slides in the bar", ["slide out of " + stepWord(i).replace(/^on /, "")],
         (m) => m.on && !!figOf(m).grid[i],
         (m) => { const f = figOf(m); const s2 = f.sld.slice(); s2[i] = s2[i] ? 0 : 1;
                  return figSet(m, { ...f, sld: s2 }); },
-        (m) => (figOf(m).sld[i] ? "no slide " : "slide out of ") + stepWord(i),
+        (m) => (figOf(m).sld[i] ? "no slide " : "slide out of ") +
+               stepWord(i).replace(/^on /, ""),
         (m) => !!figOf(m).sld[i]);
   }
 

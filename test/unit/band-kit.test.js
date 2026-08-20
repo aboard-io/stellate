@@ -620,6 +620,66 @@ console.log("a breakdown can go wet without the verse moving");
   ok(secs[secs.length - 1].box, "the outro arrives at full level");
 }
 
+/* (o) THE RECORD'S LINE IS THE BASSIST'S OWN, AND EVERY CHAIR CAN BE CLEARED */
+// The figure used to sit only on the genre, so the bass chair showed the
+// STYLE's quarters while an acid line was playing — and writing one note
+// into that bar replaced the acid line with quarters. "The bass drops out on
+// techno."
+console.log("the bassist holds the record's line, and a chair can be cleared");
+{
+  const B2 = Band.B;
+  for (const [key, gk] of Object.entries(Band.GENRES)) {
+    if (!gk.fig) continue;
+    const m = Band.answer(on(), "arranger", "genre", gk.w);
+    ok(m.bass.fig, key + ": the bassist was never handed the record's line");
+    ok(JSON.stringify(B2.figOf(m.bass).grid) === JSON.stringify(B2.FIGURES[gk.fig].grid),
+       key + ": the bassist's bar is not the line that is playing");
+    // ...so editing one note edits THAT line, not a fresh one
+    const edited = { ...m, bass: B2.say(m.bass, "note:15") };
+    const was = B2.figOf(m.bass).grid, now = B2.figOf(edited.bass).grid;
+    const moved = was.map((v, i) => v !== now[i]).filter(Boolean).length;
+    ok(moved === 1, key + ": writing one note moved " + moved + " of them");
+    // one note in, one note out — counted in ONE bar, since a section
+    // repeats the figure across all of them
+    const inBar = (mm) => play(Band.toSong(mm, MODES)[0].genre).bass.filter((e) => e.t < 16).length;
+    // ...unless the record leaves four measures between two notes, where the
+    // SPACE schedule outranks the figure and a sixteenth nobody plays is a
+    // sixteenth nobody hears. That is the axis working, not the bar failing.
+    const moved2 = Math.abs(inBar(edited) - inBar(m));
+    ok(gk.space ? moved2 === 0 : moved2 === 1,
+       key + ": one note changed the bar by " + moved2);
+  }
+  // a bassist who wrote their own keeps it when the record is called again
+  const mine = { ...on(), bass: Band.B.say(Band.B.say(Band.B.blank(), "start"), "note:5") };
+  const called = Band.answer(mine, "arranger", "genre", "a techno record");
+  ok(JSON.stringify(called.bass.fig) === JSON.stringify(mine.bass.fig),
+     "calling a record overwrote a line the bassist had written");
+
+  // START OVER, one chair at a time
+  let m = Band.answer(Band.answer(on(), "arranger", "genre", "a jazz date"),
+                      "arranger", "form", Band.FORMS.head.w);
+  m = Band.answer(m, "drums", "job", Band.seatDecisions(m, "drums").find(d => d.id === "job").opts[1].w);
+  m = Band.answer(m, "engineer", "kick", "huge");
+  const d0 = Band.resetSeat(m, "drums");
+  ok(!(d0.drums.answers || {}).job, "clearing the drums left their answers");
+  ok(d0.drums.on, "clearing the drums put the drummer away");
+  ok(JSON.stringify(d0.bass) === JSON.stringify(m.bass), "clearing the drums touched the bass");
+  ok(JSON.stringify(d0.eng) === JSON.stringify(m.eng), "clearing the drums touched the desk");
+  const e0 = Band.resetSeat(m, "engineer");
+  ok(Object.keys(Band.mixOf(e0)).length === 0, "clearing the desk left it written on");
+  ok(JSON.stringify(e0.drums) === JSON.stringify(m.drums), "clearing the desk moved the drummer");
+  const a0 = Band.resetSeat(m, "arranger");
+  ok(!a0.song.genre && !a0.song.form, "clearing the arranger left the tune called");
+  ok(a0.drums.on && a0.bass.on, "clearing the arranger sent the players home");
+  // ...and everything still plays after any of them
+  for (const m2 of [d0, e0, a0, Band.resetSeat(m, "bass")])
+    for (const s2 of Band.toSong(m2, MODES)) {
+      const ev = play(s2.genre);
+      ok(ev.drums.every((e) => Number.isFinite(e.t)) && ev.bass.every((e) => Number.isFinite(e.n)),
+         "a cleared chair left something unplayable");
+    }
+}
+
 /* (e) NOTHING NUMERIC CARRIES A WORD */
 // The swing NaN: the genre once held the WORD "swing" where the kernel
 // computes (i % 2) * (g.swing || 0), and every time in the record became

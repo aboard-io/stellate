@@ -122,3 +122,6 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-ui)}
 .dchip.dbig{min-height:64px;padding:0 var(--sp-4);font-size:clamp(19px,4vw,26px);
   font-weight:700;background:var(--accent);border-color:var(--accent);
   color:var(--on-accent)}
+/* the way back — a fact-shaped key that clears the chair */
+.dagain{border-style:dashed;color:var(--ink-2)}
+.dagain:hover{color:var(--ink);border-color:var(--accent)}

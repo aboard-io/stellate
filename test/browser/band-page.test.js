@@ -221,6 +221,48 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
     ok(ev > 0, "mixing the record silenced it");
   }
 
+  // ── NO QUESTION OPENS WITH NOTHING TO TAP, AND EVERY CHAIR CAN BE CLEARED ──
+  // Half the bass's subjects are about a note that has to exist first, so an
+  // octave question over an empty bar was sixteen dead buttons ("when the
+  // octave setting first shows up I can't select anything"). And a chair you
+  // cannot clear is a chair you stop trying things in.
+  {
+    await seat("bass");
+    for (let i = 0; i < 24; i++) {
+      const cur = (await q())[0] || "";
+      if (!cur || /tap anything/.test(cur)) break;
+      const list = await opts();
+      ok(list.some(o => !o.dead), "\"" + cur + "\" opens with nothing you can tap");
+      await tap(list.find(o => !o.dead).w);
+    }
+    // the sheet holds what was said, including the line and the bar
+    const facts = await page.evaluate(() => [...document.querySelectorAll(".dfact")]
+      .map(x => (x.querySelector("b") || {}).textContent || x.textContent));
+    for (const f of ["the figure", "the bar"])
+      ok(facts.includes(f), "the bassist cannot get back to " + f + ": " + JSON.stringify(facts));
+    ok(facts.some(f => /start over/.test(f)), "there is no way to clear this chair");
+    // ...and the same question is not asked twice in two costumes
+    ok(!facts.includes("the register"), "the register is asked twice");
+    ok(!facts.includes("the line"), "the line is asked twice");
+    // opening the bar gives sixteen live places
+    await page.evaluate(() => { const f = [...document.querySelectorAll(".dfact")]
+      .find(x => (x.querySelector("b") || {}).textContent === "the bar"); if (f) f.click(); });
+    await page.waitForTimeout(300);
+    const bar = await opts();
+    ok(bar.length === 16 && !bar.some(o => o.dead),
+       "the bar offers " + bar.length + " places, " + bar.filter(o => o.dead).length + " of them dead");
+    // START OVER really clears
+    const before = await page.evaluate(() => window.__bandModel());
+    await page.evaluate(() => { const b = [...document.querySelectorAll(".dfact")]
+      .find(x => x.textContent === "start over"); if (b) b.click(); });
+    await page.waitForTimeout(400);
+    const after = await page.evaluate(() => window.__bandModel());
+    ok(after !== before, "start over changed nothing");
+    ok(JSON.parse(after).bass.fig === null, "start over left the bassist's line behind");
+    ok(JSON.parse(after).song.genre === JSON.parse(before).song.genre,
+       "clearing the bass chair uncalled the record");
+  }
+
   // ── THE PAGE SCROLLS ──
   // Nothing on this page scrolled once the wall of chips came out, and a
   // section asks six questions.
