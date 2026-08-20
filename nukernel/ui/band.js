@@ -251,9 +251,14 @@ function draw() {
   // ...and where the same question is asked in DIFFERENT words, say which:
   // "how low?" and a subject called "the register" are one decision, and
   // word-matching cannot see that ("you ask twice about octaves").
-  const COVERS = { "the register": "reg", "the feel": "sit", "the tempo": "tempo",
-                   "how you play them": "notes", "the line": "job",
-                   "what you are playing": "instr" };
+  // ...and the ideas module asks the same five things in its interview and
+  // in its tray, so the sheet carried every one of them twice ("the rhythm
+  // of it" beside "idea:cell"). Same law, one more table.
+  const COVERS = { "the register": ["reg", "idea:reg"], "the feel": ["sit"],
+                   "the tempo": ["tempo"], "how you play them": ["notes"],
+                   "the line": ["job"], "what you are playing": ["instr"],
+                   "the rhythm of it": ["idea:cell"], "the shape": ["idea:contour"],
+                   "where it ends": ["idea:land"], "how long": ["idea:len"] };
   // ...and a subject the ARRANGER owns is not a subject a player has. The
   // interview already drops those questions (TAKEN); the tray was still
   // handing the bassist "faster"/"slower" and the drummer the feel.
@@ -264,7 +269,10 @@ function draw() {
   const asked = new Set(asks0
     .flatMap(d => d.opts.map(o => o.w)));
   const asks = [
-    ...asks0.map(d => ({ id: d.id, ask: d.ask, label: d.id,
+    // a fact says what it is, not what its id is: the ideas module prefixes
+    // its questions so they can live in the arranger's chair, and nobody
+    // needs to read "idea:len" on a gig sheet
+    ...asks0.map(d => ({ id: d.id, ask: d.ask, label: d.id.replace(/^idea:/, ""),
       answered: d.answered, opts: d.opts.map(o => ({ w: o.w, on: o.answered,
         istrue: o.active, take: () => { model = answer(model, who, d.id, o.w); } })) })),
     ...[...groups.entries()].sort((a, b) => rank(a[0]) - rank(b[0])).map(([g, list]) => ({
@@ -288,7 +296,7 @@ function draw() {
           said.set("grp:" + g, i.words[0]);
         } })) })),
   ].filter(d => d.opts.length &&
-    !(COVERS[d.label] && asks0.some(x => x.id === COVERS[d.label])) &&
+    !((COVERS[d.label] || []).some(id => asks0.some(x => x.id === id))) &&
     !((NOTYOURS[who] || []).includes(d.label)));
 
   // THE GIG SHEET — every fact of it tappable
