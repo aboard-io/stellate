@@ -356,8 +356,11 @@ export function sectionEvents(sec, slots, songGroove, songSwing) {
   // held the old record's one box, and reading .voices off the vanished
   // authority killed the schedule. A transient frame without its genre
   // renders empty; the roll's final push recompiles and the section comes
-  // back whole.
-  if (!GENRES[(a0 && a0.g) || gid(sec)]) return [];
+  // back whole. Empty in the CALLERS' shape — songBars destructures
+  // { g, bars, ev } and skips on !ev.length, and a bare [] here handed it
+  // ev === undefined, which crashed the very compile this guard exists for.
+  if (!GENRES[(a0 && a0.g) || gid(sec)])
+    return { g: null, bars: Math.max(1, sec.len || 1), vBase: 0, ev: [] };
   const g = genreOf(sec, a0);
   // THE SONG'S SWING lands on the authority's genre, first thing: the kernel
   // reads g.swing per note, the layers copy it (lg below), and the drums and
