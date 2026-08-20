@@ -166,6 +166,49 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
        techno.dur.toFixed(2) + " vs " + slow.dur.toFixed(2) + ")");
   }
 
+  // ── SOMEBODY IS MIXING THIS, and the desk hears it ──
+  // The engineer's answers are mix OFFSETS over the composed mix, so the
+  // proof is the units the bar is played with — not the model, not the
+  // board, the numbers the engine is handed.
+  const units = () => page.evaluate(async () => {
+    const PL = await import("/nukernel/audio/plan.js"); PL.compile();
+    const U = (PL.barPlan(0) || {}).units || {};
+    const one = (k) => U[k] ? { lvl: U[k].lvl, rev: U[k].rev, del: U[k].del,
+      lo: U[k].sampler && U[k].sampler.strip ? U[k].sampler.strip.lo : null } : null;
+    return { kick: one("kick"), snare: one("snare"), hat: one("hat") }; });
+  {
+    await seat("engineer");
+    const dq2 = (await q())[0] || "";
+    ok(/drums|kick|snare|hats|squeeze|tape|bass/.test(dq2),
+       "in the engineer's chair the question is \"" + dq2 + "\"");
+    const before = await units();
+    for (const w of ["down the hall", "huge", "a plate on it", "keep them down"]) {
+      if (!(await tap(w))) {
+        // the questions come in order; walk to the one that offers this word
+        for (let i = 0; i < 8 && !(await opts()).some(o => o.w === w); i++) {
+          const list = (await opts()).filter(o => !o.dead);
+          if (!list.length) break;
+          await tap(list[0].w);
+        }
+        await tap(w);
+      }
+    }
+    await page.waitForTimeout(500);
+    const after = await units();
+    ok(after.kick.lvl > before.kick.lvl,
+       "the kick was made huge and its level did not move (" + before.kick.lvl + " → " + after.kick.lvl + ")");
+    ok(after.kick.lo > before.kick.lo, "the kick was made huge and its bottom did not move");
+    ok(after.snare.rev > before.snare.rev, "a plate on the snare added no reverb");
+    ok(after.hat.lvl < before.hat.lvl, "the hats were told to come down and did not");
+    ok(after.kick.rev > before.kick.rev, "the room never reached the kit");
+    // ...and mixing did not rewrite the parts
+    const ev = await page.evaluate(async () => {
+      const PL = await import("/nukernel/audio/plan.js"); PL.compile();
+      let d = 0; for (let i = 0; i < PL.barCount(); i++) d += PL.barPlan(i).ev.drums.length;
+      return d; });
+    ok(ev > 0, "mixing the record silenced it");
+  }
+
   // ── AND IT STILL SOUNDS ──
   let rms = 0;
   for (let i = 0; i < 22; i++) { await page.waitForTimeout(900);

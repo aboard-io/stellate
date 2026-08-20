@@ -22,7 +22,14 @@
   else root.NuDrums = api;
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
-  const LANES = ["k", "s", "h", "o", "c", "p", "t"];
+  // THE TOMS ARE THREE DRUMS. The kernel has had `t`/`m`/`l` — high, mid and
+  // floor, routed to tomHi/tom/tomLo at 132/105/88 Hz — since the tom lanes
+  // were split; this file only ever wrote `t`, so a tom was a texture and
+  // never a MELODY. Three of our forty-four grooves used a tom at all. That
+  // is the single biggest thing missing from a drummer whose signature is
+  // the toms answering the voice (Katché on "In Your Eyes"), so they are
+  // lanes here now, with their own words.
+  const LANES = ["k", "s", "h", "o", "c", "p", "t", "m", "l"];
   const BARS = 4, N = 16;
   const z = () => new Array(N).fill(0);
   const on = (...ix) => { const v = z(); for (const i of ix) v[i] = 1; return v; };
@@ -149,11 +156,14 @@
     claps:    { word: "claps", lane: "c", give: on(4, 12), more: on(4, 7, 12, 15) },
     perc:     { word: "percussion", lane: "p", give: on(2, 7, 10, 14), more: every(2, 1) },
     toms:     { word: "toms", lane: "t", give: on(6, 14), more: on(2, 6, 10, 14) },
+    midtom:   { word: "mid tom", lane: "m", give: on(10), more: on(6, 10, 14) },
+    floortom: { word: "floor tom", lane: "l", give: on(12), more: on(8, 12, 14) },
     kick:     { word: "kick", lane: "k", give: on(0, 8), more: on(0, 3, 8, 11) },
     snare:    { word: "snare", lane: "s", give: on(4, 12), more: on(4, 7, 12, 14) },
   };
   const DROPWORD = { k: "no kick", s: "no snare", h: "no hats", o: "no open hats",
-                     c: "no claps", p: "no percussion", t: "no toms" };
+                     c: "no claps", p: "no percussion", t: "no toms",
+                     m: "no mid tom", l: "no floor tom" };
 
   /* ---------- HOW A DRUMMER SAYS IT --------------------------------------
      Nobody at a kit thinks "kick on step ten". They think about where the
@@ -202,7 +212,25 @@
     "snare on every beat": (m) => ({ ...m, kit: { ...clone(m.kit), s: every(4) } }),
     "toms, not the snare": (m) => { const k = clone(m.kit);
       k.t = k.s.slice(); k.s = z(); return { ...m, kit: k }; },
-    "floor tom on the ands": (m) => ({ ...m, kit: { ...clone(m.kit), t: on(2, 6, 10, 14) } }),
+    "floor tom on the ands": (m) => ({ ...m, kit: { ...clone(m.kit), l: on(2, 6, 10, 14) } }),
+    // A TOM MELODY: high, mid, floor across the second half of the bar, the
+    // backbeat stepping out of its way. This is a PHRASE, not a fill — it is
+    // the groove itself, which is what the toms are for.
+    "a tom melody":        (m) => { const k = clone(m.kit);
+      k.t = on(8); k.m = on(11); k.l = on(14);
+      k.s = k.s.map((v, i) => (i >= 8 && i !== 12 ? 0 : v));
+      return { ...m, kit: k }; },
+    "walk the toms down":  (m) => { const k = clone(m.kit);
+      k.t = on(0, 4); k.m = on(8); k.l = on(12); return { ...m, kit: k }; },
+    // PLAY THE SONG. Half of every hit in our forty-four grooves is a hi-hat.
+    // A drummer serving a song pulls the hand back to quarters, drops the
+    // decoration and leaves the kick and the backbeat holding the record up.
+    // `vel.all` is a NUMBER here (VELROW: 6 + n*2) and writing the word
+    // "soft" into it is the same NaN the swing once was — one notch down is
+    // -1, and the gate that caught this is the reason it says so.
+    "play the song":       (m) => { const k = clone(m.kit);
+      k.h = HANDS.quarters.slice(); k.o = z(); k.p = z(); k.c = z();
+      return { ...m, kit: k, vel: { ...(m.vel || {}), all: -1 } }; },
     "open the hat on four": (m) => { const k = clone(m.kit);
       k.o = k.o.slice(); k.o[14] = 1; if (k.h) { k.h = k.h.slice(); k.h[14] = 0; }
       return { ...m, kit: k }; },
@@ -295,6 +323,14 @@
         m => !!m.fills[bar]);
   add("nofills", "the fills", ["no fills"], m => Object.keys(m.fills).length > 0,
       m => ({ ...m, fills: {} }), () => "the fills come out");
+
+  // THE SENTENCE. Not a kit word — it is a fact about the FORM of the
+  // groove, two bars where the second answers the first — so it toggles on
+  // the model rather than editing the bar you can see.
+  add("answer", "at the kit", ["answer yourself"], m => m.on,
+      m => ({ ...m, answer: !m.answer }),
+      m => (m.answer ? "back to one bar, round and round" : "two bars: the groove, then its answer"),
+      m => !!m.answer);
 
   for (const [word, fn] of Object.entries(DRUMMER))
     add("drum:" + word, "at the kit", [word],
@@ -508,9 +544,28 @@
 
   /* ---------- the model as a GENRE the engine already knows how to play --- */
   const VELROW = (n) => { const v = new Array(N).fill(Math.max(2, Math.min(9, 6 + n * 2))); return v; };
+  // THE ANSWER BAR — the second half of a two-bar sentence. A groove that
+  // repeats a bar identically is a LOOP; a drummer plays a sentence, and the
+  // second bar answers the first. The answer is small on purpose: the kick
+  // steps onto the and of three, and the last beat is a tom instead of the
+  // backbeat. That is the difference between a machine and a player, and it
+  // is what a fill is made of before it is a fill.
+  const ANSWERBAR = (kit) => {
+    const k = clone(kit);
+    if (k.k) { k.k = k.k.slice(); k.k[10] = 1; }
+    if (k.s) { k.s = k.s.slice(); k.s[12] = 0; }
+    k.t = (k.t || z()).slice(); k.m = (k.m || z()).slice(); k.l = (k.l || z()).slice();
+    k.m[12] = 1; k.l[14] = 1;
+    return k;
+  };
+
   function toGenre(m) {
     const bars = [];
-    for (let b = 1; b <= BARS; b++) bars.push(m.fills[b] ? FILLBAR(m.kit) : m.kit);
+    // a SENTENCE is two bars: the groove, then its answer
+    for (let b = 1; b <= BARS; b++) {
+      const base = (m.answer && b % 2 === 0) ? ANSWERBAR(m.kit) : m.kit;
+      bars.push(m.fills[b] ? FILLBAR(base) : base);
+    }
     const g = {
       label: "Drums", family: "club", rate: 1, bars: BARS, voices: 1,
       entry: () => 0, reg: () => 0, realize: () => "line", harmony: "modal",
@@ -528,7 +583,7 @@
     return g;
   }
 
-  return { LANES, BARS, N, blank, V, offered, catalog, say, says, toGenre, stepWord,
+  return { LANES, BARS, N, ANSWERBAR, blank, V, offered, catalog, say, says, toGenre, stepWord,
            GROOVEWORD, GROOVEFAM, laneKeys, DECISIONS, decisions, nextAsk, answer,
            stepsFor, LANENAME, LANEOF, GROOVES, LANEWORD, FILLWORD, MACHINES,
            hits, has, clone, empty };

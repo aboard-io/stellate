@@ -13,8 +13,13 @@
 let pass = 0, fails = 0;
 const ok = (b, msg) => { if (b) pass++; else { fails++; console.log("  ✗ " + msg); } };
 
+// A KIT LANE IS ANY KEY IN THE KERNEL'S OWN `LANES` MAP. `DRUM_LANES` is
+// something else — the seven lanes a drum PHRASE (kind:"drum") may use — and
+// holding kits against it said the mid and floor toms did not exist, on a
+// kernel that has routed t/m/l to tomHi/tom/tomLo all along.
 const D = require("../../nukernel/drums-kit.js");
 const K = require("../../nukernel/kernel.js");
+const KITLANE = (l) => Object.prototype.hasOwnProperty.call(K.LANES, l);
 const P = { deg: new Array(16).fill(0), oct: new Array(16).fill(0),
   vel: new Array(16).fill(6), inc: new Array(16).fill(0), stk: new Array(16).fill(0),
   gate: new Array(16).fill(0), acc: new Array(16).fill(0), sld: new Array(16).fill(0) };
@@ -96,12 +101,12 @@ console.log("the model is a genre: real lanes, real bars, real fills");
   // a key is either a LANE or one of the kernel's own sidecars beside a lane
   // ("!k" grace, "~k" nudge, "?k" chance) — the drummer's hands
   for (const lane of Object.keys(g.kit))
-    ok(K.DRUM_LANES.includes(lane) ||
-       (/^[!~?]/.test(lane) && K.DRUM_LANES.includes(lane.slice(1))),
+    ok(KITLANE(lane) ||
+       (/^[!~?]/.test(lane) && KITLANE(lane.slice(1))),
        "kit key \"" + lane + "\" is neither a kernel lane nor a sidecar on one");
   for (const bar of g.kits) for (const [lane, v] of Object.entries(bar)) {
-    ok(K.DRUM_LANES.includes(lane) ||
-       (/^[!~?]/.test(lane) && K.DRUM_LANES.includes(lane.slice(1))),
+    ok(KITLANE(lane) ||
+       (/^[!~?]/.test(lane) && KITLANE(lane.slice(1))),
        "a bar carries a key the kernel has no name for: " + lane);
     ok(Array.isArray(v) && v.length === 16, "a lane is not sixteen steps");
   }
@@ -164,11 +169,11 @@ console.log("every groove is sixteen real steps, and no two are the same");
     const m = i.apply(D.say(D.blank(), "start"));
     let hits = 0;
     for (const [lane, v] of Object.entries(m.kit)) {
-      ok(K.DRUM_LANES.includes(lane) ||
-         (/^[!~?]/.test(lane) && K.DRUM_LANES.includes(lane.slice(1))),
+      ok(KITLANE(lane) ||
+         (/^[!~?]/.test(lane) && KITLANE(lane.slice(1))),
          i.words[0] + ": key " + lane + " is neither a lane nor a sidecar");
       ok(Array.isArray(v) && v.length === 16, i.words[0] + ": " + lane + " is not sixteen steps");
-      if (K.DRUM_LANES.includes(lane)) hits += v.filter(Boolean).length;
+      if (KITLANE(lane)) hits += v.filter(Boolean).length;
     }
     ok(hits >= 4, i.words[0] + " has " + hits + " hits in it");
     ok(render(m, 1).length > 0, i.words[0] + " renders nothing");
@@ -278,6 +283,58 @@ console.log("every machine word is a kit the engine can route");
     ok(KITS.has(name), "\"" + i.words[0] + "\" names kit \"" + name +
        "\", which is not one the engine knows (" + [...KITS].join(", ") + ")");
   }
+}
+
+/* (e) THE TOMS ARE THREE DRUMS, THE HATS CAN COME DOWN, AND A GROOVE CAN BE
+       A SENTENCE — the three things a drummer whose signature is space and
+       melodic toms would find missing. */
+console.log("three toms, a hand that can come down, and two bars that differ");
+{
+  const base = D.say({ ...D.blank(), on: true }, "groove:breakbeat");
+  const ev = (m) => K.drums(P, D.toGenre(m), 4);
+  const lanes = (m) => new Set(ev(m).map((e) => e.d));
+  // (e1) three separate toms, each its own drum in the render
+  const tom = D.say(base, "drum:a tom melody");
+  for (const l of ["t", "m", "l"])
+    ok(lanes(tom).has(l), "\"a tom melody\" never sounds the " + K.LANES[l].name);
+  const at = (m, l) => ev(m).filter((e) => e.d === l).map((e) => e.t % 16);
+  ok(at(tom, "t")[0] < at(tom, "m")[0] && at(tom, "m")[0] < at(tom, "l")[0],
+     "the tom melody does not walk high to low: " +
+     JSON.stringify([at(tom, "t")[0], at(tom, "m")[0], at(tom, "l")[0]]));
+  const down = D.say(base, "drum:walk the toms down");
+  ok(["t", "m", "l"].every((l) => lanes(down).has(l)), "walking the toms down uses one tom");
+  // ...and they are drums the kernel knows, played by the right units
+  for (const l of ["t", "m", "l"]) ok(K.LANES[l] && K.LANES[l].kind === "tom",
+    l + " is not a tom to the kernel");
+  // (e2) PLAY THE SONG: the hand comes down, the record keeps standing up
+  const song = D.say(base, "drum:play the song");
+  const count = (m, l) => ev(m).filter((e) => e.d === l).length;
+  ok(count(song, "h") < count(base, "h"), "\"play the song\" left the hats where they were");
+  ok(count(song, "h") <= count(base, "h") / 2,
+     "the hand only came down from " + count(base, "h") + " to " + count(song, "h"));
+  ok(count(song, "k") === count(base, "k"), "playing the song moved the kick");
+  ok(count(song, "s") === count(base, "s"), "playing the song moved the backbeat");
+  ok(count(song, "p") === 0 && count(song, "o") === 0, "the decoration stayed");
+  ok(ev(song).every((e) => Number.isFinite(e.vel)), "\"play the song\" renders a velocity that is not a number");
+  ok(ev(song).length > 0, "playing the song stopped the drums");
+  // (e3) A SENTENCE: two bars, the second answering the first
+  const bar = (m, b) => JSON.stringify(ev(m).filter((e) => e.t >= b * 16 && e.t < (b + 1) * 16)
+    .map((e) => [e.d, +(e.t - b * 16).toFixed(2)]));
+  ok(bar(base, 0) === bar(base, 1), "a plain groove already differs bar to bar");
+  const said = D.say(base, "answer");
+  ok(!!said.answer, "\"answer yourself\" was not recorded");
+  ok(bar(said, 0) !== bar(said, 1), "the answer bar is the same bar again");
+  ok(bar(said, 0) === bar(said, 2) && bar(said, 1) === bar(said, 3),
+     "the sentence is not two bars long");
+  ok(bar(said, 0) === bar(base, 0), "answering changed the bar that asks");
+  ok(JSON.stringify(D.say(said, "answer").answer) === "false",
+     "the sentence cannot be taken back");
+  ok(bar(D.say(said, "answer"), 0) === bar(D.say(said, "answer"), 1),
+     "taking the answer back left it in");
+  // every one of them still renders something a machine can play
+  for (const m of [tom, down, song, said])
+    ok(ev(m).every((e) => Number.isFinite(e.t) && Number.isFinite(e.vel) && K.LANES[e.d]),
+       "a new word rendered something the kit has no drum for");
 }
 
 console.log(fails ? "\ndrums-kit: FAIL — " + fails + " of " + (pass + fails)

@@ -26,6 +26,7 @@ const P = { deg: new Array(16).fill(0), oct: new Array(16).fill(0),
   vel: new Array(16).fill(6), inc: new Array(16).fill(0), stk: new Array(16).fill(0),
   gate: new Array(16).fill(0), acc: new Array(16).fill(0), sld: new Array(16).fill(0) };
 const on = () => ({ ...Band.blank(), on: true });
+const ENGIDS = Band.ENG.map((d) => d.id);
 const play = (g) => ({ drums: K.drums(P, g, g.bars), bass: K.bass(P, g, g.bars) });
 const sig = (o) => JSON.stringify(o.drums.map((e) => [+e.t.toFixed(3), e.d, e.vel])) +
                    "|" + JSON.stringify(o.bass.map((e) => [+e.t.toFixed(3), e.n]));
@@ -34,7 +35,8 @@ const sig = (o) => JSON.stringify(o.drums.map((e) => [+e.t.toFixed(3), e.d, e.ve
 console.log("an arranger and two players, each asked what is theirs");
 {
   const m = on();
-  ok(Band.SEATS.join(",") === "arranger,drums,bass", "the band is " + Band.SEATS.join(","));
+  ok(Band.SEATS.join(",") === "arranger,drums,bass,engineer",
+     "the band is " + Band.SEATS.join(","));
   for (const seat of Band.SEATS) {
     const ds = Band.seatDecisions(m, seat);
     ok(ds.length > 0, seat + " is asked nothing");
@@ -450,6 +452,67 @@ console.log("every record says what its bass sounds like");
      "a bassist told to let them ring is still playing the record's staccato");
 }
 
+/* (l) SOMEBODY IS MIXING THIS */
+// A band in a room is four jobs. How close the mics are, how big the kick
+// is, whether the snare has a plate on it and how hard the whole thing is
+// squeezed are decisions no amount of drumming makes.
+console.log("the engineer has the fourth chair, and it lands on the desk");
+{
+  const CHAN = /^(drums|bass|lead|master|unit:[a-z]+)$/;
+  const KEYS = ["fader", "rev", "del", "pan", "eq", "mute",
+                "glue", "drive", "tape", "space"];
+  ok(Band.SEATS.includes("engineer"), "there is nobody mixing this");
+  const m0 = on();
+  const ds = Band.seatDecisions(m0, "engineer");
+  ok(ds.length >= 6, "the engineer is asked " + ds.length + " things");
+  for (const d of ds) {
+    ok(d.ask.endsWith("?"), "\"" + d.ask + "\" is not a question");
+    ok(d.opts.length >= 2, "\"" + d.ask + "\" offers one answer");
+    for (const o of d.opts) {
+      ok(o.mix && typeof o.mix === "object", d.id + "/" + o.w + " says nothing to the desk");
+      for (const [chan, vals] of Object.entries(o.mix)) {
+        ok(CHAN.test(chan), d.id + "/" + o.w + ": \"" + chan + "\" is not a channel the desk has");
+        for (const [k, v] of Object.entries(vals)) {
+          ok(KEYS.includes(k), d.id + "/" + o.w + ": the desk has no \"" + k + "\"");
+          if (k === "eq") for (const [b2, db] of Object.entries(v))
+            ok(["lo", "mid", "hi"].includes(b2) && Math.abs(db) <= 12,
+               d.id + "/" + o.w + ": eq " + b2 + " " + db);
+          else if (["rev", "del", "glue", "drive", "tape", "space"].includes(k))
+            ok(v >= 0 && v <= 1, d.id + "/" + o.w + ": " + k + " " + v + " is outside 0..1");
+          else if (k === "fader") ok(Math.abs(v) <= 12, d.id + "/" + o.w + ": a " + v + " dB fader");
+        }
+      }
+    }
+  }
+  // the seats do not do each other's jobs
+  for (const d of ds) ok(!["key", "form", "groove", "job", "tempo"].includes(d.id),
+    "the engineer is deciding " + d.id);
+  for (const seat of ["arranger", "drums", "bass"])
+    for (const d of Band.seatDecisions(m0, seat))
+      ok(!ENGIDS.includes(d.id), "the " + seat + " chair is being asked " + d.id);
+  // an empty board until somebody says something
+  ok(Object.keys(Band.mixOf(m0)).length === 0, "the board is not flat before anybody touches it");
+  // ...and every answer lands on it
+  for (const d of ds)
+    for (const o of d.opts) {
+      const m = Band.answer(m0, "engineer", d.id, o.w);
+      ok((m.eng || {})[d.id] === o.w, d.id + ": \"" + o.w + "\" was not recorded");
+      ok(JSON.stringify(Band.mixOf(m)) === JSON.stringify(o.mix),
+         d.id + "/" + o.w + ": the desk heard " + JSON.stringify(Band.mixOf(m)));
+      // ...and mixing changes nothing about what anybody PLAYS
+      ok(JSON.stringify(Band.toSong(m, MODES).map((s2) => sig(play(s2.genre)))) ===
+         JSON.stringify(Band.toSong(m0, MODES).map((s2) => sig(play(s2.genre)))),
+         d.id + "/" + o.w + ": mixing the record changed the notes");
+    }
+  // two hands on the same channel add rather than replace
+  const both = Band.answer(Band.answer(m0, "engineer", "room", "down the hall"),
+                           "engineer", "snare", "a plate on it");
+  const mix = Band.mixOf(both);
+  ok(mix["unit:snare"] && mix["unit:snare"].del > 0 && mix["unit:snare"].rev > 0,
+     "two answers on the snare did not stack: " + JSON.stringify(mix["unit:snare"]));
+  ok(mix.drums && mix.drums.rev === 0.5, "the room went missing when the snare was set");
+}
+
 /* (e) NOTHING NUMERIC CARRIES A WORD */
 // The swing NaN: the genre once held the WORD "swing" where the kernel
 // computes (i % 2) * (g.swing || 0), and every time in the record became
@@ -474,5 +537,5 @@ console.log("no word ever sits in a numeric field");
 }
 
 console.log(fails ? `\nband-kit: FAIL — ${fails} of ${pass + fails}`
-  : `\nband-kit: PASS — ${pass} checks (three seats, the arranger owns the tune, every form plays, a section is its own)`);
+  : `\nband-kit: PASS — ${pass} checks (four chairs, the arranger owns the tune, every form plays, a section is its own, the engineer mixes it)`);
 process.exit(fails ? 1 : 0);

@@ -8,7 +8,8 @@ const Band = window.NuBand;
 const { blank, catalog, say, says, toSong, seatDecisions, nextAsk, nextAnywhere,
         answer, SEATS, sectionAsks, setSection } = Band;
 import { GENRES, NuSong, MODES } from "./deps.js";
-import { adoptSong, SONG, on, commit, setBpm, setSwing, setPoolChair } from "./state.js";
+import { adoptSong, SONG, on, commit, setBpm, setSwing, setPoolChair,
+         setMixOffset, clearMixOffsets } from "./state.js";
 import { startAt, stop, playing, warmup, getPosition, passAt } from "../audio/live.js";
 
 const $ = (id) => document.getElementById(id);
@@ -44,6 +45,14 @@ function push(first) {
   setBpm(model.song.bpm);
   setSwing(model.song.swing || null);
   setPoolChair("bass", model.bass.instr);
+  // THE ENGINEER'S HAND ON THE DESK. Everything the fourth chair decides is
+  // a mix OFFSET (ui/state.js MIXER, applied in audio/desk.js over the
+  // composed mix), so the engineer needs no audio path of its own — it is
+  // the same board the mixer page writes. Cleared and rewritten whole on
+  // every push: what the engineer said IS the board on this page.
+  clearMixOffsets();
+  for (const [chan, vals] of Object.entries(Band.mixOf(model)))
+    for (const [k, v] of Object.entries(vals)) setMixOffset(chan, k, v);
   const boxes = song.map((s2, i) => ({ ...NuSong.emptyBox(),
     stack: [{ g: GKP + i, slots: [0] }], len: s2.bars, role: s2.role, cue: s2.role }));
   if (first) adoptSong({ v: NuSong.VERSION, bpm: model.song.bpm, genres: {},

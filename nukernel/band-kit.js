@@ -17,12 +17,76 @@
 })(typeof self !== "undefined" ? self : this, function (D, B) {
   "use strict";
 
-  const SEATS = ["arranger", "drums", "bass"];
+  const SEATS = ["arranger", "drums", "bass", "engineer"];
   // the questions the ARRANGER has already answered, so the players stop
   // asking them: a drummer does not set the tempo, a bassist does not pick
   // the key
   const TAKEN = { drums: ["tempo", "feel", "record"],
                   bass: ["key", "mode", "changes", "tempo", "feel"] };
+
+  /* ---------- THE FOURTH CHAIR: SOMEBODY IS MIXING THIS -------------------
+     A band in a room is four jobs, not three. The drummer decides what they
+     PLAY; how close the mics are, how big the kick is, whether the snare has
+     a plate on it and how hard the whole thing is squeezed are somebody
+     else's decisions entirely, and no amount of drumming makes them.
+     Everything here lands on the desk nukernel already has — the mix-offset
+     layer (ui/state.js MIXER, applied in audio/desk.js over the composed
+     mix), addressed by the channels it already understands: a part chan
+     ("drums", "bass"), a UNIT chan ("unit:kick"), and "master". */
+  const ENG = [
+    { id: "room", ask: "how close are the drums?", opts: [
+      { w: "right up close", mix: {} },
+      { w: "in the room", mix: { drums: { rev: 0.25 } } },
+      { w: "down the hall", mix: { drums: { rev: 0.5 }, "unit:snare": { del: 0.12 } } } ] },
+    { id: "kick", ask: "how big is the kick?", opts: [
+      { w: "tight", mix: { "unit:kick": { eq: { lo: -2, hi: 2 } } } },
+      { w: "round", mix: { "unit:kick": { eq: { lo: 3 } } } },
+      { w: "huge", mix: { "unit:kick": { eq: { lo: 6 }, fader: 2 } } } ] },
+    { id: "snare", ask: "and the snare?", opts: [
+      { w: "dry, cracking", mix: { "unit:snare": { eq: { hi: 3 } } } },
+      { w: "fat", mix: { "unit:snare": { eq: { lo: 3, mid: 2 } } } },
+      { w: "a plate on it", mix: { "unit:snare": { rev: 0.45 } } } ] },
+    { id: "hats", ask: "the hats?", opts: [
+      { w: "keep them down", mix: { "unit:hat": { fader: -4 } } },
+      { w: "as they are", mix: {} },
+      { w: "bright", mix: { "unit:hat": { eq: { hi: 4 }, fader: 1 } } } ] },
+    { id: "squeeze", ask: "how hard do you squeeze it?", opts: [
+      { w: "leave it alone", mix: {} },
+      { w: "a little glue", mix: { master: { glue: 0.3 } } },
+      { w: "pumping", mix: { master: { glue: 0.7, drive: 0.2 } } } ] },
+    { id: "tape", ask: "how much tape?", opts: [
+      { w: "none", mix: {} },
+      { w: "warm", mix: { master: { tape: 0.35 } } },
+      { w: "cooking", mix: { master: { tape: 0.7, drive: 0.3 } } } ] },
+    { id: "bassmix", ask: "where does the bass sit?", opts: [
+      { w: "under everything", mix: { bass: { fader: -3 } } },
+      { w: "with the kick", mix: {} },
+      { w: "out front", mix: { bass: { fader: 3 } } } ] },
+  ];
+  const engDecisions = (m) => ENG.map((d) => ({
+    ...d, seat: "engineer", answered: (m.eng || {})[d.id] || null,
+    opts: d.opts.map((o) => ({ ...o, answered: (m.eng || {})[d.id] === o.w,
+      active: (m.eng || {})[d.id] === o.w })) }));
+  // WHAT THE DESK IS TOLD: every answer's offsets, summed per channel. Two
+  // answers that touch the same channel add rather than replace, the way two
+  // hands on a board would.
+  function mixOf(m) {
+    const out = {};
+    for (const d of ENG) {
+      const w = (m.eng || {})[d.id];
+      const o = w && d.opts.find((x) => x.w === w);
+      if (!o) continue;
+      for (const [chan, vals] of Object.entries(o.mix)) {
+        const c = out[chan] || (out[chan] = {});
+        for (const [k, v] of Object.entries(vals)) {
+          if (k === "eq") { const e = c.eq || (c.eq = {});
+            for (const [b, db] of Object.entries(v)) e[b] = (e[b] || 0) + db; }
+          else c[k] = (c[k] || 0) + v;
+        }
+      }
+    }
+    return out;
+  }
 
   const blank = () => ({ on: false, seat: "arranger",
     song: { key: "C", minor: false, form: null, chg: {}, bpm: 96, swing: null, answers: {} },
@@ -314,6 +378,7 @@
   };
   const seatDecisions = (m, seat) => {
     if (seat === "arranger") return narrow(m, seat, arrDecisions(m));
+    if (seat === "engineer") return engDecisions(m);
     const drop = TAKEN[seat] || [];
     const ds = seat === "drums" ? D.decisions(m.drums) : B.decisions(m.bass);
     return narrow(m, seat, ds.filter((d) => !drop.includes(d.id))
@@ -353,6 +418,11 @@
         if (gk) out = called(out, gk);
       }
       return out;
+    }
+    if (seat === "engineer") {
+      const d = ENG.find((x) => x.id === id);
+      if (!d || !d.opts.some((o) => o.w === w)) return m;
+      return { ...m, eng: { ...(m.eng || {}), [id]: w } };
     }
     if (seat === "drums") return { ...m, drums: D.answer(m.drums, id, w) };
     return { ...m, bass: B.answer(m.bass, id, w) };
@@ -576,7 +646,8 @@
     };
   }
 
-  return { SEATS, TAKEN, FORMS, CALLED, GENRES, SPACE, ROLE, genreOf, rolesIn,
+  return { SEATS, TAKEN, FORMS, CALLED, GENRES, SPACE, ROLE, ENG, mixOf,
+           genreOf, rolesIn,
            secWords, partOf,
            blank, decisions, seatDecisions,
            nextAsk, nextAnywhere, answer, catalog, say, says, toGenre, toSong,
