@@ -735,8 +735,12 @@ pages beside the daw, each a MUSICIAN you talk to rather than a grid you edit.
 `drums-kit.js` is the drummer (44 grooves, 30+ drummer words, a ten-question
 interview, and THREE TOMS — the kernel has routed t/m/l to tomHi/tom/tomLo all
 along and this file only ever wrote `t`, so a tom was a texture and never a
-melody), `bass-kit.js` the bassist, `band-kit.js` an ARRANGER and an ENGINEER
-over both — the fourth chair decides how close the mics are, how big the kick
+melody), `bass-kit.js` the bassist (figures — an acid line is a written-out part with
+octaves, accents and slides, plus the 303's own panel), `keys-kit.js` the
+KEYS PLAYER (the first chair that plays HARMONY: pads/comping/skank/riff/
+counter/arpeggios/drone are the kernel's own PARTS, and the chair writes both
+a part and the box's PHRASE), `band-kit.js` an ARRANGER and an ENGINEER over
+all three — the fourth chair decides how close the mics are, how big the kick
 is and how hard it is squeezed, all of it landing on the mix-offset layer
 (ui/state.js MIXER → audio/desk.js) rather than any audio path of its own:
 the arranger calls the genre (15 records) which NARROWS what the players may

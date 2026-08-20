@@ -35,7 +35,7 @@ const sig = (o) => JSON.stringify(o.drums.map((e) => [+e.t.toFixed(3), e.d, e.ve
 console.log("an arranger and two players, each asked what is theirs");
 {
   const m = on();
-  ok(Band.SEATS.join(",") === "arranger,drums,bass,engineer",
+  ok(Band.SEATS.join(",") === "arranger,drums,bass,keys,engineer",
      "the band is " + Band.SEATS.join(","));
   for (const seat of Band.SEATS) {
     const ds = Band.seatDecisions(m, seat);
@@ -131,7 +131,8 @@ console.log("what happens in the chorus stays in the chorus");
   let m = Band.answer(on(), "arranger", "form", Band.FORMS.pop.w);
   const before = Band.toSong(m, MODES).map((s) => sig(play(s.genre)));
   const asks = Band.sectionAsks(m, 1);
-  ok(asks.map((a) => a.id).join(",") === "drums,dwords,bass,bwords,mix,move,band",
+  ok(asks.map((a) => a.id).join(",") ===
+     "drums,dwords,keys,kwords,bass,bwords,mix,move,band",
      "a section asks " + asks.map((a) => a.id).join(","));
   let movers = 0;
   for (const a of asks) {
@@ -719,6 +720,75 @@ console.log("the bassist holds the record's line, and a chair can be cleared");
     }
 }
 
+/* (p) SOMEBODY IS PLAYING THE CHORDS */
+// The arranger called the changes, the bassist realized their roots, and
+// until this chair the chords themselves were imaginary — a rhythm section,
+// not a band. A keys player is also not a pad machine: pads are one of the
+// things a pair of hands does.
+console.log("the fifth chair plays the harmony that was being called");
+{
+  const Ky = Band.Ky;
+  const m0 = on();
+  ok(Band.SEATS.includes("keys"), "nobody is playing the chords");
+  const ds = Band.seatDecisions(m0, "keys");
+  ok(ds.length >= 5, "the keys player is asked " + ds.length + " things");
+  for (const id of Band.TAKEN.keys)
+    ok(!ds.some((d) => d.id === id), "the keys player is still asked " + id);
+  // the chair reaches the genre AND the phrase
+  for (const [k, j] of Object.entries(Ky.JOBS)) {
+    const m = { ...m0, keys: Ky.say(m0.keys, "job:" + k) };
+    const s2 = Band.toSong(m, MODES)[0];
+    ok(typeof s2.genre.part === "function", k + ": the section carries no part");
+    ok(s2.genre.part(0) === (j.part || "line"), k + ": the part is " + s2.genre.part(0));
+    ok(s2.pattern && s2.pattern.gate.length === 16, k + ": the section carries no phrase");
+    const ev = K.render(s2.pattern, s2.genre, s2.bars);
+    if (k === "out") ok(ev.length === 0, k + " played " + ev.length + " notes");
+    else {
+      ok(ev.length > 0, k + " plays nothing in the band");
+      ok(ev.every((e) => Number.isFinite(e.n) && Number.isFinite(e.t)), k + " is not finite");
+    }
+  }
+  // A CHORD IS SEVERAL NOTES, and they move with the called changes
+  const s3 = Band.toSong(m0, MODES)[0];
+  const ev = K.render(s3.pattern, s3.genre, s3.bars);
+  ok(ev.filter((e) => e.t === 0).length >= 3, "the first chord is one note");
+  const perBar = [0, 1, 2, 3].map((b) => ev.filter((e) => e.t >= b * 16 && e.t < (b + 1) * 16)
+    .map((e) => e.n).sort().join(","));
+  ok(new Set(perBar).size > 1, "the chords never move: " + perBar[0]);
+  // ...and every record narrows the keys the way it narrows everything else
+  for (const [key, gk] of Object.entries(Band.GENRES)) {
+    ok(Array.isArray(gk.keys) && gk.keys.length >= 3,
+       key + " offers " + ((gk.keys || []).length) + " keyboards");
+    for (const w of gk.keys)
+      ok(Object.values(Ky.INSTRUMENTS).includes(w), key + ": nobody makes \"" + w + "\"");
+    ok(!gk.kjob || Ky.JOBS[gk.kjob], key + ": there is no job called " + gk.kjob);
+    const m = Band.answer(on(), "arranger", "genre", gk.w);
+    ok(gk.keys.includes(Ky.INSTRUMENTS[m.keys.instr]),
+       key + ": the keys picked up " + Ky.INSTRUMENTS[m.keys.instr]);
+    if (gk.kjob) ok(m.keys.job === gk.kjob, key + ": the keys are " + m.keys.job);
+    const iq = Band.seatDecisions(m, "keys").find((d) => d.id === "instr");
+    for (const o of iq.opts) ok(gk.keys.includes(o.w),
+      key + ": \"" + o.w + "\" is not on this record");
+  }
+  // a section can tell them something, and it stays in that section
+  let m = Band.answer(Band.answer(on(), "arranger", "genre", "a house record"),
+                      "arranger", "form", Band.FORMS.pop.w);
+  const before = Band.toSong(m, MODES).map((s4) =>
+    JSON.stringify([s4.pattern.gate, s4.genre.part(0)]));
+  const ask = Band.sectionAsks(m, 1).find((a) => a.id === "keys");
+  ok(!!ask && ask.opts.length >= 5, "a section cannot tell the keys anything");
+  for (const o of ask.opts) {
+    const m2 = Band.setSection(m, 1, "keys", o.key);
+    const after = Band.toSong(m2, MODES).map((s4) =>
+      JSON.stringify([s4.pattern.gate, s4.genre.part(0)]));
+    for (let i = 0; i < after.length; i++)
+      if (i !== 1) ok(after[i] === before[i],
+        "\"" + o.w + "\" in the chorus changed section " + i);
+    ok(JSON.stringify(m2.keys) === JSON.stringify(m.keys),
+       "\"" + o.w + "\" said about one section changed the player for the whole song");
+  }
+}
+
 /* (e) NOTHING NUMERIC CARRIES A WORD */
 // The swing NaN: the genre once held the WORD "swing" where the kernel
 // computes (i % 2) * (g.swing || 0), and every time in the record became
@@ -743,5 +813,5 @@ console.log("no word ever sits in a numeric field");
 }
 
 console.log(fails ? `\nband-kit: FAIL — ${fails} of ${pass + fails}`
-  : `\nband-kit: PASS — ${pass} checks (four chairs, the arranger owns the tune, every form plays, a section is its own, the engineer mixes it)`);
+  : `\nband-kit: PASS — ${pass} checks (five chairs, the arranger owns the tune, every form plays, a section is its own, the engineer mixes it)`);
 process.exit(fails ? 1 : 0);

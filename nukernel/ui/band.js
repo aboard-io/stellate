@@ -8,7 +8,7 @@ const Band = window.NuBand;
 const { blank, catalog, say, says, toSong, seatDecisions, nextAsk, nextAnywhere,
         answer, SEATS, sectionAsks, setSection } = Band;
 import { GENRES, NuSong, MODES } from "./deps.js";
-import { adoptSong, SONG, on, commit, setBpm, setSwing, setPoolChair,
+import { adoptSong, SONG, SLOTS, putPhrase, on, commit, setBpm, setSwing, setPoolChair,
          setMixOffset, clearMixOffsets } from "./state.js";
 import { startAt, stop, playing, warmup, getPosition, passAt } from "../audio/live.js";
 
@@ -45,6 +45,10 @@ function push(first) {
   setBpm(model.song.bpm);
   setSwing(model.song.swing || null);
   setPoolChair("bass", model.bass.instr);
+  // the keys player sits in whichever chair their JOB names — the pool casts
+  // by role, which is exactly what a part is
+  for (const chair of ["pad", "stab", "riff", "counter", "line", "drone"])
+    setPoolChair(chair, model.keys.job === "out" ? null : model.keys.instr);
   // THE ENGINEER'S HAND ON THE DESK. Everything the fourth chair decides is
   // a mix OFFSET (ui/state.js MIXER, applied in audio/desk.js over the
   // composed mix), so the engineer needs no audio path of its own — it is
@@ -53,12 +57,17 @@ function push(first) {
   clearMixOffsets();
   for (const [chan, vals] of Object.entries(Band.mixOf(model)))
     for (const [k, v] of Object.entries(vals)) setMixOffset(chan, k, v);
+  // THE KEYS PLAYER'S PHRASE, per section: a pitched voice is a part and a
+  // PHRASE, and only the phrase says where the hands fall. One slot per
+  // section, so a chorus can comp while the verse holds pads.
+  song.forEach((s2, i) => putPhrase(i, s2.pattern));
+  for (let i = song.length; i < SLOTS.length; i++) putPhrase(i, NuSong.blank());
   const boxes = song.map((s2, i) => ({ ...NuSong.emptyBox(),
-    stack: [{ g: GKP + i, slots: [0] }], len: s2.bars, role: s2.role, cue: s2.role,
+    stack: [{ g: GKP + i, slots: [i] }], len: s2.bars, role: s2.role, cue: s2.role,
     // ...and the engineer's hand on THIS section: the box's own strip
     ...(s2.box || {}) }));
   if (first) adoptSong({ v: NuSong.VERSION, bpm: model.song.bpm, genres: {},
-                         slots: [NuSong.blank()], song: boxes }, "band");
+                         slots: song.map((s2) => s2.pattern), song: boxes }, "band");
   else {
     // the form can change length, so the box list is replaced in place
     SONG.length = 0; for (const b of boxes) SONG.push(b);

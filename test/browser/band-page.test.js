@@ -49,10 +49,14 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
       if (b) b.click(); }, name); await page.waitForTimeout(320); };
   const plan = () => page.evaluate(async () => {
     const PL = await import("/nukernel/audio/plan.js"); PL.compile();
+    const bassV = (PL.cast() || []).find(c => c.chair === "bass");
     const out = { bars: PL.barCount(), drums: 0, pitched: 0, kicks: [] };
     for (let i = 0; i < PL.barCount(); i++) {
       const p = PL.barPlan(i);
-      out.drums += p.ev.drums.length; out.pitched += p.ev.pitched.length;
+      out.drums += p.ev.drums.length;
+      // the BASS's own notes — a keys player is also pitched, and "one note
+      // every four bars" was never a claim about the whole band
+      out.pitched += p.ev.pitched.filter(e => !bassV || e.voice === bassV.v).length;
       if (p.ev.drums.some(e => e.drum === "kick")) out.kicks.push(i);
     }
     return out; });
@@ -72,7 +76,7 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
   {
     const labels = await page.evaluate(() => [...document.querySelectorAll(".dseat")]
       .map(x => x.textContent));
-    ok(labels.length === 4, "the session has " + labels.length + " chairs");
+    ok(labels.length === 5, "the session has " + labels.length + " chairs");
     const counts = labels.map(l => parseInt((l.match(/(\d+) question/) || [])[1] || "0", 10));
     ok(counts.some(c => c > 1), "every chair claims one question: " + JSON.stringify(labels));
     ok(new Set(counts).size > 1, "every chair has the same number of questions left");
@@ -129,12 +133,17 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
   // and a gate as long as the note. This asks the VOICE the engine built.
   // the unit the bass notes are actually played by — the plan names it on
   // the event, and reading "the first pitched-looking unit" found the sfx
+  // WHICH VOICE IS THE BASS: the cast says so (plan.js cast()). Reading "the
+  // first pitched event" found the keys player the moment one sat down.
   const voice = () => page.evaluate(async () => {
     const PL = await import("/nukernel/audio/plan.js"); PL.compile();
-    const U = PL.unitTable() || {}, p = PL.barPlan(0);
-    const e = p.ev.pitched[0];
-    const u = e && U[e.voice];
+    const bassV = (PL.cast() || []).find(c => c.chair === "bass");
+    let e = null;
+    for (let i = 0; i < PL.barCount() && !e; i++)
+      e = PL.barPlan(i).ev.pitched.find(x => bassV && x.voice === bassV.v);
+    const u = e && ((PL.barPlan(0) || {}).units || {})[e.voice];
     return { module: u ? u.module : null, params: u ? u.params : null,
+             chair: bassV ? bassV.chair : null,
              zones: u && u.sampler ? (u.sampler.zones || []).length : 0,
              dur: e ? e.dur : 0 }; });
   const asArranger = async (w) => {
@@ -195,6 +204,10 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
       lo: U[k].sampler && U[k].sampler.strip ? U[k].sampler.strip.lo : null } : null;
     return { kick: one("kick"), snare: one("snare"), hat: one("hat") }; });
   {
+    // ...on a record with a SAMPLED kit, since the bottom band the gate reads
+    // is a sampler strip and a 909 is a module with no zones to shape
+    ok(await asArranger("a rock record"), "the record could not be changed to rock");
+    await page.waitForTimeout(400);
     await seat("engineer");
     const dq2 = (await q())[0] || "";
     ok(/drums|kick|snare|hats|squeeze|tape|bass/.test(dq2),
@@ -215,7 +228,9 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
     const after = await units();
     ok(after.kick.lvl > before.kick.lvl,
        "the kick was made huge and its level did not move (" + before.kick.lvl + " → " + after.kick.lvl + ")");
-    ok(after.kick.lo > before.kick.lo, "the kick was made huge and its bottom did not move");
+    ok(before.kick.lo == null || after.kick.lo > before.kick.lo,
+       "the kick was made huge and its bottom did not move (" +
+       JSON.stringify([before.kick.lo, after.kick.lo]) + ")");
     ok(after.snare.rev > before.snare.rev, "a plate on the snare added no reverb");
     ok(after.hat.lvl < before.hat.lvl, "the hats were told to come down and did not");
     ok(after.kick.rev > before.kick.rev, "the room never reached the kit");
@@ -280,11 +295,32 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
     ok(/techno/.test(await page.evaluate(() => window.__bandModel())),
        "the record did not become a techno record");
     await seat("bass");
+    // ...with a machine in your hands. Earlier blocks walk this chair and
+    // clear it, so the bass in it is whatever they left — and a P-bass has
+    // no filter to read.
+    for (let i = 0; i < 12; i++) {
+      if (await page.evaluate(() => JSON.parse(window.__bandModel()).bass.instr === "bass_lead")) break;
+      if (await page.evaluate(() => { const f = [...document.querySelectorAll(".dfact")]
+        .find(x => (x.querySelector("b") || {}).textContent === "instr");
+        if (f) { f.click(); return true; } return false; })) {
+        await page.waitForTimeout(260);
+        if (await tap("a synth bass")) continue;
+      }
+      const list = (await opts()).filter(o => !o.dead);
+      if (!list.length) break;
+      await tap(list[0].w);
+    }
+    ok(await page.evaluate(() => JSON.parse(window.__bandModel()).bass.instr === "bass_lead"),
+       "the bassist could not be handed a machine");
+    // the BASS's own voice — with a keys player in the room the first
+    // pitched event on the bar is somebody else's
     const voiceNow = () => page.evaluate(async () => {
       const PL = await import("/nukernel/audio/plan.js"); PL.compile();
       const U = (PL.barPlan(0) || {}).units || {}, p = PL.barPlan(0);
-      const e = p.ev.pitched[0], u = e && U[e.voice];
-      return { params: u ? u.params : null, notes: p.ev.pitched.map(x => x.pch) }; });
+      const bassV = (PL.cast() || []).find(c => c.chair === "bass");
+      const mine = p.ev.pitched.filter(x => bassV && x.voice === bassV.v);
+      const e = mine[0] || p.ev.pitched[0], u = e && U[e.voice];
+      return { params: u ? u.params : null, notes: mine.map(x => x.pch) }; });
     const before = await voiceNow();
     // reach the machine panel through the sheet
     // A SUBJECT IS EITHER A FACT OR THE QUESTION IN FRONT OF YOU. An
@@ -361,6 +397,64 @@ const ok = (b, msg) => { checks++; if (!b) { fails++; console.log("  ✗ " + msg
     await page.evaluate(() => { const b = [...document.querySelectorAll(".dpinkey")].pop();
       if (b) b.click(); });
     await page.waitForTimeout(250);
+  }
+
+  // ── SOMEBODY IS PLAYING THE CHORDS ──
+  // Until the fifth chair the harmony was called and voiced by nobody. The
+  // proof is the compiled bar: chords under the bass, moving with the
+  // changes, and gone when the player lays out.
+  {
+    const pitched = () => page.evaluate(async () => {
+      const PL = await import("/nukernel/audio/plan.js"); PL.compile();
+      const keysV = (PL.cast() || []).find(c => c.chair !== "bass");
+      const byVoice = {}, atZero = [];
+      for (let i = 0; i < PL.barCount(); i++)
+        for (const e of PL.barPlan(i).ev.pitched) {
+          byVoice[e.voice] = (byVoice[e.voice] || 0) + 1;
+          if (i === 0 && e.beat === 0 && (!keysV || e.voice === keysV.v)) atZero.push(e.pch);
+        }
+      return { byVoice, atZero, voices: Object.keys(byVoice).length,
+               cast: (PL.cast() || []).map(c => c.chair) }; });
+    // ...on a record whose keys hold PADS — techno's keys default to a drone,
+    // and a drone is one note on purpose
+    ok(await asArranger("a house record"), "the record could not be changed to house");
+    await page.waitForTimeout(400);
+    await seat("keys");
+    const kq = (await q())[0] || "";
+    ok(/playing|job|sit|bright|arrive|leave|colour/.test(kq),
+       "in the keys chair the question is \"" + kq + "\"");
+    const held = await pitched();
+    ok(held.voices >= 2, "only " + held.voices + " pitched voice on a record with keys in it");
+    ok(held.atZero.length >= 3, "the first chord is " + held.atZero.length + " note(s)");
+    // comping is a different phrase from pads, in the bar the engine is handed
+    const before = JSON.stringify(held.byVoice);
+    for (let i = 0; i < 8; i++) {
+      if (await tap("comping the changes")) break;
+      const list = (await opts()).filter(o => !o.dead);
+      if (!list.length) break;
+      await tap(list[0].w);
+    }
+    await page.waitForTimeout(500);
+    ok(JSON.stringify((await pitched()).byVoice) !== before,
+       "comping played exactly what the pads did: " + before);
+    // ...and laying out really stops. The job is a FACT by now, so the way
+    // back to it is its own chip.
+    for (let i = 0; i < 12; i++) {
+      if (await tap("lay out")) break;
+      const opened = await page.evaluate(() => { const f = [...document.querySelectorAll(".dfact")]
+        .find(x => (x.querySelector("b") || {}).textContent === "job" ||
+                   (x.querySelector("b") || {}).textContent === "what you are playing");
+        if (f) { f.click(); return true; } return false; });
+      if (opened) { await page.waitForTimeout(260); continue; }
+      const list = (await opts()).filter(o => !o.dead);
+      if (!list.length) break;
+      await tap(list[0].w);
+    }
+    await page.waitForTimeout(500);
+    const out = await pitched();
+    ok(out.voices <= 1 || !out.cast.some(c => c !== "bass"),
+       "the keys player laid out and is still playing: " +
+       JSON.stringify([out.byVoice, out.cast]));
   }
 
   // ── THE PAGE SCROLLS ──

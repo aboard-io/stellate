@@ -11,18 +11,20 @@
 (function (root, factory) {
   const api = factory(
     typeof require !== "undefined" ? require("./drums-kit.js") : root.NuDrums,
-    typeof require !== "undefined" ? require("./bass-kit.js") : root.NuBass);
+    typeof require !== "undefined" ? require("./bass-kit.js") : root.NuBass,
+    typeof require !== "undefined" ? require("./keys-kit.js") : root.NuKeys);
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuBand = api;
-})(typeof self !== "undefined" ? self : this, function (D, B) {
+})(typeof self !== "undefined" ? self : this, function (D, B, Ky) {
   "use strict";
 
-  const SEATS = ["arranger", "drums", "bass", "engineer"];
+  const SEATS = ["arranger", "drums", "bass", "keys", "engineer"];
   // the questions the ARRANGER has already answered, so the players stop
   // asking them: a drummer does not set the tempo, a bassist does not pick
   // the key
   const TAKEN = { drums: ["tempo", "feel", "record"],
-                  bass: ["key", "mode", "changes", "tempo", "feel"] };
+                  bass: ["key", "mode", "changes", "tempo", "feel"],
+                  keys: ["key", "mode", "changes", "tempo", "feel"] };
 
   /* ---------- THE FOURTH CHAIR: SOMEBODY IS MIXING THIS -------------------
      A band in a room is four jobs, not three. The drummer decides what they
@@ -113,7 +115,8 @@
 
   const blank = () => ({ on: false, seat: "arranger",
     song: { key: "C", minor: false, form: null, chg: {}, bpm: 96, swing: null, answers: {} },
-    drums: D.say(D.blank(), "start"), bass: B.say(B.blank(), "start") });
+    drums: D.say(D.blank(), "start"), bass: B.say(B.blank(), "start"),
+    keys: Ky.say(Ky.blank(), "start") });
 
   /* ---------- WHAT EACH PLAYER DOES IN EACH SECTION -----------------------
      The gig sheet sets up the SONG; a section is where a band actually
@@ -185,85 +188,85 @@
      row that names a groove or a machine nobody has fails the gate rather
      than quietly offering nothing. */
   const GENRES = {
-    house:   { w: "a house record", fam: "the floor", bpm: 120, forms: ["vamp", "dance", "twelve", "dj"], fig: "offbeat", artic: "staccato", tone: { cut: 700,  q: 6,  rel: 0.16 },
+    house:   { w: "a house record", fam: "the floor", bpm: 120, keys: ["a warm pad", "a polysynth", "a Rhodes", "an electric piano", "strings"], kjob: "pads", forms: ["vamp", "dance", "twelve", "dj"], fig: "offbeat", artic: "staccato", tone: { cut: 700,  q: 6,  rel: 0.16 },
                grooves: ["house", "four on the floor", "disco", "uk garage"],
                machines: ["909", "808", "electronic kit"],
                styles: ["hold the root", "octaves", "eighths, driving"],
                instr: ["a synth bass", "fingers on a P-bass"],
                chg: ["the four-chord one", "a minor vamp", "one chord, all night"] },
-    techno:  { w: "a techno record", fam: "the floor", bpm: 120, forms: ["vamp", "dance", "twelve", "dj"], fig: "acid", artic: "staccato", tone: { cut: 600,  q: 8,  rel: 0.13 },
+    techno:  { w: "a techno record", fam: "the floor", bpm: 120, keys: ["a glassy pad", "a polysynth", "a warm pad", "strings"], kjob: "drone", forms: ["vamp", "dance", "twelve", "dj"], fig: "acid", artic: "staccato", tone: { cut: 600,  q: 8,  rel: 0.13 },
                grooves: ["techno", "four on the floor", "gabber"],
                machines: ["909", "606", "electronic kit"],
                styles: ["hold the root", "eighths, driving", "sixteenths, busy"],
                instr: ["a synth bass", "with a pick"],
                chg: ["one chord, all night", "a pedal point", "a minor vamp"] },
-    disco:   { w: "a disco record", fam: "the floor", bpm: 120, forms: ["dance", "versechorus", "vamp", "twelve"], fig: "discoct", artic: "staccato", tone: { cut: 950,  q: 3,  rel: 0.20 },
+    disco:   { w: "a disco record", fam: "the floor", bpm: 120, keys: ["a Rhodes", "strings", "a clav", "an electric piano"], kjob: "comp", forms: ["dance", "versechorus", "vamp", "twelve"], fig: "discoct", artic: "staccato", tone: { cut: 950,  q: 3,  rel: 0.20 },
                grooves: ["disco", "four on the floor", "two step"],
                machines: ["acoustic kit", "room kit", "909"],
                styles: ["octaves", "eighths, driving", "hold the root"],
                instr: ["fingers on a P-bass", "with a pick"],
                chg: ["the four-chord one", "two-five-one", "the fifties changes"] },
-    hiphop:  { w: "a boom-bap record", fam: "breaks", bpm: 96, forms: ["versechorus", "pop", "vamp"], artic: "normal", tone: { cut: 520,  q: 2,  rel: 0.45 },
+    hiphop:  { w: "a boom-bap record", fam: "breaks", bpm: 96, keys: ["a Rhodes", "an electric piano", "a warm pad", "a grand piano"], kjob: "pads", forms: ["versechorus", "pop", "vamp"], artic: "normal", tone: { cut: 520,  q: 2,  rel: 0.45 },
                grooves: ["boom bap", "breakbeat", "trap"],
                machines: ["808", "909", "acoustic kit"],
                styles: ["hold the root", "octaves"],
                instr: ["a synth bass", "fingers on a P-bass"],
                chg: ["a minor vamp", "one chord, all night", "two-five-one"] },
-    jungle:  { w: "a jungle record", fam: "breaks", bpm: 144, forms: ["dance", "twelve", "vamp", "dj"], artic: "normal", tone: { cut: 480,  q: 5,  rel: 0.70 },
+    jungle:  { w: "a jungle record", fam: "breaks", bpm: 144, keys: ["a glassy pad", "a warm pad", "a polysynth", "strings"], kjob: "pads", forms: ["dance", "twelve", "vamp", "dj"], artic: "normal", tone: { cut: 480,  q: 5,  rel: 0.70 },
                grooves: ["amen break", "jungle", "breakbeat"],
                machines: ["electronic kit", "909", "acoustic kit"],
                styles: ["hold the root", "octaves"],
                instr: ["a synth bass", "with a pick"],
                chg: ["a minor vamp", "one chord, all night"] },
-    rock:    { w: "a rock record", fam: "rock", bpm: 120, forms: ["versechorus", "pop", "full", "aaba"], artic: "normal", tone: { cut: 1100, q: 2,  rel: 0.24 },
+    rock:    { w: "a rock record", fam: "rock", bpm: 120, keys: ["an organ", "a rock organ", "a grand piano", "an upright"], kjob: "comp", forms: ["versechorus", "pop", "full", "aaba"], artic: "normal", tone: { cut: 1100, q: 2,  rel: 0.24 },
                grooves: ["straight rock", "driving rock", "stomp", "half time"],
                machines: ["acoustic kit", "room kit", "big kit"],
                styles: ["hold the root", "eighths, driving", "root and fifth"],
                instr: ["with a pick", "fingers on a P-bass"],
                chg: ["the fifties changes", "the four-chord one", "a twelve-bar blues"] },
-    punk:    { w: "a punk record", fam: "rock", bpm: 144, forms: ["versechorus", "pop", "vamp"], fig: "pump", artic: "staccato", tone: { cut: 1400, q: 2,  rel: 0.18 },
+    punk:    { w: "a punk record", fam: "rock", bpm: 144, keys: ["a rock organ", "an organ", "an upright"], kjob: "comp", forms: ["versechorus", "pop", "vamp"], fig: "pump", artic: "staccato", tone: { cut: 1400, q: 2,  rel: 0.18 },
                grooves: ["punk", "driving rock", "stomp"],
                machines: ["acoustic kit", "big kit"],
                styles: ["eighths, driving", "hold the root"],
                instr: ["with a pick", "fingers on a P-bass"],
                chg: ["the four-chord one", "the fifties changes"] },
-    kraut:   { w: "a krautrock record", fam: "rock", bpm: 120, forms: ["vamp", "dance", "full"], fig: "pump", artic: "normal", tone: { cut: 850,  q: 5,  rel: 0.30 },
+    kraut:   { w: "a krautrock record", fam: "rock", bpm: 120, keys: ["a polysynth", "a glassy pad", "a warm pad", "an organ"], kjob: "arp", forms: ["vamp", "dance", "full"], fig: "pump", artic: "normal", tone: { cut: 850,  q: 5,  rel: 0.30 },
                grooves: ["motorik", "bare bones", "half time"],
                machines: ["electronic kit", "room kit", "606"],
                styles: ["hold the root", "eighths, driving"],
                instr: ["a synth bass", "with a pick"],
                chg: ["one chord, all night", "a pedal point"] },
-    jazz:    { w: "a jazz date", fam: "jazz", bpm: 144, forms: ["head", "aaba", "blues"], swing: "swing", artic: "legato", tone: { cut: 1200, q: 1,  rel: 0.35 },
+    jazz:    { w: "a jazz date", fam: "jazz", bpm: 144, keys: ["a grand piano", "a Rhodes", "an upright", "a church organ"], kjob: "comp", forms: ["head", "aaba", "blues"], swing: "swing", artic: "legato", tone: { cut: 1200, q: 1,  rel: 0.35 },
                grooves: ["jazz ride", "bebop", "brush swing"],
                machines: ["jazz kit", "brushes", "acoustic kit"],
                styles: ["walk it", "hold the root"],
                instr: ["fingers on a P-bass", "with a pick"],
                chg: ["two-five-one", "a twelve-bar blues", "the fifties changes"] },
-    blues:   { w: "a blues", fam: "rock", bpm: 96, forms: ["blues", "versechorus", "aaba"], swing: "shuffle", artic: "normal", tone: { cut: 1000, q: 1,  rel: 0.30 },
+    blues:   { w: "a blues", fam: "rock", bpm: 96, keys: ["an upright", "a rock organ", "a grand piano", "a Rhodes"], kjob: "comp", forms: ["blues", "versechorus", "aaba"], swing: "shuffle", artic: "normal", tone: { cut: 1000, q: 1,  rel: 0.30 },
                grooves: ["shuffle", "train beat", "straight rock"],
                machines: ["acoustic kit", "room kit", "brushes"],
                styles: ["walk it", "root and fifth", "hold the root"],
                instr: ["fingers on a P-bass", "with a pick"],
                chg: ["a twelve-bar blues", "the fifties changes"] },
-    funk:    { w: "a funk record", fam: "funk", bpm: 96, forms: ["vamp", "versechorus", "dance"], fig: "funk16", artic: "staccato", tone: { cut: 900,  q: 7,  rel: 0.14 },
+    funk:    { w: "a funk record", fam: "funk", bpm: 96, keys: ["a clav", "a Rhodes", "an organ", "an electric piano"], kjob: "skank", forms: ["vamp", "versechorus", "dance"], fig: "funk16", artic: "staccato", tone: { cut: 900,  q: 7,  rel: 0.14 },
                grooves: ["funk", "linear funk", "new orleans", "motown"],
                machines: ["acoustic kit", "room kit", "808"],
                styles: ["sixteenths, busy", "octaves", "hold the root"],
                instr: ["fingers on a P-bass", "with a pick"],
                chg: ["one chord, all night", "a minor vamp"] },
-    reggae:  { w: "a reggae record", fam: "latin", bpm: 96, forms: ["vamp", "dub", "versechorus"], fig: "bubble", artic: "legato", tone: { cut: 420,  q: 2,  rel: 0.55 },
+    reggae:  { w: "a reggae record", fam: "latin", bpm: 96, keys: ["an organ", "a Rhodes", "a rock organ", "a grand piano"], kjob: "skank", forms: ["vamp", "dub", "versechorus"], fig: "bubble", artic: "legato", tone: { cut: 420,  q: 2,  rel: 0.55 },
                grooves: ["one drop", "steppers", "rockers"],
                machines: ["acoustic kit", "room kit", "808"],
                styles: ["hold the root", "octaves"],
                instr: ["fingers on a P-bass", "a synth bass"],
                chg: ["a minor vamp", "one chord, all night"] },
-    bossa:   { w: "a bossa", fam: "latin", bpm: 120, forms: ["aaba", "versechorus", "head"], artic: "normal", tone: { cut: 1000, q: 1,  rel: 0.28 },
+    bossa:   { w: "a bossa", fam: "latin", bpm: 120, keys: ["a grand piano", "a Rhodes", "a felt piano", "an upright"], kjob: "comp", forms: ["aaba", "versechorus", "head"], artic: "normal", tone: { cut: 1000, q: 1,  rel: 0.28 },
                grooves: ["bossa nova", "samba", "rumba", "cha cha"],
                machines: ["jazz kit", "brushes", "acoustic kit"],
                styles: ["hold the root", "octaves"],
                instr: ["fingers on a P-bass", "with a pick"],
                chg: ["two-five-one", "the four-chord one"] },
-    slow:    { w: "something slow and open", fam: "rock", bpm: 72, forms: ["vamp", "full", "dub"], fig: "stab", space: "four", artic: "legato", tone: { cut: 520,  q: 3,  rel: 1.20 },
+    slow:    { w: "something slow and open", fam: "rock", bpm: 72, keys: ["a warm pad", "strings", "a felt piano", "a glassy pad"], kjob: "swell", forms: ["vamp", "full", "dub"], fig: "stab", space: "four", artic: "legato", tone: { cut: 520,  q: 3,  rel: 1.20 },
                grooves: ["bare bones", "half time"],
                machines: ["electronic kit", "room kit", "808"],
                styles: ["hold the root", "octaves"],
@@ -415,6 +418,14 @@
     // acid line with quarters. "The bass drops out on techno." A bassist who
     // has written their own figure keeps it.
     if (gk.fig && B.FIGURES[gk.fig] && !b.fig) b = B.figSet(b, B.FIGURES[gk.fig]);
+    // ...and the keys: what they are holding and what they are doing with it
+    let kk = m.keys;
+    const kw = Ky.INSTRUMENTS[kk.instr];
+    if (!keep(kw, gk.keys || [])) {
+      const want = Object.entries(Ky.INSTRUMENTS).find(([, w]) => w === (gk.keys || [])[0]);
+      if (want) kk = Ky.answer(kk, "instr", want[1]);
+    }
+    if (gk.kjob && !(kk.answers || {}).job) kk = Ky.say(kk, "job:" + gk.kjob);
     if (!keep((b.answers || {}).instr, gk.instr)) b = B.answer(b, "instr", gk.instr[0]);
     // ...and the changes, which are the arranger's own but still have to be
     // changes this record has
@@ -426,7 +437,7 @@
         answers["chg:" + r] = gk.chg[0];
       }
     }
-    return { ...m, drums: d, bass: b, song: { ...m.song, chg, answers } };
+    return { ...m, drums: d, bass: b, keys: kk, song: { ...m.song, chg, answers } };
   }
 
   /* ---------- the three seats, one question at a time ----------
@@ -436,13 +447,18 @@
      whole — at that point it is not a constraint, it is the arranger
      playing the drums. */
   const WORDSOF = { groove: "grooves", job: "styles", instr: "instr", form: "formw" };
+  // the keys chair asks "what are you playing?" under the same id the bass
+  // does, so the narrowing table is per SEAT, not per question id alone
+  const KEYSOF = { instr: "keys" };
   const narrow = (m, seat, ds) => {
     const gk = genreOf(m);
     if (!gk) return ds;
     // the forms this record has, as the words the question offers
     const formw = (gk.forms || []).map((k) => FORMS[k] && FORMS[k].w).filter(Boolean);
     return ds.map((d) => {
-      const keep = d.id === "form" ? formw : gk[WORDSOF[d.id]];
+      const keep = d.id === "form" ? formw
+        : seat === "keys" ? gk[KEYSOF[d.id]]
+        : gk[WORDSOF[d.id]];
       if (!keep) {
         // ...and the changes the arranger calls are the genre's own
         if (!d.id.startsWith("chg:") || !gk.chg) return d;
@@ -457,6 +473,7 @@
   // reloading the page is a session you stop experimenting in.
   function resetSeat(m, seat) {
     if (seat === "drums") return { ...m, drums: D.say(D.blank(), "start") };
+    if (seat === "keys") return { ...m, keys: Ky.say(Ky.blank(), "start") };
     if (seat === "bass") return { ...m, bass: B.say(B.blank(), "start") };
     if (seat === "engineer") return { ...m, eng: {} };
     // the arranger's own reset takes the tune back but leaves the players
@@ -467,7 +484,8 @@
     if (seat === "arranger") return narrow(m, seat, arrDecisions(m));
     if (seat === "engineer") return engDecisions(m);
     const drop = TAKEN[seat] || [];
-    const ds = seat === "drums" ? D.decisions(m.drums) : B.decisions(m.bass);
+    const ds = seat === "drums" ? D.decisions(m.drums)
+      : seat === "keys" ? Ky.decisions(m.keys) : B.decisions(m.bass);
     return narrow(m, seat, ds.filter((d) => !drop.includes(d.id))
       .map((d) => ({ ...d, seat })));
   };
@@ -512,12 +530,14 @@
       return { ...m, eng: { ...(m.eng || {}), [id]: w } };
     }
     if (seat === "drums") return { ...m, drums: D.answer(m.drums, id, w) };
+    if (seat === "keys") return { ...m, keys: Ky.answer(m.keys, id, w) };
     return { ...m, bass: B.answer(m.bass, id, w) };
   }
   // the words each seat still has, beyond its interview
   const catalog = (m, seat) => {
     const list = seat === "drums" ? D.catalog(m.drums)
-      : seat === "bass" ? B.catalog(m.bass) : [];
+      : seat === "bass" ? B.catalog(m.bass)
+      : seat === "keys" ? Ky.catalog(m.keys) : [];
     const gk = genreOf(m);
     if (!gk) return list;
     // the same law as the questions: a genre hides the grooves and the
@@ -531,13 +551,17 @@
       // ...and the same law for the bassist's own tray: a record that does
       // not have a walking line in it does not offer one here either
       if (i.group === "the line") return (gk.styles || []).includes(w);
-      if (i.group === "what you are playing") return (gk.instr || []).includes(w);
+      if (i.group === "what it is") return (gk.keys || []).includes(w);
+      if (i.group === "what you are playing" && !Ky.JOBS[i.id.replace(/^job:/, "")])
+        return (gk.instr || []).includes(w);
       return true;
     });
   };
-  const say = (m, seat, id) => (seat === "drums" ? { ...m, drums: D.say(m.drums, id) }
+  const say = (m, seat, id) => (seat === "keys" ? { ...m, keys: Ky.say(m.keys, id) }
+    : seat === "drums" ? { ...m, drums: D.say(m.drums, id) }
     : seat === "bass" ? { ...m, bass: B.say(m.bass, id) } : m);
-  const says = (m, seat, id) => (seat === "drums" ? D.says(m.drums, id)
+  const says = (m, seat, id) => (seat === "keys" ? Ky.says(m.keys, id)
+    : seat === "drums" ? D.says(m.drums, id)
     : seat === "bass" ? B.says(m.bass, id) : "");
 
   /* ---------- ONE GENRE, BOTH PLAYERS -------------------------------------
@@ -559,10 +583,12 @@
       // the player's OWN vocabulary over a copy of that player, and what
       // comes out is this section's part. The player's song-wide decisions
       // are untouched: this is one chorus, not a new drummer.
-      let dm = m.drums, bm = m.bass;
+      let dm = m.drums, bm = m.bass, km = m.keys;
       for (const id of per.dwords || []) dm = D.say(dm, id);
       for (const id of per.bwords || []) bm = B.say(bm, id);
-      let g = toGenre(m, MODES, (m.song.chg || {})[key] || "fourchord", dm, bm);
+      for (const id of per.kwords || []) km = Ky.say(km, id);
+      if (per.keys && KEYJOB[per.keys]) km = Ky.say(km, "job:" + KEYJOB[per.keys]);
+      let g = toGenre(m, MODES, (m.song.chg || {})[key] || "fourchord", dm, bm, km);
       // how much space there is, before anything a section says: a section
       // that asks for busier hats over one-hit-every-four-bars gets them,
       // which is what asking meant
@@ -600,7 +626,11 @@
       // has — the page writes them onto the box it builds
       const box = { ...((SECMIX[per.mix] || {}).box || {}),
                     ...((SECMOVE[per.move] || {}).box || {}) };
+      // THE KEYS PLAYER'S PHRASE is the box's own pattern — a pitched voice
+      // is a part AND a phrase, and only the phrase can say where the hands
+      // fall. A chair that is out hands back a silent one.
       return { role, i, genre: g, bars: g.bars, per,
+               pattern: Ky.toPattern(km),
                box: Object.keys(box).length ? box : null };
     });
   }
@@ -648,6 +678,8 @@
                : (spoke("dwords") ? undefined : d.drums),
              bass: per.bass != null ? per.bass
                : (spoke("bwords") ? undefined : d.bass),
+             keys: per.keys != null ? per.keys : d.keys,
+             kwords: per.kwords || [],
              mix: per.mix != null ? per.mix : d.mix,
              move: per.move != null ? per.move : d.move,
              lift: per.lift != null ? per.lift : !!d.lift,
@@ -664,6 +696,20 @@
   // own counting belongs to the drummer's own page; the hands, the kit, what
   // comes out and what is taken away are things you say about a chorus.
   const DGROUPS = ["at the kit", "the kit", "take away", "the fills"];
+  const KGROUPS = ["what you are playing", "the bar", "the register", "at the machine"];
+  // the section's own shorthand for the keys, on top of their whole vocabulary
+  const KEYJOB = { pads: "pads", comp: "comp", skank: "skank", riff: "riff",
+                   arp: "arp", drone: "drone", out: "out" };
+  const SECKEYS = {
+    same:  { w: "same as before" },
+    pads:  { w: "pads under it" },
+    comp:  { w: "comp the changes" },
+    skank: { w: "chop the offbeats" },
+    riff:  { w: "the riff" },
+    arp:   { w: "arpeggios" },
+    drone: { w: "hold one note" },
+    out:   { w: "lay out" },
+  };
   // WHAT A BASSIST IS TOLD ABOUT ONE SECTION: the line, how the notes come
   // out, the register, and where they sit against the drums. Not which bass
   // they are holding — nobody changes instrument for the chorus — and not
@@ -672,13 +718,14 @@
                    "how you play them", "the register", "the feel"];
   const secWords = (m, i, who) => {
     const per = partOf(m, i);
-    const said = (who === "drums" ? per.dwords : per.bwords) || [];
-    let pm = who === "drums" ? m.drums : m.bass;
-    for (const id of said) pm = (who === "drums" ? D : B).say(pm, id);
-    const groups = who === "drums" ? DGROUPS : BGROUPS;
+    const KIT = who === "drums" ? D : who === "keys" ? Ky : B;
+    const said = (who === "drums" ? per.dwords : who === "keys" ? per.kwords : per.bwords) || [];
+    let pm = who === "drums" ? m.drums : who === "keys" ? m.keys : m.bass;
+    for (const id of said) pm = KIT.say(pm, id);
+    const groups = who === "drums" ? DGROUPS : who === "keys" ? KGROUPS : BGROUPS;
     // the HANDS first, then what is playing, then what comes out — the
     // order the words matter in when you are talking about one section
-    return (who === "drums" ? D.catalog(pm) : B.catalog(pm))
+    return KIT.catalog(pm)
       .filter((x) => groups.includes(x.group))
       .sort((a, b) => groups.indexOf(a.group) - groups.indexOf(b.group))
       .map((x) => ({ w: x.words[0], key: "w:" + x.id, answered: said.includes(x.id) }));
@@ -690,6 +737,9 @@
       { id: "drums", who: "the drums", opts: Object.entries(SECDRUMS).map(([k, v]) => ({
           w: v.w, key: k, answered: per.drums === k || (!per.drums && k === "same") })) },
       { id: "dwords", who: "at the kit", opts: secWords(m, i, "drums") },
+      { id: "keys", who: "the keys", opts: Object.entries(SECKEYS).map(([k, v]) => ({
+          w: v.w, key: k, answered: per.keys === k || (!per.keys && k === "same") })) },
+      { id: "kwords", who: "at the keys", opts: secWords(m, i, "keys") },
       { id: "bass", who: "the bass", opts: Object.entries(SECBASS).map(([k, v]) => ({
           w: v.w, key: k, answered: per.bass === k || (!per.bass && k === "same") })) },
       { id: "bwords", who: "the bass player", opts: secWords(m, i, "bass") },
@@ -710,9 +760,9 @@
       // in the bar before a change, so "give it a lift" has to be sayable
       // in reverse — a band saying "don't" is saying something
       one[key] = !partOf(m, i)[key];
-    } else if (who === "dwords" || who === "bwords") {
+    } else if (who === "dwords" || who === "bwords" || who === "kwords") {
       // a word said about a section is said again to take it back
-      const k = who === "dwords" ? "dwords" : "bwords";
+      const k = who;
       const id = String(key).slice(2);
       const list = (one[k] || []).slice();
       const at = list.indexOf(id);
@@ -724,16 +774,21 @@
     return { ...m, per };
   };
 
-  function toGenre(m, MODES, changes, dm, bm) {
-    const drums = dm || m.drums, bass = bm || m.bass;
+  function toGenre(m, MODES, changes, dm, bm, km) {
+    const drums = dm || m.drums, bass = bm || m.bass, keys = km || m.keys;
     const gk = genreOf(m);
+    const kg = Ky.toGenre(keys);
     const dg = D.toGenre(drums);
     const c = B.CHANGES[changes || (m.song.chg || {}).verse || "fourchord"];
     return {
       label: "Band", family: "kernel", rate: 1, bars: c.bars, voices: 1,
-      entry: () => 0, reg: () => 0, realize: () => "line",
+      entry: () => 0,
+      // ...and the keys player's own chair: the PART they are playing, where
+      // they sit, and what it is. A silent chair keeps the voice (the phrase
+      // is empty) so nothing downstream has to know they are out.
+      reg: kg.reg, realize: kg.realize, part: kg.part,
       harmony: "cycle", roots: c.roots.slice(),
-      instr: "yamaha_grand_piano",
+      instr: kg.instr,
       // the drummer's kit, over whatever length the tune is (kernel's `at`
       // wraps a shorter schedule across a longer form)
       kit: dg.kit, kits: dg.kits, drumkit: dg.drumkit, humanize: dg.humanize,
@@ -758,7 +813,7 @@
       // turns the filter, and the record does not get to hold it shut
       bassTone: { wave: "saw", ...(gk && gk.tone ? gk.tone : { cut: 800, q: 4, rel: 0.22 }),
                   atk: 0.004, gain: 0.34, ...(bass.tone || {}) },
-      tone: { wave: "sine", cut: 900, q: 1, atk: 0.01, rel: 0.25, gain: 0.001, verb: 0.08 },
+      tone: kg.tone,
       words: [], word: () => [],
     };
   }
@@ -769,5 +824,5 @@
            secWords, partOf,
            blank, decisions, seatDecisions,
            nextAsk, nextAnywhere, answer, catalog, say, says, toGenre, toSong,
-           SECDRUMS, SECBASS, sectionAsks, setSection, D, B };
+           SECDRUMS, SECBASS, SECKEYS, sectionAsks, setSection, D, B, Ky };
 });

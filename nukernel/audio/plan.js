@@ -233,6 +233,13 @@ export const songDurSec = () => TL.reduce((s, b) => s + b.barSteps, 0) * stepDur
 // the register decision the last compile made, per seat — a shift nobody can
 // see is a shift nobody can check (the old window.__nuHome, kept)
 export const homes = () => HOMES.slice();
+// WHICH SEAT IS WHOSE. A pitched event names its voice ("v0"), and until the
+// band page seated a keys player beside the bass nothing had to ask which
+// was which — one pitched voice needs no map. A gate reading "the bass" off
+// the first pitched event it finds is a gate that will lie the moment a
+// second chair sits down, so the cast says who it is.
+export const cast = () => SEATS.map((s, i) => ({ v: "v" + i, chair: s.chair,
+  instr: s.instr, synth: !!s.synth, tone: s.tone || null }));
 export const seats = () => SEATS.slice();
 export const barBeatsAt = (n) => (BARS.length ? BARS[((n % BARS.length) + BARS.length) % BARS.length].beats : 4);
 // THE WARM SET, NAMED BY THE CALLER (the parent's opts.warmSrcs seam): every
