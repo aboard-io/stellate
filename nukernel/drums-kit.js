@@ -103,6 +103,22 @@
     bebop:     { p: on(0, 4, 6, 8, 12, 14), s: on(2, 10), k: on(0) },
     brushes:   { p: every(2), s: on(4, 12), k: on(0, 8) },
 
+    /* THE OLD WORLD (2026-08-21) — what a drummer can honestly do on a
+       record cut before the drum kit existed. `tacet` is SILENCE AS A
+       GROOVE, and it is first-class on purpose: the pre-1900 records
+       (chant, organum, a nocturne, a parlor song) have no kit, and the
+       drummer's honest answer must be sayable at the same question every
+       other answer is — the drumless law is that a chant must not inherit a
+       kick by default, and a default is a groove word. It is the ONE entry
+       the sixteen-real-steps gate (test/unit/drums-kit.test.js d3) exempts
+       by name: its bar is empty because silence IS its bar. The other two
+       are real bars: the pipe-and-tabor dance drum (the estampie's own dum,
+       dum-dum) and the processional tread (the big drum carried, the low
+       answer behind it). */
+    tacet:     {},
+    tabor:     { k: on(0, 6, 8), p: on(4, 12) },
+    procession:{ k: on(0, 8), l: on(4, 12) },
+
     /* THE FLOOR */
     house:     { k: on(0, 4, 8, 12), o: on(2, 6, 10, 14), c: on(4, 12), h: every(2, 1) },
     techno:    { k: on(0, 4, 8, 12), h: every(1), o: on(2, 6, 10, 14) },
@@ -132,6 +148,8 @@
     house: ["house"], techno: ["techno"], garage: ["uk garage"],
     twostep: ["two step"], jungle: ["jungle"], dubstep: ["dubstep"],
     trapbeat: ["trap"], gabber: ["gabber"],
+    tacet: ["nobody on the kit"], tabor: ["the tabor"],
+    procession: ["a processional"],
   };
   const GROOVEFAM = {
     four: "the floor", disco: "the floor", house: "the floor", techno: "the floor",
@@ -147,6 +165,7 @@
     funk: "funk", neworleans: "funk", linear: "funk", purdie: "funk",
     motownbeat: "funk",
     jazzride: "jazz", bebop: "jazz", brushes: "jazz",
+    tacet: "the old world", tabor: "the old world", procession: "the old world",
   };
 
   /* ---------- the lanes, as things you ask for ---------- */
@@ -476,7 +495,10 @@
     // a new family means the groove under it must be chosen again — the
     // dependency is DECLARED here and the chair's walker honours it
     { id: "record", ask: "what kind of record is this?", invalidates: ["groove"], opts:
-      ["the floor", "breaks", "rock", "latin", "funk", "jazz"].map((f) => ({
+      // ..."the old world" joined 2026-08-21: the pre-1900 records' family,
+      // where the honest grooves are the tabor, the processional tread and
+      // silence itself
+      ["the floor", "breaks", "rock", "latin", "funk", "jazz", "the old world"].map((f) => ({
         w: f, is: (m) => m.fam === f, apply: (m) => ({ ...m, fam: f }) })) },
     // the second question about the record: which groove, out of the family
     // just chosen — the options are a FUNCTION of the model, and the row is

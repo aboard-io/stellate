@@ -1087,6 +1087,15 @@
       const e = g && g.instr;
       if (e) for (const id of (Array.isArray(e) ? e : [e])) ids.add(id);
     }
+    // ...plus the BASS CHAIR'S OWN DEFAULT. No anchor names the upright in
+    // its `instr` — it is the instrument every bass line lands on when the
+    // pool says nothing (instruments.js BASS_INSTR, audio/plan.js) — and
+    // since the bass player can now pick it up BY NAME (bass-kit.js "an
+    // upright bass", 2026-08-21) the pool must offer what the word casts.
+    // The id is spelled here rather than imported because instruments.js
+    // sits a layer ABOVE this file in the graph; the bass-kit gate holds the
+    // word to this pool, and the register gate proves the id resolves.
+    ids.add("acoustic_bass");
     for (const id of [...ids].sort()) INSTRCHOICES[id] = id.replace(/_/g, " ");
   }
   // THE POOL CHAIRS — which seats the song's INSTRUMENT POOL may cast. They

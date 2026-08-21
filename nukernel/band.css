@@ -19,6 +19,10 @@ header { flex: none; padding: 10px 0 8px; border-bottom: 1px solid #000; }
 h1 { margin: 0 0 6px; font-size: 1.25rem; }
 .dtransport { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
 .dbeat, .dpending { font-variant-numeric: tabular-nums; }
+/* the change countdown is LINES under the transport, not a "; " string: one
+   line per landing bar, soonest first, at most two, then "+ n more waiting" */
+.dpending { flex: 1 0 100%; }
+.dpending .dpmore { color: #555; }
 
 /* the one scrolling pane: everything below the transport */
 .dwrap { flex: 1 1 auto; min-height: 0; overflow-y: auto;

@@ -34,12 +34,17 @@
     twofive:   { bars: 4,  roots: [1, 4, 0, 0], q: "min7" },
     descending:{ bars: 4,  roots: [0, 6, 5, 4] },
     pedalpoint:{ bars: 4,  roots: [0, 0, 0, 0], pedal: true },
+    // the passamezzo antico — the REAL Renaissance ground bass, mined from
+    // history rather than invented: eight bars in degree space, the
+    // progression the pavane danced over. (2026-08-21, the old-world slate.)
+    passamezzo:{ bars: 8,  roots: [0, 6, 0, 4, 2, 6, 4, 0] },
   };
   const CHANGEWORD = {
     onechord: "one chord, all night", twelvebar: "a twelve-bar blues",
     fifties: "the doo-wop changes", fourchord: "the four-chord one",
     minorvamp: "a minor vamp", twofive: "two-five-one",
     descending: "a descending line", pedalpoint: "a pedal",
+    passamezzo: "the old passamezzo",
   };
   const KEYS = { C: 0, F: -7, G: 7, D: 2, A: -3, E: 4, Bb: -2, Eb: 3 };
   const STYLES = {
@@ -60,6 +65,14 @@
     finger_bass: "fingers on a P-bass",
     picked_bass: "with a pick",
     bass_lead: "a synth bass",
+    // ...and the two a pre-1950 record can honestly hold (2026-08-21): the
+    // upright is the bass chair's own default recording (instruments.js
+    // BASS_INSTR — the pool offers it by name now), and the cello is the
+    // bass viol/violone said as the nearest real instrument the registry
+    // has. Without these, every old-world record's bass chair claimed a
+    // P-bass, which lies by three centuries.
+    acoustic_bass: "an upright bass",
+    cello: "a cello",
   };
 
   /* ---------- A FIGURE: A BASS LINE, WRITTEN OUT ---------------------------

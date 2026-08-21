@@ -69,6 +69,10 @@
     upright_piano: "an upright", church_organ: "a church organ",
     percussive_organ: "an organ", rock_organ: "a rock organ",
     clavinet: "a clav", ahh_choir: "voices",
+    // ...the old-world pair (2026-08-21): the harpsichord was genre-named by
+    // `counterpoint` all along — this word was overdue — and the harp is the
+    // salon's (barcarolle names it)
+    harpsichord: "a harpsichord", harp: "a harp",
   };
 
   // WHERE THE HANDS SIT. The kernel's `reg` is octaves off middle; a keys
@@ -106,6 +110,7 @@
     warm_pad: "pads & strings:", halo_pad: "pads & strings:",
     slow_strings: "pads & strings:", synth_strings_1: "pads & strings:",
     polysynth: "synths:", ahh_choir: "voices:",
+    harpsichord: "pianos:", harp: "pads & strings:",
   };
 
   const chair = C.pitchedChair({

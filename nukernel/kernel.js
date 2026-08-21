@@ -481,8 +481,13 @@
         const barEnd = (Math.floor(e.t * ctx.rate / ctx.stepsPerBar) + 1) *
                        ctx.stepsPerBar / ctx.rate;
         if (e.t + d >= barEnd) continue;
+        // the echo answers an octave BELOW — unless the source already sits
+        // under MIDI 33, where "an octave below" leaves the piano (the dice
+        // found a riff at 31 echoing to 19). A canon answers at the octave
+        // it has room for, so the low case answers above instead.
         add.push({ ...e, t: e.t + d, dur: Math.min(e.dur, barEnd - (e.t + d)),
-                   n: e.n - 12, acc: 0, sld: 0, pipe: "echoCanon", echoOf: e.t,
+                   n: e.n - 12 >= 21 ? e.n - 12 : e.n + 12,
+                   acc: 0, sld: 0, pipe: "echoCanon", echoOf: e.t,
                    vel: Math.max(1, Math.floor((e.vel == null ? 5 : e.vel) * 0.6)) });
       }
       return add.length ? ev.concat(add) : ev;

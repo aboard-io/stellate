@@ -306,7 +306,7 @@
                styles: ["walk it", "hold the root"],
                instr: ["fingers on a P-bass", "with a pick"],
                chg: ["two-five-one", "a twelve-bar blues", "the doo-wop changes"] },
-    blues:   { w: "a blues", fam: "rock", bpm: 96, chords: "all7", when: ["the fifties", "the sixties"], where: ["Chicago", "Memphis", "New Orleans"], venue: ["a bar", "a club", "a porch"], gtr: ["a crunchy one", "a clean electric", "a steel-string acoustic"], gjob: "riff", keys: ["an upright", "a rock organ", "a grand piano", "a Rhodes"], kjob: "comp", forms: ["blues", "versechorus", "aaba"], swing: "shuffle", artic: "normal", tone: { cut: 1000, q: 1,  rel: 0.30 },
+    blues:   { w: "a blues", fam: "rock", bpm: 96, chords: "all7", when: ["the fifties", "the sixties"], where: ["Chicago", "Memphis", "New Orleans"], venue: ["a bar", "a club", "a porch", "a parlor"], gtr: ["a crunchy one", "a clean electric", "a steel-string acoustic"], gjob: "riff", keys: ["an upright", "a rock organ", "a grand piano", "a Rhodes"], kjob: "comp", forms: ["blues", "versechorus", "aaba"], swing: "shuffle", artic: "normal", tone: { cut: 1000, q: 1,  rel: 0.30 },
                grooves: ["shuffle", "train beat", "straight rock"],
                machines: ["acoustic kit", "room kit", "brushes"],
                styles: ["walk it", "root and fifth", "hold the root"],
@@ -336,6 +336,183 @@
                styles: ["hold the root", "octaves"],
                instr: ["a synth bass", "fingers on a P-bass"],
                chg: ["a pedal", "one chord, all night"] },
+
+    /* ---- THE OLD WORLD (2026-08-21): twelve records, Rome 600 → New York
+       1892. The design law for every one of them: a pre-1900 record never
+       REMOVES a chair — it narrows each chair to what the century can
+       honestly hold and defaults the anachronistic ones to their sit-out
+       words (gjob "out", the drummer's "nobody on the kit", SECBASS.out per
+       section). The dice stays complete: every array ≥2 entries, every
+       combination renders (drumless is proven playable by the bass chair —
+       the band's bass always plays unless a section says out, and an
+       upright pedal under a chant is the ison, which is real practice).
+       Every groove here is from the drummer's own "the old world" family,
+       every bass word from the two period instruments the bass chair
+       gained, and the lute is the nylon-string said plainly. */
+    chant:    { w: "a chant record", fam: "the old world", bpm: 72, chords: "plain",
+                when: ["the six-hundreds", "the twelve-hundreds"], where: ["Rome", "Paris"],
+                venue: ["a cathedral", "a chapel"],
+                gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "out",
+                // the harp is the psalmist's own instrument — the one
+                // keyboard-chair word here older than the chant itself
+                keys: ["voices", "a church organ", "a harp"], kjob: "drone",
+                forms: ["vamp", "strophic"], artic: "legato",
+                tone: { cut: 2000, q: 1, rel: 2.2 },
+                grooves: ["nobody on the kit", "a processional"],
+                machines: ["brushes", "room kit"],
+                styles: ["hold the root", "octaves"],
+                instr: ["an upright bass", "a cello"],
+                chg: ["a pedal", "one chord, all night"] },
+    organum:  { w: "an organum", fam: "the old world", bpm: 72, chords: "plain",
+                when: ["the twelve-hundreds"], where: ["Paris", "Reims"],
+                venue: ["a cathedral"],
+                gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "out",
+                keys: ["voices", "a church organ", "a harp"], kjob: "drone",
+                forms: ["vamp", "strophic"], artic: "legato",
+                tone: { cut: 2000, q: 1, rel: 2.8 },
+                grooves: ["nobody on the kit", "a processional"],
+                machines: ["brushes", "room kit"],
+                styles: ["hold the root", "octaves"],
+                instr: ["an upright bass", "a cello"],
+                chg: ["a pedal", "one chord, all night"] },
+    trobar:   { w: "a troubadour song", fam: "the old world", bpm: 96, chords: "plain",
+                when: ["the twelve-hundreds", "the thirteen-hundreds"],
+                // Reims is the trouvères' Champagne — the northern answer to
+                // the troubadours, and what keeps that city's door two-wide
+                where: ["Provence", "Paris", "Reims"], venue: ["a court", "a village green"],
+                gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "strum",
+                // the keys of 1210 are an organetto or nothing — the
+                // harpsichord waits three centuries for the pavane
+                keys: ["voices", "a church organ", "a harp"], kjob: "pads",
+                forms: ["strophic", "aaba", "versechorus"], artic: "legato",
+                tone: { cut: 2400, q: 1, rel: 1.1 },
+                grooves: ["nobody on the kit", "the tabor"],
+                machines: ["brushes", "room kit"],
+                styles: ["hold the root", "root and fifth"],
+                instr: ["an upright bass", "a cello"],
+                chg: ["a pedal", "a descending line"] },
+    estampie: { w: "an estampie", fam: "the old world", bpm: 120, chords: "plain",
+                when: ["the thirteen-hundreds"], where: ["Paris", "Provence"],
+                venue: ["a village green", "a court"],
+                gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "ring",
+                keys: ["a church organ", "voices", "a harp"], kjob: "drone",
+                forms: ["vamp", "dacapo"], artic: "normal",
+                tone: { cut: 2600, q: 1, rel: 0.5 },
+                grooves: ["the tabor", "a processional"],
+                machines: ["room kit", "brushes"],
+                styles: ["hold the root", "octaves"],
+                instr: ["an upright bass", "a cello"],
+                chg: ["a pedal", "one chord, all night"] },
+    pavane:   { w: "a pavane", fam: "the old world", bpm: 72, chords: "plain",
+                // ...into the sixteen-hundreds honestly: Dowland's pavans and
+                // Sweelinck's keyboard ones are 1600s music
+                when: ["the fifteen-hundreds", "the sixteen-hundreds"], where: ["Antwerp", "London"],
+                venue: ["a court", "a chapel"],
+                gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "strum",
+                keys: ["a harpsichord", "voices", "a church organ"], kjob: "comp",
+                forms: ["dacapo", "vamp", "strophic"], artic: "normal",
+                tone: { cut: 2400, q: 1, rel: 0.8 },
+                grooves: ["a processional", "the tabor"],
+                machines: ["room kit", "brushes"],
+                styles: ["hold the root", "root and fifth"],
+                instr: ["an upright bass", "a cello"],
+                chg: ["the old passamezzo", "a descending line"] },
+    monody:   { w: "the new music", fam: "the old world", bpm: 72, chords: "sus",
+                // the Camerata met through the 1590s; Le nuove musiche is
+                // 1602 — the practice straddles the century line. And the
+                // opera house is monody's own child (Peri, Monteverdi), which
+                // is also what keeps that venue's door two-wide.
+                when: ["the fifteen-hundreds", "the sixteen-hundreds"],
+                where: ["Florence", "Venice"],
+                venue: ["a court", "a salon", "an opera house"],
+                gtr: ["a nylon-string", "a jazz box"], gjob: "out",
+                // the arpa doppia is real continuo practice — Caccini's own pit
+                keys: ["a harpsichord", "a church organ", "a harp"], kjob: "comp",
+                forms: ["strophic", "dacapo", "aaba"], artic: "legato",
+                tone: { cut: 2200, q: 1, rel: 1.4 },
+                grooves: ["nobody on the kit", "the tabor"],
+                machines: ["brushes", "room kit"],
+                styles: ["hold the root", "walk it"],
+                instr: ["a cello", "an upright bass"],
+                chg: ["a descending line", "a pedal"] },
+    concerto: { w: "a concerto", fam: "the old world", bpm: 120, chords: "sevens",
+                // Corelli's concerto grosso is the 1680s: the form starts in
+                // the sixteen-hundreds and peaks in the seventeen-hundreds
+                when: ["the sixteen-hundreds", "the seventeen-hundreds"],
+                where: ["Venice", "Leipzig"],
+                venue: ["a court", "a concert hall", "a church"],
+                gtr: ["a nylon-string", "a jazz box"], gjob: "out",
+                keys: ["a harpsichord", "a church organ", "strings"], kjob: "comp",
+                forms: ["head", "dacapo", "full"], artic: "normal",
+                tone: { cut: 2600, q: 1, rel: 0.6 },
+                grooves: ["nobody on the kit", "a processional"],
+                machines: ["room kit", "brushes"],
+                styles: ["driving eighths", "walk it", "hold the root"],
+                instr: ["a cello", "an upright bass"],
+                chg: ["a descending line", "two-five-one"] },
+    vienna:   { w: "a Viennese classic", fam: "the old world", bpm: 120, chords: "plain",
+                when: ["the seventeen-hundreds"], where: ["Vienna"],
+                venue: ["a salon", "a court", "a concert hall"],
+                gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "out",
+                // the Alberti hand IS the arpeggios job
+                keys: ["a grand piano", "a harpsichord", "strings"], kjob: "arp",
+                forms: ["aaba", "dacapo", "full", "versechorus"], artic: "normal",
+                tone: { cut: 3000, q: 1, rel: 0.7 },
+                grooves: ["nobody on the kit", "a processional"],
+                machines: ["brushes", "room kit"],
+                styles: ["hold the root", "root and fifth", "walk it"],
+                instr: ["an upright bass", "a cello"],
+                chg: ["two-five-one", "the doo-wop changes"] },
+    nocturne: { w: "a nocturne", fam: "the old world", bpm: 72, chords: "sevens",
+                when: ["the eighteen-hundreds"], where: ["Paris", "Vienna"],
+                venue: ["a salon", "a parlor"],
+                gtr: ["a nylon-string", "a jazz box"], gjob: "out",
+                keys: ["a grand piano", "a felt piano", "an upright"], kjob: "arp",
+                forms: ["dacapo", "aaba"], artic: "legato",
+                tone: { cut: 2600, q: 1, rel: 2.0 },
+                grooves: ["nobody on the kit", "a processional"],
+                machines: ["brushes", "room kit"],
+                styles: ["hold the root", "octaves"],
+                instr: ["an upright bass", "a cello"],
+                chg: ["the doo-wop changes", "a descending line"] },
+    romantic: { w: "a romantic symphony", fam: "the old world", bpm: 72, chords: "sevens",
+                when: ["the eighteen-hundreds"], where: ["Vienna", "Paris"],
+                venue: ["a concert hall", "an opera house"],
+                gtr: ["a nylon-string", "a jazz box"], gjob: "out",
+                keys: ["strings", "a church organ", "a warm pad"], kjob: "swell",
+                forms: ["full", "dacapo", "aaba"], artic: "legato",
+                tone: { cut: 2000, q: 1, rel: 2.4 },
+                // the timpani tread first: an orchestra HAS a drum
+                grooves: ["a processional", "nobody on the kit"],
+                machines: ["room kit", "brushes"],
+                styles: ["hold the root", "walk it", "octaves"],
+                instr: ["a cello", "an upright bass"],
+                chg: ["a descending line", "two-five-one", "a minor vamp"] },
+    salon:    { w: "a barcarolle", fam: "the old world", bpm: 72, chords: "plain",
+                swing: "shuffle",   // the 6/8 rock is the triplet feel, honestly
+                when: ["the eighteen-hundreds"], where: ["Paris", "Vienna"],
+                venue: ["a salon", "an opera house"],
+                gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "ring",
+                keys: ["a harp", "a grand piano", "a felt piano"], kjob: "arp",
+                forms: ["dacapo", "strophic", "versechorus"], artic: "legato",
+                tone: { cut: 2400, q: 1, rel: 1.6 },
+                grooves: ["nobody on the kit", "the tabor"],
+                machines: ["brushes", "room kit"],
+                styles: ["hold the root", "root and fifth"],
+                instr: ["a cello", "an upright bass"],
+                chg: ["the doo-wop changes", "a pedal"] },
+    parlor:   { w: "a parlor song", fam: "the old world", bpm: 96, chords: "plain",
+                when: ["the eighteen-hundreds"], where: ["New York", "London"],
+                venue: ["a parlor", "a salon"],
+                gtr: ["a steel-string acoustic", "a nylon-string"], gjob: "strum",
+                keys: ["an upright", "a grand piano", "a felt piano"], kjob: "comp",
+                forms: ["versechorus", "strophic", "aaba"], artic: "normal",
+                tone: { cut: 2600, q: 1, rel: 0.9 },
+                grooves: ["nobody on the kit", "the tabor"],
+                machines: ["brushes", "room kit"],
+                styles: ["hold the root", "root and fifth", "walk it"],
+                instr: ["an upright bass", "a cello"],
+                chg: ["the doo-wop changes", "the four-chord one"] },
   };
   const genreOf = (m) => GENRES[m.song.genre] || null;
 
@@ -398,7 +575,12 @@
      which means there are no dead ends by construction — you cannot answer
      your way to nothing. When one record is left it is CALLED, without being
      asked. */
-  const FIELDS3 = [["when", "what decade is it?"], ["where", "where are you?"],
+  // "when is it?" not "what decade is it?" — the axis starts in Rome now,
+  // and "the twelve-hundreds" is not a decade. One question either way: the
+  // GRANULARITY of the answers mirrors the density of the catalog (centuries
+  // where records differ by century, decades where they differ by decade),
+  // which is what the narrowing machine already does everywhere else.
+  const FIELDS3 = [["when", "when is it?"], ["where", "where are you?"],
                    ["venue", "where do you play?"]];
   const fits = (gk, s2) => FIELDS3.every(([f]) =>
     !s2[f] || (gk[f] || []).includes(s2[f]));
@@ -406,7 +588,15 @@
   // the values still worth offering for one field, given the others
   // ...and a decade is asked in the order decades happen, which no table
   // order can be relied on to give
-  const DECADES = ["the fifties", "the sixties", "the seventies", "the eighties",
+  // ...prepended 2026-08-21 with the CENTURIES (PLAN.md phase 3: "century
+  // first, then decade where it matters") — the old-world records answer in
+  // centuries because "the twelve-thirties" is not how anyone remembers
+  // Notre Dame. GROW-ONLY: every existing decade word keeps its place, so
+  // every existing tap still lands.
+  const DECADES = ["the six-hundreds", "the twelve-hundreds", "the thirteen-hundreds",
+                   "the fifteen-hundreds", "the sixteen-hundreds",
+                   "the seventeen-hundreds", "the eighteen-hundreds",
+                   "the fifties", "the sixties", "the seventies", "the eighties",
                    "the nineties", "the two-thousands", "now"];
   const openOf = (s2, field) => {
     const out = [];
@@ -468,6 +658,12 @@
                 secs: ["intro", "drop", "outro"] },
     head:     { w: "head, solos, head", secs: ["head", "solo", "solo", "head"] },
     dub:      { w: "a version", secs: ["verse", "break", "verse"] },
+    // ...the two shapes most of pre-1900 music actually takes (2026-08-21):
+    // strophic song — the same verse, again and again, which is a hymn, a
+    // canso and a parlor ballad alike — and da capo ABA, which is everything
+    // from the pavane's ouvert/clos pairing to the nocturne's middle section.
+    strophic: { w: "verses, one after another", secs: ["verse", "verse", "verse"] },
+    dacapo:   { w: "A, then B, then A again", secs: ["verse", "bridge", "verse"] },
   };
   // a role that is not one of the three the changes are called for still has
   // to know WHICH changes it takes — a drop is the chorus of a twelve-inch
@@ -692,8 +888,28 @@
         answers["chg:" + r] = gk.chg[0];
       }
     }
+    // THE FORM IS THE RECORD'S TOO. called() moved the groove, the bass,
+    // the keys and the changes — and left the form null, which renders as
+    // "vamp": a freshly called nocturne played one vamp round and round, a
+    // shape its own forms list refuses to offer (the era audit caught it —
+    // and rock and jazz had been doing the same thing quietly all along).
+    // Same law as the changes: an ANSWERED form this record allows is kept;
+    // anything else becomes the record's first form, spoken in the
+    // question's own word so the gig sheet shows what was decided.
+    // Two cases, and only two: an ANSWERED form the record refuses moves to
+    // the record's first; an UNANSWERED form moves only when the implicit
+    // vamp default is itself a form this record refuses — a record that
+    // allows vamp keeps the quiet default (the slow record's "one hit every
+    // four bars" lives on that vamp, and moving it broke the sparseness law).
+    let form = m.song.form;
+    const allowed = gk.forms || [];
+    if ((form && !allowed.includes(form)) ||
+        (!form && allowed.length && !allowed.includes("vamp"))) {
+      form = allowed[0] || form;
+      if (form && FORMS[form]) answers.form = FORMS[form].w;
+    }
     return { ...m, drums: d, bass: b, keys: kk, guitar: gg2,
-             song: { ...m.song, chg, answers } };
+             song: { ...m.song, form, chg, answers } };
   }
 
   /* ---------- the three seats, one question at a time ----------
@@ -1162,7 +1378,8 @@
       // chorus already comes forward. A section somebody mixed by hand keeps
       // what they said — the arc is what happens when nobody did.
       if (shape && shape.lvl && !((m.per || {})[i] || {}).mix) box.lvl = shape.lvl;
-      if (shape && shape.busier && !((m.per || {})[i] || {}).drums)
+      if (shape && shape.busier && !((m.per || {})[i] || {}).drums &&
+          !(SPACE[m.song.space || "none"] || {}).bars)
         { const fn = SECDRUMS.busier.fn; g.kit = fn(g.kit); g.kits = (g.kits || []).map(fn); }
       // THE MELODY IS ITS OWN LAYER. A two-bar phrase cannot ride the bar
       // clock the rhythm section keeps — the kernel reads a phrase's own
@@ -1283,6 +1500,14 @@
     const d = { ...(ROLE[role] || {}) };
     // the drummer plays the band into the change; nobody has to ask
     if (next && next !== role) d.lift = true;
+    // A CALLED SPACE OWNS THE SCHEDULE. "One hit every four bars" is a
+    // schedule, not a tempo — and a fill is itself a drum event, so a
+    // section whose kit speaks once per four bars has no bar to fill. When
+    // the arranger has called space, the role's canned drum/bass parts and
+    // the default fill-into-the-change stand down; a section somebody
+    // actually ASKED to be busier still gets it, which is what asking meant.
+    const sp = SPACE[m.song.space || "none"];
+    if (sp && sp.bars) { delete d.drums; delete d.bass; d.lift = false; }
     return d;
   };
   // what this section actually is: the role's own part, with anything said

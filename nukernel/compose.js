@@ -827,7 +827,20 @@
   // and the singer this table blocks was a formant cantor composed over the
   // top of a forty-part motet that never had one.
   const INSTRUMENTAL = { techno: 1, dnb: 1, acid: 1, dub: 1,
-                         fugue: 1, counterpoint: 1, tango: 1, spem: 1 };
+                         fugue: 1, counterpoint: 1, tango: 1, spem: 1,
+                         // THE OLD WORLD (2026-08-21). Two kinds of refusal:
+                         // the truly instrumental records — a consort, a
+                         // concerto, an orchestra, a nocturne have no singer
+                         // to book — and organum/arsnova by spem's own law
+                         // ("its every chair IS the sampled choir"): their
+                         // cast is already the voices, and a formant topline
+                         // over a Notre Dame organum is the composed cantor
+                         // spem was rid of. troubadour/continuo/barcarolle/
+                         // parlor stay OFF this list on crooner's precedent —
+                         // they are SONG traditions and the singer layer
+                         // taking the tune is what a song record is.
+                         estampie: 1, pavane: 1, concerto: 1, classical: 1,
+                         nocturne: 1, romantic: 1, organum: 1, arsnova: 1 };
   // ---- THE ERA LAW ("Why would Chicago 1932 have enormous amounts of
   // delay?", 2026-08-18). Every place-year anchor states its year in its own
   // label (ui/palette.js genreYear — the same trailing-digit parse, kept in
@@ -1036,7 +1049,15 @@
       } else {
         const cast = castOf(G).filter(w => w !== "solo" && !sings(w));
         const who = cast.length && chance(r, 0.5) ? pick(S.out, cast) : null;
-        if (who) layer(who, [partSlot(who, S)]);
+        // ...but never on the soloist's own VISITING chorus: that box is
+        // about to take the visit below and may draw the guest as well, and
+        // three layers on one chorus is mush — the census caught exactly
+        // this the day the first instrumental song-plan genre (classical,
+        // Vienna 1785) joined the table and rolled cast + visit + guest at
+        // once. The draws above still run so every other box's stream is
+        // byte-identical; only the push is withheld.
+        const visiting = a && a.i != null && a.i === S.visit;
+        if (who && !visiting) layer(who, [partSlot(who, S)]);
       }
       // THE SOLOIST VISITS, ONCE. "The solo is what visits — one section, maybe
       // a chorus." So it is exactly one chorus of the record, chosen before any

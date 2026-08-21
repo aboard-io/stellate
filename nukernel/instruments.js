@@ -182,8 +182,10 @@
   // the bounds come from the instrument's real compass intersected with the
   // registry's zone extents (playWindow does the intersection).
   const RANGES = {
-    // winds + reeds
+    // winds + reeds. The recorder is the estampie/pavane pipe — parent
+    // values verbatim, same law as the viols below.
     flute: [60, 96], harmonica: [60, 96], tenor_sax: [44, 77],
+    recorder: [60, 91],
     // brass. THE TROMBONE IS THE SKATALITES' FRONT LINE, and its ceiling is
     // 74 — ten semitones under the trumpet's, which is the point. Composed ska
     // writes its horn line as high as MIDI 100 and the register home folds it
@@ -192,8 +194,13 @@
     // between Don Drummond and a squeak.
     trumpet: [54, 84], muted_trumpet: [54, 84], brass_section: [40, 86],
     trombone: [40, 74],
-    // bowed
-    violin: [55, 100], fiddle: [55, 100],
+    // the romantic orchestra's answering voice — parent values verbatim
+    french_horns: [34, 77],
+    // bowed. Viola and cello joined with the old-world slate (pavane's viol,
+    // romantic's tune-carrier) — values are the parent's INSTRUMENT_RANGE
+    // verbatim, because the register-law gate holds any shared id to the
+    // table that actually binds (state-engine.js foldToRange).
+    violin: [55, 100], fiddle: [55, 100], viola: [48, 91], cello: [36, 84],
     // plucked + fretted (guitar tops around E6)
     nylon_string_guitar: [40, 88], steel_string_guitar: [40, 88],
     jazz_guitar: [40, 88], clean_guitar: [40, 88], palm_muted_guitar: [40, 86],
@@ -208,8 +215,10 @@
     // key-click) and the row stays only because the table is the compass.
     bandoneon: [41, 86], drawbarorgan: [36, 96], rock_organ: [36, 96],
     church_organ: [36, 96], percussive_organ: [36, 96],
-    // struck + tuned percussion
+    // struck + tuned percussion. The dulcimer (the estampie's struck
+    // strings) and the harp (the salon's) carry the parent's own windows.
     marimba: [45, 91], harpsichord: [29, 89], clavinet: [36, 84],
+    dulcimer: [43, 88], harp: [24, 103],
     // the Funk Brothers' vibes and a Highlife kalimba: two colours the table
     // could name and no genre had ever asked for
     vibraphone: [53, 89], kalimba: [60, 96],
@@ -229,8 +238,14 @@
     yamaha_grand_piano: [21, 108], bright_yamaha_grand: [21, 108],
     upright_piano: [21, 108], felt_piano: [21, 108],
     rhodes_ep: [28, 96], electric_piano: [28, 96], legend_ep_2: [28, 96],
-    // string sections — contrabass bottom to violin-section top
+    // string sections — contrabass bottom to violin-section top. `tremolo`
+    // (GM 44, tremolo strings — the romantic climax's floor) is a section
+    // like the other three; the parent's table does not list it, so the
+    // bounds here are the section compass intersected with its zone span
+    // (roots 31..83, top zone reaching 96), the file's own policy for the
+    // parent-unlisted.
     strings: [28, 96], slow_strings: [28, 96], synth_strings_1: [28, 96],
+    tremolo: [28, 96],
     // THE GM SYNTH PATCHES. The parent leaves real synths unclamped, but these
     // are one-zone SAMPLES of synths (warm_pad: a single zone rooted at 84),
     // exempt from the zone window by design (ROOT_SPAN_MIN in voices.js) — so
@@ -867,8 +882,11 @@
     [/trumpet|trombone|tuba|brass|horn/, "brass"],
     [/sax|clarinet|oboe|bassoon|flute|recorder|harmonica|whistle|pipe/, "reed"],
     [/violin|fiddle|viola|cello|contrabass/, "bowed"],
-    [/marimba|xylo|vibra|glock|kalimba|music_box|celesta|steel_drum|timpani/, "mallet"],
-    [/strings|orchestra/, "strings"],
+    // ...dulcimer is struck strings — a mallet instrument by mechanism, which
+    // is also where the parent's own mallet test files it
+    [/marimba|xylo|vibra|glock|kalimba|music_box|celesta|steel_drum|timpani|dulcimer/, "mallet"],
+    // ...and `tremolo` is GM's tremolo STRINGS: a section, not a lead
+    [/strings|orchestra|tremolo/, "strings"],
     // the soft synth patches that are pads by behaviour even when the genre
     // does not call the voice one (ambient's bowed glass, techno's metal pad)
     [/halo|_pad$|glass|atmosph|sweep|warm_pad/, "pad"],

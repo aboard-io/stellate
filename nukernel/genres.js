@@ -193,6 +193,16 @@
     // close, plain and full of breath: a voice a foot from the mic telling you
     // something. The wobble arrives late and never gets wide.
     confessional:{ voice: "alto",  vowels: "aoe", vib: 0.28, air: 0.32, vibRate: 5.2, vibRise: 0.85, syll: 0.5 },
+    // THE OLD WORLD'S TWO (2026-08-21, the Rome-600 slate). A troubadour is
+    // one man in a hall with no polish on him: a chant-trained tenor, open
+    // vowels, a straight-ish tone with more breath than any church allows,
+    // one syllable a beat because a canso is WORDS before it is line.
+    trobar:     { voice: "tenor",  vowels: "aeo", vib: 0.15, air: 0.30, syll: 1 },
+    // ...and Caccini's nuove musiche, four centuries later: the ornament
+    // arrives LATE in the note (vibRise, the crooner's own trick avant la
+    // lettre), the tone is trained and forward, and the syllable stretches to
+    // two beats because the affect lives in the held vowel, not the diction.
+    monody:     { voice: "soprano", vowels: "aei", vib: 0.35, air: 0.22, vibRise: 0.8, syll: 2 },
   };
 
   // ---- NAMED PROGRESSIONS --------------------------------------------------
@@ -5276,6 +5286,332 @@
       words: ["the chord, held, one voicing a bar"],
       word: () => [],
     },
+
+    // ---- THE OLD WORLD (2026-08-21) --------------------------------------
+    // Twelve anchors, Rome 600 → New York 1892, filling the thirteen
+    // centuries the catalog skipped between `gregorian` and its 1930s front
+    // edge. Three standing `wants` debts are paid here by name — organum
+    // (owed by counterpoint AND drone), the romantic piano miniature (owed by
+    // neoclassical, → nocturne), and hymnody's parlor descendant — and every
+    // instrument is the nearest REAL recording the registry has, said plainly
+    // (lute = nylon_string_guitar, viol = viola/cello, violone =
+    // acoustic_bass, fortepiano = yamaha_grand_piano) rather than pretended
+    // away. The Viennese waltz is BLOCKED on purpose: this kernel is a
+    // 16-step 4/4 grid with no meter field, and a waltz in 4/4 is not a
+    // waltz — the salon slot is a barcarolle instead (swing 1/3 IS the
+    // triplet lilt, kernel.js's own comment), with `wants` keeping the debt
+    // on the books.
+
+    // ORGANUM — the first debt paid. Notre Dame, Léonin/Pérotin: a voice
+    // ADDED to the chant. The tenor HOLDS the chant below (a pad, because a
+    // held cantus is a chord with one note in it), the vox organalis moves a
+    // fifth above, and the third voice arrives at bar 5 a fourth up — the
+    // staggered entry IS the history: that arrival is the moment Western
+    // polyphony happens. Transpose in DEGREE space: +4 is the fifth, +3 the
+    // fourth, hymn's own law (the scale is seven long).
+    organum: {
+      label: "Paris 1200", rate: 0.5, voices: 3,
+      plan: "arc", bpm: 76,
+      parents: { gregorian: 1 }, wants: [], near: "gregorian",
+      instr: ["ahh_choir", "ahh_choir", "solo_vox"],
+      entry: v => (v === 2 ? 4 : 0), reg: v => (v === 0 ? -1 : 0),
+      realize: v => (v === 0 ? "pad" : "line"),
+      kit: {}, nobass: true, harmony: "modal", intro: "solo",
+      mode: MODES.dorian, scale: DIATONIC,
+      artic: "tie", incClamp: 2,
+      tone: { wave: "triangle", cut: 2000, q: 0.7, atk: .12, rel: 2.8, gain: .24, verb: .85,
+              // WHO SINGS: the same monks as gregorian — no vibrato at all
+              mouth: MOUTHS.plainchant },
+      words: ["the tenor, held under everything", "a fifth above, moving with it",
+              "the third voice, a fourth up, from bar 5"],
+      word: v => (v === 0 ? [drop(2)] : v === 1 ? [transpose(4)] : [transpose(3)]),
+    },
+
+    // TROUBADOUR. A chant-trained voice singing its OWN words for a court —
+    // secular monody, the canso. The lute IS the nylon-string here, said
+    // plainly, shadowing the line an octave below rather than harmonizing it,
+    // because harmony has not been invented as a thing an accompanist plays.
+    // The missing Andalusi thread is named in `wants`, not claimed.
+    troubadour: {
+      // bars 8 and an unhurried 84: a canso strophe is LONG — and measured,
+      // the near-duplicate gate put a 4-bar troubadour 0.022 from counterpoint,
+      // which the length and the tempo of the real form honestly separate
+      label: "Provence 1210", bars: 8,
+      plan: "song", bpm: 76,
+      parents: { gregorian: 1 }, wants: ["andalusi song"], near: "gregorian",
+      instr: ["solo_vox", "nylon_string_guitar"],
+      // the lute is a BORDUN, not a second line: medieval accompaniment
+      // holds the mode under the song (the fiddle's drone string, the open
+      // course), it does not shadow the tune in parallel — and a pad chair
+      // is exactly what a held tone under a moving line is to this engine
+      entry: () => 0, reg: v => (v === 0 ? 0 : -1),
+      realize: v => (v === 0 ? "line" : "pad"),
+      kit: {}, nobass: true, harmony: "modal", intro: "solo",
+      mode: MODES.dorian, scale: DIATONIC,
+      // THE RHYTHMIC MODES ARE TRIPLE. A 1210 melody moves in the long-short
+      // trochee of modal rhythm, not in even eighths — swing 1/3 is the
+      // kernel's own triplet reading of exactly that — and it is also what
+      // the confusion gate hears: without the lilt this anchor rendered
+      // 0.023 from counterpoint, two drumless diatonic line-pairs telling
+      // the machine apart by tempo alone.
+      swing: 0.33,
+      artic: "legato", maxHold: 4,
+      tone: { wave: "triangle", cut: 2400, q: 0.8, atk: .02, rel: 1.1, gain: .26, verb: .4,
+              // WHO SINGS: one man, a hall, no polish
+              mouth: MOUTHS.trobar },
+      words: ["the canso, one voice", "the lute, holding the bordun"],
+      word: () => [],
+    },
+
+    // ESTAMPIE — the first DRUM in the catalog's history: the one pre-1500
+    // music that genuinely has one, and the engine voices it perfectly. Pipe
+    // and struck strings over the tabor's dum, dum-dum; the vielle/hurdy-gurdy
+    // drone is the bass chair on a pedal. The puncta go round and round with
+    // open and close endings — the same line, ROTATED at the section turn,
+    // which is what an ouvert/clos pair is before notation can say so.
+    estampie: {
+      label: "Paris 1300",
+      plan: "dance", bpm: 120,
+      parents: { troubadour: 0.6, gregorian: 0.4 }, wants: [], near: "troubadour",
+      instr: ["recorder", "dulcimer"],
+      drumkit: "room",
+      entry: () => 0, reg: v => (v === 0 ? 0 : -1), realize: () => "line",
+      harmony: "modal", mode: MODES.dorian, scale: DIATONIC,
+      bassStyle: "pedal",
+      bassGrid: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],   // the tabor: dum, dum-dum
+             p: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },
+      tone: { wave: "square", cut: 2600, q: 1.0, atk: .01, rel: .5, gain: .26, verb: .35 },
+      words: ["the puncta, round and round", "the strings doubling below"],
+      word: (v, s) => (v === 0 ? (s % 2 ? [rotate(2)] : []) : [drop(2)]),
+    },
+
+    // ARS NOVA — Machaut: organum's tenor made RHYTHMIC, the trouvère line on
+    // top. The talea is genuinely rotate() — the same material re-entering
+    // against itself one notch further round each section, cyclic rather than
+    // reflective, which is exactly the operator the fugue's mirror grammar
+    // never uses. This is the kernel expressing the history, not
+    // approximating it.
+    arsnova: {
+      label: "Reims 1360", voices: 3, bars: 8,
+      plan: "arc", bpm: 104,
+      parents: { organum: 0.6, troubadour: 0.4 }, wants: [], near: "spem",
+      instr: ["ahh_choir", "solo_vox", "recorder"],  // tenor / motetus / triplum
+      entry: v => [0, 2, 4][v], reg: v => v - 1,
+      realize: v => (v === 0 ? "pad" : "line"),
+      kit: {}, nobass: true, harmony: "emergent",
+      // NOT legato: hocket — the ars nova's signature articulation is the
+      // note CUT so the other voice can strike between, which is the
+      // default (detached) reading, not a tied line
+      mode: MODES.dorian, scale: DIATONIC,
+      tone: { wave: "triangle", cut: 2300, q: 0.8, atk: .06, rel: 2.0, gain: .2, verb: .7,
+              // WHO SINGS: the motet mouth — spem's own, two centuries early
+              mouth: MOUTHS.motet },
+      words: ["the tenor: the talea, turning", "the motetus", "the triplum, high and quick"],
+      word: (v, s) => (v === 0 ? [rotate(3 * s), drop(2)]
+                    : v === 1 ? [transpose(2)]
+                    : [transpose(4), rotate(5 * s)]),
+    },
+
+    // PAVANE — Susato's Danserye: the consort plays for DANCING. The lines
+    // are polyphony's, the drum is the estampie's tabor grown up, and the
+    // ground is the real passamezzo antico, mined from history rather than
+    // invented — one chord a bar, eight bars, the progression the whole
+    // Renaissance danced over. (Renaissance polyphony itself is NOT
+    // re-anchored: spem + counterpoint own the idiom; this draws on spem.)
+    pavane: {
+      label: "Antwerp 1551", voices: 3, bars: 8,
+      plan: "dance", bpm: 76,
+      parents: { estampie: 0.4, spem: 0.35, troubadour: 0.25 }, wants: ["galliard"],
+      near: "spem",
+      instr: ["nylon_string_guitar", "recorder", "viola"],   // lute, pipe, viol
+      drumkit: "room",
+      entry: v => (v === 2 ? 2 : 0), reg: v => (v === 0 ? -1 : v - 1),
+      realize: () => "line",
+      roots: [0, 6, 0, 4, 2, 6, 4, 0],   // the passamezzo antico
+      scale: DIATONIC, diatonic: true, maxHold: 2,
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             p: [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,0,0] },
+      bassGrid: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .015, rel: .8, gain: .26, verb: .4 },
+      words: ["the lute, carrying the ground", "the pipe above", "the viol between"],
+      word: v => (v === 1 ? [transpose(2)] : v === 2 ? [invert(5)] : []),
+    },
+
+    // CONTINUO — Florence 1602, Caccini's Le nuove musiche: polyphony
+    // deliberately REFUSED. One voice, affect first, the chords reduced to an
+    // accompaniment a harpsichord realizes from figures — and under it the
+    // lamento tetrachord, falling by step, the bass line the whole Baroque
+    // will cry over. The violone is the bass chair's own acoustic_bass,
+    // honestly close.
+    continuo: {
+      label: "Florence 1602", rate: 0.5,
+      plan: "song", bpm: 72,
+      parents: { troubadour: 0.55, spem: 0.45 }, wants: ["opera seria"], near: "crooner",
+      instr: ["solo_vox", "harpsichord"],
+      entry: v => (v === 0 ? 2 : 0), reg: v => (v === 0 ? 0 : -1),
+      realize: v => (v === 0 ? "line" : "pad"),
+      kit: {},
+      roots: [0, 6, 5, 4],                        // the lamento tetrachord
+      scale: DIATONIC,
+      artic: "legato", anchor: 2, maxHold: 4, intro: "solo",
+      bassStyle: "pedal",
+      tone: { wave: "triangle", cut: 2200, q: 0.9, atk: .03, rel: 1.4, gain: .24, verb: .45,
+              // WHO SINGS: the ornament arrives late in the note
+              mouth: MOUTHS.monody },
+      words: ["the voice, held over the descent", "the harpsichord, realizing the figures"],
+      word: v => (v === 0 ? [] : [drop(2)]),
+    },
+
+    // CONCERTO — Venice 1725, the high-Baroque BAND (fugue already owns the
+    // organ loft): counterpoint's engine driving a dance pulse over a
+    // continuo. The ritornello alternation is the form the classical style
+    // inherits, and THE BAROQUE SEQUENCE is the word: the solo restates one
+    // step lower each section — transpose(-1) per section is Vivaldi's whole
+    // episode grammar. The walking continuo IS driving eighths on the
+    // violone.
+    concerto: {
+      label: "Venice 1725", voices: 3, bars: 8,
+      plan: "arc", bpm: 120,
+      parents: { continuo: 0.4, counterpoint: 0.35, pavane: 0.25 }, wants: [],
+      near: "fugue",
+      instr: ["strings", "violin", "harpsichord"],   // tutti / solo / continuo
+      entry: v => (v === 1 ? 4 : 0), reg: v => (v === 1 ? 1 : v === 2 ? 0 : -1),
+      realize: v => (v === 2 ? "pad" : "line"),
+      kit: {},
+      roots: [0, 3, 4, 0, 5, 1, 4, 0],
+      mode: MODES.harmonic, scale: DIATONIC, diatonic: true,
+      bassStyle: "eighths",
+      maxHold: 2,
+      tone: { wave: "sawtooth", cut: 2600, q: 1.0, atk: .01, rel: .6, gain: .24, verb: .35 },
+      words: ["the ritornello, tutti", "the solo, sequencing away from it", "the continuo"],
+      word: (v, s) => (v === 1 ? [transpose(-(s % 3)), ...(s % 2 ? [rotate(2)] : [])] : []),
+    },
+
+    // CLASSICAL — Vienna 1785, the galant reaction: the concerto's clarity,
+    // the fugue kept for development sections only, and the piano replacing
+    // the harpsichord. The tune is periodic, the Alberti hand turns under it
+    // low and short (a RIFF, which is what an Alberti bass is to this
+    // engine), and the strings double the cadence. The fortepiano is the
+    // grand, said plainly.
+    classical: {
+      label: "Vienna 1785", voices: 3, bars: 8,
+      plan: "song", bpm: 120,
+      parents: { concerto: 0.55, continuo: 0.25, fugue: 0.2 }, wants: [],
+      near: "songwriterpiano",
+      instr: ["yamaha_grand_piano", "yamaha_grand_piano", "slow_strings"],
+      part: ["lead", "riff", "pad"],
+      entry: v => (v === 2 ? 2 : 0), reg: v => [1, -1, 0][v],
+      realize: v => (v === 2 ? "pad" : "line"),
+      kit: {}, nobass: true,                      // the left hand IS the bass
+      roots: [0, 3, 4, 0, 0, 5, 1, 4],
+      mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      maxHold: 2,
+      tone: { wave: "triangle", cut: 3000, q: 0.8, atk: .005, rel: .7, gain: .28, verb: .3 },
+      words: ["the tune, periodic", "the Alberti hand under it", "strings, doubling the cadence"],
+      word: (v, s) => (v === 1 ? [rotate(1), ...(s % 2 ? [] : [drop(2)])] : []),
+    },
+
+    // NOCTURNE — Paris 1835, Chopin: a bel-canto line (monody's thread, kept
+    // in the lineage) over a widespread left hand. This is the romantic piano
+    // miniature `neoclassical` has wanted since its own anchor was written —
+    // the debt is paid here and neoclassical's `wants` can empty the day its
+    // comment is next touched. Melodic minor because it is the minor that can
+    // still make a real dominant AND sing a major sixth on the way up, which
+    // is what a nocturne's fioritura does.
+    nocturne: {
+      label: "Paris 1835", rate: 0.5, bars: 8,
+      plan: "arc", bpm: 72,
+      parents: { classical: 0.6, continuo: 0.4 }, wants: ["bel canto opera"],
+      near: "neoclassical",
+      instr: "yamaha_grand_piano",
+      part: ["lead", "pad"],
+      entry: () => 0, reg: v => (v === 0 ? 1 : -1),
+      realize: v => (v === 0 ? "line" : "pad"),
+      kit: {}, nobass: true,
+      roots: [0, 5, 3, 4, 0, 5, 1, 4],
+      mode: MODES.melodic, scale: DIATONIC,
+      artic: "legato", maxHold: 6, incClamp: 2,
+      tone: { wave: "triangle", cut: 2600, q: 0.8, atk: .01, rel: 2.0, gain: .26, verb: .5 },
+      words: ["the song, up high, taking its time", "the left hand, wide and low"],
+      word: v => (v === 1 ? [drop(2)] : []),
+    },
+
+    // ROMANTIC — Vienna 1876, the orchestra: the body of strings, the tune in
+    // the CELLO (the romantic register), horns answering at bar 5, and the
+    // tremolo arriving last — which is how a climax is built. No fx block:
+    // the era law (compose.js FX_YEAR) is right that 1876 has no filter
+    // sweep, and the swell lives in the entries instead. Timpani exist in the
+    // registry but the kit has twelve fixed lanes and no timpani file;
+    // casting one as a pitched voice would make it melodic, so it waits for a
+    // PERC lane rather than being faked.
+    romantic: {
+      label: "Vienna 1876", voices: 4, bars: 8,
+      plan: "arc", bpm: 76,
+      parents: { classical: 0.5, nocturne: 0.3, concerto: 0.2 },
+      wants: ["opera orchestra"], near: "neoclassical",
+      instr: ["slow_strings", "cello", "french_horns", "tremolo"],
+      entry: v => [0, 0, 4, 6][v], reg: v => [-1, 0, -1, -2][v],
+      realize: v => (v === 0 || v === 3 ? "pad" : "line"),
+      kit: {},
+      roots: [0, 5, 3, 4, 2, 5, 1, 4],
+      mode: MODES.harmonic, scale: DIATONIC,
+      artic: "legato", maxHold: 4,
+      tone: { wave: "sawtooth", cut: 2000, q: 0.9, atk: .08, rel: 2.4, gain: .2, verb: .65 },
+      words: ["the strings", "the cello, singing the tune", "the horns, answering",
+              "tremolo, underneath, late"],
+      word: v => (v === 2 ? [transpose(-3)] : v === 3 ? [drop(2)] : []),
+    },
+
+    // BARCAROLLE — the salon, honestly. The Viennese waltz is blocked (no
+    // meter field — see the heading above), so the salon slot rocks in 6/8
+    // instead: swing 1/3 IS the triplet shuffle per kernel.js's own comment,
+    // and a barcarolle is the one salon form that lives there. Voice, harp
+    // rolling under it, a cello line between; `wants` keeps the waltz debt on
+    // the books for the day the kernel grows a meter.
+    barcarolle: {
+      label: "Paris 1881", voices: 3, bars: 8, swing: 0.33,
+      plan: "song", bpm: 76,
+      parents: { nocturne: 0.55, classical: 0.45 }, wants: ["viennese waltz"],
+      near: "nocturne",
+      instr: ["solo_vox", "harp", "cello"],
+      entry: v => (v === 0 ? 2 : 0), reg: v => [0, 0, -1][v],
+      realize: v => (v === 1 ? "pad" : "line"),
+      kit: {}, roots: [0, 4, 0, 4, 3, 4, 0, 4],
+      mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      bassStyle: "pedal",
+      artic: "legato", anchor: 2, maxHold: 4,
+      tone: { wave: "triangle", cut: 2400, q: 0.8, atk: .02, rel: 1.6, gain: .24, verb: .5,
+              // WHO SINGS: the monody mouth, three centuries on — the salon
+              // soprano is Caccini's daughter by direct descent
+              mouth: MOUTHS.monody },
+      words: ["the song, rocking on the tide", "the harp, rolling under it", "the cello line"],
+      word: v => (v === 1 ? [drop(2)] : v === 2 ? [invert(5)] : []),
+    },
+
+    // PARLOR — New York 1892, the hinge into the existing catalog: the
+    // hymnal's four-part habit sold as sheet music for the home piano. Its
+    // I-vi-IV-V IS "the doo-wop changes" sixty years early, which stitches
+    // this whole slate onto the catalog's 1950s front edge — hence
+    // `near: "doowop"`, a claim about the future rather than the past.
+    parlor: {
+      label: "New York 1892",
+      plan: "song", bpm: 96,
+      parents: { hymn: 0.4, classical: 0.35, barcarolle: 0.25 }, wants: ["ragtime"],
+      near: "doowop",
+      instr: ["solo_vox", "upright_piano"],
+      entry: () => 0, reg: v => (v === 0 ? 0 : -1),
+      realize: () => "line",
+      kit: {}, nobass: true,
+      roots: [0, 5, 3, 4],                        // the fifties changes, at home in 1892
+      mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      maxHold: 4,
+      tone: { wave: "triangle", cut: 2600, q: 0.8, atk: .008, rel: .9, gain: .28, verb: .3,
+              // WHO SINGS: the hymnal mouth, out of church and into the front room
+              mouth: MOUTHS.hymnal },
+      words: ["the song, sentimental on purpose", "the upright, oom and chord"],
+      word: v => (v === 1 ? [rotate(1)] : []),
+    },
   };
 
   // THE ARRANGEMENT'S COLUMN HEADINGS, one per lane. `p` says "Ghost perc"
@@ -5326,7 +5662,10 @@
   // table and belongs to no tradition.
   const FAMILIES = [
     ["kernel", ["simple"]],
-    ["vox",    ["gregorian", "bulgarian", "spem", "counterpoint", "fugue", "hymn"]],
+    // ...organum and arsnova joined 2026-08-21: unaccompanied polyphony is
+    // this cluster's whole definition, and both are gregorian's direct line.
+    ["vox",    ["gregorian", "bulgarian", "spem", "counterpoint", "fugue", "hymn",
+                "organum", "arsnova"]],
     ["club",   ["acid", "house", "techno", "garage", "dnb", "trap", "boombap",
                 "electro", "bigbeat", "drill", "kpop", "bigroom", "ebm", "synthduo",
                 // the five newcomers below are the SAME "no family fallback"
@@ -5357,7 +5696,14 @@
     // built out of it.
     ["roots",  ["countrypop", "skiffle", "tango", "jazz", "crooner", "yuletide",
                 "folkduo", "worldfolk",
-                "altcountry", "songwriterpiano", "softfolk", "singersongwriter"]],
+                "altcountry", "songwriterpiano", "softfolk", "singersongwriter",
+                // ...and the OLD WORLD slate (2026-08-21): everything pre-rock
+                // that is not unaccompanied polyphony lands here, because
+                // "the pre-rock traditions" is exactly what this cluster is —
+                // the two ancestors that joined it in phase 2 (tango 1935,
+                // skiffle 1956) just got ten much older housemates.
+                "troubadour", "estampie", "pavane", "continuo", "concerto",
+                "classical", "nocturne", "romantic", "barcarolle", "parlor"]],
     // ...and the one cluster that is not a tradition at all: the FUNCTION
     // genres, which are parts rather than styles. They sit last because that
     // is how they are used — you pick the music first and the part second.
@@ -5424,6 +5770,19 @@
     // plainchant has no metre AT ALL — the whole point — so the stress term is
     // nearly off and every drop of shape comes from the line
     gregorian: { stress: 0.06, phrase: 0.9, touch: { t: 0.06, v: 0.5 } },
+    // ...and organum is chant with a second voice on it, not a metred music:
+    // it keeps chant's near-zero stress rather than the vox default's 0.22.
+    // (arsnova takes the vox default as written — the talea IS metre arriving.)
+    organum:   { stress: 0.08, phrase: 0.85, touch: { t: 0.05, v: 0.5 } },
+    // THE OLD-WORLD SOLOISTS disagree with roots' backbeat-era default
+    // (stress .45) in the same direction neoclassical disagrees with drift:
+    // rubato music, the phrase over the bar. The dances and the classical
+    // period keep the family row — a pavane is danced and a Vienna 1785
+    // period IS its metre.
+    continuo:  { stress: 0.2,  phrase: 0.85, touch: { t: 0.07, v: 0.8 } },
+    nocturne:  { stress: 0.25, phrase: 0.85, touch: { t: 0.07, v: 0.85 } },
+    romantic:  { stress: 0.3,  phrase: 0.8,  touch: { t: 0.06, v: 0.9 } },
+    barcarolle:{ stress: 0.3,  phrase: 0.7,  touch: { t: 0.06, v: 0.8 } },
     // a fugue is the tight end of the human range: four voices only stay
     // legible if they agree about where the beat is
     fugue:     { stress: 0.3,  phrase: 0.7,  touch: { t: 0.025, v: 0.4 } },
@@ -5583,6 +5942,16 @@
     counterpoint:{ pass: 0.35 },
     fugue:       { pass: 0.3 },
     hymn:        { pass: 0.2 },
+    // the old world decorates the way its own treatises say to: passing tones
+    // for the polyphony (chant's answer, inherited whole), and the GRACE for
+    // the two soloists whose ornament is the style — Caccini wrote the
+    // trillo into the score, Chopin's fioritura is the nocturne.
+    organum:     { pass: 0.3 },
+    arsnova:     { pass: 0.3 },
+    pavane:      { pass: 0.2 },
+    continuo:    { pass: 0.2, grace: 0.3 },
+    nocturne:    { pass: 0.2, grace: 0.35 },
+    barcarolle:  { grace: 0.2 },
     bulgarian:   { grace: 0.35 },                  // the ornament IS the style
     funk:        { grace: 0.2,  flam: 0.15 },
     motown:      { grace: 0.15, flam: 0.12 },
