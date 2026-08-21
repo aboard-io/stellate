@@ -2088,6 +2088,46 @@
     if (sp && sp.bars) { delete d.drums; delete d.bass; d.lift = false; }
     return d;
   };
+  /* ---------- A THEME IS STATED WHOLE BEFORE IT IS FRAGMENTED ------------
+     The tag is the ONE role that carries a default `back` — "the hook's
+     head, played out the door" — and a head is only the head of something
+     you have already heard. Nobody asked for it there; the role did.
+
+     Measured on 120 dice rolls (the written theme, against the melody
+     layer's own compiled events): 24 of 303 theme-carrying sections never
+     sounded their theme's written second half, and every one of them was a
+     canned `frag` — 23 tags and one drop. Worse at record scale: 47 of the
+     120 rolls compose an ANSWER, and in 9 of them theme B's second half was
+     never heard ANYWHERE, because the dice's own "a rolled answer must be
+     heard" law seats B on the last theme-carrying section — which, in every
+     form that ends in a tag, IS the tag. The answer was composed, placed,
+     and decapitated by a default written for the hook. ("I never hear the
+     second half of the answer.")
+
+     THE LAW: a theme sounds its whole length somewhere. A `back` somebody
+     ANSWERED is untouched — fragmenting on purpose is a real musical call,
+     and this only ever stands down the role's own canned one. A record
+     whose hook is stated in a verse or a chorus is byte-identical: the tag
+     frags it exactly as it always did. */
+  const themeAt = (m, j) => (((((m.per || {})[j] || {}).theme === "b") &&
+                              m.ideaB && m.ideaB.on) ? "b" : "a");
+  // the returns that keep every note the theme wrote — `aug` (the head at
+  // half speed) and `frag` (the head) do not, by their own definitions
+  const WHOLE_BACK = { same: 1, up: 1 };
+  const statedWhole = (m, i) => {
+    const which = themeAt(m, i);
+    return secsOf(m).some((_, j) => {
+      if (j === i || themeAt(m, j) !== which) return false;
+      const p = (m.per || {})[j] || {};
+      // `idea` and `back` exactly as partOf resolves them — read here
+      // rather than through partOf so the two never recurse into each other
+      const id = p.idea != null ? p.idea : defaultsFor(m, j).idea;
+      if (!id || id === "no") return false;
+      const bk = p.back != null ? p.back : defaultsFor(m, j).back;
+      return !bk || !!WHOLE_BACK[bk];
+    });
+  };
+
   // what this section actually is: the role's own part, with anything said
   // about it on top
   const partOf = (m, i) => {
@@ -2109,8 +2149,11 @@
              // and every consumer treats undefined as "the tune, as it was".
              theme: per.theme,
              // ...the tag role brings its own return (`d.back`, the
-             // fragmented hook); everywhere else unsaid stays ABSENT
-             back: per.back != null ? per.back : d.back,
+             // fragmented hook); everywhere else unsaid stays ABSENT — and
+             // the canned fragment stands down where this theme has not
+             // been stated whole anywhere else (statedWhole, above)
+             back: per.back != null ? per.back
+               : (d.back === "frag" && !statedWhole(m, i) ? undefined : d.back),
              keys: per.keys != null ? per.keys : d.keys,
              guitar: per.guitar != null ? per.guitar : d.guitar,
              gwords: per.gwords || [],

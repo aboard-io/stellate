@@ -23,6 +23,10 @@ import { adoptSong, SONG, SLOTS, putPhrase, on, commit, setBpm, setSwing, setPoo
 import { startAt, stop, playing, warmup, getPosition, passAt,
          announceChange } from "../audio/live.js";
 import { registerSW, warmCache, warmShell, warmed } from "../audio/offline.js";
+// the COMPILED score — the same per-bar artifact the engine is fed. The staff
+// reads it to re-engrave a sounding section as played (playedPhrase, below);
+// nothing here computes a note of its own.
+import { timeline } from "../audio/plan.js";
 import { toEngraving, toNotes } from "./abc.js";
 import { playAudition, stopAudition, auditioning, zoneFilesFor } from "../audio/audition.js";
 
@@ -209,6 +213,21 @@ const staffDone = {};   // ...and the ABC actually IN the host's SVG. The old
                         // answer theme earned a staff of its own.
 const staffGlyphs = {}; // per theme: glyph -> toNotes note index (abc.js
                         // toEngraving — tied pieces share their note's index)
+const staffCue = {};    // per theme: the caption line UNDER the staff — the
+                        // one place the page says whether you are looking at
+                        // the theme as written or as this section plays it
+// AS PLAYED (2026-08-21, Paul: "can you visually rewrite the themes for their
+// actual notes as you play them"). The written staff is the composer's
+// reference view; a section plays the theme TRANSFORMED (per.back: up a step,
+// augmented, just its head), in the record's key, over that section's own
+// changes and conformed by the harmony — so the page and the air were showing
+// two different tunes. While the record plays, the sounding section's theme is
+// re-engraved from the notes the ENGINE WAS HANDED, and the lights ride that
+// engraving, because the glyph map comes out of the same call.
+let playedEng = {};     // per theme: the as-played engraving standing in
+let playedSi = null;    // ...and the section it was read off
+let staffSig = "";      // the notes+caption currently on the staves — the churn
+                        // guard, so a beat that changes nothing engraves nothing
 
 // THE SOUNDING NOTE, LIT ON THE STAFF (2026-08-21, Paul: "can you light up
 // notes in the theme when playing them"). One note index per theme is ever
@@ -279,11 +298,130 @@ const themeOpts = (m, t) => ({
   maxHold: 4,
 });
 
+/* ---------- THE STAFF SHOWS WHAT IS ACTUALLY BEING PLAYED --------------
+   The written staff is the theme as the ROOM owns it, which is the right
+   thing to edit against and the wrong thing to watch. A section plays it
+   TRANSFORMED (per.back — up a step, augmented, just its head), in the
+   record's key, over that section's own changes, conformed by the harmony
+   stage; "up a step" moved nothing on the page and `aug` drew no longer
+   notes. So while the record plays, the sounding section's theme is
+   re-engraved FROM THE COMPILED SCORE.
+
+   THE ARTIFACT, NEVER A RE-COMPUTATION (CLAUDE.md's test-the-artifact law):
+   audio/plan.js timeline() is the per-bar event list the engine itself is
+   fed, layer-tagged and register-homed. This reads ONE CYCLE of the melody
+   layer off it — the theme's own bars, which is the length the layer cycles
+   on (band-kit per16) — and hands abc.js absolute MIDI, so key, register,
+   transposition and the harmony's conforming are all already in the number.
+   The lights ride the same call's glyph map, so the lit index stays true. */
+const playedOpts = (m) => ({
+  // key and mode here choose the SIGNATURE only — every pitch arrives as an
+  // absolute MIDI number, so nothing about the sound is re-derived
+  key: Band.B.KEYS[m.song.key] || 0,
+  mode: MODES[Band.modeKeyOf(m.song)],
+  bpm: m.song.bpm,
+});
+function playedPhrase(si) {
+  const TL = timeline();
+  if (!TL.length || si == null || si < 0) return null;
+  const lay = MELP + si, sec = SONG[si];
+  if (!sec || !GENRES[lay]) return null;
+  const ent = (sec.stack || []).find((e) => e.g === lay);
+  const ph = ent && SLOTS[ent.slots[0]];
+  if (!ph || !ph.gate || !ph.gate.length) return null;
+  const cyc = Math.max(1, Math.round(ph.gate.length / 16));   // the theme's own bars
+  const n = cyc * 16;
+  const gate = new Array(n).fill(0), midi = new Array(n).fill(0),
+        hold = new Array(n).fill(0);
+  let any = false;
+  for (const bar of TL) {
+    const bi = bar.barIn || 0;
+    if (bar.si !== si || bi >= cyc) continue;
+    // the NOMINAL grid (bar.steps), because `off` was written on it: the
+    // tempo map warps barSteps afterwards and a staff has no rubato
+    const rate = 16 / (bar.steps || 16);
+    for (const e of bar.ev) {
+      if (e.layer !== lay || e.kind !== "line" || e.n == null) continue;
+      const at = bi * 16 + Math.max(0, Math.min(15, Math.round((e.off || 0) * rate)));
+      // a groove push, an ornament's grace note: two events can share one
+      // sixteenth and a staff has one place for them. The first stands.
+      if (gate[at]) continue;
+      gate[at] = 1; any = true;
+      midi[at] = Math.round(e.n + (e.home || 0));
+      hold[at] = Math.max(1, Math.round((e.dur || 0) * rate));
+    }
+  }
+  return any ? { gate, midi, hold } : null;
+}
+
+// the caption, in the house voice — words, no icons
+const backWord = (k) => ((Band.Id.TRANSFORMS || {})[k || "same"] || {}).w || "";
+const cueWord = {};     // per theme: the words, kept so a redraw repaints them
+function setCue(t, words) {
+  cueWord[t] = words || "";
+  if (staffCue[t]) staffCue[t].textContent = cueWord[t];
+}
+// DRESS BOTH STAVES. `si`/`t` name the sounding section and the theme it
+// carries (null when the record is stopped); `cue` is what the page says
+// about it. Guarded on a signature of the notes AND the words, so a beat
+// that changes neither engraves nothing — the low-churn law.
+function dressStaff(si, t, cue, elseCue) {
+  const pp = t ? playedPhrase(si) : null;
+  const sig = (pp ? si + "|" + t + "|" + pp.gate.join("") + "|" + pp.midi.join(",") +
+               "|" + pp.hold.join(",") : "") +
+              "\u00a7" + (cue || "") + "\u00a7" + (elseCue || "");
+  if (sig === staffSig) return playedEng[t] || null;
+  staffSig = sig;
+  playedEng = {}; playedSi = pp ? si : null;
+  if (pp) playedEng[t] = toEngraving(pp, playedOpts(model));
+  for (const k of ["a", "b"]) {
+    // the words are remembered whether or not the staff is on the page yet
+    // (themeFig repaints them), the engraving needs a host to stand in
+    setCue(k, k === t ? cue : elseCue);
+    const theme = themeOf(model, k);
+    if (!staffHost[k] || !theme || !theme.on) continue;
+    engraveInto(k, playedEng[k] ||
+      toEngraving(Band.Id.toPhrase(theme), themeOpts(model, k)));
+  }
+  return playedEng[t] || null;
+}
+
+// PUT AN ENGRAVING ON A STAFF. The one writer of staffAbc/staffGlyphs/
+// staffDone, so the ABC on screen, the glyph map the lights read and the
+// music the page thinks it is showing can never be three different things.
+// Engraves whenever what is ON SCREEN is not this call's music — a changed
+// theme re-engraves, and so does a host whose last engrave failed, was
+// skipped, or lost its SVG: an error retries on the very next call.
+function engraveInto(t, eng) {
+  const abc = eng.abc;
+  staffAbc[t] = abc;
+  staffGlyphs[t] = eng.glyphs;     // glyph -> note map, for the highlight
+  const host = staffHost[t];
+  if (!host) return;
+  if (abc === staffDone[t] && host.querySelector("svg")) return;
+  loadStaffLib().then((A) => {
+    // a draw may have moved on while the chunk was on the wire — engrave
+    // only what is still current, where it still stands
+    if (!A || host !== staffHost[t] || abc !== staffAbc[t] || !host.isConnected) return;
+    try {
+      // add_classes makes every engraved note addressable (.abcjs-note in
+      // engraving = timeline order; rests class .abcjs-rest, disjoint) —
+      // the highlight below rides those classes
+      A.renderAbc(host, abc, { responsive: "resize", add_classes: true });
+      staffDone[t] = host.querySelector("svg") ? abc : "";
+      // a re-engrave replaced the SVG under a lit note: light it again
+      if (litT === t && litIdx != null) { const i = litIdx; litIdx = null; lightStaff(t, i); }
+    } catch (e) { staffDone[t] = ""; }
+  }).catch(() => { staffDone[t] = ""; });  // a failed load retries next call
+}
+
 // one theme's figure: the staff, its name, and its own piano button
 function themeFig(m, t) {
   const theme = themeOf(m, t);
-  const eng = toEngraving(Band.Id.toPhrase(theme), themeOpts(m, t));
-  const abc = eng.abc;
+  // the AS-PLAYED engraving outranks the written one while a section that
+  // carries this theme is sounding (dressStaff, below); a redraw mid-record
+  // must not put the written notes back under the lights
+  const eng = playedEng[t] || toEngraving(Band.Id.toPhrase(theme), themeOpts(m, t));
   // a plain bordered box with the theme's name — the name the RECORD gives
   // it (themeName: a hook when the singer carries it, a riff when the
   // guitar does; the answer is called the answer), the same word the
@@ -304,28 +442,10 @@ function themeFig(m, t) {
   } else fig.append(el("figcaption", null, name));
   if (!staffHost[t]) { staffHost[t] = el("div", "dstaffsvg"); staffDone[t] = ""; }
   fig.append(staffHost[t]);        // the same node every draw: no async flash
-  staffAbc[t] = abc;
-  staffGlyphs[t] = eng.glyphs;     // glyph -> note map, for the highlight
-  // engrave whenever what is ON SCREEN is not this draw's music — a changed
-  // theme re-engraves, and so does a host whose last engrave failed, was
-  // skipped, or lost its SVG: an error retries on the very next draw
-  if (abc !== staffDone[t] || !staffHost[t].querySelector("svg")) {
-    const host = staffHost[t];
-    loadStaffLib().then((A) => {
-      // a draw may have moved on while the chunk was on the wire — engrave
-      // only what is still current, where it still stands
-      if (!A || host !== staffHost[t] || abc !== staffAbc[t] || !host.isConnected) return;
-      try {
-        // add_classes makes every engraved note addressable (.abcjs-note in
-        // engraving = timeline order; rests class .abcjs-rest, disjoint) —
-        // the highlight below rides those classes
-        A.renderAbc(host, abc, { responsive: "resize", add_classes: true });
-        staffDone[t] = host.querySelector("svg") ? abc : "";
-        // a re-engrave replaced the SVG under a lit note: light it again
-        if (litT === t && litIdx != null) { const i = litIdx; litIdx = null; lightStaff(t, i); }
-      } catch (e) { staffDone[t] = ""; }
-    }).catch(() => { staffDone[t] = ""; });  // a failed load retries next draw
-  }
+  if (!staffCue[t]) staffCue[t] = el("p", "dstaffcue");
+  staffCue[t].textContent = cueWord[t] || "";
+  fig.append(staffCue[t]);         // ...and the same caption node, likewise
+  engraveInto(t, eng);
   // HEAR IT ON THE PIANO — the theme alone, on the GM grand, through
   // audition.js's own little context: the click is the gesture, the band
   // engine is never touched, and if the band is playing the piano simply
@@ -337,6 +457,10 @@ function themeFig(m, t) {
   hear.addEventListener("click", () => {
     if (auditioning()) stopAudition();
     else {
+      // THE PIANO PLAYS THE THEME AS WRITTEN, so it takes the written staff
+      // with it: its onNote indexes the written timeline, and lighting that
+      // index on an as-played engraving would light the wrong note.
+      dressStaff(null, null, "", "");
       const t2 = toNotes(Band.Id.toPhrase(themeOf(model, t)), themeOpts(model, t));
       // the piano lights the staff as it plays — the same toNotes timeline
       // the audition schedules from, so index i IS the sounding note
@@ -362,7 +486,10 @@ function themeStaff(m) {
   if (!(m.idea && m.idea.on)) {
     delete staffHost.a; delete staffHost.b;
     delete staffGlyphs.a; delete staffGlyphs.b;
+    delete staffCue.a; delete staffCue.b;
     staffAbc.a = staffAbc.b = ""; staffDone.a = staffDone.b = "";
+    playedEng = {}; playedSi = null; staffSig = "";
+    cueWord.a = cueWord.b = "";
     lightStaff(null, null);
     if (auditioning()) stopAudition();
     return null;
@@ -372,8 +499,8 @@ function themeStaff(m) {
   // ...and the answer beside it, when the arranger wrote one; a B taken
   // back out drops its host so a later one engraves fresh
   if (m.ideaB && m.ideaB.on) wrap.append(themeFig(m, "b"));
-  else { delete staffHost.b; delete staffGlyphs.b;
-         staffAbc.b = ""; staffDone.b = "";
+  else { delete staffHost.b; delete staffGlyphs.b; delete staffCue.b;
+         staffAbc.b = ""; staffDone.b = ""; delete playedEng.b; staffSig = "";
          if (litT === "b") lightStaff(null, null); }
   return wrap;
 }
@@ -1887,13 +2014,31 @@ const themeNoteAt = (tn, step) => {
 function lightBeat(d) {
   clearLightTimers();
   if (auditioning()) return;                  // the piano has the staff
-  if (!playing || !(model.idea && model.idea.on) || d.si == null || d.si < 0)
+  if (!playing || !(model.idea && model.idea.on) || d.si == null || d.si < 0) {
+    dressStaff(null, null, "", "");
     return lightStaff(null, null);
+  }
   const per = Band.partOf(model, d.si);
   const tk = Band.TAKERS[per.idea];
-  if (!tk || !tk.chair) return lightStaff(null, null);
+  const role = Band.secsOf(model)[d.si] || "section";
+  // NOBODY IS PLAYING THE TUNE HERE, AND THE PAGE SAYS SO. A dark staff and
+  // an honest sentence look identical from across the room, and this record
+  // spends whole sections with the melody out; the words are the difference
+  // between "the tune is out" and "the lights are broken".
+  if (!tk || !tk.chair) {
+    dressStaff(null, null, "", "the tune is out in the " + role);
+    return lightStaff(null, null);
+  }
   const t = per.theme === "b" && model.ideaB && model.ideaB.on ? "b" : "a";
-  const tn = toNotes(Band.Id.toPhrase(themeOf(model, t)), themeOpts(model, t));
+  // AS PLAYED: the section's own notes, off the compiled score. When the
+  // layer never reached the timeline (a compile between records, a section
+  // whose taker has no room) the written staff stands, which is the honest
+  // fallback — it is still this theme.
+  const bw = backWord(per.back);
+  const eng = dressStaff(d.si, t, "as played in the " + role +
+                         (per.back && per.back !== "same" ? ": " + bw : ""),
+                         "as written");
+  const tn = eng || toNotes(Band.Id.toPhrase(themeOf(model, t)), themeOpts(model, t));
   if (!tn.n || !tn.notes.length) return lightStaff(null, null);
   let barIn = 0;                              // which bar of the sounding box
   try { barIn = Math.max(0, (passAt(getPosition().now).bar || 1) - 1); }
@@ -1963,7 +2108,9 @@ on("transport:state", () => {
   if (!playing) { pend.clear(); beatEl.textContent = ""; pendEl.textContent = "";
     if (liveEl) liveEl.textContent = "";
     clearLightTimers();
-    if (!auditioning()) lightStaff(null, null); }
+    // STOPPED, SO THE STAFF GOES BACK TO THE COMPOSER'S VIEW: the theme as
+    // written, with nothing claiming it is being played
+    if (!auditioning()) { dressStaff(null, null, "", ""); lightStaff(null, null); } }
 });
 
 /* ---------- boot ---------- */
@@ -1991,6 +2138,17 @@ warmShell();
 window.__bandWarm = () => warmed();               // the gate asks what is cached
 window.__bandDraw = () => draw();                  // the gate times a redraw
 window.__bandLit = () => ({ t: litT, idx: litIdx });  // the lit staff note
+// ...and WHAT THE STAFF IS SHOWING: which theme (if any) stands re-engraved
+// from the sounding section's own notes, that engraving's timeline, and the
+// words under each staff. A gate asking "does the page draw what it plays"
+// has to read the ARTIFACT, not the model that would have made it.
+window.__bandStaff = () => ({
+  sig: staffSig, si: playedSi,
+  played: Object.fromEntries(Object.entries(playedEng).map(([k, e]) =>
+    [k, e.notes.map((x) => ({ at: x.at, len: x.len, midi: x.midi }))])),
+  cue: { a: (staffCue.a || {}).textContent || "", b: (staffCue.b || {}).textContent || "" },
+  abc: { a: staffAbc.a || "", b: staffAbc.b || "" },
+});
 window.__bandModel = () => JSON.stringify(model);   // ...and the model, so a
 // word that is lost can be located: did the MODEL move, or only the plan?
 // ...and the session you left, if there is one. A cached record you cannot

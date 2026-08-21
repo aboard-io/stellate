@@ -100,6 +100,26 @@ Phase 4): a theme is a CLAIM, not a pattern. Build:
    fragmented (just its head). This is the seam where the theme composer
    meets the improvisation engine: trading and solos ARE transformations
    applied live.
+   SHIPPED 2026-08-21, and with two laws the first cut was missing:
+   - A THEME IS STATED WHOLE BEFORE IT IS FRAGMENTED (Paul: "I never hear
+     the second half of the answer"). The tag role carries the one DEFAULT
+     `back` — the hook's head, out the door — and the dice seats theme B on
+     the last theme-carrying section, which in every form ending in a tag
+     IS the tag. Measured over 120 rolls: 9 of the 47 records that compose
+     an answer never heard B's second half anywhere; the bars the engine
+     was handed for that section read 3 0 4 0. The canned fragment now
+     stands down unless another section says that theme whole (band-kit
+     `statedWhole`); an ANSWERED `back` is untouched. After: 0 records,
+     and the same section reads 4 3 4 3.
+   - THE STAFF SHOWS WHAT IS ACTUALLY BEING PLAYED (Paul: "can you visually
+     rewrite the themes for their actual notes as you play them"). While
+     the record plays, the sounding section's theme is re-engraved from the
+     COMPILED SCORE (audio/plan.js timeline — the same per-bar artifact the
+     engine is fed), so a transform, the record's key and the section's own
+     changes are all visible; the note lights ride that engraving's own
+     glyph map. Stopped, or in a section nobody carries the tune in, the
+     staff is the written theme again and a caption says which ("as played
+     in the drop: up a step" · "the tune is out in the break").
 
 THE THROUGH-COMPOSED THEME (Paul, 2026-08-21, from the Yesterday study —
 "yes, but I don't want to lose the flexibility of the recursive theme"):

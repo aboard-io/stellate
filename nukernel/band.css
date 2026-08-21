@@ -53,6 +53,13 @@ header { flex: none; }
    matters: abcjs paints fill as an ATTRIBUTE on the paths inside each
    note's <g>, and only a CSS rule aimed at the paths outranks it. */
 .dstaffsvg .dlit, .dstaffsvg .dlit * { fill: #c00; }
+/* WHAT YOU ARE LOOKING AT (2026-08-21, Paul: "visually rewrite the themes
+   for their actual notes as you play them"). One line under the staff, in
+   words: whether these are the theme's own notes or the ones the sounding
+   section is actually playing — and, when nobody is carrying it there, that
+   the tune is out. Empty most of the time, so it takes no room when silent. */
+.dstaffcue { margin: .2em 0 0; font-size: .85em; }
+.dstaffcue:empty { display: none; }
 
 /* NAV AND FOLDS (Paul: "instead of using only lists use HTML <nav>
    elements to make things easy to hide and shrink"): the outline trees ride

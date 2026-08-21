@@ -162,7 +162,9 @@ function meterOf(steps) {
 
 // ---- the compiler ----------------------------------------------------------
 // toABC(phrase, opts) -> ABC string.
-//   phrase  { deg[], oct[], gate[], vel[], hold[]? }  equal lengths; vel is
+//   phrase  { deg[], oct[], gate[], vel[], hold[]?, midi[]? }  equal lengths;
+//           `midi` is present-only and outranks the degree math (see
+//           toNotes below: as written, or as played); vel is
 //           carried by the phrase but not drawn — dynamics belong to the
 //           SECTION's performance layer (stress/touch), not to the theme's
 //           identity, and a staff full of per-note marks says less, not
@@ -186,8 +188,18 @@ function meterOf(steps) {
 // A note lasts to the NEXT onset (kernel spans()), the last one to the end of
 // the phrase — the loop's wrap shows as the note holding out its bar, which
 // is what it does in the air.
+// AS WRITTEN, OR AS PLAYED. A phrase may carry `midi` — an absolute MIDI
+// number per step, present-only — and when it does that number IS the pitch:
+// the degree math, the key offset and the register shift are all already
+// inside it. That is the seam the band page re-engraves a sounding section
+// through (ui/band.js): the notes the ENGINE was handed for that section, so
+// "up a step" visibly moves the staff and the bar's own chord shows in the
+// spelling. `key`/`mode` still choose the SIGNATURE (spellPitch reads them),
+// which is why they stay opts and not part of the pitch. A phrase without
+// `midi` takes exactly the old branch, byte for byte.
 export function toNotes(phrase, opts = {}) {
   const { deg = [], oct = [], gate = [] } = phrase || {};
+  const mid = phrase && phrase.midi;
   const n = gate.length;
   const key = opts.key | 0;
   const mode = (opts.mode && opts.mode.length ? opts.mode : MINOR).slice();
@@ -206,7 +218,8 @@ export function toNotes(phrase, opts = {}) {
     if (hd) span = Math.min(span, hd);
     else if (opts.maxHold) span = Math.min(span, opts.maxHold);
     notes.push({ at, len: span,
-      midi: 60 + key + regShift + degPitch(deg[at] | 0, mode) + 12 * (oct[at] | 0) });
+      midi: mid ? mid[at] | 0
+                : 60 + key + regShift + degPitch(deg[at] | 0, mode) + 12 * (oct[at] | 0) });
   });
   return { n, spb, notes };
 }
