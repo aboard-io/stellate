@@ -30,11 +30,24 @@
   "use strict";
 
   // the kernel's own alphabets, by name (kernel.js PENT / MODE and friends)
+  //
+  // `mode` was called "every note in the key" — false on a major-key record
+  // (measured: it played Ab and Eb against F major, because the value IS the
+  // natural minor, kernel.js MODE). Named honestly now, in the house voice
+  // band-kit's own question uses ("major or minor?"). SAVED SESSIONS keep
+  // both the VALUE and the word (band-kit knobs + knobs.__said), so an old
+  // session restores byte-identical: the gig sheet prints the word that was
+  // answered, and re-asking lights the same value under its new name —
+  // nothing to map, nothing throws.
   const SCALES = {
     pent:  { w: "the pentatonic", v: [0, 3, 5, 7, 10] },
-    mode:  { w: "every note in the key", v: [0, 2, 3, 5, 7, 8, 10] },
+    mode:  { w: "the minor scale", v: [0, 2, 3, 5, 7, 8, 10] },
     blues: { w: "the blues scale", v: [0, 3, 5, 6, 7, 10] },
     major: { w: "a major pentatonic", v: [0, 2, 4, 7, 9] },
+    // ...and the major scale itself, which simply was not offered — in a
+    // system whose harmony is ionian (genres.js MODES.ionian, the same
+    // seven notes)
+    ionian: { w: "the major scale", v: [0, 2, 4, 5, 7, 9, 11] },
   };
 
   // ONE ROW PER FIELD. `role` is the chair that is asked; `ask` is the

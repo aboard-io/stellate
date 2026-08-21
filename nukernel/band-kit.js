@@ -610,8 +610,14 @@
      vocabulary (QSTEPS triad/7/nine/sus4/six, QFIX maj7/m7/dom7). */
   const CHORDKIND = {
     plain:  { w: "plain triads", q: null },
+    // "where they belong": I and IV are the MAJOR sevenths of the key —
+    // giving only I the special case handed IV a chromatic m7 (measured in
+    // F: Bb-C#-F-Ab, a Bbm7 in the middle of a major tune) where Bbmaj7
+    // (Bb-D-F-A) is what the words mean. vii would be m7b5, but the
+    // kernel's QFIX carries maj7/m7/dom7 only, so it stays m7 — close
+    // enough that nobody has called it, and honest here rather than silent.
     sevens: { w: "sevenths where they belong",
-              q: (d) => (d === 0 ? "maj7" : d === 4 ? "dom7" : "m7") },
+              q: (d) => (d === 0 || d === 3 ? "maj7" : d === 4 ? "dom7" : "m7") },
     all7:   { w: "sevenths on everything", q: () => "7" },
     nines:  { w: "ninths", q: () => "nine" },
     sus:    { w: "suspended", q: () => "sus4" },
@@ -848,6 +854,13 @@
   // (the same law compose.js OUTRO_NOKIT holds on the daw side)
   const OUT_NOKIT = { fill: "tail", roll: "tail", tomfill: "tail", hatrun: "cut",
                       doubles: "cut", "break": "tail", crash: "hush" };
+  // a groove with nothing on the kit — the one fact both the endings above
+  // and the default lift degrade on
+  const kitlessOf = (g) => {
+    const k = g.kits && g.kits.length ? g.kits : [g.kit || {}];
+    return !k.some((bar) => Object.entries(bar || {})
+      .some(([, v]) => Array.isArray(v) && v.some(Boolean)));
+  };
   // the four kinds that accelerate INTO a downbeat — the lift's own ballot,
   // dealt deterministically by where the section sits
   const OUT_LIFT = ["roll", "hatrun", "doubles", "tomfill"];
@@ -1496,7 +1509,13 @@
       // arrangement, not drumming. "Follow the kick" is the bass locking to
       // the drummer's own kick pattern, which is a thing one player asks
       // another for and neither can do by themselves.
-      if (per.lift && per.drums !== "nokit") {
+      // ...and a fill needs a KIT: on a kitless groove ("nobody on the kit")
+      // the DEFAULT lift stands down — a snare fill from a kit that isn't
+      // there, before the bridge — the same law OUT_NOKIT holds for the
+      // endings below. A lift somebody actually ANSWERED still wins, which
+      // is what asking meant.
+      const liftAsked = ((m.per || {})[i] || {}).lift != null;
+      if (per.lift && per.drums !== "nokit" && (liftAsked || !kitlessOf(g))) {
         const k = g.kits && g.kits.length ? g.kits.slice() : [g.kit || {}];
         const last = { ...(k[k.length - 1] || {}) };
         last.s = FILLBAR.s; last.t = FILLBAR.t;
@@ -1555,8 +1574,21 @@
       // backwards — and to nobody when the room is empty. The hole-filling
       // below gets the same guard, because "the keys take it" must not
       // resurrect a laid-out guitar with a strum job either.
+      // ...WITH ONE HONEST DISTINCTION PER VOCABULARY. For the keys and the
+      // guitar, the JOB is the chair's whole musical existence — Ky/Gt's "out"
+      // IS the player leaving the room, so a laid-out keys chair neither plays
+      // nor takes. The SINGER'S chair is TWO things (CLAUDE.md: "a TAKER of
+      // the idea, AND parts of its own"), and vocal-kit's own words keep them
+      // apart: its jobs group is "what you are SINGING" — the accompaniment
+      // parts — and "lay out" (job:out, said song-wide or as a section's own
+      // word) silences THOSE, while the taking is the section's `idea` word
+      // and belongs to the arranger. A verse that says "the singer takes it"
+      // and "lay out" is the bare verse where somebody just sings the tune —
+      // reading the singer's own-part word as the room emptied un-took the
+      // melody from exactly that record. A seated singer is always in the
+      // room for taking; only not being in the band could say otherwise.
       const inRoom = { keys: !Ky.toGenre(km).silent, guitar: !Gt.toGenre(gm).silent,
-                       voice: !Vo.toGenre(m.voice).silent };
+                       voice: true };
       let taker = TAKERS[per.idea] || TAKERS.no;
       if (taker.chair && !inRoom[taker.chair]) {
         const next = (taker.chair === "keys" ? ["guitar"]
@@ -1647,12 +1679,7 @@
       else if (per.out === "lift") outro = OUT_LIFT[i % OUT_LIFT.length];
       else if (per.out !== "none" && i === f.secs.length - 1 && m.song.end)
         outro = m.song.end;
-      if (outro) {
-        const kitsNow = g.kits && g.kits.length ? g.kits : [g.kit || {}];
-        const kitless = !kitsNow.some((bar) => Object.entries(bar || {})
-          .some(([k2, v]) => Array.isArray(v) && v.some(Boolean)));
-        box.outro = kitless ? (OUT_NOKIT[outro] || outro) : outro;
-      }
+      if (outro) box.outro = kitlessOf(g) ? (OUT_NOKIT[outro] || outro) : outro;
       // THE SECTION'S OWN LENGTH, with the changes repeating inside it
       const bars = lenOf(m, role) || g.bars;
       return { role, i, genre: g, bars, per, melody, voice,

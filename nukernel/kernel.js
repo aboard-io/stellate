@@ -1451,6 +1451,11 @@
         // stamps the phrase it was made from as regDeg/regGate; the mean
         // reads THAT, so the shift matches the untransformed section's and
         // the step rides on top. A phrase with no stamp is byte-identical.
+        // ...AND NOT THE HAND EITHER: a hand-lift (ideas-kit `lift`, "that
+        // third note is too high") is the same class of deliberate move —
+        // one lifted note near the rounding boundary flipped the whole line
+        // an octave — so toPhrase stamps the pre-lift degrees the same way
+        // and the lift rides on top of the registration.
         const rdeg = p.regDeg || p.deg, rgate = p.regDeg ? p.regGate : p.gate;
         const on = [];
         for (let i = 0; i < N; i++) if (rgate[i]) on.push(pitch(rdeg[i], sc));

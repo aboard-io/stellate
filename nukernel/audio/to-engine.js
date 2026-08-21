@@ -401,6 +401,30 @@ const PAGE_TRIM = {
 };
 /** the page's trim for a pooled module, by dsp id — 1 for everything else. */
 export const pageTrim = (dsp) => PAGE_TRIM[dsp] || 1;
+// ...AND THE TABLE'S CONSUMER, which it had lost. The route these numbers were
+// measured for was the old audio tier's own graph, and when that engine came
+// out (2026-08-18) the GainNode that read them went with it — pageTrim was
+// exported and NOTHING called it, so every modelled voice shipped at the raw
+// deficit the table records. Nobody heard it until a record put a MODELLED
+// voice at the FRONT: the Yesterday session's singer (voice_lead) carried the
+// tune at -18.3 dB under the sampled band — "the audio has no melody at all" —
+// while its events, its unit and its module were all present and correct
+// (the engine's own audit read the voice at rms 0.02 against a 0.21 mix).
+// The trim lands where the comment above says it must: on the ROUTE — the
+// unit's dry tap, which the renderer multiplies into every sample the module
+// puts out (stream-renderer/render-core `dg = (u.dry ?? 1) * curOut`) — never
+// on `gain` (the shaper's input: dirt) and never on `level` (3 dB of headroom).
+// `u.pageTrim` rides along so audio/desk.js can lift the sends it composes per
+// bar by the same gain, keeping the voice in the same room as the band.
+const trimRoute = (u) => {
+  const T = pageTrim(u.module || "");
+  if (T === 1) return u;
+  u.dry = (u.dry != null ? u.dry : 1) * T;
+  u.rev = (u.rev || 0) * T;
+  u.del = (u.del || 0) * T;
+  u.pageTrim = T;
+  return u;
+};
 // the five voice types as the formant tables index them, and their compass. The
 // index is which singer; the compass is the register law — a bass's formants
 // over a soprano's line is a chipmunk, so a part that runs off the top of a
@@ -1097,8 +1121,8 @@ export function toEngine(plan, deps) {
   // pitchedUnit, so every strip, every insert chain and every register law is
   // the parent's and not a copy of it.
   const units = SE.voiceUnits(E, state);
-  for (const c of chairs.values()) units[c.key] = SE.pitchedUnit(c.role, c.m, state);
-  if (bassSeat) units.bass = SE.pitchedUnit("bass", bassSeat.m, state);
+  for (const c of chairs.values()) units[c.key] = trimRoute(SE.pitchedUnit(c.role, c.m, state));
+  if (bassSeat) units.bass = trimRoute(SE.pitchedUnit("bass", bassSeat.m, state));
   else delete units.bass;
   delete units.pad; delete units.melody;         // the placeholders; the chairs above are the real voices
   // stereo placement + the same-timbre carve, re-run over the FINAL table: two

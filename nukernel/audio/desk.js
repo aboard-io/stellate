@@ -608,6 +608,15 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
     if (mo && mo.fader && v.lvl) v.lvl *= Math.pow(10, faderDb(mo.fader) / 20);
     if (mo && mo.rev) v.rev = c01(v.rev + mo.rev);
     if (mo && mo.del) v.del = c01(v.del + mo.del);
+    // THE PAGE'S ROUTE TRIM (to-engine PAGE_TRIM/trimRoute): a modelled voice's
+    // raw output sits well under the sampled band's, and its dry tap already
+    // carries the measured makeup. The sends this desk just composed multiply
+    // the same RAW output, so without the same gain the lifted voice would sing
+    // level but bone dry — its reverb 18 dB under the room everyone else is in.
+    // Applied after the clamps on purpose: the rails bound what a hand may ask
+    // for, and the trim is not a hand, it is the route. Absent (=== every
+    // sampled voice, every unit the parent built), byte-identical.
+    if (u.pageTrim && u.pageTrim !== 1) { v.rev *= u.pageTrim; v.del *= u.pageTrim; }
     // A CHIP IS AN INSERT HERE. The page's own vocabulary calls it a send and had
     // one shared bus per effect; the parent has no page-wide effect bus and a
     // per-voice INSERT chain instead (state-engine insertChain -> sampler.js

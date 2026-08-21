@@ -309,9 +309,21 @@
     // THE HAND MOVES LAST. A step you lifted by hand is lifted even if it is
     // the note the phrase lands on — otherwise "that one is too high" did
     // nothing to exactly the notes anybody would say it about.
+    //
+    // ...AND REGISTER THE PHRASE, NOT THE HAND. The kernel's whole-line
+    // octave shift reads a degree mean (kernel.js render, the regDeg law),
+    // and a hand-lift is deliberate movement exactly like the transform's
+    // step: fold it into the mean and one lifted note near the rounding
+    // boundary flips the WHOLE LINE an octave the other way. So a lifted
+    // phrase stamps the degrees as written pre-lift; registration reads the
+    // stamp and the lift rides on top. Present-only, like `hold` — an
+    // unlifted phrase carries no stamp and is byte-identical.
+    const lifted = onsets.some((at) => lift[at % N]);
+    const regDeg = lifted ? deg.slice() : null;
     for (const at of onsets) if (lift[at % N]) deg[at] += lift[at % N];
     const out = { deg, oct, vel, inc: z(n), stk: z(n), gate, acc: z(n), sld: z(n) };
     if (anyHold) out.hold = hold;               // present-only, like `orn`
+    if (regDeg) { out.regDeg = regDeg; out.regGate = gate.slice(); }
     return out;
   }
 
