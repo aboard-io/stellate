@@ -282,7 +282,7 @@ async function assemble(state, sched, env, opts) {
     if (u.sampler) {
       const notes = events.map(e => ({
         tSec: e.beat * spb, durSec: e.durB * spb, freq: e.sets.freq,
-        gain: (u.lvl || 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
+        gain: (u.lvl != null ? u.lvl : 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
         // VELOCITY-LAYER selection runs off the MUSICAL amp (e.amp), not this
         // mix gain — SP.selVel is the one formula live.js uses too
         // (ENGINE-AUDIT Tier 2).

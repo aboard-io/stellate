@@ -377,7 +377,7 @@
           const tailN = SP.stripTailN(u.sampler.strip, SR);
           const notes = events.map((e) => ({
             tSec: e.beat * spb, durSec: e.durB * spb, freq: e.sets.freq,
-            gain: (u.lvl || 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
+            gain: (u.lvl != null ? u.lvl : 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
             vel: SP.selVelOf(e),   // velocity layer off the MUSICAL amp (press parity)
             atk: u.sampler.atk, rel: u.sampler.rel, zones: u.sampler.zones,
             swell: !!u.sampler.swell, mello: u.sampler.mello || null,
@@ -616,7 +616,7 @@
           const tailN = SP.stripTailN(u.sampler.strip, SR);   // delay-strip ring-out (see above)
           for (const e of byUnit[key].slice().sort((a, b) => a.beat - b.beat)) {
             const n = { tSec: base / SR + (e.beat - lo) * spb, durSec: e.durB * spb, freq: e.sets.freq,
-              gain: (u.lvl || 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
+              gain: (u.lvl != null ? u.lvl : 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
               vel: SP.selVelOf(e),   // velocity layer off the MUSICAL amp (press parity)
               atk: u.sampler.atk, rel: u.sampler.rel, zones: u.sampler.zones,
               swell: !!u.sampler.swell, mello: u.sampler.mello || null,

@@ -1647,7 +1647,7 @@
         const lead = SP.zoneLeadIn ? SP.zoneLeadIn(buf, z, buf.sampleRate, zsr) : 0;   // guard: a stale sw-cached sampler.js
         const leadSec = lead ? lead / (buf.sampleRate || zsr) : 0;
         ent.player.note(buf, at(e.beat), { rate: SP.rateFor(z, midi), durSec: e.durB * spb,
-          gain: (u.lvl || 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
+          gain: (u.lvl != null ? u.lvl : 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
           atk: u.sampler.atk, rel: u.sampler.rel, swell: !!u.sampler.swell, mello: u.sampler.mello || null,
           strip: u.sampler.strip || null,   // per-voice band EQ/comp/saturation/air (SamplerLive builds the node twin)
           songT: beatAbs(e.beat) * spb,
