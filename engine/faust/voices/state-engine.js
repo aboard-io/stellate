@@ -1140,9 +1140,31 @@
   // same instrument and must not drift into two.
   const pianoBody = (mp) => ({
     bright: mp("bright", 0.25, 0, 1),
-    stiff: mp("stiff", 0.28, 0, 1),
+    // stiff caps at 0.7, not 1: above ~0.72 the stiffness allpass chain has NO
+    // retrigger-stable register at all (measured 2026-08-21 — see pianoFence).
+    stiff: mp("stiff", 0.28, 0, 0.7),
     detune: mp("detune", 0.1, 0, 1),
   });
+  // STABILITY FENCE — the honest freqMax for a commuted piano, by its stiffness.
+  // stk_piano is NOT stable over its whole compiled freq slider [20,4200]: a
+  // voice RETRIGGERED (pool steal, legato re-seat — any note on a proc that has
+  // already played) diverges to ±inf→NaN when the new pitch is high enough,
+  // and the threshold is set by `stiff` (the inharmonicity allpass). One NaN
+  // poisons the shared buses and the master never recovers — measured killing a
+  // whole stream in ~24 samples (the Joel study, band page: a stacked tune at
+  // MIDI 101 / 2793 Hz on stiff 0.28 took the record down at bar 5). A FRESH
+  // proc at the same pitch is stable for 12+ s, which is why press one-shots
+  // never saw it. Measured ceilings (worst case over prior notes, hammer,
+  // bright=1, detune=1, release=3; 48 kHz):
+  //   stiff <=0.25 -> stable through MIDI 108   0.30 -> MIDI 97   0.35 -> 96
+  //   0.45..0.55   -> 95                        0.65 -> 94        >=0.72 -> none
+  // The fence sits >=1 semitone under each measured ceiling and feeds the same
+  // per-note octave FOLD freqMax already drives (mapEvents "SYNTH REGISTER
+  // FOLD" — the dx7 [50,1000] precedent): a note above it drops an octave, in
+  // key, into a register the model can actually voice — up there the model was
+  // near-silent anyway (peak ~0.01..0.03 against ~0.3 an octave down).
+  const pianoFence = (stiff) =>
+    stiff <= 0.25 ? 4000 : stiff <= 0.35 ? 2000 : stiff <= 0.55 ? 1880 : 1770;
 
   function pitchedUnitRaw(role, m, state) {
     // param-reader: clamp(m[k]!=null?m[k]:d,lo,hi) — the null-coalescing default
@@ -1374,9 +1396,11 @@
         // to be told how long the note was because its decay was an envelope;
         // this one's decay is three coupled strings and a soundboard, and it is
         // already right for the register.
-        case "piano":  return { ...base, module: "stk_piano", dyn: MODEL_DYN.stk_piano,
-          params: { ...base.params, cutoff: clamp(Math.min(4000, c * 2.5), 200, 16000),
-            ...pianoBody(mp), release: clamp(m.release != null ? m.release : 0.35, 0.02, 3) } };
+        case "piano": { const body = pianoBody(mp);
+          return { ...base, module: "stk_piano", dyn: MODEL_DYN.stk_piano,
+            freqMax: pianoFence(body.stiff),   // retrigger-stability fence, see pianoFence
+            params: { ...base.params, cutoff: clamp(Math.min(4000, c * 2.5), 200, 16000),
+              ...body, release: clamp(m.release != null ? m.release : 0.35, 0.02, 3) } }; }
         case "sampler": return samplerUnit();   // the upright &co (native path)
         default:       return { ...base, module: "bass_saw",   params: { ...base.params, cutoff: clamp(c, 80, 12000), res, ...bassArt } };
       }
@@ -1396,9 +1420,11 @@
       // dynamic, and the same 1.28 s decay at MIDI 40 as at MIDI 76. A real
       // piano's bass rings five times longer than its treble and its forte is a
       // different spectrum. `hammer` is where that now comes from.
-      case "piano":   return { ...base, module: "stk_piano", dyn: MODEL_DYN.stk_piano,
-        params: { ...base.params, cutoff: clamp(Math.min(isPad ? 8000 : 9000, c * 2), 200, 16000),
-          ...pianoBody(mp), release: clamp(m.release != null ? m.release : (isPad ? 0.5 : 0.35), 0.02, 3) } };
+      case "piano": { const body = pianoBody(mp);
+        return { ...base, module: "stk_piano", dyn: MODEL_DYN.stk_piano,
+          freqMax: pianoFence(body.stiff),   // retrigger-stability fence, see pianoFence
+          params: { ...base.params, cutoff: clamp(Math.min(isPad ? 8000 : 9000, c * 2), 200, 16000),
+            ...body, release: clamp(m.release != null ? m.release : (isPad ? 0.5 : 0.35), 0.02, 3) } }; }
       case "brass":   return { ...base, module: "brass", biteFromAmp: true, params: { ...base.params, cutoff: clamp(Math.min(12000, c), 500, 12000), attack: clamp(isPad ? atk : (m.attack != null ? m.attack : 0.08), 0.005, 3) } };
       case "fm":      return isPad
         ? { ...base, module: "fm2op", params: { ...base.params, cutoff: clamp(Math.min(8000, c * 1.7), 200, 14000), ratio: 2.001, idx0: 2.6, idx1: 0.9, idxTime: 1.1, attack: atk, vibrato: 0 } }
