@@ -42,7 +42,7 @@ hr { border: 0; border-top: 1px solid #000; margin: 14px 0; }
 .dstaffsvg svg { max-width: 100%; height: auto; }
 
 /* rows of plain controls, wrapping */
-.drow, .dopts, .dsheet, .dseats { display: flex; flex-wrap: wrap;
+.drow, .dopts, .dsheet { display: flex; flex-wrap: wrap;
   gap: 6px; margin: 6px 0; align-items: stretch; }
 .dsec { text-align: left; }
 .dsec b { display: block; }
@@ -130,6 +130,15 @@ fieldset.dask { border: 0; padding: 0; min-width: 0; }
 /* an open section's questions, as the same tree (the player's own words
    nested under the player) */
 .dsectree > li { margin: 0 0 6px; }
+/* a question opens IN PLACE (2026-08-21): the fieldset sits inside the
+   tapped row's own <li>, directly under the row — the outline expands at
+   that node and the page grows vertically */
+.dtree .dask { margin: 4px 0 10px; }
+/* the band as an outline: each chair a top-level node whose label is the
+   .dseat button, the open seat's whole sheet nested beneath its node */
+.dband .dseat { text-align: left; }
+.dband > li > .dtree { margin: 6px 0 4px 5px; padding-left: 12px;
+  border-left: 1px solid #999; }
 /* a big bundle of options scans as aligned columns, not a ragged wrap */
 .dopts.dmany { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5em, 1fr)); }
 .dopts.dmany .drowlab { grid-column: 1 / -1; }

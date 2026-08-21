@@ -403,7 +403,13 @@ function render(box) {
     mb.setAttribute("aria-label", "the band");
     h.append(document.createTextNode("the "), mb);
     sBand.append(h); }
-  const seats = el("div", "dseats");
+  // THE CHAIRS AS AN OUTLINE (2026-08-21). The six seats were a bunched row
+  // of blocks with the open seat's sheet rendered somewhere below them all;
+  // now the band is one .dtree — each chair a top-level node whose label is
+  // the same .dseat button it always was, and the seat you are in expands:
+  // its whole gig sheet (instruments and all) nests BENEATH its own chair
+  // node, the same outline idiom as everywhere else on the page.
+  const seats = el("ul", "dtree dband");
   for (const s2 of SEATS.filter((x) => x !== "arranger")) {
     // HOW MANY, NOT WHETHER. This said "1 question" for every chair that
     // had any question left at all — a chair with nine things still to
@@ -419,10 +425,15 @@ function render(box) {
              el("i", null, left ? "questions left: " + left : "all set"));
     b.addEventListener("click", () => {
       seat = s2; module_ = "band"; section = null; asking = null; draw(); });
-    seats.append(b);
+    const li = el("li", "dchair");
+    li.append(b);
+    // only the seat you are in carries its sheet — the one-question law is
+    // untouched, and the other chairs stay one line each
+    if (module_ === "band" && section == null && seat === s2)
+      chairArea(li, s2, false);
+    seats.append(li);
   }
   sBand.append(seats);
-  if (module_ === "band" && section == null) chairArea(sBand, seat, false);
   box.append(sBand);
 }
 
@@ -771,8 +782,10 @@ function chairArea(parent, who, ideasOnly) {
   // grouped and nested by the OUTLINE/UNDER tables above, expanded, always.
   // A row is the same tappable .dfact it always was (the gates find facts
   // by the <b> label and the data-k, and both stay put); the one-question
-  // law holds below it: tapping a row only brings its question to the
-  // floor, it never opens a second set of options in place.
+  // law holds: tapping a row brings its question to the floor, and the
+  // floor is IN PLACE now — the fieldset opens directly under that row's
+  // own <li> (see the end of this function), never at a fixed slot below
+  // the sheet, so at most one set of options exists at any time.
   const spec = ideasOnly
     // the theme's node is titled by what the record DOES with the tune —
     // Band.themeName derives hook/riff/figure/chant, nobody is asked
@@ -948,7 +961,15 @@ function chairArea(parent, who, ideasOnly) {
     ask.append(el("p", "dlen", "that\u2019s " + Math.floor(secs / 60) + ":" +
                                String(secs % 60).padStart(2, "0")));
   }
-  parent.append(ask);
+  // INLINE, IN PLACE (2026-08-21). The question used to land at a fixed
+  // slot below the whole sheet; it opens AT ITS ROW now \u2014 the outline
+  // expands at that node and the page grows vertically. Every ask has a
+  // row (the trailing headless branch catches whatever the tables do not
+  // name), and the fieldset slots in right after the row's own button, so
+  // it sits above any child rows that nest beneath the same node.
+  const qLi = rowLi.get(q.id);
+  if (qLi && qLi.firstElementChild) qLi.firstElementChild.after(ask);
+  else parent.append(ask);
 }
 
 const GROUPQ = {
