@@ -1,11 +1,15 @@
 /* band.css — BASIC HTML (2026-08-21, Paul: "Just use basic HTML for
    everything right now… Don't style at all"). The browser's own widgets do
-   the talking now — visible radios/checkboxes/selects, default buttons,
+   the talking now — visible radios/checkboxes, default buttons,
    native fieldset borders, native list indents — and this file says only
    what a stylesheet still MUST say:
    - the one layout fact a gate measures: .dwrap is THE scroll container
      (band-page.test.js scrolls it and reads scrollTop), so the header
      stays put and the page scrolls under it;
+   - the option grid (.dcols): a long one-of-N laid in aligned columns
+     (Paul reversed the reset's <select> ruling — "don't use dropdown
+     select boxes just have a nice grid of radio buttons" — and columns
+     are layout, not decoration);
    - state-swap rules: the states the eye reads off the screen (the seat
      you are in, the sounding section, the fact being re-asked, the mark in
      hand, the theme in hand) that no native widget carries;
@@ -20,8 +24,9 @@ header { flex: none; }
 /* the one scrolling pane: everything below the transport */
 .dwrap { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 
-/* words for AT and nobody else: the comma in a box's name, the hint a
-   title used to hoard, the one-shot change announcement (#dlive) */
+/* words for AT and nobody else: the hidden colon-seam where a label is
+   itself hidden (the engineer's channel rows), the hint a title used to
+   hoard, the one-shot change announcement (#dlive) */
 .dvh { position: absolute; width: 1px; height: 1px; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
@@ -42,6 +47,31 @@ header { flex: none; }
 .dgrid .dcell.dtied { text-decoration: underline; }
 /* the engraving shrinks with the column instead of overflowing it */
 .dstaffsvg svg { max-width: 100%; height: auto; }
+/* THE SOUNDING NOTE (Paul: "light up notes in the theme when playing
+   them") — state the eye reads off the staff, like .dsec.now on a box: the
+   note now in the air, on ink that cannot invert. The descendant half
+   matters: abcjs paints fill as an ATTRIBUTE on the paths inside each
+   note's <g>, and only a CSS rule aimed at the paths outranks it. */
+.dstaffsvg .dlit, .dstaffsvg .dlit * { fill: #c00; }
+
+/* NAV AND FOLDS (Paul: "instead of using only lists use HTML <nav>
+   elements to make things easy to hide and shrink"): the outline trees ride
+   inside labeled <nav> landmarks and the foldable regions are native
+   <details>/<summary> — no JS collapse, no styling beyond seating a block
+   heading beside the summary's own marker. */
+summary > h2 { display: inline; margin: 0; }
+
+/* A LONG LIST IS A GRID OF RADIOS (2026-08-21, Paul: "don't use dropdown
+   select boxes just have a nice grid of radio buttons"). Layout only: the
+   same .dopt radio-labels every short question renders, in columns that
+   align so 14-30 options scan; a row label (.drowlab — the kick:,
+   pianos:…) spans the grid's whole width, the same plain text row the
+   short path draws. With the stylesheet off the grid reads as the same
+   flat list of labeled radios. */
+.dcols { display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8em, 1fr));
+  gap: 2px 14px; align-items: baseline; }
+.dcols .drowlab { grid-column: 1 / -1; }
 
 /* ---- the circle of fifths: THE sanctioned exception ---- */
 /* Paul, mid-reset, verbatim: "Keep the circle of fifths!!!" — so this block

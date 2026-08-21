@@ -211,7 +211,21 @@ export function toNotes(phrase, opts = {}) {
   return { n, spb, notes };
 }
 
-export function toABC(phrase, opts = {}) {
+export function toABC(phrase, opts = {}) { return engrave(phrase, opts).abc; }
+
+// ---- the engraving, with its glyph map ------------------------------------
+// toEngraving(phrase, opts) -> { abc, glyphs, notes, n, spb }. `glyphs` maps
+// every pitched GLYPH the staff will draw, in engraving order, to the index
+// of the toNotes() note it belongs to — a note split at a barline or said as
+// tied pieces (a five-step value) is SEVERAL glyphs of one note, and they
+// share an index. Rests are not in the map (abcjs classes them .abcjs-rest,
+// never .abcjs-note), so `svg.querySelectorAll(".abcjs-note")[g]` is glyph g
+// exactly. This is what lets the page light the SOUNDING note on the
+// engraved staff without re-deriving the fold: one loop computes the ABC
+// and the map together, so they cannot disagree.
+export function toEngraving(phrase, opts = {}) { return engrave(phrase, opts); }
+
+function engrave(phrase, opts = {}) {
   const key = opts.key | 0;
   const mode = (opts.mode && opts.mode.length ? opts.mode : MINOR).slice();
   const sigInfo = keySig(key, mode);
@@ -234,7 +248,8 @@ export function toABC(phrase, opts = {}) {
   // instead of one run per bar, and the accidental memory resets at each
   // barline exactly as a reader's does.
   const out = [];
-  let cur = "", accState = {}, pos = 0;
+  const glyphs = [];                          // pitched glyph -> toNotes index
+  let cur = "", accState = {}, pos = 0, ni = -1;
 
   const push = (tok) => {
     const inBar = pos % spb;
@@ -251,6 +266,7 @@ export function toABC(phrase, opts = {}) {
     if (kind[i] === 1) {
       const midi = midiAt[i];
       let remain = len[i];
+      ni++;                                   // the next toNotes note, in order
       while (remain > 0) {
         const room = spb - (pos % spb);
         const chunk = Math.min(remain, room);
@@ -262,6 +278,7 @@ export function toABC(phrase, opts = {}) {
           const name = spellPitch(midi, sigInfo, accState);
           const tie = k < ps.length - 1 || crossesBar ? "-" : "";
           push(name + durStr(p) + tie);
+          glyphs.push(ni);                    // every tied piece is this note's
           advance(p);
         });
         remain -= chunk;
@@ -294,5 +311,6 @@ export function toABC(phrase, opts = {}) {
   for (let b = 0; b < out.length; b += 4)
     lines.push(out.slice(b, b + 4).join(" | ") +
                (b + 4 >= out.length ? " |]" : " |"));
-  return head.join("\n") + "\n" + (lines.join("\n") || "z" + spb + " |]") + "\n";
+  const abc = head.join("\n") + "\n" + (lines.join("\n") || "z" + spb + " |]") + "\n";
+  return { abc, glyphs, notes, n, spb };
 }

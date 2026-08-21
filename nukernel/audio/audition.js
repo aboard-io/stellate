@@ -73,9 +73,10 @@ export const auditioning = () => !!live;
 
 export function stopAudition() {
   if (!live) return;
-  const { master, timer, onEnd } = live;
+  const { master, timer, onEnd, noteTimers } = live;
   live = null;
   clearTimeout(timer);
+  for (const t of noteTimers || []) clearTimeout(t);
   try {
     const t = ctx.currentTime;
     master.gain.cancelScheduledValues(t);
@@ -90,10 +91,15 @@ export function stopAudition() {
 // sixteenth steps); `bpm` the record's own tempo. Returns true when it is
 // now sounding, false when nothing could sound (no sampler, no notes).
 // `onEnd` fires once, when the phrase runs out or stop is pressed.
-export function playAudition({ notes, bpm }, onEnd) {
+// `onNote(i)`, when given, fires as note `i` of `notes` starts sounding —
+// the page's staff highlight rides it (ui/band.js). Plain JS timers laid
+// against the same t0 the buffers are scheduled from: a lit note may drift
+// a few ms from the sample, never a step.
+export function playAudition({ notes, bpm, onNote }, onEnd) {
   stopAudition();
   const sm = samplerNow();
-  const list = (notes || []).filter((x) => x && x.len > 0);
+  const list = (notes || []).map((x, i) => x && { ...x, i })
+    .filter((x) => x && x.len > 0);
   if (!sm || !list.length) return false;
   if (!ctx) {
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -105,7 +111,7 @@ export function playAudition({ notes, bpm }, onEnd) {
   master.gain.value = 0.7;
   master.connect(ctx.destination);
   const stepSec = 60 / Math.max(30, bpm || 96) / 4;     // a sixteenth
-  const mine = { master, timer: 0, onEnd };
+  const mine = { master, timer: 0, onEnd, noteTimers: [] };
   live = mine;
   const hrefs = new Set();
   for (const x of list) {
@@ -118,6 +124,12 @@ export function playAudition({ notes, bpm }, onEnd) {
       const byHref = new Map(pairs);
       const t0 = ctx.currentTime + 0.05;
       let end = 0;
+      // the highlight's timers, one per note — laid whether or not the
+      // note's buffer arrived, because the TIMELINE continues either way
+      if (onNote) for (const x of list)
+        mine.noteTimers.push(setTimeout(() => {
+          if (live === mine) onNote(x.i);
+        }, Math.max(0, (t0 - ctx.currentTime + x.at * stepSec) * 1000)));
       for (const x of list) {
         const z = zoneFor(sm, x.midi);
         const buf = z && byHref.get(new URL("found/samples/instruments/" +

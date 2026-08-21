@@ -23,7 +23,7 @@ import { adoptSong, SONG, SLOTS, putPhrase, on, commit, setBpm, setSwing, setPoo
 import { startAt, stop, playing, warmup, getPosition, passAt,
          announceChange } from "../audio/live.js";
 import { registerSW, warmCache, warmShell, warmed } from "../audio/offline.js";
-import { toABC, toNotes } from "./abc.js";
+import { toEngraving, toNotes } from "./abc.js";
 import { playAudition, stopAudition, auditioning, zoneFilesFor } from "../audio/audition.js";
 
 const $ = (id) => document.getElementById(id);
@@ -207,6 +207,30 @@ const staffDone = {};   // ...and the ABC actually IN the host's SVG. The old
                         // what is actually on screen, every draw re-engraves
                         // until the SVG stands. Keyed "a"/"b" since the
                         // answer theme earned a staff of its own.
+const staffGlyphs = {}; // per theme: glyph -> toNotes note index (abc.js
+                        // toEngraving — tied pieces share their note's index)
+
+// THE SOUNDING NOTE, LIT ON THE STAFF (2026-08-21, Paul: "can you light up
+// notes in the theme when playing them"). One note index per theme is ever
+// lit; lighting is a class swap on the already-engraved glyphs (every glyph
+// of a tied note lights together, because the map says they are one note)
+// and nothing is touched unless the index CHANGED — no per-frame churn, no
+// re-engrave. Who calls it: the band's own beat feed (lightBeat, on "pos"
+// below) while the record plays, and the piano audition's note timers while
+// the piano has the floor.
+let litT = null, litIdx = null, litEls = [];
+function lightStaff(t, idx) {
+  if (idx == null || idx < 0) { t = null; idx = null; }
+  if (litT === t && litIdx === idx) return;
+  for (const e of litEls) e.classList.remove("dlit");
+  litEls = []; litT = t; litIdx = idx;
+  if (t == null) return;
+  const host = staffHost[t], map = staffGlyphs[t];
+  if (!host || !map) return;
+  const els = host.querySelectorAll(".abcjs-note");
+  for (let g = 0; g < map.length && g < els.length; g++)
+    if (map[g] === idx) { els[g].classList.add("dlit"); litEls.push(els[g]); }
+}
 
 // THE LAZY CHUNK, and why it is a <script> element rather than import():
 // the vendor build is a classic UMD whose wrapper hands `this` to the
@@ -258,7 +282,8 @@ const themeOpts = (m, t) => ({
 // one theme's figure: the staff, its name, and its own piano button
 function themeFig(m, t) {
   const theme = themeOf(m, t);
-  const abc = toABC(Band.Id.toPhrase(theme), themeOpts(m, t));
+  const eng = toEngraving(Band.Id.toPhrase(theme), themeOpts(m, t));
+  const abc = eng.abc;
   // a plain bordered box with the theme's name — the name the RECORD gives
   // it (themeName: a hook when the singer carries it, a riff when the
   // guitar does; the answer is called the answer), the same word the
@@ -280,6 +305,7 @@ function themeFig(m, t) {
   if (!staffHost[t]) { staffHost[t] = el("div", "dstaffsvg"); staffDone[t] = ""; }
   fig.append(staffHost[t]);        // the same node every draw: no async flash
   staffAbc[t] = abc;
+  staffGlyphs[t] = eng.glyphs;     // glyph -> note map, for the highlight
   // engrave whenever what is ON SCREEN is not this draw's music — a changed
   // theme re-engraves, and so does a host whose last engrave failed, was
   // skipped, or lost its SVG: an error retries on the very next draw
@@ -290,8 +316,13 @@ function themeFig(m, t) {
       // only what is still current, where it still stands
       if (!A || host !== staffHost[t] || abc !== staffAbc[t] || !host.isConnected) return;
       try {
-        A.renderAbc(host, abc, { responsive: "resize" });
+        // add_classes makes every engraved note addressable (.abcjs-note in
+        // engraving = timeline order; rests class .abcjs-rest, disjoint) —
+        // the highlight below rides those classes
+        A.renderAbc(host, abc, { responsive: "resize", add_classes: true });
         staffDone[t] = host.querySelector("svg") ? abc : "";
+        // a re-engrave replaced the SVG under a lit note: light it again
+        if (litT === t && litIdx != null) { const i = litIdx; litIdx = null; lightStaff(t, i); }
       } catch (e) { staffDone[t] = ""; }
     }).catch(() => { staffDone[t] = ""; });  // a failed load retries next draw
   }
@@ -307,7 +338,11 @@ function themeFig(m, t) {
     if (auditioning()) stopAudition();
     else {
       const t2 = toNotes(Band.Id.toPhrase(themeOf(model, t)), themeOpts(model, t));
-      playAudition({ notes: t2.notes, bpm: model.song.bpm }, () => {
+      // the piano lights the staff as it plays — the same toNotes timeline
+      // the audition schedules from, so index i IS the sounding note
+      playAudition({ notes: t2.notes, bpm: model.song.bpm,
+                     onNote: (i) => lightStaff(t, i) }, () => {
+        lightStaff(null, null);
         for (const b of document.querySelectorAll(".dhear"))
           b.textContent = "hear it on the piano";
       });
@@ -326,7 +361,9 @@ function themeStaff(m) {
   // guard is the empty room and a recalled pre-theme session.)
   if (!(m.idea && m.idea.on)) {
     delete staffHost.a; delete staffHost.b;
+    delete staffGlyphs.a; delete staffGlyphs.b;
     staffAbc.a = staffAbc.b = ""; staffDone.a = staffDone.b = "";
+    lightStaff(null, null);
     if (auditioning()) stopAudition();
     return null;
   }
@@ -335,7 +372,9 @@ function themeStaff(m) {
   // ...and the answer beside it, when the arranger wrote one; a B taken
   // back out drops its host so a later one engraves fresh
   if (m.ideaB && m.ideaB.on) wrap.append(themeFig(m, "b"));
-  else { delete staffHost.b; staffAbc.b = ""; staffDone.b = ""; }
+  else { delete staffHost.b; delete staffGlyphs.b;
+         staffAbc.b = ""; staffDone.b = "";
+         if (litT === "b") lightStaff(null, null); }
   return wrap;
 }
 
@@ -444,6 +483,48 @@ function modButton(word, key) {
   return b;
 }
 
+// NAV AND FOLDS (2026-08-21, Paul: "instead of using only lists use HTML
+// <nav> elements to make things easy to hide and shrink"). The outline
+// trees ARE this page's navigation — the tree is how the floor moves — so
+// each one stands inside a labeled <nav> landmark; and the regions that
+// should hide and shrink do it with the browser's own <details>/<summary>,
+// no JS collapse of its own: an area under its heading, the open chair's
+// sheet under its seat line, a headed branch under its head. Everything is
+// OPEN by default (the outline's "expanded, always" law — and the gates
+// walk today's DOM), but now closable; a fold the hand shut stays shut
+// across redraws (the `closed` set remembers, since draw() rebuilds the
+// page). A button inside a summary keeps its own job: the guard below
+// cancels the native toggle when the click landed on a control, so tapping
+// "song" still brings its questions to the floor rather than folding the
+// area you were reaching into.
+const closed = new Set();          // fold keys the hand has shut
+function navOf(inner, label) {
+  const n = el("nav");
+  if (label) n.setAttribute("aria-label", label);
+  n.append(inner);
+  return n;
+}
+function foldOf(key, sumLine) {
+  const det = el("details");
+  if (!closed.has(key)) det.open = true;
+  const sum = el("summary");
+  sum.addEventListener("click", (e) => {
+    if (e.target.closest("button,label,input,select")) return e.preventDefault();
+    // the native toggle is about to flip det.open — remember the hand's
+    // choice NOW (the "toggle" event is queued async, and a redraw in this
+    // same task would otherwise rebuild the fold open again)
+    if (det.open) closed.add(key); else closed.delete(key);
+  });
+  sum.append(sumLine);
+  det.append(sum);
+  // ...and the async event keeps the set honest for keyboard toggles and
+  // anything else that moves `open` without the click above
+  det.addEventListener("toggle", () => {
+    if (det.open) closed.delete(key); else closed.add(key);
+  });
+  return det;
+}
+
 // A REAL CHOICE WIDGET. An option is a <label class="dopt"> over a hidden
 // <input> — the label keeps the class, the exact word (the input contributes
 // no text, so a gate's textContent match still holds and label.click() still
@@ -463,45 +544,33 @@ function optWidget(word, cls, { kind, name, on, dead, key, take }) {
   return lab;
 }
 
-// A LONG LIST IS A <select> (Paul: "radio buttons for options with one
-// choice; select for others"). Any one-of-N question over ~8 answers renders
-// as the browser's own dropdown: each answer an <option class="dopt"> — the
-// exact word, native disabled, native selected — so a gate that reads
-// `.dopt` textContent/disabled still reads the truth, and answering is
-// setting the value (the gates' tap helper dispatches "change"). Row labels
-// (the kick:, pianos:…) become real <optgroup>s. The placeholder an
-// unanswered question shows carries NO .dopt class: it is not an answer.
-// Toggle sets stay checkboxes (a select is one choice by construction), and
-// the key question stays the circle of fifths (Paul: "Keep the circle of
-// fifths!!!").
+// A LONG LIST IS A GRID OF RADIOS (2026-08-21, Paul: "don't use dropdown
+// select boxes just have a nice grid of radio buttons" — reversing the
+// reset's <select> ruling). Any one-of-N question over ~8 answers renders
+// the SAME plain radio-labels every short question gets, laid out in
+// aligned columns by band.css .dcols (an auto-fill grid — layout, not
+// decoration) so 14–30 options scan instead of piling. Row labels (the
+// kick:, pianos:…) stand as plain full-width .drowlab rows inside the
+// grid, the .drowlab precedent the short path always drew. There is no
+// <select> anywhere on the page — the gates' tap helper still knows how
+// to drive one (harmless), but nothing renders one. Toggle sets stay
+// checkboxes, and the key question stays the circle of fifths (Paul:
+// "Keep the circle of fifths!!!").
 const LONG = 8;
-function selectOf(opts2, { ask, key }) {
-  const sel = el("select");
-  sel.dataset.k = key;
-  sel.setAttribute("aria-label", ask);
-  if (!opts2.some((o) => o.on)) {
-    const p = el("option", null, "—");
-    p.value = ""; p.disabled = true; p.selected = true;
-    sel.append(p);
-  }
-  const rowed = opts2.length > 0 && opts2.every((o) => o.row);
-  let host = sel, lastRow = null;
-  for (const o of opts2) {
-    if (rowed && o.row !== lastRow) {
-      host = el("optgroup"); host.label = o.row; sel.append(host); lastRow = o.row;
-    }
-    const op = el("option", "dopt" + (o.on ? " on" : "") +
-                            (!o.on && o.istrue ? " istrue" : ""), o.w);
-    op.value = o.w;
-    if (o.dead) op.disabled = true;
-    if (o.on) op.selected = true;
-    host.append(op);
-  }
-  sel.addEventListener("change", () => {
-    const o = opts2.find((x) => x.w === sel.value);
-    if (o && !o.dead) o.take();      // the same closure a radio's input runs
-  });
-  return sel;
+
+// THE COLON LAW (2026-08-21, Paul: "just put a colon on things, like
+// verse: 4 sections or tempo: up, 120"). Every label→value pairing on the
+// page reads `label: value`, and the seam is made HERE, once — every row
+// helper appends seam() between its label and its words, never a
+// hand-rolled dash or a hidden comma. The colon is real text, not CSS, so
+// AT hears the same seam the eye reads (it replaced the old .dvh comma);
+// where the LABEL itself is AT-only (the engineer's channel table hides
+// its <b> because the visible word is the row header) the colon hides
+// with it. The colon stays OUTSIDE the <b>: the gates find facts by the
+// <b>'s exact textContent, and multiple answer words keep their own
+// comma-join after the seam ("tempo: up, 120").
+function seam(hidden) {
+  return hidden ? el("span", "dvh", ": ") : document.createTextNode(": ");
 }
 
 /* ---------- THE CIRCLE OF FIFTHS -----------------------------------------
@@ -634,7 +703,7 @@ function chgxWidget(role) {
     rowB.type = "button";
     rowB.dataset.k = "pbar|" + role + "|" + ci;
     rowB.append(el("b", null, ki ? "and" : "bar " + (bi + 1)),
-                el("span", "dvh", ", "),
+                seam(),
                 el("span", "dans", chordWord(cc)));
     rowB.addEventListener("click", () => {
       picker.open = picker.open === ci ? null : ci; draw(); });
@@ -733,7 +802,7 @@ function draw() {
   render(box);
   if (wasIn) {
     const first = floorQ && floorQ !== lastQ &&
-      box.querySelector(".dask .dopt input, .dask select");
+      box.querySelector(".dask .dopt input");
     const same = !first && wasKey &&
       box.querySelector('[data-k="' + CSS.escape(wasKey) + '"]');
     if (first) first.focus(); else if (same) same.focus();
@@ -774,7 +843,11 @@ function render(box) {
   // ---- THEMES ---- (the ideas module by its right name — PLAN Phase 2
   // renames the organ; the page starts saying the word now)
   const sThemes = el("section", "dsect");
-  { const h = el("h2"); h.append(modButton("themes", "ideas")); sThemes.append(h); }
+  // the whole area folds under its heading (foldOf's law) — hideable,
+  // shrinkable, open by default
+  const dThemes = (() => { const h = el("h2");
+    h.append(modButton("themes", "ideas")); return foldOf("area|themes", h); })();
+  sThemes.append(dThemes);
   // NO PROSE (2026-08-21). Two paragraphs used to explain what a theme is
   // and how to add one — "don't sneak in explanations". The outline IS the
   // explanation: the staff, the theme's own named node, and its questions.
@@ -782,8 +855,8 @@ function render(box) {
   // has the tune, and follows every edit — a lifted note, a new key —
   // because draw() recompiles the ABC each pass and re-engraves on change
   const staff = themeStaff(model);
-  if (staff) sThemes.append(staff);
-  if (module_ === "ideas" && section == null) chairArea(sThemes, "arranger", true);
+  if (staff) dThemes.append(staff);
+  if (module_ === "ideas" && section == null) chairArea(dThemes, "arranger", true);
   box.append(sThemes, el("hr"));
 
   // ---- SONG ---- the record's structure AS AN OUTLINE (2026-08-21): the
@@ -793,7 +866,9 @@ function render(box) {
   // the playhead lights), the open section's asks nested BENEATH its own
   // node inline, and "add a box" a plain row at the end.
   const sSong = el("section", "dsect");
-  { const h = el("h2"); h.append(modButton("song", "song")); sSong.append(h); }
+  const dSong = (() => { const h = el("h2");
+    h.append(modButton("song", "song")); return foldOf("area|song", h); })();
+  sSong.append(dSong);
   const song = toSong(model, MODES);
   const tree = el("ul", "dtree dsong");
   cells = [];
@@ -804,16 +879,16 @@ function render(box) {
     b.type = "button";
     b.dataset.k = "sec|" + i;
     b.title = "what is everyone doing here?";
-    // the box's name has a SEAM in it for a screen reader ("head, 4 bars",
-    // not "head4 bars"), and the hint the title used to hoard is words in
-    // the name too — .dvh is text AT and a long-press can reach, invisible
-    b.append(el("b", null, s2.role), el("span", "dvh", ", "),
+    // the box's name reads by the colon law ("head: 4 bars" — seam()), the
+    // extra words comma-joined after it, and the hint the title used to
+    // hoard is words in the name too — .dvh, text AT can reach, invisible
+    b.append(el("b", null, s2.role), seam(),
              el("i", null, s2.bars + " bars"));
     const per = s2.per || {};
     const diff = [per.drums && Band.SECDRUMS[per.drums] && Band.SECDRUMS[per.drums].w,
                   per.bass && Band.SECBASS[per.bass] && Band.SECBASS[per.bass].w]
                  .filter(Boolean);
-    if (diff.length) b.append(el("span", "dvh", ", "), el("i", "ddiff", diff.join(", ")));
+    if (diff.length) b.append(document.createTextNode(", "), el("i", "ddiff", diff.join(", ")));
     b.append(el("span", "dvh", " — what is everyone doing here?"));
     b.addEventListener("click", () => {
       module_ = "song";
@@ -838,21 +913,23 @@ function render(box) {
       module_ = "song"; section = null; asking = "form"; draw(); });
     li.append(add);
     tree.append(li); }
-  sSong.append(tree);
-  if (section == null && module_ === "song") chairArea(sSong, "arranger", false);
+  // the song's outline is the way around the record: a landmark
+  dSong.append(navOf(tree, "the song's sections"));
+  if (section == null && module_ === "song") chairArea(dSong, "arranger", false);
   box.append(sSong, el("hr"));
 
   // ---- THE BAND ---- the members, each a plain block that says how much
   // it still has to decide. Tap one and its questions take the floor.
   const sBand = el("section", "dsect");
-  { const h = el("h2");
+  const dBand = (() => { const h = el("h2");
     // the visible heading reads "the band"; the button inside it is the
     // word the gates (and a finger) press — but its accessible NAME is the
     // heading's whole phrase: "band" alone is not a thing on this page
     const mb = modButton("band", "band");
     mb.setAttribute("aria-label", "the band");
     h.append(document.createTextNode("the "), mb);
-    sBand.append(h); }
+    return foldOf("area|band", h); })();
+  sBand.append(dBand);
   // THE CHAIRS AS AN OUTLINE (2026-08-21). The six seats were a bunched row
   // of blocks with the open seat's sheet rendered somewhere below them all;
   // now the band is one .dtree — each chair a top-level node whose label is
@@ -869,21 +946,29 @@ function render(box) {
     const b = el("button", "dseat" + (seat === s2 ? " on" : "") + (left ? " asking" : ""));
     b.type = "button";
     b.dataset.k = "seat|" + s2;
-    // the count stays the LAST thing in the label (a gate reads the
-    // trailing digits); when nothing is left it is a word, not a checkmark
-    b.append(el("b", null, s2), document.createTextNode(" — "),
+    // the colon law joins the seat to its phrase ("drums: questions left:
+    // 3"), and the count stays the LAST thing in the label (a gate reads
+    // the trailing digits — /(\d+)$/, so the digits may not move off the
+    // end); when nothing is left it is a word, not a checkmark
+    b.append(el("b", null, s2), seam(),
              el("i", null, left ? "questions left: " + left : "all set"));
     b.addEventListener("click", () => {
       seat = s2; module_ = "band"; section = null; asking = null; draw(); });
     const li = el("li", "dchair");
-    li.append(b);
     // only the seat you are in carries its sheet — the one-question law is
-    // untouched, and the other chairs stay one line each
-    if (module_ === "band" && section == null && seat === s2)
-      chairArea(li, s2, false);
+    // untouched, and the other chairs stay one line each. The open sheet
+    // FOLDS under its own seat line (foldOf: the summary is the .dseat
+    // button, whose tap still switches seats — the guard keeps the toggle
+    // off the button)
+    if (module_ === "band" && section == null && seat === s2) {
+      const det = foldOf("chair|" + s2, b);
+      chairArea(det, s2, false);
+      li.append(det);
+    } else li.append(b);
     seats.append(li);
   }
-  sBand.append(seats);
+  // the chairs are how you move between the players: a landmark
+  dBand.append(navOf(seats, "the chairs"));
   box.append(sBand);
 }
 
@@ -920,22 +1005,16 @@ function sectionArea(parent) {
                      { who: a2.who, role: here ? here.role : "section" });
       draw();
     };
-    if (a2.opts.length > LONG) {
-      // a player's own words run long (34 at the kit) — the browser's own
-      // dropdown, one choice by construction
-      ask2.append(selectOf(a2.opts.map((o) => ({ w: o.w, on: o.answered, take: takeSec(o) })),
-        { ask: "in the " + (here ? here.role : "section") + ", " + a2.who,
-          key: "sel|sec" + section + "|" + a2.id }));
-    } else {
-      const row2 = el("div", "dopts");
-      for (const o of a2.opts) {
-        row2.append(optWidget(o.w, "dopt" + (o.answered ? " on" : ""), {
-          kind: "radio", name: "sq-" + section + "-" + a2.id, on: o.answered,
-          key: "opt|sec" + section + "|" + a2.id + "|" + o.key,
-          take: takeSec(o) }), " ");
-      }
-      ask2.append(row2);
+    // a player's own words run long (34 at the kit) — the same radios,
+    // laid in the .dcols grid (the grid law above)
+    const row2 = el("div", "dopts" + (a2.opts.length > LONG ? " dcols" : ""));
+    for (const o of a2.opts) {
+      row2.append(optWidget(o.w, "dopt" + (o.answered ? " on" : ""), {
+        kind: "radio", name: "sq-" + section + "-" + a2.id, on: o.answered,
+        key: "opt|sec" + section + "|" + a2.id + "|" + o.key,
+        take: takeSec(o) }), " ");
     }
+    ask2.append(row2);
     const li = el("li");
     li.append(ask2);
     liOf.set(a2.id, li);
@@ -950,7 +1029,7 @@ function sectionArea(parent) {
       cu.append(li);
     } else tree.append(li);
   }
-  parent.append(tree);
+  parent.append(navOf(tree, "this section"));
 }
 
 /* ---------- THE COUNT ROW ------------------------------------------------
@@ -1289,7 +1368,7 @@ function chairArea(parent, who, ideasOnly) {
     if (flatFact(d)) {
       const f2 = el("span", "dfact dflat");
       f2.dataset.k = "fact|" + d.id;
-      f2.append(el("b", null, d.label), el("span", "dvh", ", "),
+      f2.append(el("b", null, d.label), seam(),
                 el("span", "dans", d.answered));
       li.append(f2);
       return li;
@@ -1299,7 +1378,7 @@ function chairArea(parent, who, ideasOnly) {
     c.type = "button";
     c.dataset.k = "fact|" + d.id;
     c.title = d.answered ? "change it: " + d.ask : d.ask;
-    c.append(el("b", null, d.label), el("span", "dvh", ", "),
+    c.append(el("b", null, d.label), seam(),
              d.answered ? el("span", "dans", d.answered)
                         : el("span", "dhint", d.ask));
     c.addEventListener("click", () => { asking = asking === d.id ? null : d.id; draw(); });
@@ -1334,26 +1413,33 @@ function chairArea(parent, who, ideasOnly) {
   for (const [h, list] of branches) {
     const li = el("li", "dbranch");
     // the themes area's one headed branch IS the edited theme's node — its
-    // heading is the theme's own (a switch once two themes exist)
-    if (h) li.append(ideasOnly ? themeNodeHead(themeNow(), true)
-                               : el("span", "dthead", h));
+    // heading is the theme's own (a switch once two themes exist). A HEADED
+    // branch folds under its head (foldOf); a headless one has no label
+    // line to be a summary and stays plain
+    const head = h ? (ideasOnly ? themeNodeHead(themeNow(), true)
+                                : el("span", "dthead", h)) : null;
+    const fold = head
+      ? foldOf("branch|" + who + "|" + (ideasOnly ? "theme" : h), head) : null;
+    if (fold) li.append(fold);
+    const bhost = fold || li;
     // THE ENGINEER'S CHANNEL TABLE (the basic-HTML reset): the five channel
     // questions align — channel down the label column, treatment beside it —
     // so this one branch is a real <table>, one row per channel: the label a
-    // row header, the same tappable .dfact (and, when its question holds the
-    // floor, the question itself) in the cell beside it. The button keeps a
-    // visually-hidden <b> label so AT and the gates read the same fact row
-    // everywhere.
+    // row header (with the colon law's own ":" on it, since the pairing is
+    // th → td here), the same tappable .dfact (and, when its question holds
+    // the floor, the question itself) in the cell beside it. The button
+    // keeps a visually-hidden <b> label — and a hidden seam — so AT and the
+    // gates read the same fact row everywhere.
     if (h === "the channels" && who === "engineer" && !ideasOnly) {
       const table = el("table", "dchans");
       for (const [, d] of list) {
         const tr = el("tr");
-        const th = el("th", null, d.label); th.scope = "row";
+        const th = el("th", null, d.label + ":"); th.scope = "row";
         const td = el("td");
         if (flatFact(d)) {
           const f2 = el("span", "dfact dflat");
           f2.dataset.k = "fact|" + d.id;
-          f2.append(el("b", "dvh", d.label), el("span", "dvh", ", "),
+          f2.append(el("b", "dvh", d.label), seam(true),
                     el("span", "dans", d.answered));
           td.append(f2);
         } else {
@@ -1362,7 +1448,7 @@ function chairArea(parent, who, ideasOnly) {
           c.type = "button";
           c.dataset.k = "fact|" + d.id;
           c.title = d.answered ? "change it: " + d.ask : d.ask;
-          c.append(el("b", "dvh", d.label), el("span", "dvh", ", "),
+          c.append(el("b", "dvh", d.label), seam(true),
                    d.answered ? el("span", "dans", d.answered)
                               : el("span", "dhint", d.ask));
           c.addEventListener("click", () => { asking = asking === d.id ? null : d.id; draw(); });
@@ -1373,7 +1459,7 @@ function chairArea(parent, who, ideasOnly) {
         table.append(tr);
         rowLi.set(d.id, td);       // the ask lands in the cell, like any row
       }
-      li.append(table);
+      bhost.append(table);
       tree.append(li);
       continue;
     }
@@ -1394,7 +1480,7 @@ function chairArea(parent, who, ideasOnly) {
         cu.append(row);
       } else ul.append(row);
     }
-    li.append(ul);
+    bhost.append(ul);
     tree.append(li);
   }
   if (ideasOnly) {
@@ -1439,7 +1525,8 @@ function chairArea(parent, who, ideasOnly) {
       if (other === "a") tree.prepend(oli); else tree.append(oli);
     }
   }
-  if (tree.childElementCount) parent.append(tree);
+  // this chair's sheet is how you move around its facts: a landmark
+  if (tree.childElementCount) parent.append(navOf(tree, seatWord(who)));
   if (asks.some(d => d.answered)) {
     // ...and one way back. A chair you cannot clear is a chair you stop
     // trying things in.
@@ -1579,8 +1666,8 @@ function chairArea(parent, who, ideasOnly) {
   const kind = q.id.startsWith("grp:") || q.multi ? "checkbox" : "radio";
   // LABELED ROWS, NOT WORD-PILES: when every option names its row (the
   // kick:, the filter:, pianos:…), the options group under those labels in
-  // the order a musician lists them — plain block labels in the flow,
-  // real <optgroup>s in a select
+  // the order a musician lists them — plain .drowlab rows in the flow,
+  // full-width rows when the list runs long enough to grid
   let opts2 = q.opts;
   const rowed = opts2.length > 0 && opts2.every(o => o.row);
   if (rowed) {
@@ -1596,13 +1683,12 @@ function chairArea(parent, who, ideasOnly) {
     asking = q.multi ? q.id : null;
     draw();
   };
-  if (kind === "radio" && opts2.length > LONG) {
-    // a long one-of-N is the browser's own dropdown (selectOf's law)
-    ask.append(selectOf(opts2.map((o) => ({ w: o.w, row: o.row, on: o.on,
-      dead: o.dead, istrue: o.istrue, take: fire(o) })),
-      { ask: q.ask, key: "sel|" + who + "|" + q.id }));
-  } else {
-    const row = el("div", "dopts");
+  {
+    // a long one-of-N gets the SAME radios, laid in the .dcols grid (the
+    // grid law above); its row labels are the same .drowlab rows, spanning
+    // the grid's whole width
+    const row = el("div", "dopts" +
+      (kind === "radio" && opts2.length > LONG ? " dcols" : ""));
     let lastRow = null;
     for (const o of opts2) {
       if (rowed && o.row !== lastRow) { row.append(el("div", "drowlab", o.row)); lastRow = o.row; }
@@ -1769,7 +1855,63 @@ const beatEl = $("dbeat"), pendEl = $("dpending"), liveEl = $("dlive");
 const pend = new Map();                       // label -> the last "pending" payload
 on("pos", (d) => {
   beatEl.textContent = "bar " + (d.bar + 1) + "." + d.beat;
+  lightBeat(d);
 });
+
+// THE BAND LIGHTS THE STAFF. Driven by the same per-beat "pos" feed the
+// counter reads — no rAF, no loop of its own. Each beat: is the sounding
+// section carrying a theme (partOf's taker — the defaults included, so the
+// chorus's own hook lights unsaid), WHICH theme (per.theme "b" rides B's
+// staff), and where in the theme's own cycle the ear is — the melody layer
+// rides its own phrase length as the bar (band-kit's per16), so a two-bar
+// theme under a four-bar section cycles twice: position is
+// (barInSection × 16 + stepInBar) mod the phrase's steps, off passAt's own
+// bar-within-box. A beat is four sixteenths, so up to three timers a beat
+// carry the lights BETWEEN pos events; they are cleared on every beat and
+// on stop, and lightStaff itself no-ops until the index changes. The staff
+// draws the theme as the ROOM owns it, so that is the timeline lit — a
+// section's return transform (augmented, just its head) reshapes the sound,
+// not the notation. The piano audition outranks the band on the staff: it
+// is the surface's own instrument, lighting from its own timers.
+let lightTimers = [];
+const clearLightTimers = () => { for (const t2 of lightTimers) clearTimeout(t2);
+  lightTimers = []; };
+const themeNoteAt = (tn, step) => {
+  for (let k = 0; k < tn.notes.length; k++) {
+    const x = tn.notes[k];
+    if (x.at > step) break;
+    if (step < x.at + x.len) return k;
+  }
+  return -1;                                  // a rest: nothing in the air
+};
+function lightBeat(d) {
+  clearLightTimers();
+  if (auditioning()) return;                  // the piano has the staff
+  if (!playing || !(model.idea && model.idea.on) || d.si == null || d.si < 0)
+    return lightStaff(null, null);
+  const per = Band.partOf(model, d.si);
+  const tk = Band.TAKERS[per.idea];
+  if (!tk || !tk.chair) return lightStaff(null, null);
+  const t = per.theme === "b" && model.ideaB && model.ideaB.on ? "b" : "a";
+  const tn = toNotes(Band.Id.toPhrase(themeOf(model, t)), themeOpts(model, t));
+  if (!tn.n || !tn.notes.length) return lightStaff(null, null);
+  let barIn = 0;                              // which bar of the sounding box
+  try { barIn = Math.max(0, (passAt(getPosition().now).bar || 1) - 1); }
+  catch (e) {}
+  const step0 = (barIn * tn.spb + Math.max(0, (d.beat || 1) - 1) * 4) % tn.n;
+  const stepSec = 60 / Math.max(30, d.bpm || model.song.bpm || 96) / 4;
+  let prev = null;
+  for (let sub = 0; sub < 4; sub++) {
+    const idx = themeNoteAt(tn, (step0 + sub) % tn.n);
+    if (sub === 0) { lightStaff(t, idx); prev = idx; }
+    else if (idx !== prev) {
+      prev = idx;
+      lightTimers.push(setTimeout(() => {
+        if (playing && !auditioning()) lightStaff(t, idx);
+      }, sub * stepSec * 1000));
+    }
+  }
+}
 // SPEAK LIKE A MUSICIAN, NOT A LOG. "the melody in the drop — changes in 21
 // beats; the drums in the drop — changes in 21 beats" was true and unreadable:
 // the big number was left to explain, by itself, that the drop is far away.
@@ -1819,7 +1961,9 @@ on("pending", (d) => {
 });
 on("transport:state", () => {
   if (!playing) { pend.clear(); beatEl.textContent = ""; pendEl.textContent = "";
-    if (liveEl) liveEl.textContent = ""; }
+    if (liveEl) liveEl.textContent = "";
+    clearLightTimers();
+    if (!auditioning()) lightStaff(null, null); }
 });
 
 /* ---------- boot ---------- */
@@ -1846,6 +1990,7 @@ registerSW();
 warmShell();
 window.__bandWarm = () => warmed();               // the gate asks what is cached
 window.__bandDraw = () => draw();                  // the gate times a redraw
+window.__bandLit = () => ({ t: litT, idx: litIdx });  // the lit staff note
 window.__bandModel = () => JSON.stringify(model);   // ...and the model, so a
 // word that is lost can be located: did the MODEL move, or only the plan?
 // ...and the session you left, if there is one. A cached record you cannot
