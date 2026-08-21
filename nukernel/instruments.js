@@ -596,34 +596,62 @@
     // GM 28 (clean electric). The most-cast instrument in the table by a factor
     // of four, and the one whose sampled version has the least to say: a clean
     // electric IS its pick attack, and the sample has one.
-    clean_guitar:      { dsp: "stk_guitar", set: (M) => ({
-      drive: 0.09, pluckPos: 0.22, pickup: 0.30, bright: 0.55, ring: 4.0,
+    //
+    // EVERY ELECTRIC DECLARES ITS OWN INSERTS (the de-jangle round,
+    // 2026-08-21): a chording guitar rides the parent's `pad` strip
+    // (CHAIR_ROLE stab -> pad, which keeps the body in the chord), and a
+    // recipe with NO inserts gets defaultInserts' pad chain there — chorus at
+    // mix 0.28 plus a leslie or phaser, which is the jangle. A NON-EMPTY
+    // kernel inserts array overrides the default entirely (state-engine
+    // insertChain law), so each amp names its own pedalboard: the cleans a
+    // chorus an octave subtler than the pad default, the dirty three the
+    // parent's own staged insert_higain (compiled all along, declared by
+    // nobody until now) at three amounts of amp, the mute a tight gated one
+    // with the presence up.
+    clean_guitar:      { dsp: "stk_guitar",
+      inserts: [{ type: "chorus", rate: 0.7, depth: 0.35, mix: 0.12 }],
+      set: (M) => ({
+      drive: 0.16, pluckPos: 0.22, pickup: 0.30, bright: 0.55, ring: 4.0,
       cutoff: M.cab, release: M.rel }) },
     // GM 27 (jazz electric) — neck pickup, no dirt, and the tone rolled off. The
     // pickup is the whole difference between this and the clean above.
-    jazz_guitar:       { dsp: "stk_guitar", set: (M) => ({
+    jazz_guitar:       { dsp: "stk_guitar",
+      inserts: [{ type: "chorus", rate: 0.5, depth: 0.25, mix: 0.08 }],
+      set: (M) => ({
       drive: 0.04, pluckPos: 0.38, pickup: 0.50, bright: 0.30, ring: 3.0,
       cutoff: Math.min(M.cab, 3200), release: M.rel }) },
     // GM 29 (palm muted) — the mute is the STRING's own decay and a short hand,
     // which is what a palm mute physically is, plus enough gain to chug. 0.23 s
     // of ring measures as a 140 ms chug on a real pluck; the old coefficient
     // spelling of the same idea left the string sustaining for a full second.
-    palm_muted_guitar: { dsp: "stk_guitar", set: (M) => ({
+    palm_muted_guitar: { dsp: "stk_guitar",
+      inserts: [{ type: "higain", gate: 0.6, drive: 0.55, stages: 2,
+        low: 0.62, mid: 0.5, high: 0.45, presence: 0.6, level: 0.65, mix: 1 }],
+      set: (M) => ({
       drive: 0.38, pluckPos: 0.10, pickup: 0.12, bright: 0.62, ring: 0.23,
       cutoff: M.cab, release: 0.06 }) },
     // crunch, overdrive, distortion: ONE instrument at three amounts of
     // amplifier, which is what those three words have always meant. The sampled
     // trio are three separate recordings pretending to be that, and none of them
     // can be played quietly.
-    crunch_guitar:     { dsp: "stk_guitar", set: (M) => ({
-      drive: 0.45, pluckPos: 0.16, pickup: 0.2, bright: 0.58, ring: 5.0,
+    crunch_guitar:     { dsp: "stk_guitar",
+      inserts: [{ type: "higain", gate: 0.3, drive: 0.32, stages: 1,
+        low: 0.55, mid: 0.5, high: 0.44, presence: 0.4, level: 0.7, mix: 1 }],
+      set: (M) => ({
+      drive: 0.55, pluckPos: 0.16, pickup: 0.2, bright: 0.58, ring: 5.0,
       cutoff: M.cab, release: M.rel }) },
-    overdrive_guitar:  { dsp: "stk_guitar", set: (M) => ({
+    overdrive_guitar:  { dsp: "stk_guitar",
+      inserts: [{ type: "higain", gate: 0.35, drive: 0.5, stages: 2,
+        low: 0.55, mid: 0.48, high: 0.42, presence: 0.42, level: 0.68, mix: 1 }],
+      set: (M) => ({
       drive: 0.58, pluckPos: 0.16, pickup: 0.22, bright: 0.58, ring: 5.5,
       cutoff: M.cab, release: M.rel }) },
-    distortion_guitar: { dsp: "stk_guitar", set: (M) => ({
+    distortion_guitar: { dsp: "stk_guitar",
+      inserts: [{ type: "higain", gate: 0.45, drive: 0.72, stages: 3,
+        low: 0.6, mid: 0.42, high: 0.45, presence: 0.48, level: 0.62, mix: 1 }],
+      set: (M) => ({
       drive: 0.82, pluckPos: 0.12, pickup: 0.16, bright: 0.64, ring: 6.0,
-      cutoff: Math.min(M.cab, 4600), release: M.rel }) },
+      cutoff: Math.min(M.cab, 4000), release: M.rel }) },
     // ---- the pianos ----
     // AND THE PIANOS ARE HERE NOW, on a measurement that overturns the reason
     // they were not. The note that used to sit below this table said pianos stay

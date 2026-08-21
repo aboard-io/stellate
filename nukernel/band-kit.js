@@ -212,7 +212,11 @@
     thirds: { w: "double it in thirds", p: [{ id: "harmonize", p: 0.6 }] },
     sixths: { w: "double it in sixths", p: [{ id: "harmonize", p: 0.6, gap: "sixth" }] },
     echo:   { w: "echo it round", p: [{ id: "echoCanon", delay: 3 }] },
-    strum:  { w: "spread the chords", p: [{ id: "strum", spread: 0.06 }] },
+    // two entries, one per part that holds chords: "spread the chords" means
+    // all of them, whichever chair holds them (a strum pipe admits one
+    // declared part — pads undeclared, the guitarist's stabs by name)
+    strum:  { w: "spread the chords", p: [{ id: "strum", spread: 0.06 },
+                                          { id: "strum", spread: 0.06, part: "stab" }] },
     breathe:{ w: "let it breathe", p: [{ id: "breathe" }] },
     both:   { w: "thirds and an echo",
               p: [{ id: "harmonize", p: 0.5 }, { id: "echoCanon", delay: 3 }] },
@@ -282,7 +286,7 @@
                styles: ["hold the root", "octaves"],
                instr: ["a synth bass", "with a pick"],
                chg: ["a minor vamp", "one chord, all night"] },
-    rock:    { w: "a rock record", fam: "rock", bpm: 120, chords: "plain", when: ["the sixties", "the seventies", "the eighties", "the nineties"], where: ["London", "Los Angeles", "New York"], venue: ["a stadium", "a bar", "a festival"], gtr: ["an overdriven one", "a crunchy one", "a distorted one", "a clean electric"], gjob: "power", keys: ["an organ", "a rock organ", "a grand piano", "an upright"], kjob: "comp", forms: ["versechorus", "pop", "full", "aaba"], artic: "normal", tone: { cut: 1100, q: 2,  rel: 0.24 },
+    rock:    { w: "a rock record", fam: "rock", bpm: 120, chords: "plain", when: ["the sixties", "the seventies", "the eighties", "the nineties"], where: ["London", "Los Angeles", "New York"], venue: ["a stadium", "a bar", "a festival"], gtr: ["an overdriven one", "a crunchy one", "a distorted one", "a clean electric"], gjob: "power", keys: ["an organ", "a rock organ", "a grand piano", "an upright"], kjob: "comp", forms: ["versechorus", "pop", "full", "aaba"], artic: "normal", gtrTone: { cut: 1300 }, tone: { cut: 1100, q: 2,  rel: 0.24 },
                grooves: ["straight rock", "driving rock", "stomp", "half time"],
                machines: ["acoustic kit", "room kit", "big kit"],
                styles: ["hold the root", "driving eighths", "root and fifth"],
@@ -300,13 +304,13 @@
                styles: ["hold the root", "driving eighths"],
                instr: ["a synth bass", "with a pick"],
                chg: ["one chord, all night", "a pedal"] },
-    jazz:    { w: "a jazz date", fam: "jazz", bpm: 144, chords: "sevens", when: ["the fifties", "the sixties", "now"], where: ["New York", "New Orleans", "Paris"], venue: ["a club", "a bar", "a studio"], gtr: ["a jazz box", "a nylon-string", "a clean electric"], gjob: "strum", keys: ["a grand piano", "a Rhodes", "an upright", "a church organ"], kjob: "comp", forms: ["head", "aaba", "blues"], swing: "swing", artic: "legato", tone: { cut: 1200, q: 1,  rel: 0.35 },
+    jazz:    { w: "a jazz date", fam: "jazz", bpm: 144, chords: "sevens", when: ["the fifties", "the sixties", "now"], where: ["New York", "New Orleans", "Paris"], venue: ["a club", "a bar", "a studio"], gtr: ["a jazz box", "a nylon-string", "a clean electric"], gjob: "strum", keys: ["a grand piano", "a Rhodes", "an upright", "a church organ"], kjob: "comp", forms: ["head", "aaba", "blues"], swing: "swing", artic: "legato", gtrTone: { cut: 1000 }, tone: { cut: 1200, q: 1,  rel: 0.35 },
                grooves: ["jazz ride", "bebop", "brush swing"],
                machines: ["jazz kit", "brushes", "acoustic kit"],
                styles: ["walk it", "hold the root"],
                instr: ["fingers on a P-bass", "with a pick"],
                chg: ["two-five-one", "a twelve-bar blues", "the doo-wop changes"] },
-    blues:   { w: "a blues", fam: "rock", bpm: 96, chords: "all7", when: ["the fifties", "the sixties"], where: ["Chicago", "Memphis", "New Orleans"], venue: ["a bar", "a club", "a porch", "a parlor"], gtr: ["a crunchy one", "a clean electric", "a steel-string acoustic"], gjob: "riff", keys: ["an upright", "a rock organ", "a grand piano", "a Rhodes"], kjob: "comp", forms: ["blues", "versechorus", "aaba"], swing: "shuffle", artic: "normal", tone: { cut: 1000, q: 1,  rel: 0.30 },
+    blues:   { w: "a blues", fam: "rock", bpm: 96, chords: "all7", when: ["the fifties", "the sixties"], where: ["Chicago", "Memphis", "New Orleans"], venue: ["a bar", "a club", "a porch", "a parlor"], gtr: ["a crunchy one", "a clean electric", "a steel-string acoustic"], gjob: "riff", keys: ["an upright", "a rock organ", "a grand piano", "a Rhodes"], kjob: "comp", forms: ["blues", "versechorus", "aaba"], swing: "shuffle", artic: "normal", gtrTone: { cut: 1300 }, tone: { cut: 1000, q: 1,  rel: 0.30 },
                grooves: ["shuffle", "train beat", "straight rock"],
                machines: ["acoustic kit", "room kit", "brushes"],
                styles: ["walk it", "root and fifth", "hold the root"],
@@ -318,7 +322,7 @@
                styles: ["busy sixteenths", "octaves", "hold the root"],
                instr: ["fingers on a P-bass", "with a pick"],
                chg: ["one chord, all night", "a minor vamp"] },
-    reggae:  { w: "a reggae record", fam: "latin", bpm: 96, chords: "plain", when: ["the seventies", "the eighties"], where: ["Kingston", "London"], venue: ["a dancehall", "a festival", "a yard"], gtr: ["a clean electric", "a muted one", "a jazz box"], gjob: "skank", keys: ["an organ", "a Rhodes", "a rock organ", "a grand piano"], kjob: "skank", forms: ["vamp", "dub", "versechorus"], fig: "bubble", artic: "legato", tone: { cut: 420,  q: 2,  rel: 0.55 },
+    reggae:  { w: "a reggae record", fam: "latin", bpm: 96, chords: "plain", when: ["the seventies", "the eighties"], where: ["Kingston", "London"], venue: ["a dancehall", "a festival", "a yard"], gtr: ["a clean electric", "a muted one", "a jazz box"], gjob: "skank", keys: ["an organ", "a Rhodes", "a rock organ", "a grand piano"], kjob: "skank", forms: ["vamp", "dub", "versechorus"], fig: "bubble", artic: "legato", gtrTone: { cut: 1600 }, tone: { cut: 420,  q: 2,  rel: 0.55 },
                grooves: ["one drop", "steppers", "rockers"],
                machines: ["acoustic kit", "room kit", "808"],
                styles: ["hold the root", "octaves"],
@@ -1720,8 +1724,18 @@
   // drone sits an octave below where it is told to and a lead an octave
   // above.
   const FLOOR = { riff: 0, drone: 1, pad: 0, stab: 0, line: -1, counter: 0, lead: -1 };
+  // ...and the GUITAR'S OWN FLOOR (the de-jangle round): its STAB reaches
+  // -1, because "power chords, down low" is reg -2 by its own words and a
+  // floor of 0 rendered the chord centred on MIDI 60 — an octave above the
+  // hand (~MIDI 42-54 is where a low guitar part lives). Per CHAIR, not per
+  // part, and stab ONLY: the keys player's chords keep the 0 floor, and the
+  // riff keeps it on both chairs — the kernel's riff realization already
+  // sits low (a chug at reg -1 reached MIDI 19 in key C; found by the dice,
+  // roll 270, both times this was tried wider). The drone keeps its floor
+  // everywhere, which is what the clamp was written for.
+  const GFLOOR = { riff: 0, drone: 1, pad: 0, stab: -1, line: -1, counter: 0, lead: -1 };
   const CEIL  = { riff: 1, drone: 2, pad: 1, stab: 1, line: 1, counter: 1, lead: 1 };
-  const stand = (part, reg) => Math.max(FLOOR[part] == null ? -1 : FLOOR[part],
+  const stand = (part, reg, F) => Math.max((F || FLOOR)[part] == null ? -1 : (F || FLOOR)[part],
                                         Math.min(CEIL[part] == null ? 1 : CEIL[part], reg));
 
   function toGenre(m, MODES, changes, dm, bm, km, gm) {
@@ -1729,6 +1743,12 @@
     const gtr = gm || m.guitar;
     const gk = genreOf(m);
     const kg = Ky.toGenre(keys), gg = Gt.toGenre(gtr);
+    // THE RECORD'S TONE REACHES THE GUITAR, exactly as it reaches the bass:
+    // a record may carry `gtrTone` beside `tone` (which has always been the
+    // bass's). It sits between the chair's own defaults and the player's
+    // answered panel — the player at the amp outranks the record, the record
+    // outranks the default, and a record that names none is byte-identical.
+    const ggTone = { ...gg.tone, ...((gk && gk.gtrTone) || {}), ...((gtr && gtr.tone) || {}) };
     // TWO PITCHED CHAIRS, TWO VOICES. Each takes its own phrase (the box's
     // stack lists a slot per voice — derive.js walks phrase pi to voice pi),
     // its own part, its own register and its own instrument. A chair that is
@@ -1741,8 +1761,8 @@
     // wrong before anybody plays it. Found by rolling three hundred records.
     const chairs = [{ part: kg.part(0), reg: stand(kg.part(0), kg.reg(0)),
                       instr: kg.instr, tone: kg.tone, pad: kg.realize(0) === "pad" },
-                    { part: gg.part, reg: stand(gg.part, gg.reg), instr: gg.instr,
-                      tone: gg.tone, pad: gg.pad }];
+                    { part: gg.part, reg: stand(gg.part, gg.reg, GFLOOR), instr: gg.instr,
+                      tone: ggTone, pad: gg.pad }];
     const dg = D.toGenre(drums);
     const c = B.CHANGES[changes || (m.song.chg || {}).verse || "fourchord"];
     return {
@@ -1798,6 +1818,10 @@
       bassTone: { wave: "saw", ...(gk && gk.tone ? gk.tone : { cut: 800, q: 4, rel: 0.22 }),
                   atk: 0.004, gain: 0.34, ...(bass.tone || {}) },
       tone: kg.tone, chairs,
+      // the guitarist's own call on their chords (the default strum pipe a
+      // chording job carries) — a section's explicit pipe call still replaces
+      // it wholesale, because the band outranks the chair
+      ...(gg.pipes ? { pipes: gg.pipes } : {}),
       words: [], word: () => [],
     };
   }

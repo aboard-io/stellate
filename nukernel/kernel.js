@@ -512,11 +512,15 @@
       });
     },
     // pad voices leave the grid by a few hairs, direction alternating per
-    // chord — a keyboard player's hand, not a chord stamp
+    // chord — a keyboard player's hand, not a chord stamp. A pipe may DECLARE
+    // which part it strums (`part: "stab"` — a guitarist's chords are chords
+    // too, and a chair spreading its own chords must not move somebody
+    // else's); undeclared, pads, so every existing genre's strum is
+    // byte-identical. Both at once is two pipe entries, one per part.
     strum(ev, ctx, o) {
       const groups = new Map();
       ev.forEach((e, i) => {
-        if (e.part !== "pad") return;
+        if (e.part !== (o.part || "pad")) return;
         const k = (e.v || 0) + "@" + e.t;
         if (!groups.has(k)) groups.set(k, []);
         groups.get(k).push(i);

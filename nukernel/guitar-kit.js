@@ -24,7 +24,11 @@
   const { N, z, on, every, deg } = C;
 
   const JOBS = {
+    // the chug CASTS its own instrument: a palm mute is the string under the
+    // hand, not the record's word for the amp — before this, kraut's "chug on
+    // a clean electric" rang for four seconds per eighth
     chug:   { w: "a palm-muted chug", part: "riff", gate: every(2), reg: -1,
+              instr: "palm_muted_guitar",
               says: "eighths, down low, muted" },
     power:  { w: "power chords", part: "stab", gate: on(0, 8), reg: -1,
               says: "one chord a half-bar, and it rings" },
@@ -60,9 +64,14 @@
   const REG = { low: { w: "down low", v: -1 }, mid: { w: "where it sits", v: 0 },
                 high: { w: "up the neck", v: 1 } };
   const PANEL = [
+    // the four brightnesses sit an octave down from where they started: the
+    // cab translation (to-engine modelForInstr) multiplies by 2.6 with its
+    // floor at 3 kHz now, so "dark" genuinely closes the cabinet and "glassy"
+    // (3600 -> 9 kHz, the translation's own ceiling) is still all the top the
+    // cab has to give
     { id: "cut", ask: "how bright is it?", key: "cut", opts: [
-      { w: "dark", v: 900 }, { w: "warm", v: 1800 },
-      { w: "bright", v: 3400 }, { w: "glassy", v: 6000 } ] },
+      { w: "dark", v: 900 }, { w: "warm", v: 1400 },
+      { w: "bright", v: 2400 }, { w: "glassy", v: 3600 } ] },
     { id: "rel", ask: "how long does it ring?", key: "rel", opts: [
       { w: "damped", v: 0.15 }, { w: "ringing", v: 0.7 }, { w: "hanging on", v: 2 } ] },
   ];
@@ -85,10 +94,21 @@
 
   function toGenre(m) {
     const j = jobOf(m);
+    // a CHORDING job (the stab parts: power/drive/strum/skank) is a strike,
+    // not a drone — the string's ring comes down to 1.2 s and the hand damps
+    // at 0.15, which is what kills the voice-steal "bend" a 4-second ring
+    // under half-bar stabs kept feeding. The player's own panel answer (rel)
+    // still outranks the job. riff/line/arp keep the recipe's longer ring.
+    const chord = j.part === "stab";
     return { part: j.part || "line", reg: (REG[m.reg] || REG.mid).v + (j.reg || 0),
-             instr: m.instr, pad: j.part === "pad", silent: !j.part,
-             tone: { wave: "saw", cut: 1800, q: 1, atk: 0.006, rel: 0.5, gain: 0.24,
-                     verb: 0.1, ...(m.tone || {}) } };
+             instr: j.instr || m.instr, pad: j.part === "pad", silent: !j.part,
+             // ...and a chord is STRUMMED, a few ms a string, not stamped:
+             // the chair declares the kernel's own strum pipe with the stab
+             // admission — nukernel data, so no catalog genre's bytes move
+             ...(chord ? { pipes: [{ id: "strum", spread: 0.03, part: "stab" }] } : {}),
+             tone: { wave: "saw", cut: 1200, q: 1, atk: 0.006,
+                     rel: chord ? 0.15 : 0.5, ...(chord ? { ring: 1.2 } : {}),
+                     gain: 0.24, verb: 0.1, ...(m.tone || {}) } };
   }
 
   return { N, JOBS, INSTRUMENTS, REG, PANEL, rhythmic, blank, V, catalog, say, says,

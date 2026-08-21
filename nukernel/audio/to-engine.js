@@ -688,14 +688,23 @@ export function modelForInstr(id, tone) {
   // and not a fudge — and both ends are clamped inside the modules' own slider
   // ranges, because a value written ON a declared edge is the failure the
   // bounds paragraph above exists to avoid.
-  //   THE 4.2 kHz FLOOR IS LOAD-BEARING and was measured, not chosen: blues
-  // writes cut 1100, which read literally puts a 4x12 cabinet's cliff at 2.9 kHz
-  // and takes every guitar in the catalogue back to the blanket this whole round
-  // exists to lift. A real cab dies around 5 kHz (which is where the parent's
-  // own insert_higain puts its, fixed), so the genre's number tilts the cabinet
-  // and does not get to close it.
+  //   THE FLOOR IS LOAD-BEARING and was measured, not chosen. It sat at
+  // 4.2 kHz because blues writes cut 1100, which read literally puts a 4x12
+  // cabinet's cliff at 2.9 kHz and took every guitar in the catalogue back to
+  // the blanket the brightness round existed to lift — and back then the
+  // recipe cutoff was the ONLY brightness stage the family had. It is 3 kHz
+  // now (the de-jangle round, 2026-08-21) because it no longer carries that
+  // whole burden alone: every electric declares its own inserts — the dirty
+  // ones the parent's staged insert_higain, whose own fixed 4x12 sim keeps
+  // the cliff near 5 kHz whatever this number says — and the pick writes
+  // drive per note (MODEL_DYN), so the attack survives a darker cabinet. The
+  // law stays the same law: the genre's number TILTS the cabinet and does not
+  // get to close it — 3 kHz still sits above the 2.9 kHz blanket that was
+  // measured as the failure, and a guitar chair asking "dark" (cut 900 ->
+  // 2340 literal) lands at the floor, audibly darker than the old 4.2 kHz
+  // without becoming the blanket.
   const M = {
-    cab:  clamp((t.cut != null ? t.cut : 2600) * 2.6, 4200, 9000),
+    cab:  clamp((t.cut != null ? t.cut : 2600) * 2.6, 3000, 9000),
     mcut: clamp((t.cut != null ? t.cut : 3000) * 2.6, 3000, 15000),
     rel:  clamp(t.rel != null ? t.rel : 0.3, 0.05, 1.8),
   };
@@ -705,9 +714,18 @@ export function modelForInstr(id, tone) {
   // tape for the same strike. Measured against the sampled zone each row stands
   // in for, the long-ringing three came back 5-6 dB hot; this is that, and
   // nothing else, which is why the two short ones do not carry one.
+  const set = P.set(M);
+  // a chair may say how long the STRING rings, per job (the guitarist's
+  // chording jobs shorten it so a chord is a strike, not a five-second bend
+  // magnet) — the recipe's own ring stands where nobody said
+  if (t.ring != null) set.ring = clamp(t.ring, 0.05, 12);
   return { dsp: P.dsp, root: P.dsp,
     level: clamp((t.gain != null ? t.gain : 0.28) * 2.8 * (P.mul || 1), 0.35, 0.92),
-    set: P.set(M), live: liveModel(P.dsp) };
+    set, live: liveModel(P.dsp),
+    // the recipe's own pedalboard — a non-empty inserts array on the unit
+    // overrides the parent's defaultInserts entirely (its own law), which is
+    // how a chording electric escapes the pad chain's chorus + leslie
+    ...(P.inserts ? { inserts: P.inserts } : {}) };
 }
 
 /**
@@ -786,6 +804,10 @@ function synthRecipe(sy, tone, role) {
     const key = (S.rename && S.rename[k]) || k;
     m[key] = (S.waveIndex && key === "wave") ? (WAVES[v | 0] || "saw") : v;
   }
+  // a spec that names its own pedalboard carries it onto the unit, where the
+  // parent's insertChain law (non-empty array wins over defaultInserts) reads
+  // it — absent, byte-identical, and the house default stands as before
+  if (Array.isArray(sy.inserts) && sy.inserts.length) m.inserts = sy.inserts;
   return { role: S.role || role, m };
 }
 

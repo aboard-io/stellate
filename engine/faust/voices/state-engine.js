@@ -1002,7 +1002,12 @@
   //                 and the breath is the brightest thing in the note, which is
   //                 also true of the real instrument.)
   const MODEL_DYN = {
-    stk_guitar:  { pick: [0.12, 1] },
+    // `drive` is a REL span (third element "rel"): the note's velocity moves
+    // the amp AROUND the recipe's own drive rather than to an absolute value
+    // — a clean guitar dug into gets dirtier, it does not become a stack, and
+    // the six recipes' three-amounts-of-amplifier identity survives velocity.
+    // The offset rides mapEvents' dyn write (see the "rel" branch there).
+    stk_guitar:  { pick: [0.12, 1], drive: [-0.10, 0.10, "rel"] },
     stk_piano:   { hammer: [0.3, 1] },
     mallet:      { hard: [0.05, 1] },
     voice_lead:  { push: [0.06, 0.95] },
@@ -2551,7 +2556,17 @@
       if (u.dyn) {
         const du = clamp((p.amp - DYN_AMP_LO) / (DYN_AMP_HI - DYN_AMP_LO), 0, 1);
         for (const k of Object.keys(u.dyn)) {
-          const r = u.dyn[k]; sets[k] = r[0] + (r[1] - r[0]) * du;
+          const r = u.dyn[k];
+          // a REL span ([lo, hi, "rel"]) is an OFFSET around the unit's own
+          // recipe value, for a control whose centre is the instrument's
+          // identity (each guitar recipe's drive IS which amp it is) — the
+          // velocity moves the hand around it, never to an absolute setting.
+          // Declared for 0..1 controls, clamped as such. Two-element spans
+          // are absolute, exactly as before, byte-identical.
+          sets[k] = r[2] === "rel"
+            ? clamp((u.params && u.params[k] != null ? u.params[k] : 0)
+                    + r[0] + (r[1] - r[0]) * du, 0, 1)
+            : r[0] + (r[1] - r[0]) * du;
         }
       }
       // A SLIDE IS A REAL PORTAMENTO on a waveguide: the string's delay length
