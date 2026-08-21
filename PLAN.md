@@ -82,6 +82,25 @@ vice versa (the bass locking to the kick pattern; the drummer opening up
 when the soloist climbs; comping thinning under a busy tune). Design it as a
 graph of influences between chairs, not a deeper hierarchy.
 
+THE THEME COMPOSER (Paul, 2026-08-21 — "be a real composer"; this leads
+Phase 4): a theme is a CLAIM, not a pattern. Build:
+1. MULTIPLE THEMES, named and few — A and B ("the tune" / "the answer").
+2. ASSIGNMENT ON THE SECTION NODE — each section says which theme it
+   carries and who takes it; the same theme over different sections'
+   changes is the Jimmy Webb engine (recurrence over different ground).
+3. THE PHRASE AS A SENTENCE — 2–4 measures, EACH with its own rhythm
+   cell (statement / restatement / development / landing), never one
+   cell photocopied. Father John Misty's law: no two measures of a sung
+   line scan the same; a theme has a rhythmic profile — dense bar,
+   sparse bar, the long note where it means it.
+4. TIES AND LEGATO FIRST-CLASS — notes carry across cells and barlines,
+   pickups start before the bar, legato is the default articulation of a
+   sung theme. The staff must show the ties.
+5. RETURN WITH TRANSFORMATION — the same · up a step · augmented ·
+   fragmented (just its head). This is the seam where the theme composer
+   meets the improvisation engine: trading and solos ARE transformations
+   applied live.
+
 Themes: develop real methods for improvising ON a theme — how musicians
 actually explore one: restatement, transposition, inversion, augmentation/
 diminution, fragmentation, sequence, call-and-response, reharmonization,
