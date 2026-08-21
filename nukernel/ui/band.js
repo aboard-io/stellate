@@ -85,8 +85,14 @@ function push(first) {
   setPoolChair("bass", model.bass.instr);
   // the keys player sits in whichever chair their JOB names — the pool casts
   // by role, which is exactly what a part is
-  // the pool casts by ROLE, and two chairs can want the same role — the one
-  // whose part it actually is wins, and the guitar's roles are its own
+  // the pool casts by ROLE, and two chairs can want the same role — a jazz
+  // date comps on the keys AND the guitar, both `stab`, and a role key can
+  // only name one instrument. So the pool is NOT how this page's two pitched
+  // voices resolve any more: the genre's `chairs` seam carries each chair's
+  // own instrument per voice and derive.js poolInstrOf reads it first. The
+  // row written here is the roster surface (and any reader without the
+  // seam); where two chairs collide on one role, the one whose part it
+  // actually is wins the label, and the guitar's roles are its own
   const kj = Band.Ky.JOBS[model.keys.job] || {}, gj = Band.Gt.JOBS[model.guitar.job] || {};
   for (const chair of ["pad", "stab", "riff", "counter", "line", "drone", "lead"]) {
     const mine = gj.part === chair ? model.guitar.instr

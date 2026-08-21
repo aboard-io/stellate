@@ -97,6 +97,21 @@ export const chairOf = (sec, ent, v) => {
 // appear twice in a stack. Read by the live scheduler, the register home, the
 // asset list and the mix desk, so a cast chair is one fact everywhere at once.
 export const poolInstrOf = (sec, owner, v, pool) => {
+  // A CHAIR PLAYS ITS OWN INSTRUMENT. The pool is keyed on ROLE, and two
+  // chairs can hold the same role — a jazz date comps on the keys AND the
+  // guitar, both `stab` — so the role key can only name one of them, and
+  // the keys' theory-voiced shells came out through jazz_guitar (on rock,
+  // comped triads through overdrive: thirds under drive, the exact mud the
+  // fifths law exists to prevent). A genre that declares `chairs` (band-kit
+  // toGenre — the same seam the kernel's chordLock branch reads) has already
+  // said which instrument each VOICE holds, so that answer outranks the
+  // role pool. No catalog genre sets `chairs`; every one of them takes the
+  // pool law below, byte for byte.
+  const g = GENRES[owner];
+  if (g && Array.isArray(g.chairs) && g.chairs.length) {
+    const c = g.chairs[v % g.chairs.length];
+    if (c && c.instr) return c.instr;
+  }
   if (!pool) return null;
   const ent = stackOf(sec).find(x => x.g === owner) || null;
   return pool[chairOf(sec, ent, v)] || null;

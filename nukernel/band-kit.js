@@ -1072,6 +1072,42 @@
       const o = pick(a.opts);
       if (o) m = setSection(m, i, a.id, o.key);
     }
+    // A ROLLED ANSWER MUST BE HEARD. The dice answers "a second theme
+    // answers it" like any other question, but assignment lives on the
+    // section node — and measured over 52 rolls, 22 composed a B and 0
+    // sections ever named it: a theme that exists only in the model is not
+    // a structure, it is a file. So when this roll composed one and no
+    // section (rolled above, or a hand's later answer — which overwrites
+    // this exactly as it overwrites any dice answer) carries it, the dice
+    // gives it the CONTRAST section, which is what an answer is for: the
+    // bridge where the form has one, else the last theme-carrying section
+    // of the form — never the ONLY one, which would erase the tune to play
+    // its answer. A section whose role brought no taker gets the chorus's
+    // own ("keys", ROLE above). And a form with no room for a second theme
+    // — one place a melody can sound — honestly rolls "one theme is
+    // plenty" instead of composing an answer nobody will hear.
+    if (m.song.themeB && m.ideaB && m.ideaB.on) {
+      const f = FORMS[m.song.form || "vamp"];
+      const takes = f.secs.map((_, i) => {
+        const p = partOf(m, i); return !!p.idea && p.idea !== "no";
+      });
+      const bAt = f.secs.findIndex((_, i) => ((m.per || {})[i] || {}).theme === "b");
+      if (bAt >= 0) {
+        // the roll already placed it — seat a taker there if the role
+        // brought none, so the placement is a sound and not a label
+        if (!takes[bAt]) m = setSection(m, bAt, "idea", "keys");
+      } else {
+        let home = f.secs.indexOf("bridge");
+        if (home < 0) {
+          const carriers = takes.reduce((a2, t, i) => (t ? a2.concat(i) : a2), []);
+          home = carriers.length > 1 ? carriers[carriers.length - 1] : -1;
+        }
+        if (home >= 0) {
+          m = setSection(m, home, "theme", "b");
+          if (!takes[home]) m = setSection(m, home, "idea", "keys");
+        } else m = answer(m, "arranger", "second", "one theme is plenty");
+      }
+    }
     return m;
   }
 
@@ -1507,10 +1543,30 @@
       // biggest moment in the record, quieter, because the part that carried
       // it left. So the other pitched chair steps up, which is what the
       // other player would do.
-      const taker = TAKERS[per.idea] || TAKERS.no;
-      if (taker.chair === "guitar" && !(per.keys && per.keys !== "same"))
+      // A PLAYER WHO HAS LAID OUT IS NOT IN THE ROOM. "Lay out" silences a
+      // chair's VOICE (part null, empty phrase — the guitar-out precedent),
+      // but the tune's default home (a vamp's verse and a chorus both hand
+      // it to the keys) still built the melody layer on that chair's own
+      // instrument — a laid-out keys player, audibly playing the hook. So
+      // the taker is resolved against who is actually in the room, as this
+      // section hears them (a section that says per.keys "pads" has brought
+      // the chair back, and then it can take the tune again): an out taker's
+      // tune falls to the other pitched chair — the hole rule played
+      // backwards — and to nobody when the room is empty. The hole-filling
+      // below gets the same guard, because "the keys take it" must not
+      // resurrect a laid-out guitar with a strum job either.
+      const inRoom = { keys: !Ky.toGenre(km).silent, guitar: !Gt.toGenre(gm).silent,
+                       voice: !Vo.toGenre(m.voice).silent };
+      let taker = TAKERS[per.idea] || TAKERS.no;
+      if (taker.chair && !inRoom[taker.chair]) {
+        const next = (taker.chair === "keys" ? ["guitar"]
+          : taker.chair === "guitar" ? ["keys"] : ["keys", "guitar"])
+          .find((c) => inRoom[c]);
+        taker = next ? TAKERS[next] : TAKERS.no;
+      }
+      if (taker.chair === "guitar" && inRoom.keys && !(per.keys && per.keys !== "same"))
         km = Ky.say(km, "job:comp");
-      if (taker.chair === "keys" && !(per.guitar && per.guitar !== "same"))
+      if (taker.chair === "keys" && inRoom.guitar && !(per.guitar && per.guitar !== "same"))
         gm = Gt.say(gm, "job:strum");
       let melody = null;
       // WHICH THEME, AND HOW IT COMES BACK (PLAN.md THE THEME COMPOSER §2,
@@ -1531,7 +1587,14 @@
           ...g, label: "Idea", voices: 1, part: () => "lead",
           // the idea's OWN register — a tune is not where the chords are
           realize: () => "line", reg: () => Id.regOf(theme),
-          // the tune is on the instrument of whoever picked it up
+          // the tune is on the instrument of whoever picked it up.
+          // A LAYER'S SEAT IS ITS OWN: `...g` copies the band's two-chair
+          // `chairs` seam onto this one-voice layer, and derive.js
+          // poolInstrOf reads chairs FIRST — the stacked voice index (2, 3)
+          // wrapped `v % 2` straight back onto chairs[0], and the tune (and
+          // the singer below) came out on the keys' instrument and the keys'
+          // tone, laid out or not. One voice, one chair, declared here.
+          chairs: [{ part: "lead", instr: lend.instr, tone: lend.tone }],
           instr: lend.instr, tone: lend.tone,
           // LEGATO IS THE DEFAULT ARTICULATION OF A SUNG THEME (PLAN.md THE
           // THEME COMPOSER §4) — and of any theme that has learned to speak
@@ -1565,6 +1628,11 @@
       const voice = vg.silent ? null : { phrase: Vo.toPattern(vm), genre: {
         ...g, label: "Voice", voices: 1, part: () => vg.part,
         realize: () => (vg.pad ? "pad" : "line"), reg: () => stand(vg.part, vg.reg),
+        // "a voice must not lose its own recording" — same law as the
+        // melody's chair above: the layer declares its OWN one-seat chairs,
+        // or the band's inherited pair answers for it
+        chairs: [{ part: vg.part, instr: vg.instr, tone: vg.tone,
+                   ...(vg.pad ? { pad: true } : {}) }],
         instr: vg.instr, tone: vg.tone, nobass: true, kit: {}, kits: null,
         bassFig: undefined, pipes: undefined } };
       // THE KEYS PLAYER'S PHRASE is the box's own pattern — a pitched voice
@@ -1632,6 +1700,20 @@
     const f = FORMS[m.song.form || "vamp"];
     const role = f.secs[i], next = f.secs[i + 1];
     const d = { ...(ROLE[role] || {}) };
+    // THE TUNE HAS A HOME IN EVERY FORM. "The hook plays in every chorus by
+    // default, because a melody that appears once is an event, not a
+    // structure" — and a melody that appears NOWHERE is not even an event.
+    // A chorus and a drop bring their own taker (ROLE above); a form with
+    // neither — a vamp, a blues, AABA, a jazz head, a dub, a strophic song,
+    // da capo — left every theme silent unless somebody said the words. So
+    // those forms give theme A the same default the chorus gets, in the
+    // section that IS the tune in that form: the head where the form has
+    // one (that is what a head means), the verse everywhere else (that is
+    // what strophic means). The bridge stays a contrast, exactly as it is
+    // in a chorus form. A per-section answer still outranks this (partOf).
+    if (!f.secs.some((r) => (ROLE[r] || {}).idea) &&
+        role === (f.secs.includes("head") ? "head" : "verse"))
+      d.idea = "keys";
     // the drummer plays the band into the change; nobody has to ask
     if (next && next !== role) d.lift = true;
     // A CALLED SPACE OWNS THE SCHEDULE. "One hit every four bars" is a

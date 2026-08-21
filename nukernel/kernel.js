@@ -75,6 +75,11 @@
     // same group-law reason: a phrase that never carried holds must come out
     // of rotate(0) as the same keys it went in as.
     if (p.hold) o.hold = f(p.hold);
+    // ...and so does the registration source a transformed return carries
+    // (ideas-kit transform stamps regDeg/regGate = the phrase it was made
+    // from): present-only, moved by the same f so a rotated word rotates
+    // what the render's octave shift will read. See the render's mean.
+    if (p.regDeg) { o.regDeg = f(p.regDeg); o.regGate = f(p.regGate); }
     return o;
   };
 
@@ -1436,8 +1441,19 @@
         // back down every third loop. The ramp is deliberate movement — the
         // clamp is what bounds it — so it must sit ON TOP of the registration,
         // exactly like oct.
+        // ...AND REGISTER THE THEME, NOT ITS RETURN. A transformed return
+        // (ideas-kit transform — "up a step", augmented, just its head) is
+        // deliberate movement exactly like the ramp: +1 on every degree
+        // includes the whole step in the mean, and where the mean sits near
+        // the rounding boundary the shift flips a whole octave the other way
+        // (measured: at ctr 68 the shift went 72→60, and "up a step" came
+        // back 7–12 semitones BELOW the phrase it answers). The transform
+        // stamps the phrase it was made from as regDeg/regGate; the mean
+        // reads THAT, so the shift matches the untransformed section's and
+        // the step rides on top. A phrase with no stamp is byte-identical.
+        const rdeg = p.regDeg || p.deg, rgate = p.regDeg ? p.regGate : p.gate;
         const on = [];
-        for (let i = 0; i < N; i++) if (p.gate[i]) on.push(pitch(p.deg[i], sc));
+        for (let i = 0; i < N; i++) if (rgate[i]) on.push(pitch(rdeg[i], sc));
         const mean = on.length ? on.reduce((a, b2) => a + b2, 0) / on.length : 0;
         const shift = 12 * Math.round((ctr - mean) / 12);
         // A PAD IS ONE CHORD PER BAR, HELD. Firing it on every gated step of the

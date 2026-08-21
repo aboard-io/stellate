@@ -358,6 +358,16 @@
       else if (kind === "frag") { if (i < N) put(i, i); }
     }
     if (hh) out.hold = hh;
+    // THE RETURN IS REGISTERED AS THE THEME. The kernel's whole-line octave
+    // shift is computed from a degree mean, and a transform is deliberate
+    // movement the same way the ramp is: fold "+1 on every degree" into the
+    // mean and near the rounding boundary the shift flips — measured, "up a
+    // step" came back an octave DOWN. So the transform carries the phrase it
+    // was made from (present-only, like `hold`), the kernel registers THAT,
+    // and the transform's offset rides on top. `same` returns the phrase
+    // object itself above, so an untransformed return stays byte-identical.
+    out.regDeg = ph.regDeg || ph.deg.slice();
+    out.regGate = ph.regGate || ph.gate.slice();
     return out;
   }
 

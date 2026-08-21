@@ -200,7 +200,17 @@ function castOf(bars) {
         // it stays sampled — the score's own predicate, verbatim
         const useSyn = !!(gsyn && !(gsyn.lineOnly && e.pad && !font));
         const chair = e.pad ? "pad" : "line";
-        e._seat = seatFor(chair, over || instrOf(owner, vi), useSyn ? gsyn : null, G.tone || null);
+        // A CHAIR'S SEAT CARRIES THE CHAIR'S OWN TONE. `G.tone` is one tone
+        // for the whole genre, and on a genre that seats two chairs (the
+        // band's `chairs` seam) it is the KEYS' — which handed the driven
+        // guitar's seat a keys tone, and (with the instruments already
+        // merged by the role pool) folded both chairs into ONE seat key.
+        // The chair's declared tone outranks it; a genre without chairs is
+        // byte-identical.
+        const ch = Array.isArray(G.chairs) && G.chairs.length
+          ? (G.chairs[vi % G.chairs.length] || null) : null;
+        e._seat = seatFor(chair, over || instrOf(owner, vi), useSyn ? gsyn : null,
+                          (ch && ch.tone) || G.tone || null);
         e._syn = useSyn;
         const r = roster.find((x) => x.v === e.v);
         if (r) A["v" + e._seat] = r.key;
