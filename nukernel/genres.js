@@ -5371,7 +5371,14 @@
     // which is what an ouvert/clos pair is before notation can say so.
     estampie: {
       label: "Paris 1300",
-      plan: "dance", bpm: 120,
+      // `arc`, NOT `dance`, on the plan policy's own words (compose.js): the
+      // dance plan is the build-and-drop floor grammar, and a floor record
+      // states its topline only through the singer layer — which the
+      // INSTRUMENTAL table rightly denies a 1300 consort, so a quote intro
+      // (roots' own lean votes for one) promised a hook the record could
+      // never state. A run of puncta going round is "one shape end to end";
+      // tango, the danced roots ancestor, is the precedent.
+      plan: "arc", bpm: 120,
       parents: { troubadour: 0.6, gregorian: 0.4 }, wants: [], near: "troubadour",
       instr: ["recorder", "dulcimer"],
       drumkit: "room",
@@ -5421,7 +5428,11 @@
     // re-anchored: spem + counterpoint own the idiom; this draws on spem.)
     pavane: {
       label: "Antwerp 1551", voices: 3, bars: 8,
-      plan: "dance", bpm: 76,
+      // `arc` for the estampie's reason (see that anchor): the kernel's dance
+      // plan is club build-and-drop, whose topline arrives only on a singer,
+      // and a consort has none — a processional danced through is one shape
+      // end to end, tango's own plan.
+      plan: "arc", bpm: 76,
       parents: { estampie: 0.4, spem: 0.35, troubadour: 0.25 }, wants: ["galliard"],
       near: "spem",
       instr: ["nylon_string_guitar", "recorder", "viola"],   // lute, pipe, viol
@@ -5575,7 +5586,14 @@
       parents: { nocturne: 0.55, classical: 0.45 }, wants: ["viennese waltz"],
       near: "nocturne",
       instr: ["solo_vox", "harp", "cello"],
-      entry: v => (v === 0 ? 2 : 0), reg: v => [0, 0, -1][v],
+      // THE CELLO WAITS WITH THE VOICE. Two LINE voices an octave apart
+      // (reg 0 / -1) trading which of them owns the downbeat across the
+      // entry seam is, to the root-fold gate, an unfolded root walk — the
+      // first line note of the bar jumped 25 semitones where the harmony
+      // moved 10. So the harp rocks the first two bars alone (a pad, so the
+      // gate rightly ignores it) and the song and its cello line arrive
+      // together — which is how the salon actually opens the form.
+      entry: v => (v === 1 ? 0 : 2), reg: v => [0, 0, -1][v],
       realize: v => (v === 1 ? "pad" : "line"),
       kit: {}, roots: [0, 4, 0, 4, 3, 4, 0, 4],
       mode: MODES.ionian, scale: SCALES.major, diatonic: true,
