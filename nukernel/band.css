@@ -33,6 +33,14 @@ h2 .dmod { font: inherit; font-weight: bold; }
 hr { border: 0; border-top: 1px solid #000; margin: 14px 0; }
 .dprose { margin: 6px 0; max-width: 38em; }
 
+/* the theme, written down (PLAN Phase 2): the staff in a plain bordered box.
+   abcjs sizes its SVG to its own staff width; the box holds it to the prose
+   measure and lets it shrink with the column. */
+.dstaff { margin: 10px 0; padding: 8px 10px 4px; border: 1px solid #000;
+  max-width: 38em; }
+.dstaff figcaption { font-weight: bold; }
+.dstaffsvg svg { max-width: 100%; height: auto; }
+
 /* rows of plain controls, wrapping */
 .drow, .dopts, .dsheet, .dseats { display: flex; flex-wrap: wrap;
   gap: 6px; margin: 6px 0; align-items: stretch; }
@@ -71,3 +79,58 @@ fieldset.dask { border: 0; padding: 0; min-width: 0; }
   margin: 0; pointer-events: none; }
 .dopt:has(> input:focus-visible) { outline: 2px solid #000; outline-offset: 1px; }
 .dopt:has(> input:disabled) { opacity: .4; }
+
+/* ---- the count row: the bar as a 4x4 grid ---- */
+/* columns one..four, rows the beat / e / and / a; a cell's tapped word is
+   still the whole counted sentence (the contract), the grid is the look —
+   so the sentence is visually clipped to its cell, not restated 16 times */
+.dmarks { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 2px;
+  align-items: baseline; }
+.dmarklab { opacity: .6; }
+.dmark { border: 1px dashed #000; background: #fff; padding: 1px 8px;
+  cursor: pointer; }
+.dmark.on { background: #000; color: #fff; border-style: solid; }
+.dgrid { display: grid; grid-template-columns: auto repeat(4, 1fr);
+  gap: 4px; max-width: 26em; margin: 6px 0; align-items: stretch; }
+.dghead, .dglead { opacity: .6; text-align: center; align-self: center; }
+.dgrid .dcell { text-align: center; overflow: hidden; white-space: nowrap;
+  text-overflow: clip; min-width: 0; }
+/* the row label a bundle of options sits under (the kick:, the filter:,
+   pianos:) — a label, never a control, and it starts its own line */
+.drowlab { flex-basis: 100%; margin-top: 6px; opacity: .7; font-style: italic; }
+.drowlab:first-child { margin-top: 0; }
+/* the record's computed length, printed on the form node as a fact */
+.dlen { margin: 4px 0 0; opacity: .7; }
+
+/* ---- the outline: the question graph as a tree (PLAN Phase 2) ---- */
+/* plain nested lists; the indent guide is a thin left rule, because the
+   NESTING is the information — a child row is a question that only exists
+   because of its parent's answer */
+.dtree, .dtree ul { list-style: none; margin: 6px 0; padding: 0; }
+.dtree ul { margin: 2px 0 2px 5px; padding-left: 12px; border-left: 1px solid #999; }
+.dtree > li { margin: 0 0 10px; }
+/* a branch heading — a label over its questions, never a control */
+.dthead { display: block; font-size: .78rem; letter-spacing: .08em;
+  text-transform: uppercase; opacity: .6; margin: 0 0 2px; }
+/* a row is the same tappable .dfact it always was, laid out as a two-column
+   line: the label column left, the answer (or the still-open ask) beside it
+   — which is what makes a bundle of facts read as a table */
+.dtree .dfact { display: block; width: 100%; border: 0; background: none;
+  text-align: left; padding: 1px 4px 1px 0; cursor: pointer; font: inherit; }
+.dtree .dfact b { display: inline-block; min-width: 8.5em; font-weight: normal;
+  opacity: .65; vertical-align: top; }
+.dtree .dfact .dans { font-weight: bold; }
+.dtree .dfact .dhint { opacity: .5; font-style: italic; }
+/* an answered fact whose re-ask has nothing to change to renders as plain
+   text — a dead question is not a button */
+.dtree .dfact.dflat { cursor: default; }
+/* the row whose question currently holds the floor */
+.dtree .dfact.qnow { outline: 1px dashed #000; outline-offset: 1px; }
+.dtree .dfact.open b, .dtree .dfact.open .dhint { opacity: 1; }
+/* an open section's questions, as the same tree (the player's own words
+   nested under the player) */
+.dsectree > li { margin: 0 0 6px; }
+/* a big bundle of options scans as aligned columns, not a ragged wrap */
+.dopts.dmany { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5em, 1fr)); }
+.dopts.dmany .drowlab { grid-column: 1 / -1; }
+.dopts.dmany .dopt { text-align: left; }

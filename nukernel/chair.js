@@ -65,6 +65,11 @@
   const COUNT = ["one", "two", "three", "four"], SUB = ["", "e", "and", "a"];
   const stepWord = (i) => (i % 4 === 0) ? "on " + COUNT[i >> 2]
     : "on the " + SUB[i % 4] + " of " + COUNT[i >> 2];
+  // ...and the same sixteen places as CELLS of a 4×4 grid: column = the
+  // count (one..four), row = the subdivision (the beat, e, and, a). The
+  // SENTENCE stays the contract — a cell's tapped word is stepWord's own —
+  // the grid is only the look.
+  const stepCell = (i) => ({ beat: i >> 2, sub: i % 4, word: stepWord(i) });
 
   /* ---------- the vocabulary ------------------------------------------- */
   // One registrar, one entry shape. `is` defaults to never-true because most
@@ -199,9 +204,11 @@
           (m) => m.on && (m.job !== k || !!m.gate),
           (m) => ({ ...m, job: k, gate: null }), () => j.says,
           (m) => m.job === k && !m.gate);
-    for (const [k, w] of Object.entries(INSTRUMENTS))
+    for (const [k, w] of Object.entries(INSTRUMENTS)) {
       add("instr:" + k, spec.groups.instr, [w], (m) => m.on && m.instr !== k,
           (m) => ({ ...m, instr: k }), () => spec.instrSays(w), (m) => m.instr === k);
+      if (spec.instrRows && spec.instrRows[k]) V["instr:" + k].row = spec.instrRows[k];
+    }
     for (const [k, r] of Object.entries(REG))
       add("reg:" + k, "the register", [r.w], (m) => m.on && m.reg !== k,
           (m) => ({ ...m, reg: k }), () => r.w, (m) => m.reg === k);
@@ -225,7 +232,8 @@
     const DECISIONS = [
       { id: "instr", ask: spec.asks.instr, opts:
         Object.entries(INSTRUMENTS).map(([k, w]) => ({
-          w, is: (m) => m.instr === k, apply: (m) => ({ ...m, instr: k }) })) },
+          w, row: (spec.instrRows || {})[k],
+          is: (m) => m.instr === k, apply: (m) => ({ ...m, instr: k }) })) },
       { id: "job", ask: spec.asks.job, opts:
         Object.entries(JOBS).map(([k, j]) => ({
           w: j.w, is: (m) => m.job === k, apply: (m) => ({ ...m, job: k, gate: null }) })) },
@@ -256,7 +264,7 @@
              jobOf, gateOf, toneOf, stepWord, DECISIONS };
   }
 
-  return { N, COUNT, SUB, stepWord, z, on, every, deg,
+  return { N, COUNT, SUB, stepWord, stepCell, z, on, every, deg,
            vocab, tryIs, mapOpts,
            catalogSlimOf, catalogFullOf, sayOf, saysOf, saysLooseOf,
            interview, pitchedChair };

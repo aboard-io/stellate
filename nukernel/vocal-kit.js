@@ -61,7 +61,7 @@
     start: { words: ["step up to the mic"], says: "a voice, holding oohs under it" },
     groups: { job: "what you are singing", instr: "the voice", panel: "at the mic" },
     asks: { instr: "whose voice is it?", job: "what are you singing?",
-            reg: "where does it sit?" },
+            reg: "where do you sit?" },
     instrSays: (w) => w,
     hit: { on: "sing ", off: "nothing " },
     vel: () => 6,

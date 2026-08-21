@@ -86,7 +86,7 @@
     lead:    { w: "hangs under the root", d: -1 },
   };
 
-  const LENGTHS = { one: { w: "a bar long", bars: 1 }, two: { w: "two bars", bars: 2 },
+  const LENGTHS = { one: { w: "one bar", bars: 1 }, two: { w: "two bars", bars: 2 },
                     four: { w: "four bars", bars: 4 } };
   // OCTAVES OVER MIDDLE C, the kernel's own `reg`. A tune sits an octave
   // above the keys' comping by default — the register a voice sings in and a
@@ -228,7 +228,7 @@
         (m) => m.on && m.contour !== k && conFirst(m, k),
         (m) => ({ ...m, contour: k }), () => "it " + c.w, (m) => m.contour === k);
   for (const [k, l] of Object.entries(LANDINGS))
-    add("land:" + k, "where it ends", [l.w], (m) => m.on && m.land !== k,
+    add("land:" + k, "where it lands", [l.w], (m) => m.on && m.land !== k,
         (m) => ({ ...m, land: k }), () => l.w, (m) => m.land === k);
   for (const [k, l] of Object.entries(LENGTHS))
     add("len:" + k, "how long", [l.w], (m) => m.on && m.len !== k,
@@ -276,9 +276,9 @@
       opts: Object.entries(CONTOURS).map(([k, c]) => ({
         w: c.w, is: (m) => m.contour === k, apply: (m) => ({ ...m, contour: k }),
         heard: (m) => conFirst(m, k) })) },
-    { id: "land", ask: "where does it end?", opts: Object.entries(LANDINGS).map(([k, l]) => ({
+    { id: "land", ask: "where does it land?", opts: Object.entries(LANDINGS).map(([k, l]) => ({
         w: l.w, is: (m) => m.land === k, apply: (m) => ({ ...m, land: k }) })) },
-    { id: "reg", ask: "how high does it sit?", opts: Object.entries(REG).map(([k, r]) => ({
+    { id: "reg", ask: "where does it sit?", opts: Object.entries(REG).map(([k, r]) => ({
         w: r.w, is: (m) => m.reg === k, apply: (m) => ({ ...m, reg: k }) })) },
   ];
   const { decisions, nextAsk, answer } = C.interview(DECISIONS, {});
@@ -286,7 +286,14 @@
   const say = C.sayOf(V), says = C.saysOf(V);
 
   const regOf = (m) => (REG[m.reg] || REG.mid).v;
+  // THE COUNT ROW's marks for the tune: the note itself, and a scale step
+  // either way on one place — "that third note is too high" made tappable
+  const BARMARKS = [
+    { w: "the note",    id: (i) => "note:" + i },
+    { w: "up a step",   id: (i) => "up:" + i },
+    { w: "down a step", id: (i) => "down:" + i },
+  ];
   return { N, CELLS, CONTOURS, LANDINGS, LENGTHS, REG, regOf, gridOf, liftOf, stepWord,
-           blank, V, catalog, say, says,
+           blank, V, catalog, say, says, BARMARKS,
            decisions, nextAsk, answer, toPhrase, describe, barsOf, cellOf };
 });

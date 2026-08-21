@@ -37,9 +37,9 @@
   };
   const CHANGEWORD = {
     onechord: "one chord, all night", twelvebar: "a twelve-bar blues",
-    fifties: "the fifties changes", fourchord: "the four-chord one",
+    fifties: "the doo-wop changes", fourchord: "the four-chord one",
     minorvamp: "a minor vamp", twofive: "two-five-one",
-    descending: "a descending line", pedalpoint: "a pedal point",
+    descending: "a descending line", pedalpoint: "a pedal",
   };
   const KEYS = { C: 0, F: -7, G: 7, D: 2, A: -3, E: 4, Bb: -2, Eb: 3 };
   const STYLES = {
@@ -48,8 +48,8 @@
   };
   const STYLEWORD = {
     root: "hold the root", walk: "walk it", octaves: "octaves",
-    fifths: "root and fifth", eighths: "eighths, driving",
-    sixteenths: "sixteenths, busy",
+    fifths: "root and fifth", eighths: "driving eighths",
+    sixteenths: "busy sixteenths",
   };
   // ONLY WHAT THE PLAYER CAN ACTUALLY PICK UP. The parent's sampler holds
   // uprights, fretlesses and slap basses, but nukernel's POOL vocabulary
@@ -63,7 +63,7 @@
   };
 
   /* ---------- A FIGURE: A BASS LINE, WRITTEN OUT ---------------------------
-     "Hold the root" and "eighths, driving" describe a line's DENSITY. What
+     "Hold the root" and "driving eighths" describe a line's DENSITY. What
      an acid line is cannot be described that way — it is a specific figure:
      these sixteenths, that octave jump, an accent there, a slide into the
      next note. The 303's accent and slide have been carried all the way to
@@ -168,13 +168,17 @@
       (m) => ({ ...m, on: true }), () => "a bass, in C, holding the root");
 
   // the machine's own panel — only when there is a machine
+  const PANELROW = { cut: "the filter:", squelch: "the squelch:",
+                     env: "the envelope:", close: "how it closes:", wave: "the wave:" };
   for (const p2 of PANEL)
-    for (const o of p2.opts)
-      add("mach:" + p2.id + ":" + o.w, "at the machine", [o.w + (p2.id === "cut" ? " filter" : "")],
+    for (const o of p2.opts) {
+      add("mach:" + p2.id + ":" + o.w, "at the machine", [o.w],
           (m) => m.on && isSynth(m) && toneOf(m)[p2.key] !== o.v,
           (m) => ({ ...m, tone: { ...toneOf(m), [p2.key]: o.v } }),
           () => p2.ask.replace("?", ": ") + o.w,
           (m) => toneOf(m)[p2.key] === o.v);
+      V["mach:" + p2.id + ":" + o.w].row = PANELROW[p2.id];
+    }
 
   // what notes the line uses
   for (const [k, t] of Object.entries(TONALITY))
@@ -349,7 +353,17 @@
     };
   }
 
+  const BARMARKS = [
+    { w: "a note",        id: (i) => "note:" + i },
+    { w: "the third",     id: (i) => "deg:" + i + ":2" },
+    { w: "the fifth",     id: (i) => "deg:" + i + ":4" },
+    { w: "the seventh",   id: (i) => "deg:" + i + ":6" },
+    { w: "up the octave", id: (i) => "oct:" + i },
+    { w: "an accent",     id: (i) => "acc:" + i },
+    { w: "a slide out",   id: (i) => "sld:" + i },
+  ];
+
   return { blank, V, catalog, offered, say, says, toGenre, decisions, nextAsk,
            answer, CHANGES, CHANGEWORD, KEYS, STYLES, STYLEWORD, INSTRUMENTS,
-           FIGURES, figOf, figSet, stepWord, PANEL, TONALITY, isSynth };
+           FIGURES, figOf, figSet, stepWord, PANEL, TONALITY, isSynth, BARMARKS };
 });

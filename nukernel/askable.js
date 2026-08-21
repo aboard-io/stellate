@@ -32,7 +32,7 @@
   // the kernel's own alphabets, by name (kernel.js PENT / MODE and friends)
   const SCALES = {
     pent:  { w: "the pentatonic", v: [0, 3, 5, 7, 10] },
-    mode:  { w: "the whole mode", v: [0, 2, 3, 5, 7, 8, 10] },
+    mode:  { w: "every note in the key", v: [0, 2, 3, 5, 7, 8, 10] },
     blues: { w: "the blues scale", v: [0, 3, 5, 6, 7, 10] },
     major: { w: "a major pentatonic", v: [0, 2, 4, 7, 9] },
   };
@@ -43,16 +43,14 @@
   const ASKABLE = [
     { field: "stress", role: "drums", ask: "how much does the band lean on the beat?",
       opts: [["dead straight", 0], ["a little", 0.35], ["hard on the one", 0.8]] },
-    { field: "touch", role: "drums", ask: "how human is the hand?",
-      opts: [["a machine", 0], ["a hand", 0.35], ["loose", 0.75]] },
     { field: "phrase", role: "keys", ask: "does the line breathe?",
       opts: [["flat", 0], ["a little", 0.4], ["it arches", 0.85]] },
-    { field: "maxHold", role: "keys", ask: "how long may a note hold?",
+    { field: "maxHold", role: "keys", ask: "how long do the notes hold?",
       opts: [["let them ring", 0], ["a beat", 4], ["half a bar", 8]] },
     { field: "orn", role: "guitar", ask: "how much decoration?",
       opts: [["none", null], ["a grace here and there", { grace: 0.22 }],
              ["passing notes too", { grace: 0.25, approach: 0.3, pass: 0.3 }],
-             ["ornamented", { grace: 0.4, approach: 0.4, pass: 0.4, roll: 0.2 }]] },
+             ["it never sits still", { grace: 0.4, approach: 0.4, pass: 0.4, roll: 0.2 }]] },
     { field: "scale", role: "arranger", ask: "what notes is the tune made of?",
       opts: Object.values(SCALES).map((s) => [s.w, s.v]) },
     { field: "diatonic", role: "arranger", ask: "does the line follow the chords?",
@@ -62,15 +60,12 @@
              ["most of them", { h: [7,7,7,7, 7,7,7,7, 7,7,7,7, 7,7,7,7] }],
              ["about half", { h: [5,5,5,5, 5,5,5,5, 5,5,5,5, 5,5,5,5] }],
              ["now and then", { h: [3,3,3,3, 3,3,3,3, 3,3,3,3, 3,3,3,3] }]] },
-    { field: "fill", role: "drums", ask: "does the last bar fill?",
-      opts: [["no", null],
-             ["a snare fill", { s: [0,0,0,0, 0,0,0,0, 1,0,1,1, 1,0,1,1] }],
+    { field: "fill", role: "drums", ask: "what's the fill made of?",
+      opts: [["on the snare", { s: [0,0,0,0, 0,0,0,0, 1,0,1,1, 1,0,1,1] }],
              ["round the toms", { s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
                                   t: [0,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
                                   m: [0,0,0,0, 0,0,0,0, 0,0,0,0, 1,0,0,0],
                                   l: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,1] }]] },
-    { field: "hand", role: "drums", ask: "is the kit played or programmed?",
-      opts: [["played", null], ["programmed", "exact"]] },
   ];
 
   // ...and the fields no question reaches, with the reason. A row here is a
@@ -98,8 +93,13 @@
   // separately, at the value level, rather than letting the field count as
   // done.)
   const WRITTEN = {
+    touch: "folded into the drummer's own \"how tight to the grid?\" — each of its " +
+           "answers writes humanize + touch + hand together, because the axes were " +
+           "never independent (a machine is never loose)",
+    hand:  "the same fold: \"a machine\" is the programmed hand, every other answer " +
+           "is a played one — one question, three fields",
     prog:  "the arranger CALLS it now (what kind of chords? — plain triads / " +
-           "sevenths by function / on everything / ninths / suspended / sixths), " +
+           "sevenths where they belong / on everything / ninths / suspended / sixths), " +
            "and the melody layer pairs the same objects into its longer phrase. " +
            "Not an `askable` row because the question writes chord OBJECTS " +
            "derived from the changes, not one value onto one field",

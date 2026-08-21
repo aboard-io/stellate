@@ -99,8 +99,17 @@
      the phrase — is chair.js's; the spec is the nouns. A pad plays at 5,
      everything else at 6: the hands lean into a line and sit back under a
      chord. */
+  const INSTRROWS = {
+    yamaha_grand_piano: "pianos:", felt_piano: "pianos:", upright_piano: "pianos:",
+    rhodes_ep: "pianos:", legend_ep_2: "pianos:", clavinet: "pianos:",
+    church_organ: "organs:", percussive_organ: "organs:", rock_organ: "organs:",
+    warm_pad: "pads & strings:", halo_pad: "pads & strings:",
+    slow_strings: "pads & strings:", synth_strings_1: "pads & strings:",
+    polysynth: "synths:", ahh_choir: "voices:",
+  };
+
   const chair = C.pitchedChair({
-    jobs: JOBS, instruments: INSTRUMENTS, reg: REG, panel: PANEL,
+    jobs: JOBS, instruments: INSTRUMENTS, reg: REG, panel: PANEL, instrRows: INSTRROWS,
     model: { job: "pads", instr: "warm_pad", reg: "high" },
     start: { words: ["sit down at the keys"], says: "a pair of hands, playing pads" },
     groups: { job: "what you are playing", instr: "what it is", panel: "at the machine" },

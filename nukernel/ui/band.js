@@ -13,6 +13,7 @@ import { adoptSong, SONG, SLOTS, putPhrase, on, commit, setBpm, setSwing, setPoo
 import { startAt, stop, playing, warmup, getPosition, passAt,
          announceChange } from "../audio/live.js";
 import { registerSW, warmCache, warmShell, warmed } from "../audio/offline.js";
+import { toABC } from "./abc.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const n = document.createElement(tag);
@@ -150,6 +151,78 @@ function announce(who, si) {
   announceChange(module_ === "ideas" ? "the tune" : seatWord(who), si);
 }
 
+/* ---------- the theme, written down ---------- */
+// PLAN Phase 2: a theme RENDERS AS SHEET MUSIC. ui/abc.js compiles the
+// phrase the room owns into an ABC string with the kernel's own pitch math,
+// and the vendored abcjs (vendor/abcjs/ — MIT, see NOTICE) engraves the SVG.
+// The staff draws only when the record CARRIES the theme — some section
+// picks it up (band-kit TAKERS → a melody layer) — because a tune nobody
+// plays is not on the record yet.
+let staffLib = null;    // one promise for the vendor chunk — first need only
+let staffHost = null;   // the <div> the SVG lives in, KEPT across draws...
+let staffAbc = "";      // ...and re-engraved only when the music changed
+
+// THE LAZY CHUNK, and why it is a <script> element rather than import():
+// the vendor build is a classic UMD whose wrapper hands `this` to the
+// factory, and module scope makes `this` undefined — measured in chromium,
+// import() of this file parses all 500 KB and then throws "Cannot set
+// properties of undefined" before ABCJS exists. A script element runs it as
+// the classic script it is: the same URL, one fetch, same-origin and
+// service-worker cacheable (audio/offline.js warms it with the record, so a
+// warmed record draws its staff with the wire cut), and nothing on the boot
+// path — the element is not made until a staff is actually asked for.
+function loadStaffLib() {
+  if (window.ABCJS) return Promise.resolve(window.ABCJS);
+  if (!staffLib) staffLib = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = new URL("../../vendor/abcjs/abcjs-basic-min.js", import.meta.url).href;
+    s.async = true;
+    s.onload = () => resolve(window.ABCJS);
+    s.onerror = () => { staffLib = null; s.remove();
+      reject(new Error("abcjs did not arrive")); };
+    document.head.append(s);
+  });
+  return staffLib;
+}
+
+function themeStaff(m) {
+  // NOTHING RENDERS WHEN THERE IS NO THEME — and the kept host is dropped
+  // with it, so a theme that comes back is engraved fresh, never shown stale.
+  const f = Band.FORMS[m.song.form || "vamp"];
+  const carried = m.idea && m.idea.on &&
+    f.secs.some((r, i) => (Band.TAKERS[Band.partOf(m, i).idea] || {}).chair);
+  if (!carried) { staffHost = null; staffAbc = ""; return null; }
+  // THE STAFF MUST NOT DISAGREE WITH THE SOUND: key, mode and register are
+  // the same three facts band-kit toGenre hands the kernel (B.KEYS by the
+  // key answer, dorian/ionian by the minor answer, Id.regOf), and the phrase
+  // is Id.toPhrase(m.idea) — the theme as the room owns it, before any
+  // section's chords transpose its bars.
+  const abc = toABC(Band.Id.toPhrase(m.idea), {
+    key: Band.B.KEYS[m.song.key] || 0,
+    mode: m.song.minor ? MODES.dorian : MODES.ionian,
+    reg: Band.Id.regOf(m.idea),
+    bpm: m.song.bpm,
+  });
+  // a plain bordered box with the theme's name — the name the RECORD gives
+  // it (themeName: a hook when the singer carries it, a riff when the
+  // guitar does), the same word the outline's node is titled by
+  const fig = el("figure", "dstaff");
+  fig.append(el("figcaption", null, Band.themeName(m)));
+  if (!staffHost) staffHost = el("div", "dstaffsvg");
+  fig.append(staffHost);           // the same node every draw: no async flash
+  if (abc !== staffAbc) {
+    staffAbc = abc;
+    const host = staffHost;
+    loadStaffLib().then((A) => {
+      // a draw may have moved on while the chunk was on the wire — engrave
+      // only what is still current, where it still stands
+      if (!A || host !== staffHost || abc !== staffAbc || !host.isConnected) return;
+      A.renderAbc(host, abc, { responsive: "resize" });
+    }).catch(() => { staffAbc = ""; });  // a failed load retries next draw
+  }
+  return fig;
+}
+
 /* ---------- draw ---------- */
 // ONE PAGE, NO MODES (PLAN.md Phase 1). Three areas stand on the page at
 // once, top to bottom — THEMES (the tune the record keeps), SONG (the
@@ -251,11 +324,25 @@ function render(box) {
   // renames the organ; the page starts saying the word now)
   const sThemes = el("section", "dsect");
   { const h = el("h2"); h.append(modButton("themes", "ideas")); sThemes.append(h); }
-  // the one visible sentence that answers "how do I add a theme"
+  // WHAT A THEME IS, in words a musician would say (the language pass's
+  // section D). The prose names the KINDS a theme can be; the outline below
+  // names THIS record's one by what the record does with it (Band.themeName
+  // — a hook when the singer carries it, a riff when the guitar does), so
+  // the sentence and the node title teach each other.
   sThemes.append(el("p", "dprose",
-    "A theme is a tune the record keeps coming back to — a hook, a riff, a " +
-    "chant. To add one, tap “themes” above and answer what it " +
-    "asks: how long it runs, how it moves, where it lands."));
+    "A theme is the part of the record you can hum — the tune it keeps " +
+    "coming back to. It might be a hook the singer carries, a riff the " +
+    "guitar leans on, a figure that keeps turning up underneath, or a " +
+    "chant that sits on one note and means it."));
+  sThemes.append(el("p", "dprose",
+    "To add one, tap “themes” and answer what it asks: how long " +
+    "it runs, how it moves, where it lands."));
+  // ...and the theme itself, written down: the staff stands beside the plain
+  // controls whenever the record carries the tune, and follows every edit —
+  // a lifted note, a new key — because draw() recompiles the ABC each pass
+  // and re-engraves only when it changed
+  const staff = themeStaff(model);
+  if (staff) sThemes.append(staff);
   if (module_ === "ideas" && section == null) chairArea(sThemes, "arranger", true);
   box.append(sThemes, el("hr"));
 
@@ -347,13 +434,22 @@ function sectionArea(parent) {
   const secs = toSong(model, MODES);
   const here = secs[section];
   floorQ = "sec|" + section;
+  // THE SECTION'S OWN OUTLINE. A section is arranged as one conversation —
+  // every question stays on the floor at once here, exactly as the gates
+  // read it — but the same tree law shapes the page: a player's own words
+  // ("at the kit", "the bass player") are only there because that player's
+  // row is, so they NEST under it and the outline says whose words they are.
+  const WORDSOF = { dwords: "drums", kwords: "keys", gwords: "guitar",
+                    bwords: "bass", vwords: "voice" };
+  const tree = el("ul", "dtree dsectree");
+  const liOf = new Map();
   for (const a2 of sectionAsks(model, section)) {
     // a question and its answers are ONE form group — fieldset binds the
     // options to the legend, which stays the .dq the gates read
     const ask2 = el("fieldset", "dask");
     ask2.append(el("legend", "dq", "in the " + (here ? here.role : "section") +
                    ", " + a2.who + "…"));
-    const row2 = el("div", "dopts");
+    const row2 = el("div", "dopts" + (a2.opts.length > 8 ? " dmany" : ""));
     for (const o of a2.opts) {
       row2.append(optWidget(o.w, "dopt" + (o.answered ? " on" : ""), {
         kind: "radio", name: "sq-" + section + "-" + a2.id, on: o.answered,
@@ -368,9 +464,188 @@ function sectionArea(parent) {
         } }));
     }
     ask2.append(row2);
-    parent.append(ask2);
+    const li = el("li");
+    li.append(ask2);
+    liOf.set(a2.id, li);
+    // the words-question rides under the player it belongs to; a pruned
+    // player (nothing to ask) leaves its words at the top level rather
+    // than dropping them
+    const pLi = WORDSOF[a2.id] && liOf.get(WORDSOF[a2.id]);
+    if (pLi) {
+      let cu = pLi.lastElementChild && pLi.lastElementChild.tagName === "UL"
+        ? pLi.lastElementChild : null;
+      if (!cu) { cu = el("ul"); pLi.append(cu); }
+      cu.append(li);
+    } else tree.append(li);
   }
+  parent.append(tree);
 }
+
+/* ---------- THE COUNT ROW ------------------------------------------------
+   "on the e of the one" sixteen times over is a word-pile; a bar is a 4×4
+   GRID — columns one two three four, rows the beat / e / and / a — and the
+   sentence stays the contract: every cell's tapped word is stepWord's own,
+   byte for byte, so nothing a gate (or a ledger) ever read has moved. The
+   MARK row above the grid chooses what a tap puts at that place (a note, an
+   octave, an accent, a slide…) — everything past the note greys until a
+   note exists there, which is the kit's own when-guard made visible. */
+const stepWord = Band.B.stepWord;            // one table, every chair counts alike
+// a CELL of the count grid — a pitched chair's hit:/note: places, the
+// drummer's lane-scoped step:<lane>:<i> — as opposed to the named-shape
+// words (shape:<lane>:…) that stay chips under it
+const isCellId = (id) => /^(note|hit):\d+$/.test(id) || /^step:[^:]+:\d+$/.test(id);
+const barMarks = new Map();                  // who -> which mark is in hand
+// which kits have marks beyond the note itself; a pitched chair's bar is
+// single-mark (a chord / a strum / sing) and gets the grid alone
+const marksOf = (who) =>
+  who === "bass" ? Band.B.BARMARKS
+  : who === "arranger" ? Band.Id.BARMARKS
+  // the drummer's marks are the KIT itself: pick the drum, then say where it
+  // goes — the same lane-pinning the drums page does, drawn as the mark row
+  : who === "drums" ? Band.D.LANES.map((l) => ({
+      lane: l, w: { m: "mid tom", l: "floor tom" }[l] || Band.D.LANEOF(l),
+      id: (i) => "step:" + l + ":" + i }))
+  : [{ w: null, id: (i) => "hit:" + i }];
+// the groups the marks absorb: their words survive as cells under a mark,
+// never as a subject question of their own
+const MERGED = new Set(["octaves in the bar", "accents in the bar",
+                        "notes in the bar", "slides in the bar",
+                        "higher", "lower"]);
+// the labeled rows, in the order a musician lists them — kit first, then
+// the machine panel, then the keys families
+const ROWORDER = ["the kick:", "the snare:", "the hats:", "the toms:",
+                  "the accents:", "the one:", "calls:",
+                  "the filter:", "the squelch:", "the envelope:",
+                  "how it closes:", "the wave:",
+                  "pianos:", "organs:", "pads & strings:", "synths:", "voices:"];
+
+/* ---------- THE LABEL COLUMN ---------------------------------------------
+   The outline's label is a WORD a musician would say, never an id: `atk` is
+   "how it comes in", `keysfx` is "the keys", `knob:maxHold` is "how long
+   notes hold". ONE table, word per question id — a seat-qualified key wins
+   where two chairs share an id (the bass's `reg` is "how low", the theme's
+   is "where it sits") — and anything unnamed falls back to its id with the
+   prefixes stripped, so a colon-id can never reach the sheet. The
+   section-role calls (chg:/len:) are labeled with the ROLE THE RECORD
+   SHOWS: band-kit CHGROLE folds build→verse and drop→chorus, and a sheet
+   saying "the verse changes" over a record whose boxes read
+   build/drop/break would name a role no box on screen has. */
+const QLABEL = {
+  chords: "the chords",
+  "knob:scale": "the scale", "knob:diatonic": "following the chords",
+  "knob:stress": "leaning on the beat", "knob:kitProb": "how many hats land",
+  "knob:fill": "what fills are made of",
+  "knob:phrase": "how the line breathes", "knob:maxHold": "how long notes hold",
+  "knob:orn": "the decoration",
+  instr: "the instrument", reg: "the register", cut: "how bright",
+  atk: "how it comes in", rel: "how it lets go", col: "the colour",
+  sit: "against the drums",
+  verb: "the reverb", keysfx: "the keys", gtrfx: "the guitar",
+  voxfx: "the voice", bassfx: "the bass", bassmix: "where the bass sits",
+  "bass:reg": "how low",
+  "arranger:len": "how long", "arranger:cell": "the rhythm of it",
+  "arranger:contour": "the shape", "arranger:land": "where it lands",
+  "arranger:reg": "where it sits",
+};
+// the role a canonical section-role SHOWS on this record's boxes: the role
+// itself when a box carries it, else the first box whose changes it takes
+const roleShown = (r) => {
+  const secs = (Band.FORMS[model.song.form || "vamp"] || {}).secs || [];
+  if (secs.includes(r)) return r;
+  // several boxes can take one role's changes (a twelve-inch's intro, build
+  // and break all take the verse's) — the OWNER a band would name is the one
+  // that is not a way in or a way out
+  const cands = secs.filter((s2) => (Band.CHGROLE[s2] || s2) === r);
+  return cands.find((s2) => s2 !== "intro" && s2 !== "outro") || cands[0] || r;
+};
+const qLabel = (who, id0) => {
+  const id = id0.replace(/^idea:/, "");
+  if (id.startsWith("chg:")) {
+    const r = id.slice(4), s2 = roleShown(r);
+    return "the " + s2 + (s2 === r ? "" : "\u2019s") + " changes";
+  }
+  if (id.startsWith("len:")) return "how long the " + roleShown(id.slice(4)) + " runs";
+  return QLABEL[who + ":" + id] || QLABEL[id] ||
+    id.replace(/^(knob|grp):/, "").replace(/:/g, " ");
+};
+
+/* ---------- THE OUTLINE --------------------------------------------------
+   PLAN Phase 2: the answered facts used to render as one flat bunch of
+   lozenges, which hid the one thing the vocabulary actually has — STRUCTURE.
+   These tables say where every question of a seat LIVES in that structure:
+   a heading bundles the questions that decide one thing (the record, the
+   tune, the time, the form), and an UNDER edge nests a question below the
+   answer it exists because of — the chorus's changes exist because the form
+   has a chorus, the 303 panel exists because the bass is a synth, a pitched
+   chair's bar exists because its job is rhythmic. The dependency edges are
+   the vocabulary's own (question-trees walks the same ones); the tables
+   only make them visible. A question neither table names still shows, in a
+   trailing headless branch — the outline may not swallow a question. */
+const OUTLINE = {
+  arranger: [
+    ["the record", ["when", "where", "venue", "genre"]],
+    ["the tune", ["key", "mode", "chords", "knob:scale", "knob:diatonic"]],
+    ["the time", ["tempo", "feel", "space"]],
+    ["the form", ["form", "arc", "chg:*", "len:*", "end"]],
+  ],
+  drums: [
+    ["the record's kit", ["groove", "the machine"]],
+    ["the job", ["job"]],
+    ["the time-keeping", ["time", "backbeat"]],
+    ["the feel", ["loud", "loose", "knob:stress", "knob:kitProb"]],
+    ["the fills", ["fills", "knob:fill", "the fills"]],
+    ["at the kit", ["at the kit", "the kit", "take away", "the bar"]],
+  ],
+  bass: [
+    ["the line", ["job", "the figure", "what notes it plays", "the bar"]],
+    ["the instrument", ["instr", "what you are playing", "at the machine"]],
+    ["the hands", ["sit", "notes", "reg"]],
+  ],
+  keys: [
+    ["the instrument", ["instr"]],
+    ["the job", ["job", "the bar"]],
+    ["the sound", ["reg", "cut", "atk", "rel", "col", "knob:phrase", "knob:maxHold"]],
+  ],
+  guitar: [
+    ["the instrument", ["instr"]],
+    ["the job", ["job", "the bar"]],
+    ["the sound", ["reg", "cut", "rel", "knob:orn"]],
+  ],
+  voice: [
+    ["the voice", ["instr"]],
+    ["the part", ["job", "the bar"]],
+    ["the sound", ["reg", "cut", "atk"]],
+  ],
+  engineer: [
+    // the drums block stays four questions (the gate taps its words); the
+    // five channel questions read as one TABLE because the rows align —
+    // channel down the label column, treatment beside it
+    ["the drums", ["room", "kick", "snare", "hats"]],
+    ["the space", ["verb", "delay"]],
+    ["the glue", ["squeeze", "tape"]],
+    ["the channels", ["keysfx", "gtrfx", "voxfx", "bassfx", "bassmix"]],
+  ],
+};
+// the nesting edges, per seat: pattern -> the pattern of the row it sits
+// under. Only real dependencies are drawn — a nest that is merely thematic
+// would lie about the graph.
+const UNDER = {
+  arranger: { "chg:*": "form", "len:*": "form" },
+  // ...named in both its costumes: the interview's row before it is
+  // answered, the tray's subject ("what you are playing") after
+  bass: { "at the machine": ["instr", "what you are playing"] },
+  keys: { "the bar": "job" },
+  guitar: { "the bar": "job" },
+  voice: { "the bar": "job" },
+  // the theme: the note-by-note bar exists over the rhythm you chose, and
+  // "answer itself" only exists once the tune is longer than a bar
+  ideas: { "the bar": "cell", "the answer": "len" },
+};
+// a pattern names a question by id or by its label (a tray subject's label
+// IS its group name); a trailing * is a prefix — the per-role calls the
+// form unlocks are chg:verse, chg:chorus…
+const outMatch = (p, d) => (p.endsWith("*") ? d.id.startsWith(p.slice(0, -1))
+  : d.id === p || d.label === p);
 
 // ONE SURFACE, THREE KINDS OF QUESTION, AND NO MENU. The seat you are in
 // is asked its own questions in order; an answered one lands on the GIG
@@ -380,8 +655,29 @@ function chairArea(parent, who, ideasOnly) {
   // this seat's questions: the interview, then one per subject of whatever
   // words the player still has
   const groups = new Map();
-  for (const i of catalog(model, who)) {
+  const byId = new Map();                    // the whole vocabulary, for the grid
+  // THE DRUMMER'S BAR IS LANE-SCOPED (drums-kit stepsFor lives outside V),
+  // so the laneless catalog never carries it. Fetch the pinned lane's own
+  // vocabulary — the drum the mark row has in hand — through drums-kit's
+  // catalog, exactly as the drums page drives the laneful bar: the count
+  // grid, the step ids and say()/says() are all the kit's own.
+  const laneNow = who === "drums"
+    ? marksOf(who)[Math.min(barMarks.get(who) || 0, Band.D.LANES.length - 1)].lane
+    : null;
+  const cat = laneNow
+    ? [...catalog(model, who), ...Band.D.catalog(model.drums, laneNow)]
+    : catalog(model, who);
+  for (const i of cat) {
+    byId.set(i.id, i);
     if (i.group === "start") continue;
+    if (MERGED.has(i.group)) continue;       // absorbed into the bar's marks
+    // the arranger's tray IS the theme's vocabulary (catalog(m,"arranger")
+    // returns the ideas words and nothing else), so in the SONG area those
+    // subjects would be the themes questions asked a second time in a
+    // second place — the outline made that duplication visible, and the
+    // fix is the COVERS law's own: one home per question. They render in
+    // the themes area, where the idea interview covers and dedupes them.
+    if (who === "arranger" && !ideasOnly) continue;
     if (!groups.has(i.group)) groups.set(i.group, []);
     groups.get(i.group).push(i);
   }
@@ -405,7 +701,7 @@ function chairArea(parent, who, ideasOnly) {
                    "the tempo": ["tempo"], "how you play them": ["notes"],
                    "the line": ["job"], "what you are playing": ["instr"],
                    "the rhythm of it": ["idea:cell"], "the shape": ["idea:contour"],
-                   "where it ends": ["idea:land"], "how long": ["idea:len"] };
+                   "where it lands": ["idea:land"], "how long": ["idea:len"] };
   // ...and a subject the ARRANGER owns is not a subject a player has. The
   // interview already drops those questions (TAKEN); the tray was still
   // handing the bassist "faster"/"slower" and the drummer the feel.
@@ -419,11 +715,14 @@ function chairArea(parent, who, ideasOnly) {
     // a fact says what it is, not what its id is: the ideas module prefixes
     // its questions so they can live in the arranger's chair, and nobody
     // needs to read "idea:len" on a gig sheet
-    ...asks0.map(d => ({ id: d.id, ask: d.ask, label: d.id.replace(/^idea:/, ""),
-      answered: d.answered, opts: d.opts.map(o => ({ w: o.w, on: o.answered,
+    ...asks0.map(d => ({ id: d.id, ask: d.ask, label: qLabel(who, d.id),
+      answered: d.answered, opts: d.opts.map(o => ({ w: o.w, row: o.row, on: o.answered,
         istrue: o.active, take: () => { model = answer(model, who, d.id, o.w); } })) })),
     ...[...groups.entries()].sort((a, b) => rank(a[0]) - rank(b[0])).map(([g, list]) => ({
       id: "grp:" + g, ask: GROUPQ[g] || g, label: g,
+      // the bar draws as the count grid; its cells live outside `opts` so a
+      // word that needs a note first can GREY instead of vanishing
+      bar: g === "the bar" && list.some(i => isCellId(i.id) && (i.changes || i.active)),
       answered: (list.find(i => i.active) || {}).words?.[0] || said.get("grp:" + g) || null,
       // A QUESTION NEVER OPENS WITH NOTHING YOU CAN TAP. Half the bass's
       // subjects are about a note that has to exist first — an octave on a
@@ -431,8 +730,9 @@ function chairArea(parent, who, ideasOnly) {
       // cannot be said and is not already true is not shown, and a subject
       // with nothing left in it is not asked ("when the octave setting first
       // shows up I can't select anything").
-      opts: list.filter(i => (i.changes || i.active) && !asked.has(i.words[0]))
-        .map(i => ({ w: i.words[0],
+      opts: list.filter(i => (i.changes || i.active) && !asked.has(i.words[0]) &&
+                             !(g === "the bar" && isCellId(i.id)))
+        .map(i => ({ w: i.words[0], row: i.row,
         on: i.active || said.get("grp:" + g) === i.words[0],
         dead: false,
         take: () => {
@@ -442,23 +742,106 @@ function chairArea(parent, who, ideasOnly) {
           if (model !== before) ledger.push(line);
           said.set("grp:" + g, i.words[0]);
         } })) })),
-  ].filter(d => d.opts.length &&
-    !((COVERS[d.label] || []).some(id => asks0.some(x => x.id === id))) &&
-    !((NOTYOURS[who] || []).includes(d.label)));
+  ].filter(d => (d.opts.length || d.bar) &&
+    // COVERS/NOTYOURS are laws about tray SUBJECTS (a group whose question
+    // an interview row already asks). An interview row wears a word of its
+    // own for a label now, and must not be eaten for matching one.
+    !(d.id.startsWith("grp:") &&
+      ((COVERS[d.label] || []).some(id => asks0.some(x => x.id === id)) ||
+       (NOTYOURS[who] || []).includes(d.label))));
 
-  // THE GIG SHEET — every fact of it tappable
-  const sheet = el("div", "dsheet");
-  for (const d of asks) {
-    if (!d.answered) continue;
-    const c = el("button", "dfact" + (asking === d.id ? " open" : ""));
+  // NOTHING LEFT TO ASK IS NOTHING TO SAY. There is no line telling you to
+  // tap something: everything on this page is already tappable, and a
+  // sentence explaining that is the sentence a good surface does not need.
+  // (A stale `asking` — "add a box" before the form is reachable — falls
+  // back to the next unanswered question rather than an empty floor.)
+  // Found FIRST so the outline can mark which of its rows holds the floor.
+  // A RE-ASK WITH NOTHING TO CHANGE TO IS NOT A QUESTION: the pruner can
+  // leave an answered interview fact exactly one option — its own answer —
+  // and a button that opens a one-radio fieldset is a dead end in a
+  // control's clothes. Such a fact renders as plain text and never takes
+  // the floor.
+  const flatFact = (d) => d.answered && !d.bar && !d.id.startsWith("grp:") &&
+    d.opts.length < 2;
+  const q = (asking && asks.find(d => d.id === asking && !flatFact(d))) ||
+    asks.find(d => !d.answered);
+
+  // THE GIG SHEET AS AN OUTLINE. Every question of this seat is a row —
+  // an answered one says its word, an open one says its ask in italics —
+  // grouped and nested by the OUTLINE/UNDER tables above, expanded, always.
+  // A row is the same tappable .dfact it always was (the gates find facts
+  // by the <b> label and the data-k, and both stay put); the one-question
+  // law holds below it: tapping a row only brings its question to the
+  // floor, it never opens a second set of options in place.
+  const spec = ideasOnly
+    // the theme's node is titled by what the record DOES with the tune —
+    // Band.themeName derives hook/riff/figure/chant, nobody is asked
+    ? [[Band.themeName(model), ["len", "cell", "the bar", "contour", "land", "reg", "the answer"]]]
+    : OUTLINE[who] || [];
+  const under = (ideasOnly ? UNDER.ideas : UNDER[who]) || {};
+  const rowLi = new Map();                     // ask id -> its <li>, for the edges
+  const rowOf = (d) => {
+    const li = el("li");
+    if (flatFact(d)) {
+      const f2 = el("span", "dfact dflat");
+      f2.dataset.k = "fact|" + d.id;
+      f2.append(el("b", null, d.label), el("span", "dvh", ", "),
+                el("span", "dans", d.answered));
+      li.append(f2);
+      return li;
+    }
+    const c = el("button", "dfact" + (asking === d.id ? " open" : "") +
+                           (q && q.id === d.id ? " qnow" : ""));
     c.type = "button";
     c.dataset.k = "fact|" + d.id;
-    c.title = "change it: " + d.ask;
-    c.append(el("b", null, d.label), document.createTextNode(" " + d.answered));
+    c.title = d.answered ? "change it: " + d.ask : d.ask;
+    c.append(el("b", null, d.label), el("span", "dvh", ", "),
+             d.answered ? el("span", "dans", d.answered)
+                        : el("span", "dhint", d.ask));
     c.addEventListener("click", () => { asking = asking === d.id ? null : d.id; draw(); });
-    sheet.append(c);
+    li.append(c);
+    return li;
+  };
+  const placed = new Set();
+  const branches = [];
+  for (const [h, pats] of spec) {
+    const list = [];
+    for (const p of pats) for (const d of asks) {
+      if (placed.has(d.id) || !outMatch(p, d)) continue;
+      placed.add(d.id); list.push([p, d]);
+    }
+    if (list.length) branches.push([h, list]);
   }
-  if (sheet.childNodes.length) {
+  // whatever the tables do not name still shows — the outline may not
+  // swallow a question the seat can be asked
+  const rest = asks.filter(d => !placed.has(d.id)).map(d => [null, d]);
+  if (rest.length) branches.push([null, rest]);
+  const tree = el("ul", "dtree");
+  for (const [h, list] of branches) {
+    const li = el("li", "dbranch");
+    if (h) li.append(el("span", "dthead", h));
+    const ul = el("ul");
+    for (const [p, d] of list) {
+      const row = rowOf(d);
+      rowLi.set(d.id, row);
+      // the dependency edge: this row nests under the row it exists
+      // because of (the parent renders first — the tables order it so)
+      const pk = p && under[p];
+      const pks = !pk ? [] : Array.isArray(pk) ? pk : [pk];
+      const pAsk = pks.length && asks.find(a => pks.some((x) => outMatch(x, a)));
+      const pLi = pAsk && rowLi.get(pAsk.id);
+      if (pLi) {
+        let cu = pLi.lastElementChild && pLi.lastElementChild.tagName === "UL"
+          ? pLi.lastElementChild : null;
+        if (!cu) { cu = el("ul"); pLi.append(cu); }
+        cu.append(row);
+      } else ul.append(row);
+    }
+    li.append(ul);
+    tree.append(li);
+  }
+  if (branches.length) parent.append(tree);
+  if (asks.some(d => d.answered)) {
     // ...and one way back. A chair you cannot clear is a chair you stop
     // trying things in.
     const again = el("button", "dfact dagain", "start over");
@@ -469,16 +852,8 @@ function chairArea(parent, who, ideasOnly) {
       model = Band.resetSeat(model, who);
       said.clear(); asking = null; push(false); announce(who, null); draw();
     });
-    sheet.append(again);
-    parent.append(sheet);
+    parent.append(again);
   }
-
-  // NOTHING LEFT TO ASK IS NOTHING TO SAY. There is no line telling you to
-  // tap something: everything on this page is already tappable, and a
-  // sentence explaining that is the sentence a good surface does not need.
-  // (A stale `asking` — "add a box" before the form is reachable — falls
-  // back to the next unanswered question rather than an empty floor.)
-  const q = (asking && asks.find(d => d.id === asking)) || asks.find(d => !d.answered);
   if (!q) return;
   floorQ = who + "|" + q.id + (ideasOnly ? "|ideas" : "");
   // a question and its answers are ONE form group — fieldset binds the
@@ -487,9 +862,70 @@ function chairArea(parent, who, ideasOnly) {
   // toggles (checkboxes) — several of its words can be true at once
   const ask = el("fieldset", "dask");
   ask.append(el("legend", "dq", q.ask));
-  const row = el("div", "dopts");
+  // THE COUNT GRID. The bar renders as cells — columns one..four, rows the
+  // beat/e/and/a — with the MARK row above it choosing what a tap puts
+  // there. A cell's word is stepWord's own sentence, byte for byte.
+  if (q.bar) {
+    const marks = marksOf(who);
+    const mi = Math.min(barMarks.get(who) || 0, marks.length - 1);
+    if (marks.length > 1) {
+      const mrow = el("div", "dmarks");
+      mrow.append(el("span", "dmarklab", "put"));
+      marks.forEach((mk, ix) => {
+        const b = el("button", "dmark" + (ix === mi ? " on" : ""), mk.w);
+        b.type = "button";
+        b.dataset.k = "mark|" + who + "|" + mk.w;
+        b.addEventListener("click", () => { barMarks.set(who, ix); draw(); });
+        mrow.append(b);
+      });
+      ask.append(mrow);
+    }
+    const grid = el("div", "dgrid");
+    grid.append(el("span", "dghead dgcorner", ""));
+    for (const c of ["one", "two", "three", "four"]) grid.append(el("span", "dghead", c));
+    const SUBS = ["\u00b7", "e", "and", "a"];
+    for (let sub = 0; sub < 4; sub++) {
+      grid.append(el("span", "dglead", SUBS[sub]));
+      for (let beat = 0; beat < 4; beat++) {
+        const i = beat * 4 + sub;
+        const entry = byId.get(marks[mi].id(i));
+        const on = !!(entry && entry.active);
+        // everything past the note greys until a note exists at that place —
+        // the kit's own when-guard made visible, never a vanished word
+        const dead = !entry || (!entry.changes && !entry.active);
+        grid.append(optWidget(stepWord(i), "dopt dcell" + (on ? " on" : ""), {
+          kind: "checkbox", name: "bar-" + who, on, dead,
+          key: "opt|" + who + "|grp:the bar|" + (entry ? entry.id : i),
+          take: () => {
+            if (!entry) return;
+            const line = says(model, who, entry.id);
+            const before = model;
+            model = say(model, who, entry.id);
+            if (model !== before) { ledger.push(line); push(false); announce(who, null); }
+            said.set("grp:the bar", stepWord(i));
+            draw();
+          } }));
+      }
+    }
+    ask.append(grid);
+  }
+  // a big bundle of options scans as aligned columns, not a ragged wrap
+  // (PLAN: "the bundle of options is hard to scan") — same words, same
+  // widgets, only the layout
+  const row = el("div", "dopts" + (q.opts.length > 8 ? " dmany" : ""));
   const kind = q.id.startsWith("grp:") ? "checkbox" : "radio";
-  for (const o of q.opts) {
+  // LABELED ROWS, NOT WORD-PILES: when every option names its row (the
+  // kick:, the filter:, pianos:…), the options group under those labels in
+  // the order a musician lists them
+  let opts2 = q.opts;
+  const rowed = opts2.length > 0 && opts2.every(o => o.row);
+  if (rowed) {
+    const at = (r) => { const ix = ROWORDER.indexOf(r); return ix < 0 ? ROWORDER.length : ix; };
+    opts2 = [...opts2].sort((a, b) => at(a.row) - at(b.row));
+  }
+  let lastRow = null;
+  for (const o of opts2) {
+    if (rowed && o.row !== lastRow) { row.append(el("span", "drowlab", o.row)); lastRow = o.row; }
     row.append(optWidget(o.w, "dopt" + (o.on ? " on" : "") +
                                (!o.on && o.istrue ? " istrue" : ""), {
       kind, name: "q-" + who + "-" + q.id, on: o.on, dead: o.dead,
@@ -503,6 +939,15 @@ function chairArea(parent, who, ideasOnly) {
       } }));
   }
   ask.append(row);
+  // THE RECORD'S LENGTH IS A FACT, NOT A QUESTION: the form × the lengths
+  // already decide it, so the form node simply says what they add up to
+  if (q.id === "form") {
+    const song = toSong(model, MODES);
+    const bars = song.reduce((n, s2) => n + s2.bars, 0);
+    const secs = Math.round(bars * 4 * 60 / (model.song.bpm || 96));
+    ask.append(el("p", "dlen", "that\u2019s " + Math.floor(secs / 60) + ":" +
+                               String(secs % 60).padStart(2, "0")));
+  }
   parent.append(ask);
 }
 
@@ -519,7 +964,7 @@ const GROUPQ = {
   "the line": "what is the line doing?",
   "the changes": "what are the changes?",
   "the key": "what key?",
-  "the kit": "what kit is this?",
+  "the kit": "what’s in the kit?",
   "what you are playing": "what are you playing?",
   "take away": "take something out?",
   "how you play them": "how are you playing them?",

@@ -44,7 +44,7 @@
   // a MODEL is the kit, the four bars' worth of variation, and the feel
   const blank = () => ({ on: false, kit: empty(), fills: {}, drumkit: "acoustic",
                          humanize: 0, swing: null, vel: {}, bpm: 92,
-                         answers: {}, fam: null, job: null });
+                         touch: null, hand: null, answers: {}, fam: null, job: null });
 
   /* ---------- THE GROOVES: real bars, written out ------------------------
      A vocabulary of styles, AUTHORED HERE. Paul pointed at
@@ -250,7 +250,7 @@
     "lay the snare back":  (m) => ({ ...m, kit: side(m.kit, "~", "s", onHits(m.kit, "s", 1)) }),
     "push the kick":       (m) => ({ ...m, kit: side(m.kit, "~", "k", onHits(m.kit, "k", -1)) }),
     "let the hats breathe": (m) => ({ ...m, kit: side(m.kit, "?", "h", onHits(m.kit, "h", 7)) }),
-    "sometimes the perc":  (m) => ({ ...m, kit: side(m.kit, "?", "p", onHits(m.kit, "p", 5)) }),
+    "the perc, in and out": (m) => ({ ...m, kit: side(m.kit, "?", "p", onHits(m.kit, "p", 5)) }),
     "crescendo the bar":   (m) => { const k = clone(m.kit);
       for (const l of ["s", "h"]) if (has(k, l))
         k[l] = k[l].map((v, i) => (v ? Math.max(2, Math.min(9, 3 + Math.round(i * 6 / 15))) : 0));
@@ -334,12 +334,50 @@
       m => ({ ...m, answer: !m.answer }),
       m => (m.answer ? "back to one bar, round and round" : "two bars: the groove, then its answer"),
       m => !!m.answer);
+  V.answer.row = "calls:";
 
-  for (const [word, fn] of Object.entries(DRUMMER))
+  // WHICH ROW OF THE KIT a word is about — the page draws the pile as one
+  // labeled row per drum (never "accent" five times in a flat list), and the
+  // row label carries the subject so the words can stay verbatim.
+  const DRUMROW = {
+    "kick on the one only": "the kick:", "kick on the ands": "the kick:",
+    "double the kick": "the kick:", "flam the kick": "the kick:",
+    "push the kick": "the kick:",
+    "snare on every beat": "the snare:", "lay the snare back": "the snare:",
+    "drag the backbeat": "the snare:", "flam the backbeat": "the snare:",
+    "ghost notes": "the snare:", "backbeat on two and four": "the snare:",
+    "backbeat on three": "the snare:",
+    "hands in quarters": "the hats:", "hands in eighths": "the hats:",
+    "hands in sixteenths": "the hats:", "hands shuffled": "the hats:",
+    "push the hats": "the hats:", "let the hats breathe": "the hats:",
+    "open the hat on four": "the hats:", "ride it, not the hats": "the hats:",
+    "back to the hats": "the hats:",
+    "toms, not the snare": "the toms:", "floor tom on the ands": "the toms:",
+    "a tom melody": "the toms:", "walk the toms down": "the toms:",
+    "accent the downbeats": "the accents:", "accent the ands": "the accents:",
+    "nothing on the one": "the one:",
+    "play the song": "calls:", "play it straight again": "calls:",
+    "the perc, in and out": "calls:", "crescendo the bar": "calls:",
+  };
+  // A TRAY WORD THAT IS AN INTERVIEW ANSWER SETS THE INTERVIEW FACT. Saying
+  // "backbeat on three" at the kit IS answering "where is the backbeat?" —
+  // recording it keeps the sheet honest and the question off the floor,
+  // instead of the same fact wearing two costumes.
+  const SETS = { "backbeat on two and four": ["backbeat", "two and four"],
+                 "backbeat on three": ["backbeat", "three"],
+                 "ride it, not the hats": ["time", "the ride"],
+                 "back to the hats": ["time", "the hats"] };
+  for (const [word, fn] of Object.entries(DRUMMER)) {
+    const apply = SETS[word]
+      ? (m) => { const out = fn(m); const [id, w] = SETS[word];
+                 return { ...out, answers: { ...(out.answers || m.answers || {}), [id]: w } }; }
+      : fn;
     add("drum:" + word, "at the kit", [word],
         m => m.on && JSON.stringify(fn(m).kit) !== JSON.stringify(m.kit),
-        fn, () => word,
+        apply, () => word,
         m => m.on && JSON.stringify(fn(m).kit) === JSON.stringify(m.kit));
+    if (DRUMROW[word]) V["drum:" + word].row = DRUMROW[word];
+  }
 
   for (const [k, word] of Object.entries(MACHINES))
     add("kit:" + k, "the machine", [word], m => m.on && m.drumkit !== k,
@@ -452,7 +490,7 @@
         apply: (m) => ({ ...m, job: "drive", kit: DRUMMER["hands in sixteenths"](m).kit }) },
       { w: "stay out of the way", is: (m) => m.job === "out",
         apply: (m) => ({ ...m, job: "out", kit: { ...clone(m.kit), h: HANDS.quarters.slice(), o: z(), p: z() } }) },
-      { w: "push it", is: (m) => m.job === "push",
+      { w: "on the front of it", is: (m) => m.job === "push",
         apply: (m) => ({ ...m, job: "push",
           kit: DRUMMER["accent the downbeats"](DRUMMER["ghost notes"](m)).kit }) } ] },
     { id: "time", ask: "what are you keeping time on?", opts: [
@@ -470,13 +508,24 @@
       { w: "nowhere — no backbeat", is: (m) => !has(m.kit, "s"),
         apply: (m) => ({ ...m, kit: { ...clone(m.kit), s: z() } }) } ] },
     { id: "loud", ask: "how hard are you hitting?", opts: [
-      { w: "back", is: (m) => (m.vel.all || 0) < 0, apply: (m) => ({ ...m, vel: { all: -1 } }) },
+      { w: "light", is: (m) => (m.vel.all || 0) < 0, apply: (m) => ({ ...m, vel: { all: -1 } }) },
       { w: "normal", is: (m) => !(m.vel.all || 0), apply: (m) => ({ ...m, vel: {} }) },
       { w: "hard", is: (m) => (m.vel.all || 0) > 0, apply: (m) => ({ ...m, vel: { all: 1 } }) } ] },
+    // ONE QUESTION FOR THE WHOLE HAND. touch (askable) and hand (played/
+    // programmed) used to be their own knob questions beside this one — four
+    // asks orbiting one fact. Each answer writes humanize + touch + hand
+    // together, because the axes were never independent: a machine is never
+    // loose, and a loose hand is never a machine. (askable.js lists touch
+    // and hand under WRITTEN now, and the coverage gate reads that table.)
     { id: "loose", ask: "how tight to the grid?", opts: [
-      { w: "on the grid", is: (m) => !m.humanize, apply: (m) => ({ ...m, humanize: 0 }) },
-      { w: "human", is: (m) => m.humanize === 0.03, apply: (m) => ({ ...m, humanize: 0.03 }) },
-      { w: "loose", is: (m) => m.humanize >= 0.06, apply: (m) => ({ ...m, humanize: 0.06 }) } ] },
+      { w: "a machine", is: (m) => !m.humanize && m.hand === "exact",
+        apply: (m) => ({ ...m, humanize: 0, touch: 0, hand: "exact" }) },
+      { w: "on the grid", is: (m) => !m.humanize && m.hand !== "exact",
+        apply: (m) => ({ ...m, humanize: 0, touch: 0, hand: null }) },
+      { w: "a human hand", is: (m) => m.humanize === 0.03,
+        apply: (m) => ({ ...m, humanize: 0.03, touch: 0.35, hand: null }) },
+      { w: "loose", is: (m) => m.humanize >= 0.06,
+        apply: (m) => ({ ...m, humanize: 0.06, touch: 0.75, hand: null }) } ] },
     { id: "fills", ask: "where do the fills go?", opts: [
       { w: "end of every four", is: (m) => !!m.fills[4] && !m.fills[2],
         apply: (m) => ({ ...m, fills: { 4: true } }) },
@@ -567,6 +616,11 @@
     // stops". The swing is a SONG fact anyway, and ui/derive.js maps the
     // word to its number (SWINGS) on the way in; the page sets it there.)
     if (m.vel.all) g.kitVel = Object.fromEntries(LANES.map(l => [l, VELROW(m.vel.all)]));
+    // the rest of the one humanization answer: touch (how human the hand is)
+    // and hand ("exact" = programmed) ride the same genre the kit does —
+    // absent answers write nothing, so an old model is byte-identical
+    if (m.touch != null) g.touch = m.touch;
+    if (m.hand) g.hand = m.hand;
     return g;
   }
 
