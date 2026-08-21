@@ -136,19 +136,16 @@ to hear what that is like. This needs design research before code: workflow
 a theory pass (how theme development works, what the kernel can already
 express, what's missing), then implement.
 
-## Phase 5 — The instrument room and the feedback loop
+## Phase 5 — SKIPPED (Paul, 2026-08-21: "just skip stage 5")
 
-A new page, linked from the band page: EVERY instrument (sampled, synthesized,
-and the effects chains), each playable in its applications — a riff, a melody,
-a pad — with a plain-text notes box per instrument. Notes save automatically
-to the server (a tiny append-only endpoint on the droplet; the static site
-stays static, the notes land in a JSONL log outside the web root). Then the
-loop: Claude reads the log, diagnoses (e.g. "electric guitar is missing
-crunch, bends notes all over the place, jangly"), improves the instrument
-(zone selection, effects chain, velocity/articulation mapping), redeploys,
-and marks the note addressed. Paul's goal: give as little feedback as
-possible; Claude figures out what to do next. Many passes; the log is the
-program.
+The instrument room and its server-side notes log are OFF THE BOARD. The
+reason is evidence, not fatigue: every note Paul gave in conversation —
+the jangly guitar, the buried melody, the thrash blues, the fabricated
+drums — was measured and fixed within hours of being said. The direct
+channel IS the feedback loop, and it is faster than any page-and-log
+round trip would have been. The droplet endpoint stays up (a tiny
+sandboxed service holding the first guitar note); see the
+stellate-notes-endpoint memory if it is ever wanted back.
 
 ## Phase 1a — Playback truth (rides with Phase 1)
 
@@ -161,6 +158,50 @@ program.
   moment the answer is given to the bar/section where it takes effect.
 - Put a beat counter back in (bar.beat, plain text, always visible in the
   transport line).
+
+
+## What the repertoire panel measured (2026-08-21)
+
+Four records built by answering the page's own questions — Bach's
+Invention (Leipzig 1723), Enjoy the Silence, Honesty, and three hymns —
+plus Yesterday as the reference. The frozen benchmark (sessions, fit
+scripts, 386 rip notes across four centuries) lives in the memory
+directory under keeps/repertoire-benchmark; EVERY melody or meter slice
+gets measured against it, before and after.
+
+The verdict: exact melody pitch sits at 31-41% in every idiom and every
+century — Bach 1723 and Depeche Mode 1990 within five points of each
+other. That is a ceiling of the melody LANGUAGE, not of any mapping.
+Rhythm is solved (zero missed onsets wherever written bars covered the
+material). Authored harmony is near-perfect four for four. The box
+stages records well and imitates across time — the theme A/B and
+transform machinery is literally the invention's own development
+devices. "Imitation yes, counterpoint no."
+
+The convergent gaps, ranked by how many studies hit them independently:
+
+1. METER — three of four studies, and it excludes repertoire before a
+   note is written (Piano Man, the beginner Minuets, half of hymnody;
+   SLANE shipped with every bar a third too long). THE CHOSEN NEXT
+   SLICE, because it is the only one already half-built: the kernel
+   speaks twelve-step bars (stressAt, stepsPerBar = deg.length),
+   plan.js already feeds opts.barBeats, the parent has shipping 3/4
+   anchors and waltz kits. The work is everything above the kernel that
+   assumes sixteen: one arranger question, twelve-step grids for the
+   chairs that carry them, wrote[b] validation, and a gate that renders
+   one 3/4 record end to end. Acceptance test already exists — re-run
+   the SLANE fit and watch the stretched bars disappear.
+2. THE 4-BAR THEME CAP — all four studies; the single biggest fit
+   limiter. Wants theme length 8 with written bars over all of it, plus
+   an AABB sentence word.
+3. THE REGISTER/LIFT CLAMP — all four; the dominant "off" category.
+   Wants a per-written-bar (and, for pedal-alternation riffs, per-place)
+   octave word.
+4. A SECOND AUTHORED LINE — Bach's heart, the hymns' inner voices. The
+   architecture already has the shape: themeB-as-layer with its own
+   taker.
+5. INVERSIONS — the kernel's chord objects already carry the field; the
+   picker never asks it.
 
 ## Standing rules for every phase
 
