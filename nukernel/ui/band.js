@@ -866,7 +866,17 @@ function chairArea(parent, who, ideasOnly) {
              d.answered ? el("span", "dans", d.answered)
                         : el("span", "dhint", d.ask));
     c.addEventListener("click", () => { asking = asking === d.id ? null : d.id; draw(); });
-    li.append(c);
+    // THE ROW AND ITS QUESTION ARE ONE BOX (2026-08-21, Paul: "a dotted box
+    // shows up with options below… put the options INSIDE"): the row whose
+    // question holds the floor is wrapped in a .dqbox — the dashed outline
+    // lives on the wrapper now, and the fieldset lands inside it (end of
+    // this function), so the label you tapped tops the box and the options
+    // sit within the same dashes, never as a sibling below them.
+    if (q && q.id === d.id) {
+      const w2 = el("div", "dqbox");
+      w2.append(c);
+      li.append(w2);
+    } else li.append(c);
     return li;
   };
   const placed = new Set();
@@ -1019,10 +1029,13 @@ function chairArea(parent, who, ideasOnly) {
   // slot below the whole sheet; it opens AT ITS ROW now \u2014 the outline
   // expands at that node and the page grows vertically. Every ask has a
   // row (the trailing headless branch catches whatever the tables do not
-  // name), and the fieldset slots in right after the row's own button, so
-  // it sits above any child rows that nest beneath the same node.
+  // name), and the fieldset lands INSIDE the row's own .dqbox \u2014 one
+  // dashed box holding label and options both \u2014 so it still sits above
+  // any child rows that nest beneath the same node.
   const qLi = rowLi.get(q.id);
-  if (qLi && qLi.firstElementChild) qLi.firstElementChild.after(ask);
+  const qBox = qLi && qLi.querySelector(":scope > .dqbox");
+  if (qBox) qBox.append(ask);
+  else if (qLi && qLi.firstElementChild) qLi.firstElementChild.after(ask);
   else parent.append(ask);
 }
 

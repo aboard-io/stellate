@@ -132,8 +132,12 @@ fieldset.dask { border: 0; padding: 0; min-width: 0; }
 /* an answered fact whose re-ask has nothing to change to renders as plain
    text — a dead question is not a button */
 .dtree .dfact.dflat { cursor: default; }
-/* the row whose question currently holds the floor */
-.dtree .dfact.qnow { outline: 1px dashed #000; outline-offset: 1px; }
+/* the row whose question currently holds the floor: the row and its open
+   question are ONE dashed box (.dqbox wraps the .dfact and the .dask) —
+   the label you tapped at the top, the options inside the dashes */
+.dtree .dqbox { outline: 1px dashed #000; padding: 2px 5px 5px;
+  margin: 1px -5px 10px; }
+.dtree .dqbox .dask { margin: 2px 0 0; }
 .dtree .dfact.open b, .dtree .dfact.open .dhint { opacity: 1; }
 /* an open section's questions, as the same tree (the player's own words
    nested under the player) */
