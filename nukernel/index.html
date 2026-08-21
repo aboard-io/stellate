@@ -6,10 +6,11 @@
 <title>The band — say it</title>
 <meta name="description" content="A band: an arranger, a drummer, a bass player, a keys player and an engineer. The arranger calls the tune; everyone else decides what is theirs.">
 <meta name="robots" content="noindex">
-<!-- PLAIN HTML ON PURPOSE (PLAN.md Phase 1). One stylesheet, and it says
-     almost nothing: system fonts, borders, whitespace. hw.css and drums.css
-     belong to the satellite pages now — this page stopped borrowing their
-     chrome so that what you read here is the HTML itself. -->
+<!-- BASIC HTML ON PURPOSE (Paul, 2026-08-21: "Just use basic HTML for
+     everything right now… Don't style at all"). One stylesheet, and it says
+     almost nothing: the scroll pane a gate measures, state-swap rules, and
+     the circle of fifths ("Keep the circle of fifths!!!" — the one
+     sanctioned exception). Everything else is the browser's own widgets. -->
 <link rel="stylesheet" href="band.css">
 </head>
 <body>
@@ -27,6 +28,16 @@
               title="a whole record by answering every question at random">roll a record</button>
       <button id="dreset" type="button"
               title="put the room back to empty">start again</button>
+      <!-- THE LISTENER'S KNOB (Paul: "I need a volume slider on the top very
+           badly"). A plain range over the DEVICE volume — ui/state.js
+           VOLSTORE, the same setting the daw's fader writes — never the
+           engineer's desk (those are mix OFFSETS; this is the master the
+           parent engine smooths on the audio thread). Wired in ui/band.js;
+           audio/live.js already rides it both ways: masterVol at open, so it
+           works before the engine boots, and setMasterVol on every
+           "transport" commit, so a drag is heard mid-bar. -->
+      <label for="dvol">volume</label>
+      <input type="range" id="dvol" min="0" max="100" step="1" value="100">
       <!-- the beat counter (bar.beat) and the change countdown are plain
            text, fed by the engine's own clock (audio/live.js "pos" and
            "pending" events). Not live regions on purpose: they change every

@@ -19,7 +19,7 @@ const say = (m, who, id) => say0(m, who, id, who === "arranger" ? themeNow() : u
 const says = (m, who, id) => says0(m, who, id, who === "arranger" ? themeNow() : undefined);
 import { GENRES, NuSong, MODES } from "./deps.js";
 import { adoptSong, SONG, SLOTS, putPhrase, on, commit, setBpm, setSwing, setPoolChair,
-         setMixOffset, clearMixOffsets } from "./state.js";
+         setMixOffset, clearMixOffsets, vol, setVol } from "./state.js";
 import { startAt, stop, playing, warmup, getPosition, passAt,
          announceChange } from "../audio/live.js";
 import { registerSW, warmCache, warmShell, warmed } from "../audio/offline.js";
@@ -396,12 +396,17 @@ function sentStrip(theme) {
   const wrap = el("div", "dsent");
   for (let b = 0; b < bars; b++) {
     const row = el("div", "dsentbar");
-    const cellsEl = el("span", "dsentcells");
+    // PLAIN TEXT ROWS (the basic-HTML reset): one measure per line, sixteen
+    // characters — x a note starting, - the note still sounding through
+    // (the tie made visible; a - opening the next row IS the tie over the
+    // barline), · a rest — a space at each beat so the bar counts itself.
+    let txt = "";
     for (let i = 0; i < N16; i++) {
       const v = state[b * N16 + i];
-      cellsEl.append(el("i", (v === 1 ? "dnote" : v === 2 ? "dtiec" : "drest") +
-                            (i % 4 === 3 && i < 15 ? " dbeat" : "")));
+      txt += v === 1 ? "x" : v === 2 ? "-" : "·";
+      if (i % 4 === 3 && i < 15) txt += " ";
     }
+    const cellsEl = el("span", "dsentcells", txt);
     const word = wr[b] ? "written by hand"
       : rowOf ? (ROLEW[rowOf[b]] || rowOf[b]) : (b ? "the cell again" : "says it");
     const aim = el("button", "dsentrole" + (wr[b] ? " dwr" : ""), word);
@@ -411,7 +416,7 @@ function sentStrip(theme) {
       model = say(model, "arranger", "bar:" + b);
       module_ = "ideas"; section = null; asking = "grp:the bar";
       push(false); draw(); });
-    row.append(cellsEl, aim);
+    row.append(cellsEl, " ", aim);
     wrap.append(row);
   }
   return wrap;
@@ -456,6 +461,47 @@ function optWidget(word, cls, { kind, name, on, dead, key, take }) {
   r.addEventListener("click", take);
   lab.append(r, document.createTextNode(word));
   return lab;
+}
+
+// A LONG LIST IS A <select> (Paul: "radio buttons for options with one
+// choice; select for others"). Any one-of-N question over ~8 answers renders
+// as the browser's own dropdown: each answer an <option class="dopt"> — the
+// exact word, native disabled, native selected — so a gate that reads
+// `.dopt` textContent/disabled still reads the truth, and answering is
+// setting the value (the gates' tap helper dispatches "change"). Row labels
+// (the kick:, pianos:…) become real <optgroup>s. The placeholder an
+// unanswered question shows carries NO .dopt class: it is not an answer.
+// Toggle sets stay checkboxes (a select is one choice by construction), and
+// the key question stays the circle of fifths (Paul: "Keep the circle of
+// fifths!!!").
+const LONG = 8;
+function selectOf(opts2, { ask, key }) {
+  const sel = el("select");
+  sel.dataset.k = key;
+  sel.setAttribute("aria-label", ask);
+  if (!opts2.some((o) => o.on)) {
+    const p = el("option", null, "—");
+    p.value = ""; p.disabled = true; p.selected = true;
+    sel.append(p);
+  }
+  const rowed = opts2.length > 0 && opts2.every((o) => o.row);
+  let host = sel, lastRow = null;
+  for (const o of opts2) {
+    if (rowed && o.row !== lastRow) {
+      host = el("optgroup"); host.label = o.row; sel.append(host); lastRow = o.row;
+    }
+    const op = el("option", "dopt" + (o.on ? " on" : "") +
+                            (!o.on && o.istrue ? " istrue" : ""), o.w);
+    op.value = o.w;
+    if (o.dead) op.disabled = true;
+    if (o.on) op.selected = true;
+    host.append(op);
+  }
+  sel.addEventListener("change", () => {
+    const o = opts2.find((x) => x.w === sel.value);
+    if (o && !o.dead) o.take();      // the same closure a radio's input runs
+  });
+  return sel;
 }
 
 /* ---------- THE CIRCLE OF FIFTHS -----------------------------------------
@@ -623,7 +669,7 @@ function chgxWidget(role) {
           const nl = JSON.parse(JSON.stringify(list));
           const t = nl[bi][ki], want2 = fq(t.d);
           if (want2 === null) delete t.q; else t.q = want2;
-          write(nl); } }));
+          write(nl); } }), " ");
     }
     // ...and the bar's two marks: the split, and the lean
     const split = list[bi].length > 1;
@@ -633,7 +679,7 @@ function chgxWidget(role) {
       take: () => {
         const nl = JSON.parse(JSON.stringify(list));
         nl[bi] = split ? [nl[bi][0]] : [nl[bi][0], { ...nl[bi][0] }];
-        write(nl); } }));
+        write(nl); } }), " ");
     qrow.append(optWidget("lean into the next", "dopt" + (cc.q === "dom7" ? " on" : ""), {
       kind: "checkbox", name: "pk-x-" + ci, on: cc.q === "dom7",
       key: "opt|arranger|chgx:" + role + ":lean" + ci + "|lean into the next",
@@ -642,7 +688,7 @@ function chgxWidget(role) {
         const next = flat[(ci + 1) % flat.length];
         nl[bi][ki] = Band.dominantOf(list[next.bi][next.ki],
                                      MODES[Band.modeKeyOf(model.song)]);
-        write(nl); } }));
+        write(nl); } }), " ");
     wrap.append(qrow);
   });
   // the foot: grow, shrink, go round again
@@ -652,7 +698,7 @@ function chgxWidget(role) {
     b2.type = "button"; b2.dataset.k = "pick|" + role + "|" + k;
     if (dead) b2.disabled = true;
     b2.addEventListener("click", fn);
-    foot.append(b2); };
+    foot.append(b2, " "); };
   footBtn("add a bar", "add", () => {
     const nl = JSON.parse(JSON.stringify(list));
     nl.push(JSON.parse(JSON.stringify(nl[nl.length - 1])));
@@ -686,7 +732,8 @@ function draw() {
   floorQ = null;
   render(box);
   if (wasIn) {
-    const first = floorQ && floorQ !== lastQ && box.querySelector(".dask .dopt input");
+    const first = floorQ && floorQ !== lastQ &&
+      box.querySelector(".dask .dopt input, .dask select");
     const same = !first && wasKey &&
       box.querySelector('[data-k="' + CSS.escape(wasKey) + '"]');
     if (first) first.focus(); else if (same) same.focus();
@@ -863,23 +910,32 @@ function sectionArea(parent) {
     const ask2 = el("fieldset", "dask");
     ask2.append(el("legend", "dq", "in the " + (here ? here.role : "section") +
                    ", " + a2.who + "…"));
-    const row2 = el("div", "dopts" + (a2.opts.length > 8 ? " dmany" : ""));
-    for (const o of a2.opts) {
-      row2.append(optWidget(o.w, "dopt" + (o.answered ? " on" : ""), {
-        kind: "radio", name: "sq-" + section + "-" + a2.id, on: o.answered,
-        key: "opt|sec" + section + "|" + a2.id + "|" + o.key,
-        take: () => {
-          model = setSection(model, section, a2.id, o.key);
-          push(false);
-          // scoped to THIS section: the change can only be heard when the
-          // section next comes round, and the countdown says so — the label
-          // stays the unique key; who/role are the words the phrasing uses
-          announceChange(a2.who + " in the " + (here ? here.role : "section"), section,
-                         { who: a2.who, role: here ? here.role : "section" });
-          draw();
-        } }));
+    // scoped to THIS section: the change can only be heard when the
+    // section next comes round, and the countdown says so — the label
+    // stays the unique key; who/role are the words the phrasing uses
+    const takeSec = (o) => () => {
+      model = setSection(model, section, a2.id, o.key);
+      push(false);
+      announceChange(a2.who + " in the " + (here ? here.role : "section"), section,
+                     { who: a2.who, role: here ? here.role : "section" });
+      draw();
+    };
+    if (a2.opts.length > LONG) {
+      // a player's own words run long (34 at the kit) — the browser's own
+      // dropdown, one choice by construction
+      ask2.append(selectOf(a2.opts.map((o) => ({ w: o.w, on: o.answered, take: takeSec(o) })),
+        { ask: "in the " + (here ? here.role : "section") + ", " + a2.who,
+          key: "sel|sec" + section + "|" + a2.id }));
+    } else {
+      const row2 = el("div", "dopts");
+      for (const o of a2.opts) {
+        row2.append(optWidget(o.w, "dopt" + (o.answered ? " on" : ""), {
+          kind: "radio", name: "sq-" + section + "-" + a2.id, on: o.answered,
+          key: "opt|sec" + section + "|" + a2.id + "|" + o.key,
+          take: takeSec(o) }), " ");
+      }
+      ask2.append(row2);
     }
-    ask2.append(row2);
     const li = el("li");
     li.append(ask2);
     liOf.set(a2.id, li);
@@ -1281,6 +1337,46 @@ function chairArea(parent, who, ideasOnly) {
     // heading is the theme's own (a switch once two themes exist)
     if (h) li.append(ideasOnly ? themeNodeHead(themeNow(), true)
                                : el("span", "dthead", h));
+    // THE ENGINEER'S CHANNEL TABLE (the basic-HTML reset): the five channel
+    // questions align — channel down the label column, treatment beside it —
+    // so this one branch is a real <table>, one row per channel: the label a
+    // row header, the same tappable .dfact (and, when its question holds the
+    // floor, the question itself) in the cell beside it. The button keeps a
+    // visually-hidden <b> label so AT and the gates read the same fact row
+    // everywhere.
+    if (h === "the channels" && who === "engineer" && !ideasOnly) {
+      const table = el("table", "dchans");
+      for (const [, d] of list) {
+        const tr = el("tr");
+        const th = el("th", null, d.label); th.scope = "row";
+        const td = el("td");
+        if (flatFact(d)) {
+          const f2 = el("span", "dfact dflat");
+          f2.dataset.k = "fact|" + d.id;
+          f2.append(el("b", "dvh", d.label), el("span", "dvh", ", "),
+                    el("span", "dans", d.answered));
+          td.append(f2);
+        } else {
+          const c = el("button", "dfact" + (asking === d.id ? " open" : "") +
+                                 (q && q.id === d.id ? " qnow" : ""));
+          c.type = "button";
+          c.dataset.k = "fact|" + d.id;
+          c.title = d.answered ? "change it: " + d.ask : d.ask;
+          c.append(el("b", "dvh", d.label), el("span", "dvh", ", "),
+                   d.answered ? el("span", "dans", d.answered)
+                              : el("span", "dhint", d.ask));
+          c.addEventListener("click", () => { asking = asking === d.id ? null : d.id; draw(); });
+          if (q && q.id === d.id) { const w2 = el("div", "dqbox"); w2.append(c); td.append(w2); }
+          else td.append(c);
+        }
+        tr.append(th, td);
+        table.append(tr);
+        rowLi.set(d.id, td);       // the ask lands in the cell, like any row
+      }
+      li.append(table);
+      tree.append(li);
+      continue;
+    }
     const ul = el("ul");
     for (const [p, d] of list) {
       const row = rowOf(d);
@@ -1392,7 +1488,7 @@ function chairArea(parent, who, ideasOnly) {
             model = say(model, who, "bar:" + b);
             if (model !== before) push(false);
             draw(); });
-          rail.append(btn);
+          rail.append(btn, " ");
         }
         if (wr[hand]) {
           const back = el("button", "dmark dback", "let the plan have it back");
@@ -1416,16 +1512,27 @@ function chairArea(parent, who, ideasOnly) {
         b.type = "button";
         b.dataset.k = "mark|" + who + "|" + mk.w;
         b.addEventListener("click", () => { barMarks.set(who, ix); draw(); });
-        mrow.append(b);
+        mrow.append(b, " ");
       });
       ask.append(mrow);
     }
-    const grid = el("div", "dgrid");
-    grid.append(el("span", "dghead dgcorner", ""));
-    for (const c of ["one", "two", "three", "four"]) grid.append(el("span", "dghead", c));
+    // THE BAR AS A REAL <table> (the basic-HTML reset): column heads
+    // one..four, row heads the beat/e/and/a, and every cell the same
+    // labeled checkbox it always was \u2014 class .dopt, the whole counted
+    // sentence for its word (the contract), native checked state. The
+    // gates' `.dgrid .dopt input` selector reads it unchanged.
+    const grid = el("table", "dgrid");
+    { const thr = el("tr");
+      thr.append(el("th"));
+      for (const c of ["one", "two", "three", "four"]) {
+        const th = el("th", null, c); th.scope = "col"; thr.append(th);
+      }
+      const thead = el("thead"); thead.append(thr); grid.append(thead); }
+    const gbody = el("tbody");
     const SUBS = ["\u00b7", "e", "and", "a"];
     for (let sub = 0; sub < 4; sub++) {
-      grid.append(el("span", "dglead", SUBS[sub]));
+      const gtr = el("tr");
+      { const th = el("th", null, SUBS[sub]); th.scope = "row"; gtr.append(th); }
       for (let beat = 0; beat < 4; beat++) {
         const i = beat * 4 + sub;
         const entry = byId.get(marks[mi].id(i));
@@ -1439,7 +1546,8 @@ function chairArea(parent, who, ideasOnly) {
         // vanish from the bar. Only the theme's vocabulary has tie: ids —
         // every other chair's grid is untouched.
         const tieE = byId.get("tie:" + i);
-        grid.append(optWidget(stepWord(i), "dopt dcell" + (on ? " on" : "") +
+        const td = el("td");
+        td.append(optWidget(stepWord(i), "dopt dcell" + (on ? " on" : "") +
                               (tieE && tieE.active ? " dtied" : ""), {
           kind: "checkbox", name: "bar-" + who, on, dead,
           key: "opt|" + who + "|grp:the bar|" + (entry ? entry.id : i),
@@ -1452,8 +1560,11 @@ function chairArea(parent, who, ideasOnly) {
             said.set("grp:the bar", stepWord(i));
             draw();
           } }));
+        gtr.append(td);
       }
+      gbody.append(gtr);
     }
+    grid.append(gbody);
     ask.append(grid);
   }
   // THE KEY IS A CIRCLE. "what key are we in?" draws as the object a
@@ -1463,40 +1574,46 @@ function chairArea(parent, who, ideasOnly) {
   if (q.id === "key" && who === "arranger") {
     ask.append(keyCircle(q, who));
   } else {
-  // a big bundle of options scans as aligned columns, not a ragged wrap
-  // (PLAN: "the bundle of options is hard to scan") — same words, same
-  // widgets, only the layout
-  const row = el("div", "dopts" + (q.opts.length > 8 ? " dmany" : ""));
-  // ...and an interview decision marked `multi` (the engineer's channel
-  // treatments) is a toggle set too — several of its words lit at once
+  // an interview decision marked `multi` (the engineer's channel
+  // treatments) is a toggle set — several of its words lit at once
   const kind = q.id.startsWith("grp:") || q.multi ? "checkbox" : "radio";
   // LABELED ROWS, NOT WORD-PILES: when every option names its row (the
   // kick:, the filter:, pianos:…), the options group under those labels in
-  // the order a musician lists them
+  // the order a musician lists them — plain block labels in the flow,
+  // real <optgroup>s in a select
   let opts2 = q.opts;
   const rowed = opts2.length > 0 && opts2.every(o => o.row);
   if (rowed) {
     const at = (r) => { const ix = ROWORDER.indexOf(r); return ix < 0 ? ROWORDER.length : ix; };
     opts2 = [...opts2].sort((a, b) => at(a.row) - at(b.row));
   }
-  let lastRow = null;
-  for (const o of opts2) {
-    if (rowed && o.row !== lastRow) { row.append(el("span", "drowlab", o.row)); lastRow = o.row; }
-    row.append(optWidget(o.w, "dopt" + (o.on ? " on" : "") +
-                               (!o.on && o.istrue ? " istrue" : ""), {
-      kind, name: "q-" + who + "-" + q.id, on: o.on, dead: o.dead,
-      key: "opt|" + who + "|" + q.id + "|" + o.w,
-      take: () => {
-        const before = model;
-        o.take();
-        if (model !== before) { push(false); announce(who, null); }
-        // a checkbox set stays on the floor — lighting one treatment is not
-        // the end of the question the way choosing a radio is
-        asking = q.multi ? q.id : null;
-        draw();
-      } }));
+  const fire = (o) => () => {
+    const before = model;
+    o.take();
+    if (model !== before) { push(false); announce(who, null); }
+    // a checkbox set stays on the floor — lighting one treatment is not
+    // the end of the question the way choosing a radio is
+    asking = q.multi ? q.id : null;
+    draw();
+  };
+  if (kind === "radio" && opts2.length > LONG) {
+    // a long one-of-N is the browser's own dropdown (selectOf's law)
+    ask.append(selectOf(opts2.map((o) => ({ w: o.w, row: o.row, on: o.on,
+      dead: o.dead, istrue: o.istrue, take: fire(o) })),
+      { ask: q.ask, key: "sel|" + who + "|" + q.id }));
+  } else {
+    const row = el("div", "dopts");
+    let lastRow = null;
+    for (const o of opts2) {
+      if (rowed && o.row !== lastRow) { row.append(el("div", "drowlab", o.row)); lastRow = o.row; }
+      row.append(optWidget(o.w, "dopt" + (o.on ? " on" : "") +
+                                 (!o.on && o.istrue ? " istrue" : ""), {
+        kind, name: "q-" + who + "-" + q.id, on: o.on, dead: o.dead,
+        key: "opt|" + who + "|" + q.id + "|" + o.w,
+        take: fire(o) }), " ");
+    }
+    ask.append(row);
   }
-  ask.append(row);
   }
   // THE ESCAPE IS A WIDGET OF THE QUESTION, not an option (the keyCircle
   // law: the circle is a rendering of the key question). A `chg:<role>`
@@ -1619,6 +1736,29 @@ function playWord(onNow) {
   b.classList.toggle("on", isOn);
 }
 on("transport:state", () => playWord());
+
+/* ---------- the volume ---------- */
+// THE LISTENER'S KNOB (Paul: "I need a volume slider on the top very
+// badly"). A plain <input type=range> over the DEVICE volume — ui/state.js
+// setVol writes VOLSTORE ("nukernel.vol.v1"), the same setting the daw's
+// fader keeps — never the engineer's desk: those answers are mix OFFSETS on
+// the voices, this is the master the parent engine smooths on the audio
+// thread, and the two must not fight. audio/live.js already rides the value
+// both ways: `masterVol: vol / 100` when the engine opens (so a level set
+// before the first play is the level the first bar sounds at) and
+// handle.setMasterVol on every "transport" commit (so a drag mid-bar is
+// heard mid-bar). A fresh device starts at FULL: the store's own default
+// (80) predates this knob being visible anywhere on this page, and a knob
+// that boots at four-fifths looks broken; a device that has ever set a
+// level keeps it.
+try { if (localStorage.getItem("nukernel.vol.v1") == null) setVol(100); } catch (e) {}
+{
+  const volEl = $("dvol");
+  if (volEl) {
+    volEl.value = String(vol);
+    volEl.addEventListener("input", () => { setVol(+volEl.value); commit("transport"); });
+  }
+}
 
 /* ---------- the beat counter and the change countdown ---------- */
 // PLAN Phase 1a: the transport SAYS where it is (bar.beat) and WHEN a change

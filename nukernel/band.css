@@ -1,112 +1,57 @@
-/* band.css — PLAIN HTML (PLAN.md Phase 1). This file used to be chrome over
-   hw.css + drums.css; now it is the band page's ONLY stylesheet and it tries
-   to say as little as possible: system fonts, thin rules, whitespace, and
-   default-looking buttons whose words do the work. Two things it must still
-   do, because a gate measures them:
-   - .dwrap is THE scroll container (band-page.test.js scrolls it and reads
-     scrollTop), so the header stays put and the page scrolls under it;
-   - state classes (.on/.now/.open) must be VISIBLE, since the sounding box
-     and the answered word are read off the screen. */
+/* band.css — BASIC HTML (2026-08-21, Paul: "Just use basic HTML for
+   everything right now… Don't style at all"). The browser's own widgets do
+   the talking now — visible radios/checkboxes/selects, default buttons,
+   native fieldset borders, native list indents — and this file says only
+   what a stylesheet still MUST say:
+   - the one layout fact a gate measures: .dwrap is THE scroll container
+     (band-page.test.js scrolls it and reads scrollTop), so the header
+     stays put and the page scrolls under it;
+   - state-swap rules: the states the eye reads off the screen (the seat
+     you are in, the sounding section, the fact being re-asked, the mark in
+     hand, the theme in hand) that no native widget carries;
+   - the words that are for assistive tech only (.dvh).
+   No fonts, no colors beyond state, no borders, no radius/shadows/
+   transforms. With CSS off the page reads as the same document. */
 
-* { box-sizing: border-box; }
 html, body { height: 100%; }
-body { margin: 0; background: #fff; color: #000;
-  font-family: system-ui, sans-serif; line-height: 1.45; }
-
-main { height: 100%; max-width: 44rem; margin: 0 auto; padding: 0 12px;
-  display: flex; flex-direction: column; }
-header { flex: none; padding: 10px 0 8px; border-bottom: 1px solid #000; }
-h1 { margin: 0 0 6px; font-size: 1.25rem; }
-.dtransport { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
-.dbeat, .dpending { font-variant-numeric: tabular-nums; }
-/* the change countdown is LINES under the transport, not a "; " string: one
-   line per landing bar, soonest first, at most two, then "+ n more waiting" */
-.dpending { flex: 1 0 100%; }
-.dpending .dpmore { color: #555; }
-
+body { margin: 0; }
+main { height: 100%; display: flex; flex-direction: column; }
+header { flex: none; }
 /* the one scrolling pane: everything below the transport */
-.dwrap { flex: 1 1 auto; min-height: 0; overflow-y: auto;
-  -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
-  padding: 12px 0 3rem; }
+.dwrap { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 
-button { font: inherit; }
-h2 { margin: 0 0 6px; font-size: 1.05rem; }
-/* a section heading IS the button that puts its questions on the floor */
-h2 .dmod { font: inherit; font-weight: bold; }
-.dsect { margin: 10px 0 14px; }
-hr { border: 0; border-top: 1px solid #000; margin: 14px 0; }
-.dprose { margin: 6px 0; max-width: 38em; }
-
-/* the theme, written down (PLAN Phase 2): the staff in a plain bordered box.
-   abcjs sizes its SVG to its own staff width; the box holds it to the prose
-   measure and lets it shrink with the column. */
-.dstaff { margin: 10px 0; padding: 8px 10px 4px; border: 1px solid #000;
-  max-width: 38em; }
-.dstaff figcaption { font-weight: bold; }
-/* two themes: the one in the editing hand carries the heavier border, and
-   its name — a button once a second theme exists — is the thing you tap.
-   (The page's bare .on law paints things black; a staff is INK, so the box
-   says its state with the border and stays paper.) */
-.dstaff.on { border-width: 2px; background: #fff; color: #000; }
-.dthemepick { border: none; background: none; font: inherit; font-weight: bold;
-  padding: 0; cursor: pointer; text-decoration: underline; }
-.dthemepick.on { text-decoration: none; }
-.dstaffsvg svg { max-width: 100%; height: auto; }
-/* hear it on the piano — the theme alone, beside the staff it prints */
-.dhear { border: 1px solid #000; background: #fff; padding: 1px 8px;
-  cursor: pointer; margin: 4px 0 2px; }
-
-/* rows of plain controls, wrapping */
-.dopts { display: flex; flex-wrap: wrap;
-  gap: 6px; margin: 6px 0; align-items: stretch; }
-/* a SECTION is an outline row now (2026-08-21), not a box in a bunched row:
-   the same plain-row treatment as the chairs' facts — the role bold, the
-   bars beside it, anything said about the section trailing dim */
-.dsong .dsec, .dadd { display: block; width: 100%; border: 0; background: none;
-  text-align: left; padding: 1px 4px 1px 0; cursor: pointer; font: inherit; }
-.dsong .dsec b { font-weight: bold; margin-right: .5em; }
-.dsec i, .dseat i, .ddiff { font-style: normal; }
-.ddiff { opacity: .65; margin-left: .5em; }
-.dadd { opacity: .65; }
-
-/* state the eye needs: the answered word, the chair you are in, the box
-   that is sounding, the fact being re-asked */
-.on, .dopt.on, .dseat.on, .dfact.open, .dmod.on { background: #000; color: #fff; }
-.dsec.now { background: #000; color: #fff; }
-.dsec.open { outline: 2px solid #000; outline-offset: 1px; }
-.dopt.istrue { text-decoration: underline; }
-.dopt[disabled] { opacity: .4; }
-
-.dask { margin: 10px 0; }
-.dq { margin: 10px 0 4px; font-size: 1rem; font-weight: bold; }
-.dagain { border-style: dashed; }
-
-/* ---- the accessibility layer: none of this changes the look ---- */
 /* words for AT and nobody else: the comma in a box's name, the hint a
    title used to hoard, the one-shot change announcement (#dlive) */
 .dvh { position: absolute; width: 1px; height: 1px; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-/* a question is a real fieldset now; strip the UA chrome so it still
-   reads as plain text on the page (.dq styles the legend) */
-fieldset.dask { border: 0; padding: 0; min-width: 0; }
-.dask legend { padding: 0; }
-/* an option is a label over a real radio/checkbox: the input is for the
-   keyboard and the screen reader (hidden but focusable), the label keeps
-   the plain-button look the buttons had */
-.dopt { position: relative; border: 1px solid #000; background: #fff;
-  padding: 1px 8px; cursor: pointer; }
-.dopt input { position: absolute; opacity: 0; width: 1px; height: 1px;
-  margin: 0; pointer-events: none; }
-.dopt:has(> input:focus-visible) { outline: 2px solid #000; outline-offset: 1px; }
-.dopt:has(> input:disabled) { opacity: .4; }
 
-/* ---- the circle of fifths: the key question ---- */
-/* twelve majors on the outer ring (C at the top, sharps clockwise), their
-   relative minors inside at the same hour. Pure arrangement over the plain
-   .dopt labels — each one rotates to its hour, walks out along the radius
-   and rotates back upright — so with the stylesheet off the same labels
-   read as a list in fifths order. The two thin ring strokes are the box's
-   own before/after; nothing here is an image or a library. */
+/* state the eye needs and no native widget says: the area/chair that holds
+   the floor, the sounding section (the playhead), the open section, the
+   fact being re-asked, the mark in hand, the theme node in hand. Checked
+   radios/checkboxes and selected options say their own state natively. */
+.dmark.on, .dmod.on, .dseat.on, .dsec.now,
+.dfact.open, .dthemepick.on, .dtnode.on { background: #000; color: #fff; }
+.dsec.open { outline: 2px solid; }
+.dstaff.on { outline: 2px solid; }   /* the staff is INK; a background would drown it */
+/* an option that is already true but was not the word you said */
+.dopt.istrue { text-decoration: underline; }
+/* a word that cannot be said yet (its input is disabled) greys whole */
+.dopt:has(> input:disabled) { opacity: .4; }
+/* the tie shows through every mark: a place held through ("hold it") keeps
+   its say whichever mark is in hand */
+.dgrid .dcell.dtied { text-decoration: underline; }
+/* the engraving shrinks with the column instead of overflowing it */
+.dstaffsvg svg { max-width: 100%; height: auto; }
+
+/* ---- the circle of fifths: THE sanctioned exception ---- */
+/* Paul, mid-reset, verbatim: "Keep the circle of fifths!!!" — so this block
+   survives the basic-HTML rule whole. It is pure ARRANGEMENT over the same
+   plain radio-labels every other question renders: twelve majors on the
+   outer ring (C at the top, sharps clockwise), relative minors inside at
+   the same hour, each label rotated to its hour, walked out the radius and
+   rotated back upright. The two thin ring strokes are the box's own
+   before/after. With the stylesheet off the same labels read as a list in
+   fifths order. The picker's root ring (.dpcircle) rides the same rules. */
 .dcircle { position: relative; width: 21em; height: 21em;
   font-size: clamp(.72rem, 3.6vw, 1rem); margin: 10px auto; }
 .dcircle::before, .dcircle::after { content: ""; position: absolute;
@@ -115,134 +60,19 @@ fieldset.dask { border: 0; padding: 0; min-width: 0; }
 .dcircle::before { width: 17.4em; height: 17.4em; }
 .dcircle::after  { width: 10.4em; height: 10.4em; }
 .dcircle .dopt { position: absolute; left: 50%; top: 50%; margin: 0;
-  white-space: nowrap;
+  white-space: nowrap; background: #fff;
   transform: translate(-50%, -50%) rotate(var(--a))
              translateY(calc(var(--r) * -1)) rotate(calc(var(--a) * -1)); }
 .dcircle .dko { --r: 8.7em; }
-.dcircle .dki { --r: 5.2em; font-size: .85em; border-color: #888; }
+.dcircle .dki { --r: 5.2em; font-size: .85em; }
 .dcircle .da0  { --a: 0deg; }   .dcircle .da1  { --a: 30deg; }
 .dcircle .da2  { --a: 60deg; }  .dcircle .da3  { --a: 90deg; }
 .dcircle .da4  { --a: 120deg; } .dcircle .da5  { --a: 150deg; }
 .dcircle .da6  { --a: 180deg; } .dcircle .da7  { --a: 210deg; }
 .dcircle .da8  { --a: 240deg; } .dcircle .da9  { --a: 270deg; }
 .dcircle .da10 { --a: 300deg; } .dcircle .da11 { --a: 330deg; }
-
-/* ---- the count row: the bar as a 4x4 grid ---- */
-/* columns one..four, rows the beat / e / and / a; a cell's tapped word is
-   still the whole counted sentence (the contract), the grid is the look —
-   so the sentence is visually clipped to its cell, not restated 16 times */
-.dmarks { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 2px;
-  align-items: baseline; }
-.dmarklab { opacity: .6; }
-.dmark { border: 1px dashed #000; background: #fff; padding: 1px 8px;
-  cursor: pointer; }
-.dmark.on { background: #000; color: #fff; border-style: solid; }
-.dgrid { display: grid; grid-template-columns: auto repeat(4, 1fr);
-  gap: 4px; max-width: 26em; margin: 6px 0; align-items: stretch; }
-.dghead, .dglead { opacity: .6; text-align: center; align-self: center; }
-.dgrid .dcell { text-align: center; overflow: hidden; white-space: nowrap;
-  text-overflow: clip; min-width: 0; }
-/* the tie shows through every mark: a place held through ("hold it", the
-   theme grid's 2) keeps a heavy underline whichever mark is in hand */
-.dgrid .dcell.dtied { box-shadow: inset 0 -4px 0 #000; }
-/* the row label a bundle of options sits under (the kick:, the filter:,
-   pianos:) — a label, never a control, and it starts its own line */
-.drowlab { flex-basis: 100%; margin-top: 6px; opacity: .7; font-style: italic; }
-.drowlab:first-child { margin-top: 0; }
-/* the record's computed length, printed on the form node as a fact */
-.dlen { margin: 4px 0 0; opacity: .7; }
-
-/* ---- the outline: the question graph as a tree (PLAN Phase 2) ---- */
-/* plain nested lists; the indent guide is a thin left rule, because the
-   NESTING is the information — a child row is a question that only exists
-   because of its parent's answer */
-.dtree, .dtree ul { list-style: none; margin: 6px 0; padding: 0; }
-.dtree ul { margin: 2px 0 2px 5px; padding-left: 12px; border-left: 1px solid #999; }
-.dtree > li { margin: 0 0 10px; }
-/* a branch heading — a label over its questions, never a control */
-.dthead { display: block; font-size: .78rem; letter-spacing: .08em;
-  text-transform: uppercase; opacity: .6; margin: 0 0 2px; }
-/* a row is the same tappable .dfact it always was, laid out as a two-column
-   line: the label column left, the answer (or the still-open ask) beside it
-   — which is what makes a bundle of facts read as a table */
-.dtree .dfact { display: block; width: 100%; border: 0; background: none;
-  text-align: left; padding: 1px 4px 1px 0; cursor: pointer; font: inherit; }
-.dtree .dfact b { display: inline-block; min-width: 8.5em; font-weight: normal;
-  opacity: .65; vertical-align: top; }
-.dtree .dfact .dans { font-weight: bold; }
-.dtree .dfact .dhint { opacity: .5; font-style: italic; }
-/* an answered fact whose re-ask has nothing to change to renders as plain
-   text — a dead question is not a button */
-.dtree .dfact.dflat { cursor: default; }
-/* the row whose question currently holds the floor: the row and its open
-   question are ONE dashed box (.dqbox wraps the .dfact and the .dask) —
-   the label you tapped at the top, the options inside the dashes */
-.dtree .dqbox { outline: 1px dashed #000; padding: 2px 5px 5px;
-  margin: 1px -5px 10px; }
-.dtree .dqbox .dask { margin: 2px 0 0; }
-.dtree .dfact.open b, .dtree .dfact.open .dhint { opacity: 1; }
-/* an open section's questions, as the same tree (the player's own words
-   nested under the player) */
-.dsectree > li { margin: 0 0 6px; }
-/* a question opens IN PLACE (2026-08-21): the fieldset sits inside the
-   tapped row's own <li>, directly under the row — the outline expands at
-   that node and the page grows vertically */
-.dtree .dask { margin: 4px 0 10px; }
-/* the band as an outline: each chair a top-level node whose label is the
-   .dseat button, the open seat's whole sheet nested beneath its node */
-.dband .dseat { text-align: left; }
-.dband > li > .dtree { margin: 6px 0 4px 5px; padding-left: 12px;
-  border-left: 1px solid #999; }
-/* a big bundle of options scans as aligned columns, not a ragged wrap */
-.dopts.dmany { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5em, 1fr)); }
-.dopts.dmany .drowlab { grid-column: 1 / -1; }
-.dopts.dmany .dopt { text-align: left; }
-
-/* ---- the theme nodes and the sentence strip (THE THEME COMPOSER) ---- */
-/* a theme's node heading becomes a button once two themes exist — the same
-   small-caps dthead look, tappable; the node in the editing hand is lit by
-   the page's own .on law */
-.dtnode { border: 0; background: none; cursor: pointer; padding: 0 2px;
-  text-align: left; }
-.dtnode.on { opacity: 1; }
-/* the node not in hand keeps one dim line saying what its theme is */
-.dthemesum { opacity: .65; font-style: italic; }
-/* the sentence, measure by measure: a filled place is a note starting, the
-   low dash after it is the note still sounding through — the tie made
-   visible, across the barline when it crosses one — and the word beside
-   the measure is its role in the sentence */
-.dsent { margin: 2px 0 8px; }
-.dsentbar { display: flex; align-items: center; gap: 10px; margin: 3px 0; }
-.dsentcells { display: inline-flex; align-items: center; gap: 2px; flex: none; }
-.dsentcells i { width: 9px; height: 12px; border: 1px solid #bbb; }
-.dsentcells i.dbeat { margin-right: 6px; }   /* the beat boundary breathes */
-.dsentcells i.dnote { background: #000; border-color: #000; }
-.dsentcells i.dtiec { height: 4px; border: 0; background: #000; }
-.dsentrole { opacity: .65; font-style: italic; font-size: .85rem;
-  min-width: 0; }
-
-/* ---- the through-composed theme (2026-08-21) ---- */
-/* the sentence strip's role word is a BUTTON now — tapping a measure puts
-   that bar in the editing hand — and a written bar says so, upright */
-button.dsentrole { border: 0; background: none; cursor: pointer;
-  text-align: left; padding: 0; }
-button.dsentrole.dwr { opacity: 1; font-style: normal; font-weight: bold; }
-/* the bar rail over the count grid: which measure the grid is aimed at */
-.dbarrail { margin-top: 8px; }
-.dmark.dback { border-style: solid; border-color: #888; }
-/* the changes picker: a bar list under the chg question; the root wears the
-   key circle's own paint, smaller — twelve degrees round the record's key */
-.dpick { margin: 8px 0 2px; }
-.dpick .dfact.dchgx, .dpick .dpickbar { display: block; width: 100%;
-  border: 0; background: none; text-align: left; cursor: pointer;
-  padding: 2px 0; }
-.dpick .dpickbar b { display: inline-block; min-width: 4.5em;
-  font-weight: normal; opacity: .65; }
-.dpick .dpickbar .dans { font-weight: bold; }
-.dpick .dpickbar.open .dans { text-decoration: underline; }
+/* the changes picker's root, on the circle's own paint, smaller */
 .dpick .dcircle.dpcircle { width: 15em; height: 15em; margin: 8px auto; }
 .dpick .dpcircle::before { width: 12.4em; height: 12.4em; }
 .dpick .dpcircle::after { display: none; }
 .dpick .dpcircle .dko { --r: 6.2em; font-size: .85em; }
-.dpickfoot { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0 2px; }
-.dpickfoot .dmark:disabled { opacity: .35; cursor: default; }
