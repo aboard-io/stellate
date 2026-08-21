@@ -1528,6 +1528,21 @@
           params: { ...base.params, voice: V.n,
             vowel: word[0],
             breath: mp("breath", 0.05, 0, 0.6),
+            // THE FOLD'S SLOW DRIFT (voice_lead.dsp `sway`) — a held note out
+            // of a formant bank is the same spectrum for its whole length,
+            // because the tables do not move. This is a slow LFO on `push`, so
+            // it opens and closes the voice at the SAME loudness rather than
+            // breathing on the fader (the measurement against the free
+            // alternative, insert_filtersweep, is in the module's header).
+            // DEFAULT ZERO: every anchor that does not ask is byte-identical,
+            // checked sample-for-sample.
+            sway: mp("sway", 0, 0, 0.5),
+            // ...and the same drift on the FILTERBANK, which is where most of
+            // the movement is: the formant centres wander instead of standing
+            // still under a held note. Vowel-table units, kept well under 1 so
+            // a mouth drifts rather than being overruled.
+            vowelSway: mp("vowelSway", 0, 0, 2),
+            swayRate: mp("swayRate", 0.13, 0.01, 2),
             vibrato: mp("vibrato", 0.012, 0, 0.05),
             vibRate: mp("vibRate", 5.4, 3, 8),
             vibRise: mp("vibRise", 0.6, 0.05, 3),
@@ -2406,6 +2421,25 @@
       wob: clamp(state.wob || 0, 0, 1),
       tsat: clamp(state.tsat != null ? state.tsat : 0.18, 0, 1),
       mrev: clamp(state.mrev != null ? state.mrev : 0.07, 0, 0.5),
+      // ── THE MASTER'S OWN BILL (2026-08-21). Four per-stage trims and the
+      // compressor's parallel dry path, all of them IDENTITIES by default, so
+      // every state that has never heard of them writes exactly the value the
+      // DSP already had and renders byte-for-byte what it rendered before
+      // (proven: the whole master stage over a 60 s record, cmp-identical
+      // old wasm vs new at defaults).
+      // They exist because the master's four character controls were also
+      // volume controls and nothing said so: drive +1.47 LUFS at "warm", glue
+      // +0.87 at "glue", the pair +2.20 — all of it paid for in crest and kick
+      // attack. A caller with a master surface (nukernel's desk, audio/desk.js
+      // masterState) now measures its own stages and hands the bill back here:
+      //   gtrim/ctrim/ttrim  per-stage output trims (grit / glue / tape)
+      //   dtrim              the DRY side of the `space` crossfade
+      //   cpar               how much uncompressed signal rides under the glue
+      gtrim: clamp(state.gtrim != null ? state.gtrim : 1, 0.05, 2),
+      ctrim: clamp(state.ctrim != null ? state.ctrim : 1, 0.05, 2),
+      ttrim: clamp(state.ttrim != null ? state.ttrim : 1, 0.05, 2),
+      dtrim: clamp(state.dtrim != null ? state.dtrim : 1, 0.05, 2),
+      cpar: clamp(state.cpar || 0, 0, 1),
     };
   }
   const MASTER_AIR_SHELF_DB = -3;   // dB above the fx_bus AIR_FC (8 kHz) — the headphone ask

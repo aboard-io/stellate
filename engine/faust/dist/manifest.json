@@ -3857,22 +3857,31 @@
   "params": [
    "/fx_bus/bps",
    "/fx_bus/comp",
+   "/fx_bus/cpar",
    "/fx_bus/crackle",
+   "/fx_bus/ctrim",
    "/fx_bus/dcut",
    "/fx_bus/dfb",
    "/fx_bus/dgain",
    "/fx_bus/dtime",
+   "/fx_bus/dtrim",
    "/fx_bus/grit",
+   "/fx_bus/gtrim",
    "/fx_bus/highcut",
    "/fx_bus/lowcut",
    "/fx_bus/mcut",
+   "/fx_bus/mrev",
    "/fx_bus/ppfb",
    "/fx_bus/pptime",
    "/fx_bus/pptone",
    "/fx_bus/pump",
    "/fx_bus/rgain",
    "/fx_bus/rtone",
-   "/fx_bus/scmix"
+   "/fx_bus/scmix",
+   "/fx_bus/shelf",
+   "/fx_bus/tsat",
+   "/fx_bus/ttrim",
+   "/fx_bus/wob"
   ]
  },
  "gtr_amp": {
@@ -4679,11 +4688,14 @@
    "/voice_lead/level",
    "/voice_lead/push",
    "/voice_lead/release",
+   "/voice_lead/sway",
+   "/voice_lead/swayRate",
    "/voice_lead/vibRate",
    "/voice_lead/vibRise",
    "/voice_lead/vibrato",
    "/voice_lead/voice",
-   "/voice_lead/vowel"
+   "/voice_lead/vowel",
+   "/voice_lead/vowelSway"
   ]
  },
  "vp330": {

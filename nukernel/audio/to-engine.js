@@ -521,10 +521,46 @@ export function voiceForInstr(id, tone) {
   const word = String(M.vowels || P.vowels || "a");
   const ph = (P.phase || 0) % word.length;
   const set = {
-    voice: M.voice || P.voice,
+    // WHO IS SINGING. `voice` is the formant TABLE — five throats, and the
+    // parent's VOICE_TYPE carries each one's compass beside it, so the choice
+    // moves the register fold too (state-engine's singer case reads it back
+    // out as freqMin/freqMax and a line that runs off the top of a bass is
+    // folded rather than sung where nobody has that throat). A genre may say it
+    // in its mouth block; the CHAIR says it flat, because a panel word writes
+    // one key on the tone (chair.js) and a voice type is not a mouth's shape,
+    // it is whose mouth it is.
+    voice: M.voice || t.voice || P.voice,
     vowels: word.slice(ph) + word.slice(0, ph),
     vowelEvery: M.syll != null ? M.syll : P.syll,
-    breath: dial(M.air, choir ? 0.22 : 0.14, 0.6),
+    // AIR IS SEASONING, NOT THE TONE. This dial was 0.14 (a breath of 0.084
+    // against the module's 0..0.6) and the voice read airy on nearly every
+    // record — measured on the module at the velocity the chair actually
+    // sends (push 0.653), the aperiodic energy above 4 kHz was 2.8 dB UNDER
+    // the harmonic energy there and ABOVE it at the softer end of the melody
+    // layer's own velocities. That is a whisper's balance, not a singer's.
+    // Halved to 0.07 (breath 0.042), which lands the same measurement at
+    // -9.1 dB above 4 kHz and -21.9 dB above 2 kHz: tone first, air on top.
+    // A WHISPER IS STILL REACHABLE — a genre writing air 1 gets 0.588, and
+    // the module's own breath-before-the-vowel (voice_tract.lib `fric` rides
+    // the gate for ~30 ms) is untouched, which is the h the chair's "a breath
+    // first" is actually asking for.
+    breath: dial(M.air, choir ? 0.22 : 0.07, 0.6),
+    // THE VOICE MOVES. A formant bank holds one spectrum for the length of a
+    // note, which is the one thing this model does worse than a recording.
+    // `sway` is a slow LFO on the glottal fold and `vowelSway` the same LFO on
+    // the filterbank — the formant centres themselves — and the module's header
+    // carries the measurement that chose them over the free alternative (an
+    // insert_filtersweep on the unit, which buys a third of the colour for
+    // twice the level wobble). Subtle by default rather than off, because what
+    // it fixes is what the voice sounds like when nobody has said anything.
+    //   ONE WORD, TWO AXES. The chair says how much the tone moves and the
+    // ratio is decided here, where a musical judgement belongs: the mouth
+    // carries five times the fold, and it is CAPPED at 0.9 of a vowel step so
+    // that "let it swell and fade" is still singing the genre's own vowel.
+    // Neither can make the voice airier — the drift is one-sided (see the
+    // module) — so no answer here can undo the breath number above.
+    sway: clamp(t.sway != null ? t.sway : 0.12, 0, 0.5),
+    vowelSway: clamp((t.sway != null ? t.sway : 0.12) * 5, 0, 0.9),
     cutoff: cut,
     // a mouth cannot open in three milliseconds and a section cannot open in
     // thirty, so the genre's attack is a floor away from the module's edge
@@ -639,6 +675,14 @@ export function mouthForInstr(id, tone, padish) {
     nasal: dial(M.nasal, P.nasal, 1),
     fric: dial(M.hiss, P.hiss, 1),
     voiced: clamp(M.voiced != null ? M.voiced : 1, 0, 1),
+    // 1, NOT THE SINGERS' 0.6, and that is the tube's own range rather than a
+    // slip: tract_voice.dsp declares `breath` 0..1 where voice_lead declares it
+    // 0..0.6, because a tract's breath is the glottal leak of a MODEL that also
+    // has a fricative of its own and a whole mouth to shape it, while the
+    // singer's is raw noise summed into a formant bank and 0.6 of that is
+    // already past a whisper. Each dial is held against its OWN module's
+    // declared top — checked, both — which is the whole point of the bounds
+    // paragraph above.
     breath: dial(M.air, P.air, 1),
     vibrato: dial(M.vib, P.vib, 0.05),
     cutoff: cut,

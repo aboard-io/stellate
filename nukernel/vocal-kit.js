@@ -45,9 +45,34 @@
   };
   const REG = { low: { w: "down low", v: -1 }, mid: { w: "where it sits", v: 0 },
                 high: { w: "up high", v: 1 } };
+  // AT THE MIC. Four words, and two of them are new because the singer was the
+  // one chair with nothing to say about the instrument itself.
+  //   `voice` is WHOSE THROAT — the five formant tables the parent has carried
+  // all along (engine/faust/voices/state-engine.js VOICE_TYPE, five voice types
+  // straight out of the CSOUND manual's measured tables) and which nothing in
+  // this box had ever asked for. It is a real difference and not a transpose:
+  // the same A3 through the five throats measures 709-881 Hz of spectral
+  // centroid, and each type carries its own COMPASS, so choosing one also moves
+  // where the line sits (a bass tops out at 330 Hz where a soprano starts at
+  // 247 and runs to 1047, and the register law folds the part into it).
+  //   `sway` is whether the tone MOVES — a slow drift on the glottal fold, so a
+  // held note stops being one spectrum for its whole length. It sits at a
+  // subtle default rather than off, because the thing it fixes is what the
+  // voice sounds like when nobody has said anything.
+  //   BOTH LAND ON THE MODELLED SINGER (solo_vox -> voice_lead) and are carried
+  // and unread by the three sampled choirs, exactly as `wave` and `q` already
+  // are in every tone block this chair writes: a recording has one throat and
+  // one dynamic, which is the argument the formant model exists to answer.
   const PANEL = [
+    { id: "who", ask: "how high is the voice?", key: "voice", opts: [
+      { w: "a soprano", v: "soprano" }, { w: "an alto", v: "alto" },
+      { w: "a countertenor", v: "countertenor" }, { w: "a tenor", v: "tenor" },
+      { w: "a bass", v: "bass" } ] },
     { id: "cut", ask: "how bright is the voice?", key: "cut", opts: [
       { w: "dark", v: 900 }, { w: "warm", v: 1800 }, { w: "airy", v: 4200 } ] },
+    { id: "mov", ask: "does the tone move?", key: "sway", opts: [
+      { w: "it sits still", v: 0 }, { w: "let it drift", v: 0.12 },
+      { w: "let it swell and fade", v: 0.22 } ] },
     { id: "atk", ask: "how does it come in?", key: "atk", opts: [
       { w: "straight away", v: 0.02 }, { w: "a breath first", v: 0.18 },
       { w: "swelling in", v: 0.7 } ] },
