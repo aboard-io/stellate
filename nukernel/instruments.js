@@ -634,15 +634,29 @@
     // amplifier, which is what those three words have always meant. The sampled
     // trio are three separate recordings pretending to be that, and none of them
     // can be played quietly.
+    // ...RE-STAGED 2026-08-21 ("blues are very saturated almost like thrash"):
+    // measured offline (4-note riff, A2 region, crest factor / spectral tilt),
+    // the old crunch (string drive .55 into higain .32 level .7) played at
+    // +14.3 dB over the jazz box and its crest collapsed to 9.5 dB at a hard
+    // pick — overdrive territory (9.0), thrash to the ear. Crunch means the
+    // EDGE of breakup: string drive .26, one stage at .14, level .42 measures
+    // (at the page's true cab) crest 13.6 dB mid / 10.7 hard against jazz
+    // 13.4/14.1 and overdrive 8.9/7.6 — the warm side of the fence — and
+    // +6.5 dB over the jazz box instead of +16.4. Digging in still
+    // compresses, which is what an amp on the edge does; it no longer
+    // becomes a different amp.
     crunch_guitar:     { dsp: "stk_guitar",
-      inserts: [{ type: "higain", gate: 0.3, drive: 0.32, stages: 1,
-        low: 0.55, mid: 0.5, high: 0.44, presence: 0.4, level: 0.7, mix: 1 }],
+      inserts: [{ type: "higain", gate: 0.3, drive: 0.14, stages: 1,
+        low: 0.55, mid: 0.5, high: 0.44, presence: 0.4, level: 0.42, mix: 1 }],
       set: (M) => ({
-      drive: 0.55, pluckPos: 0.16, pickup: 0.2, bright: 0.58, ring: 5.0,
+      drive: 0.26, pluckPos: 0.16, pickup: 0.2, bright: 0.58, ring: 5.0,
       cutoff: M.cab, release: M.rel }) },
+    // (the drive and the two stages ARE rock's sound and stay; only the
+    // insert's output comes down 2.7 dB with the same measurement — the tier
+    // sat +12.7 dB over the jazz box, level .5 lands it at +10)
     overdrive_guitar:  { dsp: "stk_guitar",
       inserts: [{ type: "higain", gate: 0.35, drive: 0.5, stages: 2,
-        low: 0.55, mid: 0.48, high: 0.42, presence: 0.42, level: 0.68, mix: 1 }],
+        low: 0.55, mid: 0.48, high: 0.42, presence: 0.42, level: 0.5, mix: 1 }],
       set: (M) => ({
       drive: 0.58, pluckPos: 0.16, pickup: 0.22, bright: 0.58, ring: 5.5,
       cutoff: M.cab, release: M.rel }) },

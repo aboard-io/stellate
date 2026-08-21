@@ -438,7 +438,7 @@
        Every groove here is from the drummer's own "the old world" family,
        every bass word from the two period instruments the bass chair
        gained, and the lute is the nylon-string said plainly. */
-    chant:    { w: "a chant record", fam: "the old world", bpm: 72, chords: "plain",
+    chant:    { w: "a chant record", fam: "the old world", scale: "mode", bpm: 72, chords: "plain",
                 when: ["the six-hundreds", "the twelve-hundreds"], where: ["Rome", "Paris"],
                 venue: ["a cathedral", "a chapel"],
                 gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "out",
@@ -452,7 +452,7 @@
                 styles: ["hold the root", "octaves"],
                 instr: ["an upright bass", "a cello"],
                 chg: ["a pedal", "one chord, all night"] },
-    organum:  { w: "an organum", fam: "the old world", bpm: 72, chords: "plain",
+    organum:  { w: "an organum", fam: "the old world", scale: "mode", bpm: 72, chords: "plain",
                 when: ["the twelve-hundreds"], where: ["Paris", "Reims"],
                 venue: ["a cathedral"],
                 gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "out",
@@ -464,7 +464,7 @@
                 styles: ["hold the root", "octaves"],
                 instr: ["an upright bass", "a cello"],
                 chg: ["a pedal", "one chord, all night"] },
-    trobar:   { w: "a troubadour song", fam: "the old world", bpm: 96, chords: "plain",
+    trobar:   { w: "a troubadour song", fam: "the old world", scale: "mode", bpm: 96, chords: "plain",
                 when: ["the twelve-hundreds", "the thirteen-hundreds"],
                 // Reims is the trouvères' Champagne — the northern answer to
                 // the troubadours, and what keeps that city's door two-wide
@@ -480,7 +480,7 @@
                 styles: ["hold the root", "root and fifth"],
                 instr: ["an upright bass", "a cello"],
                 chg: ["a pedal", "a descending line"] },
-    estampie: { w: "an estampie", fam: "the old world", bpm: 120, chords: "plain",
+    estampie: { w: "an estampie", fam: "the old world", scale: "mode", bpm: 120, chords: "plain",
                 when: ["the thirteen-hundreds"], where: ["Paris", "Provence"],
                 venue: ["a village green", "a court"],
                 gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "ring",
@@ -492,7 +492,7 @@
                 styles: ["hold the root", "octaves"],
                 instr: ["an upright bass", "a cello"],
                 chg: ["a pedal", "one chord, all night"] },
-    pavane:   { w: "a pavane", fam: "the old world", bpm: 72, chords: "plain",
+    pavane:   { w: "a pavane", fam: "the old world", scale: "mode", bpm: 72, chords: "plain",
                 // ...into the sixteen-hundreds honestly: Dowland's pavans and
                 // Sweelinck's keyboard ones are 1600s music
                 when: ["the fifteen-hundreds", "the sixteen-hundreds"], where: ["Antwerp", "London"],
@@ -506,7 +506,7 @@
                 styles: ["hold the root", "root and fifth"],
                 instr: ["an upright bass", "a cello"],
                 chg: ["the old passamezzo", "a descending line"] },
-    monody:   { w: "the new music", fam: "the old world", bpm: 72, chords: "sus",
+    monody:   { w: "the new music", fam: "the old world", scale: "mode", bpm: 72, chords: "sus",
                 // the Camerata met through the 1590s; Le nuove musiche is
                 // 1602 — the practice straddles the century line. And the
                 // opera house is monody's own child (Peri, Monteverdi), which
@@ -524,7 +524,7 @@
                 styles: ["hold the root", "walk it"],
                 instr: ["a cello", "an upright bass"],
                 chg: ["a descending line", "a pedal"] },
-    concerto: { w: "a concerto", fam: "the old world", bpm: 120, chords: "sevens",
+    concerto: { w: "a concerto", fam: "the old world", scale: "mode", bpm: 120, chords: "sevens",
                 // Corelli's concerto grosso is the 1680s: the form starts in
                 // the sixteen-hundreds and peaks in the seventeen-hundreds
                 when: ["the sixteen-hundreds", "the seventeen-hundreds"],
@@ -539,7 +539,7 @@
                 styles: ["driving eighths", "walk it", "hold the root"],
                 instr: ["a cello", "an upright bass"],
                 chg: ["a descending line", "two-five-one"] },
-    vienna:   { w: "a Viennese classic", fam: "the old world", bpm: 120, chords: "plain",
+    vienna:   { w: "a Viennese classic", fam: "the old world", scale: "mode", bpm: 120, chords: "plain",
                 when: ["the seventeen-hundreds"], where: ["Vienna"],
                 venue: ["a salon", "a court", "a concert hall"],
                 gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "out",
@@ -552,7 +552,7 @@
                 styles: ["hold the root", "root and fifth", "walk it"],
                 instr: ["an upright bass", "a cello"],
                 chg: ["two-five-one", "the doo-wop changes"] },
-    nocturne: { w: "a nocturne", fam: "the old world", bpm: 72, chords: "sevens",
+    nocturne: { w: "a nocturne", fam: "the old world", scale: "mode", bpm: 72, chords: "sevens",
                 when: ["the eighteen-hundreds"], where: ["Paris", "Vienna"],
                 venue: ["a salon", "a parlor"],
                 gtr: ["a nylon-string", "a jazz box"], gjob: "out",
@@ -564,7 +564,7 @@
                 styles: ["hold the root", "octaves"],
                 instr: ["an upright bass", "a cello"],
                 chg: ["the doo-wop changes", "a descending line"] },
-    romantic: { w: "a romantic symphony", fam: "the old world", bpm: 72, chords: "sevens",
+    romantic: { w: "a romantic symphony", fam: "the old world", scale: "mode", bpm: 72, chords: "sevens",
                 when: ["the eighteen-hundreds"], where: ["Vienna", "Paris"],
                 venue: ["a concert hall", "an opera house"],
                 gtr: ["a nylon-string", "a jazz box"], gjob: "out",
@@ -577,7 +577,7 @@
                 styles: ["hold the root", "walk it", "octaves"],
                 instr: ["a cello", "an upright bass"],
                 chg: ["a descending line", "two-five-one", "a minor vamp"] },
-    salon:    { w: "a barcarolle", fam: "the old world", bpm: 72, chords: "plain",
+    salon:    { w: "a barcarolle", fam: "the old world", scale: "mode", bpm: 72, chords: "plain",
                 swing: "shuffle",   // the 6/8 rock is the triplet feel, honestly
                 when: ["the eighteen-hundreds"], where: ["Paris", "Vienna"],
                 venue: ["a salon", "an opera house"],
@@ -590,7 +590,7 @@
                 styles: ["hold the root", "root and fifth"],
                 instr: ["a cello", "an upright bass"],
                 chg: ["the doo-wop changes", "a pedal"] },
-    parlor:   { w: "a parlor song", fam: "the old world", bpm: 96, chords: "plain",
+    parlor:   { w: "a parlor song", fam: "the old world", scale: "mode", bpm: 96, chords: "plain",
                 when: ["the eighteen-hundreds"], where: ["New York", "London"],
                 venue: ["a parlor", "a salon"],
                 gtr: ["a steel-string acoustic", "a nylon-string"], gjob: "strum",
@@ -1799,8 +1799,17 @@
       // which is what asking meant
       g = spaceOut(g, SPACE[m.song.space || "none"]);
       // ...and what each player is doing HERE, if they said
+      // ...and a canned drum part needs a KIT, the same law the default
+      // lift below already follows: on a kitless groove ("nobody on the
+      // kit") the chorus's role default "busier" and the tag's "sparser"
+      // FABRICATE hits from an empty bar — sixteen hats over a concerto, a
+      // backbeat under a chant — because their fns write lanes rather than
+      // thickening ones that exist. So a part nobody said stands down when
+      // the record has nothing on the kit; a part somebody actually
+      // ANSWERED still wins, which is what asking meant.
+      const drumsAsked = ((m.per || {})[i] || {}).drums != null;
       const dsec = SECDRUMS[per.drums];
-      if (dsec && dsec.fn) {
+      if (dsec && dsec.fn && (drumsAsked || !kitlessOf(g))) {
         g.kit = dsec.fn(g.kit);
         g.kits = (g.kits || []).map((b) => dsec.fn(b));
       }
@@ -1859,7 +1868,7 @@
       // what they said — the arc is what happens when nobody did.
       if (shape && shape.lvl && !((m.per || {})[i] || {}).mix) box.lvl = shape.lvl;
       if (shape && shape.busier && !((m.per || {})[i] || {}).drums &&
-          !(SPACE[m.song.space || "none"] || {}).bars)
+          !(SPACE[m.song.space || "none"] || {}).bars && !kitlessOf(g))
         { const fn = SECDRUMS.busier.fn; g.kit = fn(g.kit); g.kits = (g.kits || []).map(fn); }
       // THE MELODY IS ITS OWN LAYER. A two-bar phrase cannot ride the bar
       // clock the rhythm section keeps — the kernel reads a phrase's own
@@ -2362,6 +2371,18 @@
                       tone: ggTone, pad: gg.pad,
                       ...(gg.fifths ? { fifths: true } : {}) }];
     const dg = D.toGenre(drums);
+    // THE TUNE'S ALPHABET IS THE RECORD'S OWN, when the record says so.
+    // kernel.js reads `g.scale || PENT` for every line part, so a record
+    // that declares nothing sings minor pentatonic whatever its harmony
+    // says — right for a rock riff, and "the blues scale" over a 1600s
+    // monody. An old-world record declares scale:"mode": the tune walks
+    // the same diatonic colour the arranger called (mcolor moves the mode
+    // and the alphabet together, so the lamento minor IS the tune's
+    // notes). The hand's own answer ("what notes is the tune made of?")
+    // lands in toSong's Ask.merge, OVER this — asked outranks the record.
+    const ownScale = gk && gk.scale
+      ? (gk.scale === "mode" ? (MODES ? MODES[modeKeyOf(m.song)] : null) : gk.scale)
+      : null;
     // `changes` arrives three ways: the RESOLVED object (toSong's own calls,
     // through changesOf), a catalog key (older callers and the gates), or
     // nothing — the verse's own resolution, exactly what it always meant
@@ -2410,6 +2431,7 @@
       // dorian and major still ionian (the page's shipped defaults, held so
       // no saved session moves); the mcolor answer reaches the kernel here
       mode: MODES ? MODES[modeKeyOf(m.song)] : undefined,
+      ...(ownScale ? { scale: ownScale } : {}),
       artic: bass.artic || (gk && gk.artic) || undefined,
       bassArtic: bass.artic || (gk && gk.artic) || undefined,
       // A RECORD BRINGS ITS OWN LINE. House is offbeats, techno is an acid

@@ -1007,7 +1007,10 @@
     // — a clean guitar dug into gets dirtier, it does not become a stack, and
     // the six recipes' three-amounts-of-amplifier identity survives velocity.
     // The offset rides mapEvents' dyn write (see the "rel" branch there).
-    stk_guitar:  { pick: [0.12, 1], drive: [-0.10, 0.10, "rel"] },
+    // (drive span halved 2026-08-21: ±0.10 took the crunch tier from the
+    // edge of breakup to a second amp at a hard pick — the blues-like-thrash
+    // round; ±0.05 keeps velocity dirtying the note without recasting it)
+    stk_guitar:  { pick: [0.12, 1], drive: [-0.05, 0.05, "rel"] },
     stk_piano:   { hammer: [0.3, 1] },
     mallet:      { hard: [0.05, 1] },
     voice_lead:  { push: [0.06, 0.95] },
