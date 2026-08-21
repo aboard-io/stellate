@@ -523,8 +523,10 @@ function sectionArea(parent) {
           model = setSection(model, section, a2.id, o.key);
           push(false);
           // scoped to THIS section: the change can only be heard when the
-          // section next comes round, and the countdown says so
-          announceChange(a2.who + " in the " + (here ? here.role : "section"), section);
+          // section next comes round, and the countdown says so — the label
+          // stays the unique key; who/role are the words the phrasing uses
+          announceChange(a2.who + " in the " + (here ? here.role : "section"), section,
+                         { who: a2.who, role: here ? here.role : "section" });
           draw();
         } }));
     }
@@ -1091,7 +1093,7 @@ requestAnimationFrame(tick);
 /* ---------- the transport ---------- */
 // START AGAIN — the whole session, not one chair. Every chair has its own
 // `start over` on its own sheet; this is the one that puts the room back to
-// empty, so the next record can begin from "what decade is it?" rather than
+// empty, so the next record can begin from "when is it?" rather than
 // from whatever the last one decided.
 $("dreset").addEventListener("click", () => {
   if (playing) { stop(); playWord(); }
@@ -1136,25 +1138,56 @@ on("transport:state", () => playWord());
 // plain text off the engine's own feeds — audio/live.js emits "pos" once per
 // beat and "pending" once per count — so this is rendering, not timekeeping.
 const beatEl = $("dbeat"), pendEl = $("dpending"), liveEl = $("dlive");
-const pend = new Map();                       // label -> beats left
+const pend = new Map();                       // label -> the last "pending" payload
 on("pos", (d) => {
   beatEl.textContent = "bar " + (d.bar + 1) + "." + d.beat;
 });
+// SPEAK LIKE A MUSICIAN, NOT A LOG. "the melody in the drop — changes in 21
+// beats; the drums in the drop — changes in 21 beats" was true and unreadable:
+// the big number was left to explain, by itself, that the drop is far away.
+// So a section-scoped landing SAYS WHY ("the drums change when the drop comes
+// round — 21", off the feed's own `round`), an imminent one just counts ("the
+// melody changes in 5"), everything landing on the SAME bar is one sentence,
+// lines run soonest first, at most two, and the rest is "+ n more waiting".
+const pluralish = (w) => { const t = w.split(" ").pop();
+  return t.length > 1 && t.slice(-1) === "s" && t !== "bass"; };
+function pendPhrase(names, d) {
+  const subj = names.length === 1 ? names[0]
+    : names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
+  const verb = (names.length > 1 || pluralish(subj)) ? "change" : "changes";
+  return d.round && d.role
+    ? subj + " " + verb + " when the " + d.role + " comes round — " + d.beatsLeft
+    : subj + " " + verb + " in " + d.beatsLeft;
+}
+function drawPending() {
+  const at = new Map();                       // landsSerial -> one line's facts
+  for (const p of pend.values()) {
+    const g = at.get(p.landsSerial) ||
+      { s: p.landsSerial, names: [], beatsLeft: p.beatsLeft, round: false, role: null };
+    if (g.names.indexOf(p.who || p.label) < 0) g.names.push(p.who || p.label);
+    g.beatsLeft = Math.min(g.beatsLeft, p.beatsLeft);
+    if (p.round && !g.round) { g.round = true; g.role = p.role; }
+    at.set(p.landsSerial, g);
+  }
+  const lines = [...at.values()].sort((a, b) => a.s - b.s);
+  pendEl.textContent = "";
+  for (const g of lines.slice(0, 2))
+    pendEl.append(el("div", "dpline", pendPhrase(g.names, g)));
+  if (lines.length > 2)
+    pendEl.append(el("div", "dpmore", "+ " + (lines.length - 2) + " more waiting"));
+}
 on("pending", (d) => {
   // beatsLeft 0 is the landing: the change is in the air, so the line goes
   if (d.beatsLeft === 0) pend.delete(d.label);
   else {
-    // ...and a screen reader hears the countdown ONCE, when its label first
+    // ...and a screen reader hears each promise ONCE, when its label first
     // appears: one polite write per new label, never per beat tick — the
     // ticking stays in #dpending, which is not live on purpose
     if (!pend.has(d.label) && liveEl)
-      liveEl.textContent = d.label + " — changes in " + d.beatsLeft +
-        (d.beatsLeft === 1 ? " beat" : " beats");
-    pend.set(d.label, d.beatsLeft);
+      liveEl.textContent = pendPhrase([d.who || d.label], d);
+    pend.set(d.label, d);
   }
-  pendEl.textContent = [...pend.entries()]
-    .map(([l, n]) => l + " — changes in " + n + (n === 1 ? " beat" : " beats"))
-    .join("; ");
+  drawPending();
 });
 on("transport:state", () => {
   if (!playing) { pend.clear(); beatEl.textContent = ""; pendEl.textContent = "";

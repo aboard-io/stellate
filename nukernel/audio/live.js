@@ -202,6 +202,7 @@ function onBar(info) {
     if (info.serial >= p.landsSerial) {
       pendings.delete(p.label);
       emit("pending", { label: p.label, beatsLeft: 0,
+                        who: p.who, role: p.role, si: p.si, round: p.round,
                         landsBar: p.landsBar, landsSerial: p.landsSerial });
     }
   if (st.state === "starting") settle("full");
@@ -488,9 +489,18 @@ function tickPos() {
     for (let s = curBar.serial + 1; s < p.landsSerial; s++)
       left += barBeatsAt(barOfSerial(s));
     const whole = Math.max(1, Math.ceil(left));   // 0 is the landing's to say
+    // A COUNTDOWN NEVER TICKS UP BY ONE. Bar anchors ride the engine's own
+    // clock, so a downbeat can land a hair later than the last bar's
+    // arithmetic promised and the ceil wobbles 12 -> 13 -> 12 at the bar
+    // line. Hold the shown number through a one-beat blip; a real stall
+    // (two beats or more — the ring starving under load) re-syncs honestly,
+    // because a countdown that lies for minutes is worse than one that
+    // jumps up once.
+    if (p.lastLeft != null && whole === p.lastLeft + 1) continue;
     if (p.lastLeft !== whole) {
       p.lastLeft = whole;
       emit("pending", { label: p.label, beatsLeft: whole,
+                        who: p.who, role: p.role, si: p.si, round: p.round,
                         landsBar: p.landsBar, landsSerial: p.landsSerial });
     }
   }
@@ -515,20 +525,31 @@ function stopPosFeed() {
 // box. The UI calls this right after push(); everything after that is the
 // ticker's countdown and the onBar clamp — including the crossfade path,
 // where the parent prunes bars and the change arrives early.
-export function announceChange(label, si) {
+export function announceChange(label, si, info) {
   if (!playing || !label) return;
   const n = barCount();
   if (!n) return;
   let lands = Math.max(lastAsked + 1, curBar ? curBar.serial + 1 : 0);
+  // DOES THE EAR WAIT FOR THE BOX TO COME ROUND? If the first unbaked serial
+  // is already inside the target box, the change lands THIS pass (imminent);
+  // if the scan had to advance past it, the landing is the section's next
+  // occurrence — which is the fact the page's phrasing hangs the big number
+  // on ("when the drop comes round — 21"). `round` says which.
+  let round = false;
   if (si != null) {
     const TL = timeline();
     for (let k = 0; k < n; k++)
       if (TL[barOfSerial(lands + k)] && TL[barOfSerial(lands + k)].si === si) {
-        lands += k; break;
+        lands += k; round = k > 0; break;
       }
   }
   pendings.set(label, { label, landsSerial: lands,
-                        landsBar: barOfSerial(lands), lastLeft: null });
+                        landsBar: barOfSerial(lands), lastLeft: null,
+                        // the words the page phrases the countdown with —
+                        // carried beside the old fields, never instead of them
+                        who: (info && info.who) || label,
+                        role: (info && info.role) || null,
+                        si: si != null ? si : null, round });
   tickPos();                       // say it now, not a tick later
 }
 
