@@ -240,7 +240,10 @@ function loadStaffLib() {
 const themeOf = (m, t) => (t === "b" ? m.ideaB : m.idea);
 const themeOpts = (m, t) => ({
   key: Band.B.KEYS[m.song.key] || 0,
-  mode: m.song.minor ? MODES.dorian : MODES.ionian,
+  // the arranger's colour answer included (band-kit modeKeyOf: unanswered,
+  // minor is still dorian and major still ionian) — the staff and the
+  // audition must not disagree with what toGenre hands the kernel
+  mode: MODES[Band.modeKeyOf(m.song)],
   reg: Band.Id.regOf(themeOf(m, t) || m.idea),
   bpm: m.song.bpm,
   // the LEAD part's own cap (kernel PARTS.lead maxHold), so the staff and
@@ -441,6 +444,64 @@ function optWidget(word, cls, { kind, name, on, dead, key, take }) {
   r.addEventListener("click", take);
   lab.append(r, document.createTextNode(word));
   return lab;
+}
+
+/* ---------- THE CIRCLE OF FIFTHS -----------------------------------------
+   The key question, drawn as the object musicians actually keep in their
+   heads: twelve majors on the outer ring in fifths order — C at the top,
+   sharps clockwise — and each key's RELATIVE minor on an inner ring at the
+   same hour. Every position is the same real radio-label every other
+   question renders (class .dopt, the exact option word, a hidden input
+   carrying the checked state), so the gates' textContent taps still land;
+   the roundness is band.css alone (absolute within a square box,
+   rotate/translate — no library, thin strokes), which means CSS-off
+   degrades to a readable list and a screen reader hears the plain fieldset
+   either way. The DOM order IS fifths order, so the keyboard tabs round
+   the circle. Tapping an inner minor answers TWO questions in one gesture
+   — the key of its relative major, then "minor" — because A minor IS
+   "in A, minor", and the answer machinery composes: two answer() calls on
+   an immutable model are exactly two taps' worth of truth. */
+const FIFTHS = ["C", "G", "D", "A", "E", "B", "F#", "Db", "Ab", "Eb", "Bb", "F"];
+// each hour's relative minor: [what the ring says, the key its TONIC answers]
+// — tapping Am must sound A minor ("in A", minor), never C minor at C's
+// hour; where the tonic's letter is not a KEYS spelling it lands on the
+// enharmonic key the table does carry (C#m -> "in Db", G#m -> "in Ab")
+const RELMIN = { C: ["Am", "A"], G: ["Em", "E"], D: ["Bm", "B"],
+                 A: ["F#m", "F#"], E: ["C#m", "Db"], B: ["G#m", "Ab"],
+                 "F#": ["D#m", "Eb"], Db: ["Bbm", "Bb"], Ab: ["Fm", "F"],
+                 Eb: ["Cm", "C"], Bb: ["Gm", "G"], F: ["Dm", "D"] };
+function keyCircle(q, who) {
+  const box = el("div", "dcircle");
+  const done = (before) => {
+    if (model !== before) { push(false); announce(who, null); }
+    asking = null; draw();
+  };
+  // the outer ring: the question's own options, placed by the hour
+  FIFTHS.forEach((k, i) => {
+    const o = q.opts.find((x) => x.w === "in " + k);
+    if (!o) return;
+    box.append(optWidget(o.w, "dopt dko da" + i + (o.on ? " on" : "") +
+                              (!o.on && o.istrue ? " istrue" : ""), {
+      kind: "radio", name: "q-" + who + "-" + q.id, on: o.on, dead: o.dead,
+      key: "opt|" + who + "|" + q.id + "|" + o.w,
+      take: () => { const before = model; o.take(); done(before); } }));
+  });
+  // the inner ring: the relative minors — one tap, two answers
+  FIFTHS.forEach((k, i) => {
+    if (!q.opts.some((x) => x.w === "in " + k)) return;
+    const [w, tonic] = RELMIN[k];
+    const on = model.song.key === tonic && !!model.song.minor;
+    box.append(optWidget(w, "dopt dki da" + i + (on ? " on" : ""), {
+      kind: "radio", name: "q-" + who + "-" + q.id + "-rel", on,
+      key: "opt|" + who + "|" + q.id + "rel|" + w,
+      take: () => {
+        const before = model;
+        model = answer(model, who, "key", "in " + tonic);
+        model = answer(model, who, "mode", "minor");
+        done(before);
+      } }));
+  });
+  return box;
 }
 
 // FOCUS OUTLIVES THE REBUILD. draw() replaces #dwrap wholesale, which used
@@ -723,6 +784,7 @@ const ROWORDER = ["the kick:", "the snare:", "the hats:", "the toms:",
    build/drop/break would name a role no box on screen has. */
 const QLABEL = {
   chords: "the chords",
+  mcolor: "the colour",
   "knob:scale": "the scale", "knob:diatonic": "following the chords",
   "knob:stress": "leaning on the beat", "knob:kitProb": "how many hats land",
   "knob:fill": "what fills are made of",
@@ -776,7 +838,7 @@ const qLabel = (who, id0) => {
 const OUTLINE = {
   arranger: [
     ["the record", ["when", "where", "venue", "genre"]],
-    ["the tune", ["key", "mode", "chords", "knob:scale", "knob:diatonic"]],
+    ["the tune", ["key", "mode", "mcolor", "chords", "knob:scale", "knob:diatonic"]],
     ["the time", ["tempo", "feel", "space"]],
     ["the form", ["form", "arc", "chg:*", "len:*", "end"]],
   ],
@@ -822,7 +884,8 @@ const OUTLINE = {
 // under. Only real dependencies are drawn — a nest that is merely thematic
 // would lie about the graph.
 const UNDER = {
-  arranger: { "chg:*": "form", "len:*": "form" },
+  // ...and the colour nests under the major/minor answer it refines
+  arranger: { "chg:*": "form", "len:*": "form", mcolor: "mode" },
   // ...named in both its costumes: the interview's row before it is
   // answered, the tray's subject ("what you are playing") after
   bass: { "at the machine": ["instr", "what you are playing"] },
@@ -1188,6 +1251,13 @@ function chairArea(parent, who, ideasOnly) {
     }
     ask.append(grid);
   }
+  // THE KEY IS A CIRCLE. "what key are we in?" draws as the object a
+  // musician keeps in their head — the circle of fifths — instead of a
+  // twelve-word pile (see keyCircle below). Same fieldset, same .dopt
+  // radio-labels, same exact words; only the arrangement is round.
+  if (q.id === "key" && who === "arranger") {
+    ask.append(keyCircle(q, who));
+  } else {
   // a big bundle of options scans as aligned columns, not a ragged wrap
   // (PLAN: "the bundle of options is hard to scan") — same words, same
   // widgets, only the layout
@@ -1222,6 +1292,7 @@ function chairArea(parent, who, ideasOnly) {
       } }));
   }
   ask.append(row);
+  }
   // THE RECORD'S LENGTH IS A FACT, NOT A QUESTION: the form × the lengths
   // already decide it, so the form node simply says what they add up to
   if (q.id === "form") {

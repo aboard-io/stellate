@@ -100,6 +100,33 @@ fieldset.dask { border: 0; padding: 0; min-width: 0; }
 .dopt:has(> input:focus-visible) { outline: 2px solid #000; outline-offset: 1px; }
 .dopt:has(> input:disabled) { opacity: .4; }
 
+/* ---- the circle of fifths: the key question ---- */
+/* twelve majors on the outer ring (C at the top, sharps clockwise), their
+   relative minors inside at the same hour. Pure arrangement over the plain
+   .dopt labels — each one rotates to its hour, walks out along the radius
+   and rotates back upright — so with the stylesheet off the same labels
+   read as a list in fifths order. The two thin ring strokes are the box's
+   own before/after; nothing here is an image or a library. */
+.dcircle { position: relative; width: 21em; height: 21em;
+  font-size: clamp(.72rem, 3.6vw, 1rem); margin: 10px auto; }
+.dcircle::before, .dcircle::after { content: ""; position: absolute;
+  left: 50%; top: 50%; transform: translate(-50%, -50%);
+  border: 1px solid #bbb; border-radius: 50%; }
+.dcircle::before { width: 17.4em; height: 17.4em; }
+.dcircle::after  { width: 10.4em; height: 10.4em; }
+.dcircle .dopt { position: absolute; left: 50%; top: 50%; margin: 0;
+  white-space: nowrap;
+  transform: translate(-50%, -50%) rotate(var(--a))
+             translateY(calc(var(--r) * -1)) rotate(calc(var(--a) * -1)); }
+.dcircle .dko { --r: 8.7em; }
+.dcircle .dki { --r: 5.2em; font-size: .85em; border-color: #888; }
+.dcircle .da0  { --a: 0deg; }   .dcircle .da1  { --a: 30deg; }
+.dcircle .da2  { --a: 60deg; }  .dcircle .da3  { --a: 90deg; }
+.dcircle .da4  { --a: 120deg; } .dcircle .da5  { --a: 150deg; }
+.dcircle .da6  { --a: 180deg; } .dcircle .da7  { --a: 210deg; }
+.dcircle .da8  { --a: 240deg; } .dcircle .da9  { --a: 270deg; }
+.dcircle .da10 { --a: 300deg; } .dcircle .da11 { --a: 330deg; }
+
 /* ---- the count row: the bar as a 4x4 grid ---- */
 /* columns one..four, rows the beat / e / and / a; a cell's tapped word is
    still the whole counted sentence (the contract), the grid is the look —

@@ -764,6 +764,40 @@
     return CALLED.filter((r) => want.has(r));
   };
 
+  /* ---------- THE COLOUR OF THE KEY --------------------------------------
+     "major or minor?" stays the first ask, exactly as it always was — and
+     behind it a colour question names WHICH minor (natural · dorian ·
+     harmonic · melodic minor) or WHICH major (major · mixolydian · lydian).
+     THE UNANSWERED DEFAULTS DO NOT MOVE: plain "minor" has meant dorian on
+     this page since the page existed, and every saved session
+     (nu.band.session replays the whole model) and every gate spine answered
+     "minor" into that sound — so dorian stays the silent default even
+     though aeolian is the commoner pop minor, and the colour question is
+     where "natural" becomes sayable out loud. Each row is
+     [key, the word said, the MODES key it plays]. */
+  const COLORS = {
+    minor: [["natural", "natural", "aeolian"],
+            ["dorian", "dorian", "dorian"],
+            ["harmonic", "harmonic", "harmonic"],
+            ["melodic", "melodic minor", "melodic"]],
+    major: [["major", "major", "ionian"],
+            ["mixo", "mixolydian", "mixo"],
+            ["lydian", "lydian", "lydian"]],
+  };
+  const colorOf = (s) => {
+    const list = COLORS[s.minor ? "minor" : "major"];
+    return list.some(([k]) => k === s.mcolor) ? s.mcolor
+      : (s.minor ? "dorian" : "major");   // a colour from the other family is no colour
+  };
+  // song -> the MODES key toGenre (and the staff, and the audition) plays
+  const modeKeyOf = (s) => COLORS[s.minor ? "minor" : "major"]
+    .find(([k]) => k === colorOf(s))[2];
+  const colorRow = (m) => ({ id: "mcolor", seat: "arranger",
+    ask: m.song.minor ? "what kind of minor?" : "what kind of major?",
+    opts: COLORS[m.song.minor ? "minor" : "major"].map(([k, w]) => ({
+      w, is: (s2) => colorOf(s2) === k,
+      apply: (s2) => ({ ...s2, mcolor: k }) })) });
+
   /* ---------- WHAT THE ARRANGER DECIDES ---------- */
   const ARR = [
     // ...and before the genre, the three things a genre is MADE of. Each
@@ -801,6 +835,11 @@
     { id: "mode", ask: "major or minor?", opts: [
       { w: "major", is: (s) => !s.minor, apply: (s) => ({ ...s, minor: false }) },
       { w: "minor", is: (s) => s.minor, apply: (s) => ({ ...s, minor: true }) } ] },
+    // ...and THE COLOUR behind it, the way a musician actually says it:
+    // "minor" is a family, not one scale, and the follow-up names which one
+    // (built per model in arrDecisionsNow/answer — the words depend on which
+    // half of "major or minor?" the room is in)
+    { id: "mcolor", color: true },
     { id: "form", ask: "what's the form?", opts:
       Object.entries(FORMS).map(([k, f]) => ({
         w: f.w, is: (s) => s.form === k, apply: (s) => ({ ...s, form: k }) })) },
@@ -920,6 +959,7 @@
         // it a punk record".
         ? { ...d, opts: d.opts.filter((o) =>
             survivors({ ...m.song, venue: null }).some(([, gk]) => gk.w === o.w)) }
+        : d.color ? colorRow(m)
         : d))
     .map((d) => ({
     // ...and an IDEA question is answered on the idea, not on the song, so
@@ -1313,7 +1353,8 @@
         : id.startsWith("len:") ? lenDecisions(m)
         : id.startsWith("chg:") ? callDecisions(m).map((x) => ({ ...x, seat: "arranger",
             opts: x.opts.map((o) => ({ ...o })) }))
-        : ARR.map((x) => (x.three ? { ...x, opts: threeOpts(m, x.id) } : x)))
+        : ARR.map((x) => (x.three ? { ...x, opts: threeOpts(m, x.id) }
+                          : x.color ? colorRow(m) : x)))
         .find((x) => x.id === id) || arrDecisions(m).find((x) => x.id === id);
       const o = d && d.opts.find((x) => x.w === w);
       if (!o) return m;
@@ -1334,6 +1375,14 @@
         return out2;
       }
       const song = { ...o.apply(m.song), answers: { ...(m.song.answers || {}), [id]: w } };
+      // A COLOUR BELONGS TO ITS FAMILY: crossing "major or minor?" to the
+      // other word takes the colour answer with it (chair.js spells this
+      // `invalidates`; the arranger's own walker does it by hand), so a
+      // harmonic minor never lingers on a record that just went major.
+      if (id === "mode" && (m.song.answers || {}).mode !== w) {
+        delete song.answers.mcolor;
+        if (song.mcolor) song.mcolor = null;
+      }
       let out = { ...m, song };
       // A SECOND THEME IS MADE THE MOMENT IT IS ASKED FOR — and it starts
       // as a CONTRAST, because that is what an answer is: where the tune
@@ -2069,7 +2118,10 @@
       // a band's pads are voice-led over a real progression, and this is the
       // room they are allowed to walk in
       padRoom: true,
-      mode: MODES ? (m.song.minor ? MODES.dorian : MODES.ionian) : undefined,
+      // ...in the colour the arranger called: unanswered, minor is still
+      // dorian and major still ionian (the page's shipped defaults, held so
+      // no saved session moves); the mcolor answer reaches the kernel here
+      mode: MODES ? MODES[modeKeyOf(m.song)] : undefined,
       artic: bass.artic || (gk && gk.artic) || undefined,
       bassArtic: bass.artic || (gk && gk.artic) || undefined,
       // A RECORD BRINGS ITS OWN LINE. House is offbeats, techno is an acid
@@ -2117,7 +2169,7 @@
   }
 
   return { SEATS, TAKEN, FORMS, CALLED, CHGROLE, GENRES, SPACE, ROLE, ENG, SECMIX, SECMOVE, mixOf, themeName,
-           resetSeat, randomSong,
+           resetSeat, randomSong, modeKeyOf,
            genreOf, rolesIn, asked, pending, sigOf, secSigOf, survivors, FIELDS3, Ask,
            secWords, partOf,
            blank, decisions, seatDecisions,

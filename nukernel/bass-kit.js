@@ -46,7 +46,16 @@
     descending: "a descending line", pedalpoint: "a pedal",
     passamezzo: "the old passamezzo",
   };
-  const KEYS = { C: 0, F: -7, G: 7, D: 2, A: -3, E: 4, Bb: -2, Eb: 3 };
+  // THE TWELVE KEYS, WHOLE (2026-08-21: it shipped with eight — no Ab, Db,
+  // B, F#, so a third of the circle of fifths was unsayable). The value is
+  // the semitone shift kernel.js adds to every pitch LAST, so the register
+  // convention is the law here: keep the tonic within ±7 of C — up a fifth
+  // for G, down a fifth for F (a bassist hears G above and F below), and
+  // every other key at its nearest representative — so no key ever moves a
+  // line further than the fifths already did. Append, never reorder: the
+  // question's option order and the saved sessions' words read this table.
+  const KEYS = { C: 0, F: -7, G: 7, D: 2, A: -3, E: 4, Bb: -2, Eb: 3,
+                 Ab: -4, Db: 1, B: -1, "F#": 6 };
   const STYLES = {
     root: "pedal", walk: "walk", octaves: "octaves", fifths: "fifths",
     eighths: "eighths", sixteenths: "sixteenths",

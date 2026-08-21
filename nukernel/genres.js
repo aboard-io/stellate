@@ -57,10 +57,19 @@
     ionian:   [0, 2, 4, 5, 7, 9, 11],
     lydian:   [0, 2, 4, 6, 7, 9, 11],
     melodic:  [0, 2, 3, 5, 7, 9, 11],
+    // ...and NATURAL MINOR ITSELF, sayable at last: the band page's colour
+    // question ("what kind of minor?") needed the word, and the table's own
+    // header has claimed "natural minor is the default" since the day it was
+    // written while carrying no key for it. The value IS this file's DIATONIC
+    // — the same [0,2,3,5,7,8,10] kernel.js names MODE ("natural minor") —
+    // shared by reference on purpose, not a lookalike literal: aeolian is not
+    // a new alphabet, it is the default one finally wearing its name.
+    aeolian:  DIATONIC,
   };
   const MODELABEL = { dorian: "dorian", phrygian: "phrygian",
                       harmonic: "harmonic", mixo: "mixolydian",
-                      ionian: "major", lydian: "lydian", melodic: "melodic minor" };
+                      ionian: "major", lydian: "lydian", melodic: "melodic minor",
+                      aeolian: "natural minor" };
 
   // SCALES — the SUBJECT's alphabet, offered per section. Swapping it changes
   // the chromatic width of a phrase without moving a single degree: the contour
