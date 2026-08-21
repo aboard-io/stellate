@@ -134,6 +134,14 @@ the star-cruise 3D video mode (`app/starcruise/`).
 MIT license (`vendor/simplex-noise/LICENSE`). Used by the star-cruise mode's
 procedural motion.
 
+## abcjs — vendored (MIT)
+
+vendor/abcjs/ — abcjs 6.7.0 (github.com/paulrosen/abcjs), MIT, Copyright (c)
+2009-2026 Paul Rosen and Gregory Dyke; license beside the build in
+vendor/abcjs/LICENSE. Used by the band page to engrave a record's theme as a
+staff: nukernel/ui/abc.js compiles the phrase to ABC and the vendored build
+draws the SVG.
+
 ## GoatCounter count.js — vendored (ISC)
 
 `vendor/goatcounter/count.js` is GoatCounter's browser counter (v4), © Martin

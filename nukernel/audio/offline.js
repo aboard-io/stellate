@@ -44,6 +44,12 @@ export function warmCache() {
     if (done.has(href) || urls.length >= CAP) return;
     done.add(href); urls.push(href);
   };
+  // (0) the STAFF — the theme renders as sheet music through the vendored
+  // abcjs chunk, which ui/band.js loads lazily on first need (a script
+  // element, never on boot). One same-origin file, and it goes in AHEAD of
+  // the cast so the CAP can never crowd it out: a warmed record must be able
+  // to draw its staff with the wire cut.
+  add("vendor/abcjs/abcjs-basic-min.js");
   // (a) the CRATE — drums and found sound, which carry their own paths
   try { for (const s of ((warmSources() || {}).samplerSrcs || []))
     add(s && (s.samplePath || s.path || s.url)); } catch (e) {}

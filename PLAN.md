@@ -42,6 +42,12 @@ Language pass, in the same phase (it changes what the outline says):
 
 - "ideas" → "themes" everywhere, with short text explaining what a theme is
   and the different things one can be (a hook, a riff, a figure, a chant).
+- A theme RENDERS AS SHEET MUSIC: notation via abcjs (github.com/paulrosen/
+  abcjs, MIT) — VENDORED locally like vendor/three (the CSP is same-origin
+  and the offline law holds: the page must draw the staff with the wire
+  cut). The theme's own phrase (deg/oct/gate + the record's key and mode)
+  compiles to an ABC string; abcjs draws the SVG staff beside the plain
+  controls.
 - Kill redundancy: never say "accent" five times in five options — say it
   once and offer the choices. Compose option bundles as TABLES with visual
   spacing, not word-piles.
