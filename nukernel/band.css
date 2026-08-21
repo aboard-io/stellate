@@ -220,3 +220,29 @@ fieldset.dask { border: 0; padding: 0; min-width: 0; }
 .dsentcells i.dtiec { height: 4px; border: 0; background: #000; }
 .dsentrole { opacity: .65; font-style: italic; font-size: .85rem;
   min-width: 0; }
+
+/* ---- the through-composed theme (2026-08-21) ---- */
+/* the sentence strip's role word is a BUTTON now — tapping a measure puts
+   that bar in the editing hand — and a written bar says so, upright */
+button.dsentrole { border: 0; background: none; cursor: pointer;
+  text-align: left; padding: 0; }
+button.dsentrole.dwr { opacity: 1; font-style: normal; font-weight: bold; }
+/* the bar rail over the count grid: which measure the grid is aimed at */
+.dbarrail { margin-top: 8px; }
+.dmark.dback { border-style: solid; border-color: #888; }
+/* the changes picker: a bar list under the chg question; the root wears the
+   key circle's own paint, smaller — twelve degrees round the record's key */
+.dpick { margin: 8px 0 2px; }
+.dpick .dfact.dchgx, .dpick .dpickbar { display: block; width: 100%;
+  border: 0; background: none; text-align: left; cursor: pointer;
+  padding: 2px 0; }
+.dpick .dpickbar b { display: inline-block; min-width: 4.5em;
+  font-weight: normal; opacity: .65; }
+.dpick .dpickbar .dans { font-weight: bold; }
+.dpick .dpickbar.open .dans { text-decoration: underline; }
+.dpick .dcircle.dpcircle { width: 15em; height: 15em; margin: 8px auto; }
+.dpick .dpcircle::before { width: 12.4em; height: 12.4em; }
+.dpick .dpcircle::after { display: none; }
+.dpick .dpcircle .dko { --r: 6.2em; font-size: .85em; }
+.dpickfoot { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0 2px; }
+.dpickfoot .dmark:disabled { opacity: .35; cursor: default; }

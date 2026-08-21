@@ -557,8 +557,11 @@
         apply: (m) => ({ ...m, fills: {} }) } ] },
   ];
   // the same grooves, asked the way a drummer would ask
+  // ...tacet is UNIVERSAL (2026-08-21, the chamber ballad): any drummer can
+  // sit out, whatever the family — "nobody on the kit" is not an old-world
+  // groove, it is the absence of one, and every record honestly has it
   const grooveOpts = (m) => Object.keys(GROOVES)
-    .filter((g) => (GROOVEFAM[g] || "other") === m.fam)
+    .filter((g) => (GROOVEFAM[g] || "other") === m.fam || g === "tacet")
     .map((g) => ({ w: (GROOVEWORD[g] || [g])[0],
       is: (mm) => JSON.stringify({ ...empty(), ...GROOVES[g] }) === JSON.stringify(mm.kit),
       apply: (mm) => ({ ...mm, kit: { ...empty(), ...GROOVES[g] }, fills: mm.fills }) }));

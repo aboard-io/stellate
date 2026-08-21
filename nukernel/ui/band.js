@@ -366,10 +366,14 @@ function themeNodeHead(t, edited) {
 // sentence's own carry/land, the only spans the kernel holds past the lead
 // part's cap — so a dash crossing from one row's end into the next row's
 // start IS the tie over the barline), and the measure's role in the
-// sentence said beside it in the writer's own words. Display only: no
-// button, no .dopt, so the gates' option counts and the one-question law
-// never see it. A one-measure theme has no sentence and no strip — its one
-// measure IS the count grid.
+// sentence said beside it in the writer's own words. The word is a real
+// BUTTON now (PLAN.md THE THROUGH-COMPOSED THEME): tapping a measure's row
+// puts that bar in the editing hand and opens the count grid — one tap from
+// "that bar is wrong" to editing it — and a WRITTEN bar says the honest
+// state, "written by hand", in place of its retired role word. This is the
+// "write this bar out?" question answered by DOING; no .dopt, so the gates'
+// option counts and the one-question law never see it. A one-measure theme
+// has no sentence and no strip — its one measure IS the count grid.
 function sentStrip(theme) {
   if (!theme || !theme.on) return null;
   const bars = Band.Id.barsOf(theme);
@@ -384,6 +388,7 @@ function sentStrip(theme) {
   }
   const rows = (Band.Id.SENTENCES[theme.sent || "plain"] || {}).rows;
   const rowOf = (rows && rows[bars]) || null;
+  const wr = Band.Id.wroteOf(theme);
   // the role words are the writer's, not the table's keys
   const ROLEW = { state: "says it", restate: "again, ending differently",
                   develop: "pushes it further", land: "lands on one note",
@@ -397,9 +402,16 @@ function sentStrip(theme) {
       cellsEl.append(el("i", (v === 1 ? "dnote" : v === 2 ? "dtiec" : "drest") +
                             (i % 4 === 3 && i < 15 ? " dbeat" : "")));
     }
-    row.append(cellsEl,
-      el("span", "dsentrole", rowOf ? (ROLEW[rowOf[b]] || rowOf[b])
-                                    : (b ? "the cell again" : "says it")));
+    const word = wr[b] ? "written by hand"
+      : rowOf ? (ROLEW[rowOf[b]] || rowOf[b]) : (b ? "the cell again" : "says it");
+    const aim = el("button", "dsentrole" + (wr[b] ? " dwr" : ""), word);
+    aim.type = "button";
+    aim.dataset.k = "sbar|" + b;
+    aim.addEventListener("click", () => {
+      model = say(model, "arranger", "bar:" + b);
+      module_ = "ideas"; section = null; asking = "grp:the bar";
+      push(false); draw(); });
+    row.append(cellsEl, aim);
     wrap.append(row);
   }
   return wrap;
@@ -423,7 +435,7 @@ function modButton(word, key) {
   b.type = "button";
   b.dataset.k = "mod|" + key;
   b.addEventListener("click", () => {
-    module_ = key; section = null; asking = null; draw(); });
+    module_ = key; section = null; asking = null; picker = null; draw(); });
   return b;
 }
 
@@ -504,6 +516,158 @@ function keyCircle(q, who) {
   return box;
 }
 
+/* ---------- CHANGES OF OUR OWN — the picker ------------------------------
+   (PLAN.md THE THROUGH-COMPOSED THEME §2.) A bar list, one row per chord:
+   tapping a row opens ITS controls below it (menus insert below the row,
+   never scrolling inside themselves) — the root on the circle-of-fifths
+   paint the key question already wears (twelve positions: the seven degrees
+   of the record's key and mode plus their borrowed neighbours, every one a
+   real .dopt radio-label), the quality, "two chords in this bar" (the
+   Em7|A7 bar) and "lean into the next" (dominantOf, stored as DATA in the
+   list — un-leaning is re-picking the root). Every edit lands through
+   Band.setChanges, the same public API the dice rolls through, so the
+   authored list's length IS the section's length the moment it is written.
+   CSS-off degrades to a readable fieldset — the circle is paint, the
+   controls are HTML (the keyCircle law). */
+let picker = null;                 // { role, open } — open = flat chord index
+const PCNAME = ["C", "Db", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+// the twelve root positions of the record's key/mode: diatonic degrees
+// exact, chromatic neighbours as the borrow that spells them
+function rootOpts() {
+  const md = MODES[Band.modeKeyOf(model.song)];
+  const base = Band.B.KEYS[model.song.key] || 0;
+  const out = [];
+  for (let i = 0; i < 12; i++) {
+    const pc = (7 * i) % 12;                 // fifths order round the circle
+    let d = md.indexOf(pc), borrow = 0;
+    if (d < 0) { d = md.indexOf((pc + 1) % 12); borrow = -1; }
+    if (d < 0) { d = md.indexOf((pc + 11) % 12); borrow = 1; }
+    if (d < 0) continue;
+    out.push({ w: PCNAME[((base + pc) % 12 + 120) % 12], d, borrow, hour: i });
+  }
+  return out;
+}
+const chordWord = (c) => {
+  const md = MODES[Band.modeKeyOf(model.song)];
+  const base = Band.B.KEYS[model.song.key] || 0;
+  const pc = ((base + md[((c.d % 7) + 7) % 7] + (c.borrow || 0)) % 12 + 120) % 12;
+  const q = { dom7: "7", maj7: "maj7", m7: "m7", 7: "7th", nine: "9",
+              sus4: "sus", six: "6", triad: "" }[c.q] || "";
+  return PCNAME[pc] + q;
+};
+function chgxWidget(role) {
+  const wrap = el("div", "dpick");
+  const authored = !!(model.song.chgx || {})[role];
+  const openBtn = el("button", "dfact dchgx" + (picker && picker.role === role ? " open" : ""),
+                     authored ? "our changes, bar by bar…" : "changes of our own…");
+  openBtn.type = "button";
+  openBtn.dataset.k = "chgx|" + role;
+  openBtn.addEventListener("click", () => {
+    picker = picker && picker.role === role ? null : { role, open: null };
+    draw(); });
+  wrap.append(openBtn);
+  if (!picker || picker.role !== role) return wrap;
+  // the list in hand: the authored one, else the catalog materialized —
+  // the escape starts from what you heard (a called lean included)
+  const c = Band.changesOf(model, role);
+  const list = authored ? JSON.parse(JSON.stringify(model.song.chgx[role]))
+    : c.leaned ? c.prog.map((b2) => (Array.isArray(b2) ? b2 : [b2])
+        .map((cc) => ({ d: cc.d, ...(cc.q ? { q: cc.q } : {}),
+                        ...(cc.borrow ? { borrow: cc.borrow } : {}) })))
+    : c.roots.map((d) => [{ d }]);
+  const write = (nl) => {
+    const before = model;
+    model = Band.setChanges(model, role, nl);
+    if (model !== before) { push(false); announce("arranger", null); }
+    draw(); };
+  // one row per CHORD, bars numbered, a split bar's second chord indented
+  const flat = [];
+  list.forEach((bar, bi) => bar.forEach((cc, ki) => flat.push({ cc, bi, ki })));
+  flat.forEach(({ cc, bi, ki }, ci) => {
+    const rowB = el("button", "dfact dpickbar" + (picker.open === ci ? " open" : ""));
+    rowB.type = "button";
+    rowB.dataset.k = "pbar|" + role + "|" + ci;
+    rowB.append(el("b", null, ki ? "and" : "bar " + (bi + 1)),
+                el("span", "dvh", ", "),
+                el("span", "dans", chordWord(cc)));
+    rowB.addEventListener("click", () => {
+      picker.open = picker.open === ci ? null : ci; draw(); });
+    wrap.append(rowB);
+    if (picker.open !== ci) return;
+    // the root, on the circle's own paint
+    const circle = el("div", "dcircle dpcircle");
+    for (const o of rootOpts()) {
+      const on2 = cc.d === o.d && (cc.borrow || 0) === o.borrow;
+      circle.append(optWidget(o.w, "dopt dko da" + o.hour + (on2 ? " on" : ""), {
+        kind: "radio", name: "pk-root-" + ci, on: on2,
+        key: "opt|arranger|chgx:" + role + ":root" + ci + "|" + o.w,
+        take: () => {
+          const nl = JSON.parse(JSON.stringify(list));
+          const t = nl[bi][ki];
+          t.d = o.d; if (o.borrow) t.borrow = o.borrow; else delete t.borrow;
+          write(nl); } }));
+    }
+    wrap.append(circle);
+    // the quality — plain, a seventh by function, or the record's own kind
+    const QROW = [["plain", (d) => "triad"],
+                  ["a seventh", (d) => Band.CHORDKIND.sevens.q(((d % 7) + 7) % 7)],
+                  ["the record’s own", () => null]];
+    const qrow = el("div", "dopts");
+    for (const [wq, fq] of QROW) {
+      const want = fq(cc.d);
+      const on2 = want === null ? cc.q == null : cc.q === want;
+      qrow.append(optWidget(wq, "dopt" + (on2 ? " on" : ""), {
+        kind: "radio", name: "pk-q-" + ci, on: on2,
+        key: "opt|arranger|chgx:" + role + ":q" + ci + "|" + wq,
+        take: () => {
+          const nl = JSON.parse(JSON.stringify(list));
+          const t = nl[bi][ki], want2 = fq(t.d);
+          if (want2 === null) delete t.q; else t.q = want2;
+          write(nl); } }));
+    }
+    // ...and the bar's two marks: the split, and the lean
+    const split = list[bi].length > 1;
+    qrow.append(optWidget("two chords in this bar", "dopt" + (split ? " on" : ""), {
+      kind: "checkbox", name: "pk-x-" + ci, on: split,
+      key: "opt|arranger|chgx:" + role + ":split" + ci + "|two chords in this bar",
+      take: () => {
+        const nl = JSON.parse(JSON.stringify(list));
+        nl[bi] = split ? [nl[bi][0]] : [nl[bi][0], { ...nl[bi][0] }];
+        write(nl); } }));
+    qrow.append(optWidget("lean into the next", "dopt" + (cc.q === "dom7" ? " on" : ""), {
+      kind: "checkbox", name: "pk-x-" + ci, on: cc.q === "dom7",
+      key: "opt|arranger|chgx:" + role + ":lean" + ci + "|lean into the next",
+      take: () => {
+        const nl = JSON.parse(JSON.stringify(list));
+        const next = flat[(ci + 1) % flat.length];
+        nl[bi][ki] = Band.dominantOf(list[next.bi][next.ki],
+                                     MODES[Band.modeKeyOf(model.song)]);
+        write(nl); } }));
+    wrap.append(qrow);
+  });
+  // the foot: grow, shrink, go round again
+  const foot = el("div", "dpickfoot");
+  const footBtn = (w, k, fn, dead) => {
+    const b2 = el("button", "dmark", w);
+    b2.type = "button"; b2.dataset.k = "pick|" + role + "|" + k;
+    if (dead) b2.disabled = true;
+    b2.addEventListener("click", fn);
+    foot.append(b2); };
+  footBtn("add a bar", "add", () => {
+    const nl = JSON.parse(JSON.stringify(list));
+    nl.push(JSON.parse(JSON.stringify(nl[nl.length - 1])));
+    write(nl); }, list.length >= 16);
+  footBtn("take a bar away", "cut", () => {
+    const nl = JSON.parse(JSON.stringify(list)); nl.pop();
+    write(nl); }, list.length <= 2);
+  footBtn("go round again", "loop", () => {
+    const nl = JSON.parse(JSON.stringify(list));
+    write(nl.concat(JSON.parse(JSON.stringify(nl))).slice(0, 16)); },
+    list.length > 8);
+  wrap.append(foot);
+  return wrap;
+}
+
 // FOCUS OUTLIVES THE REBUILD. draw() replaces #dwrap wholesale, which used
 // to drop keyboard focus to <body> on every answer. Every control carries a
 // stable data-k; before the rebuild we note where focus was, after it we put
@@ -537,8 +701,8 @@ function render(box) {
   // changed), and tapping another thing just opens that one instead.
   box.onclick = (e) => {
     if (e.target !== box) return;
-    if (asking == null && section == null) return;
-    asking = null; section = null; draw();
+    if (asking == null && section == null && picker == null) return;
+    asking = null; section = null; picker = null; draw();
   };
 
   // BEFORE THE COUNT-IN there is nothing to arrange: one sentence and one
@@ -762,7 +926,7 @@ const marksOf = (who) =>
 // never as a subject question of their own
 const MERGED = new Set(["octaves in the bar", "accents in the bar",
                         "notes in the bar", "slides in the bar",
-                        "higher", "lower", "held"]);
+                        "higher", "lower", "held", "the bar in hand"]);
 // the labeled rows, in the order a musician lists them — kit first, then
 // the machine panel, then the keys families
 const ROWORDER = ["the kick:", "the snare:", "the hats:", "the toms:",
@@ -800,11 +964,12 @@ const QLABEL = {
   "arranger:contour": "the shape", "arranger:land": "where it lands",
   "arranger:reg": "where it sits", "arranger:sent": "how it speaks",
   second: "a second theme",
+  reprise: "round again", doors: "how it opens and closes",
 };
 // the role a canonical section-role SHOWS on this record's boxes: the role
 // itself when a box carries it, else the first box whose changes it takes
 const roleShown = (r) => {
-  const secs = (Band.FORMS[model.song.form || "vamp"] || {}).secs || [];
+  const secs = Band.secsOf(model);          // the wrapped form — doors and all
   if (secs.includes(r)) return r;
   // several boxes can take one role's changes (a twelve-inch's intro, build
   // and break all take the verse's) — the OWNER a band would name is the one
@@ -819,6 +984,7 @@ const qLabel = (who, id0) => {
     return "the " + s2 + (s2 === r ? "" : "\u2019s") + " changes";
   }
   if (id.startsWith("len:")) return "how long the " + roleShown(id.slice(4)) + " runs";
+  if (id.startsWith("lean:")) return "what leans in the " + roleShown(id.slice(5));
   return QLABEL[who + ":" + id] || QLABEL[id] ||
     id.replace(/^(knob|grp):/, "").replace(/:/g, " ");
 };
@@ -840,7 +1006,8 @@ const OUTLINE = {
     ["the record", ["when", "where", "venue", "genre"]],
     ["the tune", ["key", "mode", "mcolor", "chords", "knob:scale", "knob:diatonic"]],
     ["the time", ["tempo", "feel", "space"]],
-    ["the form", ["form", "arc", "chg:*", "len:*", "end"]],
+    ["the form", ["form", "reprise", "doors", "arc", "chg:*", "lean:*",
+                  "len:*", "end"]],
   ],
   drums: [
     ["the record's kit", ["groove", "the machine"]],
@@ -885,7 +1052,8 @@ const OUTLINE = {
 // would lie about the graph.
 const UNDER = {
   // ...and the colour nests under the major/minor answer it refines
-  arranger: { "chg:*": "form", "len:*": "form", mcolor: "mode" },
+  arranger: { "chg:*": "form", "len:*": "form", mcolor: "mode",
+              reprise: "form", doors: "form" },
   // ...named in both its costumes: the interview's row before it is
   // answered, the tray's subject ("what you are playing") after
   bass: { "at the machine": ["instr", "what you are playing"] },
@@ -1201,6 +1369,43 @@ function chairArea(parent, who, ideasOnly) {
   // beat/e/and/a — with the MARK row above it choosing what a tap puts
   // there. A cell's word is stepWord's own sentence, byte for byte.
   if (q.bar) {
+    // THE BAR RAIL (PLAN.md THE THROUGH-COMPOSED THEME): a theme longer
+    // than a bar aims its count grid — bar one · bar two · … — driving the
+    // ideas kit's own `bar:` word. The grid below then shows the bar in
+    // hand (the cell actives read the hand's grid), a written bar's key
+    // says so in words, and a written bar in hand offers the way back.
+    if (who === "arranger") {
+      const theme = themeOf(model, themeNow()) || model.idea;
+      const tbars = Band.Id.barsOf(theme);
+      if (tbars > 1) {
+        const wr = Band.Id.wroteOf(theme), hand = Band.Id.handOf(theme);
+        const BW = ["bar one", "bar two", "bar three", "bar four"];
+        const rail = el("div", "dmarks dbarrail");
+        rail.append(el("span", "dmarklab", "bar"));
+        for (let b = 0; b < tbars; b++) {
+          const btn = el("button", "dmark" + (b === hand ? " on" : ""),
+                         BW[b] + (wr[b] ? " · written" : ""));
+          btn.type = "button";
+          btn.dataset.k = "bar|" + who + "|" + b;
+          btn.addEventListener("click", () => {
+            const before = model;
+            model = say(model, who, "bar:" + b);
+            if (model !== before) push(false);
+            draw(); });
+          rail.append(btn);
+        }
+        if (wr[hand]) {
+          const back = el("button", "dmark dback", "let the plan have it back");
+          back.type = "button";
+          back.dataset.k = "bar|" + who + "|back";
+          back.addEventListener("click", () => {
+            model = say(model, who, "back:hand");
+            push(false); announce(who, null); draw(); });
+          rail.append(back);
+        }
+        ask.append(rail);
+      }
+    }
     const marks = marksOf(who);
     const mi = Math.min(barMarks.get(who) || 0, marks.length - 1);
     if (marks.length > 1) {
@@ -1293,6 +1498,13 @@ function chairArea(parent, who, ideasOnly) {
   }
   ask.append(row);
   }
+  // THE ESCAPE IS A WIDGET OF THE QUESTION, not an option (the keyCircle
+  // law: the circle is a rendering of the key question). A `chg:<role>`
+  // fieldset carries its catalog radios PLUS the picker — "changes of our
+  // own…" — because an "other changes" ANSWER would materialize the current
+  // roots, be secSig-identical, and be rightly pruned.
+  if (who === "arranger" && q.id.startsWith("chg:"))
+    ask.append(chgxWidget(q.id.slice(4)));
   // THE RECORD'S LENGTH IS A FACT, NOT A QUESTION: the form × the lengths
   // already decide it, so the form node simply says what they add up to
   if (q.id === "form") {
@@ -1373,7 +1585,8 @@ requestAnimationFrame(tick);
 $("dreset").addEventListener("click", () => {
   if (playing) { stop(); playWord(); }
   model = { ...Band.blank(), on: true };
-  said.clear(); asking = null; section = null; module_ = "song"; seat = "drums";
+  said.clear(); asking = null; section = null; picker = null;
+  module_ = "song"; seat = "drums";
   ledger.length = 0;
   clearMixOffsets();
   try { localStorage.removeItem(SAVE); } catch (e) {}
@@ -1385,7 +1598,7 @@ $("dreset").addEventListener("click", () => {
 // path taken quickly, not a special one.
 $("ddice").addEventListener("click", () => {
   model = Band.randomSong();
-  said.clear(); asking = null; section = null; module_ = "song";
+  said.clear(); asking = null; section = null; picker = null; module_ = "song";
   ledger.length = 0;
   clearMixOffsets();
   push(true); draw();

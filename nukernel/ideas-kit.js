@@ -198,6 +198,91 @@
   const cellOf = (m) => CELLS[m.cell] || CELLS.three;
   const barsOf = (m) => (LENGTHS[m.len] || LENGTHS.two).bars;
 
+  /* ---------- THE WRITTEN BAR (PLAN.md THE THROUGH-COMPOSED THEME) --------
+     Three modes, one data shape. DERIVED is today: one authored cell, the
+     sentence derives every bar. AUTHORED is `wrote[b]` for every bar — a
+     2–4-bar tune with every bar its own tri-state rhythm (the drum phrase's
+     lane grid is the precedent). MIXED is the interesting one: some bars
+     written, the rest derived AROUND them. THE HAND MOVES LAST, extended to
+     bars — a bar you wrote survives any sentence-plan change, and a length
+     shrink leaves the far bars DORMANT, revived if the length comes back
+     (the same law as a lift surviving the note it sits on being the
+     landing). Both fields are present-only: no `wrote`, no `hand` — every
+     phrase ever compiled is byte-identical.
+
+       wrote: { [b]: { grid: [16 tri-state], lift: { [i]: -2..2 } } }
+       hand:  0..3   which bar the count grid is aimed at — a MODEL fact
+                     (aim, not sound: it changes no phrase and stays out of
+                     the cache key)
+
+     PARANOIA AT THE ACCESSOR, because the session rides localStorage whole:
+     a bar entry whose grid is not sixteen ints in 0..2 is dropped, lifts
+     are clamped to ±2, keys outside 0..3 are ignored — the same law
+     gridOf/liftOf already imply. */
+  const wroteOf = (m) => {
+    const out = {};
+    if (!m.wrote) return out;
+    for (const [k, v] of Object.entries(m.wrote)) {
+      const b = +k;
+      if (!Number.isInteger(b) || b < 0 || b > 3 || !v) continue;
+      const g = Array.isArray(v.grid) && v.grid.length === N &&
+        v.grid.every((x) => x === 0 || x === 1 || x === 2) ? v.grid.slice() : null;
+      if (!g) continue;
+      const lift = {};
+      for (const [i, lv] of Object.entries(v.lift || {})) {
+        const ii = +i;
+        if (Number.isInteger(ii) && ii >= 0 && ii < N && Number.isFinite(lv) && lv)
+          lift[ii] = Math.max(-2, Math.min(2, Math.round(lv)));
+      }
+      out[b] = { grid: g, lift };
+    }
+    return out;
+  };
+  // the bar in hand — aim, clamped to a bar the theme actually has
+  const handOf = (m) => {
+    const h = m.hand || 0;
+    return Number.isInteger(h) && h >= 0 && h < barsOf(m) ? h : 0;
+  };
+  // RECONSTRUCT one bar of the CURRENT phrase as a tri-state cell — what
+  // writing a derived bar out starts from: the onsets you heard, and the
+  // places an explicit hold sounds through. Never from silence.
+  const barTriOf = (m, b) => {
+    const ph = toPhrase(m);
+    const g = z();
+    for (let i = 0; i < N; i++) {
+      const at = b * N + i;
+      if (at < ph.gate.length && ph.gate[at]) g[i] = 1;
+    }
+    if (ph.hold) for (let at = 0; at < ph.gate.length; at++) {
+      if (!ph.gate[at] || !ph.hold[at]) continue;
+      for (let j = at + 1; j < at + ph.hold[at] && j < ph.gate.length; j++)
+        if (Math.floor(j / N) === b && !g[j % N]) g[j % N] = 2;
+    }
+    return g;
+  };
+  // is the count grid editing a WRITTEN bar right now? Bar one with no
+  // wrote[0] edits the base cell — today's path, byte for byte.
+  const editsWrote = (m) => handOf(m) > 0 || !!wroteOf(m)[0];
+  const handGrid = (m) => {
+    if (!editsWrote(m)) return gridOf(m);
+    const h = handOf(m), wr = wroteOf(m);
+    return (wr[h] ? wr[h].grid : barTriOf(m, h)).slice();
+  };
+  const handLift = (m) => {
+    if (!editsWrote(m)) return liftOf(m);
+    const wb = wroteOf(m)[handOf(m)];
+    return wb ? { ...wb.lift } : {};
+  };
+  // one edit to the bar in hand: seeded from what the sentence was deriving
+  // the first time a hand touches a derived bar, so writing out starts from
+  // what you heard
+  const withHandBar = (m, fn) => {
+    const h = handOf(m), wr = wroteOf(m);
+    const bar = wr[h] || { grid: barTriOf(m, h), lift: {} };
+    const nb = fn({ grid: bar.grid.slice(), lift: { ...bar.lift } });
+    return { ...m, wrote: { ...wr, [h]: nb } };
+  };
+
   /* ---------- THE PHRASE THE ENGINE PLAYS --------------------------------
      One vector per bar of the idea, joined: the rhythm cell restated, the
      contour sampled across ALL its onsets (so a two-bar idea is one shape,
@@ -221,7 +306,10 @@
     const key = m.cell + "|" + m.contour + "|" + m.land + "|" + m.len + "|" +
                 m.reg + "|" + (m.answer ? 1 : 0) + "|" + (m.sent || "plain") + "|" +
                 (roots ? roots.length : 0) +
-                "|" + (m.grid ? m.grid.join("") : "") + "|" + JSON.stringify(m.lift || {});
+                "|" + (m.grid ? m.grid.join("") : "") + "|" + JSON.stringify(m.lift || {}) +
+                // the written bars enter the key; `hand` does not — hand is
+                // aim, and aim changes no phrase
+                "|" + (m.wrote ? JSON.stringify(m.wrote) : "");
     let hit = PHCACHE.get(key);
     if (hit) return hit;
     hit = phraseNow(m, roots);
@@ -259,9 +347,24 @@
     // out byte-identical to the phrase this file always made.
     const rows = (SENTENCES[m.sent] || SENTENCES.plain).rows;
     const rowOf = rows ? rows[bars] || null : null;
+    // THE HAND MOVES LAST, PER BAR (PLAN.md THE THROUGH-COMPOSED THEME): a
+    // bar somebody WROTE replaces the role-derived cell for that bar — its
+    // own onsets from its 1s, its own ties from its 2s — while the sentence
+    // keeps deriving the OTHER bars from the base cell exactly as today.
+    // No `wrote` anywhere → wr is empty and every branch below is the old
+    // code path, byte for byte.
+    const wr = wroteOf(m);
     const onsets = [];
     for (let b = 0; b < bars; b++) {
-      const bg = rowOf ? ROLES[rowOf[b]] ? ROLES[rowOf[b]](mask) : mask : mask;
+      const wb = wr[b] || null;
+      const bg = wb ? wb.grid.map((v) => (v === 1 ? 1 : 0))
+        : rowOf ? ROLES[rowOf[b]] ? ROLES[rowOf[b]](mask) : mask : mask;
+      // a written bar's tie run reads its OWN grid; a derived bar keeps the
+      // base cell's (the tie belongs to the place it was written on)
+      const runIn = wb ? ((i) => { let last = i;
+        for (let j = i + 1; j < N && wb.grid[j] !== 1; j++)
+          if (wb.grid[j] === 2) last = j;
+        return last - i; }) : runAt;
       const inBar = [];
       for (let i = 0; i < N; i++) if (bg[i]) inBar.push(i);
       inBar.forEach((i, j) => {
@@ -275,7 +378,7 @@
         // a hand-marked hold rides with the note it was written on — an
         // onset a role MOVED leaves its tie behind (the tie belongs to the
         // place, and a restated ending is a new ending)
-        const r = mask[i] ? runAt(i) : 0;
+        const r = (wb ? true : mask[i]) ? runIn(i) : 0;
         if (r) { hold[at] = 1 + r; anyHold = true; }
       });
     }
@@ -303,8 +406,31 @@
     if (rowOf) for (let k = 0; k < onsets.length; k++) {
       const at = onsets[k], next = k + 1 < onsets.length ? onsets[k + 1] : n;
       if (Math.floor(at / N) !== Math.floor((next - 1) / N)) {
+        // ...unless the seam lands in a WRITTEN bar: the hand's grid owns
+        // that barline — a rest it wrote at the top of its bar is a breath,
+        // and its leading 2s (below) are the tie
+        if (wr[Math.floor(at / N) + 1]) continue;
         hold[at] = next - at; anyHold = true;
       }
+    }
+    // THE TIE INTO THE BAR: a written bar whose grid OPENS with "hold it"
+    // marks reaches back — the previous bar's last onset extends across the
+    // line to sound through the leading run (the sentence-barline law at
+    // the seam, generalized to the hand; a rest between the line and the
+    // furthest mark is sounded through, because holding through a place is
+    // the whole ask). Present-only: no written bar, no pass.
+    for (let b = 1; b < bars; b++) {
+      const wb = wr[b];
+      if (!wb) continue;
+      const first1 = wb.grid.indexOf(1);
+      let reach = -1;
+      for (let j = 0; j < (first1 < 0 ? N : first1); j++)
+        if (wb.grid[j] === 2) reach = j;
+      if (reach < 0) continue;
+      const prev = onsets.filter((a) => a < b * N).pop();
+      if (prev == null) continue;
+      const span = b * N + reach + 1 - prev;
+      if ((hold[prev] || 0) < span) { hold[prev] = span; anyHold = true; }
     }
     // THE HAND MOVES LAST. A step you lifted by hand is lifted even if it is
     // the note the phrase lands on — otherwise "that one is too high" did
@@ -318,9 +444,17 @@
     // phrase stamps the degrees as written pre-lift; registration reads the
     // stamp and the lift rides on top. Present-only, like `hold` — an
     // unlifted phrase carries no stamp and is byte-identical.
-    const lifted = onsets.some((at) => lift[at % N]);
+    // ...and a WRITTEN bar's lifts are its own, keyed by its own places —
+    // which is the per-at gap closed: the base lift stays %16 for derived
+    // bars (byte-identity for every saved theme), and the climb's lifts
+    // stop echoing into bar one
+    const liftAt = (at) => {
+      const wb = wr[Math.floor(at / N)];
+      return wb ? wb.lift[at % N] || 0 : lift[at % N] || 0;
+    };
+    const lifted = onsets.some((at) => liftAt(at));
     const regDeg = lifted ? deg.slice() : null;
-    for (const at of onsets) if (lift[at % N]) deg[at] += lift[at % N];
+    for (const at of onsets) if (liftAt(at)) deg[at] += liftAt(at);
     const out = { deg, oct, vel, inc: z(n), stk: z(n), gate, acc: z(n), sld: z(n) };
     if (anyHold) out.hold = hold;               // present-only, like `orn`
     if (regDeg) { out.regDeg = regDeg; out.regGate = gate.slice(); }
@@ -447,32 +581,71 @@
   // NOTE only at grid value 1: a 2 is the previous note still sounding, so
   // the note mark re-attacks it (a tie tapped back into a note) and the
   // lift marks pass it by (there is nothing there to move).
+  // ...AND EVERY MARK LANDS ON THE BAR IN HAND (PLAN.md THE THROUGH-COMPOSED
+  // THEME). With no bar in hand (hand 0, nothing written) these are today's
+  // words on today's grid, byte for byte. With a WRITTEN bar in hand they
+  // edit that bar's own tri-state and its own per-place lifts; the first
+  // mark on a DERIVED bar in hand writes it out, seeded from what the
+  // sentence was deriving (barTriOf — you start from what you heard, never
+  // from silence).
   for (let i = 0; i < N; i++) {
     add("note:" + i, "the bar", [stepWord(i)], (m) => m.on,
-        (m) => { const g = gridOf(m); g[i] = g[i] === 1 ? 0 : 1;
-                 return { ...m, grid: g, cell: m.cell }; },
-        (m) => (gridOf(m)[i] === 1 ? "no note " : "a note ") + stepWord(i),
-        (m) => gridOf(m)[i] === 1);
+        (m) => (editsWrote(m)
+          ? withHandBar(m, (b) => { b.grid[i] = b.grid[i] === 1 ? 0 : 1; return b; })
+          : (() => { const g = gridOf(m); g[i] = g[i] === 1 ? 0 : 1;
+                     return { ...m, grid: g, cell: m.cell }; })()),
+        (m) => (handGrid(m)[i] === 1 ? "no note " : "a note ") + stepWord(i),
+        (m) => handGrid(m)[i] === 1);
     add("up:" + i, "higher", ["up a step " + stepWord(i)],
-        (m) => m.on && gridOf(m)[i] === 1 && (liftOf(m)[i] || 0) < 2,
-        (m) => ({ ...m, lift: { ...liftOf(m), [i]: (liftOf(m)[i] || 0) + 1 } }),
+        (m) => m.on && handGrid(m)[i] === 1 && (handLift(m)[i] || 0) < 2,
+        (m) => (editsWrote(m)
+          ? withHandBar(m, (b) => { b.lift[i] = (b.lift[i] || 0) + 1; return b; })
+          : { ...m, lift: { ...liftOf(m), [i]: (liftOf(m)[i] || 0) + 1 } }),
         () => "up a step " + stepWord(i));
     add("down:" + i, "lower", ["down a step " + stepWord(i)],
-        (m) => m.on && gridOf(m)[i] === 1 && (liftOf(m)[i] || 0) > -2,
-        (m) => ({ ...m, lift: { ...liftOf(m), [i]: (liftOf(m)[i] || 0) - 1 } }),
+        (m) => m.on && handGrid(m)[i] === 1 && (handLift(m)[i] || 0) > -2,
+        (m) => (editsWrote(m)
+          ? withHandBar(m, (b) => { b.lift[i] = (b.lift[i] || 0) - 1; return b; })
+          : { ...m, lift: { ...liftOf(m), [i]: (liftOf(m)[i] || 0) - 1 } }),
         () => "down a step " + stepWord(i));
     // "hold it" — offered only where a note EARLIER in the bar exists to
-    // hold from: a tie with nothing before it would be a mark on silence
+    // hold from: a tie with nothing before it would be a mark on silence.
+    // (In a written bar past the first, the note before the line counts —
+    // the leading run IS the tie across the barline.)
     add("tie:" + i, "held", ["hold it " + stepWord(i)],
-        (m) => m.on && i > 0 && gridOf(m).slice(0, i).some((v) => v === 1),
-        (m) => { const g = gridOf(m); g[i] = g[i] === 2 ? 0 : 2;
-                 return { ...m, grid: g, cell: m.cell }; },
-        (m) => (gridOf(m)[i] === 2 ? "let go " : "held through ") + stepWord(i),
-        (m) => gridOf(m)[i] === 2);
+        (m) => m.on && (handGrid(m).slice(0, i).some((v) => v === 1) ||
+                        (editsWrote(m) && handOf(m) > 0)),
+        (m) => (editsWrote(m)
+          ? withHandBar(m, (b) => { b.grid[i] = b.grid[i] === 2 ? 0 : 2; return b; })
+          : (() => { const g = gridOf(m); g[i] = g[i] === 2 ? 0 : 2;
+                     return { ...m, grid: g, cell: m.cell }; })()),
+        (m) => (handGrid(m)[i] === 2 ? "let go " : "held through ") + stepWord(i),
+        (m) => handGrid(m)[i] === 2);
   }
-  add("flatten", "the bar", ["straighten it out"], (m) => m.on && (m.grid || m.lift),
-      (m) => ({ ...m, grid: null, lift: null }),
+  add("flatten", "the bar", ["straighten it out"],
+      (m) => m.on && (m.grid || m.lift || m.wrote),
+      // "straighten it out" means all of it — the written bars included
+      (m) => ({ ...m, grid: null, lift: null, wrote: null }),
       () => "back to the rhythm it was written with");
+  // THE BAR IN HAND — which measure the count grid is aimed at. Writing is
+  // refinement, like the lifts: vocabulary, not interview (zero new
+  // interview rows). Taking a bar in hand changes no phrase; the first mark
+  // made on a derived bar writes it out.
+  const BARWORD = ["bar one", "bar two", "bar three", "bar four"];
+  for (let b = 0; b < 4; b++)
+    add("bar:" + b, "the bar in hand", [BARWORD[b]],
+        (m) => m.on && barsOf(m) > 1 && b < barsOf(m) && handOf(m) !== b,
+        (m) => ({ ...m, hand: b }),
+        (m) => BARWORD[b] + (wroteOf(m)[b] ? ", written by hand, in hand"
+                                           : ", in hand"),
+        (m) => handOf(m) === b && barsOf(m) > 1);
+  // ...and the way back: a written bar handed to the plan re-derives around
+  // whatever its neighbours still hold — the words replace each other, whole
+  add("back:hand", "the bar in hand", ["let the plan have it back"],
+      (m) => m.on && !!wroteOf(m)[handOf(m)],
+      (m) => { const wr = { ...(m.wrote || {}) }; delete wr[handOf(m)];
+               return { ...m, wrote: Object.keys(wr).length ? wr : null }; },
+      (m) => BARWORD[handOf(m)] + " goes back to the plan");
 
   add("answer", "the answer", ["answer itself"], (m) => m.on && barsOf(m) > 1,
       (m) => ({ ...m, answer: !m.answer }),
@@ -521,7 +694,7 @@
     { w: "hold it",     id: (i) => "tie:" + i },
   ];
   return { N, CELLS, CONTOURS, LANDINGS, LENGTHS, REG, SENTENCES, ROLES, TRANSFORMS,
-           regOf, gridOf, liftOf, stepWord,
+           regOf, gridOf, liftOf, wroteOf, handOf, stepWord,
            blank, V, catalog, say, says, BARMARKS,
            decisions, nextAsk, answer, toPhrase, transform, describe, barsOf, cellOf };
 });

@@ -397,6 +397,34 @@
                styles: ["hold the root", "octaves"],
                instr: ["a synth bass", "fingers on a P-bass"],
                chg: ["a pedal", "one chord, all night"] },
+    // A CHAMBER BALLAD (PLAN.md THE THROUGH-COMPOSED THEME, the Yesterday
+    // study's front-door gap): the sixties, London or Liverpool, a studio —
+    // the quartet in the room and the song on the steel-string, so the
+    // front door stops needing to lie by a century. Named the way the
+    // records name themselves: not "chamber pop" (nobody in 1965 said it),
+    // not "a ballad" (the slow record owns half that word). Its kitless
+    // default rides the universal-tacet law (drums-kit grooveOpts): any
+    // drummer can sit out, whatever the family.
+    chamber: { w: "a chamber ballad", fam: "jazz", bpm: 84, chords: "plain",
+               // ...two entries per door on purpose (the catalog's own law:
+               // a city all alone on one record strands the questions beside
+               // it — Liverpool must leave a second decade and a second room
+               // standing): the strings-and-song records run into the
+               // seventies, and the quartet plays halls as well as studios
+               when: ["the sixties", "the seventies"],
+               where: ["London", "Liverpool"],
+               venue: ["a studio", "a concert hall"],
+               gtr: ["a steel-string acoustic", "a nylon-string", "a clean electric"],
+               gjob: "strum",
+               keys: ["an upright", "strings", "a felt piano", "a grand piano"],
+               kjob: "comp",
+               forms: ["aaba", "full", "versechorus", "strophic"], artic: "normal",
+               tone: { cut: 900, q: 1, rel: 0.5 },
+               grooves: ["nobody on the kit", "brush swing"],
+               machines: ["brushes", "room kit"],
+               styles: ["hold the root", "root and fifth", "walk it"],
+               instr: ["a cello", "an upright bass"],
+               chg: ["a descending line", "the doo-wop changes", "the four-chord one"] },
 
     /* ---- THE OLD WORLD (2026-08-21): twelve records, Rome 600 → New York
        1892. The design law for every one of them: a pre-1900 record never
@@ -630,6 +658,108 @@
     return roots.map((d) => ({ d, q: K2.q(((d % 7) + 7) % 7) }));
   };
 
+  /* ---------- "LEAN INTO THE NEXT ONE" — the secondary dominant ----------
+     Not called that, because the word is what a leader says; the chord it
+     writes is V7-of-what-follows. The kernel already plays every piece of
+     this: root = mp(d)+borrow, QFIX.dom7 is the absolute stack ("the one
+     deliberate exit"), the bass hears a seventh as a note the line may pass
+     through, and the melody layer carries q/borrow through its pairing.
+       d      = next.d + 4 (the degree a fifth above — the sequence's move)
+       borrow = the semitone fix making the root exactly a fifth over next's
+                root; in every church mode the diatonic fifth-above is 0 or
+                ±1 off, so the clamp never bites a real mode.
+     Verified against the benchmark: F major, next = Dm (d 5) → d 2, borrow
+     0, dom7 = A–C♯–E–G — the A7 whose C♯ is in the rip. */
+  const dp7 = (d, md) => md[((d % 7) + 7) % 7] + 12 * Math.floor(d / 7);
+  const IONIAN = [0, 2, 4, 5, 7, 9, 11];
+  const dominantOf = (next, md0) => {
+    const md = Array.isArray(md0) && md0.length === 7 ? md0 : IONIAN;
+    const d = (((next.d || 0) + 4) % 7 + 7) % 7;
+    const wantPc = (((dp7(next.d || 0, md) + (next.borrow || 0) + 7) % 12) + 12) % 12;
+    const havePc = ((dp7(d, md) % 12) + 12) % 12;
+    let borrow = wantPc - havePc;
+    if (borrow > 6) borrow -= 12; if (borrow < -6) borrow += 12;
+    borrow = Math.max(-1, Math.min(1, borrow));
+    return { d, q: "dom7", ...(borrow ? { borrow } : {}),
+             ...(next.beats ? { beats: next.beats } : {}) };
+  };
+
+  /* ---------- CHANGES OF THE BAND'S OWN ----------------------------------
+     `m.song.chgx = { [role]: [bar, …] }` — each bar one or two chord
+     objects ({ d 0..6, q?, borrow? -1..1, beats? 8 } — two chords split the
+     bar in halves, which is the Em7|A7 bar), 2..16 bars. Present-only:
+     absent, every path below resolves the catalog row exactly as today.
+     PARANOIA AT THE ACCESSOR, because the model rides the session whole:
+     a malformed bar is dropped, and a list left shorter than two bars is
+     no list at all. */
+  const QWORDS = ["maj7", "m7", "dom7", "7", "nine", "sus4", "six", "triad"];
+  const chgxOf = (m, role) => {
+    const raw = (m.song.chgx || {})[role];
+    if (!Array.isArray(raw)) return null;
+    const bars = [];
+    for (const bar of raw.slice(0, 16)) {
+      const list = (Array.isArray(bar) ? bar : [bar]).slice(0, 2)
+        .filter((c) => c && Number.isInteger(c.d) && c.d >= 0 && c.d <= 6)
+        .map((c) => ({ d: c.d,
+          ...(QWORDS.includes(c.q) ? { q: c.q } : {}),
+          ...(c.borrow === 1 || c.borrow === -1 ? { borrow: c.borrow } : {}),
+          ...(c.beats === 8 ? { beats: 8 } : {}) }));
+      if (list.length) bars.push(list);
+    }
+    return bars.length >= 2 ? bars : null;
+  };
+  // ONE RESOLVER, ONE OWNER: what changes does this role play? The hand's
+  // own list first (its LENGTH is the section's length — the precedence
+  // law), the catalog row second — with "does anything lean?" materializing
+  // the one dom7 bar over the cycle. A bar the hand left plain (`q` absent)
+  // takes the record's chord kind, so "sevenths" still colors the bars
+  // nobody spelled.
+  const modeArrOf = (m) => (MODESREF ? MODESREF[modeKeyOf(m.song)] : null) || IONIAN;
+  function changesOf(m, role) {
+    const list = chgxOf(m, role);
+    if (list) {
+      const K2 = CHORDKIND[m.song.chords];
+      const prog = list.map((bar) => bar.map((c) => (c.q || !K2 || !K2.q ? { ...c }
+        : { ...c, q: K2.q(((c.d % 7) + 7) % 7) })));
+      return { bars: list.length, roots: list.map((b) => b[0].d), prog,
+               authored: true, word: "changes of our own" };
+    }
+    const c = B.CHANGES[(m.song.chg || {})[role] || "fourchord"];
+    const lw = (m.song.lean || {})[role];
+    if (lw === "last" || lw === "mid") {
+      // a lean FORCES prog materialization even under plain triads — the
+      // honest cost: roots become triad objects plus the one dom7 bar.
+      // Everything else about the cycle is byte-identical.
+      const K2 = CHORDKIND[m.song.chords];
+      const prog = c.roots.map((d) => (K2 && K2.q
+        ? { d, q: K2.q(((d % 7) + 7) % 7) } : { d }));
+      const at = lw === "last" ? c.bars - 1 : Math.floor(c.bars / 2) - 1;
+      if (at >= 0 && at < prog.length)
+        prog[at] = dominantOf(prog[(at + 1) % prog.length], modeArrOf(m));
+      return { bars: c.bars, roots: c.roots, prog, leaned: true };
+    }
+    return { bars: c.bars, roots: c.roots, prog: progOf(c.roots, m.song.chords) };
+  }
+  /* the API the picker (and the dice) writes through — validated exactly
+     like setSection: clamps, drops malformed bars, returns m unchanged on
+     an empty or one-bar list. Writing a role's own changes RETIRES its
+     length question (a question whose answers cannot change the record is
+     not asked — the house pruning law, not a silent override) and clears
+     its lean (a lean on changes that left is a mark on silence). */
+  function setChanges(m, role, list) {
+    if (!CALLED.includes(role)) return m;
+    const probe = { song: { chgx: { [role]: list }, chords: m.song.chords } };
+    const clean = chgxOf(probe, role);
+    if (!clean) return m;
+    const answers = { ...(m.song.answers || {}) };
+    delete answers["len:" + role];
+    answers["chg:" + role] = "changes of our own";
+    const lens = { ...(m.song.lens || {}) }; delete lens[role];
+    const lean = { ...(m.song.lean || {}) }; delete lean[role];
+    return { ...m, song: { ...m.song, answers, lens, lean,
+                           chgx: { ...(m.song.chgx || {}), [role]: clean } } };
+  }
+
   /* ---------- WHERE A RECORD COMES FROM -----------------------------------
      Nobody starts a session by picking a genre off a list of fifteen. They
      know when it is, where they are and what room they are playing — and a
@@ -734,8 +864,29 @@
   };
   // a role that is not one of the three the changes are called for still has
   // to know WHICH changes it takes — a drop is the chorus of a twelve-inch
+  // (...and a TAG plays the tune's own changes out the door)
   const CHGROLE = { intro: "verse", outro: "verse", build: "verse", drop: "chorus",
-                    break: "verse", head: "verse", solo: "chorus" };
+                    break: "verse", head: "verse", solo: "chorus", tag: "verse" };
+  /* ---------- REPRISE AND DOORS (PLAN.md THE THROUGH-COMPOSED THEME) ------
+     Not new FORMS rows per combination (± intro ± tag ± reprise would cube
+     the table) and not a repeat grammar: two small arranger questions that
+     WRAP the chosen form, both defaulting to nothing. `secsOf` is the one
+     mechanism — every .secs read goes through it, and with both fields
+     absent it returns the form's own array untouched (the same reference),
+     so every saved record and every dice roll from before is byte-identical.
+       reprise "bridge": secs + everything from the bridge on — AABA becomes
+       V V B V B V, and it composes with any bridged form.
+       doors: an intro prepended, a tag appended, or both, around the
+       (reprised) secs. */
+  const secsOf = (m) => {
+    let secs = FORMS[m.song.form || "vamp"].secs;
+    if (m.song.reprise === "bridge" && secs.includes("bridge"))
+      secs = [...secs, ...secs.slice(secs.indexOf("bridge"))];
+    const d = m.song.doors;
+    if (d === "intro" || d === "both") secs = ["intro", ...secs];
+    if (d === "tag" || d === "both") secs = [...secs, "tag"];
+    return secs;
+  };
   /* ---------- HOW LONG IS IT ----------------------------------------------
      A section was as long as the changes it was called with, and nothing
      could say otherwise: the only lengths reachable anywhere in the graph
@@ -759,8 +910,7 @@
   // the verse's, the way a band would)
   const CALLED = ["verse", "chorus", "bridge"];
   const rolesIn = (m) => {
-    const f = FORMS[m.song.form || "vamp"];
-    const want = new Set(f.secs.map((r) => CHGROLE[r] || r));
+    const want = new Set(secsOf(m).map((r) => CHGROLE[r] || r));
     return CALLED.filter((r) => want.has(r));
   };
 
@@ -843,6 +993,24 @@
     { id: "form", ask: "what's the form?", opts:
       Object.entries(FORMS).map(([k, f]) => ({
         w: f.w, is: (s) => s.form === k, apply: (s) => ({ ...s, form: k }) })) },
+    // THE FORM, WRAPPED (PLAN.md THE THROUGH-COMPOSED THEME §form): a
+    // reprise and the doors. Both default to writing nothing — an
+    // unanswered record is byte-identical, and the pruner retires "again
+    // from the bridge" on a form with no bridge (secsOf is a no-op there).
+    { id: "reprise", ask: "once through, or round again?", opts: [
+      { w: "once through", is: (s2) => !s2.reprise,
+        apply: (s2) => ({ ...s2, reprise: null }) },
+      { w: "again from the bridge", is: (s2) => s2.reprise === "bridge",
+        apply: (s2) => ({ ...s2, reprise: "bridge" }) } ] },
+    { id: "doors", ask: "how does it open and close?", opts: [
+      { w: "straight in", is: (s2) => !s2.doors,
+        apply: (s2) => ({ ...s2, doors: null }) },
+      { w: "an intro", is: (s2) => s2.doors === "intro",
+        apply: (s2) => ({ ...s2, doors: "intro" }) },
+      { w: "a tag on the end", is: (s2) => s2.doors === "tag",
+        apply: (s2) => ({ ...s2, doors: "tag" }) },
+      { w: "an intro and a tag", is: (s2) => s2.doors === "both",
+        apply: (s2) => ({ ...s2, doors: "both" }) } ] },
     // A SECOND THEME (PLAN.md THE THEME COMPOSER §1): named and few — A and
     // B, the tune and the answer. The question lands on the song's ledger
     // like any other; the theme itself is a MODEL fact (m.ideaB), made in
@@ -906,12 +1074,40 @@
   // ...and one CALL per role the form contains: "what are the chorus
   // changes?" is a thing a bandleader says out loud
   // ...one length question per role the form contains, beside its changes
-  const lenDecisions = (m) => (m.song.form ? rolesIn(m) : []).map((r) => ({
+  // ...and a role whose changes the hand AUTHORED has no length question:
+  // the list's length IS the section's length (the precedence law), and a
+  // question whose answers cannot change the record is not asked
+  const lenDecisions = (m) => (m.song.form ? rolesIn(m) : [])
+    .filter((r) => !chgxOf(m, r)).map((r) => ({
     id: "len:" + r, seat: "arranger", ask: "how long is the " + r + "?",
     opts: Object.entries(LENS).map(([k, v]) => ({
       w: v.w, is: (s2) => ((s2.lens || {})[r] || "short") === k,
       apply: (s2) => ({ ...s2, lens: { ...(s2.lens || {}), [r]: k } }) })),
   }));
+  // "DOES ANYTHING LEAN?" — one small question per called role, after its
+  // changes: the turnaround (the last bar leaning home) and the mid-cycle
+  // lean, offered only where the cycle has four bars and the mid bar's next
+  // differs from it (a lean into the same chord is the same wearing a
+  // costume). Per-bar freedom is what the authored picker is FOR, so a role
+  // with changes of its own is not asked — the lean is a mark IN its list.
+  const leanDecisions = (m) => (m.song.form ? rolesIn(m) : [])
+    .filter((r) => !chgxOf(m, r)).map((r) => {
+    const c = B.CHANGES[(m.song.chg || {})[r] || "fourchord"];
+    const mid = Math.floor(c.bars / 2) - 1;
+    const midOk = c.bars >= 4 && c.roots[mid] !== c.roots[(mid + 1) % c.bars];
+    return { id: "lean:" + r, seat: "arranger",
+      ask: "does anything lean in the " + r + "?",
+      opts: [
+        { w: "no, it sits", is: (s2) => !(s2.lean || {})[r],
+          apply: (s2) => { const lean = { ...(s2.lean || {}) }; delete lean[r];
+                           return { ...s2, lean }; } },
+        { w: "the last bar leans home", is: (s2) => (s2.lean || {})[r] === "last",
+          apply: (s2) => ({ ...s2, lean: { ...(s2.lean || {}), [r]: "last" } }) },
+        ...(midOk ? [{ w: "halfway, it leans into the turn",
+          is: (s2) => (s2.lean || {})[r] === "mid",
+          apply: (s2) => ({ ...s2, lean: { ...(s2.lean || {}), [r]: "mid" } }) }] : []),
+      ] };
+  });
   const callDecisions = (m) => (m.song.form ? rolesIn(m) : []).map((r) => ({
     id: "chg:" + r, seat: "arranger", ask: "what are the " + r + " changes?",
     opts: Object.entries(B.CHANGEWORD).map(([k, w]) => ({
@@ -947,7 +1143,8 @@
     if (!hit) ARRD.set(m, hit = arrDecisionsNow(m));
     return hit;
   };
-  const arrDecisionsNow = (m) => [...ARR, ...callDecisions(m), ...lenDecisions(m), ...ideaDecisions(m)]
+  const arrDecisionsNow = (m) => [...ARR, ...callDecisions(m), ...leanDecisions(m),
+                                  ...lenDecisions(m), ...ideaDecisions(m)]
     .map((d) => (d.three ? { ...d, opts: threeOpts(m, d.id) }
       : d.id === "genre"
         // THE RECORDS STILL STANDING — but read WITHOUT the room, so the
@@ -1019,11 +1216,16 @@
     // ...and the changes, which are the arranger's own but still have to be
     // changes this record has
     const chg = { ...(m.song.chg || {}) }, answers = { ...(m.song.answers || {}) };
+    const lean2 = { ...(m.song.lean || {}) };
     for (const r of CALLED) {
+      // the hand's own list is an answered change the record cannot veto —
+      // same rank as an answered groove
+      if (chgxOf(m, r)) continue;
       const w = B.CHANGEWORD[chg[r]];
       if (chg[r] && !gk.chg.includes(w)) {
         chg[r] = Object.keys(B.CHANGEWORD).find((k) => B.CHANGEWORD[k] === gk.chg[0]);
         answers["chg:" + r] = gk.chg[0];
+        delete lean2[r];                 // a lean on changes that left
       }
     }
     // THE FORM IS THE RECORD'S TOO. called() moved the groove, the bass,
@@ -1047,7 +1249,8 @@
       if (form && FORMS[form]) answers.form = FORMS[form].w;
     }
     return { ...m, drums: d, bass: b, keys: kk, guitar: gg2,
-             song: { ...m.song, form, chg, answers } };
+             song: { ...m.song, form, chg, answers,
+                     ...(m.song.lean ? { lean: lean2 } : {}) } };
   }
 
   /* ---------- the three seats, one question at a time ----------
@@ -1114,6 +1317,32 @@
         if (!left.length) break;
         for (const d of left) if (d.opts.length) m = answer(m, seat, d.id, pick(d.opts).w);
       }
+    // ...THE HAND ON THE DICE (PLAN.md THE THROUGH-COMPOSED THEME): the
+    // composer's powers are ordinary answers, so the dice reaches them the
+    // ordinary way — the lean and the wrap questions are interview rows the
+    // loop above already rolls. Two powers are VOCABULARY (a hand's marks),
+    // so the dice says those words itself: sometimes it writes one bar of
+    // the tune out (the same seeded-from-what-you-heard path a person taps),
+    // and rarely it authors a role's changes whole, 3–8 bars through the
+    // same public setChanges the picker uses — measured over 300 seeded
+    // rolls: ~45 write a bar, ~40 author changes.
+    if (R() < 0.25 && Id.barsOf(m.idea) > 1) {
+      const b = 1 + Math.floor(R() * (Id.barsOf(m.idea) - 1));
+      let idea = Id.say(m.idea, "bar:" + b);
+      idea = Id.say(idea, "note:" + Math.floor(R() * 16));
+      m = { ...m, idea };
+    }
+    if (R() < 0.12) {
+      const roles = rolesIn(m);
+      if (roles.length) {
+        const r = roles[Math.floor(R() * roles.length)];
+        const n = 3 + Math.floor(R() * 6);
+        const list = Array.from({ length: n }, () => [{ d: Math.floor(R() * 7) }]);
+        // ...and sometimes its last bar leans home — the turnaround, as data
+        if (R() < 0.5) list[n - 1] = [dominantOf(list[0][0], modeArrOf(m))];
+        m = setChanges(m, r, list);
+      }
+    }
     // ...and an arrangement: about half the sections get one thing said
     // about them, which is what makes two dice rolls different records
     const secs = toSong(m, MODESREF);
@@ -1140,17 +1369,17 @@
     // — one place a melody can sound — honestly rolls "one theme is
     // plenty" instead of composing an answer nobody will hear.
     if (m.song.themeB && m.ideaB && m.ideaB.on) {
-      const f = FORMS[m.song.form || "vamp"];
-      const takes = f.secs.map((_, i) => {
+      const fsecs = secsOf(m);
+      const takes = fsecs.map((_, i) => {
         const p = partOf(m, i); return !!p.idea && p.idea !== "no";
       });
-      const bAt = f.secs.findIndex((_, i) => ((m.per || {})[i] || {}).theme === "b");
+      const bAt = fsecs.findIndex((_, i) => ((m.per || {})[i] || {}).theme === "b");
       if (bAt >= 0) {
         // the roll already placed it — seat a taker there if the role
         // brought none, so the placement is a sound and not a label
         if (!takes[bAt]) m = setSection(m, bAt, "idea", "keys");
       } else {
-        let home = f.secs.indexOf("bridge");
+        let home = fsecs.indexOf("bridge");
         if (home < 0) {
           const carriers = takes.reduce((a2, t, i) => (t ? a2.concat(i) : a2), []);
           home = carriers.length > 1 ? carriers[carriers.length - 1] : -1;
@@ -1224,6 +1453,13 @@
       m.ideaB && m.ideaB.on ? [Id.toPhrase(m.ideaB), Id.regOf(m.ideaB)] : null,
       m.song.bpm, m.song.swing, m.song.key, m.song.minor, m.song.space, m.song.form,
       m.song.chg, m.song.end || null, m.keys.tone, m.guitar.tone, m.bass.tone,
+      // ...and the song facts the FIRST section cannot show: a length, a
+      // reprise, the doors, a lean or an authored list on a role that is
+      // not section 0's. Blind here, the pruner retired real questions —
+      // "how long is the chorus?" was invisible the day this list missed
+      // `lens`.
+      m.song.lens || null, m.song.reprise || null, m.song.doors || null,
+      m.song.lean || null, m.song.chgx || null,
     ]);
   }
   // the MODES table toSong needs, remembered from the first call the page or
@@ -1351,6 +1587,7 @@
       // tap and is most of what composing a record cost.
       const d = (id.startsWith("idea") ? ideaDecisions(m)
         : id.startsWith("len:") ? lenDecisions(m)
+        : id.startsWith("lean:") ? leanDecisions(m)
         : id.startsWith("chg:") ? callDecisions(m).map((x) => ({ ...x, seat: "arranger",
             opts: x.opts.map((o) => ({ ...o })) }))
         : ARR.map((x) => (x.three ? { ...x, opts: threeOpts(m, x.id) }
@@ -1375,6 +1612,16 @@
         return out2;
       }
       const song = { ...o.apply(m.song), answers: { ...(m.song.answers || {}), [id]: w } };
+      // A CATALOG CALL REPLACES THE HAND'S LIST, WHOLE — the words replace
+      // each other — and a changed cycle takes its lean with it: a lean on
+      // changes that left is a mark on silence (the invalidates law).
+      if (id.startsWith("chg:")) {
+        const r = id.slice(4);
+        if ((song.chgx || {})[r]) { const chgx = { ...song.chgx }; delete chgx[r];
+          song.chgx = chgx; }
+        if ((song.lean || {})[r] && (m.song.answers || {})["chg:" + r] !== w) {
+          const lean = { ...song.lean }; delete lean[r]; song.lean = lean; }
+      }
       // A COLOUR BELONGS TO ITS FAMILY: crossing "major or minor?" to the
       // other word takes the colour answer with it (chair.js spells this
       // `invalidates`; the arranger's own walker does it by hand), so a
@@ -1500,6 +1747,21 @@
       out.push(roots.slice(i, i + per16).map((d) => ({ d, beats: 16, ...q(d) })));
     return out.length ? out : [[{ d: 0, beats: 16 }]];
   };
+  // ...and the same pairing over chord OBJECTS — the authored (or leaned)
+  // changes carry q/borrow/beats the roots cannot, and the tune's harmony
+  // layer must hear them: a split bar keeps its two half-bar chords, a
+  // whole bar spans its sixteen steps.
+  const pairProgX = (bars, per16) => {
+    const out = [];
+    for (let i = 0; i < bars.length; i += per16) {
+      out.push(bars.slice(i, i + per16).flatMap((bar) => {
+        const list = Array.isArray(bar) ? bar : [bar];
+        return list.length > 1 ? list.map((cc) => ({ ...cc, beats: 8 }))
+                               : [{ ...list[0], beats: 16 }];
+      }));
+    }
+    return out.length ? out : [[{ d: 0, beats: 16 }]];
+  };
 
   // `only` builds ONE section. Every signature below asks what one section
   // sounds like, and building the whole form to answer that made the
@@ -1507,9 +1769,9 @@
   // length of the record. Absent, this is the whole take, as it was.
   function toSong(m, MODES, only) {
     if (MODES && !MODESREF) MODESREF = MODES;
-    const f = FORMS[m.song.form || "vamp"];
-    const secs = only == null ? f.secs
-      : (f.secs[only] === undefined ? [] : [f.secs[only]]);
+    const fsecs = secsOf(m);
+    const secs = only == null ? fsecs
+      : (fsecs[only] === undefined ? [] : [fsecs[only]]);
     return secs.map((role, ix) => {
       const i = only == null ? ix : only;
       const key = CHGROLE[role] || role;
@@ -1528,8 +1790,10 @@
       for (const id of per.gwords || []) gm = Gt.say(gm, id);
       if (per.keys && KEYJOB[per.keys]) km = Ky.say(km, "job:" + KEYJOB[per.keys]);
       if (per.guitar && per.guitar !== "same") gm = Gt.say(gm, "job:" + per.guitar);
-      const c = B.CHANGES[(m.song.chg || {})[key] || "fourchord"];
-      let g = toGenre(m, MODES, (m.song.chg || {})[key] || "fourchord", dm, bm, km, gm);
+      // ONE RESOLVER, ONE OWNER: the hand's own list first (chgx), the
+      // catalog row (with its lean, if called) second
+      const c = changesOf(m, key);
+      let g = toGenre(m, MODES, c, dm, bm, km, gm);
       // how much space there is, before anything a section says: a section
       // that asks for busier hats over one-hit-every-four-bars gets them,
       // which is what asking meant
@@ -1582,9 +1846,9 @@
       // is not the first one. A section that was told its own level keeps it
       // — the arc is what happens when nobody said.
       const arc = ARC[m.song.arc || "flat"];
-      const nth = f.secs.slice(0, i).filter((r) => r === role).length;
-      const of = f.secs.filter((r) => r === role).length;
-      const shape = arc && arc.at ? arc.at(role, nth, of, i, f.secs.length) : null;
+      const nth = fsecs.slice(0, i).filter((r) => r === role).length;
+      const of = fsecs.filter((r) => r === role).length;
+      const shape = arc && arc.at ? arc.at(role, nth, of, i, fsecs.length) : null;
       const box = { ...((SECMIX[per.mix] || {}).box || {}),
                     ...((SECMOVE[per.move] || {}).box || {}) };
       // THE ARC OWNS THE LEVEL of the sections it shapes, and that includes
@@ -1692,8 +1956,13 @@
               ? { artic: "legato" } : {}),
           nobass: true, kit: {}, kits: null, bassFig: undefined,
           bars: Math.max(1, Math.ceil(g.bars / per16)),
-          prog: per16 > 1 ? pairProg(c.roots, per16, m.song.chords)
-                          : progOf(c.roots, m.song.chords),
+          // the tune's harmony layer hears the authored (or leaned) chord
+          // objects — q and borrow carried through the pairing — and the
+          // catalog path stays the object it always built, byte for byte
+          prog: per16 > 1
+            ? (c.authored || c.leaned ? pairProgX(c.prog, per16)
+                                      : pairProg(c.roots, per16, m.song.chords))
+            : (c.authored || c.leaned ? c.prog : progOf(c.roots, m.song.chords)),
         } };
       }
       // THE SINGER IS A LAYER OF ITS OWN. Two pitched chairs already share
@@ -1726,11 +1995,13 @@
       let outro = null;
       if (per.out === "fill") outro = "fill";
       else if (per.out === "lift") outro = OUT_LIFT[i % OUT_LIFT.length];
-      else if (per.out !== "none" && i === f.secs.length - 1 && m.song.end)
+      else if (per.out !== "none" && i === fsecs.length - 1 && m.song.end)
         outro = m.song.end;
       if (outro) box.outro = kitlessOf(g) ? (OUT_NOKIT[outro] || outro) : outro;
-      // THE SECTION'S OWN LENGTH, with the changes repeating inside it
-      const bars = lenOf(m, role) || g.bars;
+      // THE SECTION'S OWN LENGTH, with the changes repeating inside it —
+      // and an AUTHORED list's length IS the length, outranking any stale
+      // length answer (setChanges retires the question and its answer)
+      const bars = (c.authored ? null : lenOf(m, role)) || g.bars;
       return { role, i, genre: g, bars, per, melody, voice,
                pattern: Ky.toPattern(taker.chair === "keys" && melody
                  ? Ky.say(km, "job:out") : km),
@@ -1771,10 +2042,14 @@
     break:  { drums: "nokit", bass: "pedal", mix: "wet", move: "close" },
     head:   {},
     solo:   { drums: "ride", bass: "walk" },
+    // a TAG is the hook's head, played out the door: thin, back, and the
+    // tune fragmented — the one role that carries a default `back`
+    tag:    { drums: "sparser", bass: "pedal", mix: "back", idea: "keys",
+              back: "frag" },
   };
   const defaultsFor = (m, i) => {
-    const f = FORMS[m.song.form || "vamp"];
-    const role = f.secs[i], next = f.secs[i + 1];
+    const fsecs = secsOf(m);
+    const role = fsecs[i], next = fsecs[i + 1];
     const d = { ...(ROLE[role] || {}) };
     // THE TUNE HAS A HOME IN EVERY FORM. "The hook plays in every chorus by
     // default, because a melody that appears once is an event, not a
@@ -1787,8 +2062,10 @@
     // one (that is what a head means), the verse everywhere else (that is
     // what strophic means). The bridge stays a contrast, exactly as it is
     // in a chorus form. A per-section answer still outranks this (partOf).
-    if (!f.secs.some((r) => (ROLE[r] || {}).idea) &&
-        role === (f.secs.includes("head") ? "head" : "verse"))
+    // ...a TAG is a door, not the tune's home: its own default taker (the
+    // hook's head, out the door) must not un-home the verse's
+    if (!fsecs.some((r) => r !== "tag" && (ROLE[r] || {}).idea) &&
+        role === (fsecs.includes("head") ? "head" : "verse"))
       d.idea = "keys";
     // the drummer plays the band into the change; nobody has to ask
     if (next && next !== role) d.lift = true;
@@ -1821,7 +2098,10 @@
              // head. Unsaid they are ABSENT, not defaulted: a serialized
              // section that never heard the new words is byte-identical,
              // and every consumer treats undefined as "the tune, as it was".
-             theme: per.theme, back: per.back,
+             theme: per.theme,
+             // ...the tag role brings its own return (`d.back`, the
+             // fragmented hook); everywhere else unsaid stays ABSENT
+             back: per.back != null ? per.back : d.back,
              keys: per.keys != null ? per.keys : d.keys,
              guitar: per.guitar != null ? per.guitar : d.guitar,
              gwords: per.gwords || [],
@@ -1955,7 +2235,7 @@
           w: v.w, key: k, answered: per.bass === k || (!per.bass && k === "same") })) },
       { id: "bwords", who: "the bass player", opts: secWords(m, i, "bass") },
       { id: "idea",
-        who: (FORMS[m.song.form || "vamp"].secs[i] === "solo") ? "the solo" : "the melody",
+        who: (secsOf(m)[i] === "solo") ? "the solo" : "the melody",
         opts: Object.entries(TAKERS).map(([k, v]) => ({
           w: v.w, key: k, answered: per.idea === k || (!per.idea && k === "no") })) },
       // ASSIGNMENT ON THE SECTION NODE (PLAN.md THE THEME COMPOSER §2, §5):
@@ -2082,7 +2362,14 @@
                       tone: ggTone, pad: gg.pad,
                       ...(gg.fifths ? { fifths: true } : {}) }];
     const dg = D.toGenre(drums);
-    const c = B.CHANGES[changes || (m.song.chg || {}).verse || "fourchord"];
+    // `changes` arrives three ways: the RESOLVED object (toSong's own calls,
+    // through changesOf), a catalog key (older callers and the gates), or
+    // nothing — the verse's own resolution, exactly what it always meant
+    const c = changes && changes.roots ? changes
+      : typeof changes === "string" && B.CHANGES[changes]
+        ? { bars: B.CHANGES[changes].bars, roots: B.CHANGES[changes].roots,
+            prog: progOf(B.CHANGES[changes].roots, m.song.chords) }
+        : changesOf(m, "verse");
     return {
       label: "Band", family: "kernel", rate: 1, bars: c.bars,
       entry: () => 0,
@@ -2094,9 +2381,10 @@
       realize: (v) => (chairs[v % 2].pad ? "pad" : "line"),
       part: (v) => chairs[v % 2].part,
       harmony: "cycle", roots: c.roots.slice(),
-      // ...and the chords themselves, if a kind was called. `prog` outranks
-      // `roots` in chordsOf, and carries the quality the roots cannot.
-      prog: progOf(c.roots, m.song.chords),
+      // ...and the chords themselves, if a kind was called — or as the hand
+      // spelled them. `prog` outranks `roots` in chordsOf, and carries the
+      // quality (and the lean's borrow) the roots cannot.
+      prog: c.prog,
       instr: chairs.map((c) => c.instr),
       // the drummer's kit, over whatever length the tune is (kernel's `at`
       // wraps a shorter schedule across a longer form)
@@ -2157,8 +2445,7 @@
     // theme B is the answer — that is its whole name, the way "the hook"
     // is A's when the singer carries it
     if (which === "b") return "the answer";
-    const f = FORMS[m.song.form || "vamp"];
-    const takers = f.secs.map((r, i) => (TAKERS[partOf(m, i).idea] || {}).chair)
+    const takers = secsOf(m).map((r, i) => (TAKERS[partOf(m, i).idea] || {}).chair)
       .filter(Boolean);
     if (takers.includes("voice")) return "the hook";
     if (takers.includes("guitar")) return "the riff";
@@ -2176,5 +2463,6 @@
            nextAsk, nextAnywhere, answer, catalog, say, says, toGenre, toSong,
            SECDRUMS, SECBASS, SECKEYS, SECPIPE, CHORDKIND, LENS, ARC, TAKERS,
            sectionAsks, setSection,
+           secsOf, changesOf, setChanges, dominantOf,
            D, B, Ky, Id, Gt, Vo };
 });
