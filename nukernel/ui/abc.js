@@ -162,10 +162,12 @@ function meterOf(steps) {
 
 // ---- the compiler ----------------------------------------------------------
 // toABC(phrase, opts) -> ABC string.
-//   phrase  { deg[], oct[], gate[], vel[] }  equal lengths; vel is carried by
-//           the phrase but not drawn — dynamics belong to the SECTION's
-//           performance layer (stress/touch), not to the theme's identity,
-//           and a staff full of per-note marks says less, not more.
+//   phrase  { deg[], oct[], gate[], vel[], hold[]? }  equal lengths; vel is
+//           carried by the phrase but not drawn — dynamics belong to the
+//           SECTION's performance layer (stress/touch), not to the theme's
+//           identity, and a staff full of per-note marks says less, not
+//           more. `hold` is present-only: a note's explicit length in steps
+//           (the tie mark / a sentence's carry), outranking maxHold below.
 //   opts    { key, mode, bpm, label, maxHold, stepsPerBar, reg }
 //     key         signed semitone offset from C (band-kit B.KEYS)   [0]
 //     mode        interval array (genres.js MODES / kernel MODE)    [minor]
@@ -196,7 +198,13 @@ export function toNotes(phrase, opts = {}) {
   const notes = [];
   onsets.forEach((at, k) => {
     let span = k + 1 < onsets.length ? onsets[k + 1] - at : n - at;
-    if (opts.maxHold) span = Math.min(span, opts.maxHold);
+    // an explicit per-note hold (phrase.hold — the hand's tie, or a
+    // sentence's carry across the barline) outranks the maxHold clamp the
+    // same way it does in the kernel: the cap makes rests only where
+    // nobody said, and never past the next onset either way
+    const hd = phrase && phrase.hold && phrase.hold[at];
+    if (hd) span = Math.min(span, hd);
+    else if (opts.maxHold) span = Math.min(span, opts.maxHold);
     notes.push({ at, len: span,
       midi: 60 + key + regShift + degPitch(deg[at] | 0, mode) + 12 * (oct[at] | 0) });
   });

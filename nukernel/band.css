@@ -43,6 +43,14 @@ hr { border: 0; border-top: 1px solid #000; margin: 14px 0; }
 .dstaff { margin: 10px 0; padding: 8px 10px 4px; border: 1px solid #000;
   max-width: 38em; }
 .dstaff figcaption { font-weight: bold; }
+/* two themes: the one in the editing hand carries the heavier border, and
+   its name — a button once a second theme exists — is the thing you tap.
+   (The page's bare .on law paints things black; a staff is INK, so the box
+   says its state with the border and stays paper.) */
+.dstaff.on { border-width: 2px; background: #fff; color: #000; }
+.dthemepick { border: none; background: none; font: inherit; font-weight: bold;
+  padding: 0; cursor: pointer; text-decoration: underline; }
+.dthemepick.on { text-decoration: none; }
 .dstaffsvg svg { max-width: 100%; height: auto; }
 /* hear it on the piano — the theme alone, beside the staff it prints */
 .dhear { border: 1px solid #000; background: #fff; padding: 1px 8px;
@@ -107,6 +115,9 @@ fieldset.dask { border: 0; padding: 0; min-width: 0; }
 .dghead, .dglead { opacity: .6; text-align: center; align-self: center; }
 .dgrid .dcell { text-align: center; overflow: hidden; white-space: nowrap;
   text-overflow: clip; min-width: 0; }
+/* the tie shows through every mark: a place held through ("hold it", the
+   theme grid's 2) keeps a heavy underline whichever mark is in hand */
+.dgrid .dcell.dtied { box-shadow: inset 0 -4px 0 #000; }
 /* the row label a bundle of options sits under (the kick:, the filter:,
    pianos:) — a label, never a control, and it starts its own line */
 .drowlab { flex-basis: 100%; margin-top: 6px; opacity: .7; font-style: italic; }
@@ -159,3 +170,26 @@ fieldset.dask { border: 0; padding: 0; min-width: 0; }
 .dopts.dmany { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5em, 1fr)); }
 .dopts.dmany .drowlab { grid-column: 1 / -1; }
 .dopts.dmany .dopt { text-align: left; }
+
+/* ---- the theme nodes and the sentence strip (THE THEME COMPOSER) ---- */
+/* a theme's node heading becomes a button once two themes exist — the same
+   small-caps dthead look, tappable; the node in the editing hand is lit by
+   the page's own .on law */
+.dtnode { border: 0; background: none; cursor: pointer; padding: 0 2px;
+  text-align: left; }
+.dtnode.on { opacity: 1; }
+/* the node not in hand keeps one dim line saying what its theme is */
+.dthemesum { opacity: .65; font-style: italic; }
+/* the sentence, measure by measure: a filled place is a note starting, the
+   low dash after it is the note still sounding through — the tie made
+   visible, across the barline when it crosses one — and the word beside
+   the measure is its role in the sentence */
+.dsent { margin: 2px 0 8px; }
+.dsentbar { display: flex; align-items: center; gap: 10px; margin: 3px 0; }
+.dsentcells { display: inline-flex; align-items: center; gap: 2px; flex: none; }
+.dsentcells i { width: 9px; height: 12px; border: 1px solid #bbb; }
+.dsentcells i.dbeat { margin-right: 6px; }   /* the beat boundary breathes */
+.dsentcells i.dnote { background: #000; border-color: #000; }
+.dsentcells i.dtiec { height: 4px; border: 0; background: #000; }
+.dsentrole { opacity: .65; font-style: italic; font-size: .85rem;
+  min-width: 0; }

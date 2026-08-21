@@ -86,6 +86,81 @@
     lead:    { w: "hangs under the root", d: -1 },
   };
 
+  /* ---------- 2½. THE SENTENCE: a phrase speaks in measures -------------- */
+  // PLAN.md THE THEME COMPOSER §3: a theme is 2–4 measures, EACH with its
+  // own rhythm cell — statement, restatement, development, landing — never
+  // one cell photocopied. Father John Misty's law: no two measures of a sung
+  // line scan the same; a theme has a rhythmic PROFILE — the dense bar, the
+  // sparse bar, the long note where it means it.
+  //
+  // The measures are DERIVED from the one cell the writer chose, not asked
+  // for one by one: four rhythm questions per theme would be a form to fill
+  // in, and the derivations are what a musician does to a cell anyway —
+  // say it (state), say it again ending differently (restate), crowd it
+  // (develop), leave one long note (land), or enter already holding (carry —
+  // the tie made structural: dropping a bar's first onset makes the previous
+  // bar's last note hold straight across the barline, because the kernel
+  // holds every note to the NEXT onset and abc.js draws exactly that hold
+  // as a tie. Legato is not a switch here; it is the resting state of the
+  // engine, and the sentence only decides where the seams are).
+  const ROLES = {
+    // the cell as written
+    state:   (c) => c.slice(),
+    // the same thing said again, ending differently: the last note moves to
+    // the nearest free place (later if the bar has room, earlier if not) —
+    // guaranteed to differ, because a cell never fills all sixteen places
+    restate: (c) => {
+      const g = c.slice();
+      let last = -1; for (let i = 0; i < N; i++) if (g[i]) last = i;
+      if (last < 0) return g;
+      let to = -1;
+      for (let i = last + 1; i < N; i++) if (!g[i]) { to = i; break; }
+      if (to < 0) for (let i = last - 1; i >= 0; i--) if (!g[i]) { to = i; break; }
+      if (to >= 0) { g[last] = 0; g[to] = 1; }
+      return g;
+    },
+    // the dense bar: an echo one step after the first onset and the middle
+    // one, where the bar has room — development crowds what was stated
+    develop: (c) => {
+      const g = c.slice();
+      const on2 = []; for (let i = 0; i < N; i++) if (g[i]) on2.push(i);
+      for (const i of [on2[0], on2[Math.floor(on2.length / 2)]])
+        if (i != null && i + 1 < N && !g[i + 1]) g[i + 1] = 1;
+      return g;
+    },
+    // the sparse bar: one long note where the cell's first note was
+    land: (c) => {
+      const g = z(); const at = c.findIndex(Boolean);
+      g[at < 0 ? 0 : at] = 1; return g;
+    },
+    // enter held: the restatement minus its first onset, so the previous
+    // bar's last note ties across the line and this bar picks up mid-breath
+    carry: (c) => {
+      const g = ROLES.restate(c);
+      const at = g.findIndex(Boolean);
+      if (at >= 0 && g.filter(Boolean).length > 1) g[at] = 0;
+      return g;
+    },
+  };
+  // The named sentence plans — data, like the comp feels the desk keeps.
+  // `plain` is the old law (the cell restated verbatim) and stays the
+  // default so every phrase ever written renders byte-identical; the other
+  // three are profiles a working writer would name. Keyed by bar count
+  // because a two-bar sentence and a four-bar one are different sentences,
+  // not the same one cropped.
+  const SENTENCES = {
+    plain: { w: "one cell, said again", rows: null },
+    vary:  { w: "say it, then vary it",
+             rows: { 2: ["state", "restate"],
+                     4: ["state", "restate", "develop", "land"] } },
+    long:  { w: "a long note, then it moves",
+             rows: { 2: ["land", "restate"],
+                     4: ["land", "state", "restate", "develop"] } },
+    hold:  { w: "carry it over the barline",
+             rows: { 2: ["state", "carry"],
+                     4: ["state", "carry", "develop", "carry"] } },
+  };
+
   const LENGTHS = { one: { w: "one bar", bars: 1 }, two: { w: "two bars", bars: 2 },
                     four: { w: "four bars", bars: 4 } };
   // OCTAVES OVER MIDDLE C, the kernel's own `reg`. A tune sits an octave
@@ -100,13 +175,23 @@
 
   const blank = () => ({ on: false, cell: "three", contour: "arch", land: "root",
                          len: "two", reg: "mid", answer: true, name: "the hook",
-                         grid: null, lift: null, answers: {} });
+                         sent: "plain", grid: null, lift: null, answers: {} });
   // THE TUNE, NOTE BY NOTE. Every other chair can refine what it plays — the
   // drummer says a place in the bar, the bassist writes a figure a note at a
   // time — and the melody could only be described by its parameters. `grid`
   // is the rhythm once you have moved it (the named cell until then) and
   // `lift` is a scale step up or down on one place, so "that third note is
   // too high" is a thing you can say.
+  //
+  // THE GRID IS TRI-STATE now (PLAN.md THE THEME COMPOSER §4): 0 is a rest,
+  // 1 is a note, and 2 is HOLD — the tie as a MARK. "Hold it" on a place
+  // means the note before it sounds THROUGH that place: the run of 2s after
+  // an onset compiles to an explicit per-note `hold` on the phrase, which
+  // the kernel honors past the lead part's own four-step cap (maxHold makes
+  // rests real ONLY where nobody said otherwise) and abc.js draws as the
+  // tied note it is. A grid with no 2s in it compiles to a phrase with no
+  // `hold` key at all — the mark is present-only, like `orn`, so every
+  // theme written before the mark existed renders byte-identical.
   const gridOf = (m) => (m.grid ? m.grid.slice() : cellOf(m).g.slice());
   const liftOf = (m) => ({ ...(m.lift || {}) });
 
@@ -134,7 +219,8 @@
   const PHCACHE = new Map();
   function toPhrase(m, roots) {
     const key = m.cell + "|" + m.contour + "|" + m.land + "|" + m.len + "|" +
-                m.reg + "|" + (m.answer ? 1 : 0) + "|" + (roots ? roots.length : 0) +
+                m.reg + "|" + (m.answer ? 1 : 0) + "|" + (m.sent || "plain") + "|" +
+                (roots ? roots.length : 0) +
                 "|" + (m.grid ? m.grid.join("") : "") + "|" + JSON.stringify(m.lift || {});
     let hit = PHCACHE.get(key);
     if (hit) return hit;
@@ -149,25 +235,50 @@
     const land = (LANDINGS[m.land] || LANDINGS.root).d;
     const n = bars * N;
     const gate = z(n), deg = z(n), vel = new Array(n).fill(6), oct = z(n);
-    // ONE MOTIF, RESTATED. The shape is sampled over ONE bar's onsets and
-    // said again in the next bar — which is what a hook IS. (Running the
-    // contour across the whole phrase instead made every bar different from
-    // every other, so there was nothing to remember; the kernel transposes
-    // each bar by its own chord anyway, so a restated motif over moving
-    // changes is a SEQUENCE, which is the oldest good idea in melody.)
-    const inBar = [];
-    for (let i = 0; i < N; i++) if (cell[i]) inBar.push(i);
+    // THE HAND'S TIES. The grid is tri-state — 1 a note, 2 "hold it" — so
+    // the sentence machinery sees only the ONSET mask (a hold is not a
+    // place to restate), and each onset remembers the run of 2s behind it.
+    // A named cell is binary, so mask === cell there and nothing moves.
+    const mask = cell.map((v) => (v === 1 ? 1 : 0));
+    // how far an onset's tie reaches: to the FURTHEST "hold it" mark before
+    // the next note — a rest between the note and the mark is sounded
+    // through, because holding through a place is the whole ask
+    const runAt = (i) => { let last = i;
+      for (let j = i + 1; j < N && cell[j] !== 1; j++) if (cell[j] === 2) last = j;
+      return last - i; };
+    const hold = z(n); let anyHold = false;
+    // ONE MOTIF, RESTATED — OR A SENTENCE. The shape is sampled over each
+    // bar's own onsets and said again in the next bar — which is what a hook
+    // IS. (Running the contour across the whole phrase instead made every
+    // bar different from every other, so there was nothing to remember; the
+    // kernel transposes each bar by its own chord anyway, so a restated
+    // motif over moving changes is a SEQUENCE, which is the oldest good
+    // idea in melody.) A sentence plan gives each bar its own DERIVED cell
+    // (statement / restatement / development / landing / carry); `plain` —
+    // and any length the plan has no row for — is the photocopy, and comes
+    // out byte-identical to the phrase this file always made.
+    const rows = (SENTENCES[m.sent] || SENTENCES.plain).rows;
+    const rowOf = rows ? rows[bars] || null : null;
     const onsets = [];
-    for (let b = 0; b < bars; b++)
-      for (const i of inBar) { gate[b * N + i] = 1; onsets.push(b * N + i); }
-    onsets.forEach((at, k) => {
-      const j = k % inBar.length;
-      deg[at] = con.f(j, inBar.length);
-      // the register is the GENRE's (`reg`), not the phrase's — writing it
-      // in both places put every tune an octave higher than it was asked for
-      // the phrase leans on its first note and gives back on the way out
-      vel[at] = j === 0 ? 8 : (j === inBar.length - 1 ? 5 : 6);
-    });
+    for (let b = 0; b < bars; b++) {
+      const bg = rowOf ? ROLES[rowOf[b]] ? ROLES[rowOf[b]](mask) : mask : mask;
+      const inBar = [];
+      for (let i = 0; i < N; i++) if (bg[i]) inBar.push(i);
+      inBar.forEach((i, j) => {
+        const at = b * N + i;
+        gate[at] = 1; onsets.push(at);
+        deg[at] = con.f(j, inBar.length);
+        // the register is the GENRE's (`reg`), not the phrase's — writing it
+        // in both places put every tune an octave higher than it was asked
+        // for; the phrase leans on its first note and gives back going out
+        vel[at] = j === 0 ? 8 : (j === inBar.length - 1 ? 5 : 6);
+        // a hand-marked hold rides with the note it was written on — an
+        // onset a role MOVED leaves its tie behind (the tie belongs to the
+        // place, and a restated ending is a new ending)
+        const r = mask[i] ? runAt(i) : 0;
+        if (r) { hold[at] = 1 + r; anyHold = true; }
+      });
+    }
     if (onsets.length) {
       const last = onsets[onsets.length - 1];
       deg[last] = land;
@@ -179,11 +290,75 @@
         if (mid.length) deg[mid[mid.length - 1]] = land === 0 ? 4 : 0;
       }
     }
+    // A SENTENCE'S TIES CROSS THE BARLINE (PLAN.md THE THEME COMPOSER §4).
+    // `carry` drops a bar's first onset so the note before the line reaches
+    // into it, and `land` leaves one note with a bar to itself — but the
+    // lead part's own cap (maxHold 4, the rest-making law) would cut both
+    // at a beat and quietly turn the tie into a rest the staff still drew.
+    // So any note a SENTENCE holds across a barline gets its full span as
+    // an explicit `hold`, which the kernel honors past the cap: the tie is
+    // real in the air, not only on the page. Notes held WITHIN a bar keep
+    // the cap — the breath between phrases is the part's own law — and
+    // `plain` emits no holds at all, byte for byte the phrase it always was.
+    if (rowOf) for (let k = 0; k < onsets.length; k++) {
+      const at = onsets[k], next = k + 1 < onsets.length ? onsets[k + 1] : n;
+      if (Math.floor(at / N) !== Math.floor((next - 1) / N)) {
+        hold[at] = next - at; anyHold = true;
+      }
+    }
     // THE HAND MOVES LAST. A step you lifted by hand is lifted even if it is
     // the note the phrase lands on — otherwise "that one is too high" did
     // nothing to exactly the notes anybody would say it about.
     for (const at of onsets) if (lift[at % N]) deg[at] += lift[at % N];
-    return { deg, oct, vel, inc: z(n), stk: z(n), gate, acc: z(n), sld: z(n) };
+    const out = { deg, oct, vel, inc: z(n), stk: z(n), gate, acc: z(n), sld: z(n) };
+    if (anyHold) out.hold = hold;               // present-only, like `orn`
+    return out;
+  }
+
+  /* ---------- RETURN WITH TRANSFORMATION ---------------------------------
+     PLAN.md THE THEME COMPOSER §5: the same theme comes back the same, up a
+     step, augmented, or fragmented — the seam where the composer meets the
+     improvisation engine, because trading and solos ARE transformations
+     applied live. These are pure functions on the RENDERED phrase, applied
+     by the section that carries the return (band-kit), never written back
+     onto the theme: the theme is the claim, the transformation is one
+     section's way of making it. `same` returns the phrase object untouched,
+     so a section that never says the word is byte-identical. */
+  const TRANSFORMS = {
+    same: { w: "as it was" },
+    // one scale step up, every note — the sequence's own move, diatonic by
+    // construction because deg is a DEGREE and the harmony spells it
+    up:   { w: "up a step" },
+    // augmentation: the head of the phrase at half speed, over the same
+    // bars — each onset lands at twice its place, and what no longer fits
+    // has already been said
+    aug:  { w: "stretched out, twice as slow" },
+    // fragmentation: just its head — the first bar's material, and the last
+    // note of it holds, because the kernel holds every note to the next
+    // onset and there isn't one
+    frag: { w: "just its head" },
+  };
+  function transform(ph, kind) {
+    if (!kind || kind === "same" || !TRANSFORMS[kind]) return ph;
+    const n = ph.gate.length;
+    const out = { deg: z(n), oct: z(n), vel: new Array(n).fill(6), inc: z(n),
+                  stk: z(n), gate: z(n), acc: z(n), sld: z(n) };
+    // a tie is part of the note, so it travels with it — present-only, the
+    // same law as the phrase compiler's. Augmentation doubles a hold along
+    // with everything else (half speed is half speed for the long note
+    // too); the fragment keeps its head's ties; `up` moves no rhythm at all.
+    const hh = ph.hold ? z(n) : null;
+    const put = (to, from, stretch) => { out.gate[to] = 1; out.deg[to] = ph.deg[from];
+      out.oct[to] = ph.oct[from]; out.vel[to] = ph.vel[from];
+      if (hh && ph.hold[from]) hh[to] = ph.hold[from] * (stretch || 1); };
+    for (let i = 0; i < n; i++) {
+      if (!ph.gate[i]) continue;
+      if (kind === "up") { put(i, i); out.deg[i] = ph.deg[i] + 1; }
+      else if (kind === "aug") { if (i * 2 < n) put(i * 2, i, 2); }
+      else if (kind === "frag") { if (i < N) put(i, i); }
+    }
+    if (hh) out.hold = hh;
+    return out;
   }
 
   // what it sounds like, said out loud — the chyron the page can print
@@ -201,7 +376,8 @@
   // "hovers" and "turns back on itself" are the identical phrase — so a
   // shape is offered only when it would come out DIFFERENT. (The model
   // moving is not enough: this file's whole job is the phrase.)
-  const sounds = (m) => JSON.stringify(toPhrase(m).deg) + JSON.stringify(toPhrase(m).gate);
+  const sounds = (m) => JSON.stringify(toPhrase(m).deg) + JSON.stringify(toPhrase(m).gate) +
+                        JSON.stringify(toPhrase(m).hold || 0);
   // ...and no two of the offered ones may sound alike EITHER. Comparing each
   // only against the current phrase left two shapes that were different from
   // what is playing and identical to each other; the first one in the table
@@ -219,6 +395,7 @@
   };
   const conFirst = firstOf("contour", Object.keys(CONTOURS));
   const cellFirst = firstOf("cell", Object.keys(CELLS));
+  const sentFirst = firstOf("sent", Object.keys(SENTENCES));
   for (const [k, c] of Object.entries(CELLS))
     add("cell:" + k, "the rhythm of it", [c.w],
         (m) => m.on && m.cell !== k && cellFirst(m, k),
@@ -227,6 +404,13 @@
     add("con:" + k, "the shape", [c.w],
         (m) => m.on && m.contour !== k && conFirst(m, k),
         (m) => ({ ...m, contour: k }), () => "it " + c.w, (m) => m.contour === k);
+  // the sentence — only when the phrase is longer than a bar (a one-bar
+  // tune has no measures to differ), and only the plans that would come out
+  // audibly different over the rhythm you actually wrote
+  for (const [k, s] of Object.entries(SENTENCES))
+    add("sent:" + k, "how it speaks", [s.w],
+        (m) => m.on && barsOf(m) > 1 && (m.sent || "plain") !== k && sentFirst(m, k),
+        (m) => ({ ...m, sent: k }), () => s.w, (m) => (m.sent || "plain") === k);
   for (const [k, l] of Object.entries(LANDINGS))
     add("land:" + k, "where it lands", [l.w], (m) => m.on && m.land !== k,
         (m) => ({ ...m, land: k }), () => l.w, (m) => m.land === k);
@@ -236,21 +420,33 @@
   for (const [k, r] of Object.entries(REG))
     add("reg:" + k, "the register", [r.w], (m) => m.on && m.reg !== k,
         (m) => ({ ...m, reg: k }), () => r.w, (m) => m.reg === k);
-  // THE BAR, and the two things you can say about one note in it
+  // THE BAR, and the three things you can say about one place in it: a note,
+  // a step up or down on it — and "hold it", the tie as a mark. A place is a
+  // NOTE only at grid value 1: a 2 is the previous note still sounding, so
+  // the note mark re-attacks it (a tie tapped back into a note) and the
+  // lift marks pass it by (there is nothing there to move).
   for (let i = 0; i < N; i++) {
     add("note:" + i, "the bar", [stepWord(i)], (m) => m.on,
-        (m) => { const g = gridOf(m); g[i] = g[i] ? 0 : 1;
+        (m) => { const g = gridOf(m); g[i] = g[i] === 1 ? 0 : 1;
                  return { ...m, grid: g, cell: m.cell }; },
-        (m) => (gridOf(m)[i] ? "no note " : "a note ") + stepWord(i),
-        (m) => !!gridOf(m)[i]);
+        (m) => (gridOf(m)[i] === 1 ? "no note " : "a note ") + stepWord(i),
+        (m) => gridOf(m)[i] === 1);
     add("up:" + i, "higher", ["up a step " + stepWord(i)],
-        (m) => m.on && !!gridOf(m)[i] && (liftOf(m)[i] || 0) < 2,
+        (m) => m.on && gridOf(m)[i] === 1 && (liftOf(m)[i] || 0) < 2,
         (m) => ({ ...m, lift: { ...liftOf(m), [i]: (liftOf(m)[i] || 0) + 1 } }),
         () => "up a step " + stepWord(i));
     add("down:" + i, "lower", ["down a step " + stepWord(i)],
-        (m) => m.on && !!gridOf(m)[i] && (liftOf(m)[i] || 0) > -2,
+        (m) => m.on && gridOf(m)[i] === 1 && (liftOf(m)[i] || 0) > -2,
         (m) => ({ ...m, lift: { ...liftOf(m), [i]: (liftOf(m)[i] || 0) - 1 } }),
         () => "down a step " + stepWord(i));
+    // "hold it" — offered only where a note EARLIER in the bar exists to
+    // hold from: a tie with nothing before it would be a mark on silence
+    add("tie:" + i, "held", ["hold it " + stepWord(i)],
+        (m) => m.on && i > 0 && gridOf(m).slice(0, i).some((v) => v === 1),
+        (m) => { const g = gridOf(m); g[i] = g[i] === 2 ? 0 : 2;
+                 return { ...m, grid: g, cell: m.cell }; },
+        (m) => (gridOf(m)[i] === 2 ? "let go " : "held through ") + stepWord(i),
+        (m) => gridOf(m)[i] === 2);
   }
   add("flatten", "the bar", ["straighten it out"], (m) => m.on && (m.grid || m.lift),
       (m) => ({ ...m, grid: null, lift: null }),
@@ -272,6 +468,13 @@
         w: l.w, is: (m) => m.len === k, apply: (m) => ({ ...m, len: k }) })) },
     { id: "cell", ask: "what's its rhythm?", opts: Object.entries(CELLS).map(([k, c]) => ({
         w: c.w, is: (m) => m.cell === k, apply: (m) => ({ ...m, cell: k }) })) },
+    // the sentence rides right behind the rhythm it derives from, and only
+    // when there are measures to differ — a one-bar tune is not a sentence
+    { id: "sent", ask: "how does it speak?", when: (m) => barsOf(m) > 1,
+      opts: Object.entries(SENTENCES).map(([k, s]) => ({
+        w: s.w, is: (m) => (m.sent || "plain") === k,
+        apply: (m) => ({ ...m, sent: k }),
+        heard: (m) => (m.sent || "plain") === k || sentFirst(m, k) })) },
     { id: "contour", ask: "what shape does it make?",
       opts: Object.entries(CONTOURS).map(([k, c]) => ({
         w: c.w, is: (m) => m.contour === k, apply: (m) => ({ ...m, contour: k }),
@@ -286,14 +489,17 @@
   const say = C.sayOf(V), says = C.saysOf(V);
 
   const regOf = (m) => (REG[m.reg] || REG.mid).v;
-  // THE COUNT ROW's marks for the tune: the note itself, and a scale step
-  // either way on one place — "that third note is too high" made tappable
+  // THE COUNT ROW's marks for the tune: the note itself, a scale step either
+  // way on one place — "that third note is too high" made tappable — and
+  // "hold it", the tie: the note before this place sounds through it
   const BARMARKS = [
     { w: "the note",    id: (i) => "note:" + i },
     { w: "up a step",   id: (i) => "up:" + i },
     { w: "down a step", id: (i) => "down:" + i },
+    { w: "hold it",     id: (i) => "tie:" + i },
   ];
-  return { N, CELLS, CONTOURS, LANDINGS, LENGTHS, REG, regOf, gridOf, liftOf, stepWord,
+  return { N, CELLS, CONTOURS, LANDINGS, LENGTHS, REG, SENTENCES, ROLES, TRANSFORMS,
+           regOf, gridOf, liftOf, stepWord,
            blank, V, catalog, say, says, BARMARKS,
-           decisions, nextAsk, answer, toPhrase, describe, barsOf, cellOf };
+           decisions, nextAsk, answer, toPhrase, transform, describe, barsOf, cellOf };
 });

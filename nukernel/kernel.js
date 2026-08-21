@@ -43,6 +43,18 @@
 (function (root) {
   "use strict";
 
+  // THE HARMONY BRAIN IS OPTIONAL EQUIPMENT. engine/theory.js (the parent's
+  // CsdTheory — itself pure, seeded, zero-dep) voices the comping chair when
+  // it is in the room: the page loads it before this file, node resolves it
+  // by path. Every read of it below is gated on a CHAIR asking, so a page
+  // that never loads it — and every catalog genre — renders byte-identically
+  // without it. This is a reference to a sibling organ, not a dependency:
+  // the algebra still stands alone.
+  let Th = null;
+  if (typeof module !== "undefined" && module.exports) {
+    try { Th = require("../engine/theory.js"); } catch (e) { Th = null; }
+  } else Th = root.CsdTheory || null;
+
   // ---- indexing ------------------------------------------------------------
   // Patterns are necklaces, not lists: they have no ends. Every read is cyclic.
   const at = (v, i) => v[((i % v.length) + v.length) % v.length];
@@ -58,6 +70,11 @@
                 inc: f(p.inc || Z(p)), stk: f(p.stk || Z(p)),
                 gate: f(p.gate), acc: f(p.acc), sld: f(p.sld) };
     if (p.orn) o.orn = f(p.orn);
+    // `hold` rides exactly as `orn` does — present-only, a per-note length
+    // the hand wrote (the tie made first-class: see the render's cap). The
+    // same group-law reason: a phrase that never carried holds must come out
+    // of rotate(0) as the same keys it went in as.
+    if (p.hold) o.hold = f(p.hold);
     return o;
   };
 
@@ -837,9 +854,10 @@
   // the worst kind of instrument. A genre with no `g.orn` gets NOTHING — no
   // default, no family fallback — so every anchor that predates this renders
   // byte for byte as it did.
-  const ORN = { none: 0, grace: 1, flam: 2, roll2: 3, roll3: 4, roll4: 5 };
-  const ORNNAME = ["", "grace", "flam", "roll", "roll", "roll"];
-  const ORNPARTS = [0, 0, 0, 2, 3, 4];             // how many strokes a roll is
+  const ORN = { none: 0, grace: 1, flam: 2, roll2: 3, roll3: 4, roll4: 5,
+                mute: 6 };
+  const ORNNAME = ["", "grace", "flam", "roll", "roll", "roll", "mute"];
+  const ORNPARTS = [0, 0, 0, 2, 3, 4, 0];          // how many strokes a roll is
 
   // THE SOUNDING ALPHABET OF ONE BAR, and it has to be per bar rather than per
   // genre: under a chord cycle the line is transposed by the bar's root (the
@@ -937,8 +955,16 @@
     let did = false;
     for (let k = bar.length - 1; k >= 0; k--) {
       const m = marks[steps[k]] | 0;
-      if (!m || m > 5) continue;
+      if (!m || m > ORN.mute) continue;
       const e = bar[k];
+      // A PALM MUTE IS A MARK, NOT A NOTE. It makes no extra events and it
+      // moves no clock — it rides the note it is written on as `mut` 0..1,
+      // which the bridge carries to the string model as a hand resting on
+      // the strings (stk_guitar's own `mute` param) the way `acc` and `sld`
+      // have always ridden. 0.6 is a mute you can still hear the pitch
+      // through. Nothing wrote mark 6 before this line existed, so every
+      // phrase ever saved renders byte-identically.
+      if (m === ORN.mute) { bar[k].omark = 1; bar[k].mut = 0.6; did = true; continue; }
       e.omark = 1;                                 // hands off, generated pass
       did = true;
       if (m >= ORN.roll2) { ratchet(bar, k, ORNPARTS[m]); continue; }
@@ -1278,6 +1304,7 @@
       const ctr = 60 + 12 * g.reg(v) + (pol.ctr || 0), pad = part === "pad",
             sc = g.scale || PENT, md = g.mode || MODE;
       let voicing = null;      // pad voice-leading memory: per voice, across bars
+      let compv = null;        // the comping hand's voicing memory, same law
       for (let b = g.entry(v); b < bars; b++) {
         const s = b - g.entry(v);
         // the genre's word plus the bar schedule's word for THIS bar — the
@@ -1461,16 +1488,65 @@
         // path above fires once a bar at the phrase's first gate, full stop.
         if (pol.chordLock) {
           const lane = String.fromCharCode(97 + (v % 26));
+          // THE CHAIR'S OWN CHORD POLICY (the chairs seam). band-kit has
+          // carried `chairs` onto the genre since the two-voice band existed
+          // and the kernel read it NOWHERE — these are the first reads. Three
+          // facts a chair may declare about its chords: `fifths` (a driven
+          // guitar's power chord), `comping` (a keys hand voicing shells
+          // through the parent's harmony brain), `antic`/`maxHold` (a push
+          // voices the bar it is pushing into; a held comp rings to the
+          // change). No catalog genre sets `chairs`, so every one of them
+          // takes the old per-pc fold below, byte for byte.
+          const chair = (g.chairs && g.chairs[v % g.chairs.length]) || {};
           const t0 = (b * N) / g.rate, t1 = ((b + 1) * N) / g.rate;
           for (let i = 0; i < N; i++) {
             if (!p.gate[i]) continue;
-            const c = chordFor(i), hold = Math.min(sp[i], pol.maxHold || 1);
+            // A PUSH VOICES THE CHORD IT IS PUSHING INTO: on the last eighth
+            // of the bar an anticipating chair reads the NEXT bar's first
+            // chord — chordFor caps at the bar line and would answer with
+            // the chord being left, which is the one thing a push is not.
+            const c = chair.antic && i >= N - 2
+              ? chordsOf(subj, g, b + 1)[0] : chordFor(i);
+            const hold = Math.min(sp[i], chair.maxHold || pol.maxHold || 1);
             // the stab is the one chord that DOES move: a skank that lands
             // dead on the grid every time is the drum machine playing a
             // guitar. It moves as one, though — see chordFeel.
             const cf = chordFeel(g, b, i, lane, N);
             const t = Math.min(t1 - 1e-9, Math.max(t0,
               timeOf(g, b, N, i) + (cf ? cf.push : 0)));
+            if (chair.fifths) {
+              // A POWER CHORD IS AN AMP FACT MADE PITCH: root, fifth,
+              // octave. Thirds intermodulate under distortion — the driven
+              // amp turns a major triad into mud — and fifths do not, which
+              // is why every driven rhythm guitar on every record voices
+              // this way. Fold ONLY the root into the chair's register and
+              // stack 7/12 as literal offsets: folding all three would wrap
+              // the octave back onto the root and un-voice the chord.
+              const r = fold(c.rootPc, ctr) + key;
+              for (const n of [r, r + 7, r + 12])
+                ev.push({ t, dur: hold * 0.92 / g.rate, v, part, n,
+                          acc: p.acc[i], sld: 0,
+                          vel: cf ? leaned(vel(p, i), cf.dv) : vel(p, i) });
+              continue;
+            }
+            if (chair.comping && Th) {
+              // COMPING IS VOICE-LED, NOT STAMPED. The shell is the chord's
+              // own root/3rd/7th (the jazz priority — the 5th says nothing
+              // the root has not), three voices, moved minimally chord to
+              // chord by the parent's own harmony brain. The register
+              // window rides the chair's seat: ctr±12, which is 48..72
+              // where the hands sit by default — an octave and a half under
+              // the pad tables, where a comping hand actually lives.
+              const shell = c.pcs.length >= 4
+                ? [c.pcs[0], c.pcs[1], c.pcs[3]] : c.pcs.slice(0, 3);
+              compv = Th.lead(compv, shell.map(n => n + key),
+                              { voices: 3, regLo: ctr - 12, regHi: ctr + 12 });
+              for (const n of compv.map(Th.parsePch))
+                ev.push({ t, dur: hold * 0.92 / g.rate, v, part, n,
+                          acc: p.acc[i], sld: 0,
+                          vel: cf ? leaned(vel(p, i), cf.dv) : vel(p, i) });
+              continue;
+            }
             for (const n of c.pcs)
               ev.push({ t, dur: hold * 0.92 / g.rate,
                         v, part, n: fold(n, ctr) + key, acc: p.acc[i], sld: 0,
@@ -1492,8 +1568,26 @@
           if (!p.gate[i]) continue;
           const steps = sp[i];
           const slid = pad || p.sld[(i + steps) % N];
-          const legato = slid ? 1 : (ART[artic] || 0.92);
-          const held = slid || !cap ? steps : Math.min(steps, cap);
+          // AN EXPLICIT HOLD OUTRANKS THE CAP, the way a slide already does:
+          // `hold[i]` is the length the hand (or the theme's sentence) WROTE
+          // on this note — a tie across a barline is a note whose hold says
+          // so — and maxHold's rest-making law applies only where nobody
+          // said. Never past the next onset, though: spans() is still the
+          // outer wall, so a tie cannot swallow the note after it. A phrase
+          // with no `hold` key takes exactly the old branch, byte for byte.
+          const hd = p.hold && p.hold[i];
+          // ...and it outranks the ARTICULATION too, for the same reason it
+          // outranks the cap: a written length is the whole length. The
+          // articulation's gap — staccato's half, normal's breath — is the
+          // performer's word about notes nobody measured, and a tie mark
+          // says "sound THROUGH this" in steps, by hand. Without the
+          // exemption a house record's staccato cut every written tie to
+          // half and the staff drew a bow the air never played. The slide
+          // has always had this exemption (a physical connection cannot be
+          // shortened); the hand's tie is the notational one.
+          const legato = slid || hd ? 1 : (ART[artic] || 0.92);
+          const held = hd ? Math.min(steps, hd)
+                          : (slid || !cap ? steps : Math.min(steps, cap));
           const ns = [null];                             // pitched: registered below
           for (const n of ns) {
             const dg = p.deg[i] + degShiftAt(i);

@@ -100,8 +100,19 @@
     // under half-bar stabs kept feeding. The player's own panel answer (rel)
     // still outranks the job. riff/line/arp keep the recipe's longer ring.
     const chord = j.part === "stab";
+    // A POWER CHORD IS THE AMP'S DECISION, so the seam is here — the chair
+    // is the one thing that knows both the job (chords) and the instrument
+    // (how much amplifier). Thirds intermodulate under drive and fifths do
+    // not: the same grip through a clean amp is a voicing choice, through a
+    // driven one it is the only chord that comes out as a chord. The chair
+    // declares the FACT (`fifths`); the kernel voices it (root/5th/octave,
+    // the chairs seam in the chordLock branch). Clean, jazz and the
+    // acoustics keep the full triad they always had.
+    const fifths = chord &&
+      /^(crunch|overdrive|distortion|palm_muted)_guitar$/.test(j.instr || m.instr);
     return { part: j.part || "line", reg: (REG[m.reg] || REG.mid).v + (j.reg || 0),
              instr: j.instr || m.instr, pad: j.part === "pad", silent: !j.part,
+             ...(fifths ? { fifths: true } : {}),
              // ...and a chord is STRUMMED, a few ms a string, not stamped:
              // the chair declares the kernel's own strum pipe with the stab
              // admission — nukernel data, so no catalog genre's bytes move

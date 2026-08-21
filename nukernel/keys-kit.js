@@ -39,7 +39,22 @@
     swell:   { w: "long swells", part: "pad", gate: on(0), bars2: true,
                says: "a chord every two bars, arriving slowly" },
     comp:    { w: "comping the changes", part: "stab", gate: on(0, 4, 8, 12),
-               says: "chords on the beat" },
+               comping: true, says: "chords on the beat" },
+    // THE COMP FEELS — data, not code, which is the whole house style: each
+    // is the comp job with a different hand. `comping` on all of them routes
+    // the chord through the parent's harmony brain (theory.js lead — shells,
+    // three voices, minimal motion) instead of the kernel's stamped per-pc
+    // fold; `antic` makes the late push voice the NEXT bar's chord (an
+    // anticipation is a chord you arrive at early, not one you leave late);
+    // `maxHold` on the held feel lets each chord ring to the change.
+    charleston: { w: "the Charleston", part: "stab", gate: on(0, 6),
+               comping: true, says: "the chord on one, and the and-of-two" },
+    pushes:  { w: "pushing the changes", part: "stab", gate: on(3, 8, 14),
+               comping: true, antic: true,
+               says: "chords between the beats, leaning into the next bar" },
+    held:    { w: "held to the change", part: "stab", gate: on(0, 4, 8, 12),
+               comping: true, maxHold: 6,
+               says: "chords on the beat, each ringing to the change" },
     skank:   { w: "on the offbeats", part: "stab", gate: on(2, 6, 10, 14),
                says: "the offbeat chop" },
     push:    { w: "pushing the bar", part: "stab", gate: on(0, 6, 8, 14),
@@ -137,6 +152,12 @@
     return {
       voices: 1, part: () => (j.part || "line"), reg: () => (REG[m.reg] || REG.high).v,
       instr: m.instr,
+      // the comping facts ride the chair (band-kit's chairs[] carries them
+      // onto the genre, the kernel's chordLock branch reads them) — absent
+      // keys serialize to nothing, so a non-comping job is byte-identical
+      ...(j.comping ? { comping: true } : {}),
+      ...(j.antic ? { antic: true } : {}),
+      ...(j.maxHold ? { maxHold: j.maxHold } : {}),
       realize: () => (j.part === "pad" ? "pad" : "line"),
       tone: { wave: "saw", cut: 1400, q: 1.2, atk: 0.05, rel: 0.9, gain: 0.22,
               verb: 0.12, ...(m.tone || {}) },

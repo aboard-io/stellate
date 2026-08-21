@@ -105,21 +105,29 @@
   }
 
   // ---- 2. voice leading ---------------------------------------------------
+  // The register is a PARAMETER of the walk now, not a constant of the file:
+  // the pad tables live at 84..105, but a comping electric piano lives an
+  // octave and a half under them, and the mechanism — fold in, sort,
+  // un-collide upward, minimal motion — is register-blind. Every default is
+  // the old constant, so the two internal callers (progress, toProgression)
+  // and every parent consumer are byte-identical unless a caller asks.
   const REG_LO=84, REG_HI=105;   // hand-table pad register: 7.00..8.09
   function nearestTo(p,pc){ const d=mod12(pc-p); return d<=6? p+d : p+d-12; }
-  function clampReg(v){
-    for(let i=0;i<v.length;i++){ while(v[i]<REG_LO)v[i]+=12; while(v[i]>REG_HI)v[i]-=12; }
+  function clampReg(v,lo,hi){
+    if(lo==null)lo=REG_LO; if(hi==null)hi=REG_HI;
+    for(let i=0;i<v.length;i++){ while(v[i]<lo)v[i]+=12; while(v[i]>hi)v[i]-=12; }
     v.sort((a,b)=>a-b);
-    for(let i=1;i<v.length;i++) if(v[i]===v[i-1]&&v[i]+12<=REG_HI) v[i]+=12;  // un-collide unisons upward
+    for(let i=1;i<v.length;i++) if(v[i]===v[i-1]&&v[i]+12<=hi) v[i]+=12;  // un-collide unisons upward
     v.sort((a,b)=>a-b); return v;
   }
   // first voicing of a chain — this is where style lives. pcs come in shell
   // priority order (root first); we stack by interval-above-root but banish
   // the 9th-cluster zone (iv 1–2) to the top so seconds don't sit on the root.
-  function seedVoicing(pcs,style,voices){
+  function seedVoicing(pcs,style,voices,lo,hi){
+    if(lo==null)lo=REG_LO; if(hi==null)hi=REG_HI;
     const sel=pcs.slice(0,voices), rootPc=sel[0];
     const lift=pc=>{ const iv=mod12(pc-rootPc); return iv<3&&iv>0? iv+12: iv; };
-    const base=REG_LO+mod12(rootPc-REG_LO);          // root lands in 84..95
+    const base=lo+mod12(rootPc-lo);                  // root lands in lo..lo+11
     let v=[base];
     if(style==="quartal"){
       for(let i=1;i<voices;i++){ const t=v[i-1]+5; let best=null;  // aim a 4th up, snap to a chord pc
@@ -135,14 +143,14 @@
       while(v.length<voices) v.push(v[v.length-sel.length]+12);  // double from the bottom up
       v.sort((a,b)=>a-b);
       if(style==="drop2"&&v.length>=3) v[v.length-2]-=12;        // second-from-top drops an octave
-      if(style==="open") for(let i=1;i<v.length;i+=2) if(v[i]+12<=REG_HI) v[i]+=12;
+      if(style==="open") for(let i=1;i<v.length;i+=2) if(v[i]+12<=hi) v[i]+=12;
     }
-    return clampReg(v);
+    return clampReg(v,lo,hi);
   }
   // minimal-motion step: each voice takes its nearest chord tone (common tones
   // ride free at cost 0), then a coverage repair moves the cheapest doubled
   // voice onto any pc that went missing — total displacement stays tiny.
-  function moveVoices(prev,pcs){
+  function moveVoices(prev,pcs,lo,hi){
     const out=prev.map(p=>{ let best=p,bd=99;
       for(const pc of pcs){ const q=nearestTo(p,pc), d=Math.abs(q-p); if(d<bd){bd=d;best=q;} }
       return best; });
@@ -155,18 +163,26 @@
         if(cost<bc){bc=cost;bi=i;bq=q;} }
       if(bi>=0) out[bi]=bq;
     }
-    return clampReg(out);
+    return clampReg(out,lo,hi);
   }
-  // lead(prevVoicing, chordPcs, {style, voices}) → pch strings (sorted).
-  // prevVoicing null → seed a fresh voicing in `style`; else minimal motion
-  // (style shaped the seed; displacement minimization carries it forward).
+  // lead(prevVoicing, chordPcs, {style, voices, regLo, regHi}) → pch strings
+  // (sorted). prevVoicing null → seed a fresh voicing in `style`; else minimal
+  // motion (style shaped the seed; displacement minimization carries it
+  // forward). regLo/regHi move the register window (default: the pad tables'
+  // 84..105 — absent, byte-identical). An EXPLICIT voices request may go down
+  // to 3 (a comping hand plays shells); the implicit clamp keeps the old
+  // floor of 4, because a 3-pc triad with no request has always seeded 4
+  // voices and the parent's renders sit downstream of that.
   function lead(prevVoicing,chordPcs,opts){
     const o=opts||{}, style=o.style||"close";
+    const lo=o.regLo==null?REG_LO:(o.regLo|0), hi=o.regHi==null?REG_HI:(o.regHi|0);
     const uniq=[]; for(const pc of chordPcs.map(mod12)) if(!uniq.includes(pc)) uniq.push(pc);
-    const voices=Math.max(4,Math.min(6,(o.voices|0)||(prevVoicing&&prevVoicing.length)||uniq.length));
+    const req=o.voices|0;
+    const voices=req? Math.max(3,Math.min(6,req))
+                    : Math.max(4,Math.min(6,(prevVoicing&&prevVoicing.length)||uniq.length));
     const pcs=uniq.slice(0,voices);
-    if(!prevVoicing||!prevVoicing.length) return seedVoicing(pcs,style,voices).map(toPch);
-    return moveVoices(prevVoicing.map(parsePch),pcs).map(toPch);
+    if(!prevVoicing||!prevVoicing.length) return seedVoicing(pcs,style,voices,lo,hi).map(toPch);
+    return moveVoices(prevVoicing.map(parsePch),pcs,lo,hi).map(toPch);
   }
 
   // ---- 3. the functional walk --------------------------------------------

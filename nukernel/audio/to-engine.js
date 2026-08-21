@@ -1035,13 +1035,19 @@ export function toEngine(plan, deps) {
       if (e.kind === "line") {
         if (e.n == null) continue;
         const c = seatFor(e.v, e.part);
+        // `mut` is the palm-mute mark (kernel ORN.mute) riding the note the
+        // way acc/sld always have — carried as `mute` for the string model's
+        // own hand-on-the-strings param. Absent, nothing is written and the
+        // note object is byte-identical.
         pitched.push({ voice: c.key, beat, dur: durB, pch: pchOf(e.n),
-          amp: pitchAmp(e.vel, e.acc), accent: e.acc ? 1 : 0, slide: e.sld ? 1 : 0 });
+          amp: pitchAmp(e.vel, e.acc), accent: e.acc ? 1 : 0, slide: e.sld ? 1 : 0,
+          ...(e.mut ? { mute: e.mut } : {}) });
         if (e.vox) notes.push("vox");
       } else if (e.kind === "bass") {
         if (e.n == null || !bassSeat) continue;
         pitched.push({ voice: "bass", beat, dur: durB, pch: pchOf(e.n),
-          amp: pitchAmp(e.vel, e.acc), accent: e.acc ? 1 : 0, slide: e.sld ? 1 : 0 });
+          amp: pitchAmp(e.vel, e.acc), accent: e.acc ? 1 : 0, slide: e.sld ? 1 : 0,
+          ...(e.mut ? { mute: e.mut } : {}) });
       } else if (e.kind === "hit") {
         // A HIT AT ZERO IS SILENCE, on the record as on the page. The kit
         // velocity vectors and the groove profiles both write velocity 0

@@ -203,8 +203,10 @@
     drums: D.say(D.blank(), "start"), bass: B.say(B.blank(), "start"),
     keys: Ky.say(Ky.blank(), "start"),
     // THE IDEA belongs to the room. The arranger writes it; a section says
-    // who picks it up. One melody to start with — the hook.
-    idea: Id.say(Id.blank(), "start"),
+    // who picks it up. One melody to start with — the hook — and room for
+    // its ANSWER (theme B, made only when the arranger asks for one, so a
+    // record that never says the word is byte-identical).
+    idea: Id.say(Id.blank(), "start"), ideaB: null,
     guitar: Gt.say(Gt.blank(), "start"),
     voice: Vo.say(Vo.blank(), "start") });
 
@@ -796,6 +798,18 @@
     { id: "form", ask: "what's the form?", opts:
       Object.entries(FORMS).map(([k, f]) => ({
         w: f.w, is: (s) => s.form === k, apply: (s) => ({ ...s, form: k }) })) },
+    // A SECOND THEME (PLAN.md THE THEME COMPOSER §1): named and few — A and
+    // B, the tune and the answer. The question lands on the song's ledger
+    // like any other; the theme itself is a MODEL fact (m.ideaB), made in
+    // answer() the way the melody's own answers land on the idea — because
+    // a theme is not a song field, it is a claim the room keeps. Unanswered
+    // (or answered "one theme is plenty") there is no B and every phrase,
+    // section and staff is byte-identical to the one-theme box.
+    { id: "second", ask: "does the tune have an answer?", opts: [
+      { w: "one theme is plenty", is: (s2) => !s2.themeB,
+        apply: (s2) => ({ ...s2, themeB: false }) },
+      { w: "a second theme answers it", is: (s2) => !!s2.themeB,
+        apply: (s2) => ({ ...s2, themeB: true }) } ] },
     // 72 IS THE FLOOR ON PURPOSE. nukernel's tempo dial runs 70..160 and
     // song.js drops a document that says otherwise, so a band that agreed
     // to play at 48 would lose it the moment anyone pressed WRITE. Below 72
@@ -853,12 +867,22 @@
       apply: (s) => ({ ...s, chg: { ...(s.chg || {}), [r]: k } }) })),
   }));
   // the melody is the arranger's, and it is asked in the ideas module's own
-  // words — one question per thing that makes a tune
-  const ideaDecisions = (m) => Id.decisions(m.idea).map((d) => ({
-    ...d, id: "idea:" + d.id, seat: "arranger",
-    opts: d.opts.map((o) => ({ ...o,
-      apply: (s2) => s2,                       // the melody is not a song field
-      idea: true, iid: d.id })) }));
+  // words — one question per thing that makes a tune. Theme B, when the
+  // arranger has asked for one, gets the same interview under its own ids
+  // ("ideaB:…"): the same five-or-six questions, aimed at the answer.
+  const ideaDecisions = (m) => [
+    ...Id.decisions(m.idea).map((d) => ({
+      ...d, id: "idea:" + d.id, seat: "arranger",
+      opts: d.opts.map((o) => ({ ...o,
+        apply: (s2) => s2,                     // the melody is not a song field
+        idea: true, iid: d.id })) })),
+    ...(m.ideaB && m.ideaB.on ? Id.decisions(m.ideaB).map((d) => ({
+      ...d, id: "ideaB:" + d.id, seat: "arranger",
+      ask: "and the answer — " + d.ask,
+      opts: d.opts.map((o) => ({ ...o,
+        apply: (s2) => s2,
+        idea: "b", iid: d.id })) })) : []),
+  ];
   const threeOpts = (m, f) => openOf(m.song, f).map((v) => ({
     w: v, is: (s2) => s2[f] === v, apply: (s2) => ({ ...s2, [f]: v }) }));
   // memoised per model, like the chairs' lists: `answer` builds this to find
@@ -890,7 +914,9 @@
     // questions unanswerable — the arranger was asked "how long is it?"
     // forever)
     ...d, seat: "arranger",
-    answered: d.id.startsWith("idea:") ? d.answered : ((m.song.answers || {})[d.id] || null),
+    // an IDEA question (either theme's) is answered on the idea's own
+    // ledger, not the song's
+    answered: d.id.startsWith("idea") ? d.answered : ((m.song.answers || {})[d.id] || null),
     // the chair's own option mapper, aimed at the SONG: what was said, and
     // what is true of the tune right now
     opts: C.mapOpts(d.opts, (m.song.answers || {})[d.id], m.song) }));
@@ -1104,6 +1130,9 @@
       // pruned away — the chair existed and was never asked anything.
       s0.voice ? [s0.voice.phrase, genreSig(s0.voice.genre)] : null,
       mixOf(m), Id.toPhrase(m.idea), Id.regOf(m.idea),
+      // ...and the answer, when there is one — without it every question
+      // about theme B would look like it changed nothing and be pruned
+      m.ideaB && m.ideaB.on ? [Id.toPhrase(m.ideaB), Id.regOf(m.ideaB)] : null,
       m.song.bpm, m.song.swing, m.song.key, m.song.minor, m.song.space, m.song.form,
       m.song.chg, m.song.end || null, m.keys.tone, m.guitar.tone, m.bass.tone,
     ]);
@@ -1231,7 +1260,7 @@
       // construct every arranger question there is — the calls, the tune's
       // own five, the narrowing — to find one row, which measured at 9 ms a
       // tap and is most of what composing a record cost.
-      const d = (id.startsWith("idea:") ? ideaDecisions(m)
+      const d = (id.startsWith("idea") ? ideaDecisions(m)
         : id.startsWith("len:") ? lenDecisions(m)
         : id.startsWith("chg:") ? callDecisions(m).map((x) => ({ ...x, seat: "arranger",
             opts: x.opts.map((o) => ({ ...o })) }))
@@ -1239,7 +1268,9 @@
         .find((x) => x.id === id) || arrDecisions(m).find((x) => x.id === id);
       const o = d && d.opts.find((x) => x.w === w);
       if (!o) return m;
-      // ...the melody's own answers land on the idea, not on the tune
+      // ...the melody's own answers land on the idea, not on the tune —
+      // whichever theme the question was about
+      if (o.idea === "b") return { ...m, ideaB: Id.answer(m.ideaB, o.iid, w) };
       if (o.idea) return { ...m, idea: Id.answer(m.idea, o.iid, w) };
       // THE LAST ONE STANDING IS CALLED. Answering the third question when
       // only one record fits is answering the genre — asking "and which of
@@ -1255,6 +1286,17 @@
       }
       const song = { ...o.apply(m.song), answers: { ...(m.song.answers || {}), [id]: w } };
       let out = { ...m, song };
+      // A SECOND THEME IS MADE THE MOMENT IT IS ASKED FOR — and it starts
+      // as a CONTRAST, because that is what an answer is: where the tune
+      // arches and closes on the root, the answer is a short call that
+      // falls away and opens on the fifth. (A B theme that started as a
+      // copy of A would be A with extra steps.) Saying "one theme is
+      // plenty" takes it back out; saying it twice changes nothing.
+      if (id === "second")
+        out.ideaB = song.themeB
+          ? (m.ideaB || Id.say({ ...Id.blank(), name: "the answer", cell: "call",
+                                 contour: "fall", land: "fifth" }, "start"))
+          : null;
       // WHAT KIND OF RECORD IS THIS is the drummer's own first question, and
       // the arranger has just answered it out loud. It is recorded on the
       // drummer (so their groove question is narrowed to that family) and
@@ -1299,13 +1341,16 @@
     return { ...m, bass: B.answer(m.bass, id, w) };
   }
   // the words each seat still has, beyond its interview
-  const catalog = (m, seat) => {
+  const catalog = (m, seat, theme) => {
+    // the arranger's tray is the theme's own words — aimed at whichever
+    // theme the page is editing (the tune unless it says "b")
+    const idm = theme === "b" && m.ideaB ? m.ideaB : m.idea;
     const list = seat === "drums" ? D.catalog(m.drums)
       : seat === "bass" ? B.catalog(m.bass)
       : seat === "keys" ? Ky.catalog(m.keys)
       : seat === "guitar" ? Gt.catalog(m.guitar)
       : seat === "voice" ? Vo.catalog(m.voice)
-      : seat === "arranger" ? Id.catalog(m.idea).filter((i) => i.group !== "start") : [];
+      : seat === "arranger" ? Id.catalog(idm).filter((i) => i.group !== "start") : [];
     const gk = genreOf(m);
     if (!gk) return list;
     // the same law as the questions: a genre hides the grooves and the
@@ -1326,15 +1371,17 @@
       return true;
     });
   };
-  const say = (m, seat, id) => (seat === "voice" ? { ...m, voice: Vo.say(m.voice, id) }
+  const say = (m, seat, id, theme) => (seat === "voice" ? { ...m, voice: Vo.say(m.voice, id) }
     : seat === "guitar" ? { ...m, guitar: Gt.say(m.guitar, id) }
-    : seat === "arranger" ? { ...m, idea: Id.say(m.idea, id) }
+    : seat === "arranger" ? (theme === "b" && m.ideaB
+        ? { ...m, ideaB: Id.say(m.ideaB, id) }
+        : { ...m, idea: Id.say(m.idea, id) })
     : seat === "keys" ? { ...m, keys: Ky.say(m.keys, id) }
     : seat === "drums" ? { ...m, drums: D.say(m.drums, id) }
     : seat === "bass" ? { ...m, bass: B.say(m.bass, id) } : m);
-  const says = (m, seat, id) => (seat === "voice" ? Vo.says(m.voice, id)
+  const says = (m, seat, id, theme) => (seat === "voice" ? Vo.says(m.voice, id)
     : seat === "guitar" ? Gt.says(m.guitar, id)
-    : seat === "arranger" ? Id.says(m.idea, id)
+    : seat === "arranger" ? Id.says(theme === "b" && m.ideaB ? m.ideaB : m.idea, id)
     : seat === "keys" ? Ky.says(m.keys, id)
     : seat === "drums" ? D.says(m.drums, id)
     : seat === "bass" ? B.says(m.bass, id) : "");
@@ -1466,17 +1513,39 @@
       if (taker.chair === "keys" && !(per.guitar && per.guitar !== "same"))
         gm = Gt.say(gm, "job:strum");
       let melody = null;
-      if (taker.chair && m.idea && m.idea.on) {
-        const ph = Id.toPhrase(m.idea, c.roots);
+      // WHICH THEME, AND HOW IT COMES BACK (PLAN.md THE THEME COMPOSER §2,
+      // §5). The section node says which theme it carries — the tune, or
+      // its answer when the arranger wrote one — and how the return is
+      // made: the same, up a step, augmented, or just its head. The same
+      // theme over different sections' changes is the Jimmy Webb engine
+      // (recurrence over different ground); the transformation is the
+      // section's, applied to the rendered phrase, so the theme itself is
+      // never rewritten by being played.
+      const theme = per.theme === "b" && m.ideaB && m.ideaB.on ? m.ideaB : m.idea;
+      if (taker.chair && theme && theme.on) {
+        const ph = Id.transform(Id.toPhrase(theme, c.roots), per.back);
         const per16 = ph.deg.length / 16;
         const lend = taker.chair === "guitar" ? Gt.toGenre(gm)
           : taker.chair === "voice" ? Vo.toGenre(m.voice) : Ky.toGenre(km);
         melody = { phrase: ph, genre: {
           ...g, label: "Idea", voices: 1, part: () => "lead",
           // the idea's OWN register — a tune is not where the chords are
-          realize: () => "line", reg: () => Id.regOf(m.idea),
+          realize: () => "line", reg: () => Id.regOf(theme),
           // the tune is on the instrument of whoever picked it up
           instr: lend.instr, tone: lend.tone,
+          // LEGATO IS THE DEFAULT ARTICULATION OF A SUNG THEME (PLAN.md THE
+          // THEME COMPOSER §4) — and of any theme that has learned to speak
+          // in sentences: a line whose measures differ and whose ties cross
+          // barlines is a LINE, and the record's own articulation (a house
+          // record says staccato) must not chop it into the comping's
+          // eighths. Gated on the new machinery — a sentence plan, or a
+          // written tie anywhere in the phrase — so every theme from before
+          // the composer landed keeps the record's word and renders byte
+          // for byte; the written ties themselves are safe either way,
+          // because the kernel plays an explicit hold at its full written
+          // length under any articulation.
+          ...((theme.sent || "plain") !== "plain" || ph.hold
+              ? { artic: "legato" } : {}),
           nobass: true, kit: {}, kits: null, bassFig: undefined,
           bars: Math.max(1, Math.ceil(g.bars / per16)),
           prog: per16 > 1 ? pairProg(c.roots, per16, m.song.chords)
@@ -1589,6 +1658,12 @@
              bass: per.bass != null ? per.bass
                : (spoke("bwords") ? undefined : d.bass),
              idea: per.idea != null ? per.idea : d.idea,
+             // which theme this section carries (A when unsaid), and how it
+             // comes back — the same · up a step · augmented · just its
+             // head. Unsaid they are ABSENT, not defaulted: a serialized
+             // section that never heard the new words is byte-identical,
+             // and every consumer treats undefined as "the tune, as it was".
+             theme: per.theme, back: per.back,
              keys: per.keys != null ? per.keys : d.keys,
              guitar: per.guitar != null ? per.guitar : d.guitar,
              gwords: per.gwords || [],
@@ -1725,6 +1800,19 @@
         who: (FORMS[m.song.form || "vamp"].secs[i] === "solo") ? "the solo" : "the melody",
         opts: Object.entries(TAKERS).map(([k, v]) => ({
           w: v.w, key: k, answered: per.idea === k || (!per.idea && k === "no") })) },
+      // ASSIGNMENT ON THE SECTION NODE (PLAN.md THE THEME COMPOSER §2, §5):
+      // which theme this section carries — asked only when there IS a
+      // second one — and how it comes back, asked only where somebody is
+      // actually carrying it. Both default to the byte-identical answer,
+      // and the prune below already retires a transformation that would
+      // make the identical section (fragmenting a one-bar tune is "the
+      // same" wearing a costume).
+      ...(m.ideaB && m.ideaB.on ? [{ id: "theme", who: "which theme", opts: [
+          { w: "the tune", key: "a", answered: !per.theme || per.theme === "a" },
+          { w: "the answer", key: "b", answered: per.theme === "b" } ] }] : []),
+      ...(per.idea && per.idea !== "no" ? [{ id: "back", who: "how it comes back",
+        opts: Object.entries(Id.TRANSFORMS).map(([k, v]) => ({
+          w: v.w, key: k, answered: per.back === k || (!per.back && k === "same") })) }] : []),
       { id: "pipe", who: "what happens to it", opts: Object.entries(SECPIPE).map(([k, v]) => ({
           w: v.w, key: k, answered: per.pipe === k || (!per.pipe && k === "none") })) },
       { id: "mix", who: "the mix", opts: Object.entries(SECMIX).map(([k, v]) => ({
@@ -1749,7 +1837,8 @@
       // want to say something specific.
       .sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
   };
-  const ORDER = ["idea", "drums", "keys", "guitar", "bass", "voice", "pipe", "mix", "move", "out",
+  const ORDER = ["idea", "theme", "back", "drums", "keys", "guitar", "bass", "voice",
+                 "pipe", "mix", "move", "out",
                  "band", "dwords", "kwords", "gwords", "bwords", "vwords"];
   const setSection = (m, i, who, key) => {
     const per = { ...(m.per || {}) };
@@ -1767,7 +1856,7 @@
       const at = list.indexOf(id);
       if (at >= 0) list.splice(at, 1); else list.push(id);
       if (list.length) one[k] = list; else delete one[k];
-    } else if (key === "same") delete one[who];
+    } else if (key === "same" || (who === "theme" && key === "a")) delete one[who];
     else one[who] = key;
     if (Object.keys(one).length) per[i] = one; else delete per[i];
     return { ...m, per };
@@ -1820,10 +1909,20 @@
     // a low key landed at MIDI 19, two octaves under the bottom of a piano.
     // The engine's register home would lift it, but a part written there is
     // wrong before anybody plays it. Found by rolling three hundred records.
+    // ...and each chair's CHORD POLICY rides with it. The chairs array has
+    // always been on the genre and the kernel read it nowhere; now the
+    // chordLock branch reads exactly these facts — the keys hand's comping
+    // (theory-voiced shells, the anticipating push, the ring-to-the-change
+    // hold) and the driven guitar's power-chord fifths. Spread-if-set so a
+    // chair that declares nothing is the same object it always was.
     const chairs = [{ part: kg.part(0), reg: stand(kg.part(0), kg.reg(0)),
-                      instr: kg.instr, tone: kg.tone, pad: kg.realize(0) === "pad" },
+                      instr: kg.instr, tone: kg.tone, pad: kg.realize(0) === "pad",
+                      ...(kg.comping ? { comping: true } : {}),
+                      ...(kg.antic ? { antic: true } : {}),
+                      ...(kg.maxHold ? { maxHold: kg.maxHold } : {}) },
                     { part: gg.part, reg: stand(gg.part, gg.reg, GFLOOR), instr: gg.instr,
-                      tone: ggTone, pad: gg.pad }];
+                      tone: ggTone, pad: gg.pad,
+                      ...(gg.fifths ? { fifths: true } : {}) }];
     const dg = D.toGenre(drums);
     const c = B.CHANGES[changes || (m.song.chg || {}).verse || "fourchord"];
     return {
@@ -1893,7 +1992,10 @@
   // it keeps turning up under the keys, a chant when it sits on one note.
   // (The node title and the themes prose read this; asking "what kind of
   // theme is it?" would duplicate a derived fact.)
-  function themeName(m) {
+  function themeName(m, which) {
+    // theme B is the answer — that is its whole name, the way "the hook"
+    // is A's when the singer carries it
+    if (which === "b") return "the answer";
     const f = FORMS[m.song.form || "vamp"];
     const takers = f.secs.map((r, i) => (TAKERS[partOf(m, i).idea] || {}).chair)
       .filter(Boolean);

@@ -5,8 +5,18 @@
 // the kit model is the classic UMD data tier (nukernel/drums-kit.js), read
 // off window exactly as ui/deps.js reads the rest of it
 const Band = window.NuBand;
-const { blank, catalog, say, says, toSong, seatDecisions, nextAsk, nextAnywhere,
-        answer, SEATS, sectionAsks, setSection } = Band;
+const { blank, catalog: catalog0, say: say0, says: says0, toSong, seatDecisions,
+        nextAsk, nextAnywhere, answer, SEATS, sectionAsks, setSection } = Band;
+// WHICH THEME THE PAGE IS EDITING. Two themes at most — the tune (A) and
+// its answer (B) — and every arranger tray word, bar cell and staff caption
+// aims at the one in hand. Nothing but this page cares: band-kit's say/says/
+// catalog take the theme as a fourth argument and default to A, so a page
+// (or a gate) that never mentions themeEdit is byte-identical.
+let themeEdit = "a";
+const themeNow = () => (themeEdit === "b" && model.ideaB && model.ideaB.on ? "b" : "a");
+const catalog = (m, who) => catalog0(m, who, who === "arranger" ? themeNow() : undefined);
+const say = (m, who, id) => say0(m, who, id, who === "arranger" ? themeNow() : undefined);
+const says = (m, who, id) => says0(m, who, id, who === "arranger" ? themeNow() : undefined);
 import { GENRES, NuSong, MODES } from "./deps.js";
 import { adoptSong, SONG, SLOTS, putPhrase, on, commit, setBpm, setSwing, setPoolChair,
          setMixOffset, clearMixOffsets } from "./state.js";
@@ -137,8 +147,14 @@ function push(first) {
   let extra = [];
   try {
     if (model.idea && model.idea.on) {
-      const t = toNotes(Band.Id.toPhrase(model.idea), themeOpts(model));
+      const t = toNotes(Band.Id.toPhrase(model.idea), themeOpts(model, "a"));
       extra = zoneFilesFor(t.notes.map((x) => x.midi));
+      // ...and the answer's own span, when there is one — a warmed record
+      // plays BOTH its themes on the train
+      if (model.ideaB && model.ideaB.on) {
+        const t2 = toNotes(Band.Id.toPhrase(model.ideaB), themeOpts(model, "b"));
+        extra = [...extra, ...zoneFilesFor(t2.notes.map((x) => x.midi))];
+      }
     }
   } catch (e) {}
   warmCache(extra);
@@ -157,7 +173,8 @@ const seatWord = (who) =>
   : who === "arranger" ? "the band"
   : "the " + who;
 function announce(who, si) {
-  announceChange(module_ === "ideas" ? "the tune" : seatWord(who), si);
+  announceChange(module_ === "ideas"
+    ? (themeNow() === "b" ? "the answer" : "the tune") : seatWord(who), si);
 }
 
 /* ---------- the theme, written down ---------- */
@@ -174,15 +191,16 @@ function announce(who, si) {
 // record does), the staff is on the page; whether anybody plays it is the
 // arrangement's business, not the notation's.
 let staffLib = null;    // one promise for the vendor chunk — first need only
-let staffHost = null;   // the <div> the SVG lives in, KEPT across draws
-let staffAbc = "";      // the ABC the CURRENT draw wants engraved
-let staffDone = "";     // ...and the ABC actually IN the host's SVG. The old
+const staffHost = {};   // per theme: the <div> the SVG lives in, KEPT across draws
+const staffAbc = {};    // per theme: the ABC the CURRENT draw wants engraved
+const staffDone = {};   // ...and the ABC actually IN the host's SVG. The old
                         // guard compared against what was last ASKED for, so
                         // an engrave that failed or was skipped (a load
                         // error, a host that missed its window) was never
                         // retried while the music stayed the same; keyed on
                         // what is actually on screen, every draw re-engraves
-                        // until the SVG stands
+                        // until the SVG stands. Keyed "a"/"b" since the
+                        // answer theme earned a staff of its own.
 
 // THE LAZY CHUNK, and why it is a <script> element rather than import():
 // the vendor build is a classic UMD whose wrapper hands `this` to the
@@ -213,46 +231,60 @@ function loadStaffLib() {
 // is Id.toPhrase(m.idea) — the theme as the room owns it, before any
 // section's chords transpose its bars. One table, read by the ABC compiler
 // AND the piano audition, so the two can never disagree either.
-const themeOpts = (m) => ({
+const themeOf = (m, t) => (t === "b" ? m.ideaB : m.idea);
+const themeOpts = (m, t) => ({
   key: Band.B.KEYS[m.song.key] || 0,
   mode: m.song.minor ? MODES.dorian : MODES.ionian,
-  reg: Band.Id.regOf(m.idea),
+  reg: Band.Id.regOf(themeOf(m, t) || m.idea),
   bpm: m.song.bpm,
+  // the LEAD part's own cap (kernel PARTS.lead maxHold), so the staff and
+  // the piano say what the band will actually play — the staff used to show
+  // a gap as a note held straight across it while the engine made the rest
+  // real at a beat. An explicit hold (the tie mark, a sentence's carry)
+  // outranks this in toNotes exactly as it does in the kernel, so the ties
+  // still draw at full length.
+  maxHold: 4,
 });
 
-function themeStaff(m) {
-  // NOTHING RENDERS WHEN THERE IS NO WRITTEN THEME — and the kept host is
-  // dropped with it, so a theme that comes back is engraved fresh, never
-  // shown stale. (A record that has been counted in always has one; this
-  // guard is the empty room and a recalled pre-theme session.)
-  if (!(m.idea && m.idea.on)) {
-    staffHost = null; staffAbc = ""; staffDone = "";
-    if (auditioning()) stopAudition();
-    return null;
-  }
-  const abc = toABC(Band.Id.toPhrase(m.idea), themeOpts(m));
+// one theme's figure: the staff, its name, and its own piano button
+function themeFig(m, t) {
+  const theme = themeOf(m, t);
+  const abc = toABC(Band.Id.toPhrase(theme), themeOpts(m, t));
   // a plain bordered box with the theme's name — the name the RECORD gives
   // it (themeName: a hook when the singer carries it, a riff when the
-  // guitar does), the same word the outline's node is titled by
-  const fig = el("figure", "dstaff");
-  fig.append(el("figcaption", null, Band.themeName(m)));
-  if (!staffHost) { staffHost = el("div", "dstaffsvg"); staffDone = ""; }
-  fig.append(staffHost);           // the same node every draw: no async flash
-  staffAbc = abc;
+  // guitar does; the answer is called the answer), the same word the
+  // outline's node is titled by. With a B theme in the room the caption is
+  // a BUTTON: tapping a theme's name puts that theme in the editing hand —
+  // the staff you tapped is the one the questions and the bar are about.
+  const fig = el("figure", "dstaff" + (m.ideaB && m.ideaB.on && themeNow() === t ? " on" : ""));
+  const name = Band.themeName(m, t === "b" ? "b" : undefined);
+  if (m.ideaB && m.ideaB.on) {
+    const cap = el("figcaption");
+    const b = el("button", "dthemepick" + (themeNow() === t ? " on" : ""), name);
+    b.type = "button";
+    b.dataset.k = "theme|" + t;
+    b.addEventListener("click", () => {
+      themeEdit = t; module_ = "ideas"; section = null; asking = null; draw(); });
+    cap.append(b);
+    fig.append(cap);
+  } else fig.append(el("figcaption", null, name));
+  if (!staffHost[t]) { staffHost[t] = el("div", "dstaffsvg"); staffDone[t] = ""; }
+  fig.append(staffHost[t]);        // the same node every draw: no async flash
+  staffAbc[t] = abc;
   // engrave whenever what is ON SCREEN is not this draw's music — a changed
   // theme re-engraves, and so does a host whose last engrave failed, was
   // skipped, or lost its SVG: an error retries on the very next draw
-  if (abc !== staffDone || !staffHost.querySelector("svg")) {
-    const host = staffHost;
+  if (abc !== staffDone[t] || !staffHost[t].querySelector("svg")) {
+    const host = staffHost[t];
     loadStaffLib().then((A) => {
       // a draw may have moved on while the chunk was on the wire — engrave
       // only what is still current, where it still stands
-      if (!A || host !== staffHost || abc !== staffAbc || !host.isConnected) return;
+      if (!A || host !== staffHost[t] || abc !== staffAbc[t] || !host.isConnected) return;
       try {
         A.renderAbc(host, abc, { responsive: "resize" });
-        staffDone = host.querySelector("svg") ? abc : "";
-      } catch (e) { staffDone = ""; }
-    }).catch(() => { staffDone = ""; });  // a failed load retries next draw
+        staffDone[t] = host.querySelector("svg") ? abc : "";
+      } catch (e) { staffDone[t] = ""; }
+    }).catch(() => { staffDone[t] = ""; });  // a failed load retries next draw
   }
   // HEAR IT ON THE PIANO — the theme alone, on the GM grand, through
   // audition.js's own little context: the click is the gesture, the band
@@ -261,21 +293,107 @@ function themeStaff(m) {
   // its own state in a word, like the transport.
   const hear = el("button", "dhear", auditioning() ? "stop" : "hear it on the piano");
   hear.type = "button";
-  hear.dataset.k = "hear";
+  hear.dataset.k = t === "b" ? "hear|b" : "hear";
   hear.addEventListener("click", () => {
     if (auditioning()) stopAudition();
     else {
-      const t = toNotes(Band.Id.toPhrase(model.idea), themeOpts(model));
-      playAudition({ notes: t.notes, bpm: model.song.bpm }, () => {
-        const b = document.querySelector(".dhear");
-        if (b) b.textContent = "hear it on the piano";
+      const t2 = toNotes(Band.Id.toPhrase(themeOf(model, t)), themeOpts(model, t));
+      playAudition({ notes: t2.notes, bpm: model.song.bpm }, () => {
+        for (const b of document.querySelectorAll(".dhear"))
+          b.textContent = "hear it on the piano";
       });
     }
-    const b = document.querySelector(".dhear");
-    if (b) b.textContent = auditioning() ? "stop" : "hear it on the piano";
+    for (const b of document.querySelectorAll(".dhear"))
+      b.textContent = auditioning() ? "stop" : "hear it on the piano";
   });
   fig.append(hear);
   return fig;
+}
+
+function themeStaff(m) {
+  // NOTHING RENDERS WHEN THERE IS NO WRITTEN THEME — and the kept hosts are
+  // dropped with it, so a theme that comes back is engraved fresh, never
+  // shown stale. (A record that has been counted in always has one; this
+  // guard is the empty room and a recalled pre-theme session.)
+  if (!(m.idea && m.idea.on)) {
+    delete staffHost.a; delete staffHost.b;
+    staffAbc.a = staffAbc.b = ""; staffDone.a = staffDone.b = "";
+    if (auditioning()) stopAudition();
+    return null;
+  }
+  const wrap = document.createDocumentFragment();
+  wrap.append(themeFig(m, "a"));
+  // ...and the answer beside it, when the arranger wrote one; a B taken
+  // back out drops its host so a later one engraves fresh
+  if (m.ideaB && m.ideaB.on) wrap.append(themeFig(m, "b"));
+  else { delete staffHost.b; staffAbc.b = ""; staffDone.b = ""; }
+  return wrap;
+}
+
+// A THEME IS A NODE OF THE OUTLINE (PLAN.md THE THEME COMPOSER §1): its
+// heading is the name the RECORD derives — the hook, the riff, the answer —
+// never a letter. With two themes in the room the heading is a BUTTON, the
+// same switch the staff captions carry: tapping a node puts that theme in
+// the editing hand and ITS questions come to the floor, which is how both
+// themes stand in the outline while only one set of questions is ever open
+// (the one-question law counts every .dopt on the page).
+function themeNodeHead(t, edited) {
+  const name = Band.themeName(model, t === "b" ? "b" : undefined);
+  if (!(model.ideaB && model.ideaB.on)) return el("span", "dthead", name);
+  const b = el("button", "dthead dtnode" + (edited ? " on" : ""), name);
+  b.type = "button";
+  b.dataset.k = "themenode|" + t;
+  b.addEventListener("click", () => {
+    themeEdit = t; module_ = "ideas"; section = null; asking = null; draw(); });
+  return b;
+}
+
+/* ---------- the sentence, measure by measure ---------- */
+// PLAN.md THE THEME COMPOSER §3–4: a written-out sentence is 2–4 measures,
+// EACH with its own derived cell, and the ties are first-class. This strip
+// is the sentence made VISIBLE — one row per measure: sixteen places, a
+// filled place where a note starts, a low dash where a note is still
+// sounding THROUGH the place (an explicit hold: the hand's tie mark or the
+// sentence's own carry/land, the only spans the kernel holds past the lead
+// part's cap — so a dash crossing from one row's end into the next row's
+// start IS the tie over the barline), and the measure's role in the
+// sentence said beside it in the writer's own words. Display only: no
+// button, no .dopt, so the gates' option counts and the one-question law
+// never see it. A one-measure theme has no sentence and no strip — its one
+// measure IS the count grid.
+function sentStrip(theme) {
+  if (!theme || !theme.on) return null;
+  const bars = Band.Id.barsOf(theme);
+  if (bars < 2) return null;
+  const ph = Band.Id.toPhrase(theme);
+  const NN = ph.gate.length, N16 = 16;
+  const state = new Array(NN).fill(0);        // 0 rest, 1 onset, 2 held through
+  for (let i = 0; i < NN; i++) if (ph.gate[i]) {
+    state[i] = 1;
+    const hd = (ph.hold && ph.hold[i]) || 0;
+    for (let j = i + 1; j < i + hd && j < NN; j++) state[j] = 2;
+  }
+  const rows = (Band.Id.SENTENCES[theme.sent || "plain"] || {}).rows;
+  const rowOf = (rows && rows[bars]) || null;
+  // the role words are the writer's, not the table's keys
+  const ROLEW = { state: "says it", restate: "again, ending differently",
+                  develop: "pushes it further", land: "lands on one note",
+                  carry: "picks it up mid-breath, tied over" };
+  const wrap = el("div", "dsent");
+  for (let b = 0; b < bars; b++) {
+    const row = el("div", "dsentbar");
+    const cellsEl = el("span", "dsentcells");
+    for (let i = 0; i < N16; i++) {
+      const v = state[b * N16 + i];
+      cellsEl.append(el("i", (v === 1 ? "dnote" : v === 2 ? "dtiec" : "drest") +
+                            (i % 4 === 3 && i < 15 ? " dbeat" : "")));
+    }
+    row.append(cellsEl,
+      el("span", "dsentrole", rowOf ? (ROLEW[rowOf[b]] || rowOf[b])
+                                    : (b ? "the cell again" : "says it")));
+    wrap.append(row);
+  }
+  return wrap;
 }
 
 /* ---------- draw ---------- */
@@ -577,7 +695,7 @@ const marksOf = (who) =>
 // never as a subject question of their own
 const MERGED = new Set(["octaves in the bar", "accents in the bar",
                         "notes in the bar", "slides in the bar",
-                        "higher", "lower"]);
+                        "higher", "lower", "held"]);
 // the labeled rows, in the order a musician lists them — kit first, then
 // the machine panel, then the keys families
 const ROWORDER = ["the kick:", "the snare:", "the hats:", "the toms:",
@@ -612,7 +730,8 @@ const QLABEL = {
   "bass:reg": "how low",
   "arranger:len": "how long", "arranger:cell": "the rhythm of it",
   "arranger:contour": "the shape", "arranger:land": "where it lands",
-  "arranger:reg": "where it sits",
+  "arranger:reg": "where it sits", "arranger:sent": "how it speaks",
+  second: "a second theme",
 };
 // the role a canonical section-role SHOWS on this record's boxes: the role
 // itself when a box carries it, else the first box whose changes it takes
@@ -626,7 +745,7 @@ const roleShown = (r) => {
   return cands.find((s2) => s2 !== "intro" && s2 !== "outro") || cands[0] || r;
 };
 const qLabel = (who, id0) => {
-  const id = id0.replace(/^idea:/, "");
+  const id = id0.replace(/^ideaB?:/, "");
   if (id.startsWith("chg:")) {
     const r = id.slice(4), s2 = roleShown(r);
     return "the " + s2 + (s2 === r ? "" : "\u2019s") + " changes";
@@ -705,14 +824,22 @@ const UNDER = {
   guitar: { "the bar": "job" },
   voice: { "the bar": "job" },
   // the theme: the note-by-note bar exists over the rhythm you chose, and
-  // "answer itself" only exists once the tune is longer than a bar
-  ideas: { "the bar": "cell", "the answer": "len" },
+  // "answer itself" — and the sentence — only exist once the tune is
+  // longer than a bar. (Keys here are the SPEC's own patterns — the edge
+  // is looked up by the pattern that placed the row, so a key spelled as a
+  // label the spec never uses is an edge that never draws.)
+  ideas: { "the bar": "cell", "the answer": "len", sent: "len" },
 };
 // a pattern names a question by id or by its label (a tray subject's label
 // IS its group name); a trailing * is a prefix — the per-role calls the
-// form unlocks are chg:verse, chg:chorus…
+// form unlocks are chg:verse, chg:chorus… — and a theme's questions wear
+// their theme's spelling ("idea:len", "ideaB:len") while the node's
+// patterns say the bare word, so a pattern matches through the costume.
+// Without that strip the five interview rows never matched anything and
+// fell to the trailing headless branch below the theme's own node, and
+// UNDER.ideas' edges ("the bar" nests under "cell") were dead as written.
 const outMatch = (p, d) => (p.endsWith("*") ? d.id.startsWith(p.slice(0, -1))
-  : d.id === p || d.label === p);
+  : d.id === p || d.label === p || d.id.replace(/^ideaB?:/, "") === p);
 
 // ONE SURFACE, THREE KINDS OF QUESTION, AND NO MENU. The seat you are in
 // is asked its own questions in order; an answered one lands on the GIG
@@ -764,18 +891,29 @@ function chairArea(parent, who, ideasOnly) {
   // ...and the ideas module asks the same five things in its interview and
   // in its tray, so the sheet carried every one of them twice ("the rhythm
   // of it" beside "idea:cell"). Same law, one more table.
-  const COVERS = { "the register": ["reg", "idea:reg"], "the feel": ["sit"],
+  // (the ideas ids cover BOTH themes' spellings — the answer's interview
+  // wears "ideaB:" and asks the same five-or-six things)
+  const COVERS = { "the register": ["reg", "idea:reg", "ideaB:reg"], "the feel": ["sit"],
                    "the tempo": ["tempo"], "how you play them": ["notes"],
                    "the line": ["job"], "what you are playing": ["instr"],
-                   "the rhythm of it": ["idea:cell"], "the shape": ["idea:contour"],
-                   "where it lands": ["idea:land"], "how long": ["idea:len"] };
+                   "the rhythm of it": ["idea:cell", "ideaB:cell"],
+                   "the shape": ["idea:contour", "ideaB:contour"],
+                   "how it speaks": ["idea:sent", "ideaB:sent"],
+                   "where it lands": ["idea:land", "ideaB:land"],
+                   "how long": ["idea:len", "ideaB:len"] };
   // ...and a subject the ARRANGER owns is not a subject a player has. The
   // interview already drops those questions (TAKEN); the tray was still
   // handing the bassist "faster"/"slower" and the drummer the feel.
   const NOTYOURS = { drums: ["the tempo", "the feel"],
                      bass: ["the tempo", "the feel", "the key", "the changes"] };
+  // the themes area shows the EDITED theme's questions (idea: for the tune,
+  // ideaB: for the answer) plus the one question that decides whether an
+  // answer exists at all; the song area shows neither — one home per
+  // question, the COVERS law's own reason
+  const ipfx = themeNow() === "b" ? "ideaB:" : "idea:";
   const asks0 = Band.asked(model, who)
-    .filter((d) => (ideasOnly ? d.id.startsWith("idea:") : !d.id.startsWith("idea:")));
+    .filter((d) => (ideasOnly ? d.id.startsWith(ipfx) || d.id === "second"
+                              : !d.id.startsWith("idea") && d.id !== "second"));
   const asked = new Set(asks0
     .flatMap(d => d.opts.map(o => o.w)));
   const asks = [
@@ -845,8 +983,11 @@ function chairArea(parent, who, ideasOnly) {
   // the sheet, so at most one set of options exists at any time.
   const spec = ideasOnly
     // the theme's node is titled by what the record DOES with the tune —
-    // Band.themeName derives hook/riff/figure/chant, nobody is asked
-    ? [[Band.themeName(model), ["len", "cell", "the bar", "contour", "land", "reg", "the answer"]]]
+    // Band.themeName derives hook/riff/figure/chant, nobody is asked; when
+    // the answer theme is in hand, its own name heads the node
+    ? [[Band.themeName(model, themeNow() === "b" ? "b" : undefined),
+        ["len", "cell", "sent", "the bar", "contour", "land", "reg",
+         "the answer", "second"]]]
     : OUTLINE[who] || [];
   const under = (ideasOnly ? UNDER.ideas : UNDER[who]) || {};
   const rowLi = new Map();                     // ask id -> its <li>, for the edges
@@ -899,7 +1040,10 @@ function chairArea(parent, who, ideasOnly) {
   const tree = el("ul", "dtree");
   for (const [h, list] of branches) {
     const li = el("li", "dbranch");
-    if (h) li.append(el("span", "dthead", h));
+    // the themes area's one headed branch IS the edited theme's node — its
+    // heading is the theme's own (a switch once two themes exist)
+    if (h) li.append(ideasOnly ? themeNodeHead(themeNow(), true)
+                               : el("span", "dthead", h));
     const ul = el("ul");
     for (const [p, d] of list) {
       const row = rowOf(d);
@@ -920,7 +1064,49 @@ function chairArea(parent, who, ideasOnly) {
     li.append(ul);
     tree.append(li);
   }
-  if (branches.length) parent.append(tree);
+  if (ideasOnly) {
+    // THE SENTENCE UNDER THE THEME NODE: the per-measure strip nests under
+    // the "how it speaks" row it visualizes — the sentence plan and its
+    // measures in one place — and falls back to the node's own list when
+    // the pruner has retired that row (the strip may not vanish with it:
+    // a plain sentence is still two measures the eye should see agree)
+    const strip = sentStrip(themeOf(model, themeNow()) || model.idea);
+    if (strip) {
+      const sLi = rowLi.get((themeNow() === "b" ? "ideaB:" : "idea:") + "sent");
+      const li2 = el("li");
+      li2.append(strip);
+      const home = sLi || tree.querySelector("li.dbranch");
+      if (sLi) {
+        let cu = sLi.lastElementChild && sLi.lastElementChild.tagName === "UL"
+          ? sLi.lastElementChild : null;
+        if (!cu) { cu = el("ul"); sLi.append(cu); }
+        cu.append(li2);
+      } else if (home) {
+        let cu = home.lastElementChild && home.lastElementChild.tagName === "UL"
+          ? home.lastElementChild : null;
+        if (!cu) { cu = el("ul"); home.append(cu); }
+        cu.append(li2);
+      }
+    }
+    // ...and the OTHER theme stands beside the edited one as a node of its
+    // own — A above B, the record's own order, whichever is in hand — with
+    // its name for a heading (the switch) and one dim line of what it is.
+    // Its questions are not here: one home per question, and the home is
+    // the node in the editing hand.
+    if (model.ideaB && model.ideaB.on) {
+      const other = themeNow() === "b" ? "a" : "b";
+      const oli = el("li", "dbranch");
+      oli.append(themeNodeHead(other, false));
+      const om = themeOf(model, other);
+      if (om) {
+        const ul2 = el("ul"), li3 = el("li");
+        li3.append(el("span", "dthemesum", Band.Id.describe(om)));
+        ul2.append(li3); oli.append(ul2);
+      }
+      if (other === "a") tree.prepend(oli); else tree.append(oli);
+    }
+  }
+  if (tree.childElementCount) parent.append(tree);
   if (asks.some(d => d.answered)) {
     // ...and one way back. A chair you cannot clear is a chair you stop
     // trying things in.
@@ -973,7 +1159,14 @@ function chairArea(parent, who, ideasOnly) {
         // everything past the note greys until a note exists at that place —
         // the kit's own when-guard made visible, never a vanished word
         const dead = !entry || (!entry.changes && !entry.active);
-        grid.append(optWidget(stepWord(i), "dopt dcell" + (on ? " on" : ""), {
+        // THE TIE SHOWS THROUGH EVERY MARK: a place the hand marked "hold
+        // it" (the theme grid's 2) keeps its tie paint whichever mark is in
+        // hand, so switching back to "the note" does not make the ties
+        // vanish from the bar. Only the theme's vocabulary has tie: ids —
+        // every other chair's grid is untouched.
+        const tieE = byId.get("tie:" + i);
+        grid.append(optWidget(stepWord(i), "dopt dcell" + (on ? " on" : "") +
+                              (tieE && tieE.active ? " dtied" : ""), {
           kind: "checkbox", name: "bar-" + who, on, dead,
           key: "opt|" + who + "|grp:the bar|" + (entry ? entry.id : i),
           take: () => {

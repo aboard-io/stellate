@@ -51,6 +51,16 @@
   // move made twice, and takes the same presence-keyed lift — as does the
   // INSTR MOVE ("the band is hired for the record"): the per-layer `instr`
   // override lifts, per chair, into the song's one INSTRUMENT POOL.
+  // THE THEME COMPOSER (2026-08-21) did not need a v:3 either, for the same
+  // reason as every row above: the shape GREW. A phrase may now carry an
+  // optional ninth vector, `hold` — per-note explicit lengths in steps (the
+  // tie made first-class: the band page's theme sentences and hand-marked
+  // "hold it" grid ties compile to it, and the kernel lets it outrank the
+  // part's maxHold cap). Absent, a phrase is exactly the eight-vector shape
+  // it always was and renders byte-identically; the band page's own theme
+  // MODEL (two themes and per-section assignment/transform words) never
+  // reaches this document at all — it lives in the band session, and only
+  // the compiled phrases and genres land here, both already legal.
   const VERSION = 2;
 
   // THE FILTER RULE, written down at last: `ops` and `fx` are FILTERED on
@@ -301,6 +311,11 @@
     if (!p || typeof p !== "object" || !Array.isArray(p.deg)) return false;
     const n = p.deg.length;
     if (!Number.isInteger(n) || n < PHRASE_MIN || n > PHRASE_MAX) return false;
+    // `hold` is the OPTIONAL ninth vector (see the VERSION comment): when a
+    // phrase carries it, it obeys the same one-length law and every entry
+    // is a whole number of steps, zero where the hand said nothing
+    if (p.hold != null && !(Array.isArray(p.hold) && p.hold.length === n &&
+        p.hold.every(x => Number.isInteger(x) && x >= 0))) return false;
     return ["deg", "oct", "vel", "inc", "stk", "gate", "acc", "sld"].every(k =>
       Array.isArray(p[k]) && p[k].length === n && p[k].every(Number.isFinite));
   };

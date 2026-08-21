@@ -2441,7 +2441,8 @@
     juno60:  { cut: ["cutoff", 60, 16000], pw: ["pwmBase", 0.05, 0.5] },
     vp330:   { cut: ["cutoff", 300, 12000] },
     solina:  { cut: ["tone", 300, 12000] },   // solina's brightness param is `tone` (no res, no cutoff)
-    stk_guitar: { cut: ["cutoff", 200, 14000] },  // the cab's cliff; the STRING's brightness is `pick`, and that belongs to velocity
+    stk_guitar: { cut: ["cutoff", 200, 14000],    // the cab's cliff; the STRING's brightness is `pick`, and that belongs to velocity
+                  mute: true },                   // the palm — a per-note hand on the strings (see the np block)
     stk_piano:  { cut: ["cutoff", 200, 16000] },  // the lid; the HAMMER's brightness is `hammer`, same rule
     mallet:  { cut: ["cutoff", 400, 16000] },  // likewise: the mallet's own hardness is velocity's, not a pipe's
   };
@@ -2604,6 +2605,14 @@
       // only annotated notes may touch the param, by contract.
       const np = NOTE_PARAMS[u.module];
       if (np) {
+        // A HAND ON THE STRINGS, PER NOTE (the kernel's palm-mute mark,
+        // carried by the bridge as `mute` 0..1). Written on EVERY note of a
+        // module that declares it, not only marked ones: a per-note set is
+        // sticky on its pool voice by contract, and a mute that outlives its
+        // own note is a mute on somebody else's. At 0 the DSP multiplies
+        // every affected knob by exactly 1.0, so an unmarked score is
+        // sample-identical.
+        if (np.mute) sets.mute = clamp(p.mute || 0, 0, 1);
         if (p.cutoffMul != null && np.cut) {
           const cbase = u.params ? u.params[np.cut[0]] : null;   // the voice's RESOLVED static cutoff/tone
           // SHRIEK GUARD (1b): a per-note cutoff sweep may not push a resonant

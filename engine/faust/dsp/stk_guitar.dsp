@@ -71,6 +71,19 @@ cutoff = hslider("cutoff", 5200, 200, 14000, 1) : si.smoo;   // the cab's cliff
 level  = hslider("level", 0.5, 0, 1, 0.01);
 gain   = hslider("gain", 0.3, 0, 2, 0.01);
 release = hslider("release", 0.25, 0.02, 2, 0.005);
+// mute: THE PALM, per note, 0..1. Not a second damp knob — one number that
+// moves the four things a palm on the strings physically moves: the string's
+// own decay comes down (ring), the flesh eats the top (bright, and the cab
+// hears less top too), and the hand lets go sooner (release). At 0 every
+// multiply below is by exactly 1.0, sample-identical to the file before the
+// knob existed. Velocity is NOT this: velocity stays pick+drive (how hard),
+// mute is a fact about the left hand (how damped) — a per-note param, never
+// a dyn.
+mute   = hslider("mute", 0, 0, 1, 0.01);
+ringEff    = ring*(1.0 - 0.94*mute);
+brightEff  = bright*(1.0 - 0.5*mute);
+cutoffEff  = cutoff*(1.0 - 0.55*mute);
+releaseEff = max(0.03, release*(1.0 - 0.8*mute));
 
 // ---- the string (faust-stk NLFeks) ---------------------------------------
 sfreq = freq : si.smooth(ba.tau2pole(max(glide, 0.0001)));
@@ -122,15 +135,32 @@ excitation = noiseburst(gate, P) : si.smooth(pickPole) : pickComb : levelfilter(
 // the loop's -60 dB time, expressed per period. `ring` is seconds, so a low E
 // asked to ring 4 s and a high E asked the same both get the coefficient their
 // own period needs — which is not what a single `damp` number can do.
-rho = pow(0.001, 1.0/(max(40.0, sfreq)*max(0.05, ring)));
+rho = pow(0.001, 1.0/(max(40.0, sfreq)*max(0.05, ringEff)));
 // LINEAR-PHASE FIR3 damping. Its delay is exactly one sample at every
 // frequency, which is the reason this string is in tune and gtr_amp's — whose
 // bridge filter's group delay is not flat — needed a fitted frequency term.
-h0 = (1.0 + bright)/2.0;
-h1 = (1.0 - bright)/4.0;
+h0 = (1.0 + brightEff)/2.0;
+h1 = (1.0 - brightEff)/4.0;
 loopfilter(x) = rho * (h0*x' + h1*(x + x''));
 
-str = excitation : (+ : de.fdelay4(Pmax, P - 2)) ~ loopfilter;
+// A PLECTRUM TOUCHES THE STRING BEFORE IT SOUNDS IT. The loop above keeps
+// whatever is circulating when a voice is re-plucked, and de.fdelay4 re-tunes
+// it: a pool voice stolen for a new pitch played the OLD note bending to the
+// new one — a gliss nobody wrote. The fix is the file's own trigger idiom
+// (noiseburst's, above) stretched to one period: on each gate RISE, for
+// exactly P samples, the loop return is scaled by (1 - 0.88) so the old ring
+// dies about -18 dB per traversal precisely while the new burst enters —
+// which is what a plectrum landing on a sounding string does. Gate rise ONLY,
+// never a freq edge: `glide` is a deliberate bend of a sounding note and a
+// freq-triggered squelch would kill the portamento it exists for.
+squelch(g, n) = g : diffgtz : release(n) : > (0.0)
+  with {
+    diffgtz(x) = (x - x') > 0;
+    decay(m, x) = x - (x > 0)/m;
+    release(m) = + ~ decay(m);
+  };
+damp = 1.0 - 0.88*squelch(gate, P);
+str = excitation : (+ : de.fdelay4(Pmax, P - 2)) ~ (loopfilter : *(damp));
 
 // ---- the pickup, the amp and the cab (kept from gtr_amp, measured there) ---
 // A magnetic pickup is a coil: a resonant peak up around 3 kHz and nothing
@@ -149,10 +179,10 @@ tight(x) = fi.highpass(2, 90.0 + drive*120.0, x);
 shaped(x) = ma.tanh(tight(x) * pre) * (0.24 - drive*0.11)
           : fi.peak_eq(0.0 - drive*7.0, 400, 320);
 cab = fi.highpass(2, 90) : fi.peak_eq(3.5 + drive*4.0, 2400, 1100)
-    : fi.lowpass(3, max(300.0, min(cutoff, 14000.0)));
+    : fi.lowpass(3, max(300.0, min(cutoffEff, 14000.0)));
 
 // note-off is a HAND ON THE STRINGS, not a switch.
-env = en.asr(0.001, 1, release, gate);
+env = en.asr(0.001, 1, releaseEff, gate);
 
 // TWO TRIMS, AND THEY ARE NOT THE SAME KNOB.
 //

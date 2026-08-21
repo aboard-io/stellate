@@ -4496,6 +4496,7 @@
    "/stk_guitar/gate",
    "/stk_guitar/glide",
    "/stk_guitar/level",
+   "/stk_guitar/mute",
    "/stk_guitar/pick",
    "/stk_guitar/pickup",
    "/stk_guitar/pluckPos",
