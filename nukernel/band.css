@@ -40,14 +40,22 @@ hr { border: 0; border-top: 1px solid #000; margin: 14px 0; }
   max-width: 38em; }
 .dstaff figcaption { font-weight: bold; }
 .dstaffsvg svg { max-width: 100%; height: auto; }
+/* hear it on the piano — the theme alone, beside the staff it prints */
+.dhear { border: 1px solid #000; background: #fff; padding: 1px 8px;
+  cursor: pointer; margin: 4px 0 2px; }
 
 /* rows of plain controls, wrapping */
-.drow, .dopts, .dsheet { display: flex; flex-wrap: wrap;
+.dopts { display: flex; flex-wrap: wrap;
   gap: 6px; margin: 6px 0; align-items: stretch; }
-.dsec { text-align: left; }
-.dsec b { display: block; }
+/* a SECTION is an outline row now (2026-08-21), not a box in a bunched row:
+   the same plain-row treatment as the chairs' facts — the role bold, the
+   bars beside it, anything said about the section trailing dim */
+.dsong .dsec, .dadd { display: block; width: 100%; border: 0; background: none;
+  text-align: left; padding: 1px 4px 1px 0; cursor: pointer; font: inherit; }
+.dsong .dsec b { font-weight: bold; margin-right: .5em; }
 .dsec i, .dseat i, .ddiff { font-style: normal; }
-.ddiff { display: block; }
+.ddiff { opacity: .65; margin-left: .5em; }
+.dadd { opacity: .65; }
 
 /* state the eye needs: the answered word, the chair you are in, the box
    that is sounding, the fact being re-asked */

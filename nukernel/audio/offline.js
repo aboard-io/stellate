@@ -30,7 +30,11 @@ export function registerSW() {
 // is 30-odd files) — but the fence is here so a future record cannot become
 // a flood without somebody moving this number.
 const CAP = 120, PARALLEL = 6;
-export function warmCache() {
+// `extra` is a list of site-relative paths the caller knows this record
+// needs beyond the plan's own cast — today that is the piano-audition
+// zones for the theme's span (ui/band.js hands in audition.js
+// zoneFilesFor), so "hear it on the piano" works with the wire cut.
+export function warmCache(extra) {
   if (!("serviceWorker" in navigator)) return;
   // THE PLAN FIRST. The warm runs on a record change, and the unit table it
   // reads is whatever the LAST compile left — so a chair that just joined
@@ -50,6 +54,10 @@ export function warmCache() {
   // the cast so the CAP can never crowd it out: a warmed record must be able
   // to draw its staff with the wire cut.
   add("vendor/abcjs/abcjs-basic-min.js");
+  // (0b) the AUDITION — the piano zones the theme's own span would pull
+  // ("hear it on the piano" beside the staff). Ahead of the cast for the
+  // same reason as the staff chunk: a handful of files, never crowded out.
+  for (const p of extra || []) add(p);
   // (a) the CRATE — drums and found sound, which carry their own paths
   try { for (const s of ((warmSources() || {}).samplerSrcs || []))
     add(s && (s.samplePath || s.path || s.url)); } catch (e) {}

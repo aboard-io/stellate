@@ -13,7 +13,8 @@ import { adoptSong, SONG, SLOTS, putPhrase, on, commit, setBpm, setSwing, setPoo
 import { startAt, stop, playing, warmup, getPosition, passAt,
          announceChange } from "../audio/live.js";
 import { registerSW, warmCache, warmShell, warmed } from "../audio/offline.js";
-import { toABC } from "./abc.js";
+import { toABC, toNotes } from "./abc.js";
+import { playAudition, stopAudition, auditioning, zoneFilesFor } from "../audio/audition.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const n = document.createElement(tag);
@@ -131,8 +132,16 @@ function push(first) {
   settling = false;
   // ONCE THE RECORD IS CALLED, IT IS YOURS: the samples this cast can ask
   // for are fetched once, and the service worker keeps them. After that the
-  // record plays with the network off.
-  warmCache();
+  // record plays with the network off — the piano-audition zones for the
+  // theme's own span included, so "hear it on the piano" works on a train.
+  let extra = [];
+  try {
+    if (model.idea && model.idea.on) {
+      const t = toNotes(Band.Id.toPhrase(model.idea), themeOpts(model));
+      extra = zoneFilesFor(t.notes.map((x) => x.midi));
+    }
+  } catch (e) {}
+  warmCache(extra);
   remember();
 }
 
@@ -155,12 +164,25 @@ function announce(who, si) {
 // PLAN Phase 2: a theme RENDERS AS SHEET MUSIC. ui/abc.js compiles the
 // phrase the room owns into an ABC string with the kernel's own pitch math,
 // and the vendored abcjs (vendor/abcjs/ — MIT, see NOTICE) engraves the SVG.
-// The staff draws only when the record CARRIES the theme — some section
-// picks it up (band-kit TAKERS → a melody layer) — because a tune nobody
-// plays is not on the record yet.
+// THE STAFF FOLLOWS THE THEME, NOT THE ARRANGEMENT (2026-08-21). It used to
+// draw only while some section's TAKERS chair carried the tune — so a form
+// change (a vamp, an AABA, a blues: no default taker) or a section answered
+// "nobody takes it" took the sheet music off the page, and nothing in the
+// THEMES area, where the theme is actually edited, could bring it back:
+// "keeps disappearing when I change things and never comes back". The law
+// now: whenever the record HAS a written theme (m.idea.on — every counted-in
+// record does), the staff is on the page; whether anybody plays it is the
+// arrangement's business, not the notation's.
 let staffLib = null;    // one promise for the vendor chunk — first need only
-let staffHost = null;   // the <div> the SVG lives in, KEPT across draws...
-let staffAbc = "";      // ...and re-engraved only when the music changed
+let staffHost = null;   // the <div> the SVG lives in, KEPT across draws
+let staffAbc = "";      // the ABC the CURRENT draw wants engraved
+let staffDone = "";     // ...and the ABC actually IN the host's SVG. The old
+                        // guard compared against what was last ASKED for, so
+                        // an engrave that failed or was skipped (a load
+                        // error, a host that missed its window) was never
+                        // retried while the music stayed the same; keyed on
+                        // what is actually on screen, every draw re-engraves
+                        // until the SVG stands
 
 // THE LAZY CHUNK, and why it is a <script> element rather than import():
 // the vendor build is a classic UMD whose wrapper hands `this` to the
@@ -185,41 +207,74 @@ function loadStaffLib() {
   return staffLib;
 }
 
+// THE STAFF MUST NOT DISAGREE WITH THE SOUND: key, mode and register are
+// the same three facts band-kit toGenre hands the kernel (B.KEYS by the
+// key answer, dorian/ionian by the minor answer, Id.regOf), and the phrase
+// is Id.toPhrase(m.idea) — the theme as the room owns it, before any
+// section's chords transpose its bars. One table, read by the ABC compiler
+// AND the piano audition, so the two can never disagree either.
+const themeOpts = (m) => ({
+  key: Band.B.KEYS[m.song.key] || 0,
+  mode: m.song.minor ? MODES.dorian : MODES.ionian,
+  reg: Band.Id.regOf(m.idea),
+  bpm: m.song.bpm,
+});
+
 function themeStaff(m) {
-  // NOTHING RENDERS WHEN THERE IS NO THEME — and the kept host is dropped
-  // with it, so a theme that comes back is engraved fresh, never shown stale.
-  const f = Band.FORMS[m.song.form || "vamp"];
-  const carried = m.idea && m.idea.on &&
-    f.secs.some((r, i) => (Band.TAKERS[Band.partOf(m, i).idea] || {}).chair);
-  if (!carried) { staffHost = null; staffAbc = ""; return null; }
-  // THE STAFF MUST NOT DISAGREE WITH THE SOUND: key, mode and register are
-  // the same three facts band-kit toGenre hands the kernel (B.KEYS by the
-  // key answer, dorian/ionian by the minor answer, Id.regOf), and the phrase
-  // is Id.toPhrase(m.idea) — the theme as the room owns it, before any
-  // section's chords transpose its bars.
-  const abc = toABC(Band.Id.toPhrase(m.idea), {
-    key: Band.B.KEYS[m.song.key] || 0,
-    mode: m.song.minor ? MODES.dorian : MODES.ionian,
-    reg: Band.Id.regOf(m.idea),
-    bpm: m.song.bpm,
-  });
+  // NOTHING RENDERS WHEN THERE IS NO WRITTEN THEME — and the kept host is
+  // dropped with it, so a theme that comes back is engraved fresh, never
+  // shown stale. (A record that has been counted in always has one; this
+  // guard is the empty room and a recalled pre-theme session.)
+  if (!(m.idea && m.idea.on)) {
+    staffHost = null; staffAbc = ""; staffDone = "";
+    if (auditioning()) stopAudition();
+    return null;
+  }
+  const abc = toABC(Band.Id.toPhrase(m.idea), themeOpts(m));
   // a plain bordered box with the theme's name — the name the RECORD gives
   // it (themeName: a hook when the singer carries it, a riff when the
   // guitar does), the same word the outline's node is titled by
   const fig = el("figure", "dstaff");
   fig.append(el("figcaption", null, Band.themeName(m)));
-  if (!staffHost) staffHost = el("div", "dstaffsvg");
+  if (!staffHost) { staffHost = el("div", "dstaffsvg"); staffDone = ""; }
   fig.append(staffHost);           // the same node every draw: no async flash
-  if (abc !== staffAbc) {
-    staffAbc = abc;
+  staffAbc = abc;
+  // engrave whenever what is ON SCREEN is not this draw's music — a changed
+  // theme re-engraves, and so does a host whose last engrave failed, was
+  // skipped, or lost its SVG: an error retries on the very next draw
+  if (abc !== staffDone || !staffHost.querySelector("svg")) {
     const host = staffHost;
     loadStaffLib().then((A) => {
       // a draw may have moved on while the chunk was on the wire — engrave
       // only what is still current, where it still stands
       if (!A || host !== staffHost || abc !== staffAbc || !host.isConnected) return;
-      A.renderAbc(host, abc, { responsive: "resize" });
-    }).catch(() => { staffAbc = ""; });  // a failed load retries next draw
+      try {
+        A.renderAbc(host, abc, { responsive: "resize" });
+        staffDone = host.querySelector("svg") ? abc : "";
+      } catch (e) { staffDone = ""; }
+    }).catch(() => { staffDone = ""; });  // a failed load retries next draw
   }
+  // HEAR IT ON THE PIANO — the theme alone, on the GM grand, through
+  // audition.js's own little context: the click is the gesture, the band
+  // engine is never touched, and if the band is playing the piano simply
+  // plays over it (somebody at the piano in the same room). The button says
+  // its own state in a word, like the transport.
+  const hear = el("button", "dhear", auditioning() ? "stop" : "hear it on the piano");
+  hear.type = "button";
+  hear.dataset.k = "hear";
+  hear.addEventListener("click", () => {
+    if (auditioning()) stopAudition();
+    else {
+      const t = toNotes(Band.Id.toPhrase(model.idea), themeOpts(model));
+      playAudition({ notes: t.notes, bpm: model.song.bpm }, () => {
+        const b = document.querySelector(".dhear");
+        if (b) b.textContent = "hear it on the piano";
+      });
+    }
+    const b = document.querySelector(".dhear");
+    if (b) b.textContent = auditioning() ? "stop" : "hear it on the piano";
+  });
+  fig.append(hear);
   return fig;
 }
 
@@ -324,37 +379,31 @@ function render(box) {
   // renames the organ; the page starts saying the word now)
   const sThemes = el("section", "dsect");
   { const h = el("h2"); h.append(modButton("themes", "ideas")); sThemes.append(h); }
-  // WHAT A THEME IS, in words a musician would say (the language pass's
-  // section D). The prose names the KINDS a theme can be; the outline below
-  // names THIS record's one by what the record does with it (Band.themeName
-  // — a hook when the singer carries it, a riff when the guitar does), so
-  // the sentence and the node title teach each other.
-  sThemes.append(el("p", "dprose",
-    "A theme is the part of the record you can hum — the tune it keeps " +
-    "coming back to. It might be a hook the singer carries, a riff the " +
-    "guitar leans on, a figure that keeps turning up underneath, or a " +
-    "chant that sits on one note and means it."));
-  sThemes.append(el("p", "dprose",
-    "To add one, tap “themes” and answer what it asks: how long " +
-    "it runs, how it moves, where it lands."));
-  // ...and the theme itself, written down: the staff stands beside the plain
-  // controls whenever the record carries the tune, and follows every edit —
-  // a lifted note, a new key — because draw() recompiles the ABC each pass
-  // and re-engraves only when it changed
+  // NO PROSE (2026-08-21). Two paragraphs used to explain what a theme is
+  // and how to add one — "don't sneak in explanations". The outline IS the
+  // explanation: the staff, the theme's own named node, and its questions.
+  // The theme itself, written down: the staff stands whenever the record
+  // has the tune, and follows every edit — a lifted note, a new key —
+  // because draw() recompiles the ABC each pass and re-engraves on change
   const staff = themeStaff(model);
   if (staff) sThemes.append(staff);
   if (module_ === "ideas" && section == null) chairArea(sThemes, "arranger", true);
   box.append(sThemes, el("hr"));
 
-  // ---- SONG ---- the record's structure as a set of plain boxes, the
-  // sounding one lit by the playhead. A band's picture is its form.
+  // ---- SONG ---- the record's structure AS AN OUTLINE (2026-08-21): the
+  // sections were the page's one remaining bunched row of boxes; they are
+  // nodes of a .dtree now, like everything else — each section a row (its
+  // label the role and the bars, the same .dsec button the gates click and
+  // the playhead lights), the open section's asks nested BENEATH its own
+  // node inline, and "add a box" a plain row at the end.
   const sSong = el("section", "dsect");
   { const h = el("h2"); h.append(modButton("song", "song")); sSong.append(h); }
   const song = toSong(model, MODES);
-  const row = el("div", "drow");
+  const tree = el("ul", "dtree dsong");
   cells = [];
   song.forEach((s2, i) => {
     cells[i] = [[]];
+    const li = el("li");
     const b = el("button", "dsec" + (section === i ? " open" : ""));
     b.type = "button";
     b.dataset.k = "sec|" + i;
@@ -374,22 +423,27 @@ function render(box) {
       module_ = "song";
       section = section === i ? null : i; asking = null; draw(); });
     cells[i][0].push(b);
-    row.append(b);
+    li.append(b);
+    // the open section's whole conversation, nested under its own node —
+    // the same in-place mechanism the chairs use
+    if (section === i) sectionArea(li);
+    tree.append(li);
   });
-  sSong.append(row);
   // A BOX IS A SECTION OF THE SONG, and today every box comes from the FORM
-  // — there is no per-box append in the model yet (Phase 2's outline is
-  // where one would live), so "add a box" honestly opens the question that
-  // decides how many boxes the record has and what each one is.
-  const add = el("button", "dadd", "add a box");
-  add.type = "button";
-  add.dataset.k = "addbox";
-  add.title = "boxes come from the form — open that question";
-  add.addEventListener("click", () => {
-    module_ = "song"; section = null; asking = "form"; draw(); });
-  sSong.append(add);
-  if (section != null) sectionArea(sSong);
-  else if (module_ === "song") chairArea(sSong, "arranger", false);
+  // — there is no per-box append in the model yet, so "add a box" honestly
+  // opens the question that decides how many boxes the record has and what
+  // each one is. A plain row at the end of the outline.
+  { const li = el("li");
+    const add = el("button", "dadd", "add a box");
+    add.type = "button";
+    add.dataset.k = "addbox";
+    add.title = "boxes come from the form — open that question";
+    add.addEventListener("click", () => {
+      module_ = "song"; section = null; asking = "form"; draw(); });
+    li.append(add);
+    tree.append(li); }
+  sSong.append(tree);
+  if (section == null && module_ === "song") chairArea(sSong, "arranger", false);
   box.append(sSong, el("hr"));
 
   // ---- THE BAND ---- the members, each a plain block that says how much

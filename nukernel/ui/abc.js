@@ -176,30 +176,48 @@ function meterOf(steps) {
 //     stepsPerBar sixteenths per bar                                [16]
 //     reg         whole-octave shift for display                    [0]
 //
+// ---- the note timeline, shared -------------------------------------------
+// toNotes(phrase, opts) -> { n, spb, notes: [{ at, len, midi }] } — the same
+// onsets/spans/pitch arithmetic toABC folds into bars, exported on its own so
+// the piano audition (audio/audition.js) plays EXACTLY the notes the staff
+// prints: one function computes the midi numbers, two surfaces read them.
 // A note lasts to the NEXT onset (kernel spans()), the last one to the end of
 // the phrase — the loop's wrap shows as the note holding out its bar, which
 // is what it does in the air.
-export function toABC(phrase, opts = {}) {
+export function toNotes(phrase, opts = {}) {
   const { deg = [], oct = [], gate = [] } = phrase || {};
   const n = gate.length;
   const key = opts.key | 0;
   const mode = (opts.mode && opts.mode.length ? opts.mode : MINOR).slice();
   const spb = opts.stepsPerBar || 16;
   const regShift = (opts.reg | 0) * 12;
-  const sigInfo = keySig(key, mode);
-
-  // the step timeline: for every step, a note that STARTS there (with its
-  // held length) or a rest. Built once, then folded into bars.
   const onsets = [];
   for (let i = 0; i < n; i++) if (gate[i]) onsets.push(i);
-  const kind = new Array(n).fill(0);          // 0 rest, 1 note-start, 2 held
-  const len = new Array(n).fill(0);
+  const notes = [];
   onsets.forEach((at, k) => {
     let span = k + 1 < onsets.length ? onsets[k + 1] - at : n - at;
     if (opts.maxHold) span = Math.min(span, opts.maxHold);
-    kind[at] = 1; len[at] = span;
-    for (let j = 1; j < span; j++) kind[at + j] = 2;
+    notes.push({ at, len: span,
+      midi: 60 + key + regShift + degPitch(deg[at] | 0, mode) + 12 * (oct[at] | 0) });
   });
+  return { n, spb, notes };
+}
+
+export function toABC(phrase, opts = {}) {
+  const key = opts.key | 0;
+  const mode = (opts.mode && opts.mode.length ? opts.mode : MINOR).slice();
+  const sigInfo = keySig(key, mode);
+
+  // the step timeline: for every step, a note that STARTS there (with its
+  // held length and its pitch) or a rest — toNotes's own, folded into bars.
+  const { n, spb, notes } = toNotes(phrase, opts);
+  const kind = new Array(n).fill(0);          // 0 rest, 1 note-start, 2 held
+  const len = new Array(n).fill(0);
+  const midiAt = new Array(n).fill(0);
+  for (const note of notes) {
+    kind[note.at] = 1; len[note.at] = note.len; midiAt[note.at] = note.midi;
+    for (let j = 1; j < note.len; j++) kind[note.at + j] = 2;
+  }
 
   // Fold the timeline into bars. A note crossing a barline splits and TIES;
   // a rest just splits; a duration that is not one engravable value (a
@@ -223,7 +241,7 @@ export function toABC(phrase, opts = {}) {
   let i = 0;
   while (i < n) {
     if (kind[i] === 1) {
-      const midi = 60 + key + regShift + degPitch(deg[i] | 0, mode) + 12 * (oct[i] | 0);
+      const midi = midiAt[i];
       let remain = len[i];
       while (remain > 0) {
         const room = spb - (pos % spb);
