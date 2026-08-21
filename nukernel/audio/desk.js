@@ -746,6 +746,95 @@ export function deskLevelAt(sec, f) {
 // the tables are the REGISTRY's — read through NuFields rather than copied, for
 // the reason every table on this page is read rather than copied
 const GLUE_COMP = { soft: 0.2, glue: 0.35, tight: 0.55, pump: 0.75, squash: 0.95 };
+
+/* ---------------- THE HONEST MASTER (2026-08-21) -------------------------
+ * Paul: "when you turn on glue and other effects for a song in combination it
+ * basically turns to sludge". Measured, and he is right, and the reason is not
+ * taste — it is that THREE OF THE FOUR WORDS RAISE THE LEVEL and nothing gives
+ * it back, so louder reads as better and you keep stacking. One record
+ * (compose("rock", 3), 60 s, 74 bars, a real kit + bass + two guitars + a sung
+ * lead), every on/off combination of the four words at their second setting:
+ *
+ *   word          ΔLUFS   Δcrest   Δkick attack   Δ vocal-band dip at kicks
+ *   drive warm    +1.47    -1.69      -1.20 dB          -0.70 dB
+ *   glue  glue    +0.87    -0.79      -0.13 dB          -0.43 dB
+ *   tape  tape    -0.28    -0.13      -0.21 dB          -0.16 dB
+ *   space room     0.00     0.00       0.00 dB           0.00 dB   <-- DEAD
+ *   drive+glue    +2.20    -2.14      -1.19 dB          -0.91 dB
+ *
+ * Two separate deceptions in that table:
+ *
+ *  (a) +2.2 dB for drive+glue, and the whole of it is bought with transient.
+ *      Every one of these controls chooses CHARACTER; none of them is a volume
+ *      knob, and none of them said so. Fixed by TRIMMING EACH STAGE BY WHAT IT
+ *      MEASURED — the knots below are ΔLUFS per setting, straight off that run.
+ *
+ *  (b) `space` did LITERALLY NOTHING — byte-identical output at every setting
+ *      from "a touch" to "cavern". audio/plan.js hands the engine `reverb: 0`
+ *      (a deliberate choice: the desk composes per-box sends and did not want
+ *      toEngine's own default room on top), and fx_bus's return is
+ *      `rin * rgain` with `rgain = state.reverb * 3.2` — so rgain was 0, which
+ *      mutes the whole return: `mrev`, and every per-box `rev` send the desk
+ *      composes with it. A room control that is wired to a muted return is the
+ *      purest form of the same lie. `space` now OPENS the return (below), which
+ *      is the only thing that makes the sends it feeds audible at all.
+ *
+ * The trims land on fx_bus params that default to the identity, so a song with
+ * no master says nothing, writes nothing, and sounds exactly as before.
+ *
+ * AND NO, THIS BOX IS NOT GETTING GROUP BUSES, and here is the cost that says
+ * so, because the next person to hear a kick duck a vocal will ask. The engine
+ * sums EVERY unit's dry into ONE bus set (stream-renderer renderUnitWindow,
+ * press assemble), so the master compressor's detector genuinely does hear kick
+ * and voice as one signal. Drums / music / voice buses would fix that, and the
+ * mechanism even exists already — stem-worker.js allocates one lazy
+ * {dry,rev,del,pp,wL,wR} set per layer and is parity-gated against render-core,
+ * and nothing calls it. What kills it is the DSP you would hang on each group:
+ *   * one fx_bus instance = 7.9% of realtime measured (2.57x pad_saw, against a
+ *     committed COST table that says 2.32 — the table is honest). Three of them
+ *     is +25 points against the 17 points of headroom wavout-seam's render gate
+ *     actually has (15.4% used of a 33% budget). It is not close.
+ *   * three LIGHT group stages (master_limit is 0.52%, a bare stereo comp would
+ *     be ~0.8%) WOULD fit: +1.5 to 2.4 points, and the extra bus adds cost
+ *     nothing measurable (renderUnitWindow writes into whatever bus set it is
+ *     handed; the group->master fold is 4-12 float adds a sample, 0.05-0.14% of
+ *     realtime). The blockers there are not CPU: press allocates whole-song
+ *     buses, so three sets is +359 MB on a 170 s song, and segment-parity holds
+ *     the live and press summation orders byte-equal, so both paths would have
+ *     to move together and exactly.
+ * And the prize is small. Measured, the pumping this would fix is 1.2 dB of
+ * extra kick-synchronous ducking (-0.51 dB bypassed, -1.74 dB with everything
+ * on), and MOST OF IT IS NOT THE COMPRESSOR — drive alone walks the dip to
+ * -1.73 dB while glue alone only reaches -1.20, i.e. it is the grit
+ * waveshaper's instantaneous intermodulation, which no detector and no group
+ * bus can touch. The cheap stand-in (a high-passed sidechain) was built and
+ * measured and moved it 0.04 dB; see the note in fx_bus.dsp. What actually
+ * moved it was the push budget below and the compressor's dry path.
+ */
+// ΔLUFS each stage ADDS at a given setting, measured with nothing compensating.
+const DRIVE_LU = [[0, 0], [0.12, 0.61], [0.28, 1.47], [0.50, 2.05], [0.80, 2.32]];
+const GLUE_LU  = [[0, 0], [0.20, 0.45], [0.35, 0.60], [0.55, 0.57], [0.75, 0.27], [0.95, -0.29]];
+const TAPE_LU  = [[0.18, 0], [0.30, -0.28], [0.45, -0.69], [0.60, -1.08]];   // keyed on tsat
+const SPACE_LU = [[0, 0], [0.07, 0.07], [0.13, 0.15], [0.20, 0.30], [0.30, 0.58]];  // keyed on mrev
+// A trim UPSTREAM OF THE SOFT CLIP does not deliver its whole dB — the clipper
+// was working harder and gives some back. Measured by trimming and re-reading:
+// 0.81 of it for the grit and glue trims, 1.00 for the tape trim (it is past
+// the compressor and the clip barely moves), 0.70 for the dry trim (the wet it
+// is trading against is deliberately NOT trimmed).
+const PRECLIP_EFF = 0.81, TAPE_EFF = 1.0, DRY_EFF = 0.70;
+const lerpTbl = (tbl, x) => {
+  if (x <= tbl[0][0]) return tbl[0][1];
+  for (let i = 1; i < tbl.length; i++) {
+    if (x <= tbl[i][0]) {
+      const [x0, y0] = tbl[i - 1], [x1, y1] = tbl[i];
+      return y0 + (y1 - y0) * (x - x0) / Math.max(1e-9, x1 - x0);
+    }
+  }
+  return tbl[tbl.length - 1][1];
+};
+const trimFor = (tbl, x, eff) =>
+  Math.max(0.05, Math.min(2, Math.pow(10, -lerpTbl(tbl, x) / eff / 20)));
+
 export function masterState(MASTER) {
   const m = MASTER && typeof MASTER === "object" ? MASTER : null;
   const out = {};
@@ -776,5 +865,78 @@ export function masterState(MASTER) {
     over("tsat", 0.18, o.tape ? o.tape * 0.5 : 0, 1); // gently
     over("mrev", 0.07, o.space ? o.space * 0.5 : 0, 0.5);
   }
-  return Object.keys(out).length ? out : null;
+  if (!Object.keys(out).length) return null;         // absent: the engine's own master
+  return honest(out);
 }
+
+/* ONE PUSH BUDGET, and then everybody pays for their own level.
+ *
+ * THE BUDGET. drive is a waveshaper, glue is a compressor and tape is a SECOND
+ * waveshaper, and all three squeeze the same mids. Stacked at full they are not
+ * three characters, they are one mush — measured, drive+glue+tape at their top
+ * settings costs 1.3 dB of crest and 1.6 dB of kick attack against bypass while
+ * ending up QUIETER than bypass, which is the signature of a chain fighting
+ * itself. So they share one budget: each claims a fraction of it (drive of its
+ * own range, glue of its own, tape of the saturation it adds over the default
+ * head), and when the claims exceed 1 the FOLLOWERS give back — never drive,
+ * because drive is the one you asked for by name, and never below 55%, because
+ * THE FREEDOM TO RUIN A MIX IS NOT THE BUG. The bug was that ruining it read as
+ * an improvement. At the natural "on" settings the claims total 1.004 and the
+ * followers give back 0.4% — this does not touch the sane middle of the board.
+ *
+ * PARALLEL GLUE. The compressor keeps a dry path underneath (fx_bus `cpar`),
+ * scaled with how hard it is squeezing. Measured at matched loudness it buys
+ * no crest and no attack — the compressor was never the transient thief here —
+ * but it does take 0.39 dB off the kick-synchronous ducking of the vocal band
+ * at squash, and 0.10 dB at glue, which is the only lever a single shared bus
+ * has against the pumping at all.
+ *
+ * THE TRIMS. Each stage then trims its own output by what it measured, so
+ * turning a word on changes the sound and not the loudness. Verified: every
+ * single control, and every combination of them, within ±0.5 LUFS of bypass.
+ */
+function honest(st) {
+  const grit = st.grit || 0;
+  const comp0 = st.comp || 0;
+  const tsat0 = st.tsat != null ? st.tsat : 0.18;
+  // the claims: each word as a fraction of its own range
+  const cd = Math.min(1, grit / 0.80);
+  const cg = Math.min(1, comp0 / 0.95);
+  const ct = Math.min(1, Math.max(0, tsat0 - 0.18) / 0.42);
+  const over = Math.max(0, cd + cg + ct - 1);
+  const follow = Math.max(0.55, 1 - 0.45 * over / 2);
+  const comp = comp0 * follow;
+  const tsat = 0.18 + (tsat0 - 0.18) * follow;
+  if (comp !== comp0) st.comp = round3(comp);
+  if (tsat !== tsat0) st.tsat = round3(tsat);
+  // parallel glue: 20% of the dry underneath at the gentlest, 50% at squash
+  if (comp > 0) st.cpar = Math.round((0.20 + 0.30 * Math.min(1, comp / 0.95)) * 100) / 100;
+  // SPACE OPENS THE RETURN. rgain = reverb*3.2 in fxParams, and the four
+  // measured settings (a touch / room / hall / cavern) want rgain .25/.45/.70/1.0
+  // against a mix that is 23/18/14.5/11.3 dB under the dry — one relation fits
+  // all four, and it is very nearly rgain = mrev*3.35.
+  const mrev = st.mrev != null ? st.mrev : 0.07;
+  if (st.mrev != null) st.reverb = Math.round(mrev * 1.05 * 1000) / 1000;
+  // THE STACK TERM. Each stage's trim is measured ALONE and lands within
+  // 0.06 LUFS alone — but two stages in series leave about 0.09 dB on the
+  // table and three leave three times that (measured: drive+glue +0.14,
+  // glue+tape +0.12, drive+tape +0.07, all three +0.27, and +0.52 with all
+  // three at their top settings). It is the soft clip: a stage that is no
+  // longer slamming it hands the next stage a signal the clipper shapes
+  // differently. One term per PAIR, scaled by how hard the stack is pushing,
+  // split evenly between the stages that are in it.
+  const claims = [cd, cg, ct].filter((c) => c > 0);
+  const n = claims.length;
+  const pairs = (n * (n - 1)) / 2;
+  const stackDb = n > 1
+    ? 0.09 * pairs * (1 + claims.reduce((a, b) => a + b, 0) / n) : 0;
+  const shareDb = n ? stackDb / n : 0;
+  const share = Math.pow(10, -shareDb / 20);
+  // and now the bill for each of them
+  if (grit > 0) st.gtrim = round3(trimFor(DRIVE_LU, grit, PRECLIP_EFF) * share);
+  if (comp > 0) st.ctrim = round3(trimFor(GLUE_LU, comp, PRECLIP_EFF) * share);
+  if (tsat !== 0.18) st.ttrim = round3(trimFor(TAPE_LU, tsat, TAPE_EFF) * share);
+  if (st.mrev != null && mrev !== 0.07) st.dtrim = round3(trimFor(SPACE_LU, mrev, DRY_EFF));
+  return st;
+}
+const round3 = (x) => Math.round(x * 1000) / 1000;

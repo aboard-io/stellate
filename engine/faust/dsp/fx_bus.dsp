@@ -73,6 +73,57 @@ mrev    = hslider("mrev", 0.07, 0, 0.5, 0.01);
 WOB_MS  = 1.6;    // base delay; peak deviation is 90% of it at wob=1 (~±0.1% pitch)
 TSAT_K  = 1.8;    // saturation drive at tsat=1
 
+// ---- THE HONEST MASTER (2026-08-21) -------------------------------------
+// Measured on a real record (nukernel rock/3, 60 s, every on/off combination
+// of the desk's four master words): THREE OF THE FOUR RAISE LEVEL IN SERIES
+// AND NOTHING COMPENSATES. drive at "warm" is +1.47 LUFS, glue at "glue" is
+// +0.87, the two together +2.20 — and every one of those gains costs crest
+// (9.61 dB bypassed -> 7.47 dB with drive+glue) and kick transient (6.24 ->
+// 5.05 dB). Louder reads as better, so the user keeps stacking, and what they
+// are actually stacking is the transient loss. That is a DECEPTION, not a
+// range problem: the controls are supposed to choose CHARACTER, not volume.
+//
+// Five params answer it, and EVERY ONE OF THEM DEFAULTS TO THE IDENTITY, so a
+// host that does not write them hears exactly the master it heard before
+// (the absent-law: `x + (f(x) - x)*0` is x, `x*1` is x, bit-for-bit).
+//
+//   gtrim  output trim on the grit stage      — drive stops feeding the
+//                                               compressor a hotter signal
+//   cpar   PARALLEL GLUE: how much uncompressed signal rides under the
+//          compressor's output. 0 = today's fully serial path.
+//   ctrim  output trim on the glue stage      — glue stops feeding the clipper
+//   ttrim  output trim on the tape stage
+//   dtrim  DRY trim in the mix sum            — the `space` crossfade: a send
+//                                               that adds a room should not
+//                                               also add level
+gtrim   = hslider("gtrim", 1, 0.05, 2, 0.001);
+cpar    = hslider("cpar", 0, 0, 1, 0.01);
+ctrim   = hslider("ctrim", 1, 0.05, 2, 0.001);
+ttrim   = hslider("ttrim", 1, 0.05, 2, 0.001);
+dtrim   = hslider("dtrim", 1, 0.05, 2, 0.001);
+
+// A KEYED DETECTOR IS NOT THE FIX, AND HERE IS THE MEASUREMENT (2026-08-21).
+// The obvious cheap stand-in for a group bus is to high-pass the master
+// compressor's SIDECHAIN so the kick's fundamental stops writing the gain the
+// vocal is heard through. It was built (a `sckey` mix param, 0 = today's
+// full-band `abs(l)+abs(r)` detector bit-for-bit, 1 = the detector through a
+// 2nd-order high-pass at 140 Hz) and measured on the same record as everything
+// else above. Vocal-band gain dip at kick onsets, median over 69 kicks that
+// land under a sung note:
+//     comp .95 alone           sckey 0: -1.20 dB     sckey 1: -1.18 dB
+//     drive .8 + glue .95 + tape 1.0   -1.45 dB              -1.41 dB
+// Nothing. The pumping on this material is NOT the compressor's detector — it
+// is the GRIT WAVESHAPER's instantaneous intermodulation: drive alone walks the
+// dip -0.51 -> -0.93 -> -1.21 -> -1.46 -> -1.73 dB across its four settings,
+// while glue alone only reaches -1.20 at squash. A high-pass on a detector
+// cannot touch a memoryless nonlinearity, and a "power kick" has plenty of
+// energy above 140 Hz anyway. Faust computes every branch, so the two biquads
+// were 0.285 points of realtime (fx_bus 7.93% -> 8.51%; 8.22% without them) —
+// master_mb.dsp records the same lesson from the other direction. Removed, and
+// written down so the next person costs it from here rather than from scratch.
+// What DID move the dip is up in the desk: the push budget (drive and glue
+// stop stacking) and the parallel dry path below.
+
 MAXD = 131072;   // ~3 s at 44.1k
 
 // instr 98: tap -> tone -> out & *fb -> back into the write head
@@ -109,16 +160,42 @@ wobble(lfo, x) = de.fdelay(1024, dly, x)
 // level-preserving soft knee; exact bypass at tsat=0 (the (…-x)*tsat term dies)
 tapesat(x) = x + (ma.tanh(x*k)/k - x)
   with { k = 1 + TSAT_K*tsat; };
+// THE GLUE STAGE, opened up. It was `co.compressor_stereo(...) : *(makeup)`,
+// which is EXACTLY what the lines below compute when cpar and ctrim sit
+// at their defaults — compressor_stereo is `cgm*x, cgm*y with { cgm =
+// compression_gain_mono(ratio,thresh,att,rel, abs(x)+abs(y)) }` (compressors.lib,
+// Julius O. Smith III), so writing the detector out by hand is a re-spelling,
+// not a re-design, and the multiply order is preserved.
+// What the spelling buys is the thing a serial bus compressor cannot do: a DRY
+// PATH underneath (cpar). MEASURED AT MATCHED LOUDNESS, which is the only way
+// this comparison means anything — a compressor's level change is not a gain,
+// so crest read at two different loudnesses reads two different questions:
+//   glue  (comp .35)   crest 9.57 -> 9.57   kick attack 6.50 -> 6.42
+//                      vocal-band dip at kicks  -0.85 -> -0.75 dB
+//   squash(comp .95)   crest 9.65 -> 9.60   kick attack 7.07 -> 6.99
+//                      vocal-band dip at kicks  -1.29 -> -0.90 dB
+// So the honest reading is: the compressor was never the transient thief on
+// this material (crest and attack move by 0.05-0.08 dB, i.e. not at all), and
+// what the dry path actually buys is the PUMPING — 0.39 dB less kick-synchronous
+// ducking of the vocal band at squash, 0.10 dB at glue. That is the whole of
+// what a single shared bus can give back without a group bus under it.
+glue(x, y) = (wl + (x - wl)*cpar) * ctrim, (wr + (y - wr)*cpar) * ctrim
+with {
+  cgm = co.compression_gain_mono(cratio, cthresh, 0.01, 0.09, abs(x) + abs(y));
+  wl = cgm * x * makeup;
+  wr = cgm * y * makeup;
+};
 master(sc, l, r) = l, r
   : (wobble(wowL), wobble(wowR))                                  // the transport, before everything downstream
   : (fi.lowpass(2, min(mcut, 20500)), fi.lowpass(2, min(mcut, 20500)))
   : (*(duck), *(duck))
   : (gritmix, gritmix)
-  : co.compressor_stereo(cratio, cthresh, 0.01, 0.09)
-  : (*(makeup), *(makeup))
+  : (*(gtrim), *(gtrim))                                           // drive pays for its own level
+  : glue                                                           // compressor + makeup, with the parallel dry path and its trim
   : (fi.highpass(2, lowcut), fi.highpass(2, lowcut))
   : (fi.lowpass(2, highcut), fi.lowpass(2, highcut))
   : (tapesat, tapesat)                                             // tape saturation, under the clip stage
+  : (*(ttrim), *(ttrim))                                           // tape pays for its own level
   : (fi.high_shelf(shelf, AIR_FC), fi.high_shelf(shelf, AIR_FC))   // master AIR shelf (see hslider above)
   : (clip, clip)
 with {
@@ -146,6 +223,10 @@ with {
   // darker tail than stock zita — this is what pulls the A/B centroid in line
   rl  = (rin, rin) : re.zita_rev1_stereo(40, 200, 2000, 5.0, 3.5, 48000) : fi.lowpass(1, rtone), ! ;
   rr  = (rin, rin) : re.zita_rev1_stereo(40, 200, 2000, 5.0, 3.5, 48000) : !, fi.lowpass(1, rtone);
-  mixL = dl + rl + d + ppl + crk;
-  mixR = dr + rr + d + ppr + crk;
+  // dtrim: the SPACE crossfade. mrev sends the dry mix to the room; pulling the
+  // dry back by the same energy is what makes "more room" a choice about the
+  // room rather than a choice about loudness. The SEND above is untrimmed on
+  // purpose — the wet amount is mrev's job alone.
+  mixL = dl*dtrim + rl + d + ppl + crk;
+  mixR = dr*dtrim + rr + d + ppr + crk;
 };
