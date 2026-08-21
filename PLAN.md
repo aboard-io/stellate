@@ -101,6 +101,32 @@ Phase 4): a theme is a CLAIM, not a pattern. Build:
    meets the improvisation engine: trading and solos ARE transformations
    applied live.
 
+THE THROUGH-COMPOSED THEME (Paul, 2026-08-21, from the Yesterday study —
+"yes, but I don't want to lose the flexibility of the recursive theme"):
+the sentence machinery is the SOUL OF THE MACHINE and stays the default.
+"Written out" is one more answer, never a replacement. Three modes, one
+theme:
+1. DERIVED (today): one authored bar, the sentence plan derives the rest.
+2. AUTHORED: per-bar grids (the drum phrase's 7-lane grid is the
+   precedent) — a 2-4 bar tune with every bar its own rhythm, ties
+   crossing every barline.
+3. MIXED — the interesting one: author bar 1, derive 2-4; or take a
+   derived sentence and override just the bar that is wrong. THE HAND
+   MOVES LAST (the lifts' existing law, extended to bars): a bar you
+   wrote stays written through any sentence-plan change.
+Alongside it, from the same study's gap list:
+- AUTHORED CHANGES: an "other changes" escape so a 7-chord list makes a
+  7-bar section (the kernel's at(roots,bar) already wraps any length —
+  verified); per-at lift keys instead of at%16.
+- SECONDARY DOMINANTS: a question that writes the kernel's existing
+  borrow/dom7 chord fields ("make bar n pull toward bar n+1") — the
+  Em7-A7 bar Yesterday is about.
+- A 1960s CHAMBER-POP RECORD (the sixties, London/Liverpool, a studio:
+  steel-string, keys incl. strings, kitless-or-brushes, aaba/full,
+  descending + doo-wop changes) so the front door stops needing to lie
+  about the century.
+- FORM: a repeat mechanism (A-A-B-A-B-A), intro and tag roles.
+
 Themes: develop real methods for improvising ON a theme — how musicians
 actually explore one: restatement, transposition, inversion, augmentation/
 diminution, fragmentation, sequence, call-and-response, reharmonization,
