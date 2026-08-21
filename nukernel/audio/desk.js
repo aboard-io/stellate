@@ -564,7 +564,13 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
     // THE MIX-OFFSET LAYER (ui/state.js MIXER): the mixer surface's own hand,
     // per CHANNEL (part key or "drums") for the whole song, applied last —
     // OVER the composed per-section values, never instead of them. null =
-    // byte-identical.
+    // byte-identical. The band page's engineer writes this layer too, and
+    // since 2026-08-21 one channel's offset can be SEVERAL treatments summed
+    // (band-kit mixOf: room + slapback + darker on one guitar — rev, del and
+    // eq are independent lanes, pre-clamped there at this desk's own ranges);
+    // this side needs nothing special for that — a summed offset is just an
+    // offset, and c01/faderDb/eqDb below hold every lane on the rails as
+    // they always did.
     const chan = addr[key] || (isDrum ? "drums" : "");
     // THE BOARD'S THREE ADDRESS KINDS (RUBINESQUE speaks all three): the part
     // chan ("drums", "lead"), the UNIT chan ("unit:kick" — the couch says

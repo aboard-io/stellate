@@ -783,6 +783,7 @@ function chairArea(parent, who, ideasOnly) {
     // its questions so they can live in the arranger's chair, and nobody
     // needs to read "idea:len" on a gig sheet
     ...asks0.map(d => ({ id: d.id, ask: d.ask, label: qLabel(who, d.id),
+      multi: !!d.multi,
       answered: d.answered, opts: d.opts.map(o => ({ w: o.w, row: o.row, on: o.answered,
         istrue: o.active, take: () => { model = answer(model, who, d.id, o.w); } })) })),
     ...[...groups.entries()].sort((a, b) => rank(a[0]) - rank(b[0])).map(([g, list]) => ({
@@ -992,7 +993,9 @@ function chairArea(parent, who, ideasOnly) {
   // (PLAN: "the bundle of options is hard to scan") — same words, same
   // widgets, only the layout
   const row = el("div", "dopts" + (q.opts.length > 8 ? " dmany" : ""));
-  const kind = q.id.startsWith("grp:") ? "checkbox" : "radio";
+  // ...and an interview decision marked `multi` (the engineer's channel
+  // treatments) is a toggle set too — several of its words lit at once
+  const kind = q.id.startsWith("grp:") || q.multi ? "checkbox" : "radio";
   // LABELED ROWS, NOT WORD-PILES: when every option names its row (the
   // kick:, the filter:, pianos:…), the options group under those labels in
   // the order a musician lists them
@@ -1013,7 +1016,9 @@ function chairArea(parent, who, ideasOnly) {
         const before = model;
         o.take();
         if (model !== before) { push(false); announce(who, null); }
-        if (asking) asking = null;
+        // a checkbox set stays on the floor — lighting one treatment is not
+        // the end of the question the way choosing a radio is
+        asking = q.multi ? q.id : null;
         draw();
       } }));
   }

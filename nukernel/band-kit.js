@@ -87,7 +87,25 @@
     // A PATH FOR EVERY INSTRUMENT, not just the kit and the bass. The desk
     // addresses an instrument by family (audio/desk.js INST_CHANS), so these
     // land wherever that chair's instrument actually is.
-    { id: "keysfx", ask: "anything on the keys?", opts: [
+    // ...AND A CHANNEL'S TREATMENTS COMPOSE (2026-08-21). "A room" and "a
+    // slapback" and "darker" are three different lanes on the desk — the rev
+    // send, the del send, the strip's tone bands — and an engineer lights
+    // all three on one guitar every day of the week. So the four channel
+    // questions are TOGGLE SETS (`multi`), not one-of-N: an answer lights or
+    // unlights, the lit set is stored joined in the menu's own order ("a
+    // room, a slapback, darker" — which is also what the gig sheet says),
+    // and mixOf sums every lit word's offsets onto its lanes, clamped at the
+    // desk's own ranges. The one honest exclusion is the `dry` word — dry
+    // MEANS the empty set said out loud, so lighting it clears the rest and
+    // lighting anything else clears it. The wet words ("wide and wet",
+    // "washed out", "dub echo") COEXIST with the rest — they are more send,
+    // and more send plus a room is just a wetter room, the caps holding the
+    // sum on the rails. The voice's two placements ("in the distance"/"up
+    // front") are the one pair that contradict — a voice has one position —
+    // so they exclude each other (`excl`) and compose with everything else.
+    // (The DRUMS block above stays one-of-N on purpose: its words are a
+    // gate's contract, and "how close are the drums?" is one distance.)
+    { id: "keysfx", ask: "anything on the keys?", multi: true, dry: "dry", opts: [
       { w: "dry", mix: {} },
       { w: "a room", mix: { "inst:keys": { rev: 0.25 }, "inst:pads": { rev: 0.25 } } },
       { w: "echo", mix: { "inst:keys": { del: 0.3 }, "inst:pads": { del: 0.3 } } },
@@ -95,19 +113,20 @@
                                   "inst:pads": { rev: 0.55, del: 0.2 } } },
       { w: "darker", mix: { "inst:keys": { eq: { hi: -3, lo: 2 } },
                             "inst:pads": { eq: { hi: -3, lo: 2 } } } } ] },
-    { id: "gtrfx", ask: "anything on the guitar?", opts: [
+    { id: "gtrfx", ask: "anything on the guitar?", multi: true, dry: "straight in", opts: [
       { w: "straight in", mix: {} },
       { w: "a room", mix: { "inst:guitar": { rev: 0.25 } } },
       { w: "a slapback", mix: { "inst:guitar": { del: 0.22 } } },
       { w: "washed out", mix: { "inst:guitar": { rev: 0.55, del: 0.3 } } },
       { w: "brighter", mix: { "inst:guitar": { eq: { hi: 4 } } } } ] },
-    { id: "voxfx", ask: "anything on the voice?", opts: [
+    { id: "voxfx", ask: "anything on the voice?", multi: true, dry: "close and dry",
+      excl: [["in the distance", "up front"]], opts: [
       { w: "close and dry", mix: {} },
       { w: "a plate", mix: { vocals: { rev: 0.4 } } },
       { w: "a long echo", mix: { vocals: { del: 0.4, rev: 0.25 } } },
       { w: "in the distance", mix: { vocals: { rev: 0.7, fader: -3 } } },
       { w: "up front", mix: { vocals: { fader: 3, eq: { hi: 2 } } } } ] },
-    { id: "bassfx", ask: "anything on the bass?", opts: [
+    { id: "bassfx", ask: "anything on the bass?", multi: true, dry: "dry", opts: [
       { w: "dry", mix: {} },
       { w: "a room", mix: { bass: { rev: 0.22 } } },
       { w: "echo", mix: { bass: { del: 0.3 } } },
@@ -118,27 +137,63 @@
       { w: "with the kick", mix: {} },
       { w: "out front", mix: { bass: { fader: 3 } } } ] },
   ];
-  const engDecisions = (m) => ENG.map((d) => ({
-    ...d, seat: "engineer", answered: (m.eng || {})[d.id] || null,
-    opts: d.opts.map((o) => ({ ...o, answered: (m.eng || {})[d.id] === o.w,
-      active: (m.eng || {})[d.id] === o.w })) }));
+  // the lit set of a multi question, read back out of the stored phrase —
+  // the phrase IS the storage ("a room, a slapback"), so an old session's
+  // single word reads as a one-word set and nothing migrates
+  const engSet = (m, id) => { const s = (m.eng || {})[id]; return s ? s.split(", ") : []; };
+  // one toggle: dry is exclusive both ways, an excl pair keeps one of two
+  // contradictory placements, and the result is canonicalized to the menu's
+  // own order so a set lit in any order has one spelling
+  const engToggle = (d, cur, w) => {
+    if (w === d.dry) return cur.length === 1 && cur[0] === d.dry ? [] : [d.dry];
+    let next = cur.includes(w) ? cur.filter((x) => x !== w)
+      : [...cur.filter((x) => x !== d.dry), w];
+    for (const pair of d.excl || [])
+      if (pair.includes(w) && next.includes(w))
+        next = next.filter((x) => x === w || !pair.includes(x));
+    const at = (x) => d.opts.findIndex((o) => o.w === x);
+    return next.sort((a, b) => at(a) - at(b));
+  };
+  const engDecisions = (m) => ENG.map((d) => {
+    const said = (m.eng || {})[d.id] || null;
+    const lit = d.multi ? engSet(m, d.id) : null;
+    const hit = (w) => (d.multi ? lit.includes(w) : said === w);
+    return { ...d, seat: "engineer", answered: said,
+      opts: d.opts.map((o) => ({ ...o, answered: hit(o.w), active: hit(o.w) })) };
+  });
   // WHAT THE DESK IS TOLD: every answer's offsets, summed per channel. Two
   // answers that touch the same channel add rather than replace, the way two
   // hands on a board would.
   function mixOf(m) {
     const out = {};
     for (const d of ENG) {
-      const w = (m.eng || {})[d.id];
-      const o = w && d.opts.find((x) => x.w === w);
-      if (!o) continue;
-      for (const [chan, vals] of Object.entries(o.mix)) {
-        const c = out[chan] || (out[chan] = {});
-        for (const [k, v] of Object.entries(vals)) {
-          if (k === "eq") { const e = c.eq || (c.eq = {});
-            for (const [b, db] of Object.entries(v)) e[b] = (e[b] || 0) + db; }
-          else c[k] = (c[k] || 0) + v;
+      const words = d.multi ? engSet(m, d.id)
+        : (m.eng || {})[d.id] ? [(m.eng || {})[d.id]] : [];
+      for (const w of words) {
+        const o = d.opts.find((x) => x.w === w);
+        if (!o) continue;
+        for (const [chan, vals] of Object.entries(o.mix)) {
+          const c = out[chan] || (out[chan] = {});
+          for (const [k, v] of Object.entries(vals)) {
+            if (k === "eq") { const e = c.eq || (c.eq = {});
+              for (const [b, db] of Object.entries(v)) e[b] = (e[b] || 0) + db; }
+            else c[k] = (c[k] || 0) + v;
+          }
         }
       }
+    }
+    // THE CAPS. Several lit treatments sum on one lane now, so the sum is
+    // held to the desk's own ranges (audio/desk.js c01 on the sends,
+    // fields.js faderDb -24..12, eqDb ±12) — all-on is wet, never clipped.
+    // A single answer is always inside the caps, so one word's offsets pass
+    // through byte-identical.
+    const r3 = (v) => Math.round(v * 1000) / 1000;
+    for (const c of Object.values(out)) {
+      for (const k of ["rev", "del", "glue", "drive", "tape", "space"])
+        if (c[k] != null) c[k] = r3(Math.min(1, Math.max(0, c[k])));
+      if (c.fader != null) c.fader = r3(Math.max(-24, Math.min(12, c.fader)));
+      if (c.eq) for (const b of Object.keys(c.eq))
+        c.eq[b] = r3(Math.max(-12, Math.min(12, c.eq[b])));
     }
     return out;
   }
@@ -1223,7 +1278,13 @@
     if (seat === "engineer") {
       const d = ENG.find((x) => x.id === id);
       if (!d || !d.opts.some((o) => o.w === w)) return m;
-      return { ...m, eng: { ...(m.eng || {}), [id]: w } };
+      if (!d.multi) return { ...m, eng: { ...(m.eng || {}), [id]: w } };
+      // a toggle set: the word lights or unlights; an emptied set is the
+      // question back open, not a different kind of silence
+      const next = engToggle(d, engSet(m, id), w);
+      const eng = { ...(m.eng || {}) };
+      if (next.length) eng[id] = next.join(", "); else delete eng[id];
+      return { ...m, eng };
     }
     if (seat === "drums") return { ...m, drums: D.answer(m.drums, id, w) };
     // an annotated knob answers onto the SONG, whichever chair was asked
