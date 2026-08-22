@@ -1778,7 +1778,9 @@ function chairArea(parent, who, ideasOnly) {
       const tbars = Band.Id.barsOf(theme);
       if (tbars > 1) {
         const wr = Band.Id.wroteOf(theme), hand = Band.Id.handOf(theme);
-        const BW = ["bar one", "bar two", "bar three", "bar four"];
+        // the words are the kit's own (Id.BARWORD) — the rail kept a copy of
+        // four of them and a theme may be eight bars long since 2026-08-22
+        const BW = Band.Id.BARWORD;
         const rail = el("p", "dbarrail", "bar ");
         for (let b = 0; b < tbars; b++) {
           const btn = el("button", "dmark" + (b === hand ? " on" : ""),

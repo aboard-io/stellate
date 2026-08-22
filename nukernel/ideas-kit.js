@@ -153,21 +153,63 @@
   // three are profiles a working writer would name. Keyed by bar count
   // because a two-bar sentence and a four-bar one are different sentences,
   // not the same one cropped.
+  //
+  // AND A SENTENCE MAY RUN TO EIGHT (2026-08-22). Every plan carries a row
+  // for every length a theme can be, because a plan with no row falls back
+  // to the photocopy — and a word that quietly does nothing is exactly what
+  // `sentFirst` below refuses to offer. An eight-bar row is not the four-bar
+  // row said twice (that is the tiling this length exists to end): it is one
+  // arc over eight measures, the second half going somewhere the first did
+  // not.
+  //
+  // `aabb` is the shape all four repertoire studies asked for by name —
+  // statement, statement, departure, return. It is the one plan that says a
+  // measure TWICE on purpose, which is why it declares `same`: the rest obey
+  // the sung-line law (no two adjacent measures scan alike) and a strophic
+  // form is built on breaking it. The Depeche Mode study measured the cost of
+  // not having it — a two-bar cell tiled over four bars comes out A B A B
+  // where the record is A A B B, a ceiling of about half before a single
+  // pitch is asked about.
   const SENTENCES = {
     plain: { w: "one cell, said again", rows: null },
     vary:  { w: "say it, then vary it",
              rows: { 2: ["state", "restate"],
-                     4: ["state", "restate", "develop", "land"] } },
+                     4: ["state", "restate", "develop", "land"],
+                     8: ["state", "restate", "develop", "land",
+                         "restate", "develop", "carry", "land"] } },
     long:  { w: "a long note, then it moves",
              rows: { 2: ["land", "restate"],
-                     4: ["land", "state", "restate", "develop"] } },
+                     4: ["land", "state", "restate", "develop"],
+                     8: ["land", "state", "restate", "develop",
+                         "land", "restate", "develop", "carry"] } },
     hold:  { w: "carry it over the barline",
              rows: { 2: ["state", "carry"],
-                     4: ["state", "carry", "develop", "carry"] } },
+                     4: ["state", "carry", "develop", "carry"],
+                     8: ["state", "carry", "develop", "carry",
+                         "restate", "carry", "develop", "land"] } },
+    // A is one measure at four bars and TWO at eight — a letter is half of
+    // the half, and a two-bar letter is itself "say it, say it again ending
+    // differently", which is what a strophe is.
+    aabb:  { w: "twice, then somewhere else twice", same: true,
+             rows: { 4: ["state", "state", "develop", "develop"],
+                     8: ["state", "restate", "state", "restate",
+                         "develop", "land", "develop", "land"] } },
   };
 
+  // HOW LONG A THEME IS, AND IT GOES TO EIGHT (2026-08-22). Four was the cap,
+  // and a four-bar theme TILES over anything longer: an eight-bar verse heard
+  // bars one to four twice instead of its own second half. That was the single
+  // biggest fit limiter the repertoire panel measured, hit by all four studies
+  // independently — Yesterday's seven-bar verse, Honesty's eight-bar verse and
+  // a twelve-to-sixteen-bar hymn strophe all lost their divergent second
+  // halves before a note was compared. Eight bars, with a written grid
+  // reachable on every one of them (`wrote`, below), is what says the rest.
   const LENGTHS = { one: { w: "one bar", bars: 1 }, two: { w: "two bars", bars: 2 },
-                    four: { w: "four bars", bars: 4 } };
+                    four: { w: "four bars", bars: 4 },
+                    eight: { w: "eight bars", bars: 8 } };
+  // the longest a theme can be, and therefore wroteOf's ceiling and the
+  // number of words the bar-in-hand rail has
+  const MAXB = 8;
   // OCTAVES OVER MIDDLE C, the kernel's own `reg`. A tune sits an octave
   // above the keys' comping by default — the register a voice sings in and a
   // lead line lives in, not the one the chords are in.
@@ -227,43 +269,86 @@
   /* ---------- THE WRITTEN BAR (PLAN.md THE THROUGH-COMPOSED THEME) --------
      Three modes, one data shape. DERIVED is today: one authored cell, the
      sentence derives every bar. AUTHORED is `wrote[b]` for every bar — a
-     2–4-bar tune with every bar its own tri-state rhythm (the drum phrase's
-     lane grid is the precedent). MIXED is the interesting one: some bars
-     written, the rest derived AROUND them. THE HAND MOVES LAST, extended to
-     bars — a bar you wrote survives any sentence-plan change, and a length
-     shrink leaves the far bars DORMANT, revived if the length comes back
-     (the same law as a lift surviving the note it sits on being the
-     landing). Both fields are present-only: no `wrote`, no `hand` — every
-     phrase ever compiled is byte-identical.
+     tune of up to MAXB bars with every bar its own tri-state rhythm (the
+     drum phrase's lane grid is the precedent). MIXED is the interesting one:
+     some bars written, the rest derived AROUND them. THE HAND MOVES LAST,
+     extended to bars — a bar you wrote survives any sentence-plan change,
+     and a length shrink leaves the far bars DORMANT, revived if the length
+     comes back (the same law as a lift surviving the note it sits on being
+     the landing). Both fields are present-only: no `wrote`, no `hand` —
+     every phrase ever compiled is byte-identical.
 
-       wrote: { [b]: { grid: [16 tri-state], lift: { [i]: -2..2 } } }
-       hand:  0..3   which bar the count grid is aimed at — a MODEL fact
+       wrote: { [b]: { grid: [N tri-state], lift: { [i]: -2..2 },
+                       octs?: { [i]: -1..1 } } }
+       hand:  0..MAXB-1  which bar the count grid is aimed at — a MODEL fact
                      (aim, not sound: it changes no phrase and stays out of
                      the cache key)
 
+     EVERY BAR IS REACHABLE, all eight of them (2026-08-22). The ceiling was
+     four, which was the length cap, and a written second half is exactly
+     what the repertoire panel's item 2 is about — so the ceiling is MAXB and
+     moves with it rather than being a number of its own.
+
      PARANOIA AT THE ACCESSOR, because the session rides localStorage whole:
-     a bar entry whose grid is not sixteen ints in 0..2 is dropped, lifts
-     are clamped to ±2, keys outside 0..3 are ignored — the same law
-     gridOf/liftOf already imply. */
+     a bar entry whose grid is not N ints in 0..2 is dropped, lifts are
+     clamped to ±2, octaves to ±1, keys outside the theme's own places or
+     0..MAXB-1 are ignored — the same law gridOf/liftOf already imply. */
+  const clampMap = (src, n, lo, hi) => {
+    const out = {};
+    for (const [i, v] of Object.entries(src || {})) {
+      const ii = +i;
+      if (Number.isInteger(ii) && ii >= 0 && ii < n && Number.isFinite(v) && v)
+        out[ii] = Math.max(lo, Math.min(hi, Math.round(v)));
+    }
+    return out;
+  };
   const wroteOf = (m) => {
     const out = {};
     if (!m.wrote) return out;
     for (const [k, v] of Object.entries(m.wrote)) {
       const b = +k;
-      if (!Number.isInteger(b) || b < 0 || b > 3 || !v) continue;
+      if (!Number.isInteger(b) || b < 0 || b >= MAXB || !v) continue;
       const g = Array.isArray(v.grid) && v.grid.length === NOF(m) &&
         v.grid.every((x) => x === 0 || x === 1 || x === 2) ? v.grid.slice() : null;
       if (!g) continue;
-      const lift = {};
-      for (const [i, lv] of Object.entries(v.lift || {})) {
-        const ii = +i;
-        if (Number.isInteger(ii) && ii >= 0 && ii < NOF(m) && Number.isFinite(lv) && lv)
-          lift[ii] = Math.max(-2, Math.min(2, Math.round(lv)));
-      }
-      out[b] = { grid: g, lift };
+      const bar = { grid: g, lift: clampMap(v.lift, NOF(m), -2, 2) };
+      // the octave map is PRESENT-ONLY, like `hold` and `orn`: a bar written
+      // before the word existed carries no `octs` key and comes back without
+      // one, so every saved theme is byte-identical through this accessor
+      const octs = clampMap(v.octs, NOF(m), -1, 1);
+      if (Object.keys(octs).length) bar.octs = octs;
+      out[b] = bar;
     }
     return out;
   };
+  /* ---------- THE OCTAVE (2026-08-22) -------------------------------------
+     A lift is ±2 SCALE STEPS on one place, and every theme this box has ever
+     written lived inside one tessitura. That was the repertoire panel's
+     dominant "off" category, hit by all four studies: a line that traverses
+     an octave and a half (Bach's invention), a cadence that drops an octave
+     (Honesty), a climax phrase (the hymns) and a pedal-alternating riff
+     (Enjoy the Silence) are all unreachable when the widest thing anybody
+     can say is "up a step".
+
+     ONE MECHANISM AT TWO SCALES, because the studies named two shapes and
+     they are the same shape said about different amounts of music: `octs` is
+     a per-PLACE map exactly parallel to `lift` — base keyed %N for the
+     derived bars, its own inside a WRITTEN bar — and one word says it about
+     the whole bar in hand at once, writing that same map. The riff that
+     alternates inside the bar is the first; the cadence and the climax are
+     the second.
+
+     AND THE REGISTRATION STAYS HONEST WITHOUT A SECOND STAMP. The kernel's
+     whole-line octave shift is a mean over DEGREE-pitches with the octave
+     vector deliberately left out of it ("the mean is taken over the DEGREE
+     pitches only, before the step's octave displacement is added" —
+     kernel.js), and 12 × oct is added on top afterwards. So an octave word
+     is OUTSIDE the mean by construction and cannot flip the whole line the
+     way "up a step" once did — which is the same law the regDeg stamp
+     enforces for the lifts and the transforms, reached by the mechanism the
+     kernel already had rather than by a second one. The lifts' stamp is
+     untouched. */
+  const octsOf = (m) => ({ ...(m.octs || {}) });
   // the bar in hand — aim, clamped to a bar the theme actually has
   const handOf = (m) => {
     const h = m.hand || 0;
@@ -299,13 +384,22 @@
     const wb = wroteOf(m)[handOf(m)];
     return wb ? { ...wb.lift } : {};
   };
+  const handOcts = (m) => {
+    if (!editsWrote(m)) return octsOf(m);
+    const wb = wroteOf(m)[handOf(m)];
+    return wb ? { ...(wb.octs || {}) } : {};
+  };
   // one edit to the bar in hand: seeded from what the sentence was deriving
   // the first time a hand touches a derived bar, so writing out starts from
   // what you heard
   const withHandBar = (m, fn) => {
     const h = handOf(m), wr = wroteOf(m);
     const bar = wr[h] || { grid: barTriOf(m, h), lift: {} };
-    const nb = fn({ grid: bar.grid.slice(), lift: { ...bar.lift } });
+    const nb = fn({ grid: bar.grid.slice(), lift: { ...bar.lift },
+                    octs: { ...(bar.octs || {}) } });
+    // present-only: a bar nobody moved an octave stores no `octs` key, so a
+    // session written before the word existed round-trips byte for byte
+    if (!Object.keys(nb.octs || {}).length) delete nb.octs;
     return { ...m, wrote: { ...wr, [h]: nb } };
   };
 
@@ -340,6 +434,9 @@
                 // a meter switch hands back a stale sixteen-step phrase and
                 // the failure reads as a scheduler bug rather than a cache one
                 "|" + (m.wrote ? JSON.stringify(m.wrote) : "") +
+                // ...and the base octave map, present-only like the rest: an
+                // unmarked theme adds an empty pair of braces and nothing else
+                "|" + (m.octs ? JSON.stringify(m.octs) : "") +
                 "|" + NOF(m) + ":" + metOf(m).pulse;
     let hit = PHCACHE.get(key);
     if (hit) return hit;
@@ -351,7 +448,7 @@
   function phraseNow(m, roots) {
     const N = NOF(m);
     const bars = barsOf(m), cell = gridOf(m), con = CONTOURS[m.contour] || CONTOURS.arch;
-    const lift = liftOf(m);
+    const lift = liftOf(m), octs = octsOf(m);
     const land = (LANDINGS[m.land] || LANDINGS.root).d;
     const n = bars * N;
     const gate = z(n), deg = z(n), vel = new Array(n).fill(6), oct = z(n);
@@ -487,6 +584,17 @@
     const lifted = onsets.some((at) => liftAt(at));
     const regDeg = lifted ? deg.slice() : null;
     for (const at of onsets) if (liftAt(at)) deg[at] += liftAt(at);
+    // THE OCTAVE RIDES THE `oct` VECTOR, which is the kernel's own lane for
+    // exactly this and the one thing its register mean is documented to
+    // exclude — so no stamp is needed and none is taken. A written bar's
+    // octaves are its own places; the base map is %N across the derived bars,
+    // the same asymmetry the lifts have and for the same reason (byte
+    // identity for every theme saved before either word existed).
+    const octAt = (at) => {
+      const wb = wr[Math.floor(at / N)];
+      return wb ? (wb.octs || {})[at % N] || 0 : octs[at % N] || 0;
+    };
+    for (const at of onsets) if (octAt(at)) oct[at] = octAt(at);
     const out = { deg, oct, vel, inc: z(n), stk: z(n), gate, acc: z(n), sld: z(n) };
     if (anyHold) out.hold = hold;               // present-only, like `orn`
     if (regDeg) { out.regDeg = regDeg; out.regGate = gate.slice(); }
@@ -559,6 +667,18 @@
 
   /* ---------- the words ---------- */
   const { V, add } = C.vocab();
+  // the bar-in-hand words, one per bar a theme can have (MAXB). The rail in
+  // ui/band.js reads this list rather than keeping its own, so a theme that
+  // grew to eight bars did not leave four of them unnameable.
+  const BARWORD = ["bar one", "bar two", "bar three", "bar four",
+                   "bar five", "bar six", "bar seven", "bar eight"];
+  // the base (unwritten) octave map, edited and left PRESENT-ONLY: emptied,
+  // the key goes away rather than sitting there as {}
+  const withBaseOcts = (m, fn) => {
+    const o = octsOf(m); fn(o);
+    for (const k of Object.keys(o)) if (!o[k]) delete o[k];
+    return { ...m, octs: Object.keys(o).length ? o : null };
+  };
 
   add("start", "start", ["write something"], (m) => !m.on,
       (m) => ({ ...m, on: true }), () => "a phrase, two bars, arching over");
@@ -654,6 +774,23 @@
           ? withHandBar(m, (b) => { b.lift[i] = (b.lift[i] || 0) - 1; return b; })
           : { ...m, lift: { ...liftOf(m), [i]: (liftOf(m)[i] || 0) - 1 } }),
         (m) => "down a step " + sw(i, m));
+    // THE OCTAVE, ON ONE PLACE. The same two words a step gets, an octave
+    // wide — which is what a pedal-alternating riff is made of (the Depeche
+    // Mode study's shape: the same figure with every other note down an
+    // octave). Clamped to one octave either way: two is a different
+    // instrument, and the record has to stay on a piano.
+    add("oup:" + i, "octaves in the bar", ["an octave up " + stepWord(i)],
+        (m) => m.on && handGrid(m)[i] === 1 && (handOcts(m)[i] || 0) < 1,
+        (m) => (editsWrote(m)
+          ? withHandBar(m, (b) => { b.octs[i] = (b.octs[i] || 0) + 1; return b; })
+          : withBaseOcts(m, (o) => { o[i] = (o[i] || 0) + 1; })),
+        (m) => "an octave up " + sw(i, m));
+    add("odn:" + i, "octaves in the bar", ["an octave down " + stepWord(i)],
+        (m) => m.on && handGrid(m)[i] === 1 && (handOcts(m)[i] || 0) > -1,
+        (m) => (editsWrote(m)
+          ? withHandBar(m, (b) => { b.octs[i] = (b.octs[i] || 0) - 1; return b; })
+          : withBaseOcts(m, (o) => { o[i] = (o[i] || 0) - 1; })),
+        (m) => "an octave down " + sw(i, m));
     // "hold it" — offered only where a note EARLIER in the bar exists to
     // hold from: a tie with nothing before it would be a mark on silence.
     // (In a written bar past the first, the note before the line counts —
@@ -669,16 +806,44 @@
         (m) => handGrid(m)[i] === 2);
   }
   add("flatten", "the bar", ["straighten it out"],
-      (m) => m.on && (m.grid || m.lift || m.wrote),
-      // "straighten it out" means all of it — the written bars included
-      (m) => ({ ...m, grid: null, lift: null, wrote: null }),
+      (m) => m.on && (m.grid || m.lift || m.octs || m.wrote),
+      // "straighten it out" means all of it — the written bars included, and
+      // every octave anybody moved
+      (m) => ({ ...m, grid: null, lift: null, octs: null, wrote: null }),
       () => "back to the rhythm it was written with");
+  // THE WHOLE BAR, AN OCTAVE. The cadence that drops one and the climax
+  // phrase that takes one are BAR-scale facts, and saying them a place at a
+  // time is not how anybody says one. Same storage as the per-place marks —
+  // one mechanism, two scales — and on a derived bar past the first, the
+  // first thing said writes that bar out, exactly as every other mark does.
+  const barOctCan = (m, d) => m.on &&
+    handGrid(m).some((v, i) => v === 1 &&
+      Math.abs(((handOcts(m)[i] || 0) + d)) <= 1 && (handOcts(m)[i] || 0) + d !== (handOcts(m)[i] || 0));
+  const barOct = (m, d) => {
+    const g = handGrid(m), cur = handOcts(m), next = { ...cur };
+    let moved = false;
+    for (let i = 0; i < g.length; i++) {
+      if (g[i] !== 1) continue;
+      const v = Math.max(-1, Math.min(1, (cur[i] || 0) + d));
+      if (v !== (cur[i] || 0)) moved = true;
+      if (v) next[i] = v; else delete next[i];
+    }
+    if (!moved) return m;
+    return editsWrote(m)
+      ? withHandBar(m, (b) => { b.octs = next; return b; })
+      : { ...m, octs: Object.keys(next).length ? next : null };
+  };
+  add("boct:up", "the bar", ["take the bar up an octave"],
+      (m) => barOctCan(m, 1), (m) => barOct(m, 1),
+      (m) => BARWORD[handOf(m)] + " goes up an octave");
+  add("boct:down", "the bar", ["take the bar down an octave"],
+      (m) => barOctCan(m, -1), (m) => barOct(m, -1),
+      (m) => BARWORD[handOf(m)] + " goes down an octave");
   // THE BAR IN HAND — which measure the count grid is aimed at. Writing is
   // refinement, like the lifts: vocabulary, not interview (zero new
   // interview rows). Taking a bar in hand changes no phrase; the first mark
   // made on a derived bar writes it out.
-  const BARWORD = ["bar one", "bar two", "bar three", "bar four"];
-  for (let b = 0; b < 4; b++)
+  for (let b = 0; b < MAXB; b++)
     add("bar:" + b, "the bar in hand", [BARWORD[b]],
         (m) => m.on && barsOf(m) > 1 && b < barsOf(m) && handOf(m) !== b,
         (m) => ({ ...m, hand: b }),
@@ -742,10 +907,12 @@
     { w: "up a step",   id: (i) => "up:" + i },
     { w: "down a step", id: (i) => "down:" + i },
     { w: "hold it",     id: (i) => "tie:" + i },
+    { w: "an octave up",   id: (i) => "oup:" + i },
+    { w: "an octave down", id: (i) => "odn:" + i },
   ];
   return { N, NOF, CELLS, CELLS3, CELLS6, extraCells, cellOf,
            CONTOURS, LANDINGS, LENGTHS, REG, SENTENCES, ROLES, TRANSFORMS,
-           regOf, gridOf, liftOf, wroteOf, handOf, stepWord,
-           blank, V, catalog, say, says, BARMARKS,
+           regOf, gridOf, liftOf, octsOf, wroteOf, handOf, stepWord,
+           blank, V, catalog, say, says, BARMARKS, BARWORD, MAXB,
            decisions, nextAsk, answer, toPhrase, transform, describe, barsOf, cellOf };
 });
