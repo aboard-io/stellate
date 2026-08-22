@@ -223,6 +223,55 @@ The convergent gaps, ranked by how many studies hit them independently:
 5. INVERSIONS — the kernel's chord objects already carry the field; the
    picker never asks it.
 
+
+## THE PRODUCT, as Paul stated it (2026-08-22)
+
+Verbatim: "I answer a few questions about time, location and genre. You
+compose themes and set everything up clamped and mixed to that. I can tweak
+it all but you make logical decisions about the songs. We bring in the
+producer and we give him things to say like 'make the sound more punk' and
+you tweak the sound to punk. Or he says 'make the drums more punk' or 'make
+the guitar thrash' and you keep adapting."
+
+Three movements, and the third is the new one.
+
+1. THE FEW QUESTIONS — when, where, what. This exists (208+ routes, the last
+   one standing is called). Keep it short; it is the door, not the record.
+
+2. THE RECORD ARRIVES FINISHED. Today the front door casts a band and leaves
+   the themes and the desk generic. It should hand back a RECORD: themes
+   composed to the idiom (a punk hook is not a bossa hook — cell, contour,
+   register and length are genre facts), every chair's register clamped to
+   where that music sits, the desk already set the way that record would be
+   mixed, the form and changes idiomatic. Everything still answerable — the
+   defaults are DECISIONS, not walls, and every one of them is a question
+   whose answer was chosen for you and can be re-opened.
+
+3. THE PRODUCER — the new organ. You say a sentence, the record moves:
+   "make the sound more punk" · "make the drums more punk" · "make the guitar
+   thrash" · "less of that" · "more like the seventies".
+   THE MECHANISM IS ALREADY IN THE BUILDING, and it is not a model call: a
+   genre IS a bundle of coordinated settings, so "more punk" is a VECTOR STEP
+   IN GENRE SPACE, SCOPED TO A SUBSYSTEM — move the named chair's (or the
+   whole record's) fields one step toward the named anchor's, leave the rest
+   standing. Say it twice and go further; "less" walks back; the step is
+   deterministic, instant, and works with the wire cut. The kernel's own
+   blend/mix algebra is the arithmetic (the parent's genre-kernel does the
+   same thing at catalog scale).
+   THE PRODUCER SPEAKS BACK, in the band's voice, saying what it moved:
+   "opened the hats, snare hard on two and four, took the swing out, drove
+   the amp." Everything else in this box is musicians talking; the producer
+   is not an exception.
+   WHAT IT MAY SAY is a TABLE, not a parser guess — one row per
+   (scope x target x direction), the askable.js philosophy: scopes are the
+   chairs plus "the sound" and "the mix"; targets are the catalog's own
+   genres and its adjectives where they are honest ("thrash" is a real word
+   the guitar rack can reach; "punk" is an anchor). An unsayable sentence
+   says so plainly rather than guessing.
+   IT MUST BE UNDOABLE — a producer note is a move on a stack, not a
+   destructive edit, so "less punk" and plain undo both work, and the gig
+   sheet keeps showing what is true.
+
 ## Standing rules for every phase
 
 - Verify at the score/DOM level pure-node where possible; browser gates for
