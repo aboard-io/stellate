@@ -159,6 +159,14 @@ function meterOf(steps) {
   while (den < 4) { num *= 2; den *= 2; }
   return num + "/" + den;
 }
+// ...AND WHY A SIGNATURE CAN BE DECLARED. Twelve steps reduce to 3/4 and
+// only ever to 3/4 — a 6/8 bar is the SAME twelve sixteenths heard in two
+// dotted-quarter beats, and no arithmetic on the step count can tell the two
+// apart (kernel.js METERS says the same thing one layer down). So `opts.abc`
+// names the signature outright when the record has one, and `opts.beam` says
+// how far apart the beam breaks go: four sixteenths to a beat in simple time,
+// six (three eighths) in compound. Both absent = the derived 3/4-or-4/4 and
+// beaming by the quarter, which is every staff this file has ever drawn.
 
 // ---- the compiler ----------------------------------------------------------
 // toABC(phrase, opts) -> ABC string.
@@ -264,9 +272,10 @@ function engrave(phrase, opts = {}) {
   const glyphs = [];                          // pitched glyph -> toNotes index
   let cur = "", accState = {}, pos = 0, ni = -1;
 
+  const beam = Math.max(1, opts.beam | 0) || 4;
   const push = (tok) => {
     const inBar = pos % spb;
-    if (inBar !== 0 && inBar % 4 === 0 && cur && !cur.endsWith(" ")) cur += " ";
+    if (inBar !== 0 && inBar % beam === 0 && cur && !cur.endsWith(" ")) cur += " ";
     cur += tok;
   };
   const advance = (steps) => {
@@ -313,7 +322,7 @@ function engrave(phrase, opts = {}) {
 
   const head = ["X:1"];
   if (opts.label) head.push("T:" + String(opts.label).replace(/[\r\n]+/g, " "));
-  head.push("M:" + meterOf(spb));
+  head.push("M:" + (opts.abc || meterOf(spb)));
   head.push("L:1/16");
   if (opts.bpm) head.push("Q:1/4=" + Math.round(opts.bpm));
   head.push("K:" + sigInfo.k);

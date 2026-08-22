@@ -331,6 +331,31 @@
     return sign * Math.min(clamp, mag);
   };
 
+  // ---- HOW A BAR COUNTS: the METER, in two numbers -------------------------
+  // A 3/4 bar and a 6/8 bar are the SAME twelve sixteenth-steps (3 quarters =
+  // 6 eighths = 12 sixteenths), so the whole scheduling half of meter is one
+  // number — how many steps the bar has — and the machine needs nothing else.
+  // What makes them different MUSIC is the second number: how many steps are
+  // in a felt beat. 12/4 is a waltz, 12/6 is a lilt with two big beats, and
+  // no amount of arithmetic can derive one from the other. That ambiguity IS
+  // the distinction, which is why `pulse` is declared rather than computed.
+  //
+  //   g.meter  { steps, pulse }   present-only; ABSENT = { steps: 16, pulse: 4 }
+  //
+  // Absent-is-today is a law, not an aspiration: every reader below is
+  // `g.meter ? … : the old literal`, so a genre that says nothing about meter
+  // renders byte for byte what it always did. The sweep is the tripwire.
+  const MET4 = { steps: 16, pulse: 4 };
+  const METERS = {
+    three: { w: "in three",     steps: 12, pulse: 4, abc: "3/4", beam: 4 },
+    six:   { w: "in six-eight", steps: 12, pulse: 6, abc: "6/8", beam: 6 },
+  };
+  // the bar's own arithmetic, off a genre. Total: anything without a meter is
+  // sixteen steps of four, which is every genre that has ever shipped.
+  const metOf = (g) => (g && g.meter && g.meter.steps) ? g.meter : MET4;
+  const stepsIn = (g) => metOf(g).steps;
+  const pulseIn = (g) => metOf(g).pulse;
+
   const swing = (g, i) => (i % 2) * (g.swing || 0);
   // WHERE STEP i OF BAR b LANDS, swing included — the one spelling of the
   // clock expression every renderer writes. The arithmetic ORDER is
@@ -378,9 +403,16 @@
   // this genre's own step units, so a half-time genre grooves at half the rate —
   // which is correct: groove is a feel per BAR, not per sixteenth of a second.
   // `amount` fades the whole thing in, so it is a dial and not a switch.
-  const groove = (ev, name, barSteps, amount) => {
+  // A GROOVE PROFILE IS A 4/4 FINGERPRINT and says so. The five vectors are
+  // sixteen slots of two-and-four lean; over a twelve-step bar they smear onto
+  // three-quarters of a step and the "backbeat" lands where no backbeat is.
+  // A wrong groove is worse than none, so under a declared meter the song's
+  // groove stands down rather than being stretched — an honest zero until
+  // somebody writes profiles in three. (`met` absent = every call before this.)
+  const groove = (ev, name, barSteps, amount, met) => {
     const G = GROOVES[name];
     if (!G || !barSteps) return ev;
+    if (met && met.steps && met.steps !== 16) return ev;
     const amt = amount == null ? 1 : Math.max(0, Math.min(1, amount));
     if (!amt) return ev;
     const unit = barSteps / 16;
@@ -1019,7 +1051,10 @@
         const e = list[k];
         if (e.orn || e.omark) continue;            // the hand's, or another ornament's
         const t0 = Math.floor((e.t * rate) / N) * N / rate;
-        const beats = Math.max(1, N / 4);
+        // the FELT beat, not a quarter: an ornament leans onto the pulse the
+        // bar actually counts in (6/8 has two, 3/4 has three), and absent a
+        // meter it is the quarter it always was
+        const beats = Math.max(1, (g.meter && g.meter.pulse) || N / 4);
         const strong = stepOf(e) % beats === 0;
         if (o.roll && e.dur * rate >= 1.5 && die(e, ORNSALT.roll) < o.roll) {
           if (ratchet(list, k, die(e, ORNSALT.roll + 1) < 0.5 ? 2 : 3)) { touched = true; continue; }
@@ -1190,8 +1225,8 @@
   // The metrical hierarchy, in weights. `q` is the quarter in THIS pattern's
   // own step units, so a twelve-step bar stresses its three beats rather than
   // an imaginary four.
-  const stressAt = (i, N) => {
-    const q = N / 4, j = ((i % N) + N) % N;
+  const stressAt = (i, N, pulse) => {
+    const q = pulse || N / 4, j = ((i % N) + N) % N;
     if (j === 0) return 1;                                        // the downbeat
     if (q >= 1 && j % q === 0) return j === 2 * q ? 0.55 : 0.3;   // 3, then 2 and 4
     if (q >= 2 && j % (q / 2) === 0) return -0.15;                // the eighths
@@ -1227,7 +1262,7 @@
   const chordFeel = (g, b, i, lane, N) => {
     const st = +g.stress || 0, feel = humanOf(g.touch);
     if (!st && !feel) return null;
-    let dv = st ? 2.4 * st * stressAt(i, N) : 0;
+    let dv = st ? 2.4 * st * stressAt(i, N, g.meter && g.meter.pulse) : 0;
     if (feel && feel.v) dv += (perfDice(g, b, i, lane, 6) * 2 - 1) * feel.v;
     return { dv, push: feel && feel.t ? (perfDice(g, b, i, lane, 4) * 2 - 1) * feel.t / g.rate : 0 };
   };
@@ -1259,7 +1294,7 @@
     for (let k = 1; k < m; k++) if (bar[k].n > bar[pk].n) pk = k;
     for (let k = 0; k < m; k++) {
       const e = bar[k];
-      let d = st ? 2.4 * st * stressAt(steps[k], N) : 0;
+      let d = st ? 2.4 * st * stressAt(steps[k], N, g.meter && g.meter.pulse) : 0;
       // two notes have no arch to hear, so the tent starts at three
       if (ph && m >= 3) {
         const tent = k <= pk ? (pk ? k / pk : 1) : (m - 1 - k) / (m - 1 - pk);
@@ -2350,7 +2385,15 @@
     // the sort only runs when the hand actually moved something, so a genre
     // without `touch` cannot even be reordered by accident.
     const bg = (g.stress || g.touch || g.phrase) ? { ...g, phrase: 0 } : g;
-    const QUARTERS = [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0];
+    // THE PULSE, NOT THE QUARTER. The genre's own fallback rhythm is one note
+    // on every felt beat, which is a quarter in 4/4, a quarter in 3/4 and a
+    // DOTTED quarter in 6/8. Without a meter this is the same sixteen-slot
+    // literal it has always been, spelled out so the bytes cannot move.
+    const MSTEPS = stepsIn(g), MPULSE = pulseIn(g);
+    const QUARTERS = g.meter
+      ? (() => { const v = new Array(MSTEPS).fill(0);
+                 for (let i = 0; i < MSTEPS; i += MPULSE) v[i] = 1; return v; })()
+      : [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0];
     // A STYLE MAY OWN THE RHYTHM. `eighths` and `sixteenths` are not a different
     // choice of NOTE, they are a different DENSITY, so they override the accent
     // grid rather than reading it — a driving eighth-note bass that goes quiet
@@ -2425,8 +2468,14 @@
         // the walk starts from bassPc, so an inversion is audible from the
         // first beat, and it AIMS at the next chord's bassPc — a walking line
         // is defined by where it is going
-        const tones = [c.bassPc, mid[0], mid[1], nc.bassPc - 1];
-        const steps = tones.map((_, q) => q * 4).filter((i) => !gw || at(gw, i));
+        // A WALK IS ONE NOTE PER FELT BEAT, however many the bar has: four
+        // in 4/4 (root, two middles, the approach), three in 3/4 (root, one
+        // middle, the approach), two in 6/8. Four is the literal it always
+        // was and the slice is a no-op there.
+        const nbeats = Math.max(2, Math.round(MSTEPS / MPULSE));
+        const tones = [c.bassPc, mid[0], mid[1], nc.bassPc - 1]
+          .filter((_, q) => q < nbeats - 1 || q === 3);
+        const steps = tones.map((_, q) => q * MPULSE).filter((i) => !gw || at(gw, i));
         const bar = steps.map((i, k) =>
           ({ t: leant((b * N + i) / g.rate),
              // 3.7 is the number the walk has always written; scaling it by
@@ -2435,7 +2484,7 @@
              // tripwire exists
              dur: (held ? held.get(b * N + i) * bart
                         : (g.bassArtic ? 3.94 * bart : 3.7)) / g.rate,
-             n: Math.max(24, onBass(tones[i / 4] + 36 + key) + bassReg), r, walk: true,
+             n: Math.max(24, onBass(tones[i / MPULSE] + 36 + key) + bassReg), r, walk: true,
              vel: k === 0 ? 7 : 5 }));
         played = perform(bar, steps, bg, b, N, { lane: "B" }) || played;
         for (const e of bar) ev.push(e);
@@ -2617,12 +2666,20 @@
   //
   // Both take the windowed event stream, the section's length in steps and the
   // steps in a bar, and both are total: an unknown name returns the stream.
-  const beatsOf = (t0, bs, steps) => steps.map(s => t0 + s * bs / 16);
+  // THE BAR'S OWN STEP. `bs` is the bar in time units and `met` says how many
+  // steps that bar has, so one step is bs/steps — sixteen of them unless a
+  // meter says otherwise, which is why every literal below reads through `u`
+  // rather than through `/ 16`. Absent a meter every number here is the one
+  // that was written.
+  const barMet = (met) => { const m2 = (met && met.steps) ? met : MET4;
+    return { n: m2.steps, p: m2.pulse }; };
+  const beatsOf = (t0, u, steps) => steps.map(s => t0 + s * u);
   // one drum event, written in the same shape drums() emits
   const D = (t, d, acc, v) => ({ t, d, acc: !!acc, vel: v, kind: "hit", fill: true });
 
-  function intro(ev, kind, span, bs) {
+  function intro(ev, kind, span, bs, met) {
     if (!kind || !bs) return ev;
+    const M = barMet(met), NS = M.n, PU = M.p, u = bs / NS;
     // COLD is the identity, and it is in the vocabulary ON PURPOSE: the whole
     // band from beat one, no pickup, no count — the absence of an intro is
     // itself a way to start a record, and naming it lets a composer CHOOSE it
@@ -2668,8 +2725,8 @@
       // material away entirely, because a riser under a playing band is just
       // a busy bar.
       const out = rest.slice();
-      for (let s = 0; s < 16; s++)
-        out.push(D(s * bs / 16, "h", s === 15, 1 + Math.round(s * 8 / 15)));
+      for (let s = 0; s < NS; s++)
+        out.push(D(s * u, "h", s === NS - 1, 1 + Math.round(s * 8 / (NS - 1))));
       return out.sort((a, b) => a.t - b.t);
     }
     if (kind === "stabs") {
@@ -2684,9 +2741,9 @@
       const t0 = Math.min(...src0.map(e => e.t));
       const src = src0.filter(e => e.t <= t0 + 1e-6);
       const out = rest.slice();
-      for (const s of [0, 6, 10])
+      for (const s of [0, 6, 10].filter(x => x < NS))
         for (const e of src)
-          out.push({ ...e, t: s * bs / 16, dur: 0.9 * bs / 16,
+          out.push({ ...e, t: s * u, dur: 0.9 * u,
                      vel: Math.max(6, e.vel == null ? 5 : e.vel),
                      acc: s === 0 ? 1 : 0, sld: 0 });
       return out.sort((a, b) => a.t - b.t);
@@ -2694,7 +2751,9 @@
     if (kind === "count") {
       // a count-in: four rim clicks and nothing else, the fourth accented
       const out = rest.slice();
-      beatsOf(0, bs, [0, 4, 8, 12]).forEach((t, i) => out.push(D(t, "p", i === 3, i === 3 ? 9 : 6)));
+      const cb = []; for (let s = 0; s < NS; s += PU) cb.push(s);
+      beatsOf(0, u, cb).forEach((t, i) =>
+        out.push(D(t, "p", i === cb.length - 1, i === cb.length - 1 ? 9 : 6)));
       return out.sort((a, b) => a.t - b.t);
     }
     if (kind === "hit") {
@@ -2712,7 +2771,7 @@
       // marks the downbeat and then the section ARRIVES: the band is back on
       // beat 2, which is what everybody actually plays.
       return [D(0, "k", 1, 9), D(0, "x", 1, 9),
-              ...bar.filter(e => e.t >= bs / 4 - 1e-9), ...rest].sort((a, b) => a.t - b.t);
+              ...bar.filter(e => e.t >= PU * u - 1e-9), ...rest].sort((a, b) => a.t - b.t);
     }
     // SOLO MEANS ONE VOICE. It used to keep the whole pitched layer, which on
     // any genre whose voices are one phrase dealt twice — the octave-doubled
@@ -2749,8 +2808,9 @@
     return ev;
   }
 
-  function outro(ev, kind, span, bs) {
+  function outro(ev, kind, span, bs, met) {
     if (!kind || !bs || !span) return ev;
+    const M = barMet(met), NS = M.n, PU = M.p, u = bs / NS;
     const from = Math.max(0, span - bs);
     const inBar = e => e.t >= from, rest = ev.filter(e => !inBar(e));
     const bar = ev.filter(inBar);
@@ -2760,18 +2820,28 @@
       // second, accented on the beat — the standard shape, played as real snare
       // events rather than as a kit vector, which is why it can accelerate at
       // all. The kick stays on 1 so the bar still lands.
+      // EIGHTHS FOR THE FIRST HALF, SIXTEENTHS FOR THE SECOND — said as the
+      // shape rather than as twelve indices, so it is the same twelve indices
+      // in 4/4 and a real half-and-half fill in a twelve-step bar.
       const out = [...rest, ...keepLines, D(from, "k", 1, 9)];
-      for (const s of [0, 2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15])
-        out.push(D(from + s * bs / 16, "s", s % 4 === 0, s < 8 ? 6 : 7 + (s % 2)));
-      out.push(D(from + 15 * bs / 16, "x", 1, 9));
+      const half = Math.round(NS / 2), fs = [];
+      for (let s = 0; s < half; s += 2) fs.push(s);
+      for (let s = half; s < NS; s++) fs.push(s);
+      for (const s of fs)
+        out.push(D(from + s * u, "s", s % PU === 0, s < half ? 6 : 7 + (s % 2)));
+      out.push(D(from + (NS - 1) * u, "x", 1, 9));
       return out.sort((a, b) => a.t - b.t);
     }
     if (kind === "roll") {
       // an accelerating roll: slow, then faster, then a crash. Same idea as the
       // fill, but it is a crescendo rather than a phrase.
-      const steps = [0, 4, 8, 10, 12, 13, 14, 15];
+      // beats, then eighths, then sixteenths — the accelerando as a shape
+      const steps = [];
+      for (let s = 0; s < NS / 2; s += PU) steps.push(s);
+      for (let s = Math.round(NS / 2); s < Math.round(NS * 3 / 4); s += 2) steps.push(s);
+      for (let s = Math.round(NS * 3 / 4); s < NS; s++) steps.push(s);
       const out = [...rest, ...keepLines];
-      steps.forEach((s, i) => out.push(D(from + s * bs / 16, "s", i > 4, 4 + i)));
+      steps.forEach((s, i) => out.push(D(from + s * u, "s", i > 4, 4 + i)));
       out.push(D(from + bs, "x", 1, 9));
       return out.sort((a, b) => a.t - b.t);
     }
@@ -2810,10 +2880,16 @@
       // over a kick on 1, landing on a crash. Nothing else plays: a tom fill
       // under a hat pattern is not a tom fill.
       const out = [...rest, ...keepLines, D(from, "k", 1, 9)];
-      const run = [[0, "t", 6], [2, "t", 6], [4, "m", 7], [6, "m", 7],
-                   [8, "l", 8], [10, "l", 8], [12, "m", 8], [13, "m", 7],
-                   [14, "l", 9], [15, "l", 9]];
-      for (const [s, d, v] of run) out.push(D(from + s * bs / 16, d, s % 4 === 0, v));
+      // down the kit in eighths, then the last beat in sixteenths — high,
+      // mid, floor by POSITION in the run, so a shorter bar keeps the shape
+      const run = [];
+      const ei = []; for (let s = 0; s < NS - PU; s += 2) ei.push(s);
+      ei.forEach((s, k) => { const x = ei.length > 1 ? k / ei.length : 0;
+        run.push([s, x < 1 / 3 ? "t" : x < 2 / 3 ? "m" : "l", x < 1 / 3 ? 6 : x < 2 / 3 ? 7 : 8]); });
+      const tail = ["m", "m", "l", "l"], tv = [8, 7, 9, 9];
+      for (let k = 0; k < PU; k++)
+        run.push([NS - PU + k, tail[k % 4], tv[k % 4]]);
+      for (const [s, d, v] of run) out.push(D(from + s * u, d, s % PU === 0, v));
       out.push(D(from + bs, "x", 1, 9));
       return out.sort((a, b) => a.t - b.t);
     }
@@ -2822,9 +2898,9 @@
       // closed hats getting louder and the last four opening: the electronic
       // record's way of ending a section, where a snare roll would be a band.
       const out = [...rest, ...keepLines, D(from, "k", 1, 8)];
-      for (let s = 0; s < 16; s++)
-        out.push(D(from + s * bs / 16, s >= 12 ? "o" : "h", s % 4 === 0,
-                   3 + Math.round(s * 6 / 15)));
+      for (let s = 0; s < NS; s++)
+        out.push(D(from + s * u, s >= NS - PU ? "o" : "h", s % PU === 0,
+                   3 + Math.round(s * 6 / (NS - 1))));
       return out.sort((a, b) => a.t - b.t);
     }
     if (kind === "hush") {
@@ -2844,25 +2920,28 @@
         return { ...e, vel: Math.max(1, Math.round((e.vel == null ? 5 : e.vel) * (1 - 0.55 * x))) };
       };
       return [...rest, ...bar.filter(e => e.t < half - 1e-9).map(fall),
-              D(from + 15 * bs / 16, "x", 1, 9)].sort((a, b) => a.t - b.t);
+              D(from + (NS - 1) * u, "x", 1, 9)].sort((a, b) => a.t - b.t);
     }
     if (kind === "doubles") {
       // the kick-and-snare double-time bar: no acceleration, no cymbal, just
       // the same two drums at twice the rate — a hard stop that stays inside
       // the groove instead of announcing itself
       const out = [...rest, ...keepLines];
-      for (let s = 0; s < 16; s += 2)
-        out.push(D(from + s * bs / 16, s % 4 === 0 ? "k" : "s", s % 8 === 0, s % 4 === 0 ? 8 : 6));
+      for (let s = 0; s < NS; s += 2)
+        out.push(D(from + s * u, s % PU === 0 ? "k" : "s", s % (2 * PU) === 0,
+                   s % PU === 0 ? 8 : 6));
       return out.sort((a, b) => a.t - b.t);
     }
     if (kind === "break") return [...rest, ...bar.filter(e => e.kind === "hit")];
     if (kind === "tail")  return [...rest, ...keepLines];
-    if (kind === "cut")   return ev.filter(e => e.t < span - bs / 4);
+    if (kind === "cut")   return ev.filter(e => e.t < span - PU * u);
     return ev;
   }
-  const edges = (ev, i, o, span, bs) => outro(intro(ev, i, span, bs), o, span, bs);
+  const edges = (ev, i, o, span, bs, met) =>
+    outro(intro(ev, i, span, bs, met), o, span, bs, met);
 
-  const api = { at, mapv, spans, vel, drop, fill, spread, split, del, rampOf, envelope, SHAPES, edges, intro, outro, groove, GROOVES, stressAt, perform, KITOPS, mapKit, LANES, TOMS, HATS, CYMBALS, LIMBORDER, rollAt, swing, rotate, reverse, transpose, invert, complement,
+  const api = { METERS, MET4, metOf, stepsIn, pulseIn,
+                at, mapv, spans, vel, drop, fill, spread, split, del, rampOf, envelope, SHAPES, edges, intro, outro, groove, GROOVES, stressAt, perform, KITOPS, mapKit, LANES, TOMS, HATS, CYMBALS, LIMBORDER, rollAt, swing, rotate, reverse, transpose, invert, complement,
                 crossmap, excerpt, only, word,
                 PENT, MODE, ROMAN, romanOf, pitch, mp, fold, near,
                 QSTEPS, QFIX, chordsOf, chordAt, withCadence, harmonizeStage,

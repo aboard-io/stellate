@@ -18,7 +18,7 @@ const catalog = (m, who) => catalog0(m, who, who === "arranger" ? themeNow() : u
 const say = (m, who, id) => say0(m, who, id, who === "arranger" ? themeNow() : undefined);
 const says = (m, who, id) => says0(m, who, id, who === "arranger" ? themeNow() : undefined);
 import { GENRES, NuSong, MODES } from "./deps.js";
-import { adoptSong, SONG, SLOTS, putPhrase, on, commit, setBpm, setSwing, setPoolChair,
+import { adoptSong, SONG, SLOTS, putPhrase, on, commit, setBpm, setSwing, setMeter, setPoolChair,
          setMixOffset, clearMixOffsets, vol, setVol } from "./state.js";
 import { startAt, stop, playing, warmup, getPosition, passAt,
          announceChange } from "../audio/live.js";
@@ -96,6 +96,11 @@ function push(first) {
              len: song[0].bars }] }, "band");
   setBpm(model.song.bpm);
   setSwing(model.song.swing || null);
+  // ...and how the record counts, the third song fact of the family. The
+  // ENGINE reads the meter off each section's genre (band-kit stamps it);
+  // this is the SONG's record of the same fact, which is what a saved
+  // document round-trips and what song.js validates.
+  setMeter(model.song.meter || null);
   setPoolChair("bass", model.bass.instr);
   // the keys player sits in whichever chair their JOB names — the pool casts
   // by role, which is exactly what a part is
@@ -299,6 +304,12 @@ const themeOpts = (m, t) => ({
   mode: MODES[Band.modeKeyOf(m.song)],
   reg: Band.Id.regOf(themeOf(m, t) || m.idea),
   bpm: m.song.bpm,
+  // HOW THIS BAR COUNTS — declared, not derived: twelve steps reduce to 3/4
+  // and only 3/4, and a 6/8 record is the same twelve steps heard in two
+  // (ui/abc.js meterOf says why). Absent = the 4/4 every staff drew before.
+  ...(Band.metOf(m.song)
+      ? { stepsPerBar: Band.metOf(m.song).steps, abc: Band.metOf(m.song).abc,
+          beam: Band.metOf(m.song).beam } : {}),
   // the LEAD part's own cap (kernel PARTS.lead maxHold), so the staff and
   // the piano say what the band will actually play — the staff used to show
   // a gap as a note held straight across it while the engine made the rest
@@ -330,6 +341,9 @@ const playedOpts = (m) => ({
   key: Band.B.KEYS[m.song.key] || 0,
   mode: MODES[Band.modeKeyOf(m.song)],
   bpm: m.song.bpm,
+  ...(Band.metOf(m.song)
+      ? { stepsPerBar: Band.metOf(m.song).steps, abc: Band.metOf(m.song).abc,
+          beam: Band.metOf(m.song).beam } : {}),
 });
 function playedPhrase(si) {
   const TL = timeline();
@@ -339,8 +353,12 @@ function playedPhrase(si) {
   const ent = (sec.stack || []).find((e) => e.g === lay);
   const ph = ent && SLOTS[ent.slots[0]];
   if (!ph || !ph.gate || !ph.gate.length) return null;
-  const cyc = Math.max(1, Math.round(ph.gate.length / 16));   // the theme's own bars
-  const n = cyc * 16;
+  // THE BAR IS THE RECORD'S. This rounded the played staff onto a sixteen-slot
+  // bar while already knowing (bar.steps) that the bar was twelve — a wrongly
+  // lit staff still lights, which is why it is worth being exact about.
+  const NB = stepsNow();
+  const cyc = Math.max(1, Math.round(ph.gate.length / NB));   // the theme's own bars
+  const n = cyc * NB;
   const gate = new Array(n).fill(0), midi = new Array(n).fill(0),
         hold = new Array(n).fill(0);
   let any = false;
@@ -349,10 +367,10 @@ function playedPhrase(si) {
     if (bar.si !== si || bi >= cyc) continue;
     // the NOMINAL grid (bar.steps), because `off` was written on it: the
     // tempo map warps barSteps afterwards and a staff has no rubato
-    const rate = 16 / (bar.steps || 16);
+    const rate = NB / (bar.steps || NB);
     for (const e of bar.ev) {
       if (e.layer !== lay || e.kind !== "line" || e.n == null) continue;
-      const at = bi * 16 + Math.max(0, Math.min(15, Math.round((e.off || 0) * rate)));
+      const at = bi * NB + Math.max(0, Math.min(NB - 1, Math.round((e.off || 0) * rate)));
       // a groove push, an ornament's grace note: two events can share one
       // sixteenth and a staff has one place for them. The first stands.
       if (gate[at]) continue;
@@ -555,7 +573,7 @@ function sentStrip(theme) {
   const bars = Band.Id.barsOf(theme);
   if (bars < 2) return null;
   const ph = Band.Id.toPhrase(theme);
-  const NN = ph.gate.length, N16 = 16;
+  const NN = ph.gate.length, N16 = stepsNow();
   const state = new Array(NN).fill(0);        // 0 rest, 1 onset, 2 held through
   for (let i = 0; i < NN; i++) if (ph.gate[i]) {
     state[i] = 1;
@@ -577,10 +595,11 @@ function sentStrip(theme) {
     // (the tie made visible; a - opening the next row IS the tie over the
     // barline), · a rest — a space at each beat so the bar counts itself.
     let txt = "";
+    const CU = (metNow() || {}).count || 4;
     for (let i = 0; i < N16; i++) {
       const v = state[b * N16 + i];
       txt += v === 1 ? "x" : v === 2 ? "-" : "·";
-      if (i % 4 === 3 && i < 15) txt += " ";
+      if (i % CU === CU - 1 && i < N16 - 1) txt += " ";
     }
     const cellsEl = el("span", "dsentcells", txt);
     const word = wr[b] ? "written by hand"
@@ -1246,7 +1265,14 @@ function sectionArea(parent) {
    MARK row above the grid chooses what a tap puts at that place (a note, an
    octave, an accent, a slide…) — everything past the note greys until a
    note exists there, which is the kit's own when-guard made visible. */
-const stepWord = Band.B.stepWord;            // one table, every chair counts alike
+const stepWordRaw = Band.B.stepWord;        // one table, every chair counts alike
+// ...and the record's own way of counting rides with it: "on the a of three"
+// in a waltz, "on the and of five" in a six. The SENTENCE never changes shape
+// (which is what keeps every tap-by-textContent gate reading), only the
+// numbers in it — and an unanswered record counts to four exactly as before.
+const metNow = () => Band.metOf(model.song);
+const stepWord = (i) => stepWordRaw(i, metNow());
+const stepsNow = () => Band.stepsOfSong(model.song);
 // a CELL of the count grid — a pitched chair's hit:/note: places, the
 // drummer's lane-scoped step:<lane>:<i> — as opposed to the named-shape
 // words (shape:<lane>:…) that stay chips under it
@@ -1796,20 +1822,26 @@ function chairArea(parent, who, ideasOnly) {
     // labeled checkbox it always was \u2014 class .dopt, the whole counted
     // sentence for its word (the contract), native checked state. The
     // gates' `.dgrid .dopt input` selector reads it unchanged.
+    // ...and it is the bar THIS RECORD counts: four columns of four in four,
+    // three of four in a waltz, six of two in a six-eight. Twelve cells either
+    // way, one screen either way, and the same .dgrid/.dopt contract.
+    const MT = metNow();
+    const HEADS = MT ? MT.names : ["one", "two", "three", "four"];
+    const NSUB = MT ? MT.count : 4;
     const grid = el("table", "dgrid");
     { const thr = el("tr");
       thr.append(el("th"));
-      for (const c of ["one", "two", "three", "four"]) {
+      for (const c of HEADS) {
         const th = el("th", null, c); th.scope = "col"; thr.append(th);
       }
       const thead = el("thead"); thead.append(thr); grid.append(thead); }
     const gbody = el("tbody");
-    const SUBS = ["\u00b7", "e", "and", "a"];
-    for (let sub = 0; sub < 4; sub++) {
+    const SUBS = NSUB === 2 ? ["\u00b7", "and"] : ["\u00b7", "e", "and", "a"];
+    for (let sub = 0; sub < NSUB; sub++) {
       const gtr = el("tr");
       { const th = el("th", null, SUBS[sub]); th.scope = "row"; gtr.append(th); }
-      for (let beat = 0; beat < 4; beat++) {
-        const i = beat * 4 + sub;
+      for (let beat = 0; beat < HEADS.length; beat++) {
+        const i = beat * NSUB + sub;
         const entry = byId.get(marks[mi].id(i));
         const on = !!(entry && entry.active);
         // everything past the note greys until a note exists at that place —
@@ -2199,6 +2231,12 @@ function recall() {
     const m = JSON.parse(raw);
     if (!m || !m.on || !m.song || !m.drums || !m.bass || !m.keys) return false;
     model = { ...Band.blank(), ...m };
+    // THE METER IS RE-SEATED FROM THE WORD, never trusted off the wire. A
+    // saved session carries `song.meter` (one of the two words fields.js
+    // METERLABEL names, or nothing); the two NUMBERS every chair counts by
+    // are looked up fresh from the live table, so a tampered or stale `met`
+    // on a chair cannot outlive the word that made it.
+    model = Band.seatMeter(model, Band.metOf(model.song));
     return true;
   } catch (e) { return false; }
 }

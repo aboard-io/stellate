@@ -53,6 +53,16 @@
   // ONE ROW PER FIELD. `role` is the chair that is asked; `ask` is the
   // question; `opts` are [word, value]. Everything here lands on the genre
   // the section hands the kernel.
+  //
+  // `meter` IS NOT A ROW HERE, AND THAT IS DELIBERATE. The arranger asks
+  // "how does it count?" (band-kit ARR) and the answer reaches `g.meter`, so
+  // the coverage gate counts it REACHED and it needs no NOT_ASKED row — but
+  // it must not become a knob. A knob writes one value onto the genre and
+  // nothing else, and a meter is the whole band's: the same answer re-seats
+  // every chair's bar (band-kit seatMeter), reopens the drummer's family and
+  // moves the count row. A second door onto the same field would put a
+  // twelve-step meter on the genre while six chairs still handed the kernel
+  // sixteen-step vectors — which is a bug generator, not a question.
   const ASKABLE = [
     { field: "stress", role: "drums", ask: "how much does the band lean on the beat?",
       opts: [["dead straight", 0], ["a little", 0.35], ["hard on the one", 0.8]] },

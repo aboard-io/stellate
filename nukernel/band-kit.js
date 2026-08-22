@@ -199,7 +199,8 @@
   }
 
   const blank = () => ({ on: false, seat: "arranger",
-    song: { key: "C", minor: false, form: null, chg: {}, bpm: 96, swing: null, answers: {} },
+    song: { key: "C", minor: false, form: null, chg: {}, bpm: 96, swing: null,
+            meter: null, answers: {} },
     drums: D.say(D.blank(), "start"), bass: B.say(B.blank(), "start"),
     keys: Ky.say(Ky.blank(), "start"),
     // THE IDEA belongs to the room. The arranger writes it; a section says
@@ -264,7 +265,70 @@
      default and the honest one — but a chorus where the drums go half-time
      and the bass pedals the root is the whole difference between a loop and
      an arrangement. */
+  /* ---------- HOW THE RECORD COUNTS -------------------------------------
+     Meter is a SONG fact, like the key, the tempo and the swing: a record
+     counts in three or it does not, and a section that changed meter mid-way
+     would be a different feature. So it lives on `m.song.meter` beside them,
+     it is nullable, and NOTHING says it by default — a record that never
+     answers the question renders byte for byte what it always did.
+
+     One word in, two numbers out (chair.js METS · kernel.js METERS): how
+     many sixteenth-steps the bar has, and how many of those are a felt
+     beat. Everything else — the players' grids, the count row, the staff's
+     signature, the parent's per-bar beat count — reads those two. */
+  const METS = C.METS;
+  const metOf = (song) => (song && song.meter && METS[song.meter]) || null;
+  const stepsOfSong = (song) => { const t = metOf(song); return t ? t.steps : 16; };
+  // ...and the meter, stamped onto every chair so their bars are the record's
+  const seatMeter = (m, met) => ({ ...m,
+    drums: { ...m.drums, met: met || null }, bass: { ...m.bass, met: met || null },
+    keys: { ...m.keys, met: met || null }, guitar: { ...m.guitar, met: met || null },
+    voice: { ...m.voice, met: met || null }, idea: { ...m.idea, met: met || null },
+    ideaB: m.ideaB ? { ...m.ideaB, met: met || null } : m.ideaB });
+  /* A METER IS THE WHOLE BAND'S. One word, and every chair counts the new
+     bar — the drummer's table of grooves, the bassist's figure, the pitched
+     chairs' places, the theme's own cells. The chairs' hand-edits are
+     trimmed, never re-seated (chair.js `refit`), and the drummer's family/
+     groove/backbeat answers are REOPENED, because a waltz is not a
+     four-on-the-floor with a beat cut off.
+     TWO CALLERS, one law: the arranger's own "how does it count?", and a
+     record that counts in three by being what it is. Both pass the meter
+     the band was on before, and this is a no-op when the bar has not
+     actually moved — saying "in four" to a record already counting in four
+     is a word, not a change, and re-seating there would sweep a drummer's
+     jazz ride for a kit nobody asked to hear. */
+  const remeter = (out, was) => {
+    if ((out.song.meter || null) === (was || null)) return out;
+    let o = seatMeter(out, METS[out.song.meter] || null);
+    const dr = { ...o.drums };
+    const da = { ...(dr.answers || {}) };
+    delete da.record; delete da.groove; delete da.backbeat;
+    dr.answers = da;
+    // ...and the kit itself moves to the new bar's first groove, so the
+    // record is playable the instant the word is said
+    o = { ...o, drums: D.say({ ...dr, on: false }, "start") };
+    if (o.drums.answers !== da) o = { ...o, drums: { ...o.drums, answers: da } };
+    // ...and the bassist's WRITTEN line is trimmed to the new bar rather than
+    // re-seated (chair.js `refit`, the hand-edit law): a mark you made stays
+    // where you made it for as long as the bar reaches it. Without this the
+    // figure kept the length of the bar it was written in, and the kernel —
+    // which reads a grid with `at`, wrapping — played the first twelve of
+    // sixteen places and dropped the rest into silence.
+    if (o.bass && o.bass.fig) {
+      const m2 = METS[o.song.meter] || null, f = o.bass.fig;
+      o = { ...o, bass: { ...o.bass, fig: {
+        grid: C.refit(f.grid, m2), oct: C.refit(f.oct, m2), acc: C.refit(f.acc, m2),
+        sld: C.refit(f.sld, m2), deg: f.deg ? C.refit(f.deg, m2) : f.deg } } };
+    }
+    return o;
+  };
+
   const z16 = () => new Array(16).fill(0);
+  const zn = (n) => new Array(n || 16).fill(0);
+  // HOW LONG THIS KIT'S BAR IS, read off the kit itself: a section operator
+  // is handed a bar and must answer in the same length it was given.
+  const barLen = (k) => { for (const v of Object.values(k || {}))
+    if (Array.isArray(v) && v.length) return v.length; return 16; };
   const hitsAt = (...ix) => { const v = z16(); for (const i of ix) v[i] = 1; return v; };
   const SECDRUMS = {
     same:     { w: "same as before" },
@@ -272,10 +336,12 @@
     double:   { w: "double time", fn: (k) => ({ ...k, s: hitsAt(2, 6, 10, 14) }) },
     hatsonly: { w: "just the hats", fn: (k) => ({ h: k.h || z16() }) },
     nokit:    { w: "lay out", fn: () => ({}) },
-    busier:   { w: "busier", fn: (k) => ({ ...k, h: new Array(16).fill(1),
+    busier:   { w: "busier", fn: (k) => ({ ...k, h: new Array(barLen(k)).fill(1),
                                            o: hitsAt(0, 8) }) },
     sparser:  { w: "sparser", fn: (k) => ({ k: hitsAt(0, 8), s: hitsAt(4, 12) }) },
-    ride:     { w: "move to the ride", fn: (k) => ({ ...k, p: k.h || z16(), h: z16() }) },
+    ride:     { w: "move to the ride",
+                fn: (k) => { const n = barLen(k), Z = zn(n);
+                             return { ...k, p: k.h || Z.slice(), h: Z.slice() }; } },
   };
   // WHAT THE ENGINEER DOES TO ONE SECTION. Not the offset board — that is
   // the record's whole mix — but the SECTION's own strip, which nukernel's
@@ -624,15 +690,32 @@
                 styles: ["hold the root", "walk it", "octaves"],
                 instr: ["a cello", "an upright bass"],
                 chg: ["a descending line", "two-five-one", "a minor vamp"] },
-    salon:    { w: "a barcarolle", fam: "the old world", scale: "mode", bpm: 72, chords: "plain",
-                swing: "shuffle",   // the 6/8 rock is the triplet feel, honestly
+    salon:    { w: "a barcarolle", fam: "the old world", scale: "mode", bpm: 96, chords: "plain",
+                // ...AND IT SAYS SIX NOW (2026-08-22). A barcarolle IS 6/8 —
+                // the gondolier's rock — and this row used to buy the lilt
+                // with a shuffle over a sixteen-step bar, which is a triplet
+                // FEEL in four and not the meter at all. The comment said so
+                // out loud ("the 6/8 rock is the triplet feel, honestly"); a
+                // record whose comment admits it is faking is exactly the
+                // thing to make honest the moment the bar can be twelve.
+                // The swing comes off with it: swinging a compound bar bends
+                // the eighths that ARE the lilt — and the TEMPO moves too:
+                // in compound time the felt beat is the dotted quarter, so
+                // the 72 this row used to say is a pulse of 48 a minute,
+                // under the floor the tempo question is itself written
+                // against ("72 IS THE FLOOR ON PURPOSE"). 96 is a
+                // barcarolle's own rock: 64 dotted quarters to the minute.
+                meter: "six",
                 when: ["the eighteen-hundreds"], where: ["Paris", "Vienna"],
                 venue: ["a salon", "an opera house"],
                 gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "ring",
                 keys: ["a harp", "a grand piano", "a felt piano"], kjob: "arp",
                 forms: ["dacapo", "strophic", "versechorus"], artic: "legato",
                 tone: { cut: 2400, q: 1, rel: 1.6 },
-                grooves: ["nobody on the kit", "the tabor"],
+                // ...and the six-count table's own: the drummer sits out (a
+                // salon has no kit), or plays the siciliana that is the
+                // rocking figure itself
+                grooves: ["nobody on the kit", "a siciliana"],
                 machines: ["brushes", "room kit"],
                 styles: ["hold the root", "root and fifth"],
                 instr: ["a cello", "an upright bass"],
@@ -649,6 +732,91 @@
                 styles: ["hold the root", "root and fifth", "walk it"],
                 instr: ["an upright bass", "a cello"],
                 chg: ["the doo-wop changes", "the four-chord one"] },
+
+    /* ---- THE RECORDS THAT COUNT IN THREE (2026-08-22) -------------------
+       Meter landed as a question (ARR `meter`) and nothing on the front door
+       used it, which meant a waltz was two taps away from a record that was
+       not one — and the repertoire panel's own verdict was that meter
+       excludes repertoire BEFORE A NOTE IS WRITTEN. A record is when it is,
+       where it is and what room it is in; how it COUNTS is the same kind of
+       fact, so it belongs on the row beside the tempo and the feel, said
+       once by the arranger who calls the tune.
+
+       `meter` on a row is the WORD (chair.js METS), not the numbers, and it
+       lands exactly the way `swing` and `bpm` do: it is what the room
+       assumes until somebody says otherwise, and answering "how does it
+       count?" outranks it. A row that says nothing about it is byte for
+       byte the record it always was.
+
+       THREE LAWS a metered row obeys, and the gate holds all three:
+       a groove belongs to a meter (the words here are from the drummer's
+       own three-count table, never the sixteen-step one); a FIGURE means
+       sixteen (bass-kit FOURONLY), so none of these rows names one; and
+       every one of them still leaves two answers standing at every
+       question, so the dice can roll it. */
+    // THE VIENNESE WALTZ, which the daw's own catalog has carried as a DEBT
+    // since the old world landed (genres.js `barcarolle`: "the Viennese
+    // waltz is BLOCKED on purpose... a waltz in 4/4 is not a waltz"). It is
+    // not blocked here any more: the bar can be twelve.
+    waltz:    { w: "a waltz", fam: "the ballroom", scale: "mode", bpm: 144,
+                chords: "plain", meter: "three",
+                // ...and it did not stop in 1899: a ballroom is still a
+                // ballroom, the New Year's concert and a floor with a
+                // teacher on it. The catalog's two-wide law needs the second
+                // era anyway — "a ballroom" is a door only this record has,
+                // so one decade would leave "when is it?" with a single
+                // answer, which is not a question.
+                when: ["the eighteen-hundreds", "now"], where: ["Vienna", "Paris"],
+                venue: ["a ballroom", "a salon"],
+                gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "out",
+                keys: ["a grand piano", "strings", "a harp"], kjob: "comp",
+                forms: ["dacapo", "aaba", "strophic", "versechorus"], artic: "normal",
+                tone: { cut: 2600, q: 1, rel: 0.9 },
+                grooves: ["a waltz", "a viennese lift", "boom chick chick"],
+                machines: ["room kit", "brushes"],
+                // oom-pah-pah: the root on the boom, the band on the chicks
+                styles: ["root and fifth", "hold the root", "walk it"],
+                instr: ["an upright bass", "a cello"],
+                chg: ["two-five-one", "the doo-wop changes"] },
+    hymn:     { w: "a hymn tune", fam: "the old world", scale: "mode", bpm: 96,
+                chords: "plain", meter: "three",
+                // SLANE ("Be Thou My Vision") is 3/4 and shipped from this
+                // box as 4/4 with a machine-added tied fourth beat — every
+                // bar a third too long, and no tempo can compensate. A
+                // hymnal is of course mixed: "in four" is one tap, and
+                // common metre is right there.
+                when: ["the eighteen-hundreds", "now"], where: ["London", "New York"],
+                venue: ["a church", "a chapel"],
+                gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "out",
+                // the organ holds it and the congregation is the choir; each
+                // chord rings to the change, which is what `held` means
+                keys: ["a church organ", "voices", "a grand piano"], kjob: "held",
+                forms: ["strophic", "versechorus", "aaba"], artic: "legato",
+                tone: { cut: 2000, q: 1, rel: 1.4 },
+                // nobody is on a kit in a church; the tread is the other
+                // honest answer, and both are the three-count old world
+                grooves: ["nobody on the kit", "a slow three"],
+                machines: ["room kit", "brushes"],
+                styles: ["hold the root", "octaves"],
+                instr: ["an upright bass", "a cello"],
+                chg: ["two-five-one", "a descending line"] },
+    pianobar: { w: "a piano-bar waltz", fam: "rock", bpm: 120, chords: "sevens",
+                meter: "three",
+                // the modern one, and the one the panel named: most of the
+                // Joel songbook is unreachable without a bar of three
+                // ("Piano Man" is 3/4 and the box could not hold it)
+                when: ["the seventies", "now"], where: ["New York", "Los Angeles"],
+                venue: ["a bar", "a piano bar"],
+                gtr: ["a steel-string acoustic", "a clean electric", "a nylon-string"],
+                gjob: "strum",
+                keys: ["a grand piano", "an upright", "a Rhodes", "strings"], kjob: "comp",
+                forms: ["versechorus", "pop", "aaba", "strophic"], artic: "normal",
+                tone: { cut: 1000, q: 1, rel: 0.35 },
+                grooves: ["a rock waltz", "nobody on the kit"],
+                machines: ["brushes", "acoustic kit", "room kit"],
+                styles: ["hold the root", "root and fifth", "walk it"],
+                instr: ["fingers on a P-bass", "an upright bass"],
+                chg: ["the doo-wop changes", "the four-chord one", "two-five-one"] },
   };
   const genreOf = (m) => GENRES[m.song.genre] || null;
 
@@ -858,7 +1026,7 @@
      `bassBars` the same way (kernel.js), so "one hit every four measures"
      is four entries where three of them are empty, and the bass note
      HOLDS across the gap rather than stopping. */
-  const one16 = () => { const v = z16(); v[0] = 1; return v; };
+  const one16 = (n) => { const v = zn(n); v[0] = 1; return v; };
   const SPACE = {
     none: { w: "keep it going" },
     half: { w: "one bar on, one off", bars: [1, 0, 1, 0] },
@@ -867,11 +1035,12 @@
   };
   const spaceOut = (g, sp) => {
     if (!sp || !sp.bars) return g;
+    const n = (g.meter && g.meter.steps) || 16;
     const kits = (g.kits && g.kits.length ? g.kits : [g.kit || {}]);
     const out = sp.bars.map((keep, b) => !keep ? {}
-      : sp.one ? { k: one16() } : (kits[b % kits.length] || {}));
+      : sp.one ? { k: one16(n) } : (kits[b % kits.length] || {}));
     return { ...g, kits: out, kit: out[0],
-             bassBars: sp.bars.map((keep) => (keep ? one16() : 0)) };
+             bassBars: sp.bars.map((keep) => (keep ? one16(n) : 0)) };
   };
 
   /* ---------- THE FORM: what the arranger calls out ----------------------
@@ -1103,12 +1272,17 @@
     // the feel the record usually takes, and in one case ("something slow
     // and open") how much space there is; none of those are locked, they
     // are just what the room assumes until somebody says otherwise.
+    // ...and HOW IT COUNTS, on the same footing as the feel: a waltz record
+    // counts in three because that is what the word means, and "how does it
+    // count?" outranks it the moment anybody answers it. A record that says
+    // nothing writes null, which is the sixteen-step bar it always had.
     { id: "genre", ask: "what are we playing?", opts:
       Object.entries(GENRES).map(([k, gk]) => ({
         w: gk.w, is: (s) => s.genre === k,
         apply: (s) => ({ ...s, genre: k,
           bpm: gk.bpm != null && !(s.answers || {}).tempo ? gk.bpm : s.bpm,
         chords: !(s.answers || {}).chords ? (gk.chords || "plain") : s.chords,
+          meter: !(s.answers || {}).meter ? (gk.meter || null) : s.meter,
           swing: !(s.answers || {}).feel ? (gk.swing || null) : s.swing,
           space: !(s.answers || {}).space ? (gk.space || "none") : s.space }) })) },
     { id: "arc", ask: "where does it go?", opts:
@@ -1184,6 +1358,17 @@
       { w: "straight", is: (s) => !s.swing, apply: (s) => ({ ...s, swing: null }) },
       { w: "swung", is: (s) => s.swing === "swing", apply: (s) => ({ ...s, swing: "swing" }) },
       { w: "shuffled", is: (s) => s.swing === "shuffle", apply: (s) => ({ ...s, swing: "shuffle" }) } ] },
+    // HOW DOES IT COUNT — the arranger's, because meter sits with the key,
+    // the tempo and the form and is called before anybody plays. Not "what
+    // meter?" (nobody says that at a session), not "what's the time?" (that
+    // reads as tempo, which is already a question on this page), not "is it
+    // a waltz?" (which names one genre for a whole class). "In four" is the
+    // default and writes nothing, so an unanswered record is byte-identical
+    // and the dice stays complete by construction.
+    { id: "meter", ask: "how does it count?", opts: [
+      { w: "in four", is: (s) => !s.meter, apply: (s) => ({ ...s, meter: null }) },
+      { w: "in three", is: (s) => s.meter === "three", apply: (s) => ({ ...s, meter: "three" }) },
+      { w: "in six-eight", is: (s) => s.meter === "six", apply: (s) => ({ ...s, meter: "six" }) } ] },
     // HOW SLOW CAN THIS GO: a tempo of 48 is still four hits a bar. This is
     // the other axis — how much of the bar is nothing.
     { id: "space", ask: "how much space is there?", opts:
@@ -1342,7 +1527,15 @@
     // line was playing — and writing one note into that bar replaced the
     // acid line with quarters. "The bass drops out on techno." A bassist who
     // has written their own figure keeps it.
-    if (gk.fig && B.FIGURES[gk.fig] && !b.fig) b = B.figSet(b, B.FIGURES[gk.fig]);
+    // ...AND THE FIGURE IS THE BAR'S. `figFor` (bass-kit) is the one law
+    // both surfaces read: a written-out line re-seats into the bar being
+    // counted — "house offbeats" in three is the offbeats of three beats —
+    // and the hand-written 303 lines, which mean sixteen places of accent
+    // and slide, come back null rather than mangled, so the record's STYLE
+    // (a density, which ports) plays instead. Without it a 16-place grid
+    // reached a 12-step bar and quietly lost its last four steps.
+    const fig = gk.fig && B.figFor(b, B.FIGURES[gk.fig], gk.fig);
+    if (fig && !b.fig) b = B.figSet(b, fig);
     // ...and the keys: what they are holding and what they are doing with it
     let kk = m.keys;
     // UNSPOKEN FOLLOWS THE RECORD. Keeping whatever the chair happened to
@@ -1544,7 +1737,7 @@
     if (R() < 0.25 && Id.barsOf(m.idea) > 1) {
       const b = 1 + Math.floor(R() * (Id.barsOf(m.idea) - 1));
       let idea = Id.say(m.idea, "bar:" + b);
-      idea = Id.say(idea, "note:" + Math.floor(R() * 16));
+      idea = Id.say(idea, "note:" + Math.floor(R() * Id.NOF(m.idea)));
       m = { ...m, idea };
     }
     if (R() < 0.12) {
@@ -1666,7 +1859,8 @@
       // ...and the answer, when there is one — without it every question
       // about theme B would look like it changed nothing and be pruned
       m.ideaB && m.ideaB.on ? [Id.toPhrase(m.ideaB), Id.regOf(m.ideaB)] : null,
-      m.song.bpm, m.song.swing, m.song.key, m.song.minor, m.song.space, m.song.form,
+      m.song.bpm, m.song.swing, m.song.meter || null,
+      m.song.key, m.song.minor, m.song.space, m.song.form,
       m.song.chg, m.song.end || null, m.keys.tone, m.guitar.tone, m.bass.tone,
       // ...and the song facts the FIRST section cannot show: a length, a
       // reprise, the doors, a lean or an authored list on a role that is
@@ -1851,6 +2045,17 @@
         if (song.mcolor) song.mcolor = null;
       }
       let out = { ...m, song };
+      // A METER IS THE WHOLE BAND'S. One answer, and every chair counts the
+      // new bar — the drummer's table of grooves, the bassist's figure, the
+      // pitched chairs' places, the theme's own cells. The chairs' own
+      // hand-edits are trimmed, never re-seated (chair.js `refit`), and the
+      // drummer's family/groove answers are reopened because a waltz is not
+      // a four-on-the-floor with a beat cut off.
+      // ...and only when the BAR actually moves: saying "in four" to a record
+      // that already counts in four is a word, not a change, and re-seating
+      // the band there would sweep a drummer's jazz ride for a kit nobody
+      // asked to hear.
+      if (id === "meter") out = remeter(out, m.song.meter);
       // A SECOND THEME IS MADE THE MOMENT IT IS ASKED FOR — and it starts
       // as a CONTRAST, because that is what an answer is: where the tune
       // arches and closes on the root, the answer is a short call that
@@ -1867,7 +2072,13 @@
       // taken off their list — they are not asked what they were told.
       if (id === "genre") {
         const gk = GENRES[song.genre];
-        if (gk) out.drums = D.answer(m.drums, "record", gk.fam);
+        // ...AND A RECORD MAY COUNT DIFFERENTLY. "A waltz" moves the bar the
+        // same way the arranger's own word does, and for the same reason: a
+        // band handed a new record counts the new record. It runs BEFORE the
+        // call below, so the groove the record names is chosen out of the
+        // table the record is actually in.
+        out = remeter(out, m.song.meter);
+        if (gk) out.drums = D.answer(out.drums, "record", gk.fam);
         // CALLING A RECORD MAKES THE RECORD. Narrowing what a player MAY
         // choose is not the same as changing what they ARE playing, and a
         // genre that only edits a menu is a genre you cannot hear ("I change
@@ -1923,7 +2134,17 @@
     // belongs to the player in every genre there is.
     return list.filter((i) => {
       const w = i.words[0];
-      if (i.group.startsWith("grooves")) return (gk.grooves || []).includes(w);
+      // ...and A GROOVE LIST NAMES A BAR. A record's list is written in the
+      // record's own meter, so it narrows the tray exactly as long as the
+      // band is still counting the record's way — a waltz offers its three
+      // ballroom grooves, a house record its four. The moment somebody
+      // COUNTS IT DIFFERENTLY (a house record taken in three) the list is a
+      // list of words for another bar, and a record cannot narrow what it
+      // has no words for: the meter's own table is the tray then, and the
+      // exactness law upstairs (`changes`) drops anything from another bar.
+      if (i.group.startsWith("grooves"))
+        return (m.song.meter || null) === (gk.meter || null)
+          ? (gk.grooves || []).includes(w) : true;
       if (i.group === "the machine") return (gk.machines || []).includes(w);
       // ...and the same law for the bassist's own tray: a record that does
       // not have a walking line in it does not offer one here either
@@ -1966,28 +2187,30 @@
   // changes, and the players' own decisions under all of them. What a band
   // plays is a FORM, not a loop.
   // the same changes, read by a voice whose bar is `per16` bars long
-  const pairProg = (roots, per16, kind) => {
-    const K2 = CHORDKIND[kind];
+  const pairProg = (roots, per16, kind, steps) => {
+    const K2 = CHORDKIND[kind], N2 = steps || 16;
     const q = (d) => (K2 && K2.q ? { q: K2.q(((d % 7) + 7) % 7) } : {});
     const out = [];
     for (let i = 0; i < roots.length; i += per16)
-      out.push(roots.slice(i, i + per16).map((d) => ({ d, beats: 16, ...q(d) })));
-    return out.length ? out : [[{ d: 0, beats: 16 }]];
+      out.push(roots.slice(i, i + per16).map((d) => ({ d, beats: N2, ...q(d) })));
+    return out.length ? out : [[{ d: 0, beats: N2 }]];
   };
   // ...and the same pairing over chord OBJECTS — the authored (or leaned)
   // changes carry q/borrow/beats the roots cannot, and the tune's harmony
   // layer must hear them: a split bar keeps its two half-bar chords, a
   // whole bar spans its sixteen steps.
-  const pairProgX = (bars, per16) => {
-    const out = [];
+  const pairProgX = (bars, per16, steps) => {
+    const out = [], N2 = steps || 16;
     for (let i = 0; i < bars.length; i += per16) {
       out.push(bars.slice(i, i + per16).flatMap((bar) => {
         const list = Array.isArray(bar) ? bar : [bar];
-        return list.length > 1 ? list.map((cc) => ({ ...cc, beats: 8 }))
-                               : [{ ...list[0], beats: 16 }];
+        // A SPLIT BAR IS HALF OF THIS BAR, not eight steps of somebody
+        // else's: in three that is six, not eight-and-then-four.
+        return list.length > 1 ? list.map((cc) => ({ ...cc, beats: N2 / 2 }))
+                               : [{ ...list[0], beats: N2 }];
       }));
     }
-    return out.length ? out : [[{ d: 0, beats: 16 }]];
+    return out.length ? out : [[{ d: 0, beats: N2 }]];
   };
 
   // `only` builds ONE section. Every signature below asks what one section
@@ -2043,7 +2266,16 @@
       const bsec = SECBASS[per.bass];
       if (bsec) {
         if (bsec.style) g.bassStyle = bsec.style;
-        if (bsec.oct) g.key = g.key + 12 * bsec.oct;
+        // THE KEY IS THE TUNE'S, NOT THE BASSIST'S — the same law toGenre
+        // states, which this line was quietly breaking one level down. "Up
+        // an octave" is a thing the BASS PLAYER does, and folding it into
+        // `g.key` moved the key centre for every chair in the section AND
+        // for the melody and voice layers that inherit the box's genre. The
+        // dice found it: a chorus told to take the bass up, on a record
+        // already in a high key, put the tune at MIDI 111 — three semitones
+        // above the top of a piano. `bassReg` is the bass's own octave and
+        // kernel.bass() is the only thing that reads it.
+        if (bsec.oct) g.bassReg = (g.bassReg || 0) + bsec.oct;
         if (bsec.out) g.nobass = true;
       }
       // ...and the annotated knobs, over whatever the chairs made: they are
@@ -2067,7 +2299,8 @@
       if (per.lift && per.drums !== "nokit" && (liftAsked || !kitlessOf(g))) {
         const k = g.kits && g.kits.length ? g.kits.slice() : [g.kit || {}];
         const last = { ...(k[k.length - 1] || {}) };
-        last.s = FILLBAR.s; last.t = FILLBAR.t;
+        const FB = fillBarFor((g.meter && g.meter.steps) || 16);
+        last.s = FB.s; last.t = FB.t;
         k[k.length - 1] = last;
         g.kits = k; g.kit = k[0];
       }
@@ -2160,8 +2393,10 @@
       // never rewritten by being played.
       const theme = per.theme === "b" && m.ideaB && m.ideaB.on ? m.ideaB : m.idea;
       if (taker.chair && theme && theme.on) {
-        const ph = Id.transform(Id.toPhrase(theme, c.roots), per.back);
-        const per16 = ph.deg.length / 16;
+        const ph = Id.transform(Id.toPhrase(theme, c.roots), per.back, metOf(m.song));
+        // how many of THIS record's bars the theme spans
+        const NB = (g.meter && g.meter.steps) || 16;
+        const per16 = ph.deg.length / NB;
         const lend = taker.chair === "guitar" ? Gt.toGenre(gm)
           : taker.chair === "voice" ? Vo.toGenre(m.voice) : Ky.toGenre(km);
         melody = { phrase: ph, genre: {
@@ -2196,8 +2431,8 @@
           // objects — q and borrow carried through the pairing — and the
           // catalog path stays the object it always built, byte for byte
           prog: per16 > 1
-            ? (c.authored || c.leaned ? pairProgX(c.prog, per16)
-                                      : pairProg(c.roots, per16, m.song.chords))
+            ? (c.authored || c.leaned ? pairProgX(c.prog, per16, NB)
+                                      : pairProg(c.roots, per16, m.song.chords, NB))
             : (c.authored || c.leaned ? c.prog : progOf(c.roots, m.song.chords)),
         } };
       }
@@ -2416,6 +2651,14 @@
   // arrangement everybody in a band can name
   const FILLBAR = { s: [0,0,0,0, 0,0,0,0, 1,0,1,1, 1,0,1,1],
                     t: [0,0,0,0, 0,0,0,0, 0,1,0,0, 0,1,0,0] };
+  // ...and the same bar in a bar that counts differently: the fill is the
+  // BACK HALF of it, whatever half that is. Four is the literal above.
+  const fillBarFor = (n) => (n === 16 ? FILLBAR : (() => {
+    const h = Math.round(n / 2), S = zn(n), T = zn(n);
+    for (let i = h; i < n; i++) S[i] = (i - h) % 3 === 1 ? 0 : 1;
+    T[h + 1] = 1; if (h + 4 < n) T[h + 4] = 1;
+    return { s: S, t: T };
+  })());
   // the groups of a player's vocabulary that make sense said about ONE
   // SECTION. A machine is the record's, a tempo is the band's, and the bar's
   // own counting belongs to the drummer's own page; the hands, the kit, what
@@ -2675,8 +2918,14 @@
         ? { bars: B.CHANGES[changes].bars, roots: B.CHANGES[changes].roots,
             prog: progOf(B.CHANGES[changes].roots, m.song.chords) }
         : changesOf(m, "verse");
+    const met = metOf(m.song);
     return {
       label: "Band", family: "kernel", rate: 1, bars: c.bars,
+      // HOW THIS BAR COUNTS. Present-only: without an answer there is no
+      // `meter` key on the genre at all and every reader downstream — the
+      // kernel's stress and ornaments, derive's bar length, the staff — is
+      // on the sixteen-step path it has always been on.
+      ...(met ? { meter: { steps: met.steps, pulse: met.pulse } } : {}),
       entry: () => 0,
       // ...and the keys player's own chair: the PART they are playing, where
       // they sit, and what it is. A silent chair keeps the voice (the phrase
@@ -2721,7 +2970,13 @@
       // A RECORD BRINGS ITS OWN LINE. House is offbeats, techno is an acid
       // line, disco is octaves — those are not densities, they are figures,
       // and a bassist who has written their own outranks the record.
-      bassFig: bass.fig || (gk && gk.fig && B.FIGURES[gk.fig]) || undefined,
+      // ...and it is the BAR'S figure: `figFor` re-seats a written line into
+      // the bar being counted and answers null for the three that mean
+      // sixteen, so a record's line can never reach a twelve-step bar with
+      // four steps hanging off the end of it (the kernel reads a grid with
+      // `at`, which wraps, so those four were lost in silence).
+      bassFig: bass.fig ||
+        (gk && gk.fig && B.figFor(bass, B.FIGURES[gk.fig], gk.fig)) || undefined,
       bassNudge: bass.sit ? bass.sit * 2 : undefined,
       // WHAT THE BASS SOUNDS LIKE, per record. A synth bass with no tone of
       // its own ran on the engine's defaults and played one continuous line
@@ -2762,6 +3017,7 @@
   }
 
   return { SEATS, TAKEN, FORMS, CALLED, CHGROLE, GENRES, SPACE, ROLE, ENG, SECMIX, SECMOVE, mixOf, themeName,
+           METS, metOf, stepsOfSong, seatMeter,
            resetSeat, randomSong, modeKeyOf,
            genreOf, rolesIn, asked, pending, sigOf, secSigOf, survivors, FIELDS3, Ask,
            secWords, partOf,

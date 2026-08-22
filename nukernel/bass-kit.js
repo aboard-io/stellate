@@ -127,16 +127,51 @@
   // figure of its own is asked what its STYLE would play, so writing a note
   // into the bar starts from the line you can already hear
   const Z16 = () => new Array(16).fill(0);
+  // ---- AND THE BAR THAT DOES NOT COUNT IN FOUR ---------------------------
+  // A bassist's DENSITIES are the one thing in this box that port cleanly:
+  // "one note a beat" is one note a beat whatever the beat is, so the style
+  // grids are said as a shape and the four literals come back unchanged in
+  // 4/4. The three hand-written 303 lines (acid, acid2, funk16) are signature
+  // 4/4 patterns — sixteen places of accent and slide that MEAN sixteen — so
+  // they are simply not offered under a meter rather than mangled into twelve.
+  const { metOf, barOf, regrid } = C;
+  const stepsOf = (m) => metOf(m).steps;
+  const zOf = (m) => new Array(stepsOf(m)).fill(0);
+  const FOURONLY = { acid: 1, acid2: 1, funk16: 1 };
   const STYLEFIG = {
     pedal: g16(0, 4, 8, 12), walk: g16(0, 4, 8, 12), octaves: g16(0, 4, 8, 12),
     fifths: g16(0, 4, 8, 12), eighths: g16(0, 2, 4, 6, 8, 10, 12, 14),
     sixteenths: new Array(16).fill(1),
   };
-  const figOf = (m) => m.fig || { grid: (STYLEFIG[STYLES[m.style]] || g16(0, 4, 8, 12)).slice(),
-                                  oct: Z16(), acc: Z16(), sld: Z16(), deg: Z16() };
-  const figSet = (m, f) => ({ ...m, fig: { grid: f.grid.slice(), oct: (f.oct || Z16()).slice(),
-                                           acc: (f.acc || Z16()).slice(), sld: (f.sld || Z16()).slice(),
-                                           deg: (f.deg || Z16()).slice() } });
+  const styleGrid = (m) => { const st = STYLES[m.style];
+    if (metOf(m).steps === 16) return (STYLEFIG[st] || g16(0, 4, 8, 12)).slice();
+    const b = barOf(metOf(m));
+    return (st === "eighths" ? b.every(2) : st === "sixteenths" ? b.every(1)
+            : b.beats0()).slice(); };
+  /* A FIGURE IS A TABLE, AND A TABLE RE-SEATS. `regrid` (chair.js) is the
+     law for written-down marks: same place in the beat, beats wrapped — so
+     "house offbeats" in a bar of three is the offbeats of THREE beats, not
+     sixteen places of which the last four fall off the end (the kernel reads
+     a grid with `at`, which wraps, so a 16-place figure on a 12-step bar
+     silently loses its tail). The three hand-written 303 lines are the
+     exception and always were: sixteen places of accent and slide MEAN
+     sixteen, there is no honest twelve of them, and `figFor` answers null so
+     every caller — the tray, and a record handing one over the back of the
+     chair (band-kit `called`) — refuses them the same way. */
+  const figFor = (m, f, k) => {
+    if (!f) return null;
+    const met = metOf(m);
+    if (met.steps === 16 || (f.grid && f.grid.length === met.steps)) return f;
+    if (k && FOURONLY[k]) return null;
+    const R = (v) => (v ? regrid(v, met) : v);
+    return { w: f.w, grid: R(f.grid), oct: R(f.oct), acc: R(f.acc),
+             sld: R(f.sld), deg: R(f.deg) };
+  };
+  const figOf = (m) => m.fig || { grid: styleGrid(m),
+                                  oct: zOf(m), acc: zOf(m), sld: zOf(m), deg: zOf(m) };
+  const figSet = (m, f) => ({ ...m, fig: { grid: f.grid.slice(), oct: (f.oct || zOf(m)).slice(),
+                                           acc: (f.acc || zOf(m)).slice(), sld: (f.sld || zOf(m)).slice(),
+                                           deg: (f.deg || zOf(m)).slice() } });
   const sameFig = (a, b2) => JSON.stringify([a.grid, a.oct, a.acc, a.sld]) ===
     JSON.stringify([b2.grid, b2.oct || Z16(), b2.acc || Z16(), b2.sld || Z16()]);
 
@@ -174,7 +209,7 @@
      seventh there is a thing you can ask for by name. */
   const DEGWORD = { 2: "the third", 4: "the fifth", 6: "the seventh" };
   const TONALITY = {
-    root:   { w: "just the root",       deg: () => new Array(16).fill(0) },
+    root:   { w: "just the root",       deg: (g) => g.map(() => 0) },
     third:  { w: "the minor third in it", deg: (g) => g.map((v, i) => (v && i % 4 === 2 ? 2 : 0)) },
     fifth:  { w: "fifths in the line",  deg: (g) => g.map((v, i) => (v && i % 2 ? 4 : 0)) },
     acid:   { w: "a full acid scale",   deg: (g) => g.map((v, i) =>
@@ -207,13 +242,15 @@
     add("tone:" + k, "what notes it plays", [t.w], (m) => m.on,
         (m) => { const f = figOf(m); return figSet(m, { ...f, deg: t.deg(f.grid) }); },
         () => t.w,
-        (m) => JSON.stringify(figOf(m).deg || new Array(16).fill(0)) ===
+        (m) => JSON.stringify(figOf(m).deg || zOf(m)) ===
                JSON.stringify(t.deg(figOf(m).grid)));
 
   // the figures, by name
   for (const [k, f] of Object.entries(FIGURES))
-    add("fig:" + k, "the figure", [f.w], (m) => m.on && !sameFig(figOf(m), f),
-        (m) => figSet(m, f), () => f.w, (m) => sameFig(figOf(m), f));
+    add("fig:" + k, "the figure", [f.w],
+        (m) => m.on && !!figFor(m, f, k) && !sameFig(figOf(m), figFor(m, f, k)),
+        (m) => figSet(m, figFor(m, f, k) || f), () => f.w,
+        (m) => !!figFor(m, f, k) && sameFig(figOf(m), figFor(m, f, k)));
   add("fig:none", "the figure", ["forget the figure"], (m) => m.on && !!m.fig,
       (m) => ({ ...m, fig: null }), () => "back to the line, no figure",
       (m) => !m.fig);
@@ -223,37 +260,42 @@
   // no density word can say: which octave it takes, whether it is accented,
   // whether it slides into the next.
   const stepWord = C.stepWord;
+  // ...and it SAYS the place in the bar this record actually counts. The
+  // registered `words` are the search index (one static list, written in
+  // four); the SENTENCE a mark speaks is the model's own count, which is the
+  // same string in four and in three and reads "on the and of five" in a six.
+  const sw = (i, m) => stepWord(i, metOf(m));
   for (let i = 0; i < 16; i++) {
-    add("note:" + i, "the bar", [stepWord(i)], (m) => m.on,
+    add("note:" + i, "the bar", [stepWord(i)], (m) => m.on && i < stepsOf(m),
         (m) => { const f = figOf(m); const g2 = f.grid.slice(); g2[i] = g2[i] ? 0 : 1;
                  return figSet(m, { ...f, grid: g2 }); },
-        (m) => (figOf(m).grid[i] ? "no note " : "a note ") + stepWord(i),
+        (m) => (figOf(m).grid[i] ? "no note " : "a note ") + sw(i, m),
         (m) => !!figOf(m).grid[i]);
     add("oct:" + i, "octaves in the bar", ["octave up " + stepWord(i)],
-        (m) => m.on && !!figOf(m).grid[i],
+        (m) => m.on && i < stepsOf(m) && !!figOf(m).grid[i],
         (m) => { const f = figOf(m); const o = f.oct.slice(); o[i] = o[i] ? 0 : 12;
                  return figSet(m, { ...f, oct: o }); },
-        (m) => (figOf(m).oct[i] ? "back down " : "octave up ") + stepWord(i),
+        (m) => (figOf(m).oct[i] ? "back down " : "octave up ") + sw(i, m),
         (m) => !!figOf(m).oct[i]);
     add("acc:" + i, "accents in the bar", ["accent it " + stepWord(i)],
-        (m) => m.on && !!figOf(m).grid[i],
+        (m) => m.on && i < stepsOf(m) && !!figOf(m).grid[i],
         (m) => { const f = figOf(m); const a2 = f.acc.slice(); a2[i] = a2[i] ? 0 : 1;
                  return figSet(m, { ...f, acc: a2 }); },
-        (m) => (figOf(m).acc[i] ? "no accent " : "accent ") + stepWord(i),
+        (m) => (figOf(m).acc[i] ? "no accent " : "accent ") + sw(i, m),
         (m) => !!figOf(m).acc[i]);
     for (const [d, w] of Object.entries(DEGWORD))
       add("deg:" + i + ":" + d, "notes in the bar", [w + " " + stepWord(i)],
-          (m) => m.on && !!figOf(m).grid[i] && (figOf(m).deg || [])[i] !== +d,
-          (m) => { const f = figOf(m); const g2 = (f.deg || new Array(16).fill(0)).slice();
+          (m) => m.on && i < stepsOf(m) && !!figOf(m).grid[i] && (figOf(m).deg || [])[i] !== +d,
+          (m) => { const f = figOf(m); const g2 = (f.deg || zOf(m)).slice();
                    g2[i] = +d; return figSet(m, { ...f, deg: g2 }); },
-          () => w + " " + stepWord(i),
+          (m) => w + " " + sw(i, m),
           (m) => (figOf(m).deg || [])[i] === +d);
     add("sld:" + i, "slides in the bar", ["slide out of " + stepWord(i).replace(/^on /, "")],
-        (m) => m.on && !!figOf(m).grid[i],
+        (m) => m.on && i < stepsOf(m) && !!figOf(m).grid[i],
         (m) => { const f = figOf(m); const s2 = f.sld.slice(); s2[i] = s2[i] ? 0 : 1;
                  return figSet(m, { ...f, sld: s2 }); },
         (m) => (figOf(m).sld[i] ? "no slide " : "slide out of ") +
-               stepWord(i).replace(/^on /, ""),
+               sw(i, m).replace(/^on /, ""),
         (m) => !!figOf(m).sld[i]);
   }
 
@@ -364,6 +406,9 @@
       bassFig: m.fig || undefined,
       // behind the beat or on top of it, in ninths of a step
       bassNudge: m.sit ? m.sit * 2 : undefined,
+      // the bar this line was written for; absent = the sixteen it always was
+      ...(metOf(m).steps !== 16
+          ? { meter: { steps: metOf(m).steps, pulse: metOf(m).pulse } } : {}),
       // a bass with a tone of its own: without this the chair runs on the
       // engine's defaults and a synth bass never closes
       // the record's tone, with the player's own panel over it
@@ -387,5 +432,5 @@
 
   return { blank, V, catalog, offered, say, says, toGenre, decisions, nextAsk,
            answer, CHANGES, CHANGEWORD, KEYS, STYLES, STYLEWORD, INSTRUMENTS,
-           FIGURES, figOf, figSet, stepWord, PANEL, TONALITY, isSynth, BARMARKS };
+           FIGURES, figOf, figSet, figFor, stepWord, PANEL, TONALITY, isSynth, BARMARKS };
 });

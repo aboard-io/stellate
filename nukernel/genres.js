@@ -5305,11 +5305,17 @@
     // instrument is the nearest REAL recording the registry has, said plainly
     // (lute = nylon_string_guitar, viol = viola/cello, violone =
     // acoustic_bass, fortepiano = yamaha_grand_piano) rather than pretended
-    // away. The Viennese waltz is BLOCKED on purpose: this kernel is a
-    // 16-step 4/4 grid with no meter field, and a waltz in 4/4 is not a
-    // waltz — the salon slot is a barcarolle instead (swing 1/3 IS the
-    // triplet lilt, kernel.js's own comment), with `wants` keeping the debt
-    // on the books.
+    // away. The Viennese waltz was BLOCKED here on purpose, and the reason
+    // has since half-expired: the kernel grew a meter on 2026-08-20
+    // (kernel.js METERS — a twelve-step bar and the pulse that tells 3/4
+    // from 6/8), and the BAND PAGE reaches a waltz through the front door
+    // today (band-kit `waltz`, the eighteen-hundreds in a Vienna ballroom).
+    // What is still owed HERE is a catalog job, not a kernel one: every
+    // pattern, cell and phrase in this file is written on sixteen places, so
+    // an anchor that counts in three needs twelve-step ones of its own plus
+    // its rows in compose.js PLAN_OF and BPM. Until somebody writes those
+    // the salon slot stays a barcarolle — which is honest, because a
+    // barcarolle IS 6/8 — and `wants` keeps the debt on the books.
 
     // ORGANUM — the first debt paid. Notre Dame, Léonin/Pérotin: a voice
     // ADDED to the chant. The tenor HOLDS the chant below (a pad, because a
@@ -5583,12 +5589,15 @@
       word: v => (v === 2 ? [transpose(-3)] : v === 3 ? [drop(2)] : []),
     },
 
-    // BARCAROLLE — the salon, honestly. The Viennese waltz is blocked (no
-    // meter field — see the heading above), so the salon slot rocks in 6/8
-    // instead: swing 1/3 IS the triplet shuffle per kernel.js's own comment,
-    // and a barcarolle is the one salon form that lives there. Voice, harp
-    // rolling under it, a cello line between; `wants` keeps the waltz debt on
-    // the books for the day the kernel grows a meter.
+    // BARCAROLLE — the salon, honestly. The salon slot rocks in 6/8 rather
+    // than waltzing (see the heading above: this file's cells are sixteen
+    // places long, so a three-count anchor is a catalog job still owed), and
+    // a barcarolle is the one salon form that lives there. Swing 1/3 is the
+    // triplet shuffle standing in for the compound bar — the band page's own
+    // barcarolle now says `meter: "six"` outright, which is what this anchor
+    // wants the day its cells are rewritten in twelve. Voice, harp rolling
+    // under it, a cello line between; `wants` keeps the waltz debt on the
+    // books.
     barcarolle: {
       label: "Paris 1881", voices: 3, bars: 8, swing: 0.33,
       plan: "song", bpm: 76,

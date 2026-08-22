@@ -10,7 +10,8 @@ import { GENRES, MODES, SCALES, RATES, SWINGS, KITOPS, OPS,
          blank, VOX, PROGS, PERIODS, BREATHS, PIPESETS, withCadence,
          instrOf, partOf, PARTNAMES,
          chordsOf, MODE, harmonizeStage,
-         tempoWarp, seatNote, prng, TOMS } from "./deps.js";
+         tempoWarp, seatNote, prng, TOMS,
+         METERS, metOf, stepsIn, pulseIn } from "./deps.js";
 
 export const isBlank = p => p.gate.every(g => !g);
 
@@ -28,9 +29,12 @@ export const isBlank = p => p.gate.every(g => !g);
 export function contourPath(p) {
   const runs = [];
   let run = null;
-  for (let k = 0; k < 16; k++) {
+  // the phrase's OWN length: a twelve-step bar drew three-quarters of itself
+  // when this counted to sixteen
+  const NK = (p.gate && p.gate.length) || 16, SX = 64 / NK;
+  for (let k = 0; k < NK; k++) {
     if (!p.gate[k]) { run = null; continue; }
-    const x = k * 4 + 2, y = (23 - ((p.deg[k] + 7) / 14) * 20).toFixed(1);
+    const x = +(k * SX + SX / 2).toFixed(2), y = (23 - ((p.deg[k] + 7) / 14) * 20).toFixed(1);
     if (!run) runs.push(run = []);
     run.push(x + " " + y);
   }
@@ -177,7 +181,10 @@ export const boxBars = b => b.len;
 // bar count alone cannot tell you.
 export const secsOf = (b, bpm) => {
   const g = genreOf(b);
-  return boxBars(b) * (16 / g.rate) * (60 / bpm / 4);
+  // ...and in the bar this genre actually counts: a twelve-step bar is three
+  // quarters long, not four, and a duration readout that says otherwise is
+  // wrong by a third
+  return boxBars(b) * (stepsIn(g) / g.rate) * (60 / bpm / 4);
 };
 export const mmss = t => Math.floor(t / 60) + ":" + String(Math.round(t % 60)).padStart(2, "0");
 // NAMES THE KEY IT CANNOT FIND rather than throwing on it. Every other reader
@@ -388,7 +395,15 @@ export function sectionEvents(sec, slots, songGroove, songSwing) {
   // of music from nudging within the first four bars — so it must not wrap.
   const len = Math.max(1, sec.len || g.bars), nudge = Math.max(0, sec.nudge);
   const total = Math.ceil((nudge + len) / g.bars) * g.bars;
-  const barSteps = 16 / g.rate, from = nudge * barSteps, to = (nudge + len) * barSteps;
+  // THE ONE CHOKEPOINT. `barSteps` is the bar in TIME UNITS (one unit = one
+  // sixteenth at nominal tempo) and everything downstream — the buckets, the
+  // per-bar beat count plan.js hands the parent, to-engine's own division —
+  // is length-agnostic already. So a meter is one number here: how many steps
+  // this genre's bar has, sixteen unless it says otherwise. It is read off
+  // the GENRE and never off the phrase, because a 32-step phrase spanning two
+  // 16-step bars is a deliberate, shipped semantics (ui/band.js says so) and
+  // reading the phrase length would silently re-time every long-phrase box.
+  const barSteps = stepsIn(g) / g.rate, from = nudge * barSteps, to = (nudge + len) * barSteps;
 
   const phrasesFor = e => (e.slots.length ? e.slots : [null])
     .map(i => word(i == null ? blank() : slots[i], opsOf(sec, e).map(o => OPS[o])));
@@ -508,8 +523,9 @@ export function sectionEvents(sec, slots, songGroove, songSwing) {
   // sitting flat on the grid, which is exactly what you notice. The groove is
   // the SONG's (one drummer for the record), applied here because this is
   // where the section's final stream exists.
-  const ev = groove(edges(envelope(win, sec.env, span, barSteps), sec.intro, sec.outro, span, barSteps),
-                    songGroove, barSteps, 1);
+  const ev = groove(edges(envelope(win, sec.env, span, barSteps), sec.intro, sec.outro,
+                          span, barSteps, g.meter),
+                    songGroove, barSteps, 1, g.meter);
   // (a singEvents pass appended `sing` events here — a syllable and a voice
   // index rather than a note and a chair — after the groove, so the words
   // followed the tune off the grid. It left with the espeak organ on
@@ -777,7 +793,9 @@ function arrivalChord(sec, slots) {
 function pitchedLeadIn(bar, tBase, secB, slots, e0, siB, rnd) {
   const arr = arrivalChord(secB, slots);
   if (!arr || e0.n == null) return;
-  const bs = bar.barSteps, u = bs / 16, beat = bs / 4;
+  // `u` is ONE STEP and `beat` is one FELT beat, both in this bar's own
+  // units — sixteen and four unless the genre counts differently
+  const bs = bar.barSteps, u = bs / stepsIn(bar.g), beat = u * pulseIn(bar.g);
   const run = PICKUPS[PICKKEYS[Math.floor(rnd() * PICKKEYS.length)]];
   const gap = [2, 3, 4][Math.floor(rnd() * 3)] * u;     // 8th, dotted 8th, quarter
   // HALF A BAR IS THE CEILING for a pitched pickup: past that it stops being a
@@ -842,7 +860,7 @@ function pitchedLeadIn(bar, tBase, secB, slots, e0, siB, rnd) {
 // Nothing to collide with, so this writes real material — and it is the one
 // pickup allowed a whole bar, which is the "a bar early" case.
 function drumLeadIn(bar, tBase, inBar, kit, siB, rnd) {
-  const bs = bar.barSteps, u = bs / 16;
+  const bs = bar.barSteps, u = bs / stepsIn(bar.g);
   const lanes = new Set(inBar.ev.filter(e => e.kind === "hit").map(e => e.d));
   if (!lanes.size) return;
   const voice = ["s", "p", "c", "t", "m", "l"].find(d => lanes.has(d)) || [...lanes][0];
@@ -852,7 +870,7 @@ function drumLeadIn(bar, tBase, inBar, kit, siB, rnd) {
   const shape = shapes[Math.floor(rnd() * shapes.length)];
   const pos = [];
   if (shape === "build") {                              // the accelerating build
-    let g = 4 * u, t = w0;
+    let g = pulseIn(bar.g) * u, t = w0;
     while (t < bs - 1e-9) { pos.push(t); t += g; if (t > bs - L * 0.4) g = Math.max(u, g / 2); }
   } else for (let t = w0; t < bs - 1e-9; t += 2 * u) pos.push(t);
   const add = pos.map((t, i) => {
@@ -887,7 +905,7 @@ function drumLeadIn(bar, tBase, inBar, kit, siB, rnd) {
 // made explicit: a double that lands where the kit already hits is dropped, so
 // a fill can never flam its own pattern.
 function quoteFill(bar, rnd) {
-  const bs = bar.barSteps, u = bs / 16, w0 = bs / 2;
+  const bs = bar.barSteps, u = bs / stepsIn(bar.g), w0 = bs / 2;
   const win = bar.ev.filter(e => e.kind === "hit" && e.off >= w0 - 1e-9);
   if (!win.length) return;
   const add = [];
@@ -975,7 +993,7 @@ export function songBars(song, slots, songGroove, songSwing, loopOnly, opts) {
     // silence, for ever. A box with no events is skipped the way an empty one
     // used to be.
     if (!ev.length) continue;
-    const barSteps = 16 / g.rate;
+    const barSteps = stepsIn(g) / g.rate;
     // ONE PASS into per-bar buckets. The old per-bar filter over the whole event
     // list was O(bars × events) per box — ~6M comparisons per compile on a
     // twenty-box song, and compile runs on every editor scrub while playing.

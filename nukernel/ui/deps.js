@@ -23,7 +23,11 @@ export const { harm, render, drums, bass, ROMAN, word, KITOPS,
                // the time layer's own three: the tempo map's closed-form warp,
                // the one-note seating law the lead-in pickups share with the
                // harmonize stage, and the seeded dice both of them roll
-               tempoWarp, seatNote, prng, TOMS } = window.NuKernel;
+               tempoWarp, seatNote, prng, TOMS,
+               // HOW A BAR COUNTS: the two-number meter and its readers.
+               // Absent from a genre = the sixteen steps of four this box
+               // counted in for its whole life (kernel.js METERS).
+               METERS, MET4, metOf, stepsIn, pulseIn } = window.NuKernel;
 
 // ---- the genre table (genres.js) ----
 export const { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL,
@@ -33,7 +37,7 @@ export const { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL,
 export const NuFields = window.NuFields;
 export const { NSLOTS, MAX_LEN, MAX_NUDGE, MAX_FX,
                OPS, OPLABEL, ENVLABEL, MOTLABEL, INLABEL, OUTLABEL,
-               RATES, RATELABEL, SWINGS, SWINGLABEL, GROOVELABEL,
+               RATES, RATELABEL, SWINGS, SWINGLABEL, GROOVELABEL, METERLABEL,
                KITLABEL, DRUMKITS, BASSOPS,
                FX, fxChain, FXSEND, fxMix, fxSendable,
                SENDS, SENDLABEL, VERBS,

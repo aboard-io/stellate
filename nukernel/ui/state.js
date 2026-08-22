@@ -11,7 +11,7 @@
 // time, two of them in the audio hot path (stepDur per tick, barSec per
 // channel build), which also made the loader untestable in node.
 import { NuSong, GENRES, blank, emptyBox, DEFAULT, masterIsDefault,
-         busesIsDefault, GROOVELABEL, SWINGLABEL, INSTRCHOICES,
+         busesIsDefault, GROOVELABEL, SWINGLABEL, METERLABEL, INSTRCHOICES,
          POOLCHAIRS } from "./deps.js";
 
 export const DEFAULT_BPM = 126, NBOXES = 4;
@@ -92,6 +92,16 @@ export let GROOVE = null;
 // recompiles on "swing", the bounce re-renders, song.js migrates old per-box
 // saves up to it.
 export let SWING = null;
+// …AND THE METER, the third of the family, on exactly the same terms: a
+// record counts in three or it does not. null is the four-four every record
+// in this box has counted in since it existed; "three" and "six" are the two
+// words fields.js METERLABEL names, and the NUMBERS behind them (steps and
+// pulse) live in kernel.js METERS so a saved word and a live table cannot
+// drift. The engine reads the meter off the GENRE (band-kit stamps
+// `g.meter`, kernel.js and ui/derive.js read it); this is the SONG's record
+// of the same fact — what survives storage, and what a reloaded session
+// re-seats every chair from.
+export let METER = null;
 // …AND THE INSTRUMENT POOL :
 // a song fact like all three above — the band is cast once, for the record,
 // not re-auditioned per section. A map of CHAIR (fields.js POOLCHAIRS: the
@@ -186,6 +196,12 @@ export function setGroove(g) {
 export function setSwing(v) {
   SWING = v != null &&
     Object.prototype.hasOwnProperty.call(SWINGLABEL, String(v)) ? v : null;
+}
+// ...and one for the song's meter, the same normalizer against its own table:
+// anything METERLABEL does not name is "count in four", spelled null
+export function setMeter(v) {
+  METER = v != null &&
+    Object.prototype.hasOwnProperty.call(METERLABEL, String(v)) ? v : null;
 }
 // ...and one writer per CHAIR for the song's instrument pool, the same
 // normalizer against its own two tables: a seat POOLCHAIRS does not name is
@@ -334,7 +350,8 @@ function writeStore() {
   try {
     localStorage.setItem(STORE, JSON.stringify(
       { v: NuSong.VERSION, slots: SLOTS, song: SONG, master: MASTER,
-        buses: BUSES, mix: MIXER, groove: GROOVE, swing: SWING, pool: POOL,
+        buses: BUSES, mix: MIXER, groove: GROOVE, swing: SWING, meter: METER,
+        pool: POOL,
         genres: GENRESET, bpm }));
   } catch (e) { /* private mode, or quota: not worth interrupting the music */ }
 }
@@ -409,6 +426,7 @@ export function adoptSong(raw, reason) {
   MIXER = s.mix != null ? s.mix : null;
   GROOVE = s.groove;                   // ...and the song's groove, same law
   SWING = s.swing;                     // ...and its swing, the same move made twice
+  METER = s.meter;                     // ...and how it counts, the third of the three
   POOL = s.pool;                       // ...and the band, hired for the record
   viewSec = 0; loopOnly = null; pendingStart = null;
   if (s.bpm != null) bpm = s.bpm;
@@ -434,7 +452,8 @@ export function songJSON() {
   // for producers inside this session, never for a document leaving it
   return JSON.stringify(
     { v: NuSong.VERSION, slots: SLOTS, song: SONG, master: MASTER,
-      buses: BUSES, mix: MIXER, groove: GROOVE, swing: SWING, pool: POOL,
+      buses: BUSES, mix: MIXER, groove: GROOVE, swing: SWING, meter: METER,
+      pool: POOL,
       genres: GENRESET, bpm },
     null, 1);
 }

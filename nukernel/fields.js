@@ -160,6 +160,14 @@
   // because it is vocabulary, and one registry file owns every word.
   const GROOVELABEL = { backbeat: "backbeat", push: "pushed", laidback: "laid back",
                         funk: "funk", dub: "dub" };
+  // ...AND THE METER, the third song fact of this family and the same law
+  // exactly: a record counts in three or it does not, and a section that
+  // changed meter mid-way would be a different feature. Absent (null) is the
+  // four-four every record in this box has counted in since it existed, and
+  // there is deliberately no `meter` entry in FIELDS below for the same
+  // reason there is no `groove` one. The NUMBERS live in kernel.js METERS —
+  // one place, because they are algebra — and this is the vocabulary.
+  const METERLABEL = { three: "in three", six: "in six-eight" };
   // EVERY KIT OPERATOR kernel.js has — which is now sixty-eight rather than
   // thirteen, because the kit grew from six lanes to twelve and a vocabulary
   // that cannot say "ride instead of hats" or "tom fill" is not a vocabulary.
@@ -1282,7 +1290,7 @@
 
   const api = { NSLOTS, MAX_LEN, MAX_NUDGE, MAX_FX,
                 OPS, OPLABEL, ENVLABEL, MOTLABEL, INLABEL, OUTLABEL,
-                RATES, RATELABEL, SWINGS, SWINGLABEL, GROOVELABEL,
+                RATES, RATELABEL, SWINGS, SWINGLABEL, GROOVELABEL, METERLABEL,
                 KITLABEL, KITNAME, VERBLABEL, DRUMKITS, DRUMLANES, BASSOPS,
                 FX, FXLABEL, fxChain, FXSEND, fxMix, fxSendable,
                 SENDS, SENDLABEL, VERBS,

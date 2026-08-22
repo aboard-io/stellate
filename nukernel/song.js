@@ -30,7 +30,7 @@
     ? require("./kernel.js") : root.NuKernel;
   const { FIELDS, OPS, FX, MAX_FX, NSLOTS, MAX_LEN, MAX_NUDGE, VOX,
           AUTOPARAMS, PERIODS, PARTMIX, okPartKey, MASTER, BUSES, faderDb,
-          eqDb, GROOVELABEL, SWINGLABEL, INSTRCHOICES, POOLCHAIRS,
+          eqDb, GROOVELABEL, SWINGLABEL, METERLABEL, INSTRCHOICES, POOLCHAIRS,
           PARTNAMES } = NF;
   const { GENRES } = NG;
 
@@ -786,6 +786,15 @@
     s.swing = s.swing != null &&
       Object.prototype.hasOwnProperty.call(SWINGLABEL, String(s.swing))
       ? s.swing : null;
+    // ...and THE METER, the third of the family and the same policy again:
+    // an unknown word means "count in four", never "refuse the song", and a
+    // document written before the question existed has no `meter` key at all
+    // and loads unchanged. The two NUMBERS a meter means (kernel.js METERS:
+    // steps and pulse) are never stored — a saved word and a live table
+    // cannot drift apart if only the word is saved.
+    s.meter = s.meter != null &&
+      Object.prototype.hasOwnProperty.call(METERLABEL, String(s.meter))
+      ? s.meter : null;
 
     // ---- THE INSTRUMENT POOL, the third song fact in this family ("the band
     // is hired for the record"): a map of chair -> instrument id, one pick per

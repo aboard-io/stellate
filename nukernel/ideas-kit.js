@@ -34,6 +34,11 @@
   const N = 16;
   const { z, stepWord } = C;
   const g16 = C.on;
+  // A THEME COUNTS THE WAY THE RECORD DOES. `met` is the one field (chair.js
+  // METS, absent = the sixteen places every theme ever written has had) and
+  // `NOF` is the bar length every loop below reads instead of the constant.
+  const { metOf, regrid, barOf } = C;
+  const NOF = (m) => metOf(m).steps;
 
   /* ---------- 1. THE RHYTHM: where the notes fall, and where they don't ---- */
   const CELLS = {
@@ -110,7 +115,7 @@
     // the nearest free place (later if the bar has room, earlier if not) —
     // guaranteed to differ, because a cell never fills all sixteen places
     restate: (c) => {
-      const g = c.slice();
+      const g = c.slice(), N = c.length;
       let last = -1; for (let i = 0; i < N; i++) if (g[i]) last = i;
       if (last < 0) return g;
       let to = -1;
@@ -122,7 +127,7 @@
     // the dense bar: an echo one step after the first onset and the middle
     // one, where the bar has room — development crowds what was stated
     develop: (c) => {
-      const g = c.slice();
+      const g = c.slice(), N = c.length;
       const on2 = []; for (let i = 0; i < N; i++) if (g[i]) on2.push(i);
       for (const i of [on2[0], on2[Math.floor(on2.length / 2)]])
         if (i != null && i + 1 < N && !g[i + 1]) g[i + 1] = 1;
@@ -130,7 +135,7 @@
     },
     // the sparse bar: one long note where the cell's first note was
     land: (c) => {
-      const g = z(); const at = c.findIndex(Boolean);
+      const g = z(c.length); const at = c.findIndex(Boolean);
       g[at < 0 ? 0 : at] = 1; return g;
     },
     // enter held: the restatement minus its first onset, so the previous
@@ -192,10 +197,31 @@
   // tied note it is. A grid with no 2s in it compiles to a phrase with no
   // `hold` key at all — the mark is present-only, like `orn`, so every
   // theme written before the mark existed renders byte-identical.
-  const gridOf = (m) => (m.grid ? m.grid.slice() : cellOf(m).g.slice());
+  const gridOf = (m) => (m.grid ? C.refit(m.grid, metOf(m)).slice() : cellOf(m).g.slice());
   const liftOf = (m) => ({ ...(m.lift || {}) });
 
-  const cellOf = (m) => CELLS[m.cell] || CELLS.three;
+  // ...and the same cells re-seated into a bar that counts differently, plus
+  // the ones only that bar has. The parent's own metrical melody cells are
+  // the source (engine/csd-engine.js MM_CELLS_3 / MM_CELLS_6): even quarters,
+  // the dotted lilt and the minuet long-short in three; running eighths, the
+  // siciliana and the two big pulses in six.
+  const c12 = (...ix) => { const v = new Array(12).fill(0); for (const i of ix) v[i] = 1; return v; };
+  const CELLS3 = {
+    quarters: { w: "one note a beat", g: c12(0, 4, 8) },
+    lilt:     { w: "a dotted lilt", g: c12(0, 6, 8) },
+    minuet:   { w: "long, then short", g: c12(0, 8) },
+  };
+  const CELLS6 = {
+    running:  { w: "running eighths", g: c12(0, 2, 4, 6, 8, 10) },
+    siciliana:{ w: "a siciliana", g: c12(0, 3, 4, 6, 9, 10) },
+    twopulse: { w: "the two big beats", g: c12(0, 6) },
+  };
+  const extraCells = (m) => { const mt = metOf(m);
+    return mt.steps === 16 ? null : (mt.pulse === 6 ? CELLS6 : CELLS3); };
+  const cellOf = (m) => { const x = extraCells(m);
+    if (x && x[m.cell]) return x[m.cell];
+    const base = CELLS[m.cell] || CELLS.three;
+    return x ? { w: base.w, g: regrid(base.g, metOf(m)) } : base; };
   const barsOf = (m) => (LENGTHS[m.len] || LENGTHS.two).bars;
 
   /* ---------- THE WRITTEN BAR (PLAN.md THE THROUGH-COMPOSED THEME) --------
@@ -225,13 +251,13 @@
     for (const [k, v] of Object.entries(m.wrote)) {
       const b = +k;
       if (!Number.isInteger(b) || b < 0 || b > 3 || !v) continue;
-      const g = Array.isArray(v.grid) && v.grid.length === N &&
+      const g = Array.isArray(v.grid) && v.grid.length === NOF(m) &&
         v.grid.every((x) => x === 0 || x === 1 || x === 2) ? v.grid.slice() : null;
       if (!g) continue;
       const lift = {};
       for (const [i, lv] of Object.entries(v.lift || {})) {
         const ii = +i;
-        if (Number.isInteger(ii) && ii >= 0 && ii < N && Number.isFinite(lv) && lv)
+        if (Number.isInteger(ii) && ii >= 0 && ii < NOF(m) && Number.isFinite(lv) && lv)
           lift[ii] = Math.max(-2, Math.min(2, Math.round(lv)));
       }
       out[b] = { grid: g, lift };
@@ -247,8 +273,8 @@
   // writing a derived bar out starts from: the onsets you heard, and the
   // places an explicit hold sounds through. Never from silence.
   const barTriOf = (m, b) => {
-    const ph = toPhrase(m);
-    const g = z();
+    const ph = toPhrase(m), N = NOF(m);
+    const g = z(N);
     for (let i = 0; i < N; i++) {
       const at = b * N + i;
       if (at < ph.gate.length && ph.gate[at]) g[i] = 1;
@@ -309,7 +335,12 @@
                 "|" + (m.grid ? m.grid.join("") : "") + "|" + JSON.stringify(m.lift || {}) +
                 // the written bars enter the key; `hand` does not — hand is
                 // aim, and aim changes no phrase
-                "|" + (m.wrote ? JSON.stringify(m.wrote) : "");
+                // ...AND THE METER, because a twelve-step bar and a sixteen-step
+                // bar are different phrases from the same answers: without it
+                // a meter switch hands back a stale sixteen-step phrase and
+                // the failure reads as a scheduler bug rather than a cache one
+                "|" + (m.wrote ? JSON.stringify(m.wrote) : "") +
+                "|" + NOF(m) + ":" + metOf(m).pulse;
     let hit = PHCACHE.get(key);
     if (hit) return hit;
     hit = phraseNow(m, roots);
@@ -318,6 +349,7 @@
     return hit;
   }
   function phraseNow(m, roots) {
+    const N = NOF(m);
     const bars = barsOf(m), cell = gridOf(m), con = CONTOURS[m.contour] || CONTOURS.arch;
     const lift = liftOf(m);
     const land = (LANDINGS[m.land] || LANDINGS.root).d;
@@ -484,9 +516,13 @@
     // onset and there isn't one
     frag: { w: "just its head" },
   };
-  function transform(ph, kind) {
+  function transform(ph, kind, met) {
     if (!kind || kind === "same" || !TRANSFORMS[kind]) return ph;
     const n = ph.gate.length;
+    // "just its head" means the FIRST BAR, and a bar is not always sixteen
+    // steps: in a waltz the head is twelve, and cutting at sixteen would
+    // hand a section a bar and a third of a tune.
+    const head = ((met && met.steps) || N);
     const out = { deg: z(n), oct: z(n), vel: new Array(n).fill(6), inc: z(n),
                   stk: z(n), gate: z(n), acc: z(n), sld: z(n) };
     // a tie is part of the note, so it travels with it — present-only, the
@@ -501,7 +537,7 @@
       if (!ph.gate[i]) continue;
       if (kind === "up") { put(i, i); out.deg[i] = ph.deg[i] + 1; }
       else if (kind === "aug") { if (i * 2 < n) put(i * 2, i, 2); }
-      else if (kind === "frag") { if (i < N) put(i, i); }
+      else if (kind === "frag") { if (i < head) put(i, i); }
     }
     if (hh) out.hold = hh;
     // THE RETURN IS REGISTERED AS THE THEME. The kernel's whole-line octave
@@ -556,6 +592,12 @@
     add("cell:" + k, "the rhythm of it", [c.w],
         (m) => m.on && m.cell !== k && cellFirst(m, k),
         (m) => ({ ...m, cell: k }), () => c.w, (m) => m.cell === k);
+  // ...and the cells that only exist in a bar that counts differently. Same
+  // registrar, same shape; never offered under four, so the tray is the tray.
+  for (const [k, c] of Object.entries({ ...CELLS3, ...CELLS6 }))
+    add("cell:" + k, "the rhythm of it", [c.w],
+        (m) => m.on && !!(extraCells(m) || {})[k] && m.cell !== k,
+        (m) => ({ ...m, cell: k }), () => c.w, (m) => m.cell === k);
   for (const [k, c] of Object.entries(CONTOURS))
     add("con:" + k, "the shape", [c.w],
         (m) => m.on && m.contour !== k && conFirst(m, k),
@@ -588,38 +630,42 @@
   // mark on a DERIVED bar in hand writes it out, seeded from what the
   // sentence was deriving (barTriOf — you start from what you heard, never
   // from silence).
+  // (the registered `words` are the search index, written in four; the
+  // SENTENCE a mark speaks is the theme's own count — identical in three,
+  // "on the and of five" in a six.)
+  const sw = (i, m) => stepWord(i, metOf(m));
   for (let i = 0; i < N; i++) {
-    add("note:" + i, "the bar", [stepWord(i)], (m) => m.on,
+    add("note:" + i, "the bar", [stepWord(i)], (m) => m.on && i < NOF(m),
         (m) => (editsWrote(m)
           ? withHandBar(m, (b) => { b.grid[i] = b.grid[i] === 1 ? 0 : 1; return b; })
           : (() => { const g = gridOf(m); g[i] = g[i] === 1 ? 0 : 1;
                      return { ...m, grid: g, cell: m.cell }; })()),
-        (m) => (handGrid(m)[i] === 1 ? "no note " : "a note ") + stepWord(i),
+        (m) => (handGrid(m)[i] === 1 ? "no note " : "a note ") + sw(i, m),
         (m) => handGrid(m)[i] === 1);
     add("up:" + i, "higher", ["up a step " + stepWord(i)],
         (m) => m.on && handGrid(m)[i] === 1 && (handLift(m)[i] || 0) < 2,
         (m) => (editsWrote(m)
           ? withHandBar(m, (b) => { b.lift[i] = (b.lift[i] || 0) + 1; return b; })
           : { ...m, lift: { ...liftOf(m), [i]: (liftOf(m)[i] || 0) + 1 } }),
-        () => "up a step " + stepWord(i));
+        (m) => "up a step " + sw(i, m));
     add("down:" + i, "lower", ["down a step " + stepWord(i)],
         (m) => m.on && handGrid(m)[i] === 1 && (handLift(m)[i] || 0) > -2,
         (m) => (editsWrote(m)
           ? withHandBar(m, (b) => { b.lift[i] = (b.lift[i] || 0) - 1; return b; })
           : { ...m, lift: { ...liftOf(m), [i]: (liftOf(m)[i] || 0) - 1 } }),
-        () => "down a step " + stepWord(i));
+        (m) => "down a step " + sw(i, m));
     // "hold it" — offered only where a note EARLIER in the bar exists to
     // hold from: a tie with nothing before it would be a mark on silence.
     // (In a written bar past the first, the note before the line counts —
     // the leading run IS the tie across the barline.)
     add("tie:" + i, "held", ["hold it " + stepWord(i)],
-        (m) => m.on && (handGrid(m).slice(0, i).some((v) => v === 1) ||
+        (m) => m.on && i < NOF(m) && (handGrid(m).slice(0, i).some((v) => v === 1) ||
                         (editsWrote(m) && handOf(m) > 0)),
         (m) => (editsWrote(m)
           ? withHandBar(m, (b) => { b.grid[i] = b.grid[i] === 2 ? 0 : 2; return b; })
           : (() => { const g = gridOf(m); g[i] = g[i] === 2 ? 0 : 2;
                      return { ...m, grid: g, cell: m.cell }; })()),
-        (m) => (handGrid(m)[i] === 2 ? "let go " : "held through ") + stepWord(i),
+        (m) => (handGrid(m)[i] === 2 ? "let go " : "held through ") + sw(i, m),
         (m) => handGrid(m)[i] === 2);
   }
   add("flatten", "the bar", ["straighten it out"],
@@ -661,8 +707,12 @@
   const DECISIONS = [
     { id: "len", ask: "how long is it?", opts: Object.entries(LENGTHS).map(([k, l]) => ({
         w: l.w, is: (m) => m.len === k, apply: (m) => ({ ...m, len: k }) })) },
-    { id: "cell", ask: "what's its rhythm?", opts: Object.entries(CELLS).map(([k, c]) => ({
-        w: c.w, is: (m) => m.cell === k, apply: (m) => ({ ...m, cell: k }) })) },
+    // the cells of the bar this record counts in: the ten, re-seated, plus
+    // the three that only a twelve-step bar has
+    { id: "cell", ask: "what's its rhythm?",
+      opts: (m) => Object.entries({ ...CELLS, ...(extraCells(m) || {}) }).map(([k, c]) => ({
+        w: (extraCells(m) && extraCells(m)[k] ? c.w : (CELLS[k] || c).w),
+        is: (mm) => mm.cell === k, apply: (mm) => ({ ...mm, cell: k }) })) },
     // the sentence rides right behind the rhythm it derives from, and only
     // when there are measures to differ — a one-bar tune is not a sentence
     { id: "sent", ask: "how does it speak?", when: (m) => barsOf(m) > 1,
@@ -693,7 +743,8 @@
     { w: "down a step", id: (i) => "down:" + i },
     { w: "hold it",     id: (i) => "tie:" + i },
   ];
-  return { N, CELLS, CONTOURS, LANDINGS, LENGTHS, REG, SENTENCES, ROLES, TRANSFORMS,
+  return { N, NOF, CELLS, CELLS3, CELLS6, extraCells, cellOf,
+           CONTOURS, LANDINGS, LENGTHS, REG, SENTENCES, ROLES, TRANSFORMS,
            regOf, gridOf, liftOf, wroteOf, handOf, stepWord,
            blank, V, catalog, say, says, BARMARKS,
            decisions, nextAsk, answer, toPhrase, transform, describe, barsOf, cellOf };

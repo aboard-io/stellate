@@ -58,18 +58,112 @@
   const every = (n, from) => { const v = z(); for (let i = from || 0; i < N; i += n) v[i] = 1; return v; };
   const deg = (...d) => { const v = z(); d.forEach((x, i) => { v[i] = x; }); return v; };
 
+  /* ---------- HOW THE BAR COUNTS ---------------------------------------
+     Sixteen places is a 4/4 bar and nothing else, and this box now knows
+     three bars: 4/4, 3/4 and 6/8 — the last two being the SAME twelve
+     sixteenth-steps told apart by where the felt beat is (kernel.js METERS
+     says why). A chair model carries the meter as ONE optional field, `met`;
+     absent is 4/4, which is why every table above stays exactly the sixteen
+     numbers it was written as and every existing chair is byte-identical.
+
+       met = { steps, pulse, count, names }
+         steps   the bar, in sixteenth-steps           16 · 12 · 12
+         pulse   steps in a FELT beat                   4 ·  4 ·  6
+         count   steps in a COUNTED number              4 ·  4 ·  2
+         names   what those numbers are called   one..four · one..three ·
+                                                              one..six
+
+     `count` is not `pulse`: in 6/8 the beat is the dotted quarter and the
+     COUNT is still "one two three four five six" over the eighths, which is
+     what a bandleader says and what the count row draws. */
+  const COUNT4 = ["one", "two", "three", "four"];
+  const COUNT6 = ["one", "two", "three", "four", "five", "six"];
+  const MET4 = { steps: 16, pulse: 4, count: 4, names: COUNT4 };
+  const METS = {
+    three: { w: "in three", steps: 12, pulse: 4, count: 4,
+             names: ["one", "two", "three"], abc: "3/4", beam: 4 },
+    six:   { w: "in six-eight", steps: 12, pulse: 6, count: 2,
+             names: COUNT6, abc: "6/8", beam: 6 },
+  };
+  // total: anything without a meter counts in four
+  const metOf = (m) => (m && m.met && m.met.steps) ? m.met : MET4;
+  const stepsOf = (m) => metOf(m).steps;
+
+  /* THE SAME PLACE IN THE BEAT, WITH THE BEATS WRAPPED. Every table in every
+     kit is written as sixteen places, so a chair asked to count differently
+     needs those marks moved rather than re-authored — and the only mapping
+     that is musically true reads a mark as (which beat, how far into it) and
+     re-seats it in the new bar. In 3/4 that is the identity on the first
+     three beats and folds the fourth home; in 6/8 the four beats become the
+     two big ones and a subdivision becomes an eighth, so a backbeat lands on
+     the second big beat rather than three-against-two. Absent a meter it
+     returns the vector it was handed, untouched. */
+  const regrid = (vec, met) => {
+    const m2 = (met && met.steps) ? met : MET4;
+    if (!vec || m2.steps === 16) return vec;
+    const beats = m2.steps / m2.pulse, out = new Array(m2.steps).fill(0);
+    for (let i = 0; i < vec.length; i++) {
+      if (!vec[i]) continue;
+      const b = Math.floor(i / 4) % beats, sub = Math.min(m2.pulse - 1, Math.round((i % 4) * m2.pulse / 4));
+      const j = b * m2.pulse + sub;
+      if (j < m2.steps && Math.abs(vec[i]) > Math.abs(out[j])) out[j] = vec[i];
+    }
+    return out;
+  };
+  // ...and a HAND-EDITED vector, which is not a table and must not be
+  // re-seated: it is trimmed or padded to the bar it now lives in, so a mark
+  // you made stays where you made it for as long as the bar reaches it.
+  const refit = (vec, met) => {
+    const n = ((met && met.steps) || 16);
+    if (!vec || vec.length === n) return vec;
+    const out = new Array(n).fill(0);
+    for (let i = 0; i < Math.min(n, vec.length); i++) out[i] = vec[i];
+    return out;
+  };
+  // the bar's own builders, bound to a meter — what a kit reaches for when it
+  // wants "every beat" rather than "steps 0, 4, 8 and 12"
+  const barOf = (met) => {
+    const m2 = (met && met.steps) ? met : MET4, n = m2.steps, p = m2.pulse;
+    const beats = n / p;
+    const zz = () => new Array(n).fill(0);
+    const oo = (...ix) => { const v = zz(); for (const i of ix) if (i < n) v[i] = 1; return v; };
+    const ev = (k, from) => { const v = zz(); for (let i = from || 0; i < n; i += k) v[i] = 1; return v; };
+    // WHICH BEATS ARE THE BACKBEAT: two and four in four, the two chicks of a
+    // waltz, the second big beat of a six. Four is the literal [4, 12].
+    const backIx = beats === 4 ? [1, 3]
+      : Array.from({ length: Math.max(0, beats - 1) }, (_, k) => k + 1);
+    return { n, pulse: p, beats, z: zz, on: oo, every: ev,
+             beat: (...bs) => oo(...bs.map((b) => b * p)),
+             beats0: () => ev(p),
+             back: () => oo(...backIx.map((b) => b * p)),
+             ands: () => ev(p, Math.floor(p / 2)) };
+  };
+
   /* ---------- the count ------------------------------------------------
      Nobody at an instrument thinks "step ten". They count — one e and a,
      two e and a — so every sixteenth has a name and every kit says the
      same one. */
-  const COUNT = ["one", "two", "three", "four"], SUB = ["", "e", "and", "a"];
-  const stepWord = (i) => (i % 4 === 0) ? "on " + COUNT[i >> 2]
-    : "on the " + SUB[i % 4] + " of " + COUNT[i >> 2];
+  const COUNT = COUNT4, SUB = ["", "e", "and", "a"];
+  // ...and in a bar that counts differently the SENTENCE does not change, only
+  // the numbers in it: "on the a of three" in a waltz, "on the and of five" in
+  // a six. Two subdivisions to a number means the only sub-word is "and".
+  const SUB2 = ["", "and"];
+  const subsOf = (m2) => (m2.count === 2 ? SUB2 : SUB);
+  const stepWord = (i, met) => {
+    const m2 = (met && met.steps) ? met : MET4;
+    const u = m2.count, names = m2.names, sub = subsOf(m2);
+    const k = Math.floor(i / u) % names.length;
+    return (i % u === 0) ? "on " + names[k]
+      : "on the " + sub[i % u] + " of " + names[k];
+  };
   // ...and the same sixteen places as CELLS of a 4×4 grid: column = the
   // count (one..four), row = the subdivision (the beat, e, and, a). The
   // SENTENCE stays the contract — a cell's tapped word is stepWord's own —
   // the grid is only the look.
-  const stepCell = (i) => ({ beat: i >> 2, sub: i % 4, word: stepWord(i) });
+  const stepCell = (i, met) => {
+    const m2 = (met && met.steps) ? met : MET4, u = m2.count;
+    return { beat: Math.floor(i / u), sub: i % u, word: stepWord(i, met) };
+  };
 
   /* ---------- the vocabulary ------------------------------------------- */
   // One registrar, one entry shape. `is` defaults to never-true because most
@@ -185,7 +279,10 @@
     const blank = () => ({ on: false, job: spec.model.job, instr: spec.model.instr,
                            reg: spec.model.reg, tone: null, gate: null, answers: {} });
     const jobOf = (m) => JOBS[m.job] || JOBS[spec.model.job];
-    const gateOf = (m) => (m.gate ? m.gate.slice() : jobOf(m).gate.slice());
+    // A JOB'S GATE IS A TABLE (re-seated into the bar the chair is counting);
+    // a gate you EDITED is yours (trimmed or padded, never re-seated).
+    const gateOf = (m) => (m.gate ? refit(m.gate, metOf(m)).slice()
+                                  : regrid(jobOf(m).gate, metOf(m)).slice());
     const toneOf = (m) => m.tone || {};
     // A PAD DOES NOT HEAR THE BAR. The kernel holds a pad to the next CHORD
     // on purpose — extra hits inside the bar read as a stutter, not a pad —
@@ -221,10 +318,14 @@
             (m) => toneOf(m)[p.key] === o.v);
     // THE BAR — where the hands fall, one place at a time, the same sixteen
     // places the drummer and the bassist count.
+    // ...and the words are registered for the WIDEST bar this box counts, with
+    // the ones past the end of a shorter bar simply never offered — a
+    // vocabulary is a table, and a table that changes shape per model is a
+    // table nobody can memoise.
     for (let i = 0; i < N; i++)
-      add("hit:" + i, "the bar", [stepWord(i)], (m) => m.on && rhythmic(m),
+      add("hit:" + i, "the bar", [stepWord(i)], (m) => m.on && rhythmic(m) && i < stepsOf(m),
           (m) => { const g = gateOf(m); g[i] = g[i] ? 0 : 1; return { ...m, gate: g }; },
-          (m) => (gateOf(m)[i] ? spec.hit.off : spec.hit.on) + stepWord(i),
+          (m) => (gateOf(m)[i] ? spec.hit.off : spec.hit.on) + stepWord(i, metOf(m)),
           (m) => !!gateOf(m)[i]);
 
     /* the interview: what you play, what your job is, where you sit, then
@@ -253,10 +354,11 @@
     /* the PHRASE the engine is handed: the job's own degrees over the gate
        you can edit, at the weight this chair plays at */
     function toPattern(m) {
-      const j = jobOf(m), g = gateOf(m);
-      return { deg: (j.dg || z()).slice(), oct: z(),
-               vel: new Array(N).fill(spec.vel(j)),
-               inc: z(), stk: z(), gate: g, acc: z(), sld: z() };
+      const j = jobOf(m), g = gateOf(m), n = stepsOf(m), met = metOf(m);
+      const zn = () => new Array(n).fill(0);
+      return { deg: (j.dg ? regrid(j.dg, met) : zn()).slice(), oct: zn(),
+               vel: new Array(n).fill(spec.vel(j)),
+               inc: zn(), stk: zn(), gate: g, acc: zn(), sld: zn() };
     }
 
     return { N, JOBS, INSTRUMENTS, REG, PANEL, rhythmic, blank, V, catalog,
@@ -265,6 +367,7 @@
   }
 
   return { N, COUNT, SUB, stepWord, stepCell, z, on, every, deg,
+           MET4, METS, metOf, stepsOf, regrid, refit, barOf,
            vocab, tryIs, mapOpts,
            catalogSlimOf, catalogFullOf, sayOf, saysOf, saysLooseOf,
            interview, pitchedChair };
