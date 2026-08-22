@@ -425,6 +425,23 @@
      Everything here is stored as the WORD the player actually knows, so a
      row that names a groove or a machine nobody has fails the gate rather
      than quietly offering nothing. */
+  /* HOW FAST THE CHORDS MOVE, per record (HRATE above). A record carries a
+     `hrw` only when it is a record that does NOT take its changes a bar at a
+     time; everything else is offered all three words and the dice reaches
+     them all. THE GENRE-LABELLED CORPUS IS WHY, and it is unusually clean —
+     median share of barlines carrying a change, by rip:
+       jazz 0.667 · classical_midiworld 0.593 · classical_greats 0.563 ·
+       classical_piano 0.557 · ragtime 0.550 · classical_guitar 0.545 ·
+       classical_mfiles 0.514 · classical_violin 0.506 · bulk 0.504 ·
+       folk 0.450 · dub 0.431
+     Jazz moves fastest and classical is next, which is why a jazz date, a
+     Viennese classic, a concerto and the waltzes may still say "a chord a
+     bar" — but NOT ONE of the eleven families exceeds 2.2% of records
+     pinned at 0.95 or above (classical piano, classical violin, folk, dub
+     and ragtime are at 0.0%), so no idiom gets to be pinned there for a
+     whole record. */
+  const HRSLOW = ["two bars each", "one to a phrase"];
+
   const GENRES = {
     house:   { w: "a house record", fam: "the floor", bpm: 120, chords: "plain", when: ["the eighties", "the nineties", "now"], where: ["Chicago", "New York", "London"], venue: ["a warehouse", "a club"], gtr: ["a clean electric", "a jazz box", "a muted one"], gjob: "skank", keys: ["a warm pad", "a polysynth", "a Rhodes", "an electric piano", "strings"], kjob: "pads", forms: ["vamp", "dance", "twelve", "dj"], fig: "offbeat", artic: "staccato", tone: { cut: 700,  q: 6,  rel: 0.16 },
                grooves: ["house", "four on the floor", "disco", "uk garage"],
@@ -437,7 +454,7 @@
                machines: ["909", "606", "electronic kit"],
                styles: ["hold the root", "driving eighths", "busy sixteenths"],
                instr: ["a synth bass", "with a pick"],
-               chg: ["one chord, all night", "a pedal", "a minor vamp"] },
+               chg: ["one chord, all night", "a pedal", "a minor vamp"], hrw: HRSLOW },
     disco:   { w: "a disco record", fam: "the floor", bpm: 120, chords: "sevens", when: ["the seventies", "the eighties"], where: ["New York", "Philadelphia"], venue: ["a club", "a wedding"], gtr: ["a clean electric", "a jazz box", "a muted one"], gjob: "skank", keys: ["a Rhodes", "strings", "a clav", "an electric piano"], kjob: "comp", forms: ["dance", "versechorus", "vamp", "twelve"], fig: "discoct", artic: "staccato", tone: { cut: 950,  q: 3,  rel: 0.20 },
                grooves: ["disco", "four on the floor", "two step"],
                machines: ["acoustic kit", "room kit", "909"],
@@ -449,13 +466,13 @@
                machines: ["808", "909", "acoustic kit"],
                styles: ["hold the root", "octaves"],
                instr: ["a synth bass", "fingers on a P-bass"],
-               chg: ["a minor vamp", "one chord, all night", "two-five-one"] },
+               chg: ["a minor vamp", "one chord, all night", "two-five-one"], hrw: HRSLOW },
     jungle:  { w: "a jungle record", fam: "breaks", bpm: 144, chords: "plain", when: ["the nineties", "the two-thousands"], where: ["London", "Bristol"], venue: ["a warehouse", "a club"], gtr: ["a clean electric", "a muted one", "a jazz box"], gjob: "out", keys: ["a glassy pad", "a warm pad", "a polysynth", "strings"], kjob: "pads", forms: ["dance", "twelve", "vamp", "dj"], artic: "normal", tone: { cut: 480,  q: 5,  rel: 0.70 },
                grooves: ["amen break", "jungle", "breakbeat"],
                machines: ["electronic kit", "909", "acoustic kit"],
                styles: ["hold the root", "octaves"],
                instr: ["a synth bass", "with a pick"],
-               chg: ["a minor vamp", "one chord, all night"] },
+               chg: ["a minor vamp", "one chord, all night"], hrw: HRSLOW },
     rock:    { w: "a rock record", fam: "rock", bpm: 120, chords: "plain", when: ["the sixties", "the seventies", "the eighties", "the nineties"], where: ["London", "Los Angeles", "New York"], venue: ["a stadium", "a bar", "a festival"], gtr: ["an overdriven one", "a crunchy one", "a distorted one", "a clean electric", "a re-amped DI"], gjob: "power", keys: ["an organ", "a rock organ", "a grand piano", "an upright"], kjob: "comp", forms: ["versechorus", "pop", "full", "aaba"], artic: "normal", gtrTone: { cut: 1300 }, tone: { cut: 1100, q: 2,  rel: 0.24 },
                grooves: ["straight rock", "driving rock", "stomp", "half time"],
                machines: ["acoustic kit", "room kit", "big kit"],
@@ -473,7 +490,7 @@
                machines: ["electronic kit", "room kit", "606"],
                styles: ["hold the root", "driving eighths"],
                instr: ["a synth bass", "with a pick"],
-               chg: ["one chord, all night", "a pedal"] },
+               chg: ["one chord, all night", "a pedal"], hrw: HRSLOW },
     jazz:    { w: "a jazz date", fam: "jazz", bpm: 144, chords: "sevens", when: ["the fifties", "the sixties", "now"], where: ["New York", "New Orleans", "Paris"], venue: ["a club", "a bar", "a studio"], gtr: ["a jazz box", "a nylon-string", "a clean electric"], gjob: "strum", keys: ["a grand piano", "a Rhodes", "an upright", "a church organ"], kjob: "comp", forms: ["head", "aaba", "blues"], swing: "swing", artic: "legato", gtrTone: { cut: 1000 }, tone: { cut: 1200, q: 1,  rel: 0.35 },
                grooves: ["jazz ride", "bebop", "brush swing"],
                machines: ["jazz kit", "brushes", "acoustic kit"],
@@ -485,19 +502,19 @@
                machines: ["acoustic kit", "room kit", "brushes"],
                styles: ["walk it", "root and fifth", "hold the root"],
                instr: ["fingers on a P-bass", "with a pick"],
-               chg: ["a twelve-bar blues", "the doo-wop changes"] },
+               chg: ["a twelve-bar blues", "the doo-wop changes"], hrw: HRSLOW },
     funk:    { w: "a funk record", fam: "funk", bpm: 96, chords: "nines", when: ["the seventies", "the eighties"], where: ["New Orleans", "Detroit", "Los Angeles"], venue: ["a club", "a bar", "a festival"], gtr: ["a clean electric", "a muted one", "a jazz box"], gjob: "skank", keys: ["a clav", "a Rhodes", "an organ", "an electric piano"], kjob: "skank", forms: ["vamp", "versechorus", "dance"], fig: "funk16", artic: "staccato", tone: { cut: 900,  q: 7,  rel: 0.14 },
                grooves: ["funk", "linear funk", "new orleans", "motown"],
                machines: ["acoustic kit", "room kit", "808"],
                styles: ["busy sixteenths", "octaves", "hold the root"],
                instr: ["fingers on a P-bass", "with a pick"],
-               chg: ["one chord, all night", "a minor vamp"] },
+               chg: ["one chord, all night", "a minor vamp"], hrw: HRSLOW },
     reggae:  { w: "a reggae record", fam: "latin", bpm: 96, chords: "plain", when: ["the seventies", "the eighties"], where: ["Kingston", "London"], venue: ["a dancehall", "a festival", "a yard"], gtr: ["a clean electric", "a muted one", "a jazz box"], gjob: "skank", keys: ["an organ", "a Rhodes", "a rock organ", "a grand piano"], kjob: "skank", forms: ["vamp", "dub", "versechorus"], fig: "bubble", artic: "legato", gtrTone: { cut: 1600 }, tone: { cut: 420,  q: 2,  rel: 0.55 },
                grooves: ["one drop", "steppers", "rockers"],
                machines: ["acoustic kit", "room kit", "808"],
                styles: ["hold the root", "octaves"],
                instr: ["fingers on a P-bass", "a synth bass"],
-               chg: ["a minor vamp", "one chord, all night"] },
+               chg: ["a minor vamp", "one chord, all night"], hrw: HRSLOW },
     bossa:   { w: "a bossa", fam: "latin", bpm: 120, chords: "sevens", when: ["the sixties", "the seventies"], where: ["Rio", "New York"], venue: ["a bar", "a studio", "a club"], gtr: ["a nylon-string", "a jazz box", "a steel-string acoustic"], gjob: "strum", keys: ["a grand piano", "a Rhodes", "a felt piano", "an upright"], kjob: "comp", forms: ["aaba", "versechorus", "head"], artic: "normal", tone: { cut: 1000, q: 1,  rel: 0.28 },
                grooves: ["bossa nova", "samba", "rumba", "cha cha"],
                machines: ["jazz kit", "brushes", "acoustic kit"],
@@ -509,7 +526,7 @@
                machines: ["electronic kit", "room kit", "808"],
                styles: ["hold the root", "octaves"],
                instr: ["a synth bass", "fingers on a P-bass"],
-               chg: ["a pedal", "one chord, all night"] },
+               chg: ["a pedal", "one chord, all night"], hrw: HRSLOW },
     // A CHAMBER BALLAD (PLAN.md THE THROUGH-COMPOSED THEME, the Yesterday
     // study's front-door gap): the sixties, London or Liverpool, a studio —
     // the quartet in the room and the song on the steel-string, so the
@@ -537,7 +554,7 @@
                machines: ["brushes", "room kit"],
                styles: ["hold the root", "root and fifth", "walk it"],
                instr: ["a cello", "an upright bass"],
-               chg: ["a descending line", "the doo-wop changes", "the four-chord one"] },
+               chg: ["a descending line", "the doo-wop changes", "the four-chord one"], hrw: HRSLOW },
 
     /* ---- THE OLD WORLD (2026-08-21): twelve records, Rome 600 → New York
        1892. The design law for every one of them: a pre-1900 record never
@@ -564,7 +581,7 @@
                 machines: ["brushes", "room kit"],
                 styles: ["hold the root", "octaves"],
                 instr: ["an upright bass", "a cello"],
-                chg: ["a pedal", "one chord, all night"] },
+                chg: ["a pedal", "one chord, all night"], hrw: HRSLOW },
     organum:  { w: "an organum", fam: "the old world", scale: "mode", bpm: 72, chords: "plain",
                 when: ["the twelve-hundreds"], where: ["Paris", "Reims"],
                 venue: ["a cathedral"],
@@ -576,7 +593,7 @@
                 machines: ["brushes", "room kit"],
                 styles: ["hold the root", "octaves"],
                 instr: ["an upright bass", "a cello"],
-                chg: ["a pedal", "one chord, all night"] },
+                chg: ["a pedal", "one chord, all night"], hrw: HRSLOW },
     trobar:   { w: "a troubadour song", fam: "the old world", scale: "mode", bpm: 96, chords: "plain",
                 when: ["the twelve-hundreds", "the thirteen-hundreds"],
                 // Reims is the trouvères' Champagne — the northern answer to
@@ -592,7 +609,7 @@
                 machines: ["brushes", "room kit"],
                 styles: ["hold the root", "root and fifth"],
                 instr: ["an upright bass", "a cello"],
-                chg: ["a pedal", "a descending line"] },
+                chg: ["a pedal", "a descending line"], hrw: HRSLOW },
     estampie: { w: "an estampie", fam: "the old world", scale: "mode", bpm: 120, chords: "plain",
                 when: ["the thirteen-hundreds"], where: ["Paris", "Provence"],
                 venue: ["a village green", "a court"],
@@ -604,7 +621,7 @@
                 machines: ["room kit", "brushes"],
                 styles: ["hold the root", "octaves"],
                 instr: ["an upright bass", "a cello"],
-                chg: ["a pedal", "one chord, all night"] },
+                chg: ["a pedal", "one chord, all night"], hrw: HRSLOW },
     pavane:   { w: "a pavane", fam: "the old world", scale: "mode", bpm: 72, chords: "plain",
                 // ...into the sixteen-hundreds honestly: Dowland's pavans and
                 // Sweelinck's keyboard ones are 1600s music
@@ -618,7 +635,7 @@
                 machines: ["room kit", "brushes"],
                 styles: ["hold the root", "root and fifth"],
                 instr: ["an upright bass", "a cello"],
-                chg: ["the old passamezzo", "a descending line"] },
+                chg: ["the old passamezzo", "a descending line"], hrw: HRSLOW },
     monody:   { w: "the new music", fam: "the old world", scale: "mode", bpm: 72, chords: "sus",
                 // the Camerata met through the 1590s; Le nuove musiche is
                 // 1602 — the practice straddles the century line. And the
@@ -636,7 +653,7 @@
                 machines: ["brushes", "room kit"],
                 styles: ["hold the root", "walk it"],
                 instr: ["a cello", "an upright bass"],
-                chg: ["a descending line", "a pedal"] },
+                chg: ["a descending line", "a pedal"], hrw: HRSLOW },
     concerto: { w: "a concerto", fam: "the old world", scale: "mode", bpm: 120, chords: "sevens",
                 // Corelli's concerto grosso is the 1680s: the form starts in
                 // the sixteen-hundreds and peaks in the seventeen-hundreds
@@ -676,7 +693,7 @@
                 machines: ["brushes", "room kit"],
                 styles: ["hold the root", "octaves"],
                 instr: ["an upright bass", "a cello"],
-                chg: ["the doo-wop changes", "a descending line"] },
+                chg: ["the doo-wop changes", "a descending line"], hrw: HRSLOW },
     romantic: { w: "a romantic symphony", fam: "the old world", scale: "mode", bpm: 72, chords: "sevens",
                 when: ["the eighteen-hundreds"], where: ["Vienna", "Paris"],
                 venue: ["a concert hall", "an opera house"],
@@ -689,7 +706,7 @@
                 machines: ["room kit", "brushes"],
                 styles: ["hold the root", "walk it", "octaves"],
                 instr: ["a cello", "an upright bass"],
-                chg: ["a descending line", "two-five-one", "a minor vamp"] },
+                chg: ["a descending line", "two-five-one", "a minor vamp"], hrw: HRSLOW },
     salon:    { w: "a barcarolle", fam: "the old world", scale: "mode", bpm: 96, chords: "plain",
                 // ...AND IT SAYS SIX NOW (2026-08-22). A barcarolle IS 6/8 —
                 // the gondolier's rock — and this row used to buy the lilt
@@ -719,7 +736,7 @@
                 machines: ["brushes", "room kit"],
                 styles: ["hold the root", "root and fifth"],
                 instr: ["a cello", "an upright bass"],
-                chg: ["the doo-wop changes", "a pedal"] },
+                chg: ["the doo-wop changes", "a pedal"], hrw: HRSLOW },
     parlor:   { w: "a parlor song", fam: "the old world", scale: "mode", bpm: 96, chords: "plain",
                 when: ["the eighteen-hundreds"], where: ["New York", "London"],
                 venue: ["a parlor", "a salon"],
@@ -731,7 +748,7 @@
                 machines: ["brushes", "room kit"],
                 styles: ["hold the root", "root and fifth", "walk it"],
                 instr: ["an upright bass", "a cello"],
-                chg: ["the doo-wop changes", "the four-chord one"] },
+                chg: ["the doo-wop changes", "the four-chord one"], hrw: HRSLOW },
 
     /* ---- THE RECORDS THAT COUNT IN THREE (2026-08-22) -------------------
        Meter landed as a question (ARR `meter`) and nothing on the front door
@@ -799,7 +816,7 @@
                 machines: ["room kit", "brushes"],
                 styles: ["hold the root", "octaves"],
                 instr: ["an upright bass", "a cello"],
-                chg: ["two-five-one", "a descending line"] },
+                chg: ["two-five-one", "a descending line"], hrw: HRSLOW },
     pianobar: { w: "a piano-bar waltz", fam: "rock", bpm: 120, chords: "sevens",
                 meter: "three",
                 // the modern one, and the one the panel named: most of the
@@ -930,6 +947,82 @@
   // takes the record's chord kind, so "sevenths" still colors the bars
   // nobody spelled.
   const modeArrOf = (m) => (MODESREF ? MODESREF[modeKeyOf(m.song)] : null) || IONIAN;
+
+  /* ---------- HOW FAST DO THE CHORDS MOVE ---------------------------------
+     A CHART IS NOT A BAR COUNTER. `B.CHANGES` gives a cycle one root per bar
+     and the kernel reads `at(roots, bar)`, so "the doo-wop changes" meant a
+     new chord at every single barline for the length of the record. Nobody
+     plays them that way and, measured, almost nobody records them that way.
+
+     THE CORPUS (4,449 bulk records with four or more chord runs, measured
+     through the same estimator the critic bands with):
+       * a chord lasts ONE bar 60.2% of the time, two 21.4%, three 8.0%,
+         four 4.0%, longer 6.3%;
+       * only 1.7% of real records hold every chord for the same number of
+         bars — a harmonic rhythm is a shape, not a setting;
+       * changes land at p10 0.197 / MEDIAN 0.504 / p90 0.770 of barlines,
+         and only 1.3% of real records change at 95% of them or more.
+     Against that, 30.8% of this box's records changed chord at EVERY
+     barline, and the nine idioms that scored worst against real records
+     (parlor, punk, chamber, pavane, disco, trobar, house, romantic,
+     nocturne) are exactly the nine whose changes are `fourchord`,
+     `fifties`, `descending` or `passamezzo` — the four cycles that move on
+     every bar. The idioms that scored BEST (kraut, hiphop, jungle, funk,
+     techno, jazz, reggae) are the ones that vamp. It is the cycle, not the
+     idiom and not the tempo.
+
+     So a cycle whose roots move at every barline is laid out as a PHRASE —
+     each chord held for as many bars as the record takes them at. Three
+     words, because a bandleader says all three ("two bars each"), and the
+     record narrows which two are on the table (`hrw`) the way it narrows
+     everything else: a punk record may take them a bar at a time; a pavane
+     may not. TWO THINGS ARE LEFT ALONE ON PURPOSE — a cycle that already
+     repeats a root (the vamps, two-five-one, the twelve-bar) has a harmonic
+     rhythm of its own and is not given another, and a role whose changes the
+     HAND authored is never re-timed, because the hand moves last. */
+  const HRATE = {
+    bar:    { w: "a chord a bar",   hold: 1 },
+    two:    { w: "two bars each",   hold: 2 },
+    phrase: { w: "one to a phrase", hold: 4 },
+  };
+  // "two bars each" is the unanswered default: it is the corpus's own median
+  // (a cycle laid out at two bars a chord changes at 0.500 of its barlines,
+  // against a real median of 0.504) and the one that costs a cycle nothing —
+  // every chord the arranger called is still heard, in order.
+  const HRDEF = "two";
+  const hrOf = (m) => HRATE[(m.song || {}).hr] || HRATE[HRDEF];
+  // does this cycle move at every barline? (the wrap is not counted — the
+  // passamezzo returns to its own tonic, and that is a cadence, not a hold)
+  const movesEveryBar = (roots) => roots.length >= 2 &&
+    roots.every((d, i) => i === 0 || d !== roots[i - 1]);
+  /* the cycle as a phrase. THE SECTION'S OWN LENGTH IS THE CEILING: a role
+     the arranger gave four bars gets four bars, so a four-chord cycle in it
+     is a chord a bar and stays one — an arranger who asked for a short
+     section did not ask to hear half the changes. Unanswered, the phrase
+     IS the length (`g.bars` follows `c.bars`), which is how a record that
+     says nothing comes out with eight-bar sections instead of four. */
+  const phraseOf = (m, role, c) => {
+    const want = hrOf(m).hold;
+    if (want <= 1 || !movesEveryBar(c.roots)) return { bars: c.bars, roots: c.roots };
+    const len = lenOf(m, role);
+    // TWO CHORDS IS THE FLOOR, and it is the only thing the section's own
+    // length is allowed to say here. A four-bar verse at two bars a chord
+    // hears the first two changes of the cycle and not all four — which is
+    // what "two bars each" MEANS, and a four-bar section holding two chords
+    // is the commonest four bars in music. What it may never become is ONE
+    // chord: a section with a single chord in it is a vamp and nobody
+    // called one. (The first cut of this capped the hold so the whole cycle
+    // always fit, and measured, that made the word do nothing at all on
+    // every role anybody had given four bars — the largest single group of
+    // records still changing chord at every barline.)
+    const cap = len ? Math.max(1, Math.floor(len / 2)) : want;
+    const hold = Math.max(1, Math.min(want, cap));
+    if (hold <= 1) return { bars: c.bars, roots: c.roots };
+    const roots = [];
+    for (const d of c.roots) for (let k = 0; k < hold; k++) roots.push(d);
+    return { bars: roots.length, roots };
+  };
+
   function changesOf(m, role) {
     const list = chgxOf(m, role);
     if (list) {
@@ -939,7 +1032,7 @@
       return { bars: list.length, roots: list.map((b) => b[0].d), prog,
                authored: true, word: "changes of our own" };
     }
-    const c = B.CHANGES[(m.song.chg || {})[role] || "fourchord"];
+    const c = phraseOf(m, role, B.CHANGES[(m.song.chg || {})[role] || "fourchord"]);
     const lw = (m.song.lean || {})[role];
     if (lw === "last" || lw === "mid") {
       // a lean FORCES prog materialization even under plain triads — the
@@ -1200,6 +1293,17 @@
      bar)`, so a four-chord cycle under an eight-bar chorus goes round
      twice). */
   const LENS = { short: { w: "four bars", v: 4 }, eight: { w: "eight bars", v: 8 },
+                 // TWELVE, because a record is not a stack of powers of two.
+                 // Size-matched corpus (bulk rows with the box's own 2..7
+                 // sections, n=513): only 40% of real sections are 2/4/8/16
+                 // at the median and 83% at p90 — the box was running 83%
+                 // AS ITS MEDIAN. Twelve is the length the vernacular
+                 // already owns (the blues chorus, the hymn strophe, the
+                 // sixteen-bar tune with a four-bar tag), it is the one
+                 // non-square length every theme this box can write still
+                 // tiles into whole (1, 2 and 4 bars all divide it), and it
+                 // is APPENDED so nothing that answered "four bars" moves.
+                 twelve: { w: "twelve bars", v: 12 },
                  long: { w: "sixteen bars", v: 16 } };
   const lenOf = (m, role) => {
     // ...by its OWN role, not the one whose CHANGES it borrows: an intro
@@ -1293,6 +1397,14 @@
       Object.entries(CHORDKIND).map(([k, v]) => ({
         w: v.w, is: (s2) => (s2.chords || "plain") === k,
         apply: (s2) => ({ ...s2, chords: k }) })) },
+    // ...and how fast they move, which is the other half of the same
+    // sentence and the one nobody could say (HRATE above). The record
+    // narrows it to the two words that record would use, so a punk record
+    // may take the four-chord one a bar at a time and a pavane may not.
+    { id: "hr", ask: "how fast do the chords move?", opts:
+      Object.entries(HRATE).map(([k, v]) => ({
+        w: v.w, is: (s2) => (s2.hr || HRDEF) === k,
+        apply: (s2) => ({ ...s2, hr: k }) })) },
     { id: "key", ask: "what key are we in?", opts: Object.keys(B.KEYS).map((k) => ({
         w: "in " + k, is: (s) => s.key === k, apply: (s) => ({ ...s, key: k }) })) },
     { id: "mode", ask: "major or minor?", opts: [
@@ -1625,7 +1737,8 @@
   // guitar `called()` casts on a chair that has not spoken — so appending
   // moves no render, and what it does move is which side of the rack's two
   // rows a word is drawn under.)
-  const WORDSOF = { groove: "grooves", job: "styles", instr: "instr", form: "formw" };
+  const WORDSOF = { groove: "grooves", job: "styles", instr: "instr", form: "formw",
+                    hr: "hrw" };
   // the keys chair asks "what are you playing?" under the same id the bass
   // does, so the narrowing table is per SEAT, not per question id alone
   const KEYSOF = { instr: "keys" }, GTROF = { instr: "gtr" };
@@ -1745,7 +1858,16 @@
       if (roles.length) {
         const r = roles[Math.floor(R() * roles.length)];
         const n = 3 + Math.floor(R() * 6);
-        const list = Array.from({ length: n }, () => [{ d: Math.floor(R() * 7) }]);
+        // ...and A HAND WRITING CHANGES WRITES A PHRASE. Rolling n bars of n
+        // different roots is the one place the dice was still manufacturing
+        // the fault HRATE exists to end (a new chord at every barline, which
+        // 1.3% of real records do). So a bar sometimes holds the one before
+        // it — measured against the corpus's own pooled shape, where 60% of
+        // chords last a bar and 21% last two.
+        const list = [];
+        for (let b = 0; b < n; b++)
+          list.push(b && R() < 0.4 ? list[b - 1].map((x) => ({ ...x }))
+                                   : [{ d: Math.floor(R() * 7) }]);
         // ...and sometimes its last bar leans home — the turnaround, as data
         if (R() < 0.5) list[n - 1] = [dominantOf(list[0][0], modeArrOf(m))];
         m = setChanges(m, r, list);
@@ -2402,7 +2524,8 @@
         melody = { phrase: ph, genre: {
           ...g, label: "Idea", voices: 1, part: () => "lead",
           // the idea's OWN register — a tune is not where the chords are
-          realize: () => "line", reg: () => Id.regOf(theme),
+          realize: () => "line",
+          reg: () => tuneReg(Id.regOf(theme), g.key | 0) - LAYER_LIFT,
           // the tune is on the instrument of whoever picked it up.
           // A LAYER'S SEAT IS ITS OWN: `...g` copies the band's two-chair
           // `chairs` seam onto this one-voice layer, and derive.js
@@ -2448,7 +2571,8 @@
       const vg = Vo.toGenre(vm);
       const voice = vg.silent ? null : { phrase: Vo.toPattern(vm), genre: {
         ...g, label: "Voice", voices: 1, part: () => vg.part,
-        realize: () => (vg.pad ? "pad" : "line"), reg: () => stand(vg.part, vg.reg),
+        realize: () => (vg.pad ? "pad" : "line"),
+        reg: () => stand(vg.part, vg.reg) - LAYER_LIFT,
         // "a voice must not lose its own recording" — same law as the
         // melody's chair above: the layer declares its OWN one-seat chairs,
         // or the band's inherited pair answers for it
@@ -2472,7 +2596,7 @@
       // THE SECTION'S OWN LENGTH, with the changes repeating inside it —
       // and an AUTHORED list's length IS the length, outranking any stale
       // length answer (setChanges retires the question and its answer)
-      const bars = (c.authored ? null : lenOf(m, role)) || g.bars;
+      const bars = (c.authored ? null : lenOf(m, role) || ROLEBARS[role]) || g.bars;
       return { role, i, genre: g, bars, per, melody, voice,
                pattern: Ky.toPattern(taker.chair === "keys" && melody
                  ? Ky.say(km, "job:out") : km),
@@ -2521,6 +2645,20 @@
   // a way in, a way out, and the hole in the middle: the sections a tune is
   // not AT HOME in, whatever else a record is made of
   const DOORROLE = { intro: 1, outro: 1, tag: 1, break: 1 };
+  /* ...AND A DOOR IS NOT A VERSE, so it is not a verse LONG either. Only the
+     three called roles (verse / chorus / bridge) can be asked how long they
+     are; everything else took the length of the changes it borrowed, so an
+     intro was as long as the verse and a tag was as long as the chorus and
+     the record came out a rectangle. Measured over 6,540 records, 29% used
+     ONE length for every section, where a real record of 2..7 sections uses
+     a different length for half of them at p10 and all of them at the median
+     (struct-bands.json distinctLens, n=513). These are the lengths the roles
+     already mean — a band arrives in four, a solo takes a chorus and a half,
+     a tag is four bars out the door — and an answered length still wins. */
+  const ROLEBARS = { intro: 4, outro: 8, tag: 4, break: 4, build: 8, solo: 12 };
+  // the roles a record LIFTS INTO — where the tune arrives and the band
+  // opens up. Read by the verse's hold-back below, and by nothing else.
+  const LIFTROLE = { chorus: 1, drop: 1 };
   const homeRole = (fsecs) => (fsecs.includes("head") ? "head"
     : fsecs.includes("verse") ? "verse"
     : (fsecs.find((r) => !DOORROLE[r]) || fsecs[0]));
@@ -2552,6 +2690,67 @@
     if (!fsecs.some((r) => r !== "tag" && (ROLE[r] || {}).idea) &&
         role === homeRole(fsecs))
       d.idea = "keys";
+    /* A VERSE ONLY SITS BACK WHEN THERE IS SOMEWHERE TO GO ------------------
+       PLAN.md says a chorus lifts, and this file's own ROLE table moves four
+       things to make it happen. MEASURED at scale it does not: over the
+       records that have both a verse and a chorus, the chorus came out
+       SMALLER than the verse in pitched parts 61% of the time (median lift
+       0.92, against the ~2.0 the Pet Shop Boys study measured across 17
+       records), and the shape that dominated was "the verse with more
+       drums" — the kit up 1.65x while the parts went nowhere.
+
+       The cause is arithmetic, not taste. A verse has BOTH pitched chairs
+       comping (measured 6.95 + 7.32 notes a bar); the chorus takes one of
+       them away, because whoever picks up the tune stops playing chords —
+       one chair is one pair of hands, which is right — and the tune only
+       puts back 4.9. So the biggest moment in the record was two chairs
+       becoming one and a half.
+
+       The band's answer is not to give the pianist three hands. It is that
+       THE VERSE WAS TOO FULL: a rhythm guitar strumming every bar under a
+       comping keyboard for the whole verse leaves the chorus nothing to
+       add. So a verse whose record HAS a chorus lets the guitar ring —
+       long chords, out of the way — and takes it back when the tune
+       arrives. A verse with nowhere to go (strophic, a vamp, a jazz head)
+       is untouched: it is the whole record, and thinning it would just be a
+       thinner record. Anybody can still say otherwise; this is what nobody
+       had to say. */
+    if (!d.guitar && LIFTROLE[fsecs[i]] === undefined &&
+        (role === "verse" || role === "head") && fsecs.some((r) => LIFTROLE[r]))
+      d.guitar = "ring";
+    /* ...AND THE TUNE ARRIVES ON A PAIR OF HANDS THAT IS FREE.
+       The other half of the same arithmetic. `ROLE.chorus` hands the tune to
+       the keys, and the keys are the chair already holding the chords, so
+       the chorus paid for its melody by losing its accompaniment. A band
+       does not do that: in a chorus THE SINGER takes the tune and the
+       players keep playing. So where a record has a singer in the room, a
+       lifting section gives them the tune; where it does not (an
+       instrumental — the vocal chair laid out), the keys take it exactly as
+       before, because a tune on a voice nobody hired is not an arrangement.
+       A section's own answer still outranks this, like every other default
+       in this table. */
+    if (d.idea === "keys" && LIFTROLE[role] && !Vo.toGenre(m.voice).silent)
+      d.idea = "voice";
+    if (LIFTROLE[role] && !d.pipe) d.pipe = "thirds";
+    /* ...AND A RETURN IS NOT A REPEAT (PLAN.md THE THEME COMPOSER §5).
+       The transform words existed and nothing ever said one: every time the
+       tune's home role came round again it played the identical phrase over
+       the identical changes. That is the shape the corpus is most emphatic
+       about — `halfExactSame` (four bars of tune repeated note for note) has
+       a MEDIAN OF 0.00 in every stratum of the bulk corpus and a p90 of 0.00
+       among records of this box's length; real writing keeps the rhythm and
+       moves the notes. And it is the box's own written law: "the same theme
+       over different sections' changes is the Jimmy Webb engine".
+       So the SECOND time a theme-carrying section comes round it goes up a
+       step, and later returns stretch out — the sequence's own move first,
+       because that is the one every idiom in the catalog owns. The first
+       statement is never touched (a theme is stated whole before it is
+       anything else) and a section that says its own `back` wins. */
+    if (d.idea && d.idea !== "no" && !d.back) {
+      const nth = fsecs.slice(0, i).filter((r) => r === role).length;
+      if (nth === 1) d.back = "up";
+      else if (nth >= 2) d.back = nth % 2 ? "aug" : "up";
+    }
     // the drummer plays the band into the change; nobody has to ask
     if (next && next !== role) d.lift = true;
     // A CALLED SPACE OWNS THE SCHEDULE. "One hit every four bars" is a
@@ -2861,6 +3060,39 @@
   const CEIL  = { riff: 1, drone: 2, pad: 1, stab: 1, line: 1, counter: 1, lead: 1 };
   const stand = (part, reg, F) => Math.max((F || FLOOR)[part] == null ? -1 : (F || FLOOR)[part],
                                         Math.min(CEIL[part] == null ? 1 : CEIL[part], reg));
+
+  /* ---------- THE SEAM TAKES AN OCTAVE, SO THE WORD HAS TO GIVE IT BACK ----
+     `ui/derive.js` renders every STACKED layer at `L.reg(v) + 1`. That is the
+     daw's own convention and it is right there: a layer is a second synth
+     sitting ON TOP of the box, a bright 303 over a dark one. On this page a
+     layer is not that. It is THE TUNE and THE SINGER, and "down low / where
+     it sits / up high" (ideas-kit REG) are a writer's words about where a
+     line lives — words the seam was quietly overruling by an octave.
+     MEASURED, over 6,540 records: the tune's median note came out at MIDI 85
+     against a corpus band of 62..81 (p10..p90 of 2,042 real melodies,
+     lib/bands.json melCentre, median 71.5), and 10.9% of records put a note
+     above MIDI 108 — off the top of a piano, which is `test/unit/dice.test.js:79`'s
+     own law. THE DICE GATE CANNOT SEE IT: it renders the melody genre
+     directly (`K.render(s.melody.phrase, s.melody.genre, …)`) and the octave
+     is added downstream of that call, in the bar list the transport actually
+     plays. So the two layers this page builds declare their register one
+     octave BELOW their word, the seam adds it back, and the word comes true.
+     Nothing else in the box moves: `+1` stays exactly what it is for every
+     other stacked layer in nukernel. */
+  const LAYER_LIFT = 1;
+
+  /* ...AND THE TUNE'S OWN CEILING, for the same reason FLOOR and CEIL exist
+     above: THE REGISTER WORD AND THE KEY BOTH SHIFT OCTAVES AND THEY STACK.
+     A theme written "up high" is a lead part (PARTS.lead, another octave)
+     over the record's own key (kernel.js adds it last), and measured over
+     1,074 melody layers across 400 rolls the top note of a tune runs about
+     87 + 12·reg + key: at reg 1 it tops out at 99 in C, 104 in E flat, 107
+     in E and 112 in G — off the end of the piano, which is
+     test/unit/dice.test.js:79's law and was found by it (roll 150). The
+     four keys that sit a minor third or more above C therefore take a tune
+     "up high" one octave lower, exactly the way a singer would. Below that
+     nothing moves, and the word means what it says. */
+  const tuneReg = (r, key) => Math.min(r, key >= 3 ? 0 : 1);
 
   function toGenre(m, MODES, changes, dm, bm, km, gm) {
     const drums = dm || m.drums, bass = bm || m.bass, keys = km || m.keys;
