@@ -700,6 +700,9 @@ function sentStrip(theme) {
 // other). `module_` now only names WHOSE question that is; each area's
 // heading is the button that brings its questions to the floor.
 let module_ = "song";
+// ...and whether the FRONT DOOR is standing (below): true whenever no
+// record has been called, which is what folds every area shut.
+let doorShut = false;
 
 // the heading-word of an area, as a button: tap "themes"/"song"/"band" and
 // that area's next question comes to the floor
@@ -736,7 +739,13 @@ function navOf(inner, label) {
 }
 function foldOf(key, sumLine) {
   const det = el("details");
-  if (!closed.has(key)) det.open = true;
+  // ...and EVERY fold is shut while the front door stands (below): until a
+  // record has been called there is nothing below the door to read, and a
+  // page of open areas is exactly what buried the three questions that make
+  // the record. `closed` is untouched by this — the hand's own folds are
+  // remembered separately — so the moment the record is called every area
+  // opens again, which is how you SEE that it just did.
+  if (!closed.has(key) && !doorShut) det.open = true;
   const sum = el("summary");
   sum.addEventListener("click", (e) => {
     if (e.target.closest("button,label,input,select")) return e.preventDefault();
@@ -1035,6 +1044,158 @@ function chgxWidget(role) {
 let floorQ = null;                 // the question on the floor, as the areas render it
 let lastQ = null;                  // ...and the previous draw's, to see it advance
 
+/* ---------- THE FRONT DOOR -----------------------------------------------
+   (2026-08-22, Paul, looking at his own screen: "There no count it in
+   button.") He was right, and the bug was bigger than the button. The
+   invitation was drawn only while `model.on` was false — a state a page
+   leaves once and never comes back to — so a RETURNING visitor (the session
+   is remembered in localStorage) landed mid-interview with no way in, and
+   "start again" reset the model without changing the shape of the screen.
+   Measured on the live page before this: reload after one answer gave
+   `hasCountIn: false`, the question "where are you?" sitting on the floor of
+   a page otherwise full of themes, boxes, six chairs and the producer.
+
+   So the door is not a state of the boot any more, it is a state of the
+   RECORD: it stands whenever nothing has been called (`song.genre` unset) —
+   a virgin visit, a remembered half-answered session, and every "start
+   again" — and it carries three things and nothing else:
+
+     · one line saying what this is and what to do,
+     · "count it in" (the exact words the gates tap, a real <button>), which
+       still lands the demonstration record the room opens with, and
+     · THE RUN: when · where · the room, one question at a time, with the
+       ones already said standing above it as facts you can tap to change.
+
+   It is not a second view and not a mode — the page is the same single
+   scroll it always was, and the four areas are still drawn, in order, with
+   their own headings. They are FOLDED (foldOf reads `doorShut`), which is
+   the page's own idiom for quiet, and they unfold the instant a record is
+   called. That way nothing below the door competes with the question, no
+   gate loses a node it reads, and the opening is something you watch
+   happen rather than a screen you are moved to.
+
+   The one-question law is untouched: the door holds the floor only when the
+   floor is the arranger's own (the song area, nothing else being re-asked),
+   which is exactly when its three would have been the next question anyway.
+   Tap "producer" or "themes" and that area's question takes the floor as it
+   always did — the door keeps its line and its trail and asks nothing. */
+const THREE = ["when", "where", "venue"];
+// the door's own rows: the three, and — only when all three are said and
+// they STILL leave several records standing — the record itself. Three
+// answers usually call one (the last one standing is called without being
+// asked), but "the seventies · London · a bar" is four records deep, and a
+// door that runs out of questions with nothing called would hand the last
+// word to a question folded away inside the song area.
+const doorRows = () => {
+  const ds = seatDecisions(model, "arranger");
+  const rows = THREE.map((f) => ds.find((d) => d.id === f)).filter(Boolean);
+  if (rows.length && rows.every((d) => d.answered)) {
+    const g = ds.find((d) => d.id === "genre");
+    if (g) rows.push(g);
+  }
+  return rows;
+};
+// which row holds the floor, if the door holds it at all
+function doorQ(rows) {
+  if (module_ !== "song" || section != null) return null;
+  if (asking != null) return rows.find((d) => d.id === asking) || null;
+  return rows.find((d) => !d.answered) || null;
+}
+
+// the question, drawn the way every other question on this page is drawn —
+// a fieldset, its legend the .dq, plain radio-labels, the .dcols grid once
+// the list runs long (fourteen decades does)
+function doorAsk(d) {
+  const ask = el("fieldset", "dask");
+  ask.append(el("legend", "dq", d.ask));
+  const row = d.opts.length > LONG ? el("div", "dcols") : ask;
+  for (const o of d.opts)
+    row.append(optWidget(o.w, "dopt" + (o.answered ? " on" : ""), {
+      kind: "radio", name: "q-arranger-" + d.id, on: !!o.answered,
+      key: "opt|arranger|" + d.id + "|" + o.w,
+      take: () => {
+        const before = model;
+        model = answer(model, "arranger", d.id, o.w);
+        if (model !== before) {
+          // SAYING SOMETHING COUNTS THE BAND IN. `on` is what arms the
+          // auto-start (the `armed` hook at the foot of this file), and a
+          // visitor who answers the first question rather than tapping the
+          // chip should hear the record they are calling, not silence.
+          if (!model.on) model = { ...model, on: true };
+          push(false); announce("arranger", null);
+        }
+        asking = null;
+        draw();
+      } }), " ");
+  if (row !== ask) ask.append(row);
+  return ask;
+}
+
+// the door. Returns whether it took the floor — the song area's arranger
+// sheet renders quiet when it did, so the page never carries two questions.
+function frontDoor(box) {
+  const rows = doorRows();
+  const q = doorQ(rows);
+  const s = el("section", "ddoor");
+  s.append(el("p", "dprose",
+    "A band, and a record made of three answers: when it is, where you are, " +
+    "and the room you play in. Count it in and say."));
+  const c = el("button", "dchip", "count it in");
+  c.type = "button";
+  c.dataset.k = "start";
+  c.addEventListener("click", () => {
+    const was = model.on;
+    model = { ...model, on: true };
+    if (!was) ledger.push("a band, waiting to be told what the tune is");
+    // COUNTING IN STARTS THE RECORD (2026-08-22, Paul: "The start again
+    // 'default' song should play and interpret the theme and its answer
+    // across a verse-chorus structure"). A first count-in lands the whole
+    // record (`push(true)` — the session skeleton adopt); counting in a
+    // session that is already standing only pushes what it has, because a
+    // skeleton adopt would throw away a returning visitor's board.
+    push(!was); draw();
+    if (!playing) startAt(0);
+    playWord(true);
+  });
+  s.append(c);
+  // THE RUN, as the same name-and-value rows the gig sheet is made of: an
+  // answered one says its word, the one in front of you says its question
+  // and carries it. Three rows, always — you can see the whole path from
+  // the first tap, which is the difference between a run and a surprise.
+  const tree = el("ul", "dtree ddoorrun");
+  for (const d of rows) {
+    const li = el("li");
+    // the one in front of you IS its question — the row would only say the
+    // legend twice, which is what the whole door exists to stop
+    if (q && q.id === d.id) { li.append(doorAsk(d)); tree.append(li); continue; }
+    const dl = el("dl");
+    const f = el("button", "dfact", d.id);
+    f.type = "button";
+    f.dataset.k = "fact|" + d.id;
+    f.title = d.answered ? "change it: " + d.ask : d.ask;
+    f.addEventListener("click", () => {
+      module_ = "song"; section = null;
+      asking = asking === d.id ? null : d.id; draw(); });
+    dl.append(term(f), el("dd", null, d.answered || d.ask));
+    li.append(dl);
+    tree.append(li);
+  }
+  s.append(navOf(tree, "the record"));
+  box.append(s, el("hr"));
+  if (q) floorQ = "arranger|" + q.id + "|door";
+  return !!q;
+}
+
+// ...and once it IS called, the record says its own name at the top — the
+// three answers it was made of, in one line. It is the headline of the page
+// the door just opened, and it is what a returning visitor reads first.
+function calledLine() {
+  const gk = Band.GENRES[model.song.genre];
+  const said = THREE.map((f) => model.song[f]).filter(Boolean).join(" · ");
+  return el("p", "dprose dcalled",
+    (gk ? gk.w : model.song.genre) + (said ? " — " + said : ""));
+}
+
 function draw() {
   const box = $("dwrap");
   const wasIn = box.contains(document.activeElement);
@@ -1053,6 +1214,9 @@ function draw() {
 
 function render(box) {
   box.textContent = "";
+  // THE DOOR IS A STATE OF THE RECORD, not of the boot: it stands whenever
+  // nothing has been called, and every fold below reads this.
+  doorShut = !model.song.genre;
   // TAP AWAY FROM ANYTHING. Nothing here has to be dismissed: tapping the
   // floor closes whatever is open (a section being arranged, a fact being
   // changed), and tapping another thing just opens that one instead.
@@ -1064,33 +1228,13 @@ function render(box) {
     pverb = null; psubj = null; draw();
   };
 
-  // BEFORE THE COUNT-IN there is nothing to arrange: one sentence and one
-  // word. The three areas appear when the band exists.
-  if (!model.on) {
-    const start = el("section");
-    start.append(el("p", "dprose",
-      "A band: an arranger, a drummer, a bass player, keys, a guitar, a " +
-      "voice and an engineer. Count it in and answer what it asks."));
-    const c = el("button", "dchip", "count it in");
-    c.type = "button";
-    c.dataset.k = "start";
-    c.addEventListener("click", () => {
-      model = { ...model, on: true };
-      ledger.push("a band, waiting to be told what the tune is");
-      // COUNTING IN STARTS THE RECORD (2026-08-22, Paul: "The start again
-      // 'default' song should play and interpret the theme and its answer
-      // across a verse-chorus structure"). It did not: `push(true)` sets
-      // `settling`, which is exactly what holds the auto-start off while a
-      // whole record lands, so counting in left a demonstration record
-      // standing there in silence until you answered something. The dice
-      // has started its own roll since it existed; this is the same line.
-      push(true); draw();
-      if (!playing) startAt(0);
-      playWord(true); });
-    start.append(c);
-    box.append(start);
-    return;
-  }
+  // THE FRONT DOOR, whenever no record has been called (frontDoor above):
+  // the invitation, "count it in", and the run of three. The areas below are
+  // still drawn — one page, one scroll, no modes — but folded shut, and the
+  // arranger's own sheet renders QUIET while the door holds the floor, so
+  // exactly one question is ever on it.
+  const doorFloor = doorShut ? frontDoor(box) : false;
+  if (!doorShut) box.append(calledLine());
 
   // ---- THEMES ---- (the ideas module by its right name — PLAN Phase 2
   // renames the organ; the page starts saying the word now)
@@ -1106,9 +1250,19 @@ function render(box) {
   // The theme itself, written down: the staff stands whenever the record
   // has the tune, and follows every edit — a lifted note, a new key —
   // because draw() recompiles the ABC each pass and re-engraves on change
-  const staff = themeStaff(model);
+  // ...and NOT while the front door stands: the themes area is folded shut,
+  // so an engraving there is a picture nobody can see — and drawing it would
+  // fire the lazy `import()` of the abcjs chunk during boot, BEFORE the
+  // service worker has taken control of this page's fetches, which is a
+  // request the worker never sees and therefore never caches. Measured:
+  // engraving at boot made band-offline.test.js fail on exactly one URL with
+  // the wire cut, /vendor/abcjs/*. The staff engraves when the record is
+  // called, seconds later, through the worker, and is cached like everything
+  // else. (themeStaff's own null branch clears the kept hosts; skipping the
+  // call leaves them alone, which is what a fold wants.)
+  const staff = doorShut ? null : themeStaff(model);
   if (staff) dThemes.append(staff);
-  if (module_ === "ideas" && section == null) chairArea(dThemes, "arranger", true);
+  if (module_ === "ideas" && section == null) chairArea(dThemes, "arranger", true, doorFloor);
   box.append(sThemes, el("hr"));
 
   // ---- SONG ---- the record's structure AS AN OUTLINE (2026-08-21): the
@@ -1216,7 +1370,7 @@ function render(box) {
   }
   // the song's outline is the way around the record: a landmark
   dSong.append(navOf(tree, "the song's sections"));
-  if (section == null && module_ === "song") chairArea(dSong, "arranger", false);
+  if (section == null && module_ === "song") chairArea(dSong, "arranger", false, doorFloor);
   box.append(sSong, el("hr"));
 
   // ---- THE BAND ---- the members, each a plain block that says how much
@@ -1715,7 +1869,11 @@ const outMatch = (p, d) => (p.endsWith("*") ? d.id.startsWith(p.slice(0, -1))
 // is asked its own questions in order; an answered one lands on the GIG
 // SHEET and stays tappable, so changing your mind is tapping what you
 // said. Rendered into whichever area owns the floor right now.
-function chairArea(parent, who, ideasOnly) {
+// `quiet` — the sheet without its floor question: the front door is asking
+// the arranger's next question at the top of the page, and two questions on
+// one page answer each other. Every fact still renders (a returning session's
+// answers are the record so far); only the fieldset is withheld.
+function chairArea(parent, who, ideasOnly, quiet) {
   // this seat's questions: the interview, then one per subject of whatever
   // words the player still has
   const groups = new Map();
@@ -1783,7 +1941,13 @@ function chairArea(parent, who, ideasOnly) {
   const ipfx = themeNow() === "b" ? "ideaB:" : "idea:";
   const asks0 = Band.asked(model, who)
     .filter((d) => (ideasOnly ? d.id.startsWith(ipfx) || d.id === "second"
-                              : !d.id.startsWith("idea") && d.id !== "second"));
+                              : !d.id.startsWith("idea") && d.id !== "second"))
+    // ONE HOME PER QUESTION (the COVERS law, one line down): while the front
+    // door stands, when/where/the room are ITS rows. They come back to the
+    // arranger's sheet — under "the record", where the outline puts them —
+    // the moment a record is called and the door goes.
+    .filter((d) => !(doorShut && who === "arranger" && !ideasOnly &&
+                     (THREE.includes(d.id) || d.id === "genre")));
   const asked = new Set(asks0
     .flatMap(d => d.opts.map(o => o.w)));
   const asks = [
@@ -2022,7 +2186,7 @@ function chairArea(parent, who, ideasOnly) {
     });
     parent.append(again);
   }
-  if (!q) return;
+  if (!q || quiet) return;
   floorQ = who + "|" + q.id + (ideasOnly ? "|ideas" : "");
   // a question and its answers are ONE form group — fieldset binds the
   // options to the legend, which stays the .dq the gates read. An interview
@@ -2309,7 +2473,18 @@ $("ddice").addEventListener("click", () => {
 });
 $("dplay").addEventListener("click", () => {
   if (playing) { stop(); playWord(); }
-  else if (model.on) { startAt(0); playWord(true); }
+  else {
+    // ...and PLAY COUNTS THE BAND IN TOO. `on` used to gate this key, which
+    // meant that on a first visit — the one state where it is false — the
+    // transport's own play button did nothing at all. There is a record
+    // standing in the room from the first paint (the demonstration record);
+    // the key that says play should play it.
+    // (no push: the record has been in SONG/GENRES since boot — `on` is what
+    // ARMS the page, not what compiles it, and pushing here would start the
+    // engine a second time through the `armed` hook)
+    if (!model.on) { model = { ...model, on: true }; draw(); }
+    startAt(0); playWord(true);
+  }
 });
 // THE PLAY KEY SAYS ITS OWN STATE IN A WORD — "play" or "stop", never a
 // glyph (PLAN Phase 1). `startAt` opens the engine asynchronously, so the
