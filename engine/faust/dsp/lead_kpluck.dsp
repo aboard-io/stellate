@@ -18,8 +18,38 @@ dec(tau) = ba.impulsify(gate) : (+ ~ *(ba.tau2pole(tau)));
 // csound pluck's per-sample averaging kills HF almost immediately — darken the
 // excitation AND the loop hard or the faust string reads 2 octaves brighter
 burst = no.noise * dec(0.004) : fi.lowpass(2, 2800);
-ks(f) = (+(burst) : de.fdelay4(4096, max(2, ma.SR/max(f,40) - 1.5)))
-        ~ (fi.lowpass(1, 2000) : *(0.996));
+
+// THE LOOP WAS THREE SAMPLES TOO LONG — the same error lead_pluck.dsp carried,
+// for the same reason, and fixed the same way. `SR/f - 1.5` pays for the one
+// sample Faust's `~` puts in the feedback path and half a sample of guesswork,
+// and pays nothing for the damping filter, which is not free: fi.lowpass(1,
+// 2000) is filters.lib's bilinear one-pole, a pole at p = (c-1)/(c+1) with
+// c = 1/tan(PI*2000/SR) plus a Nyquist zero worth half a sample, and its phase
+// delay at the bottom of the range is 3.49 samples. So every string ran 2.99
+// long, and a delay d samples too long is 1731*d/P cents flat with P = SR/f —
+// an error that grows with the note.
+//
+// Measured on the shipped module (the estimator has three detuned strings, a
+// chorus and a flanger to see through, so the low end is noisy and the middle
+// is the honest read): MIDI 60 -11 c, 64 -38 c, 66 -44 c, 68 -48 c, 70 -56 c,
+// 72 -63 c, 74 -78 c — implied d ~2.9-3.1 through that whole span.
+//
+// The compensation is computed per STRING at that string's own fundamental,
+// which matters here in a way it does not in lead_pluck: `str` below sounds
+// f, f*1.0013 and f*2 through this same function, and the octave string was
+// running twice as many cents flat as the fundamental one. A pre-warp on
+// `freq` could not have fixed that; subtracting each string's own filter delay
+// does. Nothing about the damping or the detuning changes, only the lengths.
+//
+// Every argument is a slider expression, so Faust hoists the transcendentals
+// into the block's control code. |p| < 1 always, so 1 - p*cos(w) never reaches
+// zero and plain `atan` needs no quadrant.
+lpPole(fc) = (c - 1.0)/(c + 1.0) with { c = 1.0/tan(ma.PI*fc/ma.SR); };
+lpDelay(fc, f0) = 0.5 + atan(p*sin(w)/(1.0 - p*cos(w)))/w
+  with { p = lpPole(fc); w = 2.0*ma.PI*f0/ma.SR; };
+ks(f) = (+(burst) : de.fdelay4(4096, max(2, ma.SR/fq - 1.0 - lpDelay(2000, fq))))
+        ~ (fi.lowpass(1, 2000) : *(0.996))
+  with { fq = max(f, 40); };
 
 // csound: pluck(1) + pluck(0.5)*0.5 + octave pluck(0.34)*0.42 -> 1 / 0.25 / 0.14
 str = ks(freq) + ks(freq*1.0013)*0.25 + ks(freq*2)*0.14;

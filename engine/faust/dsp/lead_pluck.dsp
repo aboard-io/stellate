@@ -17,7 +17,49 @@ gain   = hslider("gain", 0.5, 0, 2, 0.01);
 
 dec(tau) = ba.impulsify(gate) : (+ ~ *(ba.tau2pole(tau)));
 burst = no.noise * dec(0.004) : fi.lowpass(2, 3500);   // pre-darkened excitation
-dl    = max(2, ma.SR/max(freq, 40) - 1.5);
+
+// THE LOOP WAS THREE SAMPLES TOO LONG, AND THAT WAS THE WHOLE TUNING ERROR.
+// A Karplus-Strong string sounds at SR divided by the delay round the WHOLE
+// loop, and this loop is three things, not one: the delay line, the damping
+// filter's own phase delay, and the single sample Faust's `~` puts in every
+// feedback path. The line was `SR/f - 1.5`, which pays for the `~` and half a
+// sample of guesswork and pays nothing at all for the filter — and
+// `fi.lowpass(1, damp)` is not free. It is filters.lib's bilinear one-pole,
+// tf1s(0,1,1,2*PI*damp): a pole at p = (c-1)/(c+1) with c = 1/tan(PI*damp/SR),
+// and a zero at Nyquist that carries half a sample of its own. At the default
+// damp = 2000 that is a phase delay of 3.49 samples where 0.5 was budgeted, so
+// the string ran 2.99 samples long at EVERY pitch.
+//
+// A delay d samples too long is 1731*d/P cents flat and P is SR/f, so the
+// error grows with the note — which is what it did. Measured on the shipped
+// module (and the implied d beside it): MIDI 36 -8 c (d 2.98), 48 -15 c
+// (2.97), 60 -30 c (2.94), 72 -59 c (2.87), 76 -73 c (2.83). Middle C a third
+// of a semitone flat, and the top of the range two thirds.
+//
+// THE FIX IS stk_guitar's, NOT gtr_amp's: make the loop's total delay right
+// rather than fit a pre-warp on top of a wrong one. stk_guitar can afford a
+// linear-phase FIR3 whose delay is exactly one sample at every frequency; this
+// string cannot, because `damp` is a CUTOFF IN HERTZ the engine writes across
+// 500..12000 and a symmetric three-tap FIR has no such knob. So the phase
+// delay is computed instead — exactly, at the note's own fundamental, from the
+// same bilinear coefficient fi.lowpass derives from — and subtracted from the
+// line. Nothing about the damping changes; only the length does. The declining
+// d in the measurements above is this function's own curve: the analytic value
+// is 2.984 at MIDI 36 and 2.871 at MIDI 76, against 2.98 and 2.83 measured.
+//
+// `dl` depends only on sliders, so Faust hoists all of it into the block's
+// control code — the transcendentals cost nothing per sample.
+// The denominator is 1 - p*cos(w) and |p| < 1 always, so it never reaches zero
+// and plain `atan` is safe (no quadrant to resolve).
+lpPole(fc) = (c - 1.0)/(c + 1.0) with { c = 1.0/tan(ma.PI*fc/ma.SR); };
+lpDelay(fc, f0) = 0.5 + atan(p*sin(w)/(1.0 - p*cos(w)))/w
+  with { p = lpPole(fc); w = 2.0*ma.PI*f0/ma.SR; };
+f0    = max(freq, 40);
+// max(2,...) is the pre-existing floor and still the last word: asked for a
+// damp far below the note's own fundamental (500 Hz under a 4 kHz string) the
+// compensation is longer than the period, and a too-short line is the only
+// answer left.
+dl    = max(2, ma.SR/f0 - 1.0 - lpDelay(damp, f0));
 ks(x) = (+(x) : de.fdelay4(4096, dl)) ~ (fi.lowpass(1, damp) : *(0.995));
 
 env = en.asr(0.001, 1, release, gate);   // note-off just shortens the ring

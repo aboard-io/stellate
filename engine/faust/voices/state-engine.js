@@ -1435,12 +1435,33 @@
         // csound amp 0.3 * level 0.7 => external scale = 1.333 * amp * level
         extGainPerAmp: 1.333 * lvl, params: {} };
       case "sampler": return samplerUnit();
-      case "pluck":   return { ...base, module: "lead_pluck",  params: { ...base.params, cutoff: clamp(c, 200, 14000), res, damp: 2000,
+      // A REGISTER FENCE ON THE PLUCKS, for the same reason the dx7 family and
+      // the piano have one: these are Karplus-Strong strings whose loop gain is
+      // `0.995 * |H_lowpass(damp)|`, and at damp 2000 that is 0.978 per
+      // traversal at 370 Hz and 0.950 at 660 Hz — the note stops ringing before
+      // it has sounded. Measured on the shipped module, |X(f0)| collapses
+      // 2.5e+1 -> 1.7e+0 -> 2.0e-2 -> 1.7e-3 across MIDI 66/72/76/78, and above
+      // that the loudest thing in the output is a ~50 Hz rumble rather than the
+      // note. Without a fence these inherited the lead default of 4000 Hz, so
+      // the engine was handing them notes they cannot say and getting
+      // present-but-silent bars — the dx7 dropout, in a different family. 700 Hz
+      // is MIDI 77, one semitone over the last register that measures loud, and
+      // mapEvents' SYNTH REGISTER FOLD drops anything above it an octave, in
+      // key, into a register the string can actually voice.
+      case "pluck":   return { ...base, module: "lead_pluck", freqMax: 700, params: { ...base.params, cutoff: clamp(c, 200, 14000), res, damp: 2000,
         ...(plucky ? { release: rel, fenv: fev } : {}) } };
-      case "kpluck":  return { ...base, module: "lead_kpluck", flangeFromTime: true, params: { ...base.params, cutoff: clamp(c, 200, 14000), drive: clamp(m.drive || 0, 0, 1) } };
+      case "kpluck":  return { ...base, module: "lead_kpluck", freqMax: 700, flangeFromTime: true, params: { ...base.params, cutoff: clamp(c, 200, 14000), drive: clamp(m.drive || 0, 0, 1) } };
       case "fuzz":    return { ...base, module: "lead_fuzz",   params: { ...base.params, cutoff: clamp(c, 200, 14000), res, drive: clamp(m.drive || 0, 0, 1), vibrato: clamp(m.vibrato || 0, 0, 0.03), vibRate: clamp(m.vibRate || 5.2, 0.1, 12),
         ...(plucky ? { attack: clamp(m.attack != null ? m.attack : 0.05, 0.001, 5), sustain: sus, release: rel, fenv: fev } : {}) } };
-      case "guitar":  return { ...base, module: "lead_guitar", params: { ...base.params, cutoff: clamp(c || 4500, 200, 14000), pluckPos: 0.75 } };
+      // pm.lib's guitar is in tune through MIDI 86 and above it the loudest
+      // peak sits on a fixed ~1244 Hz that does not track the note — the body
+      // resonance outrunning the string, not a mistuning. 1250 Hz is MIDI 86.
+      // The FLOOR is the instrument itself: a guitar's low E is MIDI 40
+      // (82.4 Hz) and below it the body, not the string, is the loudest thing
+      // in the box — measured +37.6 cents at MIDI 30, a full octave under an
+      // instrument that does not go there. 80 Hz keeps the low E and folds
+      // anything under it up, in key, the way the sampler window law does.
+      case "guitar":  return { ...base, module: "lead_guitar", freqMax: 1250, freqMin: 80, params: { ...base.params, cutoff: clamp(c || 4500, 200, 14000), pluckPos: 0.75 } };
       // ---- the INSTRUMENTS YOU PLAY (dsp/stk_guitar.dsp, dsp/mallet.dsp; the
       // piano case below is the third, dsp/stk_piano.dsp) ----
       // Both carry `dyn`, which is the point of them: mapEvents turns the note's
@@ -2604,9 +2625,32 @@
       // while its lower bars sound.
       // Octave-fold into the unit's declared range — the drop a real player
       // makes — instead of feeding the module a pitch it cannot say.
+      // THE FOLD HAD A CEILING AND NO FLOOR, and the floor is the half that
+      // nothing else covers. `freqMax` was consumed here from the day the dx7
+      // dropout was fixed; the matching `freqMin` defaulted to 0, which is not
+      // a floor, so a note UNDER an instrument came through at its written
+      // pitch on every path. Measured before this line existed: MIDI 17 (21.8
+      // Hz) handed to stk_piano, to the GM sampler, to strings and to the
+      // pluck arrived at 21.8 Hz in all four, while MIDI 110 was correctly
+      // folded down two, one, one and three octaves. And it is reachable —
+      // 2000 dice records (1.86 M pitched notes) put the singer's pad on MIDI
+      // 17..20 twenty-three times, four semitones under the bottom of a piano,
+      // where the note is not a pitch at all, only headroom the master has to
+      // carry.
+      // 27.5 Hz is A0, the bottom of a piano and the same bottom
+      // test/unit/dice.test.js asserts for every event it walks (21..108). A
+      // unit that knows better still says so: `freqMin` overrides, and the
+      // dx7 family keeps its compiled 52 Hz.
+      // NOTE this is deliberately NOT a whole-line shift. plan.js's register
+      // home already moves a LINE into its instrument's window before any of
+      // this runs ("A WHOLE LINE MOVES, OR THE LINE BREAKS"); what is left
+      // here is the single note that walked off the end on its own — an
+      // octave word on the top note, a voicing that spread too far — and for
+      // one note the octave fold IS the drop a player makes.
+      const PITCH_FLOOR_HZ = 27.5;
       if (u.freqMax) {
         while (noteHz > u.freqMax && noteHz > 40) noteHz /= 2;
-        const fmin = u.freqMin != null ? u.freqMin : (u.dx7 ? 52 : 0);
+        const fmin = u.freqMin != null ? u.freqMin : (u.dx7 ? 52 : PITCH_FLOOR_HZ);
         while (fmin && noteHz < fmin && noteHz < 8000) noteHz *= 2;
       }
       const sets = { freq: noteHz };

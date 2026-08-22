@@ -275,6 +275,9 @@ const staffDone = {};   // ...and the ABC actually IN the host's SVG. The old
                         // answer theme earned a staff of its own.
 const staffGlyphs = {}; // per theme: glyph -> toNotes note index (abc.js
                         // toEngraving — tied pieces share their note's index)
+const staffEng = {};    // ...and the whole engraving that is ON the staff, so
+                        // a gate can ask the ARTIFACT which octave it is in
+                        // and whether the lit glyph is the sounding note
 const staffCue = {};    // per theme: the caption line UNDER the staff — the
                         // one place the page says whether you are looking at
                         // the theme as written or as this section plays it
@@ -488,6 +491,7 @@ function engraveInto(t, eng) {
   const abc = eng.abc;
   staffAbc[t] = abc;
   staffGlyphs[t] = eng.glyphs;     // glyph -> note map, for the highlight
+  staffEng[t] = eng;               // what is on the staff, whole
   cueOtt[t] = ottWords(eng);       // ...and the octave clause of the caption
   paintCue(t);
   const host = staffHost[t];
@@ -580,6 +584,7 @@ function themeStaff(m) {
   if (!(m.idea && m.idea.on)) {
     delete staffHost.a; delete staffHost.b;
     delete staffGlyphs.a; delete staffGlyphs.b;
+    delete staffEng.a; delete staffEng.b;
     delete staffCue.a; delete staffCue.b;
     staffAbc.a = staffAbc.b = ""; staffDone.a = staffDone.b = "";
     playedEng = {}; playedSi = null; staffSig = "";
@@ -594,6 +599,7 @@ function themeStaff(m) {
   // back out drops its host so a later one engraves fresh
   if (m.ideaB && m.ideaB.on) wrap.append(themeFig(m, "b"));
   else { delete staffHost.b; delete staffGlyphs.b; delete staffCue.b;
+         delete staffEng.b;
          staffAbc.b = ""; staffDone.b = ""; cueOtt.b = ""; delete playedEng.b;
          staffSig = "";
          if (litT === "b") lightStaff(null, null); }
@@ -2529,6 +2535,16 @@ window.__bandStaff = () => ({
     [k, e.notes.map((x) => ({ at: x.at, len: x.len, midi: x.midi }))])),
   cue: { a: (staffCue.a || {}).textContent || "", b: (staffCue.b || {}).textContent || "" },
   abc: { a: staffAbc.a || "", b: staffAbc.b || "" },
+  // ...and the ENGRAVING itself: which octave the staff is written in (8va /
+  // 8vb / as it sounds), whether any octave rescued it, the glyph -> note map
+  // the lights ride, and the sounding midi of every note. A gate proving that
+  // the drawn note IS the played note, moved by the marked octave and nothing
+  // else, needs all four and can derive none of them.
+  eng: Object.fromEntries(["a", "b"].filter((k) => staffEng[k]).map((k) => [k, {
+    ottava: staffEng[k].ottava | 0, wide: !!staffEng[k].wide,
+    glyphs: staffEng[k].glyphs.slice(),
+    notes: staffEng[k].notes.map((x) => ({ at: x.at, len: x.len, midi: x.midi })),
+  }])),
 });
 window.__bandModel = () => JSON.stringify(model);   // ...and the model, so a
 // word that is lost can be located: did the MODEL move, or only the plan?

@@ -150,6 +150,99 @@ const pieces = (n) => {
 };
 const durStr = (n) => (n === 1 ? "" : String(n));
 
+// ---- ottava: 8va / 8vb, so the noteheads stay on the staff -----------------
+// WHAT AN ENGRAVER DOES WITH A HIGH PASSAGE (2026-08-22, Paul: "rather than
+// move notes all over the place use 8va and 8vo on the staff?"). A melody
+// living above the treble staff was drawn where it sounds — five, six, seven
+// ledger lines a note — and a stack of ledger lines is the one thing on a
+// staff that is genuinely hard to read. The fix is four centuries old: write
+// the passage an octave closer to the staff and mark the clef, so the reader
+// transposes instead of counting lines.
+//
+// WHAT THE VENDORED abcjs ACTUALLY SUPPORTS — measured, not assumed
+// (chromium, vendor/abcjs/abcjs-basic-min.js):
+//   * `K:C clef=treble+8` / `clef=treble-8` WORK. The clef glyph grows the
+//     little 8 above/below (one extra path in the .abcjs-clef group, and the
+//     group's bbox grows 57 -> 74 px), and — the part that matters — the
+//     NOTEHEADS do not move: the octave clefs carry the same `mid` as plain
+//     treble, so `c8` under clef=treble+8 draws at staff position 7 with ZERO
+//     ledger lines where `c'8` under plain treble draws at 14 with five
+//     ledger elements. The clef is a word to the reader; the placement is
+//     ours. Bare `K:C treble+8` parses identically, and a real signature
+//     (`K:Ebm clef=treble+8`) keeps all six flats.
+//   * `!8va(!` … `!8va)!` DOES NOT. There is no "8va" and no "ottava" string
+//     anywhere in the build; abcjs answers "Unknown decoration: 8va(" and
+//     draws the passage unchanged. REJECTED — a bracket we cannot draw is a
+//     lie either way.
+//   * `K:C clef=treble octave=1` parses without complaint and moves nothing
+//     on the page (staff position 14, unchanged). REJECTED for the same reason.
+// So the marking is a WHOLE-STAFF clef, which is also the simpler thing to be
+// right about: it cannot straddle a barline, cannot half-open, and one look at
+// the clef tells the reader what octave the whole line is in.
+//
+// THE RULE, in a sentence: a staff earns an ottava when its MIDDLE note sits
+// more than two ledger lines clear of the staff — above C6, or below A3 —
+// and then it is written in whichever octave costs the fewest ledger lines,
+// provided that saves at least two of them.
+//   * THE MEDIAN, not the extremes, is what decides. One high note in an
+//     otherwise ordinary phrase is a note, not a register; a phrase whose
+//     middle is up at C6 is genuinely living up there. Measured: C5..C6 and
+//     G3..G4 stay plain (both are ordinary treble writing), A5..A6 takes 8va
+//     and C3..C4 takes 8vb.
+//   * TWO LEDGER LINES is the ordinary reach of a treble staff — A5/C6 above,
+//     C4/A3 below are read at a glance by anybody. Past that they stack.
+//   * THE SAVING GUARD stops a clef change that buys one line, and ties go to
+//     no marking, so the plain staff is always the default.
+//   * IT DEGRADES HONESTLY. A theme spanning four octaves has a median in the
+//     middle and no octave rescues its ends: it stays plain, keeps its ledger
+//     lines, and reports `wide` so the caption can SAY the staff runs wide
+//     rather than pretend otherwise.
+//
+// THE SOUND DOES NOT MOVE. This is presentation and only presentation: the
+// shift is applied where the pitch is SPELLED and nowhere else, so toNotes'
+// midi numbers — what the piano audition plays, and what the engine was handed
+// — are untouched, and the glyph map is computed by the same loop as before,
+// so the lit note index still rides it. What the reader infers (written pitch
+// + the clef's octave) equals what the engine plays, by construction.
+
+// diatonic staff position of a midi number: 0 = middle C, +1 per letter, so
+// the treble staff itself is 2 (bottom line E4) .. 10 (top line F5). This is
+// abcjs's own `abcjs-p<n>` number, which is what makes the probe above a
+// measurement of the drawing rather than of our arithmetic.
+const DIA = [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6];
+const staffPos = (m) => 7 * Math.floor(m / 12) + DIA[pcw(m)] - 35;
+// every ledger line BETWEEN the staff and the note gets drawn, so a space
+// note beyond the first ledger costs that ledger too (B3 costs one, A3 two)
+const ledgers = (p) => Math.max(0, Math.floor((p - 10) / 2)) +
+                       Math.max(0, Math.floor((2 - p) / 2));
+// +1 = "sounds an octave ABOVE the staff" (8va, clef=treble+8, written down);
+// -1 = "sounds an octave BELOW" (8vb, clef=treble-8, written up)
+const OTT_CLEF = { "1": "treble+8", "-1": "treble-8" };
+function chooseOttava(notes) {
+  if (!notes.length) return { ott: 0, wide: false };
+  const ps = notes.map((x) => staffPos(x.midi)).sort((a, b) => a - b);
+  const mid = ps[ps.length >> 1];             // the phrase's own register
+  let ott = 0;
+  if (ledgers(mid) >= 2) {
+    const cost = (s) =>
+      notes.reduce((a, x) => a + ledgers(staffPos(x.midi - 12 * s)), 0);
+    let best = cost(0);
+    for (const s of [1, -1]) {
+      const c = cost(s);
+      if (c < best - 1) { best = c; ott = s; } // must save two lines, at least
+    }
+  }
+  // ...and WHETHER IT WORKED. The staff plus two ledger lines each way holds
+  // sixteen diatonic steps (A3 up to C6); a theme wider than that fits in no
+  // octave at all, and one that still stacks four ledger lines on a note has
+  // not been rescued either. Either way the page should SAY the staff runs
+  // wide rather than imply the marking fixed it.
+  const lo = ps[0] - 7 * ott, hi = ps[ps.length - 1] - 7 * ott;  // as written
+  const wide = hi - lo > 16 ||
+               notes.some((x) => ledgers(staffPos(x.midi - 12 * ott)) >= 4);
+  return { ott, wide };
+}
+
 // meter from steps-per-bar: sixteenths, reduced, denominator kept >= 4 so
 // sixteen steps say 4/4 rather than 1/1
 function meterOf(steps) {
@@ -243,7 +336,10 @@ export function toABC(phrase, opts = {}) { return engrave(phrase, opts).abc; }
 // never .abcjs-note), so `svg.querySelectorAll(".abcjs-note")[g]` is glyph g
 // exactly. This is what lets the page light the SOUNDING note on the
 // engraved staff without re-deriving the fold: one loop computes the ABC
-// and the map together, so they cannot disagree.
+// and the map together, so they cannot disagree. `ottava` (+1 = 8va, -1 =
+// 8vb, 0 = as it sounds) and `wide` come out with it, so the page can put the
+// octave into WORDS under the staff — a reader who does not know the marking
+// still learns what is happening — and can admit a staff no octave rescues.
 export function toEngraving(phrase, opts = {}) { return engrave(phrase, opts); }
 
 function engrave(phrase, opts = {}) {
@@ -254,6 +350,11 @@ function engrave(phrase, opts = {}) {
   // the step timeline: for every step, a note that STARTS there (with its
   // held length and its pitch) or a rest — toNotes's own, folded into bars.
   const { n, spb, notes } = toNotes(phrase, opts);
+  // ...and, before a single pitch is spelled, WHICH OCTAVE THIS STAFF IS IN.
+  // One decision for the whole staff, taken off the sounding pitches; every
+  // spelling below is written `12 * ott` away from the sound and the clef
+  // says so, which is the only place the shift exists.
+  const { ott, wide } = chooseOttava(notes);
   const kind = new Array(n).fill(0);          // 0 rest, 1 note-start, 2 held
   const len = new Array(n).fill(0);
   const midiAt = new Array(n).fill(0);
@@ -286,7 +387,7 @@ function engrave(phrase, opts = {}) {
   let i = 0;
   while (i < n) {
     if (kind[i] === 1) {
-      const midi = midiAt[i];
+      const midi = midiAt[i] - 12 * ott;   // as WRITTEN; midiAt is the sound
       let remain = len[i];
       ni++;                                   // the next toNotes note, in order
       while (remain > 0) {
@@ -325,7 +426,10 @@ function engrave(phrase, opts = {}) {
   head.push("M:" + (opts.abc || meterOf(spb)));
   head.push("L:1/16");
   if (opts.bpm) head.push("Q:1/4=" + Math.round(opts.bpm));
-  head.push("K:" + sigInfo.k);
+  // the signature, and — when the staff moved — the octave clef that puts it
+  // back: `clef=treble+8` is the little 8 above the G, "sounds an octave
+  // higher than written" (verified rendering above)
+  head.push("K:" + sigInfo.k + (ott ? " clef=" + OTT_CLEF[String(ott)] : ""));
 
   // four bars a line, the last bar closed with a final barline; an empty
   // phrase is still a bar of rest, so the staff always draws
@@ -334,5 +438,5 @@ function engrave(phrase, opts = {}) {
     lines.push(out.slice(b, b + 4).join(" | ") +
                (b + 4 >= out.length ? " |]" : " |"));
   const abc = head.join("\n") + "\n" + (lines.join("\n") || "z" + spb + " |]") + "\n";
-  return { abc, glyphs, notes, n, spb };
+  return { abc, glyphs, notes, n, spb, ottava: ott, wide };
 }

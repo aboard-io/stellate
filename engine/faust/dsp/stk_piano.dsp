@@ -714,7 +714,27 @@ with {
     // 3.5 / 6.5 / 12.2 / 26.7 cents flat at 82.4 / 164.8 / 329.6 / 659.3 Hz —
     // 0.0425, 0.0394, 0.0370, 0.0405 cents per Hz, which is one constant with a
     // 7% spread and no curve left in it.
-    warpCents = 0.0399*written;
+    //
+    // ...AND THE TOP OCTAVE HAS NO DELAY LINE TO CORRECT. `process` splits this
+    // model in two at FIRST_HIGH_NOTE: below it the note is a looped waveguide
+    // (`coupledStrings`), whose length is the thing that runs long; at and above
+    // it the note is STRUCK — a bank of resonant biquads whose pitch is set by
+    // cos(2*PI*f/SR) coefficients and is therefore exact. The warp above was
+    // fitted on the waveguide (82..659 Hz) and then applied to both, so from
+    // MIDI 88 up the correction WAS the error: measured on the shipped module,
+    // +52.4 c at MIDI 88 rising to +117.3 c at MIDI 102, against a fitted warp
+    // of +52.6 c and +118.1 c — a residual under a cent at every note, i.e. the
+    // struck octave is already in tune and was being pushed sharp by a
+    // correction it does not need. (The waltz study heard it as "the top note
+    // of the melody is extremely out of tune": MIDI 91, +62.6 c.)
+    //
+    // So the warp is gated on the SAME note number the model branches on. The
+    // gate reads `written` rather than the warped `freq` — which is not a
+    // second opinion about the key, because the two agree at every note the
+    // warp survives: measured MIDI 20..87 they are equal, and they first differ
+    // at MIDI 88, where the warp is now zero and `freq` IS `written`. Below the
+    // split nothing here moves a sample.
+    warpCents = 0.0399*written * (freqn < FIRST_HIGH_NOTE);
     freq = written * pow(2.0, warpCents/1200.0);
 
     // A NOTE-OFF IS THE DAMPER COMING DOWN, not a switch. The model already
@@ -787,7 +807,16 @@ with {
 
     //convert a frequency in a midi note number
     freqToNoteNumber = (log-log(440))/log(2)*12+69+0.5 : int;
-    freqn = freq : freqToNoteNumber;
+    // THE KEY IS THE KEY THAT WAS PLAYED. `freqn` indexes every measured
+    // per-key table in this file and decides the waveguide/struck split, so it
+    // must be the note the caller asked for, not the note the tuning pre-warp
+    // moved it to — otherwise the correction is deciding which model plays.
+    // Reading `written` also breaks the circularity the gate above would
+    // otherwise have (warp -> freq -> freqn -> warp). Measured against the old
+    // definition: identical at every note through MIDI 87, and from MIDI 88 up
+    // the old one read a key too high (88 indexed 89, 102 indexed 101) because
+    // the warp had grown past the half-step the rounding allows for.
+    freqn = written : freqToNoteNumber;
 
     //a counter that restart a every note-on
     cntSample = *(gate)+1~_ : -(1);
