@@ -70,7 +70,13 @@
      One constant. ALPHA is how far each press closes the remaining gap. */
   const ALPHA = 0.4;
   const START = 0.4;                       // ...and the first press IS one step
-  const MAXNOTES = 6;                      // "I'm allowed to say five or six things"
+  // TEN THINGS. It was six — "I'm allowed to say five or six things" — and
+  // Paul asked for ten (2026-08-22). The number is a legibility budget, not a
+  // musical law: the stack is a list you read, and a list you cannot hold in
+  // your head is a list you stop trusting. Ten still reads, and saying the
+  // same thing again is a PUSH rather than an eleventh line, so the ceiling is
+  // reached far less often than the count suggests.
+  const MAXNOTES = 10;
   const up   = (w) => 1 - (1 - w) * (1 - ALPHA);
   const down = (w) => { const v = 1 - (1 - w) / (1 - ALPHA);
                         return v < 0.005 ? 0 : v; };

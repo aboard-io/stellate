@@ -432,9 +432,26 @@ function playedPhrase(si) {
 // the caption, in the house voice — words, no icons
 const backWord = (k) => ((Band.Id.TRANSFORMS || {})[k || "same"] || {}).w || "";
 const cueWord = {};     // per theme: the words, kept so a redraw repaints them
-function setCue(t, words) {
-  cueWord[t] = words || "";
-  if (staffCue[t]) staffCue[t].textContent = cueWord[t];
+// ...and THE OCTAVE, said out loud (2026-08-22). A staff that has been moved
+// under 8va/8vb reads correctly only if you know the marking, and the page's
+// own idiom is words: the caption carries the clause, so a reader who has
+// never seen the little 8 on the clef still learns that the tune sounds an
+// octave away from where it is drawn. It is written by ENGRAVEINTO, off the
+// engraving that actually went onto the staff — never re-derived here, so the
+// words and the notes on screen cannot come from two different decisions.
+const cueOtt = {};      // per theme: the octave clause, from what is on screen
+const paintCue = (t) => { if (staffCue[t]) staffCue[t].textContent =
+  [cueWord[t], cueOtt[t]].filter(Boolean).join(" — "); };
+function setCue(t, words) { cueWord[t] = words || ""; paintCue(t); }
+// abc.js hands back `ottava` (+1 = 8va, sounds an octave above the staff;
+// -1 = 8vb, below) and `wide` (no octave rescues this one — the ledger lines
+// stand, and the page says so rather than implying the marking fixed it)
+function ottWords(eng) {
+  const parts = [];
+  if (eng && eng.ottava > 0) parts.push("8va — it sounds an octave above the staff");
+  else if (eng && eng.ottava < 0) parts.push("8vb — it sounds an octave below the staff");
+  if (eng && eng.wide) parts.push("it runs wider than one staff, so the ledger lines stand");
+  return parts.join("; ");
 }
 // DRESS BOTH STAVES. `si`/`t` name the sounding section and the theme it
 // carries (null when the record is stopped); `cue` is what the page says
@@ -471,6 +488,8 @@ function engraveInto(t, eng) {
   const abc = eng.abc;
   staffAbc[t] = abc;
   staffGlyphs[t] = eng.glyphs;     // glyph -> note map, for the highlight
+  cueOtt[t] = ottWords(eng);       // ...and the octave clause of the caption
+  paintCue(t);
   const host = staffHost[t];
   if (!host) return;
   if (abc === staffDone[t] && host.querySelector("svg")) return;
@@ -518,7 +537,7 @@ function themeFig(m, t) {
   if (!staffHost[t]) { staffHost[t] = el("div", "dstaffsvg"); staffDone[t] = ""; }
   fig.append(staffHost[t]);        // the same node every draw: no async flash
   if (!staffCue[t]) staffCue[t] = el("p", "dstaffcue");
-  staffCue[t].textContent = cueWord[t] || "";
+  paintCue(t);                     // the words AND the octave clause
   fig.append(staffCue[t]);         // ...and the same caption node, likewise
   engraveInto(t, eng);
   // HEAR IT ON THE PIANO — the theme alone, on the GM grand, through
@@ -564,7 +583,7 @@ function themeStaff(m) {
     delete staffCue.a; delete staffCue.b;
     staffAbc.a = staffAbc.b = ""; staffDone.a = staffDone.b = "";
     playedEng = {}; playedSi = null; staffSig = "";
-    cueWord.a = cueWord.b = "";
+    cueWord.a = cueWord.b = ""; cueOtt.a = cueOtt.b = "";
     lightStaff(null, null);
     if (auditioning()) stopAudition();
     return null;
@@ -575,7 +594,8 @@ function themeStaff(m) {
   // back out drops its host so a later one engraves fresh
   if (m.ideaB && m.ideaB.on) wrap.append(themeFig(m, "b"));
   else { delete staffHost.b; delete staffGlyphs.b; delete staffCue.b;
-         staffAbc.b = ""; staffDone.b = ""; delete playedEng.b; staffSig = "";
+         staffAbc.b = ""; staffDone.b = ""; cueOtt.b = ""; delete playedEng.b;
+         staffSig = "";
          if (litT === "b") lightStaff(null, null); }
   return wrap;
 }
@@ -1334,8 +1354,10 @@ function producerArea(parent) {
   // words is a menu, and Paul asked for the world's simplest grammar.
   if (!pverb) {
     if (notes.length >= Prod.MAXNOTES) {
+      // the number comes from the producer's own constant, so the sentence
+      // cannot go stale the way it did when the ceiling moved from six to ten
       ask.append(el("legend", "dq",
-        "that is six things — take one off before you say another"));
+        "that is " + Prod.MAXNOTES + " things — take one off before you say another"));
       return;
     }
     ask.append(el("legend", "dq", "what do you want to say?"));
