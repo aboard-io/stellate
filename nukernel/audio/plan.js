@@ -372,6 +372,7 @@ export function compile() {
       if (!STATE.foundSources.some((x) => x.id === src.id)) STATE.foundSources.push(src);
   }
   UNITS = KITS[kits[0]];
+  STRIPLOAD = trimStripLoad(KITS, TL);
 
   // ---- the per-bar slice -----------------------------------------------------
   // Every event carries an absolute beat; a bar owns [beat0, beat0+beats). A
@@ -391,6 +392,106 @@ export function compile() {
   for (const kit of kits) put(drumsByKit[kit], "drums");
   for (const b of BARS) b.drums.sort((x, y) => x.beat - y.beat);
   return TL;
+}
+
+/* ---------- the strip load: what the renderer can actually finish in time ----
+ * THE GLITCH OF 2026-08-20, AND WHY IT WAS INVISIBLE. Paul heard the waltz as
+ * "just a pile of glitches"; the tape had 37 stretches of DIGITAL SILENCE, 61 to
+ * 109 ms each, several a second. Nothing was wrong with the audio — measured, it
+ * is cleaner than the shipping explorer's (crest 10.5 dB, 0.07 clicks/s, zero
+ * dropouts in the frames that arrived). There was just NOT ENOUGH OF IT: the
+ * AudioContext advanced 0.42 to 0.90 audio seconds per wall second on this box
+ * while the parent's own explorer, same machine, same load, same engine, held
+ * 0.99-1.00. A ring fed slower than it drains is heard as holes.
+ *
+ * WHERE IT GOES. sampler.js runs a whole channel strip PER NOTE — hpf, eq, sat,
+ * comp, chorus, a four-stage phaser, a tape delay, each stage a per-sample kernel
+ * with its own transcendentals — and then keeps stepping it through a ring-out
+ * after the note ends so the delay line can empty. The explorer plays two to four
+ * notes at once; a nukernel record is a BAND, and a chorale here is nine to twelve
+ * sustained notes at once, every one of them dragging a full strip. Ablated on the
+ * real page: with the strips off, btmv goes 0.47 -> 1.000 and the waltz 0.87 ->
+ * 0.999. With only the MODULATION stages off — phaser, chorus, delay, leslie,
+ * flange — and every tone stage kept, btmv 1.001, waltz 0.999, dox 1.000. The
+ * tone is affordable; the modulation, times twelve, is not.
+ *
+ * WHY NOBODY SAW IT COMING. state-engine's CPU cost model charges a sampled voice
+ * a flat SAMPLER_COST = 0.3 ("native PCM zone playback (no worklet) — cheap per
+ * voice") and never looks at `sampler.strip` at all, so trimToBudget reads a
+ * chorale at a third of budget and sheds nothing. Charging the strip there is not
+ * the fix: measured over 274 anchors x 3 seeds, EVERY ONE of the 822 states
+ * carries strips heavy enough to blow the same budget, and they all render in
+ * real time in the explorer because they do not stack twelve of them. The load is
+ * CONCURRENCY, and the only place that knows this record's concurrency is here.
+ *
+ * SO THE DESK TRIMS ITS OWN. This is nukernel's unit table, built by nukernel, so
+ * a trim here cannot move one sample of a parent render — every explorer/daw/press
+ * state is byte-identical by construction, because none of them comes through this
+ * function. Deterministic, no rng: cost each unit's modulation stages by the most
+ * notes that unit ever sounds at once, and if the record is over the ceiling, drop
+ * modulation stages heaviest-unit-first, in a fixed key order, until it is under.
+ * Tone stages (hpf/lpf/eq/eq2/sat/comp) are never touched. A record under the
+ * ceiling keeps every stage and is byte-identical to before this existed.
+ */
+const MOD_STAGES = ["phase", "chorus", "delay", "leslie", "flange"];
+// MEASURED on the four study records (realtime ratio = audio seconds the
+// AudioContext advanced per wall second, headless chromium, this box):
+//   abide  load  2 -> 0.997-1.001   (never starved; must not lose a stage)
+//   waltz  load 14 -> 0.866-0.904
+//   dox    load 20 -> 0.420-0.701
+//   btmv   load 20 -> 0.425-0.588
+// With the modulation stages ablated outright the same three read 0.999 (waltz),
+// 1.000 (dox), 1.001 (btmv); with THIS trim in place they read 0.997 / 0.986 /
+// 1.001, and abide — under the line, so untouched — 1.000.
+// The line is ALL-OR-NOTHING per record on purpose: trimming unit-by-unit was
+// measured to plateau — btmv trimmed from load 20 to load 4 still only reached
+// 0.79-0.82, because the cost of the last stacked voice is not proportional to
+// its stage count. A record either has the headroom for its modulation or it
+// does not, and the ear would rather have a dry chorus than a hole in the bar.
+const STRIP_CEILING = 6;
+let STRIPLOAD = null;
+export const stripLoad = () => STRIPLOAD;
+function trimStripLoad(kits, tl) {
+  // the most notes a seat ever sounds at once, as the score writes it: a pad
+  // chord is three events on one beat, and three strips
+  const simul = new Map();
+  for (const bar of tl) {
+    const at = new Map();
+    for (const e of bar.ev) {
+      if (e._seat == null || e.n == null) continue;
+      const k = e._seat + "@" + Math.round(e.t * 1000);
+      at.set(k, (at.get(k) || 0) + 1);
+    }
+    for (const [k, c] of at) {
+      const v = +k.slice(0, k.indexOf("@"));
+      if (c > (simul.get(v) || 0)) simul.set(v, c);
+    }
+  }
+  const rows = [];
+  for (const kit of Object.keys(kits).sort()) {
+    for (const key of Object.keys(kits[kit]).sort()) {
+      const u = kits[kit][key];
+      if (!u || key.slice(0, 2) === "__" || !u.sampler || !u.sampler.strip) continue;
+      const mods = MOD_STAGES.filter((m) => u.sampler.strip[m]);
+      if (!mods.length) continue;
+      const v = key[0] === "v" ? +key.slice(1) : NaN;
+      const n = Number.isFinite(v) ? Math.max(1, simul.get(v) || 1) : 1;
+      rows.push({ kit, key, u, mods, n });
+    }
+  }
+  const load = rows.reduce((s, r) => s + r.mods.length * r.n, 0);
+  const dropped = [];
+  if (load > STRIP_CEILING) {
+    for (const r of rows) {
+      // the unit table came out of the parent's own resolver — copy before
+      // writing, so nothing upstream ever sees a mutated strip
+      const strip = { ...r.u.sampler.strip };
+      for (const m of r.mods) delete strip[m];
+      r.u.sampler = { ...r.u.sampler, strip };
+      dropped.push(r.kit + "/" + r.key + ":" + r.mods.join("+") + " x" + r.n);
+    }
+  }
+  return { load, ceiling: STRIP_CEILING, trimmed: dropped.length > 0, dropped };
 }
 
 /* ---------- the handoff ---------- */
