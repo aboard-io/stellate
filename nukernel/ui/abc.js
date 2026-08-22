@@ -181,8 +181,8 @@ const durStr = (n) => (n === 1 ? "" : String(n));
 // the clef tells the reader what octave the whole line is in.
 //
 // THE RULE, in a sentence: a staff earns an ottava when its MIDDLE note sits
-// more than two ledger lines clear of the staff — above C6, or below A3 —
-// and then it is written in whichever octave costs the fewest ledger lines,
+// two ledger lines or more clear of the staff — C6 and up, A3 and down — and
+// then it is written in whichever octave costs the fewest ledger lines,
 // provided that saves at least two of them.
 //   * THE MEDIAN, not the extremes, is what decides. One high note in an
 //     otherwise ordinary phrase is a note, not a register; a phrase whose
@@ -207,8 +207,9 @@ const durStr = (n) => (n === 1 ? "" : String(n));
 
 // diatonic staff position of a midi number: 0 = middle C, +1 per letter, so
 // the treble staff itself is 2 (bottom line E4) .. 10 (top line F5). This is
-// abcjs's own `abcjs-p<n>` number, which is what makes the probe above a
-// measurement of the drawing rather than of our arithmetic.
+// abcjs's own `abcjs-p<n>` number, which is what lets
+// test/probes/staff-ottava.probe.js check this against the drawing itself
+// rather than against a second copy of our arithmetic.
 const DIA = [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6];
 const staffPos = (m) => 7 * Math.floor(m / 12) + DIA[pcw(m)] - 35;
 // every ledger line BETWEEN the staff and the note gets drawn, so a space
