@@ -10,9 +10,10 @@
      (Paul reversed the reset's <select> ruling — "don't use dropdown
      select boxes just have a nice grid of radio buttons" — and columns
      are layout, not decoration);
+   - two lines keeping a <dl> fact on one line;
    - state-swap rules: the states the eye reads off the screen (the seat
-     you are in, the sounding section, the fact being re-asked, the mark in
-     hand, the theme in hand) that no native widget carries;
+     you are in, the sounding section, the fact being re-asked, the mark
+     in hand, the theme in hand) no native widget carries;
    - the words that are for assistive tech only (.dvh).
    No fonts, no colors beyond state, no borders, no radius/shadows/
    transforms. With CSS off the page reads as the same document. */
@@ -24,27 +25,28 @@ header { flex: none; }
 /* the one scrolling pane: everything below the transport */
 .dwrap { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 
-/* words for AT and nobody else: the hidden colon-seam where a label is
-   itself hidden (the engineer's channel rows), the hint a title used to
-   hoard, the one-shot change announcement (#dlive) */
+/* words for AT and nobody else: the hint a title used to hoard, and the
+   one-shot change announcement (#dlive). No hidden colon-seam any more —
+   <dt>/<dd> and <th scope="row"> pair a name with its value. */
 .dvh { position: absolute; width: 1px; height: 1px; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* state the eye needs and no native widget says: the area/chair that holds
    the floor, the sounding section (the playhead), the open section, the
    fact being re-asked, the mark in hand, the theme node in hand. Checked
-   radios/checkboxes and selected options say their own state natively. */
+   radios and checkboxes say their own state natively. */
 .dmark.on, .dmod.on, .dseat.on, .dsec.now,
 .dfact.open, .dthemepick.on, .dtnode.on { background: #000; color: #fff; }
-.dsec.open { outline: 2px solid; }
-.dstaff.on { outline: 2px solid; }   /* the staff is INK; a background would drown it */
+/* ...and the two that must not invert: the open section, and the staff,
+   which is INK — a background would drown it */
+.dsec.open, .dstaff.on { outline: 2px solid; }
 /* an option that is already true but was not the word you said */
 .dopt.istrue { text-decoration: underline; }
 /* a word that cannot be said yet (its input is disabled) greys whole */
 .dopt:has(> input:disabled) { opacity: .4; }
 /* the tie shows through every mark: a place held through ("hold it") keeps
    its say whichever mark is in hand */
-.dgrid .dcell.dtied { text-decoration: underline; }
+.dcell.dtied { text-decoration: underline; }
 /* the engraving shrinks with the column instead of overflowing it */
 .dstaffsvg svg { max-width: 100%; height: auto; }
 /* THE SOUNDING NOTE (Paul: "light up notes in the theme when playing
@@ -56,24 +58,27 @@ header { flex: none; }
 /* WHAT YOU ARE LOOKING AT (2026-08-21, Paul: "visually rewrite the themes
    for their actual notes as you play them"). One line under the staff, in
    words: whether these are the theme's own notes or the ones the sounding
-   section is actually playing — and, when nobody is carrying it there, that
-   the tune is out. Empty most of the time, so it takes no room when silent. */
+   section plays — and, when nobody carries it, that the tune is out. Empty
+   most of the time, so it takes no room when silent. */
 .dstaffcue { margin: .2em 0 0; font-size: .85em; }
 .dstaffcue:empty { display: none; }
 
-/* NAV AND FOLDS (Paul: "instead of using only lists use HTML <nav>
-   elements to make things easy to hide and shrink"): the outline trees ride
-   inside labeled <nav> landmarks and the foldable regions are native
-   <details>/<summary> — no JS collapse, no styling beyond seating a block
-   heading beside the summary's own marker. */
+/* NAV, FOLDS AND FACTS (Paul: "use HTML <nav> elements"; "dictionary
+   lists or tables where needed"): outline trees ride in labeled <nav>s,
+   folds are <details>/<summary>, and a fact is a one-pair <dl> — <dt> the
+   control that re-asks it, <dd> its answer. Layout only: seat a
+   heading beside the summary marker, and keep a pair on ONE line (default
+   <dl> drops the value to a second indented line, doubling a sheet that is
+   all pairs). CSS off, the pairs read the same, one per line. */
 summary > h2 { display: inline; margin: 0; }
+dl { display: flex; flex-wrap: wrap; gap: 0 .4em; margin: 0; }
+dd { margin: 0; }
 
 /* A LONG LIST IS A GRID OF RADIOS (2026-08-21, Paul: "don't use dropdown
    select boxes just have a nice grid of radio buttons"). Layout only: the
    same .dopt radio-labels every short question renders, in columns that
    align so 14-30 options scan; a row label (.drowlab — the kick:,
-   pianos:…) spans the grid's whole width, the same plain text row the
-   short path draws. With the stylesheet off the grid reads as the same
+   pianos:…) spans the grid's width. CSS off, the grid reads as the same
    flat list of labeled radios. */
 .dcols { display: grid;
   grid-template-columns: repeat(auto-fill, minmax(8em, 1fr));
@@ -102,12 +107,8 @@ summary > h2 { display: inline; margin: 0; }
              translateY(calc(var(--r) * -1)) rotate(calc(var(--a) * -1)); }
 .dcircle .dko { --r: 8.7em; }
 .dcircle .dki { --r: 5.2em; font-size: .85em; }
-.dcircle .da0  { --a: 0deg; }   .dcircle .da1  { --a: 30deg; }
-.dcircle .da2  { --a: 60deg; }  .dcircle .da3  { --a: 90deg; }
-.dcircle .da4  { --a: 120deg; } .dcircle .da5  { --a: 150deg; }
-.dcircle .da6  { --a: 180deg; } .dcircle .da7  { --a: 210deg; }
-.dcircle .da8  { --a: 240deg; } .dcircle .da9  { --a: 270deg; }
-.dcircle .da10 { --a: 300deg; } .dcircle .da11 { --a: 330deg; }
+/* --a, the HOUR, is all that differs word to word: ui/band.js sets it on
+   the element (optWidget's `hour`), where twelve .daN classes used to. */
 /* the changes picker's root, on the circle's own paint, smaller */
 .dpick .dcircle.dpcircle { width: 15em; height: 15em; margin: 8px auto; }
 .dpick .dpcircle::before { width: 12.4em; height: 12.4em; }

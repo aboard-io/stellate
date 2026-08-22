@@ -559,9 +559,9 @@ function sentStrip(theme) {
   const ROLEW = { state: "says it", restate: "again, ending differently",
                   develop: "pushes it further", land: "lands on one note",
                   carry: "picks it up mid-breath, tied over" };
-  const wrap = el("div", "dsent");
+  const wrap = el("ul");
   for (let b = 0; b < bars; b++) {
-    const row = el("div", "dsentbar");
+    const row = el("li", "dsentbar");
     // PLAIN TEXT ROWS (the basic-HTML reset): one measure per line, sixteen
     // characters — x a note starting, - the note still sounding through
     // (the tie made visible; a - opening the next row IS the tie over the
@@ -660,12 +660,18 @@ function foldOf(key, sumLine) {
 // "checkbox" for a set of independent toggles ("which notes are accented?"
 // can have several on at once, and two checked radios in one group is a
 // state HTML refuses to hold).
-function optWidget(word, cls, { kind, name, on, dead, key, take }) {
+function optWidget(word, cls, { kind, name, on, dead, key, take, hour }) {
   const lab = el("label", cls);
   const r = el("input");
   r.type = kind; r.name = name; r.checked = !!on;
   r.dataset.k = key;
   if (dead) { r.disabled = true; lab.disabled = true; }  // the gates read .disabled off the .dopt
+  // ...and, on the circle of fifths, WHICH HOUR this word sits at. It rode
+  // twelve numbered classes (.da0….da11) whose whole content was one
+  // number each — class soup for a datum — and the datum belongs on the
+  // element. The paint is unchanged: band.css still walks --a out the
+  // radius and rotates the word back upright.
+  if (hour != null) lab.style.setProperty("--a", hour * 30 + "deg");
   r.addEventListener("click", take);
   lab.append(r, document.createTextNode(word));
   return lab;
@@ -685,20 +691,23 @@ function optWidget(word, cls, { kind, name, on, dead, key, take }) {
 // "Keep the circle of fifths!!!").
 const LONG = 8;
 
+// A FACT IS A NAME AND ITS VALUE — so it is a <dl> (2026-08-22, the
+// cleanliness pass). Every answered line of the gig sheet used to be a
+// <button> holding a <b> label, a colon and a .dans <span>: a label→value
+// pair wearing generic elements. It is a real one-pair definition list
+// now — the TERM is the control that re-asks the question, the
+// DEFINITION is the answer (or, unanswered, the question itself) in plain
+// text — which is what makes the pairing something a screen reader can
+// hear without a hidden word helping it. No .dans, no .dhint, no <b>.
+//
 // THE COLON LAW (2026-08-21, Paul: "just put a colon on things, like
-// verse: 4 sections or tempo: up, 120"). Every label→value pairing on the
-// page reads `label: value`, and the seam is made HERE, once — every row
-// helper appends seam() between its label and its words, never a
-// hand-rolled dash or a hidden comma. The colon is real text, not CSS, so
-// AT hears the same seam the eye reads (it replaced the old .dvh comma);
-// where the LABEL itself is AT-only (the engineer's channel table hides
-// its <b> because the visible word is the row header) the colon hides
-// with it. The colon stays OUTSIDE the <b>: the gates find facts by the
-// <b>'s exact textContent, and multiple answer words keep their own
-// comma-join after the seam ("tempo: up, 120").
-function seam(hidden) {
-  return hidden ? el("span", "dvh", ": ") : document.createTextNode(": ");
-}
+// verse: 4 sections or tempo: up, 120") survives inside it: the seam is a
+// real ":" text node, never CSS content, so it reads with the stylesheet
+// off and is spoken. It sits in the <dt> AFTER the control, so the
+// .dfact element's own textContent stays the label exactly — which is
+// how the gates find a fact, and how a value with commas in it
+// ("tempo: up, 120") still reads as one answer.
+const term = (labelEl) => { const dt = el("dt"); dt.append(labelEl, ":"); return dt; };
 
 /* ---------- THE CIRCLE OF FIFTHS -----------------------------------------
    The key question, drawn as the object musicians actually keep in their
@@ -734,10 +743,10 @@ function keyCircle(q, who) {
   FIFTHS.forEach((k, i) => {
     const o = q.opts.find((x) => x.w === "in " + k);
     if (!o) return;
-    box.append(optWidget(o.w, "dopt dko da" + i + (o.on ? " on" : "") +
+    box.append(optWidget(o.w, "dopt dko" + (o.on ? " on" : "") +
                               (!o.on && o.istrue ? " istrue" : ""), {
       kind: "radio", name: "q-" + who + "-" + q.id, on: o.on, dead: o.dead,
-      key: "opt|" + who + "|" + q.id + "|" + o.w,
+      hour: i, key: "opt|" + who + "|" + q.id + "|" + o.w,
       take: () => { const before = model; o.take(); done(before); } }));
   });
   // the inner ring: the relative minors — one tap, two answers
@@ -745,9 +754,9 @@ function keyCircle(q, who) {
     if (!q.opts.some((x) => x.w === "in " + k)) return;
     const [w, tonic] = RELMIN[k];
     const on = model.song.key === tonic && !!model.song.minor;
-    box.append(optWidget(w, "dopt dki da" + i + (on ? " on" : ""), {
+    box.append(optWidget(w, "dopt dki" + (on ? " on" : ""), {
       kind: "radio", name: "q-" + who + "-" + q.id + "-rel", on,
-      key: "opt|" + who + "|" + q.id + "rel|" + w,
+      hour: i, key: "opt|" + who + "|" + q.id + "rel|" + w,
       take: () => {
         const before = model;
         model = answer(model, who, "key", "in " + tonic);
@@ -826,23 +835,25 @@ function chgxWidget(role) {
   const flat = [];
   list.forEach((bar, bi) => bar.forEach((cc, ki) => flat.push({ cc, bi, ki })));
   flat.forEach(({ cc, bi, ki }, ci) => {
-    const rowB = el("button", "dfact dpickbar" + (picker.open === ci ? " open" : ""));
+    // a bar and its chord is the same name/value pair the gig sheet reads
+    // as a <dl>: the tappable bar number is the term, the chord the value
+    const rowB = el("button", "dfact dpickbar" + (picker.open === ci ? " open" : ""),
+                    ki ? "and" : "bar " + (bi + 1));
     rowB.type = "button";
     rowB.dataset.k = "pbar|" + role + "|" + ci;
-    rowB.append(el("b", null, ki ? "and" : "bar " + (bi + 1)),
-                seam(),
-                el("span", "dans", chordWord(cc)));
     rowB.addEventListener("click", () => {
       picker.open = picker.open === ci ? null : ci; draw(); });
-    wrap.append(rowB);
+    const dl = el("dl");
+    dl.append(term(rowB), el("dd", null, chordWord(cc)));
+    wrap.append(dl);
     if (picker.open !== ci) return;
     // the root, on the circle's own paint
     const circle = el("div", "dcircle dpcircle");
     for (const o of rootOpts()) {
       const on2 = cc.d === o.d && (cc.borrow || 0) === o.borrow;
-      circle.append(optWidget(o.w, "dopt dko da" + o.hour + (on2 ? " on" : ""), {
+      circle.append(optWidget(o.w, "dopt dko" + (on2 ? " on" : ""), {
         kind: "radio", name: "pk-root-" + ci, on: on2,
-        key: "opt|arranger|chgx:" + role + ":root" + ci + "|" + o.w,
+        hour: o.hour, key: "opt|arranger|chgx:" + role + ":root" + ci + "|" + o.w,
         take: () => {
           const nl = JSON.parse(JSON.stringify(list));
           const t = nl[bi][ki];
@@ -854,7 +865,7 @@ function chgxWidget(role) {
     const QROW = [["plain", (d) => "triad"],
                   ["a seventh", (d) => Band.CHORDKIND.sevens.q(((d % 7) + 7) % 7)],
                   ["the record’s own", () => null]];
-    const qrow = el("div", "dopts");
+    const qrow = el("p");
     for (const [wq, fq] of QROW) {
       const want = fq(cc.d);
       const on2 = want === null ? cc.q == null : cc.q === want;
@@ -951,11 +962,11 @@ function render(box) {
   // BEFORE THE COUNT-IN there is nothing to arrange: one sentence and one
   // word. The three areas appear when the band exists.
   if (!model.on) {
-    const start = el("section", "dstart");
+    const start = el("section");
     start.append(el("p", "dprose",
       "A band: an arranger, a drummer, a bass player, keys, a guitar, a " +
       "voice and an engineer. Count it in and answer what it asks."));
-    const c = el("button", "dchip dbig", "count it in");
+    const c = el("button", "dchip", "count it in");
     c.type = "button";
     c.dataset.k = "start";
     c.addEventListener("click", () => {
@@ -969,7 +980,7 @@ function render(box) {
 
   // ---- THEMES ---- (the ideas module by its right name — PLAN Phase 2
   // renames the organ; the page starts saying the word now)
-  const sThemes = el("section", "dsect");
+  const sThemes = el("section");
   // the whole area folds under its heading (foldOf's law) — hideable,
   // shrinkable, open by default
   const dThemes = (() => { const h = el("h2");
@@ -992,7 +1003,7 @@ function render(box) {
   // label the role and the bars, the same .dsec button the gates click and
   // the playhead lights), the open section's asks nested BENEATH its own
   // node inline, and "add a box" a plain row at the end.
-  const sSong = el("section", "dsect");
+  const sSong = el("section");
   const dSong = (() => { const h = el("h2");
     h.append(modButton("song", "song")); return foldOf("area|song", h); })();
   sSong.append(dSong);
@@ -1006,16 +1017,17 @@ function render(box) {
     b.type = "button";
     b.dataset.k = "sec|" + i;
     b.title = "what is everyone doing here?";
-    // the box's name reads by the colon law ("head: 4 bars" — seam()), the
-    // extra words comma-joined after it, and the hint the title used to
-    // hoard is words in the name too — .dvh, text AT can reach, invisible
-    b.append(el("b", null, s2.role), seam(),
-             el("i", null, s2.bars + " bars"));
+    // the box's name reads by the colon law ("head: 4 bars"), the extra
+    // words comma-joined after it — one plain string, since a <b> for the
+    // role and an <i> for the bars were paint over a sentence — and the
+    // hint the title used to hoard is words in the name too: .dvh, text AT
+    // can reach, invisible.
     const per = s2.per || {};
     const diff = [per.drums && Band.SECDRUMS[per.drums] && Band.SECDRUMS[per.drums].w,
                   per.bass && Band.SECBASS[per.bass] && Band.SECBASS[per.bass].w]
                  .filter(Boolean);
-    if (diff.length) b.append(document.createTextNode(", "), el("i", "ddiff", diff.join(", ")));
+    b.append(s2.role + ": " + s2.bars + " bars" +
+             (diff.length ? ", " + diff.join(", ") : ""));
     b.append(el("span", "dvh", " — what is everyone doing here?"));
     b.addEventListener("click", () => {
       module_ = "song";
@@ -1047,7 +1059,7 @@ function render(box) {
 
   // ---- THE BAND ---- the members, each a plain block that says how much
   // it still has to decide. Tap one and its questions take the floor.
-  const sBand = el("section", "dsect");
+  const sBand = el("section");
   const dBand = (() => { const h = el("h2");
     // the visible heading reads "the band"; the button inside it is the
     // word the gates (and a finger) press — but its accessible NAME is the
@@ -1063,7 +1075,7 @@ function render(box) {
   // the same .dseat button it always was, and the seat you are in expands:
   // its whole gig sheet (instruments and all) nests BENEATH its own chair
   // node, the same outline idiom as everywhere else on the page.
-  const seats = el("ul", "dtree dband");
+  const seats = el("ul", "dtree");
   for (const s2 of SEATS.filter((x) => x !== "arranger")) {
     // HOW MANY, NOT WHETHER. This said "1 question" for every chair that
     // had any question left at all — a chair with nine things still to
@@ -1077,11 +1089,10 @@ function render(box) {
     // 3"), and the count stays the LAST thing in the label (a gate reads
     // the trailing digits — /(\d+)$/, so the digits may not move off the
     // end); when nothing is left it is a word, not a checkmark
-    b.append(el("b", null, s2), seam(),
-             el("i", null, left ? "questions left: " + left : "all set"));
+    b.append(s2 + ": " + (left ? "questions left: " + left : "all set"));
     b.addEventListener("click", () => {
       seat = s2; module_ = "band"; section = null; asking = null; draw(); });
-    const li = el("li", "dchair");
+    const li = el("li");
     // only the seat you are in carries its sheet — the one-question law is
     // untouched, and the other chairs stay one line each. The open sheet
     // FOLDS under its own seat line (foldOf: the summary is the .dseat
@@ -1133,15 +1144,16 @@ function sectionArea(parent) {
       draw();
     };
     // a player's own words run long (34 at the kit) — the same radios,
-    // laid in the .dcols grid (the grid law above)
-    const row2 = el("div", "dopts" + (a2.opts.length > LONG ? " dcols" : ""));
+    // laid in the .dcols grid (the grid law above). A SHORT question needs
+    // no box at all: its options are the fieldset's own children.
+    const row2 = a2.opts.length > LONG ? el("div", "dcols") : ask2;
     for (const o of a2.opts) {
       row2.append(optWidget(o.w, "dopt" + (o.answered ? " on" : ""), {
         kind: "radio", name: "sq-" + section + "-" + a2.id, on: o.answered,
         key: "opt|sec" + section + "|" + a2.id + "|" + o.key,
         take: takeSec(o) }), " ");
     }
-    ask2.append(row2);
+    if (row2 !== ask2) ask2.append(row2);
     const li = el("li");
     li.append(ask2);
     liOf.set(a2.id, li);
@@ -1490,36 +1502,30 @@ function chairArea(parent, who, ideasOnly) {
     : OUTLINE[who] || [];
   const under = (ideasOnly ? UNDER.ideas : UNDER[who]) || {};
   const rowLi = new Map();                     // ask id -> its <li>, for the edges
+  // THE ROW IS A NAME AND ITS VALUE: <dt> carries the control that re-asks
+  // the question (a <button> in a <dt> is valid, and the label stays the
+  // thing you tap), <dd> carries the answer as plain text — or, unanswered,
+  // the question itself, which IS what that name is worth so far. A fact
+  // the pruner left with nothing to change to has no control at all: the
+  // term is a plain word.
   const rowOf = (d) => {
     const li = el("li");
+    const dl = el("dl");
     if (flatFact(d)) {
-      const f2 = el("span", "dfact dflat");
+      const f2 = el("span", "dfact", d.label);
       f2.dataset.k = "fact|" + d.id;
-      f2.append(el("b", null, d.label), seam(),
-                el("span", "dans", d.answered));
-      li.append(f2);
+      dl.append(term(f2), el("dd", null, d.answered));
+      li.append(dl);
       return li;
     }
     const c = el("button", "dfact" + (asking === d.id ? " open" : "") +
-                           (q && q.id === d.id ? " qnow" : ""));
+                           (q && q.id === d.id ? " qnow" : ""), d.label);
     c.type = "button";
     c.dataset.k = "fact|" + d.id;
     c.title = d.answered ? "change it: " + d.ask : d.ask;
-    c.append(el("b", null, d.label), seam(),
-             d.answered ? el("span", "dans", d.answered)
-                        : el("span", "dhint", d.ask));
     c.addEventListener("click", () => { asking = asking === d.id ? null : d.id; draw(); });
-    // THE ROW AND ITS QUESTION ARE ONE BOX (2026-08-21, Paul: "a dotted box
-    // shows up with options below… put the options INSIDE"): the row whose
-    // question holds the floor is wrapped in a .dqbox — the dashed outline
-    // lives on the wrapper now, and the fieldset lands inside it (end of
-    // this function), so the label you tapped tops the box and the options
-    // sit within the same dashes, never as a sibling below them.
-    if (q && q.id === d.id) {
-      const w2 = el("div", "dqbox");
-      w2.append(c);
-      li.append(w2);
-    } else li.append(c);
+    dl.append(term(c), el("dd", null, d.answered || d.ask));
+    li.append(dl);
     return li;
   };
   const placed = new Set();
@@ -1551,36 +1557,30 @@ function chairArea(parent, who, ideasOnly) {
     const bhost = fold || li;
     // THE ENGINEER'S CHANNEL TABLE (the basic-HTML reset): the five channel
     // questions align — channel down the label column, treatment beside it —
-    // so this one branch is a real <table>, one row per channel: the label a
-    // row header (with the colon law's own ":" on it, since the pairing is
-    // th → td here), the same tappable .dfact (and, when its question holds
-    // the floor, the question itself) in the cell beside it. The button
-    // keeps a visually-hidden <b> label — and a hidden seam — so AT and the
-    // gates read the same fact row everywhere.
+    // so this one branch is a real <table> instead of a run of <dl> rows,
+    // and the browser does the aligning. It is the SAME shape as a fact row
+    // with the table's own elements: <th scope="row"> is the term (the
+    // tappable .dfact and the colon law's ":"), <td> is the value. That
+    // scope is what pairs them for a screen reader — which is why the
+    // hidden <b> label and hidden seam this cell used to carry are gone.
     if (h === "the channels" && who === "engineer" && !ideasOnly) {
-      const table = el("table", "dchans");
+      const table = el("table");
       for (const [, d] of list) {
         const tr = el("tr");
-        const th = el("th", null, d.label + ":"); th.scope = "row";
-        const td = el("td");
+        const th = el("th"); th.scope = "row";
+        const td = el("td", null, d.answered || d.ask);
         if (flatFact(d)) {
-          const f2 = el("span", "dfact dflat");
+          const f2 = el("span", "dfact", d.label);
           f2.dataset.k = "fact|" + d.id;
-          f2.append(el("b", "dvh", d.label), seam(true),
-                    el("span", "dans", d.answered));
-          td.append(f2);
+          th.append(f2, ":");
         } else {
           const c = el("button", "dfact" + (asking === d.id ? " open" : "") +
-                                 (q && q.id === d.id ? " qnow" : ""));
+                                 (q && q.id === d.id ? " qnow" : ""), d.label);
           c.type = "button";
           c.dataset.k = "fact|" + d.id;
           c.title = d.answered ? "change it: " + d.ask : d.ask;
-          c.append(el("b", "dvh", d.label), seam(true),
-                   d.answered ? el("span", "dans", d.answered)
-                              : el("span", "dhint", d.ask));
           c.addEventListener("click", () => { asking = asking === d.id ? null : d.id; draw(); });
-          if (q && q.id === d.id) { const w2 = el("div", "dqbox"); w2.append(c); td.append(w2); }
-          else td.append(c);
+          th.append(c, ":");
         }
         tr.append(th, td);
         table.append(tr);
@@ -1644,11 +1644,7 @@ function chairArea(parent, who, ideasOnly) {
       const oli = el("li", "dbranch");
       oli.append(themeNodeHead(other, false));
       const om = themeOf(model, other);
-      if (om) {
-        const ul2 = el("ul"), li3 = el("li");
-        li3.append(el("span", "dthemesum", Band.Id.describe(om)));
-        ul2.append(li3); oli.append(ul2);
-      }
+      if (om) oli.append(el("p", "dthemesum", Band.Id.describe(om)));
       if (other === "a") tree.prepend(oli); else tree.append(oli);
     }
   }
@@ -1657,7 +1653,7 @@ function chairArea(parent, who, ideasOnly) {
   if (asks.some(d => d.answered)) {
     // ...and one way back. A chair you cannot clear is a chair you stop
     // trying things in.
-    const again = el("button", "dfact dagain", "start over");
+    const again = el("button", "dfact", "start over");
     again.type = "button";
     again.dataset.k = "again|" + who;
     again.title = "clear this chair and ask again";
@@ -1690,8 +1686,7 @@ function chairArea(parent, who, ideasOnly) {
       if (tbars > 1) {
         const wr = Band.Id.wroteOf(theme), hand = Band.Id.handOf(theme);
         const BW = ["bar one", "bar two", "bar three", "bar four"];
-        const rail = el("div", "dmarks dbarrail");
-        rail.append(el("span", "dmarklab", "bar"));
+        const rail = el("p", "dbarrail", "bar ");
         for (let b = 0; b < tbars; b++) {
           const btn = el("button", "dmark" + (b === hand ? " on" : ""),
                          BW[b] + (wr[b] ? " · written" : ""));
@@ -1719,8 +1714,7 @@ function chairArea(parent, who, ideasOnly) {
     const marks = marksOf(who);
     const mi = Math.min(barMarks.get(who) || 0, marks.length - 1);
     if (marks.length > 1) {
-      const mrow = el("div", "dmarks");
-      mrow.append(el("span", "dmarklab", "put"));
+      const mrow = el("p", null, "put ");
       marks.forEach((mk, ix) => {
         const b = el("button", "dmark" + (ix === mi ? " on" : ""), mk.w);
         b.type = "button";
@@ -1813,9 +1807,9 @@ function chairArea(parent, who, ideasOnly) {
   {
     // a long one-of-N gets the SAME radios, laid in the .dcols grid (the
     // grid law above); its row labels are the same .drowlab rows, spanning
-    // the grid's whole width
-    const row = el("div", "dopts" +
-      (kind === "radio" && opts2.length > LONG ? " dcols" : ""));
+    // the grid's whole width. A SHORT question needs no box at all: its
+    // options are the fieldset's own children.
+    const row = kind === "radio" && opts2.length > LONG ? el("div", "dcols") : ask;
     let lastRow = null;
     for (const o of opts2) {
       if (rowed && o.row !== lastRow) { row.append(el("div", "drowlab", o.row)); lastRow = o.row; }
@@ -1825,7 +1819,7 @@ function chairArea(parent, who, ideasOnly) {
         key: "opt|" + who + "|" + q.id + "|" + o.w,
         take: fire(o) }), " ");
     }
-    ask.append(row);
+    if (row !== ask) ask.append(row);
   }
   }
   // THE ESCAPE IS A WIDGET OF THE QUESTION, not an option (the keyCircle
@@ -1841,20 +1835,22 @@ function chairArea(parent, who, ideasOnly) {
     const song = toSong(model, MODES);
     const bars = song.reduce((n, s2) => n + s2.bars, 0);
     const secs = Math.round(bars * 4 * 60 / (model.song.bpm || 96));
-    ask.append(el("p", "dlen", "that\u2019s " + Math.floor(secs / 60) + ":" +
+    ask.append(el("p", null, "that\u2019s " + Math.floor(secs / 60) + ":" +
                                String(secs % 60).padStart(2, "0")));
   }
   // INLINE, IN PLACE (2026-08-21). The question used to land at a fixed
-  // slot below the whole sheet; it opens AT ITS ROW now \u2014 the outline
+  // slot below the whole sheet; it opens AT ITS ROW now — the outline
   // expands at that node and the page grows vertically. Every ask has a
   // row (the trailing headless branch catches whatever the tables do not
-  // name), and the fieldset lands INSIDE the row's own .dqbox \u2014 one
-  // dashed box holding label and options both \u2014 so it still sits above
-  // any child rows that nest beneath the same node.
+  // name), and the fieldset lands in that row's own <li>, immediately
+  // after its name/value pair and above any child rows nesting beneath the
+  // same node — or, on the engineer's channel branch, in the row's own
+  // cell. (It used to need a .dqbox wrapper for a dashed outline the
+  // basic-HTML reset took away; the wrapper outlived the paint.)
   const qLi = rowLi.get(q.id);
-  const qBox = qLi && qLi.querySelector(":scope > .dqbox");
-  if (qBox) qBox.append(ask);
+  if (qLi && qLi.tagName === "TD") qLi.append(ask);
   else if (qLi && qLi.firstElementChild) qLi.firstElementChild.after(ask);
+  else if (qLi) qLi.append(ask);
   else parent.append(ask);
 }
 

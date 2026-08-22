@@ -22,8 +22,13 @@
 <main>
   <header>
     <h1>The band</h1>
-    <div class="dtransport" role="group" aria-label="transport">
-      <button class="dplay" id="dplay" type="button">play</button>
+    <!-- THE ONE DIV IN THE HEADER, and it earns it: a set of controls that
+         is neither prose nor a landmark, named for assistive tech by
+         role="group" + aria-label, which needs an element to sit on. The
+         class it used to wear (.dtransport) styled nothing and no gate
+         looked for it. -->
+    <div role="group" aria-label="transport">
+      <button id="dplay" type="button">play</button>
       <button id="ddice" type="button"
               title="a whole record by answering every question at random">roll a record</button>
       <button id="dreset" type="button"
@@ -42,9 +47,11 @@
            text, fed by the engine's own clock (audio/live.js "pos" and
            "pending" events). Not live regions on purpose: they change every
            beat, and a screen reader that announces every beat is a metronome
-           nobody asked for. -->
-      <span class="dbeat" id="dbeat"></span>
-      <span class="dpending" id="dpending"></span>
+           nobody asked for — which is also why they are plain <span>s and
+           not <output>, whose implicit live region is exactly that
+           metronome. They carry ids, not classes: nothing styles them. -->
+      <span id="dbeat"></span>
+      <span id="dpending"></span>
       <!-- ...but a change made SHOULD be said once: when a countdown's label
            first appears it lands here — one polite write per new label,
            never per beat (ui/band.js "pending"). Visually hidden; the eye
