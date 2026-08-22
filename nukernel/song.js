@@ -61,6 +61,25 @@
   // MODEL (two themes and per-section assignment/transform words) never
   // reaches this document at all — it lives in the band session, and only
   // the compiled phrases and genres land here, both already legal.
+  // THE BOXES ARE REAL (2026-08-22) did not need a v:3 either, and it is the
+  // clearest case of the law yet. The band page's record used to be a FORM —
+  // one of thirteen named shapes — and is now a LIST OF SECTIONS a hand can
+  // append to, move and remove (band-kit `m.song.secs`). Two things follow,
+  // and neither is a shape that MOVED:
+  //   · that list lives in the BAND SESSION (`nu.band.session`), not in this
+  //     document, exactly like the theme model above. It is validated where
+  //     it is read, by the accessor, on the `chgxOf` precedent: a list that
+  //     is not an array, is empty, runs past band-kit MAXSECS, or names a
+  //     role this build cannot play is NO LIST AT ALL and the form answers
+  //     for it — the same "a malformed bar is dropped" paranoia, because the
+  //     model rides localStorage whole and a session is not a trusted file.
+  //   · what DOES reach this document is the compiled box, and its `role` is
+  //     a box field validated against the fields.js ROLES table — which
+  //     GREW, by the four words the band page has always said and the table
+  //     never knew (build · break · head · tag). A song written by an older
+  //     build names a subset of that table, so it loads byte-identically;
+  //     one naming a role this build does not have still errors by key, with
+  //     the typed message the loader has always raised (`err(...)`).
   const VERSION = 2;
 
   // THE FILTER RULE, written down at last: `ops` and `fx` are FILTERED on

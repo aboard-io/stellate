@@ -52,14 +52,37 @@
     out:    { w: "lay out", part: null, gate: z(), reg: 0, says: "nothing at all" },
   };
 
-  // THE DIRT IS THE INSTRUMENT. Every id is one nukernel's own genres name,
-  // which is what the pool is cast from.
+  // THE DIRT IS THE INSTRUMENT. Every id here is one the POOL can cast
+  // (fields.js INSTRCHOICES) — a word that casts something the pool will not
+  // take is a word that lies, and the gate holds this list against the pool
+  // rather than against a grep of genres.js, which is a proxy for it and was
+  // wrong the moment a chair's own default stopped being any record's.
+  //
+  // TEN GUITARS, WHERE THE RACK SHOWED THREE (2026-08-22, "give me lots more
+  // guitar options"). Two of them are instruments the registry has carried all
+  // along that no word could reach:
+  //   harmonics       — guitar_harmonics, a real recording of a touched node.
+  //                     Not a model: a harmonic is the fundamental DAMPED by a
+  //                     finger at a node, and stk_guitar's plectrum cannot put
+  //                     a finger anywhere. Sampled, like the two acoustics.
+  //   a re-amped DI   — di_guitar, the FreePats FSBS direct pickup signal
+  //                     (-27 dB RMS by design), which the registry's own header
+  //                     says to claim ONLY behind a staged higain amp. That is
+  //                     now sayable: instruments.js SAMPLED_INSERTS gives a
+  //                     sampled voice the same declared pedalboard the modelled
+  //                     electrics got in the de-jangle round, and the parent has
+  //                     honoured inserts on sampled voices all along
+  //                     (state-engine INSERTS-ON-SAMPLED-VOICES).
+  // The other eight were already here; what changed is that a RECORD no longer
+  // hides them (band-kit `narrow` — the record recommends, it does not jail).
   const INSTRUMENTS = {
     clean_guitar: "a clean electric", crunch_guitar: "a crunchy one",
     overdrive_guitar: "an overdriven one", distortion_guitar: "a distorted one",
+    di_guitar: "a re-amped DI",
     palm_muted_guitar: "a muted one", jazz_guitar: "a jazz box",
     steel_string_guitar: "a steel-string acoustic",
     nylon_string_guitar: "a nylon-string",
+    guitar_harmonics: "harmonics",
   };
   const REG = { low: { w: "down low", v: -1 }, mid: { w: "where it sits", v: 0 },
                 high: { w: "up the neck", v: 1 } };
@@ -108,8 +131,11 @@
     // declares the FACT (`fifths`); the kernel voices it (root/5th/octave,
     // the chairs seam in the chordLock branch). Clean, jazz and the
     // acoustics keep the full triad they always had.
+    // (di_guitar joins the driven three: it IS the dirtiest amp in the rack —
+    // a raw pickup through three stages — so a third in it intermodulates
+    // exactly like a third in the distortion)
     const fifths = chord &&
-      /^(crunch|overdrive|distortion|palm_muted)_guitar$/.test(j.instr || m.instr);
+      /^(crunch|overdrive|distortion|palm_muted)_guitar$|^di_guitar$/.test(j.instr || m.instr);
     return { part: j.part || "line", reg: (REG[m.reg] || REG.mid).v + (j.reg || 0),
              instr: j.instr || m.instr, pad: j.part === "pad", silent: !j.part,
              ...(fifths ? { fifths: true } : {}),

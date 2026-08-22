@@ -5,7 +5,7 @@
 // the kit model is the classic UMD data tier (nukernel/drums-kit.js), read
 // off window exactly as ui/deps.js reads the rest of it
 const Band = window.NuBand;
-const { blank, catalog: catalog0, say: say0, says: says0, toSong, seatDecisions,
+const { catalog: catalog0, say: say0, says: says0, toSong, seatDecisions,
         nextAsk, nextAnywhere, answer, SEATS, sectionAsks, setSection } = Band;
 // WHICH THEME THE PAGE IS EDITING. Two themes at most — the tune (A) and
 // its answer (B) — and every arranger tray word, bar cell and staff caption
@@ -39,11 +39,21 @@ const MELP = "lab.idea.";          // ...and the melody's own, when somebody tak
 const VOXP = "lab.voice.";         // ...and the singer's, which is a layer too
 let cells = [];                    // the pattern's cells, for the playhead
 let asking = null;                 // a decision being revisited, if any
-let model = blank();
+// THE ROOM OPENS WITH A RECORD IN IT (2026-08-22, Paul: "The start again
+// 'default' song should play and interpret the theme and its answer across
+// a verse-chorus structure"). `Band.blank()` is still the empty room — the
+// dice rolls from it and every gate measures from it — and `Band.opening()`
+// is that room with the demonstration record already standing: verse,
+// chorus, verse, chorus, the tune in the verses, the answer in the choruses
+// and the last one back up a step. Nothing in it is answered, so the first
+// question is still "when is it?" and every part of it is overridden by the
+// first word anybody says.
+let model = Band.opening();
 model.bpm = 112;                   // a machine tempo: shorter bars, sooner changes
 let seat = "arranger";             // who you are talking to
 let ledger = [];                   // what has been said, in order
 let section = null;                // a section being arranged, if any
+let adding = false;                // "add a box" open, asking what kind
 const said = new Map();            // subjects you have answered, and with what
 
 /* ---------- the model reaches the engine ---------- */
@@ -972,7 +982,16 @@ function render(box) {
     c.addEventListener("click", () => {
       model = { ...model, on: true };
       ledger.push("a band, waiting to be told what the tune is");
-      push(true); draw(); });
+      // COUNTING IN STARTS THE RECORD (2026-08-22, Paul: "The start again
+      // 'default' song should play and interpret the theme and its answer
+      // across a verse-chorus structure"). It did not: `push(true)` sets
+      // `settling`, which is exactly what holds the auto-start off while a
+      // whole record lands, so counting in left a demonstration record
+      // standing there in silence until you answered something. The dice
+      // has started its own roll since it existed; this is the same line.
+      push(true); draw();
+      if (!playing) startAt(0);
+      playWord(true); });
     start.append(c);
     box.append(start);
     return;
@@ -1034,24 +1053,72 @@ function render(box) {
       section = section === i ? null : i; asking = null; draw(); });
     cells[i][0].push(b);
     li.append(b);
+    // THE BOXES ARE REAL (2026-08-22, Paul: "'add a box' doesn't really add
+    // a box. i can't move boxes around"). Every section node carries the
+    // three moves a hand makes on a record's shape, IN WORDS — no icons, no
+    // drag handles, no tracker interface: "move up", "move down", "remove".
+    // A move that cannot be made is not drawn (the first box has no up, the
+    // last no down) rather than drawn dead, and a record cannot be emptied,
+    // so the last box left has no remove. The section's own conversation
+    // still opens by tapping its name; these are about the BOX.
+    { const ops = el("p", "dboxops");
+      const opBtn = (word, k, run) => {
+        const o = el("button", "dboxop", word);
+        o.type = "button";
+        o.dataset.k = k + "|" + i;
+        o.append(el("span", "dvh", " — the " + s2.role));
+        o.addEventListener("click", run);
+        ops.append(o, " ");
+      };
+      const boxMove = (m2, keep) => {
+        if (m2 === model) return;
+        model = m2; section = keep; asking = null;
+        push(false); announce("arranger", null); draw();
+      };
+      if (i > 0) opBtn("move up", "boxup",
+        () => boxMove(Band.moveSection(model, i, -1), section === i ? i - 1 : section));
+      if (i < song.length - 1) opBtn("move down", "boxdown",
+        () => boxMove(Band.moveSection(model, i, 1), section === i ? i + 1 : section));
+      if (song.length > 1) opBtn("remove", "boxdel",
+        () => boxMove(Band.removeSection(model, i), null));
+      li.append(ops); }
     // the open section's whole conversation, nested under its own node —
     // the same in-place mechanism the chairs use
     if (section === i) sectionArea(li);
     tree.append(li);
   });
-  // A BOX IS A SECTION OF THE SONG, and today every box comes from the FORM
-  // — there is no per-box append in the model yet, so "add a box" honestly
-  // opens the question that decides how many boxes the record has and what
-  // each one is. A plain row at the end of the outline.
-  { const li = el("li");
-    const add = el("button", "dadd", "add a box");
+  // A BOX IS A SECTION OF THE SONG, and now it really is one: "add a box"
+  // asks the one thing a new box needs — WHAT KIND — and lands it after the
+  // section you have open, or at the end when none is. The form is still
+  // where a shape comes FROM (thirteen starting points, one tap each); it
+  // is no longer the only place a shape can be.
+  if (song.length < Band.MAXSECS) {
+    const li = el("li");
+    const add = el("button", "dadd" + (adding ? " open" : ""), "add a box");
     add.type = "button";
     add.dataset.k = "addbox";
-    add.title = "boxes come from the form — open that question";
-    add.addEventListener("click", () => {
-      module_ = "song"; section = null; asking = "form"; draw(); });
+    add.title = "a new section, after the one you have open";
+    add.addEventListener("click", () => { adding = !adding; draw(); });
     li.append(add);
-    tree.append(li); }
+    if (adding) {
+      const at = section == null ? song.length : section + 1;
+      const ask = el("fieldset", "dask");
+      ask.append(el("legend", "dq", "what kind of box?"));
+      const row = Object.keys(Band.SECROLES).length > LONG ? el("div", "dcols") : ask;
+      for (const [k, w] of Object.entries(Band.SECROLES))
+        row.append(optWidget(w, "dopt", { kind: "radio", name: "addbox", on: false,
+          key: "opt|addbox|" + k,
+          take: () => {
+            const m2 = Band.addSection(model, at, k);
+            if (m2 === model) return;
+            model = m2; adding = false; section = at; asking = null;
+            push(false); announce("arranger", null); draw();
+          } }), " ");
+      if (row !== ask) ask.append(row);
+      li.append(ask);
+    }
+    tree.append(li);
+  }
   // the song's outline is the way around the record: a landmark
   dSong.append(navOf(tree, "the song's sections"));
   if (section == null && module_ === "song") chairArea(dSong, "arranger", false);
@@ -1470,7 +1537,7 @@ function chairArea(parent, who, ideasOnly) {
   // NOTHING LEFT TO ASK IS NOTHING TO SAY. There is no line telling you to
   // tap something: everything on this page is already tappable, and a
   // sentence explaining that is the sentence a good surface does not need.
-  // (A stale `asking` — "add a box" before the form is reachable — falls
+  // (A stale `asking` — a question the pruner has since retired — falls
   // back to the next unanswered question rather than an empty floor.)
   // Found FIRST so the outline can mark which of its rows holds the floor.
   // A RE-ASK WITH NOTHING TO CHANGE TO IS NOT A QUESTION: the pruner can
@@ -1909,14 +1976,20 @@ requestAnimationFrame(tick);
 // empty, so the next record can begin from "when is it?" rather than
 // from whatever the last one decided.
 $("dreset").addEventListener("click", () => {
-  if (playing) { stop(); playWord(); }
-  model = { ...Band.blank(), on: true };
-  said.clear(); asking = null; section = null; picker = null;
+  model = { ...Band.opening(), on: true };
+  said.clear(); asking = null; section = null; picker = null; adding = false;
   module_ = "song"; seat = "drums";
   ledger.length = 0;
   clearMixOffsets();
   try { localStorage.removeItem(SAVE); } catch (e) {}
+  // ...AND IT PLAYS. "Start again" used to stop the band and hand you an
+  // empty room; it hands you the record the room opens with, and a record
+  // you have to press play to hear is a record nobody hears. Same three
+  // lines as the dice, for the same reason — a whole record landing sets
+  // `settling`, which holds the auto-start off.
   push(true); draw();
+  if (!playing) startAt(0);
+  playWord(true);
 });
 // THE DICE — a whole record by answering every question at random, which is
 // only possible because the graph is complete: every question has at least
@@ -1924,7 +1997,8 @@ $("dreset").addEventListener("click", () => {
 // path taken quickly, not a special one.
 $("ddice").addEventListener("click", () => {
   model = Band.randomSong();
-  said.clear(); asking = null; section = null; picker = null; module_ = "song";
+  said.clear(); asking = null; section = null; picker = null; adding = false;
+  module_ = "song";
   ledger.length = 0;
   clearMixOffsets();
   push(true); draw();

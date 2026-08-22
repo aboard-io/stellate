@@ -961,7 +961,20 @@ export function recipeFor(chair, seat, lib, unrouted) {
   // answered with a synth voice. Let the parent's own dispatch have it.
   if (spec.synth) return { role, m: { ...tone, ...spec.params, model: spec.synth, dx7: spec.dx7 || null },
     source: "font:" + spec.synth };
-  return { role, m: { ...tone, model: "sampler", sampler: spec }, source: "sampler:" + seat.instr };
+  // ...AND A SAMPLED VOICE MAY DECLARE A PEDALBOARD TOO (2026-08-22). Every
+  // modelled electric names its own inserts and every recording arrived dry,
+  // because the parent gives a sampler no default chain (absent-law) and this
+  // branch never offered it one. It has honoured an EXPLICIT chain on the
+  // native PCM lane all along (state-engine INSERTS-ON-SAMPLED-VOICES), which
+  // is what makes `di_guitar` — the raw pickup the registry says to claim only
+  // behind a staged amp — sayable at all. The table is instruments.js
+  // SAMPLED_INSERTS, beside RANGES and STRIPS, where an id's rows live; an id
+  // with no row is byte-identical to before, because an absent key adds
+  // nothing to the recipe.
+  const ped = (NI.SAMPLED_INSERTS || {})[seat.instr];
+  return { role, m: { ...tone, model: "sampler", sampler: spec,
+                      ...(ped ? { inserts: ped } : {}) },
+           source: "sampler:" + seat.instr };
 }
 
 /**

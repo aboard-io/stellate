@@ -210,6 +210,53 @@
     guitar: Gt.say(Gt.blank(), "start"),
     voice: Vo.say(Vo.blank(), "start") });
 
+  // THE ANSWER, as it is first written: a CONTRAST, because that is what an
+  // answer is — where the tune arches and closes on the root, the answer is
+  // a short call that falls away and opens on the fifth. (A B theme that
+  // started as a copy of A would be A with extra steps.) One constructor,
+  // two callers — the arranger's own "a second theme answers it", and the
+  // record the room opens with — so the two cannot drift apart.
+  const answerTheme = () => Id.say({ ...Id.blank(), name: "the answer",
+    cell: "call", contour: "fall", land: "fifth" }, "start");
+
+  /* ---------- THE RECORD THE ROOM OPENS WITH (2026-08-22) ------------------
+     Paul, verbatim: "The start again 'default' song should play and
+     interpret the theme and its answer across a verse-chorus structure."
+
+     `blank()` is the EMPTY ROOM and stays empty — the dice rolls from it,
+     every gate measures from it, and a default written into it would land
+     on every record this box has ever made. What "start again" hands you is
+     this: the same empty room with a record already standing in it, so that
+     counting in before answering anything DEMONSTRATES the machine rather
+     than looping one four-bar vamp with a tune nobody picks up.
+
+     Verse, chorus, verse, chorus. THEME A is stated in the verses and THEME
+     B — the answer — takes the choruses, which is the oldest arrangement
+     there is and the one thing that makes two themes audibly two themes.
+     The last chorus brings the answer back UP A STEP: a return that is not
+     a repeat, which is the whole of what the transform words are for.
+
+     Every one of these is an ORDINARY value on the ordinary model — a form
+     nobody has answered yet (`answers.form` is unset, so the question is
+     still open and the first thing the page asks is still "when is it?"),
+     two ordinary section words on the ordinary `per` ledger. So all of it
+     is overridden by any answer, exactly as today: tap a form and the boxes
+     reseed, tap "one theme is plenty" and B goes away, tap a section's own
+     "which theme" and yours wins. Calling a record still moves the form to
+     one the record has (`called`), which is what should happen to a shape
+     nobody asked for. */
+  const opening = () => {
+    const m = blank();
+    return { ...m,
+      song: { ...m.song, form: "pop", themeB: true },
+      ideaB: answerTheme(),
+      // the verses take the tune (a chorus in the shape means the "home"
+      // law hands it to the chorus, so the verses say so themselves), the
+      // choruses take the answer, and the last one returns it up a step
+      per: { 0: { idea: "keys" }, 1: { theme: "b" },
+             2: { idea: "keys" }, 3: { theme: "b", back: "up" } } };
+  };
+
   /* ---------- WHAT EACH PLAYER DOES IN EACH SECTION -----------------------
      The gig sheet sets up the SONG; a section is where a band actually
      arranges. So every section can ask each player one thing: what are you
@@ -343,13 +390,13 @@
                styles: ["hold the root", "octaves"],
                instr: ["a synth bass", "with a pick"],
                chg: ["a minor vamp", "one chord, all night"] },
-    rock:    { w: "a rock record", fam: "rock", bpm: 120, chords: "plain", when: ["the sixties", "the seventies", "the eighties", "the nineties"], where: ["London", "Los Angeles", "New York"], venue: ["a stadium", "a bar", "a festival"], gtr: ["an overdriven one", "a crunchy one", "a distorted one", "a clean electric"], gjob: "power", keys: ["an organ", "a rock organ", "a grand piano", "an upright"], kjob: "comp", forms: ["versechorus", "pop", "full", "aaba"], artic: "normal", gtrTone: { cut: 1300 }, tone: { cut: 1100, q: 2,  rel: 0.24 },
+    rock:    { w: "a rock record", fam: "rock", bpm: 120, chords: "plain", when: ["the sixties", "the seventies", "the eighties", "the nineties"], where: ["London", "Los Angeles", "New York"], venue: ["a stadium", "a bar", "a festival"], gtr: ["an overdriven one", "a crunchy one", "a distorted one", "a clean electric", "a re-amped DI"], gjob: "power", keys: ["an organ", "a rock organ", "a grand piano", "an upright"], kjob: "comp", forms: ["versechorus", "pop", "full", "aaba"], artic: "normal", gtrTone: { cut: 1300 }, tone: { cut: 1100, q: 2,  rel: 0.24 },
                grooves: ["straight rock", "driving rock", "stomp", "half time"],
                machines: ["acoustic kit", "room kit", "big kit"],
                styles: ["hold the root", "driving eighths", "root and fifth"],
                instr: ["with a pick", "fingers on a P-bass"],
                chg: ["the doo-wop changes", "the four-chord one", "a twelve-bar blues"] },
-    punk:    { w: "a punk record", fam: "rock", bpm: 144, chords: "plain", when: ["the seventies", "the eighties"], where: ["London", "New York", "Manchester"], venue: ["a basement", "a bar", "a club"], gtr: ["a distorted one", "an overdriven one", "a crunchy one"], gjob: "drive", keys: ["a rock organ", "an organ", "an upright"], kjob: "comp", forms: ["versechorus", "pop", "vamp"], fig: "pump", artic: "staccato", tone: { cut: 1400, q: 2,  rel: 0.18 },
+    punk:    { w: "a punk record", fam: "rock", bpm: 144, chords: "plain", when: ["the seventies", "the eighties"], where: ["London", "New York", "Manchester"], venue: ["a basement", "a bar", "a club"], gtr: ["a distorted one", "an overdriven one", "a crunchy one", "a re-amped DI"], gjob: "drive", keys: ["a rock organ", "an organ", "an upright"], kjob: "comp", forms: ["versechorus", "pop", "vamp"], fig: "pump", artic: "staccato", tone: { cut: 1400, q: 2,  rel: 0.18 },
                grooves: ["punk", "driving rock", "stomp"],
                machines: ["acoustic kit", "big kit"],
                styles: ["driving eighths", "hold the root"],
@@ -391,7 +438,7 @@
                styles: ["hold the root", "octaves"],
                instr: ["fingers on a P-bass", "with a pick"],
                chg: ["two-five-one", "the four-chord one"] },
-    slow:    { w: "something slow and open", fam: "rock", bpm: 72, chords: "sus", when: ["the nineties", "the two-thousands", "now"], where: ["Berlin", "Reykjavík", "London"], venue: ["a bedroom", "a studio", "a church"], gtr: ["a clean electric", "a steel-string acoustic", "a nylon-string"], gjob: "ring", keys: ["a warm pad", "strings", "a felt piano", "a glassy pad"], kjob: "swell", forms: ["vamp", "full", "dub"], fig: "stab", space: "four", artic: "legato", tone: { cut: 520,  q: 3,  rel: 1.20 },
+    slow:    { w: "something slow and open", fam: "rock", bpm: 72, chords: "sus", when: ["the nineties", "the two-thousands", "now"], where: ["Berlin", "Reykjavík", "London"], venue: ["a bedroom", "a studio", "a church"], gtr: ["a clean electric", "a steel-string acoustic", "a nylon-string", "harmonics"], gjob: "ring", keys: ["a warm pad", "strings", "a felt piano", "a glassy pad"], kjob: "swell", forms: ["vamp", "full", "dub"], fig: "stab", space: "four", artic: "legato", tone: { cut: 520,  q: 3,  rel: 1.20 },
                grooves: ["bare bones", "half time"],
                machines: ["electronic kit", "room kit", "808"],
                styles: ["hold the root", "octaves"],
@@ -878,7 +925,46 @@
        V V B V B V, and it composes with any bridged form.
        doors: an intro prepended, a tag appended, or both, around the
        (reprised) secs. */
+  /* ---------- THE BOXES ARE REAL (2026-08-22) -----------------------------
+     Paul, verbatim: "'add a box' doesn't really add a box. i can't move
+     boxes around. it gives me very very few options for song structure I
+     want many more."
+
+     He was right about the model, not just the button: the record's shape
+     was a CLOSED SET of named shapes and nothing could append to it, so
+     "add a box" honestly had nothing to do but re-open "what's the form?".
+     A form is a STARTING SHAPE, not a jail — every band that has ever
+     played an AABA has then decided to take the bridge twice — so the
+     boxes get a list of their own.
+
+     `m.song.secs` — the record's sections, in order, as role words. ABSENT
+     is the whole of the old behaviour: the form, wrapped by the reprise
+     and the doors, the same array reference it always returned, so every
+     saved record and every dice roll from before is byte-identical.
+     PRESENT it is the truth and the form label is only how the shape
+     STARTED — which is why `shapeOf` reads the boxes rather than the label
+     and the form fact stops claiming "AABA" the moment you edit one.
+
+     Paranoia at the ACCESSOR, the chgxOf law: the model rides the session
+     whole (localStorage), so a list carrying a role this build cannot play
+     is no list at all and the form answers for it. `cleanSecs` returns the
+     SAME array when it is clean — secsOf is on the hot path (partOf →
+     defaultsFor → secsOf, per section, per draw) and must not allocate. */
+  const SECROLES = {
+    intro: "an intro", verse: "a verse", chorus: "a chorus", bridge: "a bridge",
+    build: "a build", drop: "a drop", break: "a breakdown", head: "a head",
+    solo: "a solo", tag: "a tag", outro: "an outro",
+  };
+  // the ceiling: ui/band.js sweeps the section genre table to 24 and the
+  // phrase bank runs four deep per section, so a record cannot be allowed
+  // to outgrow either. Sixteen boxes is longer than any record this box has
+  // ever made and half the sweep.
+  const MAXSECS = 16;
+  const cleanSecs = (own) => (Array.isArray(own) && own.length >= 1 &&
+    own.length <= MAXSECS && own.every((r) => SECROLES[r])) ? own : null;
   const secsOf = (m) => {
+    const own = cleanSecs(m.song.secs);
+    if (own) return own;
     let secs = FORMS[m.song.form || "vamp"].secs;
     if (m.song.reprise === "bridge" && secs.includes("bridge"))
       secs = [...secs, ...secs.slice(secs.indexOf("bridge"))];
@@ -887,6 +973,54 @@
     if (d === "tag" || d === "both") secs = [...secs, "tag"];
     return secs;
   };
+  // has anybody edited the boxes? (the form label is then a starting point,
+  // not the shape)
+  const boxesEdited = (m) => !!cleanSecs(m.song.secs);
+  // WHAT SHAPE IS THIS RECORD, read off the boxes rather than the label —
+  // the honest answer to "what's the form?" once the boxes have diverged
+  // from the row that seeded them
+  const shapeOf = (m) => secsOf(m).join(", ");
+  /* EVERY BOX EDIT IS THE SAME TWO MOVES: the list, and the per-section
+     arrangement that rides its INDEXES. `m.per` is keyed by position, so a
+     box that moves takes what was said about it with it — otherwise the
+     chorus's "open the reverb" would stay behind on whatever landed in its
+     slot. Materializing is implicit: the first edit reads the shape the
+     form was making and writes it down. */
+  const shiftPer = (per, at) => {
+    const out = {};
+    for (const k of Object.keys(per || {})) {
+      const j = at(+k);
+      if (j != null && j >= 0) out[j] = per[k];
+    }
+    return out;
+  };
+  function addSection(m, at, role) {
+    if (!SECROLES[role]) return m;
+    const cur = secsOf(m);
+    if (cur.length >= MAXSECS) return m;
+    const p = Number.isInteger(at) && at >= 0 && at <= cur.length ? at : cur.length;
+    return { ...m, per: shiftPer(m.per, (j) => (j >= p ? j + 1 : j)),
+             song: { ...m.song, secs: [...cur.slice(0, p), role, ...cur.slice(p)] } };
+  }
+  function moveSection(m, i, dir) {
+    const cur = secsOf(m), j = i + (dir < 0 ? -1 : 1);
+    if (!(i >= 0 && i < cur.length && j >= 0 && j < cur.length)) return m;
+    const secs = cur.slice();
+    secs[i] = cur[j]; secs[j] = cur[i];
+    return { ...m, per: shiftPer(m.per, (k) => (k === i ? j : k === j ? i : k)),
+             song: { ...m.song, secs } };
+  }
+  // ...and a record cannot be emptied: a song with no sections is not a
+  // shorter song, it is a page that stops compiling
+  function removeSection(m, i) {
+    const cur = secsOf(m);
+    if (cur.length <= 1 || !(i >= 0 && i < cur.length)) return m;
+    return { ...m, per: shiftPer(m.per, (k) => (k === i ? null : k > i ? k - 1 : k)),
+             song: { ...m.song, secs: cur.filter((_, j) => j !== i) } };
+  }
+  // ...and the way BACK: a FORMS row is a starting point you can always
+  // return to, which is what answering "what's the form?" now means
+  const reseed = (song) => { const s = { ...song }; delete s.secs; return s; };
   /* ---------- HOW LONG IS IT ----------------------------------------------
      A section was as long as the changes it was called with, and nothing
      could say otherwise: the only lengths reachable anywhere in the graph
@@ -913,6 +1047,11 @@
     const want = new Set(secsOf(m).map((r) => CHGROLE[r] || r));
     return CALLED.filter((r) => want.has(r));
   };
+  // THE RECORD HAS A SHAPE ONCE ANYBODY HAS DECIDED ONE — a called form, or
+  // boxes of its own. Until then it is one vamp and the per-role calls
+  // ("what are the chorus changes?", "how long is the verse?") name roles
+  // no box carries, which is why they wait.
+  const hasShape = (m) => !!(m.song.form || cleanSecs(m.song.secs));
 
   /* ---------- THE COLOUR OF THE KEY --------------------------------------
      "major or minor?" stays the first ask, exactly as it always was — and
@@ -990,27 +1129,35 @@
     // (built per model in arrDecisionsNow/answer — the words depend on which
     // half of "major or minor?" the room is in)
     { id: "mcolor", color: true },
+    // A FORM IS A STARTING SHAPE. Once the boxes have been edited none of
+    // these rows is what the record IS any more (`shapeOf` says that out
+    // loud), so none of them reads as current — and tapping one is the way
+    // back: it RESEEDS the boxes from that shape.
     { id: "form", ask: "what's the form?", opts:
       Object.entries(FORMS).map(([k, f]) => ({
-        w: f.w, is: (s) => s.form === k, apply: (s) => ({ ...s, form: k }) })) },
+        w: f.w, is: (s) => !cleanSecs(s.secs) && s.form === k,
+        apply: (s) => ({ ...reseed(s), form: k }) })) },
     // THE FORM, WRAPPED (PLAN.md THE THROUGH-COMPOSED THEME §form): a
     // reprise and the doors. Both default to writing nothing — an
     // unanswered record is byte-identical, and the pruner retires "again
     // from the bridge" on a form with no bridge (secsOf is a no-op there).
+    // Both WRAP the form, so both reseed the boxes for the same reason the
+    // form row does: a wrap you cannot see is not a wrap.
     { id: "reprise", ask: "once through, or round again?", opts: [
-      { w: "once through", is: (s2) => !s2.reprise,
-        apply: (s2) => ({ ...s2, reprise: null }) },
-      { w: "again from the bridge", is: (s2) => s2.reprise === "bridge",
-        apply: (s2) => ({ ...s2, reprise: "bridge" }) } ] },
+      { w: "once through", is: (s2) => !cleanSecs(s2.secs) && !s2.reprise,
+        apply: (s2) => ({ ...reseed(s2), reprise: null }) },
+      { w: "again from the bridge",
+        is: (s2) => !cleanSecs(s2.secs) && s2.reprise === "bridge",
+        apply: (s2) => ({ ...reseed(s2), reprise: "bridge" }) } ] },
     { id: "doors", ask: "how does it open and close?", opts: [
-      { w: "straight in", is: (s2) => !s2.doors,
-        apply: (s2) => ({ ...s2, doors: null }) },
-      { w: "an intro", is: (s2) => s2.doors === "intro",
-        apply: (s2) => ({ ...s2, doors: "intro" }) },
-      { w: "a tag on the end", is: (s2) => s2.doors === "tag",
-        apply: (s2) => ({ ...s2, doors: "tag" }) },
-      { w: "an intro and a tag", is: (s2) => s2.doors === "both",
-        apply: (s2) => ({ ...s2, doors: "both" }) } ] },
+      { w: "straight in", is: (s2) => !cleanSecs(s2.secs) && !s2.doors,
+        apply: (s2) => ({ ...reseed(s2), doors: null }) },
+      { w: "an intro", is: (s2) => !cleanSecs(s2.secs) && s2.doors === "intro",
+        apply: (s2) => ({ ...reseed(s2), doors: "intro" }) },
+      { w: "a tag on the end", is: (s2) => !cleanSecs(s2.secs) && s2.doors === "tag",
+        apply: (s2) => ({ ...reseed(s2), doors: "tag" }) },
+      { w: "an intro and a tag", is: (s2) => !cleanSecs(s2.secs) && s2.doors === "both",
+        apply: (s2) => ({ ...reseed(s2), doors: "both" }) } ] },
     // A SECOND THEME (PLAN.md THE THEME COMPOSER §1): named and few — A and
     // B, the tune and the answer. The question lands on the song's ledger
     // like any other; the theme itself is a MODEL fact (m.ideaB), made in
@@ -1077,7 +1224,7 @@
   // ...and a role whose changes the hand AUTHORED has no length question:
   // the list's length IS the section's length (the precedence law), and a
   // question whose answers cannot change the record is not asked
-  const lenDecisions = (m) => (m.song.form ? rolesIn(m) : [])
+  const lenDecisions = (m) => (hasShape(m) ? rolesIn(m) : [])
     .filter((r) => !chgxOf(m, r)).map((r) => ({
     id: "len:" + r, seat: "arranger", ask: "how long is the " + r + "?",
     opts: Object.entries(LENS).map(([k, v]) => ({
@@ -1090,7 +1237,7 @@
   // differs from it (a lean into the same chord is the same wearing a
   // costume). Per-bar freedom is what the authored picker is FOR, so a role
   // with changes of its own is not asked — the lean is a mark IN its list.
-  const leanDecisions = (m) => (m.song.form ? rolesIn(m) : [])
+  const leanDecisions = (m) => (hasShape(m) ? rolesIn(m) : [])
     .filter((r) => !chgxOf(m, r)).map((r) => {
     const c = B.CHANGES[(m.song.chg || {})[r] || "fourchord"];
     const mid = Math.floor(c.bars / 2) - 1;
@@ -1108,7 +1255,7 @@
           apply: (s2) => ({ ...s2, lean: { ...(s2.lean || {}), [r]: "mid" } }) }] : []),
       ] };
   });
-  const callDecisions = (m) => (m.song.form ? rolesIn(m) : []).map((r) => ({
+  const callDecisions = (m) => (hasShape(m) ? rolesIn(m) : []).map((r) => ({
     id: "chg:" + r, seat: "arranger", ask: "what are the " + r + " changes?",
     opts: Object.entries(B.CHANGEWORD).map(([k, w]) => ({
       w, is: (s) => (s.chg || {})[r] === k,
@@ -1166,7 +1313,12 @@
     ...d, seat: "arranger",
     // an IDEA question (either theme's) is answered on the idea's own
     // ledger, not the song's
-    answered: d.id.startsWith("idea") ? d.answered : ((m.song.answers || {})[d.id] || null),
+    // ...and THE FORM ANSWERS OFF THE BOXES once anybody has edited them.
+    // A sheet that still says "AABA" over boxes reading intro/verse/verse/
+    // bridge/verse/solo/outro is a sheet lying about the record: what the
+    // record IS is what the boxes say, so that is the word this fact wears.
+    answered: d.id === "form" && boxesEdited(m) ? shapeOf(m)
+      : d.id.startsWith("idea") ? d.answered : ((m.song.answers || {})[d.id] || null),
     // the chair's own option mapper, aimed at the SONG: what was said, and
     // what is true of the tune right now
     opts: C.mapOpts(d.opts, (m.song.answers || {})[d.id], m.song) }));
@@ -1206,10 +1358,25 @@
     // ...and the guitar, the same way: a house record has a guitar chopping
     // the offbeats if it has one at all, and techno has none
     let gg2 = m.guitar;
-    const gw = Gt.INSTRUMENTS[gg2.instr];
-    if (!(gg2.answers || {}).instr || !keep(gw, gk.gtr || [])) {
+    // AN ANSWERED GUITAR IS THE PLAYER'S, FULL STOP (2026-08-22). This used to
+    // re-cast an answered instrument the moment the new record's `gtr` did not
+    // list it — which was invisible while the question only OFFERED that list,
+    // and becomes a bug the moment the rack is open (`narrow`/openRack): you
+    // pick up harmonics, change the record, and the guitar is silently swapped
+    // for something you never said. The UNSPOKEN half of the law is unchanged
+    // and is the half that matters — a chair that has not been asked follows
+    // the record rather than sitting on the blank model's clean electric.
+    // (The keys line above keeps both halves: that rack is still narrowed, so
+    // an answer there is always one of the record's own anyway.)
+    // ...and the record's own cast is SAID, not ANSWERED (chair.js sayOf
+    // touches the model and not the `answers` ledger), which is what makes the
+    // two halves separable at all: `answers.instr` now means "the player said
+    // this" and nothing else, so the next record can still move an unspoken
+    // guitar and can never move a spoken one. It is also what the `gjob` line
+    // below has always done.
+    if (!(gg2.answers || {}).instr) {
       const want = Object.entries(Gt.INSTRUMENTS).find(([, w]) => w === (gk.gtr || [])[0]);
-      if (want) gg2 = Gt.answer(gg2, "instr", want[1]);
+      if (want) gg2 = Gt.say(gg2, "instr:" + want[0]);
     }
     if (gk.gjob && !(gg2.answers || {}).job) gg2 = Gt.say(gg2, "job:" + gk.gjob);
     if (!keep((b.answers || {}).instr, gk.instr)) b = B.answer(b, "instr", gk.instr[0]);
@@ -1259,16 +1426,64 @@
      picks. A filter that would leave fewer than two answers is dropped
      whole — at that point it is not a constraint, it is the arranger
      playing the drums. */
+  // (THREE RECORDS GAINED A WORD with the new guitars, 2026-08-22, APPENDED
+  // only: rock and punk name the re-amped DI, and the slow one names
+  // harmonics. `gtr[0]` is the one entry that decides anything — it is the
+  // guitar `called()` casts on a chair that has not spoken — so appending
+  // moves no render, and what it does move is which side of the rack's two
+  // rows a word is drawn under.)
   const WORDSOF = { groove: "grooves", job: "styles", instr: "instr", form: "formw" };
   // the keys chair asks "what are you playing?" under the same id the bass
   // does, so the narrowing table is per SEAT, not per question id alone
   const KEYSOF = { instr: "keys" }, GTROF = { instr: "gtr" };
+  /* THE RECORD RECOMMENDS, IT DOES NOT JAIL — the guitar rack, 2026-08-22
+     ("give me lots more guitar options rather than the three you offer").
+
+     The law above is right for a groove and wrong for a RACK. Narrowing keeps
+     a record coherent, and a record's `gtr` is three or four words, so the
+     guitarist saw three or four of the ten guitars in the room and had no way
+     to reach the rest — `narrow` only drops a filter when it would leave fewer
+     than TWO answers, and three is plenty by that test. Measured before this:
+     house 3 of 8, jazz 3, blues 3, bossa 3, rock 4. The instruments a genre
+     hides are not off the table the way a drum machine that had not been
+     invented yet is; a guitarist in a jazz club can pick up a distorted one,
+     and the record simply has an opinion about it.
+
+     So the record's picks come FIRST, under a label in the house voice, and
+     the rest of the rack follows under a second one. Everything stays ONE
+     radio group and the record's own first pick is still the head of the list
+     — which is the same answer `called()` casts — so nothing about what a
+     record SOUNDS like moved; only what it will let you say. The row words are
+     ui/band.js's `.drowlab` mechanism, already carried by every option
+     (chair.js `instrRows`) and already drawn full-width by the radio grid;
+     `ROWORDER` does not name these two, so the grid's sort is a no-op across
+     them and this order stands.
+
+     GUITAR ONLY, deliberately. The same courtesy would be one line each for
+     keys and bass, and it is NOT taken here: the keys rack is 17 words and
+     the record's four are a genuinely useful cut of it, so opening that one
+     is a design question about a longer list, asked separately. */
+  const GTRROWS = { own: "the record's own:", rest: "the rest of the rack:" };
+  const openRack = (d, want) => {
+    const w = want || [];
+    const rank = (o) => { const i = w.indexOf(o.w); return i < 0 ? w.length : i; };
+    const own = d.opts.filter((o) => w.includes(o.w))
+      .sort((a, b) => rank(a) - rank(b))
+      .map((o) => ({ ...o, row: GTRROWS.own }));
+    const rest = d.opts.filter((o) => !w.includes(o.w))
+      .map((o) => ({ ...o, row: GTRROWS.rest }));
+    // a record whose picks are the whole rack (or none of it) gets no labels:
+    // a row heading over every option says nothing
+    if (!own.length || !rest.length) return d;
+    return { ...d, opts: [...own, ...rest] };
+  };
   const narrow = (m, seat, ds) => {
     const gk = genreOf(m);
     if (!gk) return ds;
     // the forms this record has, as the words the question offers
     const formw = (gk.forms || []).map((k) => FORMS[k] && FORMS[k].w).filter(Boolean);
     return ds.map((d) => {
+      if (seat === "guitar" && d.id === "instr") return openRack(d, gk.gtr);
       const keep = d.id === "form" ? formw
         : seat === "keys" ? gk[KEYSOF[d.id]]
         : seat === "guitar" ? gk[GTROF[d.id]]
@@ -1460,6 +1675,11 @@
       // `lens`.
       m.song.lens || null, m.song.reprise || null, m.song.doors || null,
       m.song.lean || null, m.song.chgx || null,
+      // ...and THE BOXES, for the same reason: a record whose sections have
+      // been edited by hand has a shape its form label no longer names, and
+      // blind here the pruner retired the one tap that puts a FORMS row
+      // back (same form, different boxes, "nothing changed")
+      cleanSecs(m.song.secs) || null,
     ]);
   }
   // the MODES table toSong needs, remembered from the first call the page or
@@ -1639,8 +1859,7 @@
       // plenty" takes it back out; saying it twice changes nothing.
       if (id === "second")
         out.ideaB = song.themeB
-          ? (m.ideaB || Id.say({ ...Id.blank(), name: "the answer", cell: "call",
-                                 contour: "fall", land: "fifth" }, "start"))
+          ? (m.ideaB || answerTheme())
           : null;
       // WHAT KIND OF RECORD IS THIS is the drummer's own first question, and
       // the arranger has just answered it out loud. It is recorded on the
@@ -1709,8 +1928,16 @@
       // ...and the same law for the bassist's own tray: a record that does
       // not have a walking line in it does not offer one here either
       if (i.group === "the line") return (gk.styles || []).includes(w);
+      // ...and THE GUITAR RACK IS OPEN HERE TOO (2026-08-22). The question
+      // stopped jailing it (`narrow`/openRack above) and a tray that still did
+      // would be the same jail one surface over: a word you can answer and
+      // cannot then find is worse than a word you never had. The rows do the
+      // recommending in the question; the tray is a flat word list and simply
+      // carries all ten. The KEYS half of this line is untouched — that rack is
+      // 17 words and its cut is a separate design question.
       if (i.group === "what it is")
-        return ((gk.keys || []).includes(w) || (gk.gtr || []).includes(w));
+        return (seat === "guitar" ? Object.values(Gt.INSTRUMENTS).includes(w)
+                                  : (gk.keys || []).includes(w));
       if (i.group === "what you are playing" && !Ky.JOBS[i.id.replace(/^job:/, "")])
         return (gk.instr || []).includes(w);
       return true;
@@ -2056,6 +2283,12 @@
     tag:    { drums: "sparser", bass: "pedal", mix: "back", idea: "keys",
               back: "frag" },
   };
+  // a way in, a way out, and the hole in the middle: the sections a tune is
+  // not AT HOME in, whatever else a record is made of
+  const DOORROLE = { intro: 1, outro: 1, tag: 1, break: 1 };
+  const homeRole = (fsecs) => (fsecs.includes("head") ? "head"
+    : fsecs.includes("verse") ? "verse"
+    : (fsecs.find((r) => !DOORROLE[r]) || fsecs[0]));
   const defaultsFor = (m, i) => {
     const fsecs = secsOf(m);
     const role = fsecs[i], next = fsecs[i + 1];
@@ -2073,8 +2306,16 @@
     // in a chorus form. A per-section answer still outranks this (partOf).
     // ...a TAG is a door, not the tune's home: its own default taker (the
     // hook's head, out the door) must not un-home the verse's
+    // ...and NOW THAT ANY SEQUENCE IS REACHABLE (the boxes are real,
+    // 2026-08-22) the home cannot be a two-way guess. A hand-built
+    // intro/bridge/outro has no chorus, no head and no verse, and the old
+    // line quietly left every theme in that record silent. So the home is
+    // the first section that is not a DOOR — a way in, a way out or the
+    // hole in the middle — and the head/verse rows above it are what that
+    // rule already says on every form there has ever been (byte-identical:
+    // every FORMS row without a chorus or a drop carries a head or a verse).
     if (!fsecs.some((r) => r !== "tag" && (ROLE[r] || {}).idea) &&
-        role === (fsecs.includes("head") ? "head" : "verse"))
+        role === homeRole(fsecs))
       d.idea = "keys";
     // the drummer plays the band into the change; nobody has to ask
     if (next && next !== role) d.lift = true;
@@ -2524,7 +2765,11 @@
            resetSeat, randomSong, modeKeyOf,
            genreOf, rolesIn, asked, pending, sigOf, secSigOf, survivors, FIELDS3, Ask,
            secWords, partOf,
-           blank, decisions, seatDecisions,
+           blank, opening, decisions, seatDecisions,
+           // THE BOXES: the record's own sections, and the four moves a
+           // hand makes on them
+           SECROLES, MAXSECS, shapeOf, boxesEdited, homeRole,
+           addSection, moveSection, removeSection,
            nextAsk, nextAnywhere, answer, catalog, say, says, toGenre, toSong,
            SECDRUMS, SECBASS, SECKEYS, SECPIPE, CHORDKIND, LENS, ARC, TAKERS,
            sectionAsks, setSection,

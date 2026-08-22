@@ -205,6 +205,19 @@
     nylon_string_guitar: [40, 88], steel_string_guitar: [40, 88],
     jazz_guitar: [40, 88], clean_guitar: [40, 88], palm_muted_guitar: [40, 86],
     crunch_guitar: [40, 88], distortion_guitar: [40, 88], overdrive_guitar: [40, 88],
+    // ...and the DI, which is the same Fender the crunch tier is, with the amp
+    // in the insert chain instead of in the recording. The parent already
+    // carries [40, 88] for it and this row says the same, which is the law
+    // above (a borrowed value must not drift).
+    di_guitar: [40, 88],
+    // `guitar_harmonics` HAS NO ROW HERE, ON PURPOSE, and the parent has none
+    // either. Two catalog anchors cast it out of a `samplerPool`
+    // (genres-data.js), so writing an INSTRUMENT_RANGE row for it upstream
+    // would move their per-note fold and their renders — not a nukernel
+    // decision to take. Its honest window is therefore the zones' own extent,
+    // measured [16, 70.5]: wide at the bottom rather than wrong, and the
+    // guitarist's own register keeps the hand where a harmonic lives. If the
+    // parent ever gains a row, this table gains the same one.
     banjo: [48, 84],
     // keyed reeds + organs (the pedal board is the floor, not a rumble).
     // THREE ORGANS, WHERE THERE WAS ONE PLAYABLE ONE. `drawbarorgan` is a
@@ -786,6 +799,42 @@
   // fall through to the sampled library again. Fourteen genres change back —
   // gregorian, spem, bulgarian, hymn, doowop, the Beatles' and the boy band's
   // backing stacks — and every one of them is a chorus, not a soloist.
+  /* ---------- THE PEDALBOARD A SAMPLED VOICE MAY DECLARE ------------------
+     Every electric in PATCH_MODEL names its own inserts (the de-jangle round,
+     2026-08-21) because a recipe with none gets defaultInserts' pad chain.
+     A SAMPLED voice is the other case: the parent gives it no default chain at
+     all (state-engine's absent-law), so a recording arrives dry — which is
+     right for a nylon-string and wrong for a DI.
+
+     THE PARENT HAS HONOURED THIS ALL ALONG (state-engine
+     INSERTS-ON-SAMPLED-VOICES: an explicit `inserts` array on a sampler unit is
+     normalized by insertChain and run on the native PCM lane, in press and
+     live both). Nothing in nukernel ever wrote one, so the one instrument in
+     the registry that REQUIRES an amp was unclaimable: registry-data's own
+     header says di_guitar — the FreePats FSBS direct pickup, -27 dB RMS by
+     design — should be claimed "ONLY behind an insert_higain staged amp".
+     This table is that amp, and audio/to-engine.js's sampler branch is where
+     it is handed over.
+
+     WHY THE STAGING DIFFERS FROM distortion_guitar's. The modelled electrics
+     drive the STRING first (`drive: 0.82`) and the insert second; a recording
+     has no string to lean on, so the whole gain structure lives in the insert
+     — one more notch of drive, all three stages, the gate low enough not to
+     swallow a signal that starts 27 dB down, and the level up to bring it back
+     level with the rest of the rack. Measured against the modelled distortion
+     in the same bar (see the round's report): a DIFFERENT amp, not a fourth
+     amount of the same one — the cab tilt is the FSBS recording's, not the
+     4x12 the model plays through.
+
+     `heavyDriveOf` is NOT also fired: the parent's own note is that a sampled
+     voice declaring higain must not carry heavy strip distortion too, because
+     the amp IS the drive. Which is also why di_guitar stays in the plain
+     `guitar` family below rather than joining `dirty`. */
+  const SAMPLED_INSERTS = {
+    di_guitar: [{ type: "higain", gate: 0.22, drive: 0.8, stages: 3,
+      low: 0.58, mid: 0.46, high: 0.46, presence: 0.5, level: 0.85, mix: 1 }],
+  };
+
   const PATCH_VOICE = {
     solo_vox:    { dsp: "voice_lead",  voice: "tenor", vowels: "ao", syll: 0.5, phase: 0 },
   };
@@ -1071,7 +1120,7 @@
   };
 
   const api = { instrOf, BASS_INSTR, DRUMDIR, DRUMFILE, FONTS, BASSSYNTH, PATCHES, STRIPS,
-                stripFor, familyOf, RANGES, STRETCH_UP, STRETCH_DOWN, DRUMMIX, DRUMBUS,
+                stripFor, familyOf, RANGES, SAMPLED_INSERTS, STRETCH_UP, STRETCH_DOWN, DRUMMIX, DRUMBUS,
                 MACHINEMIX, mixFor, laneKey,
                 // DYN_ATK is the one raw constant the player still needs (the
                 // default attack for a note that asked for no treatment at all);

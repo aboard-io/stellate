@@ -36,7 +36,7 @@ header { flex: none; }
    fact being re-asked, the mark in hand, the theme node in hand. Checked
    radios and checkboxes say their own state natively. */
 .dmark.on, .dmod.on, .dseat.on, .dsec.now,
-.dfact.open, .dthemepick.on, .dtnode.on { background: #000; color: #fff; }
+.dfact.open, .dadd.open, .dthemepick.on, .dtnode.on { background: #000; color: #fff; }
 /* ...and the two that must not invert: the open section, and the staff,
    which is INK — a background would drown it */
 .dsec.open, .dstaff.on { outline: 2px solid; }

@@ -1063,10 +1063,20 @@
   // tell the composer what to BUILD, and tell you what you are looking at
   // afterwards. (Lived in compose.js; moved here because it is vocabulary, and
   // compose re-exports it so its own API did not move.)
+  // ...and the four the BAND PAGE has always said and this table never knew
+  // (2026-08-22, "the boxes are real"). `build`, `break`, `head` and `tag`
+  // are role words band-kit has used since the dance and jazz forms landed;
+  // the page pushed its boxes straight into SONG, so a document carrying
+  // one was refused by a loader that never saw it — a seam that only stayed
+  // quiet because no hand could build those shapes one box at a time. It
+  // can now. (`break` and `breakdown` are the same section under two
+  // vocabularies: a twelve-inch says one, the composer says the other, and
+  // both are legal names for a box rather than one being renamed.)
   const ROLES = { drums: "drums", bass: "bass", groove: "groove",
                   intro: "intro", verse: "verse", chorus: "chorus",
                   bridge: "bridge", breakdown: "breakdown", drop: "drop",
-                  solo: "solo", outro: "outro" };
+                  solo: "solo", outro: "outro",
+                  build: "build", break: "break", head: "head", tag: "tag" };
 
  // THE INSTRUMENT CHOICES : the union of
   // every sampled instrument the genre table itself plays — 48 ids, every one
@@ -1096,6 +1106,18 @@
     // sits a layer ABOVE this file in the graph; the bass-kit gate holds the
     // word to this pool, and the register gate proves the id resolves.
     ids.add("acoustic_bass");
+    // ...and the TWO GUITARS THE RACK REACHED PAST THE CATALOG (2026-08-22,
+    // "give me lots more guitar options"). Same case as the upright above and
+    // for the same reason: a chair can now pick them up BY NAME (guitar-kit.js
+    // "harmonics" and "a re-amped DI"), and the pool must offer what a word
+    // casts. Both are real SAMPLERS ids with zones on disk — `guitar_harmonics`
+    // is a recording of a touched node, which no plectrum model can fake, and
+    // `di_guitar` is the FreePats direct pickup, played through the staged amp
+    // instruments.js SAMPLED_INSERTS declares for it. No genre in genres.js
+    // names either, which is exactly why they were unreachable; the guitar-kit
+    // gate holds the chair's words against THIS list rather than against a grep
+    // of the catalog, which was only ever a proxy for it.
+    ids.add("guitar_harmonics"); ids.add("di_guitar");
     for (const id of [...ids].sort()) INSTRCHOICES[id] = id.replace(/_/g, " ");
   }
   // THE POOL CHAIRS — which seats the song's INSTRUMENT POOL may cast. They
