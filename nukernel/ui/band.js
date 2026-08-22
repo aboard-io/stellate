@@ -5,8 +5,30 @@
 // the kit model is the classic UMD data tier (nukernel/drums-kit.js), read
 // off window exactly as ui/deps.js reads the rest of it
 const Band = window.NuBand;
-const { catalog: catalog0, say: say0, says: says0, toSong, seatDecisions,
+const { catalog: catalog0, say: say0, says: says0, toSong: toSong0, seatDecisions,
         nextAsk, nextAnywhere, answer, SEATS, sectionAsks, setSection } = Band;
+// THE PRODUCER IS ONE SEAM, AND THIS IS IT. nukernel/producer.js is a pure
+// data-tier module like every other file below the UI — it reads the record
+// band-kit already composed and moves it, and it is the only thing in the
+// building that knows what "make the drums punk" means. Nothing in
+// band-kit.js, kernel.js or genres.js was touched to give it a home: the
+// section genres toSong hands back ARE the seam.
+//
+// One run per model, cached on the model's own identity (the model is
+// immutable and replaced on every answer, so a WeakMap keyed on it is an
+// exact cache). With no notes the run returns the sections it was handed,
+// unchanged and by reference — which is what makes a record with no
+// producer notes byte-identical to the record before the producer existed.
+const Prod = window.NuProducer;
+const PRODUCED = new WeakMap();
+function produced(m) {
+  let r = PRODUCED.get(m);
+  if (!r) { const base = toSong0(m, MODES);
+            r = Prod.run(m, base); r.base = base; PRODUCED.set(m, r); }
+  return r;
+}
+const toSong = (m, MODES_, only) =>
+  (only == null ? produced(m).secs : toSong0(m, MODES_, only));
 // WHICH THEME THE PAGE IS EDITING. Two themes at most — the tune (A) and
 // its answer (B) — and every arranger tray word, bar cell and staff caption
 // aims at the one in hand. Nothing but this page cares: band-kit's say/says/
@@ -94,7 +116,12 @@ function push(first) {
     slots: [song[0].pattern],
     song: [{ ...NuSong.emptyBox(), stack: [{ g: GKP + 0, slots: [0] }],
              len: song[0].bars }] }, "band");
-  setBpm(model.song.bpm);
+  // ...AND THE TEMPO IS THE PRODUCER'S TOO, within a fence. A tempo is too
+  // strong a lever to hand a lerp — one press toward punk from 96 is +25.6
+  // bpm, a whole catalog standard deviation, from one word about the drums
+  // — so producer.js caps the move at 8% of the standing tempo per press.
+  // With no notes this IS model.song.bpm, to the byte.
+  setBpm(produced(model).bpm);
   setSwing(model.song.swing || null);
   // ...and how the record counts, the third song fact of the family. The
   // ENGINE reads the meter off each section's genre (band-kit stamps it);
@@ -123,9 +150,29 @@ function push(first) {
   // composed mix), so the engineer needs no audio path of its own — it is
   // the same board the mixer page writes. Cleared and rewritten whole on
   // every push: what the engineer said IS the board on this page.
+  // ...AND THE PRODUCER'S HAND LANDS ON THE SAME BOARD, added rather than
+  // applied over: two answers on one channel ADD, the way two hands on a
+  // board would, which is exactly what audio/desk.js already does with a
+  // channel's several treatments. So the producer cannot fight the engineer
+  // on the desk — addition commutes — and it cannot fight the hand on a
+  // kernel field either, because producer.js never moves a field the hand
+  // has answered by name (its `held` set is the band's annotated knobs).
   clearMixOffsets();
-  for (const [chan, vals] of Object.entries(Band.mixOf(model)))
-    for (const [k, v] of Object.entries(vals)) setMixOffset(chan, k, v);
+  const desk = Band.mixOf(model), pmix = produced(model).mix;
+  for (const chan of new Set([...Object.keys(desk), ...Object.keys(pmix)])) {
+    const a = desk[chan] || {}, b = pmix[chan] || {};
+    for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) {
+      if (k === "eq") {
+        const e = {};
+        for (const band of ["lo", "mid", "hi"]) {
+          const v = +(((a.eq || {})[band] || 0) + ((b.eq || {})[band] || 0)).toFixed(2);
+          if (v) e[band] = v;
+        }
+        setMixOffset(chan, "eq", e);
+      } else if (k === "mute") setMixOffset(chan, "mute", !!(a.mute || b.mute));
+      else setMixOffset(chan, k, +(((a[k] || 0) + (b[k] || 0)).toFixed(3)));
+    }
+  }
   // THE KEYS PLAYER'S PHRASE, per section: a pitched voice is a part and a
   // PHRASE, and only the phrase says where the hands fall. One slot per
   // section, so a chorus can comp while the verse holds pads.
@@ -635,7 +682,8 @@ function modButton(word, key) {
   b.type = "button";
   b.dataset.k = "mod|" + key;
   b.addEventListener("click", () => {
-    module_ = key; section = null; asking = null; picker = null; draw(); });
+    module_ = key; section = null; asking = null; picker = null;
+    pverb = null; psubj = null; draw(); });
   return b;
 }
 
@@ -984,8 +1032,10 @@ function render(box) {
   // changed), and tapping another thing just opens that one instead.
   box.onclick = (e) => {
     if (e.target !== box) return;
-    if (asking == null && section == null && picker == null) return;
-    asking = null; section = null; picker = null; draw();
+    if (asking == null && section == null && picker == null &&
+        pverb == null && psubj == null) return;
+    asking = null; section = null; picker = null;
+    pverb = null; psubj = null; draw();
   };
 
   // BEFORE THE COUNT-IN there is nothing to arrange: one sentence and one
@@ -1193,7 +1243,195 @@ function render(box) {
   }
   // the chairs are how you move between the players: a landmark
   dBand.append(navOf(seats, "the chairs"));
-  box.append(sBand);
+  box.append(sBand, el("hr"));
+
+  // ---- THE PRODUCER ---- the last area, because it is the last word: the
+  // band plays the record and somebody with taste says five or six things
+  // about it. Same idiom as everything above — a heading that is the button
+  // bringing its question to the floor, an outline of what has been said,
+  // and one question at a time.
+  const sProd = el("section");
+  const dProd = (() => { const h = el("h2");
+    const mb = modButton("producer", "prod");
+    mb.setAttribute("aria-label", "the producer");
+    h.append(document.createTextNode("the "), mb);
+    return foldOf("area|prod", h); })();
+  sProd.append(dProd);
+  producerArea(dProd);
+  box.append(sProd);
+}
+
+/* ---------- THE PRODUCER -------------------------------------------------
+   ONE SENTENCE SHAPE, BUILT BY TAPPING, three taps at most:
+
+       [VERB]  [SUBJECT]  [DESCRIPTOR]
+
+   There is no text box and no parser anywhere — the sentence is ASSEMBLED
+   by the taps rather than read from them, which is why every combination
+   the page offers is one producer.js can actually make (and why an
+   unsayable sentence is never offered rather than guessed at).
+
+   THE NOTES ARE THE INTERFACE. A statement is not fire-and-forget: it is a
+   LINE the record remembers, carrying a plus, a minus and a percentage —
+   the real lerp coefficient, 40% on the first press and asymptotic after —
+   so the record IS the base plus the visible stack, and undo is taking a
+   line off. */
+let pverb = null, psubj = null;         // the sentence being built, tap by tap
+const PASKW = { make: "make what?", more: "more of what?", less: "less of what?",
+                add: "add what?", away: "take away what?",
+                only: "keep only what?" };
+function producerArea(parent) {
+  const R = produced(model);
+  const notes = Prod.notesOf(model);
+  const land = () => { pverb = null; psubj = null;
+    push(false); announce("producer", null); draw(); };
+  // ---- WHAT HAS BEEN SAID, and what it did ----
+  if (notes.length) {
+    const ol = el("ol", "dnotes");
+    R.said.forEach((line, i) => {
+      const li = el("li");
+      const dl = el("dl");
+      // the same name-and-value pair every fact on this page is: the TERM
+      // is the sentence (tapping it says it again, harder), the DEFINITION
+      // is how far along it is and what it moved — in the band's own words
+      const b = el("button", "dnote", line.sentence);
+      b.type = "button";
+      b.dataset.k = "note|" + i;
+      b.title = "say it again, harder";
+      b.addEventListener("click", () => { model = Prod.bump(model, i, +1); land(); });
+      dl.append(term(b), el("dd", null,
+        Prod.pct(line.note.w) + "% — " + line.said.join(", ")));
+      li.append(dl);
+      const ops = el("p", "dboxops");
+      const op = (word, k, run) => {
+        const o = el("button", "dboxop", word);
+        o.type = "button";
+        o.dataset.k = k + "|" + i;
+        o.append(el("span", "dvh", " — " + line.sentence));
+        o.addEventListener("click", run);
+        ops.append(o, " ");
+      };
+      op("more", "pnup", () => { model = Prod.bump(model, i, +1); land(); });
+      op("less", "pndn", () => { model = Prod.bump(model, i, -1); land(); });
+      op("take it off", "pndel", () => { model = Prod.drop(model, i); land(); });
+      li.append(ops);
+      ol.append(li);
+    });
+    parent.append(navOf(ol, "the producer's notes"));
+    const clear = el("button", "dfact", "forget all of it");
+    clear.type = "button";
+    clear.dataset.k = "pclear";
+    clear.title = "take every note off and hear the record the band made";
+    clear.addEventListener("click", () => { model = Prod.clearNotes(model); land(); });
+    parent.append(clear);
+  }
+  if (module_ !== "prod" || section != null) return;
+  floorQ = "prod|" + (pverb || "") + "|" + (psubj || "");
+  const ask = el("fieldset", "dask");
+  parent.append(ask);
+
+  // ---- TAP ONE: THE VERB. Six, and no more — a producer with a hundred
+  // words is a menu, and Paul asked for the world's simplest grammar.
+  if (!pverb) {
+    if (notes.length >= Prod.MAXNOTES) {
+      ask.append(el("legend", "dq",
+        "that is six things — take one off before you say another"));
+      return;
+    }
+    ask.append(el("legend", "dq", "what do you want to say?"));
+    for (const v of Prod.VERBS) {
+      const lab = optWidget(v.w, "dopt", { kind: "radio", name: "pverb", on: false,
+        key: "opt|pverb|" + v.id,
+        take: () => { pverb = v.id; psubj = null; draw(); } });
+      lab.title = v.says;
+      ask.append(lab, " ");
+    }
+    return;
+  }
+
+  // ---- TAP TWO: THE SUBJECT, and it is the WHOLE TREE — the record, each
+  // chair, each chair's own components, and the mix. "More drums" and "more
+  // kick" are the same sentence at two depths.
+  if (!psubj) {
+    ask.append(el("legend", "dq", PASKW[pverb] || "what?"));
+    const tree = el("ul", "dtree");
+    const byParent = new Map();
+    // WHAT THIS VERB CAN TAKE HOLD OF ON THIS RECORD. A verb that takes no
+    // descriptor is a two-tap sentence, so the record-dependent honesty test
+    // has to happen here — "less bass line" on a bass already holding one
+    // note is as sparse as it is going to get, and it is not offered.
+    const can = new Set(Prod.subjectsFor(model, R.base, pverb).map((x) => x.id));
+    for (const s2 of Prod.SUBJ) {
+      if (!can.has(s2.id)) continue;
+      const list = byParent.get(s2.under || null) || [];
+      list.push(s2); byParent.set(s2.under || null, list);
+    }
+    const node = (s2) => {
+      const li = el("li");
+      // "more"/"less" say the subject BARE ("more kick"); everything else
+      // says it with its article ("take away the kick"). Two-tap sentences
+      // have to be English too.
+      const word = (pverb === "more" || pverb === "less") ? s2.bare : s2.w;
+      li.append(optWidget(word, "dopt", { kind: "radio", name: "psubj", on: false,
+        key: "opt|psubj|" + s2.id,
+        take: () => {
+          if (Prod.VERB[pverb].d === "no") {
+            model = Prod.addNote(model, pverb, s2.id); land(); return;
+          }
+          psubj = s2.id; draw();
+        } }));
+      const kids = byParent.get(s2.id);
+      if (kids) { const ul = el("ul");
+        for (const k of kids) ul.append(node(k));
+        li.append(ul); }
+      return li;
+    };
+    for (const s2 of byParent.get(null) || []) tree.append(node(s2));
+    // a component whose own chair this verb cannot take still gets a row —
+    // the tree may not swallow a subject the producer can actually move
+    for (const [parent2, list] of byParent)
+      if (parent2 && !can.has(parent2)) for (const s2 of list) tree.append(node(s2));
+    ask.append(navOf(tree, "what the note is about"));
+    return;
+  }
+
+  // ---- TAP THREE: THE DESCRIPTOR — a genre or an adjective, and only the
+  // ones that are HONEST for this subject on THIS record. The offering is
+  // computed, not listed: a target is offered only if the first press would
+  // actually move this record (producer.js firstStep), which is what stops
+  // "I tapped it and nothing happened".
+  const S = Prod.SUB[psubj];
+  ask.append(el("legend", "dq",
+    (pverb === "add" ? "add " + S.w + " — like what?"
+                     : "make " + S.w + " — what?")));
+  const opts = Prod.targetsFor(model, R.base, pverb, psubj);
+  const adjs = opts.filter((o) => o.kind === "adj");
+  const gens = opts.filter((o) => o.kind === "genre");
+  for (const o of opts.filter((x) => x.kind === "bare")) put(ask, o);
+  const put = (host, o) => {
+    const lab = optWidget(o.w, "dopt",
+      { kind: "radio", name: "pdesc", on: false, key: "opt|pdesc|" + o.id,
+        take: () => { model = Prod.addNote(model, pverb, psubj, o.id); land(); } });
+    // the anchor's own label is what the word MEANS ("punk" is New York
+    // 1976) — a title, not a second word on the page
+    if (o.label) lab.title = o.label;
+    host.append(lab, " ");
+  };
+  if (adjs.length) {
+    ask.append(el("p", "drowlab", "in a word:"));
+    const row = el("p");
+    for (const o of adjs) put(row, o);
+    ask.append(row);
+  }
+  if (gens.length) {
+    ask.append(el("p", "drowlab", "or like a record:"));
+    const grid = el("div", "dcols");
+    for (const o of gens) put(grid, o);
+    ask.append(grid);
+  }
+  if (!adjs.length && !gens.length)
+    ask.append(el("p", "dprose", "nothing here would move " + S.w +
+      " on this record. Try another one."));
 }
 
 // A SECTION IS OPEN: everything on the floor is about this section. Each
@@ -2012,6 +2250,7 @@ requestAnimationFrame(tick);
 $("dreset").addEventListener("click", () => {
   model = { ...Band.opening(), on: true };
   said.clear(); asking = null; section = null; picker = null; adding = false;
+  pverb = null; psubj = null;
   module_ = "song"; seat = "drums";
   ledger.length = 0;
   clearMixOffsets();
@@ -2032,6 +2271,7 @@ $("dreset").addEventListener("click", () => {
 $("ddice").addEventListener("click", () => {
   model = Band.randomSong();
   said.clear(); asking = null; section = null; picker = null; adding = false;
+  pverb = null; psubj = null;
   module_ = "song";
   ledger.length = 0;
   clearMixOffsets();
@@ -2218,7 +2458,16 @@ on("transport:state", () => {
 });
 
 /* ---------- boot ---------- */
-window.__nuTempo = () => model.song.bpm;      // the gate reads tempo as part of the artifact
+// the gate reads tempo as part of the artifact — the tempo the ENGINE is
+// handed, which is the producer's if a note moved it and the arranger's
+// otherwise (with no notes the two are the same number)
+window.__nuTempo = () => produced(model).bpm;
+// ...and what the producer has been told, and what it says it did. A gate
+// asking "did the sentence move the record" has to read the ARTIFACT.
+window.__bandProd = () => { const r = produced(model);
+  return { notes: Prod.notesOf(model), mix: r.mix, bpm: r.bpm,
+           said: r.said.map((x) => ({ sentence: x.sentence, w: x.note.w,
+                                      said: x.said, moved: x.moved })) }; };
 // THE SESSION SURVIVES A RELOAD, which is what makes the offline cache worth
 // having: coming back to a dead network and being handed an empty room is
 // the same as not having cached anything. One key, the model as it stands.
