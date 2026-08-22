@@ -262,6 +262,14 @@ Three movements, and the third is the new one.
    "opened the hats, snare hard on two and four, took the swing out, drove
    the amp." Everything else in this box is musicians talking; the producer
    is not an exception.
+   IT IS TAPPED, NEVER TYPED (Paul, 2026-08-22: "Vector step. Done by
+   tapping not free texts always"). No text box and no parser anywhere:
+   the producer is three taps in the page's own idiom — a SCOPE (the sound
+   / the drums / the bass / the guitar / the keys / the voice / the mix), a
+   TARGET (the catalog's anchors and its honest adjectives), and MORE (tap
+   again to go further) or LESS (walk it back). The moves stack as a list
+   you can undo, and the sentence is assembled by the taps rather than
+   read from them.
    WHAT IT MAY SAY is a TABLE, not a parser guess — one row per
    (scope x target x direction), the askable.js philosophy: scopes are the
    chairs plus "the sound" and "the mix"; targets are the catalog's own
