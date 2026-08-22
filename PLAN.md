@@ -276,6 +276,35 @@ Three movements, and the third is the new one.
    genres and its adjectives where they are honest ("thrash" is a real word
    the guitar rack can reach; "punk" is an anchor). An unsayable sentence
    says so plainly rather than guessing.
+   THE NOTES ARE THE INTERFACE (Paul, 2026-08-22). A producer statement
+   is not a fire-and-forget command, it is a LINE ON A LIST that the
+   record remembers, and every line carries PLUS and MINUS: "more punk"
+   sits there at 30% and you push it to 60%, or back to 10%, or off.
+   The magnitude is real and continuous — 10% to 100% of the way toward
+   the target — so "more punk" is literally a lerp and the number is how
+   far along it you are. The record is the base plus the stack of notes,
+   and because the stack is visible you can SEE the production, not just
+   hear it.
+   SCOPES GO ALL THE WAY DOWN. Not only "the drums" but its parts: more
+   kick, less crash, more hats. The scope list is the whole tree — the
+   record, a chair, and a chair's own components (the kit's lanes, the
+   bass's line, the guitar's amp) — and "more drums" (the whole kit
+   louder/busier) is itself a legal statement beside "more punk" (a
+   genre lerp). A statement is a (scope, target-or-quantity, amount).
+   BE PERMISSIVE (Paul: "don't worry too much. You can get a little meta
+   and weird. As long as the result is possible."). Constrain the
+   offerings so nothing is nonsense, but do not police taste: strange
+   combinations are the point of a producer. The only hard law is that
+   the result must be PLAYABLE — the dice's completeness property,
+   applied to the producer's whole table.
+   THE PRODUCER IS RICK RUBIN (Paul: "I think Rick Rubin"). Which is a
+   design instruction, not a joke: his craft is SUBTRACTION and essence
+   — take it away and see what the song needs, what happens with no
+   drums at all, what the record is actually about. So the vocabulary
+   must be as strong in the minus direction as the plus (less, thinner,
+   drier, gone), the producer should be willing to SUGGEST removal, and
+   the notes should read like a person with taste rather than a mixing
+   desk with knobs.
    IT MUST BE UNDOABLE — a producer note is a move on a stack, not a
    destructive edit, so "less punk" and plain undo both work, and the gig
    sheet keeps showing what is true.
