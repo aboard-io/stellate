@@ -6,18 +6,25 @@
 <title>The band — say it</title>
 <meta name="description" content="A band: an arranger, a drummer, a bass player, a keys player and an engineer. The arranger calls the tune; everyone else decides what is theirs.">
 <meta name="robots" content="noindex">
-<!-- BASIC HTML ON PURPOSE (Paul, 2026-08-21: "Just use basic HTML for
-     everything right now… Don't style at all"). One stylesheet, and it says
-     almost nothing: the scroll pane a gate measures, state-swap rules, and
-     the circle of fifths ("Keep the circle of fifths!!!" — the one
-     sanctioned exception). Everything else is the browser's own widgets. -->
+<!-- BASIC HTML, AND NO FORMATTING (Paul, 2026-08-21: "Just use basic HTML
+     for everything right now… Don't style at all"; 2026-08-23: "Get rid of
+     all text formatting just let the text be default size and everything
+     even simpler"). One stylesheet, and it sets no font-size, weight,
+     style, letter-spacing or case anywhere: the scroll pane a gate
+     measures, state-swap rules, the visually-hidden helper, the staff SVG's
+     containment, and the circle of fifths ("Keep the circle of fifths!!!" —
+     the one sanctioned exception). Everything else is the browser's own
+     defaults. -->
 <link rel="stylesheet" href="band.css">
 </head>
 <body>
 
-<!-- ONE PURPOSE, ONE PAGE, NO MODES. Everything is on the page at once, top
-     to bottom — themes, the song, the band — and the only thing that moves
-     is which question is in front of you. The transport is words: no dice
+<!-- ONE PURPOSE, ONE PAGE, NO MODES, NOTHING FOLDED (2026-08-23, Paul:
+     "put everything into a table and make it all fully expanded and simple
+     to scroll"). Everything is on the page at once, top to bottom — themes,
+     the song, the band, the producer — every region a real <table> with a
+     <caption>, no <details> anywhere, and the only thing that moves is
+     which question is in front of you. The transport is words: no dice
      glyph, no triangle, no circle-arrow; a button says what it does. -->
 <main>
   <header>

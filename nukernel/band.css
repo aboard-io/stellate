@@ -1,40 +1,39 @@
-/* band.css — BASIC HTML (2026-08-21, Paul: "Just use basic HTML for
-   everything right now… Don't style at all"). The browser's own widgets do
-   the talking now — visible radios/checkboxes, default buttons,
-   native fieldset borders, native list indents — and this file says only
-   what a stylesheet still MUST say:
-   - the one layout fact a gate measures: .dwrap is THE scroll container
-     (band-page.test.js scrolls it and reads scrollTop), so the header
-     stays put and the page scrolls under it;
-   - the option grid (.dcols): a long one-of-N laid in aligned columns
-     (Paul reversed the reset's <select> ruling — "don't use dropdown
-     select boxes just have a nice grid of radio buttons" — and columns
-     are layout, not decoration);
-   - two lines keeping a <dl> fact on one line;
-   - state-swap rules: the states the eye reads off the screen (the seat
-     you are in, the sounding section, the fact being re-asked, the mark
-     in hand, the theme in hand) no native widget carries;
-   - the words that are for assistive tech only (.dvh).
-   No fonts, no colors beyond state, no borders, no radius/shadows/
-   transforms. With CSS off the page reads as the same document. */
+/* band.css — NO FORMATTING (2026-08-23, Paul: "Get rid of all text
+   formatting just let the text be default size and everything even
+   simpler"). Everything on the page is a table, a fieldset or a button, and
+   the browser's own defaults do all of the talking: default type, default
+   size, no weight, no italics, no letter-spacing, no case, no hierarchy.
 
+   There is no font-weight, font-style, letter-spacing or text-transform
+   rule anywhere in this file, and no font-size outside the circle of
+   fifths, where the size IS the geometry (see the block at the foot). What
+   is left is only what a stylesheet still MUST say — the scroll pane, the states no native widget
+   carries, the words that are for assistive tech alone, keeping a vendor
+   SVG inside its column, and the circle of fifths (Paul: "Keep the circle
+   of fifths!!!", the one sanctioned exception). With CSS off the page reads
+   as the same document, top to bottom. */
+
+/* ---- the one layout fact a gate measures ---- */
+/* .dwrap is THE scroll container (band-page.test.js scrolls it and reads
+   scrollTop): the transport stays put and the page scrolls under it */
 html, body { height: 100%; }
 body { margin: 0; }
 main { height: 100%; display: flex; flex-direction: column; }
 header { flex: none; }
-/* the one scrolling pane: everything below the transport */
 .dwrap { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 
-/* words for AT and nobody else: the hint a title used to hoard, and the
-   one-shot change announcement (#dlive). No hidden colon-seam any more —
-   <dt>/<dd> and <th scope="row"> pair a name with its value. */
+/* ---- words for assistive tech and nobody else ---- */
+/* the hint a title used to hoard, and the one-shot change announcement
+   (#dlive). Everything else pairs a name with its value as a real
+   <th scope="row"> beside its <td>. */
 .dvh { position: absolute; width: 1px; height: 1px; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-/* state the eye needs and no native widget says: the area/chair that holds
-   the floor, the sounding section (the playhead), the open section, the
-   fact being re-asked, the mark in hand, the theme node in hand. Checked
-   radios and checkboxes say their own state natively. */
+/* ---- state, and only state ---- */
+/* the area/chair that holds the floor, the sounding section (the playhead),
+   the fact being re-asked, the mark in hand, the theme in hand. Checked
+   radios and checkboxes say their own state natively, so nothing here
+   repeats them. */
 .dmark.on, .dmod.on, .dseat.on, .dsec.now,
 .dfact.open, .dadd.open, .dthemepick.on, .dtnode.on { background: #000; color: #fff; }
 /* ...and the two that must not invert: the open section, and the staff,
@@ -47,53 +46,37 @@ header { flex: none; }
 /* the tie shows through every mark: a place held through ("hold it") keeps
    its say whichever mark is in hand */
 .dcell.dtied { text-decoration: underline; }
-/* the engraving shrinks with the column instead of overflowing it */
+
+/* ---- the staff: a vendor SVG, kept inside its column ---- */
 .dstaffsvg svg { max-width: 100%; height: auto; }
 /* THE SOUNDING NOTE (Paul: "light up notes in the theme when playing
-   them") — state the eye reads off the staff, like .dsec.now on a box: the
-   note now in the air, on ink that cannot invert. The descendant half
-   matters: abcjs paints fill as an ATTRIBUTE on the paths inside each
-   note's <g>, and only a CSS rule aimed at the paths outranks it. */
+   them") — state the eye reads off the staff, like .dsec.now on a box. The
+   descendant half matters: abcjs paints fill as an ATTRIBUTE on the paths
+   inside each note's <g>, and only a rule aimed at the paths outranks it. */
 .dstaffsvg .dlit, .dstaffsvg .dlit * { fill: #c00; }
-/* WHAT YOU ARE LOOKING AT (2026-08-21, Paul: "visually rewrite the themes
-   for their actual notes as you play them"). One line under the staff, in
-   words: whether these are the theme's own notes or the ones the sounding
-   section plays — and, when nobody carries it, that the tune is out. Empty
-   most of the time, so it takes no room when silent. */
-.dstaffcue { margin: .2em 0 0; font-size: .85em; }
+/* the caption under the staff is empty most of the time; an empty line
+   should not take a line */
 .dstaffcue:empty { display: none; }
 
-/* NAV, FOLDS AND FACTS (Paul: "use HTML <nav> elements"; "dictionary
-   lists or tables where needed"): outline trees ride in labeled <nav>s,
-   folds are <details>/<summary>, and a fact is a one-pair <dl> — <dt> the
-   control that re-asks it, <dd> its answer. Layout only: seat a
-   heading beside the summary marker, and keep a pair on ONE line (default
-   <dl> drops the value to a second indented line, doubling a sheet that is
-   all pairs). CSS off, the pairs read the same, one per line. */
-summary > h2 { display: inline; margin: 0; }
-dl { display: flex; flex-wrap: wrap; gap: 0 .4em; margin: 0; }
-dd { margin: 0; }
-
-/* A LONG LIST IS A GRID OF RADIOS (2026-08-21, Paul: "don't use dropdown
-   select boxes just have a nice grid of radio buttons"). Layout only: the
-   same .dopt radio-labels every short question renders, in columns that
-   align so 14-30 options scan; a row label (.drowlab — the kick:,
-   pianos:…) spans the grid's width. CSS off, the grid reads as the same
-   flat list of labeled radios. */
-.dcols { display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(8em, 1fr));
-  gap: 2px 14px; align-items: baseline; }
-.dcols .drowlab { grid-column: 1 / -1; }
-
 /* ---- the circle of fifths: THE sanctioned exception ---- */
-/* Paul, mid-reset, verbatim: "Keep the circle of fifths!!!" — so this block
-   survives the basic-HTML rule whole. It is pure ARRANGEMENT over the same
-   plain radio-labels every other question renders: twelve majors on the
-   outer ring (C at the top, sharps clockwise), relative minors inside at
-   the same hour, each label rotated to its hour, walked out the radius and
-   rotated back upright. The two thin ring strokes are the box's own
-   before/after. With the stylesheet off the same labels read as a list in
-   fifths order. The picker's root ring (.dpcircle) rides the same rules. */
+/* Paul, verbatim: "Keep the circle of fifths!!!" — so this block survives
+   whole. It is pure ARRANGEMENT over the same plain radio-labels every
+   other question renders: twelve majors on the outer ring (C at the top,
+   sharps clockwise), relative minors inside at the same hour, each label
+   rotated to its hour, walked out the radius and rotated back upright. The
+   two thin ring strokes are the box's own before/after. With the stylesheet
+   off the same labels read as a list in fifths order. The picker's root
+   ring (.dpcircle) rides the same rules.
+
+   AND IT IS THE ONE PLACE IN THIS FILE THAT SETS A SIZE, because here the
+   size IS the geometry: every radius and ring diameter is in em, so one
+   font-size on the box scales the whole diagram to fit a 390px phone, and
+   the inner ring's twelve relative minors have to be smaller than the outer
+   ring's twelve majors or they overlap — measured at page-default type,
+   they collide by 5-9px and the ring is unreadable. It is a diagram's own
+   scale, like the numbers on an axis, not a type hierarchy in the page's
+   text: nothing outside this block sets a size, and no rule anywhere in
+   this file sets a weight, a style, a letter-spacing or a case. */
 .dcircle { position: relative; width: 21em; height: 21em;
   font-size: clamp(.72rem, 3.6vw, 1rem); margin: 10px auto; }
 .dcircle::before, .dcircle::after { content: ""; position: absolute;

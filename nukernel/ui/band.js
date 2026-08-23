@@ -615,8 +615,8 @@ function themeStaff(m) {
 // (the one-question law counts every .dopt on the page).
 function themeNodeHead(t, edited) {
   const name = Band.themeName(model, t === "b" ? "b" : undefined);
-  if (!(model.ideaB && model.ideaB.on)) return el("span", "dthead", name);
-  const b = el("button", "dthead dtnode" + (edited ? " on" : ""), name);
+  if (!(model.ideaB && model.ideaB.on)) return document.createTextNode(name);
+  const b = el("button", "dtnode" + (edited ? " on" : ""), name);
   b.type = "button";
   b.dataset.k = "themenode|" + t;
   b.addEventListener("click", () => {
@@ -660,13 +660,13 @@ function sentStrip(theme) {
   const ROLEW = { state: "says it", restate: "again, ending differently",
                   develop: "pushes it further", land: "lands on one note",
                   carry: "picks it up mid-breath, tied over" };
-  const wrap = el("ul");
+  const wrap = tableOf("the sentence");
   for (let b = 0; b < bars; b++) {
-    const row = el("li", "dsentbar");
-    // PLAIN TEXT ROWS (the basic-HTML reset): one measure per line, sixteen
-    // characters — x a note starting, - the note still sounding through
-    // (the tie made visible; a - opening the next row IS the tie over the
-    // barline), · a rest — a space at each beat so the bar counts itself.
+    // PLAIN TEXT CELLS (the no-formatting reset): one measure per row,
+    // sixteen characters — x a note starting, - the note still sounding
+    // through (the tie made visible; a - opening the next row IS the tie
+    // over the barline), · a rest — a space at each beat so the bar counts
+    // itself. The measure's number is the row's own name.
     let txt = "";
     const CU = (metNow() || {}).count || 4;
     for (let i = 0; i < N16; i++) {
@@ -674,18 +674,22 @@ function sentStrip(theme) {
       txt += v === 1 ? "x" : v === 2 ? "-" : "·";
       if (i % CU === CU - 1 && i < N16 - 1) txt += " ";
     }
-    const cellsEl = el("span", "dsentcells", txt);
     const word = wr[b] ? "written by hand"
       : rowOf ? (ROLEW[rowOf[b]] || rowOf[b]) : (b ? "the cell again" : "says it");
-    const aim = el("button", "dsentrole" + (wr[b] ? " dwr" : ""), word);
+    const aim = el("button", "dsentrole", word);
     aim.type = "button";
     aim.dataset.k = "sbar|" + b;
     aim.addEventListener("click", () => {
       model = say(model, "arranger", "bar:" + b);
       module_ = "ideas"; section = null; asking = "grp:the bar";
       push(false); draw(); });
-    row.append(cellsEl, " ", aim);
-    wrap.append(row);
+    const tr = el("tr");
+    const th = el("th"); th.scope = "row"; th.append("bar " + (b + 1) + ":");
+    const td = el("td", null, txt);
+    const td2 = el("td");
+    td2.append(aim);
+    tr.append(th, td, td2);
+    wrap.append(tr);
   }
   return wrap;
 }
@@ -701,7 +705,8 @@ function sentStrip(theme) {
 // heading is the button that brings its questions to the floor.
 let module_ = "song";
 // ...and whether the FRONT DOOR is standing (below): true whenever no
-// record has been called, which is what folds every area shut.
+// record has been called, which is what keeps the arranger's own sheet
+// quiet and the staff unengraved until there is a record to engrave.
 let doorShut = false;
 
 // the heading-word of an area, as a button: tap "themes"/"song"/"band" and
@@ -716,52 +721,44 @@ function modButton(word, key) {
   return b;
 }
 
-// NAV AND FOLDS (2026-08-21, Paul: "instead of using only lists use HTML
-// <nav> elements to make things easy to hide and shrink"). The outline
-// trees ARE this page's navigation — the tree is how the floor moves — so
-// each one stands inside a labeled <nav> landmark; and the regions that
-// should hide and shrink do it with the browser's own <details>/<summary>,
-// no JS collapse of its own: an area under its heading, the open chair's
-// sheet under its seat line, a headed branch under its head. Everything is
-// OPEN by default (the outline's "expanded, always" law — and the gates
-// walk today's DOM), but now closable; a fold the hand shut stays shut
-// across redraws (the `closed` set remembers, since draw() rebuilds the
-// page). A button inside a summary keeps its own job: the guard below
-// cancels the native toggle when the click landed on a control, so tapping
-// "song" still brings its questions to the floor rather than folding the
-// area you were reaching into.
-const closed = new Set();          // fold keys the hand has shut
-function navOf(inner, label) {
-  const n = el("nav");
-  if (label) n.setAttribute("aria-label", label);
-  n.append(inner);
-  return n;
+// EVERYTHING IS A TABLE, AND NOTHING IS FOLDED (2026-08-23, Paul: "Can you
+// just put everything into a table and make it all fully expanded and
+// simple to scroll"). The <details>/<summary> folds and the labelled <nav>
+// wrappers are both gone: a fold is a thing to tap before you can read, and
+// a page whose point is that you can see the whole record should not have
+// any. What is left is one long scroll of real tables — the gig sheet, the
+// band, the song's boxes, the producer's notes, the front door's run — each
+// with a <caption> saying what it is, which names the region for assistive
+// tech the way the <nav>'s aria-label used to and costs no wrapper.
+//
+// ONE ROW = ONE FACT: the name in a <th scope="row"> (the control that
+// re-asks it, then the colon law's real ":" text node), the value in the
+// <td> beside it. That scope is what pairs the two for a screen reader —
+// which is why no hidden word is needed to help it.
+function tableOf(caption) {
+  const t = el("table");
+  if (caption) { const c = el("caption"); c.append(caption); t.append(c); }
+  return t;
 }
-function foldOf(key, sumLine) {
-  const det = el("details");
-  // ...and EVERY fold is shut while the front door stands (below): until a
-  // record has been called there is nothing below the door to read, and a
-  // page of open areas is exactly what buried the three questions that make
-  // the record. `closed` is untouched by this — the hand's own folds are
-  // remembered separately — so the moment the record is called every area
-  // opens again, which is how you SEE that it just did.
-  if (!closed.has(key) && !doorShut) det.open = true;
-  const sum = el("summary");
-  sum.addEventListener("click", (e) => {
-    if (e.target.closest("button,label,input,select")) return e.preventDefault();
-    // the native toggle is about to flip det.open — remember the hand's
-    // choice NOW (the "toggle" event is queued async, and a redraw in this
-    // same task would otherwise rebuild the fold open again)
-    if (det.open) closed.add(key); else closed.delete(key);
-  });
-  sum.append(sumLine);
-  det.append(sum);
-  // ...and the async event keeps the set honest for keyboard toggles and
-  // anything else that moves `open` without the click above
-  det.addEventListener("toggle", () => {
-    if (det.open) closed.delete(key); else closed.add(key);
-  });
-  return det;
+function trOf(head, value) {
+  const tr = el("tr");
+  const th = el("th");
+  th.scope = "row";
+  th.append(head, ":");
+  tr.append(th, el("td", null, value == null ? "" : value));
+  return tr;
+}
+// A QUESTION OPENS AT ITS OWN ROW — a following row of the same table
+// spanning both columns, so the sheet expands in place (the question is
+// under the name it belongs to) and the page simply grows downward.
+function askRow(tr, node) {
+  const r = el("tr");
+  const td = el("td");
+  td.colSpan = 2;
+  td.append(node);
+  r.append(td);
+  tr.after(r);
+  return r;
 }
 
 // A REAL CHOICE WIDGET. An option is a <label class="dopt"> over a hidden
@@ -789,37 +786,18 @@ function optWidget(word, cls, { kind, name, on, dead, key, take, hour }) {
   return lab;
 }
 
-// A LONG LIST IS A GRID OF RADIOS (2026-08-21, Paul: "don't use dropdown
-// select boxes just have a nice grid of radio buttons" — reversing the
-// reset's <select> ruling). Any one-of-N question over ~8 answers renders
-// the SAME plain radio-labels every short question gets, laid out in
-// aligned columns by band.css .dcols (an auto-fill grid — layout, not
-// decoration) so 14–30 options scan instead of piling. Row labels (the
-// kick:, pianos:…) stand as plain full-width .drowlab rows inside the
-// grid, the .drowlab precedent the short path always drew. There is no
-// <select> anywhere on the page — the gates' tap helper still knows how
-// to drive one (harmless), but nothing renders one. Toggle sets stay
-// checkboxes, and the key question stays the circle of fifths (Paul:
+// A QUESTION'S OPTIONS ARE THE ONE THING THAT IS NOT A TABLE. A one-of-N is
+// a run of radio-labels in a <fieldset> under its <legend> — nothing about
+// it is a grid of names against values, and forcing a table on it would put
+// the answers in cells whose columns mean nothing. So they render as the
+// plainest markup that fits: the labels, in order, in the flow. The column
+// grid they used to be laid out in went out with the rest of the layout
+// (2026-08-23) — a long list is a long list, and the page scrolls.
+// Row labels (the kick:, pianos:…) are plain <p>s in the same flow.
+// There is no <select> anywhere on the page — the gates' tap helper still
+// knows how to drive one (harmless), but nothing renders one. Toggle sets
+// stay checkboxes, and the key question stays the circle of fifths (Paul:
 // "Keep the circle of fifths!!!").
-const LONG = 8;
-
-// A FACT IS A NAME AND ITS VALUE — so it is a <dl> (2026-08-22, the
-// cleanliness pass). Every answered line of the gig sheet used to be a
-// <button> holding a <b> label, a colon and a .dans <span>: a label→value
-// pair wearing generic elements. It is a real one-pair definition list
-// now — the TERM is the control that re-asks the question, the
-// DEFINITION is the answer (or, unanswered, the question itself) in plain
-// text — which is what makes the pairing something a screen reader can
-// hear without a hidden word helping it. No .dans, no .dhint, no <b>.
-//
-// THE COLON LAW (2026-08-21, Paul: "just put a colon on things, like
-// verse: 4 sections or tempo: up, 120") survives inside it: the seam is a
-// real ":" text node, never CSS content, so it reads with the stylesheet
-// off and is spoken. It sits in the <dt> AFTER the control, so the
-// .dfact element's own textContent stays the label exactly — which is
-// how the gates find a fact, and how a value with commas in it
-// ("tempo: up, 120") still reads as one answer.
-const term = (labelEl) => { const dt = el("dt"); dt.append(labelEl, ":"); return dt; };
 
 /* ---------- THE CIRCLE OF FIFTHS -----------------------------------------
    The key question, drawn as the object musicians actually keep in their
@@ -943,22 +921,26 @@ function chgxWidget(role) {
     model = Band.setChanges(model, role, nl);
     if (model !== before) { push(false); announce("arranger", null); }
     draw(); };
-  // one row per CHORD, bars numbered, a split bar's second chord indented
+  // ONE TABLE, one row per CHORD: the tappable bar number is the row's own
+  // name, the chord is its value, and an open bar's controls land in a row
+  // of their own directly beneath it.
+  const bars = tableOf("the changes, bar by bar");
+  wrap.append(bars);
   const flat = [];
   list.forEach((bar, bi) => bar.forEach((cc, ki) => flat.push({ cc, bi, ki })));
   flat.forEach(({ cc, bi, ki }, ci) => {
-    // a bar and its chord is the same name/value pair the gig sheet reads
-    // as a <dl>: the tappable bar number is the term, the chord the value
     const rowB = el("button", "dfact dpickbar" + (picker.open === ci ? " open" : ""),
                     ki ? "and" : "bar " + (bi + 1));
     rowB.type = "button";
     rowB.dataset.k = "pbar|" + role + "|" + ci;
     rowB.addEventListener("click", () => {
       picker.open = picker.open === ci ? null : ci; draw(); });
-    const dl = el("dl");
-    dl.append(term(rowB), el("dd", null, chordWord(cc)));
-    wrap.append(dl);
+    const tr = trOf(rowB, chordWord(cc));
+    bars.append(tr);
     if (picker.open !== ci) return;
+    const open = el("td");
+    open.colSpan = 2;
+    { const r = el("tr"); r.append(open); tr.after(r); }
     // the root, on the circle's own paint
     const circle = el("div", "dcircle dpcircle");
     for (const o of rootOpts()) {
@@ -972,7 +954,7 @@ function chgxWidget(role) {
           t.d = o.d; if (o.borrow) t.borrow = o.borrow; else delete t.borrow;
           write(nl); } }));
     }
-    wrap.append(circle);
+    open.append(circle);
     // the quality — plain, a seventh by function, or the record's own kind
     const QROW = [["plain", (d) => "triad"],
                   ["a seventh", (d) => Band.CHORDKIND.sevens.q(((d % 7) + 7) % 7)],
@@ -1008,7 +990,7 @@ function chgxWidget(role) {
         nl[bi][ki] = Band.dominantOf(list[next.bi][next.ki],
                                      MODES[Band.modeKeyOf(model.song)]);
         write(nl); } }), " ");
-    wrap.append(qrow);
+    open.append(qrow);
   });
   // the foot: grow, shrink, go round again
   const foot = el("div", "dpickfoot");
@@ -1068,11 +1050,10 @@ let lastQ = null;                  // ...and the previous draw's, to see it adva
 
    It is not a second view and not a mode — the page is the same single
    scroll it always was, and the four areas are still drawn, in order, with
-   their own headings. They are FOLDED (foldOf reads `doorShut`), which is
-   the page's own idiom for quiet, and they unfold the instant a record is
-   called. That way nothing below the door competes with the question, no
-   gate loses a node it reads, and the opening is something you watch
-   happen rather than a screen you are moved to.
+   their own headings, fully expanded. Nothing below the door competes with
+   the question because the arranger's own sheet renders QUIET while the
+   door holds the floor and the record's three rows are the door's own; no
+   gate loses a node it reads.
 
    The one-question law is untouched: the door holds the floor only when the
    floor is the arranger's own (the song area, nothing else being re-asked),
@@ -1103,14 +1084,13 @@ function doorQ(rows) {
 }
 
 // the question, drawn the way every other question on this page is drawn —
-// a fieldset, its legend the .dq, plain radio-labels, the .dcols grid once
-// the list runs long (fourteen decades does)
+// a fieldset, its legend the .dq, and its options as plain radio-labels in
+// the flow — fourteen decades is fourteen labels and the page scrolls
 function doorAsk(d) {
   const ask = el("fieldset", "dask");
   ask.append(el("legend", "dq", d.ask));
-  const row = d.opts.length > LONG ? el("div", "dcols") : ask;
   for (const o of d.opts)
-    row.append(optWidget(o.w, "dopt" + (o.answered ? " on" : ""), {
+    ask.append(optWidget(o.w, "dopt" + (o.answered ? " on" : ""), {
       kind: "radio", name: "q-arranger-" + d.id, on: !!o.answered,
       key: "opt|arranger|" + d.id + "|" + o.w,
       take: () => {
@@ -1127,7 +1107,6 @@ function doorAsk(d) {
         asking = null;
         draw();
       } }), " ");
-  if (row !== ask) ask.append(row);
   return ask;
 }
 
@@ -1136,8 +1115,7 @@ function doorAsk(d) {
 function frontDoor(box) {
   const rows = doorRows();
   const q = doorQ(rows);
-  const s = el("section", "ddoor");
-  s.append(el("p", "dprose",
+  box.append(el("p", null,
     "A band, and a record made of three answers: when it is, where you are, " +
     "and the room you play in. Count it in and say."));
   const c = el("button", "dchip", "count it in");
@@ -1157,18 +1135,14 @@ function frontDoor(box) {
     if (!playing) startAt(0);
     playWord(true);
   });
-  s.append(c);
-  // THE RUN, as the same name-and-value rows the gig sheet is made of: an
-  // answered one says its word, the one in front of you says its question
-  // and carries it. Three rows, always — you can see the whole path from
-  // the first tap, which is the difference between a run and a surprise.
-  const tree = el("ul", "dtree ddoorrun");
+  box.append(c);
+  // THE RUN, as the same name-and-value rows every other table on this page
+  // is made of: an answered one says its word, the one in front of you says
+  // its question and carries it in a row of its own beneath. Three rows,
+  // always — you can see the whole path from the first tap, which is the
+  // difference between a run and a surprise.
+  const table = tableOf("the record");
   for (const d of rows) {
-    const li = el("li");
-    // the one in front of you IS its question — the row would only say the
-    // legend twice, which is what the whole door exists to stop
-    if (q && q.id === d.id) { li.append(doorAsk(d)); tree.append(li); continue; }
-    const dl = el("dl");
     const f = el("button", "dfact", d.id);
     f.type = "button";
     f.dataset.k = "fact|" + d.id;
@@ -1176,12 +1150,14 @@ function frontDoor(box) {
     f.addEventListener("click", () => {
       module_ = "song"; section = null;
       asking = asking === d.id ? null : d.id; draw(); });
-    dl.append(term(f), el("dd", null, d.answered || d.ask));
-    li.append(dl);
-    tree.append(li);
+    const tr = trOf(f, d.answered || d.ask);
+    table.append(tr);
+    // the one in front of you carries its question under its own row — the
+    // value cell would only say the legend twice, which is what the whole
+    // door exists to stop
+    if (q && q.id === d.id) askRow(tr, doorAsk(d));
   }
-  s.append(navOf(tree, "the record"));
-  box.append(s, el("hr"));
+  box.append(table, el("hr"));
   if (q) floorQ = "arranger|" + q.id + "|door";
   return !!q;
 }
@@ -1192,7 +1168,7 @@ function frontDoor(box) {
 function calledLine() {
   const gk = Band.GENRES[model.song.genre];
   const said = THREE.map((f) => model.song[f]).filter(Boolean).join(" · ");
-  return el("p", "dprose dcalled",
+  return el("p", null,
     (gk ? gk.w : model.song.genre) + (said ? " — " + said : ""));
 }
 
@@ -1230,28 +1206,27 @@ function render(box) {
 
   // THE FRONT DOOR, whenever no record has been called (frontDoor above):
   // the invitation, "count it in", and the run of three. The areas below are
-  // still drawn — one page, one scroll, no modes — but folded shut, and the
+  // still drawn, in full — one page, one scroll, no modes — and the
   // arranger's own sheet renders QUIET while the door holds the floor, so
   // exactly one question is ever on it.
   const doorFloor = doorShut ? frontDoor(box) : false;
   if (!doorShut) box.append(calledLine());
 
   // ---- THEMES ---- (the ideas module by its right name — PLAN Phase 2
-  // renames the organ; the page starts saying the word now)
-  const sThemes = el("section");
-  // the whole area folds under its heading (foldOf's law) — hideable,
-  // shrinkable, open by default
-  const dThemes = (() => { const h = el("h2");
-    h.append(modButton("themes", "ideas")); return foldOf("area|themes", h); })();
-  sThemes.append(dThemes);
+  // renames the organ; the page starts saying the word now). An area is a
+  // heading and what is under it, in the flow: no <section> wrapper, no
+  // fold, nothing to open.
+  const hThemes = el("h2");
+  hThemes.append(modButton("themes", "ideas"));
+  box.append(hThemes);
   // NO PROSE (2026-08-21). Two paragraphs used to explain what a theme is
   // and how to add one — "don't sneak in explanations". The outline IS the
   // explanation: the staff, the theme's own named node, and its questions.
   // The theme itself, written down: the staff stands whenever the record
   // has the tune, and follows every edit — a lifted note, a new key —
   // because draw() recompiles the ABC each pass and re-engraves on change
-  // ...and NOT while the front door stands: the themes area is folded shut,
-  // so an engraving there is a picture nobody can see — and drawing it would
+  // ...and NOT while the front door stands: nothing has been called yet, so
+  // an engraving there is a picture of nothing — and drawing it would
   // fire the lazy `import()` of the abcjs chunk during boot, BEFORE the
   // service worker has taken control of this page's fetches, which is a
   // request the worker never sees and therefore never caches. Measured:
@@ -1259,37 +1234,33 @@ function render(box) {
   // the wire cut, /vendor/abcjs/*. The staff engraves when the record is
   // called, seconds later, through the worker, and is cached like everything
   // else. (themeStaff's own null branch clears the kept hosts; skipping the
-  // call leaves them alone, which is what a fold wants.)
+  // call leaves them alone, which is what a quiet door wants.)
   const staff = doorShut ? null : themeStaff(model);
-  if (staff) dThemes.append(staff);
-  if (module_ === "ideas" && section == null) chairArea(dThemes, "arranger", true, doorFloor);
-  box.append(sThemes, el("hr"));
+  if (staff) box.append(staff);
+  if (module_ === "ideas" && section == null) chairArea(box, "arranger", true, doorFloor);
+  box.append(el("hr"));
 
-  // ---- SONG ---- the record's structure AS AN OUTLINE (2026-08-21): the
-  // sections were the page's one remaining bunched row of boxes; they are
-  // nodes of a .dtree now, like everything else — each section a row (its
-  // label the role and the bars, the same .dsec button the gates click and
-  // the playhead lights), the open section's asks nested BENEATH its own
-  // node inline, and "add a box" a plain row at the end.
-  const sSong = el("section");
-  const dSong = (() => { const h = el("h2");
-    h.append(modButton("song", "song")); return foldOf("area|song", h); })();
-  sSong.append(dSong);
+  // ---- SONG ---- the record's structure AS A TABLE (2026-08-23): one row
+  // per box — the box's own name in the row's <th> (the same .dsec button
+  // the gates click and the playhead lights), and the three moves a hand
+  // makes on it in the cell beside it. The open box's questions land in a
+  // row of their own directly beneath, and "add a box" is the last row.
+  const hSong = el("h2");
+  hSong.append(modButton("song", "song"));
+  box.append(hSong);
   const song = toSong(model, MODES);
-  const tree = el("ul", "dtree dsong");
+  const stable = tableOf("the song's sections");
   cells = [];
   song.forEach((s2, i) => {
     cells[i] = [[]];
-    const li = el("li");
     const b = el("button", "dsec" + (section === i ? " open" : ""));
     b.type = "button";
     b.dataset.k = "sec|" + i;
     b.title = "what is everyone doing here?";
     // the box's name reads by the colon law ("head: 4 bars"), the extra
-    // words comma-joined after it — one plain string, since a <b> for the
-    // role and an <i> for the bars were paint over a sentence — and the
-    // hint the title used to hoard is words in the name too: .dvh, text AT
-    // can reach, invisible.
+    // words comma-joined after it — one plain string — and the hint the
+    // title used to hoard is words in the name too: .dvh, text AT can
+    // reach, invisible.
     const per = s2.per || {};
     const diff = [per.drums && Band.SECDRUMS[per.drums] && Band.SECDRUMS[per.drums].w,
                   per.bass && Band.SECBASS[per.bass] && Band.SECBASS[per.bass].w]
@@ -1301,61 +1272,60 @@ function render(box) {
       module_ = "song";
       section = section === i ? null : i; asking = null; draw(); });
     cells[i][0].push(b);
-    li.append(b);
+    const tr = el("tr");
+    const th = el("th"); th.scope = "row"; th.append(b);
+    const td = el("td");
+    tr.append(th, td);
+    stable.append(tr);
     // THE BOXES ARE REAL (2026-08-22, Paul: "'add a box' doesn't really add
-    // a box. i can't move boxes around"). Every section node carries the
-    // three moves a hand makes on a record's shape, IN WORDS — no icons, no
-    // drag handles, no tracker interface: "move up", "move down", "remove".
-    // A move that cannot be made is not drawn (the first box has no up, the
+    // a box. i can't move boxes around"). Every row carries the three moves
+    // a hand makes on a record's shape, IN WORDS — no icons, no drag
+    // handles, no tracker interface: "move up", "move down", "remove". A
+    // move that cannot be made is not drawn (the first box has no up, the
     // last no down) rather than drawn dead, and a record cannot be emptied,
-    // so the last box left has no remove. The section's own conversation
-    // still opens by tapping its name; these are about the BOX.
-    { const ops = el("p", "dboxops");
-      const opBtn = (word, k, run) => {
-        const o = el("button", "dboxop", word);
-        o.type = "button";
-        o.dataset.k = k + "|" + i;
-        o.append(el("span", "dvh", " — the " + s2.role));
-        o.addEventListener("click", run);
-        ops.append(o, " ");
-      };
-      const boxMove = (m2, keep) => {
-        if (m2 === model) return;
-        model = m2; section = keep; asking = null;
-        push(false); announce("arranger", null); draw();
-      };
-      if (i > 0) opBtn("move up", "boxup",
-        () => boxMove(Band.moveSection(model, i, -1), section === i ? i - 1 : section));
-      if (i < song.length - 1) opBtn("move down", "boxdown",
-        () => boxMove(Band.moveSection(model, i, 1), section === i ? i + 1 : section));
-      if (song.length > 1) opBtn("remove", "boxdel",
-        () => boxMove(Band.removeSection(model, i), null));
-      li.append(ops); }
-    // the open section's whole conversation, nested under its own node —
-    // the same in-place mechanism the chairs use
-    if (section === i) sectionArea(li);
-    tree.append(li);
+    // so the last box left has no remove. The box's own conversation still
+    // opens by tapping its name; these are about the BOX.
+    const opBtn = (word, k, run) => {
+      const o = el("button", "dboxop", word);
+      o.type = "button";
+      o.dataset.k = k + "|" + i;
+      o.append(el("span", "dvh", " — the " + s2.role));
+      o.addEventListener("click", run);
+      td.append(o, " ");
+    };
+    const boxMove = (m2, keep) => {
+      if (m2 === model) return;
+      model = m2; section = keep; asking = null;
+      push(false); announce("arranger", null); draw();
+    };
+    if (i > 0) opBtn("move up", "boxup",
+      () => boxMove(Band.moveSection(model, i, -1), section === i ? i - 1 : section));
+    if (i < song.length - 1) opBtn("move down", "boxdown",
+      () => boxMove(Band.moveSection(model, i, 1), section === i ? i + 1 : section));
+    if (song.length > 1) opBtn("remove", "boxdel",
+      () => boxMove(Band.removeSection(model, i), null));
+    // the open box's whole conversation, in a row of its own beneath it
+    if (section === i) { const r = el("tr"); const c2 = el("td"); c2.colSpan = 2;
+      sectionArea(c2); r.append(c2); stable.append(r); }
   });
   // A BOX IS A SECTION OF THE SONG, and now it really is one: "add a box"
   // asks the one thing a new box needs — WHAT KIND — and lands it after the
-  // section you have open, or at the end when none is. The form is still
-  // where a shape comes FROM (thirteen starting points, one tap each); it
-  // is no longer the only place a shape can be.
+  // box you have open, or at the end when none is.
   if (song.length < Band.MAXSECS) {
-    const li = el("li");
+    const r = el("tr");
+    const c2 = el("td"); c2.colSpan = 2;
     const add = el("button", "dadd" + (adding ? " open" : ""), "add a box");
     add.type = "button";
     add.dataset.k = "addbox";
     add.title = "a new section, after the one you have open";
     add.addEventListener("click", () => { adding = !adding; draw(); });
-    li.append(add);
+    c2.append(add);
     if (adding) {
       const at = section == null ? song.length : section + 1;
       const ask = el("fieldset", "dask");
       ask.append(el("legend", "dq", "what kind of box?"));
-      const row = Object.keys(Band.SECROLES).length > LONG ? el("div", "dcols") : ask;
       for (const [k, w] of Object.entries(Band.SECROLES))
-        row.append(optWidget(w, "dopt", { kind: "radio", name: "addbox", on: false,
+        ask.append(optWidget(w, "dopt", { kind: "radio", name: "addbox", on: false,
           key: "opt|addbox|" + k,
           take: () => {
             const m2 = Band.addSection(model, at, k);
@@ -1363,82 +1333,71 @@ function render(box) {
             model = m2; adding = false; section = at; asking = null;
             push(false); announce("arranger", null); draw();
           } }), " ");
-      if (row !== ask) ask.append(row);
-      li.append(ask);
+      c2.append(ask);
     }
-    tree.append(li);
+    r.append(c2);
+    stable.append(r);
   }
-  // the song's outline is the way around the record: a landmark
-  dSong.append(navOf(tree, "the song's sections"));
-  if (section == null && module_ === "song") chairArea(dSong, "arranger", false, doorFloor);
-  box.append(sSong, el("hr"));
+  box.append(stable);
+  if (section == null && module_ === "song") chairArea(box, "arranger", false, doorFloor);
+  box.append(el("hr"));
 
-  // ---- THE BAND ---- the members, each a plain block that says how much
-  // it still has to decide. Tap one and its questions take the floor.
-  const sBand = el("section");
-  const dBand = (() => { const h = el("h2");
-    // the visible heading reads "the band"; the button inside it is the
-    // word the gates (and a finger) press — but its accessible NAME is the
-    // heading's whole phrase: "band" alone is not a thing on this page
-    const mb = modButton("band", "band");
-    mb.setAttribute("aria-label", "the band");
-    h.append(document.createTextNode("the "), mb);
-    return foldOf("area|band", h); })();
-  sBand.append(dBand);
-  // THE CHAIRS AS AN OUTLINE (2026-08-21). The six seats were a bunched row
-  // of blocks with the open seat's sheet rendered somewhere below them all;
-  // now the band is one .dtree — each chair a top-level node whose label is
-  // the same .dseat button it always was, and the seat you are in expands:
-  // its whole gig sheet (instruments and all) nests BENEATH its own chair
-  // node, the same outline idiom as everywhere else on the page.
-  const seats = el("ul", "dtree");
+  // ---- THE BAND ---- the members, each a row that says how much it still
+  // has to decide. Tap one and its questions take the floor.
+  const hBand = el("h2");
+  // the visible heading reads "the band"; the button inside it is the word
+  // the gates (and a finger) press — but its accessible NAME is the
+  // heading's whole phrase: "band" alone is not a thing on this page
+  const mbBand = modButton("band", "band");
+  mbBand.setAttribute("aria-label", "the band");
+  hBand.append(document.createTextNode("the "), mbBand);
+  box.append(hBand);
+  // THE CHAIRS AS A TABLE (2026-08-23): one row per seat, its label the
+  // same .dseat button it always was, and the seat you are IN carries its
+  // whole gig sheet in the row beneath — expanded, never folded.
+  const seats = tableOf("the chairs");
   for (const s2 of SEATS.filter((x) => x !== "arranger")) {
     // HOW MANY, NOT WHETHER. This said "1 question" for every chair that
     // had any question left at all — a chair with nine things still to
     // decide and a chair with one looked identical, which is exactly the
     // thing a session needs to tell you.
     const left = Band.pending(model, s2);
-    const b = el("button", "dseat" + (seat === s2 ? " on" : "") + (left ? " asking" : ""));
+    const b = el("button", "dseat" + (seat === s2 ? " on" : ""));
     b.type = "button";
     b.dataset.k = "seat|" + s2;
     // the colon law joins the seat to its phrase ("drums: questions left:
     // 3"), and the count stays the LAST thing in the label (a gate reads
     // the trailing digits — /(\d+)$/, so the digits may not move off the
-    // end); when nothing is left it is a word, not a checkmark
+    // end); when nothing is left it is a word, not a checkmark. The whole
+    // row IS this one control, so the cell is a <td>: there is no second
+    // column for a scope="row" to point at.
     b.append(s2 + ": " + (left ? "questions left: " + left : "all set"));
     b.addEventListener("click", () => {
       seat = s2; module_ = "band"; section = null; asking = null; draw(); });
-    const li = el("li");
+    const tr = el("tr");
+    const td = el("td"); td.append(b); tr.append(td);
+    seats.append(tr);
     // only the seat you are in carries its sheet — the one-question law is
-    // untouched, and the other chairs stay one line each. The open sheet
-    // FOLDS under its own seat line (foldOf: the summary is the .dseat
-    // button, whose tap still switches seats — the guard keeps the toggle
-    // off the button)
+    // untouched, and the other chairs stay one line each
     if (module_ === "band" && section == null && seat === s2) {
-      const det = foldOf("chair|" + s2, b);
-      chairArea(det, s2, false);
-      li.append(det);
-    } else li.append(b);
-    seats.append(li);
+      const r = el("tr"); const c2 = el("td");
+      chairArea(c2, s2, false);
+      r.append(c2); seats.append(r);
+    }
   }
-  // the chairs are how you move between the players: a landmark
-  dBand.append(navOf(seats, "the chairs"));
-  box.append(sBand, el("hr"));
+  box.append(seats, el("hr"));
 
   // ---- THE PRODUCER ---- the last area, because it is the last word: the
   // band plays the record and somebody with taste says five or six things
   // about it. Same idiom as everything above — a heading that is the button
-  // bringing its question to the floor, an outline of what has been said,
-  // and one question at a time.
-  const sProd = el("section");
-  const dProd = (() => { const h = el("h2");
-    const mb = modButton("producer", "prod");
-    mb.setAttribute("aria-label", "the producer");
-    h.append(document.createTextNode("the "), mb);
-    return foldOf("area|prod", h); })();
-  sProd.append(dProd);
-  producerArea(dProd);
-  box.append(sProd);
+  // bringing its question to the floor, a table of what has been said, and
+  // one question at a time.
+  const hProd = el("h2");
+  const mbProd = modButton("producer", "prod");
+  mbProd.setAttribute("aria-label", "the producer");
+  hProd.append(document.createTextNode("the "), mbProd);
+  box.append(hProd);
+  producerArea(box);
 }
 
 /* ---------- THE PRODUCER -------------------------------------------------
@@ -1467,37 +1426,34 @@ function producerArea(parent) {
     push(false); announce("producer", null); draw(); };
   // ---- WHAT HAS BEEN SAID, and what it did ----
   if (notes.length) {
-    const ol = el("ol", "dnotes");
+    // one row per note: the sentence (tapping it says it again, harder),
+    // how far along it is and what it moved in the band's own words, and
+    // the three things a hand does to a note.
+    const table = tableOf("the producer's notes");
+    table.className = "dnotes";
     R.said.forEach((line, i) => {
-      const li = el("li");
-      const dl = el("dl");
-      // the same name-and-value pair every fact on this page is: the TERM
-      // is the sentence (tapping it says it again, harder), the DEFINITION
-      // is how far along it is and what it moved — in the band's own words
       const b = el("button", "dnote", line.sentence);
       b.type = "button";
       b.dataset.k = "note|" + i;
       b.title = "say it again, harder";
       b.addEventListener("click", () => { model = Prod.bump(model, i, +1); land(); });
-      dl.append(term(b), el("dd", null,
-        Prod.pct(line.note.w) + "% — " + line.said.join(", ")));
-      li.append(dl);
-      const ops = el("p", "dboxops");
+      const tr = trOf(b, Prod.pct(line.note.w) + "% — " + line.said.join(", "));
+      const td = el("td");
       const op = (word, k, run) => {
         const o = el("button", "dboxop", word);
         o.type = "button";
         o.dataset.k = k + "|" + i;
         o.append(el("span", "dvh", " — " + line.sentence));
         o.addEventListener("click", run);
-        ops.append(o, " ");
+        td.append(o, " ");
       };
       op("more", "pnup", () => { model = Prod.bump(model, i, +1); land(); });
       op("less", "pndn", () => { model = Prod.bump(model, i, -1); land(); });
       op("take it off", "pndel", () => { model = Prod.drop(model, i); land(); });
-      li.append(ops);
-      ol.append(li);
+      tr.append(td);
+      table.append(tr);
     });
-    parent.append(navOf(ol, "the producer's notes"));
+    parent.append(table);
     const clear = el("button", "dfact", "forget all of it");
     clear.type = "button";
     clear.dataset.k = "pclear";
@@ -1536,7 +1492,10 @@ function producerArea(parent) {
   // kick" are the same sentence at two depths.
   if (!psubj) {
     ask.append(el("legend", "dq", PASKW[pverb] || "what?"));
-    const tree = el("ul", "dtree");
+    // the subject tree is a QUESTION's options, so it is not a table: it is
+    // a plain nested <ul> of radio-labels ("more drums" and "more kick" are
+    // the same sentence at two depths), which the browser indents itself.
+    const tree = el("ul");
     const byParent = new Map();
     // WHAT THIS VERB CAN TAKE HOLD OF ON THIS RECORD. A verb that takes no
     // descriptor is a two-tap sentence, so the record-dependent honesty test
@@ -1573,7 +1532,7 @@ function producerArea(parent) {
     // the tree may not swallow a subject the producer can actually move
     for (const [parent2, list] of byParent)
       if (parent2 && !can.has(parent2)) for (const s2 of list) tree.append(node(s2));
-    ask.append(navOf(tree, "what the note is about"));
+    ask.append(tree);
     return;
   }
 
@@ -1600,19 +1559,19 @@ function producerArea(parent) {
     host.append(lab, " ");
   };
   if (adjs.length) {
-    ask.append(el("p", "drowlab", "in a word:"));
+    ask.append(el("p", null, "in a word:"));
     const row = el("p");
     for (const o of adjs) put(row, o);
     ask.append(row);
   }
   if (gens.length) {
-    ask.append(el("p", "drowlab", "or like a record:"));
-    const grid = el("div", "dcols");
-    for (const o of gens) put(grid, o);
-    ask.append(grid);
+    ask.append(el("p", null, "or like a record:"));
+    const row = el("p");
+    for (const o of gens) put(row, o);
+    ask.append(row);
   }
   if (!adjs.length && !gens.length)
-    ask.append(el("p", "dprose", "nothing here would move " + S.w +
+    ask.append(el("p", null, "nothing here would move " + S.w +
       " on this record. Try another one."));
 }
 
@@ -1624,15 +1583,16 @@ function sectionArea(parent) {
   const secs = toSong(model, MODES);
   const here = secs[section];
   floorQ = "sec|" + section;
-  // THE SECTION'S OWN OUTLINE. A section is arranged as one conversation —
-  // every question stays on the floor at once here, exactly as the gates
-  // read it — but the same tree law shapes the page: a player's own words
-  // ("at the kit", "the bass player") are only there because that player's
-  // row is, so they NEST under it and the outline says whose words they are.
+  // A SECTION IS A RUN OF QUESTIONS, and a question is not a name-and-value
+  // pair, so this one region is not a table: the fieldsets stand in the
+  // flow, in order, all on the floor at once, exactly as the gates read
+  // them. The tree that used to indent a player's own words ("at the kit",
+  // "the bass player") under that player's own question is gone with the
+  // rest of the hierarchy; the words simply follow the player they belong
+  // to, which is the same order and one nesting level fewer.
   const WORDSOF = { dwords: "drums", kwords: "keys", gwords: "guitar",
                     bwords: "bass", vwords: "voice" };
-  const tree = el("ul", "dtree dsectree");
-  const liOf = new Map();
+  const askOf = new Map();
   for (const a2 of sectionAsks(model, section)) {
     // a question and its answers are ONE form group — fieldset binds the
     // options to the legend, which stays the .dq the gates read
@@ -1649,32 +1609,21 @@ function sectionArea(parent) {
                      { who: a2.who, role: here ? here.role : "section" });
       draw();
     };
-    // a player's own words run long (34 at the kit) — the same radios,
-    // laid in the .dcols grid (the grid law above). A SHORT question needs
-    // no box at all: its options are the fieldset's own children.
-    const row2 = a2.opts.length > LONG ? el("div", "dcols") : ask2;
+    // a player's own words run long (34 at the kit) — the same plain
+    // radio-labels either way, straight into the fieldset
     for (const o of a2.opts) {
-      row2.append(optWidget(o.w, "dopt" + (o.answered ? " on" : ""), {
+      ask2.append(optWidget(o.w, "dopt" + (o.answered ? " on" : ""), {
         kind: "radio", name: "sq-" + section + "-" + a2.id, on: o.answered,
         key: "opt|sec" + section + "|" + a2.id + "|" + o.key,
         take: takeSec(o) }), " ");
     }
-    if (row2 !== ask2) ask2.append(row2);
-    const li = el("li");
-    li.append(ask2);
-    liOf.set(a2.id, li);
-    // the words-question rides under the player it belongs to; a pruned
-    // player (nothing to ask) leaves its words at the top level rather
-    // than dropping them
-    const pLi = WORDSOF[a2.id] && liOf.get(WORDSOF[a2.id]);
-    if (pLi) {
-      let cu = pLi.lastElementChild && pLi.lastElementChild.tagName === "UL"
-        ? pLi.lastElementChild : null;
-      if (!cu) { cu = el("ul"); pLi.append(cu); }
-      cu.append(li);
-    } else tree.append(li);
+    askOf.set(a2.id, ask2);
+    // the words-question follows the player it belongs to; a pruned player
+    // (nothing to ask) leaves its words where they fall rather than
+    // dropping them
+    const pAsk = WORDSOF[a2.id] && askOf.get(WORDSOF[a2.id]);
+    if (pAsk) pAsk.after(ask2); else parent.append(ask2);
   }
-  parent.append(navOf(tree, "this section"));
 }
 
 /* ---------- THE COUNT ROW ------------------------------------------------
@@ -2006,15 +1955,15 @@ function chairArea(parent, who, ideasOnly, quiet) {
   const q = (asking && asks.find(d => d.id === asking && !flatFact(d))) ||
     asks.find(d => !d.answered);
 
-  // THE GIG SHEET AS AN OUTLINE. Every question of this seat is a row —
-  // an answered one says its word, an open one says its ask in italics —
-  // grouped and nested by the OUTLINE/UNDER tables above, expanded, always.
-  // A row is the same tappable .dfact it always was (the gates find facts
-  // by the <b> label and the data-k, and both stay put); the one-question
-  // law holds: tapping a row brings its question to the floor, and the
-  // floor is IN PLACE now — the fieldset opens directly under that row's
-  // own <li> (see the end of this function), never at a fixed slot below
-  // the sheet, so at most one set of options exists at any time.
+  // THE GIG SHEET IS A TABLE PER HEADING. Every question of this seat is a
+  // row — an answered one says its word, an open one says its ask — grouped
+  // by the OUTLINE table above, fully expanded, nothing folded. A row is the
+  // same tappable .dfact it always was (the gates find facts by the .dfact's
+  // own textContent and its data-k, and both stay put); the one-question law
+  // holds: tapping a row brings its question to the floor, and the floor is
+  // IN PLACE — the fieldset opens in a row directly beneath that row (see
+  // the end of this function), never at a fixed slot below the sheet, so at
+  // most one set of options exists at any time.
   const spec = ideasOnly
     // the theme's node is titled by what the record DOES with the tune —
     // Band.themeName derives hook/riff/figure/chant, nobody is asked; when
@@ -2024,32 +1973,26 @@ function chairArea(parent, who, ideasOnly, quiet) {
          "the answer", "second"]]]
     : OUTLINE[who] || [];
   const under = (ideasOnly ? UNDER.ideas : UNDER[who]) || {};
-  const rowLi = new Map();                     // ask id -> its <li>, for the edges
-  // THE ROW IS A NAME AND ITS VALUE: <dt> carries the control that re-asks
-  // the question (a <button> in a <dt> is valid, and the label stays the
-  // thing you tap), <dd> carries the answer as plain text — or, unanswered,
-  // the question itself, which IS what that name is worth so far. A fact
-  // the pruner left with nothing to change to has no control at all: the
-  // term is a plain word.
+  const rowTr = new Map();                     // ask id -> its <tr>, for the edges
+  // THE ROW IS A NAME AND ITS VALUE: <th scope="row"> carries the control
+  // that re-asks the question (a <button> in a <th> is valid, and the label
+  // stays the thing you tap) plus the colon law's real ":", and the <td>
+  // beside it carries the answer as plain text — or, unanswered, the
+  // question itself, which IS what that name is worth so far. A fact the
+  // pruner left with nothing to change to has no control at all: the name
+  // is a plain word.
   const rowOf = (d) => {
-    const li = el("li");
-    const dl = el("dl");
     if (flatFact(d)) {
       const f2 = el("span", "dfact", d.label);
       f2.dataset.k = "fact|" + d.id;
-      dl.append(term(f2), el("dd", null, d.answered));
-      li.append(dl);
-      return li;
+      return trOf(f2, d.answered);
     }
-    const c = el("button", "dfact" + (asking === d.id ? " open" : "") +
-                           (q && q.id === d.id ? " qnow" : ""), d.label);
+    const c = el("button", "dfact" + (asking === d.id ? " open" : ""), d.label);
     c.type = "button";
     c.dataset.k = "fact|" + d.id;
     c.title = d.answered ? "change it: " + d.ask : d.ask;
     c.addEventListener("click", () => { asking = asking === d.id ? null : d.id; draw(); });
-    dl.append(term(c), el("dd", null, d.answered || d.ask));
-    li.append(dl);
-    return li;
+    return trOf(c, d.answered || d.ask);
   };
   const placed = new Set();
   const branches = [];
@@ -2065,114 +2008,69 @@ function chairArea(parent, who, ideasOnly, quiet) {
   // swallow a question the seat can be asked
   const rest = asks.filter(d => !placed.has(d.id)).map(d => [null, d]);
   if (rest.length) branches.push([null, rest]);
-  const tree = el("ul", "dtree");
+  // EVERY BRANCH IS A TABLE (2026-08-23). One table per heading — the
+  // heading is its <caption> — and every question of that heading is one
+  // row: the name in the <th>, its answer in the <td>. The engineer's
+  // channel branch used to be the ONE table on the page, the shape everything
+  // else was heading toward; now it is simply a branch like the others and
+  // its special case is gone.
+  //
+  // ...AND THE DEPENDENCY EDGES ARE ORDER, NOT INDENT. A question that
+  // exists because of another one (the chorus's changes because the form
+  // has a chorus, the 303 panel because the bass is a synth) used to nest
+  // in a <ul> inside its parent's <li>, three elements deep per edge. It is
+  // the row immediately BELOW its parent now — same order, same reading,
+  // no nesting and no hierarchy.
+  const tables = [];
   for (const [h, list] of branches) {
-    const li = el("li", "dbranch");
-    // the themes area's one headed branch IS the edited theme's node — its
-    // heading is the theme's own (a switch once two themes exist). A HEADED
-    // branch folds under its head (foldOf); a headless one has no label
-    // line to be a summary and stays plain
-    const head = h ? (ideasOnly ? themeNodeHead(themeNow(), true)
-                                : el("span", "dthead", h)) : null;
-    const fold = head
-      ? foldOf("branch|" + who + "|" + (ideasOnly ? "theme" : h), head) : null;
-    if (fold) li.append(fold);
-    const bhost = fold || li;
-    // THE ENGINEER'S CHANNEL TABLE (the basic-HTML reset): the five channel
-    // questions align — channel down the label column, treatment beside it —
-    // so this one branch is a real <table> instead of a run of <dl> rows,
-    // and the browser does the aligning. It is the SAME shape as a fact row
-    // with the table's own elements: <th scope="row"> is the term (the
-    // tappable .dfact and the colon law's ":"), <td> is the value. That
-    // scope is what pairs them for a screen reader — which is why the
-    // hidden <b> label and hidden seam this cell used to carry are gone.
-    if (h === "the channels" && who === "engineer" && !ideasOnly) {
-      const table = el("table");
-      for (const [, d] of list) {
-        const tr = el("tr");
-        const th = el("th"); th.scope = "row";
-        const td = el("td", null, d.answered || d.ask);
-        if (flatFact(d)) {
-          const f2 = el("span", "dfact", d.label);
-          f2.dataset.k = "fact|" + d.id;
-          th.append(f2, ":");
-        } else {
-          const c = el("button", "dfact" + (asking === d.id ? " open" : "") +
-                                 (q && q.id === d.id ? " qnow" : ""), d.label);
-          c.type = "button";
-          c.dataset.k = "fact|" + d.id;
-          c.title = d.answered ? "change it: " + d.ask : d.ask;
-          c.addEventListener("click", () => { asking = asking === d.id ? null : d.id; draw(); });
-          th.append(c, ":");
-        }
-        tr.append(th, td);
-        table.append(tr);
-        rowLi.set(d.id, td);       // the ask lands in the cell, like any row
-      }
-      bhost.append(table);
-      tree.append(li);
-      continue;
-    }
-    const ul = el("ul");
-    for (const [p, d] of list) {
+    const head = h ? (ideasOnly ? themeNodeHead(themeNow(), true) : h) : null;
+    const table = tableOf(head);
+    const tail = new Map();                    // parent id -> its last child row
+    for (const [pk0, d] of list) {
       const row = rowOf(d);
-      rowLi.set(d.id, row);
-      // the dependency edge: this row nests under the row it exists
-      // because of (the parent renders first — the tables order it so)
-      const pk = p && under[p];
+      rowTr.set(d.id, row);
+      const pk = pk0 && under[pk0];
       const pks = !pk ? [] : Array.isArray(pk) ? pk : [pk];
       const pAsk = pks.length && asks.find(a => pks.some((x) => outMatch(x, a)));
-      const pLi = pAsk && rowLi.get(pAsk.id);
-      if (pLi) {
-        let cu = pLi.lastElementChild && pLi.lastElementChild.tagName === "UL"
-          ? pLi.lastElementChild : null;
-        if (!cu) { cu = el("ul"); pLi.append(cu); }
-        cu.append(row);
-      } else ul.append(row);
+      const pTr = pAsk && rowTr.get(pAsk.id);
+      // the parent renders first (the tables order it so), so its row is
+      // already in this table; several children keep their own order by
+      // following the last one placed rather than the parent itself
+      if (pTr && pTr.parentNode === table) {
+        (tail.get(pAsk.id) || pTr).after(row);
+        tail.set(pAsk.id, row);
+      } else table.append(row);
     }
-    bhost.append(ul);
-    tree.append(li);
+    tables.push(table);
+    parent.append(table);
   }
   if (ideasOnly) {
-    // THE SENTENCE UNDER THE THEME NODE: the per-measure strip nests under
-    // the "how it speaks" row it visualizes — the sentence plan and its
-    // measures in one place — and falls back to the node's own list when
-    // the pruner has retired that row (the strip may not vanish with it:
-    // a plain sentence is still two measures the eye should see agree)
+    // THE SENTENCE, ITS OWN TABLE: it stands directly after the table that
+    // holds the "how it speaks" row it visualizes — the sentence plan and
+    // its measures in one place, side by side rather than one inside the
+    // other — and falls back to after the theme's own table when the pruner
+    // has retired that row (the strip may not vanish with it: a plain
+    // sentence is still two measures the eye should see agree)
     const strip = sentStrip(themeOf(model, themeNow()) || model.idea);
     if (strip) {
-      const sLi = rowLi.get((themeNow() === "b" ? "ideaB:" : "idea:") + "sent");
-      const li2 = el("li");
-      li2.append(strip);
-      const home = sLi || tree.querySelector("li.dbranch");
-      if (sLi) {
-        let cu = sLi.lastElementChild && sLi.lastElementChild.tagName === "UL"
-          ? sLi.lastElementChild : null;
-        if (!cu) { cu = el("ul"); sLi.append(cu); }
-        cu.append(li2);
-      } else if (home) {
-        let cu = home.lastElementChild && home.lastElementChild.tagName === "UL"
-          ? home.lastElementChild : null;
-        if (!cu) { cu = el("ul"); home.append(cu); }
-        cu.append(li2);
-      }
+      const sTr = rowTr.get((themeNow() === "b" ? "ideaB:" : "idea:") + "sent");
+      const host = (sTr && sTr.parentNode) || tables[0];
+      if (host) host.after(strip); else parent.append(strip);
     }
-    // ...and the OTHER theme stands beside the edited one as a node of its
+    // ...and the OTHER theme stands beside the edited one as a table of its
     // own — A above B, the record's own order, whichever is in hand — with
-    // its name for a heading (the switch) and one dim line of what it is.
-    // Its questions are not here: one home per question, and the home is
-    // the node in the editing hand.
+    // its name for a caption (the switch) and one line of what it is. Its
+    // questions are not here: one home per question, and the home is the
+    // node in the editing hand.
     if (model.ideaB && model.ideaB.on) {
       const other = themeNow() === "b" ? "a" : "b";
-      const oli = el("li", "dbranch");
-      oli.append(themeNodeHead(other, false));
+      const ot = tableOf(themeNodeHead(other, false));
       const om = themeOf(model, other);
-      if (om) oli.append(el("p", "dthemesum", Band.Id.describe(om)));
-      if (other === "a") tree.prepend(oli); else tree.append(oli);
+      if (om) { const r = el("tr"); const td = el("td");
+        td.textContent = Band.Id.describe(om); r.append(td); ot.append(r); }
+      if (other === "a" && tables[0]) tables[0].before(ot); else parent.append(ot);
     }
   }
-  // this chair's sheet is how you move around its facts: a landmark
-  if (tree.childElementCount) parent.append(navOf(tree, seatWord(who)));
   if (asks.some(d => d.answered)) {
     // ...and one way back. A chair you cannot clear is a chair you stop
     // trying things in.
@@ -2318,8 +2216,7 @@ function chairArea(parent, who, ideasOnly, quiet) {
   const kind = q.id.startsWith("grp:") || q.multi ? "checkbox" : "radio";
   // LABELED ROWS, NOT WORD-PILES: when every option names its row (the
   // kick:, the filter:, pianos:…), the options group under those labels in
-  // the order a musician lists them — plain .drowlab rows in the flow,
-  // full-width rows when the list runs long enough to grid
+  // the order a musician lists them, each label a plain <p> in the flow
   let opts2 = q.opts;
   const rowed = opts2.length > 0 && opts2.every(o => o.row);
   if (rowed) {
@@ -2335,22 +2232,16 @@ function chairArea(parent, who, ideasOnly, quiet) {
     asking = q.multi ? q.id : null;
     draw();
   };
-  {
-    // a long one-of-N gets the SAME radios, laid in the .dcols grid (the
-    // grid law above); its row labels are the same .drowlab rows, spanning
-    // the grid's whole width. A SHORT question needs no box at all: its
-    // options are the fieldset's own children.
-    const row = kind === "radio" && opts2.length > LONG ? el("div", "dcols") : ask;
-    let lastRow = null;
-    for (const o of opts2) {
-      if (rowed && o.row !== lastRow) { row.append(el("div", "drowlab", o.row)); lastRow = o.row; }
-      row.append(optWidget(o.w, "dopt" + (o.on ? " on" : "") +
-                                 (!o.on && o.istrue ? " istrue" : ""), {
-        kind, name: "q-" + who + "-" + q.id, on: o.on, dead: o.dead,
-        key: "opt|" + who + "|" + q.id + "|" + o.w,
-        take: fire(o) }), " ");
-    }
-    if (row !== ask) ask.append(row);
+  // every option is a child of the fieldset itself; a row label is a plain
+  // <p> in the same flow (no grid, no wrapper)
+  let lastRow = null;
+  for (const o of opts2) {
+    if (rowed && o.row !== lastRow) { ask.append(el("p", null, o.row)); lastRow = o.row; }
+    ask.append(optWidget(o.w, "dopt" + (o.on ? " on" : "") +
+                               (!o.on && o.istrue ? " istrue" : ""), {
+      kind, name: "q-" + who + "-" + q.id, on: o.on, dead: o.dead,
+      key: "opt|" + who + "|" + q.id + "|" + o.w,
+      take: fire(o) }), " ");
   }
   }
   // THE ESCAPE IS A WIDGET OF THE QUESTION, not an option (the keyCircle
@@ -2370,19 +2261,13 @@ function chairArea(parent, who, ideasOnly, quiet) {
                                String(secs % 60).padStart(2, "0")));
   }
   // INLINE, IN PLACE (2026-08-21). The question used to land at a fixed
-  // slot below the whole sheet; it opens AT ITS ROW now — the outline
-  // expands at that node and the page grows vertically. Every ask has a
-  // row (the trailing headless branch catches whatever the tables do not
-  // name), and the fieldset lands in that row's own <li>, immediately
-  // after its name/value pair and above any child rows nesting beneath the
-  // same node — or, on the engineer's channel branch, in the row's own
-  // cell. (It used to need a .dqbox wrapper for a dashed outline the
-  // basic-HTML reset took away; the wrapper outlived the paint.)
-  const qLi = rowLi.get(q.id);
-  if (qLi && qLi.tagName === "TD") qLi.append(ask);
-  else if (qLi && qLi.firstElementChild) qLi.firstElementChild.after(ask);
-  else if (qLi) qLi.append(ask);
-  else parent.append(ask);
+  // slot below the whole sheet; it opens AT ITS ROW now — the sheet expands
+  // at that row and the page grows vertically. Every ask has a row (the
+  // trailing headless branch catches whatever the tables do not name), and
+  // the fieldset lands in a row of its own directly beneath, spanning both
+  // columns, above any rows that depend on this one.
+  const qTr = rowTr.get(q.id);
+  if (qTr) askRow(qTr, ask); else parent.append(ask);
 }
 
 const GROUPQ = {
@@ -2657,9 +2542,9 @@ function drawPending() {
   const lines = [...at.values()].sort((a, b) => a.s - b.s);
   pendEl.textContent = "";
   for (const g of lines.slice(0, 2))
-    pendEl.append(el("div", "dpline", pendPhrase(g.names, g)));
+    pendEl.append(el("div", null, pendPhrase(g.names, g)));
   if (lines.length > 2)
-    pendEl.append(el("div", "dpmore", "+ " + (lines.length - 2) + " more waiting"));
+    pendEl.append(el("div", null, "+ " + (lines.length - 2) + " more waiting"));
 }
 on("pending", (d) => {
   // beatsLeft 0 is the landing: the change is in the air, so the line goes
