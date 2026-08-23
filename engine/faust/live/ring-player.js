@@ -62,6 +62,11 @@
 //    [16] C_FADE_AT_LO SCHEDULED crossfade: the global OUTPUT frame (53-bit, lo/hi)
 //    [17] C_FADE_AT_HI  at which the A→B ramp begins — see "SAMPLE-EXACT FADE" above
 //    [18] C_FADE_LEN   ramp length in frames (0 = no scheduled fade armed)
+//    [19] C_UNDER_EPI  count of dry STRETCHES (a hole and crackle are the same
+//    [20] C_UNDER_MAX   total and different shapes — see below)
+//    [21] C_UNDER_RUN  the stretch in progress, in quanta (0 = the ring is fed)
+//    [22] C_UNDER_AT_LO the OUTPUT frame the last stretch began at (53-bit,
+//    [23] C_UNDER_AT_HI  lo/hi), so a probe can find the seam in a capture
 //
 //   PER-RING block, base = C_RING0 + ring*RING_STRIDE  (rings 0 and 1):
 //     [+0] R_WRITE     frames written by that ring's producer (monotonic)
@@ -83,9 +88,37 @@ const C_STATE = 0, C_XFADE = 1, C_ACTIVE = 2, C_READ_LO = 3, C_READ_HI = 4,
       C_UNDERRUN = 5, C_UNDER_CNT = 6;
 const C_RING0 = 8, RING_STRIDE = 4;
 const C_FADE_AT_LO = 16, C_FADE_AT_HI = 17, C_FADE_LEN = 18;
+// ── THE SHAPE OF A STARVATION (2026-08-23). C_UNDER_CNT counts render quanta
+// that ran dry, and one number cannot tell the two audible failures apart: 400
+// CONSECUTIVE dry quanta is ONE 1.2-second hole, and 400 SCATTERED ones is four
+// hundred 2.9 ms notches — vinyl crackle. The reader is the only place that
+// knows which, because it is the thing that emits the silence, so it counts
+// EPISODES (a dry stretch, however long) and the longest one beside the total.
+// Four more Int32 slots inside the existing CTRL_INTS=24 block; two compares and
+// at most three stores per quantum, and only on a quantum that already underran.
+const C_UNDER_EPI = 19,    // dry STRETCHES since the open (crackle count)
+      C_UNDER_MAX = 20,    // the longest stretch, in quanta (hole length)
+      C_UNDER_RUN = 21,    // the stretch in progress (0 = the ring is fed)
+      C_UNDER_AT_LO = 22, C_UNDER_AT_HI = 23;   // output frame the last stretch began
 const R_WRITE = 0, R_READ = 1;   // offsets within a per-ring block
 const HALF_PI = Math.PI / 2;
 const GAIN_EPS = 1e-3;           // a ring below this gain doesn't count toward underrun
+// ── A STARVING RING MUST DUCK, NOT STEP (2026-08-23). Until now a dry sample was
+// written as a hard 0. That is the loudest possible thing to do with a hole: the
+// output jumps from wherever the waveform was straight to silence in ONE sample,
+// and jumps back when the producer catches up — two full-scale discontinuities
+// per episode, which is exactly what "it crackles like vinyl" is made of. (The
+// pump's own comment for the star-cruise stall already named the sound: "the ring
+// zero-fills = audible static".) So a dry sample HOLDS the last delivered one and
+// fades it out over ~1.5 ms, and the first fed samples swell back over the same
+// ramp. It does not conceal the gap — a hole is still a hole and every counter
+// still counts it — it removes the CLICK at each edge, which is the part the ear
+// files under "broken" rather than "quiet".
+//
+// BYTE-IDENTICAL WHEN FED: while `conceal` is exactly 1 the sample is written
+// through unmultiplied, so a stream that never underruns is the same stream it
+// was before this existed — every fixture, every segment-parity gate untouched.
+const CONCEAL_STEP = 1 / 64;     // 64 samples ≈ 1.45 ms at 44.1k, in and out
 
 class RingPlayer extends AudioWorkletProcessor {
   constructor(options) {
@@ -98,6 +131,8 @@ class RingPlayer extends AudioWorkletProcessor {
     ];
     this.cap = o.cap | 0;                                    // ring capacity in FRAMES (both rings)
     this.outFrames = 0;                                      // global monotonic output cursor
+    this.conceal = 1;                                        // 1 = fed; ramps to 0 while dry
+    this.holdL = 0; this.holdR = 0;                          // the last sample the ring did deliver
   }
 
   // ctrl indices for a ring's write/read cursors
@@ -136,15 +171,24 @@ class RingPlayer extends AudioWorkletProcessor {
       let read = Atomics.load(ctrl, aRi);
       let avail = write - read;
       for (let i = 0; i < n; i++) {
+        let sL, sR;
         if (avail > 0) {
           const b = (read % cap) * 2;
-          outL[i] = data[b]; outR[i] = data[b + 1];
+          sL = data[b]; sR = data[b + 1];
           read++; avail--;
+          this.holdL = sL; this.holdR = sR;
+          if (this.conceal < 1) this.conceal = Math.min(1, this.conceal + CONCEAL_STEP);
         } else {
-          // UNDERRUN: ring drained. Emit silence and do NOT advance `read` past
-          // what exists — that ring's cursor stays locked to the sample grid.
-          outL[i] = 0; outR[i] = 0; under++;
+          // UNDERRUN: ring drained. Do NOT advance `read` past what exists — that
+          // ring's cursor stays locked to the sample grid — and do not SLAM to
+          // zero: hold the last delivered sample and fade it (see CONCEAL_STEP).
+          sL = this.holdL; sR = this.holdR;
+          this.conceal = Math.max(0, this.conceal - CONCEAL_STEP);
+          under++;
         }
+        const g = this.conceal;
+        if (g === 1) { outL[i] = sL; outR[i] = sR; }          // the untouched byte path
+        else { outL[i] = sL * g; outR[i] = sR * g; }
       }
       Atomics.store(ctrl, aRi, read);
     } else {
@@ -169,17 +213,29 @@ class RingPlayer extends AudioWorkletProcessor {
         else if (t >= 1) { gA = 0; gB = 1; done = done || fadeLen > 0; }
         else { const th = t * HALF_PI; gA = Math.cos(th); gB = Math.sin(th); }
         lastPos = t < 0 ? 0 : t > 1 ? 1 : t;
-        let aL = 0, aR = 0, bL = 0, bR = 0;
+        let aL = 0, aR = 0, bL = 0, bR = 0, missed = false;
         if (t < 1) {   // A still contributes (or is about to stop): keep its cursor on the grid
           if (aAvail > 0) { const b = (aRead % cap) * 2; aL = dataA[b]; aR = dataA[b + 1]; aRead++; aAvail--; }
-          else if (gA > GAIN_EPS) under++;
+          else if (gA > GAIN_EPS) { under++; missed = true; }
         }
         if (dataB && t >= 0) {   // B is consumed from EXACTLY the armed frame
           if (bAvail > 0) { const b = (bRead % cap) * 2; bL = dataB[b]; bR = dataB[b + 1]; bRead++; bAvail--; }
-          else if (gB > GAIN_EPS) under++;
+          else if (gB > GAIN_EPS) { under++; missed = true; }
         }
-        outL[i] = aL * gA + bL * gB;
-        outR[i] = aR * gA + bR * gB;
+        // the same hold-and-duck as the single-ring path, over the MIXED sample:
+        // a ring that runs dry under a crossfade is still a hole with two edges
+        let oL, oR;
+        if (missed) {
+          oL = this.holdL; oR = this.holdR;
+          this.conceal = Math.max(0, this.conceal - CONCEAL_STEP);
+        } else {
+          oL = aL * gA + bL * gB; oR = aR * gA + bR * gB;
+          this.holdL = oL; this.holdR = oR;
+          if (this.conceal < 1) this.conceal = Math.min(1, this.conceal + CONCEAL_STEP);
+        }
+        const cg = this.conceal;
+        if (cg === 1) { outL[i] = oL; outR[i] = oR; }
+        else { outL[i] = oL * cg; outR[i] = oR * cg; }
       }
       Atomics.store(ctrl, aRi, aRead);
       if (dataB) Atomics.store(ctrl, bRi, bRead);
@@ -204,7 +260,17 @@ class RingPlayer extends AudioWorkletProcessor {
     this.outFrames += n;
     Atomics.store(ctrl, C_READ_LO, this.outFrames >>> 0);
     Atomics.store(ctrl, C_READ_HI, Math.floor(this.outFrames / 0x100000000));
-    if (under) { Atomics.store(ctrl, C_UNDERRUN, 1); Atomics.add(ctrl, C_UNDER_CNT, 1); }
+    if (under) {
+      Atomics.store(ctrl, C_UNDERRUN, 1); Atomics.add(ctrl, C_UNDER_CNT, 1);
+      const run = Atomics.load(ctrl, C_UNDER_RUN) + 1;
+      if (run === 1) {                       // a new stretch — record where it began
+        Atomics.add(ctrl, C_UNDER_EPI, 1);
+        Atomics.store(ctrl, C_UNDER_AT_LO, p0 >>> 0);
+        Atomics.store(ctrl, C_UNDER_AT_HI, Math.floor(p0 / 0x100000000));
+      }
+      Atomics.store(ctrl, C_UNDER_RUN, run);
+      if (run > Atomics.load(ctrl, C_UNDER_MAX)) Atomics.store(ctrl, C_UNDER_MAX, run);
+    } else if (Atomics.load(ctrl, C_UNDER_RUN)) Atomics.store(ctrl, C_UNDER_RUN, 0);
     return true;
   }
 }

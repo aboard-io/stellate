@@ -51,7 +51,10 @@
   // ARMED crossfade: the conductor writes the output frame the ramp
   // starts on + its length ONCE and ring-player.js runs the equal-power ramp off
   // its own sample clock. See ring-player.js "SAMPLE-EXACT FADE".
-  const C_FADE_AT_LO = 16, C_FADE_AT_HI = 17, C_FADE_LEN = 18, CTRL_INTS = 24;
+  const C_FADE_AT_LO = 16, C_FADE_AT_HI = 17, C_FADE_LEN = 18;
+  // the reader's starvation SHAPE (ring-player.js documents the layout)
+  const C_UNDER_EPI = 19, C_UNDER_MAX = 20, C_UNDER_RUN = 21,
+        C_UNDER_AT_LO = 22, C_UNDER_AT_HI = 23, CTRL_INTS = 24;
 
   const RING_SEC = 30, RING_FRAMES = RING_SEC * SR;    // each ring holds ~30s
   const TARGET_SEC = 3.0, TARGET_FRAMES = TARGET_SEC * SR;  // runway we keep filled ahead (short = responsive steering)
@@ -951,6 +954,7 @@
 
     // the onBar playback queue: bars awaiting their read-cursor crossing.
     const playQueue = [];
+    let prodLoad = null;            // the producer's last self-timing (see stream-worker prodReport)
 
     function newStream(ring) {
       // musicFrames = fedFrames MINUS any tail top-ups (see feedTail): the end of
@@ -1297,6 +1301,10 @@
         if (stream === cur && !running) status("engine error: " + m.error);
         return;
       }
+      // PRODUCER LOAD — the worker's own measurement of how long a chord bar takes
+      // to render against how long it plays. Kept as it arrives (~2 Hz) so
+      // __producer() is never stale by more than a bar.
+      if (m.type === "status" && m.load) { prodLoad = m.load; return; }
       // openedLive / status / eos / stopped: informational
     }
 
@@ -1371,12 +1379,32 @@
     // survival over steering latency, the same trade as the hidden-tab case.
     // (The post-planet static fix: entry shader compile + dispose-GC stalls
     // breach the 3s runway and the ring zero-fills = audible static.)
+    // ...AND DEEPER ONCE THE RING HAS ACTUALLY RUN DRY. The two cases above are
+    // PREDICTIONS that stalls are coming (a hidden tab, a GL view). This one is
+    // the machine having already said so: a session whose ring has emptied even
+    // once is a session on a box that stalls longer than three seconds, and the
+    // producer's own timing says why — measured over twelve minutes, its cost is
+    // 0.5-0.6 render-seconds per audio second on average and spikes to 2.1-2.5x
+    // on a single bar, so one bad bar can outlast a three-second runway. The
+    // trade is a bar of extra steering latency for a listener who has ALREADY
+    // heard a hole; a session that never starves never pays it and is
+    // byte-identical. Sticky on purpose: the box does not get quieter.
     const targetFrames = () => ((typeof document !== "undefined" && document.visibilityState === "hidden")
-      || (root.FaustLive && root.FaustLive.deepRunway)) ? HIDDEN_TARGET_FRAMES : TARGET_FRAMES;
+      || (root.FaustLive && root.FaustLive.deepRunway)
+      || Atomics.load(ctrl, C_UNDER_EPI) > 0) ? HIDDEN_TARGET_FRAMES : TARGET_FRAMES;
+    // ── THE STARVATION, ON DEMAND (test hook; test/browser/ring-starve.test.js).
+    // The failure this engine has to survive is "the producer went away for a few
+    // seconds", and the only honest way to gate the behaviour at the seam is to
+    // MAKE it happen rather than wait for a busy machine to provide one. Holding
+    // the feed pump for `sec` drains the ring exactly the way a stalled worker
+    // does — same code path, same counters, same reader. Nothing calls it but a
+    // gate, and it cannot fire by itself: the deadline starts in the past.
+    let starveUntil = 0;
     // pumpOnce: one idempotent top-up, safe to call from ANY clock (the page timer,
     // the worker tick, goVisible) — never (re)schedules, so no timer chains accumulate.
     function pumpOnce() {
       if (abort) return;
+      if (now() < starveUntil) return;
       try {
         keepOutgoingWet();   // the outgoing ring must not run dry under the ramp
         let guard = 0;
@@ -2104,6 +2132,29 @@
           ? { unit: k, types: ent.chain.types.slice(), stages: ent.chain.ch.stages.slice(), skipped: ent.chain.ch.skipped.slice() }
           : { unit: k, types: [], stages: [], skipped: [] });   // chainless sampled unit (no declared inserts)
         return out;
+      },
+      // ── PRODUCER LOAD. `underruns` says the ring ran dry; this says WHY. mean =
+      // cumulative render-milliseconds per audio second (1.0 = exactly realtime,
+      // and a stream at 1.0 has no headroom for anything); recent = the last
+      // sixteen bars; peak = the worst one. A number that CLIMBS over a long
+      // listen is an engine getting slower; a number that is flat and high is an
+      // engine that was always marginal. ──
+      __producer: () => (prodLoad ? Object.assign({}, prodLoad) : null),
+      // hold the feed for `sec` so the ring genuinely runs dry (see starveUntil)
+      __starve: (sec) => { starveUntil = now() + Math.max(0, +sec || 0) * 1000; return starveUntil; },
+      // ── THE SHAPE OF A STARVATION. `underruns` is a total, and a total cannot
+      // tell a HOLE from CRACKLE: 400 consecutive dry quanta is one 1.2 s dropout,
+      // 400 scattered ones are four hundred 2.9 ms notches. The reader counts both
+      // (ring-player.js), so this reports quanta, EPISODES and the longest episode
+      // — with the millisecond figures a person can hear, and `dry` = whether the
+      // ring is starving right now. ──
+      underrunShape: () => {
+        const q = Atomics.load(ctrl, C_UNDER_CNT), epi = Atomics.load(ctrl, C_UNDER_EPI),
+              mx = Atomics.load(ctrl, C_UNDER_MAX);
+        return { quanta: q, episodes: epi, maxRun: mx, dry: Atomics.load(ctrl, C_UNDER_RUN),
+          totalMs: +((q * 128 / SR) * 1000).toFixed(1),
+          worstMs: +((mx * 128 / SR) * 1000).toFixed(1),
+          lastAt: (Atomics.load(ctrl, C_UNDER_AT_HI) * 0x100000000) + (Atomics.load(ctrl, C_UNDER_AT_LO) >>> 0) };
       },
       // ring / underrun telemetry (real — reads the shared control block)
       underruns: () => Atomics.load(ctrl, C_UNDER_CNT),

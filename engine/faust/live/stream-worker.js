@@ -51,6 +51,40 @@ let opChain = Promise.resolve();
 // reference handed to eng.openLive (ST.buffers === liveBuffers), so an addBuffers merge
 // lands whether or not the async open has completed yet. `activeGen` guards stale opens.
 let liveBuffers = {}, activeGen = -1;
+// ── PRODUCER LOAD (the standing sensor for "is the engine getting slower").
+// A ring that runs dry has two possible causes and one symptom: the reader got
+// ahead of a stalled main thread, or renderChunk itself is taking longer than
+// the audio it makes. From outside the ring the two are the same silence, and
+// they need opposite fixes. So the pump times its own work: milliseconds spent
+// in renderChunk (and in the feedBar ingest before it) against the SECONDS OF
+// AUDIO that call produced. `mean` is cumulative over the open, `recent` the
+// last sixteen bars, `peak` the worst single bar — a leak or a denormal storm
+// shows as `recent` climbing off a flat `mean`, a merely marginal engine as a
+// mean already near 1. Two timestamps per chord-bar; nothing in the render loop.
+const prod = { chunks: 0, ms: 0, sec: 0, ingestMs: 0, peak: 0, recent: [], waitMs: 0, worst: [] };
+const nowMs = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+function prodNote(ms, frames) {
+  const sec = frames / SR;
+  prod.chunks++; prod.ms += ms; prod.sec += sec;
+  const r = ms / 1000 / Math.max(1e-9, sec);
+  if (r > prod.peak) prod.peak = r;
+  prod.recent.push(+r.toFixed(3));
+  if (prod.recent.length > 16) prod.recent.shift();
+  // THE SLOW BARS, KEPT. A mean of 0.44 with a peak of 2.15 is not a slow
+  // engine, it is a spiky one, and a spike is what empties a one-bar runway —
+  // so the four worst bars are named (which chord bar, how long it took, how
+  // long it plays) instead of collapsing into a maximum nobody can place.
+  if (prod.worst.length < 4 || r > prod.worst[prod.worst.length - 1].r) {
+    prod.worst.push({ i: prod.chunks - 1, r: +r.toFixed(3), ms: +ms.toFixed(1), sec: +sec.toFixed(2) });
+    prod.worst.sort((a, b) => b.r - a.r);
+    if (prod.worst.length > 4) prod.worst.length = 4;
+  }
+}
+const prodReport = () => ({ chunks: prod.chunks, ms: +prod.ms.toFixed(1), sec: +prod.sec.toFixed(2),
+  mean: +(prod.ms / 1000 / Math.max(1e-9, prod.sec)).toFixed(4), peak: +prod.peak.toFixed(3),
+  recent: prod.recent.slice(), ingestMs: +prod.ingestMs.toFixed(1), waitMs: +prod.waitMs.toFixed(1),
+  worst: prod.worst.slice() });
+function prodReset() { prod.chunks = 0; prod.ms = 0; prod.sec = 0; prod.ingestMs = 0; prod.peak = 0; prod.recent.length = 0; prod.waitMs = 0; prod.worst.length = 0; }
 // WAV-FIRST resilience: the vocoder speech CARRIER for the current wavOut open. Set at open
 // (may be null — the open no longer blocks on the speech decode) and updated by a late
 // setSpeech once the carrier decodes; applied post-open so a carrier that lands during the
@@ -238,7 +272,9 @@ async function runPump(msg, token) {
     while (alive() && (filled() + maxChunk > cap || filled() >= runway)) await sleep(10);
     if (!alive()) break;
 
+    const __t0 = nowMs();
     const c = eng.renderChunk(cursor);           // { L, R, startSample, length }
+    prodNote(nowMs() - __t0, c.length);
     let w = Atomics.load(ctrl, r0w);
     for (let i = 0; i < c.length; i++) {
       const b = ((w + i) % cap) * 2;
@@ -253,7 +289,7 @@ async function runPump(msg, token) {
     if (now - lastStatus > 500) {
       lastStatus = now;
       self.postMessage({ type: "status", cursor, nChunks: info.nChunks, filledSec: +(fl / SR).toFixed(2),
-        underruns: Atomics.load(ctrl, C_UNDER_CNT), primed, gen, ringIndex });
+        underruns: Atomics.load(ctrl, C_UNDER_CNT), primed, gen, ringIndex, load: prodReport() });
     }
   }
   if (cursor >= info.nChunks) {
@@ -317,13 +353,19 @@ async function runLivePump(msg, token) {
     // binding to the spec would pin one bar's units/events past bars[cursor]=null,
     // across the wait for the next bar.)
     const barSerial = bars[cursor] && bars[cursor].serial != null ? bars[cursor].serial : null;
+    const __ti = nowMs();
     const fb = await eng.feedBar(bars[cursor]);
+    prod.ingestMs += nowMs() - __ti;
     maxChunk = Math.max(maxChunk, fb.length);
     if (maxChunk > cap) { self.postMessage({ type: "openfail", error: `chunk ${maxChunk} > ring ${cap}`, gen }); return; }
+    const __tw = nowMs();
     while (alive() && (filled() + fb.length > cap || filled() >= runway)) await sleep(10);
+    prod.waitMs += nowMs() - __tw;
     if (!alive()) break;
 
+    const __t0 = nowMs();
     const c = eng.renderChunk(cursor);
+    prodNote(nowMs() - __t0, c.length);
     let w = Atomics.load(ctrl, r0w);
     for (let i = 0; i < c.length; i++) { const b = ((w + i) % cap) * 2; ring[b] = c.L[i]; ring[b + 1] = c.R[i]; }
     Atomics.store(ctrl, r0w, w + c.length);   // publish AFTER the samples are written
@@ -346,7 +388,7 @@ async function runLivePump(msg, token) {
     if (now - lastStatus > 500) {
       lastStatus = now;
       self.postMessage({ type: "status", cursor, nChunks: bars.length, filledSec: +(fl / SR).toFixed(2),
-        underruns: Atomics.load(ctrl, C_UNDER_CNT), primed, gen, ringIndex, live: true });
+        underruns: Atomics.load(ctrl, C_UNDER_CNT), primed, gen, ringIndex, live: true, load: prodReport() });
     }
   }
   if (liveEos && cursor >= bars.length) { Atomics.store(ctrl, r0c, 1); clearFeedGlobals(token); self.postMessage({ type: "eos", cursor, gen }); }
