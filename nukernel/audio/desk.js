@@ -617,6 +617,39 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
     // for, and the trim is not a hand, it is the route. Absent (=== every
     // sampled voice, every unit the parent built), byte-identical.
     if (u.pageTrim && u.pageTrim !== 1) { v.rev *= u.pageTrim; v.del *= u.pageTrim; }
+    // ...AND THE MASTER FADER REACHES A MODELLED VOICE, which it never did.
+    // ("I need a volume slider on the top very badly" — Paul, 2026-08-23.)
+    // The line above composes the master trim into `lvl`, and `lvl` is read by
+    // the SAMPLED voices (sampler.js note gain) and by the DRUM units
+    // (state-engine mapEvents `sets.level = u.lvl * amp`) and BY NOTHING ELSE:
+    // a modelled pitched voice had its level baked into `params.level` and
+    // `gmul` at cast time (state-engine pitchedUnit) and the desk moves
+    // neither, so the master volume moved the band and left every synth, every
+    // modelled electric and the singer exactly where they were. Measured on the
+    // rendered artifact before this line existed: lvl x 0.25 on a modelled
+    // chair = 0.00 dB (test/probes/live-mid-play.probe.js).
+    //
+    // IT LANDS ON THE ROUTE, not on `level` — the law to-engine.js trimRoute
+    // already states for PAGE_TRIM, and for its reasons plus two more: `level`
+    // is clamped to [0.001, 1] by pitchedUnit, so a boost above unity would
+    // vanish into the clamp, and `gmul` is the SHAPER'S INPUT (dirt), so
+    // turning a record down through it would also clean it up. Scaling the
+    // three sends by one number is a fader: the voice's whole contribution,
+    // dry and wet together, at the same gain. All three, never one — clamping
+    // the wet while the dry moved would change the balance a fader must not.
+    //
+    // NOT the per-channel faders, deliberately: the BAND writes those itself
+    // (band-kit mixOf writes `bass`, `vocals`, `unit:kick`, `unit:hat` faders
+    // on 24 of the 30 records), so routing them here would re-balance records
+    // nobody has touched — measured at -3.50..+3.00 dB over 25% of modelled
+    // unit rows. `master.fader` is written by NO record, so this is exactly
+    // 1.0 until a hand moves it, and the catalog is byte-identical.
+    if (mo && mo.fader && !u.sampler && !isDrum) {
+      const mf = Math.pow(10, faderDb(mo.fader) / 20);
+      v.dry = (v.dry != null ? v.dry : 1) * mf;
+      v.rev = (v.rev || 0) * mf;
+      v.del = (v.del || 0) * mf;
+    }
     // A CHIP IS AN INSERT HERE. The page's own vocabulary calls it a send and had
     // one shared bus per effect; the parent has no page-wide effect bus and a
     // per-voice INSERT chain instead (state-engine insertChain -> sampler.js
