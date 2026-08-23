@@ -88,7 +88,7 @@
             proc.setParamValue(sfx.slice(0, 4) === "/DX7" ? sfx : "/DX7" + sfx, v);
         procs.push({ proc, R, pending: [], ivals: [], busyUntil: -1, lastOff: null, curOut: 1, curPP: 0, renderedEnd: 0 });
       }
-      return { module: u.module, u, procs, chain: await mkChain(u.inserts), chainBarSet: false };
+      return await initChain({ module: u.module, u, procs }, u.inserts);
     }
 
     // mkChain — persistent insert-effect processors for a unit's declared chain.
@@ -121,19 +121,125 @@
       return chain;
     }
 
+    // ── THE PEDAL A HAND MOVES WHILE THE RECORD PLAYS ─────────────────────────
+    // A unit's chain used to be built ONCE (ensureUnit) and cached for the life of
+    // the stream, while feedBar glided only `params`/`dx7Params` — so switching a
+    // pedal mid-play reached a SAMPLED chair on the next bar (live.js samplerOf
+    // rebuilds its Web Audio twin on JSON.stringify(u.inserts)) and reached a
+    // FAUST-MODELLED chair never, or whenever the stream happened to re-open. The
+    // module set is the stream SIGNATURE (live.js sigOf) and the inserts are not,
+    // which is the right trade — putting them in the signature would tear down and
+    // rebuild the ring for a knob — so the chain is re-patched IN PLACE instead:
+    //
+    //   same pedals, new knobs  -> setParamValue on the live procs. No rebuild, no
+    //                              seam at all; the DSP's own smoothing rides it.
+    //                              (This is also how a tempo-synced LFO's resolved
+    //                              Hz — insertChain's rateBars — now follows a bpm
+    //                              glide, which it never did before.)
+    //   pedals added/removed    -> a fresh chain, with the OUTGOING one kept for a
+    //                              20 ms crossfade at the top of the window so the
+    //                              old echo/sweep state does not snap to zero.
+    //
+    // Both land at the top of the next bar the producer renders — the same bar
+    // granularity every other desk move already has.
+    const chainSigOf = (ins) => (ins && ins.length ? JSON.stringify(ins) : "");
+    const chainTopoOf = (ins) => (ins || []).filter((e) => e && e.module).map((e) => e.module).join(">");
+    const CHAIN_XF = Math.max(BS, Math.round(0.02 * SR));   // pedal-swap crossfade, samples
+
+    async function initChain(h, inserts) {
+      h.chain = await mkChain(inserts);
+      h.chainSig = chainSigOf(inserts);
+      h.chainTopo = chainTopoOf(inserts);
+      h.chainPrev = null;
+      h.chainBarSec = null;
+      return h;
+    }
+
+    // syncChain(h, inserts, u) -> true if anything moved. Cheap and idempotent: an
+    // unchanged declaration is one string compare per bar.
+    async function syncChain(h, inserts, u) {
+      const sig = chainSigOf(inserts);
+      if (sig === h.chainSig) return false;
+      const topo = chainTopoOf(inserts);
+      if (h.chain && topo === h.chainTopo) {
+        const list = (inserts || []).filter((e) => e && e.module);
+        for (let i = 0; i < h.chain.length; i++) {
+          const b = h.chain[i], eff = list[i];
+          if (!eff) break;
+          const prev = b.eff.params || {};
+          for (const [k, v] of Object.entries(eff.params || {}))
+            if (prev[k] !== v) b.proc.setParamValue(b.R + k, v);
+          b.eff = eff;
+        }
+      } else {
+        const old = h.chain;
+        try {
+          h.chain = await mkChain(inserts);
+        } catch (e) {
+          // A CHAIN YOU CANNOT REBUILD COSTS YOU THE CHANGE, NOT THE RECORD (the
+          // same law mkChain states one level down): keep playing the old pedals.
+          try { (self.console || console).warn("stream-renderer: chain rebuild failed —", e && e.message || e); } catch (e2) {}
+          h.chain = old;
+          return false;
+        }
+        // keep the outgoing chain for one crossfade. Skipped for a STEREO unit
+        // going chain-less, because the insert path is mono-summing (renderUnitWindow)
+        // and one bar of collapsed width would be a worse artefact than the step.
+        h.chainPrev = (old && old.length && (h.chain.length || !(u && u.stereo))) ? old : null;
+        h.chainBarSec = null;
+      }
+      h.chainSig = sig; h.chainTopo = topo;
+      return true;
+    }
+
+    // THE ROUTE A DESK MOVES. ensureUnit captured the unit spec ONCE and
+    // renderUnitWindow reads its send gains off it on EVERY window, so a reverb
+    // send, an echo send or a pan moved mid-play was frozen on a Faust-modelled
+    // voice exactly the way the inserts were — while the sampled lane re-reads them
+    // every bar (live.js samplerOf, "THE DESK MOVES; THE CHAIN IS BUILT ONCE").
+    // Only the ROUTE is copied forward: the module, the pool, mono/legato and the
+    // voice law stay whatever the stream opened with, because a change THERE flips
+    // the stream signature and gets a whole fresh stream by design.
+    const ROUTE_KEYS = ["dry", "rev", "del", "pan", "lvl", "gmul", "extGainPerAmp", "dx7OutCeil"];
+    function refreshRoute(us, u) {
+      let hit = null;
+      for (const k of ROUTE_KEYS) if (u[k] !== us.u[k]) (hit = hit || {})[k] = u[k];
+      if (hit) us.u = Object.assign({}, us.u, hit);
+    }
+
     // runChain — process one window of a unit-local buffer through its persistent
     // chain in BS blocks (chunk bases are BS-aligned, so the block walk matches
-    // press's whole-song grid — byte-parity law). Sets tempo-synced barSec once.
+    // press's whole-song grid — byte-parity law), crossfading out of the chain a
+    // pedal change just retired (live only; absent, this is the old function).
     function runChain(su, ubuf, LEN, spb) {
-      for (const b of su.chain) {
-        if (b.eff.barSec && !su.chainBarSet) b.proc.setParamValue(b.R + "barSec", 4 * spb);
+      const prev = su.chainPrev;
+      let head = null;
+      if (prev) {
+        const n = Math.min(LEN, CHAIN_XF);
+        head = ubuf.slice(0, n);
+        chainBlocks(prev, head, n, spb);
+        su.chainPrev = null;
+      }
+      chainBlocks(su.chain, ubuf, LEN, spb);
+      if (head)
+        for (let i = 0; i < head.length; i++) {
+          const g = (i + 0.5) / head.length;
+          ubuf[i] = head[i] * (1 - g) + ubuf[i] * g;
+        }
+    }
+    // ...and the block walk itself. barSec is tempo-synced PER BLOCK-MEMO (stem-worker's
+    // own law) rather than latched on the first window: a live bpm change used to leave
+    // a bar-locked sweep running at the tempo the stream opened with. Constant tempo =>
+    // set once on the first window and never again => byte-identical offline.
+    function chainBlocks(chain, buf, LEN, spb) {
+      for (const b of (chain || [])) {
+        if (b.eff.barSec && b.barSec !== 4 * spb) { b.proc.setParamValue(b.R + "barSec", 4 * spb); b.barSec = 4 * spb; }
         for (let s2 = 0; s2 < LEN; s2 += BS) {
           const len = Math.min(BS, LEN - s2);
-          const o = b.proc.render([ubuf.subarray(s2, s2 + len)], len)[0];
-          for (let i = 0; i < len; i++) ubuf[s2 + i] = o[i];
+          const o = b.proc.render([buf.subarray(s2, s2 + len)], len)[0];
+          for (let i = 0; i < len; i++) buf[s2 + i] = o[i];
         }
       }
-      su.chainBarSet = true;
     }
 
     // INGEST all of a unit's events into its persistent per-voice change/interval
@@ -196,7 +302,7 @@
     function renderUnitWindow(us, buses, barBase, barEnd, spb, meter) {
       const u = us.u;
       const LEN = barEnd - barBase;
-      const hasIns = us.chain && us.chain.length;
+      const hasIns = (us.chain && us.chain.length) || (us.chainPrev && us.chainPrev.length);
       const ubuf = hasIns ? new Float32Array(LEN) : null;
       // MASTERING pan (render-core's exact law — parity): mono units with
       // `pan` write their DRY send onto the wide buses; rev/del/pp stay mono.
@@ -394,7 +500,7 @@
           // INSERTS-ON-SAMPLED-VOICES: persistent insert procs for the unit's
           // declared chain (renderChunk mixes the unit pre-send into a window
           // buffer, runs the chain, THEN applies sends — the render-core law).
-          if (u.inserts && u.inserts.length) { su.chain = await mkChain(u.inserts); su.chainBarSet = false; }
+          if (u.inserts && u.inserts.length) await initChain(su, u.inserts);
           samplerUnits.set(key, su);
           unitOrder.push({ key, kind: "sampler" });
         } else {
@@ -533,6 +639,20 @@
           if (ST.fxp[k] !== v) { ST.fx.setParamValue("/fx_bus/" + k, v); ST.fxp[k] = v; }
       }
 
+      // ── THE PEDALBOARD AND THE ROUTE, RE-READ EVERY BAR ───────────────────────
+      // BEFORE the ingest below, because a fader on a synth-font voice rides
+      // `extGainPerAmp` and ingest bakes that into the bar's @out changes — read it
+      // after and the change would land a bar late. Everything here is a no-op when
+      // nothing moved (one string compare and eight identity compares per unit).
+      if (bar.units) {
+        for (const [key, u] of Object.entries(bar.units)) {
+          const us = ST.units.get(key);
+          if (!us || !u) continue;
+          if (await syncChain(us, u.inserts, u)) us.u = Object.assign({}, us.u, { inserts: u.inserts });
+          refreshRoute(us, u);
+        }
+      }
+
       // per-unit: lazily create the persistent proc set on first event, then ingest
       // this bar's events into its persistent queues at absolute sample positions.
       const unitsSpec = bar.units || ST.unitsSpec;
@@ -607,10 +727,21 @@
           let su = ST.samplerUnits.get(key);
           if (!su) {
             su = { notes: [], role: auditRole(u, key), sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip, pan: u.pan || 0, granularOverSt: u.sampler.granularOverSt, grainSec: u.sampler.grainSec } };
-            // INSERTS-ON-SAMPLED-VOICES (wavOut lane): same persistent chain as open()
-            if (u.inserts && u.inserts.length) { su.chain = await mkChain(u.inserts); su.chainBarSet = false; }
+            // INSERTS-ON-SAMPLED-VOICES (wavOut lane): same persistent chain as open().
+            // Built even when EMPTY here, so a pedal ADDED mid-play has a holder to
+            // re-patch (syncChain below); the render guard reads .length, not truthiness.
+            await initChain(su, u.inserts);
             ST.samplerUnits.set(key, su);
             ST.unitOrder.push({ key, kind: "sampler" });
+          } else {
+            // ...AND THE SAME RE-READ THE FAUST UNITS GET ABOVE. The ring route plays
+            // its sampled voices natively (live.js samplerOf re-reads both), but the
+            // wavOut/mobile route bakes them HERE, where the sends and the chain were
+            // frozen at the unit's first bar — a pedal or a send moved mid-play was
+            // heard on desktop and not in a pocket.
+            su.sends = { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip,
+                         pan: u.pan || 0, granularOverSt: u.sampler.granularOverSt, grainSec: u.sampler.grainSec };
+            await syncChain(su, u.inserts, u);
           }
           const relN = Math.max(32, Math.floor((u.sampler.rel || 0.09) * SR));
           const tailN = SP.stripTailN(u.sampler.strip, SR);   // delay-strip ring-out (see above)
@@ -699,7 +830,7 @@
           if (ST.live) su.notes = su.notes.filter((nt) => nt._end > base);   // prune fully-played notes (unbounded live stream)
           const win = su.notes.filter((nt) => nt._s0 < end && nt._end > base);
           const meter = { e: 0, missing: null };
-          if (su.chain) {
+          if ((su.chain && su.chain.length) || (su.chainPrev && su.chainPrev.length)) {
             // INSERTS-ON-SAMPLED-VOICES: mirror press's sampler-chain walk,
             // windowed. Notes mix PRE-SEND (strip + per-note gain inside) onto a
             // unit-local window buffer; the PERSISTENT chain processes the WHOLE
