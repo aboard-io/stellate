@@ -623,6 +623,31 @@
     // note of it holds, because the kernel holds every note to the next
     // onset and there isn't one
     frag: { w: "just its head" },
+    /* ---- THREE MORE, AND THEY ARE THE OLDEST THREE (2026-08-23) --------
+       Four ways for a theme to come back is not a composer's vocabulary, it
+       is a menu — and the three missing ones are the three every counterpoint
+       treatise opens with. The kernel has exported all three as phrase
+       operators since the day it was written (`invert`, `reverse`, and the
+       mirror of augmentation), so this is a table addition to the ONE theme
+       engine rather than a second one: the same `transform`, three more
+       branches, and every existing record's return is untouched. */
+    // inversion: the contour turned over about its own first note, so it
+    // stays where it was and goes the other way. About the PHRASE'S first
+    // degree rather than a constant — a fixed pivot moves the whole line
+    // into another register, which is a transposition wearing an
+    // inversion's name.
+    inv:  { w: "turned upside down" },
+    // retrograde: the same notes, last to first. It keeps every note (see
+    // WHOLE_BACK in band-kit) and it is the one return that guarantees a
+    // different LANDING, which is what makes it a real answer.
+    retro:{ w: "backwards" },
+    // diminution, the mirror of `aug`: half the time, so it fits twice —
+    // and a diminution that left the second half of the bars empty would be
+    // a fragment, not a diminution, so it SAYS ITSELF TWICE. Onsets that
+    // collide under the halving keep the earlier note (a diminution runs
+    // out of places before it runs out of notes, and the first is the one
+    // the ear is following).
+    dim:  { w: "twice as fast, and twice over" },
   };
   function transform(ph, kind, met) {
     if (!kind || kind === "same" || !TRANSFORMS[kind]) return ph;
@@ -641,11 +666,23 @@
     const put = (to, from, stretch) => { out.gate[to] = 1; out.deg[to] = ph.deg[from];
       out.oct[to] = ph.oct[from]; out.vel[to] = ph.vel[from];
       if (hh && ph.hold[from]) hh[to] = ph.hold[from] * (stretch || 1); };
+    // the pivot an inversion turns about: the phrase's own first note
+    let pivot = 0;
+    if (kind === "inv") for (let i = 0; i < n; i++)
+      if (ph.gate[i]) { pivot = ph.deg[i]; break; }
+    const half = n >> 1;
     for (let i = 0; i < n; i++) {
       if (!ph.gate[i]) continue;
       if (kind === "up") { put(i, i); out.deg[i] = ph.deg[i] + 1; }
       else if (kind === "aug") { if (i * 2 < n) put(i * 2, i, 2); }
       else if (kind === "frag") { if (i < head) put(i, i); }
+      else if (kind === "inv") { put(i, i); out.deg[i] = 2 * pivot - ph.deg[i]; }
+      else if (kind === "retro") { put(n - 1 - i, i); }
+      else if (kind === "dim") {
+        const to = i >> 1;
+        if (!out.gate[to]) put(to, i, 0.5);
+        if (half && to + half < n && !out.gate[to + half]) put(to + half, i, 0.5);
+      }
     }
     if (hh) out.hold = hh;
     // THE RETURN IS REGISTERED AS THE THEME. The kernel's whole-line octave
@@ -660,6 +697,100 @@
     out.regGate = ph.regGate || ph.gate.slice();
     return out;
   }
+
+  /* ---------- THE SOLO LADDER: WHAT A PLAYER DOES TO A TUNE OVER TIME ----
+     Paul: "develop theme-improvisation methods and hours-long solo handoffs".
+
+     MEASURED FIRST, on the longest record this box could make (16 boxes, a
+     jazz date, mostly solos — test/probes/solo-shape.probe.js): 188 bars,
+     and THREE DISTINCT BARS OF TUNE in the whole thing, because `ROLE.solo`
+     declared no taker and the solo sections were a rhythm section vamping.
+     Handing the tune to each player in turn, deterministically, made it
+     worse in the way that matters: 188 bars of tune, FIVE distinct bars,
+     and a self-similarity of 0.98 at lag 12 and again at lag 24 — a perfect
+     twelve-bar loop with three people taking turns playing it. Paul's own
+     fence: "an hour of improvisation that is a random walk is noise; an
+     hour that repeats every eight bars is a loop." That was the loop.
+
+     WHAT DEVELOPMENT ACTUALLY NEEDS, and why nothing here could do it: the
+     theme returns (`TRANSFORMS`, above) are per SECTION — one word for a
+     whole solo — so the only thing they can make is a different loop. The
+     one mechanism in the box that is both POSITION-DEPENDENT and PRE-RENDER
+     is the kernel's bar schedule (`g.period`, its sixth type), which is the
+     only place a note can change in the MIDDLE of a section. Nothing on the
+     band page had ever written one.
+
+     SO: A LADDER OF PER-BAR OPERATOR WORDS, DECLARED AS DATA, INDEXED BY
+     WHERE YOU ARE IN THE WHOLE RUN OF SOLOS. Four wheels, in the op
+     alphabet the box already speaks (kernel.js OPKEYS, which is fields.js's
+     palette alphabet), turning at four different rates:
+
+       DENS   every bar    how busy this bar is
+       SHAPE  every 2 bars what is being done to the line — the sentence
+       LEVEL  every 4 bars where it sits
+       COLOUR every 8 bars the wider gesture over a whole chorus
+
+     The rates are the point. If every wheel turned every bar, consecutive
+     bars would share nothing and an hour of it would be the random walk;
+     turning them at 1/2/4/8 makes bar n and bar n+1 differ in ONE
+     dimension and bar n and bar n+16 differ in all four, which is what
+     "high at short lags and decaying" means when you write it down.
+
+     AND THE INDEX RUNS ACROSS THE HANDOFF. This is the whole difference
+     between a band and a playlist. Soloist k does not start the ladder
+     over: their first rung is the rung soloist k-1 finished on (band-kit
+     `soloAt`, one rung of overlap per handoff — the new player picks up the
+     bar the last one left and goes on from there), so what the horn does in
+     its third chorus is a development of what the piano was doing when it
+     stopped, and not a second performance of the same eight ideas.
+
+     HOW LONG BEFORE IT REPEATS: the wheels are 7, 5, 3 and 11 rungs long at
+     rates 2, 1, 4 and 8, so the ladder's period is lcm(14, 5, 12, 88) =
+     9,240 bars — five hours at 120 bpm in four. That is not a claim that
+     the box can PLAY five hours (see band-kit MAXSECS: it cannot, yet); it
+     is the statement that the development, and not the ladder, is what runs
+     out first. */
+  const SOLO = {
+    // every bar: how busy. The fastest wheel is the gentlest one, so that
+    // one bar to the next is the same line played thicker or thinner —
+    // which is what a soloist most often actually does.
+    dens:   [[], ["rep2"], ["thin3"], ["dens4"], ["del4"]],
+    // every two bars: the sentence — what is being done to the line itself
+    shape:  [[], ["rot2"], ["ex8"], ["inv"], ["pit4"], ["rev"], ["gat2"]],
+    // every four bars: where it sits
+    level:  [[], ["trp1"], ["trm2"]],
+    // every eight bars: the gesture over a chorus. Half of it is empty on
+    // purpose — a colour that is always on is not a colour.
+    colour: [[], ["wide"], ["accflip"], [], ["tight"], ["ex4"], [],
+             ["rot5"], ["slides"], [], ["pit8"]],
+  };
+  const SOLORATE = { dens: 1, shape: 2, level: 4, colour: 8 };
+  // ...and the ORDER the four are applied in, which is a musical decision
+  // and not an accident: what the line IS, then how wide it is, then how
+  // busy, then where. Density last but one because thinning the notes the
+  // shape produced is a different bar from shaping the notes that survived
+  // a thinning; level last because a transposition commutes with none of
+  // the gate work and reads cleanest on top.
+  const SOLOORDER = ["shape", "colour", "dens", "level"];
+  const lcm2 = (a, b) => { let x = a, y = b; while (y) { const t = x % y; x = y; y = t; }
+                           return (a / x) * b; };
+  const SOLOPERIOD = SOLOORDER.reduce((n, k) =>
+    lcm2(n, SOLO[k].length * SOLORATE[k]), 1);
+  const SOLOCACHE = new Map();
+  // the operator word for rung i of the ladder — op KEYS, so a solo's whole
+  // development can be printed, diffed and held to a gate (kernel.js
+  // `asOps` resolves them at render time)
+  const soloWord = (i) => {
+    const k = ((i % SOLOPERIOD) + SOLOPERIOD) % SOLOPERIOD;
+    let w = SOLOCACHE.get(k);
+    if (w) return w;
+    w = [];
+    for (const wheel of SOLOORDER)
+      for (const op of SOLO[wheel][Math.floor(k / SOLORATE[wheel]) % SOLO[wheel].length])
+        w.push(op);
+    SOLOCACHE.set(k, w);
+    return w;
+  };
 
   // what it sounds like, said out loud — the chyron the page can print
   const describe = (m) => [cellOf(m).w, (CONTOURS[m.contour] || {}).w,
@@ -926,6 +1057,7 @@
   ];
   return { N, NOF, CELLS, CELLS3, CELLS6, extraCells, cellOf,
            CONTOURS, LANDINGS, LENGTHS, REG, SENTENCES, ROLES, TRANSFORMS,
+           SOLO, SOLORATE, SOLOORDER, SOLOPERIOD, soloWord,
            regOf, gridOf, liftOf, octsOf, wroteOf, handOf, stepWord,
            blank, V, catalog, say, says, BARMARKS, BARWORD, MAXB,
            decisions, nextAsk, answer, toPhrase, transform, describe, barsOf, cellOf };

@@ -1155,10 +1155,54 @@
   // one chord per four bars, because harmony is indexed by the same bar.
   // Entries are operator LISTS (the same alphabet as g.word); a function form
   // (v, s) => ops gives per-voice periods, which is call-and-response as data.
+  //
+  // ...AND A BAR SCHEDULE MAY BE WRITTEN DOWN (2026-08-23). Entries were
+  // operator FUNCTIONS, which is fine for a table compiled in the same file
+  // and useless to anything that wants to SAY a sentence: a caller with no
+  // handle on this file's closures — band-kit, ideas-kit, a saved song, a
+  // gate reading what a solo did — could not name one. So an entry may also
+  // be an op KEY, resolved here through `OPKEYS`, and a schedule becomes
+  // data all the way down: `[[], ["rot2"], ["inv", "thin3"]]` is a sentence
+  // you can print, diff, serialize and hold a gate to.
+  //
+  // THE KEY NAMES ARE NOT NEW. fields.js has carried exactly this alphabet
+  // since the palette shipped (its own `OPS`, which the DAW's period presets
+  // and every op chip already speak) — it simply built it above this file
+  // and could not lend it downward. This is the same table where the
+  // operators actually live; fields.js should be pointed at it rather than
+  // keeping its copy, and until it is, test/unit/solo-shape.test.js (a) holds
+  // the two BEHAVIOURALLY equal — same phrase in, same phrase out, for every
+  // key both name — so the two spellings can never drift into two dialects.
+  const OPKEYS = { rev: reverse(), inv: invert(4), wide: spread(2), tight: spread(0.5),
+                   accflip: complement("acc"), gateflip: complement("gate"),
+                   slides: crossmap("acc", "sld"), stick: crossmap("gate", "acc") };
+  for (let n = 2; n <= 8; n++) { OPKEYS["rep" + n] = split(n); OPKEYS["del" + n] = del(n); }
+  for (let n = 1; n <= 7; n++) OPKEYS["rot" + n] = rotate(n);
+  for (const n of [2, 4, 8]) { OPKEYS["gat" + n] = only("gate", rotate(n));
+                               OPKEYS["pit" + n] = only("deg", rotate(n)); }
+  for (const n of [2, 3, 4]) { OPKEYS["thin" + n] = drop(n); OPKEYS["dens" + n] = fill(n); }
+  for (const n of [-2, -1, 1, 2])
+    OPKEYS["tr" + (n < 0 ? "m" : "p") + Math.abs(n)] = transpose(n);
+  for (const n of [4, 8]) OPKEYS["ex" + n] = excerpt(0, n);
+  // a word entry is a list of ops, an op is a function or one of the keys
+  // above; anything else is silently nothing, which is what an unknown chip
+  // has always been worth here
+  const asOps = (w) => {
+    if (!w || !w.length) return [];
+    let out = null;
+    for (let i = 0; i < w.length; i++) {
+      const o = w[i];
+      if (typeof o === "function") { if (out) out.push(o); continue; }
+      if (!out) out = w.slice(0, i);
+      const f = OPKEYS[o];
+      if (f) out.push(f);
+    }
+    return out || w;
+  };
   const periodOps = (g, v, s) => {
     if (!g.period) return [];
     const w = typeof g.period === "function" ? g.period(v, s) : at(g.period, s);
-    return w || [];
+    return asOps(w);
   };
 
   // ---- the voice schedule --------------------------------------------------
@@ -2946,7 +2990,7 @@
                 PENT, MODE, ROMAN, romanOf, pitch, mp, fold, near,
                 QSTEPS, QFIX, chordsOf, chordAt, withCadence, harmonizeStage,
                 seatNote, tempoWarp, prng,
-                PARTS, partOf, periodOps, pipes, PIPES,
+                PARTS, partOf, periodOps, OPKEYS, pipes, PIPES,
                 ORN, ORNNAME, ORNPARTS, ornament,
                 DRUM_LANES, DMARK, DRUM_SWING,
                 harm, render, drums, bass };

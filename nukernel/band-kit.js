@@ -812,85 +812,85 @@
   const HRSLOW = ["two bars each", "one to a phrase"];
 
   const GENRES = {
-    house:   { w: "a house record", fam: "the floor", bpm: 120, chords: "plain", when: ["the eighties", "the nineties", "now"], where: ["Chicago", "New York", "London"], venue: ["a warehouse", "a club"], gtr: ["a clean electric", "a jazz box", "a muted one"], gjob: "skank", keys: ["a warm pad", "a polysynth", "a Rhodes", "an electric piano", "strings"], kjob: "pads", forms: ["vamp", "dance", "twelve", "dj"], fig: "offbeat", artic: "staccato", tone: { cut: 700,  q: 6,  rel: 0.16 },
+    house:   { w: "a house record", fam: "the floor", bpm: 120, chords: "plain", when: ["the eighties", "the nineties", "now"], where: ["Chicago", "New York", "London"], venue: ["a warehouse", "a club"], gtr: ["a clean electric", "a jazz box", "a muted one"], gjob: "skank", keys: ["a warm pad", "a polysynth", "a Rhodes", "an electric piano", "strings"], kjobs: ["pads", "arp", "skank", "swell"], forms: ["vamp", "dance", "twelve", "dj"], fig: "offbeat", artic: "staccato", tone: { cut: 700,  q: 6,  rel: 0.16 },
                grooves: ["house", "four on the floor", "disco", "uk garage"],
                machines: ["909", "808", "electronic kit"],
                styles: ["hold the root", "octaves", "driving eighths"],
                instr: ["a synth bass", "fingers on a P-bass"],
                chg: ["the four-chord one", "a minor vamp", "one chord, all night"] },
-    techno:  { w: "a techno record", fam: "the floor", bpm: 120, chords: "plain", when: ["the eighties", "the nineties", "now"], where: ["Detroit", "Berlin"], venue: ["a warehouse", "a club"], gtr: ["a muted one", "a clean electric", "a crunchy one"], gjob: "out", keys: ["a glassy pad", "a polysynth", "a warm pad", "strings"], kjob: "drone", forms: ["vamp", "dance", "twelve", "dj"], fig: "acid", artic: "staccato", tone: { cut: 600,  q: 8,  rel: 0.13 },
+    techno:  { w: "a techno record", fam: "the floor", bpm: 120, chords: "plain", when: ["the eighties", "the nineties", "now"], where: ["Detroit", "Berlin"], venue: ["a warehouse", "a club"], gtr: ["a muted one", "a clean electric", "a crunchy one"], gjob: "out", keys: ["a glassy pad", "a polysynth", "a warm pad", "strings"], kjobs: ["drone", "pads", "arp", "riff"], forms: ["vamp", "dance", "twelve", "dj"], fig: "acid", artic: "staccato", tone: { cut: 600,  q: 8,  rel: 0.13 },
                grooves: ["techno", "four on the floor", "gabber"],
                machines: ["909", "606", "electronic kit"],
                styles: ["hold the root", "driving eighths", "busy sixteenths"],
                instr: ["a synth bass", "with a pick"],
                chg: ["one chord, all night", "a pedal", "a minor vamp"], hrw: HRSLOW },
-    disco:   { w: "a disco record", fam: "the floor", bpm: 120, chords: "sevens", when: ["the seventies", "the eighties"], where: ["New York", "Philadelphia"], venue: ["a club", "a wedding"], gtr: ["a clean electric", "a jazz box", "a muted one"], gjob: "skank", keys: ["a Rhodes", "strings", "a clav", "an electric piano"], kjob: "comp", forms: ["dance", "versechorus", "vamp", "twelve"], fig: "discoct", artic: "staccato", tone: { cut: 950,  q: 3,  rel: 0.20 },
+    disco:   { w: "a disco record", fam: "the floor", bpm: 120, chords: "sevens", when: ["the seventies", "the eighties"], where: ["New York", "Philadelphia"], venue: ["a club", "a wedding"], gtr: ["a clean electric", "a jazz box", "a muted one"], gjob: "skank", keys: ["a Rhodes", "strings", "a clav", "an electric piano"], kjobs: ["comp", "skank", "arp", "push"], forms: ["dance", "versechorus", "vamp", "twelve"], fig: "discoct", artic: "staccato", tone: { cut: 950,  q: 3,  rel: 0.20 },
                grooves: ["disco", "four on the floor", "two step"],
                machines: ["acoustic kit", "room kit", "909"],
                styles: ["octaves", "driving eighths", "hold the root"],
                instr: ["fingers on a P-bass", "with a pick"],
                chg: ["the four-chord one", "two-five-one", "the doo-wop changes"] },
-    hiphop:  { w: "a boom-bap record", fam: "breaks", bpm: 96, chords: "sevens", when: ["the eighties", "the nineties", "the two-thousands"], where: ["New York", "Los Angeles"], venue: ["a block party", "a basement", "a club"], gtr: ["a clean electric", "a jazz box", "a muted one"], gjob: "out", keys: ["a Rhodes", "an electric piano", "a warm pad", "a grand piano"], kjob: "pads", forms: ["versechorus", "pop", "vamp"], artic: "normal", tone: { cut: 520,  q: 2,  rel: 0.45 },
+    hiphop:  { w: "a boom-bap record", fam: "breaks", bpm: 96, chords: "sevens", when: ["the eighties", "the nineties", "the two-thousands"], where: ["New York", "Los Angeles"], venue: ["a block party", "a basement", "a club"], gtr: ["a clean electric", "a jazz box", "a muted one"], gjob: "out", keys: ["a Rhodes", "an electric piano", "a warm pad", "a grand piano"], kjobs: ["pads", "comp", "riff", "held"], forms: ["versechorus", "pop", "vamp"], artic: "normal", tone: { cut: 520,  q: 2,  rel: 0.45 },
                grooves: ["boom bap", "breakbeat", "trap"],
                machines: ["808", "909", "acoustic kit"],
                styles: ["hold the root", "octaves"],
                instr: ["a synth bass", "fingers on a P-bass"],
                chg: ["a minor vamp", "one chord, all night", "two-five-one"], hrw: HRSLOW },
-    jungle:  { w: "a jungle record", fam: "breaks", bpm: 144, chords: "plain", when: ["the nineties", "the two-thousands"], where: ["London", "Bristol"], venue: ["a warehouse", "a club"], gtr: ["a clean electric", "a muted one", "a jazz box"], gjob: "out", keys: ["a glassy pad", "a warm pad", "a polysynth", "strings"], kjob: "pads", forms: ["dance", "twelve", "vamp", "dj"], artic: "normal", tone: { cut: 480,  q: 5,  rel: 0.70 },
+    jungle:  { w: "a jungle record", fam: "breaks", bpm: 144, chords: "plain", when: ["the nineties", "the two-thousands"], where: ["London", "Bristol"], venue: ["a warehouse", "a club"], gtr: ["a clean electric", "a muted one", "a jazz box"], gjob: "out", keys: ["a glassy pad", "a warm pad", "a polysynth", "strings"], kjobs: ["pads", "swell", "drone", "riff"], forms: ["dance", "twelve", "vamp", "dj"], artic: "normal", tone: { cut: 480,  q: 5,  rel: 0.70 },
                grooves: ["amen break", "jungle", "breakbeat"],
                machines: ["electronic kit", "909", "acoustic kit"],
                styles: ["hold the root", "octaves"],
                instr: ["a synth bass", "with a pick"],
                chg: ["a minor vamp", "one chord, all night"], hrw: HRSLOW },
-    rock:    { w: "a rock record", fam: "rock", bpm: 120, chords: "plain", when: ["the sixties", "the seventies", "the eighties", "the nineties"], where: ["London", "Los Angeles", "New York"], venue: ["a stadium", "a bar", "a festival"], gtr: ["an overdriven one", "a crunchy one", "a distorted one", "a clean electric", "a re-amped DI"], gjob: "power", keys: ["an organ", "a rock organ", "a grand piano", "an upright"], kjob: "comp", forms: ["versechorus", "pop", "full", "aaba"], artic: "normal", gtrTone: { cut: 1300 }, tone: { cut: 1100, q: 2,  rel: 0.24 },
+    rock:    { w: "a rock record", fam: "rock", bpm: 120, chords: "plain", when: ["the sixties", "the seventies", "the eighties", "the nineties"], where: ["London", "Los Angeles", "New York"], venue: ["a stadium", "a bar", "a festival"], gtr: ["an overdriven one", "a crunchy one", "a distorted one", "a clean electric", "a re-amped DI"], gjob: "power", keys: ["an organ", "a rock organ", "a grand piano", "an upright"], kjobs: ["comp", "pads", "held", "riff"], forms: ["versechorus", "pop", "full", "aaba"], artic: "normal", gtrTone: { cut: 1300 }, tone: { cut: 1100, q: 2,  rel: 0.24 },
                grooves: ["straight rock", "driving rock", "stomp", "half time"],
                machines: ["acoustic kit", "room kit", "big kit"],
                styles: ["hold the root", "driving eighths", "root and fifth"],
                instr: ["with a pick", "fingers on a P-bass"],
                chg: ["the doo-wop changes", "the four-chord one", "a twelve-bar blues"] },
-    punk:    { w: "a punk record", fam: "rock", bpm: 144, chords: "plain", when: ["the seventies", "the eighties"], where: ["London", "New York", "Manchester"], venue: ["a basement", "a bar", "a club"], gtr: ["a distorted one", "an overdriven one", "a crunchy one", "a re-amped DI"], gjob: "drive", keys: ["a rock organ", "an organ", "an upright"], kjob: "comp", forms: ["versechorus", "pop", "vamp"], fig: "pump", artic: "staccato", tone: { cut: 1400, q: 2,  rel: 0.18 },
+    punk:    { w: "a punk record", fam: "rock", bpm: 144, chords: "plain", when: ["the seventies", "the eighties"], where: ["London", "New York", "Manchester"], venue: ["a basement", "a bar", "a club"], gtr: ["a distorted one", "an overdriven one", "a crunchy one", "a re-amped DI"], gjob: "drive", keys: ["a rock organ", "an organ", "an upright"], kjobs: ["comp", "push", "riff"], forms: ["versechorus", "pop", "vamp"], fig: "pump", artic: "staccato", tone: { cut: 1400, q: 2,  rel: 0.18 },
                grooves: ["punk", "driving rock", "stomp"],
                machines: ["acoustic kit", "big kit"],
                styles: ["driving eighths", "hold the root"],
                instr: ["with a pick", "fingers on a P-bass"],
                chg: ["the four-chord one", "the doo-wop changes"] },
-    kraut:   { w: "a krautrock record", fam: "rock", bpm: 120, chords: "plain", when: ["the seventies", "the eighties"], where: ["Berlin", "Düsseldorf"], venue: ["a studio", "a festival"], gtr: ["a clean electric", "a crunchy one", "a muted one"], gjob: "chug", keys: ["a polysynth", "a glassy pad", "a warm pad", "an organ"], kjob: "arp", forms: ["vamp", "dance", "full"], fig: "pump", artic: "normal", tone: { cut: 850,  q: 5,  rel: 0.30 },
+    kraut:   { w: "a krautrock record", fam: "rock", bpm: 120, chords: "plain", when: ["the seventies", "the eighties"], where: ["Berlin", "Düsseldorf"], venue: ["a studio", "a festival"], gtr: ["a clean electric", "a crunchy one", "a muted one"], gjob: "chug", keys: ["a polysynth", "a glassy pad", "a warm pad", "an organ"], kjobs: ["arp", "drone", "pads", "riff"], forms: ["vamp", "dance", "full"], fig: "pump", artic: "normal", tone: { cut: 850,  q: 5,  rel: 0.30 },
                grooves: ["motorik", "bare bones", "half time"],
                machines: ["electronic kit", "room kit", "606"],
                styles: ["hold the root", "driving eighths"],
                instr: ["a synth bass", "with a pick"],
                chg: ["one chord, all night", "a pedal"], hrw: HRSLOW },
-    jazz:    { w: "a jazz date", fam: "jazz", bpm: 144, chords: "sevens", when: ["the fifties", "the sixties", "now"], where: ["New York", "New Orleans", "Paris"], venue: ["a club", "a bar", "a studio"], gtr: ["a jazz box", "a nylon-string", "a clean electric"], gjob: "strum", keys: ["a grand piano", "a Rhodes", "an upright", "a church organ"], kjob: "comp", forms: ["head", "aaba", "blues"], swing: "swing", artic: "legato", gtrTone: { cut: 1000 }, tone: { cut: 1200, q: 1,  rel: 0.35 },
+    jazz:    { w: "a jazz date", fam: "jazz", bpm: 144, chords: "sevens", when: ["the fifties", "the sixties", "now"], where: ["New York", "New Orleans", "Paris"], venue: ["a club", "a bar", "a studio"], gtr: ["a jazz box", "a nylon-string", "a clean electric"], gjob: "strum", keys: ["a grand piano", "a Rhodes", "an upright", "a church organ"], kjobs: ["comp", "charleston", "pushes", "held", "counter"], forms: ["head", "aaba", "blues"], swing: "swing", artic: "legato", gtrTone: { cut: 1000 }, tone: { cut: 1200, q: 1,  rel: 0.35 },
                grooves: ["jazz ride", "bebop", "brush swing"],
                machines: ["jazz kit", "brushes", "acoustic kit"],
                styles: ["walk it", "hold the root"],
                instr: ["fingers on a P-bass", "with a pick"],
                chg: ["two-five-one", "a twelve-bar blues", "the doo-wop changes"] },
-    blues:   { w: "a blues", fam: "rock", bpm: 96, chords: "all7", when: ["the fifties", "the sixties"], where: ["Chicago", "Memphis", "New Orleans"], venue: ["a bar", "a club", "a porch", "a parlor"], gtr: ["a crunchy one", "a clean electric", "a steel-string acoustic"], gjob: "riff", keys: ["an upright", "a rock organ", "a grand piano", "a Rhodes"], kjob: "comp", forms: ["blues", "versechorus", "aaba"], swing: "shuffle", artic: "normal", gtrTone: { cut: 1300 }, tone: { cut: 1000, q: 1,  rel: 0.30 },
+    blues:   { w: "a blues", fam: "rock", bpm: 96, chords: "all7", when: ["the fifties", "the sixties"], where: ["Chicago", "Memphis", "New Orleans"], venue: ["a bar", "a club", "a porch", "a parlor"], gtr: ["a crunchy one", "a clean electric", "a steel-string acoustic"], gjob: "riff", keys: ["an upright", "a rock organ", "a grand piano", "a Rhodes"], kjobs: ["comp", "riff", "held", "push"], forms: ["blues", "versechorus", "aaba"], swing: "shuffle", artic: "normal", gtrTone: { cut: 1300 }, tone: { cut: 1000, q: 1,  rel: 0.30 },
                grooves: ["shuffle", "train beat", "straight rock"],
                machines: ["acoustic kit", "room kit", "brushes"],
                styles: ["walk it", "root and fifth", "hold the root"],
                instr: ["fingers on a P-bass", "with a pick"],
                chg: ["a twelve-bar blues", "the doo-wop changes"], hrw: HRSLOW },
-    funk:    { w: "a funk record", fam: "funk", bpm: 96, chords: "nines", when: ["the seventies", "the eighties"], where: ["New Orleans", "Detroit", "Los Angeles"], venue: ["a club", "a bar", "a festival"], gtr: ["a clean electric", "a muted one", "a jazz box"], gjob: "skank", keys: ["a clav", "a Rhodes", "an organ", "an electric piano"], kjob: "skank", forms: ["vamp", "versechorus", "dance"], fig: "funk16", artic: "staccato", tone: { cut: 900,  q: 7,  rel: 0.14 },
+    funk:    { w: "a funk record", fam: "funk", bpm: 96, chords: "nines", when: ["the seventies", "the eighties"], where: ["New Orleans", "Detroit", "Los Angeles"], venue: ["a club", "a bar", "a festival"], gtr: ["a clean electric", "a muted one", "a jazz box"], gjob: "skank", keys: ["a clav", "a Rhodes", "an organ", "an electric piano"], kjobs: ["skank", "comp", "riff", "push"], forms: ["vamp", "versechorus", "dance"], fig: "funk16", artic: "staccato", tone: { cut: 900,  q: 7,  rel: 0.14 },
                grooves: ["funk", "linear funk", "new orleans", "motown"],
                machines: ["acoustic kit", "room kit", "808"],
                styles: ["busy sixteenths", "octaves", "hold the root"],
                instr: ["fingers on a P-bass", "with a pick"],
                chg: ["one chord, all night", "a minor vamp"], hrw: HRSLOW },
-    reggae:  { w: "a reggae record", fam: "latin", bpm: 96, chords: "plain", when: ["the seventies", "the eighties"], where: ["Kingston", "London"], venue: ["a dancehall", "a festival", "a yard"], gtr: ["a clean electric", "a muted one", "a jazz box"], gjob: "skank", keys: ["an organ", "a Rhodes", "a rock organ", "a grand piano"], kjob: "skank", forms: ["vamp", "dub", "versechorus"], fig: "bubble", artic: "legato", gtrTone: { cut: 1600 }, tone: { cut: 420,  q: 2,  rel: 0.55 },
+    reggae:  { w: "a reggae record", fam: "latin", bpm: 96, chords: "plain", when: ["the seventies", "the eighties"], where: ["Kingston", "London"], venue: ["a dancehall", "a festival", "a yard"], gtr: ["a clean electric", "a muted one", "a jazz box"], gjob: "skank", keys: ["an organ", "a Rhodes", "a rock organ", "a grand piano"], kjobs: ["skank", "comp", "pads"], forms: ["vamp", "dub", "versechorus"], fig: "bubble", artic: "legato", gtrTone: { cut: 1600 }, tone: { cut: 420,  q: 2,  rel: 0.55 },
                grooves: ["one drop", "steppers", "rockers"],
                machines: ["acoustic kit", "room kit", "808"],
                styles: ["hold the root", "octaves"],
                instr: ["fingers on a P-bass", "a synth bass"],
                chg: ["a minor vamp", "one chord, all night"], hrw: HRSLOW },
-    bossa:   { w: "a bossa", fam: "latin", bpm: 120, chords: "sevens", when: ["the sixties", "the seventies"], where: ["Rio", "New York"], venue: ["a bar", "a studio", "a club"], gtr: ["a nylon-string", "a jazz box", "a steel-string acoustic"], gjob: "strum", keys: ["a grand piano", "a Rhodes", "a felt piano", "an upright"], kjob: "comp", forms: ["aaba", "versechorus", "head"], artic: "normal", tone: { cut: 1000, q: 1,  rel: 0.28 },
+    bossa:   { w: "a bossa", fam: "latin", bpm: 120, chords: "sevens", when: ["the sixties", "the seventies"], where: ["Rio", "New York"], venue: ["a bar", "a studio", "a club"], gtr: ["a nylon-string", "a jazz box", "a steel-string acoustic"], gjob: "strum", keys: ["a grand piano", "a Rhodes", "a felt piano", "an upright"], kjobs: ["comp", "charleston", "pushes", "arp"], forms: ["aaba", "versechorus", "head"], artic: "normal", tone: { cut: 1000, q: 1,  rel: 0.28 },
                grooves: ["bossa nova", "samba", "rumba", "cha cha"],
                machines: ["jazz kit", "brushes", "acoustic kit"],
                styles: ["hold the root", "octaves"],
                instr: ["fingers on a P-bass", "with a pick"],
                chg: ["two-five-one", "the four-chord one"] },
-    slow:    { w: "something slow and open", fam: "rock", bpm: 72, chords: "sus", when: ["the nineties", "the two-thousands", "now"], where: ["Berlin", "Reykjavík", "London"], venue: ["a bedroom", "a studio", "a church"], gtr: ["a clean electric", "a steel-string acoustic", "a nylon-string", "harmonics"], gjob: "ring", keys: ["a warm pad", "strings", "a felt piano", "a glassy pad"], kjob: "swell", forms: ["vamp", "full", "dub"], fig: "stab", space: "four", artic: "legato", tone: { cut: 520,  q: 3,  rel: 1.20 },
+    slow:    { w: "something slow and open", fam: "rock", bpm: 72, chords: "sus", when: ["the nineties", "the two-thousands", "now"], where: ["Berlin", "Reykjavík", "London"], venue: ["a bedroom", "a studio", "a church"], gtr: ["a clean electric", "a steel-string acoustic", "a nylon-string", "harmonics"], gjob: "ring", keys: ["a warm pad", "strings", "a felt piano", "a glassy pad"], kjobs: ["swell", "pads", "drone", "arp"], forms: ["vamp", "full", "dub"], fig: "stab", space: "four", artic: "legato", tone: { cut: 520,  q: 3,  rel: 1.20 },
                grooves: ["bare bones", "half time"],
                machines: ["electronic kit", "room kit", "808"],
                styles: ["hold the root", "octaves"],
@@ -916,7 +916,7 @@
                gtr: ["a steel-string acoustic", "a nylon-string", "a clean electric"],
                gjob: "strum",
                keys: ["an upright", "strings", "a felt piano", "a grand piano"],
-               kjob: "comp",
+               kjobs: ["comp", "arp", "counter", "held"],
                forms: ["aaba", "full", "versechorus", "strophic"], artic: "normal",
                tone: { cut: 900, q: 1, rel: 0.5 },
                grooves: ["nobody on the kit", "brush swing"],
@@ -943,7 +943,7 @@
                 gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "out",
                 // the harp is the psalmist's own instrument — the one
                 // keyboard-chair word here older than the chant itself
-                keys: ["voices", "a church organ", "a harp"], kjob: "drone",
+                keys: ["voices", "a church organ", "a harp"], kjobs: ["drone"],
                 forms: ["vamp", "strophic"], artic: "legato",
                 tone: { cut: 2000, q: 1, rel: 2.2 },
                 grooves: ["nobody on the kit", "a processional"],
@@ -955,7 +955,7 @@
                 when: ["the twelve-hundreds"], where: ["Paris", "Reims"],
                 venue: ["a cathedral"],
                 gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "out",
-                keys: ["voices", "a church organ", "a harp"], kjob: "drone",
+                keys: ["voices", "a church organ", "a harp"], kjobs: ["drone", "held"],
                 forms: ["vamp", "strophic"], artic: "legato",
                 tone: { cut: 2000, q: 1, rel: 2.8 },
                 grooves: ["nobody on the kit", "a processional"],
@@ -971,7 +971,7 @@
                 gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "strum",
                 // the keys of 1210 are an organetto or nothing — the
                 // harpsichord waits three centuries for the pavane
-                keys: ["voices", "a church organ", "a harp"], kjob: "pads",
+                keys: ["voices", "a church organ", "a harp"], kjobs: ["pads", "drone", "arp"],
                 forms: ["strophic", "aaba", "versechorus"], artic: "legato",
                 tone: { cut: 2400, q: 1, rel: 1.1 },
                 grooves: ["nobody on the kit", "the tabor"],
@@ -983,7 +983,7 @@
                 when: ["the thirteen-hundreds"], where: ["Paris", "Provence"],
                 venue: ["a village green", "a court"],
                 gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "ring",
-                keys: ["a church organ", "voices", "a harp"], kjob: "drone",
+                keys: ["a church organ", "voices", "a harp"], kjobs: ["drone", "riff", "arp"],
                 forms: ["vamp", "dacapo"], artic: "normal",
                 tone: { cut: 2600, q: 1, rel: 0.5 },
                 grooves: ["the tabor", "a processional"],
@@ -997,7 +997,7 @@
                 when: ["the fifteen-hundreds", "the sixteen-hundreds"], where: ["Antwerp", "London"],
                 venue: ["a court", "a chapel"],
                 gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "strum",
-                keys: ["a harpsichord", "voices", "a church organ"], kjob: "comp",
+                keys: ["a harpsichord", "voices", "a church organ"], kjobs: ["comp", "held", "arp"],
                 forms: ["dacapo", "vamp", "strophic"], artic: "normal",
                 tone: { cut: 2400, q: 1, rel: 0.8 },
                 grooves: ["a processional", "the tabor"],
@@ -1015,7 +1015,7 @@
                 venue: ["a court", "a salon", "an opera house"],
                 gtr: ["a nylon-string", "a jazz box"], gjob: "out",
                 // the arpa doppia is real continuo practice — Caccini's own pit
-                keys: ["a harpsichord", "a church organ", "a harp"], kjob: "comp",
+                keys: ["a harpsichord", "a church organ", "a harp"], kjobs: ["comp", "arp", "held"],
                 forms: ["strophic", "dacapo", "aaba"], artic: "legato",
                 tone: { cut: 2200, q: 1, rel: 1.4 },
                 grooves: ["nobody on the kit", "the tabor"],
@@ -1030,7 +1030,7 @@
                 where: ["Venice", "Leipzig"],
                 venue: ["a court", "a concert hall", "a church"],
                 gtr: ["a nylon-string", "a jazz box"], gjob: "out",
-                keys: ["a harpsichord", "a church organ", "strings"], kjob: "comp",
+                keys: ["a harpsichord", "a church organ", "strings"], kjobs: ["comp", "arp", "counter", "held"],
                 forms: ["head", "dacapo", "full"], artic: "normal",
                 tone: { cut: 2600, q: 1, rel: 0.6 },
                 grooves: ["nobody on the kit", "a processional"],
@@ -1043,7 +1043,7 @@
                 venue: ["a salon", "a court", "a concert hall"],
                 gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "out",
                 // the Alberti hand IS the arpeggios job
-                keys: ["a grand piano", "a harpsichord", "strings"], kjob: "arp",
+                keys: ["a grand piano", "a harpsichord", "strings"], kjobs: ["arp", "comp", "counter", "held"],
                 forms: ["aaba", "dacapo", "full", "versechorus"], artic: "normal",
                 tone: { cut: 3000, q: 1, rel: 0.7 },
                 grooves: ["nobody on the kit", "a processional"],
@@ -1055,7 +1055,7 @@
                 when: ["the eighteen-hundreds"], where: ["Paris", "Vienna"],
                 venue: ["a salon", "a parlor"],
                 gtr: ["a nylon-string", "a jazz box"], gjob: "out",
-                keys: ["a grand piano", "a felt piano", "an upright"], kjob: "arp",
+                keys: ["a grand piano", "a felt piano", "an upright"], kjobs: ["arp", "pads", "counter", "swell"],
                 forms: ["dacapo", "aaba"], artic: "legato",
                 tone: { cut: 2600, q: 1, rel: 2.0 },
                 grooves: ["nobody on the kit", "a processional"],
@@ -1067,7 +1067,7 @@
                 when: ["the eighteen-hundreds"], where: ["Vienna", "Paris"],
                 venue: ["a concert hall", "an opera house"],
                 gtr: ["a nylon-string", "a jazz box"], gjob: "out",
-                keys: ["strings", "a church organ", "a warm pad"], kjob: "swell",
+                keys: ["strings", "a church organ", "a warm pad"], kjobs: ["swell", "pads", "arp", "counter"],
                 forms: ["full", "dacapo", "aaba"], artic: "legato",
                 tone: { cut: 2000, q: 1, rel: 2.4 },
                 // the timpani tread first: an orchestra HAS a drum
@@ -1095,7 +1095,7 @@
                 when: ["the eighteen-hundreds"], where: ["Paris", "Vienna"],
                 venue: ["a salon", "an opera house"],
                 gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "ring",
-                keys: ["a harp", "a grand piano", "a felt piano"], kjob: "arp",
+                keys: ["a harp", "a grand piano", "a felt piano"], kjobs: ["arp", "comp", "counter", "held"],
                 forms: ["dacapo", "strophic", "versechorus"], artic: "legato",
                 tone: { cut: 2400, q: 1, rel: 1.6 },
                 // ...and the six-count table's own: the drummer sits out (a
@@ -1110,7 +1110,7 @@
                 when: ["the eighteen-hundreds"], where: ["New York", "London"],
                 venue: ["a parlor", "a salon"],
                 gtr: ["a steel-string acoustic", "a nylon-string"], gjob: "strum",
-                keys: ["an upright", "a grand piano", "a felt piano"], kjob: "comp",
+                keys: ["an upright", "a grand piano", "a felt piano"], kjobs: ["comp", "charleston", "arp", "push"],
                 forms: ["versechorus", "strophic", "aaba"], artic: "normal",
                 tone: { cut: 2600, q: 1, rel: 0.9 },
                 grooves: ["nobody on the kit", "the tabor"],
@@ -1155,7 +1155,7 @@
                 when: ["the eighteen-hundreds", "now"], where: ["Vienna", "Paris"],
                 venue: ["a ballroom", "a salon"],
                 gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "out",
-                keys: ["a grand piano", "strings", "a harp"], kjob: "comp",
+                keys: ["a grand piano", "strings", "a harp"], kjobs: ["comp", "arp", "held", "counter"],
                 forms: ["dacapo", "aaba", "strophic", "versechorus"], artic: "normal",
                 tone: { cut: 2600, q: 1, rel: 0.9 },
                 grooves: ["a waltz", "a viennese lift", "boom chick chick"],
@@ -1176,7 +1176,7 @@
                 gtr: ["a nylon-string", "a steel-string acoustic"], gjob: "out",
                 // the organ holds it and the congregation is the choir; each
                 // chord rings to the change, which is what `held` means
-                keys: ["a church organ", "voices", "a grand piano"], kjob: "held",
+                keys: ["a church organ", "voices", "a grand piano"], kjobs: ["held", "comp", "pads"],
                 forms: ["strophic", "versechorus", "aaba"], artic: "legato",
                 tone: { cut: 2000, q: 1, rel: 1.4 },
                 // nobody is on a kit in a church; the tread is the other
@@ -1195,7 +1195,7 @@
                 venue: ["a bar", "a piano bar"],
                 gtr: ["a steel-string acoustic", "a clean electric", "a nylon-string"],
                 gjob: "strum",
-                keys: ["a grand piano", "an upright", "a Rhodes", "strings"], kjob: "comp",
+                keys: ["a grand piano", "an upright", "a Rhodes", "strings"], kjobs: ["comp", "charleston", "arp", "pushes", "counter"],
                 forms: ["versechorus", "pop", "aaba", "strophic"], artic: "normal",
                 tone: { cut: 1000, q: 1, rel: 0.35 },
                 grooves: ["a rock waltz", "nobody on the kit"],
@@ -1454,7 +1454,7 @@
      once (`form.distinctLens` "every section is the same length" and
      `form.squareness`) and most of the third (`harm.rate`, since a
      four-bar section is the ceiling that forces a four-chord cycle to a
-     chord a bar). The lengths here are LENS keys — the same four words the
+     chord a bar). The lengths here are LENS keys — the same words the
      question offers.
 
      WHAT IS DELIBERATELY NOT SEEDED HERE: the ARC ("where does it go?").
@@ -1936,11 +1936,21 @@
     build: "a build", drop: "a drop", break: "a breakdown", head: "a head",
     solo: "a solo", tag: "a tag", outro: "an outro",
   };
-  // the ceiling: ui/band.js sweeps the section genre table to 24 and the
-  // phrase bank runs four deep per section, so a record cannot be allowed
-  // to outgrow either. Sixteen boxes is longer than any record this box has
-  // ever made and half the sweep.
-  const MAXSECS = 16;
+  /* the ceiling. It used to be sixteen, with the note "longer than any
+     record this box has ever made and half the [page's] sweep" — and then
+     somebody asked for hours-long solo handoffs and sixteen boxes became the
+     first wall: MEASURED, the longest record reachable was 16 sections of at
+     most 16 bars, and with a twelve-bar solo the actual maximum was 188 bars
+     — 6.3 minutes at 120 in four. The page's sweep was the only real
+     constraint and it now reads THIS NUMBER (ui/band.js push) rather than
+     carrying its own copy, so the ceiling is one fact in one place.
+
+     TWENTY-FOUR, with the lengths widened beside it (LENS below, and a solo
+     that can be asked how long it is): 24 × 32 = 768 bars, 25 minutes at 120
+     in four and three quarters of an hour at a ballad tempo. What it is NOT
+     is hours — that needs sections MADE WHILE IT PLAYS, which is an
+     architectural piece above secsOf and is not in this round. */
+  const MAXSECS = 24;
   const cleanSecs = (own) => (Array.isArray(own) && own.length >= 1 &&
     own.length <= MAXSECS && own.every((r) => SECROLES[r])) ? own : null;
   const secsOf = (m) => {
@@ -2023,7 +2033,16 @@
                  // tiles into whole (1, 2 and 4 bars all divide it), and it
                  // is APPENDED so nothing that answered "four bars" moves.
                  twelve: { w: "twelve bars", v: 12 },
-                 long: { w: "sixteen bars", v: 16 } };
+                 long: { w: "sixteen bars", v: 16 },
+                 // ...AND TWO LONGER ONES, APPENDED (2026-08-23), so nothing
+                 // that ever answered "four bars" moves. Sixteen was the
+                 // ceiling on every section in the box, which is why the
+                 // longest record it could make was 6.3 minutes: a solo that
+                 // takes two choruses of a sixteen-bar tune is thirty-two
+                 // bars, and that is not an exotic length, it is what a solo
+                 // IS on most of the records this box is imitating.
+                 double: { w: "twenty-four bars", v: 24 },
+                 huge:   { w: "thirty-two bars", v: 32 } };
   const lenOf = (m, role) => {
     // ...by its OWN role, not the one whose CHANGES it borrows: an intro
     // takes the verse's chords and is not eight bars long because the verse
@@ -2256,7 +2275,19 @@
   // ...and a role whose changes the hand AUTHORED has no length question:
   // the list's length IS the section's length (the precedence law), and a
   // question whose answers cannot change the record is not asked
-  const lenDecisions = (m) => (hasShape(m) ? rolesIn(m) : [])
+  /* ...AND A SOLO IS ASKED HOW LONG IT IS. `rolesIn` is the list of roles
+     whose CHANGES get called, and a solo's changes are the head's — that is
+     what a solo is — so it was never in it and could never be asked its
+     length either. But "how many choruses?" is the most ordinary question
+     on a bandstand, and until it could be answered every solo in every
+     record was exactly the twelve bars ROLEBARS gives it. Length only: a
+     solo still borrows its changes, and it is asked only where the record
+     actually has one. */
+  const lenRoles = (m) => {
+    const rs = rolesIn(m);
+    return secsOf(m).includes("solo") ? [...rs, "solo"] : rs;
+  };
+  const lenDecisions = (m) => (hasShape(m) ? lenRoles(m) : [])
     .filter((r) => !chgxOf(m, r)).map((r) => ({
     id: "len:" + r, seat: "arranger", ask: "how long is the " + r + "?",
     opts: Object.entries(LENS).map(([k, v]) => ({
@@ -2859,6 +2890,46 @@
       if (out.length) { const keep = opts.filter((o) => !out.includes(o.w));
         if (keep.length) opts = keep; }
     }
+    /* A TAKE DOES NOT HAND THE CHANT THE CHARLESTON (2026-08-23).
+
+       The same law as the drummer's below, said for the other pair of
+       hands, and it had the same hole. `keys/job` is a MATERIAL row, so a
+       take re-rolls it — and NOTHING narrowed it: the bassist's line is
+       drawn from the record's own `styles` (`narrow`, WORDSOF), the
+       drummer's groove from its `grooves`, the kit from its `machines`,
+       and the keyboard player had no per-record list at all. The roll is
+       seeded from (take, seat, question) and the option count was
+       therefore the same thirteen on every record, so it landed on the
+       SAME FOUR WORDS IN THE SAME ORDER for all thirty: measured, takes
+       2..6 were "arpeggios · the Charleston · pads · a counter-line · on
+       the offbeats" on the house record, on the jazz date, on the hymn and
+       on the Gregorian chant alike — one distinct sequence across thirty
+       records, and the Charleston is a 1920s dance rhythm arriving in a
+       ninth-century monastery because the dice said so.
+
+       So a record declares `kjobs` — the keyboard jobs that are idiomatic
+       FOR IT — and the roll draws from that and nothing else. The head of
+       the list is what `called()` casts, so take one is byte-identical
+       everywhere; a one-entry list (chant: a held drone, and that is what a
+       chant's keyboard is) makes the roll a no-op and the take varies
+       somewhere else, exactly as a kitless record's groove roll does.
+
+       HERE AND NOT IN `narrow`, deliberately, and it is the difference
+       between a MECHANISM and a HAND. `narrow` drops any filter that would
+       leave fewer than two answers — so the chant's single word could not
+       be expressed there at all — and, more importantly, narrowing would
+       take the Charleston off the table for a PERSON who wants it. A hand
+       outranks a record; a take does not. (The dice is a hand in a hurry —
+       "the ordinary path taken quickly" — and is left alone for the same
+       reason.) */
+    if (seat === "keys" && d.id === "job") {
+      const want = (genreOf(m) || {}).kjobs || [];
+      if (want.length) {
+        const words = want.map((id) => (Ky.JOBS[id] || {}).w).filter(Boolean);
+        const keep = opts.filter((o) => words.includes(o.w));
+        if (keep.length) opts = keep;
+      }
+    }
     /* A TAKE DOES NOT SEAT A DRUMMER THE RECORD DOES NOT HAVE (Paul,
        2026-08-23: "sometimes you add drums to the 1800s").
 
@@ -3099,7 +3170,16 @@
       const want = Object.entries(Ky.INSTRUMENTS).find(([, w]) => w === (gk.keys || [])[0]);
       if (want) kk = Ky.answer(kk, "instr", want[1]);
     }
-    if (gk.kjob && !(kk.answers || {}).job) kk = Ky.say(kk, "job:" + gk.kjob);
+    // ...and the KEYBOARD JOB IS A LIST NOW (`kjobs`, 2026-08-23), whose HEAD
+    // is the cast — the same shape `grooves`, `styles` and `machines` have
+    // always had, and for the same reason: what a record casts and what a
+    // record ALLOWS are two different facts, and only one of them was
+    // written down. The cast is unchanged for all thirty records (every
+    // list's head is the word that used to be the singular `kjob`), so a
+    // called record sounds exactly as it did; the rest of the list is what
+    // a take may reach for (rollWord, above).
+    if ((gk.kjobs || []).length && !(kk.answers || {}).job)
+      kk = Ky.say(kk, "job:" + gk.kjobs[0]);
     // ...and the guitar, the same way: a house record has a guitar chopping
     // the offbeats if it has one at all, and techno has none
     let gg2 = m.guitar;
@@ -4418,7 +4498,7 @@
         km = Ky.say(km, "job:comp");
       if (taker.chair === "keys" && inRoom.guitar && !(per.guitar && per.guitar !== "same"))
         gm = Gt.say(gm, "job:strum");
-      let melody = null;
+      let melody = null, soloPeriod = null;
       // WHICH THEME, AND HOW IT COMES BACK (PLAN.md THE THEME COMPOSER §2,
       // §5). The section node says which theme it carries — the tune, or
       // its answer when the arranger wrote one — and how the return is
@@ -4433,6 +4513,41 @@
         // how many of THIS record's bars the theme spans
         const NB = (g.meter && g.meter.steps) || 16;
         const per16 = ph.deg.length / NB;
+        /* ---- A SOLO DEVELOPS THE TUNE, AND THE NEXT SOLOIST PICKS IT UP --
+           The one write to the kernel's bar schedule (`g.period`, its sixth
+           type) anywhere on the band page, and the only mechanism in the box
+           that can change which notes exist in the MIDDLE of a section: a
+           section-level word — a part, a return, a pipe, a mix — is one
+           answer for the whole section, so the most it can make is a
+           different loop.
+
+           THE INDEX IS THE RECORD'S, NOT THE SECTION'S. Rung 0 is the first
+           bar of the first solo, and the count carries across the handoff,
+           one rung of overlap per change of player: soloist k's first
+           statement IS the statement soloist k-1 ended on, and then it goes
+           on. That is the whole difference between a band and a playlist —
+           what the guitar plays in bar one of its chorus is a development of
+           what the piano was doing in bar twelve of its own, rather than a
+           second performance of the same eight ideas. Measured before it
+           existed: handing the tune round three players over 188 bars gave a
+           self-similarity of 0.98 at lag 12 and again at 24 — a perfect
+           twelve-bar loop with three people taking turns playing it.
+
+           The rung count is in THEME STATEMENTS, not bars, because that is
+           what the kernel's `s` counts: a melody layer renders the phrase's
+           own length as its bar (ui/band.js says so), so a two-bar tune
+           advances the ladder every two bars, which is the right rate for it
+           anyway — a soloist develops a phrase, not a barline. */
+        if (role === "solo") {
+          // this record's solo length, by the same arithmetic `bars` uses
+          // below — every solo shares one role and therefore one length, so
+          // the rung count per solo is exact rather than assumed
+          const L = (c.authored ? null : lenOf(m, role) || ROLEBARS[role]) || g.bars;
+          const reps = Math.max(1, Math.ceil(L / (per16 || 1)));
+          const nth = fsecs.slice(0, i).filter((r) => r === "solo").length;
+          const base = nth * Math.max(1, reps - 1);
+          soloPeriod = (v, sr) => Id.soloWord(base + sr);
+        }
         const lend = taker.chair === "guitar" ? Gt.toGenre(gm)
           : taker.chair === "voice" ? Vo.toGenre(m.voice) : Ky.toGenre(km);
         melody = { phrase: ph, genre: {
@@ -4462,6 +4577,10 @@
           // length under any articulation.
           ...((theme.sent || "plain") !== "plain" || ph.hold
               ? { artic: "legato" } : {}),
+          // ...and the ladder, on solos only (above). Absent everywhere
+          // else, so every section that states a theme renders byte for byte
+          // as it always has.
+          ...(soloPeriod ? { period: soloPeriod } : {}),
           nobass: true, kit: {}, kits: null, bassFig: undefined,
           bars: Math.max(1, Math.ceil(g.bars / per16)),
           // the tune's harmony layer hears the authored (or leaned) chord
@@ -4575,6 +4694,14 @@
     drop:   { drums: "busier", bass: "same", move: "open", mix: "fwd", idea: "keys" },
     break:  { drums: "nokit", bass: "pedal", mix: "wet", move: "close" },
     head:   {},
+    // A SOLO IS SOMEBODY PLAYING (2026-08-23). This row named the rhythm
+    // section and nobody else, so the box's solo was a ride cymbal and a
+    // walking bass with the tune switched off: measured over the longest
+    // record it could make, 8 of 188 bars carried the tune and three of
+    // them were distinct. Who takes it is not in this table because it is
+    // not the same answer twice — the point of a solo section is that the
+    // NEXT one is somebody else — so it is dealt in `defaultsFor`, by which
+    // solo this is.
     solo:   { drums: "ride", bass: "walk" },
     // a TAG is the hook's head, played out the door: thin, back, and the
     // tune fragmented — the one role that carries a default `back`
@@ -4598,6 +4725,25 @@
   // the roles a record LIFTS INTO — where the tune arrives and the band
   // opens up. Read by the verse's hold-back below, and by nothing else.
   const LIFTROLE = { chorus: 1, drop: 1 };
+  /* WHO COULD TAKE A SOLO ON THIS RECORD, in the order the horn line would
+     go: the guitar first (the head's own default taker is the keys, and a
+     band does not open the solos with the player who just played the tune),
+     then the keys, then the singer. A chair that is out is not a soloist —
+     the same `silent` test toSong's `inRoom` uses — and the singer is asked
+     of the SONG's voice model, exactly as the chorus's hand-over is.
+     Memoised per model: the answer is a fact about the band and not about
+     the section, and `defaultsFor` is called once per section per rail
+     draw. */
+  const TAKERM = typeof WeakMap !== "undefined" ? new WeakMap() : null;
+  const soloTakers = (m) => {
+    if (TAKERM && TAKERM.has(m)) return TAKERM.get(m);
+    const out = [];
+    if (!Gt.toGenre(m.guitar).silent) out.push("guitar");
+    if (!Ky.toGenre(m.keys).silent) out.push("keys");
+    if (!Vo.toGenre(m.voice).silent) out.push("voice");
+    if (TAKERM) TAKERM.set(m, out);
+    return out;
+  };
   const homeRole = (fsecs) => (fsecs.includes("head") ? "head"
     : fsecs.includes("verse") ? "verse"
     : (fsecs.find((r) => !DOORROLE[r]) || fsecs[0]));
@@ -4670,6 +4816,29 @@
        in this table. */
     if (d.idea === "keys" && LIFTROLE[role] && !Vo.toGenre(m.voice).silent)
       d.idea = "voice";
+    /* ...AND THE SOLOS GO ROUND THE ROOM ---------------------------------
+       The one place in a record where "who takes it" has a different answer
+       every time it is asked, which is exactly why it cannot be a row in
+       ROLE. Each solo hands the tune to the next player who is actually in
+       the band, dealt by WHICH SOLO this is, so a record with three solos
+       is three people and not one person three times.
+
+       ONLY WHO IS IN THE ROOM (`soloTakers`, memoised per model). The
+       record's own law: no mechanism may put an instrument on a record that
+       does not have one — a laid-out guitar chair is not a soloist, and an
+       instrumental record has no singer to hand anything to. toSong's own
+       fallback would re-seat an impossible taker, but it re-seats onto the
+       chair NEXT DOOR, and two consecutive solos on the same pair of hands
+       is the handoff not happening. So the rotation is over the players who
+       exist, and a one-player room simply plays every solo.
+
+       Deliberately BEFORE the return ladder below, and deliberately not
+       subject to it: see the `role !== "solo"` there. */
+    if (role === "solo" && !d.idea) {
+      const who = soloTakers(m);
+      if (who.length)
+        d.idea = who[fsecs.slice(0, i).filter((r) => r === "solo").length % who.length];
+    }
     if (LIFTROLE[role] && !d.pipe) d.pipe = "thirds";
     /* ...AND A RETURN IS NOT A REPEAT (PLAN.md THE THEME COMPOSER §5).
        The transform words existed and nothing ever said one: every time the
@@ -4685,7 +4854,14 @@
        because that is the one every idiom in the catalog owns. The first
        statement is never touched (a theme is stated whole before it is
        anything else) and a section that says its own `back` wins. */
-    if (d.idea && d.idea !== "no" && !d.back) {
+    /* ...AND A SOLO'S RETURN IS NOT A WORD, IT IS THE LADDER. Every other
+       theme-carrying section states the tune once and a single word says
+       how — that is what a return IS. A solo does not state the tune, it
+       WORKS on it, bar by bar, and it picks up where the last soloist put
+       it down (toSong's `period`, ideas-kit SOLO). Handing it a section-
+       level `back` on top would restate the tune at the top of every solo,
+       which is the loop this whole round exists to end. */
+    if (d.idea && d.idea !== "no" && !d.back && role !== "solo") {
       const nth = fsecs.slice(0, i).filter((r) => r === role).length;
       if (nth === 1) d.back = "up";
       else if (nth >= 2) d.back = nth % 2 ? "aug" : "up";
@@ -4726,8 +4902,14 @@
   const themeAt = (m, j) => (((((m.per || {})[j] || {}).theme === "b") &&
                               m.ideaB && m.ideaB.on) ? "b" : "a");
   // the returns that keep every note the theme wrote — `aug` (the head at
-  // half speed) and `frag` (the head) do not, by their own definitions
-  const WHOLE_BACK = { same: 1, up: 1 };
+  // half speed) and `frag` (the head) do not, by their own definitions.
+  // ...and NOR DOES `dim`: a diminution halves every onset's place, so two
+  // notes a step apart land on one and the earlier one keeps it (ideas-kit).
+  // Inversion and retrograde keep all of them — a reflection and a reversal
+  // are bijections on the onsets — so a theme stated upside down or
+  // backwards HAS been stated whole, and the tag's canned fragment may
+  // stand.
+  const WHOLE_BACK = { same: 1, up: 1, inv: 1, retro: 1 };
   const statedWhole = (m, i) => {
     const which = themeAt(m, i);
     return secsOf(m).some((_, j) => {
