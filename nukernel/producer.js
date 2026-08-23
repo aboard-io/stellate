@@ -547,19 +547,59 @@
      record, and because subjectsFor asks `moved(d)` the same question, the
      offering agreed with itself all the way down.
 
-     So the desk only has faders for what is PLAYING. A lane is live if the
-     kernel could sound it — kit, the per-bar `kits` schedule, the last bar's
-     `fill`, and the `ghost` lane drums() writes itself — and a chair is live
-     if it is not out (chairOut, the same test speak() already used to say
-     "the voice is not playing on this record"). A component (the bass line,
-     the amp) is as live as the chair it hangs off. */
+     So the desk only has faders for what is PLAYING — and there are THREE
+     ways for a channel to be dead, all of them found by measuring the same
+     four records the gate walks:
+
+       A LANE NOBODY HITS.   kit, the per-bar `kits` schedule, the last bar's
+           `fill`, plus the `ghost` lane drums() writes itself. THE SCHEDULE
+           SHADOWS THE KIT: drums() reads `g.kits ? at(g.kits, b) : g.kit`, so
+           on a record that carries a schedule the plain `g.kit` is never
+           played and a lane that lives only there is a lane nobody hears.
+       A UNIT ITS LANE DOES NOT REACH.  A subject owns lanes AND channels, and
+           the two lists are not one list: "the percussion" is the clap AND
+           the rim, and a record with a rim and no clap builds `unit:rim`
+           only. Asking "is any of my lanes live" and then writing to ALL my
+           channels claimed a clap on 21 of 150 rolled records. So the lane
+           maps to its own desk address (LANECHAN, which is audio/to-engine's
+           LANE table read for its `unit` field) and a channel is live only if
+           one of ITS lanes is.
+       A CHAIR WITH NOTHING TO PLAY.  This is the one Paul's seven presses
+           found. `chairOut` asks whether the chair is switched off — no
+           `part`, `nobass`, no voice, no melody — and a keyboard player can
+           be perfectly switched ON with an empty phrase in front of them: on
+           roll 1 the keys have a seat, an upright piano and a part, and
+           K.render of their pattern is zero notes long. A fader on
+           `inst:keys` there is the crash all over again. A kit lane can be
+           read structurally (a vector of zeros is a drum nobody hits); a
+           phrase cannot, because operators are what decide whether it sounds
+           — so this one ASKS THE KERNEL, which is allowed because here the
+           render IS the subject: the question is literally "does anything
+           come out of this chair". It is measured ONCE per compiled record
+           and cached on it (soundsOf below), so the offering's several
+           hundred probes share one answer.
+
+     The bass is the exception that needs no render: K.bass' own first line is
+     `if (g.nobass) return []`, so `chairOut` already answers it exactly.
+     A component (the bass line, the amp) is as live as the chair it hangs
+     off. */
+  // the desk's own address for a lane — audio/to-engine.js LANE, `unit` field,
+  // which is the roster key desk.js turns into "unit:<key>". Three hats are
+  // one channel and three toms are one channel; the crash and the ride are two.
+  const LANECHAN = { k: "unit:kick",  s: "unit:snare", p: "unit:rim",
+                     c: "unit:clap",  h: "unit:hat",   o: "unit:hat",
+                     f: "unit:hat",   r: "unit:ride",  x: "unit:crash",
+                     t: "unit:tom",   m: "unit:tom",   l: "unit:tom" };
   function liveLanes(secs) {
     const on = new Set();
     for (const sec of secs || []) {
       const g = sec && sec.genre; if (!g) continue;
       if (g.ghost) on.add("p");                  // kernel.drums' own ghost lane
-      for (const bar of [g.kit, ...(Array.isArray(g.kits) ? g.kits : []), g.fill]) {
-        if (!bar) continue;
+      const sched = Array.isArray(g.kits) && g.kits.length ? g.kits : null;
+      const bars = Math.max(1, sec.bars | 0);
+      for (let b = 0; b < bars; b++) {
+        const base = (sched ? K.at(sched, b) : g.kit) || {};
+        const bar = (g.fill && b === bars - 1) ? { ...base, ...g.fill } : base;
         for (const [lane, vec] of Object.entries(bar)) {
           if (!LANES[lane]) continue;            // ?chance ~nudge !grace are sidecars
           if (Array.isArray(vec) ? vec.some(Boolean) : vec) on.add(lane);
@@ -568,25 +608,63 @@
     }
     return on;
   }
-  // is there anything for this subject to move on this record at all?
-  function livesOn(secs, S) {
-    if (!S) return false;
-    if (S.master) return true;                   // the sound and the mix are always here
-    if (S.lane) { const on = liveLanes(secs); return S.lane.some((l) => on.has(l)); }
-    return !chairOut(secs, S.under || S.id);
+  // WHICH CHAIRS SOUND — asked of the kernel, once per compiled record. The
+  // sections are copy-on-write everywhere below, so the array the page hands
+  // in is a stable key for the answer and the whole offering pass shares it.
+  const SOUNDS = new WeakMap();
+  const emits = (f) => { try { const ev = f(); return !!(ev && ev.length); }
+                         catch (e) { return true; } };   // a throw is playable()'s
+  function soundsOf(secs) {
+    if (!Array.isArray(secs)) return new Set(["bass"]);
+    let s = SOUNDS.get(secs); if (s) return s;
+    s = new Set(["bass"]);                       // K.bass answers from `nobass`
+    for (const sec of secs) {
+      if (!sec || !sec.genre) continue;
+      if (!s.has("keys") && sec.pattern &&
+          emits(() => K.render(sec.pattern, sec.genre, sec.bars))) s.add("keys");
+      if (!s.has("guitar") && sec.guitar &&
+          emits(() => K.render(sec.guitar, sec.genre, sec.bars))) s.add("guitar");
+      if (!s.has("voice") && sec.voice &&
+          emits(() => K.render(sec.voice.phrase, sec.voice.genre, sec.bars))) s.add("voice");
+      if (!s.has("tune") && sec.melody &&
+          emits(() => K.render(sec.melody.phrase, sec.melody.genre,
+                               sec.melody.genre.bars))) s.add("tune");
+    }
+    SOUNDS.set(secs, s);
+    return s;
   }
   // ...and every desk address that resolves to something that plays
-  function liveChans(secs) {
+  function liveChans(secs, sounds) {
     const lanes = liveLanes(secs);
+    const snd = sounds || soundsOf(secs);
     const out = new Set();
     for (const S of SUBJ) {
       if (!S.chan.length) continue;
-      const on = S.lane ? S.lane.some((l) => lanes.has(l))
-                        : !chairOut(secs, S.under || S.id);
-      if (on) for (const c of S.chan) out.add(c);
+      if (S.lane) {
+        const any = S.lane.some((l) => lanes.has(l));
+        for (const c of S.chan) {
+          if (c.slice(0, 5) !== "unit:") { if (any) out.add(c); continue; }
+          if (S.lane.some((l) => lanes.has(l) && LANECHAN[l] === c)) out.add(c);
+        }
+      } else {
+        const id = S.under || S.id;
+        if (!chairOut(secs, id) && snd.has(id)) for (const c of S.chan) out.add(c);
+      }
     }
     return out;
   }
+  // is there anything for this subject to move on this record at all? Read off
+  // the live channels a note is about to be given, so the offering and the
+  // mover cannot answer it differently.
+  function livesIn(live, secs, S, sounds) {
+    if (!S) return false;
+    if (S.master) return true;                   // the sound and the mix are always here
+    if (S.chan.length) return S.chan.some((c) => live.has(c));
+    const id = S.under || S.id;                  // the bass line, the amp
+    return !chairOut(secs, id) && sounds.has(id);
+  }
+  const livesOn = (secs, S) => { const snd = soundsOf(secs);
+    return livesIn(liveChans(secs, snd), secs, S, snd); };
 
   /* ================= ONE NOTE, APPLIED ===================================
      `note` is { v: verb, s: subject, d: descriptor|null, w: amount }. What
@@ -594,7 +672,7 @@
      the producer speaks is computed from the applied delta and never from
      the intent: the hand may have overruled half of it, and the gig sheet
      must say what is true. */
-  function applyNote(model, secs, note, held, out) {
+  function applyNote(model, secs, note, held, out, live, sounds) {
     const S = SUB[note.s]; if (!S) return;
     const w = note.w, verb = note.v;
     const d = { fields: [], lanes: [], mix: {}, master: {}, bpm: 0,
@@ -614,8 +692,9 @@
 
     // THE DESK ONLY HAS FADERS FOR WHAT IS PLAYING (the live-channel law
     // above). A fader on a channel this record does not build is not a
-    // quieter cymbal, it is a line on the sheet that lied.
-    const live = liveChans(secs);
+    // quieter cymbal, it is a line on the sheet that lied. The set is handed
+    // in by run(), which recomputes it whenever a note ahead of this one has
+    // moved a lane or taken a chair out or brought one in.
     const addMix = (chans, vals) => {
       for (const c of chans) {
         if (!live.has(c)) continue;
@@ -691,7 +770,7 @@
     // verb passes the honesty test by moving everything EXCEPT its subject —
     // "keep only the cymbals" on a record with no cymbals is a record with
     // nothing in it, which is not what anybody meant by the sentence.
-    if (verb === "only" && livesOn(secs, S)) {
+    if (verb === "only" && livesIn(live, secs, S, sounds)) {
       const others = SUBJ.filter((x) => x.kind && x.id !== S.id && x.id !== "record" &&
                                         x.id !== "mix" && x.id !== S.under &&
                                         x.under !== S.id);
@@ -1025,15 +1104,25 @@
     const secs = secs0.map(clone);
     const out = [];
     if (!notes.length) return { secs: secs0, mix: {}, bpm: model.song.bpm, said: [] };
+    // WHAT SOUNDS, ASKED ONCE. The chairs are read off the record the page
+    // handed in — a stable array, so the answer is cached on it and the
+    // offering's several hundred probes share one render pass — and the desk
+    // addresses are rebuilt only when a note has actually moved a lane or put
+    // a chair in or out, which is the only way the answer can change.
+    const sounds = soundsOf(secs0);
+    let live = null;
     for (const n of notes) {
       // the kit before and after THIS note, so the sentence can be read off
       // the kernel's own operator table rather than off the intent
       const k0 = secs[0] && secs[0].genre && secs[0].genre.kit;
       const was = k0 ? JSON.parse(JSON.stringify(k0)) : null;
-      applyNote(model, secs, n, held, out);
+      if (!live) live = liveChans(secs, sounds);
+      applyNote(model, secs, n, held, out, live, sounds);
       const rec = out[out.length - 1];
       if (rec) { rec.d.__kitWas = was;
-                 rec.d.__kitNow = secs[0] && secs[0].genre && secs[0].genre.kit; }
+                 rec.d.__kitNow = secs[0] && secs[0].genre && secs[0].genre.kit;
+                 if (rec.d.lanes.length || rec.d.silenced.length ||
+                     rec.d.brought.length) live = null; }
     }
     // the desk offsets and the tempo, summed over the stack
     const mix = {}; let bpm = model.song.bpm;
