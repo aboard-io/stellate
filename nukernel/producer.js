@@ -534,6 +534,60 @@
     sec.__ownK = true;
   }
 
+  /* ================= WHAT IS ACTUALLY ON THIS RECORD =====================
+     THE LIVE-CHANNEL LAW — the audibility floor's other half, and the fault
+     Paul found on 2026-08-22: "the second producer command didn't do anything
+     at all". "Less cymbals" was OFFERED on a record whose kit has no crash
+     and no ride, it landed, and the sheet said "pulled the cymbals down",
+     because a fader written to `unit:crash` counted as a move. It is not one:
+     audio/desk.js resolves an offset against the units the record actually
+     builds (it walks the roster and asks MIXER for each unit's own chans), so
+     an offset addressed at a unit that does not exist lands on nothing at all.
+     `moved(d)` was reading the producer's own bookkeeping rather than the
+     record, and because subjectsFor asks `moved(d)` the same question, the
+     offering agreed with itself all the way down.
+
+     So the desk only has faders for what is PLAYING. A lane is live if the
+     kernel could sound it — kit, the per-bar `kits` schedule, the last bar's
+     `fill`, and the `ghost` lane drums() writes itself — and a chair is live
+     if it is not out (chairOut, the same test speak() already used to say
+     "the voice is not playing on this record"). A component (the bass line,
+     the amp) is as live as the chair it hangs off. */
+  function liveLanes(secs) {
+    const on = new Set();
+    for (const sec of secs || []) {
+      const g = sec && sec.genre; if (!g) continue;
+      if (g.ghost) on.add("p");                  // kernel.drums' own ghost lane
+      for (const bar of [g.kit, ...(Array.isArray(g.kits) ? g.kits : []), g.fill]) {
+        if (!bar) continue;
+        for (const [lane, vec] of Object.entries(bar)) {
+          if (!LANES[lane]) continue;            // ?chance ~nudge !grace are sidecars
+          if (Array.isArray(vec) ? vec.some(Boolean) : vec) on.add(lane);
+        }
+      }
+    }
+    return on;
+  }
+  // is there anything for this subject to move on this record at all?
+  function livesOn(secs, S) {
+    if (!S) return false;
+    if (S.master) return true;                   // the sound and the mix are always here
+    if (S.lane) { const on = liveLanes(secs); return S.lane.some((l) => on.has(l)); }
+    return !chairOut(secs, S.under || S.id);
+  }
+  // ...and every desk address that resolves to something that plays
+  function liveChans(secs) {
+    const lanes = liveLanes(secs);
+    const out = new Set();
+    for (const S of SUBJ) {
+      if (!S.chan.length) continue;
+      const on = S.lane ? S.lane.some((l) => lanes.has(l))
+                        : !chairOut(secs, S.under || S.id);
+      if (on) for (const c of S.chan) out.add(c);
+    }
+    return out;
+  }
+
   /* ================= ONE NOTE, APPLIED ===================================
      `note` is { v: verb, s: subject, d: descriptor|null, w: amount }. What
      comes back is a diff record — WHAT ACTUALLY MOVED — because the sentence
@@ -558,8 +612,13 @@
       (note.d && ADJOF[note.d] && ADJOF[note.d].dens);
     if (!grids && wantsGrid) d.nogrid = true;
 
+    // THE DESK ONLY HAS FADERS FOR WHAT IS PLAYING (the live-channel law
+    // above). A fader on a channel this record does not build is not a
+    // quieter cymbal, it is a line on the sheet that lied.
+    const live = liveChans(secs);
     const addMix = (chans, vals) => {
       for (const c of chans) {
+        if (!live.has(c)) continue;
         const m = d.mix[c] || (d.mix[c] = {});
         for (const [k, v] of Object.entries(vals)) {
           if (k === "eq") { const e = m.eq || (m.eq = {});
@@ -599,13 +658,10 @@
           for (const bar of [g.kit, ...(g.kits || [])]) {
             if (!bar) continue;
             for (const lane of S.lane) {
-              const pat = (A && (A.kit || {})[lane]) || ADDPAT[lane];
-              if (!pat) continue;
-              const cur = bar[lane] || new Array(pat.length).fill(0);
-              if (cur.length !== pat.length) continue;
-              const order = PRIORITY.filter((i) => pat[i] && !cur[i]);
+              const plan = addOrder(bar, lane, A);
+              if (!plan || !plan.order.length) continue;
+              const { pat, cur, order } = plan;
               const budget = Math.max(1, Math.round(w * order.length));
-              if (!order.length) continue;
               const v = cur.slice();
               for (let n = 0; n < budget && n < order.length; n++) v[order[n]] = pat[order[n]];
               bar[lane] = v;
@@ -614,8 +670,11 @@
           }
         }
       }
-      // a chair that is out comes back in
+      // a chair that is out comes back in — and once it is back, its own
+      // channel is live, so the fader that comes with it is a real move
       bringIn(secs, S, w, d);
+      if (d.brought.length || d.lanes.some((x) => x.add))
+        for (const c of S.chan) live.add(c);
       if (S.chan.length) addMix(S.chan, { fader: +2 * w });
     }
 
@@ -628,7 +687,11 @@
     }
 
     /* ---- KEEP ONLY: everything else steps back ----------------------- */
-    if (verb === "only") {
+    // ...and you cannot keep only a thing that is not there. Without this the
+    // verb passes the honesty test by moving everything EXCEPT its subject —
+    // "keep only the cymbals" on a record with no cymbals is a record with
+    // nothing in it, which is not what anybody meant by the sentence.
+    if (verb === "only" && livesOn(secs, S)) {
       const others = SUBJ.filter((x) => x.kind && x.id !== S.id && x.id !== "record" &&
                                         x.id !== "mix" && x.id !== S.under &&
                                         x.under !== S.id);
@@ -736,6 +799,40 @@
     : (a && typeof a === "object" && b && typeof b === "object"
        ? JSON.stringify(a) === JSON.stringify(b) : a === b));
 
+  /* ---- what `add` would put in --------------------------------------- */
+  // ONE function, read by the mover above AND by the offering below, so what
+  // is offered cannot drift from what happens. The anchor's own pattern for
+  // this lane (or the fallback idiom), minus what is already there, in the
+  // PRIORITY order a drummer would fill it.
+  function addOrder(bar, lane, A) {
+    const pat = (A && (A.kit || {})[lane]) || ADDPAT[lane];
+    if (!pat) return null;
+    const cur = bar[lane] || new Array(pat.length).fill(0);
+    if (cur.length !== pat.length) return null;
+    return { pat, cur, order: PRIORITY.filter((i) => pat[i] && !cur[i]) };
+  }
+  // `strict` is the OFFERING's extra condition, and it is about the WORD
+  // rather than the move: "add the crash, punk" has to mean PUNK's crash, so
+  // an anchor with nothing in this lane is not offered even though the mover
+  // would happily fall back to the generic idiom (which is what the bare
+  // "just add it" is for).
+  function canAdd(secs, S, A, grids, strict) {
+    if (!S.lane || !grids) return false;
+    const kit = (A && A.kit) || {};
+    for (const sec of secs) {
+      const g = sec.genre; if (!g) continue;
+      for (const bar of [g.kit, ...(Array.isArray(g.kits) ? g.kits : [])]) {
+        if (!bar) continue;
+        for (const lane of S.lane) {
+          if (strict && !(kit[lane] || []).some(Boolean)) continue;
+          const plan = addOrder(bar, lane, A);
+          if (plan && plan.order.length) return true;
+        }
+      }
+    }
+    return false;
+  }
+
   /* ---- density: more of what it already plays ------------------------ */
   function densLane(secs, S, sign, w, d) {
     for (const sec of secs) {
@@ -780,25 +877,32 @@
   }
 
   /* ---- silence and resurrection -------------------------------------- */
+  // TAKING OUT WHAT IS NOT THERE IS NOT A MOVE. This used to say it had
+  // silenced the subject whether or not a single lane, chair or voice went —
+  // "took the hats out" on a record whose kit is one kick lane — which is the
+  // live-channel law's fault in its other half: the diff record said a thing
+  // happened, so the offering (which asks the diff record) went on offering
+  // it. `did` is the whole fix: the sentence is read off what went.
   function silence(secs, S, d, grids) {
+    let did = false;
     for (const sec of secs) {
       if (S.lane && grids) {
         touchKit(sec); const g = sec.genre;
         for (const bar of [g.kit, ...(g.kits || [])]) { if (!bar) continue;
-          for (const lane of S.lane) if (bar[lane]) { delete bar[lane];
+          for (const lane of S.lane) if (bar[lane]) { delete bar[lane]; did = true;
             delete bar["?" + lane]; delete bar["~" + lane]; delete bar["!" + lane]; } }
       }
       if (S.id === "bass" || S.id === "line") {
-        const g = ownGenre(sec, "g"); if (!g.nobass) { g.nobass = true; }
+        const g = ownGenre(sec, "g"); if (!g.nobass) { g.nobass = true; did = true; }
       }
       if (S.id === "keys" || S.id === "guitar") {
         const ch = touchChairs(sec); const ix = S.id === "keys" ? 0 : 1;
-        if (ch[ix]) ch[ix].part = null;
+        if (ch[ix] && ch[ix].part) { ch[ix].part = null; did = true; }
       }
-      if (S.id === "voice" && sec.voice) sec.voice = null;
-      if (S.id === "tune" && sec.melody) sec.melody = null;
+      if (S.id === "voice" && sec.voice) { sec.voice = null; did = true; }
+      if (S.id === "tune" && sec.melody) { sec.melody = null; did = true; }
     }
-    d.silenced.push(S.id);
+    if (did) d.silenced.push(S.id);
   }
   function bringIn(secs, S, w, d) {
     let did = false;
@@ -953,7 +1057,12 @@
                             delete s.__dirty; }
     return { secs, mix, bpm: Math.max(40, Math.min(220, Math.round(bpm))),
              said: out.map(({ note, d }) => ({ note, sentence: sentence(note),
-               said: speak(model, secs0, note, d), moved: moved(d) })) };
+               said: speak(model, secs0, note, d), moved: moved(d),
+               // A NOTE THAT MOVED NOTHING IS REFUSED, IN WORDS. `speak`
+               // already returns the reason instead of a boast; this is the
+               // flag a gate (and the page, if it wants to grey the line)
+               // reads without matching on prose.
+               refused: !moved(d) })) };
   }
   const moved = (d) => !!(d.fields.length || d.lanes.length ||
     Object.keys(d.mix).length || Object.keys(d.master).length || d.bpm ||
@@ -1098,14 +1207,25 @@
         ? "three" : "something other than four") + " — I can move the sound but not the pattern"];
       if (note.d && GENRES[note.d] && !SCOPEFIELDS[note.s])
         return [GENRES[note.d].label + " has no opinion about " + SUB[note.s].w];
-      if (S.kind === "chair" && chairOut(base, note.s))
-        return [SUB[note.s].w + " is not playing on this record"];
+      // THERE IS NOTHING THERE. The live-channel law's own sentence: a
+      // subject this record does not have cannot be made more or less of,
+      // and the honest thing is to name it rather than to say the record is
+      // already as cymballed as it is going to get. (A chair keeps its own
+      // wording — "the voice is not playing" is what an absent PLAYER is.)
+      if (!livesOn(base, S))
+        return [S.kind === "chair" ? SUB[note.s].w + " is not playing on this record"
+                : "there " + (/s$/.test(S.bare) && !/ss$/.test(S.bare) ? "are" : "is") +
+                  " no " + S.bare + " on this record"];
       // ...and the one that is not a failure at all: the staggered
       // thresholds mean a first press can be below every noun this target
-      // disagrees about. Say so, and say what to do about it.
-      if (note.w < 0.9 && note.d &&
-          (GENRES[note.d] ? firstStep(model, base, note.s, note.d) > 0
-                          : wouldMove(model, base, note.s, note.d)))
+      // disagrees about. Say so, and say what to do about it. TWO-TAP verbs
+      // need this sentence as much as three-tap ones do — "more bass" on a
+      // line already at eighths does not reach sixteenths until the second
+      // press — so the test is the same one, asked without a descriptor.
+      if (note.w < 0.9 &&
+          (note.d ? (GENRES[note.d] ? firstStep(model, base, note.s, note.d) > 0
+                                    : wouldMove(model, base, note.s, note.d))
+                  : wouldVerb(model, base, note.v, note.s)))
         return ["not yet — push it further"];
       return ["it's as " + wordOf(note.d, note.s) + " as it's going to get"];
     }
@@ -1205,15 +1325,31 @@
   // never. "Less bass line" on a record whose bass already holds one note is
   // as sparse as it is going to get, and offering it would be the lie the
   // epsilon rule exists to prevent.
+  // THE RECORD THE OFFERING IS ABOUT IS THE ONE PLAYING, notes and all. The
+  // page hands the offering the BASE sections; the stack on top of them is
+  // what you are listening to, and a subject the stack has already taken away
+  // (or brought in) must be offered accordingly. Probing on top of the stack
+  // is exactly what tapping does — addNote appends, run applies in order.
+  let STANDK = "", STANDC = null;
+  function standing(model, secs) {
+    if (!notesOf(model).length) return secs;
+    const key = sig(model, secs);
+    if (STANDK === key && STANDC) return STANDC;
+    let out = secs;
+    try { out = run(model, secs).secs; } catch (e) { out = secs; }
+    STANDK = key; STANDC = out;
+    return out;
+  }
   let SUBJK = "", SUBJC = null;
-  function subjectsFor(model, secs, verb) {
+  function subjectsFor(model, secs0, verb) {
     if (!VERB[verb]) return [];
-    const key = sig(model, secs) + "|s|" + verb;
+    const secs = standing(model, secs0);
+    const key = sig(model, secs0) + "|s|" + verb;
     if (SUBJK === key && SUBJC) return SUBJC;
     const out = SUBJ.filter((s) => {
       if (!takes(verb, s.id)) return false;
       if (VERB[verb].d !== "no") return true;      // its descriptors decide
-      try { const r = run({ ...model, prod: [{ v: verb, s: s.id, w: 0.95 }] }, secs);
+      try { const r = run({ song: model.song, prod: [{ v: verb, s: s.id, w: 0.95 }] }, secs);
             return !!(r.said[0] && r.said[0].moved); } catch (e) { return false; }
     });
     SUBJK = key; SUBJC = out;
@@ -1223,15 +1359,17 @@
   // one cache per record shape — the offering is walked over 122 anchors and
   // a page redraws on every tap
   let OFFER = null, OFFERKEY = "";
-  function targetsFor(model, secs, verb, sid) {
+  function targetsFor(model, secs0, verb, sid) {
     if (!VERB[verb] || !SUB[sid]) return [];
     if (VERB[verb].d === "no") return [];
-    const key = sig(model, secs) + "|" + verb + "|" + sid;
+    const secs = standing(model, secs0);
+    const model2 = { song: model.song };          // the stack is IN `secs` now
+    const key = sig(model, secs0) + "|" + verb + "|" + sid;
     if (OFFERKEY === key && OFFER) return OFFER;
     const out = [];
     if (verb === "make") {
       for (const gid of Object.keys(GENRES))
-        if (firstStep(model, secs, sid, gid) >= EPS_STEPS)
+        if (firstStep(model2, secs, sid, gid) >= EPS_STEPS)
           out.push({ id: gid, w: gid, label: GENRES[gid].label, kind: "genre" });
       // AN ADJECTIVE IS ASKED THE SAME QUESTION, AND ANSWERS IT BY DOING IT.
       // A genre's first step is cheap to predict (firstStep walks its own
@@ -1240,20 +1378,24 @@
       // both move nothing HERE. There are two dozen of them, so the honest
       // test is the cheap one: make the move and see. Same epsilon law,
       // same reason.
-      for (const a of ADJ) if (a.on.includes(sid) && wouldMove(model, secs, sid, a.id))
+      for (const a of ADJ) if (a.on.includes(sid) && wouldMove(model2, secs, sid, a.id))
         out.push({ id: a.id, w: a.w, kind: "adj" });
     } else if (verb === "add") {
       // "just add it" is only offered where the record's own idiom has
       // something to put in (ADDPAT, or a chair that is actually out)
-      if (wouldAdd(model, secs, sid)) out.push({ id: null, w: "just add it", kind: "bare" });
-      // "add the crash, punk" — which record's crash. Only anchors that
-      // actually have something to put in this lane.
+      if (wouldAdd(model2, secs, sid)) out.push({ id: null, w: "just add it", kind: "bare" });
+      // "add the crash, punk" — which record's crash. THE TEST IS AGAINST
+      // THIS RECORD, not against the anchor: it used to offer every anchor
+      // with anything in the lane, which on a record that does not count in
+      // sixteen (where the grid is refused whole) was a hundred sentences
+      // that could only ever answer "this one counts in three". Same law as
+      // everywhere else — offer it if it would put a step in.
       const S = SUB[sid];
-      if (S.lane) for (const gid of Object.keys(GENRES)) {
-        const kit = GENRES[gid].kit || {};
-        if (S.lane.some((d) => (kit[d] || []).some(Boolean)))
+      const g0 = secs[0] && secs[0].genre;
+      const grids = !(g0 && g0.meter && g0.meter.steps !== 16);
+      if (S.lane) for (const gid of Object.keys(GENRES))
+        if (canAdd(secs, S, GENRES[gid], grids, true))
           out.push({ id: gid, w: gid, label: GENRES[gid].label, kind: "genre" });
-      }
     }
     OFFERKEY = key; OFFER = out;
     return out;
@@ -1264,12 +1406,27 @@
     try { const r = run({ ...model, prod: [{ v: "add", s: sid, w: 0.95 }] }, secs);
           return !!(r.said[0] && r.said[0].moved); } catch (e) { return false; }
   };
+  // the same question a two-tap sentence has to ask: does this verb move
+  // this subject AT ALL, pressed to the top of its ladder?
+  const wouldVerb = (model, secs, verb, sid) => {
+    try { const r = run({ ...model, prod: [{ v: verb, s: sid, w: 0.95 }] }, secs);
+          return !!(r.said[0] && r.said[0].moved); } catch (e) { return false; }
+  };
   const wouldMove = (model, secs, sid, dsc) => {
     try { const r = run({ ...model, prod: [{ v: "make", s: sid, d: dsc, w: 0.95 }] }, secs);
           return !!(r.said[0] && r.said[0].moved); }
     catch (e) { return false; }
   };
-  const sig = (model, secs) => JSON.stringify([secs.length,
+  // ...keyed on the stack too, since the offering is computed on top of it,
+  // and on the IDENTITY of the sections it was handed: the page recomposes
+  // them whenever anything about the record changes (a hand answer, a new
+  // section), and a fingerprint of a handful of fields cannot see a move
+  // that landed on any of the others.
+  let SECN = 0; const SECID = new WeakMap();
+  const idOf = (secs) => { let n = SECID.get(secs);
+    if (n === undefined) { n = ++SECN; SECID.set(secs, n); } return n; };
+  const sig = (model, secs) => JSON.stringify([secs.length, idOf(secs),
+    notesOf(model).map((n) => [n.v, n.s, n.d || "", n.w]),
     secs[0] && secs[0].genre && Object.keys(secs[0].genre.kit || {}),
     secs[0] && secs[0].genre && [secs[0].genre.drumkit, secs[0].genre.bassStyle,
       secs[0].genre.artic, (secs[0].genre.meter || {}).steps],
@@ -1312,5 +1469,6 @@
            PRIORITY, CREATE_TH, DELETE_TH, SCOPEFIELDS, DENS, ADDPAT,
            ALPHA, START, MAXNOTES, MAXW: 1, up, down, pct, takes,
            gridMove, sdOf, firstStep, targetsFor, subjectsFor, sentence, opWord,
+           liveLanes, livesOn, liveChans,
            run, produce, notesOf, addNote, bump, drop: dropNote, clearNotes };
 });
