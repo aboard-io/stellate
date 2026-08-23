@@ -22,6 +22,18 @@ main { height: 100%; display: flex; flex-direction: column; }
 header { flex: none; }
 .dwrap { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 
+/* ---- one size, actually ---- */
+/* This file claimed "default size, no hierarchy" and did not enforce it,
+   because the BROWSER's defaults disagree: form controls do not inherit
+   type at all, and h1/h2/h3 carry their own scale. Measured on the shipped
+   page that was 97 elements at 13.3px against a 16px body, plus headings at
+   32, 24 and 20. Four sizes on a page whose whole rule is one. So the two
+   rules the claim needs, and nothing else — no weight, no case, no spacing.
+   The circle of fifths keeps its em sizing at the foot of this file, where
+   the size IS the geometry. */
+button, input, select, textarea { font: inherit; }
+h1, h2, h3, h4, h5, h6 { font-size: inherit; }
+
 /* ---- words for assistive tech and nobody else ---- */
 /* the hint a title used to hoard, and the one-shot change announcement
    (#dlive). Everything else pairs a name with its value as a real
