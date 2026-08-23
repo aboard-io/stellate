@@ -490,8 +490,38 @@
   // a groove whose meter is not the one being counted is simply never
   // offered — `gKit` comes back null and every guard reads false.
   const gKit = (m, g) => { const S = setOf(m); return S.G[g] ? { ...empty(m), ...S.G[g] } : null; };
+  /* ---------- ONE STRINGIFY PER KIT ---------------------------------------
+     Every guard in this file asks the same question — "would saying this
+     leave the kit where it is?" — and every one of them answered it by
+     building the kit the word would make and stringifying BOTH sides, on
+     every draw, for every word. A drummer has 44 grooves and 30-odd words,
+     the tray draws all of them, and the pruner upstairs draws the tray once
+     per option: measured, the two lines below and their twins at the
+     drummer's words were 1.8 s of self time in a single dice run.
+
+     A drum model is immutable — every word in this box returns a new one,
+     which is what the memos in chair.js and band-kit already rely on — so
+     the string a kit makes is a fact about that kit and can be remembered
+     against the kit itself. The kit a WORD would make is the same kind of
+     fact, remembered against the model it would be said to. */
+  const KITSTR = typeof WeakMap !== "undefined" ? new WeakMap() : null;
+  const kitStr = (kit) => {
+    if (!KITSTR || !kit || typeof kit !== "object") return JSON.stringify(kit);
+    let s = KITSTR.get(kit);
+    if (s === undefined) KITSTR.set(kit, s = JSON.stringify(kit));
+    return s;
+  };
+  const WORDKIT = typeof WeakMap !== "undefined" ? new WeakMap() : null;
+  const afterStr = (m, word, fn) => {
+    if (!WORDKIT) return JSON.stringify(fn(m).kit);
+    let per = WORDKIT.get(m);
+    if (!per) WORDKIT.set(m, per = new Map());
+    let s = per.get(word);
+    if (s === undefined) per.set(word, s = JSON.stringify(fn(m).kit));
+    return s;
+  };
   const gSame = (m, g) => { const k = gKit(m, g);
-    return !!k && JSON.stringify(k) === JSON.stringify(m.kit); };
+    return !!k && kitStr(k) === kitStr(m.kit); };
   const ALLW = { ...GROOVEWORD3, ...GROOVEWORD6, ...GROOVEWORD };
   const ALLF = { ...GROOVEFAM3, ...GROOVEFAM6, ...GROOVEFAM };
   for (const g of [...Object.keys(GROOVEWORD),
@@ -579,9 +609,9 @@
                  return { ...out, answers: { ...(out.answers || m.answers || {}), [id]: w } }; }
       : fn;
     add("drum:" + word, "at the kit", [word],
-        m => m.on && JSON.stringify(fn(m).kit) !== JSON.stringify(m.kit),
+        m => m.on && afterStr(m, word, fn) !== kitStr(m.kit),
         apply, () => word,
-        m => m.on && JSON.stringify(fn(m).kit) === JSON.stringify(m.kit));
+        m => m.on && afterStr(m, word, fn) === kitStr(m.kit));
     if (DRUMROW[word]) V["drum:" + word].row = DRUMROW[word];
   }
 

@@ -688,8 +688,22 @@
   // "hovers" and "turns back on itself" are the identical phrase — so a
   // shape is offered only when it would come out DIFFERENT. (The model
   // moving is not enough: this file's whole job is the phrase.)
-  const sounds = (m) => JSON.stringify(toPhrase(m).deg) + JSON.stringify(toPhrase(m).gate) +
-                        JSON.stringify(toPhrase(m).hold || 0);
+  // ...and it is asked in SQUARES (the dedup below compares every shape
+  // against every earlier one), so it is remembered against the PHRASE
+  // rather than recomputed: `toPhrase` is memoised and hands back the same
+  // object for the same answers, which makes that object the honest key.
+  // Three `toPhrase` calls per ask became one, and the string is built once
+  // per distinct phrase instead of once per comparison — measured as the
+  // single biggest line in a chair-rail draw (9.9% of it).
+  const SOUNDS = typeof WeakMap !== "undefined" ? new WeakMap() : null;
+  const sounds = (m) => {
+    const p = toPhrase(m);
+    if (SOUNDS && SOUNDS.has(p)) return SOUNDS.get(p);
+    const out = JSON.stringify(p.deg) + JSON.stringify(p.gate) +
+                JSON.stringify(p.hold || 0);
+    if (SOUNDS) SOUNDS.set(p, out);
+    return out;
+  };
   // ...and no two of the offered ones may sound alike EITHER. Comparing each
   // only against the current phrase left two shapes that were different from
   // what is playing and identical to each other; the first one in the table

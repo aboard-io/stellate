@@ -2513,6 +2513,46 @@
       if (out.length) { const keep = opts.filter((o) => !out.includes(o.w));
         if (keep.length) opts = keep; }
     }
+    /* A TAKE DOES NOT SEAT A DRUMMER THE RECORD DOES NOT HAVE (Paul,
+       2026-08-23: "sometimes you add drums to the 1800s").
+
+       A take is the same band playing the same song again. It may vary what
+       the record ALLOWS, and the other direction of that law was already
+       held — a take may never lay a player out — but nobody had said the
+       first direction, and the material roll walked straight through it:
+       measured on the twelve old-world records, called with an empty kit,
+       three takes put 9 to 96 hits on it. Two doors, and both are shut
+       here rather than in a table of record names:
+
+         the groove   salon's own list is "nobody on the kit · a siciliana"
+                      and the roll took the siciliana — a drummer arriving
+                      in a parlour in 1870 because the dice said so
+         the fills    "end of every four" is not on any record's list, so
+                      nothing narrowed it, and it FABRICATES a bar of kit
+                      out of an empty one: chant, organum, monody and
+                      vienna all gained hits without their groove ever
+                      moving
+
+       So the roll asks the drummer what each word would actually make and
+       keeps only the words that leave the kit AS THE RECORD HAS IT. Both
+       directions, because they are one law said twice: a record with
+       nobody on the kit keeps nobody on it (chant, salon, hymn — where
+       "no fills" and "nobody on the kit" are the only survivors, so the
+       roll is a no-op and the take varies elsewhere), and a record with a
+       drummer keeps the drummer (romantic's own list is "a processional ·
+       nobody on the kit", and the roll took the second — 256 hits to none,
+       which is the take laying a player out, the half of this law that was
+       already written down). Every record whose grooves are all of one
+       kind — which is 26 of the 30 — rolls exactly as it always did. */
+    if (seat === "drums") {
+      const bare = kitlessOf(D.toGenre(m.drums));
+      const keep = opts.filter((o) => {
+        try { return kitlessOf(D.toGenre(D.answer(m.drums, d.id, o.w))) === bare; }
+        catch (e) { return false; }
+      });
+      if (!keep.length) return null;
+      opts = keep;
+    }
     if (!opts.length) return null;
     return opts[rollAt(take, seedKey(seat, d.id), opts.length)].w;
   };
@@ -3109,10 +3149,56 @@
     if (SIGS) SIGS.set(m, out);
     return out;
   }
-  function sigNow(m) {
+  /* ---------- THE SIGNATURE, IN PARTS ------------------------------------
+     A question only ever moves PART of a record, and comparing the parts it
+     cannot reach is most of what the pruner was spending. So the signature
+     is declared in five pieces — which is also what makes the cheap prunes
+     below provable, since a piece is exactly "somewhere the record is read
+     VERBATIM":
+
+       SEC    the composed first section — the expensive one, a whole toSong
+       MIX    the desk, `mixOf(m)`: the only thing `m.eng` reaches
+       MEL    the tune and its answer, as phrases
+       SONG   the song fields printed BY NAME — `SONGSIG`, below
+       TONE   the three chairs whose `tone` is printed beside them
+
+     `sigNow` prints them in the order it has always printed them, so the
+     string is byte-identical to the one every gate has ever compared; what
+     is new is that a caller may ask for one piece. */
+  // the song fields the signature prints by name, in print order. THE LIST
+  // IS THE PROOF: a question whose answers write only these fields is
+  // decided by SONG alone, so `songRow` below reads this same array rather
+  // than a second copy of it that could drift.
+  const SONGSIG_A = ["bpm", "swing", "meter", "key", "minor", "space",
+                     "form", "chg", "end"];
+  // ...and the song facts the FIRST section cannot show: a length, a
+  // reprise, the doors, a lean or an authored list on a role that is
+  // not section 0's. Blind here, the pruner retired real questions —
+  // "how long is the chorus?" was invisible the day this list missed
+  // `lens`.
+  const SONGSIG_B = ["lens", "reprise", "doors", "lean", "chgx"];
+  // the ones printed as `|| null`, so an absent field and a false one read
+  // exactly as they always did
+  const SONGNULL = new Set(["meter", "end", "lens", "reprise", "doors",
+                            "lean", "chgx"]);
+  // ...and THE BOXES, for the same reason: a record whose sections have
+  // been edited by hand has a shape its form label no longer names, and
+  // blind here the pruner retired the one tap that puts a FORMS row
+  // back (same form, different boxes, "nothing changed")
+  const SONGSIG = new Set([...SONGSIG_A, ...SONGSIG_B, "secs"]);
+  const songPart = (m) => SONGSIG_A.map((k) =>
+    (SONGNULL.has(k) ? (m.song[k] || null) : m.song[k]));
+  const songPart2 = (m) => [...SONGSIG_B.map((k) => m.song[k] || null),
+                            cleanSecs(m.song.secs) || null];
+  const tonePart = (m) => [m.keys.tone, m.guitar.tone, m.bass.tone];
+  const melPart = (m) => [Id.toPhrase(m.idea), Id.regOf(m.idea),
+    // ...and the answer, when there is one — without it every question
+    // about theme B would look like it changed nothing and be pruned
+    m.ideaB && m.ideaB.on ? [Id.toPhrase(m.ideaB), Id.regOf(m.ideaB)] : null];
+  function secPart(m) {
     let s0;
-    try { s0 = toSong(m, MODESREF, 0)[0]; } catch (e) { return "?"; }
-    if (!s0) return "?";
+    try { s0 = toSong(m, MODESREF, 0)[0]; } catch (e) { return null; }
+    if (!s0) return null;
     const g = s0.genre;
     // A SILENT LANE IS NOT A LANE. `{h:[0,0,…]}` and `{}` are the same drum
     // part and different objects, and comparing the objects said two answers
@@ -3121,33 +3207,19 @@
     const norm = (kit) => Object.fromEntries(Object.entries(kit || {})
       .filter(([, v]) => (Array.isArray(v) ? v.some(Boolean) : !!v)));
     const g2 = { ...g, kit: norm(g.kit), kits: (g.kits || []).map(norm) };
-    return JSON.stringify([
+    return [
       genreSig(g2), s0.pattern, s0.guitar, s0.box,
       s0.melody ? [s0.melody.phrase, genreSig(s0.melody.genre)] : null,
       // ...and the singer, who is a layer of their own. Left out of this,
       // every question the singer has looked like it changed nothing and was
       // pruned away — the chair existed and was never asked anything.
-      s0.voice ? [s0.voice.phrase, genreSig(s0.voice.genre)] : null,
-      mixOf(m), Id.toPhrase(m.idea), Id.regOf(m.idea),
-      // ...and the answer, when there is one — without it every question
-      // about theme B would look like it changed nothing and be pruned
-      m.ideaB && m.ideaB.on ? [Id.toPhrase(m.ideaB), Id.regOf(m.ideaB)] : null,
-      m.song.bpm, m.song.swing, m.song.meter || null,
-      m.song.key, m.song.minor, m.song.space, m.song.form,
-      m.song.chg, m.song.end || null, m.keys.tone, m.guitar.tone, m.bass.tone,
-      // ...and the song facts the FIRST section cannot show: a length, a
-      // reprise, the doors, a lean or an authored list on a role that is
-      // not section 0's. Blind here, the pruner retired real questions —
-      // "how long is the chorus?" was invisible the day this list missed
-      // `lens`.
-      m.song.lens || null, m.song.reprise || null, m.song.doors || null,
-      m.song.lean || null, m.song.chgx || null,
-      // ...and THE BOXES, for the same reason: a record whose sections have
-      // been edited by hand has a shape its form label no longer names, and
-      // blind here the pruner retired the one tap that puts a FORMS row
-      // back (same form, different boxes, "nothing changed")
-      cleanSecs(m.song.secs) || null,
-    ]);
+      s0.voice ? [s0.voice.phrase, genreSig(s0.voice.genre)] : null];
+  }
+  function sigNow(m) {
+    const sec = secPart(m);
+    if (!sec) return "?";
+    return JSON.stringify([...sec, mixOf(m), ...melPart(m),
+      ...songPart(m), ...tonePart(m), ...songPart2(m)]);
   }
   // the MODES table toSong needs, remembered from the first call the page or
   // a gate makes — the kits are pure and this file never imports genres.js
@@ -3163,6 +3235,91 @@
     }
     return heardOptsNow(m, seat, d);
   };
+  /* ---------- WHAT A QUESTION CAN MOVE, DERIVED ---------------------------
+     THE PRUNER WAS RENDERING THE WHOLE RECORD PER OPTION PER DRAW. Measured
+     on one called record: 83 questions, 414 options, and 325 full `toSong`
+     renders every time the chair rail was drawn — because "distinct by
+     construction" was a flag somebody remembered to set (`cheap`, on four
+     knob rows) rather than something the code worked out.
+
+     A question cannot move what its answer does not write, so a row only
+     has to be compared on the PARTS above its answers can reach. Three of
+     the four narrowings are proofs and the fourth is measured:
+
+       the engineer   `answerNow` writes `m.eng` and nothing else, and
+                      `m.eng` reaches the signature only through `mixOf`
+                      (toSong never reads the desk — mixOf's only other
+                      caller is the page). So MIX decides these rows
+                      EXACTLY, drops included: the four toggle-set rows go
+                      on losing the options they always lost, because a
+                      cheaper signature here is the same signature.
+       a song row     a row every one of whose answers writes only fields
+                      SONGSIG names is decided by SONG alone, for the same
+                      reason — the pieces it cannot write are equal on both
+                      sides of the comparison. Which rows those are is
+                      MEASURED, once per row, by running the row's own
+                      applies and diffing (`songRow`); it is not a list.
+                      That is what keeps "where does it go?" honest: `arc`
+                      writes a field the signature does NOT print, so it
+                      still renders, and it still drops the answers a flat
+                      arc makes identical.
+       a chair        `answerNow` writes `m[seat]`, which reaches the
+                      signature through the composed section and through
+                      the three printed `tone`s — so SEC+TONE, and a
+                      drummer's question stops re-deriving the tune, the
+                      desk and the song facts once per option.
+       the tune       the melody's own questions are pruned against the
+                      PHRASE — `Id.toPhrase`/`regOf`, the same pure calls
+                      the signature already prints, instead of composing a
+                      section around them. This one is measured rather than
+                      proved: over 30 records and 12 dice rolls, 281 rows,
+                      the same options in the same order.  */
+  const sigMix = (m) => JSON.stringify(mixOf(m));
+  const sigMel = (m) => JSON.stringify(melPart(m));
+  // ...remembered per model, exactly as the whole signature is (`SIGS`),
+  // and as a STRING for the same reason: a model is immutable, and a
+  // WeakMap holding the composed objects instead would keep a section's
+  // worth of arrays alive for every option the pruner ever tried.
+  const SIGC = typeof WeakMap !== "undefined" ? new WeakMap() : null;
+  const sigChair = (m) => {
+    if (SIGC && SIGC.has(m)) return SIGC.get(m);
+    const sec = secPart(m);
+    const out = sec ? JSON.stringify([...sec, ...tonePart(m)]) : "?";
+    if (SIGC) SIGC.set(m, out);
+    return out;
+  };
+  const sigSong = (m) => JSON.stringify([...songPart(m), ...songPart2(m)]);
+  // WHICH ROWS ARE SONG ROWS, MEASURED ONCE. The applies are pure functions
+  // of the song, so one record answers the question for every record: a row
+  // is a song row when every answer it offers writes only fields the
+  // signature prints by name. Remembered against the row's own words, so a
+  // row whose options were narrowed away is asked again rather than
+  // inheriting a wider row's verdict.
+  const SONGROW = new Map();
+  const rowKey = (seat, d) => seat + "\u0000" + d.id + "\u0000" +
+    d.opts.map((o) => o.w).join("\u0001");
+  const songRow = (m, d) => {
+    const key = rowKey("arranger", d);
+    if (SONGROW.has(key)) return SONGROW.get(key);
+    let out = true;
+    for (const o of d.opts) {
+      if (!o.apply || o.idea) { out = false; break; }
+      let s2;
+      try { s2 = o.apply(m.song); } catch (e) { out = false; break; }
+      if (!s2 || typeof s2 !== "object") { out = false; break; }
+      for (const k of new Set([...Object.keys(s2), ...Object.keys(m.song)]))
+        if (!SONGSIG.has(k) && s2[k] !== m.song[k]) { out = false; break; }
+      if (!out) break;
+    }
+    SONGROW.set(key, out);
+    return out;
+  };
+  const sigFor = (m, seat, d) => {
+    if (seat === "engineer") return sigMix;
+    if (seat !== "arranger") return sigChair;
+    if (d.id.startsWith("idea:") || d.id.startsWith("ideaB:")) return sigMel;
+    return songRow(m, d) ? sigSong : sigOf;
+  };
   const heardOptsNow = (m, seat, d) => {
     // A NARROWING QUESTION IS WORTH ASKING BEFORE IT CHANGES ANYTHING.
     // "What decade is it?" moves no note until the three answers collapse to
@@ -3170,9 +3327,22 @@
     // ate the whole front door. Its options are already only the ones that
     // leave a record standing, which is the same law by a different route.
     if (d.three || d.cheap) return d.opts;   // distinct by construction
-    const now = sigOf(m);
+    const sig = sigFor(m, seat, d);
+    const now = sig(m);
     const seen = new Map();
-    const sigOpt = (o) => { try { return sigOf(answer(m, seat, d.id, o.w)); } catch (e) { return null; } };
+    // ...and ONCE PER OPTION. The two passes below both ask what an answer
+    // would sound like, and `answer` hands back a new model each time, so
+    // every option the standing answer's pass touched was composed twice —
+    // on a called record, where every row has a standing answer, that was a
+    // whole extra record per question.
+    const SIG = new Map();
+    const sigOpt = (o) => {
+      if (SIG.has(o)) return SIG.get(o);
+      let out;
+      try { out = sig(answer(m, seat, d.id, o.w)); } catch (e) { out = null; }
+      SIG.set(o, out);
+      return out;
+    };
     // TWO PASSES, because the standing answer is not first in the list. The
     // word you are on registers its take BEFORE anything is filtered, so an
     // option earlier in the row that lands on the same record is dropped
@@ -3225,8 +3395,27 @@
   // is merged into every section's genre. Distinct by construction — one
   // field, distinct values — so the pruner never has to render a section to
   // know two of these answers differ, which is what makes them free.
+  // ...and CHECKED, not asserted (2026-08-23). `cheap: true` was written on
+  // this row by hand, which is a claim about a table in another file: the
+  // day askable.js grows a row that says the same thing twice, the pruner
+  // would go on believing the hand. So the claim is read off the row it is
+  // about, once per field, and a row that fails it simply pays for itself.
+  const KNOBD = new Map();
+  const knobDistinct = (row) => {
+    if (KNOBD.has(row.field)) return KNOBD.get(row.field);
+    const seen = new Set();
+    let out = true;
+    for (const [, v] of row.opts) {
+      const k = JSON.stringify(v === undefined ? null : v);
+      if (seen.has(k)) { out = false; break; }
+      seen.add(k);
+    }
+    KNOBD.set(row.field, out);
+    return out;
+  };
   const knobDecisions = (m, seat) => Ask.forRole(seat).map((row) => ({
-    id: "knob:" + row.field, seat, ask: row.ask, knob: row.field, cheap: true,
+    id: "knob:" + row.field, seat, ask: row.ask, knob: row.field,
+    cheap: knobDistinct(row),
     answered: ((m.song.knobs || {}).__said || {})[row.field] || null,
     opts: row.opts.map(([w, v]) => ({ w,
       answered: ((m.song.knobs || {}).__said || {})[row.field] === w,
@@ -4107,10 +4296,32 @@
       : who === "guitar" ? GGROUPS : who === "voice" ? VGROUPS : BGROUPS;
     // the HANDS first, then what is playing, then what comes out — the
     // order the words matter in when you are talking about one section
+    // ...and A WORD THAT DOES NOTHING HERE SAYS SO. Every catalog in the
+    // box already works out, per word, whether saying it would change this
+    // player at all, and every `say` hands back a model equal to the one it
+    // was given when it would not — so such a word composes the IDENTICAL
+    // section, which is the one thing the pruner below was composing a
+    // section to find out. A third of the tray, measured over 30 records
+    // and 12 rolls: 8,707 of 26,880 word options rendered only to be
+    // thrown away.
+    //   ...WITH ONE CATCH, and it is the reason this is a probe rather than
+    // a flag. The FIRST word said about a chair also takes the role's own
+    // canned part off the section (`partOf`'s `spoke`: a bassist who was
+    // told something is not also handed the chorus's octaves), so on a
+    // section nobody has spoken to yet, even a word that does nothing to
+    // the player changes the section. Asked here as a question rather than
+    // written down as a list of which chairs carry that guard: say a word
+    // nobody's vocabulary has and see whether the section's PART moves.
+    const bare = (p) => JSON.stringify({ ...p, dwords: 0, bwords: 0,
+                                         kwords: 0, gwords: 0, vwords: 0 });
+    const wk = who === "drums" ? "dwords" : who === "keys" ? "kwords"
+      : who === "guitar" ? "gwords" : who === "voice" ? "vwords" : "bwords";
+    const quiet = bare(per) === bare(partOf(setSection(m, i, wk, "w:\u0000"), i));
     return KIT.catalog(pm)
       .filter((x) => groups.includes(x.group))
       .sort((a, b) => groups.indexOf(a.group) - groups.indexOf(b.group))
-      .map((x) => ({ w: x.words[0], key: "w:" + x.id, answered: said.includes(x.id) }));
+      .map((x) => ({ w: x.words[0], key: "w:" + x.id, answered: said.includes(x.id),
+                     silent: quiet && !x.changes }));
   };
   // what a section can be asked, and how it is answered
   // WHAT ONE SECTION SOUNDS LIKE, in one place: the pruner uses it to drop
@@ -4142,16 +4353,68 @@
       s0.voice ? [s0.voice.phrase, genreSig(s0.voice.genre)] : null]);
   }
 
+  /* ---------- THE TWO SECTION ROWS THAT COST NOTHING ----------------------
+     A section question is pruned by composing the section once per option,
+     and MOST of them have to be: measured over 30 records and 12 rolls,
+     sixteen of the eighteen rows really do drop options, because the table
+     they read from is not the only thing writing where it writes. "The mix"
+     is the clearest case — SECMIX writes `box.lvl`, and so does the ARC
+     when nobody has mixed that section by hand, so two of its words compose
+     to the same box and one of them is rightly not offered.
+
+     Two rows are different, and the tables say why rather than a hand:
+
+       "what happens to it"  SECPIPE writes `g.pipes`, and `g.pipes` has
+                             exactly one other writer — the seeding pass
+                             below it, which stamps the same seeds on
+                             whatever is there. secSigOf prints the genre.
+       "the filter"          SECMOVE writes `box.mot`, which no other table
+                             and no arc touches. secSigOf prints the box.
+
+     So distinct table rows ARE distinct sections there. Both halves of that
+     are checked at load — the rows differ, and the keys are the row's own —
+     so a table that grows a duplicate, or a `lvl` in SECMOVE, puts the
+     question back on the expensive path instead of quietly answering it
+     wrong. */
+  const tableDistinct = (t, of) => {
+    const seen = new Set();
+    for (const v of Object.values(t)) {
+      const k = JSON.stringify(of(v) === undefined ? null : of(v));
+      if (seen.has(k)) return false;
+      seen.add(k);
+    }
+    return true;
+  };
+  const boxKeys = (t) => new Set(Object.values(t)
+    .flatMap((v) => Object.keys(v.box || {})));
+  const SECFREE = new Set([
+    ...(tableDistinct(SECPIPE, (v) => v.p) ? ["pipe"] : []),
+    ...(tableDistinct(SECMOVE, (v) => v.box) &&
+        ![...boxKeys(SECMOVE)].some((k) => boxKeys(SECMIX).has(k) || k === "lvl")
+        ? ["move"] : []),
+  ]);
+
   const sectionAsks = (m, i, raw) => {
     const per = partOf(m, i);
     // ...and the same law as the chairs': an option that would make the
     // identical section is not an option, and a question left with one is
     // not asked. (The signature here is the SECTION's, not the first one's.)
     const secSig = (mm) => secSigOf(mm, i);
+    // ...asked ONCE. What this section sounds like right now is the same
+    // answer for all eighteen questions about it, and it was being composed
+    // eighteen times a draw.
+    const now = secSig(m);
     const prune = (a) => {
-      const now = secSig(m), seen = new Map();
+      if (SECFREE.has(a.id)) return a;   // distinct by construction (below)
+      const seen = new Map();
       const opts = a.opts.filter((o) => {
         if (o.answered) return true;
+        // a word that changes nothing about this player composes the
+        // identical section — no need to compose it to find out. (It is
+        // dropped rather than remembered, exactly as `sg === now` below
+        // drops it, so the dedupe map sees the same words in the same
+        // order it always did.)
+        if (o.silent) return false;
         let sg; try { sg = secSig(setSection(m, i, a.id, o.key)); } catch (e) { return true; }
         if (sg === now || seen.has(sg)) return false;
         seen.set(sg, o.w); return true;

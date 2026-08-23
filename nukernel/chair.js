@@ -193,12 +193,20 @@
      law, and the page reaches for .apply on the row). Collapsing them would
      have changed what a gate sees, so both are here, named for what they
      carry. */
-  const catalogSlimOf = (V) => (m) => Object.values(V).map((i) => {
-    let changes = false, active = false;
-    try { changes = !!i.when(m) && JSON.stringify(i.apply(m)) !== JSON.stringify(m); } catch (e) {}
-    try { active = !!i.is(m); } catch (e) {}
-    return { id: i.id, group: i.group, words: i.words, changes, active };
-  });
+  const catalogSlimOf = (V) => (m) => {
+    // THE MODEL IS STRINGIFIED ONCE. It cannot move while its own tray is
+    // being drawn, and this line was re-stringifying it per word — measured
+    // as one of the five hottest frames in the box, for an answer that is
+    // the same every time it is asked.
+    let mine = null;
+    const meNow = () => (mine == null ? (mine = JSON.stringify(m)) : mine);
+    return Object.values(V).map((i) => {
+      let changes = false, active = false;
+      try { changes = !!i.when(m) && JSON.stringify(i.apply(m)) !== meNow(); } catch (e) {}
+      try { active = !!i.is(m); } catch (e) {}
+      return { id: i.id, group: i.group, words: i.words, changes, active };
+    });
+  };
   const catalogFullOf = (V) => (m) => Object.values(V).map((i) => {
     let active = false, changes = false;
     try { active = !!i.is(m); } catch (e) {}
