@@ -261,6 +261,54 @@ function meterOf(steps) {
 // how far apart the beam breaks go: four sixteenths to a beat in simple time,
 // six (three eighths) in compound. Both absent = the derived 3/4-or-4/4 and
 // beaming by the quarter, which is every staff this file has ever drawn.
+//
+// ---- BEAMS ARE WHITESPACE (2026-08-23, Paul: "can you connect eighth notes
+// and so forth?") -----------------------------------------------------------
+// In ABC, notes written ADJACENT are drawn under one beam and a SPACE breaks
+// it. So beaming is not a renderer option we can ask for; it is a property of
+// the string this file emits, and the only question is where the spaces go.
+//
+// THE RULE IS METRICAL, AND IT IS THE BEAT: notes are grouped by which
+// `beam`-step beat of the bar their ONSET falls in, and a space is written
+// only where that beat CHANGES. In 4/4 and 3/4 the beat is the quarter (four
+// sixteenths, `beam` 4 — chair.js METS); in 6/8 it is the dotted quarter
+// (six sixteenths, `beam` 6), which draws the two groups of three a 6/8 bar
+// is heard in. The beat is read off the ONSET rather than off every step
+// boundary, so a note that STRADDLES a beat carries its group along with it
+// (an eighth on the "and" of two beams with the two before it, and the next
+// note — landing in beat three — starts a new group), which is what a hand
+// engraver does and what "one long run per bar" and "a flag on every note"
+// both get wrong.
+//
+// THE BUG THIS REPLACES, written down so it cannot come back: the break test
+// used to be `Math.max(1, opts.beam | 0) || 4`, and `Math.max(1, 0)` is 1 —
+// truthy, so the `|| 4` fallback NEVER RAN and every staff without an
+// explicit meter beamed in groups of ONE. Groups of one step are a space
+// between every note, which is exactly a page of loose flags. The default is
+// now taken by asking whether the option is positive, not by asking whether
+// the clamp is falsy.
+//
+// TIES SURVIVE IT. A tie is a mark on a note (`-`), not a token of its own,
+// so a tied pair that happens to span a group boundary is still one note in
+// two places; ties across a barline and across a line break are unchanged.
+
+// ---- TWO BARS A LINE, BECAUSE A PHONE IS 390 PX WIDE ----------------------
+// (2026-08-23, Paul: "make the music no wider than two measures on a phone
+// it's hard to read".) The page engraves with abcjs `responsive: "resize"`,
+// which scales a system to the container's width — so a long system does not
+// overflow, it SHRINKS, and four bars of sixteenths on a phone arrive as a
+// grey smear. The line break is the fix, and in ABC a newline in the tune
+// body IS a line break, so it is this file's job like the beams are.
+//
+// TWO EVERYWHERE, not two-on-a-phone: this module is pure — no DOM, no
+// window, no measurement — which is what lets the pure-node gates compile a
+// staff and what keeps one string the single source of the glyph map. A
+// viewport-derived count would have to come IN as a number (`opts.barsPerLine`
+// below takes one, and re-engraving on resize is the caller's business), or
+// out of the renderer's own `wrap`/`staffwidth` options, which live in the
+// renderAbc call and not here. So the default is the number that reads on the
+// narrow screen, and the knob is there for a caller that knows better.
+const BARS_PER_LINE = 2;
 
 // ---- the compiler ----------------------------------------------------------
 // toABC(phrase, opts) -> ABC string.
@@ -272,7 +320,8 @@ function meterOf(steps) {
 //           identity, and a staff full of per-note marks says less, not
 //           more. `hold` is present-only: a note's explicit length in steps
 //           (the tie mark / a sentence's carry), outranking maxHold below.
-//   opts    { key, mode, bpm, label, maxHold, stepsPerBar, reg }
+//   opts    { key, mode, bpm, label, maxHold, stepsPerBar, reg,
+//             abc, beam, barsPerLine }
 //     key         signed semitone offset from C (band-kit B.KEYS)   [0]
 //     mode        interval array (genres.js MODES / kernel MODE)    [minor]
 //     bpm         quarter-note tempo for Q:                         [omitted]
@@ -281,6 +330,9 @@ function meterOf(steps) {
 //                 the kernel's own "maxHold makes rests real" law   [none]
 //     stepsPerBar sixteenths per bar                                [16]
 //     reg         whole-octave shift for display                    [0]
+//     abc         the M: signature said outright ("6/8")            [derived]
+//     beam        steps to a beam group — the BEAT                  [4]
+//     barsPerLine bars before the line breaks                       [2]
 //
 // ---- the note timeline, shared -------------------------------------------
 // toNotes(phrase, opts) -> { n, spb, notes: [{ at, len, midi }] } — the same
@@ -366,23 +418,33 @@ function engrave(phrase, opts = {}) {
 
   // Fold the timeline into bars. A note crossing a barline splits and TIES;
   // a rest just splits; a duration that is not one engravable value (a
-  // five-step note) is said as tied pieces, largest first. Spaces land on
-  // beat boundaries (every four sixteenths) so abcjs beams by the beat
-  // instead of one run per bar, and the accidental memory resets at each
-  // barline exactly as a reader's does.
+  // five-step note) is said as tied pieces, largest first. Spaces land where
+  // the BEAT changes (see "BEAMS ARE WHITESPACE" above) so abcjs draws one
+  // beam per beat instead of a flag on every note, and the accidental memory
+  // resets at each barline exactly as a reader's does.
   const out = [];
   const glyphs = [];                          // pitched glyph -> toNotes index
   let cur = "", accState = {}, pos = 0, ni = -1;
 
-  const beam = Math.max(1, opts.beam | 0) || 4;
+  // steps to a beam group: the quarter in simple time, the dotted quarter in
+  // compound. `(x | 0) > 0` and not `Math.max(1, x | 0) || 4` — the clamp is
+  // never falsy, so that spelling silently beamed everything in ones.
+  const beam = (opts.beam | 0) > 0 ? (opts.beam | 0) : 4;
+  let group = -1;               // which beam group the last token in `cur` is in
   const push = (tok) => {
-    const inBar = pos % spb;
-    if (inBar !== 0 && inBar % beam === 0 && cur && !cur.endsWith(" ")) cur += " ";
+    // the group is read off the token's ONSET, so a note straddling a beat
+    // stays with the notes it began among and the next onset opens the
+    // next beam
+    const g = Math.floor((pos % spb) / beam);
+    if (cur && g !== group) cur += " ";
     cur += tok;
+    group = g;
   };
   const advance = (steps) => {
     pos += steps;
-    if (pos % spb === 0 || pos === n) { out.push(cur); cur = ""; accState = {}; }
+    if (pos % spb === 0 || pos === n) {
+      out.push(cur); cur = ""; accState = {}; group = -1;
+    }
   };
 
   let i = 0;
@@ -432,12 +494,14 @@ function engrave(phrase, opts = {}) {
   // higher than written" (verified rendering above)
   head.push("K:" + sigInfo.k + (ott ? " clef=" + OTT_CLEF[String(ott)] : ""));
 
-  // four bars a line, the last bar closed with a final barline; an empty
+  // TWO bars a line (see above — a phone is 390 px and abcjs shrinks rather
+  // than overflows), the last bar closed with a final barline; an empty
   // phrase is still a bar of rest, so the staff always draws
+  const per = (opts.barsPerLine | 0) > 0 ? (opts.barsPerLine | 0) : BARS_PER_LINE;
   const lines = [];
-  for (let b = 0; b < out.length; b += 4)
-    lines.push(out.slice(b, b + 4).join(" | ") +
-               (b + 4 >= out.length ? " |]" : " |"));
+  for (let b = 0; b < out.length; b += per)
+    lines.push(out.slice(b, b + per).join(" | ") +
+               (b + per >= out.length ? " |]" : " |"));
   const abc = head.join("\n") + "\n" + (lines.join("\n") || "z" + spb + " |]") + "\n";
   return { abc, glyphs, notes, n, spb, ottava: ott, wide };
 }

@@ -346,7 +346,18 @@ function loadStaffLib() {
 // section's chords transpose its bars. One table, read by the ABC compiler
 // AND the piano audition, so the two can never disagree either.
 const themeOf = (m, t) => (t === "b" ? m.ideaB : m.idea);
+// HOW MANY BARS FIT ON A LINE, and it is a width question rather than a
+// notation one. Paul: "make the music no wider than two measures on a phone
+// it's hard to read". abc.js is pure — no DOM — so the number arrives from
+// here. Two on a phone; four where there is room, because abcjs scales a
+// system to fill its container, so a two-bar line on a desktop draws
+// noteheads four times the size of a phone's (measured: 14 px at 390, 65 px
+// at 1440). The breakpoint is the width at which four bars still read.
+const barsPerLine = () =>
+  (typeof window !== "undefined" && window.innerWidth < 560) ? 2 : 4;
+
 const themeOpts = (m, t) => ({
+  barsPerLine: barsPerLine(),
   key: Band.B.KEYS[m.song.key] || 0,
   // the arranger's colour answer included (band-kit modeKeyOf: unanswered,
   // minor is still dorian and major still ionian) — the staff and the
@@ -386,6 +397,7 @@ const themeOpts = (m, t) => ({
    transposition and the harmony's conforming are all already in the number.
    The lights ride the same call's glyph map, so the lit index stays true. */
 const playedOpts = (m) => ({
+  barsPerLine: barsPerLine(),
   // key and mode here choose the SIGNATURE only — every pitch arrives as an
   // absolute MIDI number, so nothing about the sound is re-derived
   key: Band.B.KEYS[m.song.key] || 0,
@@ -1170,6 +1182,22 @@ function calledLine() {
   const said = THREE.map((f) => model.song[f]).filter(Boolean).join(" · ");
   return el("p", null,
     (gk ? gk.w : model.song.genre) + (said ? " — " + said : ""));
+}
+
+// A NARROW WINDOW IS A DIFFERENT PAGE, so a resize re-engraves. The staff is
+// the only thing on the page whose SHAPE depends on the viewport (barsPerLine
+// above), and engraveInto only redraws when the ABC string changes — so the
+// cached signature is cleared first or a rotated phone keeps a desktop's
+// four-bar lines. Debounced, because a drag fires this continuously.
+if (typeof window !== "undefined") {
+  let rsz = null, wasWide = null;
+  window.addEventListener("resize", () => {
+    const wide = barsPerLine();
+    if (wide === wasWide) return;          // only a crossing matters, not every pixel
+    wasWide = wide;
+    clearTimeout(rsz);
+    rsz = setTimeout(() => { staffSig = ""; draw(); }, 150);
+  });
 }
 
 function draw() {
