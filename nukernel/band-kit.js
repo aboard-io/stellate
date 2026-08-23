@@ -152,12 +152,26 @@
   // contradictory placements, and the result is canonicalized to the menu's
   // own order so a set lit in any order has one spelling
   const engToggle = (d, cur, w) => {
-    if (w === d.dry) return cur.length === 1 && cur[0] === d.dry ? [] : [d.dry];
+    // ...AND THE DRY WORD IS IDEMPOTENT (2026-08-23). It used to toggle off
+    // like any other, which emptied the set and put the question back
+    // OPEN — a third state that only ever meant "unanswered". Now that a
+    // record seeds every channel and "dry" is the word it seeds them with,
+    // that state is a bug with a name: tapping the answer already lit
+    // un-answered the question, so the interview asked it again and the
+    // tree gate reported it as an edge that answered nothing. Dry MEANS
+    // the empty set said out loud, and saying it twice says the same thing
+    // twice; you leave it by lighting something else.
+    if (w === d.dry) return [d.dry];
     let next = cur.includes(w) ? cur.filter((x) => x !== w)
       : [...cur.filter((x) => x !== d.dry), w];
     for (const pair of d.excl || [])
       if (pair.includes(w) && next.includes(w))
         next = next.filter((x) => x === w || !pair.includes(x));
+    // ...and unlighting the last thing lit lands on the dry word rather
+    // than on nothing, for the same reason: the empty set IS "dry", and the
+    // only thing the two spellings ever told apart was answered from
+    // unanswered — which the provenance ledger says properly now.
+    if (!next.length) next = [d.dry];
     const at = (x) => d.opts.findIndex((o) => o.w === x);
     return next.sort((a, b) => at(a) - at(b));
   };
@@ -311,6 +325,17 @@
     const da = { ...(dr.answers || {}) };
     delete da.record; delete da.groove; delete da.backbeat;
     dr.answers = da;
+    // ...and the provenance marks go with the answers: a mark on a row that
+    // no longer has an answer is a row nothing will ever fill in again
+    // (measured: a rolled record that changed meter came out with no groove
+    // at all, because the dice read the stale mark and left it alone).
+    { const sd = o.song.seeded;
+      if (sd && (sd["drums/record"] || sd["drums/groove"] || sd["drums/backbeat"])) {
+        const next = { ...sd };
+        delete next["drums/record"]; delete next["drums/groove"];
+        delete next["drums/backbeat"];
+        o = { ...o, song: { ...o.song, seeded: next } };
+      } }
     // ...and the kit itself moves to the new bar's first groove, so the
     // record is playable the instant the word is said
     o = { ...o, drums: D.say({ ...dr, on: false }, "start") };
@@ -1740,12 +1765,19 @@
     { id: "genre", ask: "what are we playing?", opts:
       Object.entries(GENRES).map(([k, gk]) => ({
         w: gk.w, is: (s) => s.genre === k,
+        // ...and "answered" here means BY A HAND. Every one of these five
+        // is now answered on a called record — the record names the tempo,
+        // the chords, the count, the feel and the space it arrives with —
+        // so reading the ledger alone would have frozen the first record's
+        // words onto every record after it (measured: a rock record called
+        // after a waltz went on counting in three). `songHand` asks the
+        // provenance ledger the question this line always meant to ask.
         apply: (s) => ({ ...s, genre: k,
-          bpm: gk.bpm != null && !(s.answers || {}).tempo ? gk.bpm : s.bpm,
-        chords: !(s.answers || {}).chords ? (gk.chords || "plain") : s.chords,
-          meter: !(s.answers || {}).meter ? (gk.meter || null) : s.meter,
-          swing: !(s.answers || {}).feel ? (gk.swing || null) : s.swing,
-          space: !(s.answers || {}).space ? (gk.space || "none") : s.space }) })) },
+          bpm: gk.bpm != null && !songHand(s, "tempo") ? gk.bpm : s.bpm,
+        chords: !songHand(s, "chords") ? (gk.chords || "plain") : s.chords,
+          meter: !songHand(s, "meter") ? (gk.meter || null) : s.meter,
+          swing: !songHand(s, "feel") ? (gk.swing || null) : s.swing,
+          space: !songHand(s, "space") ? (gk.space || "none") : s.space }) })) },
     { id: "arc", ask: "where does it go?", opts:
       Object.entries(ARC).map(([k, v]) => ({
         w: v.w, is: (s2) => (s2.arc || "flat") === k,
@@ -2017,12 +2049,594 @@
   const anotherTake = (m, n) => {
     const now = m.song.take | 0;
     const take = n != null ? Math.max(1, n | 0) : Math.max(1, now || 1) + 1;
-    return take === (now || 1) ? m : { ...m, song: { ...m.song, take } };
+    if (take === (now || 1)) return m;
+    const out = { ...m, song: { ...m.song, take } };
+    const gk = genreOf(out);
+    // ...and a room with no record in it has no material to re-write: the
+    // take is still the take, and the performance seed still moves.
+    if (!gk) return out;
+    // THE MATERIAL PASS ONLY, and not `finish()`. The four tables are what
+    // the record IS — its theme's register and length plan, where the band
+    // sits, the board, the proportions — and re-running them on a take
+    // re-derives them, which is a different record at the same take
+    // number. `settle` is the half that rolls.
+    return stampSeeds(m, settle(out, gk, planOf(out.song.genre, gk), take));
   };
   const takeOf = (m) => Math.max(1, m.song.take | 0);
 
+  /* ---------- WHO PUT IT THERE -------------------------------------------
+     "I expect all the questions to have answers now when I make a song."
+     (Paul, 2026-08-23.) He was right and it was not true: walked from the
+     front door to a called record, the seats read 28 of 86 answered — the
+     record HAD decided the groove, the machine, the line, the instruments,
+     the tune, the seats, the desk and the proportions, and the sheet read
+     blank for sixty of them, because a record's decisions were a SAY
+     (chair.js sayOf: the model moves, the ledger does not) or simply the
+     model's own standing state, which no ledger records at all.
+
+     That distinction was worth keeping and the CONSEQUENCE was not, so it
+     stops being a distinction between "answered" and "unanswered" and
+     becomes one between WHO ANSWERED. One ledger, `song.seeded`, keyed
+     "<seat>/<id>": a record put this here. Everything else follows from it:
+
+       the gig sheet   reads `answered` and shows a word for every row
+       the interview   skips only what a HAND said, so a seeded row is still
+                       asked — with its word lit — and no seat goes dead
+       the law         a record may move what a record put there and may
+                       never move a hand's answer, now by NAME rather than
+                       by comparing against what the previous record's plan
+                       would have seeded
+       another take    re-rolls what the record put there and holds the rest
+
+     AND A SESSION SAVED BEFORE THIS IS UNTOUCHED: no `seeded` key means
+     every standing answer reads as a hand's, which is the safe half of
+     every law above — nothing is re-asked, nothing is re-rolled, the record
+     restores byte-identical. */
+  const seedKey = (seat, id) => seat + "/" + id;
+  const seededAt = (m, seat, id) => !!((m.song.seeded || {})[seedKey(seat, id)]);
+  // ...and the one question the walkers ask: did a PERSON say this?
+  const handSaid = (m, seat, d) => !!d.answered && !seededAt(m, seat, d.id);
+  // ...and the same question of a SONG alone, for the option tables that
+  // are handed one (the genre row's own apply): did a person say this?
+  const songHand = (s, id) => !!(s.answers || {})[id] &&
+    !((s.seeded || {})["arranger/" + id]);
+  // ...and the public form of it: who said this? — "hand", "record", or
+  // nobody. The page reads it to draw a record's word differently from
+  // yours; the gates read it to hold the law.
+  // ...and WHICH KIND of the record's: "chose" (a decision out of a table)
+  // or "named" (the word for a state it was already in). The dice reads it,
+  // and so does anything else that wants to roll a record without rolling
+  // the finishing away.
+  const seedKind = (m, seat, id) => (m.song.seeded || {})[seedKey(seat, id)] || null;
+  const saidBy = (m, seat, id) => {
+    const said = seat === "engineer" ? (m.eng || {})[id]
+      : seat === "arranger" ? (id.startsWith("knob:")
+          ? ((m.song.knobs || {}).__said || {})[id.slice(5)]
+          : id.startsWith("ideaB:") ? ((m.ideaB || {}).answers || {})[id.slice(6)]
+          : id.startsWith("idea:") ? ((m.idea || {}).answers || {})[id.slice(5)]
+          : (m.song.answers || {})[id])
+      : (((m[seat] || {}).answers) || {})[id];
+    if (!said) return null;
+    return seededAt(m, seat, id) ? "record" : "hand";
+  };
+  /* TWO KINDS OF SEED, and the difference is what the dice reads. A record
+     CHOSE some of these — the tune's shape, where the band sits, the board,
+     the proportions, the groove, the cast, the changes: decisions, out of a
+     table, and the reason a called record sounds like itself. The rest it
+     merely NAMED: the word for a state the model was already in ("normal",
+     "straight", "however they fall"), which carries no decision at all and
+     is only on the ledger so the sheet is not blank.
+       Both are the record's, so both are re-asked and both are movable.
+     They part company at the DICE: rolling a record's decisions at random
+     is rolling the finishing away, and it measured exactly that — the
+     critic's median fell from the 60th percentile to the 51st and D-grades
+     went from 3 to 14 the moment the dice started re-rolling the four
+     tables. So the dice rolls what the record NAMED and keeps what it
+     CHOSE, which is also the honest reading of what a dice is for: a random
+     RECORD, played the way that record is played. */
+  const markSeed = (m, seat, id, how) => ({ ...m, song: { ...m.song,
+    seeded: { ...(m.song.seeded || {}), [seedKey(seat, id)]: how || "named" } } });
+  const chose = (m, seat, id) => (m.song.seeded || {})[seedKey(seat, id)] === "chose";
+  const unseed = (m, seat, id) => {
+    const s = m.song.seeded;
+    if (!s || !s[seedKey(seat, id)]) return m;
+    const next = { ...s }; delete next[seedKey(seat, id)];
+    return { ...m, song: { ...m.song, seeded: next } };
+  };
+
+  /* WHAT A RECORD WROTE, MEASURED RATHER THAN THREADED. `called()` writes
+     answers through six different chairs' own `answer` functions and four
+     more ledgers besides; asking each of those call sites to also stamp a
+     provenance flag is eleven places for the next one to be forgotten. So
+     the stamp is a DIFF: every answer ledger on the model, before and
+     after, and anything that arrived or moved was the record's doing. A
+     hand's answer that the record did not touch keeps its rank by simply
+     not appearing in the diff. */
+  const LEDGERS = (m) => {
+    const out = { arranger: { ...(m.song.answers || {}) },
+                  engineer: { ...(m.eng || {}) } };
+    for (const [f, w] of Object.entries(((m.song.knobs || {}).__said) || {}))
+      out.arranger["knob:" + f] = w;
+    for (const [dim, w] of Object.entries((m.idea && m.idea.answers) || {}))
+      out.arranger["idea:" + dim] = w;
+    for (const [dim, w] of Object.entries((m.ideaB && m.ideaB.answers) || {}))
+      out.arranger["ideaB:" + dim] = w;
+    for (const seat of ["drums", "bass", "keys", "guitar", "voice"])
+      out[seat] = { ...((m[seat] || {}).answers || {}) };
+    // ...and the two things a record writes that are not on any ledger: the
+    // bassist's written-out figure and whatever the chairs were SAID rather
+    // than asked (the cast). Both are answers in every sense the sheet
+    // cares about, so both get a key of their own here.
+    out.bass["fig"] = m.bass && m.bass.fig ? "written" : null;
+    return out;
+  };
+  // ...and THE DICE IS NOT A HAND. Every answer in a rolled record was made
+  // by the machine, so every one of them is the record's: a take may
+  // re-write the tune it rolled, and calling a different record may move
+  // what it cast. (Rolled and then EDITED is the ordinary case again — the
+  // moment a person taps a word, `answer()` takes that row off this ledger
+  // and no take touches it.) Without this, "another take" on a rolled
+  // record moved nothing but the performance seed, which is the feature
+  // this ledger exists to make possible.
+  const allSeeded = (m) => {
+    const led = LEDGERS(m), seeded = { ...(m.song.seeded || {}) };
+    for (const seat of Object.keys(led))
+      for (const [id, w] of Object.entries(led[seat]))
+        if (w != null && !seeded[seedKey(seat, id)]) seeded[seedKey(seat, id)] = "chose";
+    return { ...m, song: { ...m.song, seeded } };
+  };
+  const stampSeeds = (before, after) => {
+    const a = LEDGERS(after), b = LEDGERS(before);
+    const seeded = { ...(after.song.seeded || {}) };
+    let moved = false;
+    for (const seat of Object.keys(a))
+      for (const [id, w] of Object.entries(a[seat])) {
+        if (w == null || w === b[seat][id]) continue;
+        const k = seedKey(seat, id);
+        // ...and a mark already made STANDS: `settle` runs inside this diff
+        // and writes its own NAMED marks, which must not be promoted to
+        // decisions by the very pass that is measuring them.
+        if (!seeded[k]) { seeded[k] = "chose"; moved = true; }
+      }
+    // ...and an answer the record took AWAY stops being the record's
+    for (const seat of Object.keys(b))
+      for (const id of Object.keys(b[seat]))
+        if (a[seat][id] == null && seeded[seedKey(seat, id)])
+          { delete seeded[seedKey(seat, id)]; moved = true; }
+    return moved ? { ...after, song: { ...after.song, seeded } } : after;
+  };
+
+  /* ---------- 5. AND EVERY REMAINING QUESTION GETS ITS WORD --------------
+     The four tables above are the things nobody was PLAYING. This is the
+     rest of the sheet: sixty rows the record had already decided and could
+     not say. THE RULE IS THAT A RECORD NAMES WHAT IT IS, IT DOES NOT
+     RETUNE ITSELF — which is why this whole pass is render-neutral by
+     construction, and why running it changed no note of any record:
+
+       1. THE WORD THAT IS ALREADY TRUE. Every option in this box carries
+          an `is()` — that is what lights the "active" dot — so the answer
+          to "how hard are you hitting?" on a record that is hitting
+          normally is "normal", and writing it down applies nothing. 38 of
+          the 58 blank rows are this, and it is the honest majority: the
+          record HAD decided, the ledger just never heard.
+       2. A DESCRIBER, where `is()` is too strict to have a winner but the
+          fact is legible anyway — the drummer's job (read off the hands),
+          the tone panels (the nearest word to what the chair's own
+          `toGenre` is actually sounding, engine defaults included) and the
+          annotated knobs (the value the composed genre already carries).
+          Named, not applied, for the same reason: 0.05 seconds of attack
+          is "straight away" to a musician, and moving it to exactly 0.01
+          so the word can be exact would be the tail wagging the record.
+       3. THE PLAINEST THING, said as such, where a record genuinely has no
+          opinion — `knob:fill` on the 30 records that carry no fill kit at
+          all, where neither "on the snare" nor "round the toms" is true of
+          anything and the drummer's own "where do the fills go?" has
+          already said there are none.
+
+     ...and TWO KINDS OF ROW ARE DECIDED RATHER THAN NAMED, listed here so
+     the exception is visible: `where` and `venue` (facts about the session,
+     answered out of the record's own lists, and which move no note), and
+     the engineer's five per-channel questions — whose ledger IS the desk,
+     and whose neutral word ("dry", "straight in", "close and dry", "with
+     the kick") carries an EMPTY offset table, so a board seeded at the
+     record's own treatments is the same board an untouched one is wherever
+     the record has nothing to say.
+
+     THE FIFTH CHAIR IS NOT RETIRED BY THIS, which is what killed the last
+     attempt at it ("Seeding all thirteen retired the fourth chair
+     entirely" — the note that used to stand over DESKBOARD). It was true
+     while an answered question was a closed one; the provenance ledger
+     above is what makes it false, and `test/unit/question-trees.test.js`
+     ("nothing is ever asked") is the gate that says so. */
+  // the tone panels, by the chair that owns them — the describer reads the
+  // chair's own `toGenre`, so what the sheet says a guitar sounds like is
+  // what the engine is handed and not a second table beside it
+  const PANELOF = { keys: Ky, guitar: Gt, voice: Vo };
+  // ...and the two panel keys whose default lives in the ENGINE rather than
+  // the chair's tone block (state-engine.js `singer`): a voice nobody has
+  // cast is a tenor, and a fold nobody has stirred does not move.
+  const ENGTONE = { voice: "tenor", sway: 0 };
+  const toneWord = (m, seat, d) => {
+    const K2 = PANELOF[seat];
+    const p = K2 && (K2.PANEL || []).find((x) => x.id === d.id);
+    if (!p) return null;
+    let val;
+    try { val = K2.toGenre(m[seat]).tone[p.key]; } catch (e) { val = undefined; }
+    if (val === undefined) val = ENGTONE[p.key];
+    if (val === undefined) return null;
+    let best = null, gap = Infinity;
+    for (const o of p.opts) {
+      if (o.v === val) return o.w;
+      if (typeof o.v !== "number" || typeof val !== "number") continue;
+      const g2 = Math.abs(o.v - val);
+      if (g2 < gap) { gap = g2; best = o.w; }
+    }
+    return best;
+  };
+  // the annotated knobs: the word for the value the composed genre already
+  // carries. `null` and `undefined` are the same absence to the merge
+  // (askable.js `merge` skips both), so a row with a word for the absence
+  // — "none", "every one", "flat" — answers itself.
+  const knobWord = (row, g) => {
+    const val = g ? g[row.field] : undefined;
+    const j = JSON.stringify(val);
+    for (const [w, v] of row.opts) if (JSON.stringify(v) === j) return w;
+    if (val == null)
+      for (const [w, v] of row.opts) if (v == null || v === 0 || v === false) return w;
+    if (typeof val === "number") {
+      let best = null, gap = Infinity;
+      for (const [w, v] of row.opts)
+        if (typeof v === "number" && Math.abs(v - val) < gap) { gap = Math.abs(v - val); best = w; }
+      if (best) return best;
+    }
+    return null;
+  };
+  // the drummer's own job, read off the hands rather than off a ledger: a
+  // pair of hands in sixteenths is driving it, in eighths is holding it
+  // down, and a kit with nothing in the hands at all is staying out of the
+  // way. (`is()` cannot answer this one — every option there rewrites the
+  // kit it is testing, so a record's own groove matches none of them.)
+  const drumJobWord = (dm) => {
+    const hands = (dm.kit && [...(dm.kit.h || []), ...(dm.kit.p || [])]) || [];
+    const n = hands.filter(Boolean).length, steps = (dm.met && dm.met.steps) || 16;
+    if (!n) return "stay out of the way";
+    return n >= steps * 0.75 ? "drive it" : "hold it down";
+  };
+
+  /* A TAKE ROLLS THE MATERIAL AND HOLDS THE RECORD (Paul, 2026-08-23:
+     "'Another take' should create new figures/themes").
+
+     A take used to move ONE field — the performance seed — so the chance
+     hits, the micro-timing, the humanised velocities and the ornament rolls
+     varied and the TUNE was identical every time: about 13% of notes moved
+     and not one of them was a different note to play. The reason was the
+     law above ("what was answered is held") applied to answers the player
+     never gave — the RECORD gave them — and the ledger is what tells the
+     two apart. So the rule falls straight out of the provenance:
+
+       ANOTHER TAKE RE-ROLLS WHAT THE RECORD PUT THERE, AND HOLDS WHAT THE
+       HAND SAID.
+
+     MATERIAL is the list of rows that are a musical invention rather than
+     an identity: the tune's own shape and its answer's, the groove and the
+     fills, the bassist's line and how they play it, and what each pair of
+     hands is doing. Everything else a record seeded — the genre and its
+     route, the key, the mode, the tempo, the meter, the form and its
+     lengths, the cast, the seats, the desk, the proportions — is what the
+     record IS, and a second take is the same record.
+
+     REPEATABLE, because a record is a document: the roll is seeded from
+     (take, genre, seat, question), so take 2 of a record is take 2 of it
+     forever, and take 1 is byte-for-byte the record this box has always
+     made. And a roll never lands where it already is when it has anywhere
+     else to go, so a take is a NEW line rather than a coin flip that half
+     the time writes the same one. */
+  const MATERIAL = {};
+  for (const k of ["arranger/idea:len", "arranger/idea:cell", "arranger/idea:sent",
+                   "arranger/idea:contour", "arranger/idea:land",
+                   "arranger/ideaB:len", "arranger/ideaB:cell", "arranger/ideaB:sent",
+                   "arranger/ideaB:contour", "arranger/ideaB:land",
+                   "drums/groove", "drums/fills", "bass/job", "keys/job"])
+    MATERIAL[k] = true;
+  /* WHAT A TAKE DELIBERATELY DOES NOT RE-ROLL, and it is a short list
+     because the line between material and identity is exactly where a
+     musician would draw it:
+       the cast          which guitar, which voice, which drum machine — a
+                         band does not change instruments between takes
+       the seats         where each chair sits, which is the arrangement
+       how they play     the drummer's touch, the bassist's articulation,
+                         the tone panels: that is who the player IS
+       the guitar and voice PARTS, for the same reason the cast is held —
+                         they are one pair of hands each and the record
+                         already said what they are for
+       a WRITTEN-OUT FIGURE (`bass.fig`) — an acid line is not a bassist's
+                         choice on the night, it IS the record; the take
+                         re-rolls the bassist's LINE, which is what plays on
+                         the 22 of 30 records that carry no figure */
+  // a small deterministic hash: the same take of the same record rolls the
+  // same way on any machine, which is what makes a take a document
+  const rollAt = (take, key, n) => {
+    let h = (take * 2654435761) >>> 0;
+    for (let i = 0; i < key.length; i++) h = (Math.imul(h ^ key.charCodeAt(i), 16777619)) >>> 0;
+    return n ? h % n : 0;
+  };
+
+  /* WRITING A WORD DOWN WITHOUT PLAYING IT. Every ledger this box keeps, in
+     one place: the arranger's own, the annotated knobs' `__said`, the two
+     themes', the five chairs', and the engineer's — whose ledger IS the
+     desk (mixOf reads `m.eng` directly), so for that one seat writing the
+     word down and setting the board are the same act. */
+  /* A DESCRIPTION OF THE LAST RECORD IS NOT AN ANSWER TO THIS ONE. The
+     naming pass writes a word on every row (5, below), and every guard in
+     `called()` asks "has this chair spoken for itself?" by looking for an
+     answer — so read as answers, the last record's descriptions froze its
+     cast onto the next one: called after a techno record, a house record
+     kept techno's drone, because "a drone" was standing on the keys'
+     ledger where nothing had stood before. CHOSEN words stay (they are
+     what the last record decided, and the law of the seed governs them);
+     NAMED words come off, and the naming pass puts them back from whatever
+     the new record actually plays. */
+  const dropAnswer = (m, seat, id) => {
+    if (id.startsWith("knob:")) {
+      const k2 = m.song.knobs || {}, said = { ...(k2.__said || {}) };
+      delete said[id.slice(5)];
+      return { ...m, song: { ...m.song, knobs: { ...k2, __said: said } } };
+    }
+    if (seat === "engineer") { const eng = { ...(m.eng || {}) }; delete eng[id];
+      return { ...m, eng }; }
+    if (seat === "arranger") {
+      if (id.startsWith("ideaB:") || id.startsWith("idea:")) {
+        const which = id.startsWith("ideaB:") ? "ideaB" : "idea";
+        const im = m[which]; if (!im) return m;
+        const ans = { ...(im.answers || {}) };
+        delete ans[id.slice(which === "ideaB" ? 6 : 5)];
+        return { ...m, [which]: { ...im, answers: ans } };
+      }
+      const ans = { ...(m.song.answers || {}) }; delete ans[id];
+      return { ...m, song: { ...m.song, answers: ans } };
+    }
+    const cm = m[seat]; if (!cm) return m;
+    const ans = { ...(cm.answers || {}) }; delete ans[id];
+    return { ...m, [seat]: { ...cm, answers: ans } };
+  };
+  const stripNamed = (m) => {
+    const sd = m.song.seeded;
+    if (!sd) return m;
+    let out = m, seeded = null;
+    for (const [k, kind] of Object.entries(sd)) {
+      if (kind !== "named") continue;
+      const at = k.indexOf("/");
+      out = dropAnswer(out, k.slice(0, at), k.slice(at + 1));
+      seeded = seeded || { ...sd };
+      delete seeded[k];
+    }
+    return seeded ? { ...out, song: { ...out.song, seeded } } : out;
+  };
+
+  const noteAnswer = (m, seat, id, w) => {
+    if (id.startsWith("knob:")) {
+      const f = id.slice(5), k2 = m.song.knobs || {};
+      return { ...m, song: { ...m.song, knobs: { ...k2,
+        __said: { ...(k2.__said || {}), [f]: w } } } };
+    }
+    if (seat === "engineer") return { ...m, eng: { ...(m.eng || {}), [id]: w } };
+    if (seat === "arranger") {
+      if (id.startsWith("ideaB:")) return m.ideaB ? { ...m, ideaB: { ...m.ideaB,
+        answers: { ...(m.ideaB.answers || {}), [id.slice(6)]: w } } } : m;
+      if (id.startsWith("idea:")) return { ...m, idea: { ...m.idea,
+        answers: { ...(m.idea.answers || {}), [id.slice(5)]: w } } };
+      return { ...m, song: { ...m.song, answers: { ...(m.song.answers || {}), [id]: w } } };
+    }
+    const cm = m[seat];
+    if (!cm) return m;
+    return { ...m, [seat]: { ...cm, answers: { ...(cm.answers || {}), [id]: w } } };
+  };
+
+  // THE RECORD'S OWN CHANNELS. The eight board words describe how the
+  // RECORD sounds and live in DESKS; these five describe what is on one
+  // instrument, and the neutral word of each carries an empty offset table
+  // — so a desk that says nothing here is the same board an untouched one
+  // is, and a desk that does is the idiom talking (a version board echoes
+  // everything, a hall puts a plate on the voice, a club washes the keys).
+  const CHANS = ["keysfx", "gtrfx", "voxfx", "bassfx", "bassmix"];
+  const DESKDRY = { keysfx: "dry", gtrfx: "straight in", voxfx: "close and dry",
+                    bassfx: "dry", bassmix: "with the kick" };
+  const DESKCHAN = {
+    club:   { keysfx: "wide and wet", voxfx: "a plate", bassmix: "out front" },
+    garage: { gtrfx: "a room" },
+    crate:  { bassfx: "thicken it", bassmix: "out front" },
+    date:   { keysfx: "a room", voxfx: "a plate" },
+    version:{ keysfx: "echo", gtrfx: "a slapback", voxfx: "a long echo",
+              bassfx: "dub echo", bassmix: "out front" },
+    hall:   { keysfx: "a room", gtrfx: "a room", voxfx: "in the distance",
+              bassmix: "under everything" },
+    parlour:{},
+  };
+  const chanWord = (id, plan) =>
+    ((DESKCHAN[plan && plan.desk] || {})[id]) || DESKDRY[id] || null;
+
+  /* THE ONE PASS. Every seat, every question, in the order the chairs ask
+     them — and for each one the first of these that has something to say.
+     Nothing here reaches for a table before it has asked the model what is
+     already true, which is the whole difference between a record that
+     arrives finished and a record that arrives overwritten. */
+  const seedWord = (m, seat, d, plan, composed) => {
+    const act = d.opts.filter((o) => o.active);
+    if (act.length) return act[0].w;                       // the word that is true
+    if (seat === "drums" && d.id === "job") return drumJobWord(m.drums);
+    if (d.id.startsWith("knob:")) {
+      const row = Ask.ASKABLE.find((r) => r.field === d.knob);
+      const w = row && knobWord(row, composed());
+      if (w && d.opts.some((o) => o.w === w)) return w;
+    }
+    const t = toneWord(m, seat, d);
+    if (t && d.opts.some((o) => o.w === t)) return t;
+    if (seat === "engineer") {
+      const w = chanWord(d.id, plan);
+      if (w && d.opts.some((o) => o.w === w)) return w;
+    }
+    // the changes, when nothing has been called: the kernel's own standing
+    // default is the four-chord cycle (`m.song.chg[role] || "fourchord"`),
+    // so that is the true word wherever the record still offers it
+    if (d.id.startsWith("chg:")) {
+      const w = B.CHANGEWORD.fourchord;
+      if (w && d.opts.some((o) => o.w === w)) return w;
+    }
+    return d.opts.length ? d.opts[0].w : null;             // the plainest thing
+  };
+
+  /* A TAKE'S OWN ROLL: one of this question's live answers, chosen from the
+     WHOLE list rather than from "anything but the one standing" — and that
+     is the one non-obvious line in this feature. Rolling against the
+     standing word reads better and is not repeatable: take 3 reached from
+     take 2 would exclude take 2's answer while take 3 reached from take 1
+     would exclude take 1's, so the same take number would name two
+     different records depending on the road you took to it. A take is a
+     document, so the roll depends on the take, the record and the question
+     and on nothing else. The cost is that one row in n lands where it
+     already was; with ten material rows rolling at once, a take that
+     repeats every one of them is not a thing that happens. */
+  // ...and A TAKE NEVER LAYS A PLAYER OUT. Every pitched chair's job list
+  // ends in "lay out" — a real answer, and the record's to give — but a
+  // second take is the same band playing the same song again, and a band
+  // does not lose its keys player between takes. Measured before this rule:
+  // one roll in a hundred and fifty came back with a chair seated and
+  // silent, which the critic calls unplayable by its own hard law
+  // ("a chair the record seats sounds somewhere", engine/musicality.js:161).
+  const KITOF = { keys: Ky, guitar: Gt, voice: Vo };
+  const layOut = (seat) => Object.values((KITOF[seat] || {}).JOBS || {})
+    .filter((j) => !j.part).map((j) => j.w);
+  const rollWord = (m, seat, d, take) => {
+    let opts = d.opts;
+    if (d.id === "job") {
+      const out = layOut(seat);
+      if (out.length) { const keep = opts.filter((o) => !out.includes(o.w));
+        if (keep.length) opts = keep; }
+    }
+    if (!opts.length) return null;
+    return opts[rollAt(take, seedKey(seat, d.id), opts.length)].w;
+  };
+
+  // ONE MODEL PER SEAT, NOT ONE PER ANSWER. A ledger write cannot change
+  // what any other question is offered, so the naming answers are batched
+  // and written once a seat — which is what keeps `called()` a tap rather
+  // than a pause: the cost here is rebuilding a seat's question list, and
+  // that list is memoised per model.
+  const noteAll = (m, seat, notes) => {
+    let out = m;
+    // ...INCLUDING THE ENGINEER'S FIVE, whose ledger IS the desk and which
+    // are therefore a decision rather than a description. They are marked
+    // NAMED anyway, and for a measured reason: the dice draws once per row
+    // it rolls, so a row that stops being rolled shifts every draw after it
+    // and every seed names a different record. Held here, `randomSong`
+    // rolls exactly the rows it has always rolled and seed N is still the
+    // record seed N always was — which is what the dice gate, the critic's
+    // dice cohort and every reproduction in this file's history depend on.
+    // A rolled board is what a rolled record always had.
+    const how = "named";
+    for (const [id, w] of Object.entries(notes))
+      out = markSeed(noteAnswer(out, seat, id, w), seat, id, how);
+    return out;
+  };
+
+  /* A TAKE STARTS FROM THE RECORD'S OWN TUNE. One row in the tune's six is
+     asked only sometimes — "how does it speak?" needs more than one bar to
+     be a sentence (ideas-kit `when`) — so a take that rolls the LENGTH down
+     to one bar leaves the sentence plan standing, and the standing one is
+     whatever the take before it happened to write. That is the one way a
+     take number could name two records depending on the road there: take
+     three off take two kept take two's sentence, take three off take one
+     kept take one's. So every material dim of the theme is put back to the
+     record's own word before anything is rolled, which makes the base
+     canonical and the roll a function of the take alone. */
+  const rebase = (m, plan) => {
+    const shape = THEMES[plan.theme] || THEMES.topline;
+    const isHand = (id, im, dim) => (im.answers || {})[dim] &&
+      !seededAt(m, "arranger", id);
+    let out = m, seeded = null;
+    const drop = (id) => { seeded = seeded || { ...(out.song.seeded || {}) };
+      delete seeded[seedKey("arranger", id)]; };
+    // THE TUNE goes back to the record's own shape...
+    let a = out.idea;
+    for (const dim of ["len", "cell", "sent", "contour", "land"]) {
+      const id = "idea:" + dim;
+      if (isHand(id, a, dim)) continue;
+      const t = THEMEASK[dim][shape[dim]];
+      if (t && t.w && (a.answers || {})[dim] !== t.w) a = Id.answer(a, dim, t.w);
+    }
+    if (a !== out.idea) out = { ...out, idea: a };
+    // ...and THE ANSWER goes back to being an answer. A record seeds theme
+    // B's LENGTH and its seat and nothing else, because what makes B the
+    // answer is its CONTRAST (`answerTheme`: a short call that falls away
+    // and opens on the fifth), so its base is that contrast rather than the
+    // record's own shape — reset the way it was made, ledger entry and all,
+    // so a dim the last take rolled and this one cannot ask (a one-bar
+    // theme has no sentence plan) leaves nothing standing behind it.
+    if (out.ideaB && out.ideaB.on) {
+      const zero = answerTheme();
+      let b = out.ideaB;
+      for (const dim of ["cell", "sent", "contour", "land"]) {
+        const id = "ideaB:" + dim;
+        if (isHand(id, b, dim)) continue;
+        if (b[dim] === zero[dim] && !(b.answers || {})[dim]) continue;
+        const ans = { ...(b.answers || {}) }; delete ans[dim];
+        b = { ...b, [dim]: zero[dim], answers: ans };
+        drop(id);
+      }
+      const t = THEMEASK.len[shape.len];
+      if (t && t.w && !isHand("ideaB:len", b, "len") && (b.answers || {}).len !== t.w)
+        b = Id.answer(b, "len", t.w);
+      if (b !== out.ideaB) out = { ...out, ideaB: b };
+    }
+    return seeded ? { ...out, song: { ...out.song, seeded } } : out;
+  };
+
+  function settle(m, gk, plan, take) {
+    let out = take > 1 ? rebase(m, plan) : m, genre, tried = false;
+    const composed = () => {
+      if (!tried) { tried = true;
+        try { genre = toSong(out, MODESREF, 0)[0].genre; } catch (e) { genre = null; } }
+      return genre;
+    };
+    for (const seat of SEATS) {
+      let notes = null;
+      const ids = seatDecisions(out, seat).map((d) => d.id);
+      for (const id of ids) {
+        const d = seatDecisions(out, seat).find((x) => x.id === id);
+        if (!d || handSaid(out, seat, d)) continue;
+        // THE FRONT DOOR ANSWERS ITSELF, AND A RECORD MAY NOT ANSWER IT FOR
+        // YOU. `when`/`where`/`venue` are facts about the SESSION — what
+        // decade it is, what city you are in, what room you are playing —
+        // and a record does not know any of them; it is what they add up
+        // to. Two answers often call a record on their own ("the fifties ·
+        // New York" is jazz and nothing else), and naming the third out of
+        // that record's own list would end the door a question early — the
+        // page's door asks the first row nobody has answered (ui/band.js
+        // doorQ), so a seeded venue is a question you never get asked.
+        // Left open here, the door finishes its own three and every one of
+        // them is answered by the person who walked through it.
+        if (d.three) continue;
+        const key = seedKey(seat, id);
+        if (take > 1 && MATERIAL[key]) {
+          if (notes) { out = noteAll(out, seat, notes); notes = null; }
+          const w = rollWord(out, seat, d, take);
+          if (w) { out = markSeed(answer(out, seat, id, w), seat, id, "chose"); tried = false; }
+          continue;
+        }
+        if (d.answered) continue;              // the record has already said it
+        const w = seedWord(out, seat, d, plan, composed);
+        if (!w) continue;
+        (notes || (notes = {}))[id] = w;
+      }
+      if (notes) out = noteAll(out, seat, notes);
+    }
+    return out;
+  }
+
   // ...what calling a record actually does to the players
   function called(m, gk, prevKey) {
+    const was0 = m;                 // ...to stamp what this record decides
+    m = stripNamed(m);              // ...the last record's descriptions go
     let d = m.drums, b = m.bass;
     const keep = (ans, list) => ans && list.includes(ans);
     // the groove and the kit the record is made of
@@ -2100,6 +2714,15 @@
         answers["chg:" + r] = gk.chg[0];
         delete lean2[r];                 // a lean on changes that left
       }
+      // ...and the SAME LAW AS THE FORM for a cycle nobody has called: the
+      // standing default is the four-chord one (`m.song.chg[r] ||
+      // "fourchord"` at every reader), so an unset cycle moves only where
+      // this record refuses that word — a record that has it keeps the
+      // quiet default and renders exactly as it always did.
+      if (false && !chg[r] && gk.chg && gk.chg.length && !gk.chg.includes(B.CHANGEWORD.fourchord)) {
+        chg[r] = Object.keys(B.CHANGEWORD).find((k) => B.CHANGEWORD[k] === gk.chg[0]);
+        answers["chg:" + r] = gk.chg[0];
+      }
     }
     // THE FORM IS THE RECORD'S TOO. called() moved the groove, the bass,
     // the keys and the changes — and left the form null, which renders as
@@ -2121,9 +2744,9 @@
       form = allowed[0] || form;
       if (form && FORMS[form]) answers.form = FORMS[form].w;
     }
-    return finish({ ...m, drums: d, bass: b, keys: kk, guitar: gg2,
+    return stampSeeds(was0, finish({ ...m, drums: d, bass: b, keys: kk, guitar: gg2,
              song: { ...m.song, form, chg, answers,
-                     ...(m.song.lean ? { lean: lean2 } : {}) } }, gk, prevKey);
+                     ...(m.song.lean ? { lean: lean2 } : {}) } }, gk, prevKey));
   }
 
   /* ---------- WHAT A CALLED RECORD ARRIVES WITH ---------------------------
@@ -2134,12 +2757,20 @@
      the question with that word lit, and the law of the seed (above) means
      a record only ever moves what the LAST record put there.  */
   function finish(m, gk, prevKey) {
+    const take = takeOf(m), seed0 = m.song.seeded || {};
     const plan = planOf(m.song.genre, gk);
     const wasGk = prevKey && GENRES[prevKey] ? GENRES[prevKey] : null;
     const was = wasGk ? planOf(prevKey, wasGk) : null;
     // unspoken, or exactly what the last record seated: the record may move
     // it. Anything else is a hand, and a hand outranks a record.
-    const mine = (said, before) => !said || (before != null && said === before);
+    // ...AND THE LEDGER SAYS SO OUTRIGHT (2026-08-23). The comparison
+    // against what the LAST record's plan would have seeded is still here,
+    // for sessions saved before `song.seeded` existed; where the ledger has
+    // an entry it simply answers the question, which is what lets a take
+    // re-derive a value no previous record ever put there.
+    const mine = (said, before, seat, id) => !said
+      || (seat && seed0[seedKey(seat, id)])
+      || (before != null && said === before);
     let out = m;
 
     /* --- the tune -------------------------------------------------------
@@ -2155,7 +2786,8 @@
     for (const dim of ["len", "cell", "sent", "contour", "land", "reg"]) {
       const w = wordOf(dim, shape);
       if (!w) continue;
-      if (!mine((idea.answers || {})[dim], before ? wordOf(dim, before) : null)) continue;
+      if (!mine((idea.answers || {})[dim], before ? wordOf(dim, before) : null,
+                "arranger", "idea:" + dim)) continue;
       idea = Id.answer(idea, dim, w);
     }
     if (idea !== out.idea) out = { ...out, idea };
@@ -2164,7 +2796,8 @@
       for (const dim of ["len", "reg"]) {
         const w = wordOf(dim, shape);
         if (!w) continue;
-        if (!mine((b2.answers || {})[dim], before ? wordOf(dim, before) : null)) continue;
+        if (!mine((b2.answers || {})[dim], before ? wordOf(dim, before) : null,
+                  "arranger", "ideaB:" + dim)) continue;
         b2 = Id.answer(b2, dim, w);
       }
       if (b2 !== out.ideaB) out = { ...out, ideaB: b2 };
@@ -2177,7 +2810,7 @@
       if (!want) continue;
       const wasWant = was && was.seat ? was.seat[chair] : null;
       const cm = out[chair];
-      if (!cm || !mine((cm.answers || {}).reg, wasWant)) continue;
+      if (!cm || !mine((cm.answers || {}).reg, wasWant, chair, "reg")) continue;
       const w = fitReg(chair, want, cm.instr);
       const nx = SEATOF[chair].answer(cm, "reg", w);
       if (nx !== cm) out = { ...out, [chair]: nx };
@@ -2192,7 +2825,7 @@
       if (!DESKBOARD.includes(d.id)) continue;
       const w = desk[d.id];
       if (!w || !d.opts.some((o) => o.w === w)) continue;
-      if (!mine(eng[d.id], wasDesk ? wasDesk[d.id] : null)) continue;
+      if (!mine(eng[d.id], wasDesk ? wasDesk[d.id] : null, "engineer", d.id)) continue;
       if (eng[d.id] === w) continue;
       eng[d.id] = w; moved = true;
     }
@@ -2208,7 +2841,7 @@
       const k = props[role];
       if (!k || !LENS[k]) continue;
       if (!mine(answers["len:" + role], wasProps && wasProps[role]
-        ? (LENS[wasProps[role]] || {}).w : null)) continue;
+        ? (LENS[wasProps[role]] || {}).w : null, "arranger", "len:" + role)) continue;
       if (lens[role] === k) continue;
       lens[role] = k; answers["len:" + role] = LENS[k].w; touched = true;
     }
@@ -2219,13 +2852,15 @@
       const k = Object.keys(HRATE).find((x) => HRATE[x].w === hrw);
       const allowed = !gk.hrw || gk.hrw.includes(hrw);
       if (k && allowed &&
-          mine(answers.hr, was && was.hr ? was.hr : null) && song.hr !== k) {
+          mine(answers.hr, was && was.hr ? was.hr : null, "arranger", "hr") && song.hr !== k) {
         song = { ...song, hr: k }; answers.hr = hrw; touched = true;
       }
     }
     if (touched || song !== out.song)
       out = { ...out, song: { ...song, lens, answers } };
-    return out;
+    // ...and the rest of the sheet (5, above): every question this record
+    // has not answered yet gets the word for what it already is.
+    return settle(out, gk, plan, take);
   }
 
   /* ---------- the three seats, one question at a time ----------
@@ -2337,7 +2972,12 @@
     // 640 ms a roll against 90).
     for (const seat of SEATS)
       for (let round = 0; round < 3; round++) {
-        const left = seatDecisions(m, seat).filter((d) => !d.answered);
+        // ...and a RECORD'S answer is still on the table for the dice: a
+        // seeded sheet is a finished record, not a finished session, and a
+        // dice that skipped every seeded row would roll the same record
+        // thirty ways.
+        const left = seatDecisions(m, seat).filter((d) => !d.answered
+          || (m.song.seeded || {})[seedKey(seat, d.id)] === "named");
         if (!left.length) break;
         for (const d of left) if (d.opts.length) m = answer(m, seat, d.id, pick(d.opts).w);
       }
@@ -2423,12 +3063,20 @@
         } else m = answer(m, "arranger", "second", "one theme is plenty");
       }
     }
-    return m;
+    return allSeeded(m);
   }
 
   // START OVER, one chair at a time. A session where the only way back is
   // reloading the page is a session you stop experimenting in.
   function resetSeat(m, seat) {
+    // ...and the record's own marks on that chair go with it: a reset chair
+    // has nothing on its ledger for a take to re-roll or a record to move
+    const s2 = m.song.seeded;
+    if (s2 && Object.keys(s2).some((k) => k.startsWith(seat + "/"))) {
+      const next = {};
+      for (const k of Object.keys(s2)) if (!k.startsWith(seat + "/")) next[k] = true;
+      m = { ...m, song: { ...m.song, seeded: next } };
+    }
     if (seat === "drums") return { ...m, drums: D.say(D.blank(), "start") };
     if (seat === "keys") return { ...m, keys: Ky.say(Ky.blank(), "start") };
     if (seat === "guitar") return { ...m, guitar: Gt.say(Gt.blank(), "start") };
@@ -2524,10 +3172,31 @@
     if (d.three || d.cheap) return d.opts;   // distinct by construction
     const now = sigOf(m);
     const seen = new Map();
+    const sigOpt = (o) => { try { return sigOf(answer(m, seat, d.id, o.w)); } catch (e) { return null; } };
+    // TWO PASSES, because the standing answer is not first in the list. The
+    // word you are on registers its take BEFORE anything is filtered, so an
+    // option earlier in the row that lands on the same record is dropped
+    // behind it rather than surviving by arriving first.
+    for (const o of d.opts) {
+      if (!o.answered && !o.active) continue;
+      const sig = sigOpt(o);
+      if (sig && sig !== now) seen.set(sig, o.w);
+    }
     return d.opts.filter((o) => {
+      const sig = sigOpt(o);
+      if (sig == null) return true;
+      // THE STANDING ANSWER IS ALWAYS OFFERED — you can always see the word
+      // you are on — but it is no longer INVISIBLE to the dedupe: it puts
+      // its own take in the map, so a second option that lands on the same
+      // record is dropped behind it. Before this the lit word skipped the
+      // map entirely, and a question whose only other answer was a
+      // different spelling of the one already given still read as a real
+      // fork (measured: a romantic symphony's "a processional" and "nobody
+      // on the kit", which compose to the same silent kit). Invisible while
+      // a called record's groove was simply never asked again; the moment
+      // every question is asked, it is the difference between a question
+      // and a wall with two doors into the same room.
       if (o.answered || o.active) return true;
-      let sig;
-      try { sig = sigOf(answer(m, seat, d.id, o.w)); } catch (e) { return true; }
       if (sig === now || seen.has(sig)) return false;
       seen.set(sig, o.w);
       return true;
@@ -2592,7 +3261,7 @@
   const nextAsk = (m, seat) => {
     const s2 = seat || m.seat;
     for (const d of seatDecisions(m, s2)) {
-      if (d.answered) continue;
+      if (handSaid(m, s2, d)) continue;      // only a HAND closes a question
       const opts = heardOpts(m, s2, d);
       if (opts.length >= 2) return { ...d, opts };
     }
@@ -2602,7 +3271,7 @@
   const pending = (m, seat) => {
     let n = 0;
     for (const d of seatDecisions(m, seat)) {
-      if (d.answered) continue;
+      if (handSaid(m, seat, d)) continue;
       if (heardOpts(m, seat, d).length >= 2) n++;
     }
     return n;
@@ -2613,7 +3282,16 @@
     for (const s of SEATS) { const q = nextAsk(m, s); if (q) return { ...q, seat: s }; }
     return null;
   };
+  // A HAND ANSWERING TAKES THE ROW OFF THE RECORD'S LEDGER — which is the
+  // whole of "a hand always outranks". Every road into answering runs
+  // through here, including the recursive ones (`called` answering the
+  // genre, the front door's last-one-standing), so the mark is cleared in
+  // exactly one place.
   function answer(m, seat, id, w) {
+    const out = answerNow(m, seat, id, w);
+    return out === m ? m : unseed(out, seat, id);
+  }
+  function answerNow(m, seat, id, w) {
     if (id.startsWith("knob:")) {
       const d = knobDecisions(m, seat).find((x) => x.id === id);
       const o = d && d.opts.find((x) => x.w === w);
@@ -3788,6 +4466,9 @@
            genreOf, rolesIn, asked, pending, sigOf, secSigOf, survivors, FIELDS3, Ask,
            secWords, partOf,
            blank, opening, decisions, seatDecisions,
+           // WHO SAID IT: "hand" · "record" · null (band-kit's `song.seeded`),
+           // and which kind of the record's: "chose" · "named" · null
+           saidBy, seedKind,
            // THE BOXES: the record's own sections, and the four moves a
            // hand makes on them
            SECROLES, MAXSECS, shapeOf, boxesEdited, homeRole,

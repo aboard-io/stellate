@@ -1980,8 +1980,17 @@ function chairArea(parent, who, ideasOnly, quiet) {
   // the floor.
   const flatFact = (d) => d.answered && !d.bar && !d.id.startsWith("grp:") &&
     d.opts.length < 2;
+  // ...AND A RECORD'S ANSWER IS NOT A CLOSED QUESTION (band-kit
+  // `song.seeded`, 2026-08-23). Every row on a called record arrives with a
+  // word now — the record had decided the groove, the cast, the tune, the
+  // seats, the board and the proportions all along and the sheet read blank
+  // — so the floor goes to the first row no HAND has said, and the
+  // interview runs exactly as it always did with each question arriving
+  // with the record's own word already lit. Without this line every chair
+  // would fall silent the moment a record was called.
   const q = (asking && asks.find(d => d.id === asking && !flatFact(d))) ||
-    asks.find(d => !d.answered);
+    asks.find(d => !d.answered ||
+      (Band.saidBy && Band.saidBy(model, who, d.id) === "record" && !flatFact(d)));
 
   // THE GIG SHEET IS A TABLE PER HEADING. Every question of this seat is a
   // row — an answered one says its word, an open one says its ask — grouped
