@@ -103,6 +103,8 @@
     start: { words: ["step up to the mic"], says: "a voice, holding oohs under it" },
     groups: { job: "what you are singing", instr: "the voice", panel: "at the mic",
               pedal: "in the chain" },
+    heads: { instr: "the voice", job: "the part", sound: "the sound",
+              panel: "the voice", pedal: "the chain" },
     asks: { instr: "whose voice is it?", job: "what are you singing?",
             reg: "where do you sit?", pedal: "anything in the chain?" },
     instrSays: (w) => w,

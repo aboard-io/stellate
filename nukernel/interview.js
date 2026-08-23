@@ -24,10 +24,14 @@
    structure the page reads rather than being re-derived by the page.
 
    The HEAD of a question is declared on the question's own row (`head`),
-   in the file where the question is defined. This module does not decide
-   it and MUST NOT: a heading here would be the same second source of
+   in the file where the question is defined — band-kit.js for the arranger
+   and the engineer, the kit files for the players, askable.js for the knobs,
+   chair.js for the families a pitched chair shares. This module does not
+   decide it and MUST NOT: a heading here would be the same second source of
    truth one layer down. A row with no declared head lands under a null
-   head, which is a visible defect rather than a silent one — see the gate.
+   head, which is a visible defect rather than a silent one — and
+   test/unit/every-head.test.js holds that at zero across all thirty
+   records, called and rolled.
 
    Pure: same model in, same tree out, no rendering and nothing cached. */
 "use strict";
@@ -55,16 +59,32 @@ const askOf = (row, seat, who) => ({
 /* the ledger says "seat/id" -> "named" | "chose" */
 const whoOf = (m, seat, id) => ((m.song || {}).seeded || {})[seat + "/" + id] || null;
 
-/* a seat's questions, grouped by the head each row declares. Rows keep the
-   model's order and a new head opens a new group — the whole grouping rule,
-   and the reason the page needs no table. */
+/* a seat's questions, grouped by the head each row declares — the whole
+   grouping rule, and the reason the page needs no table.
+
+   ONE HEAD, ONE GROUP. This walked the rows and opened a new group every
+   time the head CHANGED, which is the same rule read one row at a time. It
+   is not the same answer: the model's order interleaves the headings, and
+   measured on a rolled record that run rule gave 37 headings for 29 distinct
+   heads — the arranger saying "the form" three times and "the tune" three
+   times, the drummer saying "the feel" and "the fills" twice apiece, keys
+   and guitar saying "the sound" twice. A heading that appears three times in
+   one chair is a heading that has stopped naming anything.
+
+   And the model's order CANNOT be the thing that moves: `seatDecisions`
+   order is fingerprinted byte for byte by test/unit/offer-identity.test.js,
+   because it is the order a person is asked in. So the head gathers, and
+   nothing else changes: heads come out in the order their FIRST row does,
+   and inside a head the rows keep exactly the order the model gave them.
+   Both of those are the model's own facts — there is still no table. */
 function seatOf(m, seat) {
   const rows = Band.seatDecisions(m, seat) || [];
   const heads = [];
-  let cur = null;
+  const byHead = new Map();
   for (const row of rows) {
     const head = row.head || null;
-    if (!cur || cur.head !== head) { cur = { head, questions: [] }; heads.push(cur); }
+    let cur = byHead.get(head);
+    if (!cur) { cur = { head, questions: [] }; byHead.set(head, cur); heads.push(cur); }
     cur.questions.push(askOf(row, seat, whoOf(m, seat, row.id)));
   }
   return { seat, heads };

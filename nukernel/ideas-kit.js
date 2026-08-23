@@ -797,7 +797,18 @@
                            (LANDINGS[m.land] || {}).w].join(", ");
 
   /* ---------- the words ---------- */
-  const { V, add } = C.vocab();
+  /* WHICH HEADING EACH SUBJECT OF A TUNE LIVES UNDER. The six interview
+     rows above say "the tune"; the note-by-note subjects are "the bar"; and
+     the one word that makes the second half answer the first is its own
+     heading, because that is what the record calls it. */
+  const HEADS = { start: null,
+    "how long": "the tune", "the rhythm of it": "the tune",
+    "how it speaks": "the tune", "the shape": "the tune",
+    "where it lands": "the tune", "the register": "the tune",
+    "the bar": "the bar", "the bar in hand": "the bar", held: "the bar",
+    higher: "the bar", lower: "the bar", "octaves in the bar": "the bar",
+    "the answer": "the answer" };
+  const { V, add } = C.vocab(HEADS);
   // the bar-in-hand words, one per bar a theme can have (MAXB). The rail in
   // ui/band.js reads this list rather than keeping its own, so a theme that
   // grew to eight bars did not leave four of them unnameable.
@@ -1015,28 +1026,28 @@
      when OFFERING while still accepting the answer by the raw table, which
      is how band-kit answers through the gap on the idea's behalf. */
   const DECISIONS = [
-    { id: "len", ask: "how long is it?", opts: Object.entries(LENGTHS).map(([k, l]) => ({
+    { id: "len", head: "the tune", ask: "how long is it?", opts: Object.entries(LENGTHS).map(([k, l]) => ({
         w: l.w, is: (m) => m.len === k, apply: (m) => ({ ...m, len: k }) })) },
     // the cells of the bar this record counts in: the ten, re-seated, plus
     // the three that only a twelve-step bar has
-    { id: "cell", ask: "what's its rhythm?",
+    { id: "cell", head: "the tune", ask: "what's its rhythm?",
       opts: (m) => Object.entries({ ...CELLS, ...(extraCells(m) || {}) }).map(([k, c]) => ({
         w: (extraCells(m) && extraCells(m)[k] ? c.w : (CELLS[k] || c).w),
         is: (mm) => mm.cell === k, apply: (mm) => ({ ...mm, cell: k }) })) },
     // the sentence rides right behind the rhythm it derives from, and only
     // when there are measures to differ — a one-bar tune is not a sentence
-    { id: "sent", ask: "how does it speak?", when: (m) => barsOf(m) > 1,
+    { id: "sent", head: "the tune", ask: "how does it speak?", when: (m) => barsOf(m) > 1,
       opts: Object.entries(SENTENCES).map(([k, s]) => ({
         w: s.w, is: (m) => (m.sent || "plain") === k,
         apply: (m) => ({ ...m, sent: k }),
         heard: (m) => (m.sent || "plain") === k || sentFirst(m, k) })) },
-    { id: "contour", ask: "what shape does it make?",
+    { id: "contour", head: "the tune", ask: "what shape does it make?",
       opts: Object.entries(CONTOURS).map(([k, c]) => ({
         w: c.w, is: (m) => m.contour === k, apply: (m) => ({ ...m, contour: k }),
         heard: (m) => conFirst(m, k) })) },
-    { id: "land", ask: "where does it land?", opts: Object.entries(LANDINGS).map(([k, l]) => ({
+    { id: "land", head: "the tune", ask: "where does it land?", opts: Object.entries(LANDINGS).map(([k, l]) => ({
         w: l.w, is: (m) => m.land === k, apply: (m) => ({ ...m, land: k }) })) },
-    { id: "reg", ask: "where does it sit?", opts: Object.entries(REG).map(([k, r]) => ({
+    { id: "reg", head: "the tune", ask: "where does it sit?", opts: Object.entries(REG).map(([k, r]) => ({
         w: r.w, is: (m) => m.reg === k, apply: (m) => ({ ...m, reg: k }) })) },
   ];
   const { decisions, nextAsk, answer } = C.interview(DECISIONS, {});

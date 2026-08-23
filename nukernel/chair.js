@@ -168,10 +168,19 @@
   /* ---------- the vocabulary ------------------------------------------- */
   // One registrar, one entry shape. `is` defaults to never-true because most
   // words are actions, not states; a word that IS a state says so itself.
-  const vocab = () => {
+  // ...and every entry says WHICH HEADING it lives under. `heads` is the
+  // kit's own declaration — an object keyed by group name, or a function of
+  // it where the group names are made (the drummer's "grooves · funk") — and
+  // it is read once, here, at registration. The page groups a chair by the
+  // head each subject declares and by nothing else, so this is the only
+  // place a subject's heading is decided.
+  const vocab = (heads) => {
     const V = {};
+    const headOf = typeof heads === "function" ? heads
+      : (g) => ((heads && heads[g] != null) ? heads[g] : null);
     const add = (id, group, words, when, apply, says, is) =>
-      { V[id] = { id, group, words, when, apply, says, is: is || (() => false) }; };
+      { V[id] = { id, group, head: headOf(group), words, when, apply, says,
+                  is: is || (() => false) }; };
     return { V, add };
   };
 
@@ -204,7 +213,7 @@
       let changes = false, active = false;
       try { changes = !!i.when(m) && JSON.stringify(i.apply(m)) !== meNow(); } catch (e) {}
       try { active = !!i.is(m); } catch (e) {}
-      return { id: i.id, group: i.group, words: i.words, changes, active };
+      return { id: i.id, group: i.group, head: i.head || null, words: i.words, changes, active };
     });
   };
   const catalogFullOf = (V) => (m) => Object.values(V).map((i) => {
@@ -273,6 +282,8 @@
        model   { job, instr, reg }        where a blank one starts
        start   { words, says }            the word that turns the chair on
        groups  { job, instr, panel }      what the tray calls each family
+       heads   { job, instr, sound,       which HEADING each family lives
+                 panel, pedal }           under on the page
        asks    { instr, job, reg }        how the interview asks
        instrSays                          "on a Rhodes" vs just "one singer"
        hit     { on, off }                "a chord " / "no chord " at a step
@@ -317,7 +328,18 @@
     /* the words, beyond the interview — registered in the one canonical
        order (start, jobs, instruments, register, panel, the bar), because
        Object.values(V) is the tray and the tray's order is a contract */
-    const { V, add } = vocab();
+    /* THE HEADINGS OF THIS CHAIR, out of the spec beside the group names:
+       what the instrument is, what the job is, how it sounds, the machine's
+       own panel and the board. The register and the bar are subjects the
+       chair registers itself, so they take the head their family takes. */
+    const H = spec.heads || {};
+    const HEADS = { start: null, "the register": H.sound || null,
+                    "the bar": H.job || null };
+    if (spec.groups.job) HEADS[spec.groups.job] = H.job || null;
+    if (spec.groups.instr) HEADS[spec.groups.instr] = H.instr || null;
+    if (spec.groups.panel) HEADS[spec.groups.panel] = H.panel || null;
+    HEADS[spec.groups.pedal || "on the board"] = H.pedal || null;
+    const { V, add } = vocab(HEADS);
     add("start", "start", spec.start.words, (m) => !m.on,
         (m) => ({ ...m, on: true }), () => spec.start.says);
     for (const [k, j] of Object.entries(JOBS))
@@ -364,20 +386,21 @@
     /* the interview: what you play, what your job is, where you sit, then
        the panel — the order every pitched chair asks in */
     const DECISIONS = [
-      { id: "instr", ask: spec.asks.instr, opts:
+      { id: "instr", head: H.instr || null, ask: spec.asks.instr, opts:
         Object.entries(INSTRUMENTS).map(([k, w]) => ({
           w, row: (spec.instrRows || {})[k],
           is: (m) => m.instr === k, apply: (m) => ({ ...m, instr: k }) })) },
-      { id: "job", ask: spec.asks.job, opts:
+      { id: "job", head: H.job || null, ask: spec.asks.job, opts:
         Object.entries(JOBS).map(([k, j]) => ({
           w: j.w, is: (m) => m.job === k, apply: (m) => ({ ...m, job: k, gate: null }) })) },
-      { id: "reg", ask: spec.asks.reg, opts:
+      { id: "reg", head: H.sound || null, ask: spec.asks.reg, opts:
         Object.entries(REG).map(([k, r]) => ({
           w: r.w, is: (m) => m.reg === k, apply: (m) => ({ ...m, reg: k }) })) },
-      ...PANEL.map((p) => ({ id: p.id, ask: p.ask, opts: p.opts.map((o) => ({
+      ...PANEL.map((p) => ({ id: p.id, head: H.sound || null, ask: p.ask, opts: p.opts.map((o) => ({
         w: o.w, is: (m) => toneOf(m)[p.key] === o.v,
         apply: (m) => ({ ...m, tone: { ...toneOf(m), [p.key]: o.v } }) })) })),
-      ...(PEDALS ? [{ id: "pedal", ask: spec.asks.pedal || "what is on the board?",
+      ...(PEDALS ? [{ id: "pedal", head: H.pedal || null,
+        ask: spec.asks.pedal || "what is on the board?",
         opts: Object.entries(PEDALS).map(([k, p]) => ({
           w: p.w, is: (m) => pedalOf(m) === k,
           apply: (m) => ({ ...m, pedal: k }) })) }] : []),

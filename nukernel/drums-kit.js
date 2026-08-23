@@ -483,7 +483,18 @@
   // hiding them ("when I tap something light it up, don't make it
   // disappear"), so the vocabulary doubles as the readout: what the machine
   // is doing is which words are lit. The registrar is the chair's.
-  const { V, add } = C.vocab();
+  /* WHICH HEADING EACH TRAY SUBJECT LIVES UNDER. The subject is declared
+     here, so its heading is declared here too — the page has no table of its
+     own any more, it reads this one. The groove families are named by their
+     family ("grooves · funk"), so they answer by prefix. */
+  const HEADS = (g) => (g === "the machine" ? "the record's kit"
+    : g.startsWith("grooves \u00b7 ") ? "the record's kit"
+    : g === "the kit" || g === "take away" || g === "at the kit" || g === "the bar"
+      ? "at the kit"
+    : g === "the fills" ? "the fills"
+    : g === "the feel" ? "the feel"
+    : g === "the tempo" ? "the time-keeping" : null);
+  const { V, add } = C.vocab(HEADS);
 
   // the kit this drummer starts on is the first groove of the table they are
   // playing out of: four on the floor in four, a waltz in three, a lilt in six
@@ -665,7 +676,8 @@
     const m2 = met || C.MET4, n = m2.steps, b = barOf(m2), four = n === 16;
     const out = [];
     for (let i = 0; i < n; i++) out.push({
-      id: stepId(lane, i), group: "the bar", lane, step: i, words: [stepWord(i, m2)],
+      id: stepId(lane, i), group: "the bar", head: HEADS("the bar"),
+      lane, step: i, words: [stepWord(i, m2)],
       when: (m) => m.on,
       apply: (m) => { const kit = clone(m.kit);
         kit[lane] = (kit[lane] || new Array(n).fill(0)).slice();
@@ -688,7 +700,8 @@
       "nowhere": b.z(),
     };
     for (const [w, v] of Object.entries(SHAPE)) out.push({
-      id: "shape:" + lane + ":" + w, group: "the bar", lane, words: [w],
+      id: "shape:" + lane + ":" + w, group: "the bar", head: HEADS("the bar"),
+      lane, words: [w],
       when: (m) => m.on && JSON.stringify(m.kit[lane]) !== JSON.stringify(v),
       apply: (m) => { const kit = clone(m.kit); kit[lane] = v.slice(); return { ...m, kit }; },
       says: () => LANEOF(lane) + " " + w,
@@ -715,12 +728,12 @@
   const bpmSet = (n) => (m) => ({ ...m, bpm: n });
   const kitSet = (fn) => (m) => fn(m);
   const DECISIONS = [
-    { id: "tempo", ask: "how fast is it?", opts: [
+    { id: "tempo", head: "the time-keeping", ask: "how fast is it?", opts: [
       { w: "slow, 72", is: (m) => m.bpm === 72, apply: bpmSet(72) },
       { w: "medium, 96", is: (m) => m.bpm === 96, apply: bpmSet(96) },
       { w: "up, 120", is: (m) => m.bpm === 120, apply: bpmSet(120) },
       { w: "fast, 144", is: (m) => m.bpm === 144, apply: bpmSet(144) } ] },
-    { id: "feel", ask: "straight or swung?", opts: [
+    { id: "feel", head: "the feel", ask: "straight or swung?", opts: [
       { w: "straight", is: (m) => !m.swing, apply: (m) => ({ ...m, swing: null }) },
       { w: "swung", is: (m) => m.swing === "swing", apply: (m) => ({ ...m, swing: "swing" }) },
       { w: "shuffled", is: (m) => m.swing === "shuffle", apply: (m) => ({ ...m, swing: "shuffle" }) },
@@ -735,13 +748,13 @@
     // silence itself; and a bar that counts in three or in six has families
     // of its own (the ballroom, the lilt), so the row reads the METER'S
     // table rather than a list written for 4/4
-    { id: "record", ask: "what kind of record is this?", invalidates: ["groove"],
+    { id: "record", head: "the record's kit", ask: "what kind of record is this?", invalidates: ["groove"],
       opts: (m) => famOpts(m).map((f) => ({
         w: f, is: (mm) => mm.fam === f, apply: (mm) => ({ ...mm, fam: f }) })) },
     // the second question about the record: which groove, out of the family
     // just chosen — the options are a FUNCTION of the model, and the row is
     // only asked once there is a family (the chair reads both declarations)
-    { id: "groove", ask: "which one?", when: (m) => !!m.fam,
+    { id: "groove", head: "the record's kit", ask: "which one?", when: (m) => !!m.fam,
       opts: (m) => grooveOpts(m) },
     // ...AND WHAT YOU ARE PLAYING IT ON (2026-08-23, "give me all choices for
     // keys and all instruments and kits"). Ten kits — six recordings on disk
@@ -757,11 +770,11 @@
     // in (what kind of record, which beat, then which kit it is played on),
     // and because the record's own kit is the head of the list (band-kit
     // `narrow`/openRack) — so answering it is confirming, not choosing.
-    { id: "kit", ask: "what are you playing it on?", opts:
+    { id: "kit", head: "the record's kit", ask: "what are you playing it on?", opts:
       Object.entries(MACHINES).map(([k, w]) => ({
         w, row: MACHINEROW[k],
         is: (m) => m.drumkit === k, apply: (m) => ({ ...m, drumkit: k }) })) },
-    { id: "job", ask: "what is your job in it?", opts: [
+    { id: "job", head: "the job", ask: "what is your job in it?", opts: [
       { w: "hold it down", is: (m) => m.job === "hold",
         apply: (m) => ({ ...m, job: "hold", kit: DRUMMER["hands in eighths"](m).kit }) },
       { w: "drive it", is: (m) => m.job === "drive",
@@ -773,7 +786,7 @@
       { w: "on the front of it", is: (m) => m.job === "push",
         apply: (m) => ({ ...m, job: "push",
           kit: DRUMMER["accent the downbeats"](DRUMMER["ghost notes"](m)).kit }) } ] },
-    { id: "time", ask: "what are you keeping time on?", opts: [
+    { id: "time", head: "the time-keeping", ask: "what are you keeping time on?", opts: [
       { w: "the hats", is: (m) => has(m.kit, "h") && !has(m.kit, "p"),
         apply: kitSet(DRUMMER["back to the hats"]) },
       { w: "the ride", is: (m) => has(m.kit, "p") && !has(m.kit, "h"),
@@ -781,7 +794,7 @@
       { w: "nothing — just kick and snare", is: (m) => !has(m.kit, "h") && !has(m.kit, "p"),
         apply: (m) => { const zz = new Array(stepsOf(m)).fill(0);
           return { ...m, kit: { ...clone(m.kit), h: zz.slice(), p: zz.slice() } }; } } ] },
-    { id: "backbeat", ask: "where is the backbeat?", opts: [
+    { id: "backbeat", head: "the time-keeping", ask: "where is the backbeat?", opts: [
       { w: "two and four",
         is: (m) => JSON.stringify(m.kit.s) === JSON.stringify(lit(m, on(4, 12), (b) => b.back())),
         apply: kitSet(DRUMMER["backbeat on two and four"]) },
@@ -791,7 +804,7 @@
         apply: kitSet(DRUMMER["backbeat on three"]) },
       { w: "nowhere — no backbeat", is: (m) => !has(m.kit, "s"),
         apply: (m) => ({ ...m, kit: { ...clone(m.kit), s: new Array(stepsOf(m)).fill(0) } }) } ] },
-    { id: "loud", ask: "how hard are you hitting?", opts: [
+    { id: "loud", head: "the feel", ask: "how hard are you hitting?", opts: [
       { w: "light", is: (m) => (m.vel.all || 0) < 0, apply: (m) => ({ ...m, vel: { all: -1 } }) },
       { w: "normal", is: (m) => !(m.vel.all || 0), apply: (m) => ({ ...m, vel: {} }) },
       { w: "hard", is: (m) => (m.vel.all || 0) > 0, apply: (m) => ({ ...m, vel: { all: 1 } }) } ] },
@@ -801,7 +814,7 @@
     // together, because the axes were never independent: a machine is never
     // loose, and a loose hand is never a machine. (askable.js lists touch
     // and hand under WRITTEN now, and the coverage gate reads that table.)
-    { id: "loose", ask: "how tight to the grid?", opts: [
+    { id: "loose", head: "the feel", ask: "how tight to the grid?", opts: [
       { w: "a machine", is: (m) => !m.humanize && m.hand === "exact",
         apply: (m) => ({ ...m, humanize: 0, touch: 0, hand: "exact" }) },
       { w: "on the grid", is: (m) => !m.humanize && m.hand !== "exact",
@@ -810,7 +823,7 @@
         apply: (m) => ({ ...m, humanize: 0.03, touch: 0.35, hand: null }) },
       { w: "loose", is: (m) => m.humanize >= 0.06,
         apply: (m) => ({ ...m, humanize: 0.06, touch: 0.75, hand: null }) } ] },
-    { id: "fills", ask: "where do the fills go?", opts: [
+    { id: "fills", head: "the fills", ask: "where do the fills go?", opts: [
       { w: "end of every four", is: (m) => !!m.fills[4] && !m.fills[2],
         apply: (m) => ({ ...m, fills: { 4: true } }) },
       { w: "halfway too", is: (m) => !!m.fills[2] && !!m.fills[4],

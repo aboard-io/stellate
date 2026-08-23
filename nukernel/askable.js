@@ -63,27 +63,32 @@
   // moves the count row. A second door onto the same field would put a
   // twelve-step meter on the genre while six chairs still handed the kernel
   // sixteen-step vectors — which is a bug generator, not a question.
+  // EVERY ROW SAYS WHICH HEADING IT LIVES UNDER (`head`). The page groups a
+  // seat's questions by the head each row declares and by nothing else —
+  // there is no table in the view any more — so a knob added here without a
+  // head is a question with no home, which test/unit/every-head.test.js
+  // fails on rather than letting it slide into a nameless run.
   const ASKABLE = [
-    { field: "stress", role: "drums", ask: "how much does the band lean on the beat?",
+    { field: "stress", head: "the feel", role: "drums", ask: "how much does the band lean on the beat?",
       opts: [["dead straight", 0], ["a little", 0.35], ["hard on the one", 0.8]] },
-    { field: "phrase", role: "keys", ask: "does the line breathe?",
+    { field: "phrase", head: "the sound", role: "keys", ask: "does the line breathe?",
       opts: [["flat", 0], ["a little", 0.4], ["it arches", 0.85]] },
-    { field: "maxHold", role: "keys", ask: "how long do the notes hold?",
+    { field: "maxHold", head: "the sound", role: "keys", ask: "how long do the notes hold?",
       opts: [["let them ring", 0], ["a beat", 4], ["half a bar", 8]] },
-    { field: "orn", role: "guitar", ask: "how much decoration?",
+    { field: "orn", head: "the sound", role: "guitar", ask: "how much decoration?",
       opts: [["none", null], ["a grace here and there", { grace: 0.22 }],
              ["passing notes too", { grace: 0.25, approach: 0.3, pass: 0.3 }],
              ["it never sits still", { grace: 0.4, approach: 0.4, pass: 0.4, roll: 0.2 }]] },
-    { field: "scale", role: "arranger", ask: "what notes is the tune made of?",
+    { field: "scale", head: "the tune", role: "arranger", ask: "what notes is the tune made of?",
       opts: Object.values(SCALES).map((s) => [s.w, s.v]) },
-    { field: "diatonic", role: "arranger", ask: "does the line follow the chords?",
+    { field: "diatonic", head: "the tune", role: "arranger", ask: "does the line follow the chords?",
       opts: [["it follows the chords", false], ["it stays in the key", true]] },
-    { field: "kitProb", role: "drums", ask: "does every hat land?",
+    { field: "kitProb", head: "the feel", role: "drums", ask: "does every hat land?",
       opts: [["every one", null],
              ["most of them", { h: [7,7,7,7, 7,7,7,7, 7,7,7,7, 7,7,7,7] }],
              ["about half", { h: [5,5,5,5, 5,5,5,5, 5,5,5,5, 5,5,5,5] }],
              ["now and then", { h: [3,3,3,3, 3,3,3,3, 3,3,3,3, 3,3,3,3] }]] },
-    { field: "fill", role: "drums", ask: "what's the fill made of?",
+    { field: "fill", head: "the fills", role: "drums", ask: "what's the fill made of?",
       opts: [["on the snare", { s: [0,0,0,0, 0,0,0,0, 1,0,1,1, 1,0,1,1] }],
              ["round the toms", { s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
                                   t: [0,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],

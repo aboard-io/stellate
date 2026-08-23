@@ -50,44 +50,44 @@
      mix), addressed by the channels it already understands: a part chan
      ("drums", "bass"), a UNIT chan ("unit:kick"), and "master". */
   const ENG = [
-    { id: "room", ask: "how close are the drums?", opts: [
+    { id: "room", head: "the drums", ask: "how close are the drums?", opts: [
       { w: "right up close", mix: {} },
       { w: "in the room", mix: { drums: { rev: 0.25 } } },
       { w: "down the hall", mix: { drums: { rev: 0.5 }, "unit:snare": { del: 0.12 } } } ] },
-    { id: "kick", ask: "how big is the kick?", opts: [
+    { id: "kick", head: "the drums", ask: "how big is the kick?", opts: [
       { w: "tight", mix: { "unit:kick": { eq: { lo: -2, hi: 2 } } } },
       { w: "round", mix: { "unit:kick": { eq: { lo: 3 } } } },
       { w: "huge", mix: { "unit:kick": { eq: { lo: 6 }, fader: 2 } } } ] },
-    { id: "snare", ask: "and the snare?", opts: [
+    { id: "snare", head: "the drums", ask: "and the snare?", opts: [
       { w: "dry, cracking", mix: { "unit:snare": { eq: { hi: 3 } } } },
       { w: "fat", mix: { "unit:snare": { eq: { lo: 3, mid: 2 } } } },
       { w: "a plate on it", mix: { "unit:snare": { rev: 0.45 } } } ] },
-    { id: "hats", ask: "the hats?", opts: [
+    { id: "hats", head: "the drums", ask: "the hats?", opts: [
       { w: "keep them down", mix: { "unit:hat": { fader: -4 } } },
       { w: "as they are", mix: {} },
       { w: "bright", mix: { "unit:hat": { eq: { hi: 4 }, fader: 1 } } } ] },
     // REVERB AND DELAY, said as an engineer says them: how big the space is
     // and what is throwing back off it. `rev` and `del` are the desk's own
     // sends, `space` the master reverb — the same three the mixer page has.
-    { id: "verb", ask: "how much reverb on the whole thing?", opts: [
+    { id: "verb", head: "the space", ask: "how much reverb on the whole thing?", opts: [
       { w: "dry", mix: {} },
       { w: "a small room", mix: { master: { space: 0.2 }, drums: { rev: 0.12 } } },
       { w: "a big hall", mix: { master: { space: 0.5 }, drums: { rev: 0.3 },
                                 bass: { rev: 0.1 } } },
       { w: "drowned", mix: { master: { space: 0.8 }, drums: { rev: 0.55 },
                              bass: { rev: 0.25 } } } ] },
-    { id: "delay", ask: "any delay?", opts: [
+    { id: "delay", head: "the space", ask: "any delay?", opts: [
       { w: "none", mix: {} },
       { w: "a slap on the snare", mix: { "unit:snare": { del: 0.18 } } },
       { w: "an echo on the snare", mix: { "unit:snare": { del: 0.45 } } },
       { w: "dub it — echo on everything", mix: { drums: { del: 0.35 },
                                                  bass: { del: 0.2 },
                                                  "unit:snare": { del: 0.4 } } } ] },
-    { id: "squeeze", ask: "how hard do you squeeze it?", opts: [
+    { id: "squeeze", head: "the glue", ask: "how hard do you squeeze it?", opts: [
       { w: "leave it alone", mix: {} },
       { w: "a little glue", mix: { master: { glue: 0.3 } } },
       { w: "pumping", mix: { master: { glue: 0.7, drive: 0.2 } } } ] },
-    { id: "tape", ask: "how much tape?", opts: [
+    { id: "tape", head: "the glue", ask: "how much tape?", opts: [
       { w: "none", mix: {} },
       { w: "warm", mix: { master: { tape: 0.35 } } },
       { w: "cooking", mix: { master: { tape: 0.7, drive: 0.3 } } } ] },
@@ -112,7 +112,7 @@
     // so they exclude each other (`excl`) and compose with everything else.
     // (The DRUMS block above stays one-of-N on purpose: its words are a
     // gate's contract, and "how close are the drums?" is one distance.)
-    { id: "keysfx", ask: "anything on the keys?", multi: true, dry: "dry", opts: [
+    { id: "keysfx", head: "the channels", ask: "anything on the keys?", multi: true, dry: "dry", opts: [
       { w: "dry", mix: {} },
       { w: "a room", mix: { "inst:keys": { rev: 0.25 }, "inst:pads": { rev: 0.25 } } },
       { w: "echo", mix: { "inst:keys": { del: 0.3 }, "inst:pads": { del: 0.3 } } },
@@ -120,26 +120,26 @@
                                   "inst:pads": { rev: 0.55, del: 0.2 } } },
       { w: "darker", mix: { "inst:keys": { eq: { hi: -3, lo: 2 } },
                             "inst:pads": { eq: { hi: -3, lo: 2 } } } } ] },
-    { id: "gtrfx", ask: "anything on the guitar?", multi: true, dry: "straight in", opts: [
+    { id: "gtrfx", head: "the channels", ask: "anything on the guitar?", multi: true, dry: "straight in", opts: [
       { w: "straight in", mix: {} },
       { w: "a room", mix: { "inst:guitar": { rev: 0.25 } } },
       { w: "a slapback", mix: { "inst:guitar": { del: 0.22 } } },
       { w: "washed out", mix: { "inst:guitar": { rev: 0.55, del: 0.3 } } },
       { w: "brighter", mix: { "inst:guitar": { eq: { hi: 4 } } } } ] },
-    { id: "voxfx", ask: "anything on the voice?", multi: true, dry: "close and dry",
+    { id: "voxfx", head: "the channels", ask: "anything on the voice?", multi: true, dry: "close and dry",
       excl: [["in the distance", "up front"]], opts: [
       { w: "close and dry", mix: {} },
       { w: "a plate", mix: { vocals: { rev: 0.4 } } },
       { w: "a long echo", mix: { vocals: { del: 0.4, rev: 0.25 } } },
       { w: "in the distance", mix: { vocals: { rev: 0.7, fader: -3 } } },
       { w: "up front", mix: { vocals: { fader: 3, eq: { hi: 2 } } } } ] },
-    { id: "bassfx", ask: "anything on the bass?", multi: true, dry: "dry", opts: [
+    { id: "bassfx", head: "the channels", ask: "anything on the bass?", multi: true, dry: "dry", opts: [
       { w: "dry", mix: {} },
       { w: "a room", mix: { bass: { rev: 0.22 } } },
       { w: "echo", mix: { bass: { del: 0.3 } } },
       { w: "dub echo", mix: { bass: { del: 0.5, rev: 0.3 } } },
       { w: "thicken it", mix: { bass: { eq: { lo: 3, mid: 2 } } } } ] },
-    { id: "bassmix", ask: "where does the bass sit?", opts: [
+    { id: "bassmix", head: "the channels", ask: "where does the bass sit?", opts: [
       { w: "under everything", mix: { bass: { fader: -3 } } },
       { w: "with the kick", mix: {} },
       { w: "out front", mix: { bass: { fader: 3 } } } ] },
@@ -2101,7 +2101,7 @@
   // song -> the MODES key toGenre (and the staff, and the audition) plays
   const modeKeyOf = (s) => COLORS[s.minor ? "minor" : "major"]
     .find(([k]) => k === colorOf(s))[2];
-  const colorRow = (m) => ({ id: "mcolor", seat: "arranger",
+  const colorRow = (m) => ({ id: "mcolor", head: "the tune", seat: "arranger",
     ask: m.song.minor ? "what kind of minor?" : "what kind of major?",
     opts: COLORS[m.song.minor ? "minor" : "major"].map(([k, w]) => ({
       w, is: (s2) => colorOf(s2) === k,
@@ -2113,7 +2113,7 @@
     // one's options are the ones still standing, so every answer leaves at
     // least one record — and when one is left it is called without being
     // asked.
-    ...FIELDS3.map(([f, ask]) => ({ id: f, ask, opts: null, three: true })),
+    ...FIELDS3.map(([f, ask]) => ({ id: f, head: "the record", ask, opts: null, three: true })),
     // ...and before the genre, the three things a genre is MADE of. Each
     // one's options are the ones still standing, so every answer leaves at
     // least one record and the last one is called for you.
@@ -2127,7 +2127,7 @@
     // counts in three because that is what the word means, and "how does it
     // count?" outranks it the moment anybody answers it. A record that says
     // nothing writes null, which is the sixteen-step bar it always had.
-    { id: "genre", ask: "what are we playing?", opts:
+    { id: "genre", head: "the record", ask: "what are we playing?", opts:
       Object.entries(GENRES).map(([k, gk]) => ({
         w: gk.w, is: (s) => s.genre === k,
         // ...and "answered" here means BY A HAND. Every one of these five
@@ -2143,11 +2143,11 @@
           meter: !songHand(s, "meter") ? (gk.meter || null) : s.meter,
           swing: !songHand(s, "feel") ? (gk.swing || null) : s.swing,
           space: !songHand(s, "space") ? (gk.space || "none") : s.space }) })) },
-    { id: "arc", ask: "where does it go?", opts:
+    { id: "arc", head: "the form", ask: "where does it go?", opts:
       Object.entries(ARC).map(([k, v]) => ({
         w: v.w, is: (s2) => (s2.arc || "flat") === k,
         apply: (s2) => ({ ...s2, arc: k }) })) },
-    { id: "chords", ask: "what kind of chords?", opts:
+    { id: "chords", head: "the tune", ask: "what kind of chords?", opts:
       Object.entries(CHORDKIND).map(([k, v]) => ({
         w: v.w, is: (s2) => (s2.chords || "plain") === k,
         apply: (s2) => ({ ...s2, chords: k }) })) },
@@ -2155,25 +2155,25 @@
     // sentence and the one nobody could say (HRATE above). The record
     // narrows it to the two words that record would use, so a punk record
     // may take the four-chord one a bar at a time and a pavane may not.
-    { id: "hr", ask: "how fast do the chords move?", opts:
+    { id: "hr", head: "the tune", ask: "how fast do the chords move?", opts:
       Object.entries(HRATE).map(([k, v]) => ({
         w: v.w, is: (s2) => (s2.hr || HRDEF) === k,
         apply: (s2) => ({ ...s2, hr: k }) })) },
-    { id: "key", ask: "what key are we in?", opts: Object.keys(B.KEYS).map((k) => ({
+    { id: "key", head: "the tune", ask: "what key are we in?", opts: Object.keys(B.KEYS).map((k) => ({
         w: "in " + k, is: (s) => s.key === k, apply: (s) => ({ ...s, key: k }) })) },
-    { id: "mode", ask: "major or minor?", opts: [
+    { id: "mode", head: "the tune", ask: "major or minor?", opts: [
       { w: "major", is: (s) => !s.minor, apply: (s) => ({ ...s, minor: false }) },
       { w: "minor", is: (s) => s.minor, apply: (s) => ({ ...s, minor: true }) } ] },
     // ...and THE COLOUR behind it, the way a musician actually says it:
     // "minor" is a family, not one scale, and the follow-up names which one
     // (built per model in arrDecisionsNow/answer — the words depend on which
     // half of "major or minor?" the room is in)
-    { id: "mcolor", color: true },
+    { id: "mcolor", head: "the tune", color: true },
     // A FORM IS A STARTING SHAPE. Once the boxes have been edited none of
     // these rows is what the record IS any more (`shapeOf` says that out
     // loud), so none of them reads as current — and tapping one is the way
     // back: it RESEEDS the boxes from that shape.
-    { id: "form", ask: "what's the form?", opts:
+    { id: "form", head: "the form", ask: "what's the form?", opts:
       Object.entries(FORMS).map(([k, f]) => ({
         w: f.w, is: (s) => !cleanSecs(s.secs) && s.form === k,
         apply: (s) => ({ ...reseed(s), form: k }) })) },
@@ -2183,13 +2183,13 @@
     // from the bridge" on a form with no bridge (secsOf is a no-op there).
     // Both WRAP the form, so both reseed the boxes for the same reason the
     // form row does: a wrap you cannot see is not a wrap.
-    { id: "reprise", ask: "once through, or round again?", opts: [
+    { id: "reprise", head: "the form", ask: "once through, or round again?", opts: [
       { w: "once through", is: (s2) => !cleanSecs(s2.secs) && !s2.reprise,
         apply: (s2) => ({ ...reseed(s2), reprise: null }) },
       { w: "again from the bridge",
         is: (s2) => !cleanSecs(s2.secs) && s2.reprise === "bridge",
         apply: (s2) => ({ ...reseed(s2), reprise: "bridge" }) } ] },
-    { id: "doors", ask: "how does it open and close?", opts: [
+    { id: "doors", head: "the form", ask: "how does it open and close?", opts: [
       { w: "straight in", is: (s2) => !cleanSecs(s2.secs) && !s2.doors,
         apply: (s2) => ({ ...reseed(s2), doors: null }) },
       { w: "an intro", is: (s2) => !cleanSecs(s2.secs) && s2.doors === "intro",
@@ -2205,7 +2205,7 @@
     // a theme is not a song field, it is a claim the room keeps. Unanswered
     // (or answered "one theme is plenty") there is no B and every phrase,
     // section and staff is byte-identical to the one-theme box.
-    { id: "second", ask: "does the tune have an answer?", opts: [
+    { id: "second", head: "the tune", ask: "does the tune have an answer?", opts: [
       { w: "one theme is plenty", is: (s2) => !s2.themeB,
         apply: (s2) => ({ ...s2, themeB: false }) },
       { w: "a second theme answers it", is: (s2) => !!s2.themeB,
@@ -2215,12 +2215,12 @@
     // to play at 48 would lose it the moment anyone pressed WRITE. Below 72
     // the honest axis is not the tempo, it is the SPACE question underneath:
     // one hit every four bars at 72 leaves thirteen seconds between kicks.
-    { id: "tempo", ask: "how fast do we take it?", opts: [
+    { id: "tempo", head: "the time", ask: "how fast do we take it?", opts: [
       { w: "slow, 72", is: (s) => s.bpm === 72, apply: (s) => ({ ...s, bpm: 72 }) },
       { w: "medium, 96", is: (s) => s.bpm === 96, apply: (s) => ({ ...s, bpm: 96 }) },
       { w: "up, 120", is: (s) => s.bpm === 120, apply: (s) => ({ ...s, bpm: 120 }) },
       { w: "fast, 144", is: (s) => s.bpm === 144, apply: (s) => ({ ...s, bpm: 144 }) } ] },
-    { id: "feel", ask: "straight or swung?", opts: [
+    { id: "feel", head: "the time", ask: "straight or swung?", opts: [
       { w: "straight", is: (s) => !s.swing, apply: (s) => ({ ...s, swing: null }) },
       { w: "swung", is: (s) => s.swing === "swing", apply: (s) => ({ ...s, swing: "swing" }) },
       { w: "shuffled", is: (s) => s.swing === "shuffle", apply: (s) => ({ ...s, swing: "shuffle" }) } ] },
@@ -2231,13 +2231,13 @@
     // a waltz?" (which names one genre for a whole class). "In four" is the
     // default and writes nothing, so an unanswered record is byte-identical
     // and the dice stays complete by construction.
-    { id: "meter", ask: "how does it count?", opts: [
+    { id: "meter", head: "the time", ask: "how does it count?", opts: [
       { w: "in four", is: (s) => !s.meter, apply: (s) => ({ ...s, meter: null }) },
       { w: "in three", is: (s) => s.meter === "three", apply: (s) => ({ ...s, meter: "three" }) },
       { w: "in six-eight", is: (s) => s.meter === "six", apply: (s) => ({ ...s, meter: "six" }) } ] },
     // HOW SLOW CAN THIS GO: a tempo of 48 is still four hits a bar. This is
     // the other axis — how much of the bar is nothing.
-    { id: "space", ask: "how much space is there?", opts:
+    { id: "space", head: "the time", ask: "how much space is there?", opts:
       Object.entries(SPACE).map(([k, sp]) => ({
         w: sp.w, is: (s) => (s.space || "none") === k,
         apply: (s) => ({ ...s, space: k }) })) },
@@ -2247,7 +2247,7 @@
     // question PINS a gesture on the last section; "however it falls" is
     // the default and writes nothing, so an unanswered record is
     // byte-identical and the dice stays complete by construction.
-    { id: "end", ask: "how does it end?", opts: [
+    { id: "end", head: "the form", ask: "how does it end?", opts: [
       { w: "however it falls", is: (s2) => !s2.end, apply: (s2) => ({ ...s2, end: null }) },
       { w: "a hard out", is: (s2) => s2.end === "cut", apply: (s2) => ({ ...s2, end: "cut" }) },
       { w: "ring it out", is: (s2) => s2.end === "tail", apply: (s2) => ({ ...s2, end: "tail" }) },
@@ -2289,7 +2289,7 @@
   };
   const lenDecisions = (m) => (hasShape(m) ? lenRoles(m) : [])
     .filter((r) => !chgxOf(m, r)).map((r) => ({
-    id: "len:" + r, seat: "arranger", ask: "how long is the " + r + "?",
+    id: "len:" + r, head: "the form", seat: "arranger", ask: "how long is the " + r + "?",
     opts: Object.entries(LENS).map(([k, v]) => ({
       w: v.w, is: (s2) => ((s2.lens || {})[r] || "short") === k,
       apply: (s2) => ({ ...s2, lens: { ...(s2.lens || {}), [r]: k } }) })),
@@ -2305,7 +2305,7 @@
     const c = B.CHANGES[(m.song.chg || {})[r] || "fourchord"];
     const mid = Math.floor(c.bars / 2) - 1;
     const midOk = c.bars >= 4 && c.roots[mid] !== c.roots[(mid + 1) % c.bars];
-    return { id: "lean:" + r, seat: "arranger",
+    return { id: "lean:" + r, head: "the form", seat: "arranger",
       ask: "does anything lean in the " + r + "?",
       opts: [
         { w: "no, it sits", is: (s2) => !(s2.lean || {})[r],
@@ -2319,7 +2319,7 @@
       ] };
   });
   const callDecisions = (m) => (hasShape(m) ? rolesIn(m) : []).map((r) => ({
-    id: "chg:" + r, seat: "arranger", ask: "what are the " + r + " changes?",
+    id: "chg:" + r, head: "the form", seat: "arranger", ask: "what are the " + r + " changes?",
     opts: Object.entries(B.CHANGEWORD).map(([k, w]) => ({
       w, is: (s) => (s.chg || {})[r] === k,
       apply: (s) => ({ ...s, chg: { ...(s.chg || {}), [r]: k } }) })),
@@ -4013,6 +4013,8 @@
   };
   const knobDecisions = (m, seat) => Ask.forRole(seat).map((row) => ({
     id: "knob:" + row.field, seat, ask: row.ask, knob: row.field,
+    // ...under the heading the ASKABLE row declares, like every other row
+    head: row.head || null,
     cheap: knobDistinct(row),
     answered: ((m.song.knobs || {}).__said || {})[row.field] || null,
     opts: row.opts.map(([w, v]) => ({ w,

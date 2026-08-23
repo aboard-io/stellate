@@ -271,7 +271,17 @@
   };
 
   /* ---------- the words, beyond the interview ---------- */
-  const { V, add } = C.vocab();
+  /* WHICH HEADING EACH TRAY SUBJECT LIVES UNDER — declared beside the
+     subjects, because the page has no table of its own any anymore. */
+  const HEADS = { "the line": "the line", "the figure": "the line",
+    "what notes it plays": "the line", "the bar": "the line",
+    "notes in the bar": "the line", "octaves in the bar": "the line",
+    "accents in the bar": "the line", "slides in the bar": "the line",
+    "what you are playing": "the instrument", "at the machine": "the instrument",
+    "on the board": "the board", "how you play them": "the hands",
+    "the register": "the hands", "the feel": "the hands",
+    "the tempo": "the time", "the key": "the tune", "the changes": "the tune" };
+  const { V, add } = C.vocab(HEADS);
 
   add("start", "start", ["pick up the bass"], (m) => !m.on,
       (m) => ({ ...m, on: true }), () => "a bass, in C, holding the root");
@@ -402,43 +412,43 @@
      changes, tempo, feel. Then the job, then the instrument, then where you
      sit and how the notes are played. chair.js walks the table. */
   const DEC = [
-    { id: "key", ask: "what key?", opts: Object.keys(KEYS).map((k) => ({
+    { id: "key", head: "the tune", ask: "what key?", opts: Object.keys(KEYS).map((k) => ({
         w: "in " + k, is: (m) => m.key === k, apply: (m) => ({ ...m, key: k }) })) },
-    { id: "mode", ask: "major or minor?", opts: [
+    { id: "mode", head: "the tune", ask: "major or minor?", opts: [
       { w: "major", is: (m) => !m.minor, apply: (m) => ({ ...m, minor: false }) },
       { w: "minor", is: (m) => m.minor, apply: (m) => ({ ...m, minor: true }) } ] },
-    { id: "changes", ask: "what are the changes?", opts:
+    { id: "changes", head: "the tune", ask: "what are the changes?", opts:
       Object.entries(CHANGEWORD).map(([k, w]) => ({
         w, is: (m) => m.changes === k, apply: (m) => ({ ...m, changes: k }) })) },
-    { id: "tempo", ask: "how fast?", opts: [
+    { id: "tempo", head: "the time", ask: "how fast?", opts: [
       { w: "slow, 72", is: (m) => m.bpm === 72, apply: (m) => ({ ...m, bpm: 72 }) },
       { w: "medium, 96", is: (m) => m.bpm === 96, apply: (m) => ({ ...m, bpm: 96 }) },
       { w: "up, 120", is: (m) => m.bpm === 120, apply: (m) => ({ ...m, bpm: 120 }) },
       { w: "fast, 144", is: (m) => m.bpm === 144, apply: (m) => ({ ...m, bpm: 144 }) } ] },
-    { id: "feel", ask: "straight or swung?", opts: [
+    { id: "feel", head: "the hands", ask: "straight or swung?", opts: [
       { w: "straight", is: (m) => !m.swing, apply: (m) => ({ ...m, swing: null }) },
       { w: "swung", is: (m) => m.swing === "swing", apply: (m) => ({ ...m, swing: "swing" }) } ] },
-    { id: "job", ask: "what is your job in it?", opts:
+    { id: "job", head: "the line", ask: "what is your job in it?", opts:
       Object.entries(STYLEWORD).map(([k, w]) => ({
         w, is: (m) => m.style === k, apply: (m) => ({ ...m, style: k }) })) },
-    { id: "instr", ask: "what are you playing it on?", opts:
+    { id: "instr", head: "the instrument", ask: "what are you playing it on?", opts:
       Object.entries(INSTRUMENTS).map(([id, w]) => ({
         w, is: (m) => m.instr === id, apply: (m) => ({ ...m, instr: id }) })) },
-    { id: "sit", ask: "where do you sit against the drums?", opts: [
+    { id: "sit", head: "the hands", ask: "where do you sit against the drums?", opts: [
       { w: "right on it", is: (m) => m.sit === 0, apply: (m) => ({ ...m, sit: 0 }) },
       { w: "behind the beat", is: (m) => m.sit > 0, apply: (m) => ({ ...m, sit: 1 }) },
       { w: "on top of it", is: (m) => m.sit < 0, apply: (m) => ({ ...m, sit: -1 }) } ] },
-    { id: "notes", ask: "how do you play the notes?", opts: [
+    { id: "notes", head: "the hands", ask: "how do you play the notes?", opts: [
       { w: "short, off the string", is: (m) => m.artic === "staccato",
         apply: (m) => ({ ...m, artic: "staccato" }) },
       { w: "let them ring", is: (m) => m.artic === "legato",
         apply: (m) => ({ ...m, artic: "legato" }) },
       { w: "however they fall", is: (m) => !m.artic, apply: (m) => ({ ...m, artic: null }) } ] },
-    { id: "reg", ask: "how low?", opts: [
+    { id: "reg", head: "the hands", ask: "how low?", opts: [
       { w: "down low", is: (m) => m.oct < 0, apply: (m) => ({ ...m, oct: -1 }) },
       { w: "where it sits", is: (m) => m.oct === 0, apply: (m) => ({ ...m, oct: 0 }) },
       { w: "up the neck", is: (m) => m.oct > 0, apply: (m) => ({ ...m, oct: 1 }) } ] },
-    { id: "pedal", ask: "anything on the board?", opts:
+    { id: "pedal", head: "the board", ask: "anything on the board?", opts:
       Object.entries(PEDALS).map(([k, p]) => ({
         w: p.w, is: (m) => pedalOf(m) === k, apply: (m) => ({ ...m, pedal: k }) })) },
   ];

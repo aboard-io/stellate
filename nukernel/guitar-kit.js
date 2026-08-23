@@ -117,6 +117,8 @@
     start: { words: ["pick up the guitar"], says: "a guitar, strumming it" },
     groups: { job: "what you are playing", instr: "what it is", panel: "at the amp",
               pedal: "on the board" },
+    heads: { instr: "the instrument", job: "the job", sound: "the sound",
+              panel: "the instrument", pedal: "the board" },
     asks: { instr: "what are you playing?", job: "what's your job in it?",
             reg: "where do you sit?", pedal: "anything on the board?" },
     instrSays: (w) => "on " + w,

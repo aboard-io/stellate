@@ -198,6 +198,8 @@
     start: { words: ["sit down at the keys"], says: "a pair of hands, playing pads" },
     groups: { job: "what you are playing", instr: "what it is", panel: "at the machine",
               pedal: "on the board" },
+    heads: { instr: "the instrument", job: "the job", sound: "the sound",
+              panel: "the instrument", pedal: "the board" },
     asks: { instr: "what are you playing?", job: "what's your job in it?",
             reg: "where do you sit?", pedal: "anything in the chain?" },
     instrSays: (w) => "on " + w,
