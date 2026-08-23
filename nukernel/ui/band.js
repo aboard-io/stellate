@@ -2471,6 +2471,29 @@ $("ddice").addEventListener("click", () => {
   if (!playing) startAt(0);
   playWord(true);
 });
+// ANOTHER TAKE — the same record, played again. NOT the dice: the dice
+// answers every question afresh and throws the identity away; this holds
+// every answered fact (when, where, the record, the key, the tempo, the
+// form and its lengths, every chair's answers, every producer note, every
+// bar of the theme a hand wrote) and moves the one number the KERNEL draws
+// its performance from (band-kit `anotherTake` -> `song.take` -> `kitSeed`).
+// So the band plays the same tune again and plays it differently: the hand
+// moves, the velocities move, the ornaments fall elsewhere, a canon lands
+// somewhere else. Measured over 60 records: 12.7% of the notes land
+// somewhere else, the timing moves on 63% of the ones both takes have and
+// the velocity on 57%, and every answered field is byte-identical.
+// The take is on the MODEL, so it is saved with the session and a record
+// stays a document: the same take is the same performance, always.
+$("dtake").addEventListener("click", () => {
+  const next = Band.anotherTake(model);
+  if (next === model) return;
+  model = next;
+  // nothing else is cleared: the ledger, the chair, the section in hand and
+  // the producer's stack all belong to the record, and this is the record.
+  push(true); draw();
+  if (!playing) startAt(0);
+  playWord(true);
+});
 $("dplay").addEventListener("click", () => {
   if (playing) { stop(); playWord(); }
   else {

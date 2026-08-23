@@ -17,10 +17,17 @@
     typeof require !== "undefined" ? require("./ideas-kit.js") : root.NuIdeas,
     typeof require !== "undefined" ? require("./guitar-kit.js") : root.NuGuitar,
     typeof require !== "undefined" ? require("./askable.js") : root.NuAskable,
-    typeof require !== "undefined" ? require("./vocal-kit.js") : root.NuVocal);
+    typeof require !== "undefined" ? require("./vocal-kit.js") : root.NuVocal,
+    // ...and the INSTRUMENTS, for one thing only: `RANGES`, the compass of
+    // every instrument a chair can hold (instruments.js lifts it verbatim
+    // from the parent's state-engine.js INSTRUMENT_RANGE). A record seats
+    // its band inside the instrument's own notes rather than inside numbers
+    // this file made up. Loaded before band-kit in every page that has one
+    // (index.html), and requireable standalone in node.
+    typeof require !== "undefined" ? require("./instruments.js") : root.NuInstruments);
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuBand = api;
-})(typeof self !== "undefined" ? self : this, function (C, D, B, Ky, Id, Gt, Ask, Vo) {
+})(typeof self !== "undefined" ? self : this, function (C, D, B, Ky, Id, Gt, Ask, Vo, Instr) {
   "use strict";
 
   const SEATS = ["arranger", "drums", "bass", "keys", "guitar", "voice", "engineer"];
@@ -837,6 +844,356 @@
   };
   const genreOf = (m) => GENRES[m.song.genre] || null;
 
+  /* ======================================================================
+     THE RECORD ARRIVES FINISHED (PLAN.md THE PRODUCT §2, 2026-08-22)
+     ======================================================================
+     Paul, verbatim: "I answer a few questions about time, location and
+     genre. You compose themes and set everything up clamped and mixed to
+     that. I can tweak it all but you make logical decisions about the
+     songs."
+
+     Until now the front door cast a band and called a record and then left
+     four things generic, whatever the idiom: the THEME came out of
+     ideas-kit's blank model (three notes and a rest, arching, two bars,
+     photocopied — the same tune for a punk record and a plainchant), every
+     chair sat in the register its blank model happened to start in, the
+     desk was untouched, and every section was four bars long. A record that
+     arrives generic is not a record, it is a starting position.
+
+     FOUR TABLES, and every value in them is an ANSWER. `called()` seeds
+     them the way it already seeds the groove and the kit — through the
+     chairs' own `answer`, so each one lands on the answers ledger, shows on
+     the gig sheet as a decision, and tapping it re-opens that question with
+     the chosen word lit. A decision made for you is not a wall.
+
+     THE LAW OF THE SEED, which is what keeps it from being one:
+     A RECORD MAY MOVE WHAT THE LAST RECORD PUT THERE, AND NOTHING ELSE.
+     `seeded()` below compares the standing answer with what the PREVIOUS
+     record would have seeded; equal (or absent) means nobody has spoken for
+     it and the new record may seat it, anything else is a hand and is left
+     alone. It is the same half-of-the-law `called()` already keeps for the
+     guitar ("an answered guitar is the player's, full stop") — said once,
+     for four more tables.
+
+     AND NOTHING ALREADY SAVED MOVES. All of this runs inside `called()`,
+     which fires when a record is CALLED; a session restored from
+     localStorage is a model whose fields are already set and whose genre is
+     not answered again, so a stored record renders exactly as it did.
+
+     THE PLAN IS PER FAMILY, OVERRIDDEN PER RECORD. A record with no row of
+     its own inherits its family's, so a genre added tomorrow arrives
+     finished too rather than throwing or falling back to generic — the
+     opposite of the two-table law in compose.js, and deliberately, because
+     these are decisions with a defensible default and PLAN_OF/BPM are
+     facts with none. */
+
+  /* ---------- 1. THE THEME IS AN IDIOM'S THEME ---------------------------
+     A punk hook is not a bossa hook and not a chant. The theme machinery
+     carries cell, contour, landing, length, register and sentence plan, and
+     one blank model was answering all six for all thirty records — measured
+     on the critic's corpus-derived bands, the single most expensive fault
+     in the box is `rep.halfPhotocopy` (bars 5-8 of a section identical to
+     bars 1-4, which real records essentially never do), and it is a two-bar
+     theme tiled over an eight-bar section.
+
+     Fourteen shapes, named the way a musician names them, each one six
+     ordinary answers. They are not fourteen new mechanisms: every field
+     here is a word ideas-kit already offers, so the tray, the staff and the
+     count row all read a seeded theme exactly as they read a typed one. */
+  const THEMES = {
+    // short, said twice, and it does not travel — the garage/punk hook
+    hook:   { len: "two",   cell: "call",   sent: "vary", contour: "insist",
+              land: "root",    reg: "mid" },
+    // the sung eight: a pickup into the bar, an arch, and home
+    topline:{ len: "eight", cell: "pickup", sent: "vary", contour: "fall",
+              land: "root",    reg: "mid" },
+    // the floor's figure — four bars off the beat, hovering, opening out
+    figure: { len: "four",  cell: "push",   sent: "vary", contour: "fall",
+              land: "fifth",   reg: "mid" },
+    // an insistent two-bar riff, down where a riff lives
+    riff:   { len: "four",  cell: "riff",   sent: "vary", contour: "zig",
+              land: "root",    reg: "low" },
+    // a bop head: eight bars of gallop that leans on the seventh
+    head:   { len: "eight", cell: "gallop", sent: "vary", contour: "fall",
+              land: "seventh", reg: "mid" },
+    // a sung line that falls and warms on the third (bossa, soul, reggae)
+    sung:   { len: "eight", cell: "pickup", sent: "hold", contour: "fall",
+              land: "third",   reg: "mid" },
+    // the strophe: A A B B over eight bars, which is what a hymn, a canso
+    // and a parlor ballad all are (`aabb` is the one plan that says a
+    // measure twice on purpose)
+    strophe:{ len: "eight", cell: "three",  sent: "aabb", contour: "rise",
+              land: "root",    reg: "mid" },
+    // plainchant: four bars of long notes hovering round one note
+    chantline: { len: "eight", cell: "three", sent: "vary", contour: "fall",
+              land: "root",    reg: "mid" },
+    // an aria: one long note, then a run, arching, up where a voice sings
+    aria:   { len: "eight", cell: "hang",   sent: "vary", contour: "fall",
+              land: "root",    reg: "high" },
+    // an anthem: walking up to the beat and rising, carried over the line
+    anthem: { len: "eight", cell: "walkup", sent: "vary", contour: "rise",
+              land: "root",    reg: "mid" },
+    // a dance tune: running eighths that turn back on themselves
+    reel:   { len: "eight", cell: "even",   sent: "vary", contour: "zig",
+              land: "root",    reg: "mid" },
+    // the lilt of a waltz or a barcarolle: a pickup, an arch, the third
+    lilt:   { len: "eight", cell: "pickup", sent: "vary", contour: "fall",
+              land: "third",   reg: "mid" },
+    // a blues line: a long note, a run, dropping, hanging under the root
+    blue:   { len: "four",  cell: "hang",   sent: "vary", contour: "fall",
+              land: "lead",    reg: "mid" },
+    // a processional: three notes and a rest, arching, eight bars of it
+    march:  { len: "eight", cell: "three",  sent: "vary", contour: "rise",
+              land: "root",    reg: "mid" },
+  };
+  // the words those keys are, for `Id.answer` — one place, so a renamed
+  // option in ideas-kit fails the gate here rather than seeding silence
+  const THEMEASK = { len: Id.LENGTHS, cell: Id.CELLS, sent: Id.SENTENCES,
+                     contour: Id.CONTOURS, land: Id.LANDINGS, reg: Id.REG };
+
+  /* ---------- 2. THE REGISTER IS CLAMPED TO THE MUSIC --------------------
+     A chant's voices do not sit where a funk bass sits, and neither of them
+     sits wherever a blank chair model happened to start. So a record seats
+     its band — and then the seat is CLAMPED to the instrument that chair is
+     actually holding.
+
+     THE COMPASS IS THE ENGINE'S OWN. `instruments.js RANGES` is the
+     parent's `state-engine.js INSTRUMENT_RANGE` — MIDI windows per
+     instrument id, the same table the per-note fold reads — so nothing here
+     is a number somebody chose. What IS measured is the chair's own span:
+     forcing every register word on every record in the catalog (3 seeds x
+     30 records x every word) and normalising the composed line back to reg
+     0, the bass writes [38,60] at every one of its three words, an exact
+     twelve-semitone shift, and the pitched chairs' spans are wider because
+     a chair that takes the tune plays the tune. Those are the numbers in
+     SPAN, and the probe that measured them is the one the gate re-runs.
+
+     WHY THE CLAMP IS ON THE SEED AND NOT ON THE ANSWER. "Down low" on a
+     P-bass writes MIDI 26 and the instrument's floor is 28 — a real fault,
+     and the parent's whole-line fold moves it at the seam — but a clamp on
+     the ANSWER would delete the word from the question (a question with one
+     answer is dropped), would take `bassReg` out of the kernel's reachable
+     set, and would move a saved record that had said it. So the clamp is on
+     what the BOX seats: the record you are handed is in compass, and the
+     word is still there to say.
+
+     MEASURED, and this is what it bought: forcing every register word on
+     every record in the catalog and reading the composed line back off the
+     bar list, 19% of chair seatings sat outside the notes their instrument
+     has (384 semitones outside in total, the worst single seat sixteen — an
+     ahh_choir singing MIDI 32, a cello at 24, a guitar under its own low E).
+     After: 7%, 74 semitones, worst seat six, and the bass chair's 28 bad
+     seats down to 1. What is left is the GUITAR,
+     and it is not a seat fault: the power-chord and chug jobs carry a
+     register of their own (guitar-kit JOBS `reg: -1`), so that line reaches
+     under the low E at every one of the chair's three words and no seat
+     fixes it. Said here rather than hidden. */
+  const SPAN = {
+    // chair -> the composed line's [lo, hi] at its middle register, measured
+    // over the whole catalog (4 seeds x 30 records x every register word,
+    // normalised back to reg 0). It is a NOMINAL window, not a bound: a
+    // pitched chair that takes the tune plays the tune's register, so these
+    // are the widest thing that chair writes rather than a promise about one
+    // record.
+    bass:   [34, 64], keys: [44, 78], guitar: [39, 87], voice: [51, 91],
+  };
+  // the register words each chair has, with the octave each one means
+  const REGWORD = {
+    bass:   [["down low", -1], ["where it sits", 0], ["up the neck", 1]],
+    keys:   [["down low", -1], ["where it sits", 0], ["up out of the way", 1],
+             ["right at the top", 2]],
+    guitar: [["down low", -1], ["where it sits", 0], ["up the neck", 1]],
+    voice:  [["down low", -1], ["where it sits", 0], ["up high", 1]],
+  };
+  // how far outside the instrument's compass a register puts that chair —
+  // zero is "the instrument has these notes"
+  const overflow = (chair, v, win) => {
+    const s = SPAN[chair]; if (!s || !win) return 0;
+    return Math.max(0, win[0] - (s[0] + 12 * v)) +
+           Math.max(0, (s[1] + 12 * v) - win[1]);
+  };
+  // the register word this record wants, moved to the nearest one the
+  // instrument in that chair's hands can actually hold
+  const fitReg = (chair, want, instr) => {
+    const rows = REGWORD[chair] || [];
+    const win = (Instr && Instr.RANGES) ? Instr.RANGES[instr] : null;
+    if (!win) return want;                       // unlisted: the zone window is the law
+    const at = rows.findIndex(([w]) => w === want);
+    if (at < 0) return want;
+    let best = at, bestOver = overflow(chair, rows[at][1], win);
+    if (!bestOver) return want;
+    for (let i = 0; i < rows.length; i++) {
+      const o = overflow(chair, rows[i][1], win);
+      if (o < bestOver || (o === bestOver && Math.abs(i - at) < Math.abs(best - at)))
+        { best = i; bestOver = o; }
+    }
+    return rows[best][0];
+  };
+
+  /* ---------- 3. THE DESK ARRIVES SET ------------------------------------
+     A chamber ballad is not a techno record, and both of them used to come
+     out of the front door with the engineer's chair empty and the board
+     flat. Every word here is one the fourth chair already says (ENG above),
+     so a seeded desk is the same offsets a tapped one is — and the
+     producer's own stack still ADDS on top of it (ui/band.js push: the
+     engineer's `mixOf` and the producer's `produced().mix` are summed per
+     channel, and addition commutes), which is why this is the record's mix
+     and not a producer note. */
+  const DESKS = {
+    // the floor: a big kick in a room, bright hats, pumped
+    club:   { room: "in the room", kick: "huge", snare: "dry, cracking",
+              hats: "bright", verb: "a small room", delay: "none",
+              squeeze: "pumping", tape: "none" },
+    // a band in a small room: close, tight, glued, a little tape
+    garage: { room: "right up close", kick: "tight", snare: "dry, cracking",
+              hats: "as they are", verb: "a small room", delay: "none",
+              squeeze: "a little glue", tape: "warm" },
+    // sampled drums: deep low end, the hats down, a slap on the snare
+    crate:  { room: "in the room", kick: "huge", snare: "fat",
+              hats: "keep them down", verb: "a small room",
+              delay: "a slap on the snare", squeeze: "a little glue",
+              tape: "warm" },
+    // a live date: the kit in the room and nobody squeezing anything
+    date:   { room: "in the room", kick: "round", snare: "fat",
+              hats: "as they are", verb: "a small room", delay: "none",
+              squeeze: "leave it alone", tape: "none" },
+    // the dub board: echo on everything, and the room is the instrument
+    version:{ room: "down the hall", kick: "huge", snare: "a plate on it",
+              hats: "as they are", verb: "a big hall",
+              delay: "dub it — echo on everything", squeeze: "a little glue",
+              tape: "warm" },
+    // a big room with a long tail and nothing squeezed
+    hall:   { room: "down the hall", kick: "round", snare: "a plate on it",
+              hats: "keep them down", verb: "a big hall", delay: "none",
+              squeeze: "leave it alone", tape: "none" },
+    // one room, close and dry, nothing on anything
+    parlour:{ room: "right up close", kick: "tight", snare: "dry, cracking",
+              hats: "keep them down", verb: "a small room", delay: "none",
+              squeeze: "leave it alone", tape: "none" },
+  };
+  /* A RECORD ARRIVES WITH A ROOM AND A BOARD; WHAT GOES ON EACH CHANNEL IS
+     THE ENGINEER'S OWN. The eight ids above are the ones that describe how
+     the RECORD sounds — the distance to the kit, the kick, the snare, the
+     hats, the space, the echo, the squeeze and the tape. The five that name
+     one channel (`keysfx` `gtrfx` `voxfx` `bassfx` `bassmix`) are left open,
+     and not as an oversight: a chair with nothing left to ask is a dead
+     chair, which is a law this box holds and `test/unit/question-trees.test.js`
+     enforces ("nothing is ever asked"). Seeding all thirteen retired the
+     fourth chair entirely. */
+  const DESKBOARD = ["room", "kick", "snare", "hats", "verb", "delay",
+                     "squeeze", "tape"];
+
+  /* ---------- 4. A RECORD HAS PROPORTIONS, AND THEY ARE THE IDIOM'S ------
+     "How long is the verse?" is a question the arranger has had since the
+     proportions landed, and nothing answered it: unasked, a section is as
+     long as its changes, which is four bars, so every called record came
+     out a rectangle of fours. Measured against the length-matched corpus
+     stratum, that is two of the box's four biggest systematic faults at
+     once (`form.distinctLens` "every section is the same length" and
+     `form.squareness`) and most of the third (`harm.rate`, since a
+     four-bar section is the ceiling that forces a four-chord cycle to a
+     chord a bar). The lengths here are LENS keys — the same four words the
+     question offers.
+
+     WHAT IS DELIBERATELY NOT SEEDED HERE: the ARC ("where does it go?").
+     It is the obvious next fact — measured, a third of the box's records
+     have no climax at all — and seeding it (`build` on the song families,
+     `rise` on the old world) was tried and measured WORSE on the same 298
+     records: the median fell from the 60th percentile to the 54th, three
+     records became unplayable, and `dyn.drumLift` went from 30% out of band
+     to 46%, because the arc writes hush/back LEVELS onto sections and a
+     hushed chorus is a chorus with fewer drums than its verse. The arc is a
+     real word and it stays a question; what it needs is a shape that lifts
+     without emptying, which is an arrangement problem and not a seed. */
+  const PROPS = {
+    pop:    { verse: "long",   chorus: "eight",  bridge: "eight" },
+    tight:  { verse: "eight",  chorus: "eight",  bridge: "short" },
+    twelve: { verse: "twelve", chorus: "twelve", bridge: "short" },
+    strain: { verse: "long",   chorus: "eight",  bridge: "short" },
+    strophe:{ verse: "eight",  chorus: "twelve", bridge: "eight" },
+  };
+
+  /* ---------- THE RECORD'S OWN PLAN --------------------------------------
+     One row per family, overridden per record where the record is not its
+     family — a punk hook is not a rock topline, a blues is a twelve-bar
+     chorus, a chant is not a concerto. `hr` is present only where the idiom
+     is emphatic about it, and only where the record's own `hrw` allows the
+     word (a row that narrows the question cannot then be seeded past it). */
+  const FAMPLAN = {
+    "the floor":     { theme: "figure",  desk: "club",    props: "strain",
+                       seat: { bass: "where it sits", keys: "up out of the way",
+                               guitar: "where it sits", voice: "up high" },
+                       hr: "one to a phrase" },
+    // NO CHAIR IS SEATED "DOWN LOW", and the clamp is why rather than taste:
+    // the bass writes [38,60] at its middle word, so an octave under it is
+    // [26,48] and every bass in the room floors at 28 (the cello at 36) —
+    // there is no bass instrument that HAS those notes. The guitar is the
+    // same story one string up ([33,72] against a low E of 40, which is the
+    // MIDI 38 a called record used to hand the guitarist). The word is still
+    // on every one of those questions for a hand to say; a RECORD does not
+    // seat a player under their own instrument.
+    "breaks":        { theme: "riff",    desk: "crate",   props: "strain",
+                       seat: { bass: "where it sits", keys: "where it sits",
+                               guitar: "where it sits", voice: "where it sits" },
+                       hr: "one to a phrase" },
+    "rock":          { theme: "topline", desk: "garage",  props: "pop",
+                       seat: { bass: "where it sits", keys: "up out of the way",
+                               guitar: "where it sits", voice: "where it sits" } },
+    "jazz":          { theme: "head",    desk: "date",    props: "tight",
+                       seat: { bass: "where it sits", keys: "where it sits",
+                               guitar: "where it sits", voice: "where it sits" } },
+    "funk":          { theme: "riff",    desk: "club",    props: "strain",
+                       seat: { bass: "where it sits", keys: "up out of the way",
+                               guitar: "up the neck", voice: "where it sits" },
+                       hr: "one to a phrase" },
+    "latin":         { theme: "sung",    desk: "date",    props: "tight",
+                       seat: { bass: "where it sits", keys: "up out of the way",
+                               guitar: "up the neck", voice: "where it sits" } },
+    "the old world": { theme: "march",   desk: "hall",    props: "strophe",
+                       seat: { bass: "where it sits", keys: "where it sits",
+                               guitar: "where it sits", voice: "where it sits" } },
+    "the ballroom":  { theme: "lilt",    desk: "hall",    props: "pop",
+                       seat: { bass: "where it sits", keys: "where it sits",
+                               guitar: "where it sits", voice: "where it sits" } },
+  };
+  const RECPLAN = {
+    // the floor
+    // techno takes the floor's own figure; what makes it techno is the kit,
+    // the 606 and one chord all night, not a different tune
+    disco:   { theme: "topline", props: "pop", hr: null },
+    // breaks
+    jungle:  { theme: "figure" },
+    // rock's family, which is five different records
+    punk:    { theme: "hook",    props: "tight" },
+    kraut:   { theme: "reel",    props: "strain" },
+    blues:   { theme: "blue",    desk: "date",   props: "twelve" },
+    slow:    { theme: "aria",    desk: "hall",   props: "strain" },
+    pianobar:{ theme: "lilt",    desk: "parlour", props: "pop" },
+    // jazz's family: a chamber ballad is a quartet in a studio, not a club
+    chamber: { theme: "topline", desk: "parlour", props: "pop" },
+    // latin
+    reggae:  {                   desk: "version", props: "strain" },
+    bossa:   { theme: "sung",    desk: "date" },
+    // the old world, which is nine centuries and not one idiom
+    chant:   { theme: "chantline", props: "strophe",
+               seat: { bass: "where it sits", keys: "where it sits",
+                       guitar: "where it sits", voice: "where it sits" } },
+    organum: { theme: "chantline", props: "strophe" },
+    trobar:  { theme: "strophe",   props: "tight" },
+    estampie:{ theme: "reel",      props: "tight" },
+    pavane:  { theme: "march",     props: "tight" },
+    monody:  { theme: "aria",      props: "strophe" },
+    concerto:{ theme: "reel",      props: "pop" },
+    vienna:  { theme: "topline",   props: "pop" },
+    nocturne:{ theme: "aria",      desk: "parlour", props: "pop" },
+    romantic:{ theme: "anthem",    props: "pop" },
+    salon:   { theme: "lilt",      desk: "parlour", props: "pop" },
+    parlor:  { theme: "strophe",   desk: "parlour", props: "strophe" },
+    hymn:    { theme: "strophe",   props: "strophe" },
+  };
+  const planOf = (key, gk) => ({ ...(FAMPLAN[gk && gk.fam] || FAMPLAN.rock),
+                                 ...(RECPLAN[key] || {}) });
+
   /* ---------- WHERE THE RECORD GOES ---------------------------------------
      Measured on two takes: the second chorus was bigger than the first only
      because a different player happened to be handed the tune. "Each chorus
@@ -1617,11 +1974,55 @@
     answered: d.id === "form" && boxesEdited(m) ? shapeOf(m)
       : d.id.startsWith("idea") ? d.answered : ((m.song.answers || {})[d.id] || null),
     // the chair's own option mapper, aimed at the SONG: what was said, and
-    // what is true of the tune right now
-    opts: C.mapOpts(d.opts, (m.song.answers || {})[d.id], m.song) }));
+    // what is true of the tune right now.
+    // ...AND AN IDEA ROW IS AIMED AT THE IDEA (2026-08-22). A theme question
+    // is answered on the tune's own ledger, and this mapper was reading the
+    // SONG's — so the answered option never lit and `is()` was being handed a
+    // song where it expected an idea. Invisible while nothing but the dice
+    // ever answered a theme question; the moment a called record seeds one
+    // (THEMES above), a decision the sheet says was made shows no word lit,
+    // which is the difference between "you decided this" and "something
+    // happened to you".
+    opts: d.id.startsWith("ideaB:")
+      ? C.mapOpts(d.opts, d.answered, m.ideaB || {})
+      : d.id.startsWith("idea:")
+        ? C.mapOpts(d.opts, d.answered, m.idea)
+        : C.mapOpts(d.opts, (m.song.answers || {})[d.id], m.song) }));
+
+  /* ---------- ANOTHER TAKE (Paul, 2026-08-22) ----------------------------
+     "We should also have a reseed button to rebuild the current song with
+     variation on its core identity."
+
+     THE LAW: WHAT WAS ANSWERED IS HELD; WHAT WAS DERIVED IS RE-DERIVED. A
+     take moves ONE field — `song.take` — and that field reaches the ENGINE
+     and not the model, so every answered fact is byte-identical by
+     construction rather than by care: the genre, the key, the tempo, the
+     meter, the form and its lengths, every chair's answers, every theme bar
+     a hand wrote and every producer note are all upstream of it and cannot
+     move. What DOES move is everything the kernel decides with a seed (see
+     toSong): which chance hits land, the hand's micro-timing, the velocity
+     humanisation, the ornament rolls, and where a canon falls.
+
+     REPEATABLE, because a record is a document: the take is a number on the
+     model, so the same record at the same take is the same performance, and
+     a saved session comes back as the take it was saved on. Take 1 (and the
+     absent field, which is every record made before this) is the
+     performance this box has always given.
+
+     WHAT A TAKE DELIBERATELY DOES NOT RE-DERIVE: the four tables above.
+     The theme, the seats, the desk and the proportions are seeded as
+     ANSWERS — that is the whole of "every default stays a question" — and
+     the law says an answer is held. A second take is the same band playing
+     the same tune again, not a second tune. */
+  const anotherTake = (m, n) => {
+    const now = m.song.take | 0;
+    const take = n != null ? Math.max(1, n | 0) : Math.max(1, now || 1) + 1;
+    return take === (now || 1) ? m : { ...m, song: { ...m.song, take } };
+  };
+  const takeOf = (m) => Math.max(1, m.song.take | 0);
 
   // ...what calling a record actually does to the players
-  function called(m, gk) {
+  function called(m, gk, prevKey) {
     let d = m.drums, b = m.bass;
     const keep = (ans, list) => ans && list.includes(ans);
     // the groove and the kit the record is made of
@@ -1720,9 +2121,111 @@
       form = allowed[0] || form;
       if (form && FORMS[form]) answers.form = FORMS[form].w;
     }
-    return { ...m, drums: d, bass: b, keys: kk, guitar: gg2,
+    return finish({ ...m, drums: d, bass: b, keys: kk, guitar: gg2,
              song: { ...m.song, form, chg, answers,
-                     ...(m.song.lean ? { lean: lean2 } : {}) } };
+                     ...(m.song.lean ? { lean: lean2 } : {}) } }, gk, prevKey);
+  }
+
+  /* ---------- WHAT A CALLED RECORD ARRIVES WITH ---------------------------
+     `called()` above moves what a record makes a player play. This moves
+     the four things nobody was playing at all: the tune, where the band
+     sits, the desk and the proportions. Everything it writes is an ANSWER
+     on the ordinary ledger — the gig sheet shows it, tapping it re-opens
+     the question with that word lit, and the law of the seed (above) means
+     a record only ever moves what the LAST record put there.  */
+  function finish(m, gk, prevKey) {
+    const plan = planOf(m.song.genre, gk);
+    const wasGk = prevKey && GENRES[prevKey] ? GENRES[prevKey] : null;
+    const was = wasGk ? planOf(prevKey, wasGk) : null;
+    // unspoken, or exactly what the last record seated: the record may move
+    // it. Anything else is a hand, and a hand outranks a record.
+    const mine = (said, before) => !said || (before != null && said === before);
+    let out = m;
+
+    /* --- the tune -------------------------------------------------------
+       Six answers, in the ideas module's own words, on whichever theme the
+       record has. Theme B, when a record carries one, keeps its CONTRAST
+       (a short call that falls away and opens on the fifth — answerTheme)
+       and takes only the two facts that make it the same record's answer:
+       how long it is and where it sits. */
+    const shape = THEMES[plan.theme] || THEMES.topline;
+    const before = was ? (THEMES[was.theme] || THEMES.topline) : null;
+    const wordOf = (dim, sh) => { const t = THEMEASK[dim][sh[dim]]; return t ? t.w : null; };
+    let idea = out.idea;
+    for (const dim of ["len", "cell", "sent", "contour", "land", "reg"]) {
+      const w = wordOf(dim, shape);
+      if (!w) continue;
+      if (!mine((idea.answers || {})[dim], before ? wordOf(dim, before) : null)) continue;
+      idea = Id.answer(idea, dim, w);
+    }
+    if (idea !== out.idea) out = { ...out, idea };
+    if (out.ideaB && out.ideaB.on) {
+      let b2 = out.ideaB;
+      for (const dim of ["len", "reg"]) {
+        const w = wordOf(dim, shape);
+        if (!w) continue;
+        if (!mine((b2.answers || {})[dim], before ? wordOf(dim, before) : null)) continue;
+        b2 = Id.answer(b2, dim, w);
+      }
+      if (b2 !== out.ideaB) out = { ...out, ideaB: b2 };
+    }
+
+    /* --- where the band sits, inside the instruments' own compasses ----- */
+    const SEATOF = { bass: B, keys: Ky, guitar: Gt, voice: Vo };
+    for (const chair of ["bass", "keys", "guitar", "voice"]) {
+      const want = (plan.seat || {})[chair];
+      if (!want) continue;
+      const wasWant = was && was.seat ? was.seat[chair] : null;
+      const cm = out[chair];
+      if (!cm || !mine((cm.answers || {}).reg, wasWant)) continue;
+      const w = fitReg(chair, want, cm.instr);
+      const nx = SEATOF[chair].answer(cm, "reg", w);
+      if (nx !== cm) out = { ...out, [chair]: nx };
+    }
+
+    /* --- the desk ------------------------------------------------------- */
+    const desk = DESKS[plan.desk] || DESKS.garage;
+    const wasDesk = was ? (DESKS[was.desk] || DESKS.garage) : null;
+    const eng = { ...(out.eng || {}) };
+    let moved = false;
+    for (const d of ENG) {
+      if (!DESKBOARD.includes(d.id)) continue;
+      const w = desk[d.id];
+      if (!w || !d.opts.some((o) => o.w === w)) continue;
+      if (!mine(eng[d.id], wasDesk ? wasDesk[d.id] : null)) continue;
+      if (eng[d.id] === w) continue;
+      eng[d.id] = w; moved = true;
+    }
+    if (moved) out = { ...out, eng };
+
+    /* --- the proportions, and how fast the chords move ------------------ */
+    const props = PROPS[plan.props] || PROPS.tight;
+    const wasProps = was ? (PROPS[was.props] || PROPS.tight) : null;
+    const lens = { ...(out.song.lens || {}) };
+    const answers = { ...(out.song.answers || {}) };
+    let song = out.song, touched = false;
+    for (const role of CALLED) {
+      const k = props[role];
+      if (!k || !LENS[k]) continue;
+      if (!mine(answers["len:" + role], wasProps && wasProps[role]
+        ? (LENS[wasProps[role]] || {}).w : null)) continue;
+      if (lens[role] === k) continue;
+      lens[role] = k; answers["len:" + role] = LENS[k].w; touched = true;
+    }
+    // ...and the harmonic rate, only where the idiom is emphatic about it
+    // AND the record's own `hrw` leaves that word standing
+    const hrw = plan.hr;
+    if (hrw) {
+      const k = Object.keys(HRATE).find((x) => HRATE[x].w === hrw);
+      const allowed = !gk.hrw || gk.hrw.includes(hrw);
+      if (k && allowed &&
+          mine(answers.hr, was && was.hr ? was.hr : null) && song.hr !== k) {
+        song = { ...song, hr: k }; answers.hr = hrw; touched = true;
+      }
+    }
+    if (touched || song !== out.song)
+      out = { ...out, song: { ...song, lens, answers } };
+    return out;
   }
 
   /* ---------- the three seats, one question at a time ----------
@@ -2210,7 +2713,7 @@
         // decision to respect, it is a groove that is no longer on the
         // table. A player's own answer, still available here, is untouched:
         // that is the half of the law that matters.
-        if (gk) out = called(out, gk);
+        if (gk) out = called(out, gk, m.song.genre);
       }
       return out;
     }
@@ -2597,6 +3100,34 @@
       // and an AUTHORED list's length IS the length, outranking any stale
       // length answer (setChanges retires the question and its answer)
       const bars = (c.authored ? null : lenOf(m, role) || ROLEBARS[role]) || g.bars;
+      /* ---------- ANOTHER TAKE (Paul, 2026-08-22: "a reseed button to
+         rebuild the current song with variation on its core identity") ----
+         A TAKE IS A SEED, AND THIS BOX HAD ONE SEED IT NEVER WROTE.
+         `kitSeed` is the kernel's own per-take dice (kernel.js `rollAt`):
+         it decides which chance hits actually land, the HAND — seeded
+         micro-timing in ninths of a step — the per-hit velocity
+         humanisation, and the ornament rolls. Nothing in nukernel has ever
+         set it, so every record this box has made has been take zero, and
+         two performances of the same song were the same performance to the
+         byte. `song.take` is that seed, said out loud: absent (or 1) is
+         take one and every record before this renders byte-identical.
+
+         It reaches the engine and NOT the model, which is what makes the
+         law hold by construction: a take cannot move a decision, because
+         no decision is downstream of it. The section index goes into it so
+         the same figure is not humanised identically in every section. */
+      const take = (m.song.take | 0);
+      if (take > 1) {
+        const ks = (take * 0x9E3779B1 + i * 0x85EBCA77) | 0;
+        g.kitSeed = ks;
+        if (melody) melody.genre = { ...melody.genre, kitSeed: ks };
+        if (voice) voice.genre = { ...voice.genre, kitSeed: ks };
+        // ...and the PIPES, whose operators carry a seed of their own
+        // (kernel.js: `prng(((op.seed || 0) + 1) * ...)`) and were handed
+        // none — so a canon fell in the same places every time
+        if (Array.isArray(g.pipes) && g.pipes.length)
+          g.pipes = g.pipes.map((op, k) => ({ ...op, seed: ks + k }));
+      }
       return { role, i, genre: g, bars, per, melody, voice,
                pattern: Ky.toPattern(taker.chair === "keys" && melody
                  ? Ky.say(km, "job:out") : km),
@@ -3249,6 +3780,9 @@
   }
 
   return { SEATS, TAKEN, FORMS, CALLED, CHGROLE, GENRES, SPACE, ROLE, ENG, SECMIX, SECMOVE, mixOf, themeName,
+           // the record-arrives-finished tables, so a gate can hold the seed
+           // to the same numbers the seat is chosen with
+           THEMES, DESKS, PROPS, SPAN, planOf, fitReg, anotherTake, takeOf,
            METS, metOf, stepsOfSong, seatMeter,
            resetSeat, randomSong, modeKeyOf,
            genreOf, rolesIn, asked, pending, sigOf, secSigOf, survivors, FIELDS3, Ask,
