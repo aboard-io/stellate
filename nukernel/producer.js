@@ -234,20 +234,29 @@
   };
   // the genre fields each scope reads off an anchor. Each entry is
   // [path, kind, from(anchor)] where path is dotted into the SECTION.
+  // A FOURTH COLUMN, AND IT IS THE DRUMMER'S NAME ON THE ROW. "kit" says this
+  // row is a fact about the kit, and it is what the kitless fence reads: on a
+  // record the engine gets no drum event from, every one of them sits out,
+  // whichever scope pulled it in. Declared here rather than enumerated at the
+  // fence, because enumerating doors is how the last one got left open — the
+  // grid was fenced and `g.fill` walked straight through it, which is a whole
+  // fill of snare, toms and a crash on the last bar of a chamber record
+  // (measured: `make the sound rock` put 11 hits on it with every grid row
+  // refused).
   const drumsFields = () => [
-    ["g.drumkit", "noun", (A) => A.drumkit],
-    ["g.hand",    "noun", (A) => A.hand],
-    ["g.humanize","num",  (A) => A.humanize],
-    ["g.touch",   "obj",  (A) => A.touch],
-    ["g.stress",  "num",  (A) => A.stress],
-    ["g.kitVel",  "obj",  (A) => A.kitVel],
-    ["g.fill",    "noun", (A) => A.fill],
+    ["g.drumkit", "noun", (A) => A.drumkit,  "kit"],
+    ["g.hand",    "noun", (A) => A.hand,     "kit"],
+    ["g.humanize","num",  (A) => A.humanize, "kit"],
+    ["g.touch",   "obj",  (A) => A.touch,    "kit"],
+    ["g.stress",  "num",  (A) => A.stress,   "kit"],
+    ["g.kitVel",  "obj",  (A) => A.kitVel,   "kit"],
+    ["g.fill",    "noun", (A) => A.fill,     "kit"],
   ];
   const laneFields = (lanes) => lanes.flatMap((d) => [
-    ["kit." + d, "grid", (A) => (A.kit || {})[d]],
-    ["kit.?" + d, "grid", (A) => (A.kit || {})["?" + d]],
-    ["kit.~" + d, "grid", (A) => (A.kit || {})["~" + d]],
-    ["kit.!" + d, "grid", (A) => (A.kit || {})["!" + d]],
+    ["kit." + d, "grid", (A) => (A.kit || {})[d], "kit"],
+    ["kit.?" + d, "grid", (A) => (A.kit || {})["?" + d], "kit"],
+    ["kit.~" + d, "grid", (A) => (A.kit || {})["~" + d], "kit"],
+    ["kit.!" + d, "grid", (A) => (A.kit || {})["!" + d], "kit"],
   ]);
   const bassLine = () => [
     ["g.bassStyle", "noun", (A) => A.bassStyle],
@@ -666,17 +675,71 @@
   const livesOn = (secs, S) => { const snd = soundsOf(secs);
     return livesIn(liveChans(secs, snd), secs, S, snd); };
 
+  /* ================= A RECORD WITH NO KIT DOES NOT GET ONE ===============
+     Paul, 2026-08-23: "sometimes you add drums to the 1800s". It arrived
+     through this door too. On a Gregorian chant the producer offered drums /
+     kick / snare / hats / toms / percussion under "more of what?" (it dropped
+     the guitar correctly), "more drums" reported "opened the kit up (27 steps
+     across 9 drums)", and the engine's own bar list went 0 -> 216 drum hits,
+     +1.92 dB rms on the live page.
+
+     THE TRAP, and it is why every structural guard missed it: the chant's kit
+     is DECLARED — nine lanes, sixteen zeros each — so nothing on the model is
+     ever nonzero, and densLane's whole job is to fill the holes in a lane
+     that is already there. A guard that reads the kit sees nine lanes and
+     agrees the record has drums. So this one reads THE ARTIFACT: the hits
+     K.drums actually hands the engine, over the record the page handed in,
+     which is the same measurement band-kit's take gate makes (all 30 records
+     x takes 2-5, `(h1 === 0) === (h === 0)`) and the same reason it is
+     allowed to ask the kernel that soundsOf is — the question is literally
+     "does a drum come out of this record". Once per compiled record, cached
+     on the array like every other answer here.
+
+     The law is the take's, word for word: a producer may vary WHAT THE RECORD
+     ALLOWS and may not hire a player. So it is a RECORD-level fact, never a
+     lane-level one — roll 2 is a troubadour song that declares a `k` lane of
+     sixteen zeros and plays 122 drum events on its other lanes, and "more
+     kick" there filling that lane is the producer working, not the 1800s. */
+  const PH0 = { deg: new Array(16).fill(0), oct: new Array(16).fill(0),
+    vel: new Array(16).fill(6), inc: new Array(16).fill(0),
+    stk: new Array(16).fill(0), gate: new Array(16).fill(0),
+    acc: new Array(16).fill(0), sld: new Array(16).fill(0) };
+  const KITLESS = new WeakMap();
+  function kitless(secs) {
+    if (!Array.isArray(secs)) return false;
+    let v = KITLESS.get(secs); if (v !== undefined) return v;
+    v = true;
+    for (const sec of secs) {
+      if (!sec || !sec.genre) continue;
+      let n = 0;
+      try { n = K.drums(PH0, sec.genre, Math.max(1, sec.bars | 0)).length; }
+      catch (e) { n = 1; }                     // a throw is not a silent kit
+      if (n) { v = false; break; }
+    }
+    KITLESS.set(secs, v);
+    return v;
+  }
+  // ...and which subjects that fact is about. A subject that owns kit lanes
+  // IS the drummer, whichever verb is holding it.
+  const isDrum = (S) => !!(S && (S.lane || S.id === "drums"));
+
   /* ================= ONE NOTE, APPLIED ===================================
      `note` is { v: verb, s: subject, d: descriptor|null, w: amount }. What
      comes back is a diff record — WHAT ACTUALLY MOVED — because the sentence
      the producer speaks is computed from the applied delta and never from
      the intent: the hand may have overruled half of it, and the gig sheet
      must say what is true. */
-  function applyNote(model, secs, note, held, out, live, sounds) {
+  function applyNote(model, secs, note, held, out, live, sounds, noKit) {
     const S = SUB[note.s]; if (!S) return;
     const w = note.w, verb = note.v;
     const d = { fields: [], lanes: [], mix: {}, master: {}, bpm: 0,
                 kitWas: [], kitNow: [], cast: [], silenced: [], brought: [] };
+    // THE KITLESS FENCE, said once for every verb. A record the engine gets
+    // no drum event from has no drummer to make punk, no kick to open up and
+    // no crash to add — so the note is refused whole, `speak` falls through
+    // to "there are no drums on this record", and subjectsFor (which asks the
+    // mover) withholds the sentence in the first place.
+    if (noKit && isDrum(S)) { out.push({ note, d }); return; }
     const A = note.d && GENRES[note.d] ? GENRES[note.d] : null;
     const adj = note.d && ADJOF[note.d] ? ADJOF[note.d] : null;
     // GRIDS ARE REFUSED WHEN THE RECORD IS NOT COUNTING IN SIXTEEN. Every
@@ -713,10 +776,10 @@
     /* ---- MAKE: the vector step -------------------------------------- */
     if (verb === "make" && A) {
       const rows = (SCOPEFIELDS[S.id] || SCOPEFIELDS.record)();
-      for (const sec of secs) applyRows(model, sec, rows, A, w, held, d, grids);
+      for (const sec of secs) applyRows(model, sec, rows, A, w, held, d, grids, noKit);
     }
     if (verb === "make" && adj) applyAdj(model, secs, S, adj, w, held, d,
-                                         addMix, addMaster, grids);
+                                         addMix, addMaster, grids, noKit);
 
     /* ---- MORE / LESS: the amount of it ------------------------------- */
     if (verb === "more" || verb === "less") {
@@ -724,14 +787,14 @@
       if (S.chan.length) addMix(S.chan, { fader: sign * 7 * w });
       if (S.master) addMaster({ glue: sign * 0.2 * w, space: 0 });
       // ...and more of what it PLAYS, not only more of its level
-      if (S.lane && grids) densLane(secs, S, sign, w, d);
+      if (S.lane && grids) densLane(secs, S, sign, w, d, noKit);
       else if (S.id === "bass" || S.id === "line") densBass(secs, sign, w, d, held);
-      else if (S.id === "record" && grids) densLane(secs, SUB.drums, sign, w, d);
+      else if (S.id === "record" && grids) densLane(secs, SUB.drums, sign, w, d, noKit);
     }
 
     /* ---- ADD: bring in what is not playing --------------------------- */
     if (verb === "add") {
-      if (S.lane && grids) {
+      if (S.lane && grids && !noKit) {
         for (const sec of secs) {
           touchKit(sec); const g = sec.genre;
           for (const bar of [g.kit, ...(g.kits || [])]) {
@@ -758,11 +821,22 @@
     }
 
     /* ---- TAKE AWAY: the Rubin verb ---------------------------------- */
-    if (verb === "away") {
+    // ...AND YOU CANNOT TAKE AWAY WHAT IS NOT THERE. The same guard `keep
+    // only` has carried since the live-channel law, applied to the verb one
+    // door over, because the fault it prevents is Paul's original complaint
+    // wearing a different noun: on a house record "take away the keys" was
+    // OFFERED, pressed three times, and reported `moved:false, said:["the
+    // keys is not playing on this record"], mix:{}` every time. The chair has
+    // a seat, an instrument and a `part`, and K.render of its phrase is zero
+    // notes long — so `silence` nulling that part counted as a move, and
+    // subjectsFor (which asks the mover, pressed to the top of its ladder)
+    // agreed with itself all the way down. PREFER NOT OFFERING WHAT CANNOT
+    // WORK over flagging it refused afterwards.
+    if (verb === "away" && livesIn(live, secs, S, sounds)) {
       if (S.chan.length) addMix(S.chan, w >= DELETE_TH
         ? { mute: true, fader: -36 * w } : { fader: -36 * w });
       if (w >= DELETE_TH) silence(secs, S, d, grids);
-      else if (S.lane && grids) densLane(secs, S, -1, w, d);
+      else if (S.lane && grids) densLane(secs, S, -1, w, d, noKit);
     }
 
     /* ---- KEEP ONLY: everything else steps back ----------------------- */
@@ -786,15 +860,16 @@
   }
 
   /* ---- the row engine: numbers lerp, nouns switch, grids budget ------- */
-  function applyRows(model, sec, rows, A, w, held, d, grids) {
-    for (const [path, kind, from] of rows) {
+  function applyRows(model, sec, rows, A, w, held, d, grids, noKit) {
+    for (const [path, kind, from, who] of rows) {
+      if (noKit && who === "kit") continue;            // the kitless fence
       const tgt = from(A);
       if (tgt === undefined) continue;                 // no opinion: sit out
       const [box, ...rest] = path.split(".");
       const field = rest[rest.length - 1];
       if (held.has(field)) continue;                   // the hand owns it
       if (kind === "grid") {
-        if (!grids) continue;
+        if (!grids || noKit) continue;   // ...and the fence again, per kind
         const lane = rest.join(".").replace(/^kit\./, "");
         touchKit(sec);
         const g = sec.genre;
@@ -913,7 +988,8 @@
   }
 
   /* ---- density: more of what it already plays ------------------------ */
-  function densLane(secs, S, sign, w, d) {
+  function densLane(secs, S, sign, w, d, noKit) {
+    if (noKit) return;                    // the kitless fence
     for (const sec of secs) {
       touchKit(sec); const g = sec.genre;
       for (const bar of [g.kit, ...(g.kits || [])]) {
@@ -968,7 +1044,12 @@
       if (S.lane && grids) {
         touchKit(sec); const g = sec.genre;
         for (const bar of [g.kit, ...(g.kits || [])]) { if (!bar) continue;
-          for (const lane of S.lane) if (bar[lane]) { delete bar[lane]; did = true;
+          // A DECLARED LANE OF SIXTEEN ZEROS IS NOT A DRUM TO REMOVE. Deleting
+          // it moved the score and changed no sound, which is the same lie
+          // `did` was introduced to stop, one level further down.
+          for (const lane of S.lane) { const vec = bar[lane];
+            if (!vec || !(Array.isArray(vec) ? vec.some(Boolean) : vec)) continue;
+            delete bar[lane]; did = true;
             delete bar["?" + lane]; delete bar["~" + lane]; delete bar["!" + lane]; } }
       }
       if (S.id === "bass" || S.id === "line") {
@@ -999,7 +1080,7 @@
   }
 
   /* ---- the adjectives, applied --------------------------------------- */
-  function applyAdj(model, secs, S, adj, w, held, d, addMix, addMaster, grids) {
+  function applyAdj(model, secs, S, adj, w, held, d, addMix, addMaster, grids, noKit) {
     if (adj.mix && S.chan.length) addMix(S.chan, adj.mix(w));
     if (adj.mix && !S.chan.length && S.master) addMix(["drums","bass"], adj.mix(w));
     if (adj.master && (S.master || S.id === "record")) addMaster(adj.master(w));
@@ -1009,8 +1090,8 @@
       if (got !== cur) { d.bpm = got - cur; d.fields.push({ f: "bpm", from: cur, to: got }); }
     }
     if (adj.dens) {
-      if (S.lane && grids) densLane(secs, S, adj.dens, w, d);
-      else if (S.id === "record" && grids) densLane(secs, SUB.drums, adj.dens, w, d);
+      if (S.lane && grids) densLane(secs, S, adj.dens, w, d, noKit);
+      else if (S.id === "record" && grids) densLane(secs, SUB.drums, adj.dens, w, d, noKit);
       if (S.id === "bass" || S.id === "line" || S.id === "record")
         densBass(secs, adj.dens, w, d, held);
     }
@@ -1110,6 +1191,7 @@
     // addresses are rebuilt only when a note has actually moved a lane or put
     // a chair in or out, which is the only way the answer can change.
     const sounds = soundsOf(secs0);
+    const noKit = kitless(secs0);
     let live = null;
     for (const n of notes) {
       // the kit before and after THIS note, so the sentence can be read off
@@ -1117,10 +1199,22 @@
       const k0 = secs[0] && secs[0].genre && secs[0].genre.kit;
       const was = k0 ? JSON.parse(JSON.stringify(k0)) : null;
       if (!live) live = liveChans(secs, sounds);
-      applyNote(model, secs, n, held, out, live, sounds);
+      applyNote(model, secs, n, held, out, live, sounds, noKit);
       const rec = out[out.length - 1];
+      // A NOTE'S OWN DESCRIPTION IS ABOUT THE NOTE, and it is written HERE
+      // rather than at the end of the pass. `__kitNow` used to be a LIVE
+      // REFERENCE to the kit every later note goes on mutating, while `said`
+      // is computed after the whole stack has run — so a second sentence
+      // rewrote the first one's note retroactively: "less of everything"
+      // first reported "thinned the kick (1 step), thinned the hat (2
+      // steps)…", and after an unrelated second sentence the same untouched
+      // line read "opened the kit up (25 steps across 9 drums)". Inverted
+      // meaning, for a sentence the user never touched. A persisted statement
+      // describes what IT does; so the kit AFTER this note is snapshotted the
+      // same way the kit before it already was.
+      const k1 = secs[0] && secs[0].genre && secs[0].genre.kit;
       if (rec) { rec.d.__kitWas = was;
-                 rec.d.__kitNow = secs[0] && secs[0].genre && secs[0].genre.kit;
+                 rec.d.__kitNow = k1 ? JSON.parse(JSON.stringify(k1)) : null;
                  if (rec.d.lanes.length || rec.d.silenced.length ||
                      rec.d.brought.length) live = null; }
     }
@@ -1302,9 +1396,15 @@
       // already as cymballed as it is going to get. (A chair keeps its own
       // wording — "the voice is not playing" is what an absent PLAYER is.)
       if (!livesOn(base, S))
-        return [S.kind === "chair" ? SUB[note.s].w + " is not playing on this record"
-                : "there " + (/s$/.test(S.bare) && !/ss$/.test(S.bare) ? "are" : "is") +
-                  " no " + S.bare + " on this record"];
+        // ...and a PLURAL chair is plural in both halves of the sentence. The
+        // drums became sayable here the day the kitless fence landed, and
+        // "the drums is not playing on this record" is not a thing a person
+        // says. The same test the other branch already made, moved up one.
+        return [S.kind === "chair"
+          ? SUB[note.s].w + (/s$/.test(S.bare) && !/ss$/.test(S.bare) ? " are" : " is") +
+            " not playing on this record"
+          : "there " + (/s$/.test(S.bare) && !/ss$/.test(S.bare) ? "are" : "is") +
+            " no " + S.bare + " on this record"];
       // ...and the one that is not a failure at all: the staggered
       // thresholds mean a first press can be below every noun this target
       // disagrees about. Say so, and say what to do about it. TWO-TAP verbs
@@ -1365,8 +1465,10 @@
     const sd = sdOf();
     const g = secs[0] && secs[0].genre; if (!g) return 0;
     const grids = !(g.meter && g.meter.steps !== 16);
+    const noKit = kitless(secs);
     let score = 0;
-    for (const [path, kind, from] of rows) {
+    for (const [path, kind, from, who] of rows) {
+      if (noKit && who === "kit") continue;            // the kitless fence, scored
       const tgt = from(A);
       if (tgt === undefined) continue;
       const rest = path.split(".").slice(1);
@@ -1429,32 +1531,53 @@
     STANDK = key; STANDC = out;
     return out;
   }
-  let SUBJK = "", SUBJC = null;
+  // ONE RECORD'S MENU AT A TIME, whole. It was one entry keyed on the VERB,
+  // and the page draws six verbs in a row, so every redraw threw the answer
+  // away and re-probed. A Map cleared when the record's signature changes is
+  // the same cache with the right key.
+  let MENUK = "", MENU = new Map();
+  const memo = (key, make) => { const k2 = key.k;
+    if (MENUK !== k2) { MENUK = k2; MENU = new Map(); }
+    if (MENU.has(key.s)) return MENU.get(key.s);
+    const v = make(); MENU.set(key.s, v); return v;
+  };
   function subjectsFor(model, secs0, verb) {
     if (!VERB[verb]) return [];
     const secs = standing(model, secs0);
-    const key = sig(model, secs0) + "|s|" + verb;
-    if (SUBJK === key && SUBJC) return SUBJC;
-    const out = SUBJ.filter((s) => {
+    return memo({ k: sig(model, secs0), s: "s|" + verb }, () => SUBJ.filter((s) => {
       if (!takes(verb, s.id)) return false;
-      if (VERB[verb].d !== "no") return true;      // its descriptors decide
+      // THE RECORD WITH NO KIT HAS NO DRUMMER TO TALK TO, whichever verb is
+      // asking. Said at the offering as well as at the mover, because a
+      // sentence that has to be refused after the fact is a sentence that
+      // should not have been on the page (the law, both halves).
+      if (isDrum(SUB[s.id]) && kitless(secs)) return false;
+      // A VERB THAT TAKES A DESCRIPTOR IS OFFERED ONLY WHERE IT HAS ONE.
+      // This used to say `return true` — its descriptors decide — and that
+      // is exactly half a rule: the DESCRIPTOR list is computed against the
+      // record, so a subject whose list comes back empty was a noun you
+      // could press to reach a menu with nothing in it. Measured on a house
+      // record: "add" offered `the keys`, and targetsFor answered with zero
+      // targets. Withholding a subject whose target list is empty removes
+      // exactly zero sayable sentences, by construction.
+      if (VERB[verb].d !== "no") return targetsFor(model, secs0, verb, s.id).length > 0;
+      // ...and a verb that takes none is a two-tap sentence, so the
+      // record-dependent test has to happen HERE or never.
       try { const r = run({ song: model.song, prod: [{ v: verb, s: s.id, w: 0.95 }] }, secs);
             return !!(r.said[0] && r.said[0].moved); } catch (e) { return false; }
-    });
-    SUBJK = key; SUBJC = out;
-    return out;
+    }));
   }
 
   // one cache per record shape — the offering is walked over 122 anchors and
   // a page redraws on every tap
-  let OFFER = null, OFFERKEY = "";
   function targetsFor(model, secs0, verb, sid) {
     if (!VERB[verb] || !SUB[sid]) return [];
     if (VERB[verb].d === "no") return [];
     const secs = standing(model, secs0);
+    if (isDrum(SUB[sid]) && kitless(secs)) return [];      // the kitless fence
     const model2 = { song: model.song };          // the stack is IN `secs` now
-    const key = sig(model, secs0) + "|" + verb + "|" + sid;
-    if (OFFERKEY === key && OFFER) return OFFER;
+    return memo({ k: sig(model, secs0), s: verb + "|" + sid }, () => targets(model2, secs, verb, sid));
+  }
+  function targets(model2, secs, verb, sid) {
     const out = [];
     if (verb === "make") {
       for (const gid of Object.keys(GENRES))
@@ -1486,7 +1609,6 @@
         if (canAdd(secs, S, GENRES[gid], grids, true))
           out.push({ id: gid, w: gid, label: GENRES[gid].label, kind: "genre" });
     }
-    OFFERKEY = key; OFFER = out;
     return out;
   }
   // ...pressed to the top of its ladder, because the thresholds are

@@ -1576,7 +1576,6 @@ function producerArea(parent) {
   const opts = Prod.targetsFor(model, R.base, pverb, psubj);
   const adjs = opts.filter((o) => o.kind === "adj");
   const gens = opts.filter((o) => o.kind === "genre");
-  for (const o of opts.filter((x) => x.kind === "bare")) put(ask, o);
   const put = (host, o) => {
     const lab = optWidget(o.w, "dopt",
       { kind: "radio", name: "pdesc", on: false, key: "opt|pdesc|" + o.id,
@@ -1586,6 +1585,12 @@ function producerArea(parent) {
     if (o.label) lab.title = o.label;
     host.append(lab, " ");
   };
+  // a BARE target names no descriptor of its own ("add the drums" wants a
+  // kind, not an adjective), so those go straight under the legend. This
+  // line used to sit ABOVE `put` and threw on every press of every noun
+  // under `add` — one of six verbs, dead in the temporal dead zone, and
+  // the only page error on the site.
+  for (const o of opts.filter((x) => x.kind === "bare")) put(ask, o);
   if (adjs.length) {
     ask.append(el("p", null, "in a word:"));
     const row = el("p");
