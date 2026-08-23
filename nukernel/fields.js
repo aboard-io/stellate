@@ -1126,6 +1126,22 @@
     // gate holds the chair's words against THIS list rather than against a grep
     // of the catalog, which was only ever a proxy for it.
     ids.add("guitar_harmonics"); ids.add("di_guitar");
+    // ...and THE REST OF THE RACKS, on the same law and for the same reason
+    // (2026-08-23, "give me all choices for keys and all instruments and
+    // kits"). Opening the keys, bass and voice racks let a chair claim
+    // twenty-one more ids BY NAME; the pool must offer what a word casts, or
+    // the chair's pick has nowhere to land. Every one is a real SAMPLERS id
+    // with zones on disk or a patch recipe, every one carries an
+    // instruments.js RANGES row, and no catalog genre names any of them —
+    // which is exactly why they were unreachable. The three chairs' gates
+    // hold their words against THIS list.
+    for (const id of ["celesta", "glockenspiel", "vibraphone", "marimba",
+                      "xylophone", "tubular_bells", "music_box",
+                      "electric_piano", "reed_organ", "accordion",
+                      "metal_pad", "synth_strings_2", "pizzicato_strings",
+                      "space_voice",
+                      "fretless_bass", "slap_bass", "pop_bass", "contrabass",
+                      "synth_bass_1", "synth_bass_2"]) ids.add(id);
     for (const id of [...ids].sort()) INSTRCHOICES[id] = id.replace(/_/g, " ");
   }
   // THE POOL CHAIRS — which seats the song's INSTRUMENT POOL may cast. They

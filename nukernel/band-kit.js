@@ -1719,11 +1719,20 @@
      though aeolian is the commoner pop minor, and the colour question is
      where "natural" becomes sayable out loud. Each row is
      [key, the word said, the MODES key it plays]. */
+  // ...and PHRYGIAN, which the alphabet has carried since the day it was
+  // written and no word could reach (2026-08-23, the open-the-racks round).
+  // genres.js MODES holds eight scales; this table offered seven of them, so
+  // [0,1,3,5,7,8,10] — the flat second, the one minor colour a listener can
+  // name blindfolded — was a mode the engine plays, the catalog casts, and
+  // the band page could not say. It is a MINOR, and it goes last in that
+  // family on purpose: the row's order is what a session calls in, and
+  // nobody reaches for phrygian before they have reached for natural.
   const COLORS = {
     minor: [["natural", "natural", "aeolian"],
             ["dorian", "dorian", "dorian"],
             ["harmonic", "harmonic", "harmonic"],
-            ["melodic", "melodic minor", "melodic"]],
+            ["melodic", "melodic minor", "melodic"],
+            ["phrygian", "phrygian", "phrygian"]],
     major: [["major", "major", "ionian"],
             ["mixo", "mixolydian", "mixo"],
             ["lydian", "lydian", "lydian"]],
@@ -2544,10 +2553,36 @@
        which is the take laying a player out, the half of this law that was
        already written down). Every record whose grooves are all of one
        kind — which is 26 of the 30 — rolls exactly as it always did. */
+    /* ...AND THE RECKONING IS THE RECORD'S, ONE AXIS AT A TIME (2026-08-23).
+       The law above is right and it was being asked of the wrong model. `bare`
+       came off `m.drums` — the model this take starts from, which is the
+       PREVIOUS take — and the two material rows read each other, so:
+         · "nobody on the kit" with fills still switched on is not a kitless
+           genre (the fill bars have hits), so the groove roll kept the tacet
+           whenever the take before it happened to roll the fills ON;
+         · and a take that landed on the tacet made the NEXT take's reference
+           kitless, which changed what that one was allowed to roll.
+       Both make a take number name two different records depending on the road
+       there — take three off take two disagreeing with take three off take one
+       — which is the one thing test/unit/band-kit.test.js says a take may never
+       do. Measured on the shipped file before this: 43 of 200 seeded records
+       walked to a different take three than they were handed, and the gate
+       samples eight seeds, so it had never landed on one. (It landed on seed 6
+       the moment the racks opened and seed 6 became a rock record in six-eight.)
+       So the reference is the RECORD'S OWN GROOVE, which no take can move, and
+       each row is judged on its own axis: a groove is weighed with the fills
+       switched off, and the fills are weighed whole. */
     if (seat === "drums") {
-      const bare = kitlessOf(D.toGenre(m.drums));
+      const noFill = (dm) => { try { return D.answer(dm, "fills", "no fills"); }
+                               catch (e) { return dm; } };
+      const kitless = (dm, whole) => kitlessOf(D.toGenre(whole ? dm : noFill(dm)));
+      const rec = (genreOf(m) || {}).grooves || [];
+      let ref = m.drums;
+      if (rec.length) { try { ref = D.answer(m.drums, "groove", rec[0]); } catch (e) { ref = m.drums; } }
+      const whole = d.id === "fills";
+      const bare = kitless(ref, whole);
       const keep = opts.filter((o) => {
-        try { return kitlessOf(D.toGenre(D.answer(m.drums, d.id, o.w))) === bare; }
+        try { return kitless(D.answer(m.drums, d.id, o.w), whole) === bare; }
         catch (e) { return false; }
       });
       if (!keep.length) return null;
@@ -2681,9 +2716,22 @@
     const keep = (ans, list) => ans && list.includes(ans);
     // the groove and the kit the record is made of
     if (!keep((d.answers || {}).groove, gk.grooves)) d = D.answer(d, "groove", gk.grooves[0]);
+    // ...AND THE KIT, ON THE SAME LAW AS THE KEYS AND THE GUITAR (2026-08-23).
+    // This used to keep whatever kit the drummer happened to be on whenever the
+    // record merely ALLOWED it — and since every drummer starts on the acoustic
+    // kit and most records list it somewhere, a boom-bap record whose first
+    // machine is an 808 arrived on an acoustic kit, a jungle record on an
+    // acoustic kit, a jazz date and a bossa likewise. Allowed, and not the kit
+    // the record hands you: the identical bug the guitar and keys chairs had
+    // fixed in the de-jangle round, still standing here because the kit had no
+    // QUESTION and so no answer to be kept. Now it has one, so the same two
+    // halves apply — a drummer who ANSWERED keeps their answer, and an
+    // unspoken kit follows the record.
+    // (Measured: four of the thirty records move — boom-bap to the 808, jungle
+    // to the electronic kit, the jazz date to the jazz kit, the bossa to
+    // brushes. The other twenty-six name a kit they were already on.)
     const mach = D.catalog(d, null).filter((i) => i.group === "the machine");
-    const has = mach.find((i) => i.active && gk.machines.includes(i.words[0]));
-    if (!has) {
+    if (!(d.answers || {}).kit) {
       const want = mach.find((i) => i.words[0] === gk.machines[0]);
       if (want) d = D.say(d, want.id);
     }
@@ -2943,31 +2991,140 @@
      `ROWORDER` does not name these two, so the grid's sort is a no-op across
      them and this order stands.
 
-     GUITAR ONLY, deliberately. The same courtesy would be one line each for
-     keys and bass, and it is NOT taken here: the keys rack is 17 words and
-     the record's four are a genuinely useful cut of it, so opening that one
-     is a design question about a longer list, asked separately. */
-  const GTRROWS = { own: "the record's own:", rest: "the rest of the rack:" };
+     GUITAR ONLY, deliberately — and that stood for one day. The note here read
+     "the same courtesy would be one line each for keys and bass, and it is NOT
+     taken: the keys rack is 17 words and the record's four are a genuinely
+     useful cut of it, so opening that one is a design question about a longer
+     list, asked separately." It was asked, and answered, the next morning: see
+     EVERY RACK, OPEN below. */
+  /* ---------- EVERY RACK, OPEN (2026-08-23) --------------------------------
+     "Similar to guitar give me all choices for keys and all instruments and
+     kits" — the artist, on seeing the guitar rack opened. The mechanism below
+     was written guitar-only and the note above said the same courtesy for keys
+     and bass was "a design question about a longer list, asked separately".
+     This is that question, answered: the keys rack is 31 words now and a
+     record showed 4 of them, the bass rack is 11 and a record showed 2, and
+     the drummer had no kit question AT ALL — ten kits reachable only by typing
+     at the word tray. Measured before this round, on a jazz date: keys 4 of
+     17, bass 2 of 5, kit 0 of 10.
+
+     THE DRUMMER'S HALF IS A QUESTION, NOT A CAST. Every record already
+     declares `machines` and `called()` already seeds one from it, so a house
+     record has been playing a 909 all along — what was missing was the ROW.
+     drums-kit.js DECISIONS now asks it, and the record's own two or three are
+     the head of the list here, exactly as the guitar's are.
+
+     ONE CHANGE TO THE MECHANISM, and it is about the row labels. The keys rack
+     already groups itself (pianos: · organs: · bells & mallets: · …), which is
+     what makes thirty-one words readable, and stamping "the rest of the rack:"
+     over all of it would have thrown that away to say something less useful.
+     So the RECORD'S OWN half takes the new label and the REST KEEPS THE ROW IT
+     ALREADY HAD — a rack with no families of its own (guitar, bass) falls back
+     to "the rest of the rack:" and reads exactly as the guitar rack shipped.
+     ui/band.js ROWORDER names both new labels so the record's own sorts first
+     and the fallback sorts last; the family labels keep their old places in
+     between. */
+  const RACKROWS = { own: "the record's own:", rest: "the rest of the rack:" };
   const openRack = (d, want) => {
     const w = want || [];
     const rank = (o) => { const i = w.indexOf(o.w); return i < 0 ? w.length : i; };
     const own = d.opts.filter((o) => w.includes(o.w))
       .sort((a, b) => rank(a) - rank(b))
-      .map((o) => ({ ...o, row: GTRROWS.own }));
-    const rest = d.opts.filter((o) => !w.includes(o.w))
-      .map((o) => ({ ...o, row: GTRROWS.rest }));
+      .map((o) => ({ ...o, row: RACKROWS.own }));
+    // ...and the REST STAYS GROUPED. A rack with families interleaves once the
+    // record's own picks are lifted out of it (jazz took a piano, a Rhodes, an
+    // upright and an organ, which is three of the four keyboard families), and
+    // the page's ROWORDER sort hid that while every other reader — the gig
+    // sheet, the fingerprint gate, anything that walks `opts` — saw the
+    // interleaving. So the grouping is done HERE, in first-appearance order,
+    // and the page's sort becomes a no-op over an already-grouped list.
+    const rest = [], seen = [];
+    for (const o of d.opts) {
+      if (w.includes(o.w)) continue;
+      const row = o.row || RACKROWS.rest;
+      if (!seen.includes(row)) seen.push(row);
+      rest.push({ ...o, row });
+    }
+    rest.sort((a, b) => seen.indexOf(a.row) - seen.indexOf(b.row));
     // a record whose picks are the whole rack (or none of it) gets no labels:
     // a row heading over every option says nothing
     if (!own.length || !rest.length) return d;
     return { ...d, opts: [...own, ...rest] };
   };
+  // WHICH LIST A SEAT'S RACK IS RECOMMENDED FROM. One row per seat that has a
+  // rack and a record with an opinion about it; a seat missing here is a seat
+  // whose rack was never narrowed in the first place (the singer: five voices,
+  // and no record names a subset of them).
+  // (the drummer's list is `machines`, which every record has declared since
+  // the day it was written and which `called()` already casts from — the kit
+  // was record-idiomatic all along and simply had no QUESTION to be asked in)
+  // ...and THE BOARD IS A RACK TOO (2026-08-23). Eleven inserts, offered per
+  // chair, none of them recommended by any record — every record in this box
+  // plays every instrument straight in, which is what it has always sounded
+  // like, so the dry word is the head of every board and openRack is a no-op
+  // over it (`own` is the whole list). What the row IS here for is the second
+  // half of the same law: one field, distinct values, so the pruner must not
+  // compose the record once per pedal to find that out.
+  const RACKOF = { guitar: { instr: (gk) => gk.gtr, pedal: () => null },
+                   keys: { instr: (gk) => gk.keys, pedal: () => null },
+                   bass: { instr: (gk) => gk.instr, pedal: () => null },
+                   drums: { kit: (gk) => gk.machines },
+                   // the singer's rack is not recommended from anything (no
+                   // record names a subset of five voices), and it is still a
+                   // RACK — which is what the row below is for
+                   voice: { instr: () => null, pedal: () => null } };
+  /* ---------- A RACK IS DISTINCT BY CONSTRUCTION -------------------------
+     THE PRUNER WAS COMPOSING THE RECORD ONCE PER INSTRUMENT. `heardOptsNow`
+     drops an answer that would change nothing, and it finds that out by
+     rendering — which is right for a row whose two words might land on the
+     same record and pure cost for a rack, where every word casts a DIFFERENT
+     INSTRUMENT and a different instrument is a different recording or a
+     different patch. Measured over all 30 records, walking every seat: 119
+     rack rows, 5,236 options, and NOT ONE option pruned. Opening the racks
+     multiplied that by three (a jazz date's keys row went from 4 renders to
+     31), which is exactly the cost the de-rendering round exists to stop.
+     So the rows declare what they write, the way askable's knob rows do.
+
+     CHECKED, NOT ASSERTED — the same law `knobDistinct` is held to, and for
+     the same reason: this is a claim about a table in another file. The claim
+     is read off the row it is about — every word in the row is one of the
+     chair's own, and the chair's id->word table is a bijection, so two
+     different words are two different instruments — and a row that fails it
+     simply pays for itself. What the claim does NOT say is that two
+     instruments SOUND different; that is a fact about the engine, and it is
+     held where it belongs, in test/unit/rack-identity.test.js, which renders
+     the recipe for every word in every rack and holds them byte-distinct. */
+  const boardWords = (K2) => { const out = {};
+    for (const [k, p] of Object.entries(K2.PEDALS || {})) out[k] = p.w;
+    return out; };
+  const RACKTAB = { "keys/instr": () => Ky.INSTRUMENTS, "guitar/instr": () => Gt.INSTRUMENTS,
+                    "bass/instr": () => B.INSTRUMENTS, "voice/instr": () => Vo.INSTRUMENTS,
+                    "drums/kit": () => D.MACHINES,
+                    "keys/pedal": () => boardWords(Ky), "guitar/pedal": () => boardWords(Gt),
+                    "bass/pedal": () => boardWords(B), "voice/pedal": () => boardWords(Vo) };
+  const CHEAPRACK = new Map();
+  const rackCheap = (seat, d) => {
+    if (!(RACKOF[seat] || {})[d.id]) return false;
+    const key = seat + "/" + d.id;
+    if (CHEAPRACK.has(key)) return CHEAPRACK.get(key);
+    const tab = (RACKTAB[key] || (() => null))();
+    const words = tab ? Object.values(tab) : [];
+    const mine = d.opts.map((o) => o.w);
+    const out = !!words.length && new Set(words).size === words.length &&
+      new Set(mine).size === mine.length && mine.every((w) => words.includes(w));
+    CHEAPRACK.set(key, out);
+    return out;
+  };
+  const markRacks = (seat, ds) => ds.map((d) =>
+    (rackCheap(seat, d) ? { ...d, cheap: true } : d));
   const narrow = (m, seat, ds) => {
     const gk = genreOf(m);
     if (!gk) return ds;
     // the forms this record has, as the words the question offers
     const formw = (gk.forms || []).map((k) => FORMS[k] && FORMS[k].w).filter(Boolean);
     return ds.map((d) => {
-      if (seat === "guitar" && d.id === "instr") return openRack(d, gk.gtr);
+      const rack = (RACKOF[seat] || {})[d.id];
+      if (rack) return openRack(d, rack(gk));
       const keep = d.id === "form" ? formw
         : seat === "keys" ? gk[KEYSOF[d.id]]
         : seat === "guitar" ? gk[GTROF[d.id]]
@@ -3190,7 +3347,31 @@
     (SONGNULL.has(k) ? (m.song[k] || null) : m.song[k]));
   const songPart2 = (m) => [...SONGSIG_B.map((k) => m.song[k] || null),
                             cleanSecs(m.song.secs) || null];
-  const tonePart = (m) => [m.keys.tone, m.guitar.tone, m.bass.tone];
+  /* ...AND WHICH BASS IS IN THE ROOM (2026-08-23). Every other chair's
+     instrument reaches this signature through the composed section — the two
+     pitched chairs on the genre's `chairs` seam, the singer on their own
+     layer, the drummer as `drumkit` — and the BASSIST'S did not, because the
+     bass instrument is not a score fact at all: it is cast through the song's
+     INSTRUMENT POOL (ui/band.js setPoolChair, audio/plan.js `POOL.bass`), one
+     layer above anything toSong writes. So the signature was blind to it, and
+     the pruner is the signature: measured on the shipped file, the bassist's
+     "what are you playing it on?" was dropped ENTIRELY — five basses, four of
+     them pruned as changing nothing and the fifth left alone in a row that is
+     then not worth asking, so the question never appeared. The rack was not
+     narrow, it was gone. (question-trees says the same thing from the other
+     side once the row is restored: "with a pick" and "fingers on a P-bass"
+     make the identical take.)
+     One field on the signature, and it is the honest one: what the page
+     actually casts. */
+  const tonePart = (m) => [m.keys.tone, m.guitar.tone, m.bass.tone, m.bass.instr,
+    // ...and WHAT IS ON EACH BOARD, for exactly the reason the bass instrument
+    // is here: a pedal is carried on the chair's `tone.pedals` and spent by
+    // audio/to-engine's recipe, which is a layer above anything toSong writes,
+    // so without this line the signature is blind to it and the pruner eats
+    // the whole row. (The singer's board reaches the signature through their
+    // own layer — secPart prints `s0.voice` — and is printed here too so all
+    // four read the same way.)
+    m.keys.pedal, m.guitar.pedal, m.bass.pedal, m.voice.pedal];
   const melPart = (m) => [Id.toPhrase(m.idea), Id.regOf(m.idea),
     // ...and the answer, when there is one — without it every question
     // about theme B would look like it changed nothing and be pruned
@@ -3434,8 +3615,8 @@
       : seat === "keys" ? Ky.decisions(m.keys)
       : seat === "guitar" ? Gt.decisions(m.guitar)
       : seat === "voice" ? Vo.decisions(m.voice) : B.decisions(m.bass);
-    return [...narrow(m, seat, ds.filter((d) => !drop.includes(d.id))
-      .map((d) => ({ ...d, seat }))), ...knobDecisions(m, seat)];
+    return [...markRacks(seat, narrow(m, seat, ds.filter((d) => !drop.includes(d.id))
+      .map((d) => ({ ...d, seat })))), ...knobDecisions(m, seat)];
   };
   // every seat's questions, with the answers that would change nothing
   // dropped — and a question left with one answer dropped whole
@@ -3637,22 +3818,19 @@
       if (i.group.startsWith("grooves"))
         return (m.song.meter || null) === (gk.meter || null)
           ? (gk.grooves || []).includes(w) : true;
-      if (i.group === "the machine") return (gk.machines || []).includes(w);
       // ...and the same law for the bassist's own tray: a record that does
       // not have a walking line in it does not offer one here either
       if (i.group === "the line") return (gk.styles || []).includes(w);
-      // ...and THE GUITAR RACK IS OPEN HERE TOO (2026-08-22). The question
-      // stopped jailing it (`narrow`/openRack above) and a tray that still did
-      // would be the same jail one surface over: a word you can answer and
-      // cannot then find is worse than a word you never had. The rows do the
-      // recommending in the question; the tray is a flat word list and simply
-      // carries all ten. The KEYS half of this line is untouched — that rack is
-      // 17 words and its cut is a separate design question.
-      if (i.group === "what it is")
-        return (seat === "guitar" ? Object.values(Gt.INSTRUMENTS).includes(w)
-                                  : (gk.keys || []).includes(w));
-      if (i.group === "what you are playing" && !Ky.JOBS[i.id.replace(/^job:/, "")])
-        return (gk.instr || []).includes(w);
+      // ...and EVERY RACK IS OPEN HERE TOO (the guitar's since 2026-08-22, the
+      // other three since 2026-08-23). The questions stopped jailing them
+      // (`narrow`/openRack above) and a tray that still did would be the same
+      // jail one surface over: a word you can answer and cannot then find is
+      // worse than a word you never had. The rows do the recommending in the
+      // question; the tray is a flat word list and simply carries the room —
+      // ten guitars, thirty-one keyboards, eleven basses and ten kits.
+      // (The two lines this replaces read `(gk.machines||[]).includes(w)` and
+      // `(gk.keys||[]).includes(w)`; `the machine` and `what it is` now fall
+      // through to the `return true` below, as `what you are playing` does.)
       return true;
     });
   };
@@ -4689,8 +4867,13 @@
       // and long, and the slow one rings.
       // ...with the PLAYER'S OWN PANEL over it: a bassist sitting at a 303
       // turns the filter, and the record does not get to hold it shut
+      // ...and the BASSIST'S OWN BOARD rides on the same block, because the
+      // bass tone is the one a chair hands down whole (audio/plan.js reads
+      // `bassTone` where every other chair reads `chairs[].tone`). Absent when
+      // nothing is plugged in, so a dry bass is byte-identical.
       bassTone: { wave: "saw", ...(gk && gk.tone ? gk.tone : { cut: 800, q: 4, rel: 0.22 }),
-                  atk: 0.004, gain: 0.34, ...(bass.tone || {}) },
+                  atk: 0.004, gain: 0.34, ...(bass.tone || {}),
+                  ...(B.pedalsOf(bass) ? { pedals: B.pedalsOf(bass) } : {}) },
       tone: kg.tone, chairs,
       // the guitarist's own call on their chords (the default strum pipe a
       // chording job carries) — a section's explicit pipe call still replaces

@@ -16,10 +16,14 @@
 // chairs. What is left here is what makes this chair a VOICE: the parts it
 // sings, the voices the pool can cast, the mic panel, and toGenre.
 (function (root, factory) {
-  const api = factory(typeof require !== "undefined" ? require("./chair.js") : root.NuChair);
+  const api = factory(
+    typeof require !== "undefined" ? require("./chair.js") : root.NuChair,
+    // ...and the PEDALBOARD, which is instruments.js's (BOARDS over fields.js
+    // FX): a chair says which board it is handed, never what an effect IS.
+    typeof require !== "undefined" ? require("./instruments.js") : root.NuInstruments);
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuVocal = api;
-})(typeof self !== "undefined" ? self : this, function (C) {
+})(typeof self !== "undefined" ? self : this, function (C, NI) {
   "use strict";
 
   const { N, z, on, deg } = C;
@@ -39,9 +43,19 @@
     out:    { w: "lay out", part: null, gate: z(), reg: 0, says: "nothing at all" },
   };
   // ONLY WHAT THE POOL CAN CAST, and every one of them is a voice.
+  //
+  // FIVE, AND FIVE IS THE WHOLE ROOM (2026-08-23, the open-the-racks round).
+  // Every other rack in the box grew by ten or more when it was opened; this
+  // one grew by ONE, because the registry holds exactly five voices with zones
+  // on disk (ahh_choir, ohh_voices, solo_vox, synth_voice, space_voice) and a
+  // sixth word would have to be a lie or a synonym. `space_voice` is the one
+  // that was there and unreachable: a FluidR3 vocal pad, distinct WAVs from
+  // both choirs, and the only breathy held voice in the tree — which is why it
+  // is named for what it does rather than for who is singing it.
   const INSTRUMENTS = {
     ahh_choir: "a choir on ahh", ohh_voices: "voices on ooh",
     solo_vox: "one singer", synth_voice: "a synth voice",
+    space_voice: "a breathy vocal pad",
   };
   const REG = { low: { w: "down low", v: -1 }, mid: { w: "where it sits", v: 0 },
                 high: { w: "up high", v: 1 } };
@@ -82,16 +96,20 @@
   // ("one singer", not "on one singer") and sings everything at 6
   const chair = C.pitchedChair({
     jobs: JOBS, instruments: INSTRUMENTS, reg: REG, panel: PANEL,
+    // THE CHAIN IS THE ONLY AMP A VOICE HAS: no cabinet, no strings, so what
+    // is on the board is the whole of what happens to it after the mic.
+    pedals: NI.boardOf("voice"),
     model: { job: "oohs", instr: "ahh_choir", reg: "mid" },
     start: { words: ["step up to the mic"], says: "a voice, holding oohs under it" },
-    groups: { job: "what you are singing", instr: "the voice", panel: "at the mic" },
+    groups: { job: "what you are singing", instr: "the voice", panel: "at the mic",
+              pedal: "in the chain" },
     asks: { instr: "whose voice is it?", job: "what are you singing?",
-            reg: "where do you sit?" },
+            reg: "where do you sit?", pedal: "anything in the chain?" },
     instrSays: (w) => w,
     hit: { on: "sing ", off: "nothing " },
     vel: () => 6,
   });
-  const { rhythmic, blank, V, catalog, say, says,
+  const { rhythmic, blank, V, catalog, say, says, pedalOf, pedalsOf,
           decisions, nextAsk, answer, toPattern, jobOf, gateOf, stepWord } = chair;
 
   function toGenre(m) {
@@ -99,8 +117,10 @@
     return { part: j.part || "line", reg: (REG[m.reg] || REG.mid).v + (j.reg || 0),
              instr: m.instr, pad: j.part === "pad", silent: !j.part,
              tone: { wave: "sine", cut: 1800, q: 1, atk: 0.05, rel: 1.1, gain: 0.2,
-                     verb: 0.22, ...(m.tone || {}) } };
+                     verb: 0.22, ...(m.tone || {}),
+                     ...(pedalsOf(m) ? { pedals: pedalsOf(m) } : {}) } };
   }
-  return { N, JOBS, INSTRUMENTS, REG, PANEL, rhythmic, blank, V, catalog, say, says,
+  return { N, JOBS, INSTRUMENTS, REG, PANEL, PEDALS: chair.PEDALS, rhythmic, blank, V,
+           catalog, say, says, pedalOf, pedalsOf,
            decisions, nextAsk, answer, toPattern, toGenre, jobOf, gateOf, stepWord };
 });

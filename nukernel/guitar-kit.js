@@ -15,10 +15,14 @@
 // chairs. What is left here is what makes this chair a GUITAR: the jobs,
 // the amps-as-instruments, the panel, and toGenre.
 (function (root, factory) {
-  const api = factory(typeof require !== "undefined" ? require("./chair.js") : root.NuChair);
+  const api = factory(
+    typeof require !== "undefined" ? require("./chair.js") : root.NuChair,
+    // ...and the PEDALBOARD, which is instruments.js's (BOARDS over fields.js
+    // FX): a chair says which board it is handed, never what an effect IS.
+    typeof require !== "undefined" ? require("./instruments.js") : root.NuInstruments);
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuGuitar = api;
-})(typeof self !== "undefined" ? self : this, function (C) {
+})(typeof self !== "undefined" ? self : this, function (C, NI) {
   "use strict";
 
   const { N, z, on, every, deg } = C;
@@ -103,16 +107,23 @@
   // of the jobs sit at 6
   const chair = C.pitchedChair({
     jobs: JOBS, instruments: INSTRUMENTS, reg: REG, panel: PANEL,
+    // THE AMP IS THE INSTRUMENT AND THE PEDALS ARE NOT. This chair's dirt has
+    // always been a casting decision (ten amps, above); the board is the boxes
+    // in FRONT of nothing and behind everything — to-engine appends it after
+    // the recipe's own amp, so a crunch pedal thickens the amp it is plugged
+    // into instead of replacing it.
+    pedals: NI.boardOf("guitar"),
     model: { job: "strum", instr: "clean_guitar", reg: "mid" },
     start: { words: ["pick up the guitar"], says: "a guitar, strumming it" },
-    groups: { job: "what you are playing", instr: "what it is", panel: "at the amp" },
+    groups: { job: "what you are playing", instr: "what it is", panel: "at the amp",
+              pedal: "on the board" },
     asks: { instr: "what are you playing?", job: "what's your job in it?",
-            reg: "where do you sit?" },
+            reg: "where do you sit?", pedal: "anything on the board?" },
     instrSays: (w) => "on " + w,
     hit: { on: "a strum ", off: "no strum " },
     vel: (j) => (j.part === "riff" ? 7 : 6),
   });
-  const { rhythmic, blank, V, catalog, say, says,
+  const { rhythmic, blank, V, catalog, say, says, pedalOf, pedalsOf,
           decisions, nextAsk, answer, toPattern, jobOf, gateOf, stepWord } = chair;
 
   function toGenre(m) {
@@ -145,9 +156,11 @@
              ...(chord ? { pipes: [{ id: "strum", spread: 0.03, part: "stab" }] } : {}),
              tone: { wave: "saw", cut: 1200, q: 1, atk: 0.006,
                      rel: chord ? 0.15 : 0.5, ...(chord ? { ring: 1.2 } : {}),
-                     gain: 0.24, verb: 0.1, ...(m.tone || {}) } };
+                     gain: 0.24, verb: 0.1, ...(m.tone || {}),
+                     ...(pedalsOf(m) ? { pedals: pedalsOf(m) } : {}) } };
   }
 
-  return { N, JOBS, INSTRUMENTS, REG, PANEL, rhythmic, blank, V, catalog, say, says,
+  return { N, JOBS, INSTRUMENTS, REG, PANEL, PEDALS: chair.PEDALS, rhythmic, blank, V,
+           catalog, say, says, pedalOf, pedalsOf,
            decisions, nextAsk, answer, toPattern, toGenre, jobOf, gateOf, stepWord };
 });

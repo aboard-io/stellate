@@ -20,10 +20,14 @@
 // engine, six chairs. What is left here is what makes this chair the KEYS:
 // the jobs, the instruments the pool can cast, the panel, and toGenre.
 (function (root, factory) {
-  const api = factory(typeof require !== "undefined" ? require("./chair.js") : root.NuChair);
+  const api = factory(
+    typeof require !== "undefined" ? require("./chair.js") : root.NuChair,
+    // ...and the PEDALBOARD, which is instruments.js's (BOARDS over fields.js
+    // FX): a chair says which board it is handed, never what an effect IS.
+    typeof require !== "undefined" ? require("./instruments.js") : root.NuInstruments);
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuKeys = api;
-})(typeof self !== "undefined" ? self : this, function (C) {
+})(typeof self !== "undefined" ? self : this, function (C, NI) {
   "use strict";
 
   const { N, z, on, every, deg } = C;
@@ -73,21 +77,72 @@
     out:     { w: "lay out", part: null, gate: z(), says: "nothing at all" },
   };
 
-  // ONLY WHAT THE POOL CAN CAST. Every id here is an instrument nukernel's
-  // own genres already name, which is what the instrument pool is built from
-  // — a word that casts something the pool will not take is a word that lies.
+  // ONLY WHAT THE POOL CAN CAST. Every id here is an instrument the POOL will
+  // take (fields.js INSTRCHOICES, which is the catalog plus the ids the chairs
+  // claim by name) — a word that casts something the pool will not take is a
+  // word that lies, and the gate holds this list against the pool.
+  //
+  // THIRTY-ONE KEYBOARDS, WHERE THE RACK SHOWED SEVENTEEN AND A RECORD SHOWED FOUR
+  // (2026-08-23, "give me all choices for keys and all instruments and kits").
+  // The seventeen were never the room: the registry has carried a whole
+  // keyboard department that no word could reach. What is new here is
+  // EXPOSURE, not DSP — every id below already resolves on the parent, and
+  // every one was checked three ways before it earned a word (the rack gate,
+  // test/unit/rack-identity.test.js, holds all three):
+  //   1. it RESOLVES — recipeFor answers with a patch or a sampled voice and
+  //      pushes nothing onto `unrouted`;
+  //   2. it is DISTINCT — its engine recipe differs byte for byte from every
+  //      other word in this rack, AND (when it is sampled) so does the set of
+  //      WAVs it plays. Recipe-distinctness alone is not enough: `halo_pad`
+  //      and `polysynth` play byte-identical PCM and are only two sounds
+  //      because both are PATCHED (ppg / juno60), and `soundtrack` — which is
+  //      byte-identical to warm_pad and is NOT patched — was cut for exactly
+  //      that;
+  //   3. it has a COMPASS — instruments.js RANGES, so fitReg can seat it.
+  //
+  // FIVE WERE TRIED AND CUT, and the reasons are the point:
+  //   drawbarorgan  a SINGLE zone rooted at MIDI 96. instruments.js RANGES
+  //                 already says it out loud — "a hymn at MIDI 50 was one C7
+  //                 sample dragged down three and a half octaves, which is a
+  //                 breathy whistle and not a Hammond" — and the de-organ
+  //                 round deliberately made it nobody's cast. A rack is not
+  //                 a place to un-decide that.
+  //   soundtrack    byte-identical WAVs to warm_pad, and unpatched: two words,
+  //                 one sound.
+  //   bowed_glass   a real, distinct oberheim patch — but "a glassy pad" is
+  //                 halo_pad's word and this rack does not need two of them.
+  //   honky_tonk }  byte-identical WAVs to yamaha_grand_piano.
+  //   bright_grand}
   const INSTRUMENTS = {
+    // pads & synths
     warm_pad: "a warm pad", halo_pad: "a glassy pad", polysynth: "a polysynth",
+    metal_pad: "a metallic pad",
+    // strings, bowed and machined
     slow_strings: "strings", synth_strings_1: "synth strings",
+    synth_strings_2: "a string machine", pizzicato_strings: "pizzicato strings",
+    // pianos and electrics
     rhodes_ep: "a Rhodes", legend_ep_2: "an electric piano",
+    electric_piano: "a tine piano",
     yamaha_grand_piano: "a grand piano", felt_piano: "a felt piano",
-    upright_piano: "an upright", church_organ: "a church organ",
+    upright_piano: "an upright",
+    // organs and free reeds
+    church_organ: "a church organ",
     percussive_organ: "an organ", rock_organ: "a rock organ",
-    clavinet: "a clav", ahh_choir: "voices",
+    reed_organ: "a reed organ", accordion: "an accordion",
+    clavinet: "a clav", ahh_choir: "voices", space_voice: "a vocal pad",
     // ...the old-world pair (2026-08-21): the harpsichord was genre-named by
     // `counterpoint` all along — this word was overdue — and the harp is the
     // salon's (barcarolle names it)
     harpsichord: "a harpsichord", harp: "a harp",
+    // ...and the TUNED PERCUSSION a pair of hands plays from a keyboard
+    // (2026-08-23). Six recordings and two mallet models the registry has
+    // carried all along with no word to reach them. vibraphone and marimba
+    // are the same parent DSP (`mallet`) and are two instruments and not two
+    // gains: measured on the recipe, the vibes ring 2.2 s against the
+    // marimba's 0.5 and sit four semitones of tilt darker.
+    celesta: "a celesta", glockenspiel: "a glockenspiel",
+    vibraphone: "vibes", marimba: "a marimba", xylophone: "a xylophone",
+    tubular_bells: "tubular bells", music_box: "a music box",
   };
 
   // WHERE THE HANDS SIT. The kernel's `reg` is octaves off middle; a keys
@@ -121,25 +176,35 @@
   const INSTRROWS = {
     yamaha_grand_piano: "pianos:", felt_piano: "pianos:", upright_piano: "pianos:",
     rhodes_ep: "pianos:", legend_ep_2: "pianos:", clavinet: "pianos:",
+    electric_piano: "pianos:",
     church_organ: "organs:", percussive_organ: "organs:", rock_organ: "organs:",
+    reed_organ: "organs:", accordion: "organs:",
     warm_pad: "pads & strings:", halo_pad: "pads & strings:",
+    metal_pad: "pads & strings:",
     slow_strings: "pads & strings:", synth_strings_1: "pads & strings:",
-    polysynth: "synths:", ahh_choir: "voices:",
+    synth_strings_2: "pads & strings:", pizzicato_strings: "pads & strings:",
+    polysynth: "synths:", ahh_choir: "voices:", space_voice: "voices:",
     harpsichord: "pianos:", harp: "pads & strings:",
+    celesta: "bells & mallets:", glockenspiel: "bells & mallets:",
+    vibraphone: "bells & mallets:", marimba: "bells & mallets:",
+    xylophone: "bells & mallets:", tubular_bells: "bells & mallets:",
+    music_box: "bells & mallets:",
   };
 
   const chair = C.pitchedChair({
     jobs: JOBS, instruments: INSTRUMENTS, reg: REG, panel: PANEL, instrRows: INSTRROWS,
+    pedals: NI.boardOf("keys"),
     model: { job: "pads", instr: "warm_pad", reg: "high" },
     start: { words: ["sit down at the keys"], says: "a pair of hands, playing pads" },
-    groups: { job: "what you are playing", instr: "what it is", panel: "at the machine" },
+    groups: { job: "what you are playing", instr: "what it is", panel: "at the machine",
+              pedal: "on the board" },
     asks: { instr: "what are you playing?", job: "what's your job in it?",
-            reg: "where do you sit?" },
+            reg: "where do you sit?", pedal: "anything in the chain?" },
     instrSays: (w) => "on " + w,
     hit: { on: "a chord ", off: "no chord " },
     vel: (j) => (j.part === "pad" ? 5 : 6),
   });
-  const { rhythmic, blank, V, catalog, offered, say, says,
+  const { rhythmic, blank, V, catalog, offered, say, says, pedalOf, pedalsOf,
           decisions, nextAsk, answer, toPattern, jobOf, gateOf, stepWord } = chair;
 
   /* ---------- what the engine is handed ----------
@@ -160,11 +225,15 @@
       ...(j.maxHold ? { maxHold: j.maxHold } : {}),
       realize: () => (j.part === "pad" ? "pad" : "line"),
       tone: { wave: "saw", cut: 1400, q: 1.2, atk: 0.05, rel: 0.9, gain: 0.22,
-              verb: 0.12, ...(m.tone || {}) },
+              verb: 0.12, ...(m.tone || {}),
+              // the board, as the insert rows the parent builds (absent when
+              // nothing is on it, so a dry chair is byte-identical)
+              ...(pedalsOf(m) ? { pedals: pedalsOf(m) } : {}) },
       silent: !j.part,
     };
   }
 
-  return { N, JOBS, INSTRUMENTS, REG, PANEL, rhythmic, blank, V, catalog, offered, say, says,
+  return { N, JOBS, INSTRUMENTS, REG, PANEL, PEDALS: chair.PEDALS, rhythmic, blank, V,
+           catalog, offered, say, says, pedalOf, pedalsOf,
            decisions, nextAsk, answer, toPattern, toGenre, jobOf, gateOf, stepWord };
 });

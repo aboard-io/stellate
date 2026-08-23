@@ -1693,11 +1693,21 @@ const MERGED = new Set(["octaves in the bar", "accents in the bar",
                         "higher", "lower", "held", "the bar in hand"]);
 // the labeled rows, in the order a musician lists them — kit first, then
 // the machine panel, then the keys families
-const ROWORDER = ["the kick:", "the snare:", "the hats:", "the toms:",
+// ...and THE RECORD'S OWN IS ALWAYS FIRST (2026-08-23, the open-the-racks
+// round). Every rack is the whole room now, so every rack is a list with two
+// halves — what this record would reach for, and everything else — and the
+// second half keeps whatever family label it already had (band-kit openRack).
+// Without the two new entries the sort put "pianos:" (index 12) above a
+// record's own picks, which is the one thing the label exists to prevent.
+const ROWORDER = ["the record's own:",
+                  "the kick:", "the snare:", "the hats:", "the toms:",
                   "the accents:", "the one:", "calls:",
+                  "drum machines:", "kits:",
                   "the filter:", "the squelch:", "the envelope:",
                   "how it closes:", "the wave:",
-                  "pianos:", "organs:", "pads & strings:", "synths:", "voices:"];
+                  "pianos:", "organs:", "bells & mallets:",
+                  "pads & strings:", "synths:", "voices:",
+                  "the rest of the rack:"];
 
 /* ---------- THE LABEL COLUMN ---------------------------------------------
    The outline's label is a WORD a musician would say, never an id: `atk` is
@@ -1774,7 +1784,10 @@ const OUTLINE = {
                   "len:*", "end"]],
   ],
   drums: [
-    ["the record's kit", ["groove", "the machine"]],
+    // ...and "kit" is the drummer's own question about the same thing the
+    // tray calls "the machine" (2026-08-23): the row and the tray words are
+    // one vocabulary asked two ways, so they sit under one heading.
+    ["the record's kit", ["groove", "kit", "the machine"]],
     ["the job", ["job"]],
     ["the time-keeping", ["time", "backbeat"]],
     ["the feel", ["loud", "loose", "knob:stress", "knob:kitProb"]],
@@ -1784,22 +1797,29 @@ const OUTLINE = {
   bass: [
     ["the line", ["job", "the figure", "what notes it plays", "the bar"]],
     ["the instrument", ["instr", "what you are playing", "at the machine"]],
+    // ...and THE BOARD, which is its own heading in all four chairs: what is
+    // between the instrument and the desk is neither the instrument nor the
+    // sound you set on it, and a player reads it as a third thing.
+    ["the board", ["pedal", "on the board"]],
     ["the hands", ["sit", "notes", "reg"]],
   ],
   keys: [
     ["the instrument", ["instr"]],
     ["the job", ["job", "the bar"]],
     ["the sound", ["reg", "cut", "atk", "rel", "col", "knob:phrase", "knob:maxHold"]],
+    ["the board", ["pedal", "on the board"]],
   ],
   guitar: [
     ["the instrument", ["instr"]],
     ["the job", ["job", "the bar"]],
     ["the sound", ["reg", "cut", "rel", "knob:orn"]],
+    ["the board", ["pedal", "on the board"]],
   ],
   voice: [
     ["the voice", ["instr"]],
     ["the part", ["job", "the bar"]],
     ["the sound", ["reg", "cut", "atk"]],
+    ["the chain", ["pedal", "in the chain"]],
   ],
   engineer: [
     // the drums block stays four questions (the gate taps its words); the
@@ -2309,6 +2329,8 @@ function chairArea(parent, who, ideasOnly, quiet) {
 
 const GROUPQ = {
   "at the machine": "what is the machine set to?",
+  "on the board": "anything on the board?",
+  "in the chain": "anything in the chain?",
   "what notes it plays": "what notes does the line use?",
   "notes in the bar": "which notes take a different degree?",
   "the figure": "what's the line, exactly?",

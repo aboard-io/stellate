@@ -284,8 +284,24 @@
   function pitchedChair(spec) {
     const JOBS = spec.jobs, INSTRUMENTS = spec.instruments,
           REG = spec.reg, PANEL = spec.panel;
+    /* ...AND THE PEDALBOARD (2026-08-23), which is a chair fact and not a tone
+       one: `pedal` is the KEY of a board entry, so a saved session carries the
+       word and not a copy of the chain, and the chain itself stays in one
+       place (instruments.js BOARDS over fields.js FX). Absent — which is what
+       every model starts as and what every record recommends — `pedalsOf`
+       answers null, `toGenre` writes nothing, and the recipe the engine gets
+       is byte-identical to the one it got before this existed. */
+    const PEDALS = spec.pedals || null;
+    const DRY = PEDALS ? Object.keys(PEDALS)[0] : null;
+    const pedalOf = (m) => (PEDALS && PEDALS[m.pedal] ? m.pedal : DRY);
+    // the chain a chair hands its genre — null when nothing is on the board
+    const pedalsOf = (m) => {
+      const p = PEDALS && PEDALS[pedalOf(m)];
+      return p && p.chain && p.chain.length ? p.chain : null;
+    };
     const blank = () => ({ on: false, job: spec.model.job, instr: spec.model.instr,
-                           reg: spec.model.reg, tone: null, gate: null, answers: {} });
+                           reg: spec.model.reg, tone: null, gate: null,
+                           ...(PEDALS ? { pedal: DRY } : {}), answers: {} });
     const jobOf = (m) => JOBS[m.job] || JOBS[spec.model.job];
     // A JOB'S GATE IS A TABLE (re-seated into the bar the chair is counting);
     // a gate you EDITED is yours (trimmed or padded, never re-seated).
@@ -324,6 +340,15 @@
             (m) => ({ ...m, tone: { ...toneOf(m), [p.key]: o.v } }),
             () => p.ask.replace("?", ": ") + o.w,
             (m) => toneOf(m)[p.key] === o.v);
+    // ...the board, one pedal at a time. Registered after the panel and before
+    // the bar, which is where it sits in the interview too — you plug in after
+    // you have decided what the instrument is and before you play a note.
+    if (PEDALS)
+      for (const [k, p] of Object.entries(PEDALS))
+        add("pedal:" + k, spec.groups.pedal || "on the board", [p.w],
+            (m) => m.on && pedalOf(m) !== k,
+            (m) => ({ ...m, pedal: k }), () => p.says,
+            (m) => pedalOf(m) === k);
     // THE BAR — where the hands fall, one place at a time, the same sixteen
     // places the drummer and the bassist count.
     // ...and the words are registered for the WIDEST bar this box counts, with
@@ -352,6 +377,10 @@
       ...PANEL.map((p) => ({ id: p.id, ask: p.ask, opts: p.opts.map((o) => ({
         w: o.w, is: (m) => toneOf(m)[p.key] === o.v,
         apply: (m) => ({ ...m, tone: { ...toneOf(m), [p.key]: o.v } }) })) })),
+      ...(PEDALS ? [{ id: "pedal", ask: spec.asks.pedal || "what is on the board?",
+        opts: Object.entries(PEDALS).map(([k, p]) => ({
+          w: p.w, is: (m) => pedalOf(m) === k,
+          apply: (m) => ({ ...m, pedal: k }) })) }] : []),
     ];
     const { decisions, nextAsk, answer } = interview(DECISIONS, {});
 
@@ -369,9 +398,9 @@
                inc: zn(), stk: zn(), gate: g, acc: zn(), sld: zn() };
     }
 
-    return { N, JOBS, INSTRUMENTS, REG, PANEL, rhythmic, blank, V, catalog,
+    return { N, JOBS, INSTRUMENTS, REG, PANEL, PEDALS, rhythmic, blank, V, catalog,
              offered, say, says, decisions, nextAsk, answer, toPattern,
-             jobOf, gateOf, toneOf, stepWord, DECISIONS };
+             jobOf, gateOf, toneOf, pedalOf, pedalsOf, stepWord, DECISIONS };
   }
 
   return { N, COUNT, SUB, stepWord, stepCell, z, on, every, deg,

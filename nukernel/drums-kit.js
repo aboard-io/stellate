@@ -467,6 +467,14 @@
   const MACHINES = { tr808: "808", tr909: "909", tr606: "606", cr78: "cr-78",
                      acoustic: "acoustic kit", room: "room kit", power: "big kit",
                      brush: "brushes", jazz: "jazz kit", electronic: "electronic kit" };
+  // ...and which half of the room each one is, for the interview's row
+  // labels (ui/band.js ROWORDER draws them in this order). A machine and a
+  // kit are not two brightnesses of one thing: one is four synthesised
+  // voices, the other is six recordings of somebody hitting something.
+  const MACHINEROW = { tr808: "drum machines:", tr909: "drum machines:",
+                       tr606: "drum machines:", cr78: "drum machines:",
+                       acoustic: "kits:", room: "kits:", power: "kits:",
+                       brush: "kits:", jazz: "kits:", electronic: "kits:" };
 
   /* ---------- THE VOCABULARY: word-phrase -> what it does to the kit ------
      Each entry answers two questions and nothing else: is it worth offering
@@ -735,6 +743,24 @@
     // only asked once there is a family (the chair reads both declarations)
     { id: "groove", ask: "which one?", when: (m) => !!m.fam,
       opts: (m) => grooveOpts(m) },
+    // ...AND WHAT YOU ARE PLAYING IT ON (2026-08-23, "give me all choices for
+    // keys and all instruments and kits"). Ten kits — six recordings on disk
+    // and the four machines to-engine.js MACHINE_KIT knows — and until this
+    // row existed NOT ONE of them was reachable from the interview: `kit:`
+    // was a tray word, so a drummer who never typed at the tray played the
+    // acoustic kit on every record in the box, house and techno included.
+    // The row is the MACHINES table itself, which is the same list the tray
+    // says and the same list the browser gate holds against fields.js
+    // DRUMKITS — one vocabulary, asked two ways.
+    //
+    // It sits AFTER the groove because that is the order a drummer decides
+    // in (what kind of record, which beat, then which kit it is played on),
+    // and because the record's own kit is the head of the list (band-kit
+    // `narrow`/openRack) — so answering it is confirming, not choosing.
+    { id: "kit", ask: "what are you playing it on?", opts:
+      Object.entries(MACHINES).map(([k, w]) => ({
+        w, row: MACHINEROW[k],
+        is: (m) => m.drumkit === k, apply: (m) => ({ ...m, drumkit: k }) })) },
     { id: "job", ask: "what is your job in it?", opts: [
       { w: "hold it down", is: (m) => m.job === "hold",
         apply: (m) => ({ ...m, job: "hold", kit: DRUMMER["hands in eighths"](m).kit }) },
@@ -899,7 +925,7 @@
 
   return { LANES, BARS, N, ANSWERBAR, blank, V, offered, catalog, say, says, toGenre, stepWord,
            GROOVEWORD, GROOVEFAM, laneKeys, DECISIONS, decisions, nextAsk, answer,
-           stepsFor, LANENAME, LANEOF, GROOVES, LANEWORD, FILLWORD, MACHINES,
+           stepsFor, LANENAME, LANEOF, GROOVES, LANEWORD, FILLWORD, MACHINES, MACHINEROW,
            GROOVES3, GROOVES6, GROOVEWORD3, GROOVEWORD6, GROOVEFAM3, GROOVEFAM6,
            setFor, setOf, famOpts, FILLBAR,
            hits, has, clone, empty };

@@ -13,6 +13,14 @@
   const NG = (typeof module !== "undefined" && module.exports)
     ? require("./genres.js") : root.NuGenres;
   const { GENRES } = NG;
+  // ...and THE CHIPS, which are fields.js's (`FX`/`fxChain`). Not a copy of
+  // them: the pedalboards below are built by calling that table's own chain
+  // builder, so a chip whose params or module name move there move here too,
+  // and nukernel keeps ONE list of what an effect is. fields.js sits one layer
+  // under this file (kernel -> genres -> fields -> song -> THIS), which is the
+  // direction this dependency runs.
+  const NF = (typeof module !== "undefined" && module.exports)
+    ? require("./fields.js") : root.NuFields;
 
   // WHICH INSTRUMENT a genre voice plays. The table itself lives in genres.js
   // as each genre's `instr` field — instrument is genre identity, exactly like
@@ -278,6 +286,34 @@
     // player fingering a low B and a player picking eighths are two different
     // recordings, and the joke only lands if they are two different players.
     acoustic_bass: [28, 60], picked_bass: [28, 62], finger_bass: [28, 62],
+    // ...AND THE REST OF THE BASS RACK (2026-08-23, "give me all choices for
+    // keys and all instruments and kits"). Six basses the registry has carried
+    // with no word to reach them. Every window here that the parent also
+    // carries is the PARENT'S, verbatim — the borrowed-value law above, which
+    // test/unit/nukernel.test.js holds — and the two it does not carry are the
+    // zones' own honest extent.
+    fretless_bass: [28, 62], slap_bass: [28, 64], pop_bass: [28, 62],
+    contrabass: [28, 67],
+    // the two sampled synth basses: no parent row, so these are keyboard-
+    // honest windows an octave under the leads, the same reasoning the GM
+    // synth patches above are given.
+    synth_bass_1: [28, 84], synth_bass_2: [28, 84],
+    // ...AND THE REST OF THE KEYBOARD DEPARTMENT. reed_organ, accordion,
+    // celesta, glockenspiel and pizzicato_strings are the parent's rows
+    // verbatim; the four with no parent row are the instrument's own written
+    // compass, which is also inside the zones the sampler actually has.
+    reed_organ: [41, 89], accordion: [41, 89],
+    celesta: [60, 103], glockenspiel: [79, 105],
+    pizzicato_strings: [40, 91],
+    // a xylophone is written F4..C8 and sounds where it is written here (the
+    // registry's zones root above middle C); tubular bells are written C4..F5
+    // and sound an octave up, which is the window the chime actually has.
+    xylophone: [65, 108], tubular_bells: [60, 89],
+    // the two remaining synth voices take the pads' window for the same reason
+    // the one-zone GM patches above do. (`electric_piano` — the rack's "tine
+    // piano" — needs no row here: it has carried the Rhodes' [28, 96] with the
+    // other two EPs since the table was written.)
+    synth_strings_2: [36, 96], space_voice: [48, 88],
   };
   // How far past its own zone ROOTS a sample may be stretched and still be the
   // instrument — the parent's numbers (SAMPLER_STRETCH_ST / SAMPLER_FLOOR_ST).
@@ -835,6 +871,97 @@
       low: 0.58, mid: 0.46, high: 0.46, presence: 0.5, level: 0.85, mix: 1 }],
   };
 
+  /* ---------- THE PEDALBOARD A PLAYER MAY NAME ---------------------------
+     "…and give me all effects chains for each instrument" (the artist,
+     2026-08-23, in the same breath as the racks).
+
+     nukernel has had eleven real inserts since the day fields.js was written —
+     chorus, phaser, flanger, tremolo, leslie, auto-wah, ring mod, a filter
+     sweep, a squelch envelope, tape echo and a tempered crunch — each one a
+     `{type, module, params}` row naming a module that ships in
+     engine/faust/dist (insert_chorus … insert_higain), and each one already
+     spent by the catalog: 30-odd genres in genres.js declare an `fx` chain and
+     the box surface carries one. NO CHAIR COULD NAME ONE. The band page's four
+     channel questions ("anything on the keys?") are the DESK — reverb and
+     delay sends and the strip's tone bands — which is a different machine from
+     a box on the floor, and the FX chips were reachable only as a section-wide
+     `box.fx`. So a player could be handed a Rhodes and not a Leslie, a clav
+     and not a wah, a guitar and not a chorus.
+
+     THIS TABLE IS NOT A SECOND SET OF EFFECTS. Every chain is `NF.fxChain`
+     over fields.js's own chip keys, so the params are that table's, the module
+     names are that table's, and a chip that changes there changes here.
+
+     WHO GETS WHICH. A board is per CHAIR, because the idiom is: a Leslie is an
+     organ cabinet and not a bass pedal, a squelch envelope is a synth's filter
+     and not a singer's, and a wah is a guitar and a clav and a bass and
+     nothing else in this room. The words are the pedal's own name said the way
+     a player says it, and the FIRST entry of every board is the dry word —
+     which is what every record in this box recommends, and what it has always
+     sounded like, so nothing moves until somebody says otherwise.
+
+     WHERE IT LANDS. The chair writes the chain onto its own `tone.pedals`;
+     audio/to-engine.js `recipeFor` appends it to whatever inserts the
+     INSTRUMENT already declares (a modelled electric's amp, the DI's staged
+     high-gain), so the board is an effects LOOP after the instrument's own
+     voicing rather than a replacement for it. An instrument with no chain of
+     its own gets the board and nothing else; a chair that named no pedal is
+     byte-identical to before, because an absent key adds nothing to a recipe. */
+  const PEDAL = {
+    wah:      { w: "a wah", says: "an auto-wah, following the hand" },
+    crunch:   { w: "some crunch", says: "one stage of grit over what is there" },
+    chorus:   { w: "a chorus", says: "two of it, slightly apart" },
+    phaser:   { w: "a phaser", says: "a sweep through the comb" },
+    flanger:  { w: "a flanger", says: "a jet, with the feedback up" },
+    tremolo:  { w: "a tremolo", says: "the amp's own shudder" },
+    leslie:   { w: "a Leslie", says: "the cabinet, turning" },
+    echo:     { w: "a tape echo", says: "a delay on the bar, dark repeats" },
+    sweep:    { w: "a filter sweep", says: "a resonant lowpass, four bars long" },
+    fenv:     { w: "a squelch", says: "the filter opening on every note" },
+    ringmod:  { w: "a ring mod", says: "a second, inharmonic bell over it" },
+  };
+  // the dry word is FIRST in every board and carries no chain: "nothing on it"
+  // said out loud, which is a decision and not a blank
+  const BOARDS = {
+    // a guitarist's floor. No Leslie (a cabinet, not a pedal) and no squelch
+    // (a synth's filter envelope, and this chair's dirt is already an
+    // instrument — guitar-kit's ten amps).
+    guitar: { dry: "straight in",
+              of: ["wah", "crunch", "chorus", "phaser", "flanger", "tremolo",
+                   "echo", "ringmod"] },
+    // the keyboard player gets the whole rack, because a keyboard is the one
+    // chair that is sometimes an organ (Leslie), sometimes a Rhodes (tremolo),
+    // sometimes a clav (wah) and sometimes a synth (sweep, squelch).
+    keys:   { dry: "dry",
+              of: ["leslie", "chorus", "phaser", "flanger", "tremolo", "wah",
+                   "crunch", "echo", "sweep", "fenv", "ringmod"] },
+    // a bass board is short on purpose: everything here is a box that exists
+    // for a bass, and the ones that are not (a Leslie, a phaser on the low E)
+    // are left out rather than sold.
+    bass:   { dry: "dry",
+              of: ["crunch", "wah", "fenv", "chorus", "flanger", "echo", "ringmod"] },
+    // ...and the voice, where the chain IS the effect and there is no amp
+    // under it: the four modulations a vocal booth has always had, the echo,
+    // and the ring mod that makes it a machine.
+    voice:  { dry: "close and dry",
+              of: ["echo", "chorus", "flanger", "phaser", "tremolo", "ringmod"] },
+  };
+  // a chair's board, as the table pitchedChair's `pedals` spec wants: an
+  // ordered map of key -> { w, says, chain }, the dry word first
+  const boardOf = (seat) => {
+    const B2 = BOARDS[seat];
+    if (!B2) return null;
+    const out = { none: { w: B2.dry, says: "nothing on it", chain: null } };
+    for (const k of B2.of) {
+      const p = PEDAL[k];
+      if (!p) continue;
+      const chain = NF.fxChain([k]);
+      if (!chain.length) continue;          // a chip fields.js does not have
+      out[k] = { w: p.w, says: p.says, chain };
+    }
+    return out;
+  };
+
   const PATCH_VOICE = {
     solo_vox:    { dsp: "voice_lead",  voice: "tenor", vowels: "ao", syll: 0.5, phase: 0 },
   };
@@ -1120,7 +1247,8 @@
   };
 
   const api = { instrOf, BASS_INSTR, DRUMDIR, DRUMFILE, FONTS, BASSSYNTH, PATCHES, STRIPS,
-                stripFor, familyOf, RANGES, SAMPLED_INSERTS, STRETCH_UP, STRETCH_DOWN, DRUMMIX, DRUMBUS,
+                stripFor, familyOf, RANGES, SAMPLED_INSERTS, PEDAL, BOARDS, boardOf,
+                STRETCH_UP, STRETCH_DOWN, DRUMMIX, DRUMBUS,
                 MACHINEMIX, mixFor, laneKey,
                 // DYN_ATK is the one raw constant the player still needs (the
                 // default attack for a note that asked for no treatment at all);

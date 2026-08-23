@@ -17,10 +17,14 @@
 // chair.js's (NuChair); what is left here is the bassist — the changes, the
 // figures, the 303's panel, the tonality table, and toGenre.
 (function (root, factory) {
-  const api = factory(typeof require !== "undefined" ? require("./chair.js") : root.NuChair);
+  const api = factory(
+    typeof require !== "undefined" ? require("./chair.js") : root.NuChair,
+    // ...and the PEDALBOARD, which is instruments.js's (BOARDS over fields.js
+    // FX): a chair says which board it is handed, never what an effect IS.
+    typeof require !== "undefined" ? require("./instruments.js") : root.NuInstruments);
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuBass = api;
-})(typeof self !== "undefined" ? self : this, function (C) {
+})(typeof self !== "undefined" ? self : this, function (C, NI) {
   "use strict";
 
   /* ---------- the changes, as a bassist names them ---------- */
@@ -70,6 +74,24 @@
   // (fields.js INSTRCHOICES) offers three — and a word that casts an
   // instrument the pool will not take is a word that lies. The gate holds
   // this list against the pool.
+  // ELEVEN BASSES, WHERE THE RACK SHOWED FIVE AND A RECORD SHOWED TWO
+  // (2026-08-23, "give me all choices for keys and all instruments and kits").
+  // The header above was true when it was written and had gone stale: the
+  // parent's sampler DOES hold the fretless and the slap bass it names, and
+  // the pool now offers what a chair claims by name (fields.js INSTRCHOICES,
+  // the law the upright established in 2026-08-21). So the six that were
+  // "there but unreachable" are reachable, and each one earned its word the
+  // same three ways the keys rack did (test/unit/rack-identity.test.js):
+  // it resolves, its recipe AND its WAVs differ from every neighbour's, and
+  // instruments.js RANGES carries its compass.
+  //
+  // TWO WERE TRIED AND CUT:
+  //   saw_wave    the `supersaw` patch — a LEAD, not a bass, and its recipe is
+  //               byte-identical to square_lead's (the patch's own `wave` never
+  //               reaches the engine, which is a bug filed against the patch
+  //               table and not a reason to sell the same sound twice).
+  //   bassoon     a real, distinct recording, and a woodwind. The chair is a
+  //               bass player; the orchestra's bass line is `contrabass`.
   const INSTRUMENTS = {
     finger_bass: "fingers on a P-bass",
     picked_bass: "with a pick",
@@ -82,6 +104,21 @@
     // P-bass, which lies by three centuries.
     acoustic_bass: "an upright bass",
     cello: "a cello",
+    // ...and the six the room had all along. The electrics first: a thumb, a
+    // fretless neck and a bright roundwound set are three different players
+    // and three different recordings, not three gains.
+    fretless_bass: "a fretless",
+    slap_bass: "slapped",
+    pop_bass: "a bright electric",
+    // the two sampled synth basses, which are NOT the 303: `bass_lead` is a
+    // live tb303 patch with a filter you can open (the PANEL below), and these
+    // two are recordings of somebody else's machine, with the panel correctly
+    // shut on them.
+    synth_bass_1: "an old synth bass",
+    synth_bass_2: "a fat synth bass",
+    // ...and the bowed one, which the cello is not: the orchestra's own bottom
+    // octave, arco, a fifth under a cello and stopping at MIDI 67.
+    contrabass: "a bowed double bass",
   };
 
   /* ---------- A FIGURE: A BASS LINE, WRITTEN OUT ---------------------------
@@ -120,7 +157,7 @@
     funk16:  { w: "a sixteenth pop", grid: [1,0,1,1, 0,0,1,0, 1,0,1,1, 0,1,0,0],
                acc: g16(0, 8), oct: o16(6, 13) },
   };
-  const blank = () => ({ on: false, key: "C", changes: "fourchord", minor: false,
+  const blank = () => ({ on: false, pedal: "none", key: "C", changes: "fourchord", minor: false,
                          style: "root", instr: "finger_bass", oct: 0, artic: null,
                          swing: null, bpm: 96, sit: 0, fig: null, tone: null, answers: {} });
   // the figure a model is playing, as vectors you can edit: a model with no
@@ -201,6 +238,21 @@
   ];
   const toneOf = (m) => m.tone || {};
 
+  /* ---------- THE BASS BOARD ---------------------------------------------
+     The one chair that is not a `pitchedChair`, so it registers its own board
+     — same table, same law, same words (instruments.js BOARDS over fields.js
+     FX). It is deliberately the SHORT board: a wah, a squelch and a crunch are
+     boxes that exist for a bass, and a Leslie is not.
+     UNLIKE THE PANEL ABOVE, the board is offered on every bass. The 303 panel
+     is shut on a P-bass because a P-bass has no filter; a pedal is a pedal
+     whatever is plugged into it, and the electrics are the chair that most
+     wants one. */
+  const PEDALS = NI.boardOf("bass") || { none: { w: "dry", says: "nothing on it", chain: null } };
+  const PEDALDRY = Object.keys(PEDALS)[0];
+  const pedalOf = (m) => (PEDALS[m.pedal] ? m.pedal : PEDALDRY);
+  const pedalsOf = (m) => { const p = PEDALS[pedalOf(m)];
+    return p && p.chain && p.chain.length ? p.chain : null; };
+
   /* ---------- WHAT NOTES THE LINE USES ------------------------------------
      An acid line is not the root sixteen times with octave jumps — it lives
      on the minor third, the fifth and the flat seventh, and the figure could
@@ -236,6 +288,13 @@
           (m) => toneOf(m)[p2.key] === o.v);
       V["mach:" + p2.id + ":" + o.w].row = PANELROW[p2.id];
     }
+
+  // ...and the board, one pedal at a time
+  for (const [k, p] of Object.entries(PEDALS)) {
+    add("pedal:" + k, "on the board", [p.w], (m) => m.on && pedalOf(m) !== k,
+        (m) => ({ ...m, pedal: k }), () => p.says, (m) => pedalOf(m) === k);
+    V["pedal:" + k].row = "the board:";
+  }
 
   // what notes the line uses
   for (const [k, t] of Object.entries(TONALITY))
@@ -379,6 +438,9 @@
       { w: "down low", is: (m) => m.oct < 0, apply: (m) => ({ ...m, oct: -1 }) },
       { w: "where it sits", is: (m) => m.oct === 0, apply: (m) => ({ ...m, oct: 0 }) },
       { w: "up the neck", is: (m) => m.oct > 0, apply: (m) => ({ ...m, oct: 1 }) } ] },
+    { id: "pedal", ask: "anything on the board?", opts:
+      Object.entries(PEDALS).map(([k, p]) => ({
+        w: p.w, is: (m) => pedalOf(m) === k, apply: (m) => ({ ...m, pedal: k }) })) },
   ];
   const { decisions, nextAsk, answer } = C.interview(DEC, { live: true });
 
@@ -432,5 +494,6 @@
 
   return { blank, V, catalog, offered, say, says, toGenre, decisions, nextAsk,
            answer, CHANGES, CHANGEWORD, KEYS, STYLES, STYLEWORD, INSTRUMENTS,
+           PEDALS, pedalOf, pedalsOf,
            FIGURES, figOf, figSet, figFor, stepWord, PANEL, TONALITY, isSynth, BARMARKS };
 });

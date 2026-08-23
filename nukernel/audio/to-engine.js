@@ -920,6 +920,65 @@ export function patchForInstr(id, tone, padish) {
 // four ids that name a person (PATCH_VOICE), then — for every other id, which
 // is most of them — the sampled one, the parent's default sound.
 export function recipeFor(chair, seat, lib, unrouted) {
+  return pedalled(recipeBase(chair, seat, lib, unrouted), seat && seat.tone);
+}
+
+/* A CHAIR'S PEDALBOARD, AFTER THE INSTRUMENT'S OWN CHAIN (2026-08-23).
+   "…and give me all effects chains for each instrument." The eleven inserts
+   nukernel has always had (fields.js FX -> instruments.js BOARDS) are a
+   PLAYER'S decision now, and this is the one seam where a chair's board meets
+   what the instrument already declares:
+
+     · a modelled electric names its own amp (`P.inserts`, the de-jangle
+       round), and the DI names the staged high-gain the registry REQUIRES of
+       it (SAMPLED_INSERTS). Those are not effects on the instrument, they ARE
+       the instrument, so they keep the front of the chain;
+     · the board goes after them — an effects loop, which is also the only
+       ordering that is unambiguous: a chorus after a crunched guitar is a
+       chorused crunch, and there is no reading of "board plus amp" that puts
+       a modulation before the gain stage and still means one thing;
+     · an instrument with no chain of its own simply gets the board.
+
+   `tone.pedals` is a nukernel-side key that `toneRecipe` deliberately does not
+   pass through (that function is the tone BLOCK's translation and knows six
+   scalars), so this is the only reader, and a chair that named no pedal is
+   byte-identical to before: an absent key adds nothing to a recipe. */
+function pedalled(r, tone) {
+  const board = tone && Array.isArray(tone.pedals) ? tone.pedals : null;
+  if (!r || !r.m || !board || !board.length) return r;
+  const own = Array.isArray(r.m.inserts) ? r.m.inserts : [];
+  return { ...r, m: { ...r.m, inserts: [...own, ...board.map((c) => flatInsert(c, r.m)) ] } };
+}
+
+/* ONE CHIP, TWO SPELLINGS — and this is the one that reaches the parent.
+   `insertChain` (state-engine) is the normalizer every unit's chain goes
+   through, and it reads a chip's knobs FLAT off the row: `it.rate`,
+   `it.depth`, `it.mix`. fields.js `fxChain` emits them NESTED under `params`,
+   because its other reader — sampler.js buildInsertNodes, which builds
+   WebAudio nodes from insertChain's OUTPUT — wants that shape. Handing the
+   nested row to insertChain does not fail; it silently uses the module's
+   DEFAULTS, which is worse (measured: nukernel's chorus declares
+   rate 0.7 / depth 0.6 / mix 0.45 and arrived as 0.8 / 0.5 / 0.5).
+   audio/desk.js already spans the two — `insertsFor` flattens
+   `{type, ...it.params}` before it calls insertChain and converts the filter
+   sweep's Hz endpoints — and this is the same conversion at the chair's seam.
+
+   THE SWEEP IS THE ONE THAT IS NOT A RENAME. insertChain reads filtersweep's
+   `lo`/`hi` as OCTAVES ABOUT THE UNIT'S CUTOFF; fields.js declares them in Hz
+   (400 -> 5200). Passed through unconverted, `lo: 400` means 400 octaves up
+   and clamps to the ceiling — a chip that sweeps nothing. The recipe's own
+   cutoff is the base the parent will use, and it is right here on `m`. */
+function flatInsert(c, m) {
+  const p = { ...(c.params || {}) };
+  if (c.type === "filtersweep" && p.lo > 20 && p.hi > p.lo) {
+    const base = clamp(m.cutoff || 2000, 60, 12000);
+    p.lo = Math.log2(p.lo / base);
+    p.hi = Math.log2(p.hi / base);
+  }
+  return { type: c.type, ...p };
+}
+
+function recipeBase(chair, seat, lib, unrouted) {
   const role = CHAIR_ROLE[chair] || "melody";
   const tone = toneRecipe(seat.tone);
   const sy = seat.synth;
