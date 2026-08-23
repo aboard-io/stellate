@@ -445,6 +445,343 @@
     out:    { w: "lay out", out: true },
   };
 
+  /* ---------- THE BANDSTAND: WHO IS LISTENING TO WHOM ---------------------
+     Paul, 2026-08-23: "make players affect each other (a graph, not a
+     hierarchy) — the drums and the bass." Until now the box CAST each chair
+     off the record and every chair then played blind: `toGenre` fans six
+     models into one flat genre and the kernel renders drums, bass and the
+     pitched voices from the same `(subj, g, bars)`, so nothing any player
+     did could reach anybody else. A band is not that. The bass lands with
+     the kick, the guitar keeps out of the singer's register, the keys thin
+     out when the guitar chugs, and a drummer plays busier under a bass that
+     has left them the room.
+
+     THIS IS NOT A NEW MECHANISM — it is the one this file already had,
+     declared. Two edges were already here, written out by hand:
+
+       `per.follow` (below in toSong) — "follow the kick" is the bass locking
+         to the drummer's own kick, applied to the assembled genre after both
+         chairs have spoken, as `g.bassBars`
+       the TAKER's hole — "whoever takes the tune leaves a hole": a guitarist
+         playing the hook is not also playing the chords, so the other
+         pitched chair steps up (`km = Ky.say(km, "job:comp")`)
+
+     Both live ABOVE the chairs, both are guarded so that a hand wins, and
+     both are one line of code apiece for one hard-coded pair. This table is
+     those two ideas as data, with the pairs Paul named added to them.
+
+     WHY IT IS A TABLE AND NOT A RULE THAT EVERYBODY OBEYS. If every chair
+     adjusts to every other chair the records converge on one texture and
+     the genre stops meaning anything: an influence that is universal is not
+     an influence, it is a sound. So an edge DECLARES WHERE IT LIVES, by the
+     family the record is in — and the two oldest families in the box hear
+     NOTHING from this table. A Bach chorale's voices follow strict
+     voice-leading and nobody "locks with the drums", because there are no
+     drums; a pavane's inner parts do not thin out for a guitar. Sixteen of
+     the thirty records are deliberately untouched (`the old world`, `the
+     ballroom`), which is what makes the other fourteen mean something.
+
+     THE FOUR LAWS EVERY EDGE OBEYS, and each is a guard on the row rather
+     than a habit somebody has to remember:
+
+       A HAND OUTRANKS THE GRAPH.  `hand` names what a person would have had
+         to say for this edge to be none of its business — the section's own
+         word, or an ANSWER on the chair (chair.js: `say` touches the model,
+         `answer` writes the ledger, and `song.seeded` says which answers a
+         record put there). Same rank the take already gives a hand.
+       NOTHING IS FABRICATED.  An edge that writes drums may only THICKEN OR
+         THIN A LANE THAT ALREADY HAS HITS. `SECDRUMS.busier` writes
+         `h: fill(1)` and can therefore invent sixteen hats over a concerto;
+         nothing here may, which is the kitless law held by construction
+         rather than by a `kitlessOf` check bolted on afterwards.
+       A WRITTEN LINE OUTRANKS A DENSITY.  A style word ("driving eighths")
+         says how BUSY a part is and yields; a figure (`bassFig` — an acid
+         line, a disco octave, the funk sixteenth pop) says where every note
+         goes and does not.
+       IT IS A FUNCTION OF THE MODEL.  No dice, no clock, no take. Same seed,
+         same bytes.
+
+     `stage` says when an edge is heard, and there are honestly two:
+
+       "chairs"  before `toGenre` — the edge changes what somebody DECIDES to
+                 play (a register, a job). It is a `say`, never an `answer`.
+       "lanes"   after `toGenre` — the edge changes where the notes GO, on
+                 the assembled genre, which is the tier `per.follow` already
+                 worked at and the only tier where one part can read another
+                 part's rhythm at all.  */
+
+  /* HOW MUCH ROOM A BASS LEAVES — the drummer's own reading of the line, and
+     deliberately NOT its onset count. A pedalled root and a walking line
+     play the same four places (kernel.js STYLEGRID only writes a grid for
+     eighths and sixteenths; everything else falls to quarters) and leave the
+     room utterly differently: one note ringing under the bar is space, four
+     notes going somewhere is not. So the room is DECLARED per style word,
+     which is the word the bassist actually said.
+       2  a held root — the drummer has the bar
+       1  moving, but on the beats
+       0  the bass is keeping the time
+      -1  the bass is playing the sixteenths; get out of the way
+     A written FIGURE outranks the word, as it does everywhere else: it says
+     where every note is, so it is counted. */
+  const BASSROOM = { pedal: 2, root: 2, fifths: 2, octaves: 1,
+                     walk: 0, eighths: 0, sixteenths: -1 };
+  const bassRoom = (g) => {
+    const fig = g.bassFig || null;
+    if (fig && fig.grid) { const n = fig.grid.filter(Boolean).length;
+                           return n <= 3 ? 2 : n <= 5 ? 1 : n <= 8 ? 0 : -1; }
+    const r = BASSROOM[g.bassStyle];
+    return r === undefined ? 1 : r;
+  };
+  // the kit's bars, as the one shape every drum edge reads and writes
+  const kitBars = (g) => (g.kits && g.kits.length ? g.kits : [g.kit || {}]);
+  // ...and written back ONLY when a bar actually moved. Writing an unchanged
+  // schedule is not free: a record that carries `kit` and no `kits` would
+  // gain a one-entry `kits`, which is a different genre to `genreSig` and so
+  // a different record to the pruner — a question could be retired because
+  // an edge that did nothing said it had.
+  const setKit = (g, bars) => {
+    const was = kitBars(g);
+    if (bars.length === was.length && bars.every((b, i) => b === was[i])) return g;
+    g.kits = bars; g.kit = bars[0]; return g;
+  };
+  // WHICH LANE IS THE DRUMMER'S BUSY HAND, and only if it is already
+  // playing. The hats, or the ride when they have moved to it — never a
+  // lane this record does not have, which is the whole of "no mechanism may
+  // put an instrument on a record that does not have one".
+  const busyLane = (bar) => ["h", "p"].find((k) =>
+    Array.isArray(bar && bar[k]) && bar[k].some(Boolean)) || null;
+  // the registers of a chair, low to high, as the words that chair knows
+  const regLadder = (K2) => Object.entries(K2.REG)
+    .sort((a, b) => a[1].v - b[1].v);
+  /* AN EDGE DOES NOT SPEAK THROUGH THE TRAY. A chair's `say` is guarded by
+     `m.on` (chair.js: a word is only offered to a chair somebody has turned
+     on), and four of the thirty records — rock, kraut, blues, pianobar —
+     have a guitarist who plays without ever having been turned on. Measured
+     the day this landed: the `room` edge fired on all four, `Gt.say` handed
+     the model straight back, and the notes did not move by a semitone while
+     every counter said the edge had run. That is the exact shape of bug
+     this repo has shipped three times ("test the artifact"), so the graph
+     writes the FIELD — the identical write the chair's own decision row
+     makes (`apply: (m) => ({ ...m, reg: k })`), and like it, not a word on
+     the `answers` ledger. Said, not answered; and heard by a chair that is
+     merely playing rather than being interviewed.  */
+  const seatAt = (cm, k) => ({ ...cm, reg: k });
+  const jobAt = (cm, k) => ({ ...cm, job: k, gate: null });
+
+  // the guitar jobs that are already keeping the rhythm, and the keys jobs
+  // that would be keeping it with them
+  const CHUGGING = new Set(["chug", "power", "drive", "skank"]);
+  const CHOPPING = new Set(["comp", "charleston", "pushes", "push", "skank"]);
+  // A HAND OUTRANKS THE GRAPH — the chair half of it. `answers` is the
+  // ledger a person writes (chair.js `say` never touches it) and
+  // `song.seeded` names the rows a RECORD put there, so an answer no record
+  // seeded is a hand and no edge may move it.
+  const handAt = (m, seat, id) => !!(((m[seat] || {}).answers || {})[id])
+    && !seededAt(m, seat, id);
+
+  const LISTENS = [
+    /* THE ONE PAUL NAMED. A bass player and a drummer are one instrument
+       with two people on it, and in every family where that is true the
+       bass plays WHERE THE KICK IS rather than where a metronome is. This
+       is `per.follow` with nobody having to say it — the identical write
+       (`g.bassBars`, kernel.js:2427 `barGrid`), so a record that already
+       said "follow the kick" is byte-for-byte what it was.
+       Not jazz: a walking bass is defined by NOT following the drummer (and
+       kernel.js:2447 fences the walk off from every grid but its own), and a
+       jazz kick is feathered, not played. Not the old world: no kick. */
+    { id: "kick", from: "drums", to: "bass", stage: "lanes",
+      w: "the bass lands with the kick",
+      fam: ["funk", "the floor", "breaks", "rock", "latin"],
+      hand: (m, i, per) => !!per.follow || ((m.per || {})[i] || {}).bass != null,
+      apply: (g, m, i, per, kit0) => {
+        if (g.bassFig) return g;              // a written line outranks a lock
+        if (g.bassStyle === "walk") return g; // a walk goes where it is going
+        // ...and a bass that has ALREADY been scheduled is not free to
+        // relock: `spaceOut` writes `bassBars` for the slow records ("one
+        // hit every four bars"), and that sparseness is the record's, not
+        // something a kick gets to fill in.
+        if (g.bassBars) return g;
+        /* THE LOCK IS TO THE GROOVE, NOT TO THIS BAR — `kit0`, the kit this
+           record is made of, taken before the section said anything about
+           the drums. A bass player who lands with the kick has learned the
+           GROOVE; when the drummer lays out for a section they go on playing
+           the line they learned, they do not revert to quarters. Reading the
+           section's own kit instead broke the oldest law on this page — "a
+           musician can sit out, and it leaves everybody else playing"
+           (band-kit.test.js (i)) — because a nokit section has no kick and
+           the bass silently became a different part. `per.follow` said out
+           loud still reads the section's kit, exactly as it always has: that
+           is somebody asking for THIS bar, and a hand outranks the graph. */
+        if (!kit0 || !kit0.some((x) => x)) return g;   // no kick to land on
+        g.bassBars = kit0;
+        return g;
+      } },
+
+    /* AND THE SAME PAIR, HEARD THE OTHER WAY. "The drummer plays busier
+       when the bass is sparse" — a drummer under a bass holding one root a
+       bar fills the room, and gets out of the way of a sixteenth line. Both
+       halves are the SAME LANE moved in opposite directions, and the lane
+       is one the record already has: no lane, no edge. */
+    { id: "space", from: "bass", to: "drums", stage: "lanes",
+      w: "the drummer answers the room the bass leaves",
+      fam: ["funk", "rock", "breaks"],
+      // A ROLE DEFAULT IS NOT A HAND. The file's own test for "somebody
+      // actually answered this" is the raw `m.per[i]`, not the resolved
+      // `per` — `drumsAsked` and `liftAsked` in toSong are written exactly
+      // this way, because every section role arrives with a drum part
+      // already in it and reading the resolved word would silence the edge
+      // on every section but a bare verse.
+      hand: (m, i) => ((m.per || {})[i] || {}).drums != null,
+      apply: (g) => {
+        const room = bassRoom(g);
+        if (room === 0 || room === 1) return g;      // the bass is keeping time: nothing to answer
+        const bars = kitBars(g).map((bar) => {
+          const lane = busyLane(bar);
+          if (!lane) return bar;                     // no lane, no edge
+          const v = bar[lane].slice(), n = v.length, p = (n % 6 === 0) ? 3 : 2;
+          if (room >= 2) { for (let k = p; k < n; k += p * 2) if (!v[k]) v[k] = 1; }
+          else { for (let k = 0; k < n; k++) if (k % (p * 2) !== 0) v[k] = 0; }
+          if (!v.some(Boolean)) return bar;          // never thin a lane to nothing
+          if (v.every((x, k) => x === bar[lane][k])) return bar;
+          return { ...bar, [lane]: v };
+        });
+        return setKit(g, bars);
+      } },
+
+    /* KEEP OUT OF THE SINGER'S WAY. The oldest instruction in popular
+       music, and the box could not say it: the singer's layer and the
+       accompanists' are seated independently off the record's own plan
+       (`finish`, plan.seat), so a mid-register guitar and a mid-register
+       voice sat on top of each other and neither knew. An accompanist SEATED
+       where the singer is seated moves one step off them — down by
+       preference, up where the part's own compass has no down left.
+       Not the old world and not the ballroom: a chorale's alto sits in the
+       singer's register on purpose, and that is the voice-leading, not a
+       collision. */
+    { id: "room", from: "voice", to: "keys+guitar", stage: "chairs",
+      w: "the accompanists keep out of the singer's register",
+      fam: ["rock", "funk", "the floor", "breaks", "latin", "jazz"],
+      hand: () => false,                     // guarded per chair, below
+      chairs: (ctx) => {
+        const vg = Vo.toGenre(ctx.vm);
+        if (vg.silent) return ctx;
+        /* A COLLISION IS WHERE THE PARTS SIT, NOT WHAT THEY ARE CALLED.
+           "Where it sits" means a different octave to a pad, a stab and a
+           riff — `stand` seats every part in its own compass — so comparing
+           the register WORDS said two players were on top of each other
+           whenever they happened to have answered the same question the same
+           way, which is most of the time. Measured on the shipped menus, the
+           word comparison fired on 18 of the 30 records and cost the
+           guitarist their own register question on a rock record and the
+           keys player theirs on a jazz date: the bounce landed exactly on
+           one of the two words still standing, and the pruner (rightly)
+           dropped a row with one answer left in it. Comparing the SEATS
+           fires only where somebody is genuinely in somebody else's way. */
+        const vv = stand(vg.part, vg.reg);
+        for (const [seat, K2, key, floor] of [["keys", Ky, "km", null],
+                                              ["guitar", Gt, "gm", GFLOOR]]) {
+          const cm = ctx[key];
+          if (K2.toGenre(cm).silent) continue;         // not in the room
+          if (handAt(ctx.m, seat, "reg")) continue;    // a hand seated them
+          /* DOWN IF THERE IS A DOWN, AND UP IF THERE IS NOT. A register word
+             is not where a part ends up: `stand` clamps every chair to its
+             PART's own compass (GFLOOR — a guitar riff bottoms out at 0, a
+             pad likewise), and four of the thirty records have a guitarist
+             already sitting on that floor. Measured: the edge fired on rock,
+             kraut, blues and pianobar and the clamp ate all four — the word
+             moved, the notes did not. So the candidate is judged by the
+             STANDING register the kernel will actually use, and the first
+             one that genuinely clears the singer is the one taken. */
+          const seatedAt = (mm) => { const gg = K2.toGenre(mm);
+            const pt = typeof gg.part === "function" ? gg.part(0) : gg.part;
+            const rg = typeof gg.reg === "function" ? gg.reg(0) : gg.reg;
+            return stand(pt, rg, floor || undefined); };
+          const was = seatedAt(cm);
+          if (was !== vv) continue;                    // not in anybody's way
+          const lad = regLadder(K2), at = lad.findIndex(([k2]) => k2 === cm.reg);
+          for (const cand of [lad[at - 1], lad[at + 1]]) {
+            if (!cand) continue;
+            const nx = seatAt(cm, cand[0]);
+            if (seatedAt(nx) === was) continue;        // the compass swallowed it
+            ctx[key] = nx; break;
+          }
+        }
+        return ctx;
+      } },
+
+    /* AND THE ONE BETWEEN THE TWO HANDS IN THE MIDDLE. Paul: "the keys thin
+       out when the guitar chugs." Two chairs comping the same chords in the
+       same eighths is the sound of a demo, not a band — the taker rule
+       already says as much in the other direction ("a guitarist playing the
+       hook is not also playing the chords"), and this is the same sentence
+       with the guitar keeping the rhythm instead of the tune. The keys go to
+       `held` — the chords still there, ringing to the change instead of
+       chopped against a part that is already chopping. */
+    { id: "chug", from: "guitar", to: "keys", stage: "chairs",
+      w: "the keys thin out under a chugging guitar",
+      fam: ["rock", "funk", "the floor"],
+      hand: (m, i) => ((m.per || {})[i] || {}).keys != null
+        || handAt(m, "keys", "job"),
+      chairs: (ctx) => {
+        const gj = ctx.gm.job, kj = ctx.km.job;
+        if (!CHUGGING.has(gj) || !CHOPPING.has(kj)) return ctx;
+        if (Gt.toGenre(ctx.gm).silent) return ctx;
+        // ...and a BAR SOMEBODY WROTE is a hand: a new job clears the gate
+        // (chair.js), so a keys player who has moved their own hands keeps
+        // the part they moved them for.
+        if (ctx.km.gate) return ctx;
+        ctx.km = jobAt(ctx.km, "held");
+        return ctx;
+      } },
+  ];
+  // WHICH EDGES THIS RECORD HEARS. The family is the record's own
+  // (`GENRES[...].fam`); a record the arranger has not called hears nothing,
+  // because an influence without an idiom is exactly the mush this table
+  // exists to avoid.
+  const earsOf = (m) => {
+    const gk = GENRES[m.song.genre];
+    if (!gk || !gk.fam) return [];
+    return LISTENS.filter((e) => e.fam.includes(gk.fam));
+  };
+
+  /* HOW AN EDGE IS ACTUALLY HEARD. Two appliers, one per stage, and both
+     are the same four lines: which edges does this record hear, did a hand
+     already say this, and then the edge's own function. They are pure —
+     `listenChairs` hands back new chair models (every chair word returns a
+     new object) and `listenLanes` writes onto the section's own `g`, which
+     `toSong` has already built fresh for this section.
+     A RECORD NOBODY CALLED HEARS NOTHING: `earsOf` returns [] without a
+     family, so a blank model, the opening record and every session saved
+     before this existed render byte for byte what they always did. */
+  // ONE HIT EVERY FOUR BARS IS NOT A BAND NOT LISTENING. `spaceOut` is the
+  // slowest thing a band can do, and it has already decided both the kit
+  // and the bass schedule by the time an edge is heard — so the whole table
+  // stands down on a spaced record, exactly as the arc's `busier` already
+  // does (`!(SPACE[m.song.space || "none"] || {}).bars`, in toSong).
+  const spaced = (m) => !!(SPACE[m.song.space || "none"] || {}).bars;
+  const listenChairs = (m, i, per, ctx) => {
+    if (spaced(m)) return ctx;
+    for (const e of earsOf(m)) {
+      if (e.stage !== "chairs" || !e.chairs) continue;
+      if (e.hand(m, i, per)) continue;
+      ctx = e.chairs(ctx) || ctx;
+    }
+    return ctx;
+  };
+  const listenLanes = (m, i, per, g, kit0) => {
+    if (spaced(m)) return g;
+    for (const e of earsOf(m)) {
+      if (e.stage !== "lanes" || !e.apply) continue;
+      if (e.hand(m, i, per)) continue;
+      g = e.apply(g, m, i, per, kit0) || g;
+    }
+    return g;
+  };
+  // ...and the same table, as a thing a gate or a page can read: who is
+  // listening to whom on THIS record, in the band's own words.
+  const listensOn = (m) => earsOf(m).map((e) =>
+    ({ id: e.id, from: e.from, to: e.to, stage: e.stage, w: e.w }));
+
   /* ---------- WHAT KIND OF RECORD: the arranger calls the genre ----------
      A bandleader says "it's a jazz date" or "this one's a house record"
      before anybody plays a note, and everything after that is narrowed by
@@ -3910,6 +4247,20 @@
       for (const id of per.gwords || []) gm = Gt.say(gm, id);
       if (per.keys && KEYJOB[per.keys]) km = Ky.say(km, "job:" + KEYJOB[per.keys]);
       if (per.guitar && per.guitar !== "same") gm = Gt.say(gm, "job:" + per.guitar);
+      // THE SINGER'S OWN SECTION WORDS, said here rather than at the voice
+      // layer below, because somebody has to be in the room before anybody
+      // can keep out of their way (the BANDSTAND's `room` edge reads this).
+      // Nothing between here and there reads `vm`, so this is a move.
+      let vm = m.voice;
+      for (const id of per.vwords || []) vm = Vo.say(vm, id);
+      if (per.voice && per.voice !== "same") vm = Vo.say(vm, "job:" + per.voice);
+      // ...AND NOW THE BAND HEARS ITSELF (LISTENS, above). The "chairs" half
+      // runs here, before anybody's model becomes a genre, because these
+      // edges change what a player DECIDES to play — a register, a job — and
+      // a decision has to be made before it can be rendered. Every write is
+      // a `say`, never an `answer`: the record's own cast law, so the graph
+      // can never be mistaken for something a person said.
+      ({ km, gm, vm } = listenChairs(m, i, per, { m, i, per, dm, bm, km, gm, vm }));
       // ONE RESOLVER, ONE OWNER: the hand's own list first (chgx), the
       // catalog row (with its lean, if called) second
       const c = changesOf(m, key);
@@ -3918,6 +4269,14 @@
       // that asks for busier hats over one-hit-every-four-bars gets them,
       // which is what asking meant
       g = spaceOut(g, SPACE[m.song.space || "none"]);
+      // THE KIT THIS RECORD IS MADE OF, before this section says anything
+      // about it — what the BANDSTAND's `kick` edge locks to. See the note
+      // on that edge: a bass player who lands with the kick has learned the
+      // groove, not this bar, so a section where the drummer lays out must
+      // not take the bass line with it (band-kit.test.js (i)).
+      const kit0 = (g.kits && g.kits.length ? g.kits : [g.kit || {}])
+        .map((bar) => (bar && bar.k && bar.k.some(Boolean))
+          ? bar.k.map((v) => (v ? 1 : 0)) : 0);
       // ...and what each player is doing HERE, if they said
       // ...and a canned drum part needs a KIT, the same law the default
       // lift below already follows: on a kitless groove ("nobody on the
@@ -3979,6 +4338,13 @@
           .map((bar) => (bar && bar.k && bar.k.some(Boolean)) ? bar.k.map((v) => (v ? 1 : 0)) : 0);
         if (kick.some((x) => x)) g.bassBars = kick;
       }
+      // ...and the rest of what the band hears (LISTENS, above). The "lanes"
+      // half runs HERE — after every chair has spoken and `per.follow` has
+      // had its say, on the assembled genre, which is the one tier where a
+      // part can read another part's rhythm at all. An edge whose hand-guard
+      // is true never runs, so "follow the kick" said out loud is still the
+      // only thing that wrote `bassBars` on the records that said it.
+      g = listenLanes(m, i, per, g, kit0);
       // the section's own strip, as the box fields nukernel's song already
       // has — the page writes them onto the box it builds
       // THE ARC, by where this section is in the record: the second chorus
@@ -4113,9 +4479,6 @@
       // else happens to hold that role. So it rides beside the melody, with
       // its own genre and its own instrument — the shape CLAUDE.md's chair
       // recipe names for exactly this case.
-      let vm = m.voice;
-      for (const id of per.vwords || []) vm = Vo.say(vm, id);
-      if (per.voice && per.voice !== "same") vm = Vo.say(vm, "job:" + per.voice);
       const vg = Vo.toGenre(vm);
       const voice = vg.silent ? null : { phrase: Vo.toPattern(vm), genre: {
         ...g, label: "Voice", voices: 1, part: () => vg.part,
@@ -4911,6 +5274,7 @@
            resetSeat, randomSong, modeKeyOf,
            genreOf, rolesIn, asked, pending, sigOf, secSigOf, survivors, FIELDS3, Ask,
            secWords, partOf,
+           LISTENS, listensOn,
            blank, opening, decisions, seatDecisions,
            // WHO SAID IT: "hand" · "record" · null (band-kit's `song.seeded`),
            // and which kind of the record's: "chose" · "named" · null
