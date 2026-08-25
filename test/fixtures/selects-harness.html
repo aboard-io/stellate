@@ -1,0 +1,223 @@
+<!doctype html><html><head><meta charset="utf-8"><title>selects harness</title>
+<link rel="stylesheet" href="/nukernel/nu.css"></head><body>
+<!-- THE SELECTS, WITHOUT THE PAGE AROUND THEM — test/fixtures/sheets-harness.html's
+     own trick, and for the same reason it gives: `test/selects.js` is written
+     against nukernel/index.html and that page draws no <select> in #app until
+     the integrator has applied this slice's recipe to ui/eight.js, which is an
+     integration file one owner touches serially. This file is the same modules
+     — avail.js, gates.js, ui/sheets.js, ui/selects.js (menus AND the circle of
+     fifths) — over the same shipped
+     record, drawing THE SAME SITES THE RECIPE DESCRIBES, so the selects tier
+     can be held to its gate on the day it was built.
+
+     IT MUST STAY A MIRROR. Every block below is annotated with the recipe step
+     it stands in for (R2..R7). If the recipe changes and this file does not,
+     the gate is testing a page the box does not ship — which is the whole
+     failure the TEST THE ARTIFACT law is about, one level of indirection back.
+     Run: node test/selects.js --page http://localhost:8777/test/fixtures/selects-harness.html -->
+<div id="app"></div>
+<script src="/nukernel/kernel.js"></script>
+<script src="/nukernel/genres.js"></script>
+<script src="/nukernel/fields.js"></script>
+<script src="/nukernel/song.js"></script>
+<script src="/nukernel/instruments.js"></script>
+<script src="/nukernel/songs.js"></script>
+<script src="/nukernel/document.js"></script>
+<script src="/nukernel/avail.js"></script>
+<script src="/nukernel/gates.js"></script>
+<script type="module">
+// R1 — the import line. `sheetRow` comes from selects.js now: same name, same
+// signature, and it routes a one-option spec to a <select> instead of drawing a
+// lit grid of one ("in general where there is ONE option a dropdown is
+// preferred"). Nothing else about a call site changes.
+import { selectRow, selectEl, sheetRow, sheet, keyCircle } from "/nukernel/ui/selects.js";
+const A = window.NuAvail, G = window.NuGates, D = window.NuDocument, NF = window.NuFields;
+let DOC = JSON.parse(JSON.stringify(window.NuSongs.TERMS));
+D.normalize(DOC);
+const ENV = { fleet: ["tract_voice", "juno60"] };
+function spec(key, scope, label) {
+  const row = A.SHEETS[key];
+  const r = A.optionsFor(DOC, scope, key, G, ENV);
+  const qk = [key, scope.voice, scope.section,
+              scope.bar == null ? null : "bar" + scope.bar].filter(x => x != null).join("|");
+  return { key: qk, label: label == null ? row.label : label, options: r.options,
+           value: r.value, why: r.why, ungated: r.ungated,
+           set: (v) => { row.set(DOC, scope, v, ENV); draw(); } };
+}
+const el = (t, x) => { const n = document.createElement(t); if (x != null) n.textContent = x; return n; };
+
+// THE ARRANGEMENT THE CIRCLE IS DRAWN IN, ui/eight.js `fifthsRing()` verbatim —
+// and verbatim on purpose. ui/selects.js `keyCircle` does not know what a fifth
+// is ("a widget that computed the ring would be a widget with a music theory in
+// it"); the arithmetic is nukernel/fields.js (FIFTHS, relMinorOf, RELMINNAME,
+// minorish) and the CALLER hands it in. A harness that invented its own ring
+// would be a harness proving that ITS ring works, which is worth nothing. So
+// this is the page's call site, copied, with `changed()` — the page's redraw —
+// spelled `draw()`, which is this file's.
+function fifthsRing() {
+  const F = NF;
+  return {
+    outer: F.FIFTHS,
+    inner: F.FIFTHS.map((k, hour) => {
+      const tonic = F.relMinorOf(k);
+      return {
+        value: tonic,
+        word: F.RELMINNAME[hour],
+        // the both-ways spelling, said but not drawn: "D♯m" fits on the ring,
+        // "D♯/E♭ minor" is what a screen reader gets beside it.
+        say: F.KEYLABEL[String(tonic)] + " minor",
+        // String() on both sides: a record loaded from JSON carries its key as
+        // text until avail.js's `set` makes it a number.
+        on: String(DOC.alphabet.key) === String(tonic) &&
+            F.minorish(DOC.alphabet.mode),
+        set: () => { DOC.alphabet.key = tonic; DOC.alphabet.mode = "aeolian";
+                     draw(); },
+      };
+    }),
+  };
+}
+
+function draw() {
+  const box = document.getElementById("app");
+  const wasKey = document.activeElement && document.activeElement.dataset
+    ? document.activeElement.dataset.k : null;
+  box.textContent = "";
+
+  // R3 — 1 · Time. Three settled parameters: the meter, the reading speed, the
+  // swing. One value each, decided once, not shopped for.
+  selectRow(box, "1 · Time", [spec("time.meter", {}), spec("time.rate", {}),
+                              spec("time.swing", {})]);
+
+  // R4 — 2 · Alphabet. THE KEY IS THE CIRCLE OF FIFTHS AND THE OTHER TWO ARE
+  // MENUS, in that order, which is ui/eight.js:2565-2575 exactly (Paul,
+  // 2026-08-24: "Maybe put the circle of fifths back in there for key
+  // selection, it was nice.").
+  //
+  // THIS BLOCK LAGGED THE PAGE FOR A DAY AND THAT IS THE WHOLE ARGUMENT FOR
+  // FIXING IT. It drew `alphabet.key` as a <select> after the shipped page had
+  // moved it onto a ring, so test/selects.js had to carry two apologies to stay
+  // green: check 7 (the circle) went index.html-only, and check 3 ("nothing off
+  // the list quietly became a menu") carried a named exemption for the key. A
+  // fixture that has to be excused is a fixture testing a page the box does not
+  // ship, which is the TEST THE ARTIFACT law failing one level of indirection
+  // back — the exact failure the note at the top of this file warns about.
+  // Both apologies are gone now because this file tells the truth again.
+  //
+  // Tab order matters and is asserted (check 7h): outer ring, inner ring, then
+  // the mode menu BESIDE the circle. So the circle is drawn first and the two
+  // remaining menus follow in one headless row, as on the page.
+  keyCircle(box, spec("alphabet.key", {}), fifthsRing());
+  selectRow(box, null, [spec("alphabet.mode", {}), spec("alphabet.harmony", {})]);
+
+  // R2 — the chord quality, INSIDE the changes table, one per row (Paul: "chord
+  // quality can be selects inside the 'the changes' table"). The table is the
+  // shape of the record; the select is the one cell you edit.
+  const t = el("table");
+  const hd = el("tr");
+  for (const h of ["bar", "degree", "quality"]) hd.append(el("th", h));
+  t.append(hd);
+  let qwhy = null;
+  DOC.alphabet.prog.forEach((c, i) => {
+    const tr = el("tr");
+    tr.append(el("th", String(i + 1)), el("td", String(c.d + 1)));
+    const td = el("td");
+    const q = spec("alphabet.quality", { bar: i }, "bar " + (i + 1) + " quality");
+    qwhy = q.why || qwhy;
+    td.append(selectEl(q));
+    tr.append(td); t.append(tr);
+  });
+  box.append(t);
+  // ONE REASON UNDER THE TABLE, NOT EIGHT DOWN A COLUMN. `alphabet.quality` is
+  // gated at SONG level ("modal harmony has no changes"), so every row is off
+  // for the same sentence; selectEl has already refused and said why on each
+  // control, and this is the visible copy, said once.
+  if (qwhy) { const w = el("p", qwhy); w.className = "nu-why"; box.append(w); }
+
+  // R6 — the band, form tab: what each section is.
+  selectRow(box, "what each section is", DOC.form.sections.map((s, i) =>
+    spec("form.role", { section: s.id }, (i + 1) + " · " + s.bars + " bars")));
+  // R7 — ...and the section's own nudges, which are in the same tab and are the
+  // same kind of fact: one settled answer per section.
+  const nudges = [...NF.nudgesFor("form"), ...NF.nudgesFor("development")]
+    .filter((r) => r.options)
+    .map((r) => (r.axis === "form" ? "form." : "development.") + r.key);
+  DOC.form.sections.forEach((s, i) => {
+    selectRow(box, (i + 1) + " · " + s.role + ", " + s.bars + " bars",
+      nudges.map((k) => spec(k, { section: s.id })));
+  });
+
+  for (const v of DOC.voices) {
+    // R5 — a voice: plays, material, instrument.
+    if (v.kind === "line")
+      selectRow(box, v.name, [spec("cast.part", { voice: v.name }),
+                              spec("cast.material", { voice: v.name }),
+                              spec("sound.instrument", { voice: v.name })]);
+    // R5b — …AND WHICH OF THE RECORD'S TUNES IT READS, SECTION BY SECTION.
+    // ui/eight.js:2262-2264, and the second half of Paul's sentence on
+    // 2026-08-24: "'the band' is where I thought voices would be established,
+    // interpreting the progression, structure, and motif." A menu and not a
+    // sheet, for the same reason `cast.material` is one — "reads hook" is a
+    // settled parameter, and the sheet below it is the WORD the voice does to
+    // what it reads, which is the comparison.
+    //
+    // MISSING HERE UNTIL 2026-08-25, which cost the fixture its whole point:
+    // `material.cell` went onto test/selects.js's MENUS list when the
+    // integrator added it to the page, and this file never grew the call, so
+    // the harness failed check 1 ("every control Paul named is a <select>") on
+    // a control the page draws correctly. A mirror with a hole in it reports
+    // faults that are its own.
+    if (v.kind === "line")
+      selectRow(box, v.name + " · what it reads, section by section",
+        DOC.form.sections.map((s, i) =>
+          spec("material.cell", { voice: v.name, section: s.id },
+               (i + 1) + " · " + s.role)));
+    // NOT ON THE LIST, so still a sheet: the bass's own pattern.
+    if (v.kind === "bass") sheetRow(box, v.name, [spec("cast.bassStyle", { voice: v.name })]);
+    // THE DRUM MACHINE CAME ONTO THE LIST, 2026-08-24. This read "Paul's
+    // drum-kit question in the same message was whether he can pick MORE THAN
+    // ONE, which is a sheet of checkboxes, not a menu" — a question read as a
+    // request. Multiple is NOT allowed there (document.js:192 writes `drumkit`
+    // as a string), so it is a drummer's INSTRUMENT and it is a menu by the
+    // evening list's own words. The call is unchanged: ui/selects.js's
+    // `sheetRow` routes it, which is how a law reaches every caller at once.
+    if (v.kind === "drums") sheetRow(box, v.name, [spec("sound.drumkit", { voice: v.name })]);
+    // AND THE DEVELOPMENT WORDS STAY LIT. This is what the sheets round was
+    // for: many musical options, compared at once, greyed with a reason.
+    sheetRow(box, v.name + " · what it does, section by section",
+      DOC.form.sections.map((s) =>
+        spec(A.devSheetFor(v.kind), { voice: v.name, section: s.id },
+             v.name + " · " + s.role)));
+  }
+  // 8 · Performance — not on the list, still sheets.
+  sheetRow(box, "the feel and the sound",
+    NF.nudgesFor("performance").map((r) => spec("performance." + r.key, {})));
+
+  // THE ONE-OPTION LAW, ON THE ONE PLACE THE LIVE PAGE CAN REACH IT. Measured
+  // on nukernel/index.html: "add" -> "cantor" -> "add cantor — like what?"
+  // draws `prod.bare` with exactly ONE option (ui/produce.js:648). The spec is
+  // reproduced here in the producer's own shape — page state, `ungated`, no
+  // avail row — and handed to selects.js's `sheet()`, which must return a
+  // <select> and not a lit grid of one word.
+  sheet(box, { key: "prod.bare", label: "add cantor — like what?", value: "",
+               ungated: true, options: [{ value: "@bare", label: "more of it" }],
+               set: () => {} });
+
+  if (wasKey) {
+    const same = box.querySelector('[data-k="' + CSS.escape(wasKey) + '"]');
+    if (same) same.focus({ preventScroll: true });
+  }
+}
+window.__doc = () => DOC;
+window.__env = () => ENV;
+window.__draw = draw;
+window.__addDrums = (on) => {
+  DOC.material.cells.beat = { kind: "drum", lanes: {
+    k: [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], s: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+    h: [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0] } };
+  DOC.voices.push({ name: "kit", kind: "drums", cast: { on }, material: "beat",
+                    instrument: "tr909", development: {} });
+  D.normalize(DOC); draw();
+};
+window.__ready = true;
+draw();
+</script></body></html>

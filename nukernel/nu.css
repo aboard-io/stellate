@@ -1,0 +1,761 @@
+/* nukernel/nu.css — THE ONE STYLESHEET.
+ *
+ * ONE STYLESHEET, AND ONLY ONE (Paul, 2026-08-24: "keep the raw plain HTML but
+ * use more controls and a little bit of CSS. use more grid lines in tables, it
+ * will help"). This supersedes 2026-08-23's "no CSS or styling", which was the
+ * right instruction for a page that had never been read on a phone: measured at
+ * 375px on 2026-08-24 the document scrolled 15px sideways, every button was
+ * 21px tall, every checkbox 13px, and there were 96 radios on the default
+ * record. This file says four things and no fifth — tap targets, two sticky
+ * bands, per-table scroll panes, grid lines — plus the box (never the inside)
+ * of the class vocabulary PROGRAM.md §2.4 fixes. The page still reads top to
+ * bottom with CSS off; that is the promise the reversal is allowed to make.
+ *
+ * ONE OWNER. Anything a slice needs that is not here is ADDED HERE, not
+ * declared in a second stylesheet. band.css, hw.css and drums.css are on disk
+ * and unlinked: they belong to pages that are not this one, and mixing another
+ * page's state vocabulary into the shell sheet is the opposite of keep-like-
+ * with-like. Exactly two of band.css's rules were general and both are carried
+ * below with attribution (band.css:14 `font: inherit`, band.css:60-61 the clip).
+ *
+ * THREE FAILURE MODES, NAMED SO NOBODY REDISCOVERS THEM:
+ *   1. NEVER write `overflow-x: hidden` on `body` or `#app`. A sticky element
+ *      does not stick inside a scroll container, so that one line kills both
+ *      bands silently. The sideways scroll is fixed AT THE TABLE, never at the
+ *      body — that is what `.nu-pane` is for.
+ *   2. A sticky `<tr>` does nothing. Rows cannot be sticky; cells can. Every
+ *      sticky rule below is on a `th` or a `td`.
+ *   3. `--bar-h` is a PROMISE: `.nu-ax > h2 { top: var(--bar-h) }` assumes the
+ *      bar is exactly that tall, and a third control in `.nu-bar` that wraps
+ *      opens a gap under the heading. test/shell.js pins the number.
+ *
+ * TWO MODERN FEATURES, both load-bearing only for niceties. `color-mix()` and
+ * `:has()` ship in Safari 16.4+ / Chrome 105+ / Firefox 121+. If `:has()` fails
+ * an option loses its chosen-border and a disabled one loses its grey — the
+ * `is-on` / `is-off` classes sheets.js also writes cover it. If `color-mix()`
+ * fails, borders fall back to `currentColor`, which is legible and wrong-ish.
+ */
+
+/* ===== TAP TARGETS =====================================================
+   Nothing on this page cleared a thumb. 44px is the isolated-control floor
+   (WCAG 2.2 AAA / the Apple figure) and every isolated control now has it;
+   26px is the native widget, because a checkbox does NOT answer to
+   `min-height` — it answers to `inline-size`/`block-size`, which resize the
+   widget itself. `transform: scale()` was the other candidate and it is a
+   trap: it leaves the layout box at 13px, so neighbours overlap the visual
+   and the hit area stays 13px. */
+:root{
+  color-scheme: light dark;
+  --paper: Canvas;
+  --ink: CanvasText;
+  /* THE RULES TRACK THE GROUND. Mixing against the system colours is the whole
+     of dark mode in this file — measured light rgb(255,255,255) paper with
+     srgb 0.62 rules, dark rgb(18,18,18) paper with srgb 0.42 rules — and it is
+     why there is not one theme media query below. Native controls (142 of them
+     on the default record) get their dark rendering free from `color-scheme`. */
+  --rule:        color-mix(in srgb, CanvasText 38%, Canvas);
+  --rule-strong: color-mix(in srgb, CanvasText 70%, Canvas);
+  --zebra:       color-mix(in srgb, CanvasText 7%, Canvas);
+  --tap: 44px;    /* an isolated control */
+  --box: 26px;    /* a checkbox or a radio */
+  --cell: 36px;   /* one step of a sixteen-step grid — see .nu-grid */
+  --bar-h: 52px;  /* sticky level 1, the transport */
+  --head-h: 38px; /* sticky level 2, the axis heading */
+  /* the page gutter, named once because the two sticky bands cancel it to go
+     full-bleed and a second copy of the number would drift */
+  --gl: max(12px, env(safe-area-inset-left));
+  --gr: max(12px, env(safe-area-inset-right));
+}
+*,*::before,*::after{ box-sizing: border-box; }
+html{ -webkit-text-size-adjust: 100%; }
+body{ margin: 0; background: var(--paper); color: var(--ink);
+  padding-inline: var(--gl) var(--gr);
+  padding-block-end: max(24px, env(safe-area-inset-bottom)); }
+/* index.html:5 carries `viewport-fit=cover` and band.css was never linked, so
+   until today nothing paid the safe area: on a notched phone in landscape the
+   left edge of the drum grid sat under the rounded corner. Do NOT remove
+   `viewport-fit=cover` to fix that — removing it also removes the top inset the
+   sticky bar needs. */
+
+/* band.css:14, the one general rule that file had: a control that does not
+   inherit the page's font is a control from a different page. */
+button,input,select,textarea,output,meter{ font: inherit; color: inherit; }
+button,select,input[type=number],input[type=text],input[type=range]{
+  min-height: var(--tap); }
+button,select{ padding-inline: .6em; }
+input[type=number]{ padding-inline: .3em; inline-size: 5.5em; }
+input[type=checkbox],input[type=radio]{
+  inline-size: var(--box); block-size: var(--box);
+  margin: 0 .35em 0 0; vertical-align: middle; }
+/* THIS IS WHAT TURNED 96 THIRTEEN-PIXEL RADIOS INTO 96 FULL ROWS without one
+   line of ui/eight.js moving: every control on the page is already wrapped in
+   a <label>, so giving the label the height gives the gesture the height.
+   (This named `select()`, `check()` and `field()` and quoted their line
+   numbers. Two of the three were deleted with the last <select> on 2026-08-24
+   — the sheets do the wrapping now, ui/sheets.js emits `<label class="nu-opt">`
+   around every option, and there are 544 of them on the shipped chant rather
+   than 96. The rule did not have to move, which is the point the comment was
+   making; the names it made it with were the ones that went.) */
+label{ display: inline-block; min-block-size: var(--tap); line-height: var(--tap); }
+#app p{ margin-block: .35em; }
+:focus-visible{ outline: 3px solid Highlight; outline-offset: 1px; }
+
+/* ===== THE TWO STICKY BANDS ============================================
+   Two, never three: 52 + 38 = 90px of a 667px screen, 13.5%. In landscape
+   that would be 26%, so the axis heading drops out below 480px of height. */
+.nu-bar{ position: sticky; top: 0; z-index: 30;
+  display: flex; align-items: center; gap: .6em; flex-wrap: nowrap;
+  min-block-size: var(--bar-h); background: var(--paper);
+  border-block-end: 2px solid var(--rule-strong);
+  /* full-bleed: cancel the body gutter and re-pay it as padding, so the page
+     does not scroll visibly through a 12px strip beside a pinned bar */
+  margin-inline: calc(-1 * var(--gl)) calc(-1 * var(--gr));
+  padding-inline: var(--gl) var(--gr);
+  padding-block-start: env(safe-area-inset-top); }
+.nu-bar > *{ flex: 0 0 auto; }
+.nu-bar label{ display: flex; align-items: center; gap: .4em;
+  min-block-size: 0; line-height: normal; flex: 1 1 auto; }
+.nu-bar input[type=range]{ inline-size: 100%; min-inline-size: 4em; }
+
+/* THE ENGINE READOUT KEEPS ITS ROOM WHETHER IT HAS ANYTHING TO SAY OR NOT.
+   MOTIF.md, "STILL NOT COVERED" item 2, wrote the recipe (`#engine {
+   min-block-size: 1lh }`) and it was never applied; this applies it and
+   DOUBLES it, because the same report measured the case one line does not
+   cover.
+
+   MEASURED at 390x844 and 1280x844 on 2026-08-25, by writing each sentence
+   into the element and reading its box back:
+
+     empty (before you press play)                          0px
+     "stream · runway 3.1s"                                18px   both widths
+     "stream · runway 3.1s · 1 dropout, worst 168 ms,
+      last at 0 min"                                       36px @390, 18px @1280
+
+   So pressing play dropped the whole editable page 34px, and a dropout — which
+   STATE.md item 16 says happens in the first half minute of every playthrough —
+   dropped it another 18px with nobody touching anything. That is the clock
+   moving the editing interface, which is the one thing this page may not do.
+
+   TWO LINES AT EVERY WIDTH, AND NO BREAKPOINT. A media query here would be a
+   claim about WHERE that sentence wraps, and the sentence is not this file's:
+   audio/live.js `engineLine()` owns the wording (index.html says so), so any
+   width I pinned would rot the next time somebody adds a word to it. Two lines
+   costs 18px of reserved blank on a desktop that will only ever use one, and
+   that is the same trade the composed staff already makes on this page — "a
+   staff that appears on play pushes every editor below it down by 89px … and
+   reserving a blank box costs the same pixels to show you nothing", ui/eight.js
+   liveBlock. `min-block-size`, not `block-size`: a third line must be readable
+   rather than clipped. */
+#engine{ min-block-size: 2lh; }
+
+/* A STICKY HEADING NEEDS SOMETHING TO BE STICKY INSIDE OF. `position: sticky`
+   releases at the bottom of its CONTAINING BLOCK, so with every <h2> a direct
+   child of #app the first heading would pin for all 3000px of the page and the
+   last would never pin at all. `.nu-ax` — one <section> per axis — is that
+   containing block, which is why ui/eight.js has to wrap them. */
+.nu-ax > h2{ position: sticky; top: var(--bar-h); z-index: 20;
+  margin: 0 calc(-1 * var(--gr)) 0 calc(-1 * var(--gl));
+  padding-inline: var(--gl) var(--gr);
+  min-block-size: var(--head-h); line-height: var(--head-h); font-size: 1.15rem;
+  /* A TRANSPARENT STICKY HEADING IS UNREADABLE — the page runs under it. Any
+     future accent colour must paint here too. */
+  background: var(--paper); border-block-end: 1px solid var(--rule-strong); }
+.nu-ax > h3, .nu-ax h3{ font-size: 1rem; margin: .8em 0 .2em; }
+@media (max-height: 480px){ .nu-ax > h2{ position: static; } }
+/* TWO HEADINGS AT THE HANDOFF, MEASURED AND LEFT (STATE.md item 21). Swept one
+   pixel at a time across all six seams at 1280x900: every seam has a window
+   where two <h2>s are both in the 0-120 band, and the windows are 73 / 73 / 78 /
+   75 / 76 / 73 px of scroll. At y=1789, for instance, `1 · Time` is pinned at
+   top 52 and `2 · Alphabet` is arriving in flow at top 99.
+   THE CONTAINING BLOCK IS NOT WRONG, which is what item 21 suspected: the
+   outgoing heading releases EXACTLY at its own section's bottom — h2.top ===
+   section.bottom - 39 at every pixel after the release, across all six seams —
+   so this IS native sticky push-out and not a heading outstaying its axis.
+   THE FIX THAT WOULD MAKE IT "EXACTLY ONE" COSTS THE PROMISE ITSELF. The only
+   pure-CSS lever is `margin-block-end` on the h2: it insets the sticky
+   constraint rectangle, so the heading releases early. The arithmetic is the
+   window above — the incoming heading enters the band at scroll = nextTop - 120
+   and the outgoing one must be gone by then, which needs margin-block-end >= 78
+   at the tightest seam. That would unpin every axis heading 78px BEFORE its axis
+   ends, so the last 78px of every section would be read under the wrong heading
+   or none. What this file promises is "the heading on the screen is the heading
+   of the axis you are inside"; trading 78px of that for 78px of overlap buys
+   nothing and sells the feature.
+   So the geometry stands and the overlap is the handoff. Looked at rather than
+   only measured: at y=1789 the two read as one band handing over, each with its
+   own rule, the outgoing one already sliding under the .nu-bar. What is NOT
+   true is test/shell.js's "exactly one pinned .nu-ax > h2" as a claim about
+   every pixel — it is true at the three positions that gate samples, and this
+   is the note that says why it cannot be true everywhere. */
+
+/* ===== TABLES ==========================================================
+   "use more grid lines in tables, it will help" (Paul, 2026-08-24). Every
+   cell is ruled; the header row is ruled twice as heavily; alternate body
+   rows are tinted — except in a step grid, where a tint would fight the
+   playhead and the sticky lane column. */
+table{ border-collapse: collapse; }
+caption{ text-align: left; font-size: .85rem; opacity: .75; padding-block: .2em; }
+th,td{ border: 1px solid var(--rule); padding: 2px 4px; text-align: left;
+       vertical-align: middle; }
+/* The tables here are built with createElement and appended row-first, so
+   there is no implicit <tbody> — `table > tr` is a real selector on this page
+   and BOTH spellings are needed. */
+table > tr:first-child > th, thead th{ border-block-end: 2px solid var(--rule-strong); }
+table > tr:nth-child(even) > td, tbody > tr:nth-child(even) > td{
+  background: var(--zebra); }
+.nu-grid > tr:nth-child(even) > td{ background: none; }
+
+/* WHICH SECTION YOU ARE WRITING, IN THE FORM LIST — A RULE, NOT A HIGHLIGHT.
+   The form list became the one owner of "where am I in the song" on 2026-08-25
+   (Paul, asked to choose: "The first is good."), so it has to SAY which row
+   that is. It may not say it with <mark>: <mark> is the browser's own
+   highlight, it is the only one this page uses, and in this very cell it
+   already means "this section is SOUNDING" (the playhead writes inside the
+   button — ui/eight.js `secNumber`). Two facts drawn identically is the
+   conflation 2026-08-24 spent a day undoing.
+   So it is a heavy rule down the left of the row, for the same reason the zebra
+   is refused in a step grid five lines up: a tint fights the playhead, a rule
+   does not. `tr.nu-beat` in the grids below is the same answer to the same
+   question, which is why this is a rule of the same weight. */
+tr.nu-here > th:first-child, tr.nu-here > td:first-child{
+  border-inline-start: 3px solid var(--rule-strong); }
+
+/* A WIDE TABLE SCROLLS INSIDE ITSELF OR IT SCROLLS THE WHOLE DOCUMENT, and
+   there is no third option. Measured 2026-08-24: two seventeen-column grids at
+   382px against a 375px phone put documentElement.scrollWidth at 390 — every
+   vertical swipe on the page could drift sideways. One pane holds exactly ONE
+   table; NEVER nest panes, and never put a sticky heading inside one, because
+   `overflow-x: auto` computes `overflow-y` to `auto` as well and the heading
+   would stick to the pane instead of the page. The pane is focusable
+   (tabIndex 0, set by ui/eight.js) because a region a mouse can scroll must be
+   reachable from a keyboard. The four backgrounds are the classic Roma
+   shadow: two paper-coloured covers that scroll WITH the content and two
+   shadows fixed to the box, so a shadow shows exactly when there is more
+   table off that edge. */
+.nu-pane{ overflow-x: auto; overscroll-behavior-x: contain; max-inline-size: 100%;
+  background:
+    linear-gradient(to right, var(--paper) 30%, transparent) left / 24px 100% no-repeat local,
+    linear-gradient(to left,  var(--paper) 30%, transparent) right / 24px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(0,0,0,.22), transparent) left / 10px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,.22), transparent) right / 10px 100% no-repeat scroll; }
+
+/* THE SIXTEEN-STEP GRID, ROTATED, and the tension this file used to resolve
+   the other way. It read, and the argument is kept because it was right about
+   its own shape: "16 columns at the 44px isolated-control floor is 704px + a
+   44px lane label = 748px, which shows 8 of 16 steps on a 375px phone: two
+   swipes to read one bar and you can never see beat 1 and beat 4 at once. That
+   is a worse instrument than a small one. 16 x 36 + label = 617px in a 351px
+   pane — 10 steps visible, one swipe, and beat 1 stays under the sticky lane
+   label." Every number in that is measured and the conclusion was the best one
+   available to a grid with STEPS ACROSS.
+
+   Paul, 2026-08-25: *"Rotate the drum kits and motif editors to be vertical.
+   They'll fit on a phone screen that way."* Steps run DOWN now (ui/eight.js
+   `drumGrid` and `hookGrid`), so `--cell` keeps its meaning — one step of a
+   sixteen-step grid, 36px, which clears WCAG 2.2 AA Target Size (Minimum) at
+   24x24, the criterion that exists precisely for dense equally-spaced grids —
+   and its CONSTRAINT MOVES FROM WIDTH TO HEIGHT. Sixteen rows at 36 is 576px
+   of a page that already scrolls that way, and the width becomes the number of
+   COLUMNS the grid has: the kit's widest in the whole catalog is jazz's seven
+   lanes (272px, all 130 genres swept for lane counts) and the motif grid's is a
+   fixed five (292.8px, measured at every viewport from 320 to 1280 — the table
+   does not stretch). Both are inside the 366px column a 390px phone leaves and
+   inside the 296px one a 320px phone leaves, so
+   neither takes a `.nu-pane` at all — see ui/eight.js `stepGrid`, and the note
+   there about test/shell.js.
+
+   THE PARENT REACHED THE OLD ANSWER TOO and it is worth keeping the pointer:
+   main:app/daw.css:732-742 — "a 32-step phrase at 390px would give 9px columns,
+   so columns keep a 24px floor and the label column rides sticky-left over the
+   scroll". Same shape, a table instead of a grid. If a thumb disagrees on a
+   real phone the answer is one custom property; do not build a toggle. */
+.nu-grid th, .nu-grid td{ padding: 0; text-align: center; }
+.nu-grid td{ min-inline-size: var(--cell); block-size: var(--cell); }
+/* THE FIRST COLUMN IS THE COUNT NOW, not the lane label — it carries `1 e & a`
+   and it is the playhead. Sticky anyway: nothing here overflows, so nothing
+   slides under it, and the rule costs nothing and is one less thing to put back
+   the day a record turns up with more lanes than a phone is wide. */
+.nu-grid th:first-child, .nu-grid td:first-child{
+  position: sticky; left: 0; z-index: 5; background: var(--paper);
+  text-align: left; padding-inline: 4px;
+  border-inline-end: 2px solid var(--rule-strong); }
+.nu-grid input[type=checkbox], .nu-grid input[type=radio]{
+  inline-size: var(--box); block-size: var(--box); margin: 4px; }
+/* ---------- WHERE THE BEAT FALLS -------------------------------------------
+   Sixteen rows read as one block. `1 e & a 2 e & a …` says where you are, but
+   only once you are reading the labels; a heavier rule every four rows says it
+   to the eye at a glance, which is what a tracker has always drawn and what
+   Paul asked the tables for ("use more grid lines in tables, it will help",
+   2026-08-24). A ZEBRA WAS THE OTHER CANDIDATE and it is refused for the reason
+   the rule below already gives: a tint in a step grid fights the playhead. */
+.nu-grid tr.nu-beat > th, .nu-grid tr.nu-beat > td{
+  border-block-start: 2px solid var(--rule-strong); }
+/* ---------- HOW WIDE A DRAWN TUNE HAS TO BE ---------------------------------
+   Paul, 2026-08-25: "Make motif sliders much less tall." / "Add velocity to
+   motif sliders." / "Rotate the drum kits and motif editors to be vertical."
+
+   THE THIRD SENTENCE ANSWERED THE FIRST TWO AND THIS BLOCK IS THE RECORD OF
+   IT. What stood here was a pair of HEIGHTS for two VERTICAL sliders stacked
+   in one cell — `.nu-vr` 16px wide, `.nu-vr-deg` 56px tall, `.nu-vr-vel` 40px
+   — and the argument for them was careful and is worth keeping in one line:
+   the step grid's other rows are floored at 36px each, 110px of slider made
+   the motif table 290px, 56px made it 236px, and below 56 "adjacent degrees
+   are 2px apart and the row stops being a picture". All of that was about a
+   picture drawn ACROSS.
+
+   ROTATED, THE PICTURE IS DRAWN DOWN and the degree is horizontal position —
+   a piano roll on its side. So the numbers here are WIDTHS, and the height is
+   whatever fits the 36px row the grid already had: the degree slider is 30px
+   tall in a 36px cell, which is a bigger tap target than the 16x56 handle it
+   replaces and is why "make motif sliders much less tall" needed no second
+   answer. It was NOT also shortened; rotating is what answered it.
+
+   84 AND 52, MEASURED. The row is count + three radios + degree + velocity:
+   20.2 + 3x36 + 97.8 + 65.8 = 292.8px, and the 84 and the 52 are the sliders
+   inside the last two of those (the rest is each readout). 15 degrees across
+   84px is 5.6px a step — visibly different positions, where the old 56px
+   vertical handle gave under 4px a step. THE CEILING IS NOT THE PHONE IN
+   PAUL'S HAND, IT IS THE NARROWEST ONE THE GATE CHECKS: test/shell.js measures
+   at 320, where the column is 296px, so the table has 3.2px of room and the
+   73px of slack at 390 is not slack at all. Do not spend it.
+
+   AND THE 44px FLOOR IS CANCELLED HERE, exactly as it was for the vertical
+   ones. The rule at the top of this file gives every `input[type=range]` a
+   44px `min-height`, which is right for an isolated slider on a page and wrong
+   inside a grid whose whole vocabulary is a 36px cell: it would have made
+   every step row 44px and the block 704px. `.nu-grid` is the scope, so a
+   slider anywhere else on the page keeps its floor. (This cancellation used to
+   be keyed on `[orient=vertical]` and to say `min-block-size: 0` because those
+   elements' block axis was the horizontal one — a 44px WIDTH, four columns'
+   worth. Same cancellation, ordinary axes.) */
+.nu-grid input[type=range]{ min-height: 0; min-block-size: 0;
+  block-size: 30px; margin: 0; vertical-align: middle; }
+.nu-hr-deg{ inline-size: 84px; }
+.nu-hr-vel{ inline-size: 52px; }
+/* THE READOUT SITS BESIDE ITS SLIDER, NOT UNDER IT. It was `display: block`
+   under a vertical slider, in a row of its own; in a row-per-step grid a block
+   readout would push every row past 36px and undo the whole rotation. `2ch` so
+   that `-7` and `7` do not move the slider beside them as your finger drags —
+   a column that reflows while you use it is the same complaint one size down. */
+.nu-grid td > output{ display: inline-block; min-inline-size: 2ch;
+  font-size: .8rem; line-height: 1; text-align: right; vertical-align: middle; }
+.nu-grid td > output.nu-vel-out{ opacity: .75; }
+.nu-grid th span, .nu-grid th mark{ font-size: .8rem; }
+
+/* ===== THE VOCABULARY: THE BOX, NEVER THE INSIDE ========================
+   PROGRAM.md §2.4. Each slice owns what goes in; this file owns the box. */
+
+/* band.css:60-61, lifted verbatim in intent: hidden to the eye, present to a
+   screen reader, and NEVER `display:none`, which takes it out of the
+   accessibility tree and out of the tab order with it. */
+.nu-vh{ position: absolute; width: 1px; height: 1px; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.is-now{ background: var(--ink); color: var(--paper); }
+/* GREYED, NOT HIDDEN (Paul, 2026-08-24: "when an option makes another one
+   unaccessible gray it out"). `:disabled` is the DOM already saying it, so a
+   slice sets `input.disabled = true` and the grey follows for free. Hiding
+   destroys the shape of the possible, which is what a composer reads a sheet
+   for. */
+.is-off, .nu-opt:has(:disabled){ opacity: .45; }
+.is-quiet{ opacity: .7; font-style: italic; }
+.nu-hint{ font-size: .85rem; opacity: .75; }
+
+/* THE SHEETS (D2). A grid, not a wrapping row: sheets.js measures its own
+   longest word and asks for a column count on `data-cols`, and a grid is the
+   only layout where the reason text under one option cannot shove its
+   neighbours out of line. The count is advice — below 460px it is halved,
+   because four columns of anything on a 320px phone is four columns of one
+   letter. */
+.nu-sheet{ display: grid; grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr));
+  gap: 4px; border: 1px solid var(--rule); padding: 6px; margin-block: .5em;
+  min-inline-size: 0; }
+.nu-sheet[data-cols="2"]{ --cols: 2; }
+.nu-sheet[data-cols="3"]{ --cols: 3; }
+.nu-sheet[data-cols="4"]{ --cols: 4; }
+@media (max-width: 460px){
+  .nu-sheet[data-cols="3"], .nu-sheet[data-cols="4"]{ --cols: 2; } }
+@media (max-width: 340px){ .nu-sheet{ --cols: 1; } }
+.nu-sheet > legend{ padding-inline: .3em; font-weight: 600; }
+.nu-sheet > .nu-grp, .nu-sheet > .nu-why{ grid-column: 1 / -1; }
+.nu-grp{ margin: .4em 0 0; font-size: .85rem; opacity: .75;
+  border-block-end: 1px solid var(--rule); }
+.nu-why{ display: block; font-size: .8rem; opacity: .8; line-height: 1.25; }
+/* `.nu-sheets` is NOT on §2.4's table — sheetRow() emits it as the wrapper for
+   a row of sheets under one heading (ui/sheets.js:168), and the law is that a
+   name a slice needs is added HERE rather than in a second stylesheet. So it is
+   added here, and this is the notice. */
+.nu-sheets > h3{ font-size: 1rem; margin: .8em 0 .2em; }
+/* THE OPTION IS THE TARGET, and the radio inside it is CLIPPED, never
+   `display:none` (PROGRAM.md §2.3): clipped it still takes focus, still
+   answers the arrow keys, and still tells a screen reader what it is. Which
+   means the chosen state has to be drawn by the label — the border does it,
+   and `is-on`/`is-off` from sheets.js cover the browsers without `:has()`. */
+.nu-opt{ display: flex; align-items: center; gap: .35em; flex-wrap: wrap;
+  min-block-size: var(--tap); line-height: normal;
+  border: 1px solid var(--rule); padding: 4px .5em;
+  overflow-wrap: anywhere; }
+.nu-opt > input[type=radio], .nu-opt > input[type=checkbox]{
+  position: absolute; width: 1px; height: 1px; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); }
+.nu-opt .nu-w{ font-weight: 600; }
+.nu-opt .nu-why{ flex: 1 0 100%; font-weight: 400; }
+.nu-opt.is-on, .nu-opt:has(:checked){ border-color: var(--ink); border-width: 2px;
+  padding: 3px calc(.5em - 1px); }
+.nu-opt:has(:focus-visible){ outline: 3px solid Highlight; outline-offset: 1px; }
+
+/* ===== THE CIRCLE OF FIFTHS ============================================
+   (Paul, 2026-08-24: "Maybe put the circle of fifths back in there for key
+   selection, it was nice.")
+
+   PORTED, NOT LINKED. These rules are band.css:72-110's `.dcircle / .dopt /
+   .dko / .dki`, carried across under this file's own names and this file's own
+   custom properties. band.css stays on disk and stays UNLINKED: it belongs to a
+   page that is not this one, and mixing another page's state vocabulary into
+   the shell sheet is the opposite of keep-like-with-like (the ONE OWNER note at
+   the top of this file). What crossed is the geometry, which is the part that
+   was never about that page — the arrangement of twelve fifths on a clock face
+   is the same arrangement wherever it is drawn. `.nu-circ` / `.nu-circ-face` /
+   `.nu-ko` / `.nu-ki` are not on PROGRAM.md §2.4's table, and the law is that a
+   name a slice needs is added HERE rather than in a second stylesheet — so they
+   are added here, and this is the notice.
+
+   THREE THINGS CHANGED IN THE CROSSING, all of them so the diagram obeys the
+   laws THIS page runs on rather than the ones that page ran on.
+     1. The positions are `.nu-opt` — the very same label-over-clipped-radio
+        every other option on this page is — so the greying, the chosen border,
+        the focus ring and the 24px box floor are inherited and not re-stated.
+        band.css's `.dopt` rules are therefore NOT ported; they are already here
+        under another name, forty lines up.
+     2. `#bbb` and `#fff` became `var(--rule)` and `var(--paper)`, so the rings
+        and the label backgrounds track the ground in dark mode like everything
+        else. A hard-coded white behind twenty-four words is twenty-four white
+        stickers on a dark page.
+     3. The <fieldset> and the face are two elements rather than one. A
+        <legend> is painted into its own parent's border and the diagram needs
+        the whole box, so `.nu-circ` is the labelled control and
+        `.nu-circ-face` is the square the roundness is measured in.
+
+   AND IT IS THE SECOND PLACE IN THIS FILE THAT SETS A SIZE, for the reason
+   `.nu-grid`'s cell is the first: here the size IS the geometry. Every radius
+   and ring diameter is in em, so ONE font-size on the face scales the whole
+   diagram to fit a 390px phone, and the inner ring's twelve relative minors
+   have to be smaller than the outer ring's twelve majors or they collide —
+   measured at page-default type they overlap by 5-9px and the ring is
+   unreadable. That is a diagram's own scale, like the numbers on an axis, not a
+   type hierarchy in the page's text. */
+/* A DIAGRAM IS NOT A ROW. Every other control on this page takes the column it
+   is given; this one is 21em of geometry and no wider however wide the window
+   is, so the box that frames it is capped rather than stretched — a 336px
+   circle centred inside a 1280px rule reads as a mistake. `min()` and not a
+   media query: at 390px the cap is the column and nothing changes. */
+.nu-circ{ border: 1px solid var(--rule); padding: 6px; margin-block: .5em;
+  min-inline-size: 0; max-inline-size: min(100%, 26em); }
+.nu-circ > legend{ padding-inline: .3em; font-weight: 600; }
+.nu-circ > .nu-why{ margin-block: .15em .4em; }
+.nu-circ-face{ position: relative; inline-size: 21em; block-size: 21em;
+  font-size: clamp(.72rem, 3.6vw, 1rem); margin: 10px auto; max-inline-size: 100%; }
+/* THE TWO RING STROKES are the box's own before/after — one stroke per ring,
+   each at exactly twice its labels' radius, so the words sit ON the line and
+   punch through it with their own background.
+   ...AND THEY DO NOT TAKE TAPS, which is not a nicety: `::after` is the
+   face's LAST child, so it paints over the twelve labels sitting on the inner
+   ring, and a transparent background still hit-tests. Measured 2026-08-25, the
+   whole inner ring was untappable — playwright reported `<div
+   class="nu-circ-face"> intercepts pointer events` on every relative minor.
+   A line drawn through a control is decoration; decoration does not get to
+   swallow the gesture. */
+.nu-circ-face::before, .nu-circ-face::after{ content: ""; position: absolute;
+  left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none;
+  border: 1px solid var(--rule); border-radius: 50%; }
+.nu-circ-face::before{ inline-size: 17.2em; block-size: 17.2em; }
+.nu-circ-face::after { inline-size: 11.6em; block-size: 11.6em; }
+/* ONE ROTATION OUT AND ONE BACK. --a is the HOUR and it is the only thing that
+   differs word to word; ui/selects.js sets it on the label, where twelve
+   numbered classes used to sit in the old file. The second rotate is what keeps
+   every word upright: without it the ring reads like a tyre. */
+.nu-circ .nu-opt{ position: absolute; left: 50%; top: 50%; margin: 0;
+  display: flex; justify-content: center; text-align: center;
+  background: var(--paper);
+  transform: translate(-50%, -50%) rotate(var(--a))
+             translateY(calc(var(--r) * -1)) rotate(calc(var(--a) * -1)); }
+.nu-circ .nu-opt .nu-w{ white-space: nowrap; }
+/* THE 44px ROW IS CANCELLED HERE AND THE 24px BOX IS NOT. `label { min-block-size:
+   var(--tap) }` at the top of this file is right for a control that owns a row
+   and wrong for one of twenty-four positions on a clock: measured, the inner
+   ring's hours are 37-43px apart at a phone's type, so 44px boxes would overlap
+   each other and the ring would be unreadable and un-tappable both. What must
+   NOT go is WCAG 2.2's 24px floor for a radio (test/shell.js A3), so that is
+   what is stated — a real number, not an unset. */
+.nu-circ .nu-opt{ min-block-size: 26px; min-inline-size: 26px;
+  padding: 2px .3em; line-height: 1.15; align-items: center; }
+/* --r IS AN em AND em IS RESOLVED ON THE ELEMENT THAT USES IT, which is the one
+   trap in this whole diagram and it cost a measurement to find. A custom
+   property is substituted as TOKENS, not as a resolved length: `--r: 5.4em` set
+   on a label whose own `font-size` is `.8em` is 5.4 x (0.8 x the face's em),
+   and the inner ring lands 20% closer to the middle than the ring stroke drawn
+   at the face's own scale. Measured at 390px: the twelve minors came out on a
+   60.6px radius against a 75.6px stroke and the diagonal pairs (Em/Bm, G♯m/D♯m,
+   Gm/Dm) overlapped by 4px. So NO POSITIONED LABEL SETS ITS OWN font-size —
+   both rings sit at the face's scale, both radii mean the same thing, and the
+   inner ring is made smaller by shrinking THE WORD INSIDE it instead. */
+.nu-circ .nu-ko{ --r: 8.6em; }
+/* ...and the outer ring, where there IS room, keeps the full thumb. */
+@media (min-width: 400px){ .nu-circ .nu-ko{ min-block-size: 34px; } }
+.nu-circ .nu-ki{ --r: 5.8em; padding-inline: .25em; }
+/* the inner ring's words are smaller than the outer ring's, which is the one
+   thing about this diagram that is not negotiable: at equal type the twelve
+   relative minors collide with each other by 5-9px (band.css measured it, and
+   so did this file) */
+.nu-circ .nu-ki .nu-w{ font-size: .8em; }
+/* A REASON IS THE ONE THING ON THE RING THAT MAY BE WIDER THAN A WORD, and it
+   is capped rather than clipped: greyed is not hidden (the note over `.is-off`
+   above), so a key that cannot be said says why right there, wrapping, even
+   though it makes the diagram lumpy for as long as it is unsayable. Nothing on
+   the shipped record ever greys a key — gates.json carries no option rule for
+   `alphabet.key` — so this is the rule that keeps the law true rather than the
+   rule that draws the page. */
+.nu-circ .nu-opt .nu-why{ flex: 1 0 100%; max-inline-size: 9em;
+  white-space: normal; }
+
+/* THE MENUS (2026-08-24, evening). `.nu-sel` / `.nu-sels` are the `.nu-sheet` /
+   `.nu-sheets` pair one widget over: a settled parameter that was asked back as
+   a menu ("We can return some things to select menus … in general where there
+   is ONE option a dropdown is preferred"). Not on §2.4's table yet, and the law
+   is that a name a slice needs is added HERE rather than in a second
+   stylesheet — so it is added here, and this is the notice.
+
+   ALMOST NOTHING IS NEEDED, and that is the argument for the widget: the two
+   rules at the top of this file — `select { min-height: var(--tap) }` and
+   `label { min-block-size: var(--tap) }` — already give a menu its target size
+   and already make its label part of the gesture. What is left is width. */
+.nu-sels > h3{ font-size: 1rem; margin: .8em 0 .2em; }
+/* THE QUESTION IS A LINE OF ITS OWN AND THE CONTROL IS THE LINE UNDER IT.
+   Paul, 2026-08-25: "Put interactive elements on new lines below the titles or
+   questions."
+
+   THIS RULE IS A REVERSAL AND HERE IS WHAT IT REVERSED, kept because the old
+   reasoning was right about the mechanism and only wrong about the taste:
+   "THE LABEL AND ITS MENU ARE ONE ROW THAT MAY WRAP. flex, so the word and the
+   menu sit on one baseline at 1400px and stack at 320px without either being
+   given a fixed width." Every clause of that still describes what happens
+   below; what changed is that the wrap is no longer left to the width. It
+   ALWAYS wraps, because at 390x844 "what happens to it after it's played?"
+   and its menu were sharing 366px — measured, 41 controls at 390 and 56 at
+   1280 had their own label's words on the same line as themselves, and at 1280
+   there is room, which is exactly why the line was won by the words and the
+   menu ended up wherever the sentence stopped.
+
+   ONE LINE DOES IT, AND IT IS THE STYLESHEET'S OWN IDIOM ALREADY: `flex: 1 0
+   100%` on the words is what `.nu-opt .nu-why` above has always used to put a
+   reason on its own line under an option. The container stays a wrapping row,
+   so everything AFTER the words — a menu, or a slider and its readout — stays
+   on ONE line together instead of becoming a column of one item each.
+
+   `.nu-field` is ui/eight.js's `number()` and `check()` (a slider with its
+   readout, a checkbox with its sentence) and `.nu-sel` is ui/selects.js's
+   `selectField`. Two names, one rule, because it is one question: they are
+   listed together rather than given a third shared class, which would be a
+   name that meant "the other two". */
+.nu-sel{ margin-block: .5em; }
+.nu-sel > label, .nu-field > label{
+  display: flex; align-items: center; gap: .4em; flex-wrap: wrap;
+  line-height: normal; min-block-size: var(--tap); }
+.nu-sel > label > .nu-w, .nu-field > label > .nu-w{
+  flex: 1 0 100%; font-weight: 600; }
+/* A MENU OF 108 INSTRUMENTS MUST NOT BE 108 INSTRUMENTS WIDE. A <select> sizes
+   itself to its longest option, which on `sound.instrument` is a phone and a
+   half; the cap makes the browser ellipsise the CLOSED control and leaves the
+   open list alone, which is where the long names are actually read. 30ch and
+   not 100%: a menu stretched across a 1400px desktop is a 1345px control
+   holding one word. `min-inline-size: 0` is what lets it shrink below its
+   content on a phone. Measured on the harness: 240px at both 390 and 1400, and
+   documentElement.scrollWidth == innerWidth at both. */
+.nu-sel > label > select{ flex: 0 1 auto; min-inline-size: 0;
+  max-inline-size: min(100%, 30ch); }
+.nu-sel > .nu-why{ margin-block-start: .15em; }
+/* ...and the same cap for a menu in a table cell, where the chord quality went
+   ("chord quality can be selects inside the 'the changes' table"). The cell is
+   inside a `.nu-pane`, which scrolls sideways, so an unbounded select would
+   push the whole chart off the phone rather than be clipped by it. */
+td > select{ max-inline-size: 100%; }
+/* GREYED, NOT HIDDEN, THE SAME AS EVERYWHERE ELSE HERE — AND WITH NO NEW RULE.
+   selects.js puts `is-off` on a refused option and `is-quiet` on an inert one,
+   which the two rules already at the top of this file
+   (`.is-off, .nu-opt:has(:disabled){ opacity: .45 }` and `.is-quiet{ opacity:
+   .7; font-style: italic }`) dress for free, on top of the browser's own grey
+   for `option:disabled`. Adding `option:disabled{ opacity: … }` here would be a
+   second, higher-specificity opinion about the same pixel. The REASON is in the
+   words the option says (ui/selects.js `optionText`) rather than in a
+   `.nu-why`, because an <option> may contain nothing but text. */
+
+/* THE BOARD (D3) is a <table> in a pane — one column per channel, one row per
+   control — so "a horizontally scrolling row of channel strips" is the pane's
+   scroll and a fixed column width, not a flex row. The row-label column rides
+   sticky-left the way the step grid's lane column does, because a fader you
+   have scrolled to is useless if you can no longer read what row it is.
+
+   TWO SLICES ASKED THIS FILE FOR SOMETHING ON 2026-08-24 AND ONLY ONE NEEDED A
+   RULE, which is worth saying because they touch the same page. The atlas slice
+   (STATE.md item 19) took the 760px map floor out of the atlas block at the
+   foot of this file; the board slice
+   (STATE.md item 20, "twenty-three dropdowns survive, and they are all on the
+   board") needed NOTHING NEW — its per-channel `place` and three sends went
+   <select> -> <input type=range>, which `.nu-board input[type=range]` below
+   already carried, and the master's fifteen menus became `.nu-sheet`s, which
+   the sheets block above already styles. So they do not disagree and no rule
+   was arbitrated. The consequence for anyone editing below: that range rule is
+   now LOAD-BEARING for the channel strip rather than incidental — the board
+   measured 557px -> 260px at a 390px viewport when the menus left, because the
+   selects were what forced the columns past the declared 92px. */
+.nu-board th, .nu-board td{ text-align: center; vertical-align: top; }
+.nu-board tbody th, .nu-board thead th:first-child{
+  position: sticky; left: 0; z-index: 5; background: var(--paper);
+  text-align: left; border-inline-end: 2px solid var(--rule-strong); }
+.nu-ch{ inline-size: 92px; min-inline-size: 92px; }
+.nu-ch span{ display: block; }
+.nu-ch small{ display: block; font-size: .72rem; opacity: .7; font-weight: 400; }
+.nu-board input[type=range]{ inline-size: 100%; min-inline-size: 0; }
+.nu-board output{ display: block; font-size: .8rem; }
+.nu-board meter{ display: block; inline-size: 100%; block-size: 8px; }
+.nu-eng th{ inline-size: 7em; }
+.nu-eng input[type=range]{ inline-size: 9em; min-inline-size: 0; }
+
+/* THE NOTE STACK (D4): the producer's notes read top to bottom, newest last,
+   so the table is left-aligned prose with a rule between takes. */
+.nu-notes th, .nu-notes td{ text-align: left; }
+.nu-notes td:last-child{ text-align: right; }
+
+/* THE MAP (D6): an inline <svg> that fills the column and keeps its ratio. */
+.nu-map{ display: block; inline-size: 100%; block-size: auto; max-inline-size: 100%; }
+
+/* ONE MOTIF, ONE BLOCK (ui/eight.js motifs()). Paul, 2026-08-24: "The motifs
+   should stay with their editors!!!" Everything about a motif — the composed
+   staves, the written staff, the step grid, the designing buttons — is a direct
+   child of #staff, in order, and NOT wrapped in a container of its own: the
+   frozen-interface gate counts the written measures at `#staff > p > div` and a
+   wrapper would put them one level deeper. So the grouping is done here, which
+   is where grouping belongs anyway. The block's name carries a rule across the
+   column and the air above it, and that is what makes "one block" a thing you
+   can see rather than a thing a comment claims.
+
+   `--rule-strong` and not `--rule`: this is the only division inside an axis,
+   and it has to read as a stronger break than the <hr>-weight lines around the
+   sheets and panes it separates. */
+.nu-motif{ margin-block: 1.6em .2em; padding-block-start: .55em;
+  border-block-start: 2px solid var(--rule-strong); font-weight: 600; }
+/* the first block in the axis has the <h3> and the section strip over it
+   already; a rule there would be a division between a heading and the thing it
+   heads, which is not a division at all */
+.nu-motif.nu-first{ margin-block-start: .4em; padding-block-start: 0;
+  border-block-start: 0; }
+
+/* THE ENGRAVING. abcjs draws an <svg> at whatever width it was handed; on a
+   phone that is wider than the page, and an overflowing staff would put the
+   sideways scroll straight back on the body — the one thing this file exists
+   to prevent. */
+#staff svg, #app svg{ max-inline-size: 100%; }
+
+/* ===== THE ATLAS (D6) ==================================================
+   Paul, 2026-08-24: "a slider for time and a world map on top." Every rule
+   below is either a tap target, a scroll container or a system colour; the
+   <svg> already carries presentation attributes for fill and stroke, so with
+   this stylesheet disabled the map still draws — it just stops being the
+   width of the column. */
+/* WHAT WENT, AND THE SENTENCE THAT TOOK IT. Paul, 2026-08-24: "Get rid of all
+   ux for navigating except for the 'when' slider which should go across the
+   whole screen and the 3d globe. get rid of the era select boxes, the look at
+   select box, the 'nearby' select box, the genre list, etc." Seven rules stood
+   here for controls that no longer exist and are not hidden but DELETED:
+   `#atlas summary` (the disclosure — "Don't make 'Details' collapsible", so
+   index.html is a <section> now), `#atlasCtl label`, `#atlasCtl #atlasYear`,
+   `#atlasPlace h3`, `#atlasPlace button`, `#atlasPlace .inview` and
+   `#atlasList`. What is left below is two controls. */
+
+/* THE SLIDER GOES ACROSS THE WHOLE SCREEN — Paul, in the same sentence: "the
+   'when' slider which should go across the whole screen". Full-bleed the way
+   .nu-bar already does it at :112 — cancel the body gutter and re-pay it as
+   padding — and NOT 100vw: vw includes the scrollbar gutter, and a sideways
+   scroll on the body is the one thing this file exists to prevent.
+   THIS SAID "UNDER the globe, not over it: the globe is the figure and the
+   slider is its scale, and on a phone your hand rests at the bottom of the
+   screen." That was a good argument about a thumb and it lost to a MEASURED one
+   about a keyboard, so the slider ships ABOVE the globe: DOM order is reading
+   order is tab order, and with the slider second a reader met the earth and its
+   nineteen places BEFORE the control that decides which nineteen — measured,
+   Tab from the slider landed on "another take" with every place behind it,
+   reachable only by Shift-Tab. The ergonomic point survives anyway: this section
+   sits in a long scrolling document, so where the slider falls under your thumb
+   is decided by the scroll and not by this rule. Nothing here depends on the
+   order — it is full-bleed either way — and the reason is written down so the
+   next hand does not swap them back for the argument that was already tried. */
+#atlasWhen{ margin-inline: calc(-1 * var(--gl)) calc(-1 * var(--gr));
+  padding-inline: var(--gl) var(--gr); }
+#atlasWhen label{ display: block; min-block-size: 0; line-height: normal; }
+#atlasWhen #atlasYear{ display: block; inline-size: 100%; min-inline-size: 4em; }
+#atlasYearOut{ display: inline-block; min-inline-size: 3.2em; font-weight: bold; }
+
+/* THE 760 WAS A WIDTH, THEN A SCALE, AND NOW IT IS NEITHER — the second
+   reversal of the same rule, and both belong in it.
+   FIRST: "350 degrees of longitude under 760px is unreadable, so the map keeps
+   a floor and the sideways scroll happens HERE." The floor did make the map
+   readable and it also put 13 of the 62 places past the right edge of a 390px
+   phone with no way to reach them — `touch-action: pan-y` moved that box 0px on
+   a real horizontal drag, measured (STATE.md item 19).
+   THEN: ui/atlas.js kept the floor's SCALE (z = max(1, 760 / rendered width))
+   and dropped its WIDTH, so the map fit the column and the ink did not shrink.
+   NOW: the scale dies too, because the globe has `arc`. A plate carrée had to
+   choose between fitting the column and being legible; a globe is always
+   exactly its own box, and you get closer by ZOOMING — which is the control
+   Paul asked for and the reason the workaround existed at all. Every tap box
+   and label is stated in CSS px in ui/atlas.js and converted through the
+   renderer's own units-per-pixel, so there is no scale factor left to keep
+   honest. `overflow-x: auto` stays as the safety net it always was, and it
+   never fires: measured scrollWidth - clientWidth === 0 at 320 / 375 / 390 /
+   430 / 760 / 1280. If a future view ever does overflow, the scroll is at the
+   element and never at the body (this file's own third failure mode). */
+#atlasWrap{ overflow-x: auto; }
+
+/* THE GLOBE IS A TAP SURFACE, so it makes the same promise the pointer handler
+   does. `pan-y` gives a VERTICAL swipe to the page (test/atlas.js G13) and the
+   horizontal drag arrives as pointermove for ui/atlas.js's 8px axis lock to
+   claim. The measurement that reads as an argument against it is not one: this
+   morning's "pan-y moves that box 0px on a real horizontal touch drag" was
+   about the BROWSER'S OWN horizontal pan of an OVERFLOWING element, which
+   pan-y correctly forbids — and this design never overflows, so there is no
+   browser pan to lose. pan-y is the reason both halves work. It is not
+   sufficient on its own either: an unlocked build scrolled 345px AND spun the
+   globe 39 degrees on the same gesture, which is what the 8px lock is for. */
+#atlasMap{ touch-action: pan-y;
+  /* AND A DRAG ON THE EARTH DOES NOT SELECT THE PLACE NAMES. Measured: a mouse
+     drag across the globe left "Kingston", "Austin" and "Cincinnati" sitting in
+     a blue selection highlight, because SVG <text> is text. The names are
+     aria-hidden decoration painted beside a button that carries the real name,
+     so there is nothing here worth selecting and the highlight was only ever
+     the drag leaking through. */
+  -webkit-user-select: none; user-select: none; }
+#atlasMap .place{ cursor: pointer; }
+/* THE FAR SIDE IS TRANSPARENT AND INERT, AND IT IS NEVER `display: none` OR
+   `visibility: hidden`. Both of those remove an element from the FOCUS TREE
+   (measured), and a place behind the earth must stay reachable by Tab, because
+   focus is what flies the camera to it — that is the whole keyboard path now
+   that the fallback listbox is gone (G11). */
+#atlasMap .place[data-far="1"]{ opacity: 0; pointer-events: none; }
+/* TWO REMOVALS LIVE ON THESE MARKS AND THEY ARE OPPOSITE ON PURPOSE. The one
+   above is the FAR SIDE: the place is there, you cannot see it from where you
+   are standing, and focus turns the earth to it — so it must stay in the focus
+   tree. The other is THE YEAR, and it is not here: ui/atlas.js writes
+   `display: none` and `data-when="0"` straight onto the <g>, because a place
+   the slider's year does not hold is not there at all and nothing may reach it.
+   Paul, 2026-08-24: "Don't show ghost genres when the time isn't right. Just
+   show genres that align with time." It is a presentation attribute rather than
+   a rule in this file so that the removal cannot be defeated by a stylesheet;
+   `data-when` rides along because a display:none element measures 0x0 and
+   test/atlas.js G12 must be able to select the marks that are really drawn. */
+/* AND A FOCUSED MARK IS RINGED. The UA outline on an <svg> <g> is kept, not
+   suppressed — :focus-visible at :106 is the page's own indicator and a
+   keyboard user should get the same one here as everywhere else — and the
+   mark's own <circle class="ring"> is drawn as well, because an outline around
+   a bounding box is hard to find on a moving globe. A CSS property beats the
+   presentation attribute ui/atlas.js writes, so this wins while focus lasts. */
+#atlasMap .place:focus-visible .ring{ opacity: 1; }
+#atlasActs button{ min-block-size: var(--tap); margin-inline-end: .4rem; }

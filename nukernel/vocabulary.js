@@ -841,21 +841,15 @@ function extractSections(opt) {
    A row it cannot compute is never guessed -- it is returned as a HOLE, and
    the holes are the exceptions list.
    ====================================================================== */
-function evalRule(ex, f) {
-  if (!ex) return null;
-  if (ex.rule === "always") return true;
-  if (ex.rule === "never") return false;
-  if (ex.rule === "when") {
-    if (ex.is) return !!f[ex.is];
-    if (ex.not) return !f[ex.not];
-    if (ex.eq) return J(f[ex.eq]) === J(ex.value);
-  }
-  if (ex.rule === "both") {
-    const one = (t) => (t.is ? !!f[t.is] : !f[t.not]);
-    return one(ex.a) && one(ex.b);
-  }
-  return null;
-}
+// THE RULE LANGUAGE IS NOT DECLARED HERE ANY MORE. It was fifteen lines and
+// four forms, and on 2026-08-24 the eight-axes page needed the same four forms
+// to evaluate nukernel/gates.js at DRAW TIME — this file is a tool, node only,
+// in no script tag, so the page could not have it. Copying it into avail.js
+// would have made two owners of one language and they would have drifted the
+// first time a fifth form was wanted. So it moved to nukernel/avail.js, which
+// the page loads and node requires, and this file reads it from there. The
+// behaviour is unchanged: the function below IS the one that was here.
+const { evalRule } = require("./avail.js");
 // why a row cannot be regenerated, or null if it can
 function holeOf(q) {
   if (q.seat === "section") return "a section question: answered by key onto m.per, not by word";

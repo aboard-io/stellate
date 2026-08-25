@@ -632,6 +632,73 @@ PD-adjacent by long convention, noted here rather than claimed as a formal
 grant. Curation: all 114 decoded patches render non-silent (scratch audit,
 2026-07); SFX novelties (TRAIN, EXPLOSION, LASER GUN…) were not decoded.
 
+## World coastline (nukernel/atlas-land.js — committed source, not audio)
+
+The outline the atlas draws under its dots (D6, 2026-08-24: Paul, *"a slider for
+time and a world map on top that shows where the genres are happening"*).
+
+**[Natural Earth](https://www.naturalearthdata.com/) 1:50m physical vector,
+`ne_50m_land`** — **public domain (CC0)**. Natural Earth's own terms: *"No
+permission is needed to use Natural Earth. Crediting the authors is
+unnecessary."* Credited anyway, because this repo credits everything and because
+the next person needs to know which file to re-bake from. Fetched from the
+[nvkelso/natural-earth-vector](https://github.com/nvkelso/natural-earth-vector)
+GeoJSON mirror (`geojson/ne_50m_land.geojson`).
+
+**[Natural Earth](https://www.naturalearthdata.com/) 1:10m physical vector,
+`ne_10m_land`** — **public domain (CC0)**, same terms and same
+[nvkelso/natural-earth-vector](https://github.com/nvkelso/natural-earth-vector)
+mirror (`geojson/ne_10m_land.geojson`). ADDED 2026-08-24, when the map became a
+globe you can zoom (Paul: *"make the map 3d and zoomable like google earth but
+keep it black and white"*). Only the ±2° boxes around the 65 places in
+`nukernel/atlas.js` are kept from it — 308 open runs, 7,615 points, 109 KB — for
+a measured reason: 1:50m holds 60,669 points in the whole world, so below about
+0.01° of tolerance a bake from it stops improving and starts re-encoding its own
+source, and at 0.5° of arc (about 55 km across a 390px phone) that is a Thames
+estuary drawn as four straight lines. City-tight coastline needs 1:10m, and you
+only need it where a record is.
+
+Committed as NUMBERS, not as fetched assets, which is why they are in this
+section rather than in the recipe tiers above: `scratch/atlas/bake-land.js` runs
+ONCE, at a moment a human is watching, and its output `nukernel/atlas-land.js` is
+source. Nothing at runtime fetches either file — the offline law is that the page
+plays and draws with the wire cut. Re-bake with
+`node scratch/atlas/bake-land.js --src <ne_50m_land.geojson> --src10 <ne_10m_land.geojson>`,
+or `--check` to prove the committed file still matches a fresh bake (that is
+test/atlas.js G18). A download is cached in `/tmp` and **its SHA-256 prefix is
+written into the output header**, so a cache that has gone stale against the
+mirror shows up as drift rather than as a quietly different coastline.
+
+Derivation, recorded so the numbers are reproducible. Four tiers, 229 KB of
+committed source, 85 KB gzipped. (Written at 62 places and corrected at 65 on
+the same day, when the 2020s anchors added Cairo, Chandigarh and Guadalajara:
+`PATCH` is per-place, so the catalog growing grows the tier. Verified against
+`node scratch/atlas/bake-land.js --check`, which is where every figure below
+comes from — nothing here is typed by hand.)
+
+| tier | source | rule | out |
+|---|---|---|---|
+| `COARSE` | 1:50m | DP 0.8°, 1dp, rings under 3 deg² dropped | 50 rings, 1,180 pts, 12.4 KB |
+| `RUNS` + `RSPAN` | 1:50m | DP 0.1°, 2dp, same drop, cut into open runs of ≤96 points | 118 runs, 8,281 pts, 103.6 KB (56 rings rebuilt at load) |
+| `PATCH` | 1:10m | ±2° around each of the 65 places, DP 0.01°, 3dp, open runs | 308 runs, 7,615 pts, 109.2 KB |
+
+THE TOLERANCE IS SET BY THE TIGHTEST VIEW, NOT THE WIDEST, and the tightest view
+moved twice. The first bake used 1:110m at 1.0° and rendered Britain as a
+five-sided blob with no Wales and no Cornwall, because 1:110m's whole Great
+Britain ring is 44 points. The second used 1:50m at 0.1°, set by
+`VIEWS["Britain"]`, eleven degrees of longitude. There are no VIEWS now — the
+globe turns and zooms continuously to 0.5° of arc — which is what the 1:10m
+patches are for.
+
+ANTARCTICA IS BACK, and the reversal is recorded rather than deleted: the first
+two bakes dropped it because "it is entirely below the world view's southern
+edge", which was true of a plate carrée behind a table of rectangles and is false
+of a globe you can turn to the south pole. Cost, measured: +10.6 KB.
+
+**`LAND` with empty arrays is a legal value** (as `LAND = []` was). If Natural
+Earth cannot be obtained the atlas draws the sea, the graticule and its marks and
+the gate passes: a worse map, not a broken one, and not a reason to add a CDN.
+
 ## Vendored code (committed source, not audio)
 
 - `vendor/espeak-ng/` — **eSpeak NG** compiled to WebAssembly

@@ -1,59 +1,61 @@
-/* band.css — NO FORMATTING (2026-08-23, Paul: "Get rid of all text
-   formatting just let the text be default size and everything even
-   simpler"). Everything on the page is a table, a fieldset or a button, and
-   the browser's own defaults do all of the talking: default type, default
-   size, no weight, no italics, no letter-spacing, no case, no hierarchy.
+/* band.css — A FLAT DOCUMENT (2026-08-23, Paul, verbatim: "Okay table and
+   nav and everything is confusing you. Don't hide anything. Make every
+   major section h1 and every subsection h2 and questions h3. Put the
+   answers below in a list of form elements one p tag per form element.
+   Nothing can be hidden anywhere" — and immediately after: "There should
+   never be 'questions left' any more").
 
-   There is no font-weight, font-style, letter-spacing or text-transform
-   rule anywhere in this file, and no font-size outside the circle of
-   fifths, where the size IS the geometry (see the block at the foot). What
-   is left is only what a stylesheet still MUST say — the scroll pane, the states no native widget
-   carries, the words that are for assistive tech alone, keeping a vendor
-   SVG inside its column, and the circle of fifths (Paul: "Keep the circle
-   of fifths!!!", the one sanctioned exception). With CSS off the page reads
-   as the same document, top to bottom. */
+   So the page is one long scroll of headings and paragraphs and the
+   browser's own defaults do all of the talking. There is no font-weight,
+   font-style, letter-spacing or text-transform rule anywhere in this file,
+   and no font-size outside the circle of fifths, where the size IS the
+   geometry (see the block at the foot).
 
-/* ---- the one layout fact a gate measures ---- */
-/* .dwrap is THE scroll container (band-page.test.js scrolls it and reads
-   scrollTop): the transport stays put and the page scrolls under it */
-html, body { height: 100%; }
-body { margin: 0; }
-main { height: 100%; display: flex; flex-direction: column; }
-header { flex: none; }
-.dwrap { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+   TWO RULES THIS FILE MUST STILL SAY ABOUT TYPE, AND ONLY TWO:
+   `button, input, select, textarea { font: inherit; }`, because form
+   controls do not inherit type at all and rendered at 13.3px against a 16px
+   body (measured: 97 elements on the shipped page). And NOTHING about
+   headings: an hour ago this file carried `h1,h2,h3 { font-size: inherit }`
+   and that rule is GONE — Paul asked for a heading hierarchy, and the
+   browser's own default heading sizes ARE the default styling.
+
+   WHAT IS NOT HERE ANY MORE: the scroll pane. `.dwrap` was a flex child
+   with `overflow-y: auto` so the transport could stay put — a scroll
+   container that CLIPS, which is the one layout fact "nothing can be
+   hidden" forbids. The window scrolls the document now, the way a document
+   scrolls.
+
+   What is left is only what a stylesheet still MUST say: the states no
+   native widget carries, the words that are for assistive tech alone,
+   keeping a vendor SVG inside its column, and the circle of fifths (Paul:
+   "Keep the circle of fifths!!!", the one sanctioned exception). With CSS
+   off the page reads as the same document, top to bottom. */
 
 /* ---- one size, actually ---- */
-/* This file claimed "default size, no hierarchy" and did not enforce it,
-   because the BROWSER's defaults disagree: form controls do not inherit
-   type at all, and h1/h2/h3 carry their own scale. Measured on the shipped
-   page that was 97 elements at 13.3px against a 16px body, plus headings at
-   32, 24 and 20. Four sizes on a page whose whole rule is one. So the two
-   rules the claim needs, and nothing else — no weight, no case, no spacing.
-   The circle of fifths keeps its em sizing at the foot of this file, where
-   the size IS the geometry. */
+/* Form controls do not inherit type; everything else does, and the headings
+   keep the browser's own scale because the document now HAS a hierarchy. */
 button, input, select, textarea { font: inherit; }
-h1, h2, h3, h4, h5, h6 { font-size: inherit; }
 
 /* ---- words for assistive tech and nobody else ---- */
-/* the hint a title used to hoard, and the one-shot change announcement
-   (#dlive). Everything else pairs a name with its value as a real
-   <th scope="row"> beside its <td>. */
+/* .dvh ADDS information rather than hiding it — the hint a title attribute
+   used to hoard (a tooltip is information hidden from a finger, and there is
+   not one left on this page), and the one-shot change announcement (#dlive).
+   It is the ONE thing on the page that is not on the screen, and it is there
+   so a screen reader hears MORE, never less. */
 .dvh { position: absolute; width: 1px; height: 1px; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* ---- state, and only state ---- */
-/* the area/chair that holds the floor, the sounding section (the playhead),
-   the fact being re-asked, the mark in hand, the theme in hand. Checked
-   radios and checkboxes say their own state natively, so nothing here
-   repeats them. */
-.dmark.on, .dmod.on, .dseat.on, .dsec.now,
-.dfact.open, .dadd.open, .dthemepick.on, .dtnode.on { background: #000; color: #fff; }
-/* ...and the two that must not invert: the open section, and the staff,
-   which is INK — a background would drown it */
-.dsec.open, .dstaff.on { outline: 2px solid; }
+/* the sounding section (the playhead), the mark in hand on a written bar.
+   Checked radios and checkboxes say their own state natively, so nothing
+   here repeats them. */
+.dsec.now, .dmark.on { background: #000; color: #fff; }
+/* ...and the staff, which is INK — a background would drown it */
+.dstaff.on { outline: 2px solid; }
 /* an option that is already true but was not the word you said */
 .dopt.istrue { text-decoration: underline; }
-/* a word that cannot be said yet (its input is disabled) greys whole */
+/* a word that cannot be said yet (its input is disabled) greys whole — it
+   stays on the page and stays readable: greyed is not hidden */
 .dopt:has(> input:disabled) { opacity: .4; }
 /* the tie shows through every mark: a place held through ("hold it") keeps
    its say whichever mark is in hand */
@@ -62,23 +64,21 @@ h1, h2, h3, h4, h5, h6 { font-size: inherit; }
 /* ---- the staff: a vendor SVG, kept inside its column ---- */
 .dstaffsvg svg { max-width: 100%; height: auto; }
 /* THE SOUNDING NOTE (Paul: "light up notes in the theme when playing
-   them") — state the eye reads off the staff, like .dsec.now on a box. The
-   descendant half matters: abcjs paints fill as an ATTRIBUTE on the paths
-   inside each note's <g>, and only a rule aimed at the paths outranks it. */
+   them") — state the eye reads off the staff. The descendant half matters:
+   abcjs paints fill as an ATTRIBUTE on the paths inside each note's <g>,
+   and only a rule aimed at the paths outranks it. */
 .dstaffsvg .dlit, .dstaffsvg .dlit * { fill: #c00; }
-/* the caption under the staff is empty most of the time; an empty line
-   should not take a line */
-.dstaffcue:empty { display: none; }
 
 /* ---- the circle of fifths: THE sanctioned exception ---- */
 /* Paul, verbatim: "Keep the circle of fifths!!!" — so this block survives
    whole. It is pure ARRANGEMENT over the same plain radio-labels every
-   other question renders: twelve majors on the outer ring (C at the top,
-   sharps clockwise), relative minors inside at the same hour, each label
-   rotated to its hour, walked out the radius and rotated back upright. The
-   two thin ring strokes are the box's own before/after. With the stylesheet
-   off the same labels read as a list in fifths order. The picker's root
-   ring (.dpcircle) rides the same rules.
+   other question renders, each one now in its own <p> like every other form
+   element on the page: twelve majors on the outer ring (C at the top,
+   sharps clockwise), relative minors inside at the same hour, each
+   paragraph rotated to its hour, walked out the radius and rotated back
+   upright. The two thin ring strokes are the box's own before/after. With
+   the stylesheet off the same labels read as a list of paragraphs in fifths
+   order.
 
    AND IT IS THE ONE PLACE IN THIS FILE THAT SETS A SIZE, because here the
    size IS the geometry: every radius and ring diameter is in em, so one
@@ -87,25 +87,24 @@ h1, h2, h3, h4, h5, h6 { font-size: inherit; }
    ring's twelve majors or they overlap — measured at page-default type,
    they collide by 5-9px and the ring is unreadable. It is a diagram's own
    scale, like the numbers on an axis, not a type hierarchy in the page's
-   text: nothing outside this block sets a size, and no rule anywhere in
-   this file sets a weight, a style, a letter-spacing or a case. */
+   text. */
 .dcircle { position: relative; width: 21em; height: 21em;
-  font-size: clamp(.72rem, 3.6vw, 1rem); margin: 10px auto; }
+  font-size: clamp(.72rem, 3.6vw, 1rem); margin: 10px auto; max-width: 100%; }
 .dcircle::before, .dcircle::after { content: ""; position: absolute;
   left: 50%; top: 50%; transform: translate(-50%, -50%);
   border: 1px solid #bbb; border-radius: 50%; }
 .dcircle::before { width: 17.4em; height: 17.4em; }
 .dcircle::after  { width: 10.4em; height: 10.4em; }
-.dcircle .dopt { position: absolute; left: 50%; top: 50%; margin: 0;
+.dcircle p { position: absolute; left: 50%; top: 50%; margin: 0;
   white-space: nowrap; background: #fff;
   transform: translate(-50%, -50%) rotate(var(--a))
              translateY(calc(var(--r) * -1)) rotate(calc(var(--a) * -1)); }
-.dcircle .dko { --r: 8.7em; }
-.dcircle .dki { --r: 5.2em; font-size: .85em; }
+.dcircle p.dko { --r: 8.7em; }
+.dcircle p.dki { --r: 5.2em; font-size: .85em; }
 /* --a, the HOUR, is all that differs word to word: ui/band.js sets it on
-   the element (optWidget's `hour`), where twelve .daN classes used to. */
+   the paragraph (optPara's `hour`), where twelve .daN classes used to. */
 /* the changes picker's root, on the circle's own paint, smaller */
-.dpick .dcircle.dpcircle { width: 15em; height: 15em; margin: 8px auto; }
-.dpick .dpcircle::before { width: 12.4em; height: 12.4em; }
-.dpick .dpcircle::after { display: none; }
-.dpick .dpcircle .dko { --r: 6.2em; font-size: .85em; }
+.dcircle.dpcircle { width: 15em; height: 15em; margin: 8px auto; }
+.dpcircle::before { width: 12.4em; height: 12.4em; }
+.dpcircle::after { display: none; }
+.dpcircle p.dko { --r: 6.2em; font-size: .85em; }

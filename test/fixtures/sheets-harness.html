@@ -1,0 +1,108 @@
+<!doctype html><html><head><meta charset="utf-8"><title>sheets harness</title></head><body>
+<!-- THE SHEETS, WITHOUT THE PAGE AROUND THEM. `test/sheets.js` is written
+     against nukernel/index.html and that page does not draw a sheet until the
+     integrator has applied the wave-2 recipe; this file is the same three
+     modules — avail.js, gates.js, ui/sheets.js — over the same shipped record,
+     so the sheets tier could be held to its own gate on the day it was built
+     rather than on the day somebody else's serial pass landed. It draws every
+     one of the sixteen sheets, restores focus by `data-k` exactly as
+     ui/eight.js:1156 does, and exposes the three hooks the gate drives.
+     Run: node test/sheets.js --page http://localhost:8777/test/fixtures/sheets-harness.html -->
+<div id="app"></div>
+<script src="/nukernel/kernel.js"></script>
+<script src="/nukernel/genres.js"></script>
+<script src="/nukernel/fields.js"></script>
+<script src="/nukernel/song.js"></script>
+<script src="/nukernel/instruments.js"></script>
+<script src="/nukernel/songs.js"></script>
+<script src="/nukernel/document.js"></script>
+<script src="/nukernel/avail.js"></script>
+<script src="/nukernel/gates.js"></script>
+<script type="module">
+import { sheet, sheetRow } from "/nukernel/ui/sheets.js";
+const A = window.NuAvail, G = window.NuGates, D = window.NuDocument;
+const NF = window.NuFields;
+// the chips the harness's own multi sheet is writing into — page state, not a
+// fact about the record, which is why it lives here and not in DOC
+const CHIPS = {};
+let DOC = JSON.parse(JSON.stringify(window.NuSongs.TERMS));
+D.normalize(DOC);
+const ENV = { fleet: ["tract_voice", "juno60"] };
+function spec(key, scope, label) {
+  const row = A.SHEETS[key];
+  const r = A.optionsFor(DOC, scope, key, G, ENV);
+  const qk = [key, scope.voice, scope.section,
+              scope.bar == null ? null : "bar" + scope.bar].filter(x => x != null).join("|");
+  return { key: qk, label: label == null ? row.label : label, options: r.options,
+           value: r.value, why: r.why, ungated: r.ungated,
+           set: (v) => { row.set(DOC, scope, v, ENV); draw(); } };
+}
+function draw() {
+  const box = document.getElementById("app");
+  // the same focus restore ui/eight.js:1156 does across its full rebuild —
+  // the harness has to do it too or it would be testing a page the box does
+  // not ship
+  const wasKey = document.activeElement && document.activeElement.dataset
+    ? document.activeElement.dataset.k : null;
+  box.textContent = "";
+  sheetRow(box, "time", [spec("time.meter", {}), spec("time.rate", {}), spec("time.swing", {})]);
+  sheetRow(box, "alphabet", [spec("alphabet.key", {}), spec("alphabet.mode", {}),
+                             spec("alphabet.harmony", {})]);
+  sheetRow(box, "the changes", DOC.alphabet.prog.map((c, i) =>
+    spec("alphabet.quality", { bar: i }, "bar " + (i + 1))));
+  sheetRow(box, "form", DOC.form.sections.map((s) =>
+    spec("form.role", { section: s.id }, s.id)));
+  for (const v of DOC.voices) {
+    if (v.kind === "line")
+      sheetRow(box, v.name, [spec("cast.part", { voice: v.name }),
+                             spec("cast.material", { voice: v.name }),
+                             spec("sound.instrument", { voice: v.name })]);
+    if (v.kind === "bass") sheetRow(box, v.name, [spec("cast.bassStyle", { voice: v.name })]);
+    if (v.kind === "drums") sheetRow(box, v.name, [spec("sound.drumkit", { voice: v.name })]);
+    sheetRow(box, v.name + " · development", DOC.form.sections.map((s) =>
+      spec(A.devSheetFor(v.kind), { voice: v.name, section: s.id },
+           v.name + " · " + s.role)));
+    // THE ONE SHAPE ON THE PAGE THAT ALLOWS MORE THAN ONE ANSWER, reproduced
+    // here so the SHEETS TIER can be held to it on its own (Paul, 2026-08-24:
+    // "Wherever we allow multiple selections use a standard multiselect form
+    // element please."). The live one is the engineer's character chips
+    // (ui/engineer.js:360) and the engineer is not in this harness, but its
+    // spec is four fields — `multi`, `max`, a capped option list and a `set`
+    // that takes the whole array — and every one of them is ui/sheets.js's to
+    // honour. Page state, so `ungated`, exactly as ui/produce.js's taps are.
+    sheetRow(box, v.name + " · character", [{
+      key: "harness.chips|" + v.name, label: "character",
+      multi: true, max: 3,
+      maxWhy: "three chips is the limit on one track — the fourth was refused",
+      ungated: true,
+      options: Object.keys(NF.FX).map((k) => {
+        const on = (CHIPS[v.name] || []).includes(k);
+        if (!on && (CHIPS[v.name] || []).length >= 3)
+          return { value: k, label: NF.FX[k].label || k, disabled: true,
+                   why: "three chips is the limit on one track" };
+        return { value: k, label: NF.FX[k].label || k };
+      }),
+      value: (CHIPS[v.name] || []).slice(),
+      set: (list) => { CHIPS[v.name] = list.slice(); draw(); },
+    }]);
+  }
+  if (wasKey) {
+    const same = box.querySelector('[data-k="' + CSS.escape(wasKey) + '"]');
+    if (same) same.focus({ preventScroll: true });
+  }
+}
+window.__doc = () => DOC;
+window.__env = () => ENV;
+window.__draw = draw;
+window.__addDrums = (on) => {
+  DOC.material.cells.beat = { kind: "drum", lanes: {
+    k: [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], s: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+    h: [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0] } };
+  DOC.voices.push({ name: "kit", kind: "drums", cast: { on }, material: "beat",
+                    instrument: "tr909", development: {} });
+  D.normalize(DOC); draw();
+};
+window.__setPad = () => { DOC.voices[0].cast.part = "pad"; draw(); };
+window.__ready = true;
+draw();
+</script></body></html>

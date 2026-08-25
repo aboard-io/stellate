@@ -1,0 +1,16 @@
+# test/.cache — THIS BOX'S OWN NOTES, AND THEY MUST NOT TRAVEL.
+#
+# Two files land here and neither is a fact about the repo:
+#
+#   gates-check.json   the content hash of the tree that last PASSED
+#                      `nukernel/gates-extract.js --check` on this machine,
+#                      with this node. Committing it would let one person's
+#                      pass skip everybody else's check — a cache that can
+#                      return a stale green is worse than no cache at all.
+#   durations.json     what each gate cost last time, used only to start the
+#                      long poles first. A hint about a box, not about a gate.
+#
+# Both are rebuilt by running the suite. Delete this whole folder any time;
+# the next run is simply slower.
+*
+!.gitignore

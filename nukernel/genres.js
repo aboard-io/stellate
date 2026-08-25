@@ -85,10 +85,30 @@
     // consonant one — like the minor pentatonic it buys stretto for free.
     major:     [0, 2, 4, 5, 7, 9, 11],                    // 1.71
     majpent:   [0, 2, 4, 7, 9],                           // 2.4
+    // ...AND THE TWO THE TABLE COULD NOT NAME (2026-08-24, D5). Ninety-nine
+    // anchors declare a subject alphabet and five of them wrote it out as a
+    // literal array with no key in here to answer to — blues and bodiddley
+    // spell [0,3,5,6,7,10], deathmetal, screamo and industrialmetal spell
+    // [0,1,3,5,6,8,10]. That is not a shrug: a document says its alphabet by
+    // NAME (`alphabet.scale`, PROGRAM.md §2.1), so an anchor whose scale has
+    // no name cannot be written down, and precompose.js throws by name rather
+    // than quietly substituting the mode. These two rows take the count to
+    // 99/99. The values are copied from the anchors that already play them,
+    // so nothing sounds different — the alphabets existed, only the words did
+    // not.
+    //
+    // `blues` is the minor pentatonic plus the flat five, which is the same
+    // set this file's own DIATONIC header describes at the top; `bluesx` is
+    // that idea pushed onto the darker side — the flat second and the flat
+    // sixth, which is what the three metal anchors are reaching for and why
+    // none of them could say `blues`.
+    blues:     [0, 3, 5, 6, 7, 10],                       // 2.0
+    bluesx:    [0, 1, 3, 5, 6, 8, 10],                    // 1.71
   };
   const SCALELABEL = { chromatic: "chromatic", whole: "whole tone",
                        augmented: "augmented", quartal: "quartal",
-                       major: "major", majpent: "major pent." };
+                       major: "major", majpent: "major pent.",
+                       blues: "blues", bluesx: "blues, flattened" };
 
   // ---- THE MOUTHS ----------------------------------------------------------
   // WHO IS SINGING. A genre that casts a vocal instrument used to get one held
@@ -212,6 +232,24 @@
     // lettre), the tone is trained and forward, and the syllable stretches to
     // two beats because the affect lives in the held vowel, not the diction.
     monody:     { voice: "soprano", vowels: "aei", vib: 0.35, air: 0.22, vibRise: 0.8, syll: 2 },
+    // AND AFRICA'S TWO (2026-08-25, the Aksum-540 slate). The two ends of the
+    // continent's sung music this catalog can hold, and both are the BASS
+    // throat, which nothing else in this table but the crooner is: plainchant
+    // and the motet are tenor and countertenor, and reaching for either of
+    // them here would have made Aksum sound like Rome, which is the exact
+    // error the round is undoing.
+    //   zema is the older half of a däbtära choir: no wobble at all (the same
+    // zero that makes plainchant not opera), less breath than plainchant has
+    // because the tone is PRESSED rather than floated, and TWO BEATS a
+    // syllable — the only sacred row in the table above one — because a
+    // mələkkət sign stretches one syllable across a whole melodic formula.
+    zemachant: { voice: "bass",   vowels: "aeo", vib: 0,    air: 0.20, blend: 0.5, syll: 2 },
+    // ...and Johannesburg 1939 is the opposite room: a group of men close on
+    // one microphone rather than a choir in a stone building. Almost no air
+    // (0.14 is the driest row here), a little wobble, and a blend of 0.75 —
+    // ragged, because they are a GROUP and not a section, and the raggedness
+    // is what a record cut in one take in one afternoon sounds like.
+    mbubestack:{ voice: "bass",   vowels: "oau", vib: 0.18, air: 0.14, blend: 0.75, syll: 1 },
   };
 
   // ---- NAMED PROGRESSIONS --------------------------------------------------
@@ -541,8 +579,22 @@
       // LINEAGE: a root UNDER PROTEST — Chess electrified the Delta, and
       // every actual parent (delta blues, boogie-woogie piano, jump blues)
       // is a missing anchor, so in this catalog the blues starts the tree.
+      //
+      // AND THE SHOPPING LIST STOPPED AT THE MISSISSIPPI, which is the
+      // deepest omission this table had (found 2026-08-25). blues is the root
+      // that jazz, gospel, countrypop, rock, funk — and therefore afrobeat —
+      // all inherit from, and every debt it declared was American. The banjo
+      // is a West African string instrument that crossed on slave ships; the
+      // field holler is the work song it crossed with; the griot's ngoni is
+      // the banjo's own ancestor and is played in Bamako to this day, three
+      // anchors down this file. None of them can be a place-year anchor and
+      // none of them will ever be a `parents` weight — they are four
+      // centuries with no place, no year and no recording — but they can be
+      // NAMED, and naming a debt costs nothing and changes no fit. This is
+      // the truest single line available to this table today.
       parents: {},
-      wants: ["delta blues", "boogie-woogie", "jump blues"],
+      wants: ["delta blues", "boogie-woogie", "jump blues",
+              "field holler", "griot ngoni", "the banjo's west african line"],
       // AN ARCHTOP AND A HARP, because the anchor is a BAND and not a porch:
       // Chess in 1952 is a hollow-body through a small valve amp with Little
       // Walter's amplified harmonica answering it. The steel-string acoustic
@@ -1580,6 +1632,21 @@
       // Motown's showband discipline, and threw the harmony away — the
       // one-chord groove is subtraction, and what it subtracted FROM is the
       // parentage; the New Orleans second line under the kit is missing.
+      //
+      // AND THE ONE THING NOT TO "FIX" HERE, written down 2026-08-25 so the
+      // next hand does not do it. The Africa round corrected afrobeat's
+      // inversion — Lagos 1971 had declared itself a child of this anchor —
+      // and the tempting second move is an African parent ON funk, to close
+      // the loop. THAT WOULD BE A WORSE LIE THAN THE ONE IT REPLACED. James
+      // Brown did not learn from E.T. Mensah. Funk's African inheritance came
+      // through the Atlantic slave trade, the ring shout, the second line and
+      // the church — three or four centuries with no place, no year and no
+      // recording, so it cannot be a place-year anchor and therefore cannot
+      // be a `parents` edge, because `parents` is a genealogy of THIS
+      // CATALOG'S ANCHORS and not of world music. The inversion disappears on
+      // its own now that highlife, marabi and rumba have stopped hanging off
+      // American anchors. See blues' own `wants`, which is where the debt is
+      // now named in its own words.
       parents: { gospel: 0.45, blues: 0.35, motown: 0.2 },
       wants: ["new orleans second line", "jump blues"],
       instr: ["clavinet", "brass_section"],
@@ -1712,9 +1779,18 @@
       // LINEAGE: the label years invert and the claim survives it — Dorsey
       // was Georgia Tom, Ma Rainey's blues pianist, and carried the blues
       // HAND into church twenty years before the catalog's electric anchor;
-      // the spirituals and hymnody he set it against are missing.
-      parents: { blues: 1 },
-      wants: ["spirituals", "hymnody"],
+      // the spirituals he set it against are missing.
+      //
+      // HYMNODY WAS NOT MISSING, and this anchor's own `wants` had said
+      // "hymnody" while `hymn` (Boston 1831) sat six hundred lines up the
+      // file. Fixed 2026-08-25 with no new anchor: the material was already
+      // here. 0.25 is deliberately the smaller share — what Dorsey brought
+      // INTO church is the bigger half of the invention and the whole point
+      // of the anchor — but a gospel record's four-part congregational
+      // backbone is the hymnal's, and saying blues 1.0 scored that backbone
+      // as invention. See hymn's own note: these two edits are one edit.
+      parents: { blues: 0.75, hymn: 0.25 },
+      wants: ["spirituals"],
       // THE B-3, AND IT HAS SIX ZONES. `drawbarorgan` is a SINGLE sample
       // rooted at MIDI 96 — measured on the shipped registry — so the organ
       // holding this genre's chords was one C7 recording dragged three and a
@@ -1888,15 +1964,32 @@
       label: "Lagos 1971", bars: 8, voices: 3, near: "funk",
       // an arc: a groove you stay inside while the horns arrive
       plan: "arc", bpm: 108,
-      // LINEAGE: Fela heard James Brown and built a bigger machine — the
-      // one-chord modal groove is funk's own move, and it stays the plurality
-      // — but the HORNS are not funk's horns: Fela wrote unison heads and blew
-      // over changes, which is bebop's writing done twice over, so jazz takes
-      // 0.3, the size of the horn section in the arrangement. Highlife (the
-      // band he came FROM) and the Yoruba drumming the cross-rhythms quote
-      // are still missing anchors.
-      parents: { funk: 0.7, jazz: 0.3 },
-      wants: ["highlife", "yoruba drumming"],
+      // LINEAGE, REPAIRED 2026-08-25 (Paul: "fix the afrobeat parents"). This
+      // read `{ funk: 0.7, jazz: 0.3 }` — Lagos 1971 declared a child of
+      // Cincinnati 1967 — and the comment beside it already named the
+      // ancestor it was refusing to give the weight to. `wants` was the
+      // confession and `parents` was the lie; both are fixed together now
+      // that Accra 1957 exists to hold the weight.
+      //
+      // THE ARGUMENT IS A MATTER OF RECORD RATHER THAN OF TASTE. Koola
+      // Lobitos, 1963-69, was a HIGHLIFE-JAZZ BAND. Fela came out of highlife
+      // and played it for six years; the funk arrives AFTER the 1969 Los
+      // Angeles trip and Sandra Izsadore. So highlife is the band, funk is
+      // the groove laid over it, and jazz is the horn writing — the unison
+      // heads and blowing over changes, which the paragraph above had right
+      // and which survives this edit untouched. Highlife carries a horn
+      // section too, which is why jazz stays at 0.2 rather than 0.3: leaving
+      // it where it was would double-count the horns now that Accra is here.
+      //
+      // Yoruba drumming stays on `wants` and is NOT a parent, because there
+      // is no anchor to point at: the dùndún bends pitch and `melodic_tom`
+      // cannot, and a talking drum that cannot talk is not one. (Jùjú is a
+      // sibling and not a parent either — Fela came through highlife and was
+      // famously contemptuous of it; what the two share is the Yoruba
+      // percussion substrate under both.) `near: "funk"` is a different field
+      // with different semantics and is left exactly as it was.
+      parents: { highlife: 0.45, funk: 0.35, jazz: 0.2 },
+      wants: ["yoruba drumming"],
       instr: ["clean_guitar", "tenor_sax", "brass_section"],
       drumkit: "jazz",
       entry: v => v * 2, reg: v => v - 1, realize: () => "line",
@@ -3189,8 +3282,20 @@
       // IS a plagal cadence's native home, twenty years before Dorsey put a
       // shuffle under it). The Sternhold & Hopkins metrical psalter, which
       // taught English congregations to sing in the first place, is missing.
-      parents: { counterpoint: 0.45, gregorian: 0.3, gospel: 0.25 },
-      wants: ["metrical psalter"],
+      //
+      // GOSPEL DROPPED 2026-08-25, and it was Paul's own inversion in the
+      // American religious line: Boston 1831 declared 25% of itself from
+      // Chicago 1932 — the CHILD as the parent, 101 years backwards. The
+      // plagal warmth the old sentence argued for is real and it is a hymn
+      // tune's native home; it did not need Dorsey's anchor to say so. The
+      // weight redistributes over the two that remain IN THE RATIO THEY
+      // ALREADY DECLARED (0.45 : 0.3 -> 0.6 : 0.4), so nothing about the
+      // surviving claim moved. The other half of the repair is on gospel
+      // itself, which now declares `hymn` — and the two edits had to land
+      // TOGETHER, because either one alone would have made this table's first
+      // cycle and nothing here would have noticed.
+      parents: { counterpoint: 0.6, gregorian: 0.4 },
+      wants: ["metrical psalter", "spirituals"],
       // THE PIPES IN THE ROOM. This said "the drawbar organ, not a pipe
       // organ" and it was right about the century and wrong about the sound:
       // `drawbarorgan` is one zone rooted at MIDI 96, so four voices of a
@@ -3360,10 +3465,19 @@
       // same career; the massed choir answering "na na na" into a long vamp
       // is gospel's call-and-response, not the band's own invention; and the
       // shape of the arrival — quiet, then one instrument at a time, then
-      // everything — is postrock's structural move, borrowed forty years
-      // before postrock existed to name it. The mellotron/orchestral half of
-      // the record is still missing.
-      parents: { beatles: 0.45, gospel: 0.35, postrock: 0.2 },
+      // everything — is a structural move this record makes on its own. The
+      // mellotron/orchestral half of it is still missing.
+      //
+      // POSTROCK DROPPED 2026-08-25: London 1968 cannot descend from Austin
+      // 2003, and unlike the twenty-odd other backwards edges in this table
+      // there is no proxy argument available — jazz standing in for a blues
+      // older than its own label year is defensible, post-rock standing in
+      // for anything in 1968 is not, because post-rock is simply a later
+      // thing. The old sentence gave the game away in its own words
+      // ("borrowed forty years before postrock existed to name it"), which is
+      // a description of INFLUENCE RUNNING THE OTHER WAY. The 0.2 goes back
+      // to the two real parents in the ratio they already declared.
+      parents: { beatles: 0.55, gospel: 0.45 },
       wants: ["mellotron", "orchestral pop"],
       instr: ["clean_guitar", "ahh_choir"],
       drumkit: "room",
@@ -3614,10 +3728,22 @@
       // rhythm-section restraint are bossa's own, transplanted out of the
       // apartment and into a rock band; the cross-rhythm percussion under
       // it is afrobeat's technique aimed at a different clave; rock supplies
-      // the electric backbone. Cumbia, the actual Colombian floor this
-      // style is built to move, is the missing parent.
+      // the electric backbone.
+      //
+      // FLAGGED AND NOT FIXED, 2026-08-25, which is the honest state of this
+      // vector. "afrobeat's technique aimed at a different clave" is a
+      // TECHNIQUE claim written into an ANCESTRY field, and Lagos 1971 is
+      // this anchor's joint-largest parent while Miami 2001's percussion is
+      // Cuban and Puerto Rican — son, salsa, the timbale — not Fela. The
+      // Africa round could not repair it, because a weight is a reference to
+      // an anchor and there is nothing in this catalog to move it TO: the
+      // hole here is Cuba and Colombia and it is a different round. So the
+      // missing ancestors are named on `wants` beside the cumbia that was
+      // already there, and this paragraph is the marker for whoever builds
+      // them. Moving the weight to `rock` and `bossa` to make the arithmetic
+      // look better would only be a second fiction on top of the first.
       parents: { afrobeat: 0.35, rock: 0.35, bossa: 0.3 },
-      wants: ["cumbia"],
+      wants: ["cumbia", "afro-cuban son", "salsa"],
       instr: ["nylon_string_guitar", "clean_guitar"],
       drumkit: "acoustic",
       entry: () => 0, reg: v => v, realize: () => "line",
@@ -4013,13 +4139,21 @@
       label: "Johannesburg 1986", bars: 8, near: "afrobeat",
       // 116 is the Graceland lope
       plan: "song", bpm: 116,
-      // LINEAGE: the folk-song discipline (a story, a verse, one guitar
-      // carrying it) is folkduo's; the cross-rhythm percussion and the
-      // interlocking-guitar technique are afrobeat's, thinned from a big
-      // band to a duo; countrypop's bright major-key optimism colours the
-      // top. Mbaqanga, the South African street-pop the guitar language is
-      // actually borrowed from, is the missing rung.
-      parents: { afrobeat: 0.4, folkduo: 0.35, countrypop: 0.25 },
+      // LINEAGE, REPAIRED 2026-08-25. This declared `afrobeat: 0.4` — its
+      // largest parent — and that was CONTINENT-AS-ONE-THING: this is
+      // Graceland, a SOUTH AFRICAN record with the Boyoyo Boys, General M.D.
+      // Shirinda and Ladysmith Black Mambazo singing isicathamiya on the
+      // actual tape. Lagos and Johannesburg are not a lineage, and "afrobeat"
+      // here meant "the African one", which is the exact thing the 2026-08-25
+      // round exists to stop. The weight now goes to the two Johannesburg
+      // anchors that ARE the guitar language and the choral half — marabi's
+      // cycle running forward through mbaqanga, and mbube's four-part group
+      // singing, which is literally what is on the record. The folk-song
+      // discipline (a story, a verse, one guitar carrying it) is still
+      // folkduo's and countrypop's bright major-key optimism still colours
+      // the top. Mbaqanga itself stays the missing rung between marabi and
+      // this, and stays on `wants`.
+      parents: { marabi: 0.3, mbube: 0.2, folkduo: 0.3, countrypop: 0.2 },
       wants: ["mbaqanga"],
       // THE COMMENT ALREADY NAMED THE BAND: "guitar-and-kalimba interplay".
       // The kalimba was sitting in the library unasked-for while a marimba
@@ -4381,9 +4515,21 @@
     // orchestral voicing. Brian Wilson's chamber-pop arranging, the actual
     // missing rung between the three, has no anchor of its own yet.
     orchpsych: {
-      label: "Oklahoma City 1999", voices: 3,
+      label: "Oklahoma City 1999", voices: 3, near: "postrock",
       plan: "song", bpm: 122,
-      parents: { beatles: 0.4, postrock: 0.35, neoclassical: 0.25 },
+      // LINEAGE, REPAIRED 2026-08-25, and this was the worst arithmetic in
+      // the table: sixty per cent of Oklahoma City 1999 pointed at anchors
+      // dated 2003 and 2011. `postrock` was standing in for the slow-build
+      // arrangement and `neoclassical` for the string writing, and BOTH of
+      // those features are already carried by London 1968, which is
+      // orchestral psychedelia's own anchor and thirty-one years the right
+      // side of this one. So psychopop takes the freed weight whole and
+      // `beatles` keeps the 0.4 it always declared. The resemblance to Austin
+      // 2003 is real and is now written in `near`, which is the field for it.
+      // (This is the one weight in the 2026-08-25 slate I would call
+      // contestable rather than settled — 0.6 is a large plurality, and a
+      // reader who wants it split further has a case.)
+      parents: { psychpop: 0.6, beatles: 0.4 },
       wants: ["chamber pop"],
       instr: ["slow_strings", "clean_guitar", "halo_pad"],
       drumkit: "room",
@@ -5648,6 +5794,1077 @@
       words: ["the song, sentimental on purpose", "the upright, oom and chord"],
       word: v => (v === 1 ? [rotate(1)] : []),
     },
+
+    // ======================================================================
+    // NOW — the 2020s, added 2026-08-24
+    // ======================================================================
+    // Paul: "'now' is a lie, it's the 2010s. Add the 2020s as now."
+    //
+    // He was right twice. atlas.js's ERAS said `{ w: "now", y: 2011 }` — so
+    // the word "now" pointed at the 2010s — and the catalog's newest record
+    // was Los Angeles 2013, so even fixing the word left the last decade and a
+    // half of music missing. A slider whose right-hand end is 2013 is a map of
+    // a world that stopped.
+    //
+    // WHY EIGHT AND NOT ONE. atlas.gate.js G6 requires every slider stop to
+    // carry at least one exact record, so a decade you cannot compose in is a
+    // dead stop — a worse lie than the one being fixed. And the map is the
+    // argument for the spread. MEASURED on the catalog before this change: of
+    // the 94 placed anchors dated 1950 or later, 79 are in a US or UK city —
+    // 84%. That is defensible for 1962 and indefensible for 2021, because the
+    // 2020s are the decade in which the biggest records were made furthest
+    // from London and Los Angeles. So the eight below are drawn from the map's
+    // OWN empty quarters — South Africa, West Africa, North Africa, South
+    // Asia, Mexico and Brazil get a dot each, and the two Anglo entries are
+    // the two that genuinely are Anglo. Measured after: 81 of 102, 79%. One
+    // round does not fix a catalog; it moves it five points and stops adding
+    // to the problem.
+    //
+    // Three of the places (Guadalajara, Chandigarh, Cairo) were coordinates
+    // atlas.js did not have. It has them now: PLACES 62 -> 65 rows, WHEN
+    // re-baked 116 -> 124, YEARS 65 -> 69 stops spanning 600..2023, and
+    // `atlas.js` ERAS gaining the row it derives rather than types —
+    // `{ w: "now", y: 2020 }`, which is the sentence at the top of this
+    // comment finally being true. Verified: atlas.gate.js PASSED all 32.
+    //
+    // THE HONESTY TEST EACH ONE PASSES: a correlated point across the eight
+    // axes (AXES.md), a real "City Year" label the atlas can extract, declared
+    // weighted `parents` so the residue is nameable, and not one instrument
+    // the registry cannot play — checked against engine/registry-data.js
+    // SAMPLERS, which is where `accordian` (a font preset, not a sampler) was
+    // rejected and `tuba`, `shenai` and `reed_organ` were confirmed — three
+    // timbres no other anchor in the 122 casts, measured, and all three with
+    // every zone file on disk (checked: 12 instruments, 0 missing zones, so
+    // nothing here is a silent voice under the offline law).
+
+    // AMAPIANO — Johannesburg 2020. The piano IS the genre's name and the
+    // genre's sound: jazz voicings, held long, over a kick that only lands
+    // twice a bar and a shaker that never stops. The log drum — the pitched,
+    // sliding bass hit everyone recognises — is the bass chair playing
+    // `octaves` under a chord that changes once a bar, because this kernel's
+    // bass chair is one instrument (instruments.js BASS_INSTR) and a genre
+    // cannot recast it. The SHAPE is what carries, and the shape is what the
+    // ear names the genre by.
+    amapiano: {
+      label: "Johannesburg 2020", near: "house",
+      // a floor record whose tempo is the whole trick: 112 is too slow to be
+      // house and too fast to be hip-hop, and the space that opens between
+      // them is where the shaker lives
+      plan: "dance", bpm: 112,
+      // LINEAGE: the deep, chord-led, endlessly-looping floor is house's, at
+      // half its urgency; the seventh-and-ninth voicings held under the loop
+      // are jazz's; the shaker-and-hand percussion layer that actually drives
+      // the record is afrobeat's cross-rhythm hand. Kwaito — the Johannesburg
+      // scene that slowed house down in the first place, thirty years before
+      // this one slowed it again — WAS the missing rung, and this anchor's
+      // 0.3 was on `afrobeat` for want of anything nearer. Kwaito landed
+      // 2026-08-25 and the weight moved to it: Lagos 1971 was standing in for
+      // the LOCAL rung, one city, twenty-six years and one machine floor away.
+      parents: { house: 0.4, jazz: 0.3, kwaito: 0.3 },
+      wants: [],
+      instr: ["yamaha_grand_piano", "polysynth"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => (v === 0 ? 0 : -1),
+      realize: v => (v === 0 ? "line" : "pad"),
+      part: ["lead", "pad"],
+      roots: [0, 5, 2, 6], mode: MODES.dorian,
+      scale: MODES.dorian, diatonic: true,
+      prog: [{ d: 0, q: "m7" }, { d: 5, q: "maj7" }, { d: 2, q: "maj7" }, { d: 6, q: "7" }],
+      artic: "legato", maxHold: 4, bassStyle: "octaves",
+      // THE KICK ONLY LANDS TWICE. Everything the ear calls "amapiano" is in
+      // the two lanes underneath it: an offbeat hat, and a shaker that is the
+      // densest hand-percussion lane in the catalog — 10 hits of 16, where
+      // afrobeat's own is 6 and the 23-anchor median is 4. Take the shaker out
+      // and the same chords are a deep house record.
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             p: [1,0,1,1, 0,1,1,0, 1,0,1,1, 0,1,1,0] },
+      fill: { p: [1,0,1,1, 0,1,1,0, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2200, q: 1.0, atk: .01, rel: 1.2, gain: .26, verb: .32 },
+      words: ["the piano, the voicing held across the loop",
+              "the pad, an octave under, moving only when the chord does"],
+      word: v => (v === 1 ? [drop(2)] : []),
+    },
+
+    // AFROBEATS — Lagos 2021, and the plural matters: `afrobeat` (Lagos 1971)
+    // is a twenty-minute horn band and this is a three-minute pop single that
+    // borrowed its percussion and nothing else. What survived the fifty years
+    // is the SHEKERE — the hand layer that plays across the kick rather than
+    // with it — and what replaced the horns is a sung hook with R&B's own
+    // sense of phrase and a Caribbean rhythm section's restraint.
+    afrobeats: {
+      label: "Lagos 2021", near: "afrobeat",
+      plan: "song", bpm: 104,
+      // LINEAGE: the cross-rhythm percussion bed and the modal, unresolving
+      // vamp are afrobeat's own, cut down to pop length; the sung, melismatic
+      // top line and the stacked answer are R&B's; the sparse, off-the-beat
+      // rhythm-section discipline — play less than you can — is reggae's.
+      // Highlife (the Ghanaian guitar tradition this melody actually comes
+      // from) and dancehall (the digital riddim under the kick) are both
+      // missing rungs.
+      // ...and the highlife weight arrived 2026-08-25, off this anchor's own
+      // `wants` and out of the sentence three lines above it: the file has
+      // said "the Ghanaian guitar tradition this melody actually comes from"
+      // since the day it was written and pointed the weight at Lagos instead.
+      // afrobeat 0.4 -> 0.35 and reggae 0.3 -> 0.2 pay for it; reggae is
+      // still standing in for dancehall, which stays on `wants`.
+      parents: { afrobeat: 0.35, highlife: 0.2, rnb: 0.25, reggae: 0.2 },
+      wants: ["dancehall"],
+      instr: ["solo_vox", "clean_guitar"],
+      drumkit: "room",
+      entry: v => v, reg: v => (v === 0 ? 0 : -1), realize: () => "line",
+      roots: [0, 3, 5, 4], mode: MODES.dorian,
+      scale: MODES.dorian, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "eighths",
+      // ONE CLAP, ON THREE. The backbeat is deliberately not there: a snare on
+      // 2 and 4 would make this a pop record with percussion on it, and the
+      // whole feel is that the kick and the hand layer disagree about where
+      // the bar starts.
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             c: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             p: [1,0,1,0, 1,0,1,1, 1,0,1,0, 1,1,1,0] },
+      fill: { p: [1,0,1,0, 1,1,1,1, 1,0,1,1, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2600, q: 0.9, atk: .01, rel: .8, gain: .27, verb: .3 },
+      words: ["the vocal, riding across the kick",
+              "the guitar, answering — the phrase's own gate, complemented"],
+      // the same TRUE ANSWER retrofunkpop uses, and for the same reason: the
+      // guitar has to land where the voice does not or the two read as one
+      // line doubled, which is exactly what this style never does.
+      word: v => (v === 1 ? [only("gate", complement("gate")), transpose(-5)] : []),
+    },
+
+    // HYPERPOP — London 2021. Pop's own materials taken past the point where
+    // they were designed to work: the supersaw at full brightness, the vocal
+    // pitched up until it stops sounding like a body, everything short and
+    // everything loud. Measured against the other 129: it ties dnb and punk
+    // for the fastest tempo in the table (160), sits with bleeptechno and
+    // bailefunk at the shortest hold (maxHold 1), and its filter is open
+    // wider than anything else here (cut 4200, where the next brightest is
+    // minimalism at 3400). All three of those ARE the genre, not production
+    // choices laid over it.
+    hyperpop: {
+      label: "London 2021", near: "synthpop",
+      plan: "song", bpm: 160,
+      // LINEAGE: the all-synthetic chassis and the verse-chorus discipline
+      // are synthpop's; the 808 sub and the stuttered hat are trap's; the
+      // festival-scale supersaw lead is big room's, indoors and sped up. The
+      // internet-native scenes this actually grew in — the PC Music label,
+      // and the sped-up "nightcore" edit that taught it the tempo — have no
+      // musical anchor to name.
+      parents: { synthpop: 0.35, trap: 0.35, bigroom: 0.3 },
+      wants: ["pc music", "nightcore"],
+      instr: ["saw_wave", "solo_vox"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => (v === 0 ? 1 : 0), realize: () => "line",
+      part: ["lead", "lead"],
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      prog: [{ d: 0, q: "nine" }, { d: 5, q: "nine" }, { d: 3, q: "nine" }, { d: 4, q: "7" }],
+      artic: "staccato", maxHold: 1, bassStyle: "octaves",
+      kit: { k: [1,0,0,0, 0,0,0,1, 0,0,1,0, 0,0,0,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      // THE HAT IS NOT STEADY, which is trap's inheritance and drill's
+      // neighbour: the holes are where the roll starts, and they move.
+      kitProb: { h: [9,4,9,6, 9,4,9,9, 9,6,9,4, 9,9,4,9] },
+      fill: { c: [0,0,0,0, 1,0,0,1, 1,0,1,0, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 4200, q: 2.6, atk: .002, rel: .18, gain: .29, verb: .18 },
+      words: ["the supersaw, too bright and too short",
+              "the voice, pitched up an octave over it"],
+      word: v => (v === 1 ? [transpose(12), only("gate", rotate(2))] : []),
+    },
+
+    // BAILE FUNK — Rio de Janeiro 2022. The TAMBORZÃO, which is a samba
+    // pattern played on a Miami-bass drum machine, and the reason this is a
+    // separate anchor from `reggaeton` rather than a dialect of it: the dembow
+    // doubles its snare on 2 and 4 and repeats identically every bar (compare
+    // the `reggaeton` grid four hundred lines up), where the tamborzão's snare
+    // walks a clave and lands on neither — steps 2, 5, 10 and 13 of sixteen.
+    // The record on top is a chopped vocal and one synth stab, no changes at
+    // all, which is why `harmony: "modal"`.
+    bailefunk: {
+      label: "Rio de Janeiro 2022", near: "electro",
+      plan: "dance", bpm: 130,
+      // LINEAGE: the 808 kit and the sub that IS the bassline are electro's,
+      // by the direct Miami route the Rio DJs actually imported; the
+      // one-riddim, no-changes floor and the chopped vocal over it are
+      // reggaeton's shared Caribbean method; the clave the snare walks is
+      // Brazilian, and `bossa` is the only anchor that carries it. Samba
+      // itself — the percussion tradition the tamborzão is a sample OF — is
+      // the missing rung, and it is a large one.
+      parents: { electro: 0.4, reggaeton: 0.3, bossa: 0.3 },
+      wants: ["samba", "miami bass"],
+      instr: ["solo_vox", "square_lead"],
+      drumkit: "tr808",
+      entry: () => 0, reg: v => (v === 0 ? 0 : -1), realize: () => "line",
+      harmony: "modal", mode: DIATONIC, scale: DIATONIC,
+      artic: "staccato", maxHold: 1, bassStyle: "octaves",
+      // the snare is the melody here. Written as the clave it is, not as a
+      // backbeat with syncopation added: there is no 2 and no 4 in it.
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,1,0, 0,1,0,0, 0,0,1,0, 0,1,0,0],
+             p: [1,0,0,1, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,1,0, 0,1,0,0, 1,0,1,1, 1,1,1,1] },
+      tone: { wave: "square", cut: 2400, q: 2.0, atk: .002, rel: .25, gain: .29, verb: .14 },
+      words: ["the vocal, chopped onto the tamborzão",
+              "the stab, one note, answering the snare"],
+      word: v => (v === 1 ? [only("gate", rotate(2)), excerpt(0, 8)] : []),
+    },
+
+    // CORRIDO TUMBADO — Guadalajara 2023, and the shortest description of it
+    // is what it does NOT have: no drum kit, no bass guitar, no machine. A
+    // requinto plays the tune, a tuba plays the floor, and the entire rhythm
+    // section is those two instruments disagreeing about the beat. Nineteen
+    // anchors carry `kit: {}` AND `nobass: true` and this is the only one of
+    // them dated after 1892 — the other eighteen are chant, counterpoint, the
+    // function genres and the old-world slate. That is not an accident of
+    // filing: a sung story with an acoustic ensemble and no kit is a form
+    // older than every rock anchor in the table, which is why the FAMILIES
+    // row below puts a 2023 record in `roots`.
+    corridotumbado: {
+      label: "Guadalajara 2023", near: "countrypop",
+      // slow, and a narrative: these are ballads, and the tempo is set by how
+      // fast the words can be sung, not by anything a dancer needs
+      plan: "song", bpm: 90,
+      // LINEAGE: the sung story over plain major changes with a guitar
+      // carrying it is country's own shape; the Latin pop-rock harmonic
+      // language and the Spanish-language pop phrasing are latinpop's; the
+      // all-acoustic, no-kit ensemble is worldfolk's arrangement law. Banda
+      // and norteño — the actual Sinaloan brass and accordion traditions this
+      // is a stripped-down argument with — are both missing rungs, and the
+      // registry has no accordion sampler to build norteño on if they were
+      // here (engine/registry-data.js SAMPLERS: `accordian` is a font preset
+      // with no zones, which is a silent voice, so it is not cast).
+      parents: { countrypop: 0.35, latinpop: 0.35, worldfolk: 0.3 },
+      wants: ["banda", "norteño"],
+      // THE ACTUAL ENSEMBLE, three deep and in that order: requinto, tuba,
+      // bajo quinto. THREE entries and not two on purpose — the array's law is
+      // that the last entry covers every remaining chair (this file's header),
+      // and a two-entry array put a TUBA on all five chairs precompose seats,
+      // measured. A corrido has one tuba. The bajo takes the rest.
+      //
+      // The tuba is the first one in this catalog — 123 samplers, six zones,
+      // cast zero times until now. It has NO instruments.js RANGES row, so it
+      // degrades to its zone window rather than to a tuba's real compass —
+      // that file's own stated law for an unlisted id, and the row is filed as
+      // a recipe rather than smuggled in from a slice that does not own
+      // instruments.js. It plays honestly meanwhile: measured over three
+      // seeds, voice 1 sits at MIDI 32..61 — well inside a tuba's own E1..F4.
+      instr: ["nylon_string_guitar", "tuba", "steel_string_guitar"],
+      entry: v => v, reg: v => (v === 0 ? 0 : v === 1 ? -1 : 0),
+      realize: () => "line",
+      kit: {}, nobass: true,
+      roots: [0, 3, 4, 0], mode: MODES.ionian,
+      scale: SCALES.major, diatonic: true,
+      artic: "legato", maxHold: 3,
+      tone: { wave: "triangle", cut: 2400, q: 0.8, atk: .008, rel: 1.0, gain: .28, verb: .26 },
+      words: ["the requinto, telling it",
+              "the tuba, an octave down, playing the floor"],
+      // the tuba does not double the tune, it thins it to its bones: every
+      // third note, exactly twelve semitones under (measured: the requinto
+      // runs 44..73 and the tuba 32..61). That gap is the arrangement.
+      word: v => (v === 1 ? [drop(3), transpose(-12)] : []),
+    },
+
+    // PUNJABI POP — Chandigarh 2022. THE FIRST DOT THIS MAP HAS EVER HAD IN
+    // SOUTH ASIA: measured against the 62 coordinates the atlas carried before
+    // this round, the nearest one is SEOUL, 4,627 km away. Whether this is the
+    // right South Asian
+    // record to put there is a judgement and it is mine — the argument is
+    // that Chandigarh is where the industry actually is, and that the music
+    // is a POINT rather than a category: one vamp, no changes (`harmony:
+    // "modal"`, the same word plainchant uses and for the same reason), a
+    // flat-seventh mode, and the DHOL — a two-headed drum whose low hand and
+    // high hand are written below as separate lanes, because this table has
+    // no other way to say that one player is playing both.
+    punjabipop: {
+      label: "Chandigarh 2022", near: "worldfolk",
+      plan: "dance", bpm: 100,
+      // LINEAGE: the modal folk tune and the acoustic ensemble it came out of
+      // are worldfolk's; the doubled-time hat and the modern low end are
+      // trap's; the one-riddim floor with a sung hook over it is reggaeton's
+      // shared method. Bhangra — the Punjabi harvest-dance tradition that IS the
+      // dhol pattern below, and its own 1990s British diaspora recording
+      // history — is the missing rung, and it is the direct parent.
+      parents: { worldfolk: 0.4, trap: 0.35, reggaeton: 0.25 },
+      wants: ["bhangra"],
+      // THE SHEHNAI, the double-reed that answers the singer at every wedding
+      // this music is played at — six zones in the registry, cast zero times
+      // before now — and behind it the HARMONIUM, which is what `reed_organ`
+      // is. Three entries for the same reason the corrido above has three: the
+      // last one covers every remaining chair, and five shehnais is a noise
+      // nobody has ever made. Like the tuba, `shenai` carries no
+      // instruments.js RANGES row and degrades to its zone window; the row is
+      // filed as a recipe. Measured over three seeds its one chair sits at
+      // MIDI 67..76, which is the piercing register the instrument is for.
+      instr: ["solo_vox", "shenai", "reed_organ"],
+      drumkit: "room",
+      entry: v => v, reg: v => (v === 0 ? 0 : v === 1 ? 1 : 0),
+      realize: () => "line",
+      harmony: "modal", mode: MODES.mixo, scale: MODES.mixo, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "octaves",
+      // THE DHOL'S TWO HANDS. `k` is the bass head (the "dha"), `p` is the
+      // stick on the treble head running ahead of it — the chaal. They are
+      // one drummer and one instrument, and splitting them into two lanes is
+      // the only way this table can say so.
+      kit: { k: [1,0,0,0, 1,0,1,0, 1,0,0,0, 1,0,1,0],
+             p: [0,0,1,1, 0,0,1,1, 0,0,1,1, 0,0,1,1],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { p: [0,0,1,1, 0,1,1,1, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 2600, q: 1.6, atk: .006, rel: .5, gain: .28, verb: .24 },
+      words: ["the vocal, on the one vamp",
+              "the shehnai, answering it an octave up"],
+      word: v => (v === 1 ? [transpose(12), only("gate", rotate(4))] : []),
+    },
+
+    // MAHRAGANAT — Cairo 2021. Egyptian street-wedding music made on a
+    // cracked copy of a sequencer: a cheap organ patch carrying a maqam
+    // melody over a maqsoum the drum machine plays harder than any tabla
+    // could. Its melodic alphabet is HIJAZ, and this table has no key for it
+    // — MODES carries the eight the rest of the catalog needs, and a ninth
+    // row would change every mode menu in the building (fields.js KEYMODES is
+    // derived from it) for the sake of one anchor, which is a menu change
+    // nobody asked for. `phrygian` is the nearest named alphabet the box can
+    // say: it shares the flat second that is the whole identifying interval,
+    // and it is missing the raised third. Named honestly rather than smuggled
+    // in as a literal array — PROGRAM.md §2.1, a document says its alphabet
+    // by NAME.
+    mahraganat: {
+      label: "Cairo 2021", near: "electro",
+      plan: "dance", bpm: 108,
+      // LINEAGE: the drum-machine floor with no live kit anywhere near it is
+      // electro's; the 808 low end and the processed, pitch-corrected vocal
+      // are trap's; the ornamented, non-Western modal vocal line over a fast
+      // folk groove is bulgarian's — a strange-looking parent geographically
+      // and the right one musically, because it is the only anchor in this
+      // catalog whose melody works that way.
+      //
+      // AND THAT SENTENCE CONVICTED ITSELF, 2026-08-25. "A strange-looking
+      // parent geographically and the right one musically" is a description
+      // of a RESEMBLANCE, and a resemblance is what `near` is for; writing it
+      // into `parents` said Cairo street electronic is thirty per cent Sofia
+      // 1975, which nobody believes and the fit tool on `main` cannot know is
+      // a figure of speech. A Balkan women's choir was standing in for "a
+      // vocal that is not Western" — the same species of error as afrobeat
+      // standing in for "the African one", which is why it is fixed in the
+      // same round. The 0.3 goes back to the two real parents evenly, and the
+      // ornamented modal vocal is where it always was: on `wants`, in its own
+      // name. Shaabi, the Cairo wedding tradition this is the electrified
+      // argument with, is the missing rung and the ONLY honest home for it.
+      parents: { trap: 0.5, electro: 0.5 },
+      wants: ["shaabi"],
+      instr: ["percussive_organ", "solo_vox"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => (v === 0 ? 0 : -1), realize: () => "line",
+      harmony: "modal", mode: MODES.phrygian, scale: MODES.phrygian, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "octaves",
+      // THE MAQSOUM: dum on 1, dum on the and-of-2, taks filling the rest.
+      // Written on a machine kit because that is what plays it — the point of
+      // the genre is that nobody is holding a drum.
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,1,0, 1,0,0,0, 0,0,1,0, 1,0,1,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitProb: { h: [9,6,9,6, 9,6,9,6, 9,6,9,6, 9,6,9,4] },
+      fill: { s: [0,0,1,0, 1,0,0,1, 1,0,1,0, 1,1,1,1] },
+      tone: { wave: "square", cut: 2800, q: 2.2, atk: .004, rel: .3, gain: .28, verb: .2 },
+      words: ["the organ, the maqam line, hard and cheap",
+              "the vocal, doubling it a fourth under"],
+      word: v => (v === 1 ? [transpose(-5)] : []),
+    },
+
+    // BEDROOM POP — Los Angeles 2020. The decade's quietest record and its
+    // most-played: a whispered vocal an inch from the microphone, a felt
+    // piano, a sub that is felt rather than heard, and a kit playing almost
+    // nothing. It is the one anchor in this batch that is about DYNAMICS
+    // rather than rhythm: gain 0.22 — the quiet end of the table, level with
+    // counterpoint and under every other record that has drums — and a
+    // performance row (stress 0.14) that puts it nearer plainchant than
+    // nearer soul, which is exactly why it needed a row of its own. It sits
+    // in `soul` next to darkrnb rather than in `drift` with the ambient music
+    // it borrows its space from, because what it inherits is R&B's phrasing;
+    // the space is a production.
+    bedroompop: {
+      label: "Los Angeles 2020", near: "darkrnb",
+      plan: "song", bpm: 92,
+      // LINEAGE: the sung phrasing, the stacked answer and the minor-key
+      // intimacy are R&B's; the 808 sub and the half-time kit under it are
+      // trap's; the long tails and the room that never quite closes are
+      // ambient's; and the fact that it is one person and their own words is
+      // the singer-songwriter's. Trip-hop — the whisper-over-sub-over-nothing
+      // record that got here first, in Bristol, thirty years earlier — is the
+      // missing rung, and the map already has the coordinates for it.
+      parents: { rnb: 0.35, trap: 0.3, ambient: 0.2, singersongwriter: 0.15 },
+      wants: ["trip-hop"],
+      instr: ["solo_vox", "felt_piano"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => (v === 0 ? 0 : -1), realize: () => "line",
+      roots: [0, 5, 2, 6], mode: DIATONIC, scale: DIATONIC, diatonic: true,
+      artic: "legato", maxHold: 4, bassStyle: "pedal",
+      // NEARLY NOTHING, and the nothing is the arrangement: two kicks, the
+      // plainest backbeat in the file, and a pedal hat on the offbeats that is
+      // more air than hit. No open hat, no ghost perc, no crash — every lane
+      // the other 129 reach for, left empty on purpose.
+      kit: { k: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             f: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
+      fill: { f: [0,0,1,0, 0,1,1,0, 0,1,1,0, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 1800, q: 0.7, atk: .02, rel: 1.8, gain: .22, verb: .48 },
+      words: ["the voice, close and almost spoken",
+              "the felt piano, under it, an octave down"],
+      word: v => (v === 1 ? [drop(2), transpose(-12)] : []),
+    },
+
+    // ======================================================================
+    // AFRICA — added 2026-08-25
+    // ======================================================================
+    // Paul: "Fix the afrobeat parents and add the missing African history."
+    //
+    // He was right twice, the same way he was right about "now". MEASURED on
+    // the catalog the morning of the change: of 124 place-year anchors FIVE
+    // were on the African continent (Lagos 1971, Johannesburg 1986,
+    // Johannesburg 2020, Lagos 2021, Cairo 2021) — three cities, none older
+    // than 1971 — against SIX in the Afro-diaspora (Kingston ×3, Rio ×2, San
+    // Juan). The continent was represented by its export and by the last five
+    // years of pop, and nothing else.
+    //
+    // AND THE GENEALOGY RAN BACKWARDS, which is the part that is not a
+    // coverage gap but a false claim. `afrobeat` declared `{ funk: 0.7 }` —
+    // Lagos 1971 as a child of Cincinnati 1967, when Koola Lobitos was a
+    // highlife-jazz band from 1963 and the funk arrives AFTER the 1969 Los
+    // Angeles trip. `parents` is annotation here and load-bearing on `main`
+    // (genealogy.js fitChild reads it and prints the residue as "the
+    // invention"), so a wrong parent is not a wrong sound — it is a wrong
+    // measurement of originality, and afrobeat's published 44% residue was
+    // inflated by exactly the ancestor the catalog refused to hold.
+    //
+    // WHAT MADE THIS ROUND POSSIBLE AND WHAT IT LEFT ON THE FLOOR. Three
+    // blockers were checked before a line was written, and only one of them
+    // lifted:
+    //   · THE METRE. `kernel.js:349` defines `six: { steps: 12 }`, but every
+    //     phrase, cell and kit vector in this file is written on SIXTEEN
+    //     places and `drums()` takes its bar length from the SUBJECT
+    //     (kernel.js:2289), so a 12-slot bell under the 16-step seed does not
+    //     become a 12/8 bar — it PHASES, and takes three bars to come round.
+    //     So the 12-pulse standard bell — Ewe agbadza, the mbira's 48-pulse
+    //     cycle, gnawa's lila, the sabar rhythms of mbalax — cannot be
+    //     written today at all, and no instrument work changes that. Every
+    //     anchor below is in four, and every one of them genuinely is: the
+    //     records that define dance-band highlife, Congolese rumba, marabi,
+    //     mbube, ethio-jazz, kwaito and pop-raï are 4/4 records.
+    //   · THE KIT. Twelve lanes, twelve WAVs (kernel.js:1776 = DRUMFILE), and
+    //     no bell, no shaker and no hand drum among them. registry-data.js
+    //     PERCBANK has 24 real percussion hits and nukernel does not read it
+    //     (grepped: zero references). So the house answer, set twice already —
+    //     bodiddley's maracas on the hat (`genres.js:2462`) and amapiano's
+    //     shekere on the rim (`:5748`) — is the answer here: bell and claves
+    //     to `p`, shaker to `h`, hand drums to the toms, and the compromise
+    //     named in the comment every time rather than smuggled.
+    //   · THE TUNING. Everything below is 12-TET on the records themselves —
+    //     Mulatu's band played a vibraphone and a Hammond, the Rail Band
+    //     played electric guitars — which is why these anchors and not the
+    //     mbira, the masenqo or the older gasba raï.
+    //
+    // DEFERRED BY NAME, so nobody re-derives it: jeliya (no honest kora — the
+    // GM harp is a soft orchestral pedal harp with no attack, and `koto` would
+    // be a Japanese zither wearing a Malian name); jùjú (the dùndún bends
+    // pitch and `melodic_tom` cannot, and a talking drum that cannot talk is
+    // not one); taarab (Zanzibar 1928, Siti binti Saad — three arguable
+    // stand-ins in one cast is a costume even when each defends itself);
+    // gnawa and mbalax (two blockers each); chimurenga (Harare 1977 has no
+    // tuning problem at all once Mapfumo puts the mbira on guitars — it is
+    // metre-blocked alone, and it is the first thing to build the day a
+    // twelve-step seed exists). And one PERMANENT limitation, which is not a
+    // queue item: melody that follows lexical tone cannot be said here,
+    // because `deg` is "SIGNED and alphabet-free… never an absolute pitch"
+    // (kernel.js:8) and that is precisely the property that stops a text
+    // constraining it.
+
+    // ZEMA — Aksum 540, and it is now the oldest record in the catalog by
+    // sixty years. The chant of the Ethiopian Orthodox Täwaḥədo Church:
+    // unaccompanied, pentatonic, sung by two half-choirs answering each other,
+    // and notated with the mələkkət — signs that name whole melodic formulae
+    // rather than pitches.
+    //
+    // THE YEAR IS A TRADITIONAL ATTRIBUTION AND MUST BE SAID TO BE ONE. The
+    // tradition gives zema to Saint Yared (c. 505–571) at Aksum in the reign
+    // of Gebre Meskel; scholarship does not confirm it, and the notated
+    // manuscripts are 16th-century. That is the SAME KIND OF CLAIM ON THE
+    // SAME KIND OF EVIDENCE as "Rome 600", which attributes the chant to
+    // Gregory I (d. 604) when the repertory as we have it is 8th–9th century
+    // and Frankish. If the catalog will say one it must be willing to say the
+    // other, and the honest alternative — Aksum 1550, the manuscript date —
+    // would leave Rome sitting ten centuries earlier on identical evidence,
+    // which is a worse error than the one it avoids.
+    //
+    // WHAT SEPARATES IT FROM ROME 600, in fields: the ALPHABET. Chant in this
+    // table reads its subject through DIATONIC — seven notes, 1.71 semitones a
+    // step, and the whole grammar is "move by one" — where zema reads through
+    // `majpent`, five notes and 2.4 semitones a step, so the same contour
+    // MOVES half again as far. Ethiopian sacred chant is described as
+    // pentatonic; its three modes (gəʿəz, ʿəzl, araray) have no interval sets
+    // this file can source, and they are NOT the secular qenet, so the anchor
+    // claims ONE pentatonic and does not claim to distinguish them. Second
+    // difference: Rome's two voices sing together an octave apart, and these
+    // two ANSWER — `entry: v => v * 2` is the antiphony, which is what the
+    // two halves of a däbtära choir actually do.
+    zema: {
+      label: "Aksum 540", rate: 0.5, near: "gregorian",
+      plan: "arc", bpm: 72,
+      // LINEAGE: a genuine ROOT, and the comment must say which kind. Not
+      // "the ancestors are unbuilt" — the ancestor is a pre-catalog Eastern
+      // Mediterranean liturgical practice nobody can place-and-year, the same
+      // honest emptiness gregorian declares. It is NOT a child of Rome 600
+      // and must never be written as one: they are two churches, and the
+      // Frankish codification is two centuries the other side of this label.
+      parents: {},
+      wants: [],
+      instr: "ahh_choir",
+      entry: v => v * 2, reg: v => -v, realize: () => "line",
+      kit: {}, nobass: true, harmony: "modal",
+      intro: "solo",                 // the mergéta gives the line out alone
+      mode: MODES.ionian, scale: SCALES.majpent,
+      artic: "legato", incClamp: 2,
+      // WHAT IS DELIBERATELY NOT CAST, which is not a gap but the music: the
+      // begena (the ten-string lyre with the buzzing bridge) has no honest
+      // stand-in — a GM harp shares nothing with it but strings — and the
+      // tsenatsil and the kebero belong to aqʷaqʷam, the danced chant, not to
+      // plain zema. Zema is properly unaccompanied and that is why `kit: {}`
+      // is the truest line in this entry.
+      tone: { wave: "triangle", cut: 1900, q: 0.7, atk: .11, rel: 2.4, gain: .25, verb: .8,
+              // WHO SINGS: low, pressed, straight — the same absence of wobble
+              // that makes plainchant not opera, taken further down and given
+              // two beats a syllable, because a mələkkət sign stretches one
+              // syllable across a whole formula
+              mouth: MOUTHS.zemachant },
+      words: ["the first half-choir", "the second, answering two bars later"],
+      word: () => [],
+    },
+
+    // HIGHLIFE — Accra 1957, and it pays three debts this file had already
+    // booked. Dance-band highlife is a West African brass-and-guitar orchestra
+    // playing over a Cuban timeline: E.T. Mensah & the Tempos, horns in
+    // parallel, a guitar picking thirds, and a hand-percussion layer that
+    // never stops.
+    //
+    // THE YEAR is Ghana's independence in March 1957 and the peak of the
+    // Tempos' reach across the coast — a decade's centre with a real event in
+    // it, NOT a single record. (Louis Armstrong sat in with the Tempos in
+    // Accra, but that was May 1956; the year here is not hanging on him.)
+    //
+    // WHAT SEPARATES IT FROM LAGOS 1971 — its own child — is the HARMONY and
+    // the CLOCK. Afrobeat is `harmony: "modal"`, one dorian chord you stay
+    // inside for eight bars at 108. Highlife MOVES: I–IV–V–I every four bars
+    // in ionian at 120, because it is dance-band music for couples and a
+    // dance band plays changes. The guitar in parallel thirds is the other
+    // tell, and it puts this anchor in a small and specific company: the only
+    // other records here that lock two voices at ONE fixed diatonic interval
+    // for the whole song are the Beatles' thirds, Chuck Berry's fourths and
+    // the hymnal's four parallel parts — every other pair in the table is
+    // rotated, masked or thinned against each other rather than glued.
+    highlife: {
+      label: "Accra 1957", voices: 3, near: "afrobeat",
+      plan: "song", bpm: 120,
+      // LINEAGE: the catalog's first African ROOT, and honestly so. Dance-band
+      // highlife is coastal adaha brass, palm-wine guitar, the Afro-Cuban 78s
+      // that circulated in West Africa, and the SWING big band — and not one
+      // of those four is here. `jazz` is New York 1945, which is bebop: the
+      // wrong music twelve years early, and its own `wants` admits it is
+      // missing swing. Reaching for it in the bossa style would be reaching
+      // for the nearest anchor rather than the right one.
+      parents: {},
+      wants: ["palm-wine guitar", "adaha brass band", "swing", "afro-cuban son"],
+      // A HOLLOW-BODY, not a solid one: `jazz_guitar` is closer to a 1950s
+      // West African dance band than `clean_guitar`'s bright electric, and the
+      // two horns are the Tempos' own front line.
+      instr: ["jazz_guitar", "trumpet", "tenor_sax"],
+      drumkit: "jazz",
+      entry: v => v * 2, reg: v => v - 1, realize: () => "line",
+      roots: [0, 3, 4, 0], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "walk",
+      // THE TIMELINE IS THE RIM, and it is the most interesting fact about
+      // this anchor: the figure on `p` is the clave family, and dance-band
+      // highlife took it from the Cuban 78s the Tempos were covering — which
+      // had taken it from West Africa in the first place. It is written as
+      // ONE bar here (the three-side in the first eight steps, the two-side in
+      // the second), where Kinshasa 1960 below spends two bars on the same
+      // idea; that difference is real and it is the two anchors' clearest
+      // separation in the kit.
+      //
+      // AND THE MARACAS ARE THE HAT LANE AGAIN — bodiddley's compromise, said
+      // out loud a second time: there is no shaker among the twelve extracted
+      // drums, so sixteen closed hats carry it and `kitVel` carries the hand.
+      // The claps are not a stand-in at all; they are handclaps.
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,0,1, 0,0,1,0, 0,0,1,0, 1,0,0,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitVel: { h: [9,4,6,4, 8,4,6,4, 9,4,6,4, 8,4,6,5] },
+      fill: { p: [1,0,0,1, 0,0,1,0, 1,0,1,0, 1,1,0,1] },
+      tone: { wave: "triangle", cut: 2500, q: 1.0, atk: .006, rel: .6, gain: .27, verb: .28 },
+      words: ["the guitar, picking the tune",
+              "the trumpet, a third above it",
+              "the tenor, answering late"],
+      word: v => (v === 1 ? [transpose(2)] : v === 2 ? [rotate(4), drop(2)] : []),
+    },
+
+    // MARABI — Johannesburg 1935. The shebeen keyboard music of the
+    // slumyards: a pedal organ over one four-bar chord cycle that never ends,
+    // a tin of pebbles keeping time, and a pennywhistle on top.
+    //
+    // THE YEAR NEEDS CARE AND THE COMMENT IS WHERE IT GOES. The music is
+    // 1920s and it was ALMOST NEVER RECORDED — it was played in yards nobody
+    // brought a machine to. It reaches a disc through the mid-1930s African
+    // dance bands (the Jazz Maniacs, the Merry Blackbirds), and 1935 is that
+    // moment. The music is 1920s; the recording is 1935; the label names the
+    // recording, and a reader is entitled to know which.
+    //
+    // THE HIGHEST STRUCTURAL VALUE ON THIS PAGE, because marabi IS a harmonic
+    // object rather than a percussion one, and this box computes harmony far
+    // better than it computes hands. The identity is the endlessly repeating
+    // I–IV–I⁶₄–V, and that six-four is the FIRST use of `inv` anywhere in the
+    // catalog: 124 anchors, not one inversion between them until this line.
+    // `inv: 2` puts the fifth in the bass (kernel.js:2574 — "an inversion puts
+    // the third under the band"), which is exactly what makes a marabi cycle
+    // lean forward into its V instead of sitting down on its I.
+    marabi: {
+      label: "Johannesburg 1935", voices: 3, near: "gospel",
+      // a floor: the cycle is the form, and it does not go anywhere
+      plan: "dance", bpm: 104,
+      // LINEAGE: a root under protest, and the protest is the whole history —
+      // marabi is Sotho and Zulu vocal cycles, American 78s heard through a
+      // shebeen door, and kwela's own street ancestry, none of which is here.
+      parents: {},
+      wants: ["kwela", "american 78s", "sotho-zulu vocal cycle"],
+      // THE CAST IS UNUSUALLY EXACT. The marabi instrument was the PEDAL
+      // ORGAN and `reed_organ` is one (six zones, every file on disk —
+      // confirmed at genres.js:5713 when punjabipop's harmonium wanted it).
+      // The upright is an upright. The one STAND-IN is `recorder` for the
+      // pennywhistle: right family — both are fipple flutes, which is why not
+      // `whistle`, GM's recording of a person whistling — and what is lost is
+      // the pennywhistle's shrill overblown top and its bent notes, which is
+      // most of what a kwela player does with it.
+      instr: ["reed_organ", "upright_piano", "recorder"],
+      drumkit: "brush",
+      entry: v => v, reg: v => (v === 0 ? -1 : v - 1),
+      realize: v => (v === 0 ? "pad" : "line"),
+      part: ["pad", "lead", "counter"],
+      roots: [0, 3, 0, 4], mode: MODES.ionian,
+      scale: SCALES.major, diatonic: true,
+      prog: [{ d: 0 }, { d: 3 }, { d: 0, inv: 2 }, { d: 4 }],
+      artic: "legato", maxHold: 4,
+      // THE BASS IS AN ARGUMENT ABOUT WHICH YEAR THIS IS. In a 1920s yard the
+      // bass is the organist's left hand and there is no bass player; on the
+      // 1935 disc it is a dance band and there is one. The label names the
+      // recording, so the record gets its upright.
+      bassStyle: "walk",
+      // THE DRUMS ARE NOT THE IDENTITY, and the kit says so: the thinnest
+      // hand in this batch, brushes, and the tin of pebbles on the hat lane
+      // (the same compromise as the maracas above, one country south).
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      kitVel: { h: [8,4,6,4, 8,4,6,4, 8,4,6,4, 8,4,6,5] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2200, q: 0.9, atk: .02, rel: 1.1, gain: .26, verb: .34 },
+      words: ["the pedal organ, holding the cycle",
+              "the upright, the vamp on top of it",
+              "the pennywhistle, an octave up and late"],
+      word: v => (v === 1 ? [rotate(2)] : v === 2 ? [transpose(7), drop(2)] : []),
+    },
+
+    // MBUBE — Johannesburg 1939. Solomon Linda's Original Evening Birds cut
+    // "Mbube" for Gallo, a documented recording and the most solid year on
+    // this page; the record gave the style its name. (The brief said Durban:
+    // Linda was Zulu, from Msinga in Natal, and the group worked and recorded
+    // in Johannesburg. Isicathamiya — the softer, tiptoed later style — is a
+    // different sound and a different decade, and building both would be
+    // building one twice.)
+    //
+    // THE FOURTH UNACCOMPANIED SUNG ANCHOR, after Rome 600, Paris 1200 and
+    // London 1570 — and the first outside Europe. `nobass: true` is
+    // load-bearing rather than decorative here: in mbube the bass SINGERS are
+    // the bass, and letting the bass chair pick up its default upright
+    // (instruments.js BASS_INSTR) would put an instrument on a record that
+    // has none. `kit: {}` for the same reason: the stamping belongs to
+    // isicathamiya, not to 1939.
+    //
+    // WHAT SEPARATES IT FROM BOSTON 1831, its declared parent: hymn's four
+    // voices move in exact homophony and its bottom part is an ORGAN, because
+    // at MIDI 7–38 it is nobody's part to sing. Mbube's bottom part is three
+    // men, its lead is one woman's worth of freedom over a block that moves at
+    // half the lead's rate (`drop(2)` on voices 1–3), and it runs at 92 where
+    // a chorale runs at 72. And it shares its four-bar cycle — I–IV–I⁶₄–V —
+    // with marabi four years earlier and one suburb over, which is the
+    // correlation worth writing in data rather than in prose.
+    mbube: {
+      label: "Johannesburg 1939", voices: 4, near: "hymn",
+      plan: "song", bpm: 92,
+      // LINEAGE: `{ hymn: 1 }` UNDER PROTEST, in the bossa house style, and
+      // the protest said out loud: mission four-part hymnody is a real,
+      // documented and major input to South African choral music and Boston
+      // 1831 is in the catalog — but the ZULU side is the larger half, and it
+      // is the half this file cannot name. The weight normalises to 1 over
+      // what exists, which is not the same as saying it is all of it.
+      parents: { hymn: 1 },
+      wants: ["zulu wedding song", "ngoma"],
+      instr: ["solo_vox", "ahh_choir"],
+      entry: () => 0, reg: v => [1, 0, -2, -3][v], realize: () => "line",
+      kit: {}, nobass: true,
+      roots: [0, 3, 0, 4], mode: MODES.ionian,
+      scale: SCALES.major, diatonic: true,
+      prog: [{ d: 0 }, { d: 3 }, { d: 0, inv: 2 }, { d: 4, q: "7" }],
+      artic: "legato", maxHold: 4,
+      tone: { wave: "triangle", cut: 2300, q: 0.8, atk: .04, rel: 1.4, gain: .26, verb: .42,
+              // WHO SINGS: the bass throat, close and resonant, almost no
+              // wobble and almost no air — a room of men at one microphone in
+              // 1939, and the loosest blend in the table after the hymnal's,
+              // because they are a group and not a section
+              mouth: MOUTHS.mbubestack },
+      words: ["the lead, over the top", "the top of the block",
+              "the middle of it", "the bass singers, who are the bass"],
+      word: v => (v === 0 ? [] : [transpose([0, -2, -4, -7][v]), drop(2)]),
+    },
+
+    // ETHIO-JAZZ — Addis Ababa 1969. Mulatu Astatke's vibraphone over a
+    // Hammond and a tenor, an Ethiopian pentatonic mode on a jazz rhythm
+    // section, and the darkest-sounding bright scale in the catalog.
+    //
+    // THE YEAR is an institutional event with the music on the other side of
+    // it: Amha Eshete founded Amha Records in Addis Ababa in 1969 and broke
+    // the Imperial government's recording monopoly, which is the moment the
+    // scene could record at all. (1972 and *Mulatu of Ethiopia* is the other
+    // defensible label; this one names the door opening.)
+    //
+    // NOTHING HERE IS WEARING A COSTUME, which is why it was built before the
+    // harder ones: the VIBRAPHONE is Mulatu's own instrument and not a
+    // stand-in for anything, and the tenor is the tenor. ONE substitution,
+    // and it is a measured one rather than a taste one: the sessions ran on a
+    // Hammond or a Farfisa, and `drawbarorgan` is the id that names that
+    // sound — but it is ONE sample rooted at MIDI 96, which gospel measured
+    // at genres.js:1739 as "one C7 recording dragged three and a half octaves
+    // down… a spectral centroid of 249 Hz". `percussive_organ` is the same
+    // extraction WITH the percussion stop and six zones, and the percussion
+    // stop is on more of these sides than off it.
+    //
+    // THE MODE, answered as carefully as the sources allow. `tizita` is an
+    // anhemitonic major pentatonic — 1 2 3 5 6 — which is `SCALES.majpent`
+    // EXACTLY, so no new SCALES row is needed and none was guessed. The other
+    // qenet (bati, ambassel, anchihoy) have no interval sets this repo can
+    // source and none are invented here. And the honesty argument is stronger
+    // than "it approximately fits": on a masenqo the intonation is inflected
+    // and 12-TET would be a lie, but Mulatu's band played a vibraphone, an
+    // electric organ and valved horns — for THIS record 12-TET is not an
+    // approximation of the practice, it is the practice.
+    //
+    // AGAINST NEW YORK 1945, its largest parent: same horn writing, opposite
+    // harmony. Bebop is a cycle of changes at 144; this is `harmony: "modal"`
+    // — one mixolydian vamp, no changes — at 94, with the head doubled an
+    // octave down rather than harmonised. On a five-note alphabet an octave IS
+    // `transpose(-5)`, which is why the tenor's word looks like a fifth and
+    // is not one. And it is NOT pointed at Aksum 540: church chant is not the
+    // parent of a secular vibraphone record, and papering fourteen centuries
+    // and one sacred/secular boundary over with an edge is exactly the move
+    // this round exists to stop.
+    ethiojazz: {
+      label: "Addis Ababa 1969", bars: 8, voices: 3, near: "jazz",
+      // an arc: a groove you stay inside while the horn arrives
+      plan: "arc", bpm: 94,
+      // LINEAGE: Mulatu trained in Britain and at Berklee and the band is a
+      // jazz/Latin rhythm section under jazz horn writing; the one-chord
+      // modal groove and the kit's discipline are funk's, which he heard the
+      // same years everyone else did. Azmari song — the Ethiopian secular
+      // tradition the modal half comes from — has no anchor and would need a
+      // masenqo and a krar, neither of which the registry has.
+      parents: { jazz: 0.6, funk: 0.4 },
+      wants: ["azmari song"],
+      instr: ["vibraphone", "percussive_organ", "tenor_sax"],
+      drumkit: "acoustic",
+      entry: v => v * 2, reg: v => (v === 1 ? -1 : v === 2 ? -1 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad", "counter"],
+      harmony: "modal", mode: MODES.mixo, scale: SCALES.majpent,
+      artic: "legato", maxHold: 4,
+      // A LATIN-LEANING BAND. The bell figure is the rim, the congas are the
+      // toms — a real struck membrane by family, wrong drum and right physics
+      // — and beside afrobeat's two drummers this is the only other anchor
+      // where the tom lanes carry a hand rather than a fill.
+      bassGrid: [1,0,0,1, 0,0,1,0, 0,0,1,0, 0,1,0,0],
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,0,1, 0,0,1,0, 0,0,1,0, 1,0,0,0],
+             m: [0,0,1,0, 0,0,0,0, 1,0,0,0, 0,0,1,0],
+             l: [0,0,0,0, 0,1,0,0, 0,0,0,1, 0,0,0,0],
+             r: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { m: [0,0,1,0, 0,1,0,0, 1,0,1,0, 0,1,1,0] },
+      tone: { wave: "triangle", cut: 2300, q: 1.1, atk: .008, rel: 1.4, gain: .27, verb: .36 },
+      words: ["the vibraphone, the head",
+              "the organ, holding the one chord under it",
+              "the tenor, doubling the head an octave down"],
+      word: v => (v === 1 ? [drop(2)] : v === 2 ? [transpose(-5)] : []),
+    },
+
+    // CONGOLESE RUMBA — Kinshasa 1960. Two electric guitars interlocking over
+    // a clave, a tenor on the head, and a form that opens out into the
+    // SEBENE — the section where the singers stop and the guitars take the
+    // record over, which is the genre's whole architecture.
+    //
+    // THE YEAR is "Indépendance Cha Cha", Grand Kallé et l'African Jazz, cut
+    // in 1960 — the most-cited record in the tradition and as datable as
+    // mbube. THE CITY was Léopoldville in 1960 and became Kinshasa in 1966,
+    // and the label says Kinshasa anyway: atlas.js:98 enforces ONE SPELLING
+    // PER PLACE, and a second name for the same coordinates would put two
+    // dots where there is one city. The old name belongs in a comment, which
+    // is where it now is.
+    //
+    // THE FIFTH ANCHOR TO USE `kits`, and the first with a musical reason
+    // that needs it: the clave is a TWO-BAR figure — three strokes in one bar
+    // and two in the next — and a one-bar kit cannot say so. Accra 1957 above
+    // compresses both halves into sixteen steps, which is a real and
+    // different thing; this one spends the two bars the players spend. That
+    // is the two anchors' clearest separation, and it is in the kit rather
+    // than in the prose.
+    //
+    // AND THE CLAVE HERE IS NOT STANDING IN FOR AN AFRICAN BELL. It is
+    // standing in for a CUBAN clave, which is what these players were
+    // literally copying off the GV-series 78s sold in Léopoldville from the
+    // late thirties — the rim lane is the compromise, the figure is not.
+    congorumba: {
+      label: "Kinshasa 1960", bars: 8, voices: 3, near: "highlife",
+      plan: "arc", bpm: 116,
+      // LINEAGE: a root, and both its parents are outside the catalog —
+      // the Cuban son of the GV 78s, re-heard by Congolese guitarists over
+      // the local maringa. Neither is here, and pointing this at `bossa` or
+      // `jazz` because they are the nearest Latin-adjacent anchors would be
+      // the resemblance-as-ancestry move this round is undoing.
+      parents: {},
+      wants: ["afro-cuban son", "maringa"],
+      // THE SAME INSTRUMENT TWICE, on purpose: mi-solo and rhythm are two
+      // guitars with one tone, and `instr` is read per voice
+      // (instruments.js:36), so casting `clean_guitar` twice is the natural
+      // spelling of a fact rather than a duplication.
+      instr: ["clean_guitar", "clean_guitar", "tenor_sax"],
+      drumkit: "acoustic",
+      entry: v => v * 2, reg: v => v - 1, realize: () => "line",
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,0,1, 0,0,1,0, 0,0,0,0, 0,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      // THE CLAVE, ACROSS ITS TWO BARS: the three-side, then the two-side.
+      kits: [
+        { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+          s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+          p: [1,0,0,1, 0,0,1,0, 0,0,0,0, 0,0,0,0],
+          h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+        { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+          s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+          p: [0,0,0,0, 1,0,0,0, 0,0,1,0, 0,0,0,0],
+          h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      ],
+      fill: { h: [1,1,1,0, 1,1,1,0, 1,1,1,0, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2600, q: 1.0, atk: .005, rel: .5, gain: .27, verb: .3 },
+      words: ["the mi-solo, and in the sebene it never stops",
+              "the rhythm guitar, in the holes the mi-solo leaves",
+              "the tenor, the head"],
+      // THE SEBENE IS SAID IN DEVELOPMENT, NOT IN THE KIT — `word(v, s)` is
+      // indexed by SECTION (AXES.md: Form comes before Development), so the
+      // guitars change job when the record does. On the odd sections the
+      // mi-solo fills every other step and stops being a part and starts
+      // being the record; the rhythm guitar is masked to the complement of
+      // the mi-solo's own gate throughout, which is what interlocking means
+      // and what makes the two guitars one instrument with four hands.
+      word: (v, s) => (v === 0 ? (s % 2 ? [fill(2)] : [])
+                     : v === 1 ? [only("gate", complement("gate")), transpose(2)]
+                               : [rotate(8), drop(2)]),
+    },
+
+    // KWAITO — Johannesburg 1994, and it pays a debt the file booked in its
+    // own hand: `amapiano.wants` said ["kwaito"] and its comment called it
+    // "the missing rung… the Johannesburg scene that slowed house down in the
+    // first place, thirty years before this one slowed it again". This closes
+    // it, and amapiano's afrobeat weight moves here where it belonged.
+    //
+    // THE YEAR is a decade's centre plus an event and not a record: kwaito's
+    // window is 1993–96 (Boom Shaka's *It's About Time*, Arthur Mafokate's
+    // "Kaffir"), and 1994 is the middle of it and the first democratic
+    // election. Said plainly because the catalog's credibility rests on a
+    // reader being able to tell a dated record from a dated decade.
+    //
+    // THE NUMBER THAT IS THE GENRE: 105. Every four-on-the-floor kick in the
+    // `club` family is at 122 or above — house 122, acid 124, bleeptechno
+    // 124, kpop 128, techno 132, ebm 134 — and this one is seventeen under
+    // the slowest of them. Kwaito is house with the tempo taken out of it,
+    // and everything else about the record follows the tempo: the bass has
+    // room to be syncopated, the chant sits behind the beat instead of on it,
+    // and the same offbeat hat that reads as urgency at 128 reads as swagger
+    // here.
+    kwaito: {
+      label: "Johannesburg 1994", near: "house",
+      plan: "dance", bpm: 105,
+      // LINEAGE: the four-on-the-floor machine, the loop that is the form and
+      // the pads over it are Chicago's, at five-sixths of the speed; the
+      // bassline habit and the cycle underneath come down the mbaqanga line
+      // from the shebeen organ — which is what the marabi weight means, and
+      // it is in the data below as well as in this sentence.
+      parents: { house: 0.65, marabi: 0.35 },
+      wants: ["mbaqanga", "bubblegum"],
+      instr: ["polysynth", "rhodes_ep"],
+      drumkit: "tr909",
+      entry: v => v, reg: v => (v === 0 ? 0 : -1),
+      realize: v => (v === 0 ? "pad" : "line"),
+      part: ["stab", "lead"],
+      // MARABI'S OWN CYCLE, READ MINOR. The roots are Johannesburg 1935's
+      // I–IV–I–V exactly; the mode is dorian instead of ionian. Sixty years
+      // and one mode apart, which is a more useful thing for the fit tool to
+      // measure than a sentence claiming influence.
+      roots: [0, 3, 0, 4], mode: MODES.dorian,
+      scale: MODES.dorian, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "octaves",
+      bassGrid: [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,0,1,0],
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             p: [0,0,0,1, 0,0,0,0, 0,1,0,0, 0,0,1,0] },
+      fill: { p: [0,0,1,1, 0,1,0,0, 0,1,0,1, 1,0,1,1] },
+      tone: { wave: "sawtooth", cut: 2000, q: 1.4, atk: .01, rel: .7, gain: .28, verb: .24 },
+      words: ["the stab, on the cycle", "the lead, chanted over it"],
+      word: v => (v === 1 ? [drop(2), rotate(2)] : []),
+    },
+
+    // MANDE GUITAR — Bamako 1970. The Rail Band at the Buffet Hôtel de la
+    // Gare: state-sponsored, resident, and staffed by jelis — Salif Keïta and
+    // Mory Kanté — moving jeliya onto electric guitars and horns themselves.
+    // Long cyclic vamps, two guitars in an interlocking ostinato, a heptatonic
+    // mode, no changes.
+    //
+    // NAMED FOR THE BAND AND NOT FOR THE TRADITION, deliberately: the anchor
+    // is a guitar band and the key must not claim jeliya, which is booked on
+    // `wants` in its own name. AND THE EMPIRE IS NOT THE LABEL. An anchor is a
+    // correlated point across eight axes including Sound and Performance, and
+    // nobody can state the 13th-century values of those for Mande music: the
+    // transmission is oral, so a "Niani 1235" label would be a year attached
+    // to a sound invented in 2026. Rome 600 gets away with its attribution
+    // because chant came down NOTATED; this would not.
+    //
+    // THE KORA IS NOT HERE AND THAT IS THE POINT. `harp` is family-right (a
+    // harp-lute is a harp) and timbre-wrong — GM's soft orchestral pedal harp
+    // has no attack and no ostinato bite — and `koto` would be a Japanese
+    // zither wearing a Malian name. Two of the three parts WOULD cast
+    // honestly (`marimba` for balafon is close; `banjo` for ngoni may be the
+    // most defensible stand-in in this file, since the ngoni is the banjo's
+    // ancestor) — but the kora is the one people mean, so jeliya waits for a
+    // sample and Mali reaches the map through the band that was on tape.
+    //
+    // AGAINST KINSHASA 1960, its nearest neighbour and the other two-guitar
+    // anchor: Kinshasa CYCLES (I–vi–IV–V, `harmony: "cycle"`) and Bamako
+    // VAMPS (`harmony: "modal"`, one mixolydian chord for the whole record) —
+    // and the second guitar rotates by SIX rather than by four or eight, so
+    // its figure lands off the first's everywhere but one step of the bar.
+    // An even rotation cannot say interlocking; it just says doubled.
+    mandeguitar: {
+      label: "Bamako 1970", bars: 8, voices: 3, near: "congorumba",
+      plan: "arc", bpm: 112,
+      // LINEAGE: a root under protest. Jeliya — the hereditary praise-singing
+      // the whole band is a continuation of — is the parent, and it is not in
+      // the catalog; the Afro-Cuban son the Malian orchestras played beside it
+      // is the other, and it is not here either.
+      parents: {},
+      wants: ["jeliya", "afro-cuban son"],
+      instr: ["jazz_guitar", "clean_guitar", "trumpet"],
+      drumkit: "acoustic",
+      entry: v => v * 2, reg: v => v - 1, realize: () => "line",
+      harmony: "modal", mode: MODES.mixo, scale: MODES.mixo, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "eighths",
+      bassGrid: [1,0,0,0, 0,0,1,0, 0,1,0,0, 1,0,0,0],
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,1,0, 0,1,0,0, 1,0,1,0, 0,1,0,0],
+             h: [1,1,0,1, 1,1,0,1, 1,1,0,1, 1,1,0,1] },
+      kitVel: { h: [9,4,0,5, 7,4,0,5, 9,4,0,5, 7,4,0,6] },
+      fill: { p: [1,0,1,0, 1,1,0,1, 1,0,1,0, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2500, q: 1.0, atk: .005, rel: .6, gain: .27, verb: .3 },
+      words: ["the first guitar, the ostinato",
+              "the second, six steps off it",
+              "the trumpet, the praise line"],
+      word: v => (v === 1 ? [rotate(6)] : v === 2 ? [transpose(2), drop(3)] : []),
+    },
+
+    // RAÏ — Oran 1985. Pop-raï: a cheap drum machine, a synth, an accordion
+    // and a trumpet under a singer, which is what the records actually are
+    // and not a compromise this file arrived at.
+    //
+    // THE YEAR is the first officially sanctioned raï festival in Oran, 1985
+    // — the moment the music became public rather than semi-clandestine.
+    // (Bobigny 1988 is the other candidate and it is the diaspora; the
+    // catalog needed the Algerian dot.)
+    //
+    // AND THE OLDER RAÏ IS A DIFFERENT ANCHOR AND IS NOT BUILDABLE. Bedoui
+    // and cheikha raï — Cheikha Rimitti — is gasba and gallal with a
+    // microtonal vocal: no instruments for it here and the wrong tuning
+    // besides. This anchor is 1985 and claims 1985 only.
+    //
+    // THE MODE, and the caveat is the honest half of the entry. Pop-raï sits
+    // largely in a 12-TET minor or in HIJAZ [0,1,4,5,7,8,10], which this
+    // table has no key for — and mahraganat already argued that case and lost
+    // it on purpose (genres.js:6001): a ninth MODES row changes every mode
+    // menu in the building, because fields.js KEYMODES is derived from it,
+    // for the sake of one anchor. There are two anchors now and the argument
+    // has not changed enough to move; `phrygian` is the nearest NAMED
+    // alphabet, it carries the flat second that is the identifying interval,
+    // and it is missing the raised third. Named honestly rather than smuggled
+    // in as a literal array (PROGRAM.md §2.1). Raï also uses sika and saba,
+    // which have neutral intervals and are NOT 12-TET at all: this anchor
+    // claims the 12-TET half of the repertory and no more of it.
+    //
+    // ONE INSTRUMENT IS NOT A STAND-IN AND ONE IS. The ACCORDION is genuinely
+    // a pop-raï instrument, not a substitute for something absent. The
+    // DERBOUKA is a stand-in: its dum and its tak are voiced across `k`, `s`
+    // and `p` on a cr78, and what is lost is the goblet drum's pitch drop
+    // between the two strokes and the finger rolls between them. What is NOT
+    // lost is that a cheap early-eighties machine is exactly what those
+    // records used, which is why the kit is cr78 and not `acoustic`.
+    rai: {
+      label: "Oran 1985", voices: 3, near: "synthpop",
+      plan: "song", bpm: 116,
+      // LINEAGE: `{ synthpop: 0.5, disco: 0.5 }` UNDER PROTEST, and the
+      // protest is that these two are the AUDIBLE half and not the whole. The
+      // drum machine, the synth brass and the four-square floor genuinely are
+      // half of what a 1985 raï record is. The other half — the Oranese
+      // cheikha tradition the vocal comes from and the Egyptian film
+      // orchestra the horn writing comes from — has no anchor, so the weight
+      // normalises to 1 over what exists, the way bossa's does.
+      parents: { synthpop: 0.5, disco: 0.5 },
+      wants: ["bedoui raï", "egyptian film orchestra"],
+      instr: ["accordion", "polysynth", "trumpet"],
+      drumkit: "cr78",
+      entry: v => v, reg: v => (v === 1 ? -1 : v === 2 ? 1 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad", "counter"],
+      harmony: "modal", mode: MODES.phrygian, scale: MODES.phrygian, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "octaves",
+      // THE DERBOUKA, VOICED ACROSS THREE LANES: dum on the low kick, tak on
+      // the rim, and the snare taking the answering stroke — one player and
+      // one drum, which this table has no other way to say (punjabipop's dhol
+      // is written the same way one round earlier, genres.js:5975).
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,1,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [0,0,1,1, 0,1,0,0, 0,0,1,1, 0,1,0,1],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { p: [0,0,1,1, 0,1,1,0, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 2700, q: 1.5, atk: .006, rel: .6, gain: .28, verb: .26 },
+      words: ["the accordion, the vocal line's own tune",
+              "the synth, holding under it",
+              "the trumpet, answering an octave up"],
+      word: v => (v === 1 ? [drop(2)] : v === 2 ? [transpose(7), rotate(4), drop(2)] : []),
+    },
   };
 
   // THE ARRANGEMENT'S COLUMN HEADINGS, one per lane. `p` says "Ghost perc"
@@ -5700,19 +6917,55 @@
     ["kernel", ["simple"]],
     // ...organum and arsnova joined 2026-08-21: unaccompanied polyphony is
     // this cluster's whole definition, and both are gregorian's direct line.
+    // ...and Africa's two sung anchors joined 2026-08-25: unaccompanied
+    // polyphony is this cluster's whole definition and both are exactly that,
+    // Aksum 540 in two half-choirs and Johannesburg 1939 in four parts. Each
+    // takes a DYNAMICS row of its own below, in opposite directions from the
+    // family's — one has less metre than the vox default, the other has far
+    // more, and a chant and a stamped Zulu cycle should not share a number.
     ["vox",    ["gregorian", "bulgarian", "spem", "counterpoint", "fugue", "hymn",
-                "organum", "arsnova"]],
+                "organum", "arsnova", "zema", "mbube"]],
     ["club",   ["acid", "house", "techno", "garage", "dnb", "trap", "boombap",
                 "electro", "bigbeat", "drill", "kpop", "bigroom", "ebm", "synthduo",
                 // the five newcomers below are the SAME "no family fallback"
                 // deal every existing member already signed: each gets its own
                 // DYNAMICS row rather than resolving to nothing (§39's law).
                 "melodictechno", "bleeptechno", "industrialbreaks", "madchester",
-                "indiedance"]],
+                "indiedance",
+                // ...and the four 2020s floors (2026-08-24), same deal again:
+                // every one has its own DYNAMICS row below, because `club`
+                // still has no family fallback and never will.
+                "amapiano", "hyperpop", "bailefunk", "mahraganat",
+                // ...and Johannesburg 1994, on the same deal a third time: a
+                // four-on-the-floor machine floor is what this cluster IS, and
+                // kwaito has its own row below because `club` has no fallback
+                // and a newcomer left out of that table renders flat forever.
+                "kwaito"]],
     ["soul",   ["doowop", "motown", "isley", "funk", "disco", "gospel", "rnb",
                 "jodeci", "clubpop", "retrofunkpop", "boyband", "darkrnb",
-                "blueeyedsoul"]],
-    ["groove", ["reggae", "dub", "ska", "afrobeat", "bossa", "reggaeton", "latinpop"]],
+                "blueeyedsoul",
+                // bedroompop is here rather than in `drift` because what it
+                // inherits is R&B's PHRASING; the ambient space is a
+                // production, and the ear files a whispered soul record as a
+                // soul record. It disagrees with the family's stress hard,
+                // so it takes a row of its own below.
+                "bedroompop"]],
+    // ...and the two 2020s newcomers that are grooves and not floors: both are
+    // a hand layer over a rhythm section, which is what this cluster is, and
+    // both take the family's own dynamics row unchanged.
+    ["groove", ["reggae", "dub", "ska", "afrobeat", "bossa", "reggaeton", "latinpop",
+                "afrobeats", "punjabipop",
+                // ...and the five African anchors that are a HAND LAYER OVER A
+                // RHYTHM SECTION, which is this cluster's definition and is
+                // what every one of them is: Accra 1957 (maracas and claps
+                // over a dance band), Kinshasa 1960 and Bamako 1970 (a clave
+                // and a shaker under two interlocking guitars), Addis Ababa
+                // 1969 (congas on the toms under a vibraphone) and Oran 1985
+                // (a derbouka voiced across a drum machine). Accra sits here
+                // rather than in `roots` on purpose: it is pre-rock by date
+                // and a groove record by construction, and the ear files it
+                // with the child it fathered.
+                "highlife", "congorumba", "mandeguitar", "ethiojazz", "rai"]],
     ["band",   ["rock", "punk", "blues", "bodiddley", "chuckberry", "newwave",
                 "sludge", "deathmetal", "powerballad", "emo", "screamo",
                 "jamband", "sophistirock", "industrialmetal",
@@ -5739,7 +6992,18 @@
                 // the two ancestors that joined it in phase 2 (tango 1935,
                 // skiffle 1956) just got ten much older housemates.
                 "troubadour", "estampie", "pavane", "continuo", "concerto",
-                "classical", "nocturne", "romantic", "barcarolle", "parlor"]],
+                "classical", "nocturne", "romantic", "barcarolle", "parlor",
+                // ...and one record from 2023, which looks wrong in "the
+                // pre-rock traditions" until you hear it: a sung story, an
+                // acoustic ensemble and no drum kit is what this cluster IS,
+                // and a corrido is older than every rock anchor in the table.
+                "corridotumbado",
+                // ...and Johannesburg 1935, which belongs here for the plain
+                // reason: a shebeen pedal organ in the 1930s is a pre-rock
+                // tradition, the drums are not its identity, and the family's
+                // own stress-.45 backbeat reading is right for a music people
+                // danced to all night.
+                "marabi"]],
     // ...and the one cluster that is not a tradition at all: the FUNCTION
     // genres, which are parts rather than styles. They sit last because that
     // is how they are used — you pick the music first and the part second.
@@ -5907,6 +7171,65 @@
     industrialbreaks: { stress: 0.4,  phrase: 0.15, touch: { t: 0.06, v: 0.9 } },
     madchester:       { stress: 0.4,  phrase: 0.35, touch: { t: 0.07, v: 0.9 } },
     indiedance:       { stress: 0.35, phrase: 0.3,  touch: { t: 0.05, v: 0.75 } },
+    // THE 2020s FLOORS (2026-08-24). Four more `club` members and therefore
+    // four more named rows — the family has no fallback, so a newcomer left
+    // out here renders flat forever.
+    //
+    // amapiano sits with the cluster's SAMPLED corners — madchester .07,
+    // boombap and industrialbreaks .06, then amapiano .055 — and not with its
+    // machines, and it has to: the shaker is a HAND, sixteen to the bar, and a
+    // quantised shaker is a hi-hat sample. mahraganat is just under it for the
+    // same reason from the other direction — a maqsoum played hard on a
+    // machine by somebody who would rather be hitting a drum. bailefunk is a
+    // sampler being TRIGGERED, tight and loud, which is electro's own reading
+    // with the level opened up. And hyperpop is the tightest HAND in the club
+    // cluster at t .008 — in the whole table only the drone (0) and the Kling
+    // Klang line (motorik .002, kraftwerk .004, roboticpop .005) are tighter,
+    // which is the right company: the edit IS the performance here, and every
+    // drop of expression has been moved into the level instead.
+    amapiano:   { stress: 0.3,  phrase: 0.45, touch: { t: 0.055, v: 0.8 } },
+    mahraganat: { stress: 0.45, phrase: 0.4,  touch: { t: 0.05,  v: 0.95 } },
+    bailefunk:  { stress: 0.45, phrase: 0.2,  touch: { t: 0.02,  v: 1 } },
+    hyperpop:   { stress: 0.25, phrase: 0.2,  touch: { t: 0.008, v: 0.9 } },
+    // ...and the one 2020s anchor whose family row is simply wrong for it.
+    // `soul` says stress 0.5 — a backbeat felt hard — and this record has no
+    // backbeat worth feeling. It is nearly all phrase and a real hand, which
+    // is the same shape `vocal` has, because it is one person singing.
+    bedroompop: { stress: 0.14, phrase: 0.75, touch: { t: 0.05,  v: 0.55 } },
+    // AFRICA'S FIVE ROWS (2026-08-25). Four of the nine new anchors take
+    // their family's number unchanged — Accra 1957, Kinshasa 1960 and Bamako
+    // 1970 are grooves and `groove` is right about them, and Johannesburg
+    // 1935 is a dance music and `roots` is right about it. These five
+    // disagree, each in a different direction:
+    //
+    // zema disagrees with `vox` the way gregorian does and further: chant has
+    // no metre AT ALL, and Ethiopian chant is slower and longer-breathed than
+    // Rome's, so the stress term is nearly off and everything is in the line.
+    zema:      { stress: 0.08, phrase: 0.88, touch: { t: 0.06,  v: 0.6 } },
+    // mbube disagrees with `vox` in the OPPOSITE direction, and this is the
+    // whole reason it needed a row: the vox default (stress 0.22) says "the
+    // barline is a scribe's convenience", which is true of a motet and false
+    // of a Zulu group singing in step. It is the most metre of anything in
+    // the cluster and it has a real hand on the level, because four men in a
+    // room in 1939 are not a studio stack.
+    mbube:     { stress: 0.4,  phrase: 0.55, touch: { t: 0.055, v: 0.9 } },
+    // ethiojazz takes jazz's shape rather than groove's, because it is a jazz
+    // band: the line is all phrase and keeping the metre is the rhythm
+    // section's job. A shade less loose than bebop (t .07 against jazz's own
+    // .07 at stress .3) because the vibraphone is a struck instrument and a
+    // struck instrument cannot lag the way a horn can.
+    ethiojazz: { stress: 0.3,  phrase: 0.6,  touch: { t: 0.07,  v: 0.95 } },
+    // kwaito is `club`, which has no fallback, so this row is REQUIRED rather
+    // than optional. It sits between the cluster's machines and its sampled
+    // corners: the 909 is a machine and keeps the time, but a chanted vocal
+    // over it is a person, so the hand is real and modest at .045 — under
+    // amapiano's shaker (.055) and over bailefunk's triggered sampler (.02).
+    kwaito:    { stress: 0.35, phrase: 0.35, touch: { t: 0.045, v: 0.85 } },
+    // rai is the same trade from the other side: the cr78 holds the time
+    // dead (t .03, tighter than anything else in `groove`) and every drop of
+    // expression is in the singer and the accordion, which is what phrase .5
+    // and a full level swing are for.
+    rai:       { stress: 0.4,  phrase: 0.5,  touch: { t: 0.03,  v: 0.8 } },
     // THE THREE FUNCTION GENRES THAT DISAGREE WITH THEIR FAMILY. A riff is
     // metre — it is the part that is NOT expressive, that is its job. A pad has
     // no metre and barely a hand (the chord path reads stress and touch and
@@ -6002,10 +7325,55 @@
     garage:      { roll: 0.12 },
     bigbeat:     { roll: 0.15 },
     boombap:     { flam: 0.18 },
+    // THE 2020s, and only three of the eight earn a row — the header's law
+    // holds: a passing tone is a CLAIM. The requinto's slide into a note is
+    // the corrido's signature the way the hammer-on is country's, and it gets
+    // countrypop's own reading. The maqam's ornament is not decoration, it is
+    // how the mode is identified by ear, so mahraganat leans on `grace` the
+    // way bulgarian does. The Punjabi vocal's harkat is the same kind of
+    // fact. The other five are machines, or are records about space, and a
+    // guessed ornament on any of them would be a costume.
+    corridotumbado: { pass: 0.25, grace: 0.35 },
+    mahraganat:     { grace: 0.3 },
+    punjabipop:     { grace: 0.25 },
+    // AFRICA, and only two of the nine earn a row — the header's law holds,
+    // and it holds hardest here. Mulatu's band is a jazz band and fills its
+    // leaps the way one does, but it does NOT play bebop's approach note (the
+    // semitone under the target on the beat), because the line is pentatonic
+    // and a chromatic approach would be somebody else's vocabulary arriving
+    // uninvited — so ethiojazz is jazz's row with the approach term removed,
+    // which is a real distinction rather than a smaller version of one.
+    ethiojazz:      { pass: 0.3, grace: 0.2 },
+    // A raï singer's ornament is not decoration either: the turn into and off
+    // the note is how the mode is identified by ear, which is exactly the
+    // claim bulgarian and mahraganat already make with `grace`.
+    rai:            { grace: 0.25 },
+    // NOT zema, and it is worth saying why rather than leaving a gap. Chant
+    // in this table decorates by FILLING the line (gregorian pass .35), and
+    // Ethiopian chant is certainly melismatic — but the shape of its melisma
+    // is carried by the mələkkət signs and nothing in this repo can source
+    // them, so a number here would be a guess wearing gregorian's clothes.
+    // Nothing is the honest row.
   };
   for (const k of Object.keys(ORNAMENT)) if (GENRES[k]) GENRES[k].orn = ORNAMENT[k];
 
+  // THE THREE HARMONY WORDS, SAID ONCE (2026-08-24, design 02 §5 / PROGRAM.md
+  // §2.6). `harmony` is declared on all 122 anchors and its distinct values are
+  // exactly these three, so avail.js derives the KEYS off this table rather
+  // than typing them beside it — a vocabulary is data. What it could not derive
+  // is the PROSE, and prose beside the sheet is prose that drifts from the data
+  // it labels, which is the whole argument of vocabulary.js's header. So the
+  // label lives here, next to the field it names. (avail.js:348 carries the
+  // same three sentences as its fallback for a tree where this row has not
+  // landed yet; when both are present this one wins, by avail.js:351.)
+  const HARMONYLABEL = {
+    modal:    "modal — one mode, no changes",
+    cycle:    "cycle — a cycle of changes",
+    emergent: "emergent — the changes come from the voices",
+  };
+
   const api = { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL, SCALES, SCALELABEL,
+                HARMONYLABEL,
                 MOUTHS, PROGS, FAMILIES, DYNAMICS, DYN_FAMILY, ORNAMENT };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuGenres = api;

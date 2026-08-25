@@ -74,9 +74,42 @@
     let b0, b1, b2, a0, a1, a2;
     if (type === "hp") { b0 = (1 + cw) / 2; b1 = -(1 + cw); b2 = (1 + cw) / 2; a0 = 1 + alpha; a1 = -2 * cw; a2 = 1 - alpha; }
     else if (type === "lp") { b0 = (1 - cw) / 2; b1 = 1 - cw; b2 = (1 - cw) / 2; a0 = 1 + alpha; a1 = -2 * cw; a2 = 1 - alpha; }
+    // SHELVES (2026-08-24, the desk-EQ round). This function knew hp, lp and
+    // peak and nothing else, and that absence is the MEASURED reason the desk's
+    // three-band EQ moved no sound on any voice: nukernel's board says a 120 Hz
+    // LOW SHELF and a 7200 Hz HIGH SHELF (nukernel/fields.js EQ_BANDS), makeStrip
+    // had no stage to build for either word, and `{lo:-12, mid:+12, hi:+12}`
+    // rendered BIT-IDENTICAL to a flat strip. RBJ's shelf alpha at slope S = 1 is
+    // sin(w0)/2 * sqrt(2), which is exactly the alpha computed above at Q = 0.707
+    // — so the shared alpha line serves all five types with no second formula,
+    // and a shelf asked for at Q 0.707 is the textbook S = 1 shelf. gainDb 0 =>
+    // A = 1 => H(z) = 1 exactly, so a band at 0 dB is a pass-through.
+    // ONE ALGEBRA, TWO SIGNS: the high shelf is the low shelf with the (A-1)cw
+    // terms negated (RBJ's own presentation), which is why they share a branch
+    // rather than being two transcriptions that can drift apart.
+    else if (type === "ls" || type === "hs") {
+      const S2 = 2 * Math.sqrt(A) * alpha, g = type === "ls" ? 1 : -1;
+      b0 = A * ((A + 1) - g * (A - 1) * cw + S2);
+      b1 = g * 2 * A * ((A - 1) - g * (A + 1) * cw);
+      b2 = A * ((A + 1) - g * (A - 1) * cw - S2);
+      a0 = (A + 1) + g * (A - 1) * cw + S2;
+      a1 = -g * 2 * ((A - 1) + g * (A + 1) * cw);
+      a2 = (A + 1) + g * (A - 1) * cw - S2;
+    }
     else { b0 = 1 + alpha * A; b1 = -2 * cw; b2 = 1 - alpha * A; a0 = 1 + alpha / A; a1 = -2 * cw; a2 = 1 - alpha / A; } // peak
     return { b0: b0 / a0, b1: b1 / a0, b2: b2 / a0, a1: a1 / a0, a2: a2 / a0, x1: 0, x2: 0, y1: 0, y2: 0 };
   }
+  // THE BOARD'S OWN THREE FREQUENCIES, and the only copy of them the engine has.
+  // nukernel/fields.js EQ_BANDS silkscreens the same three for the surface — "the
+  // FREQUENCIES are the desk's, silkscreened once here, and the knob only turns
+  // GAIN" — so a strip's `lo`/`mid`/`hi` are three dB NUMBERS and never three
+  // filters: a spec that carried its own Hz would be a parametric, and an SSL
+  // corrective strip is not one. The two tables are gated against each other by
+  // nukernel/desk-gate.js G8, so moving a band on the silkscreen fails a check
+  // instead of silently drifting from what the tape hears.
+  const BOARD_EQ = { lo:  { type: "ls",   f: 120,  q: 0.707 },
+                     mid: { type: "peak", f: 1000, q: 0.9 },
+                     hi:  { type: "hs",   f: 7200, q: 0.707 } };
   const biq = (o, x) => { const y = o.b0 * x + o.b1 * o.x1 + o.b2 * o.x2 - o.a1 * o.y1 - o.a2 * o.y2; o.x2 = o.x1; o.x1 = x; o.y2 = o.y1; o.y1 = y; return y; };
 
   // fresh per-note strip state from a strip spec (see STRIP_PROFILES in state-engine).
@@ -140,6 +173,19 @@
         depth: clampS(f.depth != null ? f.depth : 0.7, 0, 1), fb: clampS(f.feedback != null ? f.feedback : 0.4, -0.95, 0.95),
         mix: clampS(f.mix != null ? f.mix : 0.3, 0, 1), base: sr * 0.0006, swing: sr * 0.005 };
     }
+    // THE BOARD EQ, LAST IN THE CHAIN — the desk's three bands
+    // (nukernel/audio/desk.js stripWith: the part EQ, the section EQ, the family
+    // tone and the seat shading, merged into ONE fact). It sits after every stage
+    // above on purpose, and the order is the argument: everything above is the
+    // INSTRUMENT's channel strip (STRIP_PROFILES — the voice's own carve, its
+    // saturator, its compressor) and this is the MIXER's, downstream of it. Put
+    // the board before the saturator and a hand on the `hi` knob would change how
+    // hard the voice distorts; put it after and a tone move is a tone move.
+    // Absent — which is every unit the parent builds for itself — there is no
+    // stage, no kernel entry and no cost: byte-identical.
+    if (strip.lo)  S.eLo  = rbjCoefs(BOARD_EQ.lo.type,  BOARD_EQ.lo.f,  sr, BOARD_EQ.lo.q,  strip.lo);
+    if (strip.mid) S.eMid = rbjCoefs(BOARD_EQ.mid.type, BOARD_EQ.mid.f, sr, BOARD_EQ.mid.q, strip.mid);
+    if (strip.hi)  S.eHi  = rbjCoefs(BOARD_EQ.hi.type,  BOARD_EQ.hi.f,  sr, BOARD_EQ.hi.q,  strip.hi);
     S.trim = strip.trim != null ? strip.trim : 1;
     S.step = kernelFor(S);   // fused per-shape strip kernel (see stripStep)
     return S;
@@ -256,6 +302,9 @@
       F.buf[F.w] = x + F.fb * del; F.w = (F.w + 1) % F.n;
       x = (1 - F.mix) * x + F.mix * del;
     }
+    if (S.eLo) x = biq(S.eLo, x);
+    if (S.eMid) x = biq(S.eMid, x);
+    if (S.eHi) x = biq(S.eHi, x);
     return x * S.trim;
   }
 
@@ -350,6 +399,11 @@
   F.buf[F.w] = x + F.fb * del; F.w = (F.w + 1) % F.n;
   x = (1 - F.mix) * x + F.mix * del;
 }`,
+    // ...and the BOARD's three bands last, after the instrument's own chain (see
+    // makeStrip). This literal is in chain order; STAGE_ORDER is the authority.
+    eLo: "x = biq(S.eLo, x);",
+    eMid: "x = biq(S.eMid, x);",
+    eHi: "x = biq(S.eHi, x);",
   };
   // presence test per stage — the SAME condition the old per-sample guard used
   const STAGE_ON = {
@@ -364,8 +418,14 @@
     les: (S) => S.les,
     dly: (S) => S.dly,
     fla: (S) => S.fla,
+    eLo: (S) => S.eLo,
+    eMid: (S) => S.eMid,
+    eHi: (S) => S.eHi,
   };
-  const STAGE_ORDER = ["hp", "lp", "eq", "eq2", "sat", "comp", "ch", "ph", "les", "dly", "fla"];
+  // the board EQ is LAST — see makeStrip. The fused kernel's order IS the chain
+  // order, so this list and the reference stepper have to say the same sentence.
+  const STAGE_ORDER = ["hp", "lp", "eq", "eq2", "sat", "comp", "ch", "ph", "les", "dly", "fla",
+                       "eLo", "eMid", "eHi"];
   const KERNELS = new Map();
   function kernelFor(S) {
     const on = STAGE_ORDER.filter((k) => STAGE_ON[k](S));
@@ -464,6 +524,12 @@
       F.buf[F.w] = x + F.fb * del; F.w = (F.w + 1) % F.n;
       x = (1 - F.mix) * x + F.mix * del;
     }
+    // the board EQ is downstream of the delay line, so the ECHOES wear it too —
+    // without these three the tail would ring out untreated and a `hi: -12` would
+    // sound duller on the note than on its own repeats
+    if (S.eLo) x = biq(S.eLo, x);
+    if (S.eMid) x = biq(S.eMid, x);
+    if (S.eHi) x = biq(S.eHi, x);
     return x * S.trim;
   }
 
@@ -950,6 +1016,25 @@
         const wg = ctx.createGain(); wg.gain.value = mix; dl.connect(wg); wg.connect(sum); nodes.push(dl, lg, fb, wg);
       } });
     }
+    // THE BOARD'S THREE BANDS, last before the trim — the WebAudio twin of
+    // makeStrip's eLo/eMid/eHi, at the same BOARD_EQ frequencies and the same
+    // filter types. Without these, the page served WITHOUT COOP/COEP — which has
+    // no stream renderer at all (PROGRAM.md §4 item 1) and falls back to this
+    // graph — would draw a working EQ whose knobs moved nothing, which is the
+    // exact defect this round closed on the other path.
+    // COST, said out loud because PROGRAM.md §4 item 2 is about this very
+    // function: these are three BiquadFilterNodes per NOTE, built only when the
+    // desk asked for tone (absent => not built => byte-identical). They are the
+    // cheapest node type here and this chain already builds up to ten — but if
+    // the per-note node count is ever the problem again, this is one of the
+    // places to look.
+    for (const b of ["lo", "mid", "hi"]) {
+      if (!strip[b]) continue;
+      const e = BOARD_EQ[b], f = ctx.createBiquadFilter();
+      f.type = e.type === "ls" ? "lowshelf" : e.type === "hs" ? "highshelf" : "peaking";
+      f.frequency.value = e.f; f.Q.value = e.q; f.gain.value = strip[b];
+      chain(f);
+    }
     if (strip.trim != null && strip.trim !== 1) { const t = ctx.createGain(); t.gain.value = strip.trim; chain(t); }
     return { input, output: node, oscs, nodes };
   }
@@ -1262,6 +1347,18 @@
   }
 
   return { midiOfFreq, zoneFor, rateFor, zoneLeadIn, mixPCM, decodeUrlRaw, SamplerLive, buildInsertNodes, GAIN,
+    // THE STRIP, AS A STAGE ANYONE CAN RUN (2026-08-24, the desk-EQ round).
+    // These were reachable only under `__test`, which is why the strip could
+    // only ever run where the sampler ran — inside mixPCM's per-note loop — and
+    // a Faust-modelled voice, which never enters mixPCM, had no tone stage at
+    // all. They are pure functions of (spec, sr) and a sample: the renderers
+    // (stream-renderer.js renderUnitWindow, press/render-core.js renderUnit) now
+    // hold ONE state per UNIT for the life of the stream and step it after the
+    // insert chain, which is how a modelled voice reaches the board's EQ.
+    // NOT the shape PROGRAM.md §4 item 2 warns about: that was buildStripNodes
+    // allocating a WebAudio compressor per NOTE (164 notes -> 164 compressors).
+    // This is one Float32-stepping state per unit, allocated once at open.
+    makeStrip, stripStep, BOARD_EQ,
     // ENGINE-AUDIT Tier 2: the ONE selection-velocity formula (press +
     // live must both call it) and the delay-strip tail length (mixPCM renders
     // it; the stream renderer must add it to each note's window-filter end).

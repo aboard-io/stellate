@@ -451,6 +451,13 @@
       master: (w) => ({ glue: +0.6 * w }) },
   ];
   const ADJOF = {}; for (const a of ADJ) ADJOF[a.id] = a;
+  // WHICH ADJECTIVE FAMILY A SUBJECT INHERITS. Every `on` list above names
+  // band-kit's own seven chair ids, so a cast built from a document's voices
+  // (ui/produce.js) matched NOTHING and every adjective was silently
+  // unavailable on every voice of every eight-axes record. A row may declare
+  // `as` — "read my adjectives as the keys'/the guitar's/the voice's" — and a
+  // row that does not is read as itself, which is every row in this file.
+  const asOf = (sid) => (SUB[sid] && SUB[sid].as) || sid;
 
   /* the density ladder the bass walks when somebody says "busier" */
   const DENS = ["pedal", "fifths", "octaves", "walk", "eighths", "sixteenths"];
@@ -639,6 +646,17 @@
           emits(() => K.render(sec.melody.phrase, sec.melody.genre,
                                sec.melody.genre.bars))) s.add("tune");
     }
+    // ...AND A CAST THAT IS NOT BAND-KIT'S ANSWERS FOR ITSELF. The four chairs
+    // above are band-kit's own model — `sec.pattern`, `sec.guitar`,
+    // `sec.melody`, `sec.voice` — and the eight-axes page has none of them: its
+    // record is a list of named voices, and ui/produce.js installs one SUBJ row
+    // per voice. Without this line `livesIn` is false for every one of them, so
+    // "take away the cantor" answered "the cantor is not playing on this
+    // record" WHILE THE RECORD MOVED (measured 2026-08-24, design 04 §7.2). A
+    // row that knows whether it sounds says so; a row that does not (every
+    // fixed row above) carries no `sounds` and this loop passes it by, which is
+    // why the band page is byte-identical.
+    for (const S of SUBJ) if (S.sounds && S.sounds(secs)) s.add(S.id);
     SOUNDS.set(secs, s);
     return s;
   }
@@ -778,8 +796,15 @@
       const rows = (SCOPEFIELDS[S.id] || SCOPEFIELDS.record)();
       for (const sec of secs) applyRows(model, sec, rows, A, w, held, d, grids, noKit);
     }
-    if (verb === "make" && adj) applyAdj(model, secs, S, adj, w, held, d,
-                                         addMix, addMaster, grids, noKit);
+    // ...AND `on` IS THE WORD'S OWN DECLARATION OF WHERE IT IS HONEST, read by
+    // the MOVER as well as by the offering. It was read only by `targets`
+    // (:1593), so the two disagreed on exactly one branch and it was a branch
+    // that MOVES: `applyAdj`'s cast fallback casts the guitar for scope
+    // `record`, so "make the sound chugging" — a word whose `on` is
+    // ["guitar","amp"] — was never offered and put a punk record's guitar on a
+    // palm-muted patch anyway (measured 2026-08-24). One table, both readers.
+    if (verb === "make" && adj && adj.on.includes(asOf(S.id)))
+      applyAdj(model, secs, S, adj, w, held, d, addMix, addMaster, grids, noKit);
 
     /* ---- MORE / LESS: the amount of it ------------------------------- */
     if (verb === "more" || verb === "less") {
@@ -1041,6 +1066,13 @@
   function silence(secs, S, d, grids) {
     let did = false;
     for (const sec of secs) {
+      // A ROW MAY OWN ITS OWN SILENCE. The five branches below are band-kit's
+      // model — a kit lane, `nobass`, a chair's `part`, `sec.voice`,
+      // `sec.melody` — and the eight-axes document has a WORD for this instead
+      // (songs.js:63, `"out": [["drop", 1]]`, "a voice can be silent for a
+      // section without leaving the record"). A projected row hands that word
+      // in; nothing here has to learn what a document is.
+      if (S.out) { if (S.out(sec)) did = true; continue; }
       if (S.lane && grids) {
         touchKit(sec); const g = sec.genre;
         for (const bar of [g.kit, ...(g.kits || [])]) { if (!bar) continue;
@@ -1067,6 +1099,7 @@
   function bringIn(secs, S, w, d) {
     let did = false;
     for (const sec of secs) {
+      if (S.in) { if (S.in(sec)) did = true; continue; }   // the mirror of S.out
       if (S.id === "bass" || S.id === "line") {
         const g = ownGenre(sec, "g"); if (g.nobass) { g.nobass = false; did = true; }
       }
@@ -1122,10 +1155,15 @@
             d.fields.push({ f, from: was, to: v, noun: true }); }
         } }
       if (adj.tone) {
-        const paths = S.id === "bamp" || S.id === "bass" ? ["g.bassTone"]
-          : S.id === "amp" || S.id === "guitar" ? ["g.chairs.1.tone"]
-          : S.id === "keys" ? ["g.chairs.0.tone","g.tone"]
-          : S.id === "record" ? ["g.bassTone","g.chairs.0.tone","g.chairs.1.tone"] : [];
+        // A ROW THAT OWNS A CHAIR SAYS WHICH ONE. `S.ix` is the chair index a
+        // projected voice sits in; the shipped rows carry none and keep the
+        // keys=0 / guitar=1 map they were written with.
+        const as1 = asOf(S.id), ix0 = S.ix;
+        const paths = ix0 != null ? ["g.chairs." + ix0 + ".tone"]
+          : as1 === "bamp" || as1 === "bass" ? ["g.bassTone"]
+          : as1 === "amp" || as1 === "guitar" ? ["g.chairs.1.tone"]
+          : as1 === "keys" ? ["g.chairs.0.tone","g.tone"]
+          : as1 === "record" ? ["g.bassTone","g.chairs.0.tone","g.chairs.1.tone"] : [];
         for (const p of paths) {
           const rest = p.split(".").slice(1);
           const cont = containerOf(sec, "g", rest.slice(0, -1));
@@ -1140,29 +1178,44 @@
           if (any) { cont[f] = o; d.fields.push({ f: "tone", quiet: true }); }
         }
       }
+      const cix = S.ix != null ? S.ix : 1;      // the chair these two write
       if (adj.chair) { const n = adj.chair(w);
         if (n) { const ch = touchChairs(sec);
           for (const [f, v] of Object.entries(n))
-            if (ch[1] && ch[1][f] !== v) { ch[1][f] = v;
+            if (ch[cix] && ch[cix][f] !== v) { ch[cix][f] = v;
               d.fields.push({ f, to: v, noun: true, quiet: true }); } } }
       if (adj.cast && w >= NOUN_TH.instr) {
-        const fam = adj.cast[S.id] || adj.cast[S.under] ||
-          (S.id === "record" ? adj.cast.guitar : null);
+        const fam = adj.cast[asOf(S.id)] || adj.cast[S.under] ||
+          (asOf(S.id) === "record" ? adj.cast.guitar : null);
         if (fam) { const ch = touchChairs(sec);
           const pick = fam.find((x) => F.INSTRCHOICES[x]);
-          if (pick && ch[1] && ch[1].instr !== pick) {
-            ch[1].instr = pick; d.cast.push(pick);
+          if (pick && ch[cix] && ch[cix].instr !== pick) {
+            ch[cix].instr = pick; d.cast.push(pick);
             d.fields.push({ f: "instr", to: pick, noun: true });
             ownGenre(sec, "g").instr = ch.map((c) => c.instr); } }
       }
       if (adj.reg) {
-        const ix = S.id === "keys" ? 0 : S.id === "guitar" ? 1 : null;
+        const as2 = asOf(S.id);
+        const ix = S.ix != null ? S.ix
+          : as2 === "keys" ? 0 : as2 === "guitar" ? 1 : null;
         const step = w >= 0.5 ? adj.reg : 0;
         if (!step) continue;
         if (ix != null) { const ch = touchChairs(sec);
-          if (ch[ix]) { ch[ix].reg = (ch[ix].reg || 0) + step;
-            d.fields.push({ f: "register", to: ch[ix].reg }); } }
-        else if (S.id === "bass" || S.id === "line") {
+          // A REGISTER HAS RAILS, AND A CHAIR'S DID NOT. `bassReg` is clamped to
+          // NUM.bassReg's +-2 four lines down and the CHAIR's was not, so
+          // "lower" on a voice already sitting AT the bottom rail walked it off
+          // the piano: measured 2026-08-24 on a punk record whose second guitar
+          // is cast at reg -2, one press took it to -3 and the lowest note it
+          // played went 29 -> 17. dice.test.js's own predicate calls that
+          // unplayable ("21..108 is a piano, end to end"), and PLAYABLE is the
+          // one promise a permissive producer has to keep. The step is REFUSED
+          // rather than clamped, so a record that already sits outside the rails
+          // is never dragged back into them by a note about something else.
+          if (ch[ix]) { const nx = (ch[ix].reg || 0) + step;
+            if (nx >= NUM.bassReg.lo && nx <= NUM.bassReg.hi) {
+              ch[ix].reg = nx;
+              d.fields.push({ f: "register", to: ch[ix].reg }); } } }
+        else if (as2 === "bass" || as2 === "line") {
           const g = ownGenre(sec, "g");
           g.bassReg = Math.max(-2, Math.min(2, (g.bassReg || 0) + step));
           d.fields.push({ f: "bassReg", to: g.bassReg });
@@ -1276,6 +1329,12 @@
     return null;
   }
   const LANEW = (d) => (LANES[d] ? LANES[d].name : d);
+  // the three sidecar prefixes, in the kernel's own terms (kernel.js:2304).
+  // Three rows, and they exist because a sidecar move was speechless — see the
+  // measurement in `speak` below.
+  const SIDEWORD = { "?": (w) => "changed how often the " + w + " sounds",
+                     "~": (w) => "moved the " + w + " off the grid",
+                     "!": (w) => "put a grace note in front of the " + w };
   const DKWORD = { tr909: "a 909", tr808: "an 808", tr606: "a 606", cr78: "a CR-78",
                    power: "a big rock kit", jazz: "a jazz kit", brush: "brushes",
                    room: "a room kit", acoustic: "an acoustic kit",
@@ -1319,6 +1378,21 @@
           } else for (const x of set)
             out.push((x.up ? "opened up the " : "thinned the ") + LANEW(x.lane) +
                      " (" + x.n + " step" + (x.n === 1 ? "" : "s") + ")");
+        }
+        // ...AND THE SIDECARS, WHICH WERE MOVES NOBODY COULD SAY. `?k` is how
+        // often the kick sounds, `~r` how far the ride sits behind the grid,
+        // `!p` the grace note before the perc — kernel.js:2304 reads them WITH
+        // their lane and never as one of their own, so `LANES[k]` is undefined
+        // for all six and the walk above dropped every one of them on the
+        // floor. Measured 2026-08-24 on a punk record: "make the snare toto"
+        // put two steps into `~s`, `moved(d)` was TRUE, and the sheet said
+        // "it's as toto as it's going to get". Same class as H5's tone — a move
+        // the producer had made and was reporting as a failure.
+        for (const lane of new Set([...Object.keys(was), ...Object.keys(now)])) {
+          const side = SIDEWORD[lane[0]]; if (!side) continue;
+          const dr = lane.slice(1); if (!LANES[dr]) continue;
+          if (same(was[lane], now[lane])) continue;
+          out.push(side(LANEW(dr)));
         }
       }
     }
@@ -1386,6 +1460,15 @@
     // to have moved something is worse than one who says there was nothing
     // there.
     if (!out.length) {
+      // A TONE-ONLY MOVE IS REAL, AND IT WAS BEING REPORTED AS A FAILURE.
+      // Every tone field is pushed `quiet` (:925, :1140) so the loop above
+      // skips it, `out` comes back empty and the four honest failures below
+      // claim nothing happened — while the chair's tone IS the target's after
+      // the press (measured 2026-08-24: "make the cantor doowop" left the
+      // record with doowop's colour and the sheet saying "it's as doowop as
+      // it's going to get"). The producer says the one thing that is true.
+      if (d.fields.some((f) => f.f === "tone" || /^tone\./.test(f.f)))
+        return ["moved the colour of " + S.w];
       if (d.nogrid) return ["this one counts in " + ((base[0].genre.meter || {}).steps === 12
         ? "three" : "something other than four") + " — I can move the sound but not the pattern"];
       if (note.d && GENRES[note.d] && !SCOPEFIELDS[note.s])
@@ -1423,7 +1506,15 @@
     // times because the record has five sections.
     return out.filter((x, i) => out.indexOf(x) === i);
   }
-  const chairOut = (base, id) => base.every((s) =>
+  // A PROJECTED ROW KNOWS ITS OWN SILENCE. The five branches below are
+  // band-kit's four chairs plus the bass, addressed by name; a cast installed
+  // by ui/produce.js is named for the record's own voices and falls off the end
+  // of the chain into `false` — "never out" — which made `livesIn` true for a
+  // voice the document had said `out` in every section. A row that can answer
+  // does; everything else takes the shipped chain, byte for byte.
+  const chairOut = (base, id) => (SUB[id] && SUB[id].silent)
+    ? SUB[id].silent(base)
+    : base.every((s) =>
     id === "voice" ? !s.voice : id === "tune" ? !s.melody
     : id === "bass" || id === "line" ? !!s.genre.nobass
     : id === "keys" ? !(s.genre.chairs && s.genre.chairs[0] && s.genre.chairs[0].part)
@@ -1590,7 +1681,7 @@
       // both move nothing HERE. There are two dozen of them, so the honest
       // test is the cheap one: make the move and see. Same epsilon law,
       // same reason.
-      for (const a of ADJ) if (a.on.includes(sid) && wouldMove(model2, secs, sid, a.id))
+      for (const a of ADJ) if (a.on.includes(asOf(sid)) && wouldMove(model2, secs, sid, a.id))
         out.push({ id: a.id, w: a.w, kind: "adj" });
     } else if (verb === "add") {
       // "just add it" is only offered where the record's own idiom has
@@ -1676,7 +1767,16 @@
       delete m2.prod; return m2; })(); };
   const clearNotes = (m) => { const m2 = { ...m }; delete m2.prod; return m2; };
 
+  // FAM / pickInstr / ownGenre are exported for ONE caller and it is named
+  // here: ui/produce.js, which builds a cast out of a document's own voices.
+  // It needs FAM to say which adjective family an instrument belongs to
+  // (`as`), pickInstr to give a projected chair the same `noun` target the
+  // shipped chair rows get, and ownGenre because a row's own `out`/`in` moves
+  // the section genre and MUST take the same copy-on-write flag every other
+  // writer in this file takes — a second spelling of `sec.__ownG` is how the
+  // base record gets edited under the page.
   return { VERBS, VERB, SUBJ, SUB, ADJ, ADJOF, NOUN_TH, NUM, OBJ, GROUPS,
+           FAM, pickInstr, ownGenre,
            PRIORITY, CREATE_TH, DELETE_TH, SCOPEFIELDS, DENS, ADDPAT,
            ALPHA, START, MAXNOTES, MAXW: 1, up, down, pct, takes,
            gridMove, sdOf, firstStep, targetsFor, subjectsFor, sentence, opWord,

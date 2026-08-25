@@ -1,0 +1,676 @@
+// nukernel/atlas.js — WHERE AND WHEN THE RECORDS ARE.
+//
+// Paul, 2026-08-24: "i liked when it asked a few questions about when and where
+// but how about this: a slider for time and a world map on top that shows where
+// the genres are happening! I scroll to a time, click a place, and now i've got
+// a song."
+//
+// This file is the DATA tier of that: it composes nothing and draws nothing. It
+// answers four questions — which records are where, which are when, where a
+// place is on a sphere, and where that lands in a rectangle. ui/atlas.js draws
+// it; precompose.js writes the record.
+//
+// WHAT IT REPLACES, AND WHY THE OLD DOOR WAS ROTTED. band-kit.js:1790-1831
+// already asks "when is it? / where are you? / where do you play?", and its
+// DECADES list at :1820 already does PLAN.md Phase 3's "century first, then
+// decade where it matters". But it reads `when`/`where`/`venue` off band-kit's
+// OWN catalog (band-kit.js:814), and that catalog has THIRTY records — measured
+// 2026-08-24, `survivors({})` returns 30 where genres.js has 122. The when/where
+// question on this branch reaches a different, smaller catalog than the page's.
+// This one reaches all 116 that have a place. Two place vocabularies is also
+// already a drift: band-kit says "Rio", genres.js says "Rio de Janeiro", which
+// is what ALIAS is for and what gate G3 watches.
+//
+// THE YEAR IS EXTRACTED, NOT PARSED AT RUNTIME AND NOT MIGRATED. Three ways to
+// get a year out of `label: "Kingston 1969"`, and the reasons the other two
+// lost: (a) parse at draw time — `label` is a DISPLAY string, so the day
+// somebody writes "London, 1979" the map silently loses a record, and a silent
+// loss is the failure mode this repo has legislated against; (b) add `year:` and
+// `place:` to 116 genres.js entries — a 6000-line file every other slice is
+// editing, and geography is not a musical fact: a genre is a point in the eight
+// axes and a city's latitude is not one of them. So (c): extract ONCE with a
+// regex, commit the output below, and re-run the same regex in the gate
+// (atlas.gate.js G2) demanding deep-equality. Zero runtime parsing, zero
+// migration, and an alarm the moment the label and the map disagree.
+// `node nukernel/atlas.gate.js --bake` rewrites the WHEN block in place.
+//
+// UMD, like every sibling in the data tier (genres.js:23, precompose.js:45): no
+// DOM, no window, node-requirable, so the gate calls every one of these
+// functions with no browser anywhere.
+(function (root) {
+  "use strict";
+
+  /* ======================================================================
+     1 · PLACES — the hand-written, checked, committed geography
+     ======================================================================
+     65 rows: the 62 cities that appear in a genres.js label, plus Bristol,
+     Memphis and Reykjavík, which only band-kit's smaller catalog names (G3
+     holds every band-kit `where` word to a row here, so the two vocabularies
+     cannot drift further apart than they already have).
+
+     AND SIX MORE ON 2026-08-25 — Aksum, Accra, Addis Ababa, Kinshasa, Bamako
+     and Oran — with the African history round (Paul: "fix the afrobeat
+     parents and add the missing African history"). MEASURED before it: of 124
+     place-year anchors, FIVE were on the African continent, in three cities,
+     and none older than 1971, against SIX in the Afro-diaspora. Aksum is now
+     the oldest dot on the map, sixty years the far side of Rome.
+
+     KINSHASA IS SPELLED KINSHASA THOUGH THE RECORD SAYS 1960, when the city
+     was Léopoldville. G3 below enforces ONE SPELLING PER PLACE and a second
+     name for the same coordinates would put two dots where there is one city
+     — the same reason ALIAS exists for Rio. The old name is in the anchor's
+     comment, which is where a historical fact that is not a map dot belongs.
+
+     CAIRO, CHANDIGARH AND GUADALAJARA ARRIVED ON 2026-08-24 with the 2020s
+     anchors Paul asked for ("'now' is a lie, it's the 2010s. Add the 2020s as
+     now") — mahraganat, punjabipop and corridotumbado. Geography follows the
+     catalog, never the other way round: a row here with no record behind it
+     fails G3 as an orphan, which is why these three landed the same hour their
+     labels did and not before.
+
+     Decimal degrees, 2dp, city centre. REGIONS (Provence, Essex, Kent) take the
+     region's rough centre. NEIGHBOURHOODS (Harlem, Greenwich Village, Muswell
+     Hill) take the neighbourhood's, not the city's — Muswell Hill is not
+     London, and the Kinks knew it.
+
+     THESE ROWS ARE THE ONE THING IN THIS SLICE A MACHINE CANNOT CHECK.
+     Gate G4 catches a city in the sea (bounds) and G10 catches two dots on top
+     of each other; neither can catch one 200 km off. PROGRAM.md §5 names one
+     human pass over the rendered world view as required, and this comment is
+     the pointer to it. */
+  const PLACES = {
+    "Accra": [5.60, -0.19], "Addis Ababa": [9.03, 38.74], "Aksum": [14.13, 38.72],
+    "Antwerp": [51.22, 4.40], "Atlanta": [33.75, -84.39], "Austin": [30.27, -97.74],
+    "Bamako": [12.64, -8.00],
+    "Basildon": [51.57, 0.46], "Berlin": [52.52, 13.40], "Boston": [42.36, -71.06],
+    "Bristol": [51.45, -2.59], "Buenos Aires": [-34.60, -58.38],
+    "Cairo": [30.04, 31.24], "Chandigarh": [30.73, 76.78],
+    "Chapel Hill": [35.91, -79.06], "Charlotte": [35.23, -80.84],
+    "Chicago": [41.88, -87.63], "Cincinnati": [39.10, -84.51],
+    "Cleveland": [41.50, -81.69], "Crawley": [51.11, -0.19], "Detroit": [42.33, -83.05],
+    "Düsseldorf": [51.23, 6.78], "Essex": [51.75, 0.50], "Florence": [43.77, 11.26],
+    "Glasgow": [55.86, -4.25], "Greenwich Village": [40.73, -74.00],
+    "Guadalajara": [20.67, -103.35],
+    "Harlem": [40.81, -73.94], "Johannesburg": [-26.20, 28.05], "Kent": [51.20, 0.75],
+    "Kingston": [17.97, -76.79], "Kinshasa": [-4.32, 15.31],
+    "Lagos": [6.52, 3.38], "Las Vegas": [36.17, -115.14],
+    "Leipzig": [51.34, 12.37], "Liverpool": [53.41, -2.98], "London": [51.51, -0.13],
+    "Los Angeles": [34.05, -118.24], "Manchester": [53.48, -2.24],
+    "Memphis": [35.15, -90.05], "Miami": [25.76, -80.19], "Muswell Hill": [51.59, -0.14],
+    "Nashville": [36.16, -86.78], "New Orleans": [29.95, -90.07],
+    "New York": [40.71, -74.01], "Oklahoma City": [35.47, -97.52],
+    "Oran": [35.70, -0.63],
+    "Orlando": [28.54, -81.38], "Paris": [48.86, 2.35], "Philadelphia": [39.95, -75.17],
+    "Portland": [45.52, -122.68], "Provence": [43.75, 5.50], "Reims": [49.26, 4.03],
+    "Reykjavík": [64.15, -21.94], "Rio de Janeiro": [-22.91, -43.17],
+    "Rome": [41.90, 12.50], "San Diego": [32.72, -117.16], "San Francisco": [37.77, -122.42],
+    "San Juan": [18.47, -66.11], "Sausalito": [37.86, -122.49], "Seoul": [37.57, 126.98],
+    "Sofia": [42.70, 23.32], "St. Louis": [38.63, -90.20], "Stourbridge": [52.46, -2.15],
+    "Swindon": [51.56, -1.78], "Tampa": [27.95, -82.46], "Teaneck": [40.89, -74.02],
+    "Tokyo": [35.68, 139.65], "Toronto": [43.65, -79.38], "Venice": [45.44, 12.32],
+    "Vienna": [48.21, 16.37],
+  };
+
+  /* ONE SPELLING PER PLACE. band-kit.js:814's house record says it comes from
+     "Rio"; genres.js's bossa says "Rio de Janeiro". Rather than edit either
+     catalog — the merge of the two is its own job, PROGRAM.md §4 item 14 — the
+     map resolves both to one dot, and G3 fails the day a third spelling shows
+     up without a row here. */
+  const ALIAS = { "Rio": "Rio de Janeiro" };
+
+  /* ONE PLACE INSIDE ANOTHER — declared, because a machine cannot tell.
+     PROGRAM.md §5 G10 asks that the Britain view report ZERO dot-pairs closer
+     than 26 map units. Measured 2026-08-24 it reports exactly two, and no
+     rectangle fixes either: Muswell Hill is 8.8 units from London and Basildon
+     is 20.1 from Essex, and separating Muswell Hill from London by 26 units
+     needs a view under 3.7° of longitude — which cannot hold Glasgow and Kent
+     at the same time. The pairs are not a packing bug; they are the fact that a
+     neighbourhood is IN its city and a town is IN its county. So the
+     containment is written down, G10 exempts a declared pair and still fails
+     any other, and ui/atlas.js says "Muswell Hill, in London" in the Nearby
+     list — which is the recovery path a thumb between them actually needs.
+     (The alternative, moving a dot until a gate is happy, would be putting the
+     Kinks somewhere they never lived.) */
+  const WITHIN = {
+    "Muswell Hill": "London",       // a north London suburb; the Kinks' own
+    "Harlem": "New York",           // uptown Manhattan
+    "Greenwich Village": "New York",// lower Manhattan
+    "Basildon": "Essex",            // a town in the county
+    // NOT HERE: Sausalito. It is 2.1 map units from San Francisco in the North
+    // America view and it would be convenient to declare — but it is its own
+    // town across the Golden Gate, not a district of anything, and a
+    // containment table that says otherwise to quiet a gate is a table that
+    // lies. G10 prints the pair for that view and nobody asserts on it.
+  };
+
+  /* ======================================================================
+     2 · WHEN — 116 rows, BAKED from the genres.js labels
+     ======================================================================
+     GENERATED. Do not hand-edit: `node nukernel/atlas.gate.js --bake` rewrites
+     everything between the two markers, and G2 fails if it drifts. The regex is
+     /^(.+?)\s+(\d{3,4})$/ over `GENRES[gk].label`, and it is the ONLY place a
+     label is ever read as anything but a display string. */
+  /* WHEN:BEGIN */
+  const WHEN = {
+    fugue:          { place: "Leipzig", year: 1725 },
+    acid:           { place: "Chicago", year: 1987 },
+    newwave:        { place: "London", year: 1979 },
+    vaporwave:      { place: "Portland", year: 2011 },
+    blues:          { place: "Chicago", year: 1952 },
+    rock:           { place: "London", year: 1969 },
+    gregorian:      { place: "Rome", year: 600 },
+    bulgarian:      { place: "Sofia", year: 1975 },
+    spem:           { place: "London", year: 1570 },
+    counterpoint:   { place: "Vienna", year: 1725 },
+    neoclassical:   { place: "Berlin", year: 2011 },
+    drone:          { place: "New York", year: 1964 },
+    sludge:         { place: "New Orleans", year: 1991 },
+    tango:          { place: "Buenos Aires", year: 1935 },
+    deathmetal:     { place: "Tampa", year: 1990 },
+    eurythmics:     { place: "London", year: 1983 },
+    isley:          { place: "Teaneck", year: 1973 },
+    toto:           { place: "Los Angeles", year: 1982 },
+    jodeci:         { place: "Charlotte", year: 1991 },
+    beatles:        { place: "Liverpool", year: 1962 },
+    steely:         { place: "Los Angeles", year: 1977 },
+    postrock:       { place: "Austin", year: 2003 },
+    boombap:        { place: "New York", year: 1994 },
+    trap:           { place: "Atlanta", year: 2003 },
+    house:          { place: "Chicago", year: 1986 },
+    garage:         { place: "London", year: 1999 },
+    dnb:            { place: "London", year: 1994 },
+    disco:          { place: "New York", year: 1977 },
+    funk:           { place: "Cincinnati", year: 1967 },
+    motown:         { place: "Detroit", year: 1965 },
+    rnb:            { place: "Philadelphia", year: 1994 },
+    gospel:         { place: "Chicago", year: 1932 },
+    reggae:         { place: "Kingston", year: 1969 },
+    dub:            { place: "Kingston", year: 1973 },
+    ska:            { place: "Kingston", year: 1962 },
+    afrobeat:       { place: "Lagos", year: 1971 },
+    bossa:          { place: "Rio de Janeiro", year: 1958 },
+    countrypop:     { place: "Nashville", year: 1945 },
+    synthpop:       { place: "Basildon", year: 1981 },
+    shoegaze:       { place: "London", year: 1991 },
+    citypop:        { place: "Tokyo", year: 1984 },
+    punk:           { place: "New York", year: 1976 },
+    ambient:        { place: "London", year: 1978 },
+    techno:         { place: "Detroit", year: 1988 },
+    jazz:           { place: "New York", year: 1945 },
+    bodiddley:      { place: "Chicago", year: 1955 },
+    chuckberry:     { place: "St. Louis", year: 1955 },
+    doowop:         { place: "Harlem", year: 1955 },
+    skiffle:        { place: "London", year: 1956 },
+    minimalism:     { place: "New York", year: 1967 },
+    kraftwerk:      { place: "Düsseldorf", year: 1977 },
+    electro:        { place: "New York", year: 1982 },
+    hymn:           { place: "Boston", year: 1831 },
+    crooner:        { place: "Los Angeles", year: 1953 },
+    yuletide:       { place: "New York", year: 1942 },
+    merseybeat:     { place: "Liverpool", year: 1963 },
+    psychpop:       { place: "London", year: 1968 },
+    bigbeat:        { place: "Essex", year: 1997 },
+    drill:          { place: "Chicago", year: 2012 },
+    clubpop:        { place: "New York", year: 1983 },
+    powerballad:    { place: "Los Angeles", year: 1991 },
+    retrofunkpop:   { place: "Los Angeles", year: 2013 },
+    reggaeton:      { place: "San Juan", year: 2004 },
+    latinpop:       { place: "Miami", year: 2001 },
+    kpop:           { place: "Seoul", year: 2012 },
+    boyband:        { place: "Orlando", year: 1997 },
+    emo:            { place: "Chicago", year: 1999 },
+    screamo:        { place: "San Diego", year: 1994 },
+    confessionalpop: { place: "Nashville", year: 2008 },
+    darkrnb:        { place: "Toronto", year: 2011 },
+    bigroom:        { place: "Las Vegas", year: 2012 },
+    blueeyedsoul:   { place: "Philadelphia", year: 1976 },
+    folkduo:        { place: "Greenwich Village", year: 1964 },
+    worldfolk:      { place: "Johannesburg", year: 1986 },
+    jamband:        { place: "San Francisco", year: 1972 },
+    sophistirock:   { place: "London", year: 1986 },
+    motorik:        { place: "Düsseldorf", year: 1974 },
+    roboticpop:     { place: "Düsseldorf", year: 1978 },
+    industrialmetal: { place: "Chicago", year: 1988 },
+    ebm:            { place: "Chicago", year: 1989 },
+    synthduo:       { place: "London", year: 1985 },
+    musichallrock:  { place: "Muswell Hill", year: 1966 },
+    orchpsych:      { place: "Oklahoma City", year: 1999 },
+    altcountry:     { place: "Chicago", year: 1996 },
+    yachtsoul:      { place: "San Francisco", year: 1976 },
+    yachtrock:      { place: "Austin", year: 1979 },
+    songwriterpiano: { place: "New York", year: 1971 },
+    softfolk:       { place: "Chapel Hill", year: 1970 },
+    singersongwriter: { place: "New York", year: 1972 },
+    coastrock:      { place: "Sausalito", year: 1977 },
+    spacerock:      { place: "London", year: 1973 },
+    grebo:          { place: "Stourbridge", year: 1990 },
+    melodictechno:  { place: "Kent", year: 1991 },
+    bleeptechno:    { place: "Manchester", year: 1989 },
+    industrialbreaks: { place: "Swindon", year: 1989 },
+    industrialrock: { place: "Cleveland", year: 1989 },
+    analogsynthpop: { place: "Basildon", year: 1980 },
+    gothsynth:      { place: "Basildon", year: 1990 },
+    gothicpop:      { place: "Crawley", year: 1987 },
+    postpunk:       { place: "Manchester", year: 1979 },
+    dancepostpunk:  { place: "Manchester", year: 1983 },
+    madchester:     { place: "Manchester", year: 1990 },
+    janglepop:      { place: "Manchester", year: 1984 },
+    indiedance:     { place: "Glasgow", year: 1990 },
+    organum:        { place: "Paris", year: 1200 },
+    troubadour:     { place: "Provence", year: 1210 },
+    estampie:       { place: "Paris", year: 1300 },
+    arsnova:        { place: "Reims", year: 1360 },
+    pavane:         { place: "Antwerp", year: 1551 },
+    continuo:       { place: "Florence", year: 1602 },
+    concerto:       { place: "Venice", year: 1725 },
+    classical:      { place: "Vienna", year: 1785 },
+    nocturne:       { place: "Paris", year: 1835 },
+    romantic:       { place: "Vienna", year: 1876 },
+    barcarolle:     { place: "Paris", year: 1881 },
+    parlor:         { place: "New York", year: 1892 },
+    amapiano:       { place: "Johannesburg", year: 2020 },
+    afrobeats:      { place: "Lagos", year: 2021 },
+    hyperpop:       { place: "London", year: 2021 },
+    bailefunk:      { place: "Rio de Janeiro", year: 2022 },
+    corridotumbado: { place: "Guadalajara", year: 2023 },
+    punjabipop:     { place: "Chandigarh", year: 2022 },
+    mahraganat:     { place: "Cairo", year: 2021 },
+    bedroompop:     { place: "Los Angeles", year: 2020 },
+    zema:           { place: "Aksum", year: 540 },
+    highlife:       { place: "Accra", year: 1957 },
+    marabi:         { place: "Johannesburg", year: 1935 },
+    mbube:          { place: "Johannesburg", year: 1939 },
+    ethiojazz:      { place: "Addis Ababa", year: 1969 },
+    congorumba:     { place: "Kinshasa", year: 1960 },
+    kwaito:         { place: "Johannesburg", year: 1994 },
+    mandeguitar:    { place: "Bamako", year: 1970 },
+    rai:            { place: "Oran", year: 1985 },
+  };
+  /* WHEN:END */
+
+  /* THE SIX THAT ARE NOT PLACES. genres.js:306 already ruled on them: "The six
+     FUNCTION genres … declare nothing: a role has a job, not a history." A role
+     is not a city and 1969 is not a fact about a pad. They are named HERE, with
+     a reason each, so that a 123rd genre arriving with no atlas row FAILS gate
+     G1 by name instead of vanishing quietly off the map. */
+  const EXCLUDE = {
+    simple:  "a role, not a record — the plain default, with no history",
+    solo:    "a role: whoever is taking it, wherever the record is from",
+    vocal:   "a role: the voice out front, in any city",
+    backing: "a role: the voices behind it, in any city",
+    riff:    "a role: the figure the record is built on",
+    pad:     "a role: the sustained thing underneath",
+  };
+
+  /* ======================================================================
+     3 · THE DERIVED YEAR AXIS
+     ======================================================================
+     65 stops, one per year the catalog actually has. Derived at load and never
+     typed: the day a genre is added with a new year the slider grows a stop by
+     itself. THIS IS THE SCALE FUNCTION — `yearAt(i) = YEARS[i]` — and the whole
+     argument for it is density. Measured 2026-08-24: 17 records before 1900,
+     5 in 1900-49, 94 from 1950. A linear 600→2013 slider spends 72% of its
+     travel on 22 records. Rank spends every stop on a year that EXISTS (G6),
+     so there is no dead scroll position anywhere on the control. */
+  const YEARS = Array.from(new Set(Object.keys(WHEN).map((k) => WHEN[k].year)))
+    .sort((a, b) => a - b);
+
+  /* THE WORDS FOR THE YEARS. band-kit's own DECADES (band-kit.js:1820-1824),
+     GROW-ONLY — every existing word keeps its place, so every existing tap
+     still lands — plus the two the band page cannot reach: five records sit in
+     the thirties and forties (gospel 1932, tango 1935, yuletide 1942, jazz
+     1945, countrypop 1945) and band-kit's list jumps 1800s -> the fifties.
+     Each `y` is the FIRST catalog year of its era, so the menu always lands on
+     a real record. G5b holds both halves of that.
+
+     "NOW" WAS A LIE AND IT IS NOW DERIVED. Paul, 2026-08-24: "'now' is a lie,
+     it's the 2010s. Add the 2020s as now." He is right and it was worse than he
+     said: this row read { w: "now", y: 2011 } while the catalog's newest record
+     was retrofunkpop, Los Angeles 2013, and nothing in genres.js was past 2013
+     — all 116 checked. So the 2011 row is renamed to what it actually is, and
+     "now" becomes a row that EXISTS ONLY IF THE CATALOG REACHES THE 2020s.
+
+     DERIVED, NOT TYPED, because this slice does not own genres.js and the 2020s
+     anchor lands there in a parallel hand. A hard-coded { w: "now", y: 2020 }
+     would be the same lie one decade later — G5b's law is that every ERAS year
+     is a real catalog year, and a word with no record behind it is exactly what
+     that law exists to catch. The day an anchor with a 2020s label lands, YEARS
+     grows a stop by itself (it is derived from WHEN) and this row appears with
+     the real year of that record in it. Nothing else has to change.
+
+     The era <select> is gone with the rest of the navigation UX, so ERAS is no
+     longer a control at all: it supplies the word in #atlasSay and it is what
+     G5b measures. */
+  const ERAS = (() => {
+    const rows = [
+      // THE FIVE-HUNDREDS ARRIVED 2026-08-25 with zema, "Aksum 540" — the
+      // oldest record in the catalog and the first era word that is not
+      // European. G5b's law is satisfied the only way it can be: 540 is a
+      // real catalog year, because an anchor is standing behind it.
+      { w: "the five-hundreds",     y: 540 },
+      { w: "the six-hundreds",      y: 600 },  { w: "the twelve-hundreds",   y: 1200 },
+      { w: "the thirteen-hundreds", y: 1300 }, { w: "the fifteen-hundreds",  y: 1551 },
+      { w: "the sixteen-hundreds",  y: 1602 }, { w: "the seventeen-hundreds", y: 1725 },
+      { w: "the eighteen-hundreds", y: 1835 }, { w: "the thirties",          y: 1932 },
+      { w: "the forties",           y: 1942 }, { w: "the fifties",           y: 1952 },
+      // ...and "the sixties" moved 1962 -> 1960 in the same hand, because the
+      // rule this table states one paragraph up is that each `y` is the FIRST
+      // catalog year of its era, and Kinshasa 1960 is now earlier than
+      // Kingston 1962. The word is unchanged; the record it lands on is a
+      // year older.
+      { w: "the sixties",           y: 1960 }, { w: "the seventies",         y: 1970 },
+      { w: "the eighties",          y: 1980 }, { w: "the nineties",          y: 1990 },
+      { w: "the two-thousands",     y: 2001 }, { w: "the twenty-tens",       y: 2011 },
+    ];
+    const now = YEARS.find((y) => y >= 2020);
+    if (now != null) rows.push({ w: "now", y: now });
+    return rows;
+  })();
+
+  /* ======================================================================
+     4 · VIEWS — NO LONGER THE ZOOM. NOW THE TABLE arcFor() READS.
+     ======================================================================
+     REVERSED 2026-08-24, and the paragraph that stood here is kept underneath
+     because reversing a decision silently is how the next person makes it
+     again. Paul: "Get rid of all ux for navigating except for the 'when' slider
+     which should go across the whole screen and the 3d globe. get rid of the
+     era select boxes, the look at select box, the 'nearby' select box, the
+     genre list, etc." The "look at" <select> WAS this table, so this table
+     stops being a control.
+
+     WHAT IT SAID, AND ALL OF IT WAS TRUE OF A PLATE CARRÉE: "A named rectangle
+     is the WHOLE zoom mechanism. No pan, no pinch, no gesture state machine —
+     the parent's 400-line gestures.js exists to drag waypoints and there are
+     none here — and it fixes density and thumb size at once: the Britain view
+     puts London and Manchester 78 map units apart where the world view puts
+     them 10. (Gate G10 is that measurement, and it is why Britain has a
+     rectangle at all.)"
+
+     WHAT IT IS FOR NOW: `arcFor(place)` below asks which of these rectangles is
+     the smallest one containing a place, and turns its width into DEGREES OF
+     ARC for ui/globe.js to fly to. Five rows of taste about how close you want
+     to stand to Manchester, kept as data instead of thrown away and re-guessed
+     as a constant. `project`, `heightOf` and `inView` survive with it: they are
+     no longer how the page draws, they are the frame gate G10 measures dot
+     packing in, which is a question about GEOGRAPHY and not about a projection.
+
+     SEOUL AND TOKYO GET NO RECTANGLE OF THEIR OWN, on purpose: two places, two
+     records, and they are 1,150 km apart, which is legible in the world view.
+     Do not "fix" this by adding an Asia row — add one when a record makes two
+     Japanese cities collide. */
+  const VIEWS = {
+    "the world":     { lon0: -170, lon1: 180, lat0: -58,  lat1: 78 },
+    "Britain":       { lon0: -8,   lon1: 3,   lat0: 49.5, lat1: 58.5 },
+    "Europe":        { lon0: -25,  lon1: 32,  lat0: 34,   lat1: 68 },
+    "North America": { lon0: -128, lon1: -64, lat0: 16,   lat1: 50 },
+    "the south":     { lon0: -90,  lon1: 45,  lat0: -40,  lat1: 25 },
+  };
+
+  /* THE MAP WAS 1200 UNITS WIDE, ALWAYS, and its height was DERIVED. Plate
+     carrée with SQUARE degrees: one scale for both axes, so no dot was ever
+     stretched and the viewBox aspect ratio carried the crop. Two
+     multiplications, no trigonometry, invertible in one line.
+
+     NOTHING DRAWS THROUGH THIS ANY MORE — ui/globe.js is an orthographic
+     projection of a sphere and `unit()` below is its entry point. It stays
+     because gate G10 measures dot packing in it, and because a rectangle is the
+     right frame for that question: "are these two places too close to tell
+     apart" is about where the cities are, not about which pose the camera
+     happens to be in. */
+  const W = 1200;
+  const project = (v, lat, lon) => {
+    const s = W / (v.lon1 - v.lon0);
+    return { x: (lon - v.lon0) * s, y: (v.lat1 - lat) * s };
+  };
+  const heightOf = (v) => (v.lat1 - v.lat0) * (W / (v.lon1 - v.lon0));
+  const inView = (v, lat, lon) =>
+    lon >= v.lon0 && lon <= v.lon1 && lat >= v.lat0 && lat <= v.lat1;
+
+  /* ======================================================================
+     5 · THE QUESTIONS
+     ====================================================================== */
+  const canon = (name) => (ALIAS[name] || name);
+  const placeOf = (name) => {
+    const c = canon(name);
+    return PLACES[c] ? PLACES[c].slice() : null;
+  };
+
+  // BUILT ONCE, at load. 116 rows walked per slider tick, five times a drag,
+  // is work nothing asked for; the table is immutable because WHEN is.
+  const BYPLACE = {};
+  for (const gk of Object.keys(WHEN)) {
+    const p = canon(WHEN[gk].place);
+    (BYPLACE[p] || (BYPLACE[p] = [])).push(gk);
+  }
+  for (const p of Object.keys(BYPLACE)) {
+    BYPLACE[p].sort((a, b) => WHEN[a].year - WHEN[b].year || (a < b ? -1 : a > b ? 1 : 0));
+  }
+
+  /* The label is REBUILT, not stored: `place + " " + year` is exactly the
+     genres.js label the regex matched, which is the whole point of G2. Storing
+     a copy would be the second source of truth this file exists to avoid. */
+  const recordsAt = (place) => (BYPLACE[canon(place)] || []).map((gk) => ({
+    gk, year: WHEN[gk].year, label: WHEN[gk].place + " " + WHEN[gk].year,
+  }));
+
+  /* IT FILTERS. REVERSED 2026-08-24, AND THE PARAGRAPH IT REVERSES IS KEPT
+     UNDERNEATH, because reversing a decision silently is how the next person
+     makes it again.
+
+     IT USED TO READ: "IT LIGHTS, IT DOES NOT FILTER. ‘At that moment’ means
+     the decade around it: a record made in 1969 is still happening in 1975, a
+     map that hides everything else is lying about the world, and a map whose
+     dots appear and vanish under a dragging thumb is unusable. So every place
+     stays drawn and clickable at every slider position; what the year changes
+     is BRIGHTNESS, which names are drawn, and the sentence in #atlasSay."
+
+     PAUL LOOKED AT IT: "Don’t show ghost genres when the time isn’t right.
+     Just show genres that align with time." MEASURED on the deployed page at
+     600: all 65 marks drawn, and their accessible names read "Antwerp 1551,
+     pavane (nothing near 600)", "Atlanta 2003, trap (nothing near 600)" — a
+     world full of records that do not exist yet, each politely announcing that
+     it does not exist yet. BRIGHTNESS was not enough of a difference to be a
+     difference: fill-opacity 0.34 against 1 is a dim dot, and a dim dot is
+     still a dot on a map of where the music is.
+
+     BOTH HALVES OF THE OLD PARAGRAPH SURVIVE ANYWAY, WHICH IS WHY THE WINDOW
+     AND NOT THE EXACT YEAR IS WHAT NOW DRAWS. Measured over all 69 stops:
+
+       exact year only   1 to 5 places, mean 1.8 — and 37 of the 69 stops hold
+                         exactly ONE place. A globe with one dot at more than half
+                         its stops is not a map, it is a list of 69 records with an
+                         earth behind it, and a dragging thumb replaces the whole
+                         picture on every tick.
+       ±10 years        1 to 27 places, mean 14.6. Dots enter and leave one or
+                         two at a time under a drag, and "a record made in 1969
+                         is still happening in 1975" stays true.
+
+     AND AT PAUL’S OWN YEAR THE TWO ARE THE SAME NUMBER: 600 draws exactly ONE
+     place either way — Rome. So the window costs nothing against the complaint
+     and keeps the map a map everywhere else.
+
+     `shown` IS THE NEW ANSWER AND IT IS THE ONLY ONE. The section had FOUR
+     facts about "what is here now" — the dots, the tab order, the labels and
+     the sentence — and three of them already used the window; only the dots
+     disagreed. They now all read this one Map, so the sentence above the globe
+     and the marks on it cannot say different things (test/atlas.js G22). */
+  const WINDOW = 10;
+  function atYear(Y) {
+    const exact = new Set(), near = new Set(), places = new Map();
+    for (const gk of Object.keys(WHEN)) {
+      const d = Math.abs(WHEN[gk].year - Y);
+      if (d === 0) exact.add(gk); else if (d <= WINDOW) near.add(gk); else continue;
+      const p = canon(WHEN[gk].place);
+      const e = places.get(p) || { n: 0, exact: 0 };
+      e.n++; if (d === 0) e.exact++;
+      places.set(p, e);
+    }
+    /* ONE ROW PER PLACE THE YEAR DRAWS, carrying THE record that place resolves
+       to — recordAt’s nearest-year rule, so the dot, its name and what Enter
+       writes are decided in one line instead of three. `places` (counts) and
+       `shown` (records) always have the same keys: a place is in `places`
+       because one of its records is inside the window, and recordAt returns the
+       NEAREST record, which is then inside it too. */
+    const shown = new Map();
+    for (const p of places.keys()) shown.set(p, recordAt(p, Y));
+    return { exact, near, places, shown };
+  }
+
+  const clamp = (i, lo, hi) => (i < lo ? lo : i > hi ? hi : i);
+  const yearAt = (i) => YEARS[clamp(i | 0, 0, YEARS.length - 1)];
+  /* the largest i with YEARS[i] <= y; 0 below the bottom of the catalog, so a
+     caller that hands in 1966 (a year no record has) lands on 1965 rather than
+     on nothing. */
+  const indexOf = (y) => {
+    let out = 0;
+    for (let i = 0; i < YEARS.length; i++) if (YEARS[i] <= y) out = i; else break;
+    return out;
+  };
+
+  /* nearby() IS GONE, AND THIS IS ITS TOMBSTONE. Paul, 2026-08-24: "get rid of
+     the era select boxes, the look at select box, the 'nearby' select box, the
+     genre list, etc."
+
+     WHAT IT DID: "WHO ELSE THE THUMB MIGHT HAVE MEANT. The recovery path for a
+     tap that was aiming at Manchester and landed on London: measured in MAP
+     units in the current view, so it tightens automatically when the view zooms
+     in." It fed a panel of buttons under the map, and its `cap` argument was
+     the fix for the panel offering twenty of them — seven rows standing between
+     the reader and the records they came for.
+
+     WHY IT DOES NOT COME BACK. The panel was a recovery path for a map you
+     could not zoom. THE GLOBE'S ZOOM IS CONTINUOUS, 180° of arc down to 0.5°,
+     so "you meant Manchester, not London" is answered by moving closer instead
+     of by reading a list — and the two things that made the miss likely are
+     both gone too (a fixed rectangle, and a pile of dots you could not
+     separate). What replaces the DISAMBIGUATION half of its job is
+     `recordAt()` below plus the tie rule in ui/atlas.js `nearest()`: distance
+     decides which marks are candidates, and among marks a thumb cannot separate
+     (within 4 CSS px of the closest) the record nearest the slider's year wins.
+     (This said "plus PAINT ORDER: at a pile, the mark on top is the one the
+     slider is pointing at." That was reversed while the round was still open,
+     and the reason is worth keeping: in SVG, paint order IS document order IS
+     TAB order, so sorting the marks by distance from the slider's year sorted
+     the KEYBOARD as well — Tab from the slider walked the places furthest from
+     the year first, with Kingston near the end of nineteen. The marks stay
+     alphabetical and the determinism lives in the hit test, where it costs the
+     reader nothing.)
+
+     A DEAD EXPORT IS A TRAP, so it left the `api` object with the function.
+     BYPLACE, `inView` and `project` all survive and a future recovery panel
+     could be rebuilt from them in a dozen lines — but it would need a reason
+     the globe does not already answer. */
+
+  /* ======================================================================
+     6 · THE SPHERE — the one home for this trigonometry
+     ======================================================================
+     A right-handed unit vector: +z through 0°N 0°E, +y through the north pole,
+     +x through 0°N 90°E. ui/globe.js rotates these by the camera's two angles
+     and NEVER calls sin or cos for a point — a frame is 6 multiplies and 4 adds
+     per point, and only the camera needs trig. That is the whole reason this
+     lives in the data tier rather than in the renderer: two files computing
+     "where is Kingston on a sphere" is two files that can disagree about it,
+     and the hit test and the picture must agree by construction. */
+  const D2R = Math.PI / 180;
+  const unit = (lat, lon) => {
+    const la = lat * D2R, lo = lon * D2R, cl = Math.cos(la);
+    return [cl * Math.sin(lo), cl * Math.cos(lo), Math.sin(la)];
+  };
+
+  /* EVERY PLACE, PRE-MULTIPLIED, BUILT ONCE AT LOAD AND FROZEN. One row x 3
+     floats. The renderer walks this every frame; recomputing four trig calls
+     per place per frame is work nothing asked for, and a frozen table cannot be
+     written to by a view that meant to write to its own copy. */
+  const UNITS = Object.freeze(Object.keys(PLACES).reduce((o, n) => {
+    o[n] = Object.freeze(unit(PLACES[n][0], PLACES[n][1])); return o;
+  }, {}));
+
+  /* CONSEQUENCE C OF THE STRIP-DOWN, AS ONE FUNCTION. With the "nearby" panel
+     gone, a tap on a place must resolve to EXACTLY ONE record, deterministically.
+     THE RULE IS: NEAREST YEAR; A TIE GOES TO THE EARLIER RECORD. It was measured
+     twice, independently, by two designers who did not see each other's numbers:
+
+       · (place, year) is a KEY — 0 collisions among all 116 records. So a place
+         plus an exact year has never been ambiguous and cannot become so without
+         a gate noticing.
+       · Nearest-year is a tie in well under 1% of the (place, stop) pairs the
+         slider can make — 13 of 4,030 when it was first measured over 62 places
+         and 65 stops, 16 of 4,278 after the 2020s anchors landed — and every
+         tie is exactly two records. The EARLIER one is the right answer in
+         every printed case: Kingston @1971 -> reggae (not dub),
+         London @1971 -> rock (not spacerock), Chicago @1942 -> gospel (not
+         blues), London @1962 -> skiffle, Austin @1991 -> yachtrock.
+       · "The one inside the window" CANNOT disambiguate and was rejected on the
+         measurement: 243 (place, stop) pairs hold more than one record inside
+         ±10 years, and New York 1973 holds EIGHT. Nearest-year always can, and
+         needs no fallback for the outside case.
+
+     A place with no record returns null — today Bristol, Memphis and Reykjavik,
+     which only band-kit’s smaller catalog names. THEY ARE NOT DRAWN AT ALL,
+     and that is the 2026-08-24 reversal of "ui/atlas.js draws them as dim inert
+     dots and NOT as buttons: a button that does nothing is worse than a dot
+     that is honestly inert." True as far as it went, and the round that
+     followed went further: Paul, "Don’t show ghost genres when the time isn’t
+     right. Just show genres that align with time." A dot with NO record aligns
+     with no time there is; an inert dot on a map of where the music is says
+     "music happened in Bristol" and then refuses to say what. The drift stays
+     VISIBLE where drift belongs — atlas.gate.js G6b prints the list every run,
+     and G3 still holds every band-kit `where` word to a PLACES row — rather
+     than on the reader’s globe. */
+  function recordAt(place, Y) {
+    const l = BYPLACE[canon(place)];
+    if (!l || !l.length) return null;
+    let best = null, bd = Infinity;
+    // BYPLACE is sorted year-ascending (above), so a strict `<` keeps the
+    // EARLIER record on a tie without a second comparison.
+    for (const gk of l) {
+      const d = Math.abs(WHEN[gk].year - Y);
+      if (d < bd) { bd = d; best = gk; }
+    }
+    return best === null ? null
+      : { gk: best, year: WHEN[best].year, label: WHEN[best].place + " " + WHEN[best].year };
+  }
+
+  /* VIEWS' WHOLE REMAINING JOB: how close to stand to a place, in DEGREES OF
+     ARC across the shorter side of the globe's box. The smallest rectangle that
+     contains the place wins, and its longitude span IS the arc — a rectangle
+     11° wide was a view you could read Britain in, so 11° of arc is how close
+     you fly for a Manchester record.
+
+     NOT A CONTROL, and never rendered as one. ui/atlas.js calls it from
+     showing() and from the focus handler; nothing on the page offers it.
+     Clamped to the globe's own range so a table edit cannot ask for a zoom the
+     renderer will not give. */
+  const arcFor = (place) => {
+    const c = placeOf(place);
+    let span = 180;
+    if (c) for (const v of Object.values(VIEWS)) {
+      const s = v.lon1 - v.lon0;
+      if (inView(v, c[0], c[1]) && s < span) span = s;
+    }
+    return Math.max(0.5, Math.min(180, span));
+  };
+
+  /* THE FALLBACK'S ORDER, and the map's label pass, want the same list: every
+     record, year ascending, then place, then key. Derived here so the view and
+     the gate cannot sort it two different ways. */
+  const ALL = Object.keys(WHEN).map((gk) => ({
+    gk, place: canon(WHEN[gk].place), year: WHEN[gk].year,
+    label: WHEN[gk].place + " " + WHEN[gk].year,
+  })).sort((a, b) => a.year - b.year
+    || (a.place < b.place ? -1 : a.place > b.place ? 1 : 0)
+    || (a.gk < b.gk ? -1 : a.gk > b.gk ? 1 : 0));
+
+  const eraOf = (y) => {
+    let w = ERAS[0].w;
+    for (const e of ERAS) if (e.y <= y) w = e.w; else break;
+    return w;
+  };
+
+  const api = { PLACES, ALIAS, WITHIN, WHEN, EXCLUDE, YEARS, ERAS, VIEWS, ALL, W, WINDOW,
+                UNITS, unit, recordAt, arcFor,
+                project, heightOf, inView, placeOf, recordsAt, atYear,
+                yearAt, indexOf, eraOf, canon };
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  else root.NuAtlas = api;
+})(typeof self !== "undefined" ? self : this);

@@ -345,6 +345,12 @@ async function assemble(state, sched, env, opts) {
     const r = await RC.renderUnit(u, events, {
       mkProc, rootOf, SR, BS, TOTAL, spb,
       buses: { dry, rev, del, pp, wL, wR },
+      // SP is here for the per-unit board STRIP (`u.strip`) — render-core runs
+      // makeStrip/stripStep itself so press and the stream renderer put the same
+      // tone stage on a modelled voice. Without it press would silently render
+      // the desk EQ on the sampled voices and not on the modelled ones, which is
+      // exactly the split this round closed.
+      SP,
       speech, dx7Presets,
     });
     console.log(`  ${key}: ${events.length} ev -> ${u.module} x${r.pool}, ${(r.rendered / SR).toFixed(1)}s voiced` +

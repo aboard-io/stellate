@@ -1,0 +1,3757 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>The band — the state</title>
+<meta name="robots" content="noindex">
+<!-- THE JSON IS IN THE PAGE. Nothing renders it: no stylesheet, no scripts,
+     no service worker, no engine — a <pre> and the value. Written by
+     nukernel/state-page.js, which extracts it from the running data tier;
+     re-run that to make this current. The page it replaces (headings,
+     questions, form controls, two staves, a circle of fifths) is recoverable
+     whole: git stash list -> "band UI before the JSON state dump". -->
+</head>
+<body>
+<pre>
+{
+  "transport": {"on":false,"bpm":96},
+  "record": {
+    "on": false,
+    "seat": "arranger",
+    "song": {
+      "key": "C",
+      "minor": false,
+      "form": "pop",
+      "chg": {},
+      "bpm": 96,
+      "swing": null,
+      "meter": null,
+      "answers": {},
+      "themeB": true
+    },
+    "drums": {
+      "on": true,
+      "kit": {
+        "k": [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0],
+        "s": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        "h": [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+        "o": [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0],
+        "c": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        "p": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        "t": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        "m": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        "l": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+      },
+      "fills": {},
+      "drumkit": "acoustic",
+      "humanize": 0,
+      "swing": null,
+      "vel": {},
+      "bpm": 92,
+      "touch": null,
+      "hand": null,
+      "answers": {},
+      "fam": null,
+      "job": null
+    },
+    "bass": {
+      "on": true,
+      "pedal": "none",
+      "key": "C",
+      "changes": "fourchord",
+      "minor": false,
+      "style": "root",
+      "instr": "finger_bass",
+      "oct": 0,
+      "artic": null,
+      "swing": null,
+      "bpm": 96,
+      "sit": 0,
+      "fig": null,
+      "tone": null,
+      "answers": {}
+    },
+    "keys": {
+      "on": true,
+      "job": "pads",
+      "instr": "warm_pad",
+      "reg": "high",
+      "tone": null,
+      "gate": null,
+      "pedal": "none",
+      "answers": {}
+    },
+    "idea": {
+      "on": true,
+      "cell": "three",
+      "contour": "arch",
+      "land": "root",
+      "len": "two",
+      "reg": "mid",
+      "answer": true,
+      "name": "the hook",
+      "sent": "plain",
+      "grid": null,
+      "lift": null,
+      "answers": {}
+    },
+    "ideaB": {
+      "on": true,
+      "cell": "call",
+      "contour": "fall",
+      "land": "fifth",
+      "len": "two",
+      "reg": "mid",
+      "answer": true,
+      "name": "the answer",
+      "sent": "plain",
+      "grid": null,
+      "lift": null,
+      "answers": {}
+    },
+    "guitar": {
+      "on": true,
+      "job": "strum",
+      "instr": "clean_guitar",
+      "reg": "mid",
+      "tone": null,
+      "gate": null,
+      "pedal": "none",
+      "answers": {}
+    },
+    "voice": {
+      "on": true,
+      "job": "oohs",
+      "instr": "ahh_choir",
+      "reg": "mid",
+      "tone": null,
+      "gate": null,
+      "pedal": "none",
+      "answers": {}
+    },
+    "per": {
+      "0": {"idea":"keys"},
+      "1": {"theme":"b"},
+      "2": {"idea":"keys"},
+      "3": {"theme":"b","back":"up"}
+    }
+  },
+  "interview": {
+    "seats": [
+      {
+        "seat": "arranger",
+        "heads": [
+          {
+            "head": "the record",
+            "questions": [
+              {
+                "id": "when",
+                "seat": "arranger",
+                "head": "the record",
+                "ask": "when is it?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"the six-hundreds","chosen":false},
+                  {"w":"the twelve-hundreds","chosen":false},
+                  {"w":"the thirteen-hundreds","chosen":false},
+                  {"w":"the fifteen-hundreds","chosen":false},
+                  {"w":"the sixteen-hundreds","chosen":false},
+                  {"w":"the seventeen-hundreds","chosen":false},
+                  {"w":"the eighteen-hundreds","chosen":false},
+                  {"w":"the fifties","chosen":false},
+                  {"w":"the sixties","chosen":false},
+                  {"w":"the seventies","chosen":false},
+                  {"w":"the eighties","chosen":false},
+                  {"w":"the nineties","chosen":false},
+                  {"w":"the two-thousands","chosen":false},
+                  {"w":"now","chosen":false}
+                ]
+              },
+              {
+                "id": "where",
+                "seat": "arranger",
+                "head": "the record",
+                "ask": "where are you?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"Chicago","chosen":false},
+                  {"w":"New York","chosen":false},
+                  {"w":"London","chosen":false},
+                  {"w":"Detroit","chosen":false},
+                  {"w":"Berlin","chosen":false},
+                  {"w":"Philadelphia","chosen":false},
+                  {"w":"Los Angeles","chosen":false},
+                  {"w":"Bristol","chosen":false},
+                  {"w":"Manchester","chosen":false},
+                  {"w":"Düsseldorf","chosen":false},
+                  {"w":"New Orleans","chosen":false},
+                  {"w":"Paris","chosen":false},
+                  {"w":"Memphis","chosen":false},
+                  {"w":"Kingston","chosen":false},
+                  {"w":"Rio","chosen":false},
+                  {"w":"Reykjavík","chosen":false},
+                  {"w":"Liverpool","chosen":false},
+                  {"w":"Rome","chosen":false},
+                  {"w":"Reims","chosen":false},
+                  {"w":"Provence","chosen":false},
+                  {"w":"Antwerp","chosen":false},
+                  {"w":"Florence","chosen":false},
+                  {"w":"Venice","chosen":false},
+                  {"w":"Leipzig","chosen":false},
+                  {"w":"Vienna","chosen":false}
+                ]
+              },
+              {
+                "id": "venue",
+                "seat": "arranger",
+                "head": "the record",
+                "ask": "where do you play?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"a warehouse","chosen":false},
+                  {"w":"a club","chosen":false},
+                  {"w":"a wedding","chosen":false},
+                  {"w":"a block party","chosen":false},
+                  {"w":"a basement","chosen":false},
+                  {"w":"a stadium","chosen":false},
+                  {"w":"a bar","chosen":false},
+                  {"w":"a festival","chosen":false},
+                  {"w":"a studio","chosen":false},
+                  {"w":"a porch","chosen":false},
+                  {"w":"a parlor","chosen":false},
+                  {"w":"a dancehall","chosen":false},
+                  {"w":"a yard","chosen":false},
+                  {"w":"a bedroom","chosen":false},
+                  {"w":"a church","chosen":false},
+                  {"w":"a concert hall","chosen":false},
+                  {"w":"a cathedral","chosen":false},
+                  {"w":"a chapel","chosen":false},
+                  {"w":"a court","chosen":false},
+                  {"w":"a village green","chosen":false},
+                  {"w":"a salon","chosen":false},
+                  {"w":"an opera house","chosen":false},
+                  {"w":"a ballroom","chosen":false},
+                  {"w":"a piano bar","chosen":false}
+                ]
+              },
+              {
+                "id": "genre",
+                "seat": "arranger",
+                "head": "the record",
+                "ask": "what are we playing?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"a house record","chosen":false},
+                  {"w":"a techno record","chosen":false},
+                  {"w":"a disco record","chosen":false},
+                  {"w":"a boom-bap record","chosen":false},
+                  {"w":"a jungle record","chosen":false},
+                  {"w":"a rock record","chosen":false},
+                  {"w":"a punk record","chosen":false},
+                  {"w":"a krautrock record","chosen":false},
+                  {"w":"a jazz date","chosen":false},
+                  {"w":"a blues","chosen":false},
+                  {"w":"a funk record","chosen":false},
+                  {"w":"a reggae record","chosen":false},
+                  {"w":"a bossa","chosen":false},
+                  {"w":"something slow and open","chosen":false},
+                  {"w":"a chamber ballad","chosen":false},
+                  {"w":"a chant record","chosen":false},
+                  {"w":"an organum","chosen":false},
+                  {"w":"a troubadour song","chosen":false},
+                  {"w":"an estampie","chosen":false},
+                  {"w":"a pavane","chosen":false},
+                  {"w":"the new music","chosen":false},
+                  {"w":"a concerto","chosen":false},
+                  {"w":"a Viennese classic","chosen":false},
+                  {"w":"a nocturne","chosen":false},
+                  {"w":"a romantic symphony","chosen":false},
+                  {"w":"a barcarolle","chosen":false},
+                  {"w":"a parlor song","chosen":false},
+                  {"w":"a waltz","chosen":false},
+                  {"w":"a hymn tune","chosen":false},
+                  {"w":"a piano-bar waltz","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the form",
+            "questions": [
+              {
+                "id": "arc",
+                "seat": "arranger",
+                "head": "the form",
+                "ask": "where does it go?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"it stays where it is","chosen":true},
+                  {"w":"each chorus bigger than the last","chosen":false},
+                  {"w":"it builds all the way through","chosen":false},
+                  {"w":"it builds, then drops away at the end","chosen":false}
+                ]
+              },
+              {
+                "id": "form",
+                "seat": "arranger",
+                "head": "the form",
+                "ask": "what's the form?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"one vamp, round and round","chosen":false},
+                  {"w":"a blues, three choruses","chosen":false},
+                  {"w":"verse, chorus","chosen":false},
+                  {"w":"verse, chorus, verse, chorus","chosen":true},
+                  {"w":"AABA","chosen":false},
+                  {"w":"intro, verse, chorus, bridge, chorus, outro","chosen":false},
+                  {"w":"build, drop, break, drop","chosen":false},
+                  {
+                    "w": "a twelve-inch: intro, build, drop, break, drop, outro",
+                    "chosen": false
+                  },
+                  {"w":"a DJ tool: long intro, main, long outro","chosen":false},
+                  {"w":"head, solos, head","chosen":false},
+                  {"w":"a version","chosen":false},
+                  {"w":"verses, one after another","chosen":false},
+                  {"w":"A, then B, then A again","chosen":false}
+                ]
+              },
+              {
+                "id": "reprise",
+                "seat": "arranger",
+                "head": "the form",
+                "ask": "once through, or round again?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"once through","chosen":true},
+                  {"w":"again from the bridge","chosen":false}
+                ]
+              },
+              {
+                "id": "doors",
+                "seat": "arranger",
+                "head": "the form",
+                "ask": "how does it open and close?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"straight in","chosen":true},
+                  {"w":"an intro","chosen":false},
+                  {"w":"a tag on the end","chosen":false},
+                  {"w":"an intro and a tag","chosen":false}
+                ]
+              },
+              {
+                "id": "end",
+                "seat": "arranger",
+                "head": "the form",
+                "ask": "how does it end?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"however it falls","chosen":true},
+                  {"w":"a hard out","chosen":false},
+                  {"w":"ring it out","chosen":false},
+                  {"w":"hush it down","chosen":false},
+                  {"w":"a fill and out","chosen":false}
+                ]
+              },
+              {
+                "id": "chg:verse",
+                "seat": "arranger",
+                "head": "the form",
+                "ask": "what are the verse changes?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"one chord, all night","chosen":false},
+                  {"w":"a twelve-bar blues","chosen":false},
+                  {"w":"the doo-wop changes","chosen":false},
+                  {"w":"the four-chord one","chosen":false},
+                  {"w":"a minor vamp","chosen":false},
+                  {"w":"two-five-one","chosen":false},
+                  {"w":"a descending line","chosen":false},
+                  {"w":"a pedal","chosen":false},
+                  {"w":"the old passamezzo","chosen":false}
+                ]
+              },
+              {
+                "id": "chg:chorus",
+                "seat": "arranger",
+                "head": "the form",
+                "ask": "what are the chorus changes?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"one chord, all night","chosen":false},
+                  {"w":"a twelve-bar blues","chosen":false},
+                  {"w":"the doo-wop changes","chosen":false},
+                  {"w":"the four-chord one","chosen":false},
+                  {"w":"a minor vamp","chosen":false},
+                  {"w":"two-five-one","chosen":false},
+                  {"w":"a descending line","chosen":false},
+                  {"w":"a pedal","chosen":false},
+                  {"w":"the old passamezzo","chosen":false}
+                ]
+              },
+              {
+                "id": "lean:verse",
+                "seat": "arranger",
+                "head": "the form",
+                "ask": "does anything lean in the verse?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"no, it sits","chosen":true},
+                  {"w":"the last bar leans home","chosen":false},
+                  {"w":"halfway, it leans into the turn","chosen":false}
+                ]
+              },
+              {
+                "id": "lean:chorus",
+                "seat": "arranger",
+                "head": "the form",
+                "ask": "does anything lean in the chorus?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"no, it sits","chosen":true},
+                  {"w":"the last bar leans home","chosen":false},
+                  {"w":"halfway, it leans into the turn","chosen":false}
+                ]
+              },
+              {
+                "id": "len:verse",
+                "seat": "arranger",
+                "head": "the form",
+                "ask": "how long is the verse?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"four bars","chosen":true},
+                  {"w":"eight bars","chosen":false},
+                  {"w":"twelve bars","chosen":false},
+                  {"w":"sixteen bars","chosen":false},
+                  {"w":"twenty-four bars","chosen":false},
+                  {"w":"thirty-two bars","chosen":false}
+                ]
+              },
+              {
+                "id": "len:chorus",
+                "seat": "arranger",
+                "head": "the form",
+                "ask": "how long is the chorus?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"four bars","chosen":true},
+                  {"w":"eight bars","chosen":false},
+                  {"w":"twelve bars","chosen":false},
+                  {"w":"sixteen bars","chosen":false},
+                  {"w":"twenty-four bars","chosen":false},
+                  {"w":"thirty-two bars","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the tune",
+            "questions": [
+              {
+                "id": "chords",
+                "seat": "arranger",
+                "head": "the tune",
+                "ask": "what kind of chords?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"plain triads","chosen":true},
+                  {"w":"sevenths where they belong","chosen":false},
+                  {"w":"sevenths on everything","chosen":false},
+                  {"w":"ninths","chosen":false},
+                  {"w":"suspended","chosen":false},
+                  {"w":"sixths","chosen":false}
+                ]
+              },
+              {
+                "id": "hr",
+                "seat": "arranger",
+                "head": "the tune",
+                "ask": "how fast do the chords move?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"a chord a bar","chosen":false},
+                  {"w":"two bars each","chosen":true},
+                  {"w":"one to a phrase","chosen":false}
+                ]
+              },
+              {
+                "id": "key",
+                "seat": "arranger",
+                "head": "the tune",
+                "ask": "what key are we in?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"in C","chosen":true},
+                  {"w":"in F","chosen":false},
+                  {"w":"in G","chosen":false},
+                  {"w":"in D","chosen":false},
+                  {"w":"in A","chosen":false},
+                  {"w":"in E","chosen":false},
+                  {"w":"in Bb","chosen":false},
+                  {"w":"in Eb","chosen":false},
+                  {"w":"in Ab","chosen":false},
+                  {"w":"in Db","chosen":false},
+                  {"w":"in B","chosen":false},
+                  {"w":"in F#","chosen":false}
+                ]
+              },
+              {
+                "id": "mode",
+                "seat": "arranger",
+                "head": "the tune",
+                "ask": "major or minor?",
+                "answer": null,
+                "who": null,
+                "options": [{"w":"major","chosen":true},{"w":"minor","chosen":false}]
+              },
+              {
+                "id": "mcolor",
+                "seat": "arranger",
+                "head": "the tune",
+                "ask": "what kind of major?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"major","chosen":true},
+                  {"w":"mixolydian","chosen":false},
+                  {"w":"lydian","chosen":false}
+                ]
+              },
+              {
+                "id": "second",
+                "seat": "arranger",
+                "head": "the tune",
+                "ask": "does the tune have an answer?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"one theme is plenty","chosen":false},
+                  {"w":"a second theme answers it","chosen":true}
+                ]
+              },
+              {
+                "id": "idea:len",
+                "seat": "arranger",
+                "head": "the tune",
+                "ask": "how long is it?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"one bar","chosen":false},
+                  {"w":"two bars","chosen":true},
+                  {"w":"four bars","chosen":false},
+                  {"w":"eight bars","chosen":false}
+                ]
+              },
+              {
+                "id": "idea:cell",
+                "seat": "arranger",
+                "head": "the tune",
+                "ask": "what's its rhythm?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"long notes","chosen":false},
+                  {"w":"even eighths","chosen":false},
+                  {"w":"three notes and a rest","chosen":true},
+                  {"w":"a pickup into the bar","chosen":false},
+                  {"w":"pushed, off the beat","chosen":false},
+                  {"w":"a gallop","chosen":false},
+                  {"w":"one long note, then a run","chosen":false},
+                  {"w":"a short call","chosen":false},
+                  {"w":"a walk up to the beat","chosen":false},
+                  {"w":"an insistent figure","chosen":false}
+                ]
+              },
+              {
+                "id": "idea:sent",
+                "seat": "arranger",
+                "head": "the tune",
+                "ask": "how does it speak?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"one cell, said again","chosen":true},
+                  {"w":"say it, then vary it","chosen":false},
+                  {"w":"a long note, then it moves","chosen":false},
+                  {"w":"carry it over the barline","chosen":false}
+                ]
+              },
+              {
+                "id": "idea:contour",
+                "seat": "arranger",
+                "head": "the tune",
+                "ask": "what shape does it make?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"arches over","chosen":true},
+                  {"w":"falls away","chosen":false},
+                  {"w":"drops, then climbs","chosen":false},
+                  {"w":"says one note, then moves","chosen":false}
+                ]
+              },
+              {
+                "id": "idea:land",
+                "seat": "arranger",
+                "head": "the tune",
+                "ask": "where does it land?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"lands on the root","chosen":true},
+                  {"w":"lands on the third","chosen":false},
+                  {"w":"lands on the fifth","chosen":false},
+                  {"w":"leans on the seventh","chosen":false},
+                  {"w":"hangs under the root","chosen":false}
+                ]
+              },
+              {
+                "id": "idea:reg",
+                "seat": "arranger",
+                "head": "the tune",
+                "ask": "where does it sit?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"down low","chosen":false},
+                  {"w":"where it sits","chosen":true},
+                  {"w":"up high","chosen":false}
+                ]
+              },
+              {
+                "id": "ideaB:len",
+                "seat": "arranger",
+                "head": "the tune",
+                "ask": "and the answer — how long is it?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"one bar","chosen":false},
+                  {"w":"two bars","chosen":true},
+                  {"w":"four bars","chosen":false},
+                  {"w":"eight bars","chosen":false}
+                ]
+              },
+              {
+                "id": "ideaB:cell",
+                "seat": "arranger",
+                "head": "the tune",
+                "ask": "and the answer — what's its rhythm?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"long notes","chosen":false},
+                  {"w":"even eighths","chosen":false},
+                  {"w":"three notes and a rest","chosen":false},
+                  {"w":"a pickup into the bar","chosen":false},
+                  {"w":"pushed, off the beat","chosen":false},
+                  {"w":"a gallop","chosen":false},
+                  {"w":"one long note, then a run","chosen":false},
+                  {"w":"a short call","chosen":true},
+                  {"w":"a walk up to the beat","chosen":false},
+                  {"w":"an insistent figure","chosen":false}
+                ]
+              },
+              {
+                "id": "ideaB:sent",
+                "seat": "arranger",
+                "head": "the tune",
+                "ask": "and the answer — how does it speak?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"one cell, said again","chosen":true},
+                  {"w":"say it, then vary it","chosen":false},
+                  {"w":"a long note, then it moves","chosen":false},
+                  {"w":"carry it over the barline","chosen":false}
+                ]
+              },
+              {
+                "id": "ideaB:contour",
+                "seat": "arranger",
+                "head": "the tune",
+                "ask": "and the answer — what shape does it make?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"rises","chosen":false},
+                  {"w":"falls away","chosen":true},
+                  {"w":"drops, then climbs","chosen":false},
+                  {"w":"says one note, then moves","chosen":false}
+                ]
+              },
+              {
+                "id": "ideaB:land",
+                "seat": "arranger",
+                "head": "the tune",
+                "ask": "and the answer — where does it land?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"lands on the root","chosen":false},
+                  {"w":"lands on the third","chosen":false},
+                  {"w":"lands on the fifth","chosen":true},
+                  {"w":"leans on the seventh","chosen":false},
+                  {"w":"hangs under the root","chosen":false}
+                ]
+              },
+              {
+                "id": "ideaB:reg",
+                "seat": "arranger",
+                "head": "the tune",
+                "ask": "and the answer — where does it sit?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"down low","chosen":false},
+                  {"w":"where it sits","chosen":true},
+                  {"w":"up high","chosen":false}
+                ]
+              },
+              {
+                "id": "knob:scale",
+                "seat": "arranger",
+                "head": "the tune",
+                "ask": "what notes is the tune made of?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"the pentatonic","chosen":false},
+                  {"w":"the minor scale","chosen":false},
+                  {"w":"the blues scale","chosen":false},
+                  {"w":"a major pentatonic","chosen":false},
+                  {"w":"the major scale","chosen":false}
+                ]
+              },
+              {
+                "id": "knob:diatonic",
+                "seat": "arranger",
+                "head": "the tune",
+                "ask": "does the line follow the chords?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"it follows the chords","chosen":false},
+                  {"w":"it stays in the key","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the time",
+            "questions": [
+              {
+                "id": "tempo",
+                "seat": "arranger",
+                "head": "the time",
+                "ask": "how fast do we take it?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"slow, 72","chosen":false},
+                  {"w":"medium, 96","chosen":true},
+                  {"w":"up, 120","chosen":false},
+                  {"w":"fast, 144","chosen":false}
+                ]
+              },
+              {
+                "id": "feel",
+                "seat": "arranger",
+                "head": "the time",
+                "ask": "straight or swung?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"straight","chosen":true},
+                  {"w":"swung","chosen":false},
+                  {"w":"shuffled","chosen":false}
+                ]
+              },
+              {
+                "id": "meter",
+                "seat": "arranger",
+                "head": "the time",
+                "ask": "how does it count?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"in four","chosen":true},
+                  {"w":"in three","chosen":false},
+                  {"w":"in six-eight","chosen":false}
+                ]
+              },
+              {
+                "id": "space",
+                "seat": "arranger",
+                "head": "the time",
+                "ask": "how much space is there?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"keep it going","chosen":true},
+                  {"w":"one bar on, one off","chosen":false},
+                  {"w":"one hit a bar","chosen":false},
+                  {"w":"one hit every four bars","chosen":false}
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "seat": "drums",
+        "heads": [
+          {
+            "head": "the record's kit",
+            "questions": [
+              {
+                "id": "kit",
+                "seat": "drums",
+                "head": "the record's kit",
+                "ask": "what are you playing it on?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"808","chosen":false},
+                  {"w":"909","chosen":false},
+                  {"w":"606","chosen":false},
+                  {"w":"cr-78","chosen":false},
+                  {"w":"acoustic kit","chosen":true},
+                  {"w":"room kit","chosen":false},
+                  {"w":"big kit","chosen":false},
+                  {"w":"brushes","chosen":false},
+                  {"w":"jazz kit","chosen":false},
+                  {"w":"electronic kit","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the job",
+            "questions": [
+              {
+                "id": "job",
+                "seat": "drums",
+                "head": "the job",
+                "ask": "what is your job in it?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"hold it down","chosen":false},
+                  {"w":"drive it","chosen":false},
+                  {"w":"stay out of the way","chosen":false},
+                  {"w":"on the front of it","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the time-keeping",
+            "questions": [
+              {
+                "id": "time",
+                "seat": "drums",
+                "head": "the time-keeping",
+                "ask": "what are you keeping time on?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"the hats","chosen":true},
+                  {"w":"the ride","chosen":false},
+                  {"w":"nothing — just kick and snare","chosen":false}
+                ]
+              },
+              {
+                "id": "backbeat",
+                "seat": "drums",
+                "head": "the time-keeping",
+                "ask": "where is the backbeat?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"two and four","chosen":false},
+                  {"w":"three","chosen":false},
+                  {"w":"nowhere — no backbeat","chosen":true}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the feel",
+            "questions": [
+              {
+                "id": "loud",
+                "seat": "drums",
+                "head": "the feel",
+                "ask": "how hard are you hitting?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"light","chosen":false},
+                  {"w":"normal","chosen":true},
+                  {"w":"hard","chosen":false}
+                ]
+              },
+              {
+                "id": "loose",
+                "seat": "drums",
+                "head": "the feel",
+                "ask": "how tight to the grid?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"a machine","chosen":false},
+                  {"w":"on the grid","chosen":true},
+                  {"w":"a human hand","chosen":false},
+                  {"w":"loose","chosen":false}
+                ]
+              },
+              {
+                "id": "knob:stress",
+                "seat": "drums",
+                "head": "the feel",
+                "ask": "how much does the band lean on the beat?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"dead straight","chosen":false},
+                  {"w":"a little","chosen":false},
+                  {"w":"hard on the one","chosen":false}
+                ]
+              },
+              {
+                "id": "knob:kitProb",
+                "seat": "drums",
+                "head": "the feel",
+                "ask": "does every hat land?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"every one","chosen":false},
+                  {"w":"most of them","chosen":false},
+                  {"w":"about half","chosen":false},
+                  {"w":"now and then","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the fills",
+            "questions": [
+              {
+                "id": "fills",
+                "seat": "drums",
+                "head": "the fills",
+                "ask": "where do the fills go?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"end of every four","chosen":false},
+                  {"w":"halfway too","chosen":false},
+                  {"w":"no fills","chosen":true}
+                ]
+              },
+              {
+                "id": "knob:fill",
+                "seat": "drums",
+                "head": "the fills",
+                "ask": "what's the fill made of?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"on the snare","chosen":false},
+                  {"w":"round the toms","chosen":false}
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "seat": "bass",
+        "heads": [
+          {
+            "head": "the line",
+            "questions": [
+              {
+                "id": "job",
+                "seat": "bass",
+                "head": "the line",
+                "ask": "what is your job in it?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"hold the root","chosen":true},
+                  {"w":"walk it","chosen":false},
+                  {"w":"octaves","chosen":false},
+                  {"w":"root and fifth","chosen":false},
+                  {"w":"driving eighths","chosen":false},
+                  {"w":"busy sixteenths","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the instrument",
+            "questions": [
+              {
+                "id": "instr",
+                "seat": "bass",
+                "head": "the instrument",
+                "ask": "what are you playing it on?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"fingers on a P-bass","chosen":true},
+                  {"w":"with a pick","chosen":false},
+                  {"w":"a synth bass","chosen":false},
+                  {"w":"an upright bass","chosen":false},
+                  {"w":"a cello","chosen":false},
+                  {"w":"a fretless","chosen":false},
+                  {"w":"slapped","chosen":false},
+                  {"w":"a bright electric","chosen":false},
+                  {"w":"an old synth bass","chosen":false},
+                  {"w":"a fat synth bass","chosen":false},
+                  {"w":"a bowed double bass","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the hands",
+            "questions": [
+              {
+                "id": "sit",
+                "seat": "bass",
+                "head": "the hands",
+                "ask": "where do you sit against the drums?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"right on it","chosen":true},
+                  {"w":"behind the beat","chosen":false},
+                  {"w":"on top of it","chosen":false}
+                ]
+              },
+              {
+                "id": "notes",
+                "seat": "bass",
+                "head": "the hands",
+                "ask": "how do you play the notes?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"short, off the string","chosen":false},
+                  {"w":"let them ring","chosen":false},
+                  {"w":"however they fall","chosen":true}
+                ]
+              },
+              {
+                "id": "reg",
+                "seat": "bass",
+                "head": "the hands",
+                "ask": "how low?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"down low","chosen":false},
+                  {"w":"where it sits","chosen":true},
+                  {"w":"up the neck","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the board",
+            "questions": [
+              {
+                "id": "pedal",
+                "seat": "bass",
+                "head": "the board",
+                "ask": "anything on the board?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"dry","chosen":true},
+                  {"w":"some crunch","chosen":false},
+                  {"w":"a wah","chosen":false},
+                  {"w":"a squelch","chosen":false},
+                  {"w":"a chorus","chosen":false},
+                  {"w":"a flanger","chosen":false},
+                  {"w":"a tape echo","chosen":false},
+                  {"w":"a ring mod","chosen":false}
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "seat": "keys",
+        "heads": [
+          {
+            "head": "the instrument",
+            "questions": [
+              {
+                "id": "instr",
+                "seat": "keys",
+                "head": "the instrument",
+                "ask": "what are you playing?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"a warm pad","chosen":true},
+                  {"w":"a glassy pad","chosen":false},
+                  {"w":"a polysynth","chosen":false},
+                  {"w":"a metallic pad","chosen":false},
+                  {"w":"strings","chosen":false},
+                  {"w":"synth strings","chosen":false},
+                  {"w":"a string machine","chosen":false},
+                  {"w":"pizzicato strings","chosen":false},
+                  {"w":"a Rhodes","chosen":false},
+                  {"w":"an electric piano","chosen":false},
+                  {"w":"a tine piano","chosen":false},
+                  {"w":"a grand piano","chosen":false},
+                  {"w":"a felt piano","chosen":false},
+                  {"w":"an upright","chosen":false},
+                  {"w":"a church organ","chosen":false},
+                  {"w":"an organ","chosen":false},
+                  {"w":"a rock organ","chosen":false},
+                  {"w":"a reed organ","chosen":false},
+                  {"w":"an accordion","chosen":false},
+                  {"w":"a clav","chosen":false},
+                  {"w":"voices","chosen":false},
+                  {"w":"a vocal pad","chosen":false},
+                  {"w":"a harpsichord","chosen":false},
+                  {"w":"a harp","chosen":false},
+                  {"w":"a celesta","chosen":false},
+                  {"w":"a glockenspiel","chosen":false},
+                  {"w":"vibes","chosen":false},
+                  {"w":"a marimba","chosen":false},
+                  {"w":"a xylophone","chosen":false},
+                  {"w":"tubular bells","chosen":false},
+                  {"w":"a music box","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the job",
+            "questions": [
+              {
+                "id": "job",
+                "seat": "keys",
+                "head": "the job",
+                "ask": "what's your job in it?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"pads","chosen":true},
+                  {"w":"long swells","chosen":false},
+                  {"w":"comping the changes","chosen":false},
+                  {"w":"the Charleston","chosen":false},
+                  {"w":"pushing the changes","chosen":false},
+                  {"w":"held to the change","chosen":false},
+                  {"w":"on the offbeats","chosen":false},
+                  {"w":"pushing the bar","chosen":false},
+                  {"w":"a riff","chosen":false},
+                  {"w":"a counter-line","chosen":false},
+                  {"w":"arpeggios","chosen":false},
+                  {"w":"a drone","chosen":false},
+                  {"w":"lay out","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the sound",
+            "questions": [
+              {
+                "id": "reg",
+                "seat": "keys",
+                "head": "the sound",
+                "ask": "where do you sit?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"down low","chosen":false},
+                  {"w":"where it sits","chosen":false},
+                  {"w":"up out of the way","chosen":true},
+                  {"w":"right at the top","chosen":false}
+                ]
+              },
+              {
+                "id": "cut",
+                "seat": "keys",
+                "head": "the sound",
+                "ask": "how bright is it?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"dark","chosen":false},
+                  {"w":"warm","chosen":false},
+                  {"w":"clear","chosen":false},
+                  {"w":"glassy","chosen":false}
+                ]
+              },
+              {
+                "id": "atk",
+                "seat": "keys",
+                "head": "the sound",
+                "ask": "how does it arrive?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"straight away","chosen":false},
+                  {"w":"a soft edge","chosen":false},
+                  {"w":"swelling in","chosen":false},
+                  {"w":"very slowly","chosen":false}
+                ]
+              },
+              {
+                "id": "rel",
+                "seat": "keys",
+                "head": "the sound",
+                "ask": "how does it leave?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"short","chosen":false},
+                  {"w":"ringing","chosen":false},
+                  {"w":"hanging on","chosen":false}
+                ]
+              },
+              {
+                "id": "col",
+                "seat": "keys",
+                "head": "the sound",
+                "ask": "how much colour?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"clean","chosen":false},
+                  {"w":"some","chosen":false},
+                  {"w":"singing","chosen":false}
+                ]
+              },
+              {
+                "id": "knob:phrase",
+                "seat": "keys",
+                "head": "the sound",
+                "ask": "does the line breathe?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"flat","chosen":false},
+                  {"w":"a little","chosen":false},
+                  {"w":"it arches","chosen":false}
+                ]
+              },
+              {
+                "id": "knob:maxHold",
+                "seat": "keys",
+                "head": "the sound",
+                "ask": "how long do the notes hold?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"let them ring","chosen":false},
+                  {"w":"a beat","chosen":false},
+                  {"w":"half a bar","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the board",
+            "questions": [
+              {
+                "id": "pedal",
+                "seat": "keys",
+                "head": "the board",
+                "ask": "anything in the chain?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"dry","chosen":true},
+                  {"w":"a Leslie","chosen":false},
+                  {"w":"a chorus","chosen":false},
+                  {"w":"a phaser","chosen":false},
+                  {"w":"a flanger","chosen":false},
+                  {"w":"a tremolo","chosen":false},
+                  {"w":"a wah","chosen":false},
+                  {"w":"some crunch","chosen":false},
+                  {"w":"a tape echo","chosen":false},
+                  {"w":"a filter sweep","chosen":false},
+                  {"w":"a squelch","chosen":false},
+                  {"w":"a ring mod","chosen":false}
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "seat": "guitar",
+        "heads": [
+          {
+            "head": "the instrument",
+            "questions": [
+              {
+                "id": "instr",
+                "seat": "guitar",
+                "head": "the instrument",
+                "ask": "what are you playing?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"a clean electric","chosen":true},
+                  {"w":"a crunchy one","chosen":false},
+                  {"w":"an overdriven one","chosen":false},
+                  {"w":"a distorted one","chosen":false},
+                  {"w":"a re-amped DI","chosen":false},
+                  {"w":"a muted one","chosen":false},
+                  {"w":"a jazz box","chosen":false},
+                  {"w":"a steel-string acoustic","chosen":false},
+                  {"w":"a nylon-string","chosen":false},
+                  {"w":"harmonics","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the job",
+            "questions": [
+              {
+                "id": "job",
+                "seat": "guitar",
+                "head": "the job",
+                "ask": "what's your job in it?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"a palm-muted chug","chosen":false},
+                  {"w":"power chords","chosen":false},
+                  {"w":"driving downstrokes","chosen":false},
+                  {"w":"strumming it","chosen":true},
+                  {"w":"the offbeat chop","chosen":false},
+                  {"w":"picking it out","chosen":false},
+                  {"w":"a riff","chosen":false},
+                  {"w":"a single-note line","chosen":false},
+                  {"w":"let one chord ring","chosen":false},
+                  {"w":"lay out","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the sound",
+            "questions": [
+              {
+                "id": "reg",
+                "seat": "guitar",
+                "head": "the sound",
+                "ask": "where do you sit?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"down low","chosen":false},
+                  {"w":"where it sits","chosen":true},
+                  {"w":"up the neck","chosen":false}
+                ]
+              },
+              {
+                "id": "cut",
+                "seat": "guitar",
+                "head": "the sound",
+                "ask": "how bright is it?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"dark","chosen":false},
+                  {"w":"warm","chosen":false},
+                  {"w":"bright","chosen":false},
+                  {"w":"glassy","chosen":false}
+                ]
+              },
+              {
+                "id": "rel",
+                "seat": "guitar",
+                "head": "the sound",
+                "ask": "how long does it ring?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"damped","chosen":false},
+                  {"w":"ringing","chosen":false},
+                  {"w":"hanging on","chosen":false}
+                ]
+              },
+              {
+                "id": "knob:orn",
+                "seat": "guitar",
+                "head": "the sound",
+                "ask": "how much decoration?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"none","chosen":false},
+                  {"w":"a grace here and there","chosen":false},
+                  {"w":"passing notes too","chosen":false},
+                  {"w":"it never sits still","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the board",
+            "questions": [
+              {
+                "id": "pedal",
+                "seat": "guitar",
+                "head": "the board",
+                "ask": "anything on the board?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"straight in","chosen":true},
+                  {"w":"a wah","chosen":false},
+                  {"w":"some crunch","chosen":false},
+                  {"w":"a chorus","chosen":false},
+                  {"w":"a phaser","chosen":false},
+                  {"w":"a flanger","chosen":false},
+                  {"w":"a tremolo","chosen":false},
+                  {"w":"a tape echo","chosen":false},
+                  {"w":"a ring mod","chosen":false}
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "seat": "voice",
+        "heads": [
+          {
+            "head": "the voice",
+            "questions": [
+              {
+                "id": "instr",
+                "seat": "voice",
+                "head": "the voice",
+                "ask": "whose voice is it?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"a choir on ahh","chosen":true},
+                  {"w":"voices on ooh","chosen":false},
+                  {"w":"one singer","chosen":false},
+                  {"w":"a synth voice","chosen":false},
+                  {"w":"a breathy vocal pad","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the part",
+            "questions": [
+              {
+                "id": "job",
+                "seat": "voice",
+                "head": "the part",
+                "ask": "what are you singing?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"oohs under it","chosen":true},
+                  {"w":"aahs, high","chosen":false},
+                  {"w":"an answering phrase","chosen":false},
+                  {"w":"a chant on the beat","chosen":false},
+                  {"w":"one long note","chosen":false},
+                  {"w":"lay out","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the sound",
+            "questions": [
+              {
+                "id": "reg",
+                "seat": "voice",
+                "head": "the sound",
+                "ask": "where do you sit?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"down low","chosen":false},
+                  {"w":"where it sits","chosen":true},
+                  {"w":"up high","chosen":false}
+                ]
+              },
+              {
+                "id": "who",
+                "seat": "voice",
+                "head": "the sound",
+                "ask": "how high is the voice?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"a soprano","chosen":false},
+                  {"w":"an alto","chosen":false},
+                  {"w":"a countertenor","chosen":false},
+                  {"w":"a tenor","chosen":false},
+                  {"w":"a bass","chosen":false}
+                ]
+              },
+              {
+                "id": "cut",
+                "seat": "voice",
+                "head": "the sound",
+                "ask": "how bright is the voice?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"dark","chosen":false},
+                  {"w":"warm","chosen":false},
+                  {"w":"airy","chosen":false}
+                ]
+              },
+              {
+                "id": "mov",
+                "seat": "voice",
+                "head": "the sound",
+                "ask": "does the tone move?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"it sits still","chosen":false},
+                  {"w":"let it drift","chosen":false},
+                  {"w":"let it swell and fade","chosen":false}
+                ]
+              },
+              {
+                "id": "atk",
+                "seat": "voice",
+                "head": "the sound",
+                "ask": "how does it come in?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"straight away","chosen":false},
+                  {"w":"a breath first","chosen":false},
+                  {"w":"swelling in","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the chain",
+            "questions": [
+              {
+                "id": "pedal",
+                "seat": "voice",
+                "head": "the chain",
+                "ask": "anything in the chain?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"close and dry","chosen":true},
+                  {"w":"a tape echo","chosen":false},
+                  {"w":"a chorus","chosen":false},
+                  {"w":"a flanger","chosen":false},
+                  {"w":"a phaser","chosen":false},
+                  {"w":"a tremolo","chosen":false},
+                  {"w":"a ring mod","chosen":false}
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "seat": "engineer",
+        "heads": [
+          {
+            "head": "the drums",
+            "questions": [
+              {
+                "id": "room",
+                "seat": "engineer",
+                "head": "the drums",
+                "ask": "how close are the drums?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"right up close","chosen":false},
+                  {"w":"in the room","chosen":false},
+                  {"w":"down the hall","chosen":false}
+                ]
+              },
+              {
+                "id": "kick",
+                "seat": "engineer",
+                "head": "the drums",
+                "ask": "how big is the kick?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"tight","chosen":false},
+                  {"w":"round","chosen":false},
+                  {"w":"huge","chosen":false}
+                ]
+              },
+              {
+                "id": "snare",
+                "seat": "engineer",
+                "head": "the drums",
+                "ask": "and the snare?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"dry, cracking","chosen":false},
+                  {"w":"fat","chosen":false},
+                  {"w":"a plate on it","chosen":false}
+                ]
+              },
+              {
+                "id": "hats",
+                "seat": "engineer",
+                "head": "the drums",
+                "ask": "the hats?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"keep them down","chosen":false},
+                  {"w":"as they are","chosen":false},
+                  {"w":"bright","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the space",
+            "questions": [
+              {
+                "id": "verb",
+                "seat": "engineer",
+                "head": "the space",
+                "ask": "how much reverb on the whole thing?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"dry","chosen":false},
+                  {"w":"a small room","chosen":false},
+                  {"w":"a big hall","chosen":false},
+                  {"w":"drowned","chosen":false}
+                ]
+              },
+              {
+                "id": "delay",
+                "seat": "engineer",
+                "head": "the space",
+                "ask": "any delay?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"none","chosen":false},
+                  {"w":"a slap on the snare","chosen":false},
+                  {"w":"an echo on the snare","chosen":false},
+                  {"w":"dub it — echo on everything","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the glue",
+            "questions": [
+              {
+                "id": "squeeze",
+                "seat": "engineer",
+                "head": "the glue",
+                "ask": "how hard do you squeeze it?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"leave it alone","chosen":false},
+                  {"w":"a little glue","chosen":false},
+                  {"w":"pumping","chosen":false}
+                ]
+              },
+              {
+                "id": "tape",
+                "seat": "engineer",
+                "head": "the glue",
+                "ask": "how much tape?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"none","chosen":false},
+                  {"w":"warm","chosen":false},
+                  {"w":"cooking","chosen":false}
+                ]
+              }
+            ]
+          },
+          {
+            "head": "the channels",
+            "questions": [
+              {
+                "id": "keysfx",
+                "seat": "engineer",
+                "head": "the channels",
+                "ask": "anything on the keys?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"dry","chosen":false},
+                  {"w":"a room","chosen":false},
+                  {"w":"echo","chosen":false},
+                  {"w":"wide and wet","chosen":false},
+                  {"w":"darker","chosen":false}
+                ]
+              },
+              {
+                "id": "gtrfx",
+                "seat": "engineer",
+                "head": "the channels",
+                "ask": "anything on the guitar?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"straight in","chosen":false},
+                  {"w":"a room","chosen":false},
+                  {"w":"a slapback","chosen":false},
+                  {"w":"washed out","chosen":false},
+                  {"w":"brighter","chosen":false}
+                ]
+              },
+              {
+                "id": "voxfx",
+                "seat": "engineer",
+                "head": "the channels",
+                "ask": "anything on the voice?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"close and dry","chosen":false},
+                  {"w":"a plate","chosen":false},
+                  {"w":"a long echo","chosen":false},
+                  {"w":"in the distance","chosen":false},
+                  {"w":"up front","chosen":false}
+                ]
+              },
+              {
+                "id": "bassfx",
+                "seat": "engineer",
+                "head": "the channels",
+                "ask": "anything on the bass?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"dry","chosen":false},
+                  {"w":"a room","chosen":false},
+                  {"w":"echo","chosen":false},
+                  {"w":"dub echo","chosen":false},
+                  {"w":"thicken it","chosen":false}
+                ]
+              },
+              {
+                "id": "bassmix",
+                "seat": "engineer",
+                "head": "the channels",
+                "ask": "where does the bass sit?",
+                "answer": null,
+                "who": null,
+                "options": [
+                  {"w":"under everything","chosen":false},
+                  {"w":"with the kick","chosen":false},
+                  {"w":"out front","chosen":false}
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "sections": [
+      {
+        "at": 0,
+        "role": "verse",
+        "bars": 8,
+        "questions": [
+          {
+            "id": "idea",
+            "seat": "section:0",
+            "head": null,
+            "ask": "the melody",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"nobody takes it","chosen":false},
+              {"w":"the keys take it","chosen":true},
+              {"w":"the guitar takes it","chosen":false},
+              {"w":"the singer takes it","chosen":false}
+            ]
+          },
+          {
+            "id": "theme",
+            "seat": "section:0",
+            "head": null,
+            "ask": "which theme",
+            "answer": null,
+            "who": null,
+            "options": [{"w":"the tune","chosen":true},{"w":"the answer","chosen":false}]
+          },
+          {
+            "id": "back",
+            "seat": "section:0",
+            "head": null,
+            "ask": "how it comes back",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"as it was","chosen":true},
+              {"w":"up a step","chosen":false},
+              {"w":"stretched out, twice as slow","chosen":false},
+              {"w":"just its head","chosen":false},
+              {"w":"turned upside down","chosen":false},
+              {"w":"backwards","chosen":false},
+              {"w":"twice as fast, and twice over","chosen":false}
+            ]
+          },
+          {
+            "id": "drums",
+            "seat": "section:0",
+            "head": null,
+            "ask": "the drums",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":true},
+              {"w":"half time","chosen":false},
+              {"w":"double time","chosen":false},
+              {"w":"just the hats","chosen":false},
+              {"w":"lay out","chosen":false},
+              {"w":"busier","chosen":false},
+              {"w":"sparser","chosen":false},
+              {"w":"move to the ride","chosen":false}
+            ]
+          },
+          {
+            "id": "keys",
+            "seat": "section:0",
+            "head": null,
+            "ask": "the keys",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":true},
+              {"w":"pads under it","chosen":false},
+              {"w":"comp the changes","chosen":false},
+              {"w":"chop the offbeats","chosen":false},
+              {"w":"the riff","chosen":false},
+              {"w":"arpeggios","chosen":false},
+              {"w":"hold one note","chosen":false},
+              {"w":"lay out","chosen":false}
+            ]
+          },
+          {
+            "id": "guitar",
+            "seat": "section:0",
+            "head": null,
+            "ask": "the guitar",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":false},
+              {"w":"a palm-muted chug","chosen":false},
+              {"w":"power chords","chosen":false},
+              {"w":"driving downstrokes","chosen":false},
+              {"w":"strumming it","chosen":false},
+              {"w":"the offbeat chop","chosen":false},
+              {"w":"picking it out","chosen":false},
+              {"w":"a riff","chosen":false},
+              {"w":"a single-note line","chosen":false},
+              {"w":"let one chord ring","chosen":true},
+              {"w":"lay out","chosen":false}
+            ]
+          },
+          {
+            "id": "bass",
+            "seat": "section:0",
+            "head": null,
+            "ask": "the bass",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":true},
+              {"w":"pedal the root","chosen":false},
+              {"w":"walk it","chosen":false},
+              {"w":"octaves","chosen":false},
+              {"w":"drive it in eighths","chosen":false},
+              {"w":"up an octave","chosen":false},
+              {"w":"lay out","chosen":false}
+            ]
+          },
+          {
+            "id": "voice",
+            "seat": "section:0",
+            "head": null,
+            "ask": "the voice",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":true},
+              {"w":"oohs under it","chosen":false},
+              {"w":"aahs, high","chosen":false},
+              {"w":"an answering phrase","chosen":false},
+              {"w":"a chant on the beat","chosen":false},
+              {"w":"one long note","chosen":false},
+              {"w":"lay out","chosen":false}
+            ]
+          },
+          {
+            "id": "pipe",
+            "seat": "section:0",
+            "head": null,
+            "ask": "what happens to it",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"as played","chosen":true},
+              {"w":"double it in thirds","chosen":false},
+              {"w":"double it in sixths","chosen":false},
+              {"w":"echo it round","chosen":false},
+              {"w":"spread the chords","chosen":false},
+              {"w":"let it breathe","chosen":false},
+              {"w":"thirds and an echo","chosen":false}
+            ]
+          },
+          {
+            "id": "mix",
+            "seat": "section:0",
+            "head": null,
+            "ask": "the mix",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":true},
+              {"w":"bring it forward","chosen":false},
+              {"w":"push it back","chosen":false},
+              {"w":"way down","chosen":false},
+              {"w":"open the reverb","chosen":false},
+              {"w":"drown it","chosen":false},
+              {"w":"throw an echo","chosen":false},
+              {"w":"dub it out","chosen":false},
+              {"w":"bone dry","chosen":false}
+            ]
+          },
+          {
+            "id": "move",
+            "seat": "section:0",
+            "head": null,
+            "ask": "the filter",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"no movement","chosen":true},
+              {"w":"open the filter over it","chosen":false},
+              {"w":"close it down","chosen":false},
+              {"w":"rise into the change","chosen":false},
+              {"w":"pump it on the beat","chosen":false}
+            ]
+          },
+          {
+            "id": "out",
+            "seat": "section:0",
+            "head": null,
+            "ask": "how do we get out",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"straight through","chosen":false},
+              {"w":"a fill","chosen":false},
+              {"w":"a lift into it","chosen":false}
+            ]
+          },
+          {
+            "id": "band",
+            "seat": "section:0",
+            "head": null,
+            "ask": "everybody",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"give it a lift","chosen":true},
+              {"w":"follow the kick","chosen":false}
+            ]
+          },
+          {
+            "id": "dwords",
+            "seat": "section:0",
+            "head": null,
+            "ask": "at the kit",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"answer yourself","chosen":false},
+              {"w":"hands in quarters","chosen":false},
+              {"w":"hands in eighths","chosen":false},
+              {"w":"hands in sixteenths","chosen":false},
+              {"w":"hands shuffled","chosen":false},
+              {"w":"backbeat on two and four","chosen":false},
+              {"w":"backbeat on three","chosen":false},
+              {"w":"ghost notes","chosen":false},
+              {"w":"accent the downbeats","chosen":false},
+              {"w":"ride it, not the hats","chosen":false},
+              {"w":"back to the hats","chosen":false},
+              {"w":"nothing on the one","chosen":false},
+              {"w":"kick on the one only","chosen":false},
+              {"w":"kick on the ands","chosen":false},
+              {"w":"double the kick","chosen":false},
+              {"w":"snare on every beat","chosen":false},
+              {"w":"toms, not the snare","chosen":false},
+              {"w":"floor tom on the ands","chosen":false},
+              {"w":"a tom melody","chosen":false},
+              {"w":"walk the toms down","chosen":false},
+              {"w":"play the song","chosen":false},
+              {"w":"open the hat on four","chosen":false},
+              {"w":"flam the backbeat","chosen":false},
+              {"w":"drag the backbeat","chosen":false},
+              {"w":"flam the kick","chosen":false},
+              {"w":"play it straight again","chosen":false},
+              {"w":"push the hats","chosen":false},
+              {"w":"lay the snare back","chosen":false},
+              {"w":"push the kick","chosen":false},
+              {"w":"let the hats breathe","chosen":false},
+              {"w":"the perc, in and out","chosen":false},
+              {"w":"crescendo the bar","chosen":false},
+              {"w":"accent the ands","chosen":false},
+              {"w":"hats","chosen":false},
+              {"w":"open hats","chosen":false},
+              {"w":"claps","chosen":false},
+              {"w":"percussion","chosen":false},
+              {"w":"toms","chosen":false},
+              {"w":"mid tom","chosen":false},
+              {"w":"floor tom","chosen":false},
+              {"w":"kick","chosen":false},
+              {"w":"snare","chosen":false},
+              {"w":"no kick","chosen":false},
+              {"w":"no snare","chosen":false},
+              {"w":"no hats","chosen":false},
+              {"w":"no open hats","chosen":false},
+              {"w":"no claps","chosen":false},
+              {"w":"no percussion","chosen":false},
+              {"w":"no toms","chosen":false},
+              {"w":"no mid tom","chosen":false},
+              {"w":"no floor tom","chosen":false},
+              {"w":"second measure fill","chosen":false},
+              {"w":"third measure fill","chosen":false},
+              {"w":"fourth measure fill","chosen":false},
+              {"w":"no fills","chosen":false}
+            ]
+          },
+          {
+            "id": "kwords",
+            "seat": "section:0",
+            "head": null,
+            "ask": "at the keys",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"pads","chosen":false},
+              {"w":"long swells","chosen":false},
+              {"w":"comping the changes","chosen":false},
+              {"w":"the Charleston","chosen":false},
+              {"w":"pushing the changes","chosen":false},
+              {"w":"held to the change","chosen":false},
+              {"w":"on the offbeats","chosen":false},
+              {"w":"pushing the bar","chosen":false},
+              {"w":"a riff","chosen":false},
+              {"w":"a counter-line","chosen":false},
+              {"w":"arpeggios","chosen":false},
+              {"w":"a drone","chosen":false},
+              {"w":"lay out","chosen":false},
+              {"w":"on one","chosen":false},
+              {"w":"on the e of one","chosen":false},
+              {"w":"on the and of one","chosen":false},
+              {"w":"on the a of one","chosen":false},
+              {"w":"on two","chosen":false},
+              {"w":"on the e of two","chosen":false},
+              {"w":"on the and of two","chosen":false},
+              {"w":"on the a of two","chosen":false},
+              {"w":"on three","chosen":false},
+              {"w":"on the e of three","chosen":false},
+              {"w":"on the and of three","chosen":false},
+              {"w":"on the a of three","chosen":false},
+              {"w":"on four","chosen":false},
+              {"w":"on the e of four","chosen":false},
+              {"w":"on the and of four","chosen":false},
+              {"w":"on the a of four","chosen":false},
+              {"w":"down low","chosen":false},
+              {"w":"where it sits","chosen":false},
+              {"w":"up out of the way","chosen":false},
+              {"w":"right at the top","chosen":false},
+              {"w":"dark","chosen":false},
+              {"w":"warm","chosen":false},
+              {"w":"clear","chosen":false},
+              {"w":"glassy","chosen":false},
+              {"w":"straight away","chosen":false},
+              {"w":"a soft edge","chosen":false},
+              {"w":"swelling in","chosen":false},
+              {"w":"very slowly","chosen":false},
+              {"w":"short","chosen":false},
+              {"w":"ringing","chosen":false},
+              {"w":"hanging on","chosen":false},
+              {"w":"clean","chosen":false},
+              {"w":"some","chosen":false},
+              {"w":"singing","chosen":false}
+            ]
+          },
+          {
+            "id": "gwords",
+            "seat": "section:0",
+            "head": null,
+            "ask": "at the amp",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"a palm-muted chug","chosen":false},
+              {"w":"power chords","chosen":false},
+              {"w":"driving downstrokes","chosen":false},
+              {"w":"strumming it","chosen":false},
+              {"w":"the offbeat chop","chosen":false},
+              {"w":"picking it out","chosen":false},
+              {"w":"a riff","chosen":false},
+              {"w":"a single-note line","chosen":false},
+              {"w":"let one chord ring","chosen":false},
+              {"w":"lay out","chosen":false},
+              {"w":"on one","chosen":false},
+              {"w":"on the e of one","chosen":false},
+              {"w":"on the and of one","chosen":false},
+              {"w":"on the a of one","chosen":false},
+              {"w":"on two","chosen":false},
+              {"w":"on the e of two","chosen":false},
+              {"w":"on the and of two","chosen":false},
+              {"w":"on the a of two","chosen":false},
+              {"w":"on three","chosen":false},
+              {"w":"on the e of three","chosen":false},
+              {"w":"on the and of three","chosen":false},
+              {"w":"on the a of three","chosen":false},
+              {"w":"on four","chosen":false},
+              {"w":"on the e of four","chosen":false},
+              {"w":"on the and of four","chosen":false},
+              {"w":"on the a of four","chosen":false},
+              {"w":"down low","chosen":false},
+              {"w":"where it sits","chosen":false},
+              {"w":"up the neck","chosen":false},
+              {"w":"dark","chosen":false},
+              {"w":"warm","chosen":false},
+              {"w":"bright","chosen":false},
+              {"w":"glassy","chosen":false},
+              {"w":"damped","chosen":false},
+              {"w":"ringing","chosen":false},
+              {"w":"hanging on","chosen":false}
+            ]
+          },
+          {
+            "id": "bwords",
+            "seat": "section:0",
+            "head": null,
+            "ask": "the bass player",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"hold the root","chosen":false},
+              {"w":"walk it","chosen":false},
+              {"w":"octaves","chosen":false},
+              {"w":"root and fifth","chosen":false},
+              {"w":"driving eighths","chosen":false},
+              {"w":"busy sixteenths","chosen":false},
+              {"w":"an acid line","chosen":false},
+              {"w":"a rolling 303","chosen":false},
+              {"w":"house offbeats","chosen":false},
+              {"w":"a pumping eighth","chosen":false},
+              {"w":"disco octaves","chosen":false},
+              {"w":"a reggae bubble","chosen":false},
+              {"w":"one stab a bar","chosen":false},
+              {"w":"a sixteenth pop","chosen":false},
+              {"w":"forget the figure","chosen":false},
+              {"w":"just the root","chosen":false},
+              {"w":"the minor third in it","chosen":false},
+              {"w":"fifths in the line","chosen":false},
+              {"w":"a full acid scale","chosen":false},
+              {"w":"walk it up","chosen":false},
+              {"w":"shut","chosen":false},
+              {"w":"dark","chosen":false},
+              {"w":"halfway","chosen":false},
+              {"w":"open","chosen":false},
+              {"w":"wide open","chosen":false},
+              {"w":"none","chosen":false},
+              {"w":"a little","chosen":false},
+              {"w":"squelchy","chosen":false},
+              {"w":"screaming","chosen":false},
+              {"w":"barely","chosen":false},
+              {"w":"some","chosen":false},
+              {"w":"a long way","chosen":false},
+              {"w":"all the way","chosen":false},
+              {"w":"snappy","chosen":false},
+              {"w":"short","chosen":false},
+              {"w":"long","chosen":false},
+              {"w":"hanging on","chosen":false},
+              {"w":"saw","chosen":false},
+              {"w":"square","chosen":false},
+              {"w":"short notes","chosen":false},
+              {"w":"let them ring","chosen":false},
+              {"w":"down an octave","chosen":false},
+              {"w":"up an octave","chosen":false},
+              {"w":"swing it","chosen":false},
+              {"w":"play it straight","chosen":false},
+              {"w":"sit back","chosen":false},
+              {"w":"push it","chosen":false}
+            ]
+          },
+          {
+            "id": "vwords",
+            "seat": "section:0",
+            "head": null,
+            "ask": "at the mic",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"oohs under it","chosen":false},
+              {"w":"aahs, high","chosen":false},
+              {"w":"an answering phrase","chosen":false},
+              {"w":"a chant on the beat","chosen":false},
+              {"w":"one long note","chosen":false},
+              {"w":"lay out","chosen":false},
+              {"w":"on one","chosen":false},
+              {"w":"on the e of one","chosen":false},
+              {"w":"on the and of one","chosen":false},
+              {"w":"on the a of one","chosen":false},
+              {"w":"on two","chosen":false},
+              {"w":"on the e of two","chosen":false},
+              {"w":"on the and of two","chosen":false},
+              {"w":"on the a of two","chosen":false},
+              {"w":"on three","chosen":false},
+              {"w":"on the e of three","chosen":false},
+              {"w":"on the and of three","chosen":false},
+              {"w":"on the a of three","chosen":false},
+              {"w":"on four","chosen":false},
+              {"w":"on the e of four","chosen":false},
+              {"w":"on the and of four","chosen":false},
+              {"w":"on the a of four","chosen":false},
+              {"w":"down low","chosen":false},
+              {"w":"where it sits","chosen":false},
+              {"w":"up high","chosen":false},
+              {"w":"a soprano","chosen":false},
+              {"w":"an alto","chosen":false},
+              {"w":"a countertenor","chosen":false},
+              {"w":"a tenor","chosen":false},
+              {"w":"a bass","chosen":false},
+              {"w":"dark","chosen":false},
+              {"w":"warm","chosen":false},
+              {"w":"airy","chosen":false},
+              {"w":"it sits still","chosen":false},
+              {"w":"let it drift","chosen":false},
+              {"w":"let it swell and fade","chosen":false},
+              {"w":"straight away","chosen":false},
+              {"w":"a breath first","chosen":false},
+              {"w":"swelling in","chosen":false}
+            ]
+          }
+        ]
+      },
+      {
+        "at": 1,
+        "role": "chorus",
+        "bars": 8,
+        "questions": [
+          {
+            "id": "idea",
+            "seat": "section:1",
+            "head": null,
+            "ask": "the melody",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"nobody takes it","chosen":false},
+              {"w":"the keys take it","chosen":false},
+              {"w":"the guitar takes it","chosen":false},
+              {"w":"the singer takes it","chosen":true}
+            ]
+          },
+          {
+            "id": "theme",
+            "seat": "section:1",
+            "head": null,
+            "ask": "which theme",
+            "answer": null,
+            "who": null,
+            "options": [{"w":"the tune","chosen":false},{"w":"the answer","chosen":true}]
+          },
+          {
+            "id": "back",
+            "seat": "section:1",
+            "head": null,
+            "ask": "how it comes back",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"as it was","chosen":true},
+              {"w":"up a step","chosen":false},
+              {"w":"stretched out, twice as slow","chosen":false},
+              {"w":"just its head","chosen":false},
+              {"w":"turned upside down","chosen":false},
+              {"w":"backwards","chosen":false},
+              {"w":"twice as fast, and twice over","chosen":false}
+            ]
+          },
+          {
+            "id": "drums",
+            "seat": "section:1",
+            "head": null,
+            "ask": "the drums",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":false},
+              {"w":"half time","chosen":false},
+              {"w":"double time","chosen":false},
+              {"w":"just the hats","chosen":false},
+              {"w":"lay out","chosen":false},
+              {"w":"busier","chosen":true},
+              {"w":"sparser","chosen":false},
+              {"w":"move to the ride","chosen":false}
+            ]
+          },
+          {
+            "id": "keys",
+            "seat": "section:1",
+            "head": null,
+            "ask": "the keys",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":true},
+              {"w":"pads under it","chosen":false},
+              {"w":"comp the changes","chosen":false},
+              {"w":"chop the offbeats","chosen":false},
+              {"w":"the riff","chosen":false},
+              {"w":"arpeggios","chosen":false},
+              {"w":"hold one note","chosen":false},
+              {"w":"lay out","chosen":false}
+            ]
+          },
+          {
+            "id": "guitar",
+            "seat": "section:1",
+            "head": null,
+            "ask": "the guitar",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":true},
+              {"w":"a palm-muted chug","chosen":false},
+              {"w":"power chords","chosen":false},
+              {"w":"driving downstrokes","chosen":false},
+              {"w":"strumming it","chosen":false},
+              {"w":"the offbeat chop","chosen":false},
+              {"w":"picking it out","chosen":false},
+              {"w":"a riff","chosen":false},
+              {"w":"a single-note line","chosen":false},
+              {"w":"let one chord ring","chosen":false},
+              {"w":"lay out","chosen":false}
+            ]
+          },
+          {
+            "id": "bass",
+            "seat": "section:1",
+            "head": null,
+            "ask": "the bass",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":false},
+              {"w":"pedal the root","chosen":false},
+              {"w":"walk it","chosen":false},
+              {"w":"octaves","chosen":true},
+              {"w":"drive it in eighths","chosen":false},
+              {"w":"up an octave","chosen":false},
+              {"w":"lay out","chosen":false}
+            ]
+          },
+          {
+            "id": "voice",
+            "seat": "section:1",
+            "head": null,
+            "ask": "the voice",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":true},
+              {"w":"oohs under it","chosen":false},
+              {"w":"aahs, high","chosen":false},
+              {"w":"an answering phrase","chosen":false},
+              {"w":"a chant on the beat","chosen":false},
+              {"w":"one long note","chosen":false},
+              {"w":"lay out","chosen":false}
+            ]
+          },
+          {
+            "id": "pipe",
+            "seat": "section:1",
+            "head": null,
+            "ask": "what happens to it",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"as played","chosen":false},
+              {"w":"double it in thirds","chosen":true},
+              {"w":"double it in sixths","chosen":false},
+              {"w":"echo it round","chosen":false},
+              {"w":"spread the chords","chosen":false},
+              {"w":"let it breathe","chosen":false},
+              {"w":"thirds and an echo","chosen":false}
+            ]
+          },
+          {
+            "id": "mix",
+            "seat": "section:1",
+            "head": null,
+            "ask": "the mix",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":false},
+              {"w":"bring it forward","chosen":true},
+              {"w":"push it back","chosen":false},
+              {"w":"way down","chosen":false},
+              {"w":"open the reverb","chosen":false},
+              {"w":"drown it","chosen":false},
+              {"w":"throw an echo","chosen":false},
+              {"w":"dub it out","chosen":false},
+              {"w":"bone dry","chosen":false}
+            ]
+          },
+          {
+            "id": "move",
+            "seat": "section:1",
+            "head": null,
+            "ask": "the filter",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"no movement","chosen":true},
+              {"w":"open the filter over it","chosen":false},
+              {"w":"close it down","chosen":false},
+              {"w":"rise into the change","chosen":false},
+              {"w":"pump it on the beat","chosen":false}
+            ]
+          },
+          {
+            "id": "out",
+            "seat": "section:1",
+            "head": null,
+            "ask": "how do we get out",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"straight through","chosen":false},
+              {"w":"a fill","chosen":false},
+              {"w":"a lift into it","chosen":false}
+            ]
+          },
+          {
+            "id": "band",
+            "seat": "section:1",
+            "head": null,
+            "ask": "everybody",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"give it a lift","chosen":true},
+              {"w":"follow the kick","chosen":false}
+            ]
+          },
+          {
+            "id": "dwords",
+            "seat": "section:1",
+            "head": null,
+            "ask": "at the kit",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"answer yourself","chosen":false},
+              {"w":"hands in quarters","chosen":false},
+              {"w":"hands in eighths","chosen":false},
+              {"w":"hands in sixteenths","chosen":false},
+              {"w":"hands shuffled","chosen":false},
+              {"w":"backbeat on two and four","chosen":false},
+              {"w":"backbeat on three","chosen":false},
+              {"w":"ghost notes","chosen":false},
+              {"w":"accent the downbeats","chosen":false},
+              {"w":"ride it, not the hats","chosen":false},
+              {"w":"back to the hats","chosen":false},
+              {"w":"nothing on the one","chosen":false},
+              {"w":"kick on the one only","chosen":false},
+              {"w":"kick on the ands","chosen":false},
+              {"w":"double the kick","chosen":false},
+              {"w":"snare on every beat","chosen":false},
+              {"w":"toms, not the snare","chosen":false},
+              {"w":"floor tom on the ands","chosen":false},
+              {"w":"a tom melody","chosen":false},
+              {"w":"walk the toms down","chosen":false},
+              {"w":"play the song","chosen":false},
+              {"w":"open the hat on four","chosen":false},
+              {"w":"flam the backbeat","chosen":false},
+              {"w":"drag the backbeat","chosen":false},
+              {"w":"flam the kick","chosen":false},
+              {"w":"play it straight again","chosen":false},
+              {"w":"push the hats","chosen":false},
+              {"w":"lay the snare back","chosen":false},
+              {"w":"push the kick","chosen":false},
+              {"w":"let the hats breathe","chosen":false},
+              {"w":"the perc, in and out","chosen":false},
+              {"w":"crescendo the bar","chosen":false},
+              {"w":"accent the ands","chosen":false},
+              {"w":"hats","chosen":false},
+              {"w":"open hats","chosen":false},
+              {"w":"claps","chosen":false},
+              {"w":"percussion","chosen":false},
+              {"w":"toms","chosen":false},
+              {"w":"mid tom","chosen":false},
+              {"w":"floor tom","chosen":false},
+              {"w":"kick","chosen":false},
+              {"w":"snare","chosen":false},
+              {"w":"no kick","chosen":false},
+              {"w":"no snare","chosen":false},
+              {"w":"no hats","chosen":false},
+              {"w":"no open hats","chosen":false},
+              {"w":"no claps","chosen":false},
+              {"w":"no percussion","chosen":false},
+              {"w":"no toms","chosen":false},
+              {"w":"no mid tom","chosen":false},
+              {"w":"no floor tom","chosen":false},
+              {"w":"second measure fill","chosen":false},
+              {"w":"third measure fill","chosen":false},
+              {"w":"fourth measure fill","chosen":false},
+              {"w":"no fills","chosen":false}
+            ]
+          },
+          {
+            "id": "kwords",
+            "seat": "section:1",
+            "head": null,
+            "ask": "at the keys",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"pads","chosen":false},
+              {"w":"long swells","chosen":false},
+              {"w":"comping the changes","chosen":false},
+              {"w":"the Charleston","chosen":false},
+              {"w":"pushing the changes","chosen":false},
+              {"w":"held to the change","chosen":false},
+              {"w":"on the offbeats","chosen":false},
+              {"w":"pushing the bar","chosen":false},
+              {"w":"a riff","chosen":false},
+              {"w":"a counter-line","chosen":false},
+              {"w":"arpeggios","chosen":false},
+              {"w":"a drone","chosen":false},
+              {"w":"lay out","chosen":false},
+              {"w":"on one","chosen":false},
+              {"w":"on the e of one","chosen":false},
+              {"w":"on the and of one","chosen":false},
+              {"w":"on the a of one","chosen":false},
+              {"w":"on two","chosen":false},
+              {"w":"on the e of two","chosen":false},
+              {"w":"on the and of two","chosen":false},
+              {"w":"on the a of two","chosen":false},
+              {"w":"on three","chosen":false},
+              {"w":"on the e of three","chosen":false},
+              {"w":"on the and of three","chosen":false},
+              {"w":"on the a of three","chosen":false},
+              {"w":"on four","chosen":false},
+              {"w":"on the e of four","chosen":false},
+              {"w":"on the and of four","chosen":false},
+              {"w":"on the a of four","chosen":false},
+              {"w":"down low","chosen":false},
+              {"w":"where it sits","chosen":false},
+              {"w":"up out of the way","chosen":false},
+              {"w":"right at the top","chosen":false},
+              {"w":"dark","chosen":false},
+              {"w":"warm","chosen":false},
+              {"w":"clear","chosen":false},
+              {"w":"glassy","chosen":false},
+              {"w":"straight away","chosen":false},
+              {"w":"a soft edge","chosen":false},
+              {"w":"swelling in","chosen":false},
+              {"w":"very slowly","chosen":false},
+              {"w":"short","chosen":false},
+              {"w":"ringing","chosen":false},
+              {"w":"hanging on","chosen":false},
+              {"w":"clean","chosen":false},
+              {"w":"some","chosen":false},
+              {"w":"singing","chosen":false}
+            ]
+          },
+          {
+            "id": "gwords",
+            "seat": "section:1",
+            "head": null,
+            "ask": "at the amp",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"a palm-muted chug","chosen":false},
+              {"w":"power chords","chosen":false},
+              {"w":"driving downstrokes","chosen":false},
+              {"w":"strumming it","chosen":false},
+              {"w":"the offbeat chop","chosen":false},
+              {"w":"picking it out","chosen":false},
+              {"w":"a riff","chosen":false},
+              {"w":"a single-note line","chosen":false},
+              {"w":"let one chord ring","chosen":false},
+              {"w":"lay out","chosen":false},
+              {"w":"on one","chosen":false},
+              {"w":"on the e of one","chosen":false},
+              {"w":"on the and of one","chosen":false},
+              {"w":"on the a of one","chosen":false},
+              {"w":"on two","chosen":false},
+              {"w":"on the e of two","chosen":false},
+              {"w":"on the and of two","chosen":false},
+              {"w":"on the a of two","chosen":false},
+              {"w":"on three","chosen":false},
+              {"w":"on the e of three","chosen":false},
+              {"w":"on the and of three","chosen":false},
+              {"w":"on the a of three","chosen":false},
+              {"w":"on four","chosen":false},
+              {"w":"on the e of four","chosen":false},
+              {"w":"on the and of four","chosen":false},
+              {"w":"on the a of four","chosen":false},
+              {"w":"down low","chosen":false},
+              {"w":"where it sits","chosen":false},
+              {"w":"up the neck","chosen":false},
+              {"w":"dark","chosen":false},
+              {"w":"warm","chosen":false},
+              {"w":"bright","chosen":false},
+              {"w":"glassy","chosen":false},
+              {"w":"damped","chosen":false},
+              {"w":"ringing","chosen":false},
+              {"w":"hanging on","chosen":false}
+            ]
+          },
+          {
+            "id": "bwords",
+            "seat": "section:1",
+            "head": null,
+            "ask": "the bass player",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"hold the root","chosen":false},
+              {"w":"walk it","chosen":false},
+              {"w":"octaves","chosen":false},
+              {"w":"root and fifth","chosen":false},
+              {"w":"driving eighths","chosen":false},
+              {"w":"busy sixteenths","chosen":false},
+              {"w":"an acid line","chosen":false},
+              {"w":"a rolling 303","chosen":false},
+              {"w":"house offbeats","chosen":false},
+              {"w":"a pumping eighth","chosen":false},
+              {"w":"disco octaves","chosen":false},
+              {"w":"a reggae bubble","chosen":false},
+              {"w":"one stab a bar","chosen":false},
+              {"w":"a sixteenth pop","chosen":false},
+              {"w":"forget the figure","chosen":false},
+              {"w":"just the root","chosen":false},
+              {"w":"the minor third in it","chosen":false},
+              {"w":"fifths in the line","chosen":false},
+              {"w":"a full acid scale","chosen":false},
+              {"w":"walk it up","chosen":false},
+              {"w":"shut","chosen":false},
+              {"w":"dark","chosen":false},
+              {"w":"halfway","chosen":false},
+              {"w":"open","chosen":false},
+              {"w":"wide open","chosen":false},
+              {"w":"none","chosen":false},
+              {"w":"a little","chosen":false},
+              {"w":"squelchy","chosen":false},
+              {"w":"screaming","chosen":false},
+              {"w":"barely","chosen":false},
+              {"w":"some","chosen":false},
+              {"w":"a long way","chosen":false},
+              {"w":"all the way","chosen":false},
+              {"w":"snappy","chosen":false},
+              {"w":"short","chosen":false},
+              {"w":"long","chosen":false},
+              {"w":"hanging on","chosen":false},
+              {"w":"saw","chosen":false},
+              {"w":"square","chosen":false},
+              {"w":"short notes","chosen":false},
+              {"w":"let them ring","chosen":false},
+              {"w":"down an octave","chosen":false},
+              {"w":"up an octave","chosen":false},
+              {"w":"swing it","chosen":false},
+              {"w":"play it straight","chosen":false},
+              {"w":"sit back","chosen":false},
+              {"w":"push it","chosen":false}
+            ]
+          },
+          {
+            "id": "vwords",
+            "seat": "section:1",
+            "head": null,
+            "ask": "at the mic",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"oohs under it","chosen":false},
+              {"w":"aahs, high","chosen":false},
+              {"w":"an answering phrase","chosen":false},
+              {"w":"a chant on the beat","chosen":false},
+              {"w":"one long note","chosen":false},
+              {"w":"lay out","chosen":false},
+              {"w":"on one","chosen":false},
+              {"w":"on the e of one","chosen":false},
+              {"w":"on the and of one","chosen":false},
+              {"w":"on the a of one","chosen":false},
+              {"w":"on two","chosen":false},
+              {"w":"on the e of two","chosen":false},
+              {"w":"on the and of two","chosen":false},
+              {"w":"on the a of two","chosen":false},
+              {"w":"on three","chosen":false},
+              {"w":"on the e of three","chosen":false},
+              {"w":"on the and of three","chosen":false},
+              {"w":"on the a of three","chosen":false},
+              {"w":"on four","chosen":false},
+              {"w":"on the e of four","chosen":false},
+              {"w":"on the and of four","chosen":false},
+              {"w":"on the a of four","chosen":false},
+              {"w":"down low","chosen":false},
+              {"w":"where it sits","chosen":false},
+              {"w":"up high","chosen":false},
+              {"w":"a soprano","chosen":false},
+              {"w":"an alto","chosen":false},
+              {"w":"a countertenor","chosen":false},
+              {"w":"a tenor","chosen":false},
+              {"w":"a bass","chosen":false},
+              {"w":"dark","chosen":false},
+              {"w":"warm","chosen":false},
+              {"w":"airy","chosen":false},
+              {"w":"it sits still","chosen":false},
+              {"w":"let it drift","chosen":false},
+              {"w":"let it swell and fade","chosen":false},
+              {"w":"straight away","chosen":false},
+              {"w":"a breath first","chosen":false},
+              {"w":"swelling in","chosen":false}
+            ]
+          }
+        ]
+      },
+      {
+        "at": 2,
+        "role": "verse",
+        "bars": 8,
+        "questions": [
+          {
+            "id": "idea",
+            "seat": "section:2",
+            "head": null,
+            "ask": "the melody",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"nobody takes it","chosen":false},
+              {"w":"the keys take it","chosen":true},
+              {"w":"the guitar takes it","chosen":false},
+              {"w":"the singer takes it","chosen":false}
+            ]
+          },
+          {
+            "id": "theme",
+            "seat": "section:2",
+            "head": null,
+            "ask": "which theme",
+            "answer": null,
+            "who": null,
+            "options": [{"w":"the tune","chosen":true},{"w":"the answer","chosen":false}]
+          },
+          {
+            "id": "back",
+            "seat": "section:2",
+            "head": null,
+            "ask": "how it comes back",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"as it was","chosen":true},
+              {"w":"up a step","chosen":false},
+              {"w":"stretched out, twice as slow","chosen":false},
+              {"w":"just its head","chosen":false},
+              {"w":"turned upside down","chosen":false},
+              {"w":"backwards","chosen":false},
+              {"w":"twice as fast, and twice over","chosen":false}
+            ]
+          },
+          {
+            "id": "drums",
+            "seat": "section:2",
+            "head": null,
+            "ask": "the drums",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":true},
+              {"w":"half time","chosen":false},
+              {"w":"double time","chosen":false},
+              {"w":"just the hats","chosen":false},
+              {"w":"lay out","chosen":false},
+              {"w":"busier","chosen":false},
+              {"w":"sparser","chosen":false},
+              {"w":"move to the ride","chosen":false}
+            ]
+          },
+          {
+            "id": "keys",
+            "seat": "section:2",
+            "head": null,
+            "ask": "the keys",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":true},
+              {"w":"pads under it","chosen":false},
+              {"w":"comp the changes","chosen":false},
+              {"w":"chop the offbeats","chosen":false},
+              {"w":"the riff","chosen":false},
+              {"w":"arpeggios","chosen":false},
+              {"w":"hold one note","chosen":false},
+              {"w":"lay out","chosen":false}
+            ]
+          },
+          {
+            "id": "guitar",
+            "seat": "section:2",
+            "head": null,
+            "ask": "the guitar",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":false},
+              {"w":"a palm-muted chug","chosen":false},
+              {"w":"power chords","chosen":false},
+              {"w":"driving downstrokes","chosen":false},
+              {"w":"strumming it","chosen":false},
+              {"w":"the offbeat chop","chosen":false},
+              {"w":"picking it out","chosen":false},
+              {"w":"a riff","chosen":false},
+              {"w":"a single-note line","chosen":false},
+              {"w":"let one chord ring","chosen":true},
+              {"w":"lay out","chosen":false}
+            ]
+          },
+          {
+            "id": "bass",
+            "seat": "section:2",
+            "head": null,
+            "ask": "the bass",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":true},
+              {"w":"pedal the root","chosen":false},
+              {"w":"walk it","chosen":false},
+              {"w":"octaves","chosen":false},
+              {"w":"drive it in eighths","chosen":false},
+              {"w":"up an octave","chosen":false},
+              {"w":"lay out","chosen":false}
+            ]
+          },
+          {
+            "id": "voice",
+            "seat": "section:2",
+            "head": null,
+            "ask": "the voice",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":true},
+              {"w":"oohs under it","chosen":false},
+              {"w":"aahs, high","chosen":false},
+              {"w":"an answering phrase","chosen":false},
+              {"w":"a chant on the beat","chosen":false},
+              {"w":"one long note","chosen":false},
+              {"w":"lay out","chosen":false}
+            ]
+          },
+          {
+            "id": "pipe",
+            "seat": "section:2",
+            "head": null,
+            "ask": "what happens to it",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"as played","chosen":true},
+              {"w":"double it in thirds","chosen":false},
+              {"w":"double it in sixths","chosen":false},
+              {"w":"echo it round","chosen":false},
+              {"w":"spread the chords","chosen":false},
+              {"w":"let it breathe","chosen":false},
+              {"w":"thirds and an echo","chosen":false}
+            ]
+          },
+          {
+            "id": "mix",
+            "seat": "section:2",
+            "head": null,
+            "ask": "the mix",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":true},
+              {"w":"bring it forward","chosen":false},
+              {"w":"push it back","chosen":false},
+              {"w":"way down","chosen":false},
+              {"w":"open the reverb","chosen":false},
+              {"w":"drown it","chosen":false},
+              {"w":"throw an echo","chosen":false},
+              {"w":"dub it out","chosen":false},
+              {"w":"bone dry","chosen":false}
+            ]
+          },
+          {
+            "id": "move",
+            "seat": "section:2",
+            "head": null,
+            "ask": "the filter",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"no movement","chosen":true},
+              {"w":"open the filter over it","chosen":false},
+              {"w":"close it down","chosen":false},
+              {"w":"rise into the change","chosen":false},
+              {"w":"pump it on the beat","chosen":false}
+            ]
+          },
+          {
+            "id": "out",
+            "seat": "section:2",
+            "head": null,
+            "ask": "how do we get out",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"straight through","chosen":false},
+              {"w":"a fill","chosen":false},
+              {"w":"a lift into it","chosen":false}
+            ]
+          },
+          {
+            "id": "band",
+            "seat": "section:2",
+            "head": null,
+            "ask": "everybody",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"give it a lift","chosen":true},
+              {"w":"follow the kick","chosen":false}
+            ]
+          },
+          {
+            "id": "dwords",
+            "seat": "section:2",
+            "head": null,
+            "ask": "at the kit",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"answer yourself","chosen":false},
+              {"w":"hands in quarters","chosen":false},
+              {"w":"hands in eighths","chosen":false},
+              {"w":"hands in sixteenths","chosen":false},
+              {"w":"hands shuffled","chosen":false},
+              {"w":"backbeat on two and four","chosen":false},
+              {"w":"backbeat on three","chosen":false},
+              {"w":"ghost notes","chosen":false},
+              {"w":"accent the downbeats","chosen":false},
+              {"w":"ride it, not the hats","chosen":false},
+              {"w":"back to the hats","chosen":false},
+              {"w":"nothing on the one","chosen":false},
+              {"w":"kick on the one only","chosen":false},
+              {"w":"kick on the ands","chosen":false},
+              {"w":"double the kick","chosen":false},
+              {"w":"snare on every beat","chosen":false},
+              {"w":"toms, not the snare","chosen":false},
+              {"w":"floor tom on the ands","chosen":false},
+              {"w":"a tom melody","chosen":false},
+              {"w":"walk the toms down","chosen":false},
+              {"w":"play the song","chosen":false},
+              {"w":"open the hat on four","chosen":false},
+              {"w":"flam the backbeat","chosen":false},
+              {"w":"drag the backbeat","chosen":false},
+              {"w":"flam the kick","chosen":false},
+              {"w":"play it straight again","chosen":false},
+              {"w":"push the hats","chosen":false},
+              {"w":"lay the snare back","chosen":false},
+              {"w":"push the kick","chosen":false},
+              {"w":"let the hats breathe","chosen":false},
+              {"w":"the perc, in and out","chosen":false},
+              {"w":"crescendo the bar","chosen":false},
+              {"w":"accent the ands","chosen":false},
+              {"w":"hats","chosen":false},
+              {"w":"open hats","chosen":false},
+              {"w":"claps","chosen":false},
+              {"w":"percussion","chosen":false},
+              {"w":"toms","chosen":false},
+              {"w":"mid tom","chosen":false},
+              {"w":"floor tom","chosen":false},
+              {"w":"kick","chosen":false},
+              {"w":"snare","chosen":false},
+              {"w":"no kick","chosen":false},
+              {"w":"no snare","chosen":false},
+              {"w":"no hats","chosen":false},
+              {"w":"no open hats","chosen":false},
+              {"w":"no claps","chosen":false},
+              {"w":"no percussion","chosen":false},
+              {"w":"no toms","chosen":false},
+              {"w":"no mid tom","chosen":false},
+              {"w":"no floor tom","chosen":false},
+              {"w":"second measure fill","chosen":false},
+              {"w":"third measure fill","chosen":false},
+              {"w":"fourth measure fill","chosen":false},
+              {"w":"no fills","chosen":false}
+            ]
+          },
+          {
+            "id": "kwords",
+            "seat": "section:2",
+            "head": null,
+            "ask": "at the keys",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"pads","chosen":false},
+              {"w":"long swells","chosen":false},
+              {"w":"comping the changes","chosen":false},
+              {"w":"the Charleston","chosen":false},
+              {"w":"pushing the changes","chosen":false},
+              {"w":"held to the change","chosen":false},
+              {"w":"on the offbeats","chosen":false},
+              {"w":"pushing the bar","chosen":false},
+              {"w":"a riff","chosen":false},
+              {"w":"a counter-line","chosen":false},
+              {"w":"arpeggios","chosen":false},
+              {"w":"a drone","chosen":false},
+              {"w":"lay out","chosen":false},
+              {"w":"on one","chosen":false},
+              {"w":"on the e of one","chosen":false},
+              {"w":"on the and of one","chosen":false},
+              {"w":"on the a of one","chosen":false},
+              {"w":"on two","chosen":false},
+              {"w":"on the e of two","chosen":false},
+              {"w":"on the and of two","chosen":false},
+              {"w":"on the a of two","chosen":false},
+              {"w":"on three","chosen":false},
+              {"w":"on the e of three","chosen":false},
+              {"w":"on the and of three","chosen":false},
+              {"w":"on the a of three","chosen":false},
+              {"w":"on four","chosen":false},
+              {"w":"on the e of four","chosen":false},
+              {"w":"on the and of four","chosen":false},
+              {"w":"on the a of four","chosen":false},
+              {"w":"down low","chosen":false},
+              {"w":"where it sits","chosen":false},
+              {"w":"up out of the way","chosen":false},
+              {"w":"right at the top","chosen":false},
+              {"w":"dark","chosen":false},
+              {"w":"warm","chosen":false},
+              {"w":"clear","chosen":false},
+              {"w":"glassy","chosen":false},
+              {"w":"straight away","chosen":false},
+              {"w":"a soft edge","chosen":false},
+              {"w":"swelling in","chosen":false},
+              {"w":"very slowly","chosen":false},
+              {"w":"short","chosen":false},
+              {"w":"ringing","chosen":false},
+              {"w":"hanging on","chosen":false},
+              {"w":"clean","chosen":false},
+              {"w":"some","chosen":false},
+              {"w":"singing","chosen":false}
+            ]
+          },
+          {
+            "id": "gwords",
+            "seat": "section:2",
+            "head": null,
+            "ask": "at the amp",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"a palm-muted chug","chosen":false},
+              {"w":"power chords","chosen":false},
+              {"w":"driving downstrokes","chosen":false},
+              {"w":"strumming it","chosen":false},
+              {"w":"the offbeat chop","chosen":false},
+              {"w":"picking it out","chosen":false},
+              {"w":"a riff","chosen":false},
+              {"w":"a single-note line","chosen":false},
+              {"w":"let one chord ring","chosen":false},
+              {"w":"lay out","chosen":false},
+              {"w":"on one","chosen":false},
+              {"w":"on the e of one","chosen":false},
+              {"w":"on the and of one","chosen":false},
+              {"w":"on the a of one","chosen":false},
+              {"w":"on two","chosen":false},
+              {"w":"on the e of two","chosen":false},
+              {"w":"on the and of two","chosen":false},
+              {"w":"on the a of two","chosen":false},
+              {"w":"on three","chosen":false},
+              {"w":"on the e of three","chosen":false},
+              {"w":"on the and of three","chosen":false},
+              {"w":"on the a of three","chosen":false},
+              {"w":"on four","chosen":false},
+              {"w":"on the e of four","chosen":false},
+              {"w":"on the and of four","chosen":false},
+              {"w":"on the a of four","chosen":false},
+              {"w":"down low","chosen":false},
+              {"w":"where it sits","chosen":false},
+              {"w":"up the neck","chosen":false},
+              {"w":"dark","chosen":false},
+              {"w":"warm","chosen":false},
+              {"w":"bright","chosen":false},
+              {"w":"glassy","chosen":false},
+              {"w":"damped","chosen":false},
+              {"w":"ringing","chosen":false},
+              {"w":"hanging on","chosen":false}
+            ]
+          },
+          {
+            "id": "bwords",
+            "seat": "section:2",
+            "head": null,
+            "ask": "the bass player",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"hold the root","chosen":false},
+              {"w":"walk it","chosen":false},
+              {"w":"octaves","chosen":false},
+              {"w":"root and fifth","chosen":false},
+              {"w":"driving eighths","chosen":false},
+              {"w":"busy sixteenths","chosen":false},
+              {"w":"an acid line","chosen":false},
+              {"w":"a rolling 303","chosen":false},
+              {"w":"house offbeats","chosen":false},
+              {"w":"a pumping eighth","chosen":false},
+              {"w":"disco octaves","chosen":false},
+              {"w":"a reggae bubble","chosen":false},
+              {"w":"one stab a bar","chosen":false},
+              {"w":"a sixteenth pop","chosen":false},
+              {"w":"forget the figure","chosen":false},
+              {"w":"just the root","chosen":false},
+              {"w":"the minor third in it","chosen":false},
+              {"w":"fifths in the line","chosen":false},
+              {"w":"a full acid scale","chosen":false},
+              {"w":"walk it up","chosen":false},
+              {"w":"shut","chosen":false},
+              {"w":"dark","chosen":false},
+              {"w":"halfway","chosen":false},
+              {"w":"open","chosen":false},
+              {"w":"wide open","chosen":false},
+              {"w":"none","chosen":false},
+              {"w":"a little","chosen":false},
+              {"w":"squelchy","chosen":false},
+              {"w":"screaming","chosen":false},
+              {"w":"barely","chosen":false},
+              {"w":"some","chosen":false},
+              {"w":"a long way","chosen":false},
+              {"w":"all the way","chosen":false},
+              {"w":"snappy","chosen":false},
+              {"w":"short","chosen":false},
+              {"w":"long","chosen":false},
+              {"w":"hanging on","chosen":false},
+              {"w":"saw","chosen":false},
+              {"w":"square","chosen":false},
+              {"w":"short notes","chosen":false},
+              {"w":"let them ring","chosen":false},
+              {"w":"down an octave","chosen":false},
+              {"w":"up an octave","chosen":false},
+              {"w":"swing it","chosen":false},
+              {"w":"play it straight","chosen":false},
+              {"w":"sit back","chosen":false},
+              {"w":"push it","chosen":false}
+            ]
+          },
+          {
+            "id": "vwords",
+            "seat": "section:2",
+            "head": null,
+            "ask": "at the mic",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"oohs under it","chosen":false},
+              {"w":"aahs, high","chosen":false},
+              {"w":"an answering phrase","chosen":false},
+              {"w":"a chant on the beat","chosen":false},
+              {"w":"one long note","chosen":false},
+              {"w":"lay out","chosen":false},
+              {"w":"on one","chosen":false},
+              {"w":"on the e of one","chosen":false},
+              {"w":"on the and of one","chosen":false},
+              {"w":"on the a of one","chosen":false},
+              {"w":"on two","chosen":false},
+              {"w":"on the e of two","chosen":false},
+              {"w":"on the and of two","chosen":false},
+              {"w":"on the a of two","chosen":false},
+              {"w":"on three","chosen":false},
+              {"w":"on the e of three","chosen":false},
+              {"w":"on the and of three","chosen":false},
+              {"w":"on the a of three","chosen":false},
+              {"w":"on four","chosen":false},
+              {"w":"on the e of four","chosen":false},
+              {"w":"on the and of four","chosen":false},
+              {"w":"on the a of four","chosen":false},
+              {"w":"down low","chosen":false},
+              {"w":"where it sits","chosen":false},
+              {"w":"up high","chosen":false},
+              {"w":"a soprano","chosen":false},
+              {"w":"an alto","chosen":false},
+              {"w":"a countertenor","chosen":false},
+              {"w":"a tenor","chosen":false},
+              {"w":"a bass","chosen":false},
+              {"w":"dark","chosen":false},
+              {"w":"warm","chosen":false},
+              {"w":"airy","chosen":false},
+              {"w":"it sits still","chosen":false},
+              {"w":"let it drift","chosen":false},
+              {"w":"let it swell and fade","chosen":false},
+              {"w":"straight away","chosen":false},
+              {"w":"a breath first","chosen":false},
+              {"w":"swelling in","chosen":false}
+            ]
+          }
+        ]
+      },
+      {
+        "at": 3,
+        "role": "chorus",
+        "bars": 8,
+        "questions": [
+          {
+            "id": "idea",
+            "seat": "section:3",
+            "head": null,
+            "ask": "the melody",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"nobody takes it","chosen":false},
+              {"w":"the keys take it","chosen":false},
+              {"w":"the guitar takes it","chosen":false},
+              {"w":"the singer takes it","chosen":true}
+            ]
+          },
+          {
+            "id": "theme",
+            "seat": "section:3",
+            "head": null,
+            "ask": "which theme",
+            "answer": null,
+            "who": null,
+            "options": [{"w":"the tune","chosen":false},{"w":"the answer","chosen":true}]
+          },
+          {
+            "id": "back",
+            "seat": "section:3",
+            "head": null,
+            "ask": "how it comes back",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"as it was","chosen":false},
+              {"w":"up a step","chosen":true},
+              {"w":"stretched out, twice as slow","chosen":false},
+              {"w":"just its head","chosen":false},
+              {"w":"turned upside down","chosen":false},
+              {"w":"backwards","chosen":false},
+              {"w":"twice as fast, and twice over","chosen":false}
+            ]
+          },
+          {
+            "id": "drums",
+            "seat": "section:3",
+            "head": null,
+            "ask": "the drums",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":false},
+              {"w":"half time","chosen":false},
+              {"w":"double time","chosen":false},
+              {"w":"just the hats","chosen":false},
+              {"w":"lay out","chosen":false},
+              {"w":"busier","chosen":true},
+              {"w":"sparser","chosen":false},
+              {"w":"move to the ride","chosen":false}
+            ]
+          },
+          {
+            "id": "keys",
+            "seat": "section:3",
+            "head": null,
+            "ask": "the keys",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":true},
+              {"w":"pads under it","chosen":false},
+              {"w":"comp the changes","chosen":false},
+              {"w":"chop the offbeats","chosen":false},
+              {"w":"the riff","chosen":false},
+              {"w":"arpeggios","chosen":false},
+              {"w":"hold one note","chosen":false},
+              {"w":"lay out","chosen":false}
+            ]
+          },
+          {
+            "id": "guitar",
+            "seat": "section:3",
+            "head": null,
+            "ask": "the guitar",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":true},
+              {"w":"a palm-muted chug","chosen":false},
+              {"w":"power chords","chosen":false},
+              {"w":"driving downstrokes","chosen":false},
+              {"w":"strumming it","chosen":false},
+              {"w":"the offbeat chop","chosen":false},
+              {"w":"picking it out","chosen":false},
+              {"w":"a riff","chosen":false},
+              {"w":"a single-note line","chosen":false},
+              {"w":"let one chord ring","chosen":false},
+              {"w":"lay out","chosen":false}
+            ]
+          },
+          {
+            "id": "bass",
+            "seat": "section:3",
+            "head": null,
+            "ask": "the bass",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":false},
+              {"w":"pedal the root","chosen":false},
+              {"w":"walk it","chosen":false},
+              {"w":"octaves","chosen":true},
+              {"w":"drive it in eighths","chosen":false},
+              {"w":"up an octave","chosen":false},
+              {"w":"lay out","chosen":false}
+            ]
+          },
+          {
+            "id": "voice",
+            "seat": "section:3",
+            "head": null,
+            "ask": "the voice",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":true},
+              {"w":"oohs under it","chosen":false},
+              {"w":"aahs, high","chosen":false},
+              {"w":"an answering phrase","chosen":false},
+              {"w":"a chant on the beat","chosen":false},
+              {"w":"one long note","chosen":false},
+              {"w":"lay out","chosen":false}
+            ]
+          },
+          {
+            "id": "pipe",
+            "seat": "section:3",
+            "head": null,
+            "ask": "what happens to it",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"as played","chosen":false},
+              {"w":"double it in thirds","chosen":true},
+              {"w":"double it in sixths","chosen":false},
+              {"w":"echo it round","chosen":false},
+              {"w":"spread the chords","chosen":false},
+              {"w":"let it breathe","chosen":false},
+              {"w":"thirds and an echo","chosen":false}
+            ]
+          },
+          {
+            "id": "mix",
+            "seat": "section:3",
+            "head": null,
+            "ask": "the mix",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"same as before","chosen":false},
+              {"w":"bring it forward","chosen":true},
+              {"w":"push it back","chosen":false},
+              {"w":"way down","chosen":false},
+              {"w":"open the reverb","chosen":false},
+              {"w":"drown it","chosen":false},
+              {"w":"throw an echo","chosen":false},
+              {"w":"dub it out","chosen":false},
+              {"w":"bone dry","chosen":false}
+            ]
+          },
+          {
+            "id": "move",
+            "seat": "section:3",
+            "head": null,
+            "ask": "the filter",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"no movement","chosen":true},
+              {"w":"open the filter over it","chosen":false},
+              {"w":"close it down","chosen":false},
+              {"w":"rise into the change","chosen":false},
+              {"w":"pump it on the beat","chosen":false}
+            ]
+          },
+          {
+            "id": "out",
+            "seat": "section:3",
+            "head": null,
+            "ask": "how do we get out",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"straight through","chosen":false},
+              {"w":"a fill","chosen":false},
+              {"w":"a lift into it","chosen":false}
+            ]
+          },
+          {
+            "id": "band",
+            "seat": "section:3",
+            "head": null,
+            "ask": "everybody",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"give it a lift","chosen":false},
+              {"w":"follow the kick","chosen":false}
+            ]
+          },
+          {
+            "id": "dwords",
+            "seat": "section:3",
+            "head": null,
+            "ask": "at the kit",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"answer yourself","chosen":false},
+              {"w":"hands in quarters","chosen":false},
+              {"w":"hands in eighths","chosen":false},
+              {"w":"hands in sixteenths","chosen":false},
+              {"w":"hands shuffled","chosen":false},
+              {"w":"backbeat on two and four","chosen":false},
+              {"w":"backbeat on three","chosen":false},
+              {"w":"ghost notes","chosen":false},
+              {"w":"accent the downbeats","chosen":false},
+              {"w":"ride it, not the hats","chosen":false},
+              {"w":"back to the hats","chosen":false},
+              {"w":"nothing on the one","chosen":false},
+              {"w":"kick on the one only","chosen":false},
+              {"w":"kick on the ands","chosen":false},
+              {"w":"double the kick","chosen":false},
+              {"w":"snare on every beat","chosen":false},
+              {"w":"toms, not the snare","chosen":false},
+              {"w":"floor tom on the ands","chosen":false},
+              {"w":"a tom melody","chosen":false},
+              {"w":"walk the toms down","chosen":false},
+              {"w":"play the song","chosen":false},
+              {"w":"open the hat on four","chosen":false},
+              {"w":"flam the backbeat","chosen":false},
+              {"w":"drag the backbeat","chosen":false},
+              {"w":"flam the kick","chosen":false},
+              {"w":"play it straight again","chosen":false},
+              {"w":"push the hats","chosen":false},
+              {"w":"lay the snare back","chosen":false},
+              {"w":"push the kick","chosen":false},
+              {"w":"let the hats breathe","chosen":false},
+              {"w":"the perc, in and out","chosen":false},
+              {"w":"crescendo the bar","chosen":false},
+              {"w":"accent the ands","chosen":false},
+              {"w":"hats","chosen":false},
+              {"w":"open hats","chosen":false},
+              {"w":"claps","chosen":false},
+              {"w":"percussion","chosen":false},
+              {"w":"toms","chosen":false},
+              {"w":"mid tom","chosen":false},
+              {"w":"floor tom","chosen":false},
+              {"w":"kick","chosen":false},
+              {"w":"snare","chosen":false},
+              {"w":"no kick","chosen":false},
+              {"w":"no snare","chosen":false},
+              {"w":"no hats","chosen":false},
+              {"w":"no open hats","chosen":false},
+              {"w":"no claps","chosen":false},
+              {"w":"no percussion","chosen":false},
+              {"w":"no toms","chosen":false},
+              {"w":"no mid tom","chosen":false},
+              {"w":"no floor tom","chosen":false},
+              {"w":"second measure fill","chosen":false},
+              {"w":"third measure fill","chosen":false},
+              {"w":"fourth measure fill","chosen":false},
+              {"w":"no fills","chosen":false}
+            ]
+          },
+          {
+            "id": "kwords",
+            "seat": "section:3",
+            "head": null,
+            "ask": "at the keys",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"pads","chosen":false},
+              {"w":"long swells","chosen":false},
+              {"w":"comping the changes","chosen":false},
+              {"w":"the Charleston","chosen":false},
+              {"w":"pushing the changes","chosen":false},
+              {"w":"held to the change","chosen":false},
+              {"w":"on the offbeats","chosen":false},
+              {"w":"pushing the bar","chosen":false},
+              {"w":"a riff","chosen":false},
+              {"w":"a counter-line","chosen":false},
+              {"w":"arpeggios","chosen":false},
+              {"w":"a drone","chosen":false},
+              {"w":"lay out","chosen":false},
+              {"w":"on one","chosen":false},
+              {"w":"on the e of one","chosen":false},
+              {"w":"on the and of one","chosen":false},
+              {"w":"on the a of one","chosen":false},
+              {"w":"on two","chosen":false},
+              {"w":"on the e of two","chosen":false},
+              {"w":"on the and of two","chosen":false},
+              {"w":"on the a of two","chosen":false},
+              {"w":"on three","chosen":false},
+              {"w":"on the e of three","chosen":false},
+              {"w":"on the and of three","chosen":false},
+              {"w":"on the a of three","chosen":false},
+              {"w":"on four","chosen":false},
+              {"w":"on the e of four","chosen":false},
+              {"w":"on the and of four","chosen":false},
+              {"w":"on the a of four","chosen":false},
+              {"w":"down low","chosen":false},
+              {"w":"where it sits","chosen":false},
+              {"w":"up out of the way","chosen":false},
+              {"w":"right at the top","chosen":false},
+              {"w":"dark","chosen":false},
+              {"w":"warm","chosen":false},
+              {"w":"clear","chosen":false},
+              {"w":"glassy","chosen":false},
+              {"w":"straight away","chosen":false},
+              {"w":"a soft edge","chosen":false},
+              {"w":"swelling in","chosen":false},
+              {"w":"very slowly","chosen":false},
+              {"w":"short","chosen":false},
+              {"w":"ringing","chosen":false},
+              {"w":"hanging on","chosen":false},
+              {"w":"clean","chosen":false},
+              {"w":"some","chosen":false},
+              {"w":"singing","chosen":false}
+            ]
+          },
+          {
+            "id": "gwords",
+            "seat": "section:3",
+            "head": null,
+            "ask": "at the amp",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"a palm-muted chug","chosen":false},
+              {"w":"power chords","chosen":false},
+              {"w":"driving downstrokes","chosen":false},
+              {"w":"strumming it","chosen":false},
+              {"w":"the offbeat chop","chosen":false},
+              {"w":"picking it out","chosen":false},
+              {"w":"a riff","chosen":false},
+              {"w":"a single-note line","chosen":false},
+              {"w":"let one chord ring","chosen":false},
+              {"w":"lay out","chosen":false},
+              {"w":"on one","chosen":false},
+              {"w":"on the e of one","chosen":false},
+              {"w":"on the and of one","chosen":false},
+              {"w":"on the a of one","chosen":false},
+              {"w":"on two","chosen":false},
+              {"w":"on the e of two","chosen":false},
+              {"w":"on the and of two","chosen":false},
+              {"w":"on the a of two","chosen":false},
+              {"w":"on three","chosen":false},
+              {"w":"on the e of three","chosen":false},
+              {"w":"on the and of three","chosen":false},
+              {"w":"on the a of three","chosen":false},
+              {"w":"on four","chosen":false},
+              {"w":"on the e of four","chosen":false},
+              {"w":"on the and of four","chosen":false},
+              {"w":"on the a of four","chosen":false},
+              {"w":"down low","chosen":false},
+              {"w":"where it sits","chosen":false},
+              {"w":"up the neck","chosen":false},
+              {"w":"dark","chosen":false},
+              {"w":"warm","chosen":false},
+              {"w":"bright","chosen":false},
+              {"w":"glassy","chosen":false},
+              {"w":"damped","chosen":false},
+              {"w":"ringing","chosen":false},
+              {"w":"hanging on","chosen":false}
+            ]
+          },
+          {
+            "id": "bwords",
+            "seat": "section:3",
+            "head": null,
+            "ask": "the bass player",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"hold the root","chosen":false},
+              {"w":"walk it","chosen":false},
+              {"w":"octaves","chosen":false},
+              {"w":"root and fifth","chosen":false},
+              {"w":"driving eighths","chosen":false},
+              {"w":"busy sixteenths","chosen":false},
+              {"w":"an acid line","chosen":false},
+              {"w":"a rolling 303","chosen":false},
+              {"w":"house offbeats","chosen":false},
+              {"w":"a pumping eighth","chosen":false},
+              {"w":"disco octaves","chosen":false},
+              {"w":"a reggae bubble","chosen":false},
+              {"w":"one stab a bar","chosen":false},
+              {"w":"a sixteenth pop","chosen":false},
+              {"w":"forget the figure","chosen":false},
+              {"w":"just the root","chosen":false},
+              {"w":"the minor third in it","chosen":false},
+              {"w":"fifths in the line","chosen":false},
+              {"w":"a full acid scale","chosen":false},
+              {"w":"walk it up","chosen":false},
+              {"w":"shut","chosen":false},
+              {"w":"dark","chosen":false},
+              {"w":"halfway","chosen":false},
+              {"w":"open","chosen":false},
+              {"w":"wide open","chosen":false},
+              {"w":"none","chosen":false},
+              {"w":"a little","chosen":false},
+              {"w":"squelchy","chosen":false},
+              {"w":"screaming","chosen":false},
+              {"w":"barely","chosen":false},
+              {"w":"some","chosen":false},
+              {"w":"a long way","chosen":false},
+              {"w":"all the way","chosen":false},
+              {"w":"snappy","chosen":false},
+              {"w":"short","chosen":false},
+              {"w":"long","chosen":false},
+              {"w":"hanging on","chosen":false},
+              {"w":"saw","chosen":false},
+              {"w":"square","chosen":false},
+              {"w":"short notes","chosen":false},
+              {"w":"let them ring","chosen":false},
+              {"w":"down an octave","chosen":false},
+              {"w":"up an octave","chosen":false},
+              {"w":"swing it","chosen":false},
+              {"w":"play it straight","chosen":false},
+              {"w":"sit back","chosen":false},
+              {"w":"push it","chosen":false}
+            ]
+          },
+          {
+            "id": "vwords",
+            "seat": "section:3",
+            "head": null,
+            "ask": "at the mic",
+            "answer": null,
+            "who": null,
+            "options": [
+              {"w":"oohs under it","chosen":false},
+              {"w":"aahs, high","chosen":false},
+              {"w":"an answering phrase","chosen":false},
+              {"w":"a chant on the beat","chosen":false},
+              {"w":"one long note","chosen":false},
+              {"w":"lay out","chosen":false},
+              {"w":"on one","chosen":false},
+              {"w":"on the e of one","chosen":false},
+              {"w":"on the and of one","chosen":false},
+              {"w":"on the a of one","chosen":false},
+              {"w":"on two","chosen":false},
+              {"w":"on the e of two","chosen":false},
+              {"w":"on the and of two","chosen":false},
+              {"w":"on the a of two","chosen":false},
+              {"w":"on three","chosen":false},
+              {"w":"on the e of three","chosen":false},
+              {"w":"on the and of three","chosen":false},
+              {"w":"on the a of three","chosen":false},
+              {"w":"on four","chosen":false},
+              {"w":"on the e of four","chosen":false},
+              {"w":"on the and of four","chosen":false},
+              {"w":"on the a of four","chosen":false},
+              {"w":"down low","chosen":false},
+              {"w":"where it sits","chosen":false},
+              {"w":"up high","chosen":false},
+              {"w":"a soprano","chosen":false},
+              {"w":"an alto","chosen":false},
+              {"w":"a countertenor","chosen":false},
+              {"w":"a tenor","chosen":false},
+              {"w":"a bass","chosen":false},
+              {"w":"dark","chosen":false},
+              {"w":"warm","chosen":false},
+              {"w":"airy","chosen":false},
+              {"w":"it sits still","chosen":false},
+              {"w":"let it drift","chosen":false},
+              {"w":"let it swell and fade","chosen":false},
+              {"w":"straight away","chosen":false},
+              {"w":"a breath first","chosen":false},
+              {"w":"swelling in","chosen":false}
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+</pre>
+</body>
+</html>

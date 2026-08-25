@@ -233,6 +233,7 @@ const CHAIR_ROLE = { pad: "pad", drone: "pad", stab: "pad",
 // picks pad_saw vs supersaw from the ROLE, and modeld/tb303/synclead are mono
 // voices it will only build for a lead. So a genre that names a lead dsp gets a
 // lead chair for that voice, whatever the chair said.
+export const SYNTH_NAMES = () => Object.keys(SYNTH);
 const SYNTH = {
   modeld:    { model: "modeld", role: "melody" },
   tb303:     { model: "tb303",  role: "melody", rename: { resonance: "res" } },
@@ -251,6 +252,16 @@ const SYNTH = {
   casiocz:   { model: "casiocz",  rename: { wave: "czWave", detune: "czDetune" } },
   synclead:  { model: "synclead", role: "melody", rename: { detune: "syncDetune" } },
   bell:      { model: "bell" },
+  // THE PIPE ORGAN, which was compiled and playable and simply unnamed here.
+  // faust/dsp/organ.dsp is additive — partials 1, 2, 3, 4 and 6 through a
+  // lowpass, with a long release and a slow wow — and `model: "organ"` has
+  // been in the parent's vocabulary all along (csd-engine.js). No role: an
+  // organ holds the chord AND plays the line, which is the whole point of it
+  // in a fugue.
+  organ:     { model: "organ" },
+  // …and the voices, on the same terms: compiled, playable, unnamed here.
+  choir:     { model: "choir" },
+  hammond:   { model: "hammond" },
   // the instruments you PLAY rather than recordings you edit. No `role`: a
   // guitar holds chords and plays lines, and so does a marimba (minimalism has
   // two of them doing both), and so does a piano.

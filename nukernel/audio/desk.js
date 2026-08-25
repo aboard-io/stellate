@@ -19,8 +19,12 @@
 //                                what it always had to be, and now it is the
 //                                same zero the parent's own mute is
 //   part / section EQ, family tone, seat shading
-//                            -> unit `sampler.strip` bands (the parent's
-//                               per-voice STRIP stage — its EQ, not a copy)
+//                            -> the unit's STRIP bands (the parent's own
+//                               per-voice strip stage — its EQ, not a copy),
+//                               at `sampler.strip` on a sampled voice and at
+//                               `strip` on a modelled one: two carriers because
+//                               the engine renders the two in two places, ONE
+//                               fact because both run the same makeStrip
 //   reverb send  (box `rev`) -> unit `rev`     the shared reverb bus send
 //   echo send    (box `echo`)-> unit `del`     the shared delay bus send
 //   room send    (box `room`)-> the drum units' `rev` (the ambience the kit
@@ -76,12 +80,19 @@
 // pure-node gate — which is how the board's numbers get checked without ears.
 import { GENRES, FX, MAX_FX, fxChain, SENDS, LEVELS, PANS, RATES, instrOf, BASSSYNTH,
          partOf, chairKeys, resolvePartMix, faderDb, EQ_BANDS,
-         eqDb, familyOf } from "../ui/deps.js";
+         eqDb, familyOf,
+         // HOW LONG A BAR IS, IN BEATS — the rack's echo needs it. fields.js
+         // DTIMES is a fraction of a BAR and state.delay.beats is BEATS, so a
+         // dotted eighth is 0.1875 of a bar either way and 0.75 beats only in
+         // four. Under `three` a bar is 3 beats (kernel.js METERS, steps/4) and
+         // the same word has to come out 0.5625 or the delay is in a different
+         // metre from the band.
+         METERS, stepsIn } from "../ui/deps.js";
 import { NuFields } from "../ui/deps.js";
 // bpm rides along for insertsFor: the parent resolves a chip's `rateBars` to Hz
 // off the state's tempo, so a chip that asks for a bar-locked wobble has to be
 // normalised against the song's own clock and not a default one.
-import { POOL, bpm, MIXER } from "../ui/state.js";
+import { POOL, bpm, MIXER, METER } from "../ui/state.js";
 import { gid, stackOf, genreOf, kitOf, poolInstrOf } from "../ui/derive.js";
 
 const sendOf = (sec, k, dflt) => (sec[k] != null ? SENDS[sec[k]] : dflt);
@@ -393,12 +404,37 @@ function sectionOf(sec) {
   };
 }
 
-// THE EQ, AS THE PARENT SPELLS IT. nukernel's board says three bands in dB at
-// 120 / 1000 / 7200; the parent's per-voice STRIP stage (state-engine
-// STRIP_PROFILES, built inside sampler.js's note chain) says the same three in
-// the same units. So the desk's tone is written onto the strip the voice already
-// has rather than into a filter of its own — which is why a part EQ now reaches
-// the tape: there is only one stage and both paths render it.
+/**
+ * THE EQ, AS THE PARENT SPELLS IT — and this paragraph used to be a lie, which
+ * is why the correction is written here rather than swept up.
+ *
+ * WHAT IT SAID: "the parent's per-voice STRIP stage says the same three in the
+ * same units ... there is only one stage and both paths render it."
+ *
+ * WHAT WAS TRUE ON 2026-08-24: nobody rendered it. `lo`/`mid`/`hi` were a
+ * FOURTH spelling of tone with no reader anywhere in engine/ — sampler.js's
+ * makeStrip read `hpf/lpf/eq/eq2/sat/comp/chorus/phase/leslie/delay/flanger/
+ * trim`, and rbjCoefs knew hp, lp and peak with no shelf at all. Measured
+ * through the parent's own strip on white noise, `{lo:-12, mid:+12, hi:+12}`
+ * came out BIT-IDENTICAL to a flat strip, while the parent's own dialect
+ * `{eq:{f:1000,gain:-12}}` moved 1 kHz by 11.8 dB. So the board's three knobs
+ * reached no sound on ANY voice, sampled or modelled — and the gate that was
+ * supposed to prove otherwise (desk-gate G8) asserted a FIELD IN AN OBJECT and
+ * was green throughout. That is the test-the-artifact law, failed.
+ *
+ * WHAT IS TRUE NOW: the sentence was made true instead of deleted. sampler.js
+ * rbjCoefs grew the two RBJ shelf cases, makeStrip grew three stages at the
+ * board's own frequencies (its BOARD_EQ — the same 120 / 1000 / 7200 that
+ * fields.js EQ_BANDS silkscreens, gated against each other in desk-gate G8),
+ * and they run LAST in the chain, downstream of the instrument's own carve.
+ * There is now exactly one stage and both paths render it.
+ *
+ * ANNOUNCED, NOT SLIPPED IN: 222 sampled chair-boxes across the catalog already
+ * carried a non-flat lo/mid/hi that did nothing (median 1.5 dB, max 2.0 dB —
+ * the FAM_EQ family tone and the derived section shading). Those records now
+ * sound the way the desk always said they did. The unit TABLE is byte-identical
+ * for every one of them; what changed is that the renderer stopped ignoring it.
+ */
 function stripWith(strip, eq) {
   if (!eq || (!eq.lo && !eq.mid && !eq.hi)) return strip || null;
   const s = strip ? { ...strip } : {};
@@ -407,6 +443,10 @@ function stripWith(strip, eq) {
   s.hi = (s.hi || 0) + (eq.hi || 0);
   return s;
 }
+// the absent-is-today law lives in the first line of stripWith — a flat EQ
+// returns the strip it was handed, so nothing is written and no key appears.
+// desk-gate G8 asserts it there rather than inferring it from a unit table.
+export const __test = { stripWith };
 
 /**
  * A CHIP NAMES ITS MODULE; THE PARENT'S CHAIN IS WHAT FINISHES IT.
@@ -674,8 +714,38 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
     const pan = (autoPan != null ? autoPan : S.pan) + (p ? p.pan : 0)
       + (o && o.pan ? o.pan : 0);
     if (pan) v.pan = Math.max(-1, Math.min(1, (u.pan || 0) + pan));
+    // THE TONE DECISION, ON EVERY VOICE — the part EQ, the section EQ, the family
+    // tone and the seat shading, merged once above into `eqAll` and then carried.
+    // ("The modeled voice needs to go through the EQ as do all the faust
+    // instruments." — Paul, 2026-08-24.)
+    //
+    // It used to be `if (u.sampler)` and nothing else, so a MODELLED voice —
+    // which has `module` and no `sampler` — had the number computed and thrown
+    // away. That was not a corner: 555 of 856 chair-boxes in the catalog are
+    // modelled, 527 of them had a non-flat eqAll dropped, and on the shipped
+    // chant the CANTOR (tract_voice) is modelled while the SCHOLA (ahh_choir) is
+    // sampled — the two voices at the front of the record were the A/B of the
+    // bug. A hand could ask for the board's full ±12 dB on a modelled channel
+    // and get 0.
+    //
+    // TWO CARRIERS, ONE FACT. A sampled voice's strip runs inside the sampler's
+    // per-note PCM mixer and is addressed through `sampler.strip`; a modelled
+    // voice never enters that mixer, so its strip is a stage the RENDERER owns
+    // and is addressed as `strip` (stream-renderer.js renderUnitWindow, and its
+    // twin in press/render-core.js). Same spec dialect, same makeStrip, same
+    // merge — the fork is in where the engine reads it, never in what it says.
+    //
+    // DRUMS INCLUDED, deliberately: a machine kit (tr909/tr808/cr78 — 15 anchors)
+    // is modelled and a sampled kit is not, and the whole complaint is that those
+    // two answered a board move differently. This is the BOARD's EQ, not
+    // STRIP_PROFILES.drum's transient-preserving carve, which is untouched.
+    //
+    // ABSENT IS TODAY: stripWith returns its input when every band is 0, so a
+    // record whose voices carry no EQ writes no `strip` key and the unit table is
+    // byte-identical to the one this function produced before the branch existed.
     const eqAll = o && o.eq ? addEq(eq, o.eq) : eq;
     if (u.sampler) v.sampler = { ...u.sampler, strip: stripWith(u.sampler.strip, eqAll) };
+    else { const st = stripWith(u.strip, eqAll); if (st) v.strip = st; }
     out[key] = v;
   }
   return out;
@@ -868,7 +938,21 @@ const lerpTbl = (tbl, x) => {
 const trimFor = (tbl, x, eff) =>
   Math.max(0.05, Math.min(2, Math.pow(10, -lerpTbl(tbl, x) / eff / 20)));
 
-export function masterState(MASTER) {
+/**
+ * THE MASTER STRIP AND THE RACK, ON THE PARENT'S OWN STATE.
+ *
+ * `BUSES` joined the signature on 2026-08-24 and it is the whole of D3's
+ * headline fix. A bus row is not a second chain — it is three state fields the
+ * parent's own fxParams/reverbColor already resolve, which is the same deal the
+ * master strip took above. Before it existed nothing on this page could write
+ * `state.reverb`: audio/plan.js hands toEngine `reverb: 0` on purpose (so
+ * toEngine's own default room does not land under a desk that composes its own
+ * sends), fxParams reads `rgain = clamp(state.reverb*3.2, 0, 2)`, and the only
+ * writer was `space`'s global bleed. Measured on the shipped chant: every unit
+ * carried `rev: 0.78` — gregorian's `tone.verb` (genres.js:682), defaulted in by
+ * sectionOf — into a bus whose gain was zero. 78% wet and bone dry.
+ */
+export function masterState(MASTER, BUSES) {
   const m = MASTER && typeof MASTER === "object" ? MASTER : null;
   const out = {};
   const { DRIVES, TAPES, SPACES } = NuFields;
@@ -881,6 +965,29 @@ export function masterState(MASTER) {
     if (t) { out.wob = t.wob; out.tsat = t.sat; }    // fx_bus `wob` + `tsat`, verbatim
     const s = SPACES[m.space];
     if (s) out.mrev = s.mix;                         // fx_bus `mrev`, the global dry bleed
+  }
+  // THE RACK. Every knob fields.js BUSROWS still declares lands here, and the
+  // test for whether a knob may exist at all is whether it can: `room` carries
+  // no knob because bus 3 is the reverb bus (a part's `room` folds into its
+  // `rev`, deskChannelBase above) and the parent's `pp` is stamped on DRUM
+  // events only.
+  const B = BUSES ? NuFields.resolveBuses(BUSES) : null;
+  if (B && B.rev) {
+    if (B.rev.ret != null) out.reverb = B.rev.ret;
+    if (B.rev.color) out.reverbColor = B.rev.color;
+  }
+  if (B && B.echo) {
+    // a bar, in beats — see the METERS/stepsIn import note at the top
+    const beats = stepsIn({ meter: METERS[METER] }) / 4;
+    const d = {};
+    if (B.echo.time != null) d.beats = B.echo.time * beats;
+    if (B.echo.fb   != null) d.feedback = B.echo.fb;
+    if (B.echo.tone != null) d.cutoff = B.echo.tone;
+    // the engine's own three stand where the rack is silent (to-engine.js:1172
+    // falls back to { beats: .75, feedback: .25 } and fxParams to cutoff 2600),
+    // so a rack that names one knob does not blank the other two
+    if (Object.keys(d).length)
+      out.delay = { beats: 0.75, feedback: 0.25, cutoff: 2600, ...d };
   }
   // THE MIX-OFFSET LAYER's master channel: deltas over the resolved value —
   // or, when the song's master says nothing, over the DSP's own defaults
@@ -949,7 +1056,12 @@ function honest(st) {
   // against a mix that is 23/18/14.5/11.3 dB under the dry — one relation fits
   // all four, and it is very nearly rgain = mrev*3.35.
   const mrev = st.mrev != null ? st.mrev : 0.07;
-  if (st.mrev != null) st.reverb = Math.round(mrev * 1.05 * 1000) / 1000;
+  // ...UNLESS THE RACK ALREADY SAID SO. `space` opened the return because it was
+  // the only word that could; now `buses.rev.ret` is the return and `space` is
+  // the global dry bleed it always was. One owner for state.reverb, and it is
+  // the rack — otherwise choosing "a hall" on bus 1 and "cavern" on the master
+  // would be two spellings of one number, and the second one written would win.
+  if (st.mrev != null && st.reverb == null) st.reverb = Math.round(mrev * 1.05 * 1000) / 1000;
   // THE STACK TERM. Each stage's trim is measured ALONE and lands within
   // 0.06 LUFS alone — but two stages in series leave about 0.09 dB on the
   // table and three leave three times that (measured: drive+glue +0.14,

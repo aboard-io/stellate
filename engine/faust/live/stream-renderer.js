@@ -121,6 +121,49 @@
       return chain;
     }
 
+    // ── THE BOARD'S EQ, ON A VOICE THE SAMPLER NEVER TOUCHES ─────────────────
+    // ("The modeled voice needs to go through the EQ as do all the faust
+    // instruments." — Paul, 2026-08-24.)
+    //
+    // The per-voice channel STRIP was written inside the sampler's own per-note
+    // PCM mixer (sampler.js mixPCM), addressed as `u.sampler.strip`. A Faust
+    // module never enters mixPCM, so a modelled voice had exactly two stages
+    // between it and the buses — its own sliders and the ≤2-slot insert chain —
+    // and NO tone stage of any kind. Measured: nukernel's desk computed the
+    // merged EQ for 555 of 856 chair-boxes and dropped it on the floor, and the
+    // one it did write (onto a sampled voice) named bands `lo`/`mid`/`hi` that
+    // makeStrip had no case for, so ±12 dB rendered bit-identical to flat.
+    // The whole board EQ reached no sound on any voice.
+    //
+    // So the strip is a stage the RENDERER owns now: `u.strip` is a strip spec
+    // like any other, `SP.makeStrip`/`SP.stripStep` are the same code the
+    // sampled path runs, and one state is held PER UNIT for the life of the
+    // stream — not per note. (That distinction is the whole of PROGRAM.md §4
+    // item 2: the thing that built 164 compressors was buildStripNodes
+    // allocating WebAudio nodes per NOTE. This allocates one Float32-stepping
+    // state at open and steps it.) MEASURED COST, in this loop, by
+    // nukernel/desk-gate.js G8b (best of five, because a mean over a JIT is a
+    // measure of what else the box was doing): 7-16 ms of CPU per 8 s of audio
+    // for the three bands, against pad_saw's 516 ms = 0.014-0.031 of one COST
+    // unit. Twenty-five modelled voices carrying one is under one pad_saw,
+    // against a BUDGET of 40 (state-engine.js) and an awake ceiling of ~28
+    // (ZERO-STATIC Stage 2). Stereo doubles it, which is still small enough that
+    // there is no reason to take the mono shortcut (see renderUnitWindow).
+    //
+    // A DESK MOVE REBUILDS THE STATE, and that is deliberate: coefficients are
+    // computed once in makeStrip, so a new gain is a new state. The biquad
+    // history it drops is three samples at a bar boundary, against re-deriving
+    // five coefficients per sample forever. `u.strip` is NOT in chainSigOf — an
+    // EQ move must not tear down and rebuild the stream's ring.
+    function stripStateFor(us, spec, wide) {
+      const sig = JSON.stringify(spec);
+      if (us.stripSig !== sig || !us.stripS || !!us.stripS.R !== wide) {
+        us.stripSig = sig;
+        us.stripS = { L: SP.makeStrip(spec, SR), R: wide ? SP.makeStrip(spec, SR) : null };
+      }
+      return us.stripS;
+    }
+
     // ── THE PEDAL A HAND MOVES WHILE THE RECORD PLAYS ─────────────────────────
     // A unit's chain used to be built ONCE (ensureUnit) and cached for the life of
     // the stream, while feedBar glided only `params`/`dx7Params` — so switching a
@@ -200,7 +243,11 @@
     // Only the ROUTE is copied forward: the module, the pool, mono/legato and the
     // voice law stay whatever the stream opened with, because a change THERE flips
     // the stream signature and gets a whole fresh stream by design.
-    const ROUTE_KEYS = ["dry", "rev", "del", "pan", "lvl", "gmul", "extGainPerAmp", "dx7OutCeil"];
+    // `strip` rides here too (the desk-EQ round): a tone move must reach a
+    // modelled voice on the next bar the way a send move does. It is compared by
+    // identity like every other key, so a fresh-but-equal object costs one
+    // Object.assign per bar and stripStateFor's own signature compare absorbs it.
+    const ROUTE_KEYS = ["dry", "rev", "del", "pan", "lvl", "gmul", "extGainPerAmp", "dx7OutCeil", "strip"];
     function refreshRoute(us, u) {
       let hit = null;
       for (const k of ROUTE_KEYS) if (u[k] !== us.u[k]) (hit = hit || {})[k] = u[k];
@@ -282,8 +329,25 @@
         if (u.extGainPerAmp) v.pending.push([s - BS, "@out", Math.min(u.dx7OutCeil || 1, u.extGainPerAmp * (e.amp || 0.1))]);
         v.pending.push([s - BS, "@pp", e.pp || 0]);
         if (legato) {
+          // LEGATO IS "DO NOT LIFT THE GATE", AND IT ONLY WORKS IF THE GATE IS
+          // STILL LIFTABLE. `v.lastOff` is a reference into `pending`, and
+          // pending is rewritten every window (`v.pending = ch.slice(ci)`
+          // below) — so a note whose predecessor's gate-off has ALREADY been
+          // flushed to the processor found nothing to remove, and then took
+          // the legato branch's other half too: no gate 1 was pushed. The unit
+          // was left shut and stayed shut until some later note fell outside
+          // the legato window and re-gated it.
+          //
+          // Heard on a mono unit as notes that do not speak, then a long
+          // silence, then the voice coming back by itself — which is exactly
+          // what a Gregorian chant on the vocal tract did across every bar
+          // line (the tract is the one unit that declares `mono: true`).
+          // A gate-off that is already gone cannot be unsent; the note has to
+          // re-gate instead. Where the off IS still pending, this is unchanged
+          // and the join is as seamless as it ever was.
           const ix = v.pending.indexOf(v.lastOff);
           if (ix >= 0) v.pending.splice(ix, 1);
+          else v.pending.push([s, v.R + "gate", 1]);
         } else {
           v.pending.push([s, v.R + "gate", 1]);
         }
@@ -303,7 +367,27 @@
       const u = us.u;
       const LEN = barEnd - barBase;
       const hasIns = (us.chain && us.chain.length) || (us.chainPrev && us.chainPrev.length);
-      const ubuf = hasIns ? new Float32Array(LEN) : null;
+      // THE BOARD'S TONE STAGE, AND IT KEEPS THE WIDTH. The insert branch below
+      // sums only channel 0 (`if (ubuf)` is tested BEFORE `u.stereo`), which is
+      // why nukernel's widthKept drops every chip on a wide unit rather than
+      // collapsing voice_choir/juno60/hammond/vp330 to mono — and chorale ->
+      // voice_choir is the schola on the shipped chant, so a mono-only tone stage
+      // would have skipped the very voice beside the one that was complained
+      // about. A strip is not an insert: it is a per-sample scalar map with no
+      // cross-channel state, so a WIDE unit with no chain gets TWO states and
+      // renders into a stereo pair. A unit that has BOTH a chain and a strip is
+      // already mono by the chain's own law, and stays that way.
+      const wide = !!(u.stereo && buses.wL && buses.wR);
+      // A UNIT THAT DID NOT PLAY THIS WINDOW STILL PAYS FOR ITS STRIP, and that
+      // is deliberate: the desk's unit table is the SONG's cast, so a voice
+      // seated in another box sits here silent, and skipping the stage on a
+      // silent window would drop the biquads' own ring-out and break byte parity
+      // with press (which runs one whole-song pass and cannot skip). It is 0.014
+      // COST units for a silent voice — measured, and cheaper than the
+      // bookkeeping it would take to prove a skip was safe.
+      const st = u.strip ? stripStateFor(us, u.strip, wide && !hasIns) : null;
+      const ubuf = (hasIns || st) ? new Float32Array(LEN) : null;
+      const ubufR = st && st.R ? new Float32Array(LEN) : null;
       // MASTERING pan (render-core's exact law — parity): mono units with
       // `pan` write their DRY send onto the wide buses; rev/del/pp stay mono.
       const pg2 = (u.pan && buses.wL && buses.wR && !u.stereo) ? panLR(u.pan) : null;
@@ -340,7 +424,12 @@
             const oo = v.proc.render(us.vocIns ? [us.vocIns(s2, len)] : [], len);
             const o = oo[0];
             const idx0 = s2 - barBase;
-            if (ubuf) {
+            if (ubufR) {
+              const o1 = oo[1] || o;
+              for (let i = Math.max(0, -idx0); i < len; i++) {
+                ubuf[idx0 + i] += o[i] * v.curOut; ubufR[idx0 + i] += o1[i] * v.curOut;
+              }
+            } else if (ubuf) {
               for (let i = Math.max(0, -idx0); i < len; i++) ubuf[idx0 + i] += o[i] * v.curOut;
             } else if (u.stereo && buses.wL) {
               const o1 = oo[1] || o;
@@ -371,9 +460,44 @@
         v.pending = ch.slice(ci);
       }
       if (ubuf) {
-        runChain(us, ubuf, LEN, spb);
+        if (hasIns) runChain(us, ubuf, LEN, spb);
+        // ...and the board's EQ after the pedals, because the strip is the MIXER
+        // channel and the chain is the player's. `t` is GLOBAL song seconds (the
+        // strip's own law — no per-call clock), which matters for nothing in a
+        // three-band EQ and matters absolutely if a strip ever carries an LFO.
+        if (st) {
+          const t0 = barBase / SR;
+          for (let i = 0; i < LEN; i++) ubuf[i] = SP.stripStep(st.L, ubuf[i], t0 + i / SR);
+          if (ubufR) for (let i = 0; i < LEN; i++) ubufR[i] = SP.stripStep(st.R, ubufR[i], t0 + i / SR);
+        }
+        // THIS TAIL DOES NOT CARRY `pp`, AND THE DIRECT BRANCH ABOVE DOES.
+        // Both branches sum dry/wL/wR/rev/del; only the direct one adds
+        // `if (pg) buses.pp[j] += x * pg`. `v.curPP` is still tracked at the
+        // "@pp" command above and then goes nowhere once a unit takes this
+        // path. That was survivable while only an insert chip sent a unit
+        // here; the board-EQ round (2026-08-24) made a unit with any strip
+        // take it too, which after FAM_EQ is very nearly every unit.
+        //
+        // NOT A LIVE BUG TODAY, and measured rather than assumed: across 20
+        // precomposed records and 22,145 drum hits, zero events carried a
+        // non-zero pp. The path is armed by construction all the same —
+        // nukernel/audio/to-engine.js sets `dsend: 0.04` on every record,
+        // which arms csd-engine's delayCap and its `d.pp = 0.5..0.9` throw —
+        // so the first time anybody turns the snare throw on, the ping-pong
+        // send will be silently missing from every EQ'd voice. desk-gate G8b
+        // will stay green through it: its own fixture feeds `curPP: 0`.
+        // Fix it, or write down a decision, before the throw is next wanted.
         const dg = u.dry != null ? u.dry : 1, rg = u.rev || 0, lg = u.del || 0;
-        for (let i = 0; i < LEN; i++) {
+        if (ubufR) {
+          // the wide route, verbatim from the direct branch above: [0]->L,
+          // [1]->R for the dry width, the mono sum for the sends
+          for (let i = 0; i < LEN; i++) {
+            const l = ubuf[i], r = ubufR[i], mono = (l + r) * 0.5;
+            buses.wL[i] += l * dg; buses.wR[i] += r * dg;
+            buses.rev[i] += mono * rg; buses.del[i] += mono * lg;
+            if (meter) { const md = mono * dg; meter.e += md * md; }
+          }
+        } else for (let i = 0; i < LEN; i++) {
           const x = ubuf[i];
           if (pg2) { const xd = x * dg; buses.wL[i] += xd * pg2.l; buses.wR[i] += xd * pg2.r; }
           else buses.dry[i] += x * dg;
@@ -1000,7 +1124,15 @@
 
     function close() { ST = null; }
 
-    return { open, openLive, feedBar, renderChunk, addBuffers, setSpeech, close };
+    return { open, openLive, feedBar, renderChunk, addBuffers, setSpeech, close,
+      // TEST THE ARTIFACT. renderUnitWindow is where a unit becomes SAMPLES on
+      // the buses, so a gate that wants to prove the board's EQ is audible has to
+      // reach it — asserting a field in an object is exactly the check that was
+      // green for as long as the desk EQ reached no sound at all
+      // (nukernel/desk-gate.js G8, rewritten 2026-08-24). The hook takes an
+      // injected proc, so a caller can feed deterministic noise and measure the
+      // bus. Not used by the page.
+      __test: { renderUnitWindow } };
   }
 
   return { makeStreamEngine };

@@ -21,6 +21,9 @@
 //   env.speech         -> Float32Array | null — vocoder audio input, TOTAL long
 //   env.dx7Presets     -> preset name -> { params } cartridge bank (or {})
 //   env.alloc(n)       -> Float32Array factory (optional; a worker may pool)
+//   env.SP             -> the sampler module, for makeStrip/stripStep (optional;
+//                         without it a unit's `u.strip` board EQ is not rendered
+//                         and press would diverge from the stream renderer)
 //
 // PARITY IS THE CONTRACT. This file was carved out under a hard byte-identity
 // gate (old press vs render-core press, 3 states, cmp) because the repo's
@@ -133,7 +136,27 @@
     // apply — same insert point as live's node->chain->sends. Units without
     // inserts keep the original direct-mix path untouched (bit-identical).
     const hasIns = u.inserts && u.inserts.length;
-    const ubuf = hasIns ? alloc(TOTAL) : null;
+    // THE BOARD'S OWN CHANNEL STRIP — the stream renderer's twin, verbatim
+    // (stream-renderer.js renderUnitWindow, and its long margin note there for
+    // why a modelled voice had no tone stage at all until 2026-08-24). `u.strip`
+    // is a strip spec like any the sampler runs; SP.makeStrip/stripStep are the
+    // same functions, one state per UNIT for the whole song, stepped on GLOBAL
+    // song time — so press and the stream compute the identical samples and the
+    // byte-parity law (test/unit/stem-parity, segment-parity) survives a stage
+    // that only one of the two would otherwise know about. NOTHING the
+    // state-engine builds carries `u.strip`, so absent this is the old function
+    // exactly; it is nukernel's desk that writes one.
+    // STEREO: the insert branch below folds to channel 0, which is why a wide
+    // unit with a strip and NO chain gets a second state and a second buffer
+    // instead — a strip has no cross-channel state, so two of them is the honest
+    // answer, and it costs 0.014-0.031 COST units per channel (measured in
+    // nukernel/desk-gate.js G8b).
+    const SPX = env.SP || null;
+    const strip = (SPX && u.strip) ? u.strip : null;
+    const stS = strip ? { L: SPX.makeStrip(strip, SR),
+                          R: (u.stereo && wL && wR && !hasIns) ? SPX.makeStrip(strip, SR) : null } : null;
+    const ubuf = (hasIns || stS) ? alloc(TOTAL) : null;
+    const ubufR = (stS && stS.R) ? alloc(TOTAL) : null;
 
     // supersaw release tail must survive the gate-off
     let tail = u.tail || 1;
@@ -230,7 +253,13 @@
           const ins = u.vocoder && speech ? [speech.subarray(s, s + span)] : [];
           const oo = v.proc.render(ins, span);
           const o = oo[0];
-          if (ubuf) {
+          if (ubufR) {
+            // a wide unit carrying only a STRIP keeps both channels (see above)
+            const o1 = oo[1] || o;
+            for (let i = 0; i < span; i++) {
+              ubuf[s + i] += o[i] * curOut; ubufR[s + i] += o1[i] * curOut;
+            }
+          } else if (ubuf) {
             // pre-insert: only per-note out gain applies (matches live, where
             // the voice's out GainNode feeds the chain); sends come after.
             // (stereo voices are folded to channel 0 through the mono insert
@@ -265,7 +294,7 @@
       }
     }
     if (ubuf) {
-      for (const eff of u.inserts) {
+      for (const eff of (u.inserts || [])) {
         const ip = await mkProc(eff.module);
         const IR = "/" + rootOf(eff.module) + "/";
         for (const [k, pv] of Object.entries(eff.params)) ip.setParamValue(IR + k, pv);
@@ -280,8 +309,28 @@
           for (let i = 0; i < span; i++) ubuf[s + i] = o[i];
         }
       }
+      // ...and the board's EQ after the pedals — the mixer channel is downstream
+      // of the player's, which is the order stream-renderer.js runs too
+      if (stS) {
+        for (let i = 0; i < TOTAL; i++) ubuf[i] = SPX.stripStep(stS.L, ubuf[i], i / SR);
+        if (ubufR) for (let i = 0; i < TOTAL; i++) ubufR[i] = SPX.stripStep(stS.R, ubufR[i], i / SR);
+      }
+      // THIS TAIL DOES NOT CARRY `pp` — the identical hole its twin has, and
+      // the twin (engine/faust/live/stream-renderer.js, the `if (ubuf)` tail)
+      // carries the long version of this note. In short: the direct branch
+      // adds `if (pg) pp[j] += x * pg` and this one never does, `curPP` is
+      // tracked at "@pp" and then dropped, and the board-EQ round
+      // (2026-08-24) widened who takes this path from "a unit with an insert
+      // chip" to "a unit with any strip", which is nearly all of them.
+      // Measured harmless today (zero non-zero pp events over 20 records and
+      // 22,145 hits); it bites the moment a drum throw is turned on. The two
+      // renderers must be fixed together or press parity goes.
       const dg = u.dry != null ? u.dry : 1, rg = u.rev || 0, lg = u.del || 0;
-      for (let i = 0; i < TOTAL; i++) {
+      if (ubufR) for (let i = 0; i < TOTAL; i++) {
+        const l = ubuf[i], r = ubufR[i], mono = (l + r) * 0.5;
+        wL[i] += l * dg; wR[i] += r * dg;
+        rev[i] += mono * rg; del[i] += mono * lg;
+      } else for (let i = 0; i < TOTAL; i++) {
         const x = ubuf[i];
         if (pg2) { const xd = x * dg; wL[i] += xd * pg2.l; wR[i] += xd * pg2.r; }
         else dry[i] += x * dg;

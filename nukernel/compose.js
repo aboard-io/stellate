@@ -1992,7 +1992,16 @@
                 // the stop tables are: a policy the suite cannot read is a
                 // policy the suite can only measure indirectly
                 THIN_IN, THIN_OUT, FADE_ENV, easeEdges,
-                SINGS, INSTRUMENTAL, SINGER_GENRE, singerOf, ordinals };
+                SINGS, INSTRUMENTAL, SINGER_GENRE, singerOf, ordinals,
+                // ...and the SALT itself (2026-08-24, D5). Every genre-scoped
+                // stream in this file is `rng(ihash(gk + "/" + policy + "/" +
+                // seed))`, and precompose.js needs its own stream on that same
+                // law — one that cannot move a bar line here. It asks for the
+                // hash rather than copying the eight lines of FNV-1a, because
+                // two copies of a hash is two hashes the day one of them is
+                // tuned. `rng` was already out; `ihash` was the half that
+                // was not.
+                ihash };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuCompose = api;
 })(typeof window !== "undefined" ? window : globalThis);

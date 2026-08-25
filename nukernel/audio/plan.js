@@ -195,7 +195,16 @@ function castOf(bars) {
         const vi = e.lv == null ? e.v : e.lv;
         const over = poolInstrOf(sec, owner, vi, POOL);
         const G = GENRES[owner] || {};
-        const gsyn = font || (over ? null : G.synth);
+        // A CHAIR MAY BRING ITS OWN THROAT. `G.synth` is the record's
+        // signature and it is one spec for the whole band, which is wrong the
+        // moment two voices are different instruments — a cantor is a singer
+        // and a schola is a chorale, and they are two Faust models. The
+        // chairs seam already carries a chair's instrument and its tone; this
+        // is the third thing it can carry. Absent, the genre's own stands and
+        // nothing moves.
+        const chSeat = Array.isArray(G.chairs) && G.chairs.length
+          ? (G.chairs[vi % G.chairs.length] || null) : null;
+        const gsyn = font || (over ? null : ((chSeat && chSeat.synth) || G.synth));
         // lineOnly: the riding lead swaps to the signature synth, the chord under
         // it stays sampled — the score's own predicate, verbatim
         const useSyn = !!(gsyn && !(gsyn.lineOnly && e.pad && !font));
@@ -207,8 +216,7 @@ function castOf(bars) {
         // merged by the role pool) folded both chairs into ONE seat key.
         // The chair's declared tone outranks it; a genre without chairs is
         // byte-identical.
-        const ch = Array.isArray(G.chairs) && G.chairs.length
-          ? (G.chairs[vi % G.chairs.length] || null) : null;
+        const ch = chSeat;
         e._seat = seatFor(chair, over || instrOf(owner, vi), useSyn ? gsyn : null,
                           (ch && ch.tone) || G.tone || null);
         e._syn = useSyn;
@@ -526,6 +534,42 @@ export function barPlan(n) {
   return { ev: { pitched, drums, found: [], sfx: deskSweeps(sec, b.beats, boxBeatOf),
                  srcById: {}, totalBeats: b.beats },
            units: deskUnits(KITS[b.kit] || UNITS, A, sec, boxBeatOf, D && D.SE) };
+}
+/**
+ * WHAT THE ENGINE WILL ACTUALLY DO WITH A CHANNEL, keyed by the desk address.
+ *
+ * The engineer's grey-outs are derived from THIS and from no table of their
+ * own, so the board's refusals and the renderer's are the same refusal:
+ *   * `stereo` — audio/desk.js widthKept drops every insert on a wide unit
+ *     (render-core folds a chained unit to channel 0), so a character chip on
+ *     the schola is silently discarded. The board says so instead.
+ *   * `sampled` — WHICH RENDERER PLAYS THIS VOICE, and nothing else any more.
+ *     It used to be the board's EQ refusal: "desk.js writes the strip EQ only
+ *     `if (u.sampler)` ... measured, `eq:{hi:4}` on the cantor changed
+ *     nothing." That was true, and it was the DEFECT rather than the contract
+ *     — audio/desk.js now carries the same merged EQ to a modelled voice at
+ *     `u.strip`, which stream-renderer.js renderUnitWindow runs as a per-unit
+ *     stage, so the engineer greys nothing on that account. The fact is kept
+ *     because it still says which of the parent's two paths a chair takes,
+ *     which is worth knowing; it is no longer a refusal.
+ * BEFORE compile() HAS RUN THIS IS `{}`, and the view must fail OPEN — a
+ * control that vanishes before boot is worse than one that is briefly
+ * optimistic, and widthKept drops the chip either way.
+ */
+export function channelFacts(si) {
+  const A = ADDR.get(si);
+  if (!A) return {};
+  const units = UNITS || {};
+  const out = {};
+  for (const [unitKey, chan] of Object.entries(A)) {
+    const u = units[unitKey];
+    if (!u) continue;
+    out[chan] = { stereo: !!u.stereo,
+                  sampled: !!u.sampler,
+                  module: u.module || null,
+                  instr: (u.sampler && (u.sampler.id || u.sampler.instr)) || null };
+  }
+  return out;
 }
 export const firstBarOfBox = (si) => TL.findIndex((b) => b.si === si && b.first);
 // where the box this bar belongs to STARTED, in song beats — the automation

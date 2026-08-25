@@ -1,0 +1,382 @@
+#!/usr/bin/env node
+/* test/nudges.js — D7's gate. THE NUDGES, READ OFF THE RENDERED PAGE.
+ *
+ * (Paul, 2026-08-24: "we had lots of fun nudges to the music and motifs —
+ * like arching.")
+ *
+ * PROGRAM.md §5, the nudges row, in full:
+ *   · with env:"arch" on section 2 the box carries the key AND the rendered
+ *     events show max(vel) − min(vel) >= 2, and = 0 with nothing set
+ *     (kernel numbers measured: 64 flat vel-5 events -> 3 4 4 5 5 5 5 4)
+ *   · THE GREY-OUT GATE: on a document with no drums voice,
+ *     outro: fill|roll|tomfill|hatrun|doubles|break and intro: kit are
+ *     `disabled` and nothing else is; add a drums voice and all seven come
+ *     alive
+ *   · zero pageerror
+ *
+ * TEST THE ARTIFACT. Nothing below asks a module what it would draw. Every
+ * value is either a query against the DOM the browser actually built or the
+ * event stream ui/derive.js actually rendered, and every state change is made
+ * by CLICKING the control a thumb would click. Three features have already
+ * shipped broken in this repo while every check passed.
+ *
+ * WHERE "= 0 WITH NOTHING SET" IS MEASURED, AND WHY IT IS NOT ON THE CHANT.
+ * PROGRAM.md's own parenthetical says which stream that clause is about — "64
+ * flat vel-5 events" — and it is not this record. genres.js `gregorian`
+ * declares `phrase: 0.9`, `stress: 0.06` and `touch: {t:0.06, v:0.5}`, so the
+ * shipped chant has NEVER rendered a flat velocity: the bar-scale arch (the
+ * phrase tent, kernel.js:1337-1348) has been sounding on it since the day it
+ * was written, which is precisely the nudge this slice makes SAYABLE. So §5's
+ * two halves are measured where each is true — the section arch as a DELTA on
+ * the record as shipped (assertion 4), and the exact `3 4 4 5 5 5 5 4` on the
+ * flat stream the clause describes (assertion 6).
+ *
+ *   node test/nudges.js
+ *   node test/nudges.js --page http://localhost:8777/nukernel/index.html
+ *
+ * Playwright is borrowed (NODE_PATH=/home/ford/ftrain-2025/node_modules) and
+ * the executable path is EXPLICIT — chromium.launch() with no path resolves
+ * shell build 1200, which is not installed on this machine.
+ */
+"use strict";
+const { chromium } = require("playwright");
+const argv = process.argv.slice(2);
+const arg = (n, d) => { const i = argv.indexOf(n); return i < 0 ? d : argv[i + 1]; };
+const PAGE = arg("--page", "http://localhost:8777/nukernel/index.html");
+const EXE = arg("--chrome", process.env.HOME +
+  "/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome");
+
+const fails = [], notes = [];
+const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ") + what); };
+
+// THE SEVEN. Named as data rather than counted, because "seven greyed" is true
+// of the wrong seven too. Each is `<field>:<value>` exactly as fields.js
+// NUDGEGATE spells it, and each is a bar that would otherwise be drums nobody
+// hired (kernel.js:2861 writes D() snare and cymbal events unconditionally) or
+// a bar of silence (`break` and `intro: kit` keep only `kind === "hit"` events,
+// of which a chant has none).
+const SEVEN = ["intro:kit", "outro:fill", "outro:roll", "outro:tomfill",
+               "outro:hatrun", "outro:doubles", "outro:break"].sort();
+
+const spread = (ev) => {
+  const vs = ev.map((e) => (e.vel == null ? 5 : e.vel));
+  return vs.length ? Math.max(...vs) - Math.min(...vs) : -1;
+};
+
+(async () => {
+  const b = await chromium.launch({ executablePath: EXE });
+  const p = await b.newPage();
+  const errs = [];
+  p.on("pageerror", (e) => errs.push("pageerror: " + e.message));
+  p.on("console", (m) => { if (m.type() === "error" && !/favicon/.test(m.text()))
+    errs.push("console: " + m.text()); });
+  await p.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
+  await p.goto(PAGE, { waitUntil: "networkidle" });
+  await p.waitForFunction(() => document.querySelectorAll(".nu-sheet").length > 0,
+    null, { timeout: 20000 }).catch(() => {});
+
+  /* Click a control by its `data-k` and let ui/eight.js `changed()` rebuild.
+     An <input> inside a .nu-opt is hidden BY CLIP and focusable, so it is not
+     "visible" to playwright's actionability checks — .click() on the element
+     itself is the honest gesture: it checks the radio and fires `change`,
+     which is the only listener sheets.js installs. */
+  const tap = async (k) => {
+    const hit = await p.evaluate((kk) => {
+      const n = document.querySelector('[data-k="' + CSS.escape(kk) + '"]');
+      if (!n) return false;
+      n.click();
+      return true;
+    }, k);
+    await p.waitForTimeout(220);
+    return hit;
+  };
+  // (`opt(sheet, value)` — the `opt|<sheet>|<value>` data-k a lit sheet gives
+  //  each of its options — stood here and had no reader left once `say()`
+  //  below took over: it builds that key itself for the sheet branch, and a
+  //  menu has no such key at all. Deleted rather than kept warm, because a
+  //  second way to name an option is a second way to be wrong about which
+  //  widget is on the page.)
+  /* SAY A WORD ON A SHEET *OR* ON A MENU, AND THAT IS A REVERSAL WRITTEN DOWN
+     RATHER THAN A NEW HELPER. This gate drove every nudge as a radio inside a
+     `.nu-opt`, because on the morning of 2026-08-24 every one of them was one
+     (Paul: "sheets of organized options should light up"). That evening the
+     form tab's nudges went back to menus — "in the band 'form' section --
+     return to dropdowns/select" — and BOTH sentences are right about different
+     controls, so this gate stops caring which widget it is looking at. What it
+     is actually about is unchanged and is the only thing worth asserting: the
+     word reaches the box, the box reaches the kernel, and no grey is silent.
+
+     A <select> is driven the way a person drives one — set the value, fire
+     `change`, which is the only listener ui/selects.js installs, the same as
+     sheets.js's radio. A disabled control or a disabled option returns false,
+     so "the sheet offers `arch` and takes a tap" still fails if it does not. */
+  const say = async (sheet, value) => {
+    const hit = await p.evaluate(([k, v]) => {
+      const s = document.querySelector('select[data-sel="' + CSS.escape(k) + '"]');
+      if (s) {
+        if (s.disabled) return false;
+        const o = [...s.options].find((x) => x.dataset.v === v);
+        if (!o || o.disabled) return false;
+        s.value = o.value;
+        s.dispatchEvent(new Event("change", { bubbles: true }));
+        return true;
+      }
+      const n = document.querySelector('[data-k="' +
+        CSS.escape("opt|" + k + "|" + v) + '"]');
+      if (!n) return false;
+      n.click();
+      return true;
+    }, [sheet, value]);
+    await p.waitForTimeout(220);
+    return hit;
+  };
+  const events = (si) => p.evaluate((i) => window.__eightEvents(i), si);
+
+  /* ---- 0 the recipe landed at all ------------------------------------- */
+  // WHICH KEYS ARE NUDGE KEYS IS DERIVED, NOT TYPED. fields.js `nudgesFor` is
+  // the registry's own answer, so a row that grows an `axis` there is in this
+  // gate with no edit here — and `form.role`, an older sheet living under the
+  // same prefix, stays out of it with no special case.
+  await p.evaluate(() => {
+    const NF = window.NuFields, keys = [];
+    for (const ax of ["form", "development", "performance"])
+      for (const r of (NF.nudgesFor ? NF.nudgesFor(ax) : []))
+        if (r.options) keys.push(ax + "." + r.key);
+    window.__NUDGEKEYS = keys;
+    window.__isNudge = (ds) => keys.includes(String(ds || "").split("|")[0]);
+  });
+  const wired = await p.evaluate(() => ({
+    nudges: typeof window.__eightNudges === "function",
+    events: typeof window.__eightEvents === "function",
+    keys: window.__NUDGEKEYS.length,
+    // A NUDGE IS DRAWN IF IT IS DRAWN AT ALL — sheet or menu. Eleven nudge keys,
+    // three of them lit sheets (Performance) and eight of them menus (the form
+    // tab), since 2026-08-24's evening. Counting only `.nu-sheet` here would
+    // make this gate's own bail-out fire on a page that is working.
+    sheets: [...document.querySelectorAll(".nu-sheet")]
+      .map((f) => f.dataset.sheet).filter((s) => window.__isNudge(s)).length +
+      [...document.querySelectorAll("select[data-sel]")]
+      .map((s) => s.dataset.sel).filter((s) => window.__isNudge(s)).length,
+    askable: !!window.NuAskable,
+    words: window.NuSongs ? Object.keys(window.NuSongs.WORDS).length : 0,
+  }));
+  check(wired.keys === 11, "fields.js names eleven nudge sheets — 5 on the form " +
+    "axis, 3 on development, 3 on performance (" + wired.keys + ")");
+  check(wired.words === 26, "songs.js WORDS carries the five new rows (" +
+    wired.words + " words)");
+  check(wired.askable, "askable.js is in the page (recipe R1) — without it the " +
+    "Performance sheets cannot be drawn");
+  check(wired.nudges && wired.events,
+    "ui/eight.js publishes __eightNudges and __eightEvents (recipe R6d)");
+  check(wired.sheets > 0, "the nudge sheets are drawn (recipe R5a + R6b/c) — " +
+    wired.sheets + " found");
+  if (!wired.nudges || !wired.events || !wired.sheets) {
+    for (const n of notes) console.log(n);
+    for (const f of fails) console.log(f);
+    console.log("\nFAILED " + fails.length + " of " + (fails.length + notes.length) +
+      "\n  the D7 recipe (tmp/recipes/07-nudges.md) has not been applied to the " +
+      "integration files; the rest of this gate cannot run.");
+    await b.close();
+    process.exit(1);
+  }
+
+  /* ---- 1 THE GREY-OUT GATE, on the record as shipped ------------------ */
+  // Scoped to the NUDGE sheets. Other sheets on this page grey for their own
+  // measured reasons (`dev.kit` goes dark entire with no drummer, which is
+  // design 02's gate, not this one), and counting them here would make one
+  // slice's gate fail on another slice's correct behaviour.
+  /* ...AND THE GREY SCAN READS BOTH WIDGETS TOO, for the same reason and with
+     the same law: NO SILENT GREY. Where a sheet hangs the reason in a
+     `<small class="nu-why">` inside the option, a menu APPENDS it to the
+     option's own words (an <option> may contain nothing but text) and stamps
+     it as `data-why` so a gate can read it back off the artifact — which is
+     what this reads. The seven drum-writing edges are the same seven whichever
+     control they are drawn in, which is the whole point of one spec and two
+     widgets (PROGRAM.md §2.3). */
+  const greys = () => p.evaluate(() => {
+    const out = { dis: [], quiet: [], silent: [], why: {}, sheets: 0 };
+    for (const f of document.querySelectorAll(".nu-sheet")) {
+      const key = (f.dataset.sheet || "").split("|")[0];
+      if (!window.__isNudge(key)) continue;
+      out.sheets++;
+      const field = key.split(".")[1];
+      for (const lab of f.querySelectorAll(".nu-opt")) {
+        const i = lab.querySelector("input");
+        const why = (lab.querySelector(".nu-why") || {}).textContent || "";
+        const name = field + ":" + lab.dataset.v;
+        if (why.trim()) out.why[name] = why.trim();
+        if (i && i.disabled) { out.dis.push(name); if (!why.trim()) out.silent.push(name); }
+        else if (lab.classList.contains("is-quiet")) {
+          out.quiet.push(name); if (!why.trim()) out.silent.push(name);
+        }
+      }
+    }
+    for (const s of document.querySelectorAll("select[data-sel]")) {
+      const key = (s.dataset.sel || "").split("|")[0];
+      if (!window.__isNudge(key)) continue;
+      out.sheets++;
+      const field = key.split(".")[1];
+      for (const o of s.options) {
+        const why = o.dataset.why || "";
+        const name = field + ":" + o.dataset.v;
+        if (why.trim()) out.why[name] = why.trim();
+        if (o.disabled) { out.dis.push(name); if (!why.trim()) out.silent.push(name); }
+        else if (o.classList.contains("is-quiet")) {
+          out.quiet.push(name); if (!why.trim()) out.silent.push(name);
+        }
+      }
+    }
+    out.dis = [...new Set(out.dis)].sort();
+    out.quiet = [...new Set(out.quiet)].sort();
+    return out;
+  });
+
+  await tap("tabform");
+  const g0 = await greys();
+  /* THE SEVEN ARE THE SUBJECT; ANYTHING ELSE MUST NOT BE ABOUT THE DRUMMER.
+     This read `dis === SEVEN` — exactly the seven and nothing else — and that
+     was true on the day it was written and is not a law. It is rewritten rather
+     than loosened, and the sentence it replaces is the reason:
+
+     `pipe:strum` greys on the shipped chant and is RIGHT to. The extracted
+     table measured that a strum only moves the render `when cast.hasPad`
+     (gates.json development.pipe), and fields.js NUDGEGATE says the same thing
+     in words a person can read — "nobody is voicing a chord — a strum has
+     nothing to spread". Neither has anything to do with a drummer, and a gate
+     about the DRUM edges that fails on a correct chord-voicing grey is a gate
+     measuring the wrong thing. So: the seven must all be there, and every OTHER
+     grey has to carry a reason that is not about a drummer — which is the
+     assertion the old line was actually making, said in a way that survives the
+     table learning something new. */
+  const extra = g0.dis.filter((k) => !SEVEN.includes(k));
+  const drumWord = (k) => /drum|kit|snare|fill|roll|hat|tom/i.test(g0.why[k] || "");
+  check(SEVEN.every((k) => g0.dis.includes(k)),
+    "no drummer: all seven drum-writing edges are disabled — missing " +
+    JSON.stringify(SEVEN.filter((k) => !g0.dis.includes(k))));
+  check(!extra.some(drumWord),
+    "...and every OTHER grey is greyed for a reason that is not about a " +
+    "drummer — " + JSON.stringify(extra.map((k) => k + " (" + g0.why[k] + ")")));
+  check(!g0.silent.length, "NO SILENT GREY: every greyed nudge option prints a " +
+    "reason " + JSON.stringify(g0.silent.slice(0, 4)));
+
+  /* ---- 2 ABSENT IS TODAY ---------------------------------------------- */
+  const sec = await p.evaluate(() => window.__eightDoc().form.sections.map((s) => s.id));
+  const S2 = sec[1];
+  const before = await p.evaluate(() => window.__eightNudges()[1]);
+  const allNull = before && Object.keys(before).every(
+    (k) => before[k] === null || (k === "nudge" && before[k] === 0));
+  check(allNull, "ABSENT IS TODAY: section 2's box carries " +
+    JSON.stringify(before) + " before anything is said");
+
+  /* ---- 3 THE FIVE NEW WORDS REACH THE KERNEL --------------------------- */
+  // `the rhythm, moved` is spelled `["gat4"]` — an op KEY, not a call — so if
+  // nukernel/document.js `opsOf` still destructures every entry as an array it
+  // calls K["g"]("a","t","4") and the page throws. Rotating the GATE alone
+  // re-times the phrase and keeps every note, so the proof is that the onset
+  // times move.
+  const ev0 = await events(1);
+  await tap("tabcantor");
+  const moved = await say("dev.line|cantor|" + S2, "the rhythm, moved");
+  const ev1 = await events(1);
+  check(moved, "the development sheet offers `the rhythm, moved` (songs.js, new)");
+  check(JSON.stringify(ev0.map((e) => e.t)) !== JSON.stringify(ev1.map((e) => e.t)),
+    "an op-KEY word re-times the rendered stream (" + ev0.length + " -> " +
+    ev1.length + " events, onsets moved)");
+  await say("dev.line|cantor|" + S2, "as written");
+
+  /* ---- 4 THE ARCH OVER THE SECTION ------------------------------------ */
+  await tap("tabform");
+  const evFlat = await events(1);
+  const sFlat = spread(evFlat);
+  const archOk = await say("form.env|" + S2, "arch");
+  check(archOk, "the shape sheet offers `arch` on section 2 and takes a tap");
+  const after = await p.evaluate(() => window.__eightNudges()[1]);
+  check(after && after.env === "arch",
+    "THE BOX CARRIES THE KEY: section 2's box env = " +
+    JSON.stringify(after && after.env));
+  const evArch = await events(1);
+  const sArch = spread(evArch);
+  check(sArch >= 2, "THE SOUND MOVED: under arch max(vel) − min(vel) = " + sArch +
+    " (>= 2) over " + evArch.length + " events");
+  check(sArch > sFlat, "and it moved BECAUSE of the arch: the same section read " +
+    sFlat + " before the tap and " + sArch + " after");
+
+  // ...and it is an ARCH and not a fade: kernel.js:2655, "this rises to a peak
+  // two thirds through and settles back to a level you can still hear — the
+  // shape a section of music has when nobody is fading anything." So the loud
+  // events sit around two thirds of the way in, and neither end is silent.
+  const shape = (() => {
+    if (!evArch.length) return null;
+    const T = Math.max(...evArch.map((e) => e.t)) || 1;
+    const hi = Math.max(...evArch.map((e) => e.vel));
+    const at = evArch.filter((e) => e.vel === hi).map((e) => e.t / T);
+    return { peak: at.reduce((a, x) => a + x, 0) / at.length,
+             lowest: Math.min(...evArch.map((e) => e.vel)) };
+  })();
+  check(!!shape && shape.peak > 0.35 && shape.peak < 0.95 && shape.lowest > 0,
+    "it ARCHES rather than fades: the loudest events centre at " +
+    (shape ? shape.peak.toFixed(2) : "?") + " of the section and the quietest is " +
+    (shape ? shape.lowest : "?") + " (not silence)");
+
+  /* ---- 5 THE ARCH INSIDE THE BAR — the phrase tent -------------------- */
+  // The literal thing Paul named, at the other scale: askable.js:74, "does the
+  // line breathe? … it arches". It proves the four `...(P.x != null)` spreads
+  // in nukernel/document.js toGenre reach kernel.js `perform`, because `flat`
+  // (0) and `it arches` (0.85) can only differ if `phrase` arrives at all.
+  const flatOk = await say("performance.phrase", "flat");
+  const sTentOff = spread(await events(1));
+  const archOk2 = await say("performance.phrase", "it arches");
+  const sTentOn = spread(await events(1));
+  const said = await p.evaluate(() => window.__eightDoc().performance.phrase);
+  check(flatOk && archOk2, "the Performance block asks 'does the line breathe?' " +
+    "and takes a tap");
+  check(said === 0.85, "the WORD writes askable.js's own NUMBER: phrase = " +
+    JSON.stringify(said));
+  check(sTentOn > sTentOff, "THE PHRASE TENT IS LIVE: flat -> spread " + sTentOff +
+    ", it arches -> spread " + sTentOn);
+
+  /* ---- 6 the kernel numbers PROGRAM.md quotes, on the flat stream ----- */
+  // §5's "= 0 with nothing set (64 flat vel-5 events -> 3 4 4 5 5 5 5 4)" is a
+  // statement about the ENVELOPE, and it is worth pinning exactly: it is the
+  // arithmetic all twelve shapes ride on, and the eight numbers are the ones
+  // the round was specified against.
+  const K64 = await p.evaluate(() => {
+    const ev = [];
+    for (let i = 0; i < 64; i++) ev.push({ t: i, vel: 5, kind: "line" });
+    const s = (l) => Math.max(...l.map((e) => e.vel)) - Math.min(...l.map((e) => e.vel));
+    const none = window.NuKernel.envelope(ev, null, 64, 16);
+    const arch = window.NuKernel.envelope(ev, "arch", 64, 16);
+    return { none: s(none), arch: s(arch),
+             eighths: [0, 8, 16, 24, 32, 40, 48, 56].map((i) => arch[i].vel) };
+  });
+  check(K64.none === 0, "64 flat vel-5 events with NOTHING SET: spread " + K64.none);
+  check(JSON.stringify(K64.eighths) === JSON.stringify([3, 4, 4, 5, 5, 5, 5, 4]),
+    "…and under arch they are exactly PROGRAM.md's own numbers " +
+    JSON.stringify(K64.eighths));
+
+  /* ---- 7 HIRE A DRUMMER AND ALL SEVEN COME ALIVE ---------------------- */
+  const hired = await tap("adddrums");
+  check(hired, "the page offers a drummer (+ drums)");
+  await tap("tabform");
+  const g1 = await greys();
+  // ...AND THE SAME REWRITE ON THE OTHER SIDE OF THE HIRE. This said
+  // `dis.length === 0`, which asked the whole page to have no grey at all; what
+  // the hire is evidence about is THE SEVEN. `pipe:strum` is still greyed after
+  // a drummer arrives, because a drummer is not a pad — see the note above.
+  check(!SEVEN.some((k) => g1.dis.includes(k)),
+    "hire a drummer and all seven come alive — still dark: " +
+    JSON.stringify(SEVEN.filter((k) => g1.dis.includes(k))) +
+    "  (other greys, for other reasons: " +
+    JSON.stringify(g1.dis.filter((k) => !SEVEN.includes(k))) + ")");
+
+  /* ---- 8 nothing threw ------------------------------------------------ */
+  check(!errs.length, "zero console errors / pageerrors " +
+    JSON.stringify(errs.slice(0, 3)));
+
+  for (const n of notes) console.log(n);
+  for (const f of fails) console.log(f);
+  console.log(fails.length ? "\nFAILED " + fails.length + " of " +
+    (fails.length + notes.length) : "\nALL PASS (" + notes.length + " checks)  " + PAGE);
+  await b.close();
+  process.exit(fails.length ? 1 : 0);
+})().catch((e) => { console.error(e); process.exit(1); });

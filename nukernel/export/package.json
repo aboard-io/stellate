@@ -1,0 +1,6 @@
+{
+  "//": "NOT a package — a MODULE-TYPE MARKER, the nukernel/audio/package.json pattern. als.js is a native ES module so the browser ⤓ button (P4) can import the SAME file the node CLI splices with, but the repo root declares \"type\": \"commonjs\" and node resolves module type from the NEAREST package.json — without this file `import ... from '../../nukernel/export/als.js'` inside tools/ableton/export-als.js is a syntax error. The browser never reads it; no build step consumes it; do not add dependencies here.",
+  "name": "nukernel-export",
+  "private": true,
+  "type": "module"
+}

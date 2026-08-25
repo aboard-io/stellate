@@ -20,6 +20,21 @@
     ? require("./kernel.js") : root.NuKernel;
   const NG = (typeof module !== "undefined" && module.exports)
     ? require("./genres.js") : root.NuGenres;
+  // THE PERFORMANCE WORDS ARE ASKABLE'S, NOT A SECOND COPY OF THEM. askable.js
+  // has carried "dead straight / a little / hard on the one" and "flat / a
+  // little / it arches" since it was written, with the question above each run
+  // (askable.js:72-81); the page had simply never offered them. Retyping three
+  // rows here would be the second source of truth this file exists to abolish,
+  // so `nudgesFor("performance")` reads THAT table and this one only says which
+  // rows are nudges.
+  //
+  // A PAGE THAT HAS NOT LOADED IT GETS NO PERFORMANCE SHEETS, not a page that
+  // fails to boot: nukernel/index.html must carry `<script src="askable.js">`
+  // ahead of this file, and until it does the absence is silent everywhere
+  // except the one call that needs it. (That is the absent-is-today law read
+  // one layer up: a missing table means the feature says nothing.)
+  const NA = (typeof module !== "undefined" && module.exports)
+    ? require("./askable.js") : root.NuAskable;
   const { reverse, invert, rotate, fill, spread, split, del, drop,
           transpose, complement, crossmap, excerpt, only, KITOPS, LANES, MODE } = K;
   const { MODES, MODELABEL, SCALES, SCALELABEL } = NG;
@@ -124,6 +139,103 @@
                      break: "drum break", tail: "no drums", cut: "cut short",
                      tomfill: "tom fill", hatrun: "hat stutter",
                      hush: "silence, then crash", doubles: "double-time stop" };
+
+  // ---- WHAT A NUDGE NEEDS BEFORE IT CAN BE SAID (D7) ------------------------
+  // (Paul, 2026-08-24: "when an option makes another one unaccessible gray it
+  // out.")
+  //
+  // One row per WORD that is not always sayable, in nukernel/avail.js's own
+  // rule language, evaluated against nukernel/avail.js's own docFeatures. It
+  // lives HERE rather than in avail.js because the requirement is a fact about
+  // the word — `outro: "drum fill"` needs a drummer the way `breath: "clipped"`
+  // needs nothing — and this file is where the word is written. One owner for
+  // the word and for what it costs.
+  //
+  // TWO SENSES, and the difference is the whole of the law:
+  //   rule    AVAILABLE WHEN. False ⇒ the option is a real `disabled`, because
+  //           choosing it would make a WRONG SOUND — drums where there is no
+  //           drummer, or a bar of silence.
+  //   inert   NOTHING WOULD HAPPEN. True ⇒ the option is `quiet`: still
+  //           choosable, greyed by class only, with the reason printed. The
+  //           dead-word law (band-kit.js:5024, "a word that changes nothing
+  //           about this player composes the identical section") is a remark,
+  //           not a refusal.
+  // A row with no `why` borrows avail.js WHY's sentence for the feature it
+  // names, which is how "no drummer" stays spelled once. A row that names a
+  // feature WHY has never heard of carries its own sentence, because an
+  // unreadable grey is one report away from being a readable one.
+  //
+  // WHY EXACTLY SEVEN EDGES GREY WITH NO DRUMMER, and not the eleven that
+  // touch a drum. kernel.js:2861 onward writes `D()` snare and cymbal events
+  // UNCONDITIONALLY for `fill`, `roll`, `tomfill`, `hatrun` and `doubles`, and
+  // those five ARE nothing but drums — a snare fill on a Gregorian chant is
+  // the bug this table exists to stop. `break` (:2984) and `intro: kit`
+  // (:2846) keep only `kind === "hit"` events, so with no drummer the bar is
+  // SILENCE. Those seven are refusals. `crash` and `hush` also write a cymbal,
+  // and they stay lit on purpose: `crash` re-fires each lane's own first note
+  // as a held chord (:2896, "a real band hits the last chord with the drummer
+  // and lets it ring") and `hush` is a diminuendo with a hole in it (:2958) —
+  // the gesture survives the drummer's absence and only the cymbal is a lie.
+  // `count` and `riser` write drums too and stay lit for the same reason: a
+  // count-in is a count-in whoever taps it.
+  //
+  // AND WHY `bassin`, `padin` AND `solo` ARE NOT HERE, which reverses this
+  // slice's own design note (07-nudges.md §4 called `intro: bassin` "a lie, not
+  // a crash" and would have greyed it). The kernel already answered: "a
+  // bassless stream degrades to its line for the same reason padin does…
+  // which is what total means here" (kernel.js:2755-2760). Degrading to
+  // "melody alone" is a legitimate way to start a section, not a wrong sound,
+  // so it is not a refusal — and greying it would have broken the one
+  // measurement PROGRAM.md §5 pins, that exactly seven edges go dark on a
+  // record with no drummer.
+  //
+  // ONE ROW THAT IS NOT HERE AND SHOULD BE, named rather than skipped.
+  // kernel.js:1342 says "two notes have no arch to hear, so the tent starts at
+  // three", so `phrase` is inert on material with fewer than three onsets in a
+  // bar and the sheet ought to say so. It needs a feature avail.js docFeatures
+  // does not publish — onsets per bar, over whichever cell each voice reads
+  // here — and inventing it in this file would be computing a document fact in
+  // the vocabulary registry, which is exactly the layering this file's header
+  // forbids. One row in docFeatures, then one row here.
+  const NUDGEGATE = {
+    intro: {
+      kit: { rule: { rule: "when", is: "cast.drumsOn" } },
+    },
+    outro: {
+      fill:    { rule: { rule: "when", is: "cast.drumsOn" } },
+      roll:    { rule: { rule: "when", is: "cast.drumsOn" } },
+      tomfill: { rule: { rule: "when", is: "cast.drumsOn" } },
+      hatrun:  { rule: { rule: "when", is: "cast.drumsOn" } },
+      doubles: { rule: { rule: "when", is: "cast.drumsOn" } },
+      break:   { rule: { rule: "when", is: "cast.drumsOn" } },
+    },
+    env: {
+      // both are CUTS, not curves (kernel.js:2613), and both measure their
+      // window against the section: `drop` deletes min(span/8, bar) and
+      // `stutter` repeats the last eighth. On a one-bar section that window IS
+      // the section.
+      drop:    { rule: { rule: "when", not: "section.oneBar",
+                         why: "a one-bar section is all edge — the cut would take the whole of it" } },
+      stutter: { rule: { rule: "when", not: "section.oneBar",
+                         why: "a one-bar section is all edge — the repeat window would be the whole of it" } },
+    },
+    period: {
+      // a bar schedule over one bar is `word` (kernel.js:1202 periodOps reads
+      // `at(g.period, s)` with s the bar index), so nothing moves — a remark,
+      // not a refusal
+      "2bar": { inert: { rule: "when", is: "section.oneBar",
+                         why: "there is only one bar here for the sentence to run over" } },
+      "4bar": { inert: { rule: "when", is: "section.oneBar",
+                         why: "there is only one bar here for the sentence to run over" } },
+    },
+    pipe: {
+      // kernel.js:577 `if (e.part !== (o.part || "pad")) return;` — strum
+      // groups the notes of a voiced CHORD and spreads them; a record of pure
+      // lines has no group to spread and the stream comes back `ev` untouched
+      strum: { inert: { rule: "when", not: "cast.hasPad",
+                        why: "nobody is voicing a chord — a strum has nothing to spread" } },
+    },
+  };
 
   /* ---------- grid ---------- */
   const RATES = { half: 0.5, dbl: 2 };
@@ -347,6 +459,25 @@
   const PANS = { l: -0.7, hl: -0.35, c: 0, hr: 0.35, r: 0.7 };
   const PANLABEL = { l: "left", hl: "left-ish", c: "centre", hr: "right-ish", r: "right" };
 
+  // THE REVERB RETURN, absolute rather than a multiplier: it IS `state.reverb`,
+  // and the parent reads `rgain = clamp(reverb * 3.2, 0, 2) * reverbScale`
+  // (engine/faust/voices/state-engine.js fxParams) — so `huge` is the
+  // saturation point and there is nothing above it. Absent = 0 = the return
+  // this page has been shipping: audio/plan.js hands toEngine `reverb: 0`, so
+  // every unit of the chant carried gregorian's `tone.verb` 0.78 into a bus
+  // whose gain was zero. 78% wet and bone dry, for as long as this page has
+  // existed. THIS TABLE IS THE ONLY THING THAT OPENS IT.
+  const RETURNS = { off: 0, dim: 0.18, room: 0.32, hall: 0.5, huge: 0.625 };
+  const RETURNLABEL = { off: "shut", dim: "a little", room: "a room",
+                        hall: "a hall", huge: "as wet as it goes" };
+  // WHICH ROOM — the parent's own five modules (state-engine REVERB_COLORS,
+  // all five shipped in engine/faust/dist), under desk words. nukernel's old
+  // `verb` table named three rooms that reached nothing at all.
+  const REVERBS = { plate: "dattorro", hall: "fdn", chamber: "greyhole",
+                    spring: "spring", shimmer: "shimmer" };
+  const REVERBLABEL = { plate: "plate", hall: "hall", chamber: "chamber",
+                        spring: "spring", shimmer: "shimmer" };
+
   /* ---------- what a voice can be told to do ---------- */
   // THE SYNTH KNOBS, as chips. Because the value is a NORMALIZED position
   // rather than a number in Hz, the same chips drive the 303, the Model D and
@@ -403,7 +534,37 @@
   // relative to it. Old saves (which only ever wrote −3..4) still validate
   // and still SOUND exactly as they did — those seven values did not move,
   // only their label did, from a bare number to the note it actually names.
-  const KEYNAMES = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
+  // SPELLED BOTH WAYS, AND THAT IS A REVERSAL WRITTEN DOWN. This line said
+  // "C♯" and nothing else, on the reasoning that a sharp name is a naming
+  // convention and "0" is C. Paul, 2026-08-24: "key (although please spell
+  // things out like not just A# but A#/Bb)". Two reasons it is right and the
+  // sharp-only list was wrong:
+  //   1 THE PAGE DISAGREED WITH ITSELF. ui/abc.js picks a key SIGNATURE by the
+  //     copyist's convention (SIG_OF_MAJOR: "Db over C#'s seven sharps, F# over
+  //     Gb"), so which of the two names the STAFF prints depends on the mode.
+  //     Measured through abc.js `keySig` itself: key -2 aeolian engraves a
+  //     five-flat signature and spells its tonic "Bb" where this table said
+  //     "A♯"; key 1 ionian engraves "Db" where it said "C♯"; key -4 ionian
+  //     engraves "Ab" where it said "G♯". One record, two names, and neither
+  //     surface was wrong on its own. A menu whose name carries BOTH cannot
+  //     disagree with a signature that has to pick one.
+  //   2 A composer reads whichever of the two the music in front of them uses.
+  //
+  // ♯/♭ AND NOT #/b, DECIDED BY LISTENING TO IT. eSpeak NG is NVDA's default
+  // synthesiser, so `espeak-ng -x -q` is what a screen-reader user actually
+  // hears, and it is not close:
+  //     "A♯/B♭"  ->  a# S'A@p slaS b'i: fl'at     "A sharp slash B flat"
+  //     "A#/Bb"  ->  a# h'aS slaS b,i:b'i:       "A hash slash B B"
+  // ASCII turns the accidental into "hash" and the flat into a repeated letter;
+  // the musical codepoints are read as the words they are. (Paul typed the
+  // ASCII form, in a terminal, to name the CONVENTION — spell both — and this
+  // is that convention in the character the machine can say.) The slash also
+  // does the safety work when a reader is set to skip symbols entirely: it
+  // still says "A something B", which can never be confused with a bare "A",
+  // where a dropped lone ♯ would have made A♯ and A read identically.
+  // Naturals take no slash: there is nothing to disambiguate.
+  const KEYNAMES = ["C", "C♯/D♭", "D", "D♯/E♭", "E", "F", "F♯/G♭",
+                    "G", "G♯/A♭", "A", "A♯/B♭", "B"];
   const KEYS = {}, KEYLABEL = {};
   for (let i = -6; i <= 5; i++) {
     KEYS[String(i)] = i;
@@ -436,6 +597,57 @@
   // overrides the genre's own default, which null never does.
   const KEYMODES = { ...MODES, minor: MODE };
   const KEYMODELABEL = { ...MODELABEL, minor: "minor" };
+
+  /* ---- THE CIRCLE OF FIFTHS, AS ARITHMETIC ---------------------------------
+     Paul, 2026-08-24: "Maybe put the circle of fifths back in there for key
+     selection, it was nice." It was, and it is back — ui/selects.js draws it
+     and ui/eight.js arranges it, but neither of them may KNOW what a fifth is:
+     which key sits at which hour, and which minor is relative to it, is the
+     same kind of fact as KEYS and KEYLABEL themselves, so it lives beside them
+     in the one file the UI is allowed to read a musical table from.
+
+     FIFTHS is twelve KEY VALUES (the −6..5 this table actually offers), in
+     fifths order, C at the top and sharps clockwise. Read as pitch classes it
+     is 0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5 — each hour a perfect fifth above
+     the last — folded onto this table's own range, and every one of the twelve
+     appears exactly once, which is the property that makes the ring complete.
+
+     ...AND THE SPELLING, WHICH IS THE ONE PLACE THE RING AND THE MENU LOOKED
+     LIKE THEY DISAGREED. The old band-kit circle spelled its hours the way
+     fifths order wants them — Db, Ab, Eb, Bb, F# — while the key control Paul
+     asked for on the same day spells every black note BOTH ways ("A♯/B♭", the
+     KEYNAMES comment above, measured against eSpeak NG). There is nothing to
+     reconcile, because a value is not a spelling: the ring is a list of key
+     VALUES here, and each hour wears whatever KEYLABEL says for it. Check the
+     five black hours by eye and the fifths-proper name is inside every one of
+     them — hour 6 is "F♯/G♭", hour 7 "C♯/D♭", hour 8 "G♯/A♭", hour 9 "D♯/E♭",
+     hour 10 "A♯/B♭". So the circle reads correctly going round (F♯, D♭, A♭,
+     E♭, B♭ are all on it) AND agrees, character for character, with the staff
+     ui/abc.js engraves, which spells key −2 as B♭ and would otherwise have
+     been contradicted by a ring that only said A♯. One table, both readings. */
+  const FIFTHS = [0, -5, 2, -3, 4, -1, -6, 1, -4, 3, -2, 5];
+  // THE RELATIVE MINOR of the key at each hour: its tonic is nine semitones up
+  // (or three down), folded back onto the table by wrapKey — so this is derived
+  // rather than a second list that could drift from the first.
+  const relMinorOf = (key) => wrapKey(key + 9);
+  // ...and what that minor is CALLED on the inner ring, which is the one place
+  // the fifths-proper spelling is written out: at F♯'s hour the relative minor
+  // is D♯m (six sharps, like its major), not E♭m (six flats, which belongs to
+  // G♭). Short on purpose — the inner ring is the tightest twelve positions on
+  // the diagram — and the both-ways spelling rides beside it in the widget as
+  // KEYLABEL[relMinorOf(k)] + " minor", so nothing is lost to a screen reader.
+  const RELMINNAME = ["Am", "Em", "Bm", "F♯m", "C♯m", "G♯m",
+                      "D♯m", "B♭m", "Fm", "Cm", "Gm", "Dm"];
+  // IS THIS MODE A MINOR? Asked of the interval table itself and never of a
+  // list of names: a mode is minor when it has a minor third in it, which is
+  // exactly what makes the inner ring stay lit when you push A minor to A
+  // dorian with the menu beside the circle (the flow this round settled on,
+  // 2026-08-25 — not a sentence of Paul's). The page must not forget where it
+  // is standing because you changed its colour.
+  const minorish = (mode) => {
+    const m = KEYMODES[mode] || MODE;
+    return m.indexOf(3) >= 0;
+  };
 
   // PROG — the named progressions from genres.js, by name, plus "off" (strip
   // the genre's own prog and fall back to the degenerate triads). The names
@@ -636,6 +848,26 @@
     { key: "room", table: SENDS,  labels: SENDLABEL,  default: null },
     { key: "lvl",  table: LEVELS, labels: LEVELLABEL, default: null },
     { key: "pan",  table: PANS,   labels: PANLABEL,   default: null },
+    // A CHIP IS BACK ON THE TRACK (2026-08-24, Paul: "we've lost the engineer
+    // entirely"). It came off 2026-08-17 because a track had no other way to
+    // reach a treatment and an insert costs a MULTIPLE where a bus costs a
+    // constant. BOTH HALVES OF THAT CHANGED: the three sends above are wired
+    // to the parent's own returns now (audio/desk.js masterState reads
+    // buses.rev.ret onto state.reverb), so a SHARED treatment goes to a bus
+    // and this is only for what must be IN the path — a crunch on one guitar,
+    // or `sweep`, which FXSEND above already says can never be a send.
+    // Capped at MAX_FX; the desk drops it on a STEREO voice by law
+    // (audio/desk.js widthKept). The paragraph above that called
+    // resolvePartMix's `fx` branch unreachable is rewritten rather than
+    // deleted, because it is the record of why the field left.
+    //
+    // `type: "list"`, not a new "chips" kind: song.js:601 validates a saved
+    // part entry by walking THIS list, and its only array branch is
+    // `f.type === "list"` -> filterList(f, v). A key it does not recognise
+    // falls through to okEnum, which asks whether FX holds the STRINGIFIED
+    // ARRAY as a key — so a "chips" spelling would have made every saved chip
+    // an error on load. One word, and the round trip works.
+    { key: "fx", type: "list", table: FX, max: MAX_FX, default: [] },
     { key: "mute", type: "flag",  default: false },
     { key: "solo", type: "flag",  default: false },
     // THE FADER OFFSET, in dB, and it is an OFFSET rather than a level: the
@@ -672,16 +904,16 @@
     const pick = (tbl, v, dflt) =>
       (v != null && Object.prototype.hasOwnProperty.call(tbl, String(v))) ? tbl[v] : dflt;
     return {
-      // UNREACHABLE FROM ANY LIVE SONG, not deleted here. PARTMIX no longer
-      // declares `fx`, so song.js's loader (which copies a part entry through
-      // this very list) can never hand this function an `e.fx` again, and
-      // no surface writes one either — a track really does carry only its
-      // three sends now. This line still resolves one IF handed one directly,
-      // because that is exactly what the offline desk gate does on purpose
-      // (test/browser/nukernel-drums.test.js partProbe) to prove the mixer's
-      // node-level isolation still holds for a chain a saved song brought
-      // with it — the claim the prior round promised this gate would keep
-      // making. Nothing manufactures that input anymore; only a test does.
+      // REACHABLE AGAIN, 2026-08-24. This paragraph said "UNREACHABLE FROM ANY
+      // LIVE SONG, not deleted here… nothing manufactures that input anymore;
+      // only a test does" — true for exactly the week PARTMIX did not declare
+      // `fx`. It declares it again (see the note on that entry for what
+      // changed), so song.js's loader copies a saved chip through this list and
+      // the engineer writes one, and this branch is the ordinary path once
+      // more. The clamp is what it always was: unknown keys drop, the list caps
+      // at MAX_FX, and audio/desk.js widthKept still refuses the whole chain on
+      // a STEREO voice — a chip that cannot sound is greyed on the board rather
+      // than swallowed here.
       fx: (g.fx || []).filter(k => Object.prototype.hasOwnProperty.call(FX, k)).slice(0, MAX_FX),
       rev: pick(SENDS, g.rev, 0),
       del: pick(SENDS, g.echo, 0),      // the field is `echo`, the bus is `del`
@@ -826,11 +1058,15 @@
   // detent is the only spelling of the default, and clearing every knob must
   // restore the shipped graph node for node (the master-bus law, one bus down).
   //
-  // `ret` is a MULTIPLIER on the return the graph already builds, not a level
-  // of its own: each bus's base return is a tuned number (VERBSPEC per verb,
-  // the room's 0.9) and a knob that replaced it would need one table per verb.
-  const BUSRETS = { down: 0.5, dim: 0.75, up: 1.3, hot: 1.6 };
-  const BUSRETLABEL = { down: "down", dim: "dim", up: "up", hot: "hot" };
+  // `ret` WAS A MULTIPLIER on a return the WebAudio graph built for itself —
+  // "each bus's base return is a tuned number (VERBSPEC per verb, the room's
+  // 0.9) and a knob that replaced it would need one table per verb". THAT
+  // GRAPH IS GONE. The one-engine round deleted audio/mixer.js and with it
+  // every node this table multiplied, and what stands in its place is ONE
+  // number in the parent's state (`state.reverb`), which nothing on this page
+  // could write. So `ret` is now the RETURN ITSELF (RETURNS above), absolute,
+  // and the multiplier table is retired: multiplying a return of zero by 1.6
+  // is still zero, which is exactly the bug (audio/plan.js:367 `reverb: 0`).
   // the echo's feedback (base 0.42) and tone lowpass (base 2800 Hz) —
   // buildEchoBus's own constants, offered a step either side of themselves
   const EFBS = { less: 0.22, more: 0.62 };
@@ -858,33 +1094,54 @@
                      spring: "spring", room: "room", air: "air",
                      delay: "delay", slap: "slap", echo: "echo",
                      tape: "tape", wash: "wash", drive: "drive" };
-  // …AND A BUS MAY FEED ANOTHER BUS. A real desk lets a return go to a return
-  // (delay into the plate is the oldest trick on one), so each row carries a
-  // send to each OTHER bus at the same five depths a track uses. The cycle
-  // that convention invites is handled once, in busSendPlan below.
+  // EVERY KNOB HERE NOW REACHES THE ENGINE, and the ones that could not were
+  // taken off rather than left drawing. The test is audio/desk.js masterState:
+  // a knob is on this table if and only if it lands in a field the parent's own
+  // fxParams/reverbColor resolves.
+  //   rev.ret   -> state.reverb      -> rgain = clamp(reverb*3.2, 0, 2)
+  //   rev.color -> state.reverbColor -> reverb_<module>.wasm
+  //   echo.time -> state.delay.beats (a fraction of a BAR here, beats there)
+  //   echo.fb   -> state.delay.feedback
+  //   echo.tone -> state.delay.cutoff
+  // BUS 3 IS NOT A THIRD RETURN and the board says so. The renderers carry four
+  // buses {dry, rev, del, pp} and `pp` is a real ping-pong with its own time,
+  // feedback and tone — but state-engine:2808 stamps `pp` on DRUM events only,
+  // so a pitched voice's send is dropped by mapEvents. Wiring it means editing
+  // the parent and re-running its parity gates. `room` therefore keeps its name
+  // and no knob of its own: it IS the reverb bus (audio/desk.js:590 folds a
+  // part's `room` into its `rev`), and pretending otherwise is the lie this
+  // round exists to stop telling.
   const BUSROWS = [
     { bus: "rev",  label: "reverb", feed: "fed by the reverb sends", eq: BUS_EQ_BANDS,
       knobs: [
-        { key: "ret",  label: "return", table: BUSRETS, labels: BUSRETLABEL, default: null } ] },
-    { bus: "echo", label: "delay",  feed: "ping-pong · fed by the echo sends", eq: BUS_EQ_BANDS,
+        { key: "ret",   label: "return", table: RETURNS, labels: RETURNLABEL, default: null },
+        { key: "color", label: "room",   table: REVERBS, labels: REVERBLABEL, default: null } ] },
+    { bus: "echo", label: "delay",  feed: "fed by the echo sends", eq: BUS_EQ_BANDS,
       knobs: [
-        { key: "ret",  label: "return", table: BUSRETS, labels: BUSRETLABEL, default: null },
-        { key: "fb",   label: "repeats", table: EFBS,   labels: EFBLABEL,    default: null },
-        { key: "tone", label: "tone",   table: ETONES,  labels: ETONELABEL,  default: null } ] },
-    { bus: "room", label: "room",   feed: "fed by the kit's lane sends", eq: BUS_EQ_BANDS,
-      knobs: [
-        { key: "ret",  label: "return", table: BUSRETS, labels: BUSRETLABEL, default: null } ] },
+        { key: "time", label: "time",    table: DTIMES,  labels: DTLABEL,     default: null },
+        { key: "fb",   label: "repeats", table: EFBS,    labels: EFBLABEL,    default: null },
+        { key: "tone", label: "tone",    table: ETONES,  labels: ETONELABEL,  default: null } ] },
+    { bus: "room", label: "room",   feed: "the kit's ambience — the same return as bus 1",
+      eq: BUS_EQ_BANDS, knobs: [] },
   ];
-  // the name knob and the two cross-sends are spliced onto every row from ONE
-  // place, so a fourth bus would inherit them by existing rather than by being
-  // remembered — and so song.js/resolveBuses/busesIsDefault pick them up with
-  // no edit at all (they all walk `knobs`)
+  // the name knob is spliced onto every row from ONE place, so a fourth bus
+  // would inherit it by existing rather than by being remembered — and so
+  // song.js/resolveBuses/busesIsDefault pick it up with no edit at all (they
+  // all walk `knobs`).
+  //
+  // THE TWO CROSS-SENDS CAME OFF, 2026-08-24. The paragraph that stood here
+  // said they were spliced on "so a fourth bus would inherit them", and it was
+  // right about the mechanism and wrong about the world: `x<bus>` was written
+  // against a WebAudio bus rack that the one-engine round deleted, so there has
+  // been nothing to wire an edge INTO since — and busSendPlan, the cycle
+  // refusal that made them safe, has had no caller since the same round
+  // (grepped across nukernel/, engine/ and scratch/: zero). A knob that cannot
+  // reach the sound is the thing this file exists to prevent, so it is gone
+  // rather than drawn. Delay-into-the-plate is the oldest trick on a desk and
+  // it comes back the day the parent's own bus graph can take an edge.
   const BUSES = BUSROWS.map(r => ({ ...r, knobs: [
     { key: "name", label: "name", table: BUSNAMES, labels: BUSNAMES, default: null },
     ...r.knobs,
-    ...BUSROWS.filter(o => o.bus !== r.bus).map(o => ({
-      key: "x" + o.bus, label: "→ " + o.label, to: o.bus,
-      table: SENDS, labels: SENDLABEL, default: null })),
   ] }));
   // what a bus is CALLED right now — the set name, else its shipped label.
   // One reader for the board's nameplate and one for the send bars that name
@@ -895,52 +1152,17 @@
     const set = v && v[bus] && v[bus].name;
     return (set && BUSNAMES[set]) || row.label;
   };
-  // WHICH BUS-TO-BUS SENDS MAY ACTUALLY BE WIRED, and which are refused.
-  //
-  // A desk allows delay → plate and plate → delay at the same time; an audio
-  // graph does not. Web Audio's own rule is that a cycle containing no
-  // DelayNode is muted outright, so the "allow it and see" answer is silence
-  // rather than feedback — and the cycles that DO contain a delay are a
-  // runaway with a shared reverb's own tail inside them, which is worse. So
-  // the plan is computed here, once, over the three buses, and the audio tier
-  // never builds an edge this refuses while the
-  // board shows the refusal on the bar the person just moved.
-  //
-  // GREEDY, IN REGISTRY ORDER, so the answer is deterministic and the same on
-  // both sides: walk the sends in BUSES order, keep an edge when its
-  // destination cannot already reach its source, refuse it when it can. First
-  // send wins; the one that would close the loop is the one that is dropped.
-  function busSendPlan(v) {
-    const R = resolveBuses(v);
-    const order = BUSES.map(b => b.bus);
-    const adj = new Map(order.map(b => [b, []]));
-    const reaches = (from, to) => {
-      const seen = new Set(), st = [from];
-      while (st.length) {
-        const n = st.pop();
-        if (n === to) return true;
-        if (seen.has(n)) continue;
-        seen.add(n);
-        for (const m of adj.get(n) || []) st.push(m);
-      }
-      return false;
-    };
-    const edges = [], refused = [];
-    for (const a of order) for (const b of order) {
-      if (a === b) continue;               // a bus never feeds itself
-      const amt = R[a] ? R[a]["x" + b] : null;
-      if (!amt) continue;
-      if (reaches(b, a)) { refused.push({ from: a, to: b, amt }); continue; }
-      adj.get(a).push(b);
-      edges.push({ from: a, to: b, amt });
-    }
-    return { edges, refused };
-  }
   const BUSBY = {};
   for (const b of BUSES) BUSBY[b.bus] = b;
-  // ONE SPEC -> ENGINE VALUES, resolveMaster's shape: `ret` resolves to its
-  // multiplier (1 when unset — the graph as built), fb/tone to their number or
-  // null (null = the builder's own constant, untouched).
+  // ONE SPEC -> ENGINE VALUES, resolveMaster's shape: every knob resolves to
+  // its number or to null, and null is "the engine's own value, untouched".
+  //
+  // `ret` NO LONGER DEFAULTS TO 1. The line here read
+  // `r[k.key] = k.key === "ret" ? (val == null ? 1 : val) : val`, because `ret`
+  // used to be a multiplier on a WebAudio return and 1 was "as built". It is an
+  // absolute return now (RETURNS above), so a defaulted 1 would mean "as wet as
+  // a bus can go" on every song that never touched the rack. null means the
+  // master's `space` bleed, or nothing — which is today.
   function resolveBuses(v) {
     const g = v && typeof v === "object" ? v : {};
     const pick = (tbl, x) =>
@@ -950,8 +1172,7 @@
       const e = g[b.bus] && typeof g[b.bus] === "object" ? g[b.bus] : {};
       const r = {};
       for (const k of b.knobs) {
-        const val = pick(k.table, e[k.key]);
-        r[k.key] = k.key === "ret" ? (val == null ? 1 : val) : val;
+        r[k.key] = pick(k.table, e[k.key]);
       }
       r.eq = resolveEq(e.eq, b.eq);      // null = the return as built, no nodes
       out[b.bus] = r;
@@ -1080,7 +1301,40 @@
   // can now. (`break` and `breakdown` are the same section under two
   // vocabularies: a twelve-inch says one, the composer says the other, and
   // both are legal names for a box rather than one being renamed.)
-  const ROLES = { drums: "drums", bass: "bass", groove: "groove",
+  // ...AND THE THREE THE STRIP READ AS VOICES. Paul, 2026-08-24, looking at a
+  // precomposed reggae record: "so it's weird it opens with '1 drums' and goes
+  // into '2 intro' ... what's the plan?" MEASURED on genreToDocument("reggae",
+  // 1), the strip said `bass | groove | intro | verse | …` — the first two
+  // words are section names that happen to be spelled like the two voices
+  // sitting in the band's tabs, so a numbered list of sections read as a
+  // numbered list of players.
+  //
+  // THE KEY IS RIGHT AND THE WORD WAS WRONG, which is why only the value moves.
+  // These three ARE roles to everything that reasons about them: compose.js:36
+  // BEDS keys off them ("a bed is a layer, not a section"), ui/derive.js:618
+  // TEMPOROLE gives each one the song's own tempo, song.js validates a box's
+  // role against these KEYS, and a stored record names them. Renaming the key
+  // would invalidate every document on disk to fix a caption. The value in this
+  // table is the CAPTION — `labels: ROLES` on the role row below, `opts(keys,
+  // ROLES)` in avail.js:490, `ROLES[s2.role]` in ui/eight.js:1769 — so three
+  // strings here are the whole fix and every reader gets it at once.
+  //
+  // WHAT THE WORDS SAY. compose.js:182 describes what it built: "the layered
+  // BEDS (drums, then bass, then the tune — an ARRANGEMENT, one section per
+  // layer)". `drums` is the opening bars with the drummer alone, `bass` the
+  // same with the bass alone, and `groove` is the layer where the OTHER half
+  // of the rhythm section joins it (compose.js:609-612 pushes it after either
+  // one). Said as what is PLAYING, none of the three can be mistaken for a
+  // player, and the strip now opens `bass alone | drums & bass | intro | verse`.
+  //
+  // AND THEY ARE THIS PAGE'S OWN WORDS ALREADY. INLABEL, ninety lines up, has
+  // called a drums-first opening "drums alone" and a bass-first one "bass
+  // first" since the intro widening — the same musical event, said on the
+  // section's EDGE chip instead of on the section. Two surfaces agreeing is
+  // the point of a vocabulary; it is not a collision, because no box ever
+  // offers both (a bed carries no intro edge, and the head intro that does is
+  // a different box).
+  const ROLES = { drums: "drums alone", bass: "bass alone", groove: "drums & bass",
                   intro: "intro", verse: "verse", chorus: "chorus",
                   bridge: "bridge", breakdown: "breakdown", drop: "drop",
                   solo: "solo", outro: "outro",
@@ -1177,6 +1431,20 @@
   //   table   value -> engine value       labels  value -> UI text
   //   tab     which palette page          group   the row title on that page
   //   default what emptyBox()/skeleton() seed (null = "as the genre asks")
+  //   axis    WHICH OF THE EIGHT this control belongs to (nukernel/AXES.md),
+  //           for a page laid out by axis rather than by palette tab:
+  //           "form" | "development" | "performance". Absent = not an axis
+  //           control, which is most rows — the palette tabs are a different
+  //           cut through the same registry and both stay true.
+  //   ask     THE QUESTION A WORKING MUSICIAN WOULD SAY OUT LOUD, and the
+  //           <legend> of the sheet. `group` above names the heading; this is
+  //           the sentence under it. Harvested from band-kit.js sectionAsks
+  //           and askable.js, not written fresh (PLAN.md Phase 2: "would
+  //           Mancini ask it this way? MacKaye? Glasper?").
+  //   none    the word for SAYING NOTHING — the label on the option that
+  //           writes null. Absent-is-today has to be a thing you can choose
+  //           your way back to, and "straight through" is what band-kit
+  //           (:5195) already called it.
   const FIELDS = [
     { key: "ops",     scope: "layer", type: "list", table: OPS, labels: OPLABEL,
       tab: "line",   group: "pattern",                 default: [] },
@@ -1238,33 +1506,48 @@
     { key: "room",    scope: "box",   table: SENDS,    labels: SENDLABEL,
       tab: "fx",     group: "room",                    default: null },
     { key: "lvl",     scope: "box",   table: LEVELS,   labels: LEVELLABEL,
-      tab: "fx",     group: "level",                   default: null },
+      tab: "fx",     group: "level",                   default: null,
+      axis: "form", ask: "where does it sit?", none: "leave it alone" },
     { key: "pan",     scope: "box",   table: PANS,     labels: PANLABEL,
       tab: "fx",     group: "place",                   default: null },
     { key: "intro",   scope: "box",   table: INLABEL,  labels: INLABEL,
-      tab: "move",   group: "intro",                   default: null },
+      tab: "move",   group: "intro",                   default: null,
+      axis: "form", ask: "how do we get into it?", none: "straight in" },
     { key: "outro",   scope: "box",   table: OUTLABEL, labels: OUTLABEL,
-      tab: "move",   group: "outro",                   default: null },
+      tab: "move",   group: "outro",                   default: null,
+      axis: "form", ask: "how do we get out of it?", none: "straight through" },
     { key: "env",     scope: "box",   table: ENVLABEL, labels: ENVLABEL,
-      tab: "move",   group: "level over the section",  default: null },
+      tab: "move",   group: "level over the section",  default: null,
+      axis: "form", ask: "what does it do over the section?", none: "level" },
     { key: "mot",     scope: "box",   table: MOTLABEL, labels: MOTLABEL,
-      tab: "move",   group: "filter over the section", default: null },
+      tab: "move",   group: "filter over the section", default: null,
+      axis: "form", ask: "the filter over it?", none: "no movement" },
     // the window onto the genre's form — numeric, clamped rather than rejected
     { key: "len",     scope: "box",   type: "int", min: 1, max: MAX_LEN,
       tab: "song",   group: "length",                  default: 4 },
+    // THE ONE FORM NUDGE THAT IS A NUMBER ON A LINE, not a word from a list:
+    // ui/derive.js:396 reads it as "start this section n bars into the phrase",
+    // which is how a chorus comes in on the second half of the tune. It carries
+    // `axis` like its neighbours and no `none`, because a slider's absence is 0.
     { key: "nudge",   scope: "box",   type: "int", min: 0, max: MAX_NUDGE,
-      tab: "song",   group: "nudge",                   default: 0 },
+      tab: "song",   group: "nudge",                   default: 0,
+      axis: "form", ask: "how far into the tune does it start?" },
     // ---- the composition-depth surface (P4) — appended, never reordered ----
     { key: "key",     scope: "box",   table: KEYS,        labels: KEYLABEL,
       tab: "sound",  group: "key",                     default: null },
     { key: "prog",    scope: "box",   table: PROGCHOICES, labels: PROGLABEL,
       tab: "sound",  group: "progression",             default: null },
     { key: "period",  scope: "box",   table: PERIODS,     labels: PERIODLABEL,
-      tab: "sound",  group: "sentence",                default: null },
+      tab: "sound",  group: "sentence",                default: null,
+      axis: "development", ask: "and bar by bar?", none: "the genre's own" },
     { key: "breath",  scope: "box",   table: BREATHS,     labels: BREATHLABEL,
-      tab: "line",   group: "breath",                  default: null },
+      tab: "line",   group: "breath",                  default: null,
+      axis: "development", ask: "how long may the notes be?",
+      none: "as long as they like" },
     { key: "pipe",    scope: "box",   table: PIPESETS,    labels: PIPELABEL,
-      tab: "line",   group: "pipe",                    default: null },
+      tab: "line",   group: "pipe",                    default: null,
+      axis: "development", ask: "what happens to it after it's played?",
+      none: "nothing" },
     { key: "part",    scope: "layer", table: PARTCHOICES, labels: PARTCHOICES,
       tab: "voice",  group: "part",                    default: null },
     // `parts` is the PER-PART MIX: a map of chair key -> {rev, echo, room,
@@ -1304,6 +1587,94 @@
   const FIELD = {};
   for (const f of FIELDS) FIELD[f.key] = f;
 
+  /* ---------- THE NUDGES (D7) ----------------------------------------------
+     (Paul, 2026-08-24: "we had lots of fun nudges to the music and motifs —
+     like arching.")
+
+     Four of these were already implemented end to end and NONE of them was
+     reachable: ui/derive.js:526 reads `sec.env`, `sec.intro`, `sec.outro`,
+     `sec.period`, `sec.pipe`, `sec.breath` and `sec.nudge` off every box,
+     song.js:172 already defaults every one of them to null on emptyBox(), and
+     the page had never written into any of them. This is the list of what to
+     offer; the pipe was connected the whole time.
+
+     THE REGISTRY IS THE ONLY LIST. A row that grows an `axis` above appears on
+     the page with no edit here and none in the view — interview.js's law
+     ("every question knows what heading it lives under") one layer down. */
+  // one option list, from a row's own label table, with "say nothing" first
+  const nudgeOpts = (f) => [
+    { value: "", label: f.none == null ? "nothing" : f.none },
+    ...Object.keys(f.labels || f.table || {}).map((k) => ({
+      value: k, label: (f.labels || {})[k] == null ? k : f.labels[k] })),
+  ];
+  // THE PERFORMANCE ROWS ARE ASKABLE'S ROWS. Their values are a number (stress,
+  // phrase) or a whole policy object (orn — kernel.js:894 ORN), so the OPTION
+  // VALUE is the WORD and `nudgeValue` maps it back; a radio's value is a
+  // string and `{grace: 0.4, …}` is not one. The word is also what a saved
+  // session prints, which is askable.js's own habit (band-kit knobs.__said).
+  const PERFROWS = ["stress", "phrase", "orn"];
+  const perfRow = (field) => {
+    const r = (NA && NA.ASKABLE || []).find((x) => x.field === field);
+    if (!r) return null;
+    return { key: field, axis: "performance", scope: "song",
+             ask: r.ask, group: r.head, none: "the record's own",
+             options: [{ value: "", label: "the record's own" },
+                       ...r.opts.map(([w]) => ({ value: w, label: w }))] };
+  };
+  /** Every axis control for one axis, in REGISTRY order.
+   *  -> [{ key, axis, scope, ask, group, none, options? , type?, min?, max? }] */
+  function nudgesFor(axis) {
+    if (axis === "performance") return PERFROWS.map(perfRow).filter(Boolean);
+    return FIELDS.filter((f) => f.axis === axis).map((f) => ({
+      key: f.key, axis: f.axis, scope: "section", ask: f.ask,
+      group: f.group, none: f.none,
+      ...(f.type === "int" ? { type: "int", min: f.min, max: f.max }
+                           : { options: nudgeOpts(f) }) }));
+  }
+  /** The value a performance WORD names — askable.js's own `valueOf`, so the
+   *  number that reaches the kernel is the number askable.js wrote down. */
+  const nudgeValue = (field, word) => {
+    const r = (NA && NA.ASKABLE || []).find((x) => x.field === field);
+    return r && word !== "" ? NA.valueOf(r, word) : null;
+  };
+  /** ...and back: which word a document's value is currently saying. Compared
+   *  by JSON because an `orn` policy is an object and two of them are equal
+   *  when they say the same thing, not when they are the same object. */
+  const nudgeWord = (field, value) => {
+    if (value == null) return "";
+    const r = (NA && NA.ASKABLE || []).find((x) => x.field === field);
+    if (!r) return "";
+    const j = JSON.stringify(value);
+    const hit = r.opts.find((o) => JSON.stringify(o[1]) === j);
+    return hit ? hit[0] : "";
+  };
+
+  /** GREY IT, AND SAY WHY. Stamps `disabled`/`quiet`/`why` onto one already-
+   *  built option object, from NUDGEGATE above. `A` is nukernel/avail.js —
+   *  handed in rather than required, because avail.js requires THIS file and a
+   *  cycle is not a dependency, it is a load-order accident waiting to happen.
+   *  Mutates and returns `out`, which is what lets the one call site sit inside
+   *  avail.js optionsFor's own map and leave the standing-answer rule
+   *  underneath it ("you can always see the word you are on") untouched. */
+  function nudgeGate(field, value, feats, out, A) {
+    const row = (NUDGEGATE[field] || {})[value];
+    if (!row || !A) return out;
+    // THE ONE FACT avail.js docFeatures DOES NOT PUBLISH, derived here because
+    // the rule language reads booleans only: `section.bars` is a number and
+    // `{rule:"when", eq:…}` cannot be negated, so "not a one-bar section"
+    // could not be written down at all. One line, and `drop` stops being
+    // offered where it would delete the whole section.
+    const f = { ...feats, "section.oneBar": ((feats || {})["section.bars"] | 0) === 1 };
+    if (row.rule && A.evalRule(row.rule, f) === false) {
+      out.disabled = true;
+      out.why = A.whyOf(row.rule, f) || "the record does not allow it here";
+    } else if (row.inert && A.evalRule(row.inert, f) === true) {
+      out.quiet = true;
+      out.why = row.inert.why || A.whyOf(row.inert, f) || "it would sound the same here";
+    }
+    return out;
+  }
+
   const api = { NSLOTS, MAX_LEN, MAX_NUDGE, MAX_FX,
                 OPS, OPLABEL, ENVLABEL, MOTLABEL, INLABEL, OUTLABEL,
                 RATES, RATELABEL, SWINGS, SWINGLABEL, GROOVELABEL, METERLABEL,
@@ -1311,8 +1682,10 @@
                 FX, FXLABEL, fxChain, FXSEND, fxMix, fxSendable,
                 SENDS, SENDLABEL, VERBS,
                 DTIMES, DTLABEL, LEVELS, LEVELLABEL, PANS, PANLABEL,
+                RETURNS, RETURNLABEL, REVERBS, REVERBLABEL,
                 VOX, VOXPARAM, OCTAVES, ARTICS, CMODES, CLAMPS, CLAMPLABEL,
                 KEYS, KEYLABEL, KEYNAMES, wrapKey, KEYMODES, KEYMODELABEL,
+                FIFTHS, relMinorOf, RELMINNAME, minorish,
                 PROGCHOICES, PROGLABEL, PERIODS, PERIODLABEL,
                 BREATHS, BREATHLABEL, PIPESETS, PIPELABEL, PARTCHOICES,
                 PARTNAMES, PARTLABEL, PARTMIX, PARTMIXBY, MAX_CHAIRS,
@@ -1324,9 +1697,10 @@
                 CEILINGS, CEILINGLABEL, MASTER, MASTERBY,
                 resolveMaster, masterIsDefault,
                 BUSES, BUSBY, resolveBuses, busesIsDefault,
-                BUSNAMES, busNameOf, busSendPlan,
+                BUSNAMES, busNameOf,
                 AUTOPARAMS, AUTOPARAMLABEL, AUTOSHAPES, AUTOSHAPELABEL, autoShape,
                 INSTRCHOICES, POOLCHAIRS,
+                NUDGEGATE, nudgesFor, nudgeGate, nudgeValue, nudgeWord,
                 ROLES, FIELDS, FIELD };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuFields = api;

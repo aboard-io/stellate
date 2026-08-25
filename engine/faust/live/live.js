@@ -1244,6 +1244,86 @@
       try { workers[old.wi].postMessage({ type: "stop" }); } catch (e) {}   // retire the old producer / free its ring
     }
 
+    // ── THE PREFILL — DO NOT RELEASE THE FIRST FRAME INTO AN EMPTY RING ──────
+    // MEASURED, 2026-08-24 (test/soak-nukernel.js --mins 3 --load 2 --poll 1, the
+    // nukernel song box): the ring holds ONE chord bar when the reader is let go.
+    // The trace is unambiguous — runway 3.14s at t=7 (the first chunk lands and
+    // `primed` fires at PRIME_SEC=2.0), 0.01s at t=10, an 87 ms hole; 3.10s at
+    // t=11, 0.06s at t=15, a 272 ms hole; and from t=19 on, never dry again for
+    // the remaining 11 minutes. The producer's own number says why: `mean` is
+    // 1.036 over the first bars — it renders a 3.1 s bar in 3.2 s — and falls to
+    // 0.93 by the sixth. So for the first ~20 s the pipeline is SERIAL and
+    // slightly BEHIND: chunk N+1 takes marginally longer to render than chunk N
+    // takes to play, the ring can never get more than one bar ahead of the ear,
+    // and every bar's residue is a hole. No amount of runway TARGET helps,
+    // because the target is a thing the ring is filled TOWARD and the ring is
+    // being emptied as fast as it fills.
+    //
+    // THE ONLY MOMENT THE RING CAN GAIN IS WHILE NOBODY IS LISTENING. So the
+    // conductor holds the reader at C_STATE=0 (silence, cursor frozen, no
+    // underrun counted — ring-player.js) until the ring holds `opts.prefillSec`
+    // of RENDERED audio. Nothing is added to the audio path and nothing races:
+    // the pump and the producer are already running flat out; this only declines
+    // to start spending. It buys twice — the depth itself, and the fact that the
+    // bars rendered during the wait are the ones that take the producer from
+    // 1.04x to 0.93x, so the reader starts against a warm producer as well as a
+    // full ring.
+    //
+    // WHAT IT COSTS, PLAINLY, BECAUSE PAUL WILL FEEL IT: the page is SILENT
+    // LONGER BEFORE THE FIRST NOTE. A/B on one box, `--load 2`, a minute each,
+    // prefillSec 0 then 8: first heard sample at 7.50 s with one 853 ms dropout,
+    // versus 9.78 s with none. **2.3 seconds more silence, and no hole.** The
+    // wait itself measured 3.48 s — less than the 8 s of audio it produces,
+    // because the producer is not sharing the box with the ear yet. The soak
+    // gate prints "first note at …s" beside the episode count so the trade is
+    // re-judged from numbers rather than argued from memory.
+    //
+    // A PREFILL MUST NEVER BECOME A SILENCE. Two bounds, both hard: the ask is
+    // clamped to what the pump will ever feed (targetFrames()) and to what the
+    // worker will ever hold (WORKER_RUNWAY) — asking for more than either is
+    // asking for a wait that cannot end — and PREFILL_MAX_MS caps the wait
+    // itself, after which the reader starts on whatever is there. A box too slow
+    // to fill the ring gets the old behaviour, holes and all; it does not get
+    // dead air. `capped` says which happened, and __prefill() reports it.
+    const PREFILL_MAX_MS = 12000;
+    const prefillAsk = Math.max(0, +(opts && opts.prefillSec) || 0);
+    let prefillTimer = 0, prefillT0 = 0, prefillWant = 0, prefillGot = 0,
+        prefillMs = 0, prefillCapped = false, prefillSaid = -1;
+    // frames of rendered audio to hold before release; 0 = start on `primed`,
+    // which is what every caller that does not ask for a prefill still gets.
+    function prefillFrames() {
+      if (!prefillAsk) return 0;
+      return Math.min(prefillAsk, WORKER_RUNWAY) * SR;
+    }
+    function armRun() {
+      if (abort || running || !cur) return;
+      // ONE chain, ever: this re-enters from its own timer, and a second entry
+      // (a re-`primed`, a resumed poll) would otherwise leave an orphan running
+      // that releases the reader a second time.
+      if (prefillTimer) { clearTimeout(prefillTimer); prefillTimer = 0; }
+      const want = prefillFrames();
+      if (!want) return startRun();
+      if (!prefillT0) { prefillT0 = now(); prefillWant = want / SR; }
+      // the pump's own feed ceiling is the other wall: the worker cannot render
+      // audio the conductor never handed it (feedRunwayFrames() < targetFrames()
+      // is the pump's gate), so a prefill deeper than that would wait forever.
+      const cap = Math.min(want, targetFrames());
+      const have = ringWritten(cur);
+      const waited = now() - prefillT0;
+      if (have >= cap || waited >= PREFILL_MAX_MS) {
+        prefillCapped = have < cap;
+        prefillGot = have / SR; prefillMs = waited;
+        prefillTimer = 0;
+        return startRun();
+      }
+      const whole = Math.floor(have / SR);
+      if (whole !== prefillSaid) {   // a thirteen-second silence with no words is a bug report
+        prefillSaid = whole;
+        status("filling the buffer… " + whole + "/" + Math.round(cap / SR) + "s");
+      }
+      prefillTimer = setTimeout(armRun, 50);
+    }
+
     function startRun() {
       running = true;
       cur.startGlobal = 0;
@@ -1256,6 +1336,27 @@
       startBarScheduler();
       startLoadReporter();
       ensureWorker(1);   // pre-init the idle worker so the first crossfade is snappy
+      // ── A SILENT DETECTOR IS WORSE THAN NONE. clickMon() calls itself "the
+      // acceptance-gate detector", and `rms` is a bargraph of the signal the DSP
+      // itself sees — so a flat zero two seconds into a run means the READBACK is
+      // dead, not that the music is quiet, and every gate that then trusts
+      // `clicks: 0` is reading a wire that is not connected. Nothing else in the
+      // engine would say so: the node built, so no "clickmon:" string was ever
+      // pushed here, and the detector failed by agreeing with everything.
+      //
+      // WHAT MADE THIS URGENT, AND WHAT IT TURNED OUT TO BE: a 2026-08-24 probe
+      // read rms 0 through two soaks including a 583 ms hole and the detector was
+      // written off as blind. Re-measured the same day on an UNINSTRUMENTED page
+      // (test/soak-nukernel.js, 18 samples), it reads 0.08-0.27 and clicks 0 — the
+      // detector is alive, and the zero was the probe's own AudioWorkletNode
+      // wrapper, which is the class faustwasm's generated node extends. So this
+      // stays as the ALARM rather than as a diagnosis: two seconds is long enough
+      // for the first out-param post to have arrived, and cheap enough to leave on
+      // for the day the readback really does die. ──
+      setTimeout(() => {
+        if (abort) return;
+        if (clickMonState && clickMonState.latest.rms === 0) errors.push("clickmon: no readback");
+      }, 2000);
       // spin up the background-WAV producer (mobile/Safari only) shortly after run so
       // its worker init + first offline render never contends with the priming burst.
       if (wantBg) setTimeout(() => {
@@ -1289,7 +1390,7 @@
       // discarded bridge's measurements can never be attributed to what plays.
       if (m.type === "baraudit") { takeAudit(m.serial, m.voices); return; }
       if (m.type === "primed") {
-        if (stream === cur && !running) startRun();
+        if (stream === cur && !running) armRun();   // THE PREFILL holds this back; with no prefillSec it IS startRun()
         else if (stream === br && phase === "bridging" && !br.primed) { br.primed = true; startFade(); }
         return;
       }
@@ -2203,6 +2304,11 @@
           phase, active: a, readFrames: pg,
           rings: [0, 1].map((r) => ({ w: rd(r, R_WRITE), r: rd(r, R_READ) })) };
       },
+      // WHAT THE PREFILL ACTUALLY COST, for the gate and for anyone re-judging the
+      // trade: what was asked, what the ring held when the reader was released, how
+      // long that took, and whether PREFILL_MAX_MS ended the wait instead of the ring.
+      __prefill: () => ({ askSec: prefillAsk, wantSec: +prefillWant.toFixed(2),
+        gotSec: +prefillGot.toFixed(2), ms: Math.round(prefillMs), capped: prefillCapped }),
       readCursor: () => read53(),
       rms() { return analyserRms(); },
       balance() {
@@ -2220,6 +2326,7 @@
       stop() {
         abort = true;
         clearTimeout(pumpTimer); if (barTimer) clearInterval(barTimer); if (loadTimer) clearInterval(loadTimer);
+        if (prefillTimer) { clearTimeout(prefillTimer); prefillTimer = 0; }   // a stop during the prefill must not start the run afterwards
         if (swapTimer) clearInterval(swapTimer);
         Atomics.store(ctrl, C_FADE_LEN, 0);   // disarm any pending ramp
         if (elRecycleTimer) clearInterval(elRecycleTimer);

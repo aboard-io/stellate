@@ -27,7 +27,7 @@
 // Layer graph: deps -> state -> derive -> plan/desk -> THIS FILE -> ui views.
 // It publishes ("transport:state", "transport:section", "status", "refresh")
 // and never imports a view.
-import { SONG, MASTER, bpm, vol, on, emit, pendingStart, setPendingStart } from "../ui/state.js";
+import { SONG, MASTER, BUSES, bpm, vol, on, emit, pendingStart, setPendingStart } from "../ui/state.js";
 import { GENRES } from "../ui/deps.js";
 import { stackOf } from "../ui/derive.js";
 import { compile, timeline, barCount, barBeatsAt, barPlan, parentState,
@@ -103,15 +103,32 @@ W.__nuMix = () => {
       drum: !!u.drum, role: u.role || null,
       lvl: +(u.lvl != null ? u.lvl : 1).toFixed(4), pan: +(u.pan || 0).toFixed(4),
       rev: +(u.rev || 0).toFixed(4), del: +(u.del || 0).toFixed(4),
-      strip: (u.sampler && u.sampler.strip) || null };
+      // ...AND THE TONE ON A MODELLED VOICE TOO. This read was
+      // `(u.sampler && u.sampler.strip) || null`, so it reported `null` for every
+      // Faust-modelled chair — which was accurate while desk.js dropped the EQ on
+      // one, and would have gone on being a lie the moment it stopped. The strip
+      // now rides at `u.strip` when the voice has no sampler (audio/desk.js), and
+      // a window that calls itself "the artifact" has to show both carriers.
+      strip: (u.sampler && u.sampler.strip) || u.strip || null };
   }
   return { si: playingSec, bar: lastBar, route: st.route, units,
            notes: p.ev.pitched.length, hits: p.ev.drums.length,
            sweeps: p.ev.sfx.length, master: engineReport() };
 };
+// WHAT THE EAR IS ACTUALLY GETTING. `__nuEngine` used to answer six fields —
+// route, state, rms, load, bars, units — while the handle it was holding
+// exposed underrunShape(), runwaySec(), ringDeficit(), __producer(),
+// clickMon() and auditStats(), and none of them reached the page, the console
+// or a gate. For two days the only thing this page could say about a 583 ms
+// hole in its own output was "load: 1" (measured 2026-08-24, 10 min 51 s into a
+// twelve-minute soak). health() is the same question asked of the instruments
+// that can answer it, folded into the hook so there is still one report.
 W.__nuEngine = () => ({ route: st.route, state: st.state,
   rms: handle ? safeRms() : 0, load: loadRatio, bars: barCount(),
-  units: Object.keys((barPlan(Math.max(0, lastBar)) || { units: {} }).units).length });
+  units: Object.keys((barPlan(Math.max(0, lastBar)) || { units: {} }).units).length,
+  ...health() });
+// the readout's own sentence, so a gate can read it before ui/eight.js paints it
+W.__nuEngineLine = () => engineLine();
 
 function settle(stage, why, extra) {
   clearTimeout(deadlineTimer); deadlineTimer = null;
@@ -143,11 +160,17 @@ function getState() {
   const base = parentState() || lastState;
   if (!base) return null;
   lastState = base;
-  // THE MASTER STRIP IS PART OF THE STATE, not a chain of its own — the parent
-  // resolves fx_bus and master_mb from exactly these fields, so a board move
-  // lands on the next bar the walk asks for (audio/desk.js masterState says
-  // which field is which, and which three have no home).
-  return { ...base, bpm, sections: [LIVE_SECTION], vapor: 0, ...(masterState(MASTER) || {}) };
+  // THE MASTER STRIP AND THE RACK ARE PART OF THE STATE, not a chain of their
+  // own — the parent resolves fx_bus, master_mb, reverbColor and the delay from
+  // exactly these fields, so a board move lands on the next bar the walk asks
+  // for (audio/desk.js masterState says which field is which, and which three
+  // have no home).
+  //
+  // THIS SPREAD IS WHY audio/plan.js NEEDED NO EDIT. `base` is the compiled
+  // state and it carries plan.js's deliberate `reverb: 0`; the spread lands
+  // OVER it, per stream, so the rack's return is what the engine reads and the
+  // compiled default stands whenever the document says nothing.
+  return { ...base, bpm, sections: [LIVE_SECTION], vapor: 0, ...(masterState(MASTER, BUSES) || {}) };
 }
 
 /* ---------- the two hooks: notes in, bar lengths in ---------- */
@@ -260,12 +283,106 @@ export function engineReport() {
                                tone: Math.round(fx.dcut || 0) } : null,
     room: rc ? rc.rtone.toFixed(2) : null };
 }
-export function routeNote() {
+
+/* ---------- the health report, and the one sentence it prints ---------- */
+// WHY THIS EXISTS. On 2026-08-24 the page dropped 583 ms of audio at 10:51 and
+// another 447 ms at 7:53 on a contended box, and there was no way to ask it
+// what had happened: __nuEngine() answered six fields, none of them a counter,
+// and the handle's own instruments — underrunShape(), runwaySec(),
+// ringDeficit(), __producer(), clickMon(), auditStats() — reached nobody. A
+// defect that takes eleven minutes to appear once cannot be chased through a
+// readout that cannot see it.
+//
+// PRIOR ART, AND WHY IT WAS NOT ENOUGH. The parent already reads these
+// instruments — `main:app/audio/live.js:187-212` polls runwaySec/underruns/
+// rms/decode every 500 ms and logs a `snap …` line. But it is behind
+// `?wavDebug`, it prints a JSON blob, and it never came across to nukernel. A
+// diagnostic you have to know the query string for is a diagnostic that is off
+// on the day it matters, so this one is always on and says an English sentence.
+//
+// EVERY FIELD IS GUARDED AND EVERY ROUTE ANSWERS. The wav-first route stubs
+// most of these (engine/faust/live/live.js:3574-3576 returns null for
+// clickMon/workletTruth/sentinel), so `g` swallows a missing method, a throw
+// and a null alike and hands back the default. A readout that can crash is a
+// readout nobody leaves on, and this one is read once a second forever.
+export function health() {
+  const g = (f, d) => {
+    try { const v = handle && handle[f] && handle[f](); return v == null ? d : v; }
+    catch (e) { return d; }
+  };
+  const sh = g("underrunShape", null) ||
+    { episodes: 0, quanta: 0, maxRun: 0, totalMs: 0, worstMs: 0, lastAt: 0 };
+  const cm = g("clickMon", null);
+  return {
+    route: st.route || "",
+    isolated: typeof self !== "undefined" && !!self.crossOriginIsolated,
+    // "ring" is nukernel's word; the engine calls its own desktop graph
+    // "direct" (live.js:2247's handle.outputRoute), which is why
+    // `st.route || "ring"` at the open never fires and the route string alone
+    // reads as an unfamiliar noun. What matters to the ear is which of the two
+    // engines is playing, so ask THAT: a route the media matcher claims is the
+    // <audio> element, anything else is the ring.
+    ring: !!st.route && !onMedia(),
+    runwaySec: +(+g("runwaySec", 0)).toFixed(2),
+    keepUp: +(+g("loadRatio", 0)).toFixed(3),
+    starve: { episodes: sh.episodes | 0, quanta: sh.quanta | 0,
+              maxRun: sh.maxRun | 0,
+              worstMs: +sh.worstMs || 0, totalMs: +sh.totalMs || 0,
+              // lastAt is an output-FRAME number (a 30,507,136 in the 2026-08-24
+              // capture); seconds is the only form a person can place against
+              // "it crackled about eleven minutes in".
+              lastAtSec: +((sh.lastAt || 0) / 44100).toFixed(1) },
+    producer: g("__producer", null),          // { mean, peak, worst[] } or null
+    ringDeficit: g("ringDeficit", 0) | 0,
+    clicks: cm ? cm.clicks : null,
+    // WHETHER THE DETECTOR IS EVEN LOOKING. `rms` is a bargraph of the signal
+    // the DSP itself sees, so 0 means the readback is dead, not that the music
+    // is quiet, and `clicks: 0` off a dead readback is a gate reading a
+    // disconnected wire. REVERSED FROM THE DESIGN NOTE, which measured rms 0
+    // through every sample of two soaks and called the detector blind: on an
+    // UNINSTRUMENTED page it reads 0.08-0.27 and clicks 0 (soak of 2026-08-24,
+    // 18 samples, `--load 2`). The zero was almost certainly the probe's own
+    // doing — it replaced window.AudioWorkletNode with a plain function, which
+    // is the class faustwasm's generated node extends. The detector is alive;
+    // F6 in the engine is the alarm for the day it is not.
+    clickMonAlive: !!(cm && cm.rms > 0),
+    anomalies: (g("auditStats", { anomalies: 0 }).anomalies) | 0,
+    errors: handle ? (handle.errors || []).slice(0, 4) : [],
+  };
+}
+
+// THE SENTENCE ITSELF LIVES HERE, not in the view. The design note wrote this
+// template inline in ui/eight.js; it is here instead because the wording is a
+// claim about the ENGINE, a gate must be able to read it before any view is
+// wired, and eight.js is an integration file that a dozen slices queue behind.
+// The view's whole job becomes: $("engine").textContent = engineLine().
+export function engineLine() {
+  // THE THREE STATES BEFORE THERE IS A ROUTE come from `routeNote()`, which
+  // used to live above this and which NOTHING IMPORTED — a whole second
+  // sentence about the engine, written and never read (the design note found
+  // it: "routeNote() — which would have said 'media mse-opus' — is not
+  // imported by ui/eight.js at all"). Two functions answering "what is the
+  // engine doing" is how the two answers come to disagree, so there is one
+  // now, and it keeps routeNote's words for the states it alone covered: a
+  // page that goes silent the moment the engine is capped is the F2 complaint
+  // all over again.
   if (st.capped) return "capped: " + st.capped.why;
   if (st.state === "starting") return "starting…";
   if (st.state === "failed") return "no engine";
-  if (!st.route) return "";
-  return onMedia() ? "media " + st.route : "stream";
+  const H = health();
+  if (!H.route) return "";
+  if (!H.ring) {
+    return "media (" + H.route + ")" + (H.isolated ? "" :
+      " — this page is not cross-origin isolated, so the streaming engine could"
+      + " not start. Serve it with COOP/COEP (serve.sh).");
+  }
+  const s = H.starve;
+  return "stream · runway " + H.runwaySec.toFixed(1) + "s"
+    + (s.episodes
+        ? " · " + s.episodes + " dropout" + (s.episodes > 1 ? "s" : "")
+          + ", worst " + Math.round(s.worstMs) + " ms, last at "
+          + Math.round(s.lastAtSec / 60) + " min"
+        : " · no dropouts");
 }
 
 /* ---------- the OS-facing identity ---------- */
@@ -384,8 +501,68 @@ export async function startAt(boxIndex) {
 
 async function open(FL, forceMedia) {
   st.tries++;
+  // A SONG BOX BUYS RUNWAY WITH LATENCY, AND IT SHOULD. The parent keeps 3 s
+  // ahead of the ear (engine/faust/live/live.js TARGET_SEC) because the
+  // explorer is a STEERING instrument — you are dragging through genre space
+  // and a deep buffer is a stiff wheel. This is not one. The one control that
+  // must be instant is the fader, and it rides the engine's master gain
+  // outside the ring (live.js:2068); a desk move already lands on the next bar
+  // the walk asks for, which is seconds anyway.
+  //
+  // MEASURED, 2026-08-24, on a contended four-core box: one 583 ms hole at
+  // 10 min 51 s and one 447 ms hole at 7 min 53 s with the 3 s target — and
+  // the engine's OWN response to both was to go to 8 s (its sticky
+  // C_UNDER_EPI branch, live.js:1392-1394) and never starve again. The
+  // response works; it is armed exactly one audible defect too late.
+  // `deepRunway` is the parent's own hint for this trade (it feeds
+  // targetFrames() beside the hidden-tab case), so ask for the 8 s BEFORE the
+  // hole instead of after it.
+  //
+  // THE COST, STATED: anything fed through the walk — a genre change, a tempo
+  // edit, a section rewrite — is heard up to ~5 s later than it was. That is a
+  // taste call and Paul is the judge of it. If the lag is wrong the retreat is
+  // 5 s, NOT 3 s: 3 s is the number that dropped the audio twice today.
+  FL.deepRunway = true;
+  // ── AND THE RING STARTS EMPTY, WHICH deepRunway CANNOT FIX ────────────────
+  // The line above buys a DEEP runway and the box still dropped audio — 2 to 5
+  // holes, worst 961 ms, ALL of them inside the first 8 to 31 seconds of a
+  // playthrough and none in the eleven minutes after (STATE.md item 16; the
+  // 12-minute soak of 2026-08-24). A target is a depth the ring is filled
+  // TOWARD; at t=0 the ring is empty and the reader is released the moment the
+  // FIRST chord bar lands, so for the first twenty seconds the producer — which
+  // measures 1.04x budget while the worklet instantiates, the samples decode
+  // and the first bars compile — renders each bar a fraction slower than the ear
+  // eats the last one. The ring can never get more than one bar ahead, and every
+  // bar's shortfall is a hole.
+  //
+  // So ask the engine to FILL BEFORE IT PLAYS: hold the reader silent until the
+  // ring holds the same 8 s the pump is aiming at (engine/faust/live/live.js
+  // "THE PREFILL"). A song box is the right place to spend this — you pressed
+  // play on a record, you are not dragging a fader through genre space — which
+  // is the same argument the paragraph above makes for the deep runway itself.
+  //
+  // THE COST, STATED, BECAUSE IT IS THE PART PAUL FEELS: the page is silent for
+  // TWO AND A THIRD SECONDS LONGER after the tap. That is an A/B, not an
+  // estimate — the same gate, the same box, the same two busy cores, `prefillSec`
+  // 0 then 8, one minute each: first heard sample at **7.50 s** with 1 dropout
+  // of 853 ms at t=4.1, and at **9.78 s** with ZERO dropouts. The wait itself
+  // measured 3.48 s (handle.__prefill()), and it is cheaper than the 8 s of
+  // audio it buys because the producer is not competing with the ear yet.
+  //
+  // AND IT IS NOT PAID TWICE: those bars are what warm the producer up, so it
+  // crosses into the run already at 0.88x budget instead of 1.04x, and the
+  // steady-state trough of the runway sawtooth rose with it — 1.4-2.7 s without
+  // the prefill, 3.2-4.8 s with it, over the same minute. The engine says
+  // "filling the buffer… n/8s" while it waits and the soak gate prints "first
+  // note at …s", so the trade can be re-judged rather than remembered. If 2.3 s
+  // is too long the retreat is a SMALLER prefill, not none: 5 s still covers the
+  // measured startup deficit (one 3.1 s bar plus ~0.6 s of producer shortfall)
+  // with about a second to spare.
   try {
     handle = await FL.exploreLive(getState, (m) => emit("status", { text: m }), {
+      // the prefill is an OPT-IN on the engine: a caller that says nothing gets
+      // the old start-on-primed, so the explorer next door is untouched by this.
+      prefillSec: 8,
       events, barBeats, onBar,
       // the caller's own warm set (plan.js warmSources): the stream routes
       // bake bars against the buffers held at bake time, so the zones this

@@ -3,112 +3,220 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>The band — say it</title>
-<meta name="description" content="A band: an arranger, a drummer, a bass player, a keys player and an engineer. The arranger calls the tune; everyone else decides what is theirs.">
+<title>nukernel</title>
+<meta name="description" content="A synth duo in London in 1985, and a control for every one of the eight axes the record is made of.">
 <meta name="robots" content="noindex">
-<!-- BASIC HTML, AND NO FORMATTING (Paul, 2026-08-21: "Just use basic HTML
-     for everything right now… Don't style at all"; 2026-08-23: "Get rid of
-     all text formatting just let the text be default size and everything
-     even simpler"). One stylesheet, and it sets no font-size, weight,
-     style, letter-spacing or case anywhere: the scroll pane a gate
-     measures, state-swap rules, the visually-hidden helper, the staff SVG's
-     containment, and the circle of fifths ("Keep the circle of fifths!!!" —
-     the one sanctioned exception). Everything else is the browser's own
-     defaults. -->
-<link rel="stylesheet" href="band.css">
+<!-- ONE STYLESHEET, AND ONLY ONE (Paul, 2026-08-24: "keep the raw plain HTML
+     but use more controls and a little bit of CSS. use more grid lines in
+     tables, it will help"). This supersedes 2026-08-23's "use simple HTML with
+     no CSS or styling", which was the right instruction for a page that had
+     never been read on a phone: measured at 375px on 2026-08-24 the document
+     scrolled 15px sideways, every button was 21px tall, every checkbox 13px,
+     and there were 96 radios on the default record. The stylesheet is nu.css
+     and it says four things and no fifth — tap targets, two sticky bands,
+     per-table scroll panes, grid lines. The HTML did not get less plain: it is
+     still headings, paragraphs, tables, labels, fieldsets, radios, checkboxes,
+     ranges, outputs and buttons, generated from the document
+     (nukernel/songs.js) by ui/eight.js, and every option still comes from a
+     table, so the page can only put the record into states the tables already
+     name. (This said "selects, checkboxes, numbers, one button and one slider",
+     and it has been rewritten twice in one day rather than corrected, because
+     both rewrites were right. On the MORNING of 2026-08-24 there was not one
+     <select> left on the page at all — the sixteen in #app became sheets, the
+     twenty-three on the board became ranges and sheets, and the atlas's three
+     navigation menus were deleted outright, Paul: "the options for each
+     instrument in a song section are now just one thing in a dropdown. That's
+     not effective. sheets of organized options should light up" and "get rid of
+     the era select boxes, the look at select box, the 'nearby' select box, the
+     genre list, etc." That EVENING some of them came back, by name: "We can
+     return some things to select menus: meter / reading speed / swing / key /
+     mode / the changes / chord quality can be selects inside the 'the changes'
+     table … in the band 'form' section -- return to dropdowns/select … in
+     voices -- plays, material, instrument -- dropdowns/selects … in general
+     where there is ONE option a dropdown is preferred." Neither sentence is a
+     correction of the other and the page now holds both: a lit sheet is for the
+     per-voice, per-section DEVELOPMENT WORDS, where you compare twenty-one
+     musical options at once and a greyed one has to say why; a menu is for a
+     SETTLED PARAMETER — the meter, the key, what a player plays — one value,
+     decided once. ui/selects.js's header carries both sentences side by side
+     and is the one place the rule is written down.) With the stylesheet
+     disabled the page still reads top to bottom as the same document.
+     IN <head>, BEFORE THE SCRIPTS, and not only for the flash: abcjs appends
+     two <style> elements of its own at runtime, so a <link> parsed here is
+     what makes nu.css document.styleSheets[0] — the handle the sheets gate
+     and Paul's stylesheet-off check both use. -->
+<link rel="stylesheet" href="nu.css">
+<!-- AND NO REQUEST FOR A FAVICON. An empty data: URI, which is the only way to
+     tell a browser not to go and ask: every load of this page fetched
+     /favicon.ico and took a 404 for it, which is a network round trip on a page
+     whose whole claim is that it plays and draws with the wire cut. It is also
+     the last line of test/sheets.js's "zero console errors" — a check that has
+     to stay literal to be worth anything, so the noise goes rather than the
+     check. -->
+<link rel="icon" href="data:,">
 </head>
 <body>
 
-<!-- ONE PURPOSE, ONE PAGE, NO MODES, NOTHING FOLDED (2026-08-23, Paul:
-     "put everything into a table and make it all fully expanded and simple
-     to scroll"). Everything is on the page at once, top to bottom — themes,
-     the song, the band, the producer — every region a real <table> with a
-     <caption>, no <details> anywhere, and the only thing that moves is
-     which question is in front of you. The transport is words: no dice
-     glyph, no triangle, no circle-arrow; a button says what it does. -->
-<main>
-  <header>
-    <h1>The band</h1>
-    <!-- THE ONE DIV IN THE HEADER, and it earns it: a set of controls that
-         is neither prose nor a landmark, named for assistive tech by
-         role="group" + aria-label, which needs an element to sit on. The
-         class it used to wear (.dtransport) styled nothing and no gate
-         looked for it. -->
-    <div role="group" aria-label="transport">
-      <button id="dplay" type="button">play</button>
-      <button id="ddice" type="button"
-              title="a whole record by answering every question at random">roll a record</button>
-      <!-- ANOTHER TAKE (Paul: "a reseed button to rebuild the current song
-           with variation on its core identity"). NOT the dice: the dice
-           throws the record away and answers everything again, this plays
-           the SAME record a second time — same band, same tune, same desk,
-           a different performance. band-kit `anotherTake`. -->
-      <button id="dtake" type="button"
-              title="the same record, played again — same band, same tune, a different performance">another take</button>
-      <button id="dreset" type="button"
-              title="put the room back to empty">start again</button>
-      <!-- THE LISTENER'S KNOB (Paul: "I need a volume slider on the top very
-           badly"). A plain range over the DEVICE volume — ui/state.js
-           VOLSTORE, the same setting the daw's fader writes — never the
-           engineer's desk (those are mix OFFSETS; this is the master the
-           parent engine smooths on the audio thread). Wired in ui/band.js;
-           audio/live.js already rides it both ways: masterVol at open, so it
-           works before the engine boots, and setMasterVol on every
-           "transport" commit, so a drag is heard mid-bar. -->
-      <label for="dvol">volume</label>
-      <input type="range" id="dvol" min="0" max="100" step="1" value="100">
-      <!-- the beat counter (bar.beat) and the change countdown are plain
-           text, fed by the engine's own clock (audio/live.js "pos" and
-           "pending" events). Not live regions on purpose: they change every
-           beat, and a screen reader that announces every beat is a metronome
-           nobody asked for — which is also why they are plain <span>s and
-           not <output>, whose implicit live region is exactly that
-           metronome. They carry ids, not classes: nothing styles them. -->
-      <span id="dbeat"></span>
-      <span id="dpending"></span>
-      <!-- ...but a change made SHOULD be said once: when a countdown's label
-           first appears it lands here — one polite write per new label,
-           never per beat (ui/band.js "pending"). Visually hidden; the eye
-           reads #dpending. -->
-      <span class="dvh" id="dlive" aria-live="polite"></span>
-    </div>
-  </header>
-  <div class="dwrap" id="dwrap"></div>
-</main>
+<h1 id="title"></h1>
+
+<!-- ONE .nu-bar PER PAGE, and it is this one. It is sticky at top:0 and
+     exactly --bar-h tall, because .nu-ax > h2 sits at top: var(--bar-h) and a
+     third control in here that WRAPPED would open a gap under every axis
+     heading. test/shell.js pins the number for that reason. -->
+<div class="nu-bar">
+  <button id="play" type="button">play</button>
+  <label for="vol">volume <input type="range" id="vol" min="0" max="100" step="1" value="100"></label>
+</div>
+<!-- WHICH ENGINE THE EAR GOT, AND WHETHER IT STARVED. It lives OUTSIDE #app on
+     purpose: draw() empties #app on every edit, and a readout that is destroyed
+     and rebuilt once a keystroke is a readout with no memory. The sentence is
+     written by audio/live.js engineLine(), not here — the wording is a claim
+     about the engine and it has one owner. Blank until the engine answers.
+     UNDER the bar and not IN it (integrator, 08-shell R2 x 01-crackle §1): the
+     bar is a promise about a height, and this sentence grows to two lines on a
+     host that sends no COOP/COEP. -->
+<p id="engine"></p>
+
+<!-- A GLOBE YOU TURN AND A SLIDER FOR WHEN (Paul, 2026-08-24: "a slider for
+     time and a world map on top that shows where the genres are happening! I
+     scroll to a time, click a place, and now i've got a song", then "make the
+     map 3d and zoomable like google earth but keep it black and white").
+
+     IT WAS <details>, AND THE COMMENT THAT STOOD HERE PREDICTED THIS. It said:
+     "<details> because a map plus a 116-row list above a 2264px document is a
+     wall on a phone, and <summary> is the browser's own disclosure — no JS, no
+     CSS, no ARIA. Open by default, so nothing is hidden from a first look
+     (band.css:1, 'Nothing can be hidden anywhere'); IF THAT READS AS HIDING
+     ANYWAY THE FIX IS ONE LINE, <section> INSTEAD OF <details>."
+
+     It read as hiding. Paul, 2026-08-24: "Don't make 'Details' collapsible."
+     And the word he quoted is the second half of the story: the page rendered
+     the browser's own DEFAULT LABEL, "Details", instead of the summary text —
+     because ui/atlas.js's mount() opened with `parent.textContent = ""`, which
+     deleted the <summary> this file shipped, and a <details> with no <summary>
+     has no label of its own. Nothing was styling it wrong; the view was eating
+     its own heading. <section> takes the cause away, and mount() no longer
+     destroys markup it did not create.
+
+     The 116-row list the disclosure was hiding is gone too, in the same
+     sentence: "get rid of the era select boxes, the look at select box, the
+     'nearby' select box, the genre list, etc." What is left is two controls —
+     a globe and a full-width when-slider — and neither is a wall.
+
+     THE <h2> SHIPS HERE, not in the view, so the heading survives with the
+     stylesheet off and so the view has something it must NOT delete. Under it,
+     ui/atlas.js appends the sentence, the when-slider, the globe and one
+     button, in that order — DOM order is reading order is tab order, and the
+     slider comes before the places it scopes.
+
+     Still ABOVE #app and still OUTSIDE it, for the reason #engine is outside
+     it: draw() empties #app on every edit, and a globe that was destroyed and
+     rebuilt once a keystroke would lose its pose and its year. -->
+<section id="atlas">
+  <h2 id="atlasHead">where and when</h2>
+</section>
+
+<div id="app"></div>
+
+<!-- THE BOARD, at the foot of the page and NOT inside #app (Paul, 2026-08-24:
+     "an actual mixing board at the end is a nice idea"). A board is not one of
+     the eight axes and does not belong in the axes' container: it is what the
+     record LANDS ON, and #app holds nothing but the eight and the producer's
+     statement about them. draw() clears and refills this the same way it clears
+     #app.
+     THE REASON THIS COMMENT USED TO GIVE IS GONE, and it is rewritten rather
+     than deleted because it was the wrong reason even while it was true: it
+     said the div existed "for one structural reason: a console column is 40px
+     wide, so the board's controls are <select>s, and D2's gate reads '#app
+     select is empty'". That is a div drawn to stay outside a gate's reach, and
+     STATE.md item 20 is what it cost — twenty-three dropdowns on the board that
+     no gate could see. The board's controls are ranges and sheets now and the
+     only reason left is the structural one above, which is the one that should
+     have been written.
+     (This went on to say "and the count outside the atlas is 0 page-wide".
+     That stopped being true the same evening — Paul asked a named list of
+     settled parameters back into menus and every one of them is inside #app —
+     and it is rewritten rather than deleted because the number was never the
+     point: what was wrong was a <div> placed where a gate could not look. The
+     gate looks here now whatever the controls are. test/sheets.js check 1 was
+     "#app select is empty" and is now "every menu in #app came from
+     ui/selects.js and no development word is one", which is a rule about WHAT a
+     menu may be rather than a count of them.) -->
+<div id="deck"></div>
 
 <script src="../engine/registry-data.js"></script>
 <script src="../engine/faust/voices/sampler.js"></script>
-<!-- No speech.js here: nukernel does not sing (a fresh espeak heap per
-     utterance took Safari out of memory). test/unit/nukernel.test.js §74
-     holds it out; the parent's organ is untouched. -->
 <script src="../engine/faust/voices/found-player.js"></script>
-<!-- The harmony brain BEFORE the kernel: kernel.js picks up window.CsdTheory
-     at load to voice the comping chair (shells, minimal motion). Optional by
-     law - a page without it renders the stamped fold, byte-identical. -->
+<!-- the harmony brain before the kernel: optional by law, and the comping
+     chair is voiced with it when it is in the room -->
 <script src="../engine/theory.js"></script>
 <script src="kernel.js"></script>
 <script src="genres.js"></script>
+<!-- THE QUESTIONS THE KERNEL'S OWN FIELDS ARE ASKED WITH (askable.js). It has
+     no dependencies and publishes one global. fields.js `nudgesFor` reads the
+     `stress` / `phrase` / `orn` rows off it so the Performance sheets say
+     "does the line breathe? … it arches" in askable.js's words and not in a
+     second copy of them. -->
+<script src="askable.js"></script>
 <script src="fields.js"></script>
 <script src="song.js"></script>
 <script src="instruments.js"></script>
 <script src="compose.js"></script>
 <script src="presets.js"></script>
-<!-- the one chair every musician sits in: the interview engine the six
-     kit files below are content over -->
+<!-- THE RECORD ITSELF, as data: the eight axes and the word vocabulary they
+     develop with. No LLM, no generation, no runtime surprises. -->
+<script src="songs.js"></script>
+<!-- HOW A DOCUMENT BECOMES A SCORE. Extracted from ui/eight.js, where the
+     compiler had been living inside a view and had already been copied once
+     into scratch/play-song.js. It reads kernel.js, genres.js, fields.js,
+     song.js and songs.js, so it loads after all five and before the module
+     tier; ui/deps.js is what hands it to a view. -->
+<script src="document.js"></script>
+<!-- WHERE THE DOCUMENT'S SOUND AXIS LANDS ON THE DESK. It reads fields.js only,
+     and ui/eight.js's push() reads it, so it loads after fields.js and before
+     the module tier — the same seam document.js takes above. -->
+<script src="desk-doc.js"></script>
+<!-- WHAT CAN BE SAID, AND WHAT SAYING IT WOULD DO. avail.js is the vocabulary
+     of the sixteen sheets — the same rows the page draws and the extractor
+     measures — and gates.js is the measured table of which option this record
+     has made unreachable, GENERATED by nukernel/gates-extract.js and never
+     typed. Both are UMD and read kernel/genres/fields/songs/instruments/
+     document off window, so they load after all six and before the module
+     tier; ui/deps.js is what hands them to a view. -->
+<script src="avail.js"></script>
+<script src="gates.js"></script>
+<!-- SET A GENRE, GET A WHOLE RECORD (D5). chair.js is the interview engine
+     ideas-kit.js is written in, ideas-kit.js is the theme composer, and
+     precompose.js is what projects compose()'s arrangement plus an idiomatic
+     theme into the eight axes. Three classic scripts, no DOM, no network:
+     verified in this browser building all 366 records with zero pageerrors and
+     zero off-host requests, byte-identical to the same call under node. -->
 <script src="chair.js"></script>
-<script src="drums-kit.js"></script>
-<script src="bass-kit.js"></script>
-<script src="keys-kit.js"></script>
 <script src="ideas-kit.js"></script>
-<script src="guitar-kit.js"></script>
-<script src="vocal-kit.js"></script>
-<script src="askable.js"></script>
-<script src="band-kit.js"></script>
-<!-- THE PRODUCER — pure, node-loadable, and it makes no sound: it reads the
-     record band-kit composed and moves it one deterministic vector step in
-     genre space, scoped to a subsystem. After band-kit because it reads the
-     same anchors, before the UI because ui/band.js takes it off window. -->
+<script src="precompose.js"></script>
+<!-- THE PRODUCER (D4). "We've lost the producer entirely" (Paul, 2026-08-24) —
+     and what was lost was its cast, its seam and its page, never its engine:
+     producer.js is 1,700 lines of deterministic vector step in genre space and
+     it has been sitting in this directory unloaded. It is UMD like every other
+     file above and reads kernel.js, genres.js, fields.js and bass-kit.js off
+     window, so it loads after all four. bass-kit.js comes with it because
+     producer.js is its only reader on this page (STYLES / STYLEWORD / FIGURES —
+     the words it says about a bass line); it reads chair.js and instruments.js,
+     which are already here. No DOM, no audio, no network. -->
+<script src="bass-kit.js"></script>
 <script src="producer.js"></script>
-<script type="module" src="ui/band.js"></script>
+<!-- WHERE AND WHEN THE RECORDS ARE (D6). atlas.js is 116 baked rows of place
+     and year, extracted from the genres.js labels by
+     `node nukernel/atlas.gate.js --bake` and never parsed at runtime;
+     atlas-land.js is a coastline baked once by scratch/atlas/bake-land.js from
+     Natural Earth 1:50m and 1:10m (public domain, provenance in SOURCES.md) —
+     four tiers now, because the globe zooms from the whole earth to a city and
+     the tolerance is set by the tightest view. Neither
+     fetches anything, ever — the offline law — and atlas.js reads no other
+     module, so it may sit anywhere after the classic tier. ui/deps.js is what
+     hands both to the view. -->
+<script src="atlas.js"></script>
+<script src="atlas-land.js"></script>
+<script type="module" src="ui/eight.js"></script>
 </body>
 </html>
