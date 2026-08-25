@@ -771,7 +771,16 @@
     // same way `null` is one in the dynamics table.
     parts:  [],
   };
-  const castOf = G => SOLO_LEAN[G.family] || SOLO_LEAN.kernel;
+  // ...AND THE SAME ERA DOOR THE GUEST GOES THROUGH (2026-08-25). The audit
+  // that found the organ on Aksum found this half of it too: SOLO_LEAN names
+  // only FUNCTION genres, which carry no year in a label — and so the ballot
+  // sailed past a law written to read labels, and handed a 1300 estampie an
+  // `overdrive_guitar` soloist. A soloist is a player in the room like any
+  // other. `parts` and `kernel` records have no year of their own and are
+  // untouched (eraOK's null branch), and every caller here is already guarded
+  // on `length`, which is what makes an emptied ballot a legal answer.
+  const castOf = (G, gk) => (SOLO_LEAN[G.family] || SOLO_LEAN.kernel)
+    .filter(w => eraOK(genreYear(gk), w, gk));
   // ...MINUS THE ONE PART A SOLO SECTION CANNOT BE. Backing vocals BACK
   // something, and a solo section is precisely the place where the thing they
   // would be backing has stopped playing. It is filtered at this call site
@@ -779,7 +788,7 @@
   // backing part belongs — wants it.
   // ...and an INSTRUMENTAL record's solo is never sung either (the same law
   // guestCast applies at its own door: "the lead should be 303, not vocal")
-  const soloCast = (G, gk) => castOf(G).filter(w => w !== "backing" &&
+  const soloCast = (G, gk) => castOf(G, gk).filter(w => w !== "backing" &&
     !(INSTRUMENTAL[gk] && w === "vocal"));
   // WHICH PHRASE the part is handed. A singer gets the topline — the melody the
   // composer wrote to be sung, with its motif, its breath and its one climax
@@ -857,6 +866,114 @@
   const FX_YEAR = { echo: 1950, ringmod: 1956, sweep: 1964, flanger: 1966,
                     wah: 1966, phaser: 1968, chorus: 1968, fenv: 1972,
                     crunch: 1951, leslie: 1941, tremolo: 1938, vibrato: 1938 };
+  // ...AND THE SAME LAW ABOUT THE PLAYERS, which is the half that was missing
+  // (Paul, 2026-08-25: "fix the zema organ thing"). The era law swept the
+  // PEDALS and left the ROOM alone, and the room is where the caricature was:
+  // measured across 139 anchors x 3 seeds, 254 hires were out of period, in
+  // 157 of the 417 records and 74 of the 139 anchors. The oldest record in the
+  // catalog — Aksum 540, whose entry says out loud it is "NOT a child of Rome
+  // 600 and must never be written as one" — drew a Leipzig church organ on two
+  // seeds and a Vienna harpsichord on the third.
+  // A guest is a PLAYER carrying an INSTRUMENT, so there are two dates to
+  // check and neither may be later than the record's own.
+  //
+  // WHEN AN INSTRUMENT ARRIVES IS EXTRACTED, NEVER TYPED: the earliest year
+  // any dated anchor claims the id. The catalog is the only honest source for
+  // it — `church_organ` reads 1725 because Leipzig is the oldest record here
+  // that plays one, `harpsichord` 1602, `overdrive_guitar` 1973, `warm_pad`
+  // 1973 — and a table extracted from the anchors cannot drift from the
+  // anchors the way a typed one would. It is a FLOOR over the catalog's own
+  // claims, tuned no tighter than FX_YEAR above is, and an id no dated anchor
+  // names carries no floor at all rather than a guessed one.
+  const instrOf = gk2 => { const e = (GENRES[gk2] || {}).instr;
+                           return e == null ? [] : Array.isArray(e) ? e : [e]; };
+  // A VOICE HAS NO INVENTION DATE, and that is why the sung ids are exempt
+  // below rather than floored with everything else. Extraction would put
+  // `solo_vox` at 1200 — Paris is the oldest record here that names one — and
+  // then zema's own `intro: "solo"` ("the mergéta gives the line out alone")
+  // would be unsayable in 540, which is absurd: people sang before Notre Dame.
+  // The regex is instruments.js FAMILY's own row (`/choir|voices|vox|voice/ ->
+  // "vox"`) said again here rather than imported, because that file sits a
+  // LAYER ABOVE this one in the graph — fields.js:1367 declines the same
+  // import for the same reason — and the gate holds the two in step.
+  const SUNG = /choir|voices|vox|voice/;
+  const INSTR_YEAR = {};
+  for (const k of Object.keys(GENRES)) {
+    const y = genreYear(k); if (y == null) continue;
+    for (const id of instrOf(k))
+      if (!SUNG.test(id) && (INSTR_YEAR[id] == null || y < INSTR_YEAR[id]))
+        INSTR_YEAR[id] = y;
+  }
+  // ...AND THE FLOOR IS WAIVED, AFTER 1950, FOR AN INSTRUMENT THE RECORD
+  // ALREADY PLAYS — the clause that keeps the law honest rather than merely
+  // strict. Extraction can only say when the CATALOG first hears an id, and that
+  // is not when the instrument was invented: `overdrive_guitar` extracts to
+  // 1973 because London 1969's `crunch_guitar` is the oldest dirty id any
+  // anchor names, and applying that floor flatly took the guitar solo off
+  // Chicago 1952, St. Louis 1955 and London 1969 — Chuck Berry with no lead
+  // break, which is a worse lie than the one being fixed. So the anchor
+  // answers for its own room: a record whose cast already holds that KIND of
+  // instrument can hire another one, whatever the catalog's floor says. Blues
+  // plays a `jazz_guitar`, so a guitar may visit; the Paris 1300 estampie
+  // plays a recorder and a dulcimer, so one may not.
+  //
+  // THE WAIVER STARTS IN 1950, which is not a new number: it is FX_YEAR's own
+  // `echo: 1950` and the `year < 1950` branch at the foot of build(), the line
+  // this file already draws where the modern studio begins. Every id the
+  // extraction floors late is an electric or a synthetic sound, and before
+  // that line no record can have one however many instruments of the kind it
+  // owns — a lute is a `guitar` by head noun, and without this clause Provence
+  // 1210 and Antwerp 1551 hired a palm-muted electric off the back of theirs.
+  //
+  // THE KIND IS THE HEAD NOUN, derived rather than tabled: the last word of
+  // the id with any trailing number dropped, so `overdrive_guitar`,
+  // `palm_muted_guitar` and `jazz_guitar` are one kind, `felt_piano` and
+  // `upright_piano` are one, and `synth_strings_2` files with `slow_strings`.
+  // instruments.js's FAMILY table is the fuller version of this idea and the
+  // one owner of it for MIXING; it is not imported for the reason SUNG above
+  // is not, and this file needs only the coarse question.
+  const kindOf = (id) => { const t = String(id).split("_").filter(x => !/^\d+$/.test(x));
+                           return t[t.length - 1] || String(id); };
+  const kindsOf = gk2 => new Set(instrOf(gk2).map(kindOf));
+  const AMPLIFIED = 1950;
+  // ONE EXPRESSION FOR "MAY THIS RECORD SEAT THAT SOUND", asked of an id, so
+  // the two ballots below and the gate that holds them cannot drift into three
+  // spellings of one rule — and the gate needs its own way in, because it
+  // reads the DOCUMENT's seated instruments, which is a later artifact than
+  // either ballot.
+  const seatOK = (gk2, id) => {
+    const year = genreYear(gk2);
+    return !year || SUNG.test(id) || !(INSTR_YEAR[id] > year) ||
+           (year >= AMPLIFIED && kindsOf(gk2).has(kindOf(id)));
+  };
+  // CAN THIS RECORD HIRE THAT PLAYER? Both dates at one door, so the guest
+  // ballot and the solo ballot cannot answer it differently. `year` null (a
+  // FUNCTION genre, which is a part and not a place) means no era test at all,
+  // exactly as FX_YEAR's own `!year` branch already reads.
+  const eraOK = (year, w, gk2) => !year ||
+    (!(genreYear(w) > year) && instrOf(w).every(id => seatOK(gk2, id)));
+  // WHOSE SOUND IS NOTHING BUT VOICES — asked of the anchor rather than listed,
+  // because a list is the thing that went wrong. Three of the anchor's own
+  // fields answer it: no kit, no bass, and every id in `instr` a sung one. It
+  // finds gregorian, spem, organum, zema and mbube, which is exactly the set of
+  // records whose entries say so in prose — "Zema is properly unaccompanied and
+  // that is why `kit: {}` is the truest line in this entry", and mbube's
+  // "letting the bass chair pick up its default upright would put an instrument
+  // on a record that has none".
+  // ...AND IT IS ASKED ONLY OF A PLACE AND A YEAR. `vocal` and `backing` pass
+  // all three field tests — a bare part has no kit, no bass and one sung id —
+  // but a part is not a tradition that sings unaccompanied, it is a line with
+  // nobody around it yet, and the `parts` family's own lean exists to give it
+  // somebody ("a part hosting a part: the pad under the solo, the second voice
+  // against the first"). Measured: without this clause the two of them lost
+  // all 11 of their layers across three seeds, which is the wrong genre paying
+  // for zema's bill.
+  const unaccompanied = gk2 => {
+    const g2 = GENRES[gk2] || {}, ins = instrOf(gk2);
+    return genreYear(gk2) != null &&
+           !Object.keys(g2.kit || {}).length && !!g2.nobass &&
+           ins.length > 0 && ins.every(id => SUNG.test(id));
+  };
   const SINGER_GENRE = { shoegaze: "vocal" };
   const singerOf = (G, gk) => {
     if (INSTRUMENTAL[gk]) return null;
@@ -1047,7 +1164,7 @@
         b.stack[0].slots = chance(r, 0.55) ? [S.counter] : [S.counter, S.hook];
         voice(1, [S.topline]);
       } else {
-        const cast = castOf(G).filter(w => w !== "solo" && !sings(w));
+        const cast = castOf(G, gk).filter(w => w !== "solo" && !sings(w));
         const who = cast.length && chance(r, 0.5) ? pick(S.out, cast) : null;
         // ...but never on the soloist's own VISITING chorus: that box is
         // about to take the visit below and may draw the guest as well, and
@@ -1292,7 +1409,17 @@
   const GUEST_LEAN = {
     kernel: ["pad", "vocal", "riff", "counterpoint", "backing", "drone"],
     // a choir's guest is another choir — the answering voice, the organ under
-    // it, the cantor over the top
+    // it, the cantor over the top. TRUE OF HALF THE FAMILY AND NEVER TRUE OF
+    // THE OTHER HALF, which is the whole of "the zema organ thing": `vox` is a
+    // cluster held together by TEXTURE (its own header: "unaccompanied
+    // polyphony is this cluster's whole definition"), and it now runs Aksum
+    // 540 → Johannesburg 1939 → Leipzig 1725. Every name below is European
+    // because every choir in the table was European the day it was typed. The
+    // row is LEFT AS IT IS on purpose rather than patched with exceptions: it
+    // is a statement of TASTE — what a choral record calls for — and it is the
+    // era door in guestCast, reading each anchor's own year and instruments,
+    // that decides which of these the record in hand may actually hire. For
+    // Boston 1831 that is the organ and the fugue; for Aksum 540 it is nobody.
     vox:    ["gregorian", "counterpoint", "fugue", "drone", "vocal", "vocal"],
     // the floor's guest is a LINE, because the floor already has everything
     // else: a topline over it, a pad under it, an acid riff across it
@@ -1327,6 +1454,24 @@
   // The record's own voice turning up as its own visitor would stack `vocal`
   // twice in one chorus, which is one line played by two people.
   function guestCast(G, gk, rG, singer) {
+    // AN UNACCOMPANIED RECORD HIRES NOBODY — the answer to "what is the guest
+    // pool for a choir that sings alone", and it is NO POOL rather than a
+    // narrower one. A group singing unaccompanied IS the style; a visitor is
+    // the one thing it cannot have and stay itself. This is why zema and mbube
+    // are not special cases here: the predicate reads `kit`, `nobass` and
+    // `instr` off the anchor and finds all five records the catalog describes
+    // that way, and the two that were named in the complaint fall out of it.
+    if (unaccompanied(gk)) return null;
+    const year = genreYear(gk);
+    // THE ERA LAW, APPLIED TO THE ROOM. The family lean stays what it always
+    // was — a PRODUCER'S PREFERENCE, "the club genres call a topline, a soul
+    // record calls backing vocals" — and it is right about taste and silent
+    // about time, which is how `vox` came to offer Leipzig 1725 to Aksum 540.
+    // It was not a wrong list so much as a list written when every choir in
+    // the table was European; the anchors have since stopped being. So the
+    // lean proposes and the RECORD'S OWN YEAR disposes, and where a lean is
+    // entirely inadmissible the song has no guest, which the caller already
+    // handles because a filtered-empty pool was always reachable.
     // AN INSTRUMENTAL RECORD BOOKS NO SINGING GUESTS (Paul, on the staged
     // acid: "the lead should be 303, not vocal! Watch out for that across
     // genres") — the INSTRUMENTAL table already says these records have no
@@ -1334,7 +1479,8 @@
     // through the side door.
     const pool = (GUEST_LEAN[G.family] || GUEST_LEAN.kernel)
       .filter(w => w !== gk && w !== singer)
-      .filter(w => !(INSTRUMENTAL[gk] && (w === "vocal" || w === "backing")));
+      .filter(w => !(INSTRUMENTAL[gk] && (w === "vocal" || w === "backing")))
+      .filter(w => eraOK(year, w, gk));
     if (!pool.length) return null;
     const a = pick(rG, pool);
     const rest = pool.filter(w => w !== a);
@@ -1993,6 +2139,15 @@
                 // policy the suite can only measure indirectly
                 THIN_IN, THIN_OUT, FADE_ENV, easeEdges,
                 SINGS, INSTRUMENTAL, SINGER_GENRE, singerOf, ordinals,
+                // ...and the era-of-players tables (2026-08-25), exported on
+                // the same law as every other ballot above: a policy the suite
+                // cannot read is a policy the suite can only measure
+                // indirectly, and the precompose gate now holds every anchor's
+                // whole cast against THESE rather than against a grep of the
+                // catalog, which was only ever a proxy for them.
+                genreYear, instrOf, INSTR_YEAR, SUNG, kindOf, kindsOf, seatOK,
+                eraOK, unaccompanied,
+                castOf, soloCast,
                 // ...and the SALT itself (2026-08-24, D5). Every genre-scoped
                 // stream in this file is `rng(ihash(gk + "/" + policy + "/" +
                 // seed))`, and precompose.js needs its own stream on that same

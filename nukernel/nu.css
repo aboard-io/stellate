@@ -457,6 +457,23 @@ tr.nu-here > th:first-child, tr.nu-here > td:first-child{
 /* THE TWO RING STROKES are the box's own before/after — one stroke per ring,
    each at exactly twice its labels' radius, so the words sit ON the line and
    punch through it with their own background.
+   ...AND "PUNCH THROUGH IT" WAS A CLAIM, NOT A FACT, UNTIL 2026-08-25. Paul:
+   *"put the notes in the circle of fifths on top of the circles with white
+   backgrounds. make them opaque the circles cut through them."* He is
+   describing what the sheet actually drew, and the two rings were drawing it
+   DIFFERENTLY, which is the tell. `::before` is the face's FIRST child, so the
+   twelve outer labels painted over the outer stroke and cut it cleanly.
+   `::after` is its LAST child, so the inner stroke painted over the twelve
+   relative minors and the line ran straight through every one of the words.
+   Measured at 390x844 with both strokes coloured to make them visible: the
+   outer radius (8.6em) passes inside all twelve `.nu-ko` boxes and the inner
+   radius (5.8em) inside all twelve `.nu-ki` boxes — the geometry was always
+   the same for both rings and only the PAINT ORDER differed, and the
+   screenshot shows Dm, Am, Em, Bm, F♯m, C♯m, G♯m, D♯m, B♭m, Fm, Cm and Gm all
+   struck through.
+   The background was already `var(--paper)` and already opaque — what was
+   missing was the ORDER, so it is stated: the strokes are z-index 0 and the
+   words are z-index 1. One number each, and no element moves.
    ...AND THEY DO NOT TAKE TAPS, which is not a nicety: `::after` is the
    face's LAST child, so it paints over the twelve labels sitting on the inner
    ring, and a transparent background still hit-tests. Measured 2026-08-25, the
@@ -466,7 +483,7 @@ tr.nu-here > th:first-child, tr.nu-here > td:first-child{
    swallow the gesture. */
 .nu-circ-face::before, .nu-circ-face::after{ content: ""; position: absolute;
   left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none;
-  border: 1px solid var(--rule); border-radius: 50%; }
+  border: 1px solid var(--rule); border-radius: 50%; z-index: 0; }
 .nu-circ-face::before{ inline-size: 17.2em; block-size: 17.2em; }
 .nu-circ-face::after { inline-size: 11.6em; block-size: 11.6em; }
 /* ONE ROTATION OUT AND ONE BACK. --a is the HOUR and it is the only thing that
@@ -475,7 +492,7 @@ tr.nu-here > th:first-child, tr.nu-here > td:first-child{
    every word upright: without it the ring reads like a tyre. */
 .nu-circ .nu-opt{ position: absolute; left: 50%; top: 50%; margin: 0;
   display: flex; justify-content: center; text-align: center;
-  background: var(--paper);
+  background: var(--paper); z-index: 1;
   transform: translate(-50%, -50%) rotate(var(--a))
              translateY(calc(var(--r) * -1)) rotate(calc(var(--a) * -1)); }
 .nu-circ .nu-opt .nu-w{ white-space: nowrap; }
@@ -507,6 +524,17 @@ tr.nu-here > th:first-child, tr.nu-here > td:first-child{
    relative minors collide with each other by 5-9px (band.css measured it, and
    so did this file) */
 .nu-circ .nu-ki .nu-w{ font-size: .8em; }
+/* THE CHOSEN POSITION IS INVERTED (Paul, 2026-08-25: *"when I click then invert
+   them"*). Two declarations, and they are not new vocabulary: `.is-now` sixty
+   lines up is `background: var(--ink); color: var(--paper)` and is this page's
+   only spelling of "this one is on, and you can see it across the room". The
+   `.nu-opt.is-on` border rule above still applies and is what a
+   forced-colours mode falls back to; the invert is what a reader sees, and on
+   a ring of twelve small words a 2px border alone was not enough to find at a
+   glance. Both selectors, for the same reason the border rule needs both: the
+   class covers the browsers without `:has()`. */
+.nu-circ .nu-opt.is-on, .nu-circ .nu-opt:has(:checked){
+  background: var(--ink); color: var(--paper); }
 /* A REASON IS THE ONE THING ON THE RING THAT MAY BE WIDER THAN A WORD, and it
    is capped rather than clipped: greyed is not hidden (the note over `.is-off`
    above), so a key that cannot be said says why right there, wrapping, even
@@ -576,8 +604,22 @@ tr.nu-here > th:first-child, tr.nu-here > td:first-child{
 /* ...and the same cap for a menu in a table cell, where the chord quality went
    ("chord quality can be selects inside the 'the changes' table"). The cell is
    inside a `.nu-pane`, which scrolls sideways, so an unbounded select would
-   push the whole chart off the phone rather than be clipped by it. */
-td > select{ max-inline-size: 100%; }
+   push the whole chart off the phone rather than be clipped by it.
+
+   AND `100%` WAS NOT A CAP AT ALL, WHICH COST A MEASUREMENT TO FIND. Paul,
+   2026-08-25: *"the third column is all the dropdowns"* — so a voice's
+   per-section word is a <select> in a table cell now, and the kit's word is a
+   list of SIXTY-EIGHT. A `<select>` sizes itself to its widest option, and a
+   PERCENTAGE max-width resolves against a table cell whose own width is being
+   computed from that select: circular, so it constrains nothing. Measured at
+   390x844 on the kit's section table: the select came out 334px inside a 343px
+   cell, the table 457px inside a 366px pane, and the "does" column was off the
+   right-hand edge — a dropdown you have to swipe to before you can read it is
+   not a dropdown in a column. A LENGTH is a real cap: at 9em the same table is
+   inside the pane, the select ellipsizes its own text (which is what a browser
+   does with a narrow select), and the popup undoes it the moment you open it.
+   The chord chart's own quality menus are shorter than 9em and are unmoved. */
+td > select{ max-inline-size: 9em; }
 /* GREYED, NOT HIDDEN, THE SAME AS EVERYWHERE ELSE HERE — AND WITH NO NEW RULE.
    selects.js puts `is-off` on a refused option and `is-quiet` on an inert one,
    which the two rules already at the top of this file
@@ -619,6 +661,47 @@ td > select{ max-inline-size: 100%; }
 .nu-board meter{ display: block; inline-size: 100%; block-size: 8px; }
 .nu-eng th{ inline-size: 7em; }
 .nu-eng input[type=range]{ inline-size: 9em; min-inline-size: 0; }
+
+/* ...AND THE REST OF THE DESK IN THE SAME TABLE (2026-08-25). Paul: "master and
+   the buses should also be arranged like the mixing board no?" — so the board
+   grew four more columns (bus 1, bus 2, bus 3, main) rather than a second table
+   under it, and these are the only rules that took.
+
+   A BUS COLUMN IS WIDER THAN A CHANNEL COLUMN BECAUSE IT HOLDS A MENU. A
+   channel strip is pots and checkboxes and fits the declared 92px; a bus and
+   the main carry the settled single choices (what the bus is called, which
+   reverb module it is, which compressor `glue` means), and a <select> squeezed
+   to 92px shows about four characters of its word. 124px is the measured floor
+   for the longest of them; the pane scrolls sideways for the rest, which is
+   what the pane has always been for.
+
+   THE SELECT FILLS ITS COLUMN AND NEVER WIDENS IT. `td > select{ max-inline-size:
+   9em }` above is the page-wide cap and it is a MAXIMUM, not a width — an
+   intrinsically wide menu inside a table cell still pushes the column out and
+   takes the whole board with it. Here the width is the column's, both ways. */
+.nu-bus, .nu-main{ inline-size: 124px; min-inline-size: 124px; }
+.nu-bus span, .nu-main span{ display: block; }
+.nu-bus small, .nu-main small{ display: block; font-size: .72rem; opacity: .7;
+  font-weight: 400; }
+.nu-board td > select{ inline-size: 100%; max-inline-size: 100%; }
+.nu-board td > small{ display: block; font-size: .78rem; line-height: 1.25;
+  opacity: .8; }
+/* THE LINE A CONSOLE SILKSCREENS between its channels and its returns, and
+   again before the master. Marked in the DOM (ui/engineer.js `nu-edge`) because
+   :first-of-type cannot see `data-col` and the channel count is the record's. */
+.nu-board .nu-edge{ border-inline-start: 2px solid var(--rule-strong); }
+/* A ROW-GROUP HEADING INSIDE THE TABLE. A bus has no `place` pot and the main
+   has no `→ delay` send, so those cells are blank — which is what a real
+   console's master strip looks like beside a channel strip. These two bands
+   are what make the blanks read as "these rows are not about you" instead of
+   as holes; without them the grid is right and unreadable. */
+/* ...and NOT sticky, unlike every other `tbody th` on this board: the row-label
+   column rides sticky-left so a fader you have scrolled to still says what row
+   it is, but this th spans the WHOLE table and a sticky element that is already
+   as wide as its scroller only fights the scroll. */
+.nu-board .nu-sect > th{ position: static; text-align: left; font-size: .8rem; letter-spacing: .04em;
+  text-transform: uppercase; opacity: .7; padding-block-start: .6em;
+  border-block-start: 2px solid var(--rule-strong); }
 
 /* THE NOTE STACK (D4): the producer's notes read top to bottom, newest last,
    so the table is left-aligned prose with a rule between takes. */
@@ -748,6 +831,37 @@ td > select{ max-inline-size: 100%; }
    are drawn — measured 2026-08-25 on the eight-voice record at 390px, a window
    turn is where this page's only long main-thread tasks live. */
 .nu-score > div{ display: block; contain: layout paint; }
+/* ...AND THE STACK OVERRIDES THAT `display: block` ON PURPOSE, with a selector
+   that can win. `.nu-score > div` is one class and one type (0,1,1); a bare
+   `.nu-stack` is one class (0,1,0) and LOSES, which is not a subtlety — it
+   cost a measurement to find: with the stack laid out as a block the two
+   buffers sat one under the other instead of on top of each other, the score
+   box went 165px -> 329px the first time the second one engraved, and
+   `#ax-band` was pushed 164px down the page WHILE PLAYING (measured 390x844;
+   172px at 1400x900). That is the one thing this axis may never do
+   (test/motif-frozen.js A5). Two classes, and it wins. */
+/* TWO PICTURES IN ONE CELL (ui/eight.js `scoreStack`, 2026-08-25: "it should
+   appear BEFORE the music starts"). The next two bars are engraved into a
+   hidden host while the current two are still on the glass, and the barline is
+   a class swap with no render in it — which is what takes the 186ms of settle
+   off every page turn and makes an empty frame impossible.
+
+   A GRID WITH ONE CELL, and both children in it, because the two must occupy
+   THE SAME ROOM: `grid-area: 1 / 1` puts them on top of each other, the box is
+   as tall as the taller of the two, and the reserve ui/eight.js measures lands
+   on the stack itself. Absolute positioning was the other candidate and it is
+   refused — an absolutely positioned host contributes no height at all, so the
+   box would collapse the first time it was drawn before the reserve existed.
+
+   `visibility` AND NOT `display`, and it cost a measurement to be sure: a host
+   with `display:none` has `clientWidth` 0, and `clientWidth` is exactly what
+   `renderAbc` is handed as its staff width — so the hidden buffer would engrave
+   at the 180px floor and be shown at 366. `visibility: hidden` keeps the box,
+   keeps the width, and still takes the element out of the accessibility tree,
+   so a screen reader is never read two scores at once. */
+.nu-score .nu-stack{ display: grid; }
+.nu-score .nu-stack > div{ grid-area: 1 / 1; min-inline-size: 0; }
+.nu-score .nu-stack > div.is-off{ visibility: hidden; }
 
 /* ===== THE ATLAS (D6) ==================================================
    Paul, 2026-08-24: "a slider for time and a world map on top." Every rule

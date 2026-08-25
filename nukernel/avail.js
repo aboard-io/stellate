@@ -214,7 +214,35 @@
   const CHORDPART = { pad: 1, stab: 1, drone: 1 };
   const lineCells = (doc) => Object.keys(doc.material.cells)
     .filter((n) => doc.material.cells[n].kind !== "drum");
+  /* ...AND THE OTHER HALF OF THE SAME LIST (Paul, 2026-08-25: *"then let me
+     choose motifs for things like drums and bass too, as well as existing
+     patterns."*)
+
+     WHICH CELLS A VOICE OF THIS KIND MAY READ, and it is a question about the
+     DATA and not about permission. A drum cell is `lanes` and a line cell is
+     `deg`/`play`, and the two are read by two different things: `document.js`
+     :133 takes `.lanes` off the drummer's cell, and `toPhrase` refuses a drum
+     cell outright ("a grid is not a line", document.js:230) so a pitched voice
+     handed one would compile sixteen zeros and play silence. Offering either
+     kind to the wrong voice is therefore not a liberty, it is a menu entry that
+     cannot work — which is the one thing the whole availability tier exists to
+     prevent.
+
+     THE BASS IS NOT HERE AND THAT IS THE POINT. It is a `line`-shaped voice by
+     data, but nothing in either compiler lets it NAME a cell: `K.bass` is handed
+     `phrases[0]`, the FIRST LINE's phrase, in both of them (`document.js`
+     scoreOf:355 and `ui/derive.js`:433, both captioned "the bass reads accents,
+     which only one line can own"). So `cellsFor` answers for the two kinds that
+     can act on the answer, and `ui/eight.js` says out loud, on the bass's own
+     tab, which cell it is actually reading and why it cannot choose. An honest
+     refusal beats a menu that changes nothing. */
+  const drumCells = (doc) => Object.keys(doc.material.cells)
+    .filter((n) => doc.material.cells[n].kind === "drum");
+  const cellsFor = (doc, kind) =>
+    (kind === "drums" ? drumCells(doc) : lineCells(doc));
   const voiceNamed = (doc, name) => doc.voices.find((v) => v.name === name);
+  const kindOf = (doc, s) => { const v = voiceNamed(doc, (s || {}).voice);
+    return v ? v.kind : "line"; };
 
   /* A ONE-OF-N FACT, SPREAD INTO N BOOLEANS. The rule language's two-place
      form reads `!!f[k]` (vocabulary.js's `both`), so a string column can never
@@ -504,13 +532,25 @@
        the sections back to one cell by writing a bare string over the map. Both
        go through the `""` key, which document.js materialAt already falls back
        to — one owner of "what does this voice read here", read from both ends. */
+    // `chair: "line"` IS NOT A LIE AND IT IS NOT THE WHOLE TRUTH. A drummer is
+    // shown this sheet too since 2026-08-25 (see `cellsFor`), but `chair` is not
+    // a permission — it is the kind of voice gates-extract.js:324 SCOPES its
+    // probes to (`doc.voices.filter(v => v.kind === row.chair)`), and a value
+    // that names two kinds would match none and silently extract no rule at all.
+    // The page decides who is shown a sheet; this says who the table was
+    // measured against.
     "cast.material": { label: "material", scope: "voice", chair: "line",
       // `local`: THE VALUES ARE NAMES THIS RECORD INVENTED, not a vocabulary
       // every record shares, so gates-extract.js fits no per-option rule on
       // them — see the note at its `if (row.local)`. The sheet-level rule
       // still applies; only a table keyed by the option's own text is refused.
       local: true,
-      values: (doc) => opts(lineCells(doc)),
+      // BY THE VOICE'S OWN KIND since 2026-08-25 (see `cellsFor`). A drummer
+      // asked which material it reads is asked among the DRUM cells; this said
+      // `lineCells(doc)` for everybody, which is right for the only kind of
+      // voice that was ever shown this sheet and wrong for the two that are
+      // shown it now.
+      values: (doc, s) => opts(cellsFor(doc, kindOf(doc, s))),
       get: (doc, s) => { const m = V(doc, s).material;
         return (m && typeof m === "object") ? m[""] : m; },
       set: (doc, s, v) => { const x = V(doc, s);
@@ -529,7 +569,8 @@
        and no default, and materialAt would return undefined for all of them. */
     "material.cell": { label: "reads", scope: "voice.section", chair: "line",
       absent: "", local: true,          // cell names, not a vocabulary — see above
-      values: (doc) => [{ value: "", label: "the voice's own" }, ...opts(lineCells(doc))],
+      values: (doc, s) => [{ value: "", label: "the voice's own" },
+                           ...opts(cellsFor(doc, kindOf(doc, s)))],
       get: (doc, s) => { const m = V(doc, s).material;
         return (m && typeof m === "object" && m[SEC(doc, s).id] != null)
           ? m[SEC(doc, s).id] : ""; },
@@ -678,5 +719,5 @@
   }
 
   return { docFeatures, evalRule, whyOf, reasonFor, WHY, SHEETS, optionsFor,
-           devSheetFor, HARMONIES, PARTS, lineCells };
+           devSheetFor, HARMONIES, PARTS, lineCells, drumCells, cellsFor };
 });

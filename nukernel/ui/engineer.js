@@ -18,22 +18,32 @@
 //   the band grid — a cantor's send is one more fact about the cantor, next to
 //   its register and its instrument, not a room next door.
 //
-//   THE BOARD is a real console at the foot of the page: one column per
-//   channel, one row per control, THE MASTER UNDERNEATH. Across a row compares
-//   one control over the whole band; down a column reads one channel's path in
-//   signal order (input → EQ → fader → sends → bus → master), which is the
-//   British in-line order main:nukernel/ui/mixtbl.js:34 cites. Grid lines are
-//   what make both readings possible, which is why Paul asked for them.
+//   THE BOARD is a real console at the foot of the page: one column per STRIP —
+//   the channels, then the three buses, then the main — and one row per control.
+//   Across a row compares one control over the whole desk; down a column reads
+//   one strip's path in signal order (input → EQ → fader → sends → bus →
+//   master), which is the British in-line order main:nukernel/ui/mixtbl.js:34
+//   cites. Grid lines are what make both readings possible, which is why Paul
+//   asked for them.
 //
-//   That sentence said "master at the right" until 2026-08-24 and it was a
-//   rowSpan cell at the end of every row. It moved because the master's fifteen
-//   menus became fifteen SHEETS and a rowSpan distributes its own height back
-//   over the rows it spans: measured on the shipped chant at 390px, fifteen
-//   sheets in that cell took the channel rows from 93–244px to 307–801px and the
-//   table from 1665px to 5352px, with 92px of column to read a sheet in. The
-//   console is still in signal order; the master is simply the last thing down
-//   the page instead of the last thing across it, which is also where a thumb
-//   can reach it without scrolling eight channels sideways.
+//   THE MASTER HAS BEEN AT THE RIGHT, THEN UNDERNEATH, AND IS AT THE RIGHT
+//   AGAIN, and all three sentences are kept because the measurement in the
+//   middle one is still true and is what decides the shape. It read: "That
+//   sentence said 'master at the right' until 2026-08-24 and it was a rowSpan
+//   cell at the end of every row. It moved because the master's fifteen menus
+//   became fifteen SHEETS and a rowSpan distributes its own height back over the
+//   rows it spans: measured on the shipped chant at 390px, fifteen sheets in
+//   that cell took the channel rows from 93–244px to 307–801px and the table
+//   from 1665px to 5352px, with 92px of column to read a sheet in."
+//
+//   EVERY WORD OF THAT IS ABOUT A ROWSPAN FULL OF LIT SHEETS, and there is no
+//   rowSpan and there are no sheets. The rack's controls became `<select>`s on
+//   2026-08-25 — a single choice is a menu, Paul twice — a menu is ONE control
+//   tall, and each now sits in its OWN ROW of its own column instead of fifteen
+//   stacked inside one spanned cell. So the height a rowSpan redistributed does
+//   not exist, and the master went back to the strip at the right, which is
+//   where Paul asked for it on 2026-08-25 ("master and the buses should also be
+//   arranged like the mixing board no?") and where a console keeps it.
 //
 // NO POPUPS. The cell-row-plus-popover tracker was REVERSED in favour of a
 // board, and this does not reintroduce it: no openFader, no popover, no fold —
@@ -69,17 +79,23 @@ import { NuFields, NuDeskDoc, GENRES, SENDS, SENDLABEL, LEVELS, LEVELLABEL,
 const FXLABEL = NuFields.FXLABEL;
 import { SONG, MASTER, BUSES, vol, setVol, commit } from "./state.js";
 import { deskChannelBase, deskLevelAt, derivedPartTone,
-         masterState } from "../audio/desk.js";
+         masterState, deskBusFeed } from "../audio/desk.js";
 import { channelFacts } from "../audio/plan.js";
 import { playing, playingSec, getPosition, passAt } from "../audio/live.js";
 import { gid } from "./derive.js";
 // ...THROUGH THE ONE-OPTION ROUTER, the same as ui/produce.js: same names,
 // same signatures, and a spec offering one option draws as a <select> (Paul,
 // 2026-08-24, evening: "in general where there is ONE option a dropdown is
-// preferred"). Nothing on the board renders one option today — measured,
-// `master` offers 5-6, `bus` 3-13, the `eng.*` rows 5-11 — so this changes no
-// pixel now and is the guard for the day a crate or a bus list shrinks to one.
-import { sheet, sheetRow } from "./selects.js";
+// preferred"). Only `sheet` is left of the pair: `sheetRow` was the engineer's
+// door for the five `eng.*` menus and those became pots on 2026-08-25 ("level,
+// place, delay, and room are obvious sliders"), so the one caller left is the
+// character chips, which are `multi` and route to `<select multiple>`.
+// ...and `selectEl`, the bare control, because a bus strip is a COLUMN and a
+// column has no room for `selectField`'s `<p class=nu-sel><label>` wrapper.
+// Same widget, same `data-sel`, same refusal-with-a-reason; the visible copy of
+// the reason is placed by this file, which is the chord-quality precedent
+// (ui/selects.js:238: "the VISIBLE copy is still the caller's to place").
+import { sheet, selectEl } from "./selects.js";
 
 const el = (tag, text) => { const n = document.createElement(tag);
   if (text != null) n.textContent = text; return n; };
@@ -89,11 +105,18 @@ const DD = () => NuDeskDoc;
 // than none). So a refusal is one function: it disables the control AND puts
 // the sentence next to it, in the same parent, where a gate that walks
 // `input:disabled` can find it.
-function refuse(node, why) {
+// `short` (2026-08-25) is the words that go IN the cell when the full sentence
+// would not fit one — the board's bus columns are 124px and a ten-line reason
+// there set the whole fader row 200px tall. The control still carries the WHOLE
+// sentence in `title` and in `data-why`, where a gate and a screen reader both
+// read it, and the caller prints the whole sentence once under the table. Same
+// split ui/selects.js:238 makes for a menu inside a <td>.
+function refuse(node, why, short) {
   node.disabled = true;
   node.setAttribute("aria-disabled", "true");
   node.title = why;
-  const w = el("small", why); w.className = "nu-why";
+  node.dataset.why = why;
+  const w = el("small", short || why); w.className = "nu-why";
   return w;
 }
 
@@ -240,21 +263,6 @@ export function engineer(parent, ctx, voiceName) {
     return tr;
   };
 
-  // THE FADER IS AN OFFSET, in dB, riding ON TOP of the seated gain — never
-  // replacing it. Numeric because a long-throw fader is not a detented list.
-  {
-    const wrap = el("span");
-    const r = document.createElement("input");
-    r.type = "range"; r.min = "-24"; r.max = "12"; r.step = "0.5";
-    r.value = String(faderDb(d.fader));
-    r.dataset.k = "eng|fader|" + voiceName;
-    r.setAttribute("aria-label", voiceName + " fader");
-    const out = el("output", fmtDb(faderDb(d.fader)) + " dB");
-    r.addEventListener("input", () => { out.textContent = fmtDb(+r.value) + " dB"; });
-    r.addEventListener("change", () => setDesk(ctx, voice, "fader", +r.value));
-    wrap.append(r, document.createTextNode(" "), out);
-    row("fader", wrap, "riding " + fmtDb(drv.db) + " dB seated");
-  }
   // THE STRIP EQ, absolute rather than automated — tone is set and left, so
   // there is no offset dance.
   //
@@ -288,6 +296,85 @@ export function engineer(parent, ctx, voiceName) {
     row(b.label, wrap,
         drv.eq && drv.eq[b.key] ? "riding " + fmtDb(drv.eq[b.key]) : "flat");
   }
+  /* ---- THE FIVE THAT WERE MENUS UNTIL 2026-08-25 ----------------------------
+     Paul: *"level, place, delay, and room are obvious sliders."* They were, and
+     they were `<select>`s — `sheetRow` routes a single choice through
+     ui/selects.js, so these five drew as five dropdowns down the voice's tab
+     while the SAME five facts were pots on the board four screens below. Two
+     widgets for one quantity is the drift this file's header forbids.
+
+     WHY A SLIDER IS THE RIGHT ANSWER HERE AND NOT EVERYWHERE. fields.js says
+     which: LEVELS (0.4 … 1.35), PANS (−0.7 … 0.7) and SENDS (0 … 0.9) are each
+     ONE NUMBER with words on its stops, so the words are a SCALE and a pot
+     shows its shape. The enumerated things on this page — what a bus is called,
+     which reverb module it is, which compressor `glue` means — are SETS whose
+     entries are names or whole objects, and they stay menus. `knob()` below
+     carries that test in code and shouts if it is handed a table that is not a
+     scale.
+
+     THE ROWS GO IN THE TABLE, NOT BESIDE IT, because the table already has the
+     third column that makes a send readable: the control holds YOUR value and
+     the column holds WHAT IT IS RIDING ON. A dropdown next to nothing could not
+     say "the genre asks 0.78"; a row can, and it is the same sentence the
+     board puts on a `title` because a 92px column has no room for it. ---- */
+  const base = sec ? deskChannelBase(sec, key) : { rev: 0, del: 0, pan: 0 };
+  const pct = (x) => Math.round((x || 0) * 100) + "%";
+  // "seated at", not "riding … seated": the fader row two above already prints
+  // `riding X dB seated` for the DERIVED shading, and on a record with no desk
+  // both numbers are 0.0 — two rows saying the same five words about two
+  // different facts is how a reader learns to stop reading the column.
+  row("level", knob("eng|lvl|" + voiceName, "lvl", LEVELS, LEVELLABEL, d.lvl,
+        voiceName + " level", (v) => setDesk(ctx, voice, "lvl", v), "as it stands"),
+      "the record seats it at " +
+      fmtDb(20 * Math.log10(Math.max(1e-4, base.gain || 1))) + " dB");
+
+  // THE FADER IS AN OFFSET, in dB, riding ON TOP of the seated gain — never
+  // replacing it. Numeric because a long-throw fader is not a detented list.
+  {
+    const wrap = el("span");
+    const r = document.createElement("input");
+    r.type = "range"; r.min = "-24"; r.max = "12"; r.step = "0.5";
+    r.value = String(faderDb(d.fader));
+    r.dataset.k = "eng|fader|" + voiceName;
+    r.setAttribute("aria-label", voiceName + " fader");
+    const out = el("output", fmtDb(faderDb(d.fader)) + " dB");
+    r.addEventListener("input", () => { out.textContent = fmtDb(+r.value) + " dB"; });
+    r.addEventListener("change", () => setDesk(ctx, voice, "fader", +r.value));
+    wrap.append(r, document.createTextNode(" "), out);
+    row("fader", wrap, "riding " + fmtDb(drv.db) + " dB seated");
+  }
+  row("place", knob("eng|pan|" + voiceName, "pan", PANS, PANLABEL, d.pan,
+        voiceName + " place", (v) => setDesk(ctx, voice, "pan", v), "as it stands"),
+      "the record sits at " + (base.pan || 0).toFixed(2));
+
+  // THE THREE SENDS. Bus 3 is `room` and it IS the reverb bus (desk.js:590
+  // folds a part's room into its rev) — it is offered only where it can sound,
+  // which is desk.js partKeysOf's own law: never an address that cannot.
+  const hasKit = chans.some((c) => c.key === "drums");
+  const roomWhy = key !== "drums" && !hasKit
+    ? "bus 3 is the kit's ambience and this record has no kit" : null;
+  {
+    const w = knob("eng|rev|" + voiceName, "rev", SENDS, SENDLABEL, d.rev,
+      voiceName + " " + busName("rev") + " send",
+      (v) => setDesk(ctx, voice, "rev", v), genreAsk(sec));
+    row("→ " + busName("rev") + (returnShut() ? " (shut)" : ""), w,
+        pct(base.rev) + " into " + busName("rev") +
+        (returnShut() ? " — but the return is shut; open it on bus 1's fader" : ""));
+  }
+  {
+    const w = knob("eng|echo|" + voiceName, "echo", SENDS, SENDLABEL, d.echo,
+      voiceName + " " + busName("echo") + " send",
+      (v) => setDesk(ctx, voice, "echo", v), "dry");
+    row("→ " + busName("echo"), w, pct(base.del) + " into " + busName("echo"));
+  }
+  {
+    const w = knob("eng|room|" + voiceName, "room", SENDS, SENDLABEL, d.room,
+      voiceName + " " + busName("room") + " send",
+      (v) => setDesk(ctx, voice, "room", v), "dry");
+    const tr = row("→ " + busName("room"), w,
+      "bus 3 folds into " + busName("rev") + " (desk.js deskChannelBase)");
+    if (roomWhy) tr.querySelector("td").append(refuse(w.querySelector("input"), roomWhy));
+  }
   for (const [k, label] of [["mute", "cut"], ["solo", "alone"]]) {
     const c = document.createElement("input");
     c.type = "checkbox"; c.checked = !!d[k];
@@ -316,44 +403,7 @@ export function engineer(parent, ctx, voiceName) {
   tp.append(t);
   parent.append(tp);
 
-  /* the enumerated half, as sheets — one lit sheet per question, greyed with a
-     reason wherever the engine will refuse it */
-  const base = sec ? deskChannelBase(sec, key) : { rev: 0, del: 0, pan: 0 };
   const q = (k) => "eng." + k + "|" + voiceName;
-  sheetRow(parent, "where it sits", [
-    { key: q("lvl"), label: "level",
-      options: optionsFor(LEVELS, LEVELLABEL, d.lvl, null, "normal"),
-      value: d.lvl == null ? "" : String(d.lvl),
-      set: (v) => setDesk(ctx, voice, "lvl", v) },
-    { key: q("pan"), label: "place",
-      options: optionsFor(PANS, PANLABEL, d.pan, null, "centre"),
-      value: d.pan == null ? "" : String(d.pan),
-      set: (v) => setDesk(ctx, voice, "pan", v) },
-  ]);
-
-  // THE THREE SENDS. Bus 3 is `room` and it IS the reverb bus (desk.js:590
-  // folds a part's room into its rev) — it is offered only where it can sound,
-  // which is desk.js partKeysOf's own law: never an address that cannot.
-  const hasKit = chans.some((c) => c.key === "drums");
-  const roomWhy = key !== "drums" && !hasKit
-    ? "bus 3 is the kit's ambience and this record has no kit" : null;
-  const revLabel = "→ " + busName("rev") +
-    (returnShut() ? " (the return is shut — Sound ▸ the rack)" : "");
-  sheetRow(parent, "the sends", [
-    { key: q("rev"), label: revLabel,
-      options: optionsFor(SENDS, SENDLABEL, d.rev, null, genreAsk(sec)),
-      value: d.rev == null ? "" : String(d.rev),
-      set: (v) => setDesk(ctx, voice, "rev", v) },
-    { key: q("echo"), label: "→ " + busName("echo"),
-      options: optionsFor(SENDS, SENDLABEL, d.echo, null, "dry"),
-      value: d.echo == null ? "" : String(d.echo),
-      set: (v) => setDesk(ctx, voice, "echo", v) },
-    { key: q("room"), label: "→ " + busName("room"),
-      options: optionsFor(SENDS, SENDLABEL, d.room, null, "dry"),
-      value: d.room == null ? "" : String(d.room),
-      why: roomWhy,
-      set: (v) => setDesk(ctx, voice, "room", v) },
-  ]);
 
   // THE CHARACTER CHIP, back on the track after 2026-08-17 took it off. It is
   // an INSERT and the parent's insert path is MONO, so a wide unit's chain is
@@ -390,17 +440,79 @@ export function engineer(parent, ctx, voiceName) {
     value: chips.map(String),
     set: (list) => setDesk(ctx, voice, "fx", list),
   });
+  // HOW TO PICK A SECOND ONE, SAID OUT LOUD — the `leslie` recipe's finding
+  // (2026-08-25), applied. Measured with real clicks at 390x844: a plain tap on
+  // an option REPLACES the whole selection — leslie -> ["leslie"], chorus ->
+  // ["chorus"], phaser -> ["phaser"] — so on a desktop pointer a second chip is
+  // unreachable without ctrl/cmd, and nothing on the page said so. Three chips
+  // is the documented limit and a pointer could only ever hold one, which made
+  // the cap a promise the control could not keep. This is a sentence and not a
+  // widget change on purpose: ui/sheets.js `rowsFor` already records that
+  // deselecting is ctrl-click and that it is "legible as an accident, not as a
+  // gesture", and whether to replace `<select multiple>` with something else is
+  // Paul's call, not a slice's — he asked for the standard element by name.
+  const how = el("p", "hold ⌘ (or Ctrl) to pick a second and a third — a plain"
+    + " tap replaces the whole selection, which is what a <select multiple> does");
+  how.className = "nu-hint";
+  parent.append(how);
 
-  const note = el("p",
-    "riding " + fmtDb(20 * Math.log10(Math.max(1e-4, base.gain || 1))) +
-    " dB · " + Math.round((base.rev || 0) * 100) + "% into " + busName("rev") +
-    " · " + Math.round((base.del || 0) * 100) + "% into " + busName("echo"));
-  note.className = "nu-hint";
-  parent.append(note);
+  // THE SUMMARY LINE IS GONE, and it is deleted rather than reworded because it
+  // had become a SECOND OWNER of three facts. It printed "riding X dB · N% into
+  // reverb · M% into delay" — which is now the third column of the level row
+  // and of the two send rows, beside the control each number belongs to.
+  // Keeping both would be the drift this file's header names: two answers to
+  // one question, and no way to tell which one moved.
 }
 
 /* ========================= VIEW 2 · THE BOARD =============================
-   One <table>, one column per channel, one row per control, master last.
+   ONE <table>, and since 2026-08-25 it is the WHOLE desk: one column per
+   channel, then one per bus, then the main — one row per control, and the
+   fader row runs straight across all three kinds so you can read a signal from
+   the voice that made it to the speakers it comes out of.
+
+   (Paul, 2026-08-25: "master and the buses should also be arranged like the
+   mixing board no?" and "I should be able to use the board to send signal to
+   the buses and then from the buses to the master mix too.")
+
+   THE PARAGRAPH THIS REPLACES IS REWRITTEN AND NOT DELETED, because its
+   measurement is still true and is the reason this shape is what it is. It
+   read: "That sentence said 'master at the right' until 2026-08-24 and it was
+   a rowSpan cell at the end of every row. It moved because the master's fifteen
+   menus became fifteen SHEETS and a rowSpan distributes its own height back
+   over the rows it spans: measured on the shipped chant at 390px, fifteen
+   sheets in that cell took the channel rows from 93–244px to 307–801px and the
+   table from 1665px to 5352px, with 92px of column to read a sheet in."
+
+   EVERY WORD OF THAT WAS ABOUT A ROWSPAN FULL OF LIT SHEETS. It is not what is
+   here now: the rack's controls became `<select>`s on 2026-08-25 (a single
+   choice is a menu — Paul, twice), a menu is ONE control tall, and each one now
+   sits in ITS OWN ROW in its own column instead of fifteen stacked inside one
+   spanned cell. So the height a rowSpan redistributed is gone, and the master
+   can be the strip at the right again, which is where he asked for it and where
+   a console keeps it.
+
+   THE COST IS BLANK CELLS AND THEY ARE THE POINT. A bus has no `place` pot and
+   the main has no `→ delay` send, so those cells are empty — which is exactly
+   what a real console's master strip looks like beside a channel strip, and it
+   is the honest alternative to inventing a control to fill a hole. The rows are
+   grouped so the blanks read as blocks rather than gaps: the CHANNEL rows
+   first, then THE RETURNS AND THE MAIN, then the two rows every strip answers
+   (fader, and where it goes).
+
+   NO POPUPS. The cell-row-plus-popover tracker was REVERSED in favour of a
+   board, and this does not reintroduce it: no openFader, no popover, no fold —
+   every control is on the page at rest. AND NO MENUS ON A CHANNEL, 2026-08-24.
+   This paragraph used to say "no menus either"; the measurement that reversed
+   HALF of it is 23 — `document.querySelectorAll("select")` found twenty-three
+   on this page and every one of them was on this board, four per channel, which
+   is the exact thing Paul objected to ("the options for each instrument in a
+   song section are now just one thing in a dropdown. That's not effective.").
+   The half that stands is the CHANNEL: a channel strip has no menu, its place
+   and its sends and its level are pots. The half that reversed is the RACK:
+   what a bus is called and which room it is are single choices about the whole
+   record, and a single choice is a `<select>` (Paul, evening: "There are still
+   many boxes that should be selects"). `knob()` below carries the test for
+   which is which, and it is a fields.js question and not a taste one.
 
    THE AUTOMATED FADER, IN PLAIN HTML, WITHOUT LYING. Two native elements, two
    quantities, neither pretending to be the other:
@@ -412,8 +524,29 @@ export function engineer(parent, ctx, voiceName) {
        shade() re-seats the band.
    <meter> draws its own bar, so this needs no CSS and no rAF loop. paint() runs
    from the page's existing on("pos") handler, once a beat. AUDIO NEVER CALLS A
-   VIEW. */
+   VIEW.
+
+   ...AND A BUS FADER IS THE SAME TWO ELEMENTS ASKING THE SAME TWO QUESTIONS.
+   The range is the RETURN — what this bus is worth into the main — and the
+   meter is what is arriving times that return, both out of audio/desk.js
+   `deskBusFeed`, which is also where the sentence lives for the two buses whose
+   return this page cannot move. This file does not decide which of them are
+   wired; it prints what the model says. */
 let CURRENT = null;
+
+// THE RACK'S OWN ROWS, DERIVED FROM fields.js RATHER THAN TYPED. One row per
+// distinct bus knob, in the order the registry declares them, with `ret` left
+// out because `ret` IS the fader (below) and drawing it twice would be two
+// owners of one fact. Keys are unique across the three buses today (only bus 1
+// has `color`, only bus 2 has `time`/`fb`/`tone`), so a key names a row; if a
+// fourth bus ever shared one, the row is shared too, which is the right answer.
+const RACK_ROWS = (() => {
+  const seen = new Map();
+  for (const b of BUS_FIELDS)
+    for (const k of b.knobs)
+      if (k.key !== "ret" && !seen.has(k.key)) seen.set(k.key, k.label);
+  return [...seen].map(([key, label]) => ({ key, label }));
+})();
 
 export function mount(parent, ctx) {
   const host = ctx.section
@@ -429,58 +562,115 @@ export function mount(parent, ctx) {
   // widthKept still takes something away.
   const anySolo = chans.some((c) => deskOf(c.voice).solo);
   const shut = returnShut();
+  // WHAT EACH BUS IS CARRYING AND WHERE IT REACHES — the model's answer, never
+  // this file's arithmetic (audio/desk.js deskBusFeed, and the same law as the
+  // channel meters two paragraphs up).
+  const feeds = deskBusFeed(sec, MASTER, BUSES);
 
   const pane = el("div"); pane.className = "nu-pane";
   const t = el("table"); t.id = "boardtbl"; t.className = "nu-board";
   t.setAttribute("cellpadding", "0"); t.setAttribute("cellspacing", "0");
-  const cap = el("caption", "one column per channel · the slider is your offset,"
-    + " the bar is what the record is already doing");
+  const cap = el("caption", "channels, then the three buses, then the main ·"
+    + " the slider is your offset, the bar is what the record is already doing");
   t.append(cap);
+
+  /* ---- THE COLUMNS: every strip on the desk, in signal order left to right.
+     A bus is a channel like any other here — it has a name, a fader and a
+     readout — and the main is the last strip, which is where a console keeps
+     it. `bus N` is the index in BUS_FIELDS and not a hand-typed number, so a
+     fourth bus would be `bus 4` by existing. ---- */
+  const COLS = [
+    ...chans.map((c) => ({ kind: "ch", key: c.key, c })),
+    ...BUS_FIELDS.map((b, i) => ({ kind: "bus", key: b.bus, b, n: i + 1 })),
+    { kind: "main", key: "main" },
+  ];
+  // WHERE ONE KIND OF STRIP ENDS AND THE NEXT BEGINS, marked in the DOM rather
+  // than guessed at in CSS: `:first-of-type` cannot see `data-col`, and the
+  // number of channels is whatever the record has. One rule (`nu-edge`) draws
+  // the heavy line a console silkscreens between its channels and its returns.
+  for (let i = 0; i < COLS.length; i++)
+    COLS[i].edge = i > 0 && COLS[i].kind !== COLS[i - 1].kind;
 
   /* ---- the head: who each column is ---- */
   const thead = el("thead"), hr = el("tr");
   const corner = el("th"); corner.setAttribute("scope", "col"); hr.append(corner);
-  for (const c of chans) {
+  for (const col of COLS) {
     const th = el("th"); th.setAttribute("scope", "col");
-    th.className = "nu-ch";
-    if (anySolo && !deskOf(c.voice).solo) { th.classList.add("is-off");
-      th.setAttribute("aria-disabled", "true"); }
-    th.dataset.ch = c.key;
-    th.append(el("span", c.voice.name));
-    // THE BOARD PRINTS THE VOICE'S OWN NAME, not its chair key, and this is
-    // deliberate rather than cosmetic: ui/eight.js hands the kernel `realize`
-    // and never `part`, so a voice the document calls a `counter` is ADDRESSED
-    // `line2` (desk-doc.js says why fixing the name would move the music). The
-    // address is printed under the name so the two are never confused.
-    th.append(el("small", (c.voice.instrument || c.voice.kind || "") + " · " + c.key));
+    th.dataset.col = col.kind;
+    if (col.kind === "ch") {
+      th.className = "nu-ch";
+      if (anySolo && !deskOf(col.c.voice).solo) { th.classList.add("is-off");
+        th.setAttribute("aria-disabled", "true"); }
+      th.dataset.ch = col.key;
+      th.append(el("span", col.c.voice.name));
+      // THE BOARD PRINTS THE VOICE'S OWN NAME, not its chair key, and this is
+      // deliberate rather than cosmetic: ui/eight.js hands the kernel `realize`
+      // and never `part`, so a voice the document calls a `counter` is ADDRESSED
+      // `line2` (desk-doc.js says why fixing the name would move the music). The
+      // address is printed under the name so the two are never confused.
+      th.append(el("small", (col.c.voice.instrument || col.c.voice.kind || "") +
+        " · " + col.key));
+    } else if (col.kind === "bus") {
+      th.className = "nu-bus";
+      th.dataset.bus = col.key;
+      th.append(el("span", "bus " + col.n));
+      // the bus's CURRENT name, off the one reader, so renaming bus 1 renames
+      // its column head, its send row and the engineer's sheet at once
+      th.append(el("small", busName(col.key)));
+    } else {
+      th.className = "nu-main";
+      th.dataset.main = "1";
+      th.append(el("span", "main"));
+      th.append(el("small", "the record"));
+    }
+    // AFTER the branch above, never before it: each branch assigns
+    // `th.className` outright, which wipes a class added first. Caught on the
+    // rendered page — the group rule was drawn on every `td` and on no `th`.
+    if (col.edge) th.classList.add("nu-edge");
     hr.append(th);
   }
-  // THE MASTER IS NO LONGER A COLUMN. A `<th scope=col>main / the record` stood
-  // here over a rowSpan cell; see the layout paragraph at the head of this file
-  // for the measurement that moved it under the table (307–801px rows, a 5352px
-  // console). The board is now channels and only channels, which is also what
-  // its caption has always claimed.
   thead.append(hr); t.append(thead);
 
   const tbody = el("tbody");
   const meters = [], outs = [];
-  const rowOf = (label) => {
+  const rowOf = (label, body) => {
     const tr = el("tr");
     const th = el("th", label); th.setAttribute("scope", "row");
-    tr.append(th); tbody.append(tr);
+    tr.append(th); (body || tbody).append(tr);
     return tr;
   };
-  const cellFor = (tr, c) => {
+  const cellFor = (tr, col) => {
     const td = el("td");
-    if (anySolo && !deskOf(c.voice).solo) { td.classList.add("is-off");
-      td.setAttribute("aria-disabled", "true"); }
+    td.dataset.col = col.kind;
+    if (col.edge) td.classList.add("nu-edge");
+    if (col.kind === "ch" && anySolo && !deskOf(col.c.voice).solo) {
+      td.classList.add("is-off"); td.setAttribute("aria-disabled", "true"); }
     tr.append(td); return td;
   };
-  /* ---- EQ, fader, place, the three sends, cut, alone ---- */
+  // ONE ROW, EVERY COLUMN, AND THE BLANKS ARE DRAWN. `fill` is called for every
+  // strip and simply returns without appending where the control has no meaning
+  // there — which keeps the grid rectangular, and a rectangular grid is what
+  // makes reading across a row a comparison rather than a guess.
+  const strip = (label, fill, body) => {
+    const tr = rowOf(label, body);
+    for (const col of COLS) fill(col, cellFor(tr, col));
+    return tr;
+  };
+  // a block heading INSIDE the table, so the twelve blank cells in a channel
+  // column read as "these rows are not about you" rather than as a hole
+  const block = (label) => {
+    const tr = el("tr"); tr.className = "nu-sect";
+    const th = el("th", label);
+    th.setAttribute("scope", "colgroup");
+    th.colSpan = COLS.length + 1;
+    tr.append(th); tbody.append(tr);
+  };
+
+  /* ================= the channel rows ================= */
+  const chOnly = (fn) => (col, td) => { if (col.kind === "ch") fn(col.c, td); };
+
   for (const b of EQ_BANDS) {
-    const tr = rowOf(b.label);
-    for (const c of chans) {
-      const td = cellFor(tr, c);
+    strip(b.label, chOnly((c, td) => {
       const d = deskOf(c.voice);
       const r = document.createElement("input");
       r.type = "range"; r.min = "-12"; r.max = "12"; r.step = "0.5";
@@ -499,81 +689,154 @@ export function mount(parent, ctx) {
       // the parent's two renderers plays the voice). This cell printed
       // "a modelled voice has no sampler strip for an EQ to land on" until
       // 2026-08-24, and it was right until the strip became a renderer stage.
-    }
+    }));
   }
-  {
-    const tr = rowOf("fader"); tr.dataset.row = "fader";
-    for (const c of chans) {
-      const td = cellFor(tr, c);
-      const d = deskOf(c.voice);
-      const r = document.createElement("input");
-      r.type = "range"; r.min = "-24"; r.max = "12"; r.step = "0.5";
-      r.value = String(faderDb(d.fader));
-      r.dataset.k = "b|fader|" + c.voice.name;
-      r.setAttribute("aria-label", c.voice.name + " fader");
-      const m = document.createElement("meter");
-      m.min = 0; m.max = 1;
-      m.title = "what is driving the channel";
-      const o = el("output", fmtDb(faderDb(d.fader)));
-      r.addEventListener("input", () => { o.textContent = fmtDb(+r.value); });
-      r.addEventListener("change", () => setDesk(ctx, c.voice, "fader", +r.value));
-      td.append(r, m, o);
-      meters.push({ m, key: c.key });
-      outs.push({ o, voice: c.voice });
-    }
-  }
-  {
-    const tr = rowOf("place");
-    for (const c of chans) {
-      const td = cellFor(tr, c);
-      td.append(knob("b|pan|" + c.voice.name, "pan", PANS, PANLABEL,
-        deskOf(c.voice).pan, c.voice.name + " place",
-        // "as it stands" and not "centre": PANLABEL already spells 0 `centre`,
-        // so labelling the blank detent the same word put TWO detents reading
-        // "centre" side by side (measured: the sweep came out left, left-ish,
-        // centre, centre, right-ish, right). One word for absence everywhere on
-        // this board, and its POSITION is what says the record is dead centre.
-        (v) => setDesk(ctx, c.voice, "pan", v), "as it stands"));
-    }
-  }
+  // THE LEVEL ENUM, ON THE BOARD, 2026-08-25. It was on the engineer's tab only
+  // and it is the first of the four Paul named ("level, place, delay, and room
+  // are obvious sliders"). LEVELS is a scale — hush 0.4 through forward 1.35 —
+  // so it takes the same pot as `place` and the sends, and having it here is
+  // what makes the tab and the board the same surface rather than two.
+  strip("level", chOnly((c, td) => {
+    td.append(knob("b|lvl|" + c.voice.name, "lvl", LEVELS, LEVELLABEL,
+      deskOf(c.voice).lvl, c.voice.name + " level",
+      (v) => setDesk(ctx, c.voice, "lvl", v), "as it stands"));
+  }));
+  strip("place", chOnly((c, td) => {
+    td.append(knob("b|pan|" + c.voice.name, "pan", PANS, PANLABEL,
+      deskOf(c.voice).pan, c.voice.name + " place",
+      // "as it stands" and not "centre": PANLABEL already spells 0 `centre`,
+      // so labelling the blank detent the same word put TWO detents reading
+      // "centre" side by side (measured: the sweep came out left, left-ish,
+      // centre, centre, right-ish, right). One word for absence everywhere on
+      // this board, and its POSITION is what says the record is dead centre.
+      (v) => setDesk(ctx, c.voice, "pan", v), "as it stands"));
+  }));
   const hasKit = chans.some((c) => c.key === "drums");
   for (const [field, bus] of [["rev", "rev"], ["echo", "echo"], ["room", "room"]]) {
-    const tr = rowOf("→ " + busName(bus) +
-      (field === "rev" && shut ? " (shut)" : ""));
+    const tr = strip("→ " + busName(bus) + (field === "rev" && shut ? " (shut)" : ""),
+      chOnly((c, td) => {
+        // THE EMPTY DETENT'S WORD IS SHORT ON THE BOARD AND LONG IN THE VOICE'S
+        // OWN TAB, on purpose: a 92px column cannot carry "the genre asks 0.78"
+        // without wrapping it to four lines, so the sentence goes on the
+        // control's `title` and the engineer's own row (which has the width)
+        // still prints it whole.
+        const w = knob("b|" + field + "|" + c.voice.name, field, SENDS, SENDLABEL,
+          deskOf(c.voice)[field], c.voice.name + " " + busName(bus) + " send",
+          (v) => setDesk(ctx, c.voice, field, v), "as it stands");
+        const s = w.querySelector("input");
+        if (field === "rev") s.title = genreAsk(sec) +
+          "; a part send adds to it, so absent adds nothing";
+        td.append(w);
+        if (field === "room" && c.key !== "drums" && !hasKit)
+          td.append(refuse(s,
+            "bus 3 is the kit's ambience and this record has no kit"));
+      }));
     if (field === "rev" && shut)
       tr.firstChild.title = "every channel below is sending into a return whose"
-        + " gain is zero — open it on the master strip (buses.rev.ret)";
-    for (const c of chans) {
-      const td = cellFor(tr, c);
-      // THE EMPTY DETENT'S WORD IS SHORT ON THE BOARD AND LONG IN THE VOICE'S
-      // OWN TAB, on purpose: a 92px column cannot carry "the genre asks 0.78"
-      // without wrapping it to four lines, so the sentence goes on the control's
-      // `title` and the engineer's sheet (which has the width) still prints it
-      // whole.
-      const w = knob("b|" + field + "|" + c.voice.name, field, SENDS, SENDLABEL,
-        deskOf(c.voice)[field], c.voice.name + " " + busName(bus) + " send",
-        (v) => setDesk(ctx, c.voice, field, v), "as it stands");
-      const s = w.querySelector("input");
-      if (field === "rev") s.title = genreAsk(sec) +
-        "; a part send adds to it, so absent adds nothing";
-      td.append(w);
-      if (field === "room" && c.key !== "drums" && !hasKit)
-        td.append(refuse(s,
-          "bus 3 is the kit's ambience and this record has no kit"));
-    }
+        + " gain is zero — open it on bus 1's fader";
   }
   for (const [k, label] of [["mute", "cut"], ["solo", "alone"]]) {
-    const tr = rowOf(label);
-    for (const c of chans) {
-      const td = cellFor(tr, c);
+    strip(label, chOnly((c, td) => {
       const b = document.createElement("input");
       b.type = "checkbox"; b.checked = !!deskOf(c.voice)[k];
       b.dataset.k = "b|" + k + "|" + c.voice.name;
       b.setAttribute("aria-label", c.voice.name + " " + label);
       b.addEventListener("change", () => setDesk(ctx, c.voice, k, b.checked));
       td.append(b);
+    }));
+  }
+
+  /* ================= the returns and the main ================= */
+  block("the returns and the main");
+  const busRow = (col) => BUS_FIELDS.find((b) => b.bus === col.key);
+  const bv = (bus, k) => (doc.sound && doc.sound.buses && doc.sound.buses[bus]
+    && doc.sound.buses[bus][k]) || "";
+  for (const row of RACK_ROWS) {
+    strip(row.label, (col, td) => {
+      if (col.kind !== "bus") return;
+      const spec = busRow(col).knobs.find((k) => k.key === row.key);
+      if (!spec) return;                     // this bus does not have this knob
+      td.append(selectEl({
+        key: "bus|" + col.key + "|" + row.key, label: spec.label,
+        options: optionsFor(spec.table, spec.labels, bv(col.key, row.key), null,
+                            "nothing set"),
+        value: bv(col.key, row.key),
+        set: (v) => { DD().writeBus(doc, col.key, row.key, v); ctx.changed(); },
+      }));
+    });
+  }
+  // WIDTH, TILT AND CEILING'S PUSH REACH NOTHING (audio/desk.js:769 names all
+  // three and says why: the parent gets its width from placement, its tone
+  // stage is a pair of cuts rather than a tilt, and master_limit's threshold is
+  // fixed in the DSP). They round-trip and they draw; they are drawn DISABLED
+  // with the reason printed IN THE CELL, because saying so is cheaper than
+  // pretending and a `title` is a thing no phone will ever show.
+  const HOMELESS = { width: 1, tilt: 1, ceiling: 1 };
+  const mv = (k) => (doc.sound && doc.sound.master && doc.sound.master[k]) || "";
+  for (const f of MASTER_FIELDS) {
+    strip(f.label, (col, td) => {
+      if (col.kind !== "main") return;
+      const why = HOMELESS[f.key] ? MASTER_WHY : null;
+      td.append(selectEl({
+        key: "master|" + f.key, label: f.label,
+        // "nothing set" and not "as it stands": what absence means here is not
+        // a number — it is the engine's own answer (fields.js resolveMaster:
+        // five resolve to null and build nothing at all, glue and ceiling
+        // resolve to their shipped default) — and "nothing set" is the one
+        // phrase true of all seven without naming a value that seven different
+        // tables spell differently.
+        options: optionsFor(f.table, f.labels, mv(f.key), null, "nothing set"),
+        value: mv(f.key),
+        ...(why ? { why } : {}),
+        set: (v) => { DD().writeMaster(doc, f.key, v); ctx.changed(); },
+      }));
+      // the marker, not the sentence — see MASTER_WHY below for where the whole
+      // of it is printed, once, under the table
+      if (why) { const w = el("small", "reaches no sound"); w.className = "nu-why";
+                 w.title = why; td.append(w); }
+    });
+  }
+
+  /* ================= the two rows every strip answers ================= */
+  block("out");
+  {
+    const tr = rowOf("fader"); tr.dataset.row = "fader";
+    for (const col of COLS) {
+      const td = cellFor(tr, col);
+      if (col.kind === "ch") {
+        const c = col.c, d = deskOf(c.voice);
+        const r = document.createElement("input");
+        r.type = "range"; r.min = "-24"; r.max = "12"; r.step = "0.5";
+        r.value = String(faderDb(d.fader));
+        r.dataset.k = "b|fader|" + c.voice.name;
+        r.setAttribute("aria-label", c.voice.name + " fader");
+        const m = document.createElement("meter");
+        m.min = 0; m.max = 1;
+        m.title = "what is driving the channel";
+        const o = el("output", fmtDb(faderDb(d.fader)));
+        r.addEventListener("input", () => { o.textContent = fmtDb(+r.value); });
+        r.addEventListener("change", () => setDesk(ctx, c.voice, "fader", +r.value));
+        td.append(r, m, o);
+        meters.push({ m, key: c.key });
+        outs.push({ o, voice: c.voice });
+      } else if (col.kind === "bus") {
+        busFader(td, col, feeds[col.key], doc, ctx, meters);
+      } else {
+        td.append(listening());
+      }
     }
   }
+  // WHERE EACH STRIP GOES, PRINTED. This row is the whole of "establish what
+  // routing actually exists": a channel's dry path and its three sends, each
+  // bus's destination, and the main's. It is data from audio/desk.js
+  // (`deskBusFeed`'s `to`) for the buses, so the page and the model cannot
+  // disagree about a wire.
+  strip("goes to", (col, td) => {
+    if (col.kind === "ch") { td.append(el("small", "main + its sends")); return; }
+    if (col.kind === "bus") { td.append(el("small", feeds[col.key].to)); return; }
+    td.append(el("small", "the speakers"));
+  });
+
   t.append(tbody);
   // ...and this pane keeps its sideways scroll across a rebuild too
   // (ui/eight.js keepPanes/putPanes, 2026-08-25). The board is one column per
@@ -585,11 +848,47 @@ export function mount(parent, ctx) {
   if (b0) pane.dataset.pane = b0.dataset.k;
   pane.append(t); host.append(pane);
 
-  masterStrip(host, ctx);
+  // THE ONE SENTENCE THE ROUTING OWES THE READER, once, under the board. A bus
+  // does not send to another bus and there is no knob for it — fields.js took
+  // the two cross-sends off on 2026-08-24 because the WebAudio rack they were
+  // written against is gone and the parent's bus graph takes no edge. Saying so
+  // is what stops the next round from adding one that draws and does nothing.
+  const note = el("p", "a channel sends to bus 1, 2 and 3; bus 1 returns to the"
+    + " main. No bus sends to another bus — the parent's bus graph takes no edge"
+    + " (fields.js, 2026-08-24), so there is no knob for it rather than a knob"
+    + " that does nothing.");
+  note.className = "nu-hint";
+  host.append(note);
+  // ...AND EVERY REFUSAL'S WHOLE SENTENCE, ONCE, HERE. The cells above carry a
+  // short marker because a 124px column cannot hold ten lines without setting
+  // the fader row 200px tall (measured), and a marker on its own would be the
+  // silent grey this file exists to prevent. So the long form is printed in one
+  // place a reader can get to without a hover — the same answer ui/selects.js
+  // reached for a menu in a <td> — and it stays in `data-why` and `title` on
+  // each control for the gate and the screen reader.
+  const refusals = el("ul"); refusals.className = "nu-hint";
+  const says = [];
+  for (const b of BUS_FIELDS) if (feeds[b.bus].why) says.push(feeds[b.bus].why);
+  if (MASTER_FIELDS.some((f) => HOMELESS[f.key]))
+    says.push(MASTER_FIELDS.filter((f) => HOMELESS[f.key]).map((f) => f.label)
+      .join(", ") + ": " + MASTER_WHY);
+  for (const w of says) refusals.append(el("li", w));
+  if (says.length) host.append(refusals);
 
   const paint = () => {
     const s = atBox();
+    // ONE deskBusFeed PER PAINT, not one per bus meter: paint() runs from the
+    // page's on("pos") handler once a beat and the walk sums every channel's
+    // sends, so three calls a beat is three times the work for one answer.
+    const bf = deskBusFeed(s, MASTER, BUSES);
     for (const x of meters) {
+      if (x.bus) {                          // a bus meter: what leaves it
+        const f = bf[x.bus];
+        x.m.value = gainToF(f.out);
+        x.m.title = "leaving this bus toward " + f.to + ": " +
+          Math.round(f.feed * 100) + "% in";
+        continue;
+      }
       const g = liveGain(s, x.key);
       x.m.value = gainToF(g);
       x.m.title = "driving this channel: " + fmtDb(20 * Math.log10(Math.max(1e-4, g)));
@@ -607,6 +906,101 @@ export function mount(parent, ctx) {
 // been rebuilt under it cannot be repainted by mistake.
 export const paintBoard = () => { if (CURRENT) CURRENT.paint(); };
 
+/* ---------- a bus's fader, which is its send to the main ------------------ */
+// THE ANSWER TO "from the buses to the master mix too", one bus at a time, and
+// the model decides — audio/desk.js `deskBusFeed` says whether a bus's return
+// can be moved and, when it cannot, hands over the sentence saying why. This
+// file never decides that; if it did, the board and the engine would each have
+// an opinion about a wire.
+function busFader(td, col, f, doc, ctx, meters) {
+  if (!f.movable) {
+    // BUS 2 IS A FADER THE PAGE CANNOT REACH, so it is drawn AT ITS REAL VALUE
+    // and refused — fx_bus carries `dgain` and the renderers push it, but
+    // fxParams emits the literal 1. BUS 3 IS NOT A FADER AT ALL, so nothing is
+    // drawn for it and the sentence stands alone: inventing a slider for a
+    // thing that is not a return would be the lie this whole file is about.
+    if (col.key === "echo") {
+      const r = document.createElement("input");
+      r.type = "range"; r.min = "0"; r.max = "2"; r.step = "0.01"; r.value = "1";
+      r.dataset.k = "bus|" + col.key + "|ret";
+      r.setAttribute("aria-label", "bus " + col.n + " return");
+      td.append(r);
+      td.append(el("output", "unity"));
+      td.append(refuse(r, f.why, f.short));
+    } else {
+      const w = el("small", f.short || f.why); w.className = "nu-why";
+      w.title = f.why;
+      td.append(w);
+    }
+  } else {
+    const spec = BUS_FIELDS.find((b) => b.bus === col.key).knobs
+      .find((k) => k.key === "ret");
+    const cur = (doc.sound && doc.sound.buses && doc.sound.buses[col.key]
+      && doc.sound.buses[col.key].ret) || "";
+    // A SCALE, SO A POT — the same test `knob()` carries. RETURNS runs
+    // 0 (off) .. 0.625 (huge), where `huge` is the saturation point of
+    // rgain = clamp(reverb*3.2, 0, 2) and there is nothing above it
+    // (fields.js). The blank detent is 0 because audio/plan.js hands toEngine
+    // `reverb: 0`, so a record that never opened the rack is genuinely shut.
+    // "as it stands", NOT "shut", and it is the `place`/"centre" trap one bus
+    // down: RETURNLABEL already spells `off` as "shut", so labelling the blank
+    // detent the same word put TWO stops reading "shut" side by side (measured
+    // on the rendered page: shut · shut · a little · a room · a hall · as wet
+    // as it goes). One word for absence everywhere on this board, and its
+    // POSITION — first, beside `off`, because both are 0 — is what says the
+    // record has not opened the return.
+    td.append(knob("bus|" + col.key + "|ret", "ret", spec.table, spec.labels,
+      cur, "bus " + col.n + " return",
+      (v) => { DD().writeBus(doc, col.key, "ret", v); ctx.changed(); },
+      "as it stands"));
+  }
+  const m = document.createElement("meter");
+  m.min = 0; m.max = 1;
+  m.title = "leaving this bus toward " + f.to;
+  td.append(m);
+  meters.push({ m, bus: col.key });
+}
+
+/* ---------- the listening level, on the strip it belongs to --------------- */
+// PAUL, 2026-08-25: "the 'listening' slider doesn't make much sense."
+//
+// IT DID NOT, AND HERE IS EXACTLY WHAT IT WAS DOING. It was a second view of
+// the transport bar's `volume` fader — the comment above it said so, and cited
+// main:mixtbl.js:104's "two views over ONE store, never two levels" — but the
+// two views were on DIFFERENT SCALES. `#vol` in index.html:68 is
+// `min=0 max=100 step=1`; this one was written `min=0 max=1 step=0.01`, and
+// the store is the 0..100 one (ui/state.js readVol clamps to 0..100 and
+// audio/live.js:573 sends `vol / 100` to the engine). Measured on the rendered
+// page: the store boots at 80, this slider drew `value="80"` against `max="1"`
+// so the browser clamped it and it sat hard right looking like "full"; one
+// touch anywhere on it wrote 0.5, which is `masterVol` 0.005 — 44 dB below
+// where the record had been — and localStorage took it, so the page came back
+// near-silent on the next boot and the only way out was the OTHER fader.
+//
+// SO IT IS FIXED RATHER THAN REMOVED, because the control itself is right and
+// it now has somewhere to be: it is the MAIN STRIP'S FADER. A console's master
+// strip carries the monitor level, that is what this is, and the row it sits in
+// is the row every other strip answers with its own fader. Same store, same
+// scale as the bar's, and the sentence under it says which of the two things on
+// this page it is — because the main strip's OTHER controls (drive, glue, tape,
+// space) are the record and this one is the room.
+function listening() {
+  const wrap = el("span");
+  const r = document.createElement("input");
+  r.type = "range"; r.min = "0"; r.max = "100"; r.step = "1";
+  r.value = String(vol); r.id = "vol2"; r.dataset.k = "m|listening";
+  r.setAttribute("aria-label", "listening level");
+  const o = el("output", Math.round(vol) + "%");
+  const say = () => { o.textContent = Math.round(+r.value) + "%";
+                      r.setAttribute("aria-valuetext", o.textContent); };
+  say();
+  r.addEventListener("input", () => { say(); setVol(+r.value); commit("transport"); });
+  const w = el("small", "the room, not the record — not saved with the song");
+  w.className = "nu-hint";
+  wrap.append(r, o, w);
+  return wrap;
+}
+
 /* ---------- one detented knob ----------------------------------------- */
 // REVERSED, 2026-08-24, and the old comment is rewritten rather than deleted
 // because it is the record of why the menu was there. It read: "A <select> and
@@ -618,13 +1012,19 @@ export const paintBoard = () => { if (CURRENT) CURRENT.paint(); };
 // 92px column (nu.css:265) and the per-voice sheets still live in the voice's
 // own tab. What was wrong is the conclusion that the only other answer is a
 // menu. THE TEST IS WHETHER THE TABLE IS A SCALE OR A SET, and fields.js
-// already answers it: `place` and the three sends are numbers with names on
-// them — PANS runs -0.7 .. 0.7 and SENDS runs 0 .. 0.9 (fields.js:451,459) —
-// so they are a CONTINUOUS VALUE and the honest control is the one a real
-// console puts on a strip, a pot. The genuinely enumerated things — which room
-// the reverb is, what a bus is called, how long the echo waits — are not on the
-// channel at all; they are on the BUS, once each, and they are sheets down at
-// the master end where there is width to read them.
+// already answers it — every entry a finite number, or not:
+//   SCALES, so pots: SENDS 0..0.9 · LEVELS 0.4..1.35 · PANS −0.7..0.7 ·
+//     RETURNS 0..0.625. All four are ONE quantity with words on its stops, and
+//     all four are on a strip.
+//   SETS, so menus: BUSNAMES (twelve names in no order) · REVERBS (five
+//     different wasm modules) · GLUES / TAPES / SPACES / CEILINGS, whose
+//     entries are OBJECTS of three to five parameters each — there is no single
+//     number for a slider to run along, and inventing an order would be a
+//     picture that lies.
+// (Paul, 2026-08-25: "level, place, delay, and room are obvious sliders" — and
+// the standing rule the same message carries: "A slider is for a CONTINUOUS or
+// ORDERED quantity; do not turn a genuine either/or into a slider because it
+// fits the board better.")
 //
 // `<input type=range step=1>` over the words IN VALUE ORDER, with the word
 // itself printed under it. Numeric tables ONLY: a slider over an unordered set
@@ -632,7 +1032,10 @@ export const paintBoard = () => { if (CURRENT) CURRENT.paint(); };
 // dropped and said out loud rather than drawn at some arbitrary index.
 const ZERO_STRIP = NuFields.resolvePartMix({});
 // WHICH FIELD RESOLVES TO WHICH NUMBER — fields.js:838's own mapping, quoted
-// rather than re-derived ("the field is `echo`, the bus is `del`").
+// rather than re-derived ("the field is `echo`, the bus is `del`"). `ret` is
+// not a part field and is deliberately absent: a bus's return defaults to 0
+// because audio/plan.js hands toEngine `reverb: 0`, which is the same 0 the
+// lookup below falls through to.
 const RESOLVES_TO = { rev: "rev", echo: "del", room: "room", pan: "pan", lvl: "lvl" };
 function knob(k, field, table, labels, cur, aria, set, emptyLabel) {
   // WHERE THE EMPTY DETENT SITS, read off fields.js rather than typed. A strip
@@ -683,95 +1086,7 @@ function knob(k, field, table, labels, cur, aria, set, emptyLabel) {
   return wrap;
 }
 
-/* ---------- the master strip ------------------------------------------- */
-// The four master words and the two bus rows ARE the record; the listening
-// level is a session fact and the strip says so in words. #vol2 and the page's
-// existing #vol are TWO VIEWS OVER ONE STORE (setVol — main:mixtbl.js:104's
-// law), never two levels.
-//
-// SHEETS HERE, KNOBS ON THE STRIP, and that is the whole answer to the
-// twenty-three dropdowns. `knob()` above has the test: a channel's `place` and
-// its sends are a scale, so they get a pot in a 92px column. NONE OF THE
-// FIFTEEN CONTROLS BELOW IS PER-INSTRUMENT — there is one drive, one glue, one
-// reverb room and one echo time for the whole record, which is what fields.js
-// MASTER and BUSES have always said by being per-bus rather than per-part. A
-// thing you say ONCE about the record deserves the surface Paul asked for
-// ("sheets of organized options should light up"), and down here the page is
-// its full width, so it has one.
-//
-// `master|<key>` and `bus|<bus>|<knob>` are the sheet keys: §2.3's own
-// scope-qualified form, bare key first. They are also `data-k` stems, and
-// `data-k` is how focus survives the full rebuild (ui/eight.js:1156), so the
-// surface AND the row it belongs to are both in the name.
+// THE THREE THAT REACH NO SOUND, in one sentence, so the master strip's cells
+// and any gate reading them back quote the same words.
 const MASTER_WHY = "this one round-trips and draws but reaches no sound" +
   " — audio/desk.js:769 names all three and says why";
-function masterStrip(host, ctx) {
-  const doc = ctx.doc();
-  const mv = (k) => (doc.sound && doc.sound.master && doc.sound.master[k]) || "";
-  const spec = (key, label, f, cur, set, why) => ({
-    key, label,
-    // "nothing set" and not "as it stands": optionsFor already prints "as it
-    // stands" as the GROUP over this option, and a heading and its only option
-    // reading the same three words says nothing twice. What absence means here
-    // is not a number — it is the engine's own answer (fields.js resolveMaster:
-    // five resolve to null and build nothing at all, glue and ceiling resolve
-    // to their shipped default) — and "nothing set" is the one phrase true of
-    // all seven without naming a value that seven different tables spell
-    // differently.
-    options: optionsFor(f.table, f.labels, cur, null, "nothing set"),
-    value: cur == null ? "" : String(cur),
-    ...(why ? { why } : {}),
-    set,
-  });
-  // WIDTH, TILT AND CEILING'S PUSH REACH NOTHING (audio/desk.js:769 names all
-  // three and says why: the parent gets its width from placement, its tone
-  // stage is a pair of cuts rather than a tilt, and master_limit's threshold is
-  // fixed in the DSP). They round-trip and they draw; they are drawn DISABLED
-  // with the reason printed, because saying so is cheaper than pretending —
-  // and as a sheet the reason is IN THE PAGE rather than in a `title` no phone
-  // will ever show (§2.3: a whole sheet off, its options still visible).
-  const HOMELESS = { width: 1, tilt: 1, ceiling: 1 };
-  const mset = (f) => (v) => { DD().writeMaster(doc, f.key, v); ctx.changed(); };
-  sheetRow(host, "the master", MASTER_FIELDS.filter((f) => !HOMELESS[f.key])
-    .map((f) => spec("master|" + f.key, f.label, f, mv(f.key), mset(f))));
-  sheetRow(host, "…and three that reach no sound",
-    MASTER_FIELDS.filter((f) => HOMELESS[f.key])
-      .map((f) => spec("master|" + f.key, f.label, f, mv(f.key), mset(f),
-                       MASTER_WHY)));
-
-  for (const row of BUS_FIELDS) {
-    const n = row.bus === "rev" ? "1" : row.bus === "echo" ? "2" : "3";
-    const bv = (k) => (doc.sound && doc.sound.buses && doc.sound.buses[row.bus]
-      && doc.sound.buses[row.bus][k]) || "";
-    sheetRow(host, "bus " + n + " · " + busName(row.bus), row.knobs.map((k) =>
-      spec("bus|" + row.bus + "|" + k.key, k.label, k, bv(k.key),
-        (v) => { DD().writeBus(doc, row.bus, k.key, v); ctx.changed(); })));
-    // a bus with nothing but a nameplate says what feeds it, or the row reads
-    // as a knobless mystery
-    if (!row.knobs.filter((k) => k.key !== "name").length) {
-      const w = el("small", row.feed); w.className = "nu-hint";
-      const p = el("p"); p.append(w); host.append(p);
-    }
-  }
-
-  {
-    const r = document.createElement("input");
-    r.type = "range"; r.min = "0"; r.max = "1"; r.step = "0.01";
-    r.value = String(vol); r.id = "vol2"; r.dataset.k = "m|listening";
-    r.setAttribute("aria-label", "listening level");
-    r.addEventListener("input", () => { setVol(+r.value); commit("transport"); });
-    // THE WORD ON ITS OWN LINE, THE FADER UNDER IT — Paul, 2026-08-25: "Put
-    // interactive elements on new lines below the titles or questions." The
-    // shape is ui/eight.js `number()`'s and ui/selects.js `selectField`'s:
-    // `<p class="nu-field"><label><span class="nu-w">…</span><control></label>`,
-    // and nu.css `.nu-field > label` does the stacking for all three.
-    const l = el("label");
-    const w2 = el("span", "listening"); w2.className = "nu-w";
-    l.append(w2, r);
-    const p = el("p"); p.className = "nu-field"; p.append(l); host.append(p);
-    const w = el("small", "how loud it is in the room — a session fact, not"
-      + " part of the record");
-    w.className = "nu-hint";
-    p.append(w);
-  }
-}

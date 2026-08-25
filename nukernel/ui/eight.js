@@ -46,28 +46,35 @@
 //   OR OUTSIDE #app ENTIRELY. Everything else in #app changes only in response
 //   to a gesture of yours.
 //
-// There are THREE `data-live` values, and the third is 2026-08-25's: "played"
-// is a voice's composed staff and its caption (see THE MOTIF AS SHEET MUSIC,
-// TWICE), "count" is a playhead cell (see mark(), which refuses to mark
-// anything else), and "score" is the two-measure system of the whole band at
-// the top of Material (Paul: "add a section ABOVE motifs which is the current
-// playing music, two measures at a time, but ALL"). This paragraph said "there
-// are exactly two and there is no third" and it is rewritten rather than
-// quietly amended, because the SENTENCE it was defending is the one that still
-// holds and the count never was the point: a surface the clock writes on
-// declares itself, in the HTML, where the gate can read the declaration. What a
-// third value costs is exactly one line in window.__eightFrozen — nothing —
-// and what it must still obey is everything: no control inside it, no write
-// outside it, and no change of height on the clock. Outside #app, and
-// therefore free to move: the engine readout,
-// the board's meters, the play button. Everything else — every fieldset, every
-// radio, every slider, the written staff, the drum grid, the form table, the
+// There are TWO `data-live` values, and the count moved twice in two days:
+// "count" is a playhead cell (see mark(), which refuses to mark anything else)
+// and "score" is the two-measure system of the whole band at the top of the
+// axis (Paul, 2026-08-25: "add a section ABOVE motifs which is the current
+// playing music, two measures at a time, but ALL"). A third value, "played",
+// existed for one day — a composed staff per voice inside every motif block —
+// and it is gone, by Paul's own instruction the next morning: "you don't need
+// to show me the interpreted notation for a motif, only the pure
+// representation, because now I have the sheet music." Both paragraphs this
+// replaces argued the COUNT ("there are exactly two and there is no third",
+// then "what a third value costs is exactly one line"), and both were arguing
+// about the wrong thing. The rule never was a number:
+//
+//   THE TRANSPORT FEED MAY ONLY WRITE INSIDE AN ELEMENT CARRYING `data-live`,
+//   OR OUTSIDE #app ENTIRELY. Everything else in #app changes only in response
+//   to a gesture of yours.
+//
+// A surface the clock writes on declares itself, in the HTML, where the gate
+// can read the declaration — and window.__eightFrozen empties whatever
+// declared itself, so values may come and go without one line changing there.
+// Outside #app, and therefore free to move: the engine readout, the board's
+// meters, the play button. Everything else — every fieldset, every radio,
+// every slider, the written staff, the drum grid, the form table, the
 // producer's notes — is FROZEN while the record plays, and a gesture-caused
 // rebuild is not a violation: a page that moves because you touched it is a
 // page doing what you said. The gate is test/motif-frozen.js, which asks the
 // page itself what it marked live (window.__eightFrozen) rather than inventing
 // an exclusion of its own, and it is the reason the two `draw()` calls that
-// used to hang off the transport feed are `repaintPlayed()` now.
+// used to hang off the transport feed are `repaintScore()` now.
 //
 // DETERMINISM. Nothing here generates anything: every option in every menu
 // comes from a table — songs.js WORDS for development, fields.js for keys,
@@ -392,12 +399,14 @@ function push(first) {
    that lands, for a second and a half. After that the window belongs to
    whoever is scrolling it.
 
-   IT LOST ONE CALLER ON 2026-08-24 AND KEEPS THE REST. The composed staff's
-   render callback runs on the CLOCK, and a scroll write on the clock is
-   Paul's complaint in its most literal possible form — the page moving under
-   a still thumb because a section changed — so that path does not call this,
-   and `transport:state` clears `anchorWant` outright when the transport
-   starts. Everything else is exactly as real as it was: draw() still runs on
+   IT LOST ONE CALLER ON 2026-08-24 AND ANOTHER ON 2026-08-25, AND KEEPS THE
+   REST. The composed staff's render callback ran on the CLOCK, and a scroll
+   write on the clock is Paul's complaint in its most literal possible form —
+   the page moving under a still thumb because a section changed — so that path
+   never called this; the staff itself is gone now (THE MOTIF AS SHEET MUSIC,
+   ONCE) and the score that replaced it does not call this either, for exactly
+   the same reason. `transport:state` clears `anchorWant` outright when the
+   transport starts, which is the belt over both braces. Everything else is exactly as real as it was: draw() still runs on
    every edit, every voice-tab tap and every section tap, the staves still
    arrive on a promise, and the page is still seventeen thousand pixels tall
    at 390px. This is insurance for the cold first load, not for the clock. */
@@ -486,7 +495,7 @@ const opensAPicker = (n) => !!n && n.tagName === "SELECT" && !n.multiple;
 // behind it: the scroll pane it sits in if it has one (`.nu-pane` is already
 // `tabIndex = 0`, because a region a mouse can scroll must be reachable from a
 // keyboard), otherwise its axis — and an axis's first child is the sticky <h2>
-// that names it, so what is announced is "3 · Material" and not silence.
+// that names it, so what is announced is "3 · Sheet music" and not silence.
 // `tabIndex = -1` is set on the axis at the moment of use rather than by
 // axis(): it makes the section programmatically focusable and leaves it out of
 // the tab order, and the next rebuild makes a section without it, so nothing
@@ -595,6 +604,63 @@ const ANCHOR_MAX = 240;
    — `scrollY` was already 1851 inside the pointerdown listener, before one
    line of this file ran. Tap the element at its own on-screen point
    (`mouse.click` / `touchscreen.tap` at its rect) and nothing is manufactured. */
+/* ---------- AND #app IS NOT ALLOWED TO COLLAPSE WHILE IT IS REBUILT -----
+   Paul, 2026-08-25: *"I click on 'leslie' and am immediately shot back up the
+   page."*
+
+   WHAT WAS MEASURED, and it is the honest half of this note. On desktop
+   Chromium at 390x844 and 1280x900, choosing `leslie` in the engineer's
+   character chips moves the window **0px** — before this change and after it.
+   Measured with a real click at the option's own on-screen point and with a
+   real touch (`touchscreen.tap`), from five scroll positions each, on the
+   shipped chant and on a record with three and six extra voices, and at the
+   very bottom of the page: `scrollY` 4311 → 4311, 4486 → 4486, 4233 → 4233,
+   3980 → 3980 at 390; 4818 → 4818, 4638 → 4638, 4368 → 4368, 4098 → 4098 at
+   1280. With `window.scrollBy` stubbed out, `restoreAnchor` was not asked for
+   one pixel of correction either, and NO `scroll` EVENT FIRED AT ALL. So the
+   mechanism is not one Chromium reproduces, and this file will not pretend it
+   found it there.
+
+   WHAT IS REAL AND IS FIXED HERE is the one thing `draw()` does that can lose a
+   scroll position on any browser, and it is a different mechanism from this
+   morning's staff-height reserve: `box.textContent = ""` COLLAPSES #app to
+   nothing, and draw() then forces layout several times before it has refilled
+   it (`reserveScoreCaption` and `fitSystem` both read a bounding box, and so
+   does the anchor). Measured on the rendered page, 2026-08-25, on the shipped
+   chant: emptying `#app` and forcing a read takes it from 3048px to **0** at
+   390x844 and from 2959px to **0** at 1280x900, and the DOCUMENT with it, from
+   6152 to 3099 and from 6257 to 3293. A browser that flushes layout in that
+   gap must clamp `scrollY` to the new maximum, and a clamp is not reversible:
+   `restoreAnchor` then sees a
+   correction of thousands of pixels, which is past `ANCHOR_MAX` by design, so
+   it declines and the whole jump lands on the page. That is "shot back up the
+   page", exactly, and it is worse the further down the page the control is —
+   which is where the engineer's chips are.
+
+   THE FIX IS THE SAME SHAPE AS `staffBox` AND `scoreReserve`, one level up:
+   the box is given the room it already had before it is emptied, and gives it
+   back when the new page is standing. `min-height` and not `height`, so a
+   rebuild that is genuinely taller is not clipped; released in a `finally`, so
+   a throw inside draw() cannot leave the page propped open forever.
+
+   With the hold applied, the same two reads give 3048 and 2959 — the box does
+   not move at all, and the document comes back to 6147 and 6252, which is the
+   same page to five pixels (the five is the <h2> margin the emptied section
+   loses and gets back).
+
+   IT CANNOT ITSELF CAUSE A JUMP. Between the reserve and the release the box
+   is never SHORTER than it was, and a page that only ever grows during a
+   rebuild is a page no scroll anchor has anything to correct. Measured after,
+   at both widths: every control still moves the window 0px and the page height
+   is unchanged to the pixel. */
+function holdHeight(box) {
+  if (!box) return () => {};
+  const h = Math.ceil(box.getBoundingClientRect().height);
+  if (!(h > 0)) return () => {};
+  const was = box.style.minHeight;
+  box.style.minHeight = h + "px";
+  return () => { box.style.minHeight = was; };
+}
 function restoreAnchor() {
   if (anchorWant == null || Date.now() - anchorAt > 1500) return;
   const now = $(anchorId);
@@ -663,8 +729,14 @@ const changed = () => { reviseProd(); push(); draw(); };
      the slider itself   the browser has already moved it, and `input` has
                          already moved its readout — nothing to do
      the written staff   re-engraved, by name, from the cell (reEngraveWritten)
-     the composed staves repainted, by the same pass the clock uses, with the
-                         same change detector (repaintPlayed)
+
+   (A THIRD READER STOOD HERE — "the composed staves, repainted by the same pass
+   the clock uses, with the same change detector (repaintPlayed)". Those staves
+   were deleted on 2026-08-25 and the SCORE at the top of the axis is not a
+   replacement reader: it draws the SOUNDING section from the engine's own
+   stream and only the clock moves it, so an edit made while stopped shows up
+   there on the next tick or the next play. That is the same standing that the
+   producer's block has, three paragraphs down, and for the same reason.)
 
    Nothing else on the page reads a degree, AND THAT IS CHECKED RATHER THAN
    ASSUMED. The availability table takes exactly three facts from Material and
@@ -701,7 +773,6 @@ const changed = () => { reviseProd(); push(); draw(); };
 const edited = (cellName) => {
   reviseProd(); push();
   reEngraveWritten(cellName);
-  repaintPlayed();
 };
 
 /* THE VIEW-MODULE CONTEXT (PROGRAM.md §2.2), built once and handed to every
@@ -1265,9 +1336,61 @@ const SCOREHEAD = { k: "F", s: "c", p: "c", c: "c",
 // is built on sixteen. A genre in a twelve-step meter draws its score the way
 // it draws its motifs, which is the disagreement to fix in one place if ever.
 const SCORE_SPB = 16, SCORE_BARS = 2, SCORE_W = SCORE_SPB * SCORE_BARS;
-let scoreHost = null, scoreCap = null;      // the two things the clock writes
-let scoreVoices = [], scoreEls = null;      // the glyph maps, and their elements
-let scoreAbc = "", scoreWin = -1, scoreSec = -1, scoreLit = [];
+/* ---------- TWO PICTURES, ONE VISIBLE, AND THAT IS THE RUNWAY -----------
+   Paul, 2026-08-25: *"the sheet music appears about a half measure after the
+   music starts. it should appear BEFORE the music starts, essentially I should
+   see the current measure and the next and the moment the current measure is
+   done, measure 2 becomes measure #1."*
+
+   WHAT WAS MEASURED BEFORE THIS, on the shipped chant at 390px with the
+   transport running and the page polled every 40ms: the window changed from
+   bars 1-2 to bars 3-4 at t=17919ms and the playhead entered bar 3 at the same
+   poll — **186ms LATE**, against a `SCORE_SETTLE` of 200ms. So the LATENESS is
+   the settle and nothing else: the engrave landed inside the same 40ms poll
+   (renderAbc median 23ms, measured 2026-08-25) and the walk contributed zero,
+   because `scoreMeas` is computed in the very `on("pos")` handler that moves
+   the red note — the window and the playhead share one clock and cannot
+   disagree. The HALF MEASURE is a different thing and it was the rule itself:
+   advancing two bars at a time meant that on every odd bar the sounding music
+   was the picture's RIGHT half, i.e. the picture was already a bar old. Both
+   are fixed here, and they needed two different fixes.
+
+   THE RULE IS ROLLING NOW: the window starts at the sounding measure, so it is
+   always [current, next] and it flips at every barline. That is the whole of
+   "measure 2 becomes measure #1".
+
+   WHICH BUYS THE LEAD TIME FOR FREE, and this is the part worth stating: a bar
+   is on the page for one WHOLE MEASURE before it sounds, because it enters as
+   the right half of the window whose left half is the bar in front of it. At
+   the chant's tempo that is ~4.4 seconds of reading time. Nothing had to be
+   predicted to get it; the window shape is the prediction.
+
+   AND THE STROBE IS ANSWERED BY DOUBLE-BUFFERING. The two-at-a-time rule was
+   chosen because "a window that re-centres every bar is a strobe", and that
+   objection was real about a picture that goes blank and re-appears: abcjs
+   renders into a host by emptying it, so a bar-by-bar re-engrave would show a
+   hole at every barline. So there are TWO hosts stacked in the same grid cell,
+   one visible and one not: the NEXT window is engraved into the hidden one
+   while the current one is still on screen, and the flip is a class swap with
+   no engrave in it at all. What a reader sees at the barline is the right-hand
+   bar arriving on the left and one new bar arriving on the right — a shift,
+   never a replacement, and never an empty frame.
+
+   THE OTHER HALF OF THE STROBE ARGUMENT SURVIVES AND IS WHY THE SETTLE IS
+   STILL HERE: `passAt` can report the last bar of a pass and then the first bar
+   of the next one inside a tenth of a second (measured 2026-08-25 at 1280px: 0
+   → 2 → 0 in 100ms). What is new is that only ONE kind of change can be
+   trusted immediately — a step of exactly one window forward inside the same
+   section, which is the only thing a barline can do — and everything else
+   (a section change, a jump, a step backwards) still waits out `SCORE_SETTLE`.
+   That is what takes the 186ms off the barline and leaves the flash
+   impossible. */
+let scoreBufs = [];                         // [{ el, key, abc, voices, els, ready }]
+let scoreShown = 0;                         // which of the two is on screen
+let scoreWant = "";                         // the window the page is asking for
+let scoreHost = null, scoreCap = null;      // the box that holds the room; the sentence
+let scoreLit = [];
+let scoreWin = -1, scoreSec = -1;
 let scoreMeas = 0;                          // the measure the playhead is in
 let scoreReserve = 0;                       // the room the picture is given, px
 // ...AND WHAT THAT ROOM WAS MEASURED FOR. A box is a fact about a RECORD at a
@@ -1288,18 +1411,31 @@ let scoreGutter = 0;
 // surface's arithmetic. One counter per claim.
 let scoreEngraves = 0;
 
-/* WHICH TWO MEASURES, and the answer is the one a reader can follow.
-   A window that re-centres every bar is a strobe: at 96bpm the picture would
-   be replaced every 2.5 seconds and the bar you were reading would slide out
-   from under your eye mid-phrase. So the window ADVANCES BY TWO — measures
-   1-2, then 3-4 — and every picture stands for its whole two bars, which is a
-   page turn and is how printed music has always worked.
-   THE ONE EXCEPTION IS THE END OF AN ODD SECTION. A five-bar section would
-   otherwise show bars 5-6 with bar 6 a phantom rest; instead the last window
-   slides to 4-5, so it is full and the sounding bar is still in it. That is a
-   one-bar slide once per section, not a bar-by-bar scroll. */
+/* WHICH TWO MEASURES: THE ONE THAT IS SOUNDING AND THE ONE AFTER IT.
+
+   THIS REVERSES A RULE AND THE RULE IS QUOTED RATHER THAN DELETED, because its
+   argument was good and half of it still holds. It read: *"A window that
+   re-centres every bar is a strobe: at 96bpm the picture would be replaced
+   every 2.5 seconds and the bar you were reading would slide out from under
+   your eye mid-phrase. So the window ADVANCES BY TWO — measures 1-2, then 3-4
+   — and every picture stands for its whole two bars, which is a page turn and
+   is how printed music has always worked."*
+
+   Paul overruled it on 2026-08-25: *"essentially I should see the current
+   measure and the next and the moment the current measure is done, measure 2
+   becomes measure #1."* And the objection is answered rather than ignored —
+   see the double-buffer note over `scoreBufs`. A page turn REPLACES a picture
+   and that is what strobes; this SHIFTS one, and the bar you are reading was
+   already on the page for a whole measure before it arrived under your eye.
+
+   THE CLAMP AT THE END OF A SECTION IS WHAT IS LEFT OF THE OLD EXCEPTION. In
+   the last measure of a section there is no "next" inside the section, so the
+   window holds at [M-2, M-1] and the sounding bar is the picture's right half.
+   A five-bar section therefore ends showing bars 4-5 rather than 5 and a
+   phantom rest, which is the same judgement the two-at-a-time rule made and
+   the only honest one available: `scoreParts` reads ONE section's render. */
 const scoreWinOf = (meas, M) =>
-  Math.max(0, Math.min(Math.floor(meas / SCORE_BARS) * SCORE_BARS, M - SCORE_BARS));
+  Math.max(0, Math.min(meas, M - SCORE_BARS));
 
 /* THE PARTS OF THE SYSTEM: one per voice of the record, in the record's own
    order, each holding exactly the two measures of the window. A voice with
@@ -1385,7 +1521,8 @@ function scoreCaption(si, ei, k, M, asPlayed) {
   // ...and when the two disagree, WHICH ONE THIS IS. You can be writing the tag
   // while the second verse sounds, and a picture that does not say which
   // section it is showing is worse than no picture — the same sentence
-  // `playedCaption` makes, in the same words, one surface down.
+  // `playedCaption` made one surface down until it was deleted with the
+  // composed staves on 2026-08-25, which is why it is now made only here.
   // `asPlayed` and not `playing` READ HERE, and that is what makes the reserve
   // below honest: the sentence has to be measured in the tense it will be said
   // in. Measured 2026-08-25 at 390px — the stopped sentence is 52 characters
@@ -1421,7 +1558,8 @@ function scoreReserveTo(px) {
 // somebody can check rather than a promise: 1 is the box's own window, 0.83 is
 // a system that needed a fifth more room than the box has.
 const scoreFit = () => {
-  const svg = scoreHost && scoreHost.querySelector("svg");
+  const B = scoreBufs[scoreShown];
+  const svg = B && B.el && B.el.querySelector("svg");
   if (!svg || !scoreReserve) return 1;
   const vb = (svg.getAttribute("viewBox") || "").trim().split(/\s+/).map(Number);
   const r = svg.getBoundingClientRect();
@@ -1430,26 +1568,18 @@ const scoreFit = () => {
 };
 
 /* REPAINTING THE SCORE, AND ONLY IT. Writes in exactly two places, both inside
-   the one `[data-live="score"]` element: the caption's text and the system's
-   engraving.
+   the one `[data-live="score"]` element: the caption's text and which of the
+   two stacked hosts is visible.
 
-   RE-ENGRAVED ONLY WHEN THE TWO MEASURES ACTUALLY CHANGE. Three gates, cheapest
-   first: the window index and the section (an integer compare, four times a
-   beat, which is what stops this touching the main thread at all on 15 of every
-   16 ticks); then the ABC string, the same change detector the composed half
-   uses (`cur.abc !== eng.abc`), so a window whose music is identical to the one
-   before it — two bars of the same vamp — costs no abcjs render at all. */
-/* A WINDOW THAT IS CONTRADICTED IN THE NEXT BREATH NEVER REACHES THE PAPER.
-   Measured 2026-08-25 at 1280px: the window went 0 → 2 → 0 in 100 milliseconds
-   at one pass boundary — a single flash of the wrong two bars — because the
-   bar this page counts with (`passAt`, a wall-clock estimate against the pass's
-   start, which is also what the chord chart marks with) can report the last bar
-   of a pass and then the first bar of the next one inside a tenth of a second.
-   Every honest window change stands for several SECONDS; nothing real happens
-   in 100ms. So a change is held for a fifth of a second and painted only if it
-   is still true, which costs a page turn a fifth of a beat of lateness and
-   makes the flash impossible. A GESTURE never waits: play, stop and a rebuild
-   pass `force` and paint on the spot. */
+   THREE GATES, CHEAPEST FIRST, and that has not changed: the window index and
+   the section (an integer compare, four times a beat, which is what stops this
+   touching the main thread at all on 15 of every 16 ticks); then, inside
+   `engraveWindow`, the ABC string, so a window whose music is identical to the
+   one before it — two bars of the same vamp — costs no abcjs render at all.
+
+   WHAT IS NEW IS THE FOURTH THING IT DOES: after every landing it asks for the
+   NEXT window to be engraved into the hidden host. That is the runway, and it
+   is the reason a barline costs a class swap instead of a render. */
 const SCORE_SETTLE = 200;
 let scorePendKey = null, scorePendT = 0;
 function repaintScore(force) {
@@ -1462,13 +1592,27 @@ function repaintScore(force) {
   // size, whether the transport runs or not.
   const si = playing && atSec >= 0
     ? Math.min(atSec, DOC.form.sections.length - 1) : ei;
-  const M = Math.max(1, (SONG[si] || { len: 1 }).len | 0);
-  const k = playing ? scoreWinOf(scoreMeas, M) : 0;
-  if (!force && k === scoreWin && si === scoreSec) { scorePendKey = null; return; }
-  if (!force) {
-    // the settle, above: remember what the clock is claiming and come back to
-    // it. Only the LAST claim survives — a second change inside the window
-    // replaces the first, so a flicker cancels itself.
+  const k = playing ? scoreWinOf(scoreMeas, scoreLen(si)) : 0;
+  if (!force && k === scoreWin && si === scoreSec) {
+    scorePendKey = null;
+    scoreAhead(si, k);                     // keep the runway full
+    return;
+  }
+  /* THE ONE CHANGE THAT NEVER WAITS, and it is the whole of the answer to "it
+     should appear BEFORE the music starts". A step of exactly one window
+     forward inside the same section is the only thing a barline can do, and it
+     is already engraved and sitting in the hidden host — so it is painted on
+     the spot and the 186ms of settle that used to sit on every page turn is
+     gone. Everything else still waits: a section change, a jump, a step
+     BACKWARDS. Those are the shapes `passAt`'s wall-clock estimate produces
+     when it is wrong (measured: 0 → 2 → 0 in 100ms at a pass boundary), and
+     nothing real happens in a tenth of a second. A GESTURE never waits either:
+     play, stop and a rebuild pass `force`. */
+  const oneStep = si === scoreSec && k === scoreWin + 1;
+  if (!force && !oneStep) {
+    // the settle: remember what the clock is claiming and come back to it. Only
+    // the LAST claim survives — a second change inside the window replaces the
+    // first, so a flicker cancels itself.
     const key = si + ":" + k;
     if (scorePendKey !== key) {
       scorePendKey = key;
@@ -1479,33 +1623,112 @@ function repaintScore(force) {
     return;
   }
   scorePendKey = null; clearTimeout(scorePendT);
+  showWindow(si, k);
+}
+
+/* WHICH HOST IS ON SCREEN. One class, two elements, no layout: both hosts sit
+   in the same grid cell (nu.css `.nu-stack`) so the box is the same height
+   whichever is showing, and the one that is off is `visibility: hidden` —
+   which takes it out of the accessibility tree as well as off the glass, so a
+   screen reader is never read two scores. `display: none` would have been the
+   other candidate and it is refused: a host with no box has `clientWidth` 0,
+   and `clientWidth` is exactly what `renderAbc` is handed as its staff width,
+   so the hidden buffer would engrave at 180px and be shown at 366. */
+function swapTo(i) {
+  if (i === scoreShown || !scoreBufs[i]) return;
+  scoreBufs[scoreShown].el.classList.add("is-off");
+  scoreBufs[i].el.classList.remove("is-off");
+  scoreShown = i;
+}
+
+/* THE WINDOW THE PAGE WANTS, AND HOW IT GETS THERE. `scoreWant` is the key of
+   that window and it is the only thing an in-flight engraving is allowed to
+   check itself against — a second barline can land while abcjs is still being
+   fetched, and the LAST window asked for is the one that is true. */
+function showWindow(si, k) {
+  const key = si + ":" + k;
+  scoreWant = key;
+  for (let i = 0; i < scoreBufs.length; i++)
+    if (scoreBufs[i].key === key && scoreBufs[i].ready) { swapTo(i); landed(si, k); return; }
+  engraveWindow(1 - scoreShown, si, k);
+}
+// HOW LONG THE SOUNDING SECTION IS, in measures, asked in one place. Every
+// reader below needs it and none of them may keep a copy: `SONG[si].len` moves
+// the moment the form does.
+const scoreLen = (si) => Math.max(1, (SONG[si] || { len: 1 }).len | 0);
+
+// THE PICTURE HAS LANDED: the caption, the playhead, and the ask for the next
+// one. Nothing here engraves; `scoreAhead` decides whether anything has to.
+function landed(si, k) {
   scoreWin = k; scoreSec = si;
-  const text = scoreCaption(si, ei, k, M);
-  if (scoreCap.textContent !== text) scoreCap.textContent = text;
+  const text = scoreCaption(si, editSec(), k, scoreLen(si));
+  if (scoreCap && scoreCap.textContent !== text) scoreCap.textContent = text;
+  const B = scoreBufs[scoreShown];
+  if (B) B.els = null;                  // a swapped-in host is a new element list
+  if (atStep >= 0) lightScore(atStep);
+  scoreAhead(si, k);
+}
+
+/* THE RUNWAY. One window ahead and never more, into whichever host is not on
+   screen. Two cases and they are both real records: inside a section the next
+   window is `k + 1`; at the LAST window of a section the next thing that will
+   sound is the first window of the section after it, so that is what is
+   prepared — which makes a section boundary a class swap too, instead of the
+   one place a full engrave would still land on the barline.
+
+   IT IS FREE WHEN THERE IS NOTHING TO DO. `engraveWindow` returns immediately
+   if the host already holds that key, so this runs four times a beat and does
+   arithmetic on 15 of every 16 of them. */
+function scoreAhead(si, k) {
+  if (!playing) return;
+  const M = scoreLen(si);
+  let nsi = si, nk = k + 1;
+  if (nk > M - SCORE_BARS) {
+    nsi = si + 1; nk = 0;
+    if (!SONG[nsi]) { nsi = 0; }        // the record loops: the runway does too
+  }
+  engraveWindow(1 - scoreShown, nsi, nk, true);
+}
+
+/* ONE ENGRAVING INTO ONE HOST, and the three refusals that make it cheap.
+   `quiet` is the runway's: it engraves and stops, where a demanded window
+   swaps itself in the moment it is ready. */
+function engraveWindow(i, si, k, quiet) {
+  const B = scoreBufs[i];
+  if (!B) return;
+  const key = si + ":" + k;
+  if (B.key === key) {                  // already drawn here, or already asked for
+    if (!quiet && B.ready && scoreWant === key) { swapTo(i); landed(si, k); }
+    return;
+  }
   const parts = scoreParts(si, k);
   if (!parts) return;
   let sc;
   try { sc = toScore(parts, { key: KEYS[DOC.alphabet.key] || 0,
-                                    mode: MODES[DOC.alphabet.mode] || MODES.aeolian,
-                                    stepsPerBar: SCORE_SPB }); }
+                              mode: MODES[DOC.alphabet.mode] || MODES.aeolian,
+                              stepsPerBar: SCORE_SPB }); }
   catch (err) { return; }
-  if (!sc || sc.abc === scoreAbc) return;         // <- THE CHANGE DETECTOR
-  // THE GLYPH MAPS ARE HANDED OVER ONLY WHEN THE DRAWING THEY DESCRIBE IS ON
-  // THE PAGE. Assigned here, they would describe two bars that abcjs has not
-  // drawn yet while `lightScore` was still reading the previous system's
-  // elements — a red note on the wrong notehead for as long as the promise
-  // takes. Empty means "nothing to light", which is the truth in that gap.
-  scoreAbc = sc.abc; scoreVoices = []; scoreEls = null; scoreLit = [];
-  const host = scoreHost, want = sc.abc;
+  if (!sc) return;
+  // THE CHANGE DETECTOR, AND IT LOOKS AT BOTH HOSTS. Two bars of the same vamp
+  // engrave the same ABC, and the cheapest thing to do with a picture that is
+  // already on the glass is to relabel it rather than draw it again.
+  const shown = scoreBufs[scoreShown];
+  if (shown && shown.ready && shown.abc === sc.abc) {
+    shown.key = key;
+    if (!quiet && scoreWant === key) landed(si, k);
+    return;
+  }
+  B.key = key; B.abc = sc.abc; B.voices = []; B.els = null; B.ready = false;
+  const host = B.el, want = sc.abc;
   loadStaffLib().then((A) => {
-    // the same promise race the composed half guards: a second window can land
-    // while abcjs is still being fetched, and the LAST one asked for is true
-    if (!A || scoreAbc !== want || !host.isConnected) return;
+    // the promise race: a later window can land while abcjs is still being
+    // fetched, and the LAST engraving asked for into this host is the true one
+    if (!A || B.abc !== want || B.key !== key || !host.isConnected) return;
     try { A.renderAbc(host, want, { responsive: "resize", add_classes: true,
       staffwidth: Math.max(180, host.clientWidth - 8) }); }
     catch (err) { return; }
     scoreEngraves++;
-    scoreVoices = sc.voices; scoreEls = null;
+    B.voices = sc.voices; B.els = null; B.ready = true;
     fitSystem(host);
     // ...AND THE BOX IS MEASURED ONLY WHEN THE CLOCK IS NOT RUNNING. Taking a
     // height is harmless; APPLYING one is a layout change, and a layout change
@@ -1513,7 +1736,7 @@ function repaintScore(force) {
     // boot, and after any rebuild your own gesture caused — the block may take
     // the room its picture needs; playing, the picture fits the room it has.
     if (!playing) scoreReserveTo(Math.ceil(host.getBoundingClientRect().height));
-    if (atStep >= 0) lightScore(atStep);
+    if (scoreWant === key) { swapTo(i); landed(si, k); }
   }).catch(() => {});
 }
 
@@ -1600,8 +1823,9 @@ function fitSystem(host) {
   svg.style.height = "100%";
 }
 
-/* THE PLAYHEAD ON THE SCORE. The same red notehead the composed staves get and
-   the same rule about where it may be written — inside `[data-live]`, by the
+/* THE PLAYHEAD ON THE SCORE, AND IT IS THE ONLY ONE ON NOTATION NOW — the
+   composed staves that used to carry a red notehead each were deleted on
+   2026-08-25. Same rule about where it may be written — inside `[data-live]`, by the
    clock, and nowhere else. `abs` is the pattern step `lightStep` was handed, so
    the measure arithmetic is that function's own: which of the window's two
    measures is sounding, and which glyph in that voice is under the step.
@@ -1615,14 +1839,18 @@ function fitSystem(host) {
 function lightScore(abs) {
   for (const x of scoreLit) x.removeAttribute("fill");
   scoreLit = [];
-  if (!scoreHost || !scoreVoices.length || abs < 0) return;
+  const B = scoreBufs[scoreShown];
+  if (!B || !B.ready || !B.voices.length || abs < 0) return;
   const meas = Math.floor(abs / SCORE_SPB) - scoreWin;
   if (meas < 0 || meas >= SCORE_BARS) return;     // the sounding bar is elsewhere
   const step = meas * SCORE_SPB + (Math.floor(abs) % SCORE_SPB);
-  if (!scoreEls)
-    scoreEls = scoreVoices.map((v, i) =>
-      [...scoreHost.querySelectorAll(".abcjs-note.abcjs-v" + i)]);
-  scoreVoices.forEach((v, vi) => {
+  // THE ELEMENT LIST BELONGS TO THE HOST THAT IS SHOWING, and it is dropped by
+  // `landed` on every swap: the two stacked hosts hold two different systems
+  // and a cache taken off one would light noteheads that are not on the glass.
+  if (!B.els)
+    B.els = B.voices.map((v, i) =>
+      [...B.el.querySelectorAll(".abcjs-note.abcjs-v" + i)]);
+  B.voices.forEach((v, vi) => {
     let idx = -1;
     for (let n = 0; n < v.notes.length; n++) {
       const x = v.notes[n];
@@ -1630,7 +1858,7 @@ function lightScore(abs) {
       if (step < x.at + x.len) idx = n;
     }
     if (idx < 0) return;
-    const els = scoreEls[vi] || [];
+    const els = B.els[vi] || [];
     for (let g = 0; g < v.glyphs.length && g < els.length; g++)
       if (v.glyphs[g] === idx) { els[g].setAttribute("fill", "#c00"); scoreLit.push(els[g]); }
   });
@@ -1641,7 +1869,13 @@ function lightScore(abs) {
    law this page lives under (`test/motif-frozen.js` A1) and also the honest
    design: it is a picture of the music. It cannot be scrolled, zoomed, muted
    or soloed here, because every one of those is a control and a control inside
-   a live block is how the frozen half stops being frozen. */
+   a live block is how the frozen half stops being frozen.
+
+   TWO HOSTS INSIDE THE ONE BOX (2026-08-25 — see TWO PICTURES, ONE VISIBLE,
+   over `scoreBufs`). They are two elements and one picture: stacked in a single
+   grid cell so the box is the same height whichever is showing, and the box —
+   not either host — carries the reserve, so the room a record settled on is
+   the room it keeps whichever buffer happens to be in front. */
 function scoreBlock(parent) {
   heading(parent, "the score");
   const live = el("div");
@@ -1649,18 +1883,22 @@ function scoreBlock(parent) {
   live.className = "nu-score";
   const cap = el("p");
   cap.className = "nu-hint";
-  const host = el("div");
-  live.append(cap, host);
+  const stack = el("div", null, "nu-stack");
+  const a = el("div"), b = el("div", null, "is-off");
+  stack.append(a, b);
+  live.append(cap, stack);
   parent.append(live);
-  scoreCap = cap; scoreHost = host;
-  scoreAbc = ""; scoreVoices = []; scoreEls = null; scoreLit = [];
+  scoreCap = cap; scoreHost = stack;
+  scoreBufs = [a, b].map((n) => ({ el: n, key: "", abc: "", voices: [],
+                                   els: null, ready: false }));
+  scoreShown = 0; scoreWant = ""; scoreLit = [];
   scoreWin = -1; scoreSec = -1;
   const key = DOC.voices.length + "@" + Math.round(window.innerWidth);
   if (key !== scoreReserveKey) { scoreReserveKey = key; scoreReserve = 0; scoreGutter = 0; }
   // the room this record's score has already been measured to need, put back
   // before anything draws, so a rebuild does not collapse the page and then
   // grow it again under a thumb
-  if (scoreReserve) host.style.minHeight = scoreReserve + "px";
+  if (scoreReserve) stack.style.minHeight = scoreReserve + "px";
   reserveScoreCaption();
   repaintScore(true);
 }
@@ -1669,9 +1907,9 @@ function scoreBlock(parent) {
    reason said one surface higher: a sentence that wraps to a second line when
    the section name gets longer moves every editor under it, on the clock. Set
    once to the longest thing it could ever say about this record, measured, and
-   reserved. `reserveCaption` itself cannot be reused — it walks a list of
-   voices and asks `playedCaption` — but the law is its, and this is four
-   lines of it. */
+   reserved. The law came from `reserveCaption`, which walked a list of voices
+   and asked `playedCaption`; both went with the composed staves on 2026-08-25
+   and this is the four lines of it that outlived them. */
 function reserveScoreCaption() {
   if (!scoreCap) return;
   let longest = "";
@@ -1693,73 +1931,86 @@ function reserveScoreCaption() {
   scoreCap.textContent = "";
 }
 
-/* ---------- THE MOTIF AS SHEET MUSIC, TWICE ----------------------------
+/* ---------- THE MOTIF AS SHEET MUSIC, ONCE -----------------------------
    ONE MEASURE WIDE (Paul: "one measure wide on mobile"). The cell is sixteen
    steps and the bar is sixteen steps, so `barsPerLine: 1` is the whole of it
    — the staff is one measure at every width, and abcjs's `responsive:
    "resize"` scales that measure to whatever room the phone gives it.
 
-   TWO STAVES PER MEASURE, AND THAT IS A REVERSAL WRITTEN DOWN. This block
-   said "AND IT IS THE SECTION'S OWN HOOK, not the written cell: the section's
-   word is applied first — so what is engraved is what is about to be played."
-   That was ONE staff carrying TWO facts, and the two sentences that made it
-   and then amended it are both Paul's:
+   ONE STAFF PER MEASURE, AND THAT IS A REVERSAL OF THE REVERSAL ABOVE IT.
+   This header said "TWO STAVES PER MEASURE, AND THAT IS A REVERSAL WRITTEN
+   DOWN", and it is rewritten rather than deleted because both of the sentences
+   it was built on are Paul's and neither has been withdrawn:
 
      2026-08-21 — "can you visually rewrite the themes for their actual notes
      as you play them" (PLAN.md Phase 4). The composed phrase belongs on the
-     page, compiled the way the engine compiles it. THAT STANDS.
+     page, compiled the way the engine compiles it.
      2026-08-24 — "When playing -- Don't change motifs visually or change the
      editing interface. It's too confusing when it changes. Instead, show the
      fully composed motif ABOVE the editable version of the motif."
 
-   So the composed motif gets a STAFF OF ITS OWN, above the written one, and
-   stops replacing it. The upper block is `[data-live="played"]`, the only
-   thing in the Material axis the clock may write; the lower staff, its maker
-   grid and every control beside them are re-engraved by a GESTURE of yours
-   and never by a section boundary going past. */
-// A SYSTEM OF STAVES, ONE PER VOICE (2026-08-23, Paul: "how do I see and hear
-// counterpoint"). One staff could only ever show one line, which is the one
-// thing counterpoint is not. Each pitched chair gets its own PAIR of staves —
-// the composed one above, the written one below — so two voices on one cell
-// show the answer, and two voices on two cells show the countersubject. The
-// playhead lights the sounding note on the COMPOSED staves only: the written
-// staff is the one you are typing into, and a notehead turning red under your
-// finger is the picture changing while you write on it.
-//
-// TWO REGISTRIES, NOT ONE. `staff` held both halves and the page had to be
-// rebuilt to repaint either. `played` holds the composed measures — they are
-// repainted from the clock and they are lit — and the written measures are
-// registered NOWHERE: they are built once by draw() and forgotten, which makes
-// "the written staff is never touched by the clock" true by construction
-// instead of by a condition somebody has to keep remembering.
-const played = new Map();      // "voice#bar" -> { host, glyphs, notes, abc, bar, bars, voice, lit }
-const playedVoice = new Map(); // voice name  -> { cap, bars, cell }
-/* A THIRD REGISTRY, AND IT IS A REVERSAL OF THE PARAGRAPH ABOVE — written out
-   rather than quietly dropped. That paragraph says the written measures are
-   "registered NOWHERE … which makes 'the written staff is never touched by the
-   clock' true by construction instead of by a condition somebody has to keep
-   remembering." The claim it protects still holds and the construction that
-   proved it does not, so here is the replacement argument.
+   Those two together are what put a COMPOSED staff above every WRITTEN one,
+   captioned "as played in verse 3: in retrograde", inside every motif block.
+   That was right on 2026-08-24 and it stopped being right the next morning,
+   and the thing that ended it is not an argument — it is a feature that landed
+   in between. Paul, 2026-08-25:
 
-   WHY IT HAD TO CHANGE. Until 2026-08-25 the written staff followed an edit
-   because the WHOLE PAGE was rebuilt around it, and that rebuild is Paul's
-   complaint ("it snaps left even though I'm not done editing"). Stop rebuilding
-   and the staff has to be found by name, so it has to have been written down.
+     "you don't need to show me the interpreted notation for a motif, only the
+     pure representation, because now I have the sheet music."
 
-   WHY THE CLAIM STILL HOLDS. `written` is keyed by CELL — a cell has no
-   section and no voice in it — and it has exactly one reader,
+   THE SCORE IS WHAT MADE IT REDUNDANT, and it is the whole reason this is a
+   deletion rather than a regression. `scoreBlock` at the top of this axis
+   (2026-08-25, "add a section ABOVE motifs which is the current playing
+   music, two measures at a time, but ALL") draws the DEVELOPED music — every
+   voice, barred together, through the section's own word, from the very
+   `sectionRender` stream the engine plays. That is 2026-08-21's sentence
+   answered better than a per-motif twin ever answered it: one system for the
+   whole band instead of one staff per voice per motif, and it shows the
+   counterpoint, which stacked twins could not. And 2026-08-24's sentence is
+   answered by construction rather than by discipline — with no `[data-live]`
+   inside a motif block at all, the clock cannot write on the editing
+   interface even by accident.
+
+   WHAT IS LEFT IN A MOTIF BLOCK is the PURE REPRESENTATION Paul named: the
+   cell's own name and who reads it, the staff of the cell exactly as written,
+   and the editor under it. No section, no voice, no word — a motif is a
+   song-level fact and this block finally contains nothing else.
+
+   WHAT WENT WITH THE COMPOSED HALF, named so nobody restores half of it by
+   accident: `played` and `playedVoice` (the two registries), `liveBlock`,
+   `voicePhrase`, `playedCaption`, `reserveCaption`, `REST16`/`barOrRest` (the
+   bar of rests for a motif nobody plays here) and `repaintPlayed` (the
+   transport's own repaint path). The playhead no longer lights a notehead in
+   this axis at all; it lights the SCORE, which is one surface and the right
+   one. */
+// A SYSTEM OF STAVES, ONE PER MOTIF (2026-08-23, Paul: "how do I see and hear
+// counterpoint"). The answer to that question is the score at the top of this
+// axis now — several parts under one head, barred together — and this half of
+// it is the tune you are writing, one staff per measure of one cell.
+/* THE ONE REGISTRY IN THIS AXIS, and it was the third of three until the
+   composed half was deleted this morning. Its own note was a reversal of a
+   paragraph that no longer exists ("the written measures are registered
+   NOWHERE … which makes 'the written staff is never touched by the clock' true
+   by construction"), and the claim both were defending is now true for a
+   simpler reason than either of them gave: THE CLOCK HAS NO PATH INTO THIS
+   AXIS AT ALL. `repaintPlayed` is gone with the staves it repainted, and what
+   the transport feed reaches in #app is `repaintScore` and `mark`, neither of
+   which can see this map.
+
+   WHY IT EXISTS. Until 2026-08-25 the written staff followed an edit because
+   the WHOLE PAGE was rebuilt around it, and that rebuild is Paul's complaint
+   ("it snaps left even though I'm not done editing"). Stop rebuilding and the
+   staff has to be found by name, so it has to have been written down. Keyed by
+   CELL — a cell has no section and no voice in it — with exactly one reader,
    `reEngraveWritten`, which has exactly one caller, `edited`, which is only
-   ever reached from a control's own `change` handler. The clock's path is
-   `repaintPlayed`, and `repaintPlayed` cannot see this map: it walks LINES()
-   and `played`. The invariant is now enforced by there being one caller and it
-   being a gesture, and test/motif-frozen.js proves it from the outside — the
-   editable half is byte-identical across a section boundary, and that is the
-   assertion, not this comment. */
+   ever reached from a control's own `change` handler. */
 const written = new Map();     // cell name   -> { hosts: [{ host, then }], opts }
-// HOW MANY TIMES abcjs HAS BEEN ASKED TO DRAW, for test/motif-frozen.js. The
-// change detector in repaintPlayed() is the whole cost argument for repainting
-// instead of rebuilding, and a claim nobody can count is a claim nobody can
-// check — so the count is on the page, not in the gate.
+// HOW MANY TIMES abcjs HAS BEEN ASKED TO DRAW, for test/motif-frozen.js. A
+// claim nobody can count is a claim nobody can check, so the count is on the
+// page and not in the gate. (It used to be the cost argument for repainting
+// the composed staves instead of rebuilding the page; those staves are gone,
+// and what it counts now is exactly the written measures — one per redraw of a
+// motif block and one per edit, and never one from the clock.)
 let engraves = 0;
 // (`atBar` stood here beside these two. It was assigned once a beat from the
 //  transport feed and never read again — the chord chart marks its column
@@ -1794,40 +2045,16 @@ function loadStaffLib() {
   });
   return abcLib;
 }
-// WHAT A VOICE PLAYS IN THIS SECTION — AND THIS FUNCTION NOW FEEDS THE UPPER
-// STAFF ONLY. Two of Paul's sentences, and the second amends the first rather
-// than cancelling it:
-//
-//   2026-08-21, "can you visually rewrite the themes for their actual notes as
-//   you play them" — the page must show the DEVELOPED phrase, compiled the way
-//   the engine compiles it (PLAN.md Phase 4). That was right and it stands.
-//   2026-08-24, "Don't change motifs visually or change the editing interface.
-//   It's too confusing when it changes. Instead, show the fully composed motif
-//   ABOVE the editable version of the motif." — so the developed phrase gets a
-//   STAFF OF ITS OWN and stops replacing the written one.
-//
-// What was wrong was never the re-engraving; it was that ONE staff was made to
-// carry TWO facts, so the picture under your finger changed while you wrote on
-// it — and the page was rebuilt to do it, which at 1400px was a 1516 ms freeze
-// of the main thread every four to eight bars (measured 2026-08-24).
-//
-// `if (!playing) return ph` WENT WITH IT. This function's old comment said
-// "Stopped, the cell as written", and that is now the LOWER staff's whole job;
-// a staff that changes its content on play is the editing interface changing
-// too. There is a second reason and it is musical rather than defensive: the
-// development vocabulary is twenty-six words, and until now the only way to
-// find out what `in retrograde` does to your tune was to press play and watch
-// the notes you were looking at turn into different ones. Stopped, this is a
-// prediction; playing, it is a report, and the caption says which.
-//
-// THE WORD COMES FROM THE COMPILED GENRE. This used to call a local `opsOf`,
-// which was a second copy of document.js's own WORDS-to-operators compiler —
-// and the staff is the surface that has to agree with the sound, so a drifted
-// copy here would draw one thing and play another. `g.word(v)` is the very
-// function the kernel is handed.
-function voicePhrase(voice, si, g) {
-  return K.word(phrase(materialAt(voice, SECID(si))), g.word(LINES().indexOf(voice)));
-}
+// (`voicePhrase(voice, si, g)` stood here — `K.word(phrase(materialAt(voice,
+//  SECID(si))), g.word(...))`, the DEVELOPED phrase, "compiled the way the
+//  engine compiles it". It fed the composed staff and nothing else, and it went
+//  with it on 2026-08-25 ("you don't need to show me the interpreted notation
+//  for a motif, only the pure representation, because now I have the sheet
+//  music"). The developed music is still on the page and is still compiled by
+//  the engine's own path — `scoreParts` reads `sectionRender`, which is one
+//  step further downstream than this was: the envelope, the intro and the
+//  outro have had their say by then. Nothing was lost by deleting it, which is
+//  why it is deleted rather than left for a caller that will never come.)
 // (`writtenPhrase(voice, si)` stood here — `phrase(materialAt(voice,
 //  SECID(si)))`, "the LOWER staff's phrase, the cell exactly as it is
 //  written". The description was right and the ROUTE was the last of the
@@ -1847,20 +2074,16 @@ const barSlice = (ph, m) => {
     .map((h, i) => (h ? Math.min(h, 16 - i) : 0));   // a tie stops at the barline
   return out;
 };
-// A MEASURE OF THE COMPOSED PHRASE, OR A BAR'S REST WHERE IT RAN OUT. The
-// composed block draws exactly as many measures as the written one, and that
-// is what keeps the layout from moving when a section boundary passes.
-// Measured 2026-08-24: all 26 songs.js WORDS and all 47 kernel.js OPKEYS
-// return a phrase the same length as the one they were given — kernel.js:128
-// says so in prose, "the operators stay closed" — so a WORD can never change
-// how many staves or how many editors are on the page. The two halves can
-// only disagree when the sounding section reads a DIFFERENT CELL under a
-// per-section material map, and then the surplus is a full-bar rest, which is
-// what a copyist writes. The caption says how many bars are really there.
-const REST16 = { deg: new Array(16).fill(0), oct: new Array(16).fill(0),
-                 vel: new Array(16).fill(0), gate: new Array(16).fill(0) };
-const barOrRest = (ph, m) =>
-  ((ph && ph.gate ? ph.gate.length : 0) >= (m + 1) * 16 ? barSlice(ph, m) : REST16);
+// (`REST16` and `barOrRest(ph, m)` stood here — "a measure of the composed
+//  phrase, or a bar's rest where it ran out", which is what kept the composed
+//  block exactly as many measures tall as the written one whatever the
+//  sounding section read. There is no composed block any more (see THE MOTIF AS
+//  SHEET MUSIC, ONCE) and nothing else ever called them. The MEASUREMENT they
+//  were built on is worth keeping and is not lost with the code: all 26
+//  songs.js WORDS and all 47 kernel.js OPKEYS return a phrase the same length
+//  as the one they were given — kernel.js:128 says so in prose, "the operators
+//  stay closed" — so a development word can never change how many staves or how
+//  many editors are on this page.)
 
 /* ---------- WHICH SECTION YOU ARE WRITING — AND WHERE IT IS SAID NOW ----
    `#secs`, the tab strip that stood here, is DELETED. It was built exactly
@@ -1938,15 +2161,19 @@ function forkRow(parent, name, readers) {
    one you are writing, which is what makes rebuilding this one <section> a
    complete answer rather than a shortcut.
 
-   THE MOTIF BLOCKS ARE ONLY HALF GOVERNED BY `viewSec` — a cell is the same
-   cell in every section, so its written staff, its editor and its "read by"
-   line are section-independent, and only the composed staves over it change
-   when you tap another section. They are redrawn with the rest anyway, because
-   the maker registry (`hookCells`) is cleared at the top of this function and
-   the playhead reads it: rebuilding half an axis and leaving the other half
-   pointing at a stale registry is the bug that ordering note is about. It
-   costs what it costs, and `drawMaterial` pins the page on `#secs`, which now
-   sits ABOVE everything that is rebuilt and therefore cannot move.
+   A MOTIF BLOCK IS BARELY GOVERNED BY `viewSec` AT ALL NOW, and this is what
+   is left of a paragraph that said it was governed by half. It read: "a cell is
+   the same cell in every section, so its written staff, its editor and its
+   'read by' line are section-independent, and only the composed staves over it
+   change when you tap another section." The composed staves are gone
+   (2026-08-25), so the ONE thing the section still decides here is which
+   voice's register the written staff is engraved in — `motifs()`'s `lead`, and
+   nothing else. It is redrawn with the rest anyway, because the maker registry
+   (`hookCells`) and the kit's (`stepCell`) are cleared at the top of this
+   function and the playhead reads both: rebuilding half an axis and leaving
+   the other half pointing at a stale registry is the bug that ordering note is
+   about. `drawMaterial` pins the page on the axis's own <section>, whose top is
+   above everything this function replaces.
 
    WHY THERE IS A SECOND ENTRY POINT AT ALL, with the number. A full `draw()`
    is the simple, correct answer and it keeps this file's "one owner of
@@ -1965,9 +2192,11 @@ function forkRow(parent, name, readers) {
 function materialAxis(ax) {
   // A CONSTANT HEADING. This was a ternary — "the voices, as the verse plays
   // them" / "the voices, as written" — and it changed ON THE CLOCK, inside
-  // #app, where nothing may (2026-08-24). Both facts it carried are said
-  // better by the per-voice caption on the composed block, which knows the
-  // word as well as the section. One owner per fact.
+  // #app, where nothing may (2026-08-24). Both facts it carried are said by the
+  // SCORE's caption at the top of this axis, which names the section, the two
+  // bars and the tense; they were said by the per-voice composed caption until
+  // that staff was deleted on 2026-08-25. One owner per fact, and the owner
+  // moved once.
   //
   // ...AND THERE IS ONE HEADING OVER THE MOTIFS, NOT TWO. For a few hours this
   // axis read "the motifs" — a stack of bare step grids — and then "the
@@ -1983,6 +2212,15 @@ function materialAxis(ax) {
   // the maker registry is cleared HERE, ahead of everything that draws into it
   hookCells = [];
   gridSeq = 0;
+  // ...AND THE KIT'S, WHICH USED TO BE CLEARED BY `drumGrid` ITSELF because
+  // `drumGrid` ran on every pass. It does not any more — it runs only when the
+  // open motif IS a drum cell (2026-08-25, "make it part of motifs") — so a
+  // record whose kit tab you have just left would leave sixteen detached <th>s
+  // in the registry and the playhead would spend every beat writing into
+  // elements that are not on the page. That is the exact bug `drumGrid`'s own
+  // guard note describes, arriving from the other direction; it is cleared
+  // where every other registry is cleared, once, before anything draws.
+  stepCell = [];
   // THE SCORE COMES FIRST, because Paul said where it goes: "add a section
   // ABOVE motifs which is the current playing music". It is in MATERIAL rather
   // than in an axis of its own because what it draws is this axis's own stock
@@ -1990,17 +2228,20 @@ function materialAxis(ax) {
   // position on the page, not a new place in the eight.
   //
   // OUTSIDE `#staff`, and that is load-bearing: test/motif-frozen.js A2 counts
-  // `#staff svg` against the composed and written measures and asserts the
-  // three add up. The score is a third kind of staff and belongs to neither
-  // side of that sum, so it draws in its own element and the gate's arithmetic
-  // stays true.
+  // `#staff svg` against the measures this axis says it drew. The score is a
+  // different kind of staff and belongs to neither side of that sum, so it
+  // draws in its own element and the gate's arithmetic stays true. (The sum was
+  // composed + written; it is one written staff per measure now, and the gate
+  // needs the one-line edit named in this round's recipe.)
   scoreBlock(ax);
   heading(ax, "the motifs");
   // THE SECTION STRIP IS NOT HERE ANY MORE, AND THAT IS THE ROUND OF
   // 2026-08-25. It stood exactly here and its own note argued the position
   // well — "which composed staves a motif shows is decided by the section you
   // are WRITING, so the control that moves that belongs over them" — but the
-  // form list moves that now, and one fact may have one owner. See the
+  // form list moves that now, and one fact may have one owner. (Later the same
+  // day the composed staves went too, so the strip has lost even the argument
+  // it lost with.) See the
   // tombstone over `forkRow` for Paul's sentence and what it cost. What is
   // left in this axis is the motifs and their editors, which is all Paul ever
   // asked to find here ("The motifs should stay with their editors!!!").
@@ -2016,9 +2257,10 @@ function materialAxis(ax) {
   // atSec)` is what made the editable half follow the playhead, and it was the
   // whole of the confusion Paul named. The written staff under each motif is
   // engraved from `phrase(name)` — the cell itself, with no section and no
-  // voice in it — so only the composed staves over it can move at all, and
-  // even they are pinned to the section you are writing rather than the
-  // sounding one, so a boundary can never shuffle a block.
+  // voice in it — so a boundary cannot move a note in it; since 2026-08-25 it
+  // cannot move anything in this axis at all, because there is no composed
+  // staff left for it to move and `editSec()` decides only which register the
+  // staff is drawn in.
   //
   // TWO PARENTS, AND `#staff` MEANS WHAT ITS NAME SAYS. The staves go in `sys`
   // and the chosen motif's EDITOR goes straight after it in the axis itself.
@@ -2036,8 +2278,13 @@ function materialAxis(ax) {
   // unchanged — staff, then the grid that writes it, adjacent and in that
   // order — and never was one about DOM nesting.
   motifs(sys, ax, editSec());
-  heading(ax, "the kit");
-  drumGrid(ax);
+  // (`heading(ax, "the kit"); drumGrid(ax);` stood here — the drum grid as a
+  //  block of its own at the foot of the axis. Paul, 2026-08-25: "don't just
+  //  drop drum pattern in below; make it part of motifs." It is a motif block
+  //  now, with a tab in the same strip, and `motifs()` calls `drumGrid` when
+  //  the open tab is a drum cell. Nothing about the grid itself changed; what
+  //  changed is that the page stopped saying, with its own layout, that a beat
+  //  is a lesser kind of material than a tune.)
 }
 function drawMaterial() {
   const ax = $("ax-material");
@@ -2050,8 +2297,11 @@ function drawMaterial() {
   // `.nu-ax > h2` sticks with, and re-making it mid-scroll would flicker the
   // one band that is supposed to stay put.
   const h2 = ax.querySelector("h2");
+  // …and this axis keeps ITS height while it is rebuilt, for the reason draw()
+  // does (holdHeight): emptying it is what a scroll anchor reacts to.
+  const release = holdHeight(ax);
   ax.textContent = "";
-  ax.append(h2 || el("h2", "3 · Material"));
+  ax.append(h2 || el("h2", "3 · Sheet music"));
   // THE STAVES STILL ARRIVE ON A PROMISE, so the axis is still shorter than it
   // is about to be, and the page must not jump when they land. This pinned
   // `#secs` — the strip you had just touched, which sat above everything being
@@ -2064,7 +2314,7 @@ function drawMaterial() {
   const anchor = $(anchorId);
   anchorWant = (anchorOff || !anchor) ? null : anchor.getBoundingClientRect().top;
   anchorAt = Date.now();
-  materialAxis(ax);
+  try { materialAxis(ax); } finally { release(); }
   putPanes();
   restoreFocus(ax, wasKey, wasPicker);
   restoreAnchor();
@@ -2090,17 +2340,30 @@ function drawMaterial() {
    the motif" — because the editable half had walked out from under the
    composed half.
 
-   So: one contiguous run per CELL, and the three things that show and edit it
-   are adjacent, in this order, top to bottom —
+   So: one contiguous run per CELL, and the things that show and edit it are
+   adjacent, in this order, top to bottom —
 
-     the composed staff   what the engine is actually playing: this cell
-                          through the section's development word, in the
-                          reading voice's own register, captioned with which
-                          section and in what tense. `[data-live="played"]`,
-                          the only thing in this axis the clock may write.
-     the editable staff   "as written" — the cell itself, no word applied.
-     the editor           the step grid, the designing buttons, "+ measure",
-                          and the way out of the sharing.
+     the name             "psalm — read by cantor, schola".
+     the notation         "as written": the cell itself, one staff per measure,
+                          no section, no voice and no word in it. For a DRUM
+                          cell there is no staff, because the sixteen-row grid
+                          IS the notation and the editor at once.
+     the editor           the step grid or the lane grid, the two rows of
+                          designing icons, "+ measure", and the way out of the
+                          sharing.
+
+   THERE WAS A COMPOSED STAFF AT THE TOP OF THAT LIST FOR ONE DAY and it is
+   written out rather than dropped, because it was asked for and then unasked
+   for by name. It read: "the composed staff — what the engine is actually
+   playing: this cell through the section's development word, in the reading
+   voice's own register, captioned with which section and in what tense.
+   `[data-live="played"]`, the only thing in this axis the clock may write."
+   Paul, 2026-08-24: "show the fully composed motif ABOVE the editable version
+   of the motif." Paul, 2026-08-25: "you don't need to show me the interpreted
+   notation for a motif, only the pure representation, because now I have the
+   sheet music." Between the two, the SCORE landed at the top of this axis and
+   made it redundant — see THE MOTIF AS SHEET MUSIC, ONCE for the whole
+   argument. There is now nothing in this axis the clock may write at all.
 
    WHERE THE BLOCK LIVES, which is the judgement this round asked for: in
    MATERIAL. That axis means "the record's stock of tunes", and a tune is what
@@ -2111,31 +2374,31 @@ function drawMaterial() {
    reads per section. A motif is not a player's property; the NAMING is, and
    the naming is in the band.
 
-   MORE THAN ONE COMPOSED STAFF OVER ONE EDITABLE ONE, and it is the shape a
-   fugue wants. Two voices reading one subject get a composed staff each —
-   stacked, each with its voice's name over it and engraved in that voice's own
-   register — above the single written staff and the single editor they share.
-   Read downward it says: here is what the cantor makes of it, here is what the
-   schola makes of it, here is the tune itself, here is where you change it.
-   That IS the sharing. The alternative is a block per voice, which is what
-   this page did until this morning: it drew one tune twice with an editor
-   under each, and that is what made a song-level bank look per-voice.
+   ONE TUNE, ONE EDITOR, HOWEVER MANY VOICES READ IT — and that is what the
+   stack of composed staves was for. Two voices reading one subject used to get
+   a composed staff each, stacked over the single written staff and the single
+   editor they share, so that read downward the block said: here is what the
+   cantor makes of it, here is what the schola makes of it, here is the tune
+   itself, here is where you change it. The SHARING is still the point and it is
+   still on the page — "read by cantor, schola" at the top of the block, and a
+   `give <voice> its own copy` button per reader at the foot of it — but what
+   each voice MAKES of the tune is the score's job now, where the two are
+   barred together and you can read the counterpoint instead of inferring it
+   from two stacked staves. The alternative this rejects is unchanged and is
+   still wrong: a block per voice, which drew one tune twice with an editor
+   under each, and made a song-level bank look per-voice.
 
-   WHICH BLOCK A VOICE'S COMPOSED STAFF SITS IN IS DECIDED BY THE SECTION YOU
-   ARE WRITING, never by the one that is sounding. A voice may read `psalm` in
-   the verses and `neume` in the tag, so membership is a moving fact — and a
-   staff that MOVED FROM ONE BLOCK TO ANOTHER when a boundary went past would
-   be the editing interface changing on the clock, which is the whole
-   complaint. Membership is pinned to `editSec()`; when the sounding section
-   reads a different cell the staff stays exactly where it is and its caption
-   says so out loud ("as played in the tag on neume"), which `playedCaption`
-   has done since this morning and needed no change for this.
-
-   A MOTIF NOBODY PLAYS IN THE SECTION YOU ARE WRITING STILL GETS ITS COMPOSED
-   STAFF — a bar of rests, captioned "nobody plays neume in head 1". Same
-   treatment as a voice whose word is `out` (see playedCaption on silence), for
-   the same reason: dropping it would make a motif's block change shape from
-   section to section, and the page has one rule about that.
+   TWO PARAGRAPHS WENT WITH THE COMPOSED HALF and are recorded because both
+   answered real objections. "WHICH BLOCK A VOICE'S COMPOSED STAFF SITS IN IS
+   DECIDED BY THE SECTION YOU ARE WRITING, never by the one that is sounding" —
+   membership was a moving fact, so a staff could otherwise have jumped blocks
+   at a boundary. And "A MOTIF NOBODY PLAYS IN THE SECTION YOU ARE WRITING
+   STILL GETS ITS COMPOSED STAFF — a bar of rests, captioned 'nobody plays
+   neume in head 1'" — because dropping it would have changed the block's shape
+   from section to section. Neither can happen any more: nothing in a motif
+   block depends on which section is sounding, and the one thing that depends
+   on the section you are WRITING is which reader's register the staff is drawn
+   in, which cannot move an element.
 
    THE WRITTEN PHRASE HAS NO VOICE IN IT AT ALL. It was `writtenPhrase(voice,
    si)` — `phrase(materialAt(voice, SECID(si)))`, a song-level fact reached
@@ -2222,41 +2485,16 @@ function staffRoom(host, cell, m) {
   if (box) host.style.minHeight = box + "px";
 }
 
-// A LIVE BLOCK: a caption and `bars` empty engraving hosts, in ONE contiguous
-// [data-live] element. Never interleaved bar by bar with the written ones —
-// Paul said the fully composed MOTIF, and a motif is a whole thing you read
-// the phrase shape of in one line of sight. One element per block is also what
-// lets the frozen half be defined by a single DOM operation
-// (window.__eightFrozen, at the foot of this file), with no regex and no
-// exclusion the gate invented for itself.
-//
-// IT IS HERE WHETHER THE TRANSPORT RUNS OR NOT. A staff that appears on play
-// pushes every editor below it down by 89px (measured at 390px), which is
-// precisely "the editing interface changed and it was confusing"; and
-// reserving a blank box costs the same pixels to show you nothing. Stopped, it
-// engraves the section you are writing through that section's own word — so
-// you can see what a word will do before you commit to it.
-// `cell` IS HERE ONLY SO THE HOSTS CAN BE GIVEN THEIR ROOM (staffRoom, above).
-// The block itself does not care which motif it is showing — the caption says
-// that and the clock writes it — so this argument is passed and used once.
-function liveBlock(parent, bars, twins, each, cell) {
-  const live = el("div");
-  live.dataset.live = "played";
-  const cap = el("p");
-  cap.className = "nu-hint";
-  live.append(cap);
-  const hosts = [];
-  for (let m = 0; m < bars; m++) {
-    const host = el("div");
-    staffRoom(host, cell, m);       // the room this measure took last redraw
-    const wrap = el("p"); wrap.append(host); live.append(wrap);
-    hosts.push(host);
-    twins[m].push(host);            // …and this measure's composed twin, for the reserve
-    if (each) each(host, m);
-  }
-  parent.append(live);
-  return { cap, hosts };
-}
+// (`liveBlock(parent, bars, twins, each, cell)` stood here — "a caption and
+//  `bars` empty engraving hosts, in ONE contiguous [data-live] element". It was
+//  the composed half's whole construction and it went with it on 2026-08-25.
+//  Two things it argued are still true of this axis and are said here so they
+//  are not re-discovered: a live element is ONE element per block, never
+//  interleaved bar by bar with a still one, because that is what lets the
+//  frozen half be defined by a single DOM operation (window.__eightFrozen);
+//  and a staff that APPEARS on play pushes every editor below it down by 89px
+//  at 390px, which is why the score block at the top of this axis is on the
+//  page whether the transport runs or not.)
 // ONE ENGRAVING, ONCE, AND NO REGISTRY. Both callers below draw a staff that
 // nothing will ever repaint: the written measures and an unread motif's bar of
 // rests. There is no `cur.abc !== eng.abc` guard because there is nothing to
@@ -2323,13 +2561,27 @@ function reEngraveWritten(name) {
    the bank changed underneath you, and `data-k="motiftab-3"` would restore focus
    to a button that is now a different button. A name does neither. */
 let motifTab = null;
-// THE MOTIFS, WHICH IS NOT THE SAME LIST AS THE CELLS. A drum cell is a lane
-// grid with its own editor at the foot of this axis (drumGrid) and hookGrid
-// refuses one; it has never had a block here and must not get a tab.
-const motifNames = () => cellNames().filter((n) => {
-  const H = DOC.material.cells[n];
-  return H && H.kind !== "drum";
-});
+// THE MOTIFS, WHICH IS NOW EXACTLY THE CELLS. This said "WHICH IS NOT THE SAME
+// LIST AS THE CELLS. A drum cell is a lane grid with its own editor at the foot
+// of this axis (drumGrid) and hookGrid refuses one; it has never had a block
+// here and must not get a tab." The second sentence was a fact about where the
+// kit grid happened to be drawn, dressed up as a fact about what a motif IS,
+// and Paul overruled it on 2026-08-25: *"motifs: give me a way to add a motif
+// and a way to add a drum pattern. don't just drop drum pattern in below; make
+// it part of motifs."* A beat and a tune are the same kind of thing in the
+// document — both are named entries in `DOC.material.cells`, both are reached
+// through `materialAt`, both belong to the record and not to a player — so they
+// are the same kind of thing in the strip. What is still true is the clause
+// about hookGrid: it refuses a drum cell, and `motifs()` sends one to
+// `drumGrid` instead. One list, two editors.
+const motifNames = () => cellNames();
+// ...AND WHICH CELLS A VOICE OF THIS KIND MAY READ, which is the honest half of
+// the same idea. A drum cell is LANES and a line cell is DEGREES: `toPhrase`
+// hands back a blank for a drum cell ("a grid is not a line", document.js:230)
+// and `document.js:133` reads `.lanes` off the drummer's cell and nothing else.
+// So the offer is filtered by kind rather than by hope — see avail.js
+// `cellsFor`, which is where the same rule is stated for the menus.
+const drumCells = () => cellNames().filter((n) => DOC.material.cells[n].kind === "drum");
 /* THE STRIP, BUILT LIKE THE BAND'S so the two surfaces are the same object and
    a person who has learned one has learned the other: a <p> of buttons, one per
    motif, `aria-pressed` saying which, and the chosen one wearing the same
@@ -2366,7 +2618,64 @@ function motifTabRow(parent) {
     b.addEventListener("click", () => { motifTab = name; drawMaterial(); });
     bar.append(b, document.createTextNode(" "));
   }
+  /* ---------- AND TWO WAYS TO GROW THE BANK ------------------------------
+     Paul, 2026-08-25: *"motifs: give me a way to add a motif and a way to add a
+     drum pattern."*
+
+     THIS IS A TOMBSTONE ANSWERED. `hookGrid`'s own note has said since
+     2026-08-24: *"WHAT WENT WITH IT, NAMED SO IT CAN BE PUT BACK ON PURPOSE:
+     the `+ cell` button. Adding a cell that no voice reads yet has no home on
+     the page now — the only way to grow the material is `give <voice> its own
+     copy` on a shared cell."* It has a home now, and it is this strip: a motif
+     is a name you tap, so the place to make a new one is beside the names.
+
+     IN THE STRIP AND NOT UNDER IT, exactly like the band's `+ line` / `+ bass`
+     / `+ drums`, which live in `#tabs` beside the voice tabs. The two surfaces
+     are deliberately the same object (see the note over this function), and a
+     person who has learned "the add buttons are at the end of the strip" has
+     learned both.
+
+     THE NEW CELL IS A TABLE, NOT A GENERATION. `NEWMOTIF` and `DRUMGRID` are
+     literals — determinism, tables not generation — so two people who tap this
+     button get the same tune and the same beat, forever. A cell of sixteen
+     rests would have been the other candidate and it is refused: every degree
+     slider under it is disabled until you say "note" on its step, so the first
+     thing a new motif would do is refuse to be edited.
+
+     ...AND IT OPENS THE TAB IT MADE, which is the half that makes it a
+     gesture rather than an announcement: `motifTab = n` before the redraw, so
+     the block you are looking at afterwards is the one you just created. */
+  for (const [label, kind] of [["+ motif", "line"], ["+ drum pattern", "drum"]]) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.dataset.k = kind === "drum" ? "adddrumcell" : "addcell";
+    b.append(el("span", label));
+    b.addEventListener("click", () => { motifTab = addCell(kind); push(); draw(); });
+    bar.append(b, document.createTextNode(" "));
+  }
   parent.append(bar);
+}
+/* A NEW MOTIF, AS A TABLE. Four quarter notes on the tonic and twelve rests —
+   the plainest thing that is still a tune you can hear, edit and transform, and
+   the same shape a metronome has. `DRUMGRID` (three lanes, four on the floor)
+   is the drum half and it is the very literal `addVoice("drums")` already hires
+   a kit with, so a beat added here and a beat added by hiring a drummer are the
+   same sixteen steps and not two opinions. */
+const NEWMOTIF = { deg:  [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
+                   vel:  [5,0,0,0, 5,0,0,0, 5,0,0,0, 5,0,0,0],
+                   play: ["n","r","r","r", "n","r","r","r",
+                          "n","r","r","r", "n","r","r","r"] };
+// A NAME IS AN IDENTITY (the same sentence `freeName` makes about voices), so a
+// cell is never given one the bank already holds — a second `beat` would make
+// `cellOf` answer for whichever came first and a fork would overwrite a tune.
+function addCell(kind) {
+  const base = kind === "drum" ? "beat" : "motif";
+  let n = base, i = 1;
+  while (DOC.material.cells[n]) n = base + (++i);
+  DOC.material.cells[n] = kind === "drum"
+    ? { kind: "drum", lanes: JSON.parse(JSON.stringify(DRUMGRID)) }
+    : JSON.parse(JSON.stringify(NEWMOTIF));
+  return n;
 }
 
 // (`staves(parent, si)` stood here — one block per VOICE, and the makers in a
@@ -2376,29 +2685,36 @@ function motifTabRow(parent) {
 //
 // `deck` IS WHERE THE EDITOR GOES and `parent` is where the staves go; see the
 // two-parents note in materialAxis for why they are different elements.
+//
+// `si` IS THE SECTION YOU ARE WRITING and it is down to ONE reader now: which
+// voice's register the written staff is engraved in. Everything else it used to
+// decide — which composed staves this block showed, and what their captions
+// said — went with the composed half on 2026-08-25. A motif block is a
+// song-level fact again, which is what it always was in the document.
+//
+// A DRUM CELL IS A MOTIF TOO (Paul, 2026-08-25: "don't just drop drum pattern
+// in below; make it part of motifs"). The kit grid was a block of its own at
+// the foot of this axis, under its own heading, which said with the page's
+// layout that a beat is a different KIND of thing from a tune. It is not: both
+// are entries in `DOC.material.cells`, both are named, both are read by a voice
+// through `materialAt`, and both are the record's and not a player's. So a drum
+// cell gets a tab in the same strip and a block in the same run — the same
+// name line, the same "read by", the same fork buttons — and the only thing
+// that differs is which editor goes under it, because lanes and degrees are
+// genuinely different data. `drumGrid` draws one and `hookGrid` the other.
 function motifs(parent, deck, si) {
-  played.clear();
-  playedVoice.clear();
   written.clear();
   staffBoxKeep();       // a staff engraved for a phone is not a laptop's room
-  const reserve = [];
-  // (`const g = genreFor(si)` stood here, captioned "one compile for the whole
-  //  pass". It stopped having a reader this morning, when the composed
-  //  engraving moved out to repaintPlayed() — which compiles the SOUNDING
-  //  section's genre, not this one's, and is the only place that needs one.
-  //  Left in, it was a whole genre compiled per redraw for nobody.)
   const lines = LINES();
   let firstBlock = true;
   // ONE BLOCK, THE ONE THE STRIP IS ON. The loop is kept rather than replaced
-  // by a single lookup because everything inside it — the reserve list, the
-  // registries, `firstBlock` — is written to be run any number of times, and a
-  // record whose bank is empty must draw nothing rather than throw.
-  // motifTabRow() has already chosen; this only obeys.
+  // by a single lookup because everything inside it is written to be run any
+  // number of times, and a record whose bank is empty must draw nothing rather
+  // than throw. motifTabRow() has already chosen; this only obeys.
   for (const name of motifNames().filter((n) => n === motifTab)) {
     const H = DOC.material.cells[name];
-    // DRUM CELLS ARE NOT MOTIFS HERE. The kit has its own grid at the foot of
-    // this axis, and hookGrid refuses a drum cell anyway.
-    if (!H || H.kind === "drum") continue;
+    if (!H) continue;
+    const isDrum = H.kind === "drum";
     // WHO READS IT, ACROSS THE WHOLE RECORD — the one line the restructure
     // added that was simply right, kept verbatim. `usesCell` asks about the
     // record and not about this section on purpose: a voice that reads `psalm`
@@ -2413,58 +2729,32 @@ function motifs(parent, deck, si) {
     firstBlock = false;
     parent.append(label);
 
+    if (isDrum) {
+      // A GRID IS ITS OWN NOTATION. There is no staff over a drum cell and
+      // there never was one: `toPhrase` returns a blank for a drum cell by
+      // design ("a grid is not a line", document.js:230) and abcjs would be
+      // handed sixteen zeros. The sixteen-row table IS the picture and the
+      // editor at once, which is the one place on this page where those two
+      // are honestly the same object.
+      drumGrid(deck, name);
+      if (readers.length > 1) forkRow(deck, name, readers);
+      continue;
+    }
+
     const ph = phrase(name);
     const bars = Math.max(1, Math.round(ph.deg.length / 16));
-    const twins = [];                       // measure -> every composed host over it
-    for (let m = 0; m < bars; m++) twins.push([]);
-    // WHO IS PLAYING IT IN THE SECTION YOU ARE WRITING (see the header note on
-    // membership). Every line voice reads exactly one cell per section, so
-    // every line voice appears in exactly one block and none is lost.
-    const here = lines.filter((v) => cellAt(v, si) === name);
-    // …and the register the written staff is engraved in. The first reader's,
-    // because a staff needs a clef and a cell does not have one; when two
-    // voices in different registers share a cell the composed staves show both
-    // and the written one shows the leader's. `engOpts` tolerates no chair at
-    // all, which is what an unread motif has.
-    const lead = here[0] || VOICE(readers[0]) || null;
+    // THE REGISTER THE STAFF IS ENGRAVED IN, and it is the only thing left in
+    // this block that knows what a voice is. A staff needs a clef and a cell
+    // does not have one, so it takes the register of whoever is reading this
+    // cell in the section you are writing, and failing that of the first reader
+    // anywhere in the record. `engOpts` tolerates no chair at all, which is
+    // what a motif nobody reads has.
+    const lead = lines.filter((v) => cellAt(v, si) === name)[0] ||
+                 VOICE(readers[0]) || null;
     const opts = engOpts(lead && lead.cast);
 
-    for (const voice of here) {
-      // THE IDENTITY LINE, AND IT IS FROZEN. It used to carry four facts —
-      // who, which cell, who else, which bar — and two of them are the block's
-      // now, said once at the top instead of once per voice. What is left is
-      // exactly what does NOT change when a section boundary goes past.
-      parent.append(el("p", voice.name +
-        (voice.cast.entry ? " — from bar " + (voice.cast.entry + 1) : "")));
-      const B = liveBlock(parent, bars, twins, (host, m) => {
-        // registered EMPTY: repaintPlayed() below fills every one of them from
-        // the same pass that will keep them up to date afterwards, so there is
-        // one engraving path for the composed half and not a boot copy beside it
-        played.set(voice.name + "#" + m,
-          { host, glyphs: [], notes: [], abc: "", bar: m, bars,
-            voice: voice.name, lit: [] });
-      }, name);
-      reserve.push({ cap: B.cap, voice, wcell: name, wbars: bars });
-      playedVoice.set(voice.name, { cap: B.cap, bars, cell: name });
-    }
-    if (!here.length) {
-      // NOBODY PLAYS THIS ONE HERE, so the composed staff is a bar of rests —
-      // the same thing the page draws for a voice whose word is `out`, and for
-      // the same reason. Drawn once and never repainted: repaintPlayed() walks
-      // LINES(), and there is no voice in this entry to walk to.
-      const B = liveBlock(parent, bars, twins, null, name);
-      B.cap.textContent = "nobody plays " + name + " in " + secName(si);
-      // …and the caption is registered under a key that is NOT a voice name.
-      // `__eightCaptions` is how a gate counts one caption per live block, and
-      // a live block with no caption in that list would read as a block the
-      // page forgot to caption. The clock never reaches it, which is exactly
-      // this entry's status: live by shape, still by fact.
-      playedVoice.set("·" + name, { cap: B.cap, bars, cell: name });
-      for (let m = 0; m < bars; m++) engrave(B.hosts[m], REST16, opts);
-    }
-
-    // THE EDITABLE HALF. Its label is a constant and it is outside the live
-    // block: this staff says one thing and says it always.
+    // THE CELL AS WRITTEN, AND NOW IT IS THE ONLY STAFF IN THE BLOCK. Its label
+    // is a constant: this staff says one thing and says it always.
     const wl = el("p", "as written");
     wl.className = "nu-hint";
     parent.append(wl);
@@ -2476,31 +2766,32 @@ function motifs(parent, deck, si) {
       const host = el("div");
       staffRoom(host, name, m);         // …and the written staff's own room
       const wrap = el("p"); wrap.append(host); parent.append(wrap);
-      const mine = twins[m];
       const then = () => {
         restoreAnchor();                 // the page just grew by one staff
-        // ...AND EVERY COMPOSED MEASURE ABOVE IT GETS EXACTLY THIS MUCH ROOM.
-        // Measured 2026-08-24 at 390px: a bar of notes engraves 108px tall and
-        // a bar of RESTS engraves 89px, so a voice that is `out` in one section
-        // and playing in the next moved every editor below it by 19px when the
-        // boundary went past — the frozen half was identical and had still
-        // changed position, which is half of what Paul complained about. The
-        // room is the WRITTEN measure's own, which is the honest reserve rather
-        // than a number typed here: every development word preserves phrase
-        // length (measured), so the two staves are the same music and the same
-        // bars. `min-height`, not `height`, because a composed measure that
-        // somehow needs MORE room — a word that adds a ledger line — must be
-        // readable rather than clipped; that case grows the page once and the
-        // gate names it.
+        // ...AND THE NEXT REDRAW STARTS AT THIS HEIGHT. Paul, 2026-08-25: "When
+        // I click tabs the page jumps around. It's endemic." abcjs engraves on a
+        // PROMISE, so at the instant draw() returns every staff host is an empty
+        // div and the page is short by one measure per staff; the staves then
+        // land, the page grows under the viewport, and the browser's scroll
+        // anchoring pushes the window down by exactly that growth (measured:
+        // ~95px per staff, 764px at ten voices). A measure that has been
+        // engraved once says how tall it was, and `staffRoom` above gives the
+        // host exactly that much room BEFORE abcjs is asked for anything.
         //
         // THE `<svg>` AND NOT THE HOST (staffBox, above): the host may already
         // be carrying the box this measure engraved to on the last redraw, and
         // measuring it back would ratchet the reserve up a little every time.
+        // (This paragraph also gave every COMPOSED twin above this measure the
+        //  same room — `for (const t of mine) if (!t.style.minHeight)` — with
+        //  the measurement that forced it: a bar of notes engraves 108px and a
+        //  bar of rests 89px, so a voice that was `out` in one section moved
+        //  every editor below it by 19px at a boundary. There are no twins any
+        //  more, so what is left is the reserve for the redraw. The measurement
+        //  is kept because it is the reason the reserve is measured off the
+        //  <svg> at all.)
         const px = Math.ceil(((host.querySelector("svg") || host)
                               .getBoundingClientRect()).height);
         staffBox.set(staffKey(name, m), px);  // …so the NEXT redraw starts here
-        const h = px + "px";
-        for (const t of mine) if (!t.style.minHeight) t.style.minHeight = h;
       };
       wreg.hosts.push({ host, then });
       engrave(host, barSlice(ph, m), opts, then);
@@ -2528,162 +2819,41 @@ function motifs(parent, deck, si) {
     hookGrid(deck, name, hookCells, null, null, true);
     if (readers.length > 1) forkRow(deck, name, readers);
   }
-  reserveCaption(reserve, si);
-  repaintPlayed();
 }
 
-/* ---------- THE CAPTION MAY NOT CHANGE HEIGHT EITHER --------------------
-   The caption is a SENTENCE, it is at the top of the live block, and a
-   sentence that wraps to a second line moves every editor under it. Measured
-   at 390px on 2026-08-24: "as head 1 plays it: as written" is 30 characters
-   and "as played in verse 3: in retrograde — you are writing head 1" is 59,
-   which on the shipped chant just fits one line and on the next record will
-   not. A caption that jumps a line at a section boundary is the same bug as a
-   staff that changes height, one line further up.
+/* (`reserveCaption`, `playedCaption` and `repaintPlayed` stood here — the
+   composed half's caption machinery and its repaint path — and all three went
+   on 2026-08-25 with the staves they served ("you don't need to show me the
+   interpreted notation for a motif, only the pure representation, because now
+   I have the sheet music"). THREE THINGS THEY ESTABLISHED ARE STILL LAW HERE
+   and are kept rather than lost with the code, because the score at the top of
+   this axis obeys all three and one surface up is where they now live:
 
-   So each caption is set, ONCE, to the longest thing it could ever say about
-   this record — every section, both tenses — and the height that costs is
-   kept. The number is MEASURED off the page rather than typed here, which is
-   why it is not a `nu.css` rule: it is a fact about this record's own words at
-   this width, and no stylesheet can know it.
+     A CAPTION MAY NOT CHANGE HEIGHT. A sentence at the top of a live block
+     that wraps to a second line moves every editor under it. Measured at 390px
+     on 2026-08-24: "as head 1 plays it: as written" is 30 characters and "as
+     played in verse 3: in retrograde — you are writing head 1" is 59. So a
+     caption is set ONCE to the longest thing it could ever say about this
+     record, measured, and reserved — one write pass, then one read pass, never
+     interleaved, because reading a height forces layout. `reserveScoreCaption`
+     is four lines of exactly this.
 
-   ONE WRITE PASS, THEN ONE READ PASS. Reading a height forces layout, and
-   interleaving the two would force one reflow per voice on a 17,000px page.
+     TENSE IS THE HONEST DIFFERENCE. Present stopped ("as it will play"), past
+     playing ("as played"): stopped, nothing is sounding and the picture is a
+     prediction; playing, it is a report. `scoreCaption` says it in the same
+     words.
 
-   `min-height` and not `height`: the longest sentence is a proxy for the
-   tallest one, and a caption that needs a third line must be readable rather
-   than clipped. */
-function reserveCaption(list, ei) {
-  if (!list.length) return;
-  const NS = DOC.form.sections.length, gs = [];
-  for (let i = 0; i < NS; i++) {
-    try { gs.push(genreFor(i)); } catch (err) { gs.push(null); }
-  }
-  for (const r of list) {
-    let longest = "";
-    for (let i = 0; i < NS; i++) {
-      if (!gs[i]) continue;
-      let ph;
-      try { ph = voicePhrase(r.voice, i, gs[i]); } catch (err) { continue; }
-      for (const asPlayed of [false, true]) {
-        const t = playedCaption(r.voice, i, ei, ph, r.wcell, r.wbars, asPlayed);
-        if (t.length > longest.length) longest = t;
-      }
-    }
-    r.cap.textContent = longest;
-  }
-  for (const r of list) r.h = Math.ceil(r.cap.getBoundingClientRect().height);
-  for (const r of list) {
-    if (r.h) r.cap.style.minHeight = r.h + "px";
-    r.cap.textContent = "";
-  }
-}
+     A PICTURE THAT DOES NOT SAY WHICH SECTION IT IS SHOWING IS WORSE THAN NO
+     PICTURE, because you can be writing the tag while the second verse sounds.
+     `scoreCaption`'s " - you are writing head 1" is that sentence.
 
-/* ---------- THE COMPOSED MOTIF SAYS WHERE IT CAME FROM -----------------
-   Two sections can now disagree — you can be writing the tag while the second
-   verse sounds — and a picture that does not say which one it is showing is
-   worse than no picture. PLAN.md Phase 4 named the register ("as played in
-   the drop: up a step") and nothing ever implemented it (zero git grep hits
-   on main or this branch); these are the wordings.
-
-   Present tense stopped ("as verse 3 plays it"), past tense playing ("as
-   played in verse 3"): stopped, nothing is sounding and the staff is a
-   prediction; playing, it is a report. The tense is the honest difference and
-   it costs nothing.
-
-   SILENCE IS DETECTED AS A FACT, NEVER AS A WORD. The test is the composed
-   phrase's own gates and never `word === "out"` — `out` is `[["drop",1]]`,
-   but so is any word that happens to close every gate, and a phrase is silent
-   or it is not regardless of what it is called. The silent staff is still
-   drawn, as a bar of rests: hiding it would shorten the page and move every
-   editor under it, which is the bug this whole round is about.
-
-   AND `cast.entry` IS NOT REPEATED HERE. The frozen identity line above the
-   block already says ", from bar 3", and entry is a fact about the record,
-   not about this section. One owner per fact. */
+   The CHANGE DETECTOR argument went with `repaintPlayed` too and is also still
+   in force one surface up: `toEngraving`/`toScore` is pure arithmetic over a
+   few small arrays and costs nothing, `renderAbc` is the expensive half, so
+   the ABC string is compared before the render is asked for. `repaintScore`
+   makes that comparison.) */
 const secName = (i) => { const s2 = DOC.form.sections[i];
   return s2 ? s2.role + " " + (i + 1) : "section " + (i + 1); };
-function playedCaption(voice, si, ei, ph, wcell, wbars, asPlayed) {
-  const scell = cellAt(voice, si), diff = scell !== wcell;
-  const n = (ph && ph.gate ? ph.gate.length : 0);
-  const sBars = Math.max(1, Math.round((n || 16) / 16));
-  // ...and when the cells disagree they can disagree about LENGTH, which the
-  // composed block absorbs as rests rather than as a change of height
-  const count = !diff || sBars === wbars ? ""
-    : sBars < wbars ? " (" + sBars + " of " + wbars + " bars, the rest silent)"
-                    : " (" + sBars + " bars, showing the first " + wbars + ")";
-  const there = secName(si) + (diff ? " on " + scell : "") + count;
-  const here = secName(ei) + (diff ? " on " + wcell : "");
-  const elsewhere = si === ei ? "" : " — you are writing " + here;
-  if (n && ph.gate.every((x) => !x))
-    return "the " + voice.name + " is out in " + there + elsewhere;
-  const w = wordAt(voice, si) || "as written";
-  return (asPlayed ? "as played in " + there + ": " + w
-                   : "as " + there + " plays it: " + w) + elsewhere;
-}
-
-/* ---------- REPAINTING THE COMPOSED HALF, AND ONLY IT -------------------
-   This replaces the two `draw()` calls that used to hang off the transport
-   feed (2026-08-24, Paul: "Don't change motifs visually or change the editing
-   interface. It's too confusing when it changes."). It writes in exactly two
-   places, both inside a [data-live="played"] block: a caption's text, and a
-   composed measure's engraving.
-
-   THE CHANGE DETECTOR IS THE ONE THIS FILE ALREADY HAD. `staves` used to
-   guard its promise with `cur.abc !== eng.abc`; here the same comparison
-   guards the RENDER. `toEngraving` is pure arithmetic over eight small arrays
-   and costs nothing; `renderAbc` is the expensive half. On a boundary where
-   consecutive sections carry the same word for a voice, that voice costs zero
-   abcjs renders — on the shipped chant a boundary costs at most two.
-
-   ONE `genreFor(si)` PER PASS and never one per voice, for the reason
-   `staves` gives: the page cannot engrave a development the engine is not
-   applying. */
-function repaintPlayed() {
-  if (!playedVoice.size) return;
-  const ei = editSec();
-  // WHAT IS SOUNDING, OR — STOPPED — WHAT YOU ARE WRITING. Those are the only
-  // two things this staff can honestly be about.
-  const si = playing && atSec >= 0 ? Math.min(atSec, DOC.form.sections.length - 1) : ei;
-  let g;
-  try { g = genreFor(si); } catch (err) { return; }
-  for (const voice of LINES()) {
-    const V = playedVoice.get(voice.name);
-    if (!V) continue;
-    let ph;
-    try { ph = voicePhrase(voice, si, g); } catch (err) { continue; }
-    const text = playedCaption(voice, si, ei, ph, V.cell, V.bars, playing);
-    if (V.cap.textContent !== text) V.cap.textContent = text;
-    for (let m = 0; m < V.bars; m++) {
-      const cur = played.get(voice.name + "#" + m);
-      if (!cur) continue;
-      let eng;
-      try { eng = toEngraving(barOrRest(ph, m), engOpts(voice.cast)); }
-      catch (err) { eng = null; }
-      if (!eng || eng.abc === cur.abc) continue;   // ← THE CHANGE DETECTOR
-      cur.abc = eng.abc; cur.notes = eng.notes; cur.glyphs = eng.glyphs;
-      cur.lit = [];                        // the elements are about to be gone
-      const host = cur.host, want = eng.abc;
-      loadStaffLib().then((A) => {
-        // `cur.abc !== want` is the promise race: a second boundary can land
-        // while abcjs is still being fetched, and the LAST engraving asked for
-        // is the one that is true.
-        if (!A || cur.abc !== want || !host.isConnected) return;
-        try { A.renderAbc(host, want, { responsive: "resize", add_classes: true,
-          staffwidth: Math.max(180, host.clientWidth - 8) }); }
-        catch (err) { return; }
-        engraves++;
-        // NO restoreAnchor() HERE, and that is deliberate. This path runs on
-        // the clock, and a scroll write on the clock is Paul's complaint in
-        // its most literal form — the page moving under a still thumb because
-        // a section changed. It has nothing to correct either: the composed
-        // block's measure count is fixed to the written one, so nothing above
-        // the fold grew.
-        if (atStep >= 0) lightStep(atStep);
-      }).catch(() => {});
-    }
-  }
-}
 
 /* ---------- THE HOOK AS A GRID -----------------------------------------
    The same sixteen columns as the kit, under the same count, so a step means
@@ -2823,7 +2993,145 @@ function designArt(d) {
   lay(d.art(TUNE), "nu-tf-is");         // where this button puts it
   return g;
 }
+/* ---------- ...AND THE SAME ROW FOR TIME ---------------------------------
+   Paul, 2026-08-25: *"just as there are icons for pitches create icons for
+   tempo operations and add them and make them work."*
+
+   WHAT THE KERNEL ACTUALLY HAS, established before a single icon was drawn,
+   because "make them work" is the load-bearing half of that sentence.
+   `kernel.js` OPKEYS is the alphabet and it names these time operators:
+   `gat2/gat4/gat8` (`only("gate", rotate(n))` — the RHYTHM moves and the
+   degrees stay), `gateflip` (`complement("gate")`), `dens2/3/4` (`fill(n)`),
+   `thin2/3/4` (`drop(n)`), `rep2..8` (`split(n)`) and `del2..8` (`del(n)`).
+   Seven icons, one per family, so the row is the same length as the pitch row
+   above it and every family is represented once.
+
+   WHAT IS NOT HERE, AND WHY THERE IS NO ICON FOR IT. Augmentation and
+   diminution — the two operations a musician asks for first — are NOT in that
+   list and cannot be assembled from it: no operator in `kernel.js` maps step i
+   to step 2i, and every operator in the family is CLOSED (kernel.js:132, "Both
+   re-cycle to the original length"), so nothing here can make a phrase last
+   twice as long. `split(2)` is the near miss and it is a different thing: it
+   subdivides a note that is already long, which is an arpeggiator, not
+   augmentation. Drawing an icon for augmentation and wiring it to `split`
+   would be a picture that lies about what the button does, which is the one
+   thing this row must not do. It is recorded as unavailable and it stays
+   recorded.
+
+   THE PICTURE IS THE OPERATOR ITSELF, and that is a departure from the pitch
+   row directly above, which keeps `art` and `op` deliberately separate ("If
+   the two ever disagree the picture is wrong, not the record"). The reason for
+   the separation there is that a contour drawn five blocks wide has to be
+   SIMPLIFIED to read at 32px — `spread` is drawn at 1.6 because a whole-number
+   scale puts two blocks off the top of the box. A rhythm has no such problem:
+   a gate vector IS a row of blocks, at one-to-one, so the honest drawing and
+   the true answer are the same eight numbers. `timeArt` therefore runs the
+   very operator the button runs, over a toy phrase, and draws what comes back.
+   A picture that cannot disagree with its button is better than a picture that
+   is checked against it.
+
+   THE TOY PHRASE is eight steps, five of them sounding, carrying the same
+   five-note contour `TUNE` gives the pitch row — so the two rows are visibly
+   the same little tune and the difference between them is visibly the RHYTHM
+   (Paul: "the same contour with its RHYTHM changed rather than its pitch").
+   The three silent steps carry a degree of their own, which is not decoration:
+   "a rest still carries a DEGREE — the deg vector has a value at every step,
+   gated or not — so filling does not invent notes, it uncovers ones the phrase
+   was already holding silent" (kernel.js:178). `twice as busy` uncovers one of
+   them, and the picture shows exactly that. */
+const TIMETUNE = { deg:  [-2, -2, 0, 1, 1, -1, -1, 1],
+                   gate: [ 1,  0, 1, 1, 0,  1,  0, 1] };
+const TIMES = [
+  // gateflip — the rhythm's own complement: every rest sounds and every note rests
+  { w: "off the beat",      mk: () => K.complement("gate") },
+  // gat2 / the same with a negative turn — the RHYTHM moves against the degrees,
+  // which is the one thing `only` exists to make expressible (kernel.js:122)
+  { w: "rhythm earlier",    mk: () => K.only("gate", K.rotate(2)) },
+  { w: "rhythm later",      mk: () => K.only("gate", K.rotate(-2)) },
+  { w: "twice as busy",     mk: () => K.fill(2) },     // dens2
+  { w: "half as busy",      mk: () => K.drop(2) },     // thin2
+  { w: "each note in two",  mk: () => K.split(2) },    // rep2
+  { w: "drop every fourth", mk: () => K.del(4) },      // del4
+];
+// EIGHT SLOTS IN THE SAME 32x26 BOX the pitch row uses, so the two rows are the
+// same size on glass and share `.nu-tf`. 1 + 7x3.9 + 3 = 31.3 of 32.
+const TART = { w: 32, h: 26, x0: 1, dx: 3.9, bw: 3, bh: 3.2, mid: 11.4, step: 3 };
+// A TOY PHRASE THE OPERATORS WILL ACCEPT. `split` reads `inc` and `stk` and
+// `del` moves every vector `mapv` knows about, so all eight are present — a
+// missing one is not a smaller phrase, it is a throw inside the picture.
+const timeToy = () => { const n = TIMETUNE.deg.length, z = () => zeros(n);
+  return { deg: TIMETUNE.deg.slice(), oct: z(), vel: z(), inc: z(), stk: z(),
+           gate: TIMETUNE.gate.slice(), acc: z(), sld: z() }; };
+function timeArt(d) {
+  const g = S("svg", { viewBox: "0 0 " + TART.w + " " + TART.h, width: TART.w,
+                       height: TART.h, class: "nu-tf", "aria-hidden": "true",
+                       focusable: "false" });
+  g.appendChild(S("line", { class: "nu-tf-ref", x1: 0.5, y1: TART.mid + TART.bh / 2,
+                            x2: TART.w - 0.5, y2: TART.mid + TART.bh / 2 }));
+  const lay = (p, cls) => p.gate.forEach((on, i) => { if (!on) return;
+    g.appendChild(S("rect", { class: cls, x: TART.x0 + i * TART.dx,
+      y: TART.mid - Math.max(-3, Math.min(3, p.deg[i])) * TART.step,
+      width: TART.bw, height: TART.bh, rx: 0.7 })); });
+  const was = timeToy();
+  lay(was, "nu-tf-was");                       // where the rhythm was
+  let is2 = was;
+  try { is2 = d.mk()(timeToy()); } catch (err) { is2 = was; }
+  lay(is2, "nu-tf-is");                        // where this button puts it
+  return g;
+}
 const zeros = (n) => new Array(n).fill(0);
+/* APPLYING A TIME OPERATOR TO A CELL, which is a different write from `design`
+   below it and not a special case of it. `design` moves DEGREES and carries the
+   note/hold/rest states along by reading the permutation back off the operator;
+   this moves the RHYTHM, so the thing that has to survive the trip is the cell's
+   `play` vector and nothing else.
+
+   THE GATE IS `play === "n"`, WHICH IS THE COMPILER'S OWN ARITHMETIC:
+   `document.js` toPhrase:237 is literally `play.map((p) => (p === "n" ? 1 : 0))`.
+   Reading it any other way here would mean the picture and the sound disagree
+   about what the button did.
+
+   A HOLD RIDES IN `stk`, which is the one trick in this function. `mapv` moves
+   `stk` with every other vector (kernel.js:70), so a `del` that drags the
+   phrase forward drags the holds with it instead of stranding them at the
+   indices they used to be at. `stk` is otherwise untouched by every operator in
+   TIMES and is not read by this page at all, so it costs nothing to borrow.
+
+   AND ORPHANS ARE SWEPT, because "holding a silence is not a thing you can
+   play" (hookGrid's own `holdOK`, verbatim). Rotating a gate can leave a hold
+   whose note has moved out from under it; the sweep runs to a fixpoint, because
+   turning one hold into a rest can orphan the hold behind it. The same walk
+   hookGrid uses, cyclic, because the cell loops. */
+function designTime(cell, d) {
+  const n = cell.deg.length;
+  if (!cell.play) cell.play = cell.deg.map(() => "n");
+  const play = cell.play.slice();
+  const base = { deg: cell.deg.slice(), oct: zeros(n), vel: (cell.vel || zeros(n)).slice(),
+                 inc: zeros(n), stk: play.map((p) => (p === "h" ? 1 : 0)),
+                 gate: play.map((p) => (p === "n" ? 1 : 0)),
+                 acc: (cell.acc || zeros(n)).slice(), sld: zeros(n) };
+  let out;
+  try { out = d.mk()(base); } catch (err) { return; }
+  if (!out || !out.gate || out.gate.length !== n) return;
+  cell.deg = out.deg.map((x) => Math.max(-7, Math.min(7, x | 0)));
+  cell.vel = out.vel; cell.acc = out.acc;
+  const next = out.gate.map((g, i) => (g ? "n" : (out.stk && out.stk[i] ? "h" : "r")));
+  const holds = (arr, i) => {
+    for (let k = 1; k <= n; k++) {
+      const q = arr[((i - k) % n + n) % n];
+      if (q === "h") continue;
+      return q === "n";
+    }
+    return false;                                     // nothing but holds
+  };
+  for (let pass = 0; pass < n; pass++) {
+    let moved = false;
+    for (let i = 0; i < n; i++)
+      if (next[i] === "h" && !holds(next, i)) { next[i] = "r"; moved = true; }
+    if (!moved) break;
+  }
+  cell.play = next;
+}
 function design(cell, d) {
   const n = cell.deg.length, op = K[d.op[0]](...d.op.slice(1));
   const base = { deg: cell.deg.slice(), oct: zeros(n), vel: (cell.vel || zeros(n)).slice(),
@@ -3108,6 +3416,23 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
     p2.append(b2, document.createTextNode(" "));
   }
   parent.append(p2);
+  // ...AND THE SAME ROW FOR TIME (Paul, 2026-08-25: "just as there are icons
+  // for pitches create icons for tempo operations and add them and make them
+  // work"). A SECOND <p> and not seven more buttons in the first one: the two
+  // rows answer two different questions — one moves the notes and one moves the
+  // beats — and fourteen pictures in one wrapped paragraph is a wall. Same
+  // class, same `.nu-vh` word, same `data-k` discipline; what differs is which
+  // half of the cell the click rewrites (`designTime` against `design`).
+  const p2b = el("p", null, "nu-tf-row");
+  for (const d of TIMES) {
+    const b3 = document.createElement("button");
+    b3.type = "button"; b3.dataset.k = seq + cellName + "-" + d.w;
+    b3.title = d.w;                    // hover only; NOT the accessible name
+    b3.append(timeArt(d), el("span", d.w, "nu-vh"));
+    b3.addEventListener("click", () => { designTime(H, d); push(); draw(); });
+    p2b.append(b3, document.createTextNode(" "));
+  }
+  parent.append(p2b);
   const p3 = el("p");
   const grow = document.createElement("button");
   grow.type = "button"; grow.dataset.k = seq + cellName + "-addbar";
@@ -3200,23 +3525,36 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
 // re-ticked: tick-untick-tick is now the identity on any lane in the catalog.
 // A page-level Map and not a document field, because it is undo, not music.
 const kitWas = new Map();
-function drumGrid(parent) {
-  // NO DRUMMER, NO GRID, AND SAY SO FIRST. The guard used to stand sixteen
-  // lines down, after a whole header row had been built and registered into
-  // `stepCell` — cells that were then never appended to anything, so the
-  // playhead spent every beat marking sixteen <th>s that were not on the page.
-  // The registry still has to be CLEARED here, because the last record may have
-  // had a kit and its cells are gone with the redraw.
+// `cellName` IS AN ARGUMENT NOW, and that is the whole of what this function
+// had to give up to become a motif block (Paul, 2026-08-25: "make it part of
+// motifs"). It used to ask the DRUMMER which cell to draw —
+//
+//     const drums = DRUMV(); if (!drums) return;
+//     const cellName = cellAt(drums, editSec());
+//
+// — which is a grid reached THROUGH a player, and it is the same mistake the
+// written staff made until 2026-08-24 ("i thought motifs were universal not per
+// voice?"). A drum cell is the record's; the strip says which one is open and
+// this draws it. TWO CONSEQUENCES, both wanted: a record with no drummer can
+// still be given a beat to hire one onto, and a record with TWO drum cells can
+// edit the one nobody is playing yet.
+//
+// (WHAT THE OLD GUARD WAS FOR, kept because the bug it fixed is easy to make
+//  again: the `if (!drums) return` used to stand sixteen lines further down,
+//  after a whole header row had been built and registered into `stepCell` —
+//  cells that were then never appended to anything, so the playhead spent every
+//  beat marking sixteen <th>s that were not on the page. `stepCell` is still
+//  cleared FIRST, before anything can register into it.)
+//
+// (AND THE SECTION IT NO LONGER READS: this took its cell from `cellAt(drums,
+//  editSec())`, and before 2026-08-24 from `atSec` — the SOUNDING section — so
+//  the grid swapped its cell out from under a thumb every time a boundary went
+//  past. It reads neither now.)
+function drumGrid(parent, cellName) {
   stepCell = [];
-  const drums = DRUMV();
-  if (!drums) return;
-  // THE SECTION YOU ARE WRITING, not the one that is sounding. This read
-  // `atSec`, so the kit grid — an editing surface, sixteen checkboxes a lane —
-  // swapped its cell out from under a thumb every time a section boundary went
-  // past (2026-08-24). One of the two `atSec` readers that were simply bugs;
-  // `staves` was the other.
-  const cellName = cellAt(drums, editSec());
-  const lanes = cellOf(cellName).lanes || {};
+  const H = cellName ? DOC.material.cells[cellName] : null;
+  if (!H || H.kind !== "drum") return;
+  const lanes = H.lanes || {};
   const laneKeys = Object.keys(lanes);
   const t = el("table");
   // (cellpadding/cellspacing came off 2026-08-24. They were here because they
@@ -3399,6 +3737,15 @@ function addVoice(kind) {
     const name = freeName("kit");
     DOC.voices.push({ name, kind: "drums", cast: { on: true },
       material: cell, instrument: "tr909", development: {} });
+    // ...AND THE BEAT IT WILL READ IS THE MOTIF THAT COMES UP. Since 2026-08-25
+    // the kit grid is a motif block behind a tab ("make it part of motifs"), so
+    // hiring a drummer onto a record with no drum cell used to leave the cell
+    // it just invented three taps away, in a strip you would have to guess was
+    // the right place to look. Two page states move together because one
+    // gesture caused both: you asked for a drummer, and here is what it plays.
+    // Same sentence `+ drum pattern` makes, and the same one `tab = name`
+    // has always made about the band strip one line down.
+    motifTab = cell;
     tab = name; return;
   }
   const name = freeName("voice" + (DOC.voices.length + 1));
@@ -3496,12 +3843,62 @@ function secNumber(sid, label, here, on) {
    else — the length is read as text here and edited in the detail, because a
    slider per row is a thirteen-row list growing a column of sliders, which is
    the shape this round exists to compress. */
-function formTable(parent, voice, editable) {
+/* ---------- ...AND FOR A BASS OR A KIT THE THIRD COLUMN IS A CONTROL -----
+   Paul, 2026-08-25: *"now let's say I pick drums or bass / then show me the
+   section/bars table but the third column is all the dropdowns / then show me
+   the options for machine, voice, engineer, levels, etc."*
+
+   `picks` IS THAT THIRD COLUMN. In a line's tab the row is read as text and the
+   per-section choices are two blocks BELOW the table — a menu row for what it
+   reads and a sheet row for what it does, one control per section in each. That
+   is fifteen controls under a thirteen-row table for a reggae record, in two
+   lists whose order you have to trust, and the table above them is the very
+   list they are keyed by. Said Paul's way it is one table: the section, its
+   length, and the choice, on one line.
+
+   ONE OWNER, WHICH IS WHY THE SHEETS BELOW ARE NOT ALSO DRAWN for a voice whose
+   table carries its picks. Two controls for one fact is the thing this codebase
+   has a standing law against, and it would be worse here than usual: they would
+   be a <select> and a lit sheet saying different-looking things about the same
+   word.
+
+   A SELECT AND NOT A SHEET, and that is Paul's word — "the third column is all
+   the dropdowns" — but it is also the only thing that fits: the kit vocabulary
+   is sixty-eight words, and a lit sheet of sixty-eight per row on a
+   thirteen-row form is the page this round exists to compress. Nothing is lost
+   to the greys: `selectEl` disables a refused option and joins the reason to
+   its own text ("drum fill, no drummer"), which is the same NO SILENT GREY law
+   the sheet keeps, said in the element that has room for it.
+
+   AND A FOURTH COLUMN FOR THE KIT ALONE (Paul, same message: "then let me
+   choose motifs for things like drums and bass too"). A drummer really can name
+   a cell per section — `document.js:133` resolves `materialAt(drums, secId)`
+   and reads `.lanes` off whatever it names, and has since the compiler was
+   extracted — so it gets the same `material.cell` menu a line gets, offered
+   among the DRUM cells (avail.js `cellsFor`). The bass gets a sentence instead
+   of a menu; see `bassReadsWhy` for the measurement that forced that. */
+function formTable(parent, voice, editable, picks) {
   const g = el("table");
   const gh = el("tr");
+  const kind = voice ? voice.kind : null;
+  /* THE `reads` COLUMN ONLY EXISTS WHEN THERE IS SOMETHING TO CHOOSE BETWEEN,
+     and that is Paul's own law about menus applied to a COLUMN: "in general
+     where there is ONE option a dropdown is preferred" (2026-08-24) — and where
+     there is one option per row, five rows deep, what is preferred is no column
+     at all. A record with one drum cell would otherwise get thirteen menus that
+     can only say the thing they already say, and it would cost the width that
+     makes the "does" column reachable on a phone: measured at 390x844, the
+     kit's table is 644px wide with the column and 407 without it, inside a
+     366px pane. The default is still settable — `cast.material` is in the
+     settings below — and the column appears the moment a second beat exists,
+     which is the moment it can answer anything. */
+  const reads = picks && kind === "drums" &&
+                NuAvail.cellsFor(DOC, kind).length > 1;
   // the fourth column is the voice's word; the form's own tab has no word in it
-  for (const x of editable ? ["", "section", "bars"] : ["", "section", "bars", ""])
-    gh.append(el("th", x));
+  const head = editable ? ["", "section", "bars"]
+    : picks ? ["", "section", "bars", "does", ...(reads ? ["reads"] : [])]
+    : ["", "section", "bars", ""];
+  for (const x of head) gh.append(el("th", x));
   g.append(gh);
   const cur = editSec();
   DOC.form.sections.forEach((s2, i) => {
@@ -3512,9 +3909,11 @@ function formTable(parent, voice, editable) {
       // Paul, asked on 2026-08-25 to choose between letting the form list drive
       // `editSec()` and keeping the strip over the staves: "The first is good."
       // `draw()` and not `drawMaterial()`, because this gesture changes two
-      // axes at once — the composed staves in Material and the whole of this
-      // tab — and a page that rebuilt half of what it changed would be showing
-      // you a list you had just left.
+      // axes at once — the register the Material axis engraves its staff in and
+      // the whole of this tab — and a page that rebuilt half of what it changed
+      // would be showing you a list you had just left. (It read "the composed
+      // staves in Material"; those are gone, and `editSec()` still reaches that
+      // axis through `motifs()`'s `lead`.)
       const n = secNumber(s2.id, String(i + 1), i === cur, () => {
         setViewSec(i); formSec = s2.id; draw(); });
       formCell[i] = n.live;
@@ -3531,6 +3930,23 @@ function formTable(parent, voice, editable) {
         "section " + (i + 1) + " name")));
       tr.append(tn);
       tr.append(el("td", s2.bars + " bars"));
+    } else if (picks) {
+      const th = countCell(String(i + 1));
+      formCell[i] = th;
+      tr.append(th, el("td", ROLES[s2.role] || s2.role),
+                el("td", s2.bars + " bars"));
+      const td = el("td");
+      td.append(selectEl(shSpec(NuAvail.devSheetFor(kind),
+        { voice: voice.name, section: s2.id },
+        voice.name + " · " + s2.role + " " + (i + 1))));
+      tr.append(td);
+      if (reads) {
+        const td2 = el("td");
+        td2.append(selectEl(shSpec("material.cell",
+          { voice: voice.name, section: s2.id },
+          voice.name + " reads · " + s2.role + " " + (i + 1))));
+        tr.append(td2);
+      }
     } else {
       const th = countCell(String(i + 1));
       formCell[i] = th;
@@ -3541,6 +3957,37 @@ function formTable(parent, voice, editable) {
     g.append(tr);
   });
   pane(parent, g);
+}
+
+/* WHY THE BASS IS TOLD RATHER THAN ASKED, and it is a measurement rather than a
+   preference. Paul, 2026-08-25: *"then let me choose motifs for things like
+   drums and bass too."* A drummer can be asked, and is (above). A bass cannot,
+   and the reason is in both compilers, in the same words:
+
+     `const lead = phrases[0];` … "Drums and bass follow the FIRST phrase — the
+     kit is genre data anyway, and the bass reads accents, which only one line
+     can own." (nukernel/document.js scoreOf:355, ui/derive.js:433)
+
+   `K.bass(subj, g, bars)` is handed the FIRST LINE VOICE'S compiled phrase and
+   reads its accents off it; `toGenre` gives the bass a `bassStyle` and a
+   `nobass` flag and no material at all. So a bass that named a cell would name
+   it into nothing: the menu would move, the record would not, and the page
+   would be lying about what it can do — which is the exact failure the whole
+   availability tier exists to prevent. An honest sentence beats a dead control.
+
+   WHAT IT WOULD TAKE, so this is a job and not a shrug: a `bassMaterial` seam
+   in `toGenre` and one line in each of the two compilers to pass the bass its
+   own phrase instead of `phrases[0]`. Both files belong to another slice; the
+   recipe is written and named in this round's report. */
+function bassReadsWhy(parent, voice) {
+  const lines = LINES(), lead = lines[0];
+  const cell = lead ? cellAt(lead, editSec()) : null;
+  parent.append(el("p", cell
+    ? "the bass reads " + cell + " — the first line's motif, because it takes " +
+      "its accents from the tune (document.js scoreOf, derive.js sectionEvents). " +
+      "Give it a motif of its own by changing what " + lead.name + " reads."
+    : "the bass has no motif to read: this record has no line voice for it to " +
+      "take its accents from.", "nu-why"));
 }
 
 /* ---------- ONE SECTION'S OWN QUESTIONS --------------------------------
@@ -3655,7 +4102,7 @@ function sectionDetail(parent, s2) {
    under one tabbed surface, because Development is a function of (section,
    voice) and Form and Cast are its two halves. This is the SECOND grouping, so
    the page now shows FIVE headings for eight axes: 1 · Time, 2 · Alphabet,
-   3 · Material, 4–8 · The band, and the producer, who was never an axis at all
+   3 · Sheet music, 4–8 · The band, and the producer, who was never an axis at all
    (AXES.md:113). That is a deliberate choice made on 2026-08-25 and it has a
    reason: the grouping follows the real SCOPES rather than the enumeration.
    The numbers stay in the heading precisely so the enumeration is still
@@ -3727,6 +4174,24 @@ function bandBlock(parent) {
      phone's 390, and these are four different KINDS of fact. What a voice
      shows is decided by its `kind` and nothing else: no branch anywhere asks
      whether this is "the bass". */
+  /* ---------- WHAT ORDER A VOICE'S TAB IS IN, AND IT IS NOT ONE ORDER ----
+     Paul, 2026-08-25: *"now let's say I pick drums or bass / THEN show me the
+     section/bars table but the third column is all the dropdowns / THEN show me
+     the options for machine, voice, engineer, levels, etc."* The two "then"s
+     are the instruction: for a bass or a kit, the record's shape comes first
+     and the player's own settings come after it.
+
+     A LINE'S TAB KEEPS THE ORDER IT HAD — settings, then the form — and that is
+     a decision rather than an oversight. A line has THREE per-section lists
+     (what it reads, what it does, and the form itself) and the two menus that
+     decide them (`cast.material`, `cast.part`) are what those lists are read
+     against; putting the table first would put thirteen rows between the
+     question and its default. A bass and a kit have ONE per-section list and it
+     is now IN the table, so there is nothing for the settings to be read
+     against and Paul's order is simply better. Said out loud because a page
+     that does two things needs to say which two. */
+  const settingsFirst = kind === "line";
+  const panel = el("div");
   const t = el("table");
   const row = (label, kid, kid2) => {
     const tr = el("tr");
@@ -3749,7 +4214,7 @@ function bandBlock(parent) {
     c.addEventListener("change", () => { voice.cast.on = c.checked; changed(); });
     row("drums", c);
   }
-  if (!onForm && t.firstChild) pane(parent, t);   // two columns, but a pane costs nothing
+  if (!onForm && t.firstChild) pane(panel, t);   // two columns, but a pane costs nothing
   // A CHOICE FROM A LIST IS EITHER A SHEET OR A MENU, AND WHICH ONE IS A
   // SENTENCE OF PAUL'S. The two that are a NUMBER ON A LINE stay sliders in
   // the little table above (2026-08-23: "use range sliders for numeric
@@ -3765,21 +4230,31 @@ function bandBlock(parent) {
   // is the morning's instruction and is about a different kind of question
   // (see the header of ui/selects.js, where both sentences are side by side).
   if (!onForm && kind === "line")
-    selectRow(parent, null, [shSpec("cast.part", { voice: voice.name }),
-                             shSpec("cast.material", { voice: voice.name }),
-                             shSpec("sound.instrument", { voice: voice.name })]);
+    selectRow(panel, null, [shSpec("cast.part", { voice: voice.name }),
+                            shSpec("cast.material", { voice: voice.name }),
+                            shSpec("sound.instrument", { voice: voice.name })]);
   // ...and these two are NOT on the evening list and stay sheets. The drum kit
   // in particular: Paul's question about it in the same message was "can i pick
   // more than one options for the drum kit?", and more-than-one is a row of
   // checkboxes (`multi`), which a <select multiple> is not.
   if (!onForm && kind === "bass")
-    sheetRow(parent, null, [shSpec("cast.bassStyle", { voice: voice.name })]);
-  if (!onForm && kind === "drums")
-    sheetRow(parent, null, [shSpec("sound.drumkit", { voice: voice.name })]);
+    sheetRow(panel, null, [shSpec("cast.bassStyle", { voice: voice.name })]);
+  // THE MACHINE AND THE BEAT IT READS BY DEFAULT (Paul, 2026-08-25: "show me
+  // the options for machine, voice, engineer, levels"). `sound.drumkit` IS the
+  // machine — its own label is "machine" — and `cast.material` beside it is the
+  // drum cell this kit reads in every section that does not say otherwise, which
+  // is the same fact a line's `cast.material` carries and was never offered to a
+  // drummer until now. A menu and not a sheet, for the reason the evening of
+  // 2026-08-24 gave: it is a settled parameter, one value decided once.
+  if (!onForm && kind === "drums") {
+    sheetRow(panel, null, [shSpec("sound.drumkit", { voice: voice.name })]);
+    selectRow(panel, null, [shSpec("cast.material", { voice: voice.name })]);
+  }
   // THE ENGINEER, directly after the voice's cast/material/instrument sheets and
   // in the same column of the page — a cantor's send is one more fact about the
   // cantor, next to its register and its throat, not a room next door.
-  if (!onForm && voice) engineer(parent, CTX, voice.name);
+  if (!onForm && voice) engineer(panel, CTX, voice.name);
+  if (voice && settingsFirst) parent.append(panel);
 
   /* ---------- THE FORM IS ONE ELEMENT WITH TWO STATES -------------------
      Paul, 2026-08-25, verbatim and in his order:
@@ -3824,7 +4299,10 @@ function bandBlock(parent) {
   formCell = [];
   if (secOpen) sectionDetail(parent, secOpen);
   else if (onPerf) performanceTab(parent);
-  else formTable(parent, voice, onForm);
+  else formTable(parent, voice, onForm, !!voice && !settingsFirst);
+  // ...and what the bass reads, which is a sentence and not a control
+  if (!onForm && kind === "bass") bassReadsWhy(parent, voice);
+  if (voice && !settingsFirst) parent.append(panel);
   // WHAT THIS VOICE DOES, SECTION BY SECTION. One sheet per section rather than
   // one menu per row: the vocabulary is twenty-one words for a line and
   // sixty-eight for a kit, and a menu was the only control that fitted in a
@@ -3851,7 +4329,11 @@ function bandBlock(parent) {
       DOC.form.sections.map((s2, i) =>
         shSpec("material.cell", { voice: voice.name, section: s2.id },
                (i + 1) + " · " + (ROLES[s2.role] || s2.role))));
-  if (voice)
+  // ...AND ONLY A LINE STILL GETS IT AS A BLOCK OF ITS OWN. A bass's and a
+  // kit's per-section word is the "does" column of the table above (formTable's
+  // `picks`), and drawing it twice would be two controls for one fact — see the
+  // ONE OWNER note there.
+  if (voice && settingsFirst)
     sheetRow(parent, "what " + tab + " does, section by section",
       DOC.form.sections.map((s2, i) =>
         shSpec(NuAvail.devSheetFor(kind), { voice: voice.name, section: s2.id },
@@ -3949,28 +4431,14 @@ function lightStep(abs) {
   // not in the "pos" handler so that stop's `lightStep(-1)` clears it too, by
   // the same call that clears everything else.
   lightScore(abs);
-  for (const st of played.values()) {
-    for (const x of st.lit) x.removeAttribute("fill");
-    st.lit = [];
-    if (step < 0) continue;
-    // a voice's cell may be several measures and only one of them is
-    // sounding: which one is the absolute pattern step's own measure. Read off
-    // the entry, which was handed it at registration: the measure count cannot
-    // change without a redraw, so walking cellOf(cellAt(...)) once a beat per
-    // staff was answering a question nobody had asked.
-    const nb = Math.max(1, st.bars | 0);
-    if ((Math.floor(abs / 16) % nb) !== st.bar) continue;
-    let idx = -1;
-    for (let k = 0; k < st.notes.length; k++) {
-      const x = st.notes[k];
-      if (x.at > step) break;
-      if (step < x.at + x.len) idx = k;
-    }
-    if (idx < 0) continue;
-    const els = st.host.querySelectorAll(".abcjs-note");
-    for (let g = 0; g < st.glyphs.length && g < els.length; g++)
-      if (st.glyphs[g] === idx) { els[g].setAttribute("fill", "#c00"); st.lit.push(els[g]); }
-  }
+  // (A LOOP OVER `played` STOOD HERE — the red notehead on every composed
+  //  staff in the Material axis. It went on 2026-08-25 with the staves
+  //  themselves. `lightScore` above is the whole playhead on notation now, and
+  //  that is one surface rather than one per voice per motif: the same red
+  //  fill, in the same place, on the picture that shows what is actually being
+  //  played. The written staff has never been in this registry and still is
+  //  not — "a notehead turning red under your finger is the picture changing
+  //  while you write on it".)
 }
 let stepTimers = [];
 const clearStepTimers = () => { for (const t of stepTimers) clearTimeout(t);
@@ -4002,7 +4470,13 @@ on("pos", (d) => {
   // was being rebuilt under a live finger and treated the symptom. Measured on
   // the shipped chant: 436 ms of frozen main thread at 390px and 1516 ms at
   // 1400px, per boundary. Now two writes land, both inside [data-live].
-  if (d.si != null && d.si >= 0 && d.si !== atSec) { atSec = d.si; repaintPlayed(); }
+  // A SECTION BOUNDARY IS A FACT THE SCORE READS, and it is recorded here and
+  // acted on four lines down by `repaintScore()` — one write, inside the one
+  // [data-live] element left in this axis. (This called `repaintPlayed()`
+  // beside the assignment until 2026-08-25; before that it called `draw()`,
+  // which was the whole page torn down and rebuilt every four to eight bars —
+  // 436 ms of frozen main thread at 390px and 1516 ms at 1400px, measured.)
+  if (d.si != null && d.si >= 0 && d.si !== atSec) atSec = d.si;
   // WHICH BAR OF THE LOOP the changes are on — bar WITHIN the box, which is
   // what the kernel indexes `prog` by (at(g.prog, bar)), not the running bar
   let inBox = 0;
@@ -4022,9 +4496,13 @@ on("pos", (d) => {
   const base = (inBox * 16 + (Math.max(1, d.beat || 1) - 1) * 4) * rate;
   // WHICH MEASURE THE SCORE IS SHOWING, off the very number the playhead walks
   // — so the window and the red note can never disagree about which bar this
-  // is. `repaintScore` is called every tick and does nothing on 15 of every 16
-  // of them: its first act is to compare two integers (the window and the
-  // section) and return. The engraving happens when the two measures change.
+  // is. `repaintScore` is called every tick and its first act is to compare two
+  // integers (the window and the section); on a tick where they have not moved
+  // it does nothing but ask the runway whether the NEXT window is engraved yet,
+  // which is another integer compare (`engraveWindow`'s `B.key === key`). The
+  // window moves once a BAR now rather than once every two (2026-08-25), and
+  // the engraving still happens at most once per window and never on the
+  // barline itself.
   scoreMeas = Math.max(0, Math.floor(base / SCORE_SPB));
   repaintScore();
   lightStep(base);
@@ -4050,7 +4528,7 @@ on("transport:state", () => {
   // it, 409 ms at a time.
   // ...AND THE SCORE, which shows the sounding section playing or the edit
   // position stopped, so the flip is exactly one caption and one system.
-  repaintPlayed(); repaintScore(true); say();
+  repaintScore(true); say();
   // …and the readout, because "pos" stops ticking the moment the transport
   // does: without this the page would still be claiming a runway after stop().
   engineAt = 0; paintEngine();
@@ -4058,11 +4536,13 @@ on("transport:state", () => {
     // THE CLOCK MAY NOT REACH window.scrollBy. `restoreAnchor` re-applies a
     // remembered scroll for a second and a half after every engrave that
     // lands, which is right for a page that grew under a still thumb on a cold
-    // load — and wrong, absolutely, for a composed staff repainting on a
-    // boundary, which is the page moving by itself for no reason. It has
-    // nothing to correct there anyway (the composed measure count is fixed),
-    // so this is the belt over that brace: one line, and the clock cannot
-    // reach the scroll at all.
+    // load — and wrong, absolutely, for the score re-engraving at a barline,
+    // which is the page moving by itself for no reason. It has nothing to
+    // correct there anyway (the score's box is reserved and its two buffers are
+    // the same height), so this is the belt over that brace: one line, and the
+    // clock cannot reach the scroll at all. (It said "for a composed staff
+    // repainting on a boundary"; that staff was deleted on 2026-08-25 and the
+    // sentence is true of its replacement word for word.)
     anchorWant = null;
     return;
   }
@@ -4110,6 +4590,18 @@ function draw() {
   const anchor = $(anchorId);
   anchorWant = (anchorOff || !anchor) ? null : anchor.getBoundingClientRect().top;
   anchorAt = Date.now();
+  // …and the page keeps the height it had while it is being rebuilt (holdHeight)
+  const release = holdHeight(box);
+  try { redrawApp(box); } finally { release(); }
+  putPanes();
+  // `document` and not `box`: the board is mounted into #deck, outside #app,
+  // and a thumb that was on a fader is still a thumb that must come back.
+  restoreFocus(document, wasKey, wasPicker);
+  restoreAnchor();
+}
+// THE REBUILD ITSELF, so that `draw()` can wrap it in exactly one try/finally
+// and the reserve above cannot be left behind by an early return.
+function redrawApp(box) {
   box.textContent = "";
   const D = DOC;
 
@@ -4193,7 +4685,25 @@ function draw() {
   chordGrid(axAlpha);
 
   /* 3 MATERIAL */
-  materialAxis(axis(box, "ax-material", "3 · Material"));
+  /* 3 MATERIAL — AND THE HEADING SAYS "SHEET MUSIC" (Paul, 2026-08-25:
+     *"rename 'Material' to 'Sheet music'"*).
+
+     THE HEADING MOVED AND THE AXIS DID NOT, and that is a decision rather than
+     a shortcut. AXES.md's eight are the VOCABULARY — the names we talk about a
+     record with — and "Material" is the word in every one of them that is also
+     a KEY: `doc.material.cells`, `materialAt`, `avail.js`'s `material.cell` and
+     `cast.material`, `gates.json`'s rules keyed by those two, `#ax-material`,
+     and the fixtures that capture all of it. Renaming the model would be a data
+     migration across six files this slice does not own, for a word nobody
+     types. Renaming the HEADING costs one string and answers the whole of what
+     was asked: what a reader sees over the score and the motifs is "3 · Sheet
+     music", which is what the axis has actually contained since the score
+     landed above the motifs this morning. AXES.md carries the note beside the
+     Material row so the vocabulary and the page cannot drift.
+
+     THE ID STAYS `ax-material` for the same reason the model does: it is the
+     anchor `drawMaterial()` pins the page on and the handle three gates use. */
+  materialAxis(axis(box, "ax-material", "3 · Sheet music"));
 
   /* 4-8 FORM x CAST x DEVELOPMENT x SOUND x PERFORMANCE */
   // `4–8` and not `4–7` since 2026-08-25: Performance moved in as a tab of this
@@ -4213,12 +4723,6 @@ function draw() {
      so it gets its own host at the foot of the page. */
   const deck = $("deck");
   if (deck) { deck.textContent = ""; mountBoard(deck, CTX); }
-
-  putPanes();
-  // `document` and not `box`: the board is mounted into #deck, outside #app,
-  // and a thumb that was on a fader is still a thumb that must come back.
-  restoreFocus(document, wasKey, wasPicker);
-  restoreAnchor();
 }
 
 /* ---------- transport ---------- */
@@ -4251,13 +4755,14 @@ window.__eightStep = () => atStep;
 // of its own, it can only ask what this file marked live. `replaceChildren()`
 // empties a live container and keeps the element and ALL of its attributes, so
 // a change to the container itself is still caught, and no regex ever touches
-// the HTML. THREE `data-live` values exist since 2026-08-25: "played" (one
-// composed block per line voice), "count" (the four playhead registries) and
-// "score" (the one two-measure system of the whole band, above the motifs).
-// This function did not have to change a character to take the third one,
-// which is the whole argument for asking the page rather than writing a list:
-// it empties whatever declared itself, and a surface that forgets to declare
-// itself fails the gate rather than sneaking past it.
+// the HTML. A THIRD `data-live` value existed for one day — "played", one
+// composed block per line voice — and was deleted on 2026-08-25. TWO remain:
+// "count" (the playhead registries) and "score" (the one two-measure system of
+// the whole band, above the motifs). This function did not have to change a
+// character to take the third one on, and it did not have to change one to see
+// it go, which is the whole argument for asking the page rather than writing a
+// list: it empties whatever declared itself, and a surface that forgets to
+// declare itself fails the gate rather than sneaking past it.
 window.__eightFrozen = () => {
   const c = $("app").cloneNode(true);
   for (const n of c.querySelectorAll("[data-live]")) n.replaceChildren();
@@ -4269,8 +4774,11 @@ window.__eightEngraves = () => engraves;      // abcjs renders, ever
 // Over a playthrough it is one per two measures at most, and fewer wherever a
 // window repeats the one before it.
 window.__eightScoreEngraves = () => scoreEngraves;
-window.__eightScore = () => ({ abc: scoreAbc, win: scoreWin, sec: scoreSec,
-                               voices: scoreVoices.map((v) => v.name),
+window.__eightScore = () => ({ abc: (scoreBufs[scoreShown] || {}).abc || "",
+                               win: scoreWin, sec: scoreSec,
+                               ready: scoreBufs.map((b) => b.key + (b.ready ? "!" : "?")),
+                               voices: ((scoreBufs[scoreShown] || {}).voices || [])
+                                 .map((v) => v.name),
                                lit: scoreLit.length, cap: scoreCap &&
                                scoreCap.textContent,
                                box: scoreReserve, fit: scoreFit() });
@@ -4278,8 +4786,14 @@ window.__eightSec = () => atSec;              // the SOUNDING section
 window.__eightViewSec = () => editSec();      // the section being WRITTEN
 // ...and the live half, so a gate can prove a boundary happened twice over:
 // once off the section index, and once off a caption that has to name it.
-window.__eightCaptions = () =>
-  [...playedVoice.values()].map((v) => v.cap.textContent);
+// THE NAME IS UNCHANGED AND WHAT IT READS HAS MOVED. It listed one caption per
+// composed motif block; those blocks were deleted on 2026-08-25 and the SCORE's
+// caption is the only sentence the clock writes in #app now. The hook keeps its
+// name deliberately: test/motif-frozen.js A4 asserts that "a caption moved"
+// across two section boundaries, and that assertion is TRUER of this caption
+// than it was of those — the score's says which section AND which two bars, so
+// it moves at every barline as well as at every boundary.
+window.__eightCaptions = () => (scoreCap ? [scoreCap.textContent] : []);
 window.__eightCells = () => hookCells.map((h) => h.cells.length).join(",");
 window.__eightPhraseOf = (n) => phrase(n);   // a gate reads the COMPILED hook
 window.__eightSong = () => SONG.map((b) => ({ g: b.stack[0].g, len: b.len, role: b.role }));

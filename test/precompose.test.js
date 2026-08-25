@@ -530,6 +530,131 @@ function sectionEvents(doc, i) {
     }
   });
 
+  /* ================================================================== G8e
+     THE ROOM CANNOT HOLD A PLAYER IT HAS NOT MET YET (Paul, 2026-08-25: "fix
+     the zema organ thing").
+
+     WHAT WENT WRONG, and it is the reason this gate exists rather than a
+     patch: `zema` is Aksum 540, the oldest record in the catalog, and its own
+     entry says out loud that it is "NOT a child of Rome 600 and must never be
+     written as one". Measured on the shipped composer, all three seeds hired a
+     European keyboard anyway — church organ, church organ, harpsichord — and
+     two of the three hired a voice literally named `gregorian`. `mbube`
+     (Johannesburg 1939, four men singing unaccompanied) took a harpsichord on
+     all three. Nothing in the anchors was wrong: compose.js drew the guest
+     from a per-FAMILY lean, and `vox` is a cluster held together by TEXTURE
+     that runs from Aksum 540 to Leipzig 1725, so the lean was European because
+     every choir in the table was European on the day it was typed.
+
+     THE RULE GATED HERE IS THE LOOSER OF THE TWO, ON PURPOSE, and the number
+     that decided it is in this file rather than in a commit message. The tight
+     rule — "the drawn instrument must appear in the anchor's own `instr`, its
+     parents' or its family's" — still fails 384 hires across 260 of the 417
+     records AFTER the fix, and it should: a guest is a FOREIGN colour by
+     construction, and the string quartet on a Beatles single (`counterpoint`,
+     a harpsichord from Vienna 1725 on a Liverpool 1962 record) is the file's
+     own worked example of the feature. Gating tightness would delete the
+     feature Paul asked for ("you have stopped adding elements from other
+     genres into the randomly generated songs").
+
+     So the honest rule is the ERA one, which compose.js already applies to the
+     PEDALS (FX_YEAR, "why would Chicago 1932 have enormous amounts of delay?")
+     and now applies to the ROOM:
+       1. no record hires a genre dated LATER than itself;
+       2. no record plays an instrument the catalog first hears after its own
+          year — the floor per id EXTRACTED as the earliest year any dated
+          anchor claims it, so the table cannot drift from the anchors;
+       3. a VOICE has no invention date and is exempt from 2 (extraction would
+          floor `solo_vox` at Paris 1200, and people sang before Notre Dame),
+          and from 1950 on — FX_YEAR's own line — a record may seat a late id
+          of a KIND its own cast already plays, because extraction says when
+          the CATALOG first hears an id and not when the thing was built:
+          flatly applied it took the guitar solo off Chicago 1952 and St.
+          Louis 1955, and Chuck Berry with no lead break is a worse lie than
+          the one being fixed;
+       4. an UNACCOMPANIED anchor — dated, no kit, no bass, every `instr` id a
+          sung one — hires nobody at all. That predicate reads the anchor's own
+          fields and finds gregorian, spem, organum, zema and mbube, which is
+          why the two names in the complaint are not special cases in the code.
+     Measured by re-running these very rules against the shipped composer:
+     254 violations of rules 1-3 across 157 of the 417 records and 74 of the
+     139 anchors, and 26 hires onto the 5 unaccompanied anchors in 15 records.
+     Both are 0 after.
+
+     IT READS THE DOCUMENT'S CAST, not compose()'s return value: `voices[]` and
+     their `instrument` are what the page seats and what the reader is shown,
+     and a policy that is right in the arranger and wrong by the time it is a
+     document is the failure this suite is named for. */
+  {
+    const NC = R("compose.js");
+    // WHO WAS HIRED cannot be read off the names alone, and the case that
+    // proves it is `organum`: its document carries a voice called `pad`, which
+    // is its own third chair — the held tenor — because precompose names a
+    // base voice after its PART (precompose.js:1014) and `pad` is both a part
+    // and a FUNCTION genre. Its instrument is `ahh_choir`, not `warm_pad`.
+    // So identity comes from the arrangement, built with precompose.js:937-940's
+    // own expression, and the INSTRUMENT — the thing the page actually seats —
+    // is read off the document beside it.
+    const late = [], hired = [], visited = [];
+    for (const gk of ANCHORS) {
+      const year = NC.genreYear(gk);
+      const solo = NC.unaccompanied(gk);
+      // THE RECORD'S OWN SINGER IS NOT A VISITOR (compose.js "a guest turns
+      // up; a singer is on the record"), so rule 4 does not count it: a cantor
+      // giving out the line alone is what `zema`'s `intro: "solo"` — "the
+      // mergéta gives the line out alone" — describes, and plainchant has one
+      // too. Rules 1-3 still apply to it, and a voice passes 3 anyway.
+      const singer = NC.singerOf(GENRES[gk], gk);
+      for (const seed of SEEDS) {
+        const doc = docs.get(gk + "/" + seed);
+        if (!doc) continue;
+        const hires = new Set();
+        for (const b of NC.compose(gk, seed).song)
+          for (const e of b.stack.slice(1)) if (GENRES[e.g]) hires.add(e.g);
+        for (const lk of hires) {
+          if (lk === singer) continue;
+          visited.push(gk + "/" + seed + " " + lk);
+          if (solo) hired.push(gk + "/" + seed + ": " + GENRES[gk].label +
+            " sings unaccompanied and hired " + lk);
+          const gy = NC.genreYear(lk);
+          if (year && gy && gy > year) late.push(gk + "/" + seed + ": " +
+            GENRES[gk].label + " hired " + lk + " (" + GENRES[lk].label + ")");
+        }
+        // …and the INSTRUMENTS the document actually seats, held against the
+        // arranger's own one-expression answer rather than a second copy of
+        // it — `seatOK` carries rules 2, 3 and the after-1950 waiver together.
+        for (const v of doc.voices)
+          if (v.instrument && !NC.seatOK(gk, v.instrument))
+            late.push(gk + "/" + seed + ": " + GENRES[gk].label + " seats " +
+              v.name + " on " + v.instrument + ", which the catalog first " +
+              "hears in " + NC.INSTR_YEAR[v.instrument] +
+              " and no chair of its own plays a " + NC.kindOf(v.instrument));
+      }
+    }
+    ok("G8e no record hires a player, or seats an instrument, from after its " +
+       "own year — 254 violations in 157 of 417 records before this round", () =>
+      assert.strictEqual(late.length, 0, late.length + " anachronistic, first " +
+        "eight:\n      " + late.slice(0, 8).join("\n      ")));
+    ok("G8e2 …and an anchor that sings unaccompanied hires nobody (26 hires " +
+       "in 15 records before) — zema, mbube, gregorian, spem and organum, " +
+       "found by reading their own kit/nobass/instr", () =>
+      assert.strictEqual(hired.length, 0, hired.length + ":\n      " +
+        hired.slice(0, 8).join("\n      ")));
+    // …AND THE FEATURE IS STILL THERE. A filter that empties every ballot
+    // passes both assertions above and deletes the guest, so the count is held
+    // from BELOW as well: 3364 layer placements before this round, 3279 after,
+    // and the Beatles' string quartet is named because it is precisely the
+    // case the tight rule would have cost.
+    ok("G8e3 …and the guest survives the law — the catalog still visits, and " +
+       "the harpsichord on a 1962 Liverpool record is still the proof", () => {
+      assert.ok(visited.length > 800, "only " + visited.length + " hires over " +
+        (ANCHORS.length * SEEDS.length) + " records — the era law emptied the ballots");
+      const quartet = [1, 2, 3].some((s2) => (docs.get("beatles/" + s2) || { voices: [] })
+        .voices.some((v) => v.name === "counterpoint" && v.instrument === "harpsichord"));
+      assert.ok(quartet, "no seed of beatles books the string quartet any more");
+    });
+  }
+
   /* ================================================================== G9
      TEST THE ARTIFACT. Everything above reads the DOCUMENT. This reads the
      numbers audio/desk.js hands the engine, through the same two functions

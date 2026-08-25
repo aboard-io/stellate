@@ -22,6 +22,17 @@ them**.
 | **Sound** | voices, treatment, balance | `instr/tone/kit`, the desk, `MIXER` | genre + engineer |
 | **Performance** | the seeded human layer — timing, velocity, hand, ornament | `perform`, `humanize`/`touch`, `song.take` | song |
 
+**The page calls Material "Sheet music."** Paul, 2026-08-25: *"rename
+'Material' to 'Sheet music'."* The AXIS keeps the name it has here, because
+"material" is not only a word in this vocabulary — it is the document key
+(`doc.material.cells`), the resolver (`document.js materialAt`), two sheet keys
+(`material.cell`, `cast.material`), the rules in `gates.json` that are keyed by
+them, and `#ax-material`. What changed is the HEADING a reader sees over the
+axis on `ui/eight.js`, and it changed because the axis's contents changed
+first: since the score of the whole band landed above the motifs, everything
+under that heading is notation. One fact, one owner: the vocabulary says
+Material, the page says Sheet music, and this paragraph is the join.
+
 ## GENRE IS A CORRELATION, NOT AN AXIS
 
 122 genres, 51 distinct fields between them: `scale mode harmony prog roots`

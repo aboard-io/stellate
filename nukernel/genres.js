@@ -6323,6 +6323,15 @@
       // honest emptiness gregorian declares. It is NOT a child of Rome 600
       // and must never be written as one: they are two churches, and the
       // Frankish codification is two centuries the other side of this label.
+      // ...AND THE ARRANGER NOW HONOURS THAT, which it did not (Paul,
+      // 2026-08-25: "fix the zema organ thing"). This entry said the sentence
+      // above while every seed of the composed record hired a church organ or
+      // a harpsichord, and two of three hired a voice literally named
+      // `gregorian` — the genealogy was right HERE and undone one layer down
+      // by a guest list in the composer. compose.js `unaccompanied` and
+      // `eraOK` are where the claim is enforced, and they enforce it off these
+      // very fields: no kit, no bass, an `instr` that is nothing but voices,
+      // and a year sixty earlier than Rome's.
       parents: {},
       wants: [],
       instr: "ahh_choir",
@@ -6495,7 +6504,11 @@
     // the bass, and letting the bass chair pick up its default upright
     // (instruments.js BASS_INSTR) would put an instrument on a record that
     // has none. `kit: {}` for the same reason: the stamping belongs to
-    // isicathamiya, not to 1939.
+    // isicathamiya, not to 1939. THE ARRANGER READS EXACTLY THOSE TWO FIELDS
+    // NOW (compose.js `unaccompanied`, 2026-08-25, "fix the zema organ
+    // thing"): until it did, this record took a harpsichord on all three
+    // seeds — the same instrument-on-a-record-that-has-none the two sentences
+    // above refuse, arriving through a guest list instead of through a chair.
     //
     // WHAT SEPARATES IT FROM BOSTON 1831, its declared parent: hymn's four
     // voices move in exact homophony and its bottom part is an ORGAN, because

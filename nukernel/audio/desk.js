@@ -1116,3 +1116,106 @@ function honest(st) {
   return st;
 }
 const round3 = (x) => Math.round(x * 1000) / 1000;
+
+/* ================== A BUS IS A CHANNEL. WHAT REACHES ITS FADER, AND WHERE
+   ITS FADER REACHES. ========================================================
+ *
+ * (Paul, 2026-08-25: "master and the buses should also be arranged like the
+ * mixing board no?" … "I should be able to use the board to send signal to the
+ * buses and then from the buses to the master mix too.")
+ *
+ * THE SECOND HALF OF THAT SENTENCE IS THE ONE WITH AN ANSWER IN IT, and the
+ * answer is different for each of the three buses. So it is computed here,
+ * once, in the file whose header already promises to name what has no home
+ * rather than fake it — and the REASONS are strings on this object rather than
+ * sentences in the view, because a board that types its own excuse can drift
+ * from the engine that owes it. desk-gate G12 asserts the page prints these
+ * exact words.
+ *
+ * VOICE -> BUS, all three, WIRED. deskUnits writes `u.rev` and `u.del` on every
+ * unit and the parent's renderers sum them into the shared { dry, rev, del, pp }
+ * buses (render-core.js:19). `room` is not a fourth number: deskChannelBase
+ * folds a part's `room` into its `rev`, so bus 3's feed arrives at bus 1.
+ *
+ * BUS -> MASTER, one of three, and only one:
+ *   BUS 1 IS WIRED AND IS THE ONLY ONE. `buses.rev.ret` -> masterState `reverb`
+ *     -> state-engine fxParams `rgain = clamp(reverb*3.2, 0, 2) * reverbScale`.
+ *     That IS a bus-to-master send, it has been one since the rack round, and
+ *     it is what the board's bus-1 fader moves.
+ *   BUS 2 IS NOT. fx_bus really does carry `dgain` — a 0..2 slider, init 1,
+ *     compiled into the wasm (dist/fx_bus-meta.json) and pushed by both
+ *     renderers (stream-renderer.js:652, press.js:380). But fxParams emits it
+ *     as the LITERAL `dgain: 1` (state-engine.js:2400) and reads no state field
+ *     on the way, so there is no word this page can write that moves it. A
+ *     delay-return fader here would be a knob that lies; it is drawn refused
+ *     with this sentence instead. The fix is one line in the parent plus its
+ *     parity gates, which is not this page's to take.
+ *   BUS 3 IS NOT A RETURN AT ALL, which PROGRAM.md §4.11 already records: the
+ *     parent's own third bus is `pp` and state-engine:2808 stamps `pp` on DRUM
+ *     events only, so bus 3 keeps its name and its feed folds into bus 1.
+ *
+ * BUS -> BUS does not exist and is not drawn. fields.js took the two
+ * cross-sends off on 2026-08-24 with the measurement: `x<bus>` was written
+ * against the WebAudio rack the one-engine round deleted, and busSendPlan — the
+ * cycle refusal that made an edge safe — has had no caller since.
+ *
+ * `feed` is the sum of what the channels are sending, not an average: two
+ * voices at `some` put more into the plate than one does, which is what a bus
+ * meter on a desk shows. It is the SAME number deskUnits hands the engine
+ * (deskChannelBase, per channel), so the strip's meter and the tape agree.
+ */
+// `short` IS THE MARKER IN THE CELL AND `why` IS THE SENTENCE UNDER THE TABLE,
+// and the split is a measurement rather than a taste: a bus column is 124px and
+// the `why` below wraps to ten lines in one, which made the board's fader row
+// 200px tall and pushed every other strip's fader off a phone screen. It is the
+// precedent ui/selects.js:238 already states for a menu in a <td> — "the VISIBLE
+// copy is still the caller's to place … a table puts it once under the table
+// rather than eight times down a column". Both strings are on the page, the
+// short one beside the control and the long one once beneath it, so "do not
+// draw a control that reaches nothing without saying so" is kept twice over.
+export const BUS_REACH = {
+  rev: { to: "main", short: null, why: null },
+  echo: { to: "main", short: "fixed at unity by the engine",
+    why: "bus 2's return is fixed at unity in the engine — " +
+    "state-engine.js fxParams emits `dgain: 1` and reads no state, so nothing " +
+    "this page can write moves it" },
+  room: { to: "bus 1", short: "not a return — it folds into bus 1",
+    why: "bus 3 is not a return — a part's room send folds " +
+    "into bus 1 (deskChannelBase), and the parent's own third bus is stamped " +
+    "on drum events only" },
+};
+export function deskBusFeed(sec, MASTERV, BUSESV) {
+  const st = masterState(MASTERV, BUSESV) || {};
+  const feed = { rev: 0, echo: 0, room: 0 };
+  if (sec) {
+    for (const k of partKeysOf(sec, voiceRoster(sec))) {
+      const b = deskChannelBase(sec, k);
+      const m = resolvePartMix(sec.parts && sec.parts[k]);
+      feed.rev += b.rev;                     // room is already folded in here
+      feed.echo += b.del;
+      feed.room += m.room || 0;
+    }
+  }
+  // THE RETURN EACH BUS IS WORTH RIGHT NOW. bus 1's is the record's own word;
+  // bus 2's is the engine's literal; bus 3 has none because it is not a return.
+  // ABSENT IS SHUT on bus 1 and that is not this file's opinion — audio/plan.js
+  // hands toEngine `reverb: 0` on purpose, so a record that never opened the
+  // rack sends into a bus whose gain is zero.
+  const ret = { rev: st.reverb != null ? st.reverb : 0, echo: 1, room: null };
+  const out = {};
+  for (const bus of ["rev", "echo", "room"]) {
+    const r = ret[bus];
+    // WHAT LEAVES THE STRIP, which is what a fader's meter shows on a desk.
+    // Bus 3's return is null and its output is its FEED UNCHANGED, because
+    // that is literally what happens: deskChannelBase adds a part's `room` to
+    // its `rev` at unity, so bus 3 passes what it is given straight on to
+    // bus 1. A null there would have drawn an empty meter on a bus that is
+    // carrying signal.
+    out[bus] = { feed: +feed[bus].toFixed(4), ret: r,
+                 out: +((r == null ? feed[bus] : feed[bus] * r)).toFixed(4),
+                 to: BUS_REACH[bus].to, why: BUS_REACH[bus].why,
+                 short: BUS_REACH[bus].short,
+                 movable: BUS_REACH[bus].why == null };
+  }
+  return out;
+}
