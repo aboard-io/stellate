@@ -245,10 +245,13 @@
     // mələkkət sign stretches one syllable across a whole melodic formula.
     zemachant: { voice: "bass",   vowels: "aeo", vib: 0,    air: 0.20, blend: 0.5, syll: 2 },
     // ...and Johannesburg 1939 is the opposite room: a group of men close on
-    // one microphone rather than a choir in a stone building. Almost no air
-    // (0.14 is the driest row here), a little wobble, and a blend of 0.75 —
-    // ragged, because they are a GROUP and not a section, and the raggedness
-    // is what a record cut in one take in one afternoon sounds like.
+    // one microphone rather than a choir in a stone building. Air 0.14 — the
+    // dry end of this table, level with the merseybeat stack and only the
+    // Bulgarian choir and the boy band under it — against zema's 0.20 and
+    // plainchant's 0.30, because a mic six inches away records no room. And
+    // blend 0.75, the fourth-loosest here after the gospel choir, the dream
+    // choir and the hymnal: they are a GROUP and not a section, and the
+    // raggedness is what a record cut in one take in one afternoon sounds like.
     mbubestack:{ voice: "bass",   vowels: "oau", vib: 0.18, air: 0.14, blend: 0.75, syll: 1 },
   };
 
@@ -6523,8 +6526,9 @@
       tone: { wave: "triangle", cut: 2300, q: 0.8, atk: .04, rel: 1.4, gain: .26, verb: .42,
               // WHO SINGS: the bass throat, close and resonant, almost no
               // wobble and almost no air — a room of men at one microphone in
-              // 1939, and the loosest blend in the table after the hymnal's,
-              // because they are a group and not a section
+              // 1939, ragged on purpose (blend 0.75, looser than every mouth
+              // here but the three American church-and-wash ones), because
+              // they are a group and not a section
               mouth: MOUTHS.mbubestack },
       words: ["the lead, over the top", "the top of the block",
               "the middle of it", "the bass singers, who are the bass"],

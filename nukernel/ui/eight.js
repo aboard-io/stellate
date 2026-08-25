@@ -2644,8 +2644,8 @@ function normalize() {
    WHAT CHANGED IS THE NESTING, NOT THE LAW. The live element is now INSIDE the
    button rather than the button inside the live element:
 
-       <th><button data-k="sec c2"><span data-live="count"><span>2</span></span>
-           <span class="nu-vh"> — you are writing this</span></button></th>
+       <th><button data-k="secc2"><span data-live="count"><span>2</span></span>
+             <span class="nu-vh"> — you are writing this</span></button></th>
 
    The clock still writes only inside [data-live] and still writes only text.
    The button, its listener and its `aria-pressed` sit OUTSIDE that span and
@@ -2756,11 +2756,47 @@ function formTable(parent, voice, editable) {
    of them at once.
 
    The greys come with it untouched — "drum fill, no drummer" is words the
-   <option> itself says (ui/selects.js `optionText`). */
+   <option> itself says (ui/selects.js `optionText`): measured 2026-08-25, ONE
+   section's detail carries all seven drum-writing edges greyed and not one
+   silent grey among them.
+
+   WHAT FOLLOWS FROM THIS AND IS NOT OURS TO FIX HERE: `test/nudges.js` counts
+   nudge controls on the BOOT page, which lands on the form list — and a list of
+   names has no nudges in it, so the gate bails at "0 found" before it runs. The
+   controls have not gone anywhere; they are one tap away. That gate needs a tap
+   on a section's number before it counts, and again before each of its three
+   `tap("tabform")` calls. Said in the round's report with the measurement, not
+   edited from here. */
 function sectionDetail(parent, s2) {
   const i = DOC.form.sections.indexOf(s2);
-  heading(parent, (i + 1) + " · " + (ROLES[s2.role] || s2.role) +
+  /* THE HEADING ANSWERS TO THE BUTTON'S NAME, and that is how focus follows
+     the panel without one line of new machinery. The button you pressed is not
+     on the page any more, and `restoreFocus` puts a thumb back by `data-k`
+     (`eight.js:474`) — so with nothing carrying `sec<id>` here, a keyboard user
+     pressed Enter on section 3 and landed on <body>, with the next Tab starting
+     again at the top of the document. Measured 2026-08-25 at 1280x900: a real
+     touch on the number left `document.activeElement` as `BODY`.
+
+     WHY NOT A `focus()` CALL AFTER `draw()`, WHICH WAS TRIED FIRST AND
+     MEASURED. `h.focus({ preventScroll: true })` from the click handler put
+     focus in the right place and MOVED THE PAGE 607px at 390x844 — the same
+     jump every control on this page makes from that scroll position, which is
+     Chromium's scroll anchoring reacting to `draw()` emptying `#app` (proved:
+     with `overflow-anchor: none` every control measures 0). `restoreFocus`
+     escapes it because of WHERE it runs — inside `draw()`, before
+     `restoreAnchor()`, which is the whole reason those three calls are in that
+     order. So the fix is to be findable rather than to focus: same key, same
+     `preventScroll`, and measured after this the window moves 0px.
+
+     `tabIndex = -1` makes the heading focusable WITHOUT putting it in the tab
+     order, which is the standard shape for "the thing that just replaced what
+     you were looking at": a screen reader reads the section you opened and Tab
+     goes on to its first question. The key is unique because the list and the
+     detail are never on the page together. */
+  const h = heading(parent, (i + 1) + " · " + (ROLES[s2.role] || s2.role) +
     ", " + s2.bars + " bars");
+  h.dataset.k = "sec" + s2.id;
+  h.tabIndex = -1;
   // THE WAY BACK IS THE TAB YOU CAME FROM, and it is said out loud because it
   // is the one gesture on this page that no visible control performs. A "back"
   // button here would be a second owner of where you are, which is what
