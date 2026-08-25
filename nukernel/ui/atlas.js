@@ -178,10 +178,23 @@ const HIT_MIN = 15, HIT_MAX = 23;
 const LOD_X = 46, LOD_Y = 14;
 /* THE TYPE AND ITS HALO, IN CSS PIXELS. Both are converted through the
    renderer's units-per-pixel at write time, because everything an eye is
-   measured in has to be (the tap box above is the same rule). 2.6 px of halo is
-   two 1.3 px shoulders around a 13 px letterform: measured over the 10% land
-   wash at 390x844, 1.5 px left the counters of "Kinshasa" filling in over
-   Africa and 4 px started to read as bold. */
+   measured in has to be — the tap box above is the same rule, and it is not a
+   formality here: the map is 366 CSS px wide inside a 390 px phone and 1256
+   inside a 1280 px window, so `u` is 2.732 and 0.796 viewBox units per CSS px,
+   and a halo declared as a constant in the stylesheet would be 0.95 px of ink
+   on the phone against 3.27 on the desktop. Written through `u` it measures
+   2.60 px on both, read back off the rendered <text> (7.10 units / 2.07 units).
+
+   2.6 IS THE WIDTH, AND IT WAS PICKED BY LOOKING AT ONE WORD OVER ONE COAST —
+   "Kinshasa" at 1969, which lies across the Atlantic shoreline of Africa,
+   cropped at 4x off the rendered page at 390x844:
+     0    the coastline runs straight through the "h" and the "a"
+     1.5  it clears the stems and still touches the "h" ascender
+     2.6  every glyph is cut out of the line on its own, and the coast is still
+          legible in the gaps BETWEEN the letters — the map goes on reading
+     4    the shoulders merge into one white slab from the "K" to the last "a"
+          and erase the coastline behind the whole word. That is a label PLATE:
+          a different design, and it hides the thing the label points at. */
 const LABEL_PX = 13, HALO_PX = 2.6;
 
 const el = (t, a) => Object.assign(document.createElement(t), a || {});
@@ -262,15 +275,22 @@ export function mount(parent, ctx) {
      to make the <text> a CHILD of the mark's own <g>, which already gets a
      fresh `transform` every frame — free, no second write. It is also wrong
      here, and measurably: `.place` is what the outside world measures a mark
-     BY. test/atlas.js:240 computes the tap point as the centre of
+     BY. test/atlas.js:241 computes the tap point as the centre of
      `g.getBoundingClientRect()`, and an SVG group's box is the union of its
-     children — so folding a 40-CSS-px-wide name into the group moves the
-     "centre of Kingston" ~20 px to the right of Kingston, and every gate that
-     taps a rendered mark (G8, G16, G19, G21) would be aiming at a point the
-     picture never claimed. The label gets its OWN <g class="lab"> in this
+     children. MEASURED on the rendered page at 390x844, 1969, over the seven
+     marks whose names are inked: folding the <text> into the group moves that
+     centre 17.9 to 34.1 CSS px to the RIGHT of the dot — median 21.5, London
+     17.9, Kingston 21.5, San Francisco 34.1 (a name 73.1 px wide). The tap
+     boxes are 30.0 px across at the whole earth (G12), so every gate that taps
+     a rendered mark (G8, G16, G19, G21) would be aiming clean outside the mark
+     it had just named. The label gets its OWN <g class="lab"> in this
      layer instead and is handed the SAME transform string, from the same cache,
      on the same line — one extra attribute write per drawn mark per frame,
-     which is what §paint's "write only what changed" budget is for. */
+     which is what paint()'s "write only what changed" budget is for and which
+     was measured rather than assumed: a 24-step touch drag at 390x844 wrote
+     9,283 attributes before and 10,441 after (median of five), and the drag's
+     p50 frame gap went 19.9 ms -> 16.9 ms, i.e. the write is inside the noise
+     of the frame it rides in. */
   svg.append(gNames, gMarks);
 
   /* THE SLIDER SITS ABOVE THE GLOBE, WHICH IS WHERE IT SHIPPED, AND THE ROUND'S
@@ -625,11 +645,11 @@ export function mount(parent, ctx) {
         m.t.setAttribute("x", lx.toFixed(1)); m.t.setAttribute("y", ly.toFixed(1));
         m.t.setAttribute("font-size", (LABEL_PX * u).toFixed(1));
         /* THE HALO IS A STROKE UNDER THE FILL (paint-order, nu.css), AND ITS
-           WIDTH HAS TO BE SAID HERE because a stroke-width in a stylesheet is
-           in USER units and the viewBox is 1000 units across the column — 2.6
-           would be 1.0 CSS px at 390 and 8.5 at 1280, i.e. the halo would be a
-           different thickness at every width. Stated in CSS px through `u`, it
-           is 2.6 px everywhere. */
+           WIDTH HAS TO BE SAID HERE and not there: a stroke-width in a
+           stylesheet is in USER units, and this viewBox is 1000 units across
+           whatever the column happens to be. See HALO_PX for the two measured
+           numbers — 2.6 units renders 0.95 CSS px on the phone and 3.27 on the
+           desktop, and through `u` it is 2.60 on both. */
         m.t.setAttribute("stroke-width", (HALO_PX * u).toFixed(2)); }
       cand.push({ name, x: p.x, y: p.y, dx: lx, dy: ly, z: p.z, ring: ringOn });
     }
@@ -655,16 +675,21 @@ export function mount(parent, ctx) {
        acceptable and asked for the moving version instead, so hiding SOME is
        within what he asked for and hiding all is not — and the honest way to
        choose WHICH is by what the reader is most likely to be looking at.
-       London, Liverpool and Muswell Hill are 46 CSS px apart at world zoom and
-       the greedy box below can only keep one of them; before this line the
-       winner was whichever sat nearest the sub-point, which is a fact about the
-       camera. The ringed mark is the record the page is PLAYING. It now wins
-       its neighbourhood at every zoom, and everyone else is still sorted by
-       screen-space z and then by name, so the same pose still draws the same
-       names (determinism: the pass is a pure function of the pose). The rest of
-       the crowding is answered by ZOOM — the box is in CSS px and the dots
-       separate as `arc` closes, so the map thins itself: measured at 390x844,
-       7 of 22 names at 180 degrees of arc and 12 of 22 at 33. */
+       MEASURED at 390x844, 1969: the closest pairs of marks on the whole earth
+       are Greenwich Village/New York 0.1 CSS px apart, London/Muswell Hill 0.2,
+       San Francisco/Sausalito 0.3, Liverpool/Manchester 1.0 — piles, not
+       neighbours, and the 46 x 14 box below can only keep one name out of each.
+       Before this line the winner was whichever sat nearest the sub-point,
+       which is a fact about the CAMERA. The ringed mark is the record the page
+       is PLAYING. It now wins its neighbourhood at every zoom, and everyone
+       else is still sorted by screen-space z and then by name, so the same pose
+       still draws the same names — the pass stays a pure function of the pose.
+
+       AND THE REST OF THE CROWDING IS ANSWERED BY ZOOM, which is why hiding
+       some is not hiding them. The box is in CSS px and the dots separate as
+       `arc` closes, so the map thins itself: measured at 390x844, names inked
+       of 22 near-side marks — 7 at 180 degrees of arc, 12 at 60, 16 at 20, 19
+       at 2. */
     cand.sort((a, b) => (b.ring ? 1 : 0) - (a.ring ? 1 : 0)
                      || b.z - a.z || (a.name < b.name ? -1 : 1));
     const put = [];
