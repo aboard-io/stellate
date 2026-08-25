@@ -232,6 +232,37 @@ const FAM_EQ = {
   // law, visible), and the kit's truth already lives on the lane strips
   // (DRUMMIX) — repeating it here would be the double the audit forbids.
 };
+// A COLOUR MUST NOT ALSO SAY "LOUDER" (2026-08-25).
+//
+// Eight of the twelve rows above are net BOOSTS as written — brass +1.5,
+// reed/guitar/mallet +1, keys/bowed/strings/organ +0.5 — and that was harmless
+// for as long as the number was computed and thrown away (audio/desk.js wrote
+// the strip only `if (u.sampler)`, and `rbjCoefs` knew no shelf, so a family
+// tone moved 0.00 dB on any voice). The 2026-08-24 EQ round made it a real
+// stage, and the day it reached the tape every voice in those eight families
+// got quietly LOUDER as well as differently coloured. That is the wrong sign of
+// change for a tone control: a three-band carve that changes colour should not
+// change loudness.
+//
+// So each row is CENTRED here rather than retyped above: the row's own mean is
+// subtracted from all three bands, which leaves the shape exactly as the table
+// says it and takes the level out of it. `bass` (+1.5 / -1.5) already summed to
+// zero and does not move by a byte; `brass` {mid:+1.5} becomes
+// {lo:-0.5, mid:+1, hi:-0.5}, which is the same carve without the lift.
+//
+// IT IS AN APPROXIMATION AND IT SAYS SO: a 120 Hz low shelf, a 1 kHz peak and a
+// 7.2 kHz high shelf do not carry equal loudness weight, so "zero mean dB" is
+// not "zero LUFS". It is the honest cheap version of the right idea, and the
+// measurement that matters is in the round's report, not here.
+const centredEq = (row) => {
+  if (!row) return row;
+  const bands = ["lo", "mid", "hi"];
+  const mean = bands.reduce((a, k) => a + (row[k] || 0), 0) / 3;
+  if (!mean) return row;
+  const out = {};
+  for (const k of bands) out[k] = Math.round(((row[k] || 0) - mean) * 10) / 10;
+  return out;
+};
 // the composed arc, as per-part DIFFERENTIAL shading. Sums ≈ 0 across a
 // typical roster on purpose: the section's overall level belongs to the
 // section chain; the desk only redistributes it.
@@ -279,7 +310,7 @@ export function derivedPartTone(sec, key, roster) {
   }
   const add = src => { if (src) for (const b of ["lo", "mid", "hi"])
     if (src[b]) eq[b] += src[b]; };
-  add(FAM_EQ[fam]);
+  add(centredEq(FAM_EQ[fam]));
   const sh = shade(sec, base);
   db += sh.db; add(sh.eq);
   for (const b of ["lo", "mid", "hi"]) eq[b] = eqDb(eq[b]);

@@ -549,9 +549,28 @@
         processorOptions: { ctrlSab, ring0Sab: ringSabs[0], ring1Sab: ringSabs[1], cap: RING_FRAMES } });
     const masterGain = ctx.createGain(); masterGain.gain.value = 1;
     const analyser = ctx.createAnalyser(); analyser.fftSize = 2048;
-    // USER MASTER VOLUME: a dedicated monitor gain AFTER the analyser, so
-    // the listener's volume never collides with the engine's fade/mute automation
-    // on masterGain, and the RMS meters read PRE-volume (stable). setMasterVol()
+    // USER MASTER VOLUME, AND IT RIDES THE MASTER BUS'S *INPUT* (2026-08-25).
+    //
+    // Paul: "Almost everything is once again loud and distorted and there's no
+    // way to bring it down." The second half of that sentence is the diagnosis.
+    // This node used to sit at the very END of the chain — after the glue
+    // compressor, after the make-up, after the brickwall — so every position of
+    // the fader delivered the SAME crushed signal at a different volume.
+    // Measured on a precomposed Detroit-1965 record before the move: crest 8.2 dB
+    // at full, 8.1 dB at a quarter, 7.7 dB at a tenth. The distortion did not
+    // move, because the thing making it was upstream of the hand on the knob.
+    //
+    // It now sits between masterGain and busComp, so turning it down backs the
+    // mix OUT of the make-up and out of the limiter. Same record after the move:
+    // crest 9.3 / 9.5 / 11.2 / 12.4 / 12.9 dB at 100 / 75 / 50 / 25 / 10, and
+    // silence at 0. Bringing it down now brings the DISTORTION down, which is
+    // what a listener means by the words.
+    //
+    // What the move costs, said plainly: the fade/mute automation on masterGain
+    // and the duck on voiceGain are still upstream of the fader, so they compose
+    // with it exactly as before; and the RMS meters read `analyser`, which is at
+    // the end of the chain, so they now read POST-volume rather than pre. That is
+    // the honest reading anyway — it is the signal the ear gets. setMasterVol()
     // rides this node; range is the UI's business (0..~1.5).
     const userGain = ctx.createGain();
     userGain.gain.value = (opts.masterVol != null ? Math.max(0, Math.min(4, opts.masterVol)) : 1);
@@ -566,7 +585,55 @@
     // path keeps its own mastering, so segment-parity/fixtures are untouched.
     const busComp = ctx.createDynamicsCompressor();
     busComp.threshold.value = -22; busComp.knee.value = 28; busComp.ratio.value = 2.2; busComp.attack.value = 0.015; busComp.release.value = 0.25;
-    const makeup = ctx.createGain(); makeup.gain.value = 2.6;   // ~+8 dB — the loudness the causal live path was missing
+    // ── THE MAKE-UP IS A TARGET NOW, NOT A CONSTANT (2026-08-25) ────────────
+    // It was a fixed x2.6 (+8.3 dB), and the paragraph above says exactly why it
+    // was right when it was written: "the sampled voices (the default sound) play
+    // dry and quiet (~-22 dBFS peak straight to output)". That is no longer the
+    // material. Measured through this very node on 2026-08-25, a precomposed
+    // full-band record arrives at masterGain at -9.4 to -11 dBFS RMS with peaks
+    // of 1.20 to 1.39 — already at and over full scale — because the NATIVE
+    // sampled layer (live-mode samplers are played here, not baked: see the
+    // `bakeNative` note in stream-renderer) joins the ring's own fx_bus output,
+    // which is itself soft-clipped at 0.7125.
+    //
+    // A fixed +8.3 dB on top of that does not make it louder; it makes it
+    // CRUSHED. Measured: of the 8.3 dB, the brickwall gave 5.7 dB straight back
+    // as continuous gain reduction and the remaining 2.6 dB was bought with
+    // crest — motown crest 7.9 dB, afrobeats 6.7 dB, against 10.3-12.3 dB for the
+    // same box's records the day before. That is the "loud and distorted".
+    //
+    // So the make-up reads the level ARRIVING at the master bus and rides toward
+    // a target. Three properties, each deliberate:
+    //   * it reads PRE-FADER, so a listener turning the volume down can never
+    //     make this push back up — the fader stays a fader;
+    //   * it is CAPPED at the old 2.6, so no record in the catalog can come out
+    //     louder than it does today, and the quiet material (the chant: -25 dBFS
+    //     at this bus) still gets exactly the +8.3 dB it always got;
+    //   * it is FLOORED at 1.0 and moves on a 1.5 s time constant off a smoothed
+    //     envelope, so it follows a record and never a bar. This is not a
+    //     compressor and must not act like one.
+    // Measured after, at the same volume, peak/crest: chant -14.66/14.49
+    // (unchanged), reggae -14.09/13.95 (unchanged), metal -9.27/9.10 (was
+    // -7.99/8.18), motown -9.56/9.40 (was -7.36/7.92), afrobeats -8.47/8.30 (was
+    // -6.36/6.69). Nothing got louder; the hot records came back into the
+    // neighbourhood they were in the day before, with their transients.
+    const MK_MAX = 2.6, MK_MIN = 1.0, MK_TARGET_DB = -14;
+    const makeup = ctx.createGain(); makeup.gain.value = MK_MAX;
+    const mkTap = ctx.createAnalyser(); mkTap.fftSize = 2048;
+    const mkBuf = new Float32Array(mkTap.fftSize);
+    let mkTimer = 0, mkSlow = 0;
+    const mkRide = () => {
+      try {
+        mkTap.getFloatTimeDomainData(mkBuf);
+        let acc = 0;
+        for (let i = 0; i < mkBuf.length; i++) acc += mkBuf[i] * mkBuf[i];
+        const r = Math.sqrt(acc / mkBuf.length);
+        if (!(r > 0)) return;
+        mkSlow = mkSlow ? mkSlow + (r - mkSlow) * 0.06 : r;   // a record, not a bar
+        const want = Math.pow(10, (MK_TARGET_DB - 20 * Math.log10(mkSlow)) / 20);
+        makeup.gain.setTargetAtTime(Math.max(MK_MIN, Math.min(MK_MAX, want)), ctx.currentTime, 1.5);
+      } catch (e) {}
+    };
     const limiter = ctx.createDynamicsCompressor();
     limiter.threshold.value = -1.5; limiter.knee.value = 0; limiter.ratio.value = 20; limiter.attack.value = 0.002; limiter.release.value = 0.12;
     // VOICE DUCK — a gain between the RING and the master, so the engine can pull the
@@ -584,7 +651,10 @@
     const voiceGain = ctx.createGain(); voiceGain.gain.value = 1;
     ringNode.connect(voiceGain);
     voiceGain.connect(masterGain);
-    masterGain.connect(busComp); busComp.connect(makeup); makeup.connect(limiter);
+    masterGain.connect(userGain); userGain.connect(busComp);   // the fader is the master bus's INPUT
+    masterGain.connect(mkTap);                                 // ...and the make-up reads PRE-fader
+    mkTimer = setInterval(mkRide, 250);
+    busComp.connect(makeup);   // makeup -> topLP -> vaporLP -> limiter, wired below
     // ── THE BRICKWALL (docs/TIMING-AUDIT-2026-07 "the master output
     // clips"). A DynamicsCompressor is not a limiter: at threshold −1.5 dB / ratio 20
     // its 2 ms ATTACK passes a transient's first ~90 samples at full gain, so the
@@ -605,7 +675,22 @@
     } catch (e) { errors.push("master_limit: " + (e && e.message || e)); masterLimit = null; }
     const masterOut = masterLimit || limiter;   // the last node of the master chain
     if (masterLimit) limiter.connect(masterLimit);
+    // ── AND THE CEILING IS THE LAST WORD NOW (2026-08-25) ───────────────────
+    // It was not. master_limit guarantees 0.98 and then TWO lowpass biquads sat
+    // downstream of it — `topLP` and `vaporLP`, both parked at 20 000 Hz, which
+    // at 44.1 kHz is 0.907 x Nyquist, where a bilinear-warped RBJ lowpass has a
+    // passband PEAK. They are meant to be transparent at rest and they are not:
+    // measured at the listener's own node, the output came back over full scale
+    // at every volume of 100 — motown peak 1.067 with 50 samples past +1.0 in
+    // 25 s, afrobeats 1.038 with 35, boombap 1.091 with 75 — and the browser
+    // hard-clips every one of them on the way to the device. Detaching the two
+    // filters and nothing else: 0.985 and 0.985, zero clipped samples. So it was
+    // exactly them, and the ceiling was reaching no sound.
+    // They now sit BEFORE the limiter (makeup -> topLP -> vaporLP -> limiter),
+    // which is where a master tone control belongs anyway, and masterOut goes
+    // straight to the ear.
     masterOut.connect(analyser);
+    masterOut.connect(msDest || ctx.destination);
     // VAPOR (C.1, live-only): a global "walking through a mall" EQ on the master —
     // a high-shelf that rolls the top off + a short reverb wash, both scaled by
     // vapor 0..1. Sits AFTER the analyser (the RMS meters stay pre-vapor/pre-volume)
@@ -650,10 +735,10 @@
       try { topLP.frequency.setTargetAtTime(Math.max(1200, Math.min(TOP_OFF, f)), ctx.currentTime, 0.08); } catch (e) {}
     };
     applyTop(opts.top);
-    analyser.connect(topLP);
+    makeup.connect(topLP);
     topLP.connect(vaporLP);
-    vaporLP.connect(vaporDry); vaporDry.connect(userGain);
-    vaporLP.connect(vaporPre); vaporWet.connect(userGain);
+    vaporLP.connect(vaporDry); vaporDry.connect(limiter);
+    vaporLP.connect(vaporPre); vaporWet.connect(limiter);
     const _expLerp = (a, b, t) => a * Math.pow(b / a, t);
     const applyVapor = (v) => { v = Math.max(0, Math.min(1, +v || 0));
       try {
@@ -668,7 +753,8 @@
     // the live amount, fed into each bar (feedBar) so a slider move eases in from the next bar.
     let curVapor = Math.max(0, Math.min(1, +opts.vapor || 0));
     applyVapor(0);
-    userGain.connect(msDest || ctx.destination);
+    // (masterOut -> msDest||destination is wired above, at the brickwall, so the
+    //  ceiling is the last stage on both the live and the media-element route.)
 
     // ── found routing: a small submix into master. dry → master; rev/del/pp → a
     // light native reverb (short feedback delay + lowpass) → master. Found stays
@@ -2130,20 +2216,23 @@
       ctx, analyser, errors, mediaEl,
       // VIDEO EXPORT (E): the live master as a MediaStream audio track that the
       // video exporter muxes via MediaRecorder. On the mobile route msDest already
-      // exists; on DESKTOP there is no msDest (userGain → destination directly), so
-      // lazily tap userGain into a dedicated capture destination — otherwise the
-      // recorded video has NO AUDIO. POST vapor + volume (userGain is last).
+      // exists; on DESKTOP there is no msDest (masterOut → destination directly), so
+      // lazily tap masterOut into a dedicated capture destination — otherwise the
+      // recorded video has NO AUDIO. It taps `masterOut` and not `userGain` because
+      // 2026-08-25 moved the fader to the master bus's INPUT: userGain is now the
+      // unmastered ring+found sum, and a take recorded off it would be the record
+      // with no glue, no make-up and no ceiling.
       audioStream: () => {
         if (msDest) return msDest.stream;
-        try { if (!_capDest) { _capDest = ctx.createMediaStreamDestination(); userGain.connect(_capDest); } return _capDest.stream; }
+        try { if (!_capDest) { _capDest = ctx.createMediaStreamDestination(); masterOut.connect(_capDest); } return _capDest.stream; }
         catch (e) { return null; }
       },
       // VIDEO EXPORT cleanup: tear down the lazy DESKTOP capture tap after a take so
-      // userGain isn't left fanned out into an orphan MediaStreamDestination. No-op on
+      // masterOut isn't left fanned out into an orphan MediaStreamDestination. No-op on
       // the mobile route (msDest is the shared live sink and must stay connected).
       releaseAudioStream: () => {
         if (msDest || !_capDest) return;
-        try { userGain.disconnect(_capDest); } catch (e) {}
+        try { masterOut.disconnect(_capDest); } catch (e) {}
         _capDest = null;
       },
       // ── background-WAV handoff debug hooks (headless verification) ──
@@ -2325,6 +2414,7 @@
       },
       stop() {
         abort = true;
+        if (mkTimer) { clearInterval(mkTimer); mkTimer = 0; }   // the make-up rider stops with the engine
         clearTimeout(pumpTimer); if (barTimer) clearInterval(barTimer); if (loadTimer) clearInterval(loadTimer);
         if (prefillTimer) { clearTimeout(prefillTimer); prefillTimer = 0; }   // a stop during the prefill must not start the run afterwards
         if (swapTimer) clearInterval(swapTimer);
