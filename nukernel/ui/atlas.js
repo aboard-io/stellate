@@ -176,6 +176,13 @@ const HIT_MIN = 15, HIT_MAX = 23;
    (46 x 14 map units at z = 1). Without the pass the world view piles
    Philadelphia, Harlem and Greenwich Village on top of each other. */
 const LOD_X = 46, LOD_Y = 14;
+/* THE TYPE AND ITS HALO, IN CSS PIXELS. Both are converted through the
+   renderer's units-per-pixel at write time, because everything an eye is
+   measured in has to be (the tap box above is the same rule). 2.6 px of halo is
+   two 1.3 px shoulders around a 13 px letterform: measured over the 10% land
+   wash at 390x844, 1.5 px left the counters of "Kinshasa" filling in over
+   Africa and 4 px started to read as bold. */
+const LABEL_PX = 13, HALO_PX = 2.6;
 
 const el = (t, a) => Object.assign(document.createElement(t), a || {});
 const NS = "http://www.w3.org/2000/svg";
@@ -245,8 +252,25 @@ export function mount(parent, ctx) {
      distinction wanted here. */
   const gMarks = S("g", { id: "atlasMarks", tabindex: "-1" });
   const gNames = S("g", { id: "atlasNames", "aria-hidden": "true", tabindex: "-1" });
-  // the names layer is aria-hidden so a place is spoken ONCE, from its button,
-  // and the marks sit ABOVE the labels so a label can never eat a tap.
+  /* the names layer is aria-hidden so a place is spoken ONCE, from its button,
+     and the marks sit ABOVE the labels so a label can never eat a tap.
+
+     AND THE LAYER SURVIVED THE 2026-08-25 FIX, which is worth saying because
+     the obvious repair was to delete it. Paul: "The labels on the map don't
+     move with the map. You could hide them but it would be better if you moved
+     them as I moved the globe." The cheapest way to make a name ride its dot is
+     to make the <text> a CHILD of the mark's own <g>, which already gets a
+     fresh `transform` every frame — free, no second write. It is also wrong
+     here, and measurably: `.place` is what the outside world measures a mark
+     BY. test/atlas.js:240 computes the tap point as the centre of
+     `g.getBoundingClientRect()`, and an SVG group's box is the union of its
+     children — so folding a 40-CSS-px-wide name into the group moves the
+     "centre of Kingston" ~20 px to the right of Kingston, and every gate that
+     taps a rendered mark (G8, G16, G19, G21) would be aiming at a point the
+     picture never claimed. The label gets its OWN <g class="lab"> in this
+     layer instead and is handed the SAME transform string, from the same cache,
+     on the same line — one extra attribute write per drawn mark per frame,
+     which is what §paint's "write only what changed" budget is for. */
   svg.append(gNames, gMarks);
 
   /* THE SLIDER SITS ABOVE THE GLOBE, WHICH IS WHERE IT SHIPPED, AND THE ROUND'S
@@ -359,13 +383,29 @@ export function mount(parent, ctx) {
     const dot = S("circle", { class: "dot", r: 0, fill: "CanvasText",
       stroke: "Canvas", "stroke-width": 1.5 });
     const hit = S("circle", { class: "hit", r: 0, fill: "transparent" });
+    /* THE NAME IS INSIDE A <g> AND NOT LOOSE IN THE LAYER, because a <g> can be
+       TRANSLATED and a <text> would have to be re-addressed. Both would work;
+       only one of them costs the same as the dot. The <text>'s x/y are now the
+       gap between the dot and the first letter — a LOCAL frame, in viewBox
+       units — so a turn of the earth writes one attribute and moves both.
+       `data-far` rides on the group for the same reason it rides on the mark:
+       a name over the wrong hemisphere is worse than no name (see paint()). */
+    const lg = S("g", { class: "lab", "data-place": name, "data-far": "0" });
+    /* THE INK IS `opacity` AND NOT `fill-opacity`, AND THE HALO IS WHY. This
+       said fill-opacity for as long as the name was a bare glyph; now it
+       carries a Canvas-coloured stroke UNDER its fill (nu.css, paint-order), and
+       fill-opacity does not touch a stroke — so every name the crowding pass
+       declined would still have painted its outline, and the world view would
+       have shown seven names and fifteen white ghosts of names over the land
+       wash. `opacity` takes the whole glyph, halo included. */
     const t = S("text", { class: "name", x: 10, y: 5, "font-size": 13,
-      fill: "CanvasText" });
+      fill: "CanvasText", opacity: "0" });
     t.textContent = name;
+    lg.appendChild(t);
     g.append(ring, dot, hit);
-    gNames.append(t);
+    gNames.append(lg);
     gMarks.append(g);
-    mark[name] = { g, dot, hit, ring, t };
+    mark[name] = { g, dot, hit, ring, t, lg };
   }
 
   /* ---------- the frame ------------------------------------------------ */
@@ -468,9 +508,9 @@ export function mount(parent, ctx) {
         if (m.on !== false) { m.on = false;
           m.g.setAttribute("display", "none"); m.g.setAttribute("data-when", "0");
           m.g.setAttribute("tabindex", "-1"); m.g.removeAttribute("aria-label");
-          m.ti = m.lab = m.cur = m.op = null; m.ringOn = false;
+          m.ti = m.lab = m.cur = m.op = m.lk = null; m.ringOn = false;
           m.ring.setAttribute("opacity", "0");
-          m.t.setAttribute("fill-opacity", "0"); }
+          m.t.setAttribute("opacity", "0"); }
         continue;
       }
       if (m.on !== true) { m.on = true;
@@ -483,9 +523,29 @@ export function mount(parent, ctx) {
          and a far-side place has to stay reachable by Tab, because focus is what
          flies the camera to it. That is the whole answer to "how does a keyboard
          reach Kingston when Kingston is behind the earth". */
-      if (m.far !== far) { m.far = far; m.g.setAttribute("data-far", far ? "1" : "0"); }
+      /* THE LABEL GROUP GETS `data-far` TOO, AND IT IS THE FIRST OF THE TWO
+         THINGS PAUL'S SENTENCE ASKED FOR. Measured on the shipped page at
+         390x844, mid-drag: "MID-DRAG far-side places showing a label: 1 [San
+         Francisco]" — the dot had rotated behind the earth and its name was
+         still lying over the Atlantic, because the name was not told. It is
+         written from the SAME `m.far` cache as the mark, on the same line, so
+         the two can never disagree; #atlasMap .lab[data-far="1"] is opacity 0
+         exactly as .place[data-far="1"] is. */
+      if (m.far !== far) { m.far = far;
+        m.g.setAttribute("data-far", far ? "1" : "0");
+        m.lg.setAttribute("data-far", far ? "1" : "0"); }
+      /* ONE TRANSFORM STRING, TWO NODES, ONE CACHE — and the cache is what
+         makes this the SECOND thing Paul asked for rather than a second bug.
+         Before: the mark's translate was rewritten every frame and the name's
+         absolute x/y were rewritten only on SETTLE, so a name stood still while
+         its dot walked out from under it — measured mid-drag, Addis Ababa's
+         name sat 71.0 px from its dot at 390x844 and 124.5 px at 1280x900,
+         against 12.8 px at rest. Now both nodes take the same string on the
+         same line: the drift is 0 px BY CONSTRUCTION, not by a second pass
+         that has to be remembered. */
       const tr = "translate(" + p.x.toFixed(1) + " " + p.y.toFixed(1) + ")";
-      if (m.tr !== tr) { m.tr = tr; m.g.setAttribute("transform", tr); }
+      if (m.tr !== tr) { m.tr = tr;
+        m.g.setAttribute("transform", tr); m.lg.setAttribute("transform", tr); }
       /* THE NAME AND THE TAB ORDER ARE SETTLED BEFORE THE HEMISPHERE IS, and
          that order matters: a mark's tabindex depends on the YEAR and not on
          which side of the earth it is on, so skipping it for far-side marks
@@ -543,7 +603,35 @@ export function mount(parent, ctx) {
         m.ring.setAttribute("r", ringR); m.ring.setAttribute("stroke-width", ringW); }
       const ringOn = !!(here && r.gk === here);
       if (m.ringOn !== ringOn) { m.ringOn = ringOn; m.ring.setAttribute("opacity", ringOn ? "1" : "0"); }
-      cand.push({ name, x: p.x, y: p.y, r: +dotR, z: p.z, ring: ringOn });
+      /* WHERE THE NAME SITS BESIDE ITS DOT IS A ZOOM QUESTION, NOT A TURN ONE,
+         so it is written HERE, under the same cache the radii use, and not in
+         the settle pass. The gap and the type size are stated in CSS px and
+         converted through the renderer's units-per-pixel, exactly like the tap
+         box — which is what makes a PINCH keep the pairing: `u` and `dotR` move
+         under a pinch, `p.x`/`p.y` move under a drag, and the label tracks both
+         without either loop knowing about the other. (The pinch handler never
+         set labelsStale, so under the old absolute-coordinate labels a pinch
+         moved the dots and left the names where they were.)
+
+         THE RINGED MARK'S NAME CLEARS ITS RING — 13 = 9 + 4, so the ringed name
+         keeps exactly the gap every other name has. Seen at 600, where there is
+         one place on the earth and it is the record the page is playing: the
+         ring is drawn at the dot's radius plus 9 CSS px and the name started at
+         the dot's radius plus 4, so the "R" of "Rome" sat under the ring's
+         stroke, on the one mark a reader is most likely to be reading. */
+      const lx = +dotR + (ringOn ? 13 : 4) * u, ly = 4 * u;
+      const lk = lx.toFixed(1) + "|" + u.toFixed(3);
+      if (m.lk !== lk) { m.lk = lk;
+        m.t.setAttribute("x", lx.toFixed(1)); m.t.setAttribute("y", ly.toFixed(1));
+        m.t.setAttribute("font-size", (LABEL_PX * u).toFixed(1));
+        /* THE HALO IS A STROKE UNDER THE FILL (paint-order, nu.css), AND ITS
+           WIDTH HAS TO BE SAID HERE because a stroke-width in a stylesheet is
+           in USER units and the viewBox is 1000 units across the column — 2.6
+           would be 1.0 CSS px at 390 and 8.5 at 1280, i.e. the halo would be a
+           different thickness at every width. Stated in CSS px through `u`, it
+           is 2.6 px everywhere. */
+        m.t.setAttribute("stroke-width", (HALO_PX * u).toFixed(2)); }
+      cand.push({ name, x: p.x, y: p.y, dx: lx, dy: ly, z: p.z, ring: ringOn });
     }
     if (labelsStale) { labels(cand, u); labelsStale = false; }
   }
@@ -562,24 +650,40 @@ export function mount(parent, ctx) {
      places in the window some names still lose to their neighbours, and the
      mark is always there to press whether its name got drawn or not. */
   function labels(cand, u) {
-    cand.sort((a, b) => b.z - a.z || (a.name < b.name ? -1 : 1));
-    const put = [], size = 13 * u;   // 13 CSS px, stated in the unit an eye reads
-    for (const name of NAMES) mark[name].t.setAttribute("fill-opacity", "0");
+    /* THE RINGED MARK GOES FIRST, and that is this round's answer to the
+       crowding question. Paul, 2026-08-25, offered "you could hide them" as
+       acceptable and asked for the moving version instead, so hiding SOME is
+       within what he asked for and hiding all is not — and the honest way to
+       choose WHICH is by what the reader is most likely to be looking at.
+       London, Liverpool and Muswell Hill are 46 CSS px apart at world zoom and
+       the greedy box below can only keep one of them; before this line the
+       winner was whichever sat nearest the sub-point, which is a fact about the
+       camera. The ringed mark is the record the page is PLAYING. It now wins
+       its neighbourhood at every zoom, and everyone else is still sorted by
+       screen-space z and then by name, so the same pose still draws the same
+       names (determinism: the pass is a pure function of the pose). The rest of
+       the crowding is answered by ZOOM — the box is in CSS px and the dots
+       separate as `arc` closes, so the map thins itself: measured at 390x844,
+       7 of 22 names at 180 degrees of arc and 12 of 22 at 33. */
+    cand.sort((a, b) => (b.ring ? 1 : 0) - (a.ring ? 1 : 0)
+                     || b.z - a.z || (a.name < b.name ? -1 : 1));
+    const put = [];
+    for (const name of NAMES) mark[name].t.setAttribute("opacity", "0");
     for (const c of cand) {
-      /* THE RINGED MARK'S NAME CLEARS ITS RING. Seen at 600, where there is one
-         place on the earth and it is the record the page is playing: the ring
-         is drawn at the dot's radius plus 9 CSS px and the name started at the
-         dot's radius plus 4, so the "R" of "Rome" sat under the ring's stroke —
-         on the one mark a reader is most likely to be reading. 13 = 9 + 4, so
-         the ringed name keeps exactly the gap every other name has. */
-      const tx = c.x + c.r + (c.ring ? 13 : 4) * u, ty = c.y + 4 * u;
+      /* THE COLLISION TEST IS STILL IN SCREEN SPACE — it has to be, it is about
+         what an eye can separate — but the number WRITTEN is now the opacity
+         alone. Where the name goes is paint()'s business and it is already
+         written; this pass only says whether it is inked. That split is what
+         lets it stay on SETTLE while the pairing holds every frame: running the
+         sort and the O(n²) box test under a moving thumb would also make the
+         chosen set flicker, because the z-order changes as the earth turns and
+         a greedy pass would hand the neighbourhood to a different name every
+         few frames. */
+      const tx = c.x + c.dx, ty = c.y + c.dy;
       if (put.some((q) => Math.abs(q.x - tx) < LOD_X * u && Math.abs(q.y - ty) < LOD_Y * u))
         continue;
       put.push({ x: tx, y: ty });
-      const t = mark[c.name].t;
-      t.setAttribute("x", tx.toFixed(1)); t.setAttribute("y", ty.toFixed(1));
-      t.setAttribute("font-size", size.toFixed(1));
-      t.setAttribute("fill-opacity", (0.35 + 0.65 * c.z).toFixed(2));
+      mark[c.name].t.setAttribute("opacity", (0.35 + 0.65 * c.z).toFixed(2));
     }
   }
 

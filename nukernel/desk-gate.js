@@ -809,18 +809,50 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      the atlas and the transport bar — stronger than naming the two container
      ids, because a menu that appears somewhere new outside #app is caught by
      the same line rather than by nobody. */
+  /* ...AND THEN THE EVENING SENTENCE CAUGHT UP WITH THE BOARD TOO, 2026-08-25,
+     WHICH IS A REVERSAL REWRITTEN AND NOT RELAXED. This asserted a flat zero:
+
+         ok(sel.length === 0, "no <select> on the board or in the atlas")
+
+     Paul, since: *"There are still many boxes that should be selects"*, and
+     the rule that settled out of it is one line — A SINGLE-CHOICE CONTROL IS A
+     `<select>`. The master's seven and the three buses' eight are single
+     choices about the whole record, so `sheetRow` routes them through
+     ui/selects.js like every other settled parameter and there are fifteen
+     menus on the board again. Measured 2026-08-25: 15, every one carrying
+     `data-sel`, every one in `#board` and NOT ONE in `#boardtbl`.
+
+     THE FINDING THIS GATE WAS BUILT ON IS UNTOUCHED BY THAT AND IS WHAT IS
+     ASSERTED NOW. The twenty-three were per-INSTRUMENT — "place" and three
+     sends on each channel — and Paul's objection was to per-instrument options
+     in dropdowns. Those are still knobs in a 92px column (check 2 sweeps every
+     one of them). So the two claims left are the two that were ever the point:
+     the CHANNEL STRIP has no menu at all, and the ATLAS has none — its three
+     navigation menus were deleted outright ("get rid of the era select boxes,
+     the look at select box, the 'nearby' select box, the genre list, etc."),
+     the accessible path is the globe's own place marks, and test/atlas.js G11
+     holds that. Anything else outside `#app` must be one of the fifteen, drawn
+     by ui/selects.js — a hand-rolled <select> appearing somewhere new out here
+     is still caught by the same line. */
   const sel = await page.evaluate(() => [...document.querySelectorAll("select")]
     .filter((s) => !s.closest("#app"))
-    .map((s) => ({ k: s.dataset.k || s.id || s.getAttribute("aria-label") || "?" })));
-  ok(sel.length === 0,
-     "no <select> on the board or in the atlas (was 23 on the board and 3 in " +
-     "the atlas on 2026-08-24; the board's became ranges and sheets, the " +
-     "atlas's three navigation menus were deleted outright — Paul: \"get rid " +
-     "of the era select boxes, the look at select box, the 'nearby' select " +
-     "box, the genre list, etc.\" The accessible path is the globe's own marks " +
-     "now, and test/atlas.js G11 is what holds it. #app's menus are a " +
-     "different sentence and a different gate — test/selects.js.)",
-     JSON.stringify(sel.map((s) => s.k)));
+    .map((s) => ({ k: s.dataset.k || s.id || s.getAttribute("aria-label") || "?",
+                   sel: s.dataset.sel || null,
+                   strip: !!s.closest("#boardtbl") })));
+  const onStrip = sel.filter((s) => s.strip);
+  const notRack = sel.filter((s) => !/^(master|bus)\|/.test(s.sel || ""));
+  ok(onStrip.length === 0,
+     "NOT ONE DROPDOWN ON THE CHANNEL STRIP — the twenty-three per-instrument " +
+     "menus of 2026-08-24 are still knobs (Paul: \"the options for each " +
+     "instrument in a song section are now just one thing in a dropdown. " +
+     "That's not effective\"). The master's own fifteen are a different " +
+     "sentence and are check 3.",
+     JSON.stringify(onStrip.map((s) => s.k)));
+  ok(notRack.length === 0,
+     "…and every other <select> outside #app is one of the rack's own, drawn " +
+     "by ui/selects.js — the atlas's three navigation menus are still deleted " +
+     "outright and the accessible path is the globe's marks (test/atlas.js G11)",
+     JSON.stringify(notRack.map((s) => s.k)));
 
   /* ---- 2 · every word the board used to offer is still reachable ----
      Not "a knob exists" — the knob is DRIVEN across its whole travel and the
@@ -875,15 +907,42 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   ok(!crooked.length, "…and every knob runs in fields.js's own numeric order, " +
      "with the blank detent AT its own number", crooked.join("; "));
 
-  /* ---- 3 · the master's fifteen are sheets, once, not per channel ---- */
+  /* ---- 3 · the master's fifteen are drawn ONCE, at the master end ----
+     WAS: "the master's fifteen are SHEETS, once, not per channel", reading
+     `fieldset.nu-sheet[data-sheet^=master|]` and its `.nu-opt` rows. Since
+     2026-08-25 they are `<select>`s (see check 1 for the sentence that moved
+     them), so that query matched nothing and the gate reported all fifteen
+     "gone" while all fifteen were on the page.
+
+     THE CLAIM WAS NEVER ABOUT THE WIDGET AND IS NOT NOW. It is about WHERE and
+     HOW MANY: there is one drive, one glue, one reverb room and one echo time
+     for the whole record — fields.js MASTER and BUSES have always said so by
+     being per-bus rather than per-part — so each is drawn ONCE, at the master
+     end, and never once per channel. Read through whichever widget, so this
+     survives the next time the router changes its mind. */
   const sheets = await page.evaluate(() => {
     const out = {};
     for (const f of document.querySelectorAll("fieldset.nu-sheet")) {
       if (!/^(master|bus)\|/.test(f.dataset.sheet)) continue;
       out[f.dataset.sheet] = [...f.querySelectorAll(".nu-opt")].map((o) => o.dataset.v);
     }
+    // ...AND THE SAME ROWS AS MENUS. An <option>'s `data-v` is the word the
+    // sheet's `.nu-opt` carried under the same name (ui/selects.js writes it
+    // for exactly this reason), so the two shapes read back identically and
+    // the option-by-option check below is unchanged.
+    for (const s2 of document.querySelectorAll("select[data-sel]")) {
+      if (!/^(master|bus)\|/.test(s2.dataset.sel)) continue;
+      out[s2.dataset.sel] = [...s2.options].map((o) => o.dataset.v);
+    }
     return out;
   });
+  // ONCE EACH, NOT ONE PER CHANNEL — said as a count as well as by key, because
+  // "one drive for the whole record" is a claim about how MANY were drawn and a
+  // map keyed by name cannot fail on a duplicate.
+  const drawnRack = await page.evaluate(() =>
+    [...document.querySelectorAll('select[data-sel], fieldset.nu-sheet')]
+      .map((n2) => n2.dataset.sel || n2.dataset.sheet)
+      .filter((k) => /^(master|bus)\|/.test(k || "")));
   const want = [];
   for (const f of F.MASTER) want.push(["master|" + f.key, f.table]);
   for (const b of F.BUSES) for (const k of b.knobs)
@@ -895,14 +954,17 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     const need = [""].concat(Object.keys(table));
     for (const v of need) if (!got.includes(v)) short.push(key + " has no " + (v || "(blank)"));
   }
-  ok(!gone.length, "all " + want.length + " master and bus choices are lit sheets " +
-     "at the master end — one each for the whole record, not one per channel",
+  ok(!gone.length, "all " + want.length + " master and bus choices are drawn at " +
+     "the master end — one each for the whole record, not one per channel",
      gone.join(", "));
-  ok(!short.length, "…and every option each menu carried is an option on its sheet",
+  ok(drawnRack.length === want.length,
+     "…and drawn ONCE each: " + drawnRack.length + " controls for " + want.length +
+     " rows", JSON.stringify(drawnRack));
+  ok(!short.length, "…and every option each one offers is its fields.js table's own",
      short.join("; "));
   const perChannelSheet = Object.keys(sheets).filter((k) =>
     chansOnPage.some((c) => k.endsWith("|" + c)));
-  ok(!perChannelSheet.length, "no master sheet is drawn per channel",
+  ok(!perChannelSheet.length, "no master control is drawn per channel",
      perChannelSheet.join(", "));
 
   /* ---- 4 · the numbers it draws are still the desk's ----

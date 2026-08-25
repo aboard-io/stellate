@@ -132,6 +132,28 @@ const spread = (ev) => {
   };
   const events = (si) => p.evaluate((i) => window.__eightEvents(i), si);
 
+  /* OPEN A SECTION'S QUESTIONS, BECAUSE THE FORM TAB IS A LIST NOW.
+     Paul, 2026-08-25: *"when you tap it brings up the questions about the
+     section"*. The form tab — which is also where the page boots — draws the
+     section LIST: five rows of names, one button each (`ui/eight.js:3369`
+     writes `data-k = "sec" + sid`), and a list of names has no nudges in it.
+     A section's eight nudges are one tap further in, on the detail
+     (`sectionDetail`, eight.js:3470).
+
+     WAS: `await tap("tabform")` on its own, three times, and a bare count on
+     the boot page — which was the whole gate while every section's questions
+     were on one page at once, and which now reads 0 and bails out before it
+     asserts anything. Measured 2026-08-25 on the page as shipped: boot 0 ·
+     after tapping section 2 → 8 · the performance tab → 3. Nothing went
+     missing; the count was taken in the wrong room. */
+  const S2 = (await p.evaluate(() =>
+    window.__eightDoc().form.sections.map((s) => s.id)))[1];
+  const openSection = async (id) => {
+    await tap("tabform");
+    return tap("sec" + id);
+  };
+  await openSection(S2);
+
   /* ---- 0 the recipe landed at all ------------------------------------- */
   // WHICH KEYS ARE NUDGE KEYS IS DERIVED, NOT TYPED. fields.js `nudgesFor` is
   // the registry's own answer, so a row that grows an `axis` there is in this
@@ -231,7 +253,7 @@ const spread = (ev) => {
     return out;
   });
 
-  await tap("tabform");
+  await openSection(S2);
   const g0 = await greys();
   /* THE SEVEN ARE THE SUBJECT; ANYTHING ELSE MUST NOT BE ABOUT THE DRUMMER.
      This read `dis === SEVEN` — exactly the seven and nothing else — and that
@@ -260,8 +282,6 @@ const spread = (ev) => {
     "reason " + JSON.stringify(g0.silent.slice(0, 4)));
 
   /* ---- 2 ABSENT IS TODAY ---------------------------------------------- */
-  const sec = await p.evaluate(() => window.__eightDoc().form.sections.map((s) => s.id));
-  const S2 = sec[1];
   const before = await p.evaluate(() => window.__eightNudges()[1]);
   const allNull = before && Object.keys(before).every(
     (k) => before[k] === null || (k === "nudge" && before[k] === 0));
@@ -285,7 +305,7 @@ const spread = (ev) => {
   await say("dev.line|cantor|" + S2, "as written");
 
   /* ---- 4 THE ARCH OVER THE SECTION ------------------------------------ */
-  await tap("tabform");
+  await openSection(S2);
   const evFlat = await events(1);
   const sFlat = spread(evFlat);
   const archOk = await say("form.env|" + S2, "arch");
@@ -323,6 +343,12 @@ const spread = (ev) => {
   // line breathe? … it arches". It proves the four `...(P.x != null)` spreads
   // in nukernel/document.js toGenre reach kernel.js `perform`, because `flat`
   // (0) and `it arches` (0.85) can only differ if `phrase` arrives at all.
+  // ...WHICH LIVES ON ITS OWN TAB. Gate 4 left us in section 2's form detail;
+  // the three Performance nudges are drawn under `tabperformance` and nowhere
+  // else (measured 2026-08-25: the performance tab carries exactly 3 of the
+  // eleven nudge keys). Without this tap `say` finds no control and returns
+  // false, which would read as "the box lost the phrase tent".
+  await tap("tabperformance");
   const flatOk = await say("performance.phrase", "flat");
   const sTentOff = spread(await events(1));
   const archOk2 = await say("performance.phrase", "it arches");
@@ -357,7 +383,7 @@ const spread = (ev) => {
   /* ---- 7 HIRE A DRUMMER AND ALL SEVEN COME ALIVE ---------------------- */
   const hired = await tap("adddrums");
   check(hired, "the page offers a drummer (+ drums)");
-  await tap("tabform");
+  await openSection(S2);
   const g1 = await greys();
   // ...AND THE SAME REWRITE ON THE OTHER SIDE OF THE HIRE. This said
   // `dis.length === 0`, which asked the whole page to have no grey at all; what

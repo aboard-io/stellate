@@ -47,6 +47,15 @@ const EXE = arg("--chrome", process.env.HOME +
 
 const fails = [], notes = [];
 const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ") + what); };
+// PRINT WHAT WAS MEASURED, from wherever this file stops. It used to have one
+// exit and a bare `hot.prod.notes[0].w` that threw past it; the early bail at
+// gate 3 needs the same report or a red run says nothing at all.
+const report = () => {
+  for (const n of notes) console.log(n);
+  for (const f of fails) console.log(f);
+  console.log(fails.length ? "\nFAILED " + fails.length + " of " +
+    (fails.length + notes.length) : "\nALL PASS (" + notes.length + " checks)  " + PAGE);
+};
 
 (async () => {
   const b = await chromium.launch({ executablePath: EXE });
@@ -73,6 +82,47 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     await p.waitForTimeout(420);
     return hit;
   };
+  /* SAY ONE OF THE PRODUCER'S THREE WORDS, THROUGH WHICHEVER WIDGET IT IS —
+     A REVERSAL WRITTEN DOWN RATHER THAN A NEW HELPER.
+
+     WAS: `tap("opt|prod.verb|make")`, three times, and it is worth being exact
+     about what that key was. `opt|<sheet>|<value>` is the `data-k` ui/sheets.js
+     hangs on one option of a LIT SHEET, and on 2026-08-24 the producer's three
+     taps were three lit sheets. Paul, since, twice: *"There are still many
+     boxes that should be selects"*, and a producer verb is one answer decided
+     once, so all three went to menus. There is no `opt|…` key on a `<select>`
+     at all — `tap()` returned false three times, no note ever entered the
+     record, `hot.prod.notes` came back `[]`, and this file CRASHED at
+     `hot.prod.notes[0].w` reading `.w` of undefined. Every assertion after
+     line 152 went unmade, and the three before it were never printed because
+     the crash beat the report to the console.
+
+     Measured 2026-08-25 on the shipped page: `prod.verb` is a <select> of 6,
+     `prod.scope` of 4 (record / cantor / schola / mix), `prod.record` of 130+.
+     A <select> is driven the way a person drives one — pick the option, fire
+     `change`, which is the only listener ui/selects.js installs, exactly as
+     the radio's was. The `data-v` is the WORD; `option.value` is the machine
+     value ui/selects.js wrote, and assigning `.value` a string that is no
+     option's value selects nothing and does not throw, so the option is found
+     by `data-v` and its own `.value` is used. */
+  const say = async (sheet, value) => {
+    const hit = await p.evaluate(([k, v]) => {
+      const s = document.querySelector('select[data-sel="' + CSS.escape(k) + '"]');
+      if (s) {
+        const o = [...s.options].find((x) => x.dataset.v === v);
+        if (s.disabled || !o || o.disabled) return false;
+        s.value = o.value;
+        s.dispatchEvent(new Event("change", { bubbles: true }));
+        return true;
+      }
+      const n = document.querySelector('[data-k="' +
+        CSS.escape("opt|" + k + "|" + v) + '"]');
+      if (!n) return false;
+      n.click(); return true;
+    }, [sheet, value]);
+    await p.waitForTimeout(420);
+    return hit;
+  };
   const shot = () => p.evaluate(() => ({
     dur: window.__nuBounce().durSec,          // the audio/plan.js timeline
     bars: window.__nuBounce().unrouted === undefined ? 0 : window.__nuRender().bars,
@@ -93,21 +143,34 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   const seen = await p.evaluate(() => ({
     sec: !!document.getElementById("ax-produce"),
     tbl: !!document.querySelector(".nu-notes"),
-    verbs: [...document.querySelectorAll('.nu-sheet[data-sheet="prod.verb"] input')]
-      .map((i) => i.value),
+    // THE SIX VERBS, off whichever widget draws them (see `say` above).
+    verbs: (() => {
+      const s = document.querySelector('select[data-sel="prod.verb"]');
+      if (s) return [...s.querySelectorAll("option:not([data-placeholder])")]
+        .map((o) => o.dataset.v);
+      return [...document.querySelectorAll('.nu-sheet[data-sheet="prod.verb"] input')]
+        .map((i) => i.value);
+    })(),
+    verbsAs: document.querySelector('select[data-sel="prod.verb"]') ? "menu"
+      : (document.querySelector('.nu-sheet[data-sheet="prod.verb"]') ? "sheet" : "absent"),
   }));
   check(seen.sec, "P0 · the ninth block is on the page (#ax-produce)");
+  check(seen.verbsAs === "menu", "P0 · …and the verbs are a <select> — a single " +
+    "choice is a menu now (drawn as: " + seen.verbsAs + ")");
   check(!seen.tbl, "P0 · …and there is no note table until something is said");
   check(seen.verbs.length === 6,
     "P0 · six verbs, and the minus half is there: " + seen.verbs.join(" "));
 
   /* ---- 1 THREE REAL TAPS ---------------------------------------------- */
-  const t1 = await tap("opt|prod.verb|make");
-  const t2 = await tap("opt|prod.scope|record");
-  const scope = await p.evaluate(() =>
-    [...document.querySelectorAll('.nu-sheet[data-sheet="prod.record"] input')]
-      .map((i) => i.value).length);
-  const t3 = await tap("opt|prod.record|punk");
+  const t1 = await say("prod.verb", "make");
+  const t2 = await say("prod.scope", "record");
+  // ...and how many records tap three offered, off whichever widget drew it.
+  const scope = await p.evaluate(() => {
+    const s = document.querySelector('select[data-sel="prod.record"]');
+    if (s) return s.querySelectorAll("option:not([data-placeholder])").length;
+    return document.querySelectorAll('.nu-sheet[data-sheet="prod.record"] input').length;
+  });
+  const t3 = await say("prod.record", "punk");
   check(t1 && t2 && t3, "P1 · three taps landed — make / the sound / punk " +
     "(tap three offered " + scope + " records)");
 
@@ -149,6 +212,17 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     "a view's private state");
 
   /* ---- 3 A SECOND NOTE STACKS, AND "more" PUSHES IT HARDER ------------ */
+  /* AND IT IS A GUARD NOW, NOT A DEREFERENCE. `hot.prod.notes[0].w` threw a
+     bare TypeError out of the whole file when tap one silently failed, which
+     cost this gate every assertion below it AND the three above it. A gate
+     that cannot reach its subject must SAY SO and go on being a gate. */
+  if (!hot.prod.notes.length) {
+    check(false, "P3 · the three taps never reached the record, so nothing " +
+      "below this line was measured — prod = " + JSON.stringify(hot.prod));
+    report();
+    await b.close();
+    process.exit(1);
+  }
   const w0 = hot.prod.notes[0].w;
   await tap("pnup|0");
   const up = await shot();
@@ -181,8 +255,10 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   // fader, and a fader that never reaches audio/desk.js is a producer that
   // only pretends. Offsets ADD (desk.js:593), which is why they are cleared
   // and rewritten whole on every push.
-  await tap("opt|prod.verb|less");
-  const l2 = await tap("opt|prod.scope|v:cantor");
+  // ...through the menus, for the reason `say` gives: `opt|prod.verb|less` is a
+  // lit sheet's option key and there is no lit sheet here any more.
+  await say("prod.verb", "less");
+  const l2 = await say("prod.scope", "v:cantor");
   const quiet = await shot();
   check(l2, "P5 · \"less\" takes no descriptor — the note lands on tap TWO");
   const mixKeys = Object.keys(quiet.prod.mix);
@@ -201,10 +277,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   check(!errs.length, "P6 · zero console errors / pageerrors " +
     JSON.stringify(errs.slice(0, 3)));
 
-  for (const n of notes) console.log(n);
-  for (const f of fails) console.log(f);
-  console.log(fails.length ? "\nFAILED " + fails.length + " of " +
-    (fails.length + notes.length) : "\nALL PASS (" + notes.length + " checks)  " + PAGE);
+  report();
   await b.close();
   process.exit(fails.length ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

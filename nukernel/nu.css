@@ -852,4 +852,39 @@ td > select{ max-inline-size: 100%; }
    a bounding box is hard to find on a moving globe. A CSS property beats the
    presentation attribute ui/atlas.js writes, so this wins while focus lasts. */
 #atlasMap .place:focus-visible .ring{ opacity: 1; }
+
+/* ---------- THE NAMES, WHICH TRAVEL WITH THEIR DOTS ---------------------
+   Paul, 2026-08-25: "The labels on the map don't move with the map. You could
+   hide them but it would be better if you moved them as I moved the globe."
+   The moving is in ui/atlas.js — each name is a <g class="lab"> handed the same
+   translate as its mark, on the same line, from the same cache. Three rules
+   here are what the move needs from a stylesheet, and nothing else is:
+
+   1. `pointer-events: none`. The names used to be safe from eating a tap by
+      LAYERING alone — #atlasNames is painted before #atlasMarks, so a mark was
+      always on top of a name. That is still true and it is no longer the
+      argument, because a name now sits wherever its dot is and can land over a
+      NEIGHBOUR'S dot. Declaring the layer untouchable is the promise itself
+      rather than a consequence of paint order. (The hit test picks the nearest
+      mark in SCREEN space and never reads e.target, so this changes no tap that
+      was already working; it stops one that would have started to hover wrong.)
+   2. THE FAR SIDE, said the same way the marks say it. A place rotating behind
+      the earth must take its name with it — measured on the shipped page,
+      mid-drag at 390x844: one far-side place (San Francisco) still had its name
+      lying over the Atlantic. `opacity: 0` and not `display: none`, to match
+      the mark exactly: these are aria-hidden decoration, but a rule that
+      differed from the mark's would be a second story about where a place is.
+   3. THE HALO, which is how a black name stays legible on a grey coastline
+      WITHOUT COLOUR ("keep it black and white"). `paint-order: stroke` puts the
+      stroke down first and the fill on top of it, so a Canvas-coloured stroke
+      becomes a halo around a CanvasText glyph rather than a fat outline through
+      it. Both are system colours, so it is right in a dark theme and in forced
+      colours, where a light stroke behind dark text is exactly what the mode
+      asks for. The WIDTH is not here: stroke-width in a stylesheet is in USER
+      units and this viewBox is 1000 units across the column, so ui/atlas.js
+      writes it in CSS px through the renderer's units-per-pixel (HALO_PX). */
+#atlasMap .lab{ pointer-events: none; }
+#atlasMap .lab[data-far="1"]{ opacity: 0; }
+#atlasMap text.name{ paint-order: stroke; stroke: Canvas;
+  stroke-linejoin: round; stroke-linecap: round; }
 #atlasActs button{ min-block-size: var(--tap); margin-inline-end: .4rem; }

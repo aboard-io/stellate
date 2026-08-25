@@ -22,7 +22,7 @@
  *
  * Every run says which mode it was in, on the first line and the last, because
  * the one thing this file must never do is let a sampled pass be mistaken for a
- * complete one. FAST and COMPLETE run the same fourteen gates and assert the
+ * complete one. FAST and COMPLETE run the same fifteen gates and assert the
  * same things; what changes is BREADTH (the producer's G3 walks every offered
  * sentence at a ROTATING rung instead of at all five, and draws 20 of its 200
  * random stacks) and whether a derivation whose inputs are byte-identical is
@@ -59,6 +59,11 @@
  *   --complete, concurrent          810.8s     load 7.0
  *   default (FAST), concurrent      456.4s / 520.1s     load 4.6 / 6.7
  *   --impacted, one view file       238.8s / 238.8s     7 of 14 gates run
+ *
+ * (Those four rows were taken over FOURTEEN gates. `sheets-tier` is the
+ * fifteenth, added 2026-08-25 and costing ~5s, so the wall clocks below are
+ * comparable and the gate counts in them are not. Fresh numbers are in the
+ * gate-keeper round's report for that date.)
  *
  * The honest reading of those four rows: the FAST path is the one that got
  * twice as quick, and most of that is the producer's sample and the option
@@ -221,6 +226,35 @@ const GATES = [
     argv: ["test/shell.js"],  need: ["test/shell.js"], covers: ["test/shell.js"] },
   { name: "sheets",     wave: 2, kind: "browser", url: { flag: "--page" },
     argv: ["test/sheets.js"], need: ["test/sheets.js"], covers: ["test/sheets.js"] },
+  /* THE SAME FILE, AIMED AT THE SHEETS TIER'S OWN PAGE, AND IT IS NEW TODAY
+     BECAUSE THE SHIPPED PAGE STOPPED ANSWERING SOME OF ITS QUESTIONS.
+     `test/sheets.js` holds two kinds of claim: what ui/sheets.js DRAWS (a
+     legend, a roving-tabindex radio group where ArrowDown moves the value and
+     the focus key, no silent grey) and what nukernel/index.html CHOOSES to
+     draw with it. Paul, 2026-08-25: *"There are still many boxes that should be
+     selects"* — and after that conversion the shipped page's only remaining
+     `.nu-sheet` is the engineer's `<select multiple>` fx chips. There is no
+     radio-group sheet left on it at all, so run against index.html alone the
+     traversal assertion had nothing to stand on and would have skipped for
+     ever, which is a claim nobody is making.
+
+     test/fixtures/sheets-harness.html imports ui/sheets.js directly over the
+     same avail.js and the same shipped record and draws thirty of them, so the
+     tier keeps being gated on its own page while index.html is gated on its
+     own choices. The file already knew the difference — `const REAL` at
+     sheets.js:33 — and every claim in it is now marked with which page owns
+     it. Measured 2026-08-25: 28 checks on index.html, 29 on the harness,
+     ~6s each. */
+  { name: "sheets-tier", wave: 2, kind: "browser",
+    url: { flag: "--page", path: "test/fixtures/sheets-harness.html" },
+    argv: ["test/sheets.js"],
+    need: ["test/sheets.js", "test/fixtures/sheets-harness.html"],
+    // BOTH entry points: the fixture page (so a change to the harness selects
+    // this gate and not the other one) and the gate's own source (so an edit
+    // to test/sheets.js selects BOTH, which is the only way the pair stays
+    // honest — a claim moved from the shipped page to the tier is one edit in
+    // one file that changes what two runs assert).
+    covers: ["test/fixtures/sheets-harness.html", "test/sheets.js"] },
   // THE OTHER HALF OF `sheets`, AND THEY ONLY MEAN ANYTHING TOGETHER. Paul
   // asked for some controls back as menus on the evening of 2026-08-24 ("We can
   // return some things to select menus … in general where there is ONE option a
@@ -487,8 +521,19 @@ async function main() {
     let steps = (g.steps || [COMPLETE && g.complete ? g.complete : g.argv])
       .map((s) => s.map((x) => String(x).replace(/@TMP@/g, TMP)));
     if (g.kind === "browser" && g.url) {
-      if (g.url.env) env[g.url.env] = PAGE;
-      else steps = steps.map((s) => s.concat([g.url.flag, PAGE]));
+      /* A GATE MAY NAME ITS OWN PAGE. Every browser gate but one is pointed at
+         `BROWSER_PAGE`; `sheets-tier` above is pointed at a fixture, and that
+         is the whole reason this branch exists. Built through `new URL` off
+         the ORIGIN rather than by trimming segments off the end of the string:
+         `--page` may hand this any URL at all, and a two-segment trim would
+         quietly produce `…/index.html/test/fixtures/…` for a page served from
+         the root. */
+      const page = g.url.path
+        ? (() => { const u = new URL(PAGE); u.pathname = "/" + g.url.path;
+                   u.search = ""; u.hash = ""; return u.href; })()
+        : PAGE;
+      if (g.url.env) env[g.url.env] = page;
+      else steps = steps.map((s) => s.concat([g.url.flag, page]));
     }
     const t0 = Date.now();
     return new Promise((res) => {

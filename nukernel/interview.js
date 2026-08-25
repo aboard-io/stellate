@@ -18,10 +18,33 @@
 
      Q = { id, ask, answer, who, options: [ { w, chosen } ] }
 
-   `who` is the provenance ledger's word for who decided it: "named" if a
-   hand said it, "chose" if the record did, null if nobody has yet. That
-   distinction is the one the take law turns on, so it belongs in the
-   structure the page reads rather than being re-derived by the page.
+   `who` is `song.seeded`'s own word, and it is worth getting right because
+   THIS PARAGRAPH USED TO SAY THE OPPOSITE. It read: *"named" if a hand said
+   it, "chose" if the record did, null if nobody has yet* — and the first
+   third of that is backwards. `song.seeded` is the RECORD's ledger, not a
+   ledger of everybody: band-kit.js:577 says it "names the rows a RECORD put
+   there", and `answer()` (band-kit.js:4079) takes a row OFF it the moment a
+   hand touches one, in exactly one place, because "a hand answering takes the
+   row off the record's ledger — which is the whole of `a hand always
+   outranks`". So a person's answer leaves NO MARK AT ALL. The three states
+   are:
+
+     "named"  a record named it as it was called (band-kit.js:3019 —
+              `const how = "named"`, the engineer's five included). ANOTHER
+              TAKE MAY RE-ROLL IT.
+     "chose"  a record or a take chose it (band-kit.js:3106, and `allSeeded` /
+              `stampSeeds` for everything a roll decided). ANOTHER TAKE KEEPS
+              IT.
+     null     nobody is on the ledger — either the question is unanswered, or
+              A PERSON ANSWERED IT. `handAt` is precisely `answered && !seeded`
+              (band-kit.js:579).
+
+   The named/chose distinction IS the one the take law turns on — band-kit.js
+   :2511, "the dice rolls what the record NAMED and keeps what it CHOSE" — so
+   it belongs in the structure the page reads rather than being re-derived by
+   the page. A page that wants "did a person say this?" reads `who === null`
+   together with a non-null `answer`, which is the same test band-kit's own
+   `handSaid` makes.
 
    The HEAD of a question is declared on the question's own row (`head`),
    in the file where the question is defined — band-kit.js for the arranger
@@ -29,9 +52,18 @@
    chair.js for the families a pitched chair shares. This module does not
    decide it and MUST NOT: a heading here would be the same second source of
    truth one layer down. A row with no declared head lands under a null
-   head, which is a visible defect rather than a silent one — and
-   test/unit/every-head.test.js holds that at zero across all thirty
-   records, called and rolled.
+   head, which is a visible defect rather than a silent one.
+
+   (A LINE HERE CITED `test/unit/every-head.test.js` AS HOLDING THAT AT ZERO
+   "across all thirty records, called and rolled". THERE IS NO SUCH FILE.
+   There is no `test/unit/` directory on this branch, and
+   `git log --all --diff-filter=A -- test/unit/every-head.test.js` returns
+   nothing — it has never existed in this repository, on any branch, at any
+   commit (checked 2026-08-25). A comment that points at a gate nobody wrote
+   is worse than no comment: it reads as coverage and it survives review
+   because reviewers do not `ls` the citations. The claim is a good one and
+   somebody should write it; until then it stands here as an unheld invariant
+   and says so.)
 
    Pure: same model in, same tree out, no rendering and nothing cached. */
 (function (root, factory) {
@@ -75,9 +107,17 @@
      and guitar saying "the sound" twice. A heading that appears three times in
      one chair is a heading that has stopped naming anything.
 
-     And the model's order CANNOT be the thing that moves: `seatDecisions`
-     order is fingerprinted byte for byte by test/unit/offer-identity.test.js,
-     because it is the order a person is asked in. So the head gathers, and
+     And the model's order CANNOT be the thing that moves: it is the order a
+     person is asked in.
+
+     (THIS CITED `test/unit/offer-identity.test.js` AS FINGERPRINTING
+     `seatDecisions` ORDER BYTE FOR BYTE. There is no such file and there
+     never has been — same check as above, `git log --all --diff-filter=A`
+     returns nothing for it, 2026-08-25. Same conclusion too: it is an
+     invariant this module RELIES ON and nothing currently holds. What DOES
+     exist and is adjacent is `test/gates-cache.js` and the `gates` gate,
+     which content-keys the EXTRACTED option table; the order a seat is asked
+     in is not in it.) So the head gathers, and
      nothing else changes: heads come out in the order their FIRST row does,
      and inside a head the rows keep exactly the order the model gave them.
      Both of those are the model's own facts — there is still no table. */

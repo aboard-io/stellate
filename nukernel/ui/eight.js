@@ -574,6 +574,27 @@ function putPanes() {
 // difference after the fact. So the size says it: anything past MAX is a
 // different page, and a different page keeps its own scroll.
 const ANCHOR_MAX = 240;
+/* AND WHAT THE CLAMP COST ON 2026-08-25, WRITTEN HERE BECAUSE THE NUMBER IS
+   WHY `staffBox` EXISTS. Paul: "When I click tabs the page jumps around. It's
+   endemic." He was right and this function was the trapdoor: the correction a
+   band tab asked for grew with the record — 190px on the shipped chant, 286 at
+   five tabs, 764 at ten — and the moment it passed 240 this declined, cleared
+   `anchorWant`, and the whole jump landed on the page. A clamp that gives up
+   hardest on the biggest page. The fix was NOT to widen it: the clamp is right
+   and a big correction IS a navigation. The fix was to stop the page needing a
+   big correction, by giving every staff its room before abcjs is asked for one
+   (staffBox, above liveBlock). Measured after, at 390x844 and 1280x900, with
+   `window.scrollBy` stubbed out so this function cannot help: every tab on the
+   page moves the window 0px, up to ten voices. This is insurance again.
+
+   HOW TO MEASURE A JUMP, SINCE TWO ROUNDS NOW HAVE MEASURED THE HARNESS
+   INSTEAD. Playwright's `page.click()` calls the CDP scroll-into-view first,
+   which CENTRES the target: from any scrollY, a click on the motif strip
+   "landed" on 1851 and a band tab on 2933, and both are just
+   `docTop + height/2 - innerHeight/2` for that button. The page had not moved
+   — `scrollY` was already 1851 inside the pointerdown listener, before one
+   line of this file ran. Tap the element at its own on-screen point
+   (`mouse.click` / `touchscreen.tap` at its rect) and nothing is manufactured. */
 function restoreAnchor() {
   if (anchorWant == null || Date.now() - anchorAt > 1500) return;
   const now = $(anchorId);
@@ -719,6 +740,7 @@ const CTX = {
   setDocument: (next) => { stop(); DOC = next; normalize(); push(true);
                            anchorOff = true;                 // see ANCHOR_MAX
                            paneScroll.clear();      // a new record is a new page
+                           staffBox.clear();        // …and so are its staves
                            try { draw(); } finally { anchorOff = false; }
                            anchorWant = null;
                            if (ATLAS) ATLAS.showing(DOC.basis); },
@@ -2132,6 +2154,74 @@ function drawMaterial() {
    test/motif-frozen.js A2 counts. The gate is a contract; the grouping is
    presentation, and presentation is what a stylesheet is for. */
 
+/* ---------- THE ROOM A STAFF WILL NEED, REMEMBERED ACROSS A REDRAW ------
+   Paul, 2026-08-25: *"When I click tabs the page jumps around. It's endemic."*
+
+   MEASURED at 390x844 with a real tap on the element's own on-screen point
+   (never `page.click()`, which centres the target first and manufactures the
+   jump it is looking for — see restoreAnchor). Tapping a band tab, with
+   `window.scrollBy` stubbed out so the page's own reshape is visible:
+
+     4 tabs (the shipped chant)   the page runs down  190px
+     5 tabs                                           286px
+     6 · 7 · 8 · 9 · 10 tabs      382 · 477 · 573 · 668 · 764px
+
+   ~95px per voice, and 95px is one engraved measure. `draw()` empties #app and
+   rebuilds it, and abcjs renders on a PROMISE — so at the instant draw()
+   returns, every staff host above `#tabs` is an empty div and the page is
+   short by one measure per composed staff. The staves then land, the page
+   grows under the viewport, and Chromium's scroll anchoring pushes the window
+   down by exactly that growth.
+
+   `restoreAnchor()` was cancelling it and the shipped chant looked still: 190
+   is under `ANCHOR_MAX` (240), so the correction ran and the net jump was 0px.
+   At FIVE tabs the correction it is asked for is 286 — over the clamp — so it
+   declines, clears `anchorWant`, and the later engraves find nothing armed.
+   The whole 286px lands on the page. That is the cliff, and it is why Paul's
+   word was "endemic": every band tab, every tap, on any record with three
+   voices in it. The shipped chant had eleven pixels of margin.
+
+   SO THE PAGE IS MADE NOT TO RESHAPE, rather than corrected after it has.
+   A measure that has been engraved once says how tall it was, and the next
+   redraw gives its host exactly that much room before abcjs is asked for
+   anything. The page ends draw() at its settled height, restoreAnchor is asked
+   for nothing at all — measured with `window.scrollBy` stubbed out, every tab
+   still moves the window 0px — and there is no cliff to fall off.
+
+   THIS IS THE SCORE'S OWN TRICK, one level down: `scoreReserve` already
+   outlives draw() so "the box a record settled on is the box the next redraw
+   starts in" (scoreBlock). The composed twins already reserve from their
+   written measure — `if (!t.style.minHeight)` below — they just did it too
+   LATE, inside the engrave callback, which is after draw() has returned and
+   after restoreAnchor has already made its one decision.
+
+   KEYED BY CELL AND MEASURE, never by position: `psalm#0` is the same music
+   after a voice is added above it, "the third staff on the page" is not
+   (PROGRAM.md 2.2). MEASURED FROM THE `<svg>` AND NOT THE HOST, because the
+   host now carries a reserve and measuring it would read back the number we
+   just wrote and ratchet it up forever; at 390px an engraved bar of rests is
+   89px by either measure (measured 2026-08-25, svg 89 / host 89).
+   THROWN AWAY AT A NEW WIDTH — a staff engraved for a phone is not the room a
+   laptop needs — and at a NEW RECORD, for the same reason paneScroll is:
+   reserving the old record's boxes on the new record's staves is a guess. */
+const staffBox = new Map();
+let staffBoxW = 0;
+function staffBoxKeep() {
+  if (innerWidth === staffBoxW) return;
+  staffBoxW = innerWidth;
+  staffBox.clear();
+}
+// ONE OWNER OF THE KEY, so the reader and the writer cannot drift apart.
+const staffKey = (cell, m) => cell + "#" + m;
+// `min-height` and not `height`, for the reason the twin reserve gives below:
+// a measure that somehow needs MORE room must be readable rather than clipped.
+// A measure nobody has engraved yet gets nothing, which is how the very first
+// draw behaves exactly as it always did.
+function staffRoom(host, cell, m) {
+  const box = staffBox.get(staffKey(cell, m));
+  if (box) host.style.minHeight = box + "px";
+}
+
 // A LIVE BLOCK: a caption and `bars` empty engraving hosts, in ONE contiguous
 // [data-live] element. Never interleaved bar by bar with the written ones —
 // Paul said the fully composed MOTIF, and a motif is a whole thing you read
@@ -2146,7 +2236,10 @@ function drawMaterial() {
 // reserving a blank box costs the same pixels to show you nothing. Stopped, it
 // engraves the section you are writing through that section's own word — so
 // you can see what a word will do before you commit to it.
-function liveBlock(parent, bars, twins, each) {
+// `cell` IS HERE ONLY SO THE HOSTS CAN BE GIVEN THEIR ROOM (staffRoom, above).
+// The block itself does not care which motif it is showing — the caption says
+// that and the clock writes it — so this argument is passed and used once.
+function liveBlock(parent, bars, twins, each, cell) {
   const live = el("div");
   live.dataset.live = "played";
   const cap = el("p");
@@ -2155,6 +2248,7 @@ function liveBlock(parent, bars, twins, each) {
   const hosts = [];
   for (let m = 0; m < bars; m++) {
     const host = el("div");
+    staffRoom(host, cell, m);       // the room this measure took last redraw
     const wrap = el("p"); wrap.append(host); live.append(wrap);
     hosts.push(host);
     twins[m].push(host);            // …and this measure's composed twin, for the reserve
@@ -2286,6 +2380,7 @@ function motifs(parent, deck, si) {
   played.clear();
   playedVoice.clear();
   written.clear();
+  staffBoxKeep();       // a staff engraved for a phone is not a laptop's room
   const reserve = [];
   // (`const g = genreFor(si)` stood here, captioned "one compile for the whole
   //  pass". It stopped having a reader this morning, when the composed
@@ -2348,7 +2443,7 @@ function motifs(parent, deck, si) {
         played.set(voice.name + "#" + m,
           { host, glyphs: [], notes: [], abc: "", bar: m, bars,
             voice: voice.name, lit: [] });
-      });
+      }, name);
       reserve.push({ cap: B.cap, voice, wcell: name, wbars: bars });
       playedVoice.set(voice.name, { cap: B.cap, bars, cell: name });
     }
@@ -2357,7 +2452,7 @@ function motifs(parent, deck, si) {
       // the same thing the page draws for a voice whose word is `out`, and for
       // the same reason. Drawn once and never repainted: repaintPlayed() walks
       // LINES(), and there is no voice in this entry to walk to.
-      const B = liveBlock(parent, bars, twins, null);
+      const B = liveBlock(parent, bars, twins, null, name);
       B.cap.textContent = "nobody plays " + name + " in " + secName(si);
       // …and the caption is registered under a key that is NOT a voice name.
       // `__eightCaptions` is how a gate counts one caption per live block, and
@@ -2379,6 +2474,7 @@ function motifs(parent, deck, si) {
     written.set(name, wreg);
     for (let m = 0; m < bars; m++) {
       const host = el("div");
+      staffRoom(host, name, m);         // …and the written staff's own room
       const wrap = el("p"); wrap.append(host); parent.append(wrap);
       const mine = twins[m];
       const then = () => {
@@ -2396,7 +2492,14 @@ function motifs(parent, deck, si) {
         // somehow needs MORE room — a word that adds a ledger line — must be
         // readable rather than clipped; that case grows the page once and the
         // gate names it.
-        const h = Math.ceil(host.getBoundingClientRect().height) + "px";
+        //
+        // THE `<svg>` AND NOT THE HOST (staffBox, above): the host may already
+        // be carrying the box this measure engraved to on the last redraw, and
+        // measuring it back would ratchet the reserve up a little every time.
+        const px = Math.ceil(((host.querySelector("svg") || host)
+                              .getBoundingClientRect()).height);
+        staffBox.set(staffKey(name, m), px);  // …so the NEXT redraw starts here
+        const h = px + "px";
         for (const t of mine) if (!t.style.minHeight) t.style.minHeight = h;
       };
       wreg.hosts.push({ host, then });
@@ -3477,16 +3580,26 @@ function sectionDetail(parent, s2) {
      again at the top of the document. Measured 2026-08-25 at 1280x900: a real
      touch on the number left `document.activeElement` as `BODY`.
 
-     WHY NOT A `focus()` CALL AFTER `draw()`, WHICH WAS TRIED FIRST AND
-     MEASURED. `h.focus({ preventScroll: true })` from the click handler put
-     focus in the right place and MOVED THE PAGE 607px at 390x844 — the same
-     jump every control on this page makes from that scroll position, which is
-     Chromium's scroll anchoring reacting to `draw()` emptying `#app` (proved:
-     with `overflow-anchor: none` every control measures 0). `restoreFocus`
-     escapes it because of WHERE it runs — inside `draw()`, before
-     `restoreAnchor()`, which is the whole reason those three calls are in that
-     order. So the fix is to be findable rather than to focus: same key, same
-     `preventScroll`, and measured after this the window moves 0px.
+     WHY NOT A `focus()` CALL AFTER `draw()`. Being findable by key beats
+     calling focus() from a click handler, and the reason is order:
+     `restoreFocus` runs INSIDE draw(), before `restoreAnchor()`, so whatever
+     the rebuild did to the scroll is still corrected afterwards. A focus()
+     from the handler lands after that correction and owns nothing.
+
+     THE CAUSE THIS PARAGRAPH USED TO NAME WAS WRONG AND IS REWRITTEN RATHER
+     THAN DELETED, because it was quoted forward twice. It read: "`h.focus({
+     preventScroll: true })` … MOVED THE PAGE 607px at 390x844 — the same jump
+     every control on this page makes from that scroll position, which is
+     Chromium's scroll anchoring reacting to draw() emptying #app". Measured
+     again on 2026-08-25 with a real tap at the element's own on-screen point:
+     `focus({ preventScroll: true })` on an element 1,500px off screen moves the
+     window 0px (from 4500, still 4500), and a BARE `focus()` moves it to 3045.
+     preventScroll does exactly what it says. The 607 was a harness artefact of
+     the same shape as the 1851 in restoreAnchor's note — `page.click()`
+     centring its target before it clicks. The real endemic jump was the page
+     RESHAPING because abcjs engraves on a promise, and it is fixed at the
+     source now (staffBox). Same key, same `preventScroll`, and measured after
+     this the window moves 0px.
 
      `tabIndex = -1` makes the heading focusable WITHOUT putting it in the tab
      order, which is the standard shape for "the thing that just replaced what

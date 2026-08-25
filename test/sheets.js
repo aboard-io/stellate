@@ -68,6 +68,22 @@ const VIEW_SHEETS = {
             "(drive/glue/tape/space/width/tilt/ceiling), gated by desk-gate G3 and G11",
   "bus":    "ui/engineer.js — the three shared returns, declared by fields.js " +
             "BUSES (name/ret/color/time/fb/tone), gated by desk-gate G3 and G11",
+  /* ...and the CHANNEL's own rack row, for exactly the reason the two above
+     give and found the day this gate started walking the voice tabs
+     (2026-08-25). `eng.fx` is the character chips — ui/engineer.js:360, the one
+     control on the page that allows more than one answer — and its vocabulary
+     is fields.js `FX`, declared at fields.js:1491 as
+     `{ key: "fx", scope: "box", type: "list", table: FX, max: MAX_FX }`. Same
+     registry as MASTER and BUSES, same gate (nukernel/desk-gate.js), same
+     reason it is not an avail.js row and never has been.
+
+     It was not on this list because until today this gate only ever looked at
+     the page it booted on, and `eng.fx` is drawn on a VOICE's tab. Its five
+     neighbours — eng.lvl / pan / rev / echo / room — are `<select>`s now and so
+     are not sheets at all; the chips are the only one left. */
+  "eng.fx": "ui/engineer.js — the character chips, declared by fields.js FX " +
+            "(fields.js:1491, capped at MAX_FX), gated by desk-gate G3 (the " +
+            "vocabulary) and G10 (the cap: six chips resolve to MAX_FX)",
   /* ...and the sheets harness's own multi sheet, 2026-08-24. The live control
    * that allows more than one answer is the engineer's character chips
    * (ui/engineer.js:360) and the engineer is not in that harness, so the SHAPE
@@ -102,6 +118,59 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   // gate that could not run until somebody else's serial pass had landed.
   await p.evaluate(() => { window.__D = window.__eightDoc || window.__doc; });
 
+  /* ---- WALK EVERY VIEW, BECAUSE `#app` IS TABS NOW -----------------------
+     THIS IS THE HOLE THAT LET THE THREE SURVEY GATES BELOW PASS ON NOTHING.
+     `#app` used to be one long scroll with every control on it, so one
+     snapshot was the whole page. It is a set of tabs over a section LIST now
+     (Paul, 2026-08-25: *"when you tap it brings up the questions about the
+     section"*), and the page BOOTS on the form tab, whose list is five names
+     and no controls. Measured 2026-08-25 on nukernel/index.html: at boot `#app`
+     carries 0 sheets and 0 development menus, so "0 sheets drawn" was a real
+     failure and "NO DEVELOPMENT WORD IS A MENU []" was a vacuous pass — the
+     same snapshot, telling the truth once and lying once.
+
+     A survey is therefore taken once PER VIEW and unioned. On the sheets
+     harness there are no tabs at all — it is one page with everything on it,
+     which is what the harness is for — so `eachView` runs its body once and
+     `views` is `[null]`. */
+  const tapK = async (k) => {
+    const hit = await p.evaluate((kk) => {
+      const n2 = document.querySelector('[data-k="' + CSS.escape(kk) + '"]');
+      if (!n2) return false;
+      n2.click(); return true;
+    }, k);
+    await p.waitForTimeout(250);
+    return hit;
+  };
+  // THE FORM TAB NEEDS A SECOND TAP. Its list is names; a section's questions
+  // are one tap further in, on `sec<id>` (ui/eight.js:3369).
+  const SEC1 = await p.evaluate(() => {
+    const d = window.__D();
+    return (d.form.sections[1] || d.form.sections[0] || {}).id;
+  });
+  const views = REAL
+    ? await p.evaluate(() =>
+        [...document.querySelectorAll('[data-k^="tab"]')].map((n2) => n2.dataset.k))
+    : [null];
+  const eachView = async (fn) => {
+    const out = [];
+    for (const v of views) {
+      if (v) {
+        await tapK(v);
+        if (v === "tabform") await tapK("sec" + SEC1);
+      }
+      out.push({ view: v, r: await p.evaluate(fn) });
+    }
+    return out;
+  };
+  const union = (rows, key) => {
+    const seen = new Set(), out = [];
+    for (const { r } of rows) for (const x of r[key])
+      { const s2 = JSON.stringify(x); if (!seen.has(s2)) { seen.add(s2); out.push(x); } }
+    return out;
+  };
+  const total = (rows, key) => rows.reduce((a, { r }) => a + r[key], 0);
+
   /* ---- 1 EVERY <select> IN #app IS ONE THAT WAS ASKED FOR BACK ----
      THIS CHECK IS A REVERSAL, WRITTEN DOWN RATHER THAN DELETED. It read
      `check(nSel === 0, "#app select is empty")` and it was right on the morning
@@ -120,21 +189,60 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      this file holds is no longer "no menus"; it is "no menu where you are
      comparing", and the half of it this file owns is: a development word is
      never a menu. WHICH controls came back is test/selects.js's list, and it is
-     not restated here — one owner per fact. What is checked here is that every
-     menu in #app is one nukernel/ui/selects.js drew (they carry `data-sel`)
-     rather than a hand-rolled <select> smuggled back in, and that none of them
-     is a development word. */
-  const menus = await p.evaluate(() => [...document.querySelectorAll("#app select")]
-    .map((s) => s.dataset.sel || "(no data-sel: " + (s.dataset.k || s.outerHTML.slice(0, 40)) + ")"));
+     not restated here — one owner per fact.
+
+     ...AND THEN THE SECOND SENTENCE WENT ALL THE WAY OVER, WHICH IS A REVERSAL
+     REWRITTEN AND NOT DELETED. The line below read `check(!devMenu.length, "NO
+     DEVELOPMENT WORD IS A MENU — that is what the sheets are for")`, and it was
+     the whole half of the law this file owned. Paul said it twice more, most
+     recently: *"There are still many boxes that should be selects"*. The rule
+     that settled is not "no menu where you are comparing" but the simpler thing
+     it turned into: A SINGLE-CHOICE CONTROL IS A `<select>`. What stays a lit
+     sheet is the one `<select multiple>` (the engineer's fx chips), the drum
+     STEP GRID, and single booleans — everything in `#app` that asks for one
+     answer is a menu now, development words included. Measured 2026-08-25 on
+     the shipped page: 5 `dev.line|cantor|*` menus of 26 options each, 5
+     `dev.kit|kit|*` of 69, and not one `.nu-sheet[data-sheet^="dev."]` left.
+
+     So the assertion is turned around and left pointed at the same fact. What
+     did not move: every menu in `#app` is one nukernel/ui/selects.js drew (they
+     carry `data-sel`), not a hand-rolled <select> smuggled back in. What is
+     new: no key may be drawn BOTH ways at once — the hole a half-finished
+     conversion falls into, which neither the old line nor its opposite would
+     have caught on its own. */
+  const widgets = await eachView(() => ({
+    menus: [...document.querySelectorAll("#app select")]
+      .map((s) => s.dataset.sel || "(no data-sel: " + (s.dataset.k || s.outerHTML.slice(0, 40)) + ")"),
+    sheetKeys: [...document.querySelectorAll("#app .nu-sheet")].map((f) => f.dataset.sheet),
+    multiKeys: [...document.querySelectorAll("#app .nu-sheet[data-multi]")]
+      .map((f) => f.dataset.sheet),
+  }));
+  const menus = union(widgets, "menus");
+  const sheetKeys = union(widgets, "sheetKeys");
   const rogue = menus.filter((k) => /^\(no data-sel/.test(k));
   const devMenu = menus.filter((k) => /^dev\./.test(k));
+  const devSheet = sheetKeys.filter((k) => /^dev\./.test(k));
+  /* A MULTI SHEET IS A FIELDSET AROUND ITS OWN `<select multiple>` and the two
+     share a key by construction (ui/sheets.js draws `multi` that way since
+     Paul, 2026-08-24: "Wherever we allow multiple selections use a standard
+     multiselect form element please."). That is the shape gate 8b holds, not a
+     half-finished conversion, so it is not what this line is looking for. */
+  const multiKeys = union(widgets, "multiKeys");
+  const bothWays = menus.filter((k) =>
+    sheetKeys.includes(k) && !multiKeys.includes(k));
   check(!rogue.length, "every <select> in #app came from ui/selects.js " +
     JSON.stringify(rogue.slice(0, 3)));
-  check(!devMenu.length, "NO DEVELOPMENT WORD IS A MENU — that is what the sheets " +
-    "are for " + JSON.stringify(devMenu));
+  check(!bothWays.length, "no key is drawn as a sheet AND as a menu " +
+    JSON.stringify(bothWays));
+  if (REAL)
+    check(devMenu.length > 0 && devSheet.length === 0,
+      "EVERY DEVELOPMENT WORD IS A MENU — " + devMenu.length + " of them, and " +
+      devSheet.length + " still drawn as a sheet " + JSON.stringify(devSheet));
+  else notes.push("     (which widget a development word gets is ui/selects.js's " +
+    "router, which this harness does not import — index.html only)");
 
   /* ---- 2 every sheet has a legend, and its options are avail.js's own ---- */
-  const shape = await p.evaluate(() => {
+  const shapes = await eachView(() => {
     const q = (s) => [...document.querySelectorAll(s)];
     const scopeOf = (ds, doc) => {
       const out = {};
@@ -155,6 +263,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     const env = (window.__eightEnv || window.__env || (() => ({ fleet: [] })))();
     return {
       n: q(".nu-sheet").length,
+      multiKeys: q(".nu-sheet[data-multi]").map((f) => f.dataset.sheet),
       noLegend: q(".nu-sheet").filter((f) => !(f.querySelector("legend") || {}).textContent)
         .map((f) => f.dataset.sheet),
       notOne: q(".nu-sheet:not([data-multi])")
@@ -189,7 +298,28 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
       }).filter(Boolean),
     };
   });
-  check(shape.n > 0, shape.n + " sheets drawn");
+  const shape = {
+    n: total(shapes, "n"),
+    noLegend: union(shapes, "noLegend"), notOne: union(shapes, "notOne"),
+    undeclared: union(shapes, "undeclared"), dup: union(shapes, "dup"),
+    counts: union(shapes, "counts"),
+  };
+  /* HOW MANY SHEETS ARE LEFT, AND WHY THAT NUMBER IS NOW SMALL. This read
+     `shape.n > 0` against ONE snapshot, and the snapshot was the boot page: 0,
+     which is why the gate failed here before it crashed further down. Walked
+     across every tab (above), the shipped page draws exactly one sheet per
+     voice — the engineer's fx chips — because every single-choice control on
+     it is a `<select>` now (gate 1). The claim worth making is therefore not
+     "more than none" but "the ones that are left are the ones that are allowed
+     to be": a sheet on the shipped page is a `<select multiple>`, and nothing
+     else is drawn as one. The harness is the sheets tier's own page and keeps
+     the plain count. */
+  if (REAL) {
+    const singles = sheetKeys.filter((k) => !multiKeys.includes(k));
+    check(shape.n > 0 && !singles.length,
+      shape.n + " sheet(s) left on the shipped page and every one is a " +
+      "<select multiple> — single-choice sheets still drawn: " + JSON.stringify(singles));
+  } else check(shape.n > 0, shape.n + " sheets drawn");
   check(!shape.noLegend.length, "every sheet has a legend " + JSON.stringify(shape.noLegend));
   check(!shape.notOne.length, "exactly one input:checked per non-multi sheet " +
     JSON.stringify(shape.notOne));
@@ -200,7 +330,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     "view sheet " + JSON.stringify(shape.undeclared));
 
   /* ---- 3 NO SILENT GREY. The one law this whole slice exists for. ---- */
-  const silent = () => p.evaluate(() => {
+  const silentFn = () => {
     const q = (s) => [...document.querySelectorAll(s)];
     return {
       // AN OPTION INSIDE A DISABLED SHEET IS NOT A SILENT GREY. `input.disabled`
@@ -226,8 +356,14 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
           c.classList.contains("nu-why"));
         return !w || !w.textContent.trim(); }).map((f) => f.dataset.sheet),
     };
-  });
-  let s0 = await silent();
+  };
+  const silent = () => p.evaluate(silentFn);
+  // ...ACROSS EVERY VIEW, for the reason given at `eachView`: taken once on the
+  // boot page this scanned a list of five section names and found no greys to
+  // be silent about. Unioned over the tabs it scans every control the record
+  // actually draws.
+  const s0rows = await eachView(silentFn);
+  const s0 = { opt: union(s0rows, "opt"), sheet: union(s0rows, "sheet") };
   check(!s0.opt.length, "NO SILENT GREY — every input:disabled has a reason " +
     JSON.stringify(s0.opt));
   check(!s0.sheet.length, "NO SILENT GREY — every fieldset[disabled] has a reason " +
@@ -240,9 +376,27 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (window.__addDrums) window.__addDrums(true);
   });
   await p.waitForTimeout(200);
-  const kitLive = await p.evaluate(() =>
-    !!document.querySelector('.nu-sheet[data-sheet^="dev.kit"]:not([disabled])'));
-  check(kitLive, "with a drummer, the kit sheet is live");
+  /* THE KIT'S DEVELOPMENT WORDS MOVED WIDGET, THE LAW DID NOT — the same
+     rewrite gate 5 below already carries for `alphabet.quality`, and the same
+     sentence: Paul, *"There are still many boxes that should be selects"*.
+     WAS: `.nu-sheet[data-sheet^="dev.kit"]:not([disabled])`, which on the
+     shipped page now matches nothing at all and read as "the kit is dead"
+     while the kit was fine. Measured 2026-08-25: `dev.kit|kit|c1` is a
+     `<select>` of 69 options, and it lives on the drummer's own tab, so the
+     tab has to be opened before it can be looked at. */
+  await p.evaluate(() => {
+    const t = document.querySelector('[data-k="tabkit"]');
+    if (t) t.click();
+  });
+  await p.waitForTimeout(250);
+  const kitLive = await p.evaluate(() => {
+    const f = document.querySelector('.nu-sheet[data-sheet^="dev.kit"]');
+    if (f) return { as: "sheet", live: !f.disabled };
+    const s2 = document.querySelector('select[data-sel^="dev.kit"]');
+    return s2 ? { as: "menu", live: !s2.disabled } : { as: "absent", live: false };
+  });
+  check(kitLive.live, "with a drummer, the kit's development words are live " +
+    "(as a " + kitLive.as + ")");
   await p.evaluate(() => {
     const c = document.querySelector('[data-k="drums"]');
     if (c) { c.checked = false; c.dispatchEvent(new Event("change", { bubbles: true })); return; }
@@ -250,14 +404,23 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (d) { d.cast.on = false; (window.__draw || (() => {}))(); }
   });
   await p.waitForTimeout(200);
+  // ...AND IT IS READ BACK THROUGH WHICHEVER WIDGET IT IS, for the reason
+  // above. A disabled <select> keeps its <option>s in the list exactly as a
+  // disabled fieldset keeps its `.nu-opt` rows: greyed, not hidden, which is
+  // the half of this assertion that is actually about the design.
   const kit = await p.evaluate(() => {
     const f = document.querySelector('.nu-sheet[data-sheet^="dev.kit"]');
-    const w = f && [...f.children].find((c) => c.classList.contains("nu-why"));
-    return f ? { off: f.disabled, why: w ? w.textContent : null,
-                 visible: f.querySelectorAll(".nu-opt").length } : null;
+    if (f) { const w = [...f.children].find((c) => c.classList.contains("nu-why"));
+      return { as: "sheet", off: f.disabled, why: w ? w.textContent : null,
+               visible: f.querySelectorAll(".nu-opt").length }; }
+    const s2 = document.querySelector('select[data-sel^="dev.kit"]');
+    if (!s2) return null;
+    return { as: "menu", off: s2.disabled, why: s2.dataset.why || null,
+             visible: s2.options.length };
   });
   check(!!kit && kit.off && /no drummer/.test(kit.why || ""),
-    "no drummer -> dev.kit disabled reading " + JSON.stringify(kit && kit.why));
+    "no drummer -> dev.kit disabled (as a " + (kit && kit.as) + ") reading " +
+    JSON.stringify(kit && kit.why));
   check(!!kit && kit.visible > 60,
     "...and its " + (kit && kit.visible) + " options are STILL VISIBLE — greyed, not hidden");
 
@@ -330,6 +493,18 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (t) t.click();
   });
   await p.waitForTimeout(200);
+  // ...AND READ THE WORDS BEFORE ANYTHING IS SAID, so "8 greyed" is evidence
+  // about the pad rather than about the record it happened to be measured on.
+  const padWas = (await p.evaluate(() => {
+    const rows = [];
+    for (const f of document.querySelectorAll('.nu-sheet[data-sheet^="dev.line"]'))
+      { for (const l of f.querySelectorAll(".nu-opt")) rows.push({ v: l.dataset.v,
+          off: l.querySelector("input").disabled }); break; }
+    if (rows.length) return rows;
+    for (const s2 of document.querySelectorAll('select[data-sel^="dev.line"]'))
+      { for (const o of s2.options) rows.push({ v: o.dataset.v, off: o.disabled }); break; }
+    return rows;
+  })).filter((r) => r.off);
   // SAY "PAD" THROUGH WHICHEVER WIDGET `cast.part` IS. It was a sheet all
   // morning and it is a <select> again this evening (Paul: "in voices -- plays,
   // material, instrument -- dropdowns/selects"), and what this gate is about is
@@ -345,19 +520,47 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (s) { s.value = "pad"; s.dispatchEvent(new Event("change", { bubbles: true })); }
   });
   await p.waitForTimeout(200);
-  const pad = await p.evaluate(() => {
-    const fs = [...document.querySelectorAll('.nu-sheet[data-sheet^="dev.line"]')];
-    for (const f of fs) {
-      const a = f.querySelector('.nu-opt[data-v="at the fifth"] input');
-      const o = f.querySelector('.nu-opt[data-v="out"] input');
-      if (!a || !o) continue;
-      if (a.disabled) return { sheet: f.dataset.sheet, fifth: true, out: o.disabled,
-        why: (a.closest(".nu-opt").querySelector(".nu-why") || {}).textContent || null };
-    }
-    return { fifth: false };
+  /* READ THE LAW OFF THE PAGE, NOT ONE WORD OFF A TABLE THAT IS DERIVED.
+     WAS: `a pad's \`at the fifth\` is disabled and \`out\` is not`. That was
+     true when it was written and it is stale for a reason worth keeping: the
+     option table is EXTRACTED, never typed (gates.json is generated), and
+     gates-extract no longer fits any rule to `at the fifth` — transposing a
+     pad up a fifth is still audible, so nothing greys it. Naming one word made
+     this gate an assertion about the extractor's output rather than about the
+     design. It failed on BOTH pages, and the page was right on both.
+
+     What the design says is the sentence fields.js prints in the greys: "a pad
+     voices the chord, it does not follow a line". So: before the change NOT ONE
+     of the twenty-six words is greyed at all; after it, some are, every one of
+     them says that sentence in its own text, and `out` — silence, which any
+     voice may always be told to do — is never among them. Measured 2026-08-25, identically on
+     index.html and on the harness: 8 words grey (the head only · fading ·
+     filled in · down a degree · in wider steps · at the fourth · below, at the
+     fifth · the rhythm, moved) and `out` stays live. */
+  const PADWHY = "a pad voices the chord, it does not follow a line";
+  const padRead = () => p.evaluate(() => {
+    const rows = [];
+    for (const f of document.querySelectorAll('.nu-sheet[data-sheet^="dev.line"]'))
+      { for (const l of f.querySelectorAll(".nu-opt")) rows.push({ v: l.dataset.v,
+          off: l.querySelector("input").disabled,
+          why: (l.querySelector(".nu-why") || {}).textContent || "" }); break; }
+    if (rows.length) return rows;
+    for (const s2 of document.querySelectorAll('select[data-sel^="dev.line"]'))
+      { for (const o of s2.options) rows.push({ v: o.dataset.v, off: o.disabled,
+          why: o.dataset.why || "" }); break; }
+    return rows;
   });
-  check(pad.fifth && !pad.out, "a pad's `at the fifth` is disabled and `out` is not — " +
-    JSON.stringify(pad.why));
+  const padOn = await padRead();
+  const padGrey = padOn.filter((r) => r.off);
+  const padSays = padGrey.filter((r) => r.why.includes(PADWHY));
+  const padOut = padOn.find((r) => r.v === "out");
+  check(padWas.length === 0 && padGrey.length > 0 &&
+        padSays.length === padGrey.length,
+    "a pad greys " + padGrey.length + " development words (0 before the tap) " +
+    "and every one of them says why in its own text: " +
+    JSON.stringify(padGrey.map((r) => r.v)));
+  check(!!padOut && !padOut.off,
+    "...and `out` is never one of them — a pad may always be told to sit out");
 
   /* ---- 7 the standing answer is always offered ---- */
   const standing = await p.evaluate(() => {
@@ -375,13 +578,22 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (window.__draw) window.__draw();
   });
   await p.waitForTimeout(200);
+  // ...THROUGH WHICHEVER WIDGET, for the reason gate 5 gives. WAS: the sheet
+  // branch alone, which found nothing on the shipped page and read `null` —
+  // "the standing answer is gone" — while the answer was sitting selected in a
+  // <select> one line away.
   const stand = await p.evaluate(() => {
     for (const f of document.querySelectorAll('.nu-sheet[data-sheet^="dev.line"]')) {
       const l = f.querySelector('.nu-opt[data-v="at the fifth"]');
       if (!l) continue;
       const i = l.querySelector("input");
-      if (i.checked) return { off: i.disabled,
+      if (i.checked) return { as: "sheet", off: i.disabled,
         why: (l.querySelector(".nu-why") || {}).textContent || null };
+    }
+    for (const s2 of document.querySelectorAll('select[data-sel^="dev.line"]')) {
+      const o = [...s2.options].find((x) => x.dataset.v === "at the fifth");
+      if (!o || !o.selected) continue;
+      return { as: "menu", off: o.disabled || s2.disabled, why: o.dataset.why || null };
     }
     return null;
   });
@@ -397,10 +609,29 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      sheets that are left to make it are the development words, so it is made on
      one of those. Same two assertions, same key: the value moves in the record
      and `activeElement.dataset.k` moves with it. */
+  /* ...AND THEN THE DEVELOPMENT WORDS BECAME MENUS TOO, WHICH TOOK THE LAST
+     RADIO-GROUP SHEET OFF THE SHIPPED PAGE. See gate 1: a single-choice
+     control is a `<select>` now, and `alphabet.mode` was only the first of
+     them. Measured 2026-08-25 on nukernel/index.html, walking every tab: the
+     ONLY `.nu-sheet` left anywhere is the engineer's `eng.fx|<voice>` chips,
+     which is a `<select multiple>` and has no radio in it. `devKey` came back
+     null, `readDev` did `null.split("|")` and the whole gate CRASHED at
+     line 404 — asserting nothing, including the twenty-odd checks after it.
+
+     Two things follow and both are done. HERE: the crash is a guard, and on
+     the shipped page the assertion is the reversal stated as a truth — there
+     is no roving-tabindex radio group left, and that is the design. THERE:
+     ui/sheets.js still implements one and the sheets HARNESS still draws
+     thirty of them, so test/all.js runs this same file a second time against
+     `test/fixtures/sheets-harness.html` (the `sheets-tier` gate) and the
+     traversal claim keeps being made where it is still true. A claim that only
+     ever skips is a claim nobody is making. */
   const devKey = await p.evaluate(() => {
     const f = document.querySelector('.nu-sheet[data-sheet^="dev.line"]');
     return f ? f.dataset.sheet : null;
   });
+  const radioSheets = await p.evaluate(() =>
+    [...document.querySelectorAll(".nu-sheet:not([data-multi])")].map((f) => f.dataset.sheet));
   const readDev = (k) => p.evaluate((k) => {
     const [, voice, section] = k.split("|");
     const v = window.__D().voices.find((x) => x.name === voice);
@@ -412,14 +643,23 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     const on = f && f.querySelector("input:checked");
     if (on) on.focus();
   }, devKey);
-  const kb0 = await readDev(devKey);
-  await p.keyboard.press("ArrowDown");
-  await p.waitForTimeout(200);
-  const kb1 = await readDev(devKey);
-  check(!!devKey && kb0.w !== kb1.w, "ArrowDown moved the document value on " +
-    devKey + ": " + JSON.stringify(kb0.w) + " -> " + JSON.stringify(kb1.w));
-  check(!!kb1.k && kb1.k !== kb0.k, "ArrowDown moved activeElement.dataset.k " +
-    kb0.k + " -> " + kb1.k);
+  if (!devKey) {
+    check(REAL && !radioSheets.length,
+      "no radio-group sheet is left to traverse — every single-choice control " +
+      "is a <select>, whose ArrowDown is the browser's own. Still drawn as " +
+      "single-choice sheets: " + JSON.stringify(radioSheets) +
+      "  (the traversal claim is asserted on the sheets harness — test/all.js " +
+      "`sheets-tier`)");
+  } else {
+    const kb0 = await readDev(devKey);
+    await p.keyboard.press("ArrowDown");
+    await p.waitForTimeout(200);
+    const kb1 = await readDev(devKey);
+    check(kb0.w !== kb1.w, "ArrowDown moved the document value on " +
+      devKey + ": " + JSON.stringify(kb0.w) + " -> " + JSON.stringify(kb1.w));
+    check(!!kb1.k && kb1.k !== kb0.k, "ArrowDown moved activeElement.dataset.k " +
+      kb0.k + " -> " + kb1.k);
+  }
 
   /* ---- 8b THE STANDARD MULTISELECT, AND NOTHING LEFT PRETENDING TO BE ONE ----
      (Paul, 2026-08-24: "Wherever we allow multiple selections use a standard

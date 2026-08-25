@@ -131,9 +131,20 @@ const MULTI = { "eng.fx": { what: "the per-voice character chips", max: 3 } };
  * typed, and a reading that turns out wrong should be revertible by deleting a
  * block rather than by unpicking a list. */
 const FORM_NUDGE = /^(form|development)\.(env|intro|outro|mot|lvl|period|breath|pipe)$/;
-/* THE SHEETS THAT MUST SURVIVE. The development words are what the sheets round
- * was FOR — a per-voice, per-section choice among twenty-one melodic operators
- * or sixty-eight kit words, where greying-with-a-reason is the whole point. */
+/* THE THREE DEVELOPMENT KEYS, AND WHAT THIS LIST IS FOR NOW.
+ * It was called THE SHEETS THAT MUST SURVIVE, and the sentence under that name
+ * is kept because it is the argument that lost: "the development words are what
+ * the sheets round was FOR — a per-voice, per-section choice among twenty-one
+ * melodic operators or sixty-eight kit words, where greying-with-a-reason is
+ * the whole point."
+ *
+ * Greying-with-a-reason IS still the whole point and it is still gated (checks
+ * 5 and 6 below, and test/sheets.js gate 6) — a menu carries the reason in the
+ * <option>'s own words and stamps `data-why`, which is if anything easier to
+ * read back off the artifact than a `<small class="nu-why">` was. What went is
+ * the WIDGET: Paul, 2026-08-25, *"There are still many boxes that should be
+ * selects"*. So the same three keys are now the list check 2 uses to say the
+ * opposite thing — none of them may still be a lit sheet. */
 const LIT = ["dev.line", "dev.bass", "dev.kit"];
 /* THE FIVE BLACK KEYS, SPELLED BOTH WAYS (fields.js KEYNAMES). ♯/♭ and not #/b
  * because eSpeak NG — NVDA's default synthesiser — says "A sharp slash B flat"
@@ -219,7 +230,12 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
       })),
       // a select that is NOT one of ours (the board's own, outside #app) is not
       // this gate's business; the query above is #app-scoped for that reason.
+      // ...and WHICH SUBTREE each one is in, because the claim below is about
+      // `#app`. The board's own controls are nukernel/desk-gate.js G11's fact
+      // and not this file's — one owner per fact — and a check worded "in #app"
+      // must not be able to go red on something outside it.
       sheets: q(".nu-sheet").map((f) => ({ key: f.dataset.sheet, k: bare(f.dataset.sheet),
+        inApp: !!f.closest("#app"),
         // A MULTI SHEET COUNTS ITS <option>s, NOT ITS `.nu-opt`s. It has none of
         // the latter any more — the answers live inside one `<select multiple>`
         // — and a check that counted rows would read every multiselect on the
@@ -249,9 +265,28 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   let sel = [], sheets = [];
   const eat = (s) => { sel = sel.concat(s.sel); sheets = sheets.concat(s.sheets); };
   eat(await survey());
+  // ...AND THE FORM TAB IS A LIST, so its own controls are one tap further in.
+  // Paul, 2026-08-25: *"when you tap it brings up the questions about the
+  // section"* — `tabform` draws five section names (`ui/eight.js:3369` writes
+  // `data-k = "sec" + sid`) and the eight per-section nudges FORM_NUDGE names
+  // live in the DETAIL. Walking the tab alone, this gate never saw one of them
+  // and its exemption was excusing nothing. Measured 2026-08-25: the tab 0,
+  // section 2's detail 8.
+  const SEC1 = await p.evaluate(() => {
+    const d = window.__D();
+    return (d.form.sections[1] || d.form.sections[0] || {}).id;
+  });
   for (const t of tabs) {
     await p.click('[data-k="' + t + '"]'); await p.waitForTimeout(150);
     eat(await survey());
+    if (t === "tabform") {
+      const opened = await p.evaluate((id) => {
+        const n2 = document.querySelector('[data-k="sec' + id + '"]');
+        if (!n2) return false;
+        n2.click(); return true;
+      }, SEC1);
+      if (opened) { await p.waitForTimeout(200); eat(await survey()); }
+    }
   }
   const selKeys = new Set(sel.map((s) => s.k));
   const sheetKeys = new Set(sheets.map((s) => s.k));
@@ -265,12 +300,45 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     JSON.stringify(missing.map((k) => MENUS[k])));
   check(!stillLit.length, "...and none of them is still a sheet " + JSON.stringify(stillLit));
 
-  /* ---- 2 THE DEVELOPMENT WORDS ARE STILL SHEETS ---- */
+  /* ---- 2 THE DEVELOPMENT WORDS ARE MENUS TOO — A REVERSAL, REWRITTEN ----
+     THIS PAIR SAID THE OPPOSITE AND IT IS WORTH READING WHAT IT SAID, because
+     the argument was a good one and it lost on the page rather than on paper:
+
+         check(!devSel.length, "NO development word became a menu")
+         check(devLit.length > 0, "the development words are still lit sheets")
+
+     The reasoning behind it is at LIT above — "a per-voice, per-section choice
+     among twenty-one melodic operators or sixty-eight kit words, where
+     greying-with-a-reason is the whole point" — and Paul had drawn the line
+     under it himself on the morning of 2026-08-24 ("the options for each
+     instrument in a song section are now just one thing in a dropdown. That's
+     not effective"). Then, having used the page: *"There are still many boxes
+     that should be selects"*, said twice, the second time after the settled
+     parameters had already gone back. There is no line left to draw: A
+     SINGLE-CHOICE CONTROL IS A `<select>`, development words included.
+
+     THE PART OF THE OLD CLAIM THAT SURVIVES IS THE PART THAT MATTERED, and it
+     is asserted below and in test/sheets.js rather than lost with the widget:
+     a greyed development word still says WHY in its own text. An <option>
+     cannot carry a `<small class="nu-why">`, so ui/selects.js appends the
+     reason to the option's own words and stamps `data-why` — checks 5 and 6
+     read exactly that, and test/sheets.js gate 6 measures the eight words a
+     pad greys and the sentence each of them prints. Nothing about greys got
+     weaker; only the widget changed.
+
+     Measured 2026-08-25 on the shipped page: 10 `dev.*` menus (5 line × 26
+     options, 5 kit × 69) and 0 `dev.*` sheets. */
   const devSel = sel.filter((s) => /^dev\./.test(s.k)).map((s) => s.key);
   const devLit = LIT.filter((k) => sheetKeys.has(k));
-  check(!devSel.length, "NO development word became a menu " + JSON.stringify(devSel));
-  check(devLit.length > 0, "the development words are still lit sheets " +
-    JSON.stringify(devLit));
+  if (REAL) {
+    check(devSel.length > 0, "EVERY development word is a menu now — " +
+      devSel.length + " of them " + JSON.stringify([...new Set(devSel.map(bare))]));
+    check(!devLit.length, "...and not one of them is still a lit sheet " +
+      JSON.stringify(devLit));
+  } else {
+    notes.push("     (which widget a development word gets is ui/selects.js's " +
+      "router over the shipped page — index.html only)");
+  }
 
   /* ---- 3 nothing OFF the list quietly became a menu ----
      ...except by the one-option law, which is a menu for a different reason:
@@ -285,12 +353,66 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
    * be true can only ever hide the thing it was written to excuse, and a key
    * that came back as a <select> on EITHER page means the circle was quietly
    * un-done. */
-  const stray = sel.filter((s) => !MENUS[s.k] && !MULTI[s.k] && !FORM_NUDGE.test(s.k) &&
-    s.n > 1).map((s) => s.key + " n=" + s.n);
+  /* ...AND THE ALLOWLIST STOPPED BEING THE GATE, WHICH IS THE SAME REVERSAL
+     CHECK 2 CARRIES AND IS WRITTEN DOWN THE SAME WAY. This read:
+
+         const stray = sel.filter(s => !MENUS[s.k] && !MULTI[s.k] &&
+           !FORM_NUDGE.test(s.k) && s.n > 1)
+         check(!stray.length, "no control outside the list became a menu")
+
+     — "exactly this list and no more", which is the right shape for a gate
+     while the list is the design. It is not any more. Paul: *"There are still
+     many boxes that should be selects"*, and MENUS is a transcript of one
+     afternoon rather than a rule, so a control that went to a menu AFTER that
+     afternoon (the rack's five `eng.*` sends and places, the three Performance
+     nudges, the producer's own taps, the development words) turned this red
+     for being right. Measured 2026-08-25 it named 48 of them.
+
+     SO THE RULE IS ASSERTED INSTEAD OF THE LIST, and it is a stronger check
+     than the one it replaces because it runs the other way round — off the
+     PAGE rather than off the transcript, so a control this file has never
+     heard of is still covered:
+
+       A SINGLE-CHOICE CONTROL IN #app IS A `<select>`.
+
+     Three things are deliberately not, and each is named with its reason:
+       · the fx chips — more than one answer, so `<select multiple>`, which is
+         the fieldset MULTI declares and check 12 drives;
+       · the drum STEP GRID — sixteen independent booleans per lane, not a
+         choice at all (test/sheets.js gate 8b counts its 48 boxes);
+       · the CIRCLE OF FIFTHS — one choice, deliberately not a menu, because
+         Paul asked for the diagram back ("Maybe put the circle of fifths back
+         in there for key selection, it was nice") and a ring shows which keys
+         are next door. Check 7 below is its gate.
+       · a single boolean (mute, solo, diatonic, drums) is a checkbox, which is
+         not a choice among options either.
+
+     MENUS is kept and check 1 still runs it, because "every control Paul named
+     by name is a menu" is a real and independent claim; what is gone is its
+     converse. */
+  const litSingles = sheets.filter((f) => f.inApp && !f.multi).map((f) => f.key);
+  const radios = await p.evaluate(() => {
+    const out = {};
+    for (const i of document.querySelectorAll("#app input[type=radio]")) {
+      // THE TWO THAT ARE ALLOWED, BY THE CONTAINER THEY ARE IN AND NOT BY NAME:
+      // the circle's own fieldset, and a step grid's per-step play radio.
+      if (i.closest("fieldset.nu-circ") || i.closest(".nu-grid")) continue;
+      out[i.name] = (out[i.name] || 0) + 1;
+    }
+    return Object.keys(out).map((k) => k + " x" + out[k]);
+  });
+  check(!litSingles.length,
+    "every single-choice control in #app is a <select> — still drawn as a lit " +
+    "sheet: " + JSON.stringify(litSingles));
+  check(!radios.length,
+    "...and the only radio groups left are the circle of fifths and the step " +
+    "grid — also found: " + JSON.stringify(radios));
   const byLaw = sel.filter((s) => !MENUS[s.k] && !MULTI[s.k] && !FORM_NUDGE.test(s.k) &&
     s.n <= 1).map((s) => s.key);
-  check(!stray.length, "no control outside the list became a menu " + JSON.stringify(stray));
   if (byLaw.length) notes.push("     one-option law converted: " + JSON.stringify(byLaw));
+  notes.push("     menus off Paul's own list, by the rule rather than by name: " +
+    JSON.stringify([...new Set(sel.filter((s) => !MENUS[s.k] && !MULTI[s.k])
+      .map((s) => bare(s.key)))]));
 
   /* ---- 4 THE CHORD QUALITY IS INSIDE THE CHANGES TABLE, ONE PER BAR ---- */
   const bars = await p.evaluate(() => (window.__D().alphabet.prog || []).length);
@@ -716,27 +838,62 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      `prod.bare` with exactly ONE option. It is the only place the shipped page
      can reach the one-option law, so it is the only place the law can be
      proved on the artifact. On the harness the same spec is reproduced in the
-     producer's own shape and check 6 covers it. */
+     producer's own shape and check 6 covers it.
+
+     THE TWO TAPS THAT GET THERE ARE MENUS THEMSELVES NOW, and this check could
+     not reach its own subject any more. `tap()` did the right thing already
+     (it took a `<select>` or a `.nu-opt`), but the line that PICKED the voice
+     scope did not: it read `.nu-sheet[data-sheet="prod.scope"] .nu-opt`, found
+     nothing, and returned the string "no voice scope" — which is the gate
+     failing to walk to the control rather than the control being wrong. Since
+     the settled-parameters conversion (check 2/3) every one of the producer's
+     taps is a `<select>`: measured 2026-08-25, `prod.verb` 6 options,
+     `prod.scope` 4 with `record` and `mix` greyed under "add", `prod.bare` 1.
+     So the scope is chosen through whichever widget is there, exactly as
+     `tap()` already was, and the assertion underneath is untouched.
+
+     Note also `tap()`'s own bug, fixed here while its caller was: it set
+     `select.value = v` with the OPTION'S OWN `data-v`, and ui/selects.js writes
+     the machine value into `option.value`. Setting `.value` to a string that
+     is not any option's value silently selects nothing — the assignment does
+     not throw — and the change event then reported whatever was already
+     chosen. */
   if (REAL) {
     const three = await p.evaluate(async () => {
-      const tap = (k, v) => { const l = document.querySelector(
-        '.nu-sheet[data-sheet="' + k + '"] .nu-opt[data-v="' + v + '"] input, ' +
-        'select[data-sel="' + k + '"]');
+      const tap = (k, v) => {
+        const s2 = document.querySelector('select[data-sel="' + k + '"]');
+        if (s2) {
+          const o = [...s2.options].find((x) => x.dataset.v === v);
+          if (!o || o.disabled) return false;
+          s2.value = o.value;
+          s2.dispatchEvent(new Event("change", { bubbles: true }));
+          return true;
+        }
+        const l = document.querySelector(
+          '.nu-sheet[data-sheet="' + k + '"] .nu-opt[data-v="' + v + '"] input');
         if (!l) return false;
-        if (l.tagName === "SELECT") { l.value = v; } else { l.checked = true; }
-        l.dispatchEvent(new Event("change", { bubbles: true })); return true; };
+        l.checked = true;
+        l.dispatchEvent(new Event("change", { bubbles: true }));
+        return true;
+      };
       if (!tap("prod.verb", "add")) return "no verb";
       await new Promise((r) => setTimeout(r, 250));
-      const sc = [...document.querySelectorAll(
-        '.nu-sheet[data-sheet="prod.scope"] .nu-opt')].find(
-          (l) => !l.querySelector("input").disabled && /^v:/.test(l.dataset.v));
-      if (!sc) return "no voice scope";
-      if (!tap("prod.scope", sc.dataset.v)) return "scope tap failed";
+      // WHO "add" MAY BE SAID ABOUT, off whichever widget offers it. A voice
+      // scope is `v:<name>`; `record` and `mix` are greyed under this verb.
+      const scMenu = document.querySelector('select[data-sel="prod.scope"]');
+      const scope = scMenu
+        ? ([...scMenu.options].find((o) => !o.disabled && /^v:/.test(o.dataset.v || "")) || {}).dataset
+        : ([...document.querySelectorAll('.nu-sheet[data-sheet="prod.scope"] .nu-opt')]
+            .find((l) => !l.querySelector("input").disabled && /^v:/.test(l.dataset.v)) || {}).dataset;
+      if (!scope || !scope.v) return "no voice scope";
+      if (!tap("prod.scope", scope.v)) return "scope tap failed";
       await new Promise((r) => setTimeout(r, 250));
       const lit = document.querySelector('.nu-sheet[data-sheet="prod.bare"]');
       const men = document.querySelector('select[data-sel="prod.bare"]');
-      return { lit: !!lit, litN: lit ? lit.querySelectorAll(".nu-opt").length : 0,
-               menu: !!men };
+      return { scope: scope.v, lit: !!lit,
+               litN: lit ? lit.querySelectorAll(".nu-opt").length : 0,
+               menu: !!men,
+               menuN: men ? men.querySelectorAll("option:not([data-placeholder])").length : 0 };
     });
     check(three && three.menu === true && three.lit === false,
       "the producer's one-option tap is a menu, not a lit grid of one " +

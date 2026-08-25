@@ -18,15 +18,38 @@
 //   A4  every .nu-pane has scrollHeight - clientHeight <= 1. `overflow-x: auto`
 //       silently computes `overflow-y` to `auto` as well, so a pane is a
 //       TWO-axis scroller and a table one pixel too tall hides a row.
-//   A5  every <table> has a .nu-pane parent. A wide table scrolls inside
-//       itself or it scrolls the whole document, and there is no third option.
+//   A5  NO TABLE OVERFLOWS ITS CONTAINER. A table wider than the column it
+//       sits in scrolls inside a `.nu-pane`; a table that fits needs no pane
+//       and must not have one. (WAS: "every <table> has a .nu-pane parent",
+//       which was true of every table on the page until Paul, 2026-08-25:
+//       *"Rotate the drum kits and motif editors to be vertical. They'll fit
+//       on a phone screen that way."* Steps run DOWN now, so the motif grid is
+//       292.8px and the widest kit in the catalog 272px — both inside the
+//       296px column a 320px phone leaves — and ui/eight.js `stepGrid` draws
+//       them with no pane at all. The old line would now demand a scroll
+//       container around a table that cannot scroll, and that container was
+//       not neutral: it is the one Paul reported as "when I scroll right to
+//       edit motifs and tap something it snaps left even though I'm not done
+//       editing". So A5 asserts the thing the pane was ever FOR.)
+//   A5c no `.nu-pane` wraps a rotated step grid (`table.nu-grid`) — the exact
+//       unnecessary scroll container named above, kept out by name.
 //   A6  at scrollY 600/1400/2400 the .nu-bar sits at 0 and EXACTLY ONE
 //       .nu-ax > h2 sits in 0 < top < 120 — and it is the heading of the axis
 //       the viewport is actually inside. Two bands, never three.
 //   A7  the .nu-bar is exactly --bar-h tall. `.nu-ax > h2 { top: var(--bar-h) }`
 //       is a promise about a number, and a third control in the bar that wraps
 //       opens a gap under the heading that nothing else would catch.
-//   A8  after pane.scrollLeft = 200 the sticky lane <th> has moved <= 2px.
+//   A8  every `.nu-pane` that ACTUALLY SCROLLS and declares its first column
+//       sticky keeps that column pinned: after pane.scrollLeft = 200 it has
+//       moved <= 2px. (WAS: scoped to `.nu-pane` holding a `table.nu-grid`,
+//       i.e. the step grid's lane label. There is no such pane any more — see
+//       A5 — so that reading skipped at all four widths and asserted nothing.
+//       The claim is about a sticky column over a scroll, and the page still
+//       makes one: measured 2026-08-25 at 320px the board's channel strip
+//       overflows by 36px and its first cell holds to 0.5px. The chord chart
+//       also scrolls at 320/375 and its first cell is `static` on purpose —
+//       six identical bar columns, no lane label to hold — so this reads
+//       declared stickiness rather than demanding it.)
 //
 // Run:  NODE_PATH=/home/ford/ftrain-2025/node_modules node test/shell.js
 // A bare chromium.launch() resolves shell build 1200, which is not installed on
@@ -105,11 +128,23 @@ const SURVEY = () => {
     clippedPanes: [...document.querySelectorAll(".nu-pane")]
       .map((p, i) => ({ i, over: p.scrollHeight - p.clientHeight }))
       .filter((x) => x.over > 1),
-    // A5 — a <table> whose parent is not a pane. The engraving's own <svg> is
-    // not a table and the board's <table class="nu-board"> is expected to sit
-    // in a pane like every other one; §2.4 gives no table an exemption.
-    orphanTables: [...document.querySelectorAll("table")]
-      .filter((t) => !(t.parentElement && t.parentElement.classList.contains("nu-pane")))
+    // A5 — a <table> that is WIDER THAN THE BOX IT IS IN and has nothing to
+    // scroll it. Measured off the rendered page, not off the class list: a
+    // table is fine either way round, in a `.nu-pane` that can carry it or
+    // loose in a column it fits inside. The +1 is the sub-pixel slack every
+    // other measurement in this file already allows.
+    // (This replaces a class-list test — "parentElement is a .nu-pane" — which
+    // could not tell a table that needs a scroller from one that does not.)
+    spillingTables: [...document.querySelectorAll("table")]
+      .map((t) => ({ t, host: t.parentElement }))
+      .filter(({ t, host }) => host && t.scrollWidth > host.clientWidth + 1 &&
+        !host.classList.contains("nu-pane"))
+      .map(({ t, host }) => name(t) + " " + t.scrollWidth + "px in " +
+        host.clientWidth + "px (" + (t.rows[0] ? t.rows[0].cells.length : 0) + " cols)"),
+    // A5c — the rotated step grids take no pane. ui/eight.js `stepGrid`:
+    // "an `overflow-x: auto` box around a table that cannot overflow is a
+    // scroll container that exists only to catch gestures. It caught them."
+    panedGrids: [...document.querySelectorAll(".nu-pane table.nu-grid")]
       .map((t) => name(t) + " (" + (t.rows[0] ? t.rows[0].cells.length : 0) + " cols)"),
     // A5b — a pane holding more than one table is a nested-scroll bug waiting
     crowdedPanes: [...document.querySelectorAll(".nu-pane")]
@@ -166,23 +201,39 @@ const STICKY = async () => {
   return out;
 };
 
-/* ---------- A8: the lane label rides over the scroll --------------------- */
+/* ---------- A8: a sticky first column rides over the scroll --------------
+   WAS: `p.querySelector("table.nu-grid")` — the step grid's lane label, which
+   is the control this assertion was written for and which no longer sits in a
+   pane at all (see A5). Scoped that way it found nothing at 320/375/430/820
+   and skipped four times, and a check that always skips is a check that is not
+   being made.
+
+   What it is about is unchanged: a column that is pinned while the rest of the
+   table slides under it. So the subject is now EVERY pane that genuinely
+   scrolls and whose first cell DECLARES `position: sticky`. Measured
+   2026-08-25 with a drummer hired: at 320px the board's channel strip
+   overflows its pane by 36px and holds to 0.5px; the chord chart overflows by
+   83px at 320 and 28 at 375 and its first cell is `static` — six identical bar
+   columns with no label to pin — so it is correctly not a subject rather than
+   a failure. Returns a LIST, because "the one pane that scrolls" was itself an
+   assumption about a page that has since grown more of them. */
 const LANE = async () => {
-  const pane = [...document.querySelectorAll(".nu-pane")].find((p) => {
-    const t = p.querySelector("table.nu-grid");
-    return t && p.scrollWidth - p.clientWidth >= 20;
-  });
-  if (!pane) return null;
-  const th = pane.querySelector("th:first-child") || pane.querySelector("td:first-child");
-  if (!th) return null;
-  const before = th.getBoundingClientRect().left;
-  pane.scrollLeft = 200;
-  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-  const after = th.getBoundingClientRect().left;
-  const got = pane.scrollLeft;
-  pane.scrollLeft = 0;
-  return { before: +before.toFixed(1), after: +after.toFixed(1), scrolled: got,
-           moved: +Math.abs(after - before).toFixed(1) };
+  const out = [];
+  for (const pane of document.querySelectorAll(".nu-pane")) {
+    if (pane.scrollWidth - pane.clientWidth < 20) continue;
+    const th = pane.querySelector("th:first-child") || pane.querySelector("td:first-child");
+    if (!th || getComputedStyle(th).position !== "sticky") continue;
+    const t = pane.querySelector("table");
+    const before = th.getBoundingClientRect().left;
+    pane.scrollLeft = 200;
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const after = th.getBoundingClientRect().left;
+    const got = pane.scrollLeft;
+    pane.scrollLeft = 0;
+    out.push({ what: (t && t.className) || "table", scrolled: got,
+               moved: +Math.abs(after - before).toFixed(1) });
+  }
+  return out;
 };
 
 (async () => {
@@ -221,10 +272,12 @@ const LANE = async () => {
     is(s.clippedPanes.length === 0,
       "A4 " + width + " · no pane clips vertically"
       + (s.clippedPanes.length ? " — " + JSON.stringify(s.clippedPanes) : ""));
-    is(s.panes > 0 && s.orphanTables.length === 0,
-      "A5 " + width + " · every <table> is in a .nu-pane"
-      + (s.panes === 0 ? " — there are no panes at all" : "")
-      + (s.orphanTables.length ? " — orphans: " + s.orphanTables.join(", ") : ""));
+    is(s.spillingTables.length === 0,
+      "A5 " + width + " · no <table> overflows the box it is in"
+      + (s.spillingTables.length ? " — spilling: " + s.spillingTables.join(", ") : ""));
+    is(s.panedGrids.length === 0,
+      "A5c " + width + " · no .nu-pane around a rotated step grid"
+      + (s.panedGrids.length ? " — " + s.panedGrids.join(", ") : ""));
     is(s.crowdedPanes.length === 0 && s.nestedPanes === 0,
       "A5b " + width + " · one table per pane, no nesting"
       + (s.crowdedPanes.length ? " — " + JSON.stringify(s.crowdedPanes) : "")
@@ -241,11 +294,13 @@ const LANE = async () => {
       + (s.overflowSins.length ? " — " + s.overflowSins.join(", ")
          + " (this kills BOTH sticky bands silently)" : ""));
 
-    const lane = await page.evaluate(LANE);
-    if (!lane) skip("A8 " + width + " · no scrollable .nu-grid pane at this width");
-    else is(lane.moved <= 2,
-      "A8 " + width + " · lane th moved " + lane.moved + "px over a "
-      + lane.scrolled + "px scroll");
+    const lanes = await page.evaluate(LANE);
+    if (!lanes.length)
+      skip("A8 " + width + " · no pane with a sticky first column scrolls at this width");
+    else for (const lane of lanes)
+      is(lane.moved <= 2,
+        "A8 " + width + " · " + lane.what + "'s sticky first column moved "
+        + lane.moved + "px over a " + lane.scrolled + "px scroll");
 
     if (width === STICKY_AT) {
       const trace = await page.evaluate(STICKY);
