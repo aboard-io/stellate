@@ -629,14 +629,30 @@ td > select{ max-inline-size: 100%; }
 .nu-map{ display: block; inline-size: 100%; block-size: auto; max-inline-size: 100%; }
 
 /* ONE MOTIF, ONE BLOCK (ui/eight.js motifs()). Paul, 2026-08-24: "The motifs
-   should stay with their editors!!!" Everything about a motif — the composed
-   staves, the written staff, the step grid, the designing buttons — is a direct
-   child of #staff, in order, and NOT wrapped in a container of its own: the
+   should stay with their editors!!!" A motif's staves are direct children of
+   #staff, in order, and NOT wrapped in a container of their own: the
    frozen-interface gate counts the written measures at `#staff > p > div` and a
    wrapper would put them one level deeper. So the grouping is done here, which
    is where grouping belongs anyway. The block's name carries a rule across the
    column and the air above it, and that is what makes "one block" a thing you
    can see rather than a thing a comment claims.
+
+   THIS SAID "everything about a motif — the composed staves, the written staff,
+   the step grid, the designing buttons — is a direct child of #staff", and on
+   2026-08-25 half of that stopped being true: the editor moved one level out,
+   into the axis directly after #staff, when the designing buttons became
+   pictures and seven <svg> icons per motif started being counted by a gate that
+   counts staves (`#staff svg`; ui/eight.js materialAxis says it in full). The
+   ORDER is unchanged and so is everything this rule draws — staff, then the
+   grid that writes it, adjacent — because the block was always a thing you see,
+   not a thing the DOM nests.
+
+   AND THERE IS ONLY ONE OF THEM ON THE PAGE NOW (Paul, 2026-08-25: "organize
+   the motifs into a table with tabs, each motif a tab, like 'the band'
+   section"), which is why `.nu-first` below is the case that always fires. The
+   rule is kept for the record whose bank the strip cannot show — there is none
+   yet — and because deleting it would make re-stacking the motifs a CSS change
+   as well as a JS one.
 
    `--rule-strong` and not `--rule`: this is the only division inside an axis,
    and it has to read as a stronger break than the <hr>-weight lines around the
@@ -649,11 +665,89 @@ td > select{ max-inline-size: 100%; }
 .nu-motif.nu-first{ margin-block-start: .4em; padding-block-start: 0;
   border-block-start: 0; }
 
+/* THE SEVEN DESIGNING BUTTONS, DRAWN (2026-08-25, Paul: "'backwards shift left
+   shift right upside down up a step down a step wider' can be icons").
+
+   THIS IS THE ONE PLACE ON THE PAGE WITH AN ICON ON IT, AND THE LAW IT NARROWS
+   IS QUOTED RATHER THAN DROPPED. PLAN.md Phase 1: "No icons anywhere: words
+   instead (the dice ⚄ becomes 'roll a record', ⟲ becomes 'start again', the
+   play button says 'play' / 'stop')." That still holds everywhere else and no
+   other button in this file was touched. The distinction: the old law is about
+   actions with NO VISUAL FORM — nothing depicts "roll a record", so a glyph
+   there is decoration standing where a word should be — and these seven are
+   GEOMETRIC OPERATIONS ON A SHAPE THE USER IS LOOKING AT. Backwards, upside
+   down, wider: each has a picture, and the picture is the more legible of the
+   two. (ui/eight.js DESIGNS draws them, all seven from one contour.)
+
+   THE WORD IS STILL IN THE DOM — `.nu-vh` inside every one of these buttons —
+   so with this stylesheet turned off the row reads as the seven words in order.
+   That is what makes the icon an addition rather than a replacement.
+
+   AND THE PICTURE MAY NOT EAT THE TAP. `pointer-events: none` on the <svg>:
+   the BUTTON is the target and a decorative stroke inside it cost the globe
+   round half an hour of taps that landed on nothing.
+
+   THE PADDING IS CUT TO .25em, FROM THE .6em EVERY OTHER BUTTON GETS, and it is
+   measured rather than taste: a word button needs air around a word, a picture
+   brings its own margin inside its 32×26 box, and .6em put the row at 409px
+   against the 366px column a 390px phone leaves — three wrapped lines. At .25em
+   the seven come to 346px and sit on ONE line at 390 with the tap floor intact
+   (measured 46×44, and `--tap` is 44).
+
+   THE PICTURE IS BIGGER THAN ITS OWN VIEWBOX, and that is what the padding
+   bought. `designArt` draws in a 32×26 user-unit box and says so in the width
+   and height attributes, which is the right fallback when this file is turned
+   off; here it is scaled to 40×32.5 — the largest a 44px tap target with 2px
+   of padding can hold — because at 32px a note block is four pixels wide and
+   ten of them read as a smudge. The viewBox does the arithmetic; no number in
+   ui/eight.js changes. */
+.nu-tf-row button{ padding-inline: 2px; }
+.nu-tf{ display: block; pointer-events: none;
+  inline-size: 40px; block-size: 32.5px; }
+/* WHERE THE TUNE WAS, and where this button puts it. Two weights of the same
+   ink, never two hues: the pair has to survive a forced-colours mode and a
+   monochrome screen, and `--rule` is the same 38%-of-CanvasText mix the whole
+   file draws its quiet lines with, so both track the ground into dark mode with
+   no media query — the argument made once at the top of this file. */
+.nu-tf-was{ fill: var(--rule); }
+.nu-tf-is{ fill: currentColor; }
+/* the pitch the tune's own step 0 sat on, which is what makes "up a step" and
+   "down a step" two different pictures instead of the same one twice */
+.nu-tf-ref{ stroke: var(--rule); stroke-width: .7; stroke-dasharray: 1.6 1.6; }
+
 /* THE ENGRAVING. abcjs draws an <svg> at whatever width it was handed; on a
    phone that is wider than the page, and an overflowing staff would put the
    sideways scroll straight back on the body — the one thing this file exists
    to prevent. */
 #staff svg, #app svg{ max-inline-size: 100%; }
+
+/* THE SCORE (2026-08-25, Paul: "add a section ABOVE motifs which is the current
+   playing music, two measures at a time, but ALL"). One system of staves, one
+   per voice of the record, and NOT ONE CONTROL — so there is almost nothing for
+   a stylesheet to do here and that is the point.
+
+   THE RULE UNDER IT is the same division `.nu-motif` draws over a motif: the
+   score and the motifs are two different things to look at, and the eye needs
+   to be told where one stops. It is drawn BELOW the block rather than above,
+   because the <h3> already opens it.
+
+   THE ROOM IS RESERVED IN JAVASCRIPT AND NOT HERE, and that is deliberate: how
+   tall a two-measure system of seven staves is, is a fact about this record at
+   this width that no stylesheet can know (ui/eight.js `scoreReserveTo`, and
+   the same argument `reserveCaption` makes one surface down). What this file
+   guarantees is only that the reserve has somewhere to land: the host is a
+   block, and the <svg> inside it never exceeds the column. */
+.nu-score{ margin-block: .2em 1em; padding-block-end: .6em;
+  border-block-end: 2px solid var(--rule-strong); }
+/* AND THE BOX IS SEALED OFF FROM THE PAGE'S OWN LAYOUT. `contain: layout paint`
+   is the browser's word for "nothing inside this element can change anything
+   outside it", and here it is simply TRUE: ui/eight.js gives the host a fixed
+   height (`scoreReserveTo`) and the system is scaled to fit inside it, so the
+   engraving cannot move a pixel of the page even in principle. Saying so lets
+   the browser skip re-laying-out a 16,000px document every time two new bars
+   are drawn — measured 2026-08-25 on the eight-voice record at 390px, a window
+   turn is where this page's only long main-thread tasks live. */
+.nu-score > div{ display: block; contain: layout paint; }
 
 /* ===== THE ATLAS (D6) ==================================================
    Paul, 2026-08-24: "a slider for time and a world map on top." Every rule

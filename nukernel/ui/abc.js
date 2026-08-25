@@ -138,6 +138,22 @@ function spellPitch(midi, sigInfo, state) {
   return mark + body;
 }
 
+// ---- one notehead GROUP: a note, a chord, or a position on a drum staff ----
+// The three cases toNotes may now carry (see its note), turned into the one
+// ABC token the fold below writes. A chord is bracketed and takes ONE stem and
+// ONE duration — `[ceg]4` — which is also why the glyph map does not change:
+// abcjs draws a chord as a single `.abcjs-note` group (measured against the
+// vendored build, 2026-08-25), so a chord is one glyph exactly as a note is.
+// A string is passed through untouched: it is a notehead somebody has already
+// spelled, and the ottava shift is not applied to it either, because a
+// percussion position does not move when the clef says 8va.
+function headOf(m, ott, sigInfo, state) {
+  if (typeof m === "string") return m;
+  if (Array.isArray(m))
+    return "[" + m.map((x) => headOf(x, ott, sigInfo, state)).join("") + "]";
+  return spellPitch(m - 12 * ott, sigInfo, state);
+}
+
 // ---- durations -------------------------------------------------------------
 // A value a reader can see at a glance: whole/half/quarter/eighth/sixteenth
 // and their dots. Anything else (a five-step note) is said as tied pieces,
@@ -219,14 +235,40 @@ const ledgers = (p) => Math.max(0, Math.floor((p - 10) / 2)) +
 // +1 = "sounds an octave ABOVE the staff" (8va, clef=treble+8, written down);
 // -1 = "sounds an octave BELOW" (8vb, clef=treble-8, written up)
 const OTT_CLEF = { "1": "treble+8", "-1": "treble-8" };
-function chooseOttava(notes) {
-  if (!notes.length) return { ott: 0, wide: false };
-  const ps = notes.map((x) => staffPos(x.midi)).sort((a, b) => a - b);
+// EVERY PITCH THE STAFF WILL CARRY, FLATTENED — a chord contributes all its
+// tones to the register decision (a triad's median is the triad's, not its
+// root's), and a pre-spelled notehead contributes nothing, because a
+// percussion position is not a pitch and no octave clef can rescue it.
+const pitchesOf = (notes) => {
+  const out = [];
+  for (const x of notes) {
+    if (typeof x.midi === "number") out.push(x.midi);
+    else if (Array.isArray(x.midi))
+      for (const m of x.midi) if (typeof m === "number") out.push(m);
+  }
+  return out;
+};
+// ...AND THE SAME ARITHMETIC ON AN F CLEF. A bass staff's five lines are
+// exactly twelve diatonic steps below a treble staff's (treble 2..10 in the
+// numbering above, bass -10..-2), so every ledger-line count in this block
+// works on a bass part by adding twelve before asking. That is the whole of
+// what an F clef changes here, which is why it is an OFFSET and not a copy of
+// the function: the median rule, the two-ledger reach and the saving guard are
+// the same four-hundred-year-old rules on either staff. Written for the score
+// (2026-08-25) because a real bass part sits down at G1, and every printed
+// bass part in the world writes that with an 8vb clef rather than with four
+// ledger lines under every note.
+const STAFF_BASE = { bass: 12, treble: 0 };
+function chooseOttava(notes, base) {
+  const pit = pitchesOf(notes);
+  if (!pit.length) return { ott: 0, wide: false };
+  const off = base | 0;
+  const ps = pit.map((m) => staffPos(m) + off).sort((a, b) => a - b);
   const mid = ps[ps.length >> 1];             // the phrase's own register
   let ott = 0;
   if (ledgers(mid) >= 2) {
     const cost = (s) =>
-      notes.reduce((a, x) => a + ledgers(staffPos(x.midi - 12 * s)), 0);
+      pit.reduce((a, m) => a + ledgers(staffPos(m - 12 * s) + off), 0);
     let best = cost(0);
     for (const s of [1, -1]) {
       const c = cost(s);
@@ -240,7 +282,7 @@ function chooseOttava(notes) {
   // wide rather than imply the marking fixed it.
   const lo = ps[0] - 7 * ott, hi = ps[ps.length - 1] - 7 * ott;  // as written
   const wide = hi - lo > 16 ||
-               notes.some((x) => ledgers(staffPos(x.midi - 12 * ott)) >= 4);
+               pit.some((m) => ledgers(staffPos(m - 12 * ott) + off) >= 4);
   return { ott, wide };
 }
 
@@ -371,8 +413,22 @@ export function toNotes(phrase, opts = {}) {
     const hd = phrase && phrase.hold && phrase.hold[at];
     if (hd) span = Math.min(span, hd);
     else if (opts.maxHold) span = Math.min(span, opts.maxHold);
+    // A PITCH MAY BE A CHORD, OR A NOTEHEAD SOMEBODY ELSE ALREADY SPELLED
+    // (2026-08-25, the score pass). `midi[at]` was always one number and
+    // `| 0` said so; a conductor's score of a whole band has to draw a pad's
+    // triad on one stem and a drum kit's kick-and-hat on another, and neither
+    // is a number. So the seam widens by exactly two cases and no more:
+    //   number    the pitch, as before — every existing caller, byte for byte
+    //   number[]  a CHORD, drawn as one [ceg] glyph on one stem
+    //   string[]  noteheads written out ("F", "!style=x!g") — the percussion
+    //             staff, where a lane is a POSITION on the staff and not a
+    //             pitch at all, so there is nothing for degPitch or the key
+    //             signature to say about it.
+    // `| 0` is kept for the number case rather than dropped, because that is
+    // the coercion every phrase in the box has been engraved through.
+    const raw = mid ? mid[at] : null;
     notes.push({ at, len: span,
-      midi: mid ? mid[at] | 0
+      midi: mid ? (typeof raw === "number" ? raw | 0 : raw)
                 : 60 + key + regShift + degPitch(deg[at] | 0, mode) + 12 * (oct[at] | 0) });
   });
   return { n, spb, notes };
@@ -407,7 +463,17 @@ function engrave(phrase, opts = {}) {
   // One decision for the whole staff, taken off the sounding pitches; every
   // spelling below is written `12 * ott` away from the sound and the clef
   // says so, which is the only place the shift exists.
-  const { ott, wide } = chooseOttava(notes);
+  // ...UNLESS THE CALLER ALREADY KNOWS WHICH STAFF THIS IS. `opts.clef` is the
+  // score's seam (toScore below): a bass part is written on an F clef and a kit
+  // on a percussion one, and both decisions are made by WHO IS PLAYING rather
+  // than by where the notes sit. chooseOttava reasons in treble staff positions
+  // and would answer nonsense for either, so a named clef turns it off outright.
+  // A NAMED CLEF STILL GETS ITS OCTAVE CHOSEN — except a percussion one, where
+  // the "pitches" are staff positions somebody already wrote down and an 8va
+  // over them would be a sentence about nothing.
+  const staff = opts.clef ? String(opts.clef).split(/[ +\-]/)[0] : "treble";
+  const { ott, wide } = staff === "perc" ? { ott: 0, wide: false }
+    : chooseOttava(notes, STAFF_BASE[staff] || 0);
   const kind = new Array(n).fill(0);          // 0 rest, 1 note-start, 2 held
   const len = new Array(n).fill(0);
   const midiAt = new Array(n).fill(0);
@@ -450,7 +516,7 @@ function engrave(phrase, opts = {}) {
   let i = 0;
   while (i < n) {
     if (kind[i] === 1) {
-      const midi = midiAt[i] - 12 * ott;   // as WRITTEN; midiAt is the sound
+      const midi = midiAt[i];              // as SOUNDED; headOf writes it down
       let remain = len[i];
       ni++;                                   // the next toNotes note, in order
       while (remain > 0) {
@@ -461,7 +527,7 @@ function engrave(phrase, opts = {}) {
         ps.forEach((p, k) => {
           // spelled per piece: the tied restatement after a barline needs its
           // accidental said again, and the bar-scoped accState knows when
-          const name = spellPitch(midi, sigInfo, accState);
+          const name = headOf(midi, ott, sigInfo, accState);
           const tie = k < ps.length - 1 || crossesBar ? "-" : "";
           push(name + durStr(p) + tie);
           glyphs.push(ni);                    // every tied piece is this note's
@@ -492,7 +558,12 @@ function engrave(phrase, opts = {}) {
   // the signature, and — when the staff moved — the octave clef that puts it
   // back: `clef=treble+8` is the little 8 above the G, "sounds an octave
   // higher than written" (verified rendering above)
-  head.push("K:" + sigInfo.k + (ott ? " clef=" + OTT_CLEF[String(ott)] : ""));
+  // the clef this staff ends up in: the caller's, with the octave this pass
+  // chose written onto it ("bass" + "-8"), or the treble table's own name
+  const clef = opts.clef
+    ? opts.clef + (ott ? (ott > 0 ? "+8" : "-8") : "")
+    : (ott ? OTT_CLEF[String(ott)] : "");
+  head.push("K:" + sigInfo.k + (clef ? " clef=" + clef : ""));
 
   // TWO bars a line (see above — a phone is 390 px and abcjs shrinks rather
   // than overflows), the last bar closed with a final barline; an empty
@@ -503,5 +574,92 @@ function engrave(phrase, opts = {}) {
     lines.push(out.slice(b, b + per).join(" | ") +
                (b + per >= out.length ? " |]" : " |"));
   const abc = head.join("\n") + "\n" + (lines.join("\n") || "z" + spb + " |]") + "\n";
-  return { abc, glyphs, notes, n, spb, ottava: ott, wide };
+  // `bars` and `clef` ride out with the rest so a SCORE can be assembled from
+  // several of these without re-folding anything: toScore takes each part's
+  // bars, puts them under a `V:` line, and shares one head between them.
+  return { abc, glyphs, notes, n, spb, ottava: ott, wide, bars: out, clef };
+}
+
+/* ---------- THE SCORE: EVERY VOICE AT ONCE, BARRED TOGETHER ---------------
+   Paul, 2026-08-25: *"add a section ABOVE motifs which is the current playing
+   music, two measures at a time, but ALL"*. ALL is the whole of the ask — not
+   the voice you are editing and not the tune, but every part of the record
+   stacked and barred together, which is what a conductor's score IS and has
+   been since Mozart's day.
+
+   WHY A SECOND ENTRY POINT AND NOT A FLAG ON `toEngraving`. The two functions
+   answer different questions and, more to the point, return different shapes:
+   `toEngraving` hands back ONE glyph map, ONE ottava and ONE `wide`, and every
+   caller of it — the motif staves, the piano audition, the pure gates — reads
+   those directly. A `voices: true` flag would have to nest all three a level
+   deeper for everybody, so the whole file's existing readers would grow a
+   branch to serve a caller they never meet. `toScore` instead COMPOSES the
+   engraver: it calls the same `engrave()` once per part and does nothing to
+   the music at all, only to the paper — one shared head, a `V:` line per part,
+   and the bars underneath. Nothing about how a phrase becomes notes, spellings,
+   beams or ties is written twice, and a fix to any of that reaches both.
+
+   WHAT ABC GIVES US FOR FREE, measured against the vendored build rather than
+   assumed (chromium, vendor/abcjs/abcjs-basic-min.js, 2026-08-25):
+     * `%%score [V1|V2|…]` draws the BRACKET down the left and runs every
+       barline through all the staves — one system, which is the whole point:
+       bar 2 of the bass is under bar 2 of the tune and you can read down a
+       beat. `%%score {(V1 V2)}` does NOT do this: parentheses put two voices
+       on ONE staff (measured — seven voices collapsed to 247px of two staves),
+       so the bracket-and-bar spelling is the one that means what we mean.
+     * a per-VOICE `clef=` on the `V:` line, so the bass reads in F and the kit
+       on a percussion clef under one shared key signature.
+     * `name="cantor"` prints the part's name in the left margin, which is how
+       a reader knows which line is whose without a legend to look up.
+     * `add_classes: true` puts `abcjs-vN` on every notehead, N counting the
+       `V:` lines in the order they are declared here — which is what lets the
+       playhead light the sounding note in voice N without a second render.
+
+   EVERY PART GETS A STAFF, INCLUDING THE ONES THAT SAY NOTHING. A voice whose
+   word is `out`, or that has not entered yet, arrives here as a phrase of
+   rests and is engraved as a bar of rests: dropping it would change how many
+   staves the system has from window to window, and a picture that changes
+   shape while you watch it is exactly what the page spent 2026-08-24 removing.
+   It also loses the reader their place — the fourth staff down is the fourth
+   voice, always. */
+export function toScore(parts, opts = {}) {
+  const key = opts.key | 0;
+  const mode = (opts.mode && opts.mode.length ? opts.mode : MINOR).slice();
+  const sigInfo = keySig(key, mode);
+  const spb = opts.stepsPerBar || 16;
+  const head = ["X:1"];
+  if (opts.label) head.push("T:" + String(opts.label).replace(/[\r\n]+/g, " "));
+  head.push("M:" + (opts.abc || meterOf(spb)));
+  head.push("L:1/16");
+  // NO `Q:` — the tempo mark costs a line of height above the first staff
+  // (~25px, measured) and the record's tempo is already a control on the page,
+  // one axis up. A score that repeats it buys nothing and pushes the music
+  // down. `opts.bpm` is accepted and ignored on purpose, so a caller sharing
+  // one options object with toEngraving does not have to strip it.
+  head.push("%%score [" + parts.map((p, i) => "V" + (i + 1)).join("|") + "]");
+  head.push("K:" + sigInfo.k);
+
+  const body = [], voices = [];
+  parts.forEach((p, i) => {
+    const eng = engrave(p.phrase || {}, { ...opts, reg: p.reg | 0, clef: p.clef,
+                                          barsPerLine: 0 });
+    // the name is a quoted ABC string, so a quote inside it would end the
+    // field early; a voice is named by a person and people type quotes
+    const nm = String(p.name == null ? "" : p.name).replace(/["\r\n]+/g, " ");
+    body.push("V:V" + (i + 1) + (nm ? ' name="' + nm + '"' : "") +
+              (eng.clef ? " clef=" + eng.clef : ""));
+    // A DRUM STAFF HAS NO KEY. Six flats over a kick and a hat is a sentence
+    // about pitch on a line that has none, and it is the first thing a reader
+    // notices as wrong. `K:none` on the voice's own line is ABC's way of
+    // saying so and abcjs honours it (measured: 2 key signatures drawn without
+    // it, 1 with). It follows the `V:` line rather than being folded into it
+    // because a key field is a key field, not a clef modifier.
+    if (/^perc/.test(eng.clef || "")) body.push("K:none");
+    // ...and the bars themselves, all on ONE line: the system is as wide as
+    // the window is and it must not wrap, or the staves stop lining up.
+    body.push((eng.bars.join(" | ") || "z" + spb) + " |]");
+    voices.push({ name: p.name, glyphs: eng.glyphs, notes: eng.notes,
+                  ottava: eng.ottava, wide: eng.wide, clef: eng.clef });
+  });
+  return { abc: head.join("\n") + "\n" + body.join("\n") + "\n", voices, spb };
 }
