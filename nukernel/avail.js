@@ -442,7 +442,15 @@
   // fields.js RATES names only the two departures (half, double); "as written"
   // is rate 1 and has no key there, so the sheet carries it — ui/eight.js's own
   // comment, and its own three-way mapping, moved here whole.
-  const RATEOPTS = () => [{ value: "", label: "the genre's own" },
+  /* `""` IS THE SAME OPTION AS ui/eight.js TEMPOS' LAST BUTTON — `time.rate`
+     absent — drawn twice on one page, and eight.js's own comment has said so
+     since it was written ("this button is the same fourth answer"). It read
+     "the genre's own" here and "the record's own speed" there. Paul, 2026-08-26:
+     *"'the record's own' -- make that 'default'."* One owner per fact is also
+     one WORD per fact when two controls answer one field, so both say `default`
+     now — this is the one place the rename went past the literal phrase, and
+     that is why. */
+  const RATEOPTS = () => [{ value: "", label: "default" },
                           { value: "1", label: "as written" },
                           ...Object.keys(RATES).map((k) => ({ value: k, label: RATELABEL[k] }))];
   const rateNow = (doc) => doc.time.rate == null ? ""
@@ -475,6 +483,33 @@
   const SEC = (doc, scope) => ((doc.form || {}).sections || [])
     .find((s) => s.id === (scope || {}).section) || {};
 
+  /* ================= HOW THIS PAGE SPELLS "NOTHING SAID HERE" =============
+     A `""` option means ABSENT — this control says nothing, so whatever stands
+     above it stands. Paul, 2026-08-26: *"'the record's own' -- make that
+     'default'."* That phrase is gone from every user-facing string on the page
+     (here, ui/eight.js TEMPOS and its knobs table, fields.js's three
+     performance nudges), and this is the INVENTORY of what is left, because the
+     idea is still spelled four ways and nobody can see that from one row:
+
+       "default"          time.rate, dev.bass, cast.bassStyle, and fields.js
+                          stress / phrase / orn — the ones renamed, plus the
+                          rate button in ui/eight.js that is the same option
+       "the voice's own"  material.cell — this SECTION says nothing, so the
+                          voice's own standing cell is read
+       "as written"       dev.line, dev.kit, and `time.rate`'s value 1 — and
+                          NOTE THAT IT MEANS TWO DIFFERENT THINGS: on dev.line
+                          and dev.kit it is the absent option, and on time.rate
+                          it is a REAL value (rate exactly 1) sitting one row
+                          under `default`, which is the absent one
+
+     THE RECOMMENDATION, NOT TAKEN HERE BECAUSE IT WAS NOT ASKED FOR: `default`
+     for all four absent options, and `as written` kept ONLY for time.rate's
+     value 1, where it is a real answer and not an absence. That would leave one
+     word for "say nothing" and no word doing two jobs. It is three more string
+     edits and a line in test/knobs.js; it is not made without an instruction,
+     because dev.line's "as written" is a MUSICIAN'S word for playing the motif
+     as the composer set it down, and losing it may be a real loss rather than a
+     tidy-up — that is a judgement about the vocabulary and not about the code. */
   const SHEETS = {
     /* ---- 1 TIME (song) ---- */
     "time.meter": { label: "meter", scope: "song",
@@ -579,7 +614,13 @@
         if (typeof x.material !== "object" || x.material === null)
           x.material = { "": x.material };
         if (v) x.material[id] = v; else delete x.material[id]; } },
-    "cast.bassStyle": { label: "the record's own", scope: "voice", chair: "bass", kind: "bass",
+    /* THE CONTROL THAT SETS WHAT `dev.bass`'S `default` INHERITS, and it is
+       labelled with the same word for that reason: the cast says `default:
+       walking` and each section then says `default` or a departure from it. It
+       read "the record's own" — Paul, 2026-08-26: *"'the record's own' -- make
+       that 'default'."* Two controls pointing at one fact have to point with
+       one word or neither of them is readable. */
+    "cast.bassStyle": { label: "default", scope: "voice", chair: "bass", kind: "bass",
       values: () => [{ value: "", label: "no bass" }, ...opts(Object.keys(BASSOPS), BASSOPS)],
       get: (doc, s) => (V(doc, s).cast || {}).style || "",
       set: (doc, s, v) => { V(doc, s).cast.style = v || null; } },
@@ -605,8 +646,15 @@
       values: () => devWords(),
       get: (doc, s) => (V(doc, s).development || {})[s.section] || "",
       set: (doc, s, v) => { V(doc, s).development[s.section] = v; } },
+    /* THE WORD FOR "NOTHING SAID HERE" IS `default`, AND IT IS PAUL'S OWN,
+       2026-08-26: *"'the record's own' -- make that 'default'."* This is the
+       option he was looking at — the `""` row of a per-section bass menu, which
+       means "this section says nothing about the bass, so the voice's standing
+       answer stands". Every other spelling of that idea on the page is listed
+       in the header note above `SHEETS`; only the ones that are LITERALLY this
+       option, drawn twice, were changed with it. */
     "dev.bass": { label: "the bass", scope: "voice.section", chair: "bass", kind: "bass", absent: "",
-      values: () => [{ value: "", label: "the record's own" },
+      values: () => [{ value: "", label: "default" },
                      ...opts(Object.keys(BASSOPS), BASSOPS)],
       get: (doc, s) => (V(doc, s).development || {})[s.section] || "",
       set: (doc, s, v) => { V(doc, s).development[s.section] = v; } },

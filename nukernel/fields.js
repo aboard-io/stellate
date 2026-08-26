@@ -1789,8 +1789,14 @@
     const r = (NA && NA.ASKABLE || []).find((x) => x.field === field);
     if (!r) return null;
     return { key: field, axis: "performance", scope: "song",
-             ask: r.ask, group: r.head, none: "the record's own",
-             options: [{ value: "", label: "the record's own" },
+             // `default` is the word for "say nothing here" everywhere on this
+             // page now — Paul, 2026-08-26: *"'the record's own' -- make that
+             // 'default'."* These three (stress / phrase / orn) are the same
+             // option as every other absent-is-today menu and were the same
+             // phrase; `none` and the `""` label are one string said twice and
+             // must not drift apart.
+             ask: r.ask, group: r.head, none: "default",
+             options: [{ value: "", label: "default" },
                        ...r.opts.map(([w]) => ({ value: w, label: w }))] };
   };
   /** Every axis control for one axis, in REGISTRY order.

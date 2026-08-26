@@ -3252,10 +3252,11 @@
             "label": "breath",
             "kind": "number",
             "min": 0,
-            "max": 0.6,
-            "step": 0.001,
+            "max": 0.12,
+            "step": 0.0001,
             "unit": null,
-            "derived": 0.05
+            "derived": 0.05,
+            "ceilWhy": "past here it is a whisper rather than a voice — the air stands over the tone above 4 kHz, measured"
           },
           {
             "key": "sway",
@@ -3805,10 +3806,11 @@
             "label": "breath",
             "kind": "number",
             "min": 0,
-            "max": 1,
-            "step": 0.001,
+            "max": 0.2,
+            "step": 0.0001,
             "unit": null,
-            "derived": 0.06
+            "derived": 0.06,
+            "ceilWhy": "past here it is a whisper rather than a voice — the air stands over the tone above 4 kHz, measured"
           },
           {
             "key": "vibrato",

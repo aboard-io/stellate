@@ -422,14 +422,98 @@ function writeNotes(doc, list) {
   if (list && list.length) doc.produce = list; else delete doc.produce;
   revise();
 }
-const thru = (doc, fn) => writeNotes(doc, Prod.notesOf(fn({ prod: notes(doc) })));
+/* WHAT ACTUALLY LIMITED THE STACK TO ONE, MEASURED BEFORE ANYTHING WAS WRITTEN
+   (Paul, 2026-08-26: "the producer is supposed to be able to say ten things not
+   just one.")
+
+   NOTHING DID, AND THAT IS THE FINDING. The ceiling was never the UI, never the
+   note model and never `run`. Driven on the rendered page at 390x844, nine
+   sentences stacked one after another — `make the sound dirtier / brighter /
+   harder / faster / bigger / wetter / tighter / looser / darker` — the table
+   drew ten rows, every line carried its own percentage and its own more / less
+   / take it off, and `run` applied all nine in order with a different `said`
+   for each. `Prod.MAXNOTES` is 10, `addNote` appends (and PUSHES rather than
+   repeats when the same sentence is said twice), `drop` removes one line, and
+   `notesTable` below has drawn the whole list since the day it was written.
+   So this is not a feature that was specified and skipped; it is one that was
+   built and did not READ as built.
+
+   SO WHAT WAS MISSING IS THE HALF OF PAUL'S OWN SENTENCE NOBODY HAD DONE.
+   PLAN.md: "The record is the base plus the stack of notes, and because the
+   stack is visible you can SEE the production." Two things stopped that being
+   true on glass:
+
+     · THE STACK NEVER SAID IT WAS A STACK OF TEN. The caption read "what has
+       been said" and nothing on the page mentioned that nine more lines were
+       available. A list of one that does not say how long it may get looks
+       like a slot, and a slot is a thing you can only fill once. The caption
+       now counts — "2 of 10, in order" — and the count is the whole of the
+       claim Paul says the producer is supposed to make.
+     · EVERY DESTRUCTIVE MOVE WAS ONE-WAY. "take it off" and "forget all of
+       it" threw a line — or ten — away with nothing to put them back, and
+       `less` past the bottom rung deletes a note too (`bump` -> `dropNote`
+       when `w <= 0`). Somebody who is not sure whether a note helps will not
+       take it off to find out, which means the stack stops growing at the
+       first line the ear is unsure about. UNDO is below, and it is the
+       sentence's last three words made real.
+
+   WHERE THE HISTORY LIVES, AND WHY IT IS NOT A SECOND OWNER. The record owns
+   `doc.produce` and goes on owning it alone — the history is a SESSION fact,
+   the same tier as `pverb`/`psubj` above ("which tap you are on is not
+   something the record says"), and it is never compiled, never exported and
+   never saved. It is bound to the DOCUMENT IDENTITY it was taken from, so a
+   new record through `ctx.setDocument` cannot have a previous record's notes
+   pushed back into it. */
+const HISTMAX = 20;                 // twice the ceiling: every line, twice over
+let HIST = [], HDOC = null;
+const sameNotes = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+/* A CHANGE THAT DID NOT CHANGE ANYTHING LEAVES NO LINE IN THE HISTORY, which is
+   not tidiness — `addNote` returns the model UNTOUCHED at the ceiling and
+   `bump` returns it untouched at the top rung (producer.js:1751, :1759), so
+   without this an undo could silently do nothing and that is worse than having
+   no undo at all. */
+function thru(doc, fn, what) {
+  const before = notes(doc);
+  const after = Prod.notesOf(fn({ prod: before }));
+  if (sameNotes(before, after)) return;
+  if (HDOC !== doc) { HIST = []; HDOC = doc; }
+  HIST.push({ what, list: JSON.parse(JSON.stringify(before)) });
+  if (HIST.length > HISTMAX) HIST.shift();
+  writeNotes(doc, after);
+}
+/** What one press of undo would take back, or null. Named, so the button can
+ *  say it and a gate can read it without matching on prose. */
+export const undoable = (doc) =>
+  (HDOC === doc && HIST.length) ? HIST[HIST.length - 1].what : null;
+/** Put the note stack back the way it was one move ago. */
+export function undo(doc) {
+  if (HDOC !== doc || !HIST.length) return false;
+  writeNotes(doc, HIST.pop().list);
+  return true;
+}
+/* THE SENTENCE, FOR THE UNDO BUTTON'S OWN LABEL — producer.js's own `sentence`,
+   which is the same assembler `run` uses for the row heading, so the button and
+   the line it will put back cannot be spelled two ways. It needs `SUB`, which
+   `install()` has already filled by the time any of these can be reached
+   (`mount` calls `produced()` first, and every tap goes through `subjects()` or
+   `targets()`); the fallback is there because a label may not throw. */
+const sentenceOf = (note) => { try { return Prod.sentence(note) || "that"; }
+                               catch (e) { return "that"; } };
+const lineAt = (doc, i) => { const n = notes(doc)[i];
+                             return n ? sentenceOf(n) : "that"; };
 /** Say a thing. Saying it again is a PUSH, not an eleventh line (producer.js:1657). */
 export const say = (doc, verb, sid, dsc) =>
-  thru(doc, (m) => Prod.addNote(m, verb, sid, dsc || null));
-export const pushNote = (doc, i) => thru(doc, (m) => Prod.bump(m, i, +1));
-export const pullNote = (doc, i) => thru(doc, (m) => Prod.bump(m, i, -1));
-export const offNote  = (doc, i) => thru(doc, (m) => Prod.drop(m, i));
-export const forget   = (doc)    => thru(doc, (m) => Prod.clearNotes(m));
+  thru(doc, (m) => Prod.addNote(m, verb, sid, dsc || null),
+       "\u201c" + sentenceOf({ v: verb, s: sid, d: dsc || null }) + "\u201d");
+export const pushNote = (doc, i) =>
+  thru(doc, (m) => Prod.bump(m, i, +1), "more on \u201c" + lineAt(doc, i) + "\u201d");
+export const pullNote = (doc, i) =>
+  thru(doc, (m) => Prod.bump(m, i, -1), "less on \u201c" + lineAt(doc, i) + "\u201d");
+export const offNote  = (doc, i) =>
+  thru(doc, (m) => Prod.drop(m, i), "taking \u201c" + lineAt(doc, i) + "\u201d off");
+export const forget   = (doc)    =>
+  thru(doc, (m) => Prod.clearNotes(m),
+       "forgetting all " + notes(doc).length + " of them");
 
 /* ================= WHAT MAY BE SAID, AND WHY NOT =======================
    Paul: "when an option makes another one unaccessible gray it out." The
@@ -533,8 +617,10 @@ export function mount(parent, ctx) {
   const sec = ctx.section(parent, "ax-produce", "9 · The producer");
   sec.append(el("p",
     "Not one of the eight — this is somebody with taste saying a few things " +
-    "about the record the eight describe. Every note is a step in genre space, " +
-    "it remembers how far you pushed it, and taking it off puts the record back."));
+    "about the record the eight describe. Say up to " + Prod.MAXNOTES +
+    " of them: every note is a step in genre space, it remembers how far you " +
+    "pushed it, they stack in the order you said them, and anything you take " +
+    "off you can put back."));
   const R = produced(doc);
   // A LANDING clears the sentence being built, recompiles and redraws — the one
   // owner for recompile, exactly as `changed()` is for every sheet on the page.
@@ -545,6 +631,11 @@ export function mount(parent, ctx) {
       "with it.").join(" "), "nu-hint"));
 
   if (R.said.length) notesTable(sec, R, ctx);
+  // THE STRIP IS DRAWN WHETHER OR NOT THERE IS A TABLE, and that is the whole
+  // point of it: the one move you most need to take back — "forget all of it" —
+  // leaves NO table behind, so an undo that lived inside the table would vanish
+  // in the same press that made it necessary.
+  stackStrip(sec, doc, ctx);
 
   const asked = el("div");
   sec.append(asked);
@@ -565,7 +656,13 @@ export function mount(parent, ctx) {
 function notesTable(parent, R, ctx) {
   const doc = ctx.doc();
   const t = el("table"); t.className = "nu-notes";
-  t.append(el("caption", "what has been said"));
+  // THE CAPTION COUNTS, AND THAT IS THE FIX FOR "not just one". A list that
+  // never says how long it may get reads as a slot; this one says how many
+  // lines are on it, how many the record will take, and that they are applied
+  // in the order they were said — which is exactly the claim PLAN.md makes for
+  // the stack and the page was not making.
+  t.append(el("caption", "what has been said \u00b7 " + R.said.length + " of " +
+    Prod.MAXNOTES + ", in order"));
   const head = el("tr");
   for (const h of ["the note", "how far", "what it did", "change it"]) {
     const th = el("th", h); th.scope = "col"; head.append(th); }
@@ -618,12 +715,37 @@ function notesTable(parent, R, ctx) {
   const p0 = t.querySelector("[data-k]");
   if (p0) pane.dataset.pane = p0.dataset.k;
   pane.append(t); parent.append(pane);
+}
+
+/* ---- THE STACK'S OWN TWO BUTTONS, and UNDO is the one Paul's sentence asked
+   for ("each removable, in order, with undo"). It names WHAT IT WILL PUT BACK
+   — `undoable()` is producer.js's own assembled sentence, never prose matched
+   here — because an undo you cannot read is a second thing to be unsure about
+   and unsureness is what was keeping the stack at one line.
+
+   `forget all of it` KEEPS ITS OLD `data-k`. The key is how a thumb is put back
+   after the full rebuild (PROGRAM.md §2.2) and how test/producer.browser.js
+   finds it; the button moved out of the table's function and did not move on
+   the page, so the key must not move either. */
+function stackStrip(parent, doc, ctx) {
+  const back = undoable(doc);
+  if (!notes(doc).length && !back) return;
   const p = el("p", null, "nu-row");   // a strip of buttons — nu.css
-  const clear = el("button", "forget all of it");
-  clear.type = "button"; clear.dataset.k = "pclear";
-  clear.title = "take every note off and hear the record the band made";
-  clear.addEventListener("click", () => { forget(doc); ctx.changed(); });
-  p.append(clear); parent.append(p);
+  if (notes(doc).length) {
+    const clear = el("button", "forget all of it");
+    clear.type = "button"; clear.dataset.k = "pclear";
+    clear.title = "take every note off and hear the record the band made";
+    clear.addEventListener("click", () => { forget(doc); ctx.changed(); });
+    p.append(clear, " ");
+  }
+  if (back) {
+    const u = el("button", "undo \u2014 " + back);
+    u.type = "button"; u.dataset.k = "pundo";
+    u.title = "put the note stack back the way it was one move ago";
+    u.addEventListener("click", () => { undo(doc); ctx.changed(); });
+    p.append(u, " ");
+  }
+  parent.append(p);
 }
 
 /* ---- TAP ONE: THE VERB. Six, and the MINUS half is as strong as the plus —

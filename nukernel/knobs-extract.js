@@ -150,6 +150,58 @@ const FLOOR = {
     "take it right down and the tube whispers; at zero it stops making a sound at all"],
 };
 
+/* ---------- AND A CEILING, WHICH IS A DIFFERENT KIND OF DEPARTURE --------
+   Paul, 2026-08-26: *"it's also ALWAYS hissy -- i think hiss is probably 5x
+   too much for the range of use."* His number is not a figure of speech. It is
+   the measurement.
+
+   THE SWEEP AND ITS RULE. Rendered offline, one held note at 220 Hz, at the
+   push and the cutoff the CHAIR actually sends (audio/to-engine.js:572, :711),
+   with the voiced part and the aspirate part separated exactly rather than
+   estimated: the noise is deterministic per render, so `out(b) - (1-b)*out(0)`
+   is the aspiration alone, sample for sample. The quantity is the one
+   `to-engine.js:560` already argues in — APERIODIC ENERGY ABOVE 4 kHz AGAINST
+   HARMONIC ENERGY THERE — and that paragraph carries the two judgements this
+   ceiling is read off:
+     -9.1 dB  the seat it chose. "tone first, air on top."   (measured here as
+              -8.5 dB at the same numbers, which is what says this harness and
+              that one are measuring the same thing)
+     -2.8 dB  the seat it REJECTED, on nearly every record:
+              "a whisper's balance, not a singer's."
+   So the taste ceiling is ONE STEP PAST THE ONE ALREADY CALLED TOO MUCH: the
+   breath at which the air first stands +3 dB OVER the tone above 4 kHz. Past
+   that the sound is a whisper, and a whisper is a different instrument that
+   `voiced` already owns on the tube (FLOOR, above).
+
+   WHAT IT COMES TO, and the two voices agree without being made to:
+     tract_voice  -9.8 dB at .060 · -0.5 at .150 · +2.4 at .195 · +3.3 at .210
+                  → 0.2 of a declared 1.0
+     voice_lead   -6.2 dB at .050 · +0.8 at .100 · +2.7 at .120 · +3.6 at .130
+                  → 0.12 of a declared 0.6
+   ONE FIFTH, BOTH TIMES, FROM ONE RULE. Paul's 5x is the arithmetic.
+
+   AND IT IS ONLY A CEILING ON THE CONTROL. The module still reaches 1.0 and a
+   genre's `air` still writes what it writes; what this says is that four
+   fifths of the SLIDER was travel nobody would stop on, which is a broken knob
+   even though every value in it "works". Both derived values are comfortably
+   inside — the tube's 0.06 sits 30% up the new slider, the singer's 0.05 sits
+   42% up, and the chant's own `breath: 0.07` (songs.js:302) sits at 35%.
+
+   VOICE_CHOIR IS NOT IN THIS TABLE AND THAT IS THE FINDING, not an omission.
+   The same rule puts its ceiling at 0.012 — BELOW its own derived 0.08, which
+   already measures +17.6 dB of air over tone above 4 kHz. A slider whose top
+   is under the number the record is already holding is the lie this page
+   exists to not tell, so the range stands and the module is what wants
+   looking at. Written down here rather than discovered later. */
+const CEILING = {
+  "tract_voice/breath": [0.2,
+    "past here it is a whisper rather than a voice — the air stands over the " +
+    "tone above 4 kHz, measured"],
+  "voice_lead/breath": [0.12,
+    "past here it is a whisper rather than a voice — the air stands over the " +
+    "tone above 4 kHz, measured"],
+};
+
 /* ---------- WHAT THE READOUT SAYS, AND IT SAYS THE MUSICAL THING ---------
    VOICE.md §3: "No invented units." A unit is a fact about the PARAM — seconds
    are seconds on every module — so the table is by param name and the row
@@ -656,6 +708,7 @@ async function build() {
       const why = inertOf(module, r.param) || inertOf(dsp, r.param);
       if (why) { quiet.push({ key: r.key, param: r.param, why }); continue; }
       const floor = FLOOR[dsp + "/" + r.key];
+      const ceil = CEILING[dsp + "/" + r.key];
       // THE KEY IS ASKED FIRST AND THE PARAM SECOND, which reads backwards
       // against VOICE.md §3 ("the label comes from the PARAM") and gives the
       // same answer everywhere but one. The rule's PURPOSE is that a row is
@@ -738,6 +791,10 @@ async function build() {
            the sweep measured as live. */
         let min = r.min, max = r.max;
         if (floor && min < floor[0]) min = floor[0];
+        // …and the top comes IN, for taste rather than for audibility: the
+        // sweep found the outermost value that still MOVES the parameter,
+        // which is not the outermost value anybody would stop on. See CEILING.
+        if (ceil && max > ceil[0]) max = ceil[0];
         const q = LADDER.find((x) => x <= Math.abs(max - min) / 500) || 0.00001;
         min = round(Math.ceil(min / q - 1e-9) * q, q);
         max = round(Math.floor(max / q + 1e-9) * q, q);
@@ -821,6 +878,7 @@ async function build() {
             ? { derivedParam: derived, unreachable: true } : {}),
           ...(mapped ? { mapped: true } : {}),
           ...(floor ? { floorWhy: floor[1] } : {}),
+          ...(ceil ? { ceilWhy: ceil[1] } : {}),
           ...(gate ? { gate } : {}) });
       }
     }

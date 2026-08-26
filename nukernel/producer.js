@@ -1748,7 +1748,14 @@
     const at = list.findIndex((n) => n.v === verb && n.s === sid &&
                                      (n.d || null) === (dsc || null));
     if (at >= 0) return bump(m, at, +1);
-    if (list.length >= MAXNOTES) return m;             // five or six things
+    // TEN, and this trailing comment said "five or six things" until
+    // 2026-08-26 — the number MAXNOTES was RAISED FROM, left standing beside
+    // the constant that had already stopped being it (:73). A stale ceiling in
+    // the one line that enforces the ceiling is exactly the sentence somebody
+    // reads when they are asking "how many can I say?", and the answer they
+    // take away is wrong by four. Paul: "the producer is supposed to be able
+    // to say ten things not just one."
+    if (list.length >= MAXNOTES) return m;
     return withNotes(m, [...list, { v: verb, s: sid,
       ...(dsc ? { d: dsc } : {}), w: START }]);
   }

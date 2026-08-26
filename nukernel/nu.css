@@ -77,9 +77,13 @@
 
    AND HERE IS THE SAME PAGE AFTERWARDS, measured the same way at both widths:
 
-     an action    2 looks   the word button, and the icon button whose padding
-                            is 2px so seven of them fit a 390px line (named
-                            exception, `.nu-tf-row`, argued where it is written)
+     an action    1 look    the word button. (This read "2 looks" while the
+                            three transform rows wore <svg> pictures with their
+                            padding cut to 2px to fit; the pictures became
+                            glyphs on 2026-08-26 and the exception went with
+                            them — `.nu-tf-row` now sets a 44px MINIMUM width
+                            and a .3em gap, neither of which is a second LOOK:
+                            one is the tap floor and one is spacing.)
      a tab        1 look    was 2 — the `<th>` bold is gone
      everything else unchanged, and every remaining second look is a STATE the
      browser draws (`:disabled` greys a control's border and face) or the flex
@@ -1186,76 +1190,80 @@ td > select{ max-inline-size: 9em; }
 .nu-motif.nu-first{ margin-block-start: .4em; padding-block-start: 0;
   border-block-start: 0; }
 
-/* THE SEVEN DESIGNING BUTTONS, DRAWN (2026-08-25, Paul: "'backwards shift left
-   shift right upside down up a step down a step wider' can be icons").
+/* THE DESIGNING BUTTONS WEAR A SYMBOL, AND THE DRAWING THEY WORE IS GONE.
+   TWO INSTRUCTIONS, THE SECOND REVERSING THE FIRST, BOTH QUOTED:
 
-   THIS IS THE ONE PLACE ON THE PAGE WITH AN ICON ON IT, AND THE LAW IT NARROWS
-   IS QUOTED RATHER THAN DROPPED. PLAN.md Phase 1: "No icons anywhere: words
-   instead (the dice ⚄ becomes 'roll a record', ⟲ becomes 'start again', the
-   play button says 'play' / 'stop')." That still holds everywhere else and no
-   other button in this file was touched. The distinction: the old law is about
-   actions with NO VISUAL FORM — nothing depicts "roll a record", so a glyph
-   there is decoration standing where a word should be — and these seven are
-   GEOMETRIC OPERATIONS ON A SHAPE THE USER IS LOOKING AT. Backwards, upside
-   down, wider: each has a picture, and the picture is the more legible of the
-   two. (ui/eight.js DESIGNS draws them, all seven from one contour.)
+     2026-08-25 (Paul) — "'backwards shift left shift right upside down up a
+     step down a step wider' can be icons".
+     2026-08-26 (Paul) — "the icons for motifs -- they're too hard to parse.
+     just use arrows pointing in opposite directions for widen and so forth.
+     Simple unicode symbols or a few of them arranged."
 
-   THE WORD IS STILL IN THE DOM — `.nu-vh` inside every one of these buttons —
-   so with this stylesheet turned off the row reads as the seven words in order.
-   That is what makes the icon an addition rather than a replacement.
+   WHAT STOOD HERE AND WHY IT LOST. The first instruction was answered with a
+   MINIATURE OF THE TRANSFORM: an <svg> per button, five note blocks at their
+   pitch heights with the original ghosted behind the result, scaled up to
+   40x32.5px because at its own 32px a block is four pixels wide "and ten of
+   them read as a smudge". The rule that scaled it is quoted in that sentence
+   and it is the rule that condemned it: ten marks in two weights of one ink,
+   inside a 40px box, is a smudge at 40px too. The claim written here — "the
+   picture is the more legible of the two" — was tested on the reader it was
+   drawn for and it failed. So the pictures went and the words behind them,
+   which never left, are now behind a MARK instead.
 
-   AND THE PICTURE MAY NOT EAT THE TAP. `pointer-events: none` on the <svg>:
-   the BUTTON is the target and a decorative stroke inside it cost the globe
-   round half an hour of taps that landed on nothing.
+   THE WORD IS STILL IN THE DOM. `.nu-vh` inside every one of these buttons, as
+   before: with this stylesheet turned off the three rows read as their words in
+   order. That is what makes the symbol an addition rather than a replacement,
+   and it is the one thing about this block the reversal did not touch.
 
-   THE PADDING IS CUT TO .25em, FROM THE .6em EVERY OTHER BUTTON GETS, and it is
-   measured rather than taste: a word button needs air around a word, a picture
-   brings its own margin inside its 32×26 box, and .6em put the row at 409px
-   against the 366px column a 390px phone leaves — three wrapped lines. At .25em
-   the seven come to 346px and sit on ONE line at 390 with the tap floor intact
-   (measured 46×44, and `--tap` is 44).
+   THE 44px TAP FLOOR IS NOW A WIDTH RULE AND IT WAS NOT ONE BEFORE. An <svg>
+   brought its own 40px of width; a glyph brings 10-30px, so `←` in a 2px-padded
+   button is a 20px target — under half the floor. `min-inline-size: var(--tap)`
+   restores it, and the arithmetic still fits: seven buttons at 44px with six
+   .3em gaps is 361px inside the 366px a 390px phone leaves (the gap is argued
+   in the next paragraph). The tempo row is eight and wraps to two lines at that
+   width, exactly as it did when it was eight pictures.
 
-   THE PICTURE IS BIGGER THAN ITS OWN VIEWBOX, and that is what the padding
-   bought. `designArt` draws in a 32×26 user-unit box and says so in the width
-   and height attributes, which is the right fallback when this file is turned
-   off; here it is scaled to 40×32.5 — the largest a 44px tap target with 2px
-   of padding can hold — because at 32px a note block is four pixels wide and
-   ten of them read as a smudge. The viewBox does the arithmetic; no number in
-   ui/eight.js changes. */
-.nu-tf-row button{ padding-inline: 2px; }
-/* ...AND THE ROW'S OWN GAP IS TIGHTER THAN `.nu-row`'S, FOR THE SAME REASON THE
-   PADDING IS. `.nu-row` (the one strip rule, 2026-08-26) spaces a row of WORD
-   buttons at .4em, and applying it here put the seven onto two lines at 390px —
-   measured: the seven icons are 336px of ink inside a 366px row, which leaves
-   30px for six gaps, and six .4em gaps are 38.4. At .25em they are 24 and the
-   row is one line again with the 44px tap floor intact. Same number the padding
-   paragraph above argued to, and for the same 366px. */
-.nu-tf-row{ gap: .25em; }
-.nu-tf{ display: block; pointer-events: none;
-  inline-size: 40px; block-size: 32.5px; }
-/* WHERE THE TUNE WAS, and where this button puts it. Two weights of the same
-   ink, never two hues: the pair has to survive a forced-colours mode and a
-   monochrome screen, and `--rule` is the same 38%-of-CanvasText mix the whole
-   file draws its quiet lines with, so both track the ground into dark mode with
-   no media query — the argument made once at the top of this file. */
-.nu-tf-was{ fill: var(--rule); }
-.nu-tf-is{ fill: currentColor; }
-/* the pitch the tune's own step 0 sat on, which is what makes "up a step" and
-   "down a step" two different pictures instead of the same one twice */
-.nu-tf-ref{ stroke: var(--rule); stroke-width: .7; stroke-dasharray: 1.6 1.6; }
-/* …AND THE SAME TWO WEIGHTS AS STROKES, for the tempo row (ui/eight.js
-   `tempoArt`). A rhythm is drawn as BLOCKS because a gate vector is a row of
-   blocks; a tempo is drawn as TICKS because a beat has no width — it is an
-   instant — and the two families need `fill` and `stroke` respectively. Same
-   two inks, same argument: `--rule` for where the record is and currentColor
-   for where the button puts it, so the pair survives forced colours and a
-   monochrome screen with no media query.
-   THE BAR LINE IS THE THICKER ONE, and it is the whole reason the reading-speed
-   buttons are not the same picture as the tempo buttons: half time leaves the
-   ticks exactly where they are and moves the bar. */
-.nu-tf line.nu-tf-was{ stroke: var(--rule); stroke-width: 1.3; stroke-linecap: round; }
-.nu-tf line.nu-tf-is{ stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; }
-.nu-tf line.nu-tf-bar{ stroke-width: 2.6; }
+   ...WHICH GIVES `.nu-tf-row` ITS ORDINARY PADDING BACK AND KEEPS ONE NAMED
+   EXCEPTION, WITH A NEW MEASUREMENT UNDER IT. The 2px padding was argued from
+   the width of a 40px picture and that argument is gone with the picture — the
+   44px minimum above does the same job for a glyph, so the padding is the
+   page's own .6em again. THE GAP IS STILL TIGHTER THAN `.nu-row`'S, at .3em
+   rather than .4em, and the number is measured on the rhythm row: seven
+   buttons come to 332px of ink inside a 366px column, which leaves 34px for
+   six gaps, and six .4em gaps are 38.4. At .3em they are 28.8 and the row is
+   one line. Four pixels, and the alternative is a 44px row becoming an 88px
+   one under every motif editor on the page.
+
+   AND THE SYMBOL MAY NOT EAT THE TAP: `pointer-events: none`, the same as the
+   <svg> carried, for the same half-hour the globe round lost to a decorative
+   stroke swallowing every press. */
+.nu-tf{ display: inline-block; pointer-events: none;
+  /* 1.2rem, NOT 1.3: MEASURED, not chosen. At 1.3 the widest faces (`×2`,
+     `▫▪`) came to 53px and the seven-button rhythm row was 341px of ink
+     against 366px of column with six .4em gaps to pay for — two lines. At 1.2
+     every face fits inside the 44px tap floor it already had to have, the row
+     is 7×44 and one line, and the glyph is still half again the page's own
+     type size. */
+  font-size: 1.2rem; line-height: 1; letter-spacing: -.02em;
+  /* the glyphs are geometry, not prose: a serif ↕ next to a sans ↑ is two
+     different arrows, and the page's own face is not guaranteed to have any of
+     them. A system-ui stack keeps all three rows in one hand. */
+  font-family: system-ui, "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif; }
+.nu-tf-row{ gap: .3em; }
+.nu-tf-row button{ min-inline-size: var(--tap); }
+/* WHERE THE TUNE WAS, AND WHERE THIS BUTTON PUTS IT — the one idea worth
+   keeping out of the drawing. A face may be a PAIR (`∧∨`, `■□ → □■`, `♪↑`),
+   and the first half is the quiet ink and the second the full one, so the pair
+   reads left to right as "this becomes that" instead of as two marks. Two
+   weights of ONE ink and never two hues: the pair has to survive a
+   forced-colours mode and a monochrome screen, and `--rule` is the same
+   38%-of-CanvasText mix the whole file draws its quiet lines with, so both
+   track the ground into dark mode with no media query. */
+/* ...AND A HAIR OF AIR BETWEEN THE TWO HALVES, which is not decoration: with
+   the halves touching, `□■` read as one run of two marks and not as "this
+   becomes that". Measured on the row at 390px. */
+.nu-tf-was{ color: var(--rule); margin-inline-end: .1em; }
+.nu-tf-is{ color: currentColor; }
 
 /* THE ENGRAVING. abcjs draws an <svg> at whatever width it was handed; on a
    phone that is wider than the page, and an overflowing staff would put the
@@ -1291,9 +1299,13 @@ td > select{ max-inline-size: 9em; }
    are drawn — measured 2026-08-25 on the eight-voice record at 390px, an
    engraving is where this page's only long main-thread tasks live. */
 .nu-score > div{ display: block; contain: layout paint; }
-/* ---------- THE RIBBON (2026-08-25 evening) --------------------------------
-   Paul: "Switching measures is super jumpy so I thought you could [neatly]
-   render it and scroll the score horizontally as the song progresses."
+/* ---------- THE SCROLLING SCORE (2026-08-25 evening, rewritten 08-26) ------
+   Paul, 2026-08-25: "Switching measures is super jumpy so I thought you could
+   [neatly] render it and scroll the score horizontally as the song
+   progresses." Paul, 2026-08-26: "i think you probably have to fully render
+   the whole score each time something changes… you can pop up a loader" and
+   "Just scroll at a steady speed BUT highlight notes in red. Get rid of the
+   playhead."
 
    WHAT THESE RULES REPLACED, kept because its measurement is still the reason
    for `contain` above. Two hosts were stacked in one grid cell — one visible,
@@ -1306,11 +1318,19 @@ td > select{ max-inline-size: 9em; }
      other, the score box went 165px -> 329px the first time the second one
      engraved, and `#ax-band` was pushed 164px down the page WHILE PLAYING.*
 
-   That box is now a WINDOW rather than a stack: one fixed-size hole in the
-   page with a long row of engraved sections inside it, moved by a transform.
+   That box became a WINDOW rather than a stack: one fixed-size hole in the
+   page with the engraved music inside it, moved by a transform. THE MUSIC
+   INSIDE IT WAS A ROW OF TILES for one day, and `.nu-tile` was this file's
+   name for one of them; that is gone, and the rule that cropped their margins
+   with it, because separately-engraved tiles are what "the music gets out of
+   alignment as it scrolls" WAS (ui/eight.js has the 161.9px / 213.8px
+   measurement). There is one picture now, `.nu-paper`, and one crop.
+
    The height law is unchanged and is still the reason this block exists —
-   ui/eight.js gives the box its height and the tiles are scaled into it, so
-   nothing here can move a pixel of the page.
+   ui/eight.js gives the box its height and the picture is scaled into it, so
+   nothing here can move a pixel of the page. THE LOADER OBEYS IT TOO: it is
+   positioned out of the flow, so a box that is waiting is exactly as tall as a
+   box that is not.
 
    THERE IS NO SCROLL CONTAINER, AND THAT IS DELIBERATE. This repo has paid
    twice for a horizontal pane inside a vertical page: the atlas's
@@ -1321,51 +1341,76 @@ td > select{ max-inline-size: 9em; }
    page scrolls under it exactly as it does everywhere else. The score's own
    motion belongs to the clock.
 
-   WITH THE STYLESHEET OFF, the tiles fall back to static blocks and the whole
-   record's notation is simply laid out down the page, which reads. Nothing
-   here carries meaning: the caption above the box says which section and which
-   bars, in words. */
+   WITH THE STYLESHEET OFF, the picture falls back to a static block and the
+   whole record's notation is simply laid out down the page, which reads.
+   Nothing here carries meaning: the caption above the box says which section
+   and which bars, in words, and the sounding notes are red by an attribute on
+   the notehead rather than by anything in this file. */
 .nu-score .nu-ribbon{ position: relative; overflow: hidden;
   min-block-size: 3em; contain: layout paint; }
 .nu-score .nu-run{ position: absolute; inset-block-start: 0; inset-inline-start: 0;
-  /* the row is only ever moved, never re-laid-out: `will-change` lets the
+  /* the picture is only ever moved, never re-laid-out: `will-change` lets the
      browser keep it on its own compositor layer, which is what makes a frame
      cost a matrix multiply instead of a paint */
   will-change: transform; }
-.nu-score .nu-run > .nu-tile{ position: absolute; inset-block-start: 0;
-  /* THE CROP. Everything left of a tile's first notehead — the voice names,
-     the clef, the key, the meter — is paper with no time in it, and laid end
-     to end in the flow it made the music LEAP a bar and a half at every tile
-     boundary (measured 2026-08-25 at 390px on a seven-voice reggae: 178px).
-     ui/eight.js pushes the drawing left by exactly that margin; this is what
-     hides it. */
+/* …AND IT DIMS WHILE THE BOX IS ENGRAVING. The music under a loader is the
+   PREVIOUS record's — true a moment ago and not true now — so it is greyed by
+   the same means every other refusal on this page is greyed, and the word on
+   top says why. No transition: the render is about to block the main thread
+   and an animation that cannot run is a stutter. */
+.nu-score .nu-run.is-waiting{ opacity: .3; }
+.nu-score .nu-paper{ position: absolute; inset-block-start: 0;
+  /* THE CROP. Everything left of the first notehead — the voice names, the
+     clef, the key, the meter — is paper with no time in it; ui/eight.js pushes
+     the drawing left by exactly that margin and pins a copy of it in the
+     gutter, and this is what hides the original. */
   overflow: hidden; }
-/* …AND THE MARGIN ITSELF, DRAWN ONCE AND PINNED TO THE LEFT EDGE. A clone of a
-   tile's own engraving (ui/eight.js `gutterFrom`), so the clefs it shows are
-   the clefs the ribbon behind it is written in — and the one thing on this
-   surface that never moves. It needs the page's own paper behind it, or the
-   music would slide through the voice names. */
+/* …AND THE MARGIN ITSELF, DRAWN ONCE AND PINNED TO THE LEFT EDGE. A clone of
+   the engraving's own left margin (ui/eight.js `gutterFrom`), so the clefs it
+   shows are the clefs the music behind it is written in — and the one thing on
+   this surface that never moves. On a picture that is one system long it is
+   also the ONLY clef there is after the first four bars have scrolled away. It
+   needs the page's own paper behind it, or the music would slide through the
+   voice names. */
 .nu-score .nu-gutter{ position: absolute; inset-block-start: 0;
   inset-inline-start: 0; overflow: hidden; background: var(--paper);
   pointer-events: none; }
 #app .nu-score .nu-gutter > svg{ display: block; max-inline-size: none; }
-/* AND THE TILE'S OWN SVG MAY BE WIDER THAN THE COLUMN, which is the one place
-   on this page where that is true and has to out-shout `#app svg` (an id, so
-   it wins on specificity unless this one carries the id too). A tile IS a
-   section of music laid end to end — six hundred pixels of it on a phone —
-   and it is the box that clips, not the picture. */
-#app .nu-score .nu-tile > svg{ display: block; max-inline-size: none; }
-/* THE SOUNDING POSITION, WHICH IS A LINE AND NOT A MOVING THING. It is drawn
-   once, at the fraction of the box ui/eight.js `SCORE_HEAD` names, and the
-   music passes under it — so the one element on this surface that means "here"
-   never moves and never needs the clock to write to it. `currentColor` at half
-   strength: it has to be findable against a stave without being mistaken for a
-   barline, and it must survive forced-colours, where a mixed colour falls back
-   to the system's own ink. */
-.nu-score .nu-head{ position: absolute; inset-block: 0; inline-size: 2px;
-  background: color-mix(in srgb, var(--ink) 55%, transparent);
+/* AND THE PICTURE MAY BE WIDER THAN THE COLUMN, which is the one place on this
+   page where that is true and has to out-shout `#app svg` (an id, so it wins
+   on specificity unless this one carries the id too). It is a whole record
+   engraved as one line — tens of thousands of pixels of it — and it is the box
+   that clips, not the picture. */
+#app .nu-score .nu-paper > svg{ display: block; max-inline-size: none; }
+/* THE LOADER: A WORD, NOT A BOX. It says the page is working and it is the one
+   thing on this surface that is neither music nor a sentence about music, so
+   it is set in the page's own quiet ink over the page's own paper, centred in
+   the hole. `pointer-events: none` because there is nothing to press — a
+   finger dragged across a waiting score still scrolls the page, exactly as it
+   does across a playing one. */
+.nu-score .nu-load{ position: absolute; inset: 0; margin: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .85rem; opacity: .85;
+  background: color-mix(in srgb, var(--paper) 70%, transparent);
   pointer-events: none; }
-@media (forced-colors: active){ .nu-score .nu-head{ background: CanvasText; } }
+/* …AND `hidden` HAS TO BE SAID HERE, WHICH IS NOT PEDANTRY. The `hidden`
+   ATTRIBUTE is only a UA-stylesheet rule (`[hidden]{ display: none }`), and any
+   author `display` beats it — so the line above, which is what centres the
+   word, was ALSO what stopped `load.hidden = true` from ever hiding it.
+   Measured on the rendered page 2026-08-26: `__eightScore().loading` said
+   false, `load.hidden` said true, and the screenshot said "engraving the whole
+   score…" across the middle of a picture that had finished engraving nine
+   seconds earlier. The DOM was right and the page was wrong; this is the line
+   that makes them agree. */
+.nu-score .nu-load[hidden]{ display: none; }
+/* THE PLAYHEAD LINE IS GONE (Paul, 2026-08-26: "Get rid of the playhead"), and
+   with it `.nu-score .nu-head` — a 2px `color-mix` rule with a
+   `forced-colors` fallback that drew a vertical line at 28% of the box. It was
+   honest only while the scroll was the music's own; over a STEADY scroll a
+   fixed line points at a place, not at a note. What says "here" now is the red
+   notehead, which ui/eight.js writes as a `fill` ATTRIBUTE on the note itself —
+   presentation carried on the element, the way SVG has always coloured itself,
+   and one less thing in this file that can lie. */
 
 /* ===== THE ATLAS (D6) ==================================================
    Paul, 2026-08-24: "a slider for time and a world map on top." Every rule
@@ -1599,7 +1644,23 @@ td > select{ max-inline-size: 9em; }
    all. 34em is the width past which a diagram stops being a control and starts
    being a poster; on a phone `100%` is what binds. */
 #app .nu-pad{ display: block; inline-size: 100%; max-inline-size: 34em;
-  block-size: auto; margin-block: .5em; }
+  block-size: auto; margin-block: .5em;
+  /* AND A DRAG ON THE THROAT DOES NOT SELECT THE WORDS ON IT. Paul,
+     2026-08-26: *"I can't grab everything because it keeps selecting text."*
+     Measured on the rendered page at 1280, one mouse drag apiece: a drag
+     across the face left "a" highlighted, a drag off a ring knot left "open",
+     and a drag from the ring's empty air left "breath na" — every word on the
+     picture is an SVG <text> and SVG <text> is text. There is nothing here
+     worth selecting: the whole picture is `aria-hidden` decoration painted
+     beside the sliders that carry the real values, so the highlight was only
+     ever the drag leaking through.
+       ON THE ELEMENT AND NOT ON `.nu-pad-grab`, which is the shape the globe
+     already settled (`#atlasMap`, 150 lines up, for the same complaint about
+     "Kingston" and "Austin"). `user-select` INHERITS, so one declaration on
+     the <svg> covers the labels a drag crosses on its way out of the grip it
+     started in — a rule on the grips alone would not have caught two of the
+     three drags above, because neither of them started on one. */
+  -webkit-user-select: none; user-select: none; }
 .nu-pad-grab{ touch-action: none; }
 /* the two rings and an empty spoke: the furniture, at the same weight as every
    other quiet line in this file */

@@ -525,8 +525,11 @@ const J = (x) => JSON.parse(JSON.stringify(x));
       const half = await press("half time");
       check(half.rate === 0.5 && half.bpm === faster.bpm,
         "8d `half time` moves the READING and not the clock " + JSON.stringify(half) + tag);
-      const own = await press("the record's own speed");
-      check(own.rate == null, "8e …and there is a way back to the record's own" + tag);
+      // THE WORD IS `default` SINCE 2026-08-26 (Paul: "'the record's own' --
+      // make that 'default'"), and `data-k` on this row is "tempo-" + the word,
+      // so the key this presses moved with the label.
+      const own = await press("the default speed");
+      check(own.rate == null, "8e …and there is a way back to the default" + tag);
 
       /* ---- 10 A TAKE CHANGES THE RENDERED SCORE ---------------------- */
       await tab("performance");

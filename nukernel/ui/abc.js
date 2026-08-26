@@ -689,7 +689,22 @@ export function toScore(parts, opts = {}) {
     // piece that continues, `||` for the end of a section (a thin double bar,
     // which is what a section division has always been printed as), and the
     // default is the final barline every other caller has always got.
-    body.push((eng.bars.join(" | ") || "z" + spb) + " " + (opts.close || "|]"));
+    /* …AND A SECTION ENDS ON A THIN DOUBLE BAR, WHICH IS THE ONLY MARK ON THE
+       LINE. `opts.divide` is the set of bar indexes a SECTION ends on, and it
+       exists because the score became one system per record on 2026-08-26
+       (ui/eight.js: "fully render the whole score"): the boundary used to be
+       the EDGE of a tile and was said with `close: "||"`, and a picture with no
+       edges left had nowhere to say it. A double bar is how a section division
+       has been printed for four hundred years, and a reader running an eye
+       along a hundred bars of one line has nothing else to find the chorus by.
+       Absent, this is byte-for-byte the `join(" | ")` it replaced. */
+    const div = opts.divide instanceof Set ? opts.divide : null;
+    const bs = eng.bars;
+    const line = bs.length
+      ? bs.map((b, i) => b + (i === bs.length - 1 ? ""
+                              : div && div.has(i) ? " || " : " | ")).join("")
+      : "z" + spb;
+    body.push(line + " " + (opts.close || "|]"));
     voices.push({ name: p.name, glyphs: eng.glyphs, notes: eng.notes,
                   ottava: eng.ottava, wide: eng.wide, clef: eng.clef });
   });
