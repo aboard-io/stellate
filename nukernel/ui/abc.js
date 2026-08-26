@@ -286,6 +286,19 @@ function chooseOttava(notes, base) {
   return { ott, wide };
 }
 
+/* THE OCTAVE DECISION, ASKED ON ITS OWN. A caller that engraves a long part in
+   pieces has to make this decision ONCE, over every pitch, and then hand the
+   answer to every piece (see `opts.ott` above). `midis` is what
+   `toNotes`/`scoreParts` produce — numbers, chords as arrays, and pre-spelled
+   percussion strings, which contribute nothing because a staff position is not
+   a pitch. Same function, same two-ledger-line reach, same saving guard. */
+export function ottavaFor(midis, clef) {
+  const staff = clef ? String(clef).split(/[ +\-]/)[0] : "treble";
+  if (staff === "perc") return 0;
+  const notes = (midis || []).map((m) => ({ midi: m }));
+  return chooseOttava(notes, STAFF_BASE[staff] || 0).ott;
+}
+
 // meter from steps-per-bar: sixteenths, reduced, denominator kept >= 4 so
 // sixteen steps say 4/4 rather than 1/1
 function meterOf(steps) {
@@ -472,7 +485,17 @@ function engrave(phrase, opts = {}) {
   // the "pitches" are staff positions somebody already wrote down and an 8va
   // over them would be a sentence about nothing.
   const staff = opts.clef ? String(opts.clef).split(/[ +\-]/)[0] : "treble";
+  /* ...AND UNLESS THE CALLER HAS ALREADY DECIDED FOR THE WHOLE RECORD.
+     `opts.ott` pins the octave, and it exists because a SCROLLING score is one
+     staff read left to right: the page engraves it a few bars at a time and
+     lays the pieces end to end (ui/eight.js, the ribbon), so a voice whose
+     first four bars are a bar of rests and whose next four sit down at G2
+     would change clef in the middle of its own line. Deciding once, off every
+     pitch the voice plays in the record, is the only answer that reads —
+     `ottavaFor` below is the same decision made by the same function, exported
+     so nobody has to write a second copy of it. */
   const { ott, wide } = staff === "perc" ? { ott: 0, wide: false }
+    : opts.ott != null ? { ott: opts.ott | 0, wide: false }
     : chooseOttava(notes, STAFF_BASE[staff] || 0);
   const kind = new Array(n).fill(0);          // 0 rest, 1 note-start, 2 held
   const len = new Array(n).fill(0);
@@ -642,7 +665,7 @@ export function toScore(parts, opts = {}) {
   const body = [], voices = [];
   parts.forEach((p, i) => {
     const eng = engrave(p.phrase || {}, { ...opts, reg: p.reg | 0, clef: p.clef,
-                                          barsPerLine: 0 });
+                                          ott: p.ott, barsPerLine: 0 });
     // the name is a quoted ABC string, so a quote inside it would end the
     // field early; a voice is named by a person and people type quotes
     const nm = String(p.name == null ? "" : p.name).replace(/["\r\n]+/g, " ");
@@ -657,7 +680,16 @@ export function toScore(parts, opts = {}) {
     if (/^perc/.test(eng.clef || "")) body.push("K:none");
     // ...and the bars themselves, all on ONE line: the system is as wide as
     // the window is and it must not wrap, or the staves stop lining up.
-    body.push((eng.bars.join(" | ") || "z" + spb) + " |]");
+    //
+    // HOW IT CLOSES IS THE CALLER'S, AND IT IS NOT ALWAYS THE END OF THE MUSIC.
+    // `|]` is a FINAL barline — the thing printed at the end of a piece — and
+    // the page now engraves one long part in pieces and lays them end to end
+    // (ui/eight.js, the ribbon), where a final barline every four bars would be
+    // a picture claiming the record stops there. So a caller says: `|` for a
+    // piece that continues, `||` for the end of a section (a thin double bar,
+    // which is what a section division has always been printed as), and the
+    // default is the final barline every other caller has always got.
+    body.push((eng.bars.join(" | ") || "z" + spb) + " " + (opts.close || "|]"));
     voices.push({ name: p.name, glyphs: eng.glyphs, notes: eng.notes,
                   ottava: eng.ottava, wide: eng.wide, clef: eng.clef });
   });

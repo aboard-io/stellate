@@ -152,6 +152,13 @@
 <script src="../engine/theory.js"></script>
 <script src="kernel.js"></script>
 <script src="genres.js"></script>
+<!-- WHICH WIKIPEDIA ARTICLE EACH ANCHOR IS (Paul, 2026-08-26: "add actual
+     Wikipedia links for each genre we have at the top by the title"). GENERATED
+     by nukernel/wiki-extract.js against a local ZIM on this box; the extractor
+     itself gets NO tag, exactly as gates-extract.js gets none. After genres.js
+     because it keys off genre keys, before ui/eight.js because draw() reads it.
+     A LINK IS NOT A FETCH: nothing here costs a request. -->
+<script src="wiki.js"></script>
 <!-- THE QUESTIONS THE KERNEL'S OWN FIELDS ARE ASKED WITH (askable.js). It has
      no dependencies and publishes one global. fields.js `nudgesFor` reads the
      `stress` / `phrase` / `orn` rows off it so the Performance sheets say

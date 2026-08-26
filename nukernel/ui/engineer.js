@@ -84,15 +84,19 @@
 import { NuFields, NuDeskDoc, GENRES, SENDS, SENDLABEL, LEVELS, LEVELLABEL,
          PANS, PANLABEL, FX, MAX_FX, EQ_BANDS, faderDb,
          MASTER_FIELDS, BUS_FIELDS } from "./deps.js";
-// FXLABEL is read off the whole registry rather than added to deps.js's
-// destructure list: deps is "the SOLE reader of window.*" and it already
-// re-exports NuFields, so one more name there would be a second door to the
-// same table. NuDeskDoc has to be added there because it is a different global.
+// `FX`, `MAX_FX` and `FXLABEL` NEARLY came off this list on 2026-08-26 with the
+// per-voice chip they drew, and this paragraph said so. They stayed because the
+// SECOND half of Paul's sentence needed them: "That's bus and board stuff" is
+// not only a refusal, it is an address, and the board is in this file. The chip
+// is off the instruments and onto the MAIN STRIP. FXLABEL is still read off
+// NuFields rather than added to deps.js's destructure — "deps is the SOLE
+// reader of window.* and it already re-exports NuFields, so one more name there
+// would be a second door to the same table". NuDeskDoc is in the destructure
+// because it is a different global.
 const FXLABEL = NuFields.FXLABEL;
 import { SONG, MASTER, BUSES, vol, setVol, commit } from "./state.js";
 import { deskChannelBase, deskLevelAt, derivedPartTone,
-         masterState, deskBusFeed } from "../audio/desk.js";
-import { channelFacts } from "../audio/plan.js";
+         masterState, deskBusFeed, MAIN_TO_BUS1, FIXED_EDGES } from "../audio/desk.js";
 import { playing, playingSec, getPosition, passAt } from "../audio/live.js";
 import { gid } from "./derive.js";
 // ...THROUGH THE ONE-OPTION ROUTER, the same as ui/produce.js: same names,
@@ -101,7 +105,10 @@ import { gid } from "./derive.js";
 // preferred"). Only `sheet` is left of the pair: `sheetRow` was the engineer's
 // door for the five `eng.*` menus and those became pots on 2026-08-25 ("level,
 // place, delay, and room are obvious sliders"), so the one caller left is the
-// character chips, which are `multi` and route to `<select multiple>`.
+// character chain, which is `multi` and routes to `<select multiple>`. It said
+// "the character chips" and meant a per-VOICE control; the chain is the
+// RECORD's now and sits under the board (VIEW 2), because Paul settled where a
+// treatment lives on 2026-08-26.
 // ...and `selectEl`, the bare control, because a bus strip is a COLUMN and a
 // column has no room for `selectField`'s `<p class=nu-sel><label>` wrapper.
 // Same widget, same `data-sel`, same refusal-with-a-reason; the visible copy of
@@ -165,15 +172,15 @@ function liveGain(sec, key) {
 }
 
 /* ---------- what the engine will actually do with a channel --------------- */
-// audio/plan.js channelFacts, and no table of this file's own — so the board's
-// refusals and the renderer's are the same refusal. FAIL OPEN before compile()
-// has run: `{}` greys nothing, because a control that vanishes before boot is
-// worse than one that is briefly optimistic, and widthKept drops the chip
-// anyway.
-function factsNow() {
-  try { return channelFacts(playing && playingSec >= 0 ? playingSec : 0) || {}; }
-  catch (e) { return {}; }
-}
+// GONE WITH THE CHIP, 2026-08-26, and the note is kept because the RULE in it
+// outlives the function: "audio/plan.js channelFacts, and no table of this
+// file's own — so the board's refusals and the renderer's are the same refusal.
+// FAIL OPEN before compile() has run: `{}` greys nothing, because a control
+// that vanishes before boot is worse than one that is briefly optimistic, and
+// widthKept drops the chip anyway." `stereo` was the ONLY fact this view ever
+// asked for, and it asked because a wide voice cannot take a mono insert. There
+// are no inserts on this surface now, so there is nothing left to refuse and
+// the import of audio/plan.js goes with it.
 
 /* ---------- the words a bus is called ------------------------------------- */
 // One reader for the send rows and one for the master strip's nameplate, so
@@ -201,6 +208,24 @@ function genreAsk(sec) {
   const v = g.tone && g.tone.verb != null ? g.tone.verb : 0.15;
   return "the genre asks " + v;
 }
+
+/* ---------- WHICH PARTMIX FIELD IS WHICH BUS ------------------------------
+   THE PAIRING LIVES ONCE. fields.js says it in prose — "the four sends ARE the
+   four buses: `rev`, `echo`, `room`, `aux` keep their saved names and are what
+   BUS_FIELDS names bus 1 through bus 4" — and this is that sentence as data, so
+   the engineer's rows, the board's rows and the gate walk one list. It is
+   DERIVED from BUS_FIELDS rather than typed beside it: the buses are in board
+   order there, and a row that a bus does not have is a row that cannot be
+   drawn. The one irregularity is `echo`, and it is the oldest name on the desk
+   (fields.js resolvePartMix: "the field is `echo`, the bus is `del`").
+   `n` is the printed bus number and it is the INDEX, so a fifth bus is `bus 5`
+   by existing and never by being remembered. */
+const SEND_FIELD = { rev: "rev", echo: "echo", room: "room", aux: "aux" };
+const SEND_ROWS = BUS_FIELDS
+  .map((b, i) => ({ bus: b.bus, field: SEND_FIELD[b.bus], n: i + 1 }))
+  .filter((r) => r.field);
+if (SEND_ROWS.length !== BUS_FIELDS.length)
+  console.error("engineer: a bus in BUS_FIELDS has no send field in SEND_FIELD");
 
 /* ---------- reading and writing one strip --------------------------------- */
 const deskOf = (voice) => (voice && voice.desk) || {};
@@ -248,7 +273,6 @@ export function engineer(parent, ctx, voiceName) {
   if (!me) return;                       // a voice with no channel has no strip
   const key = me.key, voice = me.voice, d = deskOf(voice);
   const sec = atBox();
-  const facts = factsNow()[key] || null;
     const drv = sec ? derivedPartTone(sec, key) : { db: 0, eq: null };
   const soloElsewhere = chans.some((c) => c.voice !== voice && deskOf(c.voice).solo);
 
@@ -359,33 +383,47 @@ export function engineer(parent, ctx, voiceName) {
         voiceName + " place", (v) => setDesk(ctx, voice, "pan", v), "as it stands"),
       "the record sits at " + (base.pan || 0).toFixed(2));
 
-  // THE THREE SENDS. Bus 3 is `room` and it IS the reverb bus (desk.js:590
-  // folds a part's room into its rev) — it is offered only where it can sound,
-  // which is desk.js partKeysOf's own law: never an address that cannot.
-  const hasKit = chans.some((c) => c.key === "drums");
-  const roomWhy = key !== "drums" && !hasKit
-    ? "bus 3 is the kit's ambience and this record has no kit" : null;
-  {
-    const w = knob("eng|rev|" + voiceName, "rev", SENDS, SENDLABEL, d.rev,
-      voiceName + " " + busName("rev") + " send",
-      (v) => setDesk(ctx, voice, "rev", v), genreAsk(sec));
-    row("→ " + busName("rev") + (returnShut() ? " (shut)" : ""), w,
-        pct(base.rev) + " into " + busName("rev") +
-        (returnShut() ? " — but the return is shut; open it on bus 1's fader" : ""));
-  }
-  {
-    const w = knob("eng|echo|" + voiceName, "echo", SENDS, SENDLABEL, d.echo,
-      voiceName + " " + busName("echo") + " send",
-      (v) => setDesk(ctx, voice, "echo", v), "dry");
-    row("→ " + busName("echo"), w, pct(base.del) + " into " + busName("echo"));
-  }
-  {
-    const w = knob("eng|room|" + voiceName, "room", SENDS, SENDLABEL, d.room,
-      voiceName + " " + busName("room") + " send",
-      (v) => setDesk(ctx, voice, "room", v), "dry");
-    const tr = row("→ " + busName("room"), w,
-      "bus 3 folds into " + busName("rev") + " (desk.js deskChannelBase)");
-    if (roomWhy) tr.querySelector("td").append(refuse(w.querySelector("input"), roomWhy));
+  /* ---- THE FOUR SENDS, WALKED OFF THE REGISTRY ------------------------------
+     It was THREE hand-written blocks and a fourth bus arrived (Paul,
+     2026-08-26: "let me have up to four buses and a way to direct them to each
+     other"), so the fourth would have had to be typed. SEND_ROWS below is the
+     one place the field↔bus pairing lives; a fifth bus draws a row here by
+     existing, which is the law fields.js already states for the `name` knob.
+
+     WHAT THE THIRD COLUMN SAYS DEPENDS ON WHAT KIND OF BUS IT IS, and that is
+     the whole of what this round adds to this view: a bus with an engine bus of
+     its own prints how much of this channel is arriving in it, and a GROUP
+     prints where its signal finally goes — `bus 3 → bus 2`, off `deskBusFeed`'s
+     own `chain`, never this file's arithmetic. The paragraph that stood here
+     said "Bus 3 is `room` and it IS the reverb bus (desk.js:590 folds a part's
+     room into its rev)", which was true while the destination was a constant. */
+  // THE BUS-3 REFUSAL IS GONE, AND ITS SENTENCE WAS TRUE WHEN IT WAS WRITTEN.
+  // It read: "bus 3 is the kit's ambience and this record has no kit", and it
+  // greyed the room send on every non-drum channel of a kitless record. That
+  // described the SECTION's `room` lane — audio/desk.js still scopes `sec.room`
+  // to the drums and says why — and a PART's room send was never the kit's: it
+  // folded into `rev` whatever the record had in it. Now that bus 3 is a group
+  // with an aim, a part send into it lands where the group is aimed, kit or no
+  // kit, so there is nothing left to refuse. A control that works needs no
+  // apology (the same sentence the modelled-voice EQ earned two rounds ago).
+  const busFeeds = deskBusFeed(sec, MASTER, BUSES);
+  for (const r of SEND_ROWS) {
+    const shutHere = r.field === "rev" && returnShut();
+    const w = knob("eng|" + r.field + "|" + voiceName, r.field, SENDS, SENDLABEL,
+      d[r.field], voiceName + " " + busName(r.bus) + " send",
+      (v) => setDesk(ctx, voice, r.field, v),
+      r.field === "rev" ? genreAsk(sec) : "dry");
+    const f = busFeeds[r.bus];
+    // A GROUP HAS NO ARRIVING NUMBER OF ITS OWN — deskChannelBase has already
+    // routed it into rev or del, so printing "N% into bus 3" would be counting
+    // this channel's signal twice. It prints the ROUTE instead, which is the
+    // thing a reader of a group actually needs.
+    const said = f.group
+      ? f.chain.join(" → ") + (f.cycle ? " — the aim you set closes a loop" : "")
+      : pct(r.field === "rev" ? base.rev : base.del) + " into " + busName(r.bus);
+    row("→ " + busName(r.bus) + (shutHere ? " (shut)" : ""),
+      w, said + (shutHere
+        ? " — but the return is shut; open it on bus 1's fader" : ""));
   }
   for (const [k, label] of [["mute", "cut"], ["solo", "alone"]]) {
     const c = document.createElement("input");
@@ -417,56 +455,36 @@ export function engineer(parent, ctx, voiceName) {
 
   const q = (k) => "eng." + k + "|" + voiceName;
 
-  // THE CHARACTER CHIP, back on the track after 2026-08-17 took it off. It is
-  // an INSERT and the parent's insert path is MONO, so a wide unit's chain is
-  // dropped outright (desk.js widthKept: "stereo voices are folded to channel 0
-  // through the mono insert chain"). Saying so is cheaper than pretending.
-  const chips = d.fx || [];
-  const wideWhy = facts && facts.stereo
-    ? "this voice is wide; a chip would fold it to mono" : null;
-  // THE ONE CONTROL ON THIS PAGE THAT ALLOWS MORE THAN ONE ANSWER, and as of
-  // 2026-08-24 it is the browser's own element for that (Paul: "Wherever we
-  // allow multiple selections use a standard multiselect form element
-  // please."). ui/sheets.js draws `multi` as a `<select multiple>` now; nothing
-  // about this call site changed except the two words below.
+  // THE CHARACTER CHIP CAME OFF THE TRACK AGAIN, 2026-08-26, AND THIS TIME BY
+  // THE PERSON WHO ASKED THE QUESTION. nukernel/STATE.md item 6 put the
+  // reversal to Paul in so many words ("Do you accept the reversal?") and he
+  // answered the other way: *"Don't let me add effects to instruments. That's
+  // bus and board stuff. But let me have up to four buses and a way to direct
+  // them to each other."*
   //
-  // THE CAP IS SAID TWICE BECAUSE A MULTISELECT NEEDS IT TWICE. Greying the
-  // unreachable chips is what a reader SEES and it is the same line it always
-  // was; `max` is the backstop, because a <select multiple> can be handed a
-  // fourth selection by a ctrl-click or a Ctrl+A in a way an unticked checkbox
-  // never could, and quietly keeping the first three would be a lie about what
-  // the record now says.
-  sheet(parent, {
-    key: q("fx"), label: "character",
-    multi: true,
-    max: MAX_FX,
-    maxWhy: "three chips is the limit on one track — the fourth was refused",
-    why: wideWhy,
-    options: Object.keys(FX).map((k) => {
-      const on = chips.includes(k);
-      if (!on && chips.length >= MAX_FX)
-        return { value: k, label: FXLABEL[k] || k, disabled: true,
-                 why: "three chips is the limit on one track" };
-      return { value: k, label: FXLABEL[k] || k };
-    }),
-    value: chips.map(String),
-    set: (list) => setDesk(ctx, voice, "fx", list),
-  });
-  // HOW TO PICK A SECOND ONE, SAID OUT LOUD — the `leslie` recipe's finding
-  // (2026-08-25), applied. Measured with real clicks at 390x844: a plain tap on
-  // an option REPLACES the whole selection — leslie -> ["leslie"], chorus ->
-  // ["chorus"], phaser -> ["phaser"] — so on a desktop pointer a second chip is
-  // unreachable without ctrl/cmd, and nothing on the page said so. Three chips
-  // is the documented limit and a pointer could only ever hold one, which made
-  // the cap a promise the control could not keep. This is a sentence and not a
-  // widget change on purpose: ui/sheets.js `rowsFor` already records that
-  // deselecting is ctrl-click and that it is "legible as an accident, not as a
-  // gesture", and whether to replace `<select multiple>` with something else is
-  // Paul's call, not a slice's — he asked for the standard element by name.
-  const how = el("p", "hold ⌘ (or Ctrl) to pick a second and a third — a plain"
-    + " tap replaces the whole selection, which is what a <select multiple> does");
-  how.className = "nu-hint";
-  parent.append(how);
+  // WHAT STOOD HERE, kept because it is the argument and the argument is still
+  // the reason bus 4 exists: "THE CHARACTER CHIP, back on the track after
+  // 2026-08-17 took it off. It is an INSERT and the parent's insert path is
+  // MONO, so a wide unit's chain is dropped outright (desk.js widthKept:
+  // 'stereo voices are folded to channel 0 through the mono insert chain').
+  // Saying so is cheaper than pretending." — plus a `<select multiple>` of
+  // eleven chips, a `max` of MAX_FX said twice, and a hint that a plain tap
+  // replaces the whole selection.
+  //
+  // ALL OF IT IS GONE RATHER THAN DISABLED, because a disabled control is a
+  // promise deferred and this is a decision made: there is no per-voice fx
+  // control on this page. fields.js took `fx` off PARTMIX in the same round, so
+  // there is no field left to write; `channelFacts`/`stereo` is no longer read
+  // in this view at all, and `wideWhy` went with it. What replaces the chip is
+  // the fourth bus and the group routing on board two — an insert costs a
+  // MULTIPLE and a bus costs a CONSTANT (fields.js has the engine's own
+  // measurement), so more buses is the cheaper answer as well as the asked-for
+  // one.
+  //
+  // THE SECTION'S OWN CHIP IS UNTOUCHED, and it is a different thing: `sound.fx`
+  // is a record-wide character that reaches every seated voice (audio/desk.js
+  // sectionOf S.fx), which is board stuff by Paul's own division. Only the
+  // per-INSTRUMENT one is refused.
 
   // THE SUMMARY LINE IS GONE, and it is deleted rather than reworded because it
   // had become a SECOND OWNER of three facts. It printed "riding X dB · N% into
@@ -613,6 +631,15 @@ function boardOf(id, capText, cols, headOf, dim) {
   const cellFor = (tr, col) => {
     const td = el("td");
     td.dataset.col = col.kind;
+    // WHICH BUS THIS CELL IS UNDER, on the cell and not only on the header.
+    // A GROUP (bus 3, bus 4 — `engine: null` in fields.js BUSROWS) has no
+    // engine accumulator at all: its sends are summed into whichever bus it is
+    // aimed at. That is a genuinely different kind of strip and the grid draws
+    // it identically, so nu.css washes the two group columns — and a rule that
+    // reached them by `:nth-child()` would break the moment a fifth bus lands.
+    // One line here, no look: the look is nu.css's (the bus-css recipe asked
+    // for exactly this line rather than reach for the positional selector).
+    if (col.kind === "bus") td.dataset.bus = col.key;
     if (col.edge) td.classList.add("nu-edge");
     if (dim && dim(col)) { td.classList.add("is-off");
                            td.setAttribute("aria-disabled", "true"); }
@@ -676,10 +703,14 @@ export function mount(parent, ctx) {
   const doc = ctx.doc();
   const chans = DD().channelVoicesOf(doc, GENRES);
   const sec = atBox();
-  // no channelFacts here any more: the board grid's ONLY per-channel refusal was
-  // the modelled-voice EQ, and that control works now. `stereo` is still read on
-  // the engineer's sheet (wideWhy, above), where the chips live — the one place
-  // widthKept still takes something away.
+  // no channelFacts anywhere in this file any more, and the second half of this
+  // note is what changed on 2026-08-26. It said: "the board grid's ONLY
+  // per-channel refusal was the modelled-voice EQ, and that control works now.
+  // `stereo` is still read on the engineer's sheet (wideWhy, above), where the
+  // chips live — the one place widthKept still takes something away." The
+  // chips are off the instruments, so `stereo` is read nowhere on this page and
+  // the import went with it. widthKept still takes a wide voice's chain away —
+  // it just never has one to take.
   const anySolo = chans.some((c) => deskOf(c.voice).solo);
   const shut = returnShut();
   // WHAT EACH BUS IS CARRYING AND WHERE IT REACHES — the model's answer, never
@@ -755,27 +786,40 @@ export function mount(parent, ctx) {
       // this board, and its POSITION is what says the record is dead centre.
       (v) => setDesk(ctx, c.voice, "pan", v), "as it stands"));
   }));
-  const hasKit = chans.some((c) => c.key === "drums");
-  for (const [field, bus] of [["rev", "rev"], ["echo", "echo"], ["room", "room"]]) {
-    const tr = A.strip("→ " + busName(bus) + (field === "rev" && shut ? " (shut)" : ""),
+  // FOUR SEND ROWS, OFF SEND_ROWS — the same list the voice's own tab walks, so
+  // the two surfaces cannot come to draw a different number of sends. It was a
+  // literal `[["rev","rev"],["echo","echo"],["room","room"]]` and the fourth
+  // bus is what made a literal a liability.
+  //
+  // THE KITLESS REFUSAL CAME OFF WITH ITS TWIN in the voice's tab; the argument
+  // is written out there ("bus 3 is the kit's ambience and this record has no
+  // kit" described the SECTION lane, never a part's send). A group takes a send
+  // from any channel and lands it where it is aimed.
+  for (const r of SEND_ROWS) {
+    const isRev = r.field === "rev";
+    const tr = A.strip("→ " + busName(r.bus) + (isRev && shut ? " (shut)" : ""),
       chOnly((c, td) => {
         // THE EMPTY DETENT'S WORD IS SHORT ON THE BOARD AND LONG IN THE VOICE'S
         // OWN TAB, on purpose: a 92px column cannot carry "the genre asks 0.78"
         // without wrapping it to four lines, so the sentence goes on the
         // control's `title` and the engineer's own row (which has the width)
         // still prints it whole.
-        const w = knob("b|" + field + "|" + c.voice.name, field, SENDS, SENDLABEL,
-          deskOf(c.voice)[field], c.voice.name + " " + busName(bus) + " send",
-          (v) => setDesk(ctx, c.voice, field, v), "as it stands");
-        const s = w.querySelector("input");
-        if (field === "rev") s.title = genreAsk(sec) +
+        const w = knob("b|" + r.field + "|" + c.voice.name, r.field, SENDS,
+          SENDLABEL, deskOf(c.voice)[r.field],
+          c.voice.name + " " + busName(r.bus) + " send",
+          (v) => setDesk(ctx, c.voice, r.field, v), "as it stands");
+        const sel = w.querySelector("input");
+        if (isRev) sel.title = genreAsk(sec) +
           "; a part send adds to it, so absent adds nothing";
+        // A GROUP'S SEND SAYS WHERE IT ENDS UP, on the control, because the
+        // column has no room to print it and the answer changes with a knob two
+        // tables down. Off deskBusFeed's `chain`, never typed here.
+        else if (feeds[r.bus].group)
+          sel.title = "bus " + r.n + " is a group — this send arrives at " +
+            feeds[r.bus].chain.join(" → ");
         td.append(w);
-        if (field === "room" && c.key !== "drums" && !hasKit)
-          td.append(refuse(s,
-            "bus 3 is the kit's ambience and this record has no kit"));
       }));
-    if (field === "rev" && shut)
+    if (isRev && shut)
       tr.firstChild.title = "every channel below is sending into a return whose"
         + " gain is zero — open it on bus 1's fader";
   }
@@ -825,10 +869,10 @@ export function mount(parent, ctx) {
   // job is the RELATIONSHIP, so it names the three sends and the destination in
   // the order the boards are read, and the bus names come off the one reader
   // (`busName`) so renaming bus 1 renames it here too.
-  const flow = el("p", "↓ every channel above leaves on the main, and its three"
-    + " sends leave on " + busName("rev") + ", " + busName("echo") + " and "
-    + busName("room") + " — which are the first three columns below. What comes"
-    + " back off them, and the main it comes back into, is the second board.");
+  const flow = el("p", "↓ every channel above leaves on the main, and its sends"
+    + " leave on " + SEND_ROWS.map((r) => busName(r.bus)).join(", ")
+    + " — which are the bus columns below. What comes back off them, and the"
+    + " main it comes back into, is the second board.");
   flow.className = "nu-flow";
   host.append(flow);
 
@@ -898,20 +942,65 @@ export function mount(parent, ctx) {
     if (col.kind === "bus") {
       const gear = busRow(col).knobs
         .filter((k) => k.key !== "ret" && k.key !== "name");
-      // BUS 3 HAS NO GEAR AND SAYS SO RATHER THAN SITTING BLANK. fields.js:
-      // "`room` therefore keeps its name and no knob of its own: it IS the
-      // reverb bus (audio/desk.js:590 folds a part's `room` into its `rev`)".
-      // An empty cell here would read as "not drawn yet"; the sentence is the
-      // fact.
-      if (!gear.length) {
-        const w = el("small", "no knob of its own — it IS bus 1's return, and"
-          + " a part's `room` is folded into its `rev` (audio/desk.js:590)");
-        w.className = "nu-why";
-        td.append(w);
-        return;
-      }
+      // BUS 3 HAD NO GEAR AND NOW BOTH GROUPS HAVE EXACTLY ONE, and it is the
+      // knob that was there all along with nobody's hand on it. This cell
+      // printed: "BUS 3 HAS NO GEAR AND SAYS SO RATHER THAN SITTING BLANK.
+      // fields.js: '`room` therefore keeps its name and no knob of its own: it
+      // IS the reverb bus (audio/desk.js:590 folds a part's `room` into its
+      // `rev`)'. An empty cell here would read as 'not drawn yet'; the sentence
+      // is the fact." The fact was right and the conclusion was one step short:
+      // the FOLD is the knob (audio/desk.js feedSplit has the argument), so a
+      // group's gear is its destination and nothing else.
       const g = el("div"); g.className = "nu-gear"; td.append(g);
-      for (const spec of gear) labelled(g, spec.label, busSel(col, spec));
+      for (const spec of gear) {
+        if (spec.key !== "to") { labelled(g, spec.label, busSel(col, spec)); continue; }
+        // WHERE A GROUP IS AIMED. The options are greyed BY THE MOVE, not by the
+        // state: `busToOk` asks what would happen if this destination were
+        // written, so aiming bus 3 at bus 4 while bus 4 points back at bus 3 is
+        // refused with the loop named, and every aim that does not close a loop
+        // is offered. Refusing the loop rather than clamping the walk is the
+        // choice fields.js busRoute writes down — a clamped cycle would put a
+        // route on the page the tape does not have.
+        const cur = bv(col.key, "to");
+        const sel = selectEl({
+          key: "bus|" + col.key + "|to", label: "goes to",
+          options: optionsFor(spec.table, spec.labels, cur,
+            (k) => NuFields.busToOk(doc.sound && doc.sound.buses, col.key, k)
+              ? null
+              : (k === col.key
+                  ? "a bus cannot send to itself"
+                  : "aiming bus " + col.n + " here would close a loop — " +
+                    NuFields.BUSTO[k] + " already comes back to bus " + col.n),
+            // THE EMPTY DETENT SAYS WHAT THE DEFAULT RESOLVES TO, in the key's
+            // own vocabulary — main:mixtbl.js defaultOf, the law `knob()` in
+            // this file already quotes. It is the BUS NAME and nothing else:
+            // "bus 1, as it has always folded" was the first wording and it
+            // clipped at 124px (measured on the rendered page — the option read
+            // "bus 1, as it l"), which made the one control that explains the
+            // routing the one control you could not read.
+            //
+            // SO THE MENU READS `bus 1` TWICE, AND THAT IS THE ACCEPTED SHAPE
+            // ON THIS BOARD. `optionsFor` puts them in different optgroups —
+            // "as it stands: bus 1" over "as you say: bus 1" — which is exactly
+            // what `place` has done since the board existed (PANLABEL spells 0
+            // `centre` and the empty detent resolves to 0 as well), and what
+            // bus 1's own fader has (`off`/"shut" beside the blank). The pair
+            // is legible because the GROUP names which is which, and the two
+            // genuinely save differently: absent is "never aimed" and `rev` is
+            // "aimed at bus 1", and busRoute resolves both to the same wire.
+            NuFields.BUSTO[NuFields.BUSDEFAULT]),
+          value: cur,
+          set: (v) => { DD().writeBus(doc, col.key, "to", v); ctx.changed(); },
+        });
+        labelled(g, spec.label, sel);
+        // NO SECOND READOUT UNDER THE CONTROL. A `.nu-why` printing the whole
+        // chain went here and it was a duplicate: the `goes to` row four rows
+        // down already prints it, and that row is where a chain BELONGS by this
+        // view's own law — a row is a comparison, and "where does this strip
+        // go" is answered by every strip. The control shows what you SET; the
+        // row shows where it ends up. On a one-hop route those are the same
+        // words, which is what made the duplication easy to miss.
+      }
       return;
     }
     // WIDTH, TILT AND CEILING'S PUSH REACH NOTHING (audio/desk.js:769 names all
@@ -962,11 +1051,95 @@ export function mount(parent, ctx) {
   // from audio/desk.js (`deskBusFeed`'s `to`) for the buses, so the page and
   // the model cannot disagree about a wire.
   B.strip("goes to", (col, td) => {
-    if (col.kind === "bus") { td.append(el("small", feeds[col.key].to)); return; }
+    if (col.kind === "bus") {
+      const f = feeds[col.key];
+      // A GROUP PRINTS THE WHOLE WALK AND A RETURN PRINTS ITS DESTINATION, and
+      // both come off deskBusFeed rather than out of this file. `chain` is the
+      // route AFTER the refusals, so a group whose aim closes a loop prints the
+      // fallback it actually takes and says that it fell back — never the aim
+      // that was asked for, because that one is not on the tape.
+      td.append(el("small", f.group ? f.chain.join(" → ") : f.to));
+      if (f.group && f.cycle) {
+        const w = el("small", "the aim you set closes a loop — this is the"
+          + " fallback"); w.className = "nu-why"; td.append(w);
+      }
+      return;
+    }
     td.append(el("small", "the speakers"));
   });
   B.key();
   host.append(B.pane);
+
+  /* ---- THE RECORD'S OWN CHARACTER, AND IT IS NOT A STRIP CONTROL ---------
+     (Paul, 2026-08-26: "Don't let me add effects to instruments. That's bus and
+     board stuff.")
+
+     THAT SENTENCE HAS TWO HALVES AND THE SECOND IS AN ADDRESS. The chip came
+     off the instruments; it needed somewhere to be. `sound.fx` is the
+     record-wide chain — audio/desk.js sectionOf reads `S.fx` and gives it to
+     every SEATED voice, ui/eight.js:379 already copies `boxFxOf(DOC)` onto
+     every box, and desk-doc.js has carried `writeBoxFx` since the day it was
+     written WITH NO CALLER. The wire was there and the surface was missing,
+     which is the exact shape desk-doc.js's own header describes.
+
+     AND IT IS NOT IN THE MAIN'S CELL, WHICH IS WHERE IT WAS FIRST PUT AND
+     MEASURED. A `<select multiple>` of eleven chips is 8 rows tall, and inside
+     the `its own gear` cell it took that row from 340px to 653px — a table row
+     is as tall as its tallest cell, so bus 3's one menu sat under 590px of
+     white. That is the 2026-08-25 measurement exactly ("the main's cell was
+     489px … bus 1's cell — one menu, 62px — sat under 427px of white"), which
+     is the emptiness Paul asked about and the reason the boards were split at
+     all. Reintroducing it to square a grid would be the thing this file
+     refuses.
+
+     SO IT SITS UNDER THE BOARD, WITH THE OTHER RECORD-LEVEL SENTENCES — the
+     flow paragraph, the routing note, the edge list — because that is what it
+     IS. A strip control is one strip's fact; this one reaches every seated
+     voice at once, and the band under the board is where the page already
+     keeps what is true of the whole record. Keep like with like.
+
+     IT IS THE PAGE'S ONE MULTIPLE-SELECTION CONTROL (Paul, 2026-08-24:
+     "Wherever we allow multiple selections use a standard multiselect form
+     element please"). `sheet()` with `multi: true` routes to ui/sheets.js's
+     `<select multiple>`; the cap is MAX_FX and it is said TWICE, for the reason
+     the per-voice chip's note gave — a ctrl-click can hand a <select multiple>
+     a fourth selection an unticked checkbox never could, and quietly keeping
+     the first three would be a lie about what the record now says.
+     test/selects.js and test/sheets.js both name the OLD key `eng.fx`; one line
+     each, recipe `multiselect-moved-to-the-main-strip.md`. */
+  {
+    const rec = DD().boxFxOf(doc);
+    const wrap = el("div"); wrap.className = "nu-rec";
+    const h = el("p", "…and what the whole record is dipped in. This chain is"
+      + " the RECORD's — audio/desk.js gives it to every seated voice — which is"
+      + " why it is here and not on an instrument.");
+    h.className = "nu-hint";
+    wrap.append(h);
+    sheet(wrap, {
+      key: "master.fx", label: "character",
+      multi: true, max: MAX_FX,
+      maxWhy: "three is the limit on the record's chain — the fourth was refused",
+      options: Object.keys(FX).map((k) => {
+        const on = rec.includes(k);
+        if (!on && rec.length >= MAX_FX)
+          return { value: k, label: FXLABEL[k] || k, disabled: true,
+                   why: "three is the limit on the record's chain" };
+        return { value: k, label: FXLABEL[k] || k };
+      }),
+      value: rec.map(String),
+      set: (list) => { DD().writeBoxFx(doc, list); ctx.changed(); },
+    });
+    // THE SAME SENTENCE THE PER-VOICE CHIP CARRIED, AND FOR THE SAME MEASURED
+    // REASON (the `leslie` recipe, 2026-08-25): a plain tap on an option
+    // REPLACES the whole selection, so on a desktop pointer a second chip is
+    // unreachable without ctrl/cmd and nothing on the page said so.
+    const how = el("p", "hold ⌘ (or Ctrl) to pick a second and a third — a plain"
+      + " tap replaces the whole selection, which is what a <select multiple>"
+      + " does.");
+    how.className = "nu-hint";
+    wrap.append(how);
+    host.append(wrap);
+  }
 
   // THE ONE SENTENCE THE ROUTING OWES THE READER, once, under the second board.
   // A bus does not send to another bus and there is no knob for it — fields.js
@@ -974,12 +1147,42 @@ export function mount(parent, ctx) {
   // were written against is gone and the parent's bus graph takes no edge.
   // Saying so is what stops the next round from adding one that draws and does
   // nothing.
-  const note = el("p", "a channel sends to bus 1, 2 and 3; bus 1 returns to the"
-    + " main. No bus sends to another bus — the parent's bus graph takes no edge"
-    + " (fields.js, 2026-08-24), so there is no knob for it rather than a knob"
-    + " that does nothing.");
+  const note = el("p", "a channel sends to all four buses. Bus 1 and bus 2 are"
+    + " the engine's own; bus 3 and bus 4 are groups, and where a group lands is"
+    + " the knob in its strip. Bus 1 returns to the main.");
   note.className = "nu-hint";
   host.append(note);
+
+  /* ---- EVERY EDGE ON THIS DESK, IN ONE LIST, WHETHER OR NOT IT HAS A KNOB.
+     This replaces a single sentence that read: "No bus sends to another bus —
+     the parent's bus graph takes no edge (fields.js, 2026-08-24), so there is
+     no knob for it rather than a knob that does nothing." It was the honest
+     answer to the question as it was then asked, and it turned out to be wrong
+     on the facts: fx_bus.dsp:221 has FOUR bus-to-bus terms in it and one of
+     them has been under this page's hand the whole time (audio/desk.js
+     MAIN_TO_BUS1 — it is the master's `space`).
+
+     THE LIST IS DATA FROM audio/desk.js, not sentences typed here, for the
+     reason BUS_REACH's own note gives: a board that types its own excuse can
+     drift from the engine that owes it. A knob that exists is named with the
+     control that owns it; an edge with no knob says why in the engine's words.
+     Nothing here draws a second control for a fact that already has one. */
+  const edges = el("ul"); edges.className = "nu-hint";
+  edges.append(el("li", MAIN_TO_BUS1.from + " → " + MAIN_TO_BUS1.to +
+    ": set it with the main strip's `" + MAIN_TO_BUS1.knob + "` above — " +
+    MAIN_TO_BUS1.why));
+  for (const b of BUS_FIELDS) {
+    const f = feeds[b.bus];
+    if (!f.group) continue;
+    edges.append(el("li", f.chain.join(" → ") + ": " +
+      (f.cycle ? "the aim set on this group closes a loop, so it falls back to"
+        + " bus 1 — the route you asked for is not on the tape and is refused"
+        + " rather than clamped" : "set it in bus " +
+        (BUS_FIELDS.indexOf(b) + 1) + "'s strip above")));
+  }
+  for (const e of FIXED_EDGES)
+    edges.append(el("li", e.from + " → " + e.to + ": " + e.why));
+  host.append(edges);
   // ...AND EVERY REFUSAL'S WHOLE SENTENCE, ONCE, HERE. The cells above carry a
   // short marker because a 124px column cannot hold ten lines without setting
   // the fader row 200px tall (measured), and a marker on its own would be the
@@ -1037,9 +1240,21 @@ function busFader(td, col, f, doc, ctx, meters) {
   if (!f.movable) {
     // BUS 2 IS A FADER THE PAGE CANNOT REACH, so it is drawn AT ITS REAL VALUE
     // and refused — fx_bus carries `dgain` and the renderers push it, but
-    // fxParams emits the literal 1. BUS 3 IS NOT A FADER AT ALL, so nothing is
-    // drawn for it and the sentence stands alone: inventing a slider for a
-    // thing that is not a return would be the lie this whole file is about.
+    // fxParams emits the literal 1. THE COST OF FIXING IT IS ONE LINE IN THE
+    // PARENT, and it is already scoped and costed in the recipe
+    // `bus-2-return-needs-one-line-in-the-parent.md`: the slider is compiled
+    // into fx_bus.wasm (dist/fx_bus-meta.json — dgain, init 1, range 0..2),
+    // both renderers already push every fxParams key onto `/fx_bus/<k>`, so
+    // NO RECOMPILE — `dgain: 1` becomes a read of `state.delay.gain` and the
+    // three edits on this side are named there. Re-confirmed 2026-08-26 while
+    // adding the fourth bus, and STILL NOT TAKEN: it is an edit to the parent
+    // and a re-run of its parity gates, which is not this page's to spend.
+    //
+    // A GROUP IS NOT A FADER AT ALL, so nothing is drawn for it and the
+    // sentence stands alone: inventing a slider for a thing that is not a
+    // return would be the lie this whole file is about. (It said "BUS 3"; there
+    // are two groups now and the same sentence covers both, which is why
+    // deskBusFeed answers `group` rather than this file testing a bus name.)
     if (col.key === "echo") {
       const r = document.createElement("input");
       r.type = "range"; r.min = "0"; r.max = "2"; r.step = "0.01"; r.value = "1";
@@ -1157,7 +1372,13 @@ const ZERO_STRIP = NuFields.resolvePartMix({});
 // not a part field and is deliberately absent: a bus's return defaults to 0
 // because audio/plan.js hands toEngine `reverb: 0`, which is the same 0 the
 // lookup below falls through to.
-const RESOLVES_TO = { rev: "rev", echo: "del", room: "room", pan: "pan", lvl: "lvl" };
+// `aux` joined it with bus 4 (2026-08-26). resolvePartMix answers `aux` under
+// its own name, like `room`, because only `echo`/`del` is a rename — and 0 is
+// where its blank detent belongs for the reason the note below gives, so the
+// lookup would have fallen through to the right answer anyway. It is written
+// down because "it happens to be right" is how the next rename goes wrong.
+const RESOLVES_TO = { rev: "rev", echo: "del", room: "room", aux: "aux",
+                      pan: "pan", lvl: "lvl" };
 function knob(k, field, table, labels, cur, aria, set, emptyLabel) {
   // WHERE THE EMPTY DETENT SITS, read off fields.js rather than typed. A strip
   // with nothing set resolves to resolvePartMix({}) — 0 for all three sends

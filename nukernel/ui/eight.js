@@ -149,7 +149,13 @@ import { startAt, stop, playing, warmup, getPosition, passAt,
 import { registerSW, warmShell, warmCache } from "../audio/offline.js";
 // ...AND THE SAME COMPILER ASSEMBLING A WHOLE SYSTEM. `toScore` is the score
 // block's half of ui/abc.js: several parts under one head, barred together.
-import { toEngraving, toScore } from "./abc.js";
+import { toEngraving, toScore, toNotes, ottavaFor } from "./abc.js";
+// …AND THE READING OF ONE, WHICH IS THE SAME NOTES OUT LOUD. `toNotes` is the
+// timeline `toABC` folds into bars, so the motif you tap and the staff you are
+// looking at cannot disagree about a pitch or a length (audio/audition.js).
+import { playAudition, stopAudition, auditioning, auditioningKey,
+         auditionVoice, auditionKit, zoneFilesFor,
+         kitFilesFor } from "../audio/audition.js";
 import { SYNTH_NAMES, voiceUnit } from "../audio/to-engine.js";
 // ONE NAME, NOT TWO. `sheet` came with `sheetRow` and had no call site here —
 // every question this page asks it asks two or three at a time, which is what
@@ -390,7 +396,28 @@ function push(first) {
     for (const [k, v] of Object.entries(vals)) setMixOffset(chan, k, v);
   SONG.length = 0; for (const b of boxes) SONG.push(b);
   commit("box"); commit("swing"); commit("transport");
-  warmCache([]);
+  // …AND THE MOTIFS GO IN THE WARM. audio/offline.js puts `extra` ahead of the
+  // cast so a handful of files can never be crowded out, and this is what
+  // makes "tap the motif and hear it" true with the wire cut: the record's own
+  // instruments are warmed anyway (they are the cast), but a STAND-IN is not —
+  // the chant's cantor is a Faust throat and its motif reads on a recorded
+  // solo_vox that nothing else on the page ever asks for. One or two zones per
+  // motif, because a sixteen-step tune spans one or two of a sampler's zones.
+  warmCache(auditionWarm());
+}
+// which files every motif in the bank would pull to be heard. Pure, and it
+// asks `auditionOf` rather than re-deciding — one answer to "who reads this".
+function auditionWarm() {
+  const out = [];
+  try {
+    for (const name of cellNames()) {
+      const A = auditionOf(name);
+      if (!A) continue;
+      if (A.hits) out.push(...kitFilesFor(A.hits.map((h) => h.lane), A.kit.dir));
+      else out.push(...zoneFilesFor(A.notes.map((x) => x.midi), A.voice.id));
+    }
+  } catch (e) {}
+  return out;
 }
 
 /* ---------- the page does not move under you --------------------------
@@ -814,7 +841,7 @@ const CTX = {
   // window down to where the previous record's tab strip used to be. The
   // correction exists for a page that grew under a still thumb mid-edit, and
   // this is not that.
-  setDocument: (next) => { stop(); DOC = next; normalize(); push(true);
+  setDocument: (next) => { stop(); auditionOff(); DOC = next; normalize(); push(true);
                            anchorOff = true;                 // see ANCHOR_MAX
                            paneScroll.clear();      // a new record is a new page
                            staffBox.clear();        // …and so are its staves
@@ -1283,20 +1310,24 @@ function chordGrid(parent) {
   if (qWhy) parent.append(el("p", qWhy, "nu-why"));
 }
 
-/* ---------- THE SCORE — THE WHOLE BAND, TWO MEASURES AT A TIME ----------
+/* ---------- THE SCORE — THE WHOLE BAND, ON ONE MOVING RIBBON ----------
    Paul, 2026-08-25: *"add a section ABOVE motifs which is the current playing
    music, two measures at a time, but ALL"*.
 
    ALL IS THE WHOLE OF THE ASK, and it is what makes this a different object
-   from the composed staff under it. A composed staff is a PART — one player's
-   line, in that player's register, with that player's word applied — and the
-   motif blocks below draw one per voice per motif, scattered down the axis
-   because they are grouped by the tune they read. A SCORE is every part at
-   once, stacked in the record's own order and barred through, so you can read
-   DOWN a beat and see what the band is doing at that instant. Nobody has ever
-   been able to see this record's counterpoint, its bass and its kit in one
-   look, and two measures is the widest window a phone can hold at a size a
-   person can read.
+   from the motif staves under it. A written staff is a PART — one player's
+   line, as the cell stands — and the motif blocks below draw one per cell. A
+   SCORE is every part at once, stacked in the record's own order and barred
+   through, so you can read DOWN a beat and see what the band is doing at that
+   instant. Nobody has ever been able to see this record's counterpoint, its
+   bass and its kit in one look.
+
+   AND IT MOVES NOW, WHICH IS THE ROUND OF 2026-08-25 EVENING. Paul:
+   *"Switching measures is super jumpy so I thought you could [neatly] render
+   it and scroll the score horizontally as the song progresses."* The old
+   mechanism is written out below (see THE RIBBON REPLACES A WINDOW) rather
+   than deleted, because its ask has not been withdrawn — you still see the
+   current bar and the next — only its mechanism has.
 
    WHERE ITS NOTES COME FROM, AND WHY IT IS NOT A SECOND OPINION. This does not
    re-derive anything: it reads `sectionRender(box, SLOTS, GROOVE, SWING).ev`,
@@ -1312,10 +1343,10 @@ function chordGrid(parent) {
 
    THE TWO PICTURES MAY THEREFORE DIFFER, AND THAT IS THE TRUTH RATHER THAN A
    BUG. The stream has been through the section's envelope, its intro and outro,
-   each chair's `entry`, the harmonize stage and the groove; the composed staff
-   is the theme with the word applied and nothing else. Read together they say
-   what a conductor's score and a player's part have always said: here is your
-   line, and here is what the room hears. Where they disagree the score is the
+   each chair's `entry`, the harmonize stage and the groove; the written staff
+   is the theme as it stands and nothing else. Read together they say what a
+   conductor's score and a player's part have always said: here is your line,
+   and here is what the room hears. Where they disagree the score is the
    report — it is what the speakers are doing.
 
    NOTATION QUANTIZES, and it always has. Swing, groove and the humanized hand
@@ -1336,70 +1367,134 @@ const SCOREHEAD = { k: "F", s: "c", p: "c", c: "c",
                     h: "!style=x!g", o: "!style=x!g", f: "!style=x!D",
                     r: "!style=x!f", x: "!style=x!a" };
 // SIXTEEN STEPS TO A MEASURE, the same sixteen the playhead counts
-// (`lightStep`) and the composed staves engrave. Not `stepsIn(g)`: the score
+// (`lightStep`) and the written staves engrave. Not `stepsIn(g)`: the score
 // has to sit in the same measure the red note is walking through, and every
-// other surface on this page — the maker grid, the kit, the composed staff —
+// other surface on this page — the maker grid, the kit, the written staff —
 // is built on sixteen. A genre in a twelve-step meter draws its score the way
 // it draws its motifs, which is the disagreement to fix in one place if ever.
-const SCORE_SPB = 16, SCORE_BARS = 2, SCORE_W = SCORE_SPB * SCORE_BARS;
-/* ---------- TWO PICTURES, ONE VISIBLE, AND THAT IS THE RUNWAY -----------
-   Paul, 2026-08-25: *"the sheet music appears about a half measure after the
-   music starts. it should appear BEFORE the music starts, essentially I should
-   see the current measure and the next and the moment the current measure is
-   done, measure 2 becomes measure #1."*
+const SCORE_SPB = 16;
+// HOW MANY BARS THE SENTENCES SPEAK FOR, and it is no longer how much is
+// DRAWN. The caption and the syllable line say "bars 2-3" — the bar under the
+// playhead and the one after it, which is the ask of 2026-08-25 morning ("I
+// should see the current measure and the next") and is still exactly what the
+// ribbon has under and to the right of the line. The picture itself now holds
+// a whole section; see below.
+const SCORE_BARS = 2;
 
-   WHAT WAS MEASURED BEFORE THIS, on the shipped chant at 390px with the
-   transport running and the page polled every 40ms: the window changed from
-   bars 1-2 to bars 3-4 at t=17919ms and the playhead entered bar 3 at the same
-   poll — **186ms LATE**, against a `SCORE_SETTLE` of 200ms. So the LATENESS is
-   the settle and nothing else: the engrave landed inside the same 40ms poll
-   (renderAbc median 23ms, measured 2026-08-25) and the walk contributed zero,
-   because `scoreMeas` is computed in the very `on("pos")` handler that moves
-   the red note — the window and the playhead share one clock and cannot
-   disagree. The HALF MEASURE is a different thing and it was the rule itself:
-   advancing two bars at a time meant that on every odd bar the sounding music
-   was the picture's RIGHT half, i.e. the picture was already a bar old. Both
-   are fixed here, and they needed two different fixes.
+/* ---------- THE RIBBON REPLACES A WINDOW, AND HERE IS WHAT IT REPLACED ------
+   Until this round the score was TWO MEASURES, engraved into one of two
+   stacked hosts and swapped at every barline. Its own header argued the swap
+   well and the argument is kept because half of it is still true:
 
-   THE RULE IS ROLLING NOW: the window starts at the sounding measure, so it is
-   always [current, next] and it flips at every barline. That is the whole of
-   "measure 2 becomes measure #1".
+     *"AND THE STROBE IS ANSWERED BY DOUBLE-BUFFERING. abcjs renders into a
+     host by emptying it, so a bar-by-bar re-engrave would show a hole at every
+     barline. So there are TWO hosts stacked in the same grid cell, one visible
+     and one not: the NEXT window is engraved into the hidden one while the
+     current one is still on screen, and the flip is a class swap with no
+     engrave in it at all. What a reader sees at the barline is the right-hand
+     bar arriving on the left and one new bar arriving on the right — a shift,
+     never a replacement, and never an empty frame."*
 
-   WHICH BUYS THE LEAD TIME FOR FREE, and this is the part worth stating: a bar
-   is on the page for one WHOLE MEASURE before it sounds, because it enters as
-   the right half of the window whose left half is the bar in front of it. At
-   the chant's tempo that is ~4.4 seconds of reading time. Nothing had to be
-   predicted to get it; the window shape is the prediction.
+   It was not a shift. It was a REPLACEMENT of the whole picture with a
+   different one that happened to share a bar, every 2.5 seconds, and Paul read
+   it exactly as what it was: *"Switching measures is super jumpy."* A settle
+   delay hides a flicker; it cannot make a replacement feel like motion.
 
-   AND THE STROBE IS ANSWERED BY DOUBLE-BUFFERING. The two-at-a-time rule was
-   chosen because "a window that re-centres every bar is a strobe", and that
-   objection was real about a picture that goes blank and re-appears: abcjs
-   renders into a host by emptying it, so a bar-by-bar re-engrave would show a
-   hole at every barline. So there are TWO hosts stacked in the same grid cell,
-   one visible and one not: the NEXT window is engraved into the hidden one
-   while the current one is still on screen, and the flip is a class swap with
-   no engrave in it at all. What a reader sees at the barline is the right-hand
-   bar arriving on the left and one new bar arriving on the right — a shift,
-   never a replacement, and never an empty frame.
+   SO THE PICTURE IS ENGRAVED ONCE AND MOVED. The music is engraved a few bars
+   at a time as one long system at its NATURAL spacing (a `staffwidth` smaller than the music
+   needs makes abcjs stop justifying — measured 2026-08-25: 4 dense bars asked
+   for 200px came back 907px wide, the width the notes actually want), and the
+   sounding position is a fixed line the music passes under. Between beats the
+   transform is interpolated against the audio clock, so the motion is
+   continuous rather than stepped — which is the whole point, since "jumpy" is
+   a complaint about discrete motion.
 
-   THE OTHER HALF OF THE STROBE ARGUMENT SURVIVES AND IS WHY THE SETTLE IS
-   STILL HERE: `passAt` can report the last bar of a pass and then the first bar
-   of the next one inside a tenth of a second (measured 2026-08-25 at 1280px: 0
-   → 2 → 0 in 100ms). What is new is that only ONE kind of change can be
-   trusted immediately — a step of exactly one window forward inside the same
-   section, which is the only thing a barline can do — and everything else
-   (a section change, a jump, a step backwards) still waits out `SCORE_SETTLE`.
-   That is what takes the 186ms off the barline and leaves the flash
-   impossible. */
-let scoreBufs = [];                         // [{ el, key, abc, voices, els, ready }]
-let scoreShown = 0;                         // which of the two is on screen
-let scoreWant = "";                         // the window the page is asking for
-let scoreHost = null, scoreCap = null;      // the box that holds the room; the sentence
-let scoreSyl = null;                        // …and what the mouths are singing (VOICE.md §7)
+   AND IT IS CHEAPER, WHICH IS THE OTHER HALF. A window turn was an abcjs
+   render (23ms median for two staves, and 110-251ms with a bbox read in it
+   before that was moved off the clock); moving a rendered SVG is a transform
+   and touches no layout at all.
+
+   HOW MUCH IS ENGRAVED, AND THE MEASUREMENT THAT DECIDED IT. Whole-record was
+   the first candidate — engrave the 36 bars once and never again — and it was
+   measured before it was chosen (chromium, vendored abcjs, 2026-08-25, dense
+   4/4 bars): 36 bars x 2 staves = 134ms, 36 x 8 = 404ms, 60 x 8 = 742ms, 104 x
+   8 = 1034ms. The catalogue's own records are the reason that loses: the
+   average precomposed record is 85 bars and 7 voices and `rai` is 152 bars and
+   9 (measured over all 199 anchors), so "engrave the record" is a one-second
+   freeze on a phone at boot — and again after every edit, because an edit
+   changes the notes. A SECTION is 4-12 bars, which is 50-150ms once, engraved
+   a section AHEAD of the ear and never on the barline.
+
+   SO THE RIBBON IS A ROW OF TILES — a few bars each, one after another, with
+   the paper running past both edges of the box. They sit end to end, so a
+   section boundary is not a swap at all: the next section's first bar arrives
+   under the line the way the next bar does. And the CROP is what makes that
+   true rather than nearly true — see `tileGeom`, where the left margin every
+   tile carries (its clef, its key, its voice names) is measured and cut off,
+   because it is paper with no time in it and the ribbon leapt across it.
+
+   THE HEIGHT NEVER CHANGES, which is what keeps the page from reshaping (the
+   same guarantee `staffBox`/`staffRoom` gives the motif staves, and
+   test/motif-frozen.js A5 measures from outside). The box is reserved at
+   creation and the tiles are scaled into it; a tile that wants more room than
+   the box has is drawn a little smaller rather than clipped, which is what a
+   page of printed music does to a dense system anyway. */
+/* HOW LONG A TILE IS, AND IT IS A COST RATHER THAN A PICTURE. A tile was one
+   whole SECTION for the first hour of this round, which is the musically
+   honest unit — a seam then falls only where the music itself turns. It was
+   measured on a real record and it does not survive the measurement: a
+   precomposed `reggae` is thirteen sections of up to SIXTEEN bars and seven
+   voices, and engraving one of those costs **241ms of main thread** (measured
+   2026-08-25 at 390x844, mid-playback, twice: 176ms and 241ms). That is a
+   quarter-second freeze every fifteen seconds, which is precisely what
+   test/motif-frozen.js A7 exists to forbid and what "super jumpy" is a
+   complaint about from the other direction.
+
+   FOUR BARS is the bound, and the cost falls with it: measured on the same
+   record at the same width, a tile costs **10-71ms** (and 20-66ms at 1280x900
+   on the same record; 6-27ms for the two-staff chant), which is under the
+   frame budget of the beat it is drawn between. `window.__eightScoreMs()`
+   prints the last twenty, so this is checkable rather than claimed. What it buys back is
+   a seam mid-section — a fresh clef and the voice names every four bars, which
+   reads as a system break in printed music and is the same thing the eye
+   already accepts at a page turn. A section boundary still gets one, because
+   `nextChunk` never runs a tile past the end of a section: a tile is four bars
+   OR the rest of the section, whichever is shorter. */
+const TILE_BARS = 4;
+// HOW MANY TILES ARE ALIVE. Enough to hold the box's width to the right of the
+// sounding line plus one behind it — `scoreAhead` keeps filling until the paper
+// runs past the right edge, and this is the ceiling on that loop. Six four-bar
+// tiles is 24 bars of ribbon, which is more than a 1280px box can show of any
+// record in the catalogue.
+const SCORE_TILES = 6;
+// WHERE THE SOUNDING POSITION SITS in the box, as a fraction of its width.
+// Just over a quarter in: enough paper to the left to see the bar you have
+// just played, and three quarters of the box for what is coming — which is
+// what makes the next bars readable BEFORE they sound, the property Paul asked
+// for on 2026-08-25 morning and which the ribbon gives away for free.
+const SCORE_HEAD = 0.28;
+let scoreTiles = [];              // the three, in no particular order
+let scoreLine = [];               // the tiles as laid out, left to right
+let scoreRun = null;              // the moving row (transform lives here)
+let scoreHost = null;             // the clipping box, which holds the reserve
+let scoreCap = null;              // the sentence
+let scoreSyl = null;              // …and what the mouths are singing (VOICE.md §7)
+let scoreMark = null;             // the sounding line
 let scoreLit = [];
-let scoreWin = -1, scoreSec = -1;
-let scoreMeas = 0;                          // the measure the playhead is in
-let scoreReserve = 0;                       // the room the picture is given, px
+let scoreSec = -1;                // the section the ribbon is following
+let scoreMeas = 0;                // the measure the playhead is in
+let scoreReserve = 0;             // the room the picture is given, px
+let scoreTop = -1;                // where staff one's top line sits in that room
+let scoreX = null;                // the transform actually applied, px
+// HOW WIDE THE BOX IS, MEASURED ONCE PER DRAW AND NEVER ON THE CLOCK. `place`
+// runs every frame and it needs the box's width to know where the sounding
+// line is; `clientWidth` is a LAYOUT READ, and a layout of this page is not
+// cheap (measured 2026-08-25: 110-140ms with a 16,000px document under it).
+// The width is a fact about the COLUMN — it changes when the page is rebuilt
+// or the window is resized, both of which rebuild this block — so it is taken
+// where every other measurement in this file is taken, in the draw.
+let scoreBoxW = 0;
+let scoreGut = null, scoreGutW = 0;   // the pinned left margin, and how wide
 // ...AND WHAT THAT ROOM WAS MEASURED FOR. A box is a fact about a RECORD at a
 // WIDTH — eight staves need four times the room two do — so the number is kept
 // with the two things it depends on and thrown away when either moves.
@@ -1407,49 +1502,25 @@ let scoreReserve = 0;                       // the room the picture is given, px
 // (213px) was still in force when the atlas swapped in an eight-voice
 // yachtrock record, and the whole band was drawn at 0.24 scale inside it.
 let scoreReserveKey = "";
-// how far the voice names push the system past the viewBox abcjs writes —
-// measured once per record and width, never on the clock (see fitSystem)
-let scoreGutter = 0;
-// A SECOND ENGRAVING COUNT, AND IT IS DELIBERATE. `engraves` is the composed
-// half's own number and test/motif-frozen.js A6 holds it to "at most one abcjs
-// render per line voice per section boundary" — a claim about the motif
+// A SECOND ENGRAVING COUNT, AND IT IS DELIBERATE. `engraves` is the motif
+// staves' own number and test/motif-frozen.js A6 holds it to "at most one
+// abcjs render per line voice per section boundary" — a claim about the motif
 // blocks, which is exactly the claim that gate exists to make. Adding this
 // surface's renders to that counter would make A6 pass or fail on a different
 // surface's arithmetic. One counter per claim.
 let scoreEngraves = 0;
-
-/* WHICH TWO MEASURES: THE ONE THAT IS SOUNDING AND THE ONE AFTER IT.
-
-   THIS REVERSES A RULE AND THE RULE IS QUOTED RATHER THAN DELETED, because its
-   argument was good and half of it still holds. It read: *"A window that
-   re-centres every bar is a strobe: at 96bpm the picture would be replaced
-   every 2.5 seconds and the bar you were reading would slide out from under
-   your eye mid-phrase. So the window ADVANCES BY TWO — measures 1-2, then 3-4
-   — and every picture stands for its whole two bars, which is a page turn and
-   is how printed music has always worked."*
-
-   Paul overruled it on 2026-08-25: *"essentially I should see the current
-   measure and the next and the moment the current measure is done, measure 2
-   becomes measure #1."* And the objection is answered rather than ignored —
-   see the double-buffer note over `scoreBufs`. A page turn REPLACES a picture
-   and that is what strobes; this SHIFTS one, and the bar you are reading was
-   already on the page for a whole measure before it arrived under your eye.
-
-   THE CLAMP AT THE END OF A SECTION IS WHAT IS LEFT OF THE OLD EXCEPTION. In
-   the last measure of a section there is no "next" inside the section, so the
-   window holds at [M-2, M-1] and the sounding bar is the picture's right half.
-   A five-bar section therefore ends showing bars 4-5 rather than 5 and a
-   phantom rest, which is the same judgement the two-at-a-time rule made and
-   the only honest one available: `scoreParts` reads ONE section's render. */
-const scoreWinOf = (meas, M) =>
-  Math.max(0, Math.min(meas, M - SCORE_BARS));
+const scoreMs = [];               // …and what each of the last twenty cost
 
 /* THE PARTS OF THE SYSTEM: one per voice of the record, in the record's own
-   order, each holding exactly the two measures of the window. A voice with
-   nothing in these bars — out, not yet entered, or simply resting — gets a
+   order, each holding `bars` measures of one section from measure `k`. A voice
+   with nothing in these bars — out, not yet entered, or simply resting — gets a
    phrase of rests rather than being dropped, so the system keeps its shape and
-   the fourth staff down is the fourth voice in every window. */
-function scoreParts(si, k) {
+   the fourth staff down is the fourth voice in every tile.
+
+   (It cropped to exactly two measures when the score was a window. The crop
+   stays because a tile is bounded — see TILE_BARS — but the number it is
+   bounded by is now a cost, not a picture.) */
+function scoreParts(si, k, bars) {
   const box = SONG[si];
   if (!box) return null;
   let R;
@@ -1457,10 +1528,11 @@ function scoreParts(si, k) {
   if (!R || !R.g || !R.ev) return null;
   const rate = R.g.rate || 1;
   const lines = LINES();
-  const z = () => new Array(SCORE_W).fill(0);
-  const bucket = new Map();                 // voice name -> the window's steps
+  const W = bars * SCORE_SPB, from = k * SCORE_SPB;
+  const z = () => new Array(W).fill(0);
+  const bucket = new Map();                 // voice name -> the section's steps
   const mine = (name) => { let b = bucket.get(name);
-    if (!b) bucket.set(name, b = { midi: new Array(SCORE_W).fill(null),
+    if (!b) bucket.set(name, b = { midi: new Array(W).fill(null),
                                    gate: z(), hold: z() });
     return b; };
   const bassV = DOC.voices.find((v) => v.kind === "bass");
@@ -1474,11 +1546,8 @@ function scoreParts(si, k) {
     // rate 1, ui/derive.js barSteps), and the pattern step the playhead counts
     // is `t * rate` — the same multiplication on("pos") does to find `base`,
     // so the score's measures and the red note's measures are one arithmetic.
-    const s = Math.round(e.t * rate);
-    const meas = Math.floor(s / SCORE_SPB);
-    if (meas < k || meas >= k + SCORE_BARS) continue;
-    const i = (meas - k) * SCORE_SPB + (s - meas * SCORE_SPB);
-    if (i < 0 || i >= SCORE_W) continue;
+    const i = Math.round(e.t * rate) - from;
+    if (i < 0 || i >= W) continue;
     const b = mine(voice.name);
     const head = e.kind === "hit" ? SCOREHEAD[e.d] : e.n;
     if (head == null) continue;
@@ -1505,7 +1574,7 @@ function scoreParts(si, k) {
     if (len > b.hold[i]) b.hold[i] = len;
   }
   const parts = DOC.voices.map((v) => {
-    const b = bucket.get(v.name) || { midi: new Array(SCORE_W).fill(null),
+    const b = bucket.get(v.name) || { midi: new Array(W).fill(null),
                                       gate: z(), hold: z() };
     return { name: v.name,
              // the bass reads in F and the kit on a percussion staff; every
@@ -1518,10 +1587,10 @@ function scoreParts(si, k) {
   return parts;
 }
 
-/* THE CAPTION, WHICH IS THE ONLY OTHER THING THE CLOCK WRITES HERE. It has to
-   say WHICH two measures, or a picture that changes every two bars is a
-   picture you cannot place. Tense as the composed captions use it: stopped it
-   is a prediction of the section you are writing, playing it is a report. */
+/* THE CAPTION, WHICH IS ONE OF THE TWO SENTENCES THE CLOCK WRITES HERE. It has
+   to say WHICH bar, or a picture that never stops moving is a picture you
+   cannot place. Tense as the written captions used it: stopped it is a
+   prediction of the section you are writing, playing it is a report. */
 function scoreCaption(si, ei, k, M, asPlayed) {
   const where = secName(si) + ", bars " + (k + 1) + "-" +
                 Math.min(M, k + SCORE_BARS) + " of " + M;
@@ -1550,7 +1619,7 @@ function scoreCaption(si, ei, k, M, asPlayed) {
    not move across two boundaries).
 
    THE RESERVE IS MONOTONIC AND IT IS ON THE INNER HOST. Monotonic, so the box
-   only ever takes the most room any window has needed and never gives it back
+   only ever takes the most room any tile has needed and never gives it back
    mid-record. On the INNER host, because `window.__eightFrozen` empties every
    `[data-live]` and keeps its attributes: a style attribute on the live
    element itself would be part of the frozen picture and A3's byte-identity
@@ -1559,287 +1628,588 @@ function scoreCaption(si, ei, k, M, asPlayed) {
 function scoreReserveTo(px) {
   if (!scoreHost || !(px > scoreReserve)) return;
   scoreReserve = px;
-  scoreHost.style.minHeight = px + "px";
+  scoreHost.style.height = px + "px";
 }
 // WHAT THE PICTURE HAD TO BE SHRUNK BY to fit, so the claim above is a number
-// somebody can check rather than a promise: 1 is the box's own window, 0.83 is
-// a system that needed a fifth more room than the box has.
+// somebody can check rather than a promise: 1 is the box's own room, 0.83 is a
+// system that needed a fifth more room than the box has.
 const scoreFit = () => {
-  const B = scoreBufs[scoreShown];
-  const svg = B && B.el && B.el.querySelector("svg");
-  if (!svg || !scoreReserve) return 1;
-  const vb = (svg.getAttribute("viewBox") || "").trim().split(/\s+/).map(Number);
-  const r = svg.getBoundingClientRect();
-  if (vb.length !== 4 || !(vb[2] > 0) || !(r.width > 0)) return 1;
-  return +Math.min(r.width / vb[2], r.height / vb[3]).toFixed(3);
+  const T = scoreLine[0];
+  return T ? T.s : 1;
 };
 
-/* REPAINTING THE SCORE, AND ONLY IT. Writes in exactly two places, both inside
-   the one `[data-live="score"]` element: the caption's text and which of the
-   two stacked hosts is visible.
+/* WHICH OCTAVE EACH STAFF IS WRITTEN IN, DECIDED ONCE FOR THE RECORD. A
+   ribbon is ONE line of music cut into pieces, so a voice that took a plain
+   treble clef in its first four bars (a bar of rests, nothing to decide) and
+   an 8vb clef in its next four would change octave in the middle of its own
+   staff — measured on the shipped chant, where the schola rests through head 1
+   and sings down at F3 in verse 2. So the decision is made over every pitch
+   the voice plays in the WHOLE record and handed to every tile.
 
-   THREE GATES, CHEAPEST FIRST, and that has not changed: the window index and
-   the section (an integer compare, four times a beat, which is what stops this
-   touching the main thread at all on 15 of every 16 ticks); then, inside
-   `engraveWindow`, the ABC string, so a window whose music is identical to the
-   one before it — two bars of the same vamp — costs no abcjs render at all.
-
-   WHAT IS NEW IS THE FOURTH THING IT DOES: after every landing it asks for the
-   NEXT window to be engraved into the hidden host. That is the runway, and it
-   is the reason a barline costs a class swap instead of a render. */
-const SCORE_SETTLE = 200;
-let scorePendKey = null, scorePendT = 0;
-function repaintScore(force) {
-  if (!scoreHost) return;
-  const ei = editSec();
-  // WHAT IS SOUNDING, OR — STOPPED — THE EDIT POSITION. A section that appeared
-  // on play would be the interface changing, which is the thing Paul objected
-  // to in the first place, so stopped it draws the first two measures of the
-  // section you are writing and says so. The block is on the page, the same
-  // size, whether the transport runs or not.
-  const si = playing && atSec >= 0
-    ? Math.min(atSec, DOC.form.sections.length - 1) : ei;
-  const k = playing ? scoreWinOf(scoreMeas, scoreLen(si)) : 0;
-  if (!force && k === scoreWin && si === scoreSec) {
-    scorePendKey = null;
-    scoreAhead(si, k);                     // keep the runway full
-    return;
+   IT IS ARITHMETIC, NOT ENGRAVING. `scoreParts` is the section stream folded
+   into arrays and `sectionRender` is memoised (measured 2026-08-25: 0.1-0.5ms
+   a section on a thirteen-section record), so this walks the record for well
+   under a frame and never asks abcjs for anything. Kept per record and width,
+   like the reserve, and thrown away with it. */
+let scoreOtt = null;
+function pinOttava() {
+  if (scoreOtt) return scoreOtt;
+  const per = DOC.voices.map(() => []);
+  for (let si = 0; si < DOC.form.sections.length; si++) {
+    const parts = scoreParts(si, 0, scoreLen(si));
+    if (!parts) continue;
+    parts.forEach((p, i) => { for (const m of p.phrase.midi) {
+      if (typeof m === "number") per[i].push(m);
+      else if (Array.isArray(m)) for (const x of m) if (typeof x === "number") per[i].push(x);
+    } });
   }
-  /* THE ONE CHANGE THAT NEVER WAITS, and it is the whole of the answer to "it
-     should appear BEFORE the music starts". A step of exactly one window
-     forward inside the same section is the only thing a barline can do, and it
-     is already engraved and sitting in the hidden host — so it is painted on
-     the spot and the 186ms of settle that used to sit on every page turn is
-     gone. Everything else still waits: a section change, a jump, a step
-     BACKWARDS. Those are the shapes `passAt`'s wall-clock estimate produces
-     when it is wrong (measured: 0 → 2 → 0 in 100ms at a pass boundary), and
-     nothing real happens in a tenth of a second. A GESTURE never waits either:
-     play, stop and a rebuild pass `force`. */
-  const oneStep = si === scoreSec && k === scoreWin + 1;
-  if (!force && !oneStep) {
-    // the settle: remember what the clock is claiming and come back to it. Only
-    // the LAST claim survives — a second change inside the window replaces the
-    // first, so a flicker cancels itself.
-    const key = si + ":" + k;
-    if (scorePendKey !== key) {
-      scorePendKey = key;
-      clearTimeout(scorePendT);
-      scorePendT = setTimeout(() => { scorePendKey = null; repaintScore(true); },
-                              SCORE_SETTLE);
+  scoreOtt = DOC.voices.map((v, i) => ottavaFor(per[i],
+    v.kind === "bass" ? "bass" : v.kind === "drums" ? "perc" : ""));
+  return scoreOtt;
+}
+
+/* ---------- ONE TILE, ENGRAVED ONCE -------------------------------------
+   A tile is up to TILE_BARS bars of one section, drawn as one system, and it
+   is drawn exactly once for as long as it is on the ribbon. Four things come
+   out of the draw and every one of them is read from abcjs's OWN tune object
+   rather than from the page:
+
+     w      how wide the system is, in the SVG's user units
+     x0     where its left margin ends and its music starts
+     y0     where the top line of the first staff sits
+     map    time -> x, from every element abcjs laid out
+
+   THAT IS THE WHOLE REASON THIS SURFACE CAN MOVE AT ALL. Reading geometry off
+   the DOM forces a layout of the whole page, and a layout of THIS page is not
+   cheap — measured 2026-08-25 at 390px, a `getBBox()` inside a window turn cost
+   110-140ms of main thread against a `renderAbc` of 23ms for the same system.
+   `tune.engraver.staffgroups[0]` carries the same numbers in plain JavaScript,
+   computed during the render that already happened, so the ribbon knows where
+   every note is without touching layout once. */
+function tileGeom(tune) {
+  const g = tune && tune.engraver && tune.engraver.staffgroups &&
+            tune.engraver.staffgroups[0];
+  if (!g || !(g.w > 0)) return null;
+  // WHERE A MOMENT IS, IN PAPER. Every voice of a system shares one x for one
+  // musical instant (that is what barring through MEANS), so the map is built
+  // by walking each voice's children and summing their durations — abcjs's own
+  // `duration` is in whole notes, so a sixteenth is 0.0625 and our step is
+  // `1 / SCORE_SPB`. The staff-extras (clef, meter) are skipped: they sit in
+  // the left margin at time zero and their x would put the first note's
+  // instant in the gutter. A NOTE BEATS A BARLINE at the same instant — the
+  // barline is drawn a notehead's width to the left of the downbeat it
+  // precedes, and it is the note that sounds.
+  const at = new Map();
+  for (const v of g.voices || []) {
+    let t = 0;
+    for (const c of v.children || []) {
+      const extra = /staff-extra/.test(c.type || "");
+      if (!extra && c.x != null) {
+        const k = Math.round(t * 1e4);
+        const bar = /bar/.test(c.type || "");
+        const had = at.get(k);
+        if (had == null || (had.bar && !bar)) at.set(k, { x: c.x, bar });
+      }
+      t += c.duration || 0;
     }
+  }
+  const map = [...at.entries()].map(([k, v]) => [k / 1e4, v.x])
+                               .sort((a, b) => a[0] - b[0]);
+  if (!map.length) return null;
+  const staffs = g.staffs || [];
+  /* WHERE THE PAPER STOPS BEING TIME. Everything left of the first note — the
+     voice names, the clef, the key signature, the meter — is a LEFT MARGIN,
+     and it is the one thing on this surface that has width without duration.
+     Measured 2026-08-25 at 390px on a seven-voice reggae: 171px of it, which
+     is a bar and a bit. Laid end to end with the margins in the flow, the
+     ribbon LEAPT 178px at every tile boundary, because the music has to cross
+     that paper in no time at all — the exact "super jumpy" this round exists
+     to remove, reintroduced by the fix for it (measured before the crop: the
+     sounding note sat 20px behind the line, then snapped onto it).
+     `x0` is where that margin ends, and the tile is cropped there; the margin
+     is drawn ONCE, in the box's own gutter, out of the same engraving. */
+  const x0 = Math.max(0, map[0][1] - 6);
+  // …and where the STAFF starts, which is the same margin with the voice
+  // names taken off it. The gutter needs both: see `gutterFrom`.
+  return { w: g.w, x0, sx: Math.max(0, (g.startx || 0) - 2),
+           y0: (staffs[0] || {}).absoluteY || 0, map };
+}
+// …AND READING IT BACK. Linear between the instants abcjs laid out, which is
+// exact at every one of them; past the last, the closing barline.
+function tileX(T, step) {
+  const map = T.map, t = step / SCORE_SPB;
+  if (!map || !map.length) return 0;
+  if (t <= map[0][0]) return map[0][1];
+  let lo = 0, hi = map.length - 1;
+  while (lo < hi - 1) { const m = (lo + hi) >> 1;
+    if (map[m][0] <= t) lo = m; else hi = m; }
+  const a = map[lo], b = map[hi];
+  if (t >= b[0]) {
+    // past the last drawn instant: run out to the closing barline over
+    // whatever is left of the section, so the last note is not a cliff
+    const endT = T.bars, endX = T.w;
+    if (t >= endT || endT <= b[0]) return endX;
+    return b[1] + (endX - b[1]) * (t - b[0]) / (endT - b[0]);
+  }
+  return a[1] + (b[1] - a[1]) * (t - a[0]) / (b[0] - a[0]);
+}
+
+/* ENGRAVING ONE SECTION INTO ONE TILE, and the two refusals that make it
+   cheap. A tile that already holds this section is left alone; a section whose
+   ABC is identical to a tile already on the ribbon is CLONED rather than drawn
+   — the chant's verses are the same music twice and a clone is a DOM copy
+   against an abcjs render. */
+function engraveTile(T, si, k) {
+  if (!T || (T.si === si && T.k === k)) return;
+  const M = scoreLen(si);
+  const bars = Math.max(1, Math.min(TILE_BARS, M - k));
+  const parts = scoreParts(si, k, bars);
+  if (!parts) return;
+  const ott = pinOttava();
+  parts.forEach((p, i) => { p.ott = ott[i]; });
+  let sc;
+  try { sc = toScore(parts, { key: KEYS[DOC.alphabet.key] || 0,
+                              mode: MODES[DOC.alphabet.mode] || MODES.aeolian,
+                              stepsPerBar: SCORE_SPB,
+                              // A TILE THAT CONTINUES CLOSES WITH A PLAIN BAR
+                              // and one that ends a section with a double —
+                              // the thin double bar is what a section division
+                              // has been printed as for four hundred years, and
+                              // a FINAL barline every four bars would be a
+                              // picture claiming the record stops there.
+                              close: k + bars >= M ? "||" : "|" }); }
+  catch (err) { return; }
+  if (!sc) return;
+  /* THE MUSIC MAY ALREADY BE DRAWN, and on this box it usually is: records
+     vamp. Two refusals before abcjs is asked for anything, both keyed on the
+     ABC STRING, so a picture is only ever reused for music that is byte for
+     byte the same music.
+
+       · THIS TILE already holds it — a recycled tile whose four bars come
+         round again. Nothing is drawn or even copied: it is shown again.
+       · ANOTHER TILE holds it — the chorus that is playing while the last
+         chorus is still on the ribbon. A `cloneNode` is a DOM copy against an
+         engraving, and the geometry rides across with it because it is a fact
+         about the picture, not about the tile.
+
+     This is why a recycled tile keeps its content instead of being emptied
+     (`scoreSee`): a tile that is off the ribbon is a picture in the bank. */
+  if (T.abc === sc.abc && T.el.firstChild && T.map) {
+    T.si = si; T.k = k; T.bars = bars; T.voices = sc.voices; T.els = null;
+    T.el.style.display = ""; T.ready = true;
+    layoutRibbon(); place(true);
     return;
   }
-  scorePendKey = null; clearTimeout(scorePendT);
-  showWindow(si, k);
+  const twin = scoreTiles.find((o) => o !== T && o.abc === sc.abc &&
+                                      o.map && o.el.firstChild);
+  T.si = si; T.k = k; T.bars = bars; T.abc = sc.abc; T.els = null; T.ready = false;
+  T.voices = sc.voices;
+  if (twin) {
+    T.el.replaceChildren(twin.el.firstChild.cloneNode(true));
+    tileReady(T, { w: twin.w, x0: twin.x0, sx: twin.sx, y0: twin.y0,
+                   map: twin.map }, twin.h);
+    return;
+  }
+  const host = T.el, want = sc.abc;
+  loadStaffLib().then((A) => whenIdle(() => {
+    // the promise race: the ribbon can move on while abcjs is still being
+    // fetched, and the LAST section asked for into this tile is the true one
+    if (!A || T.abc !== want || !host.isConnected) return;
+    let tune;
+    try {
+      // `staffwidth: 1` IS THE NATURAL SPACING, not a mistake. abcjs justifies
+      // a system OUT to the width it is given and never squeezes it in, so a
+      // width smaller than the music needs is the way to ask for the width the
+      // music needs (measured 2026-08-25: four dense bars asked for 200px came
+      // back 907px). The ribbon wants that: a dense bar is wide and a bar of
+      // whole notes is narrow, which is how printed music is spaced and what
+      // makes the scroll speed the music's own.
+      const t0 = performance.now();
+      tune = A.renderAbc(host, want, { add_classes: true, staffwidth: 1 })[0];
+      // WHAT ONE TILE COST, kept because it is the number this round turns on:
+      // a tile is bounded at TILE_BARS precisely so that this stays well under
+      // the 100ms test/motif-frozen.js A7 forbids, and a claim about a budget
+      // that nobody can read back off the page is a promise rather than a
+      // measurement. The last twenty, so a long session cannot grow an array.
+      scoreMs.push(+(performance.now() - t0).toFixed(1));
+      if (scoreMs.length > 20) scoreMs.shift();
+    } catch (err) { return; }
+    scoreEngraves++;
+    const g = tileGeom(tune);
+    if (!g) return;
+    const svg = host.querySelector("svg");
+    const h = svg ? Math.ceil(+svg.getAttribute("height") || 0) : 0;
+    tileReady(T, g, h);
+  })).catch(() => {});
 }
 
-/* WHICH HOST IS ON SCREEN. One class, two elements, no layout: both hosts sit
-   in the same grid cell (nu.css `.nu-stack`) so the box is the same height
-   whichever is showing, and the one that is off is `visibility: hidden` —
-   which takes it out of the accessibility tree as well as off the glass, so a
-   screen reader is never read two scores. `display: none` would have been the
-   other candidate and it is refused: a host with no box has `clientWidth` 0,
-   and `clientWidth` is exactly what `renderAbc` is handed as its staff width,
-   so the hidden buffer would engrave at 180px and be shown at 366. */
-function swapTo(i) {
-  if (i === scoreShown || !scoreBufs[i]) return;
-  scoreBufs[scoreShown].el.classList.add("is-off");
-  scoreBufs[i].el.classList.remove("is-off");
-  scoreShown = i;
+/* WHEN A TILE IS ACTUALLY DRAWN, AND WHY IT IS NOT NOW. abcjs measures text by
+   putting it in the document and asking how big it came out, so a render
+   forces a LAYOUT of whatever is dirty — and on the beat, everything is: the
+   playhead has just marked four grids and the board has just moved seven
+   meters. Measured 2026-08-25 at 1280x900 on a precomposed reggae, engraving
+   the same size of tile straight off the tick: 27, 39, 40, 75 and 91ms, rising
+   as the page got busier, with four long tasks over 50ms in a minute.
+
+   `requestIdleCallback` runs AFTER the frame has been laid out and painted, so
+   the layout abcjs asks about is already clean and the render pays for itself
+   alone. The runway is four bars — seconds, not milliseconds — so there is
+   nothing to lose by waiting for the gap, and the `timeout` is the promise
+   that a page which never goes idle still gets its paper before the ear
+   arrives. `setTimeout` is the fallback for Safari, where
+   requestIdleCallback has only shipped since 16.4 and this file supports
+   older. */
+function whenIdle(fn) {
+  // STOPPED, IT DRAWS NOW. The dirty layout this dodges is the BEAT's, and
+  // when nothing is sounding there is none; waiting would only mean the box
+  // taking its room up to a second after `draw()` returned, which is the one
+  // thing this axis may not do (see staffBox — a host that grows late is a
+  // page that jumps).
+  if (!playing || !window.requestIdleCallback) { fn(); return; }
+  window.requestIdleCallback(fn, { timeout: 1200 });
 }
 
-/* THE WINDOW THE PAGE WANTS, AND HOW IT GETS THERE. `scoreWant` is the key of
-   that window and it is the only thing an in-flight engraving is allowed to
-   check itself against — a second barline can land while abcjs is still being
-   fetched, and the LAST window asked for is the one that is true. */
-function showWindow(si, k) {
-  const key = si + ":" + k;
-  scoreWant = key;
-  for (let i = 0; i < scoreBufs.length; i++)
-    if (scoreBufs[i].key === key && scoreBufs[i].ready) { swapTo(i); landed(si, k); return; }
-  engraveWindow(1 - scoreShown, si, k);
+/* THE TILE TAKES ITS PLACE, and every number it needs was computed during the
+   render. The SVG is given a viewBox and an explicit size so the whole ribbon
+   can be scaled by one factor — the box's height divided by the tile's own —
+   and the tile is then nudged vertically so that STAFF ONE'S TOP LINE lands
+   where every other tile's does. Without that last line the staves would step
+   up and down at every section boundary: abcjs allocates the space above the
+   top staff from the notes that are actually in it, so a section with a high
+   line is a taller picture (measured: the same two staves engraved 161.9px
+   with plain notes and 213.8px with two ledger lines, and the first staff's
+   own y moved 75.7 -> 108). */
+function tileReady(T, g, h) {
+  T.w = g.w; T.x0 = g.x0; T.sx = g.sx || 0;
+  T.y0 = g.y0; T.map = g.map; T.h = h; T.ready = true;
+  const svg = T.el.querySelector("svg");
+  if (svg && h) {
+    svg.setAttribute("viewBox", "0 0 " + Math.ceil(g.w + 8) + " " + h);
+    svg.setAttribute("preserveAspectRatio", "xMinYMin meet");
+  }
+  // THE BOX IS MEASURED ONLY WHEN THE CLOCK IS NOT RUNNING. Taking a height is
+  // harmless; APPLYING one is a layout change, and a layout change on the clock
+  // is the whole thing this page refuses to do. Stopped — at boot, and after
+  // any rebuild your own gesture caused — the block may take the room its
+  // picture needs; playing, the picture fits the room it has.
+  if (!playing && h) scoreReserveTo(h);
+  // …and where staff one sits, which every LATER tile is aligned to. Taken
+  // from the first tile whether or not the transport is running: unlike the
+  // reserve above it writes nothing to the page, and a record whose first tile
+  // landed mid-playback (a resize) would otherwise have no reference at all
+  // and would stack its staves at different heights.
+  if (scoreTop < 0) scoreTop = g.y0;
+  T.s = scoreReserve && h > scoreReserve ? scoreReserve / h : 1;
+  if (svg) {
+    svg.setAttribute("width", (g.w + 8) * T.s);
+    svg.setAttribute("height", h * T.s);
+    // THE CROP ITSELF: the drawing is pushed left by its own margin and the
+    // tile is exactly as wide as the music in it, so the closing barline of
+    // one tile and the first notehead of the next are neighbours on the paper
+    // as well as in the music.
+    svg.style.marginLeft = (-g.x0 * T.s) + "px";
+  }
+  T.el.style.top = ((scoreTop < 0 ? 0 : scoreTop) - T.y0 * T.s) + "px";
+  T.el.style.display = "";                   // …and back on the ribbon
+  T.pw = (g.w + 8 - g.x0) * T.s;             // the printed width, margin gone
+  T.el.style.width = T.pw + "px";
+  T.els = null;
+  gutterFrom(T);
+  layoutRibbon();
+  place(true);
 }
+
+// WHERE THE SOUNDING LINE IS DRAWN, in the same arithmetic `place` puts the
+// music at. One expression, two readers, so the line and the note under it
+// cannot disagree.
+function markLine() {
+  if (!scoreMark) return;
+  scoreMark.style.left =
+    (scoreGutW + Math.round((scoreBoxW - scoreGutW) * SCORE_HEAD)) + "px";
+}
+
+/* THE MARGIN, DRAWN ONCE AND PINNED. Cropping it off every tile would leave a
+   ribbon with no clef on it at all, so the box keeps one: a COPY of a tile's
+   own engraving, cut to its left margin, sitting at the left edge with the
+   music sliding behind it. It is a clone and not a render — the same picture,
+   so the staves cannot fail to line up — and it is taken once per record and
+   width, because the clefs are pinned for the whole record (`pinOttava`) and
+   the voice names are the record's.
+
+   IT IS BETTER THAN WHAT IT REPLACED, and that is worth saying: the old
+   two-bar window drew its clef and its names inside a picture that was
+   swapped every bar; here they are the one thing on the surface that never
+   moves at all. */
+function gutterFrom(T) {
+  if (!scoreGut || !T.ready || !T.x0) return;
+  if (scoreGut.dataset.k === scoreReserveKey && scoreGut.firstChild) return;
+  const svg = T.el.querySelector("svg");
+  if (!svg) return;
+  /* THE NAMES ARE THE FIRST THING OFF A NARROW SCREEN, and it is measured
+     rather than preferred: the reggae record's margin is 171px of a 390px box
+     — 44% of the paper, so a bar and a half of music becomes a bar — and 86px
+     of it is the words `stab`, `vocal`, `simple` and `kit`. Past a third of
+     the box the clone is cut at the STAFF's own start instead (abcjs's
+     `startx`, which is exactly where the names stop), so what stays pinned is
+     the clef, the key and the meter — the three things a reader cannot infer —
+     and the names go with the music, where a section boundary restates them.
+     A wide screen keeps both. */
+  const full = T.x0 * T.s;
+  const from = full > scoreBoxW / 3 ? T.sx * T.s : 0;
+  const c = svg.cloneNode(true);
+  c.style.marginLeft = (-from) + "px";
+  scoreGut.replaceChildren(c);
+  scoreGut.dataset.k = scoreReserveKey;
+  scoreGutW = Math.max(0, Math.round(full - from));
+  scoreGut.style.width = scoreGutW + "px";
+  scoreGut.style.top = T.el.style.top;
+  markLine();
+}
+
+/* ---------- THE RIBBON ITSELF -------------------------------------------
+   `scoreLine` is the tiles in the order they are laid out, left to right, and
+   `off` is where each one starts. The offsets are rebased so the leftmost tile
+   is always at zero: a record that loops for an hour would otherwise translate
+   by a million pixels, and subpixel accuracy is the first thing that goes. */
+function layoutRibbon() {
+  let x = 0;
+  for (const T of scoreLine) {
+    T.off = x;
+    T.el.style.left = x + "px";
+    x += T.ready ? T.pw : 0;
+  }
+}
+// WHICH SECTION COMES AFTER THIS ONE — the record loops, so the last section's
+// next is the first. Asked in one place because the runway and the ribbon must
+// not disagree about it.
+const nextSec = (si) => (SONG[si + 1] ? si + 1 : 0);
 // HOW LONG THE SOUNDING SECTION IS, in measures, asked in one place. Every
 // reader below needs it and none of them may keep a copy: `SONG[si].len` moves
 // the moment the form does.
 const scoreLen = (si) => Math.max(1, (SONG[si] || { len: 1 }).len | 0);
 
-// THE PICTURE HAS LANDED: the caption, the playhead, and the ask for the next
-// one. Nothing here engraves; `scoreAhead` decides whether anything has to.
-function landed(si, k) {
-  scoreWin = k; scoreSec = si;
-  const text = scoreCaption(si, editSec(), k, scoreLen(si));
+/* WHICH TILE A MOMENT BELONGS TO. A tile is `TILE_BARS` bars of one section
+   starting on a multiple of `TILE_BARS`, so the chunk containing measure `m`
+   is arithmetic and not a search — which is what lets the follow below run on
+   every tick and cost nothing. */
+const chunkOf = (m) => Math.max(0, Math.floor(m / TILE_BARS) * TILE_BARS);
+// …AND WHAT COMES AFTER A TILE: the next chunk of the same section, or the top
+// of the next section. The record loops, so the last section's next is the
+// first. Asked in one place, because the ribbon and the runway must not
+// disagree about what is coming.
+const nextChunk = (si, k) => (k + TILE_BARS < scoreLen(si)
+  ? { si, k: k + TILE_BARS } : { si: nextSec(si), k: 0 });
+
+/* THE ONE THING THE RIBBON DOES: FOLLOW THE EAR. If the tile the ear is in is
+   already laid out, nothing is engraved at all — the ribbon simply keeps
+   moving, and the runway makes sure there is paper past the right edge. If it
+   is not (the first press, a jump, a new record), the ribbon is rebuilt around
+   it: one engrave now, the rest on the runway. */
+function scoreSee(si, force) {
+  if (!scoreHost || !SONG[si]) return;
+  const k = chunkOf(scoreMeas);
+  const here = (T) => T.si === si && T.k === k;
+  if (!force && scoreLine.some(here)) {
+    scoreSec = si;
+    scoreAhead();
+    // THE SENTENCES STILL MOVE ON A TICK WHERE THE TILE DOES NOT. The caption
+    // names the BAR under the line ("bars 3-4 of 8") and the bar changes four
+    // times as often as the tile does; `landed` is two string compares and
+    // writes only what changed.
+    landed(si);
+    return;
+  }
+  scoreSec = si;
+  let at = scoreLine.findIndex(here);
+  if (at < 0 || force) {
+    // REBUILT AROUND THE EAR: this tile first, and the runway fills the rest.
+    // Everything else is given back, because paper laid out for a place the
+    // music is not going is paper in the way.
+    for (const T of scoreTiles) { T.si = -1; T.k = -1; T.ready = false;
+                                  T.el.style.display = "none"; }
+    scoreLine = [scoreTiles[0]];
+    engraveTile(scoreTiles[0], si, k);
+  } else {
+    // THE EAR HAS WALKED PAST THE TILES ON THE LEFT. One is kept behind it —
+    // the bar you have just played is worth seeing — and the rest are recycled
+    // to the far end by the runway.
+    while (at > 1) { const gone = scoreLine.shift(); at--;
+                     gone.si = -1; gone.k = -1; gone.ready = false;
+                     gone.el.style.display = "none"; }
+  }
+  layoutRibbon();
+  scoreAhead();
+  landed(si);
+}
+/* THE RUNWAY, AND IT IS MEASURED IN PAPER RATHER THAN IN TILES. Keep engraving
+   the next chunk until the ribbon runs past the right edge of the box — which
+   is the honest condition, because how many bars fill a box depends on the
+   music (a bar of whole notes is 60px and a bar of sixteenths is 450px) and on
+   the width. One tile per call, so a rebuild spreads its engraving over the
+   next few ticks instead of doing six of them in one task.
+
+   IT IS FREE WHEN THERE IS NOTHING TO DO: two integer compares and a
+   subtraction on every tick where the paper already reaches. */
+function scoreAhead() {
+  const i = scoreLine.findIndex((T) => T.si === scoreSec && T.k === chunkOf(scoreMeas));
+  if (i < 0) return;
+  const last = scoreLine[scoreLine.length - 1];
+  if (!last || !last.ready) return;             // wait for the paper being drawn
+  const right = last.off + last.pw;
+  if (scoreX != null && right - scoreX > scoreBoxW &&
+      scoreLine.length > i + 1) return;         // there is paper past the edge
+  if (scoreLine.length >= SCORE_TILES) return;
+  const free = scoreTiles.find((T) => !scoreLine.includes(T));
+  if (!free) return;
+  const n = nextChunk(last.si, last.k);
+  scoreLine.push(free);
+  engraveTile(free, n.si, n.k);
+  layoutRibbon();
+}
+
+/* THE TWO SENTENCES, on a landing. Nothing here engraves and nothing here
+   measures: a caption and a syllable line, both text, both inside the one
+   `[data-live]`, and both saying which BAR — which is the half of "the current
+   measure and the next" that words can carry when the picture is a ribbon
+   rather than a page. */
+function landed(si) {
+  const text = scoreCaption(si, editSec(), scoreMeas, scoreLen(si));
   if (scoreCap && scoreCap.textContent !== text) scoreCap.textContent = text;
   // …and the syllables, on the same landing and under the same law: TEXT ONLY,
   // inside the one `[data-live]`, never a control.
-  const syl = syllLine(si, k);
+  const syl = syllLine(si, scoreMeas);
   if (scoreSyl && scoreSyl.textContent !== syl) scoreSyl.textContent = syl;
-  const B = scoreBufs[scoreShown];
-  if (B) B.els = null;                  // a swapped-in host is a new element list
-  if (atStep >= 0) lightScore(atStep);
-  scoreAhead(si, k);
 }
 
-/* THE RUNWAY. One window ahead and never more, into whichever host is not on
-   screen. Two cases and they are both real records: inside a section the next
-   window is `k + 1`; at the LAST window of a section the next thing that will
-   sound is the first window of the section after it, so that is what is
-   prepared — which makes a section boundary a class swap too, instead of the
-   one place a full engrave would still land on the barline.
+/* ---------- WHERE THE MUSIC IS, THIS FRAME -------------------------------
+   `scoreStep` is the pattern step the last "pos" tick reported and
+   `scoreStamp` is when it said so; between ticks the position is INTERPOLATED
+   against the wall clock at the record's own step rate. That is the whole of
+   "smooth, not stepped": the transform follows the beat position continuously
+   and not the barline.
 
-   IT IS FREE WHEN THERE IS NOTHING TO DO. `engraveWindow` returns immediately
-   if the host already holds that key, so this runs four times a beat and does
-   arithmetic on 15 of every 16 of them. */
-function scoreAhead(si, k) {
+   IT CANNOT RUN AWAY. The feed ticks at least once a beat (audio/live.js
+   `tickPos`, a 60ms interval), so the interpolation is never asked for more
+   than a beat of guessing and is clamped to exactly that; a stall shows as the
+   ribbon holding still, which is the truth, rather than as the ribbon sliding
+   off into music that is not sounding. */
+let scoreStep = 0, scoreStamp = 0, scoreRate = 0, scoreRaf = 0;
+function stepNow() {
+  if (!playing) return scoreStep;
+  const dt = (performance.now() - scoreStamp) / 1000;
+  return scoreStep + Math.max(0, Math.min(dt, 1 / Math.max(0.001, beatRate()))) * scoreRate;
+}
+// beats a second, from the rate the last tick was measured at — one place, so
+// the clamp above and the walk cannot disagree
+const beatRate = () => scoreRate / 4;
+// THE TILE THE EAR IS IN, asked in one place: the ribbon's position, the red
+// noteheads and the runway all have to agree about which tile that is.
+const soundingTile = () => scoreLine.find(
+  (t) => t.ready && t.si === scoreSec && t.k === chunkOf(scoreMeas));
+function place(force) {
+  if (!scoreRun || !scoreHost) return;
+  let T = soundingTile();
+  if (!T) return;
+  // THE SOUNDING LINE SITS IN THE MUSIC, not in the box: the left margin is
+  // pinned over the ribbon (see `gutterFrom`), so a line measured from the
+  // box's edge would spend a phone's first 170px hidden behind a clef.
+  const head = scoreGutW + Math.round((scoreBoxW - scoreGutW) * SCORE_HEAD);
+  // …and the step is the tile's own: a tile starts at bar `k` of the section
+  // and its paper starts at that bar's downbeat.
+  let step = stepNow() - T.k * SCORE_SPB;
+  /* AND IT WALKS ON OFF THE END OF A TILE, which is what makes a section
+     boundary a non-event. The clock says which section is sounding, and it
+     says it at the boundary — so between the last beat of a section and that
+     announcement the position had nowhere to go and the ribbon FROZE, then
+     caught up when the tick landed. Measured 2026-08-25 on a precomposed
+     reggae at 390px: the ribbon stood still for two frames and then moved 29px
+     at once, once per section. The paper for what comes next is already on the
+     ribbon (that is what the runway is for), so the interpolation simply
+     continues into it and the tick, when it lands, corrects by a pixel or two
+     instead of by a bar. */
+  let idx = scoreLine.indexOf(T);
+  while (step >= T.bars * SCORE_SPB && scoreLine[idx + 1] && scoreLine[idx + 1].ready) {
+    step -= T.bars * SCORE_SPB; T = scoreLine[++idx];
+  }
+  const mine = (t2, at) => t2.off + (at - t2.x0) * t2.s;
+  let x = mine(T, tileX(T, step)) - head;
+  /* THE LAST NOTE OF A TILE AIMS AT THE FIRST NOTE OF THE NEXT, which is what
+     closes the seam. Every tile carries a little paper that is not time: six
+     units of pad so the first notehead is not clipped at the crop, and eight
+     after the closing barline. Fourteen pixels, and the ribbon crossed them in
+     one frame at every tile boundary — measured 2026-08-25 at 390px on the
+     chant, a 14px twitch once a section. Between the last instant abcjs laid
+     out and the downbeat that follows it there is a real span of TIME, so the
+     span of PAPER is spread across it: the music leaves one tile and arrives
+     at the next at the speed it was already going. */
+  const endStep = T.bars * SCORE_SPB;
+  // the last instant INSIDE the tile, which is never the closing barline: a
+  // barline is not a moment, the downbeat after it is, and that downbeat is on
+  // the next tile.
+  let li = T.map.length - 1;
+  while (li > 0 && T.map[li][0] * SCORE_SPB >= endStep) li--;
+  const lastAt = T.map[li], lastStep = lastAt[0] * SCORE_SPB;
+  const after = scoreLine[idx + 1];
+  if (step > lastStep && endStep > lastStep && after && after.ready && after.map) {
+    const a = mine(T, lastAt[1]), b2 = mine(after, after.map[0][1]);
+    x = a + (b2 - a) * Math.min(1, (step - lastStep) / (endStep - lastStep)) - head;
+  }
+  // A WRITE PER FRAME, AND THE GUARD IS ONLY AGAINST WRITING THE SAME NUMBER.
+  // At the chant's tempo the ribbon moves 41px a second — 0.68px per frame at
+  // 60Hz — so a half-pixel threshold skipped every other frame and turned 60
+  // frames a second into 30 (measured 2026-08-25: 547 of 1199 frames moved).
+  // A transform write on a composited layer is a matrix, not a paint.
+  if (!force && scoreX != null && Math.abs(x - scoreX) < 0.02) return;
+  scoreX = x;
+  // translate3d and not `left`: a transform is composited and touches no
+  // layout, which is what lets this run every frame on a page that is 16,000px
+  // tall with a thousand controls on it.
+  scoreRun.style.transform = "translate3d(" + (-x).toFixed(2) + "px,0,0)";
+}
+function scoreWalk() {
+  scoreRaf = 0;
   if (!playing) return;
-  const M = scoreLen(si);
-  let nsi = si, nk = k + 1;
-  if (nk > M - SCORE_BARS) {
-    nsi = si + 1; nk = 0;
-    if (!SONG[nsi]) { nsi = 0; }        // the record loops: the runway does too
-  }
-  engraveWindow(1 - scoreShown, nsi, nk, true);
+  place();
+  scoreRaf = requestAnimationFrame(scoreWalk);
+}
+function scoreStartWalk() {
+  if (!scoreRaf) scoreRaf = requestAnimationFrame(scoreWalk);
+}
+function scoreStopWalk() {
+  if (scoreRaf) cancelAnimationFrame(scoreRaf);
+  scoreRaf = 0;
 }
 
-/* ONE ENGRAVING INTO ONE HOST, and the three refusals that make it cheap.
-   `quiet` is the runway's: it engraves and stops, where a demanded window
-   swaps itself in the moment it is ready. */
-function engraveWindow(i, si, k, quiet) {
-  const B = scoreBufs[i];
-  if (!B) return;
-  const key = si + ":" + k;
-  if (B.key === key) {                  // already drawn here, or already asked for
-    if (!quiet && B.ready && scoreWant === key) { swapTo(i); landed(si, k); }
-    return;
-  }
-  const parts = scoreParts(si, k);
-  if (!parts) return;
-  let sc;
-  try { sc = toScore(parts, { key: KEYS[DOC.alphabet.key] || 0,
-                              mode: MODES[DOC.alphabet.mode] || MODES.aeolian,
-                              stepsPerBar: SCORE_SPB }); }
-  catch (err) { return; }
-  if (!sc) return;
-  // THE CHANGE DETECTOR, AND IT LOOKS AT BOTH HOSTS. Two bars of the same vamp
-  // engrave the same ABC, and the cheapest thing to do with a picture that is
-  // already on the glass is to relabel it rather than draw it again.
-  const shown = scoreBufs[scoreShown];
-  if (shown && shown.ready && shown.abc === sc.abc) {
-    shown.key = key;
-    if (!quiet && scoreWant === key) landed(si, k);
-    return;
-  }
-  B.key = key; B.abc = sc.abc; B.voices = []; B.els = null; B.ready = false;
-  const host = B.el, want = sc.abc;
-  loadStaffLib().then((A) => {
-    // the promise race: a later window can land while abcjs is still being
-    // fetched, and the LAST engraving asked for into this host is the true one
-    if (!A || B.abc !== want || B.key !== key || !host.isConnected) return;
-    try { A.renderAbc(host, want, { responsive: "resize", add_classes: true,
-      staffwidth: Math.max(180, host.clientWidth - 8) }); }
-    catch (err) { return; }
-    scoreEngraves++;
-    B.voices = sc.voices; B.els = null; B.ready = true;
-    fitSystem(host);
-    // ...AND THE BOX IS MEASURED ONLY WHEN THE CLOCK IS NOT RUNNING. Taking a
-    // height is harmless; APPLYING one is a layout change, and a layout change
-    // on the clock is the whole thing this page refuses to do. Stopped — at
-    // boot, and after any rebuild your own gesture caused — the block may take
-    // the room its picture needs; playing, the picture fits the room it has.
-    if (!playing) scoreReserveTo(Math.ceil(host.getBoundingClientRect().height));
-    if (scoreWant === key) { swapTo(i); landed(si, k); }
-  }).catch(() => {});
+/* WHAT THE CLOCK SAYS, AND IT SAYS IT ONCE A BEAT. Everything the score does
+   on the transport feed is here: which section is sounding, which step it is
+   on, and how fast the steps are going. No layout, no engrave, no DOM write
+   except the two sentences — the picture itself is moved by the walk above. */
+function repaintScore(force) {
+  if (!scoreHost) return;
+  const ei = editSec();
+  // WHAT IS SOUNDING, OR — STOPPED — THE EDIT POSITION. A section that appeared
+  // on play would be the interface changing, which is the thing Paul objected
+  // to in the first place, so stopped it draws the section you are writing from
+  // its first bar and says so. The block is on the page, the same size, whether
+  // the transport runs or not.
+  const si = playing && atSec >= 0
+    ? Math.min(atSec, DOC.form.sections.length - 1) : ei;
+  if (!playing) { scoreStep = 0; scoreMeas = 0; scoreStopWalk(); }
+  scoreSee(si, force);
+  place(true);
+  if (playing) scoreStartWalk();
 }
 
-/* THE SYSTEM IS WIDER THAN abcjs SAYS IT IS, AND THE RIGHT-HAND BARS WERE
-   BEING CUT OFF. Measured 2026-08-25 on an eight-voice record at 390px: with
-   `responsive: "resize"` the container is handed `viewBox="0 0 486.534 670.41"`
-   while the drawing inside it runs from x=15 to x=588 — the voice NAMES in the
-   left margin are laid out but not counted, so the last 100 units of every
-   staff, which is most of the second measure, were outside the box and simply
-   not drawn. It is not a scroll and not an overflow (documentElement.scrollWidth
-   stayed 390): the picture was clipped.
+/* THE PLAYHEAD ON THE SCORE, AND IT IS THE ONLY ONE ON NOTATION — the written
+   staves have never had one, because "a notehead turning red under your finger
+   is the picture changing while you write on it". Same rule about where it may
+   be written — inside `[data-live]`, by the clock, and nowhere else.
 
-   THE FIX IS TO ASK THE DRAWING HOW BIG IT IS. `getBBox()` is the SVG's own
-   answer, exact and after layout, so the viewBox is widened to hold it and the
-   responsive wrapper's aspect (a padding-bottom percentage, abcjs's own trick)
-   is corrected to match — otherwise the picture would be stretched instead of
-   scaled. The whole system then fits the column: at 390px the eight-staff score
-   went from clipped-at-486 to complete at 593 units, 414px tall.
-
-   IT RUNS ONCE PER ENGRAVING, never on a tick, and it touches nothing but the
-   two numbers that say how the finished picture is scaled. */
-function fitSystem(host) {
-  const svg = host.querySelector("svg");
-  if (!svg || !svg.getBBox) return;
-  const vb = (svg.getAttribute("viewBox") || "").trim().split(/\s+/).map(Number);
-  if (vb.length !== 4 || !(vb[2] > 0) || !(vb[3] > 0)) return;
-  /* AND THE MEASUREMENT ITSELF IS NOT ALLOWED ON THE CLOCK. `getBBox()` forces
-     a layout, and a layout of THIS page is not cheap — the eight-voice record
-     is 16,000px tall with a thousand controls on it. Measured 2026-08-25 at
-     390px: window turns that cost 110-140 ms of main thread with the bbox read
-     in them, against a renderAbc of 23 ms median for the very same system.
-     Nearly all of it was the reflow.
-
-     What the bbox is FOR is one number — how far the voice names in the left
-     margin push the music past the viewBox abcjs wrote (see above) — and that
-     number is a fact about this record's names at this width, not about this
-     window's notes. So it is measured once, while the transport is stopped,
-     and carried; playing, the correction is applied without touching layout at
-     all. If it is ever a little too generous the system is drawn a hair small
-     with white paper to its right, which is what an engraver would do anyway;
-     too small is the only failure it can have, and it cannot crop. */
-  let w, h;
-  if (!playing || !scoreGutter) {
-    let bb;
-    try { bb = svg.getBBox(); } catch (err) { return; }
-    w = Math.ceil(Math.max(vb[2], bb.x + bb.width + 4));
-    h = Math.ceil(Math.max(vb[3], bb.y + bb.height + 4));
-    if (!playing) scoreGutter = Math.max(0, w - vb[2]);
-  } else {
-    w = Math.ceil(vb[2] + scoreGutter);
-    h = Math.ceil(vb[3]);
-  }
-  svg.setAttribute("viewBox", "0 0 " + w + " " + h);
-  // the picture is fitted INSIDE whatever box it is given, top-left, whole —
-  // `meet` is the SVG word for "scale until it fits and never crop"
-  svg.setAttribute("preserveAspectRatio", "xMinYMin meet");
-  const wrap = svg.parentNode;
-  if (!wrap || !wrap.style) return;
-  /* THE BOX IS FIXED AND THE MUSIC FITS ITSELF INTO IT — which is the only
-     answer that survives the law this page lives under. Measured 2026-08-25 at
-     390px on the shipped chant: three windows of the same two voices engraved
-     196px, 231px and 235px tall, because rests are short and beamed notes with
-     ledger lines are not. A block that took its natural height would therefore
-     have grown 39px WHILE PLAYING, and everything below it — every motif, every
-     editor, the whole band axis — would have been shoved down the page under a
-     still thumb. That is 2026-08-24's complaint exactly.
-
-     So the FIRST engraving sets the box (its own natural height, no number
-     typed here) and every later one is scaled to fit inside it. Nothing is ever
-     cropped: a denser window is drawn a little smaller, which is what a page of
-     printed music does to a dense system anyway. The alternative — growing the
-     box — is the one thing that is not allowed.
-
-     THE FIRST ENGRAVING IS THE ONE AT BOOT, and a rebuild does not re-measure:
-     `scoreReserve` outlives draw(), so the box a record settled on is the box
-     it keeps. */
-  if (!scoreReserve) {
-    wrap.style.paddingBottom = (h / w * 100).toFixed(4) + "%";
-    return;
-  }
-  wrap.style.paddingBottom = "0";
-  wrap.style.height = scoreReserve + "px";
-  svg.style.width = "100%";
-  svg.style.height = "100%";
-}
-
-/* THE PLAYHEAD ON THE SCORE, AND IT IS THE ONLY ONE ON NOTATION NOW — the
-   composed staves that used to carry a red notehead each were deleted on
-   2026-08-25. Same rule about where it may be written — inside `[data-live]`, by the
-   clock, and nowhere else. `abs` is the pattern step `lightStep` was handed, so
-   the measure arithmetic is that function's own: which of the window's two
-   measures is sounding, and which glyph in that voice is under the step.
+   IT IS NOT WHAT SAYS WHERE THE MUSIC IS ANY MORE, and that is the ribbon's
+   doing: the sounding position is a LINE the music passes under, drawn once
+   and never moved. What the red fill still does is say which of the notes
+   under that line are sounding — a chord at the same instant in four staves is
+   four noteheads and the line cannot pick them out.
 
    THE ELEMENT LISTS ARE CACHED PER RENDER. This runs four times a beat and a
    `querySelectorAll` per voice per tick on a seven-staff system is 28 walks of
@@ -1850,18 +2220,14 @@ function fitSystem(host) {
 function lightScore(abs) {
   for (const x of scoreLit) x.removeAttribute("fill");
   scoreLit = [];
-  const B = scoreBufs[scoreShown];
-  if (!B || !B.ready || !B.voices.length || abs < 0) return;
-  const meas = Math.floor(abs / SCORE_SPB) - scoreWin;
-  if (meas < 0 || meas >= SCORE_BARS) return;     // the sounding bar is elsewhere
-  const step = meas * SCORE_SPB + (Math.floor(abs) % SCORE_SPB);
-  // THE ELEMENT LIST BELONGS TO THE HOST THAT IS SHOWING, and it is dropped by
-  // `landed` on every swap: the two stacked hosts hold two different systems
-  // and a cache taken off one would light noteheads that are not on the glass.
-  if (!B.els)
-    B.els = B.voices.map((v, i) =>
-      [...B.el.querySelectorAll(".abcjs-note.abcjs-v" + i)]);
-  B.voices.forEach((v, vi) => {
+  const T = soundingTile();
+  if (!T || !T.voices || !T.voices.length || abs < 0) return;
+  const step = Math.floor(abs) - T.k * SCORE_SPB;
+  if (step < 0 || step >= T.bars * SCORE_SPB) return;
+  if (!T.els)
+    T.els = T.voices.map((v, i) =>
+      [...T.el.querySelectorAll(".abcjs-note.abcjs-v" + i)]);
+  T.voices.forEach((v, vi) => {
     let idx = -1;
     for (let n = 0; n < v.notes.length; n++) {
       const x = v.notes[n];
@@ -1869,24 +2235,28 @@ function lightScore(abs) {
       if (step < x.at + x.len) idx = n;
     }
     if (idx < 0) return;
-    const els = B.els[vi] || [];
+    const els = T.els[vi] || [];
     for (let g = 0; g < v.glyphs.length && g < els.length; g++)
       if (v.glyphs[g] === idx) { els[g].setAttribute("fill", "#c00"); scoreLit.push(els[g]); }
   });
 }
 
 /* THE BLOCK ITSELF. A heading that never changes, then ONE `[data-live]`
-   element holding a caption and the system — and NOT ONE CONTROL, which is the
-   law this page lives under (`test/motif-frozen.js` A1) and also the honest
-   design: it is a picture of the music. It cannot be scrolled, zoomed, muted
-   or soloed here, because every one of those is a control and a control inside
-   a live block is how the frozen half stops being frozen.
+   element holding a caption, the ribbon and the syllable line — and NOT ONE
+   CONTROL, which is the law this page lives under (`test/motif-frozen.js` A1)
+   and also the honest design: it is a picture of the music. It cannot be
+   scrolled, zoomed, muted or soloed here, because every one of those is a
+   control and a control inside a live block is how the frozen half stops being
+   frozen.
 
-   TWO HOSTS INSIDE THE ONE BOX (2026-08-25 — see TWO PICTURES, ONE VISIBLE,
-   over `scoreBufs`). They are two elements and one picture: stacked in a single
-   grid cell so the box is the same height whichever is showing, and the box —
-   not either host — carries the reserve, so the room a record settled on is
-   the room it keeps whichever buffer happens to be in front. */
+   AND IT IS NOT A SCROLLING PANE, WHICH IS THE TRAP THIS REPO HAS PAID FOR
+   TWICE. The atlas's `touch-action: pan-y` left 28 of 62 places unreachable,
+   and the grid rotation existed partly to delete a horizontal pane that made
+   tapping snap. The ribbon is `overflow: hidden` and is moved by a transform:
+   there is no scroll container here at all, so a finger dragged over the score
+   — up, down or sideways — does exactly what a finger dragged over any other
+   picture on the page does, which is scroll the page. The score's own motion
+   is the clock's and nobody else's. */
 function scoreBlock(parent) {
   heading(parent, "the score");
   const live = el("div");
@@ -1894,37 +2264,37 @@ function scoreBlock(parent) {
   live.className = "nu-score";
   const cap = el("p");
   cap.className = "nu-hint";
-  const stack = el("div", null, "nu-stack");
-  const a = el("div"), b = el("div", null, "is-off");
-  stack.append(a, b);
-  /* ---------- WHAT THE MOUTHS ARE SINGING, UNDER THE STAVE ---------------
-     VOICE.md §7: the score may PRINT the syllables and may not EDIT them, and
-     the page's own law is what settles which is which — *the transport feed
-     may only write inside an element carrying `data-live`, and no `[data-live]`
-     holds a control*. So the word is edited in the voice's tab and READ here,
-     in the one live block, and the two cannot be the same element.
-
-     IT IS A SENTENCE AND NOT A LYRIC LINE. `ui/abc.js` has no `w:` support and
-     adding one is separate work; letters pushed under noteheads without the
-     engraver's help would be a picture that lies about which note it is over,
-     where a sentence cannot. Derived by the same
-     `Math.round(beat0 / vowelEvery)` the engine walks with
-     (state-engine.js:2733), so the two cannot disagree. */
+  const box = el("div", null, "nu-ribbon");
+  const run = el("div", null, "nu-run");
+  const gut = el("div", null, "nu-gutter");
+  const mk = el("span", null, "nu-head");
+  const tiles = [];
+  for (let i = 0; i < SCORE_TILES; i++) {
+    const d = el("div", null, "nu-tile");
+    run.append(d);
+    tiles.push({ el: d, si: -1, k: -1, abc: "", voices: [], els: null,
+                 ready: false, w: 0, h: 0, y0: 0, s: 1, off: 0, bars: 1, map: null });
+  }
+  box.append(run, gut, mk);
   const syl = el("p");
   syl.className = "nu-hint nu-syll";
-  live.append(cap, stack, syl);
+  live.append(cap, box, syl);
   parent.append(live);
-  scoreCap = cap; scoreHost = stack; scoreSyl = syl;
-  scoreBufs = [a, b].map((n) => ({ el: n, key: "", abc: "", voices: [],
-                                   els: null, ready: false }));
-  scoreShown = 0; scoreWant = ""; scoreLit = [];
-  scoreWin = -1; scoreSec = -1;
+  scoreCap = cap; scoreHost = box; scoreSyl = syl; scoreRun = run; scoreMark = mk;
+  scoreGut = gut; scoreGutW = 0;
+  scoreTiles = tiles; scoreLine = [];
+  scoreLit = []; scoreSec = -1; scoreX = null;
   const key = DOC.voices.length + "@" + Math.round(window.innerWidth);
-  if (key !== scoreReserveKey) { scoreReserveKey = key; scoreReserve = 0; scoreGutter = 0; }
+  if (key !== scoreReserveKey) { scoreReserveKey = key; scoreReserve = 0; scoreTop = -1; }
+  scoreOtt = null;                 // a new record decides its own octaves
   // the room this record's score has already been measured to need, put back
   // before anything draws, so a rebuild does not collapse the page and then
   // grow it again under a thumb
-  if (scoreReserve) stack.style.minHeight = scoreReserve + "px";
+  if (scoreReserve) box.style.height = scoreReserve + "px";
+  scoreBoxW = box.clientWidth || Math.round(window.innerWidth);
+  // …and the line is placed in the same arithmetic `place` uses, so the two
+  // cannot drift apart: gutter first, then the fraction of what is left.
+  markLine();
   reserveScoreCaption();
   repaintScore(true);
 }
@@ -1944,7 +2314,12 @@ function reserveScoreCaption() {
     const M = Math.max(1, (SONG[i] || { len: 1 }).len | 0);
     // every section, both ends of it, both tenses, and both the case where the
     // sounding section IS the one you are writing and the case where it is not
-    for (const k of [0, Math.max(0, M - SCORE_BARS)])
+    // …AND EVERY BAR OF IT, not just the two ends. The caption names the bar
+    // under the sounding line and that line walks the whole section now, so
+    // "bars 9-10 of 12" is a sentence this record can say and has to be
+    // measured. A section is a dozen bars at most; the walk is arithmetic on
+    // strings and runs once per rebuild.
+    for (let k = 0; k < M; k++)
       for (const ei of [i, i === 0 ? Math.min(1, NS - 1) : 0])
         for (const asPlayed of [false, true]) {
           const t = scoreCaption(i, ei, k, M, asPlayed);
@@ -1965,7 +2340,7 @@ function reserveScoreCaption() {
   let widest = "";
   for (let i = 0; i < NS; i++) {
     const M = Math.max(1, (SONG[i] || { len: 1 }).len | 0);
-    for (const k of [0, Math.max(0, M - SCORE_BARS)]) {
+    for (let k = 0; k < M; k++) {
       const t = syllLine(i, k);
       if (t.length > widest.length) widest = t;
     }
@@ -2667,6 +3042,250 @@ const motifNames = () => cellNames();
 // So the offer is filtered by kind rather than by hope — see avail.js
 // `cellsFor`, which is where the same rule is stated for the menus.
 const drumCells = () => cellNames().filter((n) => DOC.material.cells[n].kind === "drum");
+/* ---------- TAP A MOTIF TO HEAR IT --------------------------------------
+   Paul, 2026-08-25: *"If I tap the motif play the motif in an associated
+   voice. Give me a loop button to loop the motif."*
+
+   THE TAP IS THE TAB, WHICH IS THE LITERAL READING AND IS THE POINT. Paul said
+   "if I tap the motif", and the thing you tap to get a motif is its tab. So
+   navigating the strip makes sound: every time you move from `psalm` to `bed`
+   to look at one, it speaks. That is how a drum machine's pad works and it is
+   NOT how a tab works anywhere else on this page, so it is built the way it was
+   asked for and reported as a feel rather than defended as a design — a
+   separate button would have been a quieter answer to a question that was not
+   asked.
+
+   WHICH VOICE IS "ASSOCIATED", AND THE PAGE ALREADY SAID SO. The block's own
+   name line reads `psalm — read by cantor, schola`, and the audition takes the
+   FIRST of those readers — its instrument, its register (`cast.reg`) and the
+   record's own key and mode, which is `engOpts`, the very options the staff
+   under it is engraved with. So the reading and the picture cannot disagree
+   about a pitch, and when there are two readers the page says which one it
+   took rather than choosing silently.
+
+   THE THREE CASES THAT ARE NOT A PITCHED READER, each answered out loud:
+     · A MOTIF NOBODY READS (`neume — read by nobody`) has no associated voice
+       at all, so it is read by the RECORD's own default instrument — the same
+       `instr` document.js hands the kernel for a voice that names nothing —
+       and the line says "read by nobody, so the record's own <x> reads it".
+     · A DRUM CELL is lanes, not degrees. It auditions on the KIT, from the
+       drummer's own `instrument`, because a grid has no pitch to give a
+       pitched voice (document.js:230: "a grid is not a line").
+     · A THROAT THE ENGINE SYNTHESISES (the chant's cantor is a `tract_voice`)
+       cannot be voiced by audio/audition.js at all — it holds recordings, not
+       Faust (VOICE.md §8). It reads on the nearest RECORDING and says so.
+
+   WHAT HAPPENS WHILE THE RECORD IS PLAYING: NOTHING, AND THE PAGE SAYS SO.
+   An audition on top of a running transport is two musics at once — a motif at
+   its own tempo, in its own key, with no relation to the bar — and this page
+   has one engine and no mixer to put them through. Ducking would be a mix
+   decision made by a tab; stopping the transport would be a tab stopping the
+   record. So the audition REFUSES, the sentence under the strip says why, and
+   the loop button greys with the same reason on it (the page's own rule: an
+   unreachable control greys WITH ITS REASON PRINTED). What you hear while the
+   record plays is the record, and the score at the top of this axis is the
+   picture of it.
+
+   WHERE THE SENTENCE LIVES, AND WHY IT CARRIES `data-live`. The audition ends
+   on a TIMER, not on a gesture of yours — the phrase runs out and the line has
+   to stop saying "sounding". That is the same property the transport feed has
+   and it is what `data-live` declares, so the sentence declares it too and
+   `window.__eightFrozen` empties it like any other. The LOOP BUTTON is a
+   control and lives outside it, which is the law that keeps the frozen half
+   frozen (test/motif-frozen.js A1). */
+let motifLoop = null;         // the cell that is looping — page state, by NAME
+let motifSay = null;          // the block's live sentence
+let motifWho = "";            // …and the still half of it, kept for a redraw
+
+// WHAT THE RECORD PLAYS WHEN NOBODY IS NAMED. document.js `toGenre` writes
+// `instr` off each chair and falls back to the anchor's own `instr` for a
+// chair that says "synth"; this is that fallback, asked for the record as a
+// whole. An ARRAY is a band (instruments.js `instrOf`: "the Isley Brothers are
+// a Rhodes and a fuzz guitar at the same time") and its first entry is the
+// record's leading sound.
+function recordInstr() {
+  const e = (GENRES[DOC.basis] || {}).instr;
+  return (Array.isArray(e) ? e[0] : e) || "";
+}
+// …AND WHAT "synth" MEANS FOR ONE VOICE: the record's signature Faust model,
+// `doc.sound.synth` over the anchor's, which is the same order document.js
+// reads them in.
+function recordSynth() {
+  const s = (DOC.sound && DOC.sound.synth) || (GENRES[DOC.basis] || {}).synth;
+  return (s && s.dsp) || "";
+}
+
+/* THE AUDITION, RESOLVED. Everything the reading needs, and the two sentences
+   that go with it: `who` (which voice, on what, and why that one) and `why`
+   (the stand-in admission, when there is one). Pure — it decides nothing and
+   sounds nothing, so a gate can read it. */
+function auditionOf(name) {
+  const H = DOC.material.cells[name];
+  if (!H) return null;
+  const readers = DOC.voices.filter((v) => usesCell(v, name));
+  if (H.kind === "drum") {
+    const drummer = readers.find((v) => v.kind === "drums") || DRUMV();
+    const K = auditionKit(drummer && drummer.instrument);
+    const lanes = H.lanes || {};
+    const hits = [];
+    let steps = 16;
+    for (const lane of Object.keys(lanes)) {
+      // A SIDECAR IS NOT A HIT — `?k`, `~r`, `!p` are how often, how late and
+      // how graced, read WITH their lane by the kernel and never struck on
+      // their own (drumGrid says the same thing about drawing them).
+      if (SIDECAR[lane[0]]) continue;
+      const arr = lanes[lane] || [];
+      steps = Math.max(steps, arr.length);
+      for (let i = 0; i < arr.length; i++)
+        if (+arr[i] > 0) hits.push({ at: i, lane, vel: +arr[i] });
+    }
+    return { hits, kit: K, steps, bpm: DOC.time.bpm,
+             who: (drummer ? drummer.name : "the kit") + " on " +
+                  (drummer && drummer.instrument || K.dir),
+             why: K.why };
+  }
+  const lead = readers[0] || null;
+  const named = lead ? (lead.instrument === "synth" ? recordSynth() : lead.instrument)
+                     : recordInstr();
+  const V = auditionVoice(named);
+  const ph = phrase(name);
+  const opts = engOpts(lead && lead.cast);
+  const notes = toNotes(ph, opts).notes;
+  const who = lead
+    ? (readers.length > 1
+        ? lead.name + " reads it first, so this is " + lead.name + " on " + V.id
+        : lead.name + " on " + V.id)
+    : "nobody reads this one, so the record's own " + V.id + " reads it";
+  return { notes, voice: V, steps: (ph.gate || []).length || 16,
+           bpm: DOC.time.bpm, who, why: V.why };
+}
+
+// WHAT THE PAGE SAYS WHEN THE RECORD IS RUNNING. One string, two readers (the
+// sentence and the reserve that gives it room), so a longer refusal cannot
+// quietly outgrow the space measured for it.
+const PLAYSAY = "the record is playing — the score above is what you hear";
+// …and WHO would read this motif, without sounding a note. The reserve needs
+// the sentence before there is anything to say.
+const auditionWho = (name) => { const A = auditionOf(name); return A ? A.who : ""; };
+
+// THE SENTENCE, WRITTEN IN ONE PLACE. Called after every rebuild of the block
+// and at every change of state, so the line is always what is true — a redraw
+// mid-loop must not lose the word "looping".
+function auditionSay() {
+  if (!motifSay) return;
+  const t = !motifTab ? ""
+    : playing ? PLAYSAY
+    : motifLoop === motifTab ? "looping " + motifTab + " — " + motifWho
+    : auditioning() && auditioningKey() === motifTab ? "sounding — " + motifWho
+    : "";
+  if (motifSay.textContent !== t) motifSay.textContent = t;
+}
+
+/* SOUND ONE MOTIF. `loop` is the button's state and not a second mode: the
+   same reading, laid round and round, re-read from the document at the top of
+   every lap so a step changed while it runs is heard on the next pass. */
+function auditionMotif(name, loop) {
+  if (playing) { auditionSay(); return false; }
+  const A = auditionOf(name);
+  if (!A) return false;
+  motifWho = A.who;
+  const ok = playAudition({
+    notes: A.notes, hits: A.hits, bpm: A.bpm, voice: A.voice, kit: A.kit,
+    steps: A.steps, key: name, loop: !!loop,
+    // THE LAP RE-READS THE DOCUMENT, which is what makes a loop an editing
+    // tool rather than a tape: `auditionOf` is called again at the top of each
+    // pass, so the note you just moved is in the next one.
+    again: () => { const B = auditionOf(name); return B ? {
+      notes: B.notes, hits: B.hits, bpm: B.bpm, steps: B.steps } : null; },
+  }, () => { auditionSay(); });
+  auditionSay();
+  return ok;
+}
+// STOPPING IS ONE VERB. A loop that is turned off, a tab that moves to another
+// motif and a record that starts all end the same way.
+function auditionOff() {
+  motifLoop = null;
+  stopAudition();
+  auditionSay();
+}
+
+/* THE LOOP BUTTON. A toggle and not a second tap-to-stop: it says what it is
+   with `aria-pressed`, it keeps its state across a redraw because the state is
+   keyed by the cell's NAME (PROGRAM.md §2.2 — an index would follow the wrong
+   motif the moment the bank changed), and it greys with its reason while the
+   transport runs. */
+function loopButton(parent, name) {
+  const p = el("p");
+  const b = document.createElement("button");
+  b.type = "button";
+  b.dataset.k = "motifloop-" + name;
+  const on = motifLoop === name;
+  b.setAttribute("aria-pressed", String(on));
+  b.append(el("span", on ? "↻ looping" : "↻ loop"));
+  if (playing) {
+    const why = "the record is playing — stop it to hear one motif alone";
+    b.disabled = true; b.setAttribute("aria-disabled", "true");
+    b.dataset.why = why;
+    b.setAttribute("aria-label", "loop " + name + ", " + why);
+  } else {
+    b.addEventListener("click", () => {
+      /* AND IT CAN STILL BE PRESSED AFTER THE RECORD STARTED, because the
+         transport may not rewrite a control (that is the whole frozen-DOM
+         law): this button was drawn while the record was stopped and it is
+         still on the page, live, when somebody presses play. So the refusal is
+         made HERE as well as at draw time, and the live sentence beside the
+         button — which the clock IS allowed to write — is what says why. The
+         same law is why the button's own word can go stale for a moment: press
+         play while a loop runs and the sound stops, the sentence says "the
+         record is playing", and the button still reads "looping" until your
+         next gesture rebuilds it. A stale word beside a true sentence is the
+         price of a page that does not reshape under a thumb. */
+      if (playing) { auditionSay(); return; }
+      if (motifLoop === name) { auditionOff(); }
+      else { motifLoop = name; auditionMotif(name, true); }
+      // THE BUTTON REDRAWS ITSELF AND NOTHING ELSE. `drawMaterial()` would
+      // rebuild every staff in the axis — three abcjs engravings on the chant
+      // — for a word and an attribute, and the recipe's own law is that the
+      // page does not reshape under a thumb.
+      const now = motifLoop === name;
+      b.setAttribute("aria-pressed", String(now));
+      b.replaceChildren(el("span", now ? "↻ looping" : "↻ loop"));
+    });
+  }
+  p.append(b, document.createTextNode(" "));
+  parent.append(p);
+  /* THE LIVE SENTENCE IS THE BUTTON'S SIBLING, never a class on the button —
+     a control the clock may write to is how the frozen half stops being frozen
+     (the note over this block).
+
+     AND IT IS GIVEN ITS ROOM AT CREATION, which is the same law the score's
+     caption obeys one surface up and for the same reason: this line is written
+     BY THE CLOCK (pressing play empties it and writes "the record is
+     playing…"), it sits above the staff, the grid and every editor in the
+     axis, and at 390px it wraps to two lines. Measured 2026-08-25 before this
+     reserve existed: pressing play grew `#staff` from 206px to 224px and
+     pushed the whole band axis 18px down the page — the clock moving the
+     editing interface, which is the one thing this file may not do
+     (test/motif-frozen.js A5, which caught it). So the longest thing this
+     motif could ever make it say is written, measured, reserved, and then the
+     true sentence goes in. One write pass, one read pass, never interleaved. */
+  const say = el("p");
+  say.dataset.live = "audition";
+  say.className = "nu-hint";
+  parent.append(say);
+  motifSay = say;
+  let longest = "";
+  const who = auditionWho(name);
+  for (const t of [PLAYSAY, "looping " + name + " — " + who, "sounding — " + who])
+    if (t.length > longest.length) longest = t;
+  say.textContent = longest;
+  const h = Math.ceil(say.getBoundingClientRect().height);
+  if (h) say.style.minHeight = h + "px";
+  say.textContent = "";
+  auditionSay();
+  if (b.disabled) P(parent, el("span", b.dataset.why, "nu-why"));
+}
+
 /* THE STRIP, BUILT LIKE THE BAND'S so the two surfaces are the same object and
    a person who has learned one has learned the other: a <p> of buttons, one per
    motif, `aria-pressed` saying which, and the chosen one wearing the same
@@ -2689,10 +3308,17 @@ function motifTabRow(parent) {
   if (!names.includes(motifTab)) motifTab = names[0] || null;
   if (!names.length) return;
   const bar = el("p");
-  // an id and no class, exactly like the band's `#tabs`: a strip of buttons in
-  // a <p> needs no rule at all — `button{min-height:var(--tap)}` at the top of
-  // nu.css already sizes and targets them, and they wrap on their own.
+  // AN ID FOR WHO IT IS, `.nu-row` FOR WHAT IT IS. This read "an id and no
+  // class, exactly like the band's `#tabs`: a strip of buttons in a <p> needs
+  // no rule at all — `button{min-height:var(--tap)}` already sizes and targets
+  // them, and they wrap on their own." Every clause of that is still true and
+  // it was still the third different way this page spaced a row of buttons:
+  // here a literal " " text node, in `#atlasActs` a `margin-inline-end` on the
+  // button, in the producer nothing (nu.css 2026-08-26's audit). `.nu-row` is
+  // the one name for a strip; the text nodes stay, because with the stylesheet
+  // off they are what keeps two tabs from reading as one word.
   bar.id = "motif-tabs";
+  bar.className = "nu-row";
   for (const name of names) {
     const b = document.createElement("button");
     b.type = "button";
@@ -2700,7 +3326,18 @@ function motifTabRow(parent) {
     b.setAttribute("aria-pressed", String(name === motifTab));
     if (name === motifTab) b.append(el("mark", name));
     else b.append(el("span", name));
-    b.addEventListener("click", () => { motifTab = name; drawMaterial(); });
+    // THE TAP SOUNDS IT (Paul: "If I tap the motif play the motif in an
+    // associated voice"), and it sounds AFTER the redraw, so the sentence the
+    // audition writes lands in the block that is now on the page. A tab that
+    // is already open re-sounds — a tap is a tap. A loop belongs to one motif,
+    // so moving to another ends it (see the block over `auditionOf`).
+    b.addEventListener("click", () => {
+      const was = motifTab;
+      motifTab = name;
+      if (was !== name) motifLoop = null;
+      drawMaterial();
+      auditionMotif(name, motifLoop === name);
+    });
     bar.append(b, document.createTextNode(" "));
   }
   /* ---------- AND TWO WAYS TO GROW THE BANK ------------------------------
@@ -2789,6 +3426,9 @@ function addCell(kind) {
 // genuinely different data. `drumGrid` draws one and `hookGrid` the other.
 function motifs(parent, deck, si) {
   written.clear();
+  // the live sentence belongs to the block that is about to be built; the
+  // LOOP belongs to the record you are looking at and outlives the redraw
+  motifSay = null;
   staffBoxKeep();       // a staff engraved for a phone is not a laptop's room
   const lines = LINES();
   let firstBlock = true;
@@ -2813,6 +3453,13 @@ function motifs(parent, deck, si) {
     label.className = "nu-motif" + (firstBlock ? " nu-first" : "");
     firstBlock = false;
     parent.append(label);
+    // …AND THE WAY TO HEAR IT. The button is a control and sits outside the
+    // live sentence beside it; the STAND-IN admission, when there is one, is a
+    // fact about this motif's voice and not about what is sounding, so it is
+    // printed here in plain text and not on the clock.
+    loopButton(parent, name);
+    const A0 = auditionOf(name);
+    if (A0 && A0.why) P(parent, el("span", A0.why, "nu-why"));
 
     if (isDrum) {
       // A GRID IS ITS OWN NOTATION. There is no staff over a drum cell and
@@ -3499,7 +4146,7 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
   // stylesheet-off label and the word a screen reader reads. `data-k` is
   // unchanged — focus is restored across a redraw by that key (PROGRAM.md
   // §2.2) and the row's keys must not move because its faces did.
-  const p2 = el("p", null, "nu-tf-row");
+  const p2 = el("p", null, "nu-row nu-tf-row");
   for (const d of DESIGNS) {
     const b2 = document.createElement("button");
     b2.type = "button"; b2.dataset.k = seq + cellName + "-" + d.w;
@@ -3516,7 +4163,7 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
   // beats — and fourteen pictures in one wrapped paragraph is a wall. Same
   // class, same `.nu-vh` word, same `data-k` discipline; what differs is which
   // half of the cell the click rewrites (`designTime` against `design`).
-  const p2b = el("p", null, "nu-tf-row");
+  const p2b = el("p", null, "nu-row nu-tf-row");
   for (const d of TIMES) {
     const b3 = document.createElement("button");
     b3.type = "button"; b3.dataset.k = seq + cellName + "-" + d.w;
@@ -4335,7 +4982,7 @@ function tempoArt(d, now) {
    own rule for a column of refusals, applied to a row of them. */
 function tempoRow(parent) {
   const now = () => ({ bpm: DOC.time.bpm, rate: DOC.time.rate == null ? null : DOC.time.rate });
-  const p = el("p", null, "nu-tf-row");
+  const p = el("p", null, "nu-row nu-tf-row");
   const refused = [];
   for (const d of TEMPOS) {
     const t = now(), next = d.mk(t);
@@ -4528,6 +5175,555 @@ function knobShut(voice, row, byRow) {
   return null;
 }
 
+/* ======================================================================
+   A THROAT, DRAWN — THE PAD AND ITS RING
+   Paul, 2026-08-26: *"Do you think you could come with a nice radial graph
+   structure for editing the voice so I can work on multiple dimensions also
+   why doesn't the tongue work"* — and, when the geometry was put to him:
+   *"I'm fine with the pad idea for the voice editor."*
+
+   THE GEOMETRY, AND WHY IT IS A PAD AND NOT A SPIDER. A spider chart gives
+   every parameter one spoke and one number, which is exactly what the table
+   under it already does, drawn round instead of down; the only thing it adds
+   is a silhouette. The two tongue knobs are not two numbers. `tongue` and
+   `tongueD` are a POSITION and a DIAMETER at that position — one constriction,
+   two coordinates — and the vowels sit at particular places in that plane
+   (tract.lib's own fitted table, `/a/` back and tight, `/i/` forward and
+   tight, `/e/` half open). Separated onto two spokes, "move the constriction
+   forward while opening it" is two gestures and the plane you are moving in is
+   invisible. That is Pink Trombone's whole insight and it is why the pad is
+   the middle of this picture and the spokes are the ring around it: the two
+   coordinates that interact are a PLACE, and the eight that modify them are
+   amounts.
+
+   THE PAD IS NEVER THE ONLY WAY IN. Every value on it is a `<input
+   type=range>` in the table directly below, and both write the same
+   `voice.set` through the same `writeKnob`. With the stylesheet off the
+   picture is a decorative <svg> and the sliders are the page; a screen reader
+   is given the sliders and never the picture (`aria-hidden`), because an SVG
+   you drag is not a control and pretending it is one is worse than not
+   drawing it. THIS PAGE HAS ALREADY PAID FOR TWO VIEWS ON ONE STORE ONCE —
+   `listening` and `volume` were two scales of one number and the record went
+   silent — so there is exactly one store here and the picture reads it: the
+   thumb and the knot are the same number, and during a drag the twin slider's
+   own value and readout are moved as well, so the two cannot be seen
+   disagreeing even for a frame.
+
+   AND IT IS THE ANSWER TO "WHY DOESN'T THE TONGUE WORK", WHICH IS THE REASON
+   IT EXISTS. tract_voice.dsp:104 is
+     `a_tp = sm(xf(xf(ktVowTp(vowel), tongue, artic), b_tp, babble))`
+   — your tongue is crossfaded against THE VOWEL TABLE's by `artic`, and that
+   against THE BABBLER's by `babble`. At `artic: 0` the vowel owns it and the
+   knob is inert; the chant's cantor ships `artic: 0.45, babble: 0.4`. The
+   tongue is OUTVOTED, not broken. A disabled slider with a sentence beside it
+   says so and Paul read past it. So the picture says it instead: the vowel's
+   own point is drawn, your handle is drawn, and THE DOT ON THE LINE BETWEEN
+   THEM IS WHERE THE TONGUE ACTUALLY GOES. At `artic: 0` that dot sits on the
+   vowel, on top of it, and the line has no length — the picture is the
+   measurement.
+   ====================================================================== */
+// THE RING RUNS FROM THE GLOTTIS TO THE LIPS, and the ring's own order is the
+// tube's: `voiced`/`open`/`breath` are the glottis (drawn low and behind),
+// `nasal` is the velum branch (up), `tongueL` is how long the constriction is,
+// `fric`/`fricX` are the noise made at it, and `lips` is the way out (down and
+// in front). Clockwise from the lower left — up the left side, over the top,
+// down the right — which puts a sagittal head on the page: the source at the
+// bottom, the palate over the top, the mouth in front on the right.
+//
+// AND `tongueL` IS ON A SPOKE FOR A REASON THAT HAS TO BE SAID OUT LOUD.
+// It is 0.05..0.5 and it is THE TONGUE'S LENGTH — how much of the tube the
+// constriction occupies. It is NOT the tract length, which is what reads as
+// gender in Pink Trombone (shorten the tube and every formant rises), and this
+// module has no tract length: there is no such slider in tract_voice.dsp.
+// Putting `tongueL` on the pad's plane beside a position and a diameter would
+// invite exactly that reading. It is an amount, so it is a spoke.
+const TUBE = ["voiced", "open", "breath", "nasal", "tongueL", "fric", "fricX", "lips"];
+/* WHAT IS NOT ON THE PICTURE, AND WHY EACH ONE IS NOT. `rate`, `seed`,
+   `vowels` and `vowelEvery` are the CLOCK and the WORD — what it says and how
+   fast, not what shape the throat is in. `attack`, `release`, `vibrato`,
+   `vibRate`, `vibRise` and `cutoff` are the note and the microphone: they
+   happen to the sound after the throat has made it. `babble` is a mode with a
+   menu of its own, and `artic` is the line, not a point. Every one of them
+   stays a slider in the table, where it always was. Nothing was taken away to
+   make room for this. */
+/* `grab` IS A RADIUS IN viewBox UNITS AND IT IS 22 FOR THE REASON THE REST OF
+   THIS PAGE IS 44px. At 390 the picture is 366 CSS px for 360 units, so a
+   22-unit reach is a 44.7px target — the isolated-control floor nu.css argues
+   at the top. At 320 it is 36px and that is NOT a regression the way it would
+   be on a button: WCAG 2.5.8's own exception is a control whose function is
+   available through another control on the same page that does meet the floor,
+   and every value on this picture is a 44px slider in the table under it. The
+   picture is the second view; the table is the one that has to clear the bar
+   on its own, and it does. */
+/* …AND THE TWO DOTS INSIDE THE SQUARE REACH LESS FAR, WHICH IS THE OPPOSITE
+   TRADE AND IS ALSO MEASURED. The face of the pad is ITSELF a target — a tap
+   anywhere on it places the tongue — and at a 22-unit reach the `artic` dot's
+   halo covered the middle of that square: measured on the rendered page, a drag
+   from the face's own centre moved `artic` instead, because the dot was 17.6
+   units away. So the ring's knots, which have nothing but empty air around
+   them, keep 22; the handle and the dot, which sit inside a large target that
+   does the same job coarsely, reach 11. Eleven units is 22px at 390 — the 24px
+   dense-target floor, not the 44px isolated one, which is the right floor for
+   an object inside another object, and 2.5.8's exception covers the rest: both
+   are 44px sliders in the table. */
+const PAD = { box: 360, r0: 74, r1: 128, lab: 138, grab: 22, grabIn: 11 };
+PAD.c = PAD.box / 2;
+/* THE viewBox IS CROPPED TO THE INK AND IT IS NOT SQUARE, which is worth the
+   two lines of arithmetic it costs below. The picture is as WIDE as the labels
+   need — "tongueL" starts at 0.383 of the label radius and runs outward — but
+   the topmost and bottommost ink is only the ring at 52 and a word half a line
+   past it. Left square it drew 40px of nothing over and under itself at every
+   width, which on a phone is 80px of the screen spent on margin. The element
+   keeps the cropped ratio (`block-size: auto` on a 360x278 viewBox), so
+   preserveAspectRatio still has nothing to letterbox and the pointer arithmetic
+   is still one scale factor per axis. */
+PAD.vy0 = 42; PAD.vh = 278;
+// THE PAD IS THE SQUARE INSCRIBED IN THE SPOKES' ZERO CIRCLE, so a spoke's
+// track starts where the pad's own frame stops and the two never overlap: the
+// eight angles below are all 22.5 degrees off the square's corners, which are
+// the only four points where the square touches the circle.
+PAD.side = 2 * PAD.r0 / Math.SQRT2;
+// …and one number does for both axes: the square is centred in a picture whose
+// horizontal centre is also its vertical one, so `PAD.x0` is the top edge as
+// well as the left one.
+PAD.x0 = PAD.c - PAD.side / 2;
+const padX = (v) => PAD.x0 + v * PAD.side;
+const padY = (v) => PAD.x0 + PAD.side - v * PAD.side;
+const spokeAng = (i) => (112.5 + i * 45) * Math.PI / 180;
+// A VALUE'S PLACE ON ITS OWN SPOKE, in the row's own bracket — knobs.js swept
+// the dead travel off both ends, so 0 on the ring is the lowest setting that
+// still moves the parameter and 1 is the highest, not the module's declared
+// range.
+const norm = (row, v) => (row.max === row.min ? 0
+  : Math.max(0, Math.min(1, (v - row.min) / (row.max - row.min))));
+const unnorm = (row, n) => row.min + Math.max(0, Math.min(1, n)) * (row.max - row.min);
+// ...AND ON THE SAME GRID THE SLIDER USES. A pad that wrote 0.4173829 where the
+// slider's step is 0.001 would be two views of one number that never show the
+// same digits.
+function padSnap(row, v) {
+  const s = row.step || 0.001;
+  const q = Math.min(row.max, Math.max(row.min,
+    row.min + Math.round((v - row.min) / s) * s));
+  // …AND ROUNDED TO THE STEP'S OWN DECIMALS BEFORE IT IS WRITTEN. Measured on
+  // the rendered page: a drag that landed the tongue diameter on the same
+  // notch the slider does wrote `0.35000000000000003` where the slider writes
+  // `0.35`, because 350 * 0.001 is not 0.35 in binary and `+r.value` on the
+  // string "0.35" is. Two views of one number that write different bytes into
+  // the record is the whole failure this pad is built to not repeat.
+  return +q.toFixed(Math.max(0, Math.min(9, Math.ceil(-Math.log10(s)))));
+}
+
+// THREE THINGS AND AN `and`, because the sentences under the picture are
+// SENTENCES: "the tongue, how far the tongue reaches, the lips are greyed" is a
+// list that reads as a sentence that has lost a verb. (One line here rather
+// than in a shared place: nothing else on this page builds a list in prose —
+// the sheets and the board all draw their lists as lists.)
+const andList = (a) => a.length < 2 ? (a[0] || "")
+  : a.slice(0, -1).join(", ") + " and " + a[a.length - 1];
+
+function tractPad(parent, voice, V, byRow, sliders) {
+  const T = NuKnobs && NuKnobs.tract;
+  const tp = byRow.tongue, td = byRow.tongueD, ar = byRow.artic, bb = byRow.babble;
+  if (!T || !tp || !td || !ar) return;
+
+  /* WHAT THE PICTURE IS SHOWING RIGHT NOW — read once, off the same
+     `knobNow` the sliders are seated from, and then held in `cur` for the life
+     of a drag. A drag does NOT write the document per frame and does NOT call
+     draw(): the same split `range()` already keeps (`input` moves the readout,
+     `change` commits) is the split here, because recompiling the record on
+     every pointermove would thrash the engine mid-bar and rebuilding #app
+     under your own finger would destroy the node you are dragging. */
+  const cur = {};
+  for (const k of ["tongue", "tongueD", "artic", ...TUBE])
+    if (byRow[k]) cur[k] = +knobNow(voice, byRow[k]);
+  const babble = bb ? +knobNow(voice, bb) : 0;
+
+  // THE VOWELS THE RECORD IS ACTUALLY SAYING. `rowOf` is measured, per voice —
+  // the singers' formant tables are indexed a-e-i-o-u and the tube's i-e-a-o-u
+  // — so a letter is turned into a row by asking, never by counting.
+  const vw = byRow.vowels;
+  const word = ((knobSet(voice) || {}).vowels) ||
+    (vw && vw.derivedWord) || "a";
+  const rows = [...word].map((ch) => (vw && vw.rowOf && vw.rowOf[ch] != null
+    ? vw.rowOf[ch] : 2)).filter((n) => n >= 0 && n < 5);
+  const said = rows.length ? rows : [2];
+
+  const shutTongue = knobShut(voice, tp, byRow);
+  const svg = S("svg", { viewBox: "0 " + PAD.vy0 + " " + PAD.box + " " + PAD.vh,
+    class: "nu-pad", "aria-hidden": "true", focusable: "false" });
+  // THE ROOM IS TAKEN AT CREATION, which is this file's standing law about
+  // anything that draws late (`staffBox`, `scoreReserve`): the <svg> carries
+  // its own viewBox and nu.css gives it `block-size: auto`, so the browser
+  // computes its height from the intrinsic ratio in the same layout pass that
+  // creates it. Nothing here grows after draw() returns and nothing waits on a
+  // promise, so there is no anchor for the browser to push the page off.
+  const add = (tag, attrs, into) => { const n = S(tag, attrs);
+    (into || svg).appendChild(n); return n; };
+
+  /* THE SILHOUETTE FIRST, which is a statement about PAINT ORDER and not about
+     reading order. It is the one thing a spider chart is genuinely good for —
+     eight numbers as a single shape, so two settings of a throat can be told
+     apart at a glance — and it is a translucent fill over half the picture, so
+     it is created before everything it must not dim. Drawn last it greyed the
+     pad's own face, its vowels and its own eight knots; measured on the
+     rendered page at 1280 before this line moved. */
+  const shape = add("polygon", { class: "nu-pad-shape" });
+
+  /* ---------- WHERE THE DRIVER CAN GO, DRAWN EXACTLY ------------------
+     `babble` does not pull the tongue toward a third POINT, it hands it to a
+     seeded walk, and the walk's reachable set is knowable exactly rather than
+     approximately: ktBabble (tract.lib:346) slides from a consonant's
+     articulation to a vowel's on ONE smoothstep `m`, and position and diameter
+     both ride that same `m`, so every place the tongue can be is on the
+     straight segment between one of them and one of the five vowels. `ktConOt`
+     says which consonants own the closure — a labial does not move the tongue,
+     so /b/ /m/ /f/ hold the vowel's own place and contribute nothing. Five
+     consonants by five vowels is twenty-five segments and that is the whole
+     territory, drawn at the strength of `babble` itself.
+
+     AND THE DRIVER PICKS ITS OWN VOWELS. `vi = floor(h(1)*4.999)` — the
+     record's word is not consulted at all, which is the part of "the tongue
+     doesn't work" that no slider could ever have said. */
+  const web = add("g", { class: "nu-pad-web" });
+  if (babble > 0) {
+    web.setAttribute("style", "opacity:" + (0.1 + 0.5 * babble).toFixed(3));
+    for (let c = 0; c < T.con.name.length; c++) {
+      if (!T.con.ot[c]) continue;
+      for (let v = 0; v < 5; v++)
+        add("line", { x1: padX(T.con.pl[c]), y1: padY(T.con.di[c]),
+                      x2: padX(T.vowel.tp[v]), y2: padY(T.vowel.td[v]) }, web);
+    }
+  }
+
+  // the pad's own frame and its two axes, named on the picture in the words
+  // the tube uses. The frame is drawn AFTER the web so the web reads as being
+  // behind the glass.
+  add("rect", { class: "nu-pad-face", x: PAD.x0, y: PAD.x0,
+                width: PAD.side, height: PAD.side, rx: 3 });
+  const tick = (t) => {
+    add("line", { class: "nu-pad-tick", x1: padX(t), y1: PAD.x0,
+                  x2: padX(t), y2: PAD.x0 + PAD.side });
+    add("line", { class: "nu-pad-tick", x1: PAD.x0, y1: padY(t),
+                  x2: PAD.x0 + PAD.side, y2: padY(t) });
+  };
+  tick(0.5);
+  /* WHICH WAY IS WHICH, ON THE PICTURE. The row labels knobs.js measured are
+     sentences ("how far the tongue reaches") and a diagram cannot carry one on
+     an axis, so the axis carries its ENDS instead — which is the thing a
+     sentence about a direction is trying to say anyway. The four words are the
+     tube's own anatomy and not a scale: `tongue` runs from the glottis to the
+     lips (tract.lib's consonant table puts /g/ velar at 0.55 and /s/ alveolar
+     at 0.84, so the number counts forward), and `tongueD` is a DIAMETER, wide
+     at 1 and sealed at 0 — which is why the turbulence term is `(1 - a_td)²`
+     and dies at a full closure. */
+  const edge = (x, y, anchor, word) => {
+    const t = add("text", { class: "nu-pad-edge", x, y, "text-anchor": anchor });
+    t.textContent = word; };
+  /* AND NOT ONE OF THE FOUR WORDS MAY BE A SPOKE'S WORD. The first cut said
+     "throat / lips / open / shut" and two of them collided with the ring: the
+     `lips` spoke is the LIP APERTURE and the `open` spoke is how open the
+     GLOTTIS is, so the same word named two different numbers on one picture.
+     `back`/`front` and `wide`/`closed` are unclaimed, and the sentence under
+     the drawing still says which anatomy they mean. */
+  const lo = PAD.x0, hi = PAD.x0 + PAD.side, mid = PAD.c;
+  edge(lo - 5, mid, "end", "back");
+  edge(hi + 5, mid, "start", "front");
+  // …and 15 rather than 9 above and below the frame, because at `tongueD` 1 —
+  // which is what the module answers with the key absent — the handle sits ON
+  // the top edge and a word 9 away was under it.
+  edge(mid, lo - 15, "middle", "wide");
+  edge(mid, hi + 15, "middle", "closed");
+
+  /* ---------- THE FIVE VOWELS, WHICH ARE THE MAP ----------------------
+     Not decoration and not a legend: these are where tract.lib's fitted table
+     puts the tongue for i, e, a, o and u, so the pad's plane is the plane the
+     vowels live in and a hand can see that /a/ is back and tight and /i/ is
+     forward and tight. The letters are the tube's own row order and the map
+     from a record's letter to a row is the measured one. */
+  // THE LETTER IS THE MARK, and that is a measurement rather than a taste.
+  // /i/ and /u/ are 0.078 apart in tongue position and 0.008 in diameter —
+  // nine pixels and one — so a dot with its letter beside it drew "u i" as one
+  // word on the rendered page at both widths. A centred letter is its own
+  // label and the two sit side by side instead of on top of each other.
+  const saidLetters = [];
+  for (let v = 0; v < 5; v++) {
+    const on = said.includes(v);
+    const t = add("text", { class: "nu-pad-vlab" + (on ? " is-said" : ""),
+                  "text-anchor": "middle",
+                  x: padX(T.vowel.tp[v]), y: padY(T.vowel.td[v]) });
+    t.textContent = T.vowels[v];
+    if (on) saidLetters.push(t);
+  }
+  // …AND THE WALK BETWEEN THEM, when the record says more than one sound. The
+  // parent steps the word once every `vowelEvery` beats and WRAPS, so the path
+  // is a closed round and not a line with an end.
+  if (said.length > 1)
+    add("polygon", { class: "nu-pad-word",
+      points: said.map((v) => padX(T.vowel.tp[v]) + "," + padY(T.vowel.td[v])).join(" ") });
+
+  // the ring: the zero circle, the full circle, and one track per spoke
+  add("circle", { class: "nu-pad-ring", cx: PAD.c, cy: PAD.c, r: PAD.r0 });
+  add("circle", { class: "nu-pad-ring", cx: PAD.c, cy: PAD.c, r: PAD.r1 });
+  const knots = [], gated = new Map();
+  TUBE.forEach((key, i) => {
+    const row = byRow[key];
+    if (!row) return;
+    const a = spokeAng(i), ux = Math.cos(a), uy = Math.sin(a);
+    const shut = knobShut(voice, row, byRow);
+    if (shut) gated.set(row.label, shut);
+    add("line", { class: "nu-pad-track" + (shut ? " is-off" : ""),
+      x1: PAD.c + ux * PAD.r0, y1: PAD.c + uy * PAD.r0,
+      x2: PAD.c + ux * PAD.r1, y2: PAD.c + uy * PAD.r1 });
+    const t = add("text", { class: "nu-pad-lab" + (shut ? " is-off" : ""),
+      x: PAD.c + ux * PAD.lab, y: PAD.c + uy * PAD.lab,
+      "text-anchor": ux > 0 ? "start" : "end" });
+    // THE WORD ON THE RING IS THE DOCUMENT'S OWN KEY, not a new short name.
+    // The row's full label ("how much it phonates") is in the table under the
+    // same value; inventing a third spelling for the ring is how one
+    // vocabulary becomes two.
+    t.textContent = key;
+    const knot = add("circle", { class: "nu-pad-knot" + (shut ? " is-off" : ""), r: 6 });
+    const at = () => { const n = norm(row, cur[key]), r = PAD.r0 + n * (PAD.r1 - PAD.r0);
+      return { x: PAD.c + ux * r, y: PAD.c + uy * r }; };
+    const put = () => { const p = at(); knot.setAttribute("cx", p.x); knot.setAttribute("cy", p.y); };
+    // WHAT A DRAG ON A SPOKE MEANS: the projection of the pointer onto the
+    // spoke's own line, clamped to its track. Distance from the centre alone
+    // would let a finger that has wandered a quadrant away still drive the
+    // knot, which is how a radial control feels broken.
+    const drive = (x, y) => {
+      const r = (x - PAD.c) * ux + (y - PAD.c) * uy;
+      cur[key] = padSnap(row, unnorm(row, (r - PAD.r0) / (PAD.r1 - PAD.r0)));
+    };
+    knots.push({ row, key, at, put, drive, live: !shut, node: knot, reach: PAD.grab });
+  });
+  /* ---------- THE LINE THAT IS `artic` --------------------------------
+     One per vowel the record says: from the vowel table's own tongue position
+     to yours, with a dot at `artic` along it. THE DOT IS NOT AN ORNAMENT — it
+     is `xf(vowel, yours, artic)`, which is literally what the module computes
+     before the babbler is mixed in, so the dot is where the tongue goes. At
+     artic 0 it is on the vowel and the line has no length: the picture is the
+     reason the slider is disabled. Dragging the dot writes `artic`, which is
+     the one control here that no gate ever shuts. */
+  const arts = said.map((v) => {
+    const vx = padX(T.vowel.tp[v]), vy = padY(T.vowel.td[v]);
+    const ln = add("line", { class: "nu-pad-artic" });
+    const dot = add("circle", { class: "nu-pad-eff", r: 5 });
+    const at = () => ({ x: vx + (padX(cur.tongue) - vx) * cur.artic,
+                        y: vy + (padY(cur.tongueD) - vy) * cur.artic });
+    const put = () => { const p = at();
+      ln.setAttribute("x1", vx); ln.setAttribute("y1", vy);
+      ln.setAttribute("x2", padX(cur.tongue)); ln.setAttribute("y2", padY(cur.tongueD));
+      dot.setAttribute("cx", p.x); dot.setAttribute("cy", p.y); };
+    const drive = (x, y) => {
+      const dx = padX(cur.tongue) - vx, dy = padY(cur.tongueD) - vy;
+      const len2 = dx * dx + dy * dy;
+      if (len2 < 1) return;                 // your handle is on the vowel: no line to slide on
+      cur.artic = padSnap(ar, Math.max(0, Math.min(1,
+        ((x - vx) * dx + (y - vy) * dy) / len2)));
+    };
+    return { row: ar, key: "artic", at, put, drive, live: true, node: dot,
+             reach: PAD.grabIn };
+  });
+
+  // YOUR OWN HANDLE, over everything it is being averaged against. (It was
+  // "drawn LAST" until the letters this record says were brought forward of it
+  // — see the note directly under. Two things are painted after it now and
+  // both are deliberate: those letters, and the transparent grab surface,
+  // which has no ink at all.)
+  const hand = add("circle", { class: "nu-pad-hand" + (shutTongue ? " is-off" : ""), r: 9 });
+  /* …AND THE LETTERS THIS RECORD SAYS COME BACK TO THE FRONT, which is a
+     one-line move with a reading behind it. At `artic` 0 the effective dot sits
+     EXACTLY on the vowel's letter, and drawn in creation order the dot covered
+     the letter — measured on the rendered page, the `a` was invisible under it
+     at the one setting where the picture's whole claim is "the vowel owns the
+     tongue". With the letter on top the dot is subsumed INTO it at 0 and comes
+     out from behind it as artic opens, which is the sentence the drawing is
+     for. */
+  for (const t of saidLetters) svg.appendChild(t);
+  const handGrip = {
+    row: tp, key: "tongue",
+    at: () => ({ x: padX(cur.tongue), y: padY(cur.tongueD) }),
+    put: () => { hand.setAttribute("cx", padX(cur.tongue));
+                 hand.setAttribute("cy", padY(cur.tongueD)); },
+    drive: (x, y) => {
+      cur.tongue = padSnap(tp, (x - PAD.x0) / PAD.side);
+      cur.tongueD = padSnap(td, 1 - (y - PAD.x0) / PAD.side);
+    },
+    live: !shutTongue, node: hand, keys: ["tongue", "tongueD"],
+    reach: PAD.grabIn,
+  };
+  // THE HANDLE IS FIRST IN THE HIT ORDER so that at `artic` 1, where the
+  // effective dot sits exactly on top of it, the thing under your finger is
+  // the one that can still be moved in two dimensions.
+  const grips = [handGrip, ...arts, ...knots];
+
+  function paint() {
+    for (const g of grips) g.put();
+    shape.setAttribute("points", knots.map((k) => { const p = k.at();
+      return p.x + "," + p.y; }).join(" "));
+  }
+  paint();
+
+  /* ---------- ONE FINGER, AND THE PAGE KEEPS THE REST OF THE PICTURE ---
+     ui/atlas.js paid for this lesson on the globe and the note there is the
+     source: with `touch-action` left to the page, the COMPOSITOR decides whose
+     a touch drag is before one line of JS runs, and `preventDefault` on a
+     pointermove does not take it back. A pad needs BOTH axes — a vertical drag
+     is the constriction opening — so the surfaces that are the control say
+     `touch-action: none` (nu.css `.nu-pad-grab`, which is put on the pad's own
+     face and on every LIVE grip) and nothing else in the picture does. A swipe
+     on the ring's empty air or the margin still scrolls the page, which is
+     most of the box — measured at 390 with a real CDP touch: a vertical drag
+     inside the face moves the tongue and the window 0px, and the same drag on
+     the ring's air scrolls the page 277px and writes nothing.
+
+     WHERE THIS DELIBERATELY DIFFERS FROM THE GLOBE: the globe declines the
+     pointer capture on touch, because a globe drag that turns out to be a page
+     scroll has to be handed back. Here the gesture has already been decided by
+     WHERE it started, so the capture is taken for every pointer type and the
+     drag survives a finger that leaves the little square. */
+  const grab = add("rect", { class: "nu-pad-grab", x: PAD.x0, y: PAD.x0,
+                             width: PAD.side, height: PAD.side, fill: "transparent" });
+  for (const g of grips) if (g.live) g.node.classList.add("nu-pad-grab");
+
+  /* VIEWBOX COORDINATES FROM A CLIENT POINT, and the arithmetic is honest for
+     one reason worth stating. This note used to read "the viewBox is square
+     and nu.css keeps the element square, so one scale factor is exact" — and
+     then the viewBox was cropped to the ink (PAD.vy0/PAD.vh) and stopped being
+     square, which is the kind of change that silently puts a 42-unit offset
+     into every hit test. It did: a touch harness written against the old shape
+     grabbed the wrong dot until it was fixed. What is actually true, and is
+     what the two lines below rely on, is that the ELEMENT keeps the viewBox's
+     ratio (`inline-size: 100%; block-size: auto`), so preserveAspectRatio has
+     nothing to letterbox and each axis has one exact scale factor — and the
+     y axis carries the viewBox's own origin. If the element is ever given a
+     height that is not the ratio's, this needs getScreenCTM(). */
+  const toVB = (e) => { const b = svg.getBoundingClientRect();
+    if (!b.width || !b.height) return null;
+    return { x: (e.clientX - b.left) * PAD.box / b.width,
+             y: PAD.vy0 + (e.clientY - b.top) * PAD.vh / b.height }; };
+
+  let drag = null;
+  const twin = (key) => {
+    const s = sliders[key];
+    if (!s) return;
+    s.r.value = String(cur[key]);
+    s.out.textContent = knobFmt(byRow[key])(cur[key]);
+  };
+  /* ONE POINTER AT A TIME, AND IT IS THE ONE THAT STARTED. A second finger
+     landing mid-drag used to re-aim `drag` at whatever was under it, and then
+     the FIRST finger's pointerup committed the second finger's number. The
+     globe wants two pointers because a pinch is a gesture; a pad has one
+     handle and a second finger on it is an accident. */
+  svg.addEventListener("pointerdown", (e) => {
+    if (drag) return;
+    const v = toVB(e); if (!v) return;
+    // NEAREST GRIP WITHIN ITS OWN REACH, and "nearest" is compared as a
+    // FRACTION of each grip's reach rather than in pixels — otherwise a ring
+    // knot 20 units away would beat a dot 12 away that is well inside its own
+    // smaller halo. (ui/atlas.js's `nearest` makes the same move for the same
+    // reason: what a thumb means by "that one" is relative to the target.)
+    let best = null, bd = 1;
+    for (const g of grips) {
+      if (!g.live) continue;
+      const p = g.at(), r = g.reach || PAD.grab;
+      const d = ((p.x - v.x) * (p.x - v.x) + (p.y - v.y) * (p.y - v.y)) / (r * r);
+      if (d < bd) { bd = d; best = g; }
+    }
+    // A TAP ON THE PAD'S FACE IS A COARSE PLACEMENT, the way a tap on the
+    // globe is: nothing else on the page can put the tongue somewhere far away
+    // in one gesture, and a knob you have to drag 100px to cross is a knob you
+    // stop crossing. Only inside the face, and only when the face is live.
+    if (!best && handGrip.live &&
+        v.x >= PAD.x0 && v.x <= PAD.x0 + PAD.side &&
+        v.y >= PAD.x0 && v.y <= PAD.x0 + PAD.side) best = handGrip;
+    if (!best) return;
+    drag = best; drag.id = e.pointerId;
+    drag.drive(v.x, v.y);
+    for (const k of (drag.keys || [drag.key])) twin(k);
+    paint();
+    try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+    e.preventDefault();
+  });
+  svg.addEventListener("pointermove", (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const v = toVB(e); if (!v) return;
+    drag.drive(v.x, v.y);
+    for (const k of (drag.keys || [drag.key])) twin(k);
+    paint();
+    e.preventDefault();
+  });
+  // …and the one line the pointer events cannot deliver on a touch screen.
+  // `touch-action: none` on the grab surfaces is what actually wins the
+  // gesture; this is the belt to that pair of braces, and it is checked for
+  // `cancelable` because once a scroll is under way the browser stops asking.
+  svg.addEventListener("touchmove", (e) => {
+    if (drag && e.cancelable) e.preventDefault();
+  }, { passive: false });
+  const done = (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const g = drag; drag = null;
+    try { svg.releasePointerCapture(e.pointerId); } catch (err) {}
+    /* ONE RECOMPILE PER GESTURE, at the end of it, and NONE AT ALL IF THE
+       NUMBER DID NOT MOVE — so a tap that lands on a knot is not an edit to
+       the record. The test is the VALUE and not whether the pointer travelled:
+       a flag counting pointermoves stood here and it was the wrong question,
+       because a two-pixel wobble inside one step of the slider's grid is not a
+       change and a tap on the pad's face a hundred pixels from the handle is. */
+    const keys = g.keys || [g.key];
+    let wrote = false;
+    for (const k of keys) {
+      const was = +knobNow(voice, byRow[k]);
+      if (Math.abs(was - cur[k]) < 1e-9) continue;
+      writeKnob(voice, k, cur[k]); wrote = true;
+    }
+    if (wrote) changed();
+  };
+  svg.addEventListener("pointerup", done);
+  // A CANCEL IS THE BROWSER TAKING THE GESTURE, so the picture goes back to
+  // what the document says rather than keeping half a drag nobody committed.
+  svg.addEventListener("pointercancel", (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    drag = null;
+    for (const k of ["tongue", "tongueD", "artic", ...TUBE])
+      if (byRow[k]) { cur[k] = +knobNow(voice, byRow[k]); twin(k); }
+    paint();
+  });
+
+  parent.appendChild(svg);
+
+  /* ---------- WHAT THE PICTURE SAYS, IN WORDS -------------------------
+     Because it is `aria-hidden` and because the page must read with the
+     stylesheet off, every claim the drawing makes is also made here in the
+     row's own measured words. Nothing below is typed twice: the labels and the
+     gate sentences are knobs.js's. */
+  P(parent, el("span", "the five letters are where tract.lib's own table puts " +
+    "the tongue for i, e, a, o and u. Across the square is " + tp.label +
+    " — the glottis at the left, the lips at the right; up the square is " +
+    td.label + " — a wide tube at the top, a closure at the bottom. The ring " +
+    "is your handle; the dot on the line from a letter to it is where the " +
+    "tongue actually goes, and how far along that line it sits IS " +
+    ar.label + ". Drag any of them, or use the sliders below for a number.",
+    "nu-why"));
+  for (const [why, labels] of (() => {
+    const by = new Map();
+    const put = (l, w) => { if (!by.has(w)) by.set(w, []); by.get(w).push(l); };
+    if (shutTongue) { put(tp.label, shutTongue); put(td.label, shutTongue); }
+    for (const [l, w] of gated) put(l, w);
+    return [...by].map(([w, l]) => [w, l]);
+  })())
+    P(parent, el("span", andList(labels) + " " +
+      (labels.length > 1 ? "are" : "is") + " greyed here and in the table " +
+      "below — " + why + ".", "nu-why"));
+  if (babble > 0 && bb)
+    P(parent, el("span", "the faint web is every place the driver can put the " +
+      "tongue: it slides from a closure to a vowel and both coordinates ride " +
+      "the same slide, so that mesh is the whole territory, exactly. It picks " +
+      "its own vowels too — the word this record says is not consulted while " +
+      "it babbles. This record babbles at " + knobSay(bb, babble) + ".",
+      "nu-why"));
+}
+
 /* ---------- THE BLOCK ---------------------------------------------------- */
 function knobsBlock(parent, voice) {
   const K = NuKnobs;
@@ -4550,6 +5746,11 @@ function knobsBlock(parent, voice) {
 
   const byRow = {};
   for (const r of V.rows) byRow[r.key] = r;
+  // THE OTHER VIEW'S THUMBS, KEPT BY KEY. The pad moves them as your finger
+  // moves, so the two views cannot be seen disagreeing even for a frame — see
+  // `tractPad` above, and the `listening`/`volume` failure it is guarding
+  // against. Nothing else reads this map.
+  const sliders = {};
   const t = el("table");
   t.className = "nu-knobs";
   const head = el("tr");
@@ -4758,11 +5959,22 @@ function knobsBlock(parent, voice) {
       (v) => writeKnob(voice, row.key, v),
       row.min, row.max, row.step,
       row.label + ", on " + voice.name, null, knobFmt(row));
+    sliders[row.key] = { r, out };
     if (shut) { r.disabled = true; r.setAttribute("aria-disabled", "true");
                 r.dataset.why = shut;
                 r.setAttribute("aria-label", row.label + ", on " + voice.name + ", " + shut); }
     rowFor(row.label, [r, document.createTextNode(" "), out], thirdCell(row), why);
   }
+
+  /* THE PICTURE GOES OVER THE TABLE, AND IT IS NOT ASKED WHICH INSTRUMENT
+     THIS IS. `tractPad` draws when the voice HAS a tongue position and a
+     tongue diameter among its MEASURED rows and returns without a mark when it
+     does not — which is the same rule the rest of this block runs on ("what a
+     voice shows is decided by its `kind` and nothing else"). Today exactly one
+     module in the fleet of 27 answers to that and it is `tract_voice`; a
+     second tube would get the pad for free and a name check would not have
+     given it one. */
+  tractPad(parent, voice, V, byRow, sliders);
 
   pane(parent, t);
 
@@ -4909,6 +6121,7 @@ function bandBlock(parent) {
   // the highlight the browser already has.
   const bar = el("p");
   bar.id = "tabs";
+  bar.className = "nu-row";   // one name for a strip of buttons — nu.css
   for (const name of tabs) {
     const b = document.createElement("button");
     b.type = "button";
@@ -5276,19 +6489,29 @@ on("pos", (d) => {
   // is what it always was.
   const rate = (GENRES[GK + Math.max(0, d.si | 0)] || {}).rate || 1;
   const base = (inBox * 16 + (Math.max(1, d.beat || 1) - 1) * 4) * rate;
-  // WHICH MEASURE THE SCORE IS SHOWING, off the very number the playhead walks
-  // — so the window and the red note can never disagree about which bar this
-  // is. `repaintScore` is called every tick and its first act is to compare two
-  // integers (the window and the section); on a tick where they have not moved
-  // it does nothing but ask the runway whether the NEXT window is engraved yet,
-  // which is another integer compare (`engraveWindow`'s `B.key === key`). The
-  // window moves once a BAR now rather than once every two (2026-08-25), and
-  // the engraving still happens at most once per window and never on the
-  // barline itself.
-  scoreMeas = Math.max(0, Math.floor(base / SCORE_SPB));
+  // WHERE THE RIBBON IS, off the very number the playhead walks — so the score
+  // and the red note can never disagree about which bar this is. This is the
+  // ONE place the transport writes the score's position: the step, when the
+  // clock said so, and how fast the steps are going. Everything else the
+  // ribbon does between beats it does by arithmetic on these three (see
+  // `stepNow`), which is what makes the motion continuous without asking the
+  // audio thread anything forty times a second.
+  const stepSec = 60 / Math.max(30, d.bpm || DOC.time.bpm) / 4;
+  scoreStep = base;
+  scoreStamp = performance.now();
+  scoreRate = rate / stepSec;              // pattern steps a second
+  /* AND IT CANNOT BE A BAR THE SECTION HAS NOT GOT. `passAt` estimates the bar
+     from the engine's own clock and it can report bar 5 of a four-bar box for
+     a tick at the boundary — the runway is ahead of the ear. Unclamped, that
+     asked the ribbon for a tile at bar 4 of a 4-bar section, which is not on
+     it, so the whole ribbon was rebuilt around a bar of rests: measured
+     2026-08-25 at 390px, the picture jumped 338px, once per section. The old
+     two-bar window had the same clamp inside `scoreWinOf` and it is the same
+     sentence — a score cannot show a bar that does not exist. */
+  scoreMeas = Math.max(0, Math.min(scoreLen(Math.max(0, atSec)) - 1,
+                                   Math.floor(base / SCORE_SPB)));
   repaintScore();
   lightStep(base);
-  const stepSec = 60 / Math.max(30, d.bpm || DOC.time.bpm) / 4;
   for (let sub = 1; sub < 4; sub++)
     stepTimers.push(setTimeout(() => { if (playing) lightStep(base + sub * rate); },
       sub * stepSec * 1000));
@@ -5311,6 +6534,13 @@ on("transport:state", () => {
   // ...AND THE SCORE, which shows the sounding section playing or the edit
   // position stopped, so the flip is exactly one caption and one system.
   repaintScore(true); say();
+  // …AND A MOTIF SOUNDING ALONE IS OVER THE MOMENT THE RECORD IS NOT. Two
+  // musics at once is the thing the audition refuses (see TAP A MOTIF TO HEAR
+  // IT); the refusal has to hold when the transport starts UNDER a sounding
+  // motif as well as when a tap arrives during one. The loop goes with it —
+  // an editing loop that survived the press would come back the moment you
+  // stopped, which is a surprise rather than a state.
+  auditionOff();
   // …and the readout, because "pos" stops ticking the moment the transport
   // does: without this the page would still be claiming a runway after stop().
   engineAt = 0; paintEngine();
@@ -5342,7 +6572,56 @@ function draw() {
   // about a record, and what this page has is a point in genre space with
   // eight axes moved off it. The basis says its own name.
   const h1 = $("title");
-  if (h1) h1.textContent = (GENRES[DOC.basis] || {}).label || DOC.basis;
+  if (h1) {
+    h1.textContent = (GENRES[DOC.basis] || {}).label || DOC.basis;
+    /* WHAT THIS RECORD IS, SOMEWHERE ELSE (Paul, 2026-08-26: "add actual
+       Wikipedia links for each genre we have at the top by the title").
+       Resolved at BUILD time against a local copy of the whole English
+       Wikipedia — nukernel/wiki.js, derived by nukernel/wiki-extract.js — so
+       this is the extraction law in its ordinary form: derive it, commit the
+       derivation, ship the table. A LINK IS NOT A FETCH: the href costs no
+       request until a reader clicks it, which is why it does not break the
+       offline law (test/atlas.js G7 aborts every non-localhost request and
+       stays green with 191 wikipedia hrefs in the DOM).
+
+       `textContent =` wipes children, so the link cannot be appended once and
+       left — it is rebuilt every draw, synchronously, onto an element that
+       already exists. THE PAGE DOES NOT JUMP: nothing here is a host that
+       grows after draw() returns, and `#title` is OUTSIDE `#app`, so MOTIF.md's
+       frozen-DOM law is not touched either.
+
+       TWO ANCHORS AND THE SIX ROLES GET NO LINK, on purpose: a wrong link is
+       worse than none (nukernel/WIKI.md, and `NuWiki.MISSES` carries the
+       paragraph for each). The title simply draws without one. */
+    const W = window.NuWiki, w = W && W.WIKI[DOC.basis];
+    if (w) {
+      const a = el("a", w.title.replace(/_/g, " "), "nu-wiki");
+      // PROPERTIES, NOT MARKUP: three titles carry an `&` (Contemporary R&B,
+      // Alternative R&B, Speak & Spell) and a %26 in an attribute string would
+      // need escaping. Assigning `href` escapes nothing and needs to.
+      a.href = W.url(DOC.basis);
+      a.rel = "noopener";
+      a.target = "_blank";
+      // WHAT KIND OF ARTICLE IT IS, IN THE DOM AND NOT ONLY IN A TOOLTIP.
+      // 31 of the 191 rows are not a genre article: 20 point at the ACT
+      // genres.js names in brackets, 4 at the ALBUM that is the era
+      // (analogsynthpop -> Speak & Spell, gothsynth -> Violator: the same band
+      // nine years apart, which one link to Depeche Mode would erase), 7 at an
+      // article wider than the anchor. A reader who sees only "Lo-fi music"
+      // beside "Los Angeles 2020" cannot tell which. `title` is NOT an
+      // accessible name (this file's own note at :3032), so the word is a REAL
+      // span in the DOM — visible, read aloud, and still there with the
+      // stylesheet off. `.nu-vh` was the recipe's suggestion and is refused
+      // here for one reason: a `::after` or a clipped span would need a
+      // VISIBLE counterpart to do its job, and two spellings of one word is
+      // the second owner this round exists to delete. 160 of the 191 rows are
+      // plain genres and get no span at all.
+      a.dataset.kind = w.kind;
+      a.title = w.why;
+      if (w.kind !== "genre") a.append(el("span", " · the " + w.kind, "nu-kind"));
+      h1.append(" ", a);
+    }
+  }
   const box = $("app");
   const wasKey = document.activeElement && document.activeElement.dataset
     ? document.activeElement.dataset.k : null;
@@ -5550,9 +6829,27 @@ window.__eightStep = () => atStep;
 // list: it empties whatever declared itself, and a surface that forgets to
 // declare itself fails the gate rather than sneaking past it.
 window.__eightFrozen = () => {
-  const c = $("app").cloneNode(true);
-  for (const n of c.querySelectorAll("[data-live]")) n.replaceChildren();
-  return c.outerHTML;
+  /* IT PARKS THE LIVE HALF RATHER THAN CLONING IT, and that is a cost fix with
+     a measurement behind it. It read `$("app").cloneNode(true)` and then
+     emptied every `[data-live]` IN THE CLONE — so the expensive half was
+     copied and then thrown away, and once the score became a scrolling ribbon
+     that half was several thousand SVG nodes. Measured 2026-08-25 at 390x844
+     with test/motif-frozen.js watching: 112ms, 105ms and 182ms of main thread
+     landed while the gate was taking its snapshots, and A7 (which cannot tell
+     the page's work from its own instrument's) failed on them.
+     Now the children are MOVED into fragments, the empty shell is cloned, and
+     they are moved back — all inside one task, so nothing is laid out or
+     painted in between and no node loses its identity or its state. The string
+     it returns is byte for byte the one the old code returned. */
+  const app = $("app");
+  const live = [...app.querySelectorAll("[data-live]")];
+  const parked = live.map((n) => {
+    const f = document.createDocumentFragment();
+    while (n.firstChild) f.append(n.firstChild);
+    return f;
+  });
+  try { return app.cloneNode(true).outerHTML; }
+  finally { live.forEach((n, i) => n.append(parked[i])); }
 };
 window.__eightEngraves = () => engraves;      // abcjs renders, ever
 // ...AND THE SCORE'S OWN, which is a different claim on a different surface
@@ -5560,14 +6857,26 @@ window.__eightEngraves = () => engraves;      // abcjs renders, ever
 // Over a playthrough it is one per two measures at most, and fewer wherever a
 // window repeats the one before it.
 window.__eightScoreEngraves = () => scoreEngraves;
-window.__eightScore = () => ({ abc: (scoreBufs[scoreShown] || {}).abc || "",
-                               win: scoreWin, sec: scoreSec,
-                               ready: scoreBufs.map((b) => b.key + (b.ready ? "!" : "?")),
-                               voices: ((scoreBufs[scoreShown] || {}).voices || [])
-                                 .map((v) => v.name),
-                               lit: scoreLit.length, cap: scoreCap &&
-                               scoreCap.textContent,
-                               box: scoreReserve, fit: scoreFit() });
+// …AND WHAT THEY COST, in milliseconds of main thread, last twenty first-hand.
+// The claim this round makes is that a tile is small enough to draw between
+// beats; this is the artifact that says whether it is true on THIS record at
+// THIS width, which is the only place the answer lives.
+window.__eightScoreMs = () => scoreMs.slice();
+window.__eightScore = () => {
+  const T = soundingTile() || scoreLine[0] || {};
+  return { abc: T.abc || "", sec: scoreSec, bar: scoreMeas,
+           // the ribbon as it is laid out, left to right: which section each
+           // tile holds, how wide it is and where it starts. A gate that wants
+           // to know whether the score MOVED reads `x`; one that wants to know
+           // whether it was RE-DRAWN reads __eightScoreEngraves.
+           line: scoreLine.map((t) => t.si + ":" + t.k + (t.ready ? "!" : "?") +
+                               "@" + Math.round(t.off) + "+" + Math.round(t.w * t.s)),
+           voices: (T.voices || []).map((v) => v.name),
+           lit: scoreLit.length, cap: scoreCap && scoreCap.textContent,
+           x: scoreX == null ? null : +scoreX.toFixed(2),
+           step: +stepNow().toFixed(3),
+           box: scoreReserve, fit: scoreFit() };
+};
 window.__eightSec = () => atSec;              // the SOUNDING section
 window.__eightViewSec = () => editSec();      // the section being WRITTEN
 // ...and the live half, so a gate can prove a boundary happened twice over:

@@ -558,10 +558,22 @@ Each is one question naming the thing to listen for or look at.
 5. **The reverb return, opened.** Play the shipped chant. Every genre sends
    `tone.verb` and until this round that send went into a muted bus. **Does it
    sound like a stone room?**
-6. **`fx` back on a track.** This reverses your 2026-08-17 directive (*"get rid
-   of inserts, reverb, and echo — let me send to bus 1, bus 2, and bus 3
-   instead"*). The argument is that the sends are wired to real returns now, so
-   a chip is only for what must be IN the path. Do you accept the reversal?
+6. **~~`fx` back on a track.~~ ANSWERED — no, and the round is undone.** The
+   ask read: *"This reverses your 2026-08-17 directive ('get rid of inserts,
+   reverb, and echo — let me send to bus 1, bus 2, and bus 3 instead'). The
+   argument is that the sends are wired to real returns now, so a chip is only
+   for what must be IN the path. Do you accept the reversal?"* You answered
+   2026-08-26: *"Don't let me add effects to instruments. That's bus and board
+   stuff. But let me have up to four buses and a way to direct them to each
+   other."* The chip is gone from PARTMIX, from the voice's tab and from the
+   board. **There are four buses now**, and bus 3 and bus 4 are groups whose
+   destination is a knob — aim bus 3 at bus 2 and the same send leaves `rev` and
+   arrives on `del` in `__nuMix()` (`desk-gate` G14 measures it: 15.16/0 →
+   13.03/8.73). The one bus-to-bus send that reaches the engine turned out to be
+   the master's `space` — `mrev` in `fx_bus.dsp:221` — and the board now says
+   so instead of drawing a second control for it. **Nothing left to decide
+   here.** What is still yours: does aiming a group somewhere new sound like a
+   different room, or only like a different number?
 7. **`--cell: 36px` on a real phone.** Sixteen 36px cells; 36 clears WCAG AA but
    not Apple's 44. Since the rotation the cost of going to 44 is a taller block
    rather than a second swipe per bar. **Does your thumb hit the cell you

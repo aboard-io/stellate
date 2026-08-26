@@ -807,36 +807,46 @@
   // levels and five places. A mixer whose channel strip speaks a different
   // language from the master strip is two things to learn.
   //
-  // A TRACK HAS THREE SENDS AND NO INSERTS ("get rid of inserts, reverb, and
- // echo — let me send to bus 1, bus 2, and bus 3 instead", Paul, 2026-08-17).
-  // The three sends ARE the three buses — `rev`, `echo`, `room` keep their
-  // saved names and are what BUS_FIELDS names bus 1, bus 2 and bus 3 — so a
+  // A TRACK HAS FOUR SENDS AND NO INSERTS ("get rid of inserts, reverb, and
+ // echo — let me send to bus 1, bus 2, and bus 3 instead", Paul, 2026-08-17;
+  // and, settling it, "Don't let me add effects to instruments. That's bus and
+  // board stuff. But let me have up to four buses and a way to direct them to
+  // each other", 2026-08-26). It said THREE until that second sentence.
+  // The four sends ARE the four buses — `rev`, `echo`, `room`, `aux` keep their
+  // saved names and are what BUS_FIELDS names bus 1 through bus 4 — so a
   // song written before this loads with its reverb and echo intact and simply
-  // finds a third send it never used. The reason it is sends and not inserts
+  // finds two sends it never used. The reason it is sends and not inserts
   // is measured rather than tidy: the engine's own bus measurement counts a
   // compressor or a convolver as the same arithmetic feeding one voice or
   // twenty, so a treatment costs a CONSTANT on a bus and a MULTIPLE on a
   // strip.
   //
-  // `fx` IS OFF THE DESK, PERIOD ("get rid of inserts, reverb, and echo — let
- // me send to bus 1, bus 2, and bus 3 instead", Paul, 2026-08-17). A prior
-  // round stopped any surface from WRITING a new one and left the FIELD in
-  // place so an old save's chain would still play — but PARTMIX is also where
-  // the mix table reads its own column list from, so the field left every
-  // track strip still DRAWING an insert bar nobody could clear. There is no
-  // way to keep the declaration and keep the promise, so it is gone: a saved
-  // `parts.<key>.fx` from before this round is not an error, it is simply a
-  // key song.js's loader (which validates a part entry against this very
-  // list) no longer recognizes, and it is dropped on load exactly the way any
-  // other unknown key is — never thrown, never migrated to something else,
-  // because there is nothing left to migrate it TO: no live song can reach
-  // resolvePartMix's `fx` handling below again, since nothing copies a part
-  // entry through this list's `fx` any more (that line stays, for the offline
-  // desk gate that still hands it one on purpose — its own note says why).
-  // The BOX keeps its own `fx` chain as the
+  // `fx` IS OFF THE DESK, PERIOD — SAID TWICE NOW, AND THE SECOND TIME IS THE
+  // ONE THAT SETTLES IT. This paragraph is the 2026-08-17 argument, unchanged,
+  // because the 2026-08-24 round overturned it and 2026-08-26 put it back and a
+  // sentence that has been true, false and true again is worth keeping whole:
+  //
+  //   "A prior round stopped any surface from WRITING a new one and left the
+  //   FIELD in place so an old save's chain would still play — but PARTMIX is
+  //   also where the mix table reads its own column list from, so the field
+  //   left every track strip still DRAWING an insert bar nobody could clear.
+  //   There is no way to keep the declaration and keep the promise, so it is
+  //   gone: a saved `parts.<key>.fx` from before this round is not an error, it
+  //   is simply a key song.js's loader (which validates a part entry against
+  //   this very list) no longer recognizes, and it is dropped on load exactly
+  //   the way any other unknown key is — never thrown, never migrated to
+  //   something else, because there is nothing left to migrate it TO: no live
+  //   song can reach resolvePartMix's `fx` handling below again, since nothing
+  //   copies a part entry through this list's `fx` any more (that line stays,
+  //   for the offline desk gate that still hands it one on purpose — its own
+  //   note says why)."
+  //
+  // Every word of that is true again as of 2026-08-26 and by the same
+  // mechanism. The BOX keeps its own `fx` chain as the
   // group insert (FIELDS below), and the section strip is where it is
   // reached — that one is a genre-wide treatment, not a per-track insert, and
-  // Paul never asked for it to go.
+  // Paul never asked for it to go ("That's bus and board stuff" is a statement
+  // about where a treatment lives, and a section chip lives on the section).
   //
   // mute/solo are the two that are NOT enums, because they are not choices
   // between values — they are the desk's own pair, and solo is the one control
@@ -846,28 +856,49 @@
     { key: "rev",  table: SENDS,  labels: SENDLABEL,  default: null },
     { key: "echo", table: SENDS,  labels: SENDLABEL,  default: null },
     { key: "room", table: SENDS,  labels: SENDLABEL,  default: null },
+    // BUS 4, AND IT IS A SEND LIKE THE OTHER THREE ("let me have up to four
+    // buses and a way to direct them to each other", Paul, 2026-08-26). Named
+    // `aux` and not `bus4` for the reason `rev`/`echo`/`room` keep their names:
+    // the field is the save's word and a positional name would have to be
+    // renamed the day a bus is reordered. Absent = 0 = adds nothing, so every
+    // record written before this loads and sounds exactly as it did.
+    { key: "aux",  table: SENDS,  labels: SENDLABEL,  default: null },
     { key: "lvl",  table: LEVELS, labels: LEVELLABEL, default: null },
     { key: "pan",  table: PANS,   labels: PANLABEL,   default: null },
-    // A CHIP IS BACK ON THE TRACK (2026-08-24, Paul: "we've lost the engineer
-    // entirely"). It came off 2026-08-17 because a track had no other way to
-    // reach a treatment and an insert costs a MULTIPLE where a bus costs a
-    // constant. BOTH HALVES OF THAT CHANGED: the three sends above are wired
-    // to the parent's own returns now (audio/desk.js masterState reads
-    // buses.rev.ret onto state.reverb), so a SHARED treatment goes to a bus
-    // and this is only for what must be IN the path — a crunch on one guitar,
-    // or `sweep`, which FXSEND above already says can never be a send.
-    // Capped at MAX_FX; the desk drops it on a STEREO voice by law
-    // (audio/desk.js widthKept). The paragraph above that called
-    // resolvePartMix's `fx` branch unreachable is rewritten rather than
-    // deleted, because it is the record of why the field left.
+    // AND IT CAME OFF AGAIN, 2026-08-26, BY THE OWNER OF THE QUESTION. This
+    // entry stood here for two days and STATE.md item 6 asked Paul to accept
+    // the reversal in so many words. He answered the other way: *"Don't let me
+    // add effects to instruments. That's bus and board stuff. But let me have
+    // up to four buses and a way to direct them to each other."* So the
+    // declaration goes and the argument stays, because the argument was not
+    // wrong — it was answering the wrong question.
     //
-    // `type: "list"`, not a new "chips" kind: song.js:601 validates a saved
-    // part entry by walking THIS list, and its only array branch is
-    // `f.type === "list"` -> filterList(f, v). A key it does not recognise
-    // falls through to okEnum, which asks whether FX holds the STRINGIFIED
-    // ARRAY as a key — so a "chips" spelling would have made every saved chip
-    // an error on load. One word, and the round trip works.
-    { key: "fx", type: "list", table: FX, max: MAX_FX, default: [] },
+    // WHAT IT SAID, and the half of it that is still true: "A CHIP IS BACK ON
+    // THE TRACK (2026-08-24, Paul: 'we've lost the engineer entirely'). It came
+    // off 2026-08-17 because a track had no other way to reach a treatment and
+    // an insert costs a MULTIPLE where a bus costs a constant. BOTH HALVES OF
+    // THAT CHANGED: the three sends above are wired to the parent's own returns
+    // now (audio/desk.js masterState reads buses.rev.ret onto state.reverb), so
+    // a SHARED treatment goes to a bus and this is only for what must be IN the
+    // path — a crunch on one guitar, or `sweep`, which FXSEND above already
+    // says can never be a send. Capped at MAX_FX; the desk drops it on a STEREO
+    // voice by law (audio/desk.js widthKept). `type: "list"`, not a new "chips"
+    // kind: song.js:601 validates a saved part entry by walking THIS list, and
+    // its only array branch is `f.type === "list"` -> filterList(f, v)."
+    //
+    // The measurement half stands and is now the REASON THE FOURTH BUS EXISTS:
+    // an insert costs a multiple and a bus costs a constant, so if a chip may
+    // not sit on a track then the answer is not fewer treatments, it is MORE
+    // BUSES to hang them on. `aux` below is bus 4 and it is what replaces this
+    // line. What is settled and no longer arguable is WHERE a treatment lives:
+    // on a bus, never on an instrument.
+    //
+    // NOTHING TO MIGRATE, MEASURED: zero voices in the shipped catalog carry a
+    // `desk.fx` (walked over songs.js, 2026-08-26). A saved one from the two
+    // days this shipped is not an error — it is a key song.js's loader (which
+    // validates a part entry against this very list) no longer recognises, and
+    // it is dropped on load the way any other unknown key is.
+    // (no `{ key: "fx", ... }` entry: see above)
     { key: "mute", type: "flag",  default: false },
     { key: "solo", type: "flag",  default: false },
     // THE FADER OFFSET, in dB, and it is an OFFSET rather than a level: the
@@ -904,20 +935,22 @@
     const pick = (tbl, v, dflt) =>
       (v != null && Object.prototype.hasOwnProperty.call(tbl, String(v))) ? tbl[v] : dflt;
     return {
-      // REACHABLE AGAIN, 2026-08-24. This paragraph said "UNREACHABLE FROM ANY
-      // LIVE SONG, not deleted here… nothing manufactures that input anymore;
-      // only a test does" — true for exactly the week PARTMIX did not declare
-      // `fx`. It declares it again (see the note on that entry for what
-      // changed), so song.js's loader copies a saved chip through this list and
-      // the engineer writes one, and this branch is the ordinary path once
-      // more. The clamp is what it always was: unknown keys drop, the list caps
-      // at MAX_FX, and audio/desk.js widthKept still refuses the whole chain on
-      // a STEREO voice — a chip that cannot sound is greyed on the board rather
-      // than swallowed here.
+      // UNREACHABLE FROM ANY LIVE SONG AGAIN, 2026-08-26, and the line stays
+      // for the third time. Its history in one place, because it is the record
+      // of an argument that went both ways: it read "UNREACHABLE FROM ANY LIVE
+      // SONG, not deleted here… nothing manufactures that input anymore; only a
+      // test does" (2026-08-17), then "REACHABLE AGAIN, 2026-08-24 … this
+      // branch is the ordinary path once more", and now nothing manufactures
+      // the input again — PARTMIX declares no `fx`, so song.js's loader drops a
+      // saved one and no surface writes one. The offline desk gate still hands
+      // it a chip on purpose, which is why the clamp is kept exact rather than
+      // stubbed: unknown keys drop and the list caps at MAX_FX, and
+      // audio/desk.js widthKept still refuses the whole chain on a STEREO voice.
       fx: (g.fx || []).filter(k => Object.prototype.hasOwnProperty.call(FX, k)).slice(0, MAX_FX),
       rev: pick(SENDS, g.rev, 0),
       del: pick(SENDS, g.echo, 0),      // the field is `echo`, the bus is `del`
-      room: pick(SENDS, g.room, 0),     // bus 3, the one a track never had
+      room: pick(SENDS, g.room, 0),     // bus 3
+      aux: pick(SENDS, g.aux, 0),       // bus 4, the one a track never had
       lvl: pick(LEVELS, g.lvl, 1),
       pan: pick(PANS, g.pan, 0),
       mute: !!g.mute,
@@ -1103,27 +1136,90 @@
   //   echo.time -> state.delay.beats (a fraction of a BAR here, beats there)
   //   echo.fb   -> state.delay.feedback
   //   echo.tone -> state.delay.cutoff
-  // BUS 3 IS NOT A THIRD RETURN and the board says so. The renderers carry four
-  // buses {dry, rev, del, pp} and `pp` is a real ping-pong with its own time,
-  // feedback and tone — but state-engine:2808 stamps `pp` on DRUM events only,
-  // so a pitched voice's send is dropped by mapEvents. Wiring it means editing
-  // the parent and re-running its parity gates. `room` therefore keeps its name
-  // and no knob of its own: it IS the reverb bus (audio/desk.js:590 folds a
-  // part's `room` into its `rev`), and pretending otherwise is the lie this
-  // round exists to stop telling.
+  // TWO OF THE FOUR BUSES HAVE AN ENGINE BUS OF THEIR OWN AND TWO DO NOT, and
+  // that is the whole shape of this table. `engine` says which — it is the name
+  // of the accumulator engine/faust/press/render-core.js:113 destructures and
+  // engine/faust/dsp/fx_bus.dsp takes as an input — and a row without one is a
+  // GROUP: a place to gather sends whose feed is summed into another bus, with
+  // `to` naming which. There is no third answer and no invented one.
+  //
+  // WHAT THE ENGINE ACTUALLY HAS, read rather than assumed (2026-08-26):
+  //   dry -> the main, and every unit's `u.dry` reaches it
+  //   rev -> BUS 1. `u.rev` feeds it; `rgain = clamp(state.reverb*3.2, 0, 2)`
+  //          returns it, and `buses.rev.ret` is that state field. Live, both ways.
+  //   del -> BUS 2. `u.del` feeds it, and its three internal knobs (dtime/dfb/
+  //          dcut) are state fields too — but its RETURN is `dgain`, which
+  //          state-engine.js fxParams emits as the literal 1. Live in, fixed out.
+  //   pp  -> not a bus this page can have. It is fed by a PER-EVENT `e.pp`
+  //          stamped on drum events only (state-engine.js:2808) and NOT on
+  //          sampled drums at all ("the sampler mix has no pp bus", same file),
+  //          which is nearly every kit here. A fourth ENGINE bus exists and
+  //          there is no word on this page that can put a signal in it.
+  //
+  // SO BUS 3 AND BUS 4 ARE GROUPS, and this paragraph replaces one that was
+  // right about the facts and wrong about the conclusion. It read: "BUS 3 IS
+  // NOT A THIRD RETURN and the board says so. The renderers carry four buses
+  // {dry, rev, del, pp} and `pp` is a real ping-pong with its own time, feedback
+  // and tone — but state-engine:2808 stamps `pp` on DRUM events only, so a
+  // pitched voice's send is dropped by mapEvents. Wiring it means editing the
+  // parent and re-running its parity gates. `room` therefore keeps its name and
+  // no knob of its own: it IS the reverb bus (audio/desk.js:590 folds a part's
+  // `room` into its `rev`), and pretending otherwise is the lie this round
+  // exists to stop telling."
+  //
+  // Every fact there is still true. What was wrong is "no knob of its own". The
+  // FOLD ITSELF IS A KNOB and always was — audio/desk.js chose `rev` in two
+  // hard-coded places, and that choice belongs to the desk and not to the
+  // engine. Making it a `to` knob is not a new wire; it is the wire that was
+  // already there, with a hand on it. A group aimed at bus 2 moves every unit's
+  // `del` in `__nuMix()`, which is the proof this round is gated on.
+  //
+  // AND THAT IS WHAT "direct them to each other" MEANS HERE (Paul, 2026-08-26).
+  // A group may aim at bus 1, at bus 2, or at the OTHER GROUP — bus 4 -> bus 3
+  // -> bus 2 is a real chain and it is the honest whole of what the desk can
+  // route without editing the parent. `busRoute` below walks those edges and
+  // REFUSES A CYCLE, which is why `busSendPlan` (deleted 2026-08-24 for having
+  // no caller since the WebAudio rack went) comes back under a new name with
+  // one: the moment a group can name another group, a cycle is reachable by two
+  // clicks and a silent stack overflow is not an answer.
   const BUSROWS = [
-    { bus: "rev",  label: "reverb", feed: "fed by the reverb sends", eq: BUS_EQ_BANDS,
+    { bus: "rev",  label: "reverb", engine: "rev",
+      feed: "fed by the reverb sends", eq: BUS_EQ_BANDS,
       knobs: [
         { key: "ret",   label: "return", table: RETURNS, labels: RETURNLABEL, default: null },
         { key: "color", label: "room",   table: REVERBS, labels: REVERBLABEL, default: null } ] },
-    { bus: "echo", label: "delay",  feed: "fed by the echo sends", eq: BUS_EQ_BANDS,
+    { bus: "echo", label: "delay",  engine: "del",
+      feed: "fed by the echo sends", eq: BUS_EQ_BANDS,
       knobs: [
         { key: "time", label: "time",    table: DTIMES,  labels: DTLABEL,     default: null },
         { key: "fb",   label: "repeats", table: EFBS,    labels: EFBLABEL,    default: null },
         { key: "tone", label: "tone",    table: ETONES,  labels: ETONELABEL,  default: null } ] },
-    { bus: "room", label: "room",   feed: "the kit's ambience — the same return as bus 1",
+    // THE TWO GROUPS. `room` keeps its name and its saved sends — a record
+    // written when bus 3 was "the kit's ambience folded into bus 1" loads with
+    // its `room` sends intact and finds that the fold now has a knob whose
+    // ABSENT VALUE IS THE FOLD IT ALWAYS HAD. That is the absent-is-today law
+    // applied to a route rather than to a level, and it is why `to` defaults to
+    // null and `busRoute` resolves null to bus 1.
+    // BUS 3 KEEPS THE NAME `room` and this is not sentiment. Its SECTION lane
+    // still is the kit's ambience — audio/desk.js scopes `sec.room` to the drums
+    // and says why — and 139 shipped records read that word on their send rows.
+    // What changed is not what bus 3 carries, it is that where it lands stopped
+    // being a constant. Bus 4 is new and has no such history, so it is called
+    // what it is.
+    { bus: "room", label: "room", engine: null,
+      feed: "the kit's ambience, and a group — its sends land where it is aimed",
+      eq: BUS_EQ_BANDS, knobs: [] },
+    { bus: "aux",  label: "group", engine: null,
+      feed: "a group — its sends land wherever it is aimed",
       eq: BUS_EQ_BANDS, knobs: [] },
   ];
+  // WHERE A GROUP MAY BE AIMED — every bus but itself, and the labels are
+  // POSITIONAL ("bus 1") because that is what the board's column heads say and
+  // a group's destination is read against the board, not against a name a
+  // record may have renamed. Derived from BUSROWS so a fifth bus would appear
+  // here by existing.
+  const BUSTO = {};
+  BUSROWS.forEach((r, i) => { BUSTO[r.bus] = "bus " + (i + 1); });
   // the name knob is spliced onto every row from ONE place, so a fourth bus
   // would inherit it by existing rather than by being remembered — and so
   // song.js/resolveBuses/busesIsDefault pick it up with no edit at all (they
@@ -1141,8 +1237,76 @@
   // it comes back the day the parent's own bus graph can take an edge.
   const BUSES = BUSROWS.map(r => ({ ...r, knobs: [
     { key: "name", label: "name", table: BUSNAMES, labels: BUSNAMES, default: null },
+    // ...AND `to` ON A GROUP AND ONLY ON A GROUP. Bus 1 and bus 2 have an
+    // engine bus, so where they go is the ENGINE's answer and not a choice
+    // (fx_bus.dsp mixes both into the master and the two cross-sends inside it
+    // — `d*0.2`, `(ppl+ppr)*0.12` — are LITERALS in the DSP). Drawing a `to`
+    // on them would be the knob-that-lies this file exists to prevent. A group
+    // has no engine bus, so `to` is the only thing it is.
+    ...(r.engine ? [] : [{ key: "to", label: "goes to", table: BUSTO,
+                           labels: BUSTO, default: null }]),
     ...r.knobs,
   ] }));
+  // ---- WHERE EVERY BUS'S FEED FINALLY LANDS, cycles refused ---------------
+  // ONE RESOLVER, because three readers ask it: audio/desk.js (twice — the
+  // composed channel base AND the unit table, and a drift between those two is
+  // the board showing one number while the tape carries another),
+  // ui/engineer.js (the `goes to` row and the greying of a group's own name in
+  // its own menu) and desk-gate. It answers, per bus:
+  //   engine  the accumulator its feed reaches — "rev" or "del" — after
+  //           following every `to` edge; null only if a cycle ate it
+  //   chain   the buses walked to get there, for printing the route
+  //   cycle   true if the edges close on themselves
+  //
+  // A CYCLE IS REFUSED AND NOT BROKEN. bus 3 -> bus 4 -> bus 3 is two clicks
+  // away and there is no arithmetic that makes it mean something: the feed
+  // would be summed into itself forever. The refusal is to fall back to the
+  // bus's SHIPPED destination (bus 1, which is what the fold has always been)
+  // and to say so — `cycle` is true, the board greys the option that would
+  // close the loop with the reason printed, and no number silently changes.
+  // The alternative, letting the option be chosen and clamping the walk, would
+  // put a route on the page that the tape does not have.
+  // THE FOLD A GROUP HAS ALWAYS HAD, and it is derived as "the first bus that
+  // has an engine bus" rather than as BUSROWS[0]. Those are the same row today
+  // and the difference is what happens on the day somebody reorders this table:
+  // a group falling back to another GROUP is a fallback that can itself loop,
+  // and `busRoute` would answer `engine: null` — a route to nowhere, which is
+  // the one thing a refusal must never produce.
+  const BUSDEFAULT = (BUSROWS.find(r => r.engine) || BUSROWS[0]).bus;
+  function busRoute(v) {
+    const g = v && typeof v === "object" ? v : {};
+    const out = {};
+    for (const b of BUSES) {
+      if (b.engine) { out[b.bus] = { engine: b.engine, chain: [b.bus], cycle: false }; continue; }
+      const chain = [b.bus];
+      const seen = new Set([b.bus]);
+      let at = b.bus, cycle = false;
+      for (;;) {
+        const row = BUSBY[at];
+        if (row && row.engine) break;
+        const e = g[at] && typeof g[at] === "object" ? g[at] : {};
+        const nxt = Object.prototype.hasOwnProperty.call(BUSTO, String(e.to)) && e.to !== at
+          ? String(e.to) : BUSDEFAULT;
+        if (seen.has(nxt)) { cycle = true; break; }
+        seen.add(nxt); chain.push(nxt); at = nxt;
+      }
+      out[b.bus] = cycle
+        ? { engine: BUSBY[BUSDEFAULT].engine, chain: [b.bus, BUSDEFAULT], cycle: true }
+        : { engine: BUSBY[at].engine, chain, cycle: false };
+    }
+    return out;
+  }
+  // may this group be aimed at `dest` without closing a loop? — the ONE
+  // predicate the board greys with, asked of the value that would be written
+  // rather than of the value that is (fields.js law: a refusal is measured on
+  // the move, not guessed from the state).
+  function busToOk(v, bus, dest) {
+    if (bus === dest) return false;
+    if (BUSBY[dest] && BUSBY[dest].engine) return true;
+    const next = { ...(v || {}) };
+    next[bus] = { ...(next[bus] || {}), to: dest };
+    return !busRoute(next)[bus].cycle;
+  }
   // what a bus is CALLED right now — the set name, else its shipped label.
   // One reader for the board's nameplate and one for the send bars that name
   // their destination, so a renamed bus is renamed everywhere at once.
@@ -1583,6 +1747,14 @@
     // one pick per chair — not a section or layer field. See INSTRCHOICES /
     // POOLCHAIRS above; ui/state.js POOL carries it, song.js validates it and
     // migrate() lifts old per-layer overrides up to it.)
+    // ---- the fourth bus — appended, never reordered ---------------------
+    // The SECTION strip's bus-4 send, so the box speaks the same four-bus
+    // sentence its own tracks do — the law the `room` entry above states, one
+    // bus along. It sits at the END of this list and not beside `room` because
+    // FIELDS is append-only: song.js and the interview both index it, and
+    // moving a row to read better renumbers everything under it.
+    { key: "aux",     scope: "box",   table: SENDS,    labels: SENDLABEL,
+      tab: "fx",     group: "bus 4",                     default: null },
   ];
   const FIELD = {};
   for (const f of FIELDS) FIELD[f.key] = f;
@@ -1697,7 +1869,7 @@
                 CEILINGS, CEILINGLABEL, MASTER, MASTERBY,
                 resolveMaster, masterIsDefault,
                 BUSES, BUSBY, resolveBuses, busesIsDefault,
-                BUSNAMES, busNameOf,
+                BUSNAMES, busNameOf, BUSTO, BUSDEFAULT, busRoute, busToOk,
                 AUTOPARAMS, AUTOPARAMLABEL, AUTOSHAPES, AUTOSHAPELABEL, autoShape,
                 INSTRCHOICES, POOLCHAIRS,
                 NUDGEGATE, nudgesFor, nudgeGate, nudgeValue, nudgeWord,

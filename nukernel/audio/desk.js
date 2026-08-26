@@ -92,7 +92,13 @@ import { NuFields } from "../ui/deps.js";
 // bpm rides along for insertsFor: the parent resolves a chip's `rateBars` to Hz
 // off the state's tempo, so a chip that asks for a bar-locked wobble has to be
 // normalised against the song's own clock and not a default one.
-import { POOL, bpm, MIXER, METER } from "../ui/state.js";
+// `BUSES` joined this list on 2026-08-26, and it is a live binding on purpose —
+// the same door `MIXER` already comes through. A GROUP'S DESTINATION IS A SONG
+// FACT and both the composed channel base and the unit table have to fold on
+// the same answer, so neither may take it as an argument that one caller
+// remembers to pass and the other does not. (ui/state.js setBuses normalizes it
+// to null when it says nothing, which is what makes absent-is-today free here.)
+import { POOL, bpm, MIXER, METER, BUSES } from "../ui/state.js";
 import { gid, stackOf, genreOf, kitOf, poolInstrOf } from "../ui/derive.js";
 
 const sendOf = (sec, k, dflt) => (sec[k] != null ? SENDS[sec[k]] : dflt);
@@ -357,6 +363,54 @@ export function resolvedPart(sec, key, roster) {
            eq: mergeEq(t.eq, sec.parts && sec.parts[key] && sec.parts[key].eq),
            tdb: t.db };
 }
+/* ---------- WHERE THE TWO GROUPS LAND, AND IT IS THE ONE ANSWER -----------
+ * (Paul, 2026-08-26: "let me have up to four buses and a way to direct them to
+ * each other.")
+ *
+ * THE FOLD WAS ALWAYS A ROUTE; IT JUST HAD NOBODY'S HAND ON IT. This line read
+ *     rev: … + (m.room || 0) + …
+ * in deskChannelBase and again in deskUnits, and the comment beside it said
+ * "THE ROOM IS THE SAME BUS". True — but the SAMENESS was this file's choice,
+ * not the engine's. render-core.js gives a unit two send gains, `u.rev` and
+ * `u.del`, and nothing in the parent says which of them a group's sends have to
+ * be added to. fields.js busRoute now answers that from the record, and this is
+ * the one function that asks — so the board's meter, the composed base and the
+ * unit table cannot disagree about a wire. A drift between those three is
+ * exactly the failure `deskBusFeed`'s own note warns about ("the strip's meter
+ * and the tape agree").
+ *
+ * ABSENT IS TODAY, EXACTLY: `busRoute(null)` sends both groups to bus 1, which
+ * is the fold this file has always done, so a record that never touched a `to`
+ * knob writes byte-identical sends. desk-gate G1 and G14 hold it.
+ *
+ * `S.room` ON THE DRUMS FOLLOWS THE SAME ROUTE, because it is the same bus 3 —
+ * the box's kit-ambience send and a part's are two writers of one group, and
+ * routing one and not the other would put the kit in a different room from the
+ * chair beside it. */
+// THE TWO BOX SENDS ARE SCOPED DIFFERENTLY AND THAT IS NOT AN OVERSIGHT.
+// `sec.room` reaches the DRUMS ONLY, because it is the kit-ambience lane
+// nukernel has always had and widening it would put every record's whole band
+// into a room only the kit was ever in. `sec.aux` is new and has no such
+// history, so it reaches every seated voice exactly the way `sec.rev` and
+// `sec.del` do — which is what a general group send is. Absent is 0 on both.
+// ...AND THE ROUTE IS RESOLVED ONCE PER CALLER, NOT ONCE PER CHANNEL. deskUnits
+// walks every unit in the song's cast and calls this for each; busRoute walks
+// four rows and follows their edges, which is cheap but not free, and this file
+// runs inside the bar budget (the realtime margin is thin — see the COST table
+// in the masterState block). `route` defaults to a fresh resolve so the two
+// callers that ask about ONE channel stay one-liners.
+function feedSplit(m, S, isDrums, route) {
+  const R = route || NuFields.busRoute(BUSES);
+  const box = { room: isDrums ? S.room || 0 : 0, aux: S.aux || 0 };
+  const add = { rev: 0, del: 0 };
+  for (const g of ["room", "aux"]) {
+    // a cycle resolves to the shipped fold (fields.js busRoute), never to
+    // nowhere — a refused route must not silently drop signal
+    const lands = R[g].engine === "del" ? "del" : "rev";
+    add[lands] += (m[g] || 0) + box[g];
+  }
+  return add;
+}
 // THE CHANNEL'S COMPOSED BASE, for the mixer surface: the "real" mix the
 // offsets ride on, one function for the drawn number and the built one.
 export function deskChannelBase(sec, key) {
@@ -364,11 +418,12 @@ export function deskChannelBase(sec, key) {
   const S = sectionOf(sec);
   const m = resolvePartMix(sec.parts && sec.parts[key]);
   const r = resolvedPart(sec, key);
+  const g = feedSplit(m, S, key === "drums");
   return {
     gain: +(r.gain * S.lvl).toFixed(4),
     pan: (S.pan || 0) + (m.pan || 0),
-    rev: Math.min(1, (m.rev || 0) + (m.room || 0) + S.rev + (key === "drums" ? S.room : 0)),
-    del: Math.min(1, (m.del || 0) + S.del),
+    rev: Math.min(1, (m.rev || 0) + S.rev + g.rev),
+    del: Math.min(1, (m.del || 0) + S.del + g.del),
     eq: r.eq, mute: m.mute };
 }
 
@@ -412,7 +467,8 @@ function partsOf(sec) {
     const t = derivedPartTone(sec, k, roster);
     out[k] = { gain: m.mute || (solo && !m.solo) ? 0
                  : m.lvl * Math.pow(10, (m.fader + t.db) / 20),
-               pan: m.pan, rev: m.rev, del: m.del, room: m.room, fx: m.fx,
+               // both groups carried, so feedSplit above has all four sends
+               pan: m.pan, rev: m.rev, del: m.del, room: m.room, aux: m.aux, fx: m.fx,
                eq: mergeEq(t.eq, ent && ent.eq) };
   }
   return out;
@@ -429,6 +485,7 @@ function sectionOf(sec) {
     rev: sendOf(sec, "rev", g.tone && g.tone.verb != null ? g.tone.verb : 0.15),
     del: sendOf(sec, "echo", 0),
     room: sendOf(sec, "room", 0),
+    aux: sendOf(sec, "aux", 0),
     eq: mergeEq(derivedSecEq(sec), sec.eq),
     fx: (sec.fx || []).filter(k => FX[k]).slice(0, MAX_FX),
     auto: compileAuto(sec, g),
@@ -622,15 +679,22 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
   };
   const autoPan = lane("pan", null);
   const autoRev = lane("send.rev", null), autoDel = lane("send.echo", null);
+  // one answer to "where does each group land", for the whole unit walk
+  const ROUTE = NuFields.busRoute(BUSES);
   const out = {};
   for (const [key, u] of Object.entries(units)) {
     if (!u || key.slice(0, 2) === "__") { out[key] = u; continue; }
     const p = P[addr[key] || (u.drum ? "drums" : "")] || null;
     const eq = p && p.eq ? p.eq : S.eq;
-    // THE ROOM IS THE SAME BUS. The ambience nukernel's kit lanes fed IS the
-    // parent's reverb bus, so a part asking for room and a box asking for it are
-    // both asking for more of the one reverb everything already shares — the box's
-    // room reaches the DRUMS (whose room it was), a part's reaches that part.
+    // THE ROOM WAS THE SAME BUS BECAUSE THIS FILE SAID SO, and now the record
+    // says so instead. The paragraph here read: "THE ROOM IS THE SAME BUS. The
+    // ambience nukernel's kit lanes fed IS the parent's reverb bus, so a part
+    // asking for room and a box asking for it are both asking for more of the
+    // one reverb everything already shares — the box's room reaches the DRUMS
+    // (whose room it was), a part's reaches that part." The second half stands
+    // verbatim and is still how `S.room` is scoped; the first half was a
+    // hard-coded destination wearing an engine's clothes. `feedSplit` above has
+    // the whole argument and busRoute(null) reproduces this exact fold.
     const isDrum = !!u.drum || !!(u.__meta && u.__meta.drum);
     // THE MIX-OFFSET LAYER (ui/state.js MIXER): the mixer surface's own hand,
     // per CHANNEL (part key or "drums") for the whole song, applied last —
@@ -659,9 +723,11 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
     const o = os.length === 1 ? os[0] : os.length ? Object.assign({}, ...os,
       { fader: sum("fader"), rev: sum("rev"), del: sum("del"), pan: sum("pan"),
         fx: os.flatMap(x => x.fx || []) }) : null;
-    const rev = (p ? (p.rev || 0) + (p.room || 0) : 0)
-      + (autoRev != null ? autoRev : S.rev) + (isDrum ? S.room : 0);
-    const del = (p && p.del ? p.del : 0) + (autoDel != null ? autoDel : S.del);
+    const grp = feedSplit(p || {}, S, isDrum, ROUTE);
+    const rev = (p ? p.rev || 0 : 0)
+      + (autoRev != null ? autoRev : S.rev) + grp.rev;
+    const del = (p && p.del ? p.del : 0)
+      + (autoDel != null ? autoDel : S.del) + grp.del;
     const v = { ...u,
       lvl: (u.lvl != null ? u.lvl : 1) * S.lvl * (p ? p.gain : 1),
       rev: Math.min(1, rev), del: Math.min(1, del) };
@@ -1132,12 +1198,17 @@ const round3 = (x) => Math.round(x * 1000) / 1000;
  * from the engine that owes it. desk-gate G12 asserts the page prints these
  * exact words.
  *
- * VOICE -> BUS, all three, WIRED. deskUnits writes `u.rev` and `u.del` on every
- * unit and the parent's renderers sum them into the shared { dry, rev, del, pp }
- * buses (render-core.js:19). `room` is not a fourth number: deskChannelBase
- * folds a part's `room` into its `rev`, so bus 3's feed arrives at bus 1.
+ * VOICE -> BUS, all four, WIRED — and only two of them are engine buses.
+ * deskUnits writes `u.rev` and `u.del` on every unit and the parent's renderers
+ * sum them into the shared { dry, rev, del, pp } buses (render-core.js:19).
+ * Bus 3 and bus 4 are GROUPS: their sends are real and they arrive at whichever
+ * of those two numbers `feedSplit` aims them at. This paragraph said "`room` is
+ * not a fourth number: deskChannelBase folds a part's `room` into its `rev`, so
+ * bus 3's feed arrives at bus 1" — still true when the group is aimed where it
+ * has always been aimed, and now it is a value in the record rather than a
+ * constant in this file.
  *
- * BUS -> MASTER, one of three, and only one:
+ * BUS -> MASTER, one of four, and only one:
  *   BUS 1 IS WIRED AND IS THE ONLY ONE. `buses.rev.ret` -> masterState `reverb`
  *     -> state-engine fxParams `rgain = clamp(reverb*3.2, 0, 2) * reverbScale`.
  *     That IS a bus-to-master send, it has been one since the rack round, and
@@ -1150,14 +1221,52 @@ const round3 = (x) => Math.round(x * 1000) / 1000;
  *     delay-return fader here would be a knob that lies; it is drawn refused
  *     with this sentence instead. The fix is one line in the parent plus its
  *     parity gates, which is not this page's to take.
- *   BUS 3 IS NOT A RETURN AT ALL, which PROGRAM.md §4.11 already records: the
- *     parent's own third bus is `pp` and state-engine:2808 stamps `pp` on DRUM
- *     events only, so bus 3 keeps its name and its feed folds into bus 1.
+ *   BUS 3 AND BUS 4 ARE NOT RETURNS AT ALL, and PROGRAM.md §4.11 already
+ *     records why for the first of them: the parent's own third bus is `pp`,
+ *     state-engine:2808 stamps `pp` on DRUM events only, and state-engine's own
+ *     note adds that it is not sent on SAMPLED drums either ("the sampler mix
+ *     has no pp bus") — which is nearly every kit in this catalog. So there is
+ *     a fourth engine bus and no word on this page can put a signal into it.
+ *     Bus 3 and bus 4 are therefore groups, and a group's honest answer is not
+ *     a return of its own but a DESTINATION: `to`, resolved by busRoute, drawn
+ *     as a control because it is one, and printed in the `goes to` row.
  *
- * BUS -> BUS does not exist and is not drawn. fields.js took the two
- * cross-sends off on 2026-08-24 with the measurement: `x<bus>` was written
- * against the WebAudio rack the one-engine round deleted, and busSendPlan — the
- * cycle refusal that made an edge safe — has had no caller since.
+ * BUS -> BUS, AND THE ANSWER IS DIFFERENT FOR EACH KIND (2026-08-26). The
+ * paragraph here read: "BUS -> BUS does not exist and is not drawn. fields.js
+ * took the two cross-sends off on 2026-08-24 with the measurement: `x<bus>` was
+ * written against the WebAudio rack the one-engine round deleted, and
+ * busSendPlan — the cycle refusal that made an edge safe — has had no caller
+ * since." That was right about `x<bus>` and it asked the question one level too
+ * high. Read engine/faust/dsp/fx_bus.dsp:221 and there are FOUR bus-to-bus
+ * terms already in the signal, and they are not all the same kind of thing:
+ *
+ *     rin = (rev + d*0.2 + (ppl + ppr)*0.12 + (dl + dr)*0.5*mrev) * rgain;
+ *
+ *   BUS 2 -> BUS 1 is `d*0.2` and the 0.2 IS A LITERAL IN THE DSP. Delay into
+ *     the plate is running on every record this page has ever made, at a fixed
+ *     20%, and no word here moves it. Making it a knob is a `.dsp` edit plus a
+ *     recompile plus the byte-parity gates, and it changes a shipped sound.
+ *     Refused with this sentence rather than drawn.
+ *   pp -> BUS 1 is `(ppl+ppr)*0.12`, the same literal, on a bus nothing on this
+ *     page can feed anyway (see BUS 4 below).
+ *   THE MAIN'S DRY -> BUS 1 is `(dl + dr)*0.5*mrev`, AND `mrev` IS A SLIDER —
+ *     compiled into fx_bus.wasm (dist/fx_bus-meta.json: init 0.07, range
+ *     0..0.5), emitted by state-engine fxParams off `state.mrev`, and WRITTEN
+ *     BY THIS FILE ALREADY: masterState turns the master's `space` chip into
+ *     it. So the page has had exactly one live bus-to-bus send the whole time
+ *     and nothing on the board said it was one. The board's routing row says it
+ *     now, and it POINTS AT `space` rather than drawing a second control — one
+ *     owner per fact, and `space` is the owner.
+ *
+ * ...AND THE ROUTE THE DESK OWNS OUTRIGHT, which is what "a way to direct them
+ * to each other" actually buys. Bus 3 and bus 4 have no engine accumulator
+ * (fields.js BUSROWS `engine: null`), so where their feed lands is a decision
+ * THIS FILE makes while composing `u.rev` and `u.del` — hard-coded to bus 1 in
+ * two places until now, and `feedSplit` reading fields.js busRoute since. A
+ * group aimed at bus 2 moves every unit's `del` in `__nuMix()`: a real wire,
+ * costing the parent nothing, and the difference between four buses and three
+ * buses and a label. busSendPlan's cycle refusal comes back as busRoute /
+ * busToOk, with a caller.
  *
  * `feed` is the sum of what the channels are sending, not an average: two
  * voices at `some` put more into the plate than one does, which is what a bus
@@ -1173,27 +1282,87 @@ const round3 = (x) => Math.round(x * 1000) / 1000;
 // rather than eight times down a column". Both strings are on the page, the
 // short one beside the control and the long one once beneath it, so "do not
 // draw a control that reaches nothing without saying so" is kept twice over.
+//
+// `to` CAME OFF THIS OBJECT FOR THE TWO GROUPS, 2026-08-26, and the reason is
+// the one-owner law rather than tidiness: a group's destination is now a value
+// in the record (`buses.<bus>.to`), so a constant here would be a second answer
+// to a question busRoute already answers, and the two would part company the
+// first time a knob moved. deskBusFeed reads the route for a group and this
+// table for a bus that has one — `to: null` here means "ask busRoute".
 export const BUS_REACH = {
   rev: { to: "main", short: null, why: null },
   echo: { to: "main", short: "fixed at unity by the engine",
     why: "bus 2's return is fixed at unity in the engine — " +
     "state-engine.js fxParams emits `dgain: 1` and reads no state, so nothing " +
     "this page can write moves it" },
-  room: { to: "bus 1", short: "not a return — it folds into bus 1",
-    why: "bus 3 is not a return — a part's room send folds " +
-    "into bus 1 (deskChannelBase), and the parent's own third bus is stamped " +
-    "on drum events only" },
+  // THE GROUPS' SENTENCE IS THE SAME SENTENCE TWICE because it is the same
+  // fact twice: neither has an engine bus, and the parent's spare one cannot be
+  // fed from here. The old bus-3 wording is kept inside it — it was the finding
+  // that made the group honest — and what is added is the half that is now a
+  // control rather than a constant.
+  room: { to: null, short: "a group — aim it", group: true,
+    why: "bus 3 is a group, not a return: the engine has two send buses (rev " +
+    "and del) and its third is `pp`, which state-engine stamps on modelled " +
+    "drum events only and never on a sampled kit. So bus 3's feed is summed " +
+    "into whichever bus it is aimed at — bus 1 unless you say otherwise, " +
+    "which is the fold deskChannelBase always did" },
+  aux: { to: null, short: "a group — aim it", group: true,
+    why: "bus 4 is a group, not a return: the engine has two send buses (rev " +
+    "and del) and its third is `pp`, which state-engine stamps on modelled " +
+    "drum events only and never on a sampled kit. So bus 4's feed is summed " +
+    "into whichever bus it is aimed at — bus 1 unless you say otherwise" },
 };
+// THE ONE BUS-TO-BUS SEND THAT REACHES THE ENGINE, and it already has an owner.
+// fx_bus.dsp:221 mixes the main's dry into bus 1 at `0.5*mrev`, and `mrev` is
+// the master's `space` chip (masterState above). Printed on the routing row so
+// the edge is visible, and NOT drawn as a control there, because drawing it
+// twice is how "touch" comes to mean 0.12 in one place and 0.15 in the other.
+export const MAIN_TO_BUS1 = {
+  from: "main", to: "bus 1", knob: "space",
+  why: "the main's dry feeds bus 1 at `0.5 * mrev` (fx_bus.dsp:221) and `mrev` " +
+  "IS the master's `space` — it is the one bus-to-bus send on this desk that " +
+  "reaches the engine, and its control is in the main strip above, not here",
+};
+// ...AND THE TWO INSIDE THE DSP THAT NOTHING CAN MOVE.
+export const FIXED_EDGES = [
+  { from: "bus 2", to: "bus 1", amount: 0.2,
+    why: "bus 2 already feeds bus 1 at a fixed 20% — `d*0.2` in fx_bus.dsp:221 " +
+    "is a literal in the DSP, not a slider, so it is running on every record " +
+    "and no word on this page moves it" },
+  { from: "the engine's pp bus", to: "bus 1", amount: 0.12,
+    why: "the parent's ping-pong bus feeds bus 1 at a fixed 12% " +
+    "(`(ppl+ppr)*0.12`, fx_bus.dsp:221) — also a literal, and nothing on this " +
+    "page can put a signal into that bus in the first place" },
+];
 export function deskBusFeed(sec, MASTERV, BUSESV) {
   const st = masterState(MASTERV, BUSESV) || {};
-  const feed = { rev: 0, echo: 0, room: 0 };
+  // THE ROUTE IS READ OFF THE STORE AND NOT OFF `BUSESV`, DELIBERATELY, and it
+  // is the one place in this file where an argument is ignored. `feedSplit`
+  // CANNOT take a buses argument — deskUnits is called by audio/plan.js, which
+  // has no bus value to hand it — so it reads the live binding. If this meter
+  // routed off a value a caller passed instead, a caller who passed a different
+  // one would draw a meter for a route the tape does not have, which is exactly
+  // the drift the header of this section warns about ("the strip's meter and
+  // the tape agree"). One source for a route. `BUSESV` still owns the RETURNS,
+  // because those go through masterState, which is an argument-taking function
+  // by the same design that makes the engineer pass it the store.
+  const R = NuFields.busRoute(BUSES);
+  // ONE ENTRY PER BUS, WALKED OFF THE REGISTRY, so a fifth bus meters itself by
+  // existing — the law fields.js states for the `name` knob, one tier up.
+  const feed = {}; for (const b of NuFields.BUSES) feed[b.bus] = 0;
   if (sec) {
+    const S = sectionOf(sec);
     for (const k of partKeysOf(sec, voiceRoster(sec))) {
       const b = deskChannelBase(sec, k);
       const m = resolvePartMix(sec.parts && sec.parts[k]);
-      feed.rev += b.rev;                     // room is already folded in here
+      feed.rev += b.rev;                     // the groups are already folded in
       feed.echo += b.del;
-      feed.room += m.room || 0;
+      // A GROUP METERS WHAT IT IS GIVEN, not what leaves it, which is why these
+      // two are read off the part and the section rather than off the channel
+      // base: the base has ALREADY routed them into rev or del, and reading
+      // them there would count the same signal twice.
+      feed.room += (m.room || 0) + (k === "drums" ? S.room : 0);
+      feed.aux += (m.aux || 0) + S.aux;
     }
   }
   // THE RETURN EACH BUS IS WORTH RIGHT NOW. bus 1's is the record's own word;
@@ -1201,21 +1370,34 @@ export function deskBusFeed(sec, MASTERV, BUSESV) {
   // ABSENT IS SHUT on bus 1 and that is not this file's opinion — audio/plan.js
   // hands toEngine `reverb: 0` on purpose, so a record that never opened the
   // rack sends into a bus whose gain is zero.
-  const ret = { rev: st.reverb != null ? st.reverb : 0, echo: 1, room: null };
+  const ret = { rev: st.reverb != null ? st.reverb : 0, echo: 1,
+                room: null, aux: null };
   const out = {};
-  for (const bus of ["rev", "echo", "room"]) {
-    const r = ret[bus];
+  for (const b of NuFields.BUSES) {
+    const bus = b.bus, r = ret[bus], reach = BUS_REACH[bus];
     // WHAT LEAVES THE STRIP, which is what a fader's meter shows on a desk.
-    // Bus 3's return is null and its output is its FEED UNCHANGED, because
-    // that is literally what happens: deskChannelBase adds a part's `room` to
-    // its `rev` at unity, so bus 3 passes what it is given straight on to
-    // bus 1. A null there would have drawn an empty meter on a bus that is
-    // carrying signal.
+    // A GROUP'S RETURN IS null AND ITS OUTPUT IS ITS FEED UNCHANGED, because
+    // that is literally what happens: feedSplit adds a group's sends to another
+    // bus's number at unity, so it passes what it is given straight on. A null
+    // there would have drawn an empty meter on a bus that is carrying signal.
+    // (This read `bus 3` and named deskChannelBase; the arithmetic is the same
+    // and there are two of them now.)
+    const route = R[bus];
     out[bus] = { feed: +feed[bus].toFixed(4), ret: r,
                  out: +((r == null ? feed[bus] : feed[bus] * r)).toFixed(4),
-                 to: BUS_REACH[bus].to, why: BUS_REACH[bus].why,
-                 short: BUS_REACH[bus].short,
-                 movable: BUS_REACH[bus].why == null };
+                 // `to` for a group is the ROUTE's answer and not a constant —
+                 // printed as the board's own column word ("bus 2"), which is
+                 // what BUSTO holds, so the row and the head agree.
+                 to: reach.to || NuFields.BUSTO[route.chain[1]] ||
+                     NuFields.BUSTO[NuFields.BUSDEFAULT],
+                 why: reach.why, short: reach.short,
+                 group: !!reach.group,
+                 // the whole walk, for the row that prints where a group's
+                 // signal finally arrives: bus 4 -> bus 3 -> bus 2 is a chain a
+                 // reader has to be able to follow without doing it in their head
+                 chain: route.chain.map((x) => NuFields.BUSTO[x]),
+                 cycle: route.cycle,
+                 movable: reach.why == null };
   }
   return out;
 }

@@ -23,7 +23,7 @@ const R = (p) => require(path.join(__dirname, "..", "nukernel", p));
 
 const NG = R("genres.js"), NF = R("fields.js"), K = R("kernel.js");
 const NI = R("instruments.js"), NuSongs = R("songs.js");
-const Doc = R("document.js"), P = R("precompose.js");
+const Doc = R("document.js"), P = R("precompose.js"), NC = R("compose.js");
 const { GENRES, MODES, SCALES } = NG;
 const { WORDS, TERMS } = NuSongs;
 
@@ -331,9 +331,14 @@ function sectionEvents(doc, i) {
   // 2020s rows ("'now' is a lie, it's the 2010s", Paul, 2026-08-24) + the
   // nine African anchors ("fix the afrobeat parents and add the missing
   // African history", Paul, 2026-08-25: Aksum 540, Accra 1957, Johannesburg
-  // 1935/1939/1994, Kinshasa 1960, Addis Ababa 1969, Bamako 1970, Oran 1985).
-  ok("G0 the catalog is 139 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 139,
+  // 1935/1939/1994, Kinshasa 1960, Addis Ababa 1969, Bamako 1970, Oran 1985)
+  // + the SIXTY of the world round ("Fill in lots of world historical genres
+  // including non western stuff over a long period of time", Paul,
+  // 2026-08-26: 21 in Latin America and the Caribbean, 9 in Africa, 5 in East
+  // Asia, 6 in Southeast Asia, 3 in South Asia, 6 in the Middle East and
+  // Central Asia, 5 in Europe and 5 in North America).
+  ok("G0 the catalog is 199 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 199,
       "anchors() returned " + ANCHORS.length));
   ok("G0b 366 records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));
@@ -767,6 +772,109 @@ function sectionEvents(doc, i) {
     assert.strictEqual(masterState(DD.masterOf(doc), DD.busesOf(doc)), null);
   });
 
+  /* ================================================================== G11
+     THE WORLD ROUND'S OWN LAWS (2026-08-26). Four assertions, and none of
+     them existed before sixty anchors landed in one afternoon, because none
+     of them could fail on a catalog somebody had read end to end.
+     ================================================================== */
+  {
+    // G11a — NO ANCHOR PROMISES A SOUND THE REGISTRY CANNOT PLAY. Until this
+    // round `instr` was checked only against NF.INSTRCHOICES, which is
+    // DERIVED FROM `instr` — the union of every genre's own cast — so it can
+    // never disagree with it and has never been a check at all. The real
+    // authority is engine/registry-data.js SAMPLERS, the 123 ids with zones
+    // on disk, and it is required here rather than in nukernel because the
+    // registry sits a tier ABOVE this data (fields.js:1367 declines the same
+    // import for the same reason). Sixty new anchors cast eleven ids nobody
+    // had ever named — sitar, koto, shamisen, steel_drums, pan_flute,
+    // clarinet, alto_sax, tuba, honky_tonk among them — and a typo in any of
+    // them would have shipped a silent chair.
+    const REG = require(path.join(__dirname, "..", "engine", "registry-data.js"));
+    const REAL = new Set(Object.keys(REG.SAMPLERS));
+    const unplayable = [];
+    for (const gk of ANCHORS)
+      for (const id of (Array.isArray(GENRES[gk].instr)
+                        ? GENRES[gk].instr : [GENRES[gk].instr]))
+        if (!REAL.has(id)) unplayable.push(gk + " -> " + id);
+    ok("G11a every instrument every anchor casts is a real registry id with " +
+       "zones on disk — " + REAL.size + " SAMPLERS ids, checked against the " +
+       "registry and not against the menu derived from these very casts", () =>
+      assert.strictEqual(unplayable.length, 0, unplayable.join(", ")));
+
+    // G11b — THE `cannot` FIELD IS AN ADMISSION AND MUST READ LIKE ONE.
+    // WORLD.md §7: "`wants` names a missing ANCESTOR; `cannot` names a
+    // missing WORD IN THE LANGUAGE", and "prose drifts from the data it
+    // labels", which is vocabulary.js's own argument for turning the prose
+    // into data. A one-word `cannot` would be prose again, so the shape is
+    // checked: an array of SENTENCES. Thirty-one anchors declare one.
+    const badCannot = [];
+    for (const gk of ANCHORS) {
+      const c = GENRES[gk].cannot;
+      if (c == null) continue;
+      if (!Array.isArray(c) || !c.length) { badCannot.push(gk + ": not a non-empty array"); continue; }
+      for (const line of c) {
+        if (typeof line !== "string" || line.length < 24 || !/\s/.test(line))
+          badCannot.push(gk + ": " + JSON.stringify(line) + " is not a sentence");
+      }
+    }
+    const nCannot = ANCHORS.filter((gk) => GENRES[gk].cannot).length;
+    ok("G11b every `cannot` is a list of SENTENCES, not a list of words — " +
+       nCannot + " anchors declare what they cannot say", () =>
+      assert.strictEqual(badCannot.length, 0, badCannot.slice(0, 5).join("\n      ")));
+
+    // G11b2 — AND A ROLE HAS NOTHING TO ADMIT. The six FUNCTION genres are
+    // parts and not traditions (atlas.js EXCLUDE says the same thing about
+    // the map); a `pad` cannot fail to say a quarter tone, because a pad is
+    // not claiming to be anywhere.
+    const roleCannot = Object.keys(NG.GENRES)
+      .filter((gk) => !/\d/.test(GENRES[gk].label || "1") && GENRES[gk].cannot);
+    ok("G11b2 …and no FUNCTION genre declares one — a role has a job, not a " +
+       "tradition it is falling short of", () =>
+      assert.strictEqual(roleCannot.length, 0, roleCannot.join(" ")));
+
+    // G11c — THE UNACCOMPANIED LAW IS STILL DERIVED, AND `sacredharp` IS THE
+    // PROBE. compose.js finds the set by reading `kit`, `nobass` and `instr`
+    // off each anchor, and it was written on 2026-08-25 knowing exactly five
+    // records. Philadelphia 1844 was written without touching that predicate
+    // and must fall into the set on its own three fields — if the law were a
+    // name list wearing a function, it would not, and this assertion is the
+    // difference between the two.
+    const solo = ANCHORS.filter((gk) => NC.unaccompanied(gk));
+    ok("G11c the unaccompanied law is derived, not a list — it found the " +
+       "five it was written on PLUS sacredharp, which it has never heard of", () => {
+      assert.deepStrictEqual(solo.slice().sort(),
+        ["gregorian", "mbube", "organum", "sacredharp", "spem", "zema"]);
+    });
+
+    // G11d — EVERY PLACE IS IN EXACTLY ONE REGION, AND EVERY REGION ROW IS A
+    // PLACE. atlas.js REGIONS is EXCLUDE's twin one tier up (WORLD.md §4: "a
+    // cell is filled or declared empty with a reason"), and a hand-typed
+    // table of 109 places is exactly the kind that rots, so it is held to
+    // PLACES in both directions.
+    const A2 = require(path.join(__dirname, "..", "nukernel", "atlas.js"));
+    const placed = new Set(), twice = [], orphan = [];
+    for (const [reg, list] of Object.entries(A2.REGIONS))
+      for (const pl of list) {
+        if (placed.has(pl)) twice.push(pl);
+        placed.add(pl);
+        if (!A2.PLACES[pl]) orphan.push(reg + " -> " + pl);
+      }
+    const homeless = Object.keys(A2.PLACES).filter((pl) => !placed.has(pl));
+    ok("G11d every dot is in exactly one region and every region row is a " +
+       "dot — " + Object.keys(A2.REGIONS).length + " regions, " +
+       placed.size + " places, plus " +
+       Object.keys(A2.REGIONS_EMPTY).length + " declared EMPTY", () => {
+      assert.strictEqual(orphan.length, 0, "orphan region rows: " + orphan.join(", "));
+      assert.strictEqual(twice.length, 0, "in two regions: " + twice.join(", "));
+      assert.strictEqual(homeless.length, 0, "no region: " + homeless.join(", "));
+      for (const [reg, why] of Object.entries(A2.REGIONS_EMPTY)) {
+        assert.ok(!A2.REGIONS[reg], reg + " is declared empty AND has dots");
+        assert.ok(why.length > 60, reg + " is declared empty with no reason in it");
+      }
+    });
+
+  }
+
   /* ================================================================== G10
      THE PRINT-OUT PAUL READS (PROGRAM.md §5, PAUL'S EARS item 5): which IDIOM
      family row each anchor resolved to, and where an override overrode it. */
@@ -837,6 +945,55 @@ function sectionEvents(doc, i) {
               " of " + nRecords + " records · " + table(hDeskKey));
   console.log("  Does a dub record sound like a dub record and a chant like a " +
     "stone room?\n  That is the question this table cannot answer itself.\n");
+
+
+  /* ---- THE COVERAGE FRAME, PRINTED EVERY RUN (WORLD.md §4) ------------
+     "Keep a gate that prints the largest inhabited region more than N km
+     from any anchor every run. It must never be the thing that says 'done'."
+     This is that, in the shape §6 asked for — anchors per region per
+     century, the Euro-American share, and the empty cell named — and it
+     asserts NOTHING, on purpose. G11d above is the assertion; this is the
+     alarm. */
+  {
+    const AT = require(path.join(__dirname, "..", "nukernel", "atlas.js"));
+  const regionOf = {};
+  for (const [reg, list] of Object.entries(AT.REGIONS))
+    for (const pl of list) regionOf[pl] = reg;
+  const cent = (y) => Math.floor(y / 100) + 1;
+  const rows = {}, EA = new Set(["Europe", "North America"]);
+  let nEA = 0, nPlaced = 0;
+  const cents = new Set();
+  for (const gk of ANCHORS) {
+    const w = AT.WHEN[gk]; if (!w) continue;
+    const r = regionOf[AT.canon(w.place)] || "(no region)";
+    const c = cent(w.year);
+    cents.add(c);
+    ((rows[r] = rows[r] || {})[c] = (rows[r][c] || 0) + 1);
+    nPlaced++; if (EA.has(r)) nEA++;
+  }
+  const pad2 = (x, n) => (x + " ".repeat(n)).slice(0, n);
+  const cols = [...cents].sort((a, b) => a - b);
+  console.log("\nTHE COVERAGE FRAME — anchors per region per century, " +
+              nPlaced + " place-year anchors\n");
+  console.log("  " + pad2("", 34) + cols.map((c) => pad2(String(c) + "c", 6)).join("") + "total");
+  for (const [reg] of Object.entries(AT.REGIONS)) {
+    const r = rows[reg] || {};
+    const tot = Object.values(r).reduce((a, b) => a + b, 0);
+    console.log("  " + pad2(reg, 34) +
+      cols.map((c) => pad2(r[c] ? String(r[c]) : "·", 6)).join("") + tot);
+  }
+  for (const [reg, why] of Object.entries(AT.REGIONS_EMPTY))
+    console.log("  " + pad2(reg, 34) + cols.map(() => pad2("·", 6)).join("") + "0" +
+                "\n      EMPTY, declared: " + why.slice(0, 96) + "…");
+  console.log("\n  Euro-American share " + (100 * nEA / nPlaced).toFixed(1) +
+              "% (" + nEA + " of " + nPlaced + ").  WORLD.md §4 measured " +
+              "86.3% before the 2020s and African rounds and 80.5% the " +
+              "morning of this one;\n  its target for the whole ~215-anchor " +
+              "program is 51%, which is NOT this round's number and is not " +
+              "meant to be.\n  The map is the alarm, not the specification: " +
+              "a region with one dot in it is not covered, it is visited.\n");
+
+  }
 
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

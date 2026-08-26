@@ -68,6 +68,39 @@
      fails G3 as an orphan, which is why these three landed the same hour their
      labels did and not before.
 
+     AND THIRTY-EIGHT MORE ON 2026-08-26, with the world round (Paul: "Fill in
+     lots of world historical genres including non western stuff over a long
+     period of time"). MEASURED before it: of 133 place-year anchors, 107 —
+     80.5% — were Western Europe or North America, and the USA and the UK held
+     88 of them. The thirty-eight rows below are the geography sixty new
+     anchors need: Havana, Mexico City, Barranquilla, Valledupar, Santo
+     Domingo, Port of Spain, Recife, São Paulo, Cusco, Monterrey, Mazatlán,
+     Freetown, Nairobi, Douala, Luanda, Abidjan, Shanghai, Hong Kong, Taipei,
+     Jakarta, Bangkok, Manila, Ho Chi Minh City, Phnom Penh, Mumbai,
+     Faisalabad, Jalandhar, Istanbul, Tehran, Kabul, Piraeus, Lisbon,
+     Barcelona, Dublin, Guča, Kansas City, Sedalia and Lafayette.
+
+     THIRTY-SEVEN, NOT THIRTY-EIGHT: Southall was drafted and withdrawn, and
+     the reason is measured in the WITHIN block below.
+
+     TWO OF THEM ARE SPELLED IN THE MODERN NAME THOUGH THE RECORD IS OLDER,
+     which is the Kinshasa precedent above applied twice more and for the same
+     gate: `nhacvang` is "Ho Chi Minh City 1968", when the city was Saigon,
+     and `filmi` is "Mumbai 1960", when it was Bombay. G3 enforces ONE
+     SPELLING PER PLACE and a second name for the same coordinates would put
+     two dots where there is one city. Both old names are in the anchors'
+     comments, which is where a historical fact that is not a map dot belongs.
+
+     AND THE ONES THAT ARE NOT HERE, NAMED SO NOBODY RE-DERIVES THEM. Four
+     Tier-1 anchors were written and held back because no coordinate for them
+     could be PROVED to stand on land: Honolulu, Honiara, Pointe-à-Pitre and
+     Naha. `atlas-land.js` bakes Natural Earth's physical "land" and the
+     nearest baked point to Honolulu is 33.9 degrees away, to Honiara 9.0, to
+     Naha 5.3 and to Pointe-à-Pitre 5.5 — there are no Pacific islands, no
+     Ryukyus and no Lesser Antilles in the file at all. Those dots would draw
+     over open water. The wall is the bake, not the music, and it is why
+     Australia and the Pacific is the world round's one empty region.
+
      Decimal degrees, 2dp, city centre. REGIONS (Provence, Essex, Kent) take the
      region's rough centre. NEIGHBOURHOODS (Harlem, Greenwich Village, Muswell
      Hill) take the neighbourhood's, not the city's — Muswell Hill is not
@@ -79,36 +112,60 @@
      human pass over the rendered world view as required, and this comment is
      the pointer to it. */
   const PLACES = {
-    "Accra": [5.60, -0.19], "Addis Ababa": [9.03, 38.74], "Aksum": [14.13, 38.72],
-    "Antwerp": [51.22, 4.40], "Atlanta": [33.75, -84.39], "Austin": [30.27, -97.74],
-    "Bamako": [12.64, -8.00],
-    "Basildon": [51.57, 0.46], "Berlin": [52.52, 13.40], "Boston": [42.36, -71.06],
+    "Abidjan": [5.32, -4.03], "Accra": [5.60, -0.19],
+    "Addis Ababa": [9.03, 38.74], "Aksum": [14.13, 38.72],
+    "Antwerp": [51.22, 4.40], "Atlanta": [33.75, -84.39],
+    "Austin": [30.27, -97.74], "Bamako": [12.64, -8.00],
+    "Bangkok": [13.75, 100.50], "Barcelona": [41.39, 2.17],
+    "Barranquilla": [10.96, -74.80], "Basildon": [51.57, 0.46],
+    "Berlin": [52.52, 13.40], "Boston": [42.36, -71.06],
     "Bristol": [51.45, -2.59], "Buenos Aires": [-34.60, -58.38],
     "Cairo": [30.04, 31.24], "Chandigarh": [30.73, 76.78],
     "Chapel Hill": [35.91, -79.06], "Charlotte": [35.23, -80.84],
     "Chicago": [41.88, -87.63], "Cincinnati": [39.10, -84.51],
-    "Cleveland": [41.50, -81.69], "Crawley": [51.11, -0.19], "Detroit": [42.33, -83.05],
-    "Düsseldorf": [51.23, 6.78], "Essex": [51.75, 0.50], "Florence": [43.77, 11.26],
-    "Glasgow": [55.86, -4.25], "Greenwich Village": [40.73, -74.00],
-    "Guadalajara": [20.67, -103.35],
-    "Harlem": [40.81, -73.94], "Johannesburg": [-26.20, 28.05], "Kent": [51.20, 0.75],
+    "Cleveland": [41.50, -81.69], "Crawley": [51.11, -0.19],
+    "Cusco": [-13.53, -71.97], "Detroit": [42.33, -83.05],
+    "Douala": [4.05, 9.77], "Dublin": [53.35, -6.26],
+    "Düsseldorf": [51.23, 6.78], "Essex": [51.75, 0.50],
+    "Faisalabad": [31.42, 73.08], "Florence": [43.77, 11.26],
+    "Freetown": [8.48, -13.23], "Glasgow": [55.86, -4.25],
+    "Greenwich Village": [40.73, -74.00], "Guadalajara": [20.67, -103.35],
+    "Guča": [43.78, 20.23], "Harlem": [40.81, -73.94], "Havana": [23.13, -82.38],
+    "Ho Chi Minh City": [10.82, 106.63], "Hong Kong": [22.32, 114.17],
+    "Istanbul": [41.01, 28.98], "Jakarta": [-6.21, 106.85],
+    "Johannesburg": [-26.20, 28.05], "Kabul": [34.53, 69.17],
+    "Kansas City": [39.10, -94.58], "Kent": [51.20, 0.75],
     "Kingston": [17.97, -76.79], "Kinshasa": [-4.32, 15.31],
-    "Lagos": [6.52, 3.38], "Las Vegas": [36.17, -115.14],
-    "Leipzig": [51.34, 12.37], "Liverpool": [53.41, -2.98], "London": [51.51, -0.13],
-    "Los Angeles": [34.05, -118.24], "Manchester": [53.48, -2.24],
-    "Memphis": [35.15, -90.05], "Miami": [25.76, -80.19], "Muswell Hill": [51.59, -0.14],
-    "Nashville": [36.16, -86.78], "New Orleans": [29.95, -90.07],
-    "New York": [40.71, -74.01], "Oklahoma City": [35.47, -97.52],
-    "Oran": [35.70, -0.63],
-    "Orlando": [28.54, -81.38], "Paris": [48.86, 2.35], "Philadelphia": [39.95, -75.17],
-    "Portland": [45.52, -122.68], "Provence": [43.75, 5.50], "Reims": [49.26, 4.03],
+    "Lafayette": [30.22, -92.02], "Lagos": [6.52, 3.38],
+    "Las Vegas": [36.17, -115.14], "Leipzig": [51.34, 12.37],
+    "Lisbon": [38.72, -9.14], "Liverpool": [53.41, -2.98],
+    "London": [51.51, -0.13], "Los Angeles": [34.05, -118.24],
+    "Luanda": [-8.84, 13.23], "Manchester": [53.48, -2.24],
+    "Manila": [14.60, 120.98], "Mazatlán": [23.25, -106.41],
+    "Memphis": [35.15, -90.05], "Mexico City": [19.43, -99.13],
+    "Miami": [25.76, -80.19], "Monterrey": [25.67, -100.32],
+    "Mumbai": [19.08, 72.88], "Muswell Hill": [51.59, -0.14],
+    "Nairobi": [-1.29, 36.82], "Nashville": [36.16, -86.78],
+    "New Orleans": [29.95, -90.07], "New York": [40.71, -74.01],
+    "Oklahoma City": [35.47, -97.52], "Oran": [35.70, -0.63],
+    "Orlando": [28.54, -81.38], "Paris": [48.86, 2.35],
+    "Philadelphia": [39.95, -75.17], "Phnom Penh": [11.56, 104.92],
+    "Piraeus": [37.94, 23.65], "Port of Spain": [10.65, -61.51],
+    "Portland": [45.52, -122.68], "Provence": [43.75, 5.50],
+    "Recife": [-8.05, -34.88], "Reims": [49.26, 4.03],
     "Reykjavík": [64.15, -21.94], "Rio de Janeiro": [-22.91, -43.17],
-    "Rome": [41.90, 12.50], "San Diego": [32.72, -117.16], "San Francisco": [37.77, -122.42],
-    "San Juan": [18.47, -66.11], "Sausalito": [37.86, -122.49], "Seoul": [37.57, 126.98],
-    "Sofia": [42.70, 23.32], "St. Louis": [38.63, -90.20], "Stourbridge": [52.46, -2.15],
-    "Swindon": [51.56, -1.78], "Tampa": [27.95, -82.46], "Teaneck": [40.89, -74.02],
-    "Tokyo": [35.68, 139.65], "Toronto": [43.65, -79.38], "Venice": [45.44, 12.32],
-    "Vienna": [48.21, 16.37],
+    "Rome": [41.90, 12.50], "San Diego": [32.72, -117.16],
+    "San Francisco": [37.77, -122.42], "San Juan": [18.47, -66.11],
+    "Santo Domingo": [18.47, -69.90], "São Paulo": [-23.55, -46.63], "Jalandhar": [31.33, 75.58],
+    "Sausalito": [37.86, -122.49], "Sedalia": [38.70, -93.23],
+    "Seoul": [37.57, 126.98], "Shanghai": [31.23, 121.47],
+    "Sofia": [42.70, 23.32],
+    "St. Louis": [38.63, -90.20], "Stourbridge": [52.46, -2.15],
+    "Swindon": [51.56, -1.78], "Taipei": [25.03, 121.57],
+    "Tampa": [27.95, -82.46], "Teaneck": [40.89, -74.02],
+    "Tehran": [35.69, 51.39], "Tokyo": [35.68, 139.65],
+    "Toronto": [43.65, -79.38], "Valledupar": [10.46, -73.25],
+    "Venice": [45.44, 12.32], "Vienna": [48.21, 16.37],
   };
 
   /* ONE SPELLING PER PLACE. band-kit.js:814's house record says it comes from
@@ -136,6 +193,17 @@
     "Harlem": "New York",           // uptown Manhattan
     "Greenwich Village": "New York",// lower Manhattan
     "Basildon": "Essex",            // a town in the county
+    // NOT HERE, AND MEASURED: Southall. The world round's `bhangra` was
+    // drafted as "Southall 1986" — the daytimer circuit, which is where UK
+    // bhangra actually was — and the dot lands 4.9 CSS px from Muswell Hill
+    // at the Britain arc, under G10's 8.5 px floor. Declaring it inside
+    // London does not help: G10 exempts a declared PAIR, and Southall and
+    // Muswell Hill are SIBLINGS, two districts of one city, which is the one
+    // relation this table cannot say. Moving the dot to Birmingham measures
+    // 4.5 px from Stourbridge and to Wolverhampton 3.8 px, so it is not a
+    // Southall problem — Britain is simply full. The anchor went to
+    // Jalandhar 1972 instead, which is the older and more directly ancestral
+    // label anyway, and this note is here so nobody re-derives the attempt.
     // NOT HERE: Sausalito. It is 2.1 map units from San Francisco in the North
     // America view and it would be convenient to declare — but it is its own
     // town across the Golden Gate, not a district of anything, and a
@@ -285,6 +353,66 @@
     kwaito:         { place: "Johannesburg", year: 1994 },
     mandeguitar:    { place: "Bamako", year: 1970 },
     rai:            { place: "Oran", year: 1985 },
+    son:            { place: "Havana", year: 1928 },
+    bolero:         { place: "Havana", year: 1948 },
+    mambo:          { place: "Mexico City", year: 1950 },
+    salsa:          { place: "New York", year: 1973 },
+    cumbia:         { place: "Barranquilla", year: 1960 },
+    vallenato:      { place: "Valledupar", year: 1975 },
+    samba:          { place: "Rio de Janeiro", year: 1939 },
+    choro:          { place: "Rio de Janeiro", year: 1900 },
+    forro:          { place: "Recife", year: 1950 },
+    merengue:       { place: "Santo Domingo", year: 1955 },
+    bachata:        { place: "Santo Domingo", year: 1992 },
+    calypso:        { place: "Port of Spain", year: 1956 },
+    soca:           { place: "Port of Spain", year: 1979 },
+    mento:          { place: "Kingston", year: 1952 },
+    rocksteady:     { place: "Kingston", year: 1966 },
+    dancehall:      { place: "Kingston", year: 1985 },
+    huayno:         { place: "Cusco", year: 1965 },
+    mariachi:       { place: "Guadalajara", year: 1950 },
+    nortena:        { place: "Monterrey", year: 1955 },
+    banda:          { place: "Mazatlán", year: 1938 },
+    tropicalia:     { place: "São Paulo", year: 1968 },
+    palmwine:       { place: "Freetown", year: 1950 },
+    kwela:          { place: "Johannesburg", year: 1955 },
+    mbaqanga:       { place: "Johannesburg", year: 1964 },
+    soukous:        { place: "Kinshasa", year: 1985 },
+    benga:          { place: "Nairobi", year: 1972 },
+    makossa:        { place: "Douala", year: 1972 },
+    hiplife:        { place: "Accra", year: 1998 },
+    kizomba:        { place: "Luanda", year: 1995 },
+    coupedecale:    { place: "Abidjan", year: 2003 },
+    shidaiqu:       { place: "Shanghai", year: 1940 },
+    enka:           { place: "Tokyo", year: 1969 },
+    trot:           { place: "Seoul", year: 1965 },
+    cantopop:       { place: "Hong Kong", year: 1984 },
+    mandopop:       { place: "Taipei", year: 2003 },
+    kroncong:       { place: "Jakarta", year: 1935 },
+    dangdut:        { place: "Jakarta", year: 1975 },
+    lukthung:       { place: "Bangkok", year: 1970 },
+    manilasound:    { place: "Manila", year: 1976 },
+    nhacvang:       { place: "Ho Chi Minh City", year: 1968 },
+    khmerrock:      { place: "Phnom Penh", year: 1970 },
+    filmi:          { place: "Mumbai", year: 1960 },
+    qawwali:        { place: "Faisalabad", year: 1988 },
+    bhangra:        { place: "Jalandhar", year: 1972 },
+    shaabi:         { place: "Cairo", year: 1978 },
+    aljil:          { place: "Cairo", year: 1988 },
+    arabesk:        { place: "Istanbul", year: 1980 },
+    anadolurock:    { place: "Istanbul", year: 1972 },
+    iranpop:        { place: "Tehran", year: 1974 },
+    kabulpop:       { place: "Kabul", year: 1972 },
+    rebetiko:       { place: "Piraeus", year: 1935 },
+    fado:           { place: "Lisbon", year: 1955 },
+    rumbacatalana:  { place: "Barcelona", year: 1970 },
+    irishtrad:      { place: "Dublin", year: 1963 },
+    balkanbrass:    { place: "Guča", year: 1985 },
+    ragtime:        { place: "Sedalia", year: 1899 },
+    swing:          { place: "Kansas City", year: 1938 },
+    bluegrass:      { place: "Nashville", year: 1946 },
+    sacredharp:     { place: "Philadelphia", year: 1844 },
+    zydeco:         { place: "Lafayette", year: 1955 },
   };
   /* WHEN:END */
 
@@ -300,6 +428,94 @@
     backing: "a role: the voices behind it, in any city",
     riff:    "a role: the figure the record is built on",
     pad:     "a role: the sustained thing underneath",
+  };
+
+  /* ======================================================================
+     2b · THE COVERAGE FRAME — nine regions, and the empty ones NAMED
+     ======================================================================
+     WORLD.md §4: "'All major historical world genres' cannot be a list you
+     finish; it can be a GRID you fill — nine Garland regions x the functions
+     each region's music performs … The stopping rule is the grid, not the
+     number: a cell is filled or DECLARED EMPTY WITH A REASON, exactly as
+     `EXCLUDE` declares the six roles that are not places."
+
+     So this is EXCLUDE's twin, one tier up: which region each dot is in, and
+     for the regions with no dot, why not. It is a table of PLACES and not of
+     genres, because a region is a fact about geography and geography is what
+     this file owns — a genre's region is then its place's, derived, and the
+     day a genre moves city its region moves with it.
+
+     WHY IT IS TYPED AND NOT DERIVED FROM THE COORDINATES, which was tried
+     first: ordered latitude/longitude boxes cannot separate Monterrey
+     (25.67, -100.32) from Austin (30.27, -97.74) without a box that follows
+     the Rio Grande, and a box that follows a river is a hand-typed table
+     wearing arithmetic. The rows below are hand-typed and SAY so, exactly
+     the way the PLACES coordinates above do — and G12 holds them to PLACES
+     in both directions, so a new dot with no region fails by name and a
+     region row with no dot fails as an orphan.
+
+     THE POINT OF THE TABLE IS THE LAST TWO ROWS. Australia and the Pacific
+     is EMPTY and the reason is not musical; Central Asia holds exactly one
+     dot. Both are printed on every run of test/precompose.js, because "the
+     map is the alarm, not the specification" only works if somebody sees the
+     alarm. */
+  const REGIONS = {
+    "Europe": ["Antwerp", "Barcelona", "Basildon", "Berlin", "Bristol", "Crawley",
+               "Dublin", "Düsseldorf", "Essex", "Florence", "Glasgow", "Guča",
+               "Kent", "Leipzig", "Lisbon", "Liverpool", "London", "Manchester",
+               "Muswell Hill", "Paris", "Piraeus", "Provence", "Reims",
+               "Reykjavík", "Rome", "Sofia", "Stourbridge", "Swindon", "Venice",
+               "Vienna"],
+    "North America": ["Atlanta", "Austin", "Boston", "Chapel Hill", "Charlotte",
+                      "Chicago", "Cincinnati", "Cleveland", "Detroit",
+                      "Greenwich Village", "Harlem", "Kansas City", "Lafayette",
+                      "Las Vegas", "Los Angeles", "Memphis", "Miami", "Nashville",
+                      "New Orleans", "New York", "Oklahoma City", "Orlando",
+                      "Philadelphia", "Portland", "San Diego", "San Francisco",
+                      "Sausalito", "Sedalia", "St. Louis", "Tampa", "Teaneck",
+                      "Toronto"],
+    // Mexico is here and not in North America, which is a choice and is the
+    // one Garland's own volumes make: the musical basin is Ibero-American,
+    // and a Sinaloan banda has more to say to a Colombian cumbia than to a
+    // Nashville record.
+    "Latin America and the Caribbean":
+      ["Barranquilla", "Buenos Aires", "Cusco", "Guadalajara", "Havana",
+       "Kingston", "Mazatlán", "Mexico City", "Monterrey", "Port of Spain",
+       "Recife", "Rio de Janeiro", "San Juan", "Santo Domingo", "São Paulo",
+       "Valledupar"],
+    // CAIRO AND ORAN ARE IN THE MIDDLE EAST ROW AND NOT IN THIS ONE, which
+    // is Garland's own division and not a claim about continents: the
+    // Encyclopedia's volume 6 is "The Middle East" and it covers Egypt and
+    // the Maghreb, because a shaabi record answers to Beirut and Istanbul
+    // rather than to Lagos. Aksum stays here — Ethiopian sacred chant is in
+    // volume 1 and belongs to it.
+    "Africa": ["Abidjan", "Accra", "Addis Ababa", "Aksum", "Bamako",
+               "Douala", "Freetown", "Johannesburg", "Kinshasa", "Lagos",
+               "Luanda", "Nairobi"],
+    "East Asia": ["Hong Kong", "Seoul", "Shanghai", "Taipei", "Tokyo"],
+    "Southeast Asia": ["Bangkok", "Ho Chi Minh City", "Jakarta", "Manila",
+                       "Phnom Penh"],
+    "South Asia": ["Chandigarh", "Faisalabad", "Jalandhar", "Mumbai"],
+    // Turkey and Iran sit here rather than in Europe or in Central Asia, and
+    // Istanbul is the case that forces the decision: the city is on two
+    // continents and the MUSIC — makam, usul, the arabesk string orchestra —
+    // answers to Cairo and Tehran, not to Vienna.
+    "Middle East": ["Cairo", "Istanbul", "Oran", "Tehran"],
+    "Central Asia": ["Kabul"],
+  };
+  /* AND THE EMPTY CELL, DECLARED. One region of the nine has no dot at all,
+     and the reason is NOT that the music is unplayable — four Tier-1 anchors
+     for it were written and withdrawn. It is the coastline bake. */
+  const REGIONS_EMPTY = {
+    "Australia and the Pacific":
+      "no dot in this region can be PROVED to stand on land: atlas-land.js " +
+      "bakes Natural Earth's physical land and holds no Pacific islands at " +
+      "all — the nearest baked point to Honolulu is 33.9 degrees away and to " +
+      "Honiara 9.0 — so hapa-haole (Honolulu 1915) and Melanesian string " +
+      "band (Honiara 1975) were written, measured, and held back rather than " +
+      "drawn over open water. Australia's own two candidates are blocked " +
+      "musically instead: manikay has no yidaki id and no bar. One re-bake " +
+      "of the coastline unblocks the Pacific half of this row.",
   };
 
   /* ======================================================================
@@ -351,7 +567,15 @@
       { w: "the six-hundreds",      y: 600 },  { w: "the twelve-hundreds",   y: 1200 },
       { w: "the thirteen-hundreds", y: 1300 }, { w: "the fifteen-hundreds",  y: 1551 },
       { w: "the sixteen-hundreds",  y: 1602 }, { w: "the seventeen-hundreds", y: 1725 },
-      { w: "the eighteen-hundreds", y: 1835 }, { w: "the thirties",          y: 1932 },
+      { w: "the eighteen-hundreds", y: 1835 },
+      // ...and the two eras the world round put records into, 2026-08-26.
+      // The catalog jumped from 1892 to 1932 and now holds Rio de Janeiro
+      // 1900 (choro), Havana 1928 (son) and Piraeus 1935 (rebetiko) in
+      // between. Same law as every row here: the `y` is a REAL catalog year
+      // with an anchor standing behind it, and the list stays GROW-ONLY, so
+      // band-kit's DECADES is still a subsequence of it (G5b holds both).
+      { w: "the nineteen-hundreds", y: 1900 }, { w: "the twenties",         y: 1928 },
+      { w: "the thirties",          y: 1932 },
       { w: "the forties",           y: 1942 }, { w: "the fifties",           y: 1952 },
       // ...and "the sixties" moved 1962 -> 1960 in the same hand, because the
       // rule this table states one paragraph up is that each `y` is the FIRST
@@ -667,7 +891,7 @@
     return w;
   };
 
-  const api = { PLACES, ALIAS, WITHIN, WHEN, EXCLUDE, YEARS, ERAS, VIEWS, ALL, W, WINDOW,
+  const api = { PLACES, ALIAS, WITHIN, REGIONS, REGIONS_EMPTY, WHEN, EXCLUDE, YEARS, ERAS, VIEWS, ALL, W, WINDOW,
                 UNITS, unit, recordAt, arcFor,
                 project, heightOf, inView, placeOf, recordsAt, atYear,
                 yearAt, indexOf, eraOf, canon };

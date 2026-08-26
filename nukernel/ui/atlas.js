@@ -339,7 +339,11 @@ export function mount(parent, ctx) {
   const again = el("button", { type: "button", id: "atlasAgain",
                                textContent: "another take" });
   again.dataset.k = "atlas|again";
-  const acts = el("p", { id: "atlasActs" });
+  // `.nu-row` IS THE PAGE'S ONE NAME FOR A STRIP OF BUTTONS (nu.css,
+  // 2026-08-26). It replaces `#atlasActs button { margin-inline-end: .4rem }`,
+  // which was this section's private spelling of a spacing three other strips
+  // spelled two other ways.
+  const acts = el("p", { id: "atlasActs", className: "nu-row" });
   acts.append(again);
 
   parent.append(say, when, wrap, acts);

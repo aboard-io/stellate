@@ -200,6 +200,16 @@ const GATES = [
      is byte-identical to the tree that last passed it — content-keyed, never
      mtime — and --complete passes --force so the complete pass never trusts it.
      The argument in full is that file's header. */
+  /* THE WIKI TABLE, RE-DERIVED. `nukernel/wiki-extract.js --check` asks the
+     local ZIM every one of the 191 titles again and diffs nukernel/wiki.js and
+     nukernel/WIKI.md against what came back — the same shape as `gates`, one
+     widget over: derive it, commit the derivation, and fail when the two
+     disagree. IT EXITS 2 WHEN KIWIX IS NOT ON THE BOX (see `skipExit` in the
+     runner below), which is not a failure. */
+  { name: "wiki",       wave: 1, kind: "node",
+    argv: ["nukernel/wiki-extract.js", "--check"], skipExit: 2,
+    need: ["nukernel/wiki-extract.js", "nukernel/wiki.js"],
+    covers: ["nukernel/wiki-extract.js", "nukernel/wiki.js", "nukernel/WIKI.md"] },
   { name: "gates",      wave: 2, kind: "node",
     argv: ["test/gates-cache.js"], complete: ["test/gates-cache.js", "--force"],
     need: ["nukernel/gates-extract.js", "nukernel/gates.js", "test/gates-cache.js"],
@@ -571,6 +581,20 @@ async function main() {
           // else's result. …and the LAST line is not always it: precompose ends
           // with a printed IDIOM table whose final line is a question. Walk back
           // from the end to the first line that reads like a count.
+          /* A GATE MAY DECLARE ONE EXIT CODE THAT MEANS "NOT ON THIS BOX".
+             `wiki` is the only one today: nukernel/wiki-extract.js --check asks
+             a local 100GB ZIM every one of its 191 titles again, and that ZIM
+             is on exactly one machine here. It exits 2 when kiwix-serve is not
+             answering, which is not a failure and must not turn this runner red
+             on a laptop. 0 pass · 1 drift · 2 skip. The code is folded to 0 and
+             the SENTENCE is left in the output, so a skip is visible rather
+             than silent — a gate that quietly passes because it did not run is
+             the thing this file exists to prevent. */
+          if (g.skipExit != null && code === g.skipExit) {
+            out += "\nSKIPPED — exit " + code + ": this gate needs a tool that " +
+                   "is not on this box.\n";
+            code = 0;
+          }
           const lines = out.trim().split("\n").filter((l) => l.trim());
           const last = ([...lines].reverse().find((l) =>
             /\b(passed|pass|PASS|failed|FAIL|OK|checks|cached)\b/.test(l)) ||

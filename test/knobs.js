@@ -337,6 +337,173 @@ const J = (x) => JSON.parse(JSON.stringify(x));
       check(vow3.line && vow3.line.indexOf(vow3.word[0]) > 0,
         "6f …and the score prints what it sings: " + JSON.stringify(vow3.line) + tag);
 
+
+      /* ---- 11 THE PAD IS A SECOND VIEW OVER ONE STORE ----------------
+         Paul, 2026-08-26: *"a nice radial graph structure for editing the
+         voice"*, and the recipe's own gate for it: every spoke moves a
+         parameter knobs.js measured as audible; dragging writes the same
+         document values the numeric control does and they agree BOTH ways;
+         with the stylesheet off every value is still readable and settable.
+
+         NOT ONE GEOMETRY CONSTANT IS REPEATED HERE, and that is the whole
+         design of this block. ui/eight.js owns the radii and the pad's frame;
+         a test that re-typed 74 and 128 would pass forever after somebody
+         moved them. So every assertion is read off the RENDERED picture — the
+         two rings it actually drew and the face rect it actually drew — and
+         the claim is that a value's place lands ON them. */
+      await seat("tract_voice");
+      // take the tongue by hand, which is the record's own escape from the
+      // driver and the thing Paul could not find: it is the `babble` mode
+      // menu, and it is what makes the pad live at all.
+      await p.evaluate(() => { const s = document.querySelector('[data-k="sel|babble|cantor"]');
+        if (s) { s.value = "hand"; s.dispatchEvent(new Event("change", { bubbles: true })); } });
+      await p.waitForTimeout(600);
+      /* …AND OPEN `artic`, WHICH IS THE SECOND HALF OF THE SAME FACT AND IS
+         WORTH SEEING FAIL. A tube with nothing written on it answers `artic` 0,
+         so on a BARE tract_voice every tongue knob is shut by the OTHER gate as
+         well — "the tube is one uniform pipe until artic opens". The picture's
+         own escape from that is the dot on the line, which is never gated;
+         this drives the slider because the drag is what 11d is testing. */
+      await p.evaluate(() => { const s = document.querySelector('input[data-k="artic#cantor"]');
+        s.value = "0.5"; s.dispatchEvent(new Event("input", { bubbles: true }));
+        s.dispatchEvent(new Event("change", { bubbles: true })); });
+      await p.waitForTimeout(600);
+      const pad0 = await p.evaluate(() => {
+        const s = document.querySelector("svg.nu-pad");
+        if (!s) return { has: false };
+        const rings = [...s.querySelectorAll(".nu-pad-ring")].map((c) => +c.getAttribute("r")).sort((a, b) => a - b);
+        const face = s.querySelector(".nu-pad-face");
+        return { has: true, hidden: s.getAttribute("aria-hidden") === "true",
+          controls: s.querySelectorAll("input,select,button,textarea,[tabindex]").length,
+          inLive: !!s.closest("[data-live]"),
+          spokes: [...s.querySelectorAll(".nu-pad-lab")].map((t) => t.textContent),
+          rings, face: { x: +face.getAttribute("x"), w: +face.getAttribute("width"),
+                         y: +face.getAttribute("y"), h: +face.getAttribute("height") },
+          offSpokes: [...s.querySelectorAll(".nu-pad-knot.is-off")].length,
+          offSliders: [...document.querySelectorAll("table.nu-knobs input:disabled")].length };
+      });
+      check(pad0.has, "11 a tube draws the pad" + tag);
+      if (pad0.has) {
+        const K11 = KN.voices.tract_voice;
+        const audible = new Set(K11.rows.map((r) => r.key));
+        const quiet = new Set(K11.quiet.map((q) => q.key));
+        const bad = pad0.spokes.filter((k) => !audible.has(k) || quiet.has(k));
+        check(pad0.spokes.length >= 8 && !bad.length,
+          "11 every one of the " + pad0.spokes.length + " spokes is a MEASURED-AUDIBLE key " +
+          JSON.stringify(bad) + tag);
+        check(pad0.hidden && pad0.controls === 0 && !pad0.inLive,
+          "11b the picture is not a control and not a live surface (aria-hidden " +
+          pad0.hidden + ", " + pad0.controls + " controls)" + tag);
+
+        /* 11c THE OTHER DIRECTION: move the SLIDER, and the knot lands on the
+           ring the picture drew. Bottom of the row's range on the inner ring,
+           top on the outer, halfway between them halfway along. */
+        const spoke = pad0.spokes.find((k) => !["tongue", "tongueD"].includes(k)) || "fric";
+        const row = K11.rows.find((r) => r.key === spoke);
+        const rAt = async (v) => {
+          await p.evaluate(([k, val]) => { const s = document.querySelector('input[data-k="' + k + '#cantor"]');
+            s.value = String(val); s.dispatchEvent(new Event("input", { bubbles: true }));
+            s.dispatchEvent(new Event("change", { bubbles: true })); }, [spoke, v]);
+          await p.waitForTimeout(500);
+          return p.evaluate((k) => { const s = document.querySelector("svg.nu-pad");
+            const i = [...s.querySelectorAll(".nu-pad-lab")].findIndex((t) => t.textContent === k);
+            const n = s.querySelectorAll(".nu-pad-knot")[i];
+            const c = s.querySelector(".nu-pad-ring");
+            const cx = +c.getAttribute("cx"), cy = +c.getAttribute("cy");
+            return Math.hypot(+n.getAttribute("cx") - cx, +n.getAttribute("cy") - cy);
+          }, spoke);
+        };
+        const lo = await rAt(row.min), hi = await rAt(row.max);
+        const mid = await rAt(row.min + (row.max - row.min) / 2);
+        const near = (a, b) => Math.abs(a - b) < 0.75;
+        check(near(lo, pad0.rings[0]) && near(hi, pad0.rings[1]) &&
+              near(mid, (pad0.rings[0] + pad0.rings[1]) / 2),
+          "11c the slider moves the knot onto the rings the picture drew — " +
+          spoke + " " + lo.toFixed(1) + "/" + mid.toFixed(1) + "/" + hi.toFixed(1) +
+          " against " + pad0.rings.map((x) => x.toFixed(1)).join("/") + tag);
+
+        /* 11d THIS direction: DRAG the pad's face and the two tongue sliders
+           and the document all say the same number. Driven at the element's
+           own on-screen point — `page.click()` scrolls its target into view
+           first and has manufactured three false bug reports in this repo. */
+        const geo = await p.evaluate(() => { const s = document.querySelector("svg.nu-pad");
+          s.scrollIntoView({ block: "center" }); return null; });
+        await p.waitForTimeout(300);
+        const box = await p.evaluate(() => { const s = document.querySelector("svg.nu-pad");
+          const r = s.getBoundingClientRect(), vb = s.viewBox.baseVal;
+          return { x: r.left, y: r.top, kx: r.width / vb.width, ky: r.height / vb.height,
+                   vx: vb.x, vy: vb.y }; });
+        const on = (vx, vy) => ({ x: box.x + (vx - box.vx) * box.kx,
+                                  y: box.y + (vy - box.vy) * box.ky });
+        const F = pad0.face;
+        const scrollWas = await p.evaluate(() => scrollY);
+        const from = on(F.x + F.w * 0.5, F.y + F.h * 0.5);
+        const to = on(F.x + F.w * 0.25, F.y + F.h * 0.75);
+        await p.mouse.move(from.x, from.y);
+        await p.mouse.down();
+        await p.mouse.move(to.x, to.y, { steps: 6 });
+        await p.mouse.up();
+        await p.waitForTimeout(700);
+        const agreed = await p.evaluate(() => {
+          const v = window.__eightDoc().voices.find((x) => x.kind === "line");
+          const s = (k) => document.querySelector('input[data-k="' + k + '#cantor"]');
+          return { set: { tongue: v.set.tongue, tongueD: v.set.tongueD },
+            sliders: { tongue: +s("tongue").value, tongueD: +s("tongueD").value },
+            scroll: scrollY };
+        });
+        check(JSON.stringify(agreed.set) === JSON.stringify(agreed.sliders) &&
+              Math.abs(agreed.set.tongue - 0.25) < 0.02 &&
+              Math.abs(agreed.set.tongueD - 0.25) < 0.02,
+          "11d a drag on the face writes the document and the sliders to the same " +
+          "number " + JSON.stringify(agreed.set) + " / " + JSON.stringify(agreed.sliders) + tag);
+        check(agreed.scroll === scrollWas,
+          "11e …and the page did not move under the finger (" + scrollWas + ")" + tag);
+
+        /* 11f A GATED DIMENSION READS AS GATED ON THE GRAPH TOO, which is the
+           whole reason this picture exists: Paul read past four disabled
+           sliders. Hand the tongue back to the driver and count. */
+        await p.evaluate(() => { const s = document.querySelector('[data-k="sel|babble|cantor"]');
+          s.value = "babble"; s.dispatchEvent(new Event("change", { bubbles: true })); });
+        await p.waitForTimeout(600);
+        const shut = await p.evaluate(() => {
+          const s = document.querySelector("svg.nu-pad");
+          const off = [...document.querySelectorAll("table.nu-knobs input:disabled")]
+            .map((c) => (c.dataset.k || "").split("#")[0]);
+          const spokes = [...s.querySelectorAll(".nu-pad-lab")].map((t) => t.textContent);
+          const offSpokes = spokes.filter((k, i) =>
+            s.querySelectorAll(".nu-pad-knot")[i].classList.contains("is-off"));
+          const whys = [...s.parentElement.querySelectorAll(".nu-why")].map((w) => w.textContent);
+          return { off, offSpokes, hand: s.querySelector(".nu-pad-hand").classList.contains("is-off"),
+            web: s.querySelectorAll(".nu-pad-web line").length,
+            said: whys.some((w) => /greyed here and in the table below/.test(w)) };
+        });
+        const shouldBeOff = shut.off.filter((k) => pad0.spokes.includes(k)).sort();
+        check(JSON.stringify(shut.offSpokes.sort()) === JSON.stringify(shouldBeOff) &&
+              shut.hand && shut.off.includes("tongue"),
+          "11f every spoke the table greys is greyed on the graph too, and so is " +
+          "the handle " + JSON.stringify(shut.offSpokes) + tag);
+        check(shut.said && shut.web > 0,
+          "11g …with the reason printed, and the driver's own territory drawn (" +
+          shut.web + " segments)" + tag);
+
+        /* 11h WITH THE STYLESHEET OFF. The picture is decoration; the eleven
+           values are still readable and settable, because they are ranges with
+           outputs in a table and always were. */
+        const naked = await p.evaluate((keys) => {
+          for (const s of [...document.querySelectorAll("link[rel=stylesheet],style")]) s.disabled = true;
+          return keys.map((k) => {
+            const r = document.querySelector('input[data-k="' + k + '#cantor"]');
+            const o = r && r.nextElementSibling;
+            return { k, range: !!r && r.type === "range", value: r ? r.value : null,
+                     say: o && o.tagName === "OUTPUT" ? o.textContent : null,
+                     named: !!(r && r.getAttribute("aria-label")) };
+          });
+        }, [...pad0.spokes, "tongue", "tongueD", "artic"]);
+        const missing = naked.filter((x) => !x.range || !x.say || !x.named);
+        check(!missing.length, "11h with the stylesheet off all " + naked.length +
+          " of the pad's values are still readable and settable " +
+          JSON.stringify(missing.map((x) => x.k)) + tag);
+      }
       /* ---- 8 THE TEMPO ICONS ARE ABOUT TEMPO ------------------------- */
       const t0 = await p.evaluate(() => ({ bpm: window.__eightDoc().time.bpm,
         rate: window.__eightDoc().time.rate,

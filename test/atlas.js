@@ -315,6 +315,46 @@ function g18() {
   check(!foreign.length, "G7 · THE OFFLINE LAW: no request left " + HOST +
     " " + JSON.stringify(foreign.slice(0, 3)));
 
+  /* ---- G7 · THE LINKS ARE LINKS, NOT FETCHES --------------------------
+     Paul, 2026-08-26: "add actual Wikipedia links for each genre we have at the
+     top by the title". A LINK IS NOT A FETCH — the whole claim — and it is only
+     worth anything asserted TOGETHER with the `foreign` check five lines up:
+     the offline law holds WITH a wikipedia href in the DOM. Extended here
+     rather than written as a new gate because these two facts are one fact.
+     Nothing below clicks a link; clicking is the reader's choice, not the
+     page's. */
+  const wiki = await p.evaluate(() => {
+    const W = window.NuWiki;
+    const a = document.querySelector("#title a[href^='https://en.wikipedia.org/']");
+    return { table: !!W, links: W ? Object.keys(W.WIKI).length : 0,
+             roles: W ? ["simple", "solo", "vocal", "backing", "riff", "pad"]
+                          .filter((r) => W.WIKI[r]) : ["no table"],
+             href: a ? a.href : null, abs: a ? a.getAttribute("href") : null,
+             inApp: !!(a && a.closest("#app")),
+             kind: a ? a.dataset.kind : null,
+             inDom: document.querySelectorAll(
+               "a[href^='https://en.wikipedia.org/']").length };
+  });
+  check(wiki.table && wiki.links === 191,
+    "G7 · the wiki table shipped (" + wiki.links + " links, and the page made " +
+    "no request for any of them)");
+  check(!wiki.roles.length,
+    "G7 · THE SIX INTERNAL ROLES GET NO LINK — a role has a job, not a " +
+    "history " + JSON.stringify(wiki.roles));
+  check(/^https:\/\/en\.wikipedia\.org\/wiki\/.+/.test(wiki.href || ""),
+    "G7 · the title carries its article: " + wiki.href);
+  check(wiki.href === wiki.abs,
+    "G7 · and it is absolute, so nothing resolves against this origin");
+  check(!!wiki.kind,
+    "G7 · the link says WHAT KIND of article it is (" + wiki.kind + ") — 31 of " +
+    "the 191 are an act, an album or something wider than the anchor");
+  /* MOTIF.md: the frozen half of the page is `#app`, and `#title` is outside it
+     — which is why draw() may rebuild this anchor every time without going
+     anywhere near the clock's own DOM. */
+  check(wiki.inDom > 0 && !wiki.inApp,
+    "G7 · " + wiki.inDom + " wikipedia href(s) in the DOM, none of them inside " +
+    "#app, and " + foreign.length + " requests left " + HOST);
+
   /* ---- G8 SCROLL TO 1969, TAP KINGSTON, GET A REGGAE RECORD ----------- */
   const out69 = await setYear(1969);
   check(out69 === "1969", "G8 · the slider reads 1969 (" + JSON.stringify(out69) + " of " +

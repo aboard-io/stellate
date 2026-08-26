@@ -253,6 +253,33 @@
     // choir and the hymnal: they are a GROUP and not a section, and the
     // raggedness is what a record cut in one take in one afternoon sounds like.
     mbubestack:{ voice: "bass",   vowels: "oau", vib: 0.18, air: 0.14, blend: 0.75, syll: 1 },
+    // AND THE WORLD ROUND'S THREE (2026-08-26). Three rows and not sixty:
+    // a mouth is a MEASURED tract setting, and this round adds anchors, not
+    // throats — fifty-seven of the sixty name a row that already exists and
+    // the comment in each says which and why it is the nearest. These three
+    // could not, because in each case the ROOM is the identity and no
+    // existing row is the same room.
+    //   the bolerista: the crooner's late-arriving wobble at half the width
+    // and twice the breath, in a TENOR rather than a bass, one syllable a
+    // beat — a bolero is a poem sung slowly and the diction is the point,
+    // where a crooner is selling the tone.
+    bolerista: { voice: "tenor", vowels: "aoe", vib: 0.45, air: 0.26, vibRate: 5.0,
+                 vibRise: 0.9, syll: 1 },
+    //   the qawwal: pushed hard, high in the tenor, more air than any sacred
+    // row here because the lead is SHOUTING over a party by the end of it,
+    // and the wobble arrives late and stays narrow. `blend` is set for the
+    // party rather than the lead: 0.7, looser than a choir and tighter than
+    // the gospel room, which is what men who sing together every week sound
+    // like.
+    qawwal:    { voice: "tenor", vowels: "aei", vib: 0.3, air: 0.36, blend: 0.7,
+                 vibRise: 0.7, syll: 1 },
+    //   the shape-note singing: the LOOSEST row in this table at 0.95,
+    // past the gospel choir's 0.9, because a Sacred Harp singing is a
+    // hundred untrained people at full volume in a wooden room facing each
+    // other, and the raggedness is the sound rather than a defect in it.
+    // Almost no vibrato — the tradition sings straight and loud — and two
+    // beats a syllable, because the tunes are slow and the words are long.
+    shapenote: { voice: "alto",  vowels: "aeo", vib: 0.08, air: 0.28, blend: 0.95, syll: 2 },
   };
 
   // ---- NAMED PROGRESSIONS --------------------------------------------------
@@ -1851,8 +1878,16 @@
       // missing intermediate — until the skank had room to breathe; the
       // mento underneath and the nyabinghi drumming that displaced the kick
       // are missing too. (`near: dub` is the CHILD, not the parent.)
-      parents: { ska: 1 },
-      wants: ["rocksteady", "mento", "nyabinghi"],
+      // LINEAGE, REPAIRED 2026-08-26. `{ ska: 1 }` with
+      // `wants: ["rocksteady", ...]` said Kingston 1969 came straight off
+      // Kingston 1962 and skipped the three years in between, which is the
+      // one span of Jamaican music where the tempo halves and the bass
+      // becomes the lead instrument. Rocksteady (Kingston 1966) is built and
+      // takes the larger weight; ska keeps a real one because the skank is
+      // still ska's. Mento reaches this record THROUGH both of them and comes
+      // off the want list for that reason, not because the debt was denied.
+      parents: { rocksteady: 0.7, ska: 0.3 },
+      wants: ["nyabinghi"],
       // the skank is the guitar and the tune is the ORGAN — the bubble every
       // Kingston session keyboard player was hired for. The harmonica this
       // cast used to answer with is a Chicago instrument; it moves to dub,
@@ -1930,8 +1965,18 @@
       // everything ska plays that is not the shuffle is theirs, the unison
       // horn front line, the walking bass, the major turnaround. Fifty-fifty
       // is the historical claim; the fit puts all of it on jazz.
-      parents: { jazz: 0.5, blues: 0.5 },
-      wants: ["mento", "calypso"],
+      // LINEAGE, REPAIRED 2026-08-26 (the world round). This read
+      // `{ jazz: 0.5, blues: 0.5 }` with `wants: ["mento", "calypso"]`
+      // beside it — the American half at full weight and the JAMAICAN half
+      // on a wish list, which is a 1962 Kingston record described entirely
+      // by what it imported. Both wants are now built: mento (Kingston 1952,
+      // the first commercial recordings of Jamaican music of any kind) and
+      // calypso (Port of Spain 1956). Mento takes the largest single weight
+      // because ska is a mento band that heard R&B, not the other way round;
+      // `jump blues` is what remains on the list, because Chicago 1952 is a
+      // blues and not the jump band the horn writing actually comes from.
+      parents: { mento: 0.35, blues: 0.25, jazz: 0.2, calypso: 0.2 },
+      wants: ["jump blues"],
       // DON DRUMMOND PLAYED TROMBONE. The Skatalites' front line is a bone
       // out front with the trumpet behind it, and the squeak the register law
       // spent a round chasing was partly a casting fault: ska's horn line is
@@ -2034,8 +2079,16 @@
       // — so the weight normalizes to 1 over what exists. Samba and choro,
       // the older Rio string tradition, are still owed. `near: steely` now
       // reads better: the neighbour is a SIBLING, both children of 1945.
-      parents: { jazz: 1 },
-      wants: ["samba", "choro"],
+      // LINEAGE, REPAIRED 2026-08-26. `{ jazz: 1 }` with
+      // `wants: ["samba", "choro"]` beside it made Rio 1958 a wholly
+      // American descent, which is precisely backwards about the half of
+      // bossa nova that is Brazilian: the rhythm. Both wants are built —
+      // samba (Rio 1939) and choro (Rio 1900) — and samba takes the largest
+      // weight, because the batida a bossa guitar plays is a samba bateria
+      // reduced to one hand. Jazz keeps a real weight for the harmony, which
+      // is genuinely what it brought.
+      parents: { samba: 0.5, jazz: 0.3, choro: 0.2 },
+      wants: [],
       instr: ["nylon_string_guitar", "flute"],
       drumkit: "brush",
       entry: v => v, reg: v => v - 1,
@@ -2384,8 +2437,15 @@
       // walking bass and a dominant seventh on every chord: the right claim
       // wearing the wrong year. A third of the 1945 sessions is twelve-bar
       // blues, so it is also the honest one.
-      parents: { blues: 1 },
-      wants: ["swing", "ragtime", "tin pan alley", "new orleans jazz"],
+      // LINEAGE, REPAIRED 2026-08-26. `{ blues: 1 }` with
+      // `wants: ["swing", "ragtime", ...]` was this anchor admitting in
+      // prose that its two biggest ancestors were missing while declaring
+      // one parent at full weight. Both are now built — Kansas City 1938 and
+      // Sedalia 1899 — and swing takes the largest weight, which is the
+      // whole argument of the comment above: Parker learned to play in the
+      // town that record comes from.
+      parents: { swing: 0.5, blues: 0.3, ragtime: 0.2 },
+      wants: ["tin pan alley", "new orleans jazz"],
       // MEASURED, and it is the declared parent — which is what a well-behaved
       // lineage looks like. Of the anchors the confusion metric compares, the
       // closest to this one is `blues`, against a 0.03 floor. Same band, same
@@ -3695,8 +3755,15 @@
       // at a different vocabulary; the sub-bass slide under it is trap's.
       // Dancehall — the actual Jamaican digital-riddim scene the dembow
       // itself came out of — is the missing rung between all three.
-      parents: { reggae: 0.4, boombap: 0.35, trap: 0.25 },
-      wants: ["dancehall"],
+      // LINEAGE, REPAIRED 2026-08-26. `reggae: 0.4` with
+      // `wants: ["dancehall"]` beside it was Kingston 1969 standing in for
+      // Kingston 1985 because 1985 was not in the catalog — the same shape
+      // of substitution as worldfolk-for-bhangra, one island over. Dancehall
+      // is built and takes the weight; reggae reaches this record through
+      // it. What remains unbuilt is the Panamanian reggae en español that
+      // put Spanish on the riddims in the first place.
+      parents: { dancehall: 0.45, boombap: 0.3, trap: 0.25 },
+      wants: ["reggae en español"],
       // the dembow's top is a synth STAB — a poly chord hit hard and let go —
       // with a guitar line over it. A choir patch holding the pad made every
       // San Juan record breathe like a church.
@@ -3745,8 +3812,17 @@
       // already there, and this paragraph is the marker for whoever builds
       // them. Moving the weight to `rock` and `bossa` to make the arithmetic
       // look better would only be a second fiction on top of the first.
-      parents: { afrobeat: 0.35, rock: 0.35, bossa: 0.3 },
-      wants: ["cumbia", "afro-cuban son", "salsa"],
+      // LINEAGE, REPAIRED 2026-08-26, and `afrobeat: 0.35` on a Miami 2001
+      // record was the THIRD cross-basin stand-in of the same species as the
+      // two WORLD.md named: Lagos 1971 was holding the place of "the Latin
+      // rhythm section", because in 2024 the catalog had no Cuban, Colombian
+      // or Nuyorican anchor to put there and afrobeat was the nearest thing
+      // with a percussion layer on it. All three wants are now built — salsa
+      // (New York 1973), cumbia (Barranquilla 1960) and son (Havana 1928) —
+      // and afrobeat comes out entirely rather than being reduced, because
+      // the resemblance was never to West Africa.
+      parents: { salsa: 0.35, cumbia: 0.2, son: 0.1, rock: 0.2, bossa: 0.15 },
+      wants: [],
       instr: ["nylon_string_guitar", "clean_guitar"],
       drumkit: "acoustic",
       entry: () => 0, reg: v => v, realize: () => "line",
@@ -4156,8 +4232,14 @@
       // folkduo's and countrypop's bright major-key optimism still colours
       // the top. Mbaqanga itself stays the missing rung between marabi and
       // this, and stays on `wants`.
-      parents: { marabi: 0.3, mbube: 0.2, folkduo: 0.3, countrypop: 0.2 },
-      wants: ["mbaqanga"],
+      // ...and mbaqanga arrived 2026-08-26, off this anchor's own want
+      // list. The paragraph above already names "the cycle running forward
+      // through mbaqanga" as the thing marabi was standing in for;
+      // Johannesburg 1964 is now an anchor and takes the weight marabi was
+      // holding on its behalf, which is why marabi drops rather than the
+      // total moving.
+      parents: { mbaqanga: 0.3, marabi: 0.15, mbube: 0.15, folkduo: 0.25, countrypop: 0.15 },
+      wants: [],
       // THE COMMENT ALREADY NAMED THE BAND: "guitar-and-kalimba interplay".
       // The kalimba was sitting in the library unasked-for while a marimba
       // stood in for it, and the guitar in Johannesburg is a bright clean
@@ -5912,8 +5994,12 @@
       // since the day it was written and pointed the weight at Lagos instead.
       // afrobeat 0.4 -> 0.35 and reggae 0.3 -> 0.2 pay for it; reggae is
       // still standing in for dancehall, which stays on `wants`.
-      parents: { afrobeat: 0.35, highlife: 0.2, rnb: 0.25, reggae: 0.2 },
-      wants: ["dancehall"],
+      // ...and dancehall arrived 2026-08-26 off this anchor's own want
+      // list. Kingston 1985 is where the vocal cadence and the sparse
+      // digital riddim come from and it is a nearer ancestor than Kingston
+      // 1969, so reggae's weight goes to it rather than the total moving.
+      parents: { afrobeat: 0.3, highlife: 0.2, rnb: 0.25, dancehall: 0.15, reggae: 0.1 },
+      wants: [],
       instr: ["solo_vox", "clean_guitar"],
       drumkit: "room",
       entry: v => v, reg: v => (v === 0 ? 0 : -1), realize: () => "line",
@@ -6041,8 +6127,17 @@
       // registry has no accordion sampler to build norteño on if they were
       // here (engine/registry-data.js SAMPLERS: `accordian` is a font preset
       // with no zones, which is a silent voice, so it is not cast).
-      parents: { countrypop: 0.35, latinpop: 0.35, worldfolk: 0.3 },
-      wants: ["banda", "norteño"],
+      // LINEAGE, REPAIRED 2026-08-26 — the SECOND of the two edges WORLD.md
+      // §4 caught. `worldfolk: 0.30`, Johannesburg 1986, on a Sinaloan
+      // corrido, with `wants: ["banda", "norteño"]` sitting right beside it.
+      // Both wants are now built — Mazatlán 1938 and Monterrey 1955 — and
+      // both are the actual music: a corrido tumbado is a norteño requinto
+      // line and a banda tuba with trap's phrasing on top. `countrypop` and
+      // `latinpop` go with `worldfolk`: Nashville 1945 and Miami 2001 were
+      // standing in for "a sung story" and "a Spanish-language record", and
+      // this catalog can now name the real thing for each.
+      parents: { nortena: 0.45, banda: 0.3, trap: 0.25 },
+      wants: [],
       // THE ACTUAL ENSEMBLE, three deep and in that order: requinto, tuba,
       // bajo quinto. THREE entries and not two on purpose — the array's law is
       // that the last entry covers every remaining chair (this file's header),
@@ -6092,8 +6187,18 @@
       // shared method. Bhangra — the Punjabi harvest-dance tradition that IS the
       // dhol pattern below, and its own 1990s British diaspora recording
       // history — is the missing rung, and it is the direct parent.
-      parents: { worldfolk: 0.4, trap: 0.35, reggaeton: 0.25 },
-      wants: ["bhangra"],
+      // LINEAGE, REPAIRED 2026-08-26, AND THIS IS THE EDGE WORLD.md §4
+      // CAUGHT RUNNING. It read `worldfolk: 0.40` — Johannesburg 1986 as the
+      // LARGEST declared ancestor of a Punjabi record — with
+      // `wants: ["bhangra"]` written underneath it. Nobody typed that as a
+      // lie: the genealogy law demanded a parent, the true parent was
+      // absent, and the nearest anchor was conscripted. `worldfolk` had two
+      // children and neither was African. Bhangra (Southall 1986) is built
+      // and takes the weight; `worldfolk` is not reduced, it is REMOVED,
+      // because the resemblance it was standing for was never a resemblance
+      // to Johannesburg at all.
+      parents: { bhangra: 0.45, trap: 0.35, reggaeton: 0.2 },
+      wants: [],
       // THE SHEHNAI, the double-reed that answers the singer at every wedding
       // this music is played at — six zones in the registry, cast zero times
       // before now — and behind it the HARMONIUM, which is what `reed_organ`
@@ -6158,8 +6263,14 @@
       // ornamented modal vocal is where it always was: on `wants`, in its own
       // name. Shaabi, the Cairo wedding tradition this is the electrified
       // argument with, is the missing rung and the ONLY honest home for it.
-      parents: { trap: 0.5, electro: 0.5 },
-      wants: ["shaabi"],
+      // ...AND THE MISSING RUNG WAS BUILT, 2026-08-26. The paragraph above
+      // ends "Shaabi … is the missing rung and the ONLY honest home for it",
+      // and Cairo 1978 is now an anchor. It takes the largest single weight
+      // — mahraganat is shaabi's own maqsoum and its own wedding voice on a
+      // machine — and trap and electro give back what they were holding for
+      // it. The want list is empty for the first time.
+      parents: { shaabi: 0.4, trap: 0.3, electro: 0.3 },
+      wants: [],
       instr: ["percussive_organ", "solo_vox"],
       drumkit: "electronic",
       entry: v => v, reg: v => (v === 0 ? 0 : -1), realize: () => "line",
@@ -6387,8 +6498,19 @@
       // wrong music twelve years early, and its own `wants` admits it is
       // missing swing. Reaching for it in the bossa style would be reaching
       // for the nearest anchor rather than the right one.
-      parents: {},
-      wants: ["palm-wine guitar", "adaha brass band", "swing", "afro-cuban son"],
+      // LINEAGE, REWRITTEN 2026-08-26 — and the paragraph above is kept
+      // rather than deleted, because it was right on the day it was written
+      // and it is the reason this repair was possible. It said: "the
+      // catalog's first African ROOT, and honestly so. Dance-band highlife
+      // is coastal adaha brass, palm-wine guitar, the Afro-Cuban 78s that
+      // circulated in West Africa, and the SWING big band — and not one of
+      // those four is here." THREE OF THE FOUR ARE NOW HERE. `wants` was a
+      // specification and the world round built to it: palmwine (Freetown
+      // 1950), son (Havana 1928) and swing (Kansas City 1938). Accra 1957
+      // stops being a root, and the one thing still missing — the adaha
+      // brass band of the coastal towns — stays named.
+      parents: { palmwine: 0.4, son: 0.3, swing: 0.3 },
+      wants: ["adaha brass band"],
       // A HOLLOW-BODY, not a solid one: `jazz_guitar` is closer to a 1950s
       // West African dance band than `clean_guitar`'s bright electric, and the
       // two horns are the Tempos' own front line.
@@ -6731,8 +6853,13 @@
       // bassline habit and the cycle underneath come down the mbaqanga line
       // from the shebeen organ — which is what the marabi weight means, and
       // it is in the data below as well as in this sentence.
-      parents: { house: 0.65, marabi: 0.35 },
-      wants: ["mbaqanga", "bubblegum"],
+      // ...and mbaqanga arrived 2026-08-26 off this anchor's own want list
+      // too. Johannesburg 1964 is the township groove kwaito slowed down and
+      // put on a 909, and it is a nearer ancestor than Johannesburg 1935 by
+      // thirty years; marabi keeps a smaller weight because the endless
+      // cycle is still marabi's idea. `bubblegum` stays unbuilt.
+      parents: { house: 0.5, mbaqanga: 0.3, marabi: 0.2 },
+      wants: ["bubblegum"],
       instr: ["polysynth", "rhodes_ep"],
       drumkit: "tr909",
       entry: v => v, reg: v => (v === 0 ? 0 : -1),
@@ -6882,6 +7009,3217 @@
               "the trumpet, answering an octave up"],
       word: v => (v === 1 ? [drop(2)] : v === 2 ? [transpose(7), rotate(4), drop(2)] : []),
     },
+    /* ====================================================================
+       FILL IN THE WORLD — TIER 1, the sixty anchors the box can honestly
+       play today (Paul, 2026-08-26: "Fill in lots of world historical
+       genres including non western stuff over a long period of time")
+       ====================================================================
+
+       MEASURED THE MORNING OF THE CHANGE, over the 133 place-year anchors
+       the atlas holds: 107 of them (80.5%) are Western Europe or North
+       America, the USA and the UK hold 88, and outside Europe the catalog
+       knew the world almost entirely through the record industry. WORLD.md
+       §4 wrote that down and called it "the catalog knows one deep tradition
+       and knows the rest of the world only through the record industry".
+
+       WHAT MADE THIS ROUND SAFE, AND DID NOT EXIST THE WEEK BEFORE. Three
+       laws landed with the African slate on 2026-08-25 and every anchor
+       below inherits them without saying anything:
+         · the UNACCOMPANIED law (compose.js) — DERIVED from `kit`, `nobass`
+           and `instr`, not a name list, so `sacredharp` below joins
+           {gregorian, spem, organum, zema, mbube} the moment it is written
+           and hires nobody, with nothing here to declare;
+         · the ERA law for players AND instruments — a record may not hire a
+           guest from after its own year, nor seat an instrument the catalog
+           first hears later;
+         · INSTR_YEAR, EXTRACTED as the earliest year any dated anchor
+           claims each id. That is why a date below is never free: a label is
+           also a CLAIM ABOUT AN INSTRUMENT, and writing an early one lowers
+           the floor for everything that plays it. MEASURED, this round moves
+           exactly ten floors and adds eight ids that had none —
+             steel_string_guitar 1956 -> 1900 (a choro cavaquinho)
+             flute               1958 -> 1900 (a choro flute)
+             trumpet             1945 -> 1928 (the septeto's cornet)
+             brass_section       1967 -> 1938 (a Sinaloa banda)
+             tenor_sax           1945 -> 1938 (a Kansas City reed section)
+             jazz_guitar         1952 -> 1938 (the same band's rhythm guitar)
+             tuba                2023 -> 1938 (the same band's bass)
+             accordion           1985 -> 1950 (a forró sanfona)
+             crunch_guitar       1969 -> 1968 (a São Paulo fuzzbox)
+             bass_lead           1987 -> 1985 (a Casio MT-40 preset)
+           — and not one of those is in dispute as a claim about when the
+           instrument existed. What a lowered floor BUYS is that older
+           records may now hire that sound too, which is why the list is
+           short and why every entry on it is a real instrument in a real
+           year rather than a convenience.
+
+       THE ORDER IS WORLD.md §6'S AND IT IS NOT NEGOTIABLE. **TIER 1 ONLY**:
+       12-TET, and a metre this file can write. Three walls decided what is
+       in and what is not, and each is a FACT about this box rather than an
+       opinion about the music:
+
+         · THE METRE. Every phrase, cell and kit vector in this file is
+           written on SIXTEEN places, `drums()` takes its bar length from the
+           subject (kernel.js:2289), and precompose.js:903 sets `meter: null`
+           for all of them — so a 12-pulse bell, an aksak 7 or 9, a 12-beat
+           flamenco compás and a tala PHASE against the seed instead of
+           becoming a bar. Every anchor below is in four, and every one of
+           them genuinely is: son, samba, mambo, filmi's keherwa, kroncong,
+           enka, luk thung, arabesk's düyek and a Sinaloa polka are all
+           records in four. `bulgarian` is the standing proof of the hazard
+           in the other direction — "Sofia 1975", whose entire identity is
+           the uneven bar, ships in 4/4 with a scale over it.
+         · THE TUNING. WORLD.md §2's measurement table: 12-TET is a hard wall
+           for exactly TWO families, quarter-tone maqam (50 cents, on the
+           note that NAMES the maqam) and gamelan (40 cents, and no two
+           ensembles agree). Turkish makam is 19c max / 6c mean, Chinese
+           scale material 10c, Hindustani shruti 14c — all at or inside the
+           10-20c melodic JND. That table is why Istanbul and Shanghai are
+           below and Cairo's tarab is not.
+         · THE INSTRUMENTS. 123 ids in the registry. `sitar`, `koto`,
+           `shamisen`, `shakuhachi`, `steel_drums`, `pan_flute`, `clarinet`,
+           `alto_sax`, `honky_tonk`, `timpani` and `melodic_tom` are all real,
+           licensed and on disk, and NO anchor had ever said their names —
+           WORLD.md §2 counted 41 such ids. Saying a name is all it takes to
+           cast one, and MEASURED against the tree this round started from
+           (66 ids cast by 139 anchors; 74 cast by 199) it says EIGHT of them:
+           clarinet, alto_sax, steel_drums, pan_flute, shamisen, koto, sitar
+           and honky_tonk, in that order, each numbered in the anchor that
+           does it. `tuba` is a ninth case and a different one — it was cast
+           exactly once, by a record from 2023, so what moved for it is the
+           FLOOR and not the id. What this round does NOT do
+           is put three stand-ins in one cast: that is the taarab refusal the
+           African round wrote down, and it is why jiangnan sizhu, Cuban
+           rumba and gamelan are named in §TIER 2 below rather than shipped.
+
+       AND THE ONE THING THE RULE MUST NOT BE USED TO EXCLUDE. No anchor in
+       this catalog has WORDS — the singers sing vowels and the tract does
+       not read a text — so "the lyric matters here" is true of every
+       tradition on the shelf and can never be a shipping blocker on its own.
+       What separates `ghazal` (Tier 2) from `cantopop` (Tier 1) is not that
+       one has a text and the other does not: in a ghazal the SETTING of the
+       couplet's prosody IS the compositional act, and in Cantopop the
+       lexical tone is a constraint ON a pop melody that is composed anyway.
+       The first is a music this box cannot write; the second is a music it
+       writes with one fact about it unsaid, declared in `cannot`.
+
+       THE `cannot` FIELD, AND THE PRIMARY-FACT RULE (WORLD.md §7). `wants`
+       names a missing ANCESTOR; `cannot` names a missing WORD IN THE
+       LANGUAGE — a fact about the tradition this box has no way to state.
+       Prose drifts from the data it labels, which is vocabulary.js's own
+       argument, so the admission is DATA. And the rule that keeps Tier 2 out
+       of Tier 1: **if a tradition's PRIMARY fact is in its own `cannot`, it
+       does not ship under that name.** Ghazal's primary fact is the
+       text-setting of a couplet, jingju's is banshi, gamelan's is slendro:
+       none of them is below. Enka's primary fact is its yonanuki melody and
+       not kobushi; qawwali's is the party, the harmonium and the clapped
+       cycle and not the sargam taan; shaabi's is the wedding voice over the
+       maqsoum and not the quarter tone. Those three ship, each carrying its
+       admission.
+
+       THE CARICATURE IS MEASURABLE, AND SEVENTEEN OF THE SIXTY ANCHORS
+       BELOW EXIST TO PAY A DEBT SOMEBODY HAD ALREADY WRITTEN DOWN. The
+       failure WORLD.md caught running was `worldfolk` (Johannesburg 1986)
+       standing as the largest declared ancestor of a Punjabi record and of a
+       Mexican one, because "the genealogy law demanded a parent, the true
+       parent was absent, and the nearest anchor was conscripted". The fix is
+       not a better guess — it is the missing rung. Every `wants` entry the
+       catalog had written down and could not reach is a SPECIFICATION, and
+       this round built to it: mento and calypso (ska wanted both),
+       rocksteady (reggae), dancehall (reggaeton AND afrobeats), bhangra
+       (punjabipop), banda and norteño (corrido tumbado wanted both), shaabi
+       (mahraganat), samba and choro (bossa wanted both), cumbia, son and
+       salsa (latin pop wanted all three), swing and ragtime (jazz wanted
+       both), palm-wine, son and swing (highlife wanted three of its four),
+       mbaqanga (worldfolk AND kwaito). Seventeen anchors, and THIRTEEN
+       `parents` lines are REWRITTEN below the entries that owned them —
+       ska, reggae, reggaeton, punjabipop, corridotumbado, mahraganat, bossa,
+       latinpop, jazz, highlife, worldfolk, kwaito and afrobeats — never in
+       silence, and each with the old claim quoted above the new one.
+
+       AND THE MAP IS THE ALARM, NOT THE SPECIFICATION. Six new dots would
+       bring every large city within 2,000 km of an anchor and six dots is
+       exactly the costume. The coverage report this round prints is anchors
+       per REGION per CENTURY, not dots.
+
+       ====================================================================
+       TIER 2 — NAMED WITH ITS WALL, AND NOT SHIPPED
+       ====================================================================
+       Nobody re-derives these; each is a name, a wall and the reason.
+
+         TUNING (12-TET is the wall, WORLD.md §2's measured table):
+           tarab / Arab classical (Cairo, Umm Kulthum) — rast and bayati put
+             a ~50-cent note on the degree that NAMES the maqam;
+           Turkish klasik makam (Istanbul) — 53-TET commas are inside the JND
+             for pitch but NOT for notation, and the notation is the tradition;
+           Persian dastgah (Tehran) — the koron is the same wall as bayati;
+           shashmaqom (Bukhara) and Uyghur muqam (Kashgar);
+           gamelan (Yogyakarta) — slendro/pelog PLUS a non-2:1 period, which
+             `degPitch`'s `12*floor(d/len)` and `foldInto`'s step of 12 make
+             unsayable at all; and no two ensembles are tuned alike, so there
+             is no target to be correct about.
+         METRE (this file's cells are sixteen places long):
+           flamenco proper (Seville) — the soleá/bulería compás is twelve
+             beats accented 3-6-8-10-12; `rumbacatalana` below is the 4/4
+             corner of that family and says so;
+           aksak — ruchenitsa, kopanitsa, daichovo (Sofia, Skopje), Turkish
+             usul, Caucasian 6+5;
+           Hindustani tala — teental is sixteen and would fit, but jhaptal,
+             rupak and ektal are 10, 7 and 12;
+           jigs, slip jigs and the mariachi sesquiáltera;
+           jingju banshi, gagaku jo-ha-kyū, pansori — metre CHANGING inside
+             one record, which precompose.js cannot yet write.
+         FREE TIME (no entry in any metre table can say "no bar"):
+           alap, taqsim, sanban, seán-nós, noh's ma, Mongolian urtiin duu.
+         INSTRUMENTS (the taarab refusal: three stand-ins in one cast is a
+         costume even when each one defends itself):
+           jiangnan sizhu (Shanghai) — dizi, erhu, pipa and yangqin, and only
+             the yangqin has an honest id (`dulcimer` IS a hammered dulcimer);
+           Cuban rumba de cajón (Havana) — three tuned drums and a clave, and
+             the box has twelve extracted kit WAVs with no hand drum among them;
+           gnawa, mbalax, jeliya, jùjú, taarab and chimurenga — DEFERRED BY
+             NAME by the African round on 2026-08-25 and not re-derived here;
+           aboriginal Australian manikay (Yirrkala) — the yidaki has no id and
+             its drone IS the music, and the metre is free besides.
+         TIMBRE AS THE GENRE (WORLD.md §5.5 — no compromise offered):
+           pansori's rasp, throat singing, jingju's role registers.
+         TEXT-SETTING (WORLD.md §5.7 — melisma density is the only proxy and
+         it is a crude one):
+           ghazal (Delhi) — the couplet's prosody IS the composition, so by
+             the primary-fact rule the name does not ship;
+           qasida, and the Gregorian melisma this catalog already admits to.
+         THE MAP ITSELF, which is a wall nobody had named until this round:
+           `atlas-land.js` — the baked Natural Earth coastline — holds NO
+           Pacific islands, no Lesser Antilles and no Ryukyus. Measured: the
+           nearest baked land to Honolulu is 33.9 degrees away and to Honiara
+           9.0. So hapa-haole (Honolulu 1915), Melanesian string band
+           (Honiara 1975), zouk (Pointe-à-Pitre 1985) and Okinawan pop (Naha
+           1992) are all Tier 1 MUSICALLY — 12-TET, in four, castable — and
+           are held back because their dot would draw over open water and no
+           gate could prove it stands on land. Australia and the Pacific is
+           therefore this round's one EMPTY REGION, and the wall is the
+           coastline bake, not the music. It is one re-bake away.
+           ...AND ONE MORE, FOR A DIFFERENT MAP REASON: UK bhangra (Southall
+           1986) — the daytimer circuit, Alaap and Heera, which is where the
+           music actually was. Southall's dot measures 4.9 CSS px from Muswell
+           Hill at the Britain arc, under atlas.gate.js G10's 8.5 px floor,
+           and the two are SIBLING neighbourhoods of one city, which is the
+           one relation `WITHIN` cannot declare. Birmingham measures 4.5 px
+           from Stourbridge and Wolverhampton 3.8, so it is not a Southall
+           problem — Britain is simply full. `bhangra` ships as Jalandhar
+           1972 instead, which is the older and more directly ancestral label
+           for what `punjabipop` was asking for anyway.
+       ==================================================================== */
+
+    /* ---- LATIN AMERICA AND THE CARIBBEAN ------------------------------
+       Twenty-one anchors — twenty of which put a dot in this region and one
+       of which, `salsa`, puts its dot in New York, because that is where the
+       Fania tape is and the map does not get to pretend otherwise. The
+       coverage report prints it under North America for the same reason.
+
+       The region was already the best-served of the
+       eight non-Euro-American ones (tango 1935, bossa 1958, latinpop 2001,
+       reggaeton 2004, bailefunk 2022, corridotumbado 2023, plus Kingston's
+       three) — which is exactly why the holes were so loud: the catalog held
+       Rio and Kingston and Buenos Aires and had no Havana, no Mexico, no
+       Colombia, no Hispaniola and no Trinidad, and five of the six anchors
+       it did hold were the last seventy years of pop.
+
+       ONE COMPROMISE IS MADE TWENTY-ONE TIMES AND IS NAMED HERE ONCE rather
+       than smuggled anchor by anchor: THERE IS NO HAND PERCUSSION IN THE
+       KIT. Twelve lanes, twelve extracted WAVs (kernel.js:1776 DRUMFILE),
+       and no bell, no shaker, no scraper, no conga and no clave among them;
+       registry-data.js PERCBANK holds 24 real percussion hits and nukernel
+       reads none of them (grepped: zero references). So the house answer,
+       set three times already — bodiddley's maracas on the hat
+       (genres.js:2462), amapiano's shekere on the rim (:5748), highlife's
+       maracas on the hat again (:6412) — is the answer here: the clave and
+       the cáscara to `p`, the shaker, güira and guacharaca to `h`, the
+       congas and the tambora to the toms, and the compromise SAID in the
+       anchor that makes it. What is lost every time is the pitch difference
+       between an open tone and a slap. */
+
+    // SON — Havana 1928, and it is the trunk of nearly everything else in
+    // this region. A septeto: tres and guitar interlocking, bongó, a bass
+    // that ANTICIPATES (the note lands on the and-of-4 and again on 3, not
+    // on the downbeat), a clave running under all of it, and a form in two
+    // halves — the sung largo, then the montuno where the chorus takes a
+    // short phrase and the lead answers over it forever.
+    //
+    // THE YEAR is the Sexteto Habanero's Victor sessions and the arrival of
+    // the CORNET, which made a sexteto a septeto in 1927 and is the sound
+    // everyone means by "son". A record and an instrument, not a decade's
+    // midpoint.
+    //
+    // THE TRES IS `steel_string_guitar` AND THAT IS THE CLOSER OF THE TWO
+    // GUITARS, not a shrug: a tres is three courses of DOUBLED METAL strings
+    // played with a plectrum, so the nylon guitar — which this file reaches
+    // for by reflex for anything Spanish — is the wrong string and the wrong
+    // attack. The Spanish guitar beside it IS nylon. What is lost is the
+    // octave doubling inside each course, which is most of what makes a tres
+    // shimmer.
+    //
+    // LINEAGE: a genuine ROOT. The parents are the changüí of Guantánamo,
+    // the Spanish canción and the African-derived rumba de cajón, and not
+    // one of the three is here. Reaching for `tango` because it is the only
+    // other Latin American anchor older than this one would be the exact
+    // conscription this round exists to undo — Buenos Aires 1935 is a
+    // different continent's worth of music away and is FIVE YEARS LATER.
+    son: {
+      label: "Havana 1928", voices: 3, bars: 8, near: "highlife",
+      plan: "song", bpm: 96,
+      parents: {},
+      wants: ["changüí", "spanish canción", "rumba de cajón", "danzón"],
+      cannot: ["the three tuned drums of a rumba and the difference between " +
+               "an open tone and a slap — the kit has twelve extracted WAVs " +
+               "and no hand drum among them"],
+      instr: ["steel_string_guitar", "trumpet", "nylon_string_guitar"],
+      drumkit: "acoustic",
+      entry: v => v * 2, reg: v => (v === 1 ? 0 : v - 1), realize: () => "line",
+      part: ["riff", "lead", "counter"],
+      roots: [0, 0, 3, 3, 4, 4, 0, 0], mode: MODES.ionian,
+      scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 2,
+      // THE ANTICIPATED BASS is the single most identifying number in this
+      // entry and it is written into the KICK rather than into a bass word,
+      // because `bassStyle` has no "arrive early" in it: the marímbula and
+      // then the double bass play a tumbao that lands on the and-of-4 of the
+      // bar before and on the 3, and the kick is what a drum kit has to say
+      // that with. `octaves` is the nearest bass word, and it is right about
+      // the interval and silent about the placement.
+      bassStyle: "octaves",
+      // CLAVE 3-2 ON `p`, one bar, three strokes then two — the same lane
+      // and the same reasoning as Accra 1957 one ocean east, which took the
+      // figure from the Cuban 78s in the first place. `h` is the bongó's
+      // martillo, and the two `s` strokes are the bongosero's slap.
+      kit: { k: [0,0,0,0, 0,0,0,1, 0,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 0,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,0,1, 0,0,1,0, 0,0,1,0, 1,0,0,0],
+             h: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1] },
+      kitVel: { h: [8,0,5,6, 7,0,5,6, 8,0,5,6, 7,0,5,7] },
+      fill: { p: [1,0,0,1, 0,0,1,0, 1,0,1,0, 1,1,0,1] },
+      tone: { wave: "triangle", cut: 2600, q: 1.1, atk: .005, rel: .5, gain: .27, verb: .24 },
+      words: ["the tres, the guajeo it never leaves",
+              "the cornet, over the montuno",
+              "the guitar, filling behind it"],
+      word: v => (v === 1 ? [rotate(4), drop(2)] : v === 2 ? [transpose(-3)] : []),
+    },
+
+    // BOLERO — Havana 1948. The Latin American love song, and the one form
+    // in this batch whose whole business is the VOICE and the guitar behind
+    // it. Two guitars: a requinto (tuned a fourth up, playing the filigree
+    // between the sung lines) and the rhythm guitar under it.
+    //
+    // THE YEAR is the Trío Los Panchos era — the requinto-led trio that made
+    // the bolero continental — rather than Pepe Sánchez's "Tristezas" of the
+    // 1880s, which is the origin and has no recording behind it. The label
+    // names what is on tape, which is this file's standing rule for a year.
+    //
+    // WHAT SEPARATES IT FROM `crooner`, its nearest neighbour in feel: the
+    // crooner is Los Angeles 1953 with a band and an arranger behind him and
+    // he sings over CHANGES that move every two beats. A bolero is two
+    // guitars, four bars of I-vi-ii-V, and a tempo half the crooner's — and
+    // the requinto's filigree between the phrases is a SECOND LINE, which is
+    // why `voices` is 3 and not 2.
+    bolero: {
+      label: "Havana 1948", voices: 3, near: "crooner",
+      // 72 and not the 68 a bolero is often taken at: compose.js requires an
+      // integer 70..160 and the floor is the floor.
+      plan: "song", bpm: 72,
+      // LINEAGE: son is the same city twenty years earlier and is genuinely
+      // an input — the bongó, the clave feeling, the trio format — but the
+      // MELODY is the Spanish-Cuban canción and the Italian-descended
+      // sentimental song, which is why the weight is not larger.
+      parents: { son: 0.55 },
+      wants: ["canción cubana", "trova santiaguera"],
+      instr: ["solo_vox", "steel_string_guitar", "nylon_string_guitar"],
+      entry: v => v, reg: v => (v === 1 ? 1 : v === 2 ? -1 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      roots: [0, 5, 1, 4], mode: MODES.ionian,
+      scale: SCALES.major, diatonic: true,
+      artic: "legato", maxHold: 4, bassStyle: "octaves",
+      // THE BOLERO RHYTHM IS THE ONE THING THE HANDS DO: bongó martillo on
+      // the hat lane, and the cinquillo — the five-stroke figure the whole
+      // Caribbean is built on — on `p`. No kick and no snare, because a
+      // bolero trio has no drum kit and putting one there would make it a
+      // dance record.
+      kit: { p: [1,0,1,1, 0,1,0,0, 1,0,1,1, 0,1,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      kitVel: { h: [7,0,4,0, 6,0,4,0, 7,0,4,0, 6,0,5,0] },
+      tone: { wave: "triangle", cut: 2200, q: 0.8, atk: .02, rel: 1.3, gain: .26, verb: .38,
+              // WHO SINGS: a tenor a foot from the microphone, the wobble
+              // arriving late in the note the way the crooner's does — the
+              // two traditions learned it from the same decade of radio —
+              // but with more breath in it and one syllable a beat, because
+              // a bolero is a POEM sung slowly and the diction is the point.
+              mouth: MOUTHS.bolerista },
+      words: ["the singer", "the requinto, between the lines",
+              "the rhythm guitar, holding the chord"],
+      word: v => (v === 1 ? [transpose(5), rotate(8), drop(2)] : v === 2 ? [drop(4)] : []),
+    },
+
+    // MAMBO — Mexico City 1950. Pérez Prado's RCA sessions: a big band with
+    // the saxes and the brass thrown at each other in two-bar blocks, a
+    // rhythm section straight off the son, and a tempo nothing else in this
+    // batch comes near.
+    //
+    // THE CITY IS MEXICO CITY AND THAT IS NOT AN ERROR. The mambo is Cuban
+    // — Cachao and Arcaño in Havana in the late thirties, Prado arranging at
+    // the Casino de la Playa — but Prado could not get the records made in
+    // Havana and did get them made in Mexico City from 1949, and the mambo
+    // the world heard is on RCA Mexico. The label names where the tape is.
+    //
+    // WHAT SEPARATES IT FROM `salsa`, which is the same rhythm section
+    // twenty-three years later: mambo is a BRASS SECTION playing riffs in
+    // block harmony over a vamp that does not modulate, at 132 — and salsa
+    // is trombones and a piano montuno in dorian over an eight-bar cycle at
+    // 100. The two anchors share a clave and disagree about everything else.
+    mambo: {
+      label: "Mexico City 1950", voices: 3, near: "son",
+      plan: "dance", bpm: 132,
+      // LINEAGE: son is the rhythm section, whole and undisguised. The other
+      // half is the danzón's final section — where the mambo takes its name
+      // — and the AMERICAN SWING BAND, which this catalog now holds (Kansas
+      // City 1938, below), and Prado's block scoring is unmistakably that.
+      parents: { son: 0.5, swing: 0.35 },
+      wants: ["danzón"],
+      instr: ["brass_section", "tenor_sax", "trumpet"],
+      drumkit: "jazz",
+      entry: v => v, reg: v => (v === 1 ? -1 : v === 2 ? 1 : 0),
+      realize: () => "line",
+      part: ["riff", "counter", "lead"],
+      harmony: "modal", mode: MODES.mixo, scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 1, bassStyle: "octaves",
+      // THE TIMBALES ARE THE TOMS, and this is the batch's other standing
+      // compromise said once: the cáscara on the shell goes to `p`, the
+      // abanico and the bell-driven mambo section go to the high and mid
+      // toms, and what is lost is that a timbalero is playing METAL — the
+      // shell and the cha-cha bell — where a tom is a head.
+      kit: { k: [1,0,0,0, 0,0,0,1, 0,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,1,1, 0,1,1,0, 1,0,1,1, 0,1,1,0],
+             t: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             m: [0,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { t: [1,0,1,0, 1,0,0,0, 1,0,1,0, 1,1,0,0] },
+      tone: { wave: "sawtooth", cut: 3000, q: 1.2, atk: .004, rel: .35, gain: .28, verb: .2 },
+      words: ["the brass, in blocks",
+              "the saxes, answering underneath",
+              "the trumpet, screaming over the top"],
+      word: v => (v === 1 ? [rotate(8), transpose(-5)] : v === 2 ? [transpose(12), drop(3)] : []),
+    },
+
+    // SALSA — New York 1973, and the label says New York because that is
+    // where the tape is: Fania's sessions, made by Puerto Rican and Cuban
+    // musicians in Manhattan, and the map should not pretend otherwise. This
+    // is the round's one anchor whose city and whose music point at
+    // different continents, and saying so is cheaper than moving the dot.
+    //
+    // THE YEAR is the Fania All-Stars at the Cheetah on tape and Willie
+    // Colón and Héctor Lavoe at their peak — the moment the word "salsa"
+    // stops being a marketing term and starts naming a sound.
+    //
+    // WHAT IT IS, IN FIELDS: a piano MONTUNO (a two-bar arpeggiated figure
+    // that never stops), trombones instead of trumpets, and a minor-side
+    // harmony — which is the audible difference between this and mambo,
+    // which is a brass band in major sitting on one chord.
+    salsa: {
+      label: "New York 1973", voices: 3, bars: 8, near: "mambo",
+      plan: "song", bpm: 100,
+      // LINEAGE: son is the skeleton and mambo is the horn writing; the
+      // third parent is the New York end of it — boogaloo and the R&B the
+      // Nuyorican bands grew up on, which `funk` is the nearest anchor to
+      // and is named at a small weight BECAUSE it is a resemblance and not a
+      // descent. `latinpop` (Miami 2001) is this anchor's CHILD and its
+      // parents line is corrected below.
+      parents: { son: 0.4, mambo: 0.35, funk: 0.25 },
+      wants: ["boogaloo", "plena", "bomba"],
+      instr: ["bright_yamaha_grand", "trombone", "trumpet"],
+      drumkit: "acoustic",
+      entry: v => v * 2, reg: v => (v === 0 ? 0 : v === 1 ? -1 : 1),
+      realize: () => "line",
+      part: ["riff", "lead", "counter"],
+      roots: [0, 3, 4, 0, 0, 3, 4, 4], mode: MODES.dorian,
+      scale: MODES.dorian, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "octaves",
+      // THE BELL IS THE HAT LANE — the campana's quarter notes with the
+      // and-strokes between them, which is what a salsa record is counted by
+      // — and the congas take the toms. Same compromise as the mambo above,
+      // one lane over.
+      kit: { k: [1,0,0,0, 0,0,0,1, 0,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,0,1, 0,0,1,0, 0,0,1,0, 1,0,0,0],
+             m: [0,0,0,0, 0,0,1,1, 0,0,0,0, 0,0,1,1],
+             l: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             h: [1,0,1,0, 1,0,1,1, 1,0,1,0, 1,0,1,1] },
+      kitVel: { h: [9,0,5,0, 8,0,5,5, 9,0,5,0, 8,0,5,6] },
+      fill: { m: [0,0,1,1, 0,0,1,1, 1,1,0,0, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2800, q: 1.2, atk: .005, rel: .45, gain: .28, verb: .22 },
+      words: ["the piano montuno", "the trombones, in the holes",
+              "the trumpet, on top of them"],
+      word: v => (v === 1 ? [rotate(4), drop(2)] : v === 2 ? [transpose(7), drop(3)] : []),
+    },
+
+    // CUMBIA — Barranquilla 1960. The Discos Fuentes orquesta cumbia: a
+    // clarinet or a sax on the tune where the gaita flute used to be, brass
+    // answering, and underneath it the pattern the whole coast walks to —
+    // the tambora on the beat and the llamador on every off-beat, which is
+    // the figure that makes a cumbia impossible to mistake for a son.
+    //
+    // THE YEAR is the Fuentes big-band era in Barranquilla, when the coastal
+    // music was arranged for a horn section and became national and then
+    // continental. The village cumbia — gaitas, no harmony, no fixed pitch —
+    // is a different music and is NOT what this anchor claims.
+    //
+    // THE CLARINET IS THE FIRST IN THE CATALOG, which is the fact worth
+    // recording: `clarinet` has been a real, licensed, on-disk registry id
+    // the whole time with SIX zones and a parent window of [50,91], and no
+    // anchor in 139 had ever said its name. Nothing was built to cast it —
+    // it just had to be asked for.
+    cumbia: {
+      label: "Barranquilla 1960", voices: 3, near: "son",
+      plan: "dance", bpm: 92,
+      // LINEAGE: a ROOT, and honestly one — coastal cumbia is Indigenous
+      // gaita flutes, African drums and a Spanish song form, none of which
+      // is in this catalog, and the orquesta arrangement it wears in 1960 is
+      // the Cuban dance band, which IS here at a real weight.
+      parents: { son: 0.3 },
+      wants: ["gaita costeña", "porro", "chandé"],
+      cannot: ["the gaita's own tuning — a kuisi is a beeswax-and-cane duct " +
+               "flute with five holes and no temperament, and this box has " +
+               "only 12-TET to offer it"],
+      instr: ["clarinet", "trumpet", "nylon_string_guitar"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 2 ? -1 : 0), realize: () => "line",
+      part: ["lead", "counter", "riff"],
+      roots: [0, 4, 0, 4], mode: MODES.aeolian, scale: DIATONIC, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "octaves",
+      // THE LLAMADOR IS ON EVERY OFF-BEAT and that is the whole identity:
+      // `p` is the 2-4-6-8 of the eighth-note grid and nothing else, the
+      // tambora is the kick and the alegre goes to the toms. The guacharaca
+      // — a scraped ridged tube — is the hat lane, and what is lost is that
+      // a scrape has a LENGTH where a hat has an attack.
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             s: [0,0,0,0, 0,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             m: [0,0,0,0, 1,0,1,0, 0,0,0,0, 1,0,1,0],
+             h: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1] },
+      kitVel: { h: [8,0,4,6, 7,0,4,6, 8,0,4,6, 7,0,4,7] },
+      fill: { m: [1,0,1,0, 1,0,1,0, 1,1,1,0, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2400, q: 1.0, atk: .01, rel: .7, gain: .27, verb: .3 },
+      words: ["the clarinet, where the gaita was",
+              "the trumpet, answering the phrase",
+              "the guitar, on the off-beat with the llamador"],
+      word: v => (v === 1 ? [rotate(8), drop(2)] : v === 2 ? [only("acc", rotate(2))] : []),
+    },
+
+    // VALLENATO — Valledupar 1975. The other Colombian accordion music, and
+    // the argument for holding both is that they are not the same ensemble:
+    // a vallenato is THREE PEOPLE — a diatonic button accordion, a caja
+    // vallenata and a guacharaca — where the cumbia above is an orchestra.
+    // Three players and one of them is the whole harmony.
+    //
+    // THE YEAR is the Festival de la Leyenda Vallenata era and the decade
+    // the paseo became a national radio form; the tradition is older and was
+    // sung by walking men with no recording near it, which is the same shape
+    // of claim marabi's entry makes about the 1920s.
+    //
+    // THE ACCORDION IS NOT A STAND-IN. It is the instrument, and the ONE
+    // thing lost is that a vallenato accordion is DIATONIC — two rows, a
+    // different note pushing than pulling — which is why its runs go where
+    // they go. The registry's accordion is chromatic and will play anything.
+    vallenato: {
+      label: "Valledupar 1975", voices: 2, near: "cumbia",
+      plan: "song", bpm: 108,
+      parents: { cumbia: 0.5 },
+      wants: ["paseo campesino", "colonial spanish décima"],
+      cannot: ["the diatonic accordion's push-pull — a bisonoric button box " +
+               "cannot play every note in both directions, and that is what " +
+               "shapes a vallenato run"],
+      instr: ["accordion", "steel_string_guitar"],
+      drumkit: "acoustic",
+      entry: v => v * 2, reg: v => -v, realize: () => "line",
+      part: ["lead", "counter"],
+      roots: [0, 4, 4, 0], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitVel: { h: [8,4,5,4, 7,4,5,4, 8,4,5,4, 7,4,5,5] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "sawtooth", cut: 2500, q: 1.1, atk: .01, rel: .6, gain: .27, verb: .26 },
+      words: ["the accordion, the whole harmony and the tune",
+              "the guitar, doubling the run an octave down"],
+      word: v => (v === 1 ? [transpose(-12), drop(2)] : []),
+    },
+
+    // SAMBA — Rio de Janeiro 1939. Estácio samba: the surdo on the second
+    // beat, the tamborim's syncopated figure over it, a cavaquinho chopping
+    // the chord and a seven-string guitar walking underneath. The catalog
+    // has held Rio since bossa nova arrived and has never held the music
+    // bossa nova is a quiet argument with.
+    //
+    // THE YEAR is Ary Barroso's "Aquarela do Brasil" and the samba-exaltação
+    // moment, when the form went from the morro to the radio orchestra —
+    // documented, dated, and on tape.
+    //
+    // THE CAVAQUINHO IS `steel_string_guitar` and the violão de sete cordas
+    // is `nylon_string_guitar`: four steel strings played with a plectrum
+    // against six nylon ones played with the thumb, which is the right
+    // contrast even at the wrong sizes. What is lost is the cavaquinho's
+    // register — it is a small instrument and sits an octave above where a
+    // guitar sits — and the reg function below moves the whole chair up to
+    // say so rather than pretending the sample is smaller than it is.
+    samba: {
+      label: "Rio de Janeiro 1939", voices: 3, near: "bossa",
+      plan: "song", bpm: 100,
+      // LINEAGE: a ROOT, and this is the one place in the batch where the
+      // catalog's own habit had to be resisted hardest — `bossa` is Rio and
+      // is right there and is TWENTY YEARS LATER; it is this anchor's child
+      // and its parents line is rewritten below to say so.
+      parents: {},
+      wants: ["maxixe", "lundu", "partido alto", "batucada"],
+      cannot: ["the bateria — a samba school is two hundred drums in six " +
+               "named voices, and the kit has twelve lanes"],
+      instr: ["solo_vox", "steel_string_guitar", "nylon_string_guitar"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 1 ? 1 : v === 2 ? -1 : 0),
+      realize: () => "line",
+      part: ["lead", "riff", "counter"],
+      roots: [0, 5, 1, 4], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "octaves",
+      // THE SURDO IS ON THE SECOND BEAT and that is the definition: the kick
+      // is quiet on 1 and loud on 3 of the sixteen-step bar (which is beat 2
+      // of each of the two 2/4 bars a samba is really counted in), the
+      // tamborim's figure is on `p`, and the pandeiro's sixteenths are the
+      // hat. The chocalho would be a shaker if there were one.
+      kit: { k: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,1, 0,0,1,0, 0,0,0,1, 0,0,1,0],
+             p: [1,0,0,1, 0,1,0,0, 1,0,0,1, 0,1,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitVel: { k: [4,0,0,0, 0,0,0,0, 9,0,0,0, 0,0,0,0],
+                h: [8,4,6,4, 7,4,6,4, 8,4,6,4, 7,4,6,5] },
+      fill: { p: [1,0,1,1, 0,1,1,0, 1,1,0,1, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2500, q: 1.0, atk: .006, rel: .5, gain: .27, verb: .28 },
+      words: ["the singer", "the cavaquinho, chopping the chord",
+              "the seven-string, walking under it"],
+      word: v => (v === 1 ? [only("acc", rotate(3))] : v === 2 ? [transpose(-12), drop(2)] : []),
+    },
+
+    // CHORO — Rio de Janeiro 1900, and it is now the oldest record in the
+    // Americas by seven years. Brazil's instrumental virtuoso music: a flute
+    // (or later a mandolin, or a clarinet) playing a written, modulating,
+    // fast tune in rondo form, a cavaquinho chopping, and the seven-string
+    // guitar's BAIXARIA — a walking countermelody in the bass that is the
+    // point of the whole ensemble and is why `bassStyle` is `walk` here and
+    // in only fourteen other anchors.
+    //
+    // THE YEAR is the turn of the century and Chiquinha Gonzaga and Ernesto
+    // Nazareth's published pieces — the moment choro is a written repertory
+    // rather than a way of playing polkas. It is a PUBLICATION date, which
+    // is the same kind of claim "Sedalia 1899" below makes and a weaker one
+    // than a session date; the comment is where that belongs.
+    //
+    // WHAT SEPARATES IT FROM EVERY OTHER LATIN ANCHOR: it MODULATES. A choro
+    // is AABBACCA with the C section in another key, and its eight-bar cycle
+    // below goes to the relative and back, which nothing else in this batch
+    // does. It is also the one that is not danced.
+    choro: {
+      label: "Rio de Janeiro 1900", voices: 3, bars: 8, near: "ragtime",
+      plan: "arc", bpm: 116,
+      // LINEAGE: a ROOT under protest. Choro is the European salon dances —
+      // polka, schottische, waltz — played by Brazilian musicians with a
+      // lundu underneath, and `parlor` (New York 1892) is the closest thing
+      // this catalog holds to a salon repertory. It is named at a real but
+      // small weight because the SHARED thing is the parlour piano culture
+      // of the 1890s and not a line of descent: Rio was not listening to New
+      // York, both were listening to Europe.
+      parents: { parlor: 0.3 },
+      wants: ["polka brasileira", "lundu", "maxixe", "modinha"],
+      instr: ["flute", "steel_string_guitar", "nylon_string_guitar"],
+      entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? 0 : -1),
+      realize: () => "line",
+      part: ["lead", "riff", "counter"],
+      roots: [0, 4, 0, 4, 2, 5, 4, 0], mode: MODES.ionian,
+      scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 1, bassStyle: "walk",
+      // THE PANDEIRO IS THE ONLY DRUM and it is written as a hand rather
+      // than a kit: thumb, fingers and heel across the hat lane with the
+      // low strokes on `p`. There is no kick and no snare because there is
+      // no drummer — one man holding one frame drum.
+      kit: { p: [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,0,1,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitVel: { h: [9,3,6,3, 8,3,6,3, 9,3,6,3, 8,3,6,4] },
+      tone: { wave: "triangle", cut: 2900, q: 0.9, atk: .004, rel: .4, gain: .26, verb: .3 },
+      words: ["the flute, the written tune",
+              "the cavaquinho, chopping under it",
+              "the seven-string's baixaria, walking against both"],
+      word: v => (v === 1 ? [only("acc", rotate(2)), drop(2)]
+                : v === 2 ? [invert(4), transpose(-12)] : []),
+    },
+
+    // FORRÓ — Recife 1950. Luiz Gonzaga's baião: an accordion, a zabumba
+    // (one man, one two-headed drum, a mallet on top and a stick underneath)
+    // and a triangle. Three players, and one of them plays the harmony, the
+    // countermelody and the tune.
+    //
+    // THE YEAR is the height of Gonzaga's national reach, a decade after
+    // "Baião" itself; the music is northeastern and older, and 1950 is when
+    // Rio's radio carried it everywhere. Same shape of claim as marabi's.
+    //
+    // WHY `voices` IS 2 ON A THREE-PIECE BAND: the third player is a
+    // triangle. The two pitched voices below are the accordion's two HANDS —
+    // the right playing the tune, the left holding the chord — which is what
+    // an accordion actually is and which nothing else in this catalog says.
+    //
+    // ONE CHORD AND A FLAT SEVEN. A baião does not move: `harmony: "modal"`
+    // and mixolydian, because the flattened seventh over a stationary bass is
+    // the sound, and giving it a cycle would make it a polka.
+    forro: {
+      label: "Recife 1950", voices: 2, near: "vallenato",
+      plan: "dance", bpm: 118,
+      parents: {},
+      wants: ["baião de viola", "coco", "xote"],
+      instr: "accordion",
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 1 ? -2 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad"],
+      harmony: "modal", mode: MODES.mixo, scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "eighths",
+      // THE ZABUMBA IS ONE PLAYER WITH TWO STICKS AND IT IS WRITTEN AS TWO
+      // LANES: the mallet's deep stroke on the kick, the bacalhau's dry tap
+      // on the underside on `p`, and the triangle's open-and-closed pattern
+      // on the hat. The baião figure is the kick on 1 and the and-of-2, and
+      // it is the most recognisable rhythm in Brazil after the samba's surdo.
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             p: [0,0,1,0, 0,1,0,1, 0,0,1,0, 0,1,0,1],
+             h: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1] },
+      kitVel: { h: [9,0,4,6, 8,0,4,6, 9,0,4,6, 8,0,4,7] },
+      fill: { p: [1,0,1,1, 0,1,1,1, 1,1,1,0, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 2600, q: 1.2, atk: .008, rel: .5, gain: .28, verb: .24 },
+      words: ["the accordion's right hand, the tune",
+              "the left hand, holding the chord under it"],
+      word: v => (v === 1 ? [drop(4)] : []),
+    },
+
+    // MERENGUE — Santo Domingo 1955. The fastest thing in this batch and one
+    // of the fastest records in the catalog: a saxophone playing a jaleo
+    // figure over and over, a tambora played with one stick and one hand,
+    // and a güira — a metal scraper — running sixteenths that never stop.
+    //
+    // THE YEAR is the Trujillo-era orquesta merengue, when the state made a
+    // rural Cibao form the national music and put it in front of a horn
+    // section. That is an unlovely reason for a year and it is the true one.
+    //
+    // THE ALTO SAX IS THE SECOND REGISTRY ID THIS ROUND UNLOCKS BY NAME:
+    // `alto_sax` has six looped zones and a parent window of [49,82] and no
+    // anchor had ever asked for it — the catalog's saxophone has been the
+    // TENOR eleven times running, which is a jazz-and-soul habit and is the
+    // wrong horn for this music.
+    merengue: {
+      label: "Santo Domingo 1955", voices: 3, near: "cumbia",
+      // 148 and not 144: a merengue de orquesta is the fastest thing in this
+      // batch and the four bpm are also four bpm of separation from Nairobi
+      // 1972, which the measurement below the benga entry explains.
+      plan: "dance", bpm: 148,
+      parents: {},
+      wants: ["merengue típico cibaeño", "danza"],
+      instr: ["alto_sax", "trumpet", "accordion"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 2 ? -1 : 0), realize: () => "line",
+      part: ["riff", "counter", "lead"],
+      roots: [0, 4, 0, 4], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 1, bassStyle: "eighths",
+      // THE TAMBORA IS TWO HANDS AND IT IS WRITTEN AS TWO LANES: the stick's
+      // rim-and-head figure on `p` and the open hand on the low tom. The
+      // güira is the hat lane at sixteenths, EVEN — no velocity arch at all,
+      // which is unusual in this file and is exactly what a scraper sounds
+      // like: a continuous surface, not a set of strokes.
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,1,1, 0,1,1,0, 1,0,1,1, 0,1,1,0],
+             l: [0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitVel: { h: [6,6,6,6, 6,6,6,6, 6,6,6,6, 6,6,6,6] },
+      fill: { p: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 3100, q: 1.3, atk: .004, rel: .3, gain: .28, verb: .18 },
+      words: ["the sax, the jaleo",
+              "the trumpet, over the top of it",
+              "the accordion, from the típico band"],
+      word: v => (v === 1 ? [transpose(5), drop(2)] : v === 2 ? [rotate(4)] : []),
+    },
+
+    // BACHATA — Santo Domingo 1992. The same island forty years later and a
+    // completely different room: a requinto guitar arpeggiating between the
+    // sung lines, a segunda guitar answering it, a bongó and a güira, and
+    // four bars of i-iv-V that go round forever.
+    //
+    // THE YEAR is Juan Luis Guerra's "Bachata Rosa" and the moment the music
+    // stopped being called amargue and stopped being disreputable — a
+    // documented record, which is the strongest kind of year this file has.
+    //
+    // WHAT SEPARATES IT FROM BOLERO, which is its declared parent and which
+    // it sounds like at half attention: the bachata guitar is ELECTRIC and
+    // arpeggiated in continuous eighths (`bassStyle: "eighths"`, `artic`
+    // staccato, `maxHold` 2) where the bolero's requinto plays filigree in
+    // the gaps and holds. And the tempo is nearly double.
+    bachata: {
+      label: "Santo Domingo 1992", voices: 3, near: "bolero",
+      plan: "song", bpm: 128,
+      // LINEAGE: bolero is the song and the guitar trio, whole; merengue is
+      // the same island's rhythm section and the güira comes straight off it.
+      parents: { bolero: 0.6, merengue: 0.4 },
+      wants: [],
+      instr: ["clean_guitar", "steel_string_guitar", "solo_vox"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? 0 : -1),
+      realize: () => "line",
+      part: ["lead", "counter", "riff"],
+      roots: [0, 3, 4, 0], mode: MODES.aeolian, scale: DIATONIC, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitVel: { h: [7,5,7,5, 7,5,7,5, 7,5,7,5, 7,5,7,6] },
+      fill: { s: [0,0,0,0, 1,0,1,0, 0,0,1,1, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2700, q: 1.1, atk: .004, rel: .45, gain: .27, verb: .3 },
+      words: ["the requinto, between the lines",
+              "the segunda, answering it",
+              "the singer"],
+      word: v => (v === 1 ? [rotate(4), transpose(-5)] : v === 2 ? [drop(2)] : []),
+    },
+
+    // CALYPSO — Port of Spain 1956. The calypsonian's verse-and-refrain over
+    // a band, and the record that gives this anchor its year is "Jean and
+    // Dinah" — Sparrow's Road March and Carnival win, and the moment the
+    // form went from the tent to the world.
+    //
+    // THE STEEL PAN IS REAL AND IT IS THE THIRD ID THIS ROUND UNLOCKS.
+    // `steel_drums` is a licensed on-disk registry id with a parent window
+    // of [52,84], and no anchor in the catalog had said its name — so the
+    // one instrument the world associates with Trinidad has been sitting on
+    // the shelf unreachable. What is NOT claimed here is a steelband
+    // (Tier 2, above): an orchestra of tuned oil drums in four sections is
+    // not one chair playing a pan sample.
+    calypso: {
+      label: "Port of Spain 1956", voices: 3, near: "mento",
+      plan: "song", bpm: 120,
+      // LINEAGE: a ROOT. Calypso's parents are the kaiso of the Carnival
+      // tents, the French-Creole belair and the chantwell tradition, and the
+      // catalog holds none of the three. `mento` (Kingston 1952) is a
+      // sibling and a cousin, not an ancestor, and it is `near` for exactly
+      // that reason — the resemblance goes in the field that means resemblance.
+      parents: {},
+      wants: ["kaiso", "belair", "chantwell song"],
+      cannot: ["a steelband — four sections of tuned oil drums answering " +
+               "each other is an orchestra, and this is one chair with a " +
+               "pan sample on it"],
+      instr: ["solo_vox", "steel_drums", "trumpet"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 1 ? 1 : v === 2 ? 0 : 0),
+      realize: () => "line",
+      part: ["lead", "counter", "riff"],
+      roots: [0, 0, 3, 4], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "octaves",
+      // THE IRON IS THE HAT LANE. A calypso band's timekeeper is a brake
+      // drum hit with a bolt — the "iron" — and it plays a two-bar figure,
+      // not an even pulse; what is lost is that it is a piece of scrap metal
+      // and rings like one. The congas take the toms, as everywhere in this
+      // batch.
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,1,0, 0,1,0,1, 1,0,1,0, 0,1,0,1],
+             m: [0,0,0,0, 0,0,0,1, 0,0,0,0, 0,0,1,1],
+             h: [1,0,1,1, 0,1,1,0, 1,0,1,1, 0,1,1,0] },
+      kitVel: { h: [9,0,5,6, 0,5,7,0, 9,0,5,6, 0,5,7,0] },
+      fill: { m: [0,0,1,1, 0,0,1,1, 1,1,0,0, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2800, q: 1.0, atk: .004, rel: .55, gain: .27, verb: .3 },
+      words: ["the calypsonian", "the pan, answering the line",
+              "the trumpet, on the refrain"],
+      word: v => (v === 1 ? [transpose(12), rotate(4), drop(2)] : v === 2 ? [drop(3)] : []),
+    },
+
+    // SOCA — Port of Spain 1979. Lord Shorty's "soul of calypso": the same
+    // island's carnival music with the tempo up, a kick on every beat and a
+    // horn section written like a funk band's. It is where calypso goes when
+    // it meets a rhythm section that has heard disco.
+    //
+    // THE YEAR is the turn of the decade when the word stuck and the form
+    // stopped being one man's experiment.
+    //
+    // WHAT SEPARATES IT FROM CALYPSO IN FIELDS: the kick. Calypso above has
+    // three kicks in sixteen steps and soca has FOUR ON THE FLOOR, plus a
+    // tempo twelve bpm faster and a synthesiser where the pan was.
+    soca: {
+      label: "Port of Spain 1979", voices: 3, near: "disco",
+      plan: "dance", bpm: 132,
+      parents: { calypso: 0.55, disco: 0.25, funk: 0.2 },
+      wants: [],
+      instr: ["brass_section", "clean_guitar", "polysynth"],
+      drumkit: "room",
+      entry: v => v, reg: v => (v === 1 ? 0 : v === 2 ? -1 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["riff", "counter", "pad"],
+      roots: [0, 0, 3, 4], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "octaves",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,1,0, 0,1,0,1, 1,0,1,0, 0,1,0,1],
+             o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             h: [1,0,0,1, 1,0,0,1, 1,0,0,1, 1,0,0,1] },
+      fill: { p: [1,1,1,1, 0,1,1,1, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 3000, q: 1.3, atk: .005, rel: .35, gain: .28, verb: .22 },
+      words: ["the horns, in stabs", "the guitar, chopping between them",
+              "the synth, holding the pad"],
+      word: v => (v === 1 ? [only("acc", rotate(2))] : v === 2 ? [drop(4)] : []),
+    },
+
+    // MENTO — Kingston 1952. Jamaica's own country music, and the rung
+    // underneath everything else the catalog holds from that island: banjo,
+    // guitar, a bamboo fife or a hand-cut saxophone, a hand drum, and a
+    // RHUMBA BOX — a big thumb piano you sit on, which plays the bass line
+    // and is the reason a mento band needs no bass player.
+    //
+    // THE YEAR is the Stanley Motta 78s in Kingston, the first commercial
+    // recordings of Jamaican music of any kind. Documented, and the earliest
+    // Jamaican year the catalog can hold.
+    //
+    // THE ACCENT IS ON THE FOURTH BEAT. That is the fact everything else in
+    // this file gets wrong by default — a backbeat lands on 2 and 4 and a
+    // mento lands hardest on 4 alone — and the `kitVel` line below is where
+    // it is said, because there is no word for it anywhere else.
+    //
+    // `ska` DECLARED `wants: ["mento", "calypso"]` AND NOW HAS BOTH. Its
+    // parents line is rewritten below.
+    mento: {
+      label: "Kingston 1952", voices: 3, near: "calypso",
+      plan: "song", bpm: 108,
+      parents: {},
+      wants: ["jonkanoo", "quadrille", "revival hymn"],
+      cannot: ["the rhumba box — a box lamellophone the player sits on, " +
+               "which is a bass instrument the registry has no id for; the " +
+               "bass chair takes an upright instead and plays the same notes"],
+      instr: ["banjo", "nylon_string_guitar", "solo_vox"],
+      drumkit: "brush",
+      entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? 0 : 0),
+      realize: () => "line",
+      part: ["riff", "counter", "lead"],
+      roots: [0, 0, 4, 0], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 2,
+      kit: { s: [0,0,0,0, 0,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      kitVel: { p: [5,0,0,0, 5,0,0,0, 5,0,0,0, 9,0,0,0],
+                h: [6,0,5,0, 6,0,5,0, 6,0,5,0, 6,0,5,0] },
+      fill: { p: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2600, q: 0.9, atk: .004, rel: .5, gain: .26, verb: .32 },
+      words: ["the banjo, picking the tune", "the guitar, under it",
+              "the singer, telling the story"],
+      word: v => (v === 1 ? [drop(2), transpose(-5)] : v === 2 ? [rotate(8)] : []),
+    },
+
+    // ROCKSTEADY — Kingston 1966, and it is the rung the catalog was missing
+    // between Kingston 1962 and Kingston 1969: `reggae` has declared
+    // `wants: ["rocksteady", ...]` since it was written.
+    //
+    // THE YEAR is the summer Alton Ellis cut "Rock Steady" and the whole
+    // island slowed down — attributed to a heatwave, which is charming and
+    // is not evidence; what IS evidence is that the tempo drops by half and
+    // the bass becomes the lead instrument in the space of one season.
+    //
+    // WHAT SEPARATES IT FROM ITS TWO NEIGHBOURS, in fields, because three
+    // Kingston anchors within seven years is exactly where a catalog starts
+    // lying: ska (1962) runs at 156 with the horns on the off-beat and the
+    // drums walking; rocksteady is 78 with the snare on 3 alone and a
+    // WRITTEN, melodic, syncopated bass line — `bassStyle: "sixteenths"` is
+    // the nearest word for a part that busy; reggae (1969) puts the kick
+    // back on 3 with it (the one drop) and takes the organ's shuffle away.
+    rocksteady: {
+      label: "Kingston 1966", voices: 3, near: "reggae",
+      plan: "song", bpm: 78,
+      // LINEAGE: ska is the band and the island; motown is the other half
+      // and it is not a guess — Jamaican producers were cutting versions of
+      // Detroit records that year and the bass writing comes straight off
+      // them.
+      parents: { ska: 0.6, motown: 0.4 },
+      wants: [],
+      instr: ["clean_guitar", "percussive_organ", "trombone"],
+      drumkit: "room",
+      entry: v => v * 2, reg: v => (v === 1 ? -1 : v === 2 ? 0 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["riff", "pad", "lead"],
+      roots: [0, 5, 3, 4], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "sixteenths",
+      // THE SNARE IS ON 3 AND NOWHERE ELSE, which is the whole rhythmic
+      // claim: no backbeat, one cross-stick in the middle of the bar, and
+      // the guitar's skank filling 2 and 4 instead of the drummer.
+      kit: { k: [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             p: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      kitVel: { h: [7,0,4,0, 7,0,4,0, 7,0,4,0, 7,0,5,0] },
+      fill: { s: [0,0,0,0, 0,0,0,0, 1,0,1,0, 1,1,0,0] },
+      tone: { wave: "triangle", cut: 2300, q: 1.0, atk: .008, rel: .7, gain: .27, verb: .34 },
+      words: ["the guitar, skanking on 2 and 4",
+              "the organ, holding the chord",
+              "the trombone, on the head"],
+      word: v => (v === 1 ? [drop(4)] : v === 2 ? [transpose(-5), drop(2)] : []),
+    },
+
+    // DANCEHALL — Kingston 1985, and it is the rung `reggaeton` and
+    // `afrobeats` have BOTH declared `wants: ["dancehall"]` for.
+    //
+    // THE YEAR is "Under Mi Sleng Teng": Wayne Smith and Noel Davey over a
+    // preset from a Casio MT-40 keyboard, King Jammy's, 1985. It is the most
+    // precisely dated record in this batch and arguably in the catalog — one
+    // riddim, one machine, one afternoon, and Jamaican music is digital from
+    // then on. THE MACHINE IS THE ANCHOR'S IDENTITY, which is why the tone
+    // block is a cheap square lead and the kit is `electronic`: the whole
+    // point of Sleng Teng is that it sounds like a toy.
+    //
+    // A RIDDIM IS ONE CHORD AND EVERYBODY'S SONG. `harmony: "modal"` is the
+    // honest reading of a form where fifty singers voice the same two-bar
+    // loop: nothing modulates, because the backing track does not know which
+    // song it is under.
+    dancehall: {
+      label: "Kingston 1985", voices: 2, near: "electro",
+      plan: "dance", bpm: 100,
+      parents: { reggae: 0.4, dub: 0.3, electro: 0.3 },
+      wants: [],
+      instr: ["bass_lead", "square_lead"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => (v === 0 ? -1 : 0), realize: () => "line",
+      part: ["riff", "lead"],
+      harmony: "modal", mode: MODES.aeolian, scale: DIATONIC, diatonic: true,
+      artic: "staccato", maxHold: 1, bassStyle: "octaves",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,1, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,1] },
+      kitVel: { h: [8,0,5,0, 7,0,5,0, 8,0,5,0, 7,0,5,5] },
+      fill: { k: [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,1,0,0] },
+      tone: { wave: "square", cut: 2400, q: 2.2, atk: .003, rel: .3, gain: .28, verb: .2 },
+      words: ["the bass line, which is the riddim",
+              "the melody preset over the top of it"],
+      word: v => (v === 1 ? [transpose(12), drop(2)] : []),
+    },
+
+    // HUAYNO — Cusco 1965. The Andes' own song and dance, and the only
+    // anchor in this batch whose alphabet is a MINOR PENTATONIC rather than
+    // a European scale — which is not a decoration, it is the tradition: the
+    // huayno melody moves in five notes and turns back on itself, and the
+    // harmony under it is a Spanish import laid on afterwards.
+    //
+    // THE YEAR is the Andean migration recordings — the decade the music
+    // came down to the coastal cities and onto 45s, which is when there is
+    // anything to date at all.
+    //
+    // TWO OF THE THREE INSTRUMENTS ARE HONEST AND ONE IS NOT. The Andean
+    // HARP is a real harp and `harp` is one; the siku IS a panpipe and
+    // `pan_flute` is a recording of one — the fourth registry id this round
+    // unlocks by name, with a parent window of [59,88] and no anchor that
+    // had ever asked for it. The charango is the stand-in: a small
+    // ten-string lute with a bright, tight, doubled sound, standing in as a
+    // steel-string guitar, and what is lost is the octave-paired courses and
+    // the size.
+    huayno: {
+      label: "Cusco 1965", voices: 3, near: "worldfolk",
+      plan: "song", bpm: 124,
+      parents: {},
+      wants: ["pre-columbian andean song", "yaraví"],
+      cannot: ["the siku's interlock — a panpipe pair is TWO players sharing " +
+               "one scale a note each, and this box gives the whole scale to " +
+               "one chair"],
+      instr: ["pan_flute", "steel_string_guitar", "harp"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? 0 : -1),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      roots: [0, 2, 0, 4], mode: MODES.aeolian,
+      artic: "staccato", maxHold: 2, bassStyle: "eighths",
+      // THE BOMBO IS THE ONLY DRUM: a big skin-headed drum played on the
+      // head and the rim, so the kick carries the head and `p` the rim, and
+      // there is no hat because there is no cymbal within a thousand miles
+      // of the tradition.
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             p: [0,0,1,0, 1,0,0,0, 0,0,1,0, 1,0,0,0] },
+      kitVel: { k: [9,0,0,0, 0,0,6,0, 9,0,0,0, 0,0,6,0] },
+      fill: { p: [1,0,1,0, 1,0,1,0, 1,1,1,0, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2500, q: 1.0, atk: .01, rel: .8, gain: .26, verb: .42 },
+      words: ["the siku, the tune", "the charango, doubling it faster",
+              "the harp, holding the two chords"],
+      word: v => (v === 1 ? [split(2), drop(2)] : v === 2 ? [drop(4)] : []),
+    },
+
+    // MARIACHI — Guadalajara 1950. The trumpet-era mariachi: two trumpets in
+    // thirds, a section of violins, a vihuela chopping, a guitarrón walking
+    // the bass in octaves, and a ranchera on top of it.
+    //
+    // THE YEAR is Mariachi Vargas at its RCA peak and the ranchera's film
+    // decade — the moment the trumpet is standard, which it was not before
+    // the 1930s. That instrument, not the ensemble, is what dates this.
+    //
+    // THE PRIMARY FACT IS THE ENSEMBLE, AND SO IT SHIPS. The sesquiáltera —
+    // the son jalisciense's 6/8 crossed against 3/4, two players counting
+    // differently in the same bar — is in `cannot` below and is NOT the
+    // primary fact: a mariachi is a mariachi playing a ranchera in four, and
+    // the metre it cannot say belongs to one corner of the repertory. That
+    // is the primary-fact rule applied in the direction it is meant to go.
+    //
+    // NO DRUM KIT AT ALL. A mariachi has no percussion — the vihuela's
+    // chop and the guitarrón are the rhythm section — so `kit: {}` here is
+    // the same kind of truest-line-in-the-entry that zema's is, and for the
+    // same reason: the absence IS the ensemble.
+    mariachi: {
+      label: "Guadalajara 1950", voices: 3, bars: 8, near: "nortena",
+      plan: "song", bpm: 96,
+      parents: {},
+      wants: ["son jalisciense", "canción ranchera", "spanish romance"],
+      cannot: ["the sesquiáltera — six-eight against three-four inside one " +
+               "bar, which needs two metres at once and this file writes one"],
+      instr: ["trumpet", "violin", "nylon_string_guitar"],
+      entry: v => v, reg: v => (v === 0 ? 0 : v === 1 ? 1 : -1),
+      realize: () => "line",
+      part: ["lead", "counter", "riff"],
+      roots: [0, 0, 4, 4, 0, 3, 4, 0], mode: MODES.ionian,
+      scale: SCALES.major, diatonic: true,
+      artic: "legato", maxHold: 3, kit: {},
+      // THE GUITARRÓN WALKS IN OCTAVES, which is literally what it does —
+      // six strings tuned so the player fingers one note and sounds two an
+      // octave apart. `octaves` is not an approximation here, it is the
+      // instrument's description.
+      bassStyle: "octaves",
+      tone: { wave: "sawtooth", cut: 2700, q: 1.0, atk: .01, rel: .8, gain: .27, verb: .4 },
+      words: ["the first trumpet", "the violins, a third above",
+              "the vihuela, chopping the chord"],
+      word: v => (v === 1 ? [transpose(4)] : v === 2 ? [split(2), drop(3)] : []),
+    },
+
+    // NORTEÑA — Monterrey 1955. A conjunto norteño is two men: a diatonic
+    // button accordion and a BAJO SEXTO, a twelve-string bass guitar that
+    // plays the chords and the bass at once. The repertory is corridos and
+    // rancheras over a polka the German and Czech settlers of the border
+    // left behind, which is why the rhythm below is a polka and says so.
+    //
+    // THE YEAR is Los Alegres de Terán's Falcon and RCA sides, when the
+    // accordion-and-bajo duet becomes the border's standard record.
+    //
+    // `corridotumbado` DECLARED `wants: ["banda", "norteño"]` AND NOW HAS
+    // BOTH — its parents line, which named `worldfolk` (Johannesburg 1986)
+    // at 0.30 because nothing nearer existed, is rewritten below. That edge
+    // is one of the two WORLD.md §4 caught running.
+    nortena: {
+      label: "Monterrey 1955", voices: 3, near: "vallenato",
+      plan: "song", bpm: 132,
+      parents: {},
+      wants: ["corrido fronterizo", "bohemian polka", "redova"],
+      cannot: ["the diatonic accordion's push-pull, the same fact vallenato " +
+               "declares one continent south"],
+      instr: ["accordion", "steel_string_guitar", "solo_vox"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 1 ? -1 : 0), realize: () => "line",
+      part: ["lead", "riff", "counter"],
+      roots: [0, 4, 4, 0], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "fifths",
+      // A POLKA, WRITTEN AS ONE: kick on the beat, snare on the off-beat,
+      // nothing clever. The tololoche's oom-pah is in `bassStyle: "fifths"`
+      // one line up, which is the only place in this catalog that word
+      // means what it means in a brass band.
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,1,0, 0,0,1,0, 1,1,1,0] },
+      tone: { wave: "sawtooth", cut: 2600, q: 1.2, atk: .008, rel: .5, gain: .28, verb: .24 },
+      words: ["the accordion", "the bajo sexto, chords and bass at once",
+              "the second voice, a third under the first"],
+      word: v => (v === 1 ? [drop(3), transpose(-12)] : v === 2 ? [transpose(-3)] : []),
+    },
+
+    // BANDA — Mazatlán 1938. A Sinaloan brass band: clarinets on the tune,
+    // trumpets and trombones answering, a TUBA playing the bass line on its
+    // feet, and a tambora — a big two-headed drum — with a tarola beside it.
+    // No strings, no electricity, and it has been the loudest music in
+    // northwest Mexico for a century.
+    //
+    // THE YEAR is Banda El Recodo's founding in Mazatlán, 1938 — which is
+    // documented and is also, deliberately, the same year as Kansas City
+    // below: two brass bands on two continents in one year is a correlation
+    // worth being able to see on the slider.
+    //
+    // TWO IDS AND A FLOOR. `tuba` was cast exactly once in 139 anchors — by
+    // a record from 2023 — so the catalog's floor for it was 2023 and a
+    // 1938 brass band could not have hired one. Extraction is a FLOOR OVER
+    // THE CATALOG'S OWN CLAIMS and it moves when the catalog learns
+    // something: a tuba in 1938 is not a claim anyone need argue with, and
+    // `clarinet` (first cast by Barranquilla 1960 above) drops to 1938 with
+    // it for the same reason.
+    banda: {
+      label: "Mazatlán 1938", voices: 3, near: "nortena",
+      plan: "dance", bpm: 128,
+      parents: {},
+      wants: ["german military band", "son sinaloense"],
+      instr: ["clarinet", "brass_section", "tuba"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? 0 : -2),
+      realize: () => "line",
+      part: ["lead", "riff", "counter"],
+      roots: [0, 4, 0, 4], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "fifths",
+      // THE TAMBORA IS A KICK AND A LOW TOM AT ONCE — one drum, two heads,
+      // one player hitting both — and the tarola's press roll is the snare.
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,1,0, 1,0,1,0, 0,0,1,0, 1,0,1,0],
+             l: [0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0],
+             x: [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0] },
+      kitVel: { s: [4,0,4,0, 8,0,4,0, 4,0,4,0, 8,0,5,0] },
+      fill: { s: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 2800, q: 1.1, atk: .01, rel: .6, gain: .28, verb: .36 },
+      words: ["the clarinets, the tune", "the brass, answering in blocks",
+              "the tuba, on its feet"],
+      word: v => (v === 1 ? [rotate(8), transpose(-5)] : v === 2 ? [drop(4), transpose(-12)] : []),
+    },
+
+    // TROPICÁLIA — São Paulo 1968. Bossa nova's harmony, an electric rock
+    // band, and an orchestral arranger, all on the same record and
+    // deliberately not resolving. Caetano, Gil, Os Mutantes and Rogério
+    // Duprat, and the record that names it is the manifesto album of 1968.
+    //
+    // WHAT THIS ANCHOR CAN AND CANNOT CLAIM. Tropicália's method is
+    // COLLAGE — a berimbau against a fuzz guitar against a Strauss quote —
+    // and a collage is a per-section decision the arranger makes, not an
+    // anchor field. What this entry holds is the three ingredients: bossa's
+    // chord vocabulary (`mode: mixo`, an eight-bar cycle that will not sit
+    // on the tonic), a fuzz guitar, and a string section over the top.
+    // The seams are in `cannot`.
+    //
+    // THE FUZZ MOVES A FLOOR BY ONE YEAR. `crunch_guitar` extracted to 1969
+    // off London; a fuzzbox in São Paulo in 1968 is a year earlier and is
+    // not in dispute.
+    tropicalia: {
+      label: "São Paulo 1968", voices: 3, bars: 8, near: "psychpop",
+      plan: "arc", bpm: 104,
+      // LINEAGE: bossa is the harmony and the language, psychpop is the
+      // studio and the band, samba is underneath both of them and is named
+      // because tropicália reached PAST bossa for it on purpose.
+      parents: { bossa: 0.4, psychpop: 0.35, samba: 0.25 },
+      wants: ["concrete poetry", "musique concrète"],
+      cannot: ["the collage itself — a quotation cut against the record is " +
+               "a per-section editorial decision and this file writes " +
+               "anchors, not edits"],
+      instr: ["nylon_string_guitar", "crunch_guitar", "strings"],
+      drumkit: "room",
+      entry: v => v * 2, reg: v => (v === 2 ? -1 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "riff", "pad"],
+      roots: [0, 5, 1, 4, 2, 5, 3, 4], mode: MODES.mixo,
+      scale: SCALES.major, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "walk",
+      fx: ["sweep"],
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,0,1, 0,1,0,0, 1,0,0,1, 0,1,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,1,0, 0,1,1,0, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 2200, q: 1.1, atk: .01, rel: .9, gain: .26, verb: .44 },
+      words: ["the nylon guitar, the bossa half",
+              "the fuzz, the rock half",
+              "the strings, the arranger's half"],
+      word: v => (v === 1 ? [transpose(-12), only("acc", rotate(2))]
+                : v === 2 ? [drop(4)] : []),
+    },
+
+    /* ---- AFRICA, THE SECOND SLATE -------------------------------------
+       Nine anchors on top of the ten the African round landed on 2026-08-25,
+       and every one of them is a rung that round named or a `wants` entry it
+       left on the books: palm-wine (highlife's own first `wants` line),
+       kwela (marabi's), mbaqanga (worldfolk's AND kwaito's), soukous (the
+       sebene congorumba's entry describes and stops short of), benga,
+       makossa, hiplife, kizomba and coupé-décalé — and the last three take
+       the continent's representation past 2001 for the first time.
+       The six the round DEFERRED BY NAME — jeliya, jùjú, taarab,
+       gnawa, mbalax, chimurenga — stay deferred, and their reasons are not
+       re-derived here. Everything below is in four and in 12-TET for the
+       same reason everything above it is. */
+
+    // PALM-WINE — Freetown 1950, and it pays the FIRST line of highlife's
+    // `wants`. The West African coastal guitar music the Kru sailors carried
+    // up and down the Atlantic seaboard: a two-finger picked guitar, a voice,
+    // a box the player sits on, and a saw or a bottle keeping time. It is the
+    // grandparent of highlife, of jùjú and of half the guitar music on the
+    // continent.
+    //
+    // THE YEAR is Ebenezer Calender's Sierra Leone Broadcasting sides, which
+    // is where maringa/palm-wine is actually on tape. The music is older and
+    // was played in bars nobody recorded, which is marabi's situation exactly
+    // and gets marabi's treatment: the label names the recording.
+    //
+    // WHAT SEPARATES IT FROM ACCRA 1957, its own child: highlife is a DANCE
+    // BAND — horns, changes every four bars, 120 bpm. This is one guitar and
+    // one voice at 96 over two chords, and the two-finger pattern is the
+    // whole style, which is why `word` gives voice 1 the same line thinned
+    // and rotated rather than a harmony part.
+    palmwine: {
+      label: "Freetown 1950", voices: 2, near: "highlife",
+      plan: "song", bpm: 96,
+      // LINEAGE: a ROOT. The parents are the Kru sailors' guitar, the
+      // Trinidadian and Cuban 78s that came off the same ships, and Krio
+      // song, and the catalog holds none of them. `son` (Havana 1928) is a
+      // named PARENT at a real weight and not a courtesy: those are literally
+      // the records that circulated in West African ports.
+      parents: { son: 0.3 },
+      wants: ["kru sailors' guitar", "maringa", "krio song"],
+      instr: ["nylon_string_guitar", "solo_vox"],
+      drumkit: "brush",
+      entry: v => v * 2, reg: v => -v, realize: () => "line",
+      part: ["riff", "lead"],
+      // THE LILT IS REAL AND IT IS ALSO A MEASUREMENT. Palm-wine guitar is
+      // played with a long-short bounce and the swing dial at a third is this
+      // file's only word for one — and drafted straight, on mento's own
+      // three-chord cycle, this anchor sat 0.245 from Kingston 1952 in the
+      // genealogy's 28-feature space, tighter than anything the catalog held
+      // before this round. Two guitar-and-voice records from opposite sides
+      // of the Atlantic SHOULD be neighbours; they should not be the same
+      // point. The bounce and the two-chord cycle are both true of the music.
+      swing: 0.33,
+      roots: [0, 0, 0, 4], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 2,
+      // A CARPENTER'S SAW AND A BOTTLE. The saw is scraped and goes to the
+      // hat lane with the rest of this file's scrapers; the bottle struck
+      // with a nail is `p`. There is no kick and no snare, because there is
+      // no drummer — that is the whole texture.
+      kit: { p: [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,0,1,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      kitVel: { h: [7,0,5,0, 6,0,5,0, 7,0,5,0, 6,0,5,0] },
+      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .005, rel: .6, gain: .26, verb: .34 },
+      words: ["the guitar, two fingers and no plectrum",
+              "the singer, over the top of it"],
+      word: v => (v === 1 ? [rotate(4), drop(2)] : []),
+    },
+
+    // KWELA — Johannesburg 1955, and it pays marabi's `wants` line. Township
+    // pennywhistle music: a boy on a cheap tin flute over a guitar, a
+    // tea-chest bass and a hand on a suitcase, played on street corners
+    // because a pennywhistle is what you can afford and a corner is where you
+    // can watch for the police.
+    //
+    // THE YEAR is Spokes Mashiyane's "Ace Blues" and the kwela boom on Gallo
+    // and Trutone — a documented, dated, commercial explosion.
+    //
+    // THE RECORDER IS THE SAME STAND-IN MARABI MADE and it is made here for
+    // the same reason and with the same loss: right family (both are fipple
+    // flutes, which is why not `whistle`, GM's recording of a person
+    // whistling), and what is missing is the pennywhistle's overblown top and
+    // its bent notes, which is most of what a kwela player does with it. The
+    // difference from Johannesburg 1935 is that there the flute was a colour
+    // on top of an organ and here it IS the record.
+    kwela: {
+      label: "Johannesburg 1955", voices: 3, near: "marabi",
+      plan: "dance", bpm: 138,
+      // LINEAGE: marabi is the four-bar cycle, verbatim — kwela plays
+      // marabi's own I-IV-I⁶₄-V and this entry keeps the inversion to prove
+      // it — and the American swing 78s that reached the townships are the
+      // other half and are now in the catalog.
+      parents: { marabi: 0.65, swing: 0.35 },
+      wants: [],
+      cannot: ["the pennywhistle's overblown top octave and its half-holed " +
+               "bends, which is where a kwela player lives"],
+      instr: ["recorder", "steel_string_guitar", "banjo"],
+      drumkit: "brush",
+      entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? 0 : -1),
+      realize: () => "line",
+      part: ["lead", "riff", "counter"],
+      roots: [0, 3, 0, 4], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      prog: [{ d: 0 }, { d: 3 }, { d: 0, inv: 2 }, { d: 4 }],
+      artic: "staccato", maxHold: 1, bassStyle: "walk",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitVel: { h: [8,4,6,4, 8,4,6,4, 8,4,6,4, 8,4,6,5] },
+      fill: { s: [0,0,0,0, 1,0,1,0, 0,0,1,1, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 3000, q: 1.1, atk: .004, rel: .4, gain: .27, verb: .3 },
+      words: ["the pennywhistle, all of it",
+              "the guitar, chopping the cycle",
+              "the second guitar, in the holes"],
+      word: v => (v === 1 ? [drop(2)] : v === 2 ? [rotate(4), transpose(-5), drop(3)] : []),
+    },
+
+    // MBAQANGA — Johannesburg 1964, and it is the rung TWO anchors have been
+    // waiting for: `worldfolk` wants it and `kwaito` wants it. The Mavuthela
+    // studio band's music — an electric guitar playing a cycling figure, a
+    // saxophone, a groaning bass voice underneath, and a beat the labels
+    // called "the sound of the city".
+    //
+    // THE YEAR is Gallo's Mavuthela sessions under Rupert Bopape, the moment
+    // the studio band, the groaner and the female chorus become one house
+    // style. The Makgona Tsohle Band is the ensemble the name attaches to.
+    //
+    // WHAT SEPARATES IT FROM ITS TWO NEIGHBOURS: kwela (1955) is a
+    // pennywhistle and a swing feel at 138; this is an electric guitar and a
+    // straight four at 116 with a bass playing sixteenths. And where marabi's
+    // cycle is I-IV-I⁶₄-V, mbaqanga's is three chords that never resolve —
+    // it just keeps going round, which is why `harmony` stays `cycle` and the
+    // roots line has no dominant in it.
+    mbaqanga: {
+      label: "Johannesburg 1964", voices: 3, near: "kwela",
+      plan: "dance", bpm: 116,
+      parents: { kwela: 0.45, marabi: 0.3, mbube: 0.25 },
+      wants: [],
+      instr: ["clean_guitar", "tenor_sax", "ahh_choir"],
+      drumkit: "room",
+      entry: v => v, reg: v => (v === 0 ? 0 : v === 1 ? 0 : -1),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["riff", "lead", "pad"],
+      roots: [0, 3, 4, 3], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "sixteenths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,1] },
+      kitVel: { h: [8,0,5,0, 7,0,5,0, 8,0,5,0, 7,0,5,5] },
+      fill: { s: [0,0,0,0, 1,0,1,0, 0,0,1,0, 1,1,1,0] },
+      tone: { wave: "triangle", cut: 2600, q: 1.2, atk: .005, rel: .45, gain: .27, verb: .28,
+              // the female chorus behind the groaner: a room, not a section
+              mouth: MOUTHS.mbubestack },
+      words: ["the lead guitar, the cycling figure",
+              "the sax, answering it",
+              "the chorus behind the groaner"],
+      word: v => (v === 1 ? [rotate(8), drop(2)] : v === 2 ? [drop(4)] : []),
+    },
+
+    // SOUKOUS — Kinshasa 1985. Congolese rumba with the rumba taken out and
+    // the SEBENE left: the fast, cycling, interlocking guitar section a
+    // rumba record used to arrive at after four minutes of singing, played
+    // for the whole record at a tempo nothing in Kinshasa 1960 approaches.
+    //
+    // THE YEAR is the mid-eighties Paris-and-Kinshasa records — Kanda Bongo
+    // Man's "Iyole" era — when the song half was dropped and the band went
+    // straight to the guitars.
+    //
+    // ITS PARENT'S OWN ENTRY DESCRIBES IT. congorumba (Kinshasa 1960)
+    // already writes a mi-solo "and in the sebene it never stops"; this is
+    // that sentence made into a record, at 148 instead of 112, with the
+    // animateur's shouted cues on the snare and a third guitar.
+    soukous: {
+      label: "Kinshasa 1985", voices: 3, near: "congorumba",
+      plan: "dance", bpm: 148,
+      parents: { congorumba: 0.8, disco: 0.2 },
+      wants: [],
+      instr: ["clean_guitar", "steel_string_guitar", "nylon_string_guitar"],
+      drumkit: "room",
+      entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? 0 : -1),
+      realize: () => "line",
+      part: ["lead", "counter", "riff"],
+      roots: [0, 3, 4, 0], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 1, bassStyle: "sixteenths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,1,1, 0,1,1,0, 1,0,1,1, 0,1,1,0],
+             o: [0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitVel: { h: [8,5,6,5, 7,5,6,5, 8,5,6,5, 7,5,6,6] },
+      fill: { p: [1,1,1,1, 1,1,1,0, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 3200, q: 1.1, atk: .003, rel: .3, gain: .27, verb: .24 },
+      words: ["the solo guitar, running the sebene",
+              "the mi-solo, interlocked a third under it",
+              "the rhythm guitar, in what is left"],
+      word: v => (v === 1 ? [transpose(-3), rotate(2)] : v === 2 ? [drop(2), rotate(6)] : []),
+    },
+
+    // BENGA — Nairobi 1972. Luo guitar music from western Kenya on Nairobi
+    // labels: a bright, fast, treble-heavy guitar line that is a NYATITI
+    // PART transferred to strings — the eight-string lyre's ostinato played
+    // on a guitar, which is a documented, deliberate translation and not a
+    // stand-in this file is inventing.
+    //
+    // THE YEAR is D.O. Misiani and Shirati Jazz's early-seventies sides, when
+    // benga is the dominant Kenyan sound and is on record every week.
+    //
+    // WHY IT IS NOT A COPY OF SOUKOUS, thirteen years earlier and one country
+    // west: benga is faster off the bass — the bass line is the LEAD melodic
+    // voice for whole passages, which is why `bassStyle` is `sixteenths` here
+    // as it is in Kinshasa but the reg function puts the guitar chairs HIGH
+    // and thins them; and the harmony is two chords, not four.
+    benga: {
+      label: "Nairobi 1972", voices: 3, near: "soukous",
+      plan: "dance", bpm: 140,
+      // LINEAGE: a ROOT under protest, and the protest is the whole point.
+      // Benga's parent is the nyatiti repertory and the Luo ohangla drum
+      // tradition, neither of which is here. congorumba is named at 0.3
+      // because Congolese records genuinely were the model for the guitar
+      // sound in East Africa — that much is documented — and NOT because it
+      // is the nearest African anchor, which is the reasoning this round
+      // exists to stop.
+      parents: { congorumba: 0.3 },
+      wants: ["nyatiti", "ohangla", "dodo"],
+      instr: ["clean_guitar", "steel_string_guitar", "solo_vox"],
+      drumkit: "room",
+      entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? 1 : 0),
+      realize: () => "line",
+      part: ["riff", "counter", "lead"],
+      // TWO BARS A CHORD, not one: a benga cycle sits on the tonic for half
+      // its length and then goes, which halves the harmonic rate against
+      // `merengue`'s bar-by-bar alternation. Drafted as [0,4,0,4] the two
+      // anchors sat 0.268 apart in the genealogy's feature space — two very
+      // fast four-bar I-V records, one in Nairobi and one in Santo Domingo,
+      // reading as one point.
+      roots: [0, 0, 4, 4], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 1, bassStyle: "sixteenths",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitVel: { h: [9,4,6,4, 8,4,6,4, 9,4,6,4, 8,4,6,5] },
+      fill: { s: [0,0,0,0, 1,1,1,1, 0,0,0,0, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 3300, q: 1.2, atk: .003, rel: .3, gain: .27, verb: .22 },
+      words: ["the guitar, the nyatiti figure moved onto strings",
+              "the second guitar, a third above",
+              "the singer, over both"],
+      word: v => (v === 1 ? [transpose(4), drop(2)] : v === 2 ? [drop(3), rotate(8)] : []),
+    },
+
+    // MAKOSSA — Douala 1972. Cameroon's own dance music, and the record that
+    // dates it is Manu Dibango's "Soul Makossa" — a saxophone over a bass
+    // line, a guitar chopping, and a beat that turned out to be exportable
+    // enough that American disco took it whole.
+    //
+    // WHAT SEPARATES IT FROM AFROBEAT, twelve months and one country apart:
+    // afrobeat is one dorian chord and two drummers for eight minutes; this
+    // is a four-bar major cycle at 118 with ONE drummer and a bass line that
+    // is the hook. The horn is the same tenor and it is doing a different job
+    // — riffing on the cycle rather than answering a call.
+    makossa: {
+      label: "Douala 1972", voices: 3, near: "afrobeat",
+      plan: "dance", bpm: 118,
+      // LINEAGE: a ROOT under protest. Makossa comes out of the ambasse bey
+      // and the assiko of the Douala coast, and out of the Congolese records
+      // that were everywhere in central Africa by 1960 — the second is here
+      // and the first two are not. `funk` is NOT named: the funk arrives in
+      // this music the same year the record does, from the same Atlantic
+      // exchange, and calling Cincinnati 1967 its parent would repeat the
+      // exact error afrobeat's own lineage was repaired for.
+      parents: { congorumba: 0.35 },
+      wants: ["ambasse bey", "assiko", "bikutsi"],
+      instr: ["tenor_sax", "clean_guitar", "brass_section"],
+      drumkit: "room",
+      entry: v => v, reg: v => (v === 1 ? 0 : v === 2 ? -1 : 0),
+      realize: () => "line",
+      part: ["lead", "riff", "counter"],
+      roots: [0, 3, 4, 0], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "sixteenths",
+      kit: { k: [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,1,0, 0,1,0,1, 1,0,1,0, 0,1,0,1],
+             h: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1] },
+      kitVel: { h: [9,0,5,6, 8,0,5,6, 9,0,5,6, 8,0,5,7] },
+      fill: { p: [1,1,1,0, 1,1,1,0, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 2900, q: 1.2, atk: .005, rel: .4, gain: .28, verb: .26 },
+      words: ["the sax, the riff everyone knows",
+              "the guitar, chopping under it",
+              "the horns, on the turnaround"],
+      word: v => (v === 1 ? [only("acc", rotate(2)), drop(2)] : v === 2 ? [rotate(12), drop(3)] : []),
+    },
+
+    // HIPLIFE — Accra 1998. Highlife's own grandchild: Reggie Rockstone
+    // rapping in Twi over highlife guitar figures and a programmed kit. The
+    // catalog holds Accra 1957 and nothing else Ghanaian for forty-one years.
+    //
+    // THE YEAR is "Makaa Maka", the record that names the form.
+    hiplife: {
+      label: "Accra 1998", voices: 2, near: "boombap",
+      plan: "dance", bpm: 100,
+      parents: { highlife: 0.4, boombap: 0.35, afrobeat: 0.25 },
+      wants: [],
+      instr: ["clean_guitar", "warm_pad"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => -v, realize: v => (v === 1 ? "pad" : "line"),
+      part: ["riff", "pad"],
+      roots: [0, 3, 4, 0], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "octaves",
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,0,1, 0,0,1,0, 0,0,1,0, 1,0,0,0],
+             h: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1] },
+      fill: { s: [0,0,0,0, 1,0,1,0, 0,0,1,1, 1,1,0,0] },
+      tone: { wave: "triangle", cut: 2500, q: 1.1, atk: .006, rel: .5, gain: .27, verb: .3 },
+      words: ["the guitar, highlife's own figure",
+              "the pad, under the rap"],
+      word: v => (v === 1 ? [drop(4)] : []),
+    },
+
+    // KIZOMBA — Luanda 1995. Angola's slow couple dance: semba's language at
+    // half the speed, with a drum machine and a Caribbean lilt in the bass.
+    // The catalog has never held an Angolan record.
+    //
+    // THE YEAR is the mid-nineties, when the name settles and the form is
+    // distinct from semba on record rather than in a dance hall.
+    //
+    // LINEAGE: `worldfolk` IS NOT NAMED HERE, which is worth saying out loud
+    // in an entry that could easily have taken it: the parents are semba
+    // (Luanda, absent, on `wants`) and the Antillean zouk of Kassav', which
+    // is Tier 2 above because no dot for it can be proved on land. So this
+    // anchor is honestly PARENTLESS on its Caribbean side and says so
+    // rather than conscripting the nearest African anchor.
+    kizomba: {
+      label: "Luanda 1995", voices: 3, near: "rai",
+      plan: "song", bpm: 92,
+      parents: {},
+      wants: ["semba", "zouk", "kilapanga"],
+      instr: ["clean_guitar", "polysynth", "solo_vox"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => (v === 1 ? -1 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["riff", "pad", "lead"],
+      roots: [0, 5, 3, 4], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "octaves",
+      kit: { k: [1,0,0,0, 0,0,0,1, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             h: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1] },
+      kitVel: { h: [8,0,4,5, 7,0,4,5, 8,0,4,5, 7,0,4,6] },
+      fill: { p: [0,0,1,1, 0,1,1,0, 1,0,1,1, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2300, q: 1.0, atk: .01, rel: .8, gain: .26, verb: .4 },
+      words: ["the guitar, picking the cycle",
+              "the synth pad under it",
+              "the singer"],
+      word: v => (v === 1 ? [drop(4)] : v === 2 ? [rotate(4), drop(2)] : []),
+    },
+
+    // COUPÉ-DÉCALÉ — Abidjan 2003. Ivorian club music made in the Paris
+    // diaspora and sent home: a programmed floor, a shouted ad-lib culture,
+    // a synth stab, and the atalaku's percussion breaks lifted straight off
+    // Kinshasa's ndombolo. It is the newest African anchor in the catalog and
+    // the only West African one after 2001.
+    //
+    // THE YEAR is the Jet Set's first records and the coining of the name in
+    // 2002-03. Abidjan is the dot because that is where it landed and became
+    // a national music, and the comment is where the Paris half belongs.
+    coupedecale: {
+      label: "Abidjan 2003", voices: 2, near: "amapiano",
+      plan: "dance", bpm: 122,
+      parents: { soukous: 0.45, house: 0.3, dancehall: 0.25 },
+      wants: ["ndombolo", "zouglou"],
+      instr: ["polysynth", "clean_guitar"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => -v, realize: () => "line",
+      part: ["riff", "counter"],
+      harmony: "modal", mode: MODES.aeolian, scale: DIATONIC, diatonic: true,
+      artic: "staccato", maxHold: 1, bassStyle: "octaves",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,1,1, 0,1,1,0, 1,0,1,1, 0,1,1,1],
+             h: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
+      fill: { p: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 3100, q: 1.6, atk: .003, rel: .25, gain: .28, verb: .2 },
+      words: ["the synth stab", "the guitar, ndombolo's own figure"],
+      word: v => (v === 1 ? [rotate(4), drop(2)] : []),
+    },
+
+    /* ---- EAST ASIA -----------------------------------------------------
+       Five anchors, against the two the catalog held (Tokyo 1984, Seoul
+       2012) — and the oldest of the two was a 1984 city-pop record, so East
+       Asia's entire representation was the last forty years of pop.
+
+       WHY THESE FIVE AND NOT THE ONES EVERYONE WOULD NAME FIRST. WORLD.md
+       §2's measurement is that Chinese scale material sits 10 cents from
+       12-TET at worst — the tuning is NOT the wall for East Asia. The walls
+       are METRE (jingju's banshi and gagaku's jo-ha-kyū are a metre CHANGING
+       inside one record, which precompose.js writes as `meter: null` for all
+       139 anchors) and INSTRUMENTS (China has no id at all — no erhu, dizi,
+       pipa, guzheng or suona). So what ships is the half of East Asia that
+       is a Western dance band, a Western pop group or a shamisen and a
+       string section: five records that genuinely are those things.
+
+       AND THE ONE THAT DID NOT SHIP FOR A REASON THAT IS NOT MUSICAL:
+       Okinawan pop (Naha 1992) is 12-TET, in four, and castable on
+       `shamisen` — the sanshin is the shamisen's own ancestor — and it is
+       held back only because `atlas-land.js` has no Ryukyus in it and the
+       nearest baked land to Naha is 5.3 degrees away. See TIER 2 above. */
+
+    // SHIDAIQU — Shanghai 1940, and it is the first Chinese record in the
+    // catalog. "Yellow music": a Chinese pentatonic tune sung by a woman in
+    // a high, light, unvibratoed voice over a Western dance band, cut in the
+    // Shanghai studios of the late thirties and early forties.
+    //
+    // THE YEAR is Zhou Xuan's peak and the Pathé/EMI Shanghai sessions —
+    // documented recordings, in a city with a recording industry.
+    //
+    // WHY IT IS TIER 1 WHEN CHINESE MUSIC GENERALLY IS NOT: this record is a
+    // JAZZ BAND. The tuning is 12-TET because the band is playing Western
+    // instruments in Western temperament; the metre is four because it is a
+    // foxtrot; the melody is the Chinese half and its five notes are inside
+    // the JND of a piano's five notes. Everything the box cannot say about
+    // Chinese music — the erhu's portamento, the qin's timbre, the opera's
+    // banshi — is absent from this repertory by construction.
+    //
+    // THE ALPHABET IS `majpent` AND THAT IS THE ANCHOR'S WHOLE CLAIM. Five
+    // notes at 2.4 semitones a step against the band's seven — the same
+    // device zema uses against Rome — so the tune MOVES differently from
+    // everything else the dance band is playing.
+    shidaiqu: {
+      label: "Shanghai 1940", voices: 3, near: "crooner",
+      plan: "song", bpm: 92,
+      // LINEAGE: `swing` UNDER PROTEST, in the bossa and mbube house style.
+      // The band, the arrangement and the recording chain are the American
+      // dance band, whole, and Kansas City 1938 is now in the catalog two
+      // years earlier. What the weight cannot say is the LARGER half — the
+      // Chinese folk-song repertory the melodies come out of, which has no
+      // anchor and cannot have one under this round's walls.
+      parents: { swing: 0.6 },
+      wants: ["chinese folk song", "shanghai opera"],
+      cannot: ["the erhu's continuous portamento between the notes of the " +
+               "pentatonic, which is the ornament this box has no channel for"],
+      instr: ["solo_vox", "tenor_sax", "jazz_guitar"],
+      drumkit: "jazz",
+      swing: 0.33,
+      entry: v => v, reg: v => (v === 1 ? -1 : 0), realize: () => "line",
+      part: ["lead", "counter", "riff"],
+      roots: [0, 5, 1, 4], mode: MODES.ionian, scale: SCALES.majpent,
+      artic: "legato", maxHold: 3, bassStyle: "walk",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             r: [1,0,0,1, 1,0,0,1, 1,0,0,1, 1,0,0,1],
+             f: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },
+      kitVel: { r: [8,0,0,5, 7,0,0,5, 8,0,0,5, 7,0,0,6] },
+      tone: { wave: "triangle", cut: 2600, q: 0.9, atk: .01, rel: 1.0, gain: .26, verb: .4,
+              // WHO SINGS: high, light, straight and forward — the Shanghai
+              // singers' own sound, which is nearly the OPPOSITE of the
+              // American belter of the same decade, and the row that gets
+              // closest is the Bulgarian one for the same reason: no wobble,
+              // very little air, and the tone pressed rather than floated.
+              mouth: MOUTHS.bulgar },
+      words: ["the singer", "the sax, answering the phrase",
+              "the guitar, comping"],
+      word: v => (v === 1 ? [rotate(8), drop(2)] : v === 2 ? [drop(3)] : []),
+    },
+
+    // ENKA — Tokyo 1969. The Japanese sentimental ballad: a minor
+    // yonanuki scale (a five-note minor with the second and sixth taken
+    // out), a shamisen and a string section, and a singer whose whole art is
+    // the ornament on the way into the note.
+    //
+    // THE YEAR is the late-sixties enka boom — Fuji Keiko, Mori Shin'ichi —
+    // when the word means this music rather than the Meiji protest song it
+    // originally named.
+    //
+    // THE SHAMISEN IS REAL AND IS THE FIFTH ID THIS ROUND UNLOCKS BY NAME.
+    // `shamisen` is a licensed on-disk registry id with a parent window of
+    // [43,84] that no anchor had ever asked for. What is NOT claimed is the
+    // sawari — the deliberate buzz where the lowest string touches the neck
+    // — which is the Japanese equivalent of the sitar's jawari and which
+    // this file has no way to ask for.
+    //
+    // THE PRIMARY FACT SHIPS AND THE ORNAMENT DOES NOT. Enka's primary fact
+    // is the yonanuki melody and the ballad form, and both are here.
+    // KOBUSHI — the rapid, wide, deliberately unstable ornament on the
+    // approach to a note — is in `cannot`: `orn` below carries `grace` and
+    // `approach`, which are ATTACK shapes, and kobushi is a pitch trajectory
+    // INSIDE the note. That is WORLD.md §5.3's wall, stated in one anchor.
+    enka: {
+      label: "Tokyo 1969", voices: 3, near: "crooner",
+      plan: "song", bpm: 72,
+      // LINEAGE: a ROOT under protest, and both halves are real. Enka is the
+      // Japanese ryūkōka of the twenties and thirties on one side and the
+      // Western sentimental ballad orchestra on the other; `crooner` (Los
+      // Angeles 1953) is genuinely the second half — the arrangement, the
+      // microphone technique and the string writing — and is named at a
+      // weight that says half and not all.
+      parents: { crooner: 0.4 },
+      wants: ["ryūkōka", "min'yō"],
+      cannot: ["kobushi — the ornament that bends the pitch INSIDE the note, " +
+               "where this box has seven attack shapes and no pitch " +
+               "trajectory (the `orn` table is `grace` and `approach`)",
+               "the shamisen's sawari buzz"],
+      instr: ["solo_vox", "shamisen", "strings"],
+      entry: v => v, reg: v => (v === 1 ? 0 : v === 2 ? -1 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      roots: [0, 3, 4, 0], mode: MODES.aeolian, scale: SCALES.majpent,
+      artic: "legato", maxHold: 4, bassStyle: "pedal",
+      orn: { grace: 0.4, approach: 0.3 },
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      kitVel: { h: [6,0,4,0, 6,0,4,0, 6,0,4,0, 6,0,4,0] },
+      drumkit: "brush",
+      tone: { wave: "triangle", cut: 2100, q: 0.8, atk: .02, rel: 1.4, gain: .26, verb: .46,
+              // WHO SINGS: the melisma row — an alto holding one vowel over
+              // several notes, two beats before the mouth moves — because
+              // that is the closest this table gets to a voice whose whole
+              // business is what happens between the syllables.
+              mouth: MOUTHS.melisma },
+      words: ["the singer", "the shamisen, answering the line",
+              "the strings, underneath"],
+      word: v => (v === 1 ? [rotate(8), drop(2)] : v === 2 ? [drop(4)] : []),
+    },
+
+    // TROT — Seoul 1965, and it gives the catalog a Korean record
+    // forty-seven years older than the one it had. The Korean ballad in
+    // duple time with a hard two-beat lilt, a minor pentatonic melody and a
+    // trumpet or an accordion answering the singer.
+    //
+    // THE YEAR is the mid-sixties, when trot is the dominant Korean popular
+    // form and the recording industry is domestic.
+    //
+    // WHAT SEPARATES IT FROM ENKA, which is a fair question and a
+    // historically loaded one: the two forms grew up beside each other under
+    // the same colonial recording industry and share the yonanuki scale.
+    // In fields they differ in TEMPO and in FEEL — trot is 108 with a hard
+    // two-beat bounce (the swing dial at a third, which is what this file has
+    // for a lilt) where enka is 72 and rubato-leaning with a string pad; and
+    // trot's cast is a horn where enka's is a shamisen.
+    trot: {
+      label: "Seoul 1965", voices: 3, near: "enka",
+      plan: "song", bpm: 108,
+      parents: { crooner: 0.35 },
+      wants: ["pansori", "changga", "min'yo"],
+      cannot: ["the kkeokkneun-mok — the same bent-inside-the-note ornament " +
+               "enka calls kobushi, and the same missing channel"],
+      instr: ["solo_vox", "trumpet", "accordion"],
+      drumkit: "brush",
+      swing: 0.33,
+      entry: v => v, reg: v => (v === 2 ? -1 : 0), realize: () => "line",
+      part: ["lead", "counter", "riff"],
+      roots: [0, 3, 4, 0], mode: MODES.aeolian, scale: SCALES.majpent,
+      artic: "legato", maxHold: 3, bassStyle: "octaves",
+      orn: { grace: 0.35 },
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      kitVel: { k: [9,0,0,0, 0,0,0,0, 7,0,0,0, 0,0,0,0],
+                h: [8,0,4,0, 7,0,4,0, 8,0,4,0, 7,0,5,0] },
+      fill: { s: [0,0,0,0, 1,0,1,0, 0,0,1,0, 1,1,1,0] },
+      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .012, rel: 1.0, gain: .27, verb: .38,
+              mouth: MOUTHS.belter },
+      words: ["the singer", "the trumpet, answering",
+              "the accordion, holding the two-beat"],
+      word: v => (v === 1 ? [rotate(8), drop(3)] : v === 2 ? [drop(2)] : []),
+    },
+
+    // CANTOPOP — Hong Kong 1984. The Cantonese ballad and mid-tempo pop of
+    // the eighties: a synthesiser and a drum machine, a big reverbed
+    // arrangement, and a melody that has to fit Cantonese's six tones, which
+    // is a constraint no other pop tradition works under.
+    //
+    // THE YEAR is Leslie Cheung and Anita Mui's breakout — the moment
+    // Cantopop stops being a local variant of Mandarin pop and becomes the
+    // regional standard.
+    //
+    // AND THE TONE CONSTRAINT IS A PERMANENT LIMITATION, NOT A QUEUE ITEM,
+    // and it is the same one the African round wrote down for the same
+    // reason: a Cantopop melody must not fight the lexical tone of its own
+    // lyric, and `deg` in this kernel is "SIGNED and alphabet-free… never an
+    // absolute pitch" (kernel.js:8), which is precisely the property that
+    // stops a TEXT constraining it. It is in `cannot` and it will stay there.
+    cantopop: {
+      label: "Hong Kong 1984", voices: 3, near: "citypop",
+      plan: "song", bpm: 96,
+      // LINEAGE: Shanghai 1940 is the Chinese-language pop song itself —
+      // the shidaiqu singers moved to Hong Kong in 1949 and took the
+      // industry with them, which is a migration and not a resemblance —
+      // and Tokyo 1984 is the eighties production. `crooner` is the third
+      // because the Cantopop ballad's microphone technique is that record's.
+      // (`powerballad`, Los Angeles 1991, was the obvious third and is SEVEN
+      // YEARS LATER than this label; a parent that postdates its child is
+      // exactly the kind of claim the fit tool on `main` cannot know is
+      // loose talk.)
+      parents: { shidaiqu: 0.35, citypop: 0.35, crooner: 0.3 },
+      wants: ["cantonese opera"],
+      cannot: ["a melody bound to the lyric's own lexical tone — `deg` is " +
+               "signed and alphabet-free and never an absolute pitch, which " +
+               "is exactly what stops a text constraining it"],
+      instr: ["solo_vox", "polysynth", "warm_pad"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => (v === 2 ? -1 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      roots: [0, 5, 3, 4], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      artic: "legato", maxHold: 4, bassStyle: "octaves",
+      fx: ["chorus"],
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,1, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             o: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,1,0, 0,0,1,1, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 2400, q: 1.0, atk: .02, rel: 1.2, gain: .26, verb: .58,
+              mouth: MOUTHS.melisma },
+      words: ["the singer", "the synth, answering the line",
+              "the pad, holding the chord"],
+      word: v => (v === 1 ? [rotate(4), drop(2)] : v === 2 ? [drop(4)] : []),
+    },
+
+    // MANDOPOP — Taipei 2003. The Jay Chou moment: R&B phrasing and a hip-hop
+    // kit under a Mandarin ballad, with a "Chinese style" pentatonic hook
+    // played on something that is meant to sound like a guzheng.
+    //
+    // AND THAT LAST CLAUSE IS THE ANCHOR'S OWN ADMISSION. There is no
+    // guzheng, no pipa and no erhu in the registry — China is the emptiest
+    // instrument slot on the map after the maqam countries. `koto` is the
+    // SIXTH id this round unlocks by name and it is a JAPANESE zither: a
+    // long half-tube board zither with movable bridges, plucked, which is the
+    // same INSTRUMENT FAMILY as the guzheng and a different country's
+    // instrument with a different tuning convention. It is cast here with the
+    // loss written down rather than left for a listener to notice, and it is
+    // the only cast in this round that borrows an instrument across a border.
+    mandopop: {
+      label: "Taipei 2003", voices: 3, near: "darkrnb",
+      plan: "song", bpm: 88,
+      parents: { cantopop: 0.4, rnb: 0.35, boombap: 0.25 },
+      wants: [],
+      cannot: ["the guzheng, the pipa and the erhu — China has no id in the " +
+               "registry, and the `koto` cast below is a Japanese zither " +
+               "standing in for a Chinese one, which is a borrowed country " +
+               "and not only a borrowed instrument"],
+      instr: ["solo_vox", "koto", "rhodes_ep"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => (v === 1 ? 1 : v === 2 ? -1 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      roots: [0, 5, 3, 4], mode: MODES.aeolian, scale: SCALES.majpent,
+      artic: "legato", maxHold: 3, bassStyle: "octaves",
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1] },
+      kitVel: { h: [8,0,4,5, 7,0,4,5, 8,0,4,5, 7,0,4,6] },
+      fill: { h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2300, q: 1.0, atk: .015, rel: 1.0, gain: .26, verb: .48,
+              mouth: MOUTHS.falsetto },
+      words: ["the singer", "the zither hook",
+              "the electric piano, under the verse"],
+      word: v => (v === 1 ? [transpose(12), drop(3)] : v === 2 ? [drop(4)] : []),
+    },
+
+    /* ---- SOUTHEAST ASIA ------------------------------------------------
+       Six anchors into a region the catalog held ZERO of. Every one of them
+       is a Western-instrument popular music of the twentieth century, which
+       is not a coincidence and is not a dodge: gamelan is Tier 2 for two
+       walls at once (tuning AND a non-2:1 period, which `degPitch`'s
+       `12*floor(d/len)` makes unsayable), and mo lam and the Thai piphat are
+       Tier 2 for metre and instruments. What is left is real, large, deeply
+       loved and entirely playable: kroncong, dangdut, luk thung, Manila
+       sound, nhạc vàng and Cambodian rock. */
+
+    // KRONCONG — Jakarta 1935, and it is the oldest Southeast Asian record
+    // the catalog can hold. A Portuguese-descended Indonesian chamber music:
+    // a small plucked ukulele-like instrument (the kroncong itself, which
+    // names the whole style) playing an interlocking figure with a second
+    // one, a cello played PIZZICATO like a drum, a flute or a violin on the
+    // counter-melody, and a singer over the top.
+    //
+    // THE YEAR is the pre-war Jakarta recording industry and "Bengawan Solo"
+    // is five years the other side of it; 1935 is the decade's centre with
+    // a studio in it.
+    //
+    // THE MOST SURPRISING TIER-1 ANCHOR IN THE BATCH, and the reason is
+    // historical: kroncong descends from sixteenth-century Portuguese
+    // sailors' music, is tuned in Western temperament, is in four, and is
+    // played on instruments the registry actually has. It is the one
+    // Indonesian music that is not behind the gamelan wall — and its
+    // presence is the clearest possible statement of where that wall
+    // actually runs.
+    kroncong: {
+      label: "Jakarta 1935", voices: 3, near: "choro",
+      plan: "song", bpm: 84,
+      parents: {},
+      wants: ["portuguese fado of the sailors", "moresco", "stambul theatre song"],
+      instr: ["solo_vox", "nylon_string_guitar", "flute"],
+      entry: v => v, reg: v => (v === 1 ? 1 : v === 2 ? 1 : 0),
+      realize: () => "line",
+      part: ["lead", "riff", "counter"],
+      roots: [0, 4, 0, 4], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      artic: "legato", maxHold: 3,
+      // THE CELLO IS THE DRUM KIT. A kroncong ensemble has no percussion at
+      // all — the pizzicato cello plays the rhythm — so `kit` is empty and
+      // the pulse lives in the bass, which is why `bassStyle` is
+      // `sixteenths` on a record at 84 bpm. That is not a busy bass line,
+      // it is a drummer.
+      kit: {}, bassStyle: "sixteenths",
+      tone: { wave: "triangle", cut: 2500, q: 0.85, atk: .008, rel: .8, gain: .26, verb: .38,
+              mouth: MOUTHS.monody },
+      words: ["the singer", "the kroncong, the interlocking figure",
+              "the flute, the counter-melody"],
+      word: v => (v === 1 ? [split(2), drop(2)] : v === 2 ? [invert(4), drop(3)] : []),
+    },
+
+    // DANGDUT — Jakarta 1975. Indonesia's own mass popular music, named
+    // after the sound of its drum: a gendang playing the DANG and the DUT
+    // that give it the name, a suling flute curling round the vocal, an
+    // electric guitar and a bass, and a melody with the Hindi film song and
+    // the Malay orkes melayu in it in equal measure.
+    //
+    // THE YEAR is Rhoma Irama's Soneta Group era, when orkes melayu becomes
+    // dangdut and the guitars arrive.
+    //
+    // THE DRUM IS THE GENRE AND IT IS TWO LANES. The gendang's two strokes
+    // are the whole hook — a low open DANG on the and-of-4 into the bar and
+    // a slapped DUT on the beat — so the kick carries one and `p` the other,
+    // and the loss is the pitch bend a player gets by pressing the head with
+    // a heel, which a sampled kick cannot do.
+    dangdut: {
+      label: "Jakarta 1975", voices: 3, near: "filmi",
+      plan: "dance", bpm: 112,
+      // LINEAGE: filmi is the melody and the string writing and it is not a
+      // resemblance — Bombay films played in Indonesian cinemas throughout
+      // the fifties and sixties and the debt is documented; kroncong is the
+      // Indonesian half; rock is the guitars, which arrive with Rhoma Irama
+      // and are the reason 1975 and not 1965.
+      parents: { filmi: 0.4, kroncong: 0.3, rock: 0.3 },
+      wants: ["orkes melayu", "qasidah"],
+      cannot: ["the gendang's pressed pitch-bend between the dang and the " +
+               "dut, which is a drum head being squeezed and this kit has " +
+               "twelve fixed samples"],
+      instr: ["solo_vox", "flute", "clean_guitar"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 1 ? 1 : v === 2 ? 0 : 0),
+      realize: () => "line",
+      part: ["lead", "counter", "riff"],
+      roots: [0, 3, 4, 0], mode: MODES.aeolian, scale: DIATONIC, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "octaves",
+      orn: { grace: 0.3, approach: 0.25 },
+      kit: { k: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,0,1,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      kitVel: { k: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,9,0],
+                p: [8,0,0,5, 0,0,7,0, 8,0,0,5, 0,0,7,0] },
+      fill: { p: [1,0,1,1, 0,1,1,0, 1,1,0,1, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2600, q: 1.1, atk: .008, rel: .7, gain: .27, verb: .34,
+              mouth: MOUTHS.melisma },
+      words: ["the singer", "the suling, curling round the vocal",
+              "the guitar, on the cycle"],
+      word: v => (v === 1 ? [rotate(4), drop(2)] : v === 2 ? [drop(3)] : []),
+    },
+
+    // LUK THUNG — Bangkok 1970. Thai country song: a rural voice with a very
+    // wide, very slow vibrato, a small Western band behind it, and a khaen
+    // or a phin somewhere in the arrangement. It is the music of the Isan
+    // migration to Bangkok and it is the biggest popular form in Thailand.
+    //
+    // THE YEAR is the Suraphon-to-Phumphuang transition and the decade luk
+    // thung is named as a genre rather than described as "songs from the
+    // fields".
+    //
+    // THE TUNING NEEDS A SENTENCE. Thai CLASSICAL music is seven equal
+    // steps to the octave — genuinely not 12-TET and genuinely a wall — but
+    // luk thung is played on Western instruments in Western temperament,
+    // which is why it and not the piphat ensemble is what ships. The claim
+    // this anchor makes is exactly that: the popular form, on a guitar band.
+    lukthung: {
+      label: "Bangkok 1970", voices: 3, near: "countrypop",
+      plan: "song", bpm: 100,
+      parents: {},
+      wants: ["mo lam", "thai folk song", "luk krung"],
+      cannot: ["the khaen — a bamboo mouth organ whose fixed pitches are " +
+               "seven equal steps to the octave, which is not this box's " +
+               "twelve"],
+      instr: ["solo_vox", "clean_guitar", "brass_section"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 2 ? -1 : 0), realize: () => "line",
+      part: ["lead", "riff", "counter"],
+      roots: [0, 3, 4, 0], mode: MODES.ionian, scale: SCALES.majpent,
+      artic: "legato", maxHold: 4, bassStyle: "eighths",
+      orn: { grace: 0.45 },
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,1,0, 0,0,1,0, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2400, q: 1.0, atk: .012, rel: .9, gain: .27, verb: .42,
+              // WHO SINGS: the widest, latest wobble in the table, which is
+              // what a luk thung singer's ûan actually is
+              mouth: MOUTHS.belter },
+      words: ["the singer", "the guitar, on the cycle",
+              "the horns, answering the line"],
+      word: v => (v === 1 ? [drop(2)] : v === 2 ? [rotate(8), drop(3)] : []),
+    },
+
+    // MANILA SOUND — Manila 1976. Filipino soft rock and disco-pop sung in
+    // Taglish: close harmony, a clean electric guitar, an electric piano and
+    // a light kit. It is the beginning of what became OPM, and the catalog
+    // has never held a Philippine record.
+    //
+    // THE YEAR is Hotdog's "Manila" and the Cinema Audio sessions.
+    //
+    // WHY NOT KUNDIMAN, which would be the older and the more obviously
+    // "traditional" choice: the kundiman is in THREE, and this file's cells
+    // are sixteen places long. It is named in Tier 2 above with the metre
+    // wall, and this anchor is what the region has that the box can play.
+    manilasound: {
+      label: "Manila 1976", voices: 3, near: "yachtsoul",
+      // 112, AN OPEN HAT AND A WALKING-EIGHTHS BASS, WHICH IS A MEASUREMENT
+      // AND NOT A TASTE. Drafted at 108 with an octave bass and a plain hat
+      // this anchor sat 0.234 from `cantopop` in the genealogy's own
+      // 28-feature space — tighter than ANY pair the catalog held before this
+      // round (yachtrock/coastrock, 0.311) and well inside the 0.380 the
+      // African slate flagged zema at. The two records are not the same
+      // music: Manila Sound is a live band in a room with a Rhodes and a
+      // disco eighth-note bass, and Hong Kong 1984 is a drum machine and a
+      // synthesiser in a big plate. Three fields say so.
+      plan: "song", bpm: 112,
+      // LINEAGE: Philadelphia 1976 is the smooth-soul arrangement and
+      // Liverpool 1963 is the close harmony, both of which a Manila Sound
+      // record wears openly. (`disco` was the obvious third and it is New
+      // York 1977, one year AFTER this label — near enough to be tempting
+      // and still the wrong direction, so Detroit 1965 takes the weight.)
+      parents: { blueeyedsoul: 0.4, merseybeat: 0.3, motown: 0.3 },
+      wants: ["kundiman", "rondalla"],
+      instr: ["solo_vox", "clean_guitar", "rhodes_ep"],
+      drumkit: "room",
+      entry: v => v, reg: v => (v === 2 ? -1 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "riff", "pad"],
+      roots: [0, 5, 1, 4], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             h: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,1] },
+      fill: { s: [0,0,0,0, 1,0,1,0, 0,0,1,0, 1,1,1,0] },
+      tone: { wave: "triangle", cut: 2500, q: 1.0, atk: .01, rel: .8, gain: .26, verb: .36,
+              mouth: MOUTHS.merseystack },
+      words: ["the lead voice", "the guitar, clean and high",
+              "the Rhodes, under both"],
+      word: v => (v === 1 ? [rotate(4), drop(2)] : v === 2 ? [drop(4)] : []),
+    },
+
+    // NHẠC VÀNG — Ho Chi Minh City 1968. "Golden music": the Vietnamese
+    // sentimental song of the pre-1975 south, sung slowly over a bolero
+    // rhythm — literally a bolero, borrowed from Latin America through
+    // French colonial radio and kept as the national ballad feel ever since.
+    //
+    // THE CITY IS SPELLED HO CHI MINH CITY THOUGH THE RECORD SAYS 1968,
+    // when it was Saigon. That is the Kinshasa precedent applied unchanged:
+    // atlas.js gate G3 enforces ONE SPELLING PER PLACE and a second name for
+    // the same coordinates would put two dots where there is one city. The
+    // old name is in this comment, which is where a historical fact that is
+    // not a map dot belongs.
+    //
+    // ITS RHYTHM IS ITS COUSIN'S. The kit below is the bolero anchor's own
+    // cinquillo, which is not a coincidence to be hidden — it is the
+    // documented route, and putting the two anchors' `p` lanes side by side
+    // is the clearest thing this catalog can say about it.
+    nhacvang: {
+      label: "Ho Chi Minh City 1968", voices: 3, near: "bolero",
+      plan: "song", bpm: 70,
+      parents: { bolero: 0.45, crooner: 0.25 },
+      wants: ["cải lương", "ca trù", "french chanson"],
+      cannot: ["the đàn bầu's monochord glide — one string and a lever, all " +
+               "pitch and no fret, which is the continuous gesture WORLD.md " +
+               "§5.3 says this box has no channel for"],
+      instr: ["solo_vox", "nylon_string_guitar", "strings"],
+      entry: v => v, reg: v => (v === 2 ? -1 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      roots: [0, 5, 1, 4], mode: MODES.aeolian, scale: DIATONIC, diatonic: true,
+      artic: "legato", maxHold: 4, bassStyle: "octaves",
+      kit: { p: [1,0,1,1, 0,1,0,0, 1,0,1,1, 0,1,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      kitVel: { h: [6,0,4,0, 6,0,4,0, 6,0,4,0, 6,0,4,0] },
+      tone: { wave: "triangle", cut: 2200, q: 0.85, atk: .02, rel: 1.3, gain: .26, verb: .46,
+              mouth: MOUTHS.melisma },
+      words: ["the singer", "the guitar, between the lines",
+              "the strings, underneath"],
+      word: v => (v === 1 ? [transpose(5), rotate(8), drop(3)] : v === 2 ? [drop(4)] : []),
+    },
+
+    // KHMER ROCK — Phnom Penh 1970. Cambodian rock and roll: surf guitar and
+    // a Farfisa organ under a Khmer vocal, made in a two-year window before
+    // the musicians who made it were killed. Sinn Sisamouth, Ros Serey
+    // Sothea, Pan Ron.
+    //
+    // THE YEAR is the peak of the Phnom Penh scene, and the honest thing to
+    // note beside it is that the recordings survive as tape copies rather
+    // than as masters — the archive is a diaspora reconstruction. That does
+    // not change the date; it changes what "documented" means here, and a
+    // reader is entitled to know which.
+    //
+    // WHAT SEPARATES IT FROM `psychpop` (London 1968), which is the nearest
+    // thing in the catalog by sound: the melody. This anchor reads its
+    // subject through a five-note alphabet where London reads seven, so the
+    // same guitar band plays a line that MOVES half again as far per step —
+    // the same device zema uses against Rome and shidaiqu uses against its
+    // own dance band.
+    khmerrock: {
+      label: "Phnom Penh 1970", voices: 3, near: "psychpop",
+      plan: "song", bpm: 124,
+      parents: { psychpop: 0.35, rock: 0.3 },
+      wants: ["khmer folk song", "mahori"],
+      instr: ["clean_guitar", "percussive_organ", "solo_vox"],
+      drumkit: "room",
+      entry: v => v, reg: v => (v === 1 ? -1 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["riff", "pad", "lead"],
+      roots: [0, 3, 4, 0], mode: MODES.aeolian, scale: SCALES.majpent,
+      artic: "staccato", maxHold: 2, bassStyle: "eighths",
+      fx: ["tremolo"],
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,1,0, 1,0,1,0, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 2700, q: 1.3, atk: .005, rel: .5, gain: .28, verb: .44,
+              mouth: MOUTHS.poplead },
+      words: ["the guitar, with the tremolo on it",
+              "the organ, holding the chord",
+              "the singer"],
+      word: v => (v === 1 ? [drop(4)] : v === 2 ? [rotate(8), drop(2)] : []),
+    },
+
+    /* ---- SOUTH ASIA ----------------------------------------------------
+       Three anchors into a region the catalog held ONE of, and that one was
+       a 2022 record. WORLD.md §2 called filmi "the closest" thing in the
+       whole program — "shruti is 14c max, inside the JND; the metre is
+       mostly 4/4 or a 6/8 keherwa" — and it was right: the wall for South
+       Asia was never tuning, it was the percussion kit and the fact that
+       nobody had said `sitar` out loud.
+
+       WHAT IS NOT HERE AND WHY, so nobody re-derives it: Hindustani and
+       Carnatic classical music are Tier 2 because their primary fact is a
+       DRONE plus a rāga that is not a scale — a rāga is a set of phrases,
+       ascending and descending forms, and one note you lean on, and this
+       box has an alphabet and a mode. Ghazal is Tier 2 under the
+       primary-fact rule: its composition IS the setting of a couplet's
+       prosody, which is WORLD.md §5.7's wall. Both are named in TIER 2
+       above with those reasons and are not argued again. */
+
+    // FILMI — Mumbai 1960. The Hindi film song: a playback singer over an
+    // orchestra that has a violin section, a flute, a harmonium, a sitar and
+    // a tabla in it at once, singing a melody built on a rāga's material in
+    // a form built by a music director for a three-minute scene.
+    //
+    // THE CITY IS SPELLED MUMBAI THOUGH THE RECORD SAYS 1960, when it was
+    // Bombay — the Kinshasa precedent again, and for the same gate.
+    //
+    // THE YEAR is the Shankar-Jaikishan and Naushad peak and "Mughal-e-Azam";
+    // the golden age is roughly 1950-70 and 1960 is its centre with real
+    // records either side of it.
+    //
+    // THE CAST IS UNUSUALLY HONEST FOR A NON-WESTERN ANCHOR AND THAT IS THE
+    // POINT. `sitar` is a real licensed id with a parent window of [48,88] —
+    // the seventh this round unlocks by name — and a filmi orchestra
+    // genuinely has a sitar in it. `reed_organ` IS a harmonium (six zones,
+    // every file on disk, confirmed at genres.js:5713). `strings` is a
+    // Western string section and a filmi orchestra has one. Nothing here is
+    // pretending.
+    //
+    // WHAT IS: the TABLA. There is no hand drum among the twelve extracted
+    // kit WAVs, so keherwa's eight beats are voiced across the kick, the rim
+    // and the toms, and the loss is the whole bol language — a tabla player
+    // says NA, TIN, GE, DHA and the difference between them is timbre, not
+    // level. That is in `cannot` and it is not a small admission.
+    filmi: {
+      label: "Mumbai 1960", voices: 4, bars: 8, near: "crooner",
+      plan: "song", bpm: 92,
+      // LINEAGE: a ROOT under protest, and the protest is the larger half.
+      // The film song's parents are the Hindustani khayal and thumri, the
+      // Parsi theatre song and the regional folk repertories, and none of
+      // them can be an anchor under this round's walls. `romantic` (Vienna
+      // 1876) is named at a real weight for the ORCHESTRA — the string
+      // writing in a Naushad arrangement is nineteenth-century European and
+      // is not a resemblance, it is what the arrangers were trained on.
+      parents: { romantic: 0.3 },
+      wants: ["khayal", "thumri", "parsi theatre song", "bhajan"],
+      cannot: ["the tabla's bols — na, tin, ge and dha differ in TIMBRE and " +
+               "this kit has twelve fixed samples and a velocity",
+               "meend, the slide between the notes of a phrase, which is the " +
+               "ornament WORLD.md §5.3 says this box has no channel for"],
+      instr: ["solo_vox", "sitar", "strings", "reed_organ"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 1 ? 0 : v === 2 ? -1 : v === 3 ? -1 : 0),
+      realize: v => (v >= 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad", "pad"],
+      roots: [0, 5, 3, 4, 0, 5, 4, 0], mode: MODES.harmonic,
+      scale: DIATONIC, diatonic: true,
+      artic: "legato", maxHold: 4, bassStyle: "pedal",
+      orn: { grace: 0.5, approach: 0.35 },
+      // KEHERWA, VOICED ACROSS FOUR LANES. Eight beats — DHA GE NA TI NA KA
+      // DHI NA — with the bass stroke of the bāyāñ on the kick, the ringing
+      // NA on the rim, and the closed strokes on the hat. It is written
+      // twice in the sixteen-step bar, because a keherwa cycle is eight
+      // beats and this bar is sixteen steps of two.
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             p: [1,0,1,0, 1,0,0,1, 1,0,1,0, 1,0,0,1],
+             h: [0,0,1,0, 0,1,1,0, 0,0,1,0, 0,1,1,0] },
+      kitVel: { p: [9,0,5,0, 7,0,0,4, 9,0,5,0, 7,0,0,5] },
+      fill: { p: [1,0,1,1, 1,1,1,1, 1,1,1,0, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .01, rel: 1.1, gain: .26, verb: .5,
+              // WHO SINGS: high, light, forward and nearly straight — the
+              // playback singer's sound, and the row that fits it is the
+              // Bulgarian one for the third time in this round, because
+              // "pressed rather than floated, almost no air" is a thing
+              // several traditions do and only one of them is European.
+              mouth: MOUTHS.bulgar },
+      words: ["the playback singer", "the sitar, answering the line",
+              "the strings, underneath", "the harmonium, holding the drone"],
+      word: v => (v === 1 ? [rotate(8), drop(2)] : v === 2 ? [drop(4)]
+                : v === 3 ? [drop(8)] : []),
+    },
+
+    // QAWWALI — Faisalabad 1988. Sufi devotional song: a lead voice, a party
+    // of men clapping and singing the refrain back, two harmoniums and a
+    // tabla, and a form that starts slow and accelerates for twenty minutes
+    // until the room is somewhere else.
+    //
+    // THE YEAR is Nusrat Fateh Ali Khan's international recordings, when
+    // qawwali is on tape at length and in one place.
+    //
+    // WHY THIS SHIPS AND GHAZAL DOES NOT, which is the primary-fact rule
+    // doing exactly the job it was written for. Qawwali's primary facts are
+    // the PARTY (a lead and a chorus answering), the HARMONIUM and the
+    // CLAPPED CYCLE — and all three are sayable here with no stand-in at
+    // all: `reed_organ` is a harmonium, `ahh_choir` is a group of people
+    // singing, and the `c` lane is literally handclaps. What it cannot say —
+    // the sargam taan, the improvised run on solfège syllables that a lead
+    // qawwal builds the ecstatic section out of — is in `cannot`, and it is
+    // an ornament, not the identity. Ghazal's missing fact is the identity.
+    //
+    // AND THE ACCELERATION IS IN `cannot` TOO. A qawwali speeds up across
+    // its whole length and nothing in this file can say so: `pace` is a
+    // WORLD.md §6 phase-2 field and does not exist yet, and `plan: "arc"` is
+    // the nearest shape available — a form that builds, at one tempo.
+    qawwali: {
+      label: "Faisalabad 1988", voices: 3, bars: 8, near: "gospel",
+      plan: "arc", bpm: 104,
+      // LINEAGE: a ROOT under protest. The parents are the Chishti sama
+      // tradition and Amir Khusrau's synthesis of Persian and Indian song,
+      // seven centuries back and unplaceable as anchors. `filmi` is named at
+      // a small weight and in one direction only — the recorded, arranged,
+      // three-minute qawwali of the late twentieth century learned its
+      // production from the film studio, which is a real and dateable debt
+      // and is NOT a claim about where the music comes from.
+      parents: { filmi: 0.25 },
+      wants: ["sama", "khusrau's qaul", "kafi"],
+      cannot: ["the sargam taan — the improvised run on solfège syllables " +
+               "that is what a lead qawwal DOES, and this box writes " +
+               "composed lines",
+               "the acceleration across the whole form, which needs a per-" +
+               "section pace and this file writes one tempo"],
+      instr: ["solo_vox", "ahh_choir", "reed_organ"],
+      entry: v => v * 2, reg: v => (v === 1 ? -1 : v === 2 ? -1 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      roots: [0, 0, 3, 3, 4, 4, 0, 0], mode: MODES.harmonic,
+      scale: DIATONIC, diatonic: true,
+      artic: "legato", maxHold: 4, nobass: true,
+      orn: { grace: 0.55, approach: 0.3 },
+      // THE HANDCLAPS ARE HANDCLAPS AND THE TABLA IS NOT A TABLA. `c` is the
+      // party clapping on the beat, which is exact; `p` and `k` are the
+      // tabla's keherwa again, with the same bol loss filmi declares. There
+      // is no kit and no bass — `nobass` — because a qawwali party has
+      // neither, and the harmonium's left hand is the only low sound in it.
+      kit: { c: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             p: [1,0,1,0, 1,0,0,1, 1,0,1,0, 1,0,0,1] },
+      kitVel: { c: [9,0,0,0, 7,0,0,0, 9,0,0,0, 8,0,0,0] },
+      fill: { p: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2300, q: 0.9, atk: .015, rel: 1.2, gain: .27, verb: .56,
+              // WHO SINGS: a tenor pushed hard with real air in it and the
+              // wobble arriving late — and the party behind him is the
+              // ROOM row, ragged on purpose, because a qawwali party is a
+              // group of men and not a section
+              mouth: MOUTHS.qawwal },
+      words: ["the lead qawwal", "the party, answering the refrain",
+              "the harmonium, under both"],
+      word: v => (v === 1 ? [drop(2), transpose(-5)] : v === 2 ? [drop(8)] : []),
+    },
+
+    // BHANGRA — Jalandhar 1972, and it pays `punjabipop`'s own `wants` line.
+    // The Punjabi harvest dance and its song repertory as the Punjab's own
+    // record industry cut it: a dhol played with two sticks on two heads, a
+    // tumbi's single high metal string, a harmonium, and boliyan — rhyming
+    // couplets shouted and answered over the drum.
+    //
+    // THE CITY IS JALANDHAR AND NOT SOUTHALL, and the reason is worth
+    // writing down because the first draft of this anchor was British.
+    // UK bhangra — Southall 1986, the daytimer circuit, Alaap and Heera — is
+    // Tier 1 musically in every respect and it is held back by the MAP: a
+    // Southall dot lands 4.9 CSS px from Muswell Hill at the Britain arc,
+    // under atlas.gate.js G10's 8.5 px floor, and the two are SIBLING
+    // neighbourhoods of one city rather than one inside the other, which is
+    // the one relation `WITHIN` cannot declare. Jalandhar is the older and
+    // the more directly ancestral anchor anyway — it is the Punjab's own
+    // recording centre, it is the same region and language as Chandigarh
+    // 2022, and it is fifty years earlier.
+    //
+    // THE YEAR is the early-seventies Punjabi LP era, when the folk
+    // repertory is being recorded commercially rather than danced at a
+    // harvest.
+    //
+    // WHAT IT REPAIRS. `punjabipop` (Chandigarh 2022) declared
+    // `worldfolk: 0.40` — Johannesburg 1986 as the largest ancestor of a
+    // Punjabi record — because the true parent was absent and the nearest
+    // anchor was conscripted. WORLD.md §4 caught that edge running. It is
+    // rewritten below.
+    bhangra: {
+      label: "Jalandhar 1972", voices: 3, near: "punjabipop",
+      plan: "dance", bpm: 120,
+      // LINEAGE: a ROOT, and there is nothing to protest — the Punjabi folk
+      // repertory has no ancestor in this catalog and no anchor here is
+      // upstream of it in any direction. `filmi` (Mumbai 1960) is NOT named:
+      // the film industry drew ON Punjabi folk music rather than the other
+      // way round, and naming it here would run the borrowing backwards.
+      parents: {},
+      wants: ["boliyan", "punjabi folk song", "jhumar"],
+      cannot: ["the tumbi — one string, one finger and no frets, which is a " +
+               "continuous-pitch instrument and this box writes semitones",
+               "the algoza's paired duct flutes, played by one man breathing " +
+               "circularly into both"],
+      instr: ["solo_vox", "reed_organ", "steel_string_guitar"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 1 ? -1 : v === 2 ? 1 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad", "counter"],
+      harmony: "modal", mode: MODES.mixo, scale: SCALES.majpent,
+      artic: "staccato", maxHold: 2, bassStyle: "pedal",
+      orn: { grace: 0.4 },
+      // THE DHOL IS TWO STICKS ON TWO HEADS AND IT GETS TWO LANES: the
+      // dagga's bass stroke on the kick and the thilli's cane on the toms,
+      // which is the same way punjabipop writes it (genres.js:5975) and the
+      // same way raï writes its derbouka one round earlier. What is lost is
+      // that one player is doing both and the two hands lock. There is no
+      // snare and no hat, because there is no drum kit within a thousand
+      // kilometres of a 1972 bhangra session — the chimta's jingles are the
+      // only metal and they go on `p`.
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             t: [0,0,1,1, 0,1,0,0, 0,0,1,1, 0,1,0,1],
+             p: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },
+      kitVel: { t: [0,0,7,5, 0,6,0,0, 0,0,7,5, 0,6,0,6] },
+      fill: { t: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2500, q: 1.1, atk: .008, rel: .7, gain: .27, verb: .36,
+              mouth: MOUTHS.belter },
+      words: ["the singer, calling the boli",
+              "the harmonium, holding the drone",
+              "the tumbi's figure, on one steel string"],
+      word: v => (v === 1 ? [drop(8)] : v === 2 ? [transpose(12), split(2), drop(2)] : []),
+    },
+
+    /* ---- THE MIDDLE EAST, NORTH AFRICA AND CENTRAL ASIA ----------------
+       Six anchors into a region the catalog held two of (Oran 1985, Cairo
+       2021), and the round's hardest editorial line runs through it.
+
+       THE LINE IS TUNING AND IT IS MEASURED, NOT FELT. WORLD.md §2: Arab
+       rast and bayati put a ~50-cent note on the degree that NAMES the
+       maqam, against a melodic JND of 10-20 cents — so tarab, the Arab
+       classical tradition, is Tier 2 and is not shipped. But `raï` already
+       showed the way out on 2026-08-25: pop-raï "sits largely in a 12-TET
+       minor or in HIJAZ", and hijaz, nahawand, kurd and ajam have NO neutral
+       intervals in them at all. So what ships here is the popular repertory
+       in the twelve-tone maqamat, and every anchor says which maqam it is
+       claiming and which it is not.
+
+       AND TURKEY IS NOT EGYPT ON THIS QUESTION. The same table measures
+       Turkish uşşak and rast at 19 cents max and 6 cents mean — at or inside
+       the JND — so Istanbul is Tier 1 for PITCH. What Istanbul is not Tier 1
+       for is NOTATION: the 53-comma system is the tradition's own way of
+       writing itself down and this box has twelve names. Turkish classical
+       makam is therefore in Tier 2 and arabesk, which is a string orchestra
+       and a drum kit, is here.
+
+       THE MODE PROBLEM, SAID ONCE FOR SIX ANCHORS. `MODES` has eight rows
+       and none of them is hijaz [0,1,4,5,7,8,10]; adding a ninth changes
+       every mode menu in the building because fields.js KEYMODES derives
+       from it. That argument was made and lost by `mahraganat` in 2024 and
+       again by `raï` in 2025, and two more anchors do not move it. So the
+       anchors below name `phrygian` or `harmonic` — phrygian for the flat
+       second, harmonic minor for the augmented second — each of which is the
+       nearest NAMED alphabet, said by name rather than smuggled in as a
+       literal array, and each of which is missing exactly one interval. */
+
+    // SHAABI — Cairo 1978, and it pays `mahraganat`'s `wants` line, which
+    // has read `["shaabi"]` since that anchor was written. Egyptian working-
+    // class wedding music: a rough, loud, unbeautiful voice over a maqsoum,
+    // an accordion or an organ, and a horn line, played at volume in a
+    // street tent.
+    //
+    // THE YEAR is Ahmed Adaweyah's breakthrough — the moment a voice that
+    // the state radio would not play sells more cassettes than the ones it
+    // would.
+    //
+    // THE QUARTER TONE IS IN `cannot` AND IS NOT THE PRIMARY FACT. Shaabi
+    // uses rast and bayati like everything else in Cairo, and this box
+    // cannot say either. What it CAN say is what makes shaabi shaabi — the
+    // wedding voice, the maqsoum, the volume and the cheapness — and the
+    // maqam it claims here is nahawand, which is a natural minor and has no
+    // neutral interval in it at all. The anchor claims the 12-TET half of
+    // the repertory and no more of it, in raï's own words.
+    shaabi: {
+      label: "Cairo 1978", voices: 3, near: "rai",
+      plan: "dance", bpm: 112,
+      // LINEAGE: a ROOT under protest. Shaabi's parents are the mawwal, the
+      // baladi wedding band and the Cairo tarab orchestra, and the third of
+      // those is Tier 2 above. Nothing in this catalog is upstream of it, and
+      // naming `disco` because Cairo 1978 had a rhythm section would be the
+      // conscription this round exists to stop.
+      parents: {},
+      wants: ["tarab", "mawwal", "baladi"],
+      cannot: ["the quarter tone — rast and bayati put a ~50-cent note on the " +
+               "degree that names the maqam, and this anchor claims only the " +
+               "12-TET half of the repertory"],
+      instr: ["solo_vox", "accordion", "brass_section"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 2 ? -1 : 0), realize: () => "line",
+      part: ["lead", "counter", "riff"],
+      harmony: "modal", mode: MODES.aeolian, scale: DIATONIC, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "octaves",
+      orn: { grace: 0.45, approach: 0.3 },
+      // THE MAQSOUM, THE SAME FIGURE MAHRAGANAT WRITES FORTY-THREE YEARS
+      // LATER: dum on 1, dum on the and-of-2, taks between. Written on an
+      // ACOUSTIC kit here because in 1978 a person is holding the drum, which
+      // is the one field that separates the two anchors' rhythm sections.
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,1,0, 1,0,0,0, 0,0,1,0, 1,0,1,0],
+             p: [0,0,1,1, 0,1,0,1, 0,0,1,1, 0,1,0,1],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,1,0, 1,0,0,1, 1,0,1,0, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 2700, q: 1.3, atk: .006, rel: .5, gain: .28, verb: .32,
+              mouth: MOUTHS.belter },
+      words: ["the singer", "the accordion, answering the phrase",
+              "the horns, on the refrain"],
+      word: v => (v === 1 ? [rotate(4), drop(2)] : v === 2 ? [drop(3)] : []),
+    },
+
+    // AL-JIL — Cairo 1988. Egyptian synth pop: shaabi's rhythm section on a
+    // drum machine, a sequenced bass, a synthesised horn line and a smooth
+    // voice — the sound of the Cairo cassette industry at its commercial
+    // height, and the direct middle rung between shaabi and mahraganat.
+    //
+    // THE YEAR is the Hamid El Shaeri / Ehab Tawfik era.
+    //
+    // WHAT SEPARATES IT FROM `raï`, its exact contemporary one Mediterranean
+    // coast west: raï is a drum machine plus an ACCORDION and a trumpet, in
+    // phrygian, at 116, and its identity is the Oranese vocal. This is a
+    // drum machine plus a SEQUENCER, in harmonic minor for the augmented
+    // second that names hijaz-kar, at 104, and its identity is the
+    // production. They are cousins and they are not the same record.
+    aljil: {
+      label: "Cairo 1988", voices: 3, near: "rai",
+      plan: "dance", bpm: 104,
+      parents: { shaabi: 0.45, synthpop: 0.3, disco: 0.25 },
+      wants: [],
+      cannot: ["the quarter tone, the same admission shaabi makes ten years " +
+               "earlier — `harmonic` carries the augmented second that names " +
+               "hijaz and is missing the neutral third of rast"],
+      instr: ["solo_vox", "polysynth", "saw_wave"],
+      drumkit: "cr78",
+      entry: v => v, reg: v => (v === 2 ? -1 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "riff", "pad"],
+      harmony: "modal", mode: MODES.harmonic, scale: DIATONIC, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "sixteenths",
+      orn: { grace: 0.35 },
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,1,0, 1,0,0,0, 0,0,1,0, 1,0,1,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitProb: { h: [9,6,9,6, 9,6,9,6, 9,6,9,6, 9,6,9,4] },
+      fill: { s: [0,0,1,0, 1,0,1,1, 1,0,1,0, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 3000, q: 1.6, atk: .004, rel: .4, gain: .28, verb: .28,
+              mouth: MOUTHS.poplead },
+      words: ["the singer", "the synth, on the hook",
+              "the sequenced pad under it"],
+      word: v => (v === 1 ? [rotate(8), drop(2)] : v === 2 ? [drop(4)] : []),
+    },
+
+    // ARABESK — Istanbul 1980. Turkey's great disreputable popular music: a
+    // large string orchestra playing a makam melody in unison, a drum kit
+    // and a darbuka underneath, and a voice singing about being crushed by
+    // the city. Orhan Gencebay, Müslüm Gürses, Ferdi Tayfur.
+    //
+    // THE YEAR is the height of the arabesk cassette boom, when the state
+    // broadcaster still would not play it and it was everywhere anyway.
+    //
+    // TIER 1 ON PITCH, AND THE MEASUREMENT IS WHY. Turkish uşşak and rast sit
+    // 19 cents from 12-TET at worst and 6 on average (WORLD.md §2) — inside
+    // the melodic JND — where Arab bayati sits at 50. So a Turkish popular
+    // melody is sayable here in a way an Egyptian classical one is not, and
+    // this anchor is the clearest evidence in the round that the tuning wall
+    // has a shape rather than a side.
+    //
+    // WHAT IS NOT CLAIMED: the bağlama. A long-necked fretted lute with
+    // movable frets set to commas has no honest id — `sitar` is the wrong
+    // country and the wrong buzz, `banjo` the wrong body — so the anchor
+    // casts what an arabesk record actually leads with, which is THE STRING
+    // SECTION, and puts the saz on `wants` rather than on a chair.
+    arabesk: {
+      label: "Istanbul 1980", voices: 3, bars: 8, near: "romantic",
+      plan: "arc", bpm: 88,
+      parents: { filmi: 0.35, romantic: 0.2 },
+      wants: ["türk sanat müziği", "bağlama âşık song", "egyptian film orchestra"],
+      cannot: ["the 53-comma notation — Turkish makam writes itself in commas " +
+               "and this box has twelve names, so the PITCH is inside the JND " +
+               "and the WRITING is not sayable at all",
+               "the bağlama's movable frets"],
+      instr: ["solo_vox", "strings", "clean_guitar"],
+      drumkit: "room",
+      entry: v => v, reg: v => (v === 1 ? 0 : v === 2 ? -1 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad", "counter"],
+      roots: [0, 0, 3, 3, 4, 4, 0, 0], mode: MODES.phrygian,
+      scale: MODES.phrygian, diatonic: true,
+      artic: "legato", maxHold: 4, bassStyle: "octaves",
+      orn: { grace: 0.5, approach: 0.35 },
+      // THE DÜYEK, VOICED ACROSS THREE LANES: düm on 1 and the and-of-2, tek
+      // on 2 and 4, and the darbuka's fill between. The same one-player-two-
+      // strokes compromise raï makes for its derbouka, said again.
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [0,0,1,1, 0,1,0,1, 0,0,1,1, 0,1,1,1],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { p: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 2200, q: 1.0, atk: .015, rel: 1.3, gain: .27, verb: .54,
+              mouth: MOUTHS.belter },
+      words: ["the singer", "the strings, in unison with the tune",
+              "the guitar, on the off-beat"],
+      word: v => (v === 1 ? [drop(4)] : v === 2 ? [only("acc", rotate(2)), drop(2)] : []),
+    },
+
+    // ANADOLU ROCK — Istanbul 1972. Turkish psychedelia: a fuzz guitar and a
+    // Farfisa playing a folk melody in a makam over a rock rhythm section.
+    // Erkin Koray, Barış Manço, Selda Bağcan, Moğollar.
+    //
+    // THE YEAR is Koray's "Elektronik Türküler" and the peak of the form.
+    //
+    // WHAT SEPARATES IT FROM `khmerrock`, which is the same idea two years
+    // and four thousand kilometres away — and the fact that this catalog can
+    // now hold BOTH is a small argument for the whole round: Phnom Penh 1970
+    // is a five-note alphabet at 124 with a tremolo on the guitar; this is a
+    // SEVEN-note phrygian at 106 with fuzz on it and a saz figure the guitar
+    // is playing. Two guitar bands, two continents, two different melodies.
+    anadolurock: {
+      label: "Istanbul 1972", voices: 3, near: "psychpop",
+      plan: "song", bpm: 106,
+      parents: { psychpop: 0.35, rock: 0.35 },
+      wants: ["türkü", "âşık song"],
+      cannot: ["the bağlama's commas, the same wall arabesk declares eight " +
+               "years later"],
+      instr: ["crunch_guitar", "percussive_organ", "solo_vox"],
+      drumkit: "room",
+      entry: v => v, reg: v => (v === 1 ? -1 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["riff", "pad", "lead"],
+      harmony: "modal", mode: MODES.phrygian, scale: MODES.phrygian, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "eighths",
+      fx: ["sweep"],
+      orn: { grace: 0.4 },
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [0,0,1,1, 0,1,0,0, 0,0,1,1, 0,1,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,1,0, 1,0,1,0, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 2500, q: 1.5, atk: .005, rel: .55, gain: .28, verb: .4,
+              mouth: MOUTHS.skiffler },
+      words: ["the fuzz guitar, playing the türkü",
+              "the organ, holding the drone",
+              "the singer"],
+      word: v => (v === 1 ? [drop(8)] : v === 2 ? [rotate(8), drop(2)] : []),
+    },
+
+    // IRANPOP — Tehran 1974. Pre-revolutionary Iranian pop: a Persian melody
+    // and a Persian poem over a Western orchestra with a rhythm section,
+    // strings and a horn line. Googoosh, Dariush, Ebi.
+    //
+    // THE YEAR is Googoosh's peak and the last full decade of the Tehran
+    // record industry.
+    //
+    // WHAT IT CLAIMS AND WHAT IT DOES NOT. The Persian classical dastgah
+    // system has KORON — a note lowered by roughly a quarter tone — and
+    // shur, the most common dastgah, has one on its second degree. That is
+    // the bayati wall exactly, and this anchor does not claim it: it claims
+    // the pop repertory, which sits in the 12-TET dastgahs (mahur is a major
+    // scale, bayat-e esfahan is close to a harmonic minor) and was arranged
+    // for an orchestra tuned to a piano. `harmonic` is the named alphabet
+    // and the augmented second is the identifying interval it carries.
+    iranpop: {
+      label: "Tehran 1974", voices: 3, near: "filmi",
+      plan: "song", bpm: 100,
+      // LINEAGE: Mumbai 1960 is the arrangement and the debt is documented
+      // — Hindi films played in Tehran cinemas through the fifties and
+      // sixties — and Vienna 1876 is the string writing the Golha orchestra
+      // was trained on. (`disco` is New York 1977, three years AFTER this
+      // label, so it is not named however much a 1974 Tehran rhythm section
+      // sounds like one; `crooner` carries that weight instead.)
+      parents: { filmi: 0.3, romantic: 0.2, crooner: 0.2 },
+      wants: ["dastgah", "tasnif", "golha radio orchestra"],
+      cannot: ["the koron — the quarter-flat second that defines dastgah-e " +
+               "shur, which is the same fifty cents that keeps tarab out"],
+      instr: ["solo_vox", "strings", "clean_guitar"],
+      drumkit: "room",
+      entry: v => v, reg: v => (v === 1 ? -1 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad", "counter"],
+      roots: [0, 3, 4, 0], mode: MODES.harmonic, scale: DIATONIC, diatonic: true,
+      artic: "legato", maxHold: 4, bassStyle: "octaves",
+      orn: { grace: 0.45, approach: 0.3 },
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [0,0,1,1, 0,1,0,1, 0,0,1,1, 0,1,0,1],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { p: [1,1,1,1, 0,1,1,1, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2300, q: 1.0, atk: .015, rel: 1.1, gain: .26, verb: .5,
+              mouth: MOUTHS.melisma },
+      words: ["the singer", "the strings, underneath",
+              "the guitar, answering the phrase"],
+      word: v => (v === 1 ? [drop(4)] : v === 2 ? [rotate(8), drop(2)] : []),
+    },
+
+    // KABUL POP — Kabul 1972, and it is the catalog's only Central Asian
+    // record. Ahmad Zahir's era: a harmonium and a rubab beside an electric
+    // organ and a drum kit, a Persian-language ghazal sung as a pop song, and
+    // an audience that included both the radio and the street.
+    //
+    // THE YEAR is Zahir's peak, a decade before the recording industry it
+    // belonged to ended.
+    //
+    // WHY IT IS HERE WHEN GHAZAL IS TIER 2, which looks like a contradiction
+    // and is the primary-fact rule again: the classical ghazal's identity is
+    // the setting of the couplet's prosody, and that does not ship. What this
+    // anchor claims is a POP RECORD whose lyric happens to be a ghazal —
+    // strophic, in four, with a band — and whose primary facts are the
+    // harmonium, the tabla and the song form. Those are all sayable.
+    kabulpop: {
+      label: "Kabul 1972", voices: 3, near: "filmi",
+      plan: "song", bpm: 96,
+      // LINEAGE: `filmi` UNDER PROTEST and alone. Mumbai 1960 is the
+      // arrangement, the harmonium and the song form, and it is genuinely a
+      // documented debt — Zahir covered Hindi film songs. Tehran 1974 would
+      // be the natural second parent and it is TWO YEARS LATER than this
+      // label, so it is not named; the Persian side of this music reaches
+      // the record through the language and the poetry, which no anchor
+      // carries.
+      parents: { filmi: 0.45 },
+      wants: ["afghan ghazal", "rubab instrumental", "attan"],
+      cannot: ["the rubab's sympathetic strings — a short-necked lute with " +
+               "fifteen strings ringing behind three, which no id here has",
+               "the tabla's bols, the same admission filmi makes"],
+      instr: ["solo_vox", "reed_organ", "steel_string_guitar"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 1 ? -1 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad", "counter"],
+      roots: [0, 5, 3, 4], mode: MODES.harmonic, scale: DIATONIC, diatonic: true,
+      artic: "legato", maxHold: 4, bassStyle: "pedal",
+      orn: { grace: 0.5, approach: 0.3 },
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             p: [1,0,1,0, 1,0,0,1, 1,0,1,0, 1,0,0,1],
+             h: [0,0,1,0, 0,1,1,0, 0,0,1,0, 0,1,1,0] },
+      kitVel: { p: [9,0,5,0, 7,0,0,4, 9,0,5,0, 7,0,0,5] },
+      fill: { p: [1,0,1,1, 1,1,1,1, 1,1,1,0, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2300, q: 0.9, atk: .015, rel: 1.2, gain: .26, verb: .52,
+              mouth: MOUTHS.qawwal },
+      words: ["the singer", "the harmonium, holding the drone",
+              "the rubab's figure, on a steel string"],
+      word: v => (v === 1 ? [drop(8)] : v === 2 ? [split(2), drop(2)] : []),
+    },
+
+    /* ---- EUROPE, THE VERNACULAR HALF -----------------------------------
+       Five anchors, and they are deliberately few. The catalog's European
+       depth is EARNED KNOWLEDGE and not padding — seventeen pre-1900 anchors
+       from Rome 600 to New York 1892 — and a round whose whole purpose is to
+       lower the Euro-American share does not get to add fifteen more. What
+       these five have in common is that they are the SOUTHERN and CELTIC
+       vernacular that the catalog's art-music spine had no room for: a
+       Greek hash-den music, a Portuguese dockside song, a Catalan rumba, an
+       Irish session and a Serbian brass band. Not one of them is a
+       conservatoire tradition and not one of them is in a major key
+       throughout. */
+
+    // REBETIKO — Piraeus 1935. The Greek port underworld's music: a bouzouki
+    // and a baglamas, a rough voice, a dromos (the Greek word for makam) and
+    // a subject matter — hashish, prison, exile — that got it banned by the
+    // Metaxas dictatorship the year after this label.
+    //
+    // THE YEAR is the Piraeus style at its peak on 78s — Markos Vamvakaris
+    // and the Piraeus Quartet — and one year before the 1936 censorship.
+    //
+    // IN FOUR, AND THE ONE THAT IS NOT IS DECLARED. The hasapiko and the
+    // hasaposerviko are in four and are most of the repertory; the ZEIBEKIKO
+    // — the solo dance every rebetiko record is famous for — is in NINE, and
+    // nine is not a metre this file can write. It is in `cannot` and it is
+    // not the primary fact: rebetiko is the bouzouki, the dromos and the
+    // voice, and this anchor claims the four-square half of the repertory.
+    //
+    // THE BOUZOUKI IS `steel_string_guitar` and the reasoning is the tres'
+    // one country and one ocean away: metal courses played with a plectrum,
+    // so the STRING and the ATTACK are right and the body is not. What is
+    // lost is the tremolo on a paired course, which is how a bouzouki holds
+    // a long note at all.
+    rebetiko: {
+      label: "Piraeus 1935", voices: 3, near: "tango",
+      plan: "song", bpm: 100,
+      parents: {},
+      wants: ["smyrneiko", "cafe aman", "ottoman makam"],
+      cannot: ["the zeibekiko's nine, which is the dance every rebetiko " +
+               "record is known for and is a metre this file cannot write",
+               "the bouzouki's tremolo on a doubled course"],
+      instr: ["steel_string_guitar", "solo_vox", "nylon_string_guitar"],
+      entry: v => v, reg: v => (v === 0 ? 1 : v === 2 ? -1 : 0),
+      realize: () => "line",
+      part: ["riff", "lead", "counter"],
+      roots: [0, 4, 0, 4], mode: MODES.phrygian, scale: MODES.phrygian, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "eighths",
+      orn: { grace: 0.45, approach: 0.3 },
+      // NO DRUM KIT. A Piraeus rebetiko band is two or three fretted
+      // instruments and a voice — the rhythm is in the strumming hand and
+      // in a set of worry beads — so `kit` is empty and the pulse is the
+      // bouzouki's own, which is what `artic: staccato` at `maxHold: 2` says.
+      kit: {},
+      tone: { wave: "triangle", cut: 2800, q: 1.1, atk: .004, rel: .5, gain: .27, verb: .34,
+              mouth: MOUTHS.skiffler },
+      words: ["the bouzouki, the taximi and the tune",
+              "the singer", "the baglamas, an octave down"],
+      word: v => (v === 1 ? [drop(2)] : v === 2 ? [transpose(-12), split(2)] : []),
+    },
+
+    // FADO — Lisbon 1955. The Portuguese song of saudade: one voice, a
+    // Portuguese guitarra — a twelve-string steel cittern with a fan-shaped
+    // tuner and a ringing, weeping sound — and a viola (a plain nylon
+    // guitar) holding the harmony under both.
+    //
+    // THE YEAR is Amália Rodrigues's fifties recordings, when fado becomes
+    // the national music on record rather than in a house in Alfama.
+    //
+    // IN FOUR, WHICH IS TRUE OF HALF THE FORM. Fado corrido and fado
+    // menor are in four and this is one of them; the fado from Coimbra and
+    // several of the older fados are in three, which this file cannot write,
+    // and that is in `cannot`. The primary fact — a voice, a guitarra, and
+    // the alternation between them — ships.
+    //
+    // THE GUITARRA IS `steel_string_guitar` FOR THE THIRD TIME IN THIS ROUND
+    // and this is the closest of the three: it is genuinely a steel-strung
+    // plucked instrument. What is lost is the doubled courses and the tuning,
+    // which is what makes the guitarra ring where a guitar decays.
+    fado: {
+      label: "Lisbon 1955", voices: 3, near: "bolero",
+      plan: "song", bpm: 76,
+      parents: {},
+      wants: ["lundum", "modinha", "moorish andalusi song"],
+      cannot: ["fado corrido's cousins in three — the Coimbra repertory and " +
+               "the older fados are in a metre this file's sixteen-place " +
+               "cells cannot write"],
+      instr: ["solo_vox", "steel_string_guitar", "nylon_string_guitar"],
+      entry: v => v, reg: v => (v === 1 ? 1 : v === 2 ? -1 : 0),
+      realize: () => "line",
+      part: ["lead", "counter", "riff"],
+      roots: [0, 4, 0, 4], mode: MODES.phrygian, scale: MODES.phrygian, diatonic: true,
+      artic: "legato", maxHold: 4, kit: {}, bassStyle: "eighths",
+      orn: { grace: 0.35, approach: 0.4 },
+      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .012, rel: 1.1, gain: .26, verb: .44,
+              mouth: MOUTHS.belter },
+      words: ["the fadista", "the guitarra, weeping between the lines",
+              "the viola, holding the chord"],
+      word: v => (v === 1 ? [transpose(12), rotate(8), drop(2)] : v === 2 ? [drop(4)] : []),
+    },
+
+    // RUMBA CATALANA — Barcelona 1970. The Catalan Roma rumba: a nylon
+    // guitar played with the VENTILADOR — a fanning right hand that strums
+    // and slaps the top at once — a bass, palmas, and a sung refrain. Peret,
+    // Gato Pérez, and the Gràcia and Hostafrancs Roma neighbourhoods.
+    //
+    // THE YEAR is Peret's national breakthrough.
+    //
+    // WHY THIS AND NOT FLAMENCO. Flamenco's primary fact is the COMPÁS — the
+    // soleá and the bulería are twelve beats accented 3-6-8-10-12, which
+    // this file cannot write at all — so under the primary-fact rule the
+    // name does not ship, and it is in Tier 2 above with that reason. The
+    // rumba is the corner of the same family that IS in four, because it
+    // came back from Cuba in four; claiming the 4/4 corner and saying so is
+    // what the whole round does with tuning, applied to metre.
+    //
+    // THE PALMAS ARE HANDCLAPS AND ARE EXACT — the `c` lane is literally
+    // handclaps, the same free hit qawwali gets — and the ventilador's slap
+    // on the guitar top is the rim, which is not.
+    rumbacatalana: {
+      label: "Barcelona 1970", voices: 2, near: "rai",
+      plan: "dance", bpm: 116,
+      parents: { son: 0.4 },
+      wants: ["flamenco rumba", "gitano palo", "guaracha"],
+      cannot: ["the flamenco compás — twelve beats accented 3-6-8-10-12, " +
+               "which is why the round ships the rumba and not the soleá"],
+      instr: ["nylon_string_guitar", "solo_vox"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => -v, realize: () => "line",
+      part: ["riff", "lead"],
+      roots: [0, 4, 0, 4], mode: MODES.phrygian, scale: MODES.phrygian, diatonic: true,
+      artic: "staccato", maxHold: 1, bassStyle: "octaves",
+      kit: { c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,1,1, 0,1,1,0, 1,0,1,1, 0,1,1,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      kitVel: { p: [9,0,4,5, 0,4,7,0, 9,0,4,5, 0,4,7,0] },
+      fill: { p: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2900, q: 1.1, atk: .003, rel: .4, gain: .27, verb: .3,
+              mouth: MOUTHS.skiffler },
+      words: ["the guitar, the ventilador",
+              "the singer, over the palmas"],
+      word: v => (v === 1 ? [rotate(4), drop(2)] : []),
+    },
+
+    // IRISH TRAD — Dublin 1963. The session repertory as the ballad revival
+    // recorded it: a fiddle and a flute playing a reel in unison an octave
+    // apart, a tenor banjo picking it, a button accordion, and a bodhrán.
+    //
+    // THE YEAR is Ceoltóirí Chualann and the Clancy Brothers' Irish return —
+    // the moment the music is on LPs rather than in kitchens, which is what
+    // this file's labels always name.
+    //
+    // REELS ARE IN FOUR AND JIGS ARE NOT, and the anchor claims the first.
+    // A reel is a straight four with the accent on the first and third of
+    // every four semiquavers, which is exactly a sixteen-step bar; a jig, a
+    // slip jig and a slide are in compound time and are in `cannot`.
+    //
+    // THE ONE THING THAT CANNOT BE SAID AT ALL is the ORNAMENT SYSTEM: a
+    // cut, a roll and a cran are all articulations of ONE pitch — a grace
+    // note above or below that separates two notes of the same degree
+    // without changing them — and this file's `orn` table has `roll` in it,
+    // which is why the number below is the largest in the catalog. What it
+    // cannot do is put a cut BETWEEN two identical notes, which is the whole
+    // technique. Named, not claimed.
+    //
+    // AND A DEBT IT CANNOT PAY: `countrypop` (Nashville 1945) declares
+    // `wants: ["appalachian fiddle", "anglo-celtic balladry"]`, and this
+    // anchor is the second of those — eighteen years TOO LATE to be its
+    // parent. A 1963 revival record is not the ancestor of a 1945 one. The
+    // want stays on the books and this comment is why.
+    irishtrad: {
+      label: "Dublin 1963", voices: 3, near: "skiffle",
+      plan: "arc", bpm: 116,
+      parents: {},
+      wants: ["seán-nós", "uilleann piping", "the O'Neill collection"],
+      cannot: ["the jig, the slip jig and the slide — compound metres this " +
+               "file's sixteen-place cells cannot write",
+               "the cut and the cran — an ornament that separates two notes " +
+               "of the SAME pitch, which needs a grace note between " +
+               "identical degrees and this box has attack shapes"],
+      instr: ["fiddle", "flute", "banjo"],
+      entry: v => v * 2, reg: v => (v === 0 ? 0 : v === 1 ? 1 : -1),
+      realize: () => "line",
+      part: ["lead", "counter", "riff"],
+      harmony: "modal", mode: MODES.dorian, scale: MODES.dorian, diatonic: true,
+      artic: "staccato", maxHold: 1, nobass: true,
+      orn: { roll: 0.55, grace: 0.4 },
+      // THE BODHRÁN IS ONE FRAME DRUM AND ONE STICK WITH TWO ENDS: the low
+      // stroke on the kick and the high on `p`, and no snare and no cymbal
+      // anywhere, because a session has neither. `nobass` because it has no
+      // bass player either — the fiddle and the flute are the whole band.
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             p: [0,0,1,1, 0,1,0,1, 0,0,1,1, 0,1,0,1] },
+      kitVel: { p: [0,0,6,4, 0,5,0,4, 0,0,6,4, 0,5,0,5] },
+      fill: { p: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2900, q: 0.9, atk: .004, rel: .4, gain: .27, verb: .36 },
+      words: ["the fiddle, the tune",
+              "the flute, in unison an octave up",
+              "the banjo, picking it faster"],
+      word: v => (v === 1 ? [transpose(12)] : v === 2 ? [split(2), drop(2)] : []),
+    },
+
+    // BALKAN BRASS — Guča 1985. The Serbian trumpet orchestra: two or three
+    // trumpets on the tune, a row of flugelhorns and tenor horns answering
+    // on the off-beats, a tuba on the bass, and a goč and a snare pushing
+    // the whole thing along. The dot is Guča because the Dragačevo festival
+    // held there since 1961 is what the tradition organises itself around.
+    //
+    // THE YEAR is the mid-eighties, when the festival is national and the
+    // recordings are widely available.
+    //
+    // IN FOUR, AND THE ANCHOR SAYS WHICH FOUR. The kolo and the čoček in
+    // 2/4 and 4/4 are most of what a Guča orchestra plays; the 7/8 and 9/8
+    // repertory that the same bands also play is `bulgarian`'s wall exactly
+    // and is in `cannot`. This anchor is the honest half.
+    //
+    // WHY IT IS NOT `banda`, which is also a brass band in a village and is
+    // also in this round: this one is MINOR and chromatic — the melodies are
+    // Romani and Ottoman and sit in a harmonic minor with an augmented
+    // second in it — where Mazatlán 1938 is in the major, plays polkas, and
+    // has clarinets on top. And this one is forty bpm faster.
+    balkanbrass: {
+      label: "Guča 1985", voices: 3, near: "banda",
+      plan: "dance", bpm: 152,
+      parents: {},
+      wants: ["ottoman military band", "romani kolo", "čoček"],
+      cannot: ["the aksak repertory the same bands play — the 7/8 and 9/8 " +
+               "kolos, which is the wall `bulgarian` has been standing in " +
+               "front of since it was written"],
+      instr: ["trumpet", "brass_section", "tuba"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? 0 : -2),
+      realize: () => "line",
+      part: ["lead", "riff", "counter"],
+      harmony: "modal", mode: MODES.harmonic, scale: DIATONIC, diatonic: true,
+      artic: "staccato", maxHold: 1, bassStyle: "fifths",
+      orn: { grace: 0.4 },
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,1,1, 1,0,1,1, 0,0,1,1, 1,0,1,1],
+             l: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,0] },
+      kitVel: { s: [0,0,4,4, 8,0,4,4, 0,0,4,4, 8,0,5,4] },
+      fill: { s: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 3100, q: 1.2, atk: .006, rel: .35, gain: .28, verb: .38 },
+      words: ["the lead trumpet", "the horns, answering on the off-beat",
+              "the tuba, on the two"],
+      word: v => (v === 1 ? [rotate(2), transpose(-5)] : v === 2 ? [drop(4), transpose(-12)] : []),
+    },
+
+    /* ---- NORTH AMERICA, THE FIVE RUNGS THE GENEALOGY ASKED FOR ---------
+       This round is supposed to LOWER the Euro-American share and every
+       anchor here raises it, so each one has to earn its place twice. All
+       five do, and none of them is here for coverage:
+         swing      — `jazz` and `highlife` BOTH declare it in `wants`;
+         ragtime    — `jazz` declares it too, and it is the oldest American
+                      record in the catalog by thirty-three years;
+         bluegrass  — the Anglo-Celtic string band, which nothing held;
+         sacredharp — an unaccompanied American tradition, and the PROBE for
+                      the derived unaccompanied law: it is written with no
+                      knowledge of that law at all and must join the set;
+         zydeco     — Louisiana Creole, the third accordion tradition in this
+                      round beside vallenato and norteña, and the one that
+                      answers them from the same continent. */
+
+    // RAGTIME — Sedalia 1899, and it is the oldest record in the Americas by
+    // a year and the catalog's first piano music before 1892 that is not a
+    // salon parlour song. A syncopated right hand over a marching left hand,
+    // in strains, written down and sold as sheet music.
+    //
+    // THE YEAR AND THE TOWN ARE THE PUBLICATION, AND THAT IS SAID PLAINLY:
+    // John Stark published Scott Joplin's "Maple Leaf Rag" in Sedalia,
+    // Missouri, in 1899. Joplin moved to St. Louis two years later and the
+    // catalog already holds St. Louis (1955, Chuck Berry), so a Sedalia dot
+    // is both the true one and the one that does not collide.
+    //
+    // IT IS A PIANO ALONE, WHICH IS THE ARRANGEMENT. `voices` 2 is the two
+    // HANDS — the right playing the syncopated strain and the left the
+    // stride — the same device forró uses for an accordion, and `kit: {}`
+    // because a rag has no drummer and a rag played with one is a novelty
+    // record from a different decade.
+    ragtime: {
+      label: "Sedalia 1899", voices: 2, bars: 8, near: "parlor",
+      plan: "arc", bpm: 96,
+      // LINEAGE: `parlor` (New York 1892) is the SHEET MUSIC INDUSTRY and
+      // the piano in the room, which is genuinely half of what a rag is —
+      // it was sold the same way, to the same instrument, seven years
+      // apart. The other half is the banjo's syncopation and the cakewalk,
+      // and neither is here.
+      parents: { parlor: 0.45 },
+      wants: ["cakewalk", "banjo syncopation", "march"],
+      instr: "honky_tonk",
+      entry: v => v, reg: v => (v === 1 ? -2 : 0), realize: () => "line",
+      part: ["lead", "riff"],
+      roots: [0, 0, 4, 4, 0, 3, 4, 0], mode: MODES.ionian,
+      scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 1, kit: {},
+      // `honky_tonk` IS THE EIGHTH AND LAST REGISTRY ID THIS ROUND UNLOCKS BY
+      // NAME: GM's detuned upright, six zones on disk, and nobody had ever
+      // asked for it — which is a small absurdity, because a rag is the one
+      // music that instrument is a recording OF.
+      // THE LEFT HAND IS THE BASS AND IT MARCHES: root on the beat, chord on
+      // the off-beat, which is `fifths` said for a piano instead of a tuba.
+      bassStyle: "fifths",
+      tone: { wave: "triangle", cut: 2700, q: 0.9, atk: .003, rel: .5, gain: .27, verb: .3 },
+      words: ["the right hand, the strain",
+              "the left hand, marching under it"],
+      word: v => (v === 1 ? [drop(2), transpose(-12)] : []),
+    },
+
+    // SWING — Kansas City 1938, and it pays a debt TWO anchors have been
+    // carrying: `jazz` (New York 1945) declares `wants: ["swing", ...]` and
+    // its own comment admits it is bebop wearing the wrong year, and
+    // `highlife` (Accra 1957) declares `wants: [..., "swing", ...]` because
+    // a West African dance band is a swing band with a clave under it.
+    //
+    // THE YEAR is Count Basie's Decca sides and the Kansas City riff-band
+    // style at its peak: a rhythm section that floats rather than chugs, two
+    // sections of horns trading riffs, and a soloist over both.
+    //
+    // THE CITY IS KANSAS CITY, not New York, and that is a claim: the swing
+    // the catalog needs upstream of bebop is the RIFF band — head
+    // arrangements built out of repeated two-bar figures, which is what
+    // Basie's band did and what a big Fletcher Henderson chart does not.
+    // Charlie Parker learned to play in that town, which is the shortest
+    // argument for the parent edge.
+    swing: {
+      label: "Kansas City 1938", voices: 3, bars: 8, near: "jazz",
+      plan: "song", bpm: 148,
+      // LINEAGE: `blues` is Chicago 1952 — FOURTEEN YEARS AFTER this label
+      // — and it is named anyway, on the precedent this file already set
+      // three times over (gospel 1932, countrypop 1945 and jazz 1945 all
+      // declare it): the anchor's own entry says its year is a Chess date on
+      // a form that is decades older, and a Kansas City riff band is built
+      // out of blues choruses whatever year the catalog happens to have
+      // photographed the blues in.
+      parents: { blues: 0.55, ragtime: 0.2 },
+      wants: ["new orleans jazz", "territory bands", "tin pan alley"],
+      instr: ["tenor_sax", "brass_section", "jazz_guitar"],
+      drumkit: "jazz",
+      swing: 0.33,
+      entry: v => v, reg: v => (v === 1 ? 0 : v === 2 ? -1 : 0),
+      realize: () => "line",
+      part: ["lead", "riff", "counter"],
+      roots: [0, 3, 0, 0, 3, 3, 0, 4], mode: MODES.mixo,
+      scale: SCALES.major, diatonic: true,
+      artic: "legato", maxHold: 2, bassStyle: "walk",
+      // THE RIDE IS THE RECORD. Spang-a-lang on `r`, the hi-hat pedal on 2
+      // and 4, and the kick barely there at all — the Kansas City rhythm
+      // section's whole innovation is that the bass drum stops marking the
+      // beat and the cymbal takes it over.
+      kit: { k: [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
+             r: [1,0,0,1, 1,0,0,1, 1,0,0,1, 1,0,0,1],
+             f: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             s: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,0] },
+      kitVel: { k: [4,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
+                r: [8,0,0,5, 7,0,0,5, 8,0,0,5, 7,0,0,6] },
+      fill: { s: [0,0,0,0, 1,0,1,0, 0,0,1,0, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2800, q: 1.0, atk: .008, rel: .6, gain: .27, verb: .34 },
+      words: ["the tenor, the solo",
+              "the brass, riffing behind it",
+              "the guitar, four to the bar"],
+      word: v => (v === 1 ? [only("acc", rotate(4)), drop(2)]
+                : v === 2 ? [split(2), drop(1)] : []),
+    },
+
+    // BLUEGRASS — Nashville 1946. The Anglo-Celtic string band at speed: a
+    // three-finger banjo roll, a fiddle, a mandolin chopping the off-beat, a
+    // guitar running bass runs and an upright, with a high lonesome voice
+    // over the top and everybody taking a break in turn.
+    //
+    // THE YEAR is Bill Monroe's Blue Grass Boys with Earl Scruggs — the
+    // Columbia sessions of 1946-47, which is the moment the banjo roll
+    // arrives and the style becomes itself.
+    //
+    // THE MANDOLIN IS THE ONE STAND-IN. It goes to `steel_string_guitar` —
+    // metal strings, plectrum, right family, wrong size — and what is lost
+    // is the tremolo on the paired courses, which is the same loss the
+    // bouzouki and the cavaquinho take in this round. The banjo and the
+    // fiddle are the instruments themselves.
+    //
+    // WHAT SEPARATES IT FROM `skiffle` (London 1956), its nearest neighbour
+    // by cast: skiffle is 148 with a washboard and a tea-chest and a guitar
+    // strumming; this is 168 — the fastest acoustic record in the catalog —
+    // with NO drum kit at all and a bass that walks. The tell is `kit: {}`:
+    // a bluegrass band has no percussion and never did.
+    bluegrass: {
+      label: "Nashville 1946", voices: 3, near: "skiffle",
+      // 160 and not the 168 a Scruggs break is really taken at: compose.js
+      // requires an integer 70..160, and skiffle at 148 is still the second
+      // fastest acoustic record in the catalog behind this one.
+      plan: "arc", bpm: 160,
+      parents: { countrypop: 0.5, blues: 0.2 },
+      wants: ["appalachian old-time", "anglo-celtic balladry", "shape-note singing"],
+      instr: ["banjo", "fiddle", "steel_string_guitar"],
+      entry: v => v * 2, reg: v => (v === 0 ? 1 : v === 1 ? 1 : 0),
+      realize: () => "line",
+      part: ["riff", "lead", "counter"],
+      roots: [0, 0, 4, 0], mode: MODES.ionian, scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 1, kit: {}, bassStyle: "fifths",
+      orn: { grace: 0.35, roll: 0.4 },
+      tone: { wave: "triangle", cut: 3000, q: 1.0, atk: .003, rel: .35, gain: .27, verb: .3 },
+      words: ["the banjo, rolling",
+              "the fiddle, taking the break",
+              "the mandolin, chopping the off-beat"],
+      word: v => (v === 1 ? [drop(2), transpose(-5)]
+                : v === 2 ? [only("acc", rotate(2)), drop(4)] : []),
+    },
+
+    // SACRED HARP — Philadelphia 1844, and it is the SIXTH unaccompanied
+    // anchor in the catalog and the FIRST outside a church hierarchy.
+    // Shape-note singing: four parts, everybody in a hollow square facing
+    // inward, the tune in the TENOR and not the top part, open fourths and
+    // fifths everywhere, and no instrument of any kind.
+    //
+    // THE YEAR AND THE CITY ARE THE PUBLICATION and the comment is where
+    // that belongs: B. F. White and E. J. King's *The Sacred Harp* was
+    // compiled in Harris County, Georgia and PRINTED in Philadelphia in
+    // 1844. The singing is southern and the book is Philadelphian, and the
+    // catalog already holds Philadelphia, so this dot is both the true one
+    // and the one that does not add a village to the map.
+    //
+    // THIS ANCHOR IS A PROBE AND THAT IS HALF ITS VALUE. compose.js's
+    // `unaccompanied` predicate is DERIVED — no kit, no bass, every id in
+    // `instr` a sung one — and it was written on 2026-08-25 knowing five
+    // records. This entry was written without touching it and must fall into
+    // that set by its own three fields, which means the record hires no
+    // guest and seats no instrument. If the law were a name list it would
+    // not, and the gate below says which of the two it is.
+    //
+    // THE TUNE IS IN THE TENOR, which is the fact that makes shape-note
+    // music sound the way it does: the melody is the THIRD voice down, with
+    // a part above it, so the top line is a countermelody and the chords come
+    // out in open fourths and fifths rather than in triads. `reg` puts voice
+    // 0 in the middle and voice 1 above it, which is that inversion.
+    sacredharp: {
+      label: "Philadelphia 1844", voices: 4, bars: 8, near: "hymn",
+      plan: "song", bpm: 96,
+      // LINEAGE: `hymn` (Boston 1831) is thirteen years earlier, is the same
+      // country and is genuinely the neighbour — and it is named UNDER
+      // PROTEST at less than half, because shape-note singing is the OLDER
+      // tradition of the two in everything but print: it comes out of the
+      // eighteenth-century New England singing school and William Billings,
+      // and the Boston 1831 hymnal is the REFORM that was trying to replace
+      // it. Naming the reformer as the parent of the thing it reformed is
+      // backwards, and the weight says so.
+      parents: { hymn: 0.4 },
+      wants: ["new england singing school", "william billings", "psalm tune"],
+      instr: ["ahh_choir", "ohh_voices"],
+      entry: () => 0, reg: v => [0, 1, -1, -2][v], realize: () => "line",
+      kit: {}, nobass: true,
+      roots: [0, 0, 4, 0, 3, 0, 4, 0], mode: MODES.aeolian, scale: DIATONIC,
+      artic: "legato", maxHold: 3, incClamp: 2,
+      tone: { wave: "triangle", cut: 2000, q: 0.7, atk: .05, rel: 1.6, gain: .26, verb: .5,
+              // WHO SINGS: everybody, loudly, in a wooden room, and not
+              // well. The hymnal row is the nearest and it is too polite;
+              // this one is the same alto placement with the blend pushed
+              // past the gospel choir's — the loosest in the table — because
+              // a Sacred Harp singing is a hundred untrained people at full
+              // volume and the raggedness is the sound, not a defect in it.
+              mouth: MOUTHS.shapenote },
+      words: ["the tenor, who has the tune",
+              "the treble, above it", "the alto", "the bass"],
+      word: v => (v === 0 ? [] : [transpose([0, 5, -4, -9][v]), drop(3)]),
+    },
+
+    // ZYDECO — Lafayette 1955. Louisiana Creole dance music: a piano
+    // accordion, a rubboard worn on the chest and played with bottle
+    // openers, a drum kit, and a repertory that is blues and R&B in French.
+    //
+    // THE YEAR is Clifton Chenier's first sides — the moment la-la and juré
+    // become a record with a rhythm section on it.
+    //
+    // THE THIRD ACCORDION ANCHOR IN THIS ROUND, and holding all three is
+    // deliberate: vallenato (Valledupar 1975) is a diatonic button box in a
+    // trio, norteña (Monterrey 1955) is a diatonic button box against a bajo
+    // sexto playing polkas, and this is a CHROMATIC PIANO accordion playing
+    // twelve-bar blues. Same word, three instruments, three musics — and
+    // this one is the only one of the three whose accordion sample is
+    // actually the right instrument.
+    //
+    // THE RUBBOARD IS THE HAT LANE, which is the same compromise the shaker,
+    // the güira and the guacharaca take above, with one difference worth
+    // writing: a frottoir is played with BOTH HANDS in opposite directions,
+    // so its sixteenths are genuinely even and the `kitVel` line says so.
+    zydeco: {
+      label: "Lafayette 1955", voices: 3, bars: 12, near: "blues",
+      plan: "song", bpm: 132,
+      parents: { blues: 0.55, countrypop: 0.2 },
+      wants: ["la-la", "juré", "cajun two-step"],
+      instr: ["accordion", "harmonica", "clean_guitar"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 2 ? -1 : 0), realize: () => "line",
+      part: ["lead", "counter", "riff"],
+      roots: [0, 0, 0, 0, 3, 3, 0, 0, 4, 3, 0, 4], mode: MODES.mixo,
+      scale: SCALES.blues,
+      artic: "staccato", maxHold: 2, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitVel: { h: [6,6,6,6, 6,6,6,6, 6,6,6,6, 6,6,6,6] },
+      fill: { s: [0,0,0,0, 1,0,1,0, 0,0,1,0, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 2700, q: 1.2, atk: .006, rel: .5, gain: .28, verb: .28 },
+      words: ["the accordion", "the harmonica, answering it",
+              "the guitar, chopping"],
+      word: v => (v === 1 ? [rotate(8), drop(2)] : v === 2 ? [only("acc", rotate(2))] : []),
+    },
   };
 
   // THE ARRANGEMENT'S COLUMN HEADINGS, one per lane. `p` says "Ghost perc"
@@ -6941,7 +10279,14 @@
     // family's — one has less metre than the vox default, the other has far
     // more, and a chant and a stamped Zulu cycle should not share a number.
     ["vox",    ["gregorian", "bulgarian", "spem", "counterpoint", "fugue", "hymn",
-                "organum", "arsnova", "zema", "mbube"]],
+                "organum", "arsnova", "zema", "mbube",
+                // ...and Philadelphia 1844 joined 2026-08-26 with the world
+                // round. `sacredharp` is this cluster's definition exactly —
+                // four unaccompanied parts, no instrument of any kind — and
+                // it is the first member that is not a church's own music.
+                // Its own DYNAMICS row is below, because a hundred people in
+                // a hollow square is not a choir in a stone building.
+                "sacredharp"]],
     ["club",   ["acid", "house", "techno", "garage", "dnb", "trap", "boombap",
                 "electro", "bigbeat", "drill", "kpop", "bigroom", "ebm", "synthduo",
                 // the five newcomers below are the SAME "no family fallback"
@@ -6957,7 +10302,15 @@
                 // four-on-the-floor machine floor is what this cluster IS, and
                 // kwaito has its own row below because `club` has no fallback
                 // and a newcomer left out of that table renders flat forever.
-                "kwaito"]],
+                "kwaito",
+                // ...and the world round's three (2026-08-26), on the same
+                // deal every member above signed: `club` has NO family
+                // fallback and never will, so each of these carries its own
+                // DYNAMICS row below. Kingston 1985 is a Casio preset,
+                // Cairo 1988 is a drum machine and a sequencer, Abidjan 2003
+                // is a programmed floor — three machines, which is what this
+                // cluster is.
+                "dancehall", "aljil", "coupedecale"]],
     ["soul",   ["doowop", "motown", "isley", "funk", "disco", "gospel", "rnb",
                 "jodeci", "clubpop", "retrofunkpop", "boyband", "darkrnb",
                 "blueeyedsoul",
@@ -6982,17 +10335,39 @@
                 // rather than in `roots` on purpose: it is pre-rock by date
                 // and a groove record by construction, and the ear files it
                 // with the child it fathered.
-                "highlife", "congorumba", "mandeguitar", "ethiojazz", "rai"]],
+                "highlife", "congorumba", "mandeguitar", "ethiojazz", "rai",
+                // ...and TWENTY-ONE from the world round (2026-08-26), which
+                // is this cluster's definition — a hand layer over a rhythm
+                // section — repeated across five continents. Every one of
+                // them has a percussion lane doing something the drum kit is
+                // not: a clave, a llamador, a güira, a rubboard, a dhol, a
+                // maqsoum, palmas. They take the family's own dynamics row
+                // unchanged, which is the point of having one.
+                "salsa", "cumbia", "samba", "forro", "merengue", "bachata",
+                "calypso", "soca", "rocksteady", "zydeco", "rumbacatalana",
+                "kwela", "mbaqanga", "soukous", "benga", "makossa", "hiplife",
+                "kizomba", "dangdut", "bhangra", "shaabi"]],
     ["band",   ["rock", "punk", "blues", "bodiddley", "chuckberry", "newwave",
                 "sludge", "deathmetal", "powerballad", "emo", "screamo",
                 "jamband", "sophistirock", "industrialmetal",
                 "musichallrock", "grebo", "janglepop", "industrialrock",
-                "gothicpop", "postpunk"]],
+                "gothicpop", "postpunk",
+                // ...and the world round's two guitar bands (2026-08-26):
+                // Phnom Penh 1970 and Istanbul 1972 are a fuzz guitar, an
+                // organ and a rhythm section, which is what this cluster is,
+                // and the fact that the catalog can now hold both of them
+                // beside London 1969 is a small argument for the round.
+                "khmerrock", "anadolurock"]],
     ["studio", ["beatles", "steely", "toto", "kraftwerk", "eurythmics",
                 "synthpop", "citypop", "merseybeat", "psychpop", "motorik",
                 "roboticpop", "confessionalpop",
                 "coastrock", "yachtrock", "yachtsoul", "analogsynthpop",
-                "gothsynth", "dancepostpunk", "orchpsych"]],
+                "gothsynth", "dancepostpunk", "orchpsych",
+                // ...and five from the world round (2026-08-26): São Paulo
+                // 1968, Manila 1976, Tehran 1974, Hong Kong 1984 and Taipei
+                // 2003 are all records ARRANGED — a band plus an arranger
+                // plus a desk — which is this cluster and not `band`.
+                "tropicalia", "manilasound", "iranpop", "cantopop", "mandopop"]],
     ["drift",  ["ambient", "drone", "vaporwave", "shoegaze", "postrock",
                 "neoclassical", "minimalism", "spacerock"]],
     // the pre-rock traditions, and the two ancestors that joined them are
@@ -7020,7 +10395,27 @@
                 // tradition, the drums are not its identity, and the family's
                 // own stress-.45 backbeat reading is right for a music people
                 // danced to all night.
-                "marabi"]],
+                "marabi",
+                // ...and TWENTY-EIGHT from the world round (2026-08-26).
+                // "The pre-rock traditions" is the cluster's own description
+                // and it turns out to describe most of the world: a son
+                // septeto, a bolero trio, a mambo band, a choro rondo, a
+                // mento band, a mariachi, a conjunto, a banda, a palm-wine
+                // guitar, a Shanghai dance band, an enka ballad, a kroncong
+                // ensemble, a filmi orchestra, a qawwali party, a rebetiko
+                // trio, a fado house, an Irish session, a Guča orchestra, a
+                // rag, a Basie band and a bluegrass band are all of them a
+                // group of people playing acoustic instruments at each
+                // other. Four are POST-rock by date (Valledupar 1975, Cusco
+                // 1965, Faisalabad 1988, Istanbul 1980) and belong here for
+                // the same reason `corridotumbado` does: a sung story on an
+                // acoustic ensemble is what this cluster IS, whatever year
+                // the tape is from.
+                "son", "bolero", "mambo", "vallenato", "choro", "mento",
+                "huayno", "mariachi", "nortena", "banda", "palmwine",
+                "shidaiqu", "enka", "trot", "kroncong", "lukthung", "nhacvang",
+                "filmi", "qawwali", "arabesk", "kabulpop", "rebetiko", "fado",
+                "irishtrad", "balkanbrass", "ragtime", "swing", "bluegrass"]],
     // ...and the one cluster that is not a tradition at all: the FUNCTION
     // genres, which are parts rather than styles. They sit last because that
     // is how they are used — you pick the music first and the part second.
@@ -7247,6 +10642,32 @@
     // expression is in the singer and the accordion, which is what phrase .5
     // and a full level swing are for.
     rai:       { stress: 0.4,  phrase: 0.5,  touch: { t: 0.03,  v: 0.8 } },
+    // THE WORLD ROUND'S FOUR (2026-08-26). Three are `club`, which has no
+    // family fallback, so those rows are REQUIRED rather than optional and
+    // the round is failing §39's own gate without them; the fourth is a vox
+    // anchor that disagrees with its cluster harder than any member of it.
+    //   Kingston 1985 IS a Casio preset — the whole point of Sleng Teng is
+    // that a machine is playing it — so it sits with the cluster's other
+    // machines on time (t .015, level with dnb) and keeps a real stress,
+    // because a deejay riding that preset is very much counting.
+    dancehall: { stress: 0.45, phrase: 0.15, touch: { t: 0.015, v: 0.55 } },
+    //   Cairo 1988 is a cr78 and a sequencer under a sung line: the machine
+    // holds the time dead, exactly as rai's does one coast west, and every
+    // drop of expression is in the voice.
+    aljil:     { stress: 0.4,  phrase: 0.5,  touch: { t: 0.03,  v: 0.8 } },
+    //   Abidjan 2003 is a programmed floor with a shouted layer over it —
+    // amapiano's deal, one continent west and eighteen years earlier.
+    coupedecale:{ stress: 0.35, phrase: 0.25, touch: { t: 0.03, v: 0.85 } },
+    //   ...and Philadelphia 1844, which disagrees with `vox` in the opposite
+    // direction from every other exception in this table. The cluster's row
+    // is stress .22 / phrase .8 — "the barline is a scribe's convenience" —
+    // and that is right for chant and wrong for shape-note singing, which is
+    // STAMPED: a hollow square beats time with its hands and its feet and
+    // the accent is the point of the tradition. So the stress is the highest
+    // in the family by a factor of two and the phrase is the lowest, and the
+    // hand is loose (t .07, v 1) because a hundred untrained singers are not
+    // together and that raggedness is the sound.
+    sacredharp:{ stress: 0.5,  phrase: 0.35, touch: { t: 0.07,  v: 1 } },
     // THE THREE FUNCTION GENRES THAT DISAGREE WITH THEIR FAMILY. A riff is
     // metre — it is the part that is NOT expressive, that is its job. A pad has
     // no metre and barely a hand (the chord path reads stress and touch and

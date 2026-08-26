@@ -36,6 +36,115 @@
  * fails, borders fall back to `currentColor`, which is legible and wrong-ish.
  */
 
+/* ===== THE DESIGN SYSTEM ================================================
+   Paul, 2026-08-26: *"Create a simple design system and use plain HTML buttons
+   where appropriate but bring more consistency."*
+
+   THE AUDIT THAT PRODUCED THIS, run on the RENDERED page (chromium at 1280x900
+   and 390x844, every tab of both strips clicked, computed styles read back —
+   not read off the source). 292 interactive elements, and the kinds actually in
+   use with the number of DISTINCT COMPUTED LOOKS each one had before this
+   section existed:
+
+     input[range]     103   4 looks   a quantity
+     input[radio]      48   1 look    a step in a grid
+     input[radio]      24   2 looks   clipped under a chip on the ring
+     button            41   4 looks   an action
+     button            23   2 looks   a tab
+     select            39   2 looks   a settled choice
+     input[checkbox]   13   2 looks   a switch
+     select[multiple]   1   1 look    an open choice among many
+     a[href]            0   -         nothing on this page left it
+
+   ...plus the 24 `<label class="nu-opt">` that ARE the widget for the radios
+   clipped inside them, in 4 looks of their own.
+
+   THE INTENDED LOOKS ARE THE ONES ARGUED SOMEWHERE IN THIS FILE; THE REST WERE
+   ACCIDENTS, AND THERE WERE FOUR. Three were visible in the audit itself:
+   a `<button>` inside a `<th>` came out BOLD, because `button { font: inherit }`
+   at the top of this file inherits the table header's weight — so eight of the
+   twenty-three tabs were a different button from the other fifteen for no
+   reason anybody chose; a row of buttons was spaced three different ways
+   (a literal " " text node in `#tabs` and `#motif-tabs`, `margin-inline-end:
+   .4rem` in `#atlasActs`, and nothing at all in the producer's rows); and
+   `.is-now` — the page's one spelling of "inverted" — had NO writer anywhere in
+   nukernel/ while `.nu-circ .nu-opt.is-on` re-declared its two lines by hand.
+   Each is fixed below, at the one place that defines it. A fourth turned up
+   while the fixes were being measured: `#atlasActs button` restated the 44px
+   tap floor the top of this file had already given every button, and carried
+   the margin that was accident 2 — one rule doing two things that were both
+   already done. It is gone.
+
+   AND HERE IS THE SAME PAGE AFTERWARDS, measured the same way at both widths:
+
+     an action    2 looks   the word button, and the icon button whose padding
+                            is 2px so seven of them fit a 390px line (named
+                            exception, `.nu-tf-row`, argued where it is written)
+     a tab        1 look    was 2 — the `<th>` bold is gone
+     everything else unchanged, and every remaining second look is a STATE the
+     browser draws (`:disabled` greys a control's border and face) or the flex
+     `min-height: auto` a control gets for being a flex item, which is the same
+     26x26 box by another name.
+
+   So: seven kinds, and every kind is one look plus its states.
+
+   SEVEN KINDS OF CONTROL AND THAT IS ALL THE PAGE NEEDS. Nothing here is a new
+   widget: this is the list of what already exists, reduced, with what each one
+   is FOR — which is the part that was missing.
+
+     1  AN ACTION            `<button type="button">`, the browser's own chrome.
+                             It does something now: play, another take, + line,
+                             fork, take it off, forget all of it. 44px floor.
+     2  A TAB                the SAME `<button>`, plus `aria-pressed`, plus the
+                             current one wearing `<mark>`. A tab is not a
+                             different widget from an action and must not look
+                             like one; what says "you are here" is the mark and
+                             the ARIA state, never a second look.
+     3  A SETTLED CHOICE     `<select>` inside `.nu-sel` — one value, decided
+                             once, nobody browses it. Meter, key's mode, a
+                             voice's instrument.
+     4  AN OPEN CHOICE       `<select multiple>` inside `.nu-sheet`, or — where
+                             the SHAPE of the field is the point and a list
+                             would destroy it — `.nu-opt` chips over clipped
+                             radios. On the shipped record that second form is
+                             the circle of fifths and nothing else (measured: 24
+                             chips, all of them on the ring), but ui/sheets.js
+                             still builds one for any single-choice sheet that
+                             asks, so the rule below is not a rule for one
+                             widget.
+     5  A SWITCH             `<input type="checkbox">` at `--box`, its sentence
+                             in the `<label>` around it.
+     6  A QUANTITY           `<input type="range">` with an `<output>` beside
+                             it. 44px in a row of its own; `--cell`-high inside
+                             a step grid, where the grid is the tap target.
+     7  A STEP               `<input type="radio">`/`checkbox` at `--box` in a
+                             `.nu-grid` cell — one of sixteen, so WCAG 2.2's
+                             24px dense-grid floor applies and not `--tap`.
+
+   ...AND ONE THING THAT IS NOT A CONTROL AT ALL: `<a href>`, which until
+   2026-08-26 the page had none of. A link is the only element here that LEAVES
+   the page, so it is the only one that gets an underline (`.nu-wiki`, below).
+
+   FOUR STATES, AND ANY KIND MAY WEAR THEM. They are adjectives, not widgets:
+     `.is-on` / `:checked`     chosen — a 2px ink border, or the inversion
+     `.is-off` / `:disabled`   refused — greyed, NEVER hidden, reason printed
+     `.is-quiet`               inert — dimmed and italic (knobs.js `quiet`)
+     `<mark>` / `.is-now`      THE ONE — the browser's own highlight. Reserved:
+                               the sounding step, and the tab you are on. It may
+                               not be borrowed for anything else, which is why
+                               `.nu-here` is a rule down the row and not a tint.
+
+   THE SECTION WASH BELOW IS NOT A STATE and may never read as one — see
+   "A COLOUR PER SECTION". It moves the GROUND a control stands on, never the
+   control.
+
+   HOW TO ADD SOMETHING. If it is one of the seven, use the seven. If it is not,
+   the burden is to say which of the seven it could have been and why that was
+   worse, HERE, in prose — the way every other decision in this file is written
+   down. A slice may not carry its own look; there is no second stylesheet.
+   PROGRAM.md §2.4 carries the same table and the two must not drift.
+ */
+
 /* ===== TAP TARGETS =====================================================
    Nothing on this page cleared a thumb. 44px is the isolated-control floor
    (WCAG 2.2 AAA / the Apple figure) and every isolated control now has it;
@@ -83,6 +192,43 @@ button,input,select,textarea,output,meter{ font: inherit; color: inherit; }
 button,select,input[type=number],input[type=text],input[type=range]{
   min-height: var(--tap); }
 button,select{ padding-inline: .6em; }
+/* A BUTTON LOOKS LIKE A BUTTON, EVERYWHERE — AND `font: inherit` HAD A COST
+   NOBODY COUNTED. The rule above it makes every control wear the page's face,
+   which is right; what came with it is the surrounding element's WEIGHT, and a
+   `<th>` is bold. Measured on the rendered page: 8 of the 23 tab buttons came
+   out at font-weight 700 and 15 at 400, the split being nothing but which ones
+   happen to sit in a table header (`secNumber`'s section number, `countCell`).
+   Two looks for one kind, decided by the furniture. The weight is stated here
+   rather than in ui/eight.js because the look is this file's, and the same line
+   covers the menu in the form list's name column. */
+th button, th select{ font-weight: 400; }
+
+/* A ROW OF BUTTONS, SPACED ONCE. The audit found three spellings of the same
+   strip: a literal " " text node between the buttons (`#tabs`, `#motif-tabs`,
+   the producer's rows), `margin-inline-end: .4rem` on the button (`#atlasActs`),
+   and nothing at all. `gap` is the one that cannot drift, and it is on the
+   CONTAINER, so a strip that gains a button gains its spacing for free.
+
+   THE TEXT NODES STAY, and that is deliberate rather than leftover: a
+   whitespace-only text run between flex items is not rendered as an item (CSS
+   Flexbox §4), so it costs nothing here — and with this stylesheet OFF it is
+   the only thing keeping "form" and "performance" from reading as one word.
+   The page must read with the stylesheet off; that promise is what pays for
+   the redundancy.
+
+   `align-items: center` and not `baseline`: a tempo icon is 44px of picture
+   with no text baseline in it, and beside a word-button baseline alignment
+   drops it half a line. */
+.nu-row{ display: flex; flex-wrap: wrap; align-items: center; gap: .4em;
+  margin-block: .4em; }
+/* AND IT MADE THE STRIPS SHORTER, WHICH WAS NOT THE POINT BUT IS THE
+   MEASUREMENT. Inline-block buttons pay for the whitespace text node AND for
+   the baseline gap under each line; flex pays for neither. `#tabs` at 390px
+   went from THREE lines to two and at 1280 from two to one; `#motif-tabs` and
+   `#atlasActs` are unmoved. The strip is 5px taller at 390 (94 against 89)
+   because two 44px rows plus one .4em gap is more than three squeezed
+   line-boxes, and that is the right trade: the tap targets were always 44 and
+   now the row admits it. */
 input[type=number]{ padding-inline: .3em; inline-size: 5.5em; }
 input[type=checkbox],input[type=radio]{
   inline-size: var(--box); block-size: var(--box);
@@ -99,6 +245,35 @@ input[type=checkbox],input[type=radio]{
 label{ display: inline-block; min-block-size: var(--tap); line-height: var(--tap); }
 #app p{ margin-block: .35em; }
 :focus-visible{ outline: 3px solid Highlight; outline-offset: 1px; }
+
+/* ===== A LINK, THE ONLY THING ON THIS PAGE THAT LEAVES IT =================
+   Paul, 2026-08-26: "add actual Wikipedia links for each genre we have at the
+   top by the title". `#title` is the record's name — "Rome 600" — and beside it
+   sits the article the anchor IS (ui/eight.js `draw`, table in nukernel/wiki.js).
+
+   AN UNDERLINE, WHICH NOTHING ELSE HERE HAS. The design system at the top of
+   this file has seven kinds of control and a link is not one of them: every one
+   of the seven acts on the record in front of you and this is the one thing
+   that takes you off the page. That difference has to be visible, and the
+   browser's own affordance for it is the underline, so the underline is left
+   alone rather than restyled.
+
+   SMALLER THAN THE NAME IT SITS BESIDE. `#title` is the h1 and the record's
+   name is the heading; the article is a footnote to it, not a second title, so
+   it drops to the body size and takes the h1's weight off. Measured at 375px:
+   "Rome 600 Gregorian chant" is one line, which matters because `#title` sits
+   directly above the sticky `.nu-bar` and a wrap here would push the bar and
+   everything under it down.
+
+   `[data-kind]` IS WRITTEN AND NOT USED FOR A LOOK, and that is deliberate.
+   31 of the 191 rows are not a genre article — 20 are the act, 4 the album that
+   IS the era, 7 an article wider than the anchor — and what says so is a REAL
+   `<span class="nu-kind">` in the DOM, because a `::after` with `content:` is
+   not text a stylesheet-off page can print. The attribute is left on the
+   element for a gate to read and for the day somebody wants to tell an act from
+   an album without reading the word. */
+.nu-wiki{ font-size: 1rem; font-weight: 400; white-space: nowrap; }
+.nu-kind{ opacity: .7; white-space: nowrap; }
 
 /* ===== THE TWO STICKY BANDS ============================================
    Two, never three: 52 + 38 = 90px of a 667px screen, 13.5%. In landscape
@@ -187,6 +362,120 @@ label{ display: inline-block; min-block-size: var(--tap); line-height: var(--tap
    true is test/shell.js's "exactly one pinned .nu-ax > h2" as a claim about
    every pixel — it is true at the three positions that gate samples, and this
    is the note that says why it cannot be true everywhere. */
+
+/* ===== A COLOUR PER SECTION ============================================
+   Paul, 2026-08-26: *"Give each section a slightly different color."*
+
+   WHICH "SECTION", AND THE OTHER READING THAT WAS CONSIDERED AND LOST. A record
+   also has sections — head, verse, bridge — and they are drawn on this page as
+   ROWS of the form list, cells of a voice's table and tiles of the score
+   ribbon. Colouring those is a different feature: they are never blocks you
+   scroll past, they are already spoken for by the playhead, and a tint on them
+   would land in the very cells `<mark>` and `.nu-here` share, which is the
+   conflation 2026-08-24 spent a day undoing. What Paul was doing when he said
+   it was scrolling six thousand pixels of black and white; the blocks that go
+   by are the seven `<section>`s — the atlas, the five axis sections, and the
+   board. Those are what take the wash.
+
+   IT IS ARITHMETIC ON AN INDEX, NOT A PALETTE. Nobody types a colour here. A
+   section's `--sec` is its ordinal among its siblings and the hue is
+   `--sec * 137.5deg` — the golden angle, which is what you use when you do not
+   know how many you will need, because consecutive indices land as far apart on
+   the wheel as they can and no two of the first dozen are close. The ladder
+   below is written modulo twelve (`:nth-child(12n+k)`), so a page of thirteen
+   sections does not run out — the thirteenth reuses the first hue, twelve
+   blocks and several screens away from it.
+
+   "SLIGHTLY" IS THE WHOLE SPECIFICATION and `--wash` is where it is stated:
+   4% of a fully saturated hue mixed into `Canvas` in oklab. Measured on the
+   rendered page, light: the paper moves from #ffffff to between #fbf5f7 and
+   #f2f9fb, and CanvasText on the darkest of them is 19.8:1 — WCAG AAA wants
+   7:1. Dark: from #121212 to between #151116 and #101517. Nothing on the page
+   changes colour except the ground.
+
+   IT MOVES `--paper`, AND THAT IS THE WHOLE MECHANISM. `--paper` in this file
+   has always meant THE GROUND YOU ARE STANDING ON — it is what the sticky
+   heading paints itself with so the page does not run under it, what the pane's
+   scroll-shadow gradients fade to, what a step grid's sticky first column and
+   the circle's face sit on. Redefining it ON THE SECTION makes every one of
+   those follow the wash with no second rule and no list to keep in step; the
+   heading rule above already anticipated this in as many words ("Any future
+   accent colour must paint here too"). `--rule`, `--rule-strong` and `--zebra`
+   are mixed against `Canvas` and NOT against `--paper`, so every line on the
+   page keeps exactly the weight it had — the wash moves the ground and never
+   the ink.
+
+   IT IS NOT A STATE AND MAY NOT READ AS ONE. `<mark>` is the browser's own
+   `Mark`/`MarkText` pair and `.is-now` is a full ink inversion; both are orders
+   of magnitude louder than 4% and neither is a hue this ladder can produce.
+   Measured on the rendered page: the largest colour distance between any two
+   sections' grounds is smaller than the distance from any ground to `<mark>`.
+
+   AND IT VANISHES WHERE IT SHOULD. With the stylesheet off there is no colour
+   and nothing is lost, because the wash says nothing the `<h2>` above it does
+   not already say in words. Under `forced-colors` and `prefers-contrast: more`
+   `--wash` goes to 0% and every section is Canvas again — one property, one
+   place, rather than a `background: Canvas` override per selector. Dark mode
+   needs no query: the mix is against `Canvas`, which is what `color-scheme`
+   already swapped.
+
+   FULL BLEED, THE WAY `.nu-bar` ALREADY DOES IT (:112) — cancel the body gutter
+   and re-pay it as padding — because a wash with a 12px white margin down each
+   side reads as a box drawn around the section rather than as ground under it.
+   Net zero on where any content sits: measured, every `.nu-ax`'s content box is
+   at the same x it was, and `documentElement.scrollWidth === innerWidth` at 390
+   and 1280. */
+:root{ --wash: 4%; }
+@media (prefers-contrast: more){ :root{ --wash: 0%; } }
+@media (forced-colors: active){ :root{ --wash: 0%; } }
+.nu-ax, #atlas{
+  --sec: 0;
+  --paper: color-mix(in oklab,
+                     hsl(calc(var(--sec) * 137.5deg) 70% 50%) var(--wash), Canvas);
+  background: var(--paper);
+  margin-inline: calc(-1 * var(--gl)) calc(-1 * var(--gr));
+  padding-inline: var(--gl) var(--gr); }
+/* THE LADDER IS THE ONLY WAY CSS CAN COUNT. There is no function that reads a
+   `:nth-child()` match back out as a number — `sibling-index()` will do this in
+   one line and is too new to ship on a page that has to work on the phone in
+   Paul's pocket — so twelve one-line rules assign the ordinal and the single
+   formula above turns it into a colour. Twelve rules, ONE palette decision, and
+   that decision is "137.5 degrees apart". */
+#app > .nu-ax:nth-child(12n+1){ --sec: 1; }
+#app > .nu-ax:nth-child(12n+2){ --sec: 2; }
+#app > .nu-ax:nth-child(12n+3){ --sec: 3; }
+#app > .nu-ax:nth-child(12n+4){ --sec: 4; }
+#app > .nu-ax:nth-child(12n+5){ --sec: 5; }
+#app > .nu-ax:nth-child(12n+6){ --sec: 6; }
+#app > .nu-ax:nth-child(12n+7){ --sec: 7; }
+#app > .nu-ax:nth-child(12n+8){ --sec: 8; }
+#app > .nu-ax:nth-child(12n+9){ --sec: 9; }
+#app > .nu-ax:nth-child(12n+10){ --sec: 10; }
+#app > .nu-ax:nth-child(12n+11){ --sec: 11; }
+#app > .nu-ax:nth-child(12n+12){ --sec: 12; }
+/* THE TWO BLOCKS THAT ARE NOT AXES, AND THE ONLY NUMBERS IN THIS FILE THAT ARE
+   HAND-KEPT. `#atlas` and `#board` are `<section>`s a reader scrolls past like
+   any other, but neither is a child of `#app` — the atlas is the front door and
+   the board is what the record lands on — so no `:nth-child()` can count them
+   into the axes' run. They are given the indices they WOULD have if the page
+   were one list: the atlas is before the axes and the board is after them.
+
+   WHY NOT 13 AND 14, WHICH IS WHERE THEY STARTED. Because the golden angle only
+   promises that CONSECUTIVE indices are far apart, and 14 is not consecutive
+   with anything on the page: measured, `--sec: 14` came out at hue 125deg
+   against `ax-time`'s 137.5 — twelve degrees, which at a 4% wash is one unit of
+   red. Numbered in reading order instead, every neighbour on the page is a full
+   137.5deg from the one before it and the closest pair anywhere is 32.5.
+
+   AND THE 6 IS A NUMBER SOMEBODY MUST CHANGE. There are five axis sections
+   today (ui/eight.js `redrawApp`), so the board is the sixth block. A sixth
+   axis would collide with it, and the fix is this one digit. That is stated
+   rather than engineered around because it cannot be engineered around: twelve
+   golden-angle steps already cover the wheel at about 30deg, so beyond twelve
+   blocks SOME pair is close no matter what the scheme is. Seven blocks is the
+   case the page has and this is the best arrangement of it. */
+#atlas{ --sec: 0; }
+#deck > .nu-ax{ --sec: 6; }
 
 /* ===== TABLES ==========================================================
    "use more grid lines in tables, it will help" (Paul, 2026-08-24). Every
@@ -350,7 +639,20 @@ tr.nu-here > th:first-child, tr.nu-here > td:first-child{
    accessibility tree and out of the tab order with it. */
 .nu-vh{ position: absolute; width: 1px; height: 1px; margin: -1px;
   overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.is-now{ background: var(--ink); color: var(--paper); }
+/* THE INVERSION, AND IT HAS EXACTLY ONE OWNER NOW. `.is-now` is this page's
+   only spelling of "this one is on, and you can see it across the room". The
+   audit of 2026-08-26 found the name had no writer left anywhere in nukernel/
+   — the playhead says "sounding" with `<mark>`, the browser's own highlight —
+   while `.nu-circ .nu-opt.is-on` five hundred lines down had copied its two
+   declarations out by hand. Two places defining one look is the accumulation
+   Paul asked to be rid of, so the circle's chosen key is added to THIS
+   selector list and its own rule is gone. `.is-now` therefore stays in the
+   vocabulary as a live name and not a fossil: it is what the ring wears.
+   (Both `.is-on` and `:has(:checked)` for the reason the border rule needs
+   both — the class covers the browsers without `:has()`.) */
+.is-now,
+.nu-circ .nu-opt.is-on, .nu-circ .nu-opt:has(:checked){
+  background: var(--ink); color: var(--paper); }
 /* GREYED, NOT HIDDEN (Paul, 2026-08-24: "when an option makes another one
    unaccessible gray it out"). `:disabled` is the DOM already saying it, so a
    slice sets `input.disabled = true` and the grey follows for free. Hiding
@@ -533,8 +835,14 @@ tr.nu-here > th:first-child, tr.nu-here > td:first-child{
    a ring of twelve small words a 2px border alone was not enough to find at a
    glance. Both selectors, for the same reason the border rule needs both: the
    class covers the browsers without `:has()`. */
-.nu-circ .nu-opt.is-on, .nu-circ .nu-opt:has(:checked){
-  background: var(--ink); color: var(--paper); }
+/* ...and this is where those two declarations WERE, until 2026-08-26's audit
+   found that `.is-now` — the same two declarations, sixty lines below the top
+   of the vocabulary — had no writer left in nukernel/ at all. Rather than keep
+   a name with no user beside a copy of what it says, the ring's chosen key was
+   added to `.is-now`'s own selector list and this rule was removed. Not one
+   pixel moved and not one word of the argument above is withdrawn; what changed
+   is that the look is now defined once, which is the whole of what Paul asked
+   for on the same day. */
 /* A REASON IS THE ONE THING ON THE RING THAT MAY BE WIDER THAN A WORD, and it
    is capped rather than clipped: greyed is not hidden (the note over `.is-off`
    above), so a key that cannot be said says why right there, wrapping, even
@@ -759,6 +1067,64 @@ td > select{ max-inline-size: 9em; }
    one cell on either board. A band that groups nothing is furniture, and the
    rule went with it; the two CAPTIONS are what name the boards now. */
 
+/* A GROUP IS A DIFFERENT KIND OF STRIP AND THE GRID CANNOT SAY SO. Bus 1 and
+   bus 2 are the engine's own accumulators and return to the main; bus 3 and
+   bus 4 have no return at all — `engine: null` in fields.js BUSROWS — and their
+   sends are summed into whichever bus they are aimed at (audio/desk.js
+   `feedSplit`), which is a `<select>` in the column's own gear cell. Four
+   identical columns for two different kinds of thing is exactly the "different
+   slices, different looks" complaint in reverse: one look for two meanings.
+
+   A WASH AND NOT A COLOUR, and the same 4% `--wash` the section grounds are
+   made of, so this is one decision rather than two — it goes to 0 under
+   `prefers-contrast: more` and `forced-colors` with them, and the page loses
+   nothing when it does, because the `goes to` row already prints the route in
+   words. It may not compete with `<mark>` or `.is-now`, and at 4% of CanvasText
+   it cannot: the same measurement the section wash makes.
+
+   `data-bus` IS ON THE CELLS BECAUSE ui/engineer.js `cellFor` PUTS IT THERE
+   (2026-08-26, one line, at the recipe's request). `:nth-child()` was the other
+   way to reach these two columns and it would break the moment a fifth bus
+   lands, which is the exact thing the four-bus round was building toward. */
+#racktbl th[data-bus="room"], #racktbl th[data-bus="aux"],
+#racktbl td[data-bus="room"], #racktbl td[data-bus="aux"]{
+  /* A TRANSLUCENT IMAGE AND NOT A BACKGROUND COLOUR, WHICH COST A MEASUREMENT.
+     `background-color` replaces the zebra rather than joining it: measured, the
+     two group columns came out a flat srgb 0.96 while their neighbours
+     alternated 1.00 / 0.93, so the columns that were meant to read as QUIETER
+     read as lighter than every other row. A translucent linear-gradient is an
+     IMAGE, painted over whatever background-color the cell already has, so a
+     zebra row under the wash is 0.89 and a plain one is 0.96 — both a step
+     darker than the cell beside them, which is the whole ask. */
+  background-image: linear-gradient(
+    color-mix(in srgb, CanvasText var(--wash), transparent) 0 100%); }
+
+/* THE ROUTING LIST IS A LEGEND, NOT A PARAGRAPH. ui/engineer.js prints one
+   `<li>` per EDGE on the desk — the main's dry into bus 1, each group's route,
+   and the two that are literals in fx_bus.dsp — and a reader scans down the
+   left edge looking for the bus they are on, so the disc marker earns the
+   browser's own 40px indent and it is the LEADING that wants closing up. It is
+   a real `<ul>` and not a definition list of `<span>`s for the reason
+   everything here is a real element: it has to read with the stylesheet off. */
+.nu-board + ul.nu-hint, .nu-flow ~ ul.nu-hint{ line-height: 1.35; }
+.nu-board + ul.nu-hint > li, .nu-flow ~ ul.nu-hint > li{ margin-block: .35em; }
+
+/* THE RECORD-LEVEL BAND — the flow sentence, the character chain, the routing
+   note and the edge list are all true of the whole record rather than of one
+   strip, and they sit under the board because that is where the page already
+   keeps that kind of fact (keep like with like). It is under the board and not
+   inside a cell for a MEASURED reason: a `<select multiple>` of eleven chips is
+   eight rows tall, and inside the `its own gear` cell it took that row from
+   334px to 653px — a table row is as tall as its tallest cell, so bus 3's
+   single menu would sit under ~590px of white. That is the 2026-08-25 finding
+   again ("the main's cell was 489px … bus 1's cell — one menu, 62px — sat under
+   427px of white"), and it is the emptiness Paul asked about.
+
+   A RULE, NOT A BOX: the band is prose plus one control, and a border on four
+   sides would make it look like a third table. */
+.nu-rec{ border-block-start: 1px solid var(--rule);
+  padding-block-start: .75em; margin-block-start: .75em; }
+
 /* THE SENTENCE BETWEEN THE TWO BOARDS. The split took away the thing that used
    to say where a send goes — a channel and its return were adjacent columns of
    one grid and now they are two tables — so the relationship is words, and the
@@ -772,6 +1138,13 @@ td > select{ max-inline-size: 9em; }
    so the table is left-aligned prose with a rule between takes. */
 .nu-notes th, .nu-notes td{ text-align: left; }
 .nu-notes td:last-child{ text-align: right; }
+/* ...AND `text-align` DOES NOT REACH A FLEX CONTAINER'S ITEMS. The "change it"
+   cell holds a `.nu-row` now (one name for a strip of buttons), and a strip is
+   `display: flex`, so the line above stopped moving those three buttons the
+   moment the class landed. `justify-content` is the flex spelling of the same
+   intention and it is stated here, beside the rule it repairs, rather than in
+   ui/produce.js — the alignment is this file's. */
+.nu-notes td:last-child > .nu-row{ justify-content: flex-end; }
 
 /* THE MAP (D6): an inline <svg> that fills the column and keeps its ratio. */
 .nu-map{ display: block; inline-size: 100%; block-size: auto; max-inline-size: 100%; }
@@ -850,6 +1223,14 @@ td > select{ max-inline-size: 9em; }
    ten of them read as a smudge. The viewBox does the arithmetic; no number in
    ui/eight.js changes. */
 .nu-tf-row button{ padding-inline: 2px; }
+/* ...AND THE ROW'S OWN GAP IS TIGHTER THAN `.nu-row`'S, FOR THE SAME REASON THE
+   PADDING IS. `.nu-row` (the one strip rule, 2026-08-26) spaces a row of WORD
+   buttons at .4em, and applying it here put the seven onto two lines at 390px —
+   measured: the seven icons are 336px of ink inside a 366px row, which leaves
+   30px for six gaps, and six .4em gaps are 38.4. At .25em they are 24 and the
+   row is one line again with the 44px tap floor intact. Same number the padding
+   paragraph above argued to, and for the same 366px. */
+.nu-tf-row{ gap: .25em; }
 .nu-tf{ display: block; pointer-events: none;
   inline-size: 40px; block-size: 32.5px; }
 /* WHERE THE TUNE WAS, and where this button puts it. Two weights of the same
@@ -883,9 +1264,10 @@ td > select{ max-inline-size: 9em; }
 #staff svg, #app svg{ max-inline-size: 100%; }
 
 /* THE SCORE (2026-08-25, Paul: "add a section ABOVE motifs which is the current
-   playing music, two measures at a time, but ALL"). One system of staves, one
-   per voice of the record, and NOT ONE CONTROL — so there is almost nothing for
-   a stylesheet to do here and that is the point.
+   playing music, two measures at a time, but ALL", and the same evening:
+   "scroll the score horizontally as the song progresses"). One system of
+   staves, one per voice of the record, MOVING, and NOT ONE CONTROL — so there
+   is almost nothing for a stylesheet to do here and that is the point.
 
    THE RULE UNDER IT is the same division `.nu-motif` draws over a motif: the
    score and the motifs are two different things to look at, and the eye needs
@@ -893,7 +1275,7 @@ td > select{ max-inline-size: 9em; }
    because the <h3> already opens it.
 
    THE ROOM IS RESERVED IN JAVASCRIPT AND NOT HERE, and that is deliberate: how
-   tall a two-measure system of seven staves is, is a fact about this record at
+   tall a system of seven staves is, is a fact about this record at
    this width that no stylesheet can know (ui/eight.js `scoreReserveTo`, and
    the same argument `reserveCaption` makes one surface down). What this file
    guarantees is only that the reserve has somewhere to land: the host is a
@@ -905,41 +1287,85 @@ td > select{ max-inline-size: 9em; }
    outside it", and here it is simply TRUE: ui/eight.js gives the host a fixed
    height (`scoreReserveTo`) and the system is scaled to fit inside it, so the
    engraving cannot move a pixel of the page even in principle. Saying so lets
-   the browser skip re-laying-out a 16,000px document every time two new bars
-   are drawn — measured 2026-08-25 on the eight-voice record at 390px, a window
-   turn is where this page's only long main-thread tasks live. */
+   the browser skip re-laying-out a 16,000px document every time four new bars
+   are drawn — measured 2026-08-25 on the eight-voice record at 390px, an
+   engraving is where this page's only long main-thread tasks live. */
 .nu-score > div{ display: block; contain: layout paint; }
-/* ...AND THE STACK OVERRIDES THAT `display: block` ON PURPOSE, with a selector
-   that can win. `.nu-score > div` is one class and one type (0,1,1); a bare
-   `.nu-stack` is one class (0,1,0) and LOSES, which is not a subtlety — it
-   cost a measurement to find: with the stack laid out as a block the two
-   buffers sat one under the other instead of on top of each other, the score
-   box went 165px -> 329px the first time the second one engraved, and
-   `#ax-band` was pushed 164px down the page WHILE PLAYING (measured 390x844;
-   172px at 1400x900). That is the one thing this axis may never do
-   (test/motif-frozen.js A5). Two classes, and it wins. */
-/* TWO PICTURES IN ONE CELL (ui/eight.js `scoreStack`, 2026-08-25: "it should
-   appear BEFORE the music starts"). The next two bars are engraved into a
-   hidden host while the current two are still on the glass, and the barline is
-   a class swap with no render in it — which is what takes the 186ms of settle
-   off every page turn and makes an empty frame impossible.
+/* ---------- THE RIBBON (2026-08-25 evening) --------------------------------
+   Paul: "Switching measures is super jumpy so I thought you could [neatly]
+   render it and scroll the score horizontally as the song progresses."
 
-   A GRID WITH ONE CELL, and both children in it, because the two must occupy
-   THE SAME ROOM: `grid-area: 1 / 1` puts them on top of each other, the box is
-   as tall as the taller of the two, and the reserve ui/eight.js measures lands
-   on the stack itself. Absolute positioning was the other candidate and it is
-   refused — an absolutely positioned host contributes no height at all, so the
-   box would collapse the first time it was drawn before the reserve existed.
+   WHAT THESE RULES REPLACED, kept because its measurement is still the reason
+   for `contain` above. Two hosts were stacked in one grid cell — one visible,
+   one hidden — and the barline was a class swap between them:
 
-   `visibility` AND NOT `display`, and it cost a measurement to be sure: a host
-   with `display:none` has `clientWidth` 0, and `clientWidth` is exactly what
-   `renderAbc` is handed as its staff width — so the hidden buffer would engrave
-   at the 180px floor and be shown at 366. `visibility: hidden` keeps the box,
-   keeps the width, and still takes the element out of the accessibility tree,
-   so a screen reader is never read two scores at once. */
-.nu-score .nu-stack{ display: grid; }
-.nu-score .nu-stack > div{ grid-area: 1 / 1; min-inline-size: 0; }
-.nu-score .nu-stack > div.is-off{ visibility: hidden; }
+     *".nu-score .nu-stack{ display: grid } … > div{ grid-area: 1/1 } …
+     > div.is-off{ visibility: hidden }". The selector had to beat
+     `.nu-score > div`'s `display:block` (0,1,1 against 0,1,0) and it cost a
+     measurement to find: laid out as blocks the two buffers sat one UNDER the
+     other, the score box went 165px -> 329px the first time the second one
+     engraved, and `#ax-band` was pushed 164px down the page WHILE PLAYING.*
+
+   That box is now a WINDOW rather than a stack: one fixed-size hole in the
+   page with a long row of engraved sections inside it, moved by a transform.
+   The height law is unchanged and is still the reason this block exists —
+   ui/eight.js gives the box its height and the tiles are scaled into it, so
+   nothing here can move a pixel of the page.
+
+   THERE IS NO SCROLL CONTAINER, AND THAT IS DELIBERATE. This repo has paid
+   twice for a horizontal pane inside a vertical page: the atlas's
+   `touch-action: pan-y` left 28 of 62 places unreachable, and the grid
+   rotation existed partly to delete a horizontal pane that made tapping snap.
+   `overflow: hidden` (not `auto`, not `scroll`) means a finger dragged over
+   the score — in any direction — is a finger dragged over a picture, and the
+   page scrolls under it exactly as it does everywhere else. The score's own
+   motion belongs to the clock.
+
+   WITH THE STYLESHEET OFF, the tiles fall back to static blocks and the whole
+   record's notation is simply laid out down the page, which reads. Nothing
+   here carries meaning: the caption above the box says which section and which
+   bars, in words. */
+.nu-score .nu-ribbon{ position: relative; overflow: hidden;
+  min-block-size: 3em; contain: layout paint; }
+.nu-score .nu-run{ position: absolute; inset-block-start: 0; inset-inline-start: 0;
+  /* the row is only ever moved, never re-laid-out: `will-change` lets the
+     browser keep it on its own compositor layer, which is what makes a frame
+     cost a matrix multiply instead of a paint */
+  will-change: transform; }
+.nu-score .nu-run > .nu-tile{ position: absolute; inset-block-start: 0;
+  /* THE CROP. Everything left of a tile's first notehead — the voice names,
+     the clef, the key, the meter — is paper with no time in it, and laid end
+     to end in the flow it made the music LEAP a bar and a half at every tile
+     boundary (measured 2026-08-25 at 390px on a seven-voice reggae: 178px).
+     ui/eight.js pushes the drawing left by exactly that margin; this is what
+     hides it. */
+  overflow: hidden; }
+/* …AND THE MARGIN ITSELF, DRAWN ONCE AND PINNED TO THE LEFT EDGE. A clone of a
+   tile's own engraving (ui/eight.js `gutterFrom`), so the clefs it shows are
+   the clefs the ribbon behind it is written in — and the one thing on this
+   surface that never moves. It needs the page's own paper behind it, or the
+   music would slide through the voice names. */
+.nu-score .nu-gutter{ position: absolute; inset-block-start: 0;
+  inset-inline-start: 0; overflow: hidden; background: var(--paper);
+  pointer-events: none; }
+#app .nu-score .nu-gutter > svg{ display: block; max-inline-size: none; }
+/* AND THE TILE'S OWN SVG MAY BE WIDER THAN THE COLUMN, which is the one place
+   on this page where that is true and has to out-shout `#app svg` (an id, so
+   it wins on specificity unless this one carries the id too). A tile IS a
+   section of music laid end to end — six hundred pixels of it on a phone —
+   and it is the box that clips, not the picture. */
+#app .nu-score .nu-tile > svg{ display: block; max-inline-size: none; }
+/* THE SOUNDING POSITION, WHICH IS A LINE AND NOT A MOVING THING. It is drawn
+   once, at the fraction of the box ui/eight.js `SCORE_HEAD` names, and the
+   music passes under it — so the one element on this surface that means "here"
+   never moves and never needs the clock to write to it. `currentColor` at half
+   strength: it has to be findable against a stave without being mistaken for a
+   barline, and it must survive forced-colours, where a mixed colour falls back
+   to the system's own ink. */
+.nu-score .nu-head{ position: absolute; inset-block: 0; inline-size: 2px;
+  background: color-mix(in srgb, var(--ink) 55%, transparent);
+  pointer-events: none; }
+@media (forced-colors: active){ .nu-score .nu-head{ background: CanvasText; } }
 
 /* ===== THE ATLAS (D6) ==================================================
    Paul, 2026-08-24: "a slider for time and a world map on top." Every rule
@@ -1079,7 +1505,14 @@ td > select{ max-inline-size: 9em; }
 #atlasMap .lab[data-far="1"]{ opacity: 0; }
 #atlasMap text.name{ paint-order: stroke; stroke: Canvas;
   stroke-linejoin: round; stroke-linecap: round; }
-#atlasActs button{ min-block-size: var(--tap); margin-inline-end: .4rem; }
+/* `#atlasActs button { min-block-size: var(--tap); margin-inline-end: .4rem }`
+   STOOD HERE AND BOTH HALVES ARE GONE (2026-08-26). The tap floor was already
+   `button { min-height: var(--tap) }` at the top of this file and had been for
+   two days — a second, higher-specificity opinion about the same pixel. The
+   margin was this section's private spelling of a spacing three other button
+   strips spelled two other ways, and it is `.nu-row` now (ui/atlas.js carries
+   the class). Measured after: `another take` is the same computed button as
+   `play`, which it never was before. */
 
 /* ---------- THE VOICE'S OWN KNOBS (VOICE.md) -----------------------------
    Almost nothing, on purpose. The block is the same <table> in the same
@@ -1112,3 +1545,110 @@ td > select{ max-inline-size: 9em; }
    attribute: a tooltip is not readable on a phone and not readable at all in a
    screen reader that is announcing the control's name. */
 .nu-knobs input[disabled]{ opacity: .45; }
+
+/* ===== THE PAD: A THROAT, DRAWN ========================================
+   Paul, 2026-08-26: *"a nice radial graph structure for editing the voice so I
+   can work on multiple dimensions"*, and *"I'm fine with the pad idea"*.
+
+   WHICH OF THE SEVEN KINDS IT IS, because the design system above says the
+   burden is to answer that here. IT IS NOT AN EIGHTH KIND: it is a PICTURE of
+   eleven controls that all remain kind 6, A QUANTITY, in the table directly
+   under it — `<input type=range>` with an `<output>`, every one of them, and
+   the pad writes through the same one store. What it could have been is what
+   it already is: eleven sliders. Why that was worse is the whole reason it was
+   asked for — two of the eleven are a POSITION and a DIAMETER at that
+   position, one constriction with two coordinates, and the five vowels sit at
+   particular places in that plane. On two sliders the plane is invisible and
+   "move the constriction forward while opening it" is two gestures.
+
+   SO IT IS A DIAGRAM, and the page already has two of those and one rule for
+   them: `.nu-circ` and `.nu-map`, which take the whole column and keep their
+   ratio. This is the third and it follows both. It is `aria-hidden` in the
+   markup and it takes no focus, because an SVG you drag is not a control; the
+   accessible page is the table below it, unchanged. With this stylesheet off
+   the picture is an inert drawing and nothing is lost — which is the same
+   promise the top of this file makes, tested the same way.
+
+   TWO WEIGHTS OF ONE INK AND NO HUE, exactly as `.nu-tf` argues: `--rule` for
+   what the record already is (the vowels' own places, the driver's territory,
+   an empty track) and `currentColor` for what your hand has done (the handle,
+   the knots, the silhouette). The pair survives forced colours, a monochrome
+   screen and dark mode with no media query, and it means the section wash
+   under it can never be mistaken for a state.
+
+   AND THE ONE PROPERTY THAT IS LOAD-BEARING RATHER THAN DECORATIVE:
+   `touch-action: none` on the surfaces that ARE the control, and nowhere else.
+   ui/atlas.js measured the alternative on the globe — with touch-action left
+   alone the compositor decides whose a drag is before any JS runs, and
+   `preventDefault` cannot take it back. A pad needs both axes, so the pad's
+   face and every LIVE grip wear `.nu-pad-grab` (ui/eight.js puts it on) and
+   decline the browser's scrolling; the ring's empty air and the margins do
+   not, and a swipe there still scrolls the page. `touch-action` INTERSECTS
+   down the ancestor chain, so a child saying `none` inside a page that says
+   nothing is the whole of the mechanism — and it DOES apply to an SVG element,
+   which is the part that had to be measured rather than assumed: at 390 with a
+   real CDP touch, a vertical drag inside the face moves the window 0px and the
+   same drag on the ring's air scrolls it 277. A grip that is GREYED does not
+   get the class, so a swipe over a disabled knot scrolls the page like any
+   other piece of the drawing. */
+/* `#app .nu-pad` AND NOT `.nu-pad`, AND THE ID IS DOING REAL WORK. Two hundred
+   lines up, `#staff svg, #app svg{ max-inline-size: 100% }` stops an abcjs
+   engraving putting the sideways scroll back on the body — and it is an ID
+   selector, so a bare `.nu-pad` cap loses to it and the pad drew 1256px wide on
+   a 1280 screen, measured. The cap has to out-specify that rule to exist at
+   all. 34em is the width past which a diagram stops being a control and starts
+   being a poster; on a phone `100%` is what binds. */
+#app .nu-pad{ display: block; inline-size: 100%; max-inline-size: 34em;
+  block-size: auto; margin-block: .5em; }
+.nu-pad-grab{ touch-action: none; }
+/* the two rings and an empty spoke: the furniture, at the same weight as every
+   other quiet line in this file */
+.nu-pad-ring, .nu-pad-track{ fill: none; stroke: var(--rule); stroke-width: 1; }
+.nu-pad-track{ stroke-width: 2; stroke-linecap: round; }
+.nu-pad-face{ fill: none; stroke: var(--rule-strong); stroke-width: 1.5; }
+.nu-pad-tick{ stroke: var(--rule); stroke-width: .75; stroke-dasharray: 2 3; }
+/* WHERE THE VOWEL TABLE PUTS THE TONGUE — the record's own, so it is `--rule`,
+   and the ones this record actually says are the ink instead. */
+.nu-pad-word{ fill: none; stroke: var(--rule); stroke-width: 1;
+  stroke-dasharray: 3 3; }
+/* EVERY PLACE THE SEEDED DRIVER CAN PUT THE TONGUE. Twenty-five segments, and
+   the opacity is `babble` itself (ui/eight.js), so a record that does not
+   babble draws none of it. */
+.nu-pad-web line{ stroke: var(--rule); stroke-width: 1; }
+/* the line from a vowel's place to yours IS `artic`, and the dot on it is
+   where the tongue goes */
+.nu-pad-artic{ stroke: currentColor; stroke-width: 1; stroke-dasharray: 2 2;
+  opacity: .55; }
+.nu-pad-eff{ fill: currentColor; }
+.nu-pad-hand{ fill: none; stroke: currentColor; stroke-width: 3; }
+.nu-pad-knot{ fill: currentColor; }
+.nu-pad-shape{ fill: color-mix(in srgb, CanvasText 6%, transparent);
+  stroke: currentColor; stroke-width: 1; pointer-events: none; }
+/* A WORD ON THE RING IS THE DOCUMENT'S OWN KEY (ui/eight.js says why), at the
+   one size on this page that is smaller than a `.nu-why` — a diagram's label
+   is not prose and the row's full sentence is in the table under it. */
+/* EVERY WORD ON THE PICTURE IS HALOED IN THE PAPER, and it is a legibility fix
+   with a measurement behind it rather than a flourish. `paint-order: stroke`
+   draws the glyph's outline FIRST and the fill over it, so a 3px paper-coloured
+   stroke is a cut-out that lets a letter be read over whatever it lands on.
+   Measured on the rendered page: at `artic` 0 — the one setting where the whole
+   claim of the drawing is "the vowel owns the tongue" — the effective dot sits
+   exactly on the vowel's letter, and a currentColor letter on a currentColor
+   dot is invisible. The same halo carries "back"/"front"/"wide"/"closed" over
+   the ring they have to cross, and every letter over the driver's web.
+   `var(--paper)` and not white: it is `Canvas`, so it tracks dark mode and
+   forced colours with no media query, like everything else in this file. */
+.nu-pad text{ font-size: 11px; fill: currentColor; opacity: .8;
+  dominant-baseline: middle; paint-order: stroke;
+  stroke: var(--paper); stroke-width: 3px; stroke-linejoin: round; }
+.nu-pad .nu-pad-vlab{ fill: var(--rule-strong); font-size: 13px; opacity: 1; }
+.nu-pad .nu-pad-vlab.is-said{ fill: currentColor; font-weight: 700; font-size: 15px; }
+/* the two ends of each axis, which is how a diagram says what a sentence in
+   the table below says in words */
+.nu-pad .nu-pad-edge{ font-size: 9.5px; fill: var(--rule-strong); opacity: 1;
+  letter-spacing: .04em; }
+/* GREYED, WITH THE REASON PRINTED — the same `.is-off` the whole page uses for
+   "refused", reaching an SVG element for the first time. The reason is a
+   `.nu-why` under the picture AND the row's own in the table, which is one
+   fact (knobs.js `gate.why`) said in both views rather than two facts. */
+.nu-pad .is-off{ opacity: .3; }

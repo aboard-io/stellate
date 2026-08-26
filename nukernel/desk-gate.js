@@ -66,7 +66,7 @@ const DESK = await import(R("audio/desk.js"));
 const STATE = await import(R("ui/state.js"));
 const { deskUnits, masterState, voiceRoster, partKeysOf, resolvedPart,
         derivedPartTone, deskChannelBase, mergeEq,
-        deskBusFeed, BUS_REACH } = DESK;
+        deskBusFeed, BUS_REACH, MAIN_TO_BUS1, FIXED_EDGES } = DESK;
 
 /* ---------- the document, compiled the way ui/eight.js push() does it ------ */
 const GK = "desk.gate.";
@@ -177,9 +177,14 @@ console.log("\nG2  the address is audio/desk.js's, not a second walk");
 console.log("\nG3  every word in the document is the registry's own");
 {
   const doc = clone(TERMS);
+  // `fx: ["chorus"]` came off this fixture on 2026-08-26 with the field it
+  // exercised (Paul: "Don't let me add effects to instruments"). `aux` took its
+  // place, because a fixture that does not name the fourth send is not asking
+  // this check's question about it.
   doc.voices[0].desk = { fader: -2.5, lvl: "back", pan: "hl", rev: "wet",
-                         echo: "touch", room: "none", eq: { lo: 0, mid: -1.5, hi: 2 },
-                         fx: ["chorus"], mute: false, solo: false };
+                         echo: "touch", room: "none", aux: "some",
+                         eq: { lo: 0, mid: -1.5, hi: 2 },
+                         mute: false, solo: false };
   doc.sound.buses = { rev: { name: "plate", ret: "hall", color: "plate" },
                       echo: { name: "slap", time: "d8", fb: "more", tone: "dark" } };
   doc.sound.master = { drive: "warm", glue: "glue", tape: "tape", space: "room" };
@@ -210,8 +215,20 @@ console.log("\nG3  every word in the document is the registry's own");
      "song.js accepts the document's own spelling",
      JSON.stringify((v || {}).errors || "no result"));
   const saved = (v.song && v.song.song ? v.song.song[0] : (v.song || [])[0]) || {};
-  ok(saved.parts && saved.parts.line && eq(saved.parts.line.fx, ["chorus"]),
-     "a per-voice chip survives the round trip",
+  // THE ASSERTION IS REVERSED, NOT DELETED. It read "a per-voice chip survives
+  // the round trip" and checked `saved.parts.line.fx`. There is no per-voice
+  // chip any more and the loader must not resurrect one, so the same line now
+  // proves the opposite; and the fourth send takes over the job of proving that
+  // a NEW word in PARTMIX does survive, which is what the old check was really
+  // for. Both halves of the pair are here on purpose: a check that only says
+  // "no fx" would pass on a loader that dropped everything.
+  ok(saved.parts && saved.parts.line && saved.parts.line.fx === undefined,
+     "NO per-voice chip survives the round trip — `fx` is not a PARTMIX key " +
+     "and song.js drops it the way it drops any word it does not know",
+     JSON.stringify(saved.parts));
+  ok(saved.parts && saved.parts.line && saved.parts.line.aux === "some",
+     "…and the FOURTH send does survive it, which is what proves the loader " +
+     "is walking the registry rather than a remembered list",
      JSON.stringify(saved.parts));
 }
 
@@ -390,17 +407,23 @@ console.log("\nG7  a bus row moves the rack and nothing else on the master");
 console.log("\nG8  a strip's numbers arrive on the parent's units");
 {
   const doc = clone(TERMS);
-  doc.voices[0].desk = { fader: -3, pan: "hl", echo: "some", eq: { hi: 4 },
-                         fx: ["chorus"] };
+  doc.voices[0].desk = { fader: -3, pan: "hl", echo: "some", eq: { hi: 4 } };
   const box = pushBoxes(doc)[0];
   const units = deskUnits(mkUnits(), ADDR, box, null, null);
   ok(near(units.v0.lvl, 0.7079, 5e-5), "fader -3 dB is lvl 0.7079",
      String(units.v0.lvl));
   ok(near(units.v0.pan, -0.35), "pan `hl` is -0.35", String(units.v0.pan));
   ok(near(units.v0.del, 0.3), "echo `some` is del 0.3", String(units.v0.del));
-  ok(units.v0.inserts && units.v0.inserts[0] &&
-     units.v0.inserts[0].module === "insert_chorus",
-     "a chip is an insert named insert_chorus",
+  // REVERSED, 2026-08-26, and kept as a check rather than removed. It read "a
+  // chip is an insert named insert_chorus" and it was the proof that a
+  // per-voice chip reached the engine. It is now the proof that it CANNOT: the
+  // fixture writes `desk.fx` no more, PARTMIX declares it no more, and if a
+  // future round wires a chip back onto a track without asking Paul, this line
+  // is what says so. The SECTION's own chip is a different fact and G8's
+  // neighbours still exercise it.
+  ok(!(units.v0.inserts && units.v0.inserts.length),
+     "NO per-voice chip reaches the units — effects are bus and board stuff " +
+     "(Paul, 2026-08-26) and there is no field left to carry one",
      JSON.stringify(units.v0.inserts));
   ok(units.v0.sampler && units.v0.sampler.strip &&
      near(units.v0.sampler.strip.hi, 4),
@@ -862,7 +885,18 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
                    sel: s.dataset.sel || null,
                    strip: !!s.closest('#boardtbl [data-col="ch"]') })));
   const onStrip = sel.filter((s) => s.strip);
-  const notRack = sel.filter((s) => !/^(master|bus)\|/.test(s.sel || ""));
+  // `master.fx` JOINED THE REGEX ON 2026-08-26 and it is a different SHAPE, not
+  // a loophole. Every other control on this board is a single choice and comes
+  // from `selectEl`, which keys `master|<knob>` / `bus|<bus>|<knob>` with a
+  // pipe. The record's character chain is the one MULTIPLE choice on the page
+  // (Paul, 2026-08-24: "Wherever we allow multiple selections use a standard
+  // multiselect form element please"), so it comes from `sheet()` instead, and
+  // the sheets' own key convention is a DOT (`prod.verb`, and `eng.fx` before
+  // this round moved the chip off the instruments and onto the main strip).
+  // The claim the check makes is unchanged — every menu outside `#app` belongs
+  // to the rack or to the main — and what widened is which spellings the rack
+  // and the main are allowed to use.
+  const notRack = sel.filter((s) => !/^(master[|.]|bus\|)/.test(s.sel || ""));
   ok(onStrip.length === 0,
      "NOT ONE DROPDOWN ON THE CHANNEL STRIP — the twenty-three per-instrument " +
      "menus of 2026-08-24 are still knobs (Paul: \"the options for each " +
@@ -1143,8 +1177,8 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     const box = pushBoxes(clone(TERMS))[0];
     const feed = deskBusFeed(box, null, null);
     ok(feed.rev.movable === true && feed.echo.movable === false &&
-       feed.room.movable === false,
-       "one of the three buses reaches the main with a fader this page can " +
+       feed.room.movable === false && feed.aux.movable === false,
+       "one of the FOUR buses reaches the main with a fader this page can " +
        "move, and it is bus 1 — `buses.rev.ret` -> state.reverb -> fx_bus rgain",
        JSON.stringify(Object.fromEntries(Object.entries(feed)
          .map(([k, v]) => [k, v.movable]))));
@@ -1189,14 +1223,21 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
         wrongDraw.push(bus + ": drawn LIVE and it reaches nothing");
       if (want.why != null && !body.includes(want.why))
         wrongSaid.push(bus + ": the reason is not printed on the page");
-      if (st.goes !== want.to) wrongDraw.push(bus + ": goes-to says " + st.goes);
+      // A GROUP'S `goes to` IS THE ROUTE'S ANSWER, not BUS_REACH's — the table
+      // carries `to: null` for a group precisely so there is one owner of that
+      // fact (audio/desk.js, the note on BUS_REACH). So the cell is checked
+      // against `deskBusFeed`'s own chain, which is the model the page drew
+      // from, and a drift between them is what this line is for.
+      const wantGoes = want.to || feed[bus].chain.join(" → ");
+      if (st.goes.indexOf(wantGoes) !== 0)
+        wrongDraw.push(bus + ": goes-to says " + st.goes + ", route says " + wantGoes);
     }
     ok(!wrongDraw.length, "every bus strip is drawn the way BUS_REACH says it " +
        "is wired — bus 1 a live return, bus 2 refused at the engine's unity, " +
-       "bus 3 no fader at all, and each says where it goes",
+       "the two GROUPS no fader at all, and each says where it goes",
        wrongDraw.join("; "));
-    ok(!wrongSaid.length, "NOTHING REACHES NOTHING IN SILENCE — the two buses " +
-       "that cannot be moved print audio/desk.js's own sentence, verbatim",
+    ok(!wrongSaid.length, "NOTHING REACHES NOTHING IN SILENCE — the three " +
+       "buses that cannot be moved print audio/desk.js's own sentence, verbatim",
        wrongSaid.join("; "));
     const homeless = await page.evaluate(() => {
       const t = document.body.innerText, out = [];
@@ -1366,6 +1407,196 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      invented for it — and this check names it, so a second blank appearing
      anywhere is a failure with the cell printed rather than a slow slide back
      to a grid full of holes. */
+  /* ================= G14 · FOUR BUSES, AND WHERE THEY GO ================
+     (Paul, 2026-08-26: "Don't let me add effects to instruments. That's bus
+     and board stuff. But let me have up to four buses and a way to direct them
+     to each other.")
+
+     TWO THINGS HAVE TO BE TRUE AT ONCE and only one of them is about drawing.
+     A board can show four columns and a routing menu in an afternoon; what
+     makes it not a picture is that MOVING THE MENU MOVES WHAT THE ENGINE IS
+     HANDED. So this reads `__nuMix()` — the unit table for the sounding bar —
+     the way G12 does, and it asks the question that only a GROUP can answer:
+     the same send, aimed two ways, has to arrive on two different numbers.
+
+     AND THE OTHER HALF IS AN ABSENCE, which is harder to check and is why it
+     is checked on the rendered page rather than in the source: there is no
+     per-voice effects control anywhere. Not disabled — absent. */
+  console.log("\n" + "G14 four buses, and a way to direct them to each other");
+  {
+    // ---- 1 · FOUR, AND THE REGISTRY IS WHERE THE NUMBER COMES FROM
+    ok(F.BUSES.length === 4,
+       "the registry declares FOUR buses: " +
+       F.BUSES.map((b, i) => "bus " + (i + 1) + " " + b.label +
+         " (" + (b.engine || "a group") + ")").join(", "),
+       String(F.BUSES.length));
+    const engines = F.BUSES.filter((b) => b.engine).map((b) => b.engine);
+    ok(eq(engines, ["rev", "del"]),
+       "…and exactly two of them are the engine's own accumulators (rev, del) " +
+       "— the parent's third is `pp` and nothing on this page can feed it",
+       JSON.stringify(engines));
+    const cols = await page.evaluate(() =>
+      [...document.querySelectorAll('#racktbl thead th[data-col="bus"]')]
+        .map((t) => t.textContent));
+    ok(cols.length === 4, "and the board draws four bus strips: " +
+       JSON.stringify(cols), String(cols.length));
+
+    // ---- 2 · NOT ONE PER-VOICE EFFECTS CONTROL, ANYWHERE ON THE PAGE.
+    // Walked over every control the page has rather than over a list of
+    // selectors this gate remembers, because the failure mode is a NEW widget
+    // in a future round, not the one that was just deleted. The test is the
+    // registry's own effect names: if a control offers `chorus` or `crunch`
+    // against a VOICE, it is a per-voice insert whatever it is called.
+    const chips = await page.evaluate((fxKeys) => {
+      const bad = [];
+      for (const c of document.querySelectorAll("select, input, button")) {
+        const k = c.dataset.k || c.dataset.sel || c.name || c.id || "";
+        // the SECTION's own chip is a different fact and is untouched — it is a
+        // record-wide character (`sound.fx`), which is board stuff by Paul's own
+        // division. It is addressed without a voice name; a per-voice control
+        // carries one.
+        const words = [...(c.options || [])].map((o) => o.value);
+        const offersFx = words.some((w) => fxKeys.includes(w));
+        if (!offersFx) continue;
+        if (/^(eng|b)[.|]/.test(k)) bad.push(k);
+      }
+      return { bad, multi: document.querySelectorAll("select[multiple]").length };
+    }, Object.keys(F.FX));
+    ok(!chips.bad.length,
+       "NO PER-VOICE EFFECTS CONTROL IS DRAWN ANYWHERE — not on the voice's " +
+       "own tab and not on the channel board (Paul: \"Don't let me add effects " +
+       "to instruments\")", JSON.stringify(chips.bad));
+    ok(!F.PARTMIX.some((f) => f.key === "fx"),
+       "…and there is no field left for one to write: PARTMIX declares no `fx`",
+       F.PARTMIX.map((f) => f.key).join(","));
+
+    // ---- 2b · AND THE OTHER HALF OF THE SENTENCE. "That's bus and board
+    // stuff" is an ADDRESS, not only a refusal, so the round is not done when
+    // the chip is gone — it is done when the chain has a home that reaches the
+    // engine. `sound.fx` is the record's, ui/engineer.js draws it under the
+    // rack board, and desk-doc's `writeBoxFx` (a writer with no caller since
+    // the day it was written) is what it goes through. Asserted on the units
+    // because a control that writes a key nothing reads is the same failure in
+    // the other direction.
+    {
+      const d2 = clone(TERMS);
+      d2.sound = { ...(d2.sound || {}) };
+      DD.writeBoxFx(d2, ["crunch"]);
+      ok(eq(DD.boxFxOf(d2), ["crunch"]),
+         "the RECORD's chain is writable through desk-doc — the door that had " +
+         "no caller has one", JSON.stringify(DD.boxFxOf(d2)));
+      const bx = pushBoxes(d2)[0];
+      const u2 = deskUnits(mkUnits(), ADDR, bx, null, null);
+      const ins = (u2.v0.inserts || []).map((i) => i.module);
+      ok(ins.includes("insert_higain"),
+         "…and it REACHES THE UNITS: a record chip is an insert on every " +
+         "seated voice (crunch -> insert_higain), which is the whole of " +
+         "\"that's bus and board stuff\" said in the engine's own words",
+         JSON.stringify(ins));
+      const one = pushBoxes(clone(TERMS))[0];
+      ok(!((deskUnits(mkUnits(), ADDR, one, null, null).v0.inserts || []).length),
+         "…and the shipped chant, which asks for no chain, still gets not one " +
+         "insert — absent is today on this axis too");
+    }
+
+    // ---- 3 · THE CYCLE IS REFUSED, IN THE MODEL AND ON THE PAGE.
+    // A group may be aimed at another group, so a loop is two clicks away. The
+    // model falls back to the shipped fold and says `cycle`; the page greys the
+    // option that would close it, with the reason printed, which is this
+    // board's own standing precedent.
+    const loop = F.busRoute({ room: { to: "aux" }, aux: { to: "room" } });
+    ok(loop.room.cycle && loop.aux.cycle &&
+       loop.room.engine === "rev" && loop.aux.engine === "rev",
+       "a cycle is REFUSED and falls back to the shipped fold (bus 1) rather " +
+       "than clamped — a clamped loop would be a route the tape does not have",
+       JSON.stringify(loop));
+    ok(F.busToOk({}, "room", "aux") === true &&
+       F.busToOk({ aux: { to: "room" } }, "room", "aux") === false &&
+       F.busToOk({}, "room", "room") === false,
+       "…and the refusal is measured ON THE MOVE: aiming bus 3 at bus 4 is " +
+       "fine until bus 4 points back, and a bus may never aim at itself");
+
+    // ---- 4 · THE PROOF. A GROUP'S SEND, AIMED TWO WAYS, LANDS ON TWO
+    // DIFFERENT NUMBERS IN THE ENGINE'S OWN REPORT.
+    //
+    // This is the whole round in one check. Everything above is a drawing and
+    // an arithmetic; `__nuMix()` is the table the parent was handed for the bar
+    // that is sounding, so a difference here is a difference in the tape.
+    // Driven like a person: the send is a range with words on its stops and the
+    // aim is a `<select>`, so each is moved the way its own element is moved,
+    // and the page is given a bar to recompile between moves.
+    const routed = await page.evaluate(async () => {
+      const wait = () => new Promise((r) => setTimeout(r, 700));
+      const drive = (k, word) => {
+        const el = document.querySelector('input[data-k="' + k + '"]');
+        if (!el) return false;
+        for (let i = +el.min; i <= +el.max; i++) {
+          el.value = String(i);
+          el.dispatchEvent(new Event("input", { bubbles: true }));
+          if (el.getAttribute("aria-valuetext") === word) {
+            el.dispatchEvent(new Event("change", { bubbles: true })); return true; }
+        }
+        return false;
+      };
+      const aim = (v) => {
+        const s = document.querySelector('[data-sel="bus|room|to"]');
+        if (!s) return false;
+        s.value = v;
+        s.dispatchEvent(new Event("change", { bubbles: true }));
+        return s.value === v;
+      };
+      const sums = () => {
+        const m = window.__nuMix(); if (!m) return null;
+        let rev = 0, del = 0;
+        for (const u of Object.values(m.units)) { rev += u.rev; del += u.del; }
+        return { rev: +rev.toFixed(4), del: +del.toFixed(4) };
+      };
+      const name = document.querySelector('#boardtbl thead th.nu-ch span').textContent;
+      // a real send into bus 3, so there is something to route
+      const sent = drive("b|room|" + name, "drown"); await wait();
+      const at1 = sums();
+      const aimed = aim("echo"); await wait();
+      const at2 = sums();
+      const backAim = aim(""); await wait();
+      const at3 = sums();
+      drive("b|room|" + name, "as it stands"); await wait();
+      return { name, sent, aimed, backAim, at1, at2, at3 };
+    });
+    ok(routed.sent && routed.aimed,
+       "a bus-3 send and a bus-3 aim are both reachable on the rendered page",
+       JSON.stringify(routed));
+    ok(routed.at1 && routed.at2 &&
+       routed.at2.del > routed.at1.del && routed.at2.rev < routed.at1.rev,
+       "AIMING BUS 3 AT BUS 2 MOVES WHAT THE ENGINE IS HANDED — the same " +
+       "send leaves `rev` and arrives on `del` in __nuMix().units[]: " +
+       JSON.stringify(routed.at1) + " -> " + JSON.stringify(routed.at2),
+       JSON.stringify(routed));
+    ok(routed.at3 && eq(routed.at3, routed.at1),
+       "…and clearing the aim puts the numbers back exactly — absent is the " +
+       "fold this desk has always done, which is the absent-is-today law " +
+       "applied to a ROUTE rather than to a level",
+       JSON.stringify({ at1: routed.at1, at3: routed.at3 }));
+
+    // ---- 5 · THE ONE BUS-TO-BUS SEND THAT DOES REACH THE ENGINE IS NAMED,
+    // AND IT IS NOT DRAWN TWICE. fx_bus.dsp:221 mixes the main's dry into bus 1
+    // at `0.5*mrev`, and `mrev` is the master's `space` chip. The page has to
+    // say so — an edge nobody knows about is the same as no edge — and it must
+    // NOT grow a second control for it.
+    const said = await page.evaluate(() => document.body.innerText);
+    ok(said.includes(MAIN_TO_BUS1.why),
+       "the page prints the one live bus-to-bus send in the engine's own " +
+       "words, and points at the control that owns it (`space`)");
+    for (const e of FIXED_EDGES)
+      ok(said.includes(e.why),
+         "…and the fixed edge " + e.from + " -> " + e.to + " at " + e.amount +
+         " is printed rather than drawn as a knob that cannot move");
+    const spaceCtl = await page.evaluate(() =>
+      document.querySelectorAll('[data-sel^="master|space"]').length);
+    ok(spaceCtl === 1,
+       "…with exactly ONE control for it on the page — one owner per fact, and " +
+       "the owner is the master strip's `space`", String(spaceCtl));
+  }
+
   console.log("\n" + "G13 the split Paul asked for, counted on the page");
   {
     const boards = await page.evaluate(() => {

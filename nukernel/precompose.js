@@ -173,6 +173,65 @@
     // right for a groove and wrong for a church
     gospel:    { contour: "arch", land: "fifth" },
     doowop:    { contour: "arch", land: "third" },
+    // — AND THE WORLD ROUND'S (2026-08-26) —
+    // Sixty anchors landed and twenty-four of them take a row here, which is
+    // roughly the proportion the table already ran at (24 of 139). The other
+    // thirty-six take their family row on purpose: `roots`' own line —
+    // statement, statement, departure, return — is what a mento, a fado, a
+    // trot, a kroncong and a luk thung song actually do, and writing a row
+    // that repeats the family's values would be the photocopy this table
+    // exists to avoid.
+    //
+    // the OSTINATO anchors: a figure that repeats and does not travel. A son
+    // guajeo, a salsa montuno, a sebene guitar, a benga line, an mbaqanga
+    // cycle and the Sleng Teng bass are all the same musical object, and the
+    // family rows they sit in (`roots`' strophe, `groove`'s fall, `club`'s
+    // hover) all describe a line that GOES somewhere.
+    son:       { cell: "riff",   contour: "zig",    sent: "plain", len: "two" },
+    salsa:     { cell: "riff",   contour: "zig",    sent: "plain", len: "two" },
+    soukous:   { cell: "riff",   contour: "zig",    sent: "plain", len: "two" },
+    benga:     { cell: "riff",   contour: "zig",    sent: "plain", len: "two" },
+    mbaqanga:  { cell: "riff",   contour: "zig",    sent: "plain", len: "two" },
+    dancehall: { cell: "riff",   contour: "zig",    reg: "low",    len: "two" },
+    // the RIFF-BAND and BLOCK anchors: a mambo, a merengue jaleo, a baião and
+    // a Kansas City head are all a short figure said again, hard.
+    mambo:     { cell: "even",   contour: "insist", sent: "plain", len: "two" },
+    merengue:  { cell: "even",   contour: "insist", sent: "plain", len: "two" },
+    forro:     { cell: "even",   contour: "insist", sent: "plain", len: "two" },
+    rumbacatalana: { cell: "even", contour: "insist", sent: "plain", len: "two" },
+    swing:     { cell: "riff",   contour: "insist", sent: "plain", land: "seventh" },
+    // the WRITTEN VIRTUOSO anchors: a choro, a rag, a reel and a kolo are
+    // composed tunes that run, and `roots`' four-bar strophe is the one thing
+    // they are not
+    choro:     { cell: "gallop", contour: "arch",   sent: "vary",  land: "fifth" },
+    ragtime:   { cell: "pickup", contour: "arch",   sent: "vary" },
+    irishtrad: { cell: "even",   contour: "zig",    sent: "vary" },
+    balkanbrass: { cell: "even", contour: "zig",    sent: "vary",  len: "two" },
+    bluegrass: { cell: "walkup", contour: "rise",   sent: "vary",  len: "two" },
+    huayno:    { cell: "even",   contour: "zig",    sent: "plain", len: "two" },
+    // the SUNG BALLADS that arch rather than restate: the crooner's row,
+    // applied to the four traditions that learned the same decade of radio
+    bolero:    { cell: "pickup", contour: "arch",   land: "third", sent: "vary" },
+    shidaiqu:  { cell: "pickup", contour: "arch",   land: "third", sent: "vary" },
+    filmi:     { cell: "pickup", contour: "arch",   land: "third", sent: "vary" },
+    cantopop:  { contour: "arch", land: "third" },
+    // ...and the three that FALL over a long breath instead: an arabesk
+    // string unison, an enka line and a rebetiko taximi are all one long idea
+    // coming down
+    arabesk:   { cell: "long",   contour: "fall",   sent: "vary",  len: "four" },
+    enka:      { cell: "long",   contour: "fall",   sent: "vary",  len: "four" },
+    rebetiko:  { cell: "hang",   contour: "fall",   sent: "vary" },
+    // the CALL-AND-ANSWER anchors: a boli, a qawwali refrain, a kwela
+    // pennywhistle phrase and a shaabi line are all a call somebody answers
+    bhangra:   { cell: "call",   contour: "insist", sent: "vary",  len: "two" },
+    qawwali:   { cell: "call",   contour: "rise",   sent: "vary" },
+    kwela:     { cell: "call",   contour: "rise",   sent: "vary",  len: "two" },
+    shaabi:    { cell: "call",   contour: "fall",   sent: "vary" },
+    // and the two the family row is plainly wrong about: a shape-note tune is
+    // a hymn (the same row `hymn` takes), and an anadolu rock record is a
+    // TÜRKÜ played on a fuzz guitar — a melody, where `band`'s row is a shout
+    sacredharp:{ cell: "three",  contour: "arch",   sent: "aabb",  len: "four" },
+    anadolurock: { cell: "three", contour: "fall",  sent: "vary",  len: "four" },
   };
 
   /* ======================================================================

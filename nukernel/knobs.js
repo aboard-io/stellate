@@ -20,6 +20,12 @@
 //   quiet    a key that EXISTS and is measured silent. Never a control; the
 //            row prints the reason instead, with its number in it.
 //
+//   tract    the vowel and consonant tables read out of
+//            engine/faust/dsp/tract.lib. NOT a probe: `vowel` is crossfaded
+//            against the tongue knobs inside the compiled module, so there
+//            is nothing for `voiceUnit` to be asked. The pad in ui/eight.js
+//            plots your tongue against the vowel's, which is what `artic` IS.
+//
 // THE CENSUS: 247 controls across 27 voices —
 //   tract_voice 22
 //   hammond 18
@@ -88,6 +94,88 @@
       "tract_voice": 22,
       "bass_reese": 4,
       "bass_wobble": 6
+    },
+    "tract": {
+      "from": "engine/faust/dsp/tract.lib",
+      "vowels": [
+        "i",
+        "e",
+        "a",
+        "o",
+        "u"
+      ],
+      "vowel": {
+        "tp": [
+          0.598,
+          0.63,
+          0.168,
+          0.265,
+          0.52
+        ],
+        "td": [
+          0.06,
+          0.554,
+          0.06,
+          0.102,
+          0.068
+        ],
+        "tl": [
+          0.42,
+          0.095,
+          0.42,
+          0.32,
+          0.268
+        ],
+        "lp": [
+          0.695,
+          1,
+          0.885,
+          0.178,
+          0.118
+        ]
+      },
+      "con": {
+        "name": [
+          "b",
+          "d",
+          "g",
+          "m",
+          "n",
+          "s",
+          "f",
+          "l"
+        ],
+        "pl": [
+          0.5,
+          0.8,
+          0.55,
+          0.5,
+          0.8,
+          0.84,
+          0.5,
+          0.78
+        ],
+        "di": [
+          0.5,
+          0,
+          0,
+          0.5,
+          0,
+          0.055,
+          0.5,
+          0.2
+        ],
+        "ot": [
+          0,
+          1,
+          1,
+          0,
+          1,
+          1,
+          0,
+          1
+        ]
+      }
     },
     "voices": {
       "modeld": {

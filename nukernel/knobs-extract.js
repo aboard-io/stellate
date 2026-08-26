@@ -406,6 +406,68 @@ function stepFor(lo, hi, derived) {
   return 0.00001;
 }
 
+/* ---------- THE TWO TABLES THE PAD IS DRAWN ON, READ OUT OF tract.lib ------
+   A DEPARTURE FROM THIS FILE'S OWN LAW, ARGUED RATHER THAN SLIPPED IN. The
+   banner above says "the extraction is a MEASUREMENT, not a parse", and that
+   law is about not believing the source text about what a key DOES — a probe
+   settles that, and it settles it better than a parser (`modeld 0/17`). This
+   is a different question and no probe can answer it: `vowel` is crossfaded
+   against the four tongue knobs INSIDE THE COMPILED MODULE
+   (tract_voice.dsp:104), so `voiceUnit` never sees a vowel's tongue position
+   and there is nothing to ask.
+
+   WHY THE NUMBERS ARE NEEDED AT ALL. The pad in ui/eight.js plots your tongue
+   against the VOWEL'S, because that is the whole reading of `artic`: at 0 the
+   vowel owns the tongue and your handle does nothing, which is what Paul
+   reported as "the tongue doesn't work" (2026-08-26). A picture that could not
+   draw the vowel's own point could not draw the gate, and typing twenty
+   numbers into a view module is the by-hand copy this codebase forbids —
+   tract.lib is their one owner and `--check` now fails if it moves them.
+
+   THE CONSONANTS COME TOO, and for a reason that is exactly as load-bearing:
+   `ktBabble` walks from a consonant articulation to a vowel's on a smoothstep
+   (tract.lib:363-367), and both coordinates move together on the same `m`, so
+   the set of tongue positions the driver can reach is EXACTLY the union of the
+   segments between each tongue-owning consonant and each vowel. `ktConOt` is
+   which consonants those are — a labial does not move the tongue. That union
+   is drawable, and drawing it is how `babble` says "the driver has this
+   territory and you do not" instead of the page saying it in a sentence
+   nobody reads. */
+const TRACTLIB = "engine/faust/dsp/tract.lib";
+function tractTables() {
+  const src = fs.readFileSync(path.join(ROOT, TRACTLIB), "utf8");
+  const list = (name) => {
+    const m = src.match(new RegExp(
+      name + "\\((\\w)\\) = \\1 : ba\\.listInterp\\(\\(([^)]*)\\)\\)"));
+    if (!m) throw new Error(TRACTLIB + ": no listInterp for " + name);
+    return m[2].split(",").map((s) => {
+      const v = Number(s.trim());
+      if (!Number.isFinite(v)) throw new Error(TRACTLIB + ": " + name + " has a non-number");
+      return v;
+    });
+  };
+  // THE CONSONANTS' NAMES ARE READ TOO, off the line the table documents
+  // itself with ("0 /b/  1 /d/  2 /g/ …"), because a picture that labels a
+  // closure has to call it something and eight letters typed here would be
+  // eight letters that can go out of order with the table under them.
+  const nm = src.match(/^\/\/\s+((?:\d \/\w\/\s*)+)$/m);
+  if (!nm) throw new Error(TRACTLIB + ": no consonant name line");
+  const names = [...nm[1].matchAll(/\/(\w)\//g)].map((m) => m[1]);
+  const vowel = { tp: list("ktVowTp"), td: list("ktVowTd"),
+                  tl: list("ktVowTl"), lp: list("ktVowLp") };
+  const con = { pl: list("ktConPl"), di: list("ktConDi"), ot: list("ktConOt") };
+  // THE ORDER IS THE VOWEL TRIANGLE, i-e-a-o-u (tract.lib), and it is NOT the
+  // order a document writes a vowel in — the letters a record says are remapped
+  // by TRACT_ROW. The row's own `rowOf` is the map and it is measured; this
+  // list is only what row 0 through row 4 SOUND like, so a point can be labelled.
+  const vowels = ["i", "e", "a", "o", "u"];
+  for (const k in vowel) if (vowel[k].length !== 5)
+    throw new Error(TRACTLIB + ": ktVow" + k + " is not five vowels");
+  for (const k in con) if (con[k].length !== names.length)
+    throw new Error(TRACTLIB + ": ktCon" + k + " and the name line disagree");
+  return { from: TRACTLIB, vowels, vowel, con: { name: names, ...con } };
+}
+
 async function build() {
   const SE = require(path.join(ROOT, "engine/faust/voices/state-engine.js"));
   const TE = await import("file://" + path.join(ROOT, "nukernel/audio/to-engine.js"));
@@ -786,7 +848,7 @@ async function build() {
     census[dsp] = out.length;
     total += out.length;
   }
-  return { voices, census, total, budget: SE.BUDGET };
+  return { voices, census, total, budget: SE.BUDGET, tract: tractTables() };
 }
 
 function banner(r) {
@@ -813,6 +875,12 @@ function banner(r) {
     "//   quiet    a key that EXISTS and is measured silent. Never a control; the\n" +
     "//            row prints the reason instead, with its number in it.\n" +
     "//\n" +
+    "//   tract    the vowel and consonant tables read out of\n" +
+    "//            engine/faust/dsp/tract.lib. NOT a probe: `vowel` is crossfaded\n" +
+    "//            against the tongue knobs inside the compiled module, so there\n" +
+    "//            is nothing for `voiceUnit` to be asked. The pad in ui/eight.js\n" +
+    "//            plots your tongue against the vowel's, which is what `artic` IS.\n" +
+    "//\n" +
     "// THE CENSUS: " + r.total + " controls across " + Object.keys(r.census).length + " voices —\n" +
     order.map(([k, n]) => "//   " + k + " " + n).join("\n") + "\n";
 }
@@ -828,7 +896,7 @@ function render(r) {
     '  "use strict";\n' +
     '  return ' + JSON.stringify({ built: new Date().toISOString().slice(0, 10),
       from: "nukernel/knobs-extract.js", total: r.total, budget: r.budget,
-      census: r.census, voices: r.voices }, null, 2).replace(/\n/g, "\n  ") + ";\n" +
+      census: r.census, tract: r.tract, voices: r.voices }, null, 2).replace(/\n/g, "\n  ") + ";\n" +
     "});\n";
 }
 

@@ -241,12 +241,94 @@ STANDING ANSWER IS ALWAYS OFFERED — you can always see the word you are on."*
 appends *", and it is what the record says"*. Without it a loaded document is
 un-editable at exactly the moment it matters.
 
-### 2.4 THE CSS CLASS VOCABULARY — one owner, `nukernel/nu.css`
+### 2.4 THE DESIGN SYSTEM — one owner, `nukernel/nu.css`
 
-Verbatim from design 08, plus the four names this synthesis adds for D3 and D4.
-Two state classes are `is-` prefixed; everything else is `nu-`. **Anything a
-slice needs that is not on this list gets added HERE, not declared in a second
-stylesheet.**
+Paul, 2026-08-26: *"Create a simple design system and use plain HTML buttons
+where appropriate but bring more consistency."*
+
+**THE AUDIT.** Run on the RENDERED page (chromium at 1280×900 and 390×844,
+every tab of both strips clicked, computed styles read back — not read off the
+source). 292 interactive elements, and the number of distinct computed **looks**
+each kind had before the system was written down:
+
+| element | count | looks | what it is |
+|---|---|---|---|
+| `input[range]` | 103 | 4 | a quantity |
+| `input[radio]` | 48 | 1 | a step in a grid |
+| `input[radio]` | 24 | 2 | clipped under a chip on the ring |
+| `button` | 41 | 4 | an action |
+| `button` | 23 | 2 | a tab |
+| `select` | 39 | 2 | a settled choice |
+| `input[checkbox]` | 13 | 2 | a switch |
+| `select[multiple]` | 1 | 1 | an open choice among many |
+| `a[href]` | 0 | — | nothing on the page left it |
+
+…plus the 24 `<label class="nu-opt">` that **are** the widget for the radios
+clipped inside them, in 4 looks of their own.
+
+**The intended looks are the ones argued somewhere in `nu.css`; the rest were
+accidents, and there were four** — which is what "four different slices" turned
+out to mean. Three were visible in the audit itself:
+
+1. a `<button>` inside a `<th>` came out **bold**, because `button { font:
+   inherit }` inherits the table header's weight — 8 of the 23 tabs were a
+   different button from the other 15 for no reason anybody chose. Fixed by
+   `th button, th select { font-weight: 400 }`.
+2. a row of buttons was spaced **three ways**: a literal `" "` text node
+   (`#tabs`, `#motif-tabs`, the producer's rows), `margin-inline-end: .4rem`
+   (`#atlasActs`), and nothing at all. Fixed by one class, `.nu-row`, on the
+   container. The text nodes stay — with the stylesheet off they are what keeps
+   two tabs from reading as one word.
+3. `.is-now`, the page's one spelling of "inverted", **had no writer left**
+   while `.nu-circ .nu-opt.is-on` re-declared its two lines by hand. Fixed by
+   putting the ring's chosen key on `.is-now`'s own selector list and deleting
+   the copy.
+4. (found while measuring the other three) `#atlasActs button` restated the
+   44px tap floor every button already had **and** carried accident 2's margin —
+   one rule doing two things that were both already done. Deleted.
+
+**AFTERWARDS, measured the same way at both widths:** an action is **2 looks** —
+the word button, and the icon button whose padding is 2px so seven fit a 390px
+line (a named exception, argued where it is written); a tab is **1 look**. Every
+other remaining second look is a STATE the browser draws (`:disabled` greys the
+border and the face) or the `min-height: auto` a control gets for being a flex
+item, which is the same 26×26 box by another name. **Seven kinds, each one look
+plus its states.**
+
+**SEVEN KINDS OF CONTROL AND THAT IS ALL THE PAGE NEEDS.** Nothing here is a
+new widget; this is what already exists, reduced, with what each is FOR.
+
+| # | kind | what it is | what it is for |
+|---|---|---|---|
+| 1 | an action | `<button type="button">`, the browser's own chrome, 44px floor | it does something now — play, another take, + line, fork, forget all of it |
+| 2 | a tab | the **same** `<button>`, plus `aria-pressed`, the current one wearing `<mark>` | a tab is not a different widget from an action and must not look like one |
+| 3 | a settled choice | `<select>` in `.nu-sel` | one value, decided once, nobody browses it |
+| 4 | an open choice | `<select multiple>` in `.nu-sheet` — or `.nu-opt` chips over clipped radios where the SHAPE of the field is the point. On the shipped record that second form is the circle of fifths and nothing else (measured: 24 chips, all on the ring), though `ui/sheets.js` still builds one for any single-choice sheet that asks | comparing many musical options at a time |
+| 5 | a switch | `<input type="checkbox">` at `--box`, its sentence in the `<label>` | one fact that is on or off |
+| 6 | a quantity | `<input type="range">` + `<output>`; 44px in a row, `--cell`-high in a grid | a continuous or ordered number |
+| 7 | a step | `<input type="radio">`/`checkbox` at `--box` in a `.nu-grid` cell | one of sixteen — WCAG 2.2's 24px dense-grid floor applies, not `--tap` |
+
+…and **one thing that is not a control at all**: `<a href>`, which until
+2026-08-26 the page had none of. A link is the only element here that LEAVES the
+page, so it is the only one that keeps an underline (`.nu-wiki`).
+
+**FOUR STATES, and any kind may wear them.** They are adjectives, not widgets:
+`.is-on` / `:checked` chosen · `.is-off` / `:disabled` refused (**greyed, never
+hidden, reason printed**) · `.is-quiet` inert (`knobs.js`'s `quiet`) ·
+`<mark>` / `.is-now` **THE ONE** — the browser's own highlight, reserved for the
+sounding step and the tab you are on, which is why `.nu-here` is a rule down the
+row and not a tint.
+
+**HOW TO ADD SOMETHING.** If it is one of the seven, use the seven. If it is
+not, the burden is to say which of the seven it could have been and why that was
+worse, in prose, in `nu.css` — the way every other decision in this codebase is
+written down. A slice may not carry its own look; there is no second stylesheet.
+
+#### 2.4.1 THE CLASS VOCABULARY
+
+Verbatim from design 08, plus the names later rounds add. Two state classes are
+`is-` prefixed; everything else is `nu-`. **Anything a slice needs that is not on
+this list gets added HERE, not declared in a second stylesheet.**
 
 | class | owner of the inside | what `nu.css` guarantees |
 |---|---|---|
@@ -265,14 +347,74 @@ stylesheet.**
 | `.nu-tf-row` `.nu-tf` `.nu-tf-was` `.nu-tf-is` `.nu-tf-ref` | shell | THE SEVEN DESIGNING BUTTONS, DRAWN (2026-08-25, Paul: *"'backwards shift left shift right upside down up a step down a step wider' can be icons"*). `.nu-tf-row` is the row and cuts its buttons' padding to 2px so the seven fit one 390px line at ≥44px; `.nu-tf` is the aria-hidden, `pointer-events:none` picture inside each — one shared five-note contour with the operation done to it, `.nu-tf-was` in `--rule` and `.nu-tf-is` in `currentColor` over the `.nu-tf-ref` baseline. **This is the only icon on the page and it narrows rather than repeals Phase 1's "No icons anywhere: words instead"** — those are actions with no visual form, these are geometric operations on a shape you are looking at. The word stays in the DOM as a `.nu-vh` span, so with the stylesheet off the row reads as the seven words in order. |
 | `.nu-hint` | any | small dim explanatory text |
 | `.nu-here` (on a `<tr>`) | shell | the row you are WRITING, in the form list — a heavy `border-inline-start` on its first cell. **Not `<mark>`**: `<mark>` is the browser's own highlight, the only one this page uses, and in that same cell it already means *this section is SOUNDING* (the playhead writes inside the button). Two facts drawn identically is the conflation 2026-08-24 undid. A rule and not a tint, for the reason the step grid refuses a zebra. Added 2026-08-25. |
+| `.nu-row` | any | **a strip of buttons, spaced once** — `display:flex; flex-wrap:wrap; gap:.4em`. One name for what was three ad-hoc spacings (2026-08-26's audit). `.nu-tf-row` restates a tighter `.25em`, because seven 46px icons plus six .4em gaps is 374px against a 366px row and the seven went to two lines — measured. |
+| `.nu-wiki` `.nu-kind` | shell | **the article this record IS**, beside `#title` (2026-08-26, Paul: *"add actual Wikipedia links for each genre we have at the top by the title"*). The one `<a href>` on the page and so the one underline; body size and weight, because the record's name is the heading and the article is a footnote to it. `.nu-kind` is a REAL span carrying "the artist" / "the work" / "the broader" for the 31 of 191 rows that are not a genre article — not a `::after`, which a stylesheet-off page cannot print. |
+| `.nu-rec` | engineer (D3) | the record-level band under the board — the flow sentence, the character chain, the routing note and the edge list, all facts about the whole record rather than one strip. A top rule and nothing else: a border on four sides would make it look like a third table. |
 | `.nu-vh` | any | visually hidden, screen-reader only (lifted from `band.css:60-61`) |
-| `.is-now` | any | the sounding thing — the playhead's inversion |
+| `.is-now` | any | **the inversion, and its one owner.** `background: var(--ink); color: var(--paper)` — this page's only spelling of "this one is on, and you can see it across the room". 2026-08-26's audit found the name had no writer left in nukernel/ (the playhead says *sounding* with `<mark>`) while the circle of fifths had copied its two declarations out by hand; the ring's chosen key is on this selector now and the copy is gone. |
 | `.is-off` | any | **greyed, not hidden.** `.nu-opt:has(:disabled)` gets it free, so a slice only sets `input.disabled = true` and the grey follows. |
 
 Custom properties, fixed: `--tap: 44px` (an isolated control) · `--box: 26px`
 (a checkbox or radio) · `--cell: 36px` (one step of a sixteen-step grid) ·
-`--bar-h: 52px` · `--head-h: 38px`. The 36px cell clears WCAG 2.2 AA Target Size
+`--bar-h: 52px` · `--head-h: 38px` · `--wash: 4%` (the section colour, §2.4.2). The 36px cell clears WCAG 2.2 AA Target Size
 Minimum (24px) — the criterion that exists for dense equally-spaced grids.
+
+#### 2.4.2 A COLOUR PER SECTION
+
+Paul, 2026-08-26: *"Give each section a slightly different color."*
+
+**Which "section".** A record also has sections — head, verse, bridge — and they
+are drawn as ROWS of the form list, cells of a voice's table and tiles of the
+score ribbon. Colouring **those** is a different feature: they are never blocks
+you scroll past, they are already spoken for by the playhead, and a tint on them
+would land in the very cells `<mark>` and `.nu-here` share, which is the
+conflation 2026-08-24 spent a day undoing. What takes the wash is the seven
+`<section>`s a reader scrolls: `#atlas`, the five `.nu-ax` axes, and `#board`.
+
+**It is arithmetic on an index, not a palette.** A section's `--sec` is its
+ordinal and the hue is `--sec × 137.5deg` — the golden angle, which is what you
+use when you do not know how many you will need. The ladder is written modulo
+twelve (`#app > .nu-ax:nth-child(12n+k)`), so a page of thirteen sections does
+not run out; the thirteenth reuses the first hue, twelve blocks away. `#atlas`
+(0) and `#board` (6) are hand-numbered, because neither is a child of `#app` and
+no `:nth-child()` can count them into the run — they take the indices they would
+have if the page were one list. That **6** is a number somebody must change if a
+sixth axis ever lands, and it is stated rather than engineered around: twelve
+golden-angle steps already cover the wheel at ~30°, so beyond twelve blocks some
+pair is close whatever the scheme.
+
+**It moves `--paper`, and that is the whole mechanism.** `--paper` has always
+meant *the ground you are standing on* — what the sticky `<h2>` paints itself
+with, what the pane's scroll-shadow gradients fade to, what a grid's sticky first
+column and the circle's face sit on. Redefining it on the section makes all of
+those follow with no second rule. `--rule` / `--rule-strong` / `--zebra` are
+mixed against `Canvas` and not against `--paper`, so **the wash moves the ground
+and never the ink**.
+
+**Measured on the rendered page.** Light: paper goes from `#ffffff` to between
+`#fff7f6` and `#fdfdf8`, and CanvasText on the darkest of them is 19.8∶1 (AAA
+wants 7). Dark: from `#121212` to between `#191413` and `#181814`, 17.8∶1. Every
+rule on the page stays `#9e9e9e`. The farthest two grounds are 11.7 units apart
+in sRGB; the nearest ground to `<mark>` is 246 and to `.is-now` 432 — **the tint
+cannot be mistaken for a state**. Full-bleed the way `.nu-bar` already does it,
+so it reads as ground and not as a box: every section's content box is at the
+same x it was and `scrollWidth === innerWidth` at 390 and 1280.
+
+`--wash` goes to `0%` under `prefers-contrast: more` and `forced-colors: active`
+— one property, one place. Dark mode needs no query: the mix is against
+`Canvas`, which `color-scheme` already swapped. With the stylesheet off the
+colour vanishes and nothing is lost, because the wash says nothing the `<h2>`
+does not already say in words.
+
+**The same `--wash` dresses the two GROUP columns of the rack board** (bus 3 and
+bus 4 — `engine: null` in `fields.js` BUSROWS, no return of their own, their
+sends summed into whichever bus they are aimed at). It is painted as a
+translucent `linear-gradient` **image** and not a `background-color`, which cost
+a measurement: a colour *replaces* the zebra, so the two columns came out a flat
+0.96 while their neighbours alternated 1.00 / 0.93 — the columns meant to read
+quieter read *lighter* than every other row. An image paints over whatever
+background-color the cell already has, so a zebra row under the wash is 0.89 and
+a plain one 0.96, both a step darker than the cell beside them.
 
 **The 617px measurement, and what replaced it.** This paragraph read: "The 36px
 cell resolves the one real tension, and it is the parent's own answer
@@ -559,12 +701,23 @@ measured and could not finish this round.
 10. **`fitReg`** (`band-kit.js:1379`) moves a seat to the nearest register the
     instrument can hold — measured 19% → 7% of seats out of compass. Precompose
     writes `G.reg(v)` raw. Ten lines against `instruments.js RANGES`.
-11. **Bus 3 is not the ping-pong.** `pp` is real but it is a per-EVENT field and
-    `state-engine.js:2808` stamps it on DRUM events only; wiring it means editing
-    the parent and re-running its parity gates. Bus 3 stays `room`, and the board
-    says so. Homeless beside it: master `width`/`tilt`/`ceiling`
-    (`desk.js:769`), which round-trip and draw `disabled` with the reason
-    printed, because saying so is cheaper than pretending.
+11. **Bus 3 is not the ping-pong, and neither is bus 4** *(rewritten
+    2026-08-26, and the first sentence stands unchanged)*. `pp` is real but it
+    is a per-EVENT field and `state-engine.js:2808` stamps it on DRUM events
+    only — and its own note adds that it is not sent on SAMPLED drums either
+    ("the sampler mix has no pp bus"), which is nearly every kit here. Wiring it
+    means editing the parent and re-running its parity gates. What changed is
+    the conclusion, not the fact: bus 3 stayed `room` **with no knob of its
+    own**, and it turned out to have had one all along. Bus 3 and bus 4 are
+    **GROUPS** — no engine accumulator, so their sends are summed into whichever
+    bus they are aimed at, and `buses.<bus>.to` is that aim (`fields.js`
+    `busRoute`, `audio/desk.js` `feedSplit`). The fold was always a route; it
+    just had nobody's hand on it. Homeless beside it: master
+    `width`/`tilt`/`ceiling` (`desk.js:769`), which round-trip and draw
+    `disabled` with the reason printed, because saying so is cheaper than
+    pretending — and **bus 2's return**, which is a compiled slider the parent
+    nails to a literal (recipe:
+    `bus-2-return-needs-one-line-in-the-parent.md`).
 12. **A per-section desk is not expressible.** Right for the document's Sound
     axis today; wrong the first time somebody wants a chorus louder than a verse.
 13. **`cast.part` collapses to line/pad.** `eight.js:39` offers seven parts and
@@ -634,11 +787,18 @@ installed on this machine; the builds that exist are
    send to `tone.verb`, so the moment a return opens, wetness that was silently
    discarded becomes audible. The chant will not sound like it did yesterday, on
    purpose. Does it sound like a stone room?
-3. **`fx` back on a track** reverses a quoted directive (Paul, 2026-08-17: *"get
-   rid of inserts, reverb, and echo — let me send to bus 1, bus 2, and bus 3
-   instead"*). The argument is that the premise changed — the sends are wired to
-   real returns now, so a chip is only for what must be IN the path. This needs
-   Paul's nod, not a gate's.
+3. **~~`fx` back on a track~~ — ANSWERED, 2026-08-26, and the answer was no.**
+   The ask stood here: *"`fx` back on a track reverses a quoted directive (Paul,
+   2026-08-17: 'get rid of inserts, reverb, and echo — let me send to bus 1, bus
+   2, and bus 3 instead'). The argument is that the premise changed — the sends
+   are wired to real returns now, so a chip is only for what must be IN the
+   path. This needs Paul's nod, not a gate's."* He gave the opposite: *"Don't
+   let me add effects to instruments. That's bus and board stuff. But let me
+   have up to four buses and a way to direct them to each other."* The chip is
+   off PARTMIX and off every surface; the measurement that made the argument (an
+   insert costs a MULTIPLE, a bus costs a CONSTANT) is now the reason there is a
+   fourth bus. `desk-gate` G14 holds it: no per-voice effects control anywhere
+   on the rendered page, and no field left for one to write.
 4. **`--cell: 36px`.** It clears WCAG AA but not the 44px Apple figure. If the
    thumb disagrees on a real phone the answer is one custom property — and since
    the rotation of 2026-08-25 the cost is a taller block rather than a second

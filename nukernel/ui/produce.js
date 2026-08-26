@@ -587,6 +587,13 @@ function notesTable(parent, R, ctx) {
     tr.append(td1);
     tr.append(el("td", line.said.join(", ")));
     const td3 = el("td");
+    // `.nu-row` GOES ON A `<p>` INSIDE THE CELL AND NOT ON THE CELL. It was on
+    // the `<td>` for one edit and that is a trap: `.nu-row` is `display: flex`,
+    // and a `display: flex` child of a `<tr>` stops being a table-cell — the
+    // browser wraps it in an anonymous one and the column stops lining up with
+    // the header above it. The strip is a strip; the cell is a cell.
+    const strip = el("p", null, "nu-row");
+    td3.append(strip);
     const op = (word, k, fn) => {
       const b = el("button", word);
       b.type = "button"; b.dataset.k = k + "|" + i;
@@ -594,7 +601,7 @@ function notesTable(parent, R, ctx) {
       const vh = el("span", " — " + line.sentence, "nu-vh");
       b.append(vh);
       b.addEventListener("click", () => { fn(doc, i); ctx.changed(); });
-      td3.append(b, " ");
+      strip.append(b, " ");
     };
     op("more", "pnup", pushNote);
     op("less", "pndn", pullNote);
@@ -611,7 +618,7 @@ function notesTable(parent, R, ctx) {
   const p0 = t.querySelector("[data-k]");
   if (p0) pane.dataset.pane = p0.dataset.k;
   pane.append(t); parent.append(pane);
-  const p = el("p");
+  const p = el("p", null, "nu-row");   // a strip of buttons — nu.css
   const clear = el("button", "forget all of it");
   clear.type = "button"; clear.dataset.k = "pclear";
   clear.title = "take every note off and hear the record the band made";
@@ -688,7 +695,7 @@ function tapTarget(parent, doc, ctx, land) {
 }
 
 function back(parent, ctx, word, fn) {
-  const p = el("p");
+  const p = el("p", null, "nu-row");   // a strip of buttons — nu.css
   const b = el("button", word);
   b.type = "button"; b.dataset.k = "pback|" + word;
   b.addEventListener("click", () => { fn(); ctx.redraw(); });
