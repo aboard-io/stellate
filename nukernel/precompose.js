@@ -75,7 +75,7 @@
   const { compose, ihash, rng } = NC;
   const { LENGTHS, REG } = Id;
   const { stepsIn } = K;
-  const { instrOf } = NI;
+  const { instrOf, isSection } = NI;
 
   /* ======================================================================
      1 · IDIOM — the record's own tune, in ideas-kit's six words
@@ -1083,6 +1083,52 @@
     const nameFor = (base) => { let n = base, i = 1;
       while (used.has(n)) n = base + (++i); used.add(n); return n; };
 
+    /* ---- THE RECORD'S OWN SIGNATURE, WHICH THIS FILE USED TO OVERRULE -----
+       Measured 2026-08-26 over 199 anchors x 3 seeds: 3228 line chairs, every
+       single one of them handed an `instrument` name, and therefore ZERO chairs
+       spelled "the record's own". That is not a shading, it is a seam:
+
+         precompose  instrument: instrOf(gk, v)      <- a GM soundfont id, always
+         document.js chairs[v] = { instr: <that> }   (:203-205)
+         derive.js   poolInstrOf returns it as `over` (:115-118)
+         plan.js     gsyn = font || (over ? null : ...) (:207)
+
+       — so on a precomposed record the fourth line nulls the signature synth of
+       every chair, and all fifteen anchors that declare one (`acid`'s 303,
+       `industrialrock`'s fuzz at drive 0.85, `vaporwave`'s DX7, kraftwerk's
+       Model D) played a sampled photograph of themselves instead. Paul heard it
+       as "industrial rock sounds more like fela kuti than nine inch nails".
+       THE BOX HAS ALWAYS PLAYED THESE RIGHT — a catalog genre sets no `chairs`,
+       so `over` is null there and `G.synth` stands. Precompose was the outlier;
+       this line makes a precomposed record sound like its own anchor.
+
+       ABSENT IS THE SPELLING. `document.js` reads `instrument: "synth"` as "name
+       nothing, the record's own keeps the part", which is the seam's documented
+       empty entry — not a new field and not a new law.
+
+       WHICH CHAIRS. `lineOnly` is the anchor's own answer to exactly this
+       question ("the synthesis is the identity of ONE voice, not of the whole
+       band" — to-engine.js:1034) and the parent reads it off the chair's ROLE,
+       so a lineOnly signature covers the moving chairs and the held ones keep
+       the sample the anchor named. Five of the fifteen say it.
+       LAYERS ARE NEVER COVERED. A guest brings its line, not its instrument
+       (derive.js:123); a vocal layer on an industrial record is a singer, not a
+       fuzz box, and the layer loop below still names its own genre's `instr`.
+       ...AND NEITHER IS A CHAIR THAT WAS CAST AS A MOUTH. That is not a new
+       rule either — it is to-engine.js:1041-1049 verbatim ("a signature synth
+       does not displace a chair that was cast as a voice"), which the engine
+       enforces by asking `mouthForInstr` BEFORE `wantSynth`. It can only do
+       that while the chair still carries the id, so the two tables that name a
+       person are read here rather than re-listed: measured, dropping this
+       clause took robotic pop's and EBM's talking tract off the record and
+       replaced it with a Minimoog doubling the part beside it, which is the
+       exact regression that comment was written about. */
+    const PAD_PART = { pad: 1, drone: 1, stab: 1 };
+    const MOUTHY = (id) => !!(NI.PATCHES.mouth[id] || NI.PATCHES.voice[id]);
+    const sigSynth = G.synth && G.synth.dsp ? G.synth : null;
+    const signed = (part, id) => !!sigSynth && !MOUTHY(id) &&
+      !(sigSynth.lineOnly && PAD_PART[part]);
+
     for (let v = 0; v < nBase; v++) {
       const kinds = R.song.map((b, i) => baseKind[i](v));
       const home = dflt(kinds);
@@ -1112,7 +1158,7 @@
                 // unclamped entry of 3 SILENCES a voice in a two-bar intro.
                 entry: Math.max(0, Math.min(G.entry(v) | 0, minBars - 1)) },
         material, development,
-        instrument: instrOf(gk, v),
+        instrument: signed(part, instrOf(gk, v)) ? "synth" : instrOf(gk, v),
       });
     }
 
@@ -1134,13 +1180,44 @@
         development[sid(i)] = k ? sayOps(R.song[i].ops, k) : "out";
       });
       const part = (L.part && L.part[0]) || L.realize(0);
+      /* ONE ROOM. `backing` is a guest whose whole instrument is `ahh_choir`,
+         and the records it lands on are frequently records that ALREADY have a
+         vocal section — merseybeat's "ooh"s, the Beatles' — so the record was
+         being given TWO choirs. As a sample that read as a thicker aah; as the
+         MODEL it is two independent three-voice sections, 12.2 cost units
+         apiece, and it is what took the heaviest records over the parent's
+         BUDGET of 40 — measured, doowop 44.40, merseybeat 43.18, beatles
+         41.50, all three of them back under it with this rule in place.
+         THE RULE IS THE PROJECT'S OWN AND NOT A BUDGET DODGE: "a guest brings
+         its line, not its instrument" (ui/derive.js:123), which is measured —
+         architecture travels across a genre cross, material does not (instr
+         3%). A SECTION is the strongest case of it, because a section is a
+         ROOM: two rooms of people singing the same backing part is not a
+         bigger choir, it is a phasing artefact with a second reverb on it. So
+         a guest cast on a section joins the section the record already has,
+         and seats its own only where there is none. */
+      let instrument = instrOf(lk, 0);
+      if (isSection(instrument)) {
+        // WHICH section it joins, where the record has more than one: the one
+        // sitting in the same KIND of chair. `plan.js seatFor` keys a seat on
+        // the chair as well as the instrument, so a guest that joins the held
+        // "ooh"s while singing a counter-line is still a second unit — it is
+        // the same people in two rooms again, one line lower down. Doowop
+        // seats a section on a stab AND on a riff; the backing guest is a
+        // counter-line, so it belongs with the riff, and joining it there is
+        // both the musical answer and 12.2 cost units.
+        const held = !!PAD_PART[part];
+        const rooms = voices.filter((x) => x.kind === "line" && isSection(x.instrument));
+        const here = rooms.find((x) => !!PAD_PART[x.cast.part] === held) || rooms[0];
+        if (here) instrument = here.instrument;
+      }
       voices.push({
         name: nameFor(lk), kind: "line",
         cast: { part,
                 reg: Math.max(-4, Math.min(3, (L.reg(0) | 0) + 1)),
                 entry: 0 },
         material, development,
-        instrument: instrOf(lk, 0),
+        instrument,
       });
     }
 

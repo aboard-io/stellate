@@ -77,6 +77,24 @@ function sectionEvents(doc, i) {
   console.log("precompose — " + ANCHORS.length + " anchors × " +
               SEEDS.length + " seeds = " + ANCHORS.length * SEEDS.length + " records\n");
 
+  /* THE ENGINE'S OWN ANSWERS, loaded once. `audio/to-engine.js` is an ES
+     module and the only place that knows which names are modelled Faust voices
+     (`SYNTH_NAMES`) and which recipe a chair actually resolves to
+     (`recipeFor`). G1 needs the first (the document may now spell a chair
+     "synth") and G12 needs the second, and both must be the ENGINE's answer
+     rather than a second opinion about it — a census that resolved chairs by
+     its own shorter rule would be measuring a different band than the one that
+     plays. */
+  const TE = await import(path.join(__dirname, "..",
+    "nukernel", "audio", "to-engine.js"));
+  const { SYNTH_NAMES } = TE;
+  const FLEET = SYNTH_NAMES();
+  // THE RECORD'S SIGNATURE, asked exactly the way `document.js synthOf` asks it
+  // (its own line 51), because "may this chair say 'synth'" and "is there a
+  // synth for it to mean" have to be the same question.
+  const SIG = (doc) => (doc.sound && doc.sound.synth) ||
+    (GENRES[doc.basis] || {}).synth || null;
+
   /* ================================================================== G0-G5
      One walk over every record. Each assertion is counted once for the whole
      sweep so a table error names the anchor rather than printing 366 lines. */
@@ -168,7 +186,18 @@ function sectionEvents(doc, i) {
           say(v.name + " reg " + v.cast.reg);
         if (!Number.isInteger(v.cast.entry) || v.cast.entry < 0)
           say(v.name + " entry " + v.cast.entry);
-        if (!NF.INSTRCHOICES[v.instrument]) say(v.name + " instrument " + v.instrument);
+        // THE MENU IS THE VOCABULARY, and it is wider than INSTRCHOICES.
+        // `avail.js instrOptions` offers a line chair three kinds of answer: a
+        // sampled id (INSTRCHOICES), a Faust model BY NAME (the fleet), and —
+        // when the record has a signature — the literal string "synth", which
+        // `document.js:184,205` reads as "name nothing, the record's own keeps
+        // the part". This check knew only the first, which is why it passed for
+        // as long as precompose named a sample on every chair and failed the
+        // moment one said "the record's own". Held against the page's own menu
+        // so the two cannot drift.
+        if (!NF.INSTRCHOICES[v.instrument] && !FLEET.includes(v.instrument) &&
+            !(v.instrument === "synth" && SIG(doc)))
+          say(v.name + " instrument " + v.instrument);
         for (const id of secIds)
           if (!WORDS[v.development[id]]) say(v.name + "/" + id + " word " +
             JSON.stringify(v.development[id]));
@@ -424,9 +453,6 @@ function sectionEvents(doc, i) {
   // assertion that reads it must be two views of one function or they drift.
   const { portrait } = require("./fixtures/terms-genre.freeze.js");
   const FROZEN = require("./fixtures/terms-genre.json");
-  const { SYNTH_NAMES } = await import(path.join(__dirname, "..",
-    "nukernel", "audio", "to-engine.js"));
-  const FLEET = SYNTH_NAMES();
   ok("G7a the shipped chant compiles to the frozen genre at every section", () => {
     const T = J(TERMS);
     T.form.sections.forEach((s, i) => assert.deepStrictEqual(
@@ -875,6 +901,243 @@ function sectionEvents(doc, i) {
 
   }
 
+  /* ================================================================== G12
+     THE THROAT CENSUS — WHAT EACH CHAIR ACTUALLY SOUNDS LIKE.
+
+     Paul, 2026-08-26, by ear: "you keep assigning 'solo vox' but should be
+     using native voices where possible."
+
+     WHY THIS COUNT EXISTS AT ALL. Every other assertion in this file reads the
+     DOCUMENT; a document names an instrument and says nothing about what will
+     make the sound, because the id is resolved four tables later
+     (`to-engine.js recipeFor`: the record's signature, then the mouth, then the
+     singer, then the synth a GM patch is a photograph of, then the model, then
+     the recording). So "which chairs are native" is not visible anywhere this
+     file was already looking, and the number that went to ZERO — every one of
+     the fifteen signature synths, silenced on every precomposed record —
+     went there without a single check in this file moving.
+
+     MEASURED THE MORNING THIS RAN, over 199 anchors x 3 seeds = 3228 line
+     chairs:
+
+                              before        after
+       native seats           2062 (63.9%)  2485 (77.0%)
+       the record's own synth    0 chairs      72 chairs, all 15 anchors
+       sampled / unrouted     1166           743
+       worst record, cost       36.80        42.00   (BUDGET 40, see G12d)
+       mean modulation-strip     5.23         3.89   (CEILING 6, plan.js:462)
+                                                    — approximated, see below
+
+     "WHERE POSSIBLE", DERIVED — four clauses, in order, each of them a fact
+     about what the voice IS rather than an entry on a list:
+
+       1. THE ANCHOR'S OWN SIGNATURE OUTRANKS EVERYTHING. A `synth` block is
+          the anchor saying "this is what this record sounds like". Fifteen say
+          it; none was reaching a chair. (precompose.js, this round.)
+       2. A SYNTHESISER IS NOT A RECORDING OF A SYNTHESISER. `saw_wave`,
+          `polysynth`, `warm_pad` are photographs of an oscillator and the
+          model IS the oscillator — there is no performance in the recording to
+          lose. (to-engine.js PATCH_SYNTH, thirteen ids, already shipped.)
+       3. A MOUTH IS CAST BY WHAT IT DOES. One person is `voice_lead`; a room
+          of people is `voice_choir`; a machine that ARTICULATES, on a line
+          chair, is `tract_voice`. The plural is in the name, and the catalog
+          had already written the difference down — `blend`, documented
+          "sections only", on ten `MOUTHS` rows that nothing could read.
+          (instruments.js PATCH_VOICE, two rows, this round.)
+       4. AND A RECORDING OF PEOPLE IS THE ONE THING A MODEL CANNOT BE. A
+          violin section, a brass section, an accordion, a sax, a sitar: air
+          through a body, played by somebody. They stay sampled, and this round
+          did not move one of them — 743 chairs, and that number is not a
+          backlog.
+
+     THE TRACT IS NOT PART OF THIS. No seat was added to it and none is asked
+     for: `mouthForInstr` reaches it only through `synth_voice` on a LINE chair
+     and that is unchanged (nine chairs, before and after). What clause 1 did
+     do is nearly TAKE those nine away — a signature synth would have displaced
+     the chair the anchor cast as a voice — which is why `MOUTHY` exists in
+     precompose. So VOICE.md §11's open question ("whether the tract sustains
+     on the live path") is exactly as open as it was this morning; nothing here
+     seats it on a held note, and nobody has run the browser probe.
+
+     THE COST TRADE, STATED, because the second number is the one that hurts:
+     a Faust seat is charged its pool x its module against a BUDGET of 40, and
+     a sampled seat is charged a flat 0.3 — which `audio/plan.js:427` says out
+     loud is a LIE ("never looks at `sampler.strip` at all... EVERY ONE of the
+     822 states carries strips heavy enough to blow the same budget"). The load
+     that actually starves the ring is CONCURRENCY of modulation stages on
+     sampled voices, and a modelled voice has no `sampler.strip` at all, so it
+     is charged nothing there. Moving 420 held choral chairs off the sampler
+     took the mean strip load from 5.23 to 3.89 against a ceiling of 6 while
+     taking the cost model from 17.26 to 23.61 against a budget of 40.
+     THE STRIP NUMBER IS AN APPROXIMATION AND THE COST NUMBER IS NOT. It was
+     taken offline with `trimStripLoad`'s own formula (stages x how many notes
+     a seat sounds at once) and the second factor stood in as 3 for a held
+     chair and 1 for a moving one, where the real one is counted off the
+     compiled timeline. The DIRECTION is not in doubt — a modelled seat has no
+     strip at all, so every chair that changed hands took its stages to zero —
+     but the magnitude wants the live path. Only the cost is asserted below,
+     because only the cost is measured exactly. */
+  let CENSUS = null;
+  {
+    const SEng = require(path.join(__dirname, "..", "engine", "faust",
+                                   "voices", "state-engine.js"));
+    // WHICH CHAIRS ARE HELD. to-engine.js:224 CHAIR_ROLE is the owner of this
+    // and does not export; the three pad parts are spelled here with the
+    // citation rather than guessed, and G12f holds them against kernel PARTS.
+    const PADPART = { pad: 1, drone: 1, stab: 1 };
+    const seatsOf = (doc) => {
+      const G = Doc.toGenre(doc, 0, GENRES, FLEET);
+      const out = [];
+      doc.voices.filter((v) => v.kind === "line").forEach((c, vi) => {
+        const ch = (G.chairs || [])[vi] || null;
+        const over = ch && ch.instr ? ch.instr : null;
+        const syn = over ? null : ((ch && ch.synth) || G.synth) || null;
+        const chair = PADPART[c.cast.part] ? "pad" : "line";
+        const seat = { chair, instr: over || c.instrument, synth: syn,
+                       tone: (ch && ch.tone) || G.tone || null };
+        const r = TE.recipeFor(chair, seat, {}, []);
+        const kind = String(r.source || "?").split(":")[0];
+        out.push({ vi, part: c.cast.part, named: c.instrument, chair, seat,
+                   source: r.source, kind, role: r.role, m: r.m,
+                   native: kind !== "unrouted" && kind !== "font" && !!(r.m && r.m.model) });
+      });
+      return out;
+    };
+    const census = {}, sigSeen = {}, cost = [];
+    let nChair = 0, nNative = 0;
+    const saidSynth = [];
+    for (const [key, doc] of docs) {
+      const seats = seatsOf(doc);
+      const paid = new Map();
+      for (const s of seats) {
+        nChair++; if (s.native) nNative++;
+        census[s.kind] = (census[s.kind] || 0) + 1;
+        if (s.kind === "synth") sigSeen[doc.basis] = s.source;
+        if (s.named === "synth" && !SIG(doc)) saidSynth.push(key + " " + s.part);
+        const k = s.chair + "|" + s.seat.instr + "|" +
+                  (s.seat.synth ? s.seat.synth.dsp : "") + "|" +
+                  JSON.stringify(s.seat.tone || null);
+        if (paid.has(k)) continue;
+        let c = 0.3;
+        if (s.native) { try { c = SEng.unitCost(SEng.pitchedUnit(s.role, s.m,
+          { bpm: 120, seed: 1 })); } catch (e) { c = 0.3; } }
+        paid.set(k, c);
+      }
+      let tot = 0; for (const c of paid.values()) tot += c;
+      cost.push({ key, cost: +tot.toFixed(2) });
+    }
+    cost.sort((a, b) => b.cost - a.cost);
+    const SIGNED = ANCHORS.filter((k) => GENRES[k].synth && GENRES[k].synth.dsp);
+
+    ok("G12a every anchor that declares a `synth` block seats it on at least " +
+       "one chair — the whole point of the round, and it was 0 of " +
+       SIGNED.length + " before it", () => {
+      const missing = SIGNED.filter((k) => !sigSeen[k]);
+      assert.deepStrictEqual(missing, [], "silenced: " + missing.join(" "));
+    });
+
+    ok("G12b the native-seat count is printed every run and can never " +
+       "silently return to zero", () => {
+      // A FLOOR, NOT AN EQUALITY. An anchor added tomorrow moves the exact
+      // count and must not fail this file. There are TWO numbers here because
+      // there are two ways this comes undone and neither one catches the
+      // other, both measured by running them: putting an instrument name back
+      // on every chair takes `census.synth` to 0 and the native count only
+      // from 2485 to 2482 (the ids fall through to the patch table and stay
+      // modelled — which is exactly how the seam hid), and deleting the two
+      // PATCH_VOICE rows takes the native count to 2065 and leaves the
+      // signatures alone. One assert apiece.
+      assert.ok(nNative >= 2400, nNative + " native seats of " + nChair +
+        " — the seam has regressed (measured 2485 the morning this was written)");
+      assert.ok(census.synth >= 60, "only " + census.synth +
+        " chairs play the record's own signature synth");
+    });
+
+    ok("G12c ABSENT IS TODAY — an anchor that declares no signature seats no " +
+       "chair on 'synth', so a record whose anchor says nothing is unmoved", () => {
+      assert.deepStrictEqual(saidSynth.slice(0, 5), [],
+        saidSynth.length + " chairs say 'the record's own' with no record synth");
+      // ...and the two PATCH_VOICE rows added this round took nothing from
+      // another table: an id already answered by the mouth, the synth or the
+      // model table would have CHANGED sound, not gained one.
+      for (const id of Object.keys(NI.PATCHES.voice))
+        if (NI.isSection(id))
+          assert.ok(!NI.PATCHES.mouth[id] && !NI.PATCHES.synth[id] &&
+                    !NI.PATCHES.model[id], id + " already had a patch row");
+      assert.strictEqual(NI.PATCHES.voice.solo_vox.dsp, "voice_lead",
+        "the one row that was here is unmoved");
+      // A HOLE, NAMED RATHER THAN LEFT QUIET: G8e's era test asks
+      // `compose.js seatOK(gk, id)` and `INSTR_YEAR` has no row for the string
+      // "synth" (nor for any dsp name), so `undefined > year` is false and a
+      // chair spelled "the record's own" is not era-checked. It is not a
+      // live anachronism — all fifteen anchors that declare a signature are
+      // electronic records of the 1970s onward and each declares its own dsp —
+      // but the day an anchor from 1650 declares one, nothing here will say so.
+      // The honest fix is a year per dsp beside INSTR_YEAR, which is a
+      // compose.js round and not this one.
+      // ...and every signature this file now seats is a dsp the fleet can
+      // actually build, asked of the engine's own table rather than of a copy
+      // of it — an unroutable `dsp` would have been silent before and would be
+      // silent now, and silence is the one outcome nothing else here catches.
+      for (const k of SIGNED)
+        assert.ok(TE.SYNTH_OF(GENRES[k].synth.dsp),
+          k + " declares dsp " + GENRES[k].synth.dsp + ", which no model names");
+    });
+
+    ok("G12d the worst record's voice cost is measured, printed, and held " +
+       "under a ceiling", () => {
+      // BUDGET is the parent's mobile-safety line (state-engine.js:1986) and it
+      // is ADVISORY here: `trimToBudget` runs inside `SE.voiceUnits`, and
+      // to-engine.js:1288 adds nukernel's chairs AFTER it, so nothing sheds
+      // them. The ceiling below is therefore the real guard, and it sits three
+      // units above BUDGET with the reason written down. ONE record of 597 is
+      // over the line — synthpop/3, at 42.00 — and it is over because it is a
+      // six-piece band in which every chair resolved to a model: a Juno, a
+      // supersaw, a singer, an Oberheim, a guitar and a choir. The parent's
+      // own note allows "a dense blend can reach ~41-54"; the load that
+      // actually starves THIS page — modulation strips on sampled voices,
+      // plan.js:405-462 — went DOWN, not up (mean 5.23 -> 3.89 of a ceiling of
+      // 6); and a ceiling that a real band cannot reach is a ceiling nobody
+      // reads. What it does catch is the seam coming back: measured, writing
+      // an instrument onto every chair again puts a record over 43.
+      const CEILING = 43;
+      assert.ok(cost[0].cost <= CEILING, cost[0].key + " costs " +
+        cost[0].cost + ", over the stated ceiling of " + CEILING);
+    });
+
+    ok("G12e A GUEST DOES NOT BRING A SECOND CHOIR — a record holds exactly " +
+       "the vocal SECTIONS its own anchor names, never one more", () => {
+      // The ANCHOR may name two and often should: `hymn` is SATB, four parts
+      // out of one choir, and it seats aah / ooh / aah so the two PATCH_VOICE
+      // `phase` rotations put the parts on different vowels of the same
+      // `MOUTHS.hymnal` walk. What a record may NOT gain is a section it never
+      // asked for, and `backing` — a function genre whose whole instrument is
+      // `ahh_choir` — was handing one to every record it landed on. A section
+      // is a ROOM; two rooms singing the same backing part is not a bigger
+      // choir, it is a phasing artefact with a second reverb on it, and (as of
+      // this round) a second three-voice Faust pool at 12.2 cost units.
+      const bad2 = [];
+      for (const [key, doc] of docs) {
+        const e = GENRES[doc.basis].instr;
+        const anchorRooms = new Set((Array.isArray(e) ? e : [e]).filter(NI.isSection));
+        const rooms = new Set(doc.voices.filter((v) => v.kind === "line" &&
+          NI.isSection(v.instrument)).map((v) => v.instrument));
+        if (rooms.size > Math.max(1, anchorRooms.size))
+          bad2.push(key + " " + [...rooms].join("+") + " vs anchor " +
+                    ([...anchorRooms].join("+") || "none"));
+      }
+      assert.deepStrictEqual(bad2.slice(0, 5), [],
+        bad2.length + " records gained a choir the anchor never named");
+    });
+
+    ok("G12f the three held parts this census calls a pad are all real kernel " +
+       "parts, and every one of them is one the kernel holds", () => {
+      for (const p of Object.keys(PADPART)) assert.ok(K.PARTS[p], p);
+    });
+    CENSUS = { census, sigSeen, cost, nChair, nNative, SIGNED,
+               BUDGET: SEng.BUDGET };
+  }
+
   /* ================================================================== G10
      THE PRINT-OUT PAUL READS (PROGRAM.md §5, PAUL'S EARS item 5): which IDIOM
      family row each anchor resolved to, and where an override overrode it. */
@@ -993,6 +1256,36 @@ function sectionEvents(doc, i) {
               "meant to be.\n  The map is the alarm, not the specification: " +
               "a region with one dot in it is not covered, it is visited.\n");
 
+  }
+
+  /* THE THROAT CENSUS, PRINTED — the assertions are above, beside the
+     other gates; this is the table Paul reads. */
+  {
+    const { census, sigSeen, cost, nChair, nNative, SIGNED, BUDGET } = CENSUS;
+    /* ---- PRINTED EVERY RUN: the census, the signatures, the cost ---- */
+    const order = Object.keys(census).sort((a, b) => census[b] - census[a]);
+    console.log("\nTHE THROAT CENSUS — what makes the sound, over " + nChair +
+                " line chairs\n");
+    console.log("  native " + nNative + " of " + nChair + " (" +
+                (100 * nNative / nChair).toFixed(1) + "%) · " +
+                order.map((k) => k + " ×" + census[k]).join(" · "));
+    console.log("  the record's own signature, honoured on " +
+                Object.keys(sigSeen).length + " of " + SIGNED.length +
+                " anchors that declare one:");
+    console.log("    " + SIGNED.map((k) => k + "→" +
+                String(sigSeen[k] || "SILENT").replace("synth:", "")).join("  "));
+    const over = cost.filter((c) => c.cost > BUDGET);
+    console.log("  cost, against the parent's BUDGET of " + BUDGET +
+                " — heaviest five: " +
+                cost.slice(0, 5).map((c) => c.key + " " + c.cost).join(" · "));
+    console.log("  " + over.length + " of " + nRecords + " records over it" +
+                (over.length ? " (" + over.map((c) => c.key).join(" ") + ")" : "") +
+                " — advisory: to-engine.js:1288 seats nukernel's chairs after " +
+                "the parent's own trim, so nothing sheds them.");
+    console.log("  Does industrial rock sound like Nine Inch Nails and a hymn " +
+                "like a room of people?\n  That is the question this table " +
+                "cannot answer itself.\n");
+  
   }
 
   process.exit(fail ? 1 : 0);

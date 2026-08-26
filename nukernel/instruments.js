@@ -962,9 +962,56 @@
     return out;
   };
 
+  /* THE IDS THAT NAME A PERSON — and, until this round, the one that named ONE.
+     `voiceForInstr` has a whole second half for a SECTION: `choir = P.dsp ===
+     "voice_choir"` picks a longer attack and release, a section's vibrato, and
+     `blend` — "how ragged they are", which moves the detune, the entry stagger
+     and the stereo width together (to-engine.js:596-604). genres.js MOUTHS
+     writes `blend` on TEN mouths (plainchant, motet, hymnal, bulgar,
+     gospelchoir, doowopstack, merseystack, boygroup, dreamchoir, backingroom)
+     and documents it as "sections only". Measured 2026-08-26: not one of those
+     ten numbers had ever been read, because this table had no row whose `dsp`
+     was `voice_choir`, so the branch that reads them was unreachable and every
+     held vocal in the catalogue — `ahh_choir` on 381 precomposed chairs,
+     `ohh_voices` on 39 — came back `unrouted` and played the sampled "aah".
+     That is the recording Paul hears as hiss: the breath is IN the sample and
+     no `air` dial can take it out, where the model's is a parameter
+     (`breath`, 0..0.6, defaulted 0.22 for a section).
+
+     WHY A SECTION AND NOT A SINGER, said as a rule rather than a list: the
+     plural is in the NAME. "aah choir" and "ooh voices" are a room full of
+     people holding a vowel; "solo vox" is one person at a microphone. A
+     formant bank with one glottis can be the second and cannot be the first —
+     three detuned, staggered voices is what a section IS — and this is the
+     same distinction the parent draws by giving `chorale` `pool: 3` and the
+     singer one throat. It is also why the sampled choir stays honest for
+     everything else: a violin section is people too, and there is no model
+     of it here, so `slow_strings` keeps its recording.
+
+     THE DEFAULTS ARE WHAT THE ID ITSELF MEANS and nothing more — an alto
+     section (the module's own default voice type), the vowel the name spells,
+     and a bar per syllable, which is the `chorale` case's own `vowelEvery`.
+     Every genre that has an opinion already states it in its `mouth` block and
+     that block still wins, exactly as it does for solo_vox.
+
+     `phase` ROTATES THE VOWEL WALK, and this is the one place it earns its
+     keep: `hymn` seats ahh / ohh / ahh against one `MOUTHS.hymnal` whose
+     vowels are "ao", and without a rotation all three chairs would open their
+     mouths on the same letter at the same time, which is a stack and not a
+     choir. */
   const PATCH_VOICE = {
     solo_vox:    { dsp: "voice_lead",  voice: "tenor", vowels: "ao", syll: 0.5, phase: 0 },
+    ahh_choir:   { dsp: "voice_choir", voice: "alto",  vowels: "a",  syll: 4, phase: 0 },
+    ohh_voices:  { dsp: "voice_choir", voice: "alto",  vowels: "ou", syll: 4, phase: 1 },
   };
+
+  // IS THIS ID A ROOM FULL OF PEOPLE? One owner for the question, because two
+  // callers ask it and neither should re-list the ids: `audio/to-engine.js`
+  // asks it as `P.dsp === "voice_choir"` to pick the section half of
+  // `voiceForInstr`, and `precompose.js` asks it to decide whether a guest may
+  // bring a second choir onto a record that already has one. A row added above
+  // is answered by both without either being edited.
+  const isSection = (id) => !!(PATCH_VOICE[id] && PATCH_VOICE[id].dsp === "voice_choir");
 
   // ---- AND THE MOUTH THAT TALKS (the table half; the chair law that decides
   // WHO gets one lives with the dispatch, audio/to-engine.js mouthForInstr) ---
@@ -1246,7 +1293,7 @@
              skip: DYN_SKIP * d.hand * force };
   };
 
-  const api = { instrOf, BASS_INSTR, DRUMDIR, DRUMFILE, FONTS, BASSSYNTH, PATCHES, STRIPS,
+  const api = { instrOf, isSection, BASS_INSTR, DRUMDIR, DRUMFILE, FONTS, BASSSYNTH, PATCHES, STRIPS,
                 stripFor, familyOf, RANGES, SAMPLED_INSERTS, PEDAL, BOARDS, boardOf,
                 STRETCH_UP, STRETCH_DOWN, DRUMMIX, DRUMBUS,
                 MACHINEMIX, mixFor, laneKey,
