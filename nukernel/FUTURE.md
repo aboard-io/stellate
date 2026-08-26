@@ -1,4 +1,4 @@
-# FUTURE — draft plan for the round after 2026-08-26
+# FUTURE — the plan from the review round of 2026-08-26
 
 Paul, 2026-08-26: *"muse and plan and sketch."* This is the plan; the sketches
 are beside it in `nukernel/ideal/` (`design-system.html`,
