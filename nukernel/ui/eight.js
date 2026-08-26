@@ -6073,8 +6073,8 @@ function knobsBlock(parent, voice) {
 
   // THE THIRD CELL: the number you are overriding while you are overriding it,
   // and one gesture back to absent. A continuous slider has NO EMPTY DETENT —
-  // ui/engineer.js:637 solves that for a detented list by seating "as it
-  // stands" at the default's own place in the run, and the trick does not
+  // ui/engineer.js:637 solves that for a detented list by seating "default"
+  // at the default's own place in the run, and the trick does not
   // exist for a range. So the derived value is printed, always, and `clear` is
   // beside it only when the key is set.
   const thirdCell = (row) => {
@@ -6206,8 +6206,19 @@ function knobsBlock(parent, voice) {
       const cur = (S && S.dx7Preset) || "";
       const sel = selectEl({
         key: "dx7|" + voice.name, label: row.label, value: cur,
-        options: [{ value: "", label: "as it stands — " + knobSay(row, knobDerived(voice, row)),
-                    group: "as it stands" }].concat(
+        // `default`, AND NOT THE DERIVED WORD AFTER IT, 2026-08-26. This detent
+        // read `"as it stands — " + knobSay(...)`, and it was wrong twice over.
+        // Wrong in its word: Paul read the page and collapsed the box's two
+        // spellings of absence into one — *"'as it stands' and 'nothing set'
+        // are too much. get rid of them -- just use 'default' for 'nothing
+        // set'"* — and ui/engineer.js:257 `optionsFor` now seats every empty
+        // detent on the page under a `default` optgroup with `default` on it.
+        // Wrong in its suffix: `thirdCell` two cells to the right already
+        // prints "default, " + the same `knobSay(row, knobDerived(...))`, so
+        // the derived word was the same string in the same row said twice —
+        // the very thing the head-cell comment above objects to. One word, no
+        // echo, and the third column keeps the job of saying what stands.
+        options: [{ value: "", label: "default", group: "default" }].concat(
           row.words.map((w, i) => ({ value: row.patches[i].dx7Preset,
             label: w, group: "as you say" }))),
         set: (v) => {
@@ -6232,8 +6243,10 @@ function knobsBlock(parent, voice) {
       const sel = selectEl({
         key: row.key + "|" + voice.name, label: row.label, value: cur,
         ...(why ? { why } : {}),
-        options: [{ value: "", label: "as it stands — " + knobSay(row, knobDerived(voice, row)),
-                    group: "as it stands" }].concat(
+        // `default`, for the reason written out at the cartridge menu above:
+        // one word for absence across the whole page, and no repeat of the
+        // derived word that `thirdCell` is already printing in this same row.
+        options: [{ value: "", label: "default", group: "default" }].concat(
           // …AND THE COMPASS IS IN THE OPTION, because `voice` does not only
           // change the COLOUR of the line, it moves it: a tenor is 123 to
           // 494 Hz and a soprano is 247 to 1047, and the parent re-folds every

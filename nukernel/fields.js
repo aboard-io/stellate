@@ -1119,14 +1119,52 @@
   // — and it is a WORD FROM A TABLE rather than free text for a structural
   // reason, not a taste one: song.js validates a saved bus by walking this
   // row's `knobs` and refusing any value its table does not hold, so a free
-  // string would be dropped on the next save. Picking from the desk's own
-  // vocabulary of return names keeps the rename inside the one law this file
-  // exists to enforce, and a name that survives a save is worth more than a
-  // name you can type. Absent = the bus's shipped label.
-  const BUSNAMES = { plate: "plate", hall: "hall", chamber: "chamber",
-                     spring: "spring", room: "room", air: "air",
-                     delay: "delay", slap: "slap", echo: "echo",
-                     tape: "tape", wash: "wash", drive: "drive" };
+  // string would be dropped on the next save. Picking from a fixed vocabulary
+  // keeps the rename inside the one law this file exists to enforce, and a name
+  // that survives a save is worth more than a name you can type. Absent = the
+  // bus's shipped label.
+  //
+  // THE VOCABULARY WAS THE DESK'S RETURN NAMES AND IT WAS THE BUG, 2026-08-26.
+  // The paragraph here used to end "Picking from the desk's own vocabulary of
+  // RETURN NAMES keeps the rename inside the one law this file exists to
+  // enforce", and that choice — plate / hall / chamber / spring / room / air /
+  // delay / slap / echo / tape / wash / drive — put a COSMETIC word and a REAL
+  // one side by side on the same board, spelled identically. Paul, 2026-08-26:
+  // *"'name' is a very confusing row because the 'name' seems to be reverb
+  // types."* He is describing a genuine collision and not a misreading:
+  //   · four words — plate, hall, chamber, spring — were in BOTH this table and
+  //     REVERBLABEL, so bus 1 drew two dropdowns four words apart, one of which
+  //     picks a wasm module and one of which picks a nameplate;
+  //   · `room` meant THREE things on one board — bus 1's `color` knob was
+  //     LABELLED "room", this table offered "room" as a name, and bus 3 IS
+  //     named room;
+  //   · `tape` and `drive` were MASTER labels (MASTER: drive/glue/tape/space/
+  //     width/tilt/ceiling), and `delay`/`echo` were bus 2's own label and key.
+  // So the vocabulary is replaced with words for a bus's JOB — what you are
+  // USING the return for — checked against every label table this file draws on
+  // the same board (SENDLABEL, LEVELLABEL, PANLABEL, RETURNLABEL, REVERBLABEL,
+  // DTLABEL, EFBLABEL, ETONELABEL, FXLABEL, DRIVE/GLUE/TAPE/SPACE/WIDTH/TILT/
+  // CEILINGLABEL) and against the four BUSROWS labels themselves. Not one of the
+  // twelve appears in any of them, so no word on this board can mean two things
+  // again. `wet` was drafted and dropped: SENDLABEL already spells 0.62 `wet` on
+  // the send row directly above.
+  //
+  // WHAT HAPPENS TO THE 139 SHIPPED RECORDS. All 139 carry `sound.buses`
+  // (STATE.md:139) and every one of them names bus 1, because precompose.js
+  // RETNAME writes a nameplate to follow the reverb colour. They are PRECOMPOSED
+  // AT LOAD, not stored on disk, so RETNAME was rewritten in the same breath as
+  // this table (precompose assertDeskTables would throw at boot otherwise) and
+  // all 139 come up named out of the new vocabulary — nothing to migrate.
+  // A record SAVED by a person before today (localStorage, a share link, an
+  // exported .json) may carry `name: "plate"`, and that word is now unknown
+  // here. Two readers keep it loading: song.js NOTES a retired bus name instead
+  // of refusing the record, and `busNameOf` below already answers `row.label`
+  // for a name no table holds. So an old save opens, plays, and shows bus 1 as
+  // "reverb" — its shipped label — with the note saying the word was retired.
+  const BUSNAMES = { ambience: "ambience", depth: "depth", bloom: "bloom",
+                     wash: "wash", sheen: "sheen", throw: "throw",
+                     lift: "lift", smash: "smash", parallel: "parallel",
+                     double: "double", stack: "stack", blend: "blend" };
   // EVERY KNOB HERE NOW REACHES THE ENGINE, and the ones that could not were
   // taken off rather than left drawing. The test is audio/desk.js masterState:
   // a knob is on this table if and only if it lands in a field the parent's own
@@ -1187,7 +1225,15 @@
       feed: "fed by the reverb sends", eq: BUS_EQ_BANDS,
       knobs: [
         { key: "ret",   label: "return", table: RETURNS, labels: RETURNLABEL, default: null },
-        { key: "color", label: "room",   table: REVERBS, labels: REVERBLABEL, default: null } ] },
+        // LABELLED "reverb type" AND NOT "room", 2026-08-26. This knob picks the
+        // wasm module the return runs (REVERBS: dattorro / fdn / greyhole /
+        // spring / shimmer) and it was labelled `room` since the day it was
+        // written, which made `room` mean three different things on one board:
+        // this knob, the old BUSNAMES entry, and bus 3, which IS named room.
+        // Paul, 2026-08-26: *"'name' is a very confusing row because the 'name'
+        // seems to be reverb types."* The name row was half of that; this label
+        // was the other half. "reverb type" cannot be misread as a place.
+        { key: "color", label: "reverb type", table: REVERBS, labels: REVERBLABEL, default: null } ] },
     { bus: "echo", label: "delay",  engine: "del",
       feed: "fed by the echo sends", eq: BUS_EQ_BANDS,
       knobs: [
@@ -1235,8 +1281,20 @@
   // reach the sound is the thing this file exists to prevent, so it is gone
   // rather than drawn. Delay-into-the-plate is the oldest trick on a desk and
   // it comes back the day the parent's own bus graph can take an edge.
+  //
+  // THE ROW IS CALLED `called`, NOT `name`, 2026-08-26. The key stays `name` —
+  // it is what 139 precomposed records and every save on disk already write, and
+  // renaming a stored key to fix a printed word is how a record stops loading —
+  // but the LABEL the board prints over the row is now `called`. Paul,
+  // 2026-08-26: *"'name' is a very confusing row because the 'name' seems to be
+  // reverb types."* On bus 1 the row sat directly above a knob labelled `room`
+  // whose menu was REVERBLABEL, and this row's own menu shared four words with
+  // it (plate/hall/chamber/spring), so "name" read as "which reverb". BUSNAMES
+  // above answers the second half by changing the words; this answers the first
+  // by changing the question the row asks. "called" can only be read one way:
+  // it is what the bus is CALLED, and nothing on a desk is called by an effect.
   const BUSES = BUSROWS.map(r => ({ ...r, knobs: [
-    { key: "name", label: "name", table: BUSNAMES, labels: BUSNAMES, default: null },
+    { key: "name", label: "called", table: BUSNAMES, labels: BUSNAMES, default: null },
     // ...AND `to` ON A GROUP AND ONLY ON A GROUP. Bus 1 and bus 2 have an
     // engine bus, so where they go is the ENGINE's answer and not a choice
     // (fx_bus.dsp mixes both into the master and the two cross-sends inside it
@@ -1310,6 +1368,14 @@
   // what a bus is CALLED right now — the set name, else its shipped label.
   // One reader for the board's nameplate and one for the send bars that name
   // their destination, so a renamed bus is renamed everywhere at once.
+  // A WORD BUSNAMES NO LONGER HOLDS FALLS BACK TO THE ROW'S LABEL rather than
+  // printing blank, and that is load-bearing since 2026-08-26 rather than merely
+  // defensive: the vocabulary was replaced whole that day (see BUSNAMES), so a
+  // record saved with `name: "plate"` reaches this reader with a word the table
+  // has no entry for. `(set && BUSNAMES[set]) || row.label` answers "reverb",
+  // which is exactly what the bus is called when nobody has renamed it — the
+  // same answer the empty detent gives. Same law as resolvePartMix: "words no
+  // table names resolve to the default".
   const busNameOf = (v, bus) => {
     const row = BUSES.find(b => b.bus === bus);
     if (!row) return String(bus);

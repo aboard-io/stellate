@@ -165,7 +165,7 @@ Applied whole:
 2. **A key present is an absolute override.** Never a sum, never a scale.
 3. **Clearing returns the derived answer.** A continuous slider has no empty
    detent — `ui/engineer.js:637 knob()` solves that for a detented list by
-   seating "as it stands" at the default's own place in the run, and the trick
+   seating "default" at the default's own place in the run, and the trick
    does not exist for a range. So **the third cell prints the derived value**
    ("the record's own, 0.06") when the key is absent and carries a `clear`
    button beside your number when it is set: one gesture back to absent, with

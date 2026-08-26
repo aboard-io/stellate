@@ -697,8 +697,11 @@
     // returns are part of how a song sounds and a shared song must sound the
     // way its author left it. Same filter split as master: an unknown BUS or
     // KNOB is dropped (that vocabulary will grow and shrink), an unknown VALUE
-    // rejects. Normalized to null when nothing survives — absent keeps one
-    // spelling, and audio/desk.js keys its as-built branch on it.
+    // rejects — WITH ONE EXCEPTION added 2026-08-26, `name`, which is a
+    // nameplate and reaches no sound, so a retired name is NOTED and dropped
+    // rather than refusing the whole record. The argument is written out at the
+    // knob loop below. Normalized to null when nothing survives — absent keeps
+    // one spelling, and audio/desk.js keys its as-built branch on it.
     if (s.buses != null) {
       if (typeof s.buses !== "object" || Array.isArray(s.buses))
         err("buses", s.buses, "a map of bus -> knob values");
@@ -714,10 +717,33 @@
           for (const k of b.knobs) {
             const v = e[k.key];
             if (v == null) continue;
-            if (!Object.prototype.hasOwnProperty.call(k.table, String(v)))
+            if (Object.prototype.hasOwnProperty.call(k.table, String(v))) {
+              o[k.key] = v; continue;
+            }
+            // A RETIRED BUS NAME IS A NOTE, NOT A REFUSAL, 2026-08-26. Every
+            // other bus knob is a WIRE — an unknown `ret`, `color`, `time`,
+            // `fb`, `tone` or `to` names a number or a wasm module the engine
+            // does not have, and loading the record anyway would put a value on
+            // the tape nobody chose, so those still reject. `name` is the one
+            // knob on the row that reaches NO SOUND: it is a nameplate. On
+            // 2026-08-26 fields.js replaced the BUSNAMES vocabulary whole
+            // (plate/hall/chamber/spring/room/air/delay/slap/echo/tape/wash/
+            // drive → a job vocabulary), because the old words were the reverb
+            // algorithm's words and Paul read them as one thing: *"'name' is a
+            // very confusing row because the 'name' seems to be reverb types."*
+            // Refusing here would mean every song anybody saved before today
+            // that had named a bus would fail to open — over a printed word.
+            // So the word is dropped, the note says which, and `busNameOf` will
+            // answer the bus's shipped label ("reverb"), which is what the bus
+            // is called when nobody has renamed it. "Degrade honestly": the
+            // loader says out loud what it chose.
+            if (k.key === "name")
+              note("buses." + b.bus + ".name", v, null,
+                   "that bus name was retired on 2026-08-26 — the bus is back " +
+                   "to being called `" + b.label + "`");
+            else
               err("buses." + b.bus + "." + k.key, v,
                   "one of " + Object.keys(k.table).join("|"));
-            else o[k.key] = v;
           }
           // the return's EQ pair, the strip law at the bus's own band list
           if (e.eq != null) {

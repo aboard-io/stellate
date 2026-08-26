@@ -244,8 +244,18 @@ function setDesk(ctx, voice, key, v) {
 // checked input, and a strip that has never been touched has no value to check;
 // and a person needs somewhere to click to UNDO a choice, because absent is the
 // only spelling of a default and there is no other way to spell it.
+//
+// AND THE WORD FOR IT IS `default`, EVERYWHERE, 2026-08-26. This board grew two
+// words for one idea — "as it stands" on the strips and "nothing set" on the
+// master — each with a paragraph arguing why it was the truer of the two in its
+// own corner. Paul read the page and collapsed them: *"'as it stands' and
+// 'nothing set' are too much. get rid of them -- just use 'default' for
+// 'nothing set'"*. He is right about the cost. Two words for absence means a
+// reader has to decide, at every control, whether the difference is meant —
+// and the difference never was: both spell the same thing, a key that is not in
+// the document. One word, and the optgroup it sits under says it too.
 function optionsFor(table, labels, cur, gate, emptyLabel) {
-  const head = [{ value: "", label: emptyLabel, group: "as it stands" }];
+  const head = [{ value: "", label: emptyLabel, group: "default" }];
   return head.concat(Object.keys(table).map((k) => {
     const g = gate ? gate(k) : null;
     const isCur = String(cur) === k;
@@ -360,7 +370,7 @@ export function engineer(parent, ctx, voiceName) {
   // both numbers are 0.0 — two rows saying the same five words about two
   // different facts is how a reader learns to stop reading the column.
   row("level", knob("eng|lvl|" + voiceName, "lvl", LEVELS, LEVELLABEL, d.lvl,
-        voiceName + " level", (v) => setDesk(ctx, voice, "lvl", v), "as it stands"),
+        voiceName + " level", (v) => setDesk(ctx, voice, "lvl", v), "default"),
       "the record seats it at " +
       fmtDb(20 * Math.log10(Math.max(1e-4, base.gain || 1))) + " dB");
 
@@ -380,7 +390,7 @@ export function engineer(parent, ctx, voiceName) {
     row("fader", wrap, "riding " + fmtDb(drv.db) + " dB seated");
   }
   row("place", knob("eng|pan|" + voiceName, "pan", PANS, PANLABEL, d.pan,
-        voiceName + " place", (v) => setDesk(ctx, voice, "pan", v), "as it stands"),
+        voiceName + " place", (v) => setDesk(ctx, voice, "pan", v), "default"),
       "the record sits at " + (base.pan || 0).toFixed(2));
 
   /* ---- THE FOUR SENDS, WALKED OFF THE REGISTRY ------------------------------
@@ -774,17 +784,22 @@ export function mount(parent, ctx) {
   A.strip("level", chOnly((c, td) => {
     td.append(knob("b|lvl|" + c.voice.name, "lvl", LEVELS, LEVELLABEL,
       deskOf(c.voice).lvl, c.voice.name + " level",
-      (v) => setDesk(ctx, c.voice, "lvl", v), "as it stands"));
+      (v) => setDesk(ctx, c.voice, "lvl", v), "default"));
   }));
   A.strip("place", chOnly((c, td) => {
     td.append(knob("b|pan|" + c.voice.name, "pan", PANS, PANLABEL,
       deskOf(c.voice).pan, c.voice.name + " place",
-      // "as it stands" and not "centre": PANLABEL already spells 0 `centre`,
-      // so labelling the blank detent the same word put TWO detents reading
+      // "default" and not "centre": PANLABEL already spells 0 `centre`, so
+      // labelling the blank detent the same word put TWO detents reading
       // "centre" side by side (measured: the sweep came out left, left-ish,
       // centre, centre, right-ish, right). One word for absence everywhere on
       // this board, and its POSITION is what says the record is dead centre.
-      (v) => setDesk(ctx, c.voice, "pan", v), "as it stands"));
+      // The word was "as it stands" until 2026-08-26, when Paul collapsed this
+      // board's two spellings of absence into one — *"'as it stands' and
+      // 'nothing set' are too much. get rid of them -- just use 'default' for
+      // 'nothing set'"* — and the argument above is untouched by that: it was
+      // never about WHICH word, only that the word must not be `centre`.
+      (v) => setDesk(ctx, c.voice, "pan", v), "default"));
   }));
   // FOUR SEND ROWS, OFF SEND_ROWS — the same list the voice's own tab walks, so
   // the two surfaces cannot come to draw a different number of sends. It was a
@@ -807,7 +822,7 @@ export function mount(parent, ctx) {
         const w = knob("b|" + r.field + "|" + c.voice.name, r.field, SENDS,
           SENDLABEL, deskOf(c.voice)[r.field],
           c.voice.name + " " + busName(r.bus) + " send",
-          (v) => setDesk(ctx, c.voice, r.field, v), "as it stands");
+          (v) => setDesk(ctx, c.voice, r.field, v), "default");
         const sel = w.querySelector("input");
         if (isRev) sel.title = genreAsk(sec) +
           "; a part send adds to it, so absent adds nothing";
@@ -910,7 +925,7 @@ export function mount(parent, ctx) {
   const busSel = (col, spec) => selectEl({
     key: "bus|" + col.key + "|" + spec.key, label: spec.label,
     options: optionsFor(spec.table, spec.labels, bv(col.key, spec.key), null,
-                        "nothing set"),
+                        "default"),
     value: bv(col.key, spec.key),
     set: (v) => { DD().writeBus(doc, col.key, spec.key, v); ctx.changed(); },
   });
@@ -919,7 +934,16 @@ export function mount(parent, ctx) {
   // is called. The main's cell is the one blank left on either board and it
   // stays blank — the main is not a bus and has no name knob, and inventing one
   // to square the grid is the thing this file refuses.
-  B.strip("name", (col, td) => {
+  //
+  // THE ROW IS HEADED `called`, NOT `name`, 2026-08-26, and the header comes off
+  // the registry (`knobs.find(k => k.key === "name").label`) rather than being
+  // typed here, so fields.js owns the word and this file prints it. Paul:
+  // *"'name' is a very confusing row because the 'name' seems to be reverb
+  // types."* It did: bus 1's menu here shared four words with the `reverb type`
+  // knob one row down (plate/hall/chamber/spring), so "name" read as "which
+  // reverb". fields.js changed the words and the question in the same round —
+  // the whole argument is written beside BUSNAMES there.
+  B.strip(BUS_FIELDS[0].knobs.find((k) => k.key === "name").label, (col, td) => {
     if (col.kind !== "bus") return;
     td.append(busSel(col, busRow(col).knobs.find((k) => k.key === "name")));
   });
@@ -981,7 +1005,7 @@ export function mount(parent, ctx) {
             //
             // SO THE MENU READS `bus 1` TWICE, AND THAT IS THE ACCEPTED SHAPE
             // ON THIS BOARD. `optionsFor` puts them in different optgroups —
-            // "as it stands: bus 1" over "as you say: bus 1" — which is exactly
+            // "default: bus 1" over "as you say: bus 1" — which is exactly
             // what `place` has done since the board existed (PANLABEL spells 0
             // `centre` and the empty detent resolves to 0 as well), and what
             // bus 1's own fader has (`off`/"shut" beside the blank). The pair
@@ -1023,13 +1047,21 @@ export function mount(parent, ctx) {
       const why = HOMELESS[f.key] ? MASTER_WHY : null;
       labelled(g, f.label, selectEl({
         key: "master|" + f.key, label: f.label,
-        // "nothing set" and not "as it stands": what absence means here is not
-        // a number — it is the engine's own answer (fields.js resolveMaster:
-        // five resolve to null and build nothing at all, glue and ceiling
-        // resolve to their shipped default) — and "nothing set" is the one
-        // phrase true of all seven without naming a value that seven different
-        // tables spell differently.
-        options: optionsFor(f.table, f.labels, mv(f.key), null, "nothing set"),
+        // "default", the same word every other empty detent on this page now
+        // carries. This paragraph used to argue the opposite — *"'nothing set'
+        // and not 'as it stands': what absence means here is not a number, it is
+        // the engine's own answer, and "nothing set" is the one phrase true of
+        // all seven without naming a value that seven different tables spell
+        // differently"* — and the OBSERVATION still holds (fields.js
+        // resolveMaster: five of the seven resolve to null and build nothing at
+        // all; glue and ceiling resolve to their shipped default). What changed
+        // is the conclusion. Paul, 2026-08-26: *"'as it stands' and 'nothing
+        // set' are too much. get rid of them -- just use 'default' for 'nothing
+        // set'"*. "default" is true of all seven in exactly the way "nothing
+        // set" was — it names the answer you get by not answering — and it costs
+        // the reader nothing to learn, because it is the word on every other
+        // control on the page.
+        options: optionsFor(f.table, f.labels, mv(f.key), null, "default"),
         value: mv(f.key),
         ...(why ? { why } : {}),
         set: (v) => { DD().writeMaster(doc, f.key, v); ctx.changed(); },
@@ -1278,17 +1310,21 @@ function busFader(td, col, f, doc, ctx, meters) {
     // rgain = clamp(reverb*3.2, 0, 2) and there is nothing above it
     // (fields.js). The blank detent is 0 because audio/plan.js hands toEngine
     // `reverb: 0`, so a record that never opened the rack is genuinely shut.
-    // "as it stands", NOT "shut", and it is the `place`/"centre" trap one bus
-    // down: RETURNLABEL already spells `off` as "shut", so labelling the blank
-    // detent the same word put TWO stops reading "shut" side by side (measured
-    // on the rendered page: shut · shut · a little · a room · a hall · as wet
-    // as it goes). One word for absence everywhere on this board, and its
-    // POSITION — first, beside `off`, because both are 0 — is what says the
-    // record has not opened the return.
+    // "default", NOT "shut", and it is the `place`/"centre" trap one bus down:
+    // RETURNLABEL already spells `off` as "shut", so labelling the blank detent
+    // the same word put TWO stops reading "shut" side by side (measured on the
+    // rendered page: shut · shut · a little · a room · a hall · as wet as it
+    // goes). One word for absence everywhere on this board, and its POSITION —
+    // first, beside `off`, because both are 0 — is what says the record has not
+    // opened the return. The word here read "as it stands" until 2026-08-26,
+    // when Paul collapsed this page's two spellings of absence into one: *"'as
+    // it stands' and 'nothing set' are too much. get rid of them -- just use
+    // 'default' for 'nothing set'"*. Which word it is was never the argument;
+    // that it is not `shut` is.
     td.append(knob("bus|" + col.key + "|ret", "ret", spec.table, spec.labels,
       cur, "bus " + col.n + " return",
       (v) => { DD().writeBus(doc, col.key, "ret", v); ctx.changed(); },
-      "as it stands"));
+      "default"));
   }
   const m = document.createElement("meter");
   m.min = 0; m.max = 1;
@@ -1398,7 +1434,7 @@ function knob(k, field, table, labels, cur, aria, set, emptyLabel) {
     console.error("engineer: knob(" + field + ") got a table that is not a scale");
   let i = 0;
   while (i < d.length && d[i].n < dflt) i++;
-  d.splice(i, 0, { v: "", w: emptyLabel == null ? "as it stands" : emptyLabel,
+  d.splice(i, 0, { v: "", w: emptyLabel == null ? "default" : emptyLabel,
                    n: dflt });
 
   const wrap = el("span");

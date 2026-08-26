@@ -350,6 +350,7 @@
     const rows = [
       ["ROOM",       () => ROOM,       () => NF.REVERBS],
       ["RETNAME",    () => RETNAME,    () => NF.BUSNAMES],
+      ["ECHONAME",   () => ECHONAME,   () => NF.BUSNAMES],
       ["CHAIRLVL",   () => CHAIRLVL,   () => NF.LEVELS],
       ["CHAIRREV",   () => CHAIRREV,   () => NF.SENDS],
     ];
@@ -763,11 +764,21 @@
     roots:  "chamber",   // a hall recording of people in a hall
     parts:  "hall",      // the FUNCTION genres are parts, and a part takes the zero
   };
-  // the nameplate follows the return, so the board's bus 1 is CALLED what it
-  // is. `shimmer` is the one REVERBS word BUSNAMES has no entry for — the
-  // desk's word for that return is `air`.
-  const RETNAME = { plate: "plate", hall: "hall", chamber: "chamber",
-                    spring: "spring", shimmer: "air" };
+  // the nameplate follows the return, so the board's bus 1 is CALLED what the
+  // return is FOR. It used to be called what the return IS — `plate` under a
+  // plate, `hall` under a hall, `air` under a shimmer — and that was the
+  // confusion Paul named on 2026-08-26 (*"'name' is a very confusing row
+  // because the 'name' seems to be reverb types"*): the nameplate repeated the
+  // `reverb type` knob's own word back at it, one cell away, so bus 1 read
+  // "plate" twice and neither reading told you which one you were turning.
+  // fields.js BUSNAMES is a JOB vocabulary now, so this table maps each of the
+  // five REVERBS colours to what that colour is being USED for — a plate for
+  // sheen on a voice, a hall for depth, a chamber for the room itself, the dub
+  // tank for a long wash, the shimmer for a bloom of octaves above the note.
+  // assertDeskTables above pins every value here to a BUSNAMES key, so this
+  // table and that one cannot drift apart without the boot throwing.
+  const RETNAME = { plate: "sheen", hall: "depth", chamber: "ambience",
+                    spring: "wash", shimmer: "bloom" };
 
   /* ---------- HOW FAR OPEN THE RETURN IS ---------------------------------
      `tone.verb` is already the number every unit SENDS — audio/desk.js
@@ -807,10 +818,25 @@
        name  what it is: one repeat is a slap, several are an echo. */
   const DARKCUT = 2000;
   const hasEcho = (G) => (G.fx || []).indexOf("echo") >= 0;
+  // BUS 2'S NAMEPLATE, AND IT IS A TABLE NOW rather than a ternary with two
+  // string literals in it. The literals were `echo` and `slap` and both were
+  // words fields.js BUSNAMES held until 2026-08-26 — they were the DELAY's own
+  // words, repeated back at the delay, which is the same confusion Paul named
+  // one bus up (*"'name' is a very confusing row because the 'name' seems to be
+  // reverb types."*). BUSNAMES is a JOB vocabulary now, so the two names say
+  // what the delay is FOR: long repeats are a `throw` (the engineer's own word
+  // for sending a word out into the delay), short ones are a `double` — which
+  // is what a slapback does to a voice and always has been.
+  //
+  // IT IS A TABLE SO assertDeskTables CAN SEE IT. The ternary was invisible to
+  // that check — the rename went green here and failed 30 records deep in
+  // precompose.test.js G8c ("echo.name = \"echo\" is not one of its words"),
+  // which is exactly the drift the assert exists to catch at boot instead.
+  const ECHONAME = { more: "throw", less: "double" };
   function echoBus(G) {
     const T = G.tone || {};
     const fb = (T.verb || 0) >= BIGROOM ? "more" : "less";
-    return { name: fb === "more" ? "echo" : "slap",
+    return { name: ECHONAME[fb],
              time: G.swing > 0 ? "8" : "d8",
              fb,
              tone: (T.cut || 0) <= DARKCUT ? "dark" : "bright" };

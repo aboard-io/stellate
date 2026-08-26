@@ -185,8 +185,16 @@ console.log("\nG3  every word in the document is the registry's own");
                          echo: "touch", room: "none", aux: "some",
                          eq: { lo: 0, mid: -1.5, hi: 2 },
                          mute: false, solo: false };
-  doc.sound.buses = { rev: { name: "plate", ret: "hall", color: "plate" },
-                      echo: { name: "slap", time: "d8", fb: "more", tone: "dark" } };
+  // THE FIXTURE'S BUS NAMES CAME OFF THE NEW VOCABULARY, 2026-08-26. They were
+  // `plate` and `slap`, and both are words fields.js BUSNAMES no longer holds —
+  // the table was replaced whole that day with a JOB vocabulary because the old
+  // one repeated REVERBLABEL back at itself (Paul: *"'name' is a very confusing
+  // row because the 'name' seems to be reverb types."*). A fixture carrying a
+  // retired name would now load with a NOTE rather than a value, which is the
+  // right behaviour for a person's old save and the wrong thing to exercise
+  // here: this fixture's job is to prove a NAMED bus round-trips.
+  doc.sound.buses = { rev: { name: "ambience", ret: "hall", color: "plate" },
+                      echo: { name: "throw", time: "d8", fb: "more", tone: "dark" } };
   doc.sound.master = { drive: "warm", glue: "glue", tape: "tape", space: "room" };
   doc.sound.fx = ["crunch"];
   const pmKeys = F.PARTMIX.map((f) => f.key);
@@ -952,7 +960,16 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     const field = k.split("|")[0], T = TBL[field];
     const want = Object.keys(T.table).map((x) => T.labels[x] || x);
     for (const w of want) if (!words.includes(w)) missing.push(k + " has no " + w);
-    if (!words.includes("as it stands")) missing.push(k + " has no empty detent");
+    // THE WORD IS `default`, 2026-08-26. This line read
+    // `if (!words.includes("as it stands"))` from the day the pots replaced the
+    // menus, and it is the reason the rename had to come through here: the gate
+    // DRIVES these controls by their printed word (`drive("default")` below
+    // sweeps a pot until aria-valuetext matches), so a board relabelled without
+    // this file would go green on a word nothing on the page says any more.
+    // Paul, 2026-08-26: *"'as it stands' and 'nothing set' are too much. get rid
+    // of them -- just use 'default' for 'nothing set'"* — one word for absence
+    // everywhere, and one word for this gate to look for.
+    if (!words.includes("default")) missing.push(k + " has no empty detent");
     // A SLIDER OVER WORDS IS ONLY HONEST IF THE WORDS ARE A SCALE. Map each
     // stop back to fields.js's own number (the blank resolves the way
     // resolvePartMix({}) resolves it) and insist the run never goes backwards.
@@ -961,7 +978,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     // ...and `lvl`'s own blank, which is 1 and not 0 — resolvePartMix({}) says
     // so, and it is why the empty detent lands BETWEEN `back` and `forward`
     // rather than at the left end like a send's.
-    back["as it stands"] = F.resolvePartMix({})[field === "echo" ? "del" : field];
+    back["default"] = F.resolvePartMix({})[field === "echo" ? "del" : field];
     const ns = words.map((w) => back[w]);
     for (let i = 1; i < ns.length; i++)
       if (!(ns[i] >= ns[i - 1])) crooked.push(k + ": " + words.join(" ") +
@@ -1046,7 +1063,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     // check alive across the next time it changes its mind.
     const pot = /^bus\|.+\|ret$/.test(key);
     const need = pot
-      ? ["as it stands"].concat(Object.keys(table).map((v) => (labels && labels[v]) || v))
+      ? ["default"].concat(Object.keys(table).map((v) => (labels && labels[v]) || v))
       : [""].concat(Object.keys(table));
     for (const v of need) if (!got.includes(v)) short.push(key + " has no " + (v || "(blank)"));
   }
@@ -1143,7 +1160,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     const deskOf = () => (window.__eightDoc().voices.find((v) => v.name === "cantor") || {}).desk;
     const found = drive("wet"); await wait();
     const set = JSON.parse(JSON.stringify(deskOf() || null));
-    drive("as it stands"); await wait();
+    drive("default"); await wait();
     return { found, set, back: deskOf() === undefined };
   });
   ok(trip.found && trip.set && trip.set.rev === "wet",
@@ -1286,7 +1303,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       const found = drive("b|echo|" + name, "drown"); await wait();
       const after = window.__nuMix() ? Object.fromEntries(Object.entries(
         window.__nuMix().units).map(([k, u]) => [k, u.del])) : null;
-      drive("b|echo|" + name, "as it stands"); await wait();
+      drive("b|echo|" + name, "default"); await wait();
       const back = window.__nuMix() ? Object.fromEntries(Object.entries(
         window.__nuMix().units).map(([k, u]) => [k, u.del])) : null;
       return { name, key, found, keys0, before, after, back, rd: rd() };
@@ -1559,7 +1576,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       const at2 = sums();
       const backAim = aim(""); await wait();
       const at3 = sums();
-      drive("b|room|" + name, "as it stands"); await wait();
+      drive("b|room|" + name, "default"); await wait();
       return { name, sent, aimed, backAim, at1, at2, at3 };
     });
     ok(routed.sent && routed.aimed,
@@ -1638,7 +1655,11 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
          "NOT ONE BLANK CELL ON THE CHANNEL BOARD (" + A.body + " body cells, " +
          A.empty + " of " + A.cells + " empty in all — it was 99 of 177 before " +
          "the split)", JSON.stringify(A.blank));
-      ok(B.blank.length <= 1 && (!B.blank.length || /^name \/ main$/.test(B.blank[0])),
+      // `called`, not `name`: the row's header comes off the fields.js registry
+      // (BUSES' spliced `name` knob, `label: "called"` since 2026-08-26 — Paul:
+      // *"'name' is a very confusing row because the 'name' seems to be reverb
+      // types."*), so this regex tracks the registry's word and not a typed one.
+      ok(B.blank.length <= 1 && (!B.blank.length || /^called \/ main$/.test(B.blank[0])),
          "…and exactly one on the rack board, which is the main's NAME — the " +
          "main is not a bus and no name knob is invented to square the grid (" +
          B.body + " body cells, " + B.blank.length + " blank)",
