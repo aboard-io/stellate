@@ -3319,6 +3319,7 @@ const drumCells = () => cellNames().filter((n) => DOC.material.cells[n].kind ===
    control and lives outside it, which is the law that keeps the frozen half
    frozen (test/motif-frozen.js A1). */
 let motifLoop = null;         // the cell that is looping — page state, by NAME
+let motifOnce = null;         // …and the cell whose ONE PASS was asked for, by NAME
 let motifSay = null;          // the block's live sentence
 let motifWho = "";            // …and the still half of it, kept for a redraw
 
@@ -3430,28 +3431,62 @@ function auditionMotif(name, loop) {
 // motif and a record that starts all end the same way.
 function auditionOff() {
   motifLoop = null;
+  motifOnce = null;
   stopAudition();
   auditionSay();
 }
 
-/* THE LOOP BUTTON. A toggle and not a second tap-to-stop: it says what it is
-   with `aria-pressed`, it keeps its state across a redraw because the state is
-   keyed by the cell's NAME (PROGRAM.md §2.2 — an index would follow the wrong
-   motif the moment the bank changed), and it greys with its reason while the
-   transport runs. */
+/* THE PLAY BUTTON — THREE STATES, ONE CONTROL.
+
+   Paul, 2026-08-26: *"I can't play motifs. Why don't you add a play button that
+   plays just the motif and has three states: play, play loop, not playing."*
+
+   He could, in fact, play them: tapping a motif's TAB sounded it, and a probe
+   of the deployed page on 2026-08-26 confirmed a buffer source firing on the
+   tap. But an affordance nobody can see is not a control, and the only visible
+   thing here said "loop" — so the plain single pass had no door at all. This
+   button is that door, and the tab-tap is retired with it (which also answers
+   the standing complaint that tapping the ALREADY-OPEN tab restarted the sound
+   instead of stopping it — a tab is now for looking, and this is for hearing).
+
+   THE STATES ARE OFF → ONCE → LOOP → OFF, cycled by tapping. State lives in two
+   page variables keyed by the cell's NAME (PROGRAM.md §2.2 — an index would
+   follow the wrong motif the moment the bank changed), so it survives a redraw.
+
+   AND THE WORD ON THE BUTTON IS THE NEXT TAP, NOT THE CURRENT STATE. That is
+   this surface's standing division of labour and it is here for a hard reason:
+   a single pass ENDS BY ITSELF, and a button that named the state would have to
+   be rewritten by the sound's own callback — a write into a control, which is
+   the one thing the frozen-DOM law forbids (MOTIF.md; test/motif-frozen.js).
+   So the button says what pressing it will do, which never goes stale, and the
+   live sentence beside it — a `[data-live]` sibling, which the clock IS allowed
+   to write — says what is happening. Between them the three states are legible
+   without anything reshaping under a thumb. */
+const PLAY_WORD = { off: "▶ play", once: "↻ loop", loop: "■ stop" };
+const PLAY_NEXT = { off: "once", once: "loop", loop: "off" };
+const playAt = (name) =>
+  motifLoop === name ? "loop" : motifOnce === name ? "once" : "off";
 function loopButton(parent, name) {
   const p = el("p");
   const b = document.createElement("button");
   b.type = "button";
-  b.dataset.k = "motifloop-" + name;
-  const on = motifLoop === name;
-  b.setAttribute("aria-pressed", String(on));
-  b.append(el("span", on ? "↻ looping" : "↻ loop"));
+  b.dataset.k = "motifplay-" + name;
+  const paint = () => {
+    const at = playAt(name);
+    b.setAttribute("aria-pressed", String(at !== "off"));
+    b.dataset.at = at;
+    b.setAttribute("aria-label",
+      at === "loop" ? "stop looping " + name
+      : at === "once" ? "loop " + name
+      : "play " + name + " once");
+    b.replaceChildren(el("span", PLAY_WORD[at]));
+  };
+  paint();
   if (playing) {
     const why = "the record is playing — stop it to hear one motif alone";
     b.disabled = true; b.setAttribute("aria-disabled", "true");
     b.dataset.why = why;
-    b.setAttribute("aria-label", "loop " + name + ", " + why);
+    b.setAttribute("aria-label", "play " + name + ", " + why);
   } else {
     b.addEventListener("click", () => {
       /* AND IT CAN STILL BE PRESSED AFTER THE RECORD STARTED, because the
@@ -3459,22 +3494,18 @@ function loopButton(parent, name) {
          law): this button was drawn while the record was stopped and it is
          still on the page, live, when somebody presses play. So the refusal is
          made HERE as well as at draw time, and the live sentence beside the
-         button — which the clock IS allowed to write — is what says why. The
-         same law is why the button's own word can go stale for a moment: press
-         play while a loop runs and the sound stops, the sentence says "the
-         record is playing", and the button still reads "looping" until your
-         next gesture rebuilds it. A stale word beside a true sentence is the
-         price of a page that does not reshape under a thumb. */
+         button — which the clock IS allowed to write — is what says why. */
       if (playing) { auditionSay(); return; }
-      if (motifLoop === name) { auditionOff(); }
-      else { motifLoop = name; auditionMotif(name, true); }
+      const want = PLAY_NEXT[playAt(name)];
+      motifOnce = want === "once" ? name : null;
+      motifLoop = want === "loop" ? name : null;
+      if (want === "off") auditionOff();
+      else auditionMotif(name, want === "loop");
       // THE BUTTON REDRAWS ITSELF AND NOTHING ELSE. `drawMaterial()` would
       // rebuild every staff in the axis — three abcjs engravings on the chant
       // — for a word and an attribute, and the recipe's own law is that the
       // page does not reshape under a thumb.
-      const now = motifLoop === name;
-      b.setAttribute("aria-pressed", String(now));
-      b.replaceChildren(el("span", now ? "↻ looping" : "↻ loop"));
+      paint();
     });
   }
   p.append(b, document.createTextNode(" "));
@@ -3557,11 +3588,16 @@ function motifTabRow(parent) {
     // is already open re-sounds — a tap is a tap. A loop belongs to one motif,
     // so moving to another ends it (see the block over `auditionOf`).
     b.addEventListener("click", () => {
+      /* A TAB IS FOR LOOKING. It used to sound the motif as well, which read
+         as a drum pad while you were writing and as a trap while you were
+         browsing — and a tap on the tab already open RESTARTED the sound with
+         no way to stop it. Hearing is the play button's job now (the block
+         over `loopButton`), so moving tabs only ends what the last one was
+         doing. */
       const was = motifTab;
       motifTab = name;
-      if (was !== name) motifLoop = null;
+      if (was !== name && (motifLoop || motifOnce)) auditionOff();
       drawMaterial();
-      auditionMotif(name, motifLoop === name);
     });
     bar.append(b, document.createTextNode(" "));
   }
