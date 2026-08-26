@@ -1,0 +1,676 @@
+<title>The Songbook</title>
+<style>
+  :root{
+    --bg:#0a0c10; --panel:#10141b; --panel2:#151a23; --panel3:#1a2029;
+    --line:#232b38; --line2:#2e3948;
+    --ink:#d6dee8; --dim:#7e8a9a; --faint:#55606f;
+    --teal:#45d7b8; --amber:#e8b45a; --violet:#b48ef0; --blue:#62a8ff;
+    --red:#ff6b6b; --green:#7ad07a; --pink:#f08eb6;
+    --mono:"SF Mono","Cascadia Code","JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  }
+  html{background:var(--bg)}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);
+       margin:0;padding:0;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 20px 90px}
+  a{color:var(--blue);text-decoration:none}
+
+  /* ---------- header ---------- */
+  header{padding:64px 0 30px;border-bottom:1px solid var(--line);
+         background:
+           radial-gradient(1200px 420px at 20% -10%, rgba(69,215,184,.10), transparent 60%),
+           radial-gradient(900px 380px at 85% 0%, rgba(180,142,240,.08), transparent 60%)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+           text-transform:uppercase;color:var(--dim);margin:0 0 14px}
+  h1{font-size:56px;line-height:1;margin:0 0 6px;letter-spacing:-.01em;font-weight:800;
+     background:linear-gradient(100deg,#eaf2fa 30%,var(--teal) 75%,var(--violet));
+     -webkit-background-clip:text;background-clip:text;color:transparent}
+  .tag{font-size:17px;color:var(--dim);max-width:62ch;margin:8px 0 26px}
+  .tag b{color:var(--ink);font-weight:600}
+  .laws{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 30px}
+  .law{font-family:var(--mono);font-size:11px;color:var(--dim);
+       border:1px solid var(--line2);border-radius:99px;padding:4px 12px;background:rgba(255,255,255,.02)}
+  .law i{font-style:normal;color:var(--teal)}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:0 0 6px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .stat b{display:block;font-family:var(--mono);font-size:22px;color:var(--teal);font-weight:700;line-height:1.2}
+  .stat span{font-size:11.5px;color:var(--dim)}
+  .stat.amberN b{color:var(--amber)}
+  .stat.violetN b{color:var(--violet)}
+
+  /* ---------- syntax colors (kernel-lang.html's vocabulary, verbatim) ---------- */
+  .sub{color:var(--violet)}          /* subject: who the rule addresses   */
+  .whn{color:var(--pink)}            /* when: section / bar selector      */
+  .verb{color:var(--teal)}           /* operator verb                     */
+  .num{color:var(--amber)}           /* numbers & counter expressions     */
+  .vec{color:var(--blue)}            /* on gate / on deg / on acc         */
+  .kw{color:var(--dim)}              /* glue: in · of · on · from · seed  */
+  .cmt{color:var(--faint);font-style:italic}
+  .colon{color:var(--faint)}
+  .dot{color:var(--faint)}
+  .err{ text-decoration:underline wavy var(--red) 1.5px; text-underline-offset:4px }
+  .warn{ text-decoration:underline wavy var(--amber) 1.5px; text-underline-offset:4px }
+
+  /* ---------- sections ---------- */
+  section{margin-top:64px}
+  .secno{font-family:var(--mono);font-size:11px;color:var(--teal);letter-spacing:.2em;margin:0 0 6px}
+  h2{font-size:26px;margin:0 0 8px;font-weight:700;letter-spacing:-.01em}
+  .lede{color:var(--dim);max-width:70ch;margin:0 0 22px;font-size:15px}
+  .lede b{color:var(--ink);font-weight:600}
+  .lede code, p code, li code, td code, .meaning code{font-family:var(--mono);font-size:.9em;color:var(--amber);
+    background:rgba(232,180,90,.07);border:1px solid rgba(232,180,90,.15);border-radius:4px;padding:0 5px}
+
+  /* ---------- reading laws card ---------- */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+  .card h3{margin:0 0 6px;font-size:14px;color:var(--ink)}
+  .card p{margin:0;font-size:13px;color:var(--dim)}
+  .card .cite{display:inline-block;margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--blue);
+    background:rgba(98,168,255,.08);border:1px solid rgba(98,168,255,.18);border-radius:5px;padding:2px 8px}
+
+  /* ---------- era groups ---------- */
+  .era{margin-top:48px}
+  .era-head{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--line);
+    padding-bottom:8px;margin-bottom:16px}
+  .era-head h3{font-family:var(--mono);font-size:12.5px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--teal);margin:0}
+  .era-head .span{font-family:var(--mono);font-size:11px;color:var(--faint)}
+
+  /* ---------- entries ---------- */
+  .exgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}
+  .ex{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .exhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;padding:13px 18px 2px}
+  .place{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.08em}
+  .gname{font-size:15px;font-weight:700;color:var(--ink)}
+  .facts{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--blue);
+    border:1px solid rgba(98,168,255,.25);border-radius:4px;padding:1px 7px;white-space:nowrap}
+  .ex .rules{margin-top:9px;padding:13px 18px;font-family:var(--mono);font-size:13.5px;line-height:1.95;
+      white-space:nowrap;overflow-x:auto;background:linear-gradient(180deg,var(--panel2),var(--panel));
+      border-top:1px solid var(--line)}
+  .ex .meaning{padding:11px 18px 13px;border-top:1px solid var(--line);font-size:13px;color:var(--dim)}
+  .ex .meaning b{color:var(--ink);font-weight:600}
+  .gapnote{display:block;margin-top:7px;font-size:12px;color:var(--amber)}
+  .gapnote.hard{color:var(--red)}
+  .gapnote a{color:inherit;text-decoration:underline dotted;text-underline-offset:3px}
+  .ex details{border-top:1px dashed var(--line)}
+  .ex summary{cursor:pointer;padding:9px 18px;font-family:var(--mono);font-size:11px;color:var(--blue);
+    list-style:none}
+  .ex summary::-webkit-details-marker{display:none}
+  .ex summary:before{content:"▸ ";color:var(--faint)}
+  .ex details[open] summary:before{content:"▾ "}
+  .ex details pre{margin:0;padding:2px 18px 14px;font-family:var(--mono);font-size:12px;color:var(--dim);
+    white-space:pre;overflow-x:auto;line-height:1.7}
+  .ex details pre em{font-style:normal;color:var(--blue)}
+
+  /* ---------- gaps ---------- */
+  .notes{counter-reset:n;margin:0;padding:0;list-style:none}
+  .notes li{counter-increment:n;position:relative;padding:14px 18px 14px 58px;margin-bottom:10px;
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:13.5px;color:var(--dim)}
+  .notes li:before{content:counter(n,decimal-leading-zero);position:absolute;left:18px;top:14px;
+    font-family:var(--mono);font-size:12px;color:var(--amber)}
+  .notes b{color:var(--ink);font-weight:600}
+  .notes .fix{display:block;margin-top:7px;font-size:12.5px;color:var(--teal)}
+  .notes .fix:before{content:"smallest extension — ";color:var(--faint)}
+  .notes .cite2{font-family:var(--mono);font-size:11px;color:var(--blue)}
+
+  footer{margin-top:70px;padding-top:22px;border-top:1px solid var(--line);
+    font-family:var(--mono);font-size:11px;color:var(--faint)}
+
+  @media (max-width:640px){
+    h1{font-size:40px}
+    section{margin-top:48px}
+    .facts{margin-left:0}
+  }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">nukernel · ideal-state sketch · the catalog, written in libretto</p>
+  <h1>THE SONGBOOK</h1>
+  <p class="tag">The genre rules of the shelf, restated as lines. <b>Every rule below desugars to a
+  closure that already ships</b> — the verbatim source and its genres.js line sit under each entry,
+  collapsed. The songbook is the proof-of-coverage exercise <a href="kernel-lang.html">Libretto</a>'s
+  §8 asked for: say the catalog in the language, and where the language cannot say it,
+  <b>report the gap instead of fudging the number</b>.</p>
+  <div class="laws">
+    <span class="law"><i>extracted</i> — every line cites the closure it desugars to</span>
+    <span class="law"><i>faithful</i> — every number matches the source</span>
+    <span class="law"><i>honest</i> — what the grammar cannot say is reported, wavy-underlined</span>
+    <span class="law"><i>gated at the score</i> — diff the rendered bytes, not the prose</span>
+  </div>
+  <div class="stats">
+    <div class="stat"><b>199</b><span>genres in the catalog, every one with a <code>word:</code></span></div>
+    <div class="stat"><b>15</b><span>of those words are the identity <code>() =&gt; []</code></span></div>
+    <div class="stat violetN"><b>4 + 4</b><span>bar schedules (<code>period</code>) + ghost layers</span></div>
+    <div class="stat violetN"><b>9</b><span>pipe racks — strum, harmonize, breathe only</span></div>
+    <div class="stat amberN"><b>22</b><span>genres sung in this songbook, source cited</span></div>
+    <div class="stat amberN"><b>14</b><span>gaps the grammar cannot say — reported below</span></div>
+  </div>
+</header>
+
+<!-- ================================================================ -->
+<section>
+  <p class="secno">00 · HOW TO READ A PAGE</p>
+  <h2>Four reading laws</h2>
+  <div class="cards">
+    <div class="card"><h3>Voices count from 1</h3>
+      <p><span class="sub">voice 1</span> is the kernel's <code>v === 0</code> — the lead, usually
+      "as written". <span class="sub">voices 2..</span> is the closure's else-branch. Parts
+      (<span class="sub">lead</span>, <span class="sub">pads</span>) address the cast; they carry
+      the pipes.</p></div>
+    <div class="card"><h3>S is entry-relative</h3>
+      <p>Both call sites pass one time index, <code>s = bar − entry(v)</code> — sections since
+      <b>this voice</b> entered. For staggered entries (fugue's <code>entry: v =&gt; v</code>) each
+      voice's <span class="whn">in odd</span> is phase-shifted. The songbook adopts that meaning;
+      the grammar must too (gap 09).</p>
+      <span class="cite">kernel.js:1393 · :629</span></div>
+    <div class="card"><h3>Two colors of trouble</h3>
+      <p><span class="err">red wavy</span> = the grammar has no way to say it at all.
+      <span class="warn">amber wavy</span> = grammatical, but the value falls outside the
+      <code>OPKEYS</code> alphabet the mock compiles to (e.g. <code>rotate 8</code>). Both are
+      indexed in <a href="#gaps">The Gaps</a>.</p></div>
+    <div class="card"><h3>+ appends, · chains</h3>
+      <p>Ops apply left to right, exactly <code>word()</code>'s reduce. A bare
+      <span class="kw">+</span> appends to the voice's previous rule — the spelling of the
+      closures' <code>...(s % 2 ? [op] : [])</code> spread, split under
+      <span class="whn">in odd</span>.</p>
+      <span class="cite">kernel.js:195</span></div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <p class="secno">01 · THE SONGBOOK</p>
+  <h2>Twenty-two records, four shelves</h2>
+  <p class="lede">Grouped by era. Each entry: the lines, one sentence on what they do to the tune,
+  and the shipped closure they desugar to. The label is a city and a year, as the catalog writes
+  them.</p>
+
+  <!-- ============ THE OLD MASTERS ============ -->
+  <div class="era">
+    <div class="era-head"><h3>The Old Masters</h3><span class="span">Reims 1360 → Boston 1831 · counterpoint before the record</span></div>
+    <div class="exgrid">
+
+    <div class="ex" id="g-arsnova">
+      <div class="exhead"><span class="place">Reims 1360</span><span class="gname">arsnova</span><span class="facts">word</span></div>
+      <div class="rules"><span class="sub">voice 1</span> <span class="colon">:</span> <span class="verb">rotate</span> <span class="warn"><span class="num">3·S</span></span> <span class="dot">·</span> <span class="verb">thin</span> <span class="num">2</span><br>
+<span class="sub">voice 2</span> <span class="colon">:</span> <span class="verb">up</span> <span class="num">2</span><br>
+<span class="sub">voice 3</span> <span class="colon">:</span> <span class="verb">up</span> <span class="warn"><span class="num">4</span></span> <span class="dot">·</span> <span class="verb">rotate</span> <span class="warn"><span class="num">5·S</span></span></div>
+      <div class="meaning"><b>Isorhythm.</b> Talea against color: the top voice's rhythm walks 3
+      steps a section, the triplum's walks 5 — two different counter multipliers turning in one
+      piece, the oldest s-arithmetic on the shelf.
+      <span class="gapnote">⚠ <a href="#gaps">gap 10, 12</a> — rotate 3·S / 5·S exceed rot1..7 as S
+      grows, and up 4 has no OPKEYS key; the score survives only by the implicit mod-16 wrap.</span></div>
+      <details><summary>genres.js:5664 — the closure</summary><pre>word: (v, s) =&gt; (v === 0 ? [rotate(3 * s), drop(2)]
+              : v === 1 ? [transpose(2)]
+              : [transpose(4), rotate(5 * s)]),   <em>genres.js:5664</em></pre></details>
+    </div>
+
+    <div class="ex" id="g-spem">
+      <div class="exhead"><span class="place">London 1570</span><span class="gname">spem</span><span class="facts">word</span></div>
+      <div class="rules"><span class="sub">voice 1</span> <span class="colon">:</span> <span class="verb">as written</span> <span class="cmt"># transpose(0), the identity</span><br>
+<span class="sub">voice 2</span> <span class="colon">:</span> <span class="verb">up</span> <span class="warn"><span class="num">4</span></span><br>
+<span class="sub">voice 3</span> <span class="colon">:</span> <span class="verb">up</span> <span class="num">2</span><br>
+<span class="sub">voice 4</span> <span class="colon">:</span> <span class="verb">down</span> <span class="warn"><span class="num">3</span></span><br>
+<span class="sub">voice 5</span> <span class="colon">:</span> <span class="verb">up</span> <span class="warn"><span class="num">3</span></span><br>
+<span class="sub">voice 6</span> <span class="colon">:</span> <span class="verb">down</span> <span class="num">2</span><br>
+<span class="sub">voice 7</span> <span class="colon">:</span> <span class="verb">up</span> <span class="warn"><span class="num">5</span></span><br>
+<span class="sub">voice 8</span> <span class="colon">:</span> <span class="verb">up</span> <span class="num">1</span><br>
+<span class="sub">all</span> <span class="whn">in odd</span> <span class="colon">:</span> <span class="kw">+</span> <span class="verb">rotate</span> <span class="num">2</span></div>
+      <div class="meaning"><b>Eight choirs, one wave.</b> Tallis' forty parts scaled to eight: each
+      choir sings the phrase at its own height, and every voice's odd sections turn two steps —
+      per-voice odd, because the entries sweep the room (<code>entry: v =&gt; v</code>).
+      <span class="gapnote">⚠ <a href="#gaps">gap 10</a> — up 3/4/5 and down 3 exceed OPKEYS'
+      trm2..trp2 (±1, ±2 only).</span></div>
+      <details><summary>genres.js:834 — the closure</summary><pre>word: (v, s) =&gt; [transpose([0, 4, 2, -3, 3, -2, 5, 1][v % 8]),
+                 ...(s % 2 ? [rotate(2)] : [])],   <em>genres.js:834</em></pre></details>
+    </div>
+
+    <div class="ex" id="g-fugue">
+      <div class="exhead"><span class="place">Leipzig 1725</span><span class="gname">fugue</span><span class="facts">word</span></div>
+      <div class="rules"><span class="sub">voice 1</span> <span class="whn">in S%3=0</span> <span class="colon">:</span> <span class="verb">as written</span><br>
+<span class="sub">voice 1</span> <span class="whn">in S%3=1</span> <span class="colon">:</span> <span class="verb">rotate</span> <span class="warn"><span class="num">0</span></span><br>
+<span class="sub">voice 1</span> <span class="whn">in S%3=2</span> <span class="colon">:</span> <span class="verb">invert</span> <span class="num">4</span><br>
+<span class="sub">voice 2</span> <span class="whn">in S%3=0</span> <span class="colon">:</span> <span class="verb">up</span> <span class="warn"><span class="num">3</span></span><br>
+<span class="sub">voice 2</span> <span class="whn">in S%3=1</span> <span class="colon">:</span> <span class="verb">up</span> <span class="warn"><span class="num">3</span></span> <span class="dot">·</span> <span class="verb">reverse</span><br>
+<span class="sub">voice 2</span> <span class="whn">in S%3=2</span> <span class="colon">:</span> <span class="verb">invert</span> <span class="num">4</span><br>
+<span class="sub">voice 3</span> <span class="whn">in S%3=0</span> <span class="colon">:</span> <span class="verb">reverse</span><br>
+<span class="sub">voice 3</span> <span class="whn">in S%3=1</span> <span class="colon">:</span> <span class="verb">invert</span> <span class="warn"><span class="num">2</span></span><br>
+<span class="sub">voice 3</span> <span class="whn">in S%3=2</span> <span class="colon">:</span> <span class="verb">up</span> <span class="warn"><span class="num">3</span></span> <span class="dot">·</span> <span class="verb">rotate</span> <span class="num">2</span><br>
+<span class="sub">voice 4</span> <span class="whn">in S%3=0</span> <span class="colon">:</span> <span class="verb">down</span> <span class="warn"><span class="num">3</span></span><br>
+<span class="sub">voice 4</span> <span class="whn">in S%3=1</span> <span class="colon">:</span> <span class="verb">reverse</span> <span class="dot">·</span> <span class="verb">up</span> <span class="warn"><span class="num">3</span></span><br>
+<span class="sub">voice 4</span> <span class="whn">in S%3=2</span> <span class="colon">:</span> <span class="verb">invert</span> <span class="num">4</span></div>
+      <div class="meaning"><b>The exposition as twelve one-line rules.</b> Four voices × three
+      columns: subject, answer at the fifth, retrograde, mirror. These lines are correct ONLY under
+      the entry-relative S law — fugue's voices enter a bar apart, so each counts its own S%3.
+      <span class="gapnote">⚠ <a href="#gaps">gap 09, 10</a> — an absolute section selector cannot
+      reproduce this table; invert 2 and up/down 3 fall outside OPKEYS (inv = invert 4 only).</span></div>
+      <details><summary>genres.js:432 — the closure</summary><pre>word: (v, s) =&gt; [
+  [[], [rotate(0)], [invert(4)]][s % 3],
+  [[transpose(3)], [transpose(3), reverse()], [invert(4)]][s % 3],
+  [[reverse()], [invert(2)], [transpose(3), rotate(2)]][s % 3],
+  [[transpose(-3)], [reverse(), transpose(3)], [invert(4)]][s % 3],
+][v],   <em>genres.js:432</em></pre></details>
+    </div>
+
+    <div class="ex" id="g-counterpoint">
+      <div class="exhead"><span class="place">Vienna 1725</span><span class="gname">counterpoint</span><span class="facts">word</span></div>
+      <div class="rules"><span class="sub">voice 1</span> <span class="colon">:</span> <span class="verb">as written</span><br>
+<span class="sub">voice 2</span> <span class="whn">in even</span> <span class="colon">:</span> <span class="verb">invert</span> <span class="warn"><span class="num">5</span></span><br>
+<span class="sub">voice 2</span> <span class="whn">in odd</span> <span class="colon">:</span> <span class="verb">invert</span> <span class="warn"><span class="num">0</span></span></div>
+      <div class="meaning"><b>Contrary motion, alternating pivot.</b> The counter-voice is the
+      cantus mirrored — about 5 on even sections, about 0 on odd. The source is one ternary
+      <i>inside</i> the op argument; the grammar has no conditional expression, so the printer must
+      split it into two rules.
+      <span class="gapnote">⚠ <a href="#gaps">gap 08, 10</a> — ternary-in-argument; invert 0 and 5
+      outside OPKEYS.</span></div>
+      <details><summary>genres.js:878 — the closure</summary><pre>word: (v, s) =&gt; (v === 0 ? [] : [invert(s % 2 ? 0 : 5)]),   <em>genres.js:878</em></pre></details>
+    </div>
+
+    <div class="ex" id="g-concerto">
+      <div class="exhead"><span class="place">Venice 1725</span><span class="gname">concerto</span><span class="facts">word</span></div>
+      <div class="rules"><span class="sub">voice 1</span> <span class="colon">:</span> <span class="verb">as written</span> <span class="cmt"># the ritornello, tutti</span><br>
+<span class="sub">voice 2</span> <span class="colon">:</span> <span class="err"><span class="verb">down</span> <span class="num">S%3</span></span><br>
+<span class="sub">voice 2</span> <span class="whn">in odd</span> <span class="colon">:</span> <span class="kw">+</span> <span class="verb">rotate</span> <span class="num">2</span><br>
+<span class="sub">voice 3</span> <span class="colon">:</span> <span class="verb">as written</span> <span class="cmt"># the continuo</span></div>
+      <div class="meaning"><b>The baroque sequence.</b> The solo steps down 0, 1, 2 degrees and
+      resets — <code>transpose(−(s % 3))</code> — turning as it falls on the odd sections.
+      <span class="gapnote hard">✕ <a href="#gaps">gap 06</a> — "down S%3" is unsayable as written:
+      expr must begin with a literal and has no unary minus.</span></div>
+      <details><summary>genres.js:5745 — the closure</summary><pre>word: (v, s) =&gt; (v === 1 ? [transpose(-(s % 3)), ...(s % 2 ? [rotate(2)] : [])] : []),   <em>genres.js:5745</em></pre></details>
+    </div>
+
+    <div class="ex" id="g-hymn">
+      <div class="exhead"><span class="place">Boston 1831</span><span class="gname">hymn</span><span class="facts">word</span></div>
+      <div class="rules"><span class="sub">voice 1</span> <span class="colon">:</span> <span class="verb">as written</span> <span class="cmt"># soprano</span><br>
+<span class="sub">voice 2</span> <span class="colon">:</span> <span class="verb">down</span> <span class="num">2</span> <span class="cmt"># alto, a third under</span><br>
+<span class="sub">voice 3</span> <span class="colon">:</span> <span class="verb">down</span> <span class="warn"><span class="num">4</span></span> <span class="cmt"># tenor, a fifth under</span><br>
+<span class="sub">voice 4</span> <span class="colon">:</span> <span class="verb">down</span> <span class="warn"><span class="num">7</span></span> <span class="cmt"># bass, the octave</span></div>
+      <div class="meaning"><b>SATB as a lookup table.</b> Parallel, not mirrored: every voice sings
+      the same tune spaced by a fixed diatonic interval — what four amateurs in a pew can actually
+      do. The same shape ships in mbube and sacredharp with different tables.
+      <span class="gapnote">⚠ <a href="#gaps">gap 10</a> — down 4 and down 7 outside OPKEYS
+      (±1, ±2 only).</span></div>
+      <details><summary>genres.js:3411 — the closure</summary><pre>word: v =&gt; (v === 0 ? [] : [transpose([0, -2, -4, -7][v])]),   <em>genres.js:3411</em></pre></details>
+    </div>
+
+    </div>
+  </div>
+
+  <!-- ============ THE BANDSTAND ============ -->
+  <div class="era">
+    <div class="era-head"><h3>The Bandstand</h3><span class="span">Chicago 1955 → Kingston 1973 · hands on instruments</span></div>
+    <div class="exgrid">
+
+    <div class="ex" id="g-bodiddley">
+      <div class="exhead"><span class="place">Chicago 1955</span><span class="gname">bodiddley</span><span class="facts">word</span></div>
+      <div class="rules"><span class="sub">voice 1</span> <span class="colon">:</span> <span class="err"><span class="verb">breath</span> <span class="num">1001·0010·0010·1000</span></span><br>
+<span class="sub">voices 2..</span> <span class="colon">:</span> <span class="err"><span class="verb">breath</span> <span class="num">0000·1100·0100·0011</span></span> <span class="dot">·</span> <span class="verb">up</span> <span class="num">2</span></div>
+      <div class="meaning"><b>The clave and its answer.</b> The guitar is masked to the Bo Diddley
+      figure; the harp is masked to the complement and lifted a second — the two parts interlock by
+      construction, not by luck.
+      <span class="gapnote hard">✕ <a href="#gaps">gap 02</a> — breath takes an array-literal mask;
+      the grammar has no array syntax and no verb for it.</span></div>
+      <details><summary>genres.js:2624 — the closure</summary><pre>word: v =&gt; (v === 0
+  ? [breath([1,0,0,1, 0,0,1,0, 0,0,1,0, 1,0,0,0])]
+  : [breath([0,0,0,0, 1,1,0,0, 0,1,0,0, 0,0,1,1]), transpose(2)]),   <em>genres.js:2624</em></pre></details>
+    </div>
+
+    <div class="ex" id="g-doowop">
+      <div class="exhead"><span class="place">Harlem 1955</span><span class="gname">doowop</span><span class="facts">word + period</span></div>
+      <div class="rules"><span class="cmt"># the bar schedule — call and response as data</span><br>
+<span class="sub">voice 3</span> <span class="whn">bar 2 of 2</span> <span class="colon">:</span> <span class="verb">thin</span> <span class="num">2</span><br>
+<span class="sub">voice 2</span> <span class="whn">bar 2 of 2</span> <span class="colon">:</span> <span class="verb">fill</span> <span class="num">3</span><br>
+<span class="cmt"># the word — three masks the grammar cannot spell</span><br>
+<span class="sub">voice 1</span> <span class="colon">:</span> <span class="err"><span class="verb">breath</span> <span class="num">1001·0000·1001·0000</span></span><br>
+<span class="sub">voice 2</span> <span class="colon">:</span> <span class="err"><span class="verb">breath</span> <span class="num">1001·0010·1000·0010</span></span><br>
+<span class="sub">voices 3..</span> <span class="colon">:</span> <span class="err"><span class="verb">breath</span> <span class="num">SUNG</span></span></div>
+      <div class="meaning"><b>The two-bar shape of the idiom.</b> Every second bar the tenor thins
+      out and the bass singer answers into the hole. The sayable half is the period; the word is
+      three breath masks — including <code>SUNG</code>, a named constant read from closure scope.
+      <span class="gapnote hard">✕ <a href="#gaps">gap 02, 03, 04</a> — mask literals, the named
+      mask, and period-as-a-function (this one reduces to bar selectors; minimalism's does not).</span></div>
+      <details><summary>genres.js:2809, 2840 — the closures</summary><pre>period: (v, s) =&gt; (s % 2 ? (v === 2 ? [drop(2)] : v === 1 ? [fill(3)] : []) : []),   <em>genres.js:2809</em>
+word: (v, s) =&gt; (v === 0 ? [breath([1,0,0,1, 0,0,0,0, 1,0,0,1, 0,0,0,0])]
+  : v === 1 ? [breath([1,0,0,1, 0,0,1,0, 1,0,0,0, 0,0,1,0])]
+  : [breath(SUNG)]),   <em>genres.js:2840 · SUNG at genres.js:346</em></pre></details>
+    </div>
+
+    <div class="ex" id="g-congorumba">
+      <div class="exhead"><span class="place">Kinshasa 1960</span><span class="gname">congorumba</span><span class="facts">word</span></div>
+      <div class="rules"><span class="sub">voice 1</span> <span class="whn">in odd</span> <span class="colon">:</span> <span class="verb">fill</span> <span class="num">2</span><br>
+<span class="sub">voice 2</span> <span class="colon">:</span> <span class="verb">flip</span> <span class="vec">gate</span> <span class="dot">·</span> <span class="verb">up</span> <span class="num">2</span><br>
+<span class="sub">voice 3</span> <span class="colon">:</span> <span class="verb">rotate</span> <span class="warn"><span class="num">8</span></span> <span class="dot">·</span> <span class="verb">thin</span> <span class="num">2</span></div>
+      <div class="meaning"><b>The sebene said in Development.</b> On odd sections the mi-solo fills
+      every other step and becomes the record; the rhythm guitar is masked to the complement of its
+      own gate — two guitars, one instrument, four hands. The source wraps that flip in a redundant
+      <code>only("gate", …)</code>; "flip gate" is score-identical, so the score-diff gate passes
+      where a source-diff would not.
+      <span class="gapnote">⚠ <a href="#gaps">gap 10</a> — rotate 8 outside rot1..7.</span></div>
+      <details><summary>genres.js:6823 — the closure</summary><pre>word: (v, s) =&gt; (v === 0 ? (s % 2 ? [fill(2)] : [])
+               : v === 1 ? [only("gate", complement("gate")), transpose(2)]
+                         : [rotate(8), drop(2)]),   <em>genres.js:6823</em></pre></details>
+    </div>
+
+    <div class="ex" id="g-jamband">
+      <div class="exhead"><span class="place">San Francisco 1972</span><span class="gname">jamband</span><span class="facts">word</span></div>
+      <div class="rules"><span class="sub">voice 1</span> <span class="colon">:</span> <span class="verb">as written</span><br>
+<span class="sub">voices 2..</span> <span class="colon">:</span> <span class="verb">rotate</span> <span class="err"><span class="num">(S%4)+2</span></span></div>
+      <div class="meaning"><b>The answer, rotated a different amount every chorus.</b> 2, 3, 4, 5
+      steps and around again — never landing the same way twice in a four-section cycle.
+      <span class="gapnote hard">✕ <a href="#gaps">gap 07</a> — needs parentheses: the flat
+      left-to-right expr chain parses "2+S%4" as ((2+S)%4), a different song.</span></div>
+      <details><summary>genres.js:4299 — the closure</summary><pre>word: (v, s) =&gt; (v === 0 ? [] : [rotate((s % 4) + 2)]),   <em>genres.js:4299</em></pre></details>
+    </div>
+
+    <div class="ex" id="g-isley">
+      <div class="exhead"><span class="place">Teaneck 1973</span><span class="gname">isley</span><span class="facts">pipes + word</span></div>
+      <div class="rules"><span class="sub">pads</span> <span class="colon">:</span> <span class="verb">strum</span> <span class="num">60ms</span><br>
+<span class="sub">voice 3</span> <span class="colon">:</span> <span class="verb">thin</span> <span class="num">2</span> <span class="dot">·</span> <span class="verb">down</span> <span class="num">2</span></div>
+      <div class="meaning"><b>The Rhodes rolled like a hand.</b> The strum pipe spreads each chord
+      60ms; the low part thins to half density and sits a third under. The pipe's parameter ships
+      as <code>spread: 0.06</code> seconds — the 60ms spelling is a unit conversion the compiler
+      owns. The word declares <code>s</code> and never reads it: no when-clause invented.</div>
+      <details><summary>genres.js:1156, 1167 — the closures</summary><pre>pipes: [{ id: "strum", spread: 0.06 }],   <em>genres.js:1156</em>
+word: (v, s) =&gt; (v === 2 ? [drop(2), transpose(-2)] : []),   <em>genres.js:1167</em></pre></details>
+    </div>
+
+    <div class="ex" id="g-dub">
+      <div class="exhead"><span class="place">Kingston 1973</span><span class="gname">dub</span><span class="facts">word</span></div>
+      <div class="rules"><span class="sub">voice 1</span> <span class="colon">:</span> <span class="err"><span class="verb">offbeats</span> <span class="num">4</span></span> <span class="dot">·</span> <span class="verb">thin</span> <span class="num">2</span><br>
+<span class="sub">voices 2..</span> <span class="colon">:</span> <span class="verb">thin</span> <span class="num">2</span><br>
+<span class="sub">voices 2..</span> <span class="whn">in odd</span> <span class="colon">:</span> <span class="kw">+</span> <span class="verb">thin</span> <span class="num">3</span></div>
+      <div class="meaning"><b>The skank, thinned; the line, mostly gone.</b> The lead is rewritten
+      onto the offbeat grid and halved; everything else drops to half, and on odd sections a second
+      thinning stacks — the mix pulling parts out, which is what dub is.
+      <span class="gapnote hard">✕ <a href="#gaps">gap 01</a> — offbeats writes an ABSOLUTE grid
+      over the gate; no rotate/thin composition can say it, and it has no verb.</span></div>
+      <details><summary>genres.js:1945 — the closure</summary><pre>word: (v, s) =&gt; (v === 0 ? [offbeats(4), drop(2)]
+                        : [drop(2), ...(s % 2 ? [drop(3)] : [])]),   <em>genres.js:1945 · offbeats at genres.js:322</em></pre></details>
+    </div>
+
+    </div>
+  </div>
+
+  <!-- ============ THE MACHINES ============ -->
+  <div class="era">
+    <div class="era-head"><h3>The Machines</h3><span class="span">New York 1967 → Portland 2011 · sequencers, samplers, tape</span></div>
+    <div class="exgrid">
+
+    <div class="ex" id="g-minimalism">
+      <div class="exhead"><span class="place">New York 1967</span><span class="gname">minimalism</span><span class="facts">word (empty) + period</span></div>
+      <div class="rules"><span class="cmt"># the word is empty; the period carries everything</span><br>
+<span class="sub">voice 2</span> <span class="colon">:</span> <span class="verb">rotate</span> <span class="num">1·S</span> <span class="cmt"># source says rotate(s) — bare counter</span><br>
+<span class="err"><span class="sub">voice 3</span> <span class="whn">until 2</span> <span class="colon">:</span> <span class="verb">loop</span> <span class="num">4</span> <span class="kw">from</span> <span class="num">0</span></span><br>
+<span class="err"><span class="sub">voice 3</span> <span class="whn">until 4</span> <span class="colon">:</span> <span class="verb">loop</span> <span class="num">8</span> <span class="kw">from</span> <span class="num">0</span></span><br>
+<span class="err"><span class="sub">voice 3</span> <span class="whn">until 6</span> <span class="colon">:</span> <span class="verb">loop</span> <span class="num">12</span> <span class="kw">from</span> <span class="num">0</span></span><br>
+<span class="err"><span class="sub">voice 3</span> <span class="whn">after 6</span> <span class="colon">:</span> <span class="verb">as written</span></span></div>
+      <div class="meaning"><b>The hardest page in the book.</b> One voice phases one step per bar;
+      the other's window grows 4 → 8 → 12 → open and then STOPS growing. Every selector the grammar
+      owns is cyclic; this is a monotone additive process, and it cannot be said. The "until" lines
+      above are a sketch of the missing selector, not legal Libretto.
+      <span class="gapnote hard">✕ <a href="#gaps">gap 04, 05, 06</a> — period-as-function, the
+      monotone process, and the bare counter (1·S is the forced workaround for rotate(s)).</span></div>
+      <details><summary>genres.js:3059–3060 — the closures</summary><pre>word: () =&gt; [],   <em>genres.js:3059</em>
+period: (v, s) =&gt; (v === 1 ? [rotate(s)]
+  : v === 2 ? (s &lt; 2 ? [excerpt(0, 4)] : s &lt; 4 ? [excerpt(0, 8)]
+               : s &lt; 6 ? [excerpt(0, 12)] : [])
+  : []),   <em>genres.js:3060</em>
+<em>// "an operator is timeless and cannot know it is in bar 3" — the source's own comment</em></pre></details>
+    </div>
+
+    <div class="ex" id="g-newwave">
+      <div class="exhead"><span class="place">London 1979</span><span class="gname">newwave</span><span class="facts">word</span></div>
+      <div class="rules"><span class="sub">voice 1</span> <span class="colon">:</span> <span class="verb">as written</span><br>
+<span class="sub">voices 2..</span> <span class="colon">:</span> <span class="verb">rotate</span> <span class="num">4</span> <span class="kw">on</span> <span class="vec">gate</span> <span class="dot">·</span> <span class="verb">thin</span> <span class="num">3</span></div>
+      <div class="meaning"><b>The answer a bar late and thinned.</b> Re-time the rhythm without
+      touching a note, then mask a third of the gates. The closure declares its second parameter as
+      <code>s2</code> and never reads it — the translator must not invent a when-clause.</div>
+      <details><summary>genres.js:544 — the closure</summary><pre>word: (v, s2) =&gt; (v === 0 ? [] : [only("gate", rotate(4)), drop(3)]),   <em>genres.js:544</em></pre></details>
+    </div>
+
+    <div class="ex" id="g-acid">
+      <div class="exhead"><span class="place">Chicago 1987</span><span class="gname">acid</span><span class="facts">word + ghost</span></div>
+      <div class="rules"><span class="sub">ghost</span> <span class="colon">:</span> <span class="verb">rotate</span> <span class="num">3</span> <span class="kw">on</span> <span class="vec">acc</span><br>
+<span class="sub">voice 1</span> <span class="colon">:</span> <span class="verb">as written</span><br>
+<span class="sub">voice 2</span> <span class="colon">:</span> <span class="verb">rotate</span> <span class="warn"><span class="num">4·S</span></span><br>
+<span class="sub">voice 2</span> <span class="whn">in odd</span> <span class="colon">:</span> <span class="kw">+</span> <span class="verb">flip</span> <span class="vec">acc</span></div>
+      <div class="meaning"><b>The language's own hero example, verbatim from the shelf.</b> The
+      sequencer never varies; the answer walks past itself 4 steps a section, flipping accents on
+      the odd ones; the ghost layer walks accents alone against an unrotated gate.
+      <span class="gapnote">⚠ <a href="#gaps">gap 12</a> — rotate 4·S exceeds rot1..7 once S &gt; 1;
+      legal only because all counter arithmetic reads mod 16 (cyclic at(), kernel.js:59).</span></div>
+      <details><summary>genres.js:500, 505 — the closures</summary><pre>ghost: [only("acc", rotate(3))],   <em>genres.js:500</em>
+word: (v, s) =&gt; (v === 0 ? [] : [rotate(4 * s), ...(s % 2 ? [complement("acc")] : [])]),   <em>genres.js:505</em></pre></details>
+    </div>
+
+    <div class="ex" id="g-techno">
+      <div class="exhead"><span class="place">Detroit 1988</span><span class="gname">techno</span><span class="facts">word</span></div>
+      <div class="rules"><span class="sub">voice 1</span> <span class="whn">in odd</span> <span class="colon">:</span> <span class="verb">delete</span> <span class="num">2</span></div>
+      <div class="meaning"><b>One line, one record.</b> Every other section the lead loses every
+      second step and the gap closes up. The cleanest witness that WHO and WHEN are a single
+      boolean in today's closures — <code>v === 0 &amp;&amp; s % 2</code> — that the grammar splits
+      into subject and selector. <code>delete 2</code> is OPKEYS <code>del2</code>, exactly.</div>
+      <details><summary>genres.js:2376 — the closure</summary><pre>word: (v, s) =&gt; (v === 0 &amp;&amp; s % 2 ? [del(2)] : []),   <em>genres.js:2376</em></pre></details>
+    </div>
+
+    <div class="ex" id="g-dnb">
+      <div class="exhead"><span class="place">London 1994</span><span class="gname">dnb</span><span class="facts">word + ghost</span></div>
+      <div class="rules"><span class="sub">ghost</span> <span class="colon">:</span> <span class="verb">rotate</span> <span class="num">1</span> <span class="kw">on</span> <span class="vec">acc</span><br>
+<span class="sub">voices 2..</span> <span class="colon">:</span> <span class="verb">rotate</span> <span class="warn"><span class="num">8</span></span> <span class="dot">·</span> <span class="verb">thin</span> <span class="num">2</span></div>
+      <div class="meaning"><b>The pads drift a half-turn over the break.</b> rotate 8 on a 16-step
+      necklace is the tritone of time — and it is the exact value the Libretto mock's error message
+      rejects ("rotate takes 1..7", suggesting rotate 4·2). A shipped genre the language as mocked
+      would refuse.
+      <span class="gapnote">⚠ <a href="#gaps">gap 10</a> — rotate 8 outside rot1..7; ~30 genres do
+      this.</span></div>
+      <details><summary>genres.js:1608, 1612 — the closures</summary><pre>ghost: [only("acc", rotate(1))],   <em>genres.js:1608</em>
+word: (v, s) =&gt; (v === 0 ? [] : [rotate(8), drop(2)]),   <em>genres.js:1612</em></pre></details>
+    </div>
+
+    <div class="ex" id="g-rnb">
+      <div class="exhead"><span class="place">Philadelphia 1994</span><span class="gname">rnb</span><span class="facts">pipes · word = identity</span></div>
+      <div class="rules"><span class="sub">all</span> <span class="colon">:</span> <span class="verb">as written</span><br>
+<span class="sub">lead</span> <span class="colon">:</span> <span class="verb">harmonize</span> <span class="num">sixth</span> <span class="kw">at</span> <span class="num">.4</span></div>
+      <div class="meaning"><b>The whole Development axis is one pipe.</b> The word is the identity;
+      a derived voice shadows the melisma a sixth under, forty percent of the time. No seed field
+      anywhere in the catalog's pipes — it defaults to 0 and renders identically forever, exactly
+      as §7 promises.</div>
+      <details><summary>genres.js:1783, 1796 — the closures</summary><pre>pipes: [{ id: "harmonize", p: 0.4, gap: "sixth" }],   <em>genres.js:1783</em>
+word: () =&gt; [],   <em>genres.js:1796</em></pre></details>
+    </div>
+
+    <div class="ex" id="g-garage">
+      <div class="exhead"><span class="place">London 1999</span><span class="gname">garage</span><span class="facts">word + period</span></div>
+      <div class="rules"><span class="cmt"># the bar schedule, four bars round</span><br>
+<span class="sub">all</span> <span class="whn">bar 2 of 4</span> <span class="colon">:</span> <span class="verb">rotate</span> <span class="num">1</span> <span class="kw">on</span> <span class="vec">gate</span><br>
+<span class="sub">all</span> <span class="whn">bar 4 of 4</span> <span class="colon">:</span> <span class="verb">thin</span> <span class="num">2</span><br>
+<span class="cmt"># the word</span><br>
+<span class="sub">voices 2..</span> <span class="colon">:</span> <span class="verb">rotate</span> <span class="num">3</span> <span class="kw">on</span> <span class="vec">gate</span> <span class="dot">·</span> <span class="verb">thin</span> <span class="num">3</span></div>
+      <div class="meaning"><b>The shuffle is edited, not played.</b> Bar two shoves the gates one
+      step off; bar four breathes; the answer rides shuffled off the beat throughout. Note the
+      period holds raw closures, not the OPKEYS strings the doc celebrates — and
+      <code>only("gate", rotate(1))</code> has no OPKEYS key at all (gat2/4/8 only).
+      <span class="gapnote">⚠ <a href="#gaps">gap 10, 14</a> — key alphabet too coarse; the
+      string-form period has zero catalog witnesses.</span></div>
+      <details><summary>genres.js:1551, 1565 — the closures</summary><pre>period: [[], [only("gate", rotate(1))], [], [drop(2)]],   <em>genres.js:1551</em>
+word: v =&gt; (v === 0 ? [] : [only("gate", rotate(3)), drop(3)]),   <em>genres.js:1565</em></pre></details>
+    </div>
+
+    <div class="ex" id="g-vaporwave">
+      <div class="exhead"><span class="place">Portland 2011</span><span class="gname">vaporwave</span><span class="facts">word</span></div>
+      <div class="rules"><span class="sub">all</span> <span class="colon">:</span> <span class="verb">loop</span> <span class="num">8</span> <span class="kw">from</span> <span class="warn"><span class="num">4·S</span></span></div>
+      <div class="meaning"><b>The loop-a-fragment move.</b> Keep 8 of 16 steps, the window sliding
+      a bar per section — the catalog's flagship use of the one lossy operator, on every voice, no
+      guard.
+      <span class="gapnote">⚠ <a href="#gaps">gap 12</a> — the source computes (s·4) % 16; the
+      line matches only because the wrap is implicit in cyclic reads. The wrap has no spelling.</span></div>
+      <details><summary>genres.js:595 — the closure</summary><pre>word: (v, s) =&gt; [excerpt((s * 4) % 16, 8)],   <em>genres.js:595</em></pre></details>
+    </div>
+
+    </div>
+  </div>
+
+  <!-- ============ THE ROLES ============ -->
+  <div class="era">
+    <div class="era-head"><h3>The Roles</h3><span class="span">function genres — a job, not a history</span></div>
+    <div class="exgrid">
+
+    <div class="ex" id="g-solo">
+      <div class="exhead"><span class="place">Solo</span><span class="gname">solo</span><span class="facts">word</span></div>
+      <div class="rules"><span class="sub">all</span> <span class="whn">in S%4=0</span> <span class="colon">:</span> <span class="verb">split</span> <span class="num">2</span><br>
+<span class="sub">all</span> <span class="whn">in S%4=1</span> <span class="colon">:</span> <span class="verb">fill</span> <span class="num">2</span> <span class="kw">on</span> <span class="vec">gate</span><br>
+<span class="sub">all</span> <span class="whn">in S%4=2</span> <span class="colon">:</span> <span class="verb">split</span> <span class="num">3</span><br>
+<span class="sub">all</span> <span class="whn">in S%4=3</span> <span class="colon">:</span> <span class="verb">split</span> <span class="num">4</span> <span class="dot">·</span> <span class="verb">up</span> <span class="num">2</span></div>
+      <div class="meaning"><b>A four-chorus plan for one player.</b> The array is indexed by section,
+      not voice: doubles, then density, then triplets, then sixteenths pushed up — a solo that
+      builds. split 4 is OPKEYS <code>rep4</code>; <code>only("gate", fill(2))</code> has no key.
+      <span class="gapnote">⚠ <a href="#gaps">gap 09, 10</a> — the per-voice-S caveat applies to
+      these selectors; fill-on-gate outside the key alphabet.</span></div>
+      <details><summary>genres.js:5386 — the closure</summary><pre>word: (v, s) =&gt; [[split(2)], [only("gate", fill(2))], [split(3)],
+                 [split(4), transpose(2)]][s % 4],   <em>genres.js:5386</em></pre></details>
+    </div>
+
+    <div class="ex" id="g-vocal">
+      <div class="exhead"><span class="place">Vocal</span><span class="gname">vocal</span><span class="facts">word + pipes</span></div>
+      <div class="rules"><span class="sub">lead</span> <span class="colon">:</span> <span class="verb">breathe</span><br>
+<span class="sub">all</span> <span class="colon">:</span> <span class="verb">spread</span> <span class="err"><span class="num">.5</span></span> <span class="dot">·</span> <span class="err"><span class="verb">breath</span> <span class="num">SUNG</span></span></div>
+      <div class="meaning"><b>Three gaps in one genre.</b> A singer's range is narrow
+      (<code>spread(0.5)</code> — a decimal the grammar's undefined <code>n</code> and ÷-less expr
+      cannot write, though §3's own spread row says "÷2 narrows"); the line stops where a singer
+      breathes (<code>breath(SUNG)</code> — a named mask the grammar cannot reference); and the
+      breathe pipe takes no parameter at all.
+      <span class="gapnote hard">✕ <a href="#gaps">gap 02, 03, 11</a> — mask verb, named mask,
+      decimals.</span></div>
+      <details><summary>genres.js:5432, 5437 — the closures</summary><pre>pipes: [{ id: "breathe" }],   <em>genres.js:5432</em>
+word: () =&gt; [spread(0.5), breath(SUNG)],   <em>genres.js:5437 · SUNG at genres.js:346</em></pre></details>
+    </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="gaps">
+  <p class="secno">02 · THE GAPS</p>
+  <h2>Fourteen things the grammar cannot say</h2>
+  <p class="lede">Design feedback, not shame: the catalog is the older text, and where the language
+  cannot reach it, the language is what moves. Each item names the construct, the shipped witnesses,
+  and — where it is obvious — the smallest extension that would cover it. Nothing here is fudged
+  into a lookalike line above; it is red-underlined there and reported here.</p>
+  <ol class="notes">
+    <li><b>The skank has no verb.</b> <code>offbeats(n)</code> <span class="cite2">genres.js:322</span>
+    writes an ABSOLUTE off-beat grid over the gate vector, discarding the phrase's own rhythm — not
+    composable from rotate/thin/fill and not in OPKEYS. Six genres use it: reggae:1909, ska:2001,
+    dub:1945, merseybeat:3516, psychpop:3561, riff:5498.
+    <span class="fix">a verb <code>offbeats n</code> (or <code>skank n</code>) mapped one-to-one to
+    the shipped operator.</span></li>
+
+    <li><b>Masks have no literal.</b> <code>breath(mask)</code> <span class="cite2">genres.js:337</span>
+    takes a 16-step array; the grammar's expr is scalar arithmetic only. Witnesses: bodiddley:2624,
+    doowop:2840, ebm:4507 (a 4-step mask read cyclically — a second implicit convention),
+    vocal:5437, backing:5472.
+    <span class="fix">a mask literal — <code>breath 1001·0010·0010·1000</code> — with the cyclic
+    short-mask read stated as law.</span></li>
+
+    <li><b>Masks have no names.</b> <code>SUNG</code> <span class="cite2">genres.js:346</span> is a
+    named constant read from closure scope (doowop:2842, vocal:5437, backing:5472) — the only thing
+    any catalog closure reads beyond (v, s) and the ops, by token scan of all 216 field sources.
+    §5's proposed <code>row</code> declarations cover pitch series only.
+    <span class="fix">extend §5's declaration form: <code>mask sung = 1111·1100·1111·0000</code> —
+    material with one owner, exactly like rows.</span></li>
+
+    <li><b>The period can be a function.</b> The doc presents <code>period</code> as a data
+    schedule, but <code>kernel.js:1204</code> accepts a function of (v, s), and half the catalog's
+    periods use it (doowop:2809, minimalism:3060). Doowop's reduces to voice + bar selectors;
+    minimalism's does not (next item).
+    <span class="fix">none needed for the reducible ones — the printer rewrites them; the
+    irreducible one is gap 05.</span></li>
+
+    <li><b>Cycles, not processes.</b> minimalism:3060 grows a window with <code>s &lt; 2 / s &lt; 4 /
+    s &lt; 6</code> and then stops — a monotone additive process. Every selector the grammar owns
+    (odd, even, S%n=n, every n, bar n of n) is cyclic. The genre's own comment says why it matters:
+    "an operator is timeless and cannot know it is in bar 3." The largest structural gap in the
+    language.
+    <span class="fix">a monotone selector pair — <code>until n</code> / <code>after n</code> —
+    still counters, still deterministic, just not modular.</span></li>
+
+    <li><b>Expressions must start with a literal, and there is no unary minus.</b>
+    <code>rotate(s)</code> (minimalism:3060) needs the artificial <code>1·S</code>;
+    <code>transpose(-(s % 3))</code> (concerto:5745) — "down S%3" — cannot be written at all.
+    <span class="fix">let expr begin with a counter; let <code>down</code> negate its whole
+    argument.</span></li>
+
+    <li><b>No parentheses, no precedence.</b> jamband:4299 needs <code>(S%4)+2</code>; the flat
+    left-to-right chain parses <code>2+S%4</code> as ((2+S)%4) — a different song.
+    <span class="fix">parens in expr, or standard precedence (· % over + −).</span></li>
+
+    <li><b>No conditional inside an argument.</b> counterpoint:878 <code>invert(s % 2 ? 0 : 5)</code>,
+    electro:3313 <code>excerpt(s % 2 ? 8 : 0, 8)</code>, and the spread-conditional append idiom
+    <code>...(s % 2 ? [op] : [])</code> in 13 genres (acid, spem, dub, concerto, classical, …). All
+    sayable by splitting one closure into rules under <span class="whn">in odd</span> /
+    <span class="whn">in even</span> — legal, but a rewrite.
+    <span class="fix">none — instead, the extraction gate must accept an n-line rendering of a
+    1-expression closure, and the printer must own the split.</span></li>
+
+    <li><b>S is per-voice at the seam.</b> The grammar promises S, B, V; both word call sites
+    (<span class="cite2">kernel.js:629, 1393</span>) pass one index,
+    <code>s = bar − entry(v)</code> — and it is phase-shifted per voice under staggered entries, so
+    an absolute <span class="whn">in S%3=1</span> cannot reproduce fugue:432's table. The doc's own
+    §4 fugue card overstates its translatability.
+    <span class="fix">define S as "sections since this voice entered" (this songbook already reads
+    it that way), or pass absolute indices at the seam and keep both words.</span></li>
+
+    <li><b>The catalog outruns the OPKEYS alphabet.</b> §1 claims the parser's entire output type
+    is OPKEYS; §6's mock errors "rotate takes 1..7". The shelf disagrees: rotate 8 in ~30 genres
+    (blues:687, dnb:1612, boombap:1455, congorumba:6823, …), rotate 12 (:8526), rotate 3·S / 5·S
+    (arsnova:5664); drop 1 (swing:10078) and drop 8; fill 1 (screamo:4001, industrialmetal:4451,
+    …); transpose ±3…±12 everywhere vs trm2..trp2; invert 0/2/5 (counterpoint:878, fugue:432,
+    baroquepop:5695, sophisti:5856) vs inv = invert(4); excerpt(8, 8); and
+    <code>only("gate", …)</code> over arbitrary ops vs the fixed gat/pit keys.
+    <span class="fix">parameterized keys (<code>rot(k)</code>, <code>tr(k)</code>,
+    <code>inv(c)</code>, <code>on(vec, key)</code>) — or admit the language compiles to closures
+    and re-state §1.</span></li>
+
+    <li><b>Decimals and division are undefined.</b> <code>spread(0.5)</code> (vocal:5437; OPKEYS
+    <code>tight</code>) — the token <code>n</code> is never defined, expr has · + − % but no ÷,
+    yet §3's own spread row says "÷2 narrows". spread's optional pivot (kernel.js:119) also has no
+    word, though no catalog closure uses it.
+    <span class="fix">define n to admit decimals; that alone covers every witness.</span></li>
+
+    <li><b>The cyclic wrap is implicit.</b> vaporwave:595 computes <code>(s·4) % 16</code>; the §4
+    card spells it <code>loop 8 from 4·S</code> and silently leans on cyclic <code>at()</code>
+    reads (<span class="cite2">kernel.js:59</span>) to absorb the wrap. Every over-range rotate
+    leans on the same fact.
+    <span class="fix">state it as a language law: all counter arithmetic is read mod pattern
+    length.</span></li>
+
+    <li><b>Multi-argument forms exceed the EBNF.</b> <code>op ::= verb [expr] [on vector]
+    [seed name]</code> has one expr slot; §3's own rows need two: <code>loop n from a</code>
+    (excerpt), <code>copy a to b</code> (crossmap), <code>harmonize sixth at .4</code> (a
+    word-token gap plus a probability). And backing:5467 ships <code>{ id: "harmonize", p: 1 }</code>
+    with no gap at all — a spelling the grammar does not show.
+    <span class="fix">give the verb rule its real arity per verb, and a gap-less harmonize
+    (default: third).</span></li>
+
+    <li><b>Three features, zero witnesses.</b> Honesty runs the other way too:
+    <code>crossmap</code> / "copy a to b" is used by no genre (only the OPKEYS slides/stick keys
+    exist); the echo pipe (<code>echoCanon</code>) is used by no genre; and no catalog period uses
+    the OPKEYS string form (<code>["thin3"]</code>) the doc celebrates — beatles:1315 and
+    garage:1551 hold raw closures. §8's extraction gate would ship three grammar features with no
+    fixture.
+    <span class="fix">either seed one catalog witness each, or mark them speculative in the
+    spec.</span></li>
+  </ol>
+</section>
+
+<footer>
+  the songbook · design sketch for nukernel · 22 entries, every line desugared to a shipped closure,
+  cited inline · sources read: genres.js (the 22 closures + SUNG:346 + offbeats:322 + breath:337) ·
+  kernel.js (the algebra :43–200 · at() :59 · OPKEYS :1176 · asOps :1190 · periodOps :1202 · the
+  seam :629, :1392–96 · PIPES :497–608) · kernel-lang.html (§2 grammar · §3 verbs) · extraction law:
+  EXTRACTION, never by hand — a rule the grammar cannot say is REPORTED, not fudged · gated at the
+  score, not the prose · no external requests · dark by commitment · 2026-08-26
+</footer>
+</div>
