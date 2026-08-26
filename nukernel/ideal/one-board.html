@@ -1,0 +1,796 @@
+<title>The One Board</title>
+<style>
+  /* ============ THE ONE BOARD — design sketch, committed dark ============ */
+  :root{
+    --chassis:#0b0d11;      /* the room */
+    --panel:#12161e;        /* console frame */
+    --strip:#171c26;        /* channel face */
+    --strip-hi:#1b212c;
+    --busface:#1a1823;      /* bus face — a violet half-step warmer */
+    --mainface:#0f1620;     /* main — darkest, amber-edged */
+    --well:#0d1017;         /* inset wells (meters, screens) */
+    --line:#272e3a;
+    --line2:#39424f;
+    --ink:#dce3ee;
+    --dim:#8792a3;
+    --faint:#5b657a;
+    --amber:#f0a63c;        /* set · raise */
+    --amber-dim:#9c7030;
+    --teal:#54c6d6;         /* fall · derived */
+    --teal-dim:#33717c;
+    --green:#79d189;        /* meter */
+    --red:#e0584c;          /* cut · clip */
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{background:var(--chassis)}
+  body{
+    background:var(--chassis);color:var(--ink);
+    font-family:var(--sans);font-size:15px;line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1240px;margin:0 auto;padding:0 20px 96px}
+
+  /* ---------- header ---------- */
+  header{padding:44px 0 26px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;
+    text-transform:uppercase;color:var(--faint)}
+  h1{font-family:var(--mono);font-weight:600;font-size:clamp(26px,5.5vw,44px);
+    letter-spacing:.3em;text-transform:uppercase;color:var(--ink);
+    margin:10px 0 12px;text-wrap:balance}
+  h1 .tick{color:var(--amber)}
+  .thesis{max-width:62ch;color:var(--dim);font-size:15px}
+  .thesis b{color:var(--ink);font-weight:600}
+  .plate{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:18px;
+    font-family:var(--mono);font-size:12px;color:var(--dim)}
+  .plate span b{color:var(--amber);font-weight:600}
+
+  /* legend */
+  .legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin:16px 0 0;
+    font-family:var(--mono);font-size:11px;color:var(--faint)}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;
+    margin-right:6px;vertical-align:baseline}
+
+  /* ---------- section headings ---------- */
+  h2{font-family:var(--mono);font-size:13px;font-weight:600;
+    letter-spacing:.22em;text-transform:uppercase;color:var(--ink);
+    margin:52px 0 6px}
+  h2 .n{color:var(--amber)}
+  .sub{color:var(--dim);font-size:14px;max-width:70ch;margin-bottom:18px}
+
+  /* callout chips */
+  .co{display:inline-flex;align-items:center;justify-content:center;
+    min-width:17px;height:17px;padding:0 4px;border-radius:9px;
+    background:var(--amber);color:#181207;font-family:var(--mono);
+    font-size:11px;font-weight:700;line-height:1;vertical-align:2px;
+    cursor:default}
+
+  /* ---------- the console ---------- */
+  .deck{overflow-x:auto;border:1px solid var(--line);border-radius:10px;
+    background:var(--panel);
+    background-image:linear-gradient(180deg,#161b24 0,#12161e 90px,#12161e 100%);
+    padding:16px 14px 14px}
+  .console{display:inline-flex;align-items:stretch;gap:8px;min-width:100%}
+  .strip{width:128px;flex:none;background:var(--strip);
+    border:1px solid var(--line);border-radius:7px;
+    display:flex;flex-direction:column;overflow:hidden}
+  .strip.bus{background:var(--busface)}
+  .strip.main{width:158px;background:var(--mainface);border-color:var(--amber-dim)}
+  .rail{width:14px;flex:none;display:flex;align-items:center;justify-content:center}
+  .rail span{writing-mode:vertical-rl;font-family:var(--mono);font-size:9px;
+    letter-spacing:.3em;text-transform:uppercase;color:var(--faint)}
+
+  .plateT{padding:9px 9px 7px;border-bottom:1px solid var(--line);
+    background:var(--strip-hi);min-height:60px}
+  .strip.bus .plateT{background:#201d2b}
+  .strip.main .plateT{background:#13202c}
+  .plateT .who{display:flex;align-items:center;gap:6px;font-weight:600;
+    font-size:13px}
+  .plateT .who i{width:8px;height:8px;border-radius:50%;flex:none}
+  .plateT .what{font-family:var(--mono);font-size:10px;color:var(--dim);
+    margin-top:2px;overflow-wrap:break-word}
+
+  .row{padding:8px 9px;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:0}
+  .rlab{font-family:var(--mono);font-size:9px;letter-spacing:.24em;
+    text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+  .rlab .co{transform:scale(.85)}
+
+  /* knobs */
+  .knobs{display:flex;justify-content:space-between}
+  .knobs.k2{justify-content:space-around}
+  .kn{display:flex;flex-direction:column;align-items:center;gap:3px;width:32px}
+  .knob{width:26px;height:26px;border-radius:50%;position:relative;flex:none;
+    background:radial-gradient(circle at 35% 30%,#39424f,#20242e 70%);
+    border:1px solid var(--line2);box-shadow:0 2px 4px rgba(0,0,0,.45)}
+  .knob i{position:absolute;left:50%;top:1px;width:2px;height:9px;
+    margin-left:-1px;background:var(--ink);border-radius:1px;
+    transform-origin:50% 11.5px;transform:rotate(var(--rot,0deg))}
+  .knob.set i{background:var(--amber)}
+  .kn label{font-family:var(--mono);font-size:9px;color:var(--dim)}
+  .kn .v{font-family:var(--mono);font-size:9px;color:var(--faint)}
+  .kn .v.set{color:var(--amber)}
+
+  /* pan detents */
+  .pan{display:flex;justify-content:space-between;align-items:flex-end;
+    padding:0 6px}
+  .pan i{width:2px;height:7px;background:var(--line2);border-radius:1px}
+  .pan i.mid{height:10px}
+  .pan i.on{background:var(--amber);height:12px}
+  .panw{font-family:var(--mono);font-size:9px;color:var(--dim);
+    text-align:center;margin-top:4px}
+
+  /* fader + meter */
+  .fadrow{display:flex;justify-content:center;gap:12px;padding:4px 0 2px}
+  .fader{position:relative;width:26px;height:132px}
+  .fader .track{position:absolute;left:50%;top:0;bottom:0;width:4px;
+    margin-left:-2px;background:var(--well);border-radius:2px;
+    border:1px solid #05070a}
+  .fader .fill{position:absolute;left:50%;bottom:0;width:4px;margin-left:-2px;
+    border-radius:2px;background:var(--teal-dim);height:var(--auto,60%)}
+  .fader .cap{position:absolute;left:50%;width:24px;height:13px;
+    margin-left:-12px;bottom:calc(var(--lv,60%) - 6px);border-radius:3px;
+    background:linear-gradient(180deg,#454f5e,#242a34 45%,#2e3540);
+    border:1px solid var(--line2);box-shadow:0 2px 5px rgba(0,0,0,.6)}
+  .fader .cap::after{content:"";position:absolute;left:2px;right:2px;top:5px;
+    height:2px;background:var(--amber);border-radius:1px}
+  .meter{width:7px;height:132px;background:var(--well);border-radius:2px;
+    border:1px solid #05070a;position:relative;overflow:hidden}
+  .meter i{position:absolute;left:0;right:0;bottom:0;height:var(--m,55%);
+    background:linear-gradient(0deg,var(--green) 0 62%,#c9d15f 62% 82%,var(--red) 82% 100%);
+    background-size:100% 132px;background-position:bottom}
+  .fadw{font-family:var(--mono);font-size:10px;text-align:center;
+    color:var(--dim);margin-top:5px}
+  .fadw b{color:var(--amber);font-weight:600}
+
+  /* cut / alone */
+  .ca{display:flex;gap:6px;justify-content:center}
+  .ca button{font-family:var(--mono);font-size:9px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--dim);background:#10141b;
+    border:1px solid var(--line2);border-radius:3px;padding:3px 8px;
+    cursor:pointer}
+  .ca button:hover{color:var(--ink)}
+  .ca button:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+
+  /* mini section lane */
+  .mini svg{display:block;width:100%;height:26px}
+
+  /* goes-to footer */
+  .goes{font-family:var(--mono);font-size:9px;color:var(--faint);
+    text-align:center;padding:6px 4px;background:#10141b}
+  .goes b{color:var(--dim);font-weight:600}
+
+  /* chain slots + word selects */
+  select{width:100%;font-family:var(--mono);font-size:11px;color:var(--ink);
+    background:#10141b;border:1px solid var(--line2);border-radius:4px;
+    padding:4px 5px;appearance:none;-webkit-appearance:none;
+    background-image:linear-gradient(45deg,transparent 50%,var(--faint) 50%),
+      linear-gradient(135deg,var(--faint) 50%,transparent 50%);
+    background-position:calc(100% - 12px) 55%,calc(100% - 8px) 55%;
+    background-size:4px 4px,4px 4px;background-repeat:no-repeat}
+  select:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+  select.setv{color:var(--amber);border-color:var(--amber-dim)}
+  .slots{display:flex;flex-direction:column;gap:5px}
+  .slot{display:flex;align-items:center;gap:5px}
+  .slot em{font-family:var(--mono);font-size:9px;font-style:normal;
+    color:var(--faint);width:8px;flex:none}
+  .mrow{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+  .mrow label{font-family:var(--mono);font-size:9px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--faint);width:44px;flex:none}
+
+  /* ---------- automation panel ---------- */
+  .auto-panel{border:1px solid var(--line);border-radius:10px;
+    background:var(--panel);padding:16px}
+  .abbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+    margin-bottom:14px}
+  .abbar .tg{display:inline-flex;border:1px solid var(--line2);
+    border-radius:6px;overflow:hidden}
+  .abbar .tg button{font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+    padding:7px 14px;background:#10141b;border:0;color:var(--dim);cursor:pointer}
+  .abbar .tg button[aria-pressed="true"]{background:var(--amber);color:#181207;
+    font-weight:700}
+  .abbar .tg button:focus-visible{outline:2px solid var(--amber);outline-offset:-2px}
+  .abnote{font-family:var(--mono);font-size:10px;color:var(--faint)}
+
+  .gridwrap,.laneswrap{overflow-x:auto}
+  table.trims{border-collapse:collapse;min-width:640px;width:100%}
+  table.trims th,table.trims td{border:1px solid var(--line);
+    font-family:var(--mono);font-size:11px;text-align:center;padding:0}
+  table.trims thead th{background:var(--strip-hi);color:var(--ink);
+    font-weight:600;padding:7px 6px}
+  table.trims thead th small{display:block;color:var(--faint);font-weight:400;
+    font-size:9px;letter-spacing:.08em}
+  table.trims tbody th{background:var(--strip-hi);text-align:left;
+    padding:0 10px;font-weight:600;color:var(--ink);white-space:nowrap}
+  table.trims tbody th i{display:inline-block;width:7px;height:7px;
+    border-radius:50%;margin-right:7px}
+  table.trims td button{width:100%;min-width:72px;border:0;background:transparent;
+    font:inherit;padding:9px 6px;cursor:pointer;color:inherit}
+  table.trims td button:focus-visible{outline:2px solid var(--amber);
+    outline-offset:-2px}
+  td.w-out{background:#0c0e13;color:var(--faint)}
+  td.w-hush{background:#0f2126;color:var(--teal)}
+  td.w-back{background:#123037;color:var(--teal)}
+  td.w-mid{background:var(--strip);color:var(--dim)}
+  td.w-fwd{background:#33270f;color:var(--amber)}
+  td.w-lift{background:#4a3512;color:var(--amber);font-weight:700}
+
+  .lanehead{display:flex;font-family:var(--mono);font-size:10px;
+    color:var(--faint);margin-left:96px;min-width:560px}
+  .lanerow{display:flex;align-items:center;min-width:656px;margin-top:6px}
+  .lanerow .nm{width:96px;flex:none;font-family:var(--mono);font-size:11px;
+    color:var(--ink)}
+  .lanerow .nm i{display:inline-block;width:7px;height:7px;border-radius:50%;
+    margin-right:7px}
+  .lanerow svg{display:block;background:var(--well);border:1px solid var(--line);
+    border-radius:4px}
+
+  .hint{font-family:var(--mono);font-size:10px;color:var(--faint);margin-top:12px}
+  .hint b{color:var(--amber);font-weight:600}
+
+  /* ---------- consolidation map ---------- */
+  .map{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    gap:12px}
+  .card{border:1px solid var(--line);border-radius:8px;background:var(--panel);
+    padding:14px 16px}
+  .card h3{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px;
+    display:flex;align-items:center;gap:8px;letter-spacing:.04em}
+  .card p{font-size:13px;color:var(--dim)}
+  .card p+p{margin-top:6px}
+  .card .from{font-family:var(--mono);font-size:10px;color:var(--faint);
+    margin-top:8px;border-top:1px dashed var(--line);padding-top:7px}
+  .card .from b{color:var(--red);font-weight:600;letter-spacing:.08em}
+  .card code{font-family:var(--mono);font-size:11px;color:var(--teal);
+    background:#0e1a1d;border-radius:3px;padding:0 4px}
+
+  footer{margin-top:56px;border-top:1px solid var(--line);padding-top:16px;
+    font-family:var(--mono);font-size:11px;color:var(--faint);max-width:76ch}
+  footer b{color:var(--dim);font-weight:600}
+
+  @media (prefers-reduced-motion:no-preference){
+    .ca button,select,.abbar .tg button,table.trims td button{
+      transition:background-color .12s,color .12s,border-color .12s}
+  }
+  @media (max-width:520px){
+    .wrap{padding:0 12px 72px}
+    h1{letter-spacing:.18em}
+  }
+</style>
+
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">nukernel &middot; design sketch &middot; 2026-08 &middot; review round</p>
+  <h1>The One<span class="tick">&nbsp;/&nbsp;</span>Board</h1>
+  <p class="thesis"><b>One console, one set of effects, and the section moves on its face.</b>
+  Every mix fact the record owns is on this surface and nowhere else: the engineer's
+  per-voice pots, the two board tables, the character chain, and the desk's hidden
+  per-section shading all fold into it. Every value is a <b>word from fields.js</b> —
+  detented, saved with the song, deterministic.</p>
+  <div class="plate">
+    <span>song&nbsp;<b>London 1969</b> (rock)</span>
+    <span>bpm&nbsp;<b>132</b></span>
+    <span>changes&nbsp;<b>i&nbsp;i&nbsp;VII&nbsp;VII&nbsp;iv&nbsp;iv&nbsp;i&nbsp;i</b></span>
+    <span>form&nbsp;<b>intro&middot;verse&middot;chorus&middot;verse&middot;chorus&middot;outro</b></span>
+  </div>
+  <div class="legend">
+    <span><i style="background:var(--amber)"></i>bright = set (yours)</span>
+    <span><i style="background:var(--teal-dim)"></i>dim = derived (the song's)</span>
+    <span><i style="background:var(--amber)"></i>amber = raise</span>
+    <span><i style="background:var(--teal)"></i>teal = fall</span>
+    <span><i style="background:var(--red)"></i>red = cut / clip</span>
+  </div>
+</header>
+
+<h2><span class="n">I</span> &middot; The console <span class="co">2</span></h2>
+<p class="sub">Signal order down every strip: input &rarr; EQ &rarr; sends &rarr; pan &rarr; fader &rarr; route.
+Channels, then the four buses, then the record — one scroll, left to right, the way a desk sits in a room.</p>
+
+<div class="deck">
+<div class="console">
+
+  <!-- ================= CHANNELS ================= -->
+
+  <div class="strip">
+    <div class="plateT"><div class="who"><i style="background:#f0a63c"></i>lead <span class="co" title="absorbs the engineer's sheet pots">1</span></div>
+      <div class="what">crunch_guitar &middot; line</div></div>
+    <div class="row"><div class="rlab">eq</div>
+      <div class="knobs">
+        <div class="kn"><span class="knob" style="--rot:-24deg"><i></i></span><label>lo</label><span class="v">&minus;1</span></div>
+        <div class="kn"><span class="knob set" style="--rot:48deg"><i></i></span><label>mid</label><span class="v set">+2</span></div>
+        <div class="kn"><span class="knob" style="--rot:24deg"><i></i></span><label>hi</label><span class="v">+1</span></div>
+      </div></div>
+    <div class="row"><div class="rlab">sends</div>
+      <div class="knobs">
+        <div class="kn"><span class="knob set" style="--rot:20deg"><i></i></span><label>wash</label><span class="v set">some</span></div>
+        <div class="kn"><span class="knob set" style="--rot:-45deg"><i></i></span><label>throw</label><span class="v set">touch</span></div>
+        <div class="kn"><span class="knob" style="--rot:-120deg"><i></i></span><label>depth</label><span class="v">dry</span></div>
+        <div class="kn"><span class="knob" style="--rot:-120deg"><i></i></span><label>par</label><span class="v">dry</span></div>
+      </div></div>
+    <div class="row"><div class="rlab">pan</div>
+      <div class="pan"><i></i><i></i><i class="mid"></i><i class="on"></i><i></i></div>
+      <div class="panw">right-ish</div></div>
+    <div class="row"><div class="rlab">fader</div>
+      <div class="fadrow">
+        <div class="fader"><span class="track"></span><span class="fill" style="--auto:64%"></span><span class="cap" style="--lv:72%"></span></div>
+        <div class="meter"><i style="--m:66%"></i></div>
+      </div>
+      <div class="fadw"><b>forward</b> &middot; +1.5</div></div>
+    <div class="row"><div class="ca"><button type="button">cut</button><button type="button">alone</button></div></div>
+    <div class="row mini"><div class="rlab">sections</div><svg id="mini-lead" viewBox="0 0 104 26" preserveAspectRatio="none"></svg></div>
+    <div class="goes">&rarr; <b>main</b> + its sends</div>
+  </div>
+
+  <div class="strip">
+    <div class="plateT"><div class="who"><i style="background:#e3c06a"></i>lead 2</div>
+      <div class="what">crunch_guitar &middot; line &middot; at the fifth</div></div>
+    <div class="row"><div class="rlab">eq</div>
+      <div class="knobs">
+        <div class="kn"><span class="knob set" style="--rot:-48deg"><i></i></span><label>lo</label><span class="v set">&minus;2</span></div>
+        <div class="kn"><span class="knob" style="--rot:0deg"><i></i></span><label>mid</label><span class="v">0</span></div>
+        <div class="kn"><span class="knob set" style="--rot:48deg"><i></i></span><label>hi</label><span class="v set">+2</span></div>
+      </div></div>
+    <div class="row"><div class="rlab">sends</div>
+      <div class="knobs">
+        <div class="kn"><span class="knob set" style="--rot:20deg"><i></i></span><label>wash</label><span class="v set">some</span></div>
+        <div class="kn"><span class="knob set" style="--rot:20deg"><i></i></span><label>throw</label><span class="v set">some</span></div>
+        <div class="kn"><span class="knob" style="--rot:-120deg"><i></i></span><label>depth</label><span class="v">dry</span></div>
+        <div class="kn"><span class="knob" style="--rot:-120deg"><i></i></span><label>par</label><span class="v">dry</span></div>
+      </div></div>
+    <div class="row"><div class="rlab">pan</div>
+      <div class="pan"><i></i><i class="on"></i><i class="mid"></i><i></i><i></i></div>
+      <div class="panw">left-ish</div></div>
+    <div class="row"><div class="rlab">fader</div>
+      <div class="fadrow">
+        <div class="fader"><span class="track"></span><span class="fill" style="--auto:52%"></span><span class="cap" style="--lv:52%"></span></div>
+        <div class="meter"><i style="--m:48%"></i></div>
+      </div>
+      <div class="fadw">back &middot; &minus;1.5</div></div>
+    <div class="row"><div class="ca"><button type="button">cut</button><button type="button">alone</button></div></div>
+    <div class="row mini"><div class="rlab">sections</div><svg id="mini-lead-2" viewBox="0 0 104 26" preserveAspectRatio="none"></svg></div>
+    <div class="goes">&rarr; <b>main</b> + its sends</div>
+  </div>
+
+  <div class="strip">
+    <div class="plateT"><div class="who"><i style="background:#54c6d6"></i>pad</div>
+      <div class="what">warm_pad &middot; pad</div></div>
+    <div class="row"><div class="rlab">eq</div>
+      <div class="knobs">
+        <div class="kn"><span class="knob set" style="--rot:-72deg"><i></i></span><label>lo</label><span class="v set">&minus;3</span></div>
+        <div class="kn"><span class="knob" style="--rot:0deg"><i></i></span><label>mid</label><span class="v">0</span></div>
+        <div class="kn"><span class="knob" style="--rot:0deg"><i></i></span><label>hi</label><span class="v">0</span></div>
+      </div></div>
+    <div class="row"><div class="rlab">sends</div>
+      <div class="knobs">
+        <div class="kn"><span class="knob set" style="--rot:80deg"><i></i></span><label>wash</label><span class="v set">wet</span></div>
+        <div class="kn"><span class="knob" style="--rot:-120deg"><i></i></span><label>throw</label><span class="v">dry</span></div>
+        <div class="kn"><span class="knob" style="--rot:-120deg"><i></i></span><label>depth</label><span class="v">dry</span></div>
+        <div class="kn"><span class="knob" style="--rot:-120deg"><i></i></span><label>par</label><span class="v">dry</span></div>
+      </div></div>
+    <div class="row"><div class="rlab">pan</div>
+      <div class="pan"><i></i><i></i><i class="mid on"></i><i></i><i></i></div>
+      <div class="panw">centre &middot; stereo</div></div>
+    <div class="row"><div class="rlab">fader</div>
+      <div class="fadrow">
+        <div class="fader"><span class="track"></span><span class="fill" style="--auto:46%"></span><span class="cap" style="--lv:44%"></span></div>
+        <div class="meter"><i style="--m:40%"></i></div>
+      </div>
+      <div class="fadw">back &middot; &minus;3.0</div></div>
+    <div class="row"><div class="ca"><button type="button">cut</button><button type="button">alone</button></div></div>
+    <div class="row mini"><div class="rlab">sections</div><svg id="mini-pad" viewBox="0 0 104 26" preserveAspectRatio="none"></svg></div>
+    <div class="goes">&rarr; <b>main</b> + its sends</div>
+  </div>
+
+  <div class="strip">
+    <div class="plateT"><div class="who"><i style="background:#8fa7e8"></i>bass</div>
+      <div class="what">bass_lead &middot; one line per box</div></div>
+    <div class="row"><div class="rlab">eq</div>
+      <div class="knobs">
+        <div class="kn"><span class="knob set" style="--rot:24deg"><i></i></span><label>lo</label><span class="v set">+1</span></div>
+        <div class="kn"><span class="knob" style="--rot:0deg"><i></i></span><label>mid</label><span class="v">0</span></div>
+        <div class="kn"><span class="knob set" style="--rot:-48deg"><i></i></span><label>hi</label><span class="v set">&minus;2</span></div>
+      </div></div>
+    <div class="row"><div class="rlab">sends</div>
+      <div class="knobs">
+        <div class="kn"><span class="knob" style="--rot:-120deg"><i></i></span><label>wash</label><span class="v">dry</span></div>
+        <div class="kn"><span class="knob" style="--rot:-120deg"><i></i></span><label>throw</label><span class="v">dry</span></div>
+        <div class="kn"><span class="knob" style="--rot:-120deg"><i></i></span><label>depth</label><span class="v">dry</span></div>
+        <div class="kn"><span class="knob set" style="--rot:-45deg"><i></i></span><label>par</label><span class="v set">touch</span></div>
+      </div></div>
+    <div class="row"><div class="rlab">pan</div>
+      <div class="pan"><i></i><i></i><i class="mid on"></i><i></i><i></i></div>
+      <div class="panw">centre</div></div>
+    <div class="row"><div class="rlab">fader</div>
+      <div class="fadrow">
+        <div class="fader"><span class="track"></span><span class="fill" style="--auto:58%"></span><span class="cap" style="--lv:58%"></span></div>
+        <div class="meter"><i style="--m:58%"></i></div>
+      </div>
+      <div class="fadw">normal &middot; 0.0</div></div>
+    <div class="row"><div class="ca"><button type="button">cut</button><button type="button">alone</button></div></div>
+    <div class="row mini"><div class="rlab">sections</div><svg id="mini-bass" viewBox="0 0 104 26" preserveAspectRatio="none"></svg></div>
+    <div class="goes">&rarr; <b>main</b> + its sends</div>
+  </div>
+
+  <div class="strip">
+    <div class="plateT"><div class="who"><i style="background:#d97a6c"></i>drums</div>
+      <div class="what">power kit &middot; one instrument</div></div>
+    <div class="row"><div class="rlab">eq</div>
+      <div class="knobs">
+        <div class="kn"><span class="knob" style="--rot:0deg"><i></i></span><label>lo</label><span class="v">0</span></div>
+        <div class="kn"><span class="knob set" style="--rot:-24deg"><i></i></span><label>mid</label><span class="v set">&minus;1</span></div>
+        <div class="kn"><span class="knob" style="--rot:24deg"><i></i></span><label>hi</label><span class="v">+1</span></div>
+      </div></div>
+    <div class="row"><div class="rlab">sends</div>
+      <div class="knobs">
+        <div class="kn"><span class="knob set" style="--rot:-45deg"><i></i></span><label>wash</label><span class="v set">touch</span></div>
+        <div class="kn"><span class="knob" style="--rot:-120deg"><i></i></span><label>throw</label><span class="v">dry</span></div>
+        <div class="kn"><span class="knob set" style="--rot:80deg"><i></i></span><label>depth</label><span class="v set">wet</span></div>
+        <div class="kn"><span class="knob set" style="--rot:20deg"><i></i></span><label>par</label><span class="v set">some</span></div>
+      </div></div>
+    <div class="row"><div class="rlab">pan</div>
+      <div class="pan"><i></i><i></i><i class="mid on"></i><i></i><i></i></div>
+      <div class="panw">centre &middot; kit spread</div></div>
+    <div class="row"><div class="rlab">fader</div>
+      <div class="fadrow">
+        <div class="fader"><span class="track"></span><span class="fill" style="--auto:60%"></span><span class="cap" style="--lv:60%"></span></div>
+        <div class="meter"><i style="--m:72%"></i></div>
+      </div>
+      <div class="fadw">normal &middot; 0.0</div></div>
+    <div class="row"><div class="ca"><button type="button">cut</button><button type="button">alone</button></div></div>
+    <div class="row mini"><div class="rlab">sections</div><svg id="mini-drums" viewBox="0 0 104 26" preserveAspectRatio="none"></svg></div>
+    <div class="goes">&rarr; <b>main</b> + its sends</div>
+  </div>
+
+  <div class="rail"><span>returns</span></div>
+
+  <!-- ================= BUSES ================= -->
+
+  <div class="strip bus">
+    <div class="plateT"><div class="who"><i style="background:#9a86c9"></i>bus 1 &middot; reverb</div>
+      <div class="what">called: <b style="color:var(--amber)">wash</b></div></div>
+    <div class="row"><div class="rlab">character &middot; chain <span class="co" title="the one set of effects">3</span></div>
+      <div class="slots">
+        <div class="slot"><em>1</em><select aria-label="bus 1 chain slot 1"><option selected>&mdash;</option><option>chorus</option><option>phaser</option><option>flanger</option><option>tremolo</option><option>leslie</option><option>auto-wah</option><option>ring mod</option><option>filter sweep</option><option>squelch</option><option>tape echo</option><option>crunch</option></select></div>
+        <div class="slot"><em>2</em><select aria-label="bus 1 chain slot 2"><option selected>&mdash;</option><option>chorus</option><option>phaser</option><option>flanger</option><option>tremolo</option><option>leslie</option><option>auto-wah</option><option>ring mod</option><option>filter sweep</option><option>squelch</option><option>tape echo</option><option>crunch</option></select></div>
+        <div class="slot"><em>3</em><select aria-label="bus 1 chain slot 3"><option selected>&mdash;</option><option>chorus</option><option>phaser</option><option>flanger</option><option>tremolo</option><option>leslie</option><option>auto-wah</option><option>ring mod</option><option>filter sweep</option><option>squelch</option><option>tape echo</option><option>crunch</option></select></div>
+      </div></div>
+    <div class="row"><div class="rlab">eq</div>
+      <div class="knobs k2">
+        <div class="kn"><span class="knob set" style="--rot:-48deg"><i></i></span><label>lo</label><span class="v set">&minus;2</span></div>
+        <div class="kn"><span class="knob" style="--rot:24deg"><i></i></span><label>hi</label><span class="v">+1</span></div>
+      </div></div>
+    <div class="row"><div class="rlab">return</div>
+      <div class="fadrow">
+        <div class="fader" style="height:84px"><span class="track"></span><span class="cap" style="--lv:66%"></span></div>
+        <div class="meter" style="height:84px"><i style="--m:44%"></i></div>
+      </div>
+      <div class="fadw"><b>a hall</b></div></div>
+    <div class="goes">&rarr; <b>main</b></div>
+  </div>
+
+  <div class="strip bus">
+    <div class="plateT"><div class="who"><i style="background:#9a86c9"></i>bus 2 &middot; delay</div>
+      <div class="what">called: <b style="color:var(--amber)">throw</b></div></div>
+    <div class="row"><div class="rlab">character &middot; chain</div>
+      <div class="slots">
+        <div class="slot"><em>1</em><select class="setv" aria-label="bus 2 chain slot 1"><option>&mdash;</option><option>chorus</option><option>phaser</option><option selected>flanger</option><option>tremolo</option><option>leslie</option><option>auto-wah</option><option>ring mod</option><option>filter sweep</option><option>squelch</option><option>tape echo</option><option>crunch</option></select></div>
+        <div class="slot"><em>2</em><select aria-label="bus 2 chain slot 2"><option selected>&mdash;</option><option>chorus</option><option>phaser</option><option>flanger</option><option>tremolo</option><option>leslie</option><option>auto-wah</option><option>ring mod</option><option>filter sweep</option><option>squelch</option><option>tape echo</option><option>crunch</option></select></div>
+        <div class="slot"><em>3</em><select aria-label="bus 2 chain slot 3"><option selected>&mdash;</option><option>chorus</option><option>phaser</option><option>flanger</option><option>tremolo</option><option>leslie</option><option>auto-wah</option><option>ring mod</option><option>filter sweep</option><option>squelch</option><option>tape echo</option><option>crunch</option></select></div>
+      </div></div>
+    <div class="row"><div class="rlab">eq</div>
+      <div class="knobs k2">
+        <div class="kn"><span class="knob" style="--rot:0deg"><i></i></span><label>lo</label><span class="v">0</span></div>
+        <div class="kn"><span class="knob set" style="--rot:-24deg"><i></i></span><label>hi</label><span class="v set">&minus;1</span></div>
+      </div></div>
+    <div class="row"><div class="rlab">return</div>
+      <div class="fadrow">
+        <div class="fader" style="height:84px"><span class="track"></span><span class="cap" style="--lv:50%"></span></div>
+        <div class="meter" style="height:84px"><i style="--m:30%"></i></div>
+      </div>
+      <div class="fadw">some</div></div>
+    <div class="goes">&rarr; <b>main</b></div>
+  </div>
+
+  <div class="strip bus">
+    <div class="plateT"><div class="who"><i style="background:#9a86c9"></i>bus 3 &middot; room</div>
+      <div class="what">called: <b style="color:var(--amber)">depth</b></div></div>
+    <div class="row"><div class="rlab">character &middot; chain <span class="co" title="dealt by the genre, not embedded">4</span></div>
+      <div class="slots">
+        <div class="slot"><em>1</em><select class="setv" aria-label="bus 3 chain slot 1"><option>&mdash;</option><option>chorus</option><option>phaser</option><option>flanger</option><option>tremolo</option><option>leslie</option><option>auto-wah</option><option>ring mod</option><option>filter sweep</option><option>squelch</option><option>tape echo</option><option selected>crunch</option></select></div>
+        <div class="slot"><em>2</em><select aria-label="bus 3 chain slot 2"><option selected>&mdash;</option><option>chorus</option><option>phaser</option><option>flanger</option><option>tremolo</option><option>leslie</option><option>auto-wah</option><option>ring mod</option><option>filter sweep</option><option>squelch</option><option>tape echo</option><option>crunch</option></select></div>
+        <div class="slot"><em>3</em><select aria-label="bus 3 chain slot 3"><option selected>&mdash;</option><option>chorus</option><option>phaser</option><option>flanger</option><option>tremolo</option><option>leslie</option><option>auto-wah</option><option>ring mod</option><option>filter sweep</option><option>squelch</option><option>tape echo</option><option>crunch</option></select></div>
+      </div></div>
+    <div class="row"><div class="rlab">eq</div>
+      <div class="knobs k2">
+        <div class="kn"><span class="knob" style="--rot:0deg"><i></i></span><label>lo</label><span class="v">0</span></div>
+        <div class="kn"><span class="knob" style="--rot:0deg"><i></i></span><label>hi</label><span class="v">0</span></div>
+      </div></div>
+    <div class="row"><div class="rlab">return</div>
+      <div class="fadrow">
+        <div class="fader" style="height:84px"><span class="track"></span><span class="cap" style="--lv:60%"></span></div>
+        <div class="meter" style="height:84px"><i style="--m:52%"></i></div>
+      </div>
+      <div class="fadw">0.9</div></div>
+    <div class="goes">&rarr; <b>bus 1</b> (aim it)</div>
+  </div>
+
+  <div class="strip bus">
+    <div class="plateT"><div class="who"><i style="background:#9a86c9"></i>bus 4 &middot; group</div>
+      <div class="what">called: <b style="color:var(--amber)">parallel</b></div></div>
+    <div class="row"><div class="rlab">character &middot; chain</div>
+      <div class="slots">
+        <div class="slot"><em>1</em><select class="setv" aria-label="bus 4 chain slot 1"><option>&mdash;</option><option>chorus</option><option>phaser</option><option>flanger</option><option>tremolo</option><option>leslie</option><option>auto-wah</option><option>ring mod</option><option>filter sweep</option><option>squelch</option><option>tape echo</option><option selected>crunch</option></select></div>
+        <div class="slot"><em>2</em><select class="setv" aria-label="bus 4 chain slot 2"><option>&mdash;</option><option>chorus</option><option>phaser</option><option>flanger</option><option>tremolo</option><option>leslie</option><option>auto-wah</option><option>ring mod</option><option selected>filter sweep</option><option>squelch</option><option>tape echo</option><option>crunch</option></select></div>
+        <div class="slot"><em>3</em><select aria-label="bus 4 chain slot 3"><option selected>&mdash;</option><option>chorus</option><option>phaser</option><option>flanger</option><option>tremolo</option><option>leslie</option><option>auto-wah</option><option>ring mod</option><option>filter sweep</option><option>squelch</option><option>tape echo</option><option>crunch</option></select></div>
+      </div></div>
+    <div class="row"><div class="rlab">eq</div>
+      <div class="knobs k2">
+        <div class="kn"><span class="knob" style="--rot:0deg"><i></i></span><label>lo</label><span class="v">0</span></div>
+        <div class="kn"><span class="knob" style="--rot:0deg"><i></i></span><label>hi</label><span class="v">0</span></div>
+      </div></div>
+    <div class="row"><div class="rlab">return</div>
+      <div class="fadrow">
+        <div class="fader" style="height:84px"><span class="track"></span><span class="cap" style="--lv:42%"></span></div>
+        <div class="meter" style="height:84px"><i style="--m:34%"></i></div>
+      </div>
+      <div class="fadw">back</div></div>
+    <div class="goes">&rarr; <b>bus 1</b> (aim it)</div>
+  </div>
+
+  <div class="rail"><span>master</span></div>
+
+  <!-- ================= MAIN ================= -->
+
+  <div class="strip main">
+    <div class="plateT"><div class="who"><i style="background:#f0a63c"></i>main &middot; the record <span class="co" title="one record level, one owner">5</span></div>
+      <div class="what">one chain for the whole page</div></div>
+    <div class="row"><div class="rlab">the words</div>
+      <div class="mrow"><label>drive</label><select class="setv" aria-label="drive"><option>&mdash;</option><option>a hair</option><option selected>warm</option><option>dirt</option><option>crush</option></select></div>
+      <div class="mrow"><label>glue</label><select class="setv" aria-label="glue"><option>&mdash;</option><option>soft</option><option selected>glue</option><option>tight</option><option>pump</option><option>squash</option></select></div>
+      <div class="mrow"><label>tape</label><select aria-label="tape"><option selected>&mdash;</option><option>warm head</option><option>tape</option><option>worn</option><option>wow &amp; flutter</option></select></div>
+      <div class="mrow"><label>space</label><select class="setv" aria-label="space"><option>&mdash;</option><option>a touch</option><option selected>room</option><option>hall</option><option>cavern</option></select></div>
+      <div class="mrow"><label>width</label><select aria-label="width"><option selected>&mdash;</option><option>mono</option><option>narrow</option><option>wide</option><option>huge</option></select></div>
+      <div class="mrow"><label>tilt</label><select aria-label="tilt"><option selected>&mdash;</option><option>dark</option><option>warm</option><option>clear</option><option>bright</option></select></div>
+      <div class="mrow"><label>ceiling</label><select class="setv" aria-label="ceiling"><option>&mdash;</option><option>open</option><option selected>safe</option><option>loud</option><option>louder</option></select></div>
+    </div>
+    <div class="row"><div class="rlab">fader</div>
+      <div class="fadrow">
+        <div class="fader"><span class="track"></span><span class="fill" style="--auto:62%"></span><span class="cap" style="--lv:62%"></span></div>
+        <div class="meter" style="width:10px"><i style="--m:70%"></i></div>
+      </div>
+      <div class="fadw"><b>the record</b> &middot; 0.0</div></div>
+    <div class="goes">&rarr; <b>the speakers</b><br>(the bar's volume slider is the ROOM,<br>not the record — unchanged, unsaved)</div>
+  </div>
+
+</div><!-- /console -->
+</div><!-- /deck -->
+
+<!-- ================= SECTION AUTOMATION ================= -->
+
+<h2><span class="n">II</span> &middot; Section automation <span class="co">6</span></h2>
+<p class="sub">&ldquo;Different automation settings per song section — some voices raise and some fall.&rdquo;
+Both views below are <b style="color:var(--ink)">one fact</b>: the grid is where you <b style="color:var(--amber)">set</b>
+(six words, saved with the song), the lanes are where you <b style="color:var(--teal)">read</b> — drawn from the
+same table, like the mini-lane on every strip. Dim is derived, bright is set.</p>
+
+<div class="auto-panel">
+  <div class="abbar" role="group" aria-label="automation view">
+    <span class="tg">
+      <button type="button" id="tg-grid" aria-pressed="true">THE GRID — you set</button>
+      <button type="button" id="tg-lanes" aria-pressed="false">THE LANES — it reads</button>
+    </span>
+    <span class="abnote">tap any cell to cycle its word — the lanes and the strips follow</span>
+  </div>
+
+  <div class="gridwrap" id="gridwrap"></div>
+  <div class="laneswrap" id="laneswrap" hidden></div>
+
+  <p class="hint">vocabulary: <b>out</b> &middot; hush &middot; back &middot; &mdash; (as mixed) &middot; fwd &middot; <b>lift</b>
+  &nbsp;&nbsp;/&nbsp;&nbsp; a word is a trim on the strip's fader for that section — deterministic, diffable, thumb-sized at 390px.
+  A hand-drawn curve is what this table renders, never what you store.</p>
+</div>
+
+<!-- ================= CONSOLIDATION MAP ================= -->
+
+<h2><span class="n">III</span> &middot; What this board absorbs</h2>
+<p class="sub">The argument for the artifact: five surfaces and one hidden layer become one console.
+Each card names the surface that closes and where its facts now live.</p>
+
+<div class="map">
+  <div class="card">
+    <h3><span class="co">1</span> The engineer's pots come home</h3>
+    <p>The per-voice <code>level / place / delay / room</code> pots inside each voice's
+    sheet in the band grid fold into the channel strip. A cantor's send stays a fact
+    about the cantor — the sheet keeps a read-only mirror that links here — but the
+    strip is the one owner and the one place that writes.</p>
+    <p class="from"><b>closes</b> ui/engineer.js &ldquo;THE ENGINEER&rdquo; (per-voice pots in the band grid)</p>
+  </div>
+  <div class="card">
+    <h3><span class="co">2</span> Two tables become one console</h3>
+    <p>The channels table and the returns-and-main table at the foot of the page merge
+    into one scroll. The two laws survive the merge: down a strip reads in signal order,
+    across the deck a row is still a comparison — and the empty-cell problem G13 measured
+    is gone because a strip only draws the rows it has.</p>
+    <p class="from"><b>closes</b> ui/engineer.js VIEW 2 (two <code>&lt;table&gt;</code>s, desk-gate G13)</p>
+  </div>
+  <div class="card">
+    <h3><span class="co">3</span> One set of effects</h3>
+    <p>The record's <code>master.fx</code> character <code>&lt;select multiple&gt;</code>
+    (hold-&#8984; to pick a second) becomes <b style="color:var(--ink)">three chain slots on
+    every bus</b> — three plain dropdowns, in series, slot order = signal order.
+    &ldquo;&mdash;&rdquo; empties a slot; all-empty = the return exactly as the engine
+    builds it. An insert costs a multiple, a bus costs a constant — so character lives
+    on buses, never on instruments.</p>
+    <p class="from"><b>closes</b> the character multi-select under the board (master.fx); fields.js FX stays the one table</p>
+  </div>
+  <div class="card">
+    <h3><span class="co">4</span> Character is dealt, not embedded</h3>
+    <p>&ldquo;Maybe we don't embed it any more?&rdquo; — right. A genre stops carrying
+    <code>g.fx</code> chips and <code>tone.verb</code> bleed inside its recipe. It arrives
+    instead as <b style="color:var(--ink)">send amounts plus a chain preset per bus</b>,
+    written onto this board by extraction — visible, overridable, and saved as the song's
+    own words. Nothing rides hidden on an instrument.</p>
+    <p class="from"><b>closes</b> per-genre embedded fx/verb (genres.js recipes) &rarr; dealt to bus strips at compose</p>
+  </div>
+  <div class="card">
+    <h3><span class="co">5</span> One record level</h3>
+    <p>The transport bar's volume slider stays what it already is — <i>the room, not the
+    record, not saved with the song</i> — and stops looking like a second master. The
+    record's own level is the main fader on this board and nowhere else. One fact,
+    one owner.</p>
+    <p class="from"><b>keeps</b> the bar slider as the room; <b>closes</b> its claim on the record's level</p>
+  </div>
+  <div class="card">
+    <h3><span class="co">6</span> Nothing moves that the board doesn't draw</h3>
+    <p>The desk's per-section level lanes, section EQ and seat shading move the mix today
+    with no surface. The automation panel puts those numbers on the face — and the same
+    law runs the other way: a knob that reaches no sound is not drawn. Width and tilt
+    appear on this mock because the ideal <b style="color:var(--ink)">wires them</b>;
+    today they round-trip and reach nothing (audio/desk.js names all three and says why).</p>
+    <p class="from"><b>surfaces</b> audio/desk.js section chains &middot; <b>enforces</b> &ldquo;no knob that cannot reach the sound&rdquo;</p>
+  </div>
+</div>
+
+<footer>
+  <b>Laws honored:</b> every value is a word from fields.js tables (deterministic, no free floats);
+  absent is the only spelling of a default; the fill is the automation, the number is your offset;
+  dim is derived, bright is set; the track list is desk-doc's <b>channelVoicesOf</b> — a board cannot
+  show a strip the desk will not build; and the section grid is score-level data, so gates read it
+  off the rendered record, not this page. Cast drawn to the desk's own chair law:
+  chairs + <b>bass</b> + <b>drums</b>, instruments by pool-first resolution.
+</footer>
+
+</div><!-- /wrap -->
+
+<script>
+(function(){
+  "use strict";
+  /* ---- the one fact: section x chair trim words ---- */
+  var SECTIONS = [
+    {id:"intro", bars:4}, {id:"verse", bars:8}, {id:"chorus", bars:8},
+    {id:"verse 2", bars:8}, {id:"chorus 2", bars:8}, {id:"outro", bars:4}
+  ];
+  var CHAIRS = [
+    {key:"lead",   color:"#f0a63c"},
+    {key:"lead 2", color:"#e3c06a"},
+    {key:"pad",    color:"#54c6d6"},
+    {key:"bass",   color:"#8fa7e8"},
+    {key:"drums",  color:"#d97a6c"}
+  ];
+  var WORDS = ["out","hush","back","—","fwd","lift"];
+  var WVAL  = {"out":0,"hush":0.3,"back":0.55,"—":0.72,"fwd":0.88,"lift":1};
+  var WCLS  = {"out":"w-out","hush":"w-hush","back":"w-back","—":"w-mid",
+               "fwd":"w-fwd","lift":"w-lift"};
+  var TRIMS = {
+    "lead":   ["out","—","lift","—","lift","back"],
+    "lead 2": ["out","hush","fwd","—","lift","out"],
+    "pad":    ["fwd","—","back","—","hush","fwd"],
+    "bass":   ["—","—","fwd","—","fwd","hush"],
+    "drums":  ["hush","—","lift","—","lift","back"]
+  };
+  var totalBars = SECTIONS.reduce(function(a,s){return a+s.bars;},0);
+
+  /* ---- grid view (the editor) ---- */
+  function renderGrid(){
+    var t = document.createElement("table"); t.className = "trims";
+    var thead = document.createElement("thead"), hr = document.createElement("tr");
+    hr.appendChild(document.createElement("th"));
+    SECTIONS.forEach(function(s){
+      var th = document.createElement("th");
+      th.innerHTML = s.id + "<small>" + s.bars + " bars</small>";
+      hr.appendChild(th);
+    });
+    thead.appendChild(hr); t.appendChild(thead);
+    var tb = document.createElement("tbody");
+    CHAIRS.forEach(function(c){
+      var tr = document.createElement("tr");
+      var th = document.createElement("th");
+      th.innerHTML = "<i style='background:" + c.color + "'></i>" + c.key;
+      tr.appendChild(th);
+      SECTIONS.forEach(function(s, i){
+        var td = document.createElement("td");
+        var b = document.createElement("button"); b.type = "button";
+        b.setAttribute("aria-label", c.key + " in " + s.id);
+        b.textContent = TRIMS[c.key][i];
+        td.className = WCLS[TRIMS[c.key][i]];
+        b.addEventListener("click", function(){
+          var cur = WORDS.indexOf(TRIMS[c.key][i]);
+          var w = WORDS[(cur + 1) % WORDS.length];
+          TRIMS[c.key][i] = w;
+          b.textContent = w; td.className = WCLS[w];
+          renderLanes(); renderMinis();
+        });
+        td.appendChild(b); tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    var w = document.getElementById("gridwrap");
+    w.textContent = ""; w.appendChild(t);
+  }
+
+  /* ---- step path from a chair's row (per-section constants: honest steps) ---- */
+  function stepPath(row, W, H, pad){
+    var x = 0, d = "", y;
+    SECTIONS.forEach(function(s, i){
+      var w = s.bars / totalBars * W;
+      y = pad + (1 - WVAL[row[i]]) * (H - 2*pad);
+      d += (i ? " L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
+      x += w;
+      d += " L" + x.toFixed(1) + " " + y.toFixed(1);
+    });
+    return d;
+  }
+
+  /* ---- lanes view (the derived reading) ---- */
+  function renderLanes(){
+    var W = 560, H = 34, wrapEl = document.getElementById("laneswrap");
+    var html = "<div class='lanehead'>";
+    SECTIONS.forEach(function(s){
+      html += "<span style='width:" + (s.bars/totalBars*100) + "%'>" + s.id + "</span>";
+    });
+    html += "</div>";
+    CHAIRS.forEach(function(c){
+      var seps = "", x = 0;
+      SECTIONS.slice(0,-1).forEach(function(s){
+        x += s.bars / totalBars * W;
+        seps += "<line x1='" + x + "' y1='0' x2='" + x + "' y2='" + H +
+                "' stroke='#272e3a' stroke-width='1'/>";
+      });
+      html += "<div class='lanerow'><span class='nm'><i style='background:" +
+        c.color + "'></i>" + c.key + "</span>" +
+        "<svg width='" + W + "' height='" + H + "' viewBox='0 0 " + W + " " + H + "'>" +
+        seps +
+        "<path d='" + stepPath(TRIMS[c.key], W, H, 4) +
+        "' fill='none' stroke='" + c.color + "' stroke-width='2' opacity='0.9'/>" +
+        "</svg></div>";
+    });
+    wrapEl.innerHTML = html;
+  }
+
+  /* ---- mini lanes on the strips (same drawing, third time) ---- */
+  function renderMinis(){
+    CHAIRS.forEach(function(c){
+      var id = "mini-" + c.key.replace(/\s+/g, "-");
+      var svg = document.getElementById(id);
+      if (!svg) return;
+      svg.innerHTML = "<path d='" + stepPath(TRIMS[c.key], 104, 26, 3) +
+        "' fill='none' stroke='" + c.color + "' stroke-width='1.5' opacity='0.6'/>";
+    });
+  }
+
+  /* ---- A/B toggle ---- */
+  var tgG = document.getElementById("tg-grid"), tgL = document.getElementById("tg-lanes");
+  function setView(grid){
+    tgG.setAttribute("aria-pressed", String(grid));
+    tgL.setAttribute("aria-pressed", String(!grid));
+    document.getElementById("gridwrap").hidden = !grid;
+    document.getElementById("laneswrap").hidden = grid;
+  }
+  tgG.addEventListener("click", function(){ setView(true); });
+  tgL.addEventListener("click", function(){ setView(false); });
+
+  renderGrid(); renderLanes(); renderMinis();
+})();
+</script>

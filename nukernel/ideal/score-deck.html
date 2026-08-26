@@ -1,0 +1,451 @@
+<title>Score Deck</title>
+<style>
+  /* ============================================================
+     SCORE DECK — the bottom of the nukernel page, ideal state.
+     A design sketch: fake data, real decisions.
+     ============================================================ */
+  :root{
+    --bg:#0a0d13; --panel:#11151f; --panel2:#151a27; --well:#0d1119;
+    --line:#232a3a; --line2:#2e3750;
+    --ink:#e9edf6; --dim:#8a93a8; --faint:#5a6378;
+    --red:#ff4438; --red-soft:rgba(255,68,56,.16);
+    --amber:#ffb454; --cyan:#45d0c6; --violet:#b18cff;
+    --green:#63d68a; --blue:#5aa7ff;
+    --staff:#c7cfdf;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  html{background:var(--bg)}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 18px 80px}
+
+  /* ---- page chrome ---- */
+  .brand{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+  .brand h1{margin:0;font:800 13px/1 var(--mono);letter-spacing:.34em;color:var(--ink)}
+  .brand .sub{color:var(--dim);font-size:13px}
+  .lede{color:var(--dim);font-size:13px;max-width:72ch;margin:0 0 22px}
+  .lede em{color:var(--ink);font-style:normal}
+
+  /* annotation markers + footnotes */
+  .n{display:inline-flex;align-items:center;justify-content:center;
+     width:16px;height:16px;border-radius:50%;border:1px solid var(--blue);
+     color:var(--blue);font:700 10px/1 var(--mono);vertical-align:2px;margin-left:6px;
+     flex:none;cursor:default}
+  .notes{margin-top:34px;border-top:1px solid var(--line);padding-top:18px;
+         display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+  .note{display:flex;gap:10px;font-size:12.5px;color:var(--dim)}
+  .note b{color:var(--ink);font-weight:600}
+
+  /* ---- transport strip ---- */
+  .transport{background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--line);border-radius:14px;padding:12px 14px;
+    display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+    box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  .tbtn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line2);
+    background:var(--well);color:var(--ink);cursor:pointer;display:flex;
+    align-items:center;justify-content:center;flex:none}
+  .tbtn:hover{border-color:var(--dim)}
+  .tbtn.play{background:var(--red);border-color:var(--red);box-shadow:0 0 22px var(--red-soft)}
+  .tbtn svg{display:block}
+  .clock{font:600 20px/1.1 var(--mono);min-width:118px}
+  .clock small{display:block;font:500 10px/1 var(--mono);letter-spacing:.18em;
+    color:var(--faint);margin-top:4px}
+  .tfact{font:600 15px/1.1 var(--mono);color:var(--ink)}
+  .tfact small{display:block;font:500 10px/1 var(--mono);letter-spacing:.18em;
+    color:var(--faint);margin-top:5px}
+  .sections{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+  .sec{padding:7px 12px;border-radius:9px;border:1px solid var(--line);
+    color:var(--dim);font:600 11px/1 var(--mono);letter-spacing:.08em;background:var(--well)}
+  .sec.now{background:var(--ink);color:#0a0d13;border-color:var(--ink)}
+
+  /* ---- score surface ---- */
+  .deck{margin-top:16px;background:var(--panel);border:1px solid var(--line);
+    border-radius:14px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  .deckhead{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    padding:12px 16px;border-bottom:1px solid var(--line)}
+  .deckhead h2{margin:0;font:700 11px/1 var(--mono);letter-spacing:.28em;color:var(--dim)}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font:500 11.5px/1 var(--mono);color:var(--dim)}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;
+    vertical-align:-1px;font-style:normal}
+  .toggle{margin-left:auto;display:flex;border:1px solid var(--line2);
+    border-radius:10px;overflow:hidden}
+  .toggle button{border:0;background:var(--well);color:var(--dim);cursor:pointer;
+    font:600 11.5px/1 var(--mono);letter-spacing:.06em;padding:9px 14px}
+  .toggle button.on{background:var(--ink);color:#0a0d13}
+
+  .scorewin{position:relative;overflow:hidden;background:
+    radial-gradient(1200px 300px at 30% 0%,rgba(90,167,255,.05),transparent 60%),var(--well)}
+  .scroller{position:absolute;top:0;left:0;will-change:transform}
+  #notview .scorewin{height:248px}
+  #rollview .scorewin{height:300px}
+  .gutter{position:absolute;top:0;left:0;bottom:0;width:74px;pointer-events:none;z-index:2;
+    background:linear-gradient(90deg,var(--well) 55%,transparent)}
+  .fadeR{position:absolute;top:0;right:0;bottom:0;width:60px;pointer-events:none;z-index:2;
+    background:linear-gradient(270deg,var(--well),transparent)}
+  .clefs{position:absolute;top:0;left:0;z-index:3;pointer-events:none}
+
+  svg text{font-family:var(--mono)}
+  .barnum{fill:var(--faint);font-size:9px}
+  .secmark{fill:var(--ink);font-size:11px;font-weight:700;letter-spacing:.14em}
+  .motifline{stroke-width:1.6;fill:none}
+  .motiflab{font-size:11px;font-weight:700}
+  .motifsub{font-size:9.5px;fill:var(--faint)}
+  .note-g .head{fill:var(--staff)} .note-g .stem{stroke:var(--staff);stroke-width:1.4}
+  .note-g.lit .head{fill:var(--red)} .note-g.lit .stem{stroke:var(--red)}
+  .note-g.lit .flag{fill:var(--red)}
+  .flag{fill:var(--staff)}
+
+  #rollview{display:none}
+  canvas{display:block}
+
+  /* ---- export row ---- */
+  .exports{margin-top:16px;display:grid;gap:12px;
+    grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+  .exp{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:16px;display:flex;flex-direction:column;gap:9px;position:relative}
+  .exp:hover{border-color:var(--line2)}
+  .exp .fmt{display:flex;align-items:center;gap:10px}
+  .exp .glyph{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;
+    justify-content:center;font:800 10px/1 var(--mono);flex:none}
+  .exp h3{margin:0;font:700 15px/1.2 var(--sans)}
+  .exp h3 small{display:block;font:500 10.5px/1 var(--mono);color:var(--faint);
+    letter-spacing:.08em;margin-top:4px}
+  .chip{align-self:flex-start;font:700 9.5px/1 var(--mono);letter-spacing:.12em;
+    padding:5px 8px;border-radius:6px}
+  .chip.ready{color:var(--green);background:rgba(99,214,138,.12);border:1px solid rgba(99,214,138,.35)}
+  .chip.near{color:var(--amber);background:rgba(255,180,84,.1);border:1px solid rgba(255,180,84,.3)}
+  .chip.promise{color:var(--blue);background:rgba(90,167,255,.1);border:1px solid rgba(90,167,255,.3)}
+  .exp p{margin:0;font-size:12.5px;color:var(--dim)}
+  .exp .act{margin-top:auto;padding-top:4px}
+  .dl{width:100%;padding:10px 0;border-radius:10px;font:600 12.5px/1 var(--mono);
+    cursor:pointer;letter-spacing:.04em}
+  .dl.solid{background:var(--ink);color:#0a0d13;border:1px solid var(--ink)}
+  .dl.ghost{background:transparent;color:var(--ink);border:1px solid var(--line2)}
+  .dl.ghost:hover{border-color:var(--dim)}
+
+  @media (max-width:640px){
+    .clock{min-width:0}
+    .sections{margin-left:0;width:100%}
+    .toggle{margin-left:0;width:100%}
+    .toggle button{flex:1}
+  }
+</style>
+
+<div class="wrap">
+  <div class="brand">
+    <h1>SCORE&nbsp;DECK</h1>
+    <span class="sub">the bottom of the page — where the record shows its work</span>
+  </div>
+  <p class="lede">Scroll to the foot of nukernel and the band is <em>playing its own
+  sheet music</em>: a steady-speed scrolling score, notes inked red as they sound,
+  motifs labelled on the staff. One toggle to the piano roll, and four ways to
+  leave with the record. Everything below runs on fake data — the decisions are real.</p>
+
+  <!-- ================= TRANSPORT ================= -->
+  <div class="transport">
+    <button class="tbtn play" id="btnPlay" aria-label="play or pause">
+      <svg id="icoPlay" width="16" height="16" viewBox="0 0 16 16"><path d="M4 2l10 6L4 14z" fill="#0a0d13"/></svg>
+      <svg id="icoPause" width="16" height="16" viewBox="0 0 16 16" style="display:none"><path d="M3 2h4v12H3zM9 2h4v12H9z" fill="#0a0d13"/></svg>
+    </button>
+    <button class="tbtn" id="btnStop" aria-label="stop">
+      <svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" rx="2" fill="var(--ink)"/></svg>
+    </button>
+    <div class="clock"><span id="clkBar">1</span>·<span id="clkBeat">1</span><small>BAR · BEAT</small></div>
+    <div class="tfact">96<small>BPM</small></div>
+    <div class="tfact">4/4<small>METER</small></div>
+    <div class="tfact">F&nbsp;min<small>KEY</small></div>
+    <div class="sections" id="secChips"></div>
+  </div>
+
+  <!-- ================= SCORE ================= -->
+  <div class="deck">
+    <div class="deckhead">
+      <h2>THE&nbsp;SCORE<span class="n" title="No playhead line — decided. The red ink IS the playhead: the scroll runs at constant px/s and the eye never chases a jumping bar.">1</span></h2>
+      <div class="legend" id="legend"></div>
+      <div class="toggle" role="tablist">
+        <button id="tabNot" class="on">NOTATION</button>
+        <button id="tabRoll">PIANO&nbsp;ROLL</button>
+      </div>
+    </div>
+
+    <div id="notview">
+      <div class="scorewin" id="notWin">
+        <div class="scroller" id="notScroll"></div>
+        <div class="gutter"></div>
+        <svg class="clefs" width="74" height="248" viewBox="0 0 74 248">
+          <text x="18" y="86" font-size="44" fill="var(--staff)">&#x1D11E;</text>
+          <text x="20" y="196" font-size="30" fill="var(--staff)">&#x1D122;</text>
+          <text x="52" y="66" font-size="15" fill="var(--staff)">4</text>
+          <text x="52" y="82" font-size="15" fill="var(--staff)">4</text>
+        </svg>
+        <div class="fadeR"></div>
+      </div>
+    </div>
+
+    <div id="rollview">
+      <div class="scorewin" id="rollWin">
+        <canvas id="rollCv"></canvas>
+        <div class="fadeR"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= EXPORTS ================= -->
+  <div class="exports">
+    <div class="exp">
+      <div class="fmt">
+        <div class="glyph" style="background:rgba(90,167,255,.1);color:var(--blue);border:1px solid rgba(90,167,255,.3)">ALS</div>
+        <h3>Ableton<small>LIVE SET · .als</small></h3>
+      </div>
+      <span class="chip promise">A PROMISE · DONOR FILE</span>
+      <p>An .als is gzipped XML. We ship a donor Live set and swap in the stems,
+      the tempo, and the sections as locators. Honest state: designed, not built.<span class="n" title="Export honesty: a button that cannot reach the artifact yet says so on its face — the 'no knob that cannot reach the sound' law, applied to downloads.">4</span></p>
+      <div class="act"><button class="dl ghost">READ THE PLAN</button></div>
+    </div>
+    <div class="exp">
+      <div class="fmt">
+        <div class="glyph" style="background:rgba(255,180,84,.1);color:var(--amber);border:1px solid rgba(255,180,84,.3)">MID</div>
+        <h3>MIDI<small>TYPE 1 · ONE TRACK PER VOICE</small></h3>
+      </div>
+      <span class="chip near">AN EXTRACTION AWAY</span>
+      <p>The score already knows every tick — the same notes this staff draws,
+      written out as a file. Extraction, never by hand; one owner per note.</p>
+      <div class="act"><button class="dl ghost">DOWNLOAD .MID</button></div>
+    </div>
+    <div class="exp">
+      <div class="fmt">
+        <div class="glyph" style="background:rgba(99,214,138,.12);color:var(--green);border:1px solid rgba(99,214,138,.3)">WAV</div>
+        <h3>WAV<small>44.1 kHz · 16-BIT · THE RENDER</small></h3>
+      </div>
+      <span class="chip ready">SHIPS TODAY</span>
+      <p>The engine already writes rolling WAV segments — this button is that
+      machinery pointed at a file. The exact artifact the speakers get.</p>
+      <div class="act"><button class="dl solid">DOWNLOAD .WAV</button></div>
+    </div>
+    <div class="exp">
+      <div class="fmt">
+        <div class="glyph" style="background:rgba(255,180,84,.1);color:var(--amber);border:1px solid rgba(255,180,84,.3)">MP3</div>
+        <h3>MP3<small>320 kbps · FOR THE PHONE</small></h3>
+      </div>
+      <span class="chip near">ENCODER TO VENDOR</span>
+      <p>No CDN in the building, so the LAME encoder gets vendored (~160&nbsp;KB)
+      and runs in a worker over the same WAV render. Small, offline, ours.</p>
+      <div class="act"><button class="dl ghost">DOWNLOAD .MP3</button></div>
+    </div>
+  </div>
+
+  <!-- ================= FOOTNOTES ================= -->
+  <div class="notes">
+    <div class="note"><span class="n">1</span><span><b>No playhead.</b> Decided
+      upstream and kept here: the scroll is steady-speed (constant px/s, not
+      beat-snapped), and the red ink is the only "now" on the surface. The
+      sounding point sits a third in from the left so the eye always has the
+      next two bars.</span></div>
+    <div class="note"><span class="n">2</span><span><b>Motif labels are
+      extracted, not typed.</b> The brackets over the staff carry the Material
+      axis's own cell names (a, a&prime;, b&hellip;) placed by the same fold
+      that bars the timeline — the musicologist's ask, done by extraction so
+      the label can never drift from the tune.</span></div>
+    <div class="note"><span class="n">3</span><span><b>One clock, two views.</b>
+      Notation and piano roll share the transport clock; flipping the toggle
+      never loses your place. The roll colors per voice and marks section
+      edges — the things staves hide.</span></div>
+    <div class="note"><span class="n">4</span><span><b>Export honesty.</b> WAV
+      is real today; MIDI is an extraction over the score; MP3 waits on a
+      vendored encoder; Ableton is a promise with a donor file. Each button
+      wears its true state — nothing greys out silently, nothing pretends.</span></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  // ------------------------------------------------------------------
+  // fake song: 16 bars, 4/4, 96 bpm. All data invented, deterministic.
+  // ------------------------------------------------------------------
+  var BPM=96, BEATS=4, BARS=16;
+  var BARSEC=BEATS*60/BPM;                 // 2.5 s
+  var PXBAR=150, PXSEC=PXBAR/BARSEC;       // 60 px/s — steady speed (note 1)
+  var SONG=BARS*BARSEC;
+  var SOUNDX=Math.round(0.33* (Math.min(document.documentElement.clientWidth,1180)-36));
+  if(SOUNDX<110) SOUNDX=110;
+
+  var SECTIONS=[{n:"IN",b:0},{n:"A",b:2},{n:"B",b:8},{n:"A′",b:12},{n:"OUT",b:15}];
+  var MOTIFS=[
+    {lab:"a",       sub:"the call",   b0:2,  b1:4,  c:"var(--amber)"},
+    {lab:"a′", sub:"up a third", b0:4,  b1:6,  c:"var(--amber)"},
+    {lab:"b",       sub:"the answer", b0:6,  b1:8,  c:"var(--cyan)"},
+    {lab:"c",       sub:"the turn",   b0:8,  b1:10, c:"var(--violet)"},
+    {lab:"c′", sub:"inverted",   b0:10, b1:12, c:"var(--violet)"},
+    {lab:"a",       sub:"the return", b0:12, b1:14, c:"var(--amber)"}
+  ];
+
+  // melody cells as [beat, dur, step] — step 0 = staff top line F5, +1 = down a 2nd
+  var cellA =[[0,1,5],[1,.5,4],[1.5,.5,3],[2,1,2],[3,1,3]];
+  var cellA2=[[0,1,3],[1,.5,2],[1.5,.5,1],[2,1,0],[3,1,1]];
+  var cellB =[[0,.5,2],[.5,.5,3],[1,1,4],[2,2,6]];
+  var cellC =[[0,1,1],[1,1,2],[2,.5,3],[2.5,.5,4],[3,1,5]];
+  var cellC2=[[0,1,7],[1,1,6],[2,.5,5],[2.5,.5,4],[3,1,3]];
+  var cellIn=[[0,4,6]];
+  var cellOut=[[0,4,4]];
+  var PLAN=[cellIn,cellIn, cellA,cellA,cellA2,cellA2, cellB,cellB,
+            cellC,cellC, cellC2,cellC2, cellA,cellA, cellOut,cellOut];
+  var mel=[];
+  PLAN.forEach(function(cell,bar){ cell.forEach(function(n){
+    mel.push({on:bar*BARSEC+n[0]*(60/BPM), dur:n[1]*(60/BPM), step:n[2], bar:bar, beat:n[0], bdur:n[1]});
+  });});
+  // bass: root whole notes on bass staff, step rel. to bass top line A3
+  var broots=[6,6, 4,4,5,5, 2,2, 6,6, 3,3, 4,4, 6,6];
+  var bass=broots.map(function(s,bar){ return {on:bar*BARSEC, dur:BARSEC*.96, step:s, bar:bar}; });
+
+  // ------------------------------------------------------------------
+  // NOTATION — one wide SVG in a translating scroller (note 1)
+  // ------------------------------------------------------------------
+  var LEAD=80, W=LEAD+BARS*PXBAR+80, H=248;
+  var T_TOP=64, B_TOP=170, GAP=8;  // treble/bass staff tops, line gap
+  function yT(step){return T_TOP+step*GAP/2}
+  function yB(step){return B_TOP+step*GAP/2}
+  function xAt(t){return LEAD+t*PXSEC}
+  var s=[];
+  s.push('<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'">');
+  for(var i=0;i<5;i++){
+    s.push('<line x1="0" y1="'+(T_TOP+i*GAP)+'" x2="'+W+'" y2="'+(T_TOP+i*GAP)+'" stroke="var(--line2)" stroke-width="1"/>');
+    s.push('<line x1="0" y1="'+(B_TOP+i*GAP)+'" x2="'+W+'" y2="'+(B_TOP+i*GAP)+'" stroke="var(--line2)" stroke-width="1"/>');
+  }
+  for(var b=0;b<=BARS;b++){
+    var x=LEAD+b*PXBAR, isSec=SECTIONS.some(function(S){return S.b===b})||b===BARS;
+    s.push('<line x1="'+x+'" y1="'+T_TOP+'" x2="'+x+'" y2="'+(B_TOP+4*GAP)+'" stroke="'+(isSec?'var(--staff)':'var(--line2)')+'" stroke-width="'+(isSec?2:1)+'"/>');
+    if(isSec&&b<BARS) s.push('<line x1="'+(x+4)+'" y1="'+T_TOP+'" x2="'+(x+4)+'" y2="'+(B_TOP+4*GAP)+'" stroke="var(--staff)" stroke-width="1"/>');
+    if(b<BARS) s.push('<text class="barnum" x="'+(x+5)+'" y="'+(B_TOP+4*GAP+16)+'">'+(b+1)+'</text>');
+  }
+  SECTIONS.forEach(function(S){
+    s.push('<text class="secmark" x="'+(LEAD+S.b*PXBAR+8)+'" y="16">'+S.n+'</text>');
+  });
+  // motif brackets (note 2)
+  MOTIFS.forEach(function(m){
+    var x0=LEAD+m.b0*PXBAR+6, x1=LEAD+m.b1*PXBAR-6, y=34;
+    s.push('<path class="motifline" stroke="'+m.c+'" d="M'+x0+' '+(y+6)+' V'+y+' H'+x1+' V'+(y+6)+'"/>');
+    s.push('<text class="motiflab" fill="'+m.c+'" x="'+(x0+4)+'" y="'+(y-6)+'">'+m.lab+'</text>');
+    s.push('<text class="motifsub" x="'+(x0+18)+'" y="'+(y-6)+'">'+m.sub+'</text>');
+  });
+  function drawNote(n,yf,cls){
+    var x=xAt(n.on), y=yf(n.step), whole=n.dur>=BARSEC*.9;
+    var g='<g class="note-g'+(cls||'')+'" data-on="'+n.on.toFixed(3)+'" data-off="'+(n.on+n.dur).toFixed(3)+'">';
+    g+='<ellipse class="head" cx="'+x+'" cy="'+y+'" rx="4.6" ry="3.4"'+(whole?' fill="none" stroke="var(--staff)" stroke-width="1.6"':'')+'/>';
+    if(!whole){
+      var up=n.step>2;
+      g+='<line class="stem" x1="'+(up?x+4.3:x-4.3)+'" y1="'+y+'" x2="'+(up?x+4.3:x-4.3)+'" y2="'+(up?y-24:y+24)+'"/>';
+      if(n.bdur&&n.bdur<=0.5){
+        var sx=up?x+4.3:x-4.3, sy=up?y-24:y+24;
+        g+='<path class="flag" d="M'+sx+' '+sy+' q7 '+(up?4:-4)+' 5 12 q-1 -6 -5 -7 z"/>';
+      }
+    }
+    return g+'</g>';
+  }
+  mel.forEach(function(n){s.push(drawNote(n,yT,''))});
+  bass.forEach(function(n){s.push(drawNote(n,yB,''))});
+  s.push('</svg>');
+  document.getElementById('notScroll').innerHTML=s.join('');
+  var noteEls=[].slice.call(document.querySelectorAll('.note-g')).map(function(el){
+    return {el:el,on:+el.dataset.on,off:+el.dataset.off,lit:false};
+  });
+
+  // ------------------------------------------------------------------
+  // PIANO ROLL — canvas, colored per voice, section edges (note 3)
+  // ------------------------------------------------------------------
+  var VOICES={lead:"#ffb454",keys:"#b18cff",bass:"#45d0c6",drums:"#63d68a"};
+  var roll=[];
+  mel.forEach(function(n){roll.push({on:n.on,dur:n.dur,row:14-n.step,v:"lead"})});
+  broots.forEach(function(s2,bar){
+    [0,2,4].forEach(function(iv){ if(bar>=2&&bar<15)
+      roll.push({on:bar*BARSEC,dur:BARSEC*.94,row:9-Math.round(s2/2)-iv,v:"keys"});});
+    roll.push({on:bar*BARSEC,dur:BARSEC*.94,row:20+Math.round(s2/3),v:"bass"});
+  });
+  for(var bb=1;bb<15;bb++)for(var q=0;q<8;q++){
+    var t0=bb*BARSEC+q*BARSEC/8;
+    if(q%2===0) roll.push({on:t0,dur:.09,row:26,v:"drums"});           // hat
+    if(q===0||q===5) roll.push({on:t0,dur:.11,row:28,v:"drums"});      // kick
+    if(q===4) roll.push({on:t0,dur:.11,row:27,v:"drums"});             // snare
+  }
+  var ROWS=30, cv=document.getElementById('rollCv'), ctx=cv.getContext('2d');
+  if(!ctx.roundRect) ctx.roundRect=function(x,y,w2,h2){this.rect(x,y,w2,h2);};
+  var rollWin=document.getElementById('rollWin');
+  function sizeCv(){
+    var dpr=window.devicePixelRatio||1, w=rollWin.clientWidth, h=rollWin.clientHeight;
+    cv.width=w*dpr; cv.height=h*dpr; cv.style.width=w+'px'; cv.style.height=h+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  sizeCv(); addEventListener('resize',sizeCv);
+  function drawRoll(t){
+    var w=rollWin.clientWidth,h=rollWin.clientHeight,rh=(h-26)/ROWS;
+    ctx.clearRect(0,0,w,h);
+    var off=SOUNDX-t*PXSEC;
+    for(var r=0;r<ROWS;r+=2){ctx.fillStyle="rgba(255,255,255,.022)";ctx.fillRect(0,20+r*rh,w,rh);}
+    for(var b2=0;b2<=BARS;b2++){
+      var x=off+b2*PXBAR; if(x<-4||x>w+4)continue;
+      var sec=SECTIONS.filter(function(S){return S.b===b2})[0];
+      ctx.strokeStyle=sec?"#c7cfdf":"rgba(120,132,158,.25)";
+      ctx.lineWidth=sec?1.6:1;
+      ctx.beginPath();ctx.moveTo(x,18);ctx.lineTo(x,h-6);ctx.stroke();
+      if(sec){ctx.fillStyle="#e9edf6";ctx.font="700 10px ui-monospace,monospace";
+        ctx.fillText(sec.n,x+5,13);}
+    }
+    roll.forEach(function(n){
+      var x=off+n.on*PXSEC, ww=Math.max(3,n.dur*PXSEC-2);
+      if(x+ww<0||x>w)return;
+      var lit=t>=n.on&&t<n.on+n.dur;
+      ctx.fillStyle=lit?"#ff4438":VOICES[n.v];
+      ctx.globalAlpha=lit?1:.85;
+      ctx.beginPath();ctx.roundRect(x,20+n.row*rh+1,ww,rh-2,2);ctx.fill();
+      ctx.globalAlpha=1;
+    });
+  }
+
+  // legend + section chips
+  document.getElementById('legend').innerHTML=Object.keys(VOICES).map(function(v){
+    return '<span><i style="background:'+VOICES[v]+'"></i>'+v.toUpperCase()+'</span>';
+  }).join('')+'<span><i style="background:var(--red)"></i>SOUNDING</span>';
+  var chips=document.getElementById('secChips');
+  chips.innerHTML=SECTIONS.map(function(S){return '<span class="sec" data-b="'+S.b+'">'+S.n+'</span>'}).join('');
+  var chipEls=[].slice.call(chips.children);
+
+  // ------------------------------------------------------------------
+  // one clock, two views (note 3)
+  // ------------------------------------------------------------------
+  var playing=true, t=0, last=performance.now(), view='not';
+  var notScroll=document.getElementById('notScroll');
+  var clkBar=document.getElementById('clkBar'), clkBeat=document.getElementById('clkBeat');
+  function frame(now){
+    var dt=(now-last)/1000; last=now;
+    if(playing){t+=dt; if(t>=SONG)t-=SONG;}
+    var bar=Math.floor(t/BARSEC), beat=Math.floor((t%BARSEC)/(60/BPM));
+    clkBar.textContent=bar+1; clkBeat.textContent=beat+1;
+    var cur=0; SECTIONS.forEach(function(S,i){if(bar>=S.b)cur=i;});
+    chipEls.forEach(function(c,i){c.classList.toggle('now',i===cur);});
+    if(view==='not'){
+      notScroll.style.transform='translateX('+(SOUNDX-LEAD-t*PXSEC)+'px)';
+      noteEls.forEach(function(n){
+        var lit=t>=n.on&&t<n.off;
+        if(lit!==n.lit){n.lit=lit;n.el.classList.toggle('lit',lit);}
+      });
+    } else drawRoll(t);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // transport + toggle wiring
+  var btnPlay=document.getElementById('btnPlay');
+  var icoP=document.getElementById('icoPlay'), icoPa=document.getElementById('icoPause');
+  function setPlay(p){playing=p;icoP.style.display=p?'none':'block';icoPa.style.display=p?'block':'none';}
+  setPlay(true);
+  btnPlay.onclick=function(){setPlay(!playing)};
+  document.getElementById('btnStop').onclick=function(){t=0;setPlay(false);drawRoll(0);};
+  var tabNot=document.getElementById('tabNot'), tabRoll=document.getElementById('tabRoll');
+  var nv=document.getElementById('notview'), rv=document.getElementById('rollview');
+  tabNot.onclick=function(){view='not';nv.style.display='block';rv.style.display='none';
+    tabNot.classList.add('on');tabRoll.classList.remove('on');};
+  tabRoll.onclick=function(){view='roll';nv.style.display='none';rv.style.display='block';
+    tabRoll.classList.add('on');tabNot.classList.remove('on');sizeCv();drawRoll(t);};
+})();
+</script>

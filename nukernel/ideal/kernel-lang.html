@@ -1,0 +1,534 @@
+<title>Libretto</title>
+<style>
+  :root{
+    --bg:#0a0c10; --panel:#10141b; --panel2:#151a23; --panel3:#1a2029;
+    --line:#232b38; --line2:#2e3948;
+    --ink:#d6dee8; --dim:#7e8a9a; --faint:#55606f;
+    --teal:#45d7b8; --amber:#e8b45a; --violet:#b48ef0; --blue:#62a8ff;
+    --red:#ff6b6b; --green:#7ad07a; --pink:#f08eb6;
+    --mono:"SF Mono","Cascadia Code","JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  }
+  html{background:var(--bg)}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);
+       margin:0;padding:0;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 20px 90px}
+  a{color:var(--blue);text-decoration:none}
+
+  /* ---------- header ---------- */
+  header{padding:64px 0 30px;border-bottom:1px solid var(--line);
+         background:
+           radial-gradient(1200px 420px at 20% -10%, rgba(69,215,184,.10), transparent 60%),
+           radial-gradient(900px 380px at 85% 0%, rgba(180,142,240,.08), transparent 60%)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+           text-transform:uppercase;color:var(--dim);margin:0 0 14px}
+  h1{font-size:56px;line-height:1;margin:0 0 6px;letter-spacing:-.01em;font-weight:800;
+     background:linear-gradient(100deg,#eaf2fa 30%,var(--teal) 75%,var(--violet));
+     -webkit-background-clip:text;background-clip:text;color:transparent}
+  .tag{font-size:17px;color:var(--dim);max-width:62ch;margin:8px 0 26px}
+  .tag b{color:var(--ink);font-weight:600}
+  .laws{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 30px}
+  .law{font-family:var(--mono);font-size:11px;color:var(--dim);
+       border:1px solid var(--line2);border-radius:99px;padding:4px 12px;background:rgba(255,255,255,.02)}
+  .law i{font-style:normal;color:var(--teal)}
+
+  .hero-line{background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--line2);border-radius:12px;padding:22px 26px;
+    font-family:var(--mono);font-size:clamp(15px,3.4vw,24px);white-space:nowrap;overflow-x:auto;
+    box-shadow:0 12px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04)}
+  .hero-line .cap{display:block;white-space:normal;font-family:var(--sans);font-size:12.5px;color:var(--faint);margin-top:12px}
+
+  /* ---------- syntax colors (one vocabulary, used everywhere) ---------- */
+  .sub{color:var(--violet)}          /* subject: who the rule addresses   */
+  .whn{color:var(--pink)}            /* when: section / bar selector      */
+  .verb{color:var(--teal)}           /* operator verb                     */
+  .num{color:var(--amber)}           /* numbers & counter expressions     */
+  .vec{color:var(--blue)}            /* on gate / on deg / on acc         */
+  .kw{color:var(--dim)}              /* glue: in · of · on · from · seed  */
+  .cmt{color:var(--faint);font-style:italic}
+  .colon{color:var(--faint)}
+  .dot{color:var(--faint)}
+  .err{ text-decoration:underline wavy var(--red) 1.5px; text-underline-offset:4px }
+
+  /* ---------- sections ---------- */
+  section{margin-top:64px}
+  .secno{font-family:var(--mono);font-size:11px;color:var(--teal);letter-spacing:.2em;margin:0 0 6px}
+  h2{font-size:26px;margin:0 0 8px;font-weight:700;letter-spacing:-.01em}
+  .lede{color:var(--dim);max-width:70ch;margin:0 0 22px;font-size:15px}
+  .lede b{color:var(--ink);font-weight:600}
+  .lede code, p code, li code, td code{font-family:var(--mono);font-size:.9em;color:var(--amber);
+    background:rgba(232,180,90,.07);border:1px solid rgba(232,180,90,.15);border-radius:4px;padding:0 5px}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+  .card h3{margin:0 0 6px;font-size:14px;color:var(--ink)}
+  .card p{margin:0;font-size:13px;color:var(--dim)}
+  .card .cite{display:inline-block;margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--blue);
+    background:rgba(98,168,255,.08);border:1px solid rgba(98,168,255,.18);border-radius:5px;padding:2px 8px}
+  .card pre{margin:8px 0 0;font-family:var(--mono);font-size:12px;color:var(--dim);
+    white-space:pre;overflow-x:auto;background:var(--bg);border:1px solid var(--line);
+    border-radius:6px;padding:8px 10px}
+
+  /* ---------- grammar ---------- */
+  .ebnf{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:20px 24px;font-family:var(--mono);font-size:13.5px;line-height:2;
+    overflow-x:auto;white-space:pre}
+  .ebnf .nt{color:var(--violet)} .ebnf .t{color:var(--teal)} .ebnf .meta{color:var(--faint)}
+  .ebnf .n2{color:var(--amber)}
+
+  .rail{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:22px;overflow-x:auto}
+  .rail-track{display:flex;align-items:center;gap:0;min-width:640px}
+  .pill,.box{font-family:var(--mono);font-size:12.5px;padding:6px 13px;white-space:nowrap}
+  .pill{border-radius:99px;border:1px solid var(--teal);color:var(--teal);background:rgba(69,215,184,.06)}
+  .box{border-radius:6px;border:1px solid var(--violet);color:var(--violet);background:rgba(180,142,240,.06)}
+  .link{height:1px;background:var(--line2);flex:0 0 26px;position:relative}
+  .link:after{content:"";position:absolute;right:0;top:-3px;border:3.5px solid transparent;border-left-color:var(--line2)}
+  .rail-note{font-size:12px;color:var(--faint);margin-top:14px;font-family:var(--sans)}
+  .loop{font-family:var(--mono);font-size:10.5px;color:var(--faint);text-align:center;margin-top:3px}
+
+  /* ---------- op table ---------- */
+  .tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;min-width:680px;font-size:13px}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+     color:var(--faint);text-align:left;padding:10px 16px;border-bottom:1px solid var(--line2);
+     background:var(--panel2)}
+  td{padding:8px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  td.mono{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+  td .cite2{font-family:var(--mono);font-size:11px;color:var(--blue)}
+  tr:hover td{background:rgba(255,255,255,.015)}
+  .fam td:first-child{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+     text-transform:uppercase;color:var(--teal);padding-top:16px}
+
+  /* ---------- examples ---------- */
+  .ex{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+      margin-bottom:14px;overflow:hidden}
+  .ex .rules{padding:14px 18px;font-family:var(--mono);font-size:14px;line-height:1.9;
+      white-space:nowrap;overflow-x:auto;background:linear-gradient(180deg,var(--panel2),var(--panel))}
+  .ex .meaning{padding:12px 18px 14px;border-top:1px solid var(--line);font-size:13px;color:var(--dim)}
+  .ex .meaning b{color:var(--ink);font-weight:600}
+  .ex .desugar{padding:10px 18px 14px;border-top:1px dashed var(--line);
+      font-family:var(--mono);font-size:12px;color:var(--faint);white-space:pre;overflow-x:auto}
+  .ex .desugar em{font-style:normal;color:var(--blue)}
+  .exgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+  .exgrid .ex{margin-bottom:0}
+
+  .newtag{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+    color:#0a0c10;background:var(--amber);border-radius:4px;padding:2px 7px;margin-right:8px;font-weight:700}
+
+  /* ---------- editor mock ---------- */
+  .app{border:1px solid var(--line2);border-radius:14px;overflow:hidden;background:var(--panel);
+       box-shadow:0 18px 60px rgba(0,0,0,.5)}
+  .app-head{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--panel3);
+       border-bottom:1px solid var(--line2)}
+  .app-head .dot2{width:9px;height:9px;border-radius:50%;background:var(--line2)}
+  .app-title{font-size:13px;color:var(--ink);font-weight:600}
+  .app-title span{color:var(--faint);font-weight:400}
+  .app-toggle{margin-left:auto;display:flex;border:1px solid var(--line2);border-radius:7px;overflow:hidden}
+  .app-toggle button{font-family:var(--mono);font-size:11px;padding:5px 12px;border:0;cursor:pointer;
+       background:transparent;color:var(--dim)}
+  .app-toggle button.on{background:var(--teal);color:#062019;font-weight:700}
+  .ed{font-family:var(--mono);font-size:13.5px;line-height:2.05;overflow-x:auto}
+  .ed .ln{display:flex;min-width:640px;padding:0 0 0 0}
+  .ed .no{flex:0 0 44px;text-align:right;padding-right:14px;color:#3c4655;user-select:none;
+       border-right:1px solid var(--line);background:rgba(0,0,0,.18)}
+  .ed .tx{padding-left:16px;white-space:pre}
+  .ed .ln.bad{background:rgba(255,107,107,.05)}
+  .ed .ln.bad .no{color:var(--red)}
+  .ed .errmsg{min-width:640px;margin:0;padding:2px 16px 8px 60px;font-size:12px;color:var(--red);
+       display:flex;gap:8px;align-items:baseline}
+  .ed .errmsg:before{content:"✕";font-size:10px}
+  .ed .errmsg i{font-style:normal;color:var(--dim)}
+  .app-status{display:flex;gap:18px;flex-wrap:wrap;padding:8px 16px;border-top:1px solid var(--line2);
+       background:var(--panel3);font-family:var(--mono);font-size:11px;color:var(--dim)}
+  .app-status .ok{color:var(--green)}
+  .app-status .bad2{color:var(--red)}
+  #compiled{display:none;padding:14px 18px;font-family:var(--mono);font-size:12.5px;
+       line-height:1.8;white-space:pre;overflow-x:auto;color:var(--dim)}
+  #compiled .c-k{color:var(--violet)} #compiled .c-s{color:var(--teal)} #compiled .c-n{color:var(--amber)}
+  #compiled .c-c{color:var(--faint);font-style:italic}
+
+  /* ---------- determinism / notes ---------- */
+  .det{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+  .notes{counter-reset:n;margin:0;padding:0;list-style:none}
+  .notes li{counter-increment:n;position:relative;padding:14px 18px 14px 58px;margin-bottom:10px;
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:13.5px;color:var(--dim)}
+  .notes li:before{content:counter(n,decimal-leading-zero);position:absolute;left:18px;top:14px;
+    font-family:var(--mono);font-size:12px;color:var(--amber)}
+  .notes b{color:var(--ink);font-weight:600}
+
+  footer{margin-top:70px;padding-top:22px;border-top:1px solid var(--line);
+    font-family:var(--mono);font-size:11px;color:var(--faint)}
+
+  @media (max-width:640px){
+    h1{font-size:40px}
+    section{margin-top:48px}
+    .ed .no{flex-basis:34px;padding-right:8px}
+  }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">nukernel · ideal-state sketch · rules as a microlanguage</p>
+  <h1>LIBRETTO</h1>
+  <p class="tag">The words of the song, written down. <b>One line = one rule.</b> The kernel already
+  calls an operator list a <b>word</b> and a bar schedule <i>“a sentence you can print, diff, serialize
+  and hold a gate to”</i> (kernel.js:1160–1176). Libretto is that sentence given a spelling — the whole
+  Development axis, plus the seams it touches, as text you can type.</p>
+  <div class="laws">
+    <span class="law"><i>deterministic</i> — no dice, seeds are named</span>
+    <span class="law"><i>extracted</i> — every verb is a kernel call that already ships</span>
+    <span class="law"><i>one owner</i> — one table emits chips, keys and words</span>
+    <span class="law"><i>reaches the sound</i> — a line that changes nothing is a parse error</span>
+  </div>
+  <div class="hero-line">
+    <span class="sub">voice 2</span> <span class="whn">in odd</span> <span class="colon">:</span>
+    <span class="verb">rotate</span> <span class="num">4·S</span> <span class="dot">·</span>
+    <span class="verb">flip</span> <span class="vec">acc</span>
+    <span class="cap">— the acid answer, verbatim. Today it is a closure only genres.js can say
+    (genres.js:505). As a line, a saved song, a gate, or Paul can say it too.</span>
+  </div>
+</header>
+
+<!-- ================================================================ -->
+<section>
+  <p class="secno">01 · WHERE IT COMES FROM</p>
+  <h2>Extracted, not invented</h2>
+  <p class="lede">Four mechanisms in the kernel already ARE this language — they just have no
+  spelling a human can type. Libretto adds the spelling and <b>nothing below it</b>: the parser’s
+  entire output type is the <code>OPKEYS</code> alphabet that shipped in kernel.js:1176, resolved by
+  <code>asOps</code> (kernel.js:1190). A rule the kernel cannot already perform is a
+  <b>parse error, not a feature request</b>.</p>
+  <div class="cards">
+    <div class="card"><h3>The word</h3>
+      <p>Per-voice, per-section operator list. Today a closure: <code>word:&nbsp;(v,s)&nbsp;=&gt;&nbsp;[…]</code>.
+      Libretto’s subject + section selector is exactly the <code>(v,s)</code> pair, said out loud.</p>
+      <pre>word: (v, s) =>
+  v===0 ? [] : [rotate(4*s)]</pre>
+      <span class="cite">genres.js:505</span></div>
+    <div class="card"><h3>The bar schedule</h3>
+      <p>Position inside the section, cyclic. Already data: op keys per bar, resolved by
+      <code>periodOps</code>.</p>
+      <pre>period: [[], [], [], [drop(3)]]</pre>
+      <span class="cite">genres.js:1315 · kernel.js:1202</span></div>
+    <div class="card"><h3>The ghost layer</h3>
+      <p>A word applied to one vector of a shadow copy — the <code>only</code> discipline
+      (kernel.js:125) that keeps a subject recognizable.</p>
+      <pre>ghost: [only("acc", rotate(3))]</pre>
+      <span class="cite">genres.js:500</span></div>
+    <div class="card"><h3>The pipes</h3>
+      <p>Post-render event rewriters — strum, harmonize, echo, breathe. Total (unknown id = skipped)
+      and <b>seeded</b>, mulberry32, never Math.random.</p>
+      <pre>pipes: [{id:"strum", spread:.06}]</pre>
+      <span class="cite">kernel.js:509 · genres.js:1156</span></div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <p class="secno">02 · THE GRAMMAR</p>
+  <h2>One line, three clauses</h2>
+  <p class="lede"><b>WHO · WHEN · WHAT.</b> The subject picks the voice(s) — the kernel’s
+  <code>v</code>. The selector picks the section and bar — the kernel’s <code>s</code> and the
+  period index. The word is operators left to right, exactly <code>word()</code>’s reduce
+  (kernel.js:195). Everything else is glue.</p>
+
+  <div class="rail" aria-label="railroad diagram of a rule">
+    <div class="rail-track">
+      <span class="box">subject</span><span class="link"></span>
+      <span class="box" style="border-style:dashed;opacity:.75">when?</span><span class="link"></span>
+      <span class="pill">:</span><span class="link"></span>
+      <span class="box">op</span><span class="link"></span>
+      <span class="pill">·</span><span class="link"></span>
+      <span class="box">op …</span>
+    </div>
+    <div class="loop">└──────── the word: ops repeat, applied left → right ────────┘</div>
+    <div class="rail-track" style="margin-top:18px">
+      <span class="box">op</span><span class="link"></span>
+      <span class="pill">verb</span><span class="link"></span>
+      <span class="box" style="border-style:dashed;opacity:.75">expr?</span><span class="link"></span>
+      <span class="pill" style="border-color:var(--blue);color:var(--blue)">on vector?</span><span class="link"></span>
+      <span class="pill" style="border-color:var(--amber);color:var(--amber)">seed name?</span>
+    </div>
+    <p class="rail-note">Rounded = terminal, square = expands below. <b>on vector</b> is the
+    <code>only()</code> combinator worn as a suffix; <b>seed</b> is legal only on a pipe verb.</p>
+  </div>
+
+  <div class="ebnf" style="margin-top:16px"><span class="nt">rule</span>     ::= <span class="nt">subject</span> { <span class="nt">when</span> } <span class="t">":"</span> <span class="nt">word</span>                    <span class="meta">-- one line, one rule</span>
+<span class="nt">subject</span>  ::= <span class="t">"voice"</span> <span class="n2">n</span> | <span class="t">"voices"</span> <span class="n2">n</span> <span class="t">".."</span> [<span class="n2">n</span>] | <span class="t">"all"</span> | <span class="t">"ghost"</span> | <span class="nt">part</span>
+<span class="nt">part</span>     ::= <span class="t">"lead"</span> | <span class="t">"pads"</span> | <span class="t">"bass"</span> | <span class="t">"kit"</span>              <span class="meta">-- the cast’s part names</span>
+<span class="nt">when</span>     ::= <span class="t">"in"</span> <span class="nt">section</span> | <span class="t">"bar"</span> <span class="n2">n</span> [<span class="t">"of"</span> <span class="n2">n</span>] | <span class="t">"every"</span> <span class="n2">n</span>
+<span class="nt">section</span>  ::= <span class="nt">role</span> | <span class="t">"odd"</span> | <span class="t">"even"</span> | <span class="t">"S%"</span><span class="n2">n</span> <span class="t">"="</span> <span class="n2">n</span>          <span class="meta">-- role: intro verse chorus …</span>
+<span class="nt">word</span>     ::= <span class="t">"as written"</span> | <span class="nt">op</span> { <span class="t">"·"</span> <span class="nt">op</span> }
+<span class="nt">op</span>       ::= <span class="nt">verb</span> [<span class="nt">expr</span>] [<span class="t">"on"</span> <span class="nt">vector</span>] [<span class="t">"seed"</span> <span class="nt">name</span>]
+<span class="nt">verb</span>     ::= <span class="t">rotate reverse invert up down split delete thin fill</span>
+           | <span class="t">loop … from … spread flip copy … to …</span>              <span class="meta">-- the algebra</span>
+           | <span class="t">strum harmonize echo breathe</span>                      <span class="meta">-- the pipes (seeded)</span>
+<span class="nt">expr</span>     ::= <span class="n2">n</span> { (<span class="t">"·"</span>|<span class="t">"+"</span>|<span class="t">"−"</span>|<span class="t">"%"</span>) (<span class="n2">n</span> | <span class="nt">counter</span>) }
+<span class="nt">counter</span>  ::= <span class="t">"S"</span> | <span class="t">"B"</span> | <span class="t">"V"</span>          <span class="meta">-- section · bar · voice. Counters, never dice.</span>
+<span class="nt">vector</span>   ::= <span class="t">"gate"</span> | <span class="t">"deg"</span> | <span class="t">"acc"</span> | <span class="t">"sld"</span> | <span class="t">"vel"</span>       <span class="meta">-- the pattern’s own vectors</span></div>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <p class="secno">03 · THE VERBS</p>
+  <h2>Every verb is a shipped operator</h2>
+  <p class="lede">The surface words are not new either — they are fields.js’s own chip labels
+  (<code>OPLABEL</code>, fields.js:61–90: “split n”, “delete n”, “rhythm n”…) said in a sentence.
+  One table must own all three spellings — chip, key, verb — see note 01 below.</p>
+  <div class="tblwrap"><table>
+    <tr><th>libretto</th><th>kernel call</th><th>what it does</th><th>lives at</th></tr>
+    <tr class="fam"><td colspan="4">the group — information-preserving</td></tr>
+    <tr><td class="mono"><span class="verb">rotate</span> <span class="num">k</span></td><td class="mono">rotate(k)</td><td>walk the necklace k steps</td><td><span class="cite2">kernel.js:87</span></td></tr>
+    <tr><td class="mono"><span class="verb">reverse</span></td><td class="mono">reverse()</td><td>retrograde — slides re-seated on their edges</td><td><span class="cite2">kernel.js:93</span></td></tr>
+    <tr><td class="mono"><span class="verb">invert</span> <span class="num">c</span></td><td class="mono">invert(c)</td><td>mirror degrees about pivot c</td><td><span class="cite2">kernel.js:100</span></td></tr>
+    <tr><td class="mono"><span class="verb">up</span> <span class="num">k</span> / <span class="verb">down</span> <span class="num">k</span></td><td class="mono">transpose(±k)</td><td>move k scale degrees</td><td><span class="cite2">kernel.js:99</span></td></tr>
+    <tr><td class="mono"><span class="verb">spread</span> <span class="num">k</span></td><td class="mono">spread(k)</td><td>scale intervals about a pivot; ÷2 narrows</td><td><span class="cite2">kernel.js:119</span></td></tr>
+    <tr class="fam"><td colspan="4">the list — sequence surgery</td></tr>
+    <tr><td class="mono"><span class="verb">split</span> <span class="num">n</span></td><td class="mono">split(n)</td><td>n attacks inside each held note; ramps climb</td><td><span class="cite2">kernel.js:150</span></td></tr>
+    <tr><td class="mono"><span class="verb">delete</span> <span class="num">n</span></td><td class="mono">del(n)</td><td>remove every nth, close the gap</td><td><span class="cite2">kernel.js:169</span></td></tr>
+    <tr><td class="mono"><span class="verb">thin</span> <span class="num">n</span> / <span class="verb">fill</span> <span class="num">n</span></td><td class="mono">drop(n) / fill(n)</td><td>gate mask off / on — rests still carry degrees</td><td><span class="cite2">kernel.js:187</span></td></tr>
+    <tr><td class="mono"><span class="verb">loop</span> <span class="num">n</span> <span class="kw">from</span> <span class="num">a</span></td><td class="mono">excerpt(a,n)</td><td>the one lossy op — episodes, not variations</td><td><span class="cite2">kernel.js:107</span></td></tr>
+    <tr class="fam"><td colspan="4">the binaries — flags, not levels</td></tr>
+    <tr><td class="mono"><span class="verb">flip</span> <span class="vec">acc</span>|<span class="vec">gate</span></td><td class="mono">complement(k)</td><td>invert a binary vector — “negative”</td><td><span class="cite2">kernel.js:101</span></td></tr>
+    <tr><td class="mono"><span class="verb">copy</span> <span class="vec">acc</span> <span class="kw">to</span> <span class="vec">sld</span></td><td class="mono">crossmap(a,b)</td><td>one flag stamped onto another — “accents slide”</td><td><span class="cite2">kernel.js:102</span></td></tr>
+    <tr><td class="mono">… <span class="kw">on</span> <span class="vec">gate</span></td><td class="mono">only("gate", op)</td><td>the discipline: move ONE vector at a time</td><td><span class="cite2">kernel.js:125</span></td></tr>
+    <tr class="fam"><td colspan="4">the pipes — post-render, seeded, total</td></tr>
+    <tr><td class="mono"><span class="verb">strum</span> <span class="num">60ms</span></td><td class="mono">PIPES.strum</td><td>roll a chord like a hand; down-strum alternates</td><td><span class="cite2">kernel.js:574</span></td></tr>
+    <tr><td class="mono"><span class="verb">harmonize</span> <span class="num">sixth</span> <span class="kw">at</span> <span class="num">.4</span></td><td class="mono">PIPES.harmonize</td><td>a derived voice under the line, snapped to the pcs</td><td><span class="cite2">kernel.js:513</span></td></tr>
+    <tr><td class="mono"><span class="verb">echo</span> / <span class="verb">breathe</span></td><td class="mono">PIPES.echoCanon / breathe</td><td>canon at the octave below / cap the held notes</td><td><span class="cite2">kernel.js:538 · :565</span></td></tr>
+  </table></div>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <p class="secno">04 · PROOF BY CATALOG</p>
+  <h2>Eight rules the shelf already plays</h2>
+  <p class="lede">Each card is a real catalog fact restated as lines. The extraction gate: compile the
+  lines, render the score, <b>diff it byte-for-byte</b> against the closure’s score — test the
+  artifact, not the source.</p>
+
+  <div class="exgrid">
+  <div class="ex">
+    <div class="rules"><span class="sub">voice 1</span> <span class="colon">:</span> <span class="verb">as written</span><br>
+    <span class="sub">voice 2</span> <span class="colon">:</span> <span class="verb">rotate</span> <span class="num">4·S</span><br>
+    <span class="sub">voice 2</span> <span class="whn">in odd</span> <span class="colon">:</span> <span class="kw">+</span> <span class="verb">flip</span> <span class="vec">acc</span></div>
+    <div class="meaning"><b>Acid.</b> The sequencer never varies; the answer walks past itself
+    4 steps per section, flipping accents on the odd ones. The counter <code>S</code> is the whole
+    closure’s arithmetic. A bare <code>+</code> appends to the voice’s previous rule.</div>
+    <div class="desugar">word: (v,s) => v===0 ? []
+  : [rotate(4*s), ...(s%2 ? [complement("acc")] : [])]   <em>genres.js:505</em></div>
+  </div>
+
+  <div class="ex">
+    <div class="rules"><span class="sub">voices 2..</span> <span class="colon">:</span> <span class="verb">rotate</span> <span class="num">4</span> <span class="kw">on</span> <span class="vec">gate</span> <span class="dot">·</span> <span class="verb">thin</span> <span class="num">3</span></div>
+    <div class="meaning"><b>New wave.</b> The answer a bar late and thinned — re-time the rhythm
+    without touching a note, then mask a third of the gates.</div>
+    <div class="desugar">word: (v,s2) => v===0 ? [] : [only("gate", rotate(4)), drop(3)]   <em>genres.js:544</em></div>
+  </div>
+
+  <div class="ex">
+    <div class="rules"><span class="sub">all</span> <span class="colon">:</span> <span class="verb">loop</span> <span class="num">8</span> <span class="kw">from</span> <span class="num">4·S</span></div>
+    <div class="meaning"><b>Vaporwave.</b> The loop-a-fragment move: keep 8 of 16 steps, the window
+    sliding a bar per section. The catalog’s only use of the lossy operator, now one readable line.</div>
+    <div class="desugar">word: (v,s) => [excerpt((s*4)%16, 8)]   <em>genres.js:595</em></div>
+  </div>
+
+  <div class="ex">
+    <div class="rules"><span class="sub">voice 2</span> <span class="colon">:</span> <span class="verb">up</span> <span class="num">3</span><br>
+    <span class="sub">voice 2</span> <span class="whn">in S%3=1</span> <span class="colon">:</span> <span class="verb">up</span> <span class="num">3</span> <span class="dot">·</span> <span class="verb">reverse</span><br>
+    <span class="sub">voice 3</span> <span class="colon">:</span> <span class="verb">reverse</span></div>
+    <div class="meaning"><b>Fugue</b> (three of its twelve cells). The 4-voice × 3-column answer
+    table becomes twelve one-line rules — the whole exposition legible at a glance instead of a
+    nested array literal.</div>
+    <div class="desugar">word: (v,s) => [[[],[rotate(0)],[invert(4)]][s%3], …][v]   <em>genres.js:432</em></div>
+  </div>
+
+  <div class="ex">
+    <div class="rules"><span class="sub">all</span> <span class="whn">bar 4 of 4</span> <span class="colon">:</span> <span class="verb">thin</span> <span class="num">3</span></div>
+    <div class="meaning"><b>The bar schedule.</b> Every fourth bar breathes. This is
+    <code>periodOps</code>’ cyclic index worn as words — and it already round-trips as data
+    (<code>["thin3"]</code>).</div>
+    <div class="desugar">period: [[], [], [], [drop(3)]]   <em>genres.js:1315 → kernel.js:1202</em></div>
+  </div>
+
+  <div class="ex">
+    <div class="rules"><span class="sub">ghost</span> <span class="colon">:</span> <span class="verb">rotate</span> <span class="num">3</span> <span class="kw">on</span> <span class="vec">acc</span></div>
+    <div class="meaning"><b>The ghost layer.</b> Accents alone, walked against an unrotated gate —
+    the shadow drummer. <code>on acc</code> is <code>only()</code>, the one-vector discipline.</div>
+    <div class="desugar">ghost: [only("acc", rotate(3))]   <em>genres.js:500</em></div>
+  </div>
+
+  <div class="ex">
+    <div class="rules"><span class="sub">pads</span> <span class="colon">:</span> <span class="verb">strum</span> <span class="num">60ms</span></div>
+    <div class="meaning"><b>A pipe with a part.</b> The keyboard player’s hand on the chord —
+    down-strum every other one, exactly as shipped. Parts address the cast; voices address the
+    subject copies.</div>
+    <div class="desugar">pipes: [{ id: "strum", spread: 0.06 }]   <em>genres.js:1156 → kernel.js:574</em></div>
+  </div>
+
+  <div class="ex">
+    <div class="rules"><span class="sub">lead</span> <span class="colon">:</span> <span class="verb">harmonize</span> <span class="num">sixth</span> <span class="kw">at</span> <span class="num">.4</span> <span class="kw">seed</span> <span class="num">hands</span></div>
+    <div class="meaning"><b>A seeded pipe.</b> <code>at .4</code> is the pipe’s own coin — mulberry32,
+    total, replayable. The seed is <b>named in the line</b>; unnamed defaults to 0 and renders
+    identically forever.</div>
+    <div class="desugar">pipes: [{ id: "harmonize", p: 0.4, gap: "sixth" }]   <em>genres.js:1783 → kernel.js:513,608</em></div>
+  </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <p class="secno">05 · NEW POWER</p>
+  <h2>Three sentences the kernel is one small verb away from</h2>
+  <p class="lede">Each needs exactly one new entry in the algebra or one seam already named in
+  fields.js — never a new mechanism. They answer the musicologist round’s structural gaps: real row
+  technique, real hocket, sections that <b>arrive</b>.</p>
+
+  <div class="exgrid">
+  <div class="ex">
+    <div class="rules"><span class="cmt"># a named row is Material; using it is Development</span><br>
+    <span class="verb">row</span> <span class="sub">wien</span> <span class="colon">=</span> <span class="num">0 11 3 4 8 7 9 5 6 1 2 10</span><br>
+    <span class="sub">voice 2</span> <span class="whn">in bridge</span> <span class="colon">:</span> <span class="verb">pitches</span> <span class="kw">row</span> <span class="sub">wien</span> <span class="num">RI5</span></div>
+    <div class="meaning"><span class="newtag">NEW</span><b>Serialism.</b> P/R/I/RI are
+    <code>reverse</code> (kernel.js:93) and <code>invert</code> (kernel.js:100) the kernel already
+    owns; the only new op is <code>only("deg", rowmap)</code> — read degrees through a named series.
+    Rows live beside motifs in the bank: material, one owner.</div>
+  </div>
+
+  <div class="ex">
+    <div class="rules"><span class="sub">voices 1,2</span> <span class="colon">:</span> <span class="verb">hocket</span> <span class="num">2</span></div>
+    <div class="meaning"><span class="newtag">NEW</span><b>Hocket.</b> One line splits its gates
+    alternately across two voices — medieval, and also every grime vocal chop. The first
+    <b>cross-voice</b> word: today <code>word(v,s)</code> sees one voice at a time, so this needs the
+    voice pair at the <code>asOps</code> seam. Desugar: voice 1 gets <code>thin 2</code>, voice 2 gets
+    <code>flip gate · thin 2</code> offset — both shipped ops (kernel.js:101,187).</div>
+  </div>
+
+  <div class="ex">
+    <div class="rules"><span class="whn">chorus</span> <span class="colon">:</span> <span class="verb">sweep</span> <span class="vec">cut</span> <span class="num">400→2600</span> <span class="kw">over</span> <span class="num">8 bars</span></div>
+    <div class="meaning"><span class="newtag">NEW</span><b>Per-section automation.</b> fields.js
+    already splits transitions into LEVEL (the event stream) and MOTION — “automation on the
+    section’s mixer channel” (fields.js:95). Today MOTION is enum presets; this names the curve.
+    Subject is a <b>section</b>, not a voice — the one place the grammar widens, and the widening is
+    the seam fields.js drew first.</div>
+  </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <p class="secno">06 · IN THE APP</p>
+  <h2>Typing one</h2>
+  <p class="lede">The libretto pane lives under the Development heading on the eight-axes page —
+  a plain textarea wearing syntax color, not an IDE. Errors are inline, cite the kernel, and
+  <b>teach the axes law</b>. The toggle proves the contract: the compiled view is the closure the
+  catalog ships today, and the gate diffs the two scores.</p>
+
+  <div class="app">
+    <div class="app-head">
+      <span class="dot2"></span><span class="dot2"></span><span class="dot2"></span>
+      <span class="app-title">5 · Development <span>— the libretto</span></span>
+      <div class="app-toggle">
+        <button id="btn-src" class="on" onclick="libView('src')">libretto</button>
+        <button id="btn-cmp" onclick="libView('cmp')">compiled</button>
+      </div>
+    </div>
+
+    <div class="ed" id="srcview">
+      <div class="ln"><span class="no">1</span><span class="tx"><span class="cmt"># dance record · who does what to the tune</span></span></div>
+      <div class="ln"><span class="no">2</span><span class="tx"><span class="sub">voice 1</span>          <span class="colon">:</span> <span class="verb">as written</span></span></div>
+      <div class="ln"><span class="no">3</span><span class="tx"><span class="sub">voice 2</span>          <span class="colon">:</span> <span class="verb">rotate</span> <span class="num">4·S</span></span></div>
+      <div class="ln"><span class="no">4</span><span class="tx"><span class="sub">voice 2</span> <span class="whn">in odd</span>   <span class="colon">:</span> <span class="kw">+</span> <span class="verb">flip</span> <span class="vec">acc</span></span></div>
+      <div class="ln"><span class="no">5</span><span class="tx"><span class="sub">ghost</span>            <span class="colon">:</span> <span class="verb">rotate</span> <span class="num">3</span> <span class="kw">on</span> <span class="vec">acc</span></span></div>
+      <div class="ln"><span class="no">6</span><span class="tx"><span class="sub">all</span> <span class="whn">bar 4 of 4</span>   <span class="colon">:</span> <span class="verb">thin</span> <span class="num">3</span></span></div>
+      <div class="ln"><span class="no">7</span><span class="tx"><span class="sub">pads</span>             <span class="colon">:</span> <span class="verb">strum</span> <span class="num">60ms</span></span></div>
+      <div class="ln"><span class="no">8</span><span class="tx"><span class="sub">lead</span>             <span class="colon">:</span> <span class="verb">harmonize</span> <span class="num">sixth</span> <span class="kw">at</span> <span class="num">.4</span> <span class="kw">seed</span> <span class="num">hands</span></span></div>
+      <div class="ln bad"><span class="no">9</span><span class="tx"><span class="sub">voice 2</span>          <span class="colon">:</span> <span class="err"><span class="verb">rotate</span> <span class="num">9</span></span></span></div>
+      <div class="errmsg">rotate takes 1..7 <i>— the kernel keeps rot1..rot7 (kernel.js:1181); a 16-step necklace makes 8 a half-turn you can already say as rotate 4·2</i></div>
+      <div class="ln bad"><span class="no">10</span><span class="tx"><span class="sub">voice 1</span>          <span class="colon">:</span> <span class="err"><span class="verb">swing</span> <span class="num">heavy</span></span></span></div>
+      <div class="errmsg">“swing” is Time, not Development <i>— nothing in a section tells time. Say it once, on the song (Time panel).</i></div>
+    </div>
+
+    <div id="compiled"><span class="c-c">// compiled — byte-identical to the shelf; the gate diffs the SCORES</span>
+{ <span class="c-k">word</span>: (v, s) => v === <span class="c-n">0</span> ? []
+    : [rotate(<span class="c-n">4</span> * s), ...(s % <span class="c-n">2</span> ? [complement(<span class="c-s">"acc"</span>)] : [])],   <span class="c-c">// genres.js:505</span>
+  <span class="c-k">ghost</span>:  [only(<span class="c-s">"acc"</span>, rotate(<span class="c-n">3</span>))],                                <span class="c-c">// genres.js:500</span>
+  <span class="c-k">period</span>: [[], [], [], [<span class="c-s">"thin3"</span>]],                                 <span class="c-c">// kernel.js:1202 asOps</span>
+  <span class="c-k">pipes</span>:  [{ id: <span class="c-s">"strum"</span>, spread: <span class="c-n">0.06</span> },
+           { id: <span class="c-s">"harmonize"</span>, gap: <span class="c-s">"sixth"</span>, p: <span class="c-n">0.4</span>, seed: hash(<span class="c-s">"hands"</span>) }] }</div>
+
+    <div class="app-status">
+      <span class="ok">✓ 8 rules · compiles to OPKEYS</span>
+      <span class="bad2">✕ 2 errors — erroring lines are skipped, the record still plays</span>
+      <span>score diff vs genres.js:505 — <span class="ok">byte-identical</span></span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <p class="secno">07 · DETERMINISM</p>
+  <h2>No dice anywhere</h2>
+  <div class="det">
+    <div class="card"><h3>Counters, not randomness</h3>
+      <p><code>S</code>, <code>B</code>, <code>V</code> are the section, bar and voice indices the
+      kernel already passes to <code>word(v,s)</code> and <code>periodOps</code>. Expressions over
+      them are arithmetic on position — the same line renders the same score forever.</p></div>
+    <div class="card"><h3>Seeds are named</h3>
+      <p>The only probabilistic-looking word, <code>at .4</code>, is a pipe’s coin — mulberry32,
+      “Every pipe is TOTAL and SEEDED” (kernel.js:497). Libretto requires the seed
+      <b>in the line</b> (<code>seed hands</code>) or it is 0. Reseed by retyping a word, never by
+      reloading a page.</p></div>
+    <div class="card"><h3>Total, like the algebra</h3>
+      <p>Pattern in, valid pattern out (kernel.js:43). An unknown verb is a red line, and a red line
+      is a skipped line — the song keeps playing, matching how <code>asOps</code> already treats an
+      unknown chip: “silently nothing” (kernel.js:1189).</p></div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <p class="secno">08 · DECISIONS THAT NEED WORDS</p>
+  <h2>Annotations for the build</h2>
+  <ol class="notes">
+    <li><b>One owner, three surfaces.</b> The op alphabet lives twice today — fields.js:61 (chips)
+    and kernel.js:1176 (keys) — held equal only by solo-shape.test.js. Libretto would be a third
+    copy unless the build inverts it: <b>one table in kernel.js emits chips, keys and verbs</b>, and
+    fields.js is pointed at it, which kernel.js:1170 already asks for in as many words.</li>
+    <li><b>Where the lines live.</b> <code>song.libretto</code>: an array of strings on the record,
+    validated by song.js the same paranoid way as every field — typed errors
+    <code>{path, got, want}</code>, line number as the path. The genre’s own closures remain the
+    defaults; a libretto line <b>shadows</b> them per voice, which is exactly the take law’s shape:
+    the box proposes, the hand overrides, provenance kept.</li>
+    <li><b>Drum phrases pass through.</b> A word over a drum phrase is the identity
+    (kernel.js:195). The editor greys a melodic verb aimed at <code>kit</code> instead of erroring —
+    the line is legal, it just says nothing yet, and greying is the dead-word law made visible.</li>
+    <li><b>The axes police the vocabulary.</b> A libretto line may only say Development and its two
+    named seams (pipes, MOTION). Time words error with the law quoted; Sound words point at the
+    desk. The error messages are how new users learn the eight axes without reading AXES.md.</li>
+    <li><b>The extraction gate ships with it.</b> For every catalog genre with a
+    <code>word</code>/<code>period</code>/<code>ghost</code>/<code>pipes</code>: print its libretto,
+    re-compile, render both scores, diff bytes. 122 genres become 122 fixtures, and the printer is
+    the proof the language covers the catalog — TEST THE ARTIFACT, not the grammar.</li>
+  </ol>
+</section>
+
+<footer>
+  libretto · design sketch for nukernel · sources read: kernel.js (the algebra, OPKEYS, PIPES) ·
+  fields.js (OPS/OPLABEL, transitions) · genres.js (acid, newwave, vaporwave, fugue) · AXES.md ·
+  no external requests · dark by commitment
+</footer>
+</div>
+
+<script>
+function libView(which){
+  var src = document.getElementById('srcview'), cmp = document.getElementById('compiled');
+  var bs = document.getElementById('btn-src'), bc = document.getElementById('btn-cmp');
+  var on = which === 'cmp';
+  src.style.display = on ? 'none' : 'block';
+  cmp.style.display = on ? 'block' : 'none';
+  bs.className = on ? '' : 'on'; bc.className = on ? 'on' : '';
+}
+</script>

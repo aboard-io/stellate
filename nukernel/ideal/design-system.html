@@ -1,0 +1,665 @@
+<title>Lampblack</title>
+<style>
+/* ==========================================================================
+   LAMPBLACK — the nukernel design language.
+   One deliberate theme: soot, cream ink, three lights. Every color is painted
+   explicitly; nothing inherits from the host. No external requests.
+   ========================================================================== */
+:root {
+  /* ---- ink (soot-warm; no pure grey anywhere) ---- */
+  --ground:  #131110;   /* the room */
+  --panel:   #1c1917;   /* a surface */
+  --raised:  #262119;   /* a control at rest */
+  --well:    #0d0c0b;   /* a cut into the panel (grids, meters) */
+  --line:    #37312a;   /* rules, borders */
+  --line-lo: #262119;   /* hairlines inside tables */
+  --ink:     #ece5d8;   /* everything said */
+  --dim:     #a89e8d;   /* the second voice: values, counts, units */
+  --faint:   #6b6355;   /* refused, and only refused */
+  /* ---- the three lights (never mixed) ---- */
+  --amber:   #f2a33c;   /* THE HAND — selection, focus, the chosen word */
+  --lamp:    #ff6b52;   /* THE CLOCK — playhead, sounding, [data-live] */
+  --signal:  #8fbf6e;   /* THE METER — what the engine is actually doing */
+  --amber-dim: #8a6428;
+  --lamp-dim:  #7e3a2e;
+  /* ---- type ---- */
+  --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  /* ---- space (the only distances allowed) ---- */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 40px; --s7: 64px;
+}
+* { box-sizing: border-box; }
+html { background: var(--ground); }
+body {
+  margin: 0; background: var(--ground); color: var(--ink);
+  font: 16px/1.55 var(--serif);
+  -webkit-font-smoothing: antialiased;
+}
+main { max-width: 960px; margin: 0 auto; padding: 0 var(--s4) var(--s7); }
+p { margin: 0; }
+h1, h2, h3 { margin: 0; font-weight: normal; text-wrap: balance; }
+
+a { color: var(--amber); }
+
+/* focus is the hand */
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; border-radius: 2px; }
+
+/* ---- machine voice: labels and data ---- */
+.lab {
+  font: 11px/1.4 var(--mono); letter-spacing: .09em; text-transform: uppercase;
+  color: var(--dim);
+}
+.data { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* ==========================================================================
+   masthead + the hero: the ideal transport strip, rendered in the system
+   ========================================================================== */
+.mast { padding: var(--s6) 0 var(--s5); border-bottom: 1px solid var(--line); }
+.mast .lab { color: var(--amber); }
+.mast h1 { font-size: clamp(34px, 6vw, 52px); letter-spacing: .01em; margin-top: var(--s2); }
+.mast p.dek { color: var(--dim); margin-top: var(--s3); max-width: 58ch; }
+
+.transport {
+  margin-top: var(--s5); background: var(--panel); border: 1px solid var(--line);
+  border-radius: 6px; padding: var(--s3) var(--s4);
+  display: flex; align-items: center; gap: var(--s4); flex-wrap: wrap;
+}
+.transport .title { font-size: 20px; }
+.transport .title small { color: var(--dim); font-size: 14px; margin-left: var(--s2); }
+.transport .fadercell { flex: 1 1 220px; min-width: 180px; }
+
+/* ==========================================================================
+   sections
+   ========================================================================== */
+section { padding-top: var(--s6); }
+section > h2 {
+  font: 13px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase;
+  color: var(--amber); border-bottom: 1px solid var(--line); padding-bottom: var(--s2);
+}
+section > p.note { color: var(--dim); margin-top: var(--s3); max-width: 62ch; }
+.why { color: var(--dim); font-style: italic; font-size: 14px; max-width: 56ch; }
+.why b { color: var(--ink); font-style: normal; font-weight: normal; }
+
+/* ==========================================================================
+   ink — swatches
+   ========================================================================== */
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--s3); margin-top: var(--s4); }
+.sw { background: var(--panel); border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
+.sw .chip { height: 56px; }
+.sw .meta { padding: var(--s2) var(--s3) var(--s3); }
+.sw .meta .data { font-size: 12px; color: var(--dim); }
+.sw .meta .role { font-size: 13px; margin-top: 2px; }
+.lights { margin-top: var(--s4); display: grid; gap: var(--s2); }
+.lights p { font-size: 14px; color: var(--dim); }
+.lights .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+  margin-right: var(--s2); vertical-align: baseline; }
+
+/* ==========================================================================
+   type — specimens
+   ========================================================================== */
+.spec { border: 1px solid var(--line); border-radius: 6px; background: var(--panel);
+  margin-top: var(--s4); }
+.spec > div { padding: var(--s4); border-bottom: 1px solid var(--line-lo);
+  display: grid; grid-template-columns: 150px 1fr; gap: var(--s4); align-items: baseline; }
+.spec > div:last-child { border-bottom: 0; }
+.spec .lab { padding-top: 2px; }
+@media (max-width: 560px) { .spec > div { grid-template-columns: 1fr; gap: var(--s1); } }
+
+.t-record { font-size: 32px; line-height: 1.15; }
+.t-record small { font-size: 16px; color: var(--dim); margin-left: var(--s2); }
+.t-axis { font: 13px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink); }
+.t-axis .n { color: var(--amber); }
+.t-sub { font-size: 19px; }
+.t-body { font-size: 16px; max-width: 62ch; }
+.t-labspec { font: 11px/1.4 var(--mono); letter-spacing: .09em; text-transform: uppercase; color: var(--dim); }
+.t-dataspec { font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+/* ==========================================================================
+   space
+   ========================================================================== */
+.spacebar { display: flex; align-items: flex-end; gap: var(--s4); margin-top: var(--s4);
+  overflow-x: auto; padding-bottom: var(--s2); }
+.spacebar figure { margin: 0; text-align: center; }
+.spacebar .blk { background: var(--amber-dim); border-top: 2px solid var(--amber);
+  width: 48px; margin: 0 auto; }
+.spacebar figcaption { font: 11px var(--mono); color: var(--dim); margin-top: var(--s2); }
+
+.axisband { margin-top: var(--s4); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.axisband .band { background: var(--raised); border-bottom: 1px solid var(--line);
+  padding: var(--s2) var(--s4); }
+.axisband .flow { padding: var(--s4); color: var(--dim); font-size: 14px; }
+
+/* ==========================================================================
+   the gallery
+   ========================================================================== */
+.gal { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: var(--s4); margin-top: var(--s4); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+  padding: var(--s4); display: flex; flex-direction: column; gap: var(--s3); }
+.card.wide { grid-column: 1 / -1; }
+.card h3 { font-size: 18px; }
+.card .why { font-size: 13.5px; }
+.staterow { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+.statecol { display: grid; gap: var(--s3); }
+.st { display: grid; gap: var(--s1); }
+.st .lab { font-size: 10px; }
+
+/* ---- button ---- */
+.btn {
+  font: 15px var(--serif); color: var(--ink);
+  background: var(--raised); border: 1px solid var(--line); border-radius: 4px;
+  padding: 6px 14px; cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,244,220,.05), 0 1px 2px rgba(0,0,0,.5);
+}
+.btn:hover { border-color: #4a443a; background: #2b251d; }
+.btn:active { background: var(--well); box-shadow: inset 0 2px 4px rgba(0,0,0,.6); }
+.btn[disabled] { color: var(--faint); background: var(--panel); border-color: var(--line-lo);
+  box-shadow: none; cursor: default; }
+.btn.primary { border-color: var(--amber-dim); color: var(--amber); }
+.btn.primary:hover { border-color: var(--amber); }
+
+/* ---- tri-state play ---- */
+.play { min-width: 96px; text-align: left; font-family: var(--mono); font-size: 13px; }
+.play .g { display: inline-block; width: 1.2em; }
+.play[data-at="off"]  { color: var(--ink); }
+.play[data-at="once"] { color: var(--amber); border-color: var(--amber-dim); }
+.play[data-at="loop"] { color: var(--lamp);  border-color: var(--lamp-dim);
+  background: #241713; }
+
+/* ---- select ---- */
+.sel { position: relative; display: inline-block; }
+.sel select {
+  appearance: none; -webkit-appearance: none; -moz-appearance: none;
+  font: 15px var(--serif); color: var(--ink);
+  background: var(--raised); border: 1px solid var(--line); border-radius: 4px;
+  padding: 6px 30px 6px 12px; cursor: pointer; max-width: 100%;
+}
+.sel::after { content: ""; position: absolute; right: 11px; top: 50%;
+  width: 7px; height: 7px; border-right: 1.5px solid var(--dim);
+  border-bottom: 1.5px solid var(--dim);
+  transform: translateY(-70%) rotate(45deg); pointer-events: none; }
+.sel select:hover { border-color: #4a443a; }
+.sel select.seated { color: var(--dim); }          /* the default detent, at rest */
+.sel select.said { color: var(--amber); border-color: var(--amber-dim); } /* a chosen word */
+.sel select:disabled { color: var(--faint); background: var(--panel);
+  border-color: var(--line-lo); cursor: default; }
+.sel select option, .sel select optgroup { background: var(--panel); color: var(--ink); }
+.stands { font: 13px var(--mono); color: var(--dim); }
+.stands b { color: var(--ink); font-weight: normal; }
+
+/* ---- fader + meter ---- */
+.fader { display: grid; gap: var(--s1); }
+.fader input[type="range"] {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 28px;
+  background: transparent; margin: 0; cursor: pointer;
+}
+.fader input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--line) 0 49.5%, var(--dim) 49.5% 50.5%, var(--line) 50.5% 100%);
+}
+.fader input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 15px; height: 26px; margin-top: -11px;
+  border-radius: 3px; border: 1px solid #4a443a;
+  background: linear-gradient(180deg, #332c23, #1c1917) padding-box,
+              linear-gradient(90deg, transparent 0 44%, var(--ink) 44% 56%, transparent 56%) border-box;
+  background: linear-gradient(90deg, #332c23 0 42%, var(--ink) 42% 58%, #332c23 58% 100%);
+  box-shadow: 0 2px 5px rgba(0,0,0,.6);
+}
+.fader input[type="range"]::-moz-range-track {
+  height: 4px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--line) 0 49.5%, var(--dim) 49.5% 50.5%, var(--line) 50.5% 100%);
+}
+.fader input[type="range"]::-moz-range-thumb {
+  width: 15px; height: 26px; border-radius: 3px; border: 1px solid #4a443a;
+  background: linear-gradient(90deg, #332c23 0 42%, var(--ink) 42% 58%, #332c23 58% 100%);
+  box-shadow: 0 2px 5px rgba(0,0,0,.6);
+}
+.fader input[type="range"]:disabled { cursor: default; opacity: .45; }
+.meter { height: 5px; border-radius: 2.5px; background: var(--well);
+  border: 1px solid var(--line-lo); overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--signal); width: 60%;
+  border-radius: 2.5px; transition: width .12s linear; }
+.fader .row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s3); }
+.fader output { font: 12px var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); }
+.fader .word { font: 12px var(--mono); color: var(--dim); }
+
+/* ---- chip ---- */
+.chip {
+  font: 13px var(--mono); color: var(--dim);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 999px;
+  padding: 4px 12px; cursor: pointer;
+}
+.chip:hover { color: var(--ink); border-color: #4a443a; }
+.chip[aria-pressed="true"] { color: var(--amber); border-color: var(--amber-dim);
+  background: #221b11; }
+.chip[disabled] { color: var(--faint); border-color: var(--line-lo); cursor: default; }
+
+/* ---- tab row ---- */
+.tabwrap { overflow-x: auto; }
+.tabs { display: flex; gap: var(--s2); border-bottom: 1px solid var(--line);
+  padding-bottom: 0; min-width: max-content; }
+.tab {
+  font: 14px var(--serif); color: var(--dim); background: none; border: none;
+  border-bottom: 2px solid transparent; padding: 6px 12px 8px; cursor: pointer;
+  white-space: nowrap;
+}
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--amber); border-bottom-color: var(--amber); }
+.tab.add { color: var(--faint); font-family: var(--mono); font-size: 12px; }
+.tab.add:hover { color: var(--dim); }
+
+/* ---- refusal ---- */
+.refusal { display: grid; gap: var(--s1); }
+.refusal .nu-why { font-size: 13px; font-style: italic; color: var(--faint); max-width: 42ch; }
+.refusal .nu-why::before { content: "— "; }
+
+/* ---- [data-live] ---- */
+[data-live] { font: 13px var(--mono); color: var(--dim); }
+[data-live] .now { color: var(--lamp); }
+.livedot { display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--lamp); margin-right: var(--s2); vertical-align: baseline; }
+@media (prefers-reduced-motion: no-preference) {
+  .livedot.beat { animation: beat 1.2s ease-in-out infinite; }
+  @keyframes beat { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+}
+
+/* ==========================================================================
+   voice
+   ========================================================================== */
+.rules { margin: var(--s4) 0 0; padding: 0; list-style: none; counter-reset: r;
+  display: grid; gap: var(--s3); max-width: 68ch; }
+.rules li { counter-increment: r; display: grid; grid-template-columns: 34px 1fr;
+  gap: var(--s3); align-items: baseline; }
+.rules li::before { content: counter(r); font: 13px var(--mono); color: var(--amber);
+  text-align: right; }
+.rules li b { font-weight: normal; }
+.rules li .eg { display: block; font: 12.5px var(--mono); color: var(--dim); margin-top: 3px; }
+.rules li .eg s { color: var(--faint); }
+
+footer { margin-top: var(--s7); border-top: 1px solid var(--line);
+  padding-top: var(--s4); color: var(--dim); font-size: 13px; }
+</style>
+
+<main>
+
+<header class="mast">
+  <p class="lab">the nukernel design language</p>
+  <h1>Lampblack</h1>
+  <p class="dek">The flat document, printed in soot. Same one-scroll page, same headings,
+  same law that nothing hides — now on a dark desk with cream ink and exactly three lights:
+  amber for the hand, lamp-red for the clock, green for the meter.</p>
+
+  <div class="transport" aria-label="specimen: the transport strip">
+    <p class="title">Rome 600 <small>Gregorian chant</small></p>
+    <button class="btn play" data-at="off" id="heroPlay" type="button"><span class="g">&#9654;</span>play</button>
+    <div class="fadercell fader">
+      <input type="range" min="-24" max="24" step="0.1" value="0" aria-label="volume" id="heroFader">
+      <div class="meter"><i id="heroMeter" style="width:58%"></i></div>
+      <div class="row"><output id="heroDb">0.0 dB</output>
+        <span data-live="played"><span class="livedot beat"></span><span class="now">bar 3 of 8</span> &middot; head</span></div>
+    </div>
+  </div>
+  <p class="why" style="margin-top:12px">The whole strip in one line: the record's name, the
+  tri-state door, the master fader over its meter, and the one sentence the clock may write.</p>
+</header>
+
+<!-- ================================================================ ink -->
+<section id="ink">
+  <h2>ink</h2>
+  <p class="note">No pure grey anywhere — every neutral leans warm, the soot of a scribble
+  strip. The three lights are semantic, never decorative, and never mixed: a thing is lit
+  because the hand chose it, the clock is on it, or the engine measured it.</p>
+
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:#131110"></div>
+      <div class="meta"><p class="data">#131110 &middot; ground</p><p class="role">the room</p></div></div>
+    <div class="sw"><div class="chip" style="background:#1c1917"></div>
+      <div class="meta"><p class="data">#1c1917 &middot; panel</p><p class="role">a surface</p></div></div>
+    <div class="sw"><div class="chip" style="background:#262119"></div>
+      <div class="meta"><p class="data">#262119 &middot; raised</p><p class="role">a control at rest</p></div></div>
+    <div class="sw"><div class="chip" style="background:#0d0c0b"></div>
+      <div class="meta"><p class="data">#0d0c0b &middot; well</p><p class="role">a cut: grids, meters</p></div></div>
+    <div class="sw"><div class="chip" style="background:#37312a"></div>
+      <div class="meta"><p class="data">#37312a &middot; line</p><p class="role">rules, borders</p></div></div>
+    <div class="sw"><div class="chip" style="background:#ece5d8"></div>
+      <div class="meta"><p class="data">#ece5d8 &middot; ink</p><p class="role">everything said</p></div></div>
+    <div class="sw"><div class="chip" style="background:#a89e8d"></div>
+      <div class="meta"><p class="data">#a89e8d &middot; dim</p><p class="role">values, counts, units</p></div></div>
+    <div class="sw"><div class="chip" style="background:#6b6355"></div>
+      <div class="meta"><p class="data">#6b6355 &middot; faint</p><p class="role">refused, and only refused</p></div></div>
+    <div class="sw"><div class="chip" style="background:#f2a33c"></div>
+      <div class="meta"><p class="data">#f2a33c &middot; amber</p><p class="role">the hand</p></div></div>
+    <div class="sw"><div class="chip" style="background:#ff6b52"></div>
+      <div class="meta"><p class="data">#ff6b52 &middot; lamp</p><p class="role">the clock</p></div></div>
+    <div class="sw"><div class="chip" style="background:#8fbf6e"></div>
+      <div class="meta"><p class="data">#8fbf6e &middot; signal</p><p class="role">the meter</p></div></div>
+  </div>
+
+  <div class="lights">
+    <p><span class="dot" style="background:#f2a33c"></span><b style="color:#ece5d8">Amber is the hand.</b>
+      Selection, focus, the chosen word in a menu, the active tab. If amber is on it, you put it there.</p>
+    <p><span class="dot" style="background:#ff6b52"></span><b style="color:#ece5d8">Lamp is the clock.</b>
+      The playhead, the sounding note on the staff, the <span class="data">[data-live]</span> sentence.
+      If lamp is on it, it is happening right now, and it will move without you.</p>
+    <p><span class="dot" style="background:#8fbf6e"></span><b style="color:#ece5d8">Signal is the meter.</b>
+      What the engine is actually doing — measured, never trusted. A knob with no green under it
+      is a knob that reaches no sound.</p>
+  </div>
+</section>
+
+<!-- ================================================================ type -->
+<section id="type">
+  <h2>type</h2>
+  <p class="note">Two voices, because the page is two things. The serif is the document —
+  what the record says, in sentences. The mono is the machine — labels, values, bars,
+  hertz. A reader always knows which one is talking.</p>
+
+  <div class="spec">
+    <div><p class="lab">record &middot; 32/1.15 serif</p>
+      <p class="t-record">Rome 600 <small>Gregorian chant</small></p></div>
+    <div><p class="lab">axis &middot; 13 mono caps</p>
+      <p class="t-axis"><span class="n">3 &middot;</span> Sheet music</p></div>
+    <div><p class="lab">block &middot; 19 serif</p>
+      <p class="t-sub">the motifs</p></div>
+    <div><p class="lab">body &middot; 16/1.55 serif</p>
+      <p class="t-body">The line stays in the key. A role is a name, not a transform:
+      setting a box to chorus does not reach in and change the drums.</p></div>
+    <div><p class="lab">label &middot; 11 mono caps</p>
+      <p class="t-labspec">reverb type &middot; goes to &middot; its own gear</p></div>
+    <div><p class="lab">data &middot; 13 mono tab-nums</p>
+      <p class="t-dataspec">92 bpm &middot; 8 bars &middot; &minus;3.2 dB &middot; 123&ndash;494 Hz</p></div>
+  </div>
+</section>
+
+<!-- ================================================================ space -->
+<section id="space">
+  <h2>space</h2>
+  <p class="note">Seven distances, and no others. Controls inside a block sit on the small
+  steps; blocks breathe on the big ones. Siblings space with <span class="data">gap</span>,
+  never margins.</p>
+
+  <div class="spacebar">
+    <figure><div class="blk" style="height:4px"></div><figcaption>s1&nbsp;&middot;&nbsp;4</figcaption></figure>
+    <figure><div class="blk" style="height:8px"></div><figcaption>s2&nbsp;&middot;&nbsp;8</figcaption></figure>
+    <figure><div class="blk" style="height:12px"></div><figcaption>s3&nbsp;&middot;&nbsp;12</figcaption></figure>
+    <figure><div class="blk" style="height:16px"></div><figcaption>s4&nbsp;&middot;&nbsp;16</figcaption></figure>
+    <figure><div class="blk" style="height:24px"></div><figcaption>s5&nbsp;&middot;&nbsp;24</figcaption></figure>
+    <figure><div class="blk" style="height:40px"></div><figcaption>s6&nbsp;&middot;&nbsp;40</figcaption></figure>
+    <figure><div class="blk" style="height:64px"></div><figcaption>s7&nbsp;&middot;&nbsp;64</figcaption></figure>
+  </div>
+
+  <div class="axisband">
+    <div class="band"><p class="t-axis"><span class="n">4&ndash;8 &middot;</span> The band</p></div>
+    <div class="flow">The one long scroll survives. Axis headings stay sticky bands — the
+    heading on screen is the axis you are inside — now a raised strip on the panel instead
+    of a pastel wash. Wide things (the board, a tab row, the score) scroll sideways inside
+    their own rail; the page itself never does.</div>
+  </div>
+</section>
+
+<!-- ================================================================ gallery -->
+<section id="gallery">
+  <h2>the gallery</h2>
+  <p class="note">Every control the page owns, in every state it has. Labels are the app's
+  own. Live where a state needs proving — press things.</p>
+
+  <div class="gal">
+
+    <!-- button -->
+    <div class="card">
+      <h3>button</h3>
+      <div class="staterow">
+        <div class="st"><p class="lab">rest</p><button class="btn" type="button">+ measure</button></div>
+        <div class="st"><p class="lab">primary</p><button class="btn primary" type="button">+ drums</button></div>
+        <div class="st"><p class="lab">refused</p><button class="btn" type="button" disabled>+ bass</button></div>
+      </div>
+      <p class="why">One face for every verb. Hover lifts the border, press cuts into the
+      well. <b>Primary is amber-edged and rare</b> — at most one per block. A refused button
+      is never alone; its reason sits under it (see refusal).</p>
+    </div>
+
+    <!-- tri-state play -->
+    <div class="card">
+      <h3>tri-state play</h3>
+      <div class="staterow">
+        <div class="st"><p class="lab">off</p>
+          <button class="btn play" data-at="off" type="button"><span class="g">&#9654;</span>play</button></div>
+        <div class="st"><p class="lab">once</p>
+          <button class="btn play" data-at="once" type="button"><span class="g">&#8635;</span>loop</button></div>
+        <div class="st"><p class="lab">looping</p>
+          <button class="btn play" data-at="loop" type="button"><span class="g">&#9632;</span>stop</button></div>
+      </div>
+      <div class="staterow">
+        <div class="st"><p class="lab">live &middot; press it</p>
+          <button class="btn play" data-at="off" id="galPlay" type="button"><span class="g">&#9654;</span>play</button></div>
+        <p class="stands" id="galPlaySay" data-live="played"></p>
+      </div>
+      <p class="why">The word on the button is the <b>next</b> verb: play &rarr; loop &rarr;
+      stop &rarr; play. Its state is the color — amber while a single pass sounds, lamp while
+      it loops — so the eye reads the state and the finger reads the offer.</p>
+    </div>
+
+    <!-- select with default detent -->
+    <div class="card">
+      <h3>select &middot; the default detent</h3>
+      <div class="statecol">
+        <div class="st"><p class="lab">seated at default &middot; the third column says what stands</p>
+          <div class="staterow">
+          <span class="sel"><select class="seated" aria-label="reverb type">
+            <optgroup label="default"><option selected>default</option></optgroup>
+            <optgroup label="as you say"><option>a hall</option><option>a room</option><option>a plate</option></optgroup>
+          </select></span>
+          <span class="stands">default, <b>a hall</b></span></div></div>
+        <div class="st"><p class="lab">a word said</p>
+          <span class="sel"><select class="said" aria-label="the mouth">
+            <optgroup label="default"><option>default</option></optgroup>
+            <optgroup label="as you say">
+              <option>bass &middot; 82&ndash;330 Hz</option>
+              <option selected>tenor &middot; 123&ndash;494 Hz</option>
+              <option>soprano &middot; 247&ndash;1047 Hz</option>
+            </optgroup>
+          </select></span></div>
+      </div>
+      <p class="why">One word for absence, everywhere: <b>default</b>, seated in its own
+      optgroup at the top. Seated is dim; a said word is amber. The derived value prints
+      once, in the row's third column — the menu never repeats it.</p>
+    </div>
+
+    <!-- fader with meter -->
+    <div class="card">
+      <h3>fader + meter</h3>
+      <div class="statecol">
+        <div class="st"><p class="lab">your offset over the automation &middot; drag it</p>
+          <div class="fader">
+            <input type="range" min="-24" max="24" step="0.1" value="0" id="galFader" aria-label="cantor fader">
+            <div class="meter"><i id="galMeter" style="width:62%"></i></div>
+            <div class="row"><output id="galDb">0.0 dB</output><span class="word" id="galWord">riding &minus;3.2 dB seated</span></div>
+          </div></div>
+        <div class="st"><p class="lab">refused &middot; bus 2 return</p>
+          <div class="fader refusal">
+            <input type="range" min="-24" max="24" value="0" disabled aria-label="bus 2 return">
+            <div class="meter"><i style="width:0%"></i></div>
+            <div class="row"><output style="color:var(--faint)">unity</output></div>
+            <p class="nu-why">the engine's own unity</p>
+          </div></div>
+      </div>
+      <p class="why">Two facts, two elements, never merged: the range is <b>your offset</b>
+      and nothing else writes it; the green bar is <b>the automation</b> — the gain actually
+      driving the channel, measured at the engine. A moving meter under a still fader is the
+      page proving the sound is real.</p>
+    </div>
+
+    <!-- chip -->
+    <div class="card">
+      <h3>chip</h3>
+      <div class="staterow">
+        <div class="st"><p class="lab">rest</p><button class="chip" type="button" aria-pressed="false">Leipzig 1725</button></div>
+        <div class="st"><p class="lab">chosen</p><button class="chip" type="button" aria-pressed="true">Rome 600</button></div>
+        <div class="st"><p class="lab">refused</p><button class="chip" type="button" disabled>Chicago 1987</button></div>
+      </div>
+      <div class="staterow" id="chipRow">
+        <span class="lab">live &middot; pick a basis</span>
+        <button class="chip" type="button" aria-pressed="true">Rome 600</button>
+        <button class="chip" type="button" aria-pressed="false">London 1570</button>
+        <button class="chip" type="button" aria-pressed="false">Vienna 1725</button>
+        <button class="chip" type="button" aria-pressed="false">New York 1964</button>
+      </div>
+      <p class="why">A chip is a <b>noun</b> — a place and a year, a genre, a kept melody.
+      Nouns don't blend, so chips are single-choice where they name a basis. Mono type: a
+      chip is data, not a sentence.</p>
+    </div>
+
+    <!-- tab row -->
+    <div class="card">
+      <h3>tab row</h3>
+      <div class="tabwrap"><div class="tabs" role="tablist" id="galTabs">
+        <button class="tab" role="tab" aria-selected="true" type="button">&#9638; form</button>
+        <button class="tab" role="tab" aria-selected="false" type="button">&#9672; performance</button>
+        <button class="tab" role="tab" aria-selected="false" type="button">&#9834; cantor</button>
+        <button class="tab" role="tab" aria-selected="false" type="button">&#9834; schola</button>
+        <button class="tab add" role="tab" aria-selected="false" type="button">+ line</button>
+        <button class="tab add" role="tab" aria-selected="false" type="button">+ bass</button>
+        <button class="tab add" role="tab" aria-selected="false" type="button">+ drums</button>
+      </div></div>
+      <p class="why">The band's strip: seated voices in serif, empty chairs as quiet mono
+      <b>+ adds</b> at the end of the row. The active tab is amber underlined — hand light,
+      because you chose it. The row scrolls in its own rail; switching tabs never moves
+      the page (the anchor law stands).</p>
+    </div>
+
+    <!-- refusal -->
+    <div class="card">
+      <h3>refusal</h3>
+      <div class="statecol">
+        <div class="st refusal">
+          <button class="btn play" data-at="off" type="button" disabled><span class="g">&#9654;</span>play</button>
+          <p class="nu-why">the record is playing &mdash; stop it to hear one motif alone</p>
+        </div>
+        <div class="st refusal">
+          <button class="btn" type="button" disabled>+ effect</button>
+          <p class="nu-why">three is the limit on the record's chain</p>
+        </div>
+        <div class="st refusal">
+          <span class="sel"><select disabled aria-label="width"><option>default</option></select></span>
+          <p class="nu-why">reaches no sound</p>
+        </div>
+      </div>
+      <p class="why">An unreachable control greys <b>with its reason printed</b> — one line,
+      faint, measured, riding the control as <span class="data">data-why</span> for gates
+      and screen readers alike. Greyed is not hidden: the control keeps its place and its
+      label. No tooltips, ever — a finger cannot hover.</p>
+    </div>
+
+    <!-- data-live -->
+    <div class="card">
+      <h3>[data-live] sentence</h3>
+      <div class="statecol">
+        <div class="st"><p class="lab">the playhead</p>
+          <p data-live="played"><span class="livedot beat"></span><span class="now">bar 3 of 8</span> &middot; head &middot; as it will play</p></div>
+        <div class="st"><p class="lab">an audition</p>
+          <p data-live="played"><span class="livedot"></span><span class="now">looping hook</span> &mdash; cantor</p></div>
+        <div class="st"><p class="lab">the standing refusal</p>
+          <p data-live="played">the record is playing &mdash; the score above is what you hear</p></div>
+      </div>
+      <p class="why">The clock may write text <b>only</b> inside an element carrying
+      <span class="data">data-live</span>, and a live element never holds a control. Lamp
+      color marks the words that move. Everything else on the page is frozen while the
+      record plays — this sentence is the one thing that breathes.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================ voice -->
+<section id="voice">
+  <h2>voice</h2>
+  <p class="note">"Get rid of all extra text." The rules for when a sentence may appear:</p>
+
+  <ol class="rules">
+    <li><p><b>One word for absence: default.</b>
+      <span class="eg"><s>as it stands &middot; nothing set &middot; the record's own</s> &rarr; default</span></p></li>
+    <li><p><b>Say it once.</b> The third column says what stands; the menu, the label and the
+      heading do not repeat it.
+      <span class="eg"><s>as it stands &mdash; a hall</s> &rarr; default, a hall</span></p></li>
+    <li><p><b>A refusal is a reason, on the control, in one line.</b> Measured, never vague.
+      <span class="eg">40 is as slow as this box counts</span></p></li>
+    <li><p><b>Only the clock speaks in time,</b> and only inside
+      <span class="data">[data-live]</span>. No other text on the page may change while the
+      record plays.</p></li>
+    <li><p><b>No tooltips.</b> A tooltip is information hidden from a finger. Anything worth
+      saying is on the page; anything not worth the space is deleted.</p></li>
+    <li><p><b>A sentence must carry state no control shows.</b> Otherwise it goes.
+      <span class="eg">looping hook &mdash; cantor &nbsp;&middot;&nbsp; riding &minus;3.2 dB seated</span></p></li>
+  </ol>
+</section>
+
+<footer>
+  <p>Lampblack &middot; sketched 2026-08-26 against the shipped flat document
+  (test.stellate.app/nukernel). The document laws survive whole: one scroll, nothing hidden,
+  every control derived from fields.js, every light measured. This page is the paint, not
+  the furniture.</p>
+</footer>
+
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* tri-state play: word = next verb, color = current state */
+  var WORD = { off: "▶ play", once: "↻ loop", loop: "■ stop" };
+  var NEXT = { off: "once", once: "loop", loop: "off" };
+  function wire(btn, say) {
+    btn.addEventListener("click", function () {
+      var at = NEXT[btn.dataset.at];
+      btn.dataset.at = at;
+      var w = WORD[at].split(" ");
+      btn.innerHTML = '<span class="g">' + w[0] + "</span>" + w[1];
+      if (say) say.textContent =
+        at === "loop" ? "looping hook — cantor"
+        : at === "once" ? "sounding — cantor" : "";
+    });
+  }
+  wire(document.getElementById("heroPlay"), null);
+  wire(document.getElementById("galPlay"), document.getElementById("galPlaySay"));
+
+  /* faders: the range is your offset; the output prints it */
+  function db(v) { var n = (+v).toFixed(1); return (v > 0 ? "+" : "") + n + " dB"; }
+  [["heroFader", "heroDb"], ["galFader", "galDb"]].forEach(function (p) {
+    var r = document.getElementById(p[0]), o = document.getElementById(p[1]);
+    r.addEventListener("input", function () { o.textContent = db(r.value); });
+  });
+
+  /* the meter is the automation: a slow ride, independent of the fader */
+  if (!reduced) {
+    var t = 0;
+    setInterval(function () {
+      t += 0.35;
+      var a = 55 + Math.sin(t) * 14 + Math.sin(t * 2.7) * 6;
+      var b = 60 + Math.sin(t * 0.8 + 2) * 16 + Math.sin(t * 3.1) * 5;
+      document.getElementById("heroMeter").style.width = a.toFixed(0) + "%";
+      document.getElementById("galMeter").style.width = b.toFixed(0) + "%";
+      var w = document.getElementById("galWord");
+      w.textContent = "riding " + ((b - 76) / 5).toFixed(1).replace("-", "−") + " dB seated";
+    }, 240);
+  }
+
+  /* chips: one basis at a time */
+  var row = document.getElementById("chipRow");
+  row.addEventListener("click", function (e) {
+    var c = e.target.closest(".chip"); if (!c || c.disabled) return;
+    row.querySelectorAll(".chip").forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
+    c.setAttribute("aria-pressed", "true");
+  });
+
+  /* tabs */
+  var tabs = document.getElementById("galTabs");
+  tabs.addEventListener("click", function (e) {
+    var t = e.target.closest(".tab"); if (!t || t.classList.contains("add")) return;
+    tabs.querySelectorAll(".tab").forEach(function (x) { x.setAttribute("aria-selected", "false"); });
+    t.setAttribute("aria-selected", "true");
+  });
+})();
+</script>
