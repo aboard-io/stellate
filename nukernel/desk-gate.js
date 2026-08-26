@@ -773,7 +773,13 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     errs.push("console: " + m.text()); });
   await page.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
   await page.goto(PAGE, { waitUntil: "networkidle" });
+  // BOTH BOARDS, 2026-08-25. Paul: "Do you want to put the bus and main into
+  // their own board so it's not all empty" — so `#boardtbl` is the CHANNELS and
+  // `#racktbl` is the returns and the main. Waiting on only the first would let
+  // every rack check below race a table that had not been appended yet, and a
+  // racing check reports "gone" for a control that is merely late.
   await page.waitForSelector("#boardtbl", { timeout: 20000 });
+  await page.waitForSelector("#racktbl", { timeout: 20000 });
 
   /* ---- 1 · the count, page-wide ---- */
   /* THIS GATE IS ABOUT THE BOARD AND THE ATLAS, AND IT SAYS SO NOW. It read
@@ -959,7 +965,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     // other fader on the board. It is READ THE SAME WAY as the menus: drive it
     // across its whole travel and collect the word at every stop, so a range
     // with the wrong max fails here exactly as a short menu would.
-    for (const r of document.querySelectorAll('#boardtbl input[type=range]')) {
+    for (const r of document.querySelectorAll('.nu-board input[type=range]')) {
       const k = r.dataset.k || "";
       if (!/^bus\|/.test(k) || r.disabled) continue;
       const keep = r.value, words = [];
@@ -989,7 +995,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   // disabled `master|width` still counts here.
   const drawnRack = await page.evaluate(() =>
     [...document.querySelectorAll('select[data-sel], fieldset.nu-sheet, ' +
-      '#boardtbl input[type=range]')]
+      '.nu-board input[type=range]')]
       .map((n2) => n2.dataset.sel || n2.dataset.sheet || n2.dataset.k)
       .filter((k) => /^(master|bus)\|/.test(k || "")));
   const want = [];
@@ -1049,10 +1055,15 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   const drawn = await page.evaluate(() => {
     const out = {};
     for (const tr of document.querySelectorAll('#boardtbl tr[data-row="fader"]')) {
-      // CHANNEL CELLS ONLY. The fader row runs across the buses and the main
-      // now (2026-08-25) and those carry a return and the listening level, not
-      // a channel gain — reading them positionally against `th.nu-ch` would
-      // have indexed off the end of the header list.
+      // CHANNEL CELLS ONLY, and the filter is kept even though `#boardtbl` is
+      // channels alone since the split. The comment here read: "The fader row
+      // runs across the buses and the main now (2026-08-25) and those carry a
+      // return and the listening level, not a channel gain — reading them
+      // positionally against `th.nu-ch` would have indexed off the end of the
+      // header list." That was true of the one-table board and is the bug this
+      // filter was written for; the returns moved to `#racktbl` on the same
+      // day. `[data-col="ch"]` still says what is being read rather than
+      // relying on which table happens to hold what today.
       const tds = [...tr.querySelectorAll('td[data-col="ch"]')];
       const th = [...document.querySelectorAll("#boardtbl thead th.nu-ch")];
       tds.forEach((td, i) => {
@@ -1145,16 +1156,22 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     // ---- 2 · the page draws exactly that, and says why where it cannot
     const strips = await page.evaluate(() => {
       const out = {};
-      for (const th of document.querySelectorAll('#boardtbl thead th[data-col="bus"]')) {
+      // `#racktbl` AND NOT `#boardtbl`, 2026-08-25: the returns and the main are
+      // their own board now (Paul, "put the bus and main into their own board
+      // so it's not all empty"), and the channel board has a `goes to` row and
+      // a fader row of its OWN — so a query that named the wrong table would
+      // have indexed a bus's column number into a row of channels and read a
+      // channel's fader as a bus's return.
+      for (const th of document.querySelectorAll('#racktbl thead th[data-col="bus"]')) {
         const i = [...th.parentNode.children].indexOf(th);
-        const tr = document.querySelector('#boardtbl tr[data-row="fader"]');
+        const tr = document.querySelector('#racktbl tr[data-row="fader"]');
         const td = tr.children[i];
         const c = td.querySelector("input[type=range]");
         out[th.dataset.bus] = {
           control: !!c, off: !!(c && c.disabled),
           why: [...td.querySelectorAll(".nu-why")].map((w) => w.textContent).join(" "),
           meter: !!td.querySelector("meter"),
-          goes: (() => { const g = [...document.querySelectorAll("#boardtbl tbody tr")]
+          goes: (() => { const g = [...document.querySelectorAll("#racktbl tbody tr")]
             .find((r) => r.firstChild.textContent === "goes to");
             return g ? g.children[i].textContent : null; })(),
         };
@@ -1331,6 +1348,90 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     ok(lis && +lis.store === 55 && lis.out === "55%",
        "…and a touch on it writes 55 to the store and prints 55%, not 0.55",
        JSON.stringify(lis));
+  }
+
+  /* ================= G13 · THE SPLIT, MEASURED =========================
+     (Paul, 2026-08-25: "Do you want to put the bus and main into their own
+     board so it's not all empty")
+
+     THE COMPLAINT WAS A NUMBER AND SO IS THE CHECK. Measured on the rendered
+     page before the split: ONE `#boardtbl` of 7 header cells and 177 cells in
+     all, 99 of them EMPTY — 55.9%, and 98 of the 144 body cells, 68.1%. A
+     channel's rows and a return's rows and the master's are almost disjoint
+     sets, so one grid over all three kinds is mostly hole.
+
+     WHAT IS ASSERTED IS THE PROPERTY AND NOT THE LAYOUT: each board carries
+     only strips of the kinds its rows are about, and AT MOST ONE empty body
+     cell survives on either. One does — the main has no name and no name is
+     invented for it — and this check names it, so a second blank appearing
+     anywhere is a failure with the cell printed rather than a slow slide back
+     to a grid full of holes. */
+  console.log("\n" + "G13 the split Paul asked for, counted on the page");
+  {
+    const boards = await page.evaluate(() => {
+      const out = {};
+      for (const id of ["boardtbl", "racktbl"]) {
+        const t = document.getElementById(id);
+        if (!t) { out[id] = null; continue; }
+        const kinds = [...t.querySelectorAll("thead th[data-col]")]
+          .map((h) => h.dataset.col);
+        const blank = [];
+        let body = 0;
+        for (const tr of t.querySelectorAll("tbody tr")) {
+          const row = tr.firstChild.textContent;
+          for (const td of tr.querySelectorAll("td")) {
+            body++;
+            if (!td.firstChild) blank.push(row + " / " + td.dataset.col);
+          }
+        }
+        const all = t.querySelectorAll("th,td");
+        out[id] = { kinds: [...new Set(kinds)], cols: kinds.length,
+                    rows: t.querySelectorAll("tbody tr").length,
+                    body, blank, cells: all.length,
+                    empty: [...all].filter((c) => !c.firstChild).length };
+      }
+      return out;
+    });
+    const A = boards.boardtbl, B = boards.racktbl;
+    ok(A && B, "there are TWO boards on the page — the channels (#boardtbl) and " +
+       "the returns and the main (#racktbl)", JSON.stringify(boards));
+    if (A && B) {
+      ok(A.kinds.length === 1 && A.kinds[0] === "ch",
+         "the first board is channels and nothing else: " + A.cols + " strips, " +
+         A.rows + " rows, " + A.cells + " cells", JSON.stringify(A.kinds));
+      ok(B.kinds.join(",") === "bus,main",
+         "the second is the three returns and the main, in that order: " +
+         B.cols + " strips, " + B.rows + " rows, " + B.cells + " cells",
+         JSON.stringify(B.kinds));
+      ok(!A.blank.length,
+         "NOT ONE BLANK CELL ON THE CHANNEL BOARD (" + A.body + " body cells, " +
+         A.empty + " of " + A.cells + " empty in all — it was 99 of 177 before " +
+         "the split)", JSON.stringify(A.blank));
+      ok(B.blank.length <= 1 && (!B.blank.length || /^name \/ main$/.test(B.blank[0])),
+         "…and exactly one on the rack board, which is the main's NAME — the " +
+         "main is not a bus and no name knob is invented to square the grid (" +
+         B.body + " body cells, " + B.blank.length + " blank)",
+         JSON.stringify(B.blank));
+    }
+    // ...AND NEITHER BOARD PUSHES THE DOCUMENT SIDEWAYS. The panes scroll; the
+    // page must not. Checked at the phone and at the desk, because a 124px
+    // column that fits one may not fit the other.
+    const wide = [];
+    for (const w of [390, 1280]) {
+      await page.setViewportSize({ width: w, height: 900 });
+      const m = await page.evaluate(() => ({
+        doc: document.documentElement.scrollWidth,
+        win: document.documentElement.clientWidth,
+        a: Math.round(document.getElementById("boardtbl").getBoundingClientRect().width),
+        b: Math.round(document.getElementById("racktbl").getBoundingClientRect().width),
+      }));
+      console.log("  note at " + w + "px: channels " + m.a + "px, rack " + m.b +
+        "px, document " + m.doc + "/" + m.win);
+      if (m.doc > m.win) wide.push(w + ": " + m.doc + " > " + m.win);
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    ok(!wide.length, "the document does not scroll sideways at 390 or at 1280 — " +
+       "the boards are inside their panes", wide.join("; "));
   }
 
   ok(!errs.length, "the page raised no console error while the board was driven",

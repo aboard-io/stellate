@@ -264,8 +264,42 @@
       { name: "cantor", kind: "line",
         cast: { part: "line", reg: 0, entry: 0 },
         material: "psalm", instrument: "tract_voice", level: 0.15,
-        set: { vowel: 1.4, artic: 0.45, babble: 0.4, rate: 2.0, seed: 1,
-               push: 0.42, open: 0.6, breath: 0.07, voiced: 1,
+        // TWELVE NUMBERS, AND TWO OF THEM WERE A LIE — REMOVED 2026-08-25.
+        // This `set` also said `vowel: 1.4` and `push: 0.42`, and VOICE.md's
+        // inventory measured that neither reaches the engine. Re-proved before
+        // deleting, in the source both sides read:
+        //
+        //   `vowel`  state-engine.js:1600 seats a mouth with
+        //            `params: { ...base.params, vowel: word[0], ... }` where
+        //            `word = tractWalk(m.vowels)`, and the players rewrite it
+        //            every syllable off that same walk. The recipe's own
+        //            `vowel` is never read — `base.params` is `{ level }`, not
+        //            a copy of the recipe — so 1.4 was overwritten before the
+        //            first note. THE ONLY WAY TO SAY A VOWEL IS THE `vowels`
+        //            STRING, in LETTERS: the singers' tables are indexed
+        //            a-e-i-o-u and the tract's are i-e-a-o-u (TRACT_ROW), so a
+        //            vowel written as a NUMBER means two different sounds
+        //            depending on which family reads it and nothing ever
+        //            fails. 1.4 cannot be honestly translated for that exact
+        //            reason — it is between `e` and `a` in one table and
+        //            between `e` and `i` in the other — so it comes out rather
+        //            than being guessed into a letter. What the cantor sings
+        //            today is the tract's own default, the open vowel `a`
+        //            (tractWalk(undefined) -> [0] -> TRACT_ROW[0]), and absent
+        //            is today.
+        //   `push`   the glottal fold, and it is this module's DYNAMIC axis:
+        //            state-engine.js:1094 `TRACT_DYN = { push: [0.12, 0.9] }`
+        //            and both renderers drive it from the note's velocity, so
+        //            a static value is rewritten on every hit. There is no
+        //            free workaround: "press harder" is a velocity edit in the
+        //            motif grid's `vel` row, which is where the chant already
+        //            says it (psalm recites at 6 and cadences at 5).
+        //
+        // The ten that remain are all read: `artic`/`babble`/`rate`/`seed`
+        // drive the syllable engine, `open`/`breath`/`voiced` the glottis, and
+        // `vibrato`/`attack`/`release` the envelope (state-engine.js:1601-1644).
+        set: { artic: 0.45, babble: 0.4, rate: 2.0, seed: 1,
+               open: 0.6, breath: 0.07, voiced: 1,
                vibrato: 0.004, attack: 0.03, release: 0.22 },
         development: { c1: "as written", c2: "as written", c3: "in retrograde",
                        c4: "the head only", c5: "as written" } },

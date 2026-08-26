@@ -388,6 +388,11 @@
       const st = u.strip ? stripStateFor(us, u.strip, wide && !hasIns) : null;
       const ubuf = (hasIns || st) ? new Float32Array(LEN) : null;
       const ubufR = st && st.R ? new Float32Array(LEN) : null;
+      // THE PING-PONG SEND OF A UNIT THAT TAKES THE ubuf TAIL — see the tail
+      // below. Lazily allocated, so a window with no throw in it (which is
+      // every window measured so far) allocates nothing and runs the same
+      // loops it did before the fix.
+      let ppbuf = null;
       // MASTERING pan (render-core's exact law — parity): mono units with
       // `pan` write their DRY send onto the wide buses; rev/del/pp stay mono.
       const pg2 = (u.pan && buses.wL && buses.wR && !u.stereo) ? panLR(u.pan) : null;
@@ -454,6 +459,25 @@
                 if (meter) { const xd = x * dg; meter.e += xd * xd; }
               }
             }
+            // ...AND THE @pp SEND, WHICH THE ubuf PATH USED TO DROP (2026-08-25).
+            // `pg` is per-PROC and per-EVENT while the chain and the strip
+            // below are per-UNIT, so one shared chain cannot carry two events'
+            // different sends; the send is therefore taken exactly where the
+            // two direct branches above take theirs — the voice's own output
+            // times its per-note gains — and summed at the tail. The `if (pg)`
+            // guard keeps the hot loops untouched (and the buffer unallocated)
+            // for every unit with no throw on it.
+            if (ubuf) {
+              const pg = v.curPP * v.curOut;
+              if (pg) {
+                if (!ppbuf) ppbuf = new Float32Array(LEN);
+                if (ubufR) { const o1 = oo[1] || o;
+                  for (let i = Math.max(0, -idx0); i < len; i++)
+                    ppbuf[idx0 + i] += (o[i] + o1[i]) * 0.5 * pg; }
+                else for (let i = Math.max(0, -idx0); i < len; i++)
+                  ppbuf[idx0 + i] += o[i] * pg;
+              }
+            }
             v.renderedEnd = s2 + BS;
           }
         }
@@ -470,24 +494,39 @@
           for (let i = 0; i < LEN; i++) ubuf[i] = SP.stripStep(st.L, ubuf[i], t0 + i / SR);
           if (ubufR) for (let i = 0; i < LEN; i++) ubufR[i] = SP.stripStep(st.R, ubufR[i], t0 + i / SR);
         }
-        // THIS TAIL DOES NOT CARRY `pp`, AND THE DIRECT BRANCH ABOVE DOES.
-        // Both branches sum dry/wL/wR/rev/del; only the direct one adds
-        // `if (pg) buses.pp[j] += x * pg`. `v.curPP` is still tracked at the
-        // "@pp" command above and then goes nowhere once a unit takes this
-        // path. That was survivable while only an insert chip sent a unit
-        // here; the board-EQ round (2026-08-24) made a unit with any strip
-        // take it too, which after FAM_EQ is very nearly every unit.
+        // THIS TAIL CARRIES `pp` — FIXED 2026-08-25, in one change with its
+        // twin (engine/faust/press/render-core.js, the `if (ubuf)` tail),
+        // because the two renderers must move together or press parity goes.
+        // It used to read: both branches sum dry/wL/wR/rev/del and only the
+        // direct one adds `if (pg) buses.pp[j] += x * pg`, so `v.curPP` was
+        // tracked at the "@pp" command above and then went nowhere once a unit
+        // took this path. That was survivable while only an insert chip sent a
+        // unit here; the board-EQ round (2026-08-24) made a unit with ANY
+        // strip take it too, which after FAM_EQ is very nearly every unit.
+        // It was measured harmless at the time — across 20 precomposed records
+        // and 22,145 drum hits, zero events carried a non-zero pp — and armed
+        // by construction all the same: nukernel/audio/to-engine.js sets
+        // `dsend: 0.04` on every record, which arms csd-engine's delayCap and
+        // its `d.pp = 0.5..0.9` throw, so the first time anybody turned the
+        // snare throw on the send would have been silently missing from every
+        // EQ'd voice. desk-gate G8b stayed green through it because its own
+        // fixture fed `curPP: 0`; the fixture now feeds a non-zero one.
         //
-        // NOT A LIVE BUG TODAY, and measured rather than assumed: across 20
-        // precomposed records and 22,145 drum hits, zero events carried a
-        // non-zero pp. The path is armed by construction all the same —
-        // nukernel/audio/to-engine.js sets `dsend: 0.04` on every record,
-        // which arms csd-engine's delayCap and its `d.pp = 0.5..0.9` throw —
-        // so the first time anybody turns the snare throw on, the ping-pong
-        // send will be silently missing from every EQ'd voice. desk-gate G8b
-        // will stay green through it: its own fixture feeds `curPP: 0`.
-        // Fix it, or write down a decision, before the throw is next wanted.
+        // WHAT IS DIFFERENT ABOUT THIS SEND, WRITTEN DOWN. dry/wL/wR/rev/del
+        // come off the buffer AFTER the pedals and the board EQ; `pp` comes
+        // off BEFORE them, at the same point the two direct branches take it.
+        // That is not a shortcut, it is the only reading that stays a SEND:
+        // `pp` is per-EVENT (state-engine.js:2808 stamps it on one snare hit
+        // and not the next) and per-PROC, while the chain and the strip are
+        // one stateful pipeline per UNIT — running two events' different
+        // weightings through one chain is arithmetically impossible, and
+        // running a SECOND chain would be a second pedalboard and a second
+        // compressor with its own sidechain, which is a different instrument
+        // rather than the same channel. What is lost is the board EQ's colour
+        // on the delay throw; what is gained is that the throw exists at all,
+        // identically in both renderers.
         const dg = u.dry != null ? u.dry : 1, rg = u.rev || 0, lg = u.del || 0;
+        if (ppbuf) for (let i = 0; i < LEN; i++) buses.pp[i] += ppbuf[i];
         if (ubufR) {
           // the wide route, verbatim from the direct branch above: [0]->L,
           // [1]->R for the dry width, the mono sum for the sends

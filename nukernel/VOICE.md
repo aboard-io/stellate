@@ -492,3 +492,142 @@ like; seat DX7 on a lead.
    rows and need no parent edit. Then FM step 2 — four `mp()` calls in
    `state-engine.js`, the only parent change in this note and the best one.
 5. Separately, not part of this build: put `FAM_EQ.vox` to rest (§6).
+
+---
+
+## 13. WHAT WAS BUILT, 2026-08-26 — AND WHERE IT DEPARTS FROM §1–§12
+
+Everything in §1–§12 shipped. This section records the six places the build
+learned something the note could not have known, because a spec that is
+silently disagreed with stops being a spec.
+
+**THE CENSUS IS 247, NOT 222** (`nukernel/knobs.js`, regenerable). §2's numbers
+were taken with a narrower candidate list; the shipped extractor takes the union
+of the module's meta labels, every `mp("k")` and `m.k` the parent reads, AND the
+two other spellings of a bounded recipe key it uses —
+`clamp(m.k || d, lo, hi)` and `clamp(m.k != null ? m.k : d, lo, hi)`. That third
+spelling is the one that mattered: `vowelEvery` has no `mp()` anywhere, so a
+scan that only knew `mp()` handed the sweep a 0..1 bracket and published a
+syllable slider that stopped at one beat. Nine voices gained rows this way
+(`organ` 2→5, `choir` 2→5, `bass_reese` 1→4, `lead_fuzz` 5→10, `bass_wobble`
+4→6, `modeld` 11→12, `supersaw` 10→12, `voice_choir` 10→11, `voice_lead`
+12→13), and `fm2op`'s nine are new because the voice is new. Every one of the
+247 is asserted to move a parameter by `test/knobs.js` check 2.
+
+**THE RANGES ARE SWEPT AND TRIMMED, NOT READ.** §2 said "ranges come from the
+meta". A bracket from the meta or from `mp()` is a GUESS — the parent clamps
+inside it, sometimes far inside — so the shipped extractor sweeps the union of
+every guess at 65 points, trims the dead travel off both ends and bisects the
+two edges twelve times. **The published range is the outermost pair of values at
+which the parameter still moves**, so no slider on this page has a stretch at
+either end where nothing happens. Three consequences the note did not foresee:
+
+* **`min` and `max` are in RECIPE space and the derived answer was in PARAM
+  space, and on five rows those are different numbers.** A choir's `cutoff` is
+  `Math.min(9000, c * 2.5)`, so the derived 5000 sat outside the 200..3600 the
+  key can reach and the thumb would have been drawn off the end of its own
+  slider. The recipe value that REPRODUCES the derived answer is found by asking
+  the parent the same question backwards (a ternary search, 60 iterations), and
+  it is what the row publishes. `mapped: true` marks the five so `ui/eight.js`
+  can do the same inversion live for the one that is a function of the tempo
+  (`bass_wobble/wobbleBars`).
+* **A step that does not divide `derived - min` draws a number the record does
+  not say.** The chant says `attack: 0.03` and the row drew 0.031. Steps come off
+  a nice-number ladder and are then CHECKED against the derived value.
+* **Whether a row is a COUNT is measured, not guessed.** The first rule was "all
+  three ends whole ⇒ step 1", and it published `artic` — 0 to 1, deriving 0 — as
+  a two-position switch. The parent is asked instead: hand it a fraction, and if
+  a whole number comes back it is a count (`seed`, and nothing else in the
+  fleet).
+
+**ONE OWNER PER PARAMETER, DECIDED BY WHO WINS.** §2 knew about the renames and
+not about the four places where BOTH spellings reach the same param —
+`wobbleBars`/`wobbleHz`, `fenv*`/`env*`, `wave`/`waveform`, `bright`/`stiff`,
+`damp`/`ring`. Two document keys for one parameter is the two-owners bug in
+miniature. The winner is measured: set both, and keep the one the parent
+obeyed — **at quarter points and not at the ends**, because a wobble's fastest
+bar fraction and its fastest hertz are the same 12 Hz and the ends answered the
+same thing four times. `test/knobs.js` check 2c holds it.
+
+**§9.3 SAID THE 114 CARTRIDGES NEEDED NO ENGINE CHANGE. THEY NEEDED TWO READS.**
+The `m.dx7 = {algorithm, params}` route is a complete answer for a caller
+holding the 671 KB bank and not for a page: a browser would have shipped two
+thirds of a megabyte of operator envelopes to say 114 words. Both renderers
+already resolve a preset by NAME (`live/stream-renderer.js:85`,
+`press/render-core.js:125`), so `case "rhodes"` now reads `m.dx7Preset` and
+`m.dx7Alg` and the bank stays where it is. Absent is today: no `dx7Preset` is
+`E.PIANO 1` on `dx7_alg5`, byte for byte.
+
+**FM STEP 2 LANDED AND IT IS THE BEST LINE IN THE ROUND.** `ratio`, `idx0`,
+`idx1` and `idxTime` are `mp()` calls now, defaulting to the constants that were
+there, so every record that says nothing is byte-identical. Re-measured on the
+shipped `fm2op` module, one second at 220 Hz, spectral centroid and partials
+over the 3% floor:
+
+    idx1  ratio 1.4        ratio 2         ratio 3.5
+    1.0   365 Hz / 7       410 Hz / 3      469 Hz / 5
+    6.0   847 Hz / 13      892 Hz / 6      914 Hz / 7
+
+RMS is 0.22 at every one of the six, which is the whole point: **FM here was
+turned down, not broken, and nothing could turn it up.** `idxTime` is spread
+rather than defaulted on the lead — the pad already wrote it and the lead never
+did, so writing it would be the same sound and a different unit spec, and a unit
+spec is what the press freeze compares.
+
+**THE COST SENTENCE IS ONE MEASURE FOR ALL 27.** §9 quoted `COST.fm2op` = 0.53
+for the FM and the SEATED 9.5 for the tract, which are two measures side by
+side. `knobs.js` publishes `unitCost` with the inserts taken off — what a SEAT
+costs, pool included, which is what a record's budget is actually spent on — so
+the page's sentence reads 1.59 for the FM against 12.8 for the DX7 and 9.5 for
+the tract, out of 40.
+
+**AND ONE THING §7 ASKED FOR THAT WAS ALREADY DONE.** The dead-key notice was
+written for `songs.js:267`'s `vowel: 1.4` and `push: 0.42`. Both were deleted
+from the chant on 2026-08-25, with the re-proof in the comment that replaced
+them. The notice is still built — it is how the NEXT one gets found — and on the
+shipped record it says nothing, which is correct.
+
+### The two asks that came with it
+
+**A TAKE IS A SEED, AND THE SLIDER MOVED NOTHING.** Paul: *"I can't seem to
+change seed and do a different take."* Measured: `performance.take` was in every
+document, `ui/eight.js` drew a slider for it, `ui/atlas.js:852` printed it, and
+**no compiler read it** — `document.js toGenre` emitted no seed of any kind, so
+every record this box has ever made was take one. It is spent now in `toGenre`
+(`takeOf`) on the kernel's own dice and the pipe operators' seeds, with
+`band-kit.js:4635`'s constants and its section-index salt. Measured over 60
+anchors: **55 render a different score at take 5, all 60 are reproducible**, and
+the only keys a take moves in a compiled genre are `kitSeed` and `pipes` — no
+decision is downstream of it, which is what makes "the same song, played again"
+true by construction rather than by hope. The five that do not move are records
+with no chance hit, no hand and no ornament to seed; nothing is claimed for them.
+
+**TEMPO ICONS ARE SONG-LEVEL AND THAT IS WHY THEY ARE NOT BESIDE THE MOTIF
+TRANSFORMS.** Paul: *"The rhythm icon adjustments never happened."* The fourteen
+icons that exist are seven PITCH and seven RHYTHM operators and every one works
+— and not one of them moves the clock. Every tempo fact this box has is a song
+fact (`time.bpm`, `time.rate`; there is no per-section pace and no per-motif
+tempo — `ui/derive.js` reads `stepsIn(g) / g.rate` and `60 / bpm` and both come
+off the song), so eight tempo icons went under **1 · Time**, between the two
+facts they move. Four move the CLOCK (a little slower/faster along a metronome's
+own detents, half and twice the tempo) and four move the READING (half time,
+double time, as written, the record's own) — drawn differently, because closer
+ticks and a nearer bar line are two different pictures and drawing them the same
+would have been the same failure in picture form. **No icon is drawn for an
+operation the box cannot perform**, and one that cannot move from where the
+record is standing greys with its reason printed ("twice 120 is 240, and 220 is
+as fast as this box counts").
+
+### Still open
+
+* **`FAM_EQ.vox`** (§6) is untouched, as §12.5 said it should be.
+* **`plan.js` hands the parent `seed: 1`**, so the take does not reach the
+  mouth's own syllable driver or the house FX hash. The voice's `seed` row in
+  the editor is the per-voice answer; the song-level one is a one-line change in
+  a file this round does not own.
+* **§11's three unknowns stand.** Nobody has swept `vibrato`, `vibRate`,
+  `vibRise`, `glide`, `spread` or `drift` by ear; the gate's assertion for them
+  is reach, not audibility. The tract's sustain caveat is printed on the page
+  rather than resolved. And 22 rows on a 390px phone now HAVE been measured:
+  they are 31 table rows in a 366px pane, no horizontal scroll on the body, and
+  the page grew 158px at 390 and 97px at 1280 for the whole round.

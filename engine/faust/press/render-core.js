@@ -157,6 +157,10 @@
                           R: (u.stereo && wL && wR && !hasIns) ? SPX.makeStrip(strip, SR) : null } : null;
     const ubuf = (hasIns || stS) ? alloc(TOTAL) : null;
     const ubufR = (stS && stS.R) ? alloc(TOTAL) : null;
+    // THE PING-PONG SEND OF A UNIT THAT TAKES THE ubuf TAIL — see the tail
+    // below. Lazily allocated, so a song with no throw in it (which is every
+    // song measured so far) allocates nothing and runs the same loops it did.
+    let ppbuf = null;
 
     // supersaw release tail must survive the gate-off
     let tail = u.tail || 1;
@@ -287,6 +291,22 @@
               if (pg) pp[s + i] += x * pg;
             }
           }
+          // ...AND THE @pp SEND, WHICH THE ubuf PATH USED TO DROP (2026-08-25).
+          // `pg` is per-PROC and per-EVENT while the chain and the strip below
+          // are per-UNIT, so one shared chain cannot carry two events' different
+          // sends; the send is therefore taken exactly where the direct branches
+          // take theirs — the voice's own output times its per-note gains — and
+          // summed at the tail. The `if (pg)` guard keeps the hot loop untouched
+          // (and the buffer unallocated) for every unit with no throw on it.
+          if (ubuf) {
+            const pg = curPP * curOut;
+            if (pg) {
+              if (!ppbuf) ppbuf = alloc(TOTAL);
+              if (ubufR) { const o1 = oo[1] || o;
+                for (let i = 0; i < span; i++) ppbuf[s + i] += (o[i] + o1[i]) * 0.5 * pg; }
+              else for (let i = 0; i < span; i++) ppbuf[s + i] += o[i] * pg;
+            }
+          }
           rendered += span;
           s = ns;
         }
@@ -315,17 +335,33 @@
         for (let i = 0; i < TOTAL; i++) ubuf[i] = SPX.stripStep(stS.L, ubuf[i], i / SR);
         if (ubufR) for (let i = 0; i < TOTAL; i++) ubufR[i] = SPX.stripStep(stS.R, ubufR[i], i / SR);
       }
-      // THIS TAIL DOES NOT CARRY `pp` — the identical hole its twin has, and
-      // the twin (engine/faust/live/stream-renderer.js, the `if (ubuf)` tail)
-      // carries the long version of this note. In short: the direct branch
-      // adds `if (pg) pp[j] += x * pg` and this one never does, `curPP` is
-      // tracked at "@pp" and then dropped, and the board-EQ round
-      // (2026-08-24) widened who takes this path from "a unit with an insert
-      // chip" to "a unit with any strip", which is nearly all of them.
-      // Measured harmless today (zero non-zero pp events over 20 records and
-      // 22,145 hits); it bites the moment a drum throw is turned on. The two
-      // renderers must be fixed together or press parity goes.
+      // THIS TAIL CARRIES `pp` — FIXED 2026-08-25, with its twin
+      // (engine/faust/live/stream-renderer.js, the `if (ubuf)` tail) in the
+      // same change, because the two renderers must move together or press
+      // parity goes. It used to say: the direct branch adds
+      // `if (pg) pp[j] += x * pg` and this one never does, `curPP` is tracked
+      // at "@pp" and then dropped, and the board-EQ round (2026-08-24) widened
+      // who takes this path from "a unit with an insert chip" to "a unit with
+      // any strip", which is nearly all of them. Measured harmless at the time
+      // (zero non-zero pp events over 20 records and 22,145 hits) and armed by
+      // construction: to-engine.js sets `dsend: 0.04` on every record, which
+      // arms the `d.pp = 0.5..0.9` snare throw, so the first record to turn a
+      // throw on would have had the send silently missing from every EQ'd voice.
+      //
+      // WHAT IS DIFFERENT ABOUT THIS SEND, WRITTEN DOWN. dry/rev/del come off
+      // the buffer AFTER the pedals and the board EQ; `pp` comes off BEFORE
+      // them, at the same point the direct branches take it. That is not a
+      // shortcut, it is the only reading that stays a SEND: `pp` is per-EVENT
+      // (state-engine.js:2808 stamps it on one snare hit and not the next) and
+      // per-PROC, while the chain and the strip are one stateful pipeline per
+      // UNIT — running two events' different weightings through one chain is
+      // arithmetically impossible, and running a SECOND chain would be a second
+      // pedalboard and a second compressor with its own sidechain, which is a
+      // different instrument rather than the same channel. What is lost is the
+      // board EQ's colour on the delay throw; what is gained is that the throw
+      // exists at all, identically in both renderers.
       const dg = u.dry != null ? u.dry : 1, rg = u.rev || 0, lg = u.del || 0;
+      if (ppbuf) for (let i = 0; i < TOTAL; i++) pp[i] += ppbuf[i];
       if (ubufR) for (let i = 0; i < TOTAL; i++) {
         const l = ubuf[i], r = ubufR[i], mono = (l + r) * 0.5;
         wL[i] += l * dg; wR[i] += r * dg;

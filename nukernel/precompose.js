@@ -466,10 +466,34 @@
   // flattened to its FIRST chord: the bar count and the roots survive, the
   // mid-bar change does not. It is written here rather than dropped silently
   // because the fix is a document shape, not a compiler.
+  //
+  // AND THE CHORD TRAVELS WITH EVERY FIELD THE KERNEL READS, which it did not
+  // until 2026-08-25. This read `{ d: c.d || 0, q: c.q || "triad" }` and threw
+  // the rest away, so `marabi`'s `inv: 2` — the anchor's own comment calls it
+  // "THE HIGHEST STRUCTURAL VALUE ON THIS PAGE", because I-IV-I6/4-V IS the
+  // style — reached no record. Measured: with it carried, 4 of marabi's 32
+  // bass notes move (kernel.js:687 `bassPc: pcs[(c.inv||0) % pcs.length]`,
+  // "an inversion puts the third under the band"). `mbube` inherits the same
+  // field and the same fix.
+  //
+  // WHICH FIELDS, AND WHY THESE. kernel.js chordsOf (:683-688) reads exactly
+  // four things off a chord — `d`, `q`, `inv`, `borrow` — plus `beats`, which
+  // only ever divides a bar between the chords of a LIST. So `inv` and
+  // `borrow` are carried whenever the anchor states them (0 anchors state a
+  // borrow today, and the day one does it arrives rather than vanishing), and
+  // `beats` is deliberately NOT carried: the list it divides is flattened to
+  // its first chord one line up, and a lone chord's window is `N - cursor` by
+  // construction, so a carried `beats` would be a number in the document that
+  // reaches nothing — the same lie this fix exists to end. An absent field
+  // stays absent: `inv: 0` on every chord in the catalog would be 137 anchors
+  // newly claiming a decision nobody made.
   function progOf(G) {
     if (G.prog) return G.prog.map((slot) => {
       const c = Array.isArray(slot) ? slot[0] : slot;
-      return { d: c.d || 0, q: c.q || "triad" };
+      const out = { d: c.d || 0, q: c.q || "triad" };
+      if (c.inv) out.inv = c.inv;
+      if (c.borrow) out.borrow = c.borrow;
+      return out;
     });
     if (G.roots) return G.roots.map((d) => ({ d, q: "triad" }));
     return [{ d: 0, q: "triad" }];

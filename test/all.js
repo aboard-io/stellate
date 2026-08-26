@@ -186,6 +186,15 @@ const GATES = [
   { name: "precompose", wave: 2, kind: "node",
     argv: ["test/precompose.test.js"],
     need: ["test/precompose.test.js"], covers: ["test/precompose.test.js"] },
+  /* THE SEND A CHANNEL STRIP USED TO SWALLOW. Next to `desk` on purpose: G8b
+     renders a strip's audio through the same shipped renderUnitWindow and
+     stayed green for the whole life of the pp defect, because its fixture feeds
+     `curPP: 0`. This one turns the throw on, and it holds BOTH renderers to the
+     same answer — the two files must be fixed together or press parity goes.
+     ~0.3 s, pure node, no faustwasm (stub procs, the desk-gate trick). */
+  { name: "pp-send",    wave: 2, kind: "node",
+    argv: ["test/pp-send.test.js"],
+    need: ["test/pp-send.test.js"], covers: ["test/pp-send.test.js"] },
   /* THE OPTION TABLE, THROUGH THE CACHE. test/gates-cache.js runs
      `nukernel/gates-extract.js --check` unless every file the derivation reads
      is byte-identical to the tree that last passed it — content-keyed, never
@@ -262,6 +271,17 @@ const GATES = [
   // question two questions: is a settled parameter a menu, and is a development
   // word still a lit sheet. Next to `sheets` on purpose — a slice that converts
   // one control too many turns one of the pair red either way.
+  /* THE VOICE'S OWN KNOBS, THE TAKE AND THE TEMPO ROW (VOICE.md §10). One gate
+     for three features because all three share one predicate — a control on
+     this page moves something the engine reads — and because they share a
+     browser: standing up a second chromium to press a tempo icon costs more
+     than the whole gate does. Half of it is pure node (the table against the
+     engine, `--check`, the vowel round-trip through the swapped formant rows)
+     and half drives the rendered page at 390 and at 1280. */
+  { name: "knobs",      wave: 2, kind: "browser", url: { flag: "--page" },
+    argv: ["test/knobs.js"],
+    need: ["test/knobs.js", "nukernel/knobs.js", "nukernel/knobs-extract.js"],
+    covers: ["test/knobs.js", "nukernel/knobs.js", "nukernel/knobs-extract.js"] },
   { name: "selects",    wave: 2, kind: "browser", url: { flag: "--page" },
     argv: ["test/selects.js"], need: ["test/selects.js"], covers: ["test/selects.js"] },
   { name: "nudges",     wave: 3, kind: "browser", url: { flag: "--page" },

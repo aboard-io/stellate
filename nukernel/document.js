@@ -124,6 +124,20 @@
   const opsOf = (name) => (WORDS[name] || []).map(
     (w) => (typeof w === "string" ? K.OPKEYS[w] : K[w[0]](...w.slice(1))));
   let ver = 0;
+  /* WHAT A TAKE IS, in the two places it can be spent: the kernel's own dice
+     (`kitSeed`) and the seeds the pipe operators carry (kernel.js:608 —
+     `prng(((op.seed || 0) + 1) * 0x9E3779B9 + i + 1)`), which were handed none
+     and so fell in the same places every reading. The two constants are
+     band-kit.js's own; a second pair would be a second answer to "what is take
+     three". */
+  function takeOf(take, si, anchor) {
+    const t = take | 0;
+    if (t <= 1) return {};                  // absent, 0 and 1 are all take one
+    const ks = (t * 0x9E3779B1 + si * 0x85EBCA77) | 0;
+    const pipes = anchor && Array.isArray(anchor.pipes) && anchor.pipes.length
+      ? { pipes: anchor.pipes.map((op, k) => ({ ...op, seed: ks + k })) } : {};
+    return { kitSeed: ks, ...pipes };
+  }
   function toGenre(doc, si, GENRES, fleet) {
     const A = doc.alphabet, T = doc.time, P = doc.performance;
     const NATIVE = fleet || [];
@@ -210,6 +224,28 @@
       // kernel.js:1337-1348, "two notes have no arch to hear, so the tent
       // starts at three".
       /* PERFORMANCE */ humanize: P.humanize, padRoom: true,
+      /* …AND THE TAKE, WHICH WAS A SLIDER THAT MOVED NOTHING.
+         Paul, 2026-08-26: "I can't seem to change seed and do a different
+         take." Measured before this line existed: `performance.take` was in
+         every document, `songs.js` set it, `ui/eight.js` drew a slider for it
+         and `ui/atlas.js` PRINTED it — and no compiler read it. The only thing
+         on the page that re-rolled anything was the atlas's "another take",
+         which re-writes the whole record from the genre.
+
+         THE LAW IS NOT INVENTED HERE. main:nukernel/band-kit.js:4635 already
+         says what a take is on this box: "`kitSeed` is the kernel's own
+         per-take dice (kernel.js rollAt): it decides which chance hits
+         actually land, the HAND — seeded micro-timing in ninths of a step —
+         the per-hit velocity humanisation, and the ornament rolls." Same
+         constants, same section-index salt so one figure is not humanised
+         identically in every section, same `pipes` seeding so a canon does not
+         fall in the same places every time.
+
+         IT REACHES THE ENGINE AND NOT THE MODEL, which is what makes the law
+         hold by construction: a take cannot move a DECISION, because no
+         decision is downstream of it. Absent — or 0, or 1 — is take one and
+         every record before this renders byte-identical. */
+                        ...takeOf(P.take, si, GENRES[doc.basis]),
                         ...(P.stress != null ? { stress: P.stress } : {}),
                         ...(P.phrase != null ? { phrase: P.phrase } : {}),
                         ...(P.touch ? { touch: P.touch } : {}),

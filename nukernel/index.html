@@ -185,6 +185,12 @@
      tier; ui/deps.js is what hands them to a view. -->
 <script src="avail.js"></script>
 <script src="gates.js"></script>
+<!-- …AND WHICH KNOBS A SEATED VOICE HAS, measured the same way (VOICE.md §2):
+     nukernel/knobs-extract.js probes the parent's own pitchedUnit at both ends
+     of every candidate `set` key and keeps the ones that moved a parameter.
+     UMD, no DOM, no network, and it is the ONLY list of what an instrument
+     editor may draw. -->
+<script src="knobs.js"></script>
 <!-- SET A GENRE, GET A WHOLE RECORD (D5). chair.js is the interview engine
      ideas-kit.js is written in, ideas-kit.js is the theme composer, and
      precompose.js is what projects compose()'s arrangement plus an idiomatic

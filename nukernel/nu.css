@@ -630,11 +630,17 @@ td > select{ max-inline-size: 9em; }
    words the option says (ui/selects.js `optionText`) rather than in a
    `.nu-why`, because an <option> may contain nothing but text. */
 
-/* THE BOARD (D3) is a <table> in a pane — one column per channel, one row per
-   control — so "a horizontally scrolling row of channel strips" is the pane's
-   scroll and a fixed column width, not a flex row. The row-label column rides
-   sticky-left the way the step grid's lane column does, because a fader you
-   have scrolled to is useless if you can no longer read what row it is.
+/* THE BOARD (D3) is TWO <table>s, each in its own pane — the channels, then the
+   returns and the main — one column per strip and one row per control, so
+   "a horizontally scrolling row of channel strips" is the pane's scroll and a
+   fixed column width, not a flex row. Both tables are `.nu-board` and every
+   rule below dresses both: the split ui/engineer.js made is which STRIPS and
+   which ROWS each table carries, and it deliberately needed no new widget.
+
+   The row-label column rides sticky-left the way the step grid's lane column
+   does, because a fader you have scrolled to is useless if you can no longer
+   read what row it is — and it does so on BOTH tables, which is why the rule
+   below is written against `.nu-board` and not against an id.
 
    TWO SLICES ASKED THIS FILE FOR SOMETHING ON 2026-08-24 AND ONLY ONE NEEDED A
    RULE, which is worth saying because they touch the same page. The atlas slice
@@ -662,10 +668,17 @@ td > select{ max-inline-size: 9em; }
 .nu-eng th{ inline-size: 7em; }
 .nu-eng input[type=range]{ inline-size: 9em; min-inline-size: 0; }
 
-/* ...AND THE REST OF THE DESK IN THE SAME TABLE (2026-08-25). Paul: "master and
-   the buses should also be arranged like the mixing board no?" — so the board
-   grew four more columns (bus 1, bus 2, bus 3, main) rather than a second table
-   under it, and these are the only rules that took.
+/* ...AND THE REST OF THE DESK, WHICH IS A SECOND TABLE AFTER ALL (2026-08-25).
+   This block was headed "...AND THE REST OF THE DESK IN THE SAME TABLE" and
+   said the board "grew four more columns (bus 1, bus 2, bus 3, main) rather
+   than a second table under it". That was the answer to Paul's "master and the
+   buses should also be arranged like the mixing board no?" and it is REVERSED
+   by his next sentence — "Do you want to put the bus and main into their own
+   board so it's not all empty" — and by the count under it: 99 of the one
+   table's 177 cells were empty. The buses and the main are still ARRANGED like
+   a mixing board, which is what he asked for; they are just a board of their
+   own. These rules did not change with it, which is the useful part: a bus
+   column is a bus column in whichever table it sits in.
 
    A BUS COLUMN IS WIDER THAN A CHANNEL COLUMN BECAUSE IT HOLDS A MENU. A
    channel strip is pots and checkboxes and fits the declared 92px; a bus and
@@ -679,29 +692,81 @@ td > select{ max-inline-size: 9em; }
    9em }` above is the page-wide cap and it is a MAXIMUM, not a width — an
    intrinsically wide menu inside a table cell still pushes the column out and
    takes the whole board with it. Here the width is the column's, both ways. */
-.nu-bus, .nu-main{ inline-size: 124px; min-inline-size: 124px; }
+.nu-bus{ inline-size: 124px; min-inline-size: 124px; }
+/* THE MAIN IS THE WIDE STRIP, AND A MEASUREMENT MADE IT ONE. It was 124px like
+   a bus until 2026-08-25. With the master's seven menus stacked in one cell
+   (the `its own gear` row — ui/engineer.js VIEW 2, "a row only ONE column can
+   answer is a label, not a comparison") that cell was 489px tall, the row was
+   548px because a row is as tall as its tallest cell, and bus 1's single menu
+   sat under 427px of white — the emptiness Paul asked about, moved rather than
+   removed. At 250px the same seven flow two-up and the cell is 248px. The pane
+   scrolls for the extra width, which is what the pane has always been for. */
+.nu-main{ inline-size: 250px; min-inline-size: 250px; }
+/* ONE STRIP'S OWN CONTROLS, FLOWING TO THE WIDTH OF THE STRIP. `auto-fill` and
+   not a fixed two, because the number of columns is the strip's business and
+   `.nu-bus` at 124px must stay one-up: 108px is the narrowest a labelled menu
+   reads at (measured against `glue`'s "wow & flutter"). `align-content: start`
+   is what keeps a short cell's controls at the top of a tall row instead of
+   floating in the middle of it. */
+.nu-gear{ display: grid; align-content: start;
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 0 .5em; }
 .nu-bus span, .nu-main span{ display: block; }
 .nu-bus small, .nu-main small{ display: block; font-size: .72rem; opacity: .7;
   font-weight: 400; }
-.nu-board td > select{ inline-size: 100%; max-inline-size: 100%; }
+/* ...AND IT IS A DESCENDANT SELECTOR AND NOT A CHILD ONE SINCE THE SPLIT. It
+   read `.nu-board td > select`, which was true while every menu on the board
+   was a bare `selectEl` dropped straight into a cell. The rack board's `its own
+   gear` cell stacks each menu in a `<p class="nu-sel"><label>` so it can carry
+   its own word — bus 2's cell is `time`, `repeats`, `tone` and the main's is
+   the seven of the chain, and unlabelled they would be a column of anonymous
+   dropdowns — which put the select two levels down and out of this rule. The
+   page-wide `td > select{ max-inline-size: 9em }` then applied instead and the
+   menus stopped filling their column. */
+.nu-board td select{ inline-size: 100%; max-inline-size: 100%; }
+/* THE LABEL SITS OVER ITS MENU IN A STRIP, WHICH IS `.nu-sel`'S OWN IDIOM
+   ALREADY (`.nu-w{ flex: 1 0 100% }`) — nothing here re-states it. What a
+   124px column does need is less air between controls than a page-width form:
+   the master's seven in one cell at the form's `.5em` margins measured 90px
+   taller than the delay's three beside it for no reading gained. */
+.nu-board td .nu-sel{ margin-block: .25em .45em; }
+.nu-board td .nu-sel > label{ gap: .2em; min-block-size: 0; }
+.nu-board td .nu-sel > label > .nu-w{ font-size: .78rem; font-weight: 600; }
 .nu-board td > small{ display: block; font-size: .78rem; line-height: 1.25;
   opacity: .8; }
-/* THE LINE A CONSOLE SILKSCREENS between its channels and its returns, and
-   again before the master. Marked in the DOM (ui/engineer.js `nu-edge`) because
-   :first-of-type cannot see `data-col` and the channel count is the record's. */
+/* THE LINE A CONSOLE SILKSCREENS between one kind of strip and the next. It
+   used to fall twice — after the channels, and again before the master — and
+   since the split the channels are their own table, so the only kind change
+   left is inside the rack, before the main. The rule is unchanged and stays
+   general: `nu-edge` is stamped wherever `col.kind` changes, so a fourth kind
+   of strip is silkscreened by existing. Marked in the DOM (ui/engineer.js
+   `boardOf`) because :first-of-type cannot see `data-col` and the number of
+   strips is the record's. */
 .nu-board .nu-edge{ border-inline-start: 2px solid var(--rule-strong); }
-/* A ROW-GROUP HEADING INSIDE THE TABLE. A bus has no `place` pot and the main
-   has no `→ delay` send, so those cells are blank — which is what a real
-   console's master strip looks like beside a channel strip. These two bands
-   are what make the blanks read as "these rows are not about you" instead of
-   as holes; without them the grid is right and unreadable. */
-/* ...and NOT sticky, unlike every other `tbody th` on this board: the row-label
-   column rides sticky-left so a fader you have scrolled to still says what row
-   it is, but this th spans the WHOLE table and a sticky element that is already
-   as wide as its scroller only fights the scroll. */
-.nu-board .nu-sect > th{ position: static; text-align: left; font-size: .8rem; letter-spacing: .04em;
-  text-transform: uppercase; opacity: .7; padding-block-start: .6em;
-  border-block-start: 2px solid var(--rule-strong); }
+/* THE ROW-GROUP HEADING IS GONE, AND ITS RULE IS DELETED RATHER THAN LEFT DEAD.
+   It read: "A ROW-GROUP HEADING INSIDE THE TABLE. A bus has no `place` pot and
+   the main has no `→ delay` send, so those cells are blank — which is what a
+   real console's master strip looks like beside a channel strip. These two
+   bands are what make the blanks read as 'these rows are not about you' instead
+   of as holes; without them the grid is right and unreadable." — plus a note
+   that the band's `th` was the one `tbody th` on the board that was NOT sticky,
+   because it spanned the whole table and a sticky element as wide as its
+   scroller only fights the scroll.
+
+   EVERY WORD OF THAT WAS TRUE OF A GRID WITH 99 EMPTY CELLS IN IT. Paul,
+   2026-08-25: "Do you want to put the bus and main into their own board so it's
+   not all empty" — so the returns and the main are their own table now
+   (ui/engineer.js VIEW 2) and the blanks the bands were dressing are down to
+   one cell on either board. A band that groups nothing is furniture, and the
+   rule went with it; the two CAPTIONS are what name the boards now. */
+
+/* THE SENTENCE BETWEEN THE TWO BOARDS. The split took away the thing that used
+   to say where a send goes — a channel and its return were adjacent columns of
+   one grid and now they are two tables — so the relationship is words, and the
+   words get the arrow's weight rather than a hint's. It is a paragraph and not
+   a border because it has to survive the stylesheet being off. */
+.nu-flow{ margin-block: .9em; padding-inline-start: .7em;
+  border-inline-start: 3px solid var(--rule-strong); font-size: .9rem;
+  line-height: 1.35; max-inline-size: 46em; }
 
 /* THE NOTE STACK (D4): the producer's notes read top to bottom, newest last,
    so the table is left-aligned prose with a rule between takes. */
@@ -797,6 +862,19 @@ td > select{ max-inline-size: 9em; }
 /* the pitch the tune's own step 0 sat on, which is what makes "up a step" and
    "down a step" two different pictures instead of the same one twice */
 .nu-tf-ref{ stroke: var(--rule); stroke-width: .7; stroke-dasharray: 1.6 1.6; }
+/* …AND THE SAME TWO WEIGHTS AS STROKES, for the tempo row (ui/eight.js
+   `tempoArt`). A rhythm is drawn as BLOCKS because a gate vector is a row of
+   blocks; a tempo is drawn as TICKS because a beat has no width — it is an
+   instant — and the two families need `fill` and `stroke` respectively. Same
+   two inks, same argument: `--rule` for where the record is and currentColor
+   for where the button puts it, so the pair survives forced colours and a
+   monochrome screen with no media query.
+   THE BAR LINE IS THE THICKER ONE, and it is the whole reason the reading-speed
+   buttons are not the same picture as the tempo buttons: half time leaves the
+   ticks exactly where they are and moves the bar. */
+.nu-tf line.nu-tf-was{ stroke: var(--rule); stroke-width: 1.3; stroke-linecap: round; }
+.nu-tf line.nu-tf-is{ stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; }
+.nu-tf line.nu-tf-bar{ stroke-width: 2.6; }
 
 /* THE ENGRAVING. abcjs draws an <svg> at whatever width it was handed; on a
    phone that is wider than the page, and an overflowing staff would put the
@@ -1002,3 +1080,35 @@ td > select{ max-inline-size: 9em; }
 #atlasMap text.name{ paint-order: stroke; stroke: Canvas;
   stroke-linejoin: round; stroke-linecap: round; }
 #atlasActs button{ min-block-size: var(--tap); margin-inline-end: .4rem; }
+
+/* ---------- THE VOICE'S OWN KNOBS (VOICE.md) -----------------------------
+   Almost nothing, on purpose. The block is the same <table> in the same
+   `.nu-pane` the board's channel strip already is — <th> the parameter, <td>
+   the control and its readout, a third cell for the derived value — so it
+   inherits the rules two hundred lines above and needs no vocabulary of its
+   own. What IS here is the two places 22 rows on a 390px phone are different
+   from 5 rows on a channel strip.
+
+   1. THE THIRD COLUMN IS THE ONE THAT MUST NOT WIN. It holds a sentence ("the
+      record's own, 0.06") beside a slider, and a table lays out to its widest
+      cell — so without a cap the derived text pushed the slider column under
+      the pane's scroll and the control you came for was off the edge of the
+      phone. Measured at 390x844 on the tract's 22 rows: 476px against the
+      366px column. A `max-inline-size` in `ch` (the width of a "0") is the
+      right unit for a column that holds a number and three words.
+   2. THE SYLLABLES WRAP. Eight <select>s of one letter each is a sequence, not
+      a set, so they stay in order and in one flow — `flex-wrap` puts them on as
+      many lines as the phone has room for and the ORDER READS DOWN THE LINES,
+      which is how a word is read anyway. They are the narrowest select on the
+      page (one letter), so `td > select`'s 9em cap is not what sizes them. */
+.nu-knobs td:last-child{ max-inline-size: 22ch; }
+.nu-knobs td:last-child .nu-why{ display: inline; }
+.nu-vow{ display: inline-flex; flex-wrap: wrap; gap: .2em; margin-inline-start: .3em; }
+.nu-vow select{ min-inline-size: 4.5em; }
+/* A DISABLED SLIDER IS GREYED THE SAME WAY A DISABLED OPTION IS — `.is-off`'s
+   own opacity, reached through the attribute the browser already sets, so
+   there is one opinion about "refused" on this page and not two. The REASON is
+   a `.nu-why` in the row under it (ui/eight.js `rowFor`), never a title
+   attribute: a tooltip is not readable on a phone and not readable at all in a
+   screen reader that is announcing the control's name. */
+.nu-knobs input[disabled]{ opacity: .45; }

@@ -80,6 +80,8 @@ window.NuDocument    = require("./document.js");
 window.NuInstruments = require("./instruments.js");
 window.NuCompose     = require("./compose.js");
 window.PRESETS       = require("./presets.js");
+// the ARRANGER, for the anchor rows of the corpus — see `corpus` below
+const PC = require("./precompose.js");
 const Avail = require("./avail.js");
 const { fitRule } = require("./vocabulary.js");
 
@@ -278,10 +280,33 @@ function corpus(seed, n, anchors, cross) {
   const base = () => clone(NuSongs.TERMS);
   out.push({ label: "TERMS", doc: D.normalize(base()) });
   if (cross) out.push(...designed());
-  for (const gk of anchors) {
-    const d = base(); d.basis = gk;
-    out.push({ label: "basis:" + gk, doc: D.normalize(d) });
-  }
+  /* THE ANCHOR ROWS ARE REAL RECORDS, and until 2026-08-25 they were not.
+     This read `const d = base(); d.basis = gk` — the shipped two-voice chant
+     with its LABEL swapped — and swapping a label cannot change the shape,
+     because every interesting rule in this table reads `cast.drumsOn` /
+     `cast.hasBass` / `cast.hasPad`, which are facts about the BAND and not
+     about the anchor. The shipped table's own header said so out loud
+     (`{records: 55, anchors: 12, ...}`, twelve anchors all seen as the same
+     plainchant) and INTERVIEW.md §3.3 measured the consequence: ONE question
+     shape for all 139 anchors where the real precomposed documents give six.
+     Re-measured here on 2026-08-25 over the scopes THIS file walks, which is
+     the number that matters to the fit: TERMS with the basis swapped gives
+     every one of the 139 anchors exactly 81 scopes and ONE distinct
+     live-sheet set; the precomposed documents give 120..365 scopes, 49
+     distinct counts and 3 distinct live-sheet sets. This is the table the
+     page greys options from, so a corpus that has never seen a drummer, a
+     bass, a chord cycle or an eight-voice cast was greying today's page off
+     yesterday's chant.
+
+     `precompose.genreToDocument(gk, seed)` is the record the page ITSELF
+     writes when you pick that anchor off the globe (PROGRAM.md's law, "THE
+     RECORD ARRIVES FINISHED"), so this is the same law the SCORE follows one
+     level up: measure the record a person actually gets, not a stand-in. The
+     precompose seed is the CORPUS seed, so the holdout's anchors — drawn from
+     a different roller AND composed at `seed + 977` — are documents the fit
+     has never seen even where the two draws overlap on a name. */
+  for (const gk of anchors)
+    out.push({ label: "basis:" + gk, doc: D.normalize(PC.genreToDocument(gk, seed)) });
   const HARM = Avail.HARMONIES(), PARTS = Avail.PARTS();
   const METERS = ["", ...Object.keys(K.METERS)];
   const BASS = Object.keys(NF.BASSOPS);
@@ -469,19 +494,135 @@ const MIN_ROWS = 8;                 // below this a "rule" is a coincidence
    facts alone first, and only falls back to the anchor's when they explain
    nothing. It is vocabulary.js:377's own preference (record over genre over
    seat) applied to this file's namespace. */
+/* ...AND A COLUMN THE MEASUREMENT CANNOT POSSIBLY BE ABOUT IS NOT OFFERED AT
+   ALL. This is the same move as the `basis.` preference above, one step
+   harder, and the real corpus forced it on 2026-08-25: with the anchor rows
+   made real records (see `corpus`) the fit came back saying
+
+     alphabet.harmony / cycle   available `when time.bpm == 58`
+     dev.line / at the octave   available `when time.bpm == 98`
+
+   — which would have greyed the word `cycle` in the harmony menu on every
+   record in the catalog except the shipped chant, printing a tempo as the
+   reason. It is a coincidence with the shape of a law, and it survived the
+   holdout because 58 bpm IS the chant and the chant is where the designed
+   cross lives, so the column separates the corpus perfectly and means
+   nothing.
+
+   AND IT IS PROVABLY A COINCIDENCE, not merely a suspicious one, which is why
+   the column comes out rather than being written up. This file measures the
+   score in STEP units (`score` above returns each event's `t` as a step) and
+   the tempo is seconds-per-step, applied after the kernel has emitted every
+   event. Measured, 8 precomposed records rewritten to a different bpm — punk
+   160->58, dub 76->58, motown 122->58, marabi 105->58 and four more:
+   8 of 8 compile to a BYTE-IDENTICAL event list. A feature that cannot move
+   the measurement can only ever fingerprint the records that carry it, so a
+   rule built on it is a rule about which record you are looking at.
+
+   THE TEST IS "CAN THIS COLUMN MOVE THE THING BEING MEASURED", and only two
+   columns fail it: the document's tempo and the anchor's. Everything else the
+   fit is offered — the key, the meter, the mode, the cast, the roles — does
+   move the score, so it stays offered and is held to the holdout like any
+   other. This is deliberately NOT "hide every continuous quantity": the key is
+   a continuous-looking integer that transposes every note, and hiding it
+   because it looks like a number would throw away a real law. */
+const NOT_A_LAW = new Set(["time.bpm", "basis.bpm"]);
 const own = (f, hide) => { const o = {};
   for (const k of Object.keys(f))
-    if (!k.startsWith("basis.") && !(hide && hide.has(k))) o[k] = f[k];
+    if (!k.startsWith("basis.") && !NOT_A_LAW.has(k) && !(hide && hide.has(k))) o[k] = f[k];
   return o; };
 const notMine = (f, hide) => { const o = {};
-  for (const k of Object.keys(f)) if (!(hide && hide.has(k))) o[k] = f[k];
+  for (const k of Object.keys(f))
+    if (!NOT_A_LAW.has(k) && !(hide && hide.has(k))) o[k] = f[k];
   return o; };
+/* ...AND A RULE THE PAGE CANNOT SAY OUT LOUD IS A RULE THE PAGE MUST NOT GREY
+   WITH. This is the second guard the real corpus forced, and unlike the tempo
+   column above it is about the SENTENCE the rule produces rather than its
+   subject.
+
+   THE LAW IT ENFORCES IS ALREADY WRITTEN: an unreachable option greys WITH ITS
+   REASON PRINTED. avail.js owns the words — `WHY` is the one hand-authored
+   table in that file, ~20 rows of English for ~20 facts a document carries —
+   and it has a deliberate fallback for a fact it has no row for: print the raw
+   column name, "AN UGLY STRING ON THE PAGE IS HOW A MISSING ROW GETS FIXED".
+   That fallback is right for a rule a PERSON wrote and reported; it is not
+   right for a rule a fitter INVENTED, because there is nobody to report it to
+   and no claim behind it — it is the fitter naming a column it happened to
+   like.
+
+   WHAT IT CAUGHT, TWO RUNS RUNNING, and both were the same species: with the
+   anchor rows made real records the corpus became two families, 19 documents
+   derived from the shipped chant and 12 whole precomposed records, and ANY
+   column constant across the chant family separates the two perfectly.
+
+     run 1   alphabet.harmony / cycle   `when time.bpm == 58`
+     run 2   alphabet.harmony / cycle   `when alphabet.key == 2`
+     run 3   dev.kit / tomtime          `both(time.meter.four, not basis.instr)`
+
+   58 bpm IS the chant and key 2 IS the chant; hiding the tempo column moved
+   the same coincidence one column over, which is how you know the column was
+   never the problem. The third greyed the word `tomtime` on the shipped page
+   with the sentence " basis.instr" — a leading space and a column name, which
+   is not a reason, and which `test/selects.js` and `test/sheets.js` both
+   caught the moment it shipped.
+
+   HOW IT IS DECIDED, AND IT IS NOT A LIST. An earlier version of this guard
+   was a set of column names the WHY table could render, which meant this file
+   kept its own second opinion about avail.js's vocabulary and would rot the
+   first time a row was added there. So the candidate rule is RUN THROUGH THE
+   PAGE'S OWN RENDERER — `Avail.whyOf(rule, feats)`, on the very feature rows
+   the rule was fitted from — and if the sentence it produces on any row where
+   the rule REFUSES still contains a raw column name, the rule is thrown away.
+   Add a WHY row in avail.js and the same rule becomes fittable, with no edit
+   here. A rejected fit falls through to the next strategy and then to null,
+   which is §6.2's law — FAIL OPEN, because greying a live option is worse than
+   showing a dead one. */
+// a column name and never English: dotted, unspaced (`basis.instr`,
+// `time.meter.four`). No row in avail.js WHY contains such a token.
+const RAW_COLUMN = /(^|[\s,])[a-z][A-Za-z0-9]*(\.[A-Za-z0-9]+)+([\s,.]|$)/;
+function unsayable(r, feats) {
+  if (!r || typeof r !== "object" || r.rule === "always" || r.rule === "never") return false;
+  for (const f of feats) {
+    if (evalRule(r, f) !== false) continue;      // it offers the word here
+    const why = Avail.whyOf(r, f);
+    if (!why || RAW_COLUMN.test(why)) return true;
+  }
+  return false;
+}
+/* one predicate for "this fit produced nothing usable", so the four fallback
+   stages below all ask the same question and a new guard lands in one place */
+const unfit = (r, feats) => !r || r.rule === "opaque" || unsayable(r, feats);
+/* ...AND A RULE NEEDS EVIDENCE ON THE SIDE IT IS MAKING A CLAIM ABOUT.
+   `MIN_EXPLAINED` below says four DEAD rows are the fewest a safe rule may
+   rest on ("below this, a 'safe rule' is a fluke"). Nothing said the same
+   about the LIVE rows, and it is the live side that decides where a word is
+   greyed: a rule fitted to "available when X" refuses the word everywhere ELSE,
+   so one lucky mover is enough to grey a whole vocabulary.
+
+   MEASURED, 2026-08-25, and this is what forced the line. With the real corpus
+   in place the fit put a rule on `dev.line / at the octave` —
+   `when is section.role.solo` — off a handful of measured scopes, which would
+   have greyed "at the octave" on every verse, chorus and head in the catalog.
+   Asked again over a fresh and far larger sample — 12 anchors x 2 seeds, every
+   section, the first two line voices, 556 scopes — the word moves the events
+   in NONE of them, solo sections included (0 of 36 solo, 0 of 520 other),
+   while `backwards` and `out` move 556 of 556 and `up a degree` 552. The
+   shipped table had it right and said so quietly: `inert`. The holdout could
+   not catch it, because a word that moves almost nowhere does not move on the
+   holdout either — the pass that separates a law from a coincidence needs the
+   coincidence to recur, and this one had nothing to recur.
+
+   So the same floor, applied to the same rule from the other end. Below it the
+   answer is `null` and not `inert`: the measurement DID see the word move
+   somewhere, so "this does nothing" would be its own small lie. No rule at all
+   is §6.2's law — the word is offered, and nothing is claimed. */
 function fitOne(present, feats, labels, hide) {
   if (present.length < MIN_ROWS) return null;
   const on = present.filter(Boolean).length;
   if (on === present.length || on === 0) return { rule: on ? "always" : "never" };
+  if (on < MIN_EXPLAINED) return null;
   let r = fitRule(present, feats.map((f) => own(f, hide)), labels);
-  if (!r || r.rule === "opaque")
+  if (unfit(r, feats))
     r = fitRule(present, feats.map((f) => notMine(f, hide)), labels);
   // ...AND IF THE CONDITION IS A NEGATED CONJUNCTION, FIT THE COMPLEMENT.
   // `fitRule` speaks AND and not OR, and half the real conditions here are
@@ -489,7 +630,7 @@ function fitOne(present, feats, labels, hide) {
   // harmony is emergent, which fitRule saw perfectly and could not say. The
   // complement of an OR is an AND, so the same fitter finds it by being asked
   // the opposite question, and avail.js's fifth rule form writes it down.
-  if (!r || r.rule === "opaque") {
+  if (unfit(r, feats)) {
     const no = present.map((x) => !x);
     let c = fitRule(no, feats.map((f) => own(f, hide)), labels);
     if (!c || c.rule === "opaque")
@@ -512,8 +653,8 @@ function fitOne(present, feats, labels, hide) {
   // move, and it is scored on how many dead words it explains. `verify` is
   // strict about the same asymmetry, so a rule that greys a mover on the
   // HOLDOUT still dies.
-  if (!r || r.rule === "opaque") r = fitSafe(present, feats.map((f) => own(f, hide)));
-  if (!r || r.rule === "opaque") return null;      // FAIL OPEN. §6.2's law.
+  if (unfit(r, feats)) r = fitSafe(present, feats.map((f) => own(f, hide)));
+  if (unfit(r, feats)) return null;                // FAIL OPEN. §6.2's law.
   delete r.alternatives;
   return r;
 }

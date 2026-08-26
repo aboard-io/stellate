@@ -1426,11 +1426,47 @@
           params: { ...base.params, cutoff: clamp(Math.min(isPad ? 8000 : 9000, c * 2), 200, 16000),
             ...body, release: clamp(m.release != null ? m.release : (isPad ? 0.5 : 0.35), 0.02, 3) } }; }
       case "brass":   return { ...base, module: "brass", biteFromAmp: true, params: { ...base.params, cutoff: clamp(Math.min(12000, c), 500, 12000), attack: clamp(isPad ? atk : (m.attack != null ? m.attack : 0.08), 0.005, 3) } };
+      // THE FOUR NUMBERS THAT WERE FM, TYPED IN. A recipe could name this module
+      // and not say one thing about the sound it made: `ratio`, `idx0`, `idx1`
+      // and `idxTime` were constants, so every FM voice in the catalogue was
+      // the same two operators at the same index. Measured (VOICE.md §9): at
+      // the shipped `idx1: 1.0` sweeping `ratio` across its whole 0.25..8 range
+      // moves the spectral centroid 254 -> 388 Hz — nearly nothing — and at
+      // `idx1: 6` the same sweep gives 34/19/11/17/7/9/7/5/5 partials with
+      // 26/10/0/14/0/4/0/0/0 of them inharmonic: integer ratios are tones,
+      // 0.25 / 1.4 / 3.5 are bells. FM here was not broken, it was turned down,
+      // and nothing could turn it up. The DEFAULTS ARE THE OLD CONSTANTS, so
+      // every record that says nothing is byte-identical; the ranges are the
+      // module's own (dist/fm2op-meta.json).
       case "fm":      return isPad
-        ? { ...base, module: "fm2op", params: { ...base.params, cutoff: clamp(Math.min(8000, c * 1.7), 200, 14000), ratio: 2.001, idx0: 2.6, idx1: 0.9, idxTime: 1.1, attack: atk, vibrato: 0 } }
-        : { ...base, module: "fm2op", fmLead: true, params: { ...base.params, cutoff: clamp(c, 200, 14000), ratio: 1.4, idx0: 3.5, idx1: 1.0, attack: clamp(m.attack != null ? m.attack : 0.05, 0.001, 5), vibrato: clamp(m.vibrato || 0, 0, 0.03), vibRate: clamp(m.vibRate || 5.2, 0.1, 12),
+        ? { ...base, module: "fm2op", params: { ...base.params, cutoff: clamp(Math.min(8000, c * 1.7), 200, 14000),
+            ratio: mp("ratio", 2.001, 0.25, 8), idx0: mp("idx0", 2.6, 0, 8), idx1: mp("idx1", 0.9, 0, 8),
+            idxTime: mp("idxTime", 1.1, 0.01, 4), attack: atk, vibrato: 0 } }
+        : { ...base, module: "fm2op", fmLead: true, params: { ...base.params, cutoff: clamp(c, 200, 14000),
+            ratio: mp("ratio", 1.4, 0.25, 8), idx0: mp("idx0", 3.5, 0, 8), idx1: mp("idx1", 1.0, 0, 8),
+            // …AND `idxTime` IS SPREAD RATHER THAN DEFAULTED ON THE LEAD, which
+            // the pad does not need: the pad already wrote it and the lead never
+            // did, so the module's own 1.1 has been the lead's answer all along.
+            // Writing that number here would be the same sound and a different
+            // unit spec, and a unit spec is what the press freeze compares.
+            ...(m.idxTime != null ? { idxTime: mp("idxTime", 1.1, 0.01, 4) } : {}),
+            attack: clamp(m.attack != null ? m.attack : 0.05, 0.001, 5), vibrato: clamp(m.vibrato || 0, 0, 0.03), vibRate: clamp(m.vibRate || 5.2, 0.1, 12),
             ...(plucky ? { decay: 0.06, sustain: sus, release: rel, fenv: fev } : {}) } };
-      case "rhodes":  return { ...base, module: "dx7_alg5", dx7: true, dx7Preset: "E.PIANO 1", freqMax: 1000,
+      // A CARTRIDGE, BY NAME. `dx7-presets.json` is 114 patches and this case
+      // could reach exactly one of them. The recipe could already carry
+      // `dx7: {algorithm, params}` (the branch above), which is a complete
+      // answer for a caller holding the 671 KB bank — and NOT for a page: a
+      // browser would have had to ship two thirds of a megabyte of operator
+      // envelopes to say 114 words. Both renderers already resolve a preset by
+      // NAME (`u.dx7Params || dx7Presets[u.dx7Preset].params` —
+      // live/stream-renderer.js:85, press/render-core.js:125), so the name and
+      // its algorithm are all a recipe has to carry and the bank stays where it
+      // already is. Absent is today: no `dx7Preset` is "E.PIANO 1" on
+      // dx7_alg5, byte for byte.
+      // (VOICE.md §9.3 said this step needed no engine change. It needed these
+      // two reads, and the alternative was the 671 KB.)
+      case "rhodes":  return { ...base, module: "dx7_alg" + Math.round(clamp(m.dx7Alg != null ? m.dx7Alg : 5, 1, 32)),
+        dx7: true, dx7Preset: m.dx7Preset || "E.PIANO 1", freqMax: 1000,
         // dx7.lib has no output gain; ab-render matched csound at raw*0.28 vs
         // csound amp 0.3 * level 0.7 => external scale = 1.333 * amp * level
         extGainPerAmp: 1.333 * lvl, params: {} };

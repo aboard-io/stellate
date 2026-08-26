@@ -42,6 +42,26 @@
 //   · Everything else is compared after a JSON round-trip on BOTH sides, so
 //     `drumkit: undefined` — which the no-drummer branch sets on purpose — is
 //     an absent key on both sides rather than a spurious difference.
+//
+// THE ONE TIME THE FROZEN FILE MOVED, AND WHAT MOVED IT (2026-08-25).
+// This fixture exists to prove that a round did NOT change the shipped record,
+// so a change to it has to be an event with a reason attached. There has been
+// exactly one: `songs.js` seated the chant's cantor with twelve numbers in
+// `set`, and two of them — `vowel: 1.4` and `push: 0.42` — reached no engine
+// (state-engine.js writes `vowel` from the vowel walk every syllable and drives
+// `push` from velocity every note; see the long note at the deletion site in
+// songs.js). They came out of the record, so they came out of its portrait.
+//
+// THE UPDATE WAS DERIVED, NOT RETYPED, because this file cannot be re-run: its
+// CLI half slices a PRE-MOVE `ui/eight.js` that no longer exists in the tree or
+// in git (eight.js was rewritten this round and is not yet committed), and
+// pointing it at today's file fails loudly at its own anchor regex rather than
+// quietly freezing something else — which is the correct behaviour for a
+// freezer. So the fixture was transformed by exactly the edit the source took:
+// delete the keys `vowel` and `push` wherever they appear under a `synth.set`,
+// and nothing else. The proof is the diff — 10 deleted lines, 5 sections x 2
+// keys, 0 insertions, 0 other changes — and G7a passing on everything that was
+// left.
 "use strict";
 const fs = require("fs");
 const path = require("path");

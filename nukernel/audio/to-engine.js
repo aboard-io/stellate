@@ -242,6 +242,20 @@ const SYNTH = {
   juno60:    { model: "juno60", rename: { spread: "chorusSpread" } },
   lead_fuzz: { model: "fuzz",   role: "melody" },
   dx7_alg5:  { model: "rhodes", role: "melody" },
+  // TWO-OPERATOR FM, WHICH THIS BOX COULD PLAY AND COULD NOT NAME. Paul,
+  // 2026-08-25: "I feel also we're just not using FM enough" — and the reason
+  // was not cost. Measured (VOICE.md §9): COST.fm2op is 0.53 against a BUDGET
+  // of 40, which is 1.3% of a record's whole voice budget and cheaper than
+  // everything in this table except the organ and the choir; one DX7 voice is
+  // 6.4, and a tract is 9.6. What FM did not have was a NAME: `fm2op` had no
+  // row here and no PATCH_* row, so there was no string a document could write
+  // that reached it, and the only FM in the catalogue was `dx7_alg5` pinned to
+  // one cartridge and seated by exactly one anchor in 139 (vaporwave). One line
+  // makes it seatable by any document and puts it in the instrument menu, which
+  // reads `SYNTH_NAMES()` through avail.js instrOptions. No role: two operators
+  // hold a pad as happily as they play a lead, and the parent's `fm` case
+  // builds `module: "fm2op"` for both.
+  fm2op:     { model: "fm" },
   // the rest of the fleet the patch table reaches for. Nothing here is new
   // synthesis — every one is a precompiled dist/ module the parent has been
   // able to play all along and nothing in nukernel had ever asked for.
@@ -904,6 +918,30 @@ function synthRecipe(sy, tone, role) {
  * one engine now, so there is one reader of each, which is the structural
  * version of the same promise.
  */
+/* ---------- THE ONE READER OF WHAT A SEATED VOICE SOUNDS LIKE ------------
+ * VOICE.md §2: "the extraction is a MEASUREMENT, not a parse" — so
+ * nukernel/knobs-extract.js has to be able to ASK the parent what a `set` key
+ * does, and ui/eight.js has to be able to ask the same question at draw time to
+ * print the DERIVED value a knob is overriding (VOICE.md §4.3, "the third cell
+ * prints the derived value"). Both used to have to reimplement `synthRecipe`'s
+ * rename table to do it, and a second copy of the rename table is exactly the
+ * drift this file's header spends four paragraphs refusing.
+ *
+ * So: ONE function, here, where the table is. It takes the document's own
+ * spelling — a dsp name and a `set` block, which is what `document.js`
+ * `nativeOf` hands out — and returns the parent's unit, params and all.
+ * `role` overrides the SYNTH row's own where a caller knows the chair.
+ * Returns null for a name the fleet cannot seat, which is what a SAMPLED
+ * instrument is (VOICE.md §5, row one).
+ */
+export const SYNTH_OF = (dsp) => SYNTH[dsp] || null;
+export function voiceUnit(dsp, set, state, role) {
+  const S = SYNTH[dsp];
+  if (!S) return null;
+  const r = synthRecipe({ dsp, set: set || {} }, null, role || S.role || "melody");
+  return SE.pitchedUnit(r.role, r.m, state || { bpm: 120, seed: 1 });
+}
+
 export function patchForInstr(id, tone, padish) {
   // THE MOUTH GOES FIRST, and it is the only entry in this chain that reads the
   // CHAIR as well as the id. "This machine is talking" is a more specific claim

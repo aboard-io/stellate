@@ -91,6 +91,13 @@ export const NuDeskDoc = window.NuDeskDoc;
 export const NuAvail = window.NuAvail;
 export const NuGates = window.NuGates;
 
+// ---- what a seated voice's own knobs are (knobs.js, VOICE.md) ----
+// Third table of the same kind and it arrives the same way: GENERATED, UMD,
+// read off window. `node nukernel/knobs-extract.js --check` is what holds it
+// against the engine, and no view module carries a second list of what an
+// instrument editor may draw.
+export const NuKnobs = window.NuKnobs;
+
 // ---- what somebody with taste said about it (producer.js, D4) ----
 // The whole module under its own name, for the reason NuDocument takes one: it
 // is a mover, not a table. `run` is the one name the seam calls; `SUBJ`, `SUB`
