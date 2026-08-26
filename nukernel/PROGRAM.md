@@ -1,5 +1,32 @@
 # PROGRAM — the round of 2026-08-24
 
+> **HOW TO READ THIS FILE, ADDED 2026-08-26 BY THE OWNER OF `STATE.md`.**
+> This is the CONTRACT the 2026-08-24 round was built against, and the contract
+> is still good: §2's eight-axis document, §2.3's greying-with-a-reason law,
+> §2.4's class vocabulary and custom properties, and the standing laws above
+> are all live. **Its COUNTS and its GATE TABLE are not.** Two days of rounds
+> have moved underneath it:
+>
+> * every "122 anchors" and "139 anchors" below should read **199**, every
+>   "62 places" or "65 places" should read **109**, and the year stops are
+>   **85, 540..2023** (`nukernel/atlas.gate.js` prints all of these);
+> * **§4's deferred list has been walked, re-measured and rebuilt** — go to
+>   `STATE.md` "STILL DEFERRED", which keeps every §4 id in brackets so nothing
+>   is renamed out of sight. Several §4 items are closed; §4·8 (`orn`) has
+>   changed shape entirely and is now the most valuable item on the list;
+> * **§5's gate table prints assertions that four gate files have since
+>   rewritten** — the pane rule, the `<select>` counts, the `eng.fx` chips, the
+>   composed-staff-per-motif — each reversed on purpose and each recorded in
+>   place in its own gate file. The gate list itself is also short: the runner
+>   carries **eighteen** gates now, against the thirteen commands named here
+>   (and the soak, which is deliberately not in the runner).
+>
+> Read §1–§3 and §5's PROSE for the argument and the laws. Read `STATE.md` for
+> what is true today, and `AXES.md` for the vocabulary. Nothing below has been
+> edited, on purpose: **reversals are rewritten, not deleted**, and a contract
+> you can no longer read as it was written is a contract nobody can check a
+> reversal against.
+
 Paul gave one brief and nine designers took a slice each. Their notes are the
 argument; this is the ORDER. It exists because nine designs that each edit
 `ui/eight.js` are nine merge conflicts, and because the crackle has to be dealt

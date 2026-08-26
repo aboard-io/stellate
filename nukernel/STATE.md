@@ -1,625 +1,1168 @@
-# STATE — where the box actually is, 2026-08-25
+# STATE — where the box actually is, 2026-08-26
 
-## What this is, in one paragraph
+## FOUR GATES CAME BACK RED TODAY, AND IN ALL FOUR THE PAGE WAS RIGHT
+
+Start here, because the previous edition of this file earned whatever trust it
+has by opening on its own failures.
+
+`node test/all.js --complete` — **18 gates, nothing sampled, nothing cached, the
+pass that gates a deploy** — was run today at 21:27 and came back **14 pass ·
+4 fail · 0 skip**. **Not one of the four failures was a defect in the page.**
+All thirteen failing assertions were transcripts of designs a later round had
+changed on purpose, most of them on Paul's own instruction. Every one has been
+rewritten to assert the new truth with the reason attached — **none deleted,
+none relaxed, each carrying above it the sentence it used to make** — and the
+repairs are committed as `2c0454d`, *"the gates catch up with the page they
+measure."* **A second full `--complete` run on the settled tree came back
+18 pass · 0 fail · 0 skip.** Nothing is red tonight, and the sentence is only
+worth anything because of what is written above and below it.
+
+* **`atlas`, 6 of 103.** **Four** of the six (G8, G16, G19, G22) compared
+  `#title` with the exact string `"Kingston 1969"`. Since the wiki round it
+  reads `"Kingston 1969 Reggae"`, because Paul asked for the article link *"at
+  the top by the title"* and `ui/eight.js draw()` appends the
+  `<a class="nu-wiki">` to that same element. The tap itself worked — G22's own
+  ring assertion passed in the same run off the same click, which is how you
+  can tell a stale string from a broken page. **The other two were the catalog
+  growing:** the gate asserted Tokyo has no mark at 1969 and the world round
+  added **enka, Tokyo 1969**; and it walked twelve Tabs looking for Kingston,
+  on a year that went from 33 drawn marks to 45.
+* **`motif-frozen`, 4 — two at 390 px and two at 1400 px.** A2 asserted *"a
+  composed staff over every written one while STOPPED"* — the
+  two-staves-per-measure layout of 2026-08-24. Paul killed it the next morning:
+  *"you don't need to show me the interpreted notation for a motif, only the
+  pure representation, because now I have the sheet music."* `ui/eight.js`'s own
+  header says the `data-live="played"` value *"existed for one day … and it is
+  gone"*, and `__eightCaptions` was rewritten with a note explaining what it
+  reads instead. **The page updated its own probe and its own prose; nobody
+  updated the gate.** Every promise A2 exists for still held in the same run —
+  A3 byte-identity, A4 the caption moving, A5 nothing moving, A6 no redraws,
+  A7 no long task.
+* **`sheets`, 2 of 28** and **`selects`, 1 of 52.** The same move from two
+  sides. The character chips came off the instruments (Paul: *"Don't let me add
+  effects to instruments. That's bus and board stuff"*) and got an address on
+  the board as `master.fx`, because that chain is the RECORD's — `audio/desk.js`
+  hands it to every seated voice. `test/sheets.js` had not been told the new
+  key. `test/selects.js` was worse: it **demanded a control be present on a page
+  where `desk-gate` — green at 123 checks in the same run — demands its
+  absence.** Two gates, one fact, opposite claims. That file is `#app`-scoped on
+  purpose and the board belongs to `desk-gate`, so the entry is gone from here
+  rather than followed.
+
+Two of the repairs now **derive** the fact they were typing — the atlas gate
+asks the page which year Tokyo holds no record in, and how wide the drawn set
+is, instead of remembering — so they cannot go stale the next time the catalog
+grows. And one of the repairs **broke its own gate on the way through** (an
+emptied table whose reader assumed a first row), which is recorded in the laws
+below rather than quietly fixed.
+
+**THE ONE THING WORTH TAKING FROM THIS, and it is why the count was four rather
+than one:** the last `--complete` run on record before today was 2026-08-25,
+and the last gate of that day's suite exited at 14:14. **Six commits landed
+after that** — `55ae623`, `6ddd43b`, `0c58a6a`, `70e2ee4`, `2151c1d`,
+`9b76f77` — three of them reversing a design on Paul's word. **A gate is a
+transcript of a decision, and a reversed decision leaves a red gate behind
+whether or not anybody looks.** The suite takes twenty-six minutes. Run it
+before you believe a tree.
+
+## AND ONE THING NOBODY MEASURED TODAY, ON PURPOSE
+
+Paul, today: *"Don't do the soak."* The soak is the only thing that can
+measure starvation, dropouts, heap and keep-up, so **this file makes no claim
+about audio health.** The last numbers stand with their date on them:
+`GLOBE.md`, 2026-08-24 evening, twelve minutes with the globe on screen —
+**SOAK PASSED, all eight checks, `episodes=0`, `keepUp p05 = 1`, readout
+`runway 8.4s · no dropouts`.** Two rounds have changed the master chain and
+the voice fleet since. Nobody has re-measured. If you want the claim, the soak
+is the way.
+
+---
+
+## WHAT THIS IS
 
 nukernel is a song box. A record is **one value with eight axes** — Time,
 Alphabet, Material, Development, Form, Cast, Sound, Performance (`AXES.md`) —
-and everything else is a view of that value. You pick a place and a year off a
-globe and the box writes a whole record there; you read it as a page of
-questions and answers, edit any of them, and the band plays. There are **139
-anchors** in the catalog across **71 places and 73 years, 540 to 2023**. One
-engine plays it (the parent's FaustLive), one mixing board sits at the foot of
-the page, one producer speaks in sentences, and one exporter writes an Ableton
-set. `PROGRAM.md` is the order the 2026-08-24 round was built in; this file is
-what actually works, dated today.
+and everything else is a view of that value. You turn a globe, pick a place
+and a year, and the box writes a whole record there; you read it as a page of
+questions and answers, edit any of them, and the band plays. There are **199
+anchors** across **109 places and 85 years, 540 to 2023**. One engine plays it
+(the parent's FaustLive), one mixing board sits at the foot of the page, one
+producer speaks in sentences, and one exporter writes an Ableton set. Nothing
+on the page fetches anything: every table it reads was derived offline and
+committed.
+
+**How to read the page.** It is one long scrolling document, seven blocks
+deep: the atlas at the top (a when-slider and a globe you turn), then the five
+axis sections, then the mixing board. Everything is a real HTML control with
+its label in the DOM — **the page must read as the same document with the
+stylesheet off, top to bottom**, and a gate asserts that. An option you cannot
+choose is greyed and **prints the reason in its own words**; that greying is
+EXTRACTED by compiling records, never typed. Nothing changes under your hand
+while the record plays except the things that declare themselves live.
+
+**The order to read the files in.** `AXES.md` first (the vocabulary, 127
+lines). Then this file. Then `PROGRAM.md` for the contract the 2026-08-24 round
+was built against — its counts are stale, its contract is not. The deep reports
+are listed at the foot, each with how far it can be trusted.
 
 ---
 
-## FIVE THINGS THAT DO NOT WORK
+## WHAT WORKS, WITH THE NUMBER THAT PROVES IT
 
-**The oldest record in the box hires a church organ.** `zema` is Aksum 540,
-Ethiopian chant, and its own comment in `genres.js` says out loud that it is
-"NOT a child of Rome 600 and must never be written as one." Then the arranger
-writes it into the cast. Measured today, all three seeds:
+### The catalog grew by 43%, and it says where it stopped
 
-    zema seed 1   voice/ahh_choir  voice2/ahh_choir  vocal/solo_vox
-                  fugue/CHURCH_ORGAN  GREGORIAN/ahh_choir
-    zema seed 2   … counterpoint/HARPSICHORD  GREGORIAN/ahh_choir
-    zema seed 3   … fugue/CHURCH_ORGAN  drone/slow_strings
+**139 anchors → 199.** Sixty new ones — son Havana 1928, choro Rio 1900, mento
+Kingston 1952, shidaiqu Shanghai 1940, kroncong Jakarta 1935, filmi Mumbai
+1960, rebetiko Piraeus 1935, ragtime Sedalia 1899, sacred harp Philadelphia
+1844 — and the Euro-American share goes **86.3% → 61.7%**. The era laws
+written for the African round held under a 43% expansion: **zero out-of-period
+hires across 597 records.**
 
-Every seed brings a European keyboard instrument to sixth-century Aksum and two
-of three bring a voice **literally named `gregorian`**. `mbube` (Johannesburg
-1939) gets a harpsichord on all three. It is not the anchor's fault:
-`compose.js:1296` hard-codes `vox: ["gregorian","counterpoint","fugue","drone",
-"vocal","vocal"]` as the guest pool ANY choir record draws from, and it was
-written when every choir in the table was European. `AFRICA.md` named this at
-04:02 and it is unfixed. Either the pool becomes per-anchor or these two opt out.
+**The one empty region is empty for a reason that is not musical.** Australia
+and the Pacific has no dot because `atlas-land.js` bakes Natural Earth
+*physical* land and holds no Pacific islands, no Ryukyus, no Lesser Antilles.
+Four Tier-1 anchors were written and **withdrawn** because no dot for them can
+be proved on land: hapa-haole (Honolulu, 33.9° from the nearest baked
+coastline), Melanesian string band (Honiara 9.0), zouk (Pointe-à-Pitre 5.5),
+Okinawan pop (Naha 5.3). All four are 12-TET, in four, and castable. **One
+re-bake of the coastline unblocks half that row**; the other half is blocked
+musically and says so. See `WORLD.md` for the tier rules and the `cannot`
+field.
 
-**Marabi's inversion is a dead field.** The `marabi` anchor calls its `inv: 2`
-"THE HIGHEST STRUCTURAL VALUE ON THIS PAGE" — I‑IV‑I6/4‑V is not a detail of
-the style, it *is* the style. Measured today, the composed record's progression
-is `[{d:0,q:triad},{d:3,q:triad},{d:0,q:triad},{d:4,q:triad}]`: **no `inv`.**
-`precompose.js:469` builds chords as `{d: c.d||0, q: c.q||"triad"}` and drops it
-on the way into the document; the kernel honours the field the moment it
-arrives (`kernel.js:688`), and putting it back by hand moves 4 of 32 bass notes.
-`mbube` inherits the same dead field. **One line.** (`AFRICA.md` §"What is
-still wrong" 1.)
+### Every genre has a Wikipedia link, resolved against a local Wikipedia
 
-**The greying on the page is derived from a corpus of one record.**
-`gates.json` decides which option is unreachable and what reason it prints, and
-it is EXTRACTED, which is right. But `gates-extract.js:281-284` builds its
-anchor corpus as `const d = base(); d.basis = gk` — every anchor measured as
-**the shipped chant with its label swapped**. The shipped `gates.json` says so
-in its own header: `{records: 55, anchors: 12, rolls: 24, holdout: 33}` —
-**twelve of a hundred and thirty-nine anchors, and all twelve seen as the same
-two-voice plainchant.** Swapping `basis` cannot change the shape, because every
-interesting rule reads `cast.drumsOn` / `cast.hasBass` / `cast.hasPad`, which
-are facts about the BAND. `INTERVIEW.md` §3.3 measured the consequence: that
-corpus produces **one question shape for all 139 anchors** where the real
-precomposed documents produce **six** (119 / 259 / 365 live questions, 6
-distinct live-sheet sets). This is not only a world-programme concern — it is
-what greys options on the page you are looking at today. The fix is one
-expression: the anchor corpus becomes `precompose.genreToDocument(gk, seed)`.
+**191 links, 2 deliberate misses, 6 internal roles never linked** — 160 genre
+articles, 20 artist, 7 broader, 4 work. Derived once by
+`nukernel/wiki-extract.js` against `wikipedia_en_all_maxi_2026-02` served by
+`kiwix-serve` on this box, committed as `nukernel/wiki.js`, and re-derivable:
+`test/all.js`'s `wiki` gate re-runs the whole derivation against the ZIM and
+fails if it drifts — it did so twice today. **A link is not a fetch** — the offline law is
+untouched, and `test/atlas.js` G7 still aborts every non-localhost request and
+stays green with 191 hrefs in the DOM.
 
-**The board's EQ rows promise a bar and do not draw one.** `#boardtbl`'s caption
-reads *"one column per channel · the slider is your offset, **the bar is what
-the record is already doing**."* Only the `fader` row builds a `<meter>`
-(`ui/engineer.js`, the fader block). The three EQ rows above it build a slider
-and nothing else — so on the grid you cannot see the derived shading you are
-offsetting. The engineer's own per-voice sheet does print it ("riding −1.3 dB");
-the grid, which is the thing the caption is about, does not.
+Disambiguation was the whole job and the file is written to be read:
+`nukernel/WIKI.md` carries, for every row, the argument from the anchor's own
+facts and the first sentence of the article, so a human can check it by
+reading. Five automatic rejections each caught a real mistake, the best of
+which is the commit's title: **`Zema` is a genus of Asian planthoppers.** Also
+caught: kiwix serves a redirect-to-fragment as a meta-refresh stub an
+HTTP-status check cannot see, so five rows were silently landing on a SECTION
+rather than an article. It refused to guess twice — `synthduo` gets no link
+because *"guessing at Erasure or the Pet Shop Boys would be inventing a fact
+the table does not hold."*
 
-**And no fresh claim is made about audio health, on purpose.** Paul, today:
-*"Don't do the soak."* The soak is the only thing that can measure starvation,
-dropouts, heap and keep-up, so this file makes **no** claim about them. The last
-numbers stand with their date: `GLOBE.md`, 2026-08-24 evening, twelve minutes
-with the globe on screen — **SOAK PASSED, all eight checks, `episodes=0`,
-`keepUp p05 = 1`, readout `runway 8.4s · no dropouts`.** That run predates the
-master-chain surgery of 05:48 today, which changed the master bus but not the
-ring. Nobody has re-measured since; if you want the claim, the soak is the way.
+### The record's own sound finally arrives
 
----
+Paul, by ear: *"you keep assigning 'solo vox' but should be using native
+voices where possible."* **The round's own first number was wrong and it said
+so.** It reported *"NATIVE seats: 0 of 1,226 (0%)"* — that measured
+`document.js nativeOf`, the DOCUMENT seam. What actually sounds is resolved
+four tables later, and through the engine's own `recipeFor` **63.9% of chairs
+were already Faust models**, including all 699 `solo_vox` seats, which resolve
+to `voice_lead` at breath 0.042 and not to a sampled breathy singer. So the
+hiss diagnosis was wrong for `solo_vox`. **The bug underneath was narrower and
+worse.**
 
-## WHAT WORKS, DELIVERABLE BY DELIVERABLE
+`precompose` names an instrument for **every** chair (3,228 of 3,228), the
+document turns that into `chairs[v] = { instr }`, `derive.js` returns it as
+`over`, and `audio/plan.js:207` read
 
-### The nine of `PROGRAM.md`
+    gsyn = font || (over ? null : ((chSeat && chSeat.synth) || G.synth))
 
-**D1 · The crackle — the start-up hole is closed in code, unmeasured today.**
-The ring **prefills before the first frame is released** (`audio/live.js:565`
-asks `prefillSec: 8`; the engine's bounds are at `engine/faust/live/live.js`
-"THE PREFILL"), `deepRunway` is on, and the page still says out loud which
-engine it got and whether it starved. The A/B recorded in the code, one minute
-each at `--load 2`: **first heard sample 7.50 s with one 853 ms dropout, versus
-9.78 s with none** — 2.3 s more silence, no hole, and the wait itself measured
-3.48 s. A prefill can never become a silence: it is clamped to what the pump
-will feed and capped at `PREFILL_MAX_MS = 12000`. **The silence is the part you
-feel, and it is question 1 below.**
+so a non-null `over` **nulled the record's signature synth on every chair of
+every precomposed record**. All **15 anchors that declare a `synth` block were
+silenced.** The catalog has always played right when rolled — a genre sets no
+`chairs`, so `over` is null — and precompose was the outlier.
 
-**D2 · The sheets — WORKS, and half of them are selects again, deliberately.**
-The rule settled after you said it twice (*"There are still many boxes that
-should be selects"*): **a single-choice control is a `<select>`; a sheet is what
-is left** — the one `<select multiple>` (the engineer's fx chips), the drum step
-grid, and single booleans. `test/selects.js` and `test/sheets.js` now assert that
-RULE off the page rather than an allowlist of one afternoon's controls: no
-single-choice `.nu-sheet` survives in `#app`, the only radio groups are the
-circle of fifths and the step grid, every development word is a menu (20 of
-them, 5 `dev.line` × 26 options and 5 `dev.kit` × 69 per voice), and **no key is
-ever drawn as a sheet AND a menu at once** — the hole a half-finished conversion
-falls into, which neither the old assertion nor its opposite would have caught.
-The greying-with-a-reason law is untouched and still gated: 0 words greyed
-before the tap, **8 after, every one printing its own reason**, `out` never
-among them. And the stylesheet-off promise still holds — `test/selects.js`
-disables every sheet in `document.styleSheets` and the page still reads as the
-same document with every reason still in the text.
+    native seats        2062 (63.9%) -> 2485 (77.0%) of 3,228 line chairs,
+                        over 199 anchors x 3 seeds
+    the record's own    0 chairs -> 72, all 15 anchors  (re-counted today:
+                        still exactly 72 chairs in exactly 15 anchors)
+    sampled / unrouted  1166 -> 743, and that number is NOT a backlog
+    worst record cost   36.80 -> 42.00 against a budget of 40
+    industrialrock      lead_fuzz, module fuzz, drive 0.85, verbatim
+    gregorian           ahh_choir -> voice_choir, MOUTHS.plainchant
+    also restored       acid->tb303 · vaporwave->dx7_alg5 · kraftwerk,
+                        motorik, roboticpop, ebm->modeld · synthduo->juno60
 
-**D3 · The engineer and the board — WORKS, and it reaches modelled voices.**
-The reverb return is open, the desk EQ is a real stage, and — this is the part
-that was missing when the last STATE.md was written — **a modelled Faust voice
-wears the same tone decision a sampled one does**, because the strip is a stage
-the RENDERER owns now. Measured on the tape by the verifier: pushing the
-cantor's board EQ to `lo −6 / hi +6` moves the output **−5.7 dB at 50 Hz and
-+4.7 dB at 15 kHz with 250 Hz–2 kHz inside ±0.3 dB**; the same gesture that
-morning moved −0.8 / −1.2 dB, noise in the wrong direction. `EQ.md` is the
-account, including the catalog-wide consequence: **222 sampled chair-boxes were
-already carrying a non-flat `lo`/`mid`/`hi` that did nothing**, and now they do
-something (about 1.5 dB). Nothing in the stored numbers changed; the renderer
-stopped ignoring them. `desk-gate` passes all **85** checks.
+`ahh_choir` (381 chairs) and `ohh_voices` (39) had no PATCH row at all, so
+`to-engine.js`'s entire `choir` branch and the `blend` dial that `genres.js
+MOUTHS` writes on ten rows had **never once executed.** The cost is one record
+of 597 over budget; the gate asserts a stated ceiling of 43 and prints the
+over-budget list every run, because `trimToBudget` runs
+before nukernel adds its chairs and so nothing sheds them. Three records would
+have been worse and were fixed by a musical rule rather than a budget dodge:
+**a guest does not bring a SECOND choir, it joins the section already seated.**
+The new census counts native seats on every run, so this can never silently
+return to zero.
 
-**D4 · The producer — WORKS.** 26 node checks, 28 browser checks. Three taps
-move the record and the note table says what it moved; `more` pushes, `less`
-puts it back exactly, *"take it off"* restores the document byte-identical, and
-a `less the cantor` note lands in the mix-offset layer rather than in the Sound
-axis. The browser gate now drives the verbs through the `<select>` **the way a
-person does** (finds the option by `data-v` and uses ITS `.value`), which is
-what the old `opt|prod.verb|make` tap key stopped being able to do.
+### The voice has 247 controls, every one measured
 
-**D5 · Precompose — WORKS, and the two gaps the last file named are closed.**
-139 anchors × 3 seeds = **417 records, 4,304 sections, 3,408 line cells,
-1,290,822 sounding events**, no throw and no silent section. Measured today:
-**139 of 139 records carry `sound.buses`**, 23 carry `sound.fx`, and **583 of
-981 voices carry a `desk`**. `time.groove` is no longer one word for everybody —
-**backbeat 55 · push 28 · none 28 · funk 14 · laidback 9 · dub 5.** 10 distinct
-scales. Two residues worth knowing rather than fixing blind: **398 voices carry
-no desk** (242 line, all 118 bass, 38 drums), which is absent-is-today doing its
-job where nothing was decided, and **all 118 bass voices carry no `instrument`**,
-which is correct — a `kind:"bass"` voice is written by the kernel's own bass
-writer — but reads as a hole in a document dump.
+`nukernel/knobs.js` is **GENERATED**, not typed: **247 controls across 27
+voices**, every key probed at both ends, dead travel trimmed, `derived`
+recorded so a knob shows the number it is overriding, `gate` carrying its own
+measurement (*"artic is a 10 dB control at babble 0.4 and a 0.1 dB one at
+babble 1"*), and `quiet` for a key that exists and is silent. The published
+range is the outermost pair of values at which the parameter still moves, so
+**no slider on this page has a stretch at either end where nothing happens.**
+`test/knobs.js` passes **94 checks** and asserts every one of the 247 moves a
+parameter. Vowels are letters, never numbers. A take and a seed exist at last.
 
-**D6 · The atlas — WORKS, and it is a globe.** Two controls: a when-slider and a
-**hand-rolled SVG earth you turn and zoom** (the WebGL twin was deleted; it
-drained the audio runway to zero in forty-five seconds). `atlas.gate` passes all
-34 checks — 139 anchors = 133 placed + 6 excluded, 73 stops 540..2023, **71
-places, 0 orphans, 0 empty stops**, 18 `ERAS` rows and "now" present *because
-the catalog reaches 2023*, derived rather than typed, so it cannot become the
-same lie in 2031. `test/atlas.js` passes 91 browser checks. The cropped,
-unswipeable flat map is gone with the map. **Both defects `GLOBE.md` opened are
-fixed in code:** the pinch now holds the point under the midpoint of your
-fingers (`holdUnder`) instead of panning by a centroid that a symmetric spread
-never moves, and the drag lock moved from a 45° `dx > dy` test to `LOCK_DEG =
-25`, so an ordinary diagonal thumb-drag belongs to the globe.
+**FM was never expensive — it was unreachable.** `fm2op` had no SYNTH row, no
+PATCH row and no string a document could write; one line seats it and the
+instrument menu goes **108 → 109**. Its four FM constants became real
+controls, and the measurement says what was wrong: at the shipped `idx1` of
+1.0 the whole ratio range moves the centroid **365 → 469 Hz**; at `idx1` 6 the
+same sweep sits at **847 → 914**. RMS is 0.22 at all six. **Brightness, not
+loudness — it was turned down, and nothing could turn it up.**
 
-**D7 · The nudges — WORKS.** 24 checks. `env:"arch"` moves the rendered
-velocities (a flat 64-event stream comes out `3 4 4 5 5 5 5 4`); with no drummer
-all seven drum-writing edges are disabled and nothing else is; hiring a drummer
-brings all seven alive. The gate had been counting nudges on the boot page and
-bailing at "0 found" — boot lands on the form **list** now and a section's
-questions are one tap further in, so it opens section 2's detail first: **boot 0
-· section 2 → 8 · performance tab → 3**, all seven drum edges in one detail, no
-silent greys.
+### A throat you can drag, and the picture IS the measurement
 
-**D8 · The shell — WORKS, and its one stale rule was reversed on the record.**
-Eight assertions, all measured off the rendered page at **320 / 375 / 430 /
-820** with a drummer hired first so the widest grid the page can draw actually
-exists: the page never scrolls sideways · no `button`, `select` or
-`input[type=number]` under 44px tall · every checkbox and radio has a 24px tap
-target on both axes (WCAG 2.2 AA) · no pane is a two-axis scroller · **no table
-overflows the box it is in** · at scrollY 600/1400/2400 the bar is at 0 and
-exactly one axis heading is pinned, and it is the axis you are inside · the bar
-is exactly `--bar-h` tall · a sticky first column survives a sideways scroll.
-PASS at all four widths, 3 skips the gate names itself. The pane rule is the
-reversal — see the gate note below.
+Paul: *"Do you think you could come with a nice radial graph structure for
+editing the voice so I can work on multiple dimensions"* — and, when the
+geometry was put to him, *"I'm fine with the pad idea for the voice editor."*
+So it is a **2-D pad with a ring of spokes around it**, and the argument for
+that shape is in the code: a spider chart gives every parameter one spoke and
+one number, which is what the table under it already does drawn round instead
+of down. **`tongue` and `tongueD` are not two numbers** — they are a POSITION
+and a DIAMETER at that position, one constriction with two coordinates, and the
+vowels sit at particular PLACES in that plane. Separated onto two spokes,
+*"move the constriction forward while opening it"* is two gestures and the
+plane you are moving in is invisible.
 
-**D9 · Ableton export — WORKS at P0, and one deferred item closed itself.**
-The `.als` round-trips against the SONG, conforms to the donor, and the sample
-audit finds no authored absolute paths. **`tomHi`/`tom`/`tomLo` no longer all
-export as GM 47**: `export/als.js` `GM_DRUM` gives `t`→50, `m`→47, `l`→43,
-because P0/P1 read `plan.timeline()` with the lane letter still on the event
-rather than the `barPlan` path that drops `L.tom`. The comment names the exact
-condition under which the collapse returns. Gate 4 — whether a set **opens** —
-only Live can answer, and it is still question 8 below.
+**And it is the answer to "why doesn't the tongue work", which is why it
+exists.** `tract_voice.dsp:104` crossfades your `tongue` against THE VOWEL
+TABLE's by `artic`, and that against THE BABBLER's by `babble`; the chant's
+cantor ships `artic: 0.45, babble: 0.4`, so **the tongue is OUTVOTED, not
+broken.** A disabled slider with a sentence beside it said so and it was read
+past. The picture says it instead: the vowel's own point is drawn, your handle
+is drawn, and **the dot on the line between them is where the tongue actually
+goes.** At `artic: 0` that dot sits on top of the vowel and the line has no
+length. The picture is the measurement.
 
-### Everything since the nine
+**Two views, one store, and this page has already paid for getting that wrong
+once** (`listening` and `volume` were two scales of one number and the record
+went silent). Every value on the pad is an `<input type=range>` in the table
+directly below and both write the same `voice.set` through the same
+`writeKnob`; during a drag the twin slider's value and readout move too, so the
+two cannot be seen disagreeing even for a frame. With the stylesheet off the
+picture is a decorative `<svg>` and **the sliders are the page**; a screen
+reader is given the sliders and never the picture, because an SVG you drag is
+not a control and pretending it is one is worse than not drawing it.
 
-**The grids rotate.** Paul: *"Rotate the drum kits and motif editors to be
-vertical. They'll fit on a phone screen that way."* Steps run DOWN now. The
-motif grid is **292.8px** and the widest kit the catalog can build is **272px**,
-both inside the **296px** column a 320px phone leaves — so they do not scroll
-sideways, and the horizontal scroll container they used to live in is gone. That
-container was not neutral: it is what caused the snapping you reported. The
-shell gate's A5 was rewritten to assert the new truth (see the gate note below).
+**And the face was dead when Paul first reached for it.** *"I can't get to the
+inside box with the vowels."* The record babbles at 0.4, which gates `tongue`
+and `tongueD` — and a transparent grab rect went on declining the browser's
+scroll over the largest object in the picture, so the tap did nothing AND the
+swipe was eaten. The grab class is conditional on liveness now and the face
+draws `is-off`. Measured: **a vertical drag inside that square scrolls the page
+346 px where it moved 0**, and **every one of the other 46 controls in the
+editor was hit-tested at its own centre at both widths and reaches.**
 
-**The form is rows, and Performance is a tab.** Boot lands on the form LIST —
-five section names as rows; tap a number and its questions open. Performance has
-its own tab with its three nudges.
+### The breath slider stopped being four-fifths travel
 
-**The live score — the whole band, two bars at a time, above the tune you are
-writing.** Paul: *"add a section ABOVE motifs which is the current playing
-music, two measures at a time, but ALL."* A stave per voice, bracketed, barlines
-running through, the playhead walking down. It reads `sectionRender(...).ev` —
-the same stream the transport and the bounce are handed — **not** `voicePhrase`,
-which exists only for LINE voices and would have shown 2 of 8 staves on a
-precomposed record. The consequence is written into the file rather than
-discovered: **the score and the composed staff below it CAN differ**, because
-the stream has been through entry, envelope, intro/outro, harmonize and groove.
-That is the difference between a conductor's score and a player's part, and
-where they disagree **the score is the report**. The window advances by TWO,
-never one; a window change is held 200 ms before it is painted (the bar feed was
-measured reporting 0 → 2 → 0 inside 100 ms at a pass boundary, so a contradicted
-window never reaches paper); silent voices keep their staves as rests, four of
-eight on the yachtrock record; percussion gets `K:none`. The block is the same
-height stopped or playing, because a section that appears on play is the
-interface changing. Window turns went **110–251 ms → a longest task of 79 ms**.
+Paul: *"it's ALWAYS hissy — i think hiss is probably 5x too much for the range
+of use."* It was the RANGE, and the measurement produced his number twice
+without being asked to. The ceiling is one step past the balance
+`to-engine.js` had already rejected in writing as *"a whisper's balance, not a
+singer's"*: the breath at which air first stands **+3 dB over tone above
+4 kHz**. That rule gives **0.2 of 1.0 on `tract_voice` and 0.12 of 0.6 on
+`voice_lead` — one fifth both times, from one rule, on two different
+modules.**
 
-**The motifs became tabs, and the transforms became pictures.** The page went
-**8,357 → 6,277px at 390 (−25%)**, and playing height equals stopped height at
-both widths. The editor moved out of `#staff` so that name means what it says;
-the ORDER Paul asked for — *"The motifs should stay with their editors!!!"* —
-is unchanged, staff then the grid that writes it, adjacent. The seven transform
-icons are generated from one shared contour so they are visibly the same tune
-transformed. That narrowly reverses PLAN.md's *"No icons anywhere"*, on the
-record: the old law was about actions with no visual form, and these are
-geometric operations on a shape you are looking at. The words stay in the DOM as
-the accessible names.
+Two other suspects were measured and cleared. The DEFAULT is not hot: the
+chant's 0.07 sits at **−8.6 dB air-over-tone**, the exact seat `to-engine.js`
+chose. `FAM_EQ.vox` is real but worth **0.022 of breath — 2% of the old
+slider** — and cannot cause a 5× complaint. **One module is left alone on
+purpose:** the same rule puts `voice_choir`'s ceiling at 0.012, **below its own
+derived 0.08**, and a slider whose top is under the number the record is
+holding is the lie this page exists not to tell. Its range stands and the
+comment says why.
 
-**The page stopped moving under the hand while it plays.** The editable half of
-a motif is byte-identical across a section boundary, the same DOM node under a
-finger, the window moved 0px. Gated by `test/motif-frozen.js`. The measurement
-that found it is worth keeping: every long task ≥100 ms on the shipped chant was
-a `draw()` — 409/436 ms at 390px, 419/1516 ms at 1400px — and the per-beat
-`lightStep` sweeps produced **none**. The suspect in `PROGRAM.md` F5 was wrong;
-the demand for a measurement before a guess was right.
+### The score scrolls, and it renders whole
 
-**Africa has a history, and the graph stopped lying about who begat whom.** Five
-African anchors in three cities became **fourteen in nine**, and the oldest
-record in the box is now Aksum 540 — sixty years before Rome 600, with the
-comment saying out loud that the date is a traditional attribution to St Yared
-*and* that Rome 600 is the same kind of claim on the same evidence. Then the
-genealogy, where the real damage was: `parents` is not decoration, because the
-fit tool measures "the invention" as the residue after ancestors, so a wrong
-parent is a wrong measurement. **Fourteen inversions** were repaired — bossa
-declared 100% New York, bailefunk descending from bebop through bossa, worldfolk
-descending from afrobeat (Lagos and Johannesburg are not a lineage), `hymn`
-descending from `gospel`, a hundred and one years backwards. And a conservative
-half that matters as much: a list of anchors that are NOT wrong and must not be
-touched, with reasons. `AFRICA.md` is the account.
+Paul asked for the whole band above the tune you are writing. It reads
+`sectionRender(...).ev` — the stream the transport and the bounce are handed,
+not `voicePhrase`, which exists only for LINE voices and would have drawn 2 of
+8 staves on a precomposed record. **Where the score and the player's part below
+it disagree, the score is the report.**
 
-**The master chain.** *"Almost everything is once again loud and distorted and
-there's no way to bring it down."* Three suspects were named and all three were
-measured OFF and exonerated (whole desk tone withheld: 0.32 dB QUIETER; FAM_EQ
-alone: 0.33; reverb return shut: 0.11; precompose desk removed: 0.00). It was a
-threshold crossed, not a line changed — the box now plays 139 precomposed
-full-band anchors where yesterday it played dice rolls, and the master chain was
-built for material that was quiet. Three fixes, all in the parent:
+The misalignment Paul reported was measured to his own diagnosis: two four-bar
+tiles of the same reggae came out **556.99 px and 588.20 px tall — 5.6%** —
+each scaled individually into a fixed box, with 1.08 px of extra staff gap
+compounding to 6.5 px by the seventh voice. It renders whole now, behind a
+loader past a **100 ms** prediction — a threshold borrowed from
+`test/motif-frozen.js` A7 rather than invented. Chant **132 ms**; Kingston,
+152 bars and 7 voices, **1.7–2.8 s** for a paper **29,695 px wide holding
+4,236 noteheads in one system.** Steady scroll, red notes, no playhead — his
+design, and simpler than what it replaced. Same engrave cost as the two-bar
+window it replaced (5 → 7 per playthrough, worst task 100 ms vs 105 ms), and
+**the picture is never replaced**: the jumpiness was replacement, not cost.
 
-* **The fader was the last node**, after the bus comp, the make-up, the
-  compressor and the limiter. Swept on Tampa 1990 it moved the level at every
-  position and **never once moved the crest** — 8.2 / 8.2 / 8.1 / 8.1 / 7.7 dB.
-  That is "no way to bring it down", literally. It now sits at the master bus
-  INPUT, and the crest recovers as you go down: **7.76 / 9.37 / 10.14.**
+### The producer was already ten
+
+Paul: *"supposed to be able to say ten things not just one."* Measured before
+a line was written: **nine sentences stacked, ten rows drawn**, each with its
+own percentage and its own more / less / take it off, and `run` applying all
+nine in order. `MAXNOTES` is 10, `addNote` appends, `notesTable` has drawn the
+whole list since it was written. **Nothing capped it.** If it reads as one,
+that is discoverability and not capability — worth knowing which, because the
+fix is somewhere else entirely. It is question 5 below.
+
+### The greying on the page is derived from real records now
+
+`gates.json` decides which option is unreachable and what reason it prints,
+and it is EXTRACTED. Until this week its anchor corpus was **the shipped chant
+with its label swapped** — all 139 gave exactly 81 scopes and ONE live-sheet
+set, where real precomposed documents give **120–365 scopes and 49 distinct
+counts.** Fixing the corpus exposed two flaws in the FITTER that were worse
+than the defect:
+
+* **The corpus is bimodal**, so any column constant across the chant family
+  separates it perfectly. Run 1 fitted `alphabet.harmony / cycle` = *"when
+  time.bpm == 58"* — 58 bpm IS the chant — a rule that would have greyed the
+  word `cycle` on 138 of 139 records and printed **a column name** as its
+  reason. Every candidate now runs through THE PAGE'S OWN renderer
+  (`Avail.whyOf`) on the rows it was fitted from and is thrown away if the
+  refusal sentence still contains a raw column name. Not a blacklist: add a WHY
+  row in `avail.js` and the same rule becomes fittable. Tempo is excluded
+  outright and that one is **proved** — this file measures in STEP units, so
+  eight records rewritten to a different bpm compile to a byte-identical event
+  list, 8 of 8.
+* **`MIN_EXPLAINED` had no twin on the live side.** `dev.line / at the octave`
+  won a rule off a handful of scopes; asked again over 556 fresh ones it moves
+  the events in **none** of them — 0/36 solo, 0/520 other — while `backwards`
+  and `out` move 556/556.
+
+**18 option rules changed.** The headline is `dev.line / at the fifth` — the
+pad gate this slice exists for — which the old corpus had landed on *at the
+fourth* and *down a degree* instead.
+
+### `inv` is carried, and it moves the music
+
+`marabi` calls its `inv: 2` *"the highest structural value on this page"* and
+precompose used to drop it. Now: **28 of 212 bass events change pitch across 9
+of its 10 sections, and 0 of 841 line events move** — correct, because `inv`
+only ever moves `bassPc`. The chord-field census found four fields; `borrow`
+is carried conditionally against the day an anchor uses it, and **`beats` is
+deliberately NOT carried**, because a carried `beats` would itself be a number
+in a shipped document that reaches nothing.
+
+Two dead keys were **removed rather than wired**, and the argument is the
+reason: `vowel: 1.4` cannot be honestly translated, because the singers' rows
+are indexed a-e-i-o-u and the tract's i-e-a-o-u, so the same number is two
+different sounds and 1.4 falls between different pairs in each. Guessing it
+into a letter would have changed how the shipped record sounds on a coin-flip.
+
+### The guest pool stopped being European
+
+`GUEST_LEAN`'s `vox` row was `["gregorian","counterpoint","fugue","drone",
+"vocal","vocal"]` — right when typed, when every choir in the catalog was
+European, and wrong the moment `vox` ran from Aksum 540 to Leipzig 1725. Fixed
+with **four laws read off the anchor, not a name-list**: the unaccompanied law
+(derived, it finds exactly {gregorian, spem, organum, zema, mbube} — the five
+whose entries already said so in prose); two era laws with `INSTR_YEAR`
+EXTRACTED as the earliest year any dated anchor claims each id (church_organ
+1725, harpsichord 1602, ahh_choir 540 — zema's own use setting that floor);
+and two measured exemptions, because without the second the flat floor took
+the guitar solo off Chicago 1952 and **Chuck Berry with no lead break is a
+worse lie than the one being fixed.**
+
+**254 out-of-period hires, in 157 of 417 records and 74 of 139 anchors → 0.**
+`zema` went from CHURCH_ORGAN / HARPSICHORD on all three seeds to two
+half-choirs and the cantor, no guest at all. A tighter rule was measured
+(586 hires → 384) and **not** gated, because *"a guest is a foreign colour BY
+CONSTRUCTION"* and gating tightness would delete the feature.
+
+### The page stopped jumping, and the evidence that said otherwise was wrong
+
+Paul: *"When I click tabs the page jumps around. It's endemic."* The first
+report was a harness artefact — **`page.click()` scrolls its target into view
+first**, CenterIfNeeded, and 2251.09 + 22 − 422 = 1851 exactly. Under the bad
+harness was a real bug: `draw()` empties `#app` and rebuilds it, but abcjs
+engraves on a **promise**, so when `draw()` returned every staff host was an
+empty div and the page was short by one engraved measure per composed staff —
+**~95 px per voice**, 190 px at four tabs, 764 px at ten. At five tabs the
+correction exceeds `ANCHOR_MAX` (240), `restoreAnchor` declines, and the whole
+286 px lands on the page. The shipped chant had **eleven pixels of margin**.
+
+The fix is at the source — `staffBox` remembers what each measure engraved to
+and `staffRoom()` reserves it as `min-height` **at creation**, before abcjs is
+asked for anything. Proof it is a fix and not a fight: **with `scrollBy`
+stubbed out entirely, so `restoreAnchor` cannot act at all, every tab moves
+0 px.** It was +190. Matrix after: 7 strips × 5 scroll positions × 2 widths,
+mouse and touch, plus WebKit, plus a browser with anchoring disabled, plus the
+8-voice record at 36 real taps — **worst |jump| 0 px.**
+
+The engine readout no longer shoves the page either: `#engine { min-block-size:
+2lh }`, doubled from the recipe because the same report measured the case one
+line does not cover (a dropout sentence wraps to two lines at 390 px and drops
+the page another 18 px with nobody touching anything).
+
+### The globe's labels travel
+
+They were positioned in absolute viewBox coordinates by the anti-collision
+pass, which is guarded by `if (labelsStale)` and deliberately never runs inside
+a moving frame — so the mark was re-transformed every frame and the name was
+not. **Pairing drift mid-drag 71.0 px → 0.0 px at 390, 124.5 → 0.0 at 1280;
+far-side labels 1 → 0; a fly-to carried a mark 367 px with a spread of 0.00 px
+over 41 samples.** A pinch now tracks, where before it moved nothing at all
+because the pinch handler never set the flag.
+
+### The master chain, and the tone that reaches the sound
+
+Paul: *"Almost everything is once again loud and distorted and there's no way
+to bring it down."* Three suspects were named and **all three measured OFF and
+exonerated** (whole desk tone withheld: 0.32 dB quieter; `FAM_EQ` alone: 0.33;
+reverb return shut: 0.11; precompose desk removed: 0.00). It was a threshold
+crossed, not a line changed. Three fixes, all in the parent:
+
+* **The fader was the last node.** Swept on Tampa 1990 it moved the level at
+  every position and **never once moved the crest** — 8.2 / 8.2 / 8.1 / 8.1 /
+  7.7 dB. That is "no way to bring it down", literally. It sits at the master
+  bus INPUT now and the crest recovers as you go down: **7.76 / 9.37 / 10.14.**
 * **The +8.3 dB make-up was a constant written for material that no longer
-  exists** (its own comment: *"the sampled voices play dry and quiet"*). A
-  precomposed band record arrives at −9.4 dBFS, so the brickwall sat in
-  permanent gain reduction. It is now a target riding toward −14 dBFS, **capped
-  at the old constant** so nothing comes out louder than it did and quiet
-  material still gets exactly its old +8.3 dB, read **pre-fader** so turning
-  down can never make it push back up.
+  exists.** A precomposed band record arrives at −9.4 dBFS, so the brickwall
+  sat in permanent gain reduction. It is a target riding toward −14 dBFS now,
+  **capped at the old constant** so nothing comes out louder than it did, and
+  read **pre-fader** so turning down can never make it push back up.
 * **The ceiling was not the last thing the signal touched.** Two RBJ lowpasses
   parked at 20 kHz sat AFTER the limiter, at 0.907× Nyquist where the
-  bilinear-warped biquad has a passband peak. **227 clipped samples across eight
-  records → 0.** The quiet ones are unchanged (chant −14.63 → −14.66); the hot
-  ones came back and got their transients back (toto 3.2 dB quieter, +2.4 dB of
-  crest).
+  bilinear-warped biquad has a passband peak. **227 clipped samples across
+  eight records → 0.** The quiet ones are unchanged (chant −14.63 → −14.66);
+  the hot ones got their transients back (toto 3.2 dB quieter, +2.4 dB crest).
 
-Also: **`FAM_EQ`'s rows are centred to zero mean dB in code.** Eight of twelve
-were net boosts as typed — harmless while the number was computed and thrown
-away, wrong the day it became a real stage, because a colour must not also say
-"louder". The table keeps the shape its author typed; only the level comes out.
+And the desk EQ reaches a MODELLED voice, because the strip is a stage the
+renderer owns now: pushing the cantor's board EQ to `lo −6 / hi +6` moves the
+output **−5.7 dB at 50 Hz and +4.7 dB at 15 kHz with 250 Hz–2 kHz inside
+±0.3 dB**; the same gesture that morning moved −0.8 / −1.2 dB, noise in the
+wrong direction. `EQ.md` is the account, including the catalog-wide
+consequence: **222 sampled chair-boxes were already carrying a non-flat
+`lo`/`mid`/`hi` that did nothing, and now they do something** (about 1.5 dB).
+`FAM_EQ`'s rows are centred to zero mean dB in code — eight of twelve were net
+boosts as typed, harmless while the number was computed and thrown away, wrong
+the day it became a real stage.
 
-**The test runner.** `node test/all.js` is concurrent (a browser gate costs 2, a
-node gate 1, budget = cores), selective by dependency closure
-(`--impacted --changed <files>`), and content-caches the option table's
-derivation. `--complete` restores full breadth and says so in its own output.
-Measured today, box otherwise idle: **15 gates, 0 fail, 415.9 s wall against
-721.4 s serial (1.7×)**, and the cached `gates` gate at **0.4 s** against
-**173.3 s** when it re-derives.
+### The ping-pong trap was sprung before it caught anything
+
+`EQ.md` §7 flagged it: both renderers route a voice into the buffered path when
+it has an insert chip **or a board tone** — after `FAM_EQ`, very nearly every
+voice — and that tail did not write `buses.pp`, while the direct branch did.
+`desk-gate` G8b stayed green through the whole defect because its fixture feeds
+`curPP: 0`. **A bus that is never asked for is a bus that is never missed.**
+`test/pp-send.test.js` turns the throw ON and asserts the buffered path's pp
+bus is identical sample-for-sample to the direct branch's, that the strip
+really engaged (so it cannot pass vacuously), and that the LIVE and PRESS
+renderers agree. **10 checks, green.**
+
+### The board split, and the buses are four
+
+One table was **68.1% empty body cells**, because a channel's rows and a bus's
+rows are almost disjoint sets. Two tables now: **channels 0.0% empty, the rack
+6.3%.** There are four buses; bus 3 and bus 4 are **groups**, so their sends
+are summed into whichever bus they are aimed at, and `buses.<bus>.to` is that
+aim — `desk-gate` G14 measures a moved send arriving somewhere new
+(15.16/0 → 13.03/8.73). The one bus-to-bus send that reaches the engine is the
+master's `space` (`mrev` in `fx_bus.dsp:221`), and the board says so instead of
+drawing a second control for it. **Every route the board offers either reaches
+the engine or draws disabled with its reason printed.** `desk-gate` passes
+**123 checks.**
+
+### The design system is seven kinds, one look each
+
+Paul: *"Create a simple design system and use plain HTML buttons where
+appropriate but bring more consistency."* Audited on the RENDERED page at 1280
+and 390, every tab clicked, computed styles read back: **292 interactive
+elements**, and the number of DISTINCT COMPUTED LOOKS each kind had. Four of
+those looks were accidents and each is named in `nu.css` — a `<button>` inside
+a `<th>` came out **bold**, because `button { font: inherit }` inherits the
+header's weight, so eight of twenty-three tabs were a different button from the
+other fifteen for no reason anybody chose. Afterwards: **an action is 1 look, a
+tab is 1 look**, and every remaining second look is a STATE the browser draws.
+
+Seven kinds and that is all the page needs — an action, a tab, a settled
+choice, an open choice, a switch, a quantity, a step — **plus one thing that is
+not a control at all**: `<a href>`, which until 2026-08-26 the page had none
+of, and which is the only element that LEAVES the page and therefore the only
+one that gets an underline. Four states any kind may wear: `.is-on`,
+`.is-off`, `.is-quiet`, and `<mark>`/`.is-now`, which is reserved for the
+sounding step and the tab you are on and **may not be borrowed.**
+
+### A colour per section, and it is arithmetic
+
+*"Give each section a slightly different color."* Nobody types a colour: a
+section's `--sec` is its ordinal and the hue is **`--sec × 137.5deg`, the
+golden angle**, written modulo twelve so a page of thirteen sections does not
+run out. **"Slightly" is the whole specification** and `--wash` states it: 4%
+of a fully saturated hue mixed into `Canvas` in oklab. Measured on the rendered
+page, light: paper moves from `#ffffff` to between `#fbf5f7` and `#f2f9fb`, and
+CanvasText on the darkest of them is **19.8:1** where WCAG AAA wants 7:1.
+
+It moves `--paper` and that is the whole mechanism, so every sticky heading,
+scroll shadow and sticky first column follows with no second rule.
+`--rule`/`--zebra` are mixed against `Canvas` and not `--paper`, so **the wash
+moves the ground and never the ink**. It is not a state and may not read as
+one: measured, the largest colour distance between any two sections' grounds is
+smaller than the distance from any ground to `<mark>`. Under `forced-colors`
+and `prefers-contrast: more` `--wash` goes to 0%. With the stylesheet off there
+is no colour and nothing is lost.
+
+### A take is a seed, and the slider used to move nothing
+
+Paul: *"I can't seem to change seed and do a different take."* Measured:
+`performance.take` was in every document, `ui/eight.js` drew a slider for it,
+`ui/atlas.js` printed it, and **no compiler read it** — every record this box
+has ever made was take one. It is spent now in `toGenre` on the kernel's own
+dice and the pipe operators' seeds. Over 60 anchors: **55 render a different
+score at take 5, all 60 are reproducible**, and the only keys a take moves in a
+compiled genre are `kitSeed` and `pipes` — **no decision is downstream of it**,
+which is what makes "the same song, played again" true by construction.
+
+### Eight tempo icons, under Time where they belong
+
+Paul: *"The rhythm icon adjustments never happened."* The fourteen that existed
+were seven PITCH and seven RHYTHM operators and **not one of them moves the
+clock**; every tempo fact this box has is a song fact. So eight tempo icons
+went under **1 · Time**, between the two facts they move: four move the CLOCK,
+four move the READING, and they are drawn differently because closer ticks and
+a nearer bar line are two different pictures. **No icon is drawn for an
+operation the box cannot perform**, and one that cannot move from where the
+record is standing greys with its reason printed (*"twice 120 is 240, and 220
+is as fast as this box counts"*).
+
+The motif transform icons went the other way and it is a **reversal on the
+record**: they were drawn contours for two days, tested on a reader, and
+failed — *"the record's own"* read as *"default"*. They are unicode arrows now.
+
+### One word for the empty detent, and a bus is "called" something
+
+Paul: *"'as it stands' and 'nothing set' are too much. get rid of them — just
+use 'default' for 'nothing set'."* Every empty detent in the app says
+**default** now, **including the two that hid in `<optgroup>` and `<option>`
+LABEL attributes** — supersaw's wave, the DX7 cartridge, the singers — which an
+`innerText` audit cannot see and the check only caught **by reading
+`outerHTML`.** That is the artifact law again, one layer finer: the rendered
+text is not the whole artifact.
+
+And the row that said *"name"*: Paul, *"'name' is a very confusing row because
+the 'name' seems to be reverb types."* It did. `BUSNAMES` shared four words —
+plate, hall, chamber, spring — with the reverb-algorithm knob **one row down**,
+and *"room"* meant three different things on one board. The row is **`called`**
+now, its vocabulary is twelve JOB words (ambience, depth, bloom, throw, lift,
+smash, parallel, double, stack, blend, wash, sheen) that **collide with no
+effect table**, and bus 1's algorithm knob says **"reverb type"**. A record
+that saved a retired name falls back to the row's own label rather than
+crashing. Verified on the rendered DOM: **zero hits for either retired string
+across 18 page states at two widths**, and the two option lists intersect only
+at *"default"*.
+
+### The motif has a play button, and a tab is for looking
+
+Paul could already sound a motif — tapping its tab did it — **but an
+affordance nobody can see is not a control**, and the only visible thing on the
+block said *"loop"*, so the plain single pass had no door at all. One button
+now cycles **off → once → loop → off**, kept by NAME so it survives a redraw.
+**The word on the button is the NEXT TAP, not the current state** (`▶ play` →
+`↻ loop` → `■ stop`): a single pass ends by itself, and a button that named the
+state would have to be rewritten by the sound's own callback — a write into a
+control, which the frozen-DOM law forbids. The live sentence beside it says
+what is happening. The tab-tap is retired with it, which also closes the
+standing complaint that tapping the open tab restarted the sound with no way to
+stop it.
+
+### And the rest of the surface, still true
+
+* **Precompose.** 199 anchors × 3 seeds, no throw and no silent section. Every
+  record carries `sound.buses` (199/199); 27 carry `sound.fx`; **803 of 1,416
+  voices carry a `desk`**, and the 613 that do not are absent-is-today doing
+  its job. `time.groove` is six words, not one: backbeat 83 · none 35 · push 31
+  · funk 29 · laidback 12 · dub 9 (seed 1). **All 175 bass voices carry no
+  `instrument`** and that is correct — a `kind:"bass"` voice is written by the
+  kernel's own bass writer.
+* **The atlas.** 199 anchors = 193 placed + 6 excluded, **85 stops 540..2023,
+  109 places, 0 orphans, 0 empty stops**, 20 `ERAS` rows and "now" present
+  *because the catalog reaches 2023*, derived rather than typed, so it cannot
+  become the same lie in 2031. `atlas.gate` passes all 34 checks.
+* **The shell.** Every assertion measured off the rendered page at 320 / 375 /
+  430 / 820 with a drummer hired first: no sideways scroll · no `button`,
+  `select` or `input[type=number]` under 44 px · every checkbox and radio with
+  a 24 px target on both axes · no pane a two-axis scroller · no table
+  overflowing its box · exactly one pinned axis heading and it is the axis you
+  are inside · a sticky first column surviving a sideways scroll.
+* **Nudges.** 24 checks. `env:"arch"` moves the rendered velocities (a flat
+  64-event stream comes out `3 4 4 5 5 5 5 4`); with no drummer all seven
+  drum-writing edges are disabled and nothing else is.
+* **The producer's own gate.** 26 node checks over every reachable stack,
+  28 browser checks. `more` pushes, `less` puts it back exactly, *"take it
+  off"* restores the document byte-identical, and a `less the cantor` note
+  lands in the mix-offset layer rather than in the Sound axis.
+* **Ableton export.** The `.als` round-trips against the SONG, conforms to the
+  donor, and the sample audit finds no authored absolute paths.
+  `tomHi`/`tom`/`tomLo` export as **50 / 47 / 43**, not three copies of 47.
+  Whether a set **opens** only Live can answer — question 7 below.
+* **The motif page is frozen while it plays.** The editable half of a motif is
+  **byte-identical across two real section boundaries — 46,685 characters,
+  measured today** — the same DOM node under a finger, the window moved 0 px,
+  the first fieldset at 541 px before and after, the band axis at 2,705 px
+  before and after. Zero abcjs redraws at a boundary, and **no long task ≥100 ms
+  after the engine started** (longest 74 ms at 390, 0 ms at 1400). The one long
+  task the gate does see is 112 ms at +0.1 s, **the engine starting — your
+  press, not the clock** — and the gate names it rather than asserting it away.
 
 ---
 
-## THE GATES, AS THEY RAN TODAY
+## THE GATES, AS THEY ACTUALLY RAN TODAY
 
-`node test/all.js` (default FAST), 2026-08-25, this box, 4 cores, nothing else
-running, 14:07 → 14:14. **Load at start 1.11 2.71 3.88 · load at end 3.00 3.74
-4.01** — the runner prints the load on every run for exactly this reason, and a
-wall clock taken on a contended box is not this suite's cost.
+**TWO FULL `--complete` RUNS, AND THE SECOND ONE IS THE ONE TO TRUST.** The
+first found the four red gates above; the second was taken after they were
+repaired, on a settled tree, and is the reading of the box as it stands.
+
+### Run 1 — 21:27 → 21:54, on `9b76f77`
+
+4 cores, 8 GB. **Load at the start 0.37 0.28 0.50 · load at the end 2.54 2.77
+2.63.** The runner prints the load on every run for exactly this reason: a wall
+clock taken on a contended box is not this suite's cost.
 
 ```
-pass  precompose     37.1s  29 passed, 0 failed
-pass  desk            6.4s  all 85 checks pass
-pass  ableton         2.2s  gate 3 — no new sample references · no authored absolute paths
-pass  document        0.4s  22 passed, 0 failed
-pass  atlas-data      0.5s  PASSED all 34 checks
-pass  atlas         119.9s  ALL PASS (91 checks)
-pass  sheets         32.0s  ALL PASS (28 checks)
-pass  producer-ui    29.8s  ALL PASS (28 checks)
-pass  nudges         29.2s  ALL PASS (24 checks)
-pass  shell          23.9s  PASS — every shell assertion holds (3 skipped)
-pass  selects        18.4s  ALL PASS
-pass  sheets-tier     5.5s  ALL PASS (29 checks)  test/fixtures/sheets-harness.html
-pass  producer      291.0s  26 passed, 0 failed · G3 SAMPLE, 20 of 200 random stacks
-pass  gates           0.4s  OK  the shipped table is what the box says. (cached)
+pass  document        0.6s  22 passed, 0 failed
+pass  pp-send         0.4s  10 checks pass, 0 fail
+pass  atlas-data      0.8s  PASSED all 34 checks
+pass  ableton         2.6s  gate 3 — no new sample references (0, the donor's
+                            own) · no authored absolute paths
+pass  wiki           12.6s  191 links and 2 misses re-derived from
+                            wikipedia_en_all_maxi_2026-02, identical to
+                            what ships
+pass  desk           18.9s  all 123 checks pass
+pass  precompose     43.7s  43 passed, 0 failed
+pass  knobs          98.8s  ALL PASS  94 checks
+pass  producer      608.8s  26 passed, 0 failed · G3 COMPLETE — every sentence
+                            at every rung, all 200 random stacks
+pass  gates         816.9s  OK  the shipped table is what the box says
+pass  nudges         11.4s  ALL PASS (24 checks)
+pass  producer-ui    10.9s  ALL PASS (28 checks)
+pass  sheets-tier     5.6s  ALL PASS (29 checks)   the harness page
+pass  shell          25.6s  PASS — every shell assertion holds (1 skipped)
+FAIL  sheets         14.5s  2 of 28   ["master.fx"] — an undeclared sheet
+FAIL  selects        20.0s  1 of 52   the multiselect that moved to the board
+FAIL  atlas         165.6s  6 of 103  four title compares, two catalog growths
   — and one alone, because everything it asserts is about time —
-pass  motif-frozen  124.6s  all checks pass
+FAIL  motif-frozen  120.5s  4 failed  a layout Paul reversed on 2026-08-25
 
-15 pass · 0 fail · 0 skip     FAST · 415.9s wall (serial 721.4s — 1.7x)
+14 pass · 4 fail · 0 skip
+COMPLETE · 1589.9s wall (serial would have been 1978.1s — 1.2x)
 ```
 
-**FAST is not the deploy gate and says so itself** — the producer samples G3's
-cross product (20 of 200 random stacks) and the option table's derivation is
-skipped when its inputs are byte-identical. `node test/all.js --complete` is the
-deploy gate, and it also ran today, on a contended box: **15 pass · 0 fail · 0
-skip, 836.0 s**, with the producer printing *"G3 COMPLETE — every sentence at
-every rung, all 200 random stacks"* and `gates` re-deriving in **173.3 s**
-instead of reading its cache. Same gates, same assertions, more breadth.
+**AND ONE CAVEAT ON THE TREE THAT RUN MEASURES, which is the same caveat the
+2026-08-25 edition had to write.** A commit landed at **21:36**, twenty-two
+minutes before the last gate exited: `0bc7114`, the motif play button. Two more
+landed at **22:05** (`b68066d`, `2c0454d`). So run 1 is a true reading of what
+was on disk when each gate ran, and **not** of any one tree. That is why there
+is a run 2.
 
-**One caveat on the tree this measures.** The FAST run above finished at
-14:14:49, and at **14:17:44** `nukernel/nu.css` and `nukernel/ui/atlas.js` were
-both written by somebody else — three minutes after the last gate exited. So the
-table is a true reading of the tree **as of 14:14** and does not cover those two
-files. Re-run before you trust it as the tree you are looking at.
+### Run 2 — 22:12 → 22:35, on `2c0454d`, the settled tree — **GREEN**
 
-**Nothing is red.** That sentence is only worth anything because of what was
-done to get there, so it is written down: **eleven assertions across five gates
-were red this morning, and every one of them was rewritten to assert the new
-truth with the reason attached — none was deleted and none was relaxed.** The
-reversals, in short:
+Same box, same flag, nothing skipped. **Load at the start 0.97 1.51 2.47 · load
+at the end 1.51 1.89 2.26.** This is the reading to trust.
 
-* `shell.js` **A5** asserted *every `<table>` sits inside a `.nu-pane`
-  horizontal-scroll container*. The rotation made that false by design. It now
-  asserts **no table overflows the box it is in** (measured geometry:
-  `scrollWidth` vs `clientWidth+1`), plus a new **A5c: no `.nu-pane` around a
-  rotated step grid** — which pins the exact unnecessary scroll container that
-  caused the snap. `PROGRAM.md` §5's gate table still prints the old sentence;
-  that file has not caught up.
-* `shell.js` **A8** (sticky lane `th` survives a sideways scroll) had been
-  scoped to a pane that no longer exists, so it SKIPPED at all four widths and
-  asserted nothing. It now runs against **every pane that actually scrolls and
-  declares a sticky first cell**, and runs for real at 320px: `nu-board`
-  overflows by 36px and holds to 0.5px.
-* `selects.js` **check 3** was an allowlist — "exactly this list of menus and no
-  more" — a transcript of one afternoon, and it named 48 correct controls red.
-  It now asserts the RULE off the page, which covers controls the file has never
-  heard of.
-* `sheets.js` **gate 6** asserted *a pad's "at the fifth" is disabled*. Stale,
-  because `gates.json` is EXTRACTED and the extractor fits no rule to that word
-  any more (transposing a pad up a fifth is still audible). It failed on both
-  pages and the page was right on both. It now asserts the LAW — 0 greyed
-  before, 8 after, each printing its own reason, `out` never among them.
-* `sheets.js` **gate 8** asserted ArrowDown traversal on a radio-group sheet.
-  There is no such sheet on the shipped page. On `index.html` it now asserts
-  **that fact**; the traversal claim is preserved by running the same file
-  against `test/fixtures/sheets-harness.html` as the new **`sheets-tier`** gate
-  — because a claim that only ever skips is a claim nobody is making.
-* `desk-gate` **G11** asserted *no `<select>` on the board or in the atlas*. 15
-  master/bus menus are back. It now asserts the two claims that were ever the
-  point — **not one dropdown on the channel strip** (measured: 15 selects, all
-  in `#board`, **0 in `#boardtbl`**, atlas 0) and every other `<select>` outside
-  `#app` is one of the rack's own.
+```
+pass  document        0.3s  22 passed, 0 failed
+pass  pp-send         0.3s  10 checks pass, 0 fail
+pass  atlas-data      0.4s  PASSED all 34 checks
+pass  ableton         2.1s  gate 3 — no new sample references (0, the donor's
+                            own) · no authored absolute paths
+pass  wiki            3.2s  191 links and 2 misses re-derived from the ZIM,
+                            identical to what ships
+pass  sheets-tier     4.4s  ALL PASS (29 checks)   the harness page
+pass  producer-ui     9.3s  ALL PASS (28 checks)
+pass  nudges         10.4s  ALL PASS (24 checks)
+pass  sheets         11.8s  ALL PASS (28 checks)
+pass  selects        15.3s  ALL PASS
+pass  desk           15.6s  all 123 checks pass
+pass  shell          22.2s  PASS — every shell assertion holds (1 skipped)
+pass  precompose     44.7s  43 passed, 0 failed
+pass  knobs          77.7s  ALL PASS  94 checks
+pass  atlas         147.7s  ALL PASS (98 checks)
+pass  producer      509.7s  26 passed, 0 failed · G3 COMPLETE — every sentence
+                            at every rung, all 200 random stacks
+pass  gates         660.3s  OK  the shipped table is what the box says
+  — and one alone, because everything it asserts is about time —
+pass  motif-frozen  120.3s  all checks pass
 
-**Three gates were broken rather than stale, and a broken gate asserts nothing:**
-`test/sheets.js` **crashed** at `readDev` on a null key, taking every assertion
-after it and the three before it; `test/producer.browser.js` crashed the same
-way at `hot.prod.notes[0].w`, after three taps that had silently reached nothing;
-and `test/sheets.js` was **surveying an empty room** — `#app` boots on a list of
-five section names, so gates 1/2/3 took one snapshot of a page with 0 sheets,
-which made "0 sheets drawn" a real failure and "NO DEVELOPMENT WORD IS A MENU
-[]" a **vacuous pass from the same snapshot**. All three are guarded or walked
-across every tab now, and the union exposed three further failures the empty
-page had been hiding.
+18 pass · 0 fail · 0 skip
+COMPLETE · 1335.1s wall (serial would have been 1655.9s — 1.2x)
+```
+
+**Three numbers are worth reading twice.**
+
+`gates` re-derives the option table in **660–817 s** (817 in run 1, 660 in
+run 2 — same work, a quieter box) where the 2026-08-25 file recorded 173.3 s.
+That is not a regression: it is the price of fixing the corpus. The table used
+to be derived from **one chant wearing 139 labels**; it is now derived from
+**199 real precomposed documents**, and the derivation sits behind a content
+hash so the FAST path skips it when its inputs are byte-identical.
+
+`producer` costs **510–609 s** against 291 s on the FAST path, which is the
+`--complete` flag doing its job: *"G3 COMPLETE — every sentence at every rung,
+all 200 random stacks"* instead of a rotating rung and a seeded sample of 20.
+**FAST is not the deploy gate and says so in its own output.**
+
+`atlas` reports **98 checks** where the failing run reported 103, and that is
+the repair rather than a loss: the four exact-title compares collapse into one
+reading through a single helper (`window.__nuName()`, installed with
+`addInitScript` so it survives the file's six reloads), and one new assertion
+was ADDED — *"there is a stop above 1984 that Tokyo does not hold (1995)"* —
+which is the derivation that makes the Tokyo check ungrowable-out-of. **The
+printed totals are not a coverage measure and should not be read as one:**
+several assertions are emitted once per thing found, so a run that fails early
+finds different things.
 
 The soak is **not** in the runner and was **not** run: *"Don't do the soak."*
 
 ---
 
-## STILL DEFERRED
+## STILL DEFERRED, REBUILT FROM SCRATCH
 
-`PROGRAM.md` §4 had fifteen; the last STATE.md added six. All twenty-one walked.
+Every item in `PROGRAM.md` §4 (fifteen), every item on the 2026-08-25
+`STATE.md`'s own list (twenty-six), and all nine sections of the after-voice
+queue were walked and re-measured today. What follows is what survived. The
+bracketed id says where the item came from, so nothing is renamed out of
+sight.
 
-### Closed, with what closed it
+### Closed this week, with what closed it
 
-* **16 · the start-up hole** — the prefill landed (commit `3fa9ee9`). Closed in
-  code; see the first section for why no fresh number is quoted.
-* **17 · precompose writes no desk, no buses, no fx** — 0 of 122 became **139 of
-  139 with buses, 583 of 981 voices with a desk, 23 records with fx.**
-* **18 · `time.groove` says `funk` or nothing** — 97/25 became six words:
-  backbeat 55 · push 28 · none 28 · funk 14 · laidback 9 · dub 5.
-* **19 · the map is cropped and unswipeable at 390px** — the flat map is gone.
-  The globe replaced it, and both of `GLOBE.md`'s own defects (pinch anchor,
-  diagonal drag) are fixed in code.
-* **20 · 23 `<select>`s remain, all on the board** — the channel strip has **0**;
-  the 15 master/bus menus that remain are single choices at the master end,
-  drawn once each, which is the rule, and `desk-gate` G11 asserts it.
-* **5 · `tomHi`/`tom`/`tomLo` all export as GM 47** — 50 / 47 / 43, with the
-  condition for the collapse's return written down.
-* **F5 · `eight.js`'s own main thread** — measured, and the suspect was wrong.
-  The whole-page rebuild it found is gone and `test/motif-frozen.js` holds it.
-  Kept in `PROGRAM.md` as a law about measuring before guessing, not as work.
+* **[§4·11 / STATE 20] The `pp` send vanished in the buffered tail.** Both
+  renderers write it now and `test/pp-send.test.js` holds the two paths
+  identical, sample for sample, with the throw ON.
+* **[STATE 15] The anchor corpus was one record.** `gates-extract` measures 199
+  real precomposed documents. 18 option rules changed. The derivation costs
+  **660–817 s** now, against 173.3 s when it was one chant wearing 139 labels —
+  that is the price of the fix and it is behind a content hash.
+* **[STATE 16] `inv` dropped on the way into a document.** Carried; 28 of 212
+  bass events move on `marabi`.
+* **[STATE 17] The `vox` guest pool was European.** Four derived laws; 254
+  out-of-period hires → 0.
+* **[after-voice §8] Industrial rock sounded like Fela.** Not the casting and
+  not the drive wiring — **precedence**: precompose named an instrument for
+  every chair, and a chair's own instrument outranks the record's signature
+  synth. Fixed at the seam. `industrialrock` gets `lead_fuzz` at drive 0.85
+  verbatim, and 15 of 15 anchors that declare a signature synth now seat it.
+* **[MOTIF 2] `<p id="engine">` shoved the page down.** `min-block-size: 2lh`,
+  with the measurement in `nu.css` for why one line was not enough.
+* **[MOTIF 1 / the endemic jump] Tabs jumped.** Fixed at the source; 0 px
+  across a 7 × 5 × 2 matrix plus touch, WebKit, and anchoring disabled.
+* **[GLOBE 1, 2] The pinch anchor and the diagonal drag lock.** Fixed in the
+  2026-08-25 round and the labels now travel with their marks.
+* **[AFRICA 5] `latinpop` descended from `afrobeat`** because Cuba and Colombia
+  were not in the catalog. They are now: `latinpop` reads
+  `{salsa .35, cumbia .2, son .1, rock .2, bossa .15}`.
+* **[after-voice §9] The motif audition had no stop.** `0bc7114`: the tab-tap is
+  retired and the block's own button cycles **off → once → loop → off**, so
+  silence has a gesture. *"A tab is for looking."*
+* **[THIS FILE'S OWN FOUR RED GATES] Repaired and committed** as `2c0454d`,
+  *"the gates catch up with the page they measure"* — all four green.
+* **[PROGRAM §5, Paul's ears 3] `fx` back on a track.** ANSWERED, and the
+  answer was no. The ask read: *"the sends are wired to real returns now, so a
+  chip is only for what must be IN the path. Do you accept the reversal?"* Paul,
+  2026-08-26: *"Don't let me add effects to instruments. That's bus and board
+  stuff. But let me have up to four buses and a way to direct them to each
+  other."* The chips are off every instrument and live on the board as
+  `master.fx`; the measurement that made the losing argument — an insert costs a
+  MULTIPLE, a bus costs a CONSTANT — is now the reason there is a fourth bus.
+  **Nothing left to decide here.**
 
-### Still open, re-measured today
+### Open, re-measured today
 
-The number in brackets is its id in `PROGRAM.md` §4, so nothing is renamed out
-of sight.
-
-1. **[§4·1] F1 — the two nginx headers.** Checked at 14:12 today: `www.ftrain.com`
-   serves the page with **neither COOP nor COEP**, so `SharedArrayBuffer` is
-   undefined and the page demotes to a different engine with no conceal and no
-   counters. `test.stellate.app` **is** isolated (`cross-origin-opener-policy:
-   same-origin`, `cross-origin-embedder-policy: require-corp`). An ops line
-   outside the repo.
-2. **[§4·2] F4 — the per-note channel strip.** `engine/faust/voices/sampler.js` builds a
-   whole strip PER NOTE. Untouched. Behind ears, because it is the one item that
-   can change how a record sounds and `mixPCM` must not move.
-3. **[§4·4] Ableton P1–P4.** P0 needs nothing. P1 and locators need **Ask #1** (one
-   30-second Live save with an 8-note clip in a slot, a copy in the Arrangement,
-   one locator); P2 needs **Ask #2**. Gate 2 is written to REFUSE `<Locator>`
-   because the donor has none, so the failure is the trigger.
+1. **[§4·1] F1 — the two nginx headers.** Checked at 21:39 today by `curl`:
+   `www.ftrain.com` serves the page with **neither COOP nor COEP**, so
+   `SharedArrayBuffer` is undefined and the page demotes to a different engine
+   with no conceal and no counters. `test.stellate.app` **is** isolated
+   (`cross-origin-opener-policy: same-origin`,
+   `cross-origin-embedder-policy: require-corp`). An ops line outside the repo.
+2. **[§4·2] F4 — the per-note channel strip.** `engine/faust/voices/sampler.js`
+   still builds a whole strip PER NOTE ("CRITICAL — window parity: the strip
+   runs PER NOTE", :61). Untouched, deliberately: it is the one item that can
+   change how a record sounds and `mixPCM` must not move. Behind ears.
+3. **[§4·4] Ableton P1–P4.** P0 needs nothing. P1 and locators need **Ask #1**
+   (one 30-second Live save with an 8-note clip in a slot, a copy in the
+   Arrangement, one locator); P2 needs **Ask #2**. Gate 2 is written to REFUSE
+   `<Locator>` because the donor has none, so the failure is the trigger.
 4. **[§4·6] Augmentation and diminution as Development words.** Implemented in
-   `ideas-kit.js:618,644` over a RENDERED phrase, therefore unnameable in
-   `WORDS`. **No kernel operator maps step *i* to step *2i*.** Do not fake it.
-5. **[§4·7] `bassGrid` has no document slot** — now **18** anchors declare one (was 15)
-   and precompose loses every one.
-6. **[§4·8] `orn` is declared by zero of 139 genres.** Re-measured today: 0 records
-   carry `performance.orn`. `kernel.js:1029` is a complete ninth type with its
-   words written; deciding which music decorates is a catalog table nobody has.
+   `ideas-kit.js` over a RENDERED phrase, therefore unnameable in `WORDS`. **No
+   kernel operator maps step *i* to step *2i*.** Do not fake it.
+5. **[§4·7] `bassGrid` has no document slot.** Re-measured: **18 anchors declare
+   one and 0 of 199 precomposed records carry it.** Same shape as `inv` was.
+6. **[§4·8] `orn` — THE TABLE NOW EXISTS AND PRECOMPOSE DROPS IT.** This item
+   used to read *"declared by zero of 122 genres; deciding which music decorates
+   is a catalog table nobody has."* Somebody wrote it: `genres.js ORNAMENT` is
+   **58 anchors** with reasons — bebop's approach note, the blues crushed note,
+   plainchant's passing tones and no flam, drill's ratchet. And **0 of 199
+   precomposed records carry `performance.orn`.** `blues` declares
+   `{pass: 0.3, grace: 0.45}`; its document's `performance` is
+   `{take, humanize, ontime}`. `document.js:252` carries the field the moment it
+   arrives and `kernel.js:1030` honours it. **This is `inv` again, one layer up,
+   and it is now the highest-value item on this list** because the table it
+   would deliver already exists.
 7. **[§4·9] The theme composer and the solo ladder.** `ideas-kit.js` is a second
    material model beside the hand-written grid; D5 uses it to WRITE cells,
    wiring it as an editable surface is a slice of its own.
-8. **[§4·10] `fitReg`.** Re-checked: `precompose.js:1026` still writes `G.reg(v)` raw and
-   `band-kit.js:1379 fitReg` is called nowhere in the precompose path. Measured
-   19% → 7% of seats out of compass. Ten lines against `instruments.js RANGES`.
-9. **[§4·11] Bus 3 is not the ping-pong**, and master `width`/`tilt`/`ceiling` still
-   draw disabled saying *"this one round-trips and draws but reaches no sound"*.
-   Now compounded — see the `pp` item below.
-10. **[§4·12] A per-section desk is not expressible**, and after the EQ round **a
-    per-section EQ is not either**: a voice's tone is one decision for the whole
+8. **[§4·10] `fitReg`.** Re-checked today: `band-kit.js:1379` defines it,
+   `:3319` is its only caller, and **precompose is not that caller** — it writes
+   `reg` raw off the IDIOM table. Measured 19% → 7% of seats out of compass.
+   Ten lines against `instruments.js RANGES`.
+9. **[§4·11] Master `width`/`tilt`/`ceiling` reach no sound.** They round-trip
+   and draw `disabled` saying so. Bus 2's return is a compiled slider the parent
+   nails to a literal. Both are parent edits with parity gates behind them.
+10. **[§4·12] A per-section desk is not expressible**, and after the EQ round a
+    per-section EQ is not either: a voice's tone is one decision for the whole
     record. Right for the Sound axis today; wrong the first time somebody wants
     a chorus louder than a verse.
-11. **[§4·13] `cast.part` collapses to line/pad.** `ui/eight.js` hands the kernel
-    `realize` and never `part`, so a voice the document calls a `counter` is
-    ADDRESSED `line2`. The board prints the address under the name so the two
+11. **[§4·13] `cast.part` collapses to line/pad.** `ui/eight.js` hands the
+    kernel `realize` and never `part`, so a voice the document calls a `counter`
+    is ADDRESSED `line2`. The board prints the address under the name so the two
     are never confused, which is honest, not fixed. Fixing the name **moves the
     music** (`kernel.js:1387`).
-12. **[§4·14] Two catalogs of place and era.** G5b now passes with `ERAS` a proper
-    superset of band-kit's `DECADES`, but the 30-record `when/where/venue` table
-    at `band-kit.js:887` still says **"Rio"** where `genres.js` says **"Rio de
-    Janeiro"**. The merge is its own job.
-13. **[§4·15] F7 — the two open WAV-route audit items.** They only matter if F1 slips.
-14. **[STATE 21] Two sticky axis headings coexist at the handoff** at 1280px.
-    **Not re-measured** — the page is tabs and rows now and the axis structure
-    it described has changed shape, so I cannot say whether it survived. The
-    gate's "exactly one pinned `h2`" passes at the positions it samples, at all
-    four widths, which is what it always claimed.
-
-### New today
-
-15. **The anchor corpus is one record**, above. `gates.json` `anchors: 12`, all
-    twelve the shipped chant. One expression in `gates-extract.js`, ~25 min of
-    offline derivation behind the content-hash skip. **This is the highest-value
-    item on the list**, because it is the only one that changes what the page
-    says to you today.
-16. **`inv` is dropped on the way into a document** — `precompose.js:469`.
-    One line; two anchors (`marabi`, `mbube`) currently carry a dead field.
-17. **The `vox` guest pool is European** — `compose.js:1296`, above.
-18. **Nineteen parent-after-child pairs remain in the genealogy.** This round
-    fixed `hymn` ← `gospel` (101 years) and left `gospel` ← `blues` (Chicago
-    1932 ← Chicago 1952) in the anchor it was editing. Also `spem` ←
-    `counterpoint`, `beatles` ← `motown`, `jazz` ← `blues`, `crooner` ←
-    `doowop`, `clubpop` ← `house`, `screamo` ← `emo` and twelve more. Some are
-    defensible as proxies for an unbuilt ancestor; **none says so.** One sweep
-    with a rule, not another anchor at a time. (`AFRICA.md` 4.)
-19. **`rai` measures 95% invention, `ethiojazz` 69%, `mahraganat` 66%.** These
-    are honest declarations of a hole — the true ancestors are not in the
-    catalog — but a reader of the published residues will read them as
-    originality. They need a word for "unexplained because absent".
-20. **The `pp` send vanishes in the buffered tail.** Both renderers route a
-    voice into the buffered path when it has an insert chip **or, new this
-    round, a board tone** — which after `FAM_EQ` is very nearly every voice —
-    and **that tail does not write `buses.pp`** while the direct branch does. A
-    trap set, not sprung: measured across 20 precomposed records and 22,145 drum
-    hits, **zero events carry a non-zero `pp`**. `desk-gate` G8b will stay green
-    through it, because its own fixture feeds `curPP: 0`. The margin notes are
-    written in both renderers; no fix. Fix it or write down a decision **before
-    the snare throw is next wanted**.
-21. **No drum-kit spectrum on the tape.** `EQ.md` §7 says it plainly: the kit is
-    proved by reading the numbers and by the gate's isolated audio, not by a
-    measured spectrum, because the chant has no kit and both routes to a record
-    that does were shut while the verifier worked. A twenty-minute job now that
-    the map has settled, and the one measurement that report is missing.
-22. **No bus EQ and no master EQ.** The three knobs are per channel. Nothing on
-    the reverb return, the delay return, or the master.
-23. **`PERCBANK`'s 24 real percussion hits are unread by nukernel** — grepped,
-    zero references — so maracas ride the hat lane and congas ride the toms.
-    `AFRICA.md` calls this "the single highest-value piece of work behind this
-    round, and it is not African-specific."
-24. **The twelve-pulse metre does not exist.** `kernel.js:349` defines
+12. **[§4·14] Two catalogs of place and era.** G5b passes with `ERAS` a proper
+    superset of band-kit's `DECADES`, but `band-kit.js:887` still says **"Rio"**
+    where `genres.js` says **"Rio de Janeiro"**. The merge is its own job.
+13. **[§4·15] F7 — the two open WAV-route audit items.** They only matter if F1
+    slips; that is the route an un-isolated host forces.
+14. **[STATE 18] Parent-after-child pairs in the genealogy — 19 → 21**, which
+    is not a regression: the catalog grew 43% under them and the RATE fell,
+    19 of 139 to 21 of 199. Re-measured today by parsing each anchor's own
+    label year: `spem 1570 ← counterpoint 1725`,
+    `gospel 1932 ← blues 1952` (w 0.75), `swing 1938 ← blues 1952`,
+    `jazz 1945 ← blues 1952`, `countrypop 1945 ← blues 1952`,
+    `bluegrass 1946 ← blues 1952`, `pavane 1551 ← spem 1570`,
+    `yuletide 1942 ← crooner 1953`, `beatles 1962 ← motown 1965`,
+    `musichallrock 1966 ← rock 1969`, `crooner 1953 ← doowop 1955`,
+    `motorik 1974 ← kraftwerk 1977`, `roboticpop 1978 ← synthpop 1981`,
+    `yachtrock 1979 ← toto 1982`, `analogsynthpop 1980 ← synthpop 1981`,
+    `clubpop 1983 ← house 1986`, `gothicpop 1987 ← shoegaze 1991`,
+    `industrialrock 1989 ← deathmetal 1990`,
+    `industrialbreaks 1989 ← dnb 1994`,
+    `industrialmetal 1988 ← deathmetal 1990`, `screamo 1994 ← emo 1999`.
+    **Five of the twenty-one are one anchor** — `blues`, Chicago 1952, standing
+    in for a music forty years older. Some are defensible as proxies for an
+    unbuilt ancestor; **none says so.** One sweep with a rule, not another
+    anchor at a time.
+15. **[STATE 19] `rai` measures 95% invention, `ethiojazz` 69%,
+    `mahraganat` 66%.** Honest declarations of a hole — the true ancestors are
+    not in the catalog — but a reader of the published residues will read them
+    as originality. They need a word for *"unexplained because absent"*.
+16. **[STATE 21] No drum-kit spectrum on the tape.** `EQ.md` §7 says it plainly:
+    the kit is proved by reading the numbers and by the gate's isolated audio,
+    not by a measured spectrum. A twenty-minute job now that the map has
+    settled, and the one measurement that report is missing.
+17. **[STATE 22] No bus EQ and no master EQ.** The three knobs are per channel.
+    Nothing on the reverb return, the delay return, or the master.
+18. **[STATE 23] `PERCBANK`'s 24 real percussion hits are unread by nukernel** —
+    grepped, zero references — so maracas ride the hat lane and congas ride the
+    toms. `AFRICA.md` calls this *"the single highest-value piece of work behind
+    this round, and it is not African-specific"*, and the world round made it
+    larger: son, choro, mento, kroncong and rebetiko all want it.
+19. **[STATE 24] The twelve-pulse metre does not exist.** `kernel.js:349` defines
     `six: {steps: 12}` but every phrase, cell and kit vector is written on
     **sixteen**, so a 12-slot bell under a 16-step seed **phases** rather than
-    becoming 12/8. Ewe agbadza, the mbira's 48-pulse cycle, gnawa, mbalax are
-    all unsayable; **chimurenga (Harare 1977) is metre-blocked and nothing
-    else**, and is the first thing to build the day a twelve-step seed exists.
-25. **`MOTIF.md`'s two, unfixed.** Nudge a degree slider and the page still
-    jumps **114px** and the grid snaps back to step 1 — and it does the same
-    with the record STOPPED, so it is the page rebuilding because you touched
-    it, not the clock. And `<p id="engine">` shoves the page down **34px** on
-    the press and another **18px** when its sentence wraps to two lines at
-    390px; the `#engine { min-block-size: 1lh }` recipe was written and never
-    applied, and one line does not cover a two-line sentence.
-26. **`GLOBE.md`'s three cosmetic ones, unrechecked** since the 03:30 commit: at
-    the deepest zoom the earth is an outline rather than land and sea (an open
-    run cannot be filled); the page may still open zoomed to 57° on a wide
-    desktop; the slider is the browser's blue.
+    becoming 12/8. Ewe agbadza, the mbira's 48-pulse cycle, gnawa and mbalax are
+    unsayable; **chimurenga (Harare 1977) is metre-blocked and nothing else**,
+    and is the first thing to build the day a twelve-step seed exists. This is
+    `WORLD.md`'s Tier 2 wall and it now blocks a longer list than it did.
+20. **[STATE 25 / MOTIF 1] Nudge a degree slider and the page jumps 114 px**,
+    with the grid snapping back to step 1 — and it does the same with the record
+    STOPPED, so it is the page rebuilding because you touched it, not the clock.
+    The tab jump is fixed; **this one is not, and it was not re-measured today**
+    because the staff-reserve fix landed on a different path.
+21. **[STATE 26 / GLOBE 3–6] The globe's cosmetic three, unrechecked.** At the
+    deepest zoom the earth is an outline rather than land and sea (an open run
+    cannot be filled); the page may still open zoomed to 57° on a wide desktop;
+    the slider is the browser's blue.
+22. **[after-voice §7] Techno's main voice eats the song.** Paul: *"technos main
+    voice is this very fuzzy bass synth that sounds like distant thunder … It
+    just eats the song."* **Untouched, and the §8 fix does not cover it** —
+    `techno` declares no `synth` block, so the precedence bug that silenced
+    fifteen anchors was never its mechanism. Its data still reads
+    `instr: [fifth_sawtooth_wave, polysynth]`, `tone: {cut: 1400, q: 4}`, which
+    is a lead in the cellar with a resonant peak where the kick and bass need
+    room. The queue's order of honesty stands: **the wrong seat, then the
+    register (`fitReg`'s first real customer), then the filter, and only then
+    the desk.** Do not simply turn it down — attenuating a voice in the wrong
+    register makes a quiet record that is still muddy.
+23. **[after-voice §5] "Can we adjust gender pitch like Pink Trombone does" —
+    NO, AND THE REASON IS IN THE DSP.** What reads as gender there is the LENGTH
+    OF THE TUBE: shorten it and every formant rises. `tract_voice.dsp` has no
+    tract-length parameter — `tongueL` is the TONGUE's length, not the throat's,
+    and `ui/eight.js:5477` says so at the spoke so it can never be mistaken for
+    one. Adding it is a `.dsp` edit plus a recompile, which this box can do
+    offline (`engine/faust/build/build.js` did it for the EQ round), but it
+    **CHANGES A SHIPPED VOICE'S SOUND**, so it is its own round with its own
+    before/after spectra and not a rider on a UI change.
+24. **[VOICE §13] `plan.js` hands the parent `seed: 1`**, so the take does not
+    reach the mouth's own syllable driver or the house FX hash. The voice's
+    `seed` row is the per-voice answer; the song-level one is a one-line change
+    in a file the voice round did not own.
+25. **[VOICE §11] Six voice parameters have never been judged by ear** —
+    `vibrato`, `vibRate`, `vibRise`, `glide`, `spread`, `drift`. The gate's
+    assertion for them is REACH, not audibility. The tract's sustain caveat is
+    printed on the page rather than resolved.
+26. **[WORLD] The Pacific row is coastline-blocked.** Four written, castable,
+    12-TET anchors are withdrawn because `atlas-land.js` bakes physical land
+    only. One re-bake unblocks them; the gate that catches a city in the sea is
+    the same gate that refuses to let them in.
 
 ---
 
-## WHAT ONLY YOU CAN DECIDE
+## WHAT ONLY PAUL CAN DECIDE
 
-Each is one question naming the thing to listen for or look at.
+Each is one question naming the thing to listen for or look at. Nothing below
+can be settled by a gate, and several of them are stated as arguments the
+builder lost on purpose.
 
-1. **The silence before the first note.** Press play and count. The ring now
-   fills before it releases a frame, which is what closed the start-up
-   crackling; the price, measured at `--load 2`, is **first heard sample at
-   9.78 s instead of 7.50 s — 2.3 seconds more silence, and no hole.** Is that
-   trade right? If it is not, the retreat is a **smaller prefill, not none**: 5 s
-   still covers the measured deficit.
-2. **The deep runway.** Change a genre, the tempo, or a section *while it is
-   playing*. Is the delay before you hear the change tolerable? It buys a buffer
-   that does not empty by spending up to ~5 s of heard lag. If it is wrong the
-   retreat is **5 s, not 3 s.**
-3. **The master make-up is no longer a constant.** It now rides toward −14 dBFS
-   instead of sitting at +8.3 dB, capped so nothing comes out louder than it did
-   yesterday. Play a loud record and a quiet one back to back — **does the box
-   sound like it is levelling them, and do you mind?** A rider is a decision
-   about whether the box has an opinion about loudness.
-4. **Is the solo voice still too breathy?** `FAM_EQ` was centred to zero mean
-   dB, which fixed eight families that were quietly getting louder — but the
-   `vox` row is `{mid: −1.5, hi: +1}`, whose mean is negative, so centring
-   moves it to `{lo: +0.2, mid: −1.3, hi: +1.2}` and **nudges its air UP by
-   0.2 dB.** This one specifically may not be solved. Play the chant and listen
-   to the top of the cantor.
-5. **The reverb return, opened.** Play the shipped chant. Every genre sends
-   `tone.verb` and until this round that send went into a muted bus. **Does it
-   sound like a stone room?**
-6. **~~`fx` back on a track.~~ ANSWERED — no, and the round is undone.** The
-   ask read: *"This reverses your 2026-08-17 directive ('get rid of inserts,
-   reverb, and echo — let me send to bus 1, bus 2, and bus 3 instead'). The
-   argument is that the sends are wired to real returns now, so a chip is only
-   for what must be IN the path. Do you accept the reversal?"* You answered
-   2026-08-26: *"Don't let me add effects to instruments. That's bus and board
-   stuff. But let me have up to four buses and a way to direct them to each
-   other."* The chip is gone from PARTMIX, from the voice's tab and from the
-   board. **There are four buses now**, and bus 3 and bus 4 are groups whose
-   destination is a knob — aim bus 3 at bus 2 and the same send leaves `rev` and
-   arrives on `del` in `__nuMix()` (`desk-gate` G14 measures it: 15.16/0 →
-   13.03/8.73). The one bus-to-bus send that reaches the engine turned out to be
-   the master's `space` — `mrev` in `fx_bus.dsp:221` — and the board now says
-   so instead of drawing a second control for it. **Nothing left to decide
-   here.** What is still yours: does aiming a group somewhere new sound like a
-   different room, or only like a different number?
-7. **`--cell: 36px` on a real phone.** Sixteen 36px cells; 36 clears WCAG AA but
-   not Apple's 44. Since the rotation the cost of going to 44 is a taller block
-   rather than a second swipe per bar. **Does your thumb hit the cell you
-   meant?** Do not ask for a toggle.
-8. **Gate 4 — Live.** `node tools/ableton/export-als.js --genre boombap --out
+1. **The motif's play button — three states on one control.** ANSWERED WHILE
+   THIS FILE WAS BEING WRITTEN, and the answer went the way its builder's
+   verdict pointed. The ask was *"should tapping a motif TAB sound it?"*, with
+   the builder's honest half attached: **right when writing, wrong when
+   browsing** — you cannot compare three motifs' staves without sitting through
+   or interrupting three readings. The tab-tap is retired (`0bc7114`): **a tab
+   is for looking**, and hearing is a button of its own that cycles
+   **off → once → loop → off**. The word on the button is the NEXT TAP and not
+   the current state, because a single pass ends by itself and a button that
+   named the state would have to be rewritten by the sound's own callback —
+   a write into a control, which the frozen-DOM law forbids. What is left for
+   you: **press it. Is one pass, then a loop, then silence the order your thumb
+   expects, or should the loop come first?**
+2. **Do the section colours read as "slightly different", or as decoration?**
+   Seven blocks, 4% of a golden-angle hue mixed into the paper, contrast
+   measured at 19.8:1. Scroll the whole page once. The question is not whether
+   you can see them — it is whether they help you tell one block from the next
+   without ever competing with `<mark>`, which is the page's one spelling of
+   "this is sounding". If they read as decoration the retreat is `--wash: 2%`
+   or `0%`, one property in one place.
+3. **The silence before the first note.** Press play and count. On an idle box
+   it is roughly **4.5–6.5 s**; under the soak's two busy cores the A/B is
+   exact — **first heard sample at 9.78 s with the prefill and 7.50 s without
+   it, and the one without it has an 853 ms dropout at t=4.1.** The ring fills
+   before it releases a frame, which is what closed the start-up crackling; the
+   price is silence, and **silence is the part you feel.** Is that trade right?
+   If it is not, the retreat is a **smaller prefill, not none** — 5 s still
+   covers the measured startup deficit (one 3.1 s bar plus ~0.6 s of producer
+   shortfall) with about a second to spare.
+4. **The catalog-wide tone change.** The family EQ reaches the sound for the
+   first time, so **222 sampled chair-boxes that were carrying a non-flat
+   `lo`/`mid`/`hi` that did nothing now do something** — about 1.5 dB, a dip
+   near 1 kHz and a lift on top. Nothing in the stored numbers changed; the
+   renderer stopped ignoring them. Play three records you know well. **Every
+   record now sounds the way its own mix sheet has always described it** — is
+   that an improvement, or did the box just get duller?
+5. **Does the producer's ten-note stack read as one note?** It is **not
+   capped** — measured, before anything was built: nine sentences stacked, ten
+   rows drawn, each with its own more / less / take it off, `run` applying all
+   nine in order. So if it feels like one, the problem is **discoverability and
+   not capability**, and the fix is somewhere else entirely. Say three things
+   in a row and tell us whether you could see that you had.
+6. **`voice_choir`'s breath range was deliberately left wide.** The rule that
+   cut `tract_voice` and `voice_lead` to one fifth of their travel puts
+   `voice_choir`'s ceiling at **0.012 — below its own derived value of 0.08**.
+   A slider whose top is under the number the record is already holding is the
+   lie this page exists not to tell, so its range stands. **The module is what
+   wants looking at.** Play a choir record and say whether the choir is hissy
+   in the way the solo voice was.
+7. **Gate 4 — Live.** `node tools/ableton/export-als.js --genre boombap --out
    /tmp/n.als`, then open it in Live 12.4.3. **Does it open?** Only Live can
-   answer; `verify.sh` has always missed this.
-9. **The eight 2020s anchors, as taste claims.** amapiano · bedroompop ·
-   afrobeats · hyperpop · mahraganat · bailefunk · punjabipop · corridotumbado.
-   Drag the slider to the end and play three of them. **Does "now" sound like
-   now?**
-10. **The ten new African anchors, as taste claims.** Nine of ten named pairs sit
-    further apart than the median pair in the genealogy's own feature space, and
-    highlife fires 782 timeline hits and 272 claps where rock fires neither — so
-    they are *distinct*. Distinct is not *right*. **Does highlife sound like
-    highlife, or like the default in a costume?** (`AFRICA.md` §"Does it sound
-    like itself".)
-11. **`zema` specifically.** It is the weakest new anchor — **0.380 from
-    `gregorian`** in the genealogy's feature space, the closest of the new ten to
-    an existing one, and flagged by its own author rather than found later. It is
-    also the record with the church organ in it, above. **Should it be in the
-    catalog at all?**
-12. **The `IDIOM` table.** Ten family rows and about twenty anchor overrides are
-    a taste claim. The precompose gate prints which family row each anchor
+   answer; `verify.sh` has always missed this. Opening it also settles Ask #1
+   and unblocks Ableton P1.
+8. **The deep runway.** Change a genre, the tempo, or a section *while it is
+   playing*. Is the delay before you hear the change tolerable? It buys a
+   buffer that does not empty by spending up to ~5 s of heard lag. If it is
+   wrong the retreat is **5 s, not 3 s.**
+9. **The master make-up is no longer a constant.** It rides toward −14 dBFS
+   instead of sitting at +8.3 dB, capped so nothing comes out louder than it
+   did. Play a loud record and a quiet one back to back — **does the box sound
+   like it is levelling them, and do you mind?** A rider is a decision about
+   whether the box has an opinion about loudness.
+10. **The sixty new world anchors, as taste claims.** Play son (Havana 1928),
+    choro (Rio 1900), mento (Kingston 1952), shidaiqu (Shanghai 1940),
+    kroncong (Jakarta 1935), filmi (Mumbai 1960), rebetiko (Piraeus 1935),
+    ragtime (Sedalia 1899), sacred harp (Philadelphia 1844). Every one is
+    measurably DISTINCT — the African round's own test was that highlife fires
+    782 timeline hits and 272 claps where rock fires neither — but **distinct
+    is not right.** The question the machine cannot ask: **does each of these
+    sound like itself, or like the default in a costume?**
+11. **`zema` specifically.** The weakest anchor by its own author's
+    measurement — **0.380 from `gregorian`** in the genealogy's feature space,
+    flagged by the round that built it rather than found later. Its church
+    organ is gone. **Should it be in the catalog at all?**
+12. **`--cell: 36px` on a real phone.** Sixteen 36 px cells; 36 clears WCAG AA
+    but not Apple's 44. Since the grids rotated the cost of going to 44 is a
+    taller block rather than a second swipe per bar. **Does your thumb hit the
+    cell you meant?** Do not ask for a toggle.
+13. **The `IDIOM` table.** Ten family rows and about twenty anchor overrides
+    are a taste claim. The precompose gate prints which family row each anchor
     resolved to. **Does a punk hook sound like punk?**
-13. **71 hand-typed coordinates.** Every new one was checked on land by
-    point-in-polygon against the baked coastline. The gate catches a city in the
-    sea; it cannot catch one 200 km off. Turn the globe once. **Is anything in
-    the wrong place?**
+14. **109 hand-typed coordinates.** Every one was checked on land by
+    point-in-polygon against the baked coastline. The gate catches a city in
+    the sea; it cannot catch one 200 km off. Turn the globe once. **Is anything
+    in the wrong place?**
+15. **The twelve words a bus can be "called".** ambience, depth, bloom, throw,
+    lift, smash, parallel, double, stack, blend, wash, sheen. They were chosen
+    to be JOBS rather than effects, so that nothing on that row collides with
+    the reverb-type knob under it — the collision you reported. That is a
+    constraint satisfied; whether they are the right twelve is taste. **Open
+    the row. Is there a word you would reach for that is not there?**
+16. **The wiki links, as claims about music.** 191 of them, each with the
+    argument for it written out in `WIKI.md`. Two rows got no link on purpose
+    and the paragraphs say why. **Read the thirty-one rows that are not plain
+    genre articles** — the 20 artist links, the 4 albums, the 7 broader — and
+    say whether any of them is a wrong claim rather than a wide one.
 
 ---
 
-*The deep reports, and how far each one can be trusted:*
+## THE STANDING LAWS THIS WEEK EARNED
 
+Written here because a newcomer will find this file before they find the
+commit that earned each one.
+
+**TEST THE ARTIFACT, NOT THE SOURCE.** Gates must read the RENDERED output.
+Three features shipped broken while every check passed. The sharpest instance
+is worth carrying: `test/sheets.js` was **surveying an empty room** — `#app`
+boots on a list of five section names, so gates 1/2/3 took one snapshot of a
+page with zero sheets on it, which made *"0 sheets drawn"* a real failure AND
+*"NO DEVELOPMENT WORD IS A MENU []"* a **vacuous pass from the same
+snapshot.** A check that passes because it looked at nothing is worse than no
+check. Walking every view exposed three further failures the empty page had
+been hiding.
+
+The law has a second half this week added: **read the artifact's own
+declaration, not a selector you remember.** `test/motif-frozen.js` A2 counted
+`#staff [data-live="played"] > p > div`, a query written on the one day that
+layout existed. `ui/eight.js`'s header says the rule *"never was a number"* and
+that a live surface **declares itself in the HTML**; the gate's own preamble
+already says it *"asks the page itself what it marked live … rather than
+inventing an exclusion of its own"* — and then one assertion invented one
+anyway. Ask what is live; do not remember what was.
+
+**DRIVE THE PAGE LIKE A PERSON.** `page.click()` scrolls its own target into
+view before clicking it, CenterIfNeeded. That single fact produced **four
+false bug reports** in one round — "a tab click lands on the same absolute
+scrollY from any start", "no script calls a scroll API", "`overflow-anchor:
+none` did not fix it" — and sent the round sideways until the arithmetic
+(2251.09 + 22 − 422 = 1851) was noticed. Tap the element at its own on-screen
+point. A harness that manufactures the effect it is measuring is not a
+measurement.
+
+**ONE OWNER PER FACT.** Two owners of one fact is the bug that hides, and the
+board round found one by looking for it: a bus's `goes to` was printed both by
+a `.nu-why` under the control and by the `goes to` ROW four rows down — *"on a
+one-hop route those are the same words, which is what made the duplication easy
+to miss."* The general mechanism is now a gate: `desk-gate` counts every rack
+control and fails on a **duplicate `data-k`**, because *"a control drawn twice
+is two owners of one fact, whether or not either copy is refused."* Today's
+`selects`/`desk-gate` collision is the same law one level up — two GATES
+asserting opposite things about one widget, because the widget moved and only
+one of them was told. When a fact moves, the gate that does not own it stops
+mentioning it rather than following it.
+
+**ABSENT IS TODAY, AND IT IS PROVED FIRST.** A key that is not in the document
+must render byte-identically to yesterday. Every new field this week was
+spread and not assigned, and the identity was measured before the feature was
+believed: `fm2op`'s four constants became `mp()` calls **defaulting to the
+constants that were there**, so every record that says nothing is byte-identical;
+`no dx7Preset` is `E.PIANO 1` byte for byte; a take of 0 or 1 or absent is take
+one and every record before the change renders identically.
+
+**THE CONVERSION IS DONE BY EXTRACTION, NEVER BY HAND.** `gates.json`,
+`knobs.js`, `wiki.js`, `INSTR_YEAR`, the option table, the atlas's `WHEN` — all
+derived from the running box, committed, and re-derivable with a `--check` that
+fails on drift. The corollary this week added: **a derivation is only as good
+as its corpus.** The option table was extracted correctly from a corpus of one
+record wearing 139 labels, and being correctly extracted did not make it true.
+
+**REVERSALS ARE REWRITTEN, NOT DELETED.** When a design decision is reversed,
+the old sentence stays above the new one with the measurement that reversed it.
+This week: the motif transform icons (drawn contours → unicode arrows, because
+a reader read "the record's own" as "default"); `fx` on instruments (put back
+on 2026-08-24, taken off again on 2026-08-26 by Paul's own words, with the
+argument for putting them back preserved as the reason there is now a fourth
+bus); PLAN.md's *"No icons anywhere"*, narrowly reversed and then narrowed
+again. A deleted argument is an argument somebody will have again.
+
+**AN AFFORDANCE NOBODY CAN SEE IS NOT A CONTROL.** You could already sound a
+motif by tapping its tab, and a probe of the deployed page confirmed the buffer
+source firing — so by every measurement the feature worked. Nothing on the
+block said so. The gesture was invisible, and an invisible gesture is a feature
+report, not a feature. Its replacement carries the other half of the law:
+**a control says what pressing it will DO, not what state it is in.** A button
+that named its own state would have to be rewritten by the sound's own
+callback, which is a write into a control while the record plays — forbidden by
+the frozen-DOM law — and it would go stale the moment a single pass ended by
+itself. The word is the next tap; the live sentence beside it is the state.
+
+**A GATE THAT ONLY EVER SKIPS IS A CLAIM NOBODY IS MAKING.** When the shipped
+page stopped having a radio-group sheet, the traversal assertion was not
+deleted and not left skipping — the same file runs a second time against
+`test/fixtures/sheets-harness.html` as the `sheets-tier` gate, so the claim
+keeps being made where it is still true.
+
+**AND A BROKEN GATE ASSERTS NOTHING — WHICH IS WORSE THAN A RED ONE.** Three
+gates were found *crashing* rather than failing on 2026-08-25 (`sheets.js` at
+`readDev` on a null key, `producer.browser.js` at `hot.prod.notes[0].w`), each
+taking every assertion after it down with it. It happened again TODAY, inside
+this file's own repair: emptying `test/selects.js`'s `MULTI` table made
+`MULTI[capKey].max` throw, and the whole gate went from "1 of 52" to a
+stack trace. **When you delete the last row of a table, look for the code that
+assumed there would always be one.**
+
+**A GATE IS A TRANSCRIPT OF A DECISION.** All four of today's red gates were
+green when they were written and were made untrue by a later decision — three
+of them by Paul, in his own words, over the following forty-eight hours. That
+is not a failure of the gates; it is what gates ARE. What it means in practice
+is the sentence at the top of this file: **run the suite before you believe a
+tree**, and when a gate goes red, ask what CHANGED before you ask what broke.
+
+---
+
+## THE DEEP REPORTS, AND HOW FAR EACH ONE CAN BE TRUSTED
+
+* `AXES.md` — the eight axes, and why genre is a correlation and not a ninth.
+  Current, and it is the shortest way in.
 * `PROGRAM.md` — the order the 2026-08-24 round was built in, and the contract.
-  **Its §5 gate table still prints the pane rule the shell gate reversed**, and
-  it does not describe the work after D9.
-* `AXES.md` — the eight, and why genre is a correlation and not a ninth.
-* `EQ.md` — the board's three knobs and the tape. Current. Its §9 warns you
-  that a gate red at the time was another round's atlas surgery mid-flight; it
-  is not, today.
-* `MOTIF.md` — the page that moved while it played. Its findings are current;
-  **its gate table is not** — it recorded 10 pass · 3 fail against a tree three
-  other rounds were rewriting underneath it.
-* `GLOBE.md` — the earth. Written 19:39 on 2026-08-24, so **its "Still open"
-  list predates the 03:30 commit that fixed its top two items.**
-* `AFRICA.md` — the fourteen anchors and the genealogy repair, and the best
-  "what is still wrong" list in the building. Current.
-* `WORLD.md`, `INTERVIEW.md` — what comes next. **Not built.**
+  **Its §4 numbers are pre-expansion** (122 and 139 anchors where the box has
+  199) and **its §5 gate table still prints assertions four gate files have
+  since rewritten.** It now opens with a dated header saying exactly which of
+  its parts have gone stale and which are still binding; nothing below that
+  header was edited, because a contract you can no longer read as it was
+  written is a contract nobody can check a reversal against. **Read it for the
+  CONTRACT, not for the counts.**
+* `WORLD.md` — the tier rules, the `cannot` field, the primary-fact rule, and
+  the coverage grid. **Its §4 catalog frame is the BEFORE picture** (124
+  anchors, 86.3% Euro-American); the world round executed against it and the
+  after numbers are in this file and in the commit.
+* `INTERVIEW.md` — the generated-shape/shared-wording decision. Its measured
+  numbers were taken at 139 anchors.
+* `VOICE.md` — the voice and instrument editors. Current, and §13 is the
+  honest record of six places the build disagreed with its own spec.
+* `EQ.md` — the board's three knobs and the tape. Current. Its §7 latent
+  ping-pong hazard is **closed** as of `test/pp-send.test.js`.
+* `WIKI.md` — GENERATED. 191 rows, each with its argument and the article's own
+  first sentence, so it can be checked by reading.
+* `AFRICA.md` — the fourteen African anchors and the genealogy repair, and the
+  best "what is still wrong" list in the building. **Items 1, 2 and 5 are now
+  fixed** (`inv`, the guest pool, `latinpop`); 3, 4 and 6 stand.
+* `MOTIF.md` — the page that moved while it played. Its item 2 is fixed; item 1
+  is not. **Its gate table is a snapshot of a tree three other rounds were
+  rewriting underneath it and should not be read as a verdict.**
+* `GLOBE.md` — the earth. Written 2026-08-24, so **its "Still open" list
+  predates the commits that fixed its top two items.**
+
+* `nukernel/state.html` — not a report but worth knowing about: the whole record
+  as indented JSON in a `<pre>`, written by `node nukernel/state-page.js` and
+  EXTRACTED from the running data tier. No stylesheet, no module graph, no
+  engine — *"there is nothing that can fail between the state and your eye."*
+
+---
+
+*Written 2026-08-26 against `2c0454d`. **Three commits landed under this file
+while it was being written** — `0bc7114`, `b68066d`, and the one carrying its
+own gate repairs — which is itself the argument for its first section: if you
+are reading this on a later tree, every number here is a claim about the day it
+was taken, and the suite that would tell you otherwise takes twenty-six
+minutes.*
