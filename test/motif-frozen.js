@@ -27,9 +27,21 @@
 // an editing control, or "put it in a data-live" becomes a way past A3.
 //
 // A1  no input/select/textarea/button/fieldset inside any [data-live]
-// A2  both staves per measure exist WHILE STOPPED (the composed staff is not
-//     conditional on `playing` — a staff that appears on play is the editing
-//     interface changing, which is the complaint itself)
+// A2  the LIVE SURFACE exists WHILE STOPPED and is captioned — nothing that
+//     the clock writes on may be conditional on `playing`, because a block
+//     that appears on play is the editing interface changing, which is the
+//     complaint itself. REWRITTEN 2026-08-26, and the page was right: this
+//     used to read "both staves per measure exist while stopped" and count
+//     `#staff [data-live="played"] > p > div` against `#staff > p > div`. That
+//     was a transcript of a layout Paul reversed the next morning — "you don't
+//     need to show me the interpreted notation for a motif, only the pure
+//     representation, because now I have the sheet music" — so the composed
+//     staff per motif was deleted (ui/eight.js's own header says so, and
+//     `__eightCaptions` was rewritten with a note explaining what it reads
+//     now). The PROMISE is unchanged and is the only thing A2 ever meant, so
+//     it is now asserted against whatever the page DECLARES live, the way the
+//     rest of this file already works: one staff per motif is the new truth
+//     and is asserted as such.
 // A3  the frozen half is byte-identical across play + two section boundaries
 // A4  ...and the live half moved: at least one composed caption changed. An
 //     independent second proof that a boundary happened, and it fails a "fix"
@@ -132,12 +144,17 @@ function firstDiff(a, b) {
     is(smuggled.length === 0,
       "A1 " + width + " · no control inside a [data-live] (" + smuggled.join(", ") + ")");
 
-    // A2 — two staves per measure, WHILE STOPPED
+    // A2 — the live surface exists WHILE STOPPED, and one staff per motif
     const shape = await page.evaluate(() => ({
       svgs: document.querySelectorAll("#staff svg").length,
-      lives: document.querySelectorAll('#staff [data-live="played"]').length,
+      // WHATEVER THE PAGE DECLARES LIVE, not a value this file remembers.
+      // ui/eight.js's header is explicit that the set of `data-live` values
+      // moves — "played" existed for one day and is gone — and that the RULE
+      // "never was a number". So the query is `[data-live]` minus the playhead
+      // cells, which are counted separately because there are twenty-odd of
+      // them in the form table and they are not blocks.
+      lives: document.querySelectorAll('#app [data-live]:not([data-live="count"])').length,
       counts: document.querySelectorAll('#app [data-live="count"]').length,
-      lineHosts: document.querySelectorAll('#staff [data-live="played"] > p > div').length,
       written: document.querySelectorAll("#staff > p > div").length,
       caps: window.__eightCaptions(),
       playing: (document.getElementById("play") || {}).textContent,
@@ -145,12 +162,19 @@ function firstDiff(a, b) {
     console.log("     " + shape.svgs + " staves · " + shape.lives + " live blocks · " +
       shape.counts + " count cells · " + shape.written + " written measures");
     is(shape.playing === "play", "A2 " + width + " · the transport is stopped to start with");
-    is(shape.lives > 0 && shape.lineHosts === shape.written &&
-       shape.svgs === shape.lineHosts + shape.written,
-      "A2 " + width + " · a composed staff over every written one while STOPPED (" +
-      shape.lineHosts + " composed, " + shape.written + " written, " + shape.svgs + " svgs)");
-    is(shape.caps.length === shape.lives && shape.caps.every((c) => c && c.length > 3),
-      "A2 " + width + " · every composed block is captioned: " + JSON.stringify(shape.caps));
+    is(shape.lives > 0,
+      "A2 " + width + " · the live surface is already there while STOPPED (" +
+      shape.lives + " live blocks, " + shape.counts + " count cells) — a block " +
+      "that appears on play is the interface changing");
+    // ONE STAFF PER MOTIF, WHICH IS THE REVERSAL STATED AS A TRUTH. It was two
+    // — the written measure and a composed staff over it — until Paul asked
+    // for "only the pure representation, because now I have the sheet music".
+    is(shape.written > 0 && shape.svgs === shape.written,
+      "A2 " + width + " · ONE staff per written measure, not two (" + shape.svgs +
+      " svgs, " + shape.written + " written measures)");
+    is(shape.caps.length > 0 && shape.caps.every((c) => c && c.length > 3),
+      "A2 " + width + " · every live block is captioned while STOPPED: " +
+      JSON.stringify(shape.caps));
 
     // ---- the before picture, and the instruments
     const A = await page.evaluate(() => window.__eightFrozen());

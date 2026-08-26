@@ -192,6 +192,19 @@ function g18() {
   const p = await b.newPage({ viewport: { width: 390, height: 844 },
                               deviceScaleFactor: 2, hasTouch: true });
   const errs = [], foreign = [];
+  /* `__nuName()` IS THE SAME READING AS `nameOf()` BELOW, INSIDE THE PAGE, and
+     it is installed with addInitScript because this file reloads six times and
+     an `evaluate`-installed helper does not survive a reload. See the long note
+     at `nameOf` for why the record's name stopped being the whole of `#title`. */
+  await p.addInitScript(() => {
+    window.__nuName = () => {
+      const t = document.getElementById("title");
+      if (!t) return null;
+      return [...t.childNodes]
+        .filter((n) => !(n.nodeType === 1 && n.classList.contains("nu-wiki")))
+        .map((n) => n.textContent).join("").trim();
+    };
+  });
   p.on("pageerror", (e) => errs.push("pageerror: " + e.message));
   p.on("console", (m) => { if (m.type() === "error" && !/favicon/.test(m.text()))
     errs.push("console: " + m.text()); });
@@ -251,6 +264,26 @@ function g18() {
     r.dispatchEvent(new Event("input", { bubbles: true }));
     return document.getElementById("atlasYearOut").textContent;
   }, y);
+
+  /* THE RECORD'S NAME IS NOT THE WHOLE OF `#title` ANY MORE — REWRITTEN
+     2026-08-26, and the page was right on every one of the six checks this
+     changed. Until the wiki round `#title.textContent` was exactly the anchor's
+     label ("Kingston 1969"), so four checks here compared it to that string
+     with `===` and a fifth parsed it with `/^(.+) (\d{3,4})$/`. Paul, 2026-08-26:
+     "add actual Wikipedia links for each genre we have at the top by the title"
+     — so `ui/eight.js draw()` now appends `<a class="nu-wiki">` (and, on the 31
+     rows that are not a plain genre article, a `.nu-kind` span inside it) to the
+     same element, and the textContent reads "Kingston 1969 Reggae". Every one of
+     those five went red while the tap, the touch tap, the pile and the ring all
+     demonstrably worked — G22's own ring assertion passed in the same run off
+     the same click.
+
+     So the name is read as the element's OWN text with the link taken out,
+     which is what "the record names the page" always meant, and the link is
+     asserted separately where it belongs (G7 counts the hrefs). A gate that
+     compares against the whole string is asserting that nothing may ever sit
+     beside the name, which is not a promise this page makes. */
+  const nameOf = () => p.evaluate(() => window.__nuName());
 
   /* ---- G7 THE PICTURE ------------------------------------------------- */
   const shape = await p.evaluate(() => {
@@ -366,10 +399,10 @@ function g18() {
   check(!!k1, "G8 · Kingston has a mark on screen at the whole earth");
   if (k1) { await p.mouse.move(k1.x, k1.y); await p.mouse.down(); await p.mouse.up(); }
   const gotTitle = await p.waitForFunction(
-    () => (document.getElementById("title") || {}).textContent === "Kingston 1969",
+    () => window.__nuName() === "Kingston 1969",
     null, { timeout: 4000 }).then(() => true).catch(() => false);
   const after = await p.evaluate(() => ({
-    title: (document.getElementById("title") || {}).textContent,
+    title: window.__nuName(),
     h2: [...document.querySelectorAll("#app .nu-ax > h2")].map((h) => h.textContent.trim()),
     basis: window.__eightDoc().basis,
     voices: window.__eightDoc().voices.length,
@@ -443,7 +476,7 @@ function g18() {
   const kbDoc = await p.evaluate(() => ({
     doc: JSON.stringify(window.__eightDoc()),
     want: JSON.stringify(window.NuPrecompose.genreToDocument("reggae", 1)),
-    title: (document.getElementById("title") || {}).textContent }));
+    title: window.__nuName() }));
   check(kbDoc.doc === kbDoc.want,
     "G11 · Enter on the mark writes exactly genreToDocument(\"reggae\", 1) — byte-identical " +
     "to the pointer path, one code path and no hidden twin (" + kbDoc.doc.length + " chars)");
@@ -506,10 +539,23 @@ function g18() {
     "Tokyo at 1984 was data-far=" + JSON.stringify(farReach.before.far) + ", is now " +
     JSON.stringify(farReach.far) + " (data-when " + JSON.stringify(farReach.when) +
     "), camera at lon " + farReach.lon);
-  /* AND THE OTHER REMOVAL, PROVED AT THE SAME MARK: at 1969 Tokyo is not there
-     at all — no tab stop, no name, nothing under a thumb — because 1984 is
-     fifteen years away and Paul asked for exactly that. */
-  await setYear(1969);
+  /* AND THE OTHER REMOVAL, PROVED AT THE SAME MARK: at a year Tokyo does not
+     hold, it is not there at all — no tab stop, no name, nothing under a thumb.
+
+     THE YEAR IS DERIVED, REWRITTEN 2026-08-26, AND THE PAGE WAS RIGHT. This
+     check used to type 1969, because Tokyo's only record was citypop 1984 and
+     1969 is fifteen years away. The world round put **enka, Tokyo 1969** in the
+     catalog, so at 1969 the mark is now correctly drawn, named and tabbable —
+     and this assertion went red for the one reason a gate must never go red,
+     which is that the catalog grew a record. Typing a second year would only
+     move the tripwire; the fact the check is making is "a year this place does
+     not hold", so it now ASKS the page which years those are and takes the
+     first one above the far-side year. It cannot go stale again. */
+  const goneYear = await p.evaluate((from) => window.NuAtlas.YEARS
+    .filter((y) => y > from && !window.NuAtlas.atYear(y).shown.has("Tokyo"))[0], 1984);
+  check(goneYear != null, "G11 · there is a stop above 1984 that Tokyo does not hold (" +
+    goneYear + ")");
+  await setYear(goneYear);
   await p.waitForTimeout(250);
   const gone = await p.evaluate(() => {
     const g = [...document.querySelectorAll("#atlasMarks .place")]
@@ -522,11 +568,11 @@ function g18() {
   });
   check(gone.when === "0" && gone.ti === "-1" && gone.disp === "none"
         && !gone.label && gone.box === 0 && !gone.focused,
-    "G11 · …and at 1969 that same Tokyo mark is GONE, not dimmed — data-when " +
+    "G11 · …and at " + goneYear + " that same Tokyo mark is GONE, not dimmed — data-when " +
     JSON.stringify(gone.when) + ", tabindex " + JSON.stringify(gone.ti) + ", display " +
     JSON.stringify(gone.disp) + ", aria-label " + JSON.stringify(gone.label) +
     ", " + gone.box + " px wide, focus() refused. It used to be a 0.34-opacity dot " +
-    "named \"Tokyo 1984, citypop (nothing near 1969)\".");
+    "named \"Tokyo 1984, citypop (nothing near " + goneYear + ")\".");
   await setYear(1969);
 
   /* ---- G12 TAP BOXES ON A PHONE --------------------------------------- */
@@ -921,7 +967,7 @@ function g18() {
     pile.a + "/" + pile.b + " at " + pile.d.toFixed(1) + " CSS px");
   await p.mouse.move(pile.x, pile.y); await p.mouse.down(); await p.mouse.up();
   await p.waitForTimeout(2000);
-  const one = await p.evaluate(() => ({ title: document.getElementById("title").textContent,
+  const one = await p.evaluate(() => ({ title: window.__nuName(),
     doc: JSON.stringify(window.__eightDoc()) }));
   await p.reload({ waitUntil: "networkidle" });
   await p.waitForTimeout(900);
@@ -930,7 +976,7 @@ function g18() {
   await p.waitForTimeout(300);
   await p.mouse.move(pile.x, pile.y); await p.mouse.down(); await p.mouse.up();
   await p.waitForTimeout(2000);
-  const two = await p.evaluate(() => ({ title: document.getElementById("title").textContent,
+  const two = await p.evaluate(() => ({ title: window.__nuName(),
     doc: JSON.stringify(window.__eightDoc()) }));
   check(one.doc === two.doc && one.title === two.title,
     "G19 · a tap into the pile resolves to ONE record and the same tap twice writes the " +
@@ -957,7 +1003,7 @@ function g18() {
   await p.waitForTimeout(250);
   const k2 = await markXY("Kingston");
   const s0 = await p.evaluate(() => ({ y: window.scrollY,
-    title: document.getElementById("title").textContent }));
+    title: window.__nuName() }));
   await touch("touchStart", [k2]);
   for (let i = 1; i <= 10; i++) {
     await touch("touchMove", [{ x: k2.x, y: k2.y - i * 22 }]);
@@ -966,7 +1012,7 @@ function g18() {
   await touch("touchEnd", []);
   await p.waitForTimeout(1600);
   const s1 = await p.evaluate(() => ({ y: window.scrollY,
-    title: document.getElementById("title").textContent }));
+    title: window.__nuName() }));
   check(s1.y - s0.y > 100, "G16 · a real vertical touch swipe BEGINNING on the Kingston mark " +
     "scrolls the page (" + s0.y + " -> " + s1.y + " px)");
   check(s1.title === s0.title, "G16 · …and composes nothing: #title is still " +
@@ -978,7 +1024,7 @@ function g18() {
   await p.waitForTimeout(40);
   await touch("touchEnd", []);
   await p.waitForTimeout(2200);
-  const tapped = await p.evaluate(() => ({ title: document.getElementById("title").textContent,
+  const tapped = await p.evaluate(() => ({ title: window.__nuName(),
     say: document.getElementById("atlasSay").textContent }));
   check(tapped.title === "Kingston 1969",
     "G16 · a real touch TAP at the same coordinate still writes the record — #title " +
@@ -1089,27 +1135,40 @@ function g18() {
     JSON.stringify(order));
   await p.evaluate(() => document.getElementById("atlasYear").focus());
   const walk = [];
-  // TWELVE PRESSES, not nine, and the first place is Addis Ababa, not Austin:
-  // the tab order IS the drawn set in the globe's own alphabetical DOM order,
-  // so both facts move whenever the catalog grows a place. The Africa round
-  // (2026-08-25) put Addis Ababa 1969, Bamako 1970 and Kinshasa 1960 inside
-  // this year's ±10 window, which is three more marks and two of them ahead of
-  // Kingston in the alphabet — so Kingston went from the 7th place to the 9th
-  // and walked out of a nine-press window. The PROMISE is unchanged and is the
-  // whole point of the check: Tab from the slider lands in the globe, then on
-  // its places, and the record the page is playing is a few Tabs away rather
-  // than behind the reader.
-  for (let i = 0; i < 12; i++) {
+  // THE PRESS COUNT IS DERIVED — REWRITTEN 2026-08-26, THE THIRD TIME THIS
+  // NUMBER WENT STALE AND THE LAST. The tab order IS the drawn set in the
+  // globe's own alphabetical DOM order, so how far along it Kingston sits is a
+  // fact about how many places the catalog holds in this year's ±10 window, and
+  // that number has now moved twice: the Africa round put Addis Ababa, Bamako
+  // and Kinshasa ahead of it and nine presses became twelve; the world round of
+  // 2026-08-26 took 1969 from 33 drawn marks to 45 — Bangkok, Barcelona,
+  // Barranquilla, Cairo and more, all ahead of K — and twelve presses stopped
+  // reaching it too. Each time the PAGE was right and only the transcript was
+  // wrong. So the walk is now as long as the drawn set (plus the globe itself
+  // and a margin), read off the page, and what is asserted is the PROMISE that
+  // was always the point: Tab from the slider lands in the globe, then on its
+  // places in alphabetical order, and the record the page is playing is
+  // REACHABLE FROM THE SLIDER GOING FORWARD rather than behind the reader.
+  // The distance is printed, not asserted — it is a measurement of the catalog,
+  // not a claim about the design.
+  const drawn69 = await p.evaluate(() =>
+    document.querySelectorAll('#atlasMarks .place[tabindex="0"]').length);
+  const first = await p.evaluate(() => {
+    const g = [...document.querySelectorAll('#atlasMarks .place[tabindex="0"]')][0];
+    return g ? g.getAttribute("aria-label") : null;
+  });
+  for (let i = 0; i < drawn69 + 3; i++) {
     await p.keyboard.press("Tab");
-    await p.waitForTimeout(90);
+    await p.waitForTimeout(30);
     walk.push(await p.evaluate(() => {
       const a = document.activeElement;
       return a.id || a.getAttribute("aria-label") || a.tagName;
     }));
+    if (walk[walk.length - 1] === "Kingston 1969, reggae") break;
   }
-  check(walk[0] === "atlasMap" && /^Addis Ababa /.test(walk[1] || ""),
-    "G11 · Tab from the slider walks INTO the globe and then its places: " +
-    JSON.stringify(walk.slice(0, 4)));
+  check(walk[0] === "atlasMap" && walk[1] === first,
+    "G11 · Tab from the slider walks INTO the globe and then its places, in the " +
+    "globe's own order (" + drawn69 + " drawn at 1969): " + JSON.stringify(walk.slice(0, 4)));
   const toKingston = walk.indexOf("Kingston 1969, reggae");
   check(toKingston > 0, "G11 · …and Kingston is " + (toKingston + 1) +
     " Tabs from the slider at 1969 (" + JSON.stringify(walk.slice(0, 8)) + ")");
@@ -1211,7 +1270,7 @@ function g18() {
   const kRing = await markXY("Kingston");
   if (kRing) { await p.mouse.move(kRing.x, kRing.y); await p.mouse.down(); await p.mouse.up(); }
   await p.waitForFunction(
-    () => (document.getElementById("title") || {}).textContent === "Kingston 1969",
+    () => window.__nuName() === "Kingston 1969",
     null, { timeout: 4000 }).catch(() => {});
   await bring();
   await p.waitForTimeout(400);
@@ -1234,7 +1293,7 @@ function g18() {
       .find((x) => x.dataset.place === "Kingston");
     return { when: g.getAttribute("data-when"), ring: g.querySelector(".ring").getAttribute("opacity"),
              drawn: document.querySelectorAll('#atlasMarks .place[data-when="1"]').length,
-             title: (document.getElementById("title") || {}).textContent };
+             title: window.__nuName() };
   });
   check(away.when === "0" && away.ring === "0" && away.drawn === 1
         && away.title === "Kingston 1969",

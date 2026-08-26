@@ -123,7 +123,31 @@ const MENUS = {
  * control that quietly becomes a multiselect is as much a fail as one that
  * quietly becomes a menu. `n` is checked against the page and `max` is driven
  * — check 12 below picks three chips and then forces a fourth. */
-const MULTI = { "eng.fx": { what: "the per-voice character chips", max: 3 } };
+/* IT IS EMPTY BECAUSE THE ONE CONTROL IT NAMED CHANGED ADDRESS — REWRITTEN
+ * 2026-08-26, and the page was right. This table held `eng.fx`, the per-voice
+ * character chips, and asserted their presence on index.html. Paul, 2026-08-26:
+ * "Don't let me add effects to instruments. That's bus and board stuff." The
+ * buses round obeyed the sentence's FIRST half by taking the chip off every
+ * instrument, and its second half by giving it an address: the same eleven
+ * chips, the same MAX_FX cap, are now `master.fx` on the board
+ * (`ui/engineer.js:1119`), because that chain is the RECORD's — audio/desk.js
+ * hands it to every seated voice — and not any one instrument's. The chips did
+ * not go away; they moved.
+ *
+ * SO THIS FILE STOPS OWNING THEM, rather than following them. Everything this
+ * gate surveys is `#app`-scoped ON PURPOSE (see the note over `survey`, and the
+ * one over `sheets`): the board's controls are `nukernel/desk-gate.js` G3's
+ * vocabulary, G10's cap and G11's placement, and one owner per fact is the law
+ * that stops two gates disagreeing about one widget — which is exactly what
+ * happened here, with this file demanding a control on a page where desk-gate,
+ * green at 123 checks in the same run, was demanding its absence.
+ *
+ * The list stays as a list rather than being deleted, because the OTHER
+ * direction is unchanged and is the half worth keeping: nothing inside `#app`
+ * may quietly become a multiselect. The day a multiple choice belongs to the
+ * record's own eight axes again, it is declared here with its cap and check 13
+ * drives it. */
+const MULTI = {};
 /* ...and the form tab's per-section nudges, which are drawn in that same tab
  * and are the same kind of fact — one settled answer per section. They are
  * listed separately because they are a READING of "in the band 'form' section
@@ -922,8 +946,13 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   // quietly became one", is held everywhere, because that one can fail on any
   // page that draws sheets at all.
   if (REAL)
-    check(!missingMulti.length, "every control that allows multiple selection is a " +
-      "<select multiple> " + JSON.stringify(missingMulti.map((k) => MULTI[k].what)));
+    check(!missingMulti.length, Object.keys(MULTI).length
+      ? "every control that allows multiple selection is a <select multiple> " +
+        JSON.stringify(missingMulti.map((k) => MULTI[k].what))
+      : "no multiple-choice control is left inside #app (" + multis.length +
+        " <select multiple> there): the page's one multiselect moved OFF the " +
+        "instruments and onto the board as `master.fx` on 2026-08-26, where " +
+        "desk-gate owns its vocabulary, its cap and its placement");
   else if (missingMulti.length)
     notes.push("     (the harness draws no engineer, so " +
       JSON.stringify(missingMulti) + " is index.html only)");
@@ -974,10 +1003,18 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      could. So: pick three, prove the rest went grey WITH A REASON IN THEIR OWN
      WORDS, then force a fourth past the grey and prove the page refused it OUT
      LOUD rather than silently keeping three. ---- */
-  const capKey = Object.keys(MULTI)[0];
-  const capMax = MULTI[capKey].max;
-  if (!multis.length) notes.push("     (check 13 — the cap, driven — needs the " +
-    "engineer's chips, which are index.html only)");
+  // ...AND IT SURVIVES AN EMPTY `MULTI`. Until 2026-08-26 this pair could not
+  // be undefined, because the table always had a row in it; when the one row
+  // moved to the board the next line threw and took every assertion after it
+  // with it — a broken gate asserts nothing, which is the failure this repo has
+  // now made twice. The driver below is guarded by `multis.length` already; the
+  // lookup has to be too.
+  const capKey = Object.keys(MULTI)[0] || null;
+  const capMax = capKey ? MULTI[capKey].max : 0;
+  if (!multis.length) notes.push("     (check 13 — the cap, driven — has no " +
+    "customer inside #app: the one capped multiselect moved onto the board as " +
+    "`master.fx` on 2026-08-26 and its cap is desk-gate's to drive now. See MULTI " +
+    "above. The driver is kept for the next one rather than deleted.)");
   else {
   await p.evaluate(() => {
     const v = window.__D().voices.find((x) => x.kind === "line");

@@ -80,10 +80,24 @@ const VIEW_SHEETS = {
      It was not on this list because until today this gate only ever looked at
      the page it booted on, and `eng.fx` is drawn on a VOICE's tab. Its five
      neighbours — eng.lvl / pan / rev / echo / room — are `<select>`s now and so
-     are not sheets at all; the chips are the only one left. */
-  "eng.fx": "ui/engineer.js — the character chips, declared by fields.js FX " +
-            "(fields.js:1491, capped at MAX_FX), gated by desk-gate G3 (the " +
-            "vocabulary) and G10 (the cap: six chips resolve to MAX_FX)",
+     are not sheets at all; the chips are the only one left.
+
+     THE KEY IS `master.fx` NOW — RENAMED 2026-08-26, AND THE PAGE WAS RIGHT.
+     Paul, 2026-08-26: "Don't let me add effects to instruments. That's bus and
+     board stuff." The chip came off every instrument and got an address on the
+     board instead (`ui/engineer.js:1119`), because the chain it writes is the
+     RECORD's — audio/desk.js hands `S.fx` to every seated voice — so one voice's
+     tab was never where it belonged. Same eleven options, same fields.js `FX`
+     table, same MAX_FX cap, same desk-gate rows holding it; only the key and the
+     place moved, and this list is a list of keys. The round that moved it left
+     the recipe (`multiselect-moved-to-the-main-strip.md`) saying this file and
+     test/selects.js each needed one line; this is that line. It is NOT
+     `#app`-scoped — the `.nu-sheet` survey below walks the whole document —
+     which is why this gate sees it at all and test/selects.js, which is
+     `#app`-scoped on purpose, correctly stopped seeing it. */
+  "master.fx": "ui/engineer.js — the RECORD's character chips, under the board, " +
+            "declared by fields.js FX (capped at MAX_FX), gated by desk-gate G3 " +
+            "(the vocabulary) and G10 (the cap: six chips resolve to MAX_FX)",
   /* ...and the sheets harness's own multi sheet, 2026-08-24. The live control
    * that allows more than one answer is the engineer's character chips
    * (ui/engineer.js:360) and the engineer is not in that harness, so the SHAPE
@@ -614,7 +628,10 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      control is a `<select>` now, and `alphabet.mode` was only the first of
      them. Measured 2026-08-25 on nukernel/index.html, walking every tab: the
      ONLY `.nu-sheet` left anywhere is the engineer's `eng.fx|<voice>` chips,
-     which is a `<select multiple>` and has no radio in it. `devKey` came back
+     which is a `<select multiple>` and has no radio in it. (Since 2026-08-26
+     that one sheet is `master.fx`, under the board rather than on a voice's
+     tab — see VIEW_SHEETS — and the sentence is otherwise unchanged: it is
+     still one multiselect and still has no radio in it.) `devKey` came back
      null, `readDev` did `null.split("|")` and the whole gate CRASHED at
      line 404 — asserting nothing, including the twenty-odd checks after it.
 
