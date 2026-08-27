@@ -35,6 +35,11 @@ import { compile, timeline, barCount, barBeatsAt, barPlan, parentState,
          unrouted, warmSources } from "./plan.js";
 import { FONT, setFont } from "./fonts.js";
 import { masterState } from "./desk.js";
+// THE HOLD'S OWN SENTENCE. audio/offline.js counts what this record needs and
+// what the worker actually has; the words land in engineLine below, because the
+// engine sentence is the page's one live region about "what the ear is getting"
+// and a second status line is how two answers come to disagree.
+import { holdLine } from "./offline.js";
 
 const FAUSTDIR = new URL("../../engine/faust/", import.meta.url).href;
 
@@ -366,7 +371,18 @@ export function health() {
 // claim about the ENGINE, a gate must be able to read it before any view is
 // wired, and eight.js is an integration file that a dozen slices queue behind.
 // The view's whole job becomes: $("engine").textContent = engineLine().
+//
+// ...AND WHETHER THIS RECORD CAN LEAVE THE PLATFORM (Paul, 2026-08-27, from a
+// train). The hold's clause rides the same sentence rather than a second line:
+// "stream · runway 8.0s · no dropouts · held — plays offline" is one claim
+// about the engine, made in one place, and a hand reading it before a tunnel is
+// reading the same words a hand reads during one. When the engine has nothing
+// to say yet, the hold's clause is the whole sentence.
 export function engineLine() {
+  const s = engineWords(), h = holdLine();
+  return h ? (s ? s + " · " + h : h) : s;
+}
+function engineWords() {
   // THE THREE STATES BEFORE THERE IS A ROUTE come from `routeNote()`, which
   // used to live above this and which NOTHING IMPORTED — a whole second
   // sentence about the engine, written and never read (the design note found

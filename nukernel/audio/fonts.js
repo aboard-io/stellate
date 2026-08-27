@@ -22,17 +22,30 @@ export const isSynthFont = () => fontDef().kind === "synth";
 
 const loaded = new Map();                          // key -> promise of registration
 
+// WHERE A FONT'S DATA LIVES — the key→url rule, in ONE place. The hold
+// (audio/offline.js) has to fetch exactly this file before a tunnel, and a
+// second copy of the string "data/font-<key>.json" is the kind of duplicate
+// that survives a rename on one side only. Answers null for the two kinds of
+// font that HAVE no file: fluidr3 is the kernel's own default table, and a
+// synth font is a voice rather than a zone library. Same two refusals loadFont
+// makes below, so what the hold holds and what the page fetches cannot drift.
+export function fontUrl(key) {
+  const def = FONTS.find(f => f.key === key);
+  if (key === "fluidr3" || (def && def.kind === "synth")) return null;
+  return FAUSTDIR + "data/font-" + key + ".json";
+}
+
 // LOAD AND REGISTER, then tell the kernel to use it. `setFont` on the kernel is
 // what makes applySampledOnly answer with that font's zones, so every later
 // translation (audio/plan.js, which memoizes its library on exactly this key)
 // resolves through it.
 export async function loadFont(key, K) {
-  const def = FONTS.find(f => f.key === key);
-  // fluidr3 IS the kernel's default table and a SYNTH font has no zones to fetch
-  if (key === "fluidr3" || (def && def.kind === "synth")) return;
+  // fluidr3 IS the kernel's default table and a SYNTH font has no zones to
+  // fetch — `fontUrl` is where that pair of refusals is written now.
+  if (!fontUrl(key)) return;
   if (!loaded.has(key)) loaded.set(key, (async () => {
     try {
-      const r = await fetch(FAUSTDIR + "data/font-" + key + ".json");
+      const r = await fetch(fontUrl(key));
       if (r.ok && K && K.registerFont) K.registerFont(key, await r.json());
     } catch (e) { /* a font that will not fetch simply stays unregistered */ }
   })());

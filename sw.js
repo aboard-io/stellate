@@ -28,8 +28,19 @@
 // all — a cross-origin dependency here would be uncacheable and fatal.
 // Cached Response objects keep their original headers, so COOP/COEP isolation
 // (SharedArrayBuffer for the render worker) survives offline replay.
+//
+// THE RENDER WORKER'S FETCHES COME THROUGH HERE TOO — measured, 2026-08-27, not
+// assumed, because the answer decides whether a page can pre-warm on a worker's
+// behalf. engine/faust/live/live.js spawns the renderer as `new Worker(BASE +
+// "stream-worker.js", {type:"module"})` — a script URL, not a blob — from a
+// controlled page, so the worker inherits this worker as its controller. With
+// the wire cut, a dedicated module worker fetched stream-worker.js,
+// data/dx7-presets.json, dist/fx_bus-module.wasm and a found/ sample zone and
+// got 200 with real bytes on all four, out of these caches. That is what makes
+// nukernel/audio/offline.js's hold work at all: what the PAGE warms is what the
+// WORKER's own fetch finds, and no request has to be routed or proxied.
 
-const VERSION = "v155";                       // bump every deploy that must reach users
+const VERSION = "v156";                       // bump every deploy that must reach users
 const APP_PREFIX = "stellate-app-";
 const APP_CACHE = APP_PREFIX + VERSION;
 const MEDIA_CACHE = "stellate-media-v1";     // NOT tied to VERSION — see above

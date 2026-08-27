@@ -321,6 +321,27 @@ const GATES = [
   { name: "motif-frozen", wave: 3, kind: "browser", solo: true, url: { env: "MOTIF_URL" },
     argv: ["test/motif-frozen.js"], need: ["test/motif-frozen.js"],
     covers: ["test/motif-frozen.js"] },
+  /* THE HOLD AND THE COMMUTE, 2026-08-27. Paul, from a train: "Please cache
+     everything you need to play one song it keeps cutting out while I'm going
+     into tunnels." Two gates, not one, and the pair is the lesson: `hold`
+     asserts the ledger for a record PICKED off the atlas and passed 22/22
+     straight through the defect, because it chose a mark first and was
+     structurally blind to the record you LAND on — which is the only one Paul
+     ever had open. `commute` cuts the wire mid-song on the boot record and
+     measures the hole in the sound.
+
+     COMMUTE RUNS ALONE for motif-frozen's own reason, one layer down: its
+     assertion is "no gap in rendered audio over 250 ms", and a neighbouring
+     job on a four-core box is exactly the thing that makes such a gap without
+     a defect. It also runs each case in a COLD CONTEXT — measured: in a
+     shared one, the flicker case passed green off cache the two tunnel cases
+     had pulled, while its own ledger said `modules: 0`. */
+  { name: "hold", wave: 3, kind: "browser", url: { env: "HOLD_URL" },
+    argv: ["test/hold.test.js"], need: ["test/hold.test.js"],
+    covers: ["test/hold.test.js"] },
+  { name: "commute", wave: 3, kind: "browser", solo: true, url: { env: "COMMUTE_URL" },
+    argv: ["test/commute.test.js"], need: ["test/commute.test.js"],
+    covers: ["test/commute.test.js"] },
 ];
 /* WHAT A BROWSER GATE REALLY COVERS. Every one of them drives this page, so a
    change to anything the page loads is inside all of their closures. That is
