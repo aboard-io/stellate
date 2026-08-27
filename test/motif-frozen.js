@@ -188,20 +188,40 @@ function firstDiff(a, b) {
     if (!probed) { fail(width + " · the page has no __eightFrozen probe"); break; }
 
     // A1 — the excluded set contains no editing interface at all
-    /* PAGE-WIDE SINCE 2026-08-27, and it was `#app`-scoped for a page where
-       every live block was in #app. Two of them are not any more: the score
-       and the piano roll moved to the deck at the foot on 2026-08-27 and then
-       to the `Score` TAB the same day. A1 is the smuggling check — "nothing
-       inside a [data-live] may be an editing control, or 'put it in a
-       data-live' becomes a way past A3" — and a smuggling check with a
-       boundary is a check with a door in it. */
-    const smuggled = await page.evaluate(() => [...document.querySelectorAll(
+    /* PAGE-WIDE SINCE 2026-08-27, WITH THE BOARD'S TWO VALUES NAMED AS THE
+       EXCEPTION THEY ALWAYS WERE. This was `#app`-scoped, which was right for a
+       page where every live block was in #app. Two of them are not any more:
+       the score and the piano roll moved to the deck at the foot on 2026-08-27
+       and then to the `Score` tab the same day, so the smuggling check — "put
+       it in a data-live and it is a way past A3" — had a door in it.
+
+       AND WIDENING IT FOUND A REAL DECLARATION RATHER THAN A DEFECT. The board
+       declares `[data-live="meter"]` on its meters and `[data-live="trimrow"]`
+       on the section grid, and ui/engineer.js says exactly why: "the board sits
+       outside #app, where the transport feed is free to write, but a surface
+       the clock writes on declares itself rather than relying on where it
+       happens to be mounted." The trim grid is a table of BUTTONS whose ROW the
+       clock marks once a beat; a control inside it is the design.
+
+       So the exemption is BY DECLARED VALUE and not by address. `meter` and
+       `trimrow` are the board's two and are named here; `count`, `score`,
+       `roll` and any value a future round adds may hold no control at all, and
+       a new value that does fails this line by existing rather than inheriting
+       the board's permission because of where it was mounted. */
+    const BOARD_LIVE = ["meter", "trimrow"];
+    const smuggled = await page.evaluate((exempt) => [...document.querySelectorAll(
       "[data-live] input, [data-live] select, [data-live] textarea," +
       " [data-live] button, [data-live] fieldset")]
-      .map((e) => e.tagName.toLowerCase() + (e.dataset.k ? "[" + e.dataset.k + "]" : "")));
+      .filter((e) => !exempt.includes(e.closest("[data-live]").dataset.live))
+      .map((e) => e.tagName.toLowerCase() + (e.dataset.k ? "[" + e.dataset.k + "]" : "")),
+      BOARD_LIVE);
+    const declared = await page.evaluate(() =>
+      [...new Set([...document.querySelectorAll("[data-live]")]
+        .map((e) => e.dataset.live))].sort());
     is(smuggled.length === 0,
-      "A1 " + width + " · no control inside any [data-live], page-wide (" +
-      smuggled.join(", ") + ")");
+      "A1 " + width + " · no control inside any [data-live] the page declares, " +
+      "outside the board's own " + JSON.stringify(BOARD_LIVE) + " — the page " +
+      "declares " + JSON.stringify(declared) + " (" + smuggled.join(", ") + ")");
 
     // A2 — the live surface exists WHILE STOPPED, and one staff per motif
     const shape = await page.evaluate(() => ({

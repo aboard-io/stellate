@@ -215,7 +215,23 @@ const readable = (r) => !!r && r.inside && r.text.length > 0;
 
   // ---- D5 — the export row wears true states -------------------------------
   const exps = d1.exports;
-  is(exps.length === 4, "D5 · four export cards (" + exps.length + ")");
+  /* FOUR FORMATS AND A LINK, 2026-08-27. This read `exps.length === 4` and the
+     four it meant are named below by key — WAV, MIDI, MP3, Ableton — which is
+     the claim that is actually load-bearing and which is asserted as such now.
+     A fifth card joined them the same day, the share link ("a share link IS an
+     export — it is the fourth thing you can take out of this box, beside the
+     WAV, the MIDI and the (refused) MP3, and it is the only one of the four
+     that costs nothing to make", ui/eight.js `shareCard`), so a bare count was
+     going to read as a defect the first time somebody added a way out of the
+     box. The rule the count was standing in for is the one below it and is
+     unchanged: EVERY card is either live or refused with a reason. */
+  const FORMATS = ["deck.exp.wav", "deck.exp.mid", "deck.exp.mp3", "deck.exp.als"];
+  const keys = exps.map((e) => e.k);
+  is(FORMATS.every((k) => keys.includes(k)),
+    "D5 · the four format cards are all drawn — " + JSON.stringify(FORMATS) +
+    " in " + JSON.stringify(keys));
+  is(keys.includes("deck.exp.copy"),
+    "D5 · …and the share link is the fifth card (" + exps.length + " in all)");
   for (const e of exps) {
     const honest = e.label && (!e.disabled || (e.why && e.why.length > 20));
     is(honest, "D5 · " + (e.k || "?") + " " +

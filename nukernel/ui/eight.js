@@ -8180,10 +8180,21 @@ function draw() {
    the idea of scrolling everything? The tabs are: Where / Tempo / Key / Motif
    / Band / Mix / Produce / Score / Export."*
 
-   THE NAMES ARE HIS AND THIS TABLE IS THEIR ONE OWNER. The word on the button,
-   the word in the hidden `<h2>` of the panel it opens, and the order of both,
-   all come from here — nukernel/index.html ships the nine hosts and NOT the
-   nine names, precisely so there is no second copy to drift.
+   THE NAMES ARE HIS AND THIS TABLE IS THEIR ONE OWNER. The word on the button
+   and the order of the nine both come from here, and from nowhere else —
+   nukernel/index.html ships the nine hosts and NOT the nine names, precisely
+   so there is no second copy to drift.
+
+   THE HIDDEN `<h2>` IS A DIFFERENT WORD AND HAS A DIFFERENT OWNER, which is
+   the one thing about this table that has to be said out loud. Each panel's
+   heading is still the VOCABULARY's name for what is in it — `Time`,
+   `Harmony`, `Motifs`, `The band`, `The board`, `The producer`, `The score` —
+   passed to `axis()` by the builders below and, for two of them, by
+   ui/engineer.js and ui/produce.js, which this file does not own. It is
+   `.nu-vh` (nu.css), so it is announced, printed with the stylesheet off, and
+   never a second VISIBLE name. nukernel/AXES.md's join table is where the two
+   columns are laid beside each other; do not copy that table into this
+   comment.
 
    WHAT EACH TAB IS, MAPPED ONTO WHAT THE PAGE ALREADY HAD:
      Where   the atlas (#atlas) — the globe and the when-slider, mounted once

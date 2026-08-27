@@ -212,12 +212,25 @@ function g18() {
      twice ("I don't know where that's from", and the swipe that composed a
      reggae record) and it is about who owns a vertical gesture that starts on
      the map — the page, never the globe. What it needs is a page with somewhere
-     to go, so the three checks run at 390x460 (a phone in landscape, which is
-     a real reading of this page) where the same panel leaves 269px of scroll,
-     and everything else runs at the 844 the rest of this file measures at. The
-     globe's own size is width-driven — measured 300px tall at every height
-     from 480 to 844 — so nothing else in the gesture changes. */
-  const SHORT_H = 560;
+     to go, so the checks that need one run at 390x600 (a phone in landscape,
+     which is a real reading of this page) where the same panel leaves 131px of
+     scroll, and everything else runs at the 844 the rest of this file measures
+     at. The globe's own size is width-driven — measured 300px tall at every
+     height from 480 to 844 — so nothing else in the gesture changes.
+
+     600 IS THE HEIGHT BOTH HALVES SURVIVE AT, and the pair is tight enough to
+     write down. The `Where` panel's whole document is 731px, so the room to
+     scroll is 731 - H and the globe is on screen only while H is large. At 460
+     there were 269px of scroll and the globe's centre sat at y=557, so every
+     drag this file starts BELOW the centre began off the bottom of the screen:
+     G13 "passed" by touching nothing and G21's diagonals turned the earth 0.0
+     degrees. At 600 the globe's centre is at 561, the Kingston mark at 555, and
+     131px are left to scroll into — everything the checks touch is on the
+     screen and each still asks for more than 100px of scroll. The drags that
+     run here therefore start ABOVE the centre (`c.y - 60`, `c.y - 120`): the
+     same distance onto the same globe, on the half of it a short screen
+     shows. */
+  const SHORT_H = 600;
   const setH = async (h) => { await p.setViewportSize({ width: 390, height: h });
     await p.waitForTimeout(250); };
   const shortPage = () => setH(SHORT_H);
@@ -232,8 +245,20 @@ function g18() {
      tall and sits 250px down, so at scrollY 0 the whole of it is on screen
      (bottom 550 of 560) and there are still 171px of document below to scroll
      into — more than the 100 the three checks ask for. */
-  const bringLow = async () => { await p.evaluate(() => window.scrollTo(0, 0));
-    await p.waitForTimeout(180); };
+  const bringLow = async () => {
+    /* `bring()` FIRST AND THE TOP SECOND, and the order is not cosmetic. The
+       atlas parks its render loop when the section leaves the viewport (G17 is
+       the check that it does, and G17 itself scrolls to the bottom of the
+       document to prove it), and `dataset.lat/lon` — which `pose()` reads — is
+       written by that loop. Measured: with only a `scrollTo(0, 0)` after G17
+       and G20, three straight diagonals came back "0.0 deg turned" and two of
+       them scrolled the page, which is the parked observer and not the lock.
+       `scrollIntoView` is what wakes it; the scroll to the top is what leaves
+       the swipe somewhere to go. */
+    await bring();
+    await p.waitForTimeout(250);
+    await p.evaluate(() => window.scrollTo(0, 0));
+    await p.waitForTimeout(300); };
   const errs = [], foreign = [];
   /* `__nuName()` IS THE SAME READING AS `nameOf()` BELOW, INSIDE THE PAGE, and
      it is installed with addInitScript because this file reloads six times and
@@ -836,9 +861,9 @@ function g18() {
   const vBefore = await p.evaluate(() => ({ y: window.scrollY,
     lat: +document.getElementById("atlasMap").dataset.lat,
     lon: +document.getElementById("atlasMap").dataset.lon }));
-  await touch("touchStart", [{ x: c2.x, y: c2.y + 120 }]);
+  await touch("touchStart", [{ x: c2.x, y: c2.y - 120 }]);   // ABOVE — see SHORT_H
   for (let i = 1; i <= 12; i++) {
-    await touch("touchMove", [{ x: c2.x, y: c2.y + 120 - i * 24 }]);
+    await touch("touchMove", [{ x: c2.x, y: c2.y - 120 - i * 24 }]);
     await p.waitForTimeout(16);
   }
   await touch("touchEnd", []);
@@ -1005,10 +1030,29 @@ function g18() {
      TWO PROMISES, AND THE SECOND IS THE ONE THAT PROTECTS THE READER: a page
      that will not scroll under a thumb is a worse bug than a globe that will
      not turn. */
-  const straight = async (deg, len) => {
-    await bringLow();
+  /* `low` — RUN THIS DRAG ON A PAGE THAT HAS SOMEWHERE TO SCROLL (2026-08-27).
+     The two halves of G21 want opposite things from the page, and only one of
+     them changed when the tabs landed:
+
+       THE DIAGONALS assert `scrolled === 0`, so they keep running exactly where
+       they always ran — the file's own 390x844, starting 60px BELOW the globe's
+       centre. Moved onto the short page they came back "0.0 deg turned" while
+       scrolling 100px, and the identical drag on a cold page at the same height
+       turned 144 degrees and scrolled nothing: something G20's pinches leave
+       behind that only a scrollable page exposes. That is ui/atlas.js's
+       question and not this block's, so it is written down here rather than
+       hidden again by the geometry that was hiding it.
+
+       THE NEAR-VERTICAL PAIR assert `scrolled > 100`, which on a one-panel
+       Where tab needs the short page and a start ABOVE the centre — SHORT_H. */
+  const straight = async (deg, len, low) => {
+    if (low) await bringLow();
+    else { await p.evaluate(() => window.scrollTo(0, 0));
+           await p.waitForTimeout(120);
+           await bring();
+           await p.waitForTimeout(250); }
     const c = await centre();
-    const x0 = c.x + 60, y0 = c.y + 60;
+    const x0 = c.x + 60, y0 = c.y + (low ? -60 : 60);
     const r = deg * Math.PI / 180;
     const dx = -len * Math.cos(r), dy = -len * Math.sin(r);
     const before = await pose();
@@ -1031,15 +1075,15 @@ function g18() {
             + Math.abs(after.lat - before.lat),
       scrolled: y1s - y0s };
   };
-  await shortPage();
   const diag = [];
-  for (const deg of [30, 45, 60]) diag.push(await straight(deg, 140));
+  for (const deg of [30, 45, 60]) diag.push(await straight(deg, 140, false));
   const badDiag = diag.filter((d) => !(d.turned > 5 && d.scrolled === 0));
   check(!badDiag.length, "G21 · a STRAIGHT diagonal drag turns the globe and does not "
     + "scroll the page, at " + diag.map((d) => d.deg + " deg: " + d.turned.toFixed(1)
     + " deg turned / " + d.scrolled + " px scrolled").join(", "));
+  await shortPage();
   const vert = [];
-  for (const deg of [80, 90]) vert.push(await straight(deg, 260));
+  for (const deg of [80, 90]) vert.push(await straight(deg, 260, true));
   const badVert = vert.filter((v) => !(v.scrolled > 100 && v.turned < 0.001));
   check(!badVert.length, "G21 · …AND A NEAR-VERTICAL SWIPE STILL SCROLLS THE PAGE, at "
     + vert.map((v) => v.deg + " deg: " + v.scrolled + " px scrolled / "
