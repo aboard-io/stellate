@@ -4,7 +4,10 @@
    THE BENCH — the ideal composing surface for motifs and kits.
    REBUILT 2026-08-27 after Paul's verdict: the pill lane retires, the
    row-per-step button structure returns as the proposal, done in ENAMEL.
-   Drums gain velocity per step. Two velocity strategies shown live.
+   TIGHTENED 2026-08-27, later the same day, on Paul's word:
+   "play/hold/rest, pitch offset -12 to 12, velocity 0 to 7, tightened to
+   one line, and factor in different scales, and accidentals vs locking in
+   scale degrees." Each step is ONE 52px line: kind, pitch bar, weight bar.
    Every drag surface: touch-action + setPointerCapture (the touch fix).
    One HTML file, no external requests. Tokens verbatim from design-system.html.
    ========================================================================== */
@@ -85,7 +88,7 @@ sup.n { color: var(--hand); font-family: var(--mono); font-size: 10px; font-weig
 .callout p .q { font-weight: 800; }
 .callout p.small { color: var(--dim); }
 
-/* ---- buttons / play / chips / tabs (Enamel skins, verbatim) ---- */
+/* ---- buttons / play / chips / tabs / select (Enamel skins, verbatim) ---- */
 .btn { font: 800 15px/1 var(--sans); color: var(--ink); letter-spacing: .01em;
   background: var(--panel); border: var(--bw) solid var(--ink); border-radius: var(--r1);
   min-height: var(--ctl); padding: 0 var(--s4); cursor: pointer; box-shadow: var(--shadow);
@@ -126,6 +129,18 @@ sup.n { color: var(--hand); font-family: var(--mono); font-size: 10px; font-weig
   .livedot.beat { animation: beat 1.2s ease-in-out infinite; }
   @keyframes beat { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
 }
+/* the scale select — an Enamel control; the record's own value is marked in its option */
+.selwrap { position: relative; display: inline-flex; }
+.selwrap::after { content: "▾"; position: absolute; right: 13px; top: 50%;
+  transform: translateY(-50%); pointer-events: none; font-weight: 800; color: var(--ink); }
+.sel { appearance: none; -webkit-appearance: none; font: 800 15px var(--sans); color: var(--ink);
+  background: var(--panel); border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  min-height: var(--ctl); padding: 0 34px 0 14px; box-shadow: var(--shadow); cursor: pointer; }
+.sel:hover { background: var(--flag-tint); }
+/* the lock — two chunky states */
+.btn.lock { text-transform: uppercase; font-size: 13px; letter-spacing: .04em; }
+.btn.lock[aria-pressed="true"] { background: var(--hand); color: #FFFFFF; }
+.btn.lock[aria-pressed="false"] { background: var(--flag); color: var(--ink); }
 
 /* ---- toolbar rows ---- */
 .bar { display: flex; gap: var(--s3); flex-wrap: wrap; align-items: center; margin-top: var(--s4); }
@@ -134,58 +149,70 @@ sup.n { color: var(--hand); font-family: var(--mono); font-size: 10px; font-weig
 .devrow .lab { margin-right: var(--s1); }
 
 /* ==========================================================================
-   THE MOTIF EDITOR — step ROWS falling down the page
+   THE MOTIF EDITOR — 16 steps, ONE line each, falling down the page
+   [label] [play/hold/rest] [pitch bar −12..+12] [weight bar 0..7]
    ========================================================================== */
 .steps { position: relative; }
-.srow { display: grid; grid-template-columns: 40px auto minmax(0, 1fr); gap: var(--s2);
-  align-items: center; padding: 6px 2px; min-height: 62px;
+.steps { border-bottom: var(--bw) solid var(--ink); }
+.srow { display: grid; grid-template-columns: 24px max-content minmax(0, 1fr); gap: 6px;
+  align-items: center; padding: 3px 2px; min-height: 52px;
   border-top: 2px solid var(--well); }
 .srow.beat { border-top: var(--bw) solid var(--ink); }
 .srow:first-child { border-top: 0; }
-.steps { border-bottom: var(--bw) solid var(--ink); }
-.slab { display: grid; justify-items: center; align-content: center; gap: 3px;
-  font: 700 13px var(--mono); color: var(--dim); }
-.srow.beat .slab b { font-size: 19px; font-weight: 800; color: var(--ink); }
+@media (min-width: 620px) {
+  .srow { grid-template-columns: 36px max-content minmax(0, 1fr); gap: var(--s2); }
+}
+.slab { display: grid; justify-items: center; align-content: center; gap: 2px;
+  font: 700 12px var(--mono); color: var(--dim); }
+.srow.beat .slab b { font-size: 17px; font-weight: 800; color: var(--ink); }
 .slab b { font-weight: 700; }
-.gtick { display: none; width: 12px; height: 12px; border: 2px dashed var(--meter);
+.gtick { display: none; width: 11px; height: 11px; border: 2px dashed var(--meter);
   border-radius: 3px; background: var(--meter-tint); }
 .srow.ghosted .gtick { display: block; }
-/* NOTE / REST / TIE segmented group */
+/* PLAY / HOLD / REST segmented group — the kind is one button */
 .seg { display: inline-flex; border: var(--bw) solid var(--ink); border-radius: var(--r1);
   overflow: hidden; background: var(--panel); }
-.segb { width: 46px; height: 48px; border: 0; border-left: 2px solid var(--ink);
+.segb { width: 44px; height: 44px; border: 0; border-left: 2px solid var(--ink);
   background: var(--panel); color: var(--ink); font: 800 17px var(--sans); cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center; padding: 0; }
 .segb:first-child { border-left: 0; }
 .segb:hover { background: var(--flag-tint); }
 .segb[aria-pressed="true"] { background: var(--hand); color: #FFFFFF; }
 .segb[disabled] { color: var(--faint); background: var(--well); cursor: default; }
-/* right side of a row: degree + velocity, wraps at phone width */
-.rowr { position: relative; display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
-.srow.is-rest .degc, .srow.is-rest .velA,
-.srow.is-tie  .degc, .srow.is-tie  .velA { opacity: .3; pointer-events: none; }
+/* right side of a row: pitch + weight, one line, never wrapping */
+.rowr { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 64px;
+  gap: 6px; align-items: center; min-width: 0; }
+@media (min-width: 620px) { .rowr { grid-template-columns: minmax(0, 1fr) 120px; gap: var(--s2); } }
+.srow.is-rest .pit, .srow.is-rest .velA,
+.srow.is-hold .pit, .srow.is-hold .velA { opacity: .3; pointer-events: none; }
 .mutewhy { display: none; position: absolute; inset: 0; align-items: center; justify-content: center;
-  font: 600 11.5px var(--mono); color: var(--dim); text-align: center; pointer-events: none; z-index: 2; }
+  font: 600 11.5px var(--mono); color: var(--dim); text-align: center; pointer-events: none; z-index: 5; }
 .mutewhy span { background: color-mix(in srgb, var(--panel) 85%, transparent);
   border-radius: 3px; padding: 2px 8px; }
-.srow.is-rest .mutewhy, .srow.is-tie .mutewhy { display: flex; }
-/* the DEGREE stepper — snapped to the Alphabet, wrong notes unenterable */
-.degc { display: inline-flex; align-items: stretch; height: 48px;
-  border: var(--bw) solid var(--ink); border-radius: var(--r1); overflow: hidden;
-  background: var(--panel); }
-.degb { width: 44px; border: 0; background: var(--panel); color: var(--ink);
-  font: 800 20px var(--sans); cursor: pointer; padding: 0; }
-.degb:hover { background: var(--flag-tint); }
-.degb[disabled] { color: var(--faint); background: var(--well); cursor: default; }
-.degv { width: 54px; display: grid; justify-items: center; align-content: center; gap: 2px;
-  border-left: 2px solid var(--ink); border-right: 2px solid var(--ink);
-  font: 800 16px var(--sans); background: var(--panel); }
-.tick { width: 11px; height: 11px; border: 2px solid var(--ink); border-radius: 2px;
-  background: var(--panel); }
-.tick.tone { background: var(--meter); }
-.tick.lead { background: var(--flag); }
-/* STRATEGY A — the velocity bar (drag sideways, tap cycles) */
-.velA { position: relative; flex: 1; min-width: 132px; height: 44px;
+.srow.is-rest .mutewhy, .srow.is-hold .mutewhy { display: flex; }
+/* THE PITCH BAR — bipolar, −12..+12, zero is a marked center detent;
+   the ink ticks ARE the lattice: only they land while the lock is on */
+.pit { position: relative; height: 44px; min-width: 0; touch-action: none; cursor: ew-resize; }
+.pb-bar { position: absolute; inset: 0; border: var(--bw) solid var(--ink);
+  border-radius: var(--r1); background: var(--well); overflow: hidden; }
+.pb-tick { position: absolute; bottom: 2px; width: 2px; height: 7px; margin-left: -1px;
+  background: var(--ink); opacity: .4; }
+.pb-fill { position: absolute; top: 5px; bottom: 5px; background: var(--hand); }
+.pb-off { position: absolute; top: 5px; bottom: 5px; background: var(--flag);
+  border-left: 2px solid var(--ink); border-right: 2px solid var(--ink); }
+.pb-zero { position: absolute; left: 50%; top: 0; bottom: 0; width: 3px; margin-left: -1.5px;
+  background: var(--ink); }
+.pb-badge { position: absolute; top: 50%; transform: translate(-50%, -50%); z-index: 4;
+  font: 800 12px var(--mono); color: var(--ink); background: var(--panel);
+  border: 2px solid var(--ink); border-radius: 3px; padding: 0 4px;
+  pointer-events: none; white-space: nowrap; }
+.pb-badge small { font: 700 9px var(--mono); color: var(--dim); margin-left: 2px; }
+.pb-badge.accb { background: var(--flag); }
+.pb-in { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0;
+  opacity: 0; pointer-events: none; }
+.pit:focus-within { outline: var(--bw-hard) solid var(--hand); outline-offset: 3px; border-radius: 2px; }
+/* THE WEIGHT BAR — 0..7; width is the level; tap cycles 1/4/7, never silence */
+.velA { position: relative; height: 44px; min-width: 0;
   touch-action: none; cursor: ew-resize; }
 .va-bar { position: absolute; inset: 0; border: var(--bw) solid var(--ink);
   border-radius: var(--r1); background: var(--well); overflow: hidden; }
@@ -193,7 +220,7 @@ sup.n { color: var(--hand); font-family: var(--mono); font-size: 10px; font-weig
   border-right: 2px solid var(--ink); }
 .velA[data-v="0"] .va-fill { display: none; }
 .velA.gh .va-fill { background: var(--faint); }
-.velA.acc .va-fill { box-shadow: inset -8px 0 0 var(--flag); }
+.velA.acc .va-fill { box-shadow: inset -6px 0 0 var(--flag); }
 .va-num { position: absolute; top: 50%; transform: translateY(-50%);
   font: 700 13px var(--mono); color: var(--ink); pointer-events: none;
   background: color-mix(in srgb, var(--panel) 80%, transparent); border-radius: 2px; padding: 0 3px; }
@@ -215,7 +242,7 @@ sup.n { color: var(--hand); font-family: var(--mono); font-size: 10px; font-weig
 .wisdom .accw { color: var(--ink); background: var(--flag); border-radius: 3px; padding: 0 4px; font-weight: 800; }
 
 /* ==========================================================================
-   THE KIT — 16 rows falling, five drum columns, velocity per step
+   THE KIT — 16 rows falling, five drum columns, velocity 0..7 per step
    ========================================================================== */
 .phrase { display: flex; gap: var(--s2); margin-top: var(--s4); flex-wrap: wrap; }
 .phrase .btn { flex: 1 1 120px; font-family: var(--mono); font-size: 13px; justify-content: center; }
@@ -296,39 +323,10 @@ sup.n { color: var(--hand); font-family: var(--mono); font-size: 10px; font-weig
   border: 1px solid var(--ink); bottom: calc(14px + (100% - 28px) * var(--nv, 0.16));
   pointer-events: none; }
 
-/* ==========================================================================
-   THE VELOCITY STRATEGIES — two candidates, both live
-   ========================================================================== */
-.strats { display: grid; gap: var(--s5); margin-top: var(--s4); }
-@media (min-width: 860px) { .strats { grid-template-columns: 1fr 1fr; align-items: start; } }
-.strat h3 { font: 800 16px var(--sans); text-transform: uppercase; letter-spacing: .05em;
-  display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; }
-.strat .rec { font: 800 10px var(--mono); letter-spacing: .08em; color: var(--ink);
-  background: var(--flag); border: 2px solid var(--ink); border-radius: 3px; padding: 3px 7px; }
-.strat .cap { font-size: 13.5px; font-weight: 600; color: var(--dim); line-height: 1.55;
-  margin-top: var(--s3); }
-.strat .cap b { color: var(--ink); font-weight: 800; }
-.demoLab { font: 700 10px var(--mono); letter-spacing: .08em; text-transform: uppercase;
-  color: var(--hand); margin: var(--s4) 0 var(--s2); }
-.demoRow { display: flex; gap: var(--s2); align-items: center; flex-wrap: wrap;
-  border: var(--bw) solid var(--ink); border-radius: var(--r1); padding: var(--s2); background: var(--panel); }
-.demoRow .slab { min-width: 36px; }
-.demoKit { display: grid; grid-template-columns: 34px repeat(5, minmax(44px, 1fr));
-  border: var(--bw) solid var(--ink); border-radius: var(--r1); overflow: hidden; background: var(--panel); }
-.demoKit .kc { min-height: 52px; }
-.demoKit .kc.tall { min-height: 128px; touch-action: auto; cursor: default; }
-/* STRATEGY B — the ladder */
-.ladder { display: grid; gap: 2px; width: 48px; touch-action: none; cursor: ns-resize;
-  align-content: center; justify-self: center; padding: 4px 0; }
-.rung { width: 48px; height: 9px; border: 2px solid var(--ink); border-radius: 2px;
-  background: var(--panel); padding: 0; cursor: pointer; display: block; }
-.rung.on { background: var(--hand); }
-.ladder.gh .rung.on { background: var(--faint); }
-.rung.on.topacc { background: var(--flag); }
-.ladVal { font: 700 12px var(--mono); color: var(--ink); text-align: center; }
-.demoKit .ladWrap { display: grid; gap: 2px; justify-items: center; padding: 6px 0;
-  border-right: 2px solid var(--ink); background: var(--well); }
-.demoKit .ladWrap:last-child { border-right: 0; }
+/* ---- the verdict plate ---- */
+.verd { font-size: 14.5px; font-weight: 600; color: var(--ink); line-height: 1.6; max-width: 68ch; }
+.verd .q { font-weight: 800; }
+.verd b { font-weight: 800; }
 
 /* ==========================================================================
    GESTURES + LAWS
@@ -359,10 +357,11 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
 <header class="mast">
   <p class="lab">nukernel · ideal state 2026-08 · the Material axis · painted in Enamel</p>
   <h1>The Bench</h1>
-  <p class="dek"><b>The lane was clever; the rows were comprehensible. The rows win.</b>
-  Every step is a row you can read and press — note, rest, tie, degree, weight — falling
-  down the page in the order it will sound, chunky enough for a thumb. And the drums get
-  what they always deserved: <b>a velocity per step</b>, two candidate ways below.</p>
+  <p class="dek"><b>Every step is one line.</b> Play, hold, or rest; a pitch bar that grows
+  from the center, −12 to +12, snapped to the scale while the lock is on; a weight bar,
+  0 to 7 — sixteen lines falling down the page in the order they will sound, chunky enough
+  for a thumb. Change the scale and the lattice redraws; unlock it and accidentals land
+  loud in <b>flag yellow</b>.</p>
   <div class="crumb">
     <span>transport</span><span>where &amp; when</span><span>Time</span><span>Harmony</span><b>motifs — this surface</b><span>Form</span><span>band</span><span>board</span><span>producer</span><span>score</span>
   </div>
@@ -371,11 +370,11 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
 <!-- ================= THE MOTIF EDITOR ================= -->
 <section id="motif">
   <h2>proposed · the motif editor</h2>
-  <p class="note">Sixteen step rows fall down the page. Each row states its kind —
-  <b>note, rest, or tie</b> — then its degree, snapped to the Alphabet so a wrong note is
-  unenterable<sup class="n">1</sup>, then its weight. The colored tick beside the degree
-  is its role under the chord that will be sounding<sup class="n">2</sup>; the red line
-  is the clock, falling.</p>
+  <p class="note">Sixteen steps, one line each. A row states its kind — <b>play, hold, or
+  rest</b> — then its pitch as a bar growing from the marked zero, landing only on the
+  scale's own detents while the lock is on<sup class="n">1</sup>, then its weight, 0–7.
+  The pitch badge's border is its role under the chord that will be
+  sounding<sup class="n">3</sup>; the red line is the clock, falling.</p>
 
   <div class="bar">
     <div class="tabs" role="tablist" id="motifTabs">
@@ -403,6 +402,19 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
   marker appears on the rows where its notes will land — EXTRACTED from the score's own
   operator, never redrawn by hand<sup class="n">6</sup></p>
 
+  <div class="bar" id="scaleBar">
+    <span class="lab">alphabet</span>
+    <span class="selwrap"><select class="sel" id="scaleSel" aria-label="scale">
+      <option value="minor" selected>minor (aeolian) — the record's</option>
+      <option value="major">major</option>
+      <option value="dorian">dorian</option>
+      <option value="pentmin">pentatonic minor</option>
+      <option value="whole">whole tone</option>
+    </select></span>
+    <button class="btn lock" id="lockBtn" type="button" aria-pressed="true">⌖ in the scale</button>
+    <span class="why" id="latWhy" style="max-width:36ch"></span>
+  </div>
+
   <div class="plate" style="margin-top:var(--s4)">
     <div class="steps" id="motifSteps"></div>
   </div>
@@ -419,15 +431,18 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
     five-widget clutter per row. One segmented kind button, one snapped stepper, one
     velocity control — and the controls of a silent row go faint instead of vanishing,
     so nothing ever reflows under a finger.</p>
+    <p class="small">2026-08-27, later the same day: <span class="q">“Tighten it up.
+    play/hold/rest, pitch offset −12 to 12, velocity 0 to 7, tightened to one
+    line.”</span> — the rows stay, each one squeezed to a single 52px line.</p>
   </div>
 
   <div class="notes">
-    <div class="ann"><b class="n">1</b><p><em>The stepper IS the Alphabet.</em> − and + walk <span class="data">g.scale/mode</span> degrees only — 7̂₋ below the tonic up to 7̂ — so snapping is the editor, not a validator. A chromatic passing tone is a different Alphabet, not a hidden value between the detents.</p></div>
-    <div class="ann"><b class="n">2</b><p><em>Roles are painted, not narrated.</em> <span class="data">chordsOf()</span> gives the windows — i over steps 1–8, V over 9–16 — and each row's tick is its degree's role under the window it sounds in: <b style="color:var(--meter)">green</b> chord tone, <b style="background:var(--flag);border-radius:2px;padding:0 3px">yellow</b> leading tone, hollow color tone. Move the degree and the tick answers.</p></div>
-    <div class="ann"><b class="n">3</b><p><em>Silent rows stay put.</em> A rest or tie row keeps its degree and weight controls, faint, with one measured line saying why they sleep — the row's geometry never changes when its kind does, so the thumb's map of the bar holds.</p></div>
-    <div class="ann"><b class="n">4</b><p><em>One knowledge rail.</em> Tap any row and the wisdom line below the bar speaks: step, degree, role under the current chord, weight. One place, one sentence — not sixteen tooltips.</p></div>
+    <div class="ann"><b class="n">1</b><p><em>The bar IS the Alphabet.</em> Locked, the landable detents are exactly the scale's pc set laid across two octaves — aeolian lands <span class="data">0 2 3 5 7 8 10 12</span> and their negatives, pentatonic fewer, whole tone evenly spaced — and they are drawn as ink ticks on the bar, so the lattice is visible and changes when the scale does. Snapping is the editor, not a validator.</p></div>
+    <div class="ann"><b class="n">2</b><p><em>The lock is the honesty line.</em> IN THE SCALE is today's kernel verbatim — <span class="data">deg</span> is a scale degree and the Alphabet is the lattice (<span class="data">kernel.js</span>, AXES: the Alphabet axis). ACCIDENTALS ALLOWED is not free: it needs the alphabet extension the review scoped — cents-valued alphabets, a chromatic channel beside <span class="data">deg</span> — which is why the lock defaults ON: the locked mode ships first, the unlocked mode is a purchase.</p></div>
+    <div class="ann"><b class="n">3</b><p><em>Roles shrink to a border.</em> <span class="data">chordsOf()</span> gives the windows — i over steps 1–8, V over 9–16 — and the pitch badge's border is its role under the window it sounds in: <b style="color:var(--meter)">green</b> chord tone, <b style="background:var(--flag);border-radius:2px;padding:0 3px">yellow</b> leading tone, plain color tone. Tap the row and the wisdom rail still speaks the whole sentence.</p></div>
+    <div class="ann"><b class="n">4</b><p><em>Hold inherits; geometry holds.</em> A hold row draws the pitch and weight of the note still ringing, faint; a rest fades both bars behind one measured line saying why they sleep. Kind never changes the row's geometry — one 52px line, sixteen times — so the thumb's map of the bar holds.</p></div>
     <div class="ann"><b class="n">5</b><p><em>The playhead lives in its own <span class="data">[data-live]</span> layer</em> — a 4px clock-red line descending over the rows. The clock may move that line and the sentence beside the play button; it may not press a button, move a bar, or scroll the page. The tri-state button keeps its law: the word on it is the NEXT tap (▶ play → ↻ loop → ■ stop).</p></div>
-    <div class="ann"><b class="n">6</b><p><em>The overlay survives as a marker.</em> The pill layer's ghost pills are gone; what remains is a small dashed meter-green tick under the step label of every row where the chosen development lands a note — the same <span class="data">reverse()</span> the score runs, applied to this cell, byte-equal to what will play.</p></div>
+    <div class="ann"><b class="n">6</b><p><em>The overlay survives as a marker.</em> A small dashed meter-green tick under the step label of every row where the chosen development lands a note — the same <span class="data">reverse()</span> the score runs, applied to this cell, byte-equal to what will play.</p></div>
   </div>
 </section>
 
@@ -436,7 +451,7 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
   <h2>proposed · the kit</h2>
   <p class="note">Same structure, five columns: 16 step rows fall, kick snare hat open
   perc run across, and every cell is a chunky button that carries <b>a velocity per
-  step</b><sup class="n">7</sup> — the fill's width is the level, the number prints at
+  step, 0–7</b><sup class="n">7</sup> — the fill's width is the level, the number prints at
   the cell's edge. Swing is rows that physically sit late<sup class="n">8</sup>; the fill
   is the hatched bottom of bar 4<sup class="n">9</sup>.</p>
 
@@ -471,8 +486,8 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
       back. Slide it (or tap a height) and watch the “&amp;” rows lean down.</p>
       <div class="legend">
         <span><i style="background:var(--hand)"></i>hit — wider is louder, the number is the level</span>
-        <span><i style="background:var(--hand);box-shadow:inset -4px 0 0 var(--flag)"></i>accent (8–9)</span>
-        <span><i style="background:var(--faint)"></i>ghost (1–2)</span>
+        <span><i style="background:var(--hand);box-shadow:inset -4px 0 0 var(--flag)"></i>accent (7)</span>
+        <span><i style="background:var(--faint)"></i>ghost (1)</span>
         <span><i style="background:var(--flag)"></i>fill stroke</span>
         <span><i style="background:repeating-linear-gradient(-45deg,var(--well) 0 3px,var(--flag-tint) 3px 6px)"></i>the fill's ground</span>
         <span><i style="background:var(--ground);border-style:dashed;border-color:var(--faint)"></i>straight time, when a row sits late</span>
@@ -491,58 +506,25 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
   table op over the grid, including its velocities</p>
 
   <div class="notes">
-    <div class="ann"><b class="n">7</b><p><em>Velocity per step — Paul's ask, granted.</em> Every drum cell carries 0–9. Tap cycles rest → ghost(2) → hit(5) → accent(9) — the levels <span class="data">drums-kit.js</span> already names — and a sideways drag (pointer-captured) writes any of the ten. The cell scrolls the page vertically and writes velocity horizontally: <span class="data">touch-action: pan-y</span>.</p></div>
+    <div class="ann"><b class="n">7</b><p><em>Velocity per step — Paul's ask, at Paul's range.</em> Every drum cell carries <b>0–7, eight levels</b>. Tap cycles rest → ghost(1) → hit(4) → accent(7) → rest, and a sideways drag (pointer-captured) writes any of the eight. The cell scrolls the page vertically and writes velocity horizontally: <span class="data">touch-action: pan-y</span>.</p></div>
     <div class="ann"><b class="n">8</b><p><em>Swing is displacement, displayed.</em> The “&amp;” rows — label and all five cells — physically sit late by <span class="data">transform</span>; the grey dashed stub marks straight time where they left it. The DOM is never rebuilt, only translated.</p></div>
     <div class="ann"><b class="n">9</b><p><em>The fill is a place, not a mode.</em> Bar 4 in the phrase strip is hatched because a fill is a SHAPE over the phrase — the bottom quarter. Open it and the ground is hatched from the fill's entry down, its strokes flag-yellow; bars 2–3 say “= 1” instead of repeating themselves.</p></div>
-    <div class="ann"><b class="n">10</b><p><em>Same bench, two kinds.</em> Motif and kit share the row-per-step spine, the toolbar, the tri-state play, the 44–48px targets, the faint-not-hidden law. A drum pattern is not a second app.</p></div>
+    <div class="ann"><b class="n">10</b><p><em>Same bench, two kinds.</em> Motif and kit share the row-per-step spine, the toolbar, the tri-state play, the 44–48px targets, the faint-not-hidden law, and the one 0–7 velocity vocabulary. A drum pattern is not a second app.</p></div>
   </div>
 </section>
 
-<!-- ================= THE VELOCITY STRATEGIES ================= -->
+<!-- ================= THE VERDICT ================= -->
 <section id="velocity">
-  <h2>the velocity strategies</h2>
-  <p class="note">Two candidate shapes for the per-step level, <b>both live on this page</b>
-  — try them with a thumb. Each is shown on a motif row and on a kit row. One is marked;
-  the argument is under each.</p>
-
-  <div class="strats">
-    <div class="plate strat" id="stratA">
-      <h3>A · the velocity bar <span class="rec">RECOMMENDED</span></h3>
-      <p class="cap"><b>The bar's width IS the value</b> and the number prints at its end —
-      sixteen of them read as a bar-graph of loudness falling down the page, the same
-      idiom the kit's cells already draw. Tap cycles ghost(2) → hit(5) → accent(9), so the
-      <b>no-drag path alone covers the three levels that matter</b>; the sideways drag
-      (pointer-captured, <span class="data">touch-action: none</span> on the bar only — the
-      fix that made today's sliders touchable) writes the other seven. If a drag ever fails
-      on a phone again, this control degrades to exactly the shipped grammar. One gesture,
-      zero extra chrome, one owner per fact.</p>
-      <p class="demoLab">on a motif row — drag sideways, or tap to cycle</p>
-      <div class="demoRow" id="demoA-motif"></div>
-      <p class="demoLab">on a kit row — same gesture inside each cell</p>
-      <div class="demoKit" id="demoA-kit"></div>
-    </div>
-
-    <div class="plate strat" id="stratB">
-      <h3>B · the ladder</h3>
-      <p class="cap"><b>Every value a visible tap target, no drag at all</b> — nine rungs,
-      tap one and the rungs below it fill; tap the top filled rung again for silence. The
-      honest answer to a month when drags didn't work. The cost is geometry: nine legal
-      44px rungs make one step over 100px tall and the bar two and a half phone screens;
-      shown here at 9px rungs — real but thin — with slide-over allowed as a mercy. It is
-      fully discrete and fully tappable, and slightly wider per row.</p>
-      <p class="demoLab">on a motif row — tap a rung</p>
-      <div class="demoRow" id="demoB-motif"></div>
-      <p class="demoLab">on a kit row — a ladder per cell</p>
-      <div class="demoKit" id="demoB-kit"></div>
-    </div>
+  <h2>resolved · the velocity question</h2>
+  <div class="plate" style="margin-top:var(--s4)">
+    <p class="verd"><b>The verdict.</b> Paul's spec — <span class="q">“play/hold/rest,
+    pitch offset −12 to 12, velocity 0 to 7, tightened to one line”</span> — settles the
+    A/B question this section used to argue: a nine-rung ladder cannot live on one 52px
+    line, so the bar ships and the ladder retires. The bar's tap path is the whole musical
+    vocabulary — ghost(1) → hit(4) → accent(7), then back where it started, never to
+    silence — its drag writes the other levels, and 0–7 is the one range everywhere,
+    motif and kit alike.</p>
   </div>
-
-  <p class="why" style="margin-top:var(--s4)"><b>The call:</b> A. The bar is one owner per
-  fact (width = level = printed number), it survives a phone that refuses to drag because
-  its tap path is the whole musical vocabulary, and down the page it reads as data — a
-  dynamics curve you can see at arm's length. B's promise of “every value visible” breaks
-  against the 44px law: honest rungs make the bar three screens tall; thin rungs betray
-  the one law this rebuild exists to keep.</p>
 </section>
 
 <!-- ================= GESTURES ================= -->
@@ -554,19 +536,18 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
   scrolls from everywhere else and never from inside a control.</p>
   <div class="gests">
     <div class="gest"><h3><b>tap</b> kind</h3>
-      <p><span class="who">motif</span><br>♪ / — / ⌒ set the row to note, rest, or tie; silent rows go faint, they never vanish</p>
-      <p><span class="who">kit</span><br>a cell cycles rest → ghost(2) → hit(5) → accent(9)</p></div>
-    <div class="gest"><h3><b>tap</b> − / +</h3>
-      <p><span class="who">motif</span><br>step the degree through the Alphabet — the detents ARE the scale; the role tick answers under the current chord</p>
+      <p><span class="who">motif</span><br>▶ / ⌒ / · set the row to play, hold, or rest; silent rows go faint, they never vanish</p>
+      <p><span class="who">kit</span><br>a cell cycles rest → ghost(1) → hit(4) → accent(7)</p></div>
+    <div class="gest"><h3><b>drag ⇄</b> pitch</h3>
+      <p><span class="who">motif</span><br>on the pitch bar: write −12..+12 from the marked zero (captured; <b>touch-action: none</b> on the bar only); locked, the thumb lands only on the scale's ink ticks; a tap jumps to that position</p>
       <p><span class="who">kit</span><br>—</p></div>
-    <div class="gest"><h3><b>drag ⇄</b></h3>
-      <p><span class="who">motif</span><br>on the velocity bar: write 0–9 as width (captured; <b>touch-action: none</b> on the bar only)</p>
-      <p><span class="who">kit</span><br>on a cell: write 0–9 as width (<b>pan-y</b> — sideways is the value, vertical is still the page)</p></div>
+    <div class="gest"><h3><b>tap / drag ⇄</b> weight</h3>
+      <p><span class="who">motif</span><br>tap the weight bar to cycle ghost(1) → hit(4) → accent(7) → back where it started — <b>a tap never silences</b>; rest is the kind button's job. Drag writes 0–7</p>
+      <p><span class="who">kit</span><br>same inside each cell (<b>pan-y</b> — sideways is the value, vertical is still the page)</p></div>
     <div class="gest"><h3><b>drag ↕</b></h3>
-      <p><span class="who">swing</span><br>the vertical slider: captured on its track, tap-to-jump at any height, keyboard arrows through the hidden native input</p>
-      <p><span class="who">ladder</span><br>slide over the rungs, if B wins</p></div>
+      <p><span class="who">swing</span><br>the vertical slider: captured on its track, tap-to-jump at any height, keyboard arrows through the hidden native input</p></div>
     <div class="gest"><h3><b>tap</b> a row</h3>
-      <p><span class="who">motif</span><br>the wisdom rail speaks: step, degree, role under the chord, weight</p>
+      <p><span class="who">motif</span><br>the wisdom rail speaks: step, degree, role under the chord, weight — and flags an accidental in yellow</p>
       <p><span class="who">kit</span><br>the cell's own label says drum, step, level</p></div>
     <div class="gest"><h3><b>two-finger / wheel</b></h3>
       <p><span class="who">both</span><br>the page scrolls — down, only ever down. No surface here scrolls sideways; only the engraved score keeps a horizontal law</p></div>
@@ -577,11 +558,11 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
 <section id="laws">
   <h2>the laws it keeps</h2>
   <div class="laws">
-    <div class="law"><b>Determinism</b>Every displayed fact is a table read: chord windows from <span class="data">chordsOf</span>, roles from pc-set membership, markers from the OPS words, ms from bpm. No model, no guess.</div>
+    <div class="law"><b>Determinism</b>Every displayed fact is a table read: chord windows from <span class="data">chordsOf</span>, roles from pc-set membership, detents from the scale's pc set, markers from the OPS words, ms from bpm. No model, no guess.</div>
     <div class="law"><b>[data-live]</b>The clock owns the falling red line and one sentence. It may not press a button, rewrite a row, or move the scroll.</div>
     <div class="law"><b>Extraction, never by hand</b>The development marker is the score's own operator applied to this cell — if marker and record ever disagree, the gate fails, not the eye.</div>
-    <div class="law"><b>Down is time</b>Steps are rows; rows fall; the needle falls; the fill is the bottom of the phrase. Vertical space is cheap, width is not.</div>
-    <div class="law"><b>One owner per fact</b>Velocity is the bar's width and its printed number, nowhere else. Duration is which rows say tie. Kind is one segmented button, not three radios.</div>
+    <div class="law"><b>Down is time</b>Steps are rows; rows fall; the needle falls; the fill is the bottom of the phrase. Vertical space is cheap, width is not — which is why a step is one line.</div>
+    <div class="law"><b>One owner per fact</b>Pitch is the bar's fill from center and its badge, nowhere else. Weight is the bar's width and its printed number. Duration is which rows say hold. Kind is one segmented button.</div>
     <div class="law"><b>The touch law</b>Every drag surface: <span class="data">setPointerCapture</span> on pointerdown, value from the pointer against the control's own rect, <span class="data">touch-action</span> declared on the control and only the control. The native input stays as the keyboard's channel — <span class="data">pointer-events: none</span>, one paint path for both.</div>
   </div>
 </section>
@@ -603,7 +584,7 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
    pointerdown -> setPointerCapture; value from pointer vs the control's rect;
    pointerup without movement = a tap. click-after-drag is suppressed by flag.
    ========================================================================== */
-function dragX(el, onValue, onTap) {
+function dragX(el, max, onValue, onTap) {
   var moved = false, x0 = 0;
   el.addEventListener("pointerdown", function (e) {
     moved = false; x0 = e.clientX;
@@ -614,11 +595,33 @@ function dragX(el, onValue, onTap) {
     if (!moved && Math.abs(e.clientX - x0) < 6) return;
     moved = true; el._dragged = true;
     var r = el.getBoundingClientRect();
-    var v = Math.round((e.clientX - r.left) / r.width * 9);
-    onValue(Math.max(0, Math.min(9, v)));
+    var v = Math.round((e.clientX - r.left) / r.width * max);
+    onValue(Math.max(0, Math.min(max, v)));
   });
   el.addEventListener("pointerup", function () {
     if (!moved && onTap) onTap();
+  });
+}
+/* same capture discipline, but hands back a 0..1 fraction — the pitch bar's
+   bipolar range and the lattice snap live in the caller */
+function dragXfrac(el, onFrac, onTapFrac) {
+  var moved = false, x0 = 0;
+  function frac(e) {
+    var r = el.getBoundingClientRect();
+    return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+  }
+  el.addEventListener("pointerdown", function (e) {
+    moved = false; x0 = e.clientX;
+    try { el.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  el.addEventListener("pointermove", function (e) {
+    if (!el.hasPointerCapture || !el.hasPointerCapture(e.pointerId)) return;
+    if (!moved && Math.abs(e.clientX - x0) < 6) return;
+    moved = true; el._dragged = true;
+    onFrac(frac(e));
+  });
+  el.addEventListener("pointerup", function (e) {
+    if (!moved && onTapFrac) onTapFrac(frac(e));   /* tap-to-jump */
   });
 }
 function dragY(el, min, max, onValue) {
@@ -638,36 +641,100 @@ function dragY(el, min, max, onValue) {
     setFrom(e);
   });
 }
-function cycMotif(v) { return v >= 8 ? 2 : v >= 4 ? 9 : 5; }   /* 2 -> 5 -> 9 -> 2 */
-function cycKit(v)   { return v === 0 ? 2 : v <= 2 ? 5 : v <= 5 ? 9 : 0; }
+/* kit cell cycle: rest -> ghost(1) -> hit(4) -> accent(7) -> rest */
+function cycKit(v) { return v === 0 ? 1 : v <= 1 ? 4 : v <= 4 ? 7 : 0; }
 
 /* ==========================================================================
-   STRATEGY A widget — the velocity bar (also used by the motif editor)
-   the native input is the keyboard channel; pointer logic writes THROUGH it
+   THE SCALES — pc sets; the lattice is the set laid across two octaves.
+   Locked mode is today's kernel verbatim (deg = scale degree, kernel.js/AXES).
    ========================================================================== */
-function makeVelA(aria, get, set) {
+var SCALES = {
+  minor:   { pcs: [0, 2, 3, 5, 7, 8, 10] },
+  major:   { pcs: [0, 2, 4, 5, 7, 9, 11] },
+  dorian:  { pcs: [0, 2, 3, 5, 7, 9, 10] },
+  pentmin: { pcs: [0, 3, 5, 7, 10] },
+  whole:   { pcs: [0, 2, 4, 6, 8, 10] }
+};
+var scaleId = "minor", locked = true;
+function pcOf(v) { return ((v % 12) + 12) % 12; }
+function lattice() {
+  var pcs = SCALES[scaleId].pcs, out = [];
+  for (var v = -12; v <= 12; v++) if (pcs.indexOf(pcOf(v)) >= 0) out.push(v);
+  return out;
+}
+function isLegal(v) { return SCALES[scaleId].pcs.indexOf(pcOf(v)) >= 0; }
+function snapNearest(v) {
+  var best = 0, bd = 99;
+  lattice().forEach(function (x) {
+    var d = Math.abs(x - v);
+    if (d < bd) { bd = d; best = x; }
+  });
+  return best;
+}
+function nextLegalUp(v)   { var L = lattice(); for (var i = 0; i < L.length; i++) if (L[i] >= v) return L[i]; return L[L.length - 1]; }
+function nextLegalDown(v) { var L = lattice(); for (var i = L.length - 1; i >= 0; i--) if (L[i] <= v) return L[i]; return L[0]; }
+function edgeLegal(v) {    /* the last in-lattice detent between 0 and v — where the flag segment starts */
+  var L = lattice(), e = 0;
+  L.forEach(function (x) {
+    if (v > 0) { if (x < v && x > e) e = x; }
+    else       { if (x > v && x < e) e = x; }
+  });
+  return e;
+}
+/* the badge's words: degree name in scale, accidental against it otherwise */
+function pitchName(v) {
+  var pcs = SCALES[scaleId].pcs, pc = pcOf(v), i = pcs.indexOf(pc);
+  var oct = v === 12 ? "+8va" : v === -12 ? "−8va" : v < 0 ? "₋" : "";
+  if (i >= 0) return { main: (i + 1) + "̂" + oct, legal: true };
+  var j = pcs.indexOf(pcOf(pc - 1));
+  if (j >= 0) return { main: "♯" + (j + 1) + "̂" + oct, legal: false };
+  j = pcs.indexOf(pcOf(pc + 1));
+  return { main: "♭" + (j + 1) + "̂" + oct, legal: false };
+}
+/* chord windows, derived from the scale itself: degrees 1-3-5, then 5-7-2 */
+function winAt(s) {
+  var pcs = SCALES[scaleId].pcs, L = pcs.length;
+  if (s < 8) return { label: scaleId === "major" ? "I" : "i",
+    pcs: [pcs[0], pcs[2 % L], pcs[4 % L]] };
+  return { label: "V", pcs: [pcs[4 % L], pcs[6 % L], pcs[1 % L]], lead: pcs[(L - 1) % L] };
+}
+function roleOf(v, w) {
+  var pc = pcOf(v);
+  if (w.lead === pc) return "leading tone";
+  if (w.pcs.indexOf(pc) >= 0) return "chord tone";
+  return "color";
+}
+
+/* ==========================================================================
+   THE WEIGHT BAR — 0..7; the native input is the keyboard channel;
+   tap cycles ghost(1) -> hit(4) -> accent(7) -> back where it started.
+   A tap NEVER lands on 0: rest is the kind button's job.
+   ========================================================================== */
+function makeVel(aria, get, set) {
   var wrap = document.createElement("div");
   wrap.className = "velA";
   wrap.innerHTML = "<div class='va-bar'><i class='va-fill'></i></div>" +
     "<b class='va-num'></b>" +
-    "<input class='va-in' type='range' min='0' max='9' step='1'>";
+    "<input class='va-in' type='range' min='0' max='7' step='1'>";
   var fill = wrap.querySelector(".va-fill"),
       num  = wrap.querySelector(".va-num"),
       inp  = wrap.querySelector(".va-in");
   inp.setAttribute("aria-label", aria);
+  var cycStart = 1;                       /* where a 4th tap returns to; never 0 */
   function paint() {
     var v = get();
+    inp.value = v;
     wrap.dataset.v = v;
-    var f = v / 9;
+    var f = v / 7;
     fill.style.width = "calc(6px + (100% - 6px) * " + f.toFixed(4) + ")";
     num.textContent = v;
-    wrap.classList.toggle("gh", v > 0 && v <= 2);
-    wrap.classList.toggle("acc", v >= 8);
-    wrap.classList.toggle("hi", v >= 7);
-    if (v >= 7) { num.style.left = ""; num.style.right = "8px"; }
+    wrap.classList.toggle("gh", v === 1);
+    wrap.classList.toggle("acc", v >= 7);
+    wrap.classList.toggle("hi", v >= 6);
+    if (v >= 6) { num.style.left = ""; num.style.right = "8px"; }
     else { num.style.right = ""; num.style.left = "calc(6px + (100% - 6px) * " + f.toFixed(4) + " + 6px)"; }
     inp.setAttribute("aria-valuetext", "velocity " + v +
-      (v === 0 ? ", silent" : v <= 2 ? ", ghost" : v >= 8 ? ", accent" : ", hit"));
+      (v === 0 ? ", silent" : v === 1 ? ", ghost" : v >= 7 ? ", accent" : ", hit"));
   }
   inp.addEventListener("input", function () { set(+inp.value); paint(); });
   function write(v) {
@@ -675,97 +742,108 @@ function makeVelA(aria, get, set) {
     inp.value = v;
     inp.dispatchEvent(new Event("input", { bubbles: true }));   /* one paint path */
   }
-  dragX(wrap, write, function () { write(cycMotif(get())); });
-  inp.value = get(); paint();
+  function cycNext(v) {
+    if (v === 1) return 4;
+    if (v === 4) return 7;
+    if (v === 7) return cycStart > 0 ? cycStart : 1;
+    cycStart = v; return 1;
+  }
+  dragX(wrap, 7, write, function () { write(cycNext(get())); });
+  paint();
   return { el: wrap, paint: paint, input: inp };
 }
 
 /* ==========================================================================
-   STRATEGY B widget — the ladder (9 rungs; tap fills down to the rung)
+   THE PITCH BAR — bipolar −12..+12; fill grows from the marked zero;
+   the ink ticks are the lattice; locked, only they land; unlocked, an
+   off-scale value flies a flag: yellow badge, flag segment past the lattice.
    ========================================================================== */
-function makeLadder(aria, get, set) {
+function makePitch(s, aria, get, set, after) {
   var wrap = document.createElement("div");
-  wrap.className = "ladder";
-  wrap.setAttribute("role", "group");
-  wrap.setAttribute("aria-label", aria);
-  var rungs = [];
-  for (var lv = 9; lv >= 1; lv--) {
-    var b = document.createElement("button");
-    b.type = "button"; b.className = "rung"; b.dataset.lv = lv;
-    b.setAttribute("aria-label", aria + ": set velocity " + lv);
-    rungs.push(b); wrap.appendChild(b);
+  wrap.className = "pit";
+  wrap.innerHTML = "<div class='pb-bar'><span class='pb-ticks'></span>" +
+    "<i class='pb-fill'></i><i class='pb-off'></i><b class='pb-zero'></b></div>" +
+    "<b class='pb-badge'></b>" +
+    "<input class='pb-in' type='range' min='-12' max='12' step='1'>";
+  var ticks = wrap.querySelector(".pb-ticks"),
+      fill  = wrap.querySelector(".pb-fill"),
+      off   = wrap.querySelector(".pb-off"),
+      badge = wrap.querySelector(".pb-badge"),
+      inp   = wrap.querySelector(".pb-in");
+  inp.setAttribute("aria-label", aria);
+  var lastVal = 0;
+  function pctOf(v) { return (v + 12) / 24 * 100; }
+  function rebuildTicks() {
+    ticks.innerHTML = "";
+    lattice().forEach(function (v) {
+      var t = document.createElement("i");
+      t.className = "pb-tick"; t.style.left = pctOf(v) + "%";
+      ticks.appendChild(t);
+    });
   }
   function paint() {
     var v = get();
-    wrap.dataset.v = v;
-    wrap.classList.toggle("gh", v > 0 && v <= 2);
-    rungs.forEach(function (b) {
-      var lv = +b.dataset.lv;
-      b.classList.toggle("on", lv <= v);
-      b.classList.toggle("topacc", lv === 9 && v === 9);
-      b.setAttribute("aria-pressed", lv <= v ? "true" : "false");
-    });
+    inp.value = v; lastVal = v;
+    var p = pctOf(v);
+    if (v > 0) { fill.style.display = ""; fill.style.left = "50%"; fill.style.width = (p - 50) + "%"; }
+    else if (v < 0) { fill.style.display = ""; fill.style.left = p + "%"; fill.style.width = (50 - p) + "%"; }
+    else fill.style.display = "none";
+    var legal = isLegal(v);
+    if (!legal) {                     /* the chromatic tail, loud in flag */
+      var pe = pctOf(edgeLegal(v));
+      off.style.display = "";
+      if (v > 0) { off.style.left = pe + "%"; off.style.width = (p - pe) + "%"; }
+      else { off.style.left = p + "%"; off.style.width = (pe - p) + "%"; }
+    } else off.style.display = "none";
+    var nm = pitchName(v);
+    badge.innerHTML = nm.main + "<small>" + (v > 0 ? "+" : "") + v + "</small>";
+    badge.classList.toggle("accb", !legal);
+    var role = roleOf(v, winAt(s));
+    badge.style.borderColor = role === "chord tone" ? "var(--meter)"
+      : role === "leading tone" ? "var(--flag)" : "var(--ink)";
+    badge.style.left = Math.max(12, Math.min(88, p)) + "%";
+    inp.setAttribute("aria-valuetext", nm.main + ", " + (v >= 0 ? "+" : "") + v +
+      " semitones, " + role + (nm.legal ? "" : ", accidental"));
   }
-  wrap.addEventListener("click", function (e) {
-    var b = e.target.closest(".rung"); if (!b) return;
-    if (wrap._dragged) { wrap._dragged = false; return; }
-    var lv = +b.dataset.lv;
-    set(lv === get() ? 0 : lv);                       /* tap the top again = silence */
-    paint();
+  /* the keyboard channel: arrows walk semitones; locked, they walk the lattice */
+  inp.addEventListener("input", function () {
+    var raw = +inp.value, v = raw;
+    if (locked && !isLegal(raw)) v = raw > lastVal ? nextLegalUp(raw) : nextLegalDown(raw);
+    set(v); after();
   });
-  /* slide-over mercy: vertical pointer-captured write */
-  (function () {
-    var moved = false, y0 = 0;
-    wrap.addEventListener("pointerdown", function (e) { moved = false; y0 = e.clientY;
-      try { wrap.setPointerCapture(e.pointerId); } catch (err) {} });
-    wrap.addEventListener("pointermove", function (e) {
-      if (!wrap.hasPointerCapture || !wrap.hasPointerCapture(e.pointerId)) return;
-      if (!moved && Math.abs(e.clientY - y0) < 6) return;
-      moved = true; wrap._dragged = true;
-      var r = wrap.getBoundingClientRect();
-      var v = Math.round((1 - (e.clientY - r.top) / r.height) * 9);
-      set(Math.max(0, Math.min(9, v))); paint();
-    });
-  })();
-  paint();
-  return { el: wrap, paint: paint };
+  function write(frac) {
+    /* 25 equal slices, so the extremes are as landable as the middle */
+    var v = Math.max(-12, Math.min(12, Math.floor(frac * 25) - 12));
+    if (locked) v = snapNearest(v);
+    set(v); after();
+  }
+  dragXfrac(wrap, write, write);      /* drag writes; tap jumps */
+  rebuildTicks();
+  return { el: wrap, paint: paint, rebuildTicks: rebuildTicks, input: inp };
 }
 
 /* ==========================================================================
-   the motif: 16 step rows, one value each
+   the motif: 16 steps, ONE line each — play/hold/rest, pitch, weight
    ========================================================================== */
 var N = 16;
 var SUB = ["1","e","&","a","2","e","&","a","3","e","&","a","4","e","&","a"];
-var COLS = [-1, 0, 1, 2, 3, 4, 5, 6];      /* the Alphabet: 7̂ below tonic .. 7̂ */
 var STEPS = [
-  { k: "note", deg: 0, vel: 5 }, { k: "tie" },
-  { k: "note", deg: 1, vel: 5 }, { k: "tie" },
-  { k: "note", deg: 2, vel: 9 }, { k: "tie" }, { k: "tie" }, { k: "tie" },
+  { k: "play", off: 0, vel: 4 }, { k: "hold" },
+  { k: "play", off: 2, vel: 4 }, { k: "hold" },
+  { k: "play", off: 3, vel: 7 }, { k: "hold" }, { k: "hold" }, { k: "hold" },
   { k: "rest" }, { k: "rest" },
-  { k: "note", deg: 2, vel: 5 }, { k: "note", deg: 1, vel: 2 },
-  { k: "note", deg: 0, vel: 5 }, { k: "tie" }, { k: "tie" },
+  { k: "play", off: 3, vel: 4 }, { k: "play", off: 2, vel: 1 },
+  { k: "play", off: 0, vel: 4 }, { k: "hold" }, { k: "hold" },
   { k: "rest" }
 ];
-var WINDOWS = [
-  { start: 0, len: 8, label: "i", q: "triad", tones: [0, 2, 4] },
-  { start: 8, len: 8, label: "V", q: "triad", tones: [4, 6, 1], lead: 6 }
-];
-function winAt(s) { return s < 8 ? WINDOWS[0] : WINDOWS[1]; }
-function roleOf(deg, w) {
-  var d = ((deg % 7) + 7) % 7;
-  if (w.lead === d) return "leading tone";
-  if (w.tones.indexOf(d) >= 0) return "chord tone";
-  return "color";
-}
-function degName(deg) { return deg === -1 ? "7̂₋" : ((deg % 7) + 1) + "̂"; }
-function soundingAt(s) {           /* the note a tie row is still ringing */
-  for (var i = s; i >= 0; i--) if (STEPS[i].k === "note") return STEPS[i];
+function soundingAt(s) {           /* the note a hold row is still ringing */
+  for (var i = s; i >= 0; i--) if (STEPS[i].k === "play") return STEPS[i];
   return null;
 }
 
 var stepsEl = document.getElementById("motifSteps");
 var wisdom = document.getElementById("wisdom");
-var rowRefs = [];                  /* {row, segbs, degv, tick, minus, plus, velA} */
+var rowRefs = [];                  /* {row, segbs, pitch, vel, mutewhy} */
 
 function buildRows() {
   var frag = document.createDocumentFragment();
@@ -783,17 +861,17 @@ function buildRows() {
     seg.className = "seg"; seg.setAttribute("role", "group");
     seg.setAttribute("aria-label", "step " + (s + 1) + " kind");
     var segbs = {};
-    [["note", "♪"], ["rest", "—"], ["tie", "⌒"]].forEach(function (kd) {
+    [["play", "▶"], ["hold", "⌒"], ["rest", "·"]].forEach(function (kd) {
       var b = document.createElement("button");
       b.type = "button"; b.className = "segb"; b.dataset.k = kd[0];
       b.textContent = kd[1];
       b.setAttribute("aria-label", "step " + (s + 1) + ": " + kd[0]);
-      if (kd[0] === "tie" && s === 0) { b.disabled = true; b.title = "nothing above to tie to"; }
+      if (kd[0] === "hold" && s === 0) { b.disabled = true; b.title = "nothing above to hold"; }
       b.addEventListener("click", function () {
         if (b.disabled) return;
         var st = STEPS[s];
         if (st.k !== kd[0]) {
-          if (kd[0] === "note" && st.deg === undefined) { st.deg = 0; st.vel = 5; }
+          if (kd[0] === "play" && st.off === undefined) { st.off = 0; st.vel = 4; }
           st.k = kd[0];
           refreshRow(s); refreshTails(s); paintGhost(currentDev);
         }
@@ -805,34 +883,20 @@ function buildRows() {
     var rowr = document.createElement("div");
     rowr.className = "rowr";
 
-    var degc = document.createElement("div");
-    degc.className = "degc";
-    var minus = document.createElement("button");
-    minus.type = "button"; minus.className = "degb"; minus.textContent = "−";
-    minus.setAttribute("aria-label", "step " + (s + 1) + ": degree down the Alphabet");
-    var degv = document.createElement("span");
-    degv.className = "degv";
-    degv.innerHTML = "<b></b><i class='tick'></i>";
-    var plus = document.createElement("button");
-    plus.type = "button"; plus.className = "degb"; plus.textContent = "+";
-    plus.setAttribute("aria-label", "step " + (s + 1) + ": degree up the Alphabet");
-    function stepDeg(d) {
-      var st = STEPS[s]; if (st.k !== "note") return;
-      var ix = COLS.indexOf(st.deg) + d;
-      if (ix < 0 || ix >= COLS.length) return;
-      st.deg = COLS[ix];
-      refreshRow(s); refreshTails(s); speak(s); paintGhost(currentDev);
-    }
-    minus.addEventListener("click", function () { stepDeg(-1); });
-    plus.addEventListener("click", function () { stepDeg(1); });
-    degc.appendChild(minus); degc.appendChild(degv); degc.appendChild(plus);
-    rowr.appendChild(degc);
+    var pitch = makePitch(s, "step " + (s + 1) + " pitch offset",
+      function () { var st = STEPS[s];
+        if (st.k === "play") return st.off;
+        var sn = soundingAt(s); return sn ? sn.off : 0; },
+      function (v) { if (STEPS[s].k === "play") STEPS[s].off = v; },
+      function () { refreshTails(s); speak(s); });
+    rowr.appendChild(pitch.el);
 
-    var velA = makeVelA("step " + (s + 1) + " velocity",
-      function () { var st = STEPS[s]; return st.k === "note" ? st.vel :
-        (st.k === "tie" && soundingAt(s) ? soundingAt(s).vel : 0); },
-      function (v) { if (STEPS[s].k === "note") STEPS[s].vel = v; });
-    rowr.appendChild(velA.el);
+    var vel = makeVel("step " + (s + 1) + " velocity",
+      function () { var st = STEPS[s];
+        if (st.k === "play") return st.vel;
+        var sn = st.k === "hold" ? soundingAt(s) : null; return sn ? sn.vel : 0; },
+      function (v) { if (STEPS[s].k === "play") STEPS[s].vel = v; });
+    rowr.appendChild(vel.el);
 
     var mw = document.createElement("p");
     mw.className = "mutewhy"; mw.innerHTML = "<span></span>";
@@ -841,8 +905,7 @@ function buildRows() {
     row.appendChild(rowr);
     row.addEventListener("click", function () { speak(s); });
     frag.appendChild(row);
-    rowRefs.push({ row: row, segbs: segbs, degv: degv, minus: minus, plus: plus,
-      velA: velA, mutewhy: mw.firstChild });
+    rowRefs.push({ row: row, segbs: segbs, pitch: pitch, vel: vel, mutewhy: mw.firstChild });
   })(s);
   stepsEl.appendChild(frag);
 
@@ -854,63 +917,82 @@ function buildRows() {
 function refreshRow(s) {
   var st = STEPS[s], r = rowRefs[s];
   r.row.classList.toggle("is-rest", st.k === "rest");
-  r.row.classList.toggle("is-tie", st.k === "tie");
+  r.row.classList.toggle("is-hold", st.k === "hold");
   Object.keys(r.segbs).forEach(function (k) {
     r.segbs[k].setAttribute("aria-pressed", st.k === k ? "true" : "false");
   });
-  var src = st.k === "note" ? st : (st.k === "tie" ? soundingAt(s) : null);
-  var b = r.degv.querySelector("b"), t = r.degv.querySelector("i");
-  if (src) {
-    b.textContent = degName(src.deg);
-    var role = roleOf(src.deg, winAt(s));
-    t.className = "tick" + (role === "chord tone" ? " tone" : role === "leading tone" ? " lead" : "");
-    t.style.display = "";
-    t.title = role + " under " + winAt(s).label;
-  } else { b.textContent = "–"; t.style.display = "none"; }
-  if (st.k === "note") {
-    r.minus.disabled = COLS.indexOf(st.deg) === 0;
-    r.plus.disabled = COLS.indexOf(st.deg) === COLS.length - 1;
-  }
-  r.velA.input.value = src ? src.vel : 0;
-  r.velA.paint();
+  r.pitch.paint();
+  r.vel.paint();
+  var src = st.k === "hold" ? soundingAt(s) : null;
   r.mutewhy.textContent = st.k === "rest" ? "rest — nothing sounds"
-    : st.k === "tie" ? "tied — " + (src ? degName(src.deg) + " still rings" : "silence holds")
+    : st.k === "hold" ? "held — " + (src ? pitchName(src.off).main + " still rings" : "silence holds")
     : "";
 }
-function refreshTails(s) {         /* tie rows after s inherit a new degree/weight */
-  for (var i = s + 1; i < N && STEPS[i].k === "tie"; i++) refreshRow(i);
+function refreshTails(s) {         /* hold rows after s inherit a new pitch/weight */
+  for (var i = s + 1; i < N && STEPS[i].k === "hold"; i++) refreshRow(i);
   refreshRow(s);
 }
+function refreshAll() { for (var i = 0; i < N; i++) refreshRow(i); }
 function speak(s) {
   var st = STEPS[s], w = winAt(s), beat = Math.floor(s / 4) + 1;
   var at = "step <b class='data'>" + (s + 1) + "</b> (beat " + beat +
     (s % 4 !== 0 ? " · “" + SUB[s] + "”" : "") + ")";
   if (st.k === "rest") {
     wisdom.innerHTML = at + " · <b>rest</b> — under <b class='data'>" + w.label + "</b> nothing sounds";
-  } else {
-    var src = st.k === "note" ? st : soundingAt(s);
-    if (!src) { wisdom.innerHTML = at + " · silence"; return; }
-    var role = roleOf(src.deg, w);
-    wisdom.innerHTML = at + (st.k === "tie" ? " · <b>tied</b> —" : " ·") +
-      " degree <b class='data'>" + degName(src.deg) + "</b> under <b class='data'>" + w.label +
-      "</b> — <b>" + role + "</b> · vel " + src.vel +
-      (src.vel >= 8 ? " <span class='accw'>accent</span>" : src.vel <= 2 ? " (ghost)" : "");
+    return;
   }
+  var src = st.k === "play" ? st : soundingAt(s);
+  if (!src) { wisdom.innerHTML = at + " · silence"; return; }
+  var nm = pitchName(src.off), role = roleOf(src.off, w);
+  wisdom.innerHTML = at + (st.k === "hold" ? " · <b>held</b> —" : " ·") +
+    " <b class='data'>" + nm.main + "</b> (" + (src.off > 0 ? "+" : "") + src.off +
+    " st) under <b class='data'>" + w.label + "</b> — <b>" + role + "</b> · vel " + src.vel +
+    (src.vel >= 7 ? " <span class='accw'>accent</span>" : src.vel === 1 ? " (ghost)" : "") +
+    (nm.legal ? "" : " · <span class='accw'>accidental — off the lattice</span>");
 }
 function placePlayline() {
   var ph = document.getElementById("playline");
   if (ph && rowRefs[6]) ph.style.top = rowRefs[6].row.offsetTop + "px";  /* static demo: step 7 */
 }
 buildRows();
-for (var i = 0; i < N; i++) refreshRow(i);
+refreshAll();
 addEventListener("resize", placePlayline);
+
+/* ---- the scale + the lock ---- */
+var scaleSel = document.getElementById("scaleSel");
+var lockBtn = document.getElementById("lockBtn");
+var latWhy = document.getElementById("latWhy");
+function snapAll() {
+  STEPS.forEach(function (st) {
+    if (st.k === "play" && !isLegal(st.off)) st.off = snapNearest(st.off);
+  });
+}
+function sayLattice() {
+  latWhy.textContent = locked
+    ? lattice().length + " landable detents of 25 — the lattice is the scale, twice over"
+    : "all 25 land — an off-scale note prints its accidental in flag yellow";
+}
+scaleSel.addEventListener("change", function () {
+  scaleId = scaleSel.value;
+  if (locked) snapAll();
+  rowRefs.forEach(function (r) { r.pitch.rebuildTicks(); });
+  refreshAll(); sayLattice();
+});
+lockBtn.addEventListener("click", function () {
+  locked = !locked;
+  lockBtn.setAttribute("aria-pressed", locked ? "true" : "false");
+  lockBtn.textContent = locked ? "⌖ in the scale" : "♯ accidentals allowed";
+  if (locked) snapAll();
+  refreshAll(); sayLattice();
+});
+sayLattice();
 
 /* ---- development markers: EXTRACTED from the score's own operator ---- */
 function motifNotes() {
   var out = [];
   for (var s = 0; s < N; s++) {
-    if (STEPS[s].k !== "note") continue;
-    var len = 1; while (s + len < N && STEPS[s + len].k === "tie") len++;
+    if (STEPS[s].k !== "play") continue;
+    var len = 1; while (s + len < N && STEPS[s + len].k === "hold") len++;
     out.push({ s: s, len: len });
   }
   return out;
@@ -970,20 +1052,20 @@ var SAY = {
 })();
 
 /* ==========================================================================
-   the kit: 16 rows falling, five drums across, velocity per step
+   the kit: 16 rows falling, five drums across, velocity 0..7 per step
    ========================================================================== */
 var DRUMS = [
-  { id: "k", name: "kick",  hits: { 0: 8, 6: 4, 8: 7, 10: 5 } },
-  { id: "s", name: "snare", hits: { 4: 9, 7: 2, 10: 2, 12: 9 } },
-  { id: "h", name: "hat",   hits: { 0: 7, 2: 4, 4: 7, 6: 4, 8: 7, 10: 4, 12: 7, 14: 4 } },
-  { id: "o", name: "open",  hits: { 14: 5 } },
-  { id: "p", name: "perc",  hits: { 2: 3, 10: 3 } }
+  { id: "k", name: "kick",  hits: { 0: 7, 6: 3, 8: 5, 10: 4 } },
+  { id: "s", name: "snare", hits: { 4: 7, 7: 1, 10: 1, 12: 7 } },
+  { id: "h", name: "hat",   hits: { 0: 5, 2: 3, 4: 5, 6: 3, 8: 5, 10: 3, 12: 5, 14: 3 } },
+  { id: "o", name: "open",  hits: { 14: 4 } },
+  { id: "p", name: "perc",  hits: { 2: 2, 10: 2 } }
 ];
 var FILLBAR = [
-  { id: "k", name: "kick",  hits: { 0: 8, 8: 6 }, fillFrom: 8 },
-  { id: "s", name: "snare", hits: { 4: 9, 8: 4, 10: 5, 11: 5, 12: 6, 13: 7, 14: 8, 15: 9 }, fillFrom: 8 },
-  { id: "h", name: "hat",   hits: { 0: 7, 2: 4, 4: 7, 6: 4 } },
-  { id: "o", name: "open",  hits: { 15: 7 } },
+  { id: "k", name: "kick",  hits: { 0: 7, 8: 5 }, fillFrom: 8 },
+  { id: "s", name: "snare", hits: { 4: 7, 8: 3, 10: 4, 11: 4, 12: 5, 13: 6, 14: 6, 15: 7 }, fillFrom: 8 },
+  { id: "h", name: "hat",   hits: { 0: 5, 2: 3, 4: 5, 6: 3 } },
+  { id: "o", name: "open",  hits: { 15: 5 } },
   { id: "p", name: "perc",  hits: {} }
 ];
 var kitGrid = document.getElementById("kitGrid");
@@ -999,11 +1081,11 @@ function makeKitCell(drum, step, v0, isStroke) {
     cell.dataset.v = v;
     cell.innerHTML = "";
     cell.setAttribute("aria-label", drum + " step " + (step + 1) +
-      (v ? ", velocity " + v + (v <= 2 ? " ghost" : v >= 8 ? " accent" : "") : ", rest"));
+      (v ? ", velocity " + v + (v <= 1 ? " ghost" : v >= 7 ? " accent" : "") : ", rest"));
     if (!v) return;
     var f = document.createElement("i");
-    f.className = "kfill" + (v <= 2 ? " ghosty" : v >= 8 ? " accent" : "") + (isStroke ? " stroke" : "");
-    f.style.width = "calc(6px + (100% - 16px) * " + (v / 9).toFixed(3) + ")";
+    f.className = "kfill" + (v <= 1 ? " ghosty" : v >= 7 ? " accent" : "") + (isStroke ? " stroke" : "");
+    f.style.width = "calc(6px + (100% - 16px) * " + (v / 7).toFixed(3) + ")";
     cell.appendChild(f);
     var n = document.createElement("b");
     n.className = "knum"; n.textContent = v;
@@ -1013,7 +1095,7 @@ function makeKitCell(drum, step, v0, isStroke) {
     if (cell._dragged) { cell._dragged = false; return; }
     v = cycKit(v); paint();
   });
-  dragX(cell, function (nv) { v = nv; paint(); }, null);
+  dragX(cell, 7, function (nv) { v = nv; paint(); }, null);
   paint();
   return cell;
 }
@@ -1105,75 +1187,6 @@ buildKit(DRUMS, false);
       rows.forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
       c.setAttribute("aria-pressed", "true");
     });
-  });
-})();
-
-/* ==========================================================================
-   the strategy demos — both live, both touch-safe
-   ========================================================================== */
-(function () {
-  /* A on a motif row */
-  var aV = 6;
-  var am = document.getElementById("demoA-motif");
-  am.innerHTML = "<div class='slab'><b>2</b></div>" +
-    "<div class='degc'><button class='degb' disabled>−</button>" +
-    "<span class='degv'><b>3̂</b><i class='tick tone'></i></span>" +
-    "<button class='degb' disabled>+</button></div>";
-  var aw = makeVelA("strategy A demo, motif velocity",
-    function () { return aV; }, function (v) { aV = v; });
-  am.appendChild(aw.el);
-  /* A on a kit row */
-  var ak = document.getElementById("demoA-kit");
-  ["", "kick", "snare", "hat", "open", "perc"].forEach(function (n, i) {
-    var h = document.createElement("div");
-    h.className = i === 0 ? "corner" : "kh"; h.textContent = n;
-    ak.appendChild(h);
-  });
-  var kn = document.createElement("div");
-  kn.className = "kn beat"; kn.textContent = "2";
-  ak.appendChild(kn);
-  [9, 2, 7, 0, 3].forEach(function (v, i) {
-    ak.appendChild(makeKitCell(["kick", "snare", "hat", "open", "perc"][i], 4, v, false));
-  });
-
-  /* B on a motif row */
-  var bV = 6;
-  var bm = document.getElementById("demoB-motif");
-  bm.innerHTML = "<div class='slab'><b>2</b></div>" +
-    "<div class='degc'><button class='degb' disabled>−</button>" +
-    "<span class='degv'><b>3̂</b><i class='tick tone'></i></span>" +
-    "<button class='degb' disabled>+</button></div>";
-  var bWrapM = document.createElement("div");
-  bWrapM.style.cssText = "display:grid;gap:2px;justify-items:center;margin-left:auto";
-  var blm = makeLadder("strategy B demo, motif velocity",
-    function () { return bV; },
-    function (v) { bV = v; bval.textContent = "v" + v; });
-  var bval = document.createElement("span");
-  bval.className = "ladVal"; bval.textContent = "v" + bV;
-  bWrapM.appendChild(blm.el); bWrapM.appendChild(bval);
-  bm.appendChild(bWrapM);
-  /* B on a kit row */
-  var bk = document.getElementById("demoB-kit");
-  ["", "kick", "snare", "hat", "open", "perc"].forEach(function (n, i) {
-    var h = document.createElement("div");
-    h.className = i === 0 ? "corner" : "kh"; h.textContent = n;
-    bk.appendChild(h);
-  });
-  var kn2 = document.createElement("div");
-  kn2.className = "kn beat"; kn2.textContent = "2";
-  bk.appendChild(kn2);
-  [9, 2, 7, 0, 3].forEach(function (v0, i) {
-    var st = { v: v0 };
-    var wrap = document.createElement("div");
-    wrap.className = "ladWrap";
-    var val = document.createElement("span");
-    val.className = "ladVal";
-    var lad = makeLadder("strategy B demo, " + ["kick", "snare", "hat", "open", "perc"][i],
-      function () { return st.v; },
-      function (v) { st.v = v; val.textContent = "v" + v; });
-    val.textContent = "v" + st.v;
-    wrap.appendChild(lad.el); wrap.appendChild(val);
-    bk.appendChild(wrap);
   });
 })();
 })();

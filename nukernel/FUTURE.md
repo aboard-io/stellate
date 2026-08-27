@@ -217,11 +217,21 @@ weight; silent rows go faint with a measured line instead of vanishing, so
 the bar's geometry never moves under a thumb. The kit gains what it always
 deserved: velocity 0–9 per cell, width = level, number printed. Two
 per-step velocity strategies were built live for Paul to thumb-test — the
-bar (drag-or-tap-cycle; recommended, because its tap path alone is the
-whole musical vocabulary and width = number = one owner per fact) and the
-ladder (every value a tap target, but honest 44px rungs make one step three
-screens tall) — Q6 below. What survives all three versions of this
-paragraph: snapping to the Alphabet so a wrong
+bar (drag-or-tap-cycle) and the ladder (every value a tap target) —
+and then Paul's tightening spec settled it the same day (Q6, resolved
+below). THE ROW'S FINAL SHAPE, his words: "play/hold/rest, pitch offset
+−12 to 12, velocity 0 to 7, tightened to one line, and factor in different
+scales, and accidentals vs locking in scale degrees." So: each step is ONE
+52px line — kind as a three-glyph segmented button (hold is the old tie), a
+BIPOLAR PITCH BAR growing from a marked zero whose landable detents are the
+scale's own pc-set drawn as ink ticks (change the scale and the lattice
+visibly redraws; pentatonic thins it, whole tone evens it), and a weight
+bar 0–7. A LOCK toggle holds the honesty line: IN THE SCALE is today's
+kernel verbatim (deg walks the Alphabet) and defaults on; ACCIDENTALS
+ALLOWED lands all 25 semitones with off-scale notes flying a flag-yellow
+badge (♯4̂) — and costs the cents-alphabet/chromatic-channel extension the
+repertoire review scoped, which is why it is a purchase, not a default.
+What survives all four versions of this paragraph: snapping to the Alphabet so a wrong
 note is unenterable; **the harmony painted, not narrated** — `chordsOf()`
 gives the windows, and each row's role tick (chord tone / leading tone /
 color) answers when the degree moves. That is "with knowledge of what we are
@@ -457,12 +467,13 @@ section (the fact stays owned by the song), and the law's text gains the
 exception in place. Without your yes, the Chinese-opera cluster ships without
 banshi and says so in `cannot`.
 
-**Q6 — Per-step velocity: the bar or the ladder?** Both live in
-`composer.html`'s strategies section, on a motif row and a kit row, touch-
-tested. We recommend **the bar** (width = level = printed number; tap cycles
-ghost/hit/accent so it works with zero drags; sixteen of them read as a
-dynamics curve). The ladder is fully discrete — every value a visible tap —
-but honest 44px rungs make a step over 100px tall. Thumb them and say A or B.
+**Q6 — Per-step velocity: RESOLVED, the bar.** The question stood for
+hours: both strategies were built live and touch-tested. Then Paul's
+tightening spec — "velocity 0 to 7, tightened to one line" — answered it
+structurally: a nine-rung ladder cannot live on one 52px line. The bar
+ships at 0–7, motif and kit alike; tap cycles ghost(1) → hit(4) → accent(7)
+and back where it started — a tap never silences; rest is the kind button's
+job.
 
 **Q5 — Does the producer survive as a section, or move onto the board?** We
 recommend: stays its own section, last, six chips + the stack, and its
